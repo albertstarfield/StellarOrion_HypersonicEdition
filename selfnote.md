@@ -168,3 +168,72 @@ The **Hypersonic Inflatable Aerodynamic Decelerator (HIAD)** is a paradigm shift
 *   **Thermal Limits:** Flexible materials have lower absolute temperature limits compared to advanced rigid carbon-carbon or ablative materials.
     *   *Example:* **Silicon Carbide (SiC) fabrics** used in F-TPS are limited to **~1,470 K - 1,870 K**. In contrast, rigid ablators like **PICA (Phenolic Impregnated Carbon Ablator)** can survive **2,770 K+** during high-energy interplanetary returns.
 *   **Dynamic Stability:** Inflatable structures can exhibit "breathing" or aero-elastic fluttering under high dynamic pressure, which complicates the aerodynamic stability derivatives.
+
+---
+
+## 8. Mission References & Technical Specifications
+Detailed specifications and source references for the mission presets implemented in the `StellarOrion` pipeline.
+
+### A. IRVE-3 (Inflatable Re-entry Vehicle Experiment 3)
+*   **Mission Type:** Suborbital Flight Test (Sounding Rocket).
+*   **Launch Vehicle:** Black Brant XI (Wallops Flight Facility).
+*   **Target Altitude:** ~80 km.
+*   **Geometry:** 3.0m diameter, 60-degree half-angle cone, 7 toroids.
+*   **Citation:** 
+    ```bibtex
+    @inproceedings{cassell2013inflatable,
+      title={Inflatable Re-entry Vehicle Experiment (IRVE-3) Flight Results},
+      author={Cassell, Robert and others},
+      booktitle={AIAA 2013-1386},
+      year={2013}
+    }
+    ```
+
+### B. LOFTID (Low-Earth Orbit Flight Test of an Inflatable Decelerator)
+*   **Mission Type:** LEO Deorbit & Reentry.
+*   **Launch Vehicle:** Atlas V (Secondary Payload).
+*   **Target Altitude:** LEO-to-Surface.
+*   **Geometry:** 6.0m diameter (scaled from 3.0m baseline), 7 toroids, F-TPS (Silicon Carbide fabric).
+*   **Citation:** 
+    ```bibtex
+    @inproceedings{lippincott2019low,
+      title={Low-Earth Orbit Flight Test of an Inflatable Decelerator (LOFTID) Mission Overview},
+      author={Lippincott, John and others},
+      booktitle={AIAA 2019-3386},
+      year={2019}
+    }
+    ```
+
+### C. Artemis (Lunar Return Profile)
+*   **Mission Type:** Interplanetary Reentry (Lunar-to-Earth).
+*   **Target Velocity:** 10.5 - 11.2 km/s.
+*   **Chemistry Mode:** 11-species Ionization (required for speeds > 8 km/s).
+*   **TPS Priority:** High thermal soak, massive thermal lag factor ($\eta_{lag}$ ~ 20%).
+*   **Key Reference:** NASA Artemis Mission Reentry Profiles (Technical Summaries).
+
+### D. Mars Science Laboratory (MSL) Scale
+*   **Mission Type:** Planetary Entry (Earth-to-Mars).
+*   **Atmosphere:** 95% $CO_2$ (Mars preset in `gui_backend.py`).
+*   **Ballistic Coefficient:** Optimized for $\beta < 150 kg/m^2$ to ensure subsonic parachute deployment.
+*   **Citation:** 
+    ```bibtex
+    @book{anderson2006hypersonic,
+      title={Hypersonic and High-Temperature Gas Dynamics},
+      author={Anderson, John D},
+      year={2006},
+      publisher={AIAA Education Series}
+    }
+    ```
+
+### E. Atmosphere Modeling (NRLMSIS 2.1)
+*   **Logic:** Used for density and temperature profile generation in `gui_backend.py`.
+*   **Citation:**
+    ```bibtex
+    @article{emmert2022nrlmsis,
+      title={NRLMSIS 2.1: An empirical model of nitric oxide incorporated into MSIS},
+      author={Emmert, J T and others},
+      journal={Journal of Geophysical Research: Space Physics},
+      volume={127},
+      year={2022}
+    }
+    ```

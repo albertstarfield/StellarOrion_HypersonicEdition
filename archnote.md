@@ -123,4 +123,19 @@ graph TD
     I --> J[Adjusted Best Parameters]
     J --> B
     F -- No --> K[Final Validation Result]
+
+---
+
+## 7. DeepXDE PINN Refinement (The Checkpoint Exchange)
+To further accelerate and refine the simulation results, a **Physics-Informed Neural Network (PINN)** stage is integrated via **DeepXDE**.
+
+1.  **Checkpoint Exchange:** The final "stable" flow field from SPARTA (DSMC) is used as a sparse point-cloud "anchor" for the PINN.
+2.  **Physical Constraints:** Unlike the pure data-driven MoP, the PINN is constrained by the **2D Steady Compressible Euler Equations**:
+    *   Continuity ($\nabla \cdot (\rho \mathbf{u}) = 0$)
+    *   Momentum ($\rho(\mathbf{u} \cdot \nabla)\mathbf{u} + \nabla p = 0$)
+    *   Equation of State ($p = \rho R T$)
+3.  **Gap Filling & Inverse Estimation:**
+    *   **Gap Filling:** The PINN interpolates and "smooths" the noisy particle data from DSMC onto a high-resolution grid.
+    *   **Inverse Parameter Estimation:** The model can be used to estimate unknown physical parameters (e.g., freestream conditions or reaction rates) by minimizing the residual between the PDE and the sparse DSMC observations.
+4.  **Hardware Acceleration:** Training is accelerated using **MPS (Metal Performance Shaders)** on Mac or **CUDA** on NVIDIA hardware, providing near-real-time flow field refinement.
 ```

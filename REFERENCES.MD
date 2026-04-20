@@ -93,3 +93,9 @@ The default simulation settings in `main.py` and `gui_backend.py` are calibrated
 *   Cassell et al., "Inflatable Re-entry Vehicle Experiment (IRVE-3) Flight Results," *AIAA 2013-1386*, 2013.
 *   Lippincott et al., "Low-Earth Orbit Flight Test of an Inflatable Decelerator (LOFTID) Mission Overview," *AIAA 2019-3386*.
 *   NASA's LOFTID (Low-Earth Orbit Flight Test of an Inflatable Decelerator) technical summaries.
+
+## 6. Physics-Informed Neural Networks (PINNs)
+The pipeline integrates a PINN refinement stage via DeepXDE to "fill the gaps" in noisy DSMC data and perform inverse parameter estimation.
+
+*   **Software (DeepXDE)**: Lu, L., Meng, X., Mao, Z., and Karniadakis, G. E., "DeepXDE: A deep learning library for solving differential equations," *SIAM Review*, 63(1), 208-228, 2021. [DOI: 10.1137/19M1274067](https://doi.org/10.1137/19M1274067)
+*   **Methodology**: G. E. Karniadakis, I. G. Kevrekidis, L. Lu, C. H. Pang, and M. Perdikaris, "Physics-informed machine learning," *Nature Reviews Physics*, 3, 422–440, 2021.
