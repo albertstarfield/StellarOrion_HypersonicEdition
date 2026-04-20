@@ -6,7 +6,7 @@ import json
 import shutil
 import time
 import numpy as np
-from source.pinn_accelerator import PINNAccelerator
+import numpy as np
 
 class Api:
     def __init__(self):
@@ -572,8 +572,17 @@ run             {opt_params.get('env_run', '1000')}
             # --- PINN Refinement Stage ---
             self.log_to_gui("[*] PHASE 1.2: DEEPXDE PINN REFINEMENT (Checkpoint Exchange)...")
             try:
+                import torch
                 device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu")
-                pinn = PINNAccelerator(device=device)
+                
+                try:
+                    from source.pinn_accelerator import PINNAccelerator
+                    pinn = PINNAccelerator(device=device)
+                except ImportError:
+                    self.log_to_gui("    [!] WARNING: DeepXDE not found. Attempting auto-installation...")
+                    subprocess.check_call([sys.executable, "-m", "pip", "install", "deepxde"])
+                    from source.pinn_accelerator import PINNAccelerator
+                    pinn = PINNAccelerator(device=device)
                 
                 # Domain bounds from opt_params
                 d_val = float(opt_params.get('base_diameter', 3.0))

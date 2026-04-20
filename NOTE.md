@@ -21,3 +21,6 @@ The IRVE-3 mission (launched July 23, 2012) is the most successful flight valida
 
 ## Optimization Strategy
 When using the "High-Fidelity SBO" mode, the optimization targets for heat flux and g-load are initially set to 1.5x IRVE-3 limits to allow the metamodel to explore "Survivability Envelopes" for future Mars-scale missions (e.g., LOFTID).
+
+## PINN Acceleration
+For Mars-scale and heavy-lift missions (e.g., Mission Atlas), the **DeepXDE PINN refinement** is crucial for filling gaps in the sparse DSMC results, ensuring that thermal protection system (TPS) margins are calculated with physics-informed high resolution.

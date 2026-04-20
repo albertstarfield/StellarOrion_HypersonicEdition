@@ -97,3 +97,27 @@ The "Metamodel Prognosis" (MoP) is a Multi-Layer Perceptron (MLP) that maps desi
 The GA steers the search towards configurations that minimize a weighted cost $J$ relative to user-defined targets.
 $$J = w_{\beta} \left( \frac{\beta_{calc} - \beta_{target}}{10} \right)^2 + w_{metric} \left( \frac{y_{pred} - y_{target}}{1} \right)^2$$
 *   **Implementation:** Lines 642-644 in `gui_backend.py`.
+
+---
+
+## 5. PINN Refinement Derivation (DeepXDE)
+
+The **Physics-Informed Neural Network (PINN)** stage uses the **2D Steady Compressible Euler Equations** to refine the flow field data from SPARTA.
+
+### 2D Steady Euler Equations (Axisymmetric)
+The network $\mathcal{N}(x, y) \to (\rho, u, v, T, p)$ is constrained by the following residuals:
+
+1.  **Continuity Residual ($R_{cont}$):**
+    $$\nabla \cdot (\rho \mathbf{u}) = \frac{\partial (\rho u)}{\partial x} + \frac{\partial (\rho v)}{\partial y} = 0$$
+2.  **Momentum Residuals ($R_{mom,x}, R_{mom,y}$):**
+    $$\rho(u \frac{\partial u}{\partial x} + v \frac{\partial u}{\partial y}) + \frac{\partial p}{\partial x} = 0$$
+    $$\rho(u \frac{\partial v}{\partial x} + v \frac{\partial v}{\partial y}) + \frac{\partial p}{\partial y} = 0$$
+3.  **Equation of State Residual ($R_{EOS}$):**
+    $$p - \rho R T = 0$$
+
+### PINN Implementation (source/pinn_accelerator.py)
+*   **Automatic Differentiation:** `dde.grad.jacobian` is used to calculate spatial derivatives without mesh-based discretization.
+*   **Checkpoint Exchange:** SPARTA grid data is introduced via `dde.icbc.PointSetBC`, which adds a data-matching term to the loss function:
+    $$\mathcal{L}_{total} = \mathcal{L}_{PDE} + w_{data} \mathcal{L}_{data}$$
+    *Where $\mathcal{L}_{data} = \frac{1}{N_{obs}} \sum |y_{pred} - y_{obs}|^2$.*
+*   **Inverse Estimation:** When `inverse=True`, a physical parameter (e.g., $v_{\infty}$) is defined as a `dde.Variable` and optimized alongside the network weights.

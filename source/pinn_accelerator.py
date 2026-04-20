@@ -1,6 +1,5 @@
 import numpy as np
-import deepxde as dde
-import torch
+import numpy as np
 import os
 import sys
 
@@ -53,6 +52,7 @@ def pde_euler_2d(x, y, v_stream=None):
     """2D Steady Compressible Euler Equations for PINN.
     If v_stream is provided as a dde.Variable, it will be estimated (Inverse problem).
     """
+    import deepxde as dde
     rho = y[:, 0:1]
     u = y[:, 1:2]
     v = y[:, 2:3]
@@ -99,6 +99,8 @@ def pde_euler_2d(x, y, v_stream=None):
 
 class PINNAccelerator:
     def __init__(self, device="mps"):
+        import deepxde as dde
+        import torch
         self.device = device
         if device == "mps":
             dde.config.set_default_device("mps")
@@ -110,6 +112,7 @@ class PINNAccelerator:
 
     def train_from_checkpoint(self, grid_file, domain_bounds, iterations=1000, inverse=False):
         """Uses SPARTA data as anchor points for PINN refinement or inverse estimation."""
+        import deepxde as dde
         X_data, Y_data = parse_sparta_grid(grid_file)
         if X_data is None:
             print("Error: Could not parse SPARTA grid file.")
@@ -146,7 +149,7 @@ class PINNAccelerator:
         else:
             self.model.compile("adam", lr=1e-3)
             
-        self.model.train(iterations=iterations)
+        self.model.train(iterations=iterations, display_every=100)
         
         if inverse:
             print(f"Estimated v_stream: {self.v_est.item()}")
