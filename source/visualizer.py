@@ -44,27 +44,27 @@ def generate_plots(grid_file, output_dir):
     plt.figure(figsize=(10, 6))
     plt.gca().set_facecolor('#0f172a')
     # Use tricontourf for smooth "heatmap" appearance
-    sc = plt.tricontourf(x_center, y_center, temp, levels=50, cmap='hot')
+    sc = plt.tricontourf(x_center, y_center, np.nan_to_num(temp), levels=50, cmap='hot')
     plt.colorbar(sc, label='Temperature (K)')
     plt.title('Thermal Map (Temperature)', color='white', fontweight='bold')
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
-    plt.savefig(os.path.join(output_dir, 'thermal_map.png'))
-    plt.savefig(os.path.join(output_dir, 'thermal_map.jpg'), pil_kwargs={'quality': 85})
+    plt.savefig(os.path.join(output_dir, 'thermal_map.png'), dpi=600)
+    plt.savefig(os.path.join(output_dir, 'thermal_map.jpg'), pil_kwargs={'quality': 85}, dpi=600)
     plt.close()
 
     # Plot 2: Pressure Contour Heatmap
     plt.figure(figsize=(10, 6))
     plt.gca().set_facecolor('#0f172a')
-    sc = plt.tricontourf(x_center, y_center, press, levels=50, cmap='jet')
+    sc = plt.tricontourf(x_center, y_center, np.nan_to_num(press), levels=50, cmap='jet')
     plt.colorbar(sc, label='Pressure (Pa)')
     plt.title('Pressure Distribution', color='white', fontweight='bold')
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
-    plt.savefig(os.path.join(output_dir, 'pressure_map.png'))
-    plt.savefig(os.path.join(output_dir, 'pressure_map.jpg'), pil_kwargs={'quality': 85})
+    plt.savefig(os.path.join(output_dir, 'pressure_map.png'), dpi=600)
+    plt.savefig(os.path.join(output_dir, 'pressure_map.jpg'), pil_kwargs={'quality': 85}, dpi=600)
     plt.close()
 
     # Plot 3: Velocity Vectors (Quiver)
@@ -79,8 +79,8 @@ def generate_plots(grid_file, output_dir):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
-    plt.savefig(os.path.join(output_dir, 'velocity_vectors.png'))
-    plt.savefig(os.path.join(output_dir, 'velocity_vectors.jpg'), pil_kwargs={'quality': 85})
+    plt.savefig(os.path.join(output_dir, 'velocity_vectors.png'), dpi=600)
+    plt.savefig(os.path.join(output_dir, 'velocity_vectors.jpg'), pil_kwargs={'quality': 85}, dpi=600)
     plt.close()
 
     # Plot 4: Mach Number Contour
@@ -90,16 +90,18 @@ def generate_plots(grid_file, output_dir):
     # Speed of sound a = sqrt(gamma * R * T)
     gamma = 1.4
     R = 287.05
-    sound_speed = np.sqrt(gamma * R * temp)
-    mach = vel / sound_speed
+    # Ensure temp is positive to avoid sqrt of negative or div by zero
+    safe_temp = np.maximum(temp, 1.0) 
+    sound_speed = np.sqrt(gamma * R * safe_temp)
+    mach = np.nan_to_num(vel / sound_speed, nan=0.0, posinf=0.0, neginf=0.0)
     sc = plt.tricontourf(x_center, y_center, mach, levels=50, cmap='plasma')
     plt.colorbar(sc, label='Mach Number')
     plt.title('Mach Number Distribution', color='white', fontweight='bold')
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
-    plt.savefig(os.path.join(output_dir, 'mach_map.png'))
-    plt.savefig(os.path.join(output_dir, 'mach_map.jpg'), pil_kwargs={'quality': 85})
+    plt.savefig(os.path.join(output_dir, 'mach_map.png'), dpi=600)
+    plt.savefig(os.path.join(output_dir, 'mach_map.jpg'), pil_kwargs={'quality': 85}, dpi=600)
     plt.close()
 
     # Plot 5: Stagnation Streamline Graph (1D)
@@ -151,8 +153,8 @@ def generate_stagnation_graph(data, output_dir):
     ax1.grid(True, alpha=0.1, color='white')
     
     fig.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'stagnation_graph.png'), facecolor=fig.get_facecolor())
-    plt.savefig(os.path.join(output_dir, 'stagnation_graph.jpg'), pil_kwargs={'quality': 85}, facecolor=fig.get_facecolor())
+    plt.savefig(os.path.join(output_dir, 'stagnation_graph.png'), facecolor=fig.get_facecolor(), dpi=600)
+    plt.savefig(os.path.join(output_dir, 'stagnation_graph.jpg'), pil_kwargs={'quality': 85}, facecolor=fig.get_facecolor(), dpi=600)
     plt.close()
 
 def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp'):
@@ -177,8 +179,9 @@ def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp'):
         u, v, w = data[:, 5], data[:, 6], data[:, 7]
         temp = data[:, 8]
         vel = np.sqrt(u**2 + v**2 + w**2)
-        sound_speed = np.sqrt(1.4 * 287.05 * temp)
-        vals = vel / sound_speed
+        safe_temp = np.maximum(temp, 1.0)
+        sound_speed = np.sqrt(1.4 * 287.05 * safe_temp)
+        vals = np.nan_to_num(vel / sound_speed, nan=0.0, posinf=0.0, neginf=0.0)
         label = "Mach Number"
         cmap = 'plasma'
     else: # Default temp
@@ -186,14 +189,14 @@ def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp'):
         label = "Temperature (K)"
         cmap = 'hot'
 
-    # 3x Resolution boost: Sample ~3000 points instead of 1000
-    step = max(1, len(x) // 3000)
+    # 20x Resolution boost: Sample ~20000 points instead of 1000
+    step = max(1, len(x) // 20000)
     x = x[::step]
     y = y[::step]
     vals = vals[::step]
     
-    # 3x Radial resolution boost: 48 slices instead of 16
-    n_slices = 48
+    # 20x Radial resolution boost: 320 slices instead of 16
+    n_slices = 320
     thetas = np.linspace(0, 2*np.pi, n_slices)
     
     from mpl_toolkits.mplot3d import Axes3D
@@ -283,7 +286,7 @@ def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp'):
     plt.suptitle(f'3D Axisymmetric Upscaling Multi-Angle: {label}', color='white', fontsize=18, fontweight='800', y=0.98)
     plt.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.9, wspace=0.1, hspace=0.1)
     
-    plt.savefig(output_path, dpi=180, facecolor=fig.get_facecolor())
+    plt.savefig(output_path, dpi=600, facecolor=fig.get_facecolor())
     plt.close()
     print(f"[+] 3D Multi-angle montage ({prop}) saved to {output_path}")
 
@@ -300,8 +303,8 @@ def export_upscaled_vtk(grid_file, output_path):
     w_2d = data[:, 7]
     temp_2d = data[:, 8]
     
-    # 3x Resolution (consistent with visualizer)
-    n_slices = 48
+    # 20x Radial resolution (consistent with visualizer)
+    n_slices = 320
     thetas = np.linspace(0, 2*np.pi, n_slices)
     
     with open(output_path, 'w') as f:
@@ -345,8 +348,11 @@ def export_upscaled_vtk(grid_file, output_path):
         for _ in range(n_slices):
             for i in range(n_pts_2d):
                 vel = np.sqrt(u_2d[i]**2 + v_2d[i]**2 + w_2d[i]**2)
-                sound = np.sqrt(1.4 * 287.05 * temp_2d[i])
-                f.write(f"{vel/sound}\n")
+                safe_temp = max(temp_2d[i], 1.0)
+                sound = np.sqrt(1.4 * 287.05 * safe_temp)
+                m_val = vel / sound
+                if not np.isfinite(m_val): m_val = 0.0
+                f.write(f"{m_val}\n")
                 
     print(f"[+] VTK Export complete: {output_path}")
 
@@ -424,7 +430,7 @@ def generate_preview(surf_file, output_path, params=None):
         plt.grid(True, alpha=0.1, color='white')
         plt.axis('equal')
         plt.tight_layout()
-        plt.savefig(output_path, dpi=120)
+        plt.savefig(output_path, dpi=600)
         plt.close()
         return True
     except Exception as e:
@@ -447,10 +453,11 @@ def generate_animation(grid_files, output_mp4):
         if len(data) > 0:
             x_center = (data[:, 0] + data[:, 2]) / 2
             y_center = (data[:, 1] + data[:, 3]) / 2
+            
             temp = data[:, 8]
             
             # Smooth contours for animation
-            cp = ax.tricontourf(x_center, y_center, temp, levels=40, cmap='hot')
+            cp = ax.tricontourf(x_center, y_center, np.nan_to_num(temp), levels=40, cmap='hot')
             sim_step = frame * 100
             flow_time_ms = sim_step * 1e-6 * 1000 # Assuming 1e-6 timestep
             ax.set_title(f'Thermal Evolution - Step {sim_step} ({flow_time_ms:.2f} ms)', color='white', fontweight='bold')
@@ -469,7 +476,7 @@ def generate_animation(grid_files, output_mp4):
     
     # Save using ffmpeg
     writer = animation.FFMpegWriter(fps=5, metadata=dict(artist='StellarOrion'), bitrate=1800)
-    ani.save(output_mp4, writer=writer)
+    ani.save(output_mp4, writer=writer, dpi=600)
     plt.close()
     print(f"Smooth animation saved to {output_mp4}")
 

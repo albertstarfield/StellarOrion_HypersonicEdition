@@ -21,7 +21,7 @@ StellarOrion_HypersonicEdition/
 │           └── ctypes.CDLL ──> libsparta.so (C Library Interface)
 │
 ├── gui_backend.py (The Orchestrator)
-│   ├── subprocess.run ──> CADDesign/make_HIAD.py (CAD Kernel)
+│   ├── subprocess.run ──> CADDesign/HIAD_GeometryEngine.py (CAD Kernel)
 │   ├── subprocess.run ──> [Docker Engine] ──> sparta-sim (Physics)
 │   ├── from source import visualizer (Post-processing)
 │   └── import torch (Metamodel / MoP Training)
@@ -59,7 +59,7 @@ The process begins with user-defined or preset parameters that define the missio
 ## 2. Into SPARTA (The Physics Engine)
 These parameters are converted into a format suitable for the **Direct Simulation Monte Carlo (DSMC)** solver.
 
-1.  **Geometry Kernel:** `make_HIAD.py` uses the geometric parameters to generate a 2D axisymmetric surface file (`.surf`).
+1.  **Geometry Kernel:** `HIAD_GeometryEngine.py` uses the geometric parameters to generate a 2D axisymmetric surface file (`.surf`).
 2.  **Script Generation:** `gui_backend.py` generates the `in.hiad` control script:
     *   **Collision Model:** Variable Soft Sphere (VSS).
     *   **Reaction Model:** Total Collision Energy (TCE) for chemical dissociation/ionization.
@@ -111,7 +111,7 @@ Once the MoP and GA identify the **Optimal Configuration**:
 
 ```mermaid
 graph TD
-    A[Input Parameters] --> B[make_HIAD.py / in.hiad]
+    A[Input Parameters] --> B[HIAD_GeometryEngine.py / in.hiad]
     B --> C[SPARTA Solver]
     C --> D[Raw Out: surf/grid]
     D --> E[Derived Metrics: beta, heat, g-load]

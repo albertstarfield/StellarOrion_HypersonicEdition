@@ -57,7 +57,7 @@ class Api:
                 
                 python_exec = self._get_python_exec()
                 cad_cmd = [
-                    python_exec, "make_HIAD.py",
+                    python_exec, "HIAD_GeometryEngine.py",
                     "--diameter", str(params.get('diameter', 3.0)),
                     "--angle", str(params.get('angle', 60.0)),
                     "--nose", str(params.get('nose_radius', 0.191)),
@@ -490,7 +490,7 @@ run             {opt_params.get('env_run', '1000')}
         
         self.log_to_gui(f"    [+] Generating Baseline Geometry (D={base_d}m)...")
         cmd_cad = [
-            python_exec, "make_HIAD.py",
+            python_exec, "HIAD_GeometryEngine.py",
             "--diameter", str(base_d),
             "--angle", str(opt_params.get('base_angle', 60.0)),
             "--nose", str(opt_params.get('base_nose', 0.191)),
@@ -618,7 +618,7 @@ run             {opt_params.get('env_run', '1000')}
             script_content = self.generate_sparta_script(opt_params, surf_name="HIAD_opt", **sample_dict)
             with open(os.path.join(cad_dir, "in.hiad"), 'w') as f: f.write(script_content)
 
-            cmd_cad = [python_exec, "make_HIAD.py", "--diameter", str(sample_dict['diameter']), "--angle", str(sample_dict['angle']), 
+            cmd_cad = [python_exec, "HIAD_GeometryEngine.py", "--diameter", str(sample_dict['diameter']), "--angle", str(sample_dict['angle']), 
                        "--toroids", str(sample_dict['toroids']), "--nose", str(sample_dict['nose']), "--thickness", str(sample_dict['thickness']),
                        "--scallop_pts", str(sample_dict['scallop_pts']), "--scallop_angle", str(sample_dict['scallop_angle']), "--output", "HIAD_opt"]
             subprocess.run(cmd_cad, cwd=cad_dir, check=True)
@@ -742,7 +742,7 @@ run             {opt_params.get('env_run', '1000')}
 
         # 6. Final Validation
         self.log_to_gui("[*] Executing Final Validation SPARTA Simulation...")
-        cmd_final = [python_exec, "make_HIAD.py", "--diameter", str(best_config['diameter']), "--angle", str(best_config['angle']), 
+        cmd_final = [python_exec, "HIAD_GeometryEngine.py", "--diameter", str(best_config['diameter']), "--angle", str(best_config['angle']), 
                      "--toroids", str(best_config['toroids']), "--nose", str(best_config['nose']), "--thickness", str(best_config['thickness']),
                      "--scallop_pts", str(best_config['scallop_pts']), "--scallop_angle", str(best_config['scallop_angle']), "--output", "HIAD_final"]
         subprocess.run(cmd_final, cwd=cad_dir, check=True)
