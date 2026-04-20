@@ -366,12 +366,12 @@
                     <!-- Row: Temp -->
                     <div class="target-row" style="display: grid; grid-template-columns: 140px 1fr 80px 100px; gap: 10px; align-items: center; margin-bottom: 8px; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px;">
                         <div class="tooltip-container">
-                            <span style="font-weight: 500; font-size: 0.8rem;">Backface Temp (C)</span>
+                            <span style="font-weight: 500; font-size: 0.8rem;">Est. Backface Temp (C)</span>
                             <span class="info-icon">?</span>
                             <div class="tooltip-text">
-                                <strong>Backface Temp</strong>
+                                <strong>Est. Backface Temp</strong>
                                 <span class="unit">Unit: Celsius (°C)</span>
-                                Target temperature for the inner surface of the skin. Must protect the payload.
+                                The estimated temperature of the internal structure protecting the payload. Should remain below 400°C for survival.
                             </div>
                         </div>
                         <input type="range" id="target-temp-range" min="100" max="600" value="400" oninput="syncTarget('temp', 'range')">
@@ -732,6 +732,81 @@
                             </div>
                         </div>
                         <input type="number" id="env-run" value="1000" step="500">
+                    </div>
+                </div>
+                <div class="param-grid" style="margin-top: 15px; grid-template-columns: repeat(3, 1fr); background: rgba(56, 189, 248, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.2);">
+                    <h4 style="grid-column: 1 / -1; margin-bottom: 5px; font-size: 0.9rem; color: var(--primary);">High-Fidelity Physics Adjustments</h4>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Vstream (m/s)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Freestream Velocity</strong>
+                                <span class="unit">Unit: m/s</span>
+                                Initial entry velocity. LEO: 7,800 m/s. Lunar/Mars Return: 10,500+ m/s.
+                            </div>
+                        </div>
+                        <input type="number" id="env-vstream" value="10500" step="100">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Pulse Duration (s)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Heating Duration</strong>
+                                <span class="unit">Unit: Seconds (s)</span>
+                                Total duration of the hypersonic heating pulse for 1D thermal modeling.
+                            </div>
+                        </div>
+                        <input type="number" id="env-duration" value="450" step="10">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Thermal Leakage (%)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Thermal Leakage Factor</strong>
+                                <span class="unit">Unit: Percentage (%)</span>
+                                Fraction of convective surface energy that penetrates the TPS insulation. Standard high-fidelity HIADs target < 0.2%.
+                            </div>
+                        </div>
+                        <input type="number" id="env-thermal-lag" value="0.1" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Chemistry Model</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Chemistry Fidelity</strong>
+                                Choose between standard 5-species air or high-speed 11-species ionized air (adds ions and electrons).
+                            </div>
+                        </div>
+                        <select id="env-chem-mode" style="background: rgba(255,255,255,0.05); color: #fff; padding: 8px; border-radius: 8px; border: 1px solid var(--glass-border); width: 100%;">
+                            <option value="5-species">5-Species (Standard Air)</option>
+                            <option value="11-species">11-Species (Ionized/High Speed)</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="display: flex; align-items: center; gap: 10px; padding-top: 25px;">
+                        <input type="checkbox" id="env-steady-state" style="width: 20px; height: 20px;">
+                        <div class="tooltip-container">
+                            <label for="env-steady-state">Steady State Check</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Automatic Convergence</strong>
+                                Enable to automatically stop the simulation when the flow reaches a steady state (based on drag force stability).
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Convergence Tol</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Steady Tol</strong>
+                                Threshold for steady state detection. Lower is more accurate but takes longer.
+                            </div>
+                        </div>
+                        <input type="number" id="env-steady-tol" value="0.01" step="0.001">
                     </div>
                 </div>
 

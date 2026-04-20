@@ -130,20 +130,42 @@ class Api:
                 lines = f.readlines()
                 start = False
                 for line in lines:
-                    if "ITEM: ENTRIES" in line:
+                    if "ITEM: SURFS" in line:
                         start = True
                         continue
                     if start:
                         parts = line.split()
                         if len(parts) >= 6:
-                            # col 1: id, 2: nflux, 3: mflux, 4: ke, 5: fx, 6: fy, 7: fz
-                            heat_vals.append(float(parts[3])) # ke is col 4 (index 3)
-                            drag_vals.append(float(parts[4])) # fx is col 5 (index 4)
+                            # id f_1[1] f_1[2] f_1[3] f_surfavg[1] f_surfavg[2] f_surfavg[3]
+                            # id nflux mflux ke fx fy fz
+                            heat_vals.append(float(parts[3])) # ke is index 3
+                            drag_vals.append(float(parts[4])) # fx is index 4
                 
                 metrics = {
                     'drag': abs(np.sum(drag_vals)) if drag_vals else 1.0,
-                    'heat': abs(np.sum(heat_vals)) if heat_vals else 1.0
+                    'heat': abs(np.max(heat_vals)) if heat_vals else 1.0 
                 }
+
+                # Find latest grid file for shock temperature (Translational Temperature)
+                grid_files = [f for f in os.listdir(results_dir) if f.startswith("grid.") and f.endswith(".out")]
+                shock_temp = 300.0
+                if grid_files:
+                    latest_grid = os.path.join(results_dir, sorted(grid_files)[-1])
+                    with open(latest_grid, 'r') as f:
+                        lines = f.readlines()
+                        temp_start = False
+                        for line in lines:
+                            if "ITEM: ENTRIES" in line:
+                                temp_start = True
+                                continue
+                            if temp_start:
+                                parts = line.split()
+                                if len(parts) >= 10: # column 10 (index 9) is temp
+                                    try:
+                                        t = float(parts[9])
+                                        if t > shock_temp: shock_temp = t
+                                    except: pass
+                metrics['shock_temp'] = shock_temp
                 return metrics
         except Exception:
             return {'drag': 1.0, 'heat': 1.0}
@@ -158,15 +180,15 @@ class Api:
         heat_flux = sparta_res['heat'] 
         
         # Ballistic Coefficient (beta)
-        vstream = 10500.0 
+        vstream = float(opt_params.get('env_vstream', 10500.0))
         nrho = float(opt_params.get('env_nrho', 3.9e20))
         rho = nrho * (28.97e-3 / 6.022e23) 
         
         q = 0.5 * rho * (vstream**2)
         beta = mass * q / drag_force if drag_force > 0 else 0
         
-        # Stagnation Heat Proxy (W/m^2)
-        stag_heat = heat_flux / area if area > 0 else 0
+        # Stagnation Heat (W/m^2) - already a per-area flux from SPARTA
+        stag_heat = heat_flux
         
         # Instantaneous g-load
         g_load = drag_force / (mass * 9.81) if mass > 0 else 0
@@ -174,11 +196,10 @@ class Api:
         # 1D Thermal Model (Transient approximation for LOFTID/IRVE-3 F-TPS)
         # T_back = T_init + (q_stag * duration) / (rho * Cp * thickness)
         t_initial = 300.0 # K
-        duration = 450.0  # s (Approx reentry pulse duration)
+        duration = float(opt_params.get('env_duration', 450.0))  # s
         tps_thickness = float(sample_dict.get('thickness', 0.02)) # m
         
         # F-TPS Properties (Flexible Thermal Protection System like LOFTID)
-        # Using a composite density/Cp for Nextel/Pyrogel/Kapton layers
         rho_tps = 250.0  # kg/m^3
         cp_tps = 1100.0  # J/kg-K
         
@@ -186,8 +207,8 @@ class Api:
         heat_load = stag_heat * duration
         
         # Temperature rise (Simplified 1D adiabatic backface estimate)
-        # We assume a thermal diffusivity lag; only a fraction of energy reaches backface during pulse
-        thermal_lag_factor = 0.15 
+        # thermal_lag_factor represents the fraction of surface energy that penetrates the insulation
+        thermal_lag_factor = float(opt_params.get('env_thermal_lag', 15.0)) / 100.0
         t_rise = (heat_load * thermal_lag_factor) / (rho_tps * cp_tps * tps_thickness)
         
         t_backface = t_initial + t_rise
@@ -202,7 +223,8 @@ class Api:
             'stag_heat': stag_heat,
             'g_load': g_load,
             'surface_temp': t_surface,
-            'backface_temp': t_backface
+            'backface_temp': t_backface,
+            'shock_temp': sparta_res.get('shock_temp', 300.0)
         }
 
 
@@ -253,9 +275,10 @@ class Api:
             n_rho, temp = 3.9e20, 200.0 # Earth baseline
         return {"nrho": n_rho, "temp": temp}
 
-    def get_chemistry_data(self, preset):
-        """Returns (species_file, react_file, species_list, mixture_cmd) for the selected planet.
-        Uses SPARTA's own bundled data files to guarantee format compatibility."""
+    def get_chemistry_data(self, opt_params):
+        """Returns (species_file, react_file, vss_file, species_list, mixture_cmd) for the selected planet and mode."""
+        preset = opt_params.get('env_preset', 'artemis')
+        chem_mode = opt_params.get('env_chem_mode', '5-species')
         data_dir = os.path.join(self.cwd, "sparta", "data")
         
         if preset == 'mars':
@@ -268,8 +291,13 @@ class Api:
             species_src = os.path.join(data_dir, "air.species")
             react_src = os.path.join(data_dir, "air.tce")
             vss_src = os.path.join(data_dir, "air.vss")
-            species_list = ["N2", "O2", "NO", "N", "O"]
-            mixture = "mixture air N2 O2 NO N O\nmixture air N2 frac 0.79\nmixture air O2 frac 0.21"
+            
+            if chem_mode == '11-species':
+                species_list = ["N2", "O2", "NO", "N", "O", "N2+", "O2+", "NO+", "N+", "O+", "e"]
+                mixture = "mixture air N2 O2 NO N O N2+ O2+ NO+ N+ O+ e\nmixture air N2 frac 0.79\nmixture air O2 frac 0.21"
+            else:
+                species_list = ["N2", "O2", "NO", "N", "O"]
+                mixture = "mixture air N2 O2 NO N O\nmixture air N2 frac 0.79\nmixture air O2 frac 0.21"
             
         return species_src, react_src, vss_src, species_list, mixture
 
@@ -281,16 +309,15 @@ class Api:
 
     def generate_sparta_script(self, opt_params, **kwargs):
         """Generates a complete SPARTA input script with dynamic geometry."""
-        preset = opt_params.get('env_preset', 'artemis')
-        species_src, react_src, vss_src, species_list, mixture_txt = self.get_chemistry_data(preset)
+        species_src, react_src, vss_src, species_list, mixture_txt = self.get_chemistry_data(opt_params)
         
         # Current Physics State
         n_rho = opt_params.get('env_nrho', '3.9e20')
         temp_inf = opt_params.get('env_temp_inf', '200.0')
+        vstream = opt_params.get('env_vstream', '10500.0')
 
         # Current Geometry (varied or base)
         d_val = float(kwargs.get('diameter', opt_params.get('base_diameter', 3.0)))
-        a_val = float(kwargs.get('angle', opt_params.get('base_angle', 60.0)))
         
         # Domain scaling (Honor GUI overrides if present)
         xmin = float(opt_params.get('env_xmin', -0.5 * d_val))
@@ -300,6 +327,16 @@ class Api:
         react_model = opt_params.get('env_react', 'tce')
         react_cmd = f"react           {react_model} air.react" if react_model != 'none' else "# No reaction model"
         
+        # Steady State Check
+        steady_state_cmd = ""
+        if opt_params.get('env_steady_state'):
+            tol = opt_params.get('env_steady_tol', '0.01')
+            steady_state_cmd = f"""
+compute         drag_curr reduce sum f_surfavg[1]
+variable        drag_val equal c_drag_curr
+fix             halt_check halt 100 v_drag_val {tol} error no
+"""
+
         script = f"""# SPARTA Input Script - 8D Optimized
 seed            12345
 dimension       2
@@ -316,7 +353,7 @@ species         air.species {" ".join(species_list)}
 # Mixture Definition
 {mixture_txt}
 # Physical State
-mixture         air vstream 10500.0 0.0 0.0
+mixture         air vstream {vstream} 0.0 0.0
 mixture         air temp {temp_inf}
 
 fix             in emit/face air xlo twopass
@@ -347,6 +384,7 @@ dump            2 grid all 1000 results_reference/grid.*.out id xlo ylo xhi yhi 
 
 stats           100
 stats_style     step cpu np nattempt ncoll nscoll nscheck
+{steady_state_cmd}
 run             {opt_params.get('env_run', '1000')}
 """
         return script
@@ -380,21 +418,47 @@ run             {opt_params.get('env_run', '1000')}
         self.log_to_gui(f"[*] TOTAL STEPS PER SIMULATION:      {opt_params.get('env_run', '1000')}")
         self.log_to_gui(f"[*] ------------------------------------------------")
         
-        # Gas & Environment Logging
-        preset = opt_params.get('env_preset', 'artemis')
-        self.log_to_gui(f"[*] ENVIRONMENT PRESET: {preset.upper()}")
-        self.log_to_gui(f"    - Density (nrho): {opt_params.get('env_nrho', '3.9e20')} m^-3")
-        self.log_to_gui(f"    - Temperature: {opt_params.get('env_temp_inf', '200.0')} K")
-        self.log_to_gui(f"    - Particle Weight (fnum): {opt_params.get('env_fnum', '1e16')}")
-        self.log_to_gui(f"    - Timestep: {opt_params.get('env_step', '1e-6')} s")
-        self.log_to_gui(f"    - Surface Temp: {opt_params.get('env_temp', '1000.0')} K")
+        self.log_to_gui(f"    - Velocity (vstream): {opt_params.get('env_vstream', '10500.0')} m/s")
+        self.log_to_gui(f"    - Duration: {opt_params.get('env_duration', '450.0')} s")
+        self.log_to_gui(f"    - Thermal Lag: {opt_params.get('env_thermal_lag', '15.0')} %")
+        self.log_to_gui(f"    - Chemistry Mode: {opt_params.get('env_chem_mode', '5-species')}")
+        self.log_to_gui(f"    - Steady State Check: {'ENABLED' if opt_params.get('env_steady_state') else 'DISABLED'}")
         
-        _, _, _, species_list, _ = self.get_chemistry_data(preset)
+        species_src, react_src, vss_src, species_list, _ = self.get_chemistry_data(opt_params)
         self.log_to_gui(f"    - Chemistry Species: {', '.join(species_list)}")
 
         # Domain info
         self.log_to_gui(f"    - Domain (X): [{opt_params.get('env_xmin', 'scaled')}, {opt_params.get('env_xmax', 'scaled')}]")
         self.log_to_gui(f"    - Domain (Y): [0, {opt_params.get('env_ymax', 'scaled')}]")
+
+        # 0. Define Search Space (Moved up to prevent UnboundLocalError)
+        base_d = float(opt_params.get('base_diameter', 3.0))
+        b_ang = float(opt_params.get('base_angle', 60.0))
+        b_tor = int(opt_params.get('base_toroids', 7))
+        b_nos = float(opt_params.get('base_nose', 0.191))
+        b_thk = float(opt_params.get('base_thick', 0.02))
+        b_spt = int(opt_params.get('base_scallop_pts', 5))
+        b_san = float(opt_params.get('base_scallop_ang', 90.0))
+        b_mas = float(opt_params.get('base_mass', 281.0))
+
+        d_ang = float(opt_params.get('delta_angle', 15.0))
+        d_tor = int(opt_params.get('delta_toroids', 3))
+        d_nos = float(opt_params.get('delta_nose', 0.05))
+        d_thk = float(opt_params.get('delta_thick', 0.01))
+        d_spt = int(opt_params.get('delta_scallop_pts', 2))
+        d_san = float(opt_params.get('delta_scallop_ang', 15.0))
+        d_mas = float(opt_params.get('delta_mass', 50.0))
+
+        search_map = {
+            'diameter':      {'base': base_d,  'v': opt_params.get('v_diameter', True),    'min': d_min,               'max': d_max,               'type': float},
+            'angle':         {'base': b_ang,   'v': opt_params.get('v_angle', True),       'min': max(10, b_ang-d_ang), 'max': min(85, b_ang+d_ang), 'type': float},
+            'toroids':       {'base': b_tor,   'v': opt_params.get('v_toroids', True),     'min': max(3, b_tor-d_tor),  'max': b_tor+d_tor,         'type': int},
+            'nose':          {'base': b_nos,   'v': opt_params.get('v_nose', True),        'min': max(0.05, b_nos-d_nos),'max': b_nos+d_nos,         'type': float},
+            'thickness':     {'base': b_thk,   'v': opt_params.get('v_thick', False),      'min': max(0.001, b_thk-d_thk),'max': b_thk+d_thk,        'type': float},
+            'scallop_pts':   {'base': b_spt,   'v': opt_params.get('v_scallop_pts', False),'min': max(2, b_spt-d_spt),  'max': b_spt+d_spt,         'type': int},
+            'scallop_angle': {'base': b_san,   'v': opt_params.get('v_scallop_ang', False),'min': max(0, b_san-d_san),  'max': min(180, b_san+d_san), 'type': float},
+            'mass':          {'base': b_mas,   'v': opt_params.get('v_mass', False),       'min': max(1, b_mas-d_mas),  'max': b_mas+d_mas,         'type': float},
+        }
 
         cad_dir = os.path.join(self.cwd, "CADDesign")
         
@@ -406,11 +470,10 @@ run             {opt_params.get('env_run', '1000')}
         n_cores = os.cpu_count() or 1
         self.log_to_gui(f"[*] Detected {n_cores} CPU cores. Enabling parallel execution...")
         
-        base_d = float(opt_params.get('base_diameter', 3.0))
         if is_gui: self.window.evaluate_js("updateProgress(5)")
         
         preset = opt_params.get('env_preset', 'artemis')
-        species_src, react_src, vss_src, _, _ = self.get_chemistry_data(preset)
+        species_src, react_src, vss_src, _, _ = self.get_chemistry_data(opt_params)
         self._safe_copy(species_src, os.path.join(cad_dir, "air.species"))
         self._safe_copy(react_src, os.path.join(cad_dir, "air.react"))
         self._safe_copy(vss_src, os.path.join(cad_dir, "air.vss"))
@@ -457,39 +520,12 @@ run             {opt_params.get('env_run', '1000')}
         self.log_to_gui(f"    [+] FLIGHT METRICS:")
         self.log_to_gui(f"        - Ballistic Coeff (beta): {base_f_metrics['beta']:.2f} kg/m^2")
         self.log_to_gui(f"        - Peak Stagnation Heat:   {base_f_metrics['stag_heat']/1e3:.2f} kW/m^2")
+        self.log_to_gui(f"        - Peak Shock Layer Temp:  {base_f_metrics['shock_temp']:.1f} K")
         self.log_to_gui(f"        - Radiative Surf Temp:    {base_f_metrics['surface_temp']:.1f} K")
+        self.log_to_gui(f"        - Est. Backface Temp:     {base_f_metrics['backface_temp']:.1f} K")
         self.log_to_gui(f"        - Instantaneous g-load:   {base_f_metrics['g_load']:.2f} g")
-        self.log_to_gui(f"        - 1D Est. Backface Temp:  {base_f_metrics['backface_temp']:.1f} K")
         
         if is_gui: self.window.evaluate_js("updateProgress(10)")
-
-        # 2. Define Search Space
-        b_ang = float(opt_params.get('base_angle', 60.0))
-        b_tor = int(opt_params.get('base_toroids', 7))
-        b_nos = float(opt_params.get('base_nose', 0.191))
-        b_thk = float(opt_params.get('base_thick', 0.02))
-        b_spt = int(opt_params.get('base_scallop_pts', 5))
-        b_san = float(opt_params.get('base_scallop_ang', 90.0))
-        b_mas = float(opt_params.get('base_mass', 281.0))
-
-        d_ang = float(opt_params.get('delta_angle', 15.0))
-        d_tor = int(opt_params.get('delta_toroids', 3))
-        d_nos = float(opt_params.get('delta_nose', 0.05))
-        d_thk = float(opt_params.get('delta_thick', 0.01))
-        d_spt = int(opt_params.get('delta_scallop_pts', 2))
-        d_san = float(opt_params.get('delta_scallop_ang', 15.0))
-        d_mas = float(opt_params.get('delta_mass', 50.0))
-
-        search_map = {
-            'diameter':      {'base': base_d,  'v': opt_params.get('v_diameter', True),    'min': d_min,               'max': d_max,               'type': float},
-            'angle':         {'base': b_ang,   'v': opt_params.get('v_angle', True),       'min': max(10, b_ang-d_ang), 'max': min(85, b_ang+d_ang), 'type': float},
-            'toroids':       {'base': b_tor,   'v': opt_params.get('v_toroids', True),     'min': max(3, b_tor-d_tor),  'max': b_tor+d_tor,         'type': int},
-            'nose':          {'base': b_nos,   'v': opt_params.get('v_nose', True),        'min': max(0.05, b_nos-d_nos),'max': b_nos+d_nos,         'type': float},
-            'thickness':     {'base': b_thk,   'v': opt_params.get('v_thick', False),      'min': max(0.001, b_thk-d_thk),'max': b_thk+d_thk,        'type': float},
-            'scallop_pts':   {'base': b_spt,   'v': opt_params.get('v_scallop_pts', False),'min': max(2, b_spt-d_spt),  'max': b_spt+d_spt,         'type': int},
-            'scallop_angle': {'base': b_san,   'v': opt_params.get('v_scallop_ang', False),'min': max(0, b_san-d_san),  'max': min(180, b_san+d_san), 'type': float},
-            'mass':          {'base': b_mas,   'v': opt_params.get('v_mass', False),       'min': max(1, b_mas-d_mas),  'max': b_mas+d_mas,         'type': float},
-        }
 
         active_params = [k for k, v in search_map.items() if v['v']]
         n_dim = len(active_params)
@@ -578,9 +614,10 @@ run             {opt_params.get('env_run', '1000')}
             self.log_to_gui(f"[*] FLIGHT METRICS:")
             self.log_to_gui(f"    - Ballistic Coeff (beta): {f_metrics['beta']:.2f} kg/m^2")
             self.log_to_gui(f"    - Peak Stagnation Heat:   {f_metrics['stag_heat']/1e3:.2f} kW/m^2")
+            self.log_to_gui(f"    - Peak Shock Layer Temp:  {f_metrics['shock_temp']:.1f} K")
             self.log_to_gui(f"    - Radiative Surf Temp:    {f_metrics['surface_temp']:.1f} K")
+            self.log_to_gui(f"    - Est. Backface Temp:     {f_metrics['backface_temp']:.1f} K")
             self.log_to_gui(f"    - Instantaneous g-load:   {f_metrics['g_load']:.2f} g")
-            self.log_to_gui(f"    - 1D Est. Backface Temp:  {f_metrics['backface_temp']:.1f} K")
             self.log_to_gui(f"[*] PARAMS: {', '.join([f'{k}={sample_dict[k]}' for k in active_params])}")
             self.log_to_gui(f"[*] ------------------------------------------------")
 

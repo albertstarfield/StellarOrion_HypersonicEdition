@@ -210,6 +210,12 @@ function startOptimization() {
         env_step: document.getElementById('env-step').value,
         env_fnum: document.getElementById('env-fnum').value,
         env_react: document.getElementById('env-react').value,
+        env_vstream: document.getElementById('env-vstream').value,
+        env_duration: document.getElementById('env-duration').value,
+        env_thermal_lag: document.getElementById('env-thermal-lag').value,
+        env_chem_mode: document.getElementById('env-chem-mode').value,
+        env_steady_state: document.getElementById('env-steady-state').checked,
+        env_steady_tol: document.getElementById('env-steady-tol').value,
         env_xmin: document.getElementById('env-xmin').value,
         env_xmax: document.getElementById('env-xmax').value,
         env_ymax: document.getElementById('env-ymax').value,
@@ -299,7 +305,9 @@ function updateSummary() {
                 <p><strong>Environment:</strong></p>
                 <ul>
                     <li>Preset: ${document.getElementById('env-preset').value}</li>
-                    <li>Wall Temp: ${document.getElementById('env-temp').value} K</li>
+                    <li>Vstream: ${document.getElementById('env-vstream').value} m/s</li>
+                    <li>Chemistry: ${document.getElementById('env-chem-mode').value}</li>
+                    <li>Steady State: ${document.getElementById('env-steady-state').checked ? 'ON' : 'OFF'}</li>
                 </ul>
             </div>
         </div>
