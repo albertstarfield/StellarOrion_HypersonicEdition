@@ -13,6 +13,18 @@ class Api:
         self.cwd = os.getcwd()
         self.reference_data = None
 
+    def _get_python_exec(self):
+        """Finds a cadquery-enabled python interpreter."""
+        cad_dir = os.path.join(self.cwd, "CADDesign")
+        cad_venv_python = os.path.join(cad_dir, "venv", "bin", "python")
+        root_venv_gui = os.path.join(self.cwd, ".venv_gui", "bin", "python")
+        
+        if os.path.exists(cad_venv_python):
+            return cad_venv_python
+        elif os.path.exists(root_venv_gui):
+            return root_venv_gui
+        return sys.executable
+
     def set_window(self, window):
         self.window = window
 
@@ -43,7 +55,7 @@ class Api:
                 cad_dir = os.path.join(self.cwd, "CADDesign")
                 self.window.evaluate_js("updateProgress(20)")
                 
-                python_exec = sys.executable
+                python_exec = self._get_python_exec()
                 cad_cmd = [
                     python_exec, "make_HIAD.py",
                     "--diameter", str(params.get('diameter', 3.0)),
@@ -97,27 +109,25 @@ class Api:
             return {"stl": "assets/model.stl"}
         return {"error": "Model not found"}
 
-    def parse_sparta_results(self, goal='drag'):
+    def parse_sparta_results(self):
         """Parses the SPARTA surface output files to extract metrics."""
         try:
             results_dir = os.path.join(self.cwd, "CADDesign", "results_reference")
             if not os.path.exists(results_dir):
                 self.log_to_gui(f"    [!] Error: Results directory {results_dir} missing!")
-                return 1.0
+                return {'drag': 1.0, 'heat': 1.0}
             
             # Find the latest surf output file
             surf_files = [f for f in os.listdir(results_dir) if f.startswith("surf.") and f.endswith(".out")]
             if not surf_files:
-                # Check if it was a crash or just no output yet
-                return 1.0 # Fallback
+                return {'drag': 1.0, 'heat': 1.0}
             
             latest_file = os.path.join(results_dir, sorted(surf_files)[-1])
             
-            # Parsing surface results: 
-            # col 1: id, 2: nflux, 3: mflux, 4: ke, 5: fx, 6: fy, 7: fz
+            drag_vals = []
+            heat_vals = []
             with open(latest_file, 'r') as f:
                 lines = f.readlines()
-                vals = []
                 start = False
                 for line in lines:
                     if "ITEM: ENTRIES" in line:
@@ -126,16 +136,74 @@ class Api:
                     if start:
                         parts = line.split()
                         if len(parts) >= 6:
-                            if goal == 'drag':
-                                vals.append(float(parts[4])) # fx is col 5 (index 4)
-                            else:
-                                vals.append(float(parts[3])) # ke (heat flux) is col 4 (index 3)
+                            # col 1: id, 2: nflux, 3: mflux, 4: ke, 5: fx, 6: fy, 7: fz
+                            heat_vals.append(float(parts[3])) # ke is col 4 (index 3)
+                            drag_vals.append(float(parts[4])) # fx is col 5 (index 4)
                 
-                if vals:
-                    return abs(np.sum(vals)) # Total force or total flux
-            return 1.0
+                metrics = {
+                    'drag': abs(np.sum(drag_vals)) if drag_vals else 1.0,
+                    'heat': abs(np.sum(heat_vals)) if heat_vals else 1.0
+                }
+                return metrics
         except Exception:
-            return 1.0 + np.random.normal(0, 0.05) # Robust fallback
+            return {'drag': 1.0, 'heat': 1.0}
+
+    def calculate_flight_metrics(self, sparta_res, opt_params, sample_dict):
+        """Calculates derived flight metrics from DSMC results."""
+        mass = float(sample_dict.get('mass', opt_params.get('base_mass', 281.0)))
+        diameter = float(sample_dict.get('diameter', 3.0))
+        area = np.pi * (diameter / 2)**2
+        
+        drag_force = sparta_res['drag']
+        heat_flux = sparta_res['heat'] 
+        
+        # Ballistic Coefficient (beta)
+        vstream = 10500.0 
+        nrho = float(opt_params.get('env_nrho', 3.9e20))
+        rho = nrho * (28.97e-3 / 6.022e23) 
+        
+        q = 0.5 * rho * (vstream**2)
+        beta = mass * q / drag_force if drag_force > 0 else 0
+        
+        # Stagnation Heat Proxy (W/m^2)
+        stag_heat = heat_flux / area if area > 0 else 0
+        
+        # Instantaneous g-load
+        g_load = drag_force / (mass * 9.81) if mass > 0 else 0
+        
+        # 1D Thermal Model (Transient approximation for LOFTID/IRVE-3 F-TPS)
+        # T_back = T_init + (q_stag * duration) / (rho * Cp * thickness)
+        t_initial = 300.0 # K
+        duration = 450.0  # s (Approx reentry pulse duration)
+        tps_thickness = float(sample_dict.get('thickness', 0.02)) # m
+        
+        # F-TPS Properties (Flexible Thermal Protection System like LOFTID)
+        # Using a composite density/Cp for Nextel/Pyrogel/Kapton layers
+        rho_tps = 250.0  # kg/m^3
+        cp_tps = 1100.0  # J/kg-K
+        
+        # Heat load (total energy per m^2)
+        heat_load = stag_heat * duration
+        
+        # Temperature rise (Simplified 1D adiabatic backface estimate)
+        # We assume a thermal diffusivity lag; only a fraction of energy reaches backface during pulse
+        thermal_lag_factor = 0.15 
+        t_rise = (heat_load * thermal_lag_factor) / (rho_tps * cp_tps * tps_thickness)
+        
+        t_backface = t_initial + t_rise
+        
+        # Surface Temperature (Radiative Equilibrium)
+        sigma = 5.67e-8
+        epsilon = 0.88 # High-temp SiC fabric
+        t_surface = (stag_heat / (sigma * epsilon))**0.25 if stag_heat > 0 else 300
+        
+        return {
+            'beta': beta,
+            'stag_heat': stag_heat,
+            'g_load': g_load,
+            'surface_temp': t_surface,
+            'backface_temp': t_backface
+        }
 
 
 
@@ -306,9 +374,31 @@ run             {opt_params.get('env_run', '1000')}
         d_max = float(opt_params.get('d_max', 4.5))
         goal = opt_params.get('goal', 'drag')
 
+        self.log_to_gui(f"[*] OPTIMIZATION TARGET: {goal.upper()}")
+        self.log_to_gui(f"[*] ------------------------------------------------")
+        self.log_to_gui(f"[*] TOTAL SIMULATION SAMPLES TO RUN: {samples_n}")
+        self.log_to_gui(f"[*] TOTAL STEPS PER SIMULATION:      {opt_params.get('env_run', '1000')}")
+        self.log_to_gui(f"[*] ------------------------------------------------")
+        
+        # Gas & Environment Logging
+        preset = opt_params.get('env_preset', 'artemis')
+        self.log_to_gui(f"[*] ENVIRONMENT PRESET: {preset.upper()}")
+        self.log_to_gui(f"    - Density (nrho): {opt_params.get('env_nrho', '3.9e20')} m^-3")
+        self.log_to_gui(f"    - Temperature: {opt_params.get('env_temp_inf', '200.0')} K")
+        self.log_to_gui(f"    - Particle Weight (fnum): {opt_params.get('env_fnum', '1e16')}")
+        self.log_to_gui(f"    - Timestep: {opt_params.get('env_step', '1e-6')} s")
+        self.log_to_gui(f"    - Surface Temp: {opt_params.get('env_temp', '1000.0')} K")
+        
+        _, _, _, species_list, _ = self.get_chemistry_data(preset)
+        self.log_to_gui(f"    - Chemistry Species: {', '.join(species_list)}")
+
+        # Domain info
+        self.log_to_gui(f"    - Domain (X): [{opt_params.get('env_xmin', 'scaled')}, {opt_params.get('env_xmax', 'scaled')}]")
+        self.log_to_gui(f"    - Domain (Y): [0, {opt_params.get('env_ymax', 'scaled')}]")
+
         cad_dir = os.path.join(self.cwd, "CADDesign")
-        cad_venv_python = os.path.join(cad_dir, "venv", "bin", "python")
-        python_exec = cad_venv_python if os.path.exists(cad_venv_python) else sys.executable
+        
+        python_exec = self._get_python_exec()
         
         # 1. Establish Physics Baseline
         self.log_to_gui(f"[*] PHASE 1: ESTABLISHING PHYSICS BASELINE...")
@@ -357,8 +447,20 @@ run             {opt_params.get('env_run', '1000')}
         baseline_time = sim_end - sim_start
         self.log_to_gui(f"    [+] Baseline established in {baseline_time:.2f}s.")
         
-        ref_metric = self.parse_sparta_results(goal)
-        self.log_to_gui(f"    [+] Baseline Established: {ref_metric:.4f}")
+        ref_metric_dict = self.parse_sparta_results()
+        ref_metric = ref_metric_dict[goal]
+        
+        base_sample = {k: v['base'] for k, v in search_map.items()}
+        base_f_metrics = self.calculate_flight_metrics(ref_metric_dict, opt_params, base_sample)
+        
+        self.log_to_gui(f"    [+] BASELINE PHYSICS RESULT ({goal.upper()}): {ref_metric:.6f}")
+        self.log_to_gui(f"    [+] FLIGHT METRICS:")
+        self.log_to_gui(f"        - Ballistic Coeff (beta): {base_f_metrics['beta']:.2f} kg/m^2")
+        self.log_to_gui(f"        - Peak Stagnation Heat:   {base_f_metrics['stag_heat']/1e3:.2f} kW/m^2")
+        self.log_to_gui(f"        - Radiative Surf Temp:    {base_f_metrics['surface_temp']:.1f} K")
+        self.log_to_gui(f"        - Instantaneous g-load:   {base_f_metrics['g_load']:.2f} g")
+        self.log_to_gui(f"        - 1D Est. Backface Temp:  {base_f_metrics['backface_temp']:.1f} K")
+        
         if is_gui: self.window.evaluate_js("updateProgress(10)")
 
         # 2. Define Search Space
@@ -394,6 +496,12 @@ run             {opt_params.get('env_run', '1000')}
         if n_dim == 0:
             active_params = ['diameter']
             n_dim = 1
+        
+        self.log_to_gui(f"[*] SEARCH SPACE RANGES:")
+        for p in active_params:
+            p_info = search_map[p]
+            self.log_to_gui(f"    - {p}: [{p_info['min']:.4f}, {p_info['max']:.4f}]")
+            
         self.log_to_gui(f"[*] Search Space: {n_dim}D — [{', '.join(active_params)}]")
 
         # 3. LHS Sampling
@@ -454,13 +562,28 @@ run             {opt_params.get('env_run', '1000')}
             sample_end = time.time()
             sample_dur = sample_end - sample_start
             
-            val = self.parse_sparta_results(goal)
+            res_dict = self.parse_sparta_results()
+            val = res_dict[goal]
+            f_metrics = self.calculate_flight_metrics(res_dict, opt_params, sample_dict)
+            
             training_x.append(current_x_row)
             training_y.append([val])
             
             remaining = samples_n - (i + 1)
             etr = remaining * sample_dur
-            self.log_to_gui(f"    [+] Sample {i+1} complete in {sample_dur:.2f}s. Result ({goal}): {val:.4f}")
+            
+            self.log_to_gui(f"[*] ------------------------------------------------")
+            self.log_to_gui(f"[*] SAMPLE {i+1} COMPLETE (Duration: {sample_dur:.2f}s)")
+            self.log_to_gui(f"[*] RESULT ({goal.upper()}): {val:.6f}")
+            self.log_to_gui(f"[*] FLIGHT METRICS:")
+            self.log_to_gui(f"    - Ballistic Coeff (beta): {f_metrics['beta']:.2f} kg/m^2")
+            self.log_to_gui(f"    - Peak Stagnation Heat:   {f_metrics['stag_heat']/1e3:.2f} kW/m^2")
+            self.log_to_gui(f"    - Radiative Surf Temp:    {f_metrics['surface_temp']:.1f} K")
+            self.log_to_gui(f"    - Instantaneous g-load:   {f_metrics['g_load']:.2f} g")
+            self.log_to_gui(f"    - 1D Est. Backface Temp:  {f_metrics['backface_temp']:.1f} K")
+            self.log_to_gui(f"[*] PARAMS: {', '.join([f'{k}={sample_dict[k]}' for k in active_params])}")
+            self.log_to_gui(f"[*] ------------------------------------------------")
+
             if remaining > 0:
                 self.log_to_gui(f"    [*] Estimated Time Remaining: {etr/60:.1f} minutes")
             

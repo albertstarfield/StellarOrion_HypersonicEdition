@@ -179,3 +179,29 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# StellarOrion Specific
+tmp_sparta_build/
+workspace/
+scratch/
+CADDesign/results_reference/
+CADDesign/in.hiad
+CADDesign/air.species
+CADDesign/air.react
+CADDesign/air.vss
+CADDesign/*.surf
+CADDesign/*.stl
+CADDesign/venv/
+web/assets/plots/
+web/assets/model.stl
+*.sparta
+TestlogDev.log
+.venv_gui/
+VLEO_DSMC_EXAMPLE/
+example_frompreviousproject/
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
