@@ -70,7 +70,7 @@ def build_sparta():
     return LIB_PATH
 
 
-def run_simulation():
+def run_simulation(steps=None):
     # 1. Build SPARTA
     lib_path = build_sparta()
     os.environ["SPARTA_LIB_PATH"] = lib_path
@@ -126,8 +126,12 @@ def run_simulation():
             full_command = ""
 
             if command:
-                print(f"[*] Executing: spa.command('{command}')")
-                spa.command(command)
+                if steps and command.startswith("run "):
+                    print(f"[*] Overriding: spa.command('run {steps}')")
+                    spa.command(f"run {steps}")
+                else:
+                    print(f"[*] Executing: spa.command('{command}')")
+                    spa.command(command)
 
     # ------------------------------------------------------------
     # End of simulation
@@ -150,6 +154,7 @@ def main():
     parser.add_argument("--optimize", action="store_true", help="Run the full survivability optimization loop")
     parser.add_argument("--samples", type=int, default=5, help="Number of samples for optimization")
     parser.add_argument("--goal", type=str, default="drag", help="Optimization goal (drag or heat)")
+    parser.add_argument("--steps", type=int, default=1000, help="Number of simulation steps")
     args, unknown = parser.parse_known_args()
 
     if not os.environ.get("IN_DOCKER"):
@@ -164,7 +169,7 @@ def main():
                 'env_fnum': '1e16',
                 'env_temp': '1000.0',
                 'env_step': '1e-6',
-                'env_run': '1000',
+                'env_run': str(args.steps),
                 'env_vstream': '10500.0',
                 'env_duration': '450.0',
                 'env_thermal_lag': '15.0',
@@ -186,7 +191,7 @@ def main():
         subprocess.call([sys.executable, gui_script])
     else:
         # We are inside the container
-        run_simulation()
+        run_simulation(steps=args.steps if '--steps' in sys.argv else None)
 
 if __name__ == "__main__":
     main()

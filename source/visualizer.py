@@ -40,24 +40,31 @@ def generate_plots(grid_file, output_dir):
     temp = data[:, 8]
     press = data[:, 9]
 
-    # Plot 1: Temperature Heatmap
+    # Plot 1: Temperature Contour Heatmap
     plt.figure(figsize=(10, 6))
-    sc = plt.scatter(x_center, y_center, c=temp, cmap='hot', s=50, marker='s')
+    plt.gca().set_facecolor('#0f172a')
+    # Use tricontourf for smooth "heatmap" appearance
+    sc = plt.tricontourf(x_center, y_center, temp, levels=50, cmap='hot')
     plt.colorbar(sc, label='Temperature (K)')
-    plt.title('Thermal Map (Temperature)')
-    plt.xlabel('Axial (m)')
-    plt.ylabel('Radial (m)')
+    plt.title('Thermal Map (Temperature)', color='white', fontweight='bold')
+    plt.xlabel('Axial (m)', color='#94a3b8')
+    plt.ylabel('Radial (m)', color='#94a3b8')
+    plt.tick_params(colors='#94a3b8')
     plt.savefig(os.path.join(output_dir, 'thermal_map.png'))
+    plt.savefig(os.path.join(output_dir, 'thermal_map.jpg'), pil_kwargs={'quality': 85})
     plt.close()
 
-    # Plot 2: Pressure Heatmap
+    # Plot 2: Pressure Contour Heatmap
     plt.figure(figsize=(10, 6))
-    sc = plt.scatter(x_center, y_center, c=press, cmap='jet', s=50, marker='s')
+    plt.gca().set_facecolor('#0f172a')
+    sc = plt.tricontourf(x_center, y_center, press, levels=50, cmap='jet')
     plt.colorbar(sc, label='Pressure (Pa)')
-    plt.title('Pressure Distribution')
-    plt.xlabel('Axial (m)')
-    plt.ylabel('Radial (m)')
+    plt.title('Pressure Distribution', color='white', fontweight='bold')
+    plt.xlabel('Axial (m)', color='#94a3b8')
+    plt.ylabel('Radial (m)', color='#94a3b8')
+    plt.tick_params(colors='#94a3b8')
     plt.savefig(os.path.join(output_dir, 'pressure_map.png'))
+    plt.savefig(os.path.join(output_dir, 'pressure_map.jpg'), pil_kwargs={'quality': 85})
     plt.close()
 
     # Plot 3: Velocity Vectors (Quiver)
@@ -71,9 +78,133 @@ def generate_plots(grid_file, output_dir):
     plt.xlabel('Axial (m)')
     plt.ylabel('Radial (m)')
     plt.savefig(os.path.join(output_dir, 'velocity_vectors.png'))
+    plt.savefig(os.path.join(output_dir, 'velocity_vectors.jpg'), pil_kwargs={'quality': 85})
     plt.close()
 
+    # Plot 4: Stagnation Streamline Graph (1D)
+    generate_stagnation_graph(data, output_dir)
+
     print(f"Plots generated in {output_dir}")
+
+def generate_stagnation_graph(data, output_dir):
+    """Generates a 1D graph of properties along the stagnation streamline (y=0)."""
+    # x_center, y_center calculations
+    x_center = (data[:, 0] + data[:, 2]) / 2
+    y_center = (data[:, 1] + data[:, 3]) / 2
+    temp = data[:, 8]
+    press = data[:, 9]
+
+    # Filter for points near symmetry axis (y=0)
+    # Since it's a grid, we look for the smallest y values
+    min_y = np.min(np.abs(y_center))
+    mask = np.abs(y_center) < (min_y + 0.05) # Small tolerance
+    
+    x_stag = x_center[mask]
+    t_stag = temp[mask]
+    p_stag = press[mask]
+
+    # Sort by X
+    idx = np.argsort(x_stag)
+    x_stag = x_stag[idx]
+    t_stag = t_stag[idx]
+    p_stag = p_stag[idx]
+
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    ax1.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+
+    color = '#f43f5e'
+    ax1.set_xlabel('Axial Position (m)', color='#94a3b8')
+    ax1.set_ylabel('Temperature (K)', color=color)
+    ax1.plot(x_stag, t_stag, color=color, linewidth=2.5, label='Temperature')
+    ax1.tick_params(axis='y', labelcolor=color, colors='#94a3b8')
+    ax1.tick_params(axis='x', colors='#94a3b8')
+
+    ax2 = ax1.twinx()
+    color = '#38bdf8'
+    ax2.set_ylabel('Pressure (Pa)', color=color)
+    ax2.plot(x_stag, p_stag, color=color, linewidth=2, linestyle='--', label='Pressure')
+    ax2.tick_params(axis='y', labelcolor=color, colors='#94a3b8')
+
+    plt.title('Stagnation Streamline Profile (y ≈ 0)', color='white', fontsize=14, fontweight='bold')
+    ax1.grid(True, alpha=0.1, color='white')
+    
+    fig.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'stagnation_graph.png'), facecolor=fig.get_facecolor())
+    plt.savefig(os.path.join(output_dir, 'stagnation_graph.jpg'), pil_kwargs={'quality': 85}, facecolor=fig.get_facecolor())
+    plt.close()
+
+def upscale_2d_to_3d(grid_file, output_path, surf_file=None):
+    """Upscales 2D axisymmetric results to a 3D visualization by rotating the slice, including the shield geometry."""
+    print(f"[*] Upscaling 2D axisymmetric results to 3D: {grid_file}")
+    data = parse_grid_dump(grid_file)
+    if len(data) == 0: return
+    
+    # x_center, y_center calculations
+    x = (data[:, 0] + data[:, 2]) / 2
+    y = (data[:, 1] + data[:, 3]) / 2
+    temp = data[:, 8]
+    
+    # Downsample for 3D performance
+    step = max(1, len(x) // 1000)
+    x = x[::step]
+    y = y[::step]
+    temp = temp[::step]
+    
+    n_slices = 16
+    thetas = np.linspace(0, 2*np.pi, n_slices)
+    
+    from mpl_toolkits.mplot3d import Axes3D
+    fig = plt.figure(figsize=(12, 10), facecolor='#0f172a')
+    ax = fig.add_subplot(111, projection='3d')
+    ax.set_facecolor('#0f172a')
+    
+    # 1. Plot the Shield Surface (Rotated from 2D surf file)
+    if surf_file and os.path.exists(surf_file):
+        points = []
+        lines = []
+        with open(surf_file, 'r') as f:
+            mode = None
+            for line in f:
+                if "Points" in line: mode = "pts"; continue
+                if "Lines" in line: mode = "lines"; continue
+                parts = line.split()
+                if not parts or parts[0].isalpha(): continue
+                if mode == "pts" and len(parts) >= 3:
+                    points.append([float(parts[1]), float(parts[2])])
+                if mode == "lines" and len(parts) >= 3:
+                    lines.append([int(parts[1])-1, int(parts[2])-1])
+        
+        if points and lines:
+            pts = np.array(points)
+            for theta in np.linspace(0, 2*np.pi, 20): # More slices for shield surface
+                xs = pts[:, 0]
+                ys = pts[:, 1] * np.cos(theta)
+                zs = pts[:, 1] * np.sin(theta)
+                ax.plot(xs, ys, zs, color='#f43f5e', alpha=0.4, linewidth=1)
+
+    # 2. Plot the Fluid Field
+    for theta in thetas:
+        x3d = x
+        y3d = y * np.cos(theta)
+        z3d = y * np.sin(theta)
+        ax.scatter(x3d, y3d, z3d, c=temp, cmap='hot', s=2, alpha=0.2, edgecolors='none')
+        
+    ax.set_xlabel('Axial (m)', color='#94a3b8')
+    ax.set_ylabel('Radial Y (m)', color='#94a3b8')
+    ax.set_zlabel('Radial Z (m)', color='#94a3b8')
+    ax.tick_params(axis='x', colors='#94a3b8')
+    ax.tick_params(axis='y', colors='#94a3b8')
+    ax.tick_params(axis='z', colors='#94a3b8')
+    
+    plt.title('3D Axisymmetric Upscaling (Thermal Field + Geometry)', color='white', fontsize=15)
+    
+    # Set viewing angle for better perspective
+    ax.view_init(elev=20, azim=-45)
+    
+    plt.savefig(output_path, dpi=150, facecolor=fig.get_facecolor())
+    plt.close()
+    print(f"[+] 3D Upscaled visualization saved to {output_path}")
 
 def generate_preview(surf_file, output_path, params=None):
     """Generates a 2D preview of the HIAD wall and domain bounds with parameter annotations."""
@@ -159,43 +290,46 @@ def generate_preview(surf_file, output_path, params=None):
 import matplotlib.animation as animation
 
 def generate_animation(grid_files, output_mp4):
-    """Creates an MP4 animation from a sequence of SPARTA grid dump files."""
+    """Creates an MP4 animation from a sequence of SPARTA grid dump files with smooth contours."""
     if not grid_files: return
     
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(10, 6), facecolor='#0f172a')
+    ax.set_facecolor('#0f172a')
     
-    # Pre-parse first file to setup plot
-    data = parse_grid_dump(grid_files[0])
-    x_center = (data[:, 0] + data[:, 2]) / 2
-    y_center = (data[:, 1] + data[:, 3]) / 2
-    temp = data[:, 8]
-    
-    sc = ax.scatter(x_center, y_center, c=temp, cmap='hot', s=40, marker='s')
-    cbar = fig.colorbar(sc)
-    cbar.set_label('Temperature (K)')
-    ax.set_title('Hypersonic Entry Thermal Evolution')
-    ax.set_xlabel('Axial (m)')
-    ax.set_ylabel('Radial (m)')
-
     def update(frame):
+        ax.clear()
         file = grid_files[frame]
-        d = parse_grid_dump(file)
-        if len(d) > 0:
-            t = d[:, 8]
-            sc.set_array(t)
-            ax.set_title(f'Thermal Evolution - Step {frame*1000}')
-        return sc,
+        data = parse_grid_dump(file)
+        if len(data) > 0:
+            x_center = (data[:, 0] + data[:, 2]) / 2
+            y_center = (data[:, 1] + data[:, 3]) / 2
+            temp = data[:, 8]
+            
+            # Smooth contours for animation
+            cp = ax.tricontourf(x_center, y_center, temp, levels=40, cmap='hot')
+            ax.set_title(f'Thermal Evolution - Step {frame*1000}', color='white', fontweight='bold')
+            ax.set_xlabel('Axial (m)', color='#94a3b8')
+            ax.set_ylabel('Radial (m)', color='#94a3b8')
+            ax.tick_params(colors='#94a3b8')
+            
+            # Add colorbar only on first frame or if it doesn't exist
+            if not hasattr(update, "cbar"):
+                update.cbar = fig.colorbar(cp, ax=ax)
+                update.cbar.set_label('Temperature (K)', color='#94a3b8')
+                update.cbar.ax.yaxis.set_tick_params(color='#94a3b8', labelcolor='#94a3b8')
+        return []
 
-    ani = animation.FuncAnimation(fig, update, frames=len(grid_files), blit=True)
+    ani = animation.FuncAnimation(fig, update, frames=len(grid_files), blit=False)
     
     # Save using ffmpeg
     writer = animation.FFMpegWriter(fps=5, metadata=dict(artist='StellarOrion'), bitrate=1800)
     ani.save(output_mp4, writer=writer)
     plt.close()
-    print(f"Animation saved to {output_mp4}")
+    print(f"Smooth animation saved to {output_mp4}")
 
 if __name__ == "__main__":
     # Test path
     test_file = "CADDesign/results_reference/grid.1000.out"
     if os.path.exists(test_file):
         generate_plots(test_file, "web/assets/plots")
+        upscale_2d_to_3d(test_file, "web/assets/plots/upscaled_3d.png")

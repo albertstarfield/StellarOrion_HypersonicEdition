@@ -510,6 +510,34 @@ run             {opt_params.get('env_run', '1000')}
         baseline_time = sim_end - sim_start
         self.log_to_gui(f"    [+] Baseline established in {baseline_time:.2f}s.")
         
+        # --- Baseline Post-processing ---
+        self.log_to_gui("[*] PHASE 1.1: POST-PROCESSING BASELINE RESULTS...")
+        from source import visualizer
+        grid_dir = os.path.join(cad_dir, "results_reference")
+        grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")])
+        plots_dir = os.path.join(self.cwd, "web", "assets", "plots")
+        os.makedirs(plots_dir, exist_ok=True)
+
+        if grid_files:
+            self.log_to_gui("    [+] Generating Baseline Animation (MP4)...")
+            ani_path = os.path.join(plots_dir, "baseline_anim.mp4")
+            visualizer.generate_animation(grid_files, ani_path)
+            
+            self.log_to_gui("    [+] Generating Baseline Static Maps (JPEG/Graph)...")
+            visualizer.generate_plots(grid_files[-1], plots_dir)
+            
+            self.log_to_gui("    [+] Upscaling Axisymmetric Results to 3D...")
+            upscale_path = os.path.join(plots_dir, "upscaled_3d.png")
+            visualizer.upscale_2d_to_3d(grid_files[-1], upscale_path, surf_file=os.path.join(cad_dir, "HIAD_custom.surf"))
+
+            if is_gui:
+                # Update UI with baseline results early
+                self.window.evaluate_js(f"document.getElementById('img-thermal').src = 'assets/plots/thermal_map.png?' + new Date().getTime()")
+                self.window.evaluate_js(f"document.getElementById('img-pressure').src = 'assets/plots/pressure_map.png?' + new Date().getTime()")
+                self.window.evaluate_js(f"document.getElementById('img-3d').src = 'assets/plots/upscaled_3d.png?' + new Date().getTime()")
+                self.window.evaluate_js(f"document.getElementById('img-stag').src = 'assets/plots/stagnation_graph.png?' + new Date().getTime()")
+        # -------------------------------
+
         ref_metric_dict = self.parse_sparta_results()
         ref_metric = ref_metric_dict[goal]
         
@@ -525,7 +553,7 @@ run             {opt_params.get('env_run', '1000')}
         self.log_to_gui(f"        - Est. Backface Temp:     {base_f_metrics['backface_temp']:.1f} K")
         self.log_to_gui(f"        - Instantaneous g-load:   {base_f_metrics['g_load']:.2f} g")
         
-        if is_gui: self.window.evaluate_js("updateProgress(10)")
+        if is_gui: self.window.evaluate_js("updateProgress(15)")
 
         active_params = [k for k, v in search_map.items() if v['v']]
         n_dim = len(active_params)
@@ -695,6 +723,7 @@ run             {opt_params.get('env_run', '1000')}
             ani_path = os.path.join(self.cwd, "web", "assets", "plots", "simulation_anim.mp4")
             visualizer.generate_animation(grid_files, ani_path)
             visualizer.generate_plots(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots"))
+            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots", "upscaled_3d.png"), surf_file=os.path.join(cad_dir, "HIAD_final.surf"))
 
             self.window.evaluate_js("updateProgress(100)")
             self.log_to_gui("[+] OPTIMIZATION LIFECYCLE COMPLETE.")
@@ -707,6 +736,8 @@ run             {opt_params.get('env_run', '1000')}
             self.window.evaluate_js("document.getElementById('img-thermal').src = 'assets/plots/thermal_map.png?' + new Date().getTime()")
             self.window.evaluate_js("document.getElementById('img-pressure').src = 'assets/plots/pressure_map.png?' + new Date().getTime()")
             self.window.evaluate_js("document.getElementById('img-velocity').src = 'assets/plots/velocity_vectors.png?' + new Date().getTime()")
+            self.window.evaluate_js("document.getElementById('img-3d').src = 'assets/plots/upscaled_3d.png?' + new Date().getTime()")
+            self.window.evaluate_js("document.getElementById('img-stag').src = 'assets/plots/stagnation_graph.png?' + new Date().getTime()")
             time.sleep(1)
             self.window.evaluate_js("nextStep(8)")
         else:
