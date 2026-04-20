@@ -1,0 +1,6 @@
+pywebview
+torch
+cadquery
+matplotlib
+numpy
+pymsis

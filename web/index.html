@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baloon Shield Maker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Fira+Code&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="aurora"></div>
+    <div id="star-container"></div>
+    <div id="splash">
+        <div class="splash-logo">STELLAR ORION</div>
+        <div class="loader"></div>
+        <p style="margin-top: 1rem;">Baloon Shield Maker - Hypersonic Edition</p>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Wizard Navigation -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon">S</div>
+                <span>StellarOrion</span>
+            </div>
+            <div class="step-list">
+                <div class="step-item active" id="side-step-1" onclick="jumpToPage(1)" style="cursor: pointer;">
+                    <div class="step-num">1</div>
+                    <div class="step-label">Mission Brief</div>
+                </div>
+                <div class="step-item" id="side-step-2" onclick="jumpToPage(2)" style="cursor: pointer;">
+                    <div class="step-num">2</div>
+                    <div class="step-label">Base Geometry</div>
+                </div>
+                <div class="step-item" id="side-step-3" onclick="jumpToPage(3)" style="cursor: pointer;">
+                    <div class="step-num">3</div>
+                    <div class="step-label">Reference Physics</div>
+                </div>
+                <div class="step-item" id="side-step-4" onclick="jumpToPage(4)" style="cursor: pointer;">
+                    <div class="step-num">4</div>
+                    <div class="step-label">CAD Verification</div>
+                </div>
+                <div class="step-item" id="side-step-5" onclick="jumpToPage(5)" style="cursor: pointer;">
+                    <div class="step-num">5</div>
+                    <div class="step-label">Survivability</div>
+                </div>
+                <div class="step-item" id="side-step-6" onclick="jumpToPage(6)" style="cursor: pointer;">
+                    <div class="step-num">6</div>
+                    <div class="step-label">Final Review</div>
+                </div>
+                <div class="step-item" id="side-step-7" onclick="jumpToPage(7)" style="cursor: pointer;">
+                    <div class="step-num">7</div>
+                    <div class="step-label">High-Fidelity SBO</div>
+                </div>
+                <div class="step-item" id="side-step-8" onclick="jumpToPage(8)" style="cursor: pointer;">
+                    <div class="step-num">8</div>
+                    <div class="step-label">Mission Results</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <div id="current-step-title" style="font-weight: 800; letter-spacing: 1px; color: var(--primary); text-transform: uppercase;">1. Mission Brief</div>
+                <div class="step-indicator" id="step-indicator">
+                <div class="dot active" onclick="jumpToPage(1)"></div>
+                <div class="dot" onclick="jumpToPage(2)"></div>
+                <div class="dot" onclick="jumpToPage(3)"></div>
+                <div class="dot" onclick="jumpToPage(4)"></div>
+                <div class="dot" onclick="jumpToPage(5)"></div>
+                <div class="dot" onclick="jumpToPage(6)"></div>
+                <div class="dot" onclick="jumpToPage(7)"></div>
+                <div class="dot" onclick="jumpToPage(8)"></div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <!-- Page 1: Splash / Welcome -->
+            <div class="page active" id="page-1">
+                <h2>Welcome to HIAD Factory</h2>
+                <p>Hypersonic Inflatable Aerodynamic Decelerator (HIAD) is a deployable aeroshell technology. This wizard will guide you through generation and optimization of your shield for planetary entry.</p>
+                <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid var(--primary-glow); padding: 20px; border-radius: 12px;">
+                    <h4 style="color: var(--primary); margin-bottom: 8px;">What is this?</h4>
+                    <p style="margin: 0; font-size: 0.9rem;">Automated design and multi-fidelity simulation pipeline for inflatable hypersonic shields. Supports high-fidelity <strong>Earth (NRLMSIS 2.1)</strong> and <strong>Mars (MSL-grade)</strong> atmospheric modeling. Uses SPARTA for DSMC analysis and PyTorch for Metamodel optimization.</p>
+                </div>
+            </div>
+
+            <!-- Page 2: Generate Reference -->
+            <div class="page" id="page-2">
+                <h2>Initial Reference Parameters</h2>
+                <p>Configure the baseline HIAD geometry for referential simulation.</p>
+                <div class="param-grid">
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Major Diameter (m)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Major Diameter</strong>
+                                <span class="unit">Unit: Meters (m)</span>
+                                Maximum outer diameter of the HIAD aeroshell. Controls the total drag area and ballistic coefficient.
+                            </div>
+                        </div>
+                        <input type="number" id="ref-diameter" value="3.0" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Cone Angle (deg)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Cone Angle</strong>
+                                <span class="unit">Unit: Degrees (deg)</span>
+                                Half-angle of the inflatable cone. Influences aerodynamic stability and heat distribution.
+                            </div>
+                        </div>
+                        <input type="number" id="ref-angle" value="60.0" step="1">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Toroid Count</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Toroid Count</strong>
+                                <span class="unit">Unit: Integer</span>
+                                Number of inflatable rings that make up the structure. More toroids provide smoother geometry but increase mass.
+                            </div>
+                        </div>
+                        <input type="number" id="ref-toroids" value="7" min="3" max="20">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Mass (kg)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Total Mass</strong>
+                                <span class="unit">Unit: Kilograms (kg)</span>
+                                Total vehicle entry mass. Directly impacts the ballistic coefficient and deceleration profile.
+                            </div>
+                        </div>
+                        <input type="number" id="mass" value="281" step="1">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Skin Thick (m)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Skin Thickness</strong>
+                                <span class="unit">Unit: Meters (m)</span>
+                                Thickness of the flexible thermal protection system (TPS) outer layer.
+                            </div>
+                        </div>
+                        <input type="number" id="thickness" value="0.02" step="0.005">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Nose Radius (m)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Nose Radius</strong>
+                                <span class="unit">Unit: Meters (m)</span>
+                                Radius of the stagnation point (nose). Larger radii generally reduce peak stagnation heat flux.
+                            </div>
+                        </div>
+                        <input type="number" id="nose-radius" value="0.191" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Scallop Pts</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Scallop Points</strong>
+                                <span class="unit">Unit: Integer</span>
+                                Number of vertices used to approximate the curved surface between toroids.
+                            </div>
+                        </div>
+                        <input type="number" id="scallop-pts" value="5" min="2" max="20">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Scallop Angle</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Scallop Angle</strong>
+                                <span class="unit">Unit: Degrees (deg)</span>
+                                The angle of the scalloping curvature between toroids. Defines surface "bumpiness".
+                            </div>
+                        </div>
+                        <input type="number" id="scallop-angle" value="90.0" step="5">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Nose Type</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Nose Type</strong>
+                                <span class="unit">Unit: Choice</span>
+                                Choose between a smooth (rounded) nose or a pointy (sharp) nose for the stagnation region.
+                            </div>
+                        </div>
+                        <select id="nose-type">
+                            <option value="smooth">Smooth (Rounded)</option>
+                            <option value="pointy">Pointy (Sharp)</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.05);">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--text-dim); font-size: 0.9rem;">
+                        <div class="tooltip-container">
+                            <input type="checkbox" id="flat-skin" checked> 
+                            <label for="flat-skin">Flat Skin (Non-Scalloped Cone)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text right" style="left: auto; right: 0;">
+                                <strong>Flat Skin Toggle</strong>
+                                <span class="unit">Unit: Boolean</span>
+                                If enabled, the shield surface will be a perfectly smooth cone instead of having scalloped indentations.
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Page 3: Progress Log -->
+            <div class="page" id="page-3">
+                <h2>Generating Initial HIAD Model with Parameters</h2>
+                <p id="sim-status">Establishing reference value...</p>
+                <div class="terminal" id="terminal"></div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+            </div>
+
+            <!-- Page 4: 3D View -->
+            <div class="page" id="page-4">
+                <h2>3D Geometry Verification</h2>
+                <p>Generated HIAD model from CADDesign/make_HIAD.py</p>
+                <div id="viewport">
+                    <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--secondary);">
+                        [ 3D Rendering Engine Loading... ]
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <div style="flex: 1; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+                        <small>STEP Model: HIAD_custom.step</small>
+                    </div>
+                    <div style="flex: 1; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+                        <small>STL Mesh: HIAD_custom.stl</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page 5: Optimization Targets -->
+            <div class="page" id="page-5">
+                <h2>Optimization Targets & Survivability</h2>
+                <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                        <div class="input-group">
+                            <div class="tooltip-container">
+                                <label>Payload Mass (kg)</label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text">
+                                    <strong>Payload Mass</strong>
+                                    <span class="unit">Unit: Kilograms (kg)</span>
+                                    Mass of the cargo or mission equipment being protected by the HIAD.
+                                </div>
+                            </div>
+                            <input type="number" id="opt-mass" value="281">
+                        </div>
+                        <div class="input-group">
+                            <div class="tooltip-container">
+                                <label>Min Diameter (m)</label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text">
+                                    <strong>Min Diameter</strong>
+                                    <span class="unit">Unit: Meters (m)</span>
+                                    Minimum bound for the optimization search space for the shield's outer diameter.
+                                </div>
+                            </div>
+                            <input type="number" id="opt-d-min" value="2.5">
+                        </div>
+                        <div class="input-group">
+                            <div class="tooltip-container">
+                                <label>Max Diameter (m)</label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text">
+                                    <strong>Max Diameter</strong>
+                                    <span class="unit">Unit: Meters (m)</span>
+                                    Maximum bound for the optimization search space for the shield's outer diameter.
+                                </div>
+                            </div>
+                            <input type="number" id="opt-d-max" value="4.5">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="targets-container" style="max-height: 280px; overflow-y: auto; padding-right: 10px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 140px 1fr 80px 100px; gap: 10px; padding: 5px 10px; color: var(--secondary); font-size: 0.7rem; text-transform: uppercase;">
+                        <div class="tooltip-container">
+                            <span>Target Metric</span>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Target Metrics</strong>
+                                Key performance indicators for the HIAD design. The optimizer attempts to reach these values by varying design parameters.
+                            </div>
+                        </div>
+                        <span>Adjustment Slider</span>
+                        <span>Value</span>
+                        <div class="tooltip-container">
+                            <span>Error Tol</span>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Error Tolerance</strong>
+                                The allowed variance between the target and the achieved value. Smaller values force tighter optimization convergence.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Row: Ballistic Coeff -->
+                    <div class="target-row" style="display: grid; grid-template-columns: 140px 1fr 80px 100px; gap: 10px; align-items: center; margin-bottom: 8px; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px;">
+                        <div class="tooltip-container">
+                            <span style="font-weight: 500; font-size: 0.8rem;">Ballistic Coeff (β)</span>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Ballistic Coefficient (β)</strong>
+                                <span class="unit">Unit: kg/m²</span>
+                                Measures an object's ability to overcome air resistance. Lower β results in higher altitude deceleration.
+                            </div>
+                        </div>
+                        <input type="range" id="target-beta-range" min="10" max="100" value="27" oninput="syncTarget('beta', 'range')">
+                        <input type="number" id="target-beta-val" value="27" oninput="syncTarget('beta', 'val')" style="padding: 4px;">
+                        <input type="number" id="target-beta-tol" value="1.0" step="0.1" style="padding: 4px; border-color: var(--primary-glow);">
+                    </div>
+
+                    <!-- Row: Heat Flux -->
+                    <div class="target-row" style="display: grid; grid-template-columns: 140px 1fr 80px 100px; gap: 10px; align-items: center; margin-bottom: 8px; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px;">
+                        <div class="tooltip-container">
+                            <span style="font-weight: 500; font-size: 0.8rem;">Stagnation Heat</span>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Stagnation Heat</strong>
+                                <span class="unit">Unit: W/cm² or MW/m²</span>
+                                Peak convective heat flux at the nose stagnation point. Primary target for TPS design.
+                            </div>
+                        </div>
+                        <input type="range" id="target-heat-range" min="10" max="500" value="100" oninput="syncTarget('heat', 'range')">
+                        <input type="number" id="target-heat-val" value="100" oninput="syncTarget('heat', 'val')" style="padding: 4px;">
+                        <input type="number" id="target-heat-tol" value="0.1" step="0.01" style="padding: 4px; border-color: var(--primary-glow);">
+                    </div>
+
+                    <!-- Row: g-load -->
+                    <div class="target-row" style="display: grid; grid-template-columns: 140px 1fr 80px 100px; gap: 10px; align-items: center; margin-bottom: 8px; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px;">
+                        <div class="tooltip-container">
+                            <span style="font-weight: 500; font-size: 0.8rem;">Peak g-load</span>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Peak g-load</strong>
+                                <span class="unit">Unit: g</span>
+                                Maximum deceleration force experienced during entry, measured in Earth gravities.
+                            </div>
+                        </div>
+                        <input type="range" id="target-g-range" min="5" max="50" value="15" oninput="syncTarget('g', 'range')">
+                        <input type="number" id="target-g-val" value="15" oninput="syncTarget('g', 'val')" style="padding: 4px;">
+                        <input type="number" id="target-g-tol" value="0.5" step="0.1" style="padding: 4px; border-color: var(--primary-glow);">
+                    </div>
+
+                    <!-- Row: Temp -->
+                    <div class="target-row" style="display: grid; grid-template-columns: 140px 1fr 80px 100px; gap: 10px; align-items: center; margin-bottom: 8px; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px;">
+                        <div class="tooltip-container">
+                            <span style="font-weight: 500; font-size: 0.8rem;">Backface Temp (C)</span>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Backface Temp</strong>
+                                <span class="unit">Unit: Celsius (°C)</span>
+                                Target temperature for the inner surface of the skin. Must protect the payload.
+                            </div>
+                        </div>
+                        <input type="range" id="target-temp-range" min="100" max="600" value="400" oninput="syncTarget('temp', 'range')">
+                        <input type="number" id="target-temp-val" value="400" oninput="syncTarget('temp', 'val')" style="padding: 4px;">
+                        <input type="number" id="target-temp-tol" value="5.0" step="1.0" style="padding: 4px; border-color: var(--primary-glow);">
+                    </div>
+
+                    <!-- Row: Dynamic Pressure -->
+                    <div class="target-row" style="display: grid; grid-template-columns: 140px 1fr 80px 100px; gap: 10px; align-items: center; margin-bottom: 8px; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px;">
+                        <div class="tooltip-container">
+                            <span style="font-weight: 500; font-size: 0.8rem;">Dynamic Press (Pa)</span>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Dynamic Pressure (q)</strong>
+                                <span class="unit">Unit: Pascals (Pa)</span>
+                                Maximum aerodynamic pressure exerted on the shield surface during entry.
+                            </div>
+                        </div>
+                        <input type="range" id="target-q-range" min="1000" max="20000" value="5000" oninput="syncTarget('q', 'range')">
+                        <input type="number" id="target-q-val" value="5000" oninput="syncTarget('q', 'val')" style="padding: 4px;">
+                        <input type="number" id="target-q-tol" value="100" step="10" style="padding: 4px; border-color: var(--primary-glow);">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Atmosphere Model</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Atmosphere Model</strong>
+                                <span class="unit">Unit: Choice</span>
+                                Sets the planetary environment (Earth or Mars) and determines freestream density and temperature.
+                            </div>
+                        </div>
+                        <select id="env-preset" onchange="toggleMSIS()" style="background: rgba(255,255,255,0.05); color: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <option value="artemis">Earth - Standard</option>
+                            <option value="nrlmsis">Earth - NRLMSIS 2.1</option>
+                            <option value="mars">Mars - MSL</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>LHS Samples</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>LHS Samples</strong>
+                                <span class="unit">Unit: Integer</span>
+                                Number of initial simulation points (Latin Hypercube Sampling). More samples (e.g., 50+) improve Metamodel accuracy but significantly increase optimization time.
+                            </div>
+                        </div>
+                        <input type="number" id="opt-samples" value="24">
+                    </div>
+                </div>
+
+                <div id="msis-panel" style="display: none; margin-top: 15px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid var(--primary-glow);">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <div class="input-group">
+                            <div class="tooltip-container">
+                                <label>Alt (km)</label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text">
+                                    <strong>Altitude</strong>
+                                    <span class="unit">Unit: Kilometers (km)</span>
+                                    Target entry altitude for atmospheric property lookup.
+                                </div>
+                            </div>
+                            <input type="number" id="msis-alt" value="80.0">
+                        </div>
+                        <div class="input-group">
+                            <div class="tooltip-container">
+                                <label>Lat</label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text">
+                                    <strong>Latitude</strong>
+                                    <span class="unit">Unit: Degrees</span>
+                                    Geographic latitude for atmospheric modeling.
+                                </div>
+                            </div>
+                            <input type="number" id="msis-lat" value="0.0">
+                        </div>
+                        <div class="input-group">
+                            <div class="tooltip-container">
+                                <label>Lon</label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text">
+                                    <strong>Longitude</strong>
+                                    <span class="unit">Unit: Degrees</span>
+                                    Geographic longitude for atmospheric modeling.
+                                </div>
+                            </div>
+                            <input type="number" id="msis-lon" value="0.0">
+                        </div>
+                        <div class="input-group">
+                            <div class="tooltip-container">
+                                <label>F10.7</label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text">
+                                    <strong>F10.7 Index</strong>
+                                    <span class="unit">Unit: sfu</span>
+                                    Solar radio flux at 10.7 cm. Influences upper atmosphere density.
+                                </div>
+                            </div>
+                            <input type="number" id="msis-f107" value="150.0">
+                        </div>
+                        <div class="input-group">
+                            <div class="tooltip-container">
+                                <label>Ap</label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text">
+                                    <strong>Ap Index</strong>
+                                    <span class="unit">Unit: Index</span>
+                                    Geomagnetic activity index. Impacts atmospheric expansion and density.
+                                </div>
+                            </div>
+                            <input type="number" id="msis-ap" value="4.0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="param-grid" style="margin-top: 15px; grid-template-columns: repeat(3, 1fr);">
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Num Density (nrho)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Number Density (nrho)</strong>
+                                <span class="unit">Unit: m⁻³</span>
+                                Number of gas molecules per unit volume. Critical input for DSMC simulation fidelity.
+                            </div>
+                        </div>
+                        <input type="number" id="env-nrho" value="3.9e20">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Freestream Temp (K)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Freestream Temp</strong>
+                                <span class="unit">Unit: Kelvin (K)</span>
+                                Static temperature of the ambient atmosphere at the entry altitude.
+                            </div>
+                        </div>
+                        <input type="number" id="env-temp-inf" value="200.0">
+                    </div>
+                    <div class="input-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-secondary" onclick="fetchAtmosphereData()" style="width: 100%; height: 42px; font-size: 0.8rem;">Refresh From Model</button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; background: rgba(0,255,180,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(0,255,180,0.2);">
+                    <h4 style="margin-bottom: 12px; font-size: 0.9rem; color: var(--primary-glow);">Parameter Variability (Select to Vary & Set Range)</h4>
+                    <div class="variability-grid">
+                        <!-- Diameter (Uses global min/max) -->
+                        <div class="var-item">
+                            <div class="tooltip-container">
+                                <label class="check-container">
+                                    Diameter <input type="checkbox" id="v-diameter" checked><span class="checkmark"></span>
+                                </label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text" style="bottom: 150%;">
+                                    <strong>Vary Diameter</strong>
+                                    Uses the global Min/Max Diameter bounds defined above for the search space.
+                                </div>
+                            </div>
+                            <div class="var-range-display">Using Global Bounds</div>
+                        </div>
+
+                        <!-- Cone Angle -->
+                        <div class="var-item">
+                            <div class="tooltip-container">
+                                <label class="check-container">
+                                    Cone Angle <input type="checkbox" id="v-angle" checked><span class="checkmark"></span>
+                                </label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text" style="bottom: 150%;">
+                                    <strong>Vary Cone Angle</strong>
+                                    Enables the cone half-angle as a design variable. Range is ± Delta from base.
+                                </div>
+                            </div>
+                            <div class="var-delta-input">
+                                <span>±</span>
+                                <input type="number" id="delta-angle" value="15.0" step="1.0">
+                            </div>
+                        </div>
+
+                        <!-- Toroid Count -->
+                        <div class="var-item">
+                            <div class="tooltip-container">
+                                <label class="check-container">
+                                    Toroids <input type="checkbox" id="v-toroids" checked><span class="checkmark"></span>
+                                </label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text right" style="bottom: 150%; left: auto; right: 0;">
+                                    <strong>Vary Toroid Count</strong>
+                                    Enables the number of rings as a variable. Range is ± Delta (integer).
+                                </div>
+                            </div>
+                            <div class="var-delta-input">
+                                <span>±</span>
+                                <input type="number" id="delta-toroids" value="3" step="1">
+                            </div>
+                        </div>
+
+                        <!-- Nose Radius -->
+                        <div class="var-item">
+                            <div class="tooltip-container">
+                                <label class="check-container">
+                                    Nose Rad <input type="checkbox" id="v-nose" checked><span class="checkmark"></span>
+                                </label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text right" style="bottom: 150%; left: auto; right: 0;">
+                                    <strong>Vary Nose Radius</strong>
+                                    Enables stagnation radius as a variable. Range is ± Delta.
+                                </div>
+                            </div>
+                            <div class="var-delta-input">
+                                <span>±</span>
+                                <input type="number" id="delta-nose" value="0.05" step="0.01">
+                            </div>
+                        </div>
+
+                        <!-- Skin Thick -->
+                        <div class="var-item">
+                            <div class="tooltip-container">
+                                <label class="check-container">
+                                    Skin Thk <input type="checkbox" id="v-thick"><span class="checkmark"></span>
+                                </label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text" style="bottom: 150%;">
+                                    <strong>Vary Skin Thick</strong>
+                                    Enables TPS thickness as a variable. Range is ± Delta.
+                                </div>
+                            </div>
+                            <div class="var-delta-input">
+                                <span>±</span>
+                                <input type="number" id="delta-thick" value="0.01" step="0.005">
+                            </div>
+                        </div>
+
+                        <!-- Scallop Pts -->
+                        <div class="var-item">
+                            <div class="tooltip-container">
+                                <label class="check-container">
+                                    Scal. Pts <input type="checkbox" id="v-scallop-pts"><span class="checkmark"></span>
+                                </label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text" style="bottom: 150%;">
+                                    <strong>Vary Scallop Points</strong>
+                                    Enables scallop resolution as a variable. Range is ± Delta (integer).
+                                </div>
+                            </div>
+                            <div class="var-delta-input">
+                                <span>±</span>
+                                <input type="number" id="delta-scallop-pts" value="2" step="1">
+                            </div>
+                        </div>
+
+                        <!-- Scallop Ang -->
+                        <div class="var-item">
+                            <div class="tooltip-container">
+                                <label class="check-container">
+                                    Scal. Ang <input type="checkbox" id="v-scallop-ang"><span class="checkmark"></span>
+                                </label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text right" style="bottom: 150%; left: auto; right: 0;">
+                                    <strong>Vary Scallop Angle</strong>
+                                    Enables scallop curvature as a variable. Range is ± Delta.
+                                </div>
+                            </div>
+                            <div class="var-delta-input">
+                                <span>±</span>
+                                <input type="number" id="delta-scallop-ang" value="15.0" step="5.0">
+                            </div>
+                        </div>
+
+                        <!-- Shield Mass -->
+                        <div class="var-item">
+                            <div class="tooltip-container">
+                                <label class="check-container">
+                                    Mass <input type="checkbox" id="v-mass"><span class="checkmark"></span>
+                                </label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text right" style="bottom: 150%; left: auto; right: 0;">
+                                    <strong>Vary Shield Mass</strong>
+                                    Enables total mass as a variable. Range is ± Delta.
+                                </div>
+                            </div>
+                            <div class="var-delta-input">
+                                <span>±</span>
+                                <input type="number" id="delta-mass" value="50.0" step="10.0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="param-grid" style="margin-top: 15px; grid-template-columns: 1fr 1fr 1fr 1fr;">
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Wall Temp (K)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Wall Temp</strong>
+                                <span class="unit">Unit: Kelvin (K)</span>
+                                Fixed surface temperature of the shield used for thermal boundary conditions.
+                            </div>
+                        </div>
+                        <input type="number" id="env-temp" value="1000.0">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Time Step (s)</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Time Step</strong>
+                                <span class="unit">Unit: Seconds (s)</span>
+                                Temporal resolution of the simulation. Must be smaller than the mean collision time (~1e-7s at 80km) to maintain physical validity.
+                            </div>
+                        </div>
+                        <input type="number" id="env-step" value="1.0e-6">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>fnum</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>fnum</strong>
+                                <span class="unit">Unit: Ratio</span>
+                                Ratio of real molecules to simulated particles. Lower fnum (e.g., 1e14) increases particle count and reduces statistical noise but requires more RAM and CPU.
+                            </div>
+                        </div>
+                        <input type="number" id="env-fnum" value="1.0e16">
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Reaction</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Reaction Model</strong>
+                                <span class="unit">Unit: Choice</span>
+                                Chemistry model for gas reactions (TCE: Total Collision Energy, QK: Quantum-Kinetic).
+                            </div>
+                        </div>
+                        <select id="env-react" style="background: rgba(255,255,255,0.05); color: #fff; padding: 8px; border-radius: 8px; border: 1px solid var(--glass-border); width: 100%;">
+                            <option value="tce">TCE</option>
+                            <option value="qk">QK</option>
+                            <option value="none">None</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <div class="tooltip-container">
+                            <label>Sim Steps</label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Simulation Steps</strong>
+                                <span class="unit">Unit: Integer</span>
+                                Total number of iterations the solver runs to reach steady state.
+                            </div>
+                        </div>
+                        <input type="number" id="env-run" value="1000" step="500">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                    <div class="domain-controls" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+                        <h4 style="color: var(--primary); margin-bottom: 10px; font-size: 0.9rem;">Domain Dimensions</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="input-group">
+                                <div class="tooltip-container">
+                                    <label>X-Min (Inlet)</label>
+                                    <span class="info-icon">?</span>
+                                    <div class="tooltip-text">
+                                        <strong>X-Min (Inlet)</strong>
+                                        <span class="unit">Unit: Meters (m)</span>
+                                        Distance upstream where the freestream is initialized.
+                                    </div>
+                                </div>
+                                <input type="number" id="env-xmin" value="-1.7" step="0.1" onchange="refreshDomainPreview()">
+                            </div>
+                            <div class="input-group">
+                                <div class="tooltip-container">
+                                    <label>X-Max (Outlet)</label>
+                                    <span class="info-icon">?</span>
+                                    <div class="tooltip-text right" style="left: auto; right: 0;">
+                                        <strong>X-Max (Outlet)</strong>
+                                        <span class="unit">Unit: Meters (m)</span>
+                                        Distance downstream where the wake is captured.
+                                    </div>
+                                </div>
+                                <input type="number" id="env-xmax" value="5.0" step="0.1" onchange="refreshDomainPreview()">
+                            </div>
+                            <div class="input-group">
+                                <div class="tooltip-container">
+                                    <label>Radial Max (Y)</label>
+                                    <span class="info-icon">?</span>
+                                    <div class="tooltip-text">
+                                        <strong>Radial Max (Y)</strong>
+                                        <span class="unit">Unit: Meters (m)</span>
+                                        Outer radius of the domain. Must contain the bow shock wave.
+                                    </div>
+                                </div>
+                                <input type="number" id="env-ymax" value="2.0" step="0.1" onchange="refreshDomainPreview()">
+                            </div>
+                            <div class="input-group">
+                                <div class="tooltip-container">
+                                    <label>Side Domain (Z)</label>
+                                    <span class="info-icon">?</span>
+                                    <div class="tooltip-text right" style="left: auto; right: 0;">
+                                        <strong>Side Domain (Z)</strong>
+                                        <span class="unit">Unit: Meters (m)</span>
+                                        Width of the simulated slice of the atmosphere (2.5D).
+                                    </div>
+                                </div>
+                                <input type="number" id="env-zthick" value="1.0" step="0.1" onchange="refreshDomainPreview()">
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" onclick="refreshDomainPreview()" style="width: 100%; margin-top: 10px; padding: 8px;">Refresh Domain Preview</button>
+                    </div>
+                    
+                    <div class="domain-preview" style="background: #000; border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <img id="domain-live-preview" src="assets/plots/domain_preview.png" style="max-width: 100%; max-height: 100%;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page 6: Confirmation -->
+            <div class="page" id="page-6">
+                <h2>Configuration Summary</h2>
+                <div style="background: rgba(255,255,255,0.03); padding: 24px; border-radius: 16px; border: 1px solid var(--glass-border);">
+                    <div id="summary-content">
+                        <!-- Filled by JS -->
+                    </div>
+                    <div style="margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
+                        <h4 style="color: var(--primary); margin-bottom: 12px;">Simulation Domain Preview</h4>
+                        <div style="background: #000; border-radius: 12px; padding: 10px; text-align: center;">
+                            <img id="domain-preview-img" src="assets/plots/domain_preview.png" style="max-width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                        </div>
+                    </div>
+                </div>
+                <p style="margin-top: 1rem;">Click 'Start Optimization' to begin LHS sampling and Metamodel training.</p>
+            </div>
+
+            <!-- Page 7: Opt Execution -->
+            <div class="page" id="page-7">
+                <h2>Optimizing Shield Topology</h2>
+                <p>Metamodel Prognosis (MoP) via PyTorch</p>
+                <div class="terminal" id="opt-terminal"></div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="opt-progress-bar"></div>
+                </div>
+            </div>
+
+            <!-- Page 8: Results -->
+            <div class="page" id="page-8">
+                <h2>Optimization Results & High-Fidelity Validation</h2>
+                <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                    <div style="flex: 1; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; padding: 15px;">
+                        <h3 style="color: #4ade80;">Reference</h3>
+                        <div id="res-ref" style="font-family: 'Fira Code', monospace; font-size: 0.9rem;"></div>
+                    </div>
+                    <div style="flex: 1; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 16px; padding: 15px;">
+                        <h3 style="color: var(--primary);">Optimized</h3>
+                        <div id="res-opt" style="font-family: 'Fira Code', monospace; font-size: 0.9rem;"></div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 350px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 20px;">
+                    <div class="plot-card" style="grid-column: span 2;">
+                        <small>Time-Step Animation (MP4)</small>
+                        <video id="vid-simulation" width="100%" autoplay loop muted style="border-radius: 12px; margin-top: 8px; border: 1px solid var(--primary-glow);">
+                            <source src="assets/plots/simulation_anim.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="plot-card">
+                        <small>Thermal Map (K)</small>
+                        <img id="img-thermal" src="assets/plots/thermal_map.png" style="width: 100%; border-radius: 8px;">
+                    </div>
+                    <div class="plot-card">
+                        <small>Pressure Dist (Pa)</small>
+                        <img id="img-pressure" src="assets/plots/pressure_map.png" style="width: 100%; border-radius: 8px;">
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-primary">Export Optimized CAD</button>
+                    <button class="btn btn-secondary" onclick="window.location.reload()">New Optimization</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button class="btn btn-secondary" id="btn-prev" onclick="changePage(-1)" style="display: none;">Back</button>
+            <button class="btn btn-primary" id="btn-next" onclick="changePage(1)">Continue</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <!-- Three.js for 3D View -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+FROM ubuntu:24.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y build-essential cmake g++ gcc gfortran libopenmpi-dev openmpi-bin python3 python3-pip git wget && rm -rf /var/lib/apt/lists/*
+WORKDIR /workspace
+
+# Only copy SPARTA source which needs to be compiled
+COPY sparta /workspace/sparta
+
+# Build SPARTA (MPI version)
+RUN cd /workspace/sparta/src && make mpi && cp spa_mpi /usr/local/bin/spa
+
+# The rest (main.py, CADDesign, etc.) will be mounted via volumes
+ENV OMP_NUM_THREADS=6
+ENV IN_DOCKER=1
+
+CMD ["spa", "-in", "in.hiad"]
