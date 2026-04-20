@@ -337,6 +337,14 @@ variable        drag_val equal c_drag_curr
 fix             halt_check halt 100 v_drag_val {tol} error no
 """
 
+        # Averaging and Output Frequencies
+        # We want to output results at least 10 times during the run, or every 100 steps minimum
+        n_run = int(opt_params.get('env_run', '1000'))
+        n_freq = max(1, n_run // 5) # 5 snapshots
+        n_repeat = max(1, n_freq // 2)
+        n_every = 1
+        dump_freq = n_freq
+
         script = f"""# SPARTA Input Script - 8D Optimized
 seed            12345
 dimension       2
@@ -365,22 +373,22 @@ surf_collide    1 diffuse {opt_params.get('env_temp', '1000.0')} 1.0
 surf_modify     all collide 1
 
 compute         1 surf all air nflux mflux ke
-fix             1 ave/surf all 10 100 1000 c_1[*]
+fix             1 ave/surf all {n_every} {n_repeat} {n_freq} c_1[*]
 
 compute         surfF surf all air fx fy fz
-fix             surfavg ave/surf all 10 100 1000 c_surfF[*]
+fix             surfavg ave/surf all {n_every} {n_repeat} {n_freq} c_surfF[*]
 compute         drag reduce sum f_surfavg[1]
 
 compute         2 grid all air n u v w
-fix             2 ave/grid all 10 100 1000 c_2[*]
+fix             2 ave/grid all {n_every} {n_repeat} {n_freq} c_2[*]
 
 compute         3 thermal/grid all air temp press
-fix             3 ave/grid all 10 100 1000 c_3[*]
+fix             3 ave/grid all {n_every} {n_repeat} {n_freq} c_3[*]
 
 timestep        {opt_params.get('env_step', '1e-6')}
 
-dump            1 surf all 1000 results_reference/surf.*.out id f_1[*] f_surfavg[*]
-dump            2 grid all 1000 results_reference/grid.*.out id xlo ylo xhi yhi f_2[*] f_3[*]
+dump            1 surf all {dump_freq} results_reference/surf.*.out id f_1[*] f_surfavg[*]
+dump            2 grid all {dump_freq} results_reference/grid.*.out id xlo ylo xhi yhi f_2[*] f_3[*]
 
 stats           100
 stats_style     step cpu np nattempt ncoll nscoll nscheck
@@ -479,6 +487,21 @@ run             {opt_params.get('env_run', '1000')}
         self._safe_copy(vss_src, os.path.join(cad_dir, "air.vss"))
 
         base_d = float(opt_params.get('base_diameter', 3.0))
+        
+        self.log_to_gui(f"    [+] Generating Baseline Geometry (D={base_d}m)...")
+        cmd_cad = [
+            python_exec, "make_HIAD.py",
+            "--diameter", str(base_d),
+            "--angle", str(opt_params.get('base_angle', 60.0)),
+            "--nose", str(opt_params.get('base_nose', 0.191)),
+            "--toroids", str(opt_params.get('base_toroids', 7)),
+            "--thickness", str(opt_params.get('base_thick', 0.02)),
+            "--scallop_pts", str(opt_params.get('base_scallop_pts', 5)),
+            "--scallop_angle", str(opt_params.get('base_scallop_ang', 90.0)),
+            "--output", "HIAD_custom"
+        ]
+        subprocess.run(cmd_cad, cwd=cad_dir, check=True)
+
         script_baseline = self.generate_sparta_script(opt_params, surf_name="HIAD_custom", diameter=base_d)
         
         os.makedirs(os.path.join(cad_dir, "results_reference"), exist_ok=True)
@@ -628,6 +651,13 @@ run             {opt_params.get('env_run', '1000')}
             
             if sim_proc.wait() != 0:
                 self.log_to_gui(f"    [-] FATAL: SPARTA Solver Crash on Sample {i+1}!")
+                # Attempt to get last few lines of log.sparta if available
+                log_path = os.path.join(cad_dir, "log.sparta")
+                if os.path.exists(log_path):
+                    with open(log_path, 'r') as f:
+                        log_tail = f.readlines()[-10:]
+                        self.log_to_gui("    [!] Last 10 lines of log.sparta:")
+                        for l in log_tail: self.log_to_gui(f"        {l.strip()}")
             else:
                 if last_cpu: self.log_to_gui(f"        {last_cpu}")
             

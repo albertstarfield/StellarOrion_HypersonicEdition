@@ -451,7 +451,9 @@ def generate_animation(grid_files, output_mp4):
             
             # Smooth contours for animation
             cp = ax.tricontourf(x_center, y_center, temp, levels=40, cmap='hot')
-            ax.set_title(f'Thermal Evolution - Step {frame*1000}', color='white', fontweight='bold')
+            sim_step = frame * 100
+            flow_time_ms = sim_step * 1e-6 * 1000 # Assuming 1e-6 timestep
+            ax.set_title(f'Thermal Evolution - Step {sim_step} ({flow_time_ms:.2f} ms)', color='white', fontweight='bold')
             ax.set_xlabel('Axial (m)', color='#94a3b8')
             ax.set_ylabel('Radial (m)', color='#94a3b8')
             ax.tick_params(colors='#94a3b8')
