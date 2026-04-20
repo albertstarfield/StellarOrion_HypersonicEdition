@@ -526,16 +526,24 @@ run             {opt_params.get('env_run', '1000')}
             self.log_to_gui("    [+] Generating Baseline Static Maps (JPEG/Graph)...")
             visualizer.generate_plots(grid_files[-1], plots_dir)
             
-            self.log_to_gui("    [+] Upscaling Axisymmetric Results to 3D...")
-            upscale_path = os.path.join(plots_dir, "upscaled_3d.png")
-            visualizer.upscale_2d_to_3d(grid_files[-1], upscale_path, surf_file=os.path.join(cad_dir, "HIAD_custom.surf"))
+            self.log_to_gui("    [+] Upscaling Axisymmetric Results to 3D (Temp, Velocity, Mach)...")
+            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_temp.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='temp')
+            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_velocity.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='velocity')
+            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_mach.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='mach')
 
             if is_gui:
                 # Update UI with baseline results early
                 self.window.evaluate_js(f"document.getElementById('img-thermal').src = 'assets/plots/thermal_map.png?' + new Date().getTime()")
                 self.window.evaluate_js(f"document.getElementById('img-pressure').src = 'assets/plots/pressure_map.png?' + new Date().getTime()")
-                self.window.evaluate_js(f"document.getElementById('img-3d').src = 'assets/plots/upscaled_3d.png?' + new Date().getTime()")
+                self.window.evaluate_js(f"document.getElementById('img-3d-temp').src = 'assets/plots/upscaled_3d_temp.png?' + new Date().getTime()")
+                self.window.evaluate_js(f"document.getElementById('img-3d-velocity').src = 'assets/plots/upscaled_3d_velocity.png?' + new Date().getTime()")
+                self.window.evaluate_js(f"document.getElementById('img-3d-mach').src = 'assets/plots/upscaled_3d_mach.png?' + new Date().getTime()")
                 self.window.evaluate_js(f"document.getElementById('img-stag').src = 'assets/plots/stagnation_graph.png?' + new Date().getTime()")
+
+            self.log_to_gui("    [+] Exporting 3D Results to ParaView (VTK)...")
+            vtk_path = os.path.join(self.cwd, "web", "assets", "data", "upscaled_baseline.vtk")
+            os.makedirs(os.path.dirname(vtk_path), exist_ok=True)
+            visualizer.export_upscaled_vtk(grid_files[-1], vtk_path)
         # -------------------------------
 
         ref_metric_dict = self.parse_sparta_results()
@@ -723,7 +731,9 @@ run             {opt_params.get('env_run', '1000')}
             ani_path = os.path.join(self.cwd, "web", "assets", "plots", "simulation_anim.mp4")
             visualizer.generate_animation(grid_files, ani_path)
             visualizer.generate_plots(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots"))
-            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots", "upscaled_3d.png"), surf_file=os.path.join(cad_dir, "HIAD_final.surf"))
+            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots", "upscaled_3d_temp.png"), surf_file=os.path.join(cad_dir, "HIAD_final.surf"), prop='temp')
+            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots", "upscaled_3d_velocity.png"), surf_file=os.path.join(cad_dir, "HIAD_final.surf"), prop='velocity')
+            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots", "upscaled_3d_mach.png"), surf_file=os.path.join(cad_dir, "HIAD_final.surf"), prop='mach')
 
             self.window.evaluate_js("updateProgress(100)")
             self.log_to_gui("[+] OPTIMIZATION LIFECYCLE COMPLETE.")
@@ -736,8 +746,15 @@ run             {opt_params.get('env_run', '1000')}
             self.window.evaluate_js("document.getElementById('img-thermal').src = 'assets/plots/thermal_map.png?' + new Date().getTime()")
             self.window.evaluate_js("document.getElementById('img-pressure').src = 'assets/plots/pressure_map.png?' + new Date().getTime()")
             self.window.evaluate_js("document.getElementById('img-velocity').src = 'assets/plots/velocity_vectors.png?' + new Date().getTime()")
-            self.window.evaluate_js("document.getElementById('img-3d').src = 'assets/plots/upscaled_3d.png?' + new Date().getTime()")
+            self.window.evaluate_js("document.getElementById('img-3d-temp').src = 'assets/plots/upscaled_3d_temp.png?' + new Date().getTime()")
+            self.window.evaluate_js("document.getElementById('img-3d-velocity').src = 'assets/plots/upscaled_3d_velocity.png?' + new Date().getTime()")
+            self.window.evaluate_js("document.getElementById('img-3d-mach').src = 'assets/plots/upscaled_3d_mach.png?' + new Date().getTime()")
             self.window.evaluate_js("document.getElementById('img-stag').src = 'assets/plots/stagnation_graph.png?' + new Date().getTime()")
+
+            self.log_to_gui("    [+] Exporting Final 3D Results to ParaView (VTK)...")
+            vtk_path = os.path.join(self.cwd, "web", "assets", "data", "upscaled_final.vtk")
+            os.makedirs(os.path.dirname(vtk_path), exist_ok=True)
+            visualizer.export_upscaled_vtk(grid_files[-1], vtk_path)
             time.sleep(1)
             self.window.evaluate_js("nextStep(8)")
         else:

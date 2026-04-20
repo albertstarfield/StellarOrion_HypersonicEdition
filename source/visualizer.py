@@ -69,19 +69,40 @@ def generate_plots(grid_file, output_dir):
 
     # Plot 3: Velocity Vectors (Quiver)
     plt.figure(figsize=(10, 6))
+    plt.gca().set_facecolor('#0f172a')
     # Downsample for clearer vectors
     step = max(1, len(x_center) // 400)
     plt.quiver(x_center[::step], y_center[::step], u[::step], v[::step], 
                np.sqrt(u[::step]**2 + v[::step]**2), cmap='viridis')
     plt.colorbar(label='Velocity Magnitude (m/s)')
-    plt.title('Velocity Vectors')
-    plt.xlabel('Axial (m)')
-    plt.ylabel('Radial (m)')
+    plt.title('Velocity Vectors', color='white', fontweight='bold')
+    plt.xlabel('Axial (m)', color='#94a3b8')
+    plt.ylabel('Radial (m)', color='#94a3b8')
+    plt.tick_params(colors='#94a3b8')
     plt.savefig(os.path.join(output_dir, 'velocity_vectors.png'))
     plt.savefig(os.path.join(output_dir, 'velocity_vectors.jpg'), pil_kwargs={'quality': 85})
     plt.close()
 
-    # Plot 4: Stagnation Streamline Graph (1D)
+    # Plot 4: Mach Number Contour
+    plt.figure(figsize=(10, 6))
+    plt.gca().set_facecolor('#0f172a')
+    vel = np.sqrt(u**2 + v**2 + w**2)
+    # Speed of sound a = sqrt(gamma * R * T)
+    gamma = 1.4
+    R = 287.05
+    sound_speed = np.sqrt(gamma * R * temp)
+    mach = vel / sound_speed
+    sc = plt.tricontourf(x_center, y_center, mach, levels=50, cmap='plasma')
+    plt.colorbar(sc, label='Mach Number')
+    plt.title('Mach Number Distribution', color='white', fontweight='bold')
+    plt.xlabel('Axial (m)', color='#94a3b8')
+    plt.ylabel('Radial (m)', color='#94a3b8')
+    plt.tick_params(colors='#94a3b8')
+    plt.savefig(os.path.join(output_dir, 'mach_map.png'))
+    plt.savefig(os.path.join(output_dir, 'mach_map.jpg'), pil_kwargs={'quality': 85})
+    plt.close()
+
+    # Plot 5: Stagnation Streamline Graph (1D)
     generate_stagnation_graph(data, output_dir)
 
     print(f"Plots generated in {output_dir}")
@@ -134,35 +155,62 @@ def generate_stagnation_graph(data, output_dir):
     plt.savefig(os.path.join(output_dir, 'stagnation_graph.jpg'), pil_kwargs={'quality': 85}, facecolor=fig.get_facecolor())
     plt.close()
 
-def upscale_2d_to_3d(grid_file, output_path, surf_file=None):
-    """Upscales 2D axisymmetric results to a 3D visualization by rotating the slice, including the shield geometry."""
-    print(f"[*] Upscaling 2D axisymmetric results to 3D: {grid_file}")
+def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp'):
+    """Upscales 2D axisymmetric results to a 3D visualization by rotating the slice.
+    Supported props: 'temp', 'velocity', 'mach'
+    """
+    print(f"[*] Upscaling 2D axisymmetric results ({prop}) to 3D: {grid_file}")
     data = parse_grid_dump(grid_file)
     if len(data) == 0: return
     
     # x_center, y_center calculations
     x = (data[:, 0] + data[:, 2]) / 2
     y = (data[:, 1] + data[:, 3]) / 2
-    temp = data[:, 8]
     
-    # Downsample for 3D performance
-    step = max(1, len(x) // 1000)
+    # Property mapping
+    if prop == 'velocity':
+        u, v, w = data[:, 5], data[:, 6], data[:, 7]
+        vals = np.sqrt(u**2 + v**2 + w**2)
+        label = "Velocity (m/s)"
+        cmap = 'viridis'
+    elif prop == 'mach':
+        u, v, w = data[:, 5], data[:, 6], data[:, 7]
+        temp = data[:, 8]
+        vel = np.sqrt(u**2 + v**2 + w**2)
+        sound_speed = np.sqrt(1.4 * 287.05 * temp)
+        vals = vel / sound_speed
+        label = "Mach Number"
+        cmap = 'plasma'
+    else: # Default temp
+        vals = data[:, 8]
+        label = "Temperature (K)"
+        cmap = 'hot'
+
+    # 3x Resolution boost: Sample ~3000 points instead of 1000
+    step = max(1, len(x) // 3000)
     x = x[::step]
     y = y[::step]
-    temp = temp[::step]
+    vals = vals[::step]
     
-    n_slices = 16
+    # 3x Radial resolution boost: 48 slices instead of 16
+    n_slices = 48
     thetas = np.linspace(0, 2*np.pi, n_slices)
     
     from mpl_toolkits.mplot3d import Axes3D
-    fig = plt.figure(figsize=(12, 10), facecolor='#0f172a')
-    ax = fig.add_subplot(111, projection='3d')
-    ax.set_facecolor('#0f172a')
+    fig = plt.figure(figsize=(16, 14), facecolor='#0f172a')
     
-    # 1. Plot the Shield Surface (Rotated from 2D surf file)
+    # Define angles and titles
+    views = [
+        {'elev': 20, 'azim': -45, 'title': 'Isometric View', 'zoom': False},
+        {'elev': 0,  'azim': -90, 'title': 'Side View (Axial Profile)', 'zoom': False},
+        {'elev': 0,  'azim': 0,   'title': 'Front View (Cross Section)', 'zoom': False},
+        {'elev': 30, 'azim': -30, 'title': 'Stagnation Region Zoom', 'zoom': True}
+    ]
+    
+    # 1. Parse Shield Surface once
+    pts = None
     if surf_file and os.path.exists(surf_file):
         points = []
-        lines = []
         with open(surf_file, 'r') as f:
             mode = None
             for line in f:
@@ -172,39 +220,135 @@ def upscale_2d_to_3d(grid_file, output_path, surf_file=None):
                 if not parts or parts[0].isalpha(): continue
                 if mode == "pts" and len(parts) >= 3:
                     points.append([float(parts[1]), float(parts[2])])
-                if mode == "lines" and len(parts) >= 3:
-                    lines.append([int(parts[1])-1, int(parts[2])-1])
+        if points: pts = np.array(points)
+
+    # 2. Collect Fluid Data once
+    all_x = []
+    all_y = []
+    all_z = []
+    all_vals = []
+    for theta in thetas:
+        all_x.extend(x)
+        all_y.extend(y * np.cos(theta))
+        all_z.extend(y * np.sin(theta))
+        all_vals.extend(vals)
+    
+    all_x = np.array(all_x)
+    all_y = np.array(all_y)
+    all_z = np.array(all_z)
+    all_vals = np.array(all_vals)
+
+    for i, v in enumerate(views):
+        ax = fig.add_subplot(2, 2, i+1, projection='3d')
+        ax.set_facecolor('#0f172a')
         
-        if points and lines:
-            pts = np.array(points)
-            for theta in np.linspace(0, 2*np.pi, 20): # More slices for shield surface
+        # Plot Shield
+        if pts is not None:
+            for theta in np.linspace(0, 2*np.pi, 30):
                 xs = pts[:, 0]
                 ys = pts[:, 1] * np.cos(theta)
                 zs = pts[:, 1] * np.sin(theta)
-                ax.plot(xs, ys, zs, color='#f43f5e', alpha=0.4, linewidth=1)
-
-    # 2. Plot the Fluid Field
-    for theta in thetas:
-        x3d = x
-        y3d = y * np.cos(theta)
-        z3d = y * np.sin(theta)
-        ax.scatter(x3d, y3d, z3d, c=temp, cmap='hot', s=2, alpha=0.2, edgecolors='none')
+                ax.plot(xs, ys, zs, color='#f43f5e', alpha=0.3, linewidth=0.8)
         
-    ax.set_xlabel('Axial (m)', color='#94a3b8')
-    ax.set_ylabel('Radial Y (m)', color='#94a3b8')
-    ax.set_zlabel('Radial Z (m)', color='#94a3b8')
-    ax.tick_params(axis='x', colors='#94a3b8')
-    ax.tick_params(axis='y', colors='#94a3b8')
-    ax.tick_params(axis='z', colors='#94a3b8')
+        # Plot Fluid
+        sc = ax.scatter(all_x, all_y, all_z, c=all_vals, cmap=cmap, s=1.5, alpha=0.08, edgecolors='none')
+        
+        # Axis Labels
+        ax.set_xlabel('X (m)', color='#64748b', fontsize=8)
+        ax.set_ylabel('Y (m)', color='#64748b', fontsize=8)
+        ax.set_zlabel('Z (m)', color='#64748b', fontsize=8)
+        ax.tick_params(colors='#475569', labelsize=7)
+        
+        # View & Zoom
+        ax.view_init(elev=v['elev'], azim=v['azim'])
+        if v['zoom']:
+            # Zoom into stagnation point (usually around x=0, y=0)
+            x_nose = np.min(all_x)
+            ax.set_xlim(x_nose - 0.2, x_nose + 0.5)
+            ax.set_ylim(-0.5, 0.5)
+            ax.set_zlim(-0.5, 0.5)
+        else:
+            ax.set_xlim(np.min(all_x), np.max(all_x))
+            ax.set_ylim(np.min(all_y), np.max(all_y))
+            ax.set_zlim(np.min(all_z), np.max(all_z))
+            
+        ax.set_title(v['title'], color='#94a3b8', fontsize=10, fontweight='bold')
+
+    # Colorbar at the bottom
+    cbar_ax = fig.add_axes([0.15, 0.05, 0.7, 0.02])
+    cbar = fig.colorbar(sc, cax=cbar_ax, orientation='horizontal')
+    cbar.set_label(label, color='#94a3b8', fontweight='bold')
+    cbar.ax.xaxis.set_tick_params(color='#94a3b8', labelcolor='#94a3b8')
     
-    plt.title('3D Axisymmetric Upscaling (Thermal Field + Geometry)', color='white', fontsize=15)
+    plt.suptitle(f'3D Axisymmetric Upscaling Multi-Angle: {label}', color='white', fontsize=18, fontweight='800', y=0.98)
+    plt.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.9, wspace=0.1, hspace=0.1)
     
-    # Set viewing angle for better perspective
-    ax.view_init(elev=20, azim=-45)
-    
-    plt.savefig(output_path, dpi=150, facecolor=fig.get_facecolor())
+    plt.savefig(output_path, dpi=180, facecolor=fig.get_facecolor())
     plt.close()
-    print(f"[+] 3D Upscaled visualization saved to {output_path}")
+    print(f"[+] 3D Multi-angle montage ({prop}) saved to {output_path}")
+
+def export_upscaled_vtk(grid_file, output_path):
+    """Exports the 3D upscaled data to a VTK file readable by ParaView."""
+    print(f"[*] Exporting 3D upscaled data to ParaView VTK: {output_path}")
+    data = parse_grid_dump(grid_file)
+    if len(data) == 0: return
+    
+    x_2d = (data[:, 0] + data[:, 2]) / 2
+    y_2d = (data[:, 1] + data[:, 3]) / 2
+    u_2d = data[:, 5]
+    v_2d = data[:, 6]
+    w_2d = data[:, 7]
+    temp_2d = data[:, 8]
+    
+    # 3x Resolution (consistent with visualizer)
+    n_slices = 48
+    thetas = np.linspace(0, 2*np.pi, n_slices)
+    
+    with open(output_path, 'w') as f:
+        f.write("# vtk DataFile Version 3.0\n")
+        f.write("StellarOrion 3D Upscaled Flow Field\n")
+        f.write("ASCII\n")
+        f.write("DATASET UNSTRUCTURED_GRID\n")
+        
+        n_pts_2d = len(x_2d)
+        total_pts = n_pts_2d * n_slices
+        f.write(f"POINTS {total_pts} float\n")
+        
+        # Calculate all points
+        for theta in thetas:
+            for i in range(n_pts_2d):
+                px = x_2d[i]
+                py = y_2d[i] * np.cos(theta)
+                pz = y_2d[i] * np.sin(theta)
+                f.write(f"{px} {py} {pz}\n")
+        
+        f.write(f"POINT_DATA {total_pts}\n")
+        
+        # Temperature
+        f.write("SCALARS Temperature float 1\n")
+        f.write("LOOKUP_TABLE default\n")
+        for _ in range(n_slices):
+            for t in temp_2d:
+                f.write(f"{t}\n")
+                
+        # Velocity
+        f.write("SCALARS Velocity float 1\n")
+        f.write("LOOKUP_TABLE default\n")
+        for _ in range(n_slices):
+            for i in range(n_pts_2d):
+                vel = np.sqrt(u_2d[i]**2 + v_2d[i]**2 + w_2d[i]**2)
+                f.write(f"{vel}\n")
+
+        # Mach
+        f.write("SCALARS Mach float 1\n")
+        f.write("LOOKUP_TABLE default\n")
+        for _ in range(n_slices):
+            for i in range(n_pts_2d):
+                vel = np.sqrt(u_2d[i]**2 + v_2d[i]**2 + w_2d[i]**2)
+                sound = np.sqrt(1.4 * 287.05 * temp_2d[i])
+                f.write(f"{vel/sound}\n")
+                
+    print(f"[+] VTK Export complete: {output_path}")
 
 def generate_preview(surf_file, output_path, params=None):
     """Generates a 2D preview of the HIAD wall and domain bounds with parameter annotations."""
