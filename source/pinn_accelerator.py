@@ -48,69 +48,73 @@ def parse_sparta_grid(filepath):
     Y = data[:, 2:] # (rho, u, v, T, p)
     return X, Y
 
-def pde_euler_2d(x, y, v_stream=None):
-    """2D Steady Compressible Euler Equations for PINN.
-    If v_stream is provided as a dde.Variable, it will be estimated (Inverse problem).
-    """
+def pde_euler_2d(x, y, v_stream=None, scales=None):
+    """2D Steady Compressible Euler Equations for PINN (Dimensionless form)."""
     import deepxde as dde
-    rho = y[:, 0:1]
-    u = y[:, 1:2]
-    v = y[:, 2:3]
-    T = y[:, 3:4]
-    p = y[:, 4:5]
+    # If no scales provided, use 1.0 (Dimensional form)
+    if scales is None:
+        scales = {"rho": 1.0, "u": 1.0, "v": 1.0, "T": 1.0, "p": 1.0, "L": 1.0}
+    
+    rho_r, u_r, v_r, T_r, p_r, L_r = scales["rho"], scales["u"], scales["v"], scales["T"], scales["p"], scales["L"]
+    
+    rho_bar = y[:, 0:1]
+    u_bar = y[:, 1:2]
+    v_bar = y[:, 2:3]
+    T_bar = y[:, 3:4]
+    p_bar = y[:, 4:5]
     
     # Gas constants (Air)
     R = 287.05
     
-    # Derivatives
+    # Dimensionless derivatives (w.r.t scaled x, y)
     drho_x = dde.grad.jacobian(y, x, i=0, j=0)
     drho_y = dde.grad.jacobian(y, x, i=0, j=1)
-    
     du_x = dde.grad.jacobian(y, x, i=1, j=0)
     du_y = dde.grad.jacobian(y, x, i=1, j=1)
-    
     dv_x = dde.grad.jacobian(y, x, i=2, j=0)
     dv_y = dde.grad.jacobian(y, x, i=2, j=1)
-    
     dp_x = dde.grad.jacobian(y, x, i=4, j=0)
     dp_y = dde.grad.jacobian(y, x, i=4, j=1)
     
-    # Continuity: div(rho * U) = 0
-    continuity = drho_x * u + rho * du_x + drho_y * v + rho * dv_y
+    # Non-dimensionalized residuals
+    # 1. Continuity: div(rho * U) = 0
+    continuity = drho_x * u_bar + rho_bar * du_x + drho_y * v_bar + rho_bar * dv_y
     
-    # Momentum X: rho*(u*ux + v*uy) + px = 0
-    mom_x = rho * (u * du_x + v * du_y) + dp_x
+    # 2. Momentum X: rho*(u*ux + v*uy) + px = 0
+    # Scaled by (rho_r * u_r^2 / L_r)
+    mom_x = rho_bar * (u_bar * du_x + v_bar * du_y) + (p_r / (rho_r * u_r**2)) * dp_x
     
-    # Momentum Y: rho*(u*vx + v*vy) + py = 0
-    mom_y = rho * (u * dv_x + v * dv_y) + dp_y
+    # 3. Momentum Y: rho*(u*vx + v*vy) + py = 0
+    mom_y = rho_bar * (u_bar * dv_x + v_bar * dv_y) + (p_r / (rho_r * u_r**2)) * dp_y
     
-    # Equation of State: p = rho * R * T
-    eos = p - rho * R * T
+    # 4. Equation of State: p = rho * R * T
+    # Scaled by p_r
+    eos = p_bar - (rho_r * R * T_r / p_r) * rho_bar * T_bar
     
-    res = [continuity, mom_x, mom_y, eos]
-    
-    # Optional: If we are estimating v_stream (e.g. for inverse problems)
-    if v_stream is not None:
-        # We could add a penalty if the predicted u at inlet differs from v_stream
-        # But usually in inverse problems, we learn the parameter that best fits the OBSERVED data
-        pass
-        
-    return res
+    return [continuity, mom_x, mom_y, eos]
 
 class PINNAccelerator:
     def __init__(self, device="mps"):
         import deepxde as dde
         import torch
         self.device = device
-        if device == "mps":
-            dde.config.set_default_device("mps")
-        elif device == "cuda":
-            dde.config.set_default_device("cuda")
+        # Some versions of DeepXDE might not have set_default_device
+        if hasattr(dde.config, "set_default_device"):
+            try:
+                if device == "mps":
+                    dde.config.set_default_device("mps")
+                elif device == "cuda":
+                    dde.config.set_default_device("cuda")
+            except Exception as e:
+                print(f"Warning: Could not set DeepXDE default device to {device}: {e}")
+        else:
+            print(f"Note: deepxde.config.set_default_device not found. DeepXDE will use its internal defaults for {os.environ.get('DDE_BACKEND', 'pytorch')}.")
         
         self.model = None
-        self.v_est = dde.Variable(10000.0) # Trainable parameter for inverse estimation
+        self.scales = None
+        self.v_est = dde.Variable(1.0) # Scaled variable
 
-    def train_from_checkpoint(self, grid_file, domain_bounds, iterations=1000, inverse=False):
+    def train_from_checkpoint(self, grid_file, domain_bounds, iterations=2000, inverse=False):
         """Uses SPARTA data as anchor points for PINN refinement or inverse estimation."""
         import deepxde as dde
         X_data, Y_data = parse_sparta_grid(grid_file)
@@ -118,49 +122,72 @@ class PINNAccelerator:
             print("Error: Could not parse SPARTA grid file.")
             return
 
-        # Define Domain: Rectangle [xmin, xmax] x [0, ymax]
-        geom = dde.geometry.Rectangle([domain_bounds[0], 0], [domain_bounds[1], domain_bounds[2]])
+        # Calculate Scales based on freestream or mean data
+        # Using max values to keep everything in [0, 1] range roughly
+        self.scales = {
+            "rho": np.max(Y_data[:, 0]) if np.max(Y_data[:, 0]) > 0 else 1e-5,
+            "u": np.max(np.abs(Y_data[:, 1])) if np.max(np.abs(Y_data[:, 1])) > 0 else 10000.0,
+            "v": np.max(np.abs(Y_data[:, 2])) if np.max(np.abs(Y_data[:, 2])) > 0 else 1000.0,
+            "T": np.max(Y_data[:, 3]) if np.max(Y_data[:, 3]) > 0 else 5000.0,
+            "p": np.max(Y_data[:, 4]) if np.max(Y_data[:, 4]) > 0 else 1000.0,
+            "L": max(abs(domain_bounds[0]), abs(domain_bounds[1]), abs(domain_bounds[2]))
+        }
         
-        # Use PointSet BC for the SPARTA data
-        observe_y0 = dde.icbc.PointSetBC(X_data, Y_data[:, 0:1], component=0) # rho
-        observe_y1 = dde.icbc.PointSetBC(X_data, Y_data[:, 1:2], component=1) # u
-        observe_y2 = dde.icbc.PointSetBC(X_data, Y_data[:, 2:3], component=2) # v
-        observe_y3 = dde.icbc.PointSetBC(X_data, Y_data[:, 3:4], component=3) # T
-        observe_y4 = dde.icbc.PointSetBC(X_data, Y_data[:, 4:5], component=4) # p
+        # Scale Data
+        X_scaled = X_data / self.scales["L"]
+        Y_scaled = Y_data / np.array([self.scales["rho"], self.scales["u"], self.scales["v"], self.scales["T"], self.scales["p"]])
+        bounds_scaled = [domain_bounds[0]/self.scales["L"], domain_bounds[1]/self.scales["L"], domain_bounds[2]/self.scales["L"]]
 
-        pde_fn = lambda x, y: pde_euler_2d(x, y, v_stream=self.v_est if inverse else None)
+        # Define Domain
+        geom = dde.geometry.Rectangle([bounds_scaled[0], 0], [bounds_scaled[1], bounds_scaled[2]])
+        
+        # Observation BCs (Scaled)
+        observe_y0 = dde.icbc.PointSetBC(X_scaled, Y_scaled[:, 0:1], component=0) # rho
+        observe_y1 = dde.icbc.PointSetBC(X_scaled, Y_scaled[:, 1:2], component=1) # u
+        observe_y2 = dde.icbc.PointSetBC(X_scaled, Y_scaled[:, 2:3], component=2) # v
+        observe_y3 = dde.icbc.PointSetBC(X_scaled, Y_scaled[:, 3:4], component=3) # T
+        observe_y4 = dde.icbc.PointSetBC(X_scaled, Y_scaled[:, 4:5], component=4) # p
+
+        pde_fn = lambda x, y: pde_euler_2d(x, y, v_stream=self.v_est if inverse else None, scales=self.scales)
 
         data = dde.data.PDE(
             geom,
             pde_fn,
             [observe_y0, observe_y1, observe_y2, observe_y3, observe_y4],
-            num_domain=2000,
-            num_boundary=400,
-            anchors=X_data
+            num_domain=2500,
+            num_boundary=500,
+            anchors=X_scaled
         )
 
-        net = dde.nn.FNN([2] + [64] * 4 + [5], "tanh", "Glorot uniform")
+        # Deeper network for complex shock features
+        net = dde.nn.FNN([2] + [128] * 5 + [5], "tanh", "Glorot uniform")
         self.model = dde.Model(data, net)
 
-        # Optimization
+        # Optimization with higher iterations for convergence
         if inverse:
-            # For inverse problems, we include the variable in the optimizer
             self.model.compile("adam", lr=1e-3, external_trainable_variables=self.v_est)
         else:
-            self.model.compile("adam", lr=1e-3)
+            self.model.compile("adam", lr=1e-3, loss_weights=[1, 1, 1, 1, 10, 10, 10, 10, 10]) # Favor data match initially
             
         self.model.train(iterations=iterations, display_every=100)
         
         if inverse:
-            print(f"Estimated v_stream: {self.v_est.item()}")
+            v_real = self.v_est.item() * self.scales["u"]
+            print(f"Estimated v_stream: {v_real}")
         
         return self.model
 
     def predict_gap_fill(self, X_query):
-        """Predicts values at query points to 'fill the gaps'."""
-        if self.model is None:
+        """Predicts values at query points and un-scales them."""
+        if self.model is None or self.scales is None:
             return None
-        return self.model.predict(X_query)
+        
+        X_scaled = X_query / self.scales["L"]
+        Y_scaled = self.model.predict(X_scaled)
+        
+        # Un-scale
+        Y_unscaled = Y_scaled * np.array([self.scales["rho"], self.scales["u"], self.scales["v"], self.scales["T"], self.scales["p"]])
+        return Y_unscaled
 
 if __name__ == "__main__":
     # Quick test if run directly

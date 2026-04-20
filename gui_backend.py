@@ -63,7 +63,7 @@ class Api:
                     "--angle", str(params.get('angle', 60.0)),
                     "--nose", str(params.get('nose_radius', 0.191)),
                     "--toroids", str(params.get('toroids', 7)),
-                    "--thickness", str(params.get('thickness', 0.02)),
+                    "--thickness", str(params.get('thickness', 0.0254)),
                     "--scallop_pts", str(params.get('scallop_pts', 5)),
                     "--scallop_angle", str(params.get('scallop_angle', 90.0)),
                     "--nose_type", str(params.get('nose_type', 'smooth'))
@@ -198,7 +198,7 @@ class Api:
         # T_back = T_init + (q_stag * duration) / (rho * Cp * thickness)
         t_initial = 300.0 # K
         duration = float(opt_params.get('env_duration', 450.0))  # s
-        tps_thickness = float(sample_dict.get('thickness', 0.02)) # m
+        tps_thickness = float(sample_dict.get('thickness', 0.0254)) # m
         
         # F-TPS Properties (Flexible Thermal Protection System like LOFTID)
         rho_tps = 250.0  # kg/m^3
@@ -321,9 +321,9 @@ class Api:
         d_val = float(kwargs.get('diameter', opt_params.get('base_diameter', 3.0)))
         
         # Domain scaling (Honor GUI overrides if present)
-        xmin = float(opt_params.get('env_xmin', -0.5 * d_val))
-        xmax = float(opt_params.get('env_xmax', 1.2 * d_val))
-        ymax = float(opt_params.get('env_ymax', 0.8 * d_val))
+        xmin = float(opt_params.get('env_xmin', -0.6 * d_val))
+        xmax = float(opt_params.get('env_xmax', 1.8 * d_val))
+        ymax = float(opt_params.get('env_ymax', 1.2 * d_val))
         
         react_model = opt_params.get('env_react', 'tce')
         react_cmd = f"react           {react_model} air.react" if react_model != 'none' else "# No reaction model"
@@ -353,7 +353,7 @@ global          gridcut 0.0 comm/sort yes
 boundary        o ar p
 
 create_box      {xmin:.2f} {xmax:.2f} 0.0 {ymax:.2f} -0.5 0.5
-create_grid     100 100 1
+create_grid     400 400 1
 balance_grid    rcb cell
 
 global          nrho {n_rho} fnum {opt_params.get('env_fnum', '1e16')}
@@ -393,6 +393,7 @@ dump            2 grid all {dump_freq} results_reference/grid.*.out id xlo ylo x
 
 stats           100
 stats_style     step cpu np nattempt ncoll nscoll nscheck
+
 {steady_state_cmd}
 run             {opt_params.get('env_run', '1000')}
 """
@@ -496,7 +497,7 @@ run             {opt_params.get('env_run', '1000')}
             "--angle", str(opt_params.get('base_angle', 60.0)),
             "--nose", str(opt_params.get('base_nose', 0.191)),
             "--toroids", str(opt_params.get('base_toroids', 7)),
-            "--thickness", str(opt_params.get('base_thick', 0.02)),
+            "--thickness", str(opt_params.get('base_thick', 0.0254)),
             "--scallop_pts", str(opt_params.get('base_scallop_pts', 5)),
             "--scallop_angle", str(opt_params.get('base_scallop_ang', 90.0)),
             "--output", "HIAD_custom"

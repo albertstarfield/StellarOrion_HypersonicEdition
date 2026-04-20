@@ -13,7 +13,7 @@ These parameters define the physical shape of the Hypersonic Inflatable Aerodyna
 | `angle` (Cone Angle) | 60.0° | 10° – 85° | **Stability & Drag:** Steeper angles increase axial force ($f_x$) but may affect aerodynamic stability. |
 | `nose_radius` | 0.191 m | 0.14 – 0.24 m | **Thermal Protection:** Controls shock standoff. A larger nose spreads the Kinetic Energy flux ($ke$). |
 | `toroids` | 7 | 3 – 10+ | **Structural:** Inflatable rings. More toroids improve shape retention under high pressure. |
-| `thickness` | 0.02 m | 0.01 – 0.03 m | **Insulation ($\delta_{TPS}$):** Crucial for preventing heat soak to the payload. |
+| `thickness` | 0.0254 m | 0.01 – 0.04 m | **Insulation ($\delta_{TPS}$):** Crucial for preventing heat soak. 2.54cm (1 inch) is the IRVE-3/LOFTID baseline. |
 | `scallop_pts` | 5 | 2 – 7 | **Fidelity:** Number of segments in the inflatable surface. Affects local flow turbulence. |
 | `scallop_angle` | 90.0° | 75° – 105° | **Surface Aero:** Curvature of lobes. Affects heating concentrations. |
 | `mass` | 281.0 kg | 231 – 331 kg | **Ballistic Loading:** Directly impacts $\beta$ and instantaneous g-load ($n$). |
