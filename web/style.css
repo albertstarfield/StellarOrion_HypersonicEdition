@@ -546,3 +546,30 @@ input:focus, select:focus {
     box-shadow: none;
 }
 
+
+/* Mission Brief Dynamic Styling */
+.mission-brief-grid > div {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+    cursor: default;
+}
+
+.mission-brief-grid > div:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.mission-brief-grid h4 {
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+@keyframes pulse-soft {
+    0%, 100% { box-shadow: 0 0 15px var(--primary-glow); }
+    50% { box-shadow: 0 0 25px var(--primary-glow); }
+}
+
+.mission-brief-grid > div:first-child {
+    animation: pulse-soft 4s infinite ease-in-out;
+}

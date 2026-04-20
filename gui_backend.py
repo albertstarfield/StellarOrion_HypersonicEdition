@@ -446,7 +446,7 @@ run             {opt_params.get('env_run', '1000')}
         b_ang = float(opt_params.get('base_angle', 60.0))
         b_tor = int(opt_params.get('base_toroids', 7))
         b_nos = float(opt_params.get('base_nose', 0.191))
-        b_thk = float(opt_params.get('base_thick', 0.02))
+        b_thk = float(opt_params.get('base_thick', 0.0254))
         b_spt = int(opt_params.get('base_scallop_pts', 5))
         b_san = float(opt_params.get('base_scallop_ang', 90.0))
         b_mas = float(opt_params.get('base_mass', 281.0))
