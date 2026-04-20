@@ -155,7 +155,7 @@ class Api:
                         lines = f.readlines()
                         temp_start = False
                         for line in lines:
-                            if "ITEM: ENTRIES" in line:
+                            if "ITEM: CELLS" in line:
                                 temp_start = True
                                 continue
                             if temp_start:
