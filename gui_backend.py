@@ -637,8 +637,27 @@ run             {opt_params.get('env_run', '1000')}
         self.log_to_gui(f"[*] PHASE 2: GENERATING {samples_n} SBO SAMPLES (LHS)...")
         training_x = [] 
         training_y = [] 
+        
+        checkpoint_path = os.path.join(cad_dir, "opt_checkpoint.json")
+        start_idx = 0
+        
+        if os.path.exists(checkpoint_path):
+            try:
+                import json
+                with open(checkpoint_path, 'r') as f:
+                    checkpoint = json.load(f)
+                    # Verify if the sample count matches to ensure we are resuming the same job
+                    if checkpoint.get('total_samples') == samples_n:
+                        training_x = checkpoint['training_x']
+                        training_y = checkpoint['training_y']
+                        start_idx = checkpoint['next_idx']
+                        self.log_to_gui(f"[!] DETECTED INCOMPLETE SESSION. Resuming from Sample {start_idx + 1}/{samples_n}...")
+                        if is_gui:
+                            self.window.evaluate_js("alert('Unexpected Error has occurred and progress session has been resumed')")
+            except Exception as e:
+                self.log_to_gui(f"    [!] Warning: Could not load checkpoint: {e}. Starting fresh.")
 
-        for i in range(samples_n):
+        for i in range(start_idx, samples_n):
             sample_dict = {k: v['base'] for k, v in search_map.items()}
             current_x_row = []
             for p_name in active_params:
@@ -702,9 +721,50 @@ run             {opt_params.get('env_run', '1000')}
             val = res_dict[goal]
             f_metrics = self.calculate_flight_metrics(res_dict, opt_params, sample_dict)
             
+            # --- Per-Sample Storage & Post-processing ---
+            sample_dir = os.path.join(cad_dir, "results_samples", f"sample_{i+1}")
+            os.makedirs(sample_dir, exist_ok=True)
+            
+            self.log_to_gui(f"    [*] Archiving results for Sample {i+1}...")
+            # Copy CAD
+            for ext in [".step", ".stl", ".surf"]:
+                src_cad = os.path.join(cad_dir, f"HIAD_opt{ext}")
+                if os.path.exists(src_cad):
+                    import shutil
+                    shutil.copy2(src_cad, os.path.join(sample_dir, f"geometry{ext}"))
+            
+            # Archive SPARTA raw data
+            raw_dir = os.path.join(cad_dir, "results")
+            if os.path.exists(raw_dir):
+                import shutil
+                shutil.copytree(raw_dir, os.path.join(sample_dir, "raw_data"), dirs_exist_ok=True)
+            
+            # Generate Visuals for this sample
+            try:
+                from source import visualizer
+                grid_files = sorted([os.path.join(raw_dir, f) for f in os.listdir(raw_dir) if f.startswith("grid.") and f.endswith(".out")])
+                if grid_files:
+                    visualizer.generate_animation(grid_files, os.path.join(sample_dir, "simulation_anim.mp4"))
+                    visualizer.generate_plots(grid_files[-1], sample_dir)
+                    visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(sample_dir, "3d_temp.png"), surf_file=os.path.join(cad_dir, "HIAD_opt.surf"), prop='temp')
+            except Exception as ve:
+                self.log_to_gui(f"    [!] Warning: Visual post-processing failed for Sample {i+1}: {ve}")
+
             training_x.append(current_x_row)
             training_y.append([val])
             
+            # Save Checkpoint
+            try:
+                import json
+                with open(checkpoint_path, 'w') as f:
+                    json.dump({
+                        'training_x': training_x, 
+                        'training_y': training_y, 
+                        'next_idx': i + 1,
+                        'total_samples': samples_n
+                    }, f)
+            except: pass
+
             remaining = samples_n - (i + 1)
             etr = remaining * sample_dur
             
@@ -725,6 +785,11 @@ run             {opt_params.get('env_run', '1000')}
                 self.log_to_gui(f"    [*] Estimated Time Remaining: {etr/60:.1f} minutes")
             
             if is_gui: self.window.evaluate_js(f"updateProgress({10 + int((i+1)/samples_n * 50)})")
+
+        # Clean up checkpoint on successful completion of all samples
+        if os.path.exists(checkpoint_path):
+            try: os.remove(checkpoint_path)
+            except: pass
 
         # 4. Metamodel Training
         self.log_to_gui(f"[*] Training {n_dim}D Metamodel Prognosis (MoP) via PyTorch...")
