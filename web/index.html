@@ -64,6 +64,12 @@
                     <div class="step-label">Mission Results</div>
                 </div>
             </div>
+            <div class="sidebar-footer" style="padding: 10px 20px; border-top: 1px solid var(--glass-border); margin-top: auto;">
+                <div class="step-item" style="padding: 10px 12px; border-radius: 12px; cursor: pointer; border-left: none; gap: 12px;" onclick="openHistory()">
+                    <div class="step-num" style="background: var(--primary-glow); color: var(--primary);">H</div>
+                    <div class="step-label" style="font-size: 0.8rem; letter-spacing: 0;">Optimization History</div>
+                </div>
+            </div>
         </div>
 
         <div class="main-content">
@@ -761,7 +767,7 @@
                                 Total number of iterations the solver runs to reach steady state.
                             </div>
                         </div>
-                        <input type="number" id="env-run" value="1000" step="500">
+                        <input type="number" id="env-run" value="1000" step="500" onchange="onSimStepsChange()">
                     </div>
                 </div>
                 <div class="param-grid" style="margin-top: 15px; grid-template-columns: repeat(3, 1fr); background: rgba(56, 189, 248, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.2);">
@@ -822,6 +828,9 @@
                             <option value="sst-k-omega">SST k-omega (Turbulent)</option>
                             <option value="laminar">Laminar (High-Altitude)</option>
                         </select>
+                        <div id="viscous-warning" style="display: none; font-size: 0.7rem; color: #ef4444; margin-top: 6px; padding: 6px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 6px; font-weight: 600;">
+                            ⚠️ MODEL INCOMPATIBILITY: SPARTA (DSMC) resolves viscosity kinetically via VSS (Variable Soft Sphere). Viscous/Turbulent models are for continuum backends only.
+                        </div>
                         <div style="font-size: 0.65rem; color: #64748b; margin-top: 4px; font-style: italic;">
                             * SST k-omega applies to PyFluent; SPARTA uses kinetic VSS.
                         </div>
@@ -850,36 +859,29 @@
                         </select>
                     </div>
                     <div class="input-group" style="display: flex; align-items: center; gap: 10px; padding-top: 25px;">
-                        <input type="checkbox" id="env-steady-state" style="width: 20px; height: 20px;">
+                        <input type="checkbox" id="env-steady-state" checked style="width: 20px; height: 20px;" onchange="onSteadyStateChange()">
                         <div class="tooltip-container">
-                            <label for="env-steady-state">Steady State Check</label>
+                            <label for="env-steady-state">Automatic Steady State Check</label>
                             <span class="info-icon">?</span>
                             <div class="tooltip-text">
                                 <strong>Automatic Convergence</strong>
-                                Enable to automatically stop the simulation when the flow reaches a steady state (based on drag force stability).
+                                Enable to automatically stop the simulation when the flow reaches a steady state (based on drag force stability). Required for DeepXDE PINN refinement.
                             </div>
                         </div>
                     </div>
-                    <div class="input-group" style="display: flex; align-items: center; gap: 10px; padding-top: 25px;">
-                        <input type="checkbox" id="pinn-accel" checked style="width: 20px; height: 20px;">
-                        <div class="tooltip-container">
-                            <label for="pinn-accel">DeepXDE Tensor GPU Acceleration</label>
-                            <span class="info-icon">?</span>
-                            <div class="tooltip-text">
-                                <strong>DeepXDE Tensor Acceleration</strong>
-                                Physics-Informed Neural Networks refine the flow field, fill data gaps, and perform inverse parameter estimation.
-                                <br><br>
-                                <b>Hardware Support:</b>
-                                <br>• NVIDIA CUDA / AMD ROCm
-                                <br>• Apple Silicon (MPS)
-                                <br>• Intel OneAPI / OpenCL
-                                <br>• Huawei CANN (Ascend)
-                                <br>• Moore Threads MUSA
-                                <br>• Biren SUPA / Innosilicon
-                                <br>• Snapdragon / ARM Generic
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="pinn-accel" checked style="width: 20px; height: 20px;" onchange="onPinnAccelChange()">
+                                <label for="pinn-accel">DeepXDE Tensor GPU Acceleration</label>
+                            </div>
+                            <div id="pinn-fidelity-warning" style="display: none; font-size: 0.65rem; color: #f59e0b; padding: 4px 8px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 4px;">
+                                ⚠️ LOW FIDELITY: Sim steps < 1000. PINN training may be unstable or inaccurate.
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-left: 30px;">
+                                <input type="checkbox" id="force-pinn" onchange="onSimStepsChange()" style="width: 16px; height: 16px;">
+                                <label for="force-pinn" style="font-size: 0.75rem; color: var(--text-dim);">Enforce DeepXDE (Override Safeguard)</label>
                             </div>
                         </div>
-                    </div>
                     <div class="input-group">
                         <div class="tooltip-container">
                             <label>Convergence Tol</label>
@@ -1180,5 +1182,68 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- History View Modal -->
+    <div id="history-modal" class="modal" style="display: none; z-index: 2000; background: rgba(0, 31, 63, 0.2); backdrop-filter: blur(5px);">
+        <div class="modal-content" style="width: 90%; max-width: 1000px; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 24px; box-shadow: 0 40px 100px -20px rgba(0,0,0,0.3);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 24px 32px; border-bottom: 1px solid var(--glass-border); background: rgba(0, 128, 128, 0.03);">
+                <h2 style="margin: 0; display: flex; align-items: center; gap: 15px; font-family: var(--font-family); font-weight: 800; color: var(--primary); font-size: 1.3rem;">
+                    <span class="logo-icon" style="width: 28px; height: 28px; font-size: 0.9rem;">H</span> Optimization History
+                </h2>
+                <button class="btn-close" onclick="closeHistory()" style="background: none; border: none; color: var(--text-dim); font-size: 1.8rem; cursor: pointer; line-height: 1; transition: color 0.2s;">×</button>
+            </div>
+            <div class="modal-body" style="padding: 0; flex: 1; overflow: hidden; display: flex;">
+                <!-- History List -->
+                <div id="history-list-panel" style="width: 320px; border-right: 1px solid var(--glass-border); background: rgba(0,0,0,0.02); overflow-y: auto;">
+                    <div id="history-list" style="padding: 16px;">
+                        <!-- History items -->
+                    </div>
+                </div>
+                <!-- Details Panel -->
+                <div id="history-details-panel" style="flex: 1; padding: 32px; background: #fff; overflow-y: auto; position: relative;">
+                    <div id="history-details-empty" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-dim); opacity: 0.6;">
+                        <div style="font-size: 3rem; margin-bottom: 15px; filter: grayscale(1);">📋</div>
+                        <p style="font-weight: 600;">Select a simulation run to view details</p>
+                    </div>
+                    <div id="history-details-content" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+                            <div>
+                                <h3 id="hist-run-name" style="margin: 0; color: var(--primary); font-size: 1.6rem; font-weight: 800;">Run #1</h3>
+                                <div id="hist-run-meta" style="font-size: 0.9rem; color: var(--text-dim); margin-top: 4px; font-weight: 500;">2024-04-21 14:00</div>
+                            </div>
+                            <div id="hist-run-status" class="badge">Completed</div>
+                        </div>
+                        
+                        <div class="param-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 40px;">
+                            <div style="background: #f8fafc; padding: 18px; border-radius: 16px; border: 1px solid var(--glass-border);">
+                                <small style="display: block; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1.2px; font-size: 0.65rem; font-weight: 800;">Optimization Goal</small>
+                                <strong id="hist-run-goal" style="font-size: 1rem; color: var(--text);">Drag</strong>
+                            </div>
+                            <div style="background: #f8fafc; padding: 18px; border-radius: 16px; border: 1px solid var(--glass-border);">
+                                <small style="display: block; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1.2px; font-size: 0.65rem; font-weight: 800;">Total Samples</small>
+                                <strong id="hist-run-samples" style="font-size: 1rem; color: var(--text);">24 / 24</strong>
+                            </div>
+                            <div style="background: #f8fafc; padding: 18px; border-radius: 16px; border: 1px solid var(--glass-border);">
+                                <small style="display: block; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1.2px; font-size: 0.65rem; font-weight: 800;">Best Metric</small>
+                                <strong id="hist-run-best" style="color: var(--primary); font-size: 1rem;">0.8421</strong>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 20px;">
+                            <h4 style="margin-bottom: 15px; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800;">Sampling Timeline</h4>
+                            <div id="hist-samples-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 10px; max-height: 280px; overflow-y: auto; padding: 20px; background: #f8fafc; border-radius: 16px; border: 1px solid var(--glass-border);">
+                                <!-- Samples chips -->
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 40px; display: flex; gap: 15px;">
+                            <button id="btn-resume-run" class="btn btn-primary" style="flex: 2; padding: 14px 20px; font-size: 0.95rem;" onclick="resumeRun()">Resume Optimization</button>
+                            <button id="btn-delete-run" class="btn btn-secondary" style="flex: 1; border-color: #fee2e2; color: #ef4444;" onclick="deleteRun()">Delete Record</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

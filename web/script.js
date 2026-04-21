@@ -353,9 +353,28 @@ let remoteCaptureInterval = null;
 async function onBackendChange() {
     await toggleRemoteFields();
     const backendEl = document.getElementById('solver-backend');
+    const viscousModelEl = document.getElementById('env-viscous-model');
+    const viscousWarningEl = document.getElementById('viscous-warning');
+    
     if (backendEl) {
-        remoteVerified = (backendEl.value === 'sparta');
+        const isSparta = (backendEl.value === 'sparta');
+        remoteVerified = isSparta;
+        
+        if (viscousModelEl) {
+            viscousModelEl.disabled = isSparta;
+            viscousModelEl.style.opacity = isSparta ? "0.5" : "1";
+            viscousModelEl.style.cursor = isSparta ? "not-allowed" : "pointer";
+            viscousModelEl.style.background = isSparta ? "rgba(0,0,0,0.1)" : "#f8fafc";
+            
+            // Auto-select laminar if sparta (purely for visual logic, though setting is ignored)
+            if (isSparta) viscousModelEl.value = "laminar";
+        }
+        
+        if (viscousWarningEl) {
+            viscousWarningEl.style.display = isSparta ? "block" : "none";
+        }
     }
+    
     const status = document.getElementById('test-readiness-status');
     if (status) status.innerText = "";
     const installContainer = document.getElementById('python-install-container');
@@ -586,7 +605,9 @@ function loadRemoteParams() {
         setCheck('solver-gpu', params.gpu !== false);
         setVal('solver-bl-layers', params.bl_layers || '15');
         setVal('env-viscous-model', params.viscous || 'sst-k-omega');
-        toggleRemoteFields();
+        onBackendChange();
+    } else {
+        onBackendChange();
     }
 }
 
@@ -638,7 +659,12 @@ persistFields.forEach(id => {
     }
 });
 
-document.addEventListener('DOMContentLoaded', loadRemoteParams);
+document.addEventListener('DOMContentLoaded', () => {
+    loadRemoteParams();
+    const stepsEl = document.getElementById('env-run');
+    if (stepsEl) stepsEl.addEventListener('input', onSimStepsChange);
+    onSimStepsChange();
+});
 
 async function runIntegrationTest() {
     startRemoteAutoCapture();
@@ -732,7 +758,60 @@ async function buildSpartaImage() {
     }
 }
 
-// --- MISSING FUNCTIONS START ---
+function onPinnAccelChange() {
+    const pinnAccel = document.getElementById('pinn-accel');
+    const steadyState = document.getElementById('env-steady-state');
+    if (!pinnAccel || !steadyState) return;
+    
+    if (pinnAccel.checked) {
+        steadyState.checked = true;
+        steadyState.disabled = true;
+        steadyState.parentElement.style.opacity = "0.7";
+    } else {
+        steadyState.disabled = false;
+        steadyState.parentElement.style.opacity = "1";
+    }
+}
+
+function onSteadyStateChange() {
+    // If PINN is off, user can toggle this freely.
+}
+
+function onSimStepsChange() {
+    const stepsEl = document.getElementById('env-run');
+    const pinnAccel = document.getElementById('pinn-accel');
+    const forcePinn = document.getElementById('force-pinn');
+    const pinnWarning = document.getElementById('pinn-fidelity-warning');
+    
+    if (!stepsEl || !pinnAccel || !forcePinn) return;
+    
+    const steps = parseInt(stepsEl.value);
+    const threshold = 1000;
+    
+    if (steps < threshold && !forcePinn.checked) {
+        pinnAccel.checked = false;
+        pinnAccel.disabled = true;
+        pinnAccel.style.opacity = "0.5";
+        pinnAccel.parentElement.style.opacity = "0.5";
+        if (pinnWarning) {
+            pinnWarning.style.display = "block";
+            pinnWarning.innerText = "⚠️ LOW FIDELITY: Sim steps < 1000. PINN training may be unstable or inaccurate.";
+        }
+    } else {
+        pinnAccel.disabled = false;
+        pinnAccel.style.opacity = "1";
+        pinnAccel.parentElement.style.opacity = "1";
+        if (pinnWarning) {
+            if (steps < threshold) {
+                pinnWarning.style.display = "block";
+                pinnWarning.innerText = "⚠️ LOW FIDELITY: Training with override switch.";
+            } else {
+                pinnWarning.style.display = "none";
+            }
+        }
+    }
+    onPinnAccelChange(); // Sync steady state requirement
+}
 
 function syncTarget(metric, type) {
     const range = document.getElementById(`target-${metric}-range`);
@@ -1081,4 +1160,126 @@ function updateLHSSamples() {
     }
 }
 
-// --- MISSING FUNCTIONS END ---
+// --- OPTIMIZATION HISTORY LOGIC ---
+
+let selectedRunId = null;
+
+async function openHistory() {
+    document.getElementById('history-modal').style.display = 'flex';
+    await loadHistoryList();
+}
+
+function closeHistory() {
+    document.getElementById('history-modal').style.display = 'none';
+}
+
+async function loadHistoryList() {
+    const listEl = document.getElementById('history-list');
+    listEl.innerHTML = '<div style="text-align: center; padding: 20px;">Loading records...</div>';
+    
+    try {
+        const history = await window.pywebview.api.get_optimization_history();
+        if (!history || history.length === 0) {
+            listEl.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-dim);">No history records found.</div>';
+            return;
+        }
+
+        listEl.innerHTML = '';
+        history.forEach(run => {
+            const item = document.createElement('div');
+            item.className = `history-item ${selectedRunId === run.id ? 'selected' : ''}`;
+            item.setAttribute('data-run-id', run.id);
+            item.onclick = () => loadRunDetails(run.id);
+            
+            const date = new Date(run.timestamp).toLocaleString();
+            const statusClass = `badge-${run.status || 'running'}`;
+            
+            item.innerHTML = `
+                <div>
+                    <div style="font-weight: 700; font-size: 0.9rem;">${run.name}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 3px;">${date}</div>
+                </div>
+                <div class="badge ${statusClass}">${run.status || 'running'}</div>
+            `;
+            listEl.appendChild(item);
+        });
+    } catch (e) {
+        listEl.innerHTML = `<div style="text-align: center; padding: 20px; color: #f87171;">Error: ${e}</div>`;
+    }
+}
+
+async function loadRunDetails(runId) {
+    selectedRunId = runId;
+    
+    // Update selection in list without full re-render for better performance
+    document.querySelectorAll('.history-item').forEach(el => {
+        // We'll use a data attribute or check the onclick function content
+        // But since we are here, let's just re-apply based on a stored ID
+        el.classList.toggle('selected', el.getAttribute('data-run-id') == runId);
+    });
+
+    document.getElementById('history-details-empty').style.display = 'none';
+    const content = document.getElementById('history-details-content');
+    content.style.display = 'block';
+    
+    try {
+        const run = await window.pywebview.api.get_run_details(runId);
+        if (!run) return;
+
+        document.getElementById('hist-run-name').innerText = run.name;
+        document.getElementById('hist-run-meta').innerText = new Date(run.timestamp).toLocaleString();
+        
+        const statusEl = document.getElementById('hist-run-status');
+        statusEl.className = `badge badge-${run.status}`;
+        statusEl.innerText = run.status;
+
+        document.getElementById('hist-run-goal').innerText = run.goal.toUpperCase();
+        document.getElementById('hist-run-samples').innerText = `${run.current_sample} / ${run.samples}`;
+        document.getElementById('hist-run-best').innerText = run.best_val ? run.best_val.toFixed(4) : 'N/A';
+
+        // Samples timeline
+        const samplesList = document.getElementById('hist-samples-list');
+        samplesList.innerHTML = '';
+        if (run.samples_data && run.samples_data.length > 0) {
+            run.samples_data.forEach((s, idx) => {
+                const chip = document.createElement('div');
+                chip.className = 'sample-chip';
+                chip.innerText = `S${idx + 1}`;
+                chip.title = `Metric: ${JSON.parse(s.metrics)[run.goal].toFixed(4)}`;
+                samplesList.appendChild(chip);
+            });
+        } else {
+            samplesList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); font-size: 0.8rem;">No samples recorded yet.</div>';
+        }
+
+        // Resume button visibility
+        const resumeBtn = document.getElementById('btn-resume-run');
+        if (run.status !== 'completed' && run.status !== 'failed') {
+            resumeBtn.style.display = 'block';
+        } else {
+            resumeBtn.style.display = 'none';
+        }
+
+    } catch (e) {
+        console.error("Error loading run details:", e);
+    }
+}
+
+async function resumeRun() {
+    if (!selectedRunId) return;
+    if (confirm("Resume this optimization run? This will load saved parameters and continue sampling.")) {
+        closeHistory();
+        await window.pywebview.api.resume_run_from_history(selectedRunId);
+    }
+}
+
+async function deleteRun() {
+    if (!selectedRunId) return;
+    if (confirm("Are you sure you want to delete this history record? This cannot be undone.")) {
+        await window.pywebview.api.delete_run(selectedRunId);
+        selectedRunId = null;
+        document.getElementById('history-details-content').style.display = 'none';
+        document.getElementById('history-details-empty').style.display = 'flex';
+        loadHistoryList();
+    }
+}

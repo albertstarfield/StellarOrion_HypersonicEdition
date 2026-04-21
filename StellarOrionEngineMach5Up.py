@@ -7,6 +7,105 @@ import shutil
 import time
 import numpy as np
 import paramiko
+import sqlite3
+import datetime
+
+class HistoryManager:
+    def __init__(self, db_path="optimization_history.db"):
+        self.db_path = db_path
+        self._init_db()
+
+    def _init_db(self):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS optimization_runs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp TEXT,
+                    name TEXT,
+                    status TEXT,
+                    goal TEXT,
+                    samples INTEGER,
+                    current_sample INTEGER,
+                    parameters TEXT,
+                    best_val REAL,
+                    best_config TEXT
+                )
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS samples (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    run_id INTEGER,
+                    sample_idx INTEGER,
+                    parameters TEXT,
+                    metrics TEXT,
+                    flight_metrics TEXT,
+                    duration REAL,
+                    timestamp TEXT,
+                    FOREIGN KEY(run_id) REFERENCES optimization_runs(id)
+                )
+            """)
+            conn.commit()
+
+    def create_run(self, name, goal, samples, parameters):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            timestamp = datetime.datetime.now().isoformat()
+            cursor.execute(
+                "INSERT INTO optimization_runs (timestamp, name, status, goal, samples, current_sample, parameters) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (timestamp, name, "running", goal, samples, 0, json.dumps(parameters))
+            )
+            return cursor.lastrowid
+
+    def update_run_progress(self, run_id, current_sample, best_val=None, best_config=None, status=None):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            if status:
+                cursor.execute("UPDATE optimization_runs SET current_sample = ?, best_val = ?, best_config = ?, status = ? WHERE id = ?",
+                               (current_sample, best_val, json.dumps(best_config) if best_config else None, status, run_id))
+            else:
+                cursor.execute("UPDATE optimization_runs SET current_sample = ?, best_val = ?, best_config = ? WHERE id = ?",
+                               (current_sample, best_val, json.dumps(best_config) if best_config else None, run_id))
+            conn.commit()
+
+    def add_sample(self, run_id, sample_idx, parameters, metrics, flight_metrics, duration):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            timestamp = datetime.datetime.now().isoformat()
+            cursor.execute(
+                "INSERT INTO samples (run_id, sample_idx, parameters, metrics, flight_metrics, duration, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (run_id, sample_idx, json.dumps(parameters), json.dumps(metrics), json.dumps(flight_metrics), duration, timestamp)
+            )
+            conn.commit()
+
+    def get_all_runs(self):
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM optimization_runs ORDER BY timestamp DESC")
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_run(self, run_id):
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM optimization_runs WHERE id = ?", (run_id,))
+            run = cursor.fetchone()
+            if not run: return None
+            
+            cursor.execute("SELECT * FROM samples WHERE run_id = ? ORDER BY sample_idx ASC", (run_id,))
+            samples = [dict(row) for row in cursor.fetchall()]
+            
+            run_dict = dict(run)
+            run_dict['samples_data'] = samples
+            return run_dict
+
+    def delete_run(self, run_id):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM samples WHERE run_id = ?", (run_id,))
+            cursor.execute("DELETE FROM optimization_runs WHERE id = ?", (run_id,))
+            conn.commit()
 
 class Api:
     def __init__(self):
@@ -15,6 +114,7 @@ class Api:
         self.reference_data = None
         import getpass
         self.local_user = getpass.getuser()
+        self.history = HistoryManager(os.path.join(self.cwd, "optimization_history.db"))
 
     def get_manual_content(self):
         """Reads and combines multiple project markdown files into one."""
@@ -43,6 +143,28 @@ class Api:
                 combined_content += f"\n\n# --- {filename} (Not Found) ---\n\n"
         
         return combined_content
+
+    def get_optimization_history(self):
+        return self.history.get_all_runs()
+
+    def get_run_details(self, run_id):
+        return self.history.get_run(run_id)
+
+    def delete_run(self, run_id):
+        self.history.delete_run(run_id)
+        return {"status": "success"}
+
+    def resume_run_from_history(self, run_id):
+        run_data = self.history.get_run(run_id)
+        if not run_data:
+            return {"status": "error", "message": "Run not found"}
+        
+        opt_params = json.loads(run_data['parameters'])
+        opt_params['resume_run_id'] = run_id
+        opt_params['resume_idx'] = run_data['current_sample']
+        
+        self.run_optimization(opt_params)
+        return {"status": "success"}
 
 
     def _get_python_exec(self):
@@ -1068,13 +1190,23 @@ run             {opt_params.get('env_run', '1000')}
 
     def execute_optimization(self, opt_params, is_gui=False):
         """Core optimization logic, usable by both GUI and Headless runners."""
-        if is_gui:
-            self.window.evaluate_js("updateProgress(0)")
-        
         samples_n = int(opt_params.get('samples', 5)) 
         d_min = float(opt_params.get('d_min', 2.5))
         d_max = float(opt_params.get('d_max', 4.5))
         goal = opt_params.get('goal', 'drag')
+
+        # --- History Tracking ---
+        run_id = opt_params.get('resume_run_id')
+        start_idx = opt_params.get('resume_idx', 0)
+        
+        if run_id:
+            self.log_to_gui(f"[!] RESUMING OPTIMIZATION RUN #{run_id} from Sample {start_idx + 1}")
+            self.history.update_run_progress(run_id, start_idx, status="running")
+        else:
+            run_name = f"Run_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            run_id = self.history.create_run(run_name, goal, samples_n, opt_params)
+            self.log_to_gui(f"[*] Created History Entry: Run #{run_id} ({run_name})")
+        # ------------------------
 
         self.log_to_gui(f"[*] OPTIMIZATION TARGET: {goal.upper()}")
         self.log_to_gui(f"[*] ------------------------------------------------")
@@ -1310,8 +1442,9 @@ run             {opt_params.get('env_run', '1000')}
         all_samples_dicts = [] # Pre-generated for consistency
         
         checkpoint_path = os.path.join(cad_dir, "opt_checkpoint.json")
-        start_idx = 0
-        resuming = False
+        # Use start_idx from opt_params if provided (history resume), otherwise default to 0
+        start_idx = opt_params.get('resume_idx', 0)
+        resuming = start_idx > 0
         
         if os.path.exists(checkpoint_path):
             try:
@@ -1342,6 +1475,10 @@ run             {opt_params.get('env_run', '1000')}
 
         if not resuming:
             # Generate all samples upfront for total consistency across resumes
+            # If resuming from history without a checkpoint, we might need to recreate samples
+            # To be truly consistent, we'd need to have saved all_samples_dicts in DB.
+            # For now, we'll regenerate them but this might cause jitter if not seeded.
+            np.random.seed(42) # Seed for semi-deterministic samples on resume
             for i in range(samples_n):
                 sample_dict = {k: v['base'] for k, v in search_map.items()}
                 for p_name in active_params:
@@ -1407,6 +1544,10 @@ run             {opt_params.get('env_run', '1000')}
             
             val = res_dict[goal]
             f_metrics = self.calculate_flight_metrics(res_dict, opt_params, sample_dict)
+            
+            # Save to History DB
+            self.history.add_sample(run_id, i, sample_dict, res_dict, f_metrics, sample_dur)
+            self.history.update_run_progress(run_id, i + 1, best_val=val) # Simplistic best_val for now
             
             # --- Per-Sample Storage & Post-processing ---
             sample_dir = os.path.join(cad_dir, "results_samples", f"sample_{i+1}")
@@ -1474,6 +1615,9 @@ run             {opt_params.get('env_run', '1000')}
                 self.log_to_gui(f"    [*] Estimated Time Remaining: {etr/60:.1f} minutes")
             
             if is_gui: self.window.evaluate_js(f"updateProgress({10 + int((i+1)/samples_n * 50)})")
+
+        # Update History on Completion
+        self.history.update_run_progress(run_id, samples_n, status="completed")
 
         # Clean up checkpoint on successful completion of all samples
         if os.path.exists(checkpoint_path):
