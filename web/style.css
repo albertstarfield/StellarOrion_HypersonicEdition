@@ -771,3 +771,210 @@ input:focus, select:focus {
     filter: brightness(1.1);
     transform: scale(1.05);
 }
+
+.btn-mini-manual {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 128, 128, 0.2);
+}
+
+.btn-mini-manual:hover {
+    background: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px var(--primary-glow);
+}
+
+/* Manual Overlay */
+.manual-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(12px);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    animation: fadeIn 0.4s ease;
+}
+
+.manual-content-container {
+    width: 100%;
+    max-width: 1000px;
+    height: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.manual-header {
+    padding: 20px 32px;
+    background: rgba(0, 31, 63, 0.05);
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.manual-header h3 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: 1px;
+}
+
+.manual-search-container {
+    flex: 1;
+    max-width: 400px;
+    margin: 0 40px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+#manual-search {
+    width: 100%;
+    padding: 8px 16px;
+    padding-right: 80px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    color: var(--text);
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+#manual-search:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.search-count {
+    position: absolute;
+    right: 15px;
+    font-size: 0.7rem;
+    color: var(--primary);
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: #ef4444;
+}
+
+.manual-body {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.markdown-body {
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+    color: var(--primary);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 0.5rem;
+}
+
+.markdown-body h1:first-child {
+    margin-top: 0;
+}
+
+.markdown-body p {
+    margin-bottom: 1.2rem;
+}
+
+.markdown-body code {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+}
+
+.markdown-body pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 20px;
+    border-radius: 12px;
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+    border: 1px solid #1e293b;
+}
+
+.markdown-body pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+}
+
+.markdown-body ul, .markdown-body ol {
+    margin-bottom: 1.5rem;
+    padding-left: 2rem;
+}
+
+.markdown-body li {
+    margin-bottom: 0.5rem;
+}
+
+/* TeX Equation Styling */
+.katex-display {
+    margin: 1.5rem 0 !important;
+    padding: 10px;
+    background: rgba(0, 31, 63, 0.03);
+    border-radius: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.katex {
+    font-size: 1.1em;
+}
+
+mark {
+    background: rgba(0, 128, 128, 0.3);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 2px;
+    border-bottom: 2px solid var(--primary);
+}
+
+.loader-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-dim);
+}

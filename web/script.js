@@ -11,6 +11,16 @@ window.onload = () => {
             setTimeout(() => splash.style.display = 'none', 800);
         }
     }, 1500);
+
+    // Initialize Mermaid
+    if (typeof mermaid !== 'undefined') {
+        mermaid.initialize({ 
+            startOnLoad: false, 
+            theme: 'dark',
+            securityLevel: 'loose',
+            fontFamily: 'Inter'
+        });
+    }
 };
 
 function initVariabilityListeners() {
@@ -754,6 +764,155 @@ function onDomainPreviewReady() {
     
     if (img1) img1.src = `assets/plots/domain_preview.png?t=${timestamp}`;
     if (img2) img2.src = `assets/plots/domain_preview.png?t=${timestamp}`;
+}
+
+// --- PROJECT MANUAL LOGIC ---
+async function openManual() {
+    const overlay = document.getElementById('manual-overlay');
+    const loader = document.getElementById('manual-loader');
+    const textContainer = document.getElementById('manual-text');
+    const searchInput = document.getElementById('manual-search');
+    const searchCount = document.getElementById('search-count');
+    
+    if (!overlay) return;
+    
+    overlay.style.display = 'flex';
+    if (loader) loader.style.display = 'flex';
+    if (textContainer) textContainer.innerHTML = '';
+    if (searchInput) searchInput.value = '';
+    if (searchCount) searchCount.innerText = '';
+    
+    try {
+        const markdown = await window.pywebview.api.get_manual_content();
+        if (textContainer && typeof marked !== 'undefined') {
+            // Custom renderer to wrap mermaid code blocks
+            const renderer = new marked.Renderer();
+            const originalCode = renderer.code;
+            renderer.code = function(code, lang) {
+                if (lang === 'mermaid') {
+                    return `<div class="mermaid">${code}</div>`;
+                }
+                return originalCode.call(this, code, lang);
+            };
+
+            textContainer.innerHTML = marked.parse(markdown, { renderer });
+            // Store original HTML for search resetting
+            textContainer.dataset.originalHtml = textContainer.innerHTML;
+            
+            // Trigger KaTeX rendering
+            if (typeof renderMathInElement !== 'undefined') {
+                renderMathInElement(textContainer, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError : false
+                });
+            }
+
+            // Trigger Mermaid rendering
+            if (typeof mermaid !== 'undefined') {
+                mermaid.run();
+            }
+        } else if (textContainer) {
+            // Fallback if marked is not loaded
+            textContainer.innerText = markdown;
+        }
+    } catch (e) {
+        if (textContainer) textContainer.innerHTML = `<p style="color: #ef4444;">Error loading documentation: ${e}</p>`;
+    } finally {
+        if (loader) loader.style.display = 'none';
+    }
+}
+
+function closeManual() {
+    const overlay = document.getElementById('manual-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function searchManual() {
+    const query = document.getElementById('manual-search').value.trim();
+    const textContainer = document.getElementById('manual-text');
+    const countEl = document.getElementById('search-count');
+    
+    if (!textContainer || !textContainer.dataset.originalHtml) return;
+    
+    if (!query) {
+        textContainer.innerHTML = textContainer.dataset.originalHtml;
+        countEl.innerText = '';
+        if (typeof renderMathInElement !== 'undefined') {
+            renderMathInElement(textContainer, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError : false
+            });
+        }
+        if (typeof mermaid !== 'undefined') {
+            mermaid.run();
+        }
+        return;
+    }
+    
+    // Simple highlight logic using regex (ignoring tags)
+    const originalHtml = textContainer.dataset.originalHtml;
+    
+    // We need to be careful not to break HTML tags. 
+    // A robust way is to use a temporary container and traverse nodes.
+    const temp = document.createElement('div');
+    temp.innerHTML = originalHtml;
+    
+    let count = 0;
+    const regex = new RegExp(`(${query})`, 'gi');
+    
+    function walk(node) {
+        if (node.nodeType === 3) { // Text node
+            const matches = node.nodeValue.match(regex);
+            if (matches) {
+                count += matches.length;
+                const span = document.createElement('span');
+                span.innerHTML = node.nodeValue.replace(regex, '<mark>$1</mark>');
+                node.parentNode.replaceChild(span, node);
+            }
+        } else if (node.nodeType === 1 && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE' && node.tagName !== 'MARK' && !node.classList.contains('mermaid')) {
+            for (let i = node.childNodes.length - 1; i >= 0; i--) {
+                walk(node.childNodes[i]);
+            }
+        }
+    }
+    
+    walk(temp);
+    textContainer.innerHTML = temp.innerHTML;
+    countEl.innerText = count > 0 ? `${count} found` : 'No results';
+    
+    // Re-trigger KaTeX after search highlighting
+    if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(textContainer, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            throwOnError : false
+        });
+    }
+
+    // Re-trigger Mermaid after search highlighting
+    if (typeof mermaid !== 'undefined') {
+        mermaid.run();
+    }
+
+    // If we have matches, scroll to the first one
+    if (count > 0) {
+        const firstMatch = textContainer.querySelector('mark');
+        if (firstMatch) firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 }
 
 function updateSummary() {

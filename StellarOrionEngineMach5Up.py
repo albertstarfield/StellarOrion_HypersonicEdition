@@ -16,6 +16,35 @@ class Api:
         import getpass
         self.local_user = getpass.getuser()
 
+    def get_manual_content(self):
+        """Reads and combines multiple project markdown files into one."""
+        files = [
+            "README.md",
+            "METHODOLOGY.md",
+            "selfnote.md",
+            "DERIVATION.md",
+            "archnote.md",
+            "HIAD_IRVE3_Baseline.md",
+            "Heatshield_Comparison.md"
+        ]
+        
+        combined_content = ""
+        for filename in files:
+            file_path = os.path.join(self.cwd, filename)
+            if os.path.exists(file_path):
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                        combined_content += f"\n\n# --- {filename} ---\n\n"
+                        combined_content += content
+                except Exception as e:
+                    combined_content += f"\n\n# --- Error reading {filename} ---\n\n{str(e)}"
+            else:
+                combined_content += f"\n\n# --- {filename} (Not Found) ---\n\n"
+        
+        return combined_content
+
+
     def _get_python_exec(self):
         """Finds a cadquery-enabled python interpreter."""
         cad_dir = os.path.join(self.cwd, "CADDesign")
