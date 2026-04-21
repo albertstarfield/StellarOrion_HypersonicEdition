@@ -888,9 +888,79 @@ input:focus, select:focus {
 
 .manual-body {
     flex: 1;
+    overflow: hidden; /* Body doesn't scroll, layout children do */
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.manual-layout {
+    display: flex;
+    height: 100%;
+}
+
+.manual-sidebar {
+    width: 260px;
+    background: rgba(0, 31, 63, 0.03);
+    border-right: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    overflow-y: auto;
+}
+
+.sidebar-section-title {
+    padding: 0 24px 12px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.manual-toc {
+    display: flex;
+    flex-direction: column;
+}
+
+.toc-item {
+    padding: 8px 24px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.toc-item:hover {
+    background: rgba(0, 128, 128, 0.05);
+    color: var(--primary);
+}
+
+.toc-item.active {
+    background: rgba(0, 128, 128, 0.1);
+    color: var(--primary);
+    border-left-color: var(--primary);
+    font-weight: 600;
+}
+
+.toc-file {
+    font-weight: 700;
+    color: var(--primary);
+    margin-top: 16px;
+    font-size: 0.85rem;
+}
+
+.toc-file:first-child {
+    margin-top: 0;
+}
+
+.toc-h2 { padding-left: 36px; font-size: 0.75rem; }
+.toc-h3 { padding-left: 48px; font-size: 0.7rem; color: var(--secondary); }
+
+.manual-main {
+    flex: 1;
     padding: 40px;
     overflow-y: auto;
-    background: rgba(255, 255, 255, 0.02);
+    scroll-behavior: smooth;
 }
 
 .markdown-body {

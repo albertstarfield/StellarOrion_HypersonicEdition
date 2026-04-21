@@ -1157,11 +1157,19 @@
                 <button class="close-btn" onclick="closeManual()">×</button>
             </div>
             <div id="manual-body" class="manual-body">
-                <div class="loader-container" id="manual-loader">
-                    <div class="loader"></div>
-                    <p>Aggregating documentation...</p>
+                <div class="manual-layout">
+                    <div class="manual-sidebar" id="manual-sidebar">
+                        <div class="sidebar-section-title">Navigation</div>
+                        <div id="manual-toc" class="manual-toc"></div>
+                    </div>
+                    <div class="manual-main">
+                        <div class="loader-container" id="manual-loader">
+                            <div class="loader"></div>
+                            <p>Aggregating documentation...</p>
+                        </div>
+                        <div id="manual-text" class="markdown-body"></div>
+                    </div>
                 </div>
-                <div id="manual-text" class="markdown-body"></div>
             </div>
         </div>
     </div>

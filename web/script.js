@@ -816,6 +816,9 @@ async function openManual() {
             if (typeof mermaid !== 'undefined') {
                 mermaid.run();
             }
+
+            // Generate Table of Contents
+            generateToc();
         } else if (textContainer) {
             // Fallback if marked is not loaded
             textContainer.innerText = markdown;
@@ -830,6 +833,63 @@ async function openManual() {
 function closeManual() {
     const overlay = document.getElementById('manual-overlay');
     if (overlay) overlay.style.display = 'none';
+}
+
+function generateToc() {
+    const textContainer = document.getElementById('manual-text');
+    const tocContainer = document.getElementById('manual-toc');
+    if (!textContainer || !tocContainer) return;
+    
+    tocContainer.innerHTML = '';
+    const headers = textContainer.querySelectorAll('h1, h2, h3');
+    
+    headers.forEach((header, index) => {
+        const text = header.innerText;
+        const id = 'header-' + index;
+        header.id = id;
+        
+        const item = document.createElement('div');
+        item.className = 'toc-item';
+        
+        // Check if it's a file header (from backend)
+        if (text.startsWith('---') && text.endsWith('---')) {
+            item.classList.add('toc-file');
+            item.innerText = text.replace(/---/g, '').trim();
+        } else {
+            item.innerText = text;
+            if (header.tagName === 'H2') item.classList.add('toc-h2');
+            if (header.tagName === 'H3') item.classList.add('toc-h3');
+        }
+        
+        item.onclick = () => {
+            header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.querySelectorAll('.toc-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+        };
+        
+        tocContainer.appendChild(item);
+    });
+
+    // Scroll synchronization
+    const mainArea = document.querySelector('.manual-main');
+    if (mainArea) {
+        mainArea.onscroll = () => {
+            let current = "";
+            headers.forEach(header => {
+                const top = header.offsetTop - mainArea.offsetTop;
+                if (mainArea.scrollTop >= top - 20) {
+                    current = header.id;
+                }
+            });
+            
+            document.querySelectorAll('.toc-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.onclick.toString().includes(current)) {
+                    item.classList.add('active');
+                }
+            });
+        };
+    }
 }
 
 function searchManual() {
