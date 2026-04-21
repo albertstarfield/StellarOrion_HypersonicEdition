@@ -164,6 +164,7 @@ def main():
     parser.add_argument("--ssh-user", type=str, help="Remote user for PyFluent")
     parser.add_argument("--ssh-pass", type=str, help="Remote password for PyFluent")
     parser.add_argument("--ssh-key", type=str, help="Remote SSH key path for PyFluent")
+    parser.add_argument("--chem", type=str, default="5-species", choices=["5-species", "11-species", "mars"], help="Chemistry model (5-species, 11-species, or mars)")
     
     args, unknown = parser.parse_known_args()
 
@@ -205,7 +206,7 @@ def main():
                 'env_vstream': '2700.0',
                 'env_duration': '60.0',
                 'env_thermal_lag': '0.1',
-                'env_chem_mode': '5-species',
+                'env_chem_mode': args.chem,
                 'env_steady_state': False,
                 'pinn_accel': args.pinn,
                 'samples': args.samples,

@@ -53,13 +53,47 @@ The choice of gas species (the simulation "specimen") is critical for capturing 
 | Model Selection | Species List | Applicability / Use Case |
 | :--- | :--- | :--- |
 | **Earth: 5-Species** | N2, O2, NO, N, O | **Standard Hypersonic:** (Mach 5-15). Captures dissociation but assumes neutral gas. Baseline for IRVE-3 (NASA/TP-2013-4012). |
-| **Earth: 11-Species** | Adds ions: N2+, O2+, NO+, N+, O+, e- | **High-Energy / Plasma:** (Mach > 15). Captures ionization. Required for Artemis Lunar Return (NASA 2022 / Johnston 2025). |
+| **Earth: 11-Species** | N2, O2, NO, N, O, N2+, O2+, NO+, N+, O+, e- | **High-Energy / Plasma:** (Mach > 15). Captures ionization. Required for Artemis Lunar Return (NASA 2022 / Johnston 2025). |
 | **Mars: 6-Species** | CO2, N2, CO, O, C, N | **Mars Entry:** Handles CO2 dissociation. Critical for MSL scale simulations (AIAA 2013-1386). |
+| **Titan (Roadmap)** | N2, CH4, Ar, H, H2, CN, HCN... | **Interplanetary:** Thick Nitrogen/Methane atmosphere with significant radiative cooling/heating. |
+
+### Specimen Classification & Physical Role:
+The solver treats each "specimen" based on its molecular structure and electronic state:
+
+1.  **Diatomic Molecules (N2, O2, CO2)**:
+    *   **Role:** Energy Storage. These carry energy in **Rotational** and **Vibrational** modes.
+    *   **Hypersonic Impact:** At high Mach, these "soak up" kinetic energy by vibrating violently, which lowers the overall gas temperature compared to a "frozen" flow.
+2.  **Monatomic Atoms (N, O, C)**:
+    *   **Role:** Dissociation Products. Formed when the energy in the shock layer exceeds the molecular bond strength.
+    *   **Hypersonic Impact:** These are highly reactive. When they hit the heatshield surface, they can **recombine** (Surface Catalysis), releasing massive amounts of heat directly into the structure.
+3.  **Exchange Radicals (NO, CO)**:
+    *   **Role:** Chemical Intermediates.
+    *   **Hypersonic Impact:** Critical for **Radiative Heat Flux**. Species like Nitric Oxide (NO) are primary emitters of ultraviolet radiation in the shock layer, which can "cook" the vehicle even if the gas doesn't touch the surface.
+4.  **Ionized Species & Electrons (N+, O+, e-)**:
+    *   **Role:** Plasma Formation.
+    *   **Hypersonic Impact:** Occurs at orbital speeds ($> 8,000 \text{ m/s}$). Electrons carry energy extremely efficiently and can cause **Radio Blackout**, preventing communication with the vehicle during peak heating.
 
 ### Why the "Specimen" Matters:
 1.  **Heat Flux ($\dot{q}$)**: Chemical reactions (endothermic dissociation) act as a "heat sink," absorbing energy that would otherwise increase the gas temperature.
 2.  **Surface Catalysis**: Recombination of atoms (N + N → N2) on the vehicle surface releases heat. The species model determines how much atomic oxygen/nitrogen is available for this process.
 3.  **Shock Standoff**: The effective $\gamma$ (ratio of specific heats) changes as gas dissociates, which alters the distance of the bow shock from the nose.
+
+### Implementation: GUI & Headless Control
+The chemistry model can be controlled in two ways:
+
+1.  **StellarOrion GUI**:
+    *   Navigate to **Page 3: Reference Physics**.
+    *   Find the **Chemistry Model** dropdown menu.
+    *   Selections will automatically update the `in.hiad` script with the correct species list and TCE reaction database.
+2.  **Headless Commandline**:
+    *   Use the `--chem` flag when launching `main.py`.
+    *   **Example:** `python main.py --optimize --chem 11-species`
+    *   Supported values: `5-species`, `11-species`, `mars`.
+
+### Chemical Reaction Engine: The TCE Model
+StellarOrion uses the **Total Collision Energy (TCE)** model in SPARTA to determine when a collision between two "specimens" results in a reaction (e.g., $N_2 + N_2 \to 2N + N_2$).
+*   **Probability-Based:** Instead of solving rate equations (like CFD), DSMC calculates a reaction probability based on the relative kinetic energy of the colliding particles and their internal vibrational states.
+*   **Park's Rates:** The model parameters are calibrated to **Park's 1990/2001 reaction rates**, ensuring that the "Specimen" transitions match the latest NASA aerothermal standards.
 
 ---
 

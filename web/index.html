@@ -823,13 +823,22 @@
                             <label>Chemistry Model</label>
                             <span class="info-icon">?</span>
                             <div class="tooltip-text">
-                                <strong>Chemistry Fidelity</strong>
-                                Choose between standard 5-species air or high-speed 11-species ionized air (adds ions and electrons).
+                                <strong>Specimen Selection (Chemistry)</strong>
+                                Defines the gas species involved in shock layer energy exchange.
+                                <br><br>
+                                • <b>5-Species (Neutral):</b> N2, O2, NO, N, O. Standard for Earth reentry (Mach 5-15).
+                                <br>
+                                • <b>11-Species (Ionized):</b> Adds N2+, O2+, NO+, N+, O+, e-. For plasma/blackout analysis (Mach > 15).
+                                <br>
+                                • <b>Mars (6-Species):</b> CO2, N2, CO, O, C, N. Carbon-dioxide dissociation baseline.
+                                <br><br>
+                                <i>Impacts Surface Catalysis and Radiative Heat Flux.</i>
                             </div>
                         </div>
                         <select id="env-chem-mode" style="background: #f8fafc; color: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-weight: 500;">
                             <option value="5-species">5-Species (Standard Air)</option>
                             <option value="11-species">11-Species (Ionized/High Speed)</option>
+                            <option value="mars">Mars (6-Species CO2)</option>
                         </select>
                     </div>
                     <div class="input-group" style="display: flex; align-items: center; gap: 10px; padding-top: 25px;">
