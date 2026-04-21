@@ -637,35 +637,54 @@ run             {opt_params.get('env_run', '1000')}
         self.log_to_gui(f"[*] PHASE 2: GENERATING {samples_n} SBO SAMPLES (LHS)...")
         training_x = [] 
         training_y = [] 
+        all_samples_dicts = [] # Pre-generated for consistency
         
         checkpoint_path = os.path.join(cad_dir, "opt_checkpoint.json")
         start_idx = 0
+        resuming = False
         
         if os.path.exists(checkpoint_path):
             try:
                 import json
                 with open(checkpoint_path, 'r') as f:
                     checkpoint = json.load(f)
-                    # Verify if the sample count matches to ensure we are resuming the same job
-                    if checkpoint.get('total_samples') == samples_n:
+                    # Check if key physical parameters match to prevent corrupted resumes
+                    prev_params = checkpoint.get('opt_params', {})
+                    params_match = (
+                        prev_params.get('env_vstream') == opt_params.get('env_vstream') and
+                        prev_params.get('env_preset') == opt_params.get('env_preset') and
+                        checkpoint.get('total_samples') == samples_n
+                    )
+                    
+                    if params_match:
                         training_x = checkpoint['training_x']
                         training_y = checkpoint['training_y']
+                        all_samples_dicts = checkpoint['all_samples_dicts']
                         start_idx = checkpoint['next_idx']
+                        resuming = True
                         self.log_to_gui(f"[!] DETECTED INCOMPLETE SESSION. Resuming from Sample {start_idx + 1}/{samples_n}...")
                         if is_gui:
                             self.window.evaluate_js("alert('Unexpected Error has occurred and progress session has been resumed')")
+                    else:
+                        self.log_to_gui("    [!] Warning: Checkpoint parameters do not match current settings. Starting fresh.")
             except Exception as e:
                 self.log_to_gui(f"    [!] Warning: Could not load checkpoint: {e}. Starting fresh.")
 
+        if not resuming:
+            # Generate all samples upfront for total consistency across resumes
+            for i in range(samples_n):
+                sample_dict = {k: v['base'] for k, v in search_map.items()}
+                for p_name in active_params:
+                    p_info = search_map[p_name]
+                    # Deterministic jittered grid
+                    val = p_info['min'] + (p_info['max'] - p_info['min']) * (i + np.random.random()) / samples_n
+                    if p_info['type'] == int: val = int(round(val))
+                    sample_dict[p_name] = val
+                all_samples_dicts.append(sample_dict)
+
         for i in range(start_idx, samples_n):
-            sample_dict = {k: v['base'] for k, v in search_map.items()}
-            current_x_row = []
-            for p_name in active_params:
-                p_info = search_map[p_name]
-                val = p_info['min'] + (p_info['max'] - p_info['min']) * (i + np.random.random()) / samples_n
-                if p_info['type'] == int: val = int(round(val))
-                sample_dict[p_name] = val
-                current_x_row.append(val)
+            sample_dict = all_samples_dicts[i]
+            current_x_row = [sample_dict[p] for p in active_params]
             
             self.log_to_gui(f"[*] SAMPLE {i+1}/{samples_n}: {', '.join([f'{k}={sample_dict[k]}' for k in active_params])}")
             script_content = self.generate_sparta_script(opt_params, surf_name="HIAD_opt", **sample_dict)
@@ -760,6 +779,8 @@ run             {opt_params.get('env_run', '1000')}
                     json.dump({
                         'training_x': training_x, 
                         'training_y': training_y, 
+                        'all_samples_dicts': all_samples_dicts,
+                        'opt_params': opt_params,
                         'next_idx': i + 1,
                         'total_samples': samples_n
                     }, f)

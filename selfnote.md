@@ -1,6 +1,6 @@
 # StellarOrion Hypersonic Simulation: Self-Note on Parameters
 
-This document serves as a reference for all parameters used in the `gui_backend.py` logic, specifically for **Hypersonic Payload Protection** (HIAD survivability) and **Hypersonic Transport** optimization.
+This document serves as a reference for all parameters used in the `StellarOrionEngineMach5Up.py` logic, specifically for **Hypersonic Payload Protection** (HIAD survivability) and **Hypersonic Transport** optimization.
 
 ---
 
@@ -153,6 +153,56 @@ A common question is why this pipeline uses **DSMC + MoP-SBO** instead of a stan
 
 ---
 
+## 6.1. Comparison: StellarOrion vs. FluidX3D (LBM)
+A frequent internal comparison is made between this pipeline and **FluidX3D**, a highly optimized Lattice Boltzmann Method (LBM) solver. While both leverage GPU acceleration, they serve fundamentally different regimes.
+
+| Feature | StellarOrion (DSMC + MoP) | FluidX3D (LBM) |
+| :--- | :--- | :--- |
+| **Physics Engine** | **Particle-based Kinetic (DSMC):** Solves the Boltzmann equation via stochastic particle collisions. | **Lattice Boltzmann (LBM):** Solves the discrete Boltzmann equation on a regular grid (lattice). |
+| **Mach Regime** | **Hypersonic ($M > 5$):** Purpose-built for strong shocks and thermal non-equilibrium. | **Subsonic/Incompressible ($M < 0.3$):** Standard LBM assumes low-speed, nearly incompressible flow. |
+| **Compressibility** | Fully Compressible (captures shock waves). | Incompressible / Weakly Compressible (shocks cause instability). |
+| **Rarefaction** | Captures $Kn > 0.01$ (High altitude / VLEO). | Continuum only ($Kn \approx 0$). |
+| **Hardware Use** | Hybrid: Docker/CPU (Physics) + GPU/NPU (MoP Inference). | Pure GPU: Optimized for massive throughput on single or multi-GPU nodes. |
+| **Use Case** | Reentry vehicles, HIAD thermal protection, orbital decay. | Urban wind comfort, automotive aero (low speed), multiphase fluid mixing. |
+
+### Why FluidX3D is NOT used for Hypersonics:
+1. **Equilibrium Assumption:** Standard LBM (like FluidX3D) relies on a local equilibrium distribution (Maxwell-Boltzmann). In hypersonics, the gas is in **extreme non-equilibrium** behind the shock wave, which LBM cannot resolve without specialized (and computationally expensive) high-order lattices.
+2. **Shock Stability:** LBM is notoriously unstable at high Mach numbers. The "lattice velocity" must be significantly higher than the flow velocity to maintain stability, leading to a "Mach number limit" that is far below the $10,000 \text{ m/s}$ required for StellarOrion.
+3. **Thermal Non-equilibrium:** DSMC naturally handles different temperatures for translation, rotation, and vibration. FluidX3D is typically isothermal or uses a simplified energy equation that fails in the plasma regime.
+
+---
+
+## 6.2. Software Evolution: The Road to MoP Steering
+The StellarOrion pipeline is a multi-generational project. It is important to distinguish between the **First Generation (Subsonic)** and the current **Hypersonic Edition**.
+
+### Phase 1: StellarOrion G1 (Subsonic Airfoil Optimization)
+*   **Origin:** Stems from a modification of the **Bimo XFoil Optimization GA**.
+*   **Problem:** Early versions used Genetic Algorithms to move individual airfoil coordinate points directly. This "wild" point movement made it nearly impossible to find a smooth, converged optimal shape.
+*   **The Hicks-Henne Breakthrough:** To solve the convergence issues, the logic was adapted to use **Hicks-Henne bump functions** as the primary **Geometry Engine**. In this architecture, airfoils are effectively **"Procedurally Generated"** via parametric deformations rather than manually sculpted.
+*   **The G1 Optimization Pipeline:**
+    1.  **Initialization:** Uses **RNG as seed** for the initial Hicks-Henne geometry population.
+    2.  **Constraint-Based GA:** A Genetic Algorithm (GA) starts the search based on predefined aerodynamic constraints.
+    3.  **Surrogate Training:** Once the GA identifies **50 high-performing candidates**, they are used to train the **MoP (Metamodel of Optimal Prognosis)**.
+    4.  **Active Steering:** The GA is then **steered** by the MoP model, leveraging GPU/NPU acceleration to evaluate thousands of virtual candidates in milliseconds.
+    5.  **Termination:** The loop continues until a **callback detects stagnation** (no significant fitness improvement), at which point the system "spits out" the final optimized result.
+*   **Context:** This was a dedicated 2D subsonic tool (see `ProgressReport/Week 1/G1_StellarOrion_Subsonic_Evolution`).
+
+### Phase 2: StellarOrion G2 (Hypersonic Edition)
+*   **Goal:** Re-engineering the G1 optimization logic for extreme flight regimes.
+*   **Solver Transition:** XFoil (subsonic) replaced by **SPARTA (DSMC)** to handle high-Mach shock waves and rarefied flow.
+*   **Dimensionality:** Moves from 2D airfoils to **3D Axisymmetric HIAD** geometries.
+*   **ML Integration:** DeepXDE PINNs used for even higher fidelity flow-field refinement and parameter estimation.
+*   **Optimization Strategy (Evolutionary MoP Steering):**
+    1.  **Steered Search:** Inherits and expands the **MoP Steering** logic from G1. The GA is steered by the surrogate metamodel to evaluate millions of candidates on the GPU/NPU.
+    2.  **Stagnation Decision Logic:** Unlike the fixed termination in G1, G2 monitors the **stagnation point of changes** (rate of fitness improvement vs. structural deformation delta).
+    3.  **Intelligent Evolution:** At each stagnation checkpoint, the system evaluates the current Pareto front. If the gradient of improvement is below the threshold, it triggers an **Intelligence Decision**:
+        *   **Continue Evolving:** If the surrogate model suggests untapped design space, it resets the seed/population and pushes for higher generations.
+        *   **Finalize:** If physical limits are reached, it "spits out" the final optimized structural toroid and nose radius configurations.
+
+---
+
+---
+
 ## 7. Technology Review: Pros & Cons of Inflatable HIAD
 The **Hypersonic Inflatable Aerodynamic Decelerator (HIAD)** is a paradigm shift from traditional rigid aeroshells.
 
@@ -172,7 +222,12 @@ The **Hypersonic Inflatable Aerodynamic Decelerator (HIAD)** is a paradigm shift
 ---
 
 ## 8. Mission References & Technical Specifications
-Detailed specifications and source references for the mission presets implemented in the `StellarOrion` pipeline.
+Detailed specifications and source references for the mission presets and comparative tools.
+
+### A. FluidX3D Source (Comparative)
+*   **Project:** GPU-accelerated Lattice Boltzmann solver.
+*   **Repository:** [FluidX3D GitHub](https://github.com/ProjectPhysX/FluidX3D)
+*   **Key Distinction:** Optimized for incompressible/low-speed regimes; distinct from the rarefied/hypersonic regime of SPARTA/StellarOrion.
 
 ### A. IRVE-3 (Inflatable Re-entry Vehicle Experiment 3)
 *   **Mission Type:** Suborbital Flight Test (Sounding Rocket).
@@ -213,7 +268,7 @@ Detailed specifications and source references for the mission presets implemente
 
 ### D. Mars Science Laboratory (MSL) Scale
 *   **Mission Type:** Planetary Entry (Earth-to-Mars).
-*   **Atmosphere:** 95% $CO_2$ (Mars preset in `gui_backend.py`).
+*   **Atmosphere:** 95% $CO_2$ (Mars preset in `StellarOrionEngineMach5Up.py`).
 *   **Ballistic Coefficient:** Optimized for $\beta < 150 kg/m^2$ to ensure subsonic parachute deployment.
 *   **Citation:** 
     ```bibtex
@@ -226,7 +281,7 @@ Detailed specifications and source references for the mission presets implemente
     ```
 
 ### E. Atmosphere Modeling (NRLMSIS 2.1)
-*   **Logic:** Used for density and temperature profile generation in `gui_backend.py`.
+*   **Logic:** Used for density and temperature profile generation in `StellarOrionEngineMach5Up.py`.
 *   **Citation:**
     ```bibtex
     @article{emmert2022nrlmsis,
@@ -237,3 +292,52 @@ Detailed specifications and source references for the mission presets implemente
       year={2022}
     }
     ```
+
+### F. Magister Bibliographic Database
+A complete list of over 50+ citations (including turbulence models, numerical schemes, and aero-thermal studies) is maintained in the root [REFERENCES.MD](file:///Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/REFERENCES.MD).
+
+---
+
+## 9. Development Roadmap & TODO
+Upcoming critical improvements for the StellarOrion Hypersonic Edition.
+
+- [ ] **DeepXDE PINN Stability:** Fix "wacky" behavior in the PINN steps. Investigate training instability and ensure consistent flow-field refinement.
+- [ ] **Checkpointing System (Recoverability):**
+    *   Implement **Pause and Resume** logic for all pipeline steps.
+    *   Specifically, integrate SPARTA's native restart/checkpointing capability into the `StellarOrionEngineMach5Up.py` logic.
+    *   Ensure the state is saved so the simulation is fully resumable after a crash or system interruption.
+
+---
+
+## 10. PINN Implementation (DeepXDE)
+The StellarOrion G2 pipeline uses **Physics-Informed Neural Networks (PINNs)** via the **DeepXDE** library to refine SPARTA flow fields and perform inverse parameter estimation.
+
+### Mathematical Formulation
+The PINN is trained to minimize a composite loss function containing the residuals of the **2D Steady Compressible Euler Equations**:
+
+1.  **Continuity (Mass Conservation):**
+    $$\nabla \cdot (\rho \mathbf{u}) = \frac{\partial (\rho u)}{\partial x} + \frac{\partial (\rho v)}{\partial y} = 0$$
+2.  **Momentum Conservation (Euler):**
+    $$\rho (\mathbf{u} \cdot \nabla) \mathbf{u} + \nabla p = 0$$
+    *   *X-Momentum:* $\rho (u \frac{\partial u}{\partial x} + v \frac{\partial u}{\partial y}) + \frac{\partial p}{\partial x} = 0$
+    *   *Y-Momentum:* $\rho (u \frac{\partial v}{\partial x} + v \frac{\partial v}{\partial y}) + \frac{\partial p}{\partial y} = 0$
+3.  **Equation of State (Ideal Gas Law):**
+    $$p = \rho R T$$
+
+**Variable Definitions:**
+*   $\rho$: Gas density $[kg/m^3]$
+*   $\mathbf{u}$: Velocity vector ($u, v$) $[m/s]$
+*   $p$: Pressure $[Pa]$
+*   $T$: Temperature $[K]$
+*   $R$: Specific gas constant for air $[287.05 J/kg \cdot K]$
+*   $\nabla$: Gradient operator
+*   $\nabla \cdot$: Divergence operator
+
+### Hybrid Anchor-Point Strategy
+The network does not solve the PDE from scratch. Instead, it uses a **Hybrid Data-Physics Approach**:
+*   **Anchor Points:** Grid data from **SPARTA (DSMC)** is injected as `PointSetBC` (Observation Boundary Conditions).
+*   **Refinement:** The neural network (FNN, 5 layers, 128 neurons) acts as a high-order interpolator that "fills the gaps" between particles while strictly adhering to the conservation laws defined by the Euler equations.
+*   **Acceleration:** Training is performed on native hardware (**Apple Silicon MPS** or **NVIDIA CUDA**) to ensure the refinement phase remains competitive with the MoP steering loop.
+
+### Implementation Location
+The core logic resides in `source/pinn_accelerator.py` within the `pde_euler_2d` function and the `PINNAccelerator` class.

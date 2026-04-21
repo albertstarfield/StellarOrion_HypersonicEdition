@@ -199,6 +199,7 @@ TestlogDev.log
 .venv_gui/
 VLEO_DSMC_EXAMPLE/
 example_frompreviousproject/
+**ProgressReport**
 
 # macOS
 .DS_Store

@@ -27,7 +27,7 @@ pip install torch numpy matplotlib pymsis
 
 ## 🧮 Mathematical Foundations
 
-The following equations form the basis of the simulation engine and the performance metrics calculated in `gui_backend.py`.
+The following equations form the basis of the simulation engine and the performance metrics calculated in `StellarOrionEngineMach5Up.py`.
 
 ### 1. General DSMC & Rarefied Gas Dynamics
 Direct Simulation Monte Carlo (DSMC) is used where the continuum assumption fails ($Kn > 0.01$).
@@ -43,7 +43,16 @@ Direct Simulation Monte Carlo (DSMC) is used where the continuum assumption fail
 *   **VSS (Variable Soft Sphere) Collision Model:**
     The cross-section $\sigma$ varies with relative velocity $g$:
     $$\sigma = \pi d_{ref}^2 \left( \frac{g_{ref}}{g} \right)^{2(\omega - 0.5)}$$
-    *Used to match the viscosity-temperature relationship of real gases.*
+
+**Variables:**
+*   $\lambda$: Mean free path $[m]$
+*   $d$: Molecular diameter $[m]$
+*   $n$: Number density $[m^{-3}]$
+*   $Kn$: Knudsen number (dimensionless)
+*   $L$: Characteristic length $[m]$
+*   $\sigma$: Collision cross-section $[m^2]$
+*   $g$: Relative velocity of colliding molecules $[m/s]$
+*   $\omega$: Viscosity index (gas-specific)
 
 ### 2. Aerodynamics & Flight Metrics
 Implemented in `calculate_flight_metrics` to derive performance from SPARTA surface results.
@@ -62,6 +71,19 @@ Implemented in `calculate_flight_metrics` to derive performance from SPARTA surf
 *   **Instantaneous g-load ($n$):**
     $$n = \frac{F_{drag}}{m \cdot g_0}$$
 
+**Variables:**
+*   $\rho$: Mass density $[kg/m^3]$
+*   $n_{rho}$: Number density $[m^{-3}]$
+*   $M_{air}$: Molar mass of air $[kg/mol]$
+*   $N_A$: Avogadro's constant ($6.022 \times 10^{23} mol^{-1}$)
+*   $q$: Dynamic pressure $[Pa]$
+*   $v_{\infty}$: Freestream velocity $[m/s]$
+*   $\beta$: Ballistic coefficient $[kg/m^2]$
+*   $m$: Vehicle mass $[kg]$
+*   $F_{drag}$: Drag force $[N]$
+*   $n$: Deceleration in Earth gravities $[g's]$
+*   $g_0$: Standard gravity $[9.81 m/s^2]$
+
 ### 3. Aerothermodynamics & Thermal Protection (TPS)
 Estimates for the flexible TPS (e.g., LOFTID/IRVE-3 F-TPS stack).
 
@@ -74,7 +96,20 @@ Estimates for the flexible TPS (e.g., LOFTID/IRVE-3 F-TPS stack).
 
 *   **1D Transient Backface Temperature ($T_{back}$):**
     $$T_{back} = T_{init} + \frac{\dot{q} \cdot \Delta t \cdot \eta_{lag}}{\rho_{TPS} \cdot C_{p,TPS} \cdot \delta_{TPS}}$$
-    *Where $\eta_{lag}$ is the thermal lag factor, $\delta_{TPS}$ is thickness, and $C_p$ is specific heat.*
+
+**Variables:**
+*   $\dot{q}$: Surface heat flux $[W/m^2]$
+*   $Q_{total}$: Total heat rate $[W]$
+*   $A_{ref}$: Reference area $[m^2]$
+*   $T_{surface}$: Radiative equilibrium surface temperature $[K]$
+*   $\sigma$: Stefan-Boltzmann constant ($5.67 \times 10^{-8} W/m^2K^4$)
+*   $\epsilon$: Emissivity (dimensionless)
+*   $T_{back}$: Payload/Backface temperature $[K]$
+*   $\Delta t$: Heat pulse duration $[s]$
+*   $\eta_{lag}$: Thermal lag efficiency (typically 0.15)
+*   $\rho_{TPS}$: TPS density $[kg/m^3]$
+*   $C_{p,TPS}$: TPS specific heat $[J/kg \cdot K]$
+*   $\delta_{TPS}$: TPS thickness $[m]$
 
 ### 4. Survivability Optimization (SBO)
 The Genetic Algorithm (GA) optimizes the HIAD geometry using a Metamodel Prognosis (MoP).
@@ -84,7 +119,15 @@ The Genetic Algorithm (GA) optimizes the HIAD geometry using a Metamodel Prognos
 
 *   **LHS Sampling (Stratified):**
     $$x_i = x_{min} + (x_{max} - x_{min}) \cdot \frac{i + r}{N}$$
-    *Ensures uniform coverage of the high-dimensional search space.*
+
+**Variables:**
+*   $J$: Optimization cost value
+*   $w_{\beta}, w_{target}$: Weight coefficients
+*   $\beta_{calc}$: Derived ballistic coefficient
+*   $y_{pred}$: Metamodel prediction
+*   $x_i$: Sample value for parameter $x$
+*   $r$: Random number $\in [0, 1)$
+*   $N$: Total samples
 
 For a deep dive into the specific derivations, SPARTA data column mappings, and code-level implementation details, see [DERIVATION.MD](file:///Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/DERIVATION.md).
 

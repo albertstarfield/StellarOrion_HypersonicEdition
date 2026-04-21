@@ -160,7 +160,7 @@ def main():
     if not os.environ.get("IN_DOCKER"):
         if args.optimize:
             print("[*] Optimization mode selected. Launching headless optimizer...")
-            from gui_backend import Api
+            from StellarOrionEngineMach5Up import Api
             api = Api()
             opt_params = {
                 'env_preset': 'artemis',

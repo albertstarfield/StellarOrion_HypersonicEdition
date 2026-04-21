@@ -12,15 +12,15 @@ StellarOrion_HypersonicEdition/
 ├── main.py (Host/Docker Entry Point)
 │   ├── [Host Mode]
 │   │   ├── gui_launcher.py (UI Layer)
-│   │   │   └── gui_backend.py (Logic Controller)
+│   │   │   └── StellarOrionEngineMach5Up.py (Logic Controller)
 │   │   └── [Headless Mode]
-│   │       └── gui_backend.py (Logic Controller)
+│   │       └── StellarOrionEngineMach5Up.py (Logic Controller)
 │   └── [Docker Mode]
 │       ├── build_sparta() ──> [cmake/make] ──> libsparta.so (C++)
 │       └── run_simulation()
 │           └── ctypes.CDLL ──> libsparta.so (C Library Interface)
 │
-├── gui_backend.py (The Orchestrator)
+├── StellarOrionEngineMach5Up.py (The Orchestrator)
 │   ├── subprocess.run ──> CADDesign/HIAD_GeometryEngine.py (CAD Kernel)
 │   ├── subprocess.run ──> [Docker Engine] ──> sparta-sim (Physics)
 │   ├── from source import visualizer (Post-processing)
@@ -60,7 +60,7 @@ The process begins with user-defined or preset parameters that define the missio
 These parameters are converted into a format suitable for the **Direct Simulation Monte Carlo (DSMC)** solver.
 
 1.  **Geometry Kernel:** `HIAD_GeometryEngine.py` uses the geometric parameters to generate a 2D axisymmetric surface file (`.surf`).
-2.  **Script Generation:** `gui_backend.py` generates the `in.hiad` control script:
+2.  **Script Generation:** `StellarOrionEngineMach5Up.py` generates the `in.hiad` control script:
     *   **Collision Model:** Variable Soft Sphere (VSS).
     *   **Reaction Model:** Total Collision Energy (TCE) for chemical dissociation/ionization.
     *   **Boundaries:** Freestream inflow (Emit), Vacuum outflow, and Diffuse surface reflection.
