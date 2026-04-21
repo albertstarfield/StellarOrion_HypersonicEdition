@@ -18,6 +18,7 @@ def run_headless_test():
         'env_temp': '1000.0',
         'env_step': '1e-6',
         'env_run': '1000',
+        'pinn_accel': True,
         'samples': 2,  # Small number for testing
         'base_diameter': 3.0,
         'base_angle': 60.0,

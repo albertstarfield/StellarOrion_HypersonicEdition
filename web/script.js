@@ -4,13 +4,17 @@ const totalPages = 8;
 window.onload = () => {
     initBackgroundEffects();
     setTimeout(() => {
-        document.getElementById('splash').style.opacity = '0';
-        setTimeout(() => document.getElementById('splash').style.display = 'none', 800);
+        const splash = document.getElementById('splash');
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => splash.style.display = 'none', 800);
+        }
     }, 1500);
 };
 
 function initBackgroundEffects() {
     const container = document.getElementById('star-container');
+    if (!container) return;
     const starCount = 50;
     for (let i = 0; i < starCount; i++) {
         const star = document.createElement('div');
@@ -56,8 +60,10 @@ function jumpToPage(step) {
     // Enforce Solver Readiness Guard for Page 5 -> 6
     if (currentPage === 5 && step > 5 && !remoteVerified) {
         const status = document.getElementById('test-readiness-status');
-        status.style.color = "#ef4444";
-        status.innerText = "✗ Please test solver readiness first!";
+        if (status) {
+            status.style.color = "#ef4444";
+            status.innerText = "✗ Please test solver readiness first!";
+        }
         return;
     }
 
@@ -71,35 +77,42 @@ function jumpToPage(step) {
 }
 
 function nextStep(step) {
-    document.getElementById(`page-${currentPage}`).classList.remove('active');
+    const currentPageEl = document.getElementById(`page-${currentPage}`);
+    if (currentPageEl) currentPageEl.classList.remove('active');
+    
     currentPage = step;
-    document.getElementById(`page-${currentPage}`).classList.add('active');
+    
+    const nextPageEl = document.getElementById(`page-${currentPage}`);
+    if (nextPageEl) nextPageEl.classList.add('active');
 
-    document.getElementById('btn-prev').style.display = currentPage === 1 ? 'none' : 'block';
+    const btnPrev = document.getElementById('btn-prev');
+    if (btnPrev) btnPrev.style.display = currentPage === 1 ? 'none' : 'block';
+    
     const nextBtn = document.getElementById('btn-next');
-    if (currentPage === 3 || currentPage === 7) {
-        nextBtn.style.display = 'none';
-    } else {
-        nextBtn.style.display = 'block';
-        nextBtn.innerText = currentPage === 8 ? 'Finish' : 'Continue';
+    if (nextBtn) {
+        if (currentPage === 3 || currentPage === 7) {
+            nextBtn.style.display = 'none';
+        } else {
+            nextBtn.style.display = 'block';
+            nextBtn.innerText = currentPage === 8 ? 'Finish' : 'Continue';
+        }
+
+        if (currentPage === 5) {
+            if (!remoteVerified) {
+                nextBtn.disabled = true;
+                nextBtn.style.opacity = "0.5";
+                nextBtn.style.cursor = "not-allowed";
+            }
+        } else {
+            nextBtn.disabled = false;
+            nextBtn.style.opacity = "1";
+            nextBtn.style.cursor = "pointer";
+        }
     }
 
     document.querySelectorAll('.step-item').forEach((s, idx) => {
         s.classList.toggle('active', idx + 1 === currentPage);
     });
-
-    const nextBtnEl = document.getElementById('btn-next');
-    if (currentPage === 5) {
-        if (!remoteVerified) {
-            nextBtnEl.disabled = true;
-            nextBtnEl.style.opacity = "0.5";
-            nextBtnEl.style.cursor = "not-allowed";
-        }
-    } else {
-        nextBtnEl.disabled = false;
-        nextBtnEl.style.opacity = "1";
-        nextBtnEl.style.cursor = "pointer";
-    }
 
     document.querySelectorAll('.dot').forEach((d, idx) => {
         d.classList.toggle('active', idx + 1 === currentPage);
@@ -136,68 +149,87 @@ function updateProgress(val) {
 }
 
 function toggleMSIS() {
-    const val = document.getElementById('env-preset').value;
-    document.getElementById('msis-panel').style.display = (val === 'nrlmsis') ? 'block' : 'none';
+    const el = document.getElementById('env-preset');
+    if (!el) return;
+    const val = el.value;
+    const msisPanel = document.getElementById('msis-panel');
+    if (msisPanel) msisPanel.style.display = (val === 'nrlmsis') ? 'block' : 'none';
     fetchAtmosphereData();
 }
 
 async function toggleRemoteFields() {
-    const val = document.getElementById('solver-backend').value;
+    const backendEl = document.getElementById('solver-backend');
+    if (!backendEl) return;
+    const val = backendEl.value;
     const remotePanel = document.getElementById('remote-fields');
     const hostField = document.getElementById('ssh-host');
     const userField = document.getElementById('ssh-user');
     
     if (val === 'pyfluent' || val === 'pyfluent_local') {
-        remotePanel.style.display = 'block';
+        if (remotePanel) remotePanel.style.display = 'block';
         if (val === 'pyfluent_local') {
-            hostField.value = "localhost";
-            hostField.disabled = true;
-            hostField.style.background = "rgba(0,0,0,0.05)"; 
+            if (hostField) {
+                hostField.value = "localhost";
+                hostField.disabled = true;
+                hostField.style.background = "rgba(0,0,0,0.05)"; 
+            }
             try {
                 const localUser = await window.pywebview.api.get_local_user();
-                userField.value = localUser;
-                userField.disabled = true;
-                userField.style.background = "rgba(0,0,0,0.05)";
+                if (userField) {
+                    userField.value = localUser;
+                    userField.disabled = true;
+                    userField.style.background = "rgba(0,0,0,0.05)";
+                }
             } catch (e) { console.error(e); }
         } else {
-            hostField.disabled = false;
-            hostField.style.background = "white";
-            userField.disabled = false;
-            userField.style.background = "white";
+            if (hostField) {
+                hostField.disabled = false;
+                hostField.style.background = "white";
+            }
+            if (userField) {
+                userField.disabled = false;
+                userField.style.background = "white";
+            }
         }
     } else {
-        remotePanel.style.display = 'none';
+        if (remotePanel) remotePanel.style.display = 'none';
     }
 }
 
 async function fetchAtmosphereData() {
+    const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : null;
     const params = {
-        env_preset: document.getElementById('env-preset').value,
-        msis_alt: document.getElementById('msis-alt').value,
-        msis_lat: document.getElementById('msis-lat').value,
-        msis_lon: document.getElementById('msis-lon').value,
-        msis_f107: document.getElementById('msis-f107').value,
-        msis_ap: document.getElementById('msis-ap').value
+        env_preset: getVal('env-preset'),
+        msis_alt: getVal('msis-alt'),
+        msis_lat: getVal('msis-lat'),
+        msis_lon: getVal('msis-lon'),
+        msis_f107: getVal('msis-f107'),
+        msis_ap: getVal('msis-ap')
     };
     const res = await window.pywebview.api.get_atmosphere_data(params);
     if (res) {
-        document.getElementById('env-nrho').value = res.nrho.toExponential(2);
-        document.getElementById('env-temp-inf').value = res.temp.toFixed(1);
+        const nrhoEl = document.getElementById('env-nrho');
+        const tempEl = document.getElementById('env-temp-inf');
+        if (nrhoEl) nrhoEl.value = res.nrho.toExponential(2);
+        if (tempEl) tempEl.value = res.temp.toFixed(1);
     }
 }
 
 function generateGeometry() {
+    const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : null;
+    const getCheck = (id) => document.getElementById(id) ? document.getElementById(id).checked : false;
+    
     const params = {
-        diameter: document.getElementById('ref-diameter').value,
-        angle: document.getElementById('ref-angle').value,
-        toroids: document.getElementById('ref-toroids').value,
-        mass: document.getElementById('mass').value,
-        thickness: document.getElementById('thickness').value,
-        nose_radius: document.getElementById('nose-radius').value,
-        scallop_pts: document.getElementById('scallop-pts').value,
-        scallop_angle: document.getElementById('scallop-angle').value,
-        nose_type: document.getElementById('nose-type').value,
-        flat_skin: document.getElementById('flat-skin').checked
+        diameter: getVal('ref-diameter'),
+        angle: getVal('ref-angle'),
+        toroids: getVal('ref-toroids'),
+        mass: getVal('mass'),
+        thickness: getVal('thickness'),
+        nose_radius: getVal('nose-radius'),
+        scallop_pts: getVal('scallop-pts'),
+        scallop_angle: getVal('scallop-angle'),
+        nose_type: getVal('nose-type'),
+        flat_skin: getCheck('flat-skin')
     };
     window.pywebview.api.generate_cad_preview(params);
     nextStep(3);
@@ -205,16 +237,88 @@ function generateGeometry() {
 
 function startOptimization() {
     nextStep(7);
-    const optParams = {
-        solver: document.getElementById('solver-backend').value,
-        ssh_host: document.getElementById('ssh-host').value,
-        ssh_user: document.getElementById('ssh-user').value,
-        ssh_pass: document.getElementById('ssh-pass').value,
-        ssh_key: document.getElementById('ssh-key').value,
-        samples: document.getElementById('opt-samples').value,
-        // ... (all other params from previous state)
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        return (el.type === 'checkbox') ? el.checked : el.value;
     };
+
+    const optParams = {
+        // Backend & Remote
+        solver: getVal('solver-backend'),
+        ssh_host: getVal('ssh-host'),
+        ssh_user: getVal('ssh-user'),
+        ssh_pass: getVal('ssh-pass'),
+        ssh_key: getVal('ssh-key'),
+        solver_dim: getVal('solver-dim'),
+        solver_gpu: getVal('solver-gpu'),
+        solver_bl_layers: getVal('solver-bl-layers'),
+
+        // Optimization
+        samples: getVal('opt-samples'),
+        d_min: getVal('opt-d-min'),
+        d_max: getVal('opt-d-max'),
+        
+        // Base Geometry
+        base_diameter: getVal('ref-diameter'),
+        base_angle: getVal('ref-angle'),
+        base_toroids: getVal('ref-toroids'),
+        base_nose: getVal('nose-radius'),
+        base_thick: getVal('thickness'),
+        base_scallop_pts: getVal('scallop-pts'),
+        base_scallop_ang: getVal('scallop-angle'),
+        base_mass: getVal('mass'),
+
+        // Variability (Checkboxes)
+        v_diameter: getCheck('v-diameter'),
+        v_angle: getCheck('v-angle'),
+        v_toroids: getCheck('v-toroids'),
+        v_nose: getCheck('v-nose'),
+        v_thick: getCheck('v-thick'),
+        v_scallop_pts: getCheck('v-scallop-pts'),
+        v_scallop_ang: getCheck('v-scallop-ang'),
+        v_mass: getCheck('v-mass'),
+
+        // Deltas
+        delta_angle: getVal('delta-angle'),
+        delta_toroids: getVal('delta-toroids'),
+        delta_nose: getVal('delta-nose'),
+        delta_thick: getVal('delta-thick'),
+        delta_scallop_pts: getVal('delta-scallop-pts'),
+        delta_scallop_ang: getVal('delta-scallop-ang'),
+        delta_mass: getVal('delta-mass'),
+
+        // Physics & Env
+        env_preset: getVal('env-preset'),
+        env_nrho: getVal('env-nrho'),
+        env_temp_inf: getVal('env-temp-inf'),
+        env_vstream: getVal('env-vstream'),
+        env_duration: getVal('env-duration'),
+        env_thermal_lag: getVal('env-thermal-lag'),
+        env_viscous_model: getVal('env-viscous-model'),
+        env_chem_mode: getVal('env-chem-mode'),
+        env_steady_state: getCheck('env-steady-state'),
+        env_steady_tol: getVal('env-steady-tol'),
+        pinn_accel: getCheck('pinn-accel'),
+        env_temp: getVal('env-temp'),
+        env_step: getVal('env-step'),
+        env_fnum: getVal('env-fnum'),
+        env_react: getVal('env-react'),
+        env_run: getVal('env-run'),
+
+        // Domain
+        env_xmin: getVal('env-xmin'),
+        env_xmax: getVal('env-xmax'),
+        env_ymax: getVal('env-ymax'),
+        env_zthick: getVal('env-zthick')
+    };
+    
     window.pywebview.api.run_optimization(optParams);
+}
+
+function getCheck(id) {
+    const el = document.getElementById(id);
+    return el ? el.checked : false;
 }
 
 // REMOTE ORCHESTRATION & DIAGNOSTICS
@@ -223,18 +327,23 @@ let remoteCaptureInterval = null;
 
 async function onBackendChange() {
     await toggleRemoteFields();
-    remoteVerified = (document.getElementById('solver-backend').value === 'sparta');
-    document.getElementById('test-readiness-status').innerText = "";
-    document.getElementById('python-install-container').innerHTML = "";
+    const backendEl = document.getElementById('solver-backend');
+    if (backendEl) {
+        remoteVerified = (backendEl.value === 'sparta');
+    }
+    const status = document.getElementById('test-readiness-status');
+    if (status) status.innerText = "";
+    const installContainer = document.getElementById('python-install-container');
+    if (installContainer) installContainer.innerHTML = "";
     lockContinueButton();
 }
 
 function lockContinueButton() {
     const nextBtn = document.getElementById('btn-next');
-    if (currentPage === 5 && !remoteVerified) {
+    if (nextBtn && currentPage === 5 && !remoteVerified) {
         nextBtn.disabled = true;
         nextBtn.style.opacity = "0.5";
-    } else {
+    } else if (nextBtn) {
         nextBtn.disabled = false;
         nextBtn.style.opacity = "1";
     }
@@ -242,61 +351,81 @@ function lockContinueButton() {
 
 async function testReadiness() {
     startRemoteAutoCapture();
-    const backend = document.getElementById('solver-backend').value;
+    const backendEl = document.getElementById('solver-backend');
+    if (!backendEl) return;
+    const backend = backendEl.value;
     const btn = document.getElementById('btn-test-readiness');
     const status = document.getElementById('test-readiness-status');
-    const originalText = btn.innerText;
+    const originalText = btn ? btn.innerText : "Test";
     
-    btn.innerText = "Testing...";
-    btn.disabled = true;
-    status.innerText = "";
+    if (btn) {
+        btn.innerText = "Testing...";
+        btn.disabled = true;
+    }
+    if (status) status.innerText = "";
     
     try {
         let result;
+        const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : '';
         if (backend === 'sparta') {
             result = await window.pywebview.api.test_sparta_readiness();
         } else {
             const params = {
-                ssh_host: document.getElementById('ssh-host').value,
-                ssh_user: document.getElementById('ssh-user').value,
-                ssh_pass: document.getElementById('ssh-pass').value,
-                ssh_key: document.getElementById('ssh-key').value
+                ssh_host: getVal('ssh-host'),
+                ssh_user: getVal('ssh-user'),
+                ssh_pass: getVal('ssh-pass'),
+                ssh_key: getVal('ssh-key')
             };
             result = await window.pywebview.api.test_ssh_connection(params);
         }
         
         if (result.status === "success") {
-            status.style.color = "#10b981";
-            status.innerText = "✓ " + result.message;
+            if (status) {
+                status.style.color = "#10b981";
+                status.innerText = "✓ " + result.message;
+            }
             remoteVerified = true;
             
             if (result.arch === "AMD64") logReadiness("[SYSTEM] Architecture: AMD64. Status Quo.");
             else if (result.arch === "ARM64") logReadiness("[SYSTEM] Architecture: ARM64. Bleeding Edge.");
 
-            if (result.message && result.message.includes("Native ARM64 Python detected")) {
-                document.getElementById('python-install-container').innerHTML = '<button onclick="purgeArmPython()" class="btn-purge">Purge ARM Python</button>';
-            } else if (result.python_missing) {
-                document.getElementById('python-install-container').innerHTML = '<button onclick="installRemotePython()" class="btn-install">Install x64 Python</button>';
-            } else if (result.pyansys_missing) {
-                document.getElementById('python-install-container').innerHTML = '<button onclick="installPyAnsys()" class="btn-install">Install PyFluent Libs</button>';
-            } else if (result.sparta_missing) {
-                document.getElementById('python-install-container').innerHTML = '<button onclick="buildSpartaImage()" class="btn-install">Build SPARTA Image</button>';
+            const installContainer = document.getElementById('python-install-container');
+            if (installContainer) {
+                if (result.message && result.message.includes("Native ARM64 Python detected")) {
+                    installContainer.innerHTML = '<button onclick="purgeArmPython()" class="btn-purge">Purge ARM Python</button>';
+                } else if (result.python_missing) {
+                    installContainer.innerHTML = '<button onclick="installRemotePython()" class="btn-install">Install x64 Python</button>';
+                } else if (result.pyansys_missing) {
+                    installContainer.innerHTML = '<button onclick="installPyAnsys()" class="btn-install">Install PyFluent Libs</button>';
+                } else if (result.sparta_missing) {
+                    installContainer.innerHTML = '<button onclick="buildSpartaImage()" class="btn-install">Build SPARTA Image</button>';
+                }
             }
             
-            if (!result.python_missing && !result.pyansys_missing) {
-                document.getElementById('btn-run-test').style.display = "block";
+            const integrationBtn = document.getElementById('btn-run-test');
+            if (integrationBtn && !result.python_missing && !result.pyansys_missing) {
+                integrationBtn.style.display = "block";
             }
             lockContinueButton();
         } else {
-            status.style.color = "#ef4444";
-            status.innerText = "✗ Readiness Test Failed.";
+            if (status) {
+                status.style.color = "#ef4444";
+                status.innerText = "✗ Readiness Test Failed.";
+            }
             logReadiness("[ERROR] " + result.message);
+            
+            const installContainer = document.getElementById('python-install-container');
+            if (installContainer && result.sparta_missing) {
+                installContainer.innerHTML = '<button onclick="buildSpartaImage()" class="btn-install">Build SPARTA Image</button>';
+            }
         }
     } catch (e) {
-        status.innerText = "✗ Error: " + e;
+        if (status) status.innerText = "✗ Error: " + e;
     } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
+        if (btn) {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
         setTimeout(stopRemoteAutoCapture, 15000);
     }
 }
@@ -305,23 +434,28 @@ async function captureRemoteView() {
     const container = document.getElementById('remote-view-container');
     const img = document.getElementById('remote-screen-img');
     const placeholder = document.getElementById('remote-screen-placeholder');
-    const backend = document.getElementById('solver-backend').value;
+    const backendEl = document.getElementById('solver-backend');
+    if (!backendEl) return;
+    const backend = backendEl.value;
     
     if (backend !== 'pyfluent' && backend !== 'pyfluent_local') return;
-    container.style.display = "block";
+    if (container) container.style.display = "block";
     
+    const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : '';
     const params = {
-        ssh_host: document.getElementById('ssh-host').value,
-        ssh_user: document.getElementById('ssh-user').value,
-        ssh_pass: document.getElementById('ssh-pass').value,
-        ssh_key: document.getElementById('ssh-key').value
+        ssh_host: getVal('ssh-host'),
+        ssh_user: getVal('ssh-user'),
+        ssh_pass: getVal('ssh-pass'),
+        ssh_key: getVal('ssh-key')
     };
     
     const res = await window.pywebview.api.capture_remote_screen(params);
     if (res.status === "success") {
-        img.src = res.image_url;
-        img.style.display = "block";
-        placeholder.style.display = "none";
+        if (img) {
+            img.src = res.image_url;
+            img.style.display = "block";
+        }
+        if (placeholder) placeholder.style.display = "none";
     }
 }
 
@@ -340,20 +474,24 @@ function stopRemoteAutoCapture() {
 
 function logReadiness(msg) {
     const logArea = document.getElementById('test-verbose-logs');
-    document.getElementById('test-verbose-logs-container').style.display = "block";
-    logArea.innerText += msg + "\n";
-    logArea.scrollTop = logArea.scrollHeight;
+    const container = document.getElementById('test-verbose-logs-container');
+    if (container) container.style.display = "block";
+    if (logArea) {
+        logArea.innerText += msg + "\n";
+        logArea.scrollTop = logArea.scrollHeight;
+    }
 }
 
 async function installRemotePython() {
     startRemoteAutoCapture();
     const status = document.getElementById('test-readiness-status');
-    status.innerText = "Installing x64 Python...";
+    if (status) status.innerText = "Installing x64 Python...";
+    const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : '';
     const params = {
-        ssh_host: document.getElementById('ssh-host').value,
-        ssh_user: document.getElementById('ssh-user').value,
-        ssh_pass: document.getElementById('ssh-pass').value,
-        ssh_key: document.getElementById('ssh-key').value
+        ssh_host: getVal('ssh-host'),
+        ssh_user: getVal('ssh-user'),
+        ssh_pass: getVal('ssh-pass'),
+        ssh_key: getVal('ssh-key')
     };
     const res = await window.pywebview.api.install_remote_python(params);
     if (res.status === "success") testReadiness();
@@ -363,12 +501,13 @@ async function installRemotePython() {
 async function installPyAnsys() {
     startRemoteAutoCapture();
     const status = document.getElementById('test-readiness-status');
-    status.innerText = "Installing PyFluent...";
+    if (status) status.innerText = "Installing PyFluent...";
+    const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : '';
     const params = {
-        ssh_host: document.getElementById('ssh-host').value,
-        ssh_user: document.getElementById('ssh-user').value,
-        ssh_pass: document.getElementById('ssh-pass').value,
-        ssh_key: document.getElementById('ssh-key').value
+        ssh_host: getVal('ssh-host'),
+        ssh_user: getVal('ssh-user'),
+        ssh_pass: getVal('ssh-pass'),
+        ssh_key: getVal('ssh-key')
     };
     const res = await window.pywebview.api.install_pyansys(params);
     if (res.status === "success") testReadiness();
@@ -377,30 +516,31 @@ async function installPyAnsys() {
 
 async function purgeArmPython() {
     const status = document.getElementById('test-readiness-status');
-    status.innerText = "Purging ARM64 Python...";
+    if (status) status.innerText = "Purging ARM64 Python...";
+    const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : '';
     const params = {
-        ssh_host: document.getElementById('ssh-host').value,
-        ssh_user: document.getElementById('ssh-user').value,
-        ssh_pass: document.getElementById('ssh-pass').value,
-        ssh_key: document.getElementById('ssh-key').value
+        ssh_host: getVal('ssh-host'),
+        ssh_user: getVal('ssh-user'),
+        ssh_pass: getVal('ssh-pass'),
+        ssh_key: getVal('ssh-key')
     };
     const res = await window.pywebview.api.purge_arm_python(params);
     if (res.status === "success") testReadiness();
 }
 
-// ... (Rest of utility functions like copyLogs, saveRemoteParams, loadRemoteParams, init3DView etc)
-
 function saveRemoteParams() {
+    const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : '';
+    const getCheck = (id) => document.getElementById(id) ? document.getElementById(id).checked : false;
     const params = {
-        backend: document.getElementById('solver-backend').value,
-        host: document.getElementById('ssh-host').value,
-        user: document.getElementById('ssh-user').value,
-        pass: document.getElementById('ssh-pass').value,
-        key: document.getElementById('ssh-key').value,
-        dim: document.getElementById('solver-dim').value,
-        gpu: document.getElementById('solver-gpu').checked,
-        bl_layers: document.getElementById('solver-bl-layers').value,
-        viscous: document.getElementById('env-viscous-model').value
+        backend: getVal('solver-backend'),
+        host: getVal('ssh-host'),
+        user: getVal('ssh-user'),
+        pass: getVal('ssh-pass'),
+        key: getVal('ssh-key'),
+        dim: getVal('solver-dim'),
+        gpu: getCheck('solver-gpu'),
+        bl_layers: getVal('solver-bl-layers'),
+        viscous: getVal('env-viscous-model')
     };
     localStorage.setItem('stellar_orion_remote_params', JSON.stringify(params));
 }
@@ -409,15 +549,18 @@ function loadRemoteParams() {
     const saved = localStorage.getItem('stellar_orion_remote_params');
     if (saved) {
         const params = JSON.parse(saved);
-        document.getElementById('solver-backend').value = params.backend || 'sparta';
-        document.getElementById('ssh-host').value = params.host || '';
-        document.getElementById('ssh-user').value = params.user || '';
-        document.getElementById('ssh-pass').value = params.pass || '';
-        document.getElementById('ssh-key').value = params.key || '';
-        document.getElementById('solver-dim').value = params.dim || '2d';
-        document.getElementById('solver-gpu').checked = params.gpu !== false;
-        document.getElementById('solver-bl-layers').value = params.bl_layers || '15';
-        document.getElementById('env-viscous-model').value = params.viscous || 'sst-k-omega';
+        const setVal = (id, val) => { if (document.getElementById(id)) document.getElementById(id).value = val; };
+        const setCheck = (id, val) => { if (document.getElementById(id)) document.getElementById(id).checked = val; };
+        
+        setVal('solver-backend', params.backend || 'sparta');
+        setVal('ssh-host', params.host || '');
+        setVal('ssh-user', params.user || '');
+        setVal('ssh-pass', params.pass || '');
+        setVal('ssh-key', params.key || '');
+        setVal('solver-dim', params.dim || '2d');
+        setCheck('solver-gpu', params.gpu !== false);
+        setVal('solver-bl-layers', params.bl_layers || '15');
+        setVal('env-viscous-model', params.viscous || 'sst-k-omega');
         toggleRemoteFields();
     }
 }
@@ -475,38 +618,54 @@ document.addEventListener('DOMContentLoaded', loadRemoteParams);
 async function runIntegrationTest() {
     startRemoteAutoCapture();
     const btn = document.getElementById('btn-run-test');
-    const originalText = btn.innerText;
-    btn.innerText = "Running Test...";
-    btn.disabled = true;
+    const originalText = btn ? btn.innerText : "Run Test";
+    if (btn) {
+        btn.innerText = "Running Test...";
+        btn.disabled = true;
+    }
     
     logReadiness("[*] Initiating 100-step dry run integration test...");
     
-    const params = {
-        ssh_host: document.getElementById('ssh-host').value,
-        ssh_user: document.getElementById('ssh-user').value,
-        ssh_pass: document.getElementById('ssh-pass').value,
-        ssh_key: document.getElementById('ssh-key').value,
-        solver_dim: document.getElementById('solver-dim').value,
-        solver_gpu: document.getElementById('solver-gpu').checked,
-        env_cores: 2,
-        solver_bl_layers: 5,
-        viscous_model: "laminar"
-    };
+    const backendEl = document.getElementById('solver-backend');
+    if (!backendEl) return;
+    const backend = backendEl.value;
     
     try {
-        const res = await window.pywebview.api.run_integration_test(params);
+        let res;
+        const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : '';
+        const getCheck = (id) => document.getElementById(id) ? document.getElementById(id).checked : false;
+        if (backend === 'sparta') {
+            res = await window.pywebview.api.run_sparta_integration_test();
+        } else {
+            const params = {
+                ssh_host: getVal('ssh-host'),
+                ssh_user: getVal('ssh-user'),
+                ssh_pass: getVal('ssh-pass'),
+                ssh_key: getVal('ssh-key'),
+                solver_dim: getVal('solver-dim'),
+                solver_gpu: getCheck('solver-gpu'),
+                env_cores: 2,
+                solver_bl_layers: 5,
+                viscous_model: "laminar"
+            };
+            res = await window.pywebview.api.run_integration_test(params);
+        }
+        
         if (res.status === "success") {
             logReadiness("[SUCCESS] Integration test complete!");
-            logReadiness(res.log);
+            if (res.log) logReadiness(res.log);
         } else {
             logReadiness("[ERROR] Integration test failed.");
-            logReadiness(res.log);
+            if (res.log) logReadiness(res.log);
+            else if (res.message) logReadiness(res.message);
         }
     } catch (e) {
         logReadiness("[EXCEPTION] " + e);
     } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
+        if (btn) {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
         setTimeout(stopRemoteAutoCapture, 10000);
     }
 }
@@ -516,7 +675,6 @@ function copyToClipboard(id) {
     if (!el) return;
     const text = el.innerText || el.value;
     navigator.clipboard.writeText(text).then(() => {
-        // Find the button that was clicked to give feedback
         const btn = event.target;
         const originalText = btn.innerText;
         btn.innerText = "Copied!";
@@ -532,7 +690,7 @@ function copyToClipboard(id) {
 
 async function buildSpartaImage() {
     const status = document.getElementById('test-readiness-status');
-    status.innerText = "Building SPARTA Image...";
+    if (status) status.innerText = "Building SPARTA Image...";
     logReadiness("[*] Initiating local Docker build for 'sparta-hysp'...");
     
     try {
@@ -548,3 +706,117 @@ async function buildSpartaImage() {
         logReadiness("[EXCEPTION] " + e);
     }
 }
+
+// --- MISSING FUNCTIONS START ---
+
+function syncTarget(metric, type) {
+    const range = document.getElementById(`target-${metric}-range`);
+    const val = document.getElementById(`target-${metric}-val`);
+    if (!range || !val) return;
+
+    if (type === 'range') {
+        val.value = range.value;
+    } else {
+        range.value = val.value;
+    }
+}
+
+function refreshDomainPreview() {
+    const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : null;
+    const params = {
+        env_xmin: getVal('env-xmin'),
+        env_xmax: getVal('env-xmax'),
+        env_ymax: getVal('env-ymax'),
+        env_zthick: getVal('env-zthick')
+    };
+    window.pywebview.api.request_domain_preview(params);
+}
+
+function onDomainPreviewReady() {
+    const timestamp = new Date().getTime();
+    const img1 = document.getElementById('domain-live-preview');
+    const img2 = document.getElementById('domain-preview-img');
+    
+    if (img1) img1.src = `assets/plots/domain_preview.png?t=${timestamp}`;
+    if (img2) img2.src = `assets/plots/domain_preview.png?t=${timestamp}`;
+}
+
+function updateSummary() {
+    const summaryDiv = document.getElementById('summary-content');
+    if (!summaryDiv) return;
+
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return 'N/A';
+        return el.value;
+    };
+    
+    const getCheck = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return 'N/A';
+        return el.checked ? '✓' : '✗';
+    };
+
+    const html = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="summary-section">
+                <h4 style="color: var(--primary); margin-bottom: 10px; font-size: 0.8rem; text-transform: uppercase;">Base Geometry</h4>
+                <ul style="list-style: none; padding: 0; font-size: 0.85rem; color: var(--text-dim);">
+                    <li>Diameter: <strong>${getVal('ref-diameter')} m</strong></li>
+                    <li>Cone Angle: <strong>${getVal('ref-angle')}°</strong></li>
+                    <li>Toroid Count: <strong>${getVal('ref-toroids')}</strong></li>
+                    <li>Nose Radius: <strong>${getVal('nose-radius')} m</strong></li>
+                    <li>Thickness: <strong>${getVal('thickness')} m</strong></li>
+                    <li>Initial Mass: <strong>${getVal('mass')} kg</strong></li>
+                </ul>
+            </div>
+            <div class="summary-section">
+                <h4 style="color: var(--primary); margin-bottom: 10px; font-size: 0.8rem; text-transform: uppercase;">Survivability Targets</h4>
+                <ul style="list-style: none; padding: 0; font-size: 0.85rem; color: var(--text-dim);">
+                    <li>Ballistic Coeff (β): <strong>${getVal('target-beta-val')} kg/m²</strong></li>
+                    <li>Peak Heat Flux: <strong>${getVal('target-heat-val')} W/cm²</strong></li>
+                    <li>Peak g-load: <strong>${getVal('target-g-val')} g</strong></li>
+                    <li>Internal Temp: <strong>${getVal('target-temp-val')} °C</strong></li>
+                    <li>Dynamic Pressure: <strong>${getVal('target-q-val')} Pa</strong></li>
+                </ul>
+            </div>
+            <div class="summary-section" style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                <h4 style="color: var(--primary); margin-bottom: 10px; font-size: 0.8rem; text-transform: uppercase;">Physics & Environment</h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 0.85rem; color: var(--text-dim);">
+                    <div>Model: <strong>${getVal('env-preset')}</strong></div>
+                    <div>V-Stream: <strong>${getVal('env-vstream')} m/s</strong></div>
+                    <div>Duration: <strong>${getVal('env-duration')} s</strong></div>
+                    <div>Viscous: <strong>${getVal('env-viscous-model')}</strong></div>
+                    <div>Chemistry: <strong>${getVal('env-chem-mode')}</strong></div>
+                    <div>Steady State: <strong>${getCheck('env-steady-state')}</strong></div>
+                    <div>PINN Accel: <strong style="color: ${getCheck('pinn-accel') === '✓' ? '#10b981' : '#ef4444'}">${getCheck('pinn-accel')}</strong></div>
+                </div>
+            </div>
+            <div class="summary-section" style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                <h4 style="color: var(--primary); margin-bottom: 10px; font-size: 0.8rem; text-transform: uppercase;">Optimization Search Space (Variability)</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 0.85rem; color: var(--text-dim);">
+                    <div>Diameter: <strong>${getCheck('v-diameter')}</strong></div>
+                    <div>Angle: <strong>${getCheck('v-angle')}</strong></div>
+                    <div>Toroids: <strong>${getCheck('v-toroids')}</strong></div>
+                    <div>Nose Rad: <strong>${getCheck('v-nose')}</strong></div>
+                    <div>Skin Thk: <strong>${getCheck('v-thick')}</strong></div>
+                    <div>Scal. Pts: <strong>${getCheck('v-scallop-pts')}</strong></div>
+                    <div>Scal. Ang: <strong>${getCheck('v-scallop-ang')}</strong></div>
+                    <div>Mass: <strong>${getCheck('v-mass')}</strong></div>
+                </div>
+            </div>
+            <div class="summary-section" style="grid-column: span 2; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-top: 10px;">
+                <h4 style="color: #a855f7; margin-bottom: 10px; font-size: 0.8rem; text-transform: uppercase;">Solver & Backend</h4>
+                <div style="display: flex; gap: 30px; font-size: 0.85rem; color: var(--text-dim);">
+                    <div>Backend: <strong style="color: #fff;">${getVal('solver-backend').toUpperCase()}</strong></div>
+                    <div>Host: <strong style="color: #fff;">${getVal('ssh-host') || 'Localhost'}</strong></div>
+                    <div>Dimension: <strong style="color: #fff;">${getVal('solver-dim').toUpperCase()}</strong></div>
+                    <div>GPU: <strong style="color: #fff;">${getCheck('solver-gpu')}</strong></div>
+                </div>
+            </div>
+        </div>
+    `;
+    summaryDiv.innerHTML = html;
+}
+
+// --- MISSING FUNCTIONS END ---

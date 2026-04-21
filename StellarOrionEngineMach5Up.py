@@ -1104,6 +1104,7 @@ run             {opt_params.get('env_run', '1000')}
         
         # 1. Establish Physics Baseline
         self.log_to_gui(f"[*] PHASE 1: ESTABLISHING PHYSICS BASELINE...")
+        sim_start = time.time()
         
         n_cores = os.cpu_count() or 1
         self.log_to_gui(f"[*] Detected {n_cores} CPU cores. Enabling parallel execution...")
@@ -1208,36 +1209,39 @@ run             {opt_params.get('env_run', '1000')}
             visualizer.export_upscaled_vtk(grid_files[-1], vtk_path)
             
             # --- PINN Refinement Stage ---
-            self.log_to_gui("[*] PHASE 1.2: DEEPXDE PINN REFINEMENT (Checkpoint Exchange)...")
-            try:
-                import torch
-                device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu")
-                
+            if opt_params.get('pinn_accel', True):
+                self.log_to_gui("[*] PHASE 1.2: DEEPXDE PINN REFINEMENT (Checkpoint Exchange)...")
                 try:
-                    from source.pinn_accelerator import PINNAccelerator
-                    pinn = PINNAccelerator(device=device)
-                except ImportError:
-                    self.log_to_gui("    [!] WARNING: DeepXDE not found. Attempting auto-installation...")
-                    subprocess.check_call([sys.executable, "-m", "pip", "install", "deepxde"])
-                    from source.pinn_accelerator import PINNAccelerator
-                    pinn = PINNAccelerator(device=device)
-                
-                # Domain bounds from opt_params
-                d_val = float(opt_params.get('base_diameter', 3.0))
-                xmin = float(opt_params.get('env_xmin', -0.5 * d_val))
-                xmax = float(opt_params.get('env_xmax', 1.2 * d_val))
-                ymax = float(opt_params.get('env_ymax', 0.8 * d_val))
-                
-                self.log_to_gui(f"    [+] Initializing PINN on {device}...")
-                pinn.train_from_checkpoint(grid_files[-1], [xmin, xmax, ymax], iterations=1500)
-                
-                self.log_to_gui("    [+] PINN Training Complete. Generating refined flow field...")
-                # Inference on a finer grid for gap filling
-                # (Conceptual: we could save this to a new file or use it for better metrics)
-                self.log_to_gui("    [+] Refined field generated via PINN. Gaps filled.")
-                
-            except Exception as pe:
-                self.log_to_gui(f"    [!] PINN Refinement Warning: {pe}")
+                    import torch
+                    device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu")
+                    
+                    try:
+                        from source.pinn_accelerator import PINNAccelerator
+                        pinn = PINNAccelerator(device=device)
+                    except ImportError:
+                        self.log_to_gui("    [!] WARNING: DeepXDE not found. Attempting auto-installation...")
+                        subprocess.check_call([sys.executable, "-m", "pip", "install", "deepxde"])
+                        from source.pinn_accelerator import PINNAccelerator
+                        pinn = PINNAccelerator(device=device)
+                    
+                    # Domain bounds from opt_params
+                    d_val = float(opt_params.get('base_diameter', 3.0))
+                    xmin = float(opt_params.get('env_xmin', -0.5 * d_val))
+                    xmax = float(opt_params.get('env_xmax', 1.2 * d_val))
+                    ymax = float(opt_params.get('env_ymax', 0.8 * d_val))
+                    
+                    self.log_to_gui(f"    [+] Initializing PINN on {device}...")
+                    pinn.train_from_checkpoint(grid_files[-1], [xmin, xmax, ymax], iterations=1500)
+                    
+                    self.log_to_gui("    [+] PINN Training Complete. Generating refined flow field...")
+                    # Inference on a finer grid for gap filling
+                    # (Conceptual: we could save this to a new file or use it for better metrics)
+                    self.log_to_gui("    [+] Refined field generated via PINN. Gaps filled.")
+                    
+                except Exception as pe:
+                    self.log_to_gui(f"    [!] PINN Refinement Warning: {pe}")
+            else:
+                self.log_to_gui("[*] PHASE 1.2: PINN REFINEMENT SKIPPED (User Disabled).")
             # -------------------------------
 
         ref_metric_dict = self.parse_sparta_results()
@@ -1564,5 +1568,53 @@ run             {opt_params.get('env_run', '1000')}
                 return {"status": "success", "message": "SPARTA image built successfully."}
             else:
                 return {"status": "error", "message": f"Docker build failed (Code {exit_code}).", "log": full_log}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def run_sparta_integration_test(self):
+        """Perform a local SPARTA dry run to verify Docker stability."""
+        import subprocess
+        import os
+        try:
+            self.log_to_readiness("[*] Initiating SPARTA dry-run (Minimal Handshake)...")
+            
+            # Create a scratch directory for the test
+            test_dir = os.path.join(self.cwd, "scratch", "sparta_test")
+            os.makedirs(test_dir, exist_ok=True)
+            
+            # Write a minimal input script that just initializes and exits
+            test_script = (
+                "seed 12345\n"
+                "dimension 2\n"
+                "boundary r r r r\n"
+                "create_box 0 0.1 0 0.1 -0.5 0.5\n"
+                "create_grid 5 5 1\n"
+                "run 0\n"
+            )
+            script_path = os.path.join(test_dir, "in.test")
+            with open(script_path, "w") as f: f.write(test_script)
+            
+            # Run Docker with volume mount
+            # Note: We use absolute path for mounting
+            abs_test_dir = os.path.abspath(test_dir)
+            cmd = [
+                "docker", "run", "--rm", 
+                "-v", f"{abs_test_dir}:/workspace", 
+                "sparta-hysp", 
+                "spa", "-in", "in.test"
+            ]
+            
+            process = subprocess.Popen(cmd, cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            
+            full_log = ""
+            for line in process.stdout:
+                full_log += line
+                if line.strip(): self.log_to_readiness(f"    [SPARTA] {line.strip()}")
+            
+            exit_code = process.wait()
+            if exit_code == 0:
+                return {"status": "success", "message": "SPARTA dry-run complete.", "log": full_log}
+            else:
+                return {"status": "error", "message": f"SPARTA dry-run failed (Code {exit_code}).", "log": full_log}
         except Exception as e:
             return {"status": "error", "message": str(e)}

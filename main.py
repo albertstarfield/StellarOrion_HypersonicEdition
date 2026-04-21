@@ -155,6 +155,8 @@ def main():
     parser.add_argument("--samples", type=int, default=5, help="Number of samples for optimization")
     parser.add_argument("--goal", type=str, default="drag", help="Optimization goal (drag or heat)")
     parser.add_argument("--steps", type=int, default=1000, help="Number of simulation steps")
+    parser.add_argument("--pinn", action="store_true", default=True, help="Enable PINN acceleration (Default)")
+    parser.add_argument("--no-pinn", action="store_false", dest="pinn", help="Disable PINN acceleration")
     args, unknown = parser.parse_known_args()
 
     if not os.environ.get("IN_DOCKER"):
@@ -175,6 +177,7 @@ def main():
                 'env_thermal_lag': '0.1',
                 'env_chem_mode': '5-species',
                 'env_steady_state': False,
+                'pinn_accel': args.pinn,
                 'samples': args.samples,
                 'goal': args.goal,
                 'v_diameter': True,
