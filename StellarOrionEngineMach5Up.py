@@ -1026,7 +1026,7 @@ run             {opt_params.get('env_run', '1000')}
             # Check if image exists
             res = subprocess.run(["docker", "images", "-q", "sparta-hysp"], check=True, capture_output=True)
             if not res.stdout.strip():
-                return {"status": "error", "message": "Docker image 'sparta-hysp' not found. Run 'docker build' first."}
+                return {"status": "error", "message": "Docker image 'sparta-hysp' not found.", "sparta_missing": True}
             
             return {"status": "success", "message": "Docker and SPARTA image are ready."}
         except FileNotFoundError:
@@ -1544,3 +1544,25 @@ run             {opt_params.get('env_run', '1000')}
             self.window.evaluate_js("nextStep(8)")
         else:
             self.log_to_gui("[+] OPTIMIZATION COMPLETE (Headless). Result in results_reference/")
+
+    def build_sparta_image(self):
+        """Build the SPARTA Docker image locally with real-time logging."""
+        import subprocess
+        try:
+            self.log_to_readiness("[*] Starting local SPARTA Docker build...")
+            cmd = ["docker", "build", "-t", "sparta-hysp", "-f", "Dockerfile.minimal", "."]
+            
+            process = subprocess.Popen(cmd, cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            
+            full_log = ""
+            for line in process.stdout:
+                full_log += line
+                if line.strip(): self.log_to_readiness(f"    [DOCKER] {line.strip()}")
+            
+            exit_code = process.wait()
+            if exit_code == 0:
+                return {"status": "success", "message": "SPARTA image built successfully."}
+            else:
+                return {"status": "error", "message": f"Docker build failed (Code {exit_code}).", "log": full_log}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}

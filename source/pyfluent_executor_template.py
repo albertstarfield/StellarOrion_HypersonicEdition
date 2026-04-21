@@ -13,8 +13,11 @@ def auto_detect_ansys():
     # Check if any AWP_ROOT is already set
     for key in os.environ:
         if key.startswith("AWP_ROOT"):
-            print(f"[*] [PyFluent] Existing environment variable found: {key}={os.environ[key]}")
-            return True
+            v_num = key.replace("AWP_ROOT", "")
+            # Convert 231 to 23.1
+            v_str = f"{v_num[:2]}.{v_num[2:]}"
+            print(f"[*] [PyFluent] Existing environment variable found: {key}={os.environ[key]} (Version: {v_str})")
+            return v_str
             
     print("[*] [PyFluent] AWP_ROOT missing. Starting deep drive scan (A:\\ to Z:\\)...")
     drives = [f"{d}:\\" for d in string.ascii_uppercase if os.path.exists(f"{d}:\\")]
@@ -28,19 +31,21 @@ def auto_detect_ansys():
                 full_path = os.path.join(ansys_inc, latest_v)
                 var_name = "AWP_ROOT" + latest_v[1:]
                 os.environ[var_name] = full_path
-                print(f"[+] [PyFluent] Discovered Ansys at {full_path}. Setting {var_name}")
-                return True
-    return False
+                v_num = latest_v[1:]
+                v_str = f"{v_num[:2]}.{v_num[2:]}"
+                print(f"[+] [PyFluent] Discovered Ansys at {full_path}. Setting {var_name} (Version: {v_str})")
+                return v_str
+    return None
 
 def run_simulation(config):
-    auto_detect_ansys()
+    ansys_version = auto_detect_ansys()
     try:
         # Parameters from config
         diameter = config.get("diameter", 3.0)
         velocity = config.get("velocity", 3000.0)
         pressure = config.get("pressure", 10.0)
         temperature = config.get("temperature", 250.0)
-        dimension = config.get("dimension", "2d") # "2d" or "3d"
+        dimension_val = config.get("dimension", "2d") # "2d" or "3d"
         
         # 1. Launch Fluent with GPU Check & Auto Core Detection
         use_gpu = config.get("use_gpu", True)
@@ -51,13 +56,20 @@ def run_simulation(config):
         if n_cores <= 0:
             n_cores = max(1, system_cores - 1) # Leave one core for system
         
-        print(f"[*] [PyFluent] Launching Fluent {dimension} (GPU={use_gpu}, Cores={n_cores}/{system_cores})...")
+        print(f"[*] [PyFluent] Launching Fluent {dimension_val} (GPU={use_gpu}, Cores={n_cores}/{system_cores}, Version={ansys_version})...")
+        # Explicitly build the Fluent path to bypass failing search logic
+        awp_key = "AWP_ROOT" + ansys_version.replace(".", "")
+        fluent_exe = os.path.join(os.environ[awp_key], "fluent", "ntbin", "win64", "fluent.exe")
+        
+        print(f"[*] [PyFluent] Launching Fluent {dimension_val} via Path: {fluent_exe}")
         session = pyfluent.launch_fluent(
             precision="double", 
             processor_count=n_cores, 
             mode="meshing", 
-            show_gui=False,
-            version=dimension,
+            ui_mode="gui", # Enable GUI for visual monitoring via viewport
+            dimension=2 if dimension_val == "2d" else 3, # Explicit integer for dimension
+            product_version=ansys_version,
+            fluent_path=fluent_exe,
             gpu=use_gpu
         )
         meshing = session.meshing

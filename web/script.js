@@ -279,6 +279,8 @@ async function testReadiness() {
                 document.getElementById('python-install-container').innerHTML = '<button onclick="installRemotePython()" class="btn-install">Install x64 Python</button>';
             } else if (result.pyansys_missing) {
                 document.getElementById('python-install-container').innerHTML = '<button onclick="installPyAnsys()" class="btn-install">Install PyFluent Libs</button>';
+            } else if (result.sparta_missing) {
+                document.getElementById('python-install-container').innerHTML = '<button onclick="buildSpartaImage()" class="btn-install">Build SPARTA Image</button>';
             }
             
             if (!result.python_missing && !result.pyansys_missing) {
@@ -526,4 +528,23 @@ function copyToClipboard(id) {
     }).catch(err => {
         console.error('Failed to copy: ', err);
     });
+}
+
+async function buildSpartaImage() {
+    const status = document.getElementById('test-readiness-status');
+    status.innerText = "Building SPARTA Image...";
+    logReadiness("[*] Initiating local Docker build for 'sparta-hysp'...");
+    
+    try {
+        const res = await window.pywebview.api.build_sparta_image();
+        if (res.status === "success") {
+            logReadiness("[SUCCESS] SPARTA Docker image built successfully!");
+            testReadiness(); // Re-test to unlock
+        } else {
+            logReadiness("[ERROR] SPARTA build failed.");
+            if (res.log) logReadiness(res.log);
+        }
+    } catch (e) {
+        logReadiness("[EXCEPTION] " + e);
+    }
 }
