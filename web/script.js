@@ -651,7 +651,8 @@ async function testReadiness() {
             status.style.color = "#10b981";
             status.innerText = "✓ " + result.message;
             remoteVerified = true;
-            document.getElementById('btn-run-test').style.display = "block"; // Show integration test button
+            document.getElementById('btn-run-test').style.display = "block";
+            document.getElementById('test-verbose-logs-container').style.display = "none"; // Hide if success
             
             if (result.python_missing) {
                 status.style.color = "#f59e0b";
@@ -662,13 +663,25 @@ async function testReadiness() {
             }
         } else {
             status.style.color = "#ef4444";
-            status.innerText = "✗ " + result.message;
+            status.innerText = "✗ Readiness Test Failed. See logs below.";
             remoteVerified = false;
+            
+            // Show detailed error in log console
+            const logArea = document.getElementById('test-verbose-logs');
+            const logContainer = document.getElementById('test-verbose-logs-container');
+            logContainer.style.display = "block";
+            logArea.style.color = "#ef4444"; // Error red
+            logArea.innerText = "[CRITICAL READINESS ERROR]\n" + result.message;
         }
     } catch (err) {
         status.style.color = "#ef4444";
-        status.innerText = "✗ API Error: " + err;
+        status.innerText = "✗ API Error. See logs below.";
         remoteVerified = false;
+        
+        const logArea = document.getElementById('test-verbose-logs');
+        document.getElementById('test-verbose-logs-container').style.display = "block";
+        logArea.style.color = "#ef4444";
+        logArea.innerText = "[API ERROR]\n" + err;
     } finally {
         btn.innerText = originalText;
         btn.disabled = false;
@@ -689,7 +702,7 @@ async function runIntegrationTest() {
     
     btn.disabled = true;
     btn.innerText = "Running Test...";
-    logArea.style.display = "block";
+    document.getElementById('test-verbose-logs-container').style.display = "block";
     logArea.innerText = "[*] Starting 100-step simulation dry run...\n";
     status.innerText = "Simulating...";
     

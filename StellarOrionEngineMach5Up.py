@@ -788,9 +788,12 @@ run             {opt_params.get('env_run', '1000')}
             
             return {"status": "success", "message": "Docker and SPARTA image are ready."}
         except FileNotFoundError:
-            return {"status": "error", "message": "Docker not found. Please install Docker Desktop."}
+            return {"status": "error", "message": "Docker not found. Please install Docker Desktop or Colima."}
+        except subprocess.CalledProcessError as e:
+            err_msg = e.stderr.decode() if e.stderr else str(e)
+            return {"status": "error", "message": f"Docker Error: {err_msg}"}
         except Exception as e:
-            return {"status": "error", "message": f"Docker Error: {str(e)}"}
+            return {"status": "error", "message": f"System Error: {str(e)}"}
 
     def execute_optimization(self, opt_params, is_gui=False):
         """Core optimization logic, usable by both GUI and Headless runners."""
