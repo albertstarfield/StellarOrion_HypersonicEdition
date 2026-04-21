@@ -460,7 +460,11 @@ run             {opt_params.get('env_run', '1000')}
                 "pressure": pressure,
                 "temperature": temp_inf,
                 "wall_temp": float(opt_params.get('env_temp', 1000.0)),
-                "iterations": 100 # Quick solve
+                "time_step": float(opt_params.get('env_step', 1.0e-6)),
+                "total_steps": int(opt_params.get('env_run', 1000)),
+                "dimension": opt_params.get('solver_dim', '2d'),
+                "use_gpu": opt_params.get('solver_gpu', True),
+                "n_cores": int(opt_params.get('env_cores', 4))
             }
             
             config_path = os.path.join(self.cwd, "scratch", "remote_config.json")
@@ -475,9 +479,20 @@ run             {opt_params.get('env_run', '1000')}
             cmd = f"cd {remote_dir} && python executor.py config.json"
             stdin, stdout, stderr = ssh.exec_command(cmd)
             
-            # Pipe remote output to GUI
-            for line in stdout:
-                self.log_to_gui(f"    [Remote] {line.strip()}")
+            # Pipe remote output to GUI (Combined stdout and stderr)
+            import select
+            while not stdout.channel.exit_status_ready():
+                if stdout.channel.recv_ready():
+                    line = stdout.readline()
+                    if line: self.log_to_gui(f"    [Remote] {line.strip()}")
+                if stderr.channel.recv_stderr_ready():
+                    line = stderr.readline()
+                    if line: self.log_to_gui(f"    [Remote-Error] {line.strip()}")
+                time.sleep(0.1)
+            
+            # Final read
+            for line in stdout: self.log_to_gui(f"    [Remote] {line.strip()}")
+            for line in stderr: self.log_to_gui(f"    [Remote-Error] {line.strip()}")
             
             # Pull results back
             self.log_to_gui("[*] Retrieving results...")

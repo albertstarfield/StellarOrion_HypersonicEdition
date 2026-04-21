@@ -232,7 +232,9 @@ function startOptimization() {
         solver: document.getElementById('solver-backend').value,
         ssh_host: document.getElementById('ssh-host').value,
         ssh_user: document.getElementById('ssh-user').value,
-        ssh_pass: document.getElementById('ssh-pass').value
+        ssh_pass: document.getElementById('ssh-pass').value,
+        solver_dim: document.getElementById('solver-dim').value,
+        solver_gpu: document.getElementById('solver-gpu').checked
     };
     window.pywebview.api.run_optimization(optParams);
 }

@@ -851,7 +851,7 @@
                     </div>
                     
                     <div id="remote-fields" style="display: none; padding-top: 10px; border-top: 1px solid rgba(147, 51, 234, 0.1);">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                             <div class="input-group">
                                 <label>SSH Host / IP</label>
                                 <input type="text" id="ssh-host" placeholder="e.g. 192.168.1.50" style="background: rgba(255,255,255,0.05);">
@@ -865,6 +865,21 @@
                                 <input type="password" id="ssh-pass" placeholder="••••••••" style="background: rgba(255,255,255,0.05);">
                             </div>
                         </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="input-group">
+                                <label>Solver Dimension</label>
+                                <select id="solver-dim" style="background: rgba(255,255,255,0.05); color: #fff; padding: 8px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                                    <option value="2d">2D Axisymmetric Slice</option>
+                                    <option value="3d">3D Full Axisymmetry</option>
+                                </select>
+                            </div>
+                            <div class="input-group" style="display: flex; align-items: center; gap: 10px; padding-top: 25px;">
+                                <input type="checkbox" id="solver-gpu" checked style="width: 20px; height: 20px;">
+                                <label for="solver-gpu">Enable GPU Acceleration</label>
+                            </div>
+                        </div>
+
                         <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 8px; font-style: italic;">
                             Note: PyFluent requires Ansys Fluent installed on the target machine. Files will be pushed via SFTP.
                         </p>
