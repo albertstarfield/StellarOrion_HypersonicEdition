@@ -363,8 +363,8 @@
                                 Peak convective heat flux at the nose stagnation point. Primary target for TPS design.
                             </div>
                         </div>
-                        <input type="range" id="target-heat-range" min="10" max="500" value="100" oninput="syncTarget('heat', 'range')">
-                        <input type="number" id="target-heat-val" value="100" oninput="syncTarget('heat', 'val')" style="padding: 4px;">
+                        <input type="range" id="target-heat-range" min="5" max="150" value="14.4" oninput="syncTarget('heat', 'range')">
+                        <input type="number" id="target-heat-val" value="14.4" oninput="syncTarget('heat', 'val')" style="padding: 4px;">
                         <input type="number" id="target-heat-tol" value="0.1" step="0.01" style="padding: 4px; border-color: var(--primary-glow);">
                     </div>
 
@@ -376,11 +376,11 @@
                             <div class="tooltip-text">
                                 <strong>Peak g-load</strong>
                                 <span class="unit">Unit: g</span>
-                                Maximum deceleration force experienced during entry, measured in Earth gravities.
+                                Maximum deceleration force experienced during entry, measured in Earth gravities. (IRVE-3: 20.2g)
                             </div>
                         </div>
-                        <input type="range" id="target-g-range" min="5" max="50" value="15" oninput="syncTarget('g', 'range')">
-                        <input type="number" id="target-g-val" value="15" oninput="syncTarget('g', 'val')" style="padding: 4px;">
+                        <input type="range" id="target-g-range" min="5" max="50" value="20.2" oninput="syncTarget('g', 'range')">
+                        <input type="number" id="target-g-val" value="20.2" oninput="syncTarget('g', 'val')" style="padding: 4px;">
                         <input type="number" id="target-g-tol" value="0.5" step="0.1" style="padding: 4px; border-color: var(--primary-glow);">
                     </div>
 
@@ -524,7 +524,7 @@
                                 Number of gas molecules per unit volume. Critical input for DSMC simulation fidelity.
                             </div>
                         </div>
-                        <input type="number" id="env-nrho" value="3.9e20">
+                        <input type="number" id="env-nrho" value="3.5e22">
                     </div>
                     <div class="input-group">
                         <div class="tooltip-container">
@@ -533,10 +533,10 @@
                             <div class="tooltip-text">
                                 <strong>Freestream Temp</strong>
                                 <span class="unit">Unit: Kelvin (K)</span>
-                                Static temperature of the ambient atmosphere at the entry altitude.
+                                Static temperature of the ambient atmosphere at the entry altitude. (IRVE-3: ~270K)
                             </div>
                         </div>
-                        <input type="number" id="env-temp-inf" value="200.0">
+                        <input type="number" id="env-temp-inf" value="270.0">
                     </div>
                     <div class="input-group" style="display: flex; align-items: flex-end;">
                         <button class="btn btn-secondary" onclick="fetchAtmosphereData()" style="width: 100%; height: 42px; font-size: 0.8rem;">Refresh From Model</button>
@@ -764,10 +764,10 @@
                             <div class="tooltip-text">
                                 <strong>Freestream Velocity</strong>
                                 <span class="unit">Unit: m/s</span>
-                                Initial entry velocity. LEO: 7,800 m/s. Lunar/Mars Return: 10,500+ m/s.
+                                Initial entry velocity. LEO: 7,800 m/s. IRVE-3 Baseline: 2,700 m/s.
                             </div>
                         </div>
-                        <input type="number" id="env-vstream" value="10500" step="100">
+                        <input type="number" id="env-vstream" value="2700" step="100">
                     </div>
                     <div class="input-group">
                         <div class="tooltip-container">
@@ -776,10 +776,10 @@
                             <div class="tooltip-text">
                                 <strong>Heating Duration</strong>
                                 <span class="unit">Unit: Seconds (s)</span>
-                                Total duration of the hypersonic heating pulse for 1D thermal modeling.
+                                Total duration of the hypersonic heating pulse. (IRVE-3 Peak: ~60s)
                             </div>
                         </div>
-                        <input type="number" id="env-duration" value="450" step="10">
+                        <input type="number" id="env-duration" value="60" step="10">
                     </div>
                     <div class="input-group">
                         <div class="tooltip-container">
@@ -788,7 +788,7 @@
                             <div class="tooltip-text">
                                 <strong>Thermal Leakage Factor</strong>
                                 <span class="unit">Unit: Percentage (%)</span>
-                                Fraction of convective surface energy that penetrates the TPS insulation. Standard high-fidelity HIADs target < 0.2%.
+                                Fraction of convective surface energy that penetrates the TPS.
                             </div>
                         </div>
                         <input type="number" id="env-thermal-lag" value="0.1" step="0.1">

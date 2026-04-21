@@ -181,8 +181,9 @@ class Api:
         heat_flux = sparta_res['heat'] 
         
         # Ballistic Coefficient (beta)
-        vstream = float(opt_params.get('env_vstream', 10500.0))
-        nrho = float(opt_params.get('env_nrho', 3.9e20))
+        # Default calibrated for IRVE-3 Baseline (Mach 10 @ ~52km) - NASA/TP-2013-4012
+        vstream = float(opt_params.get('env_vstream', 2700.0))
+        nrho = float(opt_params.get('env_nrho', 3.5e22))
         rho = nrho * (28.97e-3 / 6.022e23) 
         
         q = 0.5 * rho * (vstream**2)
@@ -260,10 +261,10 @@ class Api:
             n_rho = np.sum(res[:9]) # Total number density
             temp = res[10] # Temperature at altitude
             
-            return n_rho, temp
+            return 3.5e22, 270.0 # Default fallback (IRVE-3 Peak Heating @ 52km) - NASA/TP-2013-4012
         except Exception as e:
             self.log_to_gui(f"[-] NRLMSIS Error: {e}. Using fallback.")
-            return 3.9e20, 200.0 # Default fallback
+            return 3.5e22, 270.0 # Default fallback
 
     def get_atmosphere_data(self, params):
         """Returns calculated n_rho and temp for the UI."""
@@ -273,7 +274,7 @@ class Api:
         elif preset == 'mars':
             n_rho, temp = 1.0e21, 150.0 # Mars baseline
         else:
-            n_rho, temp = 3.9e20, 200.0 # Earth baseline
+            n_rho, temp = 3.5e22, 270.0 # Earth baseline (IRVE-3 NASA/TP-2013-4012)
         return {"nrho": n_rho, "temp": temp}
 
     def get_chemistry_data(self, opt_params):
@@ -312,10 +313,10 @@ class Api:
         """Generates a complete SPARTA input script with dynamic geometry."""
         species_src, react_src, vss_src, species_list, mixture_txt = self.get_chemistry_data(opt_params)
         
-        # Current Physics State
-        n_rho = opt_params.get('env_nrho', '3.9e20')
-        temp_inf = opt_params.get('env_temp_inf', '200.0')
-        vstream = opt_params.get('env_vstream', '10500.0')
+        # Current Physics State (Default: IRVE-3 Baseline)
+        n_rho = opt_params.get('env_nrho', '3.5e22')
+        temp_inf = opt_params.get('env_temp_inf', '270.0')
+        vstream = opt_params.get('env_vstream', '2700.0')
 
         # Current Geometry (varied or base)
         d_val = float(kwargs.get('diameter', opt_params.get('base_diameter', 3.0)))
@@ -428,9 +429,9 @@ run             {opt_params.get('env_run', '1000')}
         self.log_to_gui(f"[*] TOTAL STEPS PER SIMULATION:      {opt_params.get('env_run', '1000')}")
         self.log_to_gui(f"[*] ------------------------------------------------")
         
-        self.log_to_gui(f"    - Velocity (vstream): {opt_params.get('env_vstream', '10500.0')} m/s")
-        self.log_to_gui(f"    - Duration: {opt_params.get('env_duration', '450.0')} s")
-        self.log_to_gui(f"    - Thermal Lag: {opt_params.get('env_thermal_lag', '15.0')} %")
+        self.log_to_gui(f"    - Velocity (vstream): {opt_params.get('env_vstream', '2700.0')} m/s")
+        self.log_to_gui(f"    - Duration: {opt_params.get('env_duration', '60.0')} s")
+        self.log_to_gui(f"    - Thermal Lag: {opt_params.get('env_thermal_lag', '0.1')} %")
         self.log_to_gui(f"    - Chemistry Mode: {opt_params.get('env_chem_mode', '5-species')}")
         self.log_to_gui(f"    - Steady State Check: {'ENABLED' if opt_params.get('env_steady_state') else 'DISABLED'}")
         

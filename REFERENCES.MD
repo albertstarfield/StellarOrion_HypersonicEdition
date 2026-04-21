@@ -125,10 +125,23 @@ The default simulation settings in `main.py` and `StellarOrionEngineMach5Up.py` 
 | **Heat Pulse Duration** | 450.0 s | Typical high-energy peak heating duration |
 | **Surface Emissivity** | 0.88 | Silicon Carbide (SiC) fabric TPS |
 
+### IRVE-3 Flight Test Results (Validation Baseline)
+Based on the post-flight reconstruction (NASA/TP-2013-4012), the following parameters represent the peak conditions achieved during the July 23, 2012 flight test:
+
+| Parameter | Value | Description |
+| :--- | :--- | :--- |
+| **Entry Velocity** | Mach 10.0 | ~2,700 m/s at atmospheric interface |
+| **Peak Heat Flux ($\dot{q}$)** | 14.4 W/cm$^2$ | Theoretical stagnation point peak |
+| **Peak Deceleration** | 20.2 g | Total deceleration load |
+| **Peak Dynamic Pressure ($q$)** | 0.9 psia | ~6.2 kPa |
+| **Aeroshell Diameter** | 3.0 m | Full deployment state |
+| **Nose Radius ($R_n$)** | 0.191 m | Stagnation curvature radius |
+| **Cone Angle** | 60$^\circ$ | Forebody half-angle |
+
 ### Mission References
-*   Cassell et al., "Inflatable Re-entry Vehicle Experiment (IRVE-3) Flight Results," *AIAA 2013-1386*, 2013.
-*   Lippincott et al., "Low-Earth Orbit Flight Test of an Inflatable Decelerator (LOFTID) Mission Overview," *AIAA 2019-3386*.
-*   NASA's LOFTID (Low-Earth Orbit Flight Test of an Inflatable Decelerator) technical summaries.
+*   Cassell, G. J., et al., "Inflatable Re-entry Vehicle Experiment (IRVE-3) Flight Results," *AIAA 2013-1386*, 2013.
+*   Lau, K., Cheatwood, N., et al., "Inflatable Re-entry Vehicle Experiment 3 (IRVE-3) Post-Flight Aerothermal Reconstruction," *NASA/TP-2013-4012*.
+*   Dillman, R., "Inflatable Reentry Vehicle Experiment-3 (IRVE-3): Project Overview \& Instrumentation," *NASA LaRC*, 2015.
 
 ## 6. Physics-Informed Neural Networks (PINNs)
 The pipeline integrates a PINN refinement stage via DeepXDE to "fill the gaps" in noisy DSMC data and perform inverse parameter estimation.
