@@ -565,11 +565,76 @@ input:focus, select:focus {
     font-weight: 800;
 }
 
-@keyframes pulse-soft {
-    0%, 100% { box-shadow: 0 0 15px var(--primary-glow); }
-    50% { box-shadow: 0 0 25px var(--primary-glow); }
+/* Premium Slider Styling */
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+    outline: none;
+    margin: 15px 0;
+    transition: all 0.3s ease;
+    border: none;
 }
 
-.mission-brief-grid > div:first-child {
-    animation: pulse-soft 4s infinite ease-in-out;
+input[type="range"]:hover {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+/* Chrome/Safari Slider Thumb */
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--primary-glow);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 2px solid #fff;
+}
+
+input[type="range"]:active::-webkit-slider-thumb {
+    transform: scale(1.3);
+    box-shadow: 0 0 20px var(--primary-glow);
+}
+
+/* Firefox Slider Thumb */
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--primary-glow);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 2px solid #fff;
+}
+
+/* Global Transition for Smoothness */
+input, select, .btn, .step-item, .dot {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Enhanced Focus States */
+input:focus, select:focus {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+    transform: translateY(-1px);
+}
+
+/* Smooth Page Transitions */
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateX(20px); 
+        filter: blur(5px);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateX(0); 
+        filter: blur(0);
+    }
 }

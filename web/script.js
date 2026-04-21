@@ -234,7 +234,8 @@ function startOptimization() {
         ssh_user: document.getElementById('ssh-user').value,
         ssh_pass: document.getElementById('ssh-pass').value,
         solver_dim: document.getElementById('solver-dim').value,
-        solver_gpu: document.getElementById('solver-gpu').checked
+        solver_gpu: document.getElementById('solver-gpu').checked,
+        solver_bl_layers: document.getElementById('solver-bl-layers').value
     };
     window.pywebview.api.run_optimization(optParams);
 }
@@ -390,4 +391,124 @@ function init3DView() {
             });
         }
     });
+}
+
+function copyToClipboard(elementId) {
+    const text = document.getElementById(elementId).innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        const originalText = btn.innerText;
+        btn.innerText = "Copied!";
+        btn.style.background = "#10b981";
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.background = "";
+        }, 2000);
+    });
+}
+
+async function testConnection() {
+    const btn = document.getElementById('btn-test-conn');
+    const status = document.getElementById('test-conn-status');
+    const container = document.getElementById('python-install-container');
+    const originalText = btn.innerText;
+    
+    btn.innerText = "Testing...";
+    btn.disabled = true;
+    status.innerText = "";
+    container.innerHTML = "";
+    
+    const params = {
+        ssh_host: document.getElementById('ssh-host').value,
+        ssh_user: document.getElementById('ssh-user').value,
+        ssh_pass: document.getElementById('ssh-pass').value
+    };
+    
+    try {
+        const result = await window.pywebview.api.test_ssh_connection(params);
+        if (result.status === "success") {
+            status.style.color = "#10b981";
+            status.innerText = "✓ " + result.message;
+            
+            if (result.python_missing) {
+                status.style.color = "#f59e0b"; // Warning color
+                container.innerHTML = '<button onclick="installRemotePython()" style="background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600; animation: pulse 2s infinite;">Should i install python?</button>';
+            } else if (result.pyansys_missing) {
+                status.style.color = "#f59e0b";
+                container.innerHTML = '<button onclick="installPyAnsys()" style="background: #6366f1; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">Install PyFluent Lib?</button>';
+            } else if (result.ansys_missing) {
+                status.style.color = "#ef4444";
+                status.innerText += " (Check ANSYS installation path!)";
+            }
+        } else {
+            status.style.color = "#ef4444";
+            status.innerText = "✗ " + result.message;
+        }
+    } catch (err) {
+        status.style.color = "#ef4444";
+        status.innerText = "✗ API Error: " + err;
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function installRemotePython() {
+    const container = document.getElementById('python-install-container');
+    const status = document.getElementById('test-conn-status');
+    
+    container.innerHTML = '<button disabled style="background: #94a3b8; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.8rem;">Installing...</button>';
+    status.innerText = "Installing Python on remote machine...";
+    
+    const params = {
+        ssh_host: document.getElementById('ssh-host').value,
+        ssh_user: document.getElementById('ssh-user').value,
+        ssh_pass: document.getElementById('ssh-pass').value
+    };
+    
+    try {
+        const result = await window.pywebview.api.install_remote_python(params);
+        if (result.status === "success") {
+            status.style.color = "#10b981";
+            status.innerText = "✓ " + result.message;
+            container.innerHTML = "";
+        } else {
+            status.style.color = "#ef4444";
+            status.innerText = "✗ " + result.message;
+            container.innerHTML = '<button onclick="installRemotePython()" style="background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;">Retry Install?</button>';
+        }
+    } catch (err) {
+        status.style.color = "#ef4444";
+        status.innerText = "✗ Install Error: " + err;
+    }
+}
+
+async function installPyAnsys() {
+    const container = document.getElementById('python-install-container');
+    const status = document.getElementById('test-conn-status');
+    
+    container.innerHTML = '<button disabled style="background: #94a3b8; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.8rem;">Installing PyFluent...</button>';
+    status.innerText = "Installing PyFluent library on remote machine...";
+    
+    const params = {
+        ssh_host: document.getElementById('ssh-host').value,
+        ssh_user: document.getElementById('ssh-user').value,
+        ssh_pass: document.getElementById('ssh-pass').value
+    };
+    
+    try {
+        const result = await window.pywebview.api.install_pyansys(params);
+        if (result.status === "success") {
+            status.style.color = "#10b981";
+            status.innerText = "✓ " + result.message;
+            container.innerHTML = "";
+        } else {
+            status.style.color = "#ef4444";
+            status.innerText = "✗ " + result.message;
+            container.innerHTML = '<button onclick="installPyAnsys()" style="background: #6366f1; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;">Retry Lib Install?</button>';
+        }
+    } catch (err) {
+        status.style.color = "#ef4444";
+        status.innerText = "✗ Install Error: " + err;
+    }
 }

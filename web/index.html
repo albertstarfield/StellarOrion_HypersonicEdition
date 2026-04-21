@@ -84,11 +84,12 @@
                 
                 <div class="mission-brief-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
                     <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid var(--primary-glow); padding: 20px; border-radius: 12px;">
-                        <h4 style="color: var(--primary); margin-bottom: 8px;">Hybrid Solver Stack</h4>
+                        <h4 style="color: var(--primary); margin-bottom: 8px;">Dual-Backend Solver Architecture</h4>
                         <ul style="margin: 0; font-size: 0.85rem; padding-left: 20px; color: var(--text-dim); line-height: 1.6;">
-                            <li><strong>DSMC SPARTA:</strong> High-fidelity kinetic solver for rarefied hypersonic flow and chemical non-equilibrium.</li>
-                            <li><strong>MoP-SBO:</strong> Methodology of Physics-based Surrogate-Based Optimization for ultra-fast design convergence.</li>
-                            <li><strong>DeepXDE (PINNs):</strong> Physics-Informed Neural Networks for flow field refinement and surrogate gap-filling.</li>
+                            <li><strong>SPARTA DSMC (Local Docker):</strong> High-fidelity kinetic solver for rarefied hypersonic entry and chemical non-equilibrium.</li>
+                            <li><strong>PyFluent CFD (Remote SSH):</strong> Automated continuum CFD via Ansys Fluent for dense atmosphere survivability.</li>
+                            <li><strong>DeepXDE PINNs:</strong> Physics-Informed Neural Networks for flow field refinement and surrogate gap-filling.</li>
+                            <li><strong>MoP-SBO:</strong> Methodology of Physics-based Surrogate-Based Optimization for ultra-fast convergence.</li>
                         </ul>
                     </div>
                     
@@ -802,7 +803,7 @@
                                 Choose between standard 5-species air or high-speed 11-species ionized air (adds ions and electrons).
                             </div>
                         </div>
-                        <select id="env-chem-mode" style="background: rgba(255,255,255,0.05); color: #fff; padding: 8px; border-radius: 8px; border: 1px solid var(--glass-border); width: 100%;">
+                        <select id="env-chem-mode" style="background: #f8fafc; color: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-weight: 500;">
                             <option value="5-species">5-Species (Standard Air)</option>
                             <option value="11-species">11-Species (Ionized/High Speed)</option>
                         </select>
@@ -843,7 +844,7 @@
                                     Choose between SPARTA (Local Docker) or PyFluent (Remote SSH).
                                 </div>
                             </div>
-                            <select id="solver-backend" onchange="toggleRemoteFields()" style="background: rgba(255,255,255,0.05); color: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <select id="solver-backend" onchange="toggleRemoteFields()" style="background: #f8fafc; color: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-weight: 500;">
                                 <option value="sparta">SPARTA (DSMC)</option>
                                 <option value="pyfluent">PyFluent (Continuum)</option>
                             </select>
@@ -853,31 +854,50 @@
                     <div id="remote-fields" style="display: none; padding-top: 10px; border-top: 1px solid rgba(147, 51, 234, 0.1);">
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                             <div class="input-group">
-                                <label>SSH Host / IP</label>
-                                <input type="text" id="ssh-host" placeholder="e.g. 192.168.1.50" style="background: rgba(255,255,255,0.05);">
+                                <label style="color: #475569;">SSH Host / IP</label>
+                                <input type="text" id="ssh-host" placeholder="e.g. 192.168.1.50" style="background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;">
                             </div>
                             <div class="input-group">
-                                <label>Username</label>
-                                <input type="text" id="ssh-user" placeholder="e.g. Administrator" style="background: rgba(255,255,255,0.05);">
+                                <label style="color: #475569;">Username</label>
+                                <input type="text" id="ssh-user" placeholder="e.g. Administrator" style="background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;">
                             </div>
                             <div class="input-group">
-                                <label>Password</label>
-                                <input type="password" id="ssh-pass" placeholder="••••••••" style="background: rgba(255,255,255,0.05);">
+                                <label style="color: #475569;">Password</label>
+                                <input type="password" id="ssh-pass" placeholder="••••••••" style="background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;">
                             </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                            <button onclick="testConnection()" id="btn-test-conn" style="background: #6366f1; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">Test Connection</button>
+                            <div id="test-conn-status" style="font-size: 0.75rem; font-weight: 500;"></div>
+                            <div id="python-install-container"></div>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                             <div class="input-group">
-                                <label>Solver Dimension</label>
-                                <select id="solver-dim" style="background: rgba(255,255,255,0.05); color: #fff; padding: 8px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                                <label style="color: #475569;">Solver Dimension</label>
+                                <select id="solver-dim" style="background: #f8fafc; color: #1e293b; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-weight: 500;">
                                     <option value="2d">2D Axisymmetric Slice</option>
                                     <option value="3d">3D Full Axisymmetry</option>
                                 </select>
+                            </div>
+                            <div class="input-group">
+                                <label style="color: #475569;">Boundary Layers</label>
+                                <input type="number" id="solver-bl-layers" value="15" min="1" max="50" style="background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;">
                             </div>
                             <div class="input-group" style="display: flex; align-items: center; gap: 10px; padding-top: 25px;">
                                 <input type="checkbox" id="solver-gpu" checked style="width: 20px; height: 20px;">
                                 <label for="solver-gpu">Enable GPU Acceleration</label>
                             </div>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 12px; background: rgba(147, 51, 234, 0.1); border-radius: 8px; border: 1px solid rgba(147, 51, 234, 0.2); font-size: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <strong style="color: #a855f7;">⚠️ SSH Configuration Tip</strong>
+                                <button onclick="copyToClipboard('ssh-setup-cmd')" style="background: var(--primary); color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 0.65rem;">Copy</button>
+                            </div>
+                            <p style="color: #475569; margin: 0;">Have you setup OpenSSH on your Windows machine? If not, run this in Admin PowerShell:</p>
+                            <code id="ssh-setup-cmd" style="display: block; background: #000; color: #10b981; padding: 8px; border-radius: 4px; margin-top: 8px; font-family: var(--font-mono); font-size: 0.7rem; white-space: pre-wrap; word-break: break-all;">Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0; Start-Service sshd; Set-Service -Name sshd -StartupType 'Automatic'</code>
                         </div>
 
                         <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 8px; font-style: italic;">

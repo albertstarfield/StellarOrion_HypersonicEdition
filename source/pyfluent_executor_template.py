@@ -70,9 +70,11 @@ def run_simulation(config):
         workflow.TaskObject["Update Boundaries"].Execute()
         workflow.TaskObject["Update Regions"].Execute()
         
-        print("[*] [PyFluent] Adding 15-layer boundary layers for heating capture...")
+        # Add Boundary Layers (Critical for Hypersonic Heating)
+        bl_layers = config.get("bl_layers", 15)
+        print(f"[*] [PyFluent] Adding {bl_layers}-layer boundary layers for heating capture...")
         workflow.TaskObject["Add Boundary Layers"].Arguments.set_state({
-            "NumberOfLayers": 15,
+            "NumberOfLayers": bl_layers,
             "OffsetMethodType": "uniform"
         })
         workflow.TaskObject["Add Boundary Layers"].Execute()
@@ -120,8 +122,31 @@ def run_simulation(config):
         solver.solution.run_calculation.number_of_time_steps = n_steps
         solver.solution.run_calculation.adaptive_time_stepping = True 
         
-        print(f"[*] [PyFluent] Running {n_steps} steps (dt={t_step}s)...")
-        solver.solution.run_calculation.calculate()
+        print(f"[*] [PyFluent] Running {n_steps} steps (dt={t_step}s) with 100-step callbacks...")
+        
+        # Incremental solving to provide feedback to the main program
+        callback_freq = 100
+        for i in range(0, n_steps, callback_freq):
+            chunk = min(callback_freq, n_steps - i)
+            
+            # Execute chunk
+            solver.solution.run_calculation.calculate(number_of_time_steps=chunk)
+            
+            # Extract intermediate results & residuals
+            try:
+                curr_drag = solver.solution.report_definitions.force["drag"].compute()
+                curr_heat = solver.solution.report_definitions.flux["heat-flux"].compute()
+                
+                # Extract Residuals for convergence tracking
+                # Note: residuals structure can vary, we grab the most recent values
+                res = solver.solution.residuals.get_residuals()
+                # Assuming standard DBNS residuals: continuity, x-vel, y-vel, energy
+                res_str = " | ".join([f"{k}: {v[-1]:.2e}" for k, v in res.items() if len(v) > 0])
+                
+                # Equivalent to SPARTA "stats" output
+                print(f"[CALLBACK] STEP: {i+chunk} | DRAG: {curr_drag:.6f} | HEAT: {curr_heat:.6f} | RESIDUALS: {res_str}")
+            except Exception as e:
+                print(f"[*] [PyFluent] Step {i+chunk} metrics update: {str(e)}")
         
         # 7. Post-processing
         print("[*] [PyFluent] Calculation finished. Extracting metrics...")

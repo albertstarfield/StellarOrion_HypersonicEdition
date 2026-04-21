@@ -424,6 +424,38 @@ run             {opt_params.get('env_run', '1000')}
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             ssh.connect(host, username=user, password=password, timeout=10)
             
+            # 1. OS Verification (Check for Windows)
+            self.log_to_gui("[*] Verifying remote Operating System...")
+            stdin, stdout, stderr = ssh.exec_command("ver")
+            os_ver = stdout.read().decode().strip()
+            if "Windows" not in os_ver:
+                self.log_to_gui(f"[-] [WARNING] Remote system may not be Windows ({os_ver}). PyFluent requires Windows.")
+            else:
+                self.log_to_gui(f"[+] Detected {os_ver}")
+
+            # 2. Python Dependency Check
+            self.log_to_gui("[*] Checking for Python 3 installation...")
+            stdin, stdout, stderr = ssh.exec_command("python --version")
+            py_ver = stdout.read().decode().strip()
+            
+            if not py_ver or "Python 3" not in py_ver:
+                self.log_to_gui("[!] [CRITICAL] Python 3 not detected on remote machine.")
+                self.log_to_gui("[*] Attempting automated installation via winget...")
+                
+                # Install Python 3.12 using winget
+                install_cmd = "winget install --id Python.Python.3.12 --exact --silent --accept-source-agreements --accept-package-agreements"
+                stdin, stdout, stderr = ssh.exec_command(install_cmd)
+                
+                # Monitor installation
+                install_out = stdout.read().decode().strip()
+                if "Successfully installed" in install_out or "No newer package found" in install_out:
+                    self.log_to_gui("[+] Python 3.12 installed successfully via winget.")
+                else:
+                    self.log_to_gui("[-] Automated installation failed. Please install Python 3.12 manually.")
+                    self.log_to_gui(f"    [Error] {install_out}")
+            else:
+                self.log_to_gui(f"[+] Python detected: {py_ver}")
+
             sftp = ssh.open_sftp()
             
             # Create remote workspace
@@ -464,7 +496,8 @@ run             {opt_params.get('env_run', '1000')}
                 "total_steps": int(opt_params.get('env_run', 1000)),
                 "dimension": opt_params.get('solver_dim', '2d'),
                 "use_gpu": opt_params.get('solver_gpu', True),
-                "n_cores": int(opt_params.get('env_cores', 4))
+                "n_cores": int(opt_params.get('env_cores', 4)),
+                "bl_layers": int(opt_params.get('solver_bl_layers', 15))
             }
             
             config_path = os.path.join(self.cwd, "scratch", "remote_config.json")
@@ -530,6 +563,127 @@ run             {opt_params.get('env_run', '1000')}
                 self.log_to_gui(f"    {traceback.format_exc()}")
 
         threading.Thread(target=run).start()
+
+    def test_ssh_connection(self, opt_params):
+        """Test the SSH connection and return detailed status."""
+        host = opt_params.get('ssh_host')
+        user = opt_params.get('ssh_user')
+        password = opt_params.get('ssh_pass')
+        
+        if not host or not user or not password:
+            return {"status": "error", "message": "Missing SSH credentials."}
+            
+        import paramiko
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        try:
+            ssh.connect(host, username=user, password=password, timeout=10)
+            
+            # Check for Windows
+            stdin, stdout, stderr = ssh.exec_command("ver")
+            os_ver = stdout.read().decode().strip()
+            
+            # Check for Python
+            stdin, stdout, stderr = ssh.exec_command("python --version")
+            py_ver = stdout.read().decode().strip()
+            
+            # Check for Ansys Installation (Check for common path or env var)
+            # Default path: C:\Program Files\ANSYS Inc
+            stdin, stdout, stderr = ssh.exec_command('if exist "C:\\Program Files\\ANSYS Inc" (echo Found) else (echo Missing)')
+            ansys_status = stdout.read().decode().strip()
+            ansys_installed = (ansys_status == "Found")
+            
+            # Check for ansys-fluent-core (PyFluent)
+            stdin, stdout, stderr = ssh.exec_command('python -c "import ansys.fluent.core; print(\'PyAnsys OK\')"')
+            pyansys_status = stdout.read().decode().strip()
+            pyansys_installed = ("PyAnsys OK" in pyansys_status)
+            
+            ssh.close()
+            
+            msg = f"Connected to {os_ver}. "
+            py_missing = not py_ver
+            pyansys_missing = py_ver and not pyansys_installed
+            
+            if py_ver:
+                msg += f"Found {py_ver}. "
+            else:
+                msg += "Warning: Python not found. "
+                
+            if ansys_installed:
+                msg += "Ansys Detected. "
+            else:
+                msg += "Warning: Ansys Fluent not found. "
+                
+            if pyansys_installed:
+                msg += "PyFluent OK."
+            else:
+                msg += "Warning: PyFluent library missing."
+                
+            return {
+                "status": "success", 
+                "message": msg, 
+                "python_missing": py_missing,
+                "pyansys_missing": pyansys_missing,
+                "ansys_missing": not ansys_installed
+            }
+            
+        except paramiko.AuthenticationException:
+            return {"status": "error", "message": "Authentication failed: Check username/password."}
+        except paramiko.SSHException as e:
+            return {"status": "error", "message": f"SSH Error: {str(e)}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Connection failed: {str(e)}"}
+
+    def install_remote_python(self, opt_params):
+        """Remotely install Python 3.12 using winget."""
+        host = opt_params.get('ssh_host')
+        user = opt_params.get('ssh_user')
+        password = opt_params.get('ssh_pass')
+        
+        import paramiko
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        try:
+            ssh.connect(host, username=user, password=password, timeout=15)
+            cmd = "winget install --id Python.Python.3.12 --exact --silent --accept-source-agreements --accept-package-agreements"
+            stdin, stdout, stderr = ssh.exec_command(cmd)
+            
+            output = stdout.read().decode().strip()
+            ssh.close()
+            
+            if "Successfully installed" in output or "No newer package found" in output:
+                return {"status": "success", "message": "Python 3.12 installed successfully."}
+            else:
+                return {"status": "error", "message": f"Installation failed: {output}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def install_pyansys(self, opt_params):
+        """Remotely install ansys-fluent-core using pip."""
+        host = opt_params.get('ssh_host')
+        user = opt_params.get('ssh_user')
+        password = opt_params.get('ssh_pass')
+        
+        import paramiko
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        try:
+            ssh.connect(host, username=user, password=password, timeout=15)
+            cmd = "python -m pip install ansys-fluent-core"
+            stdin, stdout, stderr = ssh.exec_command(cmd)
+            
+            output = stdout.read().decode().strip()
+            ssh.close()
+            
+            if "Successfully installed" in output or "Requirement already satisfied" in output:
+                return {"status": "success", "message": "PyFluent library installed successfully."}
+            else:
+                return {"status": "error", "message": f"Installation failed: {output}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
 
     def execute_optimization(self, opt_params, is_gui=False):
         """Core optimization logic, usable by both GUI and Headless runners."""
