@@ -42,7 +42,7 @@ try:
     # We need to make sure air.species, air.react, air.vss are in cad_dir
     # They should already be there from previous runs.
     
-    cmd = ["docker", "run", "--rm", "-v", f"{cad_dir}:/workspace", "-w", "/workspace", "sparta-sim", "spa", "-in", "in.test"]
+    cmd = ["docker", "run", "--rm", "-v", f"{cad_dir}:/workspace", "-w", "/workspace", "sparta-hysp", "spa", "-in", "in.test"]
     result = subprocess.run(cmd, capture_output=True, text=True)
     print(result.stdout)
     print(result.stderr)

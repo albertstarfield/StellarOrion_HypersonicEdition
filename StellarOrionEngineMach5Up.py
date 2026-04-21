@@ -1151,7 +1151,7 @@ run             {opt_params.get('env_run', '1000')}
             subprocess.run([
                 "docker", "create", "--name", "hiad-runner",
                 "-v", f"{cad_dir}:/workspace", "-e", "IN_DOCKER=1",
-                "sparta-sim", "mpirun", "-np", str(n_cores), "--allow-run-as-root", "spa", "-in", "in.hiad"
+                "sparta-hysp", "mpirun", "-np", str(n_cores), "--allow-run-as-root", "spa", "-in", "in.hiad"
             ], check=True)
             
             sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -1344,7 +1344,7 @@ run             {opt_params.get('env_run', '1000')}
                 self.log_to_gui(f"    [*] Cleaning stale containers...")
                 subprocess.run(["docker", "rm", "-f", "hiad-runner"], capture_output=True)
                 self.log_to_gui(f"    [*] Initializing Docker runner...")
-                subprocess.run(["docker", "create", "--name", "hiad-runner", "-v", f"{cad_dir}:/workspace", "-e", "IN_DOCKER=1", "sparta-sim", "mpirun", "-np", str(n_cores), "--allow-run-as-root", "spa", "-in", "in.hiad"], check=True)
+                subprocess.run(["docker", "create", "--name", "hiad-runner", "-v", f"{cad_dir}:/workspace", "-e", "IN_DOCKER=1", "sparta-hysp", "mpirun", "-np", str(n_cores), "--allow-run-as-root", "spa", "-in", "in.hiad"], check=True)
                 
                 self.log_to_gui(f"    [*] Executing SPARTA solver (Sample {i+1})...")
                 sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -1509,7 +1509,7 @@ run             {opt_params.get('env_run', '1000')}
         final_script = self.generate_sparta_script(opt_params, surf_name="HIAD_final", **best_config)
         with open(os.path.join(cad_dir, "in.hiad"), 'w') as f: f.write(final_script)
         subprocess.run(["docker", "rm", "-f", "hiad-runner"], capture_output=True)
-        subprocess.run(["docker", "create", "--name", "hiad-runner", "-v", f"{cad_dir}:/workspace", "-e", "IN_DOCKER=1", "sparta-sim", "spa", "-in", "in.hiad"], check=True)
+        subprocess.run(["docker", "create", "--name", "hiad-runner", "-v", f"{cad_dir}:/workspace", "-e", "IN_DOCKER=1", "sparta-hysp", "spa", "-in", "in.hiad"], check=True)
         subprocess.run(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, check=True)
 
         if is_gui:
@@ -1586,7 +1586,7 @@ run             {opt_params.get('env_run', '1000')}
             test_script = (
                 "seed 12345\n"
                 "dimension 2\n"
-                "boundary r r r r\n"
+                "boundary r r p\n"
                 "create_box 0 0.1 0 0.1 -0.5 0.5\n"
                 "create_grid 5 5 1\n"
                 "run 0\n"

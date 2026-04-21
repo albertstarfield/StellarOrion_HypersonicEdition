@@ -152,18 +152,48 @@ def run_simulation(steps=None):
 def main():
     parser = argparse.ArgumentParser(description="StellarOrion Simulation Runner")
     parser.add_argument("--optimize", action="store_true", help="Run the full survivability optimization loop")
+    parser.add_argument("--test", type=str, choices=["sparta", "pyfluent"], help="Run integration test (headless)")
     parser.add_argument("--samples", type=int, default=5, help="Number of samples for optimization")
     parser.add_argument("--goal", type=str, default="drag", help="Optimization goal (drag or heat)")
     parser.add_argument("--steps", type=int, default=1000, help="Number of simulation steps")
     parser.add_argument("--pinn", action="store_true", default=True, help="Enable PINN acceleration (Default)")
     parser.add_argument("--no-pinn", action="store_false", dest="pinn", help="Disable PINN acceleration")
+    
+    # SSH Credentials for headless PyFluent testing
+    parser.add_argument("--ssh-host", type=str, help="Remote host for PyFluent")
+    parser.add_argument("--ssh-user", type=str, help="Remote user for PyFluent")
+    parser.add_argument("--ssh-pass", type=str, help="Remote password for PyFluent")
+    parser.add_argument("--ssh-key", type=str, help="Remote SSH key path for PyFluent")
+    
     args, unknown = parser.parse_known_args()
 
     if not os.environ.get("IN_DOCKER"):
+        from StellarOrionEngineMach5Up import Api
+        api = Api()
+
+        if args.test:
+            print(f"[*] Starting Headless Integration Test: {args.test.upper()}...")
+            if args.test == "sparta":
+                res = api.run_sparta_integration_test()
+                print(f"[*] Result: {res.get('status', 'unknown').upper()}")
+                print(f"[*] Message: {res.get('message', '')}")
+            elif args.test == "pyfluent":
+                opt_params = {
+                    'ssh_host': args.ssh_host or os.environ.get("STELLAR_SSH_HOST"),
+                    'ssh_user': args.ssh_user or os.environ.get("STELLAR_SSH_USER"),
+                    'ssh_pass': args.ssh_pass or os.environ.get("STELLAR_SSH_PASS"),
+                    'ssh_key': args.ssh_key or os.environ.get("STELLAR_SSH_KEY"),
+                }
+                if not opt_params['ssh_host'] or not opt_params['ssh_user']:
+                    print("[-] Error: SSH Host and User are required for PyFluent test.")
+                    sys.exit(1)
+                res = api.run_integration_test(opt_params)
+                print(f"[*] Result: {res.get('status', 'unknown').upper()}")
+                print(f"[*] Message: {res.get('message', '')}")
+            return
+
         if args.optimize:
             print("[*] Optimization mode selected. Launching headless optimizer...")
-            from StellarOrionEngineMach5Up import Api
-            api = Api()
             opt_params = {
                 'env_preset': 'artemis',
                 'env_nrho': '3.5e22',
@@ -183,7 +213,8 @@ def main():
                 'v_diameter': True,
                 'v_angle': True,
                 'v_toroids': True,
-                'v_nose': True
+                'v_nose': True,
+                'solver': 'sparta' # Default for optimization
             }
             api.execute_optimization(opt_params, is_gui=False)
             return

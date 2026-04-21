@@ -800,13 +800,23 @@
                             <span class="info-icon">?</span>
                             <div class="tooltip-text">
                                 <strong>Turbulence Modeling</strong>
-                                Select the viscous model. Fluent uses RANS (SST k-omega), while SPARTA resolves viscosity kinetically.
+                                <span class="unit">Backends: PyFluent (Continuum)</span>
+                                Select the viscous model for continuum simulations.
+                                <br><br>
+                                • <b>SST k-omega:</b> Standard RANS model for turbulent boundary layers. (PyFluent Only)
+                                <br>
+                                • <b>Laminar:</b> Resolves viscous layers without turbulence modeling.
+                                <br><br>
+                                <i>Note: SPARTA resolves viscosity kinetically at the molecular level; this setting will be ignored for DSMC runs.</i>
                             </div>
                         </div>
                         <select id="env-viscous-model" style="background: #f8fafc; color: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-weight: 500;">
                             <option value="sst-k-omega">SST k-omega (Turbulent)</option>
                             <option value="laminar">Laminar (High-Altitude)</option>
                         </select>
+                        <div style="font-size: 0.65rem; color: #64748b; margin-top: 4px; font-style: italic;">
+                            * SST k-omega applies to PyFluent; SPARTA uses kinetic VSS.
+                        </div>
                     </div>
                     <div class="input-group">
                         <div class="tooltip-container">
@@ -836,11 +846,20 @@
                     <div class="input-group" style="display: flex; align-items: center; gap: 10px; padding-top: 25px;">
                         <input type="checkbox" id="pinn-accel" checked style="width: 20px; height: 20px;">
                         <div class="tooltip-container">
-                            <label for="pinn-accel">PINN Acceleration</label>
+                            <label for="pinn-accel">DeepXDE Tensor GPU Acceleration</label>
                             <span class="info-icon">?</span>
                             <div class="tooltip-text">
-                                <strong>DeepXDE PINN Refinement</strong>
-                                Physics-Informed Neural Networks refine the flow field, fill data gaps, and perform inverse parameter estimation (MPS/CUDA supported).
+                                <strong>DeepXDE Tensor Acceleration</strong>
+                                Physics-Informed Neural Networks refine the flow field, fill data gaps, and perform inverse parameter estimation.
+                                <br><br>
+                                <b>Hardware Support:</b>
+                                <br>• NVIDIA CUDA / AMD ROCm
+                                <br>• Apple Silicon (MPS)
+                                <br>• Intel OneAPI / OpenCL
+                                <br>• Huawei CANN (Ascend)
+                                <br>• Moore Threads MUSA
+                                <br>• Biren SUPA / Innosilicon
+                                <br>• Snapdragon / ARM Generic
                             </div>
                         </div>
                     </div>

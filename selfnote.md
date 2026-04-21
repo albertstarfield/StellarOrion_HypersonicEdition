@@ -203,7 +203,8 @@ A common question is why this pipeline uses **DSMC + MoP-SBO** instead of a stan
 1. **Survival Envelope:** HIADs start decelerating at altitudes where the air is too thin for the continuum assumptions used in Fluent or OpenFOAM. DSMC (SPARTA) captures the true kinetic behavior of the gas.
 2. **Hardware-Agnostic Hybrid Support:** StellarOrion is built for modern cross-platform development. It leverages a **Hybrid CPU+GPU Architecture**:
     *   **Physics (CPU):** SPARTA runs on **Docker Linux** to ensure a high-performance, reproducible environment regardless of the host OS (macOS/Windows/Linux).
-    *   **Optimization (GPU/NPU):** The MoP-SBO loop uses PyTorch with support for **Apple Metal (MPS)**, **NVIDIA CUDA**, **Intel OneAPI**, and **AMD ROCm**. This ensures high-speed optimization on everything from a MacBook Pro to a data center cluster.
+    *   **Optimization (GPU/NPU):** The MoP-SBO loop uses PyTorch with support for a broad range of global hardware platforms, ensuring high-speed optimization on everything from a MacBook Pro to a data center cluster.
+        *   **Supported Platforms:** **Apple Metal (MPS)**, **NVIDIA CUDA**, **AMD ROCm**, **Intel OneAPI**, **Huawei CANN (Ascend)**, **Moore Threads MUSA**, **Biren SUPA**, **Innosilicon Fenghua**, **Denglin GPU+**, and **Snapdragon/ARM OpenCL**.
 3. **SPARTA vs. OpenFOAM (dsmcFoam+):** While OpenFOAM has a DSMC solver, **SPARTA (Sandia National Labs)** is purpose-built for high-performance DSMC. It offers significantly better parallel scaling and a more robust implementation of the VSS/VHS collision models and surface chemistry required for hypersonics.
 4. **MoP/SBO Efficiency:** To find the *optimal* cone angle or nose radius, we need to test thousands of variations. While Fluent and OpenFOAM *can* run in 2D to save time, a full CFD convergence still takes minutes. The **Metamodel of Optimal Prognosis (MoP)** allows us to "learn" the physics and then run 10,000+ virtual "tests" in milliseconds.
 5. **Axisymmetric Optimization:** Since the HIAD is a body of revolution, 2D axisymmetry is the "gold standard" for early-stage design. The StellarOrion pipeline leverages this to generate the massive datasets needed for high-fidelity surrogate models that would be computationally prohibitive with traditional CFD.
@@ -490,7 +491,10 @@ The PINN is trained to minimize a composite loss function containing the residua
 The network does not solve the PDE from scratch. Instead, it uses a **Hybrid Data-Physics Approach**:
 *   **Anchor Points:** Grid data from **SPARTA (DSMC)** is injected as `PointSetBC` (Observation Boundary Conditions).
 *   **Refinement:** The neural network (FNN, 5 layers, 128 neurons) acts as a high-order interpolator that "fills the gaps" between particles while strictly adhering to the conservation laws defined by the Euler equations.
-*   **Acceleration:** Training is performed on native hardware (**Apple Silicon MPS** or **NVIDIA CUDA**) to ensure the refinement phase remains competitive with the MoP steering loop.
+*   **Acceleration:** Training is performed on native hardware providing near-real-time flow field refinement:
+    *   **Mainstream:** NVIDIA CUDA, AMD ROCm, Apple Silicon (MPS).
+    *   **Enterprise/Edge:** Intel OneAPI, OpenCL, Snapdragon/ARM GPU.
+    *   **Specialized:** Huawei CANN (Ascend), Moore Threads MUSA, Biren SUPA, and Innosilicon Fenghua.
 
 ### Implementation Location
 The core logic resides in `source/pinn_accelerator.py` within the `pde_euler_2d` function and the `PINNAccelerator` class.

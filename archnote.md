@@ -22,7 +22,7 @@ StellarOrion_HypersonicEdition/
 │
 ├── StellarOrionEngineMach5Up.py (The Orchestrator)
 │   ├── subprocess.run ──> CADDesign/HIAD_GeometryEngine.py (CAD Kernel)
-│   ├── subprocess.run ──> [Docker Engine] ──> sparta-sim (Physics)
+│   ├── subprocess.run ──> [Docker Engine] ──> sparta-hysp (Physics)
 │   ├── from source import visualizer (Post-processing)
 │   └── import torch (Metamodel / MoP Training)
 │
@@ -137,5 +137,8 @@ To further accelerate and refine the simulation results, a **Physics-Informed Ne
 3.  **Gap Filling & Inverse Estimation:**
     *   **Gap Filling:** The PINN interpolates and "smooths" the noisy particle data from DSMC onto a high-resolution grid.
     *   **Inverse Parameter Estimation:** The model can be used to estimate unknown physical parameters (e.g., freestream conditions or reaction rates) by minimizing the residual between the PDE and the sparse DSMC observations.
-4.  **Hardware Acceleration:** Training is accelerated using **MPS (Metal Performance Shaders)** on Mac or **CUDA** on NVIDIA hardware, providing near-real-time flow field refinement.
+4.  **Hardware Acceleration:** Training is accelerated using a wide range of global hardware platforms, providing near-real-time flow field refinement:
+    *   **Tier 1:** NVIDIA CUDA, AMD ROCm, Apple Silicon (MPS).
+    *   **Tier 2 (Intel/Mobile):** Intel OneAPI, OpenCL, Snapdragon/ARM GPU.
+    *   **Specialized (Non-Western):** Huawei CANN (Ascend), Moore Threads MUSA, Biren SUPA, Innosilicon Fenghua, and Denglin GPU+.
 ```

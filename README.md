@@ -7,7 +7,7 @@ StellarOrion is a high-fidelity aerothermodynamic simulation and optimization su
 This project uses a hybrid architecture for running simulations:
 
 - **Docker:** Used exclusively for running the SPARTA simulation in a containerized Linux environment. This ensures reproducibility of the SPARTA build and execution.
-- **Native OS:** The Python environment (including PyTorch) runs on the native OS to leverage hardware acceleration (Apple Metal, NVIDIA CUDA, etc.) for pre- and post-processing, and **DeepXDE** for PINN acceleration.
+- **Native OS:** The Python environment (including PyTorch) runs on the native OS to leverage global hardware acceleration. Supported platforms include **NVIDIA CUDA**, **AMD ROCm**, **Apple Metal (MPS)**, **Intel OneAPI/OpenCL**, and specialized accelerators from **Huawei (CANN)**, **Moore Threads (MUSA)**, **Biren (SUPA)**, and **Qualcomm (Snapdragon)**. This environment powers the **DeepXDE** PINN refinement and the MoP optimization loops.
 
 ---
 

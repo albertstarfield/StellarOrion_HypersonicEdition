@@ -3,6 +3,7 @@ const totalPages = 8;
 
 window.onload = () => {
     initBackgroundEffects();
+    initVariabilityListeners();
     setTimeout(() => {
         const splash = document.getElementById('splash');
         if (splash) {
@@ -11,6 +12,20 @@ window.onload = () => {
         }
     }, 1500);
 };
+
+function initVariabilityListeners() {
+    const varCheckboxes = [
+        'v-diameter', 'v-angle', 'v-toroids', 'v-nose', 
+        'v-thick', 'v-scallop-pts', 'v-scallop-ang', 'v-mass'
+    ];
+    varCheckboxes.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', updateLHSSamples);
+        }
+    });
+}
+
 
 function initBackgroundEffects() {
     const container = document.getElementById('star-container');
@@ -789,7 +804,7 @@ function updateSummary() {
                     <div>Viscous: <strong>${getVal('env-viscous-model')}</strong></div>
                     <div>Chemistry: <strong>${getVal('env-chem-mode')}</strong></div>
                     <div>Steady State: <strong>${getCheck('env-steady-state')}</strong></div>
-                    <div>PINN Accel: <strong style="color: ${getCheck('pinn-accel') === '✓' ? '#10b981' : '#ef4444'}">${getCheck('pinn-accel')}</strong></div>
+                    <div>DeepXDE Tensor: <strong style="color: ${getCheck('pinn-accel') === '✓' ? '#10b981' : '#ef4444'}">${getCheck('pinn-accel')}</strong></div>
                 </div>
             </div>
             <div class="summary-section" style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
@@ -817,6 +832,34 @@ function updateSummary() {
         </div>
     `;
     summaryDiv.innerHTML = html;
+}
+
+function updateLHSSamples() {
+    const varCheckboxes = [
+        'v-diameter', 'v-angle', 'v-toroids', 'v-nose', 
+        'v-thick', 'v-scallop-pts', 'v-scallop-ang', 'v-mass'
+    ];
+    let numChecked = 0;
+    varCheckboxes.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.checked) numChecked++;
+    });
+
+    const samplesEl = document.getElementById('opt-samples');
+    if (samplesEl) {
+        // Dynamic LHS logic: 12 base samples + 8 per active dimension
+        // Minimizing to 12 if none selected, or up to 64 if all 8 selected
+        // Using a rule of thumb: Samples = max(12, numChecked * 8)
+        const newCount = Math.max(12, numChecked * 8);
+        samplesEl.value = newCount;
+        
+        // Subtle visual highlight to show the value changed
+        samplesEl.style.transition = 'all 0.3s ease';
+        samplesEl.style.boxShadow = '0 0 10px var(--primary-glow)';
+        setTimeout(() => {
+            samplesEl.style.boxShadow = 'none';
+        }, 600);
+    }
 }
 
 // --- MISSING FUNCTIONS END ---

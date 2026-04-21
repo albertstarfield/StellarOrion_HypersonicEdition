@@ -55,6 +55,11 @@ graph TD
 
 > [!IMPORTANT]
 > **Darwin/XNU (macOS) Resource Note:** To prevent system overload, executors on macOS must run **sequentially**. The Bridge dynamically manages VM lifecycle (Docker vs. Windows) and awaits completion of one phase before initializing the next.
+>
+> **Global GPU Acceleration Support:**
+> StellarOrion is designed to be hardware-agnostic and supports acceleration across global vendors:
+> *   **Western:** NVIDIA CUDA, AMD ROCm, Apple Silicon (MPS), Intel OneAPI.
+> *   **Non-Western/Specialized:** Huawei CANN (Ascend), Moore Threads MUSA, Biren SUPA, Innosilicon Fenghua, Denglin GPU+, and Snapdragon/ARM OpenCL.
 
 ---
 ## References

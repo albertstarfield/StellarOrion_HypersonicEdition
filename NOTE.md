@@ -24,3 +24,8 @@ When using the "High-Fidelity SBO" mode, the optimization targets for heat flux 
 
 ## PINN Acceleration
 For Mars-scale and heavy-lift missions (e.g., Mission Atlas), the **DeepXDE PINN refinement** is crucial for filling gaps in the sparse DSMC results, ensuring that thermal protection system (TPS) margins are calculated with physics-informed high resolution.
+
+### Global Hardware Acceleration
+Refinement and optimization are accelerated using global hardware platforms:
+*   **Tier 1:** NVIDIA CUDA, AMD ROCm, Apple Silicon (MPS).
+*   **Specialized:** Huawei CANN (Ascend), Moore Threads MUSA, Biren SUPA, and Intel OneAPI/OpenCL.
