@@ -4,7 +4,36 @@ import json
 import multiprocessing
 import ansys.fluent.core as pyfluent
 
+def auto_detect_ansys():
+    """Scan all drives for Ansys and set AWP_ROOT if missing."""
+    import string
+    import os
+    import re
+    
+    # Check if any AWP_ROOT is already set
+    for key in os.environ:
+        if key.startswith("AWP_ROOT"):
+            print(f"[*] [PyFluent] Existing environment variable found: {key}={os.environ[key]}")
+            return True
+            
+    print("[*] [PyFluent] AWP_ROOT missing. Starting deep drive scan (A:\\ to Z:\\)...")
+    drives = [f"{d}:\\" for d in string.ascii_uppercase if os.path.exists(f"{d}:\\")]
+    for drive in drives:
+        ansys_inc = os.path.join(drive, "ANSYS Inc")
+        if os.path.exists(ansys_inc):
+            # Find latest vXXX folder
+            v_folders = [f for f in os.listdir(ansys_inc) if re.match(r"v\d{3}", f)]
+            if v_folders:
+                latest_v = sorted(v_folders, reverse=True)[0]
+                full_path = os.path.join(ansys_inc, latest_v)
+                var_name = "AWP_ROOT" + latest_v[1:]
+                os.environ[var_name] = full_path
+                print(f"[+] [PyFluent] Discovered Ansys at {full_path}. Setting {var_name}")
+                return True
+    return False
+
 def run_simulation(config):
+    auto_detect_ansys()
     try:
         # Parameters from config
         diameter = config.get("diameter", 3.0)

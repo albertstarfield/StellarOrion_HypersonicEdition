@@ -616,11 +616,37 @@ run             {opt_params.get('env_run', '1000')}
             py_ver = py_info if py_info else None
             is_py_x64 = "AMD64" in py_info
             
-            # Check for Ansys Installation (Check for common path or env var)
-            # Default path: C:\Program Files\ANSYS Inc
-            stdin, stdout, stderr = ssh.exec_command('if exist "C:\\Program Files\\ANSYS Inc" (echo Found) else (echo Missing)')
-            ansys_status = stdout.read().decode().strip()
-            ansys_installed = (ansys_status == "Found")
+            # Deep Scan for Ansys Installation across all drives
+            scan_cmd = (
+                'powershell -Command "'
+                '$found = $false; '
+                '$drives = Get-PSDrive -PSProvider FileSystem; '
+                'foreach ($d in $drives) { '
+                '  $p = Join-Path $d.Root \'ANSYS Inc\'; '
+                '  if (Test-Path $p) { '
+                '    $v = Get-ChildItem -Path $p -Directory | Where-Object { $_.Name -match \'^v\d{3}$\' } | Sort-Object Name -Descending | Select-Object -First 1; '
+                '    if ($v) { '
+                '      $ver = $v.Name.Substring(1); '
+                '      $path = $v.FullName; '
+                '      [System.Environment]::SetEnvironmentVariable(\'AWP_ROOT\' + $ver, $path, \'Machine\'); '
+                '      Write-Host \'FOUND:\' + $ver + \':\' + $path; '
+                '      $found = $true; break; '
+                '    } '
+                '  } '
+                '}; '
+                'if (-not $found) { Write-Host \'MISSING\' }"'
+            )
+            stdin, stdout, stderr = ssh.exec_command(scan_cmd)
+            scan_res = stdout.read().decode().strip()
+            ansys_installed = "FOUND" in scan_res
+            if ansys_installed:
+                # Format is FOUND:VER:PATH (Path can contain colons for drive letters)
+                parts = scan_res.split(":", 2)
+                ansys_ver = parts[1]
+                ansys_path = parts[2]
+            else:
+                ansys_path = None
+                ansys_ver = None
             
             # Check for ansys-fluent-core (PyFluent)
             stdin, stdout, stderr = ssh.exec_command('python -c "import ansys.fluent.core; print(\'PyAnsys OK\')"')
@@ -650,7 +676,7 @@ run             {opt_params.get('env_run', '1000')}
                 msg += "Warning: Python not found. "
                 
             if ansys_installed:
-                msg += "Ansys Detected. "
+                msg += f"Ansys Detected ({ansys_path}). "
             else:
                 msg += "Warning: Ansys Fluent not found. Did you install it correctly, or did you sail the high seas? "
                 
