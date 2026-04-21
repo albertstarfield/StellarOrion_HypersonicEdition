@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 SPARTA simulation runner – executed inside Docker container.
 Builds SPARTA if needed (Linux native), then runs simulation.

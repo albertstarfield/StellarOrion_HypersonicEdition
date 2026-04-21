@@ -638,3 +638,136 @@ input:focus, select:focus {
         filter: blur(0);
     }
 }
+
+/* Windows XP Style Progress Marquee */
+.xp-progress-container {
+    width: 120px;
+    height: 16px;
+    background: #000;
+    border: 2px solid #94a3b8;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    padding: 2px;
+}
+
+.xp-progress-track {
+    display: flex;
+    gap: 4px;
+    width: fit-content;
+    animation: xp-slide 1.5s infinite linear;
+}
+
+.xp-block {
+    width: 12px;
+    height: 8px;
+    background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+    border-radius: 1px;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+}
+
+@keyframes xp-slide {
+    0% { transform: translateX(-60px); }
+    100% { transform: translateX(120px); }
+}
+
+/* Blinking Dots Animation */
+.step-indicator {
+    display: flex;
+    gap: 8px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #cbd5e1;
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.dot.active {
+    background: #0d9488;
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(13, 148, 136, 0.6);
+    animation: dot-blink 1.2s infinite ease-in-out;
+}
+
+@keyframes dot-blink {
+    0%, 100% { opacity: 1; transform: scale(1.2); }
+    50% { opacity: 0.3; transform: scale(1.0); }
+}
+
+/* Optional: Sequential blinking for all dots like a heartbeat */
+.dot:nth-child(1) { animation-delay: 0s; }
+.dot:nth-child(2) { animation-delay: 0.1s; }
+.dot:nth-child(3) { animation-delay: 0.2s; }
+.dot:nth-child(4) { animation-delay: 0.3s; }
+.dot:nth-child(5) { animation-delay: 0.4s; }
+.dot:nth-child(6) { animation-delay: 0.5s; }
+.dot:nth-child(7) { animation-delay: 0.6s; }
+.dot:nth-child(8) { animation-delay: 0.7s; }
+
+.dot {
+    animation: dot-idle-pulse 3s infinite ease-in-out;
+}
+
+@keyframes dot-idle-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.2; }
+}
+
+/* Premium Orchestration Buttons */
+.btn-install {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-install:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4);
+}
+
+.btn-purge {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-purge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(239, 68, 68, 0.4);
+}
+
+.btn-mini {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: none;
+    color: white;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+}
+
+.btn-mini:hover {
+    filter: brightness(1.1);
+    transform: scale(1.05);
+}

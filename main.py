@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 SPARTA simulation runner – executed inside the Docker container.
 - Builds SPARTA from source in an isolated directory (/tmp/sparta_build)

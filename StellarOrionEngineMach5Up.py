@@ -13,6 +13,8 @@ class Api:
         self.window = None
         self.cwd = os.getcwd()
         self.reference_data = None
+        import getpass
+        self.local_user = getpass.getuser()
 
     def _get_python_exec(self):
         """Finds a cadquery-enabled python interpreter."""
@@ -29,6 +31,9 @@ class Api:
     def set_window(self, window):
         self.window = window
 
+    def get_local_user(self):
+        return self.local_user
+
     def log_to_gui(self, message):
         timestamp = time.strftime("%H:%M:%S")
         # Clean message for terminal (remove <br>)
@@ -37,6 +42,15 @@ class Api:
         if self.window:
             safe_msg = message.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "<br>")
             self.window.evaluate_js(f"appendLog('{safe_msg}')")
+
+    def log_to_readiness(self, message):
+        """Send a message specifically to the readiness/diagnostic terminal."""
+        if self.window:
+            # Escape for JS
+            safe_msg = str(message).replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ")
+            self.window.evaluate_js(f"logReadiness('{safe_msg}')")
+        else:
+            print(f"[Readiness] {message}")
 
     def request_domain_preview(self, params):
         """Called from JS when domain params change"""
@@ -595,9 +609,12 @@ run             {opt_params.get('env_run', '1000')}
             stdin, stdout, stderr = ssh.exec_command("ver")
             os_ver = stdout.read().decode().strip()
             
-            # Check for Python
-            stdin, stdout, stderr = ssh.exec_command("python --version")
-            py_ver = stdout.read().decode().strip()
+            # Check for Python and its Architecture
+            stdin, stdout, stderr = ssh.exec_command('python -c "import platform; print(f\'{platform.python_version()} ({platform.machine()})\')"')
+            py_info = stdout.read().decode().strip()
+            # If python fails or machine isn't AMD64 on an ARM64 host, we should warn
+            py_ver = py_info if py_info else None
+            is_py_x64 = "AMD64" in py_info
             
             # Check for Ansys Installation (Check for common path or env var)
             # Default path: C:\Program Files\ANSYS Inc
@@ -610,30 +627,56 @@ run             {opt_params.get('env_run', '1000')}
             pyansys_status = stdout.read().decode().strip()
             pyansys_installed = ("PyAnsys OK" in pyansys_status)
             
+            # Check Architecture
+            stdin, stdout, stderr = ssh.exec_command("echo %PROCESSOR_ARCHITECTURE%")
+            arch = stdout.read().decode().strip().upper()
+            
             ssh.close()
             
-            msg = f"Connected to {os_ver}. "
+            msg = f"Connected to {os_ver} ({arch}). "
             py_missing = not py_ver
             pyansys_missing = py_ver and not pyansys_installed
             
             if py_ver:
-                msg += f"Found {py_ver}. "
+                msg += f"Found Python {py_ver}. "
+                if arch == "ARM64" and not is_py_x64:
+                    if not pyansys_installed:
+                        msg += "CRITICAL WARNING: Native ARM64 Python detected. x64 Python is REQUIRED for PyFluent. "
+                        pyansys_missing = True
+                    else:
+                        msg += "Note: Native ARM64 Python detected, but PyFluent is already OK. Proceeding... "
+                        pyansys_missing = False
             else:
                 msg += "Warning: Python not found. "
                 
             if ansys_installed:
                 msg += "Ansys Detected. "
             else:
-                msg += "Warning: Ansys Fluent not found. "
+                msg += "Warning: Ansys Fluent not found. Did you install it correctly, or did you sail the high seas? "
                 
             if pyansys_installed:
                 msg += "PyFluent OK."
             else:
                 msg += "Warning: PyFluent library missing."
                 
+            # Compatibility Check: Win10 ARM64 (Build < 22000) is not supported for x64 emulation
+            import re
+            build_match = re.search(r'Version 10\.0\.(\d+)', os_ver)
+            if build_match:
+                build_num = int(build_match.group(1))
+                if arch == "ARM64" and build_num < 22000:
+                    msg = f"CRITICAL: {os_ver} ({arch}) detected. Windows 10 ARM64 (Build {build_num}) lacks stable x64 emulation. Please upgrade to Windows 11 (Build 22000+) or use a Hypervisor to spin up a Windows 11 guest."
+                    return {
+                        "status": "error",
+                        "message": msg,
+                        "arch": arch,
+                        "unsupported_os": True
+                    }
+
             return {
                 "status": "success", 
                 "message": msg, 
+                "arch": arch,
                 "python_missing": py_missing,
                 "pyansys_missing": pyansys_missing,
                 "ansys_missing": not ansys_installed
@@ -647,29 +690,45 @@ run             {opt_params.get('env_run', '1000')}
             return {"status": "error", "message": f"Connection failed: {str(e)}"}
 
     def install_remote_python(self, opt_params):
-        """Remotely install Python 3.12 using winget."""
+        """Remotely install Python 3.12 using winget with streaming."""
         host = opt_params.get('ssh_host')
         user = opt_params.get('ssh_user')
         password = opt_params.get('ssh_pass')
+        key_path = opt_params.get('ssh_key')
         
         import paramiko
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         
         try:
-            ssh.connect(host, username=user, password=password, timeout=15)
-            cmd = "winget install --id Python.Python.3.12 --exact --silent --accept-source-agreements --accept-package-agreements"
+            if key_path and os.path.exists(key_path):
+                ssh.connect(host, username=user, key_filename=key_path, timeout=15)
+            else:
+                ssh.connect(host, username=user, password=password, timeout=15)
+                
+            # Force x64 Python even on ARM64 for compatibility with Ansys wheels
+            cmd = 'winget install --id Python.Python.3.12 --architecture x64 --scope machine --override "PrependPath=1" --silent --accept-source-agreements --accept-package-agreements'
             stdin, stdout, stderr = ssh.exec_command(cmd)
             
-            output = stdout.read().decode().strip()
+            self.log_to_readiness("[*] Starting remote x64 Python installation via winget...")
+            full_log = ""
+            while not stdout.channel.exit_status_ready():
+                if stdout.channel.recv_ready():
+                    line = stdout.read(1024).decode()
+                    full_log += line
+                    # Winget output is sometimes chunky, but we try to stream it
+                    for subline in line.splitlines():
+                        if subline.strip(): self.log_to_readiness(f"    [WINGET] {subline.strip()}")
+                time.sleep(0.1)
+            
             ssh.close()
             
-            if "Successfully installed" in output or "No newer package found" in output:
-                return {"status": "success", "message": "Python 3.12 installed successfully."}
+            if "Successfully installed" in full_log or "No newer package found" in full_log:
+                return {"status": "success", "message": "Python 3.12 installed successfully.", "log": full_log}
             else:
-                return {"status": "error", "message": f"Installation failed: {output}"}
+                return {"status": "error", "message": f"Installation failed.", "log": full_log}
         except Exception as e:
-            return {"status": "error", "message": str(e)}
+            return {"status": "error", "message": str(e), "log": str(e)}
 
     def run_integration_test(self, opt_params):
         """Perform a verbose 100-step dry run to verify the full simulation stack."""
@@ -732,6 +791,8 @@ run             {opt_params.get('env_run', '1000')}
                 if stdout.channel.recv_ready():
                     line = stdout.read(1024).decode()
                     full_log += line
+                    for subline in line.splitlines():
+                        if subline.strip(): self.log_to_readiness(f"    [TEST] {subline.strip()}")
                 time.sleep(0.1)
             
             # Capture final output
@@ -750,27 +811,182 @@ run             {opt_params.get('env_run', '1000')}
             return {"status": "error", "message": f"Integration Test Failed: {str(e)}", "log": str(e)}
 
     def install_pyansys(self, opt_params):
-        """Remotely install ansys-fluent-core using pip."""
+        """Remotely install ansys-fluent-core using pip with real-time streaming."""
         host = opt_params.get('ssh_host')
         user = opt_params.get('ssh_user')
         password = opt_params.get('ssh_pass')
+        key_path = opt_params.get('ssh_key')
         
         import paramiko
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         
         try:
-            ssh.connect(host, username=user, password=password, timeout=15)
+            if key_path and os.path.exists(key_path):
+                ssh.connect(host, username=user, key_filename=key_path, timeout=15)
+            else:
+                ssh.connect(host, username=user, password=password, timeout=15)
+            
             cmd = "python -m pip install ansys-fluent-core"
             stdin, stdout, stderr = ssh.exec_command(cmd)
             
-            output = stdout.read().decode().strip()
+            self.log_to_readiness("[*] Starting remote pip installation...")
+            full_log = ""
+            while not stdout.channel.exit_status_ready():
+                if stdout.channel.recv_ready():
+                    line = stdout.readline()
+                    if line:
+                        full_log += line
+                        self.log_to_readiness(f"    [PIP] {line.strip()}")
+                time.sleep(0.1)
+            
+            # Final capture
+            for line in stdout: full_log += line; self.log_to_readiness(f"    [PIP] {line.strip()}")
+            for line in stderr: full_log += line; self.log_to_readiness(f"    [PIP-Error] {line.strip()}")
+            
+            exit_code = stdout.channel.recv_exit_status()
             ssh.close()
             
-            if "Successfully installed" in output or "Requirement already satisfied" in output:
-                return {"status": "success", "message": "PyFluent library installed successfully."}
+            if exit_code == 0:
+                return {"status": "success", "message": "PyFluent library installed successfully.", "log": full_log}
             else:
-                return {"status": "error", "message": f"Installation failed: {output}"}
+                return {"status": "error", "message": f"Installation failed (Code {exit_code}).", "log": full_log}
+        except Exception as e:
+            return {"status": "error", "message": str(e), "log": str(e)}
+
+    def fix_long_paths(self, opt_params):
+        """Remotely enable Windows Long Path support via Registry."""
+        host = opt_params.get('ssh_host')
+        user = opt_params.get('ssh_user')
+        password = opt_params.get('ssh_pass')
+        key_path = opt_params.get('ssh_key')
+        
+        import paramiko
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        try:
+            if key_path and os.path.exists(key_path):
+                ssh.connect(host, username=user, key_filename=key_path, timeout=15)
+            else:
+                ssh.connect(host, username=user, password=password, timeout=15)
+            
+            # PowerShell command to enable long paths
+            cmd = 'powershell -Command "New-ItemProperty -Path \'HKLM:\\System\\CurrentControlSet\\Control\\FileSystem\' -Name \'LongPathsEnabled\' -Value 1 -PropertyType DWORD -Force"'
+            stdin, stdout, stderr = ssh.exec_command(cmd)
+            
+            self.log_to_readiness("[*] Attempting to enable Windows Long Path support...")
+            err = stderr.read().decode()
+            ssh.close()
+            
+            if err:
+                return {"status": "error", "message": f"Registry fix failed: {err}"}
+            else:
+                return {"status": "success", "message": "Windows Long Path support enabled! Please try installing PyFluent again."}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+    def reboot_remote_host(self, opt_params):
+        """Remotely reboot the Windows machine."""
+        host = opt_params.get('ssh_host')
+        user = opt_params.get('ssh_user')
+        password = opt_params.get('ssh_pass')
+        key_path = opt_params.get('ssh_key')
+        
+        import paramiko
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        try:
+            if key_path and os.path.exists(key_path):
+                ssh.connect(host, username=user, key_filename=key_path, timeout=15)
+            else:
+                ssh.connect(host, username=user, password=password, timeout=15)
+            
+            self.log_to_readiness("[!] Triggering remote system reboot...")
+            ssh.exec_command("shutdown /r /t 5")
+            ssh.close()
+            return {"status": "success", "message": "Reboot command sent. Waiting for host to restart..."}
+        except Exception as e:
+            return {"status": "error", "message": f"Reboot failed: {str(e)}"}
+
+    def purge_arm_python(self, opt_params):
+        """Remotely uninstall native ARM64 Python to resolve x64 emulation conflicts."""
+        host = opt_params.get('ssh_host')
+        user = opt_params.get('ssh_user')
+        password = opt_params.get('ssh_pass')
+        key_path = opt_params.get('ssh_key')
+        
+        import paramiko
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        try:
+            if key_path and os.path.exists(key_path):
+                ssh.connect(host, username=user, key_filename=key_path, timeout=15)
+            else:
+                ssh.connect(host, username=user, password=password, timeout=15)
+            
+            self.log_to_readiness("[!] Purging native ARM64 Python conflict...")
+            cmd = "winget uninstall --id Python.Python.3.12 --architecture arm64 --silent --accept-source-agreements"
+            stdin, stdout, stderr = ssh.exec_command(cmd)
+            out = stdout.read().decode()
+            ssh.close()
+            
+            return {"status": "success", "message": "Native ARM64 Python purged. Please try installing x64 Python again.", "log": out}
+        except Exception as e:
+            return {"status": "error", "message": f"Purge failed: {str(e)}"}
+    def capture_remote_screen(self, opt_params):
+        """Capture the remote Windows desktop and fetch the image."""
+        host = opt_params.get('ssh_host')
+        user = opt_params.get('ssh_user')
+        password = opt_params.get('ssh_pass')
+        key_path = opt_params.get('ssh_key')
+        
+        import paramiko
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        try:
+            if key_path and os.path.exists(key_path):
+                ssh.connect(host, username=user, key_filename=key_path, timeout=15)
+            else:
+                ssh.connect(host, username=user, password=password, timeout=15)
+            
+            # PowerShell Script to find active session and capture screen via PsExec
+            ps_script = """
+            $SessionID = (qwinsta | Select-String "Active" | ForEach-Object { $_.ToString().Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)[2] })
+            if ($SessionID) {
+                psexec -s -i $SessionID powershell -WindowStyle Hidden -Command {
+                    Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+                    $Path = "C:\\temp\\remote_capture.png"
+                    if (-not (Test-Path "C:\\temp")) { New-Item -ItemType Directory -Path "C:\\temp" }
+                    $Screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+                    $Bitmap = New-Object System.Drawing.Bitmap($Screen.Width, $Screen.Height)
+                    $Graphics = [System.Drawing.Graphics]::FromImage($Bitmap)
+                    $Graphics.CopyFromScreen(0, 0, 0, 0, $Bitmap.Size)
+                    $Bitmap.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
+                    $Graphics.Dispose()
+                    $Bitmap.Dispose()
+                }
+            } else { exit 1 }
+            """
+            
+            # Execute capture
+            stdin, stdout, stderr = ssh.exec_command(f'powershell -Command "{ps_script}"')
+            exit_status = stdout.channel.recv_exit_status()
+            
+            if exit_status != 0:
+                return {"status": "error", "message": "No active session found or PsExec failed."}
+            
+            # Fetch via SFTP
+            sftp = ssh.open_sftp()
+            local_path = os.path.join(self.cwd, "web", "assets", "remote_view.png")
+            sftp.get("C:/temp/remote_capture.png", local_path)
+            sftp.close()
+            ssh.close()
+            
+            # Return relative path for web use
+            return {"status": "success", "image_url": "assets/remote_view.png?t=" + str(time.time())}
         except Exception as e:
             return {"status": "error", "message": str(e)}
 

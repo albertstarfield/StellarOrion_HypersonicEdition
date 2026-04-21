@@ -74,7 +74,7 @@ def setup_and_launch():
     if not os.path.exists(venv_dir):
         target_python = sys.executable
         # Prefer 3.12/3.11 for CadQuery compatibility
-        for cmd in ["python3.12", "python3.11", "python3"]:
+        for cmd in ["python", "python3.12", "python3.11"]:
             try:
                 ver_out = subprocess.check_output([cmd, "--version"], text=True)
                 if "3.12" in ver_out or "3.11" in ver_out:

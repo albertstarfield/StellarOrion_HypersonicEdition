@@ -65,15 +65,15 @@
             <div class="header">
                 <div id="current-step-title" style="font-weight: 800; letter-spacing: 1px; color: var(--primary); text-transform: uppercase;">1. Mission Brief</div>
                 <div class="step-indicator" id="step-indicator">
-                <div class="dot active" onclick="jumpToPage(1)"></div>
-                <div class="dot" onclick="jumpToPage(2)"></div>
-                <div class="dot" onclick="jumpToPage(3)"></div>
-                <div class="dot" onclick="jumpToPage(4)"></div>
-                <div class="dot" onclick="jumpToPage(5)"></div>
-                <div class="dot" onclick="jumpToPage(6)"></div>
-                <div class="dot" onclick="jumpToPage(7)"></div>
-                <div class="dot" onclick="jumpToPage(8)"></div>
-            </div>
+                    <div class="dot active"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
         </div>
 
         <div class="content-area">
@@ -860,7 +860,8 @@
                             </div>
                             <select id="solver-backend" onchange="onBackendChange()" style="background: #f8fafc; color: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-weight: 500;">
                                 <option value="sparta">SPARTA (DSMC)</option>
-                                <option value="pyfluent">PyFluent (Continuum)</option>
+                                <option value="pyfluent">PyFluent (Remote SSH gRPC)</option>
+                                <option value="pyfluent_local">PyFluent (Local SSH gRPC)</option>
                             </select>
                         </div>
                     </div>
@@ -871,6 +872,19 @@
                             <button onclick="runIntegrationTest()" id="btn-run-test" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600; display: none;">Run 100-Step Dry Run</button>
                             <div id="test-readiness-status" style="font-size: 0.75rem; font-weight: 500;"></div>
                             <div id="python-install-container"></div>
+                        </div>
+                        <!-- Remote View Capture -->
+                        <div id="remote-view-container" style="display: none; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Remote Desktop View</span>
+                                <button onclick="captureRemoteView()" class="btn-mini" style="background: #6366f1;">Refresh View</button>
+                            </div>
+                            <div style="width: 100%; border: 2px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #000;">
+                                <img id="remote-screen-img" src="" style="width: 100%; display: none; filter: brightness(0.9) contrast(1.1);">
+                                <div id="remote-screen-placeholder" style="height: 150px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.8rem; font-family: 'Fira Code';">
+                                    [ NO REMOTE CAPTURE ACTIVE ]
+                                </div>
+                            </div>
                         </div>
                         <div id="test-verbose-logs-container" style="display: none; margin-top: 10px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
