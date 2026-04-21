@@ -191,15 +191,13 @@ Depending on the mission profile, different parameters must be prioritized.
 ## 6. Strategy: DSMC MoP-SBO vs. Continuum CFD (Ansys / OpenFOAM)
 A common question is why this pipeline uses **DSMC + MoP-SBO** instead of a standard **Ansys Fluent** or **OpenFOAM** optimization loop.
 
-| Feature | DSMC MoP-SBO (StellarOrion) | Continuum Solvers (Fluent / OpenFOAM) |
+| Feature | StellarOrion (DSMC / Fluent / Other + MoP) | Traditional CFD Optimization (Fluent / OpenFOAM) |
 | :--- | :--- | :--- |
-| **Flow Physics** | **Rarefied & Transitional:** Accurate for high-altitude/VLEO where $Kn > 0.01$. | **Continuum:** Accuracy drops as density decreases (Navier-Stokes fails). |
-| **Optimization Speed** | **Near-Instant:** MoP surrogate allows 1,000+ iterations in seconds after training. | **Slow:** Each iteration requires a new 30-60 min CFD convergence. |
-| **Non-equilibrium** | Handles thermochemical non-equilibrium at the particle level naturally. | Requires complex, semi-empirical tuning of reaction constants. |
-| **Dimensionality** | **2D Axisymmetric:** Optimized for HIAD symmetry; 100x faster than 3D. | **2D/3D Available:** Even in 2D, full CFD convergence is orders of magnitude slower than MoP. |
-| **Hardware / Acceleration** | **Hybrid Logic:** **Docker Linux** (SPARTA Physics) + GPU/NPU (MPS, CUDA, ROCm, OneAPI) for SBO. | **Standard:** Primarily CPU-bound; GPU acceleration is often limited or requires high-end solver licenses. |
-| **Pros** | High fidelity in rarefied flow; Extreme optimization speed; Zero license costs; Hardware-agnostic acceleration. | High fidelity in dense atmosphere; Industry-standard for subsonic/supersonic; Extensive GUI tools. |
-| **Cons** | Requires initial "training" samples; Less accurate in dense, low-altitude subsonic regimes. | Prohibitively slow for large-scale optimization; Expensive licenses (Fluent); High complexity (OpenFOAM). |
+| **Solver Flexibility**| **Regime-Agnostic:** Bridges SPARTA (Rarefied), Fluent (High-Mach), and Wake solvers (FUN3D). | **Single-Regime:** Usually limited to Navier-Stokes; fails in transitional regimes. |
+| **Optimization Logic** | **MoP-Accelerated:** Uses a Physics-Informed Metamodel to test 10,000+ candidates in ms. | **Brute-Force:** Requires 100% convergence of the full solver for *every* design candidate. |
+| **Data Fidelity** | **Hybrid Refinement:** Uses DeepXDE (PINN) to refine noisy DSMC or coarse CFD data. | **Raw Output:** Reliant on mesh density; no neural refinement layer. |
+| **Hardware Logic** | **Executor-Bridge:** Docker (Physics) + Local GPU/NPU (Optimization). | **Monolithic:** Primarily CPU-bound; requires high-end HPC licenses. |
+| **Speed (Turnaround)** | **Ultra-Fast:** Near-instant design iteration once the MoP is trained. | **Prohibitive:** Weeks of compute time needed for global optimization. |
 
 ### Rationale for Selection:
 1. **Survival Envelope:** HIADs start decelerating at altitudes where the air is too thin for the continuum assumptions used in Fluent or OpenFOAM. DSMC (SPARTA) captures the true kinetic behavior of the gas.
@@ -209,6 +207,80 @@ A common question is why this pipeline uses **DSMC + MoP-SBO** instead of a stan
 3. **SPARTA vs. OpenFOAM (dsmcFoam+):** While OpenFOAM has a DSMC solver, **SPARTA (Sandia National Labs)** is purpose-built for high-performance DSMC. It offers significantly better parallel scaling and a more robust implementation of the VSS/VHS collision models and surface chemistry required for hypersonics.
 4. **MoP/SBO Efficiency:** To find the *optimal* cone angle or nose radius, we need to test thousands of variations. While Fluent and OpenFOAM *can* run in 2D to save time, a full CFD convergence still takes minutes. The **Metamodel of Optimal Prognosis (MoP)** allows us to "learn" the physics and then run 10,000+ virtual "tests" in milliseconds.
 5. **Axisymmetric Optimization:** Since the HIAD is a body of revolution, 2D axisymmetry is the "gold standard" for early-stage design. The StellarOrion pipeline leverages this to generate the massive datasets needed for high-fidelity surrogate models that would be computationally prohibitive with traditional CFD.
+
+---
+
+## 6.2. Future Integration: Ansys Fluent as a Continuum Backend
+While the current StellarOrion pipeline is optimized for the rarefied and transitional regimes (using SPARTA), **Ansys Fluent** is recognized as a high-potential candidate for a secondary backend integration.
+
+### Role of Fluent in the Pipeline:
+1.  **High-Mach Aerothermodynamics (Mach 15+):** Fluent is highly capable in the high-speed regime, handling complex shock-shock interactions and thermal ionization that occur at Mach 15 and beyond. It provides a valuable continuum-based comparison to the particle-based DSMC results in high-energy regimes.
+2.  **High-Fidelity Cross-Validation:** Fluent can be used to perform "Spot Checks" on the MoP-SBO surrogate model. Validating a single optimized design point in Fluent provides a rigorous continuum-regime anchor for the kinetic-regime data.
+3.  **Detailed Structural-Thermal Coupling:** Fluent’s integration with the broader Ansys Workbench (Mechanical/Thermal) allows for high-fidelity modeling of the internal pressure distribution and torus-to-torus heat conduction that goes beyond the current 2D-axisymmetric MoP estimates.
+
+### Comparison Summary for Fluent Integration:
+*   **Strengths:** High-fidelity modeling across **Mach 1 to Mach 15+**; modular integration with **DeepXDE (PINN)** for GPU refinement; industry-standard reliability.
+*   **Target Phase:** High-speed aerothermodynamics; hybrid RANS/LES wake modeling; high-fidelity structural-thermal validation.
+
+---
+
+## 6.3. Implementation Logic: Executor-Bridge Architecture (PyAnsys)
+To ensure maximum scalability and decoupling, the Ansys integration follows an **Executor-Bridge** pattern, mirroring the containerized logic used for SPARTA.
+
+### The Architecture:
+*   **The Bridge (Controller):** A lightweight Python service within the StellarOrion core that translates GA/Optimization requests into Ansys-compatible Journal files. It manages the **Task Queue** and handles authenticated SSH/gRPC communication.
+*   **The Executor (Worker):** A dedicated, high-performance Windows or Linux instance (running Ansys). It operates as a "Black Box" that accepts a configuration, runs the high-fidelity simulation, and exports the results.
+
+### Workflow:
+1.  **Job Submission:** StellarOrion (Bridge) pushes a design vector to the Executor.
+2.  **Containerized Isolation:** The Executor spins up a clean session (via SSH or a Dockerized Ansys instance), processes the Journal file, and performs the high-Mach simulation.
+3.  **Data Bridge:** Once complete, the Bridge pulls the high-resolution thermal/pressure maps back into the project's `assets/data` directory for final MoP validation.
+
+### Self-Note: Why this "Docker-style" separation?
+*   **Resource Management:** You can scale the number of **Executors** (e.g., a cluster of 5 Windows machines) while maintaining a single **Bridge** (The StellarOrion UI).
+*   **Platform Independence:** The Bridge runs on any OS (macOS, Windows, Linux). The Executor only needs to exist somewhere on the network.
+*   **Fault Tolerance:** If an Ansys run crashes or hangs, the Bridge can restart the Executor session without crashing the main StellarOrion application.
+
+---
+
+## 6.4. Resource Management for Darwin/XNU (macOS)
+On **Darwin/XNU (Apple Silicon/Intel)**, local hardware resources (RAM/CPU) are a critical bottleneck. To ensure system stability, the pipeline implements a **Sequential Resource Governor**.
+
+### Dynamic VM Switching:
+Instead of running all environments in parallel, the Bridge manages a "Stop-Start" lifecycle for the heavy executors:
+
+1.  **Phase A (SPARTA Phase):** The Bridge boots the **Docker VM** and executes the DSMC simulation. All other non-essential VMs (like the Windows Ansys instance) are kept in a suspended/saved state.
+2.  **Phase B (Ansys Phase):** Once SPARTA is done, the Bridge **terminates/suspends the Docker VM** and boots the **Windows VM**. It then executes the high-Mach Fluent validation.
+3.  **Sequential Await Logic:** The Bridge uses `await until operational` logic. It will not attempt to bridge files or send commands until the target VM is fully reachable and its status is confirmed as `running`.
+
+### Implementation Priority:
+*   **No Parallelism:** By default, Darwin builds are locked to **Sequential Execution**. This prevents the "XNU Kernel Panic" or severe throttling caused by simultaneous virtualization of two massive overhead environments (Docker + Windows VM).
+*   **State Management:** The Bridge maintains a persistence layer to ensure data is safely written to the host `assets/data` folder before a VM is swapped out.
+
+---
+
+## 6.5. Advanced Turbulence & Wake Solvers (Beyond SPARTA)
+While SPARTA (DSMC) is the primary engine for the rarefied regime, the StellarOrion roadmap includes integration with high-fidelity continuum solvers to handle complex, unsteady flow features such as **Wake Heating** and **Wake Pressure** distributions.
+
+### Turbulence Modeling (Scale-Resolving Simulations):
+Standard steady-state RANS (Reynolds-Averaged Navier-Stokes) models like **SST $k-\omega$** are used for attached boundary layers. However, to capture the true unsteady behavior of the HIAD wake, **Scale-Resolving Simulations (SRS)** are required:
+
+1.  **LES (Large-Eddy Simulation):** Directly represents large-scale turbulent fluctuations. Highly accurate but computationally expensive near walls.
+2.  **Hybrid RANS/LES (HRLES):** Combines the efficiency of RANS near the wall with the fidelity of LES in the wake.
+    *   **DES (Detached-Eddy Simulation):** Switches to LES in regions of flow separation.
+    *   **DDES (Delayed Detached-Eddy Simulation):** Prevents premature switching to LES within the boundary layer (shielding).
+
+### specialized Solver Candidates:
+Beyond Ansys Fluent, two research-grade solvers are identified for high-fidelity validation:
+*   **FUN3D (NASA):** A node-based, dual-mesh finite-volume solver. Uses **LDFSS** (steady) and **Modified Roe** (unsteady) schemes. Industry standard for predicting wake pressures and heating.
+*   **HyperSolve:** An edge-based finite-volume solver. Employs a **Jacobian-Free Newton-Krylov (JFNK)** solver for robustness and efficiency. Utilizes pressure-based limiters (Gnoffo & White) for high-speed stability.
+
+### Methodology Interplay (Modular Fluent/PINN):
+The pipeline implements a **Modular Solver Architecture** where the physics engine (Fluent) can be swapped or combined with the refinement engine (PINN):
+1.  **Fluent (The Solver):** Generates the initial high-fidelity flow field data (RANS/DDES).
+2.  **DeepXDE (The PINN):** Processes the Fluent data on the **GPU** to refine the solution, perform inverse parameter estimation, and accelerate the generation of the MoP surrogate model.
+
+This dual-path approach allows the user to leverage Fluent's robust physics while utilizing PINN's massive parallelization for optimization.
 
 ---
 
