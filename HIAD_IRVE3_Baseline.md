@@ -28,9 +28,21 @@ The following values are derived from the post-flight reconstruction (NASA/TP-20
 | **Peak Deceleration** | 20.2 g | Total aerodynamic load |
 | **Peak Dynamic Pressure ($q$)** | 0.9 psia | ~6.2 kPa |
 | **Peak Stagnation Pressure** | ~12.4 kPa | Estimated ($2 \times q$) |
+| **Ballistic Coefficient ($\beta$)** | 26.9 kg/m² | NASA/TP-2013-4012 |
 | **Altitude of Peak Heating** | ~52 km | Atmospheric interface layer |
 
-## 4. Key Findings & Validation Metrics
+## 4. Optimization Reference Points (Validation Check)
+Use these values to calibrate the **Survivability Optimization (SBO)** targets in StellarOrion.
+
+| Metric | IRVE-3 Baseline | Note |
+| :--- | :--- | :--- |
+| **Target $\beta$** | 26.9 kg/m² | Validates Mass/Drag ratio |
+| **Target $\dot{q}_{max}$** | 14.4 W/cm² | Validates Aerothermal Model |
+| **Target $g_{max}$** | 20.2 g | Validates Structural Load |
+| **Target $q_{max}$** | 6.2 kPa | Validates Dynamic Pressure |
+| **Reference $C_D$** | ~1.47 | Validates Forebody Drag |
+
+## 5. Key Findings & Validation Metrics
 *   **FTPS Performance**: The flexible TPS survived the peak heat flux without structural failure.
 *   **Aerodynamic Stability**: The vehicle demonstrated stable flight throughout the hypersonic and supersonic regimes.
 *   **Center-of-Gravity (CG) Offset**: Demonstrated the ability to generate lift for trajectory steering.

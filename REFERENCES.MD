@@ -134,14 +134,24 @@ Based on the post-flight reconstruction (NASA/TP-2013-4012), the following param
 | **Peak Heat Flux ($\dot{q}$)** | 14.4 W/cm$^2$ | Theoretical stagnation point peak |
 | **Peak Deceleration** | 20.2 g | Total deceleration load |
 | **Peak Dynamic Pressure ($q$)** | 0.9 psia | ~6.2 kPa |
+| **Ballistic Coefficient ($\beta$)** | 26.9 kg/m² | Primary Validation Target |
 | **Aeroshell Diameter** | 3.0 m | Full deployment state |
 | **Nose Radius ($R_n$)** | 0.191 m | Stagnation curvature radius |
 | **Cone Angle** | 60$^\circ$ | Forebody half-angle |
 
+### Optimization Reference Points
+For Surrogate-Based Optimization (SBO) verification:
+*   **$\beta_{target}$**: 26.9 kg/m²
+*   **$\dot{q}_{max}$**: 14.4 W/cm²
+*   **$g_{max}$**: 20.2 g
+*   **$C_D$**: ~1.47
+
 ### Mission References
 *   Cassell, G. J., et al., "Inflatable Re-entry Vehicle Experiment (IRVE-3) Flight Results," *AIAA 2013-1386*, 2013.
-*   Lau, K., Cheatwood, N., et al., "Inflatable Re-entry Vehicle Experiment 3 (IRVE-3) Post-Flight Aerothermal Reconstruction," *NASA/TP-2013-4012*.
-*   Dillman, R., "Inflatable Reentry Vehicle Experiment-3 (IRVE-3): Project Overview \& Instrumentation," *NASA LaRC*, 2015.
+*   NASA, "Artemis I Post-Flight Reconstruction: Orion Capsule Performance and Reentry Dynamics," *NASA Technical Summary*, 2022.
+*   Johnston, C. O., "Including Radiative Heating for the Design of the Orion Backshell for Artemis 1," *Technical Report*, 2025. [Local: ProgressReport/paperref]
+*   Gill, J., et al., "The 'Test-Like-You-Fly' and 'Test-What-You-Fly' Approach for the Artemis Human Spaceflight Paradigm," *AIAA Technical Paper*, 2026. [Local: ProgressReport/paperref]
+*   Honeycutt, J., et al., "NASA's Space Launch System: Powering Artemis and Enabling Discovery," *AIAA Technical Paper*, 2025. [Local: ProgressReport/paperref]
 
 ## 6. Physics-Informed Neural Networks (PINNs)
 The pipeline integrates a PINN refinement stage via DeepXDE to "fill the gaps" in noisy DSMC data and perform inverse parameter estimation.
