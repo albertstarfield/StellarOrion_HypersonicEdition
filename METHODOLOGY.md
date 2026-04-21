@@ -49,9 +49,13 @@ graph TD
 | :--- | :--- | :--- |
 | **Exploration** | SBO / PINN | Ultra-fast estimation of 1000s of design candidates. |
 | **Refinement** | DSMC + PINN | Bridges the gap between noisy particle data and continuous flow fields. |
-| **Validation** | **DSMC Only** | Eliminates neural network bias; provides pure kinetic-regime ground truth (Bird, 1994). |
-| **High-Mach (Future)** | **Ansys Fluent + PINN** | Hybrid approach: **Fluent** (Physics) + **DeepXDE** (GPU Refinement). |
-| **Advanced Wake Modeling** | **FUN3D / HyperSolve** | Uses Finite-Volume methods (Roe/LDFSS) and DDES/LES for high-fidelity unsteady wake heating. |
+| **Validation** | **DSMC Only** | Eliminates neural network bias; provides pure kinetic-regime ground truth for wake/backshell (Bird, 1994 / Johnston, 2025). |
+| **High-Density (Future)**| **Ansys Fluent + PINN** | Hybrid approach for low-altitude/peak heating ($Kn < 0.01$) where continuum physics is valid. |
+| **Advanced Wake Modeling** | **FUN3D / HyperSolve** | Uses Finite-Volume methods (Roe/LDFSS) and DDES/LES for high-fidelity unsteady wake heating analysis (NASA/TM-20230015883). |
+
+> [!CAUTION]
+> **The Design Mismatch Risk**: 
+> As a **closed-loop optimization system**, StellarOrion relies on the physical accuracy of the underlying solver to generate valid flight parameters. Using a "less appropriate" model for a specific regime (e.g., Continuum for a Rarefied wake) results in a **Design Mismatch**, where the system converges on an "optimized" configuration that is non-physical and potentially unsafe for **In-Real-Life (IRL)** flight conditions.
 
 > [!IMPORTANT]
 > **Darwin/XNU (macOS) Resource Note:** To prevent system overload, executors on macOS must run **sequentially**. The Bridge dynamically manages VM lifecycle (Docker vs. Windows) and awaits completion of one phase before initializing the next.

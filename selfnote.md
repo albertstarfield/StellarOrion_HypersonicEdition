@@ -116,6 +116,26 @@ $$Kn = \frac{\lambda}{L}$$
 *   **Solver Fidelity:** If $Kn > 0.01$, standard CFD (Navier-Stokes) fails to predict surface heating and drag accurately because the "no-slip" boundary condition no longer applies.
 *   **StellarOrion Implementation:** Currently, $Kn$ is **not a direct input parameter**. It is a *resultant* of the atmospheric density (`env_nrho`) and vehicle scale (`diameter`). However, the SPARTA solver is specifically chosen to handle the $Kn > 0.01$ regime where traditional CFD is inaccurate.
 *   **Future Development:** Plan to implement a "Knudsen Threshold" toggle to automatically switch between DSMC and PINN-Continuum modes to optimize compute time.
+    
+## 2.3. DSMC (SPARTA) vs. Continuum (Ansys Fluent)
+Based on NASA's IRVE-3 and Artemis-1 flight reconstructions (Lau et al., 2013 / Johnston, 2025), the choice between particle-based and mesh-based solvers is driven by flow density and non-equilibrium effects.
+
+| Feature | DSMC (SPARTA) | Continuum CFD (Ansys Fluent / LAURA) |
+| :--- | :--- | :--- |
+| **Physical Basis** | Boltzmann Equation (Kinetic Theory) | Navier-Stokes Equations (Fluid Dynamics) |
+| **Applicability** | $Kn > 0.01$ (Rarefied / Transitional) | $Kn < 0.01$ (Continuum) |
+| **Wake Modeling** | **High Accuracy.** Captures low-density recirculating flows in the HIAD backshell. | **Challenging.** Often underpredicts heating in high-rarefaction wake zones (Johnston, 2025). |
+| **Thermochemistry**| Native non-equilibrium (TCE/VSS models). | Requires multi-temperature closure models (e.g., Park's 2-temp). |
+| **Compute Cost** | High (Particle-heavy). Scaling is $O(N)$. | Moderate to High (Grid-dependent). |
+| **NASA Usage** | Used for high-altitude/wake validation (DAC/SPARTA). | Primary tool for high-density peak heating (DPLR/LAURA). |
+
+### The NASA Rationale for StellarOrion:
+1.  **The Backshell heating Problem**: Johnston (2025) noted that for Artemis-1, the backshell radiative heating was dominated by VUV emissions in the wake. Continuum solvers struggle with the extreme rarefaction in these regions. StellarOrion uses **SPARTA** to ensure the wake expansion and backface thermal soak are modeled with kinetic-level fidelity.
+2.  **The Transitional Regime**: HIADs (like IRVE-3) perform the majority of their deceleration at 50km–80km altitudes. Lau et al. (2013) demonstrated that while continuum codes are excellent for peak heating, the **Transitional Regime ($Kn \approx 0.05$)** is best handled by DSMC to capture the breakdown of the "no-slip" boundary condition.
+
+> [!CAUTION]
+> **The Design Mismatch Risk (Closed-Loop Optimization)**: 
+> Because StellarOrion is a **closed-loop system** designed to generate optimized model parameters for specific entry/reentry scenarios, the choice of solver is critical. Utilizing a "different or less appropriate" model (e.g., using a purely continuum engine for a rarefied wake) results in a **Design Mismatch**. The optimizer will converge on a "Global Optimum" that is perfectly tuned for the *simulated* physics but fails to mirror **Real-Life (IRL)** flight conditions. This mismatch leads to hardware that is incorrectly sized for the actual aerothermal environment, potentially compromising safety and mission success.
 
 ## 3. Derived Metrics (Survivability Criteria)
 Metrics used to determine if the payload is "protected."
