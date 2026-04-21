@@ -4,3 +4,4 @@ cadquery
 matplotlib
 numpy
 pymsis
+paramiko

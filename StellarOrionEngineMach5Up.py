@@ -6,7 +6,7 @@ import json
 import shutil
 import time
 import numpy as np
-import numpy as np
+import paramiko
 
 class Api:
     def __init__(self):
@@ -347,6 +347,14 @@ fix             halt_check halt 100 v_drag_val {tol} error no
         n_every = 1
         dump_freq = n_freq
 
+        # Averaging and Output Frequencies
+        # We want to output results at least 10 times during the run, or every 100 steps minimum
+        n_run = int(opt_params.get('env_run', '1000'))
+        n_freq = max(1, n_run // 5) # 5 snapshots
+        n_repeat = max(1, n_freq // 2)
+        n_every = 1
+        dump_freq = n_freq
+
         script = f"""# SPARTA Input Script - 8D Optimized
 seed            12345
 dimension       2
@@ -400,6 +408,101 @@ run             {opt_params.get('env_run', '1000')}
 """
         return script
 
+    def run_remote_pyfluent_simulation(self, opt_params, sample_dict):
+        """Orchestrates a remote PyFluent simulation via SSH/SFTP."""
+        host = opt_params.get('ssh_host')
+        user = opt_params.get('ssh_user')
+        password = opt_params.get('ssh_pass')
+        
+        if not host or not user:
+            self.log_to_gui("[-] Error: SSH Host or User missing for PyFluent backend.")
+            return {'drag': 1.0, 'heat': 1.0}
+
+        try:
+            self.log_to_gui(f"[*] Establishing SSH Connection to {host}...")
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(host, username=user, password=password, timeout=10)
+            
+            sftp = ssh.open_sftp()
+            
+            # Create remote workspace
+            remote_dir = "C:\\Temp\\StellarOrion_Remote" # Assuming Windows for PyFluent
+            try:
+                sftp.mkdir(remote_dir)
+            except: pass
+            
+            self.log_to_gui("[*] Pushing CAD and configuration via SFTP...")
+            cad_dir = os.path.join(self.cwd, "CADDesign")
+            
+            # Push Geometry
+            for ext in [".stl", ".step"]:
+                local_path = os.path.join(cad_dir, f"HIAD_opt{ext}")
+                if os.path.exists(local_path):
+                    sftp.put(local_path, f"{remote_dir}\\geometry{ext}")
+            
+            # Push Executor Template
+            template_path = os.path.join(self.cwd, "source", "pyfluent_executor_template.py")
+            sftp.put(template_path, f"{remote_dir}\\executor.py")
+            
+            # Push Config
+            vstream = float(opt_params.get('env_vstream', 2700.0))
+            nrho = float(opt_params.get('env_nrho', 3.5e22))
+            rho = nrho * (28.97e-3 / 6.022e23) 
+            # Simple pressure calc for Fluent boundary
+            temp_inf = float(opt_params.get('env_temp_inf', 270.0))
+            r_gas = 287.0
+            pressure = rho * r_gas * temp_inf
+            
+            config = {
+                "diameter": float(sample_dict.get('diameter', 3.0)),
+                "velocity": vstream,
+                "pressure": pressure,
+                "temperature": temp_inf,
+                "wall_temp": float(opt_params.get('env_temp', 1000.0)),
+                "iterations": 100 # Quick solve
+            }
+            
+            config_path = os.path.join(self.cwd, "scratch", "remote_config.json")
+            os.makedirs(os.path.dirname(config_path), exist_ok=True)
+            with open(config_path, "w") as f:
+                json.dump(config, f)
+            sftp.put(config_path, f"{remote_dir}\\config.json")
+            
+            self.log_to_gui("[*] Executing remote PyFluent solver...")
+            # Command to run python remotely
+            # Note: We assume 'python' is in PATH and has pyansys installed
+            cmd = f"cd {remote_dir} && python executor.py config.json"
+            stdin, stdout, stderr = ssh.exec_command(cmd)
+            
+            # Pipe remote output to GUI
+            for line in stdout:
+                self.log_to_gui(f"    [Remote] {line.strip()}")
+            
+            # Pull results back
+            self.log_to_gui("[*] Retrieving results...")
+            local_results = os.path.join(self.cwd, "scratch", "remote_results.json")
+            try:
+                sftp.get(f"{remote_dir}\\results.json", local_results)
+                with open(local_results, "r") as f:
+                    res_data = json.load(f)
+                
+                sftp.close()
+                ssh.close()
+                return {
+                    'drag': abs(res_data.get('drag', 1.0)),
+                    'heat': abs(res_data.get('heat', 1.0))
+                }
+            except Exception as e:
+                self.log_to_gui(f"[-] Error retrieving remote results: {e}")
+                sftp.close()
+                ssh.close()
+                return {'drag': 1.0, 'heat': 1.0}
+
+        except Exception as e:
+            self.log_to_gui(f"[-] SSH/PyFluent Error: {e}")
+            return {'drag': 1.0, 'heat': 1.0}
+
     def run_optimization(self, opt_params):
         """Page 7: Real Survivability Optimization using SPARTA DSMC (GUI Threaded)"""
         def run():
@@ -426,6 +529,9 @@ run             {opt_params.get('env_run', '1000')}
         self.log_to_gui(f"[*] OPTIMIZATION TARGET: {goal.upper()}")
         self.log_to_gui(f"[*] ------------------------------------------------")
         self.log_to_gui(f"[*] TOTAL SIMULATION SAMPLES TO RUN: {samples_n}")
+        self.log_to_gui(f"[*] BACKEND SOLVER:                  {opt_params.get('solver', 'sparta').upper()}")
+        if opt_params.get('solver') == 'pyfluent':
+            self.log_to_gui(f"[*] REMOTE HOST:                     {opt_params.get('ssh_host')}")
         self.log_to_gui(f"[*] TOTAL STEPS PER SIMULATION:      {opt_params.get('env_run', '1000')}")
         self.log_to_gui(f"[*] ------------------------------------------------")
         
@@ -510,28 +616,37 @@ run             {opt_params.get('env_run', '1000')}
         os.makedirs(os.path.join(cad_dir, "results_reference"), exist_ok=True)
         with open(os.path.join(cad_dir, "in.hiad"), 'w') as f: f.write(script_baseline)
         
-        sim_start = time.time()
-        self.log_to_gui(f"    [+] Running Baseline Simulation (D={base_d}m)...")
-        subprocess.run(["docker", "rm", "-f", "hiad-runner"], capture_output=True)
-        subprocess.run([
-            "docker", "create", "--name", "hiad-runner",
-            "-v", f"{cad_dir}:/workspace", "-e", "IN_DOCKER=1",
-            "sparta-sim", "mpirun", "-np", str(n_cores), "--allow-run-as-root", "spa", "-in", "in.hiad"
-        ], check=True)
+        sim_end = time.time()
+        baseline_time = sim_end - sim_start
         
-        sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        for line in sim_proc.stdout:
-            l = line.strip()
-            if not l: continue
-            if "Step" in l or "CPU time =" in l: self.log_to_gui(f"        {l}")
-            # Log progress every 100 steps
-            parts = l.split()
-            if parts and parts[0].isdigit():
-                step = int(parts[0])
-                if step % 100 == 0: self.log_to_gui(f"        {l}")
-        if sim_proc.wait() != 0:
-            raise RuntimeError("Baseline SPARTA simulation failed! Check docker logs.")
-        
+        solver_mode = opt_params.get('solver', 'sparta')
+        if solver_mode == 'pyfluent':
+            self.log_to_gui(f"    [+] Running Baseline via PyFluent (D={base_d}m)...")
+            ref_metric_dict = self.run_remote_pyfluent_simulation(opt_params, {'diameter': base_d})
+        else:
+            self.log_to_gui(f"    [+] Running Baseline via SPARTA (D={base_d}m)...")
+            subprocess.run(["docker", "rm", "-f", "hiad-runner"], capture_output=True)
+            subprocess.run([
+                "docker", "create", "--name", "hiad-runner",
+                "-v", f"{cad_dir}:/workspace", "-e", "IN_DOCKER=1",
+                "sparta-sim", "mpirun", "-np", str(n_cores), "--allow-run-as-root", "spa", "-in", "in.hiad"
+            ], check=True)
+            
+            sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            for line in sim_proc.stdout:
+                l = line.strip()
+                if not l: continue
+                if "Step" in l or "CPU time =" in l: self.log_to_gui(f"        {l}")
+                # Log progress every 100 steps
+                parts = l.split()
+                if parts and parts[0].isdigit():
+                    step = int(parts[0])
+                    if step % 100 == 0: self.log_to_gui(f"        {l}")
+            if sim_proc.wait() != 0:
+                raise RuntimeError("Baseline SPARTA simulation failed! Check docker logs.")
+            
+            ref_metric_dict = self.parse_sparta_results()
+
         sim_end = time.time()
         baseline_time = sim_end - sim_start
         self.log_to_gui(f"    [+] Baseline established in {baseline_time:.2f}s.")
@@ -696,48 +811,46 @@ run             {opt_params.get('env_run', '1000')}
                        "--scallop_pts", str(sample_dict['scallop_pts']), "--scallop_angle", str(sample_dict['scallop_angle']), "--output", "HIAD_opt"]
             subprocess.run(cmd_cad, cwd=cad_dir, check=True)
             
-            self.log_to_gui(f"    [*] Cleaning stale containers...")
-            subprocess.run(["docker", "rm", "-f", "hiad-runner"], capture_output=True)
-            self.log_to_gui(f"    [*] Initializing Docker runner...")
-            subprocess.run(["docker", "create", "--name", "hiad-runner", "-v", f"{cad_dir}:/workspace", "-e", "IN_DOCKER=1", "sparta-sim", "mpirun", "-np", str(n_cores), "--allow-run-as-root", "spa", "-in", "in.hiad"], check=True)
-            
-            self.log_to_gui(f"    [*] Executing SPARTA solver (Sample {i+1})...")
             sample_start = time.time()
-            sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             
-            last_cpu = ""
-            for line in sim_proc.stdout:
-                l = line.strip()
-                if not l: continue
-                if "CPU time =" in l: 
-                    last_cpu = l
-                    continue
-                if "Step" in l: 
-                    self.log_to_gui(f"        {l}")
-                    continue
-                    
-                # Log progress every 100 steps
-                parts = l.split()
-                if parts and parts[0].isdigit():
-                    step = int(parts[0])
-                    if step % 100 == 0: self.log_to_gui(f"        {l}")
-            
-            if sim_proc.wait() != 0:
-                self.log_to_gui(f"    [-] FATAL: SPARTA Solver Crash on Sample {i+1}!")
-                # Attempt to get last few lines of log.sparta if available
-                log_path = os.path.join(cad_dir, "log.sparta")
-                if os.path.exists(log_path):
-                    with open(log_path, 'r') as f:
-                        log_tail = f.readlines()[-10:]
-                        self.log_to_gui("    [!] Last 10 lines of log.sparta:")
-                        for l in log_tail: self.log_to_gui(f"        {l.strip()}")
+            if solver_mode == 'pyfluent':
+                res_dict = self.run_remote_pyfluent_simulation(opt_params, sample_dict)
             else:
-                if last_cpu: self.log_to_gui(f"        {last_cpu}")
+                self.log_to_gui(f"    [*] Cleaning stale containers...")
+                subprocess.run(["docker", "rm", "-f", "hiad-runner"], capture_output=True)
+                self.log_to_gui(f"    [*] Initializing Docker runner...")
+                subprocess.run(["docker", "create", "--name", "hiad-runner", "-v", f"{cad_dir}:/workspace", "-e", "IN_DOCKER=1", "sparta-sim", "mpirun", "-np", str(n_cores), "--allow-run-as-root", "spa", "-in", "in.hiad"], check=True)
+                
+                self.log_to_gui(f"    [*] Executing SPARTA solver (Sample {i+1})...")
+                sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                
+                last_cpu = ""
+                for line in sim_proc.stdout:
+                    l = line.strip()
+                    if not l: continue
+                    if "CPU time =" in l: 
+                        last_cpu = l
+                        continue
+                    if "Step" in l: 
+                        self.log_to_gui(f"        {l}")
+                        continue
+                        
+                    # Log progress every 100 steps
+                    parts = l.split()
+                    if parts and parts[0].isdigit():
+                        step = int(parts[0])
+                        if step % 100 == 0: self.log_to_gui(f"        {l}")
+                
+                if sim_proc.wait() != 0:
+                    self.log_to_gui(f"    [-] FATAL: SPARTA Solver Crash on Sample {i+1}!")
+                else:
+                    if last_cpu: self.log_to_gui(f"        {last_cpu}")
+                
+                res_dict = self.parse_sparta_results()
             
             sample_end = time.time()
             sample_dur = sample_end - sample_start
             
-            res_dict = self.parse_sparta_results()
             val = res_dict[goal]
             f_metrics = self.calculate_flight_metrics(res_dict, opt_params, sample_dict)
             

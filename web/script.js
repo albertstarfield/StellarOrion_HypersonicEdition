@@ -125,6 +125,11 @@ function toggleMSIS() {
     fetchAtmosphereData();
 }
 
+function toggleRemoteFields() {
+    const val = document.getElementById('solver-backend').value;
+    document.getElementById('remote-fields').style.display = (val === 'pyfluent') ? 'block' : 'none';
+}
+
 async function fetchAtmosphereData() {
     const params = {
         env_preset: document.getElementById('env-preset').value,
@@ -221,11 +226,13 @@ function startOptimization() {
         env_ymax: document.getElementById('env-ymax').value,
         env_zthick: document.getElementById('env-zthick').value,
 
-        msis_alt: document.getElementById('msis-alt').value,
-        msis_lat: document.getElementById('msis-lat').value,
-        msis_lon: document.getElementById('msis-lon').value,
-        msis_f107: document.getElementById('msis-f107').value,
-        msis_ap: document.getElementById('msis-ap').value
+        msis_ap: document.getElementById('msis-ap').value,
+        
+        // Backend & SSH
+        solver: document.getElementById('solver-backend').value,
+        ssh_host: document.getElementById('ssh-host').value,
+        ssh_user: document.getElementById('ssh-user').value,
+        ssh_pass: document.getElementById('ssh-pass').value
     };
     window.pywebview.api.run_optimization(optParams);
 }
@@ -308,6 +315,8 @@ function updateSummary() {
                     <li>Vstream: ${document.getElementById('env-vstream').value} m/s</li>
                     <li>Chemistry: ${document.getElementById('env-chem-mode').value}</li>
                     <li>Steady State: ${document.getElementById('env-steady-state').checked ? 'ON' : 'OFF'}</li>
+                    <li>Backend: ${document.getElementById('solver-backend').value.toUpperCase()}</li>
+                    ${document.getElementById('solver-backend').value === 'pyfluent' ? `<li>Remote: ${document.getElementById('ssh-host').value}</li>` : ''}
                 </ul>
             </div>
         </div>

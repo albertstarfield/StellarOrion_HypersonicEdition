@@ -831,6 +831,46 @@
                     </div>
                 </div>
 
+                <div style="margin-top: 20px; background: rgba(147, 51, 234, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(147, 51, 234, 0.2);">
+                    <h4 style="margin-bottom: 12px; font-size: 0.9rem; color: #a855f7;">Solver Backend & Remote Orchestration</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div class="input-group">
+                            <div class="tooltip-container">
+                                <label>Simulation Backend</label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text">
+                                    <strong>Solver Backend</strong>
+                                    Choose between SPARTA (Local Docker) or PyFluent (Remote SSH).
+                                </div>
+                            </div>
+                            <select id="solver-backend" onchange="toggleRemoteFields()" style="background: rgba(255,255,255,0.05); color: #fff; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                                <option value="sparta">SPARTA (DSMC)</option>
+                                <option value="pyfluent">PyFluent (Continuum)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="remote-fields" style="display: none; padding-top: 10px; border-top: 1px solid rgba(147, 51, 234, 0.1);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                            <div class="input-group">
+                                <label>SSH Host / IP</label>
+                                <input type="text" id="ssh-host" placeholder="e.g. 192.168.1.50" style="background: rgba(255,255,255,0.05);">
+                            </div>
+                            <div class="input-group">
+                                <label>Username</label>
+                                <input type="text" id="ssh-user" placeholder="e.g. Administrator" style="background: rgba(255,255,255,0.05);">
+                            </div>
+                            <div class="input-group">
+                                <label>Password</label>
+                                <input type="password" id="ssh-pass" placeholder="••••••••" style="background: rgba(255,255,255,0.05);">
+                            </div>
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 8px; font-style: italic;">
+                            Note: PyFluent requires Ansys Fluent installed on the target machine. Files will be pushed via SFTP.
+                        </p>
+                    </div>
+                </div>
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
                     <div class="domain-controls" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
                         <h4 style="color: var(--primary); margin-bottom: 10px; font-size: 0.9rem;">Domain Dimensions</h4>
