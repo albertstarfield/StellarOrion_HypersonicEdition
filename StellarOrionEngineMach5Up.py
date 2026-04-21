@@ -422,7 +422,13 @@ run             {opt_params.get('env_run', '1000')}
             self.log_to_gui(f"[*] Establishing SSH Connection to {host}...")
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(host, username=user, password=password, timeout=10)
+            
+            key_path = opt_params.get('ssh_key')
+            if key_path and os.path.exists(key_path):
+                self.log_to_gui(f"[*] Authenticating with SSH Key: {key_path}")
+                ssh.connect(host, username=user, key_filename=key_path, timeout=10)
+            else:
+                ssh.connect(host, username=user, password=password, timeout=10)
             
             # 1. OS Verification (Check for Windows)
             self.log_to_gui("[*] Verifying remote Operating System...")
@@ -497,7 +503,8 @@ run             {opt_params.get('env_run', '1000')}
                 "dimension": opt_params.get('solver_dim', '2d'),
                 "use_gpu": opt_params.get('solver_gpu', True),
                 "n_cores": int(opt_params.get('env_cores', 4)),
-                "bl_layers": int(opt_params.get('solver_bl_layers', 15))
+                "bl_layers": int(opt_params.get('solver_bl_layers', 15)),
+                "viscous_model": opt_params.get('viscous_model', 'sst-k-omega')
             }
             
             config_path = os.path.join(self.cwd, "scratch", "remote_config.json")
@@ -578,7 +585,11 @@ run             {opt_params.get('env_run', '1000')}
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         
         try:
-            ssh.connect(host, username=user, password=password, timeout=10)
+            key_path = opt_params.get('ssh_key')
+            if key_path and os.path.exists(key_path):
+                ssh.connect(host, username=user, key_filename=key_path, timeout=10)
+            else:
+                ssh.connect(host, username=user, password=password, timeout=10)
             
             # Check for Windows
             stdin, stdout, stderr = ssh.exec_command("ver")
@@ -660,6 +671,84 @@ run             {opt_params.get('env_run', '1000')}
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
+    def run_integration_test(self, opt_params):
+        """Perform a verbose 100-step dry run to verify the full simulation stack."""
+        host = opt_params.get('ssh_host')
+        user = opt_params.get('ssh_user')
+        password = opt_params.get('ssh_pass')
+        key_path = opt_params.get('ssh_key')
+        
+        import paramiko
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        try:
+            if key_path and os.path.exists(key_path):
+                ssh.connect(host, username=user, key_filename=key_path, timeout=15)
+            else:
+                ssh.connect(host, username=user, password=password, timeout=15)
+            
+            sftp = ssh.open_sftp()
+            remote_dir = "C:\\Temp\\StellarOrion_Test"
+            ssh.exec_command(f"mkdir {remote_dir}")
+            
+            # Push a minimal geometry and the executor
+            geometry_path = os.path.join(self.cwd, "source", "ref_geometry.stl")
+            # If ref_geometry doesn't exist, use a placeholder or create one
+            if not os.path.exists(geometry_path):
+                with open(geometry_path, "w") as f: f.write("solid test\nendsolid test") # Minimal STL
+            
+            sftp.put(geometry_path, f"{remote_dir}\\geometry.stl")
+            template_path = os.path.join(self.cwd, "source", "pyfluent_executor_template.py")
+            sftp.put(template_path, f"{remote_dir}\\executor.py")
+            
+            # Create a 100-step config
+            test_config = {
+                "diameter": 1.0,
+                "velocity": 2000.0,
+                "pressure": 100.0,
+                "temperature": 300.0,
+                "wall_temp": 1000.0,
+                "time_step": 1e-6,
+                "total_steps": 100,
+                "dimension": "2d",
+                "use_gpu": False, # Disable GPU for test to ensure stability
+                "n_cores": 2,
+                "bl_layers": 5,
+                "viscous_model": "laminar"
+            }
+            
+            import json
+            config_path = os.path.join(self.cwd, "scratch", "test_config.json")
+            with open(config_path, "w") as f: json.dump(test_config, f)
+            sftp.put(config_path, f"{remote_dir}\\config.json")
+            
+            # Run simulation
+            cmd = f"cd {remote_dir} && python executor.py config.json"
+            stdin, stdout, stderr = ssh.exec_command(cmd)
+            
+            full_log = ""
+            while not stdout.channel.exit_status_ready():
+                if stdout.channel.recv_ready():
+                    line = stdout.read(1024).decode()
+                    full_log += line
+                time.sleep(0.1)
+            
+            # Capture final output
+            full_log += stdout.read().decode()
+            full_log += stderr.read().decode()
+            
+            exit_code = stdout.channel.recv_exit_status()
+            ssh.close()
+            
+            if exit_code == 0 and "Calculation complete" in full_log:
+                return {"status": "success", "message": "Simulation stack verified! 100 steps completed.", "log": full_log}
+            else:
+                return {"status": "error", "message": f"Execution failed (Code {exit_code}). See logs for details.", "log": full_log}
+                
+        except Exception as e:
+            return {"status": "error", "message": f"Integration Test Failed: {str(e)}", "log": str(e)}
+
     def install_pyansys(self, opt_params):
         """Remotely install ansys-fluent-core using pip."""
         host = opt_params.get('ssh_host')
@@ -684,6 +773,24 @@ run             {opt_params.get('env_run', '1000')}
                 return {"status": "error", "message": f"Installation failed: {output}"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
+
+    def test_sparta_readiness(self):
+        """Test if the local machine is ready for SPARTA (Docker + Image)."""
+        import subprocess
+        try:
+            # Check if docker is installed
+            subprocess.run(["docker", "--version"], check=True, capture_output=True)
+            
+            # Check if image exists
+            res = subprocess.run(["docker", "images", "-q", "sparta-hysp"], check=True, capture_output=True)
+            if not res.stdout.strip():
+                return {"status": "error", "message": "Docker image 'sparta-hysp' not found. Run 'docker build' first."}
+            
+            return {"status": "success", "message": "Docker and SPARTA image are ready."}
+        except FileNotFoundError:
+            return {"status": "error", "message": "Docker not found. Please install Docker Desktop."}
+        except Exception as e:
+            return {"status": "error", "message": f"Docker Error: {str(e)}"}
 
     def execute_optimization(self, opt_params, is_gui=False):
         """Core optimization logic, usable by both GUI and Headless runners."""

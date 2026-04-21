@@ -95,8 +95,14 @@ def run_simulation(config):
             solver.setup.general.solver.two_dim_space = "axisymmetric"
         
         solver.setup.models.energy.enabled = True
-        solver.setup.models.viscous.model = "k-omega"
-        solver.setup.models.viscous.k_omega_model = "sst"
+        viscous_model = config.get("viscous_model", "sst-k-omega")
+        if viscous_model == "sst-k-omega":
+            print("[*] [PyFluent] Using SST k-omega Turbulence Model...")
+            solver.setup.models.viscous.model = "k-omega"
+            solver.setup.models.viscous.k_omega_model = "sst"
+        else:
+            print("[*] [PyFluent] Using Laminar Flow Model...")
+            solver.setup.models.viscous.model = "laminar"
         
         # 4. AMR Setup
         print("[*] [PyFluent] Enabling Adaptive Mesh Refinement (Pressure Gradient)...")

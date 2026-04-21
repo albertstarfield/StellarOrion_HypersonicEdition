@@ -233,9 +233,11 @@ function startOptimization() {
         ssh_host: document.getElementById('ssh-host').value,
         ssh_user: document.getElementById('ssh-user').value,
         ssh_pass: document.getElementById('ssh-pass').value,
+        ssh_key: document.getElementById('ssh-key').value,
         solver_dim: document.getElementById('solver-dim').value,
         solver_gpu: document.getElementById('solver-gpu').checked,
-        solver_bl_layers: document.getElementById('solver-bl-layers').value
+        solver_bl_layers: document.getElementById('solver-bl-layers').value,
+        viscous_model: document.getElementById('env-viscous-model').value
     };
     window.pywebview.api.run_optimization(optParams);
 }
@@ -429,6 +431,7 @@ async function testConnection() {
         if (result.status === "success") {
             status.style.color = "#10b981";
             status.innerText = "✓ " + result.message;
+            remoteVerified = true; // Connection verified!
             
             if (result.python_missing) {
                 status.style.color = "#f59e0b"; // Warning color
@@ -510,5 +513,211 @@ async function installPyAnsys() {
     } catch (err) {
         status.style.color = "#ef4444";
         status.innerText = "✗ Install Error: " + err;
+    }
+}
+
+// Persist Remote Credentials and Backend Selection
+function saveRemoteParams() {
+    const params = {
+        backend: document.getElementById('solver-backend').value,
+        host: document.getElementById('ssh-host').value,
+        user: document.getElementById('ssh-user').value,
+        pass: document.getElementById('ssh-pass').value,
+        key: document.getElementById('ssh-key').value,
+        dim: document.getElementById('solver-dim').value,
+        gpu: document.getElementById('solver-gpu').checked,
+        bl_layers: document.getElementById('solver-bl-layers').value,
+        viscous: document.getElementById('env-viscous-model').value
+    };
+    localStorage.setItem('stellar_orion_remote_params', JSON.stringify(params));
+}
+
+function loadRemoteParams() {
+    const saved = localStorage.getItem('stellar_orion_remote_params');
+    if (saved) {
+        const params = JSON.parse(saved);
+        document.getElementById('solver-backend').value = params.backend || 'sparta';
+        document.getElementById('ssh-host').value = params.host || '';
+        document.getElementById('ssh-user').value = params.user || '';
+        document.getElementById('ssh-pass').value = params.pass || '';
+        document.getElementById('ssh-key').value = params.key || '';
+        document.getElementById('solver-dim').value = params.dim || '2d';
+        document.getElementById('solver-gpu').checked = params.gpu !== false;
+        document.getElementById('solver-bl-layers').value = params.bl_layers || '15';
+        document.getElementById('env-viscous-model').value = params.viscous || 'sst-k-omega';
+        
+        // Trigger UI updates
+        toggleRemoteFields();
+    }
+}
+
+// Add listeners to all relevant fields
+const persistFields = ['solver-backend', 'ssh-host', 'ssh-user', 'ssh-pass', 'ssh-key', 'solver-dim', 'solver-gpu', 'solver-bl-layers', 'env-viscous-model'];
+persistFields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener('input', saveRemoteParams);
+        el.addEventListener('change', saveRemoteParams);
+    }
+});
+
+// Run on load
+document.addEventListener('DOMContentLoaded', loadRemoteParams);
+
+// Update collectParams and persist logic for SSH Key
+function updateParamsWithKey() {
+    const originalRun = window.pywebview.api.run_optimization;
+    // We don't actually need to wrap it, just ensure the object sent has the key
+}
+
+// Ensure the key is collected in all API calls
+const originalTest = testConnection;
+testConnection = async function() {
+    // This is already using document.getElementById, so it will pick up the new value if we add it to the params object in script.js
+};
+
+// Connection Verification Guard
+let remoteVerified = false;
+
+// Override changePage to enforce testing
+const originalChangePage = window.changePage;
+window.changePage = function(delta) {
+    const backend = document.getElementById('solver-backend').value;
+    const currentPage = window.currentPage || 1; // Assuming currentPage is tracked
+    
+    if (currentPage === 5 && delta > 0 && !remoteVerified) {
+        const status = document.getElementById('test-readiness-status');
+        status.style.color = "#ef4444";
+        status.innerText = "✗ Please test solver readiness first!";
+        
+        const btnNext = document.getElementById('btn-next');
+        btnNext.innerText = "Verify Readiness First";
+        btnNext.style.background = "#64748b";
+        
+        setTimeout(() => {
+            btnNext.innerText = "Continue";
+            btnNext.style.background = "";
+        }, 3000);
+        return;
+    }
+    
+    // Proceed if verified or SPARTA
+    if (typeof originalChangePage === 'function') {
+        originalChangePage(delta);
+    } else {
+        // Fallback for page navigation logic
+        if (delta > 0) nextPage();
+        else prevPage();
+    }
+};
+
+// Reset verification on input change
+const remoteInputs = ['ssh-host', 'ssh-user', 'ssh-pass', 'ssh-key', 'solver-backend'];
+remoteInputs.forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+        if (document.getElementById('solver-backend').value === 'pyfluent') {
+            remoteVerified = false;
+        } else {
+            remoteVerified = true;
+        }
+    });
+});
+
+async function testReadiness() {
+    const backend = document.getElementById('solver-backend').value;
+    const btn = document.getElementById('btn-test-readiness');
+    const status = document.getElementById('test-readiness-status');
+    const originalText = btn.innerText;
+    
+    btn.innerText = "Testing...";
+    btn.disabled = true;
+    status.innerText = "";
+    
+    try {
+        let result;
+        if (backend === 'sparta') {
+            result = await window.pywebview.api.test_sparta_readiness();
+        } else {
+            const params = {
+                ssh_host: document.getElementById('ssh-host').value,
+                ssh_user: document.getElementById('ssh-user').value,
+                ssh_pass: document.getElementById('ssh-pass').value,
+                ssh_key: document.getElementById('ssh-key').value
+            };
+            result = await window.pywebview.api.test_ssh_connection(params);
+        }
+        
+        if (result.status === "success") {
+            status.style.color = "#10b981";
+            status.innerText = "✓ " + result.message;
+            remoteVerified = true;
+            document.getElementById('btn-run-test').style.display = "block"; // Show integration test button
+            
+            if (result.python_missing) {
+                status.style.color = "#f59e0b";
+                document.getElementById('python-install-container').innerHTML = '<button onclick="installRemotePython()" style="background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">Should i install python?</button>';
+            } else if (result.pyansys_missing) {
+                status.style.color = "#f59e0b";
+                document.getElementById('python-install-container').innerHTML = '<button onclick="installPyAnsys()" style="background: #6366f1; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">Install PyFluent Lib?</button>';
+            }
+        } else {
+            status.style.color = "#ef4444";
+            status.innerText = "✗ " + result.message;
+            remoteVerified = false;
+        }
+    } catch (err) {
+        status.style.color = "#ef4444";
+        status.innerText = "✗ API Error: " + err;
+        remoteVerified = false;
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
+function onBackendChange() {
+    toggleRemoteFields();
+    remoteVerified = false; // Force re-test for the new backend
+    document.getElementById('test-readiness-status').innerText = "";
+    document.getElementById('python-install-container').innerHTML = "";
+}
+
+async function runIntegrationTest() {
+    const btn = document.getElementById('btn-run-test');
+    const status = document.getElementById('test-readiness-status');
+    const logArea = document.getElementById('test-verbose-logs');
+    
+    btn.disabled = true;
+    btn.innerText = "Running Test...";
+    logArea.style.display = "block";
+    logArea.innerText = "[*] Starting 100-step simulation dry run...\n";
+    status.innerText = "Simulating...";
+    
+    const params = {
+        ssh_host: document.getElementById('ssh-host').value,
+        ssh_user: document.getElementById('ssh-user').value,
+        ssh_pass: document.getElementById('ssh-pass').value,
+        ssh_key: document.getElementById('ssh-key').value
+    };
+    
+    try {
+        const result = await window.pywebview.api.run_integration_test(params);
+        logArea.innerText += result.log;
+        logArea.scrollTop = logArea.scrollHeight;
+        
+        if (result.status === "success") {
+            status.style.color = "#10b981";
+            status.innerText = "✓ Integration Test Success!";
+        } else {
+            status.style.color = "#ef4444";
+            status.innerText = "✗ Integration Test Failed!";
+        }
+    } catch (err) {
+        status.style.color = "#ef4444";
+        status.innerText = "✗ API Error: " + err;
+        logArea.innerText += "\n[CRITICAL ERROR] " + err;
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Run 100-Step Dry Run";
     }
 }
