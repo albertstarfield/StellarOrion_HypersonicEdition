@@ -61,6 +61,27 @@ The choice of gas species (the simulation "specimen") is critical for capturing 
 2.  **Surface Catalysis**: Recombination of atoms (N + N → N2) on the vehicle surface releases heat. The species model determines how much atomic oxygen/nitrogen is available for this process.
 3.  **Shock Standoff**: The effective $\gamma$ (ratio of specific heats) changes as gas dissociates, which alters the distance of the bow shock from the nose.
 
+---
+
+## 2.2. Gas Dynamics & Rarefaction (Knudsen Number)
+The **Knudsen Number ($Kn$)** is a dimensionless ratio that determines whether the gas should be treated as a continuous fluid or as a collection of individual particles.
+
+$$Kn = \frac{\lambda}{L}$$
+
+*   **$\lambda$ (Mean Free Path):** Average distance a molecule travels before colliding with another.
+*   **$L$ (Characteristic Length):** The diameter or nose radius of the HIAD.
+
+| Regime | $Kn$ Range | Solver Requirement | StellarOrion Status |
+| :--- | :--- | :--- | :--- |
+| **Continuum** | $Kn < 0.01$ | Navier-Stokes (CFD) | Valid for low-altitude/high-density. |
+| **Transitional** | $0.01 < Kn < 10$ | **DSMC (SPARTA)** | **Primary Project Focus.** Typical of HIAD high-altitude deceleration. |
+| **Free Molecular**| $Kn > 10$ | Kinetic Theory | Valid for orbital altitudes (VLEO). |
+
+### Why $Kn$ is Critical:
+*   **Solver Fidelity:** If $Kn > 0.01$, standard CFD (Navier-Stokes) fails to predict surface heating and drag accurately because the "no-slip" boundary condition no longer applies.
+*   **StellarOrion Implementation:** Currently, $Kn$ is **not a direct input parameter**. It is a *resultant* of the atmospheric density (`env_nrho`) and vehicle scale (`diameter`). However, the SPARTA solver is specifically chosen to handle the $Kn > 0.01$ regime where traditional CFD is inaccurate.
+*   **Future Development:** Plan to implement a "Knudsen Threshold" toggle to automatically switch between DSMC and PINN-Continuum modes to optimize compute time.
+
 ## 3. Derived Metrics (Survivability Criteria)
 Metrics used to determine if the payload is "protected."
 
@@ -236,6 +257,28 @@ The StellarOrion pipeline is a multi-generational project. It is important to di
     3.  **Intelligent Evolution:** At each stagnation checkpoint, the system evaluates the current Pareto front. If the gradient of improvement is below the threshold, it triggers an **Intelligence Decision**:
         *   **Continue Evolving:** If the surrogate model suggests untapped design space, it resets the seed/population and pushes for higher generations.
         *   **Finalize:** If physical limits are reached, it "spits out" the final optimized structural toroid and nose radius configurations.
+
+---
+
+## 6.1. Methodology of Physics (MoP) & Genetic Algorithm Interplay
+The **Methodology of Physics (MoP)** acts as the "Laws of Nature" within the Genetic Algorithm (GA). While the GA handles the exploration of the design space (evolution), the MoP logic enforces physical survivability constraints during the **Natural Selection** phase.
+
+### The MoP Fitness Function
+The GA evaluates each design using a Weighted Fitness Function ($F$), where MoP introduces heavy **Penalty Weights** ($P$) for physically non-viable designs.
+
+$$F = (w_1 \cdot C_D) + (w_2 \cdot \frac{1}{\text{Mass}}) - P_{MoP}$$
+
+### MoP Penalty Logic ($P_{MoP}$):
+The penalty is triggered if the Surrogate-Based Optimization (SBO) predicts a violation of "Hard Constraints":
+
+1.  **Thermal Constraint:** If $T_{backface} > 350K$, then $P_{MoP} \to \infty$.
+2.  **Structural Constraint:** If $Peak\_G > 25g$, then $P_{MoP} \to \infty$.
+3.  **Aero Constraint:** If $C_D < 1.2$ (insufficient drag), then $P_{MoP}$ is scaled proportionally to the deficit.
+
+### Interplay Summary:
+*   **GA (The Parent):** Generates new designs via Crossover and Mutation (e.g., changing `toroids` count or `nose_radius`).
+*   **MoP (The Environment):** Evaluates if the design "survives" the physics of reentry. It adds **weight** to favorable aerodynamic metrics but applies **infinite penalty** to designs that would burn up or collapse.
+*   **Natural Selection:** Designs with high $P_{MoP}$ are "killed off" in the current generation, ensuring only physically robust parents produce the next generation.
 
 ---
 
