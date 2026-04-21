@@ -10,7 +10,8 @@ The StellarOrion Hypersonic Edition is driven by the need for more resilient and
 *   **Increase Heatshield Availability**: Transitioning from monolithic, rigid shields to deployable HIAD structures that can be manufactured and deployed on-demand.
 *   **Emergency Backup System**: Serving as a "Hypersonic Lifeboat." Providing a redundant, storable shield that can be deployed in orbit if the primary shield fails or if an unplanned reentry is required.
 *   **Lower Maintenance Cost**: Reducing the logistical burden of tile-based TPS maintenance through flexible, inflatable architectures that require less ground infrastructure and manual inspection.
-*   **Safety Margin Expansion**: Utilizing the large surface area of HIADs to decelerate higher in the atmosphere, significantly reducing the peak thermal stress on the vehicle structure (Johnston, 2025 / Gill et al., 2026).
+*   **Safety Margin Expansion**: Utilizing the large surface area of HIADs to decelerate higher in the atmosphere, significantly reducing the peak thermal stress on the vehicle structure (Johnston, 2025 / Honeycutt et al., 2024). Johnston (2025) highlights that backshell radiative heating can become the dominant heating mechanism for lunar return velocities (>10 km/s).
+*   **Test Like You Fly (TLYF)**: Implementation of rigorous integrated testing and high-fidelity emulators as documented in the Artemis paradigm to mitigate risks of first-time interface meetings in orbit (Gill et al., 2026).
 *   **Reusable Orbit to Earth Transportation**: Developing a platform for sustainable, repeatable, and low-cost return of payloads and hardware from various orbital regimes (including LEO, HEO, and Lunar orbits) to Earth.
     *   *Reasoning:* Traditional systems suffer from the **dual-disposable problem**: (1) single-use ablative shields are destroyed during reentry, and (2) high peak heating often compromises the internal pod's structural longevity. HIAD technology enables **Reusable Pods** by using a refurbishable/swappable flexible TPS and decelerating at higher altitudes to keep the internal pod within benign thermal limits. (See [Heatshield_Comparison.md](file:///Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/Heatshield_Comparison.md) for a detailed tech comparison).
 *   **Scaling for Crew Survivability**: Evolving the technology from suborbital flight tests (**IRVE-3, 3.0m**) to crew-equipped orbital/lunar platforms (**Artemis scale, 6.0m+**). This requires optimizing the aerothermodynamics to ensure g-loads and internal temperatures stay within human physiological limits.
@@ -26,7 +27,7 @@ These parameters define the physical shape of the Hypersonic Inflatable Aerodyna
 | `angle` (Cone Angle) | 60.0° | 10° – 85° | **Stability & Drag:** Steeper angles increase axial force ($f_x$) but may affect aerodynamic stability. |
 | `nose_radius` | 0.191 m | 0.14 – 0.24 m | **Thermal Protection:** Controls shock standoff. A larger nose spreads the Kinetic Energy flux ($ke$). |
 | `toroids` | 7 | 3 – 10+ | **Structural:** Inflatable rings. More toroids improve shape retention under high pressure. |
-| `thickness` | 0.0254 m | 0.01 – 0.04 m | **Insulation ($\delta_{TPS}$):** Crucial for preventing heat soak. 2.54cm (1 inch) is the IRVE-3/LOFTID baseline. |
+| `thickness` | 0.0254 m | 0.01 – 0.04 m | **Insulation ($\delta_{TPS}$):** Crucial for preventing heat soak. 2.54cm (1 inch) is the IRVE-3/LOFTID baseline (Lippincott et al., 2019). |
 | `scallop_pts` | 5 | 2 – 7 | **Fidelity:** Number of segments in the inflatable surface. Affects local flow turbulence. |
 | `scallop_angle` | 90.0° | 75° – 105° | **Surface Aero:** Curvature of lobes. Affects heating concentrations. |
 | `mass` | 281.0 kg | 231 – 331 kg | **Ballistic Loading:** Directly impacts $\beta$ and instantaneous g-load ($n$). |
@@ -52,9 +53,9 @@ The choice of gas species (the simulation "specimen") is critical for capturing 
 
 | Model Selection | Species List | Applicability / Use Case |
 | :--- | :--- | :--- |
-| **Earth: 5-Species** | N2, O2, NO, N, O | **Standard Hypersonic:** (Mach 5-15). Captures dissociation but assumes neutral gas. Baseline for IRVE-3 (NASA/TP-2013-4012). |
+| **Earth: 5-Species** | N2, O2, NO, N, O | **Standard Hypersonic:** (Mach 5-15). Captures dissociation but assumes neutral gas. Baseline for IRVE-3 (Lau et al., 2013). |
 | **Earth: 11-Species** | N2, O2, NO, N, O, N2+, O2+, NO+, N+, O+, e- | **High-Energy / Plasma:** (Mach > 15). Captures ionization. Required for Artemis Lunar Return (NASA 2022 / Johnston 2025). |
-| **Mars: 6-Species** | CO2, N2, CO, O, C, N | **Mars Entry:** Handles CO2 dissociation. Critical for MSL scale simulations (AIAA 2013-1386). |
+| **Mars: 6-Species** | CO2, N2, CO, O, C, N | **Mars Entry:** Handles CO2 dissociation. Critical for MSL scale simulations (Cassell et al., 2013). |
 | **Titan (Roadmap)** | N2, CH4, Ar, H, H2, CN, HCN... | **Interplanetary:** Thick Nitrogen/Methane atmosphere with significant radiative cooling/heating. |
 
 ### Specimen Classification & Physical Role:
@@ -68,7 +69,7 @@ The solver treats each "specimen" based on its molecular structure and electroni
     *   **Hypersonic Impact:** These are highly reactive. When they hit the heatshield surface, they can **recombine** (Surface Catalysis), releasing massive amounts of heat directly into the structure.
 3.  **Exchange Radicals (NO, CO)**:
     *   **Role:** Chemical Intermediates.
-    *   **Hypersonic Impact:** Critical for **Radiative Heat Flux**. Species like Nitric Oxide (NO) are primary emitters of ultraviolet radiation in the shock layer, which can "cook" the vehicle even if the gas doesn't touch the surface.
+    *   **Hypersonic Impact:** Critical for **Radiative Heat Flux**. Species like **Atomic Nitrogen (N)** and **Atomic Oxygen (O)** are primary emitters of **Vacuum Ultraviolet (VUV)** radiation (< 200 nm), which Artemis-1 flight data confirmed as the dominant heating mechanism on the lee-side backshell (Johnston, 2025). Note: NASA's HARA radiation code baseline for backshell radiative heating was reduced by 50% based on calorimeter comparisons, a decision validated by Artemis-1.
 4.  **Ionized Species & Electrons (N+, O+, e-)**:
     *   **Role:** Plasma Formation.
     *   **Hypersonic Impact:** Occurs at orbital speeds ($> 8,000 \text{ m/s}$). Electrons carry energy extremely efficiently and can cause **Radio Blackout**, preventing communication with the vehicle during peak heating.
@@ -93,7 +94,7 @@ The chemistry model can be controlled in two ways:
 ### Chemical Reaction Engine: The TCE Model
 StellarOrion uses the **Total Collision Energy (TCE)** model in SPARTA to determine when a collision between two "specimens" results in a reaction (e.g., $N_2 + N_2 \to 2N + N_2$).
 *   **Probability-Based:** Instead of solving rate equations (like CFD), DSMC calculates a reaction probability based on the relative kinetic energy of the colliding particles and their internal vibrational states.
-*   **Park's Rates:** The model parameters are calibrated to **Park's 1990/2001 reaction rates**, ensuring that the "Specimen" transitions match the latest NASA aerothermal standards.
+*   **Park's Rates:** The model parameters are calibrated to **Park's 1990/2001 reaction rates**, ensuring that the "Specimen" transitions match the latest NASA aerothermal standards. Calibration logic is integrated into the SPARTA TCE engine (Plimpton & Gallis, 2014).
 
 ---
 
@@ -108,7 +109,7 @@ $$Kn = \frac{\lambda}{L}$$
 | Regime | $Kn$ Range | Solver Requirement | StellarOrion Status |
 | :--- | :--- | :--- | :--- |
 | **Continuum** | $Kn < 0.01$ | Navier-Stokes (CFD) | Valid for low-altitude/high-density. |
-| **Transitional** | $0.01 < Kn < 10$ | **DSMC (SPARTA)** | **Primary Project Focus.** Typical of HIAD high-altitude deceleration. |
+| **Transitional** | $0.01 < Kn < 10$ | **DSMC (SPARTA)** | **Primary Project Focus.** Typical of HIAD high-altitude deceleration (Bird, 1994). |
 | **Free Molecular**| $Kn > 10$ | Kinetic Theory | Valid for orbital altitudes (VLEO). |
 
 ### Why $Kn$ is Critical:
@@ -134,6 +135,7 @@ The project uses the **IRVE-3 (Inflatable Re-entry Vehicle Experiment 3)** missi
 | **Velocity** | Mach 10.0 (2,700 m/s) | Solver entry speed baseline |
 | **Ballistic Coeff ($\beta$)** | **26.9 kg/m²** | Primary SBO optimization target |
 | **Peak Heat Flux ($\dot{q}$)** | **14.4 W/cm²** | Aerothermal model validation |
+| **Artemis I Comparison** | **~11 km/s Return** | Cork-clad shield protected vs $1,760^\circ\text{C}$ (Honeycutt 2024) |
 | **Peak Deceleration** | **20.2 g** | Structural load validation |
 | **Nose Radius ($R_n$)** | 0.191 m | Geometric baseline |
 | **Diameter** | 3.0 m | Scale baseline |
@@ -207,7 +209,7 @@ Depending on the mission profile, different parameters must be prioritized.
 ### G. Mission Atlas V / LOFTID (Flight Heritage)
 *   **Quest:** Demonstrate large-scale HIAD capability through an actual orbital deorbit and reentry sequence.
 *   **Launch Vehicle:** **Atlas V** (Launched Nov 10, 2022, as a secondary payload).
-*   **Payload:** 6.0m LOFTID Aeroshell.
+*   **Payload:** 6.0m LOFTID Aeroshell (Lippincott et al., 2019).
 *   **Reasoning:** This is the most significant flight validation of HIAD technology to date. The Atlas V heritage proves that inflatable shields can be integrated into standard heavy-lift fairings and successfully deployed after orbital insertion.
 
 ### H. Commercial Space Tourism (Mature Technology Phase)

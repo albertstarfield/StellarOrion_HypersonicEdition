@@ -20,7 +20,7 @@ The IRVE-3 mission (launched July 23, 2012) is the most successful flight valida
 - **DSMC Fidelity**: Freestream density (`nrho`) and temperature defaults are set to approximate the mesospheric conditions (80km altitude) where IRVE-3 began its primary data collection.
 
 ## Optimization Strategy
-When using the "High-Fidelity SBO" mode, the optimization targets for heat flux and g-load are initially set to 1.5x IRVE-3 limits to allow the metamodel to explore "Survivability Envelopes" for future Mars-scale missions (e.g., LOFTID).
+When using the "High-Fidelity SBO" mode, the optimization targets for heat flux and g-load are initially set to 1.5x IRVE-3 limits to allow the metamodel to explore "Survivability Envelopes" for future Mars-scale missions (e.g., LOFTID) (Lau et al., 2013 / Lippincott et al., 2019).
 
 ## PINN Acceleration
 For Mars-scale and heavy-lift missions (e.g., Mission Atlas), the **DeepXDE PINN refinement** is crucial for filling gaps in the sparse DSMC results, ensuring that thermal protection system (TPS) margins are calculated with physics-informed high resolution.

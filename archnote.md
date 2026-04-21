@@ -57,14 +57,14 @@ The process begins with user-defined or preset parameters that define the missio
 ---
 
 ## 2. Into SPARTA (The Physics Engine)
-These parameters are converted into a format suitable for the **Direct Simulation Monte Carlo (DSMC)** solver.
+These parameters are converted into a format suitable for the **Direct Simulation Monte Carlo (DSMC)** solver (Bird, 1994).
 
 1.  **Geometry Kernel:** `HIAD_GeometryEngine.py` uses the geometric parameters to generate a 2D axisymmetric surface file (`.surf`).
 2.  **Script Generation:** `StellarOrionEngineMach5Up.py` generates the `in.hiad` control script:
     *   **Collision Model:** Variable Soft Sphere (VSS).
     *   **Reaction Model:** Total Collision Energy (TCE) for chemical dissociation/ionization.
     *   **Boundaries:** Freestream inflow (Emit), Vacuum outflow, and Diffuse surface reflection.
-3.  **Execution:** The simulation runs within a **Docker container** (Linux-based SPARTA) to ensure environmental parity across platforms.
+3.  **Execution:** The simulation runs within a **Docker container** (Linux-based SPARTA) to ensure environmental parity across platforms (Plimpton & Gallis, 2014).
 
 ---
 
@@ -91,7 +91,7 @@ The raw output is parsed and processed to produce high-level engineering metrics
 ## 5. Optimization & MoP Role (The Intelligence)
 The pipeline does not just run one simulation; it uses a **Surrogate-Based Optimization (SBO)** approach.
 
-1.  **Sampling (LHS):** **Latin Hypercube Sampling** generates a series of diverse input parameter sets (e.g., 5-20 samples) to explore the search space efficiently.
+1.  **Sampling (LHS):** **Latin Hypercube Sampling** (McKay et al., 1979) generates a series of diverse input parameter sets (e.g., 5-20 samples) to explore the search space efficiently.
 2.  **Training the Metamodel (MoP):** 
     *   **MoP** stands for **Metamodel Prognosis**. 
     *   A PyTorch-based neural network is trained on the results of the LHS samples.
@@ -127,10 +127,10 @@ graph TD
 ---
 
 ## 7. DeepXDE PINN Refinement (The Checkpoint Exchange)
-To further accelerate and refine the simulation results, a **Physics-Informed Neural Network (PINN)** stage is integrated via **DeepXDE**.
+To further accelerate and refine the simulation results, a **Physics-Informed Neural Network (PINN)** stage is integrated via **DeepXDE** (Lu et al., 2021).
 
 1.  **Checkpoint Exchange:** The final "stable" flow field from SPARTA (DSMC) is used as a sparse point-cloud "anchor" for the PINN.
-2.  **Physical Constraints:** Unlike the pure data-driven MoP, the PINN is constrained by the **2D Steady Compressible Euler Equations**:
+2.  **Physical Constraints:** Unlike the pure data-driven MoP, the PINN is constrained by the **2D Steady Compressible Euler Equations** (Anderson, 2006):
     *   Continuity ($\nabla \cdot (\rho \mathbf{u}) = 0$)
     *   Momentum ($\rho(\mathbf{u} \cdot \nabla)\mathbf{u} + \nabla p = 0$)
     *   Equation of State ($p = \rho R T$)

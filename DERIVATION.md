@@ -44,7 +44,7 @@ The simulation results are extracted from SPARTA dump files. The mapping between
 ## 2. Flight Metrics Derivation
 
 ### Ballistic Coefficient ($\beta$)
-The ballistic coefficient is a measure of a vehicle's ability to maintain its speed during reentry.  
+The ballistic coefficient is a measure of a vehicle's ability to maintain its speed during reentry (Anderson, 2006).  
 **Standard Equation:** $\beta = \frac{m}{C_D A}$  
 **Implementation Derivation:**
 Since $F_{drag} = C_D A q$, where $q$ is dynamic pressure:
@@ -62,7 +62,7 @@ $$n = \frac{F_{drag}}{m \cdot g_0}$$
 
 ## 3. 1D Thermal Model Derivation
 
-StellarOrion uses a 1D transient approximation for the Thermal Protection System (TPS) backface temperature, assuming a thermal lag during the peak heat pulse.
+StellarOrion uses a 1D transient approximation for the Thermal Protection System (TPS) backface temperature (Anderson, 2006), assuming a thermal lag during the peak heat pulse.
 
 ### Stagnation Heat Flux Proxy ($\dot{q}$)
 $$\dot{q} = \frac{Q_{total}}{A_{ref}}$$
@@ -81,7 +81,7 @@ $$\Delta T = \frac{E_{total}}{\text{Mass}_{TPS} \cdot C_{p,TPS}} = \frac{\dot{q}
 ## 4. Survivability Optimization (SBO)
 
 ### Latin Hypercube Sampling (LHS)
-To ensure the high-dimensional search space (Diameter, Angle, Mass, etc.) is explored uniformly with minimal samples, StellarOrion implements **Stratified LHS**:
+To ensure the high-dimensional search space (Diameter, Angle, Mass, etc.) is explored uniformly with minimal samples, StellarOrion implements **Stratified LHS** (McKay et al., 1979):
 $$x_{i,j} = \min(x_j) + \text{range}(x_j) \cdot \frac{i + r}{N}$$
 *Where $i$ is the sample index, $j$ is the parameter dimension, $N$ is total samples, and $r \sim \mathcal{U}(0,1)$.*
 *   **Implementation:** `val = p_info['min'] + (p_info['max'] - p_info['min']) * (i + np.random.random()) / samples_n` (`StellarOrionEngineMach5Up.py:530`)
@@ -102,7 +102,7 @@ $$J = w_{\beta} \left( \frac{\beta_{calc} - \beta_{target}}{10} \right)^2 + w_{m
 
 ## 5. PINN Refinement Derivation (DeepXDE)
 
-The **Physics-Informed Neural Network (PINN)** stage uses the **2D Steady Compressible Euler Equations** to refine the flow field data from SPARTA.
+The **Physics-Informed Neural Network (PINN)** stage uses the **2D Steady Compressible Euler Equations** (Anderson, 2006) to refine the flow field data from SPARTA.
 
 ### 2D Steady Euler Equations (Axisymmetric)
 The network $\mathcal{N}(x, y) \to (\rho, u, v, T, p)$ is constrained by the following residuals:

@@ -23,13 +23,13 @@ graph TD
 
 ### Phase 1: Pre-Processing & Calibration
 1.  **Parametric Model Generation**: A 3D CAD model of the HIAD (Hypersonic Inflatable Aerodynamic Decelerator) is generated using specific parameters (toroid count, cone angle, nose radius).
-2.  **Reference Point Setup**: The system is calibrated against established flight data, primarily the **IRVE-3 (3.0m)** and **LOFTID (6.0m)** mission results.
+2.  **Reference Point Setup**: The system is calibrated against established flight data, primarily the **IRVE-3 (3.0m)** (Lau et al., 2013) and **LOFTID (6.0m)** (Lippincott et al., 2019) mission results.
 3.  **Baseline Comparison**: An initial "zero-run" is performed to verify that the solver baseline matches historical data (e.g., $C_D \approx 1.47$ for IRVE-3).
 
 ### Phase 2: Design Space Exploration (SBO)
 4.  **LHS Sampling**: **Latin Hypercube Sampling (LHS)** is used to generate a distributed set of design points across the parameter space (e.g., varying mass, diameter, and TPS thickness).
 5.  **Hybrid Simulation (SPARTA + PINN)**:
-    *   **SPARTA (DSMC)**: Solves the Boltzmann equation for rarefied/transitional gas dynamics.
+    *   **SPARTA (DSMC)**: Solves the Boltzmann equation for rarefied/transitional gas dynamics (Plimpton & Gallis, 2014).
     *   **DeepXDE (PINN)**: A Physics-Informed Neural Network is used to refine the noisy DSMC data, fill gaps in the flow field, and accelerate the surrogate model's training.
 
 ### Phase 3: Global Optimization
@@ -49,7 +49,7 @@ graph TD
 | :--- | :--- | :--- |
 | **Exploration** | SBO / PINN | Ultra-fast estimation of 1000s of design candidates. |
 | **Refinement** | DSMC + PINN | Bridges the gap between noisy particle data and continuous flow fields. |
-| **Validation** | **DSMC Only** | Eliminates neural network bias; provides pure kinetic-regime ground truth. |
+| **Validation** | **DSMC Only** | Eliminates neural network bias; provides pure kinetic-regime ground truth (Bird, 1994). |
 | **High-Mach (Future)** | **Ansys Fluent + PINN** | Hybrid approach: **Fluent** (Physics) + **DeepXDE** (GPU Refinement). |
 | **Advanced Wake Modeling** | **FUN3D / HyperSolve** | Uses Finite-Volume methods (Roe/LDFSS) and DDES/LES for high-fidelity unsteady wake heating. |
 
@@ -63,8 +63,10 @@ graph TD
 
 ---
 ## References
-*   Cassell, G. J., "IRVE-3 Flight Results," *AIAA 2013-1386*.
-*   Lu, L., "DeepXDE: A deep learning library for solving differential equations," *SIAM Review*, 2021.
+- Cassell, G. J., & others (2013). *Inflatable Re-entry Vehicle Experiment 3 (IRVE-3) Post-Flight Aerothermal Reconstruction*. NASA Langley Research Center.
+- Honeycutt, J., Blevins, J., Cobb, S., & Bryan, W. (2024). NASA's Space Launch System: Artemis I Results and the Path Forward. In *AIAA SciTech 2024 Forum*.
+- Johnston, C. O. (2025). Including Radiative Heating for the Design of the Orion Backshell for Artemis-1. *Journal of Spacecraft and Rockets*, *62*(1), 1-15.
+- Lu, L., "DeepXDE: A deep learning library for solving differential equations," *SIAM Review*, 2021.
 
 ---
 ## 8. Project Milestones

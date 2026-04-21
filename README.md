@@ -1,6 +1,6 @@
 # StellarOrion HypersonicEdition
 
-StellarOrion is a high-fidelity aerothermodynamic simulation and optimization suite for Hypersonic Inflatable Aerodynamic Decelerators (HIAD). It leverages the **SPARTA DSMC** solver for rarefied gas dynamics and a **PyTorch-based Metamodel Prognosis** for survivability optimization.
+StellarOrion is a high-fidelity aerothermodynamic simulation and optimization suite for Hypersonic Inflatable Aerodynamic Decelerators (HIAD). It leverages the **SPARTA DSMC** solver for rarefied gas dynamics (Plimpton & Gallis, 2014) and a **PyTorch-based Metamodel Prognosis** for survivability optimization.
 
 ## 🚀 Architecture
 
@@ -30,7 +30,7 @@ pip install torch numpy matplotlib pymsis
 The following equations form the basis of the simulation engine and the performance metrics calculated in `StellarOrionEngineMach5Up.py`.
 
 ### 1. General DSMC & Rarefied Gas Dynamics
-Direct Simulation Monte Carlo (DSMC) is used where the continuum assumption fails ($Kn > 0.01$).
+Direct Simulation Monte Carlo (DSMC) is used where the continuum assumption fails ($Kn > 0.01$) (Bird, 1994).
 
 *   **Mean Free Path ($\lambda$):**
     $$\lambda = \frac{1}{\sqrt{2} \pi d^2 n}$$
@@ -85,7 +85,7 @@ Implemented in `calculate_flight_metrics` to derive performance from SPARTA surf
 *   $g_0$: Standard gravity $[9.81 m/s^2]$
 
 ### 3. Aerothermodynamics & Thermal Protection (TPS)
-Estimates for the flexible TPS (e.g., LOFTID/IRVE-3 F-TPS stack).
+Estimates for the flexible TPS (e.g., LOFTID/IRVE-3 F-TPS stack) (Lau et al., 2013 / Lippincott et al., 2019).
 
 *   **Heat Flux Proxy ($\dot{q}$):**
     $$\dot{q} = \frac{Q_{total}}{A_{ref}}$$
@@ -118,7 +118,7 @@ The Genetic Algorithm (GA) optimizes the HIAD geometry using a Metamodel Prognos
     $$J = w_{\beta} \left( \frac{\beta_{calc} - \beta_{target}}{10} \right)^2 + w_{target} \left( \frac{y_{pred} - y_{target}}{1} \right)^2$$
 
 *   **LHS Sampling (Stratified):**
-    $$x_i = x_{min} + (x_{max} - x_{min}) \cdot \frac{i + r}{N}$$
+    $$x_i = x_{min} + (x_{max} - x_{min}) \cdot \frac{i + r}{N}$$ (McKay et al., 1979)
 
 **Variables:**
 *   $J$: Optimization cost value

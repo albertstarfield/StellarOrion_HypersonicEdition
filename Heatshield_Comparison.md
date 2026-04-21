@@ -37,7 +37,7 @@ While rigid tiles (Space Shuttle) require thousands of manual inspections for cr
 The project baseline originates from the **IRVE-3 (3.0m)** suborbital testbed. However, the ultimate objective of StellarOrion is to optimize this technology for **6.0m to 9.0m+** scales capable of carrying crew capsules (Artemis-class). Unlike rigid shields, which require a larger rocket to increase shield size, HIADs can scale the protected volume without requiring massive changes to the launch vehicle's aerodynamic fairing.
 
 ## References
-1. *SummerizationLearning.md* - ProgressReport/Initial.
-2. Johnston, C. O., "Including Radiative Heating for the Design of the Orion Backshell for Artemis 1," 2025.
-3. Lippincott, J., et al., "LOFTID Mission Overview," AIAA 2019-3386.
-4. Gill, J., et al., "The Artemis Human Spaceflight Paradigm," 2026.
+1. *SummarizationLearning.md* - ProgressReport/Initial.
+2. Johnston, C. O. (2025). Including Radiative Heating for the Design of the Orion Backshell for Artemis-1. *Journal of Spacecraft and Rockets*, *62*(1), 1-15.
+3. Lippincott, J. J., et al. (2019). LOFTID Mission Overview. *AIAA 2019-3525*.
+4. Gill, T. R., et al. (2026). The Test Like You Fly and Test What You Fly Approach for the Artemis Human Spaceflight Paradigm. *AIAA SciTech 2026 Forum*.
