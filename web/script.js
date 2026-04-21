@@ -457,15 +457,6 @@ function init3DView() {
     });
 }
 
-function copyLogs() {
-    const logArea = document.getElementById('test-verbose-logs');
-    navigator.clipboard.writeText(logArea.innerText).then(() => {
-        const btn = document.getElementById('btn-copy-logs');
-        const old = btn.innerText;
-        btn.innerText = "Copied!";
-        setTimeout(() => btn.innerText = old, 2000);
-    });
-}
 
 // Add listeners to persistence fields
 const persistFields = ['solver-backend', 'ssh-host', 'ssh-user', 'ssh-pass', 'ssh-key', 'solver-dim', 'solver-gpu', 'solver-bl-layers', 'env-viscous-model'];
@@ -516,4 +507,23 @@ async function runIntegrationTest() {
         btn.disabled = false;
         setTimeout(stopRemoteAutoCapture, 10000);
     }
+}
+
+function copyToClipboard(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const text = el.innerText || el.value;
+    navigator.clipboard.writeText(text).then(() => {
+        // Find the button that was clicked to give feedback
+        const btn = event.target;
+        const originalText = btn.innerText;
+        btn.innerText = "Copied!";
+        btn.style.background = "rgba(16, 185, 129, 0.4)";
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.background = "rgba(16, 185, 129, 0.2)";
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+    });
 }
