@@ -51,7 +51,7 @@ graph TD
 | **Refinement** | DSMC + PINN | Bridges the gap between noisy particle data and continuous flow fields. |
 | **Validation** | **DSMC Only** | Eliminates neural network bias; provides pure kinetic-regime ground truth for wake/backshell (Bird, 1994 / Johnston, 2025). |
 | **High-Density (Future)**| **Ansys Fluent + PINN** | Hybrid approach for low-altitude/peak heating ($Kn < 0.01$) where continuum physics is valid. |
-| **Advanced Wake Modeling** | **FUN3D / HyperSolve** | Uses Finite-Volume methods (Roe/LDFSS) and DDES/LES for high-fidelity unsteady wake heating analysis (NASA/TM-20230015883). |
+| **Advanced Wake Modeling** | **FUN3D / HyperSolve** | Uses Finite-Volume methods (Roe/LDFSS) and DDES/LES for high-fidelity unsteady wake heating analysis (Pederson et al., 2024 / NASA/TM-20230015883). |
 
 > [!CAUTION]
 > **The Design Mismatch Risk**: 
@@ -70,6 +70,7 @@ graph TD
 - Cassell, G. J., & others (2013). *Inflatable Re-entry Vehicle Experiment 3 (IRVE-3) Post-Flight Aerothermal Reconstruction*. NASA Langley Research Center.
 - Honeycutt, J., Blevins, J., Cobb, S., & Bryan, W. (2024). NASA's Space Launch System: Artemis I Results and the Path Forward. In *AIAA SciTech 2024 Forum*.
 - Johnston, C. O. (2025). Including Radiative Heating for the Design of the Orion Backshell for Artemis-1. *Journal of Spacecraft and Rockets*, *62*(1), 1-15.
+- Pederson, C., Wood, W. A., & Hollis, B. R. (2024). Aeroheating Predictions for a Hypersonic, Turbulent Near-Wake. *AIAA Aviation Forum 2024*.
 - Lu, L., "DeepXDE: A deep learning library for solving differential equations," *SIAM Review*, 2021.
 
 ---

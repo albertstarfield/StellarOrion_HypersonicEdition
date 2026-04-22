@@ -659,11 +659,65 @@ persistFields.forEach(id => {
     }
 });
 
+// --- AUTOSAVE & DRAFT LOGIC ---
+let autosaveInterval = null;
+
+function startAutosave() {
+    if (autosaveInterval) return;
+    autosaveInterval = setInterval(async () => {
+        // Only autosave if we are past the welcome screen (Page 2+)
+        if (currentPage < 2) return;
+        
+        const params = gatherAllParams();
+        try {
+            await window.pywebview.api.autosave_draft(params, currentPage);
+            console.log("Draft autosaved at page " + currentPage);
+        } catch (e) { console.error("Autosave failed:", e); }
+    }, 10000);
+}
+
+function gatherAllParams() {
+    const params = {};
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(el => {
+        if (!el.id) return;
+        if (el.type === 'checkbox') {
+            params[el.id] = el.checked;
+        } else {
+            params[el.id] = el.value;
+        }
+    });
+    // Add current session info
+    params['draft_name'] = "Session_" + new Date().toISOString().split('T')[0];
+    return params;
+}
+
+function applyParams(params) {
+    if (!params) return;
+    Object.keys(params).forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.type === 'checkbox') {
+            el.checked = params[id];
+        } else {
+            el.value = params[id];
+        }
+    });
+    
+    // Trigger necessary updates
+    if (params['solver-backend']) onBackendChange();
+    if (params['env-preset']) toggleMSIS();
+}
+
+// Start autosave once DOM is ready and initialized
 document.addEventListener('DOMContentLoaded', () => {
     loadRemoteParams();
     const stepsEl = document.getElementById('env-run');
     if (stepsEl) stepsEl.addEventListener('input', onSimStepsChange);
     onSimStepsChange();
+    
+    // Start the 10s autosave heartbeat
+    startAutosave();
 });
 
 async function runIntegrationTest() {
@@ -911,7 +965,13 @@ async function openManual() {
 
 function closeManual() {
     const overlay = document.getElementById('manual-overlay');
-    if (overlay) overlay.style.display = 'none';
+    if (overlay) {
+        overlay.classList.add('closing');
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            overlay.classList.remove('closing');
+        }, 300);
+    }
 }
 
 function generateToc() {
@@ -1170,7 +1230,14 @@ async function openHistory() {
 }
 
 function closeHistory() {
-    document.getElementById('history-modal').style.display = 'none';
+    const modal = document.getElementById('history-modal');
+    if (modal) {
+        modal.classList.add('closing');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            modal.classList.remove('closing');
+        }, 300);
+    }
 }
 
 async function loadHistoryList() {
@@ -1213,8 +1280,6 @@ async function loadRunDetails(runId) {
     
     // Update selection in list without full re-render for better performance
     document.querySelectorAll('.history-item').forEach(el => {
-        // We'll use a data attribute or check the onclick function content
-        // But since we are here, let's just re-apply based on a stored ID
         el.classList.toggle('selected', el.getAttribute('data-run-id') == runId);
     });
 
@@ -1230,11 +1295,12 @@ async function loadRunDetails(runId) {
         document.getElementById('hist-run-meta').innerText = new Date(run.timestamp).toLocaleString();
         
         const statusEl = document.getElementById('hist-run-status');
-        statusEl.className = `badge badge-${run.status}`;
-        statusEl.innerText = run.status;
+        const status = run.status || 'running';
+        statusEl.className = `badge badge-${status}`;
+        statusEl.innerText = status.toUpperCase();
 
-        document.getElementById('hist-run-goal').innerText = run.goal.toUpperCase();
-        document.getElementById('hist-run-samples').innerText = `${run.current_sample} / ${run.samples}`;
+        document.getElementById('hist-run-goal').innerText = run.goal ? run.goal.toUpperCase() : 'N/A';
+        document.getElementById('hist-run-samples').innerText = run.status === 'draft' ? `Draft (Page ${run.last_page})` : `${run.current_sample} / ${run.samples}`;
         document.getElementById('hist-run-best').innerText = run.best_val ? run.best_val.toFixed(4) : 'N/A';
 
         // Samples timeline
@@ -1245,17 +1311,25 @@ async function loadRunDetails(runId) {
                 const chip = document.createElement('div');
                 chip.className = 'sample-chip';
                 chip.innerText = `S${idx + 1}`;
-                chip.title = `Metric: ${JSON.parse(s.metrics)[run.goal].toFixed(4)}`;
+                try {
+                    const metrics = JSON.parse(s.metrics);
+                    if (metrics && metrics[run.goal]) {
+                        chip.title = `Metric: ${metrics[run.goal].toFixed(4)}`;
+                    }
+                } catch(e) {}
                 samplesList.appendChild(chip);
             });
         } else {
-            samplesList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); font-size: 0.8rem;">No samples recorded yet.</div>';
+            samplesList.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); font-size: 0.8rem; padding: 20px;">
+                ${run.status === 'draft' ? 'No simulation data yet (Draft Mode)' : 'No samples recorded yet.'}
+            </div>`;
         }
 
-        // Resume button visibility
+        // Resume button visibility: Drafts and Running runs can be resumed
         const resumeBtn = document.getElementById('btn-resume-run');
-        if (run.status !== 'completed' && run.status !== 'failed') {
+        if (run.status === 'draft' || run.status === 'running') {
             resumeBtn.style.display = 'block';
+            resumeBtn.innerText = run.status === 'draft' ? 'Resume Draft Session' : 'Resume Optimization';
         } else {
             resumeBtn.style.display = 'none';
         }
@@ -1267,15 +1341,38 @@ async function loadRunDetails(runId) {
 
 async function resumeRun() {
     if (!selectedRunId) return;
-    if (confirm("Resume this optimization run? This will load saved parameters and continue sampling.")) {
-        closeHistory();
-        await window.pywebview.api.resume_run_from_history(selectedRunId);
+    
+    try {
+        const run = await window.pywebview.api.get_run_details(selectedRunId);
+        if (!run) return;
+
+        const msg = run.status === 'draft' ? "Resume this session draft?" : "Resume this optimization run?";
+        if (confirm(msg)) {
+            closeHistory();
+            
+            // 1. Apply saved parameters to UI
+            if (run.parameters) {
+                applyParams(JSON.parse(run.parameters));
+            }
+            
+            // 2. Jump to the saved page
+            if (run.last_page) {
+                jumpToPage(run.last_page);
+            }
+
+            // 3. If it was an active optimization, trigger the backend resume
+            if (run.status === 'running') {
+                await window.pywebview.api.resume_run_from_history(selectedRunId);
+            }
+        }
+    } catch (e) {
+        alert("Error resuming: " + e);
     }
 }
 
 async function deleteRun() {
     if (!selectedRunId) return;
-    if (confirm("Are you sure you want to delete this history record? This cannot be undone.")) {
+    if (confirm("Are you sure you want to delete this record? This cannot be undone.")) {
         await window.pywebview.api.delete_run(selectedRunId);
         selectedRunId = null;
         document.getElementById('history-details-content').style.display = 'none';

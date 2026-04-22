@@ -38,6 +38,9 @@
 - Menter, F. (1994). Two-equation eddy-viscosity turbulence models for engineering applications. *AIAA Journal*, *32*(8), 1598-1605. https://doi.org/10.2514/3.12149
 - Petronio, A., Roman, F., Nasello, C., & Armenio, V. (2013). Large eddy simulation model for wind-driven sea circulation in coastal areas. *Nonlinear Processes in Geophysics*, *20*, 1095-1112. https://doi.org/10.5194/npg-20-1095-2013
 - Plimpton, S., & Gallis, M. (2014). SPARTA: A parallel DSMC code for rarefied gas dynamics. *Journal of Computational Physics*.
+- Pederson, C., Wood, W. A., & Hollis, B. R. (2024). Aeroheating Predictions for a Hypersonic, Turbulent Near-Wake. *AIAA Aviation Forum 2024*. https://doi.org/10.2514/6.2024-3745
+- Pederson, C., Rodrigues, N. S. (2024). Exploring the Accuracy of CFD Predictions for the Wake of a Hypersonic Inflatable Aerodynamic Decelerator. *NASA Langley Research Center*.
+- Nishikawa, H., & White, J. A. (2025). Comparison of Two Approaches to Constructing Second- and Third-Order Nodal-Gradient Cell-Centered Finite-Volume Methods for Mixed-Element Grids. *AIAA SCITECH 2025 Forum*. https://doi.org/10.2514/6.2025-0071
 - Rusanov, V. (1962). The Calculation of the Interaction of Non-Stationary Shock Waves with Obstacles. *USSR Computational Mathematics and Mathematical Physics*, *1*(2), 304-320. https://doi.org/10.1016/0041-5553(62)90062-9
 - Saleem, B., Mustafa, A., Kareem, D., Yuce, M., Szydłowski, M., & Al-Ansari, N. (2023). Numerical Analysis of Turbulent Flow over a Backward-facing Step in an Open Channel. *Archives of Hydro-Engineering and Environmental Mechanics*, *70*, 49-69. https://doi.org/10.2478/heem-2023-0004
 - Shen, H. (2023). An efficient class of increasingly high-order ENO schemes with multi-resolution. *arXiv preprint arXiv:2311.15504*.

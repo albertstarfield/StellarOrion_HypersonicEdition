@@ -206,3 +206,5 @@ example_frompreviousproject/
 
 # VS Code
 .vscode/
+optimization_history.db
+web/assets/model.stl

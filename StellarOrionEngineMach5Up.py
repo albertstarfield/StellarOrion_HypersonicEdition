@@ -29,9 +29,17 @@ class HistoryManager:
                     current_sample INTEGER,
                     parameters TEXT,
                     best_val REAL,
-                    best_config TEXT
+                    best_config TEXT,
+                    last_page INTEGER DEFAULT 1
                 )
             """)
+            
+            # Migration: Check if last_page column exists
+            cursor.execute("PRAGMA table_info(optimization_runs)")
+            columns = [col[1] for col in cursor.fetchall()]
+            if 'last_page' not in columns:
+                cursor.execute("ALTER TABLE optimization_runs ADD COLUMN last_page INTEGER DEFAULT 1")
+                
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS samples (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -107,6 +115,29 @@ class HistoryManager:
             cursor.execute("DELETE FROM optimization_runs WHERE id = ?", (run_id,))
             conn.commit()
 
+    def upsert_draft(self, name, parameters, last_page):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            timestamp = datetime.datetime.now().isoformat()
+            
+            # Try to find an existing draft with the same name
+            cursor.execute("SELECT id FROM optimization_runs WHERE name = ? AND status = 'draft'", (name,))
+            row = cursor.fetchone()
+            
+            if row:
+                run_id = row[0]
+                cursor.execute(
+                    "UPDATE optimization_runs SET timestamp = ?, parameters = ?, last_page = ? WHERE id = ?",
+                    (timestamp, json.dumps(parameters), last_page, run_id)
+                )
+                return run_id
+            else:
+                cursor.execute(
+                    "INSERT INTO optimization_runs (timestamp, name, status, goal, samples, current_sample, parameters, last_page) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (timestamp, name, "draft", "N/A", 0, 0, json.dumps(parameters), last_page)
+                )
+                return cursor.lastrowid
+
 class Api:
     def __init__(self):
         self.window = None
@@ -153,6 +184,11 @@ class Api:
     def delete_run(self, run_id):
         self.history.delete_run(run_id)
         return {"status": "success"}
+
+    def autosave_draft(self, params, page_id):
+        run_name = params.get('draft_name', "Current Session")
+        run_id = self.history.upsert_draft(run_name, params, page_id)
+        return {"status": "success", "run_id": run_id}
 
     def resume_run_from_history(self, run_id):
         run_data = self.history.get_run(run_id)
@@ -775,7 +811,7 @@ run             {opt_params.get('env_run', '1000')}
                 'foreach ($d in $drives) { '
                 '  $p = Join-Path $d.Root \'ANSYS Inc\'; '
                 '  if (Test-Path $p) { '
-                '    $v = Get-ChildItem -Path $p -Directory | Where-Object { $_.Name -match \'^v\d{3}$\' } | Sort-Object Name -Descending | Select-Object -First 1; '
+                r'    $v = Get-ChildItem -Path $p -Directory | Where-Object { $_.Name -match \'^v\d{3}$\' } | Sort-Object Name -Descending | Select-Object -First 1; '
                 '    if ($v) { '
                 '      $ver = $v.Name.Substring(1); '
                 '      $path = $v.FullName; '

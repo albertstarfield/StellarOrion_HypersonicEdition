@@ -69,7 +69,7 @@ The solver treats each "specimen" based on its molecular structure and electroni
     *   **Hypersonic Impact:** These are highly reactive. When they hit the heatshield surface, they can **recombine** (Surface Catalysis), releasing massive amounts of heat directly into the structure.
 3.  **Exchange Radicals (NO, CO)**:
     *   **Role:** Chemical Intermediates.
-    *   **Hypersonic Impact:** Critical for **Radiative Heat Flux**. Species like **Atomic Nitrogen (N)** and **Atomic Oxygen (O)** are primary emitters of **Vacuum Ultraviolet (VUV)** radiation (< 200 nm), which Artemis-1 flight data confirmed as the dominant heating mechanism on the lee-side backshell (Johnston, 2025). Note: NASA's HARA radiation code baseline for backshell radiative heating was reduced by 50% based on calorimeter comparisons, a decision validated by Artemis-1.
+    *   **Hypersonic Impact:** Critical for **Radiative Heat Flux**. Species like **Atomic Nitrogen (N)** and **Atomic Oxygen (O)** are primary emitters of **Vacuum Ultraviolet (VUV)** radiation (< 200 nm), which Artemis-1 flight data confirmed as the dominant heating mechanism on the lee-side backshell (Johnston, 2025). Note: NASA's HARA radiation code baseline for backshell radiative heating was reduced by 50% based on calorimeter comparisons, a decision validated by Artemis-1. Recent studies by Pederson et al. (2024) have further explored the accuracy of CFD in these wake regions, highlighting the role of DDES in capturing unsteady fluctuations.
 4.  **Ionized Species & Electrons (N+, O+, e-)**:
     *   **Role:** Plasma Formation.
     *   **Hypersonic Impact:** Occurs at orbital speeds ($> 8,000 \text{ m/s}$). Electrons carry energy extremely efficiently and can cause **Radio Blackout**, preventing communication with the vehicle during peak heating.
@@ -130,7 +130,7 @@ Based on NASA's IRVE-3 and Artemis-1 flight reconstructions (Lau et al., 2013 / 
 | **NASA Usage** | Used for high-altitude/wake validation (DAC/SPARTA). | Primary tool for high-density peak heating (DPLR/LAURA). |
 
 ### The NASA Rationale for StellarOrion:
-1.  **The Backshell heating Problem**: Johnston (2025) noted that for Artemis-1, the backshell radiative heating was dominated by VUV emissions in the wake. Continuum solvers struggle with the extreme rarefaction in these regions. StellarOrion uses **SPARTA** to ensure the wake expansion and backface thermal soak are modeled with kinetic-level fidelity.
+1.  **The Backshell heating Problem**: Johnston (2025) noted that for Artemis-1, the backshell radiative heating was dominated by VUV emissions in the wake. Continuum solvers struggle with the extreme rarefaction in these regions. StellarOrion uses **SPARTA** to ensure the wake expansion and backface thermal soak are modeled with kinetic-level fidelity, a strategy supported by Pederson & Rodrigues (2024) for complex wake physics.
 2.  **The Transitional Regime**: HIADs (like IRVE-3) perform the majority of their deceleration at 50km–80km altitudes. Lau et al. (2013) demonstrated that while continuum codes are excellent for peak heating, the **Transitional Regime ($Kn \approx 0.05$)** is best handled by DSMC to capture the breakdown of the "no-slip" boundary condition.
 
 > [!CAUTION]
@@ -329,8 +329,8 @@ Standard steady-state RANS (Reynolds-Averaged Navier-Stokes) models like **SST $
 
 ### specialized Solver Candidates:
 Beyond Ansys Fluent, two research-grade solvers are identified for high-fidelity validation:
-*   **FUN3D (NASA):** A node-based, dual-mesh finite-volume solver. Uses **LDFSS** (steady) and **Modified Roe** (unsteady) schemes. Industry standard for predicting wake pressures and heating.
-*   **HyperSolve:** An edge-based finite-volume solver. Employs a **Jacobian-Free Newton-Krylov (JFNK)** solver for robustness and efficiency. Utilizes pressure-based limiters (Gnoffo & White) for high-speed stability.
+*   **FUN3D (NASA):** A node-based, dual-mesh finite-volume solver. Uses **LDFSS** (steady) and **Modified Roe** (unsteady) schemes. Industry standard for predicting wake pressures and heating (Pederson et al., 2024).
+*   **HyperSolve:** An edge-based finite-volume solver. Employs a **Jacobian-Free Newton-Krylov (JFNK)** solver for robustness and efficiency. Utilizes pressure-based limiters (Gnoffo & White) for high-speed stability, with recent nodal-gradient improvements documented by Nishikawa & White (2025).
 
 ### Methodology Interplay (Modular Fluent/PINN):
 The pipeline implements a **Modular Solver Architecture** where the physics engine (Fluent) can be swapped or combined with the refinement engine (PINN):
