@@ -385,11 +385,18 @@ class Api:
         # Default calibrated for IRVE-3 Baseline (Mach 10 @ ~52km) - NASA/TP-2013-4012
         vstream = float(opt_params.get('env_vstream', 2700.0))
         nrho = float(opt_params.get('env_nrho', 3.5e22))
-        rho = nrho * (28.97e-3 / 6.022e23) 
+        # rho_inf [kg/m^3] = nrho * (M / Na)
+        rho_inf = nrho * (28.97e-3 / 6.022e23) 
         
-        q = 0.5 * rho * (vstream**2)
+        q = 0.5 * rho_inf * (vstream**2)
         beta = mass * q / drag_force if drag_force > 0 else 0
         
+        # Knudsen Number (Kn) - Critical for Rarefaction Validity
+        # lambda = 1 / (sqrt(2) * pi * d^2 * nrho)
+        mol_diam = 3.7e-10 # m (approx for Air)
+        mfp = 1.0 / (np.sqrt(2) * np.pi * (mol_diam**2) * nrho)
+        kn = mfp / diameter if diameter > 0 else 0
+
         # Stagnation Heat (W/m^2) - already a per-area flux from SPARTA
         stag_heat = heat_flux
         
@@ -423,6 +430,7 @@ class Api:
         
         return {
             'beta': beta,
+            'kn': kn,
             'stag_heat': stag_heat,
             'g_load': g_load,
             'surface_temp': t_surface,
@@ -504,6 +512,25 @@ class Api:
             
         return species_src, react_src, vss_src, species_list, mixture
 
+    def generate_surf_react_script(self, opt_params):
+        """Dynamically generates surface catalysis (recombination) script based on chemistry."""
+        preset = opt_params.get('env_preset', 'artemis')
+        chem_mode = opt_params.get('env_chem_mode', '5-species')
+        
+        # Catalytic efficiency (gamma) - typically 0.01 for SiC, higher for metals
+        gamma = float(opt_params.get('env_catalysis_gamma', 0.01))
+        
+        if preset == 'mars':
+            return f"""# Mars Surface Catalysis (CO2/N2 Recombination)
+1 global O + surface -> 0.5 O2 {gamma}
+2 global CO + O + surface -> CO2 {gamma}
+"""
+        else: # Earth
+            return f"""# Earth Surface Catalysis (Atomic Recombination)
+1 global N + surface -> 0.5 N2 {gamma}
+2 global O + surface -> 0.5 O2 {gamma}
+"""
+
     def _safe_copy(self, src, dst):
         """Copies a file only if it is not already the same file (handles hard links)."""
         if os.path.exists(dst) and os.path.samefile(src, dst):
@@ -528,7 +555,10 @@ class Api:
         ymax = float(opt_params.get('env_ymax', 1.2 * d_val))
         
         react_model = opt_params.get('env_react', 'tce')
-        react_cmd = f"react           {react_model} air.react" if react_model != 'none' else "# No reaction model"
+        react_cmd = f"react           {react_model} air.react" if react_model != 'none' else "# No gas reaction model"
+        
+        # Surface Catalysis (Integrated Dynamic Generation)
+        surf_react_cmd = "surf_react     catalysis air.surf_react"
         
         # Steady State Check
         steady_state_cmd = ""
@@ -541,15 +571,6 @@ fix             halt_check halt 100 v_drag_val {tol} error no
 """
 
         # Averaging and Output Frequencies
-        # We want to output results at least 10 times during the run, or every 100 steps minimum
-        n_run = int(opt_params.get('env_run', '1000'))
-        n_freq = max(1, n_run // 5) # 5 snapshots
-        n_repeat = max(1, n_freq // 2)
-        n_every = 1
-        dump_freq = n_freq
-
-        # Averaging and Output Frequencies
-        # We want to output results at least 10 times during the run, or every 100 steps minimum
         n_run = int(opt_params.get('env_run', '1000'))
         n_freq = max(1, n_run // 5) # 5 snapshots
         n_repeat = max(1, n_freq // 2)
@@ -581,6 +602,7 @@ collide         vss air air.vss
 
 read_surf       {kwargs.get('surf_name', 'HIAD_opt')}.surf clip
 surf_collide    1 diffuse {opt_params.get('env_temp', '1000.0')} 1.0
+{surf_react_cmd}
 surf_modify     all collide 1
 
 compute         1 surf all air nflux mflux ke
@@ -1309,10 +1331,14 @@ run             {opt_params.get('env_run', '1000')}
         if is_gui: self.window.evaluate_js("updateProgress(5)")
         
         preset = opt_params.get('env_preset', 'artemis')
-        species_src, react_src, vss_src, _, _ = self.get_chemistry_data(opt_params)
+        species_src, react_src, vss_src, surf_react_src, _, _ = self.get_chemistry_data(opt_params)
         self._safe_copy(species_src, os.path.join(cad_dir, "air.species"))
         self._safe_copy(react_src, os.path.join(cad_dir, "air.react"))
         self._safe_copy(vss_src, os.path.join(cad_dir, "air.vss"))
+        
+        # Dynamically generate surface reactions in the workspace
+        with open(os.path.join(cad_dir, "air.surf_react"), "w") as f:
+            f.write(self.generate_surf_react_script(opt_params))
 
         base_d = float(opt_params.get('base_diameter', 3.0))
         
@@ -1615,7 +1641,8 @@ run             {opt_params.get('env_run', '1000')}
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed for Sample {i+1}: {ve}")
 
             training_x.append(current_x_row)
-            training_y.append([val])
+            # Multi-metric output for MoP: [goal_val, beta, backface_temp, g_load]
+            training_y.append([val, f_metrics['beta'], f_metrics['backface_temp'], f_metrics['g_load']])
             
             # Save Checkpoint
             try:
@@ -1666,10 +1693,16 @@ run             {opt_params.get('env_run', '1000')}
         import torch.nn as nn
         import torch.optim as optim
         device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu")
+        n_out = len(training_y[0])
         X_tensor = torch.tensor(training_x, dtype=torch.float32).to(device)
         Y_tensor = torch.tensor(training_y, dtype=torch.float32).to(device)
-        model = nn.Sequential(nn.Linear(n_dim, 64), nn.ReLU(), nn.Linear(64, 64), nn.ReLU(), nn.Linear(64, 1)).to(device)
-        optimizer = optim.Adam(model.parameters(), lr=0.01)
+        # Deep MoP Architecture
+        model = nn.Sequential(
+            nn.Linear(n_dim, 128), nn.ReLU(), 
+            nn.Linear(128, 128), nn.ReLU(), 
+            nn.Linear(128, n_out)
+        ).to(device)
+        optimizer = optim.Adam(model.parameters(), lr=0.005)
         for _ in range(500):
             optimizer.zero_grad()
             loss = nn.MSELoss()(model(X_tensor), Y_tensor)
@@ -1677,12 +1710,24 @@ run             {opt_params.get('env_run', '1000')}
             if loss.item() < 1e-6: break
         self.log_to_gui(f"    [+] Model Trained. Final Loss: {loss.item():.6f}")
 
-        # 5. GA Optimization
-        self.log_to_gui(f"[*] Steering {n_dim}D Survivability Optimization (GA)...")
+        # 5. GA Optimization (Evolutionary MoP Steering)
+        self.log_to_gui(f"[*] Steering {n_dim}D Survivability Optimization (Evolutionary MoP)...")
         best_config = {k: v['base'] for k, v in search_map.items()}
-        min_cost = 1e18
+        min_total_cost = 1e18
+        best_pred_metrics = None
         targets = opt_params.get('targets', {})
-        for _ in range(10000):
+        
+        # Physics Constants for Beta Calibration
+        vstream = float(opt_params.get('env_vstream', 2700.0))
+        nrho = float(opt_params.get('env_nrho', 3.5e22))
+        rho_inf = nrho * (28.97e-3 / 6.022e23) 
+        q_inf = 0.5 * rho_inf * (vstream**2)
+        
+        # Stagnation Decision Logic
+        stagnation_count = 0
+        last_best_cost = 1e18
+        
+        for generation in range(20000):
             test_row = []
             test_sample_dict = {k: v['base'] for k, v in search_map.items()}
             for p_name in active_params:
@@ -1691,21 +1736,56 @@ run             {opt_params.get('env_run', '1000')}
                 if p_info['type'] == int: val = int(round(val))
                 test_sample_dict[p_name] = val
                 test_row.append(val)
+                
             t_val = torch.tensor([test_row], dtype=torch.float32).to(device)
-            pred_val = model(t_val).item()
-            area = np.pi * (test_sample_dict['diameter']/2)**2
-            beta_calc = test_sample_dict['mass'] / (1.5 * area)
-            cost = 0
+            # Model Output: [goal_val, beta, backface_temp, g_load]
+            preds = model(t_val).detach().cpu().numpy().flatten()
+            pred_goal_val = preds[0]
+            pred_beta = preds[1]
+            pred_temp = preds[2]
+            pred_gload = preds[3]
+            
+            # --- Methodology of Physics (MoP) Constraint Layer ---
+            p_mop = 0
+            # 1. Thermal Constraint: T_backface < 350K
+            if pred_temp > 350.0:
+                p_mop = 1e15 # Infinite Penalty
+                
+            # 2. Structural Constraint: Peak_G < 25g
+            if pred_gload > 25.0:
+                p_mop = 1e15 # Infinite Penalty
+                
+            # 3. Aero Constraint (Target Beta)
             t_beta = float(targets.get('beta', {}).get('val', 150))
-            cost += ((beta_calc - t_beta) / 10.0)**2
-            target_val = float(targets.get(goal, {}).get('val', 100))
-            cost += ((pred_val - target_val) / 1.0)**2
-            if cost < min_cost:
-                min_cost = cost
+            beta_penalty = ((pred_beta - t_beta) / 10.0)**2
+            
+            # 4. Objective Cost
+            target_goal_val = float(targets.get(goal, {}).get('val', 100))
+            objective_cost = ((pred_goal_val - target_goal_val) / 1.0)**2
+            
+            total_cost = objective_cost + beta_penalty + p_mop
+            
+            if total_cost < min_total_cost:
+                min_total_cost = total_cost
                 best_config = test_sample_dict
-                best_val = pred_val
+                best_pred_metrics = preds
+                
+            # Stagnation Monitoring
+            if generation % 1000 == 0:
+                if abs(last_best_cost - min_total_cost) < 1e-6:
+                    stagnation_count += 1
+                else:
+                    stagnation_count = 0
+                last_best_cost = min_total_cost
+                
+                if stagnation_count >= 5: # Trigger Intelligence Decision
+                    self.log_to_gui(f"    [!] Stagnation detected at generation {generation}. Spitting out final optimized structure.")
+                    break
 
-        self.log_to_gui(f"    [!] Optimal: {', '.join([f'{k}={best_config[k]}' for k in active_params])}")
+        best_val = best_pred_metrics[0]
+        self.log_to_gui(f"    [!] Optimal Configuration Found: {', '.join([f'{k}={best_config[k]}' for k in active_params])}")
+        self.log_to_gui(f"    [!] Predicted Stats: Beta={best_pred_metrics[1]:.2f}, T_back={best_pred_metrics[2]:.1f}K, G={best_pred_metrics[3]:.2f}g")
+        
         if is_gui: self.window.evaluate_js("updateProgress(85)")
 
         # 6. Final Validation
@@ -1735,9 +1815,23 @@ run             {opt_params.get('env_run', '1000')}
 
             self.window.evaluate_js("updateProgress(100)")
             self.log_to_gui("[+] OPTIMIZATION LIFECYCLE COMPLETE.")
+            # compile detailed strings for the results panel
+            ref_metrics = training_y[0] # [goal, beta, temp, gload]
             res_data = {
-                "ref": f"Base D: {training_x[0][0]:.2f}m\nDrag: {training_y[0][0]:.4f}",
-                "opt": f"Opt D: {best_config['diameter']:.2f}m\nFinal Metric: {best_val:.4f}"
+                "ref": f"--- BASELINE (IRVE-3) ---\n"
+                       f"Diameter: {training_x[0][0]:.2f}m\n"
+                       f"Metric ({goal.upper()}): {ref_metrics[0]:.4f}\n"
+                       f"Ballistic Coeff (β): {ref_metrics[1]:.1f} kg/m²\n"
+                       f"Peak Backface Temp: {ref_metrics[2]:.1f} K\n"
+                       f"Deceleration Load: {ref_metrics[3]:.2f} g\n"
+                       f"Knudsen Number (Kn): {f_metrics['kn']:.4f}",
+                "opt": f"--- OPTIMIZED (G2) ---\n"
+                       f"Diameter: {best_config['diameter']:.2f}m\n"
+                       f"Metric ({goal.upper()}): {best_val:.4f}\n"
+                       f"Ballistic Coeff (β): {best_pred_metrics[1]:.1f} kg/m²\n"
+                       f"Peak Backface Temp: {best_pred_metrics[2]:.1f} K\n"
+                       f"Deceleration Load: {best_pred_metrics[3]:.2f} g\n"
+                       f"Stagnation Search: Converged"
             }
             self.window.evaluate_js(f"document.getElementById('res-ref').innerText = `{res_data['ref']}`")
             self.window.evaluate_js(f"document.getElementById('res-opt').innerText = `{res_data['opt']}`")
