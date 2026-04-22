@@ -152,7 +152,7 @@ def run_simulation(steps=None):
 def main():
     parser = argparse.ArgumentParser(description="StellarOrion Simulation Runner")
     parser.add_argument("--optimize", action="store_true", help="Run the full survivability optimization loop")
-    parser.add_argument("--test", type=str, choices=["sparta", "pyfluent"], help="Run integration test (headless)")
+    parser.add_argument("--test", type=str, choices=["sparta", "pyfluent", "pyansys", "baseline"], help="Run integration test (headless)")
     parser.add_argument("--samples", type=int, default=5, help="Number of samples for optimization")
     parser.add_argument("--goal", type=str, default="drag", help="Optimization goal (drag or heat)")
     parser.add_argument("--steps", type=int, default=1000, help="Number of simulation steps")
@@ -165,8 +165,19 @@ def main():
     parser.add_argument("--ssh-pass", type=str, help="Remote password for PyFluent")
     parser.add_argument("--ssh-key", type=str, help="Remote SSH key path for PyFluent")
     parser.add_argument("--chem", type=str, default="5-species", choices=["5-species", "11-species", "mars"], help="Chemistry model (5-species, 11-species, or mars)")
+    parser.add_argument("--gettheirvebbaseline", action="store_true", help="Get the IRVE baseline parameter results simulation sample")
+    parser.add_argument("--solver", type=str, default="sparta", choices=["sparta", "pyfluent", "pyansys"], help="Backend solver (sparta, pyfluent, or local pyansys)")
     
     args, unknown = parser.parse_known_args()
+
+    if args.gettheirvebbaseline:
+        print("[*] Fetching IRVE-3 Baseline Parameter Results...")
+        from StellarOrionEngineMach5Up import Api
+        # Use static method if possible or just call it
+        baseline = Api.get_irve_baseline_results_static()
+        import json
+        print(json.dumps(baseline, indent=4))
+        return
 
     if not os.environ.get("IN_DOCKER"):
         from StellarOrionEngineMach5Up import Api
@@ -191,6 +202,19 @@ def main():
                 res = api.run_integration_test(opt_params)
                 print(f"[*] Result: {res.get('status', 'unknown').upper()}")
                 print(f"[*] Message: {res.get('message', '')}")
+            elif args.test == "pyansys":
+                print("[*] Starting Local PyAnsys (Windows Only) Integration Test...")
+                res = api.run_local_pyfluent_test(show_gui=True)
+                print(f"[*] Result: {res.get('status', 'unknown').upper()}")
+                print(f"[*] Message: {res.get('message', '')}")
+            elif args.test == "baseline":
+                print("[*] Starting IRVE-3 Baseline Validation Simulation...")
+                res = api.run_baseline_validation(solver=args.solver)
+                print(f"[*] Validation Result: {res.get('status', 'unknown').upper()}")
+                if 'comparison' in res:
+                    print("\n[Comparison: Simulation vs Documentation]")
+                    for k, v in res['comparison'].items():
+                        print(f"  - {k}: Sim={v['sim']:.2f}, Doc={v['doc']:.2f}, Error={v['error_pct']:.1f}%")
             return
 
         if args.optimize:
@@ -215,8 +239,13 @@ def main():
                 'v_angle': True,
                 'v_toroids': True,
                 'v_nose': True,
-                'solver': 'sparta' # Default for optimization
+                'solver': args.solver
             }
+            
+            print("[VERBOSE] Sending Optimization Parameters:")
+            import json
+            print(json.dumps(opt_params, indent=4))
+            
             api.execute_optimization(opt_params, is_gui=False)
             return
 

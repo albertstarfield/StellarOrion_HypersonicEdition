@@ -208,3 +208,12 @@ example_frompreviousproject/
 .vscode/
 optimization_history.db
 web/assets/model.stl
+
+# Test logs
+Testlog*.log
+**.trn**
+**FM_**
+
+# Windows
+Thumbs.db
+**cleanup-fluent**
