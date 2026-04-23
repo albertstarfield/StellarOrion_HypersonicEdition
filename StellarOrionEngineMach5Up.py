@@ -915,20 +915,23 @@ run             {opt_params.get('env_run', '1000')}
                 
                 self.log_to_gui(f"[*] Configuring Workflow (GPU={'ENABLED' if use_gpu else 'DISABLED'})...")
                 
-                # 1. Import Geometry
-                cad_file = os.path.join(self.cwd, "CADDesign", "HIAD_custom.step")
+                # 1. Import Geometry (Use STL for more robust and faster meshing)
+                cad_file = os.path.join(cad_dir, "HIAD_custom.stl")
                 if not os.path.exists(cad_file):
-                    cad_file = os.path.abspath("HIAD_custom.step")
-
+                    cad_file = os.path.join(cad_dir, "HIAD_custom.step")
+                
                 if os.path.exists(cad_file):
-                    self.log_to_gui(f"    [+] Importing Geometry: {cad_file}")
+                    self.log_to_gui(f"    [+] Importing Geometry/Mesh: {cad_file}")
                     import_geo = workflow.TaskObject["Import Geometry"]
                     import_geo.Arguments.set_state({"FileName": cad_file})
                     import_geo.Execute()
-                    self.log_to_gui("    [+] Import Geometry: DONE")
+                    self.log_to_gui("    [+] Import: DONE")
                 
                 # 2. Meshing Steps
-                self.log_to_gui("[*] Generating Surface Mesh...")
+                self.log_to_gui("[*] Generating High-Density Surface Mesh...")
+                workflow.TaskObject["Generate the Surface Mesh"].Arguments.set_state({
+                    "CFDSurfaceMeshControls": {"MaxSize": 2.0, "MinSize": 0.1}
+                })
                 workflow.TaskObject["Generate the Surface Mesh"].Execute()
                 self.log_to_gui("    [+] Surface Mesh: DONE")
                 
@@ -946,16 +949,24 @@ run             {opt_params.get('env_run', '1000')}
                 
                 self.log_to_gui("[*] Adding Boundary Layers...")
                 try:
+                    workflow.TaskObject["Add Boundary Layers"].Arguments.set_state({
+                        "NumberOfLayers": 3,
+                        "OffsetMethodType": "uniform"
+                    })
                     workflow.TaskObject["Add Boundary Layers"].Execute()
-                except:
-                    self.log_to_gui("    [!] Add Boundary Layers skipped (optional).")
+                except Exception as ble:
+                    self.log_to_gui(f"    [!] Add Boundary Layers skipped: {ble}")
                 self.log_to_gui("    [+] Boundary Layers: DONE")
                 
                 # 3D Slim-Slice for GPU
                 if use_gpu:
                     self.log_to_gui("[*] GPU Mode: Applying 3D slim-slice volume mesh settings.")
                 
-                self.log_to_gui("[*] Generating Volume Mesh (this may take a moment)...")
+                self.log_to_gui("[*] Generating Ultra-High Density Volume Mesh...")
+                workflow.TaskObject["Generate the Volume Mesh"].Arguments.set_state({
+                    "VolumeFill": "poly-hexcore",
+                    "MaxCellSize": 1.0 # Very fine for high utilization
+                })
                 workflow.TaskObject["Generate the Volume Mesh"].Execute()
                 self.log_to_gui("    [+] Volume Mesh: DONE")
                 
@@ -967,18 +978,34 @@ run             {opt_params.get('env_run', '1000')}
                 
                 # 4. Solver Setup (Initialization & Solve)
                 self.log_to_gui(f"[*] Configuring Solver: V={vstream}m/s, P={pressure:.1f}Pa, T={temp}K")
-                solver.tui.define.models.solver.density_based_implicit("yes")
+                
+                # If GPU enabled, switch to Pressure-Based Coupled for maximum GPU utilization
+                if use_gpu:
+                    self.log_to_gui("[*] GPU Mode: Switching to Pressure-Based Coupled Solver for Native GPU path.")
+                    solver.tui.define.models.solver.pressure_based("yes")
+                    solver.tui.solve.set.gpu_acceleration.use_gpu_solver("yes")
+                else:
+                    solver.tui.define.models.solver.density_based_implicit("yes")
+                
                 solver.tui.define.models.energy("yes", "no", "no", "no", "no")
-                solver.tui.define.materials.change_create("air", "air", "yes", "ideal-gas", "no", "no", "no", "no", "no")
+                
+                # Material setup
+                try:
+                    solver.setup.materials.fluid["air"].density.option = "ideal-gas"
+                except:
+                    solver.tui.define.materials.change_create("air", "air", "yes", "ideal-gas", "no", "no", "no", "no", "no")
                 
                 # 5. Initialization (t=0)
                 self.log_to_gui("[*] Initializing solution (t=0)...")
-                solver.tui.solve.initialize.hyb_initialization()
+                try:
+                    solver.solution.initialization.hybrid_initialize()
+                except:
+                    solver.tui.solve.initialize.hyb_initialization()
                 self.log_to_gui("    [+] Initialization: DONE")
                 
                 # 6. Iteration (Simulating)
-                n_iter = 10
-                self.log_to_gui(f"[*] Running {n_iter} local iterations for validation...")
+                n_iter = 500 # High count to profile hardware saturation
+                self.log_to_gui(f"[*] Running {n_iter} local iterations (Stress Test Mode)...")
                 solver.tui.solve.iterate(n_iter)
                 self.log_to_gui("    [+] Iterations: DONE")
                 
