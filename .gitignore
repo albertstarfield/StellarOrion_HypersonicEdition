@@ -235,3 +235,6 @@ log.sparta
 
 # Syncthing conflict
 **.sync-conflict**
+
+
+**tmp_sparta_build**

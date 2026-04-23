@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
+FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
@@ -14,36 +14,31 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     && rm -rf /var/lib/apt/lists/*
-    
-ENV PATH=/usr/local/cuda/bin:${PATH}
-ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
 
 WORKDIR /workspace
 
 # Copy SPARTA source
 COPY sparta /workspace/sparta
 
-# Build SPARTA with CUDA support (Kokkos)
+# Build SPARTA (Standard CPU build via CMake)
 RUN mkdir -p /workspace/sparta/build && cd /workspace/sparta/build && \
     cmake ../cmake \
-    -DCMAKE_CXX_COMPILER=/workspace/sparta/lib/kokkos/bin/nvcc_wrapper \
     -DSPARTA_LIB=yes \
     -DSPARTA_SHARED_LIB=yes \
     -DBUILD_LIB=ON \
     -DBUILD_SHARED_LIBS=ON \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-    -DPKG_KOKKOS=yes \
-    -DKokkos_ENABLE_CUDA=yes \
-    -DKokkos_ARCH_PASCAL60=ON \
-    -DKokkos_ENABLE_OPENMP=yes \
     -DPKG_PYTHON=yes \
-    -DPKG_MPI=no \
+    -DPKG_MPI=yes \
+    -DPKG_MPI_STUBS=no \
+
     -DCMAKE_CXX_FLAGS="-D_Static_assert=static_assert" && \
     make -j$(nproc) && \
-    cp spa /usr/local/bin/spa
+    cp src/spa_ /usr/local/bin/spa
 
-ENV OMP_NUM_THREADS=6
+
+ENV OMP_NUM_THREADS=4
 ENV IN_DOCKER=1
-ENV SPARTA_GPU=1
+ENV SPARTA_GPU=0
 
 CMD ["spa", "-in", "in.hiad"]

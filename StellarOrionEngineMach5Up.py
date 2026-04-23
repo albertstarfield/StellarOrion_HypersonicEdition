@@ -2403,7 +2403,7 @@ run             {opt_params.get('env_run', '1000')}
                 
                 use_gpu = opt_params.get('sparta_gpu')
                 if use_gpu is None:
-                    use_gpu = self.has_nvidia_gpu()
+                    use_gpu = False
                 docker_create_cmd = [
                     "docker", "create", "--name", "hiad-runner",
                     "-v", f"{self.cwd}:/app", 
@@ -2411,7 +2411,6 @@ run             {opt_params.get('env_run', '1000')}
                     "-e", "PYTHONUNBUFFERED=1",
                     "-e", "DOCKER_WORKDIR=/app",
                     "-e", f"SPARTA_GPU={1 if use_gpu else 0}"
-
                 ]
                 if use_gpu:
                     self.log_to_gui("    [!] Enabling CUDA acceleration (Kokkos) for SPARTA...")
@@ -2419,10 +2418,18 @@ run             {opt_params.get('env_run', '1000')}
                     docker_create_cmd.append("all")
                 
                 # Use python3 main.py entrypoint
-                docker_cmd = ["python3", "/app/main.py", "--steps", "1000"]
-                if use_gpu: docker_cmd.append("--sparta-gpu")
+                if not use_gpu:
+                    # Use all available cores but cap at a reasonable number if needed
+                    # For baseline, we use all cores.
+                    nproc = os.cpu_count() or 4
+
+                    self.log_to_gui(f"    [!] Parallel Execution: Using {nproc} CPU cores via mpirun...")
+                    docker_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), "python3", "/app/main.py", "--steps", "1000"]
+                else:
+                    docker_cmd = ["python3", "/app/main.py", "--steps", "1000", "--sparta-gpu"]
                 
                 docker_create_cmd.extend(["sparta-hysp"] + docker_cmd)
+
                 subprocess.run(docker_create_cmd, check=True)
 
                 
@@ -2528,8 +2535,8 @@ run             {opt_params.get('env_run', '1000')}
         import subprocess
         try:
             self.log_to_readiness("[*] Starting local SPARTA Docker build...")
-            use_gpu = self.has_nvidia_gpu()
-            dockerfile = "Dockerfile.cuda" if use_gpu else "Dockerfile.minimal"
+            use_gpu = self.has_nvidia_gpu() and False # Forcing CPU by default as per user request
+            dockerfile = "Dockerfile.cuda" if use_gpu else "Dockerfile.cpu"
             cmd = ["docker", "build", "-t", "sparta-hysp", "-f", dockerfile, "."]
 
             

@@ -12,8 +12,8 @@ import subprocess
 import sys
 import argparse
 
-print("[DEBUG] main.py is starting...")
 sys.stdout.flush()
+
 
 
 if os.environ.get("IN_DOCKER"):
@@ -115,17 +115,11 @@ def run_simulation(steps=None):
     sys.path.insert(0, sparta_python_dir)
 
     # 3. Load library and import
-    print(f"[*] Loading SPARTA from {lib_path}")
     lib_dir = os.path.dirname(lib_path)
-    if os.environ.get("LD_LIBRARY_PATH"):
-        os.environ["LD_LIBRARY_PATH"] = f"{lib_dir}:{os.environ['LD_LIBRARY_PATH']}"
-    else:
-        os.environ["LD_LIBRARY_PATH"] = lib_dir
-    
     ctypes.CDLL(lib_path, mode=ctypes.RTLD_GLOBAL)
 
-
     from sparta import sparta
+
 
     # 4. Initialize SPARTA with GPU flags if needed
     cmdargs = ["-log", "none"]
@@ -134,7 +128,14 @@ def run_simulation(steps=None):
         cmdargs.extend(["-k", "on", "g", "1", "-sf", "kk"])
     
     spa = sparta(cmdargs=cmdargs)
-    print(f"[*] SPARTA is live (GPU={'ON' if '-sf' in cmdargs else 'OFF'}).")
+    me = 0
+    try:
+        me = spa.world_rank()
+    except:
+        pass
+
+    if me == 0:
+        print(f"[*] SPARTA is live (GPU={'ON' if '-sf' in cmdargs else 'OFF'}).")
 
 
     # ------------------------------------------------------------
@@ -142,55 +143,42 @@ def run_simulation(steps=None):
     # ------------------------------------------------------------
     original_dir = os.getcwd()
     hiad_dir = os.path.join(CONTAINER_WORKDIR, "CADDesign")
-    print(f"[*] Changing to directory: {hiad_dir}")
+    if me == 0:
+        print(f"[*] Changing to directory: {hiad_dir}")
     os.chdir(hiad_dir)
 
     # Copy species files so SPARTA finds them locally
-    shutil.copy(os.path.join(SPARTA_SRC, "examples", "axi", "air.species"), "air.species")
-    shutil.copy(os.path.join(SPARTA_SRC, "examples", "axi", "air.vss"), "air.vss")
+    if me == 0:
+        shutil.copy(os.path.join(SPARTA_SRC, "examples", "axi", "air.species"), "air.species")
+        shutil.copy(os.path.join(SPARTA_SRC, "examples", "axi", "air.vss"), "air.vss")
 
     with open("in.hiad", "r") as f:
-        full_command = ""
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            # Remove trailing comments
-            line = line.split("#")[0].strip()
-            if not line:
-                continue
-
-            if full_command:
-                full_command += " " + line
-            else:
-                full_command = line
-
-            if full_command.endswith("&"):
-                full_command = full_command[:-1].strip()
-                continue
-
-            command = full_command
-            full_command = ""
-
-            if command:
-                if steps and command.startswith("run "):
-                    print(f"[*] Overriding: spa.command('run {steps}')")
-                    spa.command(f"run {steps}")
-                else:
-                    print(f"[*] Executing: spa.command('{command}')")
-                    spa.command(command)
+        lines = f.readlines()
+        
+    for line in lines:
+        command = line.strip()
+        if not command or command.startswith("#"):
+            continue
+        
+        # Override run steps if requested
+        if command.startswith("run ") and steps is not None:
+            if me == 0: print(f"[*] Overriding: spa.command('run {steps}')")
+            spa.command(f"run {steps}")
+        else:
+            spa.command(command)
 
     # ------------------------------------------------------------
     # End of simulation
     # ------------------------------------------------------------
 
     # 5. Write dummy output for demonstration
-    print(f"[*] Changing back to directory: {original_dir}")
-    os.chdir(original_dir)
-    os.makedirs(os.path.dirname(WORKSPACE_OUTPUT), exist_ok=True)
-    with open(WORKSPACE_OUTPUT, "w") as f:
-        f.write("Simulation completed successfully.\n")
-    print(f"[*] Output written to {WORKSPACE_OUTPUT}")
+    if me == 0:
+        print(f"[*] Changing back to directory: {original_dir}")
+        os.chdir(original_dir)
+        os.makedirs(os.path.dirname(WORKSPACE_OUTPUT), exist_ok=True)
+        with open(WORKSPACE_OUTPUT, "w") as f:
+            f.write("Simulation completed successfully.\n")
+        print(f"[*] Output written to {WORKSPACE_OUTPUT}")
 
     spa.command("clear")
     spa.close()
@@ -205,7 +193,8 @@ def main():
     parser.add_argument("--steps", type=int, default=1000, help="Number of simulation steps")
     parser.add_argument("--pinn", action="store_true", default=True, help="Enable PINN acceleration (Default)")
     parser.add_argument("--no-pinn", action="store_false", dest="pinn", help="Disable PINN acceleration")
-    parser.add_argument("--sparta-gpu", action="store_true", default=None, help="Enable SPARTA GPU acceleration")
+    parser.add_argument("--sparta-gpu", action="store_true", default=False, help="Enable SPARTA GPU acceleration")
+
     parser.add_argument("--no-sparta-gpu", action="store_false", dest="sparta_gpu", help="Disable SPARTA GPU acceleration")
 
     
