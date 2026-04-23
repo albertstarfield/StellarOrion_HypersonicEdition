@@ -37,6 +37,8 @@ def build_sparta():
         shutil.rmtree(build_dir)
     os.makedirs(build_dir)
 
+    use_gpu = os.environ.get("SPARTA_GPU", "0") == "1"
+    
     cmake_cmd = [
         "cmake",
         "../cmake",
@@ -51,6 +53,14 @@ def build_sparta():
         "-DPKG_MPI=no",
         "-DCMAKE_CXX_FLAGS=-D_Static_assert=static_assert",
     ]
+    
+    if use_gpu:
+        print("[*] Enabling CUDA support in CMake...")
+        cmake_cmd.extend([
+            "-DKokkos_ENABLE_CUDA=yes",
+            "-DKokkos_ARCH_NATIVE=ON"
+        ])
+
     subprocess.run(cmake_cmd, cwd=build_dir, check=True)
     subprocess.run(
         ["make", "-j", os.environ.get("OMP_NUM_THREADS", "6")],

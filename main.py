@@ -12,17 +12,25 @@ import subprocess
 import sys
 import argparse
 
+print("[DEBUG] main.py is starting...")
+sys.stdout.flush()
+
+
 if os.environ.get("IN_DOCKER"):
-    CONTAINER_WORKDIR = "/workspace"
+    CONTAINER_WORKDIR = os.environ.get("DOCKER_WORKDIR", "/workspace")
+    SPARTA_SRC = "/workspace/sparta" # Use the one built into the image
 else:
     CONTAINER_WORKDIR = os.path.dirname(os.path.abspath(__file__))
+    SPARTA_SRC = os.path.join(CONTAINER_WORKDIR, "sparta")
 
-SPARTA_SRC = os.path.join(CONTAINER_WORKDIR, "sparta")
-BUILD_DIR = os.path.join(CONTAINER_WORKDIR, "tmp_sparta_build")  # Isolated from host → no cross‑platform conflicts
+BUILD_DIR = os.path.join(CONTAINER_WORKDIR, "tmp_sparta_build") 
+
 LIB_PATH = os.path.join(BUILD_DIR, "src", "libsparta.so")
+FALLBACK_LIB_PATH = os.path.join(SPARTA_SRC, "build", "src", "libsparta.so")
 # For Mac compatibility, the shared library extension is .dylib
 if sys.platform == "darwin":
     LIB_PATH = os.path.join(BUILD_DIR, "src", "libsparta.dylib")
+    FALLBACK_LIB_PATH = os.path.join(SPARTA_SRC, "build", "src", "libsparta.dylib")
 
 WORKSPACE_OUTPUT = os.path.join(CONTAINER_WORKDIR, "workspace", "sparta_output.txt")
 
@@ -30,17 +38,36 @@ WORKSPACE_OUTPUT = os.path.join(CONTAINER_WORKDIR, "workspace", "sparta_output.t
 def build_sparta():
     """Build SPARTA shared library inside the container."""
     if os.path.exists(LIB_PATH):
-        print("[*] SPARTA library already built. Skipping compilation.")
+        print("[*] SPARTA library already built in isolated dir. Skipping compilation.")
         return LIB_PATH
+    
+    # Try multiple fallback locations and filenames
+    search_dirs = [
+        os.path.join(SPARTA_SRC, "build", "src"),
+        os.path.join(SPARTA_SRC, "src"),
+    ]
+    for d in search_dirs:
+        if not os.path.exists(d): continue
+        for f in os.listdir(d):
+            if ("libsparta" in f) and (f.endswith(".so") or f.endswith(".dylib") or ".so." in f):
+                found_path = os.path.join(d, f)
+                print(f"[*] Found SPARTA library at {found_path}. Skipping compilation.")
+                return found_path
 
     print(
         "[*] Building SPARTA shared library (this will take several minutes)..."
     )
+    print(f"[*] Checking for previous build in {BUILD_DIR}...")
     if os.path.exists(BUILD_DIR):
+        print(f"[*] Removing old build directory: {BUILD_DIR}...")
         shutil.rmtree(BUILD_DIR)
+        print("[*] Old build directory removed.")
     os.makedirs(BUILD_DIR)
 
+
     kokkos_omp = "yes" if sys.platform != "darwin" else "OFF"
+
+    use_gpu = os.environ.get("SPARTA_GPU", "0") == "1"
 
     cmake_cmd = [
         "cmake",
@@ -58,6 +85,14 @@ def build_sparta():
         "-DPKG_MPI_STUBS=ON",
         "-DCMAKE_CXX_FLAGS=-D_Static_assert=static_assert",
     ]
+
+    if use_gpu:
+        print("[*] Enabling CUDA support in CMake...")
+        cmake_cmd.extend([
+            "-DKokkos_ENABLE_CUDA=yes",
+            "-DKokkos_ARCH_NATIVE=ON"
+        ])
+
     subprocess.run(cmake_cmd, cwd=BUILD_DIR, check=True)
     subprocess.run(
         ["make", "-j", os.environ.get("OMP_NUM_THREADS", "6")],
@@ -81,14 +116,26 @@ def run_simulation(steps=None):
 
     # 3. Load library and import
     print(f"[*] Loading SPARTA from {lib_path}")
+    lib_dir = os.path.dirname(lib_path)
+    if os.environ.get("LD_LIBRARY_PATH"):
+        os.environ["LD_LIBRARY_PATH"] = f"{lib_dir}:{os.environ['LD_LIBRARY_PATH']}"
+    else:
+        os.environ["LD_LIBRARY_PATH"] = lib_dir
+    
     ctypes.CDLL(lib_path, mode=ctypes.RTLD_GLOBAL)
+
 
     from sparta import sparta
 
-    # 4. Initialize SPARTA
-    spa = sparta(cmdargs=["-log", "none"])
-    help(spa)
-    print(f"[*] SPARTA is live.")
+    # 4. Initialize SPARTA with GPU flags if needed
+    cmdargs = ["-log", "none"]
+    if os.environ.get("SPARTA_GPU", "0") == "1":
+        print("[*] Initializing SPARTA with Kokkos GPU acceleration...")
+        cmdargs.extend(["-k", "on", "g", "1", "-sf", "kk"])
+    
+    spa = sparta(cmdargs=cmdargs)
+    print(f"[*] SPARTA is live (GPU={'ON' if '-sf' in cmdargs else 'OFF'}).")
+
 
     # ------------------------------------------------------------
     # Run the HIAD reentry simulation
@@ -158,6 +205,9 @@ def main():
     parser.add_argument("--steps", type=int, default=1000, help="Number of simulation steps")
     parser.add_argument("--pinn", action="store_true", default=True, help="Enable PINN acceleration (Default)")
     parser.add_argument("--no-pinn", action="store_false", dest="pinn", help="Disable PINN acceleration")
+    parser.add_argument("--sparta-gpu", action="store_true", default=None, help="Enable SPARTA GPU acceleration")
+    parser.add_argument("--no-sparta-gpu", action="store_false", dest="sparta_gpu", help="Disable SPARTA GPU acceleration")
+
     
     # SSH Credentials for headless PyFluent testing
     parser.add_argument("--ssh-host", type=str, help="Remote host for PyFluent")
@@ -167,6 +217,8 @@ def main():
     parser.add_argument("--chem", type=str, default="5-species", choices=["5-species", "11-species", "mars"], help="Chemistry model (5-species, 11-species, or mars)")
     parser.add_argument("--gettheirvebbaseline", action="store_true", help="Get the IRVE baseline parameter results simulation sample")
     parser.add_argument("--solver", type=str, default="sparta", choices=["sparta", "pyfluent", "pyansys"], help="Backend solver (sparta, pyfluent, or local pyansys)")
+    parser.add_argument("--skip-diag", action="store_true", help="Skip slow initial diagnostics (e.g. GPU detection)")
+    parser.add_argument("--headless", action="store_true", help="Run simulation in headless mode (no GUI)")
     
     args, unknown = parser.parse_known_args()
 
@@ -209,12 +261,17 @@ def main():
                 print(f"[*] Message: {res.get('message', '')}")
             elif args.test == "baseline":
                 print("[*] Starting IRVE-3 Baseline Validation Simulation...")
-                res = api.run_baseline_validation(solver=args.solver)
+                res = api.run_baseline_validation(solver=args.solver, skip_diag=args.skip_diag, headless=args.headless, sparta_gpu=args.sparta_gpu)
                 print(f"[*] Validation Result: {res.get('status', 'unknown').upper()}")
+                if res.get('status') == 'error':
+                    print(f"[-] Error Message: {res.get('message', '')}")
+
                 if 'comparison' in res:
                     print("\n[Comparison: Simulation vs Documentation]")
                     for k, v in res['comparison'].items():
                         print(f"  - {k}: Sim={v['sim']:.2f}, Doc={v['doc']:.2f}, Error={v['error_pct']:.1f}%")
+                
+                print(f"\n[*] Post-processing plots generated in: {os.path.join(CONTAINER_WORKDIR, 'web', 'assets', 'plots')}")
             return
 
         if args.optimize:
@@ -233,6 +290,7 @@ def main():
                 'env_chem_mode': args.chem,
                 'env_steady_state': False,
                 'pinn_accel': args.pinn,
+                'sparta_gpu': args.sparta_gpu,
                 'samples': args.samples,
                 'goal': args.goal,
                 'v_diameter': True,

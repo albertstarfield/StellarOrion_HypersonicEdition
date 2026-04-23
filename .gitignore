@@ -24,6 +24,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+**venv_gui**
 MANIFEST
 
 # PyInstaller
@@ -135,6 +136,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+**venv_gui**
+**.venv**
 
 # Spyder project settings
 .spyderproject
@@ -199,13 +202,14 @@ TestlogDev.log
 .venv_gui/
 VLEO_DSMC_EXAMPLE/
 example_frompreviousproject/
-**ProgressReport**
+# **ProgressReport** (Uncomment to ignore all progress reports)
 
 # macOS
 .DS_Store
 
 # VS Code
 .vscode/
+optimization_history.db
 
 # Ansys Fluent / CFD related
 *.trn
@@ -213,4 +217,21 @@ cleanup-fluent-*.bat
 FM_*
 fluent-*-error.log
 log.sparta
-optimization_history.db
+
+# LaTeX / Progress Reports
+*.aux
+*.fdb_latexmk
+*.fls
+*.nav
+*.out
+*.snm
+*.synctex.gz
+*.toc
+*.bbl
+*.blg
+*.run.xml
+*.bcf
+
+
+# Syncthing conflict
+**.sync-conflict**

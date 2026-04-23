@@ -81,7 +81,7 @@ def run_simulation(config):
         workflow.InitializeWorkflow(WorkflowType="Watertight Geometry")
         
         # Import Geometry
-        cad_file = os.path.abspath("geometry.stl")
+        cad_file = os.path.join(cad_dir, "HIAD_custom.step")
         if not os.path.exists(cad_file):
             cad_file = os.path.abspath("geometry.step")
         
@@ -199,6 +199,31 @@ def run_simulation(config):
         print("[*] [PyFluent] Calculation finished. Extracting metrics...")
         drag_val = solver.solution.report_definitions.force["drag"].compute()
         heat_val = solver.solution.report_definitions.flux["heat-flux"].compute()
+        
+        # --- NEW: JPG Contour Generation ---
+        print("[*] [PyFluent] Generating result contours (JPG)...")
+        solver.tui.display.set.picture.driver.jpeg()
+        solver.tui.display.set.picture.x_resolution(1920)
+        solver.tui.display.set.picture.y_resolution(1080)
+        
+        try:
+            # Velocity
+            solver.results.graphics.contour["vel_c"] = {"field": "velocity-magnitude", "filled": True}
+            solver.results.graphics.contour["vel_c"].display()
+            solver.results.graphics.picture.save(file_name="velocity_contour.jpg")
+            
+            # Pressure
+            solver.results.graphics.contour["pres_c"] = {"field": "static-pressure", "filled": True}
+            solver.results.graphics.contour["pres_c"].display()
+            solver.results.graphics.picture.save(file_name="pressure_contour.jpg")
+            
+            # Temperature
+            solver.results.graphics.contour["temp_c"] = {"field": "static-temperature", "filled": True}
+            solver.results.graphics.contour["temp_c"].display()
+            solver.results.graphics.picture.save(file_name="temp_contour.jpg")
+        except Exception as e:
+            print(f"[!] [PyFluent] Graphics export failed: {e}")
+        # ------------------------------------
         
         print(f"[+] [PyFluent] Final Results -> Drag: {drag_val:.4f}, Heat Flux: {heat_val:.4f}")
         

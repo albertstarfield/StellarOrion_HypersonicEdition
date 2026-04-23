@@ -913,6 +913,21 @@
                                 <option value="pyfluent_local">PyFluent (Local SSH gRPC)</option>
                             </select>
                         </div>
+                        <div class="input-group" id="sparta-gpu-container" style="display: flex; align-items: center; gap: 10px; padding-top: 25px;">
+                            <input type="checkbox" id="sparta-gpu" checked style="width: 20px; height: 20px;">
+                            <div class="tooltip-container">
+                                <label for="sparta-gpu">SPARTA GPU Acceleration (Kokkos)</label>
+                                <span class="info-icon">?</span>
+                                <div class="tooltip-text">
+                                    <strong>SPARTA GPU Acceleration</strong>
+                                    Enables CUDA/Kokkos acceleration for SPARTA DSMC. Requires an NVIDIA GPU and 'nvidia-container-toolkit' on the host.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="input-group" style="display: flex; align-items: center; gap: 10px; padding-top: 10px;">
+                            <input type="checkbox" id="verbose-log" style="width: 20px; height: 20px;">
+                            <label for="verbose-log">Verbose Engine Output (Debug Mode)</label>
+                        </div>
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px; margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px;">

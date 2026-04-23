@@ -277,6 +277,8 @@ function startOptimization() {
         ssh_key: getVal('ssh-key'),
         solver_dim: getVal('solver-dim'),
         solver_gpu: getVal('solver-gpu'),
+        sparta_gpu: getVal('sparta-gpu'),
+        verbose: getCheck('verbose-log'),
         solver_bl_layers: getVal('solver-bl-layers'),
 
         // Optimization
@@ -372,6 +374,11 @@ async function onBackendChange() {
         
         if (viscousWarningEl) {
             viscousWarningEl.style.display = isSparta ? "block" : "none";
+        }
+
+        const spartaGpuContainer = document.getElementById('sparta-gpu-container');
+        if (spartaGpuContainer) {
+            spartaGpuContainer.style.display = isSparta ? "flex" : "none";
         }
     }
     
@@ -650,7 +657,7 @@ function init3DView() {
 
 
 // Add listeners to persistence fields
-const persistFields = ['solver-backend', 'ssh-host', 'ssh-user', 'ssh-pass', 'ssh-key', 'solver-dim', 'solver-gpu', 'solver-bl-layers', 'env-viscous-model'];
+const persistFields = ['solver-backend', 'ssh-host', 'ssh-user', 'ssh-pass', 'ssh-key', 'solver-dim', 'solver-gpu', 'sparta-gpu', 'verbose-log', 'solver-bl-layers', 'env-viscous-model'];
 persistFields.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
