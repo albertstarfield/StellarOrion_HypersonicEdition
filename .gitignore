@@ -24,7 +24,6 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-**venv_gui**
 MANIFEST
 
 # PyInstaller
@@ -136,8 +135,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-**venv_gui**
-**.venv**
 
 # Spyder project settings
 .spyderproject
@@ -185,6 +182,7 @@ cython_debug/
 
 # StellarOrion Specific
 tmp_sparta_build/
+log.sparta
 workspace/
 scratch/
 CADDesign/results_reference/
@@ -211,12 +209,12 @@ example_frompreviousproject/
 .vscode/
 optimization_history.db
 
-# Ansys Fluent / CFD related
+# Ansys Fluent / CFD
 *.trn
 cleanup-fluent-*.bat
 FM_*
 fluent-*-error.log
-log.sparta
+fluent-*.log
 
 # LaTeX / Progress Reports
 *.aux
@@ -235,6 +233,3 @@ log.sparta
 
 # Syncthing conflict
 **.sync-conflict**
-
-
-**tmp_sparta_build**

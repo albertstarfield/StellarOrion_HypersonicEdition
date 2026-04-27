@@ -14,7 +14,7 @@ This project utilizes the **NASA IRVE-3 (Inflatable Reentry Vehicle Experiment 3
 | **Ballistic Coeff (β)** | 27 kg/m² | ~27 kg/m² | Aligned with IRVE-3 flight data for sounding rocket reentry. |
 
 ## Why IRVE-3?
-The IRVE-3 mission (launched July 23, 2012) is the most successful flight validation of HIAD technology to date. 
+The IRVE-3 mission (launched July 23, 2012) is the most documented and publicly  flight validation of HIAD technology to date. 
 - **Thermal Calibration**: The default wall temperature (1000K) and stagnation heat targets are anchored in the IRVE-3 TPS performance data.
 - **Structural Integrity**: The toroid geometry and scallop angles are derived from the braided Kevlar tori specifications of the IRVE-3 aeroshell.
 - **DSMC Fidelity**: Freestream density (`nrho`) and temperature defaults are set to approximate the mesospheric conditions (80km altitude) where IRVE-3 began its primary data collection.

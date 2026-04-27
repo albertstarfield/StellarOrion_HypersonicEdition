@@ -333,6 +333,7 @@ function startOptimization() {
         env_react: getVal('env-react'),
         env_run: getVal('env-run'),
 
+        env_domain_type: getVal('env-domain-type'),
         // Domain
         env_xmin: getVal('env-xmin'),
         env_xmax: getVal('env-xmax'),
@@ -360,7 +361,8 @@ async function onBackendChange() {
     
     if (backendEl) {
         const isSparta = (backendEl.value === 'sparta');
-        remoteVerified = isSparta;
+        const isOpenFoam = (backendEl.value === 'openfoam');
+        remoteVerified = isSparta || isOpenFoam;
         
         if (viscousModelEl) {
             viscousModelEl.disabled = isSparta;
@@ -379,6 +381,11 @@ async function onBackendChange() {
         const spartaGpuContainer = document.getElementById('sparta-gpu-container');
         if (spartaGpuContainer) {
             spartaGpuContainer.style.display = isSparta ? "flex" : "none";
+        }
+
+        const remoteViewContainer = document.getElementById('remote-view-container');
+        if (remoteViewContainer) {
+            remoteViewContainer.style.display = (isOpenFoam || backendEl.value.includes('pyfluent')) ? 'block' : 'none';
         }
     }
     
@@ -420,6 +427,8 @@ async function testReadiness() {
         const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : '';
         if (backend === 'sparta') {
             result = await window.pywebview.api.test_sparta_readiness();
+        } else if (backend === 'openfoam') {
+            result = await window.pywebview.api.test_openfoam_readiness();
         } else {
             const params = {
                 ssh_host: getVal('ssh-host'),
@@ -437,6 +446,19 @@ async function testReadiness() {
             }
             remoteVerified = true;
             
+            if (backend === 'openfoam') {
+                const placeholder = document.getElementById('remote-screen-placeholder');
+                if (placeholder) {
+                    placeholder.innerHTML = 
+                        '<div style="text-align: center; padding: 20px;">' +
+                        '<p style="color: #10b981; font-weight: 600; margin-bottom: 10px;">✓ OpenFOAM VNC Server Ready</p>' +
+                        '<button onclick="window.open(\'http://localhost:6080/vnc.html\', \'_blank\')" class="btn" style="background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">Launch OpenFOAM GUI (noVNC)</button>' +
+                        '</div>';
+                    const remoteImg = document.getElementById('remote-screen-img');
+                    if (remoteImg) remoteImg.style.display = 'none';
+                }
+            }
+
             if (result.arch === "AMD64") logReadiness("[SYSTEM] Architecture: AMD64. Status Quo.");
             else if (result.arch === "ARM64") logReadiness("[SYSTEM] Architecture: ARM64. Bleeding Edge.");
 
@@ -489,7 +511,7 @@ async function captureRemoteView() {
     if (!backendEl) return;
     const backend = backendEl.value;
     
-    if (backend !== 'pyfluent' && backend !== 'pyfluent_local') return;
+    if (backend !== 'pyfluent' && backend !== 'pyfluent_local' && backend !== 'openfoam') return;
     if (container) container.style.display = "block";
     
     const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : '';
@@ -591,7 +613,8 @@ function saveRemoteParams() {
         dim: getVal('solver-dim'),
         gpu: getCheck('solver-gpu'),
         bl_layers: getVal('solver-bl-layers'),
-        viscous: getVal('env-viscous-model')
+        viscous: getVal('env-viscous-model'),
+        verbose: getCheck('verbose-log')
     };
     localStorage.setItem('stellar_orion_remote_params', JSON.stringify(params));
 }
@@ -603,7 +626,7 @@ function loadRemoteParams() {
         const setVal = (id, val) => { if (document.getElementById(id)) document.getElementById(id).value = val; };
         const setCheck = (id, val) => { if (document.getElementById(id)) document.getElementById(id).checked = val; };
         
-        setVal('solver-backend', params.backend || 'sparta');
+        setVal('solver-backend', params.backend || 'openfoam');
         setVal('ssh-host', params.host || '');
         setVal('ssh-user', params.user || '');
         setVal('ssh-pass', params.pass || '');
@@ -612,6 +635,7 @@ function loadRemoteParams() {
         setCheck('solver-gpu', params.gpu !== false);
         setVal('solver-bl-layers', params.bl_layers || '15');
         setVal('env-viscous-model', params.viscous || 'sst-k-omega');
+        setCheck('verbose-log', params.verbose !== false);
         onBackendChange();
     } else {
         onBackendChange();
@@ -889,6 +913,7 @@ function syncTarget(metric, type) {
 function refreshDomainPreview() {
     const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : null;
     const params = {
+        env_domain_type: getVal('env-domain-type'),
         env_xmin: getVal('env-xmin'),
         env_xmax: getVal('env-xmax'),
         env_ymax: getVal('env-ymax'),
@@ -918,27 +943,42 @@ async function openManual() {
     
     overlay.style.display = 'flex';
     if (loader) loader.style.display = 'flex';
-    if (textContainer) textContainer.innerHTML = '';
+    if (textContainer) {
+        textContainer.innerHTML = '';
+        textContainer.style.display = 'none';
+    }
     if (searchInput) searchInput.value = '';
     if (searchCount) searchCount.innerText = '';
     
     try {
         const markdown = await window.pywebview.api.get_manual_content();
         if (textContainer && typeof marked !== 'undefined') {
-            // Custom renderer to wrap mermaid code blocks
-            const renderer = new marked.Renderer();
-            const originalCode = renderer.code;
-            renderer.code = function(code, lang) {
-                if (lang === 'mermaid') {
-                    return `<div class="mermaid">${code}</div>`;
-                }
-                return originalCode.call(this, code, lang);
-            };
+            // Modern marked configuration (v12+)
+            // Use marked.use to merge the custom renderer with defaults
+            marked.use({
+                renderer: {
+                    code(obj) {
+                        const code = (typeof obj === 'object' && obj !== null) ? obj.text : arguments[0];
+                        const lang = (typeof obj === 'object' && obj !== null) ? obj.lang : arguments[1];
+                        
+                        if (lang === 'mermaid') {
+                            return `<div class="mermaid">${code}</div>`;
+                        }
+                        return false; // Use default marked renderer
+                    }
+                },
+                breaks: true,
+                gfm: true,
+                async: false
+            });
 
-            textContainer.innerHTML = marked.parse(markdown, { renderer });
+            textContainer.innerHTML = marked.parse(markdown);
             // Store original HTML for search resetting
             textContainer.dataset.originalHtml = textContainer.innerHTML;
             
+            if (loader) loader.style.display = 'none';
+            textContainer.style.display = 'block';
+
             // Trigger KaTeX rendering
             if (typeof renderMathInElement !== 'undefined') {
                 renderMathInElement(textContainer, {
@@ -954,7 +994,11 @@ async function openManual() {
 
             // Trigger Mermaid rendering
             if (typeof mermaid !== 'undefined') {
-                mermaid.run();
+                try {
+                    await mermaid.run();
+                } catch (e) {
+                    console.error("Mermaid run error:", e);
+                }
             }
 
             // Generate Table of Contents
@@ -962,9 +1006,19 @@ async function openManual() {
         } else if (textContainer) {
             // Fallback if marked is not loaded
             textContainer.innerText = markdown;
+            textContainer.style.display = 'block';
+            if (loader) loader.style.display = 'none';
         }
     } catch (e) {
-        if (textContainer) textContainer.innerHTML = `<p style="color: #ef4444;">Error loading documentation: ${e}</p>`;
+        console.error("Error opening manual:", e);
+        if (textContainer) {
+            textContainer.style.display = 'block';
+            textContainer.innerHTML = `<div class="error-msg" style="color: #ef4444; padding: 20px; text-align: center;">
+                <h3>Documentation Engine Error</h3>
+                <p>${e.message || e}</p>
+                <button onclick="openManual()" class="btn-mini-manual" style="margin-top: 10px;">Retry Load</button>
+            </div>`;
+        }
     } finally {
         if (loader) loader.style.display = 'none';
     }

@@ -1,2 +1,8 @@
 *
 !sparta
+!vnc_startup.sh
+!Dockerfile.openfoam
+!CADDesign
+!web
+!main.py
+!StellarOrionEngineMach5Up.py

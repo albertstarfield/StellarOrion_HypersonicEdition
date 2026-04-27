@@ -904,10 +904,11 @@
                                 <span class="info-icon">?</span>
                                 <div class="tooltip-text">
                                     <strong>Solver Backend</strong>
-                                    Choose between SPARTA (Local Docker) or PyFluent (Remote SSH).
+                                    Choose between OpenFOAM/dsmcFoam (Docker), SPARTA (Local Docker), or PyFluent (Remote SSH).
                                 </div>
                             </div>
                             <select id="solver-backend" onchange="onBackendChange()" style="background: #f8fafc; color: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-weight: 500;">
+                                <option value="openfoam" selected>OpenFOAM (dsmcFoam/hybridDSMC)</option>
                                 <option value="sparta">SPARTA (DSMC)</option>
                                 <option value="pyfluent">PyFluent (Remote SSH gRPC)</option>
                                 <option value="pyfluent_local">PyFluent (Local SSH gRPC)</option>
@@ -925,7 +926,7 @@
                             </div>
                         </div>
                         <div class="input-group" style="display: flex; align-items: center; gap: 10px; padding-top: 10px;">
-                            <input type="checkbox" id="verbose-log" style="width: 20px; height: 20px;">
+                            <input type="checkbox" id="verbose-log" checked style="width: 20px; height: 20px;">
                             <label for="verbose-log">Verbose Engine Output (Debug Mode)</label>
                         </div>
                     </div>
@@ -1016,6 +1017,14 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
                     <div class="domain-controls" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
                         <h4 style="color: var(--primary); margin-bottom: 10px; font-size: 0.9rem;">Domain Dimensions</h4>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-size: 0.8rem; color: var(--text-dim);">Domain Geometry</label>
+                            <select id="env-domain-type" onchange="refreshDomainPreview()" style="background: #f8fafc; color: #1e293b; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; width: 100%; font-size: 0.85rem;">
+                                <option value="u-domain" selected>U-Domain (Semi-Circular Inlet)</option>
+                                <option value="rectangular">Rectangular (Box)</option>
+                                <option value="o-domain">O-Domain (Circular)</option>
+                            </select>
+                        </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                             <div class="input-group">
                                 <div class="tooltip-container">
@@ -1192,7 +1201,6 @@
     </div>
 
     <script src="script.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Three.js for 3D View -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>

@@ -10,7 +10,9 @@ import os
 import shutil
 import subprocess
 import sys
+import json
 import argparse
+import time
 
 sys.stdout.flush()
 
@@ -128,11 +130,14 @@ def run_simulation(steps=None):
         cmdargs.extend(["-k", "on", "g", "1", "-sf", "kk"])
     
     spa = sparta(cmdargs=cmdargs)
+    
+    # Detect rank robustly without mpi4py
     me = 0
-    try:
-        me = spa.world_rank()
-    except:
-        pass
+    # Try OpenMPI/MPICH/etc environment variables first
+    for env_var in ["OMPI_COMM_WORLD_RANK", "PMI_RANK", "RANK"]:
+        if env_var in os.environ:
+            me = int(os.environ[env_var])
+            break
 
     if me == 0:
         print(f"[*] SPARTA is live (GPU={'ON' if '-sf' in cmdargs else 'OFF'}).")
@@ -180,49 +185,140 @@ def run_simulation(steps=None):
             f.write("Simulation completed successfully.\n")
         print(f"[*] Output written to {WORKSPACE_OUTPUT}")
 
-    spa.command("clear")
+    # Ensure all processes are synchronized before closing
+    spa.command("run 0")
     spa.close()
+    sys.stdout.flush()
+    os._exit(0)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="StellarOrion Simulation Runner")
-    parser.add_argument("--optimize", action="store_true", help="Run the full survivability optimization loop")
-    parser.add_argument("--test", type=str, choices=["sparta", "pyfluent", "pyansys", "baseline"], help="Run integration test (headless)")
-    parser.add_argument("--samples", type=int, default=5, help="Number of samples for optimization")
-    parser.add_argument("--goal", type=str, default="drag", help="Optimization goal (drag or heat)")
-    parser.add_argument("--steps", type=int, default=1000, help="Number of simulation steps")
-    parser.add_argument("--pinn", action="store_true", default=True, help="Enable PINN acceleration (Default)")
-    parser.add_argument("--no-pinn", action="store_false", dest="pinn", help="Disable PINN acceleration")
-    parser.add_argument("--sparta-gpu", action="store_true", default=False, help="Enable SPARTA GPU acceleration")
+    parser = argparse.ArgumentParser(
+        description=(
+            "StellarOrion HIAD Simulation Runner\n"
+            "------------------------------------\n"
+            "A command-line interface for hypersonic HIAD geometry optimization and simulation\n"
+            "using SPARTA (DSMC), OpenFOAM (dsmcFoam), and PyAnsys/PyFluent backends.\n"
+            "\n"
+            "QUICK START EXAMPLES:\n"
+            "  Fetch IRVE-3 reference data:     python main.py --gettheirvebbaseline\n"
+            "  Run IRVE-3 calibration check:    python main.py --compareCalibrate --solver openfoam\n"
+            "  Run baseline SPARTA validation:  python main.py --test baseline --solver sparta\n"
+            "  Run full optimization loop:      python main.py --optimize --solver sparta --samples 10\n"
+            "\n"
+            "NOTE: SPARTA and OpenFOAM solvers require Docker Desktop to be running.\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument("--no-sparta-gpu", action="store_false", dest="sparta_gpu", help="Disable SPARTA GPU acceleration")
+    # -- Mode Flags ------------------------------------------------------------
+    mode = parser.add_argument_group("Mode Flags (choose one)")
+    mode.add_argument("--optimize", action="store_true",
+        help="Run the full survivability optimization loop. Iterates over geometry samples using LHS, runs simulations, and converges toward optimal Cd/heat flux using PINN refinement.")
+    mode.add_argument("--test", type=str,
+        choices=["sparta", "pyfluent", "pyansys", "baseline", "openfoam", "sample"],
+        metavar="MODE",
+        help=(
+            "Run a headless integration test. Choices:\n"
+            "  sparta    - SPARTA Docker dry-run handshake test\n"
+            "  openfoam  - OpenFOAM Docker readiness check\n"
+            "  pyfluent  - Remote PyFluent SSH handshake\n"
+            "  pyansys   - Local PyAnsys/Fluent handshake\n"
+            "  baseline  - Full IRVE-3 baseline validation vs documentation\n"
+            "  sample    - Single simulation with IRVE-3 default parameters"
+        ))
+    mode.add_argument("--compareCalibrate", action="store_true",
+        help="Shorthand for: --headless --test sample --solver <solver>. Runs a single IRVE-3 geometry simulation and prints a formatted comparison table of Cd and heat flux against the official IRVE-3 baseline values.")
+    mode.add_argument("--gettheirvebbaseline", action="store_true",
+        help="Print the IRVE-3 mission baseline parameters as JSON (geometry, performance, validation targets). No simulation is run. Useful for reference.")
 
-    
-    # SSH Credentials for headless PyFluent testing
-    parser.add_argument("--ssh-host", type=str, help="Remote host for PyFluent")
-    parser.add_argument("--ssh-user", type=str, help="Remote user for PyFluent")
-    parser.add_argument("--ssh-pass", type=str, help="Remote password for PyFluent")
-    parser.add_argument("--ssh-key", type=str, help="Remote SSH key path for PyFluent")
-    parser.add_argument("--chem", type=str, default="5-species", choices=["5-species", "11-species", "mars"], help="Chemistry model (5-species, 11-species, or mars)")
-    parser.add_argument("--gettheirvebbaseline", action="store_true", help="Get the IRVE baseline parameter results simulation sample")
-    parser.add_argument("--solver", type=str, default="sparta", choices=["sparta", "pyfluent", "pyansys"], help="Backend solver (sparta, pyfluent, or local pyansys)")
-    parser.add_argument("--skip-diag", action="store_true", help="Skip slow initial diagnostics (e.g. GPU detection)")
-    parser.add_argument("--headless", action="store_true", help="Run simulation in headless mode (no GUI)")
-    
-    args, unknown = parser.parse_known_args()
+    # -- Solver Selection ----------------------------------------------------──
+    solver_grp = parser.add_argument_group("Solver Selection")
+    solver_grp.add_argument("--solver", type=str, default="openfoam",
+        choices=["sparta", "pyfluent", "pyansys", "openfoam"],
+        help=(
+            "Backend solver engine to use. Default: openfoam\n"
+            "  sparta    - DSMC rarefied flow solver via Docker (sparta-hysp image)\n"
+            "  openfoam  - dsmcFoam continuum/DSMC solver via Docker (openfoam-hysp image)\n"
+            "  pyansys   - Local Ansys Fluent via PyFluent (requires Ansys 2023R1+ install)\n"
+            "  pyfluent  - Remote Ansys Fluent via SSH tunnel"
+        ))
+
+    # -- Simulation Parameters ------------------------------------------------─
+    sim = parser.add_argument_group("Simulation Parameters")
+    sim.add_argument("--steps", type=int, default=1000,
+        help="Number of simulation timesteps. Default: 1000. (For SPARTA: particle advance steps. For dsmcFoam: time iterations.)")
+    sim.add_argument("--samples", type=int, default=5,
+        help="Number of Latin Hypercube Sampling (LHS) geometry samples per optimization iteration. Default: 5.")
+    sim.add_argument("--goal", type=str, default="drag", choices=["drag", "heat"],
+        help="Optimization objective. 'drag' minimizes aerodynamic drag coefficient (Cd). 'heat' minimizes peak stagnation heat flux. Default: drag.")
+    sim.add_argument("--chem", type=str, default="5-species",
+        choices=["5-species", "11-species", "mars"],
+        help=(
+            "Chemistry model for gas species. Default: 5-species\n"
+            "  5-species  - Earth air: N2, O2, NO, N, O (standard for <80km)\n"
+            "  11-species - High-enthalpy Earth: adds ionized species (N2+, O2+, NO+, e-) for >80km\n"
+            "  mars       - Mars atmosphere: CO2, N2, CO, O (for future Mars EDL studies)"
+        ))
+
+    # -- Acceleration & Hardware --------------------------------------------───
+    hw = parser.add_argument_group("Acceleration & Hardware")
+    hw.add_argument("--pinn", action="store_true", default=True,
+        help="Enable Physics-Informed Neural Network (PINN) surrogate for optimization acceleration. Default: enabled.")
+    hw.add_argument("--no-pinn", action="store_false", dest="pinn",
+        help="Disable the PINN surrogate. Optimization will rely entirely on direct simulation samples.")
+    hw.add_argument("--sparta-gpu", action="store_true", default=False,
+        help="Enable CUDA GPU acceleration for SPARTA via Kokkos. Requires an NVIDIA GPU and the CUDA-enabled sparta-hysp Docker image (Dockerfile.cuda).")
+    hw.add_argument("--no-sparta-gpu", action="store_false", dest="sparta_gpu",
+        help="Force CPU-only SPARTA execution even if a GPU is detected.")
+    hw.add_argument("--skip-diag", action="store_true",
+        help="Skip slow startup diagnostics (e.g. GPU detection via nvidia-smi). Useful for fast iteration on systems where GPU state is known.")
+
+    # -- Output & Display ----------------------------------------------------──
+    out = parser.add_argument_group("Output & Display")
+    out.add_argument("--headless", action="store_true",
+        help="Run in fully headless mode (no GUI windows). Required for CLI/server environments. Output is printed to stdout.")
+    out.add_argument("--paraview", action="store_true",
+        help="After an OpenFOAM simulation, automatically launch ParaView with an automated visualization script. Requires ParaView to be installed on the host.")
+    out.add_argument("--verbose", action="store_true", default=True,
+        help="Enable verbose logging from the simulation engine. Default: enabled.")
+    out.add_argument("--no-verbose", action="store_false", dest="verbose",
+        help="Suppress verbose engine output. Only critical results and errors will be printed.")
+
+    # -- Remote PyFluent (SSH) ------------------------------------------------─
+    ssh = parser.add_argument_group("Remote PyFluent / SSH Options (only with --solver pyfluent)")
+    ssh.add_argument("--ssh-host", type=str, help="Hostname or IP of the remote Ansys Fluent server.")
+    ssh.add_argument("--ssh-user", type=str, help="SSH username for the remote Fluent server.")
+    ssh.add_argument("--ssh-pass", type=str, help="SSH password (if not using key-based auth).")
+    ssh.add_argument("--ssh-key",  type=str, help="Path to SSH private key file for key-based authentication.")
+
+    args = parser.parse_args()
+
+    if args.compareCalibrate:
+        args.headless = True
+        if not args.test:
+            args.test = "sample"
+        # Use default steps (1000) for calibration check unless user explicitly set something else
 
     if args.gettheirvebbaseline:
         print("[*] Fetching IRVE-3 Baseline Parameter Results...")
         from StellarOrionEngineMach5Up import Api
-        # Use static method if possible or just call it
         baseline = Api.get_irve_baseline_results_static()
-        import json
         print(json.dumps(baseline, indent=4))
         return
 
     if not os.environ.get("IN_DOCKER"):
         from StellarOrionEngineMach5Up import Api
         api = Api()
+        
+        # Pre-flight check for Docker if using SPARTA or OpenFOAM
+        if args.solver in ['sparta', 'openfoam'] or args.test in ['sparta', 'openfoam', 'baseline', 'sample']:
+            try:
+                subprocess.run(["docker", "info"], capture_output=True, check=True)
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                print("[-] CRITICAL ERROR: Docker is not running or not installed.")
+                print("    Please start Docker Desktop and ensure the daemon is active.")
+                sys.exit(1)
 
         if args.test:
             print(f"[*] Starting Headless Integration Test: {args.test.upper()}...")
@@ -248,17 +344,147 @@ def main():
                 res = api.run_local_pyfluent_test(show_gui=True)
                 print(f"[*] Result: {res.get('status', 'unknown').upper()}")
                 print(f"[*] Message: {res.get('message', '')}")
+            elif args.test == "openfoam":
+                res = api.run_openfoam_integration_test()
+                print(f"[*] Result: {res.get('status', 'unknown').upper()}")
+                print(f"[*] Message: {res.get('message', '')}")
             elif args.test == "baseline":
                 print("[*] Starting IRVE-3 Baseline Validation Simulation...")
                 res = api.run_baseline_validation(solver=args.solver, skip_diag=args.skip_diag, headless=args.headless, sparta_gpu=args.sparta_gpu)
                 print(f"[*] Validation Result: {res.get('status', 'unknown').upper()}")
+                
+                if 'comparison' in res:
+                    print("\n[Comparison: Simulation vs IRVE-3 Documentation]")
+                    print(f"{'Variable':<30} | {'Simulation':<12} | {'Document':<12} | {'Error %':<8}")
+                    print("-" * 75)
+                    for k, v in res['comparison'].items():
+                        sim_str = f"{v['sim']:.2f} {v.get('unit', '')}".strip()
+                        doc_str = f"{v['doc']:.2f} {v.get('unit', '')}".strip()
+                        print(f"{k:<30} | {sim_str:<12} | {doc_str:<12} | {v['error_pct']:.1f}%")
+                
                 if res.get('status') == 'error':
                     print(f"[-] Error Message: {res.get('message', '')}")
+            elif args.test == "sample":
+                print("[*] Running Single Simulation Sample...")
+                # Construct default params
+                opt_params = {
+                    'solver': args.solver,
+                    'env_vstream': 2700.0,
+                    'env_temp_inf': 250.0,
+                    'env_nrho': 1e22,
+                    'env_run': args.steps,
+                    'env_fnum': '1e22',
+                    'headless': args.headless,
+                    'paraview': args.paraview,
+                    'sparta_gpu': args.sparta_gpu
+                }
+                sample_dict = {
+                    'diameter': 3.0,
+                    'angle': 60.0,
+                    'nose': 0.191,
+                    'toroids': 7
+                }
+                print("[*] IRVE-3 Baseline Parameters:")
+                # (json already imported)
+                print(json.dumps({**opt_params, **sample_dict}, indent=4))
+                
+                # Generate Geometry STL
+                print("[*] Generating Sample Geometry STL...")
+                cad_dir = os.path.join(api.cwd, "CADDesign")
+                python_exec = api._get_python_exec()
+                cmd_cad = [
+                    python_exec, os.path.join(cad_dir, "HIAD_GeometryEngine.py"),
+                    "--diameter", str(sample_dict['diameter']),
+                    "--angle", str(sample_dict['angle']),
+                    "--nose", str(sample_dict['nose']),
+                    "--toroids", str(sample_dict['toroids']),
+                    "--thickness", "0.0254",
+                    "--output", "HIAD_sample",
+                    "--slice_angle", "360.0"
+                ]
+                subprocess.run(cmd_cad, cwd=cad_dir, check=True)
+
+                if args.solver == 'openfoam':
+                    api.test_openfoam_readiness()
+                    res = api.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_sample")
+                elif args.solver == 'sparta':
+                    res = api.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_sample")
+                else:
+                    # Fallback for other solvers in sample mode
+                    res = api.run_sparta_integration_test() 
+                
+                # Add baseline comparison for solvers that return drag
+                if 'drag' in res and res['drag'] > 0:
+                    baseline = api.get_irve_baseline_results_static()
+                    v = opt_params['env_vstream']
+                    rho = 0.001 # approx 1e-3 (at 52km for IRVE-3)
+                    force_n = res['drag']
+                    area = 3.14159 * (sample_dict['diameter']/2)**2
+                    cd_sim = force_n / (0.5 * rho * v**2 * area) if (rho * v**2 * area) > 0 else 0
+                    
+                    # Heat Flux conversion (W/m2 to W/cm2)
+                    sim_heat = res.get('heat', 0) / 10000.0
+                    
+                    # Performance Metrics Derivation
+                    mass_kg = baseline['geometry']['mass_kg']
+                    force_n = res['drag']
+                    decel_g = force_n / (mass_kg * 9.81) if mass_kg > 0 else 0
+                    
+                    # Pressure Metrics
+                    # q = 0.5 * rho * v^2
+                    q_kpa = (0.5 * rho * v**2) / 1000.0
+                    # P_stag approx Cd * q (or use Newtonian approx: 2 * q)
+                    p_stag_kpa = (cd_sim * q_kpa) 
+                    
+                    res['comparison'] = {
+                        'drag_coeff': {
+                            'sim': cd_sim,
+                            'doc': baseline['validation_targets']['reference_cd'],
+                            'error_pct': abs(cd_sim - baseline['validation_targets']['reference_cd']) / baseline['validation_targets']['reference_cd'] * 100
+                        },
+                        'peak_heat_flux': {
+                            'sim': sim_heat,
+                            'doc': baseline['performance']['peak_heat_flux_wcm2'],
+                            'unit': 'W/cm2',
+                            'error_pct': abs(sim_heat - baseline['performance']['peak_heat_flux_wcm2']) / baseline['performance']['peak_heat_flux_wcm2'] * 100 if baseline['performance']['peak_heat_flux_wcm2'] > 0 else 0
+                        },
+                        'peak_deceleration': {
+                            'sim': decel_g,
+                            'doc': baseline['performance']['peak_deceleration_g'],
+                            'unit': 'G',
+                            'error_pct': abs(decel_g - baseline['performance']['peak_deceleration_g']) / baseline['performance']['peak_deceleration_g'] * 100
+                        },
+                        'dynamic_pressure': {
+                            'sim': q_kpa,
+                            'doc': baseline['performance']['peak_dynamic_pressure_kpa'],
+                            'unit': 'kPa',
+                            'error_pct': abs(q_kpa - baseline['performance']['peak_dynamic_pressure_kpa']) / baseline['performance']['peak_dynamic_pressure_kpa'] * 100
+                        },
+                        'stagnation_pressure': {
+                            'sim': p_stag_kpa,
+                            'doc': baseline['validation_targets']['stagnation_pressure_kpa'],
+                            'unit': 'kPa',
+                            'error_pct': abs(p_stag_kpa - baseline['validation_targets']['stagnation_pressure_kpa']) / baseline['validation_targets']['stagnation_pressure_kpa'] * 100
+                        },
+                        'ballistic_coefficient': {
+                            'sim': mass_kg / (cd_sim * area) if (cd_sim * area) > 0 else 0,
+                            'doc': baseline['performance']['ballistic_coefficient_kgm2'],
+                            'unit': 'kg/m2',
+                            'error_pct': abs((mass_kg / (cd_sim * area)) - baseline['performance']['ballistic_coefficient_kgm2']) / baseline['performance']['ballistic_coefficient_kgm2'] * 100 if (cd_sim * area) > 0 else 0
+                        }
+                    }
+                
+                print(f"[*] Result: {res}")
 
                 if 'comparison' in res:
-                    print("\n[Comparison: Simulation vs Documentation]")
+                    print("\n[Comparison: Simulation vs IRVE-3 Documentation]")
+                    print(f"Source: {api.get_irve_citation()}")
+                    print(f"{'Variable':<30} | {'Simulation':<12} | {'Document':<12} | {'Error %':<8}")
+                    print("-" * 85)
                     for k, v in res['comparison'].items():
-                        print(f"  - {k}: Sim={v['sim']:.2f}, Doc={v['doc']:.2f}, Error={v['error_pct']:.1f}%")
+                        sim_str = f"{v['sim']:.2f} {v.get('unit', '')}".strip()
+                        doc_str = f"{v['doc']:.2f} {v.get('unit', '')}".strip()
+                        print(f"{k:<30} | {sim_str:<12} | {doc_str:<12} | {v['error_pct']:.1f}%")
                 
                 print(f"\n[*] Post-processing plots generated in: {os.path.join(CONTAINER_WORKDIR, 'web', 'assets', 'plots')}")
             return
@@ -286,11 +512,12 @@ def main():
                 'v_angle': True,
                 'v_toroids': True,
                 'v_nose': True,
-                'solver': args.solver
+                'solver': args.solver,
+                'verbose': args.verbose
             }
             
             print("[VERBOSE] Sending Optimization Parameters:")
-            import json
+            # (json already imported)
             print(json.dumps(opt_params, indent=4))
             
             api.execute_optimization(opt_params, is_gui=False)

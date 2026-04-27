@@ -1,0 +1,35 @@
+FROM opencfd/openfoam-default:2312
+
+USER root
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install GUI tools (VNC, noVNC, XFCE)
+RUN apt-get update && apt-get install -y \
+    wget \
+    git \
+    xfce4 \
+    xfce4-goodies \
+    tightvncserver \
+    novnc \
+    websockify \
+    paraview \
+    && rm -rf /var/lib/apt/lists/*
+
+# Setup noVNC
+RUN ln -s /usr/share/novnc/vnc.html /usr/share/novnc/index.html
+
+# Copy VNC startup script
+COPY vnc_startup.sh /usr/local/bin/vnc_startup.sh
+RUN chmod +x /usr/local/bin/vnc_startup.sh
+
+# Environment variables for OpenFOAM
+ENV USER=root
+ENV HOME=/root
+WORKDIR /workspace
+
+# Source OpenFOAM
+RUN echo "source /usr/lib/openfoam/openfoam2312/etc/bashrc" >> /root/.bashrc
+
+EXPOSE 6080 5901
+
+CMD ["/usr/local/bin/vnc_startup.sh"]

@@ -1,1 +1,8 @@
 #include .gitignore
+
+# Ansys Fluent / CFD
+*.trn
+cleanup-fluent-*.bat
+FM_*
+fluent-*-error.log
+fluent-*.log
