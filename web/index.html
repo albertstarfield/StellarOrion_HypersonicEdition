@@ -108,11 +108,12 @@
                     </div>
                     
                     <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); padding: 20px; border-radius: 12px;">
-                        <h4 style="color: #10b981; margin-bottom: 8px;">Baseline: IRVE-3 / LOFTID</h4>
+                        <h4 style="color: #10b981; margin-bottom: 8px;">Baseline: IRVE-3 (Rapisarda 2024)</h4>
                         <ul style="margin: 0; font-size: 0.85rem; padding-left: 20px; color: var(--text-dim); line-height: 1.6;">
-                            <li><strong>Diameter:</strong> 3.0m (Standard Flight Scale)</li>
-                            <li><strong>TPS Thickness:</strong> 0.0254m (1.0 inch)</li>
-                            <li><strong>Nose Radius:</strong> 0.191m (Hemispherical)</li>
+                            <li><strong>Diameter:</strong> 3.0 m (Standard Flight Scale)</li>
+                            <li><strong>TPS Thickness:</strong> 0.0254 m (1.0 inch)</li>
+                            <li><strong>Nose Radius:</strong> 0.191 m (Rapisarda Table 4.1)</li>
+                            <li><strong>Toroid Radius:</strong> 0.135 m (Rapisarda Table 4.1)</li>
                             <li><strong>Mission:</strong> Earth Reentry / Mars Entry</li>
                         </ul>
                     </div>
@@ -362,8 +363,8 @@
                                 Measures an object's ability to overcome air resistance. Lower β results in higher altitude deceleration.
                             </div>
                         </div>
-                        <input type="range" id="target-beta-range" min="10" max="100" value="27" oninput="syncTarget('beta', 'range')">
-                        <input type="number" id="target-beta-val" value="27" oninput="syncTarget('beta', 'val')" style="padding: 4px;">
+                        <input type="range" id="target-beta-range" min="10" max="100" value="26.9" oninput="syncTarget('beta', 'range')">
+                        <input type="number" id="target-beta-val" value="26.9" oninput="syncTarget('beta', 'val')" style="padding: 4px;">
                         <input type="number" id="target-beta-tol" value="1.0" step="0.1" style="padding: 4px; border-color: var(--primary-glow);">
                     </div>
 
@@ -378,8 +379,8 @@
                                 Peak convective heat flux at the nose stagnation point. Primary target for TPS design.
                             </div>
                         </div>
-                        <input type="range" id="target-heat-range" min="5" max="150" value="14.4" oninput="syncTarget('heat', 'range')">
-                        <input type="number" id="target-heat-val" value="14.4" oninput="syncTarget('heat', 'val')" style="padding: 4px;">
+                        <input type="range" id="target-heat-range" min="5" max="150" value="14.36" oninput="syncTarget('heat', 'range')">
+                        <input type="number" id="target-heat-val" value="14.36" oninput="syncTarget('heat', 'val')" style="padding: 4px;">
                         <input type="number" id="target-heat-tol" value="0.1" step="0.01" style="padding: 4px; border-color: var(--primary-glow);">
                     </div>
 
@@ -429,6 +430,22 @@
                         <input type="range" id="target-q-range" min="1000" max="20000" value="5000" oninput="syncTarget('q', 'range')">
                         <input type="number" id="target-q-val" value="5000" oninput="syncTarget('q', 'val')" style="padding: 4px;">
                         <input type="number" id="target-q-tol" value="100" step="10" style="padding: 4px; border-color: var(--primary-glow);">
+                    </div>
+
+                    <!-- Row: Total Heat Load -->
+                    <div class="target-row" style="display: grid; grid-template-columns: 140px 1fr 80px 100px; gap: 10px; align-items: center; margin-bottom: 8px; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px;">
+                        <div class="tooltip-container">
+                            <span style="font-weight: 500; font-size: 0.8rem;">Total Heat Load</span>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Total Heat Load</strong>
+                                <span class="unit">Unit: J/cm²</span>
+                                The integrated heat flux over the entry duration. Key for ensuring TPS does not reach ablation limits. (Rapisarda: 195.1 J/cm²)
+                            </div>
+                        </div>
+                        <input type="range" id="target-hload-range" min="10" max="1000" value="195.1" oninput="syncTarget('hload', 'range')">
+                        <input type="number" id="target-hload-val" value="195.1" oninput="syncTarget('hload', 'val')" style="padding: 4px;">
+                        <input type="number" id="target-hload-tol" value="1.0" step="0.1" style="padding: 4px; border-color: var(--primary-glow);">
                     </div>
                 </div>
 

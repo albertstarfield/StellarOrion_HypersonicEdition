@@ -153,25 +153,35 @@ class Api:
         return {
             "mission": "IRVE-3",
             "date": "July 23, 2012",
+            "reference": "Rapisarda (2024) / NASA TP-2013-4012",
             "geometry": {
                 "diameter_m": 3.0,
                 "nose_radius_m": 0.191,
                 "forebody_angle_deg": 60.0,
                 "toroids": 7,
+                "toroids_rapisarda": 6,
+                "toroid_radius_m": 0.1350,
+                "outer_toroid_radius_m": 0.0508,
+                "payload_height_m": 1.7,
+                "payload_radius_m": 0.275,
                 "mass_kg": 281.0
             },
             "performance": {
                 "velocity_mach": 10.0,
                 "velocity_ms": 2700.0,
-                "peak_heat_flux_wcm2": 14.4,
+                "peak_heat_flux_wcm2": 14.361,
+                "total_heat_load_jcm2": 195.0577,
                 "peak_deceleration_g": 20.2,
                 "peak_dynamic_pressure_kpa": 6.2,
                 "ballistic_coefficient_kgm2": 26.9,
-                "peak_heating_altitude_km": 52.0
+                "peak_heating_altitude_km": 52.0,
+                "time_of_peak_heating_s": 677.49
             },
             "validation_targets": {
                 "reference_cd": 1.47,
-                "stagnation_pressure_kpa": 12.4
+                "stagnation_pressure_kpa": 12.4,
+                "ambient_pressure_pa": 75.77,
+                "ambient_temp_k": 270.65
             }
         }
 
@@ -183,9 +193,9 @@ class Api:
     def get_irve_citation():
         """Returns the official citation for IRVE-3 mission data."""
         return (
-            "Dillman, R. A., et al. (2013). 'Flight Performance of the Inflatable Reentry Vehicle Experiment 3'. "
-            "22nd AIAA Aerodynamic Decelerator Systems Technology Conference and Seminar. AIAA-2013-1390. "
-            "NASA Langley Research Center."
+            "1. Dillman, R. A., et al. (2013). 'Flight Performance of the Inflatable Reentry Vehicle Experiment 3'. AIAA-2013-1390.\n"
+            "2. Lau, K., et al. (2013). 'IRVE-3 Post-Flight Aerothermal Reconstruction'. NASA/TP-2013-4012.\n"
+            "3. Rapisarda, C. (2024). 'MDAO of Inflatable Stacked Toroids for Atmospheric Entry'. University of Strathclyde."
         )
 
     def get_manual_content(self):
@@ -261,12 +271,16 @@ class Api:
         if sys.platform == "win32":
             cad_venv_python = os.path.join(cad_dir, "venv", "Scripts", "python.exe")
             root_venv_gui = os.path.join(self.cwd, ".venv_gui", "Scripts", "python.exe")
+            root_venv = os.path.join(self.cwd, ".venv", "Scripts", "python.exe")
         else:
             cad_venv_python = os.path.join(cad_dir, "venv", "bin", "python")
             root_venv_gui = os.path.join(self.cwd, ".venv_gui", "bin", "python")
+            root_venv = os.path.join(self.cwd, ".venv", "bin", "python")
         
         if os.path.exists(cad_venv_python):
             return cad_venv_python
+        elif os.path.exists(root_venv):
+            return root_venv
         elif os.path.exists(root_venv_gui):
             return root_venv_gui
         return sys.executable
@@ -487,11 +501,18 @@ class Api:
         epsilon = 0.88 # High-temp SiC fabric
         t_surface = (stag_heat / (sigma * epsilon))**0.25 if stag_heat > 0 else 300
         
+        # Stagnation Pressure [Pa]
+        # Approximation: Dynamic pressure (q) * factor (typically 1.8-2.0 for hypersonic blunt bodies)
+        stag_press = q * 1.95 
+        
         return {
             'beta': beta,
             'kn': kn,
             'stag_heat': stag_heat,
+            'heat_load': heat_load,
+            'time_of_peak': duration, # Simplified: assuming peak occurs at end of pulse for these fast tests
             'g_load': g_load,
+            'stag_press': stag_press,
             'surface_temp': t_surface,
             'backface_temp': t_backface,
             'shock_temp': sparta_res.get('shock_temp', 300.0)
@@ -2261,8 +2282,7 @@ run             {opt_params.get('env_run', '1000')}
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed for Sample {i+1}: {ve}")
 
             training_x.append(current_x_row)
-            # Multi-metric output for MoP: [goal_val, beta, backface_temp, g_load]
-            training_y.append([val, f_metrics['beta'], f_metrics['backface_temp'], f_metrics['g_load']])
+            training_y.append([val, f_metrics['beta'], f_metrics['stag_heat'], f_metrics['heat_load'], f_metrics['time_of_peak'], f_metrics['g_load'], f_metrics['stag_press'], f_metrics['backface_temp']])
             
             # Save Checkpoint
             try:
@@ -2358,12 +2378,16 @@ run             {opt_params.get('env_run', '1000')}
                 test_row.append(val)
                 
             t_val = torch.tensor([test_row], dtype=torch.float32).to(device)
-            # Model Output: [goal_val, beta, backface_temp, g_load]
+            # Model Output: [goal_val, beta, stag_heat, heat_load, time_of_peak, g_load, stag_press, backface_temp]
             preds = model(t_val).detach().cpu().numpy().flatten()
             pred_goal_val = preds[0]
             pred_beta = preds[1]
-            pred_temp = preds[2]
-            pred_gload = preds[3]
+            pred_heat = preds[2]
+            pred_hload = preds[3]
+            pred_time = preds[4]
+            pred_gload = preds[5]
+            pred_press = preds[6]
+            pred_temp = preds[7]
             
             # --- Methodology of Physics (MoP) Constraint Layer ---
             p_mop = 0
@@ -2462,19 +2486,25 @@ run             {opt_params.get('env_run', '1000')}
             # compile detailed strings for the results panel
             ref_metrics = training_y[0] # [goal, beta, temp, gload]
             res_data = {
-                "ref": f"--- BASELINE (IRVE-3) ---\n"
+                "ref": f"--- BASELINE (IRVE-3 / Rapisarda 2024) ---\n"
                        f"Diameter: {training_x[0][0]:.2f}m\n"
                        f"Metric ({goal.upper()}): {ref_metrics[0]:.4f}\n"
                        f"Ballistic Coeff (β): {ref_metrics[1]:.1f} kg/m²\n"
-                       f"Peak Backface Temp: {ref_metrics[2]:.1f} K\n"
-                       f"Deceleration Load: {ref_metrics[3]:.2f} g\n"
+                       f"Peak Heat Flux: {ref_metrics[2] / 10000.0:.2f} W/cm²\n"
+                       f"Total Heat Load: {ref_metrics[3] / 10000.0:.2f} J/cm²\n"
+                       f"Time of Peak Heating: {ref_metrics[4]:.1f} s\n"
+                       f"Deceleration Load: {ref_metrics[5]:.2f} g\n"
+                       f"Peak Stagnation Press: {ref_metrics[6] / 1000.0:.2f} kPa\n"
                        f"Knudsen Number (Kn): {f_metrics['kn']:.4f}",
-                "opt": f"--- OPTIMIZED (G2) ---\n"
+                "opt": f"--- OPTIMIZED (G2 / Survivable) ---\n"
                        f"Diameter: {best_config['diameter']:.2f}m\n"
                        f"Metric ({goal.upper()}): {best_val:.4f}\n"
                        f"Ballistic Coeff (β): {best_pred_metrics[1]:.1f} kg/m²\n"
-                       f"Peak Backface Temp: {best_pred_metrics[2]:.1f} K\n"
-                       f"Deceleration Load: {best_pred_metrics[3]:.2f} g\n"
+                       f"Peak Heat Flux: {best_pred_metrics[2] / 10000.0:.2f} W/cm²\n"
+                       f"Total Heat Load: {best_pred_metrics[3] / 10000.0:.2f} J/cm²\n"
+                       f"Time of Peak Heating: {best_pred_metrics[4]:.1f} s\n"
+                       f"Deceleration Load: {best_pred_metrics[5]:.2f} g\n"
+                       f"Peak Stagnation Press: {best_pred_metrics[6] / 1000.0:.2f} kPa\n"
                        f"Stagnation Search: Converged"
             }
             self.window.evaluate_js(f"document.getElementById('res-ref').innerText = `{res_data['ref']}`")

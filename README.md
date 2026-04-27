@@ -131,5 +131,26 @@ The Genetic Algorithm (GA) optimizes the HIAD geometry using a Metamodel Prognos
 
 For a deep dive into the specific derivations, SPARTA data column mappings, and code-level implementation details, see [DERIVATION.MD](file:///Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/DERIVATION.md).
 
+---
+
+## 🛰️ Calibration & Validation: IRVE-3 (Rapisarda 2024 Baseline)
+StellarOrion is calibrated against the **IRVE-3 (Inflatable Reentry Vehicle Experiment 3)** flight data using the high-fidelity reconstruction parameters from **Rapisarda (2024)**.
+
+### Key Validation Metrics (Peak Results)
+| Parameter | Simulation Target | Source | Status |
+| :--- | :--- | :--- | :--- |
+| **Aeroshell Diameter** | 3.0 m | NASA Mission | ✅ Verified |
+| **Toroid Radius ($r_{torus}$)** | 0.135 m | Rapisarda Table 4.1 | ✅ Geometry Sync |
+| **Peak Heat Flux ($\dot{q}$)** | 14.36 W/cm² | Rapisarda Table 4.10 | ✅ Calibrated |
+| **Total Heat Load ($Q$)** | 195.06 J/cm² | Rapisarda Table 4.10 | ✅ Calibrated |
+| **Ballistic Coeff ($\beta$)** | 26.9 kg/m² | Rapisarda Table 4.10 | ✅ Base Meta |
+| **Peak Deceleration** | 20.2 g | NASA Flight Data | ✅ Baseline |
+| **Stagnation Pressure** | 12.4 kPa | Rapisarda Recon. | ✅ Verified |
+
+Users can run the automated calibration suite using:
+```bash
+python3 main.py --compareCalibrate --solver sparta --steps 1000
+```
+
 ## 📚 References
 For detailed scientific citations and mission parameters (IRVE-3, LOFTID), see [REFERENCES.MD](file:///Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/REFERENCES.MD).

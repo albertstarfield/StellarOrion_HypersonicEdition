@@ -1212,6 +1212,7 @@ function updateSummary() {
                     <li>Peak g-load: <strong>${getVal('target-g-val')} g</strong></li>
                     <li>Internal Temp: <strong>${getVal('target-temp-val')} °C</strong></li>
                     <li>Dynamic Pressure: <strong>${getVal('target-q-val')} Pa</strong></li>
+                    <li>Total Heat Load: <strong>${getVal('target-hload-val')} J/cm²</strong></li>
                 </ul>
             </div>
             <div class="summary-section" style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
