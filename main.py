@@ -508,10 +508,30 @@ def main():
                     print(f"Source: {api.get_irve_citation()}")
                     print(f"{'Variable':<30} | {'Simulation':<12} | {'Document':<12} | {'Error %':<8}")
                     print("-" * 85)
+                    
+                    # Generate Comparison Plot
+                    results_dir = os.path.join(api.cwd, "results")
+                    os.makedirs(results_dir, exist_ok=True)
+                    plot_path = os.path.join(results_dir, f"CalibrationGraphComparisons_{args.solver}.png")
+                    plot_calibration_comparison(res['comparison'], plot_path)
+
+                    # Generate MP4 Animation if SPARTA
+                    if args.solver == 'sparta':
+                        from source import visualizer
+                        sparta_res_dir = os.path.join(api.cwd, "CADDesign", "results_reference")
+                        grid_files = sorted([os.path.join(sparta_res_dir, f) for f in os.listdir(sparta_res_dir) if f.startswith("grid.") and f.endswith(".out")],
+                                            key=lambda x: int(x.split('.')[-2]))
+                        if grid_files:
+                            print(f"[*] Generating MP4 animation from {len(grid_files)} frames...")
+                            video_path = os.path.join(results_dir, f"CalibrationVideo_{args.solver}.mp4")
+                            visualizer.generate_animation(grid_files, video_path)
+
                     for k, v in res['comparison'].items():
                         sim_str = f"{v['sim']:.2f} {v.get('unit', '')}".strip()
                         doc_str = f"{v['doc']:.2f} {v.get('unit', '')}".strip()
                         print(f"{k:<30} | {sim_str:<12} | {doc_str:<12} | {v['error_pct']:.1f}%")
+                    
+                    sys.exit(0)
                 
                 print(f"\n[*] Post-processing plots generated in: {os.path.join(CONTAINER_WORKDIR, 'web', 'assets', 'plots')}")
             return
@@ -557,6 +577,57 @@ def main():
     else:
         # We are inside the container
         run_simulation(steps=args.steps if '--steps' in sys.argv else None)
+
+def plot_calibration_comparison(comparison_data, output_path):
+    """Generates a bar chart comparing simulation results vs document baseline."""
+    try:
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        metrics = list(comparison_data.keys())
+        sim_vals = [comparison_data[m]['sim'] for m in metrics]
+        doc_vals = [comparison_data[m]['doc'] for m in metrics]
+        
+        # Normalize for visualization (some are 1000s, some are 0.1s)
+        # We'll plot relative to the document (1.0 = 100%)
+        rel_sim = []
+        for i in range(len(metrics)):
+            if doc_vals[i] != 0:
+                rel_sim.append(sim_vals[i] / doc_vals[i])
+            else:
+                rel_sim.append(0)
+        
+        rel_doc = [1.0] * len(metrics)
+
+        fig, ax = plt.subplots(figsize=(12, 7), facecolor='#0f172a')
+        ax.set_facecolor('#0f172a')
+        
+        y_pos = np.arange(len(metrics))
+        height = 0.35
+
+        ax.barh(y_pos - height/2, rel_doc, height, label='Document (Baseline)', color='#38bdf8', alpha=0.3)
+        ax.barh(y_pos + height/2, rel_sim, height, label='Simulation (Current)', color='#f43f5e')
+
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels([m.replace('_', ' ').title() for m in metrics], color='white')
+        ax.invert_yaxis()
+        ax.set_xlabel('Relative Value (1.0 = Match)', color='#94a3b8')
+        ax.set_title('IRVE-3 Aerothermal Calibration: Simulation vs Rapisarda (2024)', color='white', fontweight='bold', fontsize=14)
+        
+        # Error percentage labels
+        for i, m in enumerate(metrics):
+            err = comparison_data[m]['error_pct']
+            ax.text(max(rel_sim[i], rel_doc[i]) + 0.05, i, f"Error: {err:.1f}%", color='#94a3b8', va='center', fontsize=9)
+
+        ax.axvline(x=1.0, color='white', linestyle='--', alpha=0.2)
+        ax.legend(facecolor='#1e293b', edgecolor='#38bdf8', labelcolor='white')
+        plt.grid(True, axis='x', alpha=0.1, color='white')
+        plt.tight_layout()
+        plt.savefig(output_path, dpi=300, facecolor=fig.get_facecolor())
+        plt.close()
+        print(f"[*] Calibration Comparison Plot saved to: {output_path}")
+    except Exception as e:
+        print(f"[!] Error generating calibration plot: {e}")
 
 if __name__ == "__main__":
     main()
