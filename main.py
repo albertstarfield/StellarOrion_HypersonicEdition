@@ -373,7 +373,8 @@ def main():
                     'env_temp_inf': 250.0,
                     'env_nrho': 1e22,
                     'env_run': args.steps,
-                    'env_fnum': '1e22',
+                    'env_fnum': '1e17', # Balanced fnum (~1M particles) to lower noise and maintain speed
+                    'grid_factor': 1.0, # Mesh adjustment: >1.0 denser, <1.0 sparser
                     'headless': args.headless,
                     'paraview': args.paraview,
                     'sparta_gpu': args.sparta_gpu
