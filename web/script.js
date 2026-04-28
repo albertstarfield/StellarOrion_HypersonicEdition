@@ -332,6 +332,7 @@ function startOptimization() {
         env_fnum: getVal('env-fnum'),
         env_react: getVal('env-react'),
         env_run: getVal('env-run'),
+        grid_factor: getVal('env-grid-factor'),
 
         env_domain_type: getVal('env-domain-type'),
         // Domain
@@ -1224,6 +1225,7 @@ function updateSummary() {
                     <div>Viscous: <strong>${getVal('env-viscous-model')}</strong></div>
                     <div>Chemistry: <strong>${getVal('env-chem-mode')}</strong></div>
                     <div>Steady State: <strong>${getCheck('env-steady-state')}</strong></div>
+                    <div>Grid Factor: <strong>${getVal('env-grid-factor')}x</strong></div>
                     <div>DeepXDE Tensor: <strong style="color: ${getCheck('pinn-accel') === '✓' ? '#10b981' : '#ef4444'}">${getCheck('pinn-accel')}</strong></div>
                 </div>
             </div>

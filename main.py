@@ -252,6 +252,8 @@ def main():
         help="Number of Latin Hypercube Sampling (LHS) geometry samples per optimization iteration. Default: 5.")
     sim.add_argument("--goal", type=str, default="drag", choices=["drag", "heat"],
         help="Optimization objective. 'drag' minimizes aerodynamic drag coefficient (Cd). 'heat' minimizes peak stagnation heat flux. Default: drag.")
+    sim.add_argument("--grid-factor", type=float, default=1.0,
+        help="Grid scaling factor. >1.0 for denser mesh, <1.0 for sparser mesh. Default: 1.0.")
     sim.add_argument("--chem", type=str, default="5-species",
         choices=["5-species", "11-species", "mars"],
         help=(
@@ -374,7 +376,7 @@ def main():
                     'env_nrho': 1e22,
                     'env_run': args.steps,
                     'env_fnum': '1e17', # Balanced fnum (~1M particles) to lower noise and maintain speed
-                    'grid_factor': 1.0, # Mesh adjustment: >1.0 denser, <1.0 sparser
+                    'grid_factor': getattr(args, 'grid_factor', 1.0), # Mesh adjustment: >1.0 denser, <1.0 sparser
                     'headless': args.headless,
                     'paraview': args.paraview,
                     'sparta_gpu': args.sparta_gpu
