@@ -5,6 +5,25 @@ import os
 # Use non-interactive backend for thread safety in GUI
 plt.switch_backend('Agg')
 
+def find_ffmpeg():
+    """Attempts to locate ffmpeg executable on Windows if not in PATH."""
+    import shutil
+    import os
+    exe = shutil.which("ffmpeg")
+    if exe: return exe
+    
+    # Check WinGet default location for Windows
+    if os.name == 'nt':
+        local_app_data = os.environ.get('LOCALAPPDATA', '')
+        if local_app_data:
+            winget_base = os.path.join(local_app_data, 'Microsoft', 'WinGet', 'Packages')
+            if os.path.exists(winget_base):
+                # Search for ffmpeg.exe in winget packages
+                for root, dirs, files in os.walk(winget_base):
+                    if 'ffmpeg.exe' in files:
+                        return os.path.join(root, 'ffmpeg.exe')
+    return "ffmpeg" # Fallback to default
+
 def parse_grid_dump(filepath):
     data = []
     with open(filepath, 'r') as f:
@@ -489,8 +508,9 @@ def generate_animation(grid_files, output_mp4):
 
     ani = animation.FuncAnimation(fig, update, frames=len(grid_files), blit=False)
     
-    # Save using ffmpeg
-    writer = animation.FFMpegWriter(fps=5, metadata=dict(artist='StellarOrion'), bitrate=1800)
+    # Save using ffmpeg (with auto-detection)
+    ffmpeg_exe = find_ffmpeg()
+    writer = animation.FFMpegWriter(fps=5, metadata=dict(artist='StellarOrion'), bitrate=1800, executable=ffmpeg_exe)
     ani.save(output_mp4, writer=writer, dpi=300)
     plt.close()
     print(f"Smooth animation saved to {output_mp4}")

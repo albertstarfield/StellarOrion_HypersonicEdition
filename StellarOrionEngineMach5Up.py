@@ -5,7 +5,6 @@ import threading
 import json
 import shutil
 import time
-import math
 import numpy as np
 import paramiko
 import sqlite3
@@ -421,68 +420,6 @@ class Api:
                     'heat': abs(np.max(heat_vals)) if heat_vals else 1.0 
                 }
 
-                # --- Normalize Heat Flux by Segment Length and Timestep ---
-                # Load surface geometry to calculate segment lengths
-                surf_name = latest_file.split('/')[-1].replace('surf.', '').split('.')[0] # Should be 'hiad' or sample name
-                # Try to find the original .surf file to get lengths
-                surf_path = os.path.join(self.cwd, "CADDesign", "HIAD_opt.surf")
-                if not os.path.exists(surf_path):
-                    surf_path = os.path.join(self.cwd, "CADDesign", "HIAD_sample.surf")
-                if not os.path.exists(surf_path):
-                    surf_path = os.path.join(self.cwd, "CADDesign", "HIAD_final.surf")
-                
-                lengths = {}
-                if os.path.exists(surf_path):
-                    with open(surf_path, 'r') as sf:
-                        s_lines = sf.readlines()
-                        pts = {}
-                        mode = None
-                        for sl in s_lines:
-                            if "Points" in sl: mode = "pts"; continue
-                            if "Lines" in sl: mode = "lines"; continue
-                            parts = sl.split()
-                            if mode == "pts" and len(parts) == 3:
-                                pts[int(parts[0])] = (float(parts[1]), float(parts[2]))
-                            if mode == "lines" and len(parts) == 3:
-                                p1 = pts.get(int(parts[1]))
-                                p2 = pts.get(int(parts[2]))
-                                if p1 and p2:
-                                    dist = math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
-                                    lengths[int(parts[0])] = dist
-                
-                # dt is required for flux (Energy / Time)
-                dt = float(kwargs.get('timestep', 1e-6))
-                
-                # Recalculate normalized values
-                norm_heat_vals = []
-                norm_drag_vals = []
-                
-                with open(latest_file, 'r') as f:
-                    f.seek(0)
-                    lines = f.readlines()
-                    start = False
-                    for line in lines:
-                        if "ITEM: SURFS" in line:
-                            start = True
-                            continue
-                        if start:
-                            parts = line.split()
-                            if len(parts) >= 6:
-                                sid = int(parts[0])
-                                l_seg = lengths.get(sid, 1.0) # Default to 1.0 if not found
-                                # ke [Energy] / (dt [s] * l_seg [m]) -> W/m
-                                # For 2D, depth is 1.0m, so W/m / 1m = W/m2
-                                h_flux = abs(float(parts[3])) / (dt * l_seg) if (dt * l_seg) > 0 else 0
-                                d_flux = float(parts[4]) # Drag is usually total force on segment
-                                norm_heat_vals.append(h_flux)
-                                norm_drag_vals.append(d_flux)
-
-                metrics = {
-                    'drag': abs(np.sum(norm_drag_vals)) if norm_drag_vals else 1.0,
-                    'heat': abs(np.max(norm_heat_vals)) if norm_heat_vals else 1.0 
-                }
-                # ----------------------------------------------------------
-                
                 # Find latest grid file for shock temperature (numeric sort)
                 grid_files = [f for f in os.listdir(results_dir) if f.startswith("grid.") and f.endswith(".out")]
                 shock_temp = 300.0
@@ -724,12 +661,9 @@ fix             halt_check halt 100 v_drag_val {tol} error no
         n_repeat = max(1, n_freq // 2)
         n_every = 1
         dump_freq = n_freq
-        
-        # Grid scaling and sparsity (mesh parameter adjustment)
-        gf = float(opt_params.get('grid_factor', 1.0))
-        nx = max(10, int(400 * gf))
-        ny = max(10, int(400 * gf))
 
+        grid_res = int(400 * float(opt_params.get('grid_factor', 1.0)))
+        
         script = f"""# SPARTA Input Script - 8D Optimized
 seed            12345
 dimension       2
@@ -737,7 +671,7 @@ global          gridcut 0.0 comm/sort yes
 boundary        o ar p
 
 create_box      {xmin:.2f} {xmax:.2f} 0.0 {ymax:.2f} -0.5 0.5
-create_grid     {nx} {ny} 1
+create_grid     {grid_res} {grid_res} 1
 balance_grid    rcb cell
 
 global          nrho {n_rho} fnum {opt_params.get('env_fnum', '1e16')}
@@ -1287,6 +1221,23 @@ run             {opt_params.get('env_run', '1000')}
         if exit_code != 0:
             self.log_to_gui(f"    [!] Warning: SPARTA exited with code {exit_code}, but results were found. Proceeding...")
         
+        # 3. Post-processing (Plots & Animation)
+        self.log_to_gui("    [+] Generating Post-processing Plots and Animation...")
+        try:
+            from source import visualizer
+            grid_dir = os.path.join(cad_dir, "results_reference")
+            grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")])
+            plots_dir = os.path.join(self.cwd, "web", "assets", "plots")
+            os.makedirs(plots_dir, exist_ok=True)
+
+            if grid_files:
+                ani_path = os.path.join(plots_dir, "simulation_anim.mp4")
+                visualizer.generate_animation(grid_files, ani_path)
+                visualizer.generate_plots(grid_files[-1], plots_dir)
+                visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_temp.png"), surf_file=os.path.join(cad_dir, f"{surf_name}.surf"), prop='temp')
+        except Exception as ve:
+            self.log_to_gui(f"    [!] Warning: Visual post-processing failed: {ve}")
+
         return self.parse_sparta_results()
 
     def run_local_pyfluent_test(self, show_gui=True):
@@ -2750,6 +2701,8 @@ run             {opt_params.get('env_run', '1000')}
                 os.makedirs(plots_dir, exist_ok=True)
 
                 if grid_files:
+                    ani_path = os.path.join(plots_dir, "baseline_anim.mp4")
+                    visualizer.generate_animation(grid_files, ani_path)
                     visualizer.generate_plots(grid_files[-1], plots_dir)
                     visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_temp.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='temp')
             except Exception as ve:
