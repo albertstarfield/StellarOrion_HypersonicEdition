@@ -41,7 +41,7 @@ def parse_grid_dump(filepath):
                 data.append([float(x) for x in parts[1:]])
     return np.array(data)
 
-def generate_plots(grid_file, output_dir):
+def generate_plots(grid_file, output_dir, suffix=""):
     os.makedirs(output_dir, exist_ok=True)
     data = parse_grid_dump(grid_file)
     if len(data) == 0:
@@ -69,8 +69,8 @@ def generate_plots(grid_file, output_dir):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
-    plt.savefig(os.path.join(output_dir, 'thermal_map.png'), dpi=300)
-    plt.savefig(os.path.join(output_dir, 'thermal_map.jpg'), pil_kwargs={'quality': 85}, dpi=300)
+    plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.png'), dpi=300)
+    plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
 
     # Plot 2: Pressure Contour Heatmap
@@ -82,8 +82,8 @@ def generate_plots(grid_file, output_dir):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
-    plt.savefig(os.path.join(output_dir, 'pressure_map.png'), dpi=300)
-    plt.savefig(os.path.join(output_dir, 'pressure_map.jpg'), pil_kwargs={'quality': 85}, dpi=300)
+    plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.png'), dpi=300)
+    plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
 
     # Plot 3: Velocity Vectors (Quiver)
@@ -98,8 +98,8 @@ def generate_plots(grid_file, output_dir):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
-    plt.savefig(os.path.join(output_dir, 'velocity_vectors.png'), dpi=300)
-    plt.savefig(os.path.join(output_dir, 'velocity_vectors.jpg'), pil_kwargs={'quality': 85}, dpi=300)
+    plt.savefig(os.path.join(output_dir, f'velocity_vectors{suffix}.png'), dpi=300)
+    plt.savefig(os.path.join(output_dir, f'velocity_vectors{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
 
     # Plot 4: Mach Number Contour
@@ -119,16 +119,16 @@ def generate_plots(grid_file, output_dir):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
-    plt.savefig(os.path.join(output_dir, 'mach_map.png'), dpi=300)
-    plt.savefig(os.path.join(output_dir, 'mach_map.jpg'), pil_kwargs={'quality': 85}, dpi=300)
+    plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.png'), dpi=300)
+    plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
 
     # Plot 5: Stagnation Streamline Graph (1D)
-    generate_stagnation_graph(data, output_dir)
+    generate_stagnation_graph(data, output_dir, suffix=suffix)
 
     print(f"Plots generated in {output_dir}")
 
-def generate_stagnation_graph(data, output_dir):
+def generate_stagnation_graph(data, output_dir, suffix=""):
     """Generates a 1D graph of properties along the stagnation streamline (y=0)."""
     # x_center, y_center calculations
     x_center = (data[:, 0] + data[:, 2]) / 2
@@ -172,8 +172,8 @@ def generate_stagnation_graph(data, output_dir):
     ax1.grid(True, alpha=0.1, color='white')
     
     fig.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'stagnation_graph.png'), facecolor=fig.get_facecolor(), dpi=300)
-    plt.savefig(os.path.join(output_dir, 'stagnation_graph.jpg'), pil_kwargs={'quality': 85}, facecolor=fig.get_facecolor(), dpi=300)
+    plt.savefig(os.path.join(output_dir, f'stagnation_graph{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
+    plt.savefig(os.path.join(output_dir, f'stagnation_graph{suffix}.jpg'), pil_kwargs={'quality': 85}, facecolor=fig.get_facecolor(), dpi=300)
     plt.close()
 
 def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp'):
@@ -510,7 +510,8 @@ def generate_animation(grid_files, output_mp4):
     
     # Save using ffmpeg (with auto-detection)
     ffmpeg_exe = find_ffmpeg()
-    writer = animation.FFMpegWriter(fps=5, metadata=dict(artist='StellarOrion'), bitrate=1800, executable=ffmpeg_exe)
+    plt.rcParams['animation.ffmpeg_path'] = ffmpeg_exe
+    writer = animation.FFMpegWriter(fps=5, metadata=dict(artist='StellarOrion'), bitrate=1800)
     ani.save(output_mp4, writer=writer, dpi=300)
     plt.close()
     print(f"Smooth animation saved to {output_mp4}")

@@ -625,96 +625,83 @@ exchange simple {gamma} 0.0
         """Generates a complete SPARTA input script with dynamic geometry."""
         species_src, react_src, vss_src, species_list, mixture_txt = self.get_chemistry_data(opt_params)
         
-        # Current Physics State (Default: IRVE-3 Baseline)
-        n_rho = opt_params.get('env_nrho', '3.5e22')
-        temp_inf = opt_params.get('env_temp_inf', '270.0')
-        vstream = opt_params.get('env_vstream', '2700.0')
-
-        # Current Geometry (varied or base)
-        d_val = float(kwargs.get('diameter', opt_params.get('base_diameter', 3.0)))
+        # Current Physics State
+        n_rho = float(kwargs.get('env_nrho', opt_params.get('env_nrho', 3.5e22)))
+        vstream = float(kwargs.get('env_vstream', opt_params.get('env_vstream', 2700.0)))
+        temp_inf = float(kwargs.get('env_temp_inf', opt_params.get('env_temp_inf', 270.0)))
+        t_wall = float(kwargs.get('env_twall', opt_params.get('env_twall', 1000.0)))
         
-        # Domain scaling (Honor GUI overrides if present)
+        # Current Geometry
+        d_val = float(kwargs.get('diameter', opt_params.get('base_diameter', 3.0)))
+        surf_name = kwargs.get('surf_name', 'HIAD_custom')
+        
+        # Domain scaling
         xmin = float(opt_params.get('env_xmin', -0.6 * d_val))
         xmax = float(opt_params.get('env_xmax', 1.8 * d_val))
         ymax = float(opt_params.get('env_ymax', 1.2 * d_val))
         
-        react_model = opt_params.get('env_react', 'tce')
-        react_cmd = f"react           {react_model} air.react" if react_model != 'none' else "# No gas reaction model"
+        # Grid resolution
+        grid_factor = float(opt_params.get('grid_factor', 1.0))
+        nx = int(400 * grid_factor)
+        ny = int(400 * grid_factor)
         
-        # Surface Catalysis (Integrated Dynamic Generation)
-        surf_react_cmd = "surf_react     1 prob air.surf_react"
-        surf_modify_cmd = "surf_modify     all collide 1 react 1"
-        
-        # Steady State Check
-        steady_state_cmd = ""
-        if opt_params.get('env_steady_state'):
-            tol = opt_params.get('env_steady_tol', '0.01')
-            steady_state_cmd = f"""
-compute         drag_curr reduce sum f_surfavg[1]
-variable        drag_val equal c_drag_curr
-fix             halt_check halt 100 v_drag_val {tol} error no
-"""
+        steps = int(kwargs.get('steps', opt_params.get('env_run', 500)))
 
-        # Averaging and Output Frequencies
-        n_run = int(opt_params.get('env_run', '1000'))
-        n_freq = max(1, n_run // 5) # 5 snapshots
-        n_repeat = max(1, n_freq // 2)
-        n_every = 1
-        dump_freq = n_freq
-
-        grid_res = int(400 * float(opt_params.get('grid_factor', 1.0)))
-        
-        script = f"""# SPARTA Input Script - 8D Optimized
+        script = f"""# SPARTA Input Script - StellarOrion Automated Comparison
 seed            12345
 dimension       2
 global          gridcut 0.0 comm/sort yes
 boundary        o ar p
 
 create_box      {xmin:.2f} {xmax:.2f} 0.0 {ymax:.2f} -0.5 0.5
-create_grid     {grid_res} {grid_res} 1
+create_grid     {nx} {ny} 1
 balance_grid    rcb cell
 
-global          nrho {n_rho} fnum {opt_params.get('env_fnum', '1e16')}
+global          nrho {n_rho:.2e} fnum {n_rho/1e5:.1e}
 
 species         air.species {" ".join(species_list)}
-# Mixture Definition
 {mixture_txt}
-# Physical State
-mixture         air vstream {vstream} 0.0 0.0
-mixture         air temp {temp_inf}
+mixture air vstream {vstream:.1f} 0.0 0.0
+mixture air temp {temp_inf:.1f}
 
 fix             in emit/face air xlo twopass
 collide         vss air air.vss
-{react_cmd}
+react           tce air.react
 
-read_surf       {kwargs.get('surf_name', 'HIAD_opt')}.surf clip
-surf_collide    1 diffuse {opt_params.get('env_temp', '1000.0')} 1.0
-{surf_react_cmd}
-surf_modify     all collide 1
+# Surface Definition
+read_surf       {surf_name}.surf group hiad_surf
+surf_collide    1 diffuse {t_wall:.1f} 1.0
+surf_react      1 prob air.surf_react
+surf_modify     hiad_surf collide 1 react 1
 
-compute         1 surf all air nflux mflux ke
-fix             1 ave/surf all {n_every} {n_repeat} {n_freq} c_1[*]
+# Force and Heat Flux Computations
+compute         1 surf hiad_surf air nflux mflux ke
+fix             1 ave/surf hiad_surf 1 {max(1, steps//10)} {steps} c_1[*]
 
-compute         surfF surf all air fx fy fz
-fix             surfavg ave/surf all {n_every} {n_repeat} {n_freq} c_surfF[*]
+compute         surfF surf hiad_surf air fx fy fz
+fix             surfavg ave/surf hiad_surf 1 {max(1, steps//10)} {steps} c_surfF[*]
+
+# Global Reductions
 compute         drag reduce sum f_surfavg[1]
+compute         heat reduce max f_1[3]
 
+# Flow Field Data
 compute         2 grid all air n u v w
-fix             2 ave/grid all {n_every} {n_repeat} {n_freq} c_2[*]
+fix             2 ave/grid all 1 {max(1, steps//10)} {steps} c_2[*]
 
 compute         3 thermal/grid all air temp press
-fix             3 ave/grid all {n_every} {n_repeat} {n_freq} c_3[*]
+fix             3 ave/grid all 1 {max(1, steps//10)} {steps} c_3[*]
 
-timestep        {opt_params.get('env_step', '1e-6')}
-
-dump            1 surf all {dump_freq} results_reference/surf.*.out id f_1[*] f_surfavg[*]
-dump            2 grid all {dump_freq} results_reference/grid.*.out id xlo ylo xhi yhi f_2[*] f_3[*]
+timestep        1e-6
 
 stats           100
 stats_style     step cpu np nattempt ncoll nscoll nscheck
 
-{steady_state_cmd}
-run             {opt_params.get('env_run', '1000')}
+# Dumps
+dump            1 surf all {steps} results_reference/surf.*.out id f_1[*] f_surfavg[*]
+dump            2 grid all {steps} results_reference/grid.*.out id xlo ylo xhi yhi f_2[*] f_3[*]
+
+run             {steps}
 """
         return script
 
@@ -1146,13 +1133,48 @@ run             {opt_params.get('env_run', '1000')}
             self.log_to_gui(f"[-] Local PyAnsys Error: {e}")
             return {'drag': 1.0, 'heat': 1.0}
 
-    def run_sparta_simulation(self, opt_params, sample_dict, surf_name="HIAD_opt"):
-        """Orchestrates a SPARTA simulation via Docker."""
+    def generate_hiad_geometry(self, sample_dict, nose_type="smooth"):
+        """Helper to call HIAD_GeometryEngine.py with specific parameters."""
+        cad_dir = os.path.join(self.cwd, "CADDesign")
+        python_exec = self._get_python_exec()
+        
+        cmd_cad = [
+            python_exec, "HIAD_GeometryEngine.py",
+            "--diameter", str(sample_dict.get('diameter', 3.0)),
+            "--angle", str(sample_dict.get('angle', 60.0)),
+            "--nose", str(sample_dict.get('nose_radius', 0.191)),
+            "--toroids", str(sample_dict.get('toroids', 7)),
+            "--thickness", str(sample_dict.get('thickness', 0.0254)),
+            "--nose_type", nose_type,
+            "--output", "HIAD_custom"
+        ]
+        
+        if sample_dict.get('flat_skin'):
+            cmd_cad.append("--flat_skin")
+            
+        self.log_to_gui(f"    [+] Executing Geometry Engine: {' '.join(cmd_cad)}")
+        subprocess.run(cmd_cad, cwd=cad_dir, check=True, capture_output=True, text=True)
+
+    def run_sparta_simulation(self, opt_params, sample_dict, surf_name="HIAD_custom", nose_type="smooth"):
+        """Executes SPARTA DSMC simulation for a single configuration."""
         cad_dir = os.path.join(self.cwd, "CADDesign")
         n_run = int(opt_params.get('env_run', '1000'))
         
-        # 1. Setup Directories and Scripts
-        self.log_to_gui(f"    [*] Generating SPARTA Input Script (Steps={n_run})...")
+        # 1. Regenerate Geometry for the specific nose type
+        self.log_to_gui(f"    [*] Regenerating Geometry: {nose_type}...")
+        self.generate_hiad_geometry(sample_dict, nose_type=nose_type)
+
+        # 2. Setup results directory (Clean start)
+        import shutil
+        results_dir = os.path.join(cad_dir, "results_reference")
+        if os.path.exists(results_dir):
+            shutil.rmtree(results_dir)
+        os.makedirs(results_dir, exist_ok=True)
+
+        # 3. Generate and Write Script
+        script_content = self.generate_sparta_script(opt_params, surf_name=surf_name, **sample_dict)
+        
+        # Write ancillary files
         species_src, react_src, vss_src, _, _ = self.get_chemistry_data(opt_params)
         self._safe_copy(species_src, os.path.join(cad_dir, "air.species"))
         self._safe_copy(react_src, os.path.join(cad_dir, "air.react"))
@@ -1160,6 +1182,27 @@ run             {opt_params.get('env_run', '1000')}
         
         with open(os.path.join(cad_dir, "air.surf_react"), "w", newline='\n') as f:
             f.write(self.generate_surf_react_script(opt_params))
+
+        # 1.5 Generate Geometry STL/Surf
+        self.log_to_gui(f"    [*] Generating HIAD Geometry (Nose={nose_type})...")
+        python_exec = self._get_python_exec()
+        cmd_cad = [
+            python_exec, os.path.join(cad_dir, "HIAD_GeometryEngine.py"),
+            "--diameter", str(sample_dict['diameter']),
+            "--angle", str(sample_dict['angle']),
+            "--nose", str(sample_dict['nose']),
+            "--toroids", str(sample_dict['toroids']),
+            "--thickness", "0.0254",
+            "--nose_type", nose_type,
+            "--output", surf_name,
+            "--slice_angle", "360.0"
+        ]
+        # For baseline validation (360 degree 2D axi) we might want --flat_skin?
+        # Actually the Engine uses flat skin for SPARTA by default if we ask for it.
+        if opt_params.get('env_preset') == 'artemis':
+             cmd_cad.append("--flat_skin")
+             
+        subprocess.run(cmd_cad, cwd=cad_dir, check=True)
 
         script_content = self.generate_sparta_script(opt_params, surf_name=surf_name, **sample_dict)
         os.makedirs(os.path.join(cad_dir, "results_reference"), exist_ok=True)
@@ -1231,10 +1274,12 @@ run             {opt_params.get('env_run', '1000')}
             os.makedirs(plots_dir, exist_ok=True)
 
             if grid_files:
-                ani_path = os.path.join(plots_dir, "simulation_anim.mp4")
+                suffix = f"_{nose_type}"
+                ani_path = os.path.join(plots_dir, f"validation_anim{suffix}.mp4")
+                self.log_to_gui(f"    [+] Encoding Animation: {os.path.basename(ani_path)}...")
                 visualizer.generate_animation(grid_files, ani_path)
-                visualizer.generate_plots(grid_files[-1], plots_dir)
-                visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_temp.png"), surf_file=os.path.join(cad_dir, f"{surf_name}.surf"), prop='temp')
+                visualizer.generate_plots(grid_files[-1], plots_dir, suffix=suffix)
+                visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, f"upscaled_3d{suffix}.png"), surf_file=os.path.join(cad_dir, f"{surf_name}.surf"), prop='temp')
         except Exception as ve:
             self.log_to_gui(f"    [!] Warning: Visual post-processing failed: {ve}")
 
@@ -1946,18 +1991,6 @@ run             {opt_params.get('env_run', '1000')}
         ]
         subprocess.run(cmd_cad, cwd=cad_dir, check=True)
 
-        # Force 1000 steps for baseline to ensure stability
-        opt_params_baseline = opt_params.copy()
-        opt_params_baseline['env_run'] = '1000'
-        script_baseline = self.generate_sparta_script(opt_params_baseline, surf_name="HIAD_custom", diameter=base_d)
-
-        
-        os.makedirs(os.path.join(cad_dir, "results_reference"), exist_ok=True)
-        with open(os.path.join(cad_dir, "in.hiad"), 'w') as f: f.write(script_baseline)
-        
-        sim_end = time.time()
-        baseline_time = sim_end - sim_start
-        
         solver_mode = opt_params.get('solver', 'openfoam')
         if solver_mode == 'pyfluent':
             self.log_to_gui(f"    [+] Running Baseline via Remote PyFluent (D={base_d}m)...")
@@ -2379,6 +2412,8 @@ run             {opt_params.get('env_run', '1000')}
         # Physics Constants for Beta Calibration
         vstream = float(opt_params.get('env_vstream', 2700.0))
         nrho = float(opt_params.get('env_nrho', 3.5e22))
+
+        # Physics Constants for Beta Calibration
         rho_inf = nrho * (28.97e-3 / 6.022e23) 
         q_inf = 0.5 * rho_inf * (vstream**2)
         
@@ -2545,9 +2580,9 @@ run             {opt_params.get('env_run', '1000')}
         else:
             self.log_to_gui("[+] OPTIMIZATION COMPLETE (Headless). Result in results_reference/")
 
-    def run_baseline_validation(self, solver='sparta', skip_diag=False, headless=False, sparta_gpu=None):
+    def run_baseline_validation(self, solver='sparta', skip_diag=False, headless=False, sparta_gpu=None, nose_type="smooth", **kwargs):
         """Runs a simulation using IRVE-3 baseline parameters and validates against documentation."""
-        self.log_to_gui(f"[*] Starting Baseline Validation using {solver.upper()} solver...")
+        self.log_to_gui(f"[*] Starting Baseline Validation using {solver.upper()} solver (Nose={nose_type})...")
         
         baseline_doc = self.get_irve_baseline_results_static()
         
@@ -2566,17 +2601,22 @@ run             {opt_params.get('env_run', '1000')}
             'base_toroids': baseline_doc['geometry']['toroids'],
             'base_thick': 0.0254,
             'env_duration': 60.0,
-            'env_run': 1000,
+            'env_run': 1000, # Default
             'env_fnum': '2e18',
             'env_cores': os.cpu_count() or 4
         }
+        
+        # Override with any passed kwargs (like steps)
+        if 'steps' in kwargs:
+            opt_params['env_run'] = kwargs['steps']
         
         # Geometry and Sample setup
         sample_dict = {
             'diameter': baseline_doc['geometry']['diameter_m'],
             'angle': baseline_doc['geometry']['forebody_angle_deg'],
             'nose': baseline_doc['geometry']['nose_radius_m'],
-            'toroids': baseline_doc['geometry']['toroids']
+            'toroids': baseline_doc['geometry']['toroids'],
+            'nose_type': nose_type
         }
         
         try:
@@ -2599,7 +2639,6 @@ run             {opt_params.get('env_run', '1000')}
                 res_readiness = self.test_openfoam_readiness()
                 if res_readiness.get('status') == 'error' or res_readiness.get('openfoam_missing'):
                     self.log_to_gui("[!] OpenFOAM image missing. Please build it first.")
-                    # self.build_openfoam_image() # Not implemented yet
             else:
                 use_gpu = sparta_gpu
                 if use_gpu is None: use_gpu = self.has_nvidia_gpu()
@@ -2613,77 +2652,9 @@ run             {opt_params.get('env_run', '1000')}
 
             # 2. Run simulation
             if solver == 'openfoam':
-                self.log_to_gui(f"    [+] Generating Baseline Geometry (D={sample_dict['diameter']}m)...")
-                cmd_cad = [
-                    python_exec, os.path.join(cad_dir, "HIAD_GeometryEngine.py"),
-                    "--diameter", str(sample_dict['diameter']),
-                    "--angle", str(sample_dict['angle']),
-                    "--nose", str(sample_dict['nose']),
-                    "--toroids", str(sample_dict['toroids']),
-                    "--thickness", "0.0254",
-                    "--output", "HIAD_custom",
-                    "--slice_angle", "360.0",
-                    "--flat_skin"
-                ]
-                subprocess.run(cmd_cad, cwd=cad_dir, check=True)
                 res_dict = self.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_custom")
             elif solver == 'sparta':
-
-                self.log_to_gui("    [+] Generating SPARTA Input Script...")
-                # Sync baseline steps to 1000
-                opt_params['env_run'] = 1000
-                script_baseline = self.generate_sparta_script(opt_params, surf_name="HIAD_custom", diameter=sample_dict['diameter'])
-
-                os.makedirs(os.path.join(cad_dir, "results_reference"), exist_ok=True)
-                with open(os.path.join(cad_dir, "in.hiad"), 'w', newline='\n') as f:
-                    f.write(script_baseline)
-
-                self.log_to_gui("    [+] Executing SPARTA via Docker...")
-                subprocess.run(["docker", "rm", "-f", "hiad-runner"], capture_output=True)
-                
-                use_gpu = opt_params.get('sparta_gpu')
-                if use_gpu is None:
-                    use_gpu = False
-                docker_create_cmd = [
-                    "docker", "create", "--name", "hiad-runner",
-                    "-v", f"{self.cwd}:/app", 
-                    "-e", "IN_DOCKER=1", 
-                    "-e", "PYTHONUNBUFFERED=1",
-                    "-e", "DOCKER_WORKDIR=/app",
-                    "-e", f"SPARTA_GPU={1 if use_gpu else 0}"
-                ]
-                if use_gpu:
-                    self.log_to_gui("    [!] Enabling CUDA acceleration (Kokkos) for SPARTA...")
-                    docker_create_cmd.append("--gpus")
-                    docker_create_cmd.append("all")
-                
-                # Use python3 main.py entrypoint
-                if not use_gpu:
-                    # Use all available cores but cap at a reasonable number if needed
-                    # For baseline, we use all cores.
-                    nproc = os.cpu_count() or 4
-
-                    self.log_to_gui(f"    [!] Parallel Execution: Using {nproc} CPU cores via mpirun...")
-                    docker_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), "python3", "/app/main.py", "--steps", "1000"]
-                else:
-                    docker_cmd = ["python3", "/app/main.py", "--steps", "1000", "--sparta-gpu"]
-                
-                docker_create_cmd.extend(["sparta-hysp"] + docker_cmd)
-
-                subprocess.run(docker_create_cmd, check=True)
-
-                
-                sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-                for line in sim_proc.stdout:
-                    l = line.strip()
-                    if not l: continue
-                    self.log_to_gui(f"        {l}")
-
-                
-                if sim_proc.wait() != 0:
-                    raise RuntimeError("SPARTA baseline simulation failed!")
-                
-                res_dict = self.parse_sparta_results()
+                res_dict = self.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_custom", nose_type=nose_type)
             elif solver == 'pyansys':
                 res_dict = self.run_local_pyfluent_simulation(opt_params, sample_dict, show_gui=not headless, skip_gpu=skip_diag)
             elif solver == 'pyfluent':
@@ -2699,57 +2670,34 @@ run             {opt_params.get('env_run', '1000')}
                 grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")])
                 plots_dir = os.path.join(self.cwd, "web", "assets", "plots")
                 os.makedirs(plots_dir, exist_ok=True)
-
+                
                 if grid_files:
-                    ani_path = os.path.join(plots_dir, "baseline_anim.mp4")
+                    suffix = f"_{nose_type}"
+                    ani_path = os.path.join(plots_dir, f"validation_anim{suffix}.mp4")
                     visualizer.generate_animation(grid_files, ani_path)
-                    visualizer.generate_plots(grid_files[-1], plots_dir)
-                    visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_temp.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='temp')
+                    visualizer.generate_plots(grid_files[-1], plots_dir, suffix=suffix)
             except Exception as ve:
-                self.log_to_gui(f"    [!] Warning: Post-processing failed: {ve}")
+                self.log_to_gui(f"    [!] Warning: Visual post-processing failed: {ve}")
 
             # 4. Extract metrics (Correcting for 2D Axisymmetric Scaling)
-            # In 2D SPARTA, Area = Diameter * Depth (1.0m)
-            # In 3D, Area = pi * R^2
-            # Cd = Drag / (q * Area)
             rho = (opt_params['env_nrho'] * (28.97e-3 / 6.022e23))
             q_dyn = 0.5 * rho * (opt_params['env_vstream']**2)
-            
-            # Use 2D Area for Cd calculation from 2D solver
-            area_2d = sample_dict['diameter'] * 1.0 # Depth is 1m in SPARTA 2D
             area_3d = 0.25 * 3.14159 * (sample_dict['diameter']**2)
             
             sim_drag_force_raw = res_dict.get('drag', 0.0)
-            # Scale 2D force to 3D: F3d = F2d * (pi * R / 2)
-            # This is a geometric approximation for sphere-cone integration
             scale_2d_to_3d = (3.14159 * (sample_dict['diameter'] / 2.0)) / 2.0
             sim_drag_force = sim_drag_force_raw * scale_2d_to_3d
+            sim_cd = sim_drag_force_raw / (q_dyn * area_3d) if (q_dyn * area_3d) > 0 else 0.0
             
-            sim_cd = sim_drag_force / (q_dyn * area_3d) if (q_dyn * area_3d) > 0 else 0.0
-            
-            # Heat Flux: ke from SPARTA is W/m2. Convert to W/cm2.
-            # Apply thermal accommodation (calibrated for IRVE-3 F-TPS material)
             accommodation = 0.035 
             sim_heat = (res_dict.get('heat', 0.0) / 10000.0) * accommodation
-            
-            # For 2D SPARTA results, the raw Cd (using 3D area) often aligns with 3D blunted bodies
-            # due to the compensation of 2D profile drag vs 3D stagnation pressure.
-            sim_cd = sim_drag_force_raw / (q_dyn * area_3d) if (q_dyn * area_3d) > 0 else 0.0
             
             self.log_to_gui("\n[VERBOSE] Baseline Calibration Physics (2D Baseline):")
             self.log_to_gui(f"    - Ambient Density (rho): {rho:.6e} kg/m3")
             self.log_to_gui(f"    - Dynamic Pressure (q): {q_dyn:.2f} Pa")
             self.log_to_gui(f"    - Reference Area (3D): {area_3d:.4f} m2")
             self.log_to_gui(f"    - Raw 2D Drag Force:    {sim_drag_force_raw:.2f} N/m")
-            self.log_to_gui(f"    - Equivalent 2D Cd:     {sim_cd:.4f}")
             self.log_to_gui(f"    - Scaled 3D Drag:      {sim_drag_force:.2f} N")
-            # Knudsen Number (Kn) - Critical for Rarefaction Validity
-            mol_diam = 3.7e-10 
-            mfp = 1.0 / (np.sqrt(2) * np.pi * (mol_diam**2) * opt_params['env_nrho'])
-            sim_kn = mfp / sample_dict['diameter']
-            
-            self.log_to_gui(f"    - Calculated Heat Flux: {sim_heat:.2f} W/cm2")
-            self.log_to_gui(f"    - Knudsen Number (Kn):  {sim_kn:.4e}")
             
             # 5. Compare
             doc_cd = baseline_doc['validation_targets']['reference_cd']
@@ -2776,11 +2724,69 @@ run             {opt_params.get('env_run', '1000')}
                 "status": status,
                 "message": "Baseline validation completed.",
                 "comparison": comparison,
-                "ref_data": baseline_doc
+                "ref_data": baseline_doc,
+                **res_dict
             }
             
         except Exception as e:
-            return {"status": "error", "message": f"Baseline Validation Failed: {str(e)}"}
+            self.log_to_gui(f"[-] Baseline Validation Failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def run_nose_comparison(self, solver='sparta', steps=1000, skip_diag=False, headless=False, sparta_gpu=None):
+        """Runs two simulations (Smooth vs Pointy) and compares results side-by-side."""
+        self.log_to_gui("[*] PHASE 1/2: Running BLUNT (Smooth) baseline...")
+        res_smooth = self.run_baseline_validation(solver=solver, skip_diag=skip_diag, headless=headless, sparta_gpu=sparta_gpu, nose_type="smooth", steps=steps)
+        
+        self.log_to_gui("\n[*] PHASE 2/2: Running SHARP (Pointy) configuration...")
+        res_pointy = self.run_baseline_validation(solver=solver, skip_diag=skip_diag, headless=headless, sparta_gpu=sparta_gpu, nose_type="pointy", steps=steps)
+        
+        # Display Comparison Table
+        print("\n" + "="*80)
+        print(f"{'HIAD NOSE COMPARISON STUDY (SPARTA DSMC)':^80}")
+        print("="*80)
+        print(f"{'Metric':<25} | {'Smooth (Blunt)':<15} | {'Pointy (Sharp)':<15} | {'Delta %':<10}")
+        print("-" * 80)
+        
+        baseline_doc = self.get_irve_baseline_results_static()
+        opt_params = {'env_vstream': baseline_doc['performance']['velocity_ms'], 'env_nrho': 3.5e22, 'env_duration': 60.0}
+        sample_dict = {'diameter': 3.0, 'mass': 281.0}
+        
+        metrics_smooth = self.calculate_flight_metrics(res_smooth, opt_params, sample_dict)
+        metrics_pointy = self.calculate_flight_metrics(res_pointy, opt_params, sample_dict)
+        
+        data_smooth = {**res_smooth, **metrics_smooth}
+        data_pointy = {**res_pointy, **metrics_pointy}
+        
+        rho = 0.001
+        v = 2700.0
+        area = np.pi * (3.0/2)**2
+        q = 0.5 * rho * v**2
+        
+        d_s = data_smooth.get('drag', 0)
+        d_p = data_pointy.get('drag', 0)
+        data_smooth['cd'] = d_s / (q * area) if (q * area) > 0 else 0
+        data_pointy['cd'] = d_p / (q * area) if (q * area) > 0 else 0
+        
+        display_list = [
+            ('cd', 'Drag Coefficient (Cd)'),
+            ('drag', 'Total Drag (N)'),
+            ('heat', 'Peak Heat Flux (W/m2)'),
+            ('stag_press', 'Stag. Pressure (Pa)'),
+            ('surface_temp', 'Peak Surface Temp (K)'),
+            ('shock_temp', 'Shock Temp (K)')
+        ]
+        
+        for key, label in display_list:
+            v_s = data_smooth.get(key, 0)
+            v_p = data_pointy.get(key, 0)
+            delta = ((v_p - v_s) / v_s * 100) if v_s != 0 else 0
+            print(f"{label:<25} | {v_s:<15.4f} | {v_p:<15.4f} | {delta:>+8.2f}%")
+        
+        print("-" * 80)
+        print(f"[*] Comparison study complete. Plots generated with '_smooth' and '_pointy' suffixes.")
+        print("="*80)
+        
+        return {"smooth": data_smooth, "pointy": data_pointy}
 
     def build_sparta_image(self):
         """Build the SPARTA Docker image locally with real-time logging."""

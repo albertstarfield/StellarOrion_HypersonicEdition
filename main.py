@@ -229,6 +229,8 @@ def main():
         ))
     mode.add_argument("--compareCalibrate", action="store_true",
         help="Shorthand for: --headless --test sample --solver <solver>. Runs a single IRVE-3 geometry simulation and prints a formatted comparison table of Cd and heat flux against the official IRVE-3 baseline values.")
+    mode.add_argument("--compareNoses", action="store_true",
+        help="Run a comparative study between Smooth (blunt) and Pointy (sharp) nose types on the baseline HIAD geometry. Prints a side-by-side performance table.")
     mode.add_argument("--gettheirvebbaseline", action="store_true",
         help="Print the IRVE-3 mission baseline parameters as JSON (geometry, performance, validation targets). No simulation is run. Useful for reference.")
 
@@ -254,6 +256,8 @@ def main():
         help="Number of Latin Hypercube Sampling (LHS) geometry samples per optimization iteration. Default: 5.")
     sim.add_argument("--goal", type=str, default="drag", choices=["drag", "heat"],
         help="Optimization objective. 'drag' minimizes aerodynamic drag coefficient (Cd). 'heat' minimizes peak stagnation heat flux. Default: drag.")
+    sim.add_argument("--nose-type", type=str, default="smooth", choices=["smooth", "pointy"],
+        help="Type of nose geometry to generate. 'smooth' creates a spherical cap (IRVE-3 baseline). 'pointy' creates a sharp conical apex. Default: smooth.")
     sim.add_argument("--chem", type=str, default="5-species",
         choices=["5-species", "11-species", "mars"],
         help=(
@@ -313,6 +317,11 @@ def main():
         from StellarOrionEngineMach5Up import Api
         api = Api()
         
+        if args.compareNoses:
+            print("[*] Starting HIAD Nose-Type Comparison Study (Smooth vs Pointy)...")
+            res = api.run_nose_comparison(solver=args.solver, steps=args.steps, skip_diag=args.skip_diag, headless=args.headless, sparta_gpu=args.sparta_gpu)
+            sys.exit(0)
+
         # Pre-flight check for Docker if using SPARTA or OpenFOAM
         if args.solver in ['sparta', 'openfoam'] or args.test in ['sparta', 'openfoam', 'baseline', 'sample']:
             try:
@@ -402,6 +411,7 @@ def main():
                     "--nose", str(sample_dict['nose']),
                     "--toroids", str(sample_dict['toroids']),
                     "--thickness", "0.0254",
+                    "--nose_type", args.nose_type,
                     "--output", "HIAD_sample",
                     "--slice_angle", "360.0"
                 ]
