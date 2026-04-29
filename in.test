@@ -1,0 +1,29 @@
+# Test Input
+seed            12345
+dimension       2
+global          gridcut 0.0 comm/sort yes
+boundary        o ar p
+
+create_box      0.0 2.0 0.0 1.0 -0.5 0.5
+create_grid     20 20 1
+
+global          nrho 1e20 fnum 1e15
+
+species         air.species N2 O2
+mixture air N2 O2
+mixture air N2 frac 0.79
+mixture air O2 frac 0.21
+mixture air vstream 1000.0 0.0 0.0
+mixture air temp 300.0
+
+fix             in emit/face air xlo
+collide         vss air air.vss
+
+read_surf       test.surf group test_grp
+surf_collide    1 diffuse 300.0 1.0
+surf_modify     test_grp collide 1
+
+stats           10
+stats_style     step cpu np nattempt ncoll nscoll
+
+run             100

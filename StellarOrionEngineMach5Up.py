@@ -635,9 +635,9 @@ exchange simple {gamma} 0.0
         d_val = float(kwargs.get('diameter', opt_params.get('base_diameter', 3.0)))
         surf_name = kwargs.get('surf_name', 'HIAD_custom')
         
-        # Domain scaling
-        xmin = float(opt_params.get('env_xmin', -0.6 * d_val))
-        xmax = float(opt_params.get('env_xmax', 1.8 * d_val))
+        # Domain scaling (Tightened for faster convergence)
+        xmin = float(opt_params.get('env_xmin', -0.2 * d_val))
+        xmax = float(opt_params.get('env_xmax', 1.0 * d_val))
         ymax = float(opt_params.get('env_ymax', 1.2 * d_val))
         
         # Grid resolution
@@ -657,7 +657,7 @@ create_box      {xmin:.2f} {xmax:.2f} 0.0 {ymax:.2f} -0.5 0.5
 create_grid     {nx} {ny} 1
 balance_grid    rcb cell
 
-global          nrho {n_rho:.2e} fnum {n_rho/1e5:.1e}
+global          nrho {n_rho:.2e} fnum {n_rho/1e4:.1e}
 
 species         air.species {" ".join(species_list)}
 {mixture_txt}
@@ -672,7 +672,7 @@ react           tce air.react
 read_surf       {surf_name}.surf group hiad_surf
 surf_collide    1 diffuse {t_wall:.1f} 1.0
 surf_react      1 prob air.surf_react
-surf_modify     hiad_surf collide 1 react 1
+surf_modify     all collide 1 react 1
 
 # Force and Heat Flux Computations
 compute         1 surf hiad_surf air nflux mflux ke

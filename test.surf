@@ -1,0 +1,14 @@
+# Test Surf
+3 points
+2 lines
+
+Points
+
+1 1.0 0.0
+2 1.0 0.5
+3 1.1 0.5
+
+Lines
+
+1 1 2
+2 2 3
