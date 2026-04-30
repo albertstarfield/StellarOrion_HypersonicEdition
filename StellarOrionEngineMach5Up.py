@@ -695,7 +695,7 @@ fix             3 ave/grid all 1 {max(1, steps//10)} {steps} c_3[*]
 timestep        1e-6
 
 stats           100
-stats_style     step cpu np nattempt ncoll nscoll nscheck
+stats_style     step cpu np c_drag c_heat nattempt ncoll nscoll
 
 # Dumps
 dump            1 surf all {steps} results_reference/surf.*.out id f_1[*] f_surfavg[*]
@@ -2012,6 +2012,9 @@ run             {steps}
                 self.build_sparta_image()
             
             subprocess.run(["docker", "rm", "-f", "hiad-runner"], capture_output=True)
+            run_date = time.strftime("%Y-%m-%d")
+            archive_dir = os.path.join(self.cwd, "results", run_date, f"baseline_{nose_type}")
+            os.makedirs(archive_dir, exist_ok=True)
 
             
             use_gpu = opt_params.get('sparta_gpu')
@@ -2041,15 +2044,22 @@ run             {steps}
 
             
             sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            log_lines = []
             for line in sim_proc.stdout:
                 l = line.strip()
                 if not l: continue
+                log_lines.append(l)
                 if "Step" in l or "CPU time =" in l: self.log_to_gui(f"        {l}")
                 # Log progress every 100 steps
                 parts = l.split()
                 if parts and parts[0].isdigit():
                     step = int(parts[0])
                     if step % 100 == 0: self.log_to_gui(f"        {l}")
+            
+            # Save log to archive
+            with open(os.path.join(archive_dir, "simulation.log"), "w") as f:
+                f.write("\n".join(log_lines))
+                
             if sim_proc.wait() != 0:
                 raise RuntimeError("Baseline SPARTA simulation failed! Check docker logs.")
             
@@ -2074,6 +2084,10 @@ run             {steps}
             
             self.log_to_gui("    [+] Generating Baseline Static Maps (JPEG/Graph)...")
             visualizer.generate_plots(grid_files[-1], plots_dir)
+            
+            self.log_to_gui("    [+] Generating Convergence Graph (Residuals)...")
+            visualizer.generate_convergence_plot(log_lines, plots_dir)
+            visualizer.generate_convergence_plot(log_lines, archive_dir) # Save to archive too
             
             self.log_to_gui("    [+] Upscaling Axisymmetric Results to 3D (Temp, Velocity, Mach)...")
             visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_temp.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='temp')
@@ -2269,11 +2283,13 @@ run             {steps}
                 else:
                     self.log_to_gui(f"    [*] Executing SPARTA solver (Sample {i+1})...")
                     sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                    log_lines = []
                     
                     last_cpu = ""
                     for line in sim_proc.stdout:
                         l = line.strip()
                         if not l: continue
+                        log_lines.append(l)
                         if "CPU time =" in l: 
                             last_cpu = l
                             continue
@@ -2305,8 +2321,13 @@ run             {steps}
             self.history.update_run_progress(run_id, i + 1, best_val=val) # Simplistic best_val for now
             
             # --- Per-Sample Storage & Post-processing ---
-            sample_dir = os.path.join(cad_dir, "results_samples", f"sample_{i+1}")
+            run_date = time.strftime("%Y-%m-%d")
+            sample_dir = os.path.join(self.cwd, "results", run_date, run_id, f"sample_{i+1}")
             os.makedirs(sample_dir, exist_ok=True)
+            
+            # Save log to archive
+            with open(os.path.join(sample_dir, "simulation.log"), "w") as f:
+                f.write("\n".join(log_lines))
             
             self.log_to_gui(f"    [*] Archiving results for Sample {i+1}...")
             # Copy CAD
@@ -2329,6 +2350,7 @@ run             {steps}
                 if grid_files:
                     visualizer.generate_animation(grid_files, os.path.join(sample_dir, "simulation_anim.mp4"))
                     visualizer.generate_plots(grid_files[-1], sample_dir)
+                    visualizer.generate_convergence_plot(log_lines, sample_dir)
                     visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(sample_dir, "3d_temp.png"), surf_file=os.path.join(cad_dir, "HIAD_opt.surf"), prop='temp')
             except Exception as ve:
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed for Sample {i+1}: {ve}")

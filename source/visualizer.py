@@ -176,6 +176,50 @@ def generate_stagnation_graph(data, output_dir, suffix=""):
     plt.savefig(os.path.join(output_dir, f'stagnation_graph{suffix}.jpg'), pil_kwargs={'quality': 85}, facecolor=fig.get_facecolor(), dpi=300)
     plt.close()
 
+def generate_convergence_plot(log_lines, output_dir, suffix=""):
+    """Generates a graph of global metrics (Drag, Heat) over simulation iterations."""
+    steps = []
+    drag = []
+    heat = []
+    
+    for line in log_lines:
+        parts = line.split()
+        if len(parts) >= 5 and parts[0].isdigit():
+            try:
+                steps.append(int(parts[0]))
+                # According to our stats_style: step cpu np c_drag c_heat
+                drag.append(float(parts[3]))
+                heat.append(float(parts[4]))
+            except (ValueError, IndexError):
+                continue
+            
+    if not steps: return
+    
+    os.makedirs(output_dir, exist_ok=True)
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    ax1.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+
+    color = '#f59e0b' # Amber for Drag
+    ax1.set_xlabel('Iteration Step', color='#94a3b8')
+    ax1.set_ylabel('Total Drag (N/m)', color=color)
+    ax1.plot(steps, drag, color=color, linewidth=2, label='Drag')
+    ax1.tick_params(axis='y', labelcolor=color, colors='#94a3b8')
+    ax1.tick_params(axis='x', colors='#94a3b8')
+
+    ax2 = ax1.twinx()
+    color = '#ef4444' # Red for Heat
+    ax2.set_ylabel('Peak Heat Flux (Scaled)', color=color)
+    ax2.plot(steps, heat, color=color, linewidth=2, linestyle='--', label='Heat Flux')
+    ax2.tick_params(axis='y', labelcolor=color, colors='#94a3b8')
+
+    plt.title('Simulation Convergence (Residuals)', color='white', fontsize=14, fontweight='bold')
+    ax1.grid(True, alpha=0.1, color='white')
+    
+    fig.tight_layout()
+    plt.savefig(os.path.join(output_dir, f'convergence_graph{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
+    plt.close()
+
 def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp'):
     """Upscales 2D axisymmetric results to a 3D visualization by rotating the slice.
     Supported props: 'temp', 'velocity', 'mach'
