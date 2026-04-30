@@ -236,10 +236,10 @@ def main():
 
     # -- Solver Selection ----------------------------------------------------──
     solver_grp = parser.add_argument_group("Solver Selection")
-    solver_grp.add_argument("--solver", type=str, default="openfoam",
+    solver_grp.add_argument("--solver", type=str, default="sparta",
         choices=["sparta", "pyfluent", "pyansys", "openfoam"],
         help=(
-            "Backend solver engine to use. Default: openfoam\n"
+            "Backend solver engine to use. Default: sparta\n"
             "  sparta    - DSMC rarefied flow solver via Docker (sparta-hysp image)\n"
             "  openfoam  - dsmcFoam continuum/DSMC solver via Docker (openfoam-hysp image)\n"
             "  pyansys   - Local Ansys Fluent via PyFluent (requires Ansys 2023R1+ install)\n"
@@ -377,6 +377,9 @@ def main():
                     print(f"[-] Error Message: {res.get('message', '')}")
             elif args.test == "sample":
                 print("[*] Running Single Simulation Sample...")
+                # Fetch baseline early for printing and comparison
+                baseline = api.get_irve_baseline_results_static()
+
                 # Construct default params
                 opt_params = {
                     'solver': args.solver,
@@ -396,9 +399,31 @@ def main():
                     'nose': 0.191,
                     'toroids': 7
                 }
-                print("[*] IRVE-3 Baseline Parameters:")
-                # (json already imported)
-                print(json.dumps({**opt_params, **sample_dict}, indent=4))
+
+                if args.compareCalibrate:
+                    print("\n" + "═"*80)
+                    print(f"{'IRVE-3 CALIBRATION MODE: SYSTEM PARAMETERS':^80}")
+                    print("═"*80)
+                    
+                    print("\n[GEOMETRIC BASELINE PARAMETERS]")
+                    print("-" * 30)
+                    for k, v in baseline['geometry'].items():
+                        print(f"  {k:<25}: {v}")
+                    
+                    print("\n[FLIGHT PERFORMANCE PARAMETERS (TARGETS)]")
+                    print("-" * 40)
+                    for k, v in baseline['performance'].items():
+                        print(f"  {k:<25}: {v}")
+                    
+                    print("\n[ENVIRONMENT PARAMETERS (CURRENT RUN)]")
+                    print("-" * 40)
+                    for k, v in opt_params.items():
+                        if k.startswith('env_'):
+                            print(f"  {k:<25}: {v}")
+                    print("═"*80 + "\n")
+                else:
+                    print("[*] IRVE-3 Baseline Parameters:")
+                    print(json.dumps({**opt_params, **sample_dict}, indent=4))
                 
                 # Generate Geometry STL
                 print("[*] Generating Sample Geometry STL...")
@@ -428,7 +453,6 @@ def main():
                 
                 # Add baseline comparison for solvers that return drag
                 if 'drag' in res and res['drag'] > 0:
-                    baseline = api.get_irve_baseline_results_static()
                     v = opt_params['env_vstream']
                     rho = 0.001 # approx 1e-3 (at 52km for IRVE-3)
                     force_n = res['drag']
