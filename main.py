@@ -13,6 +13,8 @@ import sys
 import json
 import argparse
 import time
+import re
+import pydoc
 
 sys.stdout.flush()
 
@@ -192,6 +194,49 @@ def run_simulation(steps=None):
     os._exit(0)
 
 
+def display_custom_help(parser):
+    """Displays help in a manpage-like pager if in a terminal, else prints to stdout."""
+    help_text = parser.format_help()
+    
+    # ANSI color codes
+    BOLD = "\033[1m"
+    CYAN = "\033[36m"
+    GREEN = "\033[32m"
+    RESET = "\033[0m"
+
+    if sys.stdout.isatty():
+        # Enhanced "Manpage" styling
+        # Bold and uppercase major sections
+        sections = [
+            "usage:", "description:", "QUICK START EXAMPLES:", "NOTE:",
+            "Mode Flags", "Solver Selection", "Simulation Parameters", 
+            "Acceleration & Hardware", "Output & Display", "Remote PyFluent"
+        ]
+        for section in sections:
+            # Match case-insensitively but preserve original casing for the replacement or use upper
+            pattern = re.compile(re.escape(section), re.IGNORECASE)
+            help_text = pattern.sub(f"{BOLD}{section.upper()}{RESET}", help_text)
+
+        # Highlight arguments
+        help_text = re.sub(r'(--\w+[-\w]*)', f"{CYAN}\\1{RESET}", help_text)
+        help_text = re.sub(r'(-\w)\b', f"{CYAN}\\1{RESET}", help_text)
+
+        # Use less as a pager (manpage style)
+        try:
+            # -R for ANSI colors, -S to chop long lines, -X to keep content on screen after exit
+            env = os.environ.copy()
+            env["LESS"] = "-RX" 
+            process = subprocess.Popen(['less'], stdin=subprocess.PIPE, env=env, text=True)
+            process.communicate(input=help_text)
+        except Exception:
+            # Fallback to pydoc pager or simple print
+            pydoc.pager(help_text)
+    else:
+        # Standard output for non-terminal (e.g. piping to file)
+        print(help_text)
+    sys.exit(0)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=(
@@ -207,9 +252,15 @@ def main():
             "  Run full optimization loop:      python main.py --optimize --solver sparta --samples 10\n"
             "\n"
             "NOTE: SPARTA and OpenFOAM solvers require Docker Desktop to be running.\n"
+            "      PyAnsys requires Ansys software installed on the remote computer (for pyfluent)\n"
+            "      or running on Windows (for local pyansys)."
         ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        add_help=False
     )
+
+    # Add custom help flags
+    parser.add_argument("-h", "--help", action="store_true", help="Show this help message and exit.")
 
     # -- Mode Flags ------------------------------------------------------------
     mode = parser.add_argument_group("Mode Flags (choose one)")
@@ -233,6 +284,8 @@ def main():
         help="Run a comparative study between Smooth (blunt) and Pointy (sharp) nose types on the baseline HIAD geometry. Prints a side-by-side performance table.")
     mode.add_argument("--gettheirvebbaseline", action="store_true",
         help="Print the IRVE-3 mission baseline parameters as JSON (geometry, performance, validation targets). No simulation is run. Useful for reference.")
+    mode.add_argument("--LiteracyReferences", action="store_true",
+        help="Display the full project bibliography and research references from REFERENCES.MD in a manpage-like view.")
 
     # -- Solver Selection ----------------------------------------------------──
     solver_grp = parser.add_argument_group("Solver Selection")
@@ -298,13 +351,42 @@ def main():
     ssh.add_argument("--ssh-pass", type=str, help="SSH password (if not using key-based auth).")
     ssh.add_argument("--ssh-key",  type=str, help="Path to SSH private key file for key-based authentication.")
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
+
+    if args.help:
+        display_custom_help(parser)
 
     if args.compareCalibrate:
         args.headless = True
         if not args.test:
             args.test = "sample"
         # Use default steps (1000) for calibration check unless user explicitly set something else
+
+    if args.LiteracyReferences:
+        ref_path = os.path.join(CONTAINER_WORKDIR, "REFERENCES.MD")
+        if os.path.exists(ref_path):
+            with open(ref_path, "r") as f:
+                ref_content = f.read()
+            
+            if sys.stdout.isatty():
+                # Manpage style styling for references
+                BOLD = "\033[1m"
+                RESET = "\033[0m"
+                # Bold the citations like [0], [1]
+                ref_content = re.sub(r'(\[\d+\])', f"{BOLD}\\1{RESET}", ref_content)
+                
+                try:
+                    env = os.environ.copy()
+                    env["LESS"] = "-RX"
+                    process = subprocess.Popen(['less'], stdin=subprocess.PIPE, env=env, text=True)
+                    process.communicate(input=ref_content)
+                except Exception:
+                    pydoc.pager(ref_content)
+            else:
+                print(ref_content)
+        else:
+            print(f"[-] Error: REFERENCES.MD not found at {ref_path}")
+        return
 
     if args.gettheirvebbaseline:
         print("[*] Fetching IRVE-3 Baseline Parameter Results...")
