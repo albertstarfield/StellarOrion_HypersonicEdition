@@ -393,6 +393,12 @@ def main():
             "  11-species - High-enthalpy Earth: adds ionized species (N2+, O2+, NO+, e-) for >80km\n"
             "  mars       - Mars atmosphere: CO2, N2, CO, O (for future Mars EDL studies)"
         ))
+    sim.add_argument("--payload", action="store_true", default=False,
+        help="Enable a payload model on the backside of the HIAD shield. Requires --payload-file.")
+    sim.add_argument("--payload-file", type=str, default=None,
+        help="Path to a STEP file (.step/.stp) for the payload. Only used if --payload is enabled.")
+    sim.add_argument("--slice-angle", type=float, default=360.0,
+        help="Angle to revolve the skin (degrees). Use 360 for full body, or smaller (e.g. 10.0) for thin-slice 3D domains. Default: 360.0.")
 
     # -- Acceleration & Hardware --------------------------------------------───
     hw = parser.add_argument_group("Acceleration & Hardware")
@@ -594,8 +600,11 @@ def main():
                     "--thickness", "0.0254",
                     "--nose_type", args.nose_type,
                     "--output", "HIAD_sample",
-                    "--slice_angle", "360.0"
+                    "--slice_angle", str(args.slice_angle)
                 ]
+
+                if args.payload and args.payload_file:
+                    cmd_cad.extend(["--payload_file", args.payload_file])
                 subprocess.run(cmd_cad, cwd=cad_dir, check=True)
 
                 if args.solver == 'openfoam':
@@ -731,7 +740,9 @@ def main():
                 'v_nose': True,
                 'solver': args.solver,
                 'verbose': args.verbose,
-                'grid_factor': args.grid_factor
+                'grid_factor': args.grid_factor,
+                'payload': args.payload,
+                'payload_file': args.payload_file
             }
             
             print("[VERBOSE] Sending Optimization Parameters:")

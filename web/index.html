@@ -256,6 +256,29 @@
                         </div>
                     </label>
                 </div>
+                
+                <div style="margin-top: 15px; padding: 15px; background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <div class="tooltip-container">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; color: #c084fc;">
+                                <input type="checkbox" id="enable-payload" onchange="togglePayloadInput()"> 
+                                Backside Payload Integration
+                            </label>
+                            <span class="info-icon">?</span>
+                            <div class="tooltip-text">
+                                <strong>Payload Integration</strong>
+                                If enabled, a custom payload model (from a STEP file) will be attached to the backside of the HIAD shield assembly.
+                            </div>
+                        </div>
+                    </div>
+                    <div id="payload-path-container" style="display: none;">
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.8rem;">Payload STEP File Path</label>
+                            <input type="text" id="payload-file" placeholder="e.g. CADDesign/payload.step" value="CADDesign/HIAD_MDAO_Test_v1.step">
+                        </div>
+                        <p style="font-size: 0.7rem; color: var(--text-dim); margin-top: 5px;">(Payload will be positioned at R=0, Z=max on the shield backside)</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Page 3: Progress Log -->

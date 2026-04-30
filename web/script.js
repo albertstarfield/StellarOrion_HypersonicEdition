@@ -240,6 +240,14 @@ async function fetchAtmosphereData() {
     }
 }
 
+function togglePayloadInput() {
+    const checkbox = document.getElementById('enable-payload');
+    const container = document.getElementById('payload-path-container');
+    if (checkbox && container) {
+        container.style.display = checkbox.checked ? 'block' : 'none';
+    }
+}
+
 function generateGeometry() {
     const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : null;
     const getCheck = (id) => document.getElementById(id) ? document.getElementById(id).checked : false;
@@ -254,7 +262,9 @@ function generateGeometry() {
         scallop_pts: getVal('scallop-pts'),
         scallop_angle: getVal('scallop-angle'),
         nose_type: getVal('nose-type'),
-        flat_skin: getCheck('flat-skin')
+        flat_skin: getCheck('flat-skin'),
+        payload: getCheck('enable-payload'),
+        payload_file: getVal('payload-file')
     };
     window.pywebview.api.generate_cad_preview(params);
     nextStep(3);
@@ -339,7 +349,11 @@ function startOptimization() {
         env_xmin: getVal('env-xmin'),
         env_xmax: getVal('env-xmax'),
         env_ymax: getVal('env-ymax'),
-        env_zthick: getVal('env-zthick')
+        env_zthick: getVal('env-zthick'),
+
+        // Payload
+        payload: getCheck('enable-payload'),
+        payload_file: getVal('payload-file')
     };
     
     window.pywebview.api.run_optimization(optParams);

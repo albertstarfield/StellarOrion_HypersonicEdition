@@ -354,6 +354,9 @@ class Api:
                 if params.get('flat_skin'):
                     cad_cmd.append("--flat_skin")
                 
+                if params.get('payload') and params.get('payload_file'):
+                    cad_cmd.extend(["--payload_file", params.get('payload_file')])
+                
                 self.log_to_gui(f"    [+] Executing CAD Engine: {' '.join(cad_cmd)}")
                 process = subprocess.Popen(cad_cmd, cwd=cad_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                 for line in process.stdout:
@@ -1145,7 +1148,7 @@ run             {steps}
             self.log_to_gui(f"[-] Local PyAnsys Error: {e}")
             return {'drag': 1.0, 'heat': 1.0}
 
-    def generate_hiad_geometry(self, sample_dict, nose_type="smooth"):
+    def generate_hiad_geometry(self, sample_dict, nose_type="smooth", payload_file=None):
         """Helper to call HIAD_GeometryEngine.py with specific parameters."""
         cad_dir = os.path.join(self.cwd, "CADDesign")
         python_exec = self._get_python_exec()
@@ -1161,6 +1164,9 @@ run             {steps}
             "--output", "HIAD_custom"
         ]
         
+        if payload_file:
+            cmd_cad.extend(["--payload_file", payload_file])
+        
         if sample_dict.get('flat_skin'):
             cmd_cad.append("--flat_skin")
             
@@ -1172,9 +1178,9 @@ run             {steps}
         cad_dir = os.path.join(self.cwd, "CADDesign")
         n_run = int(opt_params.get('env_run', '1000'))
         
-        # 1. Regenerate Geometry for the specific nose type
-        self.log_to_gui(f"    [*] Regenerating Geometry: {nose_type}...")
-        self.generate_hiad_geometry(sample_dict, nose_type=nose_type)
+        # 1. Regenerate Geometry for the specific configuration
+        self.log_to_gui(f"    [*] Regenerating Geometry: {nose_type} (Payload={opt_params.get('payload_file', 'None')})...")
+        self.generate_hiad_geometry(sample_dict, nose_type=nose_type, payload_file=opt_params.get('payload_file'))
 
         # 2. Setup results directory (Clean start)
         import shutil
@@ -1195,26 +1201,7 @@ run             {steps}
         with open(os.path.join(cad_dir, "air.surf_react"), "w", newline='\n') as f:
             f.write(self.generate_surf_react_script(opt_params))
 
-        # 1.5 Generate Geometry STL/Surf
-        self.log_to_gui(f"    [*] Generating HIAD Geometry (Nose={nose_type})...")
-        python_exec = self._get_python_exec()
-        cmd_cad = [
-            python_exec, os.path.join(cad_dir, "HIAD_GeometryEngine.py"),
-            "--diameter", str(sample_dict['diameter']),
-            "--angle", str(sample_dict['angle']),
-            "--nose", str(sample_dict['nose']),
-            "--toroids", str(sample_dict['toroids']),
-            "--thickness", "0.0254",
-            "--nose_type", nose_type,
-            "--output", surf_name,
-            "--slice_angle", "360.0"
-        ]
-        # For baseline validation (360 degree 2D axi) we might want --flat_skin?
-        # Actually the Engine uses flat skin for SPARTA by default if we ask for it.
-        if opt_params.get('env_preset') == 'artemis':
-             cmd_cad.append("--flat_skin")
-             
-        subprocess.run(cmd_cad, cwd=cad_dir, check=True)
+        # --- Geometry already generated above ---
 
         script_content = self.generate_sparta_script(opt_params, surf_name=surf_name, **sample_dict)
         os.makedirs(os.path.join(cad_dir, "results_reference"), exist_ok=True)
