@@ -106,10 +106,12 @@ def setup_and_launch():
         print("[*] Integrity check skipped by user flag.")
 
     # 3. Create VENV if it doesn't exist (or was purged)
-    if not os.path.exists(venv_dir):
+    recreated = False
+    if not venv_python or not os.path.exists(venv_dir):
+        recreated = True
         target_python = sys.executable
-        # Prefer 3.12/3.11 for CadQuery compatibility
-        for cmd in ["python", "python3.12", "python3.11"]:
+        # Prefer 3.12/3.11 for CadQuery compatibility (3.14/3.13 have OCP issues)
+        for cmd in ["python3.12", "python3.11", "python3"]:
             try:
                 ver_out = subprocess.check_output([cmd, "--version"], text=True)
                 if "3.12" in ver_out or "3.11" in ver_out:
@@ -126,8 +128,8 @@ def setup_and_launch():
             print(f"[-] Fatal error creating venv: {e}")
             sys.exit(1)
 
-    # 4. Check if we are already running in the venv
-    if venv_python and sys.executable != os.path.abspath(venv_python):
+    # 4. Check if we are already running in the venv or if we just recreated it
+    if venv_python and (sys.executable != os.path.abspath(venv_python) or recreated):
         print("[*] Syncing dependencies with requirements.txt...")
         try:
             req_file = os.path.join(base_dir, "requirements.txt")
@@ -140,6 +142,7 @@ def setup_and_launch():
             print(f"[-] Warning: Dependency sync failed: {e}")
 
         print(f"[*] Restarting application inside fixed venv: {venv_python}")
+        # Use subprocess.call and exit to ensure we don't keep the "broken" process alive
         subprocess.call([venv_python, __file__])
         sys.exit(0)
     elif not venv_python:
