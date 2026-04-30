@@ -1444,3 +1444,51 @@ async function deleteRun() {
         loadHistoryList();
     }
 }
+
+async function openLiteracyCredit() {
+    const overlay = document.getElementById('manual-overlay');
+    const textContainer = document.getElementById('manual-text');
+    const titleEl = document.getElementById('manual-title-text');
+    const loader = document.getElementById('manual-loader');
+    const toc = document.getElementById('manual-toc');
+    const search = document.querySelector('.manual-search-box');
+
+    if (!overlay || !textContainer) return;
+
+    overlay.style.display = 'flex';
+    if (loader) loader.style.display = 'block';
+    if (toc) toc.style.display = 'none'; // Hide TOC for references
+    if (search) search.style.display = 'none'; // Hide search for references
+    textContainer.style.display = 'none';
+    if (titleEl) titleEl.innerText = "Project Bibliography & Literacy Credit";
+
+    try {
+        const markdown = await window.pywebview.api.get_references_content();
+        if (typeof marked !== 'undefined') {
+            let html = marked.parse(markdown);
+            // Highlight citations
+            html = html.replace(/\[(\d+)\]/g, '<strong style="color: var(--secondary);">[$1]</strong>');
+            textContainer.innerHTML = html;
+            textContainer.style.display = 'block';
+            
+            // Re-trigger KaTeX
+            if (typeof renderMathInElement !== 'undefined') {
+                renderMathInElement(textContainer, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false}
+                    ],
+                    throwOnError : false
+                });
+            }
+        } else {
+            textContainer.innerText = markdown;
+            textContainer.style.display = 'block';
+        }
+    } catch (e) {
+        textContainer.innerHTML = `<p style="color: #ef4444;">Error: ${e}</p>`;
+        textContainer.style.display = 'block';
+    } finally {
+        if (loader) loader.style.display = 'none';
+    }
+}

@@ -1,15 +1,89 @@
 #!/usr/bin/env python
-"""
-SPARTA simulation runner – executed inside the Docker container.
-- Builds SPARTA from source in an isolated directory (/tmp/sparta_build)
-- Runs the simulation and writes output to the shared workspace.
-"""
+import os
+import sys
+import subprocess
+
+# --- Dependency Auto-Fix ----------------------------------------------------──
+# --- Environment Management (Shared with GUI) ------------------------------──
+def ensure_venv():
+    """Ensures we are running inside the project's virtual environment (.venv_gui)."""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    venv_dir = os.path.join(base_dir, ".venv_gui")
+    
+    # Skip bootstrap if explicitly requested or if already inside the venv
+    if "--skip-venv-bootstrap" in sys.argv:
+        return
+
+    def get_venv_python():
+        if sys.platform == "win32":
+            p = os.path.join(venv_dir, "Scripts", "python.exe")
+        else:
+            p = os.path.join(venv_dir, "bin", "python")
+            if not os.path.exists(p):
+                p = os.path.join(venv_dir, "bin", "python3")
+        
+        if os.path.exists(p):
+            # Final sanity check: if we are on Unix but found an .exe, it's invalid
+            if sys.platform != "win32" and p.endswith(".exe"): return None
+            return os.path.abspath(p)
+        return None
+
+    venv_python = get_venv_python()
+
+    # If we found a venv but it's likely from another OS (Exec format error prevention)
+    if venv_python and not os.access(venv_python, os.X_OK) and sys.platform != "win32":
+        print("[!] Detected invalid venv binaries (likely cross-platform sync).")
+        venv_python = None 
+
+    # If we are NOT in the venv, we must bootstrap
+    if not venv_python or sys.executable != venv_python:
+        print("[*] StellarOrion Environment Check...")
+        
+        if not venv_python:
+            if os.path.exists(venv_dir):
+                print("[!] Existing .venv_gui is incompatible with this OS. Recreating...")
+                try:
+                    import shutil
+                    shutil.rmtree(venv_dir)
+                except: pass
+
+            print(f"[*] Creating shared virtual environment: {venv_dir}")
+            try:
+                subprocess.check_call([sys.executable, "-m", "venv", venv_dir])
+                venv_python = get_venv_python()
+            except Exception as e:
+                print(f"[-] Fatal: Failed to create venv: {e}")
+                sys.exit(1)
+
+        # Sync dependencies if needed
+        print("[*] Synchronizing dependencies in .venv_gui...")
+        try:
+            req_path = os.path.join(base_dir, "requirements.txt")
+            # Robust pip detection
+            if sys.platform == "win32":
+                venv_pip = os.path.join(venv_dir, "Scripts", "pip.exe")
+            else:
+                venv_pip = os.path.join(venv_dir, "bin", "pip")
+            
+            subprocess.check_call([venv_pip, "install", "-r", req_path])
+        except Exception as e:
+            print(f"[-] Warning: Dependency sync failed: {e}")
+
+        print(f"[*] Restarting application in isolated environment...")
+        try:
+            new_args = [venv_python, __file__] + [a for a in sys.argv[1:] if a != "--skip-venv-bootstrap"] + ["--skip-venv-bootstrap"]
+            os.execv(venv_python, new_args)
+        except OSError as e:
+            print(f"[-] Fatal: Failed to execute venv python ({e}). This may be due to cross-platform sync artifacts.")
+            print("[*] Try deleting the .venv_gui folder manually.")
+            sys.exit(1)
+
+# Run bootstrap before anything else (unless inside Docker)
+if "IN_DOCKER" not in os.environ:
+    ensure_venv()
 
 import ctypes
-import os
 import shutil
-import subprocess
-import sys
 import json
 import argparse
 import time

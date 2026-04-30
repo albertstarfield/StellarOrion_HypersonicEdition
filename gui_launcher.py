@@ -48,28 +48,33 @@ def setup_and_launch():
 
     # 2. Determine Python & Pip executables (Robust across Windows/Unix styles)
     def detect_venv_paths():
-        v_py = None
-        v_pip = None
-        pot_py = [
-            os.path.join(venv_dir, "Scripts", "python.exe"),
-            os.path.join(venv_dir, "bin", "python.exe"),
-            os.path.join(venv_dir, "bin", "python"),
-            os.path.join(venv_dir, "bin", "python3")
-        ]
-        pot_pip = [
-            os.path.join(venv_dir, "Scripts", "pip.exe"),
-            os.path.join(venv_dir, "bin", "pip.exe"),
-            os.path.join(venv_dir, "bin", "pip"),
-            os.path.join(venv_dir, "bin", "pip3")
-        ]
-        for p in pot_py:
-            if os.path.exists(p):
-                v_py = os.path.abspath(p)
-                break
-        for p in pot_pip:
-            if os.path.exists(p):
-                v_pip = os.path.abspath(p)
-                break
+        if sys.platform == "win32":
+            v_py = os.path.join(venv_dir, "Scripts", "python.exe")
+            v_pip = os.path.join(venv_dir, "Scripts", "pip.exe")
+        else:
+            v_py = os.path.join(venv_dir, "bin", "python")
+            if not os.path.exists(v_py):
+                v_py = os.path.join(venv_dir, "bin", "python3")
+            v_pip = os.path.join(venv_dir, "bin", "pip")
+            if not os.path.exists(v_pip):
+                v_pip = os.path.join(venv_dir, "bin", "pip3")
+        
+        # Check existence and execute bit (Unix)
+        if os.path.exists(v_py):
+            v_py = os.path.abspath(v_py)
+            # Final sanity check: if we are on Unix but found an .exe, it's invalid
+            if sys.platform != "win32" and v_py.endswith(".exe"): return None, None
+            # Check execute permissions on Unix
+            if sys.platform != "win32" and not os.access(v_py, os.X_OK): return None, None
+        else:
+            v_py = None
+            
+        if os.path.exists(v_pip):
+            v_pip = os.path.abspath(v_pip)
+            if sys.platform != "win32" and v_pip.endswith(".exe"): return v_py, None
+        else:
+            v_pip = None
+            
         return v_py, v_pip
 
     venv_python, venv_pip = detect_venv_paths()

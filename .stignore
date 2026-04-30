@@ -6,3 +6,5 @@ cleanup-fluent-*.bat
 FM_*
 fluent-*-error.log
 fluent-*.log
+.venv_gui/
+.venv/

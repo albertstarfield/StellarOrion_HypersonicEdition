@@ -207,7 +207,8 @@ class Api:
             "DERIVATION.md",
             "archnote.md",
             "HIAD_IRVE3_Baseline.md",
-            "Heatshield_Comparison.md"
+            "Heatshield_Comparison.md",
+            "REFERENCES.MD"
         ]
         
         combined_content = ""
@@ -225,6 +226,17 @@ class Api:
                 combined_content += f"\n\n# --- {filename} (Not Found) ---\n\n"
         
         return combined_content
+
+    def get_references_content(self):
+        """Specifically fetches the project bibliography."""
+        file_path = os.path.join(self.cwd, "REFERENCES.MD")
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    return f.read()
+            except Exception as e:
+                return f"# Error reading REFERENCES.MD\n\n{str(e)}"
+        return "# REFERENCES.MD (Not Found)"
 
     def get_optimization_history(self):
         return self.history.get_all_runs()
