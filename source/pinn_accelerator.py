@@ -1,5 +1,4 @@
 import numpy as np
-import numpy as np
 import os
 import sys
 
@@ -78,7 +77,10 @@ def pde_euler_2d(x, y, v_stream=None, scales=None):
     
     # Non-dimensionalized residuals
     # 1. Continuity: div(rho * U) = 0
-    continuity = drho_x * u_bar + rho_bar * du_x + drho_y * v_bar + rho_bar * dv_y
+    # Axisymmetric form: d(rho*u)/dx + d(rho*v)/dy + (rho*v)/y = 0
+    y_coord = x[:, 1:2]
+    eps = 1e-6
+    continuity = drho_x * u_bar + rho_bar * du_x + drho_y * v_bar + rho_bar * dv_y + (rho_bar * v_bar) / (y_coord + eps)
     
     # 2. Momentum X: rho*(u*ux + v*uy) + px = 0
     # Scaled by (rho_r * u_r^2 / L_r)
@@ -141,12 +143,21 @@ class PINNAccelerator:
         # Define Domain
         geom = dde.geometry.Rectangle([bounds_scaled[0], 0], [bounds_scaled[1], bounds_scaled[2]])
         
-        # Observation BCs (Scaled)
-        observe_y0 = dde.icbc.PointSetBC(X_scaled, Y_scaled[:, 0:1], component=0) # rho
-        observe_y1 = dde.icbc.PointSetBC(X_scaled, Y_scaled[:, 1:2], component=1) # u
-        observe_y2 = dde.icbc.PointSetBC(X_scaled, Y_scaled[:, 2:3], component=2) # v
-        observe_y3 = dde.icbc.PointSetBC(X_scaled, Y_scaled[:, 3:4], component=3) # T
-        observe_y4 = dde.icbc.PointSetBC(X_scaled, Y_scaled[:, 4:5], component=4) # p
+        # Subsample anchor points if too many (for performance on CPU)
+        if len(X_scaled) > 5000:
+            idx = np.random.choice(len(X_scaled), 5000, replace=False)
+            X_anchors = X_scaled[idx]
+            Y_anchors = Y_scaled[idx]
+        else:
+            X_anchors = X_scaled
+            Y_anchors = Y_scaled
+
+        # Observation BCs (Scaled) - Use subsampled points
+        observe_y0 = dde.icbc.PointSetBC(X_anchors, Y_anchors[:, 0:1], component=0) # rho
+        observe_y1 = dde.icbc.PointSetBC(X_anchors, Y_anchors[:, 1:2], component=1) # u
+        observe_y2 = dde.icbc.PointSetBC(X_anchors, Y_anchors[:, 2:3], component=2) # v
+        observe_y3 = dde.icbc.PointSetBC(X_anchors, Y_anchors[:, 3:4], component=3) # T
+        observe_y4 = dde.icbc.PointSetBC(X_anchors, Y_anchors[:, 4:5], component=4) # p
 
         pde_fn = lambda x, y: pde_euler_2d(x, y, v_stream=self.v_est if inverse else None, scales=self.scales)
 
@@ -156,7 +167,7 @@ class PINNAccelerator:
             [observe_y0, observe_y1, observe_y2, observe_y3, observe_y4],
             num_domain=2500,
             num_boundary=500,
-            anchors=X_scaled
+            anchors=X_anchors
         )
 
         # Deeper network for complex shock features
@@ -167,7 +178,9 @@ class PINNAccelerator:
         if inverse:
             self.model.compile("adam", lr=1e-3, external_trainable_variables=self.v_est)
         else:
-            self.model.compile("adam", lr=1e-3, loss_weights=[1, 1, 1, 1, 10, 10, 10, 10, 10]) # Favor data match initially
+            # Set PDE weights to 0 temporarily to stabilize training if Euler equations are stiff
+            # Indices: 0-3 (PDEs), 4-8 (Observations)
+            self.model.compile("adam", lr=1e-3, loss_weights=[0, 0, 0, 0, 1, 1, 1, 1, 1])
             
         self.model.train(iterations=iterations, display_every=100)
         
@@ -189,6 +202,7 @@ class PINNAccelerator:
         Y_unscaled = Y_scaled * np.array([self.scales["rho"], self.scales["u"], self.scales["v"], self.scales["T"], self.scales["p"]])
         return Y_unscaled
 
+import torch
 if __name__ == "__main__":
     # Quick test if run directly
     accel = PINNAccelerator(device="mps" if torch.backends.mps.is_available() else "cpu")

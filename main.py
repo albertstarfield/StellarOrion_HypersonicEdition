@@ -2,6 +2,7 @@
 import os
 import sys
 import subprocess
+from typing import Any, Optional
 
 # --- Dependency Auto-Fix ----------------------------------------------------──
 # --- Environment Management (Shared with GUI) ------------------------------──
@@ -59,20 +60,33 @@ def ensure_venv():
         print("[*] Synchronizing dependencies in .venv_gui...")
         try:
             req_path = os.path.join(base_dir, "requirements.txt")
-            # Robust pip detection
-            if sys.platform == "win32":
-                venv_pip = os.path.join(venv_dir, "Scripts", "pip.exe")
-            else:
-                venv_pip = os.path.join(venv_dir, "bin", "pip")
             
-            subprocess.check_call([venv_pip, "install", "-r", req_path])
+            # Use 'python -m pip' for maximum robustness
+            if venv_python is None:
+                raise RuntimeError("Failed to locate venv python after creation")
+
+            try:
+                subprocess.run([str(venv_python), "-m", "pip", "--version"], capture_output=True, check=True)
+            except:
+                print("[*] Pip missing in venv. Bootstrapping pip...")
+                subprocess.check_call([str(venv_python), "-m", "ensurepip", "--upgrade"])
+                
+            subprocess.check_call([str(venv_python), "-m", "pip", "install", "--upgrade", "pip"])
+            subprocess.check_call([str(venv_python), "-m", "pip", "install", "-r", req_path])
+            
+            # --- Bootstrapping for components not in requirements.txt ---
+            print("[*] Installing additional components (pyrefly, deepxde, ansys-fluent-core)...")
+            subprocess.check_call([str(venv_python), "-m", "pip", "install", "pyrefly", "deepxde", "ansys-fluent-core"])
         except Exception as e:
             print(f"[-] Warning: Dependency sync failed: {e}")
 
         print(f"[*] Restarting application in isolated environment...")
         try:
-            new_args = [venv_python, __file__] + [a for a in sys.argv[1:] if a != "--skip-venv-bootstrap"] + ["--skip-venv-bootstrap"]
-            os.execv(venv_python, new_args)
+            if venv_python is None:
+                 raise RuntimeError("Failed to locate venv python for execution")
+            
+            new_args = [str(venv_python), __file__] + [str(a) for a in sys.argv[1:] if a != "--skip-venv-bootstrap"] + ["--skip-venv-bootstrap"]
+            os.execv(str(venv_python), new_args)
         except OSError as e:
             print(f"[-] Fatal: Failed to execute venv python ({e}). This may be due to cross-platform sync artifacts.")
             print("[*] Try deleting the .venv_gui folder manually.")
@@ -81,6 +95,110 @@ def ensure_venv():
 # Run bootstrap before anything else (unless inside Docker)
 if "IN_DOCKER" not in os.environ:
     ensure_venv()
+
+def run_self_diagnostic():
+    """Performs a comprehensive self-check of the application and its components."""
+    print("\n" + "="*80)
+    print(f"{'STELLARORION SYSTEM INTEGRITY REPORT':^80}")
+    print("="*80)
+    
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    critical_errors = []
+    warnings = []
+
+    def report_step(name, status, message=""):
+        color = "\033[32m" if status == "PASS" else "\033[31m" if status == "FAIL" else "\033[33m"
+        reset = "\033[0m"
+        print(f"[{color}{status}{reset}] {name:<40} {message}")
+
+    # 1. Check Python & OS
+    report_step("Environment Logic", "PASS", f"{sys.platform} | Python {sys.version.split()[0]}")
+
+    # 2. Check pyrefly installation
+    try:
+        # Try to find pyrefly in the current environment
+        result = subprocess.run([sys.executable, "-m", "pyrefly", "--version"], capture_output=True, text=True)
+        if result.returncode == 0:
+            report_step("Static Checker (pyrefly)", "PASS", result.stdout.strip())
+        else:
+            report_step("Static Checker (pyrefly)", "FAIL", "pyrefly installed but returned error")
+            critical_errors.append("pyrefly functional check failed")
+    except Exception as e:
+        report_step("Static Checker (pyrefly)", "FAIL", f"pyrefly not found or failed: {e}")
+        critical_errors.append("pyrefly missing or non-functional")
+
+    # 3. Check deepxde
+    try:
+        import deepxde  # type: ignore
+        report_step("PINN Engine (DeepXDE)", "PASS", f"v{deepxde.__version__}")
+    except ImportError:
+        report_step("PINN Engine (DeepXDE)", "FAIL", "deepxde import failed")
+        critical_errors.append("deepxde missing")
+
+    # 4. Check ansys-fluent-core
+    try:
+        import ansys.fluent.core as pyfluent  # type: ignore
+        report_step("CFD Bridge (PyFluent)", "PASS", "Import successful")
+    except ImportError:
+        report_step("CFD Bridge (PyFluent)", "WARN", "ansys-fluent-core missing (Remote Fluent disabled)")
+        warnings.append("PyFluent missing")
+
+    # 5. Check Docker (Critical for SPARTA/OpenFOAM)
+    try:
+        docker_check = subprocess.run(["docker", "info"], capture_output=True)
+        if docker_check.returncode == 0:
+            report_step("Container Engine (Docker)", "PASS", "Docker Desktop active")
+        else:
+            report_step("Container Engine (Docker)", "FAIL", "Docker service not responding")
+            critical_errors.append("Docker not running")
+    except FileNotFoundError:
+        report_step("Container Engine (Docker)", "FAIL", "Docker not installed")
+        critical_errors.append("Docker missing")
+
+    # 6. Run pyrefly self-check on main.py
+    print("-" * 80)
+    print("[*] Running Static Analysis on core components...")
+    try:
+        # Run pyrefly on main.py and StellarOrionEngineMach5Up.py
+        target_files = ["main.py", "StellarOrionEngineMach5Up.py"]
+        # Filter for existing files
+        target_files = [f for f in target_files if os.path.exists(os.path.join(base_dir, f))]
+        
+        # We use 'check' command
+        check_cmd = [str(sys.executable), "-m", "pyrefly", "check"] + target_files
+        pyref_proc = subprocess.run(check_cmd, capture_output=True, text=True)
+        
+        if pyref_proc.returncode == 0:
+            report_step("Codebase Integrity (Static)", "PASS", "No critical type errors detected")
+        else:
+            print("\n[!] Pyrefly Analysis Results:")
+            print(pyref_proc.stdout)
+            print(pyref_proc.stderr)
+            report_step("Codebase Integrity (Static)", "FAIL", "Type errors or syntax issues detected")
+            # We treat pyrefly failure as a critical error if it's a syntax error or similar
+            # But maybe just a warning if it's just type hints. 
+            # The user said "exit terminate if there's an ERROR detected".
+            critical_errors.append("Codebase failed static integrity check")
+    except Exception as e:
+        report_step("Codebase Integrity (Static)", "FAIL", f"Analysis execution failed: {e}")
+        critical_errors.append("Static analysis failed to execute")
+
+    print("="*80)
+    if critical_errors:
+        print(f"\033[31m[-] FATAL: {len(critical_errors)} CRITICAL ERROR(S) DETECTED\033[0m")
+        for err in critical_errors:
+            print(f"    - {err}")
+        print("\n[*] Application terminated due to integrity failure.")
+        sys.exit(1)
+    else:
+        print("\033[32m[+] SYSTEM INTEGRITY VERIFIED\033[0m")
+        if warnings:
+            print(f"\033[33m[*] {len(warnings)} Warning(s) ignored.\033[0m")
+        print("="*80 + "\n")
+
+# Run self-diagnostic unless skipped
+if "--skip-diag" not in sys.argv and "IN_DOCKER" not in os.environ:
+    run_self_diagnostic()
 
 import ctypes
 import shutil
@@ -196,15 +314,11 @@ def run_simulation(steps=None):
     lib_dir = os.path.dirname(lib_path)
     ctypes.CDLL(lib_path, mode=ctypes.RTLD_GLOBAL)
 
-    from sparta import sparta
+    from sparta import sparta  # type: ignore
 
 
-    # 4. Initialize SPARTA with GPU flags if needed
+    # 4. Initialize SPARTA
     cmdargs = ["-log", "none"]
-    if os.environ.get("SPARTA_GPU", "0") == "1":
-        print("[*] Initializing SPARTA with Kokkos GPU acceleration...")
-        cmdargs.extend(["-k", "on", "g", "1", "-sf", "kk"])
-    
     spa = sparta(cmdargs=cmdargs)
     
     # Detect rank robustly without mpi4py
@@ -354,12 +468,16 @@ def main():
         ))
     mode.add_argument("--compareCalibrate", action="store_true",
         help="Shorthand for: --headless --test sample --solver <solver>. Runs a single IRVE-3 geometry simulation and prints a formatted comparison table of Cd and heat flux against the official IRVE-3 baseline values.")
+    mode.add_argument("--compareCalibratePINN", action="store_true",
+        help="Run compareCalibrate for 1500 steps, train DeepXDE PINN, and compare raw vs refined results against IRVE-3 baseline.")
     mode.add_argument("--compareNoses", action="store_true",
         help="Run a comparative study between Smooth (blunt) and Pointy (sharp) nose types on the baseline HIAD geometry. Prints a side-by-side performance table.")
     mode.add_argument("--gettheirvebbaseline", action="store_true",
         help="Print the IRVE-3 mission baseline parameters as JSON (geometry, performance, validation targets). No simulation is run. Useful for reference.")
     mode.add_argument("--LiteracyReferences", action="store_true",
         help="Display the full project bibliography and research references from REFERENCES.MD in a manpage-like view.")
+    mode.add_argument("--gridIndependencyTest", action="store_true",
+        help="Run a grid independency study using SPARTA DSMC. Tests grid factors 0.3, 0.5, 0.7, and 1.0 using 1100 steps. Compares Cd against reference and prints mesh statistics.")
 
     # -- Solver Selection ----------------------------------------------------──
     solver_grp = parser.add_argument_group("Solver Selection")
@@ -377,6 +495,8 @@ def main():
     sim = parser.add_argument_group("Simulation Parameters")
     sim.add_argument("--steps", type=int, default=1000,
         help="Number of simulation timesteps. Default: 1000. (For SPARTA: particle advance steps. For dsmcFoam: time iterations.)")
+    sim.add_argument("--stats-interval", type=int, default=100,
+        help="Frequency of simulation statistics output (in steps). Default: 100.")
     sim.add_argument("--grid-factor", type=float, default=1.0,
         help="Mesh density multiplier. Default: 1.0. >1.0 increases grid resolution, <1.0 decreases it.")
     sim.add_argument("--samples", type=int, default=5,
@@ -395,8 +515,22 @@ def main():
         ))
     sim.add_argument("--payload", action="store_true", default=False,
         help="Enable a payload model on the backside of the HIAD shield. Requires --payload-file.")
-    sim.add_argument("--payload-file", type=str, default=None,
-        help="Path to a STEP file (.step/.stp) for the payload. Only used if --payload is enabled.")
+    sim.add_argument("--payload-file", type=str, default="CADDesign/HIAD_custom_full.step", help="Path to payload STEP file")
+    
+    # Geometry Overrides (Ref: Rapisarda 2024 Table 5.4)
+    geo = parser.add_argument_group("Geometry Overrides (Rapisarda Envelope)")
+    geo.add_argument("--diameter", type=float, default=3.0, help="HIAD major diameter [m]. Limit: 0.5-15.0m. (IRVE-3: 3.0m)")
+    geo.add_argument("--angle", type=float, default=60.0, help="Half-cone angle [deg]. Rapisarda Limit: 40-80°. (IRVE-3: 60°)")
+    geo.add_argument("--toroids", type=int, default=7, help="Number of stacked toroids. Limit: 1-12. (IRVE-3: 7)")
+    geo.add_argument("--mass", type=float, default=281.0, help="Total entry mass [kg]. (IRVE-3: 281kg)")
+    
+    # Material Property Overrides (Ref: Rapisarda 2024 Table B.17)
+    sim.add_argument("--tps-material", type=str, default="sic", choices=["sic", "pyrogel", "kapton"],
+        help="Predefined F-TPS material layup (outer layer). Sets defaults for density and emissivity.")
+    sim.add_argument("--tps-density", type=float, default=1468.0, help="F-TPS Density [kg/m^3] (Default: 1468.0 for Nicalon SiC)")
+    sim.add_argument("--tps-cp", type=float, default=1100.0, help="F-TPS Specific Heat [J/kg-K]")
+    sim.add_argument("--tps-emissivity", type=float, default=0.75, help="F-TPS Surface Emissivity (Default: 0.75 for Nicalon SiC)")
+    sim.add_argument("--thermal-lag", type=float, default=15.0, help="Thermal Lag Factor [%%]")
     sim.add_argument("--slice-angle", type=float, default=360.0,
         help="Angle to revolve the skin (degrees). Use 360 for full body, or smaller (e.g. 10.0) for thin-slice 3D domains. Default: 360.0.")
 
@@ -433,6 +567,23 @@ def main():
 
     args, unknown = parser.parse_known_args()
 
+    # --- Rapisarda (2024) Structural & Geometric Validation ---
+    def validate_geometry(p_dict):
+        # θc: Half-cone Angle
+        angle = p_dict.get('angle', 60.0)
+        if not (40.0 <= angle <= 80.0):
+            print(f"[WARNING] Unrealistic Cone Angle: {angle}°. Rapisarda (2024) limits: 40° to 80°.")
+        
+        # N: Toroid Count
+        toroids = p_dict.get('toroids', 7)
+        if not (1 <= toroids <= 12):
+            print(f"[WARNING] Unrealistic Toroid Count: {toroids}. Realistic manufacturing limits: 1 to 12.")
+
+        # D: Major Diameter
+        diameter = p_dict.get('diameter', 3.0)
+        if not (0.5 <= diameter <= 15.0):
+            print(f"[WARNING] Unrealistic Diameter: {diameter}m. HIAD scalability limit: 0.5m to 15m.")
+
     if args.help:
         display_custom_help(parser)
 
@@ -441,6 +592,11 @@ def main():
         if not args.test:
             args.test = "sample"
         # Use default steps (1000) for calibration check unless user explicitly set something else
+
+    if args.compareCalibratePINN:
+        args.headless = True
+        args.steps = 1500
+        args.test = "pinn_calibration"
 
     if args.LiteracyReferences:
         ref_path = os.path.join(CONTAINER_WORKDIR, "REFERENCES.MD")
@@ -481,11 +637,33 @@ def main():
         
         if args.compareNoses:
             print("[*] Starting HIAD Nose-Type Comparison Study (Smooth vs Pointy)...")
-            res = api.run_nose_comparison(solver=args.solver, steps=args.steps, skip_diag=args.skip_diag, headless=args.headless, sparta_gpu=args.sparta_gpu)
+            res: Any = api.run_nose_comparison(solver=args.solver, steps=args.steps, skip_diag=args.skip_diag, headless=args.headless, sparta_gpu=args.sparta_gpu)
+            sys.exit(0)
+
+        if args.gridIndependencyTest:
+            print("[*] Starting Grid Independency Test Suite...")
+            # Override steps to 1100 as requested if not explicitly set
+            run_steps = args.steps if args.steps != 1000 else 1100
+            
+            # Pass new parameters to the study
+            res = api.run_grid_independency_test(
+                solver=args.solver, 
+                steps=run_steps, 
+                skip_diag=args.skip_diag, 
+                headless=args.headless, 
+                sparta_gpu=args.sparta_gpu,
+                is_gui=False
+            ) # type: ignore
             sys.exit(0)
 
         # Pre-flight check for Docker if using SPARTA or OpenFOAM
-        if args.solver in ['sparta', 'openfoam'] or args.test in ['sparta', 'openfoam', 'baseline', 'sample']:
+        skip_docker = False
+        if args.test == "pinn_calibration":
+            cad_dir = os.path.dirname(os.path.abspath(__file__))
+            if os.path.exists(os.path.join(cad_dir, "CADDesign", "results_reference", f"grid.{args.steps}.out")):
+                skip_docker = True
+
+        if not skip_docker and (args.solver in ['sparta', 'openfoam'] or args.test in ['sparta', 'openfoam', 'baseline', 'sample']):
             try:
                 subprocess.run(["docker", "info"], capture_output=True, check=True)
             except (subprocess.CalledProcessError, FileNotFoundError):
@@ -497,7 +675,7 @@ def main():
             print(f"[*] Starting Headless Integration Test: {args.test.upper()}...")
             if args.test == "sparta":
                 res = api.run_sparta_integration_test()
-                print(f"[*] Result: {res.get('status', 'unknown').upper()}")
+                print(f"[*] Result: {str(res.get('status', 'unknown')).upper()}")
                 print(f"[*] Message: {res.get('message', '')}")
             elif args.test == "pyfluent":
                 opt_params = {
@@ -510,30 +688,81 @@ def main():
                     print("[-] Error: SSH Host and User are required for PyFluent test.")
                     sys.exit(1)
                 res = api.run_integration_test(opt_params)
-                print(f"[*] Result: {res.get('status', 'unknown').upper()}")
+                print(f"[*] Result: {str(res.get('status', 'unknown')).upper()}")
                 print(f"[*] Message: {res.get('message', '')}")
             elif args.test == "pyansys":
                 print("[*] Starting Local PyAnsys (Windows Only) Integration Test...")
                 res = api.run_local_pyfluent_test(show_gui=True)
-                print(f"[*] Result: {res.get('status', 'unknown').upper()}")
+                print(f"[*] Result: {str(res.get('status', 'unknown')).upper()}")
                 print(f"[*] Message: {res.get('message', '')}")
             elif args.test == "openfoam":
                 res = api.run_openfoam_integration_test()
-                print(f"[*] Result: {res.get('status', 'unknown').upper()}")
+                print(f"[*] Result: {str(res.get('status', 'unknown')).upper()}")
                 print(f"[*] Message: {res.get('message', '')}")
             elif args.test == "baseline":
                 print("[*] Starting IRVE-3 Baseline Validation Simulation...")
                 res = api.run_baseline_validation(solver=args.solver, skip_diag=args.skip_diag, headless=args.headless, sparta_gpu=args.sparta_gpu)
-                print(f"[*] Validation Result: {res.get('status', 'unknown').upper()}")
+                print(f"[*] Validation Result: {str(res.get('status', 'unknown')).upper()}")
                 
-                if 'comparison' in res:
+                if isinstance(res, dict) and 'comparison' in res and isinstance(res['comparison'], dict):
                     print("\n[Comparison: Simulation vs IRVE-3 Documentation]")
                     print(f"{'Variable':<30} | {'Simulation':<12} | {'Document':<12} | {'Error %':<8}")
                     print("-" * 75)
                     for k, v in res['comparison'].items():
-                        sim_str = f"{v['sim']:.2f} {v.get('unit', '')}".strip()
-                        doc_str = f"{v['doc']:.2f} {v.get('unit', '')}".strip()
-                        print(f"{k:<30} | {sim_str:<12} | {doc_str:<12} | {v['error_pct']:.1f}%")
+                        sim_val = float(v.get('sim', 0))
+                        doc_val = float(v.get('doc', 0))
+                        err_val = float(v.get('error_pct', 0))
+                        sim_str = f"{sim_val:.2f} {v.get('unit', '')}".strip()
+                        doc_str = f"{doc_val:.2f} {v.get('unit', '')}".strip()
+                        print(f"{k:<30} | {sim_str:<12} | {doc_str:<12} | {err_val:.1f}%")
+                
+                if res.get('status') == 'error':
+                    print(f"[-] Error Message: {res.get('message', '')}")
+            elif args.test == "pinn_calibration":
+                print("[*] Starting PINN-Refined Calibration (DeepXDE)...")
+                
+                # Fetch baseline for printing (System Parameters)
+                baseline = api.get_irve_baseline_results_static()
+                print("\n" + "="*80)
+                print(f"{'IRVE-3 PINN CALIBRATION MODE: SYSTEM PARAMETERS':^80}")
+                print("="*80)
+                
+                print("\n[GEOMETRIC BASELINE PARAMETERS]")
+                print("-" * 30)
+                for k, v in baseline['geometry'].items():
+                    print(f"  {k:<25}: {v}")
+                
+                print("\n[FLIGHT PERFORMANCE PARAMETERS (TARGETS)]")
+                print("-" * 40)
+                for k, v in baseline['performance'].items():
+                    print(f"  {k:<25}: {v}")
+                print("="*80 + "\n")
+
+                res = api.run_pinn_calibration(solver=args.solver, steps=args.steps, skip_diag=args.skip_diag, headless=args.headless, sparta_gpu=args.sparta_gpu)
+                
+                if 'comparison' in res:
+                    print("\n" + "="*110)
+                    print(f"{'IRVE-3 PINN CALIBRATION RESULTS: 3-WAY COMPARISON':^110}")
+                    print("="*110)
+                    print(f"{'Variable':<25} | {'Simulation':<12} | {'PINN (DDE)':<12} | {'Document':<12} | {'PINN Err %':<10} | {'Improve %':<8}")
+                    print("-" * 110)
+                    for k, v in res['comparison'].items():
+                        sim_val = float(v.get('sim', 0))
+                        pinn_val = float(v.get('pinn', 0))
+                        doc_val = float(v.get('doc', 0))
+                        pinn_err = float(v.get('pinn_error_pct', 0))
+                        
+                        sim_str = f"{sim_val:.2f} {v.get('unit', '')}".strip()
+                        pinn_str = f"{pinn_val:.2f} {v.get('unit', '')}".strip()
+                        doc_str = f"{doc_val:.2f} {v.get('unit', '')}".strip() if doc_val > 0 else "N/A"
+                        
+                        # Calculate improvement (how much PINN moved towards Doc vs Sim)
+                        sim_err = abs(sim_val - doc_val) / doc_val * 100 if doc_val > 0 else 0
+                        improve = sim_err - pinn_err if doc_val > 0 else 0
+                        improve_str = f"{improve:>+7.1f}%" if doc_val > 0 else "N/A"
+                        
+                        print(f"{k:<25} | {sim_str:<12} | {pinn_str:<12} | {doc_str:<12} | {pinn_err:>8.1f}% | {improve_str}")
+                    print("="*110)
                 
                 if res.get('status') == 'error':
                     print(f"[-] Error Message: {res.get('message', '')}")
@@ -556,16 +785,20 @@ def main():
                     'sparta_gpu': args.sparta_gpu
                 }
                 sample_dict = {
-                    'diameter': 3.0,
-                    'angle': 60.0,
+                    'diameter': args.diameter,
+                    'angle': args.angle,
                     'nose': 0.191,
-                    'toroids': 7
+                    'toroids': args.toroids,
+                    'mass': args.mass
                 }
+                
+                # Validate vs Rapisarda (2024) limits
+                validate_geometry(sample_dict)
 
                 if args.compareCalibrate:
-                    print("\n" + "═"*80)
+                    print("\n" + "="*80)
                     print(f"{'IRVE-3 CALIBRATION MODE: SYSTEM PARAMETERS':^80}")
-                    print("═"*80)
+                    print("="*80)
                     
                     print("\n[GEOMETRIC BASELINE PARAMETERS]")
                     print("-" * 30)
@@ -582,7 +815,7 @@ def main():
                     for k, v in opt_params.items():
                         if k.startswith('env_'):
                             print(f"  {k:<25}: {v}")
-                    print("═"*80 + "\n")
+                    print("="*80 + "\n")
                 else:
                     print("[*] IRVE-3 Baseline Parameters:")
                     print(json.dumps({**opt_params, **sample_dict}, indent=4))
@@ -609,36 +842,38 @@ def main():
 
                 if args.solver == 'openfoam':
                     api.test_openfoam_readiness()
-                    res = api.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_sample")
+                    res_raw = api.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_sample")
                 elif args.solver == 'sparta':
-                    res = api.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_sample")
+                    res_raw = api.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_sample")
                 else:
                     # Fallback for other solvers in sample mode
-                    res = api.run_sparta_integration_test() 
+                    res_raw = api.run_sparta_integration_test() 
+                
+                # Use a separate dictionary for extended results to avoid type conflicts
+                res_ext: dict[str, Any] = dict(res_raw)
                 
                 # Add baseline comparison for solvers that return drag
-                if 'drag' in res and res['drag'] > 0:
-                    v = opt_params['env_vstream']
-                    rho = 0.001 # approx 1e-3 (at 52km for IRVE-3)
-                    force_n = res['drag']
-                    area = 3.14159 * (sample_dict['diameter']/2)**2
-                    cd_sim = force_n / (0.5 * rho * v**2 * area) if (rho * v**2 * area) > 0 else 0
+                if 'drag' in res_ext and float(res_ext.get('drag', 0)) > 0:
+                    v_inf = float(opt_params.get('env_vstream', 2700.0))
+                    rho_inf = 0.001 # approx 1e-3 (at 52km for IRVE-3)
+                    force_n = float(res_ext['drag'])
+                    area_ref = 3.14159 * (float(sample_dict.get('diameter', 3.0))/2)**2
+                    cd_sim = force_n / (0.5 * rho_inf * v_inf**2 * area_ref) if (rho_inf * v_inf**2 * area_ref) > 0 else 0
                     
                     # Heat Flux conversion (W/m2 to W/cm2)
-                    sim_heat = res.get('heat', 0) / 10000.0
+                    sim_heat = float(res_ext.get('heat', 0)) / 10000.0
                     
                     # Performance Metrics Derivation
-                    mass_kg = baseline['geometry']['mass_kg']
-                    force_n = res['drag']
+                    mass_kg = float(baseline['geometry'].get('mass_kg', 281.0))
                     decel_g = force_n / (mass_kg * 9.81) if mass_kg > 0 else 0
                     
                     # Pressure Metrics
                     # q = 0.5 * rho * v^2
-                    q_kpa = (0.5 * rho * v**2) / 1000.0
+                    q_kpa = (0.5 * rho_inf * v_inf**2) / 1000.0
                     # P_stag approx Cd * q (or use Newtonian approx: 2 * q)
                     p_stag_kpa = (cd_sim * q_kpa) 
                     
-                    res['comparison'] = {
+                    res_ext['comparison'] = {
                         'drag_coeff': {
                             'sim': cd_sim,
                             'doc': baseline['validation_targets']['reference_cd'],
@@ -700,17 +935,20 @@ def main():
                         }
                     }
                 
-                print(f"[*] Result: {res}")
-
-                if 'comparison' in res:
+                print(f"[*] Result: {res_ext}")
+                
+                if isinstance(res_ext, dict) and 'comparison' in res_ext and isinstance(res_ext['comparison'], dict):
                     print("\n[Comparison: Simulation vs IRVE-3 Documentation]")
                     print(f"Source: {api.get_irve_citation()}")
                     print(f"{'Variable':<30} | {'Simulation':<12} | {'Document':<12} | {'Error %':<8}")
                     print("-" * 85)
-                    for k, v in res['comparison'].items():
-                        sim_str = f"{v['sim']:.2f} {v.get('unit', '')}".strip()
-                        doc_str = f"{v['doc']:.2f} {v.get('unit', '')}".strip()
-                        print(f"{k:<30} | {sim_str:<12} | {doc_str:<12} | {v['error_pct']:.1f}%")
+                    for k, v in res_ext['comparison'].items():
+                        sim_val = float(v.get('sim', 0))
+                        doc_val = float(v.get('doc', 0))
+                        err_val = float(v.get('error_pct', 0))
+                        sim_str = f"{sim_val:.2f} {v.get('unit', '')}".strip()
+                        doc_str = f"{doc_val:.2f} {v.get('unit', '')}".strip()
+                        print(f"{k:<30} | {sim_str:<12} | {doc_str:<12} | {err_val:.1f}%")
                 
                 print(f"\n[*] Post-processing plots generated in: {os.path.join(CONTAINER_WORKDIR, 'web', 'assets', 'plots')}")
             return
@@ -742,7 +980,12 @@ def main():
                 'verbose': args.verbose,
                 'grid_factor': args.grid_factor,
                 'payload': args.payload,
-                'payload_file': args.payload_file
+                'payload_file': args.payload_file,
+                'tps_material': args.tps_material,
+                'tps_density': args.tps_density,
+                'tps_cp': args.tps_cp,
+                'tps_emissivity': args.tps_emissivity,
+                'thermal_lag': args.thermal_lag
             }
             
             print("[VERBOSE] Sending Optimization Parameters:")

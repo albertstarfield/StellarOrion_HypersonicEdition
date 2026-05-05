@@ -173,52 +173,312 @@ def generate_stagnation_graph(data, output_dir, suffix=""):
     
     fig.tight_layout()
     plt.savefig(os.path.join(output_dir, f'stagnation_graph{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
-    plt.savefig(os.path.join(output_dir, f'stagnation_graph{suffix}.jpg'), pil_kwargs={'quality': 85}, facecolor=fig.get_facecolor(), dpi=300)
     plt.close()
 
-def generate_convergence_plot(log_lines, output_dir, suffix=""):
-    """Generates a graph of global metrics (Drag, Heat) over simulation iterations."""
+def generate_convergence_plot(log_lines, output_dir, suffix="", ref_params=None):
+    """Generates graphs of global metrics and Fluent-style residuals over simulation iterations."""
     steps = []
     drag = []
+    lift = []
     heat = []
+    np_part = []
+    ncoll = []
+    t_trans = []
+    t_rot = []
+    t_vib = []
     
+    # Dynamic pressure q = 0.5 * rho * v^2
+    q = 1.0
+    area = 1.0
+    mass = 281.0
+    duration = 450.0
+    diameter = 3.0
+    toroid_radius = 0.135
+    
+    if ref_params:
+        rho = ref_params.get('rho', 1.0)
+        v = ref_params.get('v', 1.0)
+        area = ref_params.get('area', 1.0)
+        q = 0.5 * rho * v**2
+        mass = ref_params.get('mass', 281.0)
+        duration = ref_params.get('duration', 450.0)
+        diameter = ref_params.get('diameter', 3.0)
+        toroid_radius = ref_params.get('toroid_radius', 0.135)
+
     for line in log_lines:
         parts = line.split()
-        if len(parts) >= 5 and parts[0].isdigit():
+        # stats_style: step cpu np c_drag c_lift c_heat c_temp_avg[1] c_temp_avg[2] c_temp_avg[3] nattempt ncoll nscoll
+        if len(parts) >= 12 and parts[0].isdigit():
             try:
-                steps.append(int(parts[0]))
-                # According to our stats_style: step cpu np c_drag c_heat
-                drag.append(float(parts[3]))
-                heat.append(float(parts[4]))
+                s = int(parts[0])
+                p_count = float(parts[2])
+                d = float(parts[3])
+                l = float(parts[4])
+                h = float(parts[5])
+                tt = float(parts[6])
+                tr = float(parts[7])
+                tv = float(parts[8])
+                coll = float(parts[10])
+                
+                steps.append(s)
+                np_part.append(p_count)
+                drag.append(d)
+                lift.append(l)
+                heat.append(h)
+                t_trans.append(tt)
+                t_rot.append(tr)
+                t_vib.append(tv)
+                ncoll.append(coll)
             except (ValueError, IndexError):
                 continue
             
     if not steps: return
     
     os.makedirs(output_dir, exist_ok=True)
+    
+    # --- Residual Calculation (Relative Change) ---
+    def calc_residuals(data):
+        res = [1.0] # First step residual is 1.0
+        for i in range(1, len(data)):
+            denom = abs(data[i]) if abs(data[i]) > 1e-10 else 1.0
+            r = abs(data[i] - data[i-1]) / denom
+            res.append(max(1e-7, r)) # Clamp for log scale
+        return res
+
+    # --- Derived Physics per Iteration ---
+    steps_arr = np.array(steps)
+    drag_arr = np.array(drag)
+    lift_arr = np.array(lift)
+    heat_arr = np.array(heat)
+    
+    # Drag Coefficient Cd = Fx / (0.5 * rho * v^2 * A)
+    cd = drag_arr / (q * area) if q * area > 0 else np.zeros_like(drag_arr)
+    # Lift Coefficient Cl = Fy / (0.5 * rho * v^2 * A)
+    cl = lift_arr / (q * area) if q * area > 0 else np.zeros_like(lift_arr)
+    
+    # Ballistic Coefficient beta = m / (Cd * A)
+    beta = mass / (cd * area) if area > 0 else np.zeros_like(cd)
+    beta = np.nan_to_num(beta, nan=0.0, posinf=0.0, neginf=0.0)
+    
+    # Peak Deceleration = Force / (mass * g)
+    decel = drag_arr / (mass * 9.81) if mass > 0 else np.zeros_like(drag_arr)
+    
+    # Stagnation Pressure approx Cd * q (or 2*q for hypersonic blunt body)
+    stag_press = cd * q
+    
+    # Total Heat Load Q = integrated heat flux
+    # We use cumulative trapezoidal integration for better accuracy over steps
+    # But for a simple plot, we can show instantaneous Q estimate or cumulative sum
+    # Let's show cumulative heat load J/cm2
+    q_load_cum = np.cumsum(heat_arr) * (steps[1] - steps[0] if len(steps) > 1 else 1) * 1e-6 * 1e-4 # Very rough approximation
+    # Actually, use the same duration proxy as requested
+    heat_load_inst = heat_arr * duration * 1e-4
+
+    # Calculate residuals for ALL requested variables
+    res_cd = calc_residuals(cd)
+    res_cl = calc_residuals(cl)
+    res_heat = calc_residuals(heat_arr)
+    res_beta = calc_residuals(beta)
+    res_decel = calc_residuals(decel)
+    res_press = calc_residuals(stag_press)
+
+    # --- Plot 1: Comprehensive Mission Residuals (Log Scale) ---
+    fig, ax = plt.subplots(figsize=(12, 7))
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+
+    ax.set_yscale('log')
+    ax.set_xlabel('Iteration Step', color='#94a3b8', fontsize=12)
+    ax.set_ylabel('Normalized Residuals', color='#94a3b8', fontsize=12)
+    
+    ax.plot(steps, res_cd, color='#f59e0b', linewidth=2, label='Drag Coeff (Cd)')
+    ax.plot(steps, res_cl, color='#38bdf8', linewidth=1.5, label='Lift Coeff (Cl)', linestyle='--')
+    ax.plot(steps, res_heat, color='#ef4444', linewidth=1.5, label='Heat Flux (q̇)')
+    ax.plot(steps, res_beta, color='#10b981', linewidth=1.5, label='Ballistic Coeff (β)')
+    ax.plot(steps, res_decel, color='#f43f5e', linewidth=1.5, label='Peak Decel (G)')
+    ax.plot(steps, res_press, color='#6366f1', linewidth=1.5, label='Stag Pressure (P)')
+
+    ax.tick_params(axis='both', colors='#94a3b8')
+    plt.title('Multi-Variable Convergence Residuals', color='white', fontsize=16, fontweight='800')
+    ax.grid(True, which="both", ls="-", alpha=0.1, color='white')
+    ax.legend(loc='upper right', facecolor='#1e293b', edgecolor='#334155', labelcolor='white', fontsize=9)
+    
+    # Thresholds
+    ax.axhline(y=1e-3, color='yellow', linestyle=':', alpha=0.4, label='Engineering Conv.')
+    ax.axhline(y=1e-5, color='cyan', linestyle=':', alpha=0.4, label='Tight Conv.')
+
+    # Metadata text
+    meta_text = f"Aeroshell D: {diameter}m | Toroid R: {toroid_radius}m"
+    plt.text(0.02, 0.02, meta_text, transform=ax.transAxes, color='#94a3b8', fontsize=10, fontweight='600')
+
+    fig.tight_layout()
+    plt.savefig(os.path.join(output_dir, f'convergence_residuals_master{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
+    plt.close()
+
+    # --- Plot 2: Aerodynamic Coefficients (Cd, Cl) Absolute ---
     fig, ax1 = plt.subplots(figsize=(10, 6))
     ax1.set_facecolor('#0f172a')
     fig.patch.set_facecolor('#0f172a')
 
-    color = '#f59e0b' # Amber for Drag
     ax1.set_xlabel('Iteration Step', color='#94a3b8')
-    ax1.set_ylabel('Total Drag (N/m)', color=color)
-    ax1.plot(steps, drag, color=color, linewidth=2, label='Drag')
-    ax1.tick_params(axis='y', labelcolor=color, colors='#94a3b8')
+    ax1.set_ylabel('Drag Coefficient (Cd)', color='#f59e0b')
+    ax1.plot(steps, cd, color='#f59e0b', linewidth=2.5, label='Cd')
+    ax1.tick_params(axis='y', labelcolor='#f59e0b', colors='#94a3b8')
     ax1.tick_params(axis='x', colors='#94a3b8')
 
     ax2 = ax1.twinx()
-    color = '#ef4444' # Red for Heat
-    ax2.set_ylabel('Peak Heat Flux (Scaled)', color=color)
-    ax2.plot(steps, heat, color=color, linewidth=2, linestyle='--', label='Heat Flux')
-    ax2.tick_params(axis='y', labelcolor=color, colors='#94a3b8')
+    ax2.set_ylabel('Lift Coefficient (Cl)', color='#38bdf8')
+    ax2.plot(steps, cl, color='#38bdf8', linewidth=2, linestyle='--', label='Cl')
+    ax2.tick_params(axis='y', labelcolor='#38bdf8', colors='#94a3b8')
 
-    plt.title('Simulation Convergence (Residuals)', color='white', fontsize=14, fontweight='bold')
+    plt.title('Aerodynamic Force Coefficients', color='white', fontsize=14, fontweight='bold')
     ax1.grid(True, alpha=0.1, color='white')
     
     fig.tight_layout()
-    plt.savefig(os.path.join(output_dir, f'convergence_graph{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
+    plt.savefig(os.path.join(output_dir, f'convergence_aero{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
     plt.close()
+
+    # --- Plot 3: Mission Performance Metrics (Beta, G-Load, P-Stag) ---
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    ax1.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+
+    ax1.set_xlabel('Iteration Step', color='#94a3b8')
+    ax1.set_ylabel('Ballistic Coeff (kg/m²)', color='#10b981')
+    ax1.plot(steps, beta, color='#10b981', linewidth=2, label='β')
+    ax1.tick_params(axis='y', labelcolor='#10b981', colors='#94a3b8')
+    
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Decel (G) / Pressure (Pa)', color='#94a3b8')
+    ax2.plot(steps, decel, color='#f43f5e', linewidth=2, label='Decel (G)')
+    ax2.plot(steps, stag_press, color='#6366f1', linewidth=2, linestyle=':', label='P-Stag (Pa)')
+    ax2.tick_params(axis='y', labelcolor='#94a3b8', colors='#94a3b8')
+
+    plt.title('Integrated Mission Performance Metrics', color='white', fontsize=14, fontweight='bold')
+    ax1.grid(True, alpha=0.1, color='white')
+    ax1.legend(loc='lower left', facecolor='#1e293b', labelcolor='white')
+    ax2.legend(loc='lower right', facecolor='#1e293b', labelcolor='white')
+    
+    fig.tight_layout()
+    plt.savefig(os.path.join(output_dir, f'convergence_mission{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
+    plt.close()
+
+    # --- Plot 4: Thermal Metrics (q̇ and Q) ---
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    ax1.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+
+    ax1.set_xlabel('Iteration Step', color='#94a3b8')
+    ax1.set_ylabel('Peak Heat Flux (W/m²)', color='#ef4444')
+    ax1.plot(steps, heat, color='#ef4444', linewidth=2.5, label='q̇')
+    ax1.tick_params(axis='y', labelcolor='#ef4444', colors='#94a3b8')
+
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Total Heat Load (J/cm²)', color='#fb923c')
+    ax2.plot(steps, heat_load_inst, color='#fb923c', linewidth=2, linestyle='--', label='Q (Est)')
+    ax2.tick_params(axis='y', labelcolor='#fb923c', colors='#94a3b8')
+
+    plt.title('Stagnation Thermal Loading Convergence', color='white', fontsize=14, fontweight='bold')
+    ax1.grid(True, alpha=0.1, color='white')
+    
+    fig.tight_layout()
+    plt.savefig(os.path.join(output_dir, f'convergence_thermal{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
+    plt.close()
+
+    # --- Plot 5: Simulation Coherency ---
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    ax1.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+
+    ax1.set_xlabel('Iteration Step', color='#94a3b8')
+    ax1.set_ylabel('Particle Count (np)', color='#10b981')
+    ax1.plot(steps, np_part, color='#10b981', linewidth=2, label='Particles')
+    ax1.tick_params(axis='y', labelcolor='#10b981', colors='#94a3b8')
+
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Collisions', color='#a855f7')
+    ax2.plot(steps, ncoll, color='#a855f7', linewidth=2, linestyle=':', label='Collisions')
+    ax2.tick_params(axis='y', labelcolor='#a855f7', colors='#94a3b8')
+
+    plt.title('Solver Numerical Coherency', color='white', fontsize=14, fontweight='bold')
+    ax1.grid(True, alpha=0.1, color='white')
+    
+    fig.tight_layout()
+    plt.savefig(os.path.join(output_dir, f'convergence_coherency{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
+    plt.close()
+
+def generate_mesh_plot(grid_file, output_path, surf_file=None):
+    """Generates a plot showing the actual computational grid/mesh around the geometry."""
+    print(f"[*] Generating mesh statistics plot: {grid_file}")
+    data = parse_grid_dump(grid_file)
+    if len(data) == 0: return
+    
+    # xlo ylo xhi yhi are in indices 0, 1, 2, 3
+    xlo, ylo, xhi, yhi = data[:, 0], data[:, 1], data[:, 2], data[:, 3]
+    
+    plt.figure(figsize=(12, 8), facecolor='#0f172a')
+    ax = plt.gca()
+    ax.set_facecolor('#0f172a')
+    
+    # Plot a subset of grid cells to avoid overcrowding if mesh is huge
+    # We'll plot the boundaries of the cells
+    max_cells_to_plot = 5000
+    if len(data) > max_cells_to_plot:
+        indices = np.random.choice(len(data), max_cells_to_plot, replace=False)
+    else:
+        indices = range(len(data))
+        
+    from matplotlib.collections import PolyCollection
+    verts = []
+    for i in indices:
+        # Create rectangle vertices
+        v = [
+            (xlo[i], ylo[i]),
+            (xhi[i], ylo[i]),
+            (xhi[i], yhi[i]),
+            (xlo[i], yhi[i])
+        ]
+        verts.append(v)
+        
+    coll = PolyCollection(verts, facecolors='none', edgecolors='#334155', linewidths=0.5, alpha=0.3)
+    ax.add_collection(coll)
+    
+    # Plot Geometry Wall
+    if surf_file and os.path.exists(surf_file):
+        points = []
+        with open(surf_file, 'r') as f:
+            mode = None
+            for line in f:
+                if "Points" in line: mode = "pts"; continue
+                if "Lines" in line: mode = "lines"; continue
+                parts = line.split()
+                if not parts or parts[0].isalpha(): continue
+                if mode == "pts" and len(parts) >= 3:
+                    points.append([float(parts[1]), float(parts[2])])
+        
+        if points:
+            pts = np.array(points)
+            plt.plot(pts[:, 0], pts[:, 1], color='#f43f5e', linewidth=2, label='HIAD Geometry')
+            plt.plot(pts[:, 0], -pts[:, 1], color='#f43f5e', linewidth=2) # Axisymmetric reflection
+            
+    plt.title('SPARTA DSMC - Computational Mesh Statistics', color='white', fontsize=16, fontweight='bold')
+    plt.xlabel('Axial (m)', color='#94a3b8')
+    plt.ylabel('Radial (m)', color='#94a3b8')
+    plt.tick_params(colors='#94a3b8')
+    
+    # Stats annotation
+    stats_text = f"Total Cells: {len(data)}\n"
+    stats_text += f"Domain: [{np.min(xlo):.2f}, {np.max(xhi):.2f}] x [0, {np.max(yhi):.2f}]"
+    props = dict(boxstyle='round', facecolor='#1e293b', alpha=0.8, edgecolor='#38bdf8')
+    plt.text(0.05, 0.95, stats_text, transform=ax.transAxes, fontsize=10,
+             verticalalignment='top', bbox=props, color='white', fontfamily='monospace')
+             
+    plt.grid(True, alpha=0.05, color='white')
+    plt.axis('equal')
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300)
+    plt.close()
+    print(f"[+] Mesh plot saved to {output_path}")
 
 def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp'):
     """Upscales 2D axisymmetric results to a 3D visualization by rotating the slice.

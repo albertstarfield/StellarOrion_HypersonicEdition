@@ -233,3 +233,4 @@ fluent-*.log
 
 # Syncthing conflict
 **.sync-conflict**
+AgentsInst.txt

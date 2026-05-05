@@ -248,6 +248,28 @@ function togglePayloadInput() {
     }
 }
 
+function applyMaterialPreset() {
+    const preset = document.getElementById('tps-material-preset').value;
+    const densityEl = document.getElementById('tps-density');
+    const cpEl = document.getElementById('tps-cp');
+    const emissEl = document.getElementById('tps-emissivity');
+    const maxTempEl = document.getElementById('tps-max-temp');
+
+    const materials = {
+        'sic': { rho: 1468.0, cp: 1100.0, eps: 0.75, maxT: 2073.0 },
+        'pyrogel': { rho: 110.0, cp: 1000.0, eps: 0.12, maxT: 1373.0 },
+        'kapton': { rho: 3100.0, cp: 1090.0, eps: 0.88, maxT: 773.0 }
+    };
+
+    const data = materials[preset];
+    if (data) {
+        densityEl.value = data.rho;
+        cpEl.value = data.cp;
+        emissEl.value = data.eps;
+        maxTempEl.value = data.maxT;
+    }
+}
+
 function generateGeometry() {
     const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : null;
     const getCheck = (id) => document.getElementById(id) ? document.getElementById(id).checked : false;
@@ -353,7 +375,15 @@ function startOptimization() {
 
         // Payload
         payload: getCheck('enable-payload'),
-        payload_file: getVal('payload-file')
+        payload_file: getVal('payload-file'),
+
+        // Material Properties
+        tps_material: getVal('tps-material-preset'),
+        tps_density: getVal('tps-density'),
+        tps_cp: getVal('tps-cp'),
+        tps_emissivity: getVal('tps-emissivity'),
+        tps_max_temp: getVal('tps-max-temp'),
+        thermal_lag: getVal('thermal-lag')
     };
     
     window.pywebview.api.run_optimization(optParams);
@@ -641,7 +671,7 @@ function loadRemoteParams() {
         const setVal = (id, val) => { if (document.getElementById(id)) document.getElementById(id).value = val; };
         const setCheck = (id, val) => { if (document.getElementById(id)) document.getElementById(id).checked = val; };
         
-        setVal('solver-backend', params.backend || 'openfoam');
+        setVal('solver-backend', params.backend || 'sparta');
         setVal('ssh-host', params.host || '');
         setVal('ssh-user', params.user || '');
         setVal('ssh-pass', params.pass || '');
@@ -1190,9 +1220,37 @@ function searchManual() {
     }
 }
 
+function checkStructuralValidity() {
+    const angle = parseFloat(document.getElementById('ref-angle')?.value || 60);
+    const toroids = parseInt(document.getElementById('ref-toroids')?.value || 7);
+    const diameter = parseFloat(document.getElementById('ref-diameter')?.value || 3);
+    const thickness = parseFloat(document.getElementById('thickness')?.value || 0.025);
+    
+    let warnings = [];
+    if (angle < 40 || angle > 80) warnings.push(`Cone Angle (${angle}°) is outside Rapisarda (2024) stability bounds (40°-80°).`);
+    if (toroids > 12) warnings.push(`Toroid Count (${toroids}) exceeds standard manufacturing limits (max 12).`);
+    if (diameter > 15) warnings.push(`Extreme Scale: Diameter (${diameter}m) may exceed current inflation system capacity.`);
+    if (thickness < 0.005) warnings.push(`TPS Skin (${thickness}m) is too thin for high-Mach aerothermal protection.`);
+    
+    return warnings;
+}
+
 function updateSummary() {
     const summaryDiv = document.getElementById('summary-content');
     if (!summaryDiv) return;
+
+    const structuralWarnings = checkStructuralValidity();
+    let warningHtml = "";
+    if (structuralWarnings.length > 0) {
+        warningHtml = `
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #fca5a5; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.8rem;">
+                <strong style="display: block; margin-bottom: 5px;">⚠️ Structural Integrity Warnings:</strong>
+                <ul style="margin: 0; padding-left: 20px;">
+                    ${structuralWarnings.map(w => `<li>${w}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
 
     const getVal = (id) => {
         const el = document.getElementById(id);
@@ -1207,6 +1265,7 @@ function updateSummary() {
     };
 
     const html = `
+        ${warningHtml}
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div class="summary-section">
                 <h4 style="color: var(--primary); margin-bottom: 10px; font-size: 0.8rem; text-transform: uppercase;">Base Geometry</h4>
@@ -1504,5 +1563,55 @@ async function openLiteracyCredit() {
         textContainer.style.display = 'block';
     } finally {
         if (loader) loader.style.display = 'none';
+    }
+}
+
+async function startGridIndependencyTest() {
+    // 1. Move to High-Fidelity SBO Page (Terminal)
+    jumpToPage(7);
+    
+    // 2. Gather current parameters
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        return (el.type === 'checkbox') ? el.checked : el.value;
+    };
+    
+    const solver = getVal('solver-backend') || 'sparta';
+    const steps = parseInt(getVal('grid-test-steps')) || 1100;
+    const factorsStr = getVal('grid-test-factors') || "0.3, 0.5, 0.7, 1.0";
+    const headless = getVal('grid-test-headless') ?? true;
+    const useGpu = getVal('sparta-gpu') || false;
+
+    appendLog("<br><span style='color: #a855f7; font-weight: 800;'>[SYSTEM] INITIALIZING AUTOMATED GRID INDEPENDENCY STUDY...</span>");
+    appendLog(`<span style='color: #a855f7;'>[*] Targeting Grid Factors: [${factorsStr}]</span>`);
+    appendLog(`[*] Solver Backend: ${solver.toUpperCase()}`);
+    appendLog(`[*] Iterations per Test: ${steps}`);
+    appendLog(`[*] GPU Acceleration: ${useGpu ? 'ENABLED' : 'DISABLED'}`);
+    appendLog(`[*] Mode: ${headless ? 'HEADLESS' : 'INTERACTIVE'}`);
+    appendLog("<span style='color: #a855f7;'>[*] ----------------------------------------------------------------</span>");
+    
+    // 3. Update Progress Bar
+    updateProgress(5);
+
+    // 4. Call Python API
+    try {
+        await window.pywebview.api.run_grid_independency_test(
+            solver, 
+            steps, 
+            false, // skip_diag
+            headless,
+            useGpu,
+            true,  // is_gui
+            factorsStr
+        );
+        
+        appendLog("<br><span style='color: #10b981; font-weight: 800;'>[SUCCESS] GRID INDEPENDENCY STUDY COMPLETE.</span>");
+        appendLog("[*] Results archived in individual factor subdirectories.");
+        appendLog("[*] Reference Comparison Table generated in terminal above.");
+        updateProgress(100);
+    } catch (e) {
+        appendLog(`<br><span style='color: #ef4444; font-weight: 800;'>[ERROR] Grid study failed: ${e}</span>`);
+        updateProgress(0);
     }
 }

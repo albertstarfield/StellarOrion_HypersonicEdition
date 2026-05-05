@@ -55,6 +55,19 @@ Use these values to calibrate the **Survivability Optimization (SBO)** targets i
 *   **Aerodynamic Stability**: The vehicle demonstrated stable flight throughout the hypersonic and supersonic regimes.
 *   **Center-of-Gravity (CG) Offset**: Demonstrated the ability to generate lift for trajectory steering.
 
+## 6. MDAO Reference (Rapisarda 2024) - Mesh Independence
+The following parameters establish the mesh fidelity requirements used in the Rapisarda MDAO framework for Inflatable Stacked Toroids.
+
+| Parameter | Value | Note |
+| :--- | :--- | :--- |
+| **Mesh Type** | 3D Surface Mesh | Delaunay Triangulation (Triangular Panels) |
+| **Tested Meshes** | 9 configurations | Range: 1,694 to 54,446 triangles |
+| **Convergence Point** | 30,000 triangles | $C_d$ stabilizes with < 1% variation |
+| **Recommended Density** | $A_{panel} / A_{total} < 4 \times 10^{-4}$ | Normalised average panel area |
+| **Simulation Speed** | < 0.6s per run | On standard research workstation |
+
+*   **Key Finding**: $C_d$ is Mach-independent in the continuum regime (Modified Newtonian method), but highly sensitive to the shading algorithm and panel density on rounded features (nose/shoulder).
+
 ## References
 1.  Cassell, G. J., et al., "Inflatable Re-entry Vehicle Experiment (IRVE-3) Flight Results," *AIAA 2013-1386*, 2013.
 2.  Lau, K., Cheatwood, N., et al., "Inflatable Re-entry Vehicle Experiment 3 (IRVE-3) Post-Flight Aerothermal Reconstruction," *NASA/TP-2013-4012*.
