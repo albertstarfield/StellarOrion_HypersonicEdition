@@ -85,11 +85,17 @@ def ensure_venv():
             if venv_python is None:
                  raise RuntimeError("Failed to locate venv python for execution")
             
-            new_args = [str(venv_python), __file__] + [str(a) for a in sys.argv[1:] if a != "--skip-venv-bootstrap"] + ["--skip-venv-bootstrap"]
-            os.execv(str(venv_python), new_args)
-        except OSError as e:
-            print(f"[-] Fatal: Failed to execute venv python ({e}). This may be due to cross-platform sync artifacts.")
-            print("[*] Try deleting the .venv_gui folder manually.")
+            # Use absolute path for the script to ensure it's found after restart
+            script_path = os.path.abspath(__file__)
+            new_args = [str(venv_python), script_path] + [str(a) for a in sys.argv[1:] if a != "--skip-venv-bootstrap"] + ["--skip-venv-bootstrap"]
+            
+            if sys.platform == "win32":
+                # os.execv is unreliable on Windows and can lead to REPL loops
+                sys.exit(subprocess.call(new_args))
+            else:
+                os.execv(str(venv_python), new_args)
+        except Exception as e:
+            print(f"[-] Fatal: Failed to restart in venv ({e}).")
             sys.exit(1)
 
 # Run bootstrap before anything else (unless inside Docker)
@@ -497,8 +503,8 @@ def main():
         help="Number of simulation timesteps. Default: 1000. (For SPARTA: particle advance steps. For dsmcFoam: time iterations.)")
     sim.add_argument("--stats-interval", type=int, default=100,
         help="Frequency of simulation statistics output (in steps). Default: 100.")
-    sim.add_argument("--grid-factor", type=float, default=1.0,
-        help="Mesh density multiplier. Default: 1.0. >1.0 increases grid resolution, <1.0 decreases it.")
+    sim.add_argument("--grid-factor", type=float, default=0.7,
+        help="Mesh density multiplier. Default: 0.7 (Optimized via Grid Independency test against MDAO reference). >1.0 increases grid resolution, <1.0 decreases it.")
     sim.add_argument("--samples", type=int, default=5,
         help="Number of Latin Hypercube Sampling (LHS) geometry samples per optimization iteration. Default: 5.")
     sim.add_argument("--goal", type=str, default="drag", choices=["drag", "heat"],
@@ -844,13 +850,13 @@ def main():
                     api.test_openfoam_readiness()
                     res_raw = api.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_sample")
                 elif args.solver == 'sparta':
-                    res_raw = api.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_sample")
+                    res_raw, _ = api.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_sample")
                 else:
                     # Fallback for other solvers in sample mode
                     res_raw = api.run_sparta_integration_test() 
                 
                 # Use a separate dictionary for extended results to avoid type conflicts
-                res_ext: dict[str, Any] = dict(res_raw)
+                res_ext: dict[str, Any] = dict(res_raw) if isinstance(res_raw, dict) else {"raw_output": res_raw}
                 
                 # Add baseline comparison for solvers that return drag
                 if 'drag' in res_ext and float(res_ext.get('drag', 0)) > 0:
@@ -956,7 +962,7 @@ def main():
         if args.optimize:
             print("[*] Optimization mode selected. Launching headless optimizer...")
             opt_params = {
-                'env_preset': 'artemis',
+                'env_preset': 'irve3',
                 'env_nrho': '3.5e22',
                 'env_temp_inf': '270.0',
                 'env_fnum': '1e16',
@@ -992,7 +998,23 @@ def main():
             # (json already imported)
             print(json.dumps(opt_params, indent=4))
             
+            # --- COMPARISON MODE: RUN BOTH SCALLOPED AND SMOOTH ---
+            print("\n" + "="*80)
+            print("[*] STARTING COMPARATIVE OPTIMIZATION: SCALLOPED vs SMOOTH")
+            print("="*80)
+            
+            # Run 1: Scalloped (Default/Real)
+            print("\n[*] PHASE A: OPTIMIZING SCALLOPED TOPOLOGY (Realistic Stacked Toroids)...")
+            opt_params['flat_skin'] = False
             api.execute_optimization(opt_params, is_gui=False)
+            
+            # Run 2: Smooth (Baseline/Idealized)
+            print("\n[*] PHASE B: OPTIMIZING SMOOTH TOPOLOGY (Idealized Cone Baseline)...")
+            opt_params['flat_skin'] = True
+            api.execute_optimization(opt_params, is_gui=False)
+            
+            print("\n[SUCCESS] Dual-mode optimization comparison complete.")
+            print("[INFO] Reasoning and first-run findings documented in OPTIMIZATION_LOG.md")
             return
 
         # Default: Launch the GUI

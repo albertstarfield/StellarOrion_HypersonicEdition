@@ -40,13 +40,54 @@ def parse_grid_dump(filepath):
                 # id xlo ylo xhi yhi n u v w temp press
                 data.append([float(x) for x in parts[1:]])
     return np.array(data)
+    
+def _add_metadata_overlay(ax, ref_params, extra_info=None):
+    """Internal helper to add a metadata box to the top-left of any plot."""
+    if not ref_params: return
+    
+    text_lines = []
+    # Environment info
+    if 'v_inf' in ref_params: text_lines.append(f"V_inf: {ref_params['v_inf']} m/s")
+    if 'mach' in ref_params: text_lines.append(f"Mach: {ref_params['mach']}")
+    if 'nrho' in ref_params: 
+        try: text_lines.append(f"n_rho: {float(ref_params['nrho']):.1e}")
+        except: text_lines.append(f"n_rho: {ref_params['nrho']}")
+    if 'temp' in ref_params: text_lines.append(f"T_inf: {ref_params['temp']} K")
+    
+    # Mesh info
+    if 'cells' in ref_params: text_lines.append(f"Cells: {ref_params['cells']}")
+    if 'grid_factor' in ref_params: text_lines.append(f"Grid Factor: {ref_params['grid_factor']}")
+    
+    # Hash info
+    if 'git_hash' in ref_params: text_lines.append(f"Build: {ref_params['git_hash']}")
+    
+    if extra_info:
+        text_lines.append(f"[{extra_info}]")
+        
+    if not text_lines: return
+    
+    metadata_str = "\n".join(text_lines)
+    # Using a semi-transparent slate box with a cyan border to match the StellarOrion theme
+    props = dict(boxstyle='round,pad=0.5', facecolor='#0f172a', alpha=0.7, edgecolor='#06b6d4', linewidth=1)
+    
+    # Check if we are dealing with a 3D axis
+    if hasattr(ax, 'get_zlim'):
+        ax.text2D(0.02, 0.98, metadata_str, transform=ax.transAxes, fontsize=7,
+                 verticalalignment='top', bbox=props, color='white', fontfamily='monospace')
+    else:
+        ax.text(0.02, 0.98, metadata_str, transform=ax.transAxes, fontsize=7,
+                 verticalalignment='top', bbox=props, color='white', fontfamily='monospace', zorder=100)
 
-def generate_plots(grid_file, output_dir, suffix=""):
+def generate_plots(grid_file, output_dir, suffix="", ref_params=None):
     os.makedirs(output_dir, exist_ok=True)
     data = parse_grid_dump(grid_file)
     if len(data) == 0:
         print(f"Error: No data found in {grid_file}")
         return
+
+    # Update ref_params with cell count if not present
+    if ref_params is not None and 'cells' not in ref_params:
+        ref_params['cells'] = len(data)
 
     # x_center, y_center calculations
     x_center = (data[:, 0] + data[:, 2]) / 2
@@ -69,6 +110,8 @@ def generate_plots(grid_file, output_dir, suffix=""):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
+    # Overlay Metadata
+    _add_metadata_overlay(plt.gca(), ref_params, extra_info="Thermal Map")
     plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.png'), dpi=300)
     plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
@@ -82,6 +125,8 @@ def generate_plots(grid_file, output_dir, suffix=""):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
+    # Overlay Metadata
+    _add_metadata_overlay(plt.gca(), ref_params, extra_info="Pressure Map")
     plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.png'), dpi=300)
     plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
@@ -98,6 +143,8 @@ def generate_plots(grid_file, output_dir, suffix=""):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
+    # Overlay Metadata
+    _add_metadata_overlay(plt.gca(), ref_params, extra_info="Velocity Quiver")
     plt.savefig(os.path.join(output_dir, f'velocity_vectors{suffix}.png'), dpi=300)
     plt.savefig(os.path.join(output_dir, f'velocity_vectors{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
@@ -119,16 +166,18 @@ def generate_plots(grid_file, output_dir, suffix=""):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
+    # Overlay Metadata
+    _add_metadata_overlay(plt.gca(), ref_params, extra_info="Mach Distribution")
     plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.png'), dpi=300)
     plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
 
     # Plot 5: Stagnation Streamline Graph (1D)
-    generate_stagnation_graph(data, output_dir, suffix=suffix)
+    generate_stagnation_graph(data, output_dir, suffix=suffix, ref_params=ref_params)
 
     print(f"Plots generated in {output_dir}")
 
-def generate_stagnation_graph(data, output_dir, suffix=""):
+def generate_stagnation_graph(data, output_dir, suffix="", ref_params=None):
     """Generates a 1D graph of properties along the stagnation streamline (y=0)."""
     # x_center, y_center calculations
     x_center = (data[:, 0] + data[:, 2]) / 2
@@ -170,6 +219,9 @@ def generate_stagnation_graph(data, output_dir, suffix=""):
 
     plt.title('Stagnation Streamline Profile (y ≈ 0)', color='white', fontsize=14, fontweight='bold')
     ax1.grid(True, alpha=0.1, color='white')
+    
+    # Overlay Metadata
+    _add_metadata_overlay(ax1, ref_params, extra_info="1D Stagnation Profile")
     
     fig.tight_layout()
     plt.savefig(os.path.join(output_dir, f'stagnation_graph{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
@@ -303,13 +355,16 @@ def generate_convergence_plot(log_lines, output_dir, suffix="", ref_params=None)
     ax.grid(True, which="both", ls="-", alpha=0.1, color='white')
     ax.legend(loc='upper right', facecolor='#1e293b', edgecolor='#334155', labelcolor='white', fontsize=9)
     
+    # Overlay Metadata
+    _add_metadata_overlay(ax, ref_params, extra_info="Convergence Study")
+    
     # Thresholds
     ax.axhline(y=1e-3, color='yellow', linestyle=':', alpha=0.4, label='Engineering Conv.')
     ax.axhline(y=1e-5, color='cyan', linestyle=':', alpha=0.4, label='Tight Conv.')
 
     # Metadata text
     meta_text = f"Aeroshell D: {diameter}m | Toroid R: {toroid_radius}m"
-    plt.text(0.02, 0.02, meta_text, transform=ax.transAxes, color='#94a3b8', fontsize=10, fontweight='600')
+    ax.text(0.02, 0.02, meta_text, transform=ax.transAxes, color='#94a3b8', fontsize=10, fontweight='600')
 
     fig.tight_layout()
     plt.savefig(os.path.join(output_dir, f'convergence_residuals_master{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
@@ -333,6 +388,9 @@ def generate_convergence_plot(log_lines, output_dir, suffix="", ref_params=None)
 
     plt.title('Aerodynamic Force Coefficients', color='white', fontsize=14, fontweight='bold')
     ax1.grid(True, alpha=0.1, color='white')
+    
+    # Overlay Metadata
+    _add_metadata_overlay(ax1, ref_params, extra_info="Aero Coefficients")
     
     fig.tight_layout()
     plt.savefig(os.path.join(output_dir, f'convergence_aero{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
@@ -407,7 +465,7 @@ def generate_convergence_plot(log_lines, output_dir, suffix="", ref_params=None)
     plt.savefig(os.path.join(output_dir, f'convergence_coherency{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
     plt.close()
 
-def generate_mesh_plot(grid_file, output_path, surf_file=None):
+def generate_mesh_plot(grid_file, output_path, surf_file=None, ref_params=None):
     """Generates a plot showing the actual computational grid/mesh around the geometry."""
     print(f"[*] Generating mesh statistics plot: {grid_file}")
     data = parse_grid_dump(grid_file)
@@ -466,11 +524,16 @@ def generate_mesh_plot(grid_file, output_path, surf_file=None):
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
     
-    # Stats annotation
+    # Overlay Metadata
+    if ref_params is not None and 'cells' not in ref_params:
+        ref_params['cells'] = len(data)
+    _add_metadata_overlay(ax, ref_params, extra_info="Mesh Visualization")
+    
+    # Standard stats text (bottom right or left as secondary)
     stats_text = f"Total Cells: {len(data)}\n"
     stats_text += f"Domain: [{np.min(xlo):.2f}, {np.max(xhi):.2f}] x [0, {np.max(yhi):.2f}]"
     props = dict(boxstyle='round', facecolor='#1e293b', alpha=0.8, edgecolor='#38bdf8')
-    plt.text(0.05, 0.95, stats_text, transform=ax.transAxes, fontsize=10,
+    ax.text(0.05, 0.95, stats_text, transform=ax.transAxes, fontsize=10,
              verticalalignment='top', bbox=props, color='white', fontfamily='monospace')
              
     plt.grid(True, alpha=0.05, color='white')
@@ -480,7 +543,7 @@ def generate_mesh_plot(grid_file, output_path, surf_file=None):
     plt.close()
     print(f"[+] Mesh plot saved to {output_path}")
 
-def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp'):
+def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp', ref_params=None):
     """Upscales 2D axisymmetric results to a 3D visualization by rotating the slice.
     Supported props: 'temp', 'velocity', 'mach'
     """
@@ -599,6 +662,10 @@ def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp'):
             ax.set_zlim(np.min(all_z), np.max(all_z))
             
         ax.set_title(v['title'], color='#94a3b8', fontsize=10, fontweight='bold')
+        
+        # Overlay Metadata on the first subplot
+        if i == 0:
+            _add_metadata_overlay(ax, ref_params, extra_info="3D Upscaled Results")
 
     # Colorbar at the bottom
     cbar_ax = fig.add_axes([0.15, 0.05, 0.7, 0.02])
@@ -679,7 +746,7 @@ def export_upscaled_vtk(grid_file, output_path):
                 
     print(f"[+] VTK Export complete: {output_path}")
 
-def generate_preview(surf_file, output_path, params=None):
+def generate_preview(surf_file, output_path, params=None, ref_params=None):
     """Generates a 2D preview of the HIAD wall and domain bounds with parameter annotations."""
     print(f"DEBUG: Generating preview from {surf_file}")
     try:
@@ -715,7 +782,7 @@ def generate_preview(surf_file, output_path, params=None):
                 # Lower half reflection
                 plt.plot([p1[0], p2[0]], [-p1[1], -p2[1]], color='#f43f5e', linewidth=3)
         else:
-            plt.text(0.5, 0.0, "CAD MESH PENDING", color='white', ha='center')
+            ax.text(0.5, 0.0, "CAD MESH PENDING", color='white', ha='center')
         
         # Domain schematic based on parameters
         xmin = float(params.get('env_xmin', -0.5)) if params else -0.5
@@ -740,8 +807,11 @@ def generate_preview(surf_file, output_path, params=None):
             param_text += f"Preset: {params.get('env_preset', 'Artemis I')}\n"
             
             props = dict(boxstyle='round', facecolor='#1e293b', alpha=0.8, edgecolor='#38bdf8')
-            plt.text(0.05, 0.95, param_text, transform=ax.transAxes, fontsize=9,
+            ax.text(0.05, 0.95, param_text, transform=ax.transAxes, fontsize=9,
                      verticalalignment='top', bbox=props, color='white', fontfamily='monospace')
+        
+        # Overlay Metadata (Standard box)
+        _add_metadata_overlay(ax, ref_params, extra_info="Domain Preview")
 
         plt.title("SPARTA DSMC - HIAD Simulation Domain", color='white', fontsize=14, fontweight='bold')
         plt.xlabel("Axial Position (m)", color='#94a3b8')
@@ -762,7 +832,7 @@ def generate_preview(surf_file, output_path, params=None):
 
 import matplotlib.animation as animation
 
-def generate_animation(grid_files, output_mp4):
+def generate_animation(grid_files, output_mp4, ref_params=None):
     """Creates an MP4 animation from a sequence of SPARTA grid dump files with smooth contours."""
     if not grid_files: return
     
@@ -798,6 +868,9 @@ def generate_animation(grid_files, output_mp4):
             ax.set_title(f'Thermal Evolution - Step {sim_step} ({flow_time_ms:.2f} ms)', color='white', fontweight='bold')
             ax.set_xlabel('Axial (m)', color='#94a3b8')
             ax.set_ylabel('Radial (m)', color='#94a3b8')
+            
+            # Overlay Metadata
+            _add_metadata_overlay(ax, ref_params, extra_info=f"Animation Frame {frame}")
             ax.tick_params(colors='#94a3b8')
             
             # Add colorbar only on first frame or if it doesn't exist

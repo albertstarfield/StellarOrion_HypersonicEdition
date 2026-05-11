@@ -1,5 +1,7 @@
 #include .gitignore
 
+**venv**
+
 # Ansys Fluent / CFD
 *.trn
 cleanup-fluent-*.bat

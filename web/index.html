@@ -882,12 +882,12 @@
                                 <strong>Grid Density Factor</strong>
                                 <span class="unit">Unit: Scale</span>
                                 Scales the global simulation grid. 
-                                <br>• <b>1.0:</b> Standard (400x400)
+                                <br>• <b>0.7:</b> Optimized (Grid Independency Test Result)
                                 <br>• <b>>1.0:</b> Denser (High Fidelity)
-                                <br>• <b><1.0:</b> Sparser (Fast Iteration)
+                                <br>• <b><0.7:</b> Sparser (Fast Iteration)
                             </div>
                         </div>
-                        <input type="number" id="env-grid-factor" value="1.0" step="0.1" min="0.1" max="5.0">
+                        <input type="number" id="env-grid-factor" value="0.7" step="0.1" min="0.1" max="5.0">
                     </div>
                 </div>
                 <div class="param-grid" style="margin-top: 15px; grid-template-columns: repeat(3, 1fr); background: rgba(56, 189, 248, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.2);">
@@ -1264,6 +1264,18 @@
                         <video id="vid-simulation" width="100%" autoplay loop muted style="border-radius: 12px; margin-top: 8px; border: 1px solid var(--primary-glow);">
                             <source src="assets/plots/simulation_anim.mp4" type="video/mp4">
                         </video>
+                    </div>
+                    <div class="plot-card" style="grid-column: span 2;">
+                        <small>Aerodynamic Convergence (Cd, Cl)</small>
+                        <img id="img-conv-aero" src="assets/plots/convergence_aero_smooth.png" style="width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                    </div>
+                    <div class="plot-card" style="grid-column: span 2;">
+                        <small>Thermal Loading Convergence (Heat Flux, Load)</small>
+                        <img id="img-conv-thermal" src="assets/plots/convergence_thermal_smooth.png" style="width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                    </div>
+                    <div class="plot-card" style="grid-column: span 2;">
+                        <small>Mission Parameter Convergence (β, g, P_stag)</small>
+                        <img id="img-conv-mission" src="assets/plots/convergence_mission_smooth.png" style="width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
                     </div>
                     <div class="plot-card">
                         <small>Thermal Map (K)</small>

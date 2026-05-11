@@ -19,7 +19,7 @@ def run_headless_test():
         'env_step': '1e-6',
         'env_run': '1000',
         'pinn_accel': True,
-        'samples': 2,  # Small number for testing
+        'samples': 3,  # Adjusted for comparison
         'base_diameter': 3.0,
         'base_angle': 60.0,
         'base_toroids': 7,
@@ -38,9 +38,18 @@ def run_headless_test():
     }
     
     try:
-        # Run the optimization
+        # Run 1: Scalloped Mode (The "Real" Physics)
+        print("\n[*] RUNNING MODE A: SCALLOPED (Wavy Skin)...")
+        opt_params['flat_skin'] = False
         api.execute_optimization(opt_params, is_gui=False)
-        print("\n[SUCCESS] Headless optimization test completed successfully.")
+        
+        # Run 2: Smooth Mode (The "Idealized" Baseline)
+        print("\n[*] RUNNING MODE B: SMOOTH (Flat Skin)...")
+        opt_params['flat_skin'] = True
+        api.execute_optimization(opt_params, is_gui=False)
+        
+        print("\n[SUCCESS] Dual-mode optimization comparison completed.")
+        print("[ANALYSIS] Compare results in the history DB to assess 'Scalloping Penalty' vs 'Drag Advantage'.")
     except Exception as e:
         print(f"\n[FAILURE] Optimization test failed: {str(e)}")
         import traceback

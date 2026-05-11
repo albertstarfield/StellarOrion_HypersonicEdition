@@ -44,6 +44,9 @@ Direct Simulation Monte Carlo (DSMC) is used where the continuum assumption fail
     The cross-section $\sigma$ varies with relative velocity $g$:
     $$\sigma = \pi d_{ref}^2 \left( \frac{g_{ref}}{g} \right)^{2(\omega - 0.5)}$$
 
+*   **Grid Dependency:**
+    While a particle method, DSMC requires a **computational grid** to restrict **collision pairing** to $O(N)$ (within cells) and to provide sampling volumes for **macroscopic property accumulation** (e.g., Density, Temperature). Resolution must typically be finer than the local mean free path ($\lambda$).
+
 **Variables:**
 *   $\lambda$: Mean free path $[m]$
 *   $d$: Molecular diameter $[m]$
@@ -132,6 +135,18 @@ The Genetic Algorithm (GA) optimizes the HIAD geometry using a Metamodel Prognos
 For a deep dive into the specific derivations, SPARTA data column mappings, and code-level implementation details, see [DERIVATION.MD](file:///Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/DERIVATION.md).
 
 ---
+
+## 📊 Grid Independency & Optimization
+To ensure the simulation accuracy balances computational cost, a **Grid Independency Test** was performed. The `grid-factor` (mesh density multiplier) was evaluated against reference data from the **IRVE-3 MDAO (Multidisciplinary Design Analysis and Optimization)** paper.
+
+*   **Test Range:** 0.3 to 1.0
+*   **Optimal Result:** `0.7`
+*   **Rationale:** At a factor of `0.7`, the simulation yields the least error compared to validated flight data and high-fidelity reference cases, while maintaining efficient execution times. Consequently, **0.7 is now the default grid factor** for all simulation runs.
+
+Users can manually override this via:
+```bash
+python3 main.py --grid-factor 1.0 # For higher fidelity
+```
 
 ## 🛰️ Calibration & Validation: IRVE-3 (Rapisarda 2024 Baseline)
 StellarOrion is calibrated against the **IRVE-3 (Inflatable Reentry Vehicle Experiment 3)** flight data using the high-fidelity reconstruction parameters from **Rapisarda (2024)**.

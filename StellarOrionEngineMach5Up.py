@@ -299,6 +299,38 @@ class Api:
             return root_venv_gui
         return sys.executable
 
+    def _get_git_hash(self):
+        """Retrieves the current Git commit short hash."""
+        try:
+            import subprocess
+            return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], cwd=self.cwd).decode('ascii').strip()
+        except Exception:
+            return "unknown"
+
+    def _get_viz_params(self, opt_params, sample_dict):
+        """Standardizes simulation metadata for the visualizer overlays."""
+        try:
+            vstream = float(opt_params.get('env_vstream', 2700.0))
+            temp_inf = float(opt_params.get('env_temp_inf', 270.0))
+            # Speed of sound a = sqrt(gamma * R * T)
+            gamma = 1.4
+            R = 287.05
+            sound_speed = np.sqrt(gamma * R * temp_inf)
+            mach = round(vstream / sound_speed, 2)
+            
+            return {
+                'v_inf': vstream,
+                'mach': mach,
+                'nrho': opt_params.get('env_nrho', 3.5e22),
+                'temp': temp_inf,
+                'grid_factor': opt_params.get('grid_factor', 0.7),
+                'diameter': sample_dict.get('diameter', 3.0),
+                'angle': sample_dict.get('angle', 60.0),
+                'git_hash': self._get_git_hash()
+            }
+        except Exception:
+            return {'git_hash': self._get_git_hash()}
+
     def set_window(self, window):
         self.window = window
 
@@ -404,16 +436,18 @@ class Api:
             results_dir = os.path.join(self.cwd, "CADDesign", "results_reference")
             if not os.path.exists(results_dir):
                 self.log_to_gui(f"    [!] Error: Results directory {results_dir} missing!")
-                return {'drag': 1.0, 'heat': 1.0}
+                return {'drag': 1.0, 'heat': 1.0, 'shock_temp': 300.0}
             
             # Find the latest surf output file (numeric sort)
             surf_files = [f for f in os.listdir(results_dir) if f.startswith("surf.") and f.endswith(".out")]
             if not surf_files:
-                return {'drag': 1.0, 'heat': 1.0}
+                self.log_to_gui("    [!] Error: No surf.*.out files found in results_reference.")
+                return {'drag': 1.0, 'heat': 1.0, 'shock_temp': 300.0}
             
             # Numeric sort to avoid 'surf.1000.out' < 'surf.200.out'
             surf_files.sort(key=lambda x: int(x.split('.')[1]))
             latest_file = os.path.join(results_dir, surf_files[-1])
+            self.log_to_gui(f"    [*] Parsing latest surface results: {os.path.basename(latest_file)}")
             
             drag_vals = []
             heat_vals = []
@@ -427,15 +461,22 @@ class Api:
                     if start:
                         parts = line.split()
                         if len(parts) >= 6:
-                            # id f_1[1] f_1[2] f_1[3] f_surfavg[1] f_surfavg[2] f_surfavg[3]
-                            # id nflux mflux ke fx fy fz
-                            heat_vals.append(float(parts[3])) # ke is index 3
-                            drag_vals.append(float(parts[4])) # fx is index 4
+                            # Standard SPARTA surf dump: id f_1[1] f_1[2] f_1[3] f_surfavg[1] f_surfavg[2] f_surfavg[3]
+                            # Column 4 (index 3) is ke (heat), Column 5 (index 4) is fx (drag)
+                            try:
+                                h = float(parts[3])
+                                d = float(parts[4])
+                                heat_vals.append(h)
+                                drag_vals.append(d)
+                            except ValueError: continue
                 
+                # Use total drag (sum of fx) and peak heat flux (max of ke)
                 metrics = {
                     'drag': abs(np.sum(drag_vals)) if drag_vals else 1.0,
                     'heat': abs(np.max(heat_vals)) if heat_vals else 1.0 
                 }
+                
+                self.log_to_gui(f"    [+] Extracted Raw Metrics: Drag={metrics['drag']:.2f}, Heat={metrics['heat']:.2e}")
 
                 # Find latest grid file for shock temperature (numeric sort)
                 grid_files = [f for f in os.listdir(results_dir) if f.startswith("grid.") and f.endswith(".out")]
@@ -444,23 +485,23 @@ class Api:
                     grid_files.sort(key=lambda x: int(x.split('.')[1]))
                     latest_grid = os.path.join(results_dir, grid_files[-1])
                     with open(latest_grid, 'r') as f:
-                        lines = f.readlines()
                         temp_start = False
-                        for line in lines:
+                        for line in f:
                             if "ITEM: CELLS" in line:
                                 temp_start = True
                                 continue
                             if temp_start:
                                 parts = line.split()
-                                if len(parts) >= 10: # column 10 (index 9) is temp
+                                if len(parts) >= 10: # column 10 (index 9) is temperature
                                     try:
                                         t = float(parts[9])
                                         if t > shock_temp: shock_temp = t
                                     except: pass
                 metrics['shock_temp'] = shock_temp
                 return metrics
-        except Exception:
-            return {'drag': 1.0, 'heat': 1.0}
+        except Exception as e:
+            self.log_to_gui(f"    [!] Parser Exception: {e}")
+            return {'drag': 1.0, 'heat': 1.0, 'shock_temp': 300.0}
 
     def calculate_flight_metrics(self, sparta_res, opt_params, sample_dict):
         """Calculates derived flight metrics from DSMC results."""
@@ -695,7 +736,8 @@ O recombine simple {gamma} O2
         ymax = float(opt_params.get('env_ymax', 1.2 * d_val))
         
         # Grid resolution
-        grid_factor = float(opt_params.get('grid_factor', 1.0))
+        # Default changed to 0.7 based on Grid Independency test (optimal accuracy/cost vs MDAO paper)
+        grid_factor = float(opt_params.get('grid_factor', 0.7))
         nx = int(400 * grid_factor)
         ny = int(400 * grid_factor)
         
@@ -1278,12 +1320,34 @@ run             {steps}
         else:
             docker_cmd = ["python3", "/app/main.py", "--steps", str(n_run), "--sparta-gpu"]
         
-        docker_create_cmd.extend(["sparta-hysp"] + docker_cmd)
-        subprocess.run(docker_create_cmd, check=True)
-        
+        # --- Docker vs Host Fallback ---
+        use_docker = True
+        try:
+            res_readiness = self.test_sparta_readiness()
+            if res_readiness.get('sparta_missing'):
+                use_docker = False
+        except:
+            use_docker = False
+
+        local_spa = os.path.join(self.cwd, "sparta", "build", "src", "spa_")
         log_data = []
         start_time = time.time()
-        sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        
+        if not use_docker and os.path.exists(local_spa):
+            self.log_to_gui("    [!] Docker image missing. Falling back to NATIVE host SPARTA build...")
+            # Use mpirun if available, else run single-threaded
+            try:
+                subprocess.run(["mpirun", "--version"], capture_output=True, check=True)
+                host_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), local_spa, "-in", "in.hiad"]
+            except:
+                host_cmd = [local_spa, "-in", "in.hiad"]
+            
+            sim_proc = subprocess.Popen(host_cmd, cwd=cad_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        else:
+            # Original Docker Logic
+            docker_create_cmd.extend(["sparta-hysp"] + docker_cmd)
+            subprocess.run(docker_create_cmd, check=True)
+            sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         
         last_monitor_time = time.time()
         monitor_interval = 300 # 5 minutes as requested
@@ -1334,14 +1398,19 @@ run             {steps}
                 suffix = f"_{nose_type}"
                 ani_path = os.path.join(plots_dir, f"validation_anim{suffix}.mp4")
                 self.log_to_gui(f"    [+] Encoding Animation: {os.path.basename(ani_path)}...")
-                visualizer.generate_animation(grid_files, ani_path)
-                visualizer.generate_plots(grid_files[-1], plots_dir, suffix=suffix)
-                visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, f"upscaled_3d{suffix}.png"), surf_file=os.path.join(cad_dir, f"{surf_name}.surf"), prop='temp')
+                
+                # Construct metadata for overlays
+                viz_metadata = self._get_viz_params(opt_params, sample_dict)
+                
+                visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
+                visualizer.generate_plots(grid_files[-1], plots_dir, suffix=suffix, ref_params=viz_metadata)
+                visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, f"upscaled_3d{suffix}.png"), 
+                                            surf_file=os.path.join(cad_dir, f"{surf_name}.surf"), prop='temp', ref_params=viz_metadata)
                 
                 # New Mesh/Grid Plot for Visual Feedback
                 mesh_plot_path = os.path.join(plots_dir, f"mesh_statistics{suffix}.png")
                 self.log_to_gui(f"    [+] Generating Mesh Plot: {os.path.basename(mesh_plot_path)}...")
-                visualizer.generate_mesh_plot(grid_files[-1], mesh_plot_path, surf_file=os.path.join(cad_dir, f"{surf_name}.surf"))
+                visualizer.generate_mesh_plot(grid_files[-1], mesh_plot_path, surf_file=os.path.join(cad_dir, f"{surf_name}.surf"), ref_params=viz_metadata)
                 
                 # Enhanced Residual/Convergence Graphing
                 if log_data:
@@ -1361,11 +1430,12 @@ run             {steps}
                         'diameter': diameter,
                         'toroid_radius': sample_dict.get('toroid_radius', 0.135)
                     }
-                    visualizer.generate_convergence_plot(log_data, plots_dir, suffix=suffix, ref_params=ref_params)
+                    convergence_metadata = {**viz_metadata, **ref_params}
+                    visualizer.generate_convergence_plot(log_data, plots_dir, suffix=suffix, ref_params=convergence_metadata)
         except Exception as ve:
             self.log_to_gui(f"    [!] Warning: Visual post-processing failed: {ve}")
 
-        return self.parse_sparta_results()
+        return self.parse_sparta_results(), log_data
 
     def run_grid_independency_test(self, solver="sparta", steps=1100, skip_diag=False, headless=True, sparta_gpu=False, is_gui=False, factors=[0.3, 0.5, 0.7, 1.0]):
         """Executes a grid independency study by varying the grid factor (Threaded for GUI)."""
@@ -1419,9 +1489,13 @@ run             {steps}
                     'mass': 281.0
                 }
                 
+                # Naming based on date and grid factor as requested
+                factor_name = str(factor).replace('.', 'p')
+                output_surf_name = f"grid_test_{timestamp}_{factor_name}"
+                
                 # Run simulation
                 try:
-                    res = self.run_sparta_simulation(opt_params, sample_dict, surf_name=f"grid_test_{factor}")
+                    res, _ = self.run_sparta_simulation(opt_params, sample_dict, surf_name=output_surf_name)
                     
                     # Derive metrics
                     v = opt_params['env_vstream']
@@ -1459,7 +1533,13 @@ run             {steps}
                         if os.path.isfile(os.path.join(plots_src, f)):
                             shutil.copy2(os.path.join(plots_src, f), os.path.join(plots_dst, f))
                     
+                    # Output a JSON file for this specific factor (based on date and gridfactor name)
+                    factor_file = os.path.join(suite_dir, f"results_{timestamp}_{factor_name}.json")
+                    with open(factor_file, "w") as f_json:
+                        json.dump(res_summary, f_json, indent=4)
+
                     self.log_to_gui(f"[+] COMPLETED: factor={factor}, cells={total_cells}, Cd={cd_sim:.4f}, Error={error_pct:.2f}%")
+                    self.log_to_gui(f"[+] Output saved to: {factor_file}")
                     
                 except Exception as e:
                     self.log_to_gui(f"[-] FAILED factor={factor}: {e}")
@@ -1479,6 +1559,12 @@ run             {steps}
                     self.log_to_gui(f"{r['factor']:<8.1f} | {'ERROR':<20} | {'-':<10} | {ref_cd:<10.4f} | {'-':<8}")
             self.log_to_gui("="*85)
             
+            # Save final summary of all factors
+            summary_file = os.path.join(suite_dir, f"grid_study_summary_{timestamp}.json")
+            with open(summary_file, "w") as f_sum:
+                json.dump(results, f_sum, indent=4)
+            self.log_to_gui(f"[+] Final study summary saved to: {summary_file}")
+
             self.log_to_gui(f"\n[*] All detailed plots, animations, and residual graphing saved in: {suite_dir}")
             
             # --- WEEK 3 REPORT ARCHIVING ---
@@ -2249,76 +2335,16 @@ run             {steps}
         else:
             self.log_to_gui(f"    [+] Running Baseline via SPARTA (D={base_d}m)...")
             
-            # Auto-check and build SPARTA image if missing or incompatible
-            use_gpu = opt_params.get('sparta_gpu')
-            if use_gpu is None: use_gpu = self.has_nvidia_gpu()
+            baseline_params = {
+                'diameter': base_d,
+                'angle': opt_params.get('base_angle', 60.0),
+                'nose_radius': opt_params.get('base_nose', 0.191),
+                'toroids': opt_params.get('base_toroids', 7),
+                'mass': opt_params.get('base_mass', 281.0)
+            }
             
-            self.log_to_gui("[*] Checking SPARTA Docker image readiness...")
-            res_readiness = self.test_sparta_readiness()
-            if res_readiness.get('status') == 'error' or res_readiness.get('sparta_missing'):
-                self.log_to_gui("[!] SPARTA image missing. Triggering auto-build...")
-                self.build_sparta_image()
-            
-            # Dynamically generate in.hiad for the baseline
-            script_content = self.generate_sparta_script(opt_params, surf_name="HIAD_custom")
-            with open(os.path.join(cad_dir, "in.hiad"), "w", newline='\n') as f:
-                f.write(script_content)
-
-            subprocess.run(["docker", "rm", "-f", "hiad-runner"], capture_output=True)
-            run_date = time.strftime("%Y-%m-%d")
-            nose_type = opt_params.get('nose_type', 'smooth')
-            archive_dir = os.path.join(self.cwd, "results", run_date, f"baseline_{nose_type}")
-            os.makedirs(archive_dir, exist_ok=True)
-
-            
-            use_gpu = opt_params.get('sparta_gpu')
-            if use_gpu is None:
-                use_gpu = self.has_nvidia_gpu()
-            docker_create_cmd = [
-                "docker", "create", "--name", "hiad-runner",
-                "-v", f"{self.cwd}:/app", 
-                "-e", "IN_DOCKER=1",
-                "-e", "PYTHONUNBUFFERED=1",
-                "-e", "DOCKER_WORKDIR=/app",
-                "-e", f"SPARTA_GPU={1 if use_gpu else 0}"
-            ]
-
-            if use_gpu:
-                self.log_to_gui("    [!] Enabling CUDA acceleration (Kokkos) for SPARTA...")
-                docker_create_cmd.append("--gpus")
-                docker_create_cmd.append("all")
-            
-            # Use python3 main.py as entrypoint to allow for internal build-on-fly logic
-            # This ensures that even if the image is ready, the source code is compiled inside
-            steps_run = opt_params.get('env_run', 1000)
-            docker_cmd = ["python3", "/app/main.py", "--steps", str(steps_run)]
-            if use_gpu: docker_cmd.append("--sparta-gpu")
-            
-            docker_create_cmd.extend(["sparta-hysp"] + docker_cmd)
-            subprocess.run(docker_create_cmd, check=True)
-
-            
-            sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-            log_lines = []
-            for line in sim_proc.stdout:
-                l = line.strip()
-                if not l: continue
-                log_lines.append(l)
-                if "Step" in l or "CPU time =" in l: self.log_to_gui(f"        {l}")
-                # Log progress every 100 steps
-                parts = l.split()
-                if parts and parts[0].isdigit():
-                    step = int(parts[0])
-                    if step % 100 == 0: self.log_to_gui(f"        {l}")
-            
-            # Save log to archive
-            with open(os.path.join(archive_dir, "simulation.log"), "w") as f:
-                f.write("\n".join(log_lines))
-                
-            if sim_proc.wait() != 0:
-                raise RuntimeError("Baseline SPARTA simulation failed! Check docker logs.")
-            
-            ref_metric_dict = self.parse_sparta_results()
+            # Use the robust run_sparta_simulation which handles Docker vs Host fallback automatically
+            ref_metric_dict, log_lines = self.run_sparta_simulation(opt_params, baseline_params, surf_name="HIAD_custom")
 
         sim_end = time.time()
         baseline_time = sim_end - sim_start
@@ -2333,26 +2359,38 @@ run             {steps}
         os.makedirs(plots_dir, exist_ok=True)
 
         if grid_files:
-            self.log_to_gui("    [+] Generating Baseline Animation (MP4)...")
-            ani_path = os.path.join(plots_dir, "baseline_anim.mp4")
-            visualizer.generate_animation(grid_files, ani_path)
+            # Metadata for overlays
+            viz_metadata = self._get_viz_params(opt_params, {'diameter': base_d})
+            
+            # Restore Missing Variables
+            nose_type = opt_params.get('nose_type', 'smooth')
+            ani_path = os.path.join(plots_dir, f"validation_anim_{nose_type}.mp4")
+            run_date = time.strftime("%Y-%m-%d")
+            archive_dir = os.path.join(self.cwd, "results", run_date, f"baseline_{nose_type}")
+            os.makedirs(archive_dir, exist_ok=True)
+
+            visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
             
             self.log_to_gui("    [+] Generating Baseline Static Maps (JPEG/Graph)...")
-            visualizer.generate_plots(grid_files[-1], plots_dir)
+            visualizer.generate_plots(grid_files[-1], plots_dir, ref_params=viz_metadata)
             
             self.log_to_gui("    [+] Generating Convergence Graph (Residuals)...")
-            visualizer.generate_convergence_plot(log_lines, plots_dir)
-            visualizer.generate_convergence_plot(log_lines, archive_dir) # Save to archive too
+            if 'log_lines' in locals():
+                visualizer.generate_convergence_plot(log_lines, plots_dir, ref_params=viz_metadata)
+                visualizer.generate_convergence_plot(log_lines, archive_dir, ref_params=viz_metadata) # Save to archive too
             
             self.log_to_gui("    [+] Upscaling Axisymmetric Results to 3D (Temp, Velocity, Mach)...")
-            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_temp.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='temp')
-            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_velocity.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='velocity')
-            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_mach.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='mach')
+            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_temp.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='temp', ref_params=viz_metadata)
+            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_velocity.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='velocity', ref_params=viz_metadata)
+            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_mach.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='mach', ref_params=viz_metadata)
 
             if is_gui:
                 # Update UI with baseline results early
                 self.window.evaluate_js(f"document.getElementById('img-thermal').src = 'assets/plots/thermal_map.png?' + new Date().getTime()")
                 self.window.evaluate_js(f"document.getElementById('img-pressure').src = 'assets/plots/pressure_map.png?' + new Date().getTime()")
+                self.window.evaluate_js(f"document.getElementById('img-conv-aero').src = 'assets/plots/convergence_aero_smooth.png?' + new Date().getTime()")
+                self.window.evaluate_js(f"document.getElementById('img-conv-thermal').src = 'assets/plots/convergence_thermal_smooth.png?' + new Date().getTime()")
+                self.window.evaluate_js(f"document.getElementById('img-conv-mission').src = 'assets/plots/convergence_mission_smooth.png?' + new Date().getTime()")
                 self.window.evaluate_js(f"document.getElementById('img-3d-temp').src = 'assets/plots/upscaled_3d_temp.png?' + new Date().getTime()")
                 self.window.evaluate_js(f"document.getElementById('img-3d-velocity').src = 'assets/plots/upscaled_3d_velocity.png?' + new Date().getTime()")
                 self.window.evaluate_js(f"document.getElementById('img-3d-mach').src = 'assets/plots/upscaled_3d_mach.png?' + new Date().getTime()")
@@ -2380,7 +2418,7 @@ run             {steps}
                         pinn = PINNAccelerator(device=device)
                     
                     # Domain bounds from opt_params
-                    d_val = float(opt_params.get('base_diameter', 3.0))
+                    d_val = base_d
                     xmin = float(opt_params.get('env_xmin', -0.5 * d_val))
                     xmax = float(opt_params.get('env_xmax', 1.2 * d_val))
                     ymax = float(opt_params.get('env_ymax', 0.8 * d_val))
@@ -2524,21 +2562,21 @@ run             {steps}
                     docker_create_cmd.append("--gpus")
                     docker_create_cmd.append("all")
                 
-                # Use python3 main.py as entrypoint
-                docker_cmd = ["python3", "/app/main.py", "--steps", str(opt_params.get('env_run', '1000'))]
-                if use_gpu: docker_cmd.append("--sparta-gpu")
-
-                docker_create_cmd.extend(["sparta-hysp"] + docker_cmd)
-                subprocess.run(docker_create_cmd, check=True)
-
-                
                 solver = opt_params.get('solver', 'sparta')
                 if solver == 'openfoam':
                     self.log_to_gui(f"    [*] Executing OpenFOAM solver (Sample {i+1})...")
                     res_dict = self.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_opt")
                 else:
-                    self.log_to_gui(f"    [*] Executing SPARTA solver (Sample {i+1})...")
-                    sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                    self.log_to_gui(f"    [*] Executing SPARTA solver natively (Sample {i+1})...")
+                    local_spa = os.path.join(self.cwd, "sparta", "build", "src", "spa_")
+                    try:
+                        import multiprocessing
+                        nproc = multiprocessing.cpu_count() // 2 or 1
+                        host_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), local_spa, "-in", "in.hiad"]
+                        subprocess.run(["mpirun", "--version"], capture_output=True, check=True)
+                    except:
+                        host_cmd = [local_spa, "-in", "in.hiad"]
+                    sim_proc = subprocess.Popen(host_cmd, cwd=cad_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                     log_lines = []
                     
                     last_cpu = ""
@@ -2604,10 +2642,12 @@ run             {steps}
                 from source import visualizer
                 grid_files = sorted([os.path.join(raw_dir, f) for f in os.listdir(raw_dir) if f.startswith("grid.") and f.endswith(".out")])
                 if grid_files:
-                    visualizer.generate_animation(grid_files, os.path.join(sample_dir, "simulation_anim.mp4"))
-                    visualizer.generate_plots(grid_files[-1], sample_dir)
-                    visualizer.generate_convergence_plot(log_lines, sample_dir)
-                    visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(sample_dir, "3d_temp.png"), surf_file=os.path.join(cad_dir, "HIAD_opt.surf"), prop='temp')
+                    viz_metadata = self._get_viz_params(opt_params, sample_dict)
+                    visualizer.generate_animation(grid_files, os.path.join(sample_dir, "simulation_anim.mp4"), ref_params=viz_metadata)
+                    visualizer.generate_plots(grid_files[-1], sample_dir, ref_params=viz_metadata)
+                    visualizer.generate_convergence_plot(log_lines, sample_dir, ref_params=viz_metadata)
+                    visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(sample_dir, "3d_temp.png"), 
+                                                surf_file=os.path.join(cad_dir, "HIAD_opt.surf"), prop='temp', ref_params=viz_metadata)
             except Exception as ve:
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed for Sample {i+1}: {ve}")
 
@@ -2797,18 +2837,25 @@ run             {steps}
             sparta_cmd.extend(["-k", "on", "g", "1", "-sf", "kk"])
         sparta_cmd.extend(["-in", "in.hiad"])
         
-        docker_create_cmd.extend(["sparta-hysp"] + sparta_cmd)
-        subprocess.run(docker_create_cmd, check=True)
-        subprocess.run(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, check=True)
+        local_spa = os.path.join(self.cwd, "sparta", "build", "src", "spa_")
+        try:
+            import multiprocessing
+            nproc = multiprocessing.cpu_count() // 2 or 1
+            host_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), local_spa, "-in", "in.hiad"]
+            subprocess.run(["mpirun", "--version"], capture_output=True, check=True)
+        except:
+            host_cmd = [local_spa, "-in", "in.hiad"]
+        subprocess.run(host_cmd, cwd=cad_dir, check=True)
 
         # --- Final Post-processing (Always run to generate assets for report) ---
         self.log_to_gui("[*] Compiling Final Simulation Animation (Post-process)...")
         from source import visualizer
         grid_dir = os.path.join(cad_dir, "results_reference")
         grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")])
-        ani_path = os.path.join(self.cwd, "web", "assets", "plots", "simulation_anim.mp4")
-        visualizer.generate_animation(grid_files, ani_path)
-        visualizer.generate_plots(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots"))
+        viz_metadata = self._get_viz_params(opt_params, sample_dict)
+        visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
+        viz_metadata = self._get_viz_params(opt_params, sample_dict)
+        visualizer.generate_plots(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots"), ref_params=viz_metadata)
         
         # Optimized maps naming (for report consistency)
         for ftype in ["thermal_map", "pressure_map", "mach_map"]:
@@ -2818,8 +2865,10 @@ run             {steps}
                 import shutil
                 shutil.copy2(src, dst)
 
-        visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots", "upscaled_3d_temp.png"), surf_file=os.path.join(cad_dir, "HIAD_final.surf"), prop='temp')
-        visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots", "upscaled_3d_velocity.png"), surf_file=os.path.join(cad_dir, "HIAD_final.surf"), prop='velocity')
+        visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots", "upscaled_3d_temp.png"), 
+                                    surf_file=os.path.join(cad_dir, "HIAD_final.surf"), prop='temp', ref_params=viz_metadata)
+        visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots", "upscaled_3d_velocity.png"), 
+                                    surf_file=os.path.join(cad_dir, "HIAD_final.surf"), prop='velocity', ref_params=viz_metadata)
         visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots", "upscaled_3d_mach.png"), surf_file=os.path.join(cad_dir, "HIAD_final.surf"), prop='mach')
 
         if is_gui:
@@ -2853,6 +2902,9 @@ run             {steps}
             self.window.evaluate_js(f"document.getElementById('res-opt').innerText = `{res_data['opt']}`")
             self.window.evaluate_js("document.getElementById('img-thermal').src = 'assets/plots/thermal_map.png?' + new Date().getTime()")
             self.window.evaluate_js("document.getElementById('img-pressure').src = 'assets/plots/pressure_map.png?' + new Date().getTime()")
+            self.window.evaluate_js("document.getElementById('img-conv-aero').src = 'assets/plots/convergence_aero_smooth.png?' + new Date().getTime()")
+            self.window.evaluate_js("document.getElementById('img-conv-thermal').src = 'assets/plots/convergence_thermal_smooth.png?' + new Date().getTime()")
+            self.window.evaluate_js("document.getElementById('img-conv-mission').src = 'assets/plots/convergence_mission_smooth.png?' + new Date().getTime()")
             self.window.evaluate_js("document.getElementById('img-velocity').src = 'assets/plots/velocity_vectors.png?' + new Date().getTime()")
             self.window.evaluate_js("document.getElementById('img-3d-temp').src = 'assets/plots/upscaled_3d_temp.png?' + new Date().getTime()")
             self.window.evaluate_js("document.getElementById('img-3d-velocity').src = 'assets/plots/upscaled_3d_velocity.png?' + new Date().getTime()")
@@ -2966,7 +3018,7 @@ run             {steps}
             elif solver == 'openfoam':
                 res_dict = self.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_custom")
             elif solver == 'sparta':
-                res_dict = self.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_custom", nose_type=nose_type)
+                res_dict, _ = self.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_custom", nose_type=nose_type)
             elif solver == 'pyansys':
                 res_dict = self.run_local_pyfluent_simulation(opt_params, sample_dict, show_gui=not headless, skip_gpu=skip_diag)
             elif solver == 'pyfluent':
@@ -2986,8 +3038,9 @@ run             {steps}
                 if grid_files:
                     suffix = f"_{nose_type}"
                     ani_path = os.path.join(plots_dir, f"validation_anim{suffix}.mp4")
-                    visualizer.generate_animation(grid_files, ani_path)
-                    visualizer.generate_plots(grid_files[-1], plots_dir, suffix=suffix)
+                    viz_metadata = self._get_viz_params(opt_params, sample_dict)
+                    visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
+                    visualizer.generate_plots(grid_files[-1], plots_dir, suffix=suffix, ref_params=viz_metadata)
             except Exception as ve:
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed: {ve}")
 

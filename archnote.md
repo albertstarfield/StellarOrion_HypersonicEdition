@@ -60,7 +60,8 @@ The process begins with user-defined or preset parameters that define the missio
 These parameters are converted into a format suitable for the **Direct Simulation Monte Carlo (DSMC)** solver (Bird, 1994).
 
 1.  **Geometry Kernel:** `HIAD_GeometryEngine.py` uses the geometric parameters to generate a 2D axisymmetric surface file (`.surf`).
-2.  **Script Generation:** `StellarOrionEngineMach5Up.py` generates the `in.hiad` control script:
+2.  **Computational Grid:** Although DSMC is particle-based, it requires a grid to efficiently manage **Collision Pairing** (restricting checks to $O(N)$ within cells rather than $O(N^2)$ globally) and to provide "buckets" for **Macroscopic Property Sampling** (averaging particle data into density/temperature fields).
+3.  **Script Generation:** `StellarOrionEngineMach5Up.py` generates the `in.hiad` control script:
     *   **Collision Model:** Variable Soft Sphere (VSS).
     *   **Reaction Model:** Total Collision Energy (TCE) for chemical dissociation/ionization.
     *   **Boundaries:** Freestream inflow (Emit), Vacuum outflow, and Diffuse surface reflection.
