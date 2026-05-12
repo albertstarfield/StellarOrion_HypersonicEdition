@@ -75,8 +75,8 @@ def ensure_venv():
             subprocess.check_call([str(venv_python), "-m", "pip", "install", "-r", req_path])
             
             # --- Bootstrapping for components not in requirements.txt ---
-            print("[*] Installing additional components (pyrefly, deepxde, ansys-fluent-core)...")
-            subprocess.check_call([str(venv_python), "-m", "pip", "install", "pyrefly", "deepxde", "ansys-fluent-core"])
+            print("[*] Installing additional components (pyrefly, deepxde, ansys-fluent-core, cadquery)...")
+            subprocess.check_call([str(venv_python), "-m", "pip", "install", "pyrefly", "deepxde", "ansys-fluent-core", "cadquery"])
         except Exception as e:
             print(f"[-] Warning: Dependency sync failed: {e}")
 
@@ -990,8 +990,8 @@ def main():
                 
                 # Add viability status to sample results
                 f_metrics = api.calculate_flight_metrics(res_ext, opt_params, sample_dict)
-                res_ext['is_viable'] = f_metrics['is_viable']
-                res_ext['viability'] = "[VIABLE]" if f_metrics['is_viable'] else "[NON-VIABLE]"
+                res_ext['is_viable'] = f_metrics['survivable']
+                res_ext['viability'] = "[VIABLE]" if f_metrics['survivable'] else "[NON-VIABLE]"
                 
                 v_color = "\033[32m" if res_ext.get('is_viable') else "\033[31m"
                 print(f"[*] Result Status: {v_color}{res_ext['viability']}\033[0m")

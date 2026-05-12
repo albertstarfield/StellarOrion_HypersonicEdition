@@ -1,6 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import sys
+import math
+import argparse
 
 # Use non-interactive backend for thread safety in GUI
 plt.switch_backend('Agg')
@@ -78,32 +81,154 @@ def _add_metadata_overlay(ax, ref_params, extra_info=None):
         ax.text(0.02, 0.98, metadata_str, transform=ax.transAxes, fontsize=7,
                  verticalalignment='top', bbox=props, color='white', fontfamily='monospace', zorder=100)
 
-def _overlay_geometry(ax, surf_file):
-    """Overlays the HIAD wall geometry on the current plot from a SPARTA .surf file."""
-    if not surf_file or not os.path.exists(surf_file):
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'CADDesign'))
+from HIAD_GeometryEngine import draw_analytical_slice
+
+def _parse_stl(file_path):
+    """Parses an STL file (ASCII or Binary) and returns a list of triangles."""
+    if not os.path.exists(file_path):
+        return []
+        
+    triangles = []
+    try:
+        # Try ASCII first
+        with open(file_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            idx = 0
+            while idx < len(lines):
+                line = lines[idx].strip()
+                if line.startswith("facet normal"):
+                    v_found = []
+                    search_idx = idx + 1
+                    while len(v_found) < 3 and search_idx < len(lines):
+                        sub_line = lines[search_idx].strip()
+                        if sub_line.startswith("vertex"):
+                            parts = sub_line.split()
+                            v_found.append([float(parts[1]), float(parts[2]), float(parts[3])])
+                        search_idx += 1
+                    if len(v_found) == 3:
+                        triangles.append(v_found)
+                    idx = search_idx
+                else:
+                    idx += 1
+    except (UnicodeDecodeError, Exception):
+        # Fallback to Binary STL parser
+        try:
+            with open(file_path, 'rb') as f:
+                header = f.read(80)
+                n_facets_raw = f.read(4)
+                if len(n_facets_raw) < 4: return []
+                import struct
+                n_facets = struct.unpack('<I', n_facets_raw)[0]
+                
+                for _ in range(n_facets):
+                    # facet = normal (12) + 3 vertices (3*12=36) + attr (2) = 50 bytes
+                    data = f.read(50)
+                    if len(data) < 50: break
+                    # Skip normal (0:12)
+                    v1 = struct.unpack('<fff', data[12:24])
+                    v2 = struct.unpack('<fff', data[24:36])
+                    v3 = struct.unpack('<fff', data[36:48])
+                    triangles.append([list(v1), list(v2), list(v3)])
+        except Exception as e:
+            print(f"[DEBUG] Binary STL Parse error: {e}")
+            
+    if not triangles:
+        return None
+            
+    return np.array(triangles)
+
+def _overlay_geometry(ax, surf_file, ref_params=None):
+    """Overlays the full analytical HIAD slice on the current plot."""
+    if not ref_params:
         return
     
+    # We need to reconstruct the parameters for draw_analytical_slice
+    # These are stored in ref_params
     try:
-        points = []
-        with open(surf_file, 'r') as f:
-            mode = None
-            for line in f:
-                if "Points" in line: mode = "pts"; continue
-                if "Lines" in line: mode = "lines"; continue
-                parts = line.split()
-                if not parts or parts[0].isalpha(): continue
-                if mode == "pts" and len(parts) >= 3:
-                    points.append([float(parts[1]), float(parts[2])])
+        # Extract params (converting m to mm where needed for the drawing function)
+        d_m = float(ref_params.get('diameter', 3.0))
+        angle = float(ref_params.get('angle', 60.0))
+        toroid_count = int(ref_params.get('toroids', 7))
+        toroid_radius = float(ref_params.get('toroid_radius', 0.135)) * 1000.0
+        shoulder_torus_radius = float(ref_params.get('shoulder_radius', 0.09)) * 1000.0
+        nose_radius = float(ref_params.get('nose_radius', 0.55)) * 1000.0
+        payload_height = float(ref_params.get('mass_center', 1700.0)) # Proxy for height if not present
         
-        if points:
-            pts = np.array(points)
-            # Plot with a bold, distinct color (Neon Pink/Cyan depending on theme)
-            ax.plot(pts[:, 0], pts[:, 1], color='#f43f5e', linewidth=2.5, label='HIAD Wall', zorder=10)
-            # reflect for axisymmetry if y starts from 0
-            if np.min(pts[:, 1]) >= -0.01:
-                ax.plot(pts[:, 0], -pts[:, 1], color='#f43f5e', linewidth=2.5, zorder=10)
+        # Derived values needed for drawing
+        theta_c_rad = math.radians(angle)
+        z_tangency = nose_radius * (1.0 - math.sin(theta_c_rad))
+        r_tangency = nose_radius * math.cos(theta_c_rad)
+        r_target = (d_m * 1000.0) / 2.0
+        z_nose_center = nose_radius
+        z_back = payload_height # mm
+        
+        # Re-generate skin_data points for the drawing function
+        # (This matches the logic in HIAD_GeometryEngine)
+        skin_data = []
+        # Nose
+        for beta in np.linspace(-math.pi/2.0, -theta_c_rad, 20):
+            skin_data.append((nose_radius * math.cos(beta), nose_radius + nose_radius * math.sin(beta)))
+        # Toroids
+        scallop_angle = 140.0
+        gamma = math.radians(scallop_angle / 2.0)
+        for i in range(toroid_count + 1):
+            if i < toroid_count:
+                s_c = (2*i + 1) * toroid_radius
+                rad = toroid_radius
+            else:
+                s_c = (2 * toroid_count - 1) * toroid_radius + toroid_radius + shoulder_torus_radius
+                rad = shoulder_torus_radius
+                
+            rs = r_tangency + s_c * math.sin(theta_c_rad)
+            zs = z_tangency + s_c * math.cos(theta_c_rad)
+            cr = rs - rad * math.cos(theta_c_rad)
+            cz = zs + rad * math.sin(theta_c_rad)
+            
+            for alpha in np.linspace(-theta_c_rad - gamma, -theta_c_rad + gamma, 24):
+                skin_data.append((cr + rad * math.cos(alpha), cz + rad * math.sin(alpha)))
+        
+        # 4.5 Back Closure and Payload Cylinder (NO DIAMOND)
+        r_pay = float(ref_params.get('payload_radius', 0.5)) * 1000.0 # Default 500mm
+        r_last, z_last = skin_data[-1]
+        
+        # A. Connector to Payload Radius
+        skin_data.append((r_pay, z_last))
+        
+        # B. Payload Cylinder Wall
+        skin_data.append((r_pay, z_back))
+        
+        # C. Back Cap
+        skin_data.append((0.0, z_back))
+        
+        # Convert to m for the simulation plot overlay
+        skin_data_m = [(p[0]/1000.0, p[1]/1000.0) for p in skin_data]
+        
+        # Call the analytical drawing function
+        # (We need to scale the drawing parameters to meters)
+        draw_analytical_slice(ax, skin_data_m, toroid_count, toroid_radius/1000.0, shoulder_torus_radius/1000.0,
+                              z_tangency/1000.0, r_tangency/1000.0, theta_c_rad, r_target/1000.0, 
+                              z_nose_center/1000.0, nose_radius/1000.0, z_back/1000.0,
+                              label_toroids=True)
+                              
     except Exception as e:
-        print(f"Warning: Could not overlay geometry: {e}")
+        print(f"Warning: Analytical overlay failed: {e}")
+        # Fallback to simple surf overlay
+        if surf_file and os.path.exists(surf_file):
+            points = []
+            with open(surf_file, 'r') as f:
+                mode = None
+                for line in f:
+                    if "Points" in line: mode = "pts"; continue
+                    parts = line.split()
+                    if not parts or parts[0].isalpha(): continue
+                    if mode == "pts" and len(parts) >= 3:
+                        points.append([float(parts[1]), float(parts[2])])
+            if points:
+                pts = np.array(points)
+                ax.plot(pts[:, 0], pts[:, 1], color='#f43f5e', linewidth=2.5, label='HIAD Wall', zorder=10)
+                ax.plot(pts[:, 0], -pts[:, 1], color='#f43f5e', linewidth=2.5, zorder=10)
 
 def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=None):
     os.makedirs(output_dir, exist_ok=True)
@@ -138,7 +263,7 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
     # Overlay Geometry Wall
-    _overlay_geometry(plt.gca(), surf_file)
+    _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     # Overlay Metadata
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Thermal Map")
     plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.png'), dpi=300)
@@ -155,7 +280,7 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
     # Overlay Geometry Wall
-    _overlay_geometry(plt.gca(), surf_file)
+    _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     # Overlay Metadata
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Pressure Map")
     plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.png'), dpi=300)
@@ -175,7 +300,7 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
     # Overlay Geometry Wall
-    _overlay_geometry(plt.gca(), surf_file)
+    _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     # Overlay Metadata
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Velocity Quiver")
     plt.savefig(os.path.join(output_dir, f'velocity_vectors{suffix}.png'), dpi=300)
@@ -718,8 +843,17 @@ def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp', ref_pa
         ax = fig.add_subplot(2, 2, i+1, projection='3d')
         ax.set_facecolor('#0f172a')
         
-        # Plot Shield
-        if pts is not None:
+        # Plot STL Geometry (Overlay CAD)
+        stl_file = surf_file.replace('.surf', '.stl') if surf_file else None
+        triangles = _parse_stl(stl_file)
+        if triangles is not None:
+            from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+            # STL is in mm, convert to m
+            triangles = triangles / 1000.0
+            poly = Poly3DCollection(triangles, alpha=0.15, facecolor='#f43f5e', edgecolor='#f43f5e', linewidths=0.1)
+            ax.add_collection3d(poly)
+        elif pts is not None:
+            # Fallback to lines if no STL found
             for theta in np.linspace(0, 2*np.pi, 30):
                 xs = pts[:, 0]
                 ys = pts[:, 1] * np.cos(theta)
@@ -946,7 +1080,7 @@ def generate_knudsen_plot(x, y, n, output_dir, suffix="", ref_params=None, surf_
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     # Overlay Geometry Wall
-    _overlay_geometry(plt.gca(), surf_file)
+    _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Rarefection Study")
     plt.savefig(os.path.join(output_dir, f'knudsen_map{suffix}.png'), dpi=300)
     plt.close()
@@ -967,7 +1101,7 @@ def generate_residence_time_plot(x, y, u, v, output_dir, suffix="", ref_params=N
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     # Overlay Geometry Wall
-    _overlay_geometry(plt.gca(), surf_file)
+    _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Residence Time")
     plt.savefig(os.path.join(output_dir, f'residence_time_map{suffix}.png'), dpi=300)
     plt.close()
@@ -997,7 +1131,7 @@ def generate_species_plots(x, y, species_nrho, output_dir, suffix="", ref_params
         plt.xlabel('Axial (m)', color='#94a3b8')
         plt.ylabel('Radial (m)', color='#94a3b8')
         # Overlay Geometry Wall
-        _overlay_geometry(plt.gca(), surf_file)
+        _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
         _add_metadata_overlay(plt.gca(), ref_params, extra_info=f"Chemistry: {species_names[i]}")
         plt.savefig(os.path.join(output_dir, f'species_{species_names[i]}_map{suffix}.png'), dpi=300)
         plt.close()
@@ -1096,8 +1230,27 @@ def generate_animation(grid_files, output_mp4, ref_params=None):
     print(f"Smooth animation saved to {output_mp4}")
 
 if __name__ == "__main__":
-    # Test path
-    test_file = "CADDesign/results_reference/grid.1000.out"
-    if os.path.exists(test_file):
-        generate_plots(test_file, "web/assets/plots")
-        upscale_2d_to_3d(test_file, "web/assets/plots/upscaled_3d.png")
+    parser = argparse.ArgumentParser(description="StellarOrion Visualizer CLI")
+    parser.add_argument("--grid", type=str, help="Path to grid.X.out file")
+    parser.add_argument("--output", type=str, default="web/assets/plots", help="Output directory")
+    parser.add_argument("--surf", type=str, help="Path to .surf file for overlay")
+    parser.add_argument("--diameter", type=float, default=3.0)
+    parser.add_argument("--angle", type=float, default=60.0)
+    parser.add_argument("--toroids", type=int, default=7)
+    parser.add_argument("--nose", type=float, default=0.55)
+    
+    args = parser.parse_args()
+    
+    if args.grid and os.path.exists(args.grid):
+        ref = {
+            'diameter': args.diameter,
+            'angle': args.angle,
+            'toroids': args.toroids,
+            'nose_radius': args.nose
+        }
+        generate_plots(args.grid, args.output, ref_params=ref, surf_file=args.surf)
+        upscale_2d_to_3d(args.grid, os.path.join(args.output, "upscaled_3d.png"), 
+                          surf_file=args.surf, ref_params=ref)
+        print(f"[SUCCESS] Visuals generated in {args.output}")
+    else:
+        print("Usage: python visualizer.py --grid <file> [--surf <file>] ...")
