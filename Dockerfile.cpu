@@ -24,14 +24,13 @@ COPY sparta /workspace/sparta
 RUN mkdir -p /workspace/sparta/build && cd /workspace/sparta/build && \
     cmake ../cmake \
     -DSPARTA_LIB=yes \
-    -DSPARTA_SHARED_LIB=yes \
+    -DSPARTA_SHARED_LIB=no \
     -DBUILD_LIB=ON \
-    -DBUILD_SHARED_LIBS=ON \
+    -DBUILD_SHARED_LIBS=OFF \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DPKG_PYTHON=yes \
     -DPKG_MPI=yes \
     -DPKG_MPI_STUBS=no \
-
     -DCMAKE_CXX_FLAGS="-D_Static_assert=static_assert" && \
     make -j$(nproc) && \
     cp src/spa_ /usr/local/bin/spa

@@ -22,8 +22,8 @@ def run_headless_test():
         'samples': 3,  # Adjusted for comparison
         'base_diameter': 3.0,
         'base_angle': 60.0,
-        'base_toroids': 7,
-        'base_nose': 0.191,
+        'base_toroids': 6,
+        'base_nose': 0.550,
         'd_min': 2.5,
         'd_max': 4.5,
         'goal': 'drag',

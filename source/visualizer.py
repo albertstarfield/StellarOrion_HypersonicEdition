@@ -37,7 +37,7 @@ def parse_grid_dump(filepath):
         for line in lines[start_index:]:
             parts = line.split()
             if len(parts) >= 11:
-                # id xlo ylo xhi yhi n u v w temp press
+                # id xlo ylo xhi yhi f_2[1..4] f_3[1..2] ... f_4[1..N]
                 data.append([float(x) for x in parts[1:]])
     return np.array(data)
     
@@ -78,7 +78,34 @@ def _add_metadata_overlay(ax, ref_params, extra_info=None):
         ax.text(0.02, 0.98, metadata_str, transform=ax.transAxes, fontsize=7,
                  verticalalignment='top', bbox=props, color='white', fontfamily='monospace', zorder=100)
 
-def generate_plots(grid_file, output_dir, suffix="", ref_params=None):
+def _overlay_geometry(ax, surf_file):
+    """Overlays the HIAD wall geometry on the current plot from a SPARTA .surf file."""
+    if not surf_file or not os.path.exists(surf_file):
+        return
+    
+    try:
+        points = []
+        with open(surf_file, 'r') as f:
+            mode = None
+            for line in f:
+                if "Points" in line: mode = "pts"; continue
+                if "Lines" in line: mode = "lines"; continue
+                parts = line.split()
+                if not parts or parts[0].isalpha(): continue
+                if mode == "pts" and len(parts) >= 3:
+                    points.append([float(parts[1]), float(parts[2])])
+        
+        if points:
+            pts = np.array(points)
+            # Plot with a bold, distinct color (Neon Pink/Cyan depending on theme)
+            ax.plot(pts[:, 0], pts[:, 1], color='#f43f5e', linewidth=2.5, label='HIAD Wall', zorder=10)
+            # reflect for axisymmetry if y starts from 0
+            if np.min(pts[:, 1]) >= -0.01:
+                ax.plot(pts[:, 0], -pts[:, 1], color='#f43f5e', linewidth=2.5, zorder=10)
+    except Exception as e:
+        print(f"Warning: Could not overlay geometry: {e}")
+
+def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=None):
     os.makedirs(output_dir, exist_ok=True)
     data = parse_grid_dump(grid_file)
     if len(data) == 0:
@@ -110,6 +137,8 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
+    # Overlay Geometry Wall
+    _overlay_geometry(plt.gca(), surf_file)
     # Overlay Metadata
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Thermal Map")
     plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.png'), dpi=300)
@@ -125,6 +154,8 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
+    # Overlay Geometry Wall
+    _overlay_geometry(plt.gca(), surf_file)
     # Overlay Metadata
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Pressure Map")
     plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.png'), dpi=300)
@@ -143,6 +174,8 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
+    # Overlay Geometry Wall
+    _overlay_geometry(plt.gca(), surf_file)
     # Overlay Metadata
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Velocity Quiver")
     plt.savefig(os.path.join(output_dir, f'velocity_vectors{suffix}.png'), dpi=300)
@@ -166,13 +199,26 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None):
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
+    # Overlay Geometry Wall
+    _overlay_geometry(plt.gca(), surf_file)
     # Overlay Metadata
-    _add_metadata_overlay(plt.gca(), ref_params, extra_info="Mach Distribution")
+    _add_metadata_overlay(plt.gca(), ref_params, extra_info="Mach Number")
     plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.png'), dpi=300)
     plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
 
-    # Plot 5: Stagnation Streamline Graph (1D)
+    # Plot 5: Local Knudsen Number
+    generate_knudsen_plot(x_center, y_center, n, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
+
+    # Plot 7: Species Concentrations (if available)
+    if data.shape[1] > 10:
+        species_data = data[:, 10:]
+        generate_species_plots(x_center, y_center, species_data, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
+
+    # Plot 8: Scallop Pocket Profile (Wall vs Pocket Temperature)
+    generate_scallop_profile_plot(data, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
+
+    # Plot 9: Stagnation Streamline Graph (1D)
     generate_stagnation_graph(data, output_dir, suffix=suffix, ref_params=ref_params)
 
     print(f"Plots generated in {output_dir}")
@@ -226,6 +272,47 @@ def generate_stagnation_graph(data, output_dir, suffix="", ref_params=None):
     fig.tight_layout()
     plt.savefig(os.path.join(output_dir, f'stagnation_graph{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
     plt.close()
+
+def generate_knudsen_plot(x, y, n, output_dir, suffix="", ref_params=None, surf_file=None):
+    """Maps the transition between continuum and kinetic flow regimes."""
+    # Kn = lambda / L. lambda = 1 / (sqrt(2) * n * sigma)
+    sigma = 4.3e-19 # m^2 (Effective for air)
+    lambda_local = 1.0 / (np.sqrt(2) * np.maximum(n, 1.0e10) * sigma)
+    # Characteristic length L (use nose radius if available, else 0.55m)
+    L_char = float(ref_params.get('nose_radius', 0.55)) if ref_params else 0.55
+    kn_local = lambda_local / L_char
+    
+    plt.figure(figsize=(10, 6))
+    plt.gca().set_facecolor('#0f172a')
+    # Using log scale for Kn (0.1 to 10 is the transition regime)
+    sc = plt.tricontourf(x, y, np.log10(np.clip(kn_local, 1e-5, 1e2)), levels=50, cmap='plasma')
+    plt.colorbar(sc, label='log10(Local Knudsen Number)')
+    plt.title('Local Knudsen Number Mapping', color='white', fontweight='bold')
+    plt.xlabel('Axial (m)', color='#94a3b8')
+    plt.ylabel('Radial (m)', color='#94a3b8')
+    _overlay_geometry(plt.gca(), surf_file)
+    _add_metadata_overlay(plt.gca(), ref_params, extra_info="Local Knudsen")
+    plt.savefig(os.path.join(output_dir, f'knudsen_map{suffix}.png'), dpi=300)
+    plt.close()
+
+def generate_species_plots(x, y, species_data, output_dir, suffix="", ref_params=None, surf_file=None):
+    """Plots number density of individual species (N2, O2, NO, N, O)."""
+    species_names = ['N2', 'O2', 'NO', 'N', 'O']
+    for i in range(min(len(species_names), species_data.shape[1])):
+        s_name = species_names[i]
+        s_val = species_data[:, i]
+        
+        plt.figure(figsize=(10, 6))
+        plt.gca().set_facecolor('#0f172a')
+        sc = plt.tricontourf(x, y, s_val, levels=50, cmap='viridis')
+        plt.colorbar(sc, label=f'{s_name} Number Density (#/m^3)')
+        plt.title(f'Species Concentration: {s_name}', color='white', fontweight='bold')
+        plt.xlabel('Axial (m)', color='#94a3b8')
+        plt.ylabel('Radial (m)', color='#94a3b8')
+        _overlay_geometry(plt.gca(), surf_file)
+        _add_metadata_overlay(plt.gca(), ref_params, extra_info=f"Species {s_name}")
+        plt.savefig(os.path.join(output_dir, f'species_{s_name}_map{suffix}.png'), dpi=200)
+        plt.close()
 
 def generate_convergence_plot(log_lines, output_dir, suffix="", ref_params=None):
     """Generates graphs of global metrics and Fluent-style residuals over simulation iterations."""
@@ -831,6 +918,121 @@ def generate_preview(surf_file, output_path, params=None, ref_params=None):
         return False
 
 import matplotlib.animation as animation
+
+def generate_knudsen_plot(x, y, n, output_dir, suffix="", ref_params=None, surf_file=None):
+    """Plots the local Knudsen number map to show kinetic vs continuum dominance."""
+    plt.figure(figsize=(10, 6))
+    plt.gca().set_facecolor('#0f172a')
+    
+    # lambda = 1 / (sqrt(2) * pi * d^2 * n)
+    d_mol = 3.7e-10 # m (Air)
+    mfp = 1.0 / (np.sqrt(2) * np.pi * (d_mol**2) * np.maximum(n, 1.0))
+    
+    # Characteristic length L (default to toroid radius or nose)
+    L = float(ref_params.get('toroid_radius', 0.135)) if ref_params else 0.135
+    kn_local = mfp / L
+    
+    # Log scale is best for Kn
+    levels = np.logspace(-4, 1, 50)
+    import matplotlib.colors as mcolors
+    sc = plt.tricontourf(x, y, kn_local, levels=levels, norm=mcolors.LogNorm(), cmap='RdYlBu_r')
+    plt.colorbar(sc, label='Local Knudsen Number (Kn)')
+    plt.title('Rarefaction Map (Knudsen)', color='white', fontweight='bold')
+    
+    # Zone markers
+    plt.text(0.05, 0.05, "Red: Kinetic Dominance (Kn > 0.1)\nBlue: Continuum (Kn < 0.01)", 
+             transform=plt.gca().transAxes, color='white', fontsize=8, alpha=0.6)
+             
+    plt.xlabel('Axial (m)', color='#94a3b8')
+    plt.ylabel('Radial (m)', color='#94a3b8')
+    # Overlay Geometry Wall
+    _overlay_geometry(plt.gca(), surf_file)
+    _add_metadata_overlay(plt.gca(), ref_params, extra_info="Rarefection Study")
+    plt.savefig(os.path.join(output_dir, f'knudsen_map{suffix}.png'), dpi=300)
+    plt.close()
+
+def generate_residence_time_plot(x, y, u, v, output_dir, suffix="", ref_params=None, surf_file=None):
+    """Plots inverse velocity to identify flow stagnation and trapping zones."""
+    plt.figure(figsize=(10, 6))
+    plt.gca().set_facecolor('#0f172a')
+    
+    vel_mag = np.sqrt(u**2 + v**2)
+    # Residence time proxy: 1/V (capped to avoid infinity)
+    res_time = 1.0 / np.maximum(vel_mag, 10.0) 
+    
+    sc = plt.tricontourf(x, y, res_time, levels=50, cmap='inferno')
+    plt.colorbar(sc, label='Residence Time Proxy (s/m)')
+    plt.title('Flow Stagnation / Trapping Zones', color='white', fontweight='bold')
+    
+    plt.xlabel('Axial (m)', color='#94a3b8')
+    plt.ylabel('Radial (m)', color='#94a3b8')
+    # Overlay Geometry Wall
+    _overlay_geometry(plt.gca(), surf_file)
+    _add_metadata_overlay(plt.gca(), ref_params, extra_info="Residence Time")
+    plt.savefig(os.path.join(output_dir, f'residence_time_map{suffix}.png'), dpi=300)
+    plt.close()
+
+def generate_species_plots(x, y, species_nrho, output_dir, suffix="", ref_params=None, surf_file=None):
+    """Plots concentration contours for all simulated species."""
+    # species_nrho is [N_cells, N_species]
+    n_species = species_nrho.shape[1]
+    # Use names from ref_params if available
+    species_names = ref_params.get('species_list', [f"Species_{i}" for i in range(n_species)])
+    
+    # Total number density
+    n_total = np.sum(species_nrho, axis=1)
+    n_total = np.maximum(n_total, 1.0)
+    
+    for i in range(min(n_species, 5)): # Cap at first 5 to avoid explosion
+        plt.figure(figsize=(10, 6))
+        plt.gca().set_facecolor('#0f172a')
+        
+        # Mole fraction
+        frac = species_nrho[:, i] / n_total
+        
+        sc = plt.tricontourf(x, y, frac, levels=50, cmap='viridis')
+        plt.colorbar(sc, label=f'Mole Fraction (χ_{species_names[i]})')
+        plt.title(f'Species Distribution: {species_names[i]}', color='white', fontweight='bold')
+        
+        plt.xlabel('Axial (m)', color='#94a3b8')
+        plt.ylabel('Radial (m)', color='#94a3b8')
+        # Overlay Geometry Wall
+        _overlay_geometry(plt.gca(), surf_file)
+        _add_metadata_overlay(plt.gca(), ref_params, extra_info=f"Chemistry: {species_names[i]}")
+        plt.savefig(os.path.join(output_dir, f'species_{species_names[i]}_map{suffix}.png'), dpi=300)
+        plt.close()
+
+def generate_scallop_profile_plot(data, output_dir, suffix="", ref_params=None, surf_file=None):
+    """Plots temperature profile specifically comparing wall proximity vs scallop center."""
+    x = (data[:, 0] + data[:, 2]) / 2
+    y = (data[:, 1] + data[:, 3]) / 2
+    temp = data[:, 8]
+    
+    # Filter for a specific toroid gap (approx midway radially)
+    # This is a bit heuristic, but we look for high curvature regions
+    mid_y = np.median(y)
+    mask = (y > mid_y - 0.1) & (y < mid_y + 0.1)
+    
+    x_gap = x[mask]
+    t_gap = temp[mask]
+    
+    idx = np.argsort(x_gap)
+    x_gap = x_gap[idx]
+    t_gap = t_gap[idx]
+    
+    plt.figure(figsize=(10, 6))
+    plt.gca().set_facecolor('#0f172a')
+    plt.plot(x_gap, t_gap, color='#06b6d4', linewidth=2, label='Pocket Center Temp')
+    
+    plt.title('Scallop Pocket Thermal Probe', color='white', fontweight='bold')
+    plt.xlabel('Axial Position (m)', color='#94a3b8')
+    plt.ylabel('Temperature (K)', color='#94a3b8')
+    plt.grid(True, alpha=0.1)
+    plt.legend()
+    
+    _add_metadata_overlay(plt.gca(), ref_params, extra_info="Scallop Thermal Probe")
+    plt.savefig(os.path.join(output_dir, f'scallop_pocket_temp{suffix}.png'), dpi=300)
+    plt.close()
 
 def generate_animation(grid_files, output_mp4, ref_params=None):
     """Creates an MP4 animation from a sequence of SPARTA grid dump files with smooth contours."""

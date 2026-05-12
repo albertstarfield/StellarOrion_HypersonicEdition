@@ -158,9 +158,9 @@ class Api:
             "reference": "Rapisarda (2024) / NASA TP-2013-4012",
             "geometry": {
                 "diameter_m": 3.0,
-                "nose_radius_m": 0.191,
+                "nose_radius_m": 0.550,
                 "forebody_angle_deg": 60.0,
-                "toroids": 7,
+                "toroids": 6,
                 "toroids_rapisarda": 6,
                 "toroid_radius_m": 0.1350,
                 "outer_toroid_radius_m": 0.0508,
@@ -317,6 +317,8 @@ class Api:
             R = 287.05
             sound_speed = np.sqrt(gamma * R * temp_inf)
             mach = round(vstream / sound_speed, 2)
+            # Get species list for plot labeling
+            _, _, _, species_list, _ = self.get_chemistry_data(opt_params)
             
             return {
                 'v_inf': vstream,
@@ -326,6 +328,8 @@ class Api:
                 'grid_factor': opt_params.get('grid_factor', 0.7),
                 'diameter': sample_dict.get('diameter', 3.0),
                 'angle': sample_dict.get('angle', 60.0),
+                'toroid_radius': sample_dict.get('toroid_radius', 0.135),
+                'species_list': species_list, # Use names from list
                 'git_hash': self._get_git_hash()
             }
         except Exception:
@@ -378,8 +382,8 @@ class Api:
                     python_exec, "HIAD_GeometryEngine.py",
                     "--diameter", str(params.get('diameter', 3.0)),
                     "--angle", str(params.get('angle', 60.0)),
-                    "--nose", str(params.get('nose_radius', 0.191)),
-                    "--toroids", str(params.get('toroids', 7)),
+                    "--nose", str(params.get('nose_radius', 0.550)),
+                    "--toroids", str(params.get('toroids', 6)),
                     "--thickness", str(params.get('thickness', 0.0254)),
                     "--scallop_pts", str(params.get('scallop_pts', 5)),
                     "--scallop_angle", str(params.get('scallop_angle', 90.0)),
@@ -679,10 +683,11 @@ class Api:
             mixture = "mixture air CO2 N2 CO O C N\nmixture air CO2 frac 0.95\nmixture air N2 frac 0.03\nmixture air CO frac 0.01\nmixture air O frac 0.01"
         else: # Default Earth
             species_src = os.path.join(data_dir, "air.species")
-            react_src = os.path.join(data_dir, "air.tce")
+            react_src = os.path.join(data_dir, "air.react")
             vss_src = os.path.join(data_dir, "air.vss")
             
             if chem_mode == '11-species':
+                react_src = os.path.join(data_dir, "air.tce")
                 species_list = ["N2", "O2", "NO", "N", "O", "N2+", "O2+", "NO+", "N+", "O+", "e"]
                 mixture = "mixture air N2 O2 NO N O N2+ O2+ NO+ N+ O+ e\nmixture air N2 frac 0.79\nmixture air O2 frac 0.21"
             else:
@@ -744,29 +749,32 @@ O recombine simple {gamma} O2
         steps = int(kwargs.get('steps', opt_params.get('env_run', 500)))
         stats_interval = int(opt_params.get('stats_interval', 100))
 
+        fnum = float(kwargs.get('env_fnum', opt_params.get('env_fnum', 1e17)))
+        
         script = f"""# SPARTA Input Script - StellarOrion Automated Comparison
 seed            12345
 dimension       2
 global          gridcut 0.0 comm/sort yes
-boundary        o ar p
+boundary        o ao p
 
-create_box      {xmin:.2f} {xmax:.2f} 0.0 {ymax:.2f} -0.5 0.5
+create_box      {xmin-0.001:.3f} {xmax+0.001:.3f} 0.000 {ymax+0.001:.3f} -0.5 0.5
 create_grid     {nx} {ny} 1
 balance_grid    rcb cell
 
-global          nrho {n_rho:.2e} fnum {n_rho/1e4:.1e}
+global          nrho {n_rho:.2e} fnum {fnum:.1e} weight cell radius
 
 species         air.species {" ".join(species_list)}
 {mixture_txt}
 mixture air vstream {vstream:.1f} 0.0 0.0
 mixture air temp {temp_inf:.1f}
 
-fix             in emit/face air xlo twopass
+fix             in emit/face air xlo
 collide         vss air air.vss
 react           tce air.react
 
 # Surface Definition
 read_surf       {surf_name}.surf group hiad_surf
+create_particles air n 0
 surf_collide    1 diffuse {t_wall:.1f} 1.0
 # surf_react      1 prob air.surf_react
 surf_modify     all collide 1
@@ -788,8 +796,11 @@ compute         temp_avg reduce ave f_1[1] f_1[2] f_1[3]
 compute         2 grid all air n u v w
 fix             2 ave/grid all 1 1 1 c_2[*]
 
-compute         3 thermal/grid all air temp press
+compute         3 thermal/grid all air temp
 fix             3 ave/grid all 1 1 1 c_3[*]
+
+compute         4 grid all air nrho
+fix             4 ave/grid all 1 1 1 c_4[*]
 
 timestep        1e-6
 
@@ -798,7 +809,7 @@ stats_style     step cpu np c_drag c_lift c_heat c_temp_avg[1] c_temp_avg[2] c_t
 
 # Dumps
 dump            1 surf all {stats_interval} results_reference/surf.*.out id f_1[*] f_surfavg[*]
-dump            2 grid all {stats_interval} results_reference/grid.*.out id xlo ylo xhi yhi f_2[*] f_3[*]
+dump            2 grid all {stats_interval} results_reference/grid.*.out id xlo ylo xhi yhi f_2[*] f_3[*] f_4[*]
 
 run             {steps}
 """
@@ -1241,8 +1252,8 @@ run             {steps}
             python_exec, "HIAD_GeometryEngine.py",
             "--diameter", str(sample_dict.get('diameter', 3.0)),
             "--angle", str(sample_dict.get('angle', 60.0)),
-            "--nose", str(sample_dict.get('nose_radius', 0.191)),
-            "--toroids", str(sample_dict.get('toroids', 7)),
+            "--nose", str(sample_dict.get('nose_radius', 0.550)),
+            "--toroids", str(sample_dict.get('toroids', 6)),
             "--thickness", str(sample_dict.get('thickness', 0.0254)),
             "--nose_type", nose_type,
             "--output", output_name
@@ -1253,6 +1264,11 @@ run             {steps}
         elif payload_file:
             cmd_cad.extend(["--payload_file", payload_file])
         
+        if sample_dict.get('tradius'):
+            cmd_cad.extend(["--tradius", str(sample_dict['tradius'])])
+        if sample_dict.get('oradius'):
+            cmd_cad.extend(["--oradius", str(sample_dict['oradius'])])
+            
         if sample_dict.get('flat_skin'):
             cmd_cad.append("--flat_skin")
             
@@ -1311,6 +1327,7 @@ run             {steps}
         docker_create_cmd = [
             "docker", "create", "--name", "hiad-runner",
             "-v", f"{self.cwd}:/app", 
+            "--workdir", "/app/CADDesign",
             "-e", "IN_DOCKER=1", 
             "-e", "PYTHONUNBUFFERED=1",
             "-e", "DOCKER_WORKDIR=/app",
@@ -1322,11 +1339,11 @@ run             {steps}
             docker_create_cmd.append("all")
         
         if not use_gpu:
-            nproc = opt_params.get('env_cores', min(4, os.cpu_count() or 4))
+            nproc = opt_params.get('env_cores', os.cpu_count() or 4)
             self.log_to_gui(f"    [!] Parallel Execution: Using {nproc} CPU cores via mpirun...")
-            docker_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), "python3", "/app/main.py", "--steps", str(n_run)]
+            docker_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), "spa", "-in", "in.hiad"]
         else:
-            docker_cmd = ["python3", "/app/main.py", "--steps", str(n_run), "--sparta-gpu"]
+            docker_cmd = ["spa", "-in", "in.hiad", "-pk", "kokkos", "newton", "on", "gpu", "1", "-sf", "kk"]
         
         # --- Docker vs Host Fallback ---
         use_docker = True
@@ -1411,7 +1428,7 @@ run             {steps}
                 viz_metadata = self._get_viz_params(opt_params, sample_dict)
                 
                 visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
-                visualizer.generate_plots(grid_files[-1], plots_dir, suffix=suffix, ref_params=viz_metadata)
+                visualizer.generate_plots(grid_files[-1], plots_dir, suffix=suffix, ref_params=viz_metadata, surf_file=os.path.join(cad_dir, f"{surf_name}.surf"))
                 visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, f"upscaled_3d{suffix}.png"), 
                                             surf_file=os.path.join(cad_dir, f"{surf_name}.surf"), prop='temp', ref_params=viz_metadata)
                 
@@ -1492,8 +1509,8 @@ run             {steps}
                 sample_dict = {
                     'diameter': 3.0,
                     'angle': 60.0,
-                    'nose_radius': 0.191,
-                    'toroids': 7,
+                    'nose_radius': 0.550,
+                    'toroids': 6,
                     'mass': 281.0
                 }
                 
@@ -2266,8 +2283,8 @@ run             {steps}
         # 0. Define Search Space (Moved up to prevent UnboundLocalError)
         base_d = float(opt_params.get('base_diameter', 3.0))
         b_ang = float(opt_params.get('base_angle', 60.0))
-        b_tor = int(opt_params.get('base_toroids', 7))
-        b_nos = float(opt_params.get('base_nose', 0.191))
+        b_tor = int(opt_params.get('base_toroids', 6))
+        b_nos = float(opt_params.get('base_nose', 0.550))
         b_thk = float(opt_params.get('base_thick', 0.0254))
         b_spt = int(opt_params.get('base_scallop_pts', 5))
         b_san = float(opt_params.get('base_scallop_ang', 90.0))
@@ -2322,14 +2339,13 @@ run             {steps}
             python_exec, os.path.join(cad_dir, "HIAD_GeometryEngine.py"),
             "--diameter", str(base_d),
             "--angle", str(opt_params.get('base_angle', 60.0)),
-            "--nose", str(opt_params.get('base_nose', 0.191)),
-            "--toroids", str(opt_params.get('base_toroids', 7)),
+            "--nose", str(opt_params.get('base_nose', 0.550)),
+            "--toroids", str(opt_params.get('base_toroids', 6)),
             "--thickness", str(opt_params.get('base_thick', 0.0254)),
             "--scallop_pts", str(opt_params.get('base_scallop_pts', 5)),
             "--scallop_angle", str(opt_params.get('base_scallop_ang', 90.0)),
             "--output", "HIAD_custom",
-            "--slice_angle", "360.0",
-            "--flat_skin"
+            "--slice_angle", "360.0"
         ]
         subprocess.run(cmd_cad, cwd=cad_dir, check=True)
 
@@ -2380,7 +2396,7 @@ run             {steps}
             visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
             
             self.log_to_gui("    [+] Generating Baseline Static Maps (JPEG/Graph)...")
-            visualizer.generate_plots(grid_files[-1], plots_dir, ref_params=viz_metadata)
+            visualizer.generate_plots(grid_files[-1], plots_dir, ref_params=viz_metadata, surf_file=os.path.join(cad_dir, "HIAD_custom.surf"))
             
             self.log_to_gui("    [+] Generating Convergence Graph (Residuals)...")
             if 'log_lines' in locals():
@@ -2403,6 +2419,9 @@ run             {steps}
                 self.window.evaluate_js(f"document.getElementById('img-3d-velocity').src = 'assets/plots/upscaled_3d_velocity.png?' + new Date().getTime()")
                 self.window.evaluate_js(f"document.getElementById('img-3d-mach').src = 'assets/plots/upscaled_3d_mach.png?' + new Date().getTime()")
                 self.window.evaluate_js(f"document.getElementById('img-stag').src = 'assets/plots/stagnation_graph.png?' + new Date().getTime()")
+                self.window.evaluate_js(f"document.getElementById('img-knudsen').src = 'assets/plots/knudsen_map.png?' + new Date().getTime()")
+                for s in ['N2', 'O2', 'NO', 'N', 'O']:
+                    self.window.evaluate_js(f"document.getElementById('img-species-{s}').src = 'assets/plots/species_{s}_map.png?' + new Date().getTime()")
 
             self.log_to_gui("    [+] Exporting 3D Results to ParaView (VTK)...")
             vtk_path = os.path.join(self.cwd, "web", "assets", "data", "upscaled_baseline.vtk")
@@ -2652,7 +2671,7 @@ run             {steps}
                 if grid_files:
                     viz_metadata = self._get_viz_params(opt_params, sample_dict)
                     visualizer.generate_animation(grid_files, os.path.join(sample_dir, "simulation_anim.mp4"), ref_params=viz_metadata)
-                    visualizer.generate_plots(grid_files[-1], sample_dir, ref_params=viz_metadata)
+                    visualizer.generate_plots(grid_files[-1], sample_dir, ref_params=viz_metadata, surf_file=os.path.join(cad_dir, f"{surf_name}.surf"))
                     visualizer.generate_convergence_plot(log_lines, sample_dir, ref_params=viz_metadata)
                     visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(sample_dir, "3d_temp.png"), 
                                                 surf_file=os.path.join(cad_dir, "HIAD_opt.surf"), prop='temp', ref_params=viz_metadata)
@@ -2863,7 +2882,7 @@ run             {steps}
         viz_metadata = self._get_viz_params(opt_params, sample_dict)
         visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
         viz_metadata = self._get_viz_params(opt_params, sample_dict)
-        visualizer.generate_plots(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots"), ref_params=viz_metadata)
+        visualizer.generate_plots(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots"), ref_params=viz_metadata, surf_file=os.path.join(self.cwd, "CADDesign", "HIAD_custom.surf"))
         
         # Optimized maps naming (for report consistency)
         for ftype in ["thermal_map", "pressure_map", "mach_map"]:
@@ -2968,8 +2987,10 @@ run             {steps}
         sample_dict = {
             'diameter': baseline_doc['geometry']['diameter_m'],
             'angle': baseline_doc['geometry']['forebody_angle_deg'],
-            'nose': baseline_doc['geometry']['nose_radius_m'],
+            'nose_radius': baseline_doc['geometry']['nose_radius_m'],
             'toroids': baseline_doc['geometry']['toroids'],
+            'tradius': baseline_doc['geometry']['toroid_radius_m'],
+            'oradius': baseline_doc['geometry']['outer_toroid_radius_m'],
             'nose_type': nose_type
         }
         
@@ -3049,7 +3070,7 @@ run             {steps}
                     ani_path = os.path.join(plots_dir, f"validation_anim{suffix}.mp4")
                     viz_metadata = self._get_viz_params(opt_params, sample_dict)
                     visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
-                    visualizer.generate_plots(grid_files[-1], plots_dir, suffix=suffix, ref_params=viz_metadata)
+                    visualizer.generate_plots(grid_files[-1], plots_dir, suffix=suffix, ref_params=viz_metadata, surf_file=os.path.join(cad_dir, f"{surf_name}.surf"))
             except Exception as ve:
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed: {ve}")
 
@@ -3710,6 +3731,8 @@ except Exception as e:
             "        regionType patch;\n"
             "        name shield;\n"
             "        operation max;\n        fields ( q );\n    }\n}\n")
+
+
 
         # 1.5 system/decomposeParDict
         n_cores = os.cpu_count() or 4

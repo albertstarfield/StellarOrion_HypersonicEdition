@@ -472,6 +472,10 @@ def main():
             "  baseline  - Full IRVE-3 baseline validation vs documentation\n"
             "  sample    - Single simulation with IRVE-3 default parameters"
         ))
+    mode.add_argument("--validation", action="store_true",
+        help="Shorthand for: --headless --test baseline. Runs the full IRVE-3 baseline validation suite against mission documentation.")
+    mode.add_argument("--sample", type=int, metavar="STEPS",
+        help="Shorthand for: --headless --test sample --steps STEPS. Runs a single IRVE-3 geometry simulation for N steps.")
     mode.add_argument("--compareCalibrate", action="store_true",
         help="Shorthand for: --headless --test sample --solver <solver>. Runs a single IRVE-3 geometry simulation and prints a formatted comparison table of Cd and heat flux against the official IRVE-3 baseline values.")
     mode.add_argument("--compareCalibratePINN", action="store_true",
@@ -528,7 +532,10 @@ def main():
     geo = parser.add_argument_group("Geometry Overrides (Rapisarda Envelope)")
     geo.add_argument("--diameter", type=float, default=3.0, help="HIAD major diameter [m]. Limit: 0.5-15.0m. (IRVE-3: 3.0m)")
     geo.add_argument("--angle", type=float, default=60.0, help="Half-cone angle [deg]. Rapisarda Limit: 40-80°. (IRVE-3: 60°)")
+    geo.add_argument("--nose", type=float, default=0.55, help="Nose-cone radius [m]. (IRVE-3: 0.55m)")
     geo.add_argument("--toroids", type=int, default=7, help="Number of stacked toroids. Limit: 1-12. (IRVE-3: 7)")
+    geo.add_argument("--tradius", type=float, help="Toroid radius [m]. (IRVE-3: 0.135m)")
+    geo.add_argument("--oradius", type=float, help="Outer shoulder toroid radius [m]. (IRVE-3: 0.0508m)")
     geo.add_argument("--mass", type=float, default=281.0, help="Total entry mass [kg]. (IRVE-3: 281kg)")
     
     # Material Property Overrides (Ref: Rapisarda 2024 Table B.17)
@@ -556,6 +563,8 @@ def main():
 
     # -- Output & Display ----------------------------------------------------──
     out = parser.add_argument_group("Output & Display")
+    out.add_argument("--imageDebug", action="store_true",
+        help="Enable visual geometry debug plots during generation.")
     out.add_argument("--headless", action="store_true",
         help="Run in fully headless mode (no GUI windows). Required for CLI/server environments. Output is printed to stdout.")
     out.add_argument("--paraview", action="store_true",
@@ -593,6 +602,15 @@ def main():
 
     if args.help:
         display_custom_help(parser)
+
+    if args.sample:
+        args.headless = True
+        args.test = "sample"
+        args.steps = args.sample
+
+    if args.validation:
+        args.headless = True
+        args.test = "baseline"
 
     if args.compareCalibrate:
         args.headless = True
@@ -794,8 +812,10 @@ def main():
                 sample_dict = {
                     'diameter': args.diameter,
                     'angle': args.angle,
-                    'nose': 0.191,
+                    'nose_radius': args.nose,
                     'toroids': args.toroids,
+                    'tradius': args.tradius,
+                    'oradius': args.oradius,
                     'mass': args.mass
                 }
                 
@@ -835,14 +855,21 @@ def main():
                     python_exec, os.path.join(cad_dir, "HIAD_GeometryEngine.py"),
                     "--diameter", str(sample_dict['diameter']),
                     "--angle", str(sample_dict['angle']),
-                    "--nose", str(sample_dict['nose']),
+                    "--nose", str(sample_dict['nose_radius']),
                     "--toroids", str(sample_dict['toroids']),
                     "--thickness", "0.0254",
                     "--nose_type", args.nose_type,
                     "--output", "HIAD_sample",
                     "--slice_angle", str(args.slice_angle)
                 ]
+                if sample_dict.get('tradius'):
+                    cmd_cad.extend(["--tradius", str(sample_dict['tradius'])])
+                if sample_dict.get('oradius'):
+                    cmd_cad.extend(["--oradius", str(sample_dict['oradius'])])
 
+                if args.imageDebug:
+                    cmd_cad.append("--imageDebug")
+                
                 if args.payload:
                     if args.defaultPayload:
                         cmd_cad.extend(["--defaultPayload"])

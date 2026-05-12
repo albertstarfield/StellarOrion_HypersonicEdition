@@ -158,6 +158,19 @@ function nextStep(step) {
 
     if (currentPage === 4) init3DView();
     if (currentPage === 6) updateSummary();
+    if (currentPage === 8) refreshFinalPlots();
+}
+
+function refreshFinalPlots() {
+    const timestamp = new Date().getTime();
+    const plotIds = ['img-3d-velocity', 'img-3d-mach', 'img-stag', 'img-knudsen', 'img-residence', 'img-scallop-temp'];
+    plotIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            const currentSrc = el.src.split('?')[0];
+            el.src = `${currentSrc}?t=${timestamp}`;
+        }
+    });
 }
 
 function appendLog(msg) {
@@ -180,6 +193,35 @@ function toggleMSIS() {
     const msisPanel = document.getElementById('msis-panel');
     if (msisPanel) msisPanel.style.display = (val === 'nrlmsis') ? 'block' : 'none';
     fetchAtmosphereData();
+}
+
+function applyLauncherPreset() {
+    const preset = document.getElementById('launcher-preset').value;
+    const dField = document.getElementById('fairing-diameter');
+    const hField = document.getElementById('fairing-height');
+    
+    const presets = {
+        'delta-iv': { d: 4.572, h: 16.485 },
+        'starship': { d: 8.0, h: 17.24 },
+        'new-glenn': { d: 6.35, h: 17.836 },
+        'atlas-v': { d: 4.57, h: 12.927 },
+        'ariane-5': { d: 5.4, h: 17.0 }
+    };
+    
+    if (presets[preset]) {
+        dField.value = presets[preset].d;
+        hField.value = presets[preset].h;
+        
+        // Visual feedback
+        [dField, hField].forEach(el => {
+            el.style.borderColor = 'var(--primary)';
+            el.style.boxShadow = '0 0 10px var(--primary-glow)';
+            setTimeout(() => {
+                el.style.borderColor = 'var(--glass-border)';
+                el.style.boxShadow = 'none';
+            }, 800);
+        });
+    }
 }
 
 async function toggleRemoteFields() {

@@ -120,6 +120,37 @@
                     </div>
                 </div>
 
+                <!-- Launcher Fairing Constraints (Table 3.2) -->
+                <div style="margin-top: 25px; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); padding: 20px; border-radius: 16px;">
+                    <h4 style="color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+                        <span style="background: var(--primary); color: white; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 0.7rem;">L</span>
+                        Launcher Fairing Constraints (Table 3.2)
+                    </h4>
+                    <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 15px;">Select a launch vehicle to automatically enforce volumetric packaging constraints on your HIAD design.</p>
+                    
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; align-items: end;">
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.7rem; color: var(--text-dim);">Launcher Fairing Preset</label>
+                            <select id="launcher-preset" onchange="applyLauncherPreset()" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; color: white; font-size: 0.85rem;">
+                                <option value="custom">-- Custom Envelope --</option>
+                                <option value="delta-iv">Delta IV [130]</option>
+                                <option value="starship">Starship [131]</option>
+                                <option value="new-glenn">New Glenn [132]</option>
+                                <option value="atlas-v">Atlas V [133]</option>
+                                <option value="ariane-5">Ariane 5 [134]</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.7rem; color: var(--text-dim);">Base Diameter (m)</label>
+                            <input type="number" id="fairing-diameter" value="5.0" step="0.001" style="padding: 8px; font-size: 0.85rem;">
+                        </div>
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.7rem; color: var(--text-dim);">Max Height (m)</label>
+                            <input type="number" id="fairing-height" value="15.0" step="0.001" style="padding: 8px; font-size: 0.85rem;">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Validation Tools Section -->
                 <div style="margin-top: 25px; background: rgba(147, 51, 234, 0.05); border: 1px solid rgba(147, 51, 234, 0.2); padding: 20px; border-radius: 16px;">
                     <h4 style="color: #a855f7; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
@@ -197,7 +228,7 @@
                                 <strong>Rapisarda Constraint:</strong> 1 to 12. (MiniPINS: 9, MetNet: 12).
                             </div>
                         </div>
-                        <input type="number" id="ref-toroids" value="7" min="1" max="12">
+                        <input type="number" id="ref-toroids" value="6" min="1" max="12">
                     </div>
                     <div class="input-group">
                         <div class="tooltip-container">
@@ -233,7 +264,7 @@
                                 Radius of the stagnation point (nose). Larger radii generally reduce peak stagnation heat flux.
                             </div>
                         </div>
-                        <input type="number" id="nose-radius" value="0.191" step="0.01">
+                        <input type="number" id="nose-radius" value="0.550" step="0.01">
                     </div>
                     <div class="input-group">
                         <div class="tooltip-container">
@@ -278,7 +309,7 @@
                 <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.05);">
                     <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--text-dim); font-size: 0.9rem;">
                         <div class="tooltip-container">
-                            <input type="checkbox" id="flat-skin" checked> 
+                            <input type="checkbox" id="flat-skin"> 
                             <label for="flat-skin">Flat Skin (Non-Scalloped Cone)</label>
                             <span class="info-icon">?</span>
                             <div class="tooltip-text right" style="left: auto; right: 0;">
@@ -1307,6 +1338,27 @@
                         <small>Stagnation Streamline Profile</small>
                         <img id="img-stag" src="assets/plots/stagnation_graph.png" style="width: 100%; border-radius: 8px;">
                     </div>
+                    <div class="plot-card" style="background: rgba(244, 63, 94, 0.05); border-color: rgba(244, 63, 94, 0.2);">
+                        <small style="color: #f43f5e;">Local Knudsen Number (Rarefaction)</small>
+                        <img id="img-knudsen" src="assets/plots/knudsen_map.png" style="width: 100%; border-radius: 8px;">
+                    </div>
+                    <div class="plot-card" style="background: rgba(168, 85, 247, 0.05); border-color: rgba(168, 85, 247, 0.2);">
+                        <small style="color: #a855f7;">Residence Time / Trapping Zones</small>
+                        <img id="img-residence" src="assets/plots/residence_time_map.png" style="width: 100%; border-radius: 8px;">
+                    </div>
+                    <div class="plot-card" style="background: rgba(6, 182, 212, 0.05); border-color: rgba(6, 182, 212, 0.2);">
+                        <small style="color: #06b6d4;">Scallop Pocket Thermal Probe</small>
+                        <img id="img-scallop-temp" src="assets/plots/scallop_pocket_temp.png" style="width: 100%; border-radius: 8px;">
+                    </div>
+                </div>
+
+                <h4 style="margin-top: 30px; color: var(--primary); font-family: var(--font-family); font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">Thermo-Chemical Diagnostics (Species)</h4>
+                <div class="plot-grid" id="species-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+                    <div class="plot-card"><small>N2 Concentration</small><img id="img-species-N2" src="assets/plots/species_N2_map.png" style="width: 100%; border-radius: 8px;"></div>
+                    <div class="plot-card"><small>O2 Concentration</small><img id="img-species-O2" src="assets/plots/species_O2_map.png" style="width: 100%; border-radius: 8px;"></div>
+                    <div class="plot-card"><small>NO Concentration</small><img id="img-species-NO" src="assets/plots/species_NO_map.png" style="width: 100%; border-radius: 8px;"></div>
+                    <div class="plot-card"><small>N Concentration</small><img id="img-species-N" src="assets/plots/species_N_map.png" style="width: 100%; border-radius: 8px;"></div>
+                    <div class="plot-card"><small>O Concentration</small><img id="img-species-O" src="assets/plots/species_O_map.png" style="width: 100%; border-radius: 8px;"></div>
                 </div>
                 
                 <div style="margin-top: 20px; text-align: center;">
