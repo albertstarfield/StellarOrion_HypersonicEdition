@@ -527,6 +527,8 @@ def main():
         help="Enable a payload model on the backside of the HIAD shield. Requires --payload-file or --defaultPayload.")
     sim.add_argument("--payload-file", type=str, default="CADDesign/HIAD_custom_full.step", help="Path to payload STEP file")
     sim.add_argument("--defaultPayload", action="store_true", default=False, help="Generate a default IRVE-3 cylindrical payload at the center back.")
+    sim.add_argument("--fnum", type=str, default="1e17",
+        help="Particle weighting factor (e.g. 1e17). Higher = fewer particles, faster run.")
     
     # Geometry Overrides (Ref: Rapisarda 2024 Table 5.4)
     geo = parser.add_argument_group("Geometry Overrides (Rapisarda Envelope)")
@@ -563,6 +565,8 @@ def main():
 
     # -- Output & Display ----------------------------------------------------──
     out = parser.add_argument_group("Output & Display")
+    out.add_argument("--flat_skin", action="store_true",
+        help="Generate a smooth cone instead of scalloped toroids.")
     out.add_argument("--imageDebug", action="store_true",
         help="Enable visual geometry debug plots during generation.")
     out.add_argument("--headless", action="store_true",
@@ -803,7 +807,7 @@ def main():
                     'env_temp_inf': 250.0,
                     'env_nrho': 1e22,
                     'env_run': args.steps,
-                    'env_fnum': '1e17', # Balanced fnum (~1M particles) to lower noise and maintain speed
+                    'env_fnum': args.fnum,
                     'grid_factor': args.grid_factor, # Mesh adjustment: >1.0 denser, <1.0 sparser
                     'headless': args.headless,
                     'paraview': args.paraview,
@@ -816,6 +820,7 @@ def main():
                     'toroids': args.toroids,
                     'tradius': args.tradius,
                     'oradius': args.oradius,
+                    'flat_skin': args.flat_skin,
                     'mass': args.mass
                 }
                 
@@ -862,6 +867,8 @@ def main():
                     "--output", "HIAD_sample",
                     "--slice_angle", str(args.slice_angle)
                 ]
+                if args.flat_skin:
+                    cmd_cad.append("--flat_skin")
                 if sample_dict.get('tradius'):
                     cmd_cad.extend(["--tradius", str(sample_dict['tradius'])])
                 if sample_dict.get('oradius'):
