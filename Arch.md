@@ -116,7 +116,7 @@ The geometry engine has been refactored to align with the **"MDAO of Inflatable 
 *   **Angle Definition:** The half-cone angle $\theta_c$ is measured from the **vertical axis of symmetry**. 
 *   **Blunt Body Tangency:** The spherical nose radius $r_N$ is calculated to ensure a perfectly tangent transition to the conical shell exactly at the payload radius $r_{pay}$ (MDAO Eq 3.4):
     $$r_N = \frac{r_{pay}}{\cos(\theta_c)}$$
-*   **Payload Positioning:** The payload is modeled as a cylindrical centerbody situated at the nose axis ($Z=0$), extending upward ($+Z$) into the concave aftbody/wake region of the HIAD shield. This perfectly matches the physical layout of the IRVE-3 baseline where inflatable rings wrap outward around the central payload.
+*   **Payload Positioning:** The payload is modeled as a square/rectangular centerbody situated at the nose axis ($Z=0$), extending upward ($+Z$) into the concave aftbody/wake region of the HIAD shield. This perfectly matches the physical layout of the IRVE-3 baseline where inflatable rings wrap outward around the central payload.
 *   **Toroid Packing:** Toroids are stacked along the cone slant with the first torus center offset by $r_t$ from the tangency point.
 
 ### 2. Validation Case: IRVE-3
