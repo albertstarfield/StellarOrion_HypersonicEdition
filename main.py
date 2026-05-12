@@ -389,7 +389,7 @@ def run_simulation(steps=None):
 
 
 def display_custom_help(parser):
-    """Displays help in a manpage-like pager if in a terminal, else prints to stdout."""
+    """Displays help in a colorful, non-interactive way directly to stdout."""
     help_text = parser.format_help()
     
     # ANSI color codes
@@ -398,41 +398,31 @@ def display_custom_help(parser):
     GREEN = "\033[32m"
     RESET = "\033[0m"
 
-    if sys.stdout.isatty():
-        # Enhanced "Manpage" styling
-        # Bold and uppercase major sections
-        sections = [
-            "usage:", "description:", "QUICK START EXAMPLES:", "NOTE:",
-            "Mode Flags", "Solver Selection", "Simulation Parameters", 
-            "Acceleration & Hardware", "Output & Display", "Remote PyFluent"
-        ]
-        for section in sections:
-            # Match case-insensitively but preserve original casing for the replacement or use upper
-            pattern = re.compile(re.escape(section), re.IGNORECASE)
-            help_text = pattern.sub(f"{BOLD}{section.upper()}{RESET}", help_text)
+    # Bold and uppercase major sections
+    sections = [
+        "usage:", "description:", "QUICK START EXAMPLES:", "NOTE:",
+        "Mode Flags", "Solver Selection", "Simulation Parameters", 
+        "Acceleration & Hardware", "Output & Display", "Remote PyFluent"
+    ]
+    for section in sections:
+        pattern = re.compile(re.escape(section), re.IGNORECASE)
+        help_text = pattern.sub(f"{BOLD}{section.upper()}{RESET}", help_text)
 
-        # Highlight arguments
-        help_text = re.sub(r'(--\w+[-\w]*)', f"{CYAN}\\1{RESET}", help_text)
-        help_text = re.sub(r'(-\w)\b', f"{CYAN}\\1{RESET}", help_text)
+    # Highlight arguments
+    help_text = re.sub(r'(--\w+[-\w]*)', f"{CYAN}\\1{RESET}", help_text)
+    help_text = re.sub(r'(-\w)\b', f"{CYAN}\\1{RESET}", help_text)
 
-        # Use less as a pager (manpage style)
-        try:
-            # -R for ANSI colors, -S to chop long lines, -X to keep content on screen after exit
-            env = os.environ.copy()
-            env["LESS"] = "-RX" 
-            process = subprocess.Popen(['less'], stdin=subprocess.PIPE, env=env, text=True)
-            process.communicate(input=help_text)
-        except Exception:
-            # Fallback to pydoc pager or simple print
-            pydoc.pager(help_text)
-    else:
-        # Standard output for non-terminal (e.g. piping to file)
-        print(help_text)
+    print("\n" + "="*80)
+    print(f"{'STELLARORION COMMAND LINE HELP':^80}")
+    print("="*80 + "\n")
+    print(help_text)
+    print("\n" + "="*80)
     sys.exit(0)
 
 
 def main():
     parser = argparse.ArgumentParser(
+        add_help=False, # We override this below
         description=(
             "StellarOrion HIAD Simulation Runner\n"
             "------------------------------------\n"
@@ -449,15 +439,13 @@ def main():
             "      PyAnsys requires Ansys software installed on the remote computer (for pyfluent)\n"
             "      or running on Windows (for local pyansys)."
         ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        add_help=False
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    # Add custom help flags
-    parser.add_argument("-h", "--help", action="store_true", help="Show this help message and exit.")
-
     # -- Mode Flags ------------------------------------------------------------
-    mode = parser.add_argument_group("Mode Flags (choose one)")
+    mode = parser.add_argument_group("Mode Flags")
+    mode.add_argument("-h", "--help", action="store_true",
+        help="Show this colorful help message and exit.")
     mode.add_argument("--optimize", action="store_true",
         help="Run the full survivability optimization loop. Iterates over geometry samples using LHS, runs simulations, and converges toward optimal Cd/heat flux using PINN refinement.")
     mode.add_argument("--test", type=str,
@@ -503,8 +491,8 @@ def main():
 
     # -- Simulation Parameters ------------------------------------------------─
     sim = parser.add_argument_group("Simulation Parameters")
-    sim.add_argument("--steps", type=int, default=1000,
-        help="Number of simulation timesteps. Default: 1000. (For SPARTA: particle advance steps. For dsmcFoam: time iterations.)")
+    sim.add_argument("--steps", type=int, default=500,
+        help="Number of simulation timesteps. Default: 500. (For SPARTA: particle advance steps. For dsmcFoam: time iterations.)")
     sim.add_argument("--stats-interval", type=int, default=100,
         help="Frequency of simulation statistics output (in steps). Default: 100.")
     sim.add_argument("--grid-factor", type=float, default=0.7,
@@ -527,8 +515,8 @@ def main():
         help="Enable a payload model on the backside of the HIAD shield. Requires --payload-file or --defaultPayload.")
     sim.add_argument("--payload-file", type=str, default="CADDesign/HIAD_custom_full.step", help="Path to payload STEP file")
     sim.add_argument("--defaultPayload", action="store_true", default=False, help="Generate a default IRVE-3 cylindrical payload at the center back.")
-    sim.add_argument("--fnum", type=str, default="1e17",
-        help="Particle weighting factor (e.g. 1e17). Higher = fewer particles, faster run.")
+    sim.add_argument("--fnum", type=str, default="5e18",
+        help="Particle weighting factor (e.g. 5e18). Higher = fewer particles, faster run.")
     
     # Geometry Overrides (Ref: Rapisarda 2024 Table 5.4)
     geo = parser.add_argument_group("Geometry Overrides (Rapisarda Envelope)")
@@ -604,6 +592,25 @@ def main():
         if not (0.5 <= diameter <= 15.0):
             print(f"[WARNING] Unrealistic Diameter: {diameter}m. HIAD scalability limit: 0.5m to 15m.")
 
+    # --- TPS Material Presets (Ref: Rapisarda 2024 Table B.17) ---
+    tps_presets = {
+        "sic":     {"density": 1468.0, "cp": 1100.0, "emissivity": 0.75},
+        "pyrogel": {"density": 180.0,  "cp": 1000.0, "emissivity": 0.80},
+        "kapton":  {"density": 1420.0, "cp": 1090.0, "emissivity": 0.77}
+    }
+    
+    # If a material is selected, and values are at their global defaults, update them
+    if args.tps_material in tps_presets:
+        preset = tps_presets[args.tps_material]
+        # Check if user provided overrides in sys.argv
+        provided_args = " ".join(sys.argv)
+        if "--tps-density" not in provided_args:
+            args.tps_density = preset["density"]
+        if "--tps-cp" not in provided_args:
+            args.tps_cp = preset["cp"]
+        if "--tps-emissivity" not in provided_args:
+            args.tps_emissivity = preset["emissivity"]
+
     if args.help:
         display_custom_help(parser)
 
@@ -633,26 +640,18 @@ def main():
             with open(ref_path, "r") as f:
                 ref_content = f.read()
             
-            if sys.stdout.isatty():
-                # Manpage style styling for references
-                BOLD = "\033[1m"
-                RESET = "\033[0m"
-                # Bold the citations like [0], [1]
-                ref_content = re.sub(r'(\[\d+\])', f"{BOLD}\\1{RESET}", ref_content)
-                
-                try:
-                    env = os.environ.copy()
-                    env["LESS"] = "-RX"
-                    process = subprocess.Popen(['less'], stdin=subprocess.PIPE, env=env, text=True)
-                    process.communicate(input=ref_content)
-                except Exception:
-                    pydoc.pager(ref_content)
-            else:
-                print(ref_content)
-        else:
-            print(f"[-] Error: REFERENCES.MD not found at {ref_path}")
-        return
-
+            BOLD = "\033[1m"
+            GREEN = "\033[32m"
+            RESET = "\033[0m"
+            # Bold the citations like [0], [1]
+            ref_content = re.sub(r'(\[\d+\])', f"{BOLD}{GREEN}\\1{RESET}", ref_content)
+            
+            print("\n" + "="*80)
+            print(f"{'STELLARORION LITERACY REFERENCES':^80}")
+            print("="*80 + "\n")
+            print(ref_content)
+            print("\n" + "="*80)
+            sys.exit(0)
     if args.gettheirvebbaseline:
         print("[*] Fetching IRVE-3 Baseline Parameter Results...")
         from StellarOrionEngineMach5Up import Api
@@ -730,8 +729,18 @@ def main():
                 print(f"[*] Message: {res.get('message', '')}")
             elif args.test == "baseline":
                 print("[*] Starting IRVE-3 Baseline Validation Simulation...")
-                res = api.run_baseline_validation(solver=args.solver, skip_diag=args.skip_diag, headless=args.headless, sparta_gpu=args.sparta_gpu)
-                print(f"[*] Validation Result: {str(res.get('status', 'unknown')).upper()}")
+                res = api.run_baseline_validation(
+                    solver=args.solver, 
+                    skip_diag=args.skip_diag, 
+                    headless=args.headless, 
+                    sparta_gpu=args.sparta_gpu,
+                    flat_skin=args.flat_skin,
+                    grid_factor=args.grid_factor,
+                    stats_interval=args.stats_interval
+                )
+                v_status = res.get('viability', '[UNKNOWN]')
+                v_color = "\033[32m" if res.get('is_viable') else "\033[31m"
+                print(f"[*] Validation Result: {str(res.get('status', 'unknown')).upper()} {v_color}{v_status}\033[0m")
                 
                 if isinstance(res, dict) and 'comparison' in res and isinstance(res['comparison'], dict):
                     print("\n[Comparison: Simulation vs IRVE-3 Documentation]")
@@ -979,7 +988,14 @@ def main():
                         }
                     }
                 
-                print(f"[*] Result: {res_ext}")
+                # Add viability status to sample results
+                f_metrics = api.calculate_flight_metrics(res_ext, opt_params, sample_dict)
+                res_ext['is_viable'] = f_metrics['is_viable']
+                res_ext['viability'] = "[VIABLE]" if f_metrics['is_viable'] else "[NON-VIABLE]"
+                
+                v_color = "\033[32m" if res_ext.get('is_viable') else "\033[31m"
+                print(f"[*] Result Status: {v_color}{res_ext['viability']}\033[0m")
+                print(f"[*] Raw Data: {res_ext}")
                 
                 if isinstance(res_ext, dict) and 'comparison' in res_ext and isinstance(res_ext['comparison'], dict):
                     print("\n[Comparison: Simulation vs IRVE-3 Documentation]")

@@ -305,8 +305,8 @@ function applyMaterialPreset() {
 
     const materials = {
         'sic': { rho: 1468.0, cp: 1100.0, eps: 0.75, maxT: 2073.0 },
-        'pyrogel': { rho: 110.0, cp: 1000.0, eps: 0.12, maxT: 1373.0 },
-        'kapton': { rho: 3100.0, cp: 1090.0, eps: 0.88, maxT: 773.0 }
+        'pyrogel': { rho: 110.0, cp: 1000.0, eps: 0.90, maxT: 1373.0 },
+        'kapton': { rho: 3100.0, cp: 1090.0, eps: 0.12, maxT: 773.0 }
     };
 
     const data = materials[preset];

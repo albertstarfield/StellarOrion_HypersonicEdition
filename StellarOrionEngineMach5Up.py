@@ -141,6 +141,13 @@ class HistoryManager:
                 return cursor.lastrowid
 
 class Api:
+    # --- TPS Material Specifications (MDAO Validation Ref - Table B.17) ---
+    TPS_SPECS = {
+        "SiC": {"emissivity": 0.75, "density": 1468.0, "max_temp_k": 2073.0},
+        "Pyrogel": {"emissivity": 0.90, "density": 110.0, "max_temp_k": 1373.0},
+        "Kapton": {"emissivity": 0.12, "density": 3100.0, "max_temp_k": 773.0}
+    }
+
     def __init__(self):
         self.window = None
         self.cwd = os.getcwd()
@@ -166,7 +173,10 @@ class Api:
                 "outer_toroid_radius_m": 0.0508,
                 "payload_height_m": 1.7,
                 "payload_radius_m": 0.275,
-                "mass_kg": 281.0
+                "mass_kg": 281.0,
+                "t_sic_m": 0.000506,
+                "t_pyrogel_m": 0.003047,
+                "t_kapton_m": 0.000025
             },
             "performance": {
                 "velocity_mach": 10.0,
@@ -502,6 +512,7 @@ class Api:
                                         if t > shock_temp: shock_temp = t
                                     except: pass
                 metrics['shock_temp'] = shock_temp
+                metrics['stagnation_temp'] = shock_temp # Use peak flow temp as stagnation proxy
                 return metrics
         except Exception as e:
             self.log_to_gui(f"    [!] Parser Exception: {e}")
@@ -544,16 +555,16 @@ class Api:
         duration = float(opt_params.get('env_duration', 450.0))  # s
         tps_thickness = float(sample_dict.get('thickness', 0.0254)) # m
         
-        # Material Specific Limits (Rapisarda 2024 Table B.17)
+        # Material Specific Limits (MDAO Validation Ref - Table B.17)
         mat = opt_params.get('tps_material', 'sic').lower()
-        if mat == 'sic':
-            tps_max_temp = 1870.0
-        elif mat == 'kapton':
-            tps_max_temp = 673.0
-        elif mat == 'pyrogel':
-            tps_max_temp = 923.0 # Internal limit
+        if 'sic' in mat:
+            tps_max_temp = self.TPS_SPECS["SiC"]["max_temp_k"]
+        elif 'kapton' in mat:
+            tps_max_temp = self.TPS_SPECS["Kapton"]["max_temp_k"]
+        elif 'pyrogel' in mat:
+            tps_max_temp = self.TPS_SPECS["Pyrogel"]["max_temp_k"]
         else:
-            tps_max_temp = float(opt_params.get('tps_max_temp', 1870.0)) 
+            tps_max_temp = float(opt_params.get('tps_max_temp', 2073.0)) 
         
         # F-TPS Properties (Flexible Thermal Protection System like LOFTID)
         rho_tps = float(opt_params.get('tps_density', 1468.0))  # kg/m^3 (Default: Nicalon SiC)
@@ -579,13 +590,18 @@ class Api:
         stag_press = q * 1.95 
         
         # --- Survivability Envelope Validation (Rapisarda 2024 Section 5.6) ---
-        survivable = True
+        is_sic_safe = t_surface < self.TPS_SPECS["SiC"]["max_temp_k"]
+        is_kapton_safe = t_backface < self.TPS_SPECS["Kapton"]["max_temp_k"]
+        is_viable = is_sic_safe and is_kapton_safe
+        
+        survivable = is_viable
         failures = []
         
         # 1. Thermal Limits
-        if t_surface > tps_max_temp:
-            survivable = False
-            failures.append(f"TPS Surface Melt: {t_surface:.0f}K > {tps_max_temp:.0f}K")
+        if not is_sic_safe:
+            failures.append(f"TPS Surface Melt (SiC): {t_surface:.0f}K > {self.TPS_SPECS['SiC']['max_temp_k']:.0f}K")
+        if not is_kapton_safe:
+            failures.append(f"Backface Integrity Failure (Kapton): {t_backface:.0f}K > {self.TPS_SPECS['Kapton']['max_temp_k']:.0f}K")
             
         if t_backface > 350.0: # Standard 350K bondline limit for electronics/payload
             survivable = False
@@ -755,7 +771,7 @@ O recombine simple {gamma} O2
 seed            12345
 dimension       2
 global          gridcut 0.0 comm/sort yes
-boundary        o ao p
+boundary        o ar p
 
 create_box      {xmin-0.001:.3f} {xmax+0.001:.3f} 0.000 {ymax+0.001:.3f} -0.5 0.5
 create_grid     {nx} {ny} 1
@@ -1256,7 +1272,8 @@ run             {steps}
             "--toroids", str(sample_dict.get('toroids', 6)),
             "--thickness", str(sample_dict.get('thickness', 0.0254)),
             "--nose_type", nose_type,
-            "--output", output_name
+            "--output", output_name,
+            "--fast"
         ]
         
         if default_payload:
@@ -2993,6 +3010,7 @@ run             {steps}
             'oradius': baseline_doc['geometry']['outer_toroid_radius_m'],
             'nose_type': nose_type
         }
+        sample_dict.update(kwargs) # Forward extra flags like flat_skin
         
         try:
             # 1. Setup Directories and Species
@@ -3113,11 +3131,18 @@ run             {steps}
                 }
             }
             
+            # --- Viability Check ---
+            base_f_metrics = self.calculate_flight_metrics(res_dict, opt_params, sample_dict)
+            is_viable = base_f_metrics['is_viable']
+            viability_str = "[VIABLE]" if is_viable else "[NON-VIABLE]"
+
             status = "success" if all(v['error_pct'] < 15 for v in comparison.values()) else "warning"
             
             return {
                 "status": status,
-                "message": "Baseline validation completed.",
+                "message": f"Baseline validation completed. System is {viability_str}.",
+                "viability": viability_str,
+                "is_viable": is_viable,
                 "comparison": comparison,
                 "ref_data": baseline_doc,
                 "stag_press": sim_cd * q_dyn, # Added for PINN calibration
