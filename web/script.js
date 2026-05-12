@@ -242,9 +242,15 @@ async function fetchAtmosphereData() {
 
 function togglePayloadInput() {
     const checkbox = document.getElementById('enable-payload');
-    const container = document.getElementById('payload-path-container');
+    const container = document.getElementById('payload-options-container');
+    const defaultCheckbox = document.getElementById('default-payload');
+    const fileContainer = document.getElementById('payload-path-container');
+    
     if (checkbox && container) {
         container.style.display = checkbox.checked ? 'block' : 'none';
+        if (checkbox.checked && defaultCheckbox && fileContainer) {
+            fileContainer.style.display = defaultCheckbox.checked ? 'none' : 'block';
+        }
     }
 }
 
@@ -286,6 +292,7 @@ function generateGeometry() {
         nose_type: getVal('nose-type'),
         flat_skin: getCheck('flat-skin'),
         payload: getCheck('enable-payload'),
+        default_payload: getCheck('default-payload'),
         payload_file: getVal('payload-file')
     };
     window.pywebview.api.generate_cad_preview(params);
@@ -375,6 +382,7 @@ function startOptimization() {
 
         // Payload
         payload: getCheck('enable-payload'),
+        default_payload: getCheck('default-payload'),
         payload_file: getVal('payload-file'),
 
         // Material Properties

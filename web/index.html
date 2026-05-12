@@ -335,12 +335,18 @@
                             </div>
                         </div>
                     </div>
-                    <div id="payload-path-container" style="display: none;">
-                        <div class="input-group" style="margin-bottom: 0;">
-                            <label style="font-size: 0.8rem;">Payload STEP File Path</label>
-                            <input type="text" id="payload-file" placeholder="e.g. CADDesign/payload.step" value="CADDesign/HIAD_MDAO_Test_v1.step">
+                    <div id="payload-options-container" style="display: none; margin-top: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--text-dim); font-size: 0.85rem; margin-bottom: 10px;">
+                            <input type="checkbox" id="default-payload" checked onchange="togglePayloadInput()"> 
+                            Use Default IRVE-3 Cylindrical Payload (Center Back)
+                        </label>
+                        <div id="payload-path-container" style="display: none;">
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.8rem;">Custom Payload STEP File Path</label>
+                                <input type="text" id="payload-file" placeholder="e.g. CADDesign/payload.step" value="CADDesign/HIAD_MDAO_Test_v1.step">
+                            </div>
+                            <p style="font-size: 0.7rem; color: var(--text-dim); margin-top: 5px;">(Payload will be positioned at R=0, Z=max on the shield backside)</p>
                         </div>
-                        <p style="font-size: 0.7rem; color: var(--text-dim); margin-top: 5px;">(Payload will be positioned at R=0, Z=max on the shield backside)</p>
                     </div>
                 </div>
             </div>

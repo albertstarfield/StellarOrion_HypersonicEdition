@@ -520,8 +520,9 @@ def main():
             "  mars       - Mars atmosphere: CO2, N2, CO, O (for future Mars EDL studies)"
         ))
     sim.add_argument("--payload", action="store_true", default=False,
-        help="Enable a payload model on the backside of the HIAD shield. Requires --payload-file.")
+        help="Enable a payload model on the backside of the HIAD shield. Requires --payload-file or --defaultPayload.")
     sim.add_argument("--payload-file", type=str, default="CADDesign/HIAD_custom_full.step", help="Path to payload STEP file")
+    sim.add_argument("--defaultPayload", action="store_true", default=False, help="Generate a default IRVE-3 cylindrical payload at the center back.")
     
     # Geometry Overrides (Ref: Rapisarda 2024 Table 5.4)
     geo = parser.add_argument_group("Geometry Overrides (Rapisarda Envelope)")
@@ -842,8 +843,11 @@ def main():
                     "--slice_angle", str(args.slice_angle)
                 ]
 
-                if args.payload and args.payload_file:
-                    cmd_cad.extend(["--payload_file", args.payload_file])
+                if args.payload:
+                    if args.defaultPayload:
+                        cmd_cad.extend(["--defaultPayload"])
+                    elif args.payload_file:
+                        cmd_cad.extend(["--payload_file", args.payload_file])
                 subprocess.run(cmd_cad, cwd=cad_dir, check=True)
 
                 if args.solver == 'openfoam':
@@ -987,6 +991,7 @@ def main():
                 'grid_factor': args.grid_factor,
                 'payload': args.payload,
                 'payload_file': args.payload_file,
+                'default_payload': args.defaultPayload,
                 'tps_material': args.tps_material,
                 'tps_density': args.tps_density,
                 'tps_cp': args.tps_cp,

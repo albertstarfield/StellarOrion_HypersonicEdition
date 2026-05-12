@@ -1232,7 +1232,7 @@ run             {steps}
             self.log_to_gui(f"[-] Local PyAnsys Error: {e}")
             return {'drag': 1.0, 'heat': 1.0}
 
-    def generate_hiad_geometry(self, sample_dict, nose_type="smooth", payload_file=None, output_name="HIAD_custom"):
+    def generate_hiad_geometry(self, sample_dict, nose_type="smooth", payload_file=None, default_payload=False, output_name="HIAD_custom"):
         """Helper to call HIAD_GeometryEngine.py with specific parameters."""
         cad_dir = os.path.join(self.cwd, "CADDesign")
         python_exec = self._get_python_exec()
@@ -1248,7 +1248,9 @@ run             {steps}
             "--output", output_name
         ]
         
-        if payload_file:
+        if default_payload:
+            cmd_cad.extend(["--defaultPayload"])
+        elif payload_file:
             cmd_cad.extend(["--payload_file", payload_file])
         
         if sample_dict.get('flat_skin'):
@@ -1263,8 +1265,14 @@ run             {steps}
         n_run = int(opt_params.get('env_run', '1000'))
         
         # 1. Regenerate Geometry for the specific configuration
-        self.log_to_gui(f"    [*] Regenerating Geometry: {nose_type} (Payload={opt_params.get('payload_file', 'None')})...")
-        self.generate_hiad_geometry(sample_dict, nose_type=nose_type, payload_file=opt_params.get('payload_file'), output_name=surf_name)
+        self.log_to_gui(f"    [*] Regenerating Geometry: {nose_type} (Payload={opt_params.get('payload_file', 'None')}, DefaultPayload={opt_params.get('default_payload', False)})...")
+        self.generate_hiad_geometry(
+            sample_dict, 
+            nose_type=nose_type, 
+            payload_file=opt_params.get('payload_file'), 
+            default_payload=opt_params.get('default_payload', False),
+            output_name=surf_name
+        )
 
         # 2. Setup results directory (Clean start)
         import shutil
@@ -2945,6 +2953,7 @@ run             {steps}
             'base_nose': baseline_doc['geometry']['nose_radius_m'],
             'base_toroids': baseline_doc['geometry']['toroids'],
             'base_thick': 0.0254,
+            'default_payload': True,
             'env_duration': 60.0,
             'env_run': 1000, # Default
             'env_fnum': '2e18',
