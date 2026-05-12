@@ -109,6 +109,35 @@ The ANI GA "flies" through the metamodel to find the global optimum configuratio
 
 ---
 
+## HIAD Geometry Engine (MDAO Alignment)
+The geometry engine has been refactored to align with the **"MDAO of Inflatable Stacked Toroids"** (Rapisarda, 2021) analytical framework. This ensures that the generated CAD models are mathematically consistent with flight-proven architectures (IRVE, LOFTID).
+
+### 1. Geometric Conventions
+*   **Angle Definition:** The half-cone angle $\theta_c$ is measured from the **vertical axis of symmetry**. 
+*   **Blunt Body Tangency:** The spherical nose radius $r_N$ is calculated to ensure a perfectly tangent transition to the conical shell exactly at the payload radius $r_{pay}$ (MDAO Eq 3.4):
+    $$r_N = \frac{r_{pay}}{\cos(\theta_c)}$$
+*   **Toroid Packing:** Toroids are stacked along the cone slant with the first torus center offset by $r_t$ from the tangency point.
+
+### 2. Validation Case: IRVE-3
+The engine was validated against the IRVE-3 flight vehicle parameters from the MDAO literature (Table 4.1):
+*   **Inputs:** $\theta_c = 60^\circ$, $N = 6$, $r_t = 0.135$m, $r_{sh} = 0.0508$m, $r_{pay} = 0.275$m.
+*   **Analytical Result (Eq 3.3):** Calculated Inflated Radius $r_{inflated} \approx 1.802$ m.
+*   **CAD Output:** Successfully generated a watertight surface of revolution matching the analytical profile.
+
+![IRVE-3 Validation Plot](ProgressReport/paperRef/MDAOValidationRef/pages/IRVE3_Validation_debug.png)
+*Figure: IRVE-3 Cross-section validation showing nose tangency and toroid packing alignment.*
+
+### 3. Integrated Components
+*   **Shoulder Torus ($N+1$):** Support for recent HIAD designs using a smaller-diameter outer torus to stabilize the aerodynamic skin.
+*   **Scalloped Aerodynamic Skin:** Spline-based skin generation that captures the unique "scalloped" topology of inflated toroids, critical for high-fidelity DSMC/CFD simulations.
+| `--angle` | `60.0` | Forebody half-cone angle [deg] |
+| `--nose` | `0.191` | Nose stagnation radius [m] |
+| `--toroids` | `7` | Number of inflatable structural rings |
+| `--thickness` | `0.0254` | F-TPS layer thickness [m] |
+| `--slice_angle`| `360.0` | Revolve angle for 3D/Axisymmetric |
+
+---
+
 ## 4. Component: Geometry Kernel (CAD)
 **Module:** `CADDesign/HIAD_GeometryEngine.py`  
 **Role:** Generates the parametric STL/SURF files for the physics solvers.
