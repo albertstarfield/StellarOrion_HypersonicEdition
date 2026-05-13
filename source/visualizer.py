@@ -189,18 +189,29 @@ def _overlay_geometry(ax, surf_file, ref_params=None):
             for alpha in np.linspace(-theta_c_rad - gamma, -theta_c_rad + gamma, 24):
                 skin_data.append((cr + rad * math.cos(alpha), cz + rad * math.sin(alpha)))
         
-        # 4.5 Back Closure and Payload Cylinder (NO DIAMOND)
-        r_pay = float(ref_params.get('payload_radius', 0.5)) * 1000.0 # Default 500mm
+        # 4.5 Back Closure and Payload Cylinder
+        payload_enabled = ref_params.get('payload', False)
         r_last, z_last = skin_data[-1]
         
-        # A. Connector to Payload Radius
-        skin_data.append((r_pay, z_last))
-        
-        # B. Payload Cylinder Wall
-        skin_data.append((r_pay, z_back))
-        
-        # C. Back Cap
-        skin_data.append((0.0, z_back))
+        if payload_enabled:
+            # Standard mode: Include payload cylinder
+            r_pay = float(ref_params.get('payload_radius', 0.5)) * 1000.0
+            skin_data.append((r_pay, z_last))
+            skin_data.append((r_pay, z_back))
+            skin_data.append((0.0, z_back))
+        else:
+            # Hollow Shell mode: Clean wrap back (Tight Skin)
+            thickness = 10.0 # mm
+            # Shoulder wrap
+            for alpha in np.linspace(0, math.pi, 15):
+                skin_data.append((r_last + thickness * math.sin(alpha), z_last + thickness * math.cos(alpha)))
+            # Parallel back skin
+            front_pts = skin_data[:len(skin_data)-15]
+            for r, z in reversed(front_pts):
+                skin_data.append((max(0.0, r), z - thickness))
+            # Close to axis
+            skin_data.append((0.0, -thickness))
+            z_back = -thickness
         
         # Convert to m for the simulation plot overlay
         skin_data_m = [(p[0]/1000.0, p[1]/1000.0) for p in skin_data]
@@ -252,13 +263,24 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     temp = data[:, 8]
     press = data[:, 9]
 
+    # --- Axisymmetric Mirroring for Visualization ---
+    # We duplicate the data with negative Y values to show the full cross-section
+    x_mirrored = np.concatenate([x_center, x_center])
+    y_mirrored = np.concatenate([y_center, -y_center])
+    temp_mirrored = np.concatenate([temp, temp])
+    press_mirrored = np.concatenate([press, press])
+    n_mirrored = np.concatenate([n, n])
+    u_mirrored = np.concatenate([u, u])
+    v_mirrored = np.concatenate([v, -v]) # Velocity Y component also flips
+    w_mirrored = np.concatenate([w, w])
+
     # Plot 1: Temperature Contour Heatmap
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 7))
     plt.gca().set_facecolor('#0f172a')
     # Use tricontourf for smooth "heatmap" appearance
-    sc = plt.tricontourf(x_center, y_center, np.nan_to_num(temp), levels=50, cmap='hot')
+    sc = plt.tricontourf(x_mirrored, y_mirrored, np.nan_to_num(temp_mirrored), levels=50, cmap='hot')
     plt.colorbar(sc, label='Temperature (K)')
-    plt.title('Thermal Map (Temperature)', color='white', fontweight='bold')
+    plt.title('Thermal Map (Temperature)', color='white', fontweight='800', fontsize=16)
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
@@ -271,11 +293,11 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.close()
 
     # Plot 2: Pressure Contour Heatmap
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 7))
     plt.gca().set_facecolor('#0f172a')
-    sc = plt.tricontourf(x_center, y_center, np.nan_to_num(press), levels=50, cmap='jet')
+    sc = plt.tricontourf(x_mirrored, y_mirrored, np.nan_to_num(press_mirrored), levels=50, cmap='jet')
     plt.colorbar(sc, label='Pressure (Pa)')
-    plt.title('Pressure Distribution', color='white', fontweight='bold')
+    plt.title('Pressure Distribution', color='white', fontweight='800', fontsize=16)
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
@@ -288,14 +310,14 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.close()
 
     # Plot 3: Velocity Vectors (Quiver)
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 7))
     plt.gca().set_facecolor('#0f172a')
     # Downsample for clearer vectors
-    step = max(1, len(x_center) // 400)
-    plt.quiver(x_center[::step], y_center[::step], u[::step], v[::step], 
-               np.sqrt(u[::step]**2 + v[::step]**2), cmap='viridis')
+    step = max(1, len(x_mirrored) // 800)
+    plt.quiver(x_mirrored[::step], y_mirrored[::step], u_mirrored[::step], v_mirrored[::step], 
+               np.sqrt(u_mirrored[::step]**2 + v_mirrored[::step]**2), cmap='viridis')
     plt.colorbar(label='Velocity Magnitude (m/s)')
-    plt.title('Velocity Vectors', color='white', fontweight='bold')
+    plt.title('Velocity Vectors', color='white', fontweight='800', fontsize=16)
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
@@ -308,19 +330,24 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.close()
 
     # Plot 4: Mach Number Contour
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 7))
     plt.gca().set_facecolor('#0f172a')
-    vel = np.sqrt(u**2 + v**2 + w**2)
-    # Speed of sound a = sqrt(gamma * R * T)
+    vel_mirrored = np.sqrt(u_mirrored**2 + v_mirrored**2 + w_mirrored**2)
     gamma = 1.4
     R = 287.05
-    # Ensure temp is positive to avoid sqrt of negative or div by zero
-    safe_temp = np.maximum(temp, 1.0) 
-    sound_speed = np.sqrt(gamma * R * safe_temp)
-    mach = np.nan_to_num(vel / sound_speed, nan=0.0, posinf=0.0, neginf=0.0)
-    sc = plt.tricontourf(x_center, y_center, mach, levels=50, cmap='plasma')
+    safe_temp_mirrored = np.maximum(temp_mirrored, 1.0) 
+    sound_speed_mirrored = np.sqrt(gamma * R * safe_temp_mirrored)
+    mach_mirrored = np.nan_to_num(vel_mirrored / sound_speed_mirrored, nan=0.0, posinf=0.0, neginf=0.0)
+    
+    sc = plt.tricontourf(x_mirrored, y_mirrored, mach_mirrored, levels=50, cmap='plasma')
     plt.colorbar(sc, label='Mach Number')
-    plt.title('Mach Number Distribution', color='white', fontweight='bold')
+    
+    # Overlay Sonic Line (Mach = 1)
+    try:
+        plt.tricontour(x_mirrored, y_mirrored, mach_mirrored, levels=[1.0], colors='white', linestyles='--', linewidths=1.5)
+    except: pass
+
+    plt.title('Mach Number Distribution', color='white', fontweight='800', fontsize=16)
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
@@ -332,13 +359,40 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
 
-    # Plot 5: Local Knudsen Number
-    generate_knudsen_plot(x_center, y_center, n, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
+    # Plot 5: Grid Visualization
+    plt.figure(figsize=(12, 7))
+    plt.gca().set_facecolor('#0f172a')
+    # Plot cell centers as dots or rectangles? 
+    # For SPARTA grid dump, we have cell bounds: xlo, ylo, xhi, yhi (data columns 0, 1, 2, 3)
+    # We mirror them.
+    plt.scatter(x_mirrored, y_mirrored, s=0.5, color='#38bdf8', alpha=0.3, label='Cell Centers')
+    
+    # Heuristic: plot a few cell boundaries
+    step = max(1, len(data) // 2000)
+    for i in range(0, len(data), step):
+        xlo, ylo, xhi, yhi = data[i, 0], data[i, 1], data[i, 2], data[i, 3]
+        # Top
+        plt.gca().add_patch(plt.Rectangle((xlo, ylo), xhi-xlo, yhi-ylo, fill=False, edgecolor='#38bdf8', linewidth=0.3, alpha=0.4))
+        # Bottom (Mirrored)
+        plt.gca().add_patch(plt.Rectangle((xlo, -yhi), xhi-xlo, yhi-ylo, fill=False, edgecolor='#38bdf8', linewidth=0.3, alpha=0.4))
+
+    plt.title('SPARTA Adaptive Mesh Grid', color='white', fontweight='800', fontsize=16)
+    plt.xlabel('Axial (m)', color='#94a3b8')
+    plt.ylabel('Radial (m)', color='#94a3b8')
+    plt.tick_params(colors='#94a3b8')
+    _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
+    plt.savefig(os.path.join(output_dir, f'grid_mesh_map{suffix}.png'), dpi=300)
+    plt.close()
+
+    # Plot 6: Local Knudsen Number
+    generate_knudsen_plot(x_mirrored, y_mirrored, n_mirrored, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
 
     # Plot 7: Species Concentrations (if available)
     if data.shape[1] > 10:
         species_data = data[:, 10:]
-        generate_species_plots(x_center, y_center, species_data, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
+        # Concatenate for mirroring
+        species_mirrored = np.concatenate([species_data, species_data], axis=0)
+        generate_species_plots(x_mirrored, y_mirrored, species_mirrored, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
 
     # Plot 8: Scallop Pocket Profile (Wall vs Pocket Temperature)
     generate_scallop_profile_plot(data, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
@@ -349,7 +403,7 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     print(f"Plots generated in {output_dir}")
 
 def generate_stagnation_graph(data, output_dir, suffix="", ref_params=None):
-    """Generates a 1D graph of properties along the stagnation streamline (y=0)."""
+    """Generates a 1D graph of properties along the stagnation streamline (y=0) and detects the bow shock."""
     # x_center, y_center calculations
     x_center = (data[:, 0] + data[:, 2]) / 2
     y_center = (data[:, 1] + data[:, 3]) / 2
@@ -357,13 +411,15 @@ def generate_stagnation_graph(data, output_dir, suffix="", ref_params=None):
     press = data[:, 9]
 
     # Filter for points near symmetry axis (y=0)
-    # Since it's a grid, we look for the smallest y values
+    if len(y_center) == 0: return
     min_y = np.min(np.abs(y_center))
-    mask = np.abs(y_center) < (min_y + 0.05) # Small tolerance
+    mask = np.abs(y_center) < (min_y + 0.05) 
     
     x_stag = x_center[mask]
     t_stag = temp[mask]
     p_stag = press[mask]
+
+    if len(x_stag) < 5: return
 
     # Sort by X
     idx = np.argsort(x_stag)
@@ -371,31 +427,67 @@ def generate_stagnation_graph(data, output_dir, suffix="", ref_params=None):
     t_stag = t_stag[idx]
     p_stag = p_stag[idx]
 
-    fig, ax1 = plt.subplots(figsize=(10, 6))
+    # Detect Shock Position: Max temperature gradient
+    dt_dx = np.abs(np.gradient(t_stag, x_stag))
+    shock_idx = np.argmax(dt_dx)
+    x_shock = x_stag[shock_idx]
+    t_shock = t_stag[shock_idx]
+
+    # Standoff Distance Calculation
+    # Find the body nose (where temperature starts rising rapidly or where we hit the wall)
+    # The nose is usually at the minimum x of the surface.
+    x_nose = 0.0 # Default
+    if ref_params and 'x_nose' in ref_params:
+        x_nose = float(ref_params['x_nose'])
+    else:
+        # Heuristic: Find where temperature peaks near the body
+        x_nose = np.min(x_stag[t_stag > np.max(t_stag)*0.8])
+
+    standoff = x_nose - x_shock
+    
+    fig, ax1 = plt.subplots(figsize=(12, 7))
     ax1.set_facecolor('#0f172a')
     fig.patch.set_facecolor('#0f172a')
 
-    color = '#f43f5e'
-    ax1.set_xlabel('Axial Position (m)', color='#94a3b8')
-    ax1.set_ylabel('Temperature (K)', color=color)
-    ax1.plot(x_stag, t_stag, color=color, linewidth=2.5, label='Temperature')
-    ax1.tick_params(axis='y', labelcolor=color, colors='#94a3b8')
+    color_t = '#f43f5e'
+    ax1.set_xlabel('Axial Position (m)', color='#94a3b8', fontsize=12)
+    ax1.set_ylabel('Temperature (K)', color=color_t, fontsize=12)
+    ax1.plot(x_stag, t_stag, color=color_t, linewidth=3, label='Temperature')
+    ax1.tick_params(axis='y', labelcolor=color_t, colors='#94a3b8')
     ax1.tick_params(axis='x', colors='#94a3b8')
 
     ax2 = ax1.twinx()
-    color = '#38bdf8'
-    ax2.set_ylabel('Pressure (Pa)', color=color)
-    ax2.plot(x_stag, p_stag, color=color, linewidth=2, linestyle='--', label='Pressure')
-    ax2.tick_params(axis='y', labelcolor=color, colors='#94a3b8')
+    color_p = '#38bdf8'
+    ax2.set_ylabel('Pressure (Pa)', color=color_p, fontsize=12)
+    ax2.plot(x_stag, p_stag, color=color_p, linewidth=2, linestyle='--', alpha=0.8, label='Pressure')
+    ax2.tick_params(axis='y', labelcolor=color_p, colors='#94a3b8')
 
-    plt.title('Stagnation Streamline Profile (y ≈ 0)', color='white', fontsize=14, fontweight='bold')
-    ax1.grid(True, alpha=0.1, color='white')
+    # Mark the Shock
+    ax1.axvline(x=x_shock, color='yellow', linestyle=':', linewidth=2, alpha=0.8)
+    ax1.annotate('BOW SHOCK', xy=(x_shock, t_shock), xytext=(x_shock - 0.2, t_shock + 2000),
+                arrowprops=dict(facecolor='yellow', shrink=0.05, width=1, headwidth=5),
+                color='yellow', fontsize=10, fontweight='bold', ha='center')
+
+    # Mark the Standoff Distance
+    if standoff > 0:
+        ax1.annotate('', xy=(x_shock, 500), xytext=(x_nose, 500),
+                    arrowprops=dict(arrowstyle='<->', color='#10b981', lw=1.5))
+        ax1.text((x_shock + x_nose)/2, 600, f'Standoff: {standoff*1000:.1f} mm', 
+                 color='#10b981', fontsize=9, ha='center', fontweight='bold')
+
+    plt.title('Hypersonic Bow Shock Profile (Stagnation Line)', color='white', fontsize=16, fontweight='800')
+    ax1.grid(True, alpha=0.1, color='white', linestyle='-')
     
+    # Legend
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines + lines2, labels + labels2, loc='upper right', facecolor='#1e293b', edgecolor='#334155', labelcolor='white')
+
     # Overlay Metadata
-    _add_metadata_overlay(ax1, ref_params, extra_info="1D Stagnation Profile")
+    _add_metadata_overlay(ax1, ref_params, extra_info="Shock Standoff Analysis")
     
     fig.tight_layout()
-    plt.savefig(os.path.join(output_dir, f'stagnation_graph{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
+    plt.savefig(os.path.join(output_dir, f'shock_stagnation_profile{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
     plt.close()
 
 def generate_knudsen_plot(x, y, n, output_dir, suffix="", ref_params=None, surf_file=None):
@@ -701,37 +793,18 @@ def generate_mesh_plot(grid_file, output_path, surf_file=None, ref_params=None):
     from matplotlib.collections import PolyCollection
     verts = []
     for i in indices:
-        # Create rectangle vertices
-        v = [
-            (xlo[i], ylo[i]),
-            (xhi[i], ylo[i]),
-            (xhi[i], yhi[i]),
-            (xlo[i], yhi[i])
-        ]
-        verts.append(v)
+        # Original (Upper)
+        verts.append([(xlo[i], ylo[i]), (xhi[i], ylo[i]), (xhi[i], yhi[i]), (xlo[i], yhi[i])])
+        # Mirrored (Lower)
+        verts.append([(xlo[i], -ylo[i]), (xhi[i], -ylo[i]), (xhi[i], -yhi[i]), (xlo[i], -yhi[i])])
         
-    coll = PolyCollection(verts, facecolors='none', edgecolors='#334155', linewidths=0.5, alpha=0.3)
+    coll = PolyCollection(verts, facecolors='none', edgecolors='#475569', linewidths=0.3, alpha=0.4)
     ax.add_collection(coll)
     
-    # Plot Geometry Wall
-    if surf_file and os.path.exists(surf_file):
-        points = []
-        with open(surf_file, 'r') as f:
-            mode = None
-            for line in f:
-                if "Points" in line: mode = "pts"; continue
-                if "Lines" in line: mode = "lines"; continue
-                parts = line.split()
-                if not parts or parts[0].isalpha(): continue
-                if mode == "pts" and len(parts) >= 3:
-                    points.append([float(parts[1]), float(parts[2])])
-        
-        if points:
-            pts = np.array(points)
-            plt.plot(pts[:, 0], pts[:, 1], color='#f43f5e', linewidth=2, label='HIAD Geometry')
-            plt.plot(pts[:, 0], -pts[:, 1], color='#f43f5e', linewidth=2) # Axisymmetric reflection
-            
-    plt.title('SPARTA DSMC - Computational Mesh Statistics', color='white', fontsize=16, fontweight='bold')
+    # Overlay Geometry Wall (Full axisymmetric mirroring handled inside)
+    _overlay_geometry(ax, surf_file, ref_params=ref_params)
+    
+    plt.title('SPARTA DSMC - Computational Mesh Grid', color='white', fontsize=16, fontweight='bold')
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
@@ -1240,7 +1313,7 @@ if __name__ == "__main__":
     parser.add_argument("--nose", type=float, default=0.55)
     
     args = parser.parse_args()
-    
+    print(f"DEBUG: args.grid={args.grid}")
     if args.grid and os.path.exists(args.grid):
         ref = {
             'diameter': args.diameter,

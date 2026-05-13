@@ -339,7 +339,10 @@ class Api:
                 'diameter': sample_dict.get('diameter', 3.0),
                 'angle': sample_dict.get('angle', 60.0),
                 'toroid_radius': sample_dict.get('toroid_radius', 0.135),
-                'species_list': species_list, # Use names from list
+                'nose_radius': sample_dict.get('nose_radius', 0.55),
+                'toroids': sample_dict.get('toroids', 7),
+                'payload': opt_params.get('payload', False),
+                'species_list': species_list,
                 'git_hash': self._get_git_hash()
             }
         except Exception:
