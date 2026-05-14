@@ -515,8 +515,8 @@ def main():
         help="Enable a payload model on the backside of the HIAD shield. Requires --payload-file or --defaultPayload.")
     sim.add_argument("--payload-file", type=str, default="CADDesign/HIAD_custom_full.step", help="Path to payload STEP file")
     sim.add_argument("--defaultPayload", action="store_true", default=False, help="Generate a default IRVE-3 cylindrical payload at the center back.")
-    sim.add_argument("--fnum", type=str, default="5e18",
-        help="Particle weighting factor (e.g. 5e18). Higher = fewer particles, faster run.")
+    sim.add_argument("--fnum", type=str, default="5e16",
+        help="Particle weighting factor (e.g. 5e16). Higher = fewer particles, faster run.")
     
     # Geometry Overrides (Ref: Rapisarda 2024 Table 5.4)
     geo = parser.add_argument_group("Geometry Overrides (Rapisarda Envelope)")

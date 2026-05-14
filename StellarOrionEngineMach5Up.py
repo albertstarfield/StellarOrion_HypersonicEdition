@@ -768,13 +768,13 @@ O recombine simple {gamma} O2
         steps = int(kwargs.get('steps', opt_params.get('env_run', 500)))
         stats_interval = int(opt_params.get('stats_interval', 100))
 
-        fnum = float(kwargs.get('env_fnum', opt_params.get('env_fnum', 1e17)))
+        fnum = float(kwargs.get('env_fnum', opt_params.get('env_fnum', 5e16)))
         
         script = f"""# SPARTA Input Script - StellarOrion Automated Comparison
 seed            12345
 dimension       2
 global          gridcut 0.0 comm/sort yes
-boundary        o ar p
+boundary        o ao p
 
 create_box      {xmin-0.001:.3f} {xmax+0.001:.3f} 0.000 {ymax+0.001:.3f} -0.5 0.5
 create_grid     {nx} {ny} 1
