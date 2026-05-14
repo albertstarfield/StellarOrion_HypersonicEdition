@@ -288,6 +288,17 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     print(f"    - Temp: {np.min(temp):.1f} to {np.max(temp):.1f} K")
     print(f"    - Pres: {np.min(press):.1e} to {np.max(press):.1e} Pa")
 
+    # --- Density Masking to prevent non-physical artifacts inside body/vacuum ---
+    # Threshold: 0.1% of max density in the domain
+    n_max = np.max(nrho)
+    density_mask = nrho < (n_max * 0.001) 
+    
+    # Apply masking (set to NaN to avoid "heat inside wall" interpolation bleeding)
+    temp[density_mask] = np.nan
+    press[density_mask] = np.nan
+    u[density_mask] = np.nan
+    v[density_mask] = np.nan
+
     # --- Axisymmetric Mirroring for Visualization ---
     eps = 1e-6
     mask_mirror = y_center > eps
@@ -296,19 +307,26 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     temp_mirrored = np.concatenate([temp, temp[mask_mirror]])
     press_mirrored = np.concatenate([press, press[mask_mirror]])
     n_mirrored = np.concatenate([n, n[mask_mirror]])
+    nrho_mirrored = np.concatenate([nrho, nrho[mask_mirror]])
     u_mirrored = np.concatenate([u, u[mask_mirror]])
     v_mirrored = np.concatenate([v, -v[mask_mirror]]) 
     w_mirrored = np.concatenate([w, w[mask_mirror]])
 
-    # Plot 1: Temperature Contour Heatmap
-    plt.figure(figsize=(12, 7))
-    plt.gca().set_facecolor('#0f172a')
-    sc = plt.tricontourf(x_mirrored, y_mirrored, temp_mirrored, levels=50, cmap='hot')
-    plt.colorbar(sc, label='Temperature (K)')
+    # Filter out NaNs for triangulation to prevent bleeding
+    valid_t = ~np.isnan(temp_mirrored)
+    if np.any(valid_t):
+        sc = plt.tricontourf(x_mirrored[valid_t], y_mirrored[valid_t], temp_mirrored[valid_t], levels=50, cmap='hot')
+        plt.colorbar(sc, label='Temperature (K)')
+    else:
+        print("Warning: No valid temperature data for contouring")
     plt.title('Thermal Map (Temperature)', color='white', fontweight='800', fontsize=16)
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
+    if ref_params:
+        # Show from inlet to near end of domain to capture shock layer
+        plt.xlim(float(ref_params.get('env_xmin', -0.6)), float(ref_params.get('env_xmax', 2.5)))
+
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Thermal Map")
     plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.png'), dpi=300)
@@ -318,12 +336,19 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     # Plot 2: Pressure Contour Heatmap
     plt.figure(figsize=(12, 7))
     plt.gca().set_facecolor('#0f172a')
-    sc = plt.tricontourf(x_mirrored, y_mirrored, press_mirrored, levels=50, cmap='jet')
-    plt.colorbar(sc, label='Pressure (Pa)')
+    valid_p = ~np.isnan(press_mirrored)
+    if np.any(valid_p):
+        sc = plt.tricontourf(x_mirrored[valid_p], y_mirrored[valid_p], press_mirrored[valid_p], levels=50, cmap='jet')
+        plt.colorbar(sc, label='Pressure (Pa)')
+    else:
+        print("Warning: No valid pressure data for contouring")
     plt.title('Pressure Distribution', color='white', fontweight='800', fontsize=16)
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
+    if ref_params:
+        plt.xlim(float(ref_params.get('env_xmin', -0.6)), float(ref_params.get('env_xmax', 2.5)))
+
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Pressure Map")
     plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.png'), dpi=300)
@@ -335,9 +360,15 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.gca().set_facecolor('#0f172a')
     step = max(1, len(x_mirrored) // 800)
     vel_mag_mirrored = np.sqrt(u_mirrored**2 + v_mirrored**2)
-    plt.quiver(x_mirrored[::step], y_mirrored[::step], u_mirrored[::step], v_mirrored[::step], 
-               vel_mag_mirrored[::step], cmap='viridis')
-    plt.colorbar(label='Velocity Magnitude (m/s)')
+    
+    valid_v = ~np.isnan(vel_mag_mirrored)
+    if np.any(valid_v):
+        q = plt.quiver(x_mirrored[valid_v][::step], y_mirrored[valid_v][::step], 
+                   u_mirrored[valid_v][::step], v_mirrored[valid_v][::step], 
+                   vel_mag_mirrored[valid_v][::step], cmap='viridis')
+        plt.colorbar(q, label='Velocity Magnitude (m/s)')
+    else:
+        print("Warning: No valid velocity data for quiver")
     plt.title('Velocity Vectors', color='white', fontweight='800', fontsize=16)
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
@@ -373,17 +404,34 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     
     # Cap Mach number for visualization clarity (avoids extreme outliers)
     m_inf = float(ref_params.get('mach', 10.0))
-    mach_mirrored = np.clip(mach_mirrored, 0, m_inf * 1.5)
     
-    sc = plt.tricontourf(x_mirrored, y_mirrored, mach_mirrored, levels=50, cmap='plasma')
-    plt.colorbar(sc, label='Mach Number')
-    try:
-        plt.tricontour(x_mirrored, y_mirrored, mach_mirrored, levels=[1.0], colors='white', linestyles='--', linewidths=1.5)
-    except: pass
+    # Mask low density regions in Mach map too (using mirrored nrho)
+    n_max_mirrored = np.nanmax(nrho_mirrored) if len(nrho_mirrored) > 0 else 1.0
+    density_mask_mirrored = nrho_mirrored < (n_max_mirrored * 0.01) # 1% threshold for Mach
+    mach_mirrored[density_mask_mirrored] = np.nan
+    
+    # NaN-safe clipping
+    m_inf = float(ref_params.get('mach', 10.0))
+    mach_mirrored = np.where(np.isnan(mach_mirrored), np.nan, np.clip(mach_mirrored, 0, m_inf * 1.5))
+    
+    valid_m = ~np.isnan(mach_mirrored)
+    if np.any(valid_m):
+        sc = plt.tricontourf(x_mirrored[valid_m], y_mirrored[valid_m], mach_mirrored[valid_m], levels=50, cmap='plasma')
+        plt.colorbar(sc, label='Mach Number')
+        try:
+            # Only plot sonic line if we have Mach > 1 and < 1
+            if np.nanmax(mach_mirrored) > 1.0 and np.nanmin(mach_mirrored) < 1.0:
+                plt.tricontour(x_mirrored[valid_m], y_mirrored[valid_m], mach_mirrored[valid_m], levels=[1.0], colors='white', linestyles='--', linewidths=1.5)
+        except: pass
+    else:
+        print("Warning: No valid Mach data for contouring")
     plt.title('Mach Number Distribution', color='white', fontweight='800', fontsize=16)
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
+    if ref_params:
+        plt.xlim(float(ref_params.get('env_xmin', -0.6)), float(ref_params.get('env_xmax', 2.5)))
+
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Mach Number")
     plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.png'), dpi=300)

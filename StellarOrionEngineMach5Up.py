@@ -857,7 +857,7 @@ collide         vss air air.vss
 react           tce air.react
 
 # Surface Definition
-read_surf       {surf_name}.surf group hiad_surf
+read_surf       {surf_name}.surf group hiad_surf invert
 create_particles air n 0
 balance_grid    rcb part
 surf_collide    1 diffuse {t_wall:.1f} 1.0
@@ -3160,7 +3160,7 @@ run             {steps}
                 os.makedirs(plots_dir, exist_ok=True)
                 
                 if grid_files:
-                    suffix = f"_{nose_type}"
+                    suffix = f"_{nose_type}_M{int(opt_params.get('env_mach', 0))}_A{int(sample_dict.get('altitude', 0))}"
                     ani_path = os.path.join(plots_dir, f"validation_anim{suffix}.mp4")
                     viz_metadata = self._get_viz_params(opt_params, sample_dict)
                     visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
