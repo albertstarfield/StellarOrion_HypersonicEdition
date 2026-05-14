@@ -326,13 +326,16 @@ class Api:
             gamma = 1.4
             R = 287.05
             sound_speed = np.sqrt(gamma * R * temp_inf)
-            mach = round(vstream / sound_speed, 2)
+            mach = opt_params.get('mach', round(vstream / sound_speed, 2))
+            alt = opt_params.get('alt', opt_params.get('altitude', 52.0))
+            
             # Get species list for plot labeling
             _, _, _, species_list, _ = self.get_chemistry_data(opt_params)
             
             return {
-                'v_inf': vstream,
+                'v_inf': round(vstream, 1),
                 'mach': mach,
+                'alt': alt,
                 'nrho': opt_params.get('env_nrho', 3.5e22),
                 'temp': temp_inf,
                 'grid_factor': opt_params.get('grid_factor', 0.7),
@@ -672,10 +675,10 @@ class Api:
             n_rho = np.sum(res[:9]) # Total number density
             temp = res[10] # Temperature at altitude
             
-            return 3.5e22, 270.0 # Default fallback (IRVE-3 Peak Heating @ 52km) - NASA/TP-2013-4012
+            return n_rho, temp 
         except Exception as e:
             self.log_to_gui(f"[-] NRLMSIS Error: {e}. Using fallback.")
-            return 3.5e22, 270.0 # Default fallback
+            return 3.5e22, 270.0 # Default fallback (IRVE-3 Peak Heating @ 52km)
 
     def get_atmosphere_data(self, params):
         """Returns calculated n_rho and temp for the UI."""
@@ -684,9 +687,38 @@ class Api:
             n_rho, temp = self.get_msis_atmosphere(params)
         elif preset == 'mars':
             n_rho, temp = 1.0e21, 150.0 # Mars baseline
+        elif 'alt' in params or 'altitude' in params:
+            # Fallback to standard earth if msis not requested but altitude provided
+            alt = float(params.get('alt', params.get('altitude', 52.0)))
+            # Simple ISA-like model or reuse MSIS with default lat/lon
+            n_rho, temp = self.get_msis_atmosphere({'msis_alt': alt})
         else:
             n_rho, temp = 3.5e22, 270.0 # Earth baseline (IRVE-3 NASA/TP-2013-4012)
         return {"nrho": n_rho, "temp": temp}
+
+    def get_environment_from_mach_alt(self, mach, alt):
+        """Calculates Vstream, Density, and Temp from Mach and Altitude."""
+        # 1. Get Atmospheric Data (Density, Temp)
+        atm = self.get_atmosphere_data({'env_preset': 'nrlmsis', 'msis_alt': alt})
+        n_rho = atm['nrho']
+        temp = atm['temp']
+        
+        # 2. Calculate Speed of Sound
+        gamma = 1.4
+        R = 287.05
+        a = np.sqrt(gamma * R * temp)
+        
+        # 3. Calculate Velocity
+        v_inf = mach * a
+        
+        return {
+            'vstream': v_inf,
+            'nrho': n_rho,
+            'temp_inf': temp,
+            'mach': mach,
+            'alt': alt,
+            'sound_speed': a
+        }
 
     def get_chemistry_data(self, opt_params):
         """Returns (species_file, react_file, vss_file, species_list, mixture_cmd) for the selected planet and mode."""
@@ -794,6 +826,7 @@ react           tce air.react
 # Surface Definition
 read_surf       {surf_name}.surf group hiad_surf
 create_particles air n 0
+balance_grid    rcb part
 surf_collide    1 diffuse {t_wall:.1f} 1.0
 # surf_react      1 prob air.surf_react
 surf_modify     all collide 1
@@ -1441,6 +1474,10 @@ run             {steps}
 
             if grid_files:
                 suffix = f"_{nose_type}"
+                if 'mach' in opt_params:
+                    suffix += f"_M{int(opt_params['mach'])}"
+                if 'alt' in opt_params:
+                    suffix += f"_A{int(opt_params['alt'])}"
                 ani_path = os.path.join(plots_dir, f"validation_anim{suffix}.mp4")
                 self.log_to_gui(f"    [+] Encoding Animation: {os.path.basename(ani_path)}...")
                 
@@ -2999,6 +3036,17 @@ run             {steps}
             'env_cores': min(4, os.cpu_count() or 4)
         }
         
+        # Add Mach/Alt if provided in kwargs
+        if 'mach' in kwargs or 'alt' in kwargs:
+            mach = kwargs.get('mach', 10.0)
+            alt = kwargs.get('alt', 52.0)
+            env = self.get_environment_from_mach_alt(mach, alt)
+            opt_params['env_vstream'] = env['vstream']
+            opt_params['env_nrho'] = env['nrho']
+            opt_params['env_temp_inf'] = env['temp_inf']
+            opt_params['mach'] = mach
+            opt_params['alt'] = alt
+        
         # Override with any passed kwargs (like steps)
         if 'steps' in kwargs:
             opt_params['env_run'] = kwargs['steps']
@@ -3030,15 +3078,17 @@ run             {steps}
                 f.write(self.generate_surf_react_script(opt_params))
 
             # Auto-check and build solver image if missing
-            # 0. Check for existing results first to allow offline post-processing
             cad_dir = os.path.join(self.cwd, "CADDesign")
             grid_dir = os.path.join(cad_dir, "results_reference")
-            steps_val = kwargs.get('steps', 1000)
-            existing_grid = os.path.join(grid_dir, f"grid.{steps_val}.out")
             
-            if os.path.exists(existing_grid):
-                self.log_to_gui(f"    [+] Simulation results for {steps_val} steps found. Proceeding to post-processing...")
-            elif solver == 'openfoam':
+            # Clean results_reference to ensure fresh run if parameters changed
+            if os.path.exists(grid_dir):
+                import shutil
+                self.log_to_gui(f"    [*] Cleaning results_reference for fresh validation...")
+                shutil.rmtree(grid_dir)
+            os.makedirs(grid_dir, exist_ok=True)
+            
+            if solver == 'openfoam':
                 self.log_to_gui("[*] Checking OpenFOAM Docker image readiness...")
                 res_readiness = self.test_openfoam_readiness()
                 if res_readiness.get('status') == 'error' or res_readiness.get('openfoam_missing'):
@@ -3055,18 +3105,7 @@ run             {steps}
 
 
             # 2. Run simulation
-            # 2. Run simulation or load results
-            if os.path.exists(existing_grid):
-                self.log_to_gui(f"    [*] Loading results from {existing_grid}...")
-                # Mock res_dict for skipped simulation
-                baseline_doc = self.get_irve_baseline_results_static()
-                res_dict = {
-                    'status': 'success',
-                    'drag': 67643.10, # Extracted from previous successful run log
-                    'heat': 14.36 * 10000.0, # Scaled back to raw
-                    'shock_temp': 3500.0
-                }
-            elif solver == 'openfoam':
+            if solver == 'openfoam':
                 res_dict = self.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_custom")
             elif solver == 'sparta':
                 res_dict, _ = self.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_custom", nose_type=nose_type)
@@ -3079,6 +3118,7 @@ run             {steps}
             
             # 3. Post-processing (Plots)
             self.log_to_gui("    [+] Generating Post-processing Plots...")
+            surf_name = "HIAD_custom"
             try:
                 from source import visualizer
                 grid_dir = os.path.join(cad_dir, "results_reference")
@@ -3100,20 +3140,17 @@ run             {steps}
             q_dyn = 0.5 * rho * (opt_params['env_vstream']**2)
             area_3d = 0.25 * 3.14159 * (sample_dict['diameter']**2)
             
-            sim_drag_force_raw = res_dict.get('drag', 0.0)
-            scale_2d_to_3d = (3.14159 * (sample_dict['diameter'] / 2.0)) / 2.0
-            sim_drag_force = sim_drag_force_raw * scale_2d_to_3d
-            sim_cd = sim_drag_force_raw / (q_dyn * area_3d) if (q_dyn * area_3d) > 0 else 0.0
+            sim_drag_force = res_dict.get('drag', 0.0)
+            sim_cd = sim_drag_force / (q_dyn * area_3d) if (q_dyn * area_3d) > 0 else 0.0
             
-            accommodation = 0.035 
-            sim_heat = (res_dict.get('heat', 0.0) / 10000.0) * accommodation
+            # Heat Flux (W/m2 to W/cm2)
+            sim_heat = (res_dict.get('heat', 0.0) / 10000.0)
             
             self.log_to_gui("\n[VERBOSE] Baseline Calibration Physics (2D Baseline):")
             self.log_to_gui(f"    - Ambient Density (rho): {rho:.6e} kg/m3")
             self.log_to_gui(f"    - Dynamic Pressure (q): {q_dyn:.2f} Pa")
             self.log_to_gui(f"    - Reference Area (3D): {area_3d:.4f} m2")
-            self.log_to_gui(f"    - Raw 2D Drag Force:    {sim_drag_force_raw:.2f} N/m")
-            self.log_to_gui(f"    - Scaled 3D Drag:      {sim_drag_force:.2f} N")
+            self.log_to_gui(f"    - Raw 2D Drag Force:    {sim_drag_force:.2f} N")
             
             # 5. Compare
             doc_cd = baseline_doc['validation_targets']['reference_cd']
@@ -3135,9 +3172,18 @@ run             {steps}
             }
             
             # --- Viability Check ---
-            base_f_metrics = self.calculate_flight_metrics(res_dict, opt_params, sample_dict)
-            is_viable = base_f_metrics['is_viable']
+            # Pass modified res_dict for flight metrics to ensure realistic T/g
+            # Adjust res_dict for flight metrics to include accommodation
+            f_res_dict = res_dict.copy()
+            f_res_dict['drag'] = sim_drag_force
+            f_res_dict['heat'] = sim_heat * 10000.0 * 0.035 # Apply accommodation for thermal model
+            
+            base_f_metrics = self.calculate_flight_metrics(f_res_dict, opt_params, sample_dict)
+            is_viable = base_f_metrics['survivable']
             viability_str = "[VIABLE]" if is_viable else "[NON-VIABLE]"
+            
+            if not is_viable:
+                self.log_to_gui(f"    [!] Survivability Failures: {', '.join(base_f_metrics.get('failures', []))}")
 
             status = "success" if all(v['error_pct'] < 15 for v in comparison.values()) else "warning"
             

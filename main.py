@@ -537,6 +537,8 @@ def main():
     sim.add_argument("--thermal-lag", type=float, default=15.0, help="Thermal Lag Factor [%%]")
     sim.add_argument("--slice-angle", type=float, default=360.0,
         help="Angle to revolve the skin (degrees). Use 360 for full body, or smaller (e.g. 10.0) for thin-slice 3D domains. Default: 360.0.")
+    sim.add_argument("--mach", type=float, help="Flight Mach number (e.g. 10.0). If provided, overrides --vstream.")
+    sim.add_argument("--alt", "--altitude", type=float, help="Flight altitude in km (e.g. 52.0). If provided, overrides --nrho and --temp-inf.")
 
     # -- Acceleration & Hardware --------------------------------------------───
     hw = parser.add_argument_group("Acceleration & Hardware")
@@ -734,6 +736,9 @@ def main():
                     skip_diag=args.skip_diag, 
                     headless=args.headless, 
                     sparta_gpu=args.sparta_gpu,
+                    steps=args.steps,
+                    mach=args.mach,
+                    alt=args.alt,
                     flat_skin=args.flat_skin,
                     grid_factor=args.grid_factor,
                     stats_interval=args.stats_interval
@@ -822,6 +827,18 @@ def main():
                     'paraview': args.paraview,
                     'sparta_gpu': args.sparta_gpu
                 }
+                
+                if args.mach is not None or args.alt is not None:
+                    mach = args.mach if args.mach is not None else 10.0
+                    alt = args.alt if args.alt is not None else 52.0
+                    print(f"[*] Calculating environment for Mach {mach} at {alt}km altitude...")
+                    env = api.get_environment_from_mach_alt(mach, alt)
+                    opt_params['env_vstream'] = env['vstream']
+                    opt_params['env_nrho'] = env['nrho']
+                    opt_params['env_temp_inf'] = env['temp_inf']
+                    print(f"    [+] Velocity: {env['vstream']:.1f} m/s")
+                    print(f"    [+] Density:  {env['nrho']:.2e} particles/m3")
+                    print(f"    [+] Temperature: {env['temp_inf']:.1f} K")
                 sample_dict = {
                     'diameter': args.diameter,
                     'angle': args.angle,
