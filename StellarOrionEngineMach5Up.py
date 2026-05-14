@@ -322,9 +322,18 @@ class Api:
         try:
             vstream = float(opt_params.get('env_vstream', 2700.0))
             temp_inf = float(opt_params.get('env_temp_inf', 270.0))
-            # Speed of sound a = sqrt(gamma * R * T)
-            gamma = 1.4
-            R = 287.05
+            
+            preset = 'mars'
+            if self.window:
+                preset = self.window.evaluate_js("window.localStorage.getItem('env_preset')") or 'mars'
+            
+            if 'mars' in preset.lower():
+                gamma = 1.29
+                R = 188.9
+            else:
+                gamma = 1.4
+                R = 287.05
+
             sound_speed = np.sqrt(gamma * R * temp_inf)
             mach = opt_params.get('mach', round(vstream / sound_speed, 2))
             alt = opt_params.get('alt', opt_params.get('altitude', 52.0))
@@ -336,8 +345,10 @@ class Api:
                 'v_inf': round(vstream, 1),
                 'mach': mach,
                 'alt': alt,
-                'nrho': opt_params.get('env_nrho', 3.5e22),
-                'temp': temp_inf,
+                'n_rho': opt_params.get('env_nrho', 3.5e22),
+                't_inf': temp_inf,
+                'env_preset': preset,
+                'suffix': sample_dict.get('suffix', ""),
                 'grid_factor': opt_params.get('grid_factor', 0.7),
                 'diameter': sample_dict.get('diameter', 3.0),
                 'angle': sample_dict.get('angle', 60.0),
@@ -686,7 +697,14 @@ class Api:
         if preset == 'nrlmsis':
             n_rho, temp = self.get_msis_atmosphere(params)
         elif preset == 'mars':
-            n_rho, temp = 1.0e21, 150.0 # Mars baseline
+            # Simplified Mars Atmosphere Model (derived from MCD/Thesis)
+            alt_km = float(params.get('msis_alt', params.get('alt', 50.0)))
+            # T(K) ~ 150 - 1.2 * (alt_km - 50)
+            temp = max(100.0, 150.0 - 1.2 * (alt_km - 50.0))
+            # P(Pa) ~ 0.1 * exp(-(alt_km - 50)/8.0)
+            press = 0.1 * np.exp(-(alt_km - 50.0) / 8.0)
+            # n = P / (k*T)
+            n_rho = press / (1.38e-23 * temp)
         elif 'alt' in params or 'altitude' in params:
             # Fallback to standard earth if msis not requested but altitude provided
             alt = float(params.get('alt', params.get('altitude', 52.0)))
@@ -699,13 +717,28 @@ class Api:
     def get_environment_from_mach_alt(self, mach, alt):
         """Calculates Vstream, Density, and Temp from Mach and Altitude."""
         # 1. Get Atmospheric Data (Density, Temp)
-        atm = self.get_atmosphere_data({'env_preset': 'nrlmsis', 'msis_alt': alt})
+        preset = 'mars'
+        if self.window:
+            preset = self.window.evaluate_js("window.localStorage.getItem('env_preset')") or 'mars'
+            
+        atm = self.get_atmosphere_data({'env_preset': preset, 'msis_alt': alt})
         n_rho = atm['nrho']
         temp = atm['temp']
         
         # 2. Calculate Speed of Sound
-        gamma = 1.4
-        R = 287.05
+        # For Mars (CO2 dominated): gamma ~ 1.29, R ~ 188.9 J/kgK
+        # For Earth: gamma ~ 1.4, R ~ 287.05 J/kgK
+        preset = 'mars'
+        if self.window:
+            preset = self.window.evaluate_js("window.localStorage.getItem('env_preset')") or 'mars'
+            
+        if 'mars' in preset.lower():
+            gamma = 1.29
+            R = 188.9
+        else:
+            gamma = 1.4
+            R = 287.05
+            
         a = np.sqrt(gamma * R * temp)
         
         # 3. Calculate Velocity

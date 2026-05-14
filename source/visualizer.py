@@ -352,11 +352,28 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.figure(figsize=(12, 7))
     plt.gca().set_facecolor('#0f172a')
     vel_total_mirrored = np.sqrt(u_mirrored**2 + v_mirrored**2 + w_mirrored**2)
-    gamma = 1.4
-    R = 287.05
+    
+    # Use physics-based parameters from ref_params or fallback to Mars
+    preset = str(ref_params.get('env_preset', 'mars')).lower()
+    if 'mars' in preset:
+        gamma = 1.29
+        R = 188.9
+    else:
+        gamma = 1.4
+        R = 287.05
+        
     safe_temp_mirrored = np.maximum(temp_mirrored, 1.0) 
     sound_speed_mirrored = np.sqrt(gamma * R * safe_temp_mirrored)
     mach_mirrored = vel_total_mirrored / sound_speed_mirrored
+    
+    # Mask out non-physical high Mach numbers in vacuum/low-density regions
+    nrho_inf = float(ref_params.get('n_rho', 1e20))
+    nrho_mirrored = np.concatenate([nrho, nrho[mask_mirror]])
+    mach_mirrored[nrho_mirrored < 1e-4 * nrho_inf] = 0.0
+    
+    # Cap Mach number for visualization clarity (avoids extreme outliers)
+    m_inf = float(ref_params.get('mach', 10.0))
+    mach_mirrored = np.clip(mach_mirrored, 0, m_inf * 1.5)
     
     sc = plt.tricontourf(x_mirrored, y_mirrored, mach_mirrored, levels=50, cmap='plasma')
     plt.colorbar(sc, label='Mach Number')
