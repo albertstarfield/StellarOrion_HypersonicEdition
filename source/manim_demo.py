@@ -25,7 +25,7 @@ class DSMCVisualization(Scene):
     def add_overlay(self):
         self.overlay = VGroup(
             Text("StellarOrion Hypersonic EditioN", font_size=12, color=BLUE_B, weight=BOLD),
-            Text("Git Commit: ccbab3a", font_size=10, color=GRAY)
+            Text("Git Commit: 76a0c73", font_size=10, color=GRAY)
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.08).to_corner(UL).shift(DOWN*0.2 + RIGHT*0.2)
         self.play(FadeIn(self.overlay), run_time=2)
 

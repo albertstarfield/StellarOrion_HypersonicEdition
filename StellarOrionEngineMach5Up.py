@@ -1439,7 +1439,8 @@ run             {steps}
             "-e", "IN_DOCKER=1", 
             "-e", "PYTHONUNBUFFERED=1",
             "-e", "DOCKER_WORKDIR=/app",
-            "-e", f"SPARTA_GPU={1 if use_gpu else 0}"
+            "-e", f"SPARTA_GPU={1 if use_gpu else 0}",
+            "-e", f"OMP_NUM_THREADS={os.cpu_count() or 4}"
         ]
         if use_gpu:
             self.log_to_gui("    [!] Enabling CUDA acceleration (Kokkos) for SPARTA...")
@@ -1521,16 +1522,28 @@ run             {steps}
                     suffix += f"_M{int(opt_params['mach'])}"
                 if 'alt' in opt_params:
                     suffix += f"_A{int(opt_params['alt'])}"
-                ani_path = os.path.join(plots_dir, f"validation_anim{suffix}.mp4")
-                self.log_to_gui(f"    [+] Encoding Animation: {os.path.basename(ani_path)}...")
                 
                 # Construct metadata for overlays
                 viz_metadata = self._get_viz_params(opt_params, sample_dict)
                 
-                visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
+                # Generate standard plots
                 visualizer.generate_plots(grid_files[-1], plots_dir, suffix=suffix, ref_params=viz_metadata, surf_file=os.path.join(cad_dir, f"{surf_name}.surf"))
-                visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, f"upscaled_3d{suffix}.png"), 
-                                            surf_file=os.path.join(cad_dir, f"{surf_name}.surf"), prop='temp', ref_params=viz_metadata)
+                
+                # Generate animations and 3D upscaled plots for all 6 core properties
+                properties = ['temp', 'velocity', 'mach', 'pressure', 'knudsen', 'grid']
+                for prop in properties:
+                    prop_suffix = "" if prop == 'temp' else f"_{prop}"
+                    
+                    # 2D MP4 Video
+                    ani_path = os.path.join(plots_dir, f"validation_anim{prop_suffix}{suffix}.mp4")
+                    self.log_to_gui(f"    [+] Encoding {prop.upper()} Animation: {os.path.basename(ani_path)}...")
+                    visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata, prop=prop)
+                    
+                    # 3D plot
+                    upscale_path = os.path.join(plots_dir, f"upscaled_3d{prop_suffix}{suffix}.png")
+                    self.log_to_gui(f"    [+] Generating 3D {prop.upper()} Upscale: {os.path.basename(upscale_path)}...")
+                    visualizer.upscale_2d_to_3d(grid_files[-1], upscale_path, 
+                                                surf_file=os.path.join(cad_dir, f"{surf_name}.surf"), prop=prop, ref_params=viz_metadata)
                 
                 # New Mesh/Grid Plot for Visual Feedback
                 mesh_plot_path = os.path.join(plots_dir, f"mesh_statistics{suffix}.png")
@@ -1603,7 +1616,7 @@ run             {steps}
                     'sparta_gpu': sparta_gpu,
                     'env_vstream': 2700.0,
                     'env_nrho': 3.5e22,
-                    'env_cores': min(4, os.cpu_count() or 4),
+                    'env_cores': os.cpu_count() or 4,
                     'env_duration': 450.0
                 }
                 sample_dict = {
@@ -2488,25 +2501,28 @@ run             {steps}
             
             # Restore Missing Variables
             nose_type = opt_params.get('nose_type', 'smooth')
-            ani_path = os.path.join(plots_dir, f"validation_anim_{nose_type}.mp4")
             run_date = time.strftime("%Y-%m-%d")
             archive_dir = os.path.join(self.cwd, "results", run_date, f"baseline_{nose_type}")
             os.makedirs(archive_dir, exist_ok=True)
 
-            visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
-            
             self.log_to_gui("    [+] Generating Baseline Static Maps (JPEG/Graph)...")
             visualizer.generate_plots(grid_files[-1], plots_dir, ref_params=viz_metadata, surf_file=os.path.join(cad_dir, "HIAD_custom.surf"))
             
-            self.log_to_gui("    [+] Generating Convergence Graph (Residuals)...")
-            if 'log_lines' in locals():
-                visualizer.generate_convergence_plot(log_lines, plots_dir, ref_params=viz_metadata)
-                visualizer.generate_convergence_plot(log_lines, archive_dir, ref_params=viz_metadata) # Save to archive too
-            
-            self.log_to_gui("    [+] Upscaling Axisymmetric Results to 3D (Temp, Velocity, Mach)...")
-            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_temp.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='temp', ref_params=viz_metadata)
-            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_velocity.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='velocity', ref_params=viz_metadata)
-            visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(plots_dir, "upscaled_3d_mach.png"), surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop='mach', ref_params=viz_metadata)
+            # Generate animations and 3D upscaled plots for all 6 core properties
+            properties = ['temp', 'velocity', 'mach', 'pressure', 'knudsen', 'grid']
+            for prop in properties:
+                prop_suffix = "" if prop == 'temp' else f"_{prop}"
+                
+                # 2D MP4 Video
+                ani_path = os.path.join(plots_dir, f"validation_anim_{nose_type}{prop_suffix}.mp4")
+                self.log_to_gui(f"    [+] Encoding {prop.upper()} Animation: {os.path.basename(ani_path)}...")
+                visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata, prop=prop)
+                
+                # 3D plot
+                upscale_path = os.path.join(plots_dir, f"upscaled_3d{prop_suffix}.png")
+                self.log_to_gui(f"    [+] Generating 3D {prop.upper()} Upscale: {os.path.basename(upscale_path)}...")
+                visualizer.upscale_2d_to_3d(grid_files[-1], upscale_path, 
+                                            surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop=prop, ref_params=viz_metadata)
 
             if is_gui:
                 # Update UI with baseline results early
@@ -2991,8 +3007,8 @@ run             {steps}
             'default_payload': True,
             'env_duration': 60.0,
             'env_run': 1000, # Default
-            'env_fnum': '2e18',
-            'env_cores': min(4, os.cpu_count() or 4)
+            'env_fnum': '1.5e20',
+            'env_cores': os.cpu_count() or 4
         }
         
         # Add Mach/Alt if provided in kwargs and are not None
@@ -3026,7 +3042,7 @@ run             {steps}
             # 1. Setup Directories and Species
             cad_dir = os.path.join(self.cwd, "CADDesign")
             python_exec = self._get_python_exec()
-            n_cores = min(4, os.cpu_count() or 4)
+            n_cores = os.cpu_count() or 4
             
             species_src, react_src, vss_src, _, _ = self.get_chemistry_data(opt_params)
             self._safe_copy(species_src, os.path.join(cad_dir, "air.species"))
@@ -3087,10 +3103,43 @@ run             {steps}
                 
                 if grid_files:
                     suffix = f"_{nose_type}_M{int(opt_params.get('env_mach', 0))}_A{int(sample_dict.get('altitude', 0))}"
-                    ani_path = os.path.join(plots_dir, f"validation_anim{suffix}.mp4")
                     viz_metadata = self._get_viz_params(opt_params, sample_dict)
-                    visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
+                    
+                    # 2D Static Plots (Local Knudsen, Mach, Pressure, Thermal, Velocity, Grid)
+                    self.log_to_gui("    [+] Generating 2D Static Plots...")
                     visualizer.generate_plots(grid_files[-1], plots_dir, suffix=suffix, ref_params=viz_metadata, surf_file=os.path.join(cad_dir, f"{surf_name}.surf"))
+                    
+                    # Loop over each property requested by the user to generate 3D plots and 2D animations
+                    props_list = [
+                        ('knudsen', 'Knudsen'),
+                        ('mach', 'Mach'),
+                        ('pressure', 'Pressure'),
+                        ('temp', 'Thermal'),
+                        ('velocity', 'Velocity'),
+                        ('grid', 'Grid')
+                    ]
+                    
+                    for prop_key, prop_name in props_list:
+                        # 2D MP4 Video Mode
+                        p_ani_path = os.path.join(plots_dir, f"validation_anim_{prop_key}{suffix}.mp4")
+                        self.log_to_gui(f"    [+] Generating 2D Video Animation for {prop_name} ({prop_key})...")
+                        visualizer.generate_animation(grid_files, p_ani_path, ref_params=viz_metadata, prop=prop_key)
+                        
+                        # Copy/symlink the default temp animation for backward compatibility
+                        if prop_key == 'temp':
+                            default_ani_path = os.path.join(plots_dir, f"validation_anim{suffix}.mp4")
+                            try:
+                                import shutil
+                                if os.path.exists(default_ani_path):
+                                    os.remove(default_ani_path)
+                                shutil.copy2(p_ani_path, default_ani_path)
+                            except Exception as ce:
+                                self.log_to_gui(f"    [!] Warning: Failed to link default animation: {ce}")
+                        
+                        # 3D Upscaled Plot
+                        p_3d_path = os.path.join(plots_dir, f"upscaled_3d_{prop_key}{suffix}.png")
+                        self.log_to_gui(f"    [+] Generating 3D Plot for {prop_name} ({prop_key})...")
+                        visualizer.upscale_2d_to_3d(grid_files[-1], p_3d_path, surf_file=os.path.join(cad_dir, f"{surf_name}.surf"), prop=prop_key, ref_params=viz_metadata)
             except Exception as ve:
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed: {ve}")
 

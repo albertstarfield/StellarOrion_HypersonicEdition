@@ -347,6 +347,7 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
 
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Thermal Map")
+    plt.gca().set_aspect('equal', adjustable='box')
     plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
     plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.jpg'), facecolor=fig.get_facecolor(), edgecolor='none', pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
@@ -370,6 +371,7 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
 
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Pressure Map")
+    plt.gca().set_aspect('equal', adjustable='box')
     plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
     plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.jpg'), facecolor=fig.get_facecolor(), edgecolor='none', pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
@@ -394,6 +396,7 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.tick_params(colors='#94a3b8')
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Velocity Quiver")
+    plt.gca().set_aspect('equal', adjustable='box')
     plt.savefig(os.path.join(output_dir, f'velocity_vectors{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
     plt.savefig(os.path.join(output_dir, f'velocity_vectors{suffix}.jpg'), facecolor=fig.get_facecolor(), edgecolor='none', pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
@@ -452,6 +455,7 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
 
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Mach Number")
+    plt.gca().set_aspect('equal', adjustable='box')
     plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
     plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.jpg'), facecolor=fig.get_facecolor(), edgecolor='none', pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
@@ -470,6 +474,7 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
+    plt.gca().set_aspect('equal', adjustable='box')
     plt.savefig(os.path.join(output_dir, f'grid_mesh_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
     plt.close()
 
@@ -528,7 +533,16 @@ def generate_stagnation_graph(data, output_dir, suffix="", ref_params=None):
     if ref_params and 'x_nose' in ref_params:
         x_nose = float(ref_params['x_nose'])
     else:
-        x_nose = np.min(x_stag[t_stag > np.max(t_stag)*0.8])
+        valid_t_mask = ~np.isnan(t_stag)
+        if np.any(valid_t_mask):
+            t_max = np.nanmax(t_stag)
+            eligible_x = x_stag[valid_t_mask & (t_stag > t_max * 0.8)]
+            if len(eligible_x) > 0:
+                x_nose = np.min(eligible_x)
+            else:
+                x_nose = 0.0
+        else:
+            x_nose = 0.0
 
     standoff = x_nose - x_shock
     
@@ -596,6 +610,7 @@ def generate_knudsen_plot(x, y, n, nrho, output_dir, suffix="", ref_params=None,
     plt.ylabel('Radial (m)', color='#94a3b8')
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Rarefaction Study")
+    plt.gca().set_aspect('equal', adjustable='box')
     plt.savefig(os.path.join(output_dir, f'knudsen_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
     plt.savefig(os.path.join(output_dir, f'knudsen_map{suffix}.jpg'), facecolor=fig.get_facecolor(), edgecolor='none', pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
@@ -618,6 +633,7 @@ def generate_residence_time_plot(x, y, u, v, output_dir, suffix="", ref_params=N
     plt.ylabel('Radial (m)', color='#94a3b8')
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Residence Time")
+    plt.gca().set_aspect('equal', adjustable='box')
     plt.savefig(os.path.join(output_dir, f'residence_time_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
     plt.close()
 
@@ -645,6 +661,7 @@ def generate_species_plots(x, y, species_nrho, nrho, output_dir, suffix="", ref_
         plt.ylabel('Radial (m)', color='#94a3b8')
         _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
         _add_metadata_overlay(plt.gca(), ref_params, extra_info=f"Chemistry: {species_names[i]}")
+        plt.gca().set_aspect('equal', adjustable='box')
         plt.savefig(os.path.join(output_dir, f'species_{species_names[i]}_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
         plt.close()
 
@@ -755,16 +772,53 @@ def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp', ref_pa
     x = x[valid]
     y = y[valid]
     data = data[valid]
+    nrho = nrho[valid]
+    
+    import matplotlib.colors as mcolors
+    norm = None
     
     if prop == 'velocity':
         u, v, w = data[:, 5], data[:, 6], data[:, 7]
-        vals = np.sqrt(u**2 + v**2 + w**2); label = "Velocity (m/s)"; cmap = 'viridis'
+        vals = np.sqrt(u**2 + v**2 + w**2)
+        label = "Velocity Magnitude (m/s)"
+        cmap = 'viridis'
     elif prop == 'mach':
         vel = np.sqrt(data[:, 5]**2 + data[:, 6]**2 + data[:, 7]**2)
-        sound = np.sqrt(1.4 * 287.05 * np.maximum(data[:, 8], 1.0))
-        vals = np.nan_to_num(vel / sound); label = "Mach Number"; cmap = 'plasma'
+        preset = str(ref_params.get('env_preset', 'mars')).lower() if ref_params else 'mars'
+        if 'mars' in preset:
+            gamma = 1.29
+            R = 188.9
+        else:
+            gamma = 1.4
+            R = 287.05
+        sound = np.sqrt(gamma * R * np.maximum(data[:, 8], 1.0))
+        vals = np.nan_to_num(vel / sound)
+        label = "Mach Number"
+        cmap = 'plasma'
+    elif prop == 'pressure':
+        # press = nrho * k * temp
+        temp_val = data[:, 8]
+        vals = nrho * 1.380649e-23 * temp_val
+        label = "Pressure (Pa)"
+        cmap = 'jet'
+    elif prop == 'knudsen':
+        n_val = data[:, 4]
+        d_mol = 3.7e-10 # m (Air)
+        n_safe = np.maximum(np.nan_to_num(n_val), 1.0)
+        mfp = 1.0 / (np.sqrt(2) * np.pi * (d_mol**2) * n_safe)
+        L = float(ref_params.get('nose_radius', 0.55)) if (ref_params and ref_params.get('nose_radius')) else 0.55
+        vals = mfp / L
+        label = "Local Knudsen Number (Kn)"
+        cmap = 'RdYlBu_r'
+        norm = mcolors.LogNorm(vmin=1e-5, vmax=10.0)
+    elif prop == 'grid':
+        vals = np.ones_like(x)
+        label = "Mesh Grid Centers"
+        cmap = None
     else:
-        vals = data[:, 8]; label = "Temperature (K)"; cmap = 'hot'
+        vals = data[:, 8]
+        label = "Temperature (K)"
+        cmap = 'hot'
         
     step = max(1, len(x) // 5000)
     x, y, vals = x[::step], y[::step], vals[::step]
@@ -777,40 +831,230 @@ def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp', ref_pa
     from mpl_toolkits.mplot3d import Axes3D
     ax = fig.add_subplot(111, projection='3d')
     ax.set_facecolor('#0f172a')
-    sc = ax.scatter(all_x, all_y, all_z, c=all_vals, cmap=cmap, s=1.5, alpha=0.08)
-    plt.title(f'3D Axisymmetric Upscaling: {label}', color='white')
+    
+    # Hide grid and panes for a cleaner premium look
+    ax.xaxis.pane.fill = False; ax.yaxis.pane.fill = False; ax.zaxis.pane.fill = False
+    ax.xaxis.pane.set_edgecolor('#1e293b'); ax.yaxis.pane.set_edgecolor('#1e293b'); ax.zaxis.pane.set_edgecolor('#1e293b')
+    ax.grid(color='#1e293b', linestyle='--', linewidth=0.3)
+    ax.tick_params(colors='#94a3b8')
+    
+    if cmap is None:
+        sc = ax.scatter(all_x, all_y, all_z, color='#38bdf8', s=1.5, alpha=0.08)
+    elif norm is not None:
+        sc = ax.scatter(all_x, all_y, all_z, c=all_vals, cmap=cmap, norm=norm, s=1.5, alpha=0.08)
+    else:
+        sc = ax.scatter(all_x, all_y, all_z, c=all_vals, cmap=cmap, s=1.5, alpha=0.08)
+        
+    if cmap is not None:
+        cbar = fig.colorbar(sc, ax=ax, label=label, pad=0.05, shrink=0.6)
+        cbar.ax.yaxis.label.set_color('white')
+        cbar.ax.tick_params(colors='#94a3b8')
+        
+    ax.set_xlabel('Axial X (m)', color='#94a3b8', labelpad=15)
+    ax.set_ylabel('Radial Y (m)', color='#94a3b8', labelpad=15)
+    ax.set_zlabel('Radial Z (m)', color='#94a3b8', labelpad=15)
+    ax.view_init(elev=20, azim=45)
+    
+    # Force box aspect ratio to prevent squashing/stretching of the physical geometry
+    x_min, x_max = np.min(all_x), np.max(all_x)
+    y_min, y_max = np.min(all_y), np.max(all_y)
+    z_min, z_max = np.min(all_z), np.max(all_z)
+    x_range = max(1e-3, x_max - x_min)
+    y_range = max(1e-3, y_max - y_min)
+    z_range = max(1e-3, z_max - z_min)
+    max_range = max(x_range, y_range, z_range)
+    ax.set_box_aspect((x_range / max_range, y_range / max_range, z_range / max_range))
+    
+    plt.title(f'3D Axisymmetric Upscaling: {label}', color='white', fontweight='bold', fontsize=18, pad=20)
     plt.savefig(output_path, facecolor=fig.get_facecolor(), edgecolor='none', dpi=300); plt.close()
 
-def generate_animation(grid_files, output_mp4, ref_params=None):
-    """Creates an MP4 animation."""
+def generate_animation(grid_files, output_mp4, ref_params=None, prop='temp'):
+    """Creates a beautiful 2D MP4 animation of a specified physical property with glassmorphic overlays."""
     import matplotlib.animation as animation
+    import matplotlib.colors as mcolors
     if not grid_files: return
-    global_max_temp = 300.0
+    
+    # 1. Retrieve Dynamic Git Commit
+    try:
+        git_commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], text=True).strip()
+    except Exception:
+        git_commit = "8c6b7ef"
+        
+    # 2. Pre-scan grid files to establish global normalization bounds
+    vals_list = []
     for f in grid_files:
         d = parse_grid_dump(f)
-        if len(d) > 0: global_max_temp = max(global_max_temp, np.nanmax(d[:, 8]))
-    global_max_temp = (int(global_max_temp // 500) + 1) * 500
-    fig, ax = plt.subplots(figsize=(10, 6), facecolor='#0f172a'); ax.set_facecolor('#0f172a')
+        if len(d) == 0: continue
+        xc, yc = (d[:, 0] + d[:, 2]) / 2, (d[:, 1] + d[:, 3]) / 2
+        nrho_val = d[:, 9]
+        n_max = np.max(nrho_val) if len(nrho_val) > 0 else 1.0
+        
+        if prop == 'velocity':
+            u, v, w = d[:, 5], d[:, 6], d[:, 7]
+            vals = np.sqrt(u**2 + v**2 + w**2)
+            vals[nrho_val < n_max * 0.001] = np.nan
+        elif prop == 'mach':
+            vel = np.sqrt(d[:, 5]**2 + d[:, 6]**2 + d[:, 7]**2)
+            preset = str(ref_params.get('env_preset', 'mars')).lower() if ref_params else 'mars'
+            if 'mars' in preset:
+                gamma = 1.29
+                R = 188.9
+            else:
+                gamma = 1.4
+                R = 287.05
+            sound = np.sqrt(gamma * R * np.maximum(d[:, 8], 1.0))
+            vals = np.nan_to_num(vel / sound)
+            vals[nrho_val < n_max * 0.001] = np.nan
+        elif prop == 'pressure':
+            temp_val = d[:, 8]
+            vals = nrho_val * 1.380649e-23 * temp_val
+            vals[nrho_val < n_max * 0.001] = np.nan
+        elif prop == 'knudsen':
+            n_val = d[:, 4]
+            d_mol = 3.7e-10
+            n_safe = np.maximum(np.nan_to_num(n_val), 1.0)
+            mfp = 1.0 / (np.sqrt(2) * np.pi * (d_mol**2) * n_safe)
+            L = float(ref_params.get('nose_radius', 0.55)) if (ref_params and ref_params.get('nose_radius')) else 0.55
+            vals = mfp / L
+            vals = np.clip(vals, 1e-5, 10.0)
+            vals[nrho_val < n_max * 0.001] = np.nan
+        elif prop == 'grid':
+            vals = np.ones_like(xc)
+        else: # temp
+            vals = d[:, 8].copy()
+            vals[nrho_val < n_max * 0.001] = np.nan
+            
+        valid_vals = vals[~np.isnan(vals)]
+        if len(valid_vals) > 0:
+            vals_list.append((np.nanmin(valid_vals), np.nanmax(valid_vals)))
+            
+    global_min = min(v[0] for v in vals_list) if vals_list else 0.0
+    global_max = max(v[1] for v in vals_list) if vals_list else 1.0
+    if prop == 'mach':
+        global_max = min(global_max, float(ref_params.get('mach', 10.0)) * 1.5 if ref_params else 15.0)
+        
+    # 3. Setup Plot Aesthetics
+    fig, ax = plt.subplots(figsize=(12, 7), facecolor='#0f172a'); ax.set_facecolor('#0f172a')
+    ax.tick_params(colors='#94a3b8')
+    ax.set_aspect('equal', adjustable='box')
+    
+    # Establish dynamic labels and styling
+    norm = None
+    if prop == 'velocity':
+        label = "Velocity Magnitude (m/s)"; cmap = 'viridis'
+    elif prop == 'mach':
+        label = "Mach Number"; cmap = 'plasma'
+    elif prop == 'pressure':
+        label = "Pressure (Pa)"; cmap = 'jet'
+    elif prop == 'knudsen':
+        label = "Local Knudsen Number (Kn)"; cmap = 'RdYlBu_r'
+        norm = mcolors.LogNorm(vmin=1e-5, vmax=10.0)
+    elif prop == 'grid':
+        label = "Mesh Grid Centers"; cmap = None
+    else:
+        label = "Temperature (K)"; cmap = 'hot'
+        
+    cbar = None
     
     def update(frame):
-        ax.clear(); d = parse_grid_dump(grid_files[frame])
-        if len(d) > 0:
-            xc, yc = (d[:, 0] + d[:, 2]) / 2, (d[:, 1] + d[:, 3]) / 2
+        nonlocal cbar
+        ax.clear()
+        ax.set_facecolor('#0f172a')
+        ax.set_aspect('equal', adjustable='box')
+        
+        # Load frame data
+        d = parse_grid_dump(grid_files[frame])
+        if len(d) == 0: return
+        
+        xc, yc = (d[:, 0] + d[:, 2]) / 2, (d[:, 1] + d[:, 3]) / 2
+        nrho_val = d[:, 9]
+        n_max = np.max(nrho_val) if len(nrho_val) > 0 else 1.0
+        
+        if prop == 'velocity':
+            u, v, w = d[:, 5], d[:, 6], d[:, 7]
+            vals = np.sqrt(u**2 + v**2 + w**2)
+            vals[nrho_val < n_max * 0.001] = np.nan
+        elif prop == 'mach':
+            vel = np.sqrt(d[:, 5]**2 + d[:, 6]**2 + d[:, 7]**2)
+            preset = str(ref_params.get('env_preset', 'mars')).lower() if ref_params else 'mars'
+            if 'mars' in preset:
+                gamma = 1.29
+                R = 188.9
+            else:
+                gamma = 1.4
+                R = 287.05
+            sound = np.sqrt(gamma * R * np.maximum(d[:, 8], 1.0))
+            vals = np.nan_to_num(vel / sound)
+            vals[nrho_val < n_max * 0.001] = np.nan
+        elif prop == 'pressure':
             temp_val = d[:, 8]
-            nrho_val = d[:, 9]
-            # Apply same density mask
-            temp_val[nrho_val < np.max(nrho_val) * 0.001] = np.nan
+            vals = nrho_val * 1.380649e-23 * temp_val
+            vals[nrho_val < n_max * 0.001] = np.nan
+        elif prop == 'knudsen':
+            n_val = d[:, 4]
+            d_mol = 3.7e-10
+            n_safe = np.maximum(np.nan_to_num(n_val), 1.0)
+            mfp = 1.0 / (np.sqrt(2) * np.pi * (d_mol**2) * n_safe)
+            L = float(ref_params.get('nose_radius', 0.55)) if (ref_params and ref_params.get('nose_radius')) else 0.55
+            vals = mfp / L
+            vals = np.clip(vals, 1e-5, 10.0)
+            vals[nrho_val < n_max * 0.001] = np.nan
+        elif prop == 'grid':
+            vals = np.ones_like(xc)
+        else: # temp
+            vals = d[:, 8].copy()
+            vals[nrho_val < n_max * 0.001] = np.nan
             
-            triang = _get_masked_triangulation(xc, yc, temp_val, nrho_val, np.max(nrho_val), 0.001)
+        # Symmetrical Mirroring
+        mask_mirror = (yc > 1e-9)
+        x_mirrored = np.concatenate([xc, xc[mask_mirror]])
+        y_mirrored = np.concatenate([yc, -yc[mask_mirror]])
+        vals_mirrored = np.concatenate([vals, vals[mask_mirror]])
+        nrho_mirrored = np.concatenate([nrho_val, nrho_val[mask_mirror]])
+        
+        # Plot Frame
+        if prop == 'grid':
+            sc = ax.scatter(x_mirrored, y_mirrored, s=0.5, color='#38bdf8', alpha=0.3)
+            # Add computational boxes
+            step = max(1, len(d) // 1000)
+            for i in range(0, len(d), step):
+                xlo, ylo, xhi, yhi = d[i, 0], d[i, 1], d[i, 2], d[i, 3]
+                ax.add_patch(plt.Rectangle((xlo, ylo), xhi-xlo, yhi-ylo, fill=False, edgecolor='#38bdf8', linewidth=0.3, alpha=0.4))
+                ax.add_patch(plt.Rectangle((xlo, -yhi), xhi-xlo, yhi-ylo, fill=False, edgecolor='#38bdf8', linewidth=0.3, alpha=0.4))
+        else:
+            triang = _get_masked_triangulation(x_mirrored, y_mirrored, vals_mirrored, nrho_mirrored, np.max(nrho_mirrored), 0.001)
             if triang.mask is None or not np.all(triang.mask):
-                cp = ax.tricontourf(triang, np.nan_to_num(temp_val, nan=0.0), levels=np.linspace(0, global_max_temp, 50), cmap='hot')
-            ax.set_title(f'Thermal Evolution - Step {frame*100}', color='white')
-            # Add premium glassmorphic project overlay on the left part
-            ax.text(0.03, 0.95, "StellarOrion Hypersonic EditioN\nGit Commit: ccbab3a",
-                    transform=ax.transAxes, color='#94a3b8', fontsize=9,
-                    weight='bold', verticalalignment='top',
-                    bbox=dict(facecolor='#0f172a', alpha=0.85, edgecolor='#1e293b', boxstyle='round,pad=0.5'))
+                if norm is not None:
+                    levels = np.logspace(-5, 1, 50)
+                    cp = ax.tricontourf(triang, np.nan_to_num(vals_mirrored, nan=1e-5), levels=levels, norm=norm, cmap=cmap)
+                else:
+                    levels = np.linspace(global_min, global_max, 50)
+                    cp = ax.tricontourf(triang, np.nan_to_num(vals_mirrored, nan=0.0), levels=levels, cmap=cmap)
+                    
+                if cbar is None and cmap is not None:
+                    cbar = fig.colorbar(cp, ax=ax, label=label)
+                    cbar.ax.yaxis.label.set_color('white')
+                    cbar.ax.tick_params(colors='#94a3b8')
+                    
+        ax.set_title(f'{label} Evolution - Step {frame*100}', color='white', fontweight='bold', fontsize=14)
+        ax.set_xlabel('Axial (m)', color='#94a3b8')
+        ax.set_ylabel('Radial (m)', color='#94a3b8')
+        ax.tick_params(colors='#94a3b8')
+        
+        # Expand X axis to match simulation bounding box
+        if ref_params:
+            ax.set_xlim(float(ref_params.get('env_xmin', -0.6)), float(ref_params.get('env_xmax', 2.5)))
             
+        # Draw vehicle surface boundary overlay
+        surf_file = os.path.join(os.path.dirname(grid_files[0]), "../HIAD_custom.surf")
+        _overlay_geometry(ax, surf_file, ref_params=ref_params)
+        
+        # Add glassmorphic project overlay on the left part
+        ax.text(0.03, 0.95, f"StellarOrion Hypersonic EditioN\nGit Commit: {git_commit}",
+                transform=ax.transAxes, color='#38bdf8', fontsize=10,
+                weight='bold', verticalalignment='top',
+                bbox=dict(facecolor='#0f172a', alpha=0.85, edgecolor='#1e293b', boxstyle='round,pad=0.5'))
+                
     ani = animation.FuncAnimation(fig, update, frames=len(grid_files), blit=False)
     plt.rcParams['animation.ffmpeg_path'] = find_ffmpeg()
     ani.save(output_mp4, writer='ffmpeg', dpi=300); plt.close()
