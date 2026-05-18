@@ -852,6 +852,8 @@ O recombine simple {gamma} O2
         
         steps = int(kwargs.get('steps', opt_params.get('env_run', 500)))
         stats_interval = int(opt_params.get('stats_interval', 100))
+        # Ensure stats/dump occurs on final step if run is short
+        stats_interval = min(stats_interval, steps)
 
         fnum = float(kwargs.get('env_fnum', opt_params.get('env_fnum', 5e16)))
         
@@ -877,7 +879,7 @@ collide         vss air air.vss
 react           tce air.react
 
 # Surface Definition
-read_surf       {surf_name}.surf group hiad_surf invert
+read_surf       {surf_name}.surf group hiad_surf
 create_particles air n 0
 balance_grid    rcb part
 surf_collide    1 diffuse {t_wall:.1f} 1.0
@@ -3089,10 +3091,10 @@ run             {steps}
             'env_cores': min(4, os.cpu_count() or 4)
         }
         
-        # Add Mach/Alt if provided in kwargs
-        if 'mach' in kwargs or 'alt' in kwargs:
-            mach = kwargs.get('mach', 10.0)
-            alt = kwargs.get('alt', 52.0)
+        # Add Mach/Alt if provided in kwargs and are not None
+        if kwargs.get('mach') is not None or kwargs.get('alt') is not None:
+            mach = kwargs.get('mach') if kwargs.get('mach') is not None else 10.0
+            alt = kwargs.get('alt') if kwargs.get('alt') is not None else 52.0
             env = self.get_environment_from_mach_alt(mach, alt)
             opt_params['env_vstream'] = env['vstream']
             opt_params['env_nrho'] = env['nrho']

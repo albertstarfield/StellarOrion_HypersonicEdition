@@ -88,18 +88,31 @@ class DSMCVisualization(Scene):
         smooth_cone2 = Line(smooth_nose.get_end(), smooth_nose.get_end() + [1.5, 0.866, 0], color=BLUE_D)
         smooth_shield = VGroup(smooth_nose, smooth_cone1, smooth_cone2)
         
-        # Scalloped geometry on the right (stacked toroids)
+        # Scalloped geometry on the right (stacked toroids) - showing inflation dynamics
         scalloped_nose = Arc(radius=1.0, start_angle=-PI/3, angle=2*PI/3, color=ORANGE).scale(0.8).shift(RIGHT*4 + DOWN*0.5)
-        # Create wavy stacked toroids along the cone slant using multiple small circles
-        toroids_group = VGroup()
+        
+        # Create uninflated (packed) toroids group
+        uninflated_toroids = VGroup()
+        for idx in range(4):
+            uninflated_toroids.add(Circle(radius=0.02, color=RED_E, fill_opacity=0.3).shift(RIGHT*4 + [0.4, 0.1*idx, 0]))
+            uninflated_toroids.add(Circle(radius=0.02, color=RED_E, fill_opacity=0.3).shift(RIGHT*4 + [0.4, -0.1*idx, 0]))
+            
+        inflation_lbl = Text("Inflation: P = 300 kPa", font_size=16, color=YELLOW).shift(RIGHT*4 + UP*1.2)
+        
+        self.play(Create(smooth_shield), Create(scalloped_nose), Create(uninflated_toroids), run_time=3)
+        self.play(Write(inflation_lbl), run_time=1.5)
+        
+        # Animate the toroids inflating (scaling up and moving to their final stacked positions)
+        inflated_toroids = VGroup()
         for idx in range(4):
             # top toroids
-            toroids_group.add(Circle(radius=0.18, color=RED_E, fill_opacity=0.3).shift(RIGHT*4 + [0.8 + idx*0.35, 0.5 + idx*0.2, 0]))
+            inflated_toroids.add(Circle(radius=0.18, color=RED_E, fill_opacity=0.3).shift(RIGHT*4 + [0.8 + idx*0.35, 0.5 + idx*0.2, 0]))
             # bottom toroids
-            toroids_group.add(Circle(radius=0.18, color=RED_E, fill_opacity=0.3).shift(RIGHT*4 + [0.8 + idx*0.35, -0.5 - idx*0.2, 0]))
-        scalloped_shield = VGroup(scalloped_nose, toroids_group)
-        
-        self.play(Create(smooth_shield), Create(scalloped_shield), run_time=3)
+            inflated_toroids.add(Circle(radius=0.18, color=RED_E, fill_opacity=0.3).shift(RIGHT*4 + [0.8 + idx*0.35, -0.5 - idx*0.2, 0]))
+            
+        self.play(Transform(uninflated_toroids, inflated_toroids), run_time=3)
+        scalloped_shield = VGroup(scalloped_nose, uninflated_toroids)
+        self.play(FadeOut(inflation_lbl), run_time=1)
         
         # Flow simulation on smooth shield
         smooth_particles = VGroup(*[Dot(radius=0.04, color=BLUE_A).move_to(LEFT*6.5 + [0, y, 0]) for y in np.linspace(-1.5, 1.5, 8)])
@@ -172,8 +185,19 @@ class DSMCVisualization(Scene):
             recirc_paths.append(p.animate.move_to([c[0] - 1.2, c[1]*0.5, 0]).set_color(DARK_BLUE))
         self.play(*recirc_paths, run_time=4)
         
-        # Add swirling rotation to show wake vortex
-        self.play(Rotate(wake_particles, angle=PI*1.5, about_point=RIGHT*0.2, run_time=5))
+        # Add swirling rotation with DDES scale-resolving turbulence fluctuations
+        turb_lbl = Text("DDES Scale-Resolving Unsteady Wake", font_size=18, color=YELLOW).to_edge(DOWN).shift(RIGHT*2.5 + UP*0.5)
+        self.play(Write(turb_lbl), run_time=1.5)
+        
+        # Apply a semi-random chaotic deviation to each particle while rotating to simulate DDES turbulence
+        def make_turbulent(mobject):
+            for d in mobject:
+                d.shift(np.random.normal(0, 0.08, 3))
+        
+        wake_particles.add_updater(make_turbulent)
+        self.play(Rotate(wake_particles, angle=PI*1.5, about_point=RIGHT*0.2, run_time=6))
+        wake_particles.remove_updater(make_turbulent)
+        self.play(FadeOut(turb_lbl), run_time=1)
         
         wake_info = VGroup(
             Text("Low-Density Rarefied Wake Recirculation Zone (Kn > 0.05)", font_size=18, color=PURPLE),
@@ -243,29 +267,71 @@ class DSMCVisualization(Scene):
         self.play(FadeOut(boltzmann), FadeOut(desc), FadeOut(particles), FadeOut(section_title))
 
     def timestep_move(self):
-        section_title = Title("Timestep Loop: 1. Move and Reflect")
+        section_title = Title("Timestep Loop: 1. Move and Reflect (Knudsen Boundary)")
         self.add(section_title)
         
-        body = Line([-1, -3, 0], [-1, 3, 0], color=RED, stroke_width=5)
-        self.play(Create(body, run_time=3))
+        # Screen splitter
+        splitter = DashedLine([0, 2.5, 0], [0, -3, 0], color=GRAY)
+        self.play(Create(splitter), run_time=1.5)
         
-        particle = Dot(color=YELLOW).move_to([-4, 1, 0])
-        vel = Arrow(start=[-4, 1, 0], end=[-2, 0, 0], color=BLUE, buff=0)
+        # Labels for comparison
+        lbl_left = Text("Continuum: No-Slip (Kn -> 0)", font_size=18, color=BLUE_A).shift(LEFT*4 + UP*2)
+        lbl_right = Text("Rarefied: Slip-Flow (Kn > 0.01)", font_size=18, color=ORANGE).shift(RIGHT*4 + UP*2)
+        self.play(Write(lbl_left), Write(lbl_right), run_time=2)
         
-        self.play(FadeIn(particle), GrowArrow(vel))
+        # Left boundary (No-slip, Maxwellian diffuse reflection)
+        body_left = Line([-4, -2.5, 0], [0, -2.5, 0], color=RED, stroke_width=4)
+        p_left = Dot(color=YELLOW).move_to([-2, 1.5, 0])
+        vel_left = Arrow(start=[-2, 1.5, 0], end=[-2, -2.5, 0], color=BLUE, buff=0)
         
-        # Move to wall
-        self.play(particle.animate.move_to([-1, -0.5, 0]), vel.animate.put_start_and_end_on([-1, -0.5, 0], [1, -1.5, 0]), run_time=4)
+        # Right boundary (Slip-flow boundary & Temperature Jump)
+        body_right = Line([0, -2.5, 0], [4, -2.5, 0], color=RED, stroke_width=4)
+        p_right = Dot(color=YELLOW).move_to([2, 1.5, 0])
+        vel_right = Arrow(start=[2, 1.5, 0], end=[2.5, -2.5, 0], color=BLUE, buff=0)
         
-        # Reflection label
-        refl = Text("Diffuse Reflection (Maxwellian)", font_size=24, color=YELLOW).to_edge(DOWN)
-        self.play(Write(refl, run_time=3))
+        self.play(
+            Create(body_left), Create(body_right),
+            FadeIn(p_left), FadeIn(p_right),
+            GrowArrow(vel_left), GrowArrow(vel_right),
+            run_time=2
+        )
         
-        # Reflect
-        self.play(particle.animate.move_to([1, -1.5, 0]), vel.animate.set_color(ORANGE), run_time=4)
-        self.wait(5)
+        # 1. Particles move to wall
+        self.play(
+            p_left.animate.move_to([-2, -2.5, 0]),
+            p_right.animate.move_to([2.5, -2.5, 0]),
+            vel_left.animate.put_start_and_end_on([-2, -2.5, 0], [-2, -2.5, 0]),
+            vel_right.animate.put_start_and_end_on([2.5, -2.5, 0], [2.5, -2.5, 0]),
+            run_time=3
+        )
         
-        self.play(FadeOut(body), FadeOut(particle), FadeOut(vel), FadeOut(refl), FadeOut(section_title))
+        # Show specific reflection dynamics
+        desc_left = Text("No tangential velocity: u_slip = 0\nDiffuse Maxwellian reflection", font_size=12, color=BLUE_B).shift(LEFT*4 + DOWN*1.5)
+        desc_right = MathTex(r"u_{slip} = \frac{2-\sigma_v}{\sigma_v} \lambda \frac{\partial u}{\partial y} > 0 \quad \text{(Eq. 2.1)}\\\text{Temperature Jump (Higher } T_{reflected}\text{)}").scale(0.5).shift(RIGHT*4 + DOWN*1.5)
+        
+        self.play(Write(desc_left), Write(desc_right), run_time=3)
+        
+        # Recreate arrows for reflection
+        ref_vel_left = Arrow(start=[-2, -2.5, 0], end=[-1.5, 0, 0], color=ORANGE, buff=0)
+        ref_vel_right = Arrow(start=[2.5, -2.5, 0], end=[3.8, -1.0, 0], color=RED, buff=0)
+        
+        # 2. Reflect particles
+        self.play(
+            p_left.animate.move_to([-1.5, 0, 0]),
+            p_right.animate.move_to([3.8, -1.0, 0]),
+            GrowArrow(ref_vel_left),
+            GrowArrow(ref_vel_right),
+            run_time=3
+        )
+        self.wait(4)
+        
+        # Clean up
+        self.play(
+            FadeOut(splitter), FadeOut(lbl_left), FadeOut(lbl_right),
+            FadeOut(body_left), FadeOut(body_right), FadeOut(p_left), FadeOut(p_right),
+            FadeOut(vel_left), FadeOut(vel_right), FadeOut(ref_vel_left), FadeOut(ref_vel_right),
+            FadeOut(desc_left), FadeOut(desc_right), FadeOut(section_title)
+        )
 
     def timestep_migrate(self):
         section_title = Title("Timestep Loop: 2. Migrate (MPI Exchange)")
@@ -425,8 +491,45 @@ class DSMCVisualization(Scene):
         self.play(Transform(radio_wave, bounced_wave), run_time=2)
         self.wait(3)
         
-        # Clean up Part 3 & Section
-        self.play(FadeOut(n_ion), FadeOut(electron), FadeOut(sheath), FadeOut(blackout_lbl), FadeOut(radio_wave), FadeOut(ion_eq), FadeOut(desc_ion), FadeOut(section_title))
+        # Clean up Part 3
+        self.play(FadeOut(n_ion), FadeOut(electron), FadeOut(sheath), FadeOut(blackout_lbl), FadeOut(radio_wave), FadeOut(ion_eq), FadeOut(desc_ion))
+        
+        # --- Part 4: Vacuum Ultraviolet (VUV) Radiative Transport ---
+        desc_vuv = Text("4. Vacuum Ultraviolet (VUV) Radiative Aftbody Heating", font_size=24, color=BLUE_A).to_edge(UP).shift(DOWN*0.9)
+        self.play(Write(desc_vuv), run_time=2)
+        
+        # Hot shock layer atoms on the left
+        shock_atoms = VGroup(*[Dot(radius=0.15, color=RED).move_to([np.random.uniform(-4, -2), np.random.uniform(-1.5, 1.5), 0]) for _ in range(12)])
+        shock_atoms.add(*[Dot(radius=0.15, color=ORANGE).move_to([np.random.uniform(-4, -2), np.random.uniform(-1.5, 1.5), 0]) for _ in range(8)])
+        
+        # Backshell FTPS wall on the right
+        backshell_wall = Line([3, -2, 0], [3, 2, 0], color=GRAY, stroke_width=4)
+        backshell_lbl = Text("Aftbody Backshell FTPS", font_size=16, color=GRAY).next_to(backshell_wall, UP)
+        
+        self.play(FadeIn(shock_atoms), Create(backshell_wall), Write(backshell_lbl), run_time=2)
+        
+        # VUV radiation rays propagating to the right
+        vuv_rays = VGroup()
+        for satom in shock_atoms:
+            start_pt = satom.get_center()
+            vuv_rays.add(Line(start_pt, [3, start_pt[1] + np.random.uniform(-0.5, 0.5), 0], color=YELLOW, stroke_width=1, stroke_opacity=0.6))
+        
+        # Mathematical equation overlay
+        vuv_eq = MathTex(r"\dot{q}_{VUV} \propto \sum h\nu \quad \text{emitted by atomic } N \text{ and } O \quad \text{(Johnston, 2025)}").scale(0.8).to_edge(DOWN)
+        
+        self.play(Create(vuv_rays), Write(vuv_eq), run_time=3.5)
+        
+        # Backshell wall begins to glow red as it absorbs VUV radiation
+        glowing_backshell = Line([3, -1.8, 0], [3, 1.8, 0], color=RED, stroke_width=8)
+        self.play(FadeIn(glowing_backshell), run_time=1.5)
+        self.wait(4)
+        
+        # Clean up Part 4 & Section
+        self.play(
+            FadeOut(shock_atoms), FadeOut(backshell_wall), FadeOut(backshell_lbl),
+            FadeOut(vuv_rays), FadeOut(vuv_eq), FadeOut(glowing_backshell),
+            FadeOut(desc_vuv), FadeOut(section_title)
+        )
 
     def post_processing(self):
         section_title = Title("4. Post-Processing: Engineering Metrics")

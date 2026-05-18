@@ -250,6 +250,19 @@ def _overlay_geometry(ax, surf_file, ref_params=None):
 def clean_for_tri(v):
     return np.nan_to_num(v, nan=0.0, posinf=0.0, neginf=0.0)
 
+def _get_masked_triangulation(x, y, values, nrho=None, n_max=1.0, threshold_ratio=0.001):
+    import matplotlib.tri as tri
+    triang = tri.Triangulation(x, y)
+    
+    # Vertex is invalid if value is NaN or density is below threshold
+    invalid = np.isnan(values)
+    if nrho is not None and len(nrho) == len(x):
+        invalid |= (nrho < n_max * threshold_ratio)
+        
+    mask = np.any(invalid[triang.triangles], axis=1)
+    triang.set_mask(mask)
+    return triang
+
 def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=None):
     os.makedirs(output_dir, exist_ok=True)
     data = parse_grid_dump(grid_file)
@@ -312,10 +325,15 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     v_mirrored = np.concatenate([v, -v[mask_mirror]]) 
     w_mirrored = np.concatenate([w, w[mask_mirror]])
 
-    # Filter out NaNs for triangulation to prevent bleeding
-    valid_t = ~np.isnan(temp_mirrored)
-    if np.any(valid_t):
-        sc = plt.tricontourf(x_mirrored[valid_t], y_mirrored[valid_t], temp_mirrored[valid_t], levels=50, cmap='hot')
+    # Plot 1: Thermal Map (Temperature)
+    fig = plt.figure(figsize=(12, 7), facecolor='#0f172a')
+    ax = plt.gca(); ax.set_facecolor('#0f172a')
+    
+    n_max_mirrored = np.nanmax(nrho_mirrored) if len(nrho_mirrored) > 0 else 1.0
+    triang = _get_masked_triangulation(x_mirrored, y_mirrored, temp_mirrored, nrho_mirrored, n_max_mirrored, 0.001)
+    
+    if triang.mask is None or not np.all(triang.mask):
+        sc = plt.tricontourf(triang, np.nan_to_num(temp_mirrored, nan=0.0), levels=50, cmap='hot')
         plt.colorbar(sc, label='Temperature (K)')
     else:
         print("Warning: No valid temperature data for contouring")
@@ -329,16 +347,17 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
 
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Thermal Map")
-    plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.png'), dpi=300)
-    plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
+    plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
+    plt.savefig(os.path.join(output_dir, f'thermal_map{suffix}.jpg'), facecolor=fig.get_facecolor(), edgecolor='none', pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
 
     # Plot 2: Pressure Contour Heatmap
-    plt.figure(figsize=(12, 7))
-    plt.gca().set_facecolor('#0f172a')
-    valid_p = ~np.isnan(press_mirrored)
-    if np.any(valid_p):
-        sc = plt.tricontourf(x_mirrored[valid_p], y_mirrored[valid_p], press_mirrored[valid_p], levels=50, cmap='jet')
+    fig = plt.figure(figsize=(12, 7), facecolor='#0f172a')
+    ax = plt.gca(); ax.set_facecolor('#0f172a')
+    
+    triang = _get_masked_triangulation(x_mirrored, y_mirrored, press_mirrored, nrho_mirrored, n_max_mirrored, 0.001)
+    if triang.mask is None or not np.all(triang.mask):
+        sc = plt.tricontourf(triang, np.nan_to_num(press_mirrored, nan=0.0), levels=50, cmap='jet')
         plt.colorbar(sc, label='Pressure (Pa)')
     else:
         print("Warning: No valid pressure data for contouring")
@@ -351,13 +370,13 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
 
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Pressure Map")
-    plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.png'), dpi=300)
-    plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
+    plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
+    plt.savefig(os.path.join(output_dir, f'pressure_map{suffix}.jpg'), facecolor=fig.get_facecolor(), edgecolor='none', pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
 
     # Plot 3: Velocity Vectors (Quiver)
-    plt.figure(figsize=(12, 7))
-    plt.gca().set_facecolor('#0f172a')
+    fig = plt.figure(figsize=(12, 7), facecolor='#0f172a')
+    ax = plt.gca(); ax.set_facecolor('#0f172a')
     step = max(1, len(x_mirrored) // 800)
     vel_mag_mirrored = np.sqrt(u_mirrored**2 + v_mirrored**2)
     
@@ -375,13 +394,13 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.tick_params(colors='#94a3b8')
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Velocity Quiver")
-    plt.savefig(os.path.join(output_dir, f'velocity_vectors{suffix}.png'), dpi=300)
-    plt.savefig(os.path.join(output_dir, f'velocity_vectors{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
+    plt.savefig(os.path.join(output_dir, f'velocity_vectors{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
+    plt.savefig(os.path.join(output_dir, f'velocity_vectors{suffix}.jpg'), facecolor=fig.get_facecolor(), edgecolor='none', pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
 
     # Plot 4: Mach Number Contour
-    plt.figure(figsize=(12, 7))
-    plt.gca().set_facecolor('#0f172a')
+    fig = plt.figure(figsize=(12, 7), facecolor='#0f172a')
+    ax = plt.gca(); ax.set_facecolor('#0f172a')
     vel_total_mirrored = np.sqrt(u_mirrored**2 + v_mirrored**2 + w_mirrored**2)
     
     # Use physics-based parameters from ref_params or fallback to Mars
@@ -411,17 +430,16 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     mach_mirrored[density_mask_mirrored] = np.nan
     
     # NaN-safe clipping
-    m_inf = float(ref_params.get('mach', 10.0))
     mach_mirrored = np.where(np.isnan(mach_mirrored), np.nan, np.clip(mach_mirrored, 0, m_inf * 1.5))
     
-    valid_m = ~np.isnan(mach_mirrored)
-    if np.any(valid_m):
-        sc = plt.tricontourf(x_mirrored[valid_m], y_mirrored[valid_m], mach_mirrored[valid_m], levels=50, cmap='plasma')
+    triang = _get_masked_triangulation(x_mirrored, y_mirrored, mach_mirrored, nrho_mirrored, n_max_mirrored, 0.01)
+    if triang.mask is None or not np.all(triang.mask):
+        sc = plt.tricontourf(triang, np.nan_to_num(mach_mirrored, nan=0.0), levels=50, cmap='plasma')
         plt.colorbar(sc, label='Mach Number')
         try:
             # Only plot sonic line if we have Mach > 1 and < 1
             if np.nanmax(mach_mirrored) > 1.0 and np.nanmin(mach_mirrored) < 1.0:
-                plt.tricontour(x_mirrored[valid_m], y_mirrored[valid_m], mach_mirrored[valid_m], levels=[1.0], colors='white', linestyles='--', linewidths=1.5)
+                plt.tricontour(triang, np.nan_to_num(mach_mirrored, nan=0.0), levels=[1.0], colors='white', linestyles='--', linewidths=1.5)
         except: pass
     else:
         print("Warning: No valid Mach data for contouring")
@@ -434,12 +452,12 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
 
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Mach Number")
-    plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.png'), dpi=300)
-    plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
+    plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
+    plt.savefig(os.path.join(output_dir, f'mach_map{suffix}.jpg'), facecolor=fig.get_facecolor(), edgecolor='none', pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
 
     # Plot 5: Grid Visualization
-    plt.figure(figsize=(12, 7))
+    fig = plt.figure(figsize=(12, 7), facecolor='#0f172a')
     plt.gca().set_facecolor('#0f172a')
     plt.scatter(x_mirrored, y_mirrored, s=0.5, color='#38bdf8', alpha=0.3, label='Cell Centers')
     step = max(1, len(data) // 2000)
@@ -452,17 +470,17 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.ylabel('Radial (m)', color='#94a3b8')
     plt.tick_params(colors='#94a3b8')
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
-    plt.savefig(os.path.join(output_dir, f'grid_mesh_map{suffix}.png'), dpi=300)
+    plt.savefig(os.path.join(output_dir, f'grid_mesh_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
     plt.close()
 
     # Plot 6: Local Knudsen Number
-    generate_knudsen_plot(x_mirrored, y_mirrored, n_mirrored, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
+    generate_knudsen_plot(x_mirrored, y_mirrored, n_mirrored, nrho_mirrored, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
 
     # Plot 7: Species Concentrations
     if data.shape[1] > 10:
         species_data = data[:, 10:]
         species_mirrored = np.concatenate([species_data, species_data[mask_mirror]], axis=0)
-        generate_species_plots(x_mirrored, y_mirrored, species_mirrored, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
+        generate_species_plots(x_mirrored, y_mirrored, species_mirrored, nrho_mirrored, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
 
     # Plot 8: Scallop Pocket Profile
     generate_scallop_profile_plot(data, output_dir, suffix=suffix, ref_params=ref_params, surf_file=surf_file)
@@ -547,9 +565,9 @@ def generate_stagnation_graph(data, output_dir, suffix="", ref_params=None):
     plt.savefig(os.path.join(output_dir, f'shock_stagnation_profile{suffix}.png'), facecolor=fig.get_facecolor(), dpi=300)
     plt.close()
 
-def generate_knudsen_plot(x, y, n, output_dir, suffix="", ref_params=None, surf_file=None):
+def generate_knudsen_plot(x, y, n, nrho, output_dir, suffix="", ref_params=None, surf_file=None):
     """Plots the local Knudsen number map to show kinetic vs continuum dominance."""
-    plt.figure(figsize=(10, 6))
+    fig = plt.figure(figsize=(10, 6), facecolor='#0f172a')
     plt.gca().set_facecolor('#0f172a')
     d_mol = 3.7e-10 # m (Air)
     n_safe = np.maximum(np.nan_to_num(n), 1.0)
@@ -558,53 +576,76 @@ def generate_knudsen_plot(x, y, n, output_dir, suffix="", ref_params=None, surf_
     kn_local = mfp / L
     import matplotlib.colors as mcolors
     kn_plot = np.clip(kn_local, 1e-5, 10.0)
+    
+    # Mask low density / vacuum regions
+    n_max = np.nanmax(nrho) if len(nrho) > 0 else 1.0
+    kn_plot[nrho < n_max * 0.001] = np.nan
+    
+    triang = _get_masked_triangulation(x, y, kn_plot, nrho, n_max, 0.001)
+    
     levels = np.logspace(-5, 1, 50)
-    sc = plt.tricontourf(x, y, kn_plot, levels=levels, norm=mcolors.LogNorm(), cmap='RdYlBu_r')
-    plt.colorbar(sc, label='Local Knudsen Number (Kn)')
+    if triang.mask is None or not np.all(triang.mask):
+        sc = plt.tricontourf(triang, np.nan_to_num(kn_plot, nan=1e-5), levels=levels, norm=mcolors.LogNorm(), cmap='RdYlBu_r')
+        plt.colorbar(sc, label='Local Knudsen Number (Kn)')
+    else:
+        print("Warning: No valid Knudsen data for contouring")
     plt.title('Rarefaction Map (Knudsen)', color='white', fontweight='bold')
     plt.text(0.05, 0.05, "Red: Kinetic Dominance (Kn > 0.1)\nBlue: Continuum (Kn < 0.01)", 
              transform=plt.gca().transAxes, color='white', fontsize=8, alpha=0.6)
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
-    _add_metadata_overlay(plt.gca(), ref_params, extra_info="Rarefection Study")
-    plt.savefig(os.path.join(output_dir, f'knudsen_map{suffix}.png'), dpi=300)
-    plt.savefig(os.path.join(output_dir, f'knudsen_map{suffix}.jpg'), pil_kwargs={'quality': 85}, dpi=300)
+    _add_metadata_overlay(plt.gca(), ref_params, extra_info="Rarefaction Study")
+    plt.savefig(os.path.join(output_dir, f'knudsen_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
+    plt.savefig(os.path.join(output_dir, f'knudsen_map{suffix}.jpg'), facecolor=fig.get_facecolor(), edgecolor='none', pil_kwargs={'quality': 85}, dpi=300)
     plt.close()
 
 def generate_residence_time_plot(x, y, u, v, output_dir, suffix="", ref_params=None, surf_file=None):
     """Plots inverse velocity to identify flow stagnation and trapping zones."""
-    plt.figure(figsize=(10, 6))
+    fig = plt.figure(figsize=(10, 6), facecolor='#0f172a')
     plt.gca().set_facecolor('#0f172a')
     vel_mag = np.sqrt(u**2 + v**2)
     res_time = 1.0 / np.maximum(vel_mag, 10.0) 
-    sc = plt.tricontourf(x, y, res_time, levels=50, cmap='inferno')
-    plt.colorbar(sc, label='Residence Time Proxy (s/m)')
+    
+    triang = _get_masked_triangulation(x, y, res_time)
+    if triang.mask is None or not np.all(triang.mask):
+        sc = plt.tricontourf(triang, np.nan_to_num(res_time, nan=0.0), levels=50, cmap='inferno')
+        plt.colorbar(sc, label='Residence Time Proxy (s/m)')
+    else:
+        print("Warning: No valid residence time data for contouring")
     plt.title('Flow Stagnation / Trapping Zones', color='white', fontweight='bold')
     plt.xlabel('Axial (m)', color='#94a3b8')
     plt.ylabel('Radial (m)', color='#94a3b8')
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Residence Time")
-    plt.savefig(os.path.join(output_dir, f'residence_time_map{suffix}.png'), dpi=300)
+    plt.savefig(os.path.join(output_dir, f'residence_time_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
     plt.close()
 
-def generate_species_plots(x, y, species_nrho, output_dir, suffix="", ref_params=None, surf_file=None):
+def generate_species_plots(x, y, species_nrho, nrho, output_dir, suffix="", ref_params=None, surf_file=None):
     """Plots concentration contours for all simulated species."""
     n_species = species_nrho.shape[1]
     species_names = ref_params.get('species_list', [f"Species_{i}" for i in range(n_species)])
     n_total = np.maximum(np.sum(species_nrho, axis=1), 1.0)
+    n_max = np.nanmax(nrho) if len(nrho) > 0 else 1.0
     for i in range(min(n_species, 5)):
-        plt.figure(figsize=(10, 6))
+        fig = plt.figure(figsize=(10, 6), facecolor='#0f172a')
         plt.gca().set_facecolor('#0f172a')
         frac = species_nrho[:, i] / n_total
-        sc = plt.tricontourf(x, y, frac, levels=50, cmap='viridis')
-        plt.colorbar(sc, label=f'Mole Fraction (χ_{species_names[i]})')
+        
+        # Mask vacuum
+        frac[nrho < n_max * 0.001] = np.nan
+        triang = _get_masked_triangulation(x, y, frac, nrho, n_max, 0.001)
+        if triang.mask is None or not np.all(triang.mask):
+            sc = plt.tricontourf(triang, np.nan_to_num(frac, nan=0.0), levels=50, cmap='viridis')
+            plt.colorbar(sc, label=f'Mole Fraction (χ_{species_names[i]})')
+        else:
+            print(f"Warning: No valid species data for {species_names[i]}")
         plt.title(f'Species Distribution: {species_names[i]}', color='white', fontweight='bold')
         plt.xlabel('Axial (m)', color='#94a3b8')
         plt.ylabel('Radial (m)', color='#94a3b8')
         _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
         _add_metadata_overlay(plt.gca(), ref_params, extra_info=f"Chemistry: {species_names[i]}")
-        plt.savefig(os.path.join(output_dir, f'species_{species_names[i]}_map{suffix}.png'), dpi=300)
+        plt.savefig(os.path.join(output_dir, f'species_{species_names[i]}_map{suffix}.png'), facecolor=fig.get_facecolor(), edgecolor='none', dpi=300)
         plt.close()
 
 def generate_scallop_profile_plot(data, output_dir, suffix="", ref_params=None, surf_file=None):
@@ -700,7 +741,21 @@ def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp', ref_pa
     """Upscales 2D axisymmetric results to 3D."""
     data = parse_grid_dump(grid_file)
     if len(data) == 0: return
+    
+    valid_mask = np.all(np.isfinite(data[:, :10]), axis=1)
+    data = data[valid_mask]
+    if len(data) == 0: return
+    
     x = (data[:, 0] + data[:, 2]) / 2; y = (data[:, 1] + data[:, 3]) / 2
+    nrho = data[:, 9]
+    n_max = np.nanmax(nrho) if len(nrho) > 0 else 1.0
+    
+    # Filter out empty/vacuum regions to keep the 3D visualization clean
+    valid = nrho >= (n_max * 0.001)
+    x = x[valid]
+    y = y[valid]
+    data = data[valid]
+    
     if prop == 'velocity':
         u, v, w = data[:, 5], data[:, 6], data[:, 7]
         vals = np.sqrt(u**2 + v**2 + w**2); label = "Velocity (m/s)"; cmap = 'viridis'
@@ -710,6 +765,7 @@ def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp', ref_pa
         vals = np.nan_to_num(vel / sound); label = "Mach Number"; cmap = 'plasma'
     else:
         vals = data[:, 8]; label = "Temperature (K)"; cmap = 'hot'
+        
     step = max(1, len(x) // 5000)
     x, y, vals = x[::step], y[::step], vals[::step]
     thetas = np.linspace(0, 2*np.pi, 80)
@@ -723,7 +779,7 @@ def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp', ref_pa
     ax.set_facecolor('#0f172a')
     sc = ax.scatter(all_x, all_y, all_z, c=all_vals, cmap=cmap, s=1.5, alpha=0.08)
     plt.title(f'3D Axisymmetric Upscaling: {label}', color='white')
-    plt.savefig(output_path, dpi=300); plt.close()
+    plt.savefig(output_path, facecolor=fig.get_facecolor(), edgecolor='none', dpi=300); plt.close()
 
 def generate_animation(grid_files, output_mp4, ref_params=None):
     """Creates an MP4 animation."""
@@ -735,12 +791,26 @@ def generate_animation(grid_files, output_mp4, ref_params=None):
         if len(d) > 0: global_max_temp = max(global_max_temp, np.nanmax(d[:, 8]))
     global_max_temp = (int(global_max_temp // 500) + 1) * 500
     fig, ax = plt.subplots(figsize=(10, 6), facecolor='#0f172a'); ax.set_facecolor('#0f172a')
+    
     def update(frame):
         ax.clear(); d = parse_grid_dump(grid_files[frame])
         if len(d) > 0:
             xc, yc = (d[:, 0] + d[:, 2]) / 2, (d[:, 1] + d[:, 3]) / 2
-            cp = ax.tricontourf(xc, yc, clean_for_tri(d[:, 8]), levels=np.linspace(0, global_max_temp, 50), cmap='hot')
+            temp_val = d[:, 8]
+            nrho_val = d[:, 9]
+            # Apply same density mask
+            temp_val[nrho_val < np.max(nrho_val) * 0.001] = np.nan
+            
+            triang = _get_masked_triangulation(xc, yc, temp_val, nrho_val, np.max(nrho_val), 0.001)
+            if triang.mask is None or not np.all(triang.mask):
+                cp = ax.tricontourf(triang, np.nan_to_num(temp_val, nan=0.0), levels=np.linspace(0, global_max_temp, 50), cmap='hot')
             ax.set_title(f'Thermal Evolution - Step {frame*100}', color='white')
+            # Add premium glassmorphic project overlay on the left part
+            ax.text(0.03, 0.95, "StellarOrion Hypersonic EditioN\nGit Commit: ccbab3a",
+                    transform=ax.transAxes, color='#94a3b8', fontsize=9,
+                    weight='bold', verticalalignment='top',
+                    bbox=dict(facecolor='#0f172a', alpha=0.85, edgecolor='#1e293b', boxstyle='round,pad=0.5'))
+            
     ani = animation.FuncAnimation(fig, update, frames=len(grid_files), blit=False)
     plt.rcParams['animation.ffmpeg_path'] = find_ffmpeg()
     ani.save(output_mp4, writer='ffmpeg', dpi=300); plt.close()
