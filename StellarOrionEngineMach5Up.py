@@ -1453,34 +1453,22 @@ run             {steps}
         else:
             docker_cmd = ["spa", "-in", "in.hiad", "-pk", "kokkos", "newton", "on", "gpu", "1", "-sf", "kk"]
         
-        # --- Docker vs Host Fallback ---
+        # ALWAYS make this for sparta dsmc use docker, do not make this native
         use_docker = True
-        try:
-            res_readiness = self.test_sparta_readiness()
-            if res_readiness.get('sparta_missing'):
-                use_docker = False
-        except:
-            use_docker = False
+        res_readiness = self.test_sparta_readiness()
+        if res_readiness.get('status') == 'error':
+            raise RuntimeError(
+                f"Docker execution failed: {res_readiness.get('message')}. "
+                "Please make sure Docker Desktop/Colima is running and the 'sparta-hysp' image is loaded."
+            )
 
-        local_spa = os.path.join(self.cwd, "sparta", "build", "src", "spa_")
         log_data = []
         start_time = time.time()
         
-        if not use_docker and os.path.exists(local_spa):
-            self.log_to_gui("    [!] Docker image missing. Falling back to NATIVE host SPARTA build...")
-            # Use mpirun if available, else run single-threaded
-            try:
-                subprocess.run(["mpirun", "--version"], capture_output=True, check=True)
-                host_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), local_spa, "-in", "in.hiad"]
-            except:
-                host_cmd = [local_spa, "-in", "in.hiad"]
-            
-            sim_proc = subprocess.Popen(host_cmd, cwd=cad_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        else:
-            # Original Docker Logic
-            docker_create_cmd.extend(["sparta-hysp"] + docker_cmd)
-            subprocess.run(docker_create_cmd, check=True)
-            sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        # Original Docker Logic
+        docker_create_cmd.extend(["sparta-hysp"] + docker_cmd)
+        subprocess.run(docker_create_cmd, check=True)
+        sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         
         last_monitor_time = time.time()
         monitor_interval = 300 # 5 minutes as requested
@@ -2681,67 +2669,15 @@ run             {steps}
             elif solver_mode == 'pyansys':
                 res_dict = self.run_local_pyfluent_simulation(opt_params, sample_dict, show_gui=True)
             else:
-                self.log_to_gui(f"    [*] Cleaning stale containers...")
-                subprocess.run(["docker", "rm", "-f", "hiad-runner"], capture_output=True)
-                self.log_to_gui(f"    [*] Initializing Docker runner...")
-                use_gpu = opt_params.get('sparta_gpu')
-                if use_gpu is None:
-                    use_gpu = self.has_nvidia_gpu()
-                docker_create_cmd = [
-                    "docker", "create", "--name", "hiad-runner",
-                    "-v", f"{self.cwd}:/app", 
-                    "-e", "IN_DOCKER=1",
-                    "-e", "PYTHONUNBUFFERED=1",
-                    "-e", "DOCKER_WORKDIR=/app",
-                    "-e", f"SPARTA_GPU={1 if use_gpu else 0}"
-                ]
-
-                if use_gpu:
-                    self.log_to_gui("    [!] Enabling CUDA acceleration (Kokkos) for SPARTA...")
-                    docker_create_cmd.append("--gpus")
-                    docker_create_cmd.append("all")
-                
                 solver = opt_params.get('solver', 'sparta')
                 if solver == 'openfoam':
                     self.log_to_gui(f"    [*] Executing OpenFOAM solver (Sample {i+1})...")
                     res_dict = self.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_opt")
-                else:
-                    self.log_to_gui(f"    [*] Executing SPARTA solver natively (Sample {i+1})...")
-                    local_spa = os.path.join(self.cwd, "sparta", "build", "src", "spa_")
-                    try:
-                        import multiprocessing
-                        nproc = multiprocessing.cpu_count() // 2 or 1
-                        host_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), local_spa, "-in", "in.hiad"]
-                        subprocess.run(["mpirun", "--version"], capture_output=True, check=True)
-                    except:
-                        host_cmd = [local_spa, "-in", "in.hiad"]
-                    sim_proc = subprocess.Popen(host_cmd, cwd=cad_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                     log_lines = []
-                    
-                    last_cpu = ""
-                    for line in sim_proc.stdout:
-                        l = line.strip()
-                        if not l: continue
-                        log_lines.append(l)
-                        if "CPU time =" in l: 
-                            last_cpu = l
-                            continue
-                        if "Step" in l: 
-                            self.log_to_gui(f"        {l}")
-                            continue
-                            
-                        # Log progress every 100 steps
-                        parts = l.split()
-                        if parts and parts[0].isdigit():
-                            step = int(parts[0])
-                            if step % 100 == 0: self.log_to_gui(f"        {l}")
-                    
-                    if sim_proc.wait() != 0:
-                        self.log_to_gui(f"    [-] FATAL: SPARTA Solver Crash on Sample {i+1}!")
-                    else:
-                        if last_cpu: self.log_to_gui(f"        {last_cpu}")
-                    
-                    res_dict = self.parse_sparta_results()
+                else:
+                    # ALWAYS use Docker for SPARTA solver to ensure parity; do not run natively
+                    self.log_to_gui(f"    [*] Executing SPARTA solver via Docker (Sample {i+1})...")
+                    res_dict, log_lines = self.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_opt")
             
             sample_end = time.time()
             sample_dur = sample_end - sample_start
@@ -2950,51 +2886,19 @@ run             {steps}
                      "--scallop_pts", str(best_config['scallop_pts']), "--scallop_angle", str(best_config['scallop_angle']), "--output", "HIAD_final"]
         subprocess.run(cmd_final, cwd=cad_dir, check=True)
         
-        final_script = self.generate_sparta_script(opt_params, surf_name="HIAD_final", **best_config)
-        with open(os.path.join(cad_dir, "in.hiad"), 'w') as f: f.write(final_script)
-        subprocess.run(["docker", "rm", "-f", "hiad-runner"], capture_output=True)
-        
-        use_gpu = opt_params.get('sparta_gpu')
-        if use_gpu is None:
-            use_gpu = self.has_nvidia_gpu()
-        docker_create_cmd = [
-            "docker", "create", "--name", "hiad-runner",
-            "-v", f"{self.cwd}:/app", 
-            "-e", "IN_DOCKER=1",
-            "-e", "PYTHONUNBUFFERED=1",
-            "-e", "DOCKER_WORKDIR=/app",
-            "-e", f"SPARTA_GPU={1 if use_gpu else 0}"
-        ]
-
-        if use_gpu:
-            self.log_to_gui("    [!] Enabling CUDA acceleration (Kokkos) for SPARTA...")
-            docker_create_cmd.append("--gpus")
-            docker_create_cmd.append("all")
-        
-        sparta_cmd = ["spa"]
-        if use_gpu:
-            sparta_cmd.extend(["-k", "on", "g", "1", "-sf", "kk"])
-        sparta_cmd.extend(["-in", "in.hiad"])
-        
-        local_spa = os.path.join(self.cwd, "sparta", "build", "src", "spa_")
-        try:
-            import multiprocessing
-            nproc = multiprocessing.cpu_count() // 2 or 1
-            host_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), local_spa, "-in", "in.hiad"]
-            subprocess.run(["mpirun", "--version"], capture_output=True, check=True)
-        except:
-            host_cmd = [local_spa, "-in", "in.hiad"]
-        subprocess.run(host_cmd, cwd=cad_dir, check=True)
+        # ALWAYS make this for sparta dsmc use docker, do not make this native
+        self.log_to_gui("[*] Running Final Validation SPARTA Simulation via Docker...")
+        res_dict, log_lines = self.run_sparta_simulation(opt_params, best_config, surf_name="HIAD_final")
 
         # --- Final Post-processing (Always run to generate assets for report) ---
         self.log_to_gui("[*] Compiling Final Simulation Animation (Post-process)...")
         from source import visualizer
         grid_dir = os.path.join(cad_dir, "results_reference")
         grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")])
-        viz_metadata = self._get_viz_params(opt_params, sample_dict)
+        viz_metadata = self._get_viz_params(opt_params, best_config)
         visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
-        viz_metadata = self._get_viz_params(opt_params, sample_dict)
-        visualizer.generate_plots(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots"), ref_params=viz_metadata, surf_file=os.path.join(self.cwd, "CADDesign", "HIAD_custom.surf"))
+        viz_metadata = self._get_viz_params(opt_params, best_config)
+        visualizer.generate_plots(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots"), ref_params=viz_metadata, surf_file=os.path.join(self.cwd, "CADDesign", "HIAD_final.surf"))
         
         # Optimized maps naming (for report consistency)
         for ftype in ["thermal_map", "pressure_map", "mach_map"]:
