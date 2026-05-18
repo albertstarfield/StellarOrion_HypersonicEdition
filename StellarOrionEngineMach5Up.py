@@ -834,9 +834,9 @@ O recombine simple {gamma} O2
         
         if opt_params.get('auto_adapt_wide', True):
             # Wide mode ensures the bow shock and wake recirculation are fully captured
-            xmin = float(opt_params.get('env_xmin', -max(0.5 * d_val, 3.0 * standoff_est)))
-            xmax = float(opt_params.get('env_xmax', max(1.5 * d_val, 4.0))) # Ensure wake capture
-            ymax = float(opt_params.get('env_ymax', 1.5 * d_val))
+            xmin = float(opt_params.get('env_xmin', -5.0))
+            xmax = float(opt_params.get('env_xmax', 9.0))
+            ymax = float(opt_params.get('env_ymax', 0.5 * (xmax - xmin) * (9.0 / 16.0)))
         else:
             # Traditional Tight domain
             xmin = float(opt_params.get('env_xmin', -0.2 * d_val))
@@ -3008,7 +3008,9 @@ run             {steps}
             'env_duration': 60.0,
             'env_run': 1000, # Default
             'env_fnum': '1.5e20',
-            'env_cores': os.cpu_count() or 4
+            'env_cores': os.cpu_count() or 4,
+            'env_xmin': -5.0,
+            'env_xmax': 9.0
         }
         
         # Add Mach/Alt if provided in kwargs and are not None
