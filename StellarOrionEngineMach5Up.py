@@ -162,7 +162,7 @@ class Api:
         return {
             "mission": "IRVE-3",
             "date": "July 23, 2012",
-            "reference": "Rapisarda (2024) / NASA TP-2013-4012",
+            "reference": "Rapisarda (2023) / NASA TP-2013-4012",
             "geometry": {
                 "diameter_m": 3.0,
                 "nose_radius_m": 0.550,
@@ -207,7 +207,7 @@ class Api:
         return (
             "1. Dillman, R. A., et al. (2013). 'Flight Performance of the Inflatable Reentry Vehicle Experiment 3'. AIAA-2013-1390.\n"
             "2. Lau, K., et al. (2013). 'IRVE-3 Post-Flight Aerothermal Reconstruction'. NASA/TP-2013-4012.\n"
-            "3. Rapisarda, C. (2024). 'MDAO of Inflatable Stacked Toroids for Atmospheric Entry'. University of Strathclyde."
+            "3. Rapisarda, C. (2023). 'Multidisciplinary Design Analysis and Optimisation of Inflatable Stacked Toroid Decelerators: A Novel Framework Advancing Mars Exploration'. Delft University of Technology."
         )
 
     def get_manual_content(self):
@@ -606,7 +606,7 @@ class Api:
         # Approximation: Dynamic pressure (q) * factor (typically 1.8-2.0 for hypersonic blunt bodies)
         stag_press = q * 1.95 
         
-        # --- Survivability Envelope Validation (Rapisarda 2024 Section 5.6) ---
+        # --- Survivability Envelope Validation (Rapisarda (2023) Section 5.6) ---
         is_sic_safe = t_surface < self.TPS_SPECS["SiC"]["max_temp_k"]
         is_kapton_safe = t_backface < self.TPS_SPECS["Kapton"]["max_temp_k"]
         is_viable = is_sic_safe and is_kapton_safe
@@ -819,10 +819,30 @@ O recombine simple {gamma} O2
         d_val = float(kwargs.get('diameter', opt_params.get('base_diameter', 3.0)))
         surf_name = kwargs.get('surf_name', 'HIAD_custom')
         
-        # Domain scaling (Tightened for faster convergence)
-        xmin = float(opt_params.get('env_xmin', -0.2 * d_val))
-        xmax = float(opt_params.get('env_xmax', 1.0 * d_val))
-        ymax = float(opt_params.get('env_ymax', 1.2 * d_val))
+        # Auto-Adaptive Wide System Scaling
+        # Dynamic domain adjustment based on Mach and standoff distance
+        preset = opt_params.get('env_preset', 'artemis')
+        gamma = 1.29 if 'mars' in str(preset).lower() else 1.4
+        R_gas = 188.9 if 'mars' in str(preset).lower() else 287.05
+        sound_speed = np.sqrt(gamma * R_gas * temp_inf)
+        mach_val = vstream / sound_speed
+        
+        # Conservative standoff estimate (Billig-style)
+        # delta/Rn = 0.143 * exp(3.24/M^2)
+        # Using d_val/4 as characteristic radius for domain sizing
+        standoff_est = (d_val/4.0) * (0.143 * np.exp(3.24 / (max(1.0, mach_val)**2)))
+        
+        if opt_params.get('auto_adapt_wide', True):
+            # Wide mode ensures the bow shock and wake recirculation are fully captured
+            xmin = float(opt_params.get('env_xmin', -max(0.5 * d_val, 3.0 * standoff_est)))
+            xmax = float(opt_params.get('env_xmax', max(1.5 * d_val, 4.0))) # Ensure wake capture
+            ymax = float(opt_params.get('env_ymax', 1.5 * d_val))
+        else:
+            # Traditional Tight domain
+            xmin = float(opt_params.get('env_xmin', -0.2 * d_val))
+            xmax = float(opt_params.get('env_xmax', 1.0 * d_val))
+            ymax = float(opt_params.get('env_ymax', 1.2 * d_val))
+        
         
         # Grid resolution
         # Default changed to 0.7 based on Grid Independency test (optimal accuracy/cost vs MDAO paper)
@@ -2452,8 +2472,8 @@ run             {steps}
             baseline_params = {
                 'diameter': base_d,
                 'angle': opt_params.get('base_angle', 60.0),
-                'nose_radius': opt_params.get('base_nose', 0.191),
-                'toroids': opt_params.get('base_toroids', 7),
+                'nose_radius': opt_params.get('base_nose', 0.550),
+                'toroids': opt_params.get('base_toroids', 6),
                 'mass': opt_params.get('base_mass', 281.0)
             }
             
@@ -2994,7 +3014,7 @@ run             {steps}
             # compile detailed strings for the results panel
             ref_metrics = training_y[0] # [goal, beta, temp, gload]
             res_data = {
-                "ref": f"--- BASELINE (IRVE-3 / Rapisarda 2024) ---\n"
+                "ref": f"--- BASELINE (IRVE-3 / Rapisarda 2023) ---\n"
                        f"Diameter: {training_x[0][0]:.2f}m\n"
                        f"Metric ({goal.upper()}): {ref_metrics[0]:.4f}\n"
                        f"Ballistic Coeff (β): {ref_metrics[1]:.1f} kg/m²\n"
@@ -4071,3 +4091,80 @@ except Exception as e:
             return torch.cuda.is_available()
         except:
             return False
+
+    def run_manim_demo(self, sync=False):
+        """Generates the Manim DSMC visualization video."""
+        self.log_to_gui("[*] Starting Manim Visualization Engine...")
+        self.log_to_gui("    [!] This process may take several minutes to render high-fidelity animations.")
+        
+        try:
+            # Check if manim is installed
+            subprocess.run([sys.executable, "-m", "manim", "--version"], capture_output=True, check=True)
+            # Check if ffmpeg is installed
+            subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
+        except Exception:
+            self.log_to_gui("    [*] Dependencies missing. Attempting auto-installation (Manim)...")
+            self.log_to_gui("    [!] Note: FFmpeg must be installed manually on Windows (e.g., via 'choco install ffmpeg').")
+            try:
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "manim"])
+            except: pass
+
+        source_file = os.path.join(self.cwd, "source", "manim_demo.py")
+        output_dir = os.path.join(self.cwd, "web", "assets", "videos")
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Run manim to generate high quality video
+        # -qh: High Quality
+        # --media_dir: Output directory
+        cmd = [
+            sys.executable, "-m", "manim", 
+            "-qh", source_file, "DSMCVisualization",
+            "--media_dir", output_dir,
+            "--progress_bar", "none"
+        ]
+        
+        self.log_to_gui(f"    [*] Rendering: {os.path.basename(source_file)}")
+        
+        def run_proc():
+            try:
+                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=self.cwd)
+                if proc.stdout:
+                    for line in proc.stdout:
+                        if "Animation" in line or "Rendering" in line:
+                            self.log_to_gui(f"        {line.strip()}")
+                
+                if proc.wait() == 0:
+                    self.log_to_gui("[+] Manim Rendering Complete.")
+                    # Find the generated video
+                    # Manim structure: media_dir/videos/manim_demo/1080p60/DSMCVisualization.mp4
+                    video_path = os.path.join(output_dir, "videos", "manim_demo", "1080p60", "DSMCVisualization.mp4")
+                    if os.path.exists(video_path):
+                        self.log_to_gui(f"    [+] Video saved to: {video_path}")
+                        if self.window:
+                            self.window.evaluate_js(f"showDemoVideo('{video_path.replace(os.sep, '/')}')")
+                        return video_path
+                    else:
+                        self.log_to_gui("    [-] Error: Could not locate generated video file.")
+                else:
+                    self.log_to_gui("    [-] Manim Rendering Failed. Check console for details.")
+            except Exception as e:
+                self.log_to_gui(f"    [-] Error during rendering: {e}")
+            return None
+
+        if sync:
+            return run_proc()
+        else:
+            threading.Thread(target=run_proc, daemon=True).start()
+            return {"status": "started", "message": "Rendering started in background."}
+
+    def open_demo_video(self, path):
+        """Opens the video file using the system's default player."""
+        if os.path.exists(path):
+            if sys.platform == "win32":
+                os.startfile(path)
+            elif sys.platform == "darwin":
+                subprocess.run(["open", path])
+            else:
+                subprocess.run(["xdg-open", path])
+            return {"status": "success"}
+        return {"status": "error", "message": "File not found"}

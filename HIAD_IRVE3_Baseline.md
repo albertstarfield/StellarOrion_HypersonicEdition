@@ -13,17 +13,17 @@ This document establishes the official flight test baseline for the **Inflatable
 | Parameter | Value | Description |
 | :--- | :--- | :--- |
 | **Aeroshell Diameter** | 3.0 m | Fully inflated diameter |
-| **Nose Radius ($R_n$)** | 0.191 m | Stagnation point curvature |
+| **Nose Radius ($R_n$)** | 0.550 m | Stagnation point sphere-cone curvature |
 | **Forebody Shape** | 60° Sphere-Cone | 60-degree half-angle |
-| **Toroid Count** | 7 (or 6*) | Baseline: 7; Rapisarda: 6 |
-| **Toroid Radius ($r_{torus}$)** | 0.1350 m | Rapisarda (2024) Table 4.1 |
-| **Outer Toroid Radius** | 0.0508 m | Rapisarda (2024) Table 4.1 |
-| **Payload Height ($h_{pay}$)** | 1.7 m | Rapisarda (2024) Table 4.1 |
-| **Payload Radius ($r_{pay}$)** | 0.275 m | Rapisarda (2024) Table 4.1 |
+| **Toroid Count** | 6 | Baseline & Delft MDAO model: 6; Flight: 7 |
+| **Toroid Radius ($r_{torus}$)** | 0.1350 m | Rapisarda (2023) Table 4.1 |
+| **Outer Toroid Radius** | 0.0508 m | Rapisarda (2023) Table 4.1 |
+| **Payload Height ($h_{pay}$)** | 1.7 m | Rapisarda (2023) Table 4.1 |
+| **Payload Radius ($r_{pay}$)** | 0.275 m | Rapisarda (2023) Table 4.1 |
 | **Mass** | 281.0 kg | Nominal flight mass |
 
 ## 3. Flight Performance Parameters (Peak Results)
-The following values are derived from the post-flight reconstruction (NASA/TP-2013-4012 / AIAA 2013-1386) and high-fidelity modeling by Rapisarda (2024).
+The following values are derived from the post-flight reconstruction (NASA/TP-2013-4012 / AIAA 2013-1386) and high-fidelity modeling by Rapisarda (2023).
 
 | Metric | Result | Note |
 | :--- | :--- | :--- |
@@ -55,7 +55,7 @@ Use these values to calibrate the **Survivability Optimization (SBO)** targets i
 *   **Aerodynamic Stability**: The vehicle demonstrated stable flight throughout the hypersonic and supersonic regimes.
 *   **Center-of-Gravity (CG) Offset**: Demonstrated the ability to generate lift for trajectory steering.
 
-## 6. MDAO Reference (Rapisarda 2024) - Mesh Independence
+## 6. MDAO Reference (Rapisarda 2023) - Mesh Independence
 The following parameters establish the mesh fidelity requirements used in the Rapisarda MDAO framework for Inflatable Stacked Toroids.
 
 | Parameter | Value | Note |
@@ -71,4 +71,4 @@ The following parameters establish the mesh fidelity requirements used in the Ra
 ## References
 1.  Cassell, G. J., et al., "Inflatable Re-entry Vehicle Experiment (IRVE-3) Flight Results," *AIAA 2013-1386*, 2013.
 2.  Lau, K., Cheatwood, N., et al., "Inflatable Re-entry Vehicle Experiment 3 (IRVE-3) Post-Flight Aerothermal Reconstruction," *NASA/TP-2013-4012*.
-3.  Rapisarda, C., "MDAO of Inflatable Stacked Toroids for Atmospheric Entry," *University of Strathclyde*, 2024.
+3.  Rapisarda, C., "Multidisciplinary Design Analysis and Optimisation of Inflatable Stacked Toroid Decelerators: A Novel Framework Advancing Mars Exploration," *Delft University of Technology*, 2023.

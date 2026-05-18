@@ -8,8 +8,8 @@ This project utilizes the **NASA IRVE-3 (Inflatable Reentry Vehicle Experiment 3
 | :--- | :--- | :--- | :--- |
 | **Major Diameter** | 3.0 m | 3.0 m | Exact match to the IRVE-3 inflated outer diameter. |
 | **Cone Angle** | 60.0° | 60.0° | Standard sphere-cone half-angle used in the flight test. |
-| **Nose Radius** | 0.191 m | 0.191 m | Radius of the rigid centerbody (nose cap) used in IRVE-3. |
-| **Toroid Count** | 7 | 7 | Typical stack count for a 3m HIAD to maintain structural lofting. |
+| **Nose Radius** | 0.55 m | 0.55 m | Radius of the aerodynamic sphere cap nose curvature. |
+| **Toroid Count** | 6 | 6 | Delft MDAO baseline stack count (Rapisarda 2023). |
 | **Shield Mass** | 281 kg | 281 kg | Exact match to IRVE-3 entry mass. |
 | **Ballistic Coeff (β)** | 27 kg/m² | ~27 kg/m² | Aligned with IRVE-3 flight data for sounding rocket reentry. |
 

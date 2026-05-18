@@ -148,8 +148,8 @@ Users can manually override this via:
 python3 main.py --grid-factor 1.0 # For higher fidelity
 ```
 
-## 🛰️ Calibration & Validation: IRVE-3 (Rapisarda 2024 Baseline)
-StellarOrion is calibrated against the **IRVE-3 (Inflatable Reentry Vehicle Experiment 3)** flight data using the high-fidelity reconstruction parameters from **Rapisarda (2024)**.
+## 🛰️ Calibration & Validation: IRVE-3 (Rapisarda 2023 Baseline)
+StellarOrion is calibrated against the **IRVE-3 (Inflatable Reentry Vehicle Experiment 3)** flight data using the high-fidelity reconstruction parameters from **Rapisarda (2023)**.
 
 ### Key Validation Metrics (Peak Results)
 | Parameter | Simulation Target | Source | Status |

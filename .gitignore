@@ -229,8 +229,9 @@ fluent-*.log
 *.blg
 *.run.xml
 *.bcf
-
+**web/assets/videos**
 
 # Syncthing conflict
 **.sync-conflict**
 AgentsInst.txt
+AgenticInst.txt

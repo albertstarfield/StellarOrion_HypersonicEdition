@@ -25,8 +25,8 @@ These parameters define the physical shape of the Hypersonic Inflatable Aerodyna
 | :--- | :--- | :--- | :--- |
 | `diameter` | 3.0 m | 2.5 – 4.5 m | **Drag Area:** Controls $A_{ref}$. Larger diameters reduce $\beta$, allowing for higher-altitude deceleration. |
 | `angle` (Cone Angle) | 60.0° | 10° – 85° | **Stability & Drag:** Steeper angles increase axial force ($f_x$) but may affect aerodynamic stability. |
-| `nose_radius` | 0.191 m | 0.14 – 0.24 m | **Thermal Protection:** Controls shock standoff. A larger nose spreads the Kinetic Energy flux ($ke$). |
-| `toroids` | 7 | 3 – 10+ | **Structural:** Inflatable rings. More toroids improve shape retention under high pressure. |
+| `nose_radius` | 0.550 m | 0.40 – 0.70 m | **Thermal Protection:** Controls shock standoff. A larger nose spreads the Kinetic Energy flux ($ke$). |
+| `toroids` | 6 | 3 – 10+ | **Structural:** Inflatable rings. More toroids improve shape retention under high pressure. |
 | `thickness` | 0.0254 m | 0.01 – 0.04 m | **Insulation ($\delta_{TPS}$):** Crucial for preventing heat soak. 2.54cm (1 inch) is the IRVE-3/LOFTID baseline (Lippincott et al., 2019). |
 | `scallop_pts` | 5 | 2 – 7 | **Fidelity:** Number of segments in the inflatable surface. Affects local flow turbulence. |
 | `scallop_angle` | 90.0° | 75° – 105° | **Surface Aero:** Curvature of lobes. Affects heating concentrations. |
@@ -157,7 +157,7 @@ The project uses the **IRVE-3 (Inflatable Re-entry Vehicle Experiment 3)** missi
 | **Peak Heat Flux ($\dot{q}$)** | **14.4 W/cm²** | Aerothermal model validation |
 | **Artemis I Comparison** | **~11 km/s Return** | Cork-clad shield protected vs $1,760^\circ\text{C}$ (Honeycutt 2024) |
 | **Peak Deceleration** | **20.2 g** | Structural load validation |
-| **Nose Radius ($R_n$)** | 0.191 m | Geometric baseline |
+| **Nose Radius ($R_n$)** | 0.550 m | Geometric baseline |
 | **Diameter** | 3.0 m | Scale baseline |
 | **Atmosphere** | Earth (Suborbital) | Reentry regime |
 

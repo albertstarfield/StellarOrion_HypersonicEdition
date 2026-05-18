@@ -1277,7 +1277,7 @@ function checkStructuralValidity() {
     const thickness = parseFloat(document.getElementById('thickness')?.value || 0.025);
     
     let warnings = [];
-    if (angle < 40 || angle > 80) warnings.push(`Cone Angle (${angle}°) is outside Rapisarda (2024) stability bounds (40°-80°).`);
+    if (angle < 40 || angle > 80) warnings.push(`Cone Angle (${angle}°) is outside Rapisarda (2023) stability bounds (40°-80°).`);
     if (toroids > 12) warnings.push(`Toroid Count (${toroids}) exceeds standard manufacturing limits (max 12).`);
     if (diameter > 15) warnings.push(`Extreme Scale: Diameter (${diameter}m) may exceed current inflation system capacity.`);
     if (thickness < 0.005) warnings.push(`TPS Skin (${thickness}m) is too thin for high-Mach aerothermal protection.`);
@@ -1663,5 +1663,35 @@ async function startGridIndependencyTest() {
     } catch (e) {
         appendLog(`<br><span style='color: #ef4444; font-weight: 800;'>[ERROR] Grid study failed: ${e}</span>`);
         updateProgress(0);
+    }
+}
+
+async function runManimDemo() {
+    // 1. Move to Reference Physics Page (Page 3) to show terminal logs
+    jumpToPage(3);
+    
+    appendLog("<br><span style='color: #38bdf8; font-weight: 800;'>[VISUAL] INITIALIZING MANIM DSMC WORKFLOW DEMO...</span>");
+    appendLog("[*] This process involves rendering high-fidelity animations of the kinetic cycle.");
+    appendLog("[*] Target Steps: Preprocessing -> Grid -> Advection -> Collision -> Chemistry -> Post-processing.");
+    
+    try {
+        const res = await window.pywebview.api.run_manim_demo();
+        if (res.status === "started") {
+            appendLog("<span style='color: #fbbf24;'>[*] Rendering engine dispatched. Tracking progress...</span>");
+        }
+    } catch (e) {
+        appendLog(`<br><span style='color: #ef4444; font-weight: 800;'>[ERROR] Demo engine failed to start: ${e}</span>`);
+    }
+}
+
+function showDemoVideo(path) {
+    appendLog("<br><span style='color: #10b981; font-weight: 800;'>[SUCCESS] DSMC WORKFLOW VISUALIZATION RENDERED.</span>");
+    appendLog(`[*] Media Path: ${path}`);
+    
+    const confirmMsg = "The DSMC Workflow Visualization is ready! Would you like to open it now in your system's default player?";
+    if (confirm(confirmMsg)) {
+        window.pywebview.api.open_demo_video(path);
+    } else {
+        appendLog("[*] Click the 'Visual Demo' button again to re-trigger if needed.");
     }
 }

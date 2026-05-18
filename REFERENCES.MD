@@ -132,7 +132,7 @@
 [129] В. Дерюгин, К. Пичхадзе, В. Финченко, and С. Шматов, “Оценка возможности безымпульсного спуска объектов с орбит исз на поверхность земли,” in Российская академия космонавтики им. КЭ Циолковского, НПО им. СА. Лавочкина, 2000, p. 9.
 [130] В. Финченко, А. Иванков, and С. Шматов, “Проект ка, оснащённого системой удаления космического мусора (аэротермодинамика, габаритно-массовые характеристики и траектории спуска ка с околоземных орбит),” Вестник НПО им. СА Лавочкина, no. 1, pp. 10–18, 2018.
 [131] R. Dillman et al., “Planned flight of the terrestrial HIAD orbital reentry (THOR),” in International Planetary Probe Workshop, 2014.
-[132] C. Rapisarda, Literature Review of Inflatable Aerodynamic Decelerators for a Martian Penetrator Mission. Delft University of Technology, Research Methodologies, 2022.
+[132] C. Rapisarda, Multidisciplinary Design Analysis and Optimisation of Inflatable Stacked Toroid Decelerators: A Novel Framework Advancing Mars Exploration. Delft University of Technology, MSc Thesis, August 2023.
 [133] К. Пичхадзе, В. Финченко, С. Алексашкин, and Б. Острешко, “Трансформируемые аппараты, спускаемые в атмосферах планет,” Вестник НПО им. СА Лавочкина, no. 2, pp. 4–13, 2015.
 [134] A. Ivankov, “IRDT: Inflatable re-entry and Descent Technology for mars missions,” 54th International Astronautical Congress of the International Astronautical Federation, the International Academy of Astronautics, and the International Institute of Space Law, 2003. DOI: 10.2514/6.iac-03-iaa.13.1.06.
 [135] L. Marraffa et al., “IRDT-Inflatable Re-entry and Descent Technology,” in Hot Structures and Thermal Protection Systems for Space Vehicles, vol. 521, 2003, p. 19.

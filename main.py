@@ -476,6 +476,8 @@ def main():
         help="Display the full project bibliography and research references from REFERENCES.MD in a manpage-like view.")
     mode.add_argument("--gridIndependencyTest", action="store_true",
         help="Run a grid independency study using SPARTA DSMC. Tests grid factors 0.3, 0.5, 0.7, and 1.0 using 1100 steps. Compares Cd against reference and prints mesh statistics.")
+    mode.add_argument("--demo", action="store_true",
+        help="Generate the Manim DSMC visualization video headlessly and synchronously.")
 
     # -- Solver Selection ----------------------------------------------------──
     solver_grp = parser.add_argument_group("Solver Selection")
@@ -518,7 +520,7 @@ def main():
     sim.add_argument("--fnum", type=str, default="5e16",
         help="Particle weighting factor (e.g. 5e16). Higher = fewer particles, faster run.")
     
-    # Geometry Overrides (Ref: Rapisarda 2024 Table 5.4)
+    # Geometry Overrides (Ref: Rapisarda 2023 Table 5.4)
     geo = parser.add_argument_group("Geometry Overrides (Rapisarda Envelope)")
     geo.add_argument("--diameter", type=float, default=3.0, help="HIAD major diameter [m]. Limit: 0.5-15.0m. (IRVE-3: 3.0m)")
     geo.add_argument("--angle", type=float, default=60.0, help="Half-cone angle [deg]. Rapisarda Limit: 40-80°. (IRVE-3: 60°)")
@@ -528,7 +530,7 @@ def main():
     geo.add_argument("--oradius", type=float, help="Outer shoulder toroid radius [m]. (IRVE-3: 0.0508m)")
     geo.add_argument("--mass", type=float, default=281.0, help="Total entry mass [kg]. (IRVE-3: 281kg)")
     
-    # Material Property Overrides (Ref: Rapisarda 2024 Table B.17)
+    # Material Property Overrides (Ref: Rapisarda 2023 Table B.17)
     sim.add_argument("--tps-material", type=str, default="sic", choices=["sic", "pyrogel", "kapton"],
         help="Predefined F-TPS material layup (outer layer). Sets defaults for density and emissivity.")
     sim.add_argument("--tps-density", type=float, default=1468.0, help="F-TPS Density [kg/m^3] (Default: 1468.0 for Nicalon SiC)")
@@ -577,12 +579,12 @@ def main():
 
     args, unknown = parser.parse_known_args()
 
-    # --- Rapisarda (2024) Structural & Geometric Validation ---
+    # --- Rapisarda (2023) Structural & Geometric Validation ---
     def validate_geometry(p_dict):
         # θc: Half-cone Angle
         angle = p_dict.get('angle', 60.0)
         if not (40.0 <= angle <= 80.0):
-            print(f"[WARNING] Unrealistic Cone Angle: {angle}°. Rapisarda (2024) limits: 40° to 80°.")
+            print(f"[WARNING] Unrealistic Cone Angle: {angle}°. Rapisarda (2023) limits: 40° to 80°.")
         
         # N: Toroid Count
         toroids = p_dict.get('toroids', 7)
@@ -594,7 +596,7 @@ def main():
         if not (0.5 <= diameter <= 15.0):
             print(f"[WARNING] Unrealistic Diameter: {diameter}m. HIAD scalability limit: 0.5m to 15m.")
 
-    # --- TPS Material Presets (Ref: Rapisarda 2024 Table B.17) ---
+    # --- TPS Material Presets (Ref: Rapisarda 2023 Table B.17) ---
     tps_presets = {
         "sic":     {"density": 1468.0, "cp": 1100.0, "emissivity": 0.75},
         "pyrogel": {"density": 180.0,  "cp": 1000.0, "emissivity": 0.80},
@@ -684,6 +686,15 @@ def main():
                 sparta_gpu=args.sparta_gpu,
                 is_gui=False
             ) # type: ignore
+            sys.exit(0)
+
+        if args.demo:
+            print("[*] Starting Headless/Synchronous Manim Demo Video Generation...")
+            video_path = api.run_manim_demo(sync=True)
+            if isinstance(video_path, str) and os.path.exists(video_path):
+                print(f"[SUCCESS] Headless Manim Demo Rendering Complete! Video saved to: {video_path}")
+            else:
+                print("[-] Error: Headless Manim Demo Rendering Failed.")
             sys.exit(0)
 
         # Pre-flight check for Docker if using SPARTA or OpenFOAM
@@ -850,7 +861,7 @@ def main():
                     'mass': args.mass
                 }
                 
-                # Validate vs Rapisarda (2024) limits
+                # Validate vs Rapisarda (2023) limits
                 validate_geometry(sample_dict)
 
                 if args.compareCalibrate:

@@ -110,7 +110,7 @@ The ANI GA "flies" through the metamodel to find the global optimum configuratio
 ---
 
 ## HIAD Geometry Engine (MDAO Alignment)
-The geometry engine has been refactored to align with the **"MDAO of Inflatable Stacked Toroids"** (Rapisarda, 2021) analytical framework. This ensures that the generated CAD models are mathematically consistent with flight-proven architectures (IRVE, LOFTID).
+The geometry engine has been refactored to align with the **"MDAO of Inflatable Stacked Toroids"** (Rapisarda, 2023) analytical framework. This ensures that the generated CAD models are mathematically consistent with flight-proven architectures (IRVE, LOFTID).
 
 ### 1. Geometric Conventions
 *   **Angle Definition:** The half-cone angle $\theta_c$ is measured from the **vertical axis of symmetry**. 
@@ -178,7 +178,7 @@ if "IN_DOCKER" not in os.environ:
 
 ### 6.1 SPARTA (DSMC) Subroutine logic
 - **Physical Foundation:** Solves the **Boltzmann Equation** for rarefied gas dynamics using the **Direct Simulation Monte Carlo (DSMC)** method (Bird, 1994).
-    - **Boltzmann Equation:** $\frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla f + \frac{\mathbf{F}}{m} \cdot \nabla_\mathbf{v} f = \left( \frac{\partial f}{\partial t} \right)_{coll}$
+    - **Boltzmann Equation:** $\frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla f + \frac{\mathbf{F}}{m} \cdot \nabla_{\mathbf{v}} f = \left( \frac{\partial f}{\partial t} \right)_{coll}$
     - **Logic:** Particle simulation is used where the Knudsen number ($Kn > 0.01$) invalidates continuum-based Navier-Stokes assumptions.
 - **Initialization:** Copy `air.species`, `air.vss`, `air.react`.
 - **Scripting:** Dynamically write `in.hiad` with `opt_params`.
