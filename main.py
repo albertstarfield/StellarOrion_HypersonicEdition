@@ -468,6 +468,8 @@ def main():
         help="Shorthand for: --headless --test sample --solver <solver>. Runs a single IRVE-3 geometry simulation and prints a formatted comparison table of Cd and heat flux against the official IRVE-3 baseline values.")
     mode.add_argument("--compareCalibratePINN", action="store_true",
         help="Run compareCalibrate for 1500 steps, train DeepXDE PINN, and compare raw vs refined results against IRVE-3 baseline.")
+    mode.add_argument("--validationPINN", action="store_true",
+        help="Run full IRVE-3 baseline validation suite (default 1100 steps), train DeepXDE PINN on simulation outputs, and print a 3-way comparison of SPARTA vs PINN vs reference values.")
     mode.add_argument("--compareNoses", action="store_true",
         help="Run a comparative study between Smooth (blunt) and Pointy (sharp) nose types on the baseline HIAD geometry. Prints a side-by-side performance table.")
     mode.add_argument("--gettheirvebbaseline", action="store_true",
@@ -636,6 +638,12 @@ def main():
     if args.compareCalibratePINN:
         args.headless = True
         args.steps = 1500
+        args.test = "pinn_calibration"
+
+    if args.validationPINN:
+        args.headless = True
+        if args.steps == 500:
+            args.steps = 1100
         args.test = "pinn_calibration"
 
     if args.LiteracyReferences:

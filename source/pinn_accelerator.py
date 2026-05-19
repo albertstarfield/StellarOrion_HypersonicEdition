@@ -21,21 +21,27 @@ def parse_sparta_grid(filepath):
         for line in lines[start_index:]:
             parts = line.split()
             if len(parts) >= 11:
-                # id xlo ylo xhi yhi n u v w temp press
+                # id xlo ylo xhi yhi f_2[1] f_2[2] f_2[3] f_2[4] f_3[1] f_4[1]
+                # row indices:
+                # 0: xlo, 1: ylo, 2: xhi, 3: yhi,
+                # 4: f_2[1] (n), 5: f_2[2] (u), 6: f_2[3] (v), 7: f_2[4] (w)
+                # 8: f_3[1] (temp), 9: f_4[1] (nrho)
                 row = [float(x) for x in parts[1:]]
                 # x_center, y_center
                 xc = (row[0] + row[2]) / 2.0
                 yc = (row[1] + row[3]) / 2.0
-                n = row[4]
                 u = row[5]
                 v = row[6]
-                # w = row[7] (neglected for 2D PINN)
                 T = row[8]
-                p = row[9]
+                nrho = row[9]
                 
                 # Assume air (M=0.02897 kg/mol)
                 m_avg = 28.97e-3 / 6.022e23 # Simplified mass per molecule
-                rho = n * m_avg
+                rho = nrho * m_avg
+                
+                # Pressure = nrho * k_B * T
+                k_B = 1.380649e-23
+                p = nrho * k_B * T
                 
                 data.append([xc, yc, rho, u, v, T, p])
                 
