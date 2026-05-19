@@ -574,8 +574,8 @@ class DSMCVisualization(Scene):
         
         self.play(Write(loss, run_time=4))
         
-        # 2D steady compressible Euler equations on the right
-        pde_title = Text("2D Steady Compressible Euler Equations:", font_size=16, color=BLUE).shift(RIGHT*3.2 + UP*0.2)
+        # 2D compressible Navier-Stokes equations on the right
+        pde_title = Text("2D Compressible Navier-Stokes Equations:", font_size=16, color=BLUE).shift(RIGHT*3.2 + UP*0.2)
         self.play(FadeIn(pde_title, run_time=2))
         
         pdes = VGroup(

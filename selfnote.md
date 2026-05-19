@@ -523,11 +523,11 @@ Upcoming critical improvements for the StellarOrion Hypersonic Edition.
 The StellarOrion G2 pipeline uses **Physics-Informed Neural Networks (PINNs)** via the **DeepXDE** library to refine SPARTA flow fields and perform inverse parameter estimation.
 
 ### Mathematical Formulation
-The PINN is trained to minimize a composite loss function containing the residuals of the **2D Steady Compressible Euler Equations**:
+The PINN is trained to minimize a composite loss function containing the residuals of the **2D Compressible Navier-Stokes Equations**:
 
 1.  **Continuity (Mass Conservation):**
     $$\nabla \cdot (\rho \mathbf{u}) = \frac{\partial (\rho u)}{\partial x} + \frac{\partial (\rho v)}{\partial y} = 0$$
-2.  **Momentum Conservation (Euler):**
+2.  **Momentum Conservation (Navier-Stokes):**
     $$\rho (\mathbf{u} \cdot \nabla) \mathbf{u} + \nabla p = 0$$
     *   *X-Momentum:* $\rho (u \frac{\partial u}{\partial x} + v \frac{\partial u}{\partial y}) + \frac{\partial p}{\partial x} = 0$
     *   *Y-Momentum:* $\rho (u \frac{\partial v}{\partial x} + v \frac{\partial v}{\partial y}) + \frac{\partial p}{\partial y} = 0$
@@ -546,11 +546,11 @@ The PINN is trained to minimize a composite loss function containing the residua
 ### Hybrid Anchor-Point Strategy
 The network does not solve the PDE from scratch. Instead, it uses a **Hybrid Data-Physics Approach**:
 *   **Anchor Points:** Grid data from **SPARTA (DSMC)** is injected as `PointSetBC` (Observation Boundary Conditions).
-*   **Refinement:** The neural network (FNN, 5 layers, 128 neurons) acts as a high-order interpolator that "fills the gaps" between particles while strictly adhering to the conservation laws defined by the Euler equations.
+*   **Refinement:** The neural network (FNN, 5 layers, 128 neurons) acts as a high-order interpolator that "fills the gaps" between particles while strictly adhering to the conservation laws defined by the Navier-Stokes equations.
 *   **Acceleration:** Training is performed on native hardware providing near-real-time flow field refinement:
     *   **Mainstream:** NVIDIA CUDA, AMD ROCm, Apple Silicon (MPS).
     *   **Enterprise/Edge:** Intel OneAPI, OpenCL, Snapdragon/ARM GPU.
     *   **Specialized:** Huawei CANN (Ascend), Moore Threads MUSA, Biren SUPA, and Innosilicon Fenghua.
 
 ### Implementation Location
-The core logic resides in `source/pinn_accelerator.py` within the `pde_euler_2d` function and the `PINNAccelerator` class.
+The core logic resides in `source/pinn_accelerator.py` within the `pde_navier_stokes_2d` function and the `PINNAccelerator` class.

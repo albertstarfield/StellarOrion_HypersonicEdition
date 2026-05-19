@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import sys
+from typing import Any
 
 # Set backend to pytorch
 os.environ["DDE_BACKEND"] = "pytorch"
@@ -53,8 +54,8 @@ def parse_sparta_grid(filepath):
     Y = data[:, 2:] # (rho, u, v, T, p)
     return X, Y
 
-def pde_euler_2d(x, y, v_stream=None, scales=None):
-    """2D Steady Compressible Euler Equations for PINN (Dimensionless form)."""
+def pde_navier_stokes_2d(x, y, v_stream=None, scales=None):
+    """2D Compressible Navier-Stokes Equations for PINN (Dimensionless form)."""
     import deepxde as dde
     # If no scales provided, use 1.0 (Dimensional form)
     if scales is None:
@@ -70,16 +71,32 @@ def pde_euler_2d(x, y, v_stream=None, scales=None):
     
     # Gas constants (Air)
     R = 287.05
+    mu_ref = 1.8e-5 # Constant viscosity approximation for air
     
     # Dimensionless derivatives (w.r.t scaled x, y)
-    drho_x = dde.grad.jacobian(y, x, i=0, j=0)
-    drho_y = dde.grad.jacobian(y, x, i=0, j=1)
-    du_x = dde.grad.jacobian(y, x, i=1, j=0)
-    du_y = dde.grad.jacobian(y, x, i=1, j=1)
-    dv_x = dde.grad.jacobian(y, x, i=2, j=0)
-    dv_y = dde.grad.jacobian(y, x, i=2, j=1)
-    dp_x = dde.grad.jacobian(y, x, i=4, j=0)
-    dp_y = dde.grad.jacobian(y, x, i=4, j=1)
+    drho_x: Any = dde.grad.jacobian(y, x, i=0, j=0)
+    drho_y: Any = dde.grad.jacobian(y, x, i=0, j=1)
+    du_x: Any = dde.grad.jacobian(y, x, i=1, j=0)
+    du_y: Any = dde.grad.jacobian(y, x, i=1, j=1)
+    dv_x: Any = dde.grad.jacobian(y, x, i=2, j=0)
+    dv_y: Any = dde.grad.jacobian(y, x, i=2, j=1)
+    dp_x: Any = dde.grad.jacobian(y, x, i=4, j=0)
+    dp_y: Any = dde.grad.jacobian(y, x, i=4, j=1)
+    
+    # Second derivatives for viscous terms
+    du_xx: Any = dde.grad.hessian(y, x, component=1, i=0, j=0)
+    du_yy: Any = dde.grad.hessian(y, x, component=1, i=1, j=1)
+    du_xy: Any = dde.grad.hessian(y, x, component=1, i=0, j=1)
+    
+    dv_xx: Any = dde.grad.hessian(y, x, component=2, i=0, j=0)
+    dv_yy: Any = dde.grad.hessian(y, x, component=2, i=1, j=1)
+    dv_xy: Any = dde.grad.hessian(y, x, component=2, i=0, j=1)
+
+    # Reynolds number
+    Re = (rho_r * u_r * L_r) / mu_ref
+    
+    visc_x: Any = (1.0 / Re) * ((4.0/3.0)*du_xx + du_yy + (1.0/3.0)*dv_xy)
+    visc_y: Any = (1.0 / Re) * ((4.0/3.0)*dv_yy + dv_xx + (1.0/3.0)*du_xy)
     
     # Non-dimensionalized residuals
     # 1. Continuity: div(rho * U) = 0
@@ -88,15 +105,13 @@ def pde_euler_2d(x, y, v_stream=None, scales=None):
     eps = 1e-6
     continuity = drho_x * u_bar + rho_bar * du_x + drho_y * v_bar + rho_bar * dv_y + (rho_bar * v_bar) / (y_coord + eps)
     
-    # 2. Momentum X: rho*(u*ux + v*uy) + px = 0
-    # Scaled by (rho_r * u_r^2 / L_r)
-    mom_x = rho_bar * (u_bar * du_x + v_bar * du_y) + (p_r / (rho_r * u_r**2)) * dp_x
+    # 2. Momentum X: rho*(u*ux + v*uy) + px - visc_x = 0
+    mom_x = rho_bar * (u_bar * du_x + v_bar * du_y) + (p_r / (rho_r * u_r**2)) * dp_x - visc_x
     
-    # 3. Momentum Y: rho*(u*vx + v*vy) + py = 0
-    mom_y = rho_bar * (u_bar * dv_x + v_bar * dv_y) + (p_r / (rho_r * u_r**2)) * dp_y
+    # 3. Momentum Y: rho*(u*vx + v*vy) + py - visc_y = 0
+    mom_y = rho_bar * (u_bar * dv_x + v_bar * dv_y) + (p_r / (rho_r * u_r**2)) * dp_y - visc_y
     
     # 4. Equation of State: p = rho * R * T
-    # Scaled by p_r
     eos = p_bar - (rho_r * R * T_r / p_r) * rho_bar * T_bar
     
     return [continuity, mom_x, mom_y, eos]
@@ -126,7 +141,7 @@ class PINNAccelerator:
         """Uses SPARTA data as anchor points for PINN refinement or inverse estimation."""
         import deepxde as dde
         X_data, Y_data = parse_sparta_grid(grid_file)
-        if X_data is None:
+        if X_data is None or Y_data is None:
             print("Error: Could not parse SPARTA grid file.")
             return
 
@@ -165,7 +180,7 @@ class PINNAccelerator:
         observe_y3 = dde.icbc.PointSetBC(X_anchors, Y_anchors[:, 3:4], component=3) # T
         observe_y4 = dde.icbc.PointSetBC(X_anchors, Y_anchors[:, 4:5], component=4) # p
 
-        pde_fn = lambda x, y: pde_euler_2d(x, y, v_stream=self.v_est if inverse else None, scales=self.scales)
+        pde_fn = lambda x, y: pde_navier_stokes_2d(x, y, v_stream=self.v_est if inverse else None, scales=self.scales)
 
         data = dde.data.PDE(
             geom,
@@ -177,14 +192,14 @@ class PINNAccelerator:
         )
 
         # Deeper network for complex shock features
-        net = dde.nn.FNN([2] + [128] * 5 + [5], "tanh", "Glorot uniform")
+        net = dde.nn.FNN([2] + [128] * 5 + [5], "tanh", "Glorot uniform")  # type: ignore
         self.model = dde.Model(data, net)
 
         # Optimization with higher iterations for convergence
         if inverse:
             self.model.compile("adam", lr=1e-3, external_trainable_variables=self.v_est)
         else:
-            # Set PDE weights to 0 temporarily to stabilize training if Euler equations are stiff
+            # Set PDE weights to 0 temporarily to stabilize training if Navier-Stokes equations are stiff
             # Indices: 0-3 (PDEs), 4-8 (Observations)
             self.model.compile("adam", lr=1e-3, loss_weights=[0, 0, 0, 0, 1, 1, 1, 1, 1])
             

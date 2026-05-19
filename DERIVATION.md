@@ -102,9 +102,9 @@ $$J = w_{\beta} \left( \frac{\beta_{calc} - \beta_{target}}{10} \right)^2 + w_{m
 
 ## 5. PINN Refinement Derivation (DeepXDE)
 
-The **Physics-Informed Neural Network (PINN)** stage uses the **2D Steady Compressible Euler Equations** (Anderson, 2006) to refine the flow field data from SPARTA.
+The **Physics-Informed Neural Network (PINN)** stage uses the **2D Compressible Navier-Stokes Equations** (Anderson, 2006) to refine the flow field data from SPARTA.
 
-### 2D Steady Euler Equations (Axisymmetric)
+### 2D Compressible Navier-Stokes Equations (Axisymmetric)
 The network $\mathcal{N}(x, y) \to (\rho, u, v, T, p)$ is constrained by the following residuals:
 
 1.  **Continuity Residual ($R_{cont}$):**

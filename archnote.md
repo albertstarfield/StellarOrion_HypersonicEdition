@@ -131,7 +131,7 @@ graph TD
 To further accelerate and refine the simulation results, a **Physics-Informed Neural Network (PINN)** stage is integrated via **DeepXDE** (Lu et al., 2021).
 
 1.  **Checkpoint Exchange:** The final "stable" flow field from SPARTA (DSMC) is used as a sparse point-cloud "anchor" for the PINN.
-2.  **Physical Constraints:** Unlike the pure data-driven MoP, the PINN is constrained by the **2D Steady Compressible Euler Equations** (Anderson, 2006):
+2.  **Physical Constraints:** Unlike the pure data-driven MoP, the PINN is constrained by the **2D Compressible Navier-Stokes Equations** (Anderson, 2006):
     *   Continuity ($\nabla \cdot (\rho \mathbf{u}) = 0$)
     *   Momentum ($\rho(\mathbf{u} \cdot \nabla)\mathbf{u} + \nabla p = 0$)
     *   Equation of State ($p = \rho R T$)

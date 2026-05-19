@@ -57,9 +57,9 @@ graph TD
 
 ## 2. Component: DeepXDE PINN Accelerator (ANI Informed Physics)
 **Module:** `source/pinn_accelerator.py`  
-**Role:** Refines noisy DSMC particle data by enforcing conservation laws (Euler Equations) using Artificial Narrow Intelligence (ANI).
+**Role:** Refines noisy DSMC particle data by enforcing conservation laws (Navier-Stokes Equations) using Artificial Narrow Intelligence (ANI).
 
-### 2.1 Physics Residuals (Euler 2D Axisymmetric)
+### 2.1 Physics Residuals (Navier-Stokes 2D Axisymmetric)
 The ANI model minimizes the residual $R$ of the following equations:
 1.  **Continuity:** $\frac{\partial (\rho u)}{\partial x} + \frac{\partial (\rho v)}{\partial y} + \frac{\rho v}{y} = 0$
 2.  **X-Momentum:** $\rho(u u_x + v u_y) + p_x = 0$
