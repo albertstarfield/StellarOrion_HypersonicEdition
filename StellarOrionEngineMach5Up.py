@@ -3266,8 +3266,9 @@ run             {steps}
             xmin, xmax, ymax = -0.2 * d_val, 1.0 * d_val, 1.2 * d_val
             
             pinn = PINNAccelerator(device=device)
-            self.log_to_gui(f"    [+] Training PINN on {device} (1500 iterations)...")
-            pinn.train_from_checkpoint(grid_files[-1], [xmin, xmax, ymax], iterations=1500)
+            pinn_checkpoint_path = os.path.join(self.cwd, "CADDesign", "results_reference", f"pinn_checkpoint_{steps}.pt")
+            self.log_to_gui(f"    [+] Training/Restoring PINN on {device} (1500 iterations) with checkpoint path: {pinn_checkpoint_path}...")
+            pinn.train_from_checkpoint(grid_files[-1], [xmin, xmax, ymax], iterations=1500, save_path=pinn_checkpoint_path)
             
             # 4. Extract Refined Metrics from PINN
             # Query at stagnation point (roughly min X, y=0)
