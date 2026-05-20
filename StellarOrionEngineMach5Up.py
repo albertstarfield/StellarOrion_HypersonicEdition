@@ -879,12 +879,18 @@ collide         vss air air.vss
 react           tce air.react
 
 # Surface Definition
-read_surf       {surf_name}.surf group hiad_surf
-create_particles air n 0
-balance_grid    rcb part
+# The HIAD .surf file is CW-wound: normals point outward INTO the flow (correct).
+# DO NOT use 'invert' — it would flip normals INTO the solid.
+# USE 'clip': removes the base-plate segment that sits exactly on the y=0 axis
+# boundary (axisymmetric boundary 'ao'). Without clip, SPARTA's ray-cast
+# inside/outside test fails on the degenerate y=0 surface, giving 0 fluid cells.
+read_surf       {surf_name}.surf group hiad_surf clip
 surf_collide    1 diffuse {t_wall:.1f} 1.0
 # surf_react      1 prob air.surf_react
 surf_modify     all collide 1
+# Create particles AFTER surf_modify so they are only placed in fluid cells
+create_particles air n 0
+balance_grid    rcb part
 
 # Force and Heat Flux Computations
 compute         1 surf hiad_surf air nflux mflux ke
@@ -1472,17 +1478,34 @@ run             {steps}
         sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         
         last_monitor_time = time.time()
-        monitor_interval = 300 # 5 minutes as requested
+        monitor_interval = 300 # 5 minutes babysitter interval as required
+        
+        def _babysitter_check(elapsed_min):
+            """Checks colima/docker health every 300s and restarts if down."""
+            try:
+                # 1. Check if colima is running
+                colima_res = subprocess.run(
+                    ["colima", "status"], capture_output=True, text=True, timeout=10
+                )
+                if "is running" not in colima_res.stdout and "running" not in colima_res.stderr.lower():
+                    self.log_to_gui(f"    [BABYSITTER] WARNING: Colima appears DOWN! Attempting restart...")
+                    subprocess.run(["colima", "start"], check=False, timeout=120)
+                    self.log_to_gui(f"    [BABYSITTER] Colima restart attempted. Waiting 15s...")
+                    time.sleep(15)
+                else:
+                    self.log_to_gui(f"    [BABYSITTER] Heartbeat {elapsed_min:.1f} min: Colima is running.")
+            except Exception as babysit_err:
+                self.log_to_gui(f"    [BABYSITTER] Health check failed: {babysit_err}")
         
         for line in sim_proc.stdout:
             l = line.strip()
             if not l: continue
             
-            # Babysitting check: Every 300 seconds, print a status heartbeat
+            # Babysitting check: Every 300 seconds, check colima + print heartbeat
             current_time = time.time()
             if current_time - last_monitor_time > monitor_interval:
-                elapsed_min = (current_time - start_time) / 60 if 'start_time' in locals() else 0
-                self.log_to_gui(f"    [BABYSITTER] Simulation heartbeat: {elapsed_min:.1f} min elapsed. Solver is active...")
+                elapsed_min = (current_time - start_time) / 60
+                _babysitter_check(elapsed_min)
                 last_monitor_time = current_time
 
             if "Step" in l or "CPU time =" in l: self.log_to_gui(f"        {l}")
@@ -3261,21 +3284,30 @@ run             {steps}
             if sim_comp['Drag Coefficient (Cd)']['sim'] == 0:
                 self.log_to_gui("    [!] WARNING: Simulation reported 0 drag. PINN training might be unstable.")
             
-            # Domain bounds (matching SPARTA domain)
+            # Domain bounds: MUST match the SPARTA create_box in generate_sparta_script
+            # SPARTA uses: xmin=-5.0, xmax=9.0, ymax=~3.9 (wide-mode auto-adapt)
+            # Using a tight domain [-0.6, 3.0, 3.6] was WRONG — only covered ~30% of domain
             d_val = float(baseline_doc['geometry']['diameter_m'])
-            xmin, xmax, ymax = -0.2 * d_val, 1.0 * d_val, 1.2 * d_val
+            xmin_pinn = float(res.get('domain_xmin', -5.0))
+            xmax_pinn = float(res.get('domain_xmax',  9.0))
+            ymax_pinn = float(res.get('domain_ymax',  0.5 * (xmax_pinn - xmin_pinn) * (9.0/16.0)))
+            
+            # PINN iterations: scale based on steps (more DSMC data = more training needed)
+            # Optimal range empirically: 2000-4000 iterations for DSMC-anchored PINNs
+            pinn_iters = max(2000, min(4000, int(steps * 2)))
             
             pinn = PINNAccelerator(device=device)
             pinn_checkpoint_path = os.path.join(self.cwd, "CADDesign", "results_reference", f"pinn_checkpoint_{steps}.pt")
-            self.log_to_gui(f"    [+] Training/Restoring PINN on {device} (1500 iterations) with checkpoint path: {pinn_checkpoint_path}...")
-            pinn.train_from_checkpoint(grid_files[-1], [xmin, xmax, ymax], iterations=1500, save_path=pinn_checkpoint_path)
+            self.log_to_gui(f"    [+] Training/Restoring PINN on {device} ({pinn_iters} iterations) checkpoint: {pinn_checkpoint_path}...")
+            self.log_to_gui(f"    [+] PINN Domain: x=[{xmin_pinn:.1f},{xmax_pinn:.1f}] y=[0,{ymax_pinn:.1f}] (Full SPARTA domain)")
+            pinn.train_from_checkpoint(grid_files[-1], [xmin_pinn, xmax_pinn, ymax_pinn], iterations=pinn_iters, save_path=pinn_checkpoint_path)
             
             # 4. Extract Refined Metrics from PINN
-            # Query at stagnation point (roughly min X, y=0)
-            # For IRVE-3 baseline, nose is near X=0.
-            # We'll query a small array near the nose to find peak T and p
-            x_nose = np.linspace(xmin, 0.1, 50)
-            q_pts = np.zeros((50, 2))
+            # Query along the stagnation line from far upstream to the nose (x=0 + small offset)
+            # The shock standoff is typically 0.02-0.1 * Rn upstream of nose (~x = -0.05 to -0.3 m for IRVE-3)
+            # We scan from xmin_pinn to +0.1m to capture the entire upstream shock region
+            x_nose = np.linspace(xmin_pinn, 0.1, 100)
+            q_pts = np.zeros((100, 2))
             q_pts[:, 0] = x_nose
             
             preds = pinn.predict_gap_fill(q_pts) # (rho, u, v, T, p)

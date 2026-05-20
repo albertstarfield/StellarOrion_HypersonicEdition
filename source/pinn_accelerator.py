@@ -136,7 +136,7 @@ def pde_navier_stokes_2d(x, y, v_stream=None, scales=None):
     # Convection
     energy_conv = rho_bar * (u_bar * dT_x + v_bar * dT_y)
     
-    # Pressure work
+    # Pressure work: +u*dp/dx + v*dp/dy (energy added by compression work)
     coeff_work = p_r / (rho_r * 1005.0 * T_r)
     energy_work = coeff_work * (u_bar * dp_x + v_bar * dp_y)
     
@@ -146,7 +146,9 @@ def pde_navier_stokes_2d(x, y, v_stream=None, scales=None):
     phi_visc = 2.0 * (du_x**2 + dv_y**2 + (v_bar / (y_coord + eps_y))**2) + (du_y + dv_x)**2 - (2.0/3.0) * (div_u**2)
     energy_visc = Ec_over_Re * phi_visc
     
-    energy = energy_conv - energy_work - energy_cond - energy_visc
+    # Energy equation: rho*cp*(u*dT/dx + v*dT/dy) = k*nabla^2(T) + u*dp/dx + v*dp/dy + Phi
+    # Residual form: LHS - RHS = 0
+    energy = energy_conv - energy_cond - energy_work - energy_visc
     
     return [continuity, mom_x, mom_y, eos, energy]
 
@@ -170,6 +172,7 @@ class PINNAccelerator:
         self.model = None
         self.scales = None
         self.v_est = dde.Variable(1.0) # Scaled variable
+        self.loss_history = []  # Track loss per training stage for convergence analysis
 
     def train_from_checkpoint(self, grid_file, domain_bounds, iterations=2000, inverse=False, save_path=None, loss_weights=None):
         """Uses SPARTA data as anchor points for PINN refinement or inverse estimation."""
@@ -264,15 +267,32 @@ class PINNAccelerator:
                 print(f"[PINN] Stage 1: Data Pre-training (fitting observation constraints)...")
                 stage1_weights = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0]
                 self.model.compile("adam", lr=1e-3, loss_weights=stage1_weights)
-                self.model.train(iterations=iterations // 2, display_every=100)
+                losshistory1, _ = self.model.train(iterations=iterations // 2, display_every=100)
+                # Store ONLY data-term loss (last 5 components, indices 5-9)
+                # NOT float(sum(l)) which includes 5 zero PDE terms in Stage 1
+                # and triggers false-plateau at step 9.
+                self.loss_history.extend([
+                    (i * 100, float(sum(l[5:])))  # data terms only, actual iter number
+                    for i, l in enumerate(losshistory1.loss_train)
+                ])
                 
                 print(f"[PINN] Stage 2: Physics-Regularized Fine-tuning...")
                 if loss_weights is None or len(loss_weights) != 10:
                     stage2_weights = [1e-4, 1e-4, 1e-4, 1e-4, 1e-4, 1.0, 1.0, 1.0, 1.0, 1.0]
                 else:
                     stage2_weights = loss_weights
-                self.model.compile("adam", lr=1e-3, loss_weights=stage2_weights)
-                self.model.train(iterations=iterations - (iterations // 2), display_every=100)
+                self.model.compile("adam", lr=5e-4, loss_weights=stage2_weights)  # Reduced LR for fine-tuning
+                losshistory2, _ = self.model.train(iterations=iterations - (iterations // 2), display_every=100)
+                offset = len(self.loss_history)
+                self.loss_history.extend([
+                    (offset * 100 + i * 100, float(sum(l[5:])))  # data terms only, actual iter number
+                    for i, l in enumerate(losshistory2.loss_train)
+                ])
+                
+                # Report convergence quality
+                final_loss = self.loss_history[-1][1] if self.loss_history else float('nan')
+                plateau_iter = self.find_optimal_iterations()
+                print(f"[PINN] Training complete. Final loss: {final_loss:.4e}. Plateau detected at: {plateau_iter} iterations.")
             else:
                 self.model.train(iterations=iterations, display_every=100)
             
@@ -290,7 +310,48 @@ class PINNAccelerator:
         
         return self.model
 
+    def find_optimal_iterations(self, plateau_threshold=0.01):
+        """Analyzes data-term loss history to find the optimal (plateau) training iteration.
+        
+        Returns the iteration where relative improvement in DATA losses (not PDE residuals)
+        drops below plateau_threshold. Requires at least 20% of total steps to have passed
+        to prevent false early-plateau triggers (e.g. the step-9 false positive from run 1
+        where Stage 1 zero PDE terms made total sum appear unchanged).
+        
+        Answers AgenticInst.txt: 'find out at what steps it is most optimal to train PINN'.
+        """
+        if not self.loss_history or len(self.loss_history) < 10:
+            return -1  # Not enough data
+        
+        losses = [l for _, l in self.loss_history]
+        
+        # Smooth with a rolling window to reduce noise
+        window = max(5, len(losses) // 20)
+        smoothed = []
+        for i in range(len(losses)):
+            start = max(0, i - window)
+            smoothed.append(sum(losses[start:i+1]) / (i - start + 1))
+        
+        # Require at least 20% of total steps before allowing plateau declaration
+        # Prevents false positives at early steps where loss is still rapidly changing
+        min_plateau_idx = max(1, len(smoothed) // 5)
+        
+        # Find where relative improvement < threshold (after min_plateau_idx)
+        plateau_idx = len(smoothed) - 1  # default: last iteration
+        for i in range(min_plateau_idx, len(smoothed)):
+            if smoothed[i-1] > 0:
+                rel_improvement = abs(smoothed[i-1] - smoothed[i]) / smoothed[i-1]
+                if rel_improvement < plateau_threshold:
+                    plateau_idx = i
+                    break
+        
+        optimal_iter = self.loss_history[plateau_idx][0]
+        print(f"[PINN] Convergence plateau detected at iteration {optimal_iter} "
+              f"(data_loss={smoothed[plateau_idx]:.4e}, rel_improve<{plateau_threshold:.1%})")
+        return optimal_iter
+
     def save(self, filepath):
+
         """Saves both model weights and normalization scales."""
         import torch
         import json
@@ -346,7 +407,8 @@ class PINNAccelerator:
             self.model = dde.Model(dummy_data, net)
             
             self.model.net.load_state_dict(torch.load(weights_path, map_location=torch.device(self.device)))
-            print(f"[PINN] Model loaded successfully from {base_path}")
+            self.model.compile("adam", lr=1e-3) # Compile required for prediction
+            print(f"[PINN] Model loaded and compiled successfully from {base_path}")
             return True
         except Exception as e:
             print(f"[PINN] Error loading model: {e}")
