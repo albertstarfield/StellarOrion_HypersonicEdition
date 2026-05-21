@@ -1,0 +1,266 @@
+--- Frame 1 ---
+\titlepage
+\end{frame}
+
+% --- Outline ---
+--- Frame 2 ---
+{Outline}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \textbf{SPARTA DSMC Technical Analysis}
+            \begin{itemize}
+--- Frame 3 ---
+{Architecture Overview: Layered Design}
+    The StellarOrion suite utilizes a hybrid 3-layer architecture:
+    \vfill
+    \begin{columns}
+        \beg
+--- Frame 4 ---
+{Full Execution Stack: \texttt{main.py} to Results}
+\vspace{-6pt}
+\tikzset{
+  Hnode/.style={rectangle, rounded corners=2pt, draw=PineGreen, fill=PineG
+--- Frame 5 ---
+{The Kinetic Model: Direct Simulation Monte Carlo (DSMC)}
+    \begin{itemize}
+        \item \textbf{High-Fidelity Kinetic Solver}: DSMC models gas as
+--- Frame 6 ---
+{DSMC Parameter Definitions: Understanding $Kn$, $\lambda$, and $n_\rho$}
+    \begin{itemize}
+        \item \textbf{$D_{\mathrm{HIAD}}$ (Characteristi
+--- Frame 7 ---
+{SPARTA DSMC: Technical Analysis}
+    \textbf{Governing Equation} --- the Boltzmann Transport Equation:
+    \[
+        \frac{\partial f}{\partial t}
+--- Frame 8 ---
+{Discretization: Surface vs. Volume Grid}
+    \begin{itemize}
+        \item \textbf{1. Surface Discretization (Geometry Engine v8)}:
+        \begin{it
+--- Frame 9 ---
+{Engineering Metrics: Aero-Thermal Budget}
+    \begin{columns}[t]
+        \begin{column}{0.5\textwidth}
+            \textbf{Freestream \& Aero}\\[6pt]
+--- Frame 10 ---
+{SPARTA Internal Per-Timestep Loop}
+    \centering
+    \vspace{-6pt}
+    \tikzset{
+        proc/.style = {rectangle, rounded corners=2pt, draw=PineGre
+--- Frame 11 ---
+{SPARTA Internals: DSMC Timestep Loop}
+    \begin{itemize}
+        \item \textbf{Source}: \texttt{sparta/src/update.cpp} (Method: \texttt{Update::run}
+--- Frame 12 ---
+{1. Inject}
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \centering
+            \begin{tikzpicture}
+                \draw[thi
+--- Frame 13 ---
+{2. Advect}
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \centering
+            \begin{tikzpicture}
+                \draw[das
+--- Frame 14 ---
+{3. Migrate}
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \centering
+            \begin{tikzpicture}
+                \fill[Pi
+--- Frame 15 ---
+{4. Sort}
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \centering
+            \begin{tikzpicture}[scale=0.9]
+               \
+--- Frame 16 ---
+{5. Collide}
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \centering
+            \begin{tikzpicture}
+                \draw[th
+--- Frame 17 ---
+{6. Tally}
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \centering
+            \begin{tikzpicture}
+                \draw[thic
+--- Frame 18 ---
+{SPARTA Internals: Particle Initialization}
+    \begin{itemize}
+        \item \textbf{Source}: \texttt{sparta/src/create\_particles.cpp}
+        \item
+--- Frame 19 ---
+{Role of the Computational Grid in DSMC}
+    \textit{Why does a purely particle-based method require a grid?}
+    \vfill
+    \begin{columns}
+        \
+--- Frame 20 ---
+{Concept Illustration: The Statistical Pool}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \centering
+            \begin{tikzp
+--- Frame 21 ---
+{Concept Illustration: Mean Free Path Violation}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \centering
+            \begin{t
+--- Frame 22 ---
+{SPARTA API Subroutines (\texttt{StellarOrionEngineMach5Up.py})}
+    \begin{table}
+        \centering
+        \tiny
+        \renewcommand{\arraystretc
+--- Frame 23 ---
+\vfill
+    \begin{center}
+        {\Large\bfseries\color{NavyBlue}
+        Section 2: Headless Flow Visualization\\[4pt]
+        \& High-Fidelity
+--- Frame 24 ---
+{Headless Manim Engine \& Corner Git Watermark}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \textbf{Visualization Engine
+--- Frame 25 ---
+{Mathematical Equations \& SPARTA Parity (PDE vs. Columns)}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \textbf{Navier-S
+--- Frame 26 ---
+{Complex Kinetics: Surface Catalysis \& Plasma Blackout}
+    \begin{columns}[T]
+        \begin{column}{0.45\textwidth}
+            \textbf{Boundary Re
+--- Frame 27 ---
+{Real Shield Topology \& Aftbody Wake Recirculation}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \textbf{Aeroshell Scall
+--- Frame 28 ---
+{LHS Population Strategy: Data Observation}
+    \begin{itemize}
+        \item \textbf{Objective}: Train a stable Metamodel (MoP) using Latin Hypercube
+--- Frame 29 ---
+{Geometry Engine v8}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \begin{figure}
+            \centering
+            \includegraphics[wid
+--- Frame 30 ---
+[fragile]{Geometry Engine: Mathematical Implementation}
+    \begin{columns}
+        \column{0.45\textwidth}
+        \textbf{Core Equations (Rapisarda
+--- Frame 31 ---
+{Geometry Engine: IRVE-3 + Centerbody Payload (MDAO-Corrected)}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{figure}
+--- Frame 32 ---
+{Geometry Engine: High-Fidelity MDAO Diagnostic}
+    \begin{figure}
+        \centering
+        \includegraphics[height=0.65\textheight,keepaspectratio
+--- Frame 33 ---
+{Expected Flow-Field Schematic (Validation Benchmark)}
+    \begin{columns}[T]
+        \column{0.6\textwidth}
+        \begin{figure}
+            \cente
+--- Frame 34 ---
+{Material Description: F-TPS \& Structural Components}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{F-TPS Layer Properties (Tabl
+--- Frame 35 ---
+{Structural Properties: Safety Factors \& Margins}
+    \begin{columns}[T]
+        \column{0.48\textwidth}
+        \textbf{Safety Factors \& Margins (T
+--- Frame 36 ---
+{Headless Validation Pipeline: Stability Hardening}
+    \begin{itemize}
+        \item \textbf{Objective}: Automate the verification of physically cons
+--- Frame 37 ---
+{Verified Grid Configuration: IRVE-3 Payload Integration}
+    \begin{columns}
+        \column{0.65\textwidth}
+        \begin{figure}
+            \cent
+--- Frame 38 ---
+{Results: Thermal Map (Mach 10, 52km)}
+    \begin{columns}
+        \column{0.65\textwidth}
+        \begin{figure}
+            \centering
+            \
+--- Frame 39 ---
+{Results: Mach Number Distribution}
+    \begin{columns}
+        \column{0.65\textwidth}
+        \begin{figure}
+            \centering
+            \inc
+--- Frame 40 ---
+{Results: Pressure and Velocity Fields}
+    \begin{columns}
+        \column{0.48\textwidth}
+        \begin{figure}
+            \centering
+--- Frame 41 ---
+{Results: Local Knudsen Number (Rarefaction)}
+    \begin{columns}
+        \column{0.65\textwidth}
+        \begin{figure}
+            \centering
+--- Frame 42 ---
+{Conclusion \& Next Steps}
+    \begin{itemize}
+        \item Architecture and Physics foundations are fully validated.
+        \item Grid study confir
+--- Frame 43 ---
+\vfill
+    \begin{center}
+        {\Large\bfseries\color{NavyBlue} Bonus: Development Toolkit \& GUI}
+        \vspace{12pt}
+
+        \textcolor{B
+--- Frame 44 ---
+{StellarOrion Toolkit: Integrated Design GUI}
+    \begin{columns}
+        \column{0.6\textwidth}
+        \begin{figure}
+            \centering
+--- Frame 45 ---
+{Week 6 Roadmap: System Scaling and Orbital Reentry}
+    \begin{columns}[T]
+        \column{0.6\textwidth}
+        \begin{figure}
+            \centeri
+--- Frame 46 ---
+{Calibration Progress: Week 3 vs. Week 4}
+    \begin{itemize}
+        \item \textbf{Quantifiable Convergence}: Performance tracking against NASA IRVE-
+--- Frame 47 ---
+{Calibration Insights: Drag and Thermal Analysis}
+    \begin{itemize}
+        \item \textbf{Drag Breakthrough}: $C_D$ error reduced from 12.9\% to 1.5
+--- Frame 48 ---
+{Neural Refinement: PINN Architecture \& Sampling Upgrades}
+    \begin{itemize}
+        \item \textbf{Singularity Avoidance}: The axisymmetric PDE con

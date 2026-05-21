@@ -1,0 +1,64 @@
+40:\begin{frame}
+45:\begin{frame}{Outline}
+72:\begin{frame}{Architecture Overview: Layered Design}
+99:\begin{frame}{Full Execution Stack: \texttt{main.py} to Results}
+202:\begin{frame}{The Kinetic Model: Direct Simulation Monte Carlo (DSMC)}
+216:\begin{frame}{DSMC Parameter Definitions: Understanding $Kn$, $\lambda$, and $n_\rho$}
+232:\begin{frame}{SPARTA DSMC: Technical Analysis}
+268:\begin{frame}{Discretization: Surface vs. Volume Grid}
+285:\begin{frame}{Engineering Metrics: Aero-Thermal Budget}
+315:\begin{frame}{SPARTA Internal Per-Timestep Loop}
+377:\begin{frame}{SPARTA Internals: DSMC Timestep Loop}
+399:\begin{frame}{1. Inject}
+426:\begin{frame}{1b. The Sink: Where does the gas go?}
+461:\begin{frame}{2. Advect}
+486:\begin{frame}{3. Migrate}
+516:\begin{frame}{4. Sort}
+545:\begin{frame}{5. Collide}
+581:\begin{frame}{ReactTCE::attempt()}
+611:\begin{frame}{ReactTCE: Activation Threshold \& Units}
+644:\begin{frame}{CollideVSS::setup\_collision()}
+669:\begin{frame}{SPARTA Data Architecture: Particle vs. Grid}
+701:\begin{frame}{6. Tally: How the Tiers Interact}
+745:\begin{frame}{Variable Definitions: Physics of the Flow}
+767:\begin{frame}{Thermal Non-equilibrium: The Three Energy Modes}
+806:\begin{frame}{SPARTA Internals: Particle Initialization}
+825:\begin{frame}{Role of the Computational Grid in DSMC}
+854:\begin{frame}{Concept Illustration: The Statistical Pool}
+900:\begin{frame}{Concept Illustration: Mean Free Path Violation}
+940:\begin{frame}{SPARTA API Subroutines (\texttt{StellarOrionEngineMach5Up.py})}
+963:\begin{frame}{\texttt{build\_sparta\_image()} \& \texttt{test\_sparta\_readiness()}}
+989:\begin{frame}{\texttt{get\_chemistry\_data()}}
+1013:\begin{frame}{Physics Formats: .species, .vss, .tce}
+1060:\begin{frame}{Atmosphere Inventory Presets}
+1077:\begin{frame}{\texttt{generate\_surf\_react\_script()}}
+1107:\begin{frame}{\texttt{generate\_sparta\_script()}}
+1140:\begin{frame}{\texttt{run\_sparta\_simulation()}}
+1168:\begin{frame}{\texttt{parse\_sparta\_results()}}
+1201:\begin{frame}{\texttt{calculate\_flight\_metrics()}}
+1229:\begin{frame}
+1250:\begin{frame}{Headless Manim Engine \& Corner Git Watermark}
+1275:\begin{frame}{Mathematical Equations \& SPARTA Parity (PDE vs. Columns)}
+1304:\begin{frame}{Complex Kinetics: Surface Catalysis \& Plasma Blackout}
+1341:\begin{frame}{Real Shield Topology \& Aftbody Wake Recirculation}
+1370:\begin{frame}{LHS Population Strategy: Data Observation}
+1380:\begin{frame}{Geometry Engine v8}
+1402:\begin{frame}[fragile]{Geometry Engine: Mathematical Implementation}
+1440:\begin{frame}{Geometry Engine: IRVE-3 + Centerbody Payload (MDAO-Corrected)}
+1464:\begin{frame}{Geometry Engine: High-Fidelity MDAO Diagnostic}
+1473:\begin{frame}{Expected Flow-Field Schematic (Validation Benchmark)}
+1494:\begin{frame}{Material Description: F-TPS \& Structural Components}
+1523:\begin{frame}{Structural Properties: Safety Factors \& Margins}
+1569:\begin{frame}{Headless Validation Pipeline: Stability Hardening}
+1583:\begin{frame}{Verified Grid Configuration: IRVE-3 Payload Integration}
+1602:\begin{frame}{Results: Thermal Map (Mach 10, 52km)}
+1621:\begin{frame}{Results: Mach Number Distribution}
+1640:\begin{frame}{Results: Pressure and Velocity Fields}
+1658:\begin{frame}{Results: Local Knudsen Number (Rarefaction)}
+1677:\begin{frame}{Conclusion \& Next Steps}
+1687:\begin{frame}
+1701:\begin{frame}{StellarOrion Toolkit: Integrated Design GUI}
+1723:\begin{frame}{Week 6 Roadmap: System Scaling and Orbital Reentry}
+1742:\begin{frame}{Calibration Progress: Week 3 vs. Week 4}
+1764:\begin{frame}{Calibration Insights: Drag and Thermal Analysis}
+1780:\begin{frame}{Neural Refinement: PINN Architecture \& Sampling Upgrades}

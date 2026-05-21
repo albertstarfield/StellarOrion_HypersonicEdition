@@ -1,0 +1,166 @@
+--- FRAME 1 ---
+\titlepage
+\end{frame}
+
+% --- Outline ---
+--- FRAME 2 ---
+{Outline}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \textbf{SPARTA DSMC
+--- FRAME 3 ---
+{Architecture Overview: Layered Design}
+    The StellarOrion suite utilizes a hybrid 3-layer archite
+--- FRAME 4 ---
+{Full Execution Stack: \texttt{main.py} to Results}
+\vspace{-6pt}
+\tikzset{
+  Hnode/.style={rectangl
+--- FRAME 5 ---
+{The Kinetic Model: Direct Simulation Monte Carlo (DSMC)}
+    \begin{itemize}
+        \item \textbf{
+--- FRAME 6 ---
+{DSMC Parameter Definitions: Understanding $Kn$, $\lambda$, and $n_\rho$}
+    \begin{itemize}
+--- FRAME 7 ---
+{SPARTA DSMC: Technical Analysis}
+    \textbf{Governing Equation} --- the Boltzmann Transport Equati
+--- FRAME 8 ---
+{Discretization: Surface vs. Volume Grid}
+    \begin{itemize}
+        \item \textbf{1. Surface Discr
+--- FRAME 9 ---
+{Engineering Metrics: Aero-Thermal Budget}
+    \begin{columns}[t]
+        \begin{column}{0.5\textwid
+--- FRAME 10 ---
+{SPARTA Internal Per-Timestep Loop}
+    \centering
+    \vspace{-6pt}
+    \tikzset{
+        proc/.sty
+--- FRAME 11 ---
+{SPARTA Internals: DSMC Timestep Loop}
+    \begin{itemize}
+        \item \textbf{Source}: \texttt{sp
+--- FRAME 12 ---
+{SPARTA Internals: Particle Initialization}
+    \begin{itemize}
+        \item \textbf{Source}: \text
+--- FRAME 13 ---
+{Role of the Computational Grid in DSMC}
+    \textit{Why does a purely particle-based method require
+--- FRAME 14 ---
+{SPARTA API Subroutines (\texttt{StellarOrionEngineMach5Up.py})}
+    \begin{table}
+        \centerin
+--- FRAME 15 ---
+\vfill
+    \begin{center}
+        {\Large\bfseries\color{NavyBlue}
+        Section 2: Headless
+--- FRAME 16 ---
+{Headless Manim Engine \& Corner Git Watermark}
+    \begin{columns}[T]
+        \begin{column}{0.48\t
+--- FRAME 17 ---
+{Mathematical Equations \& SPARTA Parity (PDE vs. Columns)}
+    \begin{columns}[T]
+        \begin{co
+--- FRAME 18 ---
+{Complex Kinetics: Surface Catalysis \& Plasma Blackout}
+    \begin{columns}[T]
+        \begin{colum
+--- FRAME 19 ---
+{Real Shield Topology \& Aftbody Wake Recirculation}
+    \begin{columns}[T]
+        \begin{column}{0
+--- FRAME 20 ---
+{LHS Population Strategy: Data Observation}
+    \begin{itemize}
+        \item \textbf{Objective}: Tr
+--- FRAME 21 ---
+{Geometry Engine v8}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \begin{figure}
+--- FRAME 22 ---
+[fragile]{Geometry Engine: Mathematical Implementation}
+    \begin{columns}
+        \column{0.45\tex
+--- FRAME 23 ---
+{Geometry Engine: IRVE-3 + Centerbody Payload (MDAO-Corrected)}
+    \begin{columns}[T]
+        \colu
+--- FRAME 24 ---
+{Geometry Engine: High-Fidelity MDAO Diagnostic}
+    \begin{figure}
+        \centering
+        \incl
+--- FRAME 25 ---
+{Expected Flow-Field Schematic (Validation Benchmark)}
+    \begin{columns}[T]
+        \column{0.6\te
+--- FRAME 26 ---
+{Material Description: F-TPS \& Structural Components}
+    \begin{columns}
+        \column{0.5\textw
+--- FRAME 27 ---
+{Structural Properties: Safety Factors \& Margins}
+    \begin{columns}[T]
+        \column{0.48\textw
+--- FRAME 28 ---
+{Headless Validation Pipeline: Stability Hardening}
+    \begin{itemize}
+        \item \textbf{Object
+--- FRAME 29 ---
+{Verified Grid Configuration: IRVE-3 Payload Integration}
+    \begin{columns}
+        \column{0.65\t
+--- FRAME 30 ---
+{Results: Thermal Map (Mach 10, 52km)}
+    \begin{columns}
+        \column{0.65\textwidth}
+        \
+--- FRAME 31 ---
+{Results: Mach Number Distribution}
+    \begin{columns}
+        \column{0.65\textwidth}
+        \beg
+--- FRAME 32 ---
+{Results: Pressure and Velocity Fields}
+    \begin{columns}
+        \column{0.48\textwidth}
+--- FRAME 33 ---
+{Results: Local Knudsen Number (Rarefaction)}
+    \begin{columns}
+        \column{0.65\textwidth}
+--- FRAME 34 ---
+{Conclusion \& Next Steps}
+    \begin{itemize}
+        \item Architecture and Physics foundations ar
+--- FRAME 35 ---
+\vfill
+    \begin{center}
+        {\Large\bfseries\color{NavyBlue} Bonus: Development Toolkit \
+--- FRAME 36 ---
+{StellarOrion Toolkit: Integrated Design GUI}
+    \begin{columns}
+        \column{0.6\textwidth}
+--- FRAME 37 ---
+{Week 6 Roadmap: System Scaling and Orbital Reentry}
+    \begin{columns}[T]
+        \column{0.6\text
+--- FRAME 38 ---
+{Calibration Progress: Week 3 vs. Week 4}
+    \begin{itemize}
+        \item \textbf{Quantifiable Con
+--- FRAME 39 ---
+{Calibration Insights: Drag and Thermal Analysis}
+    \begin{itemize}
+        \item \textbf{Drag Bre
+--- FRAME 40 ---
+{Neural Refinement: PINN vs. SPARTA DSMC Parity}
+    \begin{itemize}
+        \item \textbf{Physics-I

@@ -209,7 +209,23 @@ class PINNAccelerator:
         
         # Subsample anchor points if too many (for performance on CPU)
         if len(X_scaled) > 5000:
-            idx = np.random.choice(len(X_scaled), 5000, replace=False)
+            p_vals = Y_data[:, 4]
+            T_vals = Y_data[:, 3]
+            high_val_idx = np.where((p_vals > 200.0) | (T_vals > 500.0))[0]
+            
+            if len(high_val_idx) > 2500:
+                idx_high = np.random.choice(high_val_idx, 2500, replace=False)
+            else:
+                idx_high = high_val_idx
+                
+            other_idx = np.setdiff1d(np.arange(len(X_scaled)), idx_high)
+            num_other = 5000 - len(idx_high)
+            if len(other_idx) > num_other:
+                idx_other = np.random.choice(other_idx, num_other, replace=False)
+            else:
+                idx_other = other_idx
+                
+            idx = np.concatenate([idx_high, idx_other])
             X_anchors = X_scaled[idx]
             Y_anchors = Y_scaled[idx]
         else:

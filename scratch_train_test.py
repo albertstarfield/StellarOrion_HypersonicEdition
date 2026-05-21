@@ -11,7 +11,6 @@ os.environ["DDE_BACKEND"] = "pytorch"
 # 1. Load grid data
 grid_file = "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/CADDesign/results_reference/grid.1100.out"
 X_data, Y_data = parse_sparta_grid(grid_file)
-print("Total parsed cells:", len(X_data))
 
 # 2. Scale calculations
 u_max = np.max(np.abs(Y_data[:, 1])) if np.max(np.abs(Y_data[:, 1])) > 0 else 10000.0
@@ -27,7 +26,6 @@ scales = {
     "p": np.max(Y_data[:, 4]) if np.max(Y_data[:, 4]) > 0 else 1000.0,
     "L": max(abs(domain_bounds[0]), abs(domain_bounds[1]), abs(domain_bounds[2]))
 }
-print("Scales:", scales)
 
 X_scaled = X_data / scales["L"]
 Y_scaled = Y_data / np.array([scales["rho"], scales["u"], scales["v"], scales["T"], scales["p"]])
@@ -37,9 +35,7 @@ bounds_scaled = [domain_bounds[0]/scales["L"], domain_bounds[1]/scales["L"], dom
 p_vals = Y_data[:, 4]
 T_vals = Y_data[:, 3]
 
-# Select cells that are in the shock/stagnation region (pressure > 200 Pa or temperature > 500 K)
 high_val_idx = np.where((p_vals > 200.0) | (T_vals > 500.0))[0]
-print("Total cells in shock/high-value region:", len(high_val_idx))
 
 if len(high_val_idx) > 2500:
     high_val_idx = np.random.choice(high_val_idx, 2500, replace=False)
@@ -51,8 +47,6 @@ other_idx = np.random.choice(other_idx, num_other, replace=False)
 idx = np.concatenate([high_val_idx, other_idx])
 X_anchors = X_scaled[idx]
 Y_anchors = Y_scaled[idx]
-
-print(f"Sampling: {len(high_val_idx)} high-value cells + {len(other_idx)} other cells. Total anchors = {len(X_anchors)}")
 
 # 4. Set up DeepXDE model
 geom = dde.geometry.Rectangle([bounds_scaled[0], 0], [bounds_scaled[1], bounds_scaled[2]])
@@ -77,31 +71,31 @@ data = dde.data.PDE(
 net = dde.nn.FNN([2] + [128] * 5 + [5], "tanh", "Glorot uniform")
 model = dde.Model(data, net)
 
-# 5. Train for 200 + 200 iterations for a quick test
-print("\n--- Training Stage 1: Data Pre-training ---")
+# 5. Train for 300 + 300 iterations for slightly better convergence
 stage1_weights = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 model.compile("adam", lr=1e-3, loss_weights=stage1_weights)
-model.train(iterations=200, display_every=50)
+model.train(iterations=300, display_every=100)
 
-print("\n--- Training Stage 2: Physics Fine-tuning ---")
 stage2_weights = [1e-4, 1e-4, 1e-4, 1e-4, 1e-4, 1.0, 1.0, 1.0, 1.0, 1.0]
 model.compile("adam", lr=5e-4, loss_weights=stage2_weights)
-model.train(iterations=200, display_every=50)
+model.train(iterations=300, display_every=100)
 
-# 6. Evaluate predictions at high pressure points
-sorted_indices = np.argsort(Y_data[:, 4])[::-1]
-high_p_pts = Y_data[sorted_indices[:5]]
-high_p_coords = X_data[sorted_indices[:5]]
+# 6. Query along stagnation line (y = 0.0) from x = -5.0 to 0.1
+x_nose = np.linspace(-5.0, 0.1, 100)
+q_pts = np.zeros((100, 2))
+q_pts[:, 0] = x_nose
+q_pts_scaled = q_pts / scales["L"]
 
-X_query_scaled = high_p_coords / scales["L"]
-Y_scaled_preds = model.predict(X_query_scaled)
-preds = Y_scaled_preds * np.array([scales["rho"], scales["u"], scales["v"], scales["T"], scales["p"]])
+preds_scaled = model.predict(q_pts_scaled)
+preds = preds_scaled * np.array([scales["rho"], scales["u"], scales["v"], scales["T"], scales["p"]])
 
-print("\nEvaluation at Top 5 High Pressure Points:")
-print(f"{'X':<8} | {'Y':<8} | {'True P (Pa)':<12} | {'Pred P (Pa)':<12} | {'Ratio':<8}")
-print("-" * 55)
-for i in range(5):
-    true_p = high_p_pts[i, 4]
-    pred_p = preds[i, 4]
-    ratio = pred_p / true_p
-    print(f"{high_p_coords[i, 0]:.3f}    | {high_p_coords[i, 1]:.3f}    | {true_p:<12.1f} | {pred_p:<12.1f} | {ratio:.3f}")
+p_refined_max = np.max(preds[:, 4])
+t_refined_max = np.max(preds[:, 3])
+
+print("\nCenterline (y = 0.0) Refined Predictions:")
+print(f"Max Refined Pressure along y=0: {p_refined_max:.1f} Pa")
+print(f"Max Refined Temperature along y=0: {t_refined_max:.1f} K")
+
+# Let's find the location of maximum pressure along y=0
+max_idx = np.argmax(preds[:, 4])
+print(f"Location of Max Refined Pressure along y=0: x = {x_nose[max_idx]:.4f} m")

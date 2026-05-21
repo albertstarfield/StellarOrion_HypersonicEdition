@@ -1535,7 +1535,7 @@ run             {steps}
         try:
             from source import visualizer
             grid_dir = os.path.join(cad_dir, "results_reference")
-            grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")])
+            grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")], key=lambda x: int(os.path.basename(x).split('.')[1]))
             plots_dir = os.path.join(self.cwd, "web", "assets", "plots")
             os.makedirs(plots_dir, exist_ok=True)
 
@@ -2514,7 +2514,7 @@ run             {steps}
         self.log_to_gui("[*] PHASE 1.1: POST-PROCESSING BASELINE RESULTS...")
         from source import visualizer
         grid_dir = os.path.join(cad_dir, "results_reference")
-        grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")])
+        grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")], key=lambda x: int(os.path.basename(x).split('.')[1]))
         plots_dir = os.path.join(self.cwd, "web", "assets", "plots")
         os.makedirs(plots_dir, exist_ok=True)
 
@@ -2754,7 +2754,7 @@ run             {steps}
             # Generate Visuals for this sample
             try:
                 from source import visualizer
-                grid_files = sorted([os.path.join(raw_dir, f) for f in os.listdir(raw_dir) if f.startswith("grid.") and f.endswith(".out")])
+                grid_files = sorted([os.path.join(raw_dir, f) for f in os.listdir(raw_dir) if f.startswith("grid.") and f.endswith(".out")], key=lambda x: int(os.path.basename(x).split('.')[1]))
                 if grid_files:
                     viz_metadata = self._get_viz_params(opt_params, sample_dict)
                     visualizer.generate_animation(grid_files, os.path.join(sample_dir, "simulation_anim.mp4"), ref_params=viz_metadata)
@@ -2933,7 +2933,7 @@ run             {steps}
         self.log_to_gui("[*] Compiling Final Simulation Animation (Post-process)...")
         from source import visualizer
         grid_dir = os.path.join(cad_dir, "results_reference")
-        grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")])
+        grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")], key=lambda x: int(os.path.basename(x).split('.')[1]))
         viz_metadata = self._get_viz_params(opt_params, best_config)
         visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
         viz_metadata = self._get_viz_params(opt_params, best_config)
@@ -3122,7 +3122,7 @@ run             {steps}
             try:
                 from source import visualizer
                 grid_dir = os.path.join(cad_dir, "results_reference")
-                grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")])
+                grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")], key=lambda x: int(os.path.basename(x).split('.')[1]))
                 plots_dir = os.path.join(self.cwd, "web", "assets", "plots")
                 os.makedirs(plots_dir, exist_ok=True)
                 
@@ -3275,7 +3275,7 @@ run             {steps}
             
             cad_dir = os.path.join(self.cwd, "CADDesign")
             grid_dir = os.path.join(cad_dir, "results_reference")
-            grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")])
+            grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")], key=lambda x: int(os.path.basename(x).split('.')[1]))
             
             if not grid_files:
                 return {"status": "error", "message": "No grid output files found for PINN training. Simulation might have failed or steps were too low."}
@@ -3303,32 +3303,44 @@ run             {steps}
             pinn.train_from_checkpoint(grid_files[-1], [xmin_pinn, xmax_pinn, ymax_pinn], iterations=pinn_iters, save_path=pinn_checkpoint_path)
             
             # 4. Extract Refined Metrics from PINN
-            # Query along the stagnation line from far upstream to the nose (x=0 + small offset)
-            # The shock standoff is typically 0.02-0.1 * Rn upstream of nose (~x = -0.05 to -0.3 m for IRVE-3)
-            # We scan from xmin_pinn to +0.1m to capture the entire upstream shock region
+            # CRITICAL: Do NOT query at y=0 (the symmetry axis).
+            # The axisymmetric PDE has a rho*v/y singularity that forces the network to
+            # suppress values near y=0, causing massive underprediction of stagnation pressure.
+            # Query at y=0.01 (just off-axis) and ALSO scan the 2D shock-layer region to
+            # robustly find the true peak pressure / temperature in the shock layer.
+
+            # --- (A) Stagnation line query at y=0.01 offset ---
             x_nose = np.linspace(xmin_pinn, 0.1, 100)
-            q_pts = np.zeros((100, 2))
-            q_pts[:, 0] = x_nose
-            
-            preds = pinn.predict_gap_fill(q_pts) # (rho, u, v, T, p)
-            p_refined_max = np.max(preds[:, 4])
-            t_refined_max = np.max(preds[:, 3])
-            
-            # Calculate Cd from refined pressure
-            # Cd approx (P_stag - P_inf) / (0.5 * rho * v^2)
-            # For simplicity, we'll use a correction factor based on the ratio of refined vs raw pressure
+            q_pts_stag = np.zeros((100, 2))
+            q_pts_stag[:, 0] = x_nose
+            q_pts_stag[:, 1] = 0.01  # Off-axis to avoid y=0 singularity
+
+            # --- (B) 2D shock-layer region scan (x in [xmin,+0.3], y in [0.01,0.5]) ---
+            nx_scan, ny_scan = 40, 20
+            x_scan_arr = np.linspace(xmin_pinn, 0.3, nx_scan)
+            y_scan_arr = np.linspace(0.01, 0.5, ny_scan)
+            xx_s, yy_s = np.meshgrid(x_scan_arr, y_scan_arr)
+            q_pts_2d = np.column_stack([xx_s.ravel(), yy_s.ravel()])
+
+            preds_stag = pinn.predict_gap_fill(q_pts_stag)  # (rho, u, v, T, p)
+            preds_2d   = pinn.predict_gap_fill(q_pts_2d)
+
+            # Robust max across both query regions
+            p_refined_max = max(np.max(preds_stag[:, 4]), np.max(preds_2d[:, 4]))
+            t_refined_max = max(np.max(preds_stag[:, 3]), np.max(preds_2d[:, 3]))
+
+            # Calculate Cd from refined pressure using pressure ratio.
+            # Clamp ratio to [0.5, 2.0] so a pathological PINN cannot destroy derived metrics.
             p_raw_max = res.get('stag_press', baseline_doc['validation_targets']['stagnation_pressure_kpa'] * 1000.0)
-            p_ratio = p_refined_max / p_raw_max if p_raw_max > 0 else 1.0
-            
-            # Refined CD and Heat Flux
-            # We apply the ratio derived from PINN pressure refinement to the raw metrics
-            # This is a "hybrid" approach where PINN corrects the noise in the raw result
+            p_ratio = float(np.clip(p_refined_max / p_raw_max if p_raw_max > 0 else 1.0, 0.5, 2.0))
+
+            # Refined Cd: apply pressure ratio as correction to raw DSMC Cd
             pinn_cd = sim_comp['Drag Coefficient (Cd)']['sim'] * p_ratio
-            
-            # For Heat Flux, we use the temperature ratio (or more complex gradient if available)
-            # Since Q ~ dT/dn, and we refined T, we'll use the peak T ratio as a proxy for refinement
+
+            # For Heat Flux, use temperature ratio as proxy for dT/dn gradient.
+            # Clamp similarly to prevent runaway scaling.
             t_raw_max = res.get('shock_temp', 3000.0)
-            t_ratio = t_refined_max / t_raw_max if t_raw_max > 0 else 1.0
+            t_ratio = float(np.clip(t_refined_max / t_raw_max if t_raw_max > 0 else 1.0, 0.5, 2.0))
             pinn_heat = sim_comp['Stagnation Heat Flux']['sim'] * t_ratio
             
             # 5. Add to comparison

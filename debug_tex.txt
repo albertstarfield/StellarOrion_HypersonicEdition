@@ -1,0 +1,501 @@
+   600	            The \textbf{Total Collision Energy (TCE)} model is the industry standard for chemical kinetics in DSMC.
+   601	            \vspace{8pt}
+   602	            \begin{itemize}
+   603	                \item \textbf{Energy Threshold:} It checks if the kinetic energy of the colliding pair exceeds the reaction activation energy ($E_{act}$).
+   604	                \item \textbf{Probabilistic Reaction:} If $E > E_{act}$, it calculates a reaction probability based on temperature-dependent Arrhenius coefficients.
+   605	                \item \textbf{Why necessary:} Without TCE, you'd only simulate inert billiards; chemistry would never occur, meaning no dissociation or ionization in your shock layer.
+   606	            \end{itemize}
+   607	        \end{column}
+   608	    \end{columns}
+   609	\end{frame}
+   610	
+   611	\begin{frame}{ReactTCE: Activation Threshold \& Units}
+   612	    \begin{columns}
+   613	        \begin{column}{0.45\textwidth}
+   614	            \centering
+   615	            \begin{tikzpicture}
+   616	                \draw[thick, NavyBlue] (0,0) -- (4,0) node[right] {$E_c$};
+   617	                \draw[ultra thick, BrickRed] (1.5, -0.2) -- (1.5, 1.5) node[above] {$E_a$ (Threshold)};
+   618	                
+   619	                \fill[gray!20] (0,0) rectangle (1.5, 1.2);
+   620	                \node[font=\tiny] at (0.75, 0.6) {Elastic Only\\(No Reaction)};
+   621	                
+   622	                \fill[PineGreen!20] (1.5,0) rectangle (4, 1.2);
+   623	                \node[font=\tiny] at (2.75, 0.6) {Reactive Region\\(Dissociation/Ionize)};
+   624	                
+   625	                \node[font=\tiny, NavyBlue] at (2,-0.5) {Energy ($J$)};
+   626	            \end{tikzpicture}
+   627	        \end{column}
+   628	        \begin{column}{0.55\textwidth}
+   629	            \textbf{\Large The Energy Threshold:}\\
+   630	            \vspace{8pt}
+   631	            \begin{itemize}\small
+   632	                \item \textbf{Unit (SI)}: \textbf{Joules ($J$)} per molecule.
+   633	                \item \textbf{The Catch}: Standard chemistry data (like our \texttt{air.react}) often uses \textbf{Cal/mol} (e.g., 225,000 for $N_2$).
+   634	                \item \textbf{Conversion}: $E_a(J) = \frac{E_a(\text{Cal/mol}) \cdot 4.184}{6.022 \times 10^{23}}$.
+   635	                \item \textbf{Why it matters}: If the raw $225,000$ value is used directly in an SI simulation, SPARTA sees it as $2.25 \times 10^5 \text{ J}$. A typical hypersonic collision has $\approx 10^{-18} \text{ J}$. 
+   636	            \end{itemize}
+   637	            \vspace{4pt}
+   638	            \textit{\textbf{Critical Logic:}} Without the conversion to **Joules per molecule**, $E_c$ will \textbf{never} exceed $E_a$, meaning your simulation will have \textbf{zero} chemical reactions.
+   639	        \end{column}
+   640	    \end{columns}
+   641	\end{frame}
+   642	
+   643	% --- CollideVSS Slide ---
+   644	\begin{frame}{CollideVSS::setup\_collision()}
+   645	    \begin{columns}
+   646	        \begin{column}{0.4\textwidth}
+   647	            \centering
+   648	            \begin{tikzpicture}
+   649	                \draw[gray, fill=gray!10] (0,0) circle (1.5);
+   650	                \node at (0, 0.8) {\scriptsize Hard Sphere ($\omega=0.5$)};
+   651	                \draw[thick, NavyBlue, ->] (0,-1) -- (0,1) node[midway, right] {\scriptsize $\sigma_{VSS}$};
+   652	                
+   653	                \node[font=\scriptsize, align=center] at (0, -1.8) {Variable Soft\\Sphere (VSS)};
+   654	            \end{tikzpicture}
+   655	        \end{column}
+   656	        \begin{column}{0.6\textwidth}
+   657	            \textbf{\Large What is CollideVSS::setup\_collision()?}\\
+   658	            The \textbf{Variable Soft Sphere (VSS)} model defines how particles physically "bounce" off each other.
+   659	            \vspace{8pt}
+   660	            \begin{itemize}
+   661	                \item \textbf{Collision Cross-Section ($\sigma$):} Unlike simple hard spheres, VSS allows the cross-section to depend on the relative collision velocity.
+   662	                \item \textbf{Angular Scattering:} It precisely controls the deflection angle, which is critical for correctly simulating the \textit{viscosity} and \textit{thermal conductivity} of the gas.
+   663	                \item \textbf{Why necessary:} This step ensures your "virtual gas" behaves like real air. Getting the VSS parameters wrong means the simulation will have the wrong fluid viscosity, leading to totally inaccurate aerodynamic heating loads.
+   664	            \end{itemize}
+   665	        \end{column}
+   666	    \end{columns}
+   667	\end{frame}
+   668	
+   669	\begin{frame}{SPARTA Data Architecture: Particle vs. Grid}
+   670	    \begin{columns}
+   671	        \begin{column}{0.48\textwidth}
+   672	            \textbf{\color{NavyBlue}1. Per-Particle Tier (Micro)}\\
+   673	            \textit{Individual particle properties in RAM.}
+   674	            \vspace{4pt}
+   675	            \begin{tabular}{|l|p{2.5cm}|} \hline
+   676	                \textbf{Tier} & \textbf{Data Fields} \\ \hline
+   677	                \textbf{Particle} & ID, Type, $x,y,z$, $v_x,v_y,v_z$, $E_{rot,vib}$ \\ \hline
+   678	                \textbf{Grid} & $\rho, T_{tr,rot,vib}, \mathbf{U}, P$ \\ \hline
+   679	            \end{tabular}
+   680	            \vspace{4pt}
+   681	            \begin{itemize}\footnotesize
+   682	                \item \textbf{Usage}: Used by \textbf{Advect} and \textbf{Collide}. High fidelity, massive RAM footprint.
+   683	            \end{itemize}
+   684	        \end{column}
+   685	        \begin{column}{0.48\textwidth}
+   686	            \textbf{\color{NavyBlue}2. Per-Grid Tier (Macro)}\\
+   687	            \textit{Averaged properties fixed in space.}
+   688	            \vspace{4pt}
+   689	            \begin{itemize}\footnotesize
+   690	                \item \textbf{ID \& Geometry}: Cell index and bounds ($x_{lo \dots hi}$).
+   691	                \item \textbf{Ensemble Metrics}: $n, \rho, P$.
+   692	                \item \textbf{Flow Field}: $\mathbf{U} (u, v, w)$.
+   693	                \item \textbf{Thermal State}: $T_{trans}, T_{rot}, T_{vib}$.
+   694	            \end{itemize}
+   695	            \vspace{4pt}
+   696	            \textbf{Usage}: Used for \textbf{Visualization} and \textbf{Telemetry}. Efficient, represents the "Fluid" state.
+   697	        \end{column}
+   698	    \end{columns}
+   699	\end{frame}
+   700	
+   701	\begin{frame}{6. Tally: How the Tiers Interact}
+   702	    \begin{columns}
+   703	        \begin{column}{0.45\textwidth}
+   704	            \centering
+   705	            \begin{tikzpicture}[scale=0.8]
+   706	                % Grid
+   707	                \draw[thick, NavyBlue] (0,0) rectangle (4,4);
+   708	                \node[font=\tiny] at (2, 3.7) {Grid Memory};
+   709	                
+   710	                % Particle flow
+   711	                \fill[BrickRed] (1,1) circle (2pt) node[below] {\tiny $P_1$};
+   712	                \fill[BrickRed] (3,1) circle (2pt) node[below] {\tiny $P_2$};
+   713	                \fill[BrickRed] (2,3) circle (2pt) node[below] {\tiny $P_3$};
+   714	                
+   715	                % Summation arrows
+   716	                \draw[->, gray, thin] (1,1) -- (2,2);
+   717	                \draw[->, gray, thin] (3,1) -- (2.2,2);
+   718	                \draw[->, gray, thin] (2,3) -- (2,2.2);
+   719	                
+   720	                \node[draw, rounded corners, fill=yellow!10, font=\tiny] at (2,2) {Sum $\to$ Divide};
+   721	                
+   722	                % Equation box
+   723	                \node[draw, dashed, font=\tiny, align=left] at (2,-0.8) {
+   724	                    $\rho = \frac{\sum m_i}{V_{cell}}$ \\
+   725	                    $T = \frac{\sum (v_i-U)^2}{3k/m}$
+   726	                };
+   727	            \end{tikzpicture}
+   728	        \end{column}
+   729	        \begin{column}{0.55\textwidth}
+   730	            \textbf{\Large The "Tally" Mechanism:}\\
+   731	            \vspace{8pt}
+   732	            Tally is the bridge between discrete particles and fluid logic. 
+   733	            \vspace{8pt}
+   734	            \begin{itemize}\small
+   735	                \item \textbf{1. Mapping}: Every particle is assigned to a cell based on its $x, y, z$ coordinates.
+   736	                \item \textbf{2. Accumulation}: SPARTA iterates through the particle list, adding each particle's mass, momentum, and energy to its host cell's "summation buckets."
+   737	                \item \textbf{3. Normalization}: At the end of the step (or average interval), the sums are divided by the cell volume and total counts.
+   738	            \end{itemize}
+   739	            \vspace{8pt}
+   740	            \textbf{Result}: The high-speed chaotic motion of millions of particles is compressed into a clean, smooth aerodynamic map.
+   741	        \end{column}
+   742	    \end{columns}
+   743	\end{frame}
+   744	
+   745	\begin{frame}{Variable Definitions: Physics of the Flow}
+   746	    \begin{table}
+   747	        \centering
+   748	        \small
+   749	        \begin{tabular}{|c|l|l|}
+   750	            \hline
+   751	            \textbf{Var.} & \textbf{Name} & \textbf{Physical Meaning / Definition} \\ \hline
+   752	            $n$ & Number Density & Count of particles per unit volume ($1/m^3$). \\ \hline
+   753	            $\rho$ & Mass Density & Total mass of particles per unit volume ($kg/m^3$). \\ \hline
+   754	            $\mathbf{U}$ & Flow Velocity & Macroscopic bulk motion of the gas ($u, v, w$). \\ \hline
+   755	            $P$ & Static Pressure & Random momentum flux (force) against cell faces. \\ \hline
+   756	            $T_{tr}$ & Trans. Temp & Energy stored in random particle movement. \\ \hline
+   757	            $T_{rot}$ & Rot. Temp & Energy stored in molecular rotation (internal mode). \\ \hline
+   758	            $T_{vib}$ & Vib. Temp & Energy stored in molecular vibration (quantum mode). \\ \hline
+   759	            $E_{i}$ & Internal Energy & Specific energy of a single particle ($E_{rot}, E_{vib}$). \\ \hline
+   760	        \end{tabular}
+   761	    \end{table}
+   762	    \vspace{4pt}
+   763	    \textit{\textbf{\footnotesize Integration Logic:}} {\footnotesize SPARTA calculates the temperatures ($T$) by subtracting the bulk flow velocity ($\mathbf{U}$) from individual particle velocities ($\mathbf{v}_i$), isolating the "random" thermal motion from the "ordered" flow.}\\
+   764	    \textit{\textbf{\footnotesize Quantum Mode:}} {\footnotesize Unlike translational motion (continuous), vibrational energy is quantized. Particles can only occupy discrete energy "steps" (quanta); this mode is only activated during extremely high-energy hypersonic collisions.}
+   765	\end{frame}
+   766	
+   767	\begin{frame}{Thermal Non-equilibrium: The Three Energy Modes}
+   768	    \begin{columns}
+   769	        \begin{column}{0.45\textwidth}
+   770	            \centering
+   771	            \begin{tikzpicture}[scale=0.8]
+   772	                % Molecule (Diatomic)
+   773	                \shade[ball color=BrickRed] (0,0) circle (0.3);
+   774	                \shade[ball color=BrickRed] (1.2,0) circle (0.3);
+   775	                \draw[ultra thick] (0.3,0) -- (0.9,0);
+   776	                
+   777	                % Translation
+   778	                \draw[->, ultra thick, NavyBlue] (0.5,-0.1) -- (2.0, 1.0) node[midway, sloped, above, font=\tiny] {Translation ($T_{tr}$)};
+   779	                
+   780	                % Rotation
+   781	                \draw[->, thick, orange] (0,-0.4) arc (-180:180:0.3 and 0.1);
+   782	                \node[orange, font=\tiny] at (0,-0.7) {Rotation ($T_{rot}$)};
+   783	                
+   784	                % Vibration
+   785	                \draw[<->, thick, PineGreen] (-0.4,0.1) -- (0,0.1);
+   786	                \draw[<->, thick, PineGreen] (1.2,0.1) -- (1.6,0.1);
+   787	                \node[PineGreen, font=\tiny] at (0.5, 0.4) {Vibration ($T_{vib}$)};
+   788	            \end{tikzpicture}
+   789	        \end{column}
+   790	        \begin{column}{0.55\textwidth}
+   791	            \textbf{\Large Why distinguish them?}\\
+   792	            While all are "random," they represent different \textbf{Degrees of Freedom}:
+   793	            \vspace{4pt}
+   794	            \begin{itemize}\small
+   795	                \item \textbf{Translation ($T_{tr}$):} The speed of the \textit{center of mass}. This is the "classic" random motion. Adjusts in $\sim$5 collisions.
+   796	                \item \textbf{Rotation ($T_{rot}$):} The molecule \textit{spinning} like a top. Adjusts in $\sim$50 collisions.
+   797	                \item \textbf{Vibration ($T_{vib}$):} The bond \textit{stretching} like a spring. Only "activates" at high energy. Adjusts in $\sim$1000+ collisions.
+   798	            \end{itemize}
+   799	            \vspace{4pt}
+   800	            \textbf{Hypersonic Reality}: In a shockwave, $T_{tr}$ jumps to 10,000K instantly, while $T_{vib}$ stays at 300K for a long distance. This is **Thermal Non-equilibrium**.
+   801	        \end{column}
+   802	    \end{columns}
+   803	\end{frame}
+   804	
+   805	% --- Particle Creation Slide ---
+   806	\begin{frame}{SPARTA Internals: Particle Initialization}
+   807	    \begin{itemize}
+   808	        \item \textbf{Source}: \texttt{sparta/src/create\_particles.cpp}
+   809	        \item \textbf{Key Logic (Initialization Phase):}
+   810	    \end{itemize}
+   811	    \tiny
+   812	    \begin{itemize}
+   813	        \item \textbf{\texttt{CreateParticles::command}}: Parses user parameters (Density, Mixture, Region).
+   814	        \item \textbf{\texttt{count\_particles}}: Calculates total $N_p = \frac{n \cdot V_{domain}}{F_{num}}$.
+   815	        \item \textbf{\texttt{set\_velocity}}: Assigns $V_i = V_{stream} + V_{thermal}$ (Maxwell-Boltzmann distribution).
+   816	        \item \textbf{\texttt{find\_cell}}: Geometric check to assign each particle to its initial grid cell ID.
+   817	    \end{itemize}
+   818	    \vspace{10pt}
+   819	    \textbf{Warning Log Analysis}: 
+   820	    \textit{"Created unexpected \# of particles: 1938815 versus 1938898"} \\
+   821	    $\rightarrow$ This is normal; it occurs when the domain volume is not a perfect multiple of the cell volumes or due to surface overlaps.
+   822	\end{frame}
+   823	
+   824	% --- Role of the Grid ---
+   825	\begin{frame}{Role of the Computational Grid in DSMC}
+   826	    \textit{Why does a purely particle-based method require a grid?}
+   827	    \vfill
+   828	    \begin{columns}
+   829	        \begin{column}{0.33\textwidth}
+   830	            \centering
+   831	            \textbf{\color{MidnightBlue}1. Collision Efficiency}\\
+   832	            \vspace{4pt}
+   833	            Without a grid:\\$O(N^2)$ pair checks.\\[4pt]
+   834	            With a grid:\\only particles in the\\\textbf{same cell} are paired.\\$\Rightarrow O(N)$ complexity.
+   835	        \end{column}
+   836	        \begin{column}{0.33\textwidth}
+   837	            \centering
+   838	            \textbf{\color{MidnightBlue}2. Macroscopic Sampling}\\
+   839	            \vspace{4pt}
+   840	            DSMC is stochastic.\\Grid cells serve as a\\\textbf{Statistical Pool}\\to focus attention and\\average $\rho,\,T,\,P$\\from particle ensembles.\\\textit{\textcolor{AeroEmerald}{\scriptsize (Saves resources; makes SPARTA faster than dsmcFoam)}}
+   841	        \end{column}
+   842	        \begin{column}{0.33\textwidth}
+   843	            \centering
+   844	            \textbf{\color{MidnightBlue}3. Mean Free Path Validity}\\
+   845	            \vspace{4pt}
+   846	            Cell size must satisfy\\[4pt]
+   847	            $\Delta x < \lambda = \dfrac{1}{\sqrt{2}\,\pi\,d_{\mathrm{mol}}^2 n_{\rho}}$\\[4pt]
+   848	            Otherwise, particles\\non-physically skip\\shock \& gradient regions.
+   849	        \end{column}
+   850	    \end{columns}
+   851	\end{frame}
+   852	
+   853	% --- Statistical Pool Illustration ---
+   854	\begin{frame}{Concept Illustration: The Statistical Pool}
+   855	    \begin{columns}
+   856	        \begin{column}{0.5\textwidth}
+   857	            \centering
+   858	            \begin{tikzpicture}[scale=1.2]
+   859	                % Grid
+   860	                \draw[step=2cm, gray, very thin, dashed] (0,0) grid (4,4);
+   861	                % Labels
+   862	                \node[gray, font=\scriptsize] at (1,3.8) {Cell (0,1)};
+   863	                \node[gray, font=\scriptsize] at (3,3.8) {Cell (1,1)};
+   864	                \node[gray, font=\scriptsize] at (1,1.8) {Cell (0,0)};
+   865	                \node[gray, font=\scriptsize] at (3,1.8) {Cell (1,0)};
+   866	
+   867	                % Particles in Cell (0,0)
+   868	                \fill[red!80] (0.5, 0.5) circle (3pt) node[anchor=west, xshift=2pt] {\tiny $\mathbf{v}_1$};
+   869	                \fill[blue!80] (1.2, 0.8) circle (3pt) node[anchor=north] {\tiny $\mathbf{v}_2$};
+   870	                \fill[green!80] (1.5, 0.3) circle (3pt) node[anchor=south] {\tiny $\mathbf{v}_3$};
+   871	                \fill[orange!80] (0.8, 1.4) circle (3pt) node[anchor=east] {\tiny $\mathbf{v}_4$};
+   872	                
+   873	                % Highlight pool
+   874	                \draw[thick, NavyBlue, rounded corners=5pt] (0.1,0.1) rectangle (1.9,1.9);
+   875	                \node[NavyBlue, font=\bfseries, align=center, opacity=0.4] at (1,1) {\Large Pool};
+   876	                
+   877	                % Empty/sparse other cells
+   878	                \fill[gray!80] (2.5, 3.5) circle (3pt);
+   879	                \fill[gray!80] (3.2, 2.5) circle (3pt);
+   880	                \fill[gray!80] (0.5, 2.5) circle (3pt);
+   881	            \end{tikzpicture}
+   882	        \end{column}
+   883	        \begin{column}{0.5\textwidth}
+   884	            \textbf{\Large From Micro to Macro:}\\
+   885	            \vspace{8pt}
+   886	            Instead of tracking exact fluid properties everywhere continuously, DSMC defines a cell as a \textbf{Statistical Pool}:
+   887	            \vspace{8pt}
+   888	            \begin{itemize}
+   889	                \item \textbf{Density ($\rho$):} $\propto \frac{N_{\text{particles}}}{V_{\text{cell}}}$
+   890	                \item \textbf{Velocity ($\mathbf{U}$):} $\frac{1}{N} \sum \mathbf{v}_i$
+   891	                \item \textbf{Temperature ($T$):} $\propto \sum (\mathbf{v}_i - \mathbf{U})^2$
+   892	            \end{itemize}
+   893	            \vspace{8pt}
+   894	            By abstracting macro-properties into grid-level pools, SPARTA saves immense memory and computation, drastically outperforming generic PDE continuum solvers like \texttt{dsmcFoam}.
+   895	        \end{column}
+   896	    \end{columns}
+   897	\end{frame}
+   898	
+   899	% --- Mean Free Path Violation Illustration ---
+   900	\begin{frame}{Concept Illustration: Mean Free Path Violation}
+   901	    \begin{columns}
+   902	        \begin{column}{0.5\textwidth}
+   903	            \centering
+   904	            \begin{tikzpicture}[scale=1.2]
+   905	                % Coarse Grid (Violation)
+   906	                \draw[step=2cm, gray, very thin, dashed] (0,0) grid (4,2);
+   907	                \node[gray, font=\scriptsize] at (1,1.8) {Large Cell ($\Delta x > \lambda$)};
+   908	                
+   909	                % Shock boundary (gradient region)
+   910	                \draw[thick, BrickRed] (1.8, 0) -- (1.8, 2);
+   911	                \fill[BrickRed, opacity=0.1] (1.8,0) rectangle (2.2,2);
+   912	                \node[BrickRed, font=\scriptsize, align=center] at (2, -0.3) {Thin Shock\\Gradient ($\sim\lambda$)};
+   913	
+   914	                % Particle trajectory skipping the shock
+   915	                \fill[blue!80] (0.5, 1) circle (3pt) node[anchor=south] {\tiny $t$};
+   916	                \fill[blue!80, opacity=0.5] (3.5, 1) circle (3pt) node[anchor=south] {\tiny $t + \Delta t$};
+   917	                \draw[->, thick, blue, dashed] (0.6, 1) -- (3.4, 1);
+   918	                
+   919	                % Highlight miss
+   920	                \draw[red, thick, ->] (1.5, 2.3) node[anchor=south, align=center, font=\scriptsize] {Particle moves across entire\\cell in one timestep,\\missing the shock!} -- (2.0, 1.1);
+   921	
+   922	            \end{tikzpicture}
+   923	        \end{column}
+   924	        \begin{column}{0.5\textwidth}
+   925	            \textbf{\Large The "Skipping" Error:}\\
+   926	            \vspace{8pt}
+   927	            In physical reality (Analog), flows are continuous. However, in our simulation (Digital Discrete), space is carved into logical cells:
+   928	            \vspace{8pt}
+   929	            \begin{itemize}
+   930	                \item \textbf{Discretization Trap:} Because our world is digital and discrete, when cell $\Delta x > \lambda$, a particle jumps across the entire cell in one discrete timestep.
+   931	                \item \textbf{Missed Physics:} The particle bypasses the shock's high-gradient regions entirely.
+   932	                \item \textbf{Result:} A non-physical, smeared, or bypassed boundary layer because our "digital sensor" (the cell) is too coarse to detect the "analog signal" (the shock).
+   933	                \item \textbf{Scale of Error:} In our case, 100 steps represents $0.1 \text{ ms}$. This violation means we risk missing $\approx 0.1/100$ of critical particle interactions per cell passage.
+   934	            \end{itemize}
+   935	        \end{column}
+   936	    \end{columns}
+   937	\end{frame}
+   938	
+   939	% --- SPARTA API Subroutines ---
+   940	\begin{frame}{SPARTA API Subroutines (\texttt{StellarOrionEngineMach5Up.py})}
+   941	    \begin{table}
+   942	        \centering
+   943	        \tiny
+   944	        \renewcommand{\arraystretch}{1.25}
+   945	        \begin{tabular}{@{}p{4.2cm}p{8.6cm}@{}}
+   946	            \toprule
+   947	            \textbf{Subroutine} & \textbf{Role} \\ \midrule
+   948	            \texttt{build\_sparta\_image()} & Compiles the SPARTA Kokkos/MPI Docker container if not present. \\
+   949	            \texttt{test\_sparta\_readiness()} & Validates Docker daemon and image availability. \\
+   950	            \texttt{get\_chemistry\_data()} & Retrieves \texttt{.species}, \texttt{.vss}, \texttt{.tce} for the planetary atmosphere. \\
+   951	            \texttt{generate\_surf\_react\_script()} & Dynamically writes the catalytic surface recombination script. \\
+   952	            \texttt{generate\_sparta\_script()} & Constructs \texttt{in.hiad}: domain, fluid props, grid resolution. \\
+   953	            \texttt{run\_sparta\_simulation()} & Executes \texttt{docker run sparta-hysp}; tails live log output. \\
+   954	            \texttt{parse\_sparta\_results()} & Scans \texttt{surf.*.out} for total Drag $F_x$ and peak heat flux $\dot{q}_{\mathrm{stag}}$; extracts $T_{\mathrm{shock}}$ from \texttt{grid.*.out}. \\
+   955	            \texttt{calculate\_flight\_metrics()} & Post-Process DSMC output into $C_D$, $C_L$, Heat Flux, and G-loads. \\
+   956	            \bottomrule
+   957	        \end{tabular}
+   958	    \end{table}
+   959	    \vspace{2pt}
+   960	    \textbf{Hardware:} If \texttt{SPARTA\_GPU==1}: uses \texttt{-sf kk} (Kokkos CUDA/OpenMP); otherwise standard MPI/threaded CPU.
+   961	\end{frame}
+   962	
+   963	\begin{frame}{\texttt{build\_sparta\_image()} \& \texttt{test\_sparta\_readiness()}}
+   964	    \begin{columns}
+   965	        \begin{column}{0.4\textwidth}
+   966	            \centering
+   967	            \begin{tikzpicture}
+   968	                \draw[thick, NavyBlue, fill=NavyBlue!5] (0,0) rectangle (3,2.5);
+   969	                \node at (1.5, 2.0) {\tiny Docker Daemon};
+   970	                \draw[thick] (0.5, 0.5) rectangle (2.5, 1.5);
+   971	                \node at (1.5, 1.0) {\scriptsize \textbf{SPARTA Image}};
+   972	                \node[font=\tiny, BrickRed] at (1.5, 0.2) {Kokkos + MPI + CUDA};
+   973	                \draw[->, ultra thick, PineGreen] (-0.5, 1.0) -- (0.4, 1.0) node[midway, above, font=\tiny] {build};
+   974	            \end{tikzpicture}
+   975	        \end{column}
+   976	        \begin{column}{0.6\textwidth}
+   977	            \textbf{\color{NavyBlue}Step 1: Containerized Environment}\\
+   978	            \vspace{8pt}
+   979	            Ensures the simulation environment is portable and reproducible.
+   980	            \begin{itemize}\small
+   981	                \item \textbf{Image Compilation}: If \texttt{sparta-hysp} is missing, it triggers a multi-stage Docker build.
+   982	                \item \textbf{Stack}: Compiles SPARTA with \textbf{Kokkos} (for GPU/Threading acceleration) and \textbf{OpenMPI}.
+   983	                \item \textbf{Readiness Check}: Pings the Docker socket to confirm the daemon is alive before committing to a 1100-step run.
+   984	            \end{itemize}
+   985	        \end{column}
+   986	    \end{columns}
+   987	\end{frame}
+   988	
+   989	\begin{frame}{\texttt{get\_chemistry\_data()}}
+   990	    \begin{columns}
+   991	        \begin{column}{0.4\textwidth}
+   992	            \centering
+   993	            \begin{tikzpicture}
+   994	                \node[draw, cylinder, shape border rotate=90, minimum width=1.5cm, minimum height=2cm, fill=orange!10] (DB) at (0,0) {Atmos DB};
+   995	                \draw[->, thick] (DB.east) -- (1.5, 0.5) node[right, font=\tiny] {.species};
+   996	                \draw[->, thick] (DB.east) -- (1.5, 0.0) node[right, font=\tiny] {.vss};
+   997	                \draw[->, thick] (DB.east) -- (1.5, -0.5) node[right, font=\tiny] {.tce};
+   998	            \end{tikzpicture}
+   999	        \end{column}
+  1000	        \begin{column}{0.6\textwidth}
+  1001	            \textbf{\color{NavyBlue}Step 2: Physics Data Retrieval}\\
+  1002	            \vspace{8pt}
+  1003	            Fetches the molecular "rulebook" for the specific planetary atmosphere.
+  1004	            \begin{itemize}\small
+  1005	                \item \textbf{.species (Text)}: Defines molecular weights and fractional composition (e.g., 77\% $N_2$, 23\% $O_2$).
+  1006	                \item \textbf{.vss (Tabular)}: Variable Soft Sphere collision parameters (diameters, $\omega$ exponents).
+  1007	                \item \textbf{.tce (Arrhenius)}: Reaction coefficients for dissociation and ionization ($A, b, E_a$).
+  1008	            \end{itemize}
+  1009	        \end{column}
+  1010	    \end{columns}
+  1011	\end{frame}
+  1012	
+  1013	\begin{frame}{Physics Formats: .species, .vss, .tce}
+  1014	    \begin{columns}
+  1015	        \begin{column}{0.33\textwidth}
+  1016	            \centering
+  1017	            \textbf{\tiny .species (Composition)}\\
+  1018	            \begin{tikzpicture}
+  1019	                \draw[thick] (0,0) rectangle (1.8,2.2);
+  1020	                \node[font=\tiny, align=left] at (0.9, 1.1) {
+  1021	                    \texttt{\# ID Mass Rot Vib}\\
+  1022	                    \texttt{N2 4.6E-26 2 2}\\
+  1023	                    \texttt{O2 5.3E-26 2 2}\\
+  1024	                    \texttt{O  2.6E-26 0 0}
+  1025	                };
+  1026	            \end{tikzpicture}\\
+  1027	            \tiny \textit{Format: Tabular metrics for degrees of freedom.}
+  1028	        \end{column}
+  1029	        \begin{column}{0.33\textwidth}
+  1030	            \centering
+  1031	            \textbf{\tiny .vss (Collision)}\\
+  1032	            \begin{tikzpicture}
+  1033	                \draw[thick] (0,0) rectangle (1.8,2.2);
+  1034	                \node[font=\tiny, align=left] at (0.9, 1.1) {
+  1035	                    \texttt{\# ID Diam Omega}\\
+  1036	                    \texttt{N2 4.0E-10 0.74}\\
+  1037	                    \texttt{O2 3.9E-10 0.77}\\
+  1038	                    \texttt{O  3.0E-10 0.80}
+  1039	                };
+  1040	            \end{tikzpicture}\\
+  1041	            \tiny \textit{Format: VSS model scattering parameters.}
+  1042	        \end{column}
+  1043	        \begin{column}{0.33\textwidth}
+  1044	            \centering
+  1045	            \textbf{\tiny .tce (Reaction)}\\
+  1046	            \begin{tikzpicture}
+  1047	                \draw[thick] (0,0) rectangle (1.8,2.2);
+  1048	                \node[font=\tiny, align=left] at (0.9, 1.1) {
+  1049	                    \texttt{N2+N2 -> N+N+N2}\\
+  1050	                    \texttt{D A 5.0 2.2E5}\\
+  1051	                    \texttt{O2+O2 -> O+O+O2}\\
+  1052	                    \texttt{D A 5.0 1.1E5}
+  1053	                };
+  1054	            \end{tikzpicture}\\
+  1055	            \tiny \textit{Format: 2-line logic: (1) Formula (2) TCE Coefficients.}
+  1056	        \end{column}
+  1057	    \end{columns}
+  1058	\end{frame}
+  1059	
+  1060	\begin{frame}{Atmosphere Inventory Presets}
+  1061	    \centering
+  1062	    \small
+  1063	    \begin{tabular}{|l|l|l|}
+  1064	        \hline
+  1065	        \textbf{Preset} & \textbf{Mixture Logic} & \textbf{Inventory} \\ \hline
+  1066	        \textbf{Earth (5-Gas)} & $79\% N_2, 21\% O_2$ & $N_2, O_2, NO, N, O$ \\ \hline
+  1067	        \textbf{Earth (11-Gas)} & $79\% N_2, 21\% O_2$ & $+$ Ions: $N_2^+, O_2^+, NO^+, N^+, O^+, e^-$ \\ \hline
+  1068	        \textbf{Mars (CO2)} & $95\% CO_2, 3\% N_2, \dots$ & $CO_2, N_2, CO, O, C, N$ \\ \hline
+  1069	        \textbf{Titan (Ar)} & $98\% N_2, 2\% CH_4$ & $N_2, CH_4, Ar, CN, \dots$ \\ \hline
+  1070	    \end{tabular}
+  1071	    \vspace{10pt}
+  1072	    \begin{itemize}\footnotesize
+  1073	        \item \textbf{Dynamic Switching}: Python handles the \texttt{mixture} command generation, assigning the correct species list and fractional densities to the SPARTA input buffer.
+  1074	    \end{itemize}
+  1075	\end{frame}
+  1076	
+  1077	\begin{frame}{\texttt{generate\_surf\_react\_script()}}
+  1078	    \begin{columns}
+  1079	        \begin{column}{0.4\textwidth}
+  1080	            \centering
+  1081	            \begin{tikzpicture}
+  1082	                \draw[thick] (0,0) rectangle (2.5,3);
+  1083	                \node[font=\tiny, NavyBlue] at (1.25, 2.7) {air.surf\_react};
+  1084	                \node[font=\tiny, align=left] at (1.25, 1.5) {
+  1085	                    \texttt{surf\_react catalytic}\\
+  1086	                    \texttt{model global}\\
+  1087	                    \texttt{react O + O -> O2}\\
+  1088	                    \texttt{prob 0.15}
+  1089	                };
+  1090	                \draw[fill=yellow, opacity=0.2] (0,0) rectangle (2.5,3);
+  1091	                \node[rotate=45, gray!50, font=\bfseries] at (1.25,1.5) {DYNAMIC};
+  1092	            \end{tikzpicture}
+  1093	        \end{column}
+  1094	        \begin{column}{0.6\textwidth}
+  1095	            \textbf{\color{NavyBlue}Step 3: Dynamic Surface Logic}\\
+  1096	            \vspace{8pt}
+  1097	            The script \textbf{manually writes} the surface chemistry file to disk.
+  1098	            \begin{itemize}\small
+  1099	                \item \textbf{Format}: SPARTA Surface Reaction Script.
+  1100	                \item \textbf{Logic}: Injects the catalytic recombination model ($O+O \to O_2$) specifically at the heatshield boundary.
