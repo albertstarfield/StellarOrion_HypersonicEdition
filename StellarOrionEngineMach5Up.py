@@ -190,6 +190,9 @@ class Api:
                 "time_of_peak_heating_s": 677.49
             },
             "validation_targets": {
+                # NOTE: Cd=1.47 is for smooth cone baseline (Rapisarda MDAO target), 
+                # different from flight data (~0.6-0.8) which had 6 toroids vs IRVE's 7.
+                # Consistent with ballistic coefficient β = m/(Cd*A) = 26.9 kg/m²
                 "reference_cd": 1.47,
                 "stagnation_pressure_kpa": 12.4,
                 "ambient_pressure_pa": 75.77,

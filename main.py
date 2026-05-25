@@ -77,6 +77,8 @@ def ensure_venv():
             # --- Bootstrapping for components not in requirements.txt ---
             print("[*] Installing additional components (pyrefly, deepxde, ansys-fluent-core, cadquery)...")
             subprocess.check_call([str(venv_python), "-m", "pip", "install", "pyrefly", "deepxde", "ansys-fluent-core", "cadquery"])
+            print("[*] Installing additional components (ruff)...")
+            subprocess.check_call([str(venv_python), "-m", "pip", "install", "ruff"])
         except Exception as e:
             print(f"[-] Warning: Dependency sync failed: {e}")
 
@@ -767,6 +769,41 @@ def main():
                 print(f"[*] Validation Result: {str(res.get('status', 'unknown')).upper()} {v_color}{v_status}\033[0m")
                 
                 if isinstance(res, dict) and 'comparison' in res and isinstance(res['comparison'], dict):
+                    # Sanity check before printing baseline comparison
+                    comp = res.get('comparison', {})
+                    warnings = []
+                    
+                    # Check drag coefficient (should be 0-5 for physical hypersonic flow)
+                    if 'Drag Coefficient (Cd)' in comp:
+                        cd_sim = float(comp['Drag Coefficient (Cd)'].get('sim', 0))
+                        doc_cd = float(comp['Drag Coefficient (Cd)'].get('doc', 1.47))
+                        
+                        if cd_sim < 0 or cd_sim > 5.0:
+                            warnings.append(f"Unrealistic drag coefficient {cd_sim:.3f}")
+                    
+                    # Check heat flux range
+                    if 'Stagnation Heat Flux' in comp:
+                        q_sim = float(comp['Stagnation Heat Flux'].get('sim', 0))
+                        doc_q = float(comp['Stagnation Heat Flux'].get('doc', 14.36))
+                        
+                        if q_sim < 0 or q_sim > 200:
+                            warnings.append(f"Heat flux {q_sim:.2f} W/cm² out of expected range (target: ~{doc_q})")
+                    
+                    # Check deceleration  
+                    if 'Peak Deceleration' in comp:
+                        g_sim = float(comp['Peak Deceleration'].get('sim', 0))
+                        doc_g = float(comp['Peak Deceleration'].get('doc', 20.2))
+                        
+                        if abs(g_sim) > 50:
+                            warnings.append(f"Excessive deceleration {g_sim:.1f} G (target: ~{doc_g})")
+                    
+                    # Report any issues before printing table
+                    if warnings:
+                        print("\n[!] Baseline Validation Warnings:")
+                        for w in warnings:
+                            print(f"    - {w}")
+                        print("="*80)
+                    
                     print("\n[Comparison: Simulation vs IRVE-3 Documentation]")
                     print(f"{'Variable':<30} | {'Simulation':<12} | {'Document':<12} | {'Error %':<8}")
                     print("-" * 75)
@@ -803,6 +840,35 @@ def main():
                 res = api.run_pinn_calibration(solver=args.solver, steps=args.steps, skip_diag=args.skip_diag, headless=args.headless, sparta_gpu=args.sparta_gpu)
                 
                 if 'comparison' in res:
+                    # Sanity check before printing PINN results
+                    comp = res.get('comparison', {})
+                    warnings = []
+                    
+                    # Check drag coefficient range (should be 0-5 for physical flows)
+                    if 'Drag Coefficient (Cd)' in comp:
+                        cd_sim = float(comp['Drag Coefficient (Cd)'].get('sim', 0))
+                        doc_cd = float(comp['Drag Coefficient (Cd)'].get('doc', 1.47))
+                        pinn_err = float(comp['Drag Coefficient (Cd)'].get('pinn_error_pct', 0))
+                        
+                        if cd_sim < 0 or cd_sim > 5.0:
+                            warnings.append(f"Unrealistic Cd={cd_sim:.3f} in simulation")
+                        if pinn_err > 100:
+                            warnings.append(f"PINN error for Cd ({pinn_err:.1f}%) suggests poor convergence")
+                    
+                    # Check heat flux (should be positive and < 200 W/cm²)
+                    if 'Peak Heat Flux' in comp:
+                        q_sim = float(comp['Peak Heat Flux'].get('sim', 0))
+                        doc_q = float(comp['Peak Heat Flux'].get('doc', 14.36))
+                        
+                        if q_sim < 0 or q_sim > 500:
+                            warnings.append(f"Heat flux {q_sim:.2f} W/cm² out of expected range")
+                    
+                    # Print warnings before results table
+                    if warnings:
+                        print("\n[!] PINN Validation Warnings:")
+                        for w in warnings:
+                            print(f"    - {w}")
+                    
                     print("\n" + "="*110)
                     print(f"{'IRVE-3 PINN CALIBRATION RESULTS: 3-WAY COMPARISON':^110}")
                     print("="*110)
@@ -1033,7 +1099,30 @@ def main():
                 print(f"[*] Result Status: {v_color}{res_ext['viability']}\033[0m")
                 print(f"[*] Raw Data: {res_ext}")
                 
-                if isinstance(res_ext, dict) and 'comparison' in res_ext and isinstance(res_ext['comparison'], dict):
+                # Sanity checks before printing comparison
+                if 'comparison' in res_ext and isinstance(res_ext['comparison'], dict):
+                    comp = res_ext['comparison']
+                    
+                    # Check for unrealistic values
+                    unreasonables = []
+                    if 'drag_coeff' in comp:
+                        cd_sim = float(comp['drag_coeff'].get('sim', 0))
+                        doc_cd = float(comp['drag_coeff'].get('doc', 1.47))
+                        if cd_sim < 0 or cd_sim > 5.0:
+                            unreasonables.append(f"Unrealistic Cd: {cd_sim:.3f} (expected ~{doc_cd})")
+                        
+                    if 'peak_heat_flux' in comp:
+                        q_sim = float(comp['peak_heat_flux'].get('sim', 0))
+                        doc_q = float(comp['peak_heat_flux'].get('doc', 14.36))
+                        if q_sim < 0 or q_sim > 500:
+                            unreasonables.append(f"Heat flux out of range: {q_sim:.2f} W/cm²")
+                        
+                    # Report warnings before printing
+                    if unreasonables:
+                        print("\n[!] WARNING - Unrealistic values detected:")
+                        for msg in unreasonables:
+                            print(f"    {msg}")
+                    
                     print("\n[Comparison: Simulation vs IRVE-3 Documentation]")
                     print(f"Source: {api.get_irve_citation()}")
                     print(f"{'Variable':<30} | {'Simulation':<12} | {'Document':<12} | {'Error %':<8}")
