@@ -200,6 +200,9 @@ TestlogDev.log
 .venv_gui/
 VLEO_DSMC_EXAMPLE/
 example_frompreviousproject/
+# Progress Reports
+QA_Fukami.md
+QA_*
 # **ProgressReport** (Uncomment to ignore all progress reports)
 
 # macOS
