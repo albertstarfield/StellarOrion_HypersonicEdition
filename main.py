@@ -768,31 +768,34 @@ def main():
                 v_color = "\033[32m" if res.get('is_viable') else "\033[31m"
                 print(f"[*] Validation Result: {str(res.get('status', 'unknown')).upper()} {v_color}{v_status}\033[0m")
                 
-                if isinstance(res, dict) and 'comparison' in res and isinstance(res['comparison'], dict):
+                comp = res.get('comparison', {})
+                if isinstance(res, dict) and isinstance(comp, dict):
                     # Sanity check before printing baseline comparison
-                    comp = res.get('comparison', {})
                     warnings = []
                     
                     # Check drag coefficient (should be 0-5 for physical hypersonic flow)
-                    if 'Drag Coefficient (Cd)' in comp:
-                        cd_sim = float(comp['Drag Coefficient (Cd)'].get('sim', 0))
-                        doc_cd = float(comp['Drag Coefficient (Cd)'].get('doc', 1.47))
+                    cd_entry = comp.get('Drag Coefficient (Cd)')
+                    if isinstance(cd_entry, dict):
+                        cd_sim = float(cd_entry.get('sim', 0))
+                        doc_cd = float(cd_entry.get('doc', 1.47))
                         
                         if cd_sim < 0 or cd_sim > 5.0:
                             warnings.append(f"Unrealistic drag coefficient {cd_sim:.3f}")
                     
                     # Check heat flux range
-                    if 'Stagnation Heat Flux' in comp:
-                        q_sim = float(comp['Stagnation Heat Flux'].get('sim', 0))
-                        doc_q = float(comp['Stagnation Heat Flux'].get('doc', 14.36))
+                    heat_entry = comp.get('Stagnation Heat Flux')
+                    if isinstance(heat_entry, dict):
+                        q_sim = float(heat_entry.get('sim', 0))
+                        doc_q = float(heat_entry.get('doc', 14.36))
                         
                         if q_sim < 0 or q_sim > 200:
                             warnings.append(f"Heat flux {q_sim:.2f} W/cm² out of expected range (target: ~{doc_q})")
                     
                     # Check deceleration  
-                    if 'Peak Deceleration' in comp:
-                        g_sim = float(comp['Peak Deceleration'].get('sim', 0))
-                        doc_g = float(comp['Peak Deceleration'].get('doc', 20.2))
+                    dec_entry = comp.get('Peak Deceleration')
+                    if isinstance(dec_entry, dict):
+                        g_sim = float(dec_entry.get('sim', 0))
+                        doc_g = float(dec_entry.get('doc', 20.2))
                         
                         if abs(g_sim) > 50:
                             warnings.append(f"Excessive deceleration {g_sim:.1f} G (target: ~{doc_g})")
@@ -807,13 +810,14 @@ def main():
                     print("\n[Comparison: Simulation vs IRVE-3 Documentation]")
                     print(f"{'Variable':<30} | {'Simulation':<12} | {'Document':<12} | {'Error %':<8}")
                     print("-" * 75)
-                    for k, v in res['comparison'].items():
-                        sim_val = float(v.get('sim', 0))
-                        doc_val = float(v.get('doc', 0))
-                        err_val = float(v.get('error_pct', 0))
-                        sim_str = f"{sim_val:.2f} {v.get('unit', '')}".strip()
-                        doc_str = f"{doc_val:.2f} {v.get('unit', '')}".strip()
-                        print(f"{k:<30} | {sim_str:<12} | {doc_str:<12} | {err_val:.1f}%")
+                    for k, v in comp.items():
+                        if isinstance(v, dict):
+                            sim_val = float(v.get('sim', 0))
+                            doc_val = float(v.get('doc', 0))
+                            err_val = float(v.get('error_pct', 0))
+                            sim_str = f"{sim_val:.2f} {v.get('unit', '')}".strip()
+                            doc_str = f"{doc_val:.2f} {v.get('unit', '')}".strip()
+                            print(f"{k:<30} | {sim_str:<12} | {doc_str:<12} | {err_val:.1f}%")
                 
                 if res.get('status') == 'error':
                     print(f"[-] Error Message: {res.get('message', '')}")
@@ -839,16 +843,17 @@ def main():
 
                 res = api.run_pinn_calibration(solver=args.solver, steps=args.steps, skip_diag=args.skip_diag, headless=args.headless, sparta_gpu=args.sparta_gpu)
                 
-                if 'comparison' in res:
+                comp = res.get('comparison', {})
+                if isinstance(res, dict) and isinstance(comp, dict):
                     # Sanity check before printing PINN results
-                    comp = res.get('comparison', {})
                     warnings = []
                     
                     # Check drag coefficient range (should be 0-5 for physical flows)
-                    if 'Drag Coefficient (Cd)' in comp:
-                        cd_sim = float(comp['Drag Coefficient (Cd)'].get('sim', 0))
-                        doc_cd = float(comp['Drag Coefficient (Cd)'].get('doc', 1.47))
-                        pinn_err = float(comp['Drag Coefficient (Cd)'].get('pinn_error_pct', 0))
+                    cd_entry = comp.get('Drag Coefficient (Cd)')
+                    if isinstance(cd_entry, dict):
+                        cd_sim = float(cd_entry.get('sim', 0))
+                        doc_cd = float(cd_entry.get('doc', 1.47))
+                        pinn_err = float(cd_entry.get('pinn_error_pct', 0))
                         
                         if cd_sim < 0 or cd_sim > 5.0:
                             warnings.append(f"Unrealistic Cd={cd_sim:.3f} in simulation")
@@ -856,9 +861,10 @@ def main():
                             warnings.append(f"PINN error for Cd ({pinn_err:.1f}%) suggests poor convergence")
                     
                     # Check heat flux (should be positive and < 200 W/cm²)
-                    if 'Peak Heat Flux' in comp:
-                        q_sim = float(comp['Peak Heat Flux'].get('sim', 0))
-                        doc_q = float(comp['Peak Heat Flux'].get('doc', 14.36))
+                    flux_entry = comp.get('Peak Heat Flux')
+                    if isinstance(flux_entry, dict):
+                        q_sim = float(flux_entry.get('sim', 0))
+                        doc_q = float(flux_entry.get('doc', 14.36))
                         
                         if q_sim < 0 or q_sim > 500:
                             warnings.append(f"Heat flux {q_sim:.2f} W/cm² out of expected range")
@@ -874,22 +880,23 @@ def main():
                     print("="*110)
                     print(f"{'Variable':<25} | {'Simulation':<12} | {'PINN (DDE)':<12} | {'Document':<12} | {'PINN Err %':<10} | {'Improve %':<8}")
                     print("-" * 110)
-                    for k, v in res['comparison'].items():
-                        sim_val = float(v.get('sim', 0))
-                        pinn_val = float(v.get('pinn', 0))
-                        doc_val = float(v.get('doc', 0))
-                        pinn_err = float(v.get('pinn_error_pct', 0))
-                        
-                        sim_str = f"{sim_val:.2f} {v.get('unit', '')}".strip()
-                        pinn_str = f"{pinn_val:.2f} {v.get('unit', '')}".strip()
-                        doc_str = f"{doc_val:.2f} {v.get('unit', '')}".strip() if doc_val > 0 else "N/A"
-                        
-                        # Calculate improvement (how much PINN moved towards Doc vs Sim)
-                        sim_err = abs(sim_val - doc_val) / doc_val * 100 if doc_val > 0 else 0
-                        improve = sim_err - pinn_err if doc_val > 0 else 0
-                        improve_str = f"{improve:>+7.1f}%" if doc_val > 0 else "N/A"
-                        
-                        print(f"{k:<25} | {sim_str:<12} | {pinn_str:<12} | {doc_str:<12} | {pinn_err:>8.1f}% | {improve_str}")
+                    for k, v in comp.items():
+                        if isinstance(v, dict):
+                            sim_val = float(v.get('sim', 0))
+                            pinn_val = float(v.get('pinn', 0))
+                            doc_val = float(v.get('doc', 0))
+                            pinn_err = float(v.get('pinn_error_pct', 0))
+                            
+                            sim_str = f"{sim_val:.2f} {v.get('unit', '')}".strip()
+                            pinn_str = f"{pinn_val:.2f} {v.get('unit', '')}".strip()
+                            doc_str = f"{doc_val:.2f} {v.get('unit', '')}".strip() if doc_val > 0 else "N/A"
+                            
+                            # Calculate improvement (how much PINN moved towards Doc vs Sim)
+                            sim_err = abs(sim_val - doc_val) / doc_val * 100 if doc_val > 0 else 0
+                            improve = sim_err - pinn_err if doc_val > 0 else 0
+                            improve_str = f"{improve:>+7.1f}%" if doc_val > 0 else "N/A"
+                            
+                            print(f"{k:<25} | {sim_str:<12} | {pinn_str:<12} | {doc_str:<12} | {pinn_err:>8.1f}% | {improve_str}")
                     print("="*110)
                 
                 if res.get('status') == 'error':
