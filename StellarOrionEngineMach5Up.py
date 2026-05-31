@@ -1563,9 +1563,11 @@ run             {steps}
             python_exec, "HIAD_GeometryEngine.py",
             "--diameter", str(sample_dict.get('diameter', 3.0)),
             "--angle", str(sample_dict.get('angle', 60.0)),
-            "--nose", str(sample_dict.get('nose_radius', 0.550)),
+            "--nose", str(sample_dict.get('nose', 0.550)),
             "--toroids", str(sample_dict.get('toroids', 6)),
             "--thickness", str(sample_dict.get('thickness', 0.0254)),
+            "--scallop_pts", str(sample_dict.get('scallop_pts', 32)),
+            "--scallop_angle", str(sample_dict.get('scallop_angle', 40.0)),
             "--nose_type", nose_type,
             "--output", output_name,
             "--fast"
@@ -1655,7 +1657,7 @@ run             {steps}
             docker_create_cmd.append("all")
         
         if not use_gpu:
-            nproc = min(4, opt_params.get('env_cores', 4))
+            nproc = opt_params.get('env_cores', 4)
             self.log_to_gui(f"    [!] Parallel Execution: Using {nproc} CPU cores via mpirun...")
             if nproc > 1:
                 docker_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), "spa", "-in", "in.hiad"]

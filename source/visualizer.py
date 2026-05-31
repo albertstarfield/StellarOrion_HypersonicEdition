@@ -379,14 +379,21 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     # Plot 3: Velocity Vectors (Quiver)
     fig = plt.figure(figsize=(12, 7), facecolor='#0f172a')
     ax = plt.gca(); ax.set_facecolor('#0f172a')
-    step = max(1, len(x_mirrored) // 800)
     vel_mag_mirrored = np.sqrt(u_mirrored**2 + v_mirrored**2)
-    
     valid_v = ~np.isnan(vel_mag_mirrored)
     if np.any(valid_v):
-        q = plt.quiver(x_mirrored[valid_v][::step], y_mirrored[valid_v][::step], 
-                   u_mirrored[valid_v][::step], v_mirrored[valid_v][::step], 
-                   vel_mag_mirrored[valid_v][::step], cmap='viridis')
+        from scipy.interpolate import griddata
+        
+        # Create a uniform grid for the quiver plot
+        grid_x, grid_y = np.mgrid[x_mirrored.min():x_mirrored.max():40j, y_mirrored.min():y_mirrored.max():30j]
+        
+        # Interpolate U and V components onto the grid
+        grid_u = griddata((x_mirrored[valid_v], y_mirrored[valid_v]), u_mirrored[valid_v], (grid_x, grid_y), method='linear')
+        grid_v = griddata((x_mirrored[valid_v], y_mirrored[valid_v]), v_mirrored[valid_v], (grid_x, grid_y), method='linear')
+        grid_mag = np.sqrt(grid_u**2 + grid_v**2)
+        
+        # Plot the interpolated quiver
+        q = plt.quiver(grid_x, grid_y, grid_u, grid_v, grid_mag, cmap='viridis')
         plt.colorbar(q, label='Velocity Magnitude (m/s)')
     else:
         print("Warning: No valid velocity data for quiver")
