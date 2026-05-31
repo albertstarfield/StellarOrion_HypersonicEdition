@@ -591,6 +591,7 @@ class Api:
             # surf.*.out files are written every stats_interval timesteps. Averaging over
             # the last few dump files provides an additional layer of noise reduction
             # and is more robust to the exact final-step timing of the averaging window.
+            surf_files.sort(key=lambda x: int(x.split('.')[1]))
             n_avg_files = min(3, len(surf_files))  # average last 3 dumps (or all if fewer)
             files_to_avg = [os.path.join(results_dir, f) for f in surf_files[-n_avg_files:]]
             self.log_to_gui(f"    [*] Averaging surface metrics over {len(files_to_avg)} dump file(s): "
@@ -641,28 +642,28 @@ class Api:
 
             self.log_to_gui(f"    [+] Extracted Metrics: Drag={metrics['drag']:.4f} N, Heat={metrics['heat']:.2e} W/m2")
 
-                # Find latest grid file for shock temperature (numeric sort)
-                grid_files = [f for f in os.listdir(results_dir) if f.startswith("grid.") and f.endswith(".out")]
-                shock_temp = 300.0
-                if grid_files:
-                    grid_files.sort(key=lambda x: int(x.split('.')[1]))
-                    latest_grid = os.path.join(results_dir, grid_files[-1])
-                    with open(latest_grid, 'r') as f:
-                        temp_start = False
-                        for line in f:
-                            if "ITEM: CELLS" in line:
-                                temp_start = True
-                                continue
-                            if temp_start:
-                                parts = line.split()
-                                if len(parts) >= 10: # column 10 (index 9) is temperature
-                                    try:
-                                        t = float(parts[9])
-                                        if t > shock_temp: shock_temp = t
-                                    except: pass
-                metrics['shock_temp'] = shock_temp
-                metrics['stagnation_temp'] = shock_temp # Use peak flow temp as stagnation proxy
-                return metrics
+            # Find latest grid file for shock temperature (numeric sort)
+            grid_files = [f for f in os.listdir(results_dir) if f.startswith("grid.") and f.endswith(".out")]
+            shock_temp = 300.0
+            if grid_files:
+                grid_files.sort(key=lambda x: int(x.split('.')[1]))
+                latest_grid = os.path.join(results_dir, grid_files[-1])
+                with open(latest_grid, 'r') as f:
+                    temp_start = False
+                    for line in f:
+                        if "ITEM: CELLS" in line:
+                            temp_start = True
+                            continue
+                        if temp_start:
+                            parts = line.split()
+                            if len(parts) >= 10: # column 10 (index 9) is temperature
+                                try:
+                                    t = float(parts[9])
+                                    if t > shock_temp: shock_temp = t
+                                except: pass
+            metrics['shock_temp'] = shock_temp
+            metrics['stagnation_temp'] = shock_temp # Use peak flow temp as stagnation proxy
+            return metrics
         except Exception as e:
             self.log_to_gui(f"    [!] Parser Exception: {e}")
             return {'drag': 1.0, 'heat': 1.0, 'shock_temp': 300.0}
@@ -997,40 +998,6 @@ O recombine simple {gamma} O2
 
         fnum = float(kwargs.get('env_fnum', opt_params.get('env_fnum', 5e16)))
         
-        script = f"""# SPARTA Input Script - StellarOrion Automated Comparison
-seed            12345
-dimension       2
-global          gridcut 0.0 comm/sort yes
-boundary        o ao p
-
-create_box      {xmin-0.001:.3f} {xmax+0.001:.3f} 0.000 {ymax+0.001:.3f} -0.5 0.5
-create_grid     {nx} {ny} 1
-balance_grid    rcb cell
-
-global          nrho {n_rho:.2e} fnum {fnum:.1e} weight cell radius
-
-species         air.species {" ".join(species_list)}
-{mixture_txt}
-mixture air vstream {vstream:.1f} 0.0 0.0
-mixture air temp {temp_inf:.1f}
-
-fix             in emit/face air xlo
-collide         vss air air.vss
-react           tce air.react
-
-# Surface Definition
-# The HIAD .surf file is CW-wound: normals point outward INTO the flow (correct).
-# DO NOT use 'invert' — it would flip normals INTO the solid.
-# USE 'clip': removes the base-plate segment that sits exactly on the y=0 axis
-# boundary (axisymmetric boundary 'ao'). Without clip, SPARTA's ray-cast
-# inside/outside test fails on the degenerate y=0 surface, giving 0 fluid cells.
-read_surf       {surf_name}.surf group hiad_surf clip
-surf_collide    1 diffuse {t_wall:.1f} 1.0
-# surf_react      1 prob air.surf_react
-surf_modify     all collide 1
-# Create particles AFTER surf_modify so they are only placed in fluid cells
-create_particles air n 0
-balance_grid    rcb part
 
         # ─────────────────────────────────────────────────────────────────────────────
         # SURFACE FORCE TIME-AVERAGING STRATEGY
