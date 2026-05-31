@@ -7,7 +7,10 @@ import json
 import shutil
 import time
 import numpy as np
-import paramiko
+try:
+    import paramiko
+except ImportError:
+    paramiko = None
 import sqlite3
 import datetime
 from typing import Any, Dict
@@ -1056,12 +1059,10 @@ collide         vss air air.vss
 react           tce air.react
 
 # Surface Definition
-# The HIAD .surf file is CW-wound: normals point outward INTO the flow (correct).
-# DO NOT use 'invert' — it would flip normals INTO the solid.
-# USE 'clip': removes the base-plate segment that sits exactly on the y=0 axis
-# boundary (axisymmetric boundary 'ao'). Without clip, SPARTA's ray-cast
-# inside/outside test fails on the degenerate y=0 surface, giving 0 fluid cells.
-read_surf       {surf_name}.surf group hiad_surf clip
+# We use a closed loop for the vehicle with thickness > grid size.
+# Since it is a closed loop strictly inside the domain (axis segment slightly above Y=0),
+# SPARTA's ray casting will correctly identify the inside/outside.
+read_surf       {surf_name}.surf group hiad_surf
 surf_collide    1 diffuse {t_wall:.1f} 1.0
 # surf_react      1 prob air.surf_react
 surf_modify     all collide 1
@@ -1646,7 +1647,7 @@ run             {steps}
             "-e", "PYTHONUNBUFFERED=1",
             "-e", "DOCKER_WORKDIR=/app",
             "-e", f"SPARTA_GPU={1 if use_gpu else 0}",
-            "-e", f"OMP_NUM_THREADS={os.cpu_count() or 4}"
+            "-e", "OMP_NUM_THREADS=1" # MUST be 1 when using mpirun to avoid thread explosion
         ]
         if use_gpu:
             self.log_to_gui("    [!] Enabling CUDA acceleration (Kokkos) for SPARTA...")
@@ -1654,9 +1655,12 @@ run             {steps}
             docker_create_cmd.append("all")
         
         if not use_gpu:
-            nproc = opt_params.get('env_cores', os.cpu_count() or 4)
+            nproc = min(4, opt_params.get('env_cores', 4))
             self.log_to_gui(f"    [!] Parallel Execution: Using {nproc} CPU cores via mpirun...")
-            docker_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), "spa", "-in", "in.hiad"]
+            if nproc > 1:
+                docker_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), "spa", "-in", "in.hiad"]
+            else:
+                docker_cmd = ["spa", "-in", "in.hiad"]
         else:
             docker_cmd = ["spa", "-in", "in.hiad", "-pk", "kokkos", "newton", "on", "gpu", "1", "-sf", "kk"]
         
@@ -1674,6 +1678,7 @@ run             {steps}
         
         # Original Docker Logic
         docker_create_cmd.extend(["sparta-hysp"] + docker_cmd)
+        self.log_to_gui(f"[DEBUG] Docker Create CMD: {' '.join(docker_create_cmd)}")
         subprocess.run(docker_create_cmd, check=True)
         sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         
@@ -3228,7 +3233,8 @@ run             {steps}
             'base_nose': baseline_doc['geometry']['nose_radius_m'],
             'base_toroids': baseline_doc['geometry']['toroids'],
             'base_thick': 0.0254,
-            'default_payload': True,
+            'flat_skin': True,
+            'default_payload': False,
             'env_duration': 60.0,
             'env_run': 1500, # 1.5x flow-through time for DSMC steady-state convergence (compromise for speed)
             # --- fnum tuning (2026-05-31 calibration) ---
@@ -3254,6 +3260,8 @@ run             {steps}
         # Override with any passed kwargs (like steps)
         if 'steps' in kwargs and kwargs['steps'] is not None:
             opt_params['env_run'] = kwargs['steps']
+        if 'env_cores' in kwargs:
+            opt_params['env_cores'] = kwargs['env_cores']
         
         # Geometry and Sample setup
         sample_dict = {
@@ -3263,9 +3271,10 @@ run             {steps}
             'toroids': baseline_doc['geometry']['toroids'],
             'tradius': baseline_doc['geometry']['toroid_radius_m'],
             'oradius': baseline_doc['geometry']['outer_toroid_radius_m'],
-            'nose_type': nose_type
+            'nose_type': nose_type,
+            'flat_skin': True
         }
-        sample_dict.update(kwargs) # Forward extra flags like flat_skin
+        sample_dict.update(kwargs) # Forward extra flags
         
         try:
             # 1. Setup Directories and Species
