@@ -588,11 +588,12 @@ class Api:
             
             # Parse MULTIPLE surf dump files and average forces over the last 3 snapshots.
             # Rationale: Even with fix ave/surf time-averaging in the SPARTA script, the
-            # surf.*.out files are written every stats_interval timesteps. Averaging over
-            # the last few dump files provides an additional layer of noise reduction
-            # and is more robust to the exact final-step timing of the averaging window.
+            # Parse MULTIPLE surf dump files and average forces over the last N snapshots.
+            # Rationale: With fix ave/surf time-averaging in the SPARTA script aligned to
+            # stats_interval (typically 100 steps), each file contains a 100-step average.
+            # Averaging the last 15 files gives us a robust 1500-step steady-state average.
             surf_files.sort(key=lambda x: int(x.split('.')[1]))
-            n_avg_files = min(3, len(surf_files))  # average last 3 dumps (or all if fewer)
+            n_avg_files = min(15, len(surf_files))  # average last 15 dumps (or all if fewer)
             files_to_avg = [os.path.join(results_dir, f) for f in surf_files[-n_avg_files:]]
             self.log_to_gui(f"    [*] Averaging surface metrics over {len(files_to_avg)} dump file(s): "
                             f"{[os.path.basename(f) for f in files_to_avg]}")
@@ -991,7 +992,8 @@ O recombine simple {gamma} O2
         # This is handled automatically in run_baseline_validation() and
         # run_grid_independency_test() via _compute_surf_centroid().
         
-        steps = int(kwargs.get('steps', opt_params.get('env_run', 500)))
+        step_arg = kwargs.get('steps')
+        steps = int(step_arg if step_arg is not None else opt_params.get('env_run', 500))
         stats_interval = int(opt_params.get('stats_interval', 100))
         # Ensure stats/dump occurs on final step if run is short
         stats_interval = min(stats_interval, steps)
@@ -1005,33 +1007,40 @@ O recombine simple {gamma} O2
         # The core cause of 52.5% Cd over-prediction at 1100 steps was using
         # "fix ave/surf ... 1 1 1" which writes INSTANTANEOUS (per-timestep)
         # surface forces. A single DSMC timestep has massive statistical noise:
-        # O(1/sqrt(N)) ≈ 3-5% per cell, but force sums amplify this.
-        #
-        # FIX: Use fix ave/surf with Nevery/Nrepeat/Nfreq set to average over
-        # the FINAL HALF of the simulation (steady-state region):
-        #   Nfreq  = steps (write output only at end)
-        #   Nevery = 1     (sample every step)
-        #   Nrepeat = steps//2  (use last half of run as averaging window)
-        #
-        # This collapses Cd fluctuations from ±30% → ±2-3% (sqrt(N) reduction).
         # ─────────────────────────────────────────────────────────────────────────────
-        # Averaging window: last half of the run.
-        # Nrepeat must satisfy Nrepeat × Nevery ≤ Nfreq.
-        avg_nevery  = 1              # sample every step
-        avg_nfreq   = steps          # write once at final step
-        avg_nrepeat = max(1, steps // 2)  # average last half of run
-
-        # For intermediate progress monitoring, write surf dumps every stats_interval
-        # (these are instantaneous snapshots for the GUI animation, NOT for Cd calculation)
-        script = f"""# SPARTA Input Script - StellarOrion DSMC Simulation
-# Physics: {preset} | Mach {mach_val:.1f} | T_inf={temp_inf:.1f}K | nrho={n_rho:.2e}/m3
-# Tuning: fnum={fnum:.2e}, steps={steps}, avg_window=last {avg_nrepeat} steps
-seed            12345
-dimension       2
-global          gridcut 0.0 comm/sort yes
-boundary        o ao p
-
-create_box      {xmin-0.001:.3f} {xmax+0.001:.3f} 0.000 {ymax+0.001:.3f} -0.5 0.5
+        # SURFACE FORCE TIME-AVERAGING STRATEGY
+        # ─────────────────────────────────────────────────────────────────────────────
+        # The core cause of 52.5% Cd over-prediction at 1100 steps was using
+        # "fix ave/surf ... 1 1 1" which writes INSTANTANEOUS (per-timestep)
+        # surface forces. A single DSMC timestep has massive statistical noise.
+        #
+        # FIX: Use fix ave/surf to average over each stats_interval (e.g. 100 steps).
+        # We must align Nfreq with the dump interval (stats_interval) to avoid crashes:
+        # "Dump surf and fix not computed at compatible times".
+        # 
+        # The parser will then average the last 15 dump files to achieve the
+        # desired 1500-step noise reduction (sqrt(1500) ≈ 38.7x better).
+        # ─────────────────────────────────────────────────────────────────────────────
+        avg_nevery  = 1
+        avg_nfreq   = stats_interval
+        avg_nrepeat = stats_interval  # average over the entire stats_interval window
+        
+        restart_file = opt_params.get('restart_file')
+        
+        if restart_file:
+            # When resuming, read_restart replaces box, grid, particles, species, mixture, surf geometry
+            init_block = f"read_restart    {restart_file}"
+            
+            # Extract elapsed steps from filename to calculate remaining steps
+            try:
+                elapsed = int(os.path.basename(restart_file).split('.')[1])
+                steps = max(1, steps - elapsed)
+                self.log_to_gui(f"    [*] Resuming from step {elapsed}. Remaining steps to run: {steps}")
+            except:
+                pass
+        else:
+            # Fresh start
+            init_block = f"""create_box      {xmin-0.001:.3f} {xmax+0.001:.3f} 0.000 {ymax+0.001:.3f} -0.5 0.5
 create_grid     {nx} {ny} 1
 balance_grid    rcb cell
 
@@ -1059,6 +1068,17 @@ surf_modify     all collide 1
 # Create particles AFTER surf_modify so they are only placed in fluid cells
 create_particles air n 0
 balance_grid    rcb part
+"""
+
+        script = f"""# SPARTA Input Script - StellarOrion DSMC Simulation
+# Physics: {preset} | Mach {mach_val:.1f} | T_inf={temp_inf:.1f}K | nrho={n_rho:.2e}/m3
+# Tuning: fnum={fnum:.2e}, steps={steps}, avg_window=last {avg_nrepeat} steps
+seed            12345
+dimension       2
+global          gridcut 0.0 comm/sort yes
+boundary        o ao p
+
+{init_block}
 
 # ──────────────────────────────────────────────────────────────────
 # Force and Heat Flux Computations
@@ -1097,6 +1117,9 @@ stats_style     step cpu np c_drag c_lift c_heat c_temp_avg[1] c_temp_avg[2] c_t
 # surf.*.out: written every stats_interval for progress monitoring (from time-averaged fix)
 dump            1 surf all {stats_interval} results_reference/surf.*.out id f_1[*] f_surfavg[*]
 dump            2 grid all {stats_interval} results_reference/grid.*.out id xlo ylo xhi yhi f_2[*] f_3[*] f_4[*]
+
+# Periodic state saving (for resume)
+restart         {stats_interval} results_reference/restart.*.sparta
 
 run             {steps}
 """
@@ -1578,12 +1601,15 @@ run             {steps}
             output_name=surf_name
         )
 
-        # 2. Setup results directory (Clean start)
+        # 2. Setup results directory
         import shutil
         results_dir = os.path.join(cad_dir, "results_reference")
-        if os.path.exists(results_dir):
-            shutil.rmtree(results_dir)
-        os.makedirs(results_dir, exist_ok=True)
+        
+        # Only clean if we are NOT resuming
+        if not opt_params.get('restart_file'):
+            if os.path.exists(results_dir):
+                shutil.rmtree(results_dir)
+            os.makedirs(results_dir, exist_ok=True)
 
         # 3. Generate and Write Script
         script_content = self.generate_sparta_script(opt_params, surf_name=surf_name, **sample_dict)
@@ -3204,13 +3230,11 @@ run             {steps}
             'base_thick': 0.0254,
             'default_payload': True,
             'env_duration': 60.0,
-            'env_run': 3000, # 3x flow-through time for DSMC steady-state convergence
+            'env_run': 1500, # 1.5x flow-through time for DSMC steady-state convergence (compromise for speed)
             # --- fnum tuning (2026-05-31 calibration) ---
-            # Lowered from 1.5e20 → 5e19 (3× more particles/cell) to reduce
-            # statistical noise in the surface force integral, especially near the
-            # stagnation point (y < 0.55 m).  Runtime cost: ~3× longer per run.
-            # Prior value produced ~1.75M particles; new value → ~5.25M particles.
-            'env_fnum': '5e19',
+            # Lowered from 1.5e20 to 2.5e20 (moderate compromise to keep particles ~1M)
+            # Prior value of 5e19 produced ~4.8M particles and took 2 hours to run.
+            'env_fnum': '2.5e20',
             'env_cores': os.cpu_count() or 4,
             'env_xmin': -5.0,
             'env_xmax': 9.0
@@ -3228,7 +3252,7 @@ run             {steps}
             opt_params['alt'] = alt
         
         # Override with any passed kwargs (like steps)
-        if 'steps' in kwargs:
+        if 'steps' in kwargs and kwargs['steps'] is not None:
             opt_params['env_run'] = kwargs['steps']
         
         # Geometry and Sample setup
@@ -3261,12 +3285,28 @@ run             {steps}
             cad_dir = os.path.join(self.cwd, "CADDesign")
             grid_dir = os.path.join(cad_dir, "results_reference")
             
-            # Clean results_reference to ensure fresh run if parameters changed
-            if os.path.exists(grid_dir):
+            # Clean results_reference to ensure fresh run if parameters changed, unless resuming
+            is_resume = kwargs.get('resume', False)
+            restart_file = None
+            if is_resume and os.path.exists(grid_dir):
+                self.log_to_gui("    [*] Resume requested. Searching for latest restart file...")
+                import glob
+                restart_files = glob.glob(os.path.join(grid_dir, "restart.*.sparta"))
+                if restart_files:
+                    # Extract steps from 'restart.<step>.sparta'
+                    restart_files.sort(key=lambda x: int(os.path.basename(x).split('.')[1]))
+                    restart_file = restart_files[-1]
+                    self.log_to_gui(f"    [+] Found restart file: {os.path.basename(restart_file)}")
+                    opt_params['restart_file'] = restart_file
+                else:
+                    self.log_to_gui("    [!] No restart files found. Proceeding with fresh start.")
+            elif os.path.exists(grid_dir):
                 import shutil
                 self.log_to_gui("    [*] Cleaning results_reference for fresh validation...")
                 shutil.rmtree(grid_dir)
-            os.makedirs(grid_dir, exist_ok=True)
+                os.makedirs(grid_dir, exist_ok=True)
+            else:
+                os.makedirs(grid_dir, exist_ok=True)
             
             if solver == 'openfoam':
                 self.log_to_gui("[*] Checking OpenFOAM Docker image readiness...")

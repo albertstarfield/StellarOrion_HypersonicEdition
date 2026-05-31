@@ -495,12 +495,12 @@ def main():
 
     # -- Simulation Parameters ------------------------------------------------─
     sim = parser.add_argument_group("Simulation Parameters")
-    sim.add_argument("--steps", type=int, default=500,
-        help="Number of simulation timesteps. Default: 500. (For SPARTA: particle advance steps. For dsmcFoam: time iterations.)")
+    sim.add_argument("--steps", type=int, default=None,
+        help="Number of simulation timesteps. Default: Handled by engine (500 for sample, 1500 for baseline).")
     sim.add_argument("--stats-interval", type=int, default=100,
         help="Frequency of simulation statistics output (in steps). Default: 100.")
-    sim.add_argument("--grid-factor", type=float, default=0.7,
-        help="Mesh density multiplier. Default: 0.7 (Optimized via Grid Independency test against MDAO reference). >1.0 increases grid resolution, <1.0 decreases it.")
+    sim.add_argument("--grid-factor", type=float, default=1.5,
+        help="Mesh density multiplier. Default: 1.5 (Optimized to resolve shock MFP). >1.0 increases grid resolution, <1.0 decreases it.")
     sim.add_argument("--samples", type=int, default=5,
         help="Number of Latin Hypercube Sampling (LHS) geometry samples per optimization iteration. Default: 5.")
     sim.add_argument("--goal", type=str, default="drag", choices=["drag", "heat"],
@@ -518,6 +518,8 @@ def main():
     sim.add_argument("--payload", action="store_true", default=False,
         help="Enable a payload model on the backside of the HIAD shield. Requires --payload-file or --defaultPayload.")
     sim.add_argument("--payload-file", type=str, default="CADDesign/HIAD_custom_full.step", help="Path to payload STEP file")
+    sim.add_argument("--resume", action="store_true",
+        help="Attempt to resume the simulation from the latest restart file in results_reference/ instead of starting from scratch.")
     sim.add_argument("--defaultPayload", action="store_true", default=False, help="Generate a default IRVE-3 cylindrical payload at the center back.")
     sim.add_argument("--fnum", type=str, default="5e16",
         help="Particle weighting factor (e.g. 5e16). Higher = fewer particles, faster run.")
@@ -756,6 +758,7 @@ def main():
                     headless=args.headless, 
                     sparta_gpu=args.sparta_gpu,
                     steps=args.steps,
+                    resume=args.resume,
                     mach=args.mach,
                     alt=args.alt,
                     flat_skin=args.flat_skin,

@@ -242,3 +242,6 @@ fluent-*.log
 AgentsInst.txt
 AgenticInst.txt
 AgentsInst.old.txt
+
+# Videos
+*.mp4
