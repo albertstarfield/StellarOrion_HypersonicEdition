@@ -10,7 +10,7 @@ import numpy as np
 import paramiko
 import sqlite3
 import datetime
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict
 
 class HistoryManager:
     def __init__(self, db_path="optimization_history.db"):
@@ -1043,7 +1043,6 @@ run             {steps}
             stdin, stdout, stderr = ssh.exec_command(cmd)
             
             # Pipe remote output to GUI (Combined stdout and stderr)
-            import select
             while not stdout.channel.exit_status_ready():
                 if stdout.channel.recv_ready():
                     line = stdout.readline()
@@ -1435,7 +1434,7 @@ run             {steps}
             f.write(script_content)
 
         # 2. Launch Docker
-        self.log_to_gui(f"    [*] Executing SPARTA via Docker...")
+        self.log_to_gui("    [*] Executing SPARTA via Docker...")
         subprocess.run(["docker", "rm", "-f", "hiad-runner"], capture_output=True)
         
         use_gpu = opt_params.get('sparta_gpu')
@@ -1491,9 +1490,9 @@ run             {steps}
                     ["colima", "status"], capture_output=True, text=True, timeout=10
                 )
                 if "is running" not in colima_res.stdout and "running" not in colima_res.stderr.lower():
-                    self.log_to_gui(f"    [BABYSITTER] WARNING: Colima appears DOWN! Attempting restart...")
+                    self.log_to_gui("    [BABYSITTER] WARNING: Colima appears DOWN! Attempting restart...")
                     subprocess.run(["colima", "start"], check=False, timeout=120)
-                    self.log_to_gui(f"    [BABYSITTER] Colima restart attempted. Waiting 15s...")
+                    self.log_to_gui("    [BABYSITTER] Colima restart attempted. Waiting 15s...")
                     time.sleep(15)
                 else:
                     self.log_to_gui(f"    [BABYSITTER] Heartbeat {elapsed_min:.1f} min: Colima is running.")
@@ -2002,7 +2001,7 @@ run             {steps}
             if "Successfully installed" in full_log or "No newer package found" in full_log:
                 return {"status": "success", "message": "Python 3.12 installed successfully.", "log": full_log}
             else:
-                return {"status": "error", "message": f"Installation failed.", "log": full_log}
+                return {"status": "error", "message": "Installation failed.", "log": full_log}
         except Exception as e:
             return {"status": "error", "message": str(e), "log": str(e)}
 
@@ -2394,7 +2393,7 @@ run             {steps}
         # ------------------------
 
         self.log_to_gui(f"[*] OPTIMIZATION TARGET: {goal.upper()}")
-        self.log_to_gui(f"[*] ------------------------------------------------")
+        self.log_to_gui("[*] ------------------------------------------------")
         self.log_to_gui(f"[*] TOTAL SIMULATION SAMPLES TO RUN: {samples_n}")
         if opt_params.get('verbose', True):
             self.log_to_gui("[VERBOSE] Full Parameter Set:")
@@ -2404,7 +2403,7 @@ run             {steps}
         if opt_params.get('solver') == 'pyfluent':
             self.log_to_gui(f"[*] REMOTE HOST:                     {opt_params.get('ssh_host')}")
         self.log_to_gui(f"[*] TOTAL STEPS PER SIMULATION:      {opt_params.get('env_run', '1000')}")
-        self.log_to_gui(f"[*] ------------------------------------------------")
+        self.log_to_gui("[*] ------------------------------------------------")
         
         self.log_to_gui(f"    - Velocity (vstream): {opt_params.get('env_vstream', '2700.0')} m/s")
         self.log_to_gui(f"    - Duration: {opt_params.get('env_duration', '60.0')} s")
@@ -2453,7 +2452,7 @@ run             {steps}
         python_exec = self._get_python_exec()
         
         # 1. Establish Physics Baseline
-        self.log_to_gui(f"[*] PHASE 1: ESTABLISHING PHYSICS BASELINE...")
+        self.log_to_gui("[*] PHASE 1: ESTABLISHING PHYSICS BASELINE...")
         sim_start = time.time()
         
         n_cores = os.cpu_count() or 1
@@ -2552,16 +2551,16 @@ run             {steps}
 
             if is_gui:
                 # Update UI with baseline results early
-                self.window.evaluate_js(f"document.getElementById('img-thermal').src = 'assets/plots/thermal_map.png?' + new Date().getTime()")
-                self.window.evaluate_js(f"document.getElementById('img-pressure').src = 'assets/plots/pressure_map.png?' + new Date().getTime()")
-                self.window.evaluate_js(f"document.getElementById('img-conv-aero').src = 'assets/plots/convergence_aero_smooth.png?' + new Date().getTime()")
-                self.window.evaluate_js(f"document.getElementById('img-conv-thermal').src = 'assets/plots/convergence_thermal_smooth.png?' + new Date().getTime()")
-                self.window.evaluate_js(f"document.getElementById('img-conv-mission').src = 'assets/plots/convergence_mission_smooth.png?' + new Date().getTime()")
-                self.window.evaluate_js(f"document.getElementById('img-3d-temp').src = 'assets/plots/upscaled_3d_temp.png?' + new Date().getTime()")
-                self.window.evaluate_js(f"document.getElementById('img-3d-velocity').src = 'assets/plots/upscaled_3d_velocity.png?' + new Date().getTime()")
-                self.window.evaluate_js(f"document.getElementById('img-3d-mach').src = 'assets/plots/upscaled_3d_mach.png?' + new Date().getTime()")
-                self.window.evaluate_js(f"document.getElementById('img-stag').src = 'assets/plots/stagnation_graph.png?' + new Date().getTime()")
-                self.window.evaluate_js(f"document.getElementById('img-knudsen').src = 'assets/plots/knudsen_map.png?' + new Date().getTime()")
+                self.window.evaluate_js("document.getElementById('img-thermal').src = 'assets/plots/thermal_map.png?' + new Date().getTime()")
+                self.window.evaluate_js("document.getElementById('img-pressure').src = 'assets/plots/pressure_map.png?' + new Date().getTime()")
+                self.window.evaluate_js("document.getElementById('img-conv-aero').src = 'assets/plots/convergence_aero_smooth.png?' + new Date().getTime()")
+                self.window.evaluate_js("document.getElementById('img-conv-thermal').src = 'assets/plots/convergence_thermal_smooth.png?' + new Date().getTime()")
+                self.window.evaluate_js("document.getElementById('img-conv-mission').src = 'assets/plots/convergence_mission_smooth.png?' + new Date().getTime()")
+                self.window.evaluate_js("document.getElementById('img-3d-temp').src = 'assets/plots/upscaled_3d_temp.png?' + new Date().getTime()")
+                self.window.evaluate_js("document.getElementById('img-3d-velocity').src = 'assets/plots/upscaled_3d_velocity.png?' + new Date().getTime()")
+                self.window.evaluate_js("document.getElementById('img-3d-mach').src = 'assets/plots/upscaled_3d_mach.png?' + new Date().getTime()")
+                self.window.evaluate_js("document.getElementById('img-stag').src = 'assets/plots/stagnation_graph.png?' + new Date().getTime()")
+                self.window.evaluate_js("document.getElementById('img-knudsen').src = 'assets/plots/knudsen_map.png?' + new Date().getTime()")
                 for s in ['N2', 'O2', 'NO', 'N', 'O']:
                     self.window.evaluate_js(f"document.getElementById('img-species-{s}').src = 'assets/plots/species_{s}_map.png?' + new Date().getTime()")
 
@@ -2613,7 +2612,7 @@ run             {steps}
         base_f_metrics = self.calculate_flight_metrics(ref_metric_dict, opt_params, base_sample)
         
         self.log_to_gui(f"    [+] BASELINE PHYSICS RESULT ({goal.upper()}): {ref_metric:.6f}")
-        self.log_to_gui(f"    [+] FLIGHT METRICS:")
+        self.log_to_gui("    [+] FLIGHT METRICS:")
         self.log_to_gui(f"        - Ballistic Coeff (beta): {base_f_metrics['beta']:.2f} kg/m^2")
         self.log_to_gui(f"        - Peak Stagnation Heat:   {base_f_metrics['stag_heat']/1e3:.2f} kW/m^2")
         self.log_to_gui(f"        - Peak Shock Layer Temp:  {base_f_metrics['shock_temp']:.1f} K")
@@ -2629,7 +2628,7 @@ run             {steps}
             active_params = ['diameter']
             n_dim = 1
         
-        self.log_to_gui(f"[*] SEARCH SPACE RANGES:")
+        self.log_to_gui("[*] SEARCH SPACE RANGES:")
         for p in active_params:
             p_info = search_map[p]
             self.log_to_gui(f"    - {p}: [{p_info['min']:.4f}, {p_info['max']:.4f}]")
@@ -2788,10 +2787,10 @@ run             {steps}
             remaining = samples_n - (i + 1)
             etr = remaining * sample_dur
             
-            self.log_to_gui(f"[*] ------------------------------------------------")
+            self.log_to_gui("[*] ------------------------------------------------")
             self.log_to_gui(f"[*] SAMPLE {i+1} COMPLETE (Duration: {sample_dur:.2f}s)")
             self.log_to_gui(f"[*] RESULT ({goal.upper()}): {val:.6f}")
-            self.log_to_gui(f"[*] FLIGHT METRICS:")
+            self.log_to_gui("[*] FLIGHT METRICS:")
             self.log_to_gui(f"    - Ballistic Coeff (beta): {f_metrics['beta']:.2f} kg/m^2")
             self.log_to_gui(f"    - Peak Stagnation Heat:   {f_metrics['stag_heat']/1e3:.2f} kW/m^2")
             self.log_to_gui(f"    - Peak Shock Layer Temp:  {f_metrics['shock_temp']:.1f} K")
@@ -2799,7 +2798,7 @@ run             {steps}
             self.log_to_gui(f"    - Est. Backface Temp:     {f_metrics['backface_temp']:.1f} K")
             self.log_to_gui(f"    - Instantaneous g-load:   {f_metrics['g_load']:.2f} g")
             self.log_to_gui(f"[*] PARAMS: {', '.join([f'{k}={sample_dict[k]}' for k in active_params])}")
-            self.log_to_gui(f"[*] ------------------------------------------------")
+            self.log_to_gui("[*] ------------------------------------------------")
 
             if remaining > 0:
                 self.log_to_gui(f"    [*] Estimated Time Remaining: {etr/60:.1f} minutes")
@@ -3087,7 +3086,7 @@ run             {steps}
             # Clean results_reference to ensure fresh run if parameters changed
             if os.path.exists(grid_dir):
                 import shutil
-                self.log_to_gui(f"    [*] Cleaning results_reference for fresh validation...")
+                self.log_to_gui("    [*] Cleaning results_reference for fresh validation...")
                 shutil.rmtree(grid_dir)
             os.makedirs(grid_dir, exist_ok=True)
             
@@ -3495,7 +3494,7 @@ run             {steps}
             print(f"{label:<25} | {ref_str:<15} | {v_s:<15.4f} | {v_p:<15.4f} | {error_str}")
         
         print("-" * 90)
-        print(f"[*] Comparison study complete. Plots generated with '_smooth' and '_pointy' suffixes.")
+        print("[*] Comparison study complete. Plots generated with '_smooth' and '_pointy' suffixes.")
         print("="*90)
         
         return {"smooth": data_smooth, "pointy": data_pointy}
@@ -3579,7 +3578,6 @@ run             {steps}
         """Orchestrate OpenFOAM simulation."""
         import subprocess
         import os
-        import time
         
         cad_dir = os.path.join(self.cwd, "CADDesign")
         case_dir = os.path.join(cad_dir, "openfoam_case")

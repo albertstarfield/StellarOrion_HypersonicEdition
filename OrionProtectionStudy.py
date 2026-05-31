@@ -1,5 +1,4 @@
 import os
-import sys
 import subprocess
 from StellarOrionEngineMach5Up import Api
 
@@ -22,7 +21,7 @@ def setup_orion_study():
         'nose_type': 'smooth'
     }
     
-    print(f"[*] Target Payload: Orion Crew Module (5m diameter)")
+    print("[*] Target Payload: Orion Crew Module (5m diameter)")
     print(f"[*] Protecting HIAD Scale: {orion_params['diameter']}m")
     
     # 2. Generate Geometry with Placeholder Payload
@@ -45,7 +44,7 @@ def setup_orion_study():
     
     try:
         subprocess.run(cmd_cad, cwd=cad_dir, check=True)
-        print(f"[SUCCESS] Orion scale assembly generated: Orion_HIAD_ScaleStudy.step")
+        print("[SUCCESS] Orion scale assembly generated: Orion_HIAD_ScaleStudy.step")
     except Exception as e:
         print(f"[FAILURE] Geometry generation failed: {e}")
         return

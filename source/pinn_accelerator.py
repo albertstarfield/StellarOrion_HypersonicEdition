@@ -1,6 +1,5 @@
 import numpy as np
 import os
-import sys
 from typing import Any
 
 # Set backend to pytorch
@@ -155,7 +154,6 @@ def pde_navier_stokes_2d(x, y, v_stream=None, scales=None):
 class PINNAccelerator:
     def __init__(self, device="mps"):
         import deepxde as dde
-        import torch
         self.device = device
         # Some versions of DeepXDE might not have set_default_device
         if hasattr(dde.config, "set_default_device"):
@@ -280,7 +278,7 @@ class PINNAccelerator:
         if not checkpoint_loaded:
             print(f"[PINN] Starting training for {iterations} iterations...")
             if not inverse:
-                print(f"[PINN] Stage 1: Data Pre-training (fitting observation constraints)...")
+                print("[PINN] Stage 1: Data Pre-training (fitting observation constraints)...")
                 stage1_weights = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0]
                 self.model.compile("adam", lr=1e-3, loss_weights=stage1_weights)
                 losshistory1, _ = self.model.train(iterations=iterations // 2, display_every=100)
@@ -292,7 +290,7 @@ class PINNAccelerator:
                     for i, l in enumerate(losshistory1.loss_train)
                 ])
                 
-                print(f"[PINN] Stage 2: Physics-Regularized Fine-tuning...")
+                print("[PINN] Stage 2: Physics-Regularized Fine-tuning...")
                 if loss_weights is None or len(loss_weights) != 10:
                     stage2_weights = [1e-4, 1e-4, 1e-4, 1e-4, 1e-4, 1.0, 1.0, 1.0, 1.0, 1.0]
                 else:

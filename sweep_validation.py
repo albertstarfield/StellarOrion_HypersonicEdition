@@ -1,7 +1,5 @@
 
 import subprocess
-import os
-import json
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 
@@ -29,7 +27,7 @@ def main():
     machs = np.linspace(5, 25, 20)
     alts = np.linspace(40, 80, 20)
     
-    print(f"[*] Starting 400 sample sweep (20x20)...")
+    print("[*] Starting 400 sample sweep (20x20)...")
     
     tasks = []
     for m in machs:

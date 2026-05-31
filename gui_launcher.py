@@ -2,7 +2,6 @@ import sys
 import os
 import subprocess
 import shutil
-import venv
 
 # Pipe stdio and stderr to TestlogDev.log
 class Logger:

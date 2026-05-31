@@ -2,7 +2,7 @@
 import os
 import sys
 import subprocess
-from typing import Any, Optional
+from typing import Any
 
 # --- Dependency Auto-Fix ----------------------------------------------------──
 # --- Environment Management (Shared with GUI) ------------------------------──
@@ -82,7 +82,7 @@ def ensure_venv():
         except Exception as e:
             print(f"[-] Warning: Dependency sync failed: {e}")
 
-        print(f"[*] Restarting application in isolated environment...")
+        print("[*] Restarting application in isolated environment...")
         try:
             if venv_python is None:
                  raise RuntimeError("Failed to locate venv python for execution")
@@ -212,9 +212,7 @@ import ctypes
 import shutil
 import json
 import argparse
-import time
 import re
-import pydoc
 
 sys.stdout.flush()
 

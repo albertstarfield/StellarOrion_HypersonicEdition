@@ -1,6 +1,4 @@
-import os
 import sys
-import json
 from StellarOrionEngineMach5Up import Api
 
 def run_headless_test():

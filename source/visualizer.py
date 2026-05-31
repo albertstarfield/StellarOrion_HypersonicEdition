@@ -828,7 +828,6 @@ def upscale_2d_to_3d(grid_file, output_path, surf_file=None, prop='temp', ref_pa
     for theta in thetas:
         all_x.extend(x); all_y.extend(y * np.cos(theta))
         all_z.extend(y * np.sin(theta)); all_vals.extend(vals)
-    from mpl_toolkits.mplot3d import Axes3D
     ax = fig.add_subplot(111, projection='3d')
     ax.set_facecolor('#0f172a')
     
