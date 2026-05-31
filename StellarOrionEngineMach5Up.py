@@ -1640,7 +1640,7 @@ run             {steps}
         if use_gpu is None: use_gpu = self.has_nvidia_gpu()
         
         docker_create_cmd = [
-            "docker", "create", "--name", "hiad-runner",
+            "docker", "create", "--name", "hiad-runner", "--shm-size", "2g",
             "-v", f"{self.cwd}:/app", 
             "--workdir", "/app/CADDesign",
             "-e", "IN_DOCKER=1", 
@@ -2768,10 +2768,10 @@ run             {steps}
                 for s in ['N2', 'O2', 'NO', 'N', 'O']:
                     self.window.evaluate_js(f"document.getElementById('img-species-{s}').src = 'assets/plots/species_{s}_map.png?' + new Date().getTime()")
 
-            self.log_to_gui("    [+] Exporting 3D Results to ParaView (VTK)...")
-            vtk_path = os.path.join(self.cwd, "web", "assets", "data", "upscaled_baseline.vtk")
-            os.makedirs(os.path.dirname(vtk_path), exist_ok=True)
-            visualizer.export_upscaled_vtk(grid_files[-1], vtk_path)
+            # self.log_to_gui("    [+] Exporting 3D Results to ParaView (VTK)...")
+            # vtk_path = os.path.join(self.cwd, "web", "assets", "data", "upscaled_baseline.vtk")
+            # os.makedirs(os.path.dirname(vtk_path), exist_ok=True)
+            # visualizer.export_upscaled_vtk(grid_files[-1], vtk_path)
             
             # --- PINN Refinement Stage ---
             if opt_params.get('pinn_accel', True):
@@ -2903,8 +2903,7 @@ run             {steps}
 
             cmd_cad = [python_exec, "HIAD_GeometryEngine.py", "--diameter", str(sample_dict['diameter']), "--angle", str(sample_dict['angle']), 
                        "--toroids", str(sample_dict['toroids']), "--nose", str(sample_dict['nose']), "--thickness", str(sample_dict['thickness']),
-                       "--scallop_pts", str(sample_dict['scallop_pts']), "--scallop_angle", str(sample_dict['scallop_angle']), "--output", "HIAD_opt",
-                       "--slice_angle", "5.0" if opt_params.get('solver') == 'pyansys' else "360.0"]
+                       "--scallop_pts", str(sample_dict['scallop_pts']), "--scallop_angle", str(sample_dict['scallop_angle']), "--output", "HIAD_opt"]
             subprocess.run(cmd_cad, cwd=cad_dir, check=True)
             
             sample_start = time.time()
@@ -2952,7 +2951,7 @@ run             {steps}
                     shutil.copy2(src_cad, os.path.join(sample_dir, f"geometry{ext}"))
             
             # Archive SPARTA raw data
-            raw_dir = os.path.join(cad_dir, "results")
+            raw_dir = os.path.join(cad_dir, "results_reference")
             if os.path.exists(raw_dir):
                 import shutil
                 shutil.copytree(raw_dir, os.path.join(sample_dir, "raw_data"), dirs_exist_ok=True)
