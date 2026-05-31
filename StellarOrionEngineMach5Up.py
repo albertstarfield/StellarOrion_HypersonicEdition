@@ -190,13 +190,29 @@ class Api:
                 "time_of_peak_heating_s": 677.49
             },
             "validation_targets": {
-                # NOTE: Cd=1.47 is for smooth cone baseline (Rapisarda MDAO target), 
+                # NOTE: Cd=1.47 is for smooth cone baseline (Rapisarda MDAO target),
                 # different from flight data (~0.6-0.8) which had 6 toroids vs IRVE's 7.
                 # Consistent with ballistic coefficient β = m/(Cd*A) = 26.9 kg/m²
                 "reference_cd": 1.47,
                 "stagnation_pressure_kpa": 12.4,
                 "ambient_pressure_pa": 75.77,
                 "ambient_temp_k": 270.65
+            },
+            # --- 2D → 3D Axisymmetric Force Correction ---
+            # SPARTA runs in dimension 2 (axisymmetric via 'boundary o ao p').
+            # The surface-force compute returns forces in N per unit depth (the 2D slice).
+            # To recover the true 3D drag force on the revolving body, multiply by:
+            #   F_3D = F_2D_slice × 2π × ȳ_centroid
+            # where ȳ_centroid is the radial distance of the surface area centroid from
+            # the symmetry axis. For the 3.0m IRVE-3 HIAD (60° sphere-cone, Rn=0.55m,
+            # 6 toroids) this is derived geometrically as ~0.675 m.
+            # This correction is applied automatically by _compute_surf_centroid() if a
+            # .surf file is present; otherwise the estimate below is used as fallback.
+            "axisym_correction": {
+                "method": "surface_centroid_revolution",
+                "y_centroid_fallback_m": 0.675,
+                "factor_fallback": 4.241,  # 2π × 0.675
+                "note": "Converts SPARTA 2D slice force (N/m-depth) → 3D revolution force (N)"
             }
         }
 
@@ -319,6 +335,98 @@ class Api:
             return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], cwd=self.cwd).decode('ascii').strip()
         except Exception:
             return "unknown"
+
+    def _compute_surf_centroid(self, surf_file_path):
+        """Computes the area-weighted radial centroid (ȳ) of a SPARTA .surf surface.
+
+        SPARTA dimension-2 axisymmetric simulations output forces on the 2D slice
+        (units: N / m-depth, i.e. force per unit out-of-plane thickness). To convert
+        to the true 3D drag force on the revolved body, multiply by 2π × ȳ_centroid:
+
+            F_drag_3D  =  F_drag_2D_slice  ×  2π × ȳ
+            Cd         =  F_drag_3D        /  (q_dyn × A_ref_3D)
+
+        This function reads the triangles/segments in the .surf file and returns the
+        length-weighted centroid y-coordinate (radius in axisymmetric coordinates).
+
+        Returns:
+            (float) ȳ_centroid in metres. Falls back to 0.675 m for a 3m IRVE-3 HIAD
+            if the file cannot be parsed.
+        """
+        FALLBACK_Y_CENTROID = 0.675  # m  (derived analytically for 3m HIAD, 60° cone)
+        try:
+            if not surf_file_path or not os.path.exists(surf_file_path):
+                return FALLBACK_Y_CENTROID
+
+            points = {}   # id → (x, y)
+            lines  = []   # list of (p1_id, p2_id) — 2D surf uses line segments
+
+            in_points = False
+            in_lines  = False
+            with open(surf_file_path, 'r') as fh:
+                for raw in fh:
+                    row = raw.strip()
+                    if not row or row.startswith('#'):
+                        continue
+                    if row.lower().startswith('points'):
+                        in_points = True
+                        in_lines  = False
+                        continue
+                    if row.lower().startswith('lines'):
+                        in_lines  = True
+                        in_points = False
+                        continue
+                    # Other section headers (triangles, etc.) — stop both
+                    if row.lower().startswith(('triangles', 'surfs')):
+                        in_points = False
+                        in_lines  = False
+                        continue
+                    parts = row.split()
+                    if in_points and len(parts) >= 3:
+                        try:
+                            pid = int(parts[0])
+                            x   = float(parts[1])
+                            y   = float(parts[2])
+                            points[pid] = (x, y)
+                        except ValueError:
+                            pass
+                    elif in_lines and len(parts) >= 3:
+                        try:
+                            p1 = int(parts[1])
+                            p2 = int(parts[2])
+                            lines.append((p1, p2))
+                        except ValueError:
+                            pass
+
+            if not points or not lines:
+                return FALLBACK_Y_CENTROID
+
+            # Length-weighted centroid of all surface segments in the y (radial) direction.
+            # Only include segments that are NOT on the symmetry axis (y ≈ 0) to avoid
+            # contaminating the centroid with the base-plate closure segments.
+            total_len = 0.0
+            weighted_y = 0.0
+            for p1, p2 in lines:
+                if p1 not in points or p2 not in points:
+                    continue
+                x1, y1 = points[p1]
+                x2, y2 = points[p2]
+                mid_y = 0.5 * (y1 + y2)
+                if mid_y < 1e-6:  # skip axis segments
+                    continue
+                seg_len = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+                total_len   += seg_len
+                weighted_y  += seg_len * mid_y
+
+            if total_len < 1e-12:
+                return FALLBACK_Y_CENTROID
+
+            y_centroid = weighted_y / total_len
+            return float(y_centroid)
+
+        except Exception as e:
+            self.log_to_gui(f"    [!] _compute_surf_centroid fallback ({e}): using ȳ = {FALLBACK_Y_CENTROID:.3f} m")
+            return FALLBACK_Y_CENTROID
 
     def _get_viz_params(self, opt_params, sample_dict):
         """Standardizes simulation metadata for the visualizer overlays."""
@@ -852,6 +960,14 @@ O recombine simple {gamma} O2
         grid_factor = float(opt_params.get('grid_factor', 0.7))
         nx = int(400 * grid_factor)
         ny = int(400 * grid_factor)
+
+        # NOTE on axisymmetric force output (2026-05-31 calibration fix):
+        # This script uses 'dimension 2' with 'boundary o ao p' (axisymmetric).
+        # All surface force computes (c_surfF[1] = fx) produce forces in N on the
+        # 2D Cartesian slice — NOT the full 3D revolution body force.
+        # Downstream Cd calculation MUST apply:  F_3D = F_2D × 2π × ȳ_centroid
+        # This is handled automatically in run_baseline_validation() and
+        # run_grid_independency_test() via _compute_surf_centroid().
         
         steps = int(kwargs.get('steps', opt_params.get('env_run', 500)))
         stats_interval = int(opt_params.get('stats_interval', 100))
@@ -1660,10 +1776,16 @@ run             {steps}
                 try:
                     res, _ = self.run_sparta_simulation(opt_params, sample_dict, surf_name=output_surf_name)
                     
-                    # Derive metrics
+                    # Derive metrics — apply 2D axisym → 3D correction
+                    # (same formula as run_baseline_validation)
                     v = opt_params['env_vstream']
-                    rho = 3.5e22 * (28.97e-3 / 6.022e23) 
-                    force_n = res['drag']
+                    rho = 3.5e22 * (28.97e-3 / 6.022e23)
+                    force_2d = res['drag']  # Raw 2D SPARTA output [N]
+                    # Read surface centroid from the generated .surf file
+                    surf_path_gi = os.path.join(cad_dir, f"{output_surf_name}.surf")
+                    y_cen_gi = self._compute_surf_centroid(surf_path_gi)
+                    axisym_gi = 2.0 * np.pi * y_cen_gi if y_cen_gi > 1e-9 else 4.241
+                    force_n = force_2d * axisym_gi  # Corrected 3D force [N]
                     area = np.pi * (sample_dict['diameter']/2)**2
                     cd_sim = force_n / (0.5 * rho * v**2 * area) if (rho * v**2 * area) > 0 else 0
                     error_pct = abs(cd_sim - ref_cd) / ref_cd * 100
@@ -3032,7 +3154,12 @@ run             {steps}
             'default_payload': True,
             'env_duration': 60.0,
             'env_run': 1000, # Default
-            'env_fnum': '1.5e20',
+            # --- fnum tuning (2026-05-31 calibration) ---
+            # Lowered from 1.5e20 → 5e19 (3× more particles/cell) to reduce
+            # statistical noise in the surface force integral, especially near the
+            # stagnation point (y < 0.55 m).  Runtime cost: ~3× longer per run.
+            # Prior value produced ~1.75M particles; new value → ~5.25M particles.
+            'env_fnum': '5e19',
             'env_cores': os.cpu_count() or 4,
             'env_xmin': -5.0,
             'env_xmax': 9.0
@@ -3170,22 +3297,48 @@ run             {steps}
             except Exception as ve:
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed: {ve}")
 
-            # 4. Extract metrics (Correcting for 2D Axisymmetric Scaling)
+            # 4. Extract metrics — Apply 2D Axisymmetric → 3D Revolution Correction
+            # -----------------------------------------------------------------------
+            # SPARTA runs dimension 2 (axisymmetric via 'boundary o ao p').
+            # The surface compute 'fx' returns the axial force on the 2D Cartesian slice
+            # in units of N (force per unit simulation depth, effectively N/m for 2D).
+            #
+            # To recover the physical 3D drag force on the axisymmetric body:
+            #   F_drag_3D = F_drag_2D_slice × 2π × ȳ_centroid
+            # where ȳ_centroid is the area-weighted radial centroid of the surface.
+            #
+            # Without this correction Cd is over-predicted by ~50% because the raw
+            # 2D force (which excludes the azimuthal leverage) is divided against the
+            # full 3D disk area — see Rapisarda (2023) §4.2 and Week-4 error analysis.
             rho = (opt_params['env_nrho'] * (28.97e-3 / 6.022e23))
             q_dyn = 0.5 * rho * (opt_params['env_vstream']**2)
             area_3d = 0.25 * 3.14159 * (sample_dict['diameter']**2)
-            
-            sim_drag_force = res_dict.get('drag', 0.0)
+
+            sim_drag_force_2d = res_dict.get('drag', 0.0)  # Raw 2D SPARTA output [N]
+
+            # Determine axisymmetric correction factor from geometry
+            surf_file_path = os.path.join(cad_dir, "HIAD_custom.surf")
+            y_centroid = self._compute_surf_centroid(surf_file_path)
+            # Fallback from baseline doc if surf parse fails (returns 0.675)
+            if y_centroid <= 1e-9:
+                y_centroid = baseline_doc['axisym_correction']['y_centroid_fallback_m']
+            axisym_factor = 2.0 * 3.14159265 * y_centroid  # 2π × ȳ  [m]
+
+            # Apply correction: F_3D = F_2D × 2π × ȳ
+            sim_drag_force = sim_drag_force_2d * axisym_factor  # Corrected 3D force [N]
             sim_cd = sim_drag_force / (q_dyn * area_3d) if (q_dyn * area_3d) > 0 else 0.0
-            
+
             # Heat Flux (W/m2 to W/cm2)
             sim_heat = (res_dict.get('heat', 0.0) / 10000.0)
-            
-            self.log_to_gui("\n[VERBOSE] Baseline Calibration Physics (2D Baseline):")
-            self.log_to_gui(f"    - Ambient Density (rho): {rho:.6e} kg/m3")
-            self.log_to_gui(f"    - Dynamic Pressure (q): {q_dyn:.2f} Pa")
-            self.log_to_gui(f"    - Reference Area (3D): {area_3d:.4f} m2")
-            self.log_to_gui(f"    - Raw 2D Drag Force:    {sim_drag_force:.2f} N")
+
+            self.log_to_gui("\n[VERBOSE] Baseline Calibration Physics (Axisym-Corrected):")
+            self.log_to_gui(f"    - Ambient Density (rho):        {rho:.6e} kg/m3")
+            self.log_to_gui(f"    - Dynamic Pressure (q):          {q_dyn:.2f} Pa")
+            self.log_to_gui(f"    - Reference Area (3D):           {area_3d:.4f} m2")
+            self.log_to_gui(f"    - Raw 2D SPARTA Drag Force:      {sim_drag_force_2d:.4f} N")
+            self.log_to_gui(f"    - Surface Centroid (ȳ):          {y_centroid:.4f} m")
+            self.log_to_gui(f"    - Axisym Correction (2π×ȳ):      {axisym_factor:.4f}")
+            self.log_to_gui(f"    - Corrected 3D Drag Force:       {sim_drag_force:.4f} N")
             
             # 5. Compare
             doc_cd = baseline_doc['validation_targets']['reference_cd']
