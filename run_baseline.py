@@ -8,6 +8,8 @@ opt_params = {
     'target_vehicle': 'IRVE-3',
     'opt_method': 'random',
     'opt_samples': '0',
+    'samples': 0,
+    'resume': True,
     'env_mach': '17.6',
     'env_alt': '40.0',
     'env_run': '2500',
