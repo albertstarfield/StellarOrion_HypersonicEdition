@@ -595,9 +595,14 @@ class Api:
             # Rationale: With fix ave/surf time-averaging in the SPARTA script aligned to
             # stats_interval (typically 100 steps), each file contains a 100-step average.
             # Averaging the last 15 files gives us a robust 1500-step steady-state average.
+            # Remove surf.0.out as it contains no collisions and destroys the average
+            surf_files = [f for f in surf_files if f != "surf.0.out"]
             surf_files.sort(key=lambda x: int(x.split('.')[1]))
             n_avg_files = min(15, len(surf_files))  # average last 15 dumps (or all if fewer)
-            files_to_avg = [os.path.join(results_dir, f) for f in surf_files[-n_avg_files:]]
+            if n_avg_files > 0:
+                files_to_avg = [os.path.join(results_dir, f) for f in surf_files[-n_avg_files:]]
+            else:
+                files_to_avg = []
             self.log_to_gui(f"    [*] Averaging surface metrics over {len(files_to_avg)} dump file(s): "
                             f"{[os.path.basename(f) for f in files_to_avg]}")
             
