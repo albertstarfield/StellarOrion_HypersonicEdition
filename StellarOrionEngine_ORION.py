@@ -1132,7 +1132,7 @@ dump            1 surf all {stats_interval} results_reference/surf.*.out id f_1[
 dump            2 grid all {stats_interval} results_reference/grid.*.out id xlo ylo xhi yhi f_2[*] f_3[*] f_4[*]
 
 # Adaptive Mesh Refinement
-fix             adapt_grid adapt {stats_interval} all refine coarsen particle 50 10 maxlevel 2
+fix             adapt_grid adapt {stats_interval} all refine coarsen particle 100 20 maxlevel 1
 fix             balance_grid balance {stats_interval} 1.1 rcb part
 
 # Periodic state saving (for resume)

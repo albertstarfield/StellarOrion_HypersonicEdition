@@ -456,6 +456,10 @@ class Api:
             _, _, _, species_list, _ = self.get_chemistry_data(opt_params)
             
             return {
+                'target_vehicle': opt_params.get('target_vehicle', 'IRVE-3'),
+                'env_xmin': opt_params.get('env_xmin', -5.0),
+                'env_xmax': opt_params.get('env_xmax', 9.0),
+                'env_ymax': opt_params.get('env_ymax', 5.0),
                 'v_inf': round(vstream, 1),
                 'mach': mach,
                 'alt': alt,
@@ -1634,15 +1638,15 @@ run             {steps}
             "--fast"
         ]
         
+        if opt_params and 'payload_type' in opt_params:
+            cmd_cad.extend(["--payload_type", str(opt_params['payload_type'])])
+        if opt_params and 'payload_radius' in opt_params:
+            cmd_cad.extend(["--payload_radius", str(opt_params['payload_radius'])])
+        if opt_params and 'payload_height' in opt_params:
+            cmd_cad.extend(["--payload_height", str(opt_params['payload_height'])])
+            
         if default_payload:
             cmd_cad.extend(["--defaultPayload"])
-            if opt_params:
-                if 'payload_type' in opt_params:
-                    cmd_cad.extend(["--payload_type", str(opt_params['payload_type'])])
-                if 'payload_radius' in opt_params:
-                    cmd_cad.extend(["--payload_radius", str(opt_params['payload_radius'])])
-                if 'payload_height' in opt_params:
-                    cmd_cad.extend(["--payload_height", str(opt_params['payload_height'])])
         elif payload_file:
             cmd_cad.extend(["--payload_file", payload_file])
         
@@ -1669,7 +1673,8 @@ run             {steps}
             nose_type=nose_type, 
             payload_file=opt_params.get('payload_file'), 
             default_payload=opt_params.get('default_payload', False),
-            output_name=surf_name
+            output_name=surf_name,
+            opt_params=opt_params
         )
 
         # 2. Setup results directory

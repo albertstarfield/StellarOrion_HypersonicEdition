@@ -1,0 +1,408 @@
+CAD Export error: No pending wires present
+Exporting to SPARTA surface: ORION_custom.surf
+CAD Export error: No pending wires present
+Exporting to SPARTA surface: ORION_custom.surf
+8c18e0e5b353a161bfcb2466512b610436adf999e9ccac2220a0e8a26f46622a
+/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/source/visualizer.py:715: RuntimeWarning: divide by zero encountered in divide
+  beta = np.nan_to_num(mass / (cd * area), nan=0.0, posinf=0.0, neginf=0.0) if area > 0 else np.zeros_like(cd)
+Using backend: pytorch
+Other supported backends: tensorflow.compat.v1, tensorflow, jax, paddle.
+paddle supports more examples now and is recommended.
+[16:24:03] [*] Created History Entry: Run #98 (Run_20260603_162403)
+[16:24:03] [*] OPTIMIZATION TARGET: DRAG
+[16:24:03] [*] ------------------------------------------------
+[16:24:03] [*] TOTAL SIMULATION SAMPLES TO RUN: 5
+[16:24:03] [VERBOSE] Full Parameter Set:
+[16:24:03]     {
+    "target_vehicle": "ORION",
+    "opt_method": "random",
+    "opt_samples": "0",
+    "env_nrho": "2.45e22",
+    "env_vstream": "10000.0",
+    "env_mach": "32.0",
+    "env_alt": "40.0",
+    "env_run": "200",
+    "env_fnum": "1.0e23",
+    "env_xmin": "-1.69",
+    "env_xmax": "4.5",
+    "env_cores": 2,
+    "sparta_gpu": false,
+    "base_diameter": 5.02,
+    "default_payload": false,
+    "payload_file": "CADDesign/ORION_custom_full.step",
+    "active_params": {
+        "diameter": true,
+        "angle": true,
+        "nose": true,
+        "toroids": false,
+        "thickness": false,
+        "scallop_pts": false,
+        "scallop_angle": false
+    }
+}
+[16:24:03] [*] BACKEND SOLVER:                  SPARTA
+[16:24:03] [*] TOTAL STEPS PER SIMULATION:      200
+[16:24:03] [*] ------------------------------------------------
+[16:24:03]     - Velocity (vstream): 10000.0 m/s
+[16:24:03]     - Duration: 60.0 s
+[16:24:03]     - Thermal Lag: 0.1 %
+[16:24:03]     - Chemistry Mode: 5-species
+[16:24:03]     - Steady State Check: DISABLED
+[16:24:03]     - Chemistry Species: N2, O2, NO, N, O
+[16:24:03]     - Domain (X): [-1.69, 4.5]
+[16:24:03]     - Domain (Y): [0, scaled]
+[16:24:03] [*] PHASE 1: ESTABLISHING PHYSICS BASELINE...
+[16:24:03] [*] Detected 10 CPU cores. Enabling parallel execution...
+[16:24:03]     [+] Generating Baseline Geometry (D=5.02m)...
+[16:24:12]     [+] Running Baseline via SPARTA (D=5.02m)...
+[16:24:12]     [*] Regenerating Geometry: smooth (Payload=CADDesign/ORION_custom_full.step, DefaultPayload=False)...
+[16:24:12]     [+] Executing Geometry Engine: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/.venv/bin/python ORION_GeometryEngine.py --diameter 5.02 --angle 60.0 --nose 0.55 --toroids 6 --thickness 0.0254 --scallop_pts 32 --scallop_angle 40.0 --nose_type smooth --output ORION_custom --fast --payload_file CADDesign/ORION_custom_full.step
+[DEBUG] Writing in.hiad with 3262 bytes
+[16:24:17]     [*] Executing SPARTA via Docker...
+[16:24:18]     [!] Parallel Execution: Using 2 CPU cores via mpirun...
+[16:24:18] [DEBUG] Docker Create CMD: docker create --name hiad-runner --shm-size 2g -v /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition:/app --workdir /app/CADDesign -e IN_DOCKER=1 -e PYTHONUNBUFFERED=1 -e DOCKER_WORKDIR=/app -e SPARTA_GPU=0 -e OMP_NUM_THREADS=1 sparta-hysp mpirun --allow-run-as-root --oversubscribe -np 2 spa -in in.hiad
+[16:24:19]         CPU time = 0.0355163 secs
+[16:24:19]         0 initial grid cell count in group free_stream
+[16:24:19]         CPU time = 0.149864 secs
+[16:24:19]         0 0 zlo zhi
+[16:24:19]         CPU time = 0.0981435 secs
+[16:24:19]         CPU time = 0.00755851 secs
+[16:24:19]         CPU time = 0.0572648 secs
+[16:24:19]         Step CPU Np c_drag c_lift c_heat c_temp_avg[1] c_temp_avg[2] c_temp_avg[3] Natt Ncoll Nscoll
+[16:24:19]         0            0     3139            0            0            0            0            0            0        0        0        0
+[16:24:21]         100    2.0618252     3083    2375446.9   -128047.38 1.1408017e+09            0            0 3.201616e+08    63585    32966        5
+[16:24:27]         200    7.7418063     3088    2172664.8   -240537.09 9.436588e+08            0            0 1.9985356e+08   195832    99146        7
+[16:24:27]     [+] Generating Post-processing Plots and Animation...
+[DEBUG] Data ranges in grid.200.out:
+    - N:    0.0 to 8.0
+    - U:    -5006.8 to 10876.7 m/s (mean: 342.4)
+    - V:    -4575.3 to 5350.4 m/s
+    - Temp: -0.0 to 26300.3 K
+    - Pres: -1.2e-09 to 7.3e+05 Pa
+Plots generated in /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/web/assets/plots
+[16:26:28]     [+] Encoding TEMP Animation: validation_anim_smooth.mp4...
+[16:26:59]     [+] Generating 3D TEMP Upscale: upscaled_3d_smooth.png...
+[16:27:29]     [+] Encoding VELOCITY Animation: validation_anim_velocity_smooth.mp4...
+[16:28:07]     [+] Generating 3D VELOCITY Upscale: upscaled_3d_velocity_smooth.png...
+[16:28:42]     [+] Encoding MACH Animation: validation_anim_mach_smooth.mp4...
+[16:29:17]     [+] Generating 3D MACH Upscale: upscaled_3d_mach_smooth.png...
+[16:29:54]     [+] Encoding PRESSURE Animation: validation_anim_pressure_smooth.mp4...
+[16:30:28]     [+] Generating 3D PRESSURE Upscale: upscaled_3d_pressure_smooth.png...
+[16:30:58]     [+] Encoding KNUDSEN Animation: validation_anim_knudsen_smooth.mp4...
+[16:31:23]     [+] Generating 3D KNUDSEN Upscale: upscaled_3d_knudsen_smooth.png...
+[16:31:56]     [+] Encoding GRID Animation: validation_anim_grid_smooth.mp4...
+[16:32:21]     [+] Generating 3D GRID Upscale: upscaled_3d_grid_smooth.png...
+[16:33:01]     [+] Generating Mesh Plot: mesh_statistics_smooth.png...
+[16:33:04]     [!] Warning: Visual post-processing failed: x and y must have same first dimension, but have shapes (4,) and (3,)
+[16:33:04]     [*] Averaging surface metrics over 2 dump file(s): ['surf.100.out', 'surf.200.out']
+[16:33:04]     [+] Drag multi-file avg: 2274055.2850 N (σ=101391.7550, CV=4.5%)
+[16:33:04]     [+] Extracted Metrics: Drag=2274055.2850 N, Heat=1.04e+09 W/m2
+[16:33:04]     [+] Baseline established in 541.09s.
+[16:33:04] [*] PHASE 1.1: POST-PROCESSING BASELINE RESULTS...
+[16:33:04]     [+] Generating Baseline Static Maps (JPEG/Graph)...
+[DEBUG] Data ranges in grid.200.out:
+    - N:    0.0 to 8.0
+    - U:    -5006.8 to 10876.7 m/s (mean: 342.4)
+    - V:    -4575.3 to 5350.4 m/s
+    - Temp: -0.0 to 26300.3 K
+    - Pres: -1.2e-09 to 7.3e+05 Pa
+Plots generated in /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/web/assets/plots
+[16:34:12]     [+] Encoding TEMP Animation: validation_anim_smooth.mp4...
+[16:34:35]     [+] Generating 3D TEMP Upscale: upscaled_3d.png...
+[16:34:56]     [+] Encoding VELOCITY Animation: validation_anim_smooth_velocity.mp4...
+[16:35:19]     [+] Generating 3D VELOCITY Upscale: upscaled_3d_velocity.png...
+[16:35:48]     [+] Encoding MACH Animation: validation_anim_smooth_mach.mp4...
+[16:36:13]     [+] Generating 3D MACH Upscale: upscaled_3d_mach.png...
+[16:36:32]     [+] Encoding PRESSURE Animation: validation_anim_smooth_pressure.mp4...
+[16:36:47]     [+] Generating 3D PRESSURE Upscale: upscaled_3d_pressure.png...
+[16:37:00]     [+] Encoding KNUDSEN Animation: validation_anim_smooth_knudsen.mp4...
+[16:37:16]     [+] Generating 3D KNUDSEN Upscale: upscaled_3d_knudsen.png...
+[16:37:31]     [+] Encoding GRID Animation: validation_anim_smooth_grid.mp4...
+[16:37:37]     [+] Generating 3D GRID Upscale: upscaled_3d_grid.png...
+[16:37:55] [*] PHASE 1.2: DEEPXDE PINN REFINEMENT (Checkpoint Exchange)...
+Note: deepxde.config.set_default_device not found. DeepXDE will use its internal defaults for pytorch.
+[16:38:06]     [+] Initializing PINN on mps...
+Compiling model...
+'compile' took 0.000347 s
+
+[PINN] Starting training for 1500 iterations...
+[PINN] Stage 1: Data Pre-training (fitting observation constraints)...
+Compiling model...
+'compile' took 0.000197 s
+
+Training model...
+
+Step      Train loss                                                                                              Test loss                                                                                               Test metric
+0         [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.63e-03, 4.25e-02, 1.03e-02, 3.23e-02, 6.01e-02]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.63e-03, 4.25e-02, 1.03e-02, 3.23e-02, 6.01e-02]    []  
+100       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.60e-03, 3.57e-02, 1.27e-03, 2.67e-03, 3.56e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.60e-03, 3.57e-02, 1.27e-03, 2.67e-03, 3.56e-03]    []  
+200       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.41e-03, 3.31e-02, 3.51e-04, 1.50e-03, 1.04e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.41e-03, 3.31e-02, 3.51e-04, 1.50e-03, 1.04e-03]    []  
+300       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.40e-03, 3.31e-02, 2.92e-04, 1.35e-03, 1.03e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.40e-03, 3.31e-02, 2.92e-04, 1.35e-03, 1.03e-03]    []  
+400       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.40e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.40e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    []  
+500       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.40e-03, 3.31e-02, 2.91e-04, 1.36e-03, 1.03e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.40e-03, 3.31e-02, 2.91e-04, 1.36e-03, 1.03e-03]    []  
+600       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.40e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.40e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    []  
+700       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.40e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.40e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    []  
+750       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.41e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.41e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    []  
+
+Best model at step 600:
+  train loss: 3.72e-02
+  test loss: 3.72e-02
+  test metric: []
+
+'train' took 527.701139 s
+
+[PINN] Stage 2: Physics-Regularized Fine-tuning...
+Compiling model...
+'compile' took 0.007467 s
+
+Training model...
+
+Step      Train loss                                                                                              Test loss                                                                                               Test metric
+750       [2.53e-11, 0.00e+00, 2.26e-23, 7.05e-10, 2.55e-24, 1.41e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    [2.53e-11, 0.00e+00, 2.26e-23, 7.05e-10, 2.55e-24, 1.41e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    []  
+800       [5.89e-10, 0.00e+00, 1.72e-24, 3.20e-09, 3.26e-24, 1.41e-03, 3.31e-02, 2.98e-04, 1.36e-03, 1.04e-03]    [5.89e-10, 0.00e+00, 1.72e-24, 3.20e-09, 3.26e-24, 1.41e-03, 3.31e-02, 2.98e-04, 1.36e-03, 1.04e-03]    []  
+900       [6.54e-11, 0.00e+00, 2.36e-23, 6.98e-10, 2.81e-24, 1.40e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    [6.54e-11, 0.00e+00, 2.36e-23, 6.98e-10, 2.81e-24, 1.40e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    []  
+1000      [6.23e-11, 0.00e+00, 2.26e-23, 6.88e-10, 2.55e-24, 1.40e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    [6.23e-11, 0.00e+00, 2.26e-23, 6.88e-10, 2.55e-24, 1.40e-03, 3.31e-02, 2.91e-04, 1.35e-03, 1.03e-03]    []  
+1100      [1.17e-02, 1.98e-04, 2.13e-04, 1.18e-05, 8.43e-04, 4.34e-03, 4.88e-02, 2.13e-03, 2.49e-02, 8.91e-03]    [1.17e-02, 1.98e-04, 2.13e-04, 1.18e-05, 8.43e-04, 4.34e-03, 4.88e-02, 2.13e-03, 2.49e-02, 8.91e-03]    []  
+1200      [4.58e-03, 2.80e-05, 5.40e-05, 3.78e-06, 3.77e-05, 4.59e-03, 4.47e-02, 2.12e-03, 1.17e-02, 8.31e-03]    [4.58e-03, 2.80e-05, 5.40e-05, 3.78e-06, 3.77e-05, 4.59e-03, 4.47e-02, 2.12e-03, 1.17e-02, 8.31e-03]    []  
+1300      [2.55e-03, 9.60e-05, 4.06e-05, 1.82e-06, 9.48e-05, 4.39e-03, 4.24e-02, 2.01e-03, 7.86e-03, 3.86e-03]    [2.55e-03, 9.60e-05, 4.06e-05, 1.82e-06, 9.48e-05, 4.39e-03, 4.24e-02, 2.01e-03, 7.86e-03, 3.86e-03]    []  
+1400      [2.10e-03, 3.15e-05, 1.33e-05, 5.64e-07, 1.11e-04, 4.46e-03, 3.65e-02, 9.87e-04, 4.92e-03, 2.63e-03]    [2.10e-03, 3.15e-05, 1.33e-05, 5.64e-07, 1.11e-04, 4.46e-03, 3.65e-02, 9.87e-04, 4.92e-03, 2.63e-03]    []  
+1500      [2.14e-03, 1.24e-05, 1.01e-05, 8.03e-07, 1.51e-05, 4.05e-03, 3.44e-02, 7.82e-04, 3.22e-03, 2.07e-03]    [2.14e-03, 1.24e-05, 1.01e-05, 8.03e-07, 1.51e-05, 4.05e-03, 3.44e-02, 7.82e-04, 3.22e-03, 2.07e-03]    []  
+
+Best model at step 1000:
+  train loss: 3.72e-02
+  test loss: 3.72e-02
+  test metric: []
+
+'train' took 375.138463 s
+
+CAD Export error: No pending wires present
+Exporting to SPARTA surface: ORION_opt.surf
+CAD Export error: No pending wires present
+Exporting to SPARTA surface: ORION_opt.surf
+173501066d6e3414990928ed5e404a91897a1913a8259a96240e1fc5fff93f2d
+/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/source/visualizer.py:570: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+  fig.tight_layout()
+/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/source/visualizer.py:715: RuntimeWarning: divide by zero encountered in divide
+  beta = np.nan_to_num(mass / (cd * area), nan=0.0, posinf=0.0, neginf=0.0) if area > 0 else np.zeros_like(cd)
+CAD Export error: No pending wires present
+Exporting to SPARTA surface: ORION_opt.surf
+CAD Export error: No pending wires present
+Exporting to SPARTA surface: ORION_opt.surf
+d59c1b189927eba199d3f4fa1e7894fddd9dc356fd47a586b3dfe960af390b0e
+[PINN] Convergence plateau detected at iteration 800 (data_loss=3.7194e-02, rel_improve<1.0%)
+[PINN] Training complete. Final loss: 4.4555e-02. Plateau detected at: 800 iterations.
+[16:53:09]     [+] PINN Training Complete. Generating refined flow field...
+[16:53:09]     [+] Refined field generated via PINN. Gaps filled.
+[16:53:09]     [!] Error: No surf.*.out files found in results_reference.
+[16:53:09]     [+] BASELINE PHYSICS RESULT (DRAG): 1.000000
+[16:53:09]     [+] FLIGHT METRICS:
+[16:53:09]         - Ballistic Coeff (beta): 612882431.09 kg/m^2
+[16:53:09]         - Peak Stagnation Heat:   0.00 kW/m^2
+[16:53:09]         - Peak Shock Layer Temp:  300.0 K
+[16:53:09]         - Radiative Surf Temp:    69.6 K
+[16:53:09]         - Est. Backface Temp:     300.0 K
+[16:53:09]         - Instantaneous g-load:   0.00 g
+[16:53:09] [*] SEARCH SPACE RANGES:
+[16:53:09]     - diameter: [2.5000, 4.5000]
+[16:53:09]     - angle: [45.0000, 75.0000]
+[16:53:09]     - toroids: [3.0000, 9.0000]
+[16:53:09]     - nose: [0.5000, 0.6000]
+[16:53:09] [*] Search Space: 4D — [diameter, angle, toroids, nose]
+[16:53:09] [*] PHASE 2: GENERATING 5 SBO SAMPLES (LHS)...
+[16:53:09] [*] SAMPLE 1/5: diameter=2.649816047538945, angle=50.7042858384595, toroids=4, nose=0.5119731696839407
+[16:53:18]     [*] Executing SPARTA solver via Docker (Sample 1)...
+[16:53:18]     [*] Regenerating Geometry: smooth (Payload=CADDesign/ORION_custom_full.step, DefaultPayload=False)...
+[16:53:18]     [+] Executing Geometry Engine: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/.venv/bin/python ORION_GeometryEngine.py --diameter 2.649816047538945 --angle 50.7042858384595 --nose 0.5119731696839407 --toroids 4 --thickness 0.0254 --scallop_pts 5 --scallop_angle 90.0 --nose_type smooth --output ORION_opt --fast --payload_file CADDesign/ORION_custom_full.step
+[DEBUG] Writing in.hiad with 3259 bytes
+[16:53:22]     [*] Executing SPARTA via Docker...
+[16:53:22]     [!] Parallel Execution: Using 2 CPU cores via mpirun...
+[16:53:22] [DEBUG] Docker Create CMD: docker create --name hiad-runner --shm-size 2g -v /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition:/app --workdir /app/CADDesign -e IN_DOCKER=1 -e PYTHONUNBUFFERED=1 -e DOCKER_WORKDIR=/app -e SPARTA_GPU=0 -e OMP_NUM_THREADS=1 sparta-hysp mpirun --allow-run-as-root --oversubscribe -np 2 spa -in in.hiad
+[16:53:23]         CPU time = 0.176185 secs
+[16:53:23]         0 initial grid cell count in group free_stream
+[16:53:23]         CPU time = 0.309119 secs
+[16:53:23]         0 0 zlo zhi
+[16:53:23]         CPU time = 0.143195 secs
+[16:53:23]         CPU time = 0.0347232 secs
+[16:53:23]         CPU time = 0.0822501 secs
+[16:53:24]         Step CPU Np c_drag c_lift c_heat c_temp_avg[1] c_temp_avg[2] c_temp_avg[3] Natt Ncoll Nscoll
+[16:53:24]         0            0     1685            0            0            0            0            0            0        0        0        0
+[16:53:25]         100      1.27073     1679    674816.11   -11536.101 1.8896744e+09            0            0 4.1630965e+08    40954    15265        2
+[16:53:28]         200    4.0073375     1711    538762.35   -29054.941 1.1164658e+09            0            0 2.6903515e+08   127197    34509        1
+[16:53:28]     [+] Generating Post-processing Plots and Animation...
+[DEBUG] Data ranges in grid.200.out:
+    - N:    0.0 to 12.0
+    - U:    -4430.9 to 10934.0 m/s (mean: 188.9)
+    - V:    -5111.0 to 5301.2 m/s
+    - Temp: -0.0 to 12736.4 K
+    - Pres: -2.3e-09 to 4.9e+05 Pa
+Plots generated in /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/web/assets/plots
+[16:53:47]     [+] Encoding TEMP Animation: validation_anim_smooth.mp4...
+[16:53:54]     [+] Generating 3D TEMP Upscale: upscaled_3d_smooth.png...
+[16:53:59]     [+] Encoding VELOCITY Animation: validation_anim_velocity_smooth.mp4...
+[16:54:06]     [+] Generating 3D VELOCITY Upscale: upscaled_3d_velocity_smooth.png...
+[16:54:10]     [+] Encoding MACH Animation: validation_anim_mach_smooth.mp4...
+[16:54:19]     [+] Generating 3D MACH Upscale: upscaled_3d_mach_smooth.png...
+[16:54:24]     [+] Encoding PRESSURE Animation: validation_anim_pressure_smooth.mp4...
+[16:54:31]     [+] Generating 3D PRESSURE Upscale: upscaled_3d_pressure_smooth.png...
+[16:54:36]     [+] Encoding KNUDSEN Animation: validation_anim_knudsen_smooth.mp4...
+[16:54:44]     [+] Generating 3D KNUDSEN Upscale: upscaled_3d_knudsen_smooth.png...
+[16:54:49]     [+] Encoding GRID Animation: validation_anim_grid_smooth.mp4...
+[16:54:55]     [+] Generating 3D GRID Upscale: upscaled_3d_grid_smooth.png...
+[16:55:01]     [+] Generating Mesh Plot: mesh_statistics_smooth.png...
+[16:55:02]     [!] Warning: Visual post-processing failed: x and y must have same first dimension, but have shapes (4,) and (3,)
+[16:55:02]     [*] Averaging surface metrics over 2 dump file(s): ['surf.100.out', 'surf.200.out']
+[16:55:02]     [+] Drag multi-file avg: 606789.1215 N (σ=68026.9395, CV=11.2%)
+[16:55:02]     [+] Extracted Metrics: Drag=606789.1215 N, Heat=1.50e+09 W/m2
+[16:55:02]     [*] Archiving results for Sample 1...
+[16:55:11]     [!] Warning: Visual post-processing failed for Sample 1: name 'surf_name' is not defined
+[16:55:11] [*] ------------------------------------------------
+[16:55:11] [*] SAMPLE 1 COMPLETE (Duration: 104.10s)
+[16:55:11] [*] RESULT (DRAG): 606789.121500
+[16:55:11] [*] FLIGHT METRICS:
+[16:55:11]     - Ballistic Coeff (beta): 1010.04 kg/m^2
+[16:55:11]     - Peak Stagnation Heat:   1503070.00 kW/m^2
+[16:55:11]     - Peak Shock Layer Temp:  12736.4 K
+[16:55:11]     - Radiative Surf Temp:    13711.5 K
+[16:55:11]     - Est. Backface Temp:     2473906.0 K
+[16:55:11]     - Instantaneous g-load:   5.95 g
+[16:55:11] [*] PARAMS: diameter=2.649816047538945, angle=50.7042858384595, toroids=4, nose=0.5119731696839407
+[16:55:11] [*] ------------------------------------------------
+[16:55:11]     [*] Estimated Time Remaining: 6.9 minutes
+[16:55:11] [*] SAMPLE 2/5: diameter=2.9624074561769747, angle=51.93596712201722, toroids=4, nose=0.5373235229154988
+[16:55:20]     [*] Executing SPARTA solver via Docker (Sample 2)...
+[16:55:20]     [*] Regenerating Geometry: smooth (Payload=CADDesign/ORION_custom_full.step, DefaultPayload=False)...
+[16:55:20]     [+] Executing Geometry Engine: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/.venv/bin/python ORION_GeometryEngine.py --diameter 2.9624074561769747 --angle 51.93596712201722 --nose 0.5373235229154988 --toroids 4 --thickness 0.0254 --scallop_pts 5 --scallop_angle 90.0 --nose_type smooth --output ORION_opt --fast --payload_file CADDesign/ORION_custom_full.step
+[DEBUG] Writing in.hiad with 3259 bytes
+[16:55:25]     [*] Executing SPARTA via Docker...
+[16:55:25]     [!] Parallel Execution: Using 2 CPU cores via mpirun...
+[16:55:26] [DEBUG] Docker Create CMD: docker create --name hiad-runner --shm-size 2g -v /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition:/app --workdir /app/CADDesign -e IN_DOCKER=1 -e PYTHONUNBUFFERED=1 -e DOCKER_WORKDIR=/app -e SPARTA_GPU=0 -e OMP_NUM_THREADS=1 sparta-hysp mpirun --allow-run-as-root --oversubscribe -np 2 spa -in in.hiad
+[16:55:27]         CPU time = 0.0768039 secs
+[16:55:27]         0 initial grid cell count in group free_stream
+[16:55:28]         CPU time = 0.162506 secs
+[16:55:28]         0 0 zlo zhi
+[16:55:28]         CPU time = 0.104453 secs
+[16:55:28]         CPU time = 0.0117365 secs
+[16:55:28]         CPU time = 0.0513216 secs
+[16:55:28]         Step CPU Np c_drag c_lift c_heat c_temp_avg[1] c_temp_avg[2] c_temp_avg[3] Natt Ncoll Nscoll
+[16:55:28]         0            0     1881            0            0            0            0            0            0        0        0        0
+[16:55:30]         100    1.8145708     1851    803514.34   -26749.496 9.2380033e+08            0            0 3.3742327e+08    54284    29177        1
+[16:55:34]         200    5.6051604     1871    834040.59    -25652.03 1.6500722e+09            0            0 2.8796811e+08   160034    72019        3
+[16:55:34]     [+] Generating Post-processing Plots and Animation.../Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/source/visualizer.py:570: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+  fig.tight_layout()
+/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/source/visualizer.py:715: RuntimeWarning: divide by zero encountered in divide
+  beta = np.nan_to_num(mass / (cd * area), nan=0.0, posinf=0.0, neginf=0.0) if area > 0 else np.zeros_like(cd)
+CAD Export error: No pending wires present
+Exporting to SPARTA surface: ORION_opt.surf
+CAD Export error: No pending wires present
+Exporting to SPARTA surface: ORION_opt.surf
+ab959be1a551abed377cb90ebca3b2c2c01c626c549b9f3d116bff6d758bbf60
+/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/source/visualizer.py:570: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+  fig.tight_layout()
+/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/source/visualizer.py:715: RuntimeWarning: divide by zero encountered in divide
+  beta = np.nan_to_num(mass / (cd * area), nan=0.0, posinf=0.0, neginf=0.0) if area > 0 else np.zeros_like(cd)
+CAD Export error: No pending wires present
+Exporting to SPARTA surface: ORION_opt.surf
+
+[DEBUG] Data ranges in grid.200.out:
+    - N:    0.0 to 5.0
+    - U:    -3892.7 to 10940.5 m/s (mean: 208.8)
+    - V:    -6269.3 to 4717.6 m/s
+    - Temp: -0.0 to 16005.2 K
+    - Pres: -5.1e-09 to 1.8e+06 Pa
+Plots generated in /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/web/assets/plots
+[16:55:58]     [+] Encoding TEMP Animation: validation_anim_smooth.mp4...
+[16:56:08]     [+] Generating 3D TEMP Upscale: upscaled_3d_smooth.png...
+[16:56:15]     [+] Encoding VELOCITY Animation: validation_anim_velocity_smooth.mp4...
+[16:56:26]     [+] Generating 3D VELOCITY Upscale: upscaled_3d_velocity_smooth.png...
+[16:56:32]     [+] Encoding MACH Animation: validation_anim_mach_smooth.mp4...
+[16:56:42]     [+] Generating 3D MACH Upscale: upscaled_3d_mach_smooth.png...
+[16:56:51]     [+] Encoding PRESSURE Animation: validation_anim_pressure_smooth.mp4...
+[16:57:01]     [+] Generating 3D PRESSURE Upscale: upscaled_3d_pressure_smooth.png...
+[16:57:06]     [+] Encoding KNUDSEN Animation: validation_anim_knudsen_smooth.mp4...
+[16:57:14]     [+] Generating 3D KNUDSEN Upscale: upscaled_3d_knudsen_smooth.png...
+[16:57:18]     [+] Encoding GRID Animation: validation_anim_grid_smooth.mp4...
+[16:57:24]     [+] Generating 3D GRID Upscale: upscaled_3d_grid_smooth.png...
+[16:57:31]     [+] Generating Mesh Plot: mesh_statistics_smooth.png...
+[16:57:32]     [!] Warning: Visual post-processing failed: x and y must have same first dimension, but have shapes (4,) and (3,)
+[16:57:32]     [*] Averaging surface metrics over 2 dump file(s): ['surf.100.out', 'surf.200.out']
+[16:57:32]     [+] Drag multi-file avg: 818777.5905 N (σ=15263.2595, CV=1.9%)
+[16:57:32]     [+] Extracted Metrics: Drag=818777.5905 N, Heat=1.29e+09 W/m2
+[16:57:32]     [*] Archiving results for Sample 2...
+[16:57:39]     [!] Warning: Visual post-processing failed for Sample 2: name 'surf_name' is not defined
+[16:57:39] [*] ------------------------------------------------
+[16:57:39] [*] SAMPLE 2 COMPLETE (Duration: 131.48s)
+[16:57:39] [*] RESULT (DRAG): 818777.590500
+[16:57:39] [*] FLIGHT METRICS:
+[16:57:39]     - Ballistic Coeff (beta): 748.53 kg/m^2
+[16:57:39]     - Peak Stagnation Heat:   1286935.00 kW/m^2
+[16:57:39]     - Peak Shock Layer Temp:  16005.2 K
+[16:57:39]     - Radiative Surf Temp:    13189.5 K
+[16:57:39]     - Est. Backface Temp:     2118212.1 K
+[16:57:39]     - Instantaneous g-load:   8.03 g
+[16:57:39] [*] PARAMS: diameter=2.9624074561769747, angle=51.93596712201722, toroids=4, nose=0.5373235229154988
+[16:57:39] [*] ------------------------------------------------
+[16:57:39]     [*] Estimated Time Remaining: 6.6 minutes
+[16:57:39] [*] SAMPLE 3/5: diameter=3.5404460046972837, angle=61.24843546677627, toroids=5, nose=0.5593981970432399
+[16:57:45]     [*] Executing SPARTA solver via Docker (Sample 3)...
+[16:57:45]     [*] Regenerating Geometry: smooth (Payload=CADDesign/ORION_custom_full.step, DefaultPayload=False)...
+[16:57:45]     [+] Executing Geometry Engine: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/.venv/bin/python ORION_GeometryEngine.py --diameter 3.5404460046972837 --angle 61.24843546677627 --nose 0.5593981970432399 --toroids 5 --thickness 0.0254 --scallop_pts 5 --scallop_angle 90.0 --nose_type smooth --output ORION_opt --fast --payload_file CADDesign/ORION_custom_full.step
+[DEBUG] Writing in.hiad with 3259 bytes
+[16:57:48]     [*] Executing SPARTA via Docker...
+[16:57:48]     [!] Parallel Execution: Using 2 CPU cores via mpirun...
+[16:57:48] [DEBUG] Docker Create CMD: docker create --name hiad-runner --shm-size 2g -v /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition:/app --workdir /app/CADDesign -e IN_DOCKER=1 -e PYTHONUNBUFFERED=1 -e DOCKER_WORKDIR=/app -e SPARTA_GPU=0 -e OMP_NUM_THREADS=1 sparta-hysp mpirun --allow-run-as-root --oversubscribe -np 2 spa -in in.hiad
+[16:57:49]         CPU time = 0.0164112 secs
+[16:57:49]         0 initial grid cell count in group free_stream
+[16:57:50]         CPU time = 0.433419 secs
+[16:57:50]         0 0 zlo zhi
+[16:57:50]         CPU time = 0.202062 secs
+[16:57:50]         CPU time = 0.0243826 secs
+[16:57:50]         CPU time = 0.04869 secs
+[16:57:50]         Step CPU Np c_drag c_lift c_heat c_temp_avg[1] c_temp_avg[2] c_temp_avg[3] Natt Ncoll Nscoll
+[16:57:50]         0            0     2239            0            0            0            0            0            0        0        0        0
+[16:57:52]         100     1.535104     2256    1099004.7   -41475.039 1.8990431e+09            0            0 3.0615689e+08    99202    36488        1
+[16:57:56]         200    5.3607713     2238    1198928.5   -88915.138 1.0635865e+09            0            0 2.8212613e+08   105081    54967        1
+[16:57:56]     [+] Generating Post-processing Plots and Animation...
+[DEBUG] Data ranges in grid.200.out:
+    - N:    0.0 to 4.0
+    - U:    -4006.8 to 10893.3 m/s (mean: 249.4)
+    - V:    -4323.6 to 6311.0 m/s
+    - Temp: -0.0 to 22819.0 K
+    - Pres: -8.6e-10 to 3.5e+06 Pa
+Plots generated in /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/web/assets/plots
+[16:58:11]     [+] Encoding TEMP Animation: validation_anim_smooth.mp4...
+[16:58:17]     [+] Generating 3D TEMP Upscale: upscaled_3d_smooth.png...
+[16:58:23]     [+] Encoding VELOCITY Animation: validation_anim_velocity_smooth.mp4...
+[16:58:35]     [+] Generating 3D VELOCITY Upscale: upscaled_3d_velocity_smooth.png...
+[16:58:43]     [+] Encoding MACH Animation: validation_anim_mach_smooth.mp4...
+[16:58:54]     [+] Generating 3D MACH Upscale: upscaled_3d_mach_smooth.png...
+[16:59:01]     [+] Encoding PRESSURE Animation: validation_anim_pressure_smooth.mp4...
+[16:59:10]     [+] Generating 3D PRESSURE Upscale: upscaled_3d_pressure_smooth.png...
+[16:59:17]     [+] Encoding KNUDSEN Animation: validation_anim_knudsen_smooth.mp4...
+[16:59:26]     [+] Generating 3D KNUDSEN Upscale: upscaled_3d_knudsen_smooth.png...
+[16:59:33]     [+] Encoding GRID Animation: validation_anim_grid_smooth.mp4...
+[16:59:39]     [+] Generating 3D GRID Upscale: upscaled_3d_grid_smooth.png...
+[16:59:46]     [+] Generating Mesh Plot: mesh_statistics_smooth.png...
+[16:59:46]     [!] Warning: Visual post-processing failed: x and y must have same first dimension, but have shapes (4,) and (3,)
+[16:59:46]     [*] Averaging surface metrics over 2 dump file(s): ['surf.100.out', 'surf.200.out']
+[16:59:46]     [+] Drag multi-file avg: 1148966.5900 N (σ=49961.8000, CV=4.3%)
+[16:59:46]     [+] Extracted Metrics: Drag=1148966.5900 N, Heat=1.48e+09 W/m2
+[16:59:46]     [*] Archiving results for Sample 3...
+[16:59:56]     [!] Warning: Visual post-processing failed for Sample 3: name 'surf_name' is not defined
+[16:59:56] [*] ------------------------------------------------
+[16:59:56] [*] SAMPLE 3 COMPLETE (Duration: 121.27s)
+[16:59:56] [*] RESULT (DRAG): 1148966.590000
+[16:59:56] [*] FLIGHT METRICS:
+[16:59:56]     - Ballistic Coeff (beta): 533.42 kg/m^2
+[16:59:56]     - Peak Stagnation Heat:   1481315.00 kW/m^2
+[16:59:56]     - Peak Shock Layer Temp:  22819.0 K
+[16:59:56]     - Radiative Surf Temp:    13661.6 K
+[16:59:56]     - Est. Backface Temp:     2438103.7 K
+[16:59:56]     - Instantaneous g-load:   11.26 g
+[16:59:56] [*] PARAMS: diameter=3.5404460046972837, angle=61.24843546677627, toroids=5, nose=0.5593981970432399
+[16:59:56] [*] ------------------------------------------------
+[16:59:56]     [*] Estimated Time Remaining: 4.0 minutes
+[16:59:56] [*] SAMPLE 4/5: diameter=4.032977056320169, angle=64.27403466406966, toroids=7, nose=0.5636680901970688
+[17:00:04]     [*] Executing SPARTA solver via Docker (Sample 4)...
+[17:00:04]     [*] Regenerating Geometry: smooth (Payload=CADDesign/ORION_custom_full.step, DefaultPayload=False)...
+[17:00:04]     [+] Executing Geometry Engine: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/.venv/bin/python ORION_GeometryEngine.py --diameter 4.032977056320169 --angle 64.27403466406966 --nose 0.5636680901970688 --toroids 7 --thickness 0.0254 --scallop_pts 5 --scallop_angle 90.0 --nose_type smooth --output ORION_opt --fast --payload_file CADDesign/ORION_custom_full.stepCAD Export error: No pending wires present
+Exporting to SPARTA surface: ORION_opt.surf
+71e22aef2ee2be1b913df2590320451bdf752e55be82e1ace663c1a0c823d3dd

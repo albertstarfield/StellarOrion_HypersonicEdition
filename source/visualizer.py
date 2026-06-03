@@ -346,6 +346,8 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     if ref_params:
         # Show from inlet to near end of domain to capture shock layer
         plt.xlim(float(ref_params.get('env_xmin', -0.6)), float(ref_params.get('env_xmax', 2.5)))
+        if 'env_ymax' in ref_params:
+            plt.ylim(-float(ref_params['env_ymax']), float(ref_params['env_ymax']))
 
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Thermal Map")
@@ -370,6 +372,8 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.tick_params(colors='#94a3b8')
     if ref_params:
         plt.xlim(float(ref_params.get('env_xmin', -0.6)), float(ref_params.get('env_xmax', 2.5)))
+        if 'env_ymax' in ref_params:
+            plt.ylim(-float(ref_params['env_ymax']), float(ref_params['env_ymax']))
 
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Pressure Map")
@@ -461,6 +465,8 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     plt.tick_params(colors='#94a3b8')
     if ref_params:
         plt.xlim(float(ref_params.get('env_xmin', -0.6)), float(ref_params.get('env_xmax', 2.5)))
+        if 'env_ymax' in ref_params:
+            plt.ylim(-float(ref_params['env_ymax']), float(ref_params['env_ymax']))
 
     _overlay_geometry(plt.gca(), surf_file, ref_params=ref_params)
     _add_metadata_overlay(plt.gca(), ref_params, extra_info="Mach Number")

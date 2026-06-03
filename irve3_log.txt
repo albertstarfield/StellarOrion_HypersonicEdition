@@ -1,0 +1,249 @@
+Constructing hollow shell profile...
+Revolving skin profile (360.0 degrees)...
+FIRST 5 POINTS: [(0.0001, 0.0, np.float64(-1.5707963267948966)), (15.154888302489132, 0.2088311362766717, np.float64(-1.5432384965002492)), (30.29826819572603, 0.8351659616761253, np.float64(-1.515680666205602)), (45.41864000978282, 1.8785288463316192, np.float64(-1.4881228359109546)), (60.50452154674365, 3.3381274751277488, np.float64(-1.4605650056163073))]
+LAST 5 POINTS: [(324.4134295108993, 393.099457429458, np.float64(1.5707963267948966)), (207.50000000000009, 325.5994574294581, np.float64(2.617993877991494)), (207.50000000000006, 190.59945742945806, np.float64(3.665191429188092)), (324.4134295108993, 123.09945742945803, np.float64(4.71238898038469)), (0.0001, -11.900542570541973, 0.0)]
+Exporting to SPARTA surface: HIAD_custom.surf
+Successfully exported 94 segments to HIAD_custom.surf
+Exporting STL: HIAD_custom.stl
+Constructing solid skin profile (with thickness)...
+Revolving skin profile (5.0 degrees)...
+FIRST 5 POINTS: [(0.0001, 0.0, np.float64(-1.5707963267948966)), (15.154888302489132, 0.2088311362766717, np.float64(-1.5432384965002492)), (30.29826819572603, 0.8351659616761253, np.float64(-1.515680666205602)), (45.41864000978282, 1.8785288463316192, np.float64(-1.4881228359109546)), (60.50452154674365, 3.3381274751277488, np.float64(-1.4605650056163073))]
+LAST 5 POINTS: [(522.1997301711871, 523.1997193546, np.float64(1.8410408561359541)), (509.22261743182355, 518.8860541711083, np.float64(1.9423825546388507)), (500.0, 513.2816482885855, 0.0), (500.0, 2073.686027918559, 0.0), (0.0001, 2073.686027918559, 0.0)]
+Exporting to SPARTA surface: HIAD_custom.surf
+Successfully exported 399 segments to HIAD_custom.surf
+Exporting STL: HIAD_custom.stl
+c8d9b07ad7dce81d16589023575980fea12e1aa0141bf489828574ee3d975127
+/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/source/visualizer.py:570: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+  fig.tight_layout()
+/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/source/visualizer.py:715: RuntimeWarning: divide by zero encountered in divide
+  beta = np.nan_to_num(mass / (cd * area), nan=0.0, posinf=0.0, neginf=0.0) if area > 0 else np.zeros_like(cd)
+/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/source/visualizer.py:570: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+  fig.tight_layout()
+Using backend: pytorch
+Other supported backends: tensorflow.compat.v1, tensorflow, jax, paddle.
+paddle supports more examples now and is recommended.
+[16:20:21] [*] Created History Entry: Run #97 (Run_20260603_162021)
+[16:20:21] [*] OPTIMIZATION TARGET: DRAG
+[16:20:21] [*] ------------------------------------------------
+[16:20:21] [*] TOTAL SIMULATION SAMPLES TO RUN: 5
+[16:20:21] [VERBOSE] Full Parameter Set:
+[16:20:21]     {
+    "target_vehicle": "IRVE-3",
+    "opt_method": "random",
+    "opt_samples": "0",
+    "env_nrho": "2.45e22",
+    "env_mach": "17.6",
+    "env_alt": "40.0",
+    "env_run": "200",
+    "env_fnum": "1.0e23",
+    "env_cores": 2,
+    "sparta_gpu": false,
+    "default_payload": true,
+    "payload_type": "cylinder",
+    "payload_radius": 500.0,
+    "payload_height": 2000.0,
+    "active_params": {
+        "diameter": true,
+        "angle": true,
+        "nose": true,
+        "toroids": true,
+        "thickness": true,
+        "scallop_pts": true,
+        "scallop_angle": true
+    }
+}
+[16:20:21] [*] BACKEND SOLVER:                  SPARTA
+[16:20:21] [*] TOTAL STEPS PER SIMULATION:      200
+[16:20:21] [*] ------------------------------------------------
+[16:20:21]     - Velocity (vstream): 2700.0 m/s
+[16:20:21]     - Duration: 60.0 s
+[16:20:21]     - Thermal Lag: 0.1 %
+[16:20:21]     - Chemistry Mode: 5-species
+[16:20:21]     - Steady State Check: DISABLED
+[16:20:21]     - Chemistry Species: N2, O2, NO, N, O
+[16:20:21]     - Domain (X): [scaled, scaled]
+[16:20:21]     - Domain (Y): [0, scaled]
+[16:20:21] [*] PHASE 1: ESTABLISHING PHYSICS BASELINE...
+[16:20:21] [*] Detected 10 CPU cores. Enabling parallel execution...
+[16:20:21]     [+] Generating Baseline Geometry (D=3.0m)...
+[16:20:30]     [+] Running Baseline via SPARTA (D=3.0m)...
+[16:20:30]     [*] Regenerating Geometry: smooth (Payload=None, DefaultPayload=True)...
+[16:20:30]     [!] True Scalar Upscaling (Full Face): Toroid radius mathematically locked to 135.0mm.
+[16:20:30]     [!] Using 6 toroids to cover the entire face, expanding final HIAD diameter to 3.36m.
+[16:20:30]     [+] Executing Geometry Engine: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/.venv/bin/python HIAD_GeometryEngine.py --diameter 3.3559223082615817 --angle 60.0 --nose 0.55 --toroids 6 --tradius 0.135 --env_xmin -5.0 --env_xmax 9.0 --env_ymax 5.0 --thickness 0.0254 --scallop_pts 32 --scallop_angle 40.0 --nose_type smooth --output HIAD_custom --fast --defaultPayload --payload_type cylinder --payload_radius 500.0 --payload_height 2000.0
+[DEBUG] Writing in.hiad with 3130 bytes
+[16:20:38]     [*] Executing SPARTA via Docker...
+[16:20:38]     [!] Parallel Execution: Using 2 CPU cores via mpirun...
+[16:20:38] [DEBUG] Docker Create CMD: docker create --name hiad-runner --shm-size 2g -v /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition:/app --workdir /app/CADDesign -e IN_DOCKER=1 -e PYTHONUNBUFFERED=1 -e DOCKER_WORKDIR=/app -e SPARTA_GPU=0 -e OMP_NUM_THREADS=1 sparta-hysp mpirun --allow-run-as-root --oversubscribe -np 2 spa -in in.hiad
+[16:20:39]         CPU time = 0.0249195 secs
+[16:20:39]         CPU time = 0.142057 secs
+[16:20:39]         0 0 zlo zhi
+[16:20:40]         CPU time = 0.107226 secs
+[16:20:40]         CPU time = 0.00255753 secs
+[16:20:40]         CPU time = 0.0728762 secs
+[16:20:40]         Step CPU Np c_drag c_lift c_heat c_temp_avg[1] c_temp_avg[2] c_temp_avg[3] Natt Ncoll Nscoll
+[16:20:40]         0            0     1650            0            0            0            0            0            0        0        0        0
+[16:20:42]         100    2.0193085     1615    119249.11   -17859.648 2.4042368e+08            0            0    4438351.2    14621     4411        1
+[16:20:43]         200    3.6741754     1594     55223.49   -9130.9387 1.2931751e+08            0            0    1786368.9    26675     7539        0
+[16:20:44]     [+] Generating Post-processing Plots and Animation...
+[DEBUG] Data ranges in grid.200.out:
+    - N:    0.0 to 4.0
+    - U:    -1447.8 to 3634.0 m/s (mean: 52.5)
+    - V:    -858.8 to 1610.3 m/s
+    - Temp: -0.0 to 1156.9 K
+    - Pres: -7.2e-11 to 3.6e+04 Pa
+Plots generated in /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/web/assets/plots
+[16:21:09]     [+] Encoding TEMP Animation: validation_anim_smooth.mp4...
+[16:21:18]     [+] Generating 3D TEMP Upscale: upscaled_3d_smooth.png...
+[16:21:24]     [+] Encoding VELOCITY Animation: validation_anim_velocity_smooth.mp4...
+[16:21:33]     [+] Generating 3D VELOCITY Upscale: upscaled_3d_velocity_smooth.png...
+[16:21:39]     [+] Encoding MACH Animation: validation_anim_mach_smooth.mp4...
+[16:21:47]     [+] Generating 3D MACH Upscale: upscaled_3d_mach_smooth.png...
+[16:21:52]     [+] Encoding PRESSURE Animation: validation_anim_pressure_smooth.mp4...
+[16:22:01]     [+] Generating 3D PRESSURE Upscale: upscaled_3d_pressure_smooth.png...
+[16:22:08]     [+] Encoding KNUDSEN Animation: validation_anim_knudsen_smooth.mp4...
+[16:22:17]     [+] Generating 3D KNUDSEN Upscale: upscaled_3d_knudsen_smooth.png...
+[16:22:23]     [+] Encoding GRID Animation: validation_anim_grid_smooth.mp4...
+[16:22:29]     [+] Generating 3D GRID Upscale: upscaled_3d_grid_smooth.png...
+[16:22:34]     [+] Generating Mesh Plot: mesh_statistics_smooth.png...
+[16:22:35]     [!] Warning: Visual post-processing failed: x and y must have same first dimension, but have shapes (4,) and (3,)
+[16:22:35]     [*] Averaging surface metrics over 2 dump file(s): ['surf.100.out', 'surf.200.out']
+[16:22:35]     [+] Drag multi-file avg: 87236.3250 N (σ=32012.8200, CV=36.7%)
+[16:22:35]     [+] Extracted Metrics: Drag=87236.3250 N, Heat=1.85e+08 W/m2
+[16:22:35]     [+] Baseline established in 134.61s.
+[16:22:35] [*] PHASE 1.1: POST-PROCESSING BASELINE RESULTS...
+[16:22:36]     [+] Generating Baseline Static Maps (JPEG/Graph)...
+[DEBUG] Data ranges in grid.200.out:
+    - N:    0.0 to 4.0
+    - U:    -1447.8 to 3634.0 m/s (mean: 52.5)
+    - V:    -858.8 to 1610.3 m/s
+    - Temp: -0.0 to 1156.9 K
+    - Pres: -7.2e-11 to 3.6e+04 Pa
+Plots generated in /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/web/assets/plots
+[16:22:55]     [+] Encoding TEMP Animation: validation_anim_smooth.mp4...
+[16:23:05]     [+] Generating 3D TEMP Upscale: upscaled_3d.png...
+[16:23:11]     [+] Encoding VELOCITY Animation: validation_anim_smooth_velocity.mp4...
+[16:23:18]     [+] Generating 3D VELOCITY Upscale: upscaled_3d_velocity.png...
+[16:23:24]     [+] Encoding MACH Animation: validation_anim_smooth_mach.mp4...
+[16:23:35]     [+] Generating 3D MACH Upscale: upscaled_3d_mach.png...
+[16:23:40]     [+] Encoding PRESSURE Animation: validation_anim_smooth_pressure.mp4...
+[16:23:47]     [+] Generating 3D PRESSURE Upscale: upscaled_3d_pressure.png...
+[16:23:53]     [+] Encoding KNUDSEN Animation: validation_anim_smooth_knudsen.mp4...
+[16:24:02]     [+] Generating 3D KNUDSEN Upscale: upscaled_3d_knudsen.png...
+[16:24:08]     [+] Encoding GRID Animation: validation_anim_smooth_grid.mp4...
+[16:24:15]     [+] Generating 3D GRID Upscale: upscaled_3d_grid.png...
+[16:24:22] [*] PHASE 1.2: DEEPXDE PINN REFINEMENT (Checkpoint Exchange)...
+Note: deepxde.config.set_default_device not found. DeepXDE will use its internal defaults for pytorch.
+[16:24:28]     [+] Initializing PINN on mps...
+Compiling model...
+'compile' took 0.000197 s
+
+[PINN] Starting training for 1500 iterations...
+[PINN] Stage 1: Data Pre-training (fitting observation constraints)...
+Compiling model...
+'compile' took 0.000203 s
+
+Training model...
+
+Step      Train loss                                                                                              Test loss                                                                                               Test metric
+0         [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.10e-02, 1.60e-01, 1.84e-02, 1.61e-02, 2.35e-02]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.10e-02, 1.60e-01, 1.84e-02, 1.61e-02, 2.35e-02]    []  
+100       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 3.14e-03, 3.16e-02, 1.88e-03, 3.16e-03, 3.41e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 3.14e-03, 3.16e-02, 1.88e-03, 3.16e-03, 3.41e-03]    []  
+200       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.37e-03, 3.45e-02, 2.27e-03, 3.07e-03, 1.18e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.37e-03, 3.45e-02, 2.27e-03, 3.07e-03, 1.18e-03]    []  
+300       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.33e-03, 3.20e-02, 6.27e-04, 1.37e-03, 1.51e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.33e-03, 3.20e-02, 6.27e-04, 1.37e-03, 1.51e-03]    []  
+400       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.33e-03, 3.23e-02, 2.80e-04, 1.35e-03, 1.07e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.33e-03, 3.23e-02, 2.80e-04, 1.35e-03, 1.07e-03]    []  
+500       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.33e-03, 3.16e-02, 2.80e-04, 1.35e-03, 1.03e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.33e-03, 3.16e-02, 2.80e-04, 1.35e-03, 1.03e-03]    []  
+600       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    []  
+700       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    []  
+750       [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    [0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 0.00e+00, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    []  
+
+Best model at step 750:
+  train loss: 3.56e-02
+  test loss: 3.56e-02
+  test metric: []
+
+'train' took 559.578985 s
+
+[PINN] Stage 2: Physics-Regularized Fine-tuning...
+Compiling model...
+'compile' took 0.031951 s
+
+Training model...
+
+Step      Train loss                                                                                              Test loss                                                                                               Test metric
+750       [6.56e-11, 0.00e+00, 4.25e-23, 6.60e-10, 4.69e-24, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    [6.56e-11, 0.00e+00, 4.25e-23, 6.60e-10, 4.69e-24, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    []  
+800       [4.08e-09, 0.00e+00, 4.92e-21, 1.82e-10, 1.44e-20, 1.34e-03, 3.16e-02, 2.89e-04, 1.36e-03, 1.05e-03]    [4.08e-09, 0.00e+00, 4.92e-21, 1.82e-10, 1.44e-20, 1.34e-03, 3.16e-02, 2.89e-04, 1.36e-03, 1.05e-03]    []  
+900       [3.59e-10, 0.00e+00, 1.91e-21, 6.34e-10, 1.44e-20, 1.40e-03, 3.17e-02, 3.15e-04, 1.35e-03, 1.03e-03]    [3.59e-10, 0.00e+00, 1.91e-21, 6.34e-10, 1.44e-20, 1.40e-03, 3.17e-02, 3.15e-04, 1.35e-03, 1.03e-03]    []  
+1000      [6.50e-10, 0.00e+00, 1.05e-22, 2.20e-09, 9.88e-23, 1.33e-03, 3.16e-02, 2.80e-04, 1.35e-03, 1.04e-03]    [6.50e-10, 0.00e+00, 1.05e-22, 2.20e-09, 9.88e-23, 1.33e-03, 3.16e-02, 2.80e-04, 1.35e-03, 1.04e-03]    []  
+1100      [1.05e-09, 0.00e+00, 1.60e-21, 1.25e-10, 2.26e-21, 1.33e-03, 3.16e-02, 2.92e-04, 1.35e-03, 1.05e-03]    [1.05e-09, 0.00e+00, 1.60e-21, 1.25e-10, 2.26e-21, 1.33e-03, 3.16e-02, 2.92e-04, 1.35e-03, 1.05e-03]    []  
+1200      [5.35e-11, 0.00e+00, 2.40e-23, 7.68e-10, 1.97e-24, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    [5.35e-11, 0.00e+00, 2.40e-23, 7.68e-10, 1.97e-24, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    []  
+1300      [5.97e-11, 0.00e+00, 3.26e-23, 5.52e-10, 3.32e-24, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    [5.97e-11, 0.00e+00, 3.26e-23, 5.52e-10, 3.32e-24, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    []  
+1400      [4.73e-11, 0.00e+00, 3.26e-23, 5.87e-10, 2.80e-24, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    [4.73e-11, 0.00e+00, 3.26e-23, 5.87e-10, 2.80e-24, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    []  
+1500      [5.46e-11, 0.00e+00, 3.29e-23, 7.11e-10, 3.08e-24, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    [5.46e-11, 0.00e+00, 3.29e-23, 7.11e-10, 3.08e-24, 1.33e-03, 3.16e-02, 2.77e-04, 1.35e-03, 1.03e-03]    []  
+
+Best model at step 1500:
+  train loss: 3.56e-02
+  test loss: 3.56e-02
+  test metric: []
+
+'train' took 474.771435 s
+
+Constructing hollow shell profile...
+Revolving skin profile (5.0 degrees)...
+FIRST 5 POINTS: [(0.0001, 0.0, np.float64(-1.5707963267948966)), (18.47659067977828, 0.333509304613699, np.float64(-1.5346995060558732)), (36.92910933674713, 1.3336027095280087, np.float64(-1.4986026853168497)), (55.33351531006682, 2.998977254057536, np.float64(-1.4625058645778264)), (73.66583062197839, 5.327463223306495, np.float64(-1.4264090438388028))]
+LAST 5 POINTS: [(343.2205975622804, 440.73691663771143, np.float64(1.5707963267948966)), (226.30716805138118, 373.2369166377115, np.float64(2.617993877991494)), (226.30716805138115, 238.23691663771146, np.float64(3.665191429188092)), (343.2205975622804, 170.73691663771143, np.float64(4.71238898038469)), (0.0001, 35.73691663771143, 0.0)]
+Exporting to SPARTA surface: HIAD_opt.surf
+Successfully exported 84 segments to HIAD_opt.surf
+Exporting STL: HIAD_opt.stl
+Constructing solid skin profile (with thickness)...
+Revolving skin profile (5.0 degrees)...
+FIRST 5 POINTS: [(0.0001, 0.0, np.float64(-1.5707963267948966)), (18.47659067977828, 0.333509304613699, np.float64(-1.5346995060558732)), (36.92910933674713, 1.3336027095280087, np.float64(-1.4986026853168497)), (55.33351531006682, 2.998977254057536, np.float64(-1.4625058645778264)), (73.66583062197839, 5.327463223306495, np.float64(-1.4264090438388028))]
+LAST 5 POINTS: [(628.8312790324027, 494.2196095664761, np.float64(0.5235987755982988)), (556.4269471292662, 549.7774074823388, np.float64(1.308996938995747)), (500.0, 537.8651090604478, 0.0), (500.0, 2115.7634894475636, 0.0), (0.0001, 2115.7634894475636, 0.0)]
+Exporting to SPARTA surface: HIAD_opt.surf
+Successfully exported 98 segments to HIAD_opt.surf
+Exporting STL: HIAD_opt.stl
+3d5ec887ce6dadec7d957e575dc75d0ba4cce6a6aadd077b5f8642bf98e33589
+[PINN] Convergence plateau detected at iteration 1200 (data_loss=7.0426e-02, rel_improve<1.0%)
+[PINN] Training complete. Final loss: 3.5581e-02. Plateau detected at: 1200 iterations.
+[16:41:43]     [+] PINN Training Complete. Generating refined flow field...
+[16:41:43]     [+] Refined field generated via PINN. Gaps filled.
+[16:41:43]     [*] Averaging surface metrics over 2 dump file(s): ['surf.100.out', 'surf.200.out']
+[16:41:43]     [+] Drag multi-file avg: 2274055.2850 N (σ=101391.7550, CV=4.5%)
+[16:41:43]     [+] Extracted Metrics: Drag=2274055.2850 N, Heat=1.04e+09 W/m2
+[16:41:43]     [+] BASELINE PHYSICS RESULT (DRAG): 2274055.285000
+[16:41:43]     [+] FLIGHT METRICS:
+[16:41:43]         - Ballistic Coeff (beta): 0.53 kg/m^2
+[16:41:43]         - Peak Stagnation Heat:   1042229.50 kW/m^2
+[16:41:43]         - Peak Shock Layer Temp:  26300.3 K
+[16:41:43]         - Radiative Surf Temp:    12512.1 K
+[16:41:43]         - Est. Backface Temp:     1715499.6 K
+[16:41:43]         - Instantaneous g-load:   824.95 g
+[16:41:43] [*] SEARCH SPACE RANGES:
+[16:41:43]     - diameter: [2.5000, 4.5000]
+[16:41:43]     - angle: [45.0000, 75.0000]
+[16:41:43]     - toroids: [3.0000, 9.0000]
+[16:41:43]     - nose: [0.5000, 0.6000]
+[16:41:43] [*] Search Space: 4D — [diameter, angle, toroids, nose]
+[16:41:43] [*] PHASE 2: GENERATING 5 SBO SAMPLES (LHS)...
+[16:41:43] [*] SAMPLE 1/5: diameter=2.649816047538945, angle=50.7042858384595, toroids=4, nose=0.5119731696839407
+[16:42:06]     [*] Executing SPARTA solver via Docker (Sample 1)...
+[16:42:06]     [*] Regenerating Geometry: smooth (Payload=None, DefaultPayload=True)...
+[16:42:06]     [!] True Scalar Upscaling (Full Face): Toroid radius mathematically locked to 119.2mm.
+[16:42:06]     [!] Using 6 toroids to cover the entire face, expanding final HIAD diameter to 2.86m.
+[16:42:06]     [+] Executing Geometry Engine: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/.venv/bin/python HIAD_GeometryEngine.py --diameter 2.8632012763216674 --angle 50.7042858384595 --nose 0.5119731696839407 --toroids 6 --tradius 0.11924172213925255 --env_xmin -5.0 --env_xmax 9.0 --env_ymax 5.0 --thickness 0.0254 --scallop_pts 5 --scallop_angle 90.0 --nose_type smooth --output HIAD_opt --fast --defaultPayload --payload_type cylinder --payload_radius 500.0 --payload_height 2000.0
+[DEBUG] Writing in.hiad with 3127 bytes
+[16:42:33]     [*] Executing SPARTA via Docker...
+[16:42:35]     [!] Parallel Execution: Using 2 CPU cores via mpirun...
+[16:42:36] [DEBUG] Docker Create CMD: docker create --name hiad-runner --shm-size 2g -v /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition:/app --workdir /app/CADDesign -e IN_DOCKER=1 -e PYTHONUNBUFFERED=1 -e DOCKER_WORKDIR=/app -e SPARTA_GPU=0 -e OMP_NUM_THREADS=1 sparta-hysp mpirun --allow-run-as-root --oversubscribe -np 2 spa -in in.hiad
+[16:42:46]         CPU time = 0.116874 secs
+[16:42:46]         CPU time = 0.35961 secs
+[16:42:46]         0 0 zlo zhi
+Traceback (most recent call last):
+  File "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/run_baseline.py", line 25, in <module>
+    app.execute_optimization(opt_params)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/StellarOrionEngineMach5Up.py", line 2995, in execute_optimization
+    res_dict, log_lines = self.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_opt")
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/StellarOrionEngineMach5Up.py", line 1804, in run_sparta_simulation
+    raise RuntimeError(f"SPARTA simulation failed with exit code {exit_code}!")
+RuntimeError: SPARTA simulation failed with exit code 1!
