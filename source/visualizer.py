@@ -144,7 +144,8 @@ def _parse_stl(file_path):
 
 def _overlay_geometry(ax, surf_file, ref_params=None):
     """Overlays the full analytical HIAD slice on the current plot."""
-    if not ref_params:
+    is_orion = ref_params and ref_params.get('target_vehicle', '').upper() == 'ORION'
+    if not ref_params or is_orion:
         # Fallback to simple surf overlay
         if surf_file and os.path.exists(surf_file):
             points = []
@@ -257,7 +258,7 @@ def _get_masked_triangulation(x, y, values, nrho=None, n_max=1.0, threshold_rati
     # Vertex is invalid if value is NaN or density is below threshold
     invalid = np.isnan(values)
     if nrho is not None and len(nrho) == len(x):
-        invalid |= (nrho < n_max * threshold_ratio)
+        invalid |= (nrho <= 0)
         
     mask = np.any(invalid[triang.triangles], axis=1)
     triang.set_mask(mask)
@@ -303,8 +304,9 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
 
     # --- Density Masking to prevent non-physical artifacts inside body/vacuum ---
     # Threshold: 0.1% of max density in the domain
-    n_max = np.max(nrho)
-    density_mask = nrho < (n_max * 0.001) 
+    # Threshold: 1% of the 95th percentile density to prevent outlier-driven masking
+    n_max = np.percentile(nrho, 95)
+    density_mask = nrho < (n_max * 0.01) 
     
     # Apply masking (set to NaN to avoid "heat inside wall" interpolation bleeding)
     temp[density_mask] = np.nan
@@ -381,7 +383,7 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     ax = plt.gca(); ax.set_facecolor('#0f172a')
     vel_mag_mirrored = np.sqrt(u_mirrored**2 + v_mirrored**2)
     valid_v = ~np.isnan(vel_mag_mirrored)
-    if np.any(valid_v):
+    if np.sum(valid_v) >= 4:
         from scipy.interpolate import griddata
         
         # Create a uniform grid for the quiver plot
@@ -436,7 +438,7 @@ def generate_plots(grid_file, output_dir, suffix="", ref_params=None, surf_file=
     
     # Mask low density regions in Mach map too (using mirrored nrho)
     n_max_mirrored = np.nanmax(nrho_mirrored) if len(nrho_mirrored) > 0 else 1.0
-    density_mask_mirrored = nrho_mirrored < (n_max_mirrored * 0.01) # 1% threshold for Mach
+    density_mask_mirrored = nrho_mirrored <= 0
     mach_mirrored[density_mask_mirrored] = np.nan
     
     # NaN-safe clipping
@@ -1052,7 +1054,10 @@ def generate_animation(grid_files, output_mp4, ref_params=None, prop='temp'):
             ax.set_xlim(float(ref_params.get('env_xmin', -0.6)), float(ref_params.get('env_xmax', 2.5)))
             
         # Draw vehicle surface boundary overlay
-        surf_file = os.path.join(os.path.dirname(grid_files[0]), "../HIAD_custom.surf")
+        veh_name = ref_params.get('target_vehicle', 'HIAD') if ref_params else 'HIAD'
+        surf_file = os.path.join(os.path.dirname(grid_files[0]), f"../{veh_name}_custom.surf")
+        if not os.path.exists(surf_file):
+            surf_file = os.path.join(os.path.dirname(grid_files[0]), f"../{veh_name}_opt.surf")
         _overlay_geometry(ax, surf_file, ref_params=ref_params)
         
         # Add glassmorphic project overlay on the left part

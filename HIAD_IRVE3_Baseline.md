@@ -68,6 +68,11 @@ The following parameters establish the mesh fidelity requirements used in the Ra
 
 *   **Key Finding**: $C_d$ is Mach-independent in the continuum regime (Modified Newtonian method), but highly sensitive to the shading algorithm and panel density on rounded features (nose/shoulder).
 
+## 7. DSMC Simulation Enhancements (SPARTA)
+To accelerate the Direct Simulation Monte Carlo (DSMC) runs while maintaining physical fidelity, our framework integrates **Adaptive Mesh Refinement (AMR)**.
+*   **Grid Adaptation (`fix adapt_grid`)**: The SPARTA baseline simulation dynamically tracks particle densities in real-time, refining congested grid cells (particle count > 50) and coarsening empty ones (particle count < 10) on-the-fly. This boosts resolution solely where the shock physics occur.
+*   **Dynamic Load Balancing (`fix balance_grid`)**: Accompanying AMR, Recursive Coordinate Bisection (RCB) load balancing continuously redistributes particle and grid memory structures evenly across all parallel CPU cores.
+
 ## References
 1.  Cassell, G. J., et al., "Inflatable Re-entry Vehicle Experiment (IRVE-3) Flight Results," *AIAA 2013-1386*, 2013.
 2.  Lau, K., Cheatwood, N., et al., "Inflatable Re-entry Vehicle Experiment 3 (IRVE-3) Post-Flight Aerothermal Reconstruction," *NASA/TP-2013-4012*.

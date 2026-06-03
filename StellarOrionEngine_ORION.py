@@ -176,7 +176,7 @@ class Api:
                 "outer_toroid_radius_m": 0.0508,
                 "payload_height_m": 1.7,
                 "payload_radius_m": 0.275,
-                "mass_kg": 281.0,
+                "mass_kg": 10400.0,
                 "t_sic_m": 0.000506,
                 "t_pyrogel_m": 0.003047,
                 "t_kapton_m": 0.000025
@@ -503,7 +503,7 @@ class Api:
     def request_domain_preview(self, params):
         """Called from JS when domain params change"""
         cad_dir = os.path.join(self.cwd, "CADDesign")
-        surf_file = os.path.join(cad_dir, "HIAD_custom.surf")
+        surf_file = os.path.join(cad_dir, "ORION_custom.surf")
         preview_path = os.path.join(self.cwd, "web", "assets", "plots", "domain_preview.png")
         from source import visualizer
         success = visualizer.generate_preview(surf_file, preview_path, params=params)
@@ -520,7 +520,7 @@ class Api:
                 
                 python_exec = self._get_python_exec()
                 cad_cmd = [
-                    python_exec, "HIAD_GeometryEngine.py",
+                    python_exec, "ORION_GeometryEngine.py",
                     "--diameter", str(params.get('diameter', 3.0)),
                     "--angle", str(params.get('angle', 60.0)),
                     "--nose", str(params.get('nose_radius', 0.550)),
@@ -546,7 +546,7 @@ class Api:
                     self.log_to_gui("[+] Geometry generated successfully.")
                     
                     # Generate Preview Plots (Domain only)
-                    surf_file = os.path.join(cad_dir, "HIAD_custom.surf")
+                    surf_file = os.path.join(cad_dir, "ORION_custom.surf")
                     from source import visualizer
                     preview_path = os.path.join(self.cwd, "web", "assets", "plots", "domain_preview.png")
                     os.makedirs(os.path.dirname(preview_path), exist_ok=True)
@@ -565,8 +565,8 @@ class Api:
     def get_model_paths(self):
         """Page 4: Get paths for 3D rendering"""
         cad_dir = os.path.join(self.cwd, "CADDesign")
-        # Assuming default output name is HIAD_custom
-        stl_path = os.path.join(cad_dir, "HIAD_custom.stl")
+        # Assuming default output name is ORION_custom
+        stl_path = os.path.join(cad_dir, "ORION_custom.stl")
         if os.path.exists(stl_path):
             # We need to serve this or copy to web/assets
             assets_dir = os.path.join(self.cwd, "web", "assets")
@@ -679,7 +679,7 @@ class Api:
 
     def calculate_flight_metrics(self, sparta_res, opt_params, sample_dict):
         """Calculates derived flight metrics from DSMC results."""
-        mass = float(sample_dict.get('mass', opt_params.get('base_mass', 281.0)))
+        mass = float(sample_dict.get('mass', opt_params.get('base_mass', 10400.0)))
         diameter = float(sample_dict.get('diameter', 3.0))
         area = np.pi * (diameter / 2)**2
         
@@ -959,7 +959,7 @@ O recombine simple {gamma} O2
         
         # Current Geometry
         d_val = float(kwargs.get('diameter', opt_params.get('base_diameter', 3.0)))
-        surf_name = kwargs.get('surf_name', 'HIAD_custom')
+        surf_name = kwargs.get('surf_name', 'ORION_custom')
         
         # Auto-Adaptive Wide System Scaling
         # Dynamic domain adjustment based on Mach and standoff distance
@@ -976,22 +976,21 @@ O recombine simple {gamma} O2
         
         if opt_params.get('auto_adapt_wide', True):
             # Wide mode ensures the bow shock and wake recirculation are fully captured
-            xmin = float(opt_params.get('env_xmin', -5.0))
-            xmax = float(opt_params.get('env_xmax', 9.0))
-            ymax = float(opt_params.get('env_ymax', 0.5 * (xmax - xmin) * (9.0 / 16.0)))
+            xmin = float(opt_params.get('env_xmin', -4.2))
+            xmax = float(opt_params.get('env_xmax', 4.2))
+            ymax = float(opt_params.get('env_ymax', max(0.5 * (xmax - xmin) * (9.0 / 16.0), d_val * 1.5)))
         else:
             # Traditional Tight domain
             xmin = float(opt_params.get('env_xmin', -0.2 * d_val))
             xmax = float(opt_params.get('env_xmax', 1.0 * d_val))
-            ymax = float(opt_params.get('env_ymax', 1.2 * d_val))
+            ymax = float(opt_params.get('env_ymax', 1.5 * d_val))
         
         
         # Grid resolution
         # Default changed to 0.7 based on Grid Independency test (optimal accuracy/cost vs MDAO paper)
         grid_factor = float(opt_params.get('grid_factor', 0.7))
-        # Force odd grid to prevent perfect vertex alignment with symmetrical CAD models (Zero volume crash)
-        nx = 279
-        ny = 279
+        nx = int(400 * grid_factor)
+        ny = int(400 * grid_factor)
 
         # NOTE on axisymmetric force output (2026-05-31 calibration fix):
         # This script uses 'dimension 2' with 'boundary o ao p' (axisymmetric).
@@ -1038,7 +1037,12 @@ O recombine simple {gamma} O2
         
         if restart_file:
             # When resuming, read_restart replaces box, grid, particles, species, mixture, surf geometry
-            init_block = f"read_restart    {restart_file}"
+            # It does NOT replace surface collision models or boundary inflow fixes.
+            init_block = f"""read_restart    {restart_file}
+surf_collide    1 diffuse {t_wall:.1f} 1.0
+surf_modify     all collide 1
+fix             in emit/face air xlo
+"""
             
             # Extract elapsed steps from filename to calculate remaining steps
             try:
@@ -1048,9 +1052,11 @@ O recombine simple {gamma} O2
             except:
                 pass
         else:
-            # Fresh start
+            # Fresh start: Use a 279x279 grid to break exact grid-to-CAD vertex alignment (prevents zero-volume cut cells)
             init_block = f"""create_box      {xmin-0.001:.3f} {xmax+0.001:.3f} 0.000 {ymax+0.001:.3f} -0.5 0.5
-create_grid     {nx} {ny} 1
+create_grid     279 279 1
+region          exclude_craft block -0.5 3.5 -0.1 2.6 -0.5 0.5 side out
+group           free_stream grid region exclude_craft all
 balance_grid    rcb cell
 
 global          nrho {n_rho:.2e} fnum {fnum:.1e} weight cell radius
@@ -1126,7 +1132,7 @@ dump            1 surf all {stats_interval} results_reference/surf.*.out id f_1[
 dump            2 grid all {stats_interval} results_reference/grid.*.out id xlo ylo xhi yhi f_2[*] f_3[*] f_4[*]
 
 # Adaptive Mesh Refinement
-# fix             adapt_grid adapt {stats_interval} all refine coarsen particle 50 10 maxlevel 2
+fix             adapt_grid adapt {stats_interval} all refine coarsen particle 50 10 maxlevel 2
 fix             balance_grid balance {stats_interval} 1.1 rcb part
 
 # Periodic state saving (for resume)
@@ -1204,7 +1210,7 @@ run             {steps}
             
             # Push Geometry
             for ext in [".stl", ".step"]:
-                local_path = os.path.join(cad_dir, f"HIAD_opt{ext}")
+                local_path = os.path.join(cad_dir, f"ORION_opt{ext}")
                 if os.path.exists(local_path):
                     sftp.put(local_path, f"{remote_dir}\\geometry{ext}")
             
@@ -1390,7 +1396,7 @@ run             {steps}
                 self.log_to_gui(f"[*] Configuring Workflow (GPU={'ENABLED' if use_gpu else 'DISABLED'})...")
                 
                 # 1. Import Geometry (Using STEP for Watertight Geometry compatibility)
-                cad_file = os.path.join(cad_dir, "HIAD_custom.step")
+                cad_file = os.path.join(cad_dir, "ORION_custom.step")
                 
                 if os.path.exists(cad_file):
                     self.log_to_gui(f"    [+] Importing Geometry/Mesh: {cad_file}")
@@ -1564,68 +1570,17 @@ run             {steps}
             self.log_to_gui(f"[-] Local PyAnsys Error: {e}")
             return {'drag': 1.0, 'heat': 1.0}
 
-    def generate_hiad_geometry(self, sample_dict, nose_type="smooth", payload_file=None, default_payload=False, output_name="HIAD_custom", opt_params=None):
-        """Helper to call HIAD_GeometryEngine.py with specific parameters."""
+    def generate_hiad_geometry(self, sample_dict, nose_type="smooth", payload_file=None, default_payload=False, output_name="ORION_custom"):
+        """Helper to call ORION_GeometryEngine.py with specific parameters."""
         cad_dir = os.path.join(self.cwd, "CADDesign")
         python_exec = self._get_python_exec()
         
-        # --- AUTO-ADJUST HIAD DIAMETER ---
-        # If the user requested an Orion payload (radius=2.5m), ensure HIAD diameter is at least 1.5x the capsule diameter
-        requested_diam = float(sample_dict.get('diameter', 3.0))
-        requested_nose = float(sample_dict.get('nose', 0.550))
-        requested_angle = float(sample_dict.get('angle', 60.0))
-        
-        if opt_params and opt_params.get('payload_type') == 'orion':
-            payload_diam_m = (float(opt_params.get('payload_radius', 2500.0)) / 1000.0) * 2.0
-            min_diam = payload_diam_m * 1.5  # 1.5x object area/diameter rule
-            if requested_diam < min_diam:
-                self.log_to_gui(f"    [!] Auto-adjusting HIAD diameter from {requested_diam}m to {min_diam}m (1.5x capsule diameter rule)")
-                requested_diam = min_diam
-            # We will use a standard 0.55m small nose cap so the toroids cover the entire face!
-            self.log_to_gui(f"    [!] User requested toroids underneath! Using standard 0.55m nose cap.")
-            requested_nose = 0.550
-            sample_dict['nose'] = requested_nose
-            
-        # --- TRUE SCALAR UPSCALING (FULL FACE) ---
-        # The user specifically wants TRUE scalar upscaling, covering the entire face.
-        # 1. Calculate scalar toroid radius based on requested diameter ratio to baseline (3.0m).
-        requested_tradius_m = 0.135 * (requested_diam / 3.0)
-        
-        # 2. Calculate how much radial gap we need to cover from the 0.55m nose cap.
-        import math
-        r_tangency_m = requested_nose * math.cos(math.radians(requested_angle))
-        min_radial_gap_m = (requested_diam / 2.0) - r_tangency_m
-        min_slant_length_m = min_radial_gap_m / math.sin(math.radians(requested_angle))
-        
-        # 3. Calculate integer number of scalar toroids needed to cover this entire face
-        num_toroids = math.ceil(min_slant_length_m / (2.0 * requested_tradius_m))
-        
-        # 4. Re-adjust the final requested_diam to perfectly match the integer number of toroids
-        actual_slant_length = num_toroids * 2.0 * requested_tradius_m
-        actual_radial_increase = actual_slant_length * math.sin(math.radians(requested_angle))
-        requested_diam = (r_tangency_m * 2.0) + (2.0 * actual_radial_increase)
-        
-        sample_dict['diameter'] = requested_diam
-        sample_dict['toroids'] = num_toroids
-        
-        self.log_to_gui(f"    [!] True Scalar Upscaling (Full Face): Toroid radius mathematically locked to {requested_tradius_m*1000:.1f}mm.")
-        self.log_to_gui(f"    [!] Using {num_toroids} toroids to cover the entire face, expanding final HIAD diameter to {requested_diam:.2f}m.")
-        
-        # Determine domain bounds
-        env_xmin = float(opt_params.get('env_xmin', -5.0)) if opt_params else -5.0
-        env_xmax = float(opt_params.get('env_xmax', 9.0)) if opt_params else 9.0
-        env_ymax = float(opt_params.get('env_ymax', 5.0)) if opt_params else 5.0
-        
         cmd_cad = [
-            python_exec, "HIAD_GeometryEngine.py",
+            python_exec, "ORION_GeometryEngine.py",
             "--diameter", str(sample_dict.get('diameter', 3.0)),
             "--angle", str(sample_dict.get('angle', 60.0)),
-            "--nose", str(requested_nose),
+            "--nose", str(sample_dict.get('nose', 0.550)),
             "--toroids", str(sample_dict.get('toroids', 6)),
-            "--tradius", str(requested_tradius_m),
-            "--env_xmin", str(env_xmin),
-            "--env_xmax", str(env_xmax),
-            "--env_ymax", str(env_ymax),
             "--thickness", str(sample_dict.get('thickness', 0.0254)),
             "--scallop_pts", str(sample_dict.get('scallop_pts', 32)),
             "--scallop_angle", str(sample_dict.get('scallop_angle', 40.0)),
@@ -1636,13 +1591,6 @@ run             {steps}
         
         if default_payload:
             cmd_cad.extend(["--defaultPayload"])
-            if opt_params:
-                if 'payload_type' in opt_params:
-                    cmd_cad.extend(["--payload_type", str(opt_params['payload_type'])])
-                if 'payload_radius' in opt_params:
-                    cmd_cad.extend(["--payload_radius", str(opt_params['payload_radius'])])
-                if 'payload_height' in opt_params:
-                    cmd_cad.extend(["--payload_height", str(opt_params['payload_height'])])
         elif payload_file:
             cmd_cad.extend(["--payload_file", payload_file])
         
@@ -1657,7 +1605,7 @@ run             {steps}
         self.log_to_gui(f"    [+] Executing Geometry Engine: {' '.join(cmd_cad)}")
         subprocess.run(cmd_cad, cwd=cad_dir, check=True)
 
-    def run_sparta_simulation(self, opt_params, sample_dict, surf_name="HIAD_custom", nose_type="smooth") -> Dict[str, Any]:
+    def run_sparta_simulation(self, opt_params, sample_dict, surf_name="ORION_custom", nose_type="smooth") -> Dict[str, Any]:
         """Executes SPARTA DSMC simulation for a single configuration."""
         cad_dir = os.path.join(self.cwd, "CADDesign")
         n_run = int(opt_params.get('env_run', '1000'))
@@ -1856,7 +1804,7 @@ run             {steps}
                     rho_inf = nrho * (28.97e-3 / 6.022e23)
                     diameter = float(sample_dict.get('diameter', 3.0))
                     area = np.pi * (diameter / 2)**2
-                    mass = float(sample_dict.get('mass', 281.0))
+                    mass = float(sample_dict.get('mass', 10400.0))
                     
                     ref_params = {
                         'rho': rho_inf,
@@ -1922,7 +1870,7 @@ run             {steps}
                     'angle': 60.0,
                     'nose_radius': 0.550,
                     'toroids': 6,
-                    'mass': 281.0
+                    'mass': 10400.0
                 }
                 
                 # Naming based on date and grid factor as requested
@@ -2700,7 +2648,7 @@ run             {steps}
         b_thk = float(opt_params.get('base_thick', 0.0254))
         b_spt = int(opt_params.get('base_scallop_pts', 5))
         b_san = float(opt_params.get('base_scallop_ang', 90.0))
-        b_mas = float(opt_params.get('base_mass', 281.0))
+        b_mas = float(opt_params.get('base_mass', 10400.0))
 
         d_ang = float(opt_params.get('delta_angle', 15.0))
         d_tor = int(opt_params.get('delta_toroids', 3))
@@ -2748,7 +2696,7 @@ run             {steps}
         
         self.log_to_gui(f"    [+] Generating Baseline Geometry (D={base_d}m)...")
         cmd_cad = [
-            python_exec, os.path.join(cad_dir, "HIAD_GeometryEngine.py"),
+            python_exec, os.path.join(cad_dir, "ORION_GeometryEngine.py"),
             "--diameter", str(base_d),
             "--angle", str(opt_params.get('base_angle', 60.0)),
             "--nose", str(opt_params.get('base_nose', 0.550)),
@@ -2756,7 +2704,7 @@ run             {steps}
             "--thickness", str(opt_params.get('base_thick', 0.0254)),
             "--scallop_pts", str(opt_params.get('base_scallop_pts', 5)),
             "--scallop_angle", str(opt_params.get('base_scallop_ang', 90.0)),
-            "--output", "HIAD_custom",
+            "--output", "ORION_custom",
             "--slice_angle", "360.0"
         ]
         subprocess.run(cmd_cad, cwd=cad_dir, check=True)
@@ -2776,11 +2724,11 @@ run             {steps}
                 'angle': opt_params.get('base_angle', 60.0),
                 'nose_radius': opt_params.get('base_nose', 0.550),
                 'toroids': opt_params.get('base_toroids', 6),
-                'mass': opt_params.get('base_mass', 281.0)
+                'mass': opt_params.get('base_mass', 10400.0)
             }
             
             # Use the robust run_sparta_simulation which handles Docker vs Host fallback automatically
-            ref_metric_dict, log_lines = self.run_sparta_simulation(opt_params, baseline_params, surf_name="HIAD_custom")
+            ref_metric_dict, log_lines = self.run_sparta_simulation(opt_params, baseline_params, surf_name="ORION_custom")
 
         sim_end = time.time()
         baseline_time = sim_end - sim_start
@@ -2805,7 +2753,7 @@ run             {steps}
             os.makedirs(archive_dir, exist_ok=True)
 
             self.log_to_gui("    [+] Generating Baseline Static Maps (JPEG/Graph)...")
-            visualizer.generate_plots(grid_files[-1], plots_dir, ref_params=viz_metadata, surf_file=os.path.join(cad_dir, "HIAD_custom.surf"))
+            visualizer.generate_plots(grid_files[-1], plots_dir, ref_params=viz_metadata, surf_file=os.path.join(cad_dir, "ORION_custom.surf"))
             
             # Generate animations and 3D upscaled plots for all 6 core properties
             properties = ['temp', 'velocity', 'mach', 'pressure', 'knudsen', 'grid']
@@ -2821,7 +2769,7 @@ run             {steps}
                 upscale_path = os.path.join(plots_dir, f"upscaled_3d{prop_suffix}.png")
                 self.log_to_gui(f"    [+] Generating 3D {prop.upper()} Upscale: {os.path.basename(upscale_path)}...")
                 visualizer.upscale_2d_to_3d(grid_files[-1], upscale_path, 
-                                            surf_file=os.path.join(cad_dir, "HIAD_custom.surf"), prop=prop, ref_params=viz_metadata)
+                                            surf_file=os.path.join(cad_dir, "ORION_custom.surf"), prop=prop, ref_params=viz_metadata)
 
             if is_gui:
                 # Update UI with baseline results early
@@ -2968,12 +2916,12 @@ run             {steps}
             current_x_row = [sample_dict[p] for p in active_params]
             
             self.log_to_gui(f"[*] SAMPLE {i+1}/{samples_n}: {', '.join([f'{k}={sample_dict[k]}' for k in active_params])}")
-            script_content = self.generate_sparta_script(opt_params, surf_name="HIAD_opt", **sample_dict)
+            script_content = self.generate_sparta_script(opt_params, surf_name="ORION_opt", **sample_dict)
             with open(os.path.join(cad_dir, "in.hiad"), 'w') as f: f.write(script_content)
 
-            cmd_cad = [python_exec, "HIAD_GeometryEngine.py", "--diameter", str(sample_dict['diameter']), "--angle", str(sample_dict['angle']), 
+            cmd_cad = [python_exec, "ORION_GeometryEngine.py", "--diameter", str(sample_dict['diameter']), "--angle", str(sample_dict['angle']), 
                        "--toroids", str(sample_dict['toroids']), "--nose", str(sample_dict['nose']), "--thickness", str(sample_dict['thickness']),
-                       "--scallop_pts", str(sample_dict['scallop_pts']), "--scallop_angle", str(sample_dict['scallop_angle']), "--output", "HIAD_opt"]
+                       "--scallop_pts", str(sample_dict['scallop_pts']), "--scallop_angle", str(sample_dict['scallop_angle']), "--output", "ORION_opt"]
             subprocess.run(cmd_cad, cwd=cad_dir, check=True)
             
             sample_start = time.time()
@@ -2986,12 +2934,12 @@ run             {steps}
                 solver = opt_params.get('solver', 'sparta')
                 if solver == 'openfoam':
                     self.log_to_gui(f"    [*] Executing OpenFOAM solver (Sample {i+1})...")
-                    res_dict = self.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_opt")
+                    res_dict = self.run_openfoam_simulation(opt_params, sample_dict, surf_name="ORION_opt")
                     log_lines = []
                 else:
                     # ALWAYS use Docker for SPARTA solver to ensure parity; do not run natively
                     self.log_to_gui(f"    [*] Executing SPARTA solver via Docker (Sample {i+1})...")
-                    res_dict, log_lines = self.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_opt")
+                    res_dict, log_lines = self.run_sparta_simulation(opt_params, sample_dict, surf_name="ORION_opt")
             
             sample_end = time.time()
             sample_dur = sample_end - sample_start
@@ -3015,7 +2963,7 @@ run             {steps}
             self.log_to_gui(f"    [*] Archiving results for Sample {i+1}...")
             # Copy CAD
             for ext in [".step", ".stl", ".surf"]:
-                src_cad = os.path.join(cad_dir, f"HIAD_opt{ext}")
+                src_cad = os.path.join(cad_dir, f"ORION_opt{ext}")
                 if os.path.exists(src_cad):
                     import shutil
                     shutil.copy2(src_cad, os.path.join(sample_dir, f"geometry{ext}"))
@@ -3036,7 +2984,7 @@ run             {steps}
                     visualizer.generate_plots(grid_files[-1], sample_dir, ref_params=viz_metadata, surf_file=os.path.join(cad_dir, f"{surf_name}.surf"))
                     visualizer.generate_convergence_plot(log_lines, sample_dir, ref_params=viz_metadata)
                     visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(sample_dir, "3d_temp.png"), 
-                                                surf_file=os.path.join(cad_dir, "HIAD_opt.surf"), prop='temp', ref_params=viz_metadata)
+                                                surf_file=os.path.join(cad_dir, "ORION_opt.surf"), prop='temp', ref_params=viz_metadata)
             except Exception as ve:
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed for Sample {i+1}: {ve}")
 
@@ -3195,7 +3143,7 @@ run             {steps}
 
         # 6. Final Validation
         self.log_to_gui("[*] Executing Final Validation SPARTA Simulation...")
-        cmd_final = [python_exec, "HIAD_GeometryEngine.py", "--diameter", str(best_config['diameter']), "--angle", str(best_config['angle']), 
+        cmd_final = [python_exec, "ORION_GeometryEngine.py", "--diameter", str(best_config['diameter']), "--angle", str(best_config['angle']), 
                      "--toroids", str(best_config['toroids']), "--nose", str(best_config['nose']), "--thickness", str(best_config['thickness']),
                      "--scallop_pts", str(best_config['scallop_pts']), "--scallop_angle", str(best_config['scallop_angle']), "--output", "HIAD_final"]
         subprocess.run(cmd_final, cwd=cad_dir, check=True)
@@ -3404,9 +3352,9 @@ run             {steps}
 
             # 2. Run simulation
             if solver == 'openfoam':
-                res_dict = self.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_custom")
+                res_dict = self.run_openfoam_simulation(opt_params, sample_dict, surf_name="ORION_custom")
             elif solver == 'sparta':
-                res_dict, _ = self.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_custom", nose_type=nose_type)
+                res_dict, _ = self.run_sparta_simulation(opt_params, sample_dict, surf_name="ORION_custom", nose_type=nose_type)
             elif solver == 'pyansys':
                 res_dict = self.run_local_pyfluent_simulation(opt_params, sample_dict, show_gui=not headless, skip_gpu=skip_diag)
             elif solver == 'pyfluent':
@@ -3416,7 +3364,7 @@ run             {steps}
             
             # 3. Post-processing (Plots)
             self.log_to_gui("    [+] Generating Post-processing Plots...")
-            surf_name = "HIAD_custom"
+            surf_name = "ORION_custom"
             try:
                 from source import visualizer
                 grid_dir = os.path.join(cad_dir, "results_reference")
@@ -3751,7 +3699,7 @@ run             {steps}
         
         baseline_doc = self.get_irve_baseline_results_static()
         opt_params = {'env_vstream': baseline_doc['performance']['velocity_ms'], 'env_nrho': 3.5e22, 'env_duration': 60.0}
-        sample_dict = {'diameter': 3.0, 'mass': 281.0}
+        sample_dict = {'diameter': 3.0, 'mass': 10400.0}
         
         metrics_smooth = self.calculate_flight_metrics(res_smooth, opt_params, sample_dict)
         metrics_pointy = self.calculate_flight_metrics(res_pointy, opt_params, sample_dict)
@@ -3891,7 +3839,7 @@ run             {steps}
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
-    def run_openfoam_simulation(self, opt_params, sample_dict, surf_name="HIAD_opt"):
+    def run_openfoam_simulation(self, opt_params, sample_dict, surf_name="ORION_opt"):
         """Orchestrate OpenFOAM simulation."""
         import subprocess
         import os
