@@ -260,7 +260,7 @@ def _get_masked_triangulation(x, y, values, nrho=None, n_max=1.0, threshold_rati
     if nrho is not None and len(nrho) == len(x):
         invalid |= (nrho <= 0)
         
-    mask = np.any(invalid[triang.triangles], axis=1)
+    mask = np.all(invalid[triang.triangles], axis=1)
     triang.set_mask(mask)
     return triang
 

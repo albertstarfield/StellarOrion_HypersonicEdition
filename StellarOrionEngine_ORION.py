@@ -2596,7 +2596,7 @@ run             {steps}
 
     def execute_optimization(self, opt_params, is_gui=False):
         """Core optimization logic, usable by both GUI and Headless runners."""
-        samples_n = int(opt_params.get('samples', 5)) 
+        samples_n = int(opt_params.get('opt_samples', 0)) 
         d_min = float(opt_params.get('d_min', 2.5))
         d_max = float(opt_params.get('d_max', 4.5))
         goal = opt_params.get('goal', 'drag')
