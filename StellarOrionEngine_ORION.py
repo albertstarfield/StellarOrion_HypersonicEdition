@@ -456,6 +456,10 @@ class Api:
             _, _, _, species_list, _ = self.get_chemistry_data(opt_params)
             
             return {
+                'target_vehicle': opt_params.get('target_vehicle', 'ORION'),
+                'env_xmin': opt_params.get('env_xmin', -5.0),
+                'env_xmax': opt_params.get('env_xmax', 9.0),
+                'env_ymax': opt_params.get('env_ymax', 5.0),
                 'v_inf': round(vstream, 1),
                 'mach': mach,
                 'alt': alt,
@@ -470,6 +474,9 @@ class Api:
                 'nose_radius': sample_dict.get('nose_radius', 0.55),
                 'toroids': sample_dict.get('toroids', 7),
                 'payload': opt_params.get('payload', False),
+                'payload_height': sample_dict.get('payload_height', 3.3),
+                'payload_radius': sample_dict.get('payload_radius', 2.5),
+                'payload_type': opt_params.get('payload_type', 'orion'),
                 'species_list': species_list,
                 'git_hash': self._get_git_hash()
             }

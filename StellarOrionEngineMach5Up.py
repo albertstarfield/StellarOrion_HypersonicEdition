@@ -642,8 +642,8 @@ class Api:
                 'nose_radius': sample_dict.get('nose_radius', 0.55),
                 'toroids': sample_dict.get('toroids', 7),
                 'payload': opt_params.get('payload', False),
-                'payload_height': sample_dict.get('payload_height', 1.7),
-                'payload_radius': sample_dict.get('payload_radius', 0.5),
+                'payload_height': sample_dict.get('payload_height', 3.3 if 'ORION' in opt_params.get('target_vehicle', '').upper() else 1.7),
+                'payload_radius': sample_dict.get('payload_radius', 2.5 if 'ORION' in opt_params.get('target_vehicle', '').upper() else 0.5),
                 'payload_type': opt_params.get('payload_type', 'orion' if 'ORION' in opt_params.get('target_vehicle', '').upper() else 'cylinder'),
                 'species_list': species_list,
                 'git_hash': self._get_git_hash()

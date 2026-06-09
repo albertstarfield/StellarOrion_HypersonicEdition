@@ -84,10 +84,12 @@ def _add_metadata_overlay(ax, ref_params, extra_info=None):
 
 try:
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'CADDesign'))
-    from HIAD_GeometryEngine import draw_analytical_slice
+    from HIAD_GeometryEngine import draw_analytical_slice, generate_hiad
 except ImportError:
     def draw_analytical_slice(*args, **kwargs):
         print("Warning: HIAD_GeometryEngine not found. Analytical overlay disabled.")
+    def generate_hiad(*args, **kwargs):
+        return None, []
 
 def _parse_stl(file_path):
     """Parses an STL file (ASCII or Binary) and returns a list of triangles."""
@@ -142,134 +144,239 @@ def _parse_stl(file_path):
             
     return np.array(triangles)
 
-def _overlay_geometry(ax, surf_file, ref_params=None):
-    """Overlays the full analytical HIAD slice on the current plot."""
-    if not ref_params:
-        # Fallback to simple surf overlay
-        if surf_file and os.path.exists(surf_file):
-            points = []
-            with open(surf_file, 'r') as f:
-                mode = None
-                for line in f:
-                    if "Points" in line: mode = "pts"; continue
-                    parts = line.split()
-                    if not parts or parts[0].isalpha(): continue
-                    if mode == "pts" and len(parts) >= 3:
-                        points.append([float(parts[1]), float(parts[2])])
-            if points:
-                pts = np.array(points)
-                ax.plot(pts[:, 0], pts[:, 1], color='#f43f5e', linewidth=2.5, label='HIAD Wall', zorder=10)
-                ax.plot(pts[:, 0], -pts[:, 1], color='#f43f5e', linewidth=2.5, zorder=10)
+def _parse_surf_points(surf_file):
+    """Parse a SPARTA .surf file and return ordered list of (z, r) points."""
+    points = []
+    if not surf_file or not os.path.exists(surf_file):
+        return points
+    with open(surf_file, 'r') as f:
+        mode = None
+        for line in f:
+            if "Points" in line:
+                mode = "pts"
+                continue
+            if "Lines" in line:
+                mode = "lines"
+                continue
+            parts = line.split()
+            if not parts or parts[0].isalpha():
+                continue
+            if mode == "pts" and len(parts) >= 3:
+                points.append((float(parts[1]), float(parts[2])))
+    return points
+
+
+def _annotate_orion_features(ax, surf_pts, ref_params):
+    """Detect and annotate Orion payload features from parsed surf geometry."""
+    if len(surf_pts) < 5:
         return
-    
-    # We need to reconstruct the parameters for draw_analytical_slice
+
+    # Find the Orion interface: largest radial drop indicating HIAD-to-payload transition
+    max_r_jump = 0
+    interface_idx = -1
+    for i in range(1, len(surf_pts)):
+        r_jump = abs(surf_pts[i][1] - surf_pts[i - 1][1])
+        z_jump = abs(surf_pts[i][0] - surf_pts[i - 1][0])
+        if z_jump < 0.05 and r_jump > max_r_jump and r_jump > 0.3:
+            max_r_jump = r_jump
+            interface_idx = i
+
+    if interface_idx > 0:
+        iz, ir = surf_pts[interface_idx]
+        ax.plot(iz, ir, 'go', markersize=8, zorder=50)
+        ax.plot(iz, -ir, 'go', markersize=8, zorder=50)
+        ax.text(iz + 0.05, ir + 0.1, "Orion Interface", color='#22c55e',
+                fontweight='bold', fontsize=10, zorder=50)
+
+    # Find vertical payload wall for "Payload Centerbody" label
+    for i in range(len(surf_pts) - 1):
+        z1, r1 = surf_pts[i]
+        z2, r2 = surf_pts[i + 1]
+        if abs(z1 - z2) < 0.01 and abs(r1 - r2) > 0.5:
+            mid_z = (z1 + z2) / 2
+            mid_r = (r1 + r2) / 2
+            ax.text(mid_z, mid_r, "Payload Centerbody", color='#94a3b8',
+                    fontsize=8, ha='left', va='center', rotation=90)
+            ax.text(mid_z, -mid_r, "Payload Centerbody", color='#94a3b8',
+                    fontsize=8, ha='left', va='center', rotation=90)
+            break
+
+    # Find horizontal back cap for "Orion Back" label
+    for i in range(len(surf_pts) - 1):
+        z1, r1 = surf_pts[i]
+        z2, r2 = surf_pts[i + 1]
+        if abs(r1 - r2) < 0.01 and abs(z1 - z2) > 0.3 and r1 < 0.1:
+            mid_z = (z1 + z2) / 2
+            ax.text(mid_z, r1 + 0.05, "Orion Back", color='#94a3b8',
+                    fontsize=8, ha='right', va='bottom')
+            ax.text(mid_z, -(r1 + 0.05), "Orion Back", color='#94a3b8',
+                    fontsize=8, ha='right', va='top')
+            break
+
+
+def _overlay_analytical_skin(ax, ref_params):
+    """Fallback: reconstruct the full vehicle skin analytically when no surf file is available."""
     try:
-        # Extract params (converting m to mm where needed for the drawing function)
         d_m = float(ref_params.get('diameter', 3.0))
         angle = float(ref_params.get('angle', 60.0))
-        toroid_count = int(ref_params.get('toroids', 7))
-        toroid_radius = float(ref_params.get('toroid_radius', 0.135)) * 1000.0
-        shoulder_torus_radius = float(ref_params.get('shoulder_radius', 0.09)) * 1000.0
-        nose_radius = float(ref_params.get('nose_radius', 0.55)) * 1000.0
-        payload_height = float(ref_params.get('mass_center', 1700.0)) # Proxy for height if not present
+        toroid_count = int(ref_params.get('toroids', 6))
+        toroid_radius_m = float(ref_params.get('toroid_radius', 0.135))
+        shoulder_torus_radius_m = float(ref_params.get('shoulder_radius', 0.0508))
+        nose_radius_m = float(ref_params.get('nose_radius', 0.55))
+        payload_height_m = float(ref_params.get('payload_height', 1.7))
+        payload_radius_m = float(ref_params.get('payload_radius', 0.5))
         target_vehicle = ref_params.get('target_vehicle', '').upper()
-        
-        # Derived values needed for drawing
+        payload_type = ref_params.get('payload_type', 'orion' if 'ORION' in target_vehicle else 'cylinder')
+        payload_enabled = ref_params.get('payload', False) or 'IRVE-3' in target_vehicle or 'ORION' in target_vehicle
+
+        _, raw_skin_pts = generate_hiad(
+            diameter_m=d_m,
+            angle=angle,
+            nose_radius=nose_radius_m,
+            toroid_count=toroid_count,
+            toroid_radius=toroid_radius_m,
+            shoulder_torus_radius=shoulder_torus_radius_m,
+            payload=payload_enabled,
+            payload_height=payload_height_m * 1000.0,
+            payload_radius=payload_radius_m * 1000.0,
+            payload_type=payload_type,
+            debug_image=False,
+            slice_angle=0
+        )
+
+        skin_data_m = [(p[0] / 1000.0, p[1] / 1000.0) for p in raw_skin_pts]
+
         theta_c_rad = math.radians(angle)
-        z_tangency = nose_radius * (1.0 - math.sin(theta_c_rad))
-        r_tangency = nose_radius * math.cos(theta_c_rad)
-        r_target = (d_m * 1000.0) / 2.0
-        z_nose_center = nose_radius
-        z_back = payload_height # mm
-        
+        nose_radius_mm = nose_radius_m * 1000.0
+        r_tangency_mm = nose_radius_mm * math.cos(theta_c_rad)
+        z_tangency_mm = nose_radius_mm * (1.0 - math.sin(theta_c_rad))
+
+        if toroid_radius_m is None or toroid_radius_m == 0:
+            r_target_mm = (d_m * 1000.0) / 2.0
+            L_cone = (r_target_mm - r_tangency_mm) / math.sin(theta_c_rad)
+            tr_mm = L_cone / (2.0 * toroid_count)
+        else:
+            tr_mm = toroid_radius_m * 1000.0
+
+        sh_mm = shoulder_torus_radius_m * 1000.0
+        z_last_outer = skin_data_m[-1][0] * 1000.0
+        if payload_enabled and payload_type == 'orion':
+            z_back_mm = z_last_outer + (payload_height_m * 1000.0)
+        elif payload_enabled:
+            z_back_mm = z_tangency_mm + (payload_height_m * 1000.0)
+        else:
+            z_back_mm = z_last_outer
+
+        draw_analytical_slice(ax, skin_data_m, toroid_count, tr_mm / 1000.0, sh_mm / 1000.0,
+                              z_tangency_mm / 1000.0, r_tangency_mm / 1000.0, theta_c_rad, (d_m / 2.0),
+                              nose_radius_mm / 1000.0, nose_radius_mm / 1000.0, z_back_mm / 1000.0,
+                              label_toroids=True)
+    except Exception as e:
+        print(f"Warning: Analytical overlay fallback failed: {e}")
+
+
+def _overlay_geometry(ax, surf_file, ref_params=None):
+    """Overlays the vehicle geometry on the current plot.
+    
+    Primary approach: parse the actual .surf file to draw the full vehicle outline
+    (HIAD shell + payload) so the visualizer always matches what SPARTA simulated.
+    Then overlay analytical HIAD toroid circles from ref_params for structural detail.
+    """
+    target_vehicle = ''
+    if ref_params:
+        target_vehicle = ref_params.get('target_vehicle', '').upper()
+
+    # --- Step 1: Parse and draw the actual surf file geometry ---
+    surf_pts = _parse_surf_points(surf_file)
+    if surf_pts:
+        pts = np.array(surf_pts)
+        z_pts = pts[:, 0]
+        r_pts = pts[:, 1]
+
+        # Fill the solid interior to prevent contour bleeding
+        loop_z = list(z_pts) + list(reversed(z_pts))
+        loop_r = list(r_pts) + [-r for r in reversed(r_pts)]
+        ax.fill(loop_z, loop_r, facecolor='#0f172a', edgecolor='none', zorder=12)
+
+        # Draw upper and mirrored lower vehicle outline
+        if 'ORION' in target_vehicle:
+            label = 'Orion+HIAD Wall'
+        else:
+            label = 'Vehicle Wall'
+        ax.plot(z_pts, r_pts, color='#f43f5e', linewidth=2.5, label=label, zorder=15)
+        ax.plot(z_pts, -r_pts, color='#f43f5e', linewidth=2.5, zorder=15)
+
+        # Annotate Orion-specific features
+        if 'ORION' in target_vehicle:
+            _annotate_orion_features(ax, surf_pts, ref_params)
+    elif ref_params:
+        # No surf file — fall back to full analytical reconstruction
+        _overlay_analytical_skin(ax, ref_params)
+        return
+    else:
+        return
+
+    # --- Step 2: Overlay analytical HIAD toroid circles from ref_params ---
+    if not ref_params:
+        return
+
+    try:
+        d_m = float(ref_params.get('diameter', 3.0))
+        angle = float(ref_params.get('angle', 60.0))
+        toroid_count = int(ref_params.get('toroids', 6))
+        toroid_radius_m = float(ref_params.get('toroid_radius', 0.135))
+        shoulder_torus_radius_m = float(ref_params.get('shoulder_radius', 0.0508))
+        nose_radius_m = float(ref_params.get('nose_radius', 0.55))
+
+        theta_c_rad = math.radians(angle)
+        nose_radius_mm = nose_radius_m * 1000.0
+        r_tangency_mm = nose_radius_mm * math.cos(theta_c_rad)
+        z_tangency_mm = nose_radius_mm * (1.0 - math.sin(theta_c_rad))
+        r_target_mm = (d_m * 1000.0) / 2.0
+
+        if toroid_radius_m is None or toroid_radius_m == 0:
+            L_cone = (r_target_mm - r_tangency_mm) / math.sin(theta_c_rad)
+            tr_mm = L_cone / (2.0 * toroid_count)
+        else:
+            tr_mm = toroid_radius_m * 1000.0
+        sh_mm = shoulder_torus_radius_m * 1000.0
+
+        # Build minimal skin_data for draw_analytical_slice (toroids + nose only)
         skin_data = []
-        # Nose
-        for beta in np.linspace(-math.pi/2.0, -theta_c_rad, 20):
-            skin_data.append((nose_radius * math.cos(beta), nose_radius + nose_radius * math.sin(beta)))
-        # Toroids
+        for beta in np.linspace(-math.pi / 2.0, -theta_c_rad, 20):
+            skin_data.append((nose_radius_mm * math.cos(beta), nose_radius_mm + nose_radius_mm * math.sin(beta)))
         scallop_angle = 140.0
         gamma = math.radians(scallop_angle / 2.0)
         for i in range(toroid_count + 1):
             if i < toroid_count:
-                s_c = (2*i + 1) * toroid_radius
-                rad = toroid_radius
+                s_c = (2 * i + 1) * tr_mm
+                rad = tr_mm
             else:
-                s_c = (2 * toroid_count - 1) * toroid_radius + toroid_radius + shoulder_torus_radius
-                rad = shoulder_torus_radius
-                
-            rs = r_tangency + s_c * math.sin(theta_c_rad)
-            zs = z_tangency + s_c * math.cos(theta_c_rad)
+                s_c = (2 * toroid_count - 1) * tr_mm + tr_mm + sh_mm
+                rad = sh_mm
+            rs = r_tangency_mm + s_c * math.sin(theta_c_rad)
+            zs = z_tangency_mm + s_c * math.cos(theta_c_rad)
             cr = rs - rad * math.cos(theta_c_rad)
             cz = zs + rad * math.sin(theta_c_rad)
-            
             for alpha in np.linspace(-theta_c_rad - gamma, -theta_c_rad + gamma, 24):
                 skin_data.append((cr + rad * math.cos(alpha), cz + rad * math.sin(alpha)))
-        
-        payload_enabled = ref_params.get('payload', False) or 'IRVE-3' in target_vehicle or 'ORION' in target_vehicle
-        r_last, z_last = skin_data[-1]
-        
-        if payload_enabled:
-            payload_radius_m = float(ref_params.get('payload_radius', 1.25 if 'ORION' in target_vehicle else 0.5))
-            r_pay = payload_radius_m * 1000.0
-            z_back_actual = z_tangency + payload_height
-            
-            if 'ORION' in target_vehicle:
-                # Add straight line up to payload_radius
-                n_drop_pts = 10
-                for r in np.linspace(r_last, r_pay, n_drop_pts):
-                    skin_data.append((max(0.005, r), z_last))
-                
-                # Truncated cone wall
-                top_radius = 0.4 * r_pay
-                for alpha in np.linspace(0.0, 1.0, 10):
-                    curr_r = r_pay - (r_pay - top_radius) * alpha
-                    curr_z = z_last + payload_height * alpha
-                    skin_data.append((max(0.005, curr_r), curr_z))
-                
-                # Back cap
-                z_back_actual = z_last + payload_height
-                skin_data.append((0.005, z_back_actual))
-            else:
-                skin_data.append((r_pay, z_last))
-                skin_data.append((r_pay, z_back_actual))
-                skin_data.append((0.0, z_back_actual))
-                
-            z_back = z_back_actual
-        else:
 
-            thickness = 10.0 # mm
-            for alpha in np.linspace(0, math.pi, 15):
-                skin_data.append((r_last + thickness * math.sin(alpha), z_last + thickness * math.cos(alpha)))
-            front_pts = skin_data[:len(skin_data)-15]
-            for r, z in reversed(front_pts):
-                skin_data.append((max(0.0, r), z - thickness))
-            skin_data.append((0.0, -thickness))
-            z_back = -thickness
-        
-        skin_data_m = [(p[0]/1000.0, p[1]/1000.0) for p in skin_data]
-        
-        draw_analytical_slice(ax, skin_data_m, toroid_count, toroid_radius/1000.0, shoulder_torus_radius/1000.0,
-                              z_tangency/1000.0, r_tangency/1000.0, theta_c_rad, r_target/1000.0, 
-                              z_nose_center/1000.0, nose_radius/1000.0, z_back/1000.0,
+        skin_data_m = [(p[0] / 1000.0, p[1] / 1000.0) for p in skin_data]
+
+        # z_back: use last surf point z if available
+        if surf_pts:
+            z_back_m = surf_pts[-1][0]
+        else:
+            payload_height_m = float(ref_params.get('payload_height', 1.7))
+            z_back_m = (z_tangency_mm + payload_height_m * 1000.0) / 1000.0
+
+        draw_analytical_slice(ax, skin_data_m, toroid_count, tr_mm / 1000.0, sh_mm / 1000.0,
+                              z_tangency_mm / 1000.0, r_tangency_mm / 1000.0, theta_c_rad, r_target_mm / 1000.0,
+                              nose_radius_mm / 1000.0, nose_radius_mm / 1000.0, z_back_m,
                               label_toroids=True)
-                              
+
     except Exception as e:
-        print(f"Warning: Analytical overlay failed: {e}")
-        # Fallback to simple surf overlay
-        if surf_file and os.path.exists(surf_file):
-            points = []
-            with open(surf_file, 'r') as f:
-                mode = None
-                for line in f:
-                    if "Points" in line: mode = "pts"; continue
-                    parts = line.split()
-                    if not parts or parts[0].isalpha(): continue
-                    if mode == "pts" and len(parts) >= 3:
-                        points.append([float(parts[1]), float(parts[2])])
-            if points:
-                pts = np.array(points)
-                ax.plot(pts[:, 0], pts[:, 1], color='#f43f5e', linewidth=2.5, label='HIAD Wall', zorder=10)
-                ax.plot(pts[:, 0], -pts[:, 1], color='#f43f5e', linewidth=2.5, zorder=10)
+        print(f"Warning: Toroid overlay failed (surf outline still drawn): {e}")
 
 def clean_for_tri(v):
     return np.nan_to_num(v, nan=0.0, posinf=0.0, neginf=0.0)
