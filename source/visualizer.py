@@ -144,8 +144,7 @@ def _parse_stl(file_path):
 
 def _overlay_geometry(ax, surf_file, ref_params=None):
     """Overlays the full analytical HIAD slice on the current plot."""
-    is_orion = ref_params and ref_params.get('target_vehicle', '').upper() == 'ORION'
-    if not ref_params or is_orion:
+    if not ref_params:
         # Fallback to simple surf overlay
         if surf_file and os.path.exists(surf_file):
             points = []
@@ -173,6 +172,7 @@ def _overlay_geometry(ax, surf_file, ref_params=None):
         shoulder_torus_radius = float(ref_params.get('shoulder_radius', 0.09)) * 1000.0
         nose_radius = float(ref_params.get('nose_radius', 0.55)) * 1000.0
         payload_height = float(ref_params.get('mass_center', 1700.0)) # Proxy for height if not present
+        target_vehicle = ref_params.get('target_vehicle', '').upper()
         
         # Derived values needed for drawing
         theta_c_rad = math.radians(angle)
@@ -205,15 +205,38 @@ def _overlay_geometry(ax, surf_file, ref_params=None):
             for alpha in np.linspace(-theta_c_rad - gamma, -theta_c_rad + gamma, 24):
                 skin_data.append((cr + rad * math.cos(alpha), cz + rad * math.sin(alpha)))
         
-        payload_enabled = ref_params.get('payload', False)
+        payload_enabled = ref_params.get('payload', False) or 'IRVE-3' in target_vehicle or 'ORION' in target_vehicle
         r_last, z_last = skin_data[-1]
         
         if payload_enabled:
-            r_pay = float(ref_params.get('payload_radius', 0.5)) * 1000.0
-            skin_data.append((r_pay, z_last))
-            skin_data.append((r_pay, z_back))
-            skin_data.append((0.0, z_back))
+            payload_radius_m = float(ref_params.get('payload_radius', 1.25 if 'ORION' in target_vehicle else 0.5))
+            r_pay = payload_radius_m * 1000.0
+            z_back_actual = z_tangency + payload_height
+            
+            if 'ORION' in target_vehicle:
+                # Add straight line up to payload_radius
+                n_drop_pts = 10
+                for r in np.linspace(r_last, r_pay, n_drop_pts):
+                    skin_data.append((max(0.005, r), z_last))
+                
+                # Truncated cone wall
+                top_radius = 0.4 * r_pay
+                for alpha in np.linspace(0.0, 1.0, 10):
+                    curr_r = r_pay - (r_pay - top_radius) * alpha
+                    curr_z = z_last + payload_height * alpha
+                    skin_data.append((max(0.005, curr_r), curr_z))
+                
+                # Back cap
+                z_back_actual = z_last + payload_height
+                skin_data.append((0.005, z_back_actual))
+            else:
+                skin_data.append((r_pay, z_last))
+                skin_data.append((r_pay, z_back_actual))
+                skin_data.append((0.0, z_back_actual))
+                
+            z_back = z_back_actual
         else:
+
             thickness = 10.0 # mm
             for alpha in np.linspace(0, math.pi, 15):
                 skin_data.append((r_last + thickness * math.sin(alpha), z_last + thickness * math.cos(alpha)))

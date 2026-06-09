@@ -180,6 +180,8 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+*.stl
+
 # StellarOrion Specific
 tmp_sparta_build/
 log.sparta

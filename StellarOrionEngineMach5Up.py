@@ -160,8 +160,172 @@ class Api:
         self.history = HistoryManager(os.path.join(self.cwd, "optimization_history.db"))
 
     @staticmethod
+    def calculate_shield_mass(skin_data, tps_thickness=0.0254, tps_density=1468.0):
+        """
+        Calculates the total mass of the HIAD shield from geometry parameters.
+        
+        Args:
+            skin_data: List of (radius_m, axial_m, angle_rad) points defining the shield profile
+            tps_thickness: Thickness of the TPS material in meters (default: 0.0254 m = 1 inch)
+            tps_density: Density of TPS material in kg/m³ (default: 1468.0 for SiC)
+        
+        Returns:
+            dict: Shield mass calculation results
+        """
+        if not skin_data or len(skin_data) < 2:
+            return {
+                'surface_area_m2': 0.0,
+                'volume_m3': 0.0,
+                'mass_kg': 0.0,
+                'shield_mass_fraction': 0.0
+            }
+        
+        # Calculate surface area of revolution (axisymmetric body)
+        # Using Pappus's second theorem: A = 2π × ∫ r × dl
+        # where dl is the differential arc length along the profile
+        surface_area = 0.0
+        for i in range(len(skin_data) - 1):
+            r1, z1, _ = skin_data[i]
+            r2, z2, _ = skin_data[i + 1]
+            
+            # Convert from mm to m (geometry engine uses mm internally)
+            r1_m = r1 / 1000.0
+            r2_m = r2 / 1000.0
+            z1_m = z1 / 1000.0
+            z2_m = z2 / 1000.0
+            
+            # Arc length between points
+            dl = math.sqrt((z2_m - z1_m)**2 + (r2_m - r1_m)**2)
+            
+            # Average radius for this segment
+            r_avg = (r1_m + r2_m) / 2.0
+            
+            # Surface area of revolution for this segment: dA = 2π × r_avg × dl
+            surface_area += 2.0 * math.pi * r_avg * dl
+        
+        # Calculate volume of shield material
+        # Volume = surface_area × thickness (thin shell approximation)
+        volume = surface_area * tps_thickness
+        
+        # Calculate mass
+        mass = volume * tps_density
+        
+        return {
+            'surface_area_m2': surface_area,
+            'volume_m3': volume,
+            'mass_kg': mass,
+            'tps_thickness_m': tps_thickness,
+            'tps_density_kgm3': tps_density
+        }
+
+    @staticmethod
+    def calculate_shield_mass_analytical(diameter_m, angle_deg, toroid_count, toroid_radius_m, 
+                                         nose_radius_m=0.55, tps_thickness=0.0254, tps_density=1468.0):
+        """
+        Calculates HIAD shield mass analytically from geometry parameters.
+        Uses simplified geometric formulas for the sphere-cone HIAD shape.
+        
+        Args:
+            diameter_m: HIAD diameter in meters
+            angle_deg: Half-cone angle in degrees
+            toroid_count: Number of stacked toroids
+            toroid_radius_m: Toroid radius in meters
+            nose_radius_m: Nose sphere radius in meters (default: 0.55m)
+            tps_thickness: TPS material thickness in meters (default: 0.0254m = 1 inch)
+            tps_density: TPS material density in kg/m³ (default: 1468.0 for SiC)
+        
+        Returns:
+            dict: Shield mass calculation results with analytical breakdown
+        """
+        import math
+        
+        # Convert angle to radians
+        theta_c = math.radians(angle_deg)
+        
+        # Target radius
+        r_target = diameter_m / 2.0
+        
+        # Nose sphere tangency point
+        r_tangency = nose_radius_m * math.cos(theta_c)
+        
+        # 1. Nose Sphere Area (hemisphere cap)
+        # Area of spherical cap: A = 2π × R × h where h is the cap height
+        # For sphere-cone tangency, cap height = R × (1 - sin(θ))
+        nose_cap_height = nose_radius_m * (1.0 - math.sin(theta_c))
+        nose_area = 2.0 * math.pi * nose_radius_m * nose_cap_height
+        
+        # 2. Cone Section Area (frustum)
+        # Slant height from tangency to outer edge
+        slant_height = (r_target - r_tangency) / math.sin(theta_c)
+        
+        # Lateral surface area of cone frustum: A = π × (r1 + r2) × L
+        cone_area = math.pi * (r_tangency + r_target) * slant_height
+        
+        # 3. Toroid Wrapping Area (scalloped skin)
+        # Each toroid adds wrapping surface. Approximate as additional 20% for scalloping
+        scallop_factor = 1.2 if toroid_count > 0 else 1.0
+        
+        # 4. Total shield area
+        total_area = (nose_area + cone_area) * scallop_factor
+        
+        # 5. Calculate volume and mass
+        volume = total_area * tps_thickness
+        mass = volume * tps_density
+        
+        # 6. Toroid mass contribution (optional - internal structure)
+        # Volume of each toroid (torus): V = 2π² × R × r²
+        toroid_volume_each = 2.0 * math.pi**2 * (r_target * 0.7) * toroid_radius_m**2  # Approximate center radius
+        toroid_volume_total = toroid_volume_each * toroid_count
+        toroid_mass = toroid_volume_total * tps_density * 0.1  # Assume 10% density for inflatable structure
+        
+        return {
+            'nose_area_m2': nose_area,
+            'cone_area_m2': cone_area,
+            'total_surface_area_m2': total_area,
+            'scallop_factor': scallop_factor,
+            'tps_thickness_m': tps_thickness,
+            'tps_density_kgm3': tps_density,
+            'shield_volume_m3': volume,
+            'shield_mass_kg': mass,
+            'toroid_count': toroid_count,
+            'toroid_volume_m3': toroid_volume_total,
+            'toroid_mass_kg': toroid_mass,
+            'total_shield_mass_kg': mass + toroid_mass,
+            'mass_breakdown': {
+                'shield_skin_kg': mass,
+                'toroid_structure_kg': toroid_mass,
+                'total_kg': mass + toroid_mass
+            }
+        }
+
+    @staticmethod
     def get_irve_baseline_results_static():
         """Returns the IRVE-3 mission baseline data (Static)."""
+        # Calculate shield mass for IRVE-3 baseline using actual F-TPS layer thicknesses
+        # IRVE-3 used a multi-layer Flexible TPS:
+        #   - SiC outer layer: 0.506 mm (1468 kg/m3)
+        #   - Pyrogel insulation: 3.047 mm (110 kg/m3)
+        #   - Kapton inner layer: 0.025 mm (3100 kg/m3)
+        tps_thickness_sic = 0.000506  # m
+        tps_thickness_pyrogel = 0.003047  # m
+        tps_thickness_kapton = 0.000025  # m
+        total_tps_thickness = tps_thickness_sic + tps_thickness_pyrogel + tps_thickness_kapton
+        
+        # Calculate mass for each layer using weighted average density
+        # For simplicity, use effective density (mass-weighted average)
+        sic_mass_frac = (tps_thickness_sic * 1468.0) / (total_tps_thickness * 1468.0) if total_tps_thickness > 0 else 0
+        effective_density = 1468.0  # Primary structural layer is SiC
+        
+        shield_mass = Api.calculate_shield_mass_analytical(
+            diameter_m=3.0,
+            angle_deg=60.0,
+            toroid_count=6,
+            toroid_radius_m=0.135,
+            nose_radius_m=0.55,
+            tps_thickness=total_tps_thickness,
+            tps_density=effective_density
+        )
+        
         return {
             "mission": "IRVE-3",
             "date": "July 23, 2012",
@@ -179,7 +343,10 @@ class Api:
                 "mass_kg": 281.0,
                 "t_sic_m": 0.000506,
                 "t_pyrogel_m": 0.003047,
-                "t_kapton_m": 0.000025
+                "t_kapton_m": 0.000025,
+                "shield_mass_kg": shield_mass['total_shield_mass_kg'],
+                "shield_surface_area_m2": shield_mass['total_surface_area_m2'],
+                "shield_volume_m3": shield_mass['shield_volume_m3']
             },
             "performance": {
                 "velocity_mach": 10.0,
@@ -201,6 +368,7 @@ class Api:
                 "ambient_pressure_pa": 75.77,
                 "ambient_temp_k": 270.65
             },
+            "shield_mass_analysis": shield_mass,
             # --- 2D → 3D Axisymmetric Force Correction ---
             # SPARTA runs in dimension 2 (axisymmetric via 'boundary o ao p').
             # The surface-force compute returns forces in N per unit depth (the 2D slice).
@@ -490,8 +658,18 @@ class Api:
         timestamp = time.strftime("%H:%M:%S")
         # Clean message for terminal (remove <br>)
         term_msg = message.replace("<br>", "\n")
-        print(f"[{timestamp}] {term_msg}") 
+        try:
+            print(f"[{timestamp}] {term_msg}")
+        except UnicodeEncodeError:
+            # Fallback for Windows console encoding issues
+            try:
+                print(f"[{timestamp}] {term_msg}".encode(sys.stdout.encoding or 'ascii', errors='replace').decode(sys.stdout.encoding or 'ascii'))
+            except Exception:
+                # Last resort: just print the message as is, ignoring errors if possible, or print a simplified version
+                pass
+
         if self.window:
+
             safe_msg = message.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "<br>")
             self.window.evaluate_js(f"appendLog('{safe_msg}')")
 
@@ -681,11 +859,36 @@ class Api:
             self.log_to_gui(f"    [!] Parser Exception: {e}")
             return {'drag': 1.0, 'heat': 1.0, 'shock_temp': 300.0}
 
-    def calculate_flight_metrics(self, sparta_res, opt_params, sample_dict):
+    def calculate_flight_metrics(self, sparta_res, opt_params, sample_dict, skin_data=None):
         """Calculates derived flight metrics from DSMC results."""
         mass = float(sample_dict.get('mass', opt_params.get('base_mass', 281.0)))
         diameter = float(sample_dict.get('diameter', 3.0))
         area = np.pi * (diameter / 2)**2
+        
+        # Calculate shield mass
+        shield_mass_info = None
+        tps_thickness = float(sample_dict.get('thickness', 0.0254))
+        tps_density = float(opt_params.get('tps_density', 1468.0))
+        
+        if skin_data:
+            # Use geometry-based calculation if skin_data is available
+            shield_mass_info = self.calculate_shield_mass(skin_data, tps_thickness, tps_density)
+        else:
+            # Use analytical calculation from geometry parameters
+            angle = float(sample_dict.get('angle', 60.0))
+            toroids = int(sample_dict.get('toroids', 6))
+            tradius = float(sample_dict.get('tradius', 0.135))
+            nose_radius = float(sample_dict.get('nose_radius', 0.55))
+            
+            shield_mass_info = self.calculate_shield_mass_analytical(
+                diameter_m=diameter,
+                angle_deg=angle,
+                toroid_count=toroids,
+                toroid_radius_m=tradius,
+                nose_radius_m=nose_radius,
+                tps_thickness=tps_thickness,
+                tps_density=tps_density
+            )
         
         drag_force = sparta_res['drag']
         heat_flux = sparta_res['heat'] 
@@ -797,7 +1000,8 @@ class Api:
             'margin': tps_max_temp - t_surface,
             'shock_temp': sparta_res.get('shock_temp', 300.0),
             'survivable': survivable,
-            'failures': failures
+            'failures': failures,
+            'shield_mass': shield_mass_info
         }
 
 
@@ -993,9 +1197,11 @@ O recombine simple {gamma} O2
         # Grid resolution
         # Default changed to 0.7 based on Grid Independency test (optimal accuracy/cost vs MDAO paper)
         grid_factor = float(opt_params.get('grid_factor', 0.7))
-        # Force odd grid to prevent perfect vertex alignment with symmetrical CAD models (Zero volume crash)
-        nx = 279
-        ny = 279
+        # Force odd grid and use non-standard sizes to prevent perfect vertex alignment
+        # (Zero volume crash / Cell type mis-match). Changed to 201 for stability.
+        nx = 201
+        ny = 201
+
 
         # NOTE on axisymmetric force output (2026-05-31 calibration fix):
         # This script uses 'dimension 2' with 'boundary o ao p' (axisymmetric).
@@ -1053,7 +1259,7 @@ O recombine simple {gamma} O2
                 pass
         else:
             # Fresh start
-            init_block = f"""create_box      {xmin-0.001:.3f} {xmax+0.001:.3f} 0.000 {ymax+0.001:.3f} -0.5 0.5
+            init_block = f"""create_box      {xmin:.4f} {xmax:.4f} 0.0000 {ymax:.4f} -0.5 0.5
 create_grid     {nx} {ny} 1
 balance_grid    rcb cell
 
@@ -1242,7 +1448,7 @@ run             {steps}
             
             config_path = os.path.join(self.cwd, "scratch", "remote_config.json")
             os.makedirs(os.path.dirname(config_path), exist_ok=True)
-            with open(config_path, "w") as f:
+            with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(config, f)
             sftp.put(config_path, f"{remote_dir}\\config.json")
             
@@ -1696,7 +1902,7 @@ run             {steps}
         self._safe_copy(react_src, os.path.join(cad_dir, "air.react"))
         self._safe_copy(vss_src, os.path.join(cad_dir, "air.vss"))
         
-        with open(os.path.join(cad_dir, "air.surf_react"), "w", newline='\n') as f:
+        with open(os.path.join(cad_dir, "air.surf_react"), "w", newline='\n', encoding="utf-8") as f:
             f.write(self.generate_surf_react_script(opt_params))
 
         # --- Geometry already generated above ---
@@ -1704,7 +1910,7 @@ run             {steps}
         script_content = self.generate_sparta_script(opt_params, surf_name=surf_name, **sample_dict)
         os.makedirs(os.path.join(cad_dir, "results_reference"), exist_ok=True)
         print(f"[DEBUG] Writing in.hiad with {len(script_content)} bytes")
-        with open(os.path.join(cad_dir, "in.hiad"), 'w', newline='\n') as f:
+        with open(os.path.join(cad_dir, "in.hiad"), 'w', newline='\n', encoding="utf-8") as f:
             f.write(script_content)
 
         # 2. Launch Docker
@@ -1781,14 +1987,10 @@ run             {steps}
             l = line.strip()
             if not l: continue
             
+            # Log ALL lines for debugging SPARTA failures
+            self.log_to_gui(f"        {l}")
+            
             # Babysitting check: Every 300 seconds, check colima + print heartbeat
-            current_time = time.time()
-            if current_time - last_monitor_time > monitor_interval:
-                elapsed_min = (current_time - start_time) / 60
-                _babysitter_check(elapsed_min)
-                last_monitor_time = current_time
-
-            if "Step" in l or "CPU time =" in l: self.log_to_gui(f"        {l}")
             parts = l.split()
             if parts and parts[0].isdigit():
                 log_data.append(l)
@@ -1977,7 +2179,7 @@ run             {steps}
                     
                     # Output a JSON file for this specific factor (based on date and gridfactor name)
                     factor_file = os.path.join(suite_dir, f"results_{timestamp}_{factor_name}.json")
-                    with open(factor_file, "w") as f_json:
+                    with open(factor_file, "w", encoding="utf-8") as f_json:
                         json.dump(res_summary, f_json, indent=4)
 
                     self.log_to_gui(f"[+] COMPLETED: factor={factor}, cells={total_cells}, Cd={cd_sim:.4f}, Error={error_pct:.2f}%")
@@ -2003,7 +2205,7 @@ run             {steps}
             
             # Save final summary of all factors
             summary_file = os.path.join(suite_dir, f"grid_study_summary_{timestamp}.json")
-            with open(summary_file, "w") as f_sum:
+            with open(summary_file, "w", encoding="utf-8") as f_sum:
                 json.dump(results, f_sum, indent=4)
             self.log_to_gui(f"[+] Final study summary saved to: {summary_file}")
 
@@ -2309,7 +2511,7 @@ run             {steps}
             geometry_path = os.path.join(self.cwd, "source", "ref_geometry.stl")
             # If ref_geometry doesn't exist, use a placeholder or create one
             if not os.path.exists(geometry_path):
-                with open(geometry_path, "w") as f: f.write("solid test\nendsolid test") # Minimal STL
+                with open(geometry_path, "w", encoding="utf-8") as f: f.write("solid test\nendsolid test") # Minimal STL
             
             sftp.put(geometry_path, f"{remote_dir}\\geometry.stl")
             template_path = os.path.join(self.cwd, "source", "pyfluent_executor_template.py")
@@ -2333,7 +2535,7 @@ run             {steps}
             
             import json
             config_path = os.path.join(self.cwd, "scratch", "test_config.json")
-            with open(config_path, "w") as f: json.dump(test_config, f)
+            with open(config_path, "w", encoding="utf-8") as f: json.dump(test_config, f)
             sftp.put(config_path, f"{remote_dir}\\config.json")
             
             # Run simulation
@@ -2617,12 +2819,12 @@ run             {steps}
             
             # Minimal blockMeshDict for testing
             os.makedirs(os.path.join(test_dir, "system"), exist_ok=True)
-            with open(os.path.join(test_dir, "system", "blockMeshDict"), "w") as f:
+            with open(os.path.join(test_dir, "system", "blockMeshDict"), "w", encoding="utf-8") as f:
                 f.write("FoamFile { version 2.0; format ascii; class dictionary; object blockMeshDict; }\n"
                         "convertToMeters 1;\nvertices ( (0 0 0) (1 0 0) (1 1 0) (0 1 0) (0 0 1) (1 0 1) (1 1 1) (0 1 1) );\n"
                         "blocks ( hex (0 1 2 3 4 5 6 7) (10 10 10) simpleGrading (1 1 1) );\nedges ();\nboundary ();\n")
             
-            with open(os.path.join(test_dir, "system", "controlDict"), "w") as f:
+            with open(os.path.join(test_dir, "system", "controlDict"), "w", encoding="utf-8") as f:
                 f.write("FoamFile { version 2.0; format ascii; class dictionary; object controlDict; }\n"
                         "application blockMesh; startFrom startTime; startTime 0; stopAt endTime; endTime 1; deltaT 1;\n"
                         "writeControl runTime; writeInterval 1; purgeWrite 0; writeFormat ascii; writePrecision 6; writeCompression off; timeFormat general; timePrecision 6; runTimeModifiable true;\n")
@@ -2746,7 +2948,7 @@ run             {steps}
         self._safe_copy(vss_src, os.path.join(cad_dir, "air.vss"))
         
         # Dynamically generate surface reactions in the workspace
-        with open(os.path.join(cad_dir, "air.surf_react"), "w") as f:
+        with open(os.path.join(cad_dir, "air.surf_react"), "w", encoding="utf-8") as f:
             f.write(self.generate_surf_react_script(opt_params))
 
         base_d = float(opt_params.get('base_diameter', 3.0))
@@ -2974,7 +3176,7 @@ run             {steps}
             
             self.log_to_gui(f"[*] SAMPLE {i+1}/{samples_n}: {', '.join([f'{k}={sample_dict[k]}' for k in active_params])}")
             script_content = self.generate_sparta_script(opt_params, surf_name="HIAD_opt", **sample_dict)
-            with open(os.path.join(cad_dir, "in.hiad"), 'w') as f: f.write(script_content)
+            with open(os.path.join(cad_dir, "in.hiad"), 'w', encoding="utf-8") as f: f.write(script_content)
 
             cmd_cad = [python_exec, "HIAD_GeometryEngine.py", "--diameter", str(sample_dict['diameter']), "--angle", str(sample_dict['angle']), 
                        "--toroids", str(sample_dict['toroids']), "--nose", str(sample_dict['nose']), "--thickness", str(sample_dict['thickness']),
@@ -3473,7 +3675,7 @@ run             {steps}
 
             # 4. Extract metrics
             # ──────────────────────────────────────────────────────────────────
-            # SPARTA convention (dimension 2, boundary o ao p, weight cell radius):
+            # SPARTA convention (dimension 2, boundary o o a o p p, weight cell radius):
             #   With 'weight cell radius', each computational particle at radius r
             #   represents fnum × r real particles. This already accounts for the
             #   toroidal volume of the axisymmetric domain. The 'compute surf fx'

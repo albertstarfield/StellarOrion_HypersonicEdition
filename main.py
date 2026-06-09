@@ -1,6 +1,21 @@
 #!/usr/bin/env python
-import os
 import sys
+import io
+
+# Ensure UTF-8 encoding for stdout/stderr on Windows to prevent charmap errors
+if sys.platform == "win32":
+    try:
+        # Use getattr to satisfy static checkers like pyrefly
+        reconfig_out = getattr(sys.stdout, 'reconfigure', None)
+        if reconfig_out:
+            reconfig_out(encoding='utf-8', errors='replace')
+        reconfig_err = getattr(sys.stderr, 'reconfigure', None)
+        if reconfig_err:
+            reconfig_err(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
+import os
 import subprocess
 from typing import Any
 
@@ -556,6 +571,8 @@ def main():
         help="Enable CUDA GPU acceleration for SPARTA via Kokkos. Requires an NVIDIA GPU and the CUDA-enabled sparta-hysp Docker image (Dockerfile.cuda).")
     hw.add_argument("--no-sparta-gpu", action="store_false", dest="sparta_gpu",
         help="Force CPU-only SPARTA execution even if a GPU is detected.")
+    hw.add_argument("--cores", type=int, default=None,
+        help="Number of CPU cores for parallel execution (mpirun). Default: all available cores.")
     hw.add_argument("--skip-diag", action="store_true",
         help="Skip slow startup diagnostics (e.g. GPU detection via nvidia-smi). Useful for fast iteration on systems where GPU state is known.")
 
@@ -763,8 +780,10 @@ def main():
                     alt=args.alt,
                     flat_skin=args.flat_skin,
                     grid_factor=args.grid_factor,
-                    stats_interval=args.stats_interval
-                )
+                    stats_interval=args.stats_interval,
+                    env_cores=args.cores
+                    )
+
                 v_status = res.get('viability', '[UNKNOWN]')
                 v_color = "\033[32m" if res.get('is_viable') else "\033[31m"
                 print(f"[*] Validation Result: {str(res.get('status', 'unknown')).upper()} {v_color}{v_status}\033[0m")
