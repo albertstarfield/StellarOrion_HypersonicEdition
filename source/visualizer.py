@@ -278,105 +278,92 @@ def _overlay_analytical_skin(ax, ref_params):
 def _overlay_geometry(ax, surf_file, ref_params=None):
     """Overlays the vehicle geometry on the current plot.
     
-    Primary approach: parse the actual .surf file to draw the full vehicle outline
-    (HIAD shell + payload) so the visualizer always matches what SPARTA simulated.
-    Then overlay analytical HIAD toroid circles from ref_params for structural detail.
+    Primary approach: Use the .surf file for the aerodynamic wall (ground truth).
+    Secondary approach: Fall back to generate_hiad() analytical engine.
+    Then overlay toroid structural details.
     """
-    target_vehicle = ''
-    if ref_params:
-        target_vehicle = ref_params.get('target_vehicle', '').upper()
+    if not ref_params:
+        return
 
-    # --- Step 1: Parse and draw the actual surf file geometry ---
-    surf_pts = _parse_surf_points(surf_file)
+    target_vehicle = ref_params.get('target_vehicle', '').upper()
+    d_m = float(ref_params.get('diameter', 3.0))
+    angle = float(ref_params.get('angle', 60.0))
+    toroid_count = int(ref_params.get('toroids', 6))
+    toroid_radius_m = float(ref_params.get('toroid_radius', 0.135))
+    shoulder_torus_radius_m = float(ref_params.get('shoulder_radius', 0.0508))
+    nose_radius_m = float(ref_params.get('nose_radius', 0.55))
+    payload_height_m = float(ref_params.get('payload_height', 1.7))
+    payload_radius_m = float(ref_params.get('payload_radius', 0.5))
+    payload_type = ref_params.get('payload_type', 'orion' if 'ORION' in target_vehicle else 'cylinder')
+    payload_enabled = ref_params.get('payload', False) or 'IRVE-3' in target_vehicle or 'ORION' in target_vehicle
+
+    # --- Step 1: Get the Aerodynamic Wall Points ---
+    surf_pts = []
+    if surf_file and os.path.exists(surf_file):
+        surf_pts = _parse_surf_points(surf_file)
+    
+    if not surf_pts:
+        # Fallback: Analytical skin pts
+        _, raw_skin_pts = generate_hiad(
+            diameter_m=d_m, angle=angle, nose_radius=nose_radius_m,
+            toroid_count=toroid_count, toroid_radius=toroid_radius_m,
+            shoulder_torus_radius=shoulder_torus_radius_m,
+            payload=payload_enabled, payload_height=payload_height_m * 1000.0,
+            payload_radius=payload_radius_m * 1000.0, payload_type=payload_type,
+            debug_image=False, slice_angle=0
+        )
+        # Convert (r, z, a) in mm to (z, r) in meters
+        surf_pts = [(p[1]/1000.0, p[0]/1000.0) for p in raw_skin_pts]
+
+    # --- Step 2: Draw the Wall and Fill Interior ---
     if surf_pts:
         pts = np.array(surf_pts)
-        z_pts = pts[:, 0]
-        r_pts = pts[:, 1]
-
-        # Fill the solid interior to prevent contour bleeding
+        z_pts, r_pts = pts[:, 0], pts[:, 1]
+        
+        # Interior fill
         loop_z = list(z_pts) + list(reversed(z_pts))
         loop_r = list(r_pts) + [-r for r in reversed(r_pts)]
         ax.fill(loop_z, loop_r, facecolor='#0f172a', edgecolor='none', zorder=12)
 
-        # Draw upper and mirrored lower vehicle outline
-        if 'ORION' in target_vehicle:
-            label = 'Orion+HIAD Wall'
-        else:
-            label = 'Vehicle Wall'
+        # Plot wall line
+        is_standalone_orion = ('ORION' in target_vehicle and 'HIAD' not in target_vehicle)
+        label = 'Orion Capsule' if is_standalone_orion else ('Orion+HIAD Wall' if 'ORION' in target_vehicle else 'Vehicle Wall')
         ax.plot(z_pts, r_pts, color='#f43f5e', linewidth=2.5, label=label, zorder=15)
         ax.plot(z_pts, -r_pts, color='#f43f5e', linewidth=2.5, zorder=15)
 
-        # Annotate Orion-specific features
-        if 'ORION' in target_vehicle:
+        # Annotate Orion-specific features from surf geometry
+        if is_standalone_orion:
             _annotate_orion_features(ax, surf_pts, ref_params)
-    elif ref_params:
-        # No surf file — fall back to full analytical reconstruction
-        _overlay_analytical_skin(ax, ref_params)
-        return
-    else:
-        return
 
-    # --- Step 2: Overlay analytical HIAD toroid circles from ref_params ---
-    if not ref_params:
-        return
-
-    try:
-        d_m = float(ref_params.get('diameter', 3.0))
-        angle = float(ref_params.get('angle', 60.0))
-        toroid_count = int(ref_params.get('toroids', 6))
-        toroid_radius_m = float(ref_params.get('toroid_radius', 0.135))
-        shoulder_torus_radius_m = float(ref_params.get('shoulder_radius', 0.0508))
-        nose_radius_m = float(ref_params.get('nose_radius', 0.55))
-
-        theta_c_rad = math.radians(angle)
-        nose_radius_mm = nose_radius_m * 1000.0
-        r_tangency_mm = nose_radius_mm * math.cos(theta_c_rad)
-        z_tangency_mm = nose_radius_mm * (1.0 - math.sin(theta_c_rad))
-        r_target_mm = (d_m * 1000.0) / 2.0
-
-        if toroid_radius_m is None or toroid_radius_m == 0:
-            L_cone = (r_target_mm - r_tangency_mm) / math.sin(theta_c_rad)
-            tr_mm = L_cone / (2.0 * toroid_count)
-        else:
-            tr_mm = toroid_radius_m * 1000.0
-        sh_mm = shoulder_torus_radius_m * 1000.0
-
-        # Build minimal skin_data for draw_analytical_slice (toroids + nose only)
-        skin_data = []
-        for beta in np.linspace(-math.pi / 2.0, -theta_c_rad, 20):
-            skin_data.append((nose_radius_mm * math.cos(beta), nose_radius_mm + nose_radius_mm * math.sin(beta)))
-        scallop_angle = 140.0
-        gamma = math.radians(scallop_angle / 2.0)
-        for i in range(toroid_count + 1):
-            if i < toroid_count:
-                s_c = (2 * i + 1) * tr_mm
-                rad = tr_mm
-            else:
-                s_c = (2 * toroid_count - 1) * tr_mm + tr_mm + sh_mm
-                rad = sh_mm
-            rs = r_tangency_mm + s_c * math.sin(theta_c_rad)
-            zs = z_tangency_mm + s_c * math.cos(theta_c_rad)
-            cr = rs - rad * math.cos(theta_c_rad)
-            cz = zs + rad * math.sin(theta_c_rad)
-            for alpha in np.linspace(-theta_c_rad - gamma, -theta_c_rad + gamma, 24):
-                skin_data.append((cr + rad * math.cos(alpha), cz + rad * math.sin(alpha)))
-
-        skin_data_m = [(p[0] / 1000.0, p[1] / 1000.0) for p in skin_data]
-
-        # z_back: use last surf point z if available
-        if surf_pts:
-            z_back_m = surf_pts[-1][0]
-        else:
-            payload_height_m = float(ref_params.get('payload_height', 1.7))
-            z_back_m = (z_tangency_mm + payload_height_m * 1000.0) / 1000.0
-
-        draw_analytical_slice(ax, skin_data_m, toroid_count, tr_mm / 1000.0, sh_mm / 1000.0,
-                              z_tangency_mm / 1000.0, r_tangency_mm / 1000.0, theta_c_rad, r_target_mm / 1000.0,
-                              nose_radius_mm / 1000.0, nose_radius_mm / 1000.0, z_back_m,
-                              label_toroids=True)
-
-    except Exception as e:
-        print(f"Warning: Toroid overlay failed (surf outline still drawn): {e}")
+    # --- Step 3: Overlay Structural Detail & Labels ---
+    # Skip HIAD toroid overlay for standalone Orion (no HIAD toroids in the geometry)
+    is_standalone_orion = ('ORION' in target_vehicle and 'HIAD' not in target_vehicle)
+    if not is_standalone_orion and surf_pts:
+        try:
+            _, raw_skin_pts = generate_hiad(
+                diameter_m=d_m, angle=angle, nose_radius=nose_radius_m,
+                toroid_count=toroid_count, toroid_radius=toroid_radius_m,
+                shoulder_torus_radius=shoulder_torus_radius_m,
+                payload=payload_enabled, payload_height=payload_height_m * 1000.0,
+                payload_radius=payload_radius_m * 1000.0, payload_type=payload_type,
+                debug_image=False, slice_angle=0
+            )
+            skin_data_m = [(p[0]/1000.0, p[1]/1000.0) for p in raw_skin_pts]
+            
+            theta_c_rad = math.radians(angle)
+            tr_m = toroid_radius_m
+            if tr_m is None or tr_m == 0:
+                tr_m = (((d_m*1000.0)/2.0) - (nose_radius_m*1000.0*math.cos(theta_c_rad))) / math.sin(theta_c_rad) / (2.0*toroid_count) / 1000.0
+                
+            z_back_m = skin_data_m[-1][1]
+            
+            draw_analytical_slice(ax, skin_data_m, toroid_count, tr_m, shoulder_torus_radius_m,
+                                  (nose_radius_m*(1.0-math.sin(theta_c_rad))), 
+                                  (nose_radius_m*math.cos(theta_c_rad)), 
+                                  theta_c_rad, (d_m/2.0), nose_radius_m, nose_radius_m, z_back_m,
+                                  label_toroids=True, target_vehicle=target_vehicle, draw_skin=False)
+        except Exception as e:
+            print(f"Warning: Toroid overlay failed (surf outline still drawn): {e}")
 
 def clean_for_tri(v):
     return np.nan_to_num(v, nan=0.0, posinf=0.0, neginf=0.0)

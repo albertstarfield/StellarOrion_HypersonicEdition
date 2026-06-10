@@ -1654,7 +1654,7 @@ run             {steps}
         script_content = self.generate_sparta_script(opt_params, surf_name=surf_name, **sample_dict)
         os.makedirs(os.path.join(cad_dir, "results_reference"), exist_ok=True)
         print(f"[DEBUG] Writing in.hiad with {len(script_content)} bytes")
-        with open(os.path.join(cad_dir, "in.hiad"), 'w', newline='\n') as f:
+        with open(os.path.join(cad_dir, "in.hiad"), 'w', newline='\n', encoding='utf-8') as f:
             f.write(script_content)
 
         # 2. Launch Docker
@@ -3041,7 +3041,14 @@ run             {steps}
             try: os.remove(checkpoint_path)
             except: pass
 
-        # 4. Metamodel Training
+        # 4. Metamodel Training (skip if no optimization samples were run)
+        if samples_n == 0:
+            self.log_to_gui("[*] Baseline-only mode (opt_samples=0). Skipping metamodel training and GA optimization.")
+            if is_gui:
+                self.window.evaluate_js("updateProgress(100)")
+            self.log_to_gui("[+] BASELINE SIMULATION COMPLETE.")
+            return
+
         self.log_to_gui(f"[*] Training {n_dim}D Metamodel Prognosis (MoP) via PyTorch...")
         import torch
         import torch.nn as nn
