@@ -540,6 +540,20 @@ def main():
         help="Particle weighting factor (e.g. 5e16). Higher = fewer particles, faster run.")
     
     # Geometry Overrides (Ref: Rapisarda 2023 Table 5.4)
+    #
+    # VALIDATION NOTE — Default values are the IRVE-3 flight hardware configuration.
+    # These defaults can be compared directly against the Orion rigid capsule for
+    # cross-vehicle calibration (see StellarOrionEngineMach5Up.get_irve_baseline_results_static).
+    #
+    # | Parameter  | IRVE-3 Default | Orion Reference | Notes                          |
+    # |------------|----------------|-----------------|--------------------------------|
+    # | Diameter   | 3.0 m          | 5.02 m          | HIAD min for Orion: 7.5m       |
+    # | Angle      | 60.0°          | 32.5°           | Half-cone angle                |
+    # | Nose       | 0.55 m         | ~0.3 m          | Stagnation radius              |
+    # | Toroids    | 7              | 0 (rigid)       | Stacked inflatable toroids     |
+    # | Mass       | 281 kg         | ~10,400 kg      | 37x lighter than Orion capsule |
+    # | β (ballistic coeff) | 26.9 kg/m² | ~400 kg/m² | 15x lower → high-alt braking  |
+    # ====================================================================
     geo = parser.add_argument_group("Geometry Overrides (Rapisarda Envelope)")
     geo.add_argument("--diameter", type=float, default=3.0, help="HIAD major diameter [m]. Limit: 0.5-15.0m. (IRVE-3: 3.0m)")
     geo.add_argument("--angle", type=float, default=60.0, help="Half-cone angle [deg]. Rapisarda Limit: 40-80°. (IRVE-3: 60°)")
@@ -601,6 +615,24 @@ def main():
     args, unknown = parser.parse_known_args()
 
     # --- Rapisarda (2023) Structural & Geometric Validation ---
+    #
+    # FORMAL VERIFICATION NOTE — Envelope Limits (Rapisarda 2023, Table 5.4)
+    # ====================================================================
+    # These bounds define the feasible design space for HIAD stacked-toroid
+    # decelerators. Values outside this range violate structural integrity,
+    # manufacturing constraints, or aerodynamic stability assumptions used
+    # in the MDAO framework.
+    #
+    # Cross-vehicle context for sanity checking:
+    #   IRVE-3 baseline: D=3.0m, θ=60°, N=6 toroids, Rn=0.55m  (β=26.9 kg/m²)
+    #   Orion capsule:   D=5.02m, θ=32.5°, no toroids, Rn~0.3m  (β~400 kg/m²)
+    #   HIAD minimum for Orion: D≥7.5m (1.5× Orion diameter, per §7 ORION_Baseline.md)
+    #
+    # References:
+    #   [1] Rapisarda, C. (2023) TU Delft — MDAO framework for stacked toroid decelerators
+    #   [2] NASA TP-2013-4012 — IRVE-3 post-flight aerothermal reconstruction
+    #   [3] ORION_Baseline.md §7 — HIAD integration & auto-scaling rules
+    # ====================================================================
     def validate_geometry(p_dict):
         # θc: Half-cone Angle
         angle = p_dict.get('angle', 60.0)

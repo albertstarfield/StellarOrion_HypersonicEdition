@@ -300,7 +300,35 @@ class Api:
 
     @staticmethod
     def get_irve_baseline_results_static():
-        """Returns the IRVE-3 mission baseline data (Static)."""
+        """Returns the IRVE-3 mission baseline data (Static).
+
+        VALIDATION & FORMAL VERIFICATION REFERENCE
+        ============================================
+        Cross-vehicle comparison for calibration sanity checks:
+
+        | Metric              | IRVE-3 (HIAD)       | Orion (Rigid Capsule)  | Source                          |
+        |---------------------|---------------------|------------------------|---------------------------------|
+        | Diameter            | 3.0 m               | 5.02 m                 | Rapisarda (2023); EFT-1 specs   |
+        | Mass                | 281 kg              | ~10,400 kg             | NASA IRVE-3; EFT-1 post-flight  |
+        | Ballistic Coeff (β) | 26.9 kg/m²          | ~400 kg/m²             | β = m/(Cd·A); ~15x higher rigid |
+        | Peak Heat Flux      | 14.36 W/cm²         | ~1,000 W/cm²           | Stagnation point heating        |
+        | Peak Deceleration   | 20.2 G              | 8-9 G                  | Aerodynamic load                |
+        | Entry Velocity      | Mach 10 (2700 m/s)  | Mach 32 (8900-11000m/s)| Lunar-return trajectory         |
+        | Reference Cd        | 1.47 (smooth cone)  | ~1.2-1.3 (blunt body)  | Rapisarda MDAO; EFT-1 recon     |
+        | L/D                 | ~0 (symmetric)      | ~0.27 (CG offset)      | Skip-entry capability           |
+        | TPS Type            | Flexible (SiC/Pyr/Kap)| Avcoat (ablative)     | NASA TP-2013-4012; Johnston     |
+
+        The ~15x higher ballistic coefficient of Orion vs IRVE-3 quantifies why a HIAD
+        is needed for Mars/deep-space return: it lowers β to brake higher in the thin
+        upper atmosphere before the rigid heat shield melts (see ORION_Baseline.md §7).
+
+        References:
+          [1] Dillman et al. (2013) AIAA-2013-1390 — IRVE-3 flight performance
+          [2] Lau et al. (2013) NASA/TP-2013-4012 — IRVE-3 post-flight reconstruction
+          [3] Rapisarda (2023) TU Delft — MDAO framework for stacked toroid decelerators
+          [4] Johnston et al. — EFT-1 heatshield aerothermal reconstruction
+          [5] Bose et al. — EFT-1 afterbody aerothermal environment
+        """
         # Calculate shield mass for IRVE-3 baseline using actual F-TPS layer thicknesses
         # IRVE-3 used a multi-layer Flexible TPS:
         #   - SiC outer layer: 0.506 mm (1468 kg/m3)
