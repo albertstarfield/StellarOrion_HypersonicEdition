@@ -182,8 +182,8 @@ class Api:
                 "t_kapton_m": 0.000025
             },
             "performance": {
-                "velocity_mach": 10.0,
-                "velocity_ms": 2700.0,
+                "velocity_mach": 30.0,
+                "velocity_ms": 9500.0,
                 "peak_heat_flux_wcm2": 14.361,
                 "total_heat_load_jcm2": 195.0577,
                 "peak_deceleration_g": 20.2,
@@ -434,12 +434,12 @@ class Api:
     def _get_viz_params(self, opt_params, sample_dict):
         """Standardizes simulation metadata for the visualizer overlays."""
         try:
-            vstream = float(opt_params.get('env_vstream', 2700.0))
+            vstream = float(opt_params.get('env_vstream', 9500.0))
             temp_inf = float(opt_params.get('env_temp_inf', 270.0))
             
-            preset = 'mars'
+            preset = opt_params.get('env_preset', 'artemis')
             if self.window:
-                preset = self.window.evaluate_js("window.localStorage.getItem('env_preset')") or 'mars'
+                preset = self.window.evaluate_js("window.localStorage.getItem('env_preset')") or preset
             
             if 'mars' in preset.lower():
                 gamma = 1.29
@@ -449,7 +449,7 @@ class Api:
                 R = 287.05
 
             sound_speed = np.sqrt(gamma * R * temp_inf)
-            mach = opt_params.get('mach', round(vstream / sound_speed, 2))
+            mach = opt_params.get('mach', opt_params.get('env_mach', round(vstream / sound_speed, 2)))
             alt = opt_params.get('alt', opt_params.get('altitude', 52.0))
             
             # Get species list for plot labeling
@@ -694,8 +694,8 @@ class Api:
         heat_flux = sparta_res['heat'] 
         
         # Ballistic Coefficient (beta)
-        # Default calibrated for IRVE-3 Baseline (Mach 10 @ ~52km) - NASA/TP-2013-4012
-        vstream = float(opt_params.get('env_vstream', 2700.0))
+        # Default calibrated for Orion Baseline (Mach 30 @ ~40km) - Lunar Return
+        vstream = float(opt_params.get('env_vstream', 9500.0))
         nrho = float(opt_params.get('env_nrho', 3.5e22))
         # rho_inf [kg/m^3] = nrho * (M / Na)
         rho_inf = nrho * (28.97e-3 / 6.022e23) 
@@ -960,7 +960,7 @@ O recombine simple {gamma} O2
         
         # Current Physics State
         n_rho = float(kwargs.get('env_nrho', opt_params.get('env_nrho', 3.5e22)))
-        vstream = float(kwargs.get('env_vstream', opt_params.get('env_vstream', 2700.0)))
+        vstream = float(kwargs.get('env_vstream', opt_params.get('env_vstream', 9500.0)))
         temp_inf = float(kwargs.get('env_temp_inf', opt_params.get('env_temp_inf', 270.0)))
         t_wall = float(kwargs.get('env_twall', opt_params.get('env_twall', 1000.0)))
         
@@ -1226,7 +1226,7 @@ run             {steps}
             sftp.put(template_path, f"{remote_dir}\\executor.py")
             
             # Push Config
-            vstream = float(opt_params.get('env_vstream', 2700.0))
+            vstream = float(opt_params.get('env_vstream', 9500.0))
             nrho = float(opt_params.get('env_nrho', 3.5e22))
             rho = nrho * (28.97e-3 / 6.022e23) 
             # Simple pressure calc for Fluent boundary
@@ -1394,7 +1394,7 @@ run             {steps}
                 workflow.InitializeWorkflow(WorkflowType="Watertight Geometry")
                 
                 # Setup physics based on opt_params
-                vstream = float(opt_params.get('env_vstream', 2700.0))
+                vstream = float(opt_params.get('env_vstream', 9500.0))
                 n_rho = float(opt_params.get('env_nrho', 3.5e22))
                 rho = n_rho * (28.97e-3 / 6.022e23)
                 temp = float(opt_params.get('env_temp_inf', 270.0))
@@ -1806,7 +1806,7 @@ run             {steps}
                 # Enhanced Residual/Convergence Graphing
                 if log_data:
                     # Reference params for coefficients
-                    vstream = float(opt_params.get('env_vstream', 2700.0))
+                    vstream = float(opt_params.get('env_vstream', 9500.0))
                     nrho = float(opt_params.get('env_nrho', 3.5e22))
                     rho_inf = nrho * (28.97e-3 / 6.022e23)
                     diameter = float(sample_dict.get('diameter', 3.0))
@@ -1867,7 +1867,7 @@ run             {steps}
                     'grid_factor': factor,
                     'headless': headless,
                     'sparta_gpu': sparta_gpu,
-                    'env_vstream': 2700.0,
+                    'env_vstream': 9500.0,
                     'env_nrho': 3.5e22,
                     'env_cores': os.cpu_count() or 4,
                     'env_duration': 450.0
@@ -2634,7 +2634,7 @@ run             {steps}
         self.log_to_gui(f"[*] TOTAL STEPS PER SIMULATION:      {opt_params.get('env_run', '1000')}")
         self.log_to_gui("[*] ------------------------------------------------")
         
-        self.log_to_gui(f"    - Velocity (vstream): {opt_params.get('env_vstream', '2700.0')} m/s")
+        self.log_to_gui(f"    - Velocity (vstream): {opt_params.get('env_vstream', '9500.0')} m/s")
         self.log_to_gui(f"    - Duration: {opt_params.get('env_duration', '60.0')} s")
         self.log_to_gui(f"    - Thermal Lag: {opt_params.get('env_thermal_lag', '0.1')} %")
         self.log_to_gui(f"    - Chemistry Mode: {opt_params.get('env_chem_mode', '5-species')}")
@@ -3079,7 +3079,7 @@ run             {steps}
         targets = opt_params.get('targets', {})
         
         # Physics Constants for Beta Calibration
-        vstream = float(opt_params.get('env_vstream', 2700.0))
+        vstream = float(opt_params.get('env_vstream', 9500.0))
         nrho = float(opt_params.get('env_nrho', 3.5e22))
 
         # Physics Constants for Beta Calibration
@@ -3723,7 +3723,7 @@ run             {steps}
         
         # Use correct density from parameters
         baseline_doc = self.get_irve_baseline_results_static()
-        v_inf = float(opt_params.get('env_vstream', 2700.0))
+        v_inf = float(opt_params.get('env_vstream', 9500.0))
         nrho = float(opt_params.get('env_nrho', 3.5e22))
         rho_inf = nrho * (28.97e-3 / 6.022e23) 
         area = np.pi * (3.0/2)**2
@@ -3892,7 +3892,7 @@ run             {steps}
                 "\n"
                 "dsmcCloud 100000;\n"
                 "temperature 250.0;\n"
-                "velocity (2700.0 0.0 0.0);\n"
+                "velocity (9500.0 0.0 0.0);\n"
                 "numberDensities { N2 7.9e+21; O2 2.1e+21; }\n"
                 "\n"
                 "// ************************************************************************* //\n"
@@ -4085,7 +4085,7 @@ except Exception as e:
                 val = str(opt_params.get('env_temp_inf', 250.0))
             elif field == "boundaryU":
                 dims = "[0 1 -1 0 0 0 0]"
-                val = f"({opt_params.get('env_vstream', 3000.0)} 0 0)"
+                val = f"({opt_params.get('env_vstream', 9500.0)} 0 0)"
                 of_cls = "volVectorField"
             elif field == "rhoM":
                 dims = "[1 -3 0 0 0 0 0]"
@@ -4116,7 +4116,7 @@ except Exception as e:
             import shutil
             shutil.copy2(stl_src, os.path.join(case_dir, "constant", "triSurface", "shield.stl"))
             
-        vstream = float(opt_params.get('env_vstream', 2700.0))
+        vstream = float(opt_params.get('env_vstream', 9500.0))
         nrho = float(opt_params.get('env_nrho', 3.5e22))
         temp_inf = float(opt_params.get('env_temp_inf', 270.0))
         n_rho = float(opt_params.get('env_nrho', 1e22))
