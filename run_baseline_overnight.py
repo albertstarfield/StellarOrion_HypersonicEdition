@@ -2,6 +2,14 @@ import sys
 import os
 import shutil
 
+# =============================================================================
+# StellarOrion — Overnight Baseline Run (Orion + HIAD-Orion)
+# =============================================================================
+# PARTICLE SCALING:
+#   n_sim = (nrho × V_domain) / fnum
+#   fnum=1.5e20 → ~2M particles (minimum for visible shockwave)
+# =============================================================================
+
 # Make output dirs
 out_orion = os.path.join("ProgressReport", "Week 5", "figure", "baselineOrion")
 out_hiad = os.path.join("ProgressReport", "Week 5", "figure", "baselineHIADOrion")
@@ -21,7 +29,7 @@ orion_params = {
     'env_mach': '32.0',
     'env_alt': '40.0',
     'env_run': '700',
-    'env_fnum': '2.5e20',
+    'env_fnum': '1.5e20',
     'env_xmin': '-1.69',
     'env_xmax': '4.5',
     'env_ymax': '3.976',
@@ -56,7 +64,7 @@ hiad_params = {
     'env_mach': '32.0',
     'env_alt': '40.0',
     'env_run': '700',
-    'env_fnum': '2.5e20',
+    'env_fnum': '1.5e20',
     'env_xmin': '-1.69',
     'env_xmax': '8.0',
     'env_ymax': '6.0',

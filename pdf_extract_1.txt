@@ -1,0 +1,1210 @@
+
+
+========== HIAD simulation (HIAD simulationYay.pdf) - 26 pages ==========
+
+--- Page 1 ---
+Exploring the Accuracy of CFD Predictions for the Wake of a
+Hypersonic Inflatable Aerodynamic Decelerator
+Clark Pederson∗ and Neil S. Rodrigues†
+NASA Langley Research Center, Hampton, VA, 23681, USA
+Hypersonic Inflatable Aerodynamic Decelerators (HIADs) present unique challenges that
+require accurate predictions of complex wake physics. This paper presents a comparative
+study between wind tunnel experiments and CFD simulations to investigate the wake velocities
+behind a simplified HIAD model at Mach 10. The CFD simulations were performed using
+unstructured meshes to capture the complex structure of both the wake and the flow around
+the sting. The experiments utilized planar laser-induced florescence (PLIF) to measure the
+off-body wake velocities in a non-intrusive manner. Modeling the turbulent fluctuations with
+steady Reynolds-averaged Navier-Stokes (RANS) models yielded large errors in wake velocities.
+Delayed Detached-Eddy Simulation (DDES) more accurately predicts the wake velocities near
+the body and captured the same trends as experiments with increasing Reynolds number.
+However, DDES had difficulty predicting the shear layers near separation, underpredicting the
+shear layer thickness. The sensitivity of the hybrid RANS/LES results to the mesh resolution
+are also demonstrated.
+Nomenclature
+𝐷 The maximum diameter
+𝑘 Turbulent kinetic energy
+𝑀∞ Freestream Mach number
+𝑄 Q-criterion
+𝑅𝑒 𝐷 Reynolds number based on the maximum diameter and the freestream conditions
+𝑇∞ Freestream temperature
+𝑈∞ Freestream velocity
+𝑥 Axial coordinate, parallel with the centerline
+𝑦 Transverse coordinate, perpendicular to the centerline
+Δ Cell size
+Δ𝑡 Physical timestep
+𝜇𝑡 Turbulent eddy viscosity
+𝜔 Vorticity vector
+I. Introduction
+The proper design of entry, descent, and landing vehicles requires accurate predictions of the extreme heating
+experienced during atmospheric entry. New challenges in both planetary missions and earth re-entry will require both
+innovative heatshield technologies and more accurate flow predictions. For example, human exploration of Mars will
+requiresignificantlylargerpayloadsthanpreviouslydeliveredfortheMarsScienceLaboratoryorMars2020missions[ 1].
+Due to the thin atmosphere of Mars, achieving sufficient drag to slow down the large payloads will require novel lander
+vehicles. For a given payload, a larger heatshield diameter yields lower peak heating and higher drag. Unfortunately,
+the maximum heatshield diameter is often limited by the launch vehicle fairing size. This difficulty motivates the
+development of Hypersonic Inflatable Aerodynamic Decelerators (HIADs) [2]. A HIAD is a soft-goods aeroshell that
+can be compactly stored inside the payload shroud of a launch vehicle during launch and cruise, then inflated to its
+∗Aerothermodynamics Branch, AIAA Member
+†Optical Physicist, Advanced Measurements and Data Systems Branch, AIAA Senior Member
+1
+--- Page 2 ---
+maximum diameter prior to atmospheric entry. This expansion allows for larger vehicle diameters without requiring
+launch vehicles with larger fairings. The most recent flight test of a HIAD was the Low-earth Orbit Flight-Test of an
+Inflatable Decelerator (LOFTID), which successfully completed on November 10th, 2022 [3]. A cross-section of the
+LOFTID vehicle is shown in Fig. 1.
+The success of LOFTID has spurred additional interest in HIADs for Mars missions, earth reentry, and launch asset
+recovery. Thesenewmissionswillrequireaccuratepredictionsofthewakeregion. UnliketheOrioncrewmoduleorthe
+Mars2020 lander, HIADs have an exposed backshell with minimal thermal protection systems. Protecting the inflatable
+toroids, straps, and payload requires accurate heat flux predictions with low uncertainty. The difficulties with wake
+heating will become more significant on future missions with larger payloads and higher entry velocities, including
+human missions. Both LOFTID flight measurements and wind tunnel tests provide data that can be used to enhance the
+accuracy of computational fluid dynamics (CFD) in predicting these hypersonic wakes.
+Predicting the wake of a supersonic vehicle has remained a consistent challenge for many decades. Campbell and
+Brown [4] described “extreme difficulties” modeling the wake pressure for Viking landers. Compressibility dramatically
+reduces the thickness of turbulent shear layers, including the shear layers that envelop the wake. Conventional steady
+Reynolds-averaged Navier-Stokes (RANS) models fail to correctly predict this decrease in thickness. Predicting the
+thickness and the corresponding Reynolds stress are important to predicting the expansion that occurs around the
+shoulderandintothewakeofablunt-bodyvehicle. Compressibilitycorrectionshavebeenproposed,e.g. thecorrections
+by Wilcox [5, 6], but these predictions are ad hoc in nature and do not generalize well to flows with attached boundary
+layers [7]. In a recent validation study of a Mars entry vehicle [8], the compressibility correction by Spalart [9] yielded
+some improvement in wake predictions of drag, but still left large unphysical variations in wake pressure.
+Scale-resolving simulations have emerged as a way to obtain higher fidelity in wake flow simulations, albeit at a
+higher computational cost than steady RANS models. While steady RANS simulations only resolve the average state of
+a flow, scale-resolving simulations use a time-accurate simulation to directly represent some of the unsteady turbulent
+fluctuations. Scale-resolving simulations include large-eddy simulations (LES), where the majority of the turbulent
+fluctuations are directly represented and a subgrid model is used in modeling the effect of the unresolved scales on the
+resolved scales. LES is costly for wall-bounded flows due to the presence of very small eddies near the wall, leading to
+efforts to model the effects of the near-wall eddies on the external flow. One approach is a hybrid RANS/LES (H
+--- Page 3 ---
+region by as much as 100%. For these reasons, the recent experiments by Rodrigues et al. [21, 22] on a LOFTID
+geometry are a valuable dataset for CFD validation.
+The present work explores higher Mach numbers than many previous validation studies of supersonic wakes.
+Numerous experimental and computational studies have been conducted on supersonic axisymmetric wakes at Mach 2
+to 4, such as Refs. [23–25]. In comparison, the current study has a freestream Mach number of 10. The current study
+also combines a complex, flight-relevant geometry with non-intrusive velocimetry. Many studies on flight-relevant
+vehicle geometries are limited to only integrated forces or surface pressures. These quantities are useful for engineering
+design, but they provide limited ability to assess the impact of modeling decisions on the flowfield as a whole. Planar
+velocimetry like that by Rodrigues et al. [21, 22] provides a more rich and discriminating set of CFD validation data.
+The primary focus of this paper is a critical evaluation of the accuracy of unstructured finite-volume CFD in
+predicting the wake velocities of a HIAD at Mach 10. First, a brief summary of the flowfield and associated physics is
+presented in Section II. The computational tools used for the validation is described in Section III. The experimental
+campaign by Rodrigues et al. [21,21] will be summarized in Section IV. Finally, the CFD results are compared with
+experimental data in Section V.
+II. Wake Flow Description
+Hypersonic wake flows involve a complex array of physical phenomenon, as shown in Fig. 2. A bow shock forms at
+the front of a blunt body, with a stagnation point flow directly behind. A separated flow forms in the wake with the
+separation point near the maximum diameter. An expansion fan forms around the shoulder of the vehicle, turning the
+streamlines toward the centerline axis. A recirculation region with subsonic flow forms immediately behind the vehicle
+and is surrounded by a detached shear layer that may be laminar, transitional, or turbulent depending on the Reynolds
+number. At some distance downstream, the flow turns through a recompression shock to align with the axis of the
+vehicle. The physics of supersonic wakes has been studied experimentally, such as in Ref. [23, 25], revealing complex
+physics which are less understood than incompressible, subsonic wakes. In this validation campaign, a sting was used
+to support the model, as shown in Fig. 2. This sting has a significant impact on the wake dynamics and is therefore
+included in the simulations. The validation effort focuses on velocities along a z-normal plane on the model centerline
+so that the sting does not directly impede the measurements. This slice and the associated flow are illustrated in Fig. 3.
+While the current validation effort focuses specifically on the velocities in the wake, the size of the recirculation
+region is closely related to the surface pressure and heating. The flow expands from high to low pressure 
+--- Page 4 ---
+Fig. 2 Illustration of the flow features in the wake of the LOFTID PLIF test article, using a slice taken along the
+y-normal symmetry plane. The incoming flow is at Mach 9.9 and𝑹𝒆 𝑫 = 8.9 × 105.
+Fig. 3 Illustration of the wake of the LOFTID PLIF test article using a slice taken on a z-normal plane at the
+centerline. This is the same plane on which PLIF measurements were taken. The incoming flow is at Mach 9.9
+and 𝑹𝒆 𝑫 = 8.9 × 105.
+4
+--- Page 5 ---
+Table 1 Wind tunnel conditions
+Tag 𝑅𝑒 𝐷, ∞ 𝑀∞ 𝜌∞ [kg/m3] 𝑢∞ [m/s] 𝑇∞ [K]
+Low Re 2.51e+05 9.68 4.68e-03 1385 50.9
+Mid Re 5.03e+05 9.81 9.13e-03 1386 49.7
+High Re 8.93e+05 9.91 1.58e-02 1387 48.7
+For the Reynolds numbers considered in this experiment, the boundary layer is most likely laminar or transitional as it
+approaches the separation point.
+III. Computational Approach
+This study uses two codes produced by NASA Langley Research Center: FUN3D [30] and HyperSolve [31,32].
+These two codes use the finite-volume method to solve the Favre-averaged Navier-Stokes equations.
+• FUN3D uses a node-based, dual-mesh discretization. For steady calculations, the inviscid fluxes were discretized
+by using a dissipative LDFSS scheme [33]. For the unsteady calculations, the inviscid fluxes were discretized
+with a modified Roe scheme with lower dissipation in subsonic regions [34]. Stencil-based Van Albada limiters
+are used. The viscous fluxes were discretized by using Green-Gauss element-based gradients, which is equivalent
+to a Galerkin-based approach for regular tetrahedra.
+• HyperSolveuses a node-centered, edge-based finite volume discretization. The inviscid fluxes are discretized by
+using an edge-based Roe scheme with reconstruction. Similar to FUN3D, a low-dissipation Roe scheme is used
+for the unsteady calculations [34]. A pressure-based limiter by Gnoffo and White [35] is used. The viscous fluxes
+are discretized with the alpha-damping scheme by Nishikawa et al. [36, 37] and𝛼 = 1. HyperSolve also employs
+a Jacobian-Free Newton-Krylov (JFNK) solver to solve the linear systems efficiently and robustly.
+Section V.D includes a comparison of the results from the two flow solvers. In general, predictions between the two
+solvers agreed well.
+Because the wake is unsteady, two different solution strategies were explored: For the first strategy, a steady solution
+was obtained using local time-stepping. Machine-zero convergence of the residual was difficult to achieve to due to
+the low-Mach unsteadiness in the wake. The simulations were stopped after decreasing the residuals by eight orders
+of magnitude. The second strategy was to perform unsteady DDES calculations, which directly resolve some of the
+turbulent fluctuations and only model the unresolved turbulent fluctuations. The unsteady solution was time-averaged
+for comparison with experimental values of mean velocity. A BDF2 scheme was used with dual-time-stepping for
+the time integration. Ten dual time-steps were used for each physical time-step, which was sufficient to decrease the
+unsteady residual by two orders of magnitude. Using more dual-timesteps to obtain smaller temporal errors was not
+observed to have any significant impact on the mean or RMS velocity fields. The physical timesteps were set to acheive
+a CFL of 1 or less through most of the recirculating wake region; this led to a timestep ofΔ𝑡𝑈∞/Δ ≈ 4, whereΔis the
+cell size in the wake. A startup period of 2000 iterations was used to initialize the un
+--- Page 6 ---
+Fig. 4 Example instantaneous snapshots from the PLIF experiments at the higher Reynolds number. The PLIF
+signal intensity is shown with a logarithmic scale. More PLIF snapshots are in Ref. [22]
+SA-neg-RC model was used as the underlying RANS model for DDES.
+These turbulence models were run as “fully turbulent,” meaning that the source terms were not modified to manually
+specify a transition location. As shown by Rumsey [43], both SA-neg and SST models allow a stable, laminar solution
+with negligible eddy viscosity at low Reynolds numbers. In the current work, the turbulence models do show laminar
+behavior over most of the boundary layer on the heatshield, even though the turbulence models are used everywhere.
+There are a wide variety of RANS turbulence models with varying accuracy. A brief discussion of the varying
+accuracy of different turbulence models is included in the Appendix. It is possible that models such as the Wilcox 2006
+model [5] outperform the RANS models examined in this study. However, current RANS models seem fundamentally
+limitedintheirabilitytocapturecompressibleshearlayersandsupersonicwakes. Inpreviousstudiesofsupersonicwakes
+at Mach 1.4 [20] and Mach 2.5 [15], RANS models gave poor predictions of the wake pressure and the recirculation
+length. This paper considers much higher Mach numbers than the previous validation studies, but the errors seen with
+RANS are consistent with those seen in previous studies. HRLES models were seen as a more productive area for
+research.
+A. Mesh for Steady Simulations
+Grid generation is an important part of CFD, and high-quality solutions usually require high-quality grids. “High
+quality” can be defined in several ways for the wake of a blunt-body vehicle. First, the mesh should be tailored to the
+bow shock to minimize numerical errors. As shown by Candler et al. [44] and McCloud [45], large, misaligned cells
+near a bow shock can have significant impacts on overall solution accuracy. Second, the grid must be fine enough to
+resolve any gradients in the solution that will impact the quantities of interest, including boundary layers and isentropic
+expansions. Finally, the boundary layer should have a relatively fine wall-normal spacing to resolve the viscous sublayer.
+While many previous studies of supersonic wakes have used manually crafted meshes, the geometry in the current
+study is more complex than a simple cylinder or an Apollo-style capsule. The test article, shown in Fig. 8a, includes
+a concave backshell and a representative payload. Even though an offset sting was used, the sting will still impact
+the wake dynamics and was included in the computational domain. These geometric details make manual crafting of
+meshes laborious and error-prone. To help create high-quality meshes for a complex geometry, this paper makes use of
+the Sketch-to-Solution (S2S) process [46]. S2S is an iterative process where anisotropic unstructured adaptation is used
+to convert an initial coarse mesh to a high-quali
+--- Page 7 ---
+Fig. 5 Grid adaptation process when using S2S
+given mesh complexity before increasing the resolution. Usually, the cycle of adaptation and refinement is continued
+until a predefined complexity limit is reached.
+The S2S process can be used with multiscale metric adaptation. Multiscale mesh adaptation attempts to minimize
+the 𝐿2 norm of the interpolation error of a scalar field such as temperature or Mach number. After running the CFD
+solver and generating an output scalar field, the Hessian of the target scalar field is calculated. This Hessian is then
+decomposed into eigenvalues and eigenvectors. A Riemannian metric tensor is formed by recombining the inverse
+square of the eigenvalues with the eigenvectors to ensure a symmetric, positive-definite metric; the metric is then used
+to construct an anisotropic grid. For further details on multiscale metric adaptation, see Refs. [47–49].
+An example slice of the adapted mesh is shown in Fig. 6; the mesh shown has 2.3 million nodes. The mesh is
+adapted to give a high mesh density and crisp resolution around the bow shock. A high grid density is seen at the
+expansion fan around the shoulder and the wake shear layer. Anisotropic, highly stretched cells appear in the far wake,
+where the axial velocity gradients are relatively smooth.
+Fig. 6 A slice through the symmetry plane of an adapted mesh, generated using Sketch-to-Solution. The
+conditions correspond to the𝑹𝒆 𝑫 = 2.5 × 105case. The mesh is colored by the temperature to show the flow
+features to which grid is adapted.
+7
+--- Page 8 ---
+B. Mesh for Unsteady Simulations
+Creating a high-quality mesh for an unsteady DDES simulation places extra grid requirements. Spalart [50]
+suggested dividing the mesh into near-wall RANS regions and a “focus region” in the wake with isotropic, fine cells.
+The focus region is the portion of the domain where the mesh is fine enough to directly resolve LES-type turbulent
+fluctuations. A wake resolution ofΔ/𝐷 ≈ 1% is common for HRLES of supersonic wakes [17, 19, 20, 51].
+The multiscale metric adaptation that is common in RANS has limited capability to capture unsteady wakes. The
+mean flow can be relatively smooth in wakes, leading to coarse resolution precisely where extra resolution is needed.
+This can be seen in Fig. 7a, where the wake spacing is quite large. The fixed-point iteration of Alauzet et al. [52]
+was attempted in an attempt to apply the multiscale-metric adaptation to a transient metric field. Unfortunately, the
+fixed-point iteration did not yield a fine wake resolution until very high node counts; this difficulty was also noticed
+in the paper by Park et al. [53]. Instead of fixed-point iteration, this paper uses an approach similar to that proposed
+by Ekelschot and Brock [54]: The starting point is the fine-mesh from a steady SA-neg simulation. The metric field
+is then modified to place an upper limiter of a fixedΔ spacing in the wake region from𝑥/𝐷 = 0.28 to 𝑥/𝐷 = 1.18.
+Various mesh spacings were examined, as shown in Fig. 7 and Table. 3. Most of the DDES results in this paper used
+a medium resolution ofΔ/𝐷 ≈ 0.5%. Section V.C shows comparisons on coarser and finer meshes for the higher
+Reynolds number case. For the coarse and medium DDES meshes, the minimum edge length of a cell was set to 0.25
+times the upper limit, effectively limiting the aspect ratio to four. Purely isotropic cell spacings in the wake region were
+compared; the mean velocity only showed small differences. The wake region was blended with the existing RANS
+metric field using an exponential decay.
+For these DDES meshes, no further adaptation cycles were used to improve on the initial DDES mesh. The regions
+that use the anisotropic multiscale metric are generally steady, and the solution does not change significantly due to the
+improved wake resolution. Conversely, the solution in the wake does change, but the mesh in this region is defined by
+the fixed isotropic spacing and is not dependent on the solution.
+IV. Experimental Setup
+A wind tunnel test using PLIF was performed on a representative LOFTID test article in the 31-inch Mach 10 Air
+Tunnel, which is part of the Langley Aerothermodynamics Laboratory at the NASA Langley Research Center. The
+experiments are described in detail by Rodrigues et al. [21], and a brief summary is included here.
+A picture of the test article mounted on the sting is shown in Fig. 8a, alongside a dimensioned drawing in Fig. 8b.
+Dimensions are provided in Table 2. The model features a 70-degree sphere cone as the representative heat shield
+--- Page 9 ---
+(a) RANS Mesh
+ (b) Coarse DDES Mesh
+(c) Coarse DDES Mesh with Shoulder Refinement
+ (d) Fine DDES Mesh
+Fig. 7 Meshes examined in the present work. The conditions match the𝑹𝒆 𝑫 = 8.9 × 105case. The mesh is
+colored by the maximum edge length of a cell, nondimensionalized by the maximum diameter.
+9
+--- Page 10 ---
+(a) Photo of the LOFTID model and sting
+ (b) Dimensioned drawing
+Fig. 8 The LOFTID model used for experiments
+was tuned to excite nitric oxide (NO) molecules seeded into the wake through the holes in the aft section. The UV
+fluorescence was imaged using an intensified camera. By recording two successive images approximately500 nsapart,
+the velocity can be determined based on the displacement of the fluorescence induced by the laser lines and the known
+time interval. Example snapshots of the fluorescence intensity are shown in Fig. 4. The parallel lines generated by the
+laser extended to about 120 mm, or approximately one diameter, downstream of the vehicle. About 120 single-shot
+images were used to calculate the time-averaged and RMS velocity.
+Rodrigues et al. [21] reported the measurement error based on several experimental sources of error, including the
+uncertainties in the measured displacement of the laser lines, timing, and magnification. For comparison with CFD
+in the present work, the reported measurement uncertainty was combined with a heuristic uncertainty based on the
+observed asymmetry in the velocity measurements. This additional uncertainty was constructed such that both the
+reported mean velocity and the velocity mirrored across the𝑦 = 0 plane both lie within the uncertainty bands. The
+spatially-varying error bounds were defined as a function of the transverse direction𝑦 as follows:
+𝑢𝑙𝑜𝑤 (𝑥, 𝑦) = 1/2(⟨𝑢(𝑥, 𝑦)⟩ + ⟨ 𝑢(𝑥, −𝑦)⟩) −
+√︃
+𝜐2𝑚(𝑥, 𝑦) + 𝜐2𝑎 (𝑥, 𝑦) (1)
+𝑢ℎ𝑖𝑔ℎ (𝑥, 𝑦) = 1/2(⟨𝑢(𝑥, 𝑦)⟩ + ⟨ 𝑢(𝑥, −𝑦)⟩) +
+√︃
+𝜐2𝑚(𝑥, 𝑦) + 𝜐2𝑎 (𝑥, 𝑦) (2)
+where 𝑢𝑙𝑜𝑤 and 𝑢ℎ𝑖𝑔ℎ are the estimated error bounds on the mean axial velocity,¯𝑢(𝑟) is the measured velocity at the
+position (𝑥, 𝑦), 𝜐𝑚 is the reported measurement error, and𝜐𝑎 is defined as:
+𝜐𝑎 ≡ 1/2(⟨𝑢(𝑥, 𝑦)⟩ − ⟨ 𝑢(𝑥, −𝑦)⟩) (3)
+or one-half the difference between the velocity measurement and the mirrored velocity measurement. This additional
+uncertainty has little effect near the centerline but greatly increases the uncertainty at the wake edge, where lower nitric
+oxide seed gas leads to a lower signal-to-noise ratio.
+V. Results
+Comparisons between CFD and the experimental data are presented in the following sections: The relative
+performance of different turbulence models is presented in Section V.A. Next the sensitivity to Reynolds number is
+10
+--- Page 11 ---
+explored, both for the experimental data and the CFD solutions, in Section V.B. The sensitivity of the DDES results to
+mesh resolution are explored in Section V.C. Finally, a brief comparison is given between the results using FUN3D and
+HyperSolve to establish confidence in the repeatability of the present results. V.D.
+A. Comparison of RANS and DDES Approaches
+Previous research on supersonic wakes consistently shows that steady RANS models predict too strong a reverse
+velocity too close to the surface [15]. DDES is expected to perform much better at predicting the mean velocity, albeit
+with its own difficulties in predicting turbulence at the start of the shear layer [55–57]. This section compares wakeflow
+predictions between DDES and two steady RANS models: SA-neg and SST-Vm. Results for several other steady RANS
+models are shown in the Appendix.
+Contour plots of the mean axial velocity at the lower and higher Reynolds numbers are shown in Fig. 9 and 10,
+respectively. These contour plots show the predictions of SST-Vm and DDES, compared with the experimental data. In
+these plots, the zero velocity contour line is specifically marked to demonstrate the extent of the separated region. As
+described in Section IV, the origin (𝑥 = 0) is centered on the nose rather than the separation point; the representative
+payload extends to𝑥/𝐷 = 0.293, so the beginning of the contour plot at𝑥/𝐷 = 0.3 is just behind the payload.
+0.0
+0.2
+0.4y/D
+SST-Vm
+0.0
+DDES
+0.0 0.0
+0.4 0.6 0.8 1.0 1.2
+x/D
+0.0
+0.2
+0.4
+Experiment
+0.0
+0.0
+0.0
+0.4 0.6 0.8 1.0 1.2
+x/D
+Experiment
+0.0
+0.0 0.0
+0.1
+0.0
+0.1
+0.2
+0.3
+0.4
+u /u
+(a)
+0.0
+0.2
+0.4y/D
+SST-Vm
+0.0
+DDES
+0.0 0.0
+0.4 0.6 0.8 1.0 1.2
+x/D
+0.0
+0.2
+0.4
+Experiment
+0.0
+0.0
+0.0
+0.4 0.6 0.8 1.0 1.2
+x/D
+Experiment
+0.0
+0.0 0.0
+0.1
+0.0
+0.1
+0.2
+0.3
+0.4
+u /u
+ (b)
+Fig. 9 Comparison of the CFD and experimental mean velocity fields at the lowest Reynolds number,𝑹𝒆 𝑫 =
+2.5 × 105. The zero-velocity contour line is labeled.
+To better illustrate both the experimental uncertainty and the range of performances across several RANS models,
+velocity profiles are shown both along the centerline in Fig. 11 and along the transverse direction𝑦 at several x-locations
+in Figs 12 and 13. These plots include the experimental uncertainty as shaded regions in the plots. The transverse
+profiles at𝑥/𝐷 = 0.4 and 𝑥/𝐷 = 1.142 are near the edges of the visualization window (𝑥/𝐷 = 0.4 is about0.1𝐷
+downstream from the rear of the payload). The location𝑥/𝐷 = 0.85 is close to the strongest reverse velocity measured
+in the experiments.
+The steady RANS models, i.e., SA-neg, and SST-Vm, overestimate the magnitude of the maximum reverse velocity.
+The location of the local extrema in velocity is also too close to the test article; the experiments place the local minima
+somewhere in the range0.8 < 𝑥 /𝐷 < 0.95for both Reynolds numbers, while the RANS models place the local minima
+at 0.45 < 𝑥 /𝐷 < 0.8. The shear layer thickness is overpredicted, meaning that the gradient occurs over too
+--- Page 12 ---
+0.0
+0.2
+0.4y/D
+SST-Vm
+0.0
+DDES
+0.0
+0.0
+0.4 0.6 0.8 1.0 1.2
+x/D
+0.0
+0.2
+0.4
+Experiment
+0.0
+0.0
+0.0
+0.4 0.6 0.8 1.0 1.2
+x/D
+Experiment
+0.0
+0.0
+0.0
+0.1
+0.0
+0.1
+0.2
+0.3
+0.4
+u /u
+(a)
+0.0
+0.2
+0.4y/D
+SST-Vm
+0.0
+DDES
+0.0
+0.0
+0.4 0.6 0.8 1.0 1.2
+x/D
+0.0
+0.2
+0.4
+Experiment
+0.0
+0.0
+0.0
+0.4 0.6 0.8 1.0 1.2
+x/D
+Experiment
+0.0
+0.0
+0.0
+0.1
+0.0
+0.1
+0.2
+0.3
+0.4
+u /u
+ (b)
+Fig. 10 Comparison of the CFD and experimental mean velocity fields at the highest Reynolds number,
+𝑹𝒆 𝑫 = 8.9 × 105. The zero-velocity contour line is labeled.
+0.4 0.6 0.8 1.0 1.2 1.4
+x/D
+0.3
+0.2
+0.1
+0.0
+0.1
+0.2
+u /U
+Exp
+SA-neg
+SST-Vm
+DDES
+(a) 𝑹𝒆 𝑫 = 2.5 × 105
+0.4 0.6 0.8 1.0 1.2 1.4
+x/D
+0.3
+0.2
+0.1
+0.0
+0.1
+0.2
+u /U
+Exp
+SA-neg
+SST-Vm
+DDES (b) 𝑹𝒆 𝑫 = 8.9 × 105
+Fig. 11 The axial velocity along the centerline of the model, predicted using various turbulence models, for (a)
+the lower Reynolds number and (b) the higher Reynolds number cases.
+12
+--- Page 13 ---
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6y/D
+x/D = 0.400
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+x/D = 0.600
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+x/D = 0.850
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+x/D = 1.142
+Exp SA-neg SST-Vm DDES
+Fig. 12 Radial profiles at the lowest Reynolds number,𝑹𝒆 𝑫 = 2.5 × 105
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6y/D
+x/D = 0.400
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+x/D = 0.600
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+x/D = 0.850
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+x/D = 1.142
+Exp SA-neg SST-Vm DDES
+Fig. 13 Radial profiles at the highest Reynolds number,𝑹𝒆 𝑫 = 8.9 × 105
+13
+--- Page 14 ---
+as the Rotation-Curvature correction, do not completely address the model limitations.
+DDES better captures the magnitude of the peak reverse velocity, predicting it to within±0.05𝑈∞. DDES also
+predicts a similar near-zero velocity region immediately behind the test article, as seen in Fig. 12 and 13. However, the
+detached shear layer is much too thin and there is a noticeable elongation of the separated wake. The maximum reverse
+velocity occurs too far downstream, as well as the zero-velocity wake closure. This shift was also noticed in a previous
+study on a Mach 6 axisymmetric wake [58].
+B. Reynolds Number Trend
+One important part of CFD validation is ensuring that the correct physical trends are observed as the Reynolds
+number is varied. Practical applications will cover a wide range of Reynolds numbers, so for CFD to be predictive at
+flight conditions it capture these Reynolds number trends. The PLIF data provides useful insight into how a hypersonic
+wake changes as the Reynolds number increases. The experimental campaign only spanned a small range of Reynolds
+numbers, from 𝑅𝑒 𝐷 = 2.51 × 105 on the low end and𝑅𝑒 𝐷 = 8.93 × 105 at the high end. A more extensive testing
+campaign might reveal more about the changes in this flow between fully-laminar and fully-turbulent regimes. The
+measured velocity profiles both near the test article (e.g.,𝑥/𝐷 ≈ 0.4) and further downstream (e.g.𝑥/𝐷 > 1) are very
+similar across all Reynolds numbers. Nevertheless, there are several subtle trends seen in the experimental data as the
+Reynolds number increases. These trends can be seen in profiles of the time-averaged axial velocity, shown in Fig. 14
+and 15. The differences are most pronounced near𝑥/𝐷 = 0.6. Here, the lowest Reynolds number case has the strongest
+reverse velocity along the centerline. Additionally, the wake region where⟨𝑢⟩ < 0 grows larger as the Reynolds number
+increases. For any radial position, the velocity gradients are largest at the lowest Reynolds number. Qualitatively, the
+higher Reynolds number cases demonstrate a distinct inflection point between the centerline and the wake edge. This
+waviness may be the imprint of the geometry of the backshell; as can be seen in Fig. 8a, the test article has a cylindrical
+payload that protrudes into the wake. At all three Reynolds numbers, the peak reverse velocity has a similar magnitude
+and location𝑥/𝐷 ≈ 0.85, with a slight shift downstream with increasing Reynolds number. A wider range of Reynolds
+numbers may be necessary to clearly demonstrate the Reynolds-number dependence of the peak reverse velocity.
+0.2
+ 0.0 0.2 0.4
+u /U
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5y/D
+x/D=0.40
+0.2
+ 0.0 0.2 0.4
+u /U
+x/D=0.60
+0.2
+ 0.0 0.2 0.4
+u /U
+x/D=0.85
+0.2
+ 0.0 0.2 0.4
+u /U
+x/D=1.14
+ReD = 2.5 × 105 ReD = 5.0 × 105 ReD = 8.9 × 105
+Fig. 14 Radial profiles showing only the experimental measurements at different Reynolds numbers. The
+shaded regions represent the uncertainty in the experimental data.
+As depicted in Fig. 16, the DDES resu
+--- Page 15 ---
+0.4 0.6 0.8 1.0 1.2
+x/D
+0.16
+0.14
+0.12
+0.10
+0.08
+0.06
+0.04
+0.02
+0.00
+u /U
+ReD = 2.5 × 105
+ReD = 5.0 × 105
+ReD = 8.9 × 105
+Fig. 15 Centerline profile showing only the experimental measurements at different Reynolds number. The
+shaded regions represent the uncertainty in the experimental data.
+DDES is capturing the qualitative nature of the physics properly, even if there is an overprediction of the size of the
+recirculation region. They also demonstrate that the impact of uncertainty in the freestream conditions is relatively
+small. SmalldiscrepanciesinReynoldsnumberwouldnotchangethesolutionenoughtoexplainsomeofthedifferences
+between CFD and experiment.
+C. Mesh-Sensitivity of DDES
+A mesh refinement study with four different meshes demonstrates the impact of mesh resolution on the DDES
+solution. DDES is an inappropriate model when the mesh is too coarse to resolve the turbulent fluctuations in separated
+regions. Thecoarsestwakeresolutionwas Δ/𝐷 ≈ 1%,whichissimilartotheresolutionofthefinestmeshusedbySinha
+and Candler [19]. Two finer meshes were used, with spacing of 0.5% and 0.25% of the diameter. Additionally, the effect
+of refinement near separation was examined by applying a fine mesh spacing in a small region at the shoulder. This
+region is shown in Fig. 7c. The timesteps were smaller on the finer meshes to maintain a wake CFL of approximately
+Δ𝑡𝑢/Δ𝑥 ≈ 1, where𝑢 is the local velocity. More total timesteps were used for the finer meshes, to average over the same
+period of240𝐷/𝑈∞. Dueto the transitional character ofthis flow, theshear layer near theseparation point has relatively
+small length scales. The initial shear layer and the refinement around the separation point are shown in Fig. 18 for the
+coarse DDES mesh with shoulder refinement. The mesh with shoulder refinement has cells that are about eight times
+smaller in this region.
+The mean axial velocity is shown in Figures 19 and 20. The region closest to the test article appears to be most
+sensitive to the mesh resolution and is closer to the experimental data with finer grids. However, the location of the
+minimumvelocityissimilarforallmeshes. Theshearlayeristoothinonallmeshesanddoesnotthickenwithincreasing
+resolution. These trends match those observed by Sinha and Candler [19], who observed a thinner shear layer and
+Table 3 Description of the meshes used for the DDES solutions
+Grid Wake Δ/𝐷 Shoulder Δ/𝐷 Total Nodes Δ𝑡𝑢 ∞/𝐷
+Coarse 1% 1% 12.1 million 4.0 × 10−2
+Medium 0.5% 0.5% 44.5 million 2.0 × 10−2
+Fine 0.25% 0.25% 91.9 million 9.8 × 10−3
+Shoulder Refinement 1% 0.03% 106.1 million 4.0 × 10−2
+15
+--- Page 16 ---
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5y/D
+x/D = 0.400
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+x/D = 0.600
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+x/D = 0.850
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+x/D = 1.142
+Exp. Low ReD
+Exp. Mid ReD
+Exp. High ReD
+DDES Low ReD
+DDES Mid ReD
+DDES High ReD
+Fig. 16 Radial profiles showing the time-averaged axial velocity from the DDES at different Reynolds numbers.
+0.4 0.6 0.8 1.0 1.2 1.4
+x/D
+0.20
+0.15
+0.10
+0.05
+0.00
+0.05
+0.10
+0.15
+u /U
+Exp Low ReD
+Exp Mid ReD
+Exp High ReD
+DDES Low ReD
+DDES Mid ReD
+DDES High ReD
+Fig. 17 Radial profiles of the time-averaged axial velocity from the DDES at different Reynolds numbers.
+16
+--- Page 17 ---
+Fig. 18 A slice through the DDES mesh with refinement near the separation point. The contours show the
+component of vorticity that is normal to the slice.
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6y/D
+x/D = 0.400
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+x/D = 0.600
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+x/D = 0.850
+0.3
+ 0.0 0.3 0.6 0.9
+u /u  
+x/D = 1.142
+Exp
+DDES, coarse grid
+DDES, medium grid
+DDES, fine grid
+DDES, shoulder refinement
+Fig. 19 Radial profiles of the axial velocity at the highest Reynolds number,𝑹𝒆 𝑫 = 8.9 × 105, using DDES and
+a series of finer meshes.
+17
+--- Page 18 ---
+0.4 0.6 0.8 1.0 1.2 1.4
+x/D
+0.20
+0.15
+0.10
+0.05
+0.00
+0.05
+0.10
+0.15
+0.20
+u /U
+Exp
+DDES, coarse grid
+DDES, medium grid
+DDES, fine grid
+DDES, shoulder refinement
+Fig. 20 Centerline profile of the axial velocity at the highest Reynolds number,𝑹𝒆 𝑫 = 8.9 × 105, using DDES
+and a series of finer meshes.
+larger separated wake on finer meshes. Additionally, localized refinement at the shoulder does not have a large impact
+on solution accuracy. This mesh sensitivity study demonstrates that for unstructured tetrahedral meshes and mesh
+resolutions betweenΔ/𝐷 = 1% and Δ/𝐷 = 0.25%, a finer mesh does not remedy the modeling errors.
+The instantaneous PLIF images from the experiments shown in Fig. 4 show a relatively thin, nearly laminar shear
+layer close to the separation point. While there are a range of fluctuations further downstream that suggest turbulent
+flow, the region near the base appears to be near-laminar even at the highest Reynolds number tested. Capturing this
+transitional flow seems to be challenging for scale-resolving simulations. To illustrate the vortical structures in the
+unsteady solution, the isosurfaces of the Q-criterion are shown in Figs. 21 and 22 for the coarse and fine meshes,
+respectively. The Q-criterion can highlight vortex-dominated portions of the flow as opposed to shear-dominated
+portions, and is calculated as:
+𝑄 = 1/2(Ω𝑖 𝑗Ω𝑖 𝑗 − 𝑆𝑖 𝑗 𝑆𝑖 𝑗) (4)
+where 𝑆 is the rate-of-strain tensor andΩ is the rate-of-rotation tensor for the instantaneous velocity field. Three
+distinct regions appear in the isosurfaces of the Q-criterion: (1) the strong vorticity immediately following separation,
+(2) the vortices in the subsonic core of the wake, and (3) the outer portion of the shear layer, seen in Fig. 22a but not
+Fig. 22b, that envelopes the wake and only breaks down slowly into chaotic fluctuations. There is substantial vorticity
+near the separation point, but the shear layer does not immediately break down into Kelvin-Helmholtz instabilities.
+Instead, the resolved vortices appear further downstream and are mostly contained inside the recirculation region. Very
+few resolved fluctuations appear on the supersonic side of the shear layer. The sting also suppresses the formulation
+of turbulent eddies on the negative𝑧 side of the wake; there is a noticeable difference in the number of eddies in the
+positive 𝑧 and negative𝑧 directions.
+Inthewakeregion,themodelededdyviscosity 𝜇𝑡 isnegligible. ThiscanbeseeninFig.23a,wheretheeddy-viscosity
+ratio 𝜇𝑡 /𝜇 ≪ 1 for most of the wake. The small values of𝜇𝑡 indicate that the RANS model is contributing very little to
+the flow physics in the wake. However, the resolved kinetic energy is also very small over much of the wake. This is
+plotted in Fig. 23b for the highest Reynolds number case. This plot shows the ratio of resolved kinetic energy to the
+freestream kinetic energy,2𝑘/𝑈2
+∞ = ⟨𝑢′
+𝑖𝑢′
+𝑖⟩/𝑈2
+∞, where𝑢′
+𝑖 = 𝑢𝑖 − ⟨𝑢𝑖⟩. In the initial portion of the shear layer, only a
+small fraction of the total energy is 
+--- Page 19 ---
+(a) 𝑄𝐷 2/𝑈2∞ = 2
+ (b) 𝑄𝐷 2/𝑈2∞ = 10
+Fig.21 IsosurfacesoftheQ-criterionforthe 𝑹𝒆 𝑫 = 8.9 × 105caseusingthecoarsestDDESgrid. Theisosurfaces
+are colored by the vorticity in the axial direction.
+(a) 𝑄𝐷 2/𝑈2∞ = 2
+ (b) 𝑄𝐷 2/𝑈2∞ = 10
+Fig. 22 Isosurfaces of the Q-criterion for the𝑹𝒆 𝑫 = 8.9 × 105case using the fine DDES grid. The isosurfaces
+are colored by the vorticity in the axial direction.
+19
+--- Page 20 ---
+(a) Eddy-viscosity ratio
+ (b) Resolved turbulent kinetic energy
+Fig. 23 Plots of the (a) eddy viscosity ratio and (b) resolved turbulent kinetic energy in the flow along the𝑧 = 0
+plane at𝑹𝒆 𝑫 = 8.9 × 105.
+of velocity fluctuations. Further research should examine the impact of low-dissipation schemes, such as economical
+higher-order schemes [59] and kinetic-energy and entropy-preserving schemes [60, 61]. Nevertheless, multiple studies
+on the wake of a supersonic cylindrical base flow [56,57,62] have found that improved numerics do not always produce
+a better prediction of supersonic separated wake flows. Their studies used low-dissipation numerical schemes and fine
+gridstobetterresolvetheturbulentfluctuationsatthestartofthedetachedshearlayer,resultinginasmallerrecirculation
+region. However, thisincreasedresolutionalsoledtounderpredictionsofthevelocityinthewakecore, meaningthatthe
+reverse velocity was too large. These studies illustrate that numerical dissipation is only part of the overall error in CFD.
+D. Comparison Across Solvers
+The RANS cases were also used to examine how sensitive the solutions are to the differences in mesh adaptation
+and the numerics between solvers. As discussed in Section III, two compressible finite-volume codes were compared:
+FUN3D and HyperSolve. Both codes use therefinelibrary to perform the meshing, but the discretizations are different
+and the discretization errors drive the mesh adaption. Because mesh adaptation was conducted independently in each
+flow solver, there was no expectation that the two codes would yield the exact same solution. Only the highest Reynolds
+number was examined and only the SA-neg and DDES models were compared. A plot of the transverse velocity profiles
+using the two solvers is shown in Fig. 24. There are only small differences between the solvers. For the SA-neg results,
+FUN3D predicts a more diffuse edge to the wake, which may be due to differences in the convective scheme. FUN3D
+uses a first-order convection scheme for the turbulence equations while HyperSolve allows for second-order convection,
+which can better resolve the edge of the turbulent wake. For the DDES results, the differences are also small and can be
+attributed to statistical uncertainty in the time-averaging. These comparisons provide confidence that the current results
+are not specific to the code or the computational mesh.
+VI. Conclusions
+Laser-based velocimetry data from an experimental campaign was compared with CFD predictions for a Mach
+10 wake behind a simplified HIAD geometry. Neither RANS nor DDES accurately predicted the correct shear layer
+thickness nor the size of the separated wake region. As demonstrated in previous studies, the RANS models greatly
+overpredicted the magnitude of the reverse velocity in the separated wake. DDES performed much better in predicting
+the qualitative nature of the wake; the reverse velocity was predicted to within±5% of the freestream velocity. DDES
+also demonstrates the correct tre
+
+========== final_2_14_05 (final_2_14_05 copy.pdf) - 9 pages ==========
+
+--- Page 1 ---
+2ND  EUROPEAN CONFERENCE FOR AEROSPACE SCIENCES (EUCASS) 
+Copyright  2007 by ANSYS, Inc. Published by the EUCASS association with permission. 
+Simulation of External Hypersonic Problems Using 
+FLUENT 6.3 Density-Based Coupled Solver 
+ 
+ 
+K. A. Kurbatskii*, R. Kumar** and D. Mann*** 
+* ANSYS - Fluent Inc. 
+10 Cavendish Court, Lebanon, New Hampshire, USA 
+** ANSYS - Fluent India Pvt Ltd. 
+Plot No. 34/1, Pune Infotech Park, MIDC, Hinjewadi, Pune - 411057, India 
+*** Fluent Europe Ltd. 
+Sheffield Business Park, 6 Europa View, Sheffield S9 1XH, United Kingdom 
+ 
+ 
+Abstract 
+Effective and robust numerical approach to external  hypersonic problems using the general purpose 
+CFD code FLUENT, version 6.3 is presented. Density-based coupled solver with second-order upwind 
+discretization and AUSM+ flux splitting method is c hosen. Flows with strong thermo-chemical effects 
+are modeled using the laminar finite-rate chemistry  model, otherwise the ideal gas approximation is 
+applied. Both laminar and turbulent regimes are con sidered depending on the Reynolds number. SST 
+k-ω turbulence model is employed as a baseline model. N ear-wall region is resolved all the way to the 
+laminar sublayer. Several benchmark cases are consi dered, and favorable agreements with 
+experimental data are found. 
+1. Introduction 
+The accurate numerical prediction of external hyper sonic flows can be a valuable tool in the evaluatio n of designs of 
+atmospheric reentry systems, orbital transport ship s, missiles and other flight vehicles operating at hypersonic 
+speeds. The problem of hypersonic flows is complica ted by the presence of shock discontinuities that c an 
+significantly affect vehicle control systems. It is essential for the analysis to accurately capture the shock location and 
+to resolve the shock - boundary layer interaction. Simulation of external hypersonic aerodynamics beco mes even 
+more challenging at high hypersonic speeds when rea l-gas thermodynamic non-equilibrium processes becom e non-
+negligible and chemical dissociation of the gas has  to be taken into account. Hypersonic aerodynamics has been 
+studied computationally in recent years using speci alized numerical methods 1-3. This study presents an effective and 
+robust numerical approach to external hypersonic pr oblems using the general purpose CFD code FLUENT 4, version 
+6.3. Several benchmark cases including hypersonic f low over a sphere, hyperboloid flare, and a 3D hype rsonic 
+aerospike-protected missile are considered. Numeric al results for pressure and thermal loads are compa red with 
+experimental data, and favorable agreements are found. 
+2. Numerical method 
+Steady-state numerical simulations are carried out using the general purpose CFD code FLUENT, version 6.3. The 
+density-based coupled double-precision solver 4 is employed as a baseline solver. The governing eq uations for the 
+conservation of mass, momentum and energy are discr etized using a control-volume-based technique. The system o
+--- Page 2 ---
+SESSION 2.14.  HYPERSONICS AND BOUNDARY LAYER TRANSITION 
+ 2 
+and the vector H contains source terms such as body forces and ener gy sources. Here ρ, v, E, and p are the density, 
+velocity, total energy per unit mass, and pressure of the fluid, respectively, τ is the viscous stress tensor, and q is the 
+heat flux. Total energy E is related to the total enthalpy H as E = H – p / ρ  where H = h + | v|2/2 and h is sensible 
+enthalpy. The Navier-Stokes equations (1) become nu merically very stiff at low Mach number due to the disparity 
+between the fluid velocity and the acoustic speed o f sound. The numerical stiffness of the equations u nder these 
+conditions results in poor convergence rates. This difficulty is overcome by employing time-derivative  
+preconditioning 5, which modifies the time-derivative term in (1) by  pre-multiplying it with a preconditioning matrix. 
+This has the effect of re-scaling the acoustic spee d (eigenvalue) of the system of equations being sol ved in order to 
+alleviate the numerical stiffness encountered in lo w Mach numbers and incompressible flow. Face values  required 
+for computing the convection terms are interpolated  from the cell centers using the second-order upwin d scheme 6. 
+Gradients needed for constructing values of a scala r at the cell faces and for computing secondary dif fusion terms 
+and velocity derivatives are calculated using the G reen-Gauss node-based gradient evaluation 7. In this approach, 
+nodal values are constructed from the weighted aver age of the cell values surrounding the nodes, follo wing the 
+approach originally proposed by Holmes et al 8 and Rauch et al 9, and then gradients are computed at cell centers b y 
+applying a discretized form of the Green-Gauss theo rem. This scheme reconstructs exact values of a lin ear function 
+at a node from surrounding cell-centered values on arbitrary unstructured meshes by solving a constrai ned 
+minimization problem, preserving a second-order spa tial accuracy. The inviscid flux vector F appearing in (1) is 
+evaluated by Advection Upstream Splitting Method 10  (AUSM). FLUENT utilizes an all-speed AUSM+ scheme 11  
+based on the low Mach number preconditioning. The c oupled set of governing equations (1) is discretize d in time 
+using an implicit time-marching algorithm. In the i mplicit scheme, an Euler implicit discretization in  time is 
+combined with a Newton-type linearization of the fl uxes to produce a linearized system in delta form 12. The system 
+is solved using Incomplete Lower Upper factorizatio n (ILU) in conjunction with an algebraic multigrid (AMG) 
+method 4, 13 adapted for coupled sets of equations. Time marching proceeds until a steady-state solution is reached. 
+3. Test cases 
+3.1 Axisymmetric Mach 29 flow over a sphere  
+Steady-state numerical simulation of Mach 29 flow p ast a sphere with the diameter 60.96 mm is consider ed. The 
+main focus here is predicting flow conditions in th e stagnation region, thus only the front half on 
+--- Page 3 ---
+K. A. Kurbatskii, R. Kumar. SIMULATION OF EXTERNAL HYPERSONIC PROBLEMS USING FLUENT 6.3  
+ 3 
+ 
+(a)     (b)      (c) 
+Figure 1: Contours of (a) Mach number, (b) static pressure, and (c) static temperature in Mach 29 flow over a sphere  
+0
+10 
+20 
+30 
+40 
+50 
+60 
+70 
+80 
+90 
+100 
+0.00 0.02 0.04 0.06 0.08 0.10 0.12 0.14 0.16 
+r / R 
+T / T inf 
+numerical 
+Widhopf - Ref. [16] 
+Dellinger - Ref. [17] 
+ 
+0
+10 
+20 
+30 
+40 
+50 
+60 
+0.00 0.02 0.04 0.06 0.08 0.10 0.12 0.14 0.16 
+r / R 
+ρρρρ / ρρρρ inf 
+numerical 
+Widhopf - Ref. [16] 
+Dellinger - Ref. [17] 
+ 
+(a)        (b)  
+0.0001 
+0.001 
+0.01 
+0.1 
+1
+0.00 0.02 0.04 0.06 0.08 0.10 0.12 
+r / R 
+Mass fraction of species 
+O2 - numerical 
+O2 - Widhopf - Ref. [16] 
+O2 - Dellinger - Ref. [17] 
+O - numerical 
+O - Widhopf - Ref. [16] 
+O - Dellinger - Ref. [17] 
+N2 - numerical 
+N2 - Widhopf - Ref. [16] 
+N2 - Dellinger - Ref. [17] 
+ 
+(c)  
+Figure 2: Distributions of (a) normalized static temperature, (b) normalized density, and (c) mass fraction of O2, O 
+and N 2 along the stagnation streamline. Also shown are solutions of other researchers 16-17. 
+3.2 Axisymmetric Mach 9.85 flow over a hyperboloid flare 
+Axisymmetric hyperboloid flare in Mach 9.85 flow is  studied in this test. The flare geometry is derive d from the 
+windward center line of Hermes 1.0 space plane 18, 19  at 30 deg angle of attack with 20 deg deflected bo dy flap. 
+Block-structured 2D mesh of 34,100 quad cells was c reated in the GAMBIT pre-processor 15. Modeled geometry and 
+computational domain with the mesh is shown in Fig.  3. The mesh is refined at the wall for adequate re solution of 
+the laminar boundary layer. Freestream static press ure and temperature are 300 Pa and 514 K, respectiv ely. Flow is 
+considered to be laminar. Air is modeled as a react ing dissociated mixture of five species (N2, O2, O,  N, NO) in 
+thermal and chemical non-equilibrium. Each species of the mixture is assumed to be an ideal gas with t he molecular 
+viscosity µ and thermal conductivity k defined using the kinetic theory formulation 14, and specific heat Cp is modeled 
+using a polynomial fit . Specific heat, thermal conductivity and molecular viscosity of the mixture are computed as 
+--- Page 4 ---
+SESSION 2.14.  HYPERSONICS AND BOUNDARY LAYER TRANSITION 
+ 4 
+discussed in Sec. 3.1. The laminar finite-rate mode l 4 (also discussed in Sec. 3.1) is applied. Reaction system is 
+defined by first five dissociation equations in (3) . Ionization processes are assumed to be negligible  under current 
+operating conditions. Flare and flap wall are taken  to be iso-thermal with prescribed temperature of 3 00 K. Free-
+stream flow at the far-filed boundary is enforced b y the pressure far-field condition. The outflow boundary is treated 
+as a pressure outlet which uses specified static pr essure and extrapolates all other flow variables fr om the interior of 
+the domain if the flow is locally subsonic. In supe rsonic regions, all flow variables including static  pressure are 
+extrapolated from the interior. Fig. 4 shows contou rs of Mach number, static pressure and temperature around the 
+flare. Numerical distributions of pressure coeffici ent Cp, and Stanton number St , are compared with experimental 
+values 18 in Fig. 5. Numerical simulation accurately predict s the separation region (Fig. 6) and separation sho ck 
+associated with the flow around the compression cor ner. Dip in St  at around 0.09 m (Fig. 5b) reflects reduction in 
+heat transfer from the fluid into the wall in the s eparation region. There is favorable agreement betw een Cp and St  
+values predicted by FLUENT 6.3 and those of the test data 18. 
+ 
+ Outlet 
+Pressure 
+far-filed 
+111.4 mm  
+75 .02  mm  
+ 
+Figure 3: Hyperboloid flare geometry and computational mesh 
+ 
+(a)     (b)      (c)  
+Figure 4: Contours of (a) Mach number, (b) static pressure, and (c) static temperature in Mach 9.85 flow over a 
+hyperboloid flare 
+0.2 
+0.4 
+0.6 
+0.8 
+1.0 
+1.2 
+1.4 
+1.6 
+0 0.02 0.04 0.06 0.08 0.1 0.12 
+x, m 
+Cp
+Experiment 
+numerical 
+ 
+0.001 
+0.01 
+0.1 
+1
+0 0.02 0.04 0.06 0.08 0.1 0.12 
+x, m 
+St 
+Experiment 
+numerical 
+ 
+(a)        (b)  
+Figure 5:  (a) pressure coefficient, and (b) Stanton number distribution along the flare and flap walls 
+--- Page 5 ---
+K. A. Kurbatskii, R. Kumar. SIMULATION OF EXTERNAL HYPERSONIC PROBLEMS USING FLUENT 6.3  
+ 5 
+ 
+Figure 5:  Velocity vector field at the compression corner between the flare and flap showing recirculation zone 
+3.3 Three-dimensional Mach 6 hypersonic missiles with aerospike 
+Missile model considered in this study correspond t o the aerospiked missile geometries used in the exp erimental 
+tests 20 (Fig. 6). The model consists of a 101.6 mm long cyl indrical body with 101.6 mm diameter, and a 76.2 mm  
+diameter hemispherical dome offset form the body wi th a 6.35 mm cylindrical extension of the same diam eter. A 
+304.8 mm long aerospike tipped with 29.36 mm diamet er aerodisc is mounted on the missile dome. Freestr eam 
+conditions match those applied in Ref. 20: static pressure and temperature are 1951 Pa and 58.25 K, respectively, and 
+Mach number is 6.06. The freestream Reynolds number  at these conditions is 710 5 . 2×  per meter. The angle of 
+attack (AOA) in the numerical study is 0 and 10 deg. 
+ 
+101.6  
+304.8 
+9.525 
+76.2 DIA 
+29.36 
+6.35  
+101.6  
+ 
+Figure 6: Aerospike-missile geometry. All dimensions are in millimeters. 
+Air is modeled as a single-species ideal gas. For t he Mach number and operating conditions under consi deration, 
+real-gas thermodynamic non-equilibrium processes are not expected to have a strong effect on aerodynam ic heating, 
+and aerothermochemical model is not taken into account in the simulation. Kinetic theory formulation 14 is applied to 
+define air viscosity µ, thermal conductivity k and specific heat Cp. The SST k – ω turbulence model 21 is employed to 
+simulate turbulence effects. Pressure far-field bou ndary is used to prescribe free-stream Mach number and static 
+conditions at infinity. The outflow boundary is tre ated as a pressure outlet. A 3D unstructured hexahe dral 
+computational mesh is generated using the GAMBIT pr e-processor 15. It contains a structured boundary layer type 
+mesh around the aerospike and missile body fine eno ugh to resolve the viscosity-affected near-wall reg ion all the 
+way to the laminar sublayer to ensure y+ in the wall-adjacent cell is on the order of one. T he flow is assumed to be 
+symmetric about x – y  coordinate plane, and only one-half of the model is included in the computational domain. The 
+mesh is built for one-quarter of the model, and then copied to construct the mesh for half the model. The wake region 
+is not considered in the numerical model since the study concentrates on predicting forces and thermal loads exerted 
+on the missile dome. Fig. 7 shows close-up and full  views of the computational mesh around one-quarter  of the 
+model.  
+ 
+  
+Figure 7: Computational mesh of the aerospike-missile geometry 
+The numerical solution is initialized from the free -stream flowfield, and then the full multigrid (FMG) initialization 4 
+is utilized to obtain the initial solution. FMG initialization is based on the full-approximation storage (FAS) multigrid 
+technology 4, 22 . 
+--- Page 6 ---
+SESSION 2.14.  HYPERSONICS AND BOUNDARY LAYER TRANSITION 
+ 6 
+then the solution is interpolated to the next finer grid level, and the FAS cycle is repeated again from the current level 
+all the way down to the coarsest level. This proces s is continued until the finest grid level is reach ed. FMG 
+initialization is relatively inexpensive since most  of computational work is done on coarse levels, wh ich allows to 
+obtain a good initial solution that already recover s some flow physics. The solution is then iterated until the steady-
+state is reached. Fig. 8 shows contours of Mach num ber based on the local speed of sound at AOA = 0 de g with the 
+aerospike (Fig. 8a) and without it (Fig. 8b). There  is a well-resolved detached shock in front of the missile dome in 
+the spike-off configuration. A separation region ca used by the collar of the missile body is observed in Fig. 8b. The 
+aerospike moves the bow shock away from the missile  dome, which is fully enclosed in the spike-induced  subsonic 
+separation region (Fig. 8a). These observations are consistent with those reported experimentally 20 . Contours of static 
+temperature for spike-on and spike-off configurations are displayed in Fig. 8c-d. It shows lower temperatures around 
+the missile dome protected by the spike which resul ts in lower heat load on the dome. Fig. 9a compares  pressure on 
+the missile dome normalized by the freestream stati c pressure for the two configurations with and with out the 
+aerospike, plotted versus the arc length measured along the dome surface starting from its foremost point. The flow is 
+effectively axisymmetric at AOA = 0 deg, and only a single line distribution is shown. Aerospike reduces the surface 
+pressure by about a factor of 3 at the base of the dome, and by as much as a factor of 15 at the spike  root. 
+Experimental values are also shown in Fig. 9a. Ther e is a favorable agreement between numerical result s and test 
+data 20 . Ref. 20 does not provide heat transfer data, and instead presents surface temperature-rise data, whi ch proves 
+to be problematic to convert to appropriate thermal  boundary conditions for the numerical simulation. Thus, 
+adiabatic boundary conditions for aerospike and mis sile surfaces are chosen in the simulation, and onl y numerical 
+values of surface temperatures are reported. Fig. 9 b compares missile dome surface temperature normali zed by 
+freestream static temperature for spike-on vs. spik e-off configurations, plotted along the same line a s the pressure 
+distribution. Aerospike decreases the dome surface temperature by about 10%. Fig. 10 shows contours of local Mach 
+number and static temperature around the missile wi th and without the spike at AOA = 10 deg. The benef it of the 
+areospike is limited only to the leeward side of th e missile dome, which is enveloped in the spike sep aration region 
+behind the separation shock. Fig. 11 and 12 quantify the aerospike effect by plotting normalized surface pressure and 
+tem
+--- Page 7 ---
+K. A. Kurbatskii, R. Kumar. SIMULATION OF EXTERNAL HYPERSONIC PROBLEMS USING FLUENT 6.3  
+ 7 
+ 
+  
+   
+    
+  
+(a)                                 (b)   (c)            (d)  
+Figure 10: Contours of (a-b) local Mach number, and  (c-d) static temperature around the missile at AOA  = 10 deg. 
+(a, c) configuration with aerospike/aerodisc, and (b, d) missile without the spike protection. 
+ 
+0
+10 
+20 
+30 
+40 
+50 
+60 
+70 
+80 
+0.0 0.5 1.0 1.5 2.0 2.5 
+s, in 
+ps / p inf 
+Spike off - experiment 
+Spike off - computation 
+Spike on - experiment 
+Spike on - computation 
+ 
+s 
+ 
+0
+10 
+20 
+30 
+40 
+50 
+60 
+70 
+80 
+0.0 0.5 1.0 1.5 2.0 2.5 
+s, in 
+ps / p inf 
+Spike off - experiment 
+Spike off - computation 
+Spike on - experiment 
+Spike on - computation 
+ 
+    (a)                      (b) 
+Figure 11: Pressure distribution at AOA = 10 deg along (a) leeward, and (b) windward side of the missile dome with 
+and without aerospike protection  
+ 
+7.0 
+7.2 
+7.4 
+7.6 
+7.8 
+8.0 
+8.2 
+8.4 
+0.0 0.5 1.0 1.5 2.0 2.5 
+s, in 
+Ts / T inf 
+Spike off - computation 
+Spike on - computation 
+ 
+s 
+ 
+7.0 
+7.2 
+7.4 
+7.6 
+7.8 
+8.0 
+8.2 
+8.4 
+0.0 0.5 1.0 1.5 2.0 2.5 s, in 
+Ts / T inf 
+Spike off - computation 
+Spike on - computation 
+ 
+    (a)                      (b) 
+Figure 12: Temperature distribution at AOA = 10 deg along (a) leeward, and (b) windward side of the missile dome 
+with and without aerospike protection 
+ 
+ 
+Windward side: 
+1 – separation shock 
+2 – impingement point 
+1 2 
+ 
+Figure 13: Enlarged view of the local Mach number contour map around the missile with aerospike at AOA = 10 deg 
+showing the separation shock and its impingement point on the dome at the windward side. 
+--- Page 8 ---
+SESSION 2.14.  HYPERSONICS AND BOUNDARY LAYER TRANSITION 
+ 8 
+4. Conclusion  
+The problem of external hypersonic flows is studied computationally using the density-based coupled solver (DBCS) 
+implemented in the general purpose CFD code FLUENT,  version 6.3. Results of numerical tests show that DBCS 
+proves to be a robust and efficient method that can adequately resolve the physics and capture all essential features of 
+the flowfield including shock – shock and shock – b oundary layer interactions. Thermochemical dissociation effects 
+are accounted for by the laminar finite-rate formulation for reaction modeling. Observations of numerical simulations 
+are in line with those reported in prior experimental works.  
+5. Acknowledgements  
+The authors thank Laith Zori of ANSYS - Fluent Inc. and Patxi Gil Ramírez of ANSYS - Fluent France for providing 
+initial case set-up and guidance for the hypersonic sphere problem. 
+References 
+[1]  Murphy, T. K. S., (editor). Computational methods in hypersonic aerodynamics. Spirnger, first edition, 2007.  
+[2]  Anderson, J. D. Hypersonic and high temperature gas  dynamics. American Institute of Aeronautics and 
+Astronautics, second edition, 2002. 
+[3]  Ivanov, M.S., and Gimelshein, S.F. Computational hypersonic rarefied flows. Annual review of fluid mechanics , 
+30: 469-505, 1998. 
+[4]  FLUENT 6.3 User’s Guide, Fluent Inc., Lebanon, NH 03766, USA. 
+[5]  Weiss, J. M., and Smith, W. A. Preconditioning appl ied to variable and constant density flows. AIAA Journal , 
+33(11):2050-2057, 1995. 
+[6]  Barth, T. J., and D. Jespersen, D. The design and a pplication of upwind schemes on unstructured meshes . 
+Technical Report AIAA-89-0366 , AIAA 27th Aerospace Sciences Meeting, Reno, Nevada, 1989. 
+[7]  Kim, S.-E., Makarov, B., and Caraeni, D. A multi-di mensional linear reconstruction scheme for arbitrar y 
+unstructured grids. AIAA Paper 2003-3990 . 
+[8]  Holmes, D. G., and Connell, S. D. Solution of the 2 D Navier-Stokes equations on unstructured adaptive grids. 
+AIAA Paper 89-1392 . 
+[9]  Rauch, R. D., Batira, J. T., and Yang, N. T. Y. Spatial adaption procedures on unstructured meshes for accurate 
+unsteady aerodynamic flow computations. AIAA Paper 91-1106 . 
+[10]  Liou, M. S., and Steffen, C. J., Jr. A new flux spl itting scheme. Journal of Computational Physics , 107(1):23-
+39, 1993. 
+[11]  Liou, M. S. A sequel to AUSM: AUSM+. Journal of Computational Physics , 129:364-382, 1996. 
+[12]  Weiss, J. M., Maruszewski, J. P., and W. A. Smith. Implicit solution of the Navier-Stokes equations on  
+unstructured meshes. Technical Report AIAA-97-2103 , 13th AIAA CFD Conference, Snowmass, CO, 1997. 
+[13]  Hutchinson, B. R., and Raithby, G. D. A multigrid method based on the additive correction strategy. Numerical 
+Heat Transfer , 9:511-537, 1986. 
+[14]  Hirschfelder, J. O., Curtiss, C. F., and Bird, R. B . Molecular theory of gases and liquids. John Wiley  & Sons, 
+New York, 1954. 
+[15]  Gambit 2.3 User’s Guide, Fluent Inc., Leban
+--- Page 9 ---
+This page has been purposedly left blank
+• normal-paper
+• eucass2007
+• FLIGHT-PHYSICS
+• Hypersonics and Boundary Layer Transition
+• Simulation of external hypersonic problems using FLUENT 6.3 density-
+based coupled solver
+• K.A. Kurbatskii Ansys-Fluent Inc USA, R. Kumar Ansys-Fluent IN, D.
+Mann Ansys-Fluent Europe UK
+
+========== NASA report (20150019644.pdf) - 1 pages ==========
+
+--- Page 1 ---
+EFT-1 Heatshield Aerothermal Environment Reconstruction
+A. Brandon Oliver,∗ and Adam J. Amar,∗
+NASA Lyndon B. Johnson Space Center
+2101 NASA Parkway, Houston, TX, 77058
+Justin Droba†
+HX5
+2101 NASA Parkway, Houston, TX, 77058
+Victor Lessard‡
+NASA Langley
+Milad Mahzari§
+NASA Ames
+The EFT-1 Avcoat heatshield was instrumented with 34 plugs containing multiple thermocouples in-depth
+with an objective being to measure the ﬂight aerothermal environment. This paper presents a discussion of the
+instrumentation and the techniques used to reconstruct the heating environment from the measured in-depth
+temperatures. The inverse heat transfer problem algorithms, models and assumptions will be outlined, and
+available results will be presented.
+I. Introduction
+References
+∗Applied Aeroscience and CFD Branch, Member AIAA.
+†Applied Aeroscience and CFD Branch, Member AIAA.
+‡Langley, Member AIAA.
+§Ames, Member AIAA.
+1 of 1
+American Institute of Aeronautics and Astronautics

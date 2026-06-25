@@ -1059,9 +1059,19 @@ fix             in emit/face air xlo
             except:
                 pass
         else:
-            # Fresh start: Use a 279x279 grid to break exact grid-to-CAD vertex alignment (prevents zero-volume cut cells)
+            # Fresh start: Use a moderate grid — 279x279 causes zero-volume collision cells with high particle counts
+            # =========================================================================
+            # SPARTA PARTICLE INITIALIZATION:
+            #   "global nrho {n_rho} fnum {fnum} weight cell radius"
+            #   - nrho:  freestream number density [molecules/m³]
+            #   - fnum:   real molecules per simulated particle [molecules/particle]
+            #   - weight cell radius: each cell's particle count ∝ cell volume × nrho / fnum
+            #   - n_simulated ≈ (nrho × V_domain) / fnum (before AMR refinement)
+            #   - With fnum=1.5e20: ~1M+ particles (visible shockwave)
+            #   - AMR DISABLED to prevent zero-volume cell crash at high particle counts
+            # =========================================================================
             init_block = f"""create_box      {xmin-0.001:.3f} {xmax+0.001:.3f} 0.000 {ymax+0.001:.3f} -0.5 0.5
-create_grid     279 279 1
+create_grid     139 139 1
 region          exclude_craft block -0.5 3.5 -0.1 2.6 -0.5 0.5 side out
 group           free_stream grid region exclude_craft all
 balance_grid    rcb cell
@@ -1138,8 +1148,8 @@ stats_style     step cpu np c_drag c_lift c_heat c_temp_avg[1] c_temp_avg[2] c_t
 dump            1 surf all {stats_interval} results_reference/surf.*.out id f_1[*] f_surfavg[*]
 dump            2 grid all {stats_interval} results_reference/grid.*.out id xlo ylo xhi yhi f_2[*] f_3[*] f_4[*]
 
-# Adaptive Mesh Refinement
-fix             adapt_grid adapt {stats_interval} all refine coarsen particle 100 20 maxlevel 1
+# Adaptive Mesh Refinement — DISABLED to prevent zero-volume cell crash at high particle counts
+# fix             adapt_grid adapt {stats_interval} all refine coarsen particle 100 20 maxlevel 1
 fix             balance_grid balance {stats_interval} 1.1 rcb part
 
 # Periodic state saving (for resume)
@@ -3251,6 +3261,13 @@ run             {steps}
         baseline_doc = self.get_irve_baseline_results_static()
         
         # Setup optimization parameters for the baseline mission
+        # =========================================================================
+        # DSMC PARTICLE SCALING:
+        #   n_sim = (nrho × V_domain) / fnum
+        #   fnum = real molecules per simulated particle
+        #   Lower fnum → more particles → better shockwave resolution → more RAM
+        #   fnum=1.5e20 → ~2M particles (recommended minimum for visible shockwave)
+        # =========================================================================
         opt_params = {
             'solver': solver,
             'sparta_gpu': sparta_gpu,
@@ -3268,11 +3285,8 @@ run             {steps}
             'default_payload': False,
             'env_duration': 60.0,
             'env_run': 1500, # 1.5x flow-through time for DSMC steady-state convergence (compromise for speed)
-            # --- fnum tuning (2026-05-31 calibration) ---
-            # Lowered from 1.5e20 to 2.5e20 (moderate compromise to keep particles ~1M)
-            # Prior value of 5e19 produced ~4.8M particles and took 2 hours to run.
-            'env_fnum': '2.5e20',
-            'env_cores': os.cpu_count() or 4,
+            'env_fnum': '1.5e20',  # ~2M particles — lower = more particles, better shock visibility
+            'env_cores': os.cpu_count() or 4,  # Use all available CPU threads
             'env_xmin': -5.0,
             'env_xmax': 9.0
         }

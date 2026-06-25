@@ -23,32 +23,32 @@ This document establishes the official flight test baseline for the **Inflatable
 | **Mass** | 281.0 kg | Nominal flight mass |
 
 ## 3. Flight Performance Parameters (Peak Results)
-The following values are derived from the post-flight reconstruction (NASA/TP-2013-4012 / AIAA 2013-1386) and high-fidelity modeling by Rapisarda (2023).
+The following values combine **actual flight data** from the post-flight reconstruction (NASA/TP-2013-4012 / AIAA 2013-1386) with **MDAO model predictions** from Rapisarda (2023). Where flight and model values differ, both are listed.
 
-| Metric | Result | Note |
-| :--- | :--- | :--- |
-| **Entry Velocity** | Mach 10.0 | ~2,700 m/s |
-| **Peak Heat Flux ($\dot{q}$)** | 14.36 W/cm² | Rapisarda Table 4.10 |
-| **Total Heat Load ($Q_{max}$)** | 195.06 J/cm² | Rapisarda Table 4.10 |
-| **Peak Deceleration** | 20.2 g | Total aerodynamic load |
-| **Peak Dynamic Pressure ($q$)** | 6.2 kPa | ~0.9 psia |
-| **Stagnation Pressure** | ~12.4 kPa | Estimated ($2 \times q$) |
-| **Ambient Pressure (50km)** | 75.77 Pa | Rapisarda Table 4.5 |
-| **Ambient Temp (50km)** | 270.65 K | Rapisarda Table 4.5 |
-| **Ballistic Coefficient ($\beta$)** | 26.9 kg/m² | NASA/TP-2013-4012 |
-| **Altitude of Peak Heating** | ~52 km | Atmospheric interface layer |
-| **Time of Peak Heating** | 677.49 s | Rapisarda Table 4.10 |
+| Metric | Flight Data | MDAO Model | Source |
+| :--- | :--- | :--- | :--- |
+| **Entry Velocity** | Mach 10.0 | — | ~2,700 m/s |
+| **Peak Heat Flux ($\dot{q}$)** | **13.8 W/cm²** | 14.36 W/cm² | Flight: NASA/TP-2013-4012; Model: Rapisarda Table 4.10 |
+| **Total Heat Load ($Q_{max}$)** | **188 J/cm²** | 195.06 J/cm² | Flight: NASA/TP-2013-4012; Model: Rapisarda Table 4.10 |
+| **Peak Deceleration** | **19.7 g** | 20.2 g | Flight: NASA/TP-2013-4012; Model: Rapisarda estimate |
+| **Peak Dynamic Pressure ($q$)** | 6.2 kPa | — | ~0.9 psia |
+| **Stagnation Pressure** | ~12.4 kPa | — | Estimated ($2 \times q$) |
+| **Ambient Pressure (50km)** | 75.77 Pa | — | Rapisarda Table 4.5 |
+| **Ambient Temp (50km)** | 270.65 K | — | Rapisarda Table 4.5 |
+| **Ballistic Coefficient ($\beta$)** | 26.9 kg/m² | — | Source not verified in available PDFs |
+| **Altitude of Peak Heating** | ~52 km | — | Atmospheric interface layer |
+| **Time of Peak Heating** | 677.49 s | — | Rapisarda Table 4.10 |
 
 ## 4. Optimization Reference Points (Validation Check)
-Use these values to calibrate the **Survivability Optimization (SBO)** targets in StellarOrion.
+Use these values to calibrate the **Survivability Optimization (SBO)** targets in StellarOrion. Note: some targets use Rapisarda MDAO predictions (slightly higher than flight) for conservative design margins.
 
-| Metric | IRVE-3 Baseline | Note |
-| :--- | :--- | :--- |
-| **Target $\beta$** | 26.9 kg/m² | Validates Mass/Drag ratio |
-| **Target $\dot{q}_{max}$** | 14.36 W/cm² | Validates Aerothermal Model |
-| **Target $g_{max}$** | 20.2 g | Validates Structural Load |
-| **Target $q_{max}$** | 6.2 kPa | Validates Dynamic Pressure |
-| **Reference $C_D$** | ~1.47 | Validates Forebody Drag |
+| Metric | IRVE-3 Baseline | Source | Note |
+| :--- | :--- | :--- | :--- |
+| **Target $\beta$** | 26.9 kg/m² | Unverified | Validates Mass/Drag ratio |
+| **Target $\dot{q}_{max}$** | 14.36 W/cm² | Rapisarda Table 4.10 (MDAO) | Conservative vs flight 13.8 W/cm² |
+| **Target $g_{max}$** | 20.2 g | Rapisarda estimate (MDAO) | Conservative vs flight 19.7 g |
+| **Target $q_{max}$** | 6.2 kPa | Flight reconstruction | Validates Dynamic Pressure |
+| **Reference $C_D$** | ~1.47 | Code reference | Validates Forebody Drag |
 
 ## 5. Key Findings & Validation Metrics
 *   **FTPS Performance**: The flexible TPS survived the peak heat flux without structural failure.

@@ -1,0 +1,258 @@
+Slide 01
+StellarOrion Hypersonic Edition: Week 5
+
+Headless Flow Visualization & Telemetry Parity Validation
+Slide 02
+SPARTA DSMC Technical Analysis
+
+e Architecture Overview Results & Next Steps
+Slide 03
+ecture Overview: Layered Design
+
+The StellarOrion suite utilizes a hybrid 3-layer architecture:
+Slide 04
+Full Execution Stack: main.py to Results
+
+(__ Each LAS Weration’ meties ready
+Slide 05
+The Kinetic Model: Direct Simulat'
+
+n Monte Carlo (DSMC)
+Slide 06
+DSMC Parameter De Understanding Kn, \, and n
+
+e Dutap (Characteristic Dimension): The reference length (diameter) of the
+Slide 07
+ARTA DSMC: Technical Analysi
+
+Governing Equation — the Boltzmann Transport Equation:
+Slide 08
+Discretization: Surface vs. Volume Gr
+
+e 1. Surface Discretization (Geometry Engine v8):
+Slide 09
+Freestream & Aero
+
+_ Mair * 0.25
+Slide 10
+SPARTA Internal Timestep Loop
+
+20 Rein |
+Slide 11
+SPARTA Internals: DSMC Timestep Loop
+
+e Source: sparta/src/update.cpp (Method: Update: : run)
+Slide 12
+Freestream
+
+Simulation
+Slide 13
+1b. The Sink: Where does the gas go?
+
+No, mass is strictly conserved. Particles leave via
+Slide 14
+Etymology:
+
+From Latin advectus, meaning “to carry to.”
+Slide 15
+3. Migrate
+
+ymology:
+Slide 16
+RAM (Unsorted):
+
+Sort by Cell 1D
+Slide 17
+ymology:
+From Latin com- (together) and /aedere (to strike).
+“To strike together.”
+Slide 18
+ReactT CE::attempt()
+
+The Total Collision Energy (TCE) model is nthe
+Slide 19
+b,0) circle (1.5); at (0, 0.8) Hard Sphere (w = 0.5); [thick, NavyBlue, ->] (0,-1) — (0,1)
+node[midway, right] ovss;
+
+Slide 20
+ARTA Data A
+
+Parti
+Slide 21
+bthick, NavyBlue] (0,0) rectangle (4,4); [font=] at (2, 3.7) Grid Memory
+
+[BrickRed] (1,1) circle (2pt) node[below] Py; [BrickRed] (3,1) circle (2pt) node[below] P3; [BrickRed] (2,3) circle (2pt) node[below] P3;
+Slide 22
+Var. | Name Physical Meaning / Definition
+n | Number Density | Count of particles per unit volume (1/m?).
+p Mass Density Total mass of particles per unit volume (kg/m?)
+Slide 23
+bball color=BrickRed] (0,0) circle (0.3); [ball color=BrickRed] (1.2,0) circle (0.3);
+[ultra thick] (0.3,0) — (0.9,0);
+[->, ultra thick, NavyBlue] (0.5,-0.1) — (2.0, 1.0) node[midway, sloped, above, font=}
+Slide 24
+22
+Slide 25
+SPARTA Internals: Particle Initialization
+
+e Source: sparta/src/create_particles.cpp
+Slide 26
+Role of the Computational Grid in DSMC
+
+Why does a purely particle-based method require a grid?
+Slide 27
+bstep=2cm, gray, very thin, dashed] (0,0) grid (4,4); [gray, font=] at (1,3.8) Cell (0,1); [gray,
+font=] at (3,3.8) Cell (1,1); [gray, font=] at (1,1.8) Cell (0,0); [gray, font=] at (3,1.8) Cell (1,0);
+
+Slide 28
+bbtep=2cm, gray, very thin, dashed] (0,0) grid (4,2); [gray, font=] at (1,1.8) Large Cell
+(Ax >A);
+
+Slide 29
+Gradient (~ A);
+
+[blue!80] (0.5, 1) circle (3pt) nodefanchor=south] ¢; [blue!80, opacity=0.5] (3.5, 1) circle (3pt)
+Slide 30
+24
+Slide 31
+SPARTA API Subroutines (Stellar0rionEngineMach5Up. py)
+
+Subroutine Role
+Slide 32
+b®) rectangle (3,2.5); at (1.5, 2.0) Docker Daemon; [thick] (0.5, 0.5) rectangle (2.5, 1.5); at
+
+(1.5, 1.0) SPARTA Image; [font=, srickRea] at (1.5, 0.2) Kokkos + MPI + CUDA; [->, ultra thick, PineGreen} (-0.5,
+Slide 33
+bB) at (0,0) Atmos DB; [->, thick] (DB.east) - (1.5, 0.5) nodefright, font=) species: [>,
+
+thick] (DB.east) ~ (1.5, 0.0) nodefright, font=] .vss; [->, thick] (DB.east) — (1.5, -0.5) nodefright, font=] .tee;
+Slide 34
+24
+Slide 35
+b®) rectangle (1.8,2.2); [font=, atign=tere} at (0.9, 1.1) # 10 Mass Rot Vib
+na 4.66-26 22
+02 §.38-26 2 2
+Slide 36
+0 2.6E-26 00;
+
+24
+Slide 37
+Format: Tabular metrics for degrees of freedom.
+
+age
+Slide 38
+Atmosphere Inventory Presets
+
+Preset Mixture Logic Inventory
+Slide 39
+bQD) rectangle (2.5,3); [font=, NavyBlue] at (1.25, 2.7) airsurf_react; [font=, align=left] at (1.25, 1.5) surf_react catalytic
+model global
+react 0 +0 -> 02
+Slide 40
+bQ) rectangle (2,2.5); [font=, NavyBlue] at (1, 2.3) surf.1100.out; [font=, align=left] at (1, 1.2) Row 1: 0.125
+Row 2: 0.842
+Row 3: 1.105
+Slide 41
+on the way to TIx;
+
+26
+Slide 42
+Broken slide and program,
+on the way to fix
+
+Slide 43
+Broken slide and program,
+on the way to fix
+
+Slide 44
+Complex Kinetics: Surface Catalysis & Plasma Black
+
+Boundary Reactions & Signal Blackout:
+Slide 45
+Broken slide and program,
+on the way to fix
+
+Slide 46
+LHS Population Strategy: Data Observation
+
+© Objective: Train a stable Metamodel (MoP) using Latin Hypercube Sampling.
+Slide 47
+Geometry Engine v8
+
+Figure 5: IRVE-3 Cross-section Validation
+Slide 48
+Geometry Engine: Mathematical Implementation
+
+Core Equations (Rapisarda 2023)
+Slide 49
+Geometry Engine: IRVE-3 + Centerbody Payload (MDAO-Corrected)
+
+Figure 6: 2D Cross-Section:
+Slide 50
+lelity MDAO Diagnostic
+
+Analytical HAD Sice (MORO Parametization)
+Slide 51
+Expected Flow-Field Schematic (Val enchmark)
+
+Key Calibration Points:
+Slide 52
+Material Description: F-TPS & Structural Components
+
+F-TPS Layer Properties (Table B.17)
+Slide 53
+Structural Properties: Safety Factors & Margins
+
+Safety Factors & Margins (Table 5.5) Structural Materials (Table 5.5)
+Slide 54
+¢ Objective: Automate the verification of physically consistent flow fields across the flight envelope.
+
+# Key Enhancements:
+Slide 55
+SPARTA Adaptive Mesh Grid
+
+Figure 9: SPARTA Cartesian Grid with Refined IRVE-3
+Slide 56
+Results: Thermal Map (Mach
+
+‘Thermal Map (Temperature)
+Slide 57
+Results: Mach Number Distr
+
+Figure 11:
+Slide 58
+Results: Pressure and Velocity Fields
+
+Figure 12: Pressure Distribution (Stagnation Figure 13: Velocity Vectors (Shock
+Slide 59
+Results: Local Knudsen Number (Rarefaction)
+
+Rarefaction Map (Knudsen)
+Slide 60
+Conclusion & Next Steps
+
+Architecture and Physics foundations are fully validated.
+Slide 61
+Bonus: Development Toolkit & GUI
+
+Screenshots of the integrated StellarOrion design interface.
+Slide 62
+Figure 15: StellarOrion GUI: Mission Briefing, Physics
+Setup, and Grid Study.
+
+Slide 63
+Week 6 Roadmap: System Scaling and Orbital Reentry
+
+Week 6 Next Steps:
+Slide 64
+Week
+
+Calibration Progress: Week 3 v:
+Slide 65
+Calibration Insights: Drag and Thermal Analysis
+
+Drag Breakthrough: Cp error reduced from 12.9% to 1.5%, validating the F0.7 grid setting and verifying physical flow capture.
+Slide 66
+Neural
+
+Refinement: PINN Architecture & Sampling Upgrades

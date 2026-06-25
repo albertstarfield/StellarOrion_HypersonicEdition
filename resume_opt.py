@@ -11,7 +11,7 @@ opt_params = {
     'env_mach': '5.0',
     'env_alt': '40.0',
     'env_run': '500',
-    'env_fnum': '2.5e20',
+    'env_fnum': '1.5e20',
     'sparta_gpu': False,
     'default_payload': False,
     'payload_file': 'CADDesign/HIAD_custom_full.step',

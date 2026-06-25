@@ -1,0 +1,354 @@
+
+=== PAGE 69 ===
+3. Methodology
+Once the boundary cases are identified, for the rarefied and continuum regimes respectively, the
+expression requires careful identification of the parametersa1 and a2. These, in fact, should be
+analytically fit to the high-fidelity data available in the transitional flow specifically for the class
+of stacked-toroid vehicles. The DSMC data obtained and discussed in [56] is employed in the
+next chapter to identify such parameters. For this purpose, the non-linear least square-method
+is employed as a regression model to calculate the coefficients that are most suited to a given
+set of input dataxDSMC and yDSMC. The nonlinear function lsqcurvefit in MATLAB solves the
+problem in Equation 3.70 to find coefficientsa1, a2 with the matricesCx((a1, a2), xDSMC ) being
+of the same size asyDSMC for an initial estimate ofa1 and a2.
+minx||Cx((a1, a2), xDSMC ) − yDSMC ||2
+2 = minx ∑
+i
+(Cx((a1, a2), xDSMC i − yDSMC i )2 (3.70)
+3.5.5. Shading Algorithm
+Determining elemental flow exposure, often known as shading, is a typical issue with discrete
+element estimation of aerodynamic forces [186]. Because of the rectilinear motion of the flow
+streamlines, the panel method assumes that the flow does not wrap around the edge of the
+stacked-toroid to impact its back surface. A shaded region is therefore created behind the frontal
+region directly in contact with the airstream where no momentum transfer occurs. It follows
+that the local pressure in the shadowed region can be assumed to be equivalent to the freestream
+pressure p = p∞ and that, therefore, the pressure coefficient is equal to zeroCp = 0 according
+to Equation C.32 as depicted in Figure 3.18 for the modified Newtonian method. Equation 3.52
+enablestheevaluationofthecorrectinclinationanglegivenapanelandtheincomingflowvelocity
+vector. The back-face culling algorithm [187] may then be used to select the flow-facing surfaces
+on the i − th panel in Equation 3.71.
+Figure 3.18.: Shadow region according to Newtonian flow theory
+V∞
+|V∞| · ˆni
+(
+< 0 flow-facing
+≥ 0 back-facing (3.71)
+The simple shading algorithm described in Equation 3.71, however, is only dependent on the
+orientation of each individual panel with respect to the incoming flow. This means that this
+44
+
+=== PAGE 70 ===
+3. Methodology
+method is unable to discern the panels which are shielded from the flow by upstream bodies. In
+the case of a stacked-toroid, the front aeroshell may completely or partially cover the payload
+which would not contribute to the aerodynamic analysis. For this study, it is crucial to be able
+to identify which components are not exposed to the incoming flow, and if done incorrectly, this
+might slow down processing [186].
+The back-face culling algorithm is therefore supported by an additional method developed for
+the ADBSat code2 [163, 164, 174], in which only the set of panels that meet the condition
+V∞
+|V∞| · ˆni < 0, referred to as "group A", can be shadowed and only those panels that meet the
+condition V∞
+|V∞| · ˆni ≥ 0, or "group B" can shadow other panels. The region of interest for a
+stacked-toroid with zero angle-of-attack is shown in Figure 3.19.
+Figure 3.19.: Region of shading analysis for complementary algorithm
+The following procedure is thus followed according to the approach described in [163]:
+1. The identification of the most downwind panel in set A (Panel Y) and the most upwind
+panel in set B (Panel Z) is conducted
+2. The set A is reduced to A’ by realising that only the panels downwind of Z can be shadowed.
+At the same time, set B is reduced to B’ in which only the panels upwind of Y can be used
+to shadow other panels.
+3. Each panel in set A’ is checked against B’ to identify the upwind panels. The barycentre of
+this subset is assessed for the 2D projection of each sub-set panel. If the barycentre is within
+the projection, then it is considered as being shadowed and its aerodynamic contribution
+is zero, otherwise, the next panel is evaluated.
+Sinpetruetal. [163]remarkthatthealgorithmisnotafoolproofmethodofshadingdetermination
+and may be inaccurate for coarse meshes with large flat sides. While this should not be the case
+for a stacked-toroid IAD, verification shall be conducted in the next chapter.
+2Shadow analysis available at https://github.com/nhcrisp/ADBSat/blob/master/toolbox/calc/shadowAnaly.m
+Date Accessed: 10/05/2023
+45
+
+=== PAGE 71 ===
+3. Methodology
+3.5.6. Aerostability
+Equation 3.43 can be used to obtain theCM about the MRC, taken to be at the origin of the
+constructed surface of revolution. When the position of the CoG is known, the moment coefficient
+can also be computed about this point with Equation 3.44. The moment coefficient is of interest
+to determine the IAD’s aerodynamic stability. As discussed by Mostaza-Prietro and Roberts
+[188] for spacecraft subjected to aerodynamic torques, the derivatives of the pitching moment
+coefficient with respect to the angle attack∂Cm
+∂α and the derivative of the yawing moment with
+respect to the sideslip angle∂Cn
+∂βs must be negative as shown in Equation 3.72.
+∂Cm
+∂α < 0 ∂Cn
+∂βs
+< 0 (3.72)
+Additional aerostability parameters can be calculated, but they rely on knowing the moment
+of inertia and angular velocity of the vehicles, which are often unavailable during the early
+design stages. Therefore, it is common practice to focus on longitudinal static stability, which
+is considered sufficient in such cases. To achieve this, the coefficient of pressure (CoP) must be
+defined. The CoP represents the point where the average pressure force acts. In the body-frame
+orientation depicted in Figure 3.20, the y-coordinate of the CoP is defined for a continuous body
+as a function of the pressure distributionp(y) as in Equation 3.73. This is then approximated
+for a discretised geometry made of panels based on each panel’sCP [189].
+yCoP =
+R
+yp (y)dyR
+p(y)dy → yCoP = ∑ yiCpi
+∑ Cpi
+(3.73)
+Figure 3.20.: Longitudinal Stability of Stacked-toroid
+The longitudinal static stability of the decelerator is attained by ensuring that the CoG is in
+front of the CoP, as in Figure 3.20. The stability is increased by further shifting the CoG
+towards the nose cone, thus increasing the distance between the CoP and CoG, defined as static
+margin SM in Equation 3.74 which is normalised by the decelerator’s height. A larger value
+of SM is desirable for aerostability because it ensures that the vehicle consistently returns to a
+flow-pointing attitude when subjected to disturbances [165].
+SM = (yCoP − yCoG ) /hIAD (3.74)
+46
+
+=== PAGE 83 ===
+3. Methodology
+axial and normal force coefficients are presented in Equation 4.1 and Equation 4.2, respectively,
+while the lift and drag coefficients are described by Equation 4.3.
+C(A,N), f lexible = C(A,N),Rigid − ∆C(A,N)(q∞) (3.104)
+3.7.2. Aerothermodynamics
+The experimental study conducted by Hollis and Hollingsworth [53] on a F-TPS applied to a
+stacked-toroid decelerator determined the aeroheating effects of the surface deformation on its
+aerothermal performance. Specifically, rigid, nonsmooth aeroshell models were used to simulate
+and quantify the boundary-layer transition and convective heating levels as a consequence of
+the surface deformation and associated scalloping phenomenon. Hollis [53] investigated different
+models of the IRVE vehicle in NASA’s Langley Aerothermodynamics Laboratory at Mach num-
+bers between 5.8 and 6.1. The experimental results were then compared to flow field predictions
+using high-fidelity CFD simulations with a finite-volume 3D solver that accounts for nonequilib-
+rium chemistry. The combination of the experimental data with the numerical results enabled
+the development of a parametric correlation for the effect of scalloping on heating depending on
+the scallop heightksc, maximum inflated radius of the deceleratorrin f lated and laminar boundary
+layer momentum thickness Reynolds numberReθ. This latter quantity can be estimated using a
+simple explicit relation for a flat plate given by Schlichting [219] in Equation 3.106 as a function
+of the streamwise Reynolds numberRex in Equation 3.105.
+Rex =
+ρ∞V∞rin f lated
+µ ∞
+(3.105)
+Reθ = 0.664
+√
+Rex (3.106)
+Hollis’ scalloped augmented heat flux correlation is given in Equation 3.107 as a function of
+the kSC
+rin f lated
+radius where kSC is needed in metres andrin f lated in feet. The expression is used to
+estimate the increase in convective heat transfer due to the transition from laminar to turbulent
+conditions. The augmented heat transfer coefficient is given in the form of a film coefficienth f
+which may be computed according to Equation 3.108 [53] by assuming that the adiabatic wall
+enthalpy is equal to the freestream total enthalpyH0, with a wall temperature of 300 K.
+ 
+h fturb
+h flam
+!
+= 1 + 7.3457
+ 
+kSC
+rin f lated
+!
++ 0.006 + 0.049294
+ 
+kSC
+rin f lated
+!0.51841
+· Reθ (3.107)
+h f = q
+H0 − H300K
+(3.108)
+The increase in convective heat flux due to the deflection of the stacked toroid is therefore
+predicted by means of Equation 3.107 to determine the heat distribution across the stacked
+toroid’s surface, where the relations described in subsection 3.6.1 can be used to determine the
+stagnation heat flux.
+58
+
+=== PAGE 84 ===
+3. Methodology
+3.8. Flexible Thermal Protection System
+During the EDL sequence that the stacked-toroid must undergo, the inflated outer shell is bound
+to experience large heat fluxes from its surrounding environment in the form of convection and
+radiation, which is then transferred to its internal structures and payload via conduction. To
+ensure that the vehicle survives the severe environmental conditions encountered, the F-TPS
+must be carefully designed. When compared to traditional TPS designs, its flexible counterpart
+offers the capability of being packaged into a smaller volume within the rocket fairing and inflated
+upon entry.
+The requirements for the flexible TPS components are that the layers can withstand the highest
+aerodynamic pressure and shear loads with the associated aeroheating effects. In addition, the
+flexible structure must be tolerant to the packing and deployment of the system [36]. To meet
+the specific engineering functional aspects of each mission, a combination of multiple layers of
+materials is specifically selected as shown in the staggered configuration in Figure 3.25. This
+concept has been developed by NASA across the various projects mentioned in chapter 2, such
+as PAIDAE [97], IRVE [44–46, 114], and LOFTID [121–123]. The three functional layers serve
+the following purposes [220]:
+• The outer layers must sustain the incident heat flux, surface pressure and aerodynamic
+shear force during the EDL phases in the form of convective heating, optical thickness,
+emissivity and catalycity of the material. These layers must be structurally robust with
+low catalicity and should also present a high emissivity to re-radiate the heat to the sur-
+rounding. Moreover, it is essential for the chosen materials to maintain their performance
+after handling, shape deformation, compression and packing [30].
+• The insulation layers’ main function is that of delaying the thermal pulse experienced in the
+entry trajectory. The delay must be sufficiently extended to keep the underlying structure
+within the temperature design limits. Although the insulators only experience a small
+amount of shearing flow, given that they are located behind the outer fabric, it is desirable
+for the insulating material to be robust and fault tolerant in the event of a failure to the
+outer layers [30].
+• The gas barrier must act as a support for the insulating layers and a surface for fastenings
+connecting the TPS to the main inflated structure. More importantly, the gas barrier layers
+prevent the hot gases and decomposition products arising as a result of the heat transfer
+from damaging the toroidal structures.
+An optimal selection of the F-TPS layups shall focus on materials that have low areal weight and
+low permeability [30]. At the same time, these should also be sufficiently malleable to maintain
+uniformity and homogeneity after being subject to deformation. Other manufacturing features
+of the material should also be considered such as the maturity of the manufacturing processes
+and the ability to constantly reproduce consistent products for testing [30]. Example candidates
+of the material layups investigated in the literature include Nextel and SiC for the outer fabric,
+due to their high strength and little shrinkage at high continuous temperatures. Pyrogel, on
+the other hand, is often chosen as the insulator because of its flexibility and resistance to high
+temperatures. Kapton is instead employed for the gas barrier as it retains its properties at large
+temperature differences [30].
+59
+
+=== PAGE 85 ===
+3. Methodology
+Figure 3.25.: Definition of the F-TPS layers [36]
+Although the thermal characterisation of different F-TPS layups is beyond the scope of this
+work, given that an experimental campaign would be required to define the complex material
+response [30, 32, 220], the proposed MDAO framework includes the capabilities to estimate the
+thermal performance of a given layup and to optimise its thickness. Based on the experimental
+and high-fidelity simulation results presented, Del Corso et al. [30, 32] claims that a 1D analysis
+comprising convection, radiation and conduction is sufficiently accurate for the through-thickness
+results. Given the nature of the MDAO process, a 1D heat diffusion model is hereby proposed to
+estimate the temperature variation across an arbitrary F-TPS layup over the expected trajectory
+freestream conditions.
+The simplified problem forn F-TPS layers, each of thicknessL, is shown in Figure 3.26, where
+the outer fabric layers are exposed to the transient heat fluxq(t) in the form of convectionqc,
+conduction qcond and re-radiationqrerad. The inner layers of the fabric, gas barrier and insulator,
+on the other hand, are only subject to heat conduction driven by the temperature gradient within
+the TPS layers. Conversely, the last layer of the gas barrier is in contact with the structural mass
+of the stacked toroid. Following the example set by Del Corso et al. [30, 32], the heat conduction
+between the inner layers is treated as a thermal resistance, and heat contact conductance is
+applied at the interface between each layer. It is noted that this conductance, caused by the
+presence of a non-ideal contact between two surfaces, is the inverse of the thermal conductivity
+measured experimentally for any given material [30]. Since the contact conductanceqcontact at
+the interface of two materials is dependent on the freestream pressure and temperature, this
+may also be expressed as qcontact = f (p∞, T∞). However, the rather limited data on contact
+conductance available in the literature for the materials of interest to a F-TPS may dictate the
+modelling of qcontact as being constant [221].
+The problem of predicting the temperature across a compound structure composed of layers
+with different material thermal properties and each with different thicknesses has been widely
+addressed in the literature [222]. In particular, the implementation of analytical approaches
+appears to be dominant due to the computational advantages [223]. However, not are these only
+mostly applied to steady-state flows but they also present large degrees of error in the solution.
+60
+
+=== PAGE 96 ===
+4. Verification & Validation
+4.2. Planar Motion Trajectory: Verification
+Planar motion is widely applied to entry trajectories and its validity is already well established.
+However, to verify the correct implementation of the planar equations of motion described in sec-
+tion 3.4 and their suitability in simulating the entry trajectory of a stacked-toroid, a comparison
+between the numerical results and the actual flight trajectory of the IRVE-II vehicle is hereby
+conducted. The overview of the mission concept of operations is given in Figure 4.5, showing that
+the trajectory data is measured between 80 km, used as the reference entry, and 40 km for ap-
+proximately 30 seconds [230]. Given that the atmospheric model described in section 3.3 is only
+applicable to the Martian atmosphere, the aerodynamic database and environmental conditions,
+namely the entry velocity, density and speed of sound, are extrapolated from the reconstructed
+flight trajectory [100] as inputs for the planar equations of motion.
+Figure 4.5.: IRVE-II Mission Overview [230]
+The comparison of the actual flight trajectory of IRVE-II and the simulation results is shown
+in Figure 4.6 for the altitude-Mach number curve, deceleration load against altitude, dynamic
+pressure against altitude and, finally, for the downrange profile over the time of flight. All the
+results presented show an excellent agreement with the flight data, presentingR2 correlations
+larger than 0.98 in all cases. It is noted that the reconstructed trajectory data of IRVE-II was
+obtained using the Program to Optimize Simulated Trajectories II [100], accounting for each
+trajectory stage. However, of interest to this section is the re-entry phase between 40 km and
+80 km of altitude. The reference data adopted in this work for comparison also falls within
+the pre-flight simulation Monte Carlo results conducted by O’Keefe et al. [100], confirming the
+validity of the data.
+71
+
+=== PAGE 97 ===
+4. Verification & Validation
+3 4 5 6
+40
+50
+60
+70
+80
+(a) Mach Number
+50 60 70 80
+0
+2
+4
+6 (b) g-load
+50 60 70 80
+0
+200
+400
+600
+800
+1000
+1200
+(c) Dynamic Pressure
+0 10 20 30
+0
+2
+4
+6
+8
+10 (d) Downrange
+Figure 4.6.: Comparison of Reconstructed IRVE-II Trajectory with Planar Motion
+The mean percentage errors are shown in Table 4.3, where errors between1 − 7 % are obtained
+across the plots. The excellent agreement, due to the minimised source of uncertainty in aerody-
+namic coefficients and atmospheric parameters given that these have been extrapolated from the
+actual flight, confirms the suitability of the planar model to evaluate trajectories in early design
+stages.
+Although the errors resulting from the assumptions made in the definition of the planar equations
+are generally small, it is important to acknowledge their presence. One such assumption is the
+absence of lateral wind speeds, which was instead measured in the case of IRVE-II [100, 230].
+However, for the purposes of this work, these errors are considered to be negligible. The effect
+of wind on the entry trajectory is further discussed in section B.7.
+h − M
+Figure 4.6(a)
+g − h
+Figure 4.6(b)
+q − h
+Figure 4.6(c)
+R − t
+Figure 4.6(d)
+1.978% 7.097% 3.696% 1.074%
+Table 4.3.: Average Percentage Error|δ%,avg | of IRVE-II Trajectory Model
+72
+
+=== PAGE 98 ===
+4. Verification & Validation
+4.3. Aerodynamics
+4.3.1. Mesh Independence: Verification
+Prior to establishing the validity of the aerodynamics method described in section 3.5, it is crucial
+to verify that the results obtained with the panel methods for a stacked-toroid are independent of
+the vehicle’s spatial discretisation. The IRVE-II design is constructed as shown in Figure 4.1 and
+nine meshes are generated with an increasing level of refinement in Table 4.4. The increasing level
+of refinement in the meshes is visually displayed in Figure 4.8 to show that while the number
+of panels is increased, the topology of the baseline geometry in each mesh is conserved. The
+mesh independence hereby verified is also valid for the integration of the panel method with the
+aerothermal models later analysed for the heat distribution.
+Number of Triangles 1694 4152 5220 5562 10656 11784 26078 54446
+Number of Nodes 849 2076 2612 2783 5330 5894 13041 27225
+Table 4.4.: Mesh independence study for aerodynamics panel method
+Figure 4.7.: Refinement of the number of panels generated for the IRVE design
+The modified Newtonian panel code is thus run for the investigated meshes and the drag co-
+efficient is measured for the scenario in whichM = 5 and γ = 1.4. The computational time
+and normalized drag coefficient are shown in Figure 4.7. It is observed that no change in drag
+coefficient is observed beyond 30,000 mesh triangles and that only 1% of variation is measured
+after 5,000 triangles. The convergence of the resulting normalised drag coefficient is also associ-
+ated with the logarithmic reduction of the average panel area in proportion to the total surface
+area of the stacked toroid. A value lower than4 · 10−4 is recommended based on the percentage
+change ofCD.The lower surface area should especially be employed in the rounded features of the
+geometry, such as the nose cone and the outer torus’ shoulder. The increased mesh refinement
+comes at the expense of an increased computational time, though this varies from 0.2 seconds for
+73

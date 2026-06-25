@@ -12,7 +12,7 @@ def run_headless_test():
         'env_preset': 'artemis',
         'env_nrho': '3.9e20',
         'env_temp_inf': '200.0',
-        'env_fnum': '1e16',
+        'env_fnum': '1.5e20',
         'env_temp': '1000.0',
         'env_step': '1e-6',
         'env_run': '1000',

@@ -11,7 +11,7 @@ opt_params = {
     'env_mach': '17.6',
     'env_alt': '40.0',
     'env_run': '2500',
-    'env_fnum': '2.5e20',
+    'env_fnum': '1.5e20',
     'env_cores': 10,
     'sparta_gpu': False,
     'default_payload': False,

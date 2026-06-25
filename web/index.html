@@ -878,11 +878,16 @@
                             <span class="info-icon">?</span>
                             <div class="tooltip-text">
                                 <strong>fnum</strong>
-                                <span class="unit">Unit: Ratio</span>
-                                Ratio of real molecules to simulated particles. Lower fnum (e.g., 1e14) increases particle count and reduces statistical noise but requires more RAM and CPU.
+                                <span class="unit">Unit: molecules/particle</span>
+                                Number of real molecules represented by ONE simulated particle.
+                                Formula: n_sim = (nrho × V_domain) / fnum.
+                                Lower fnum = more particles = better shockwave visibility = more RAM/CPU.
+                                Recommended: 1.5e20 (~2M particles, visible shockwave).
+                                Too low (e.g., 1e16): 130GB+ RAM, OOM crash.
+                                Too high (e.g., 5e23): ~600 particles, shockwave invisible.
                             </div>
                         </div>
-                        <input type="number" id="env-fnum" value="1.0e16">
+                        <input type="number" id="env-fnum" value="1.5e20">
                     </div>
                     <div class="input-group">
                         <div class="tooltip-container">

@@ -1,0 +1,58 @@
+Page 5: [peak dynamic] trajectory parameters, such as peak heat flux, heat load, and peak dynamic pressure, by tracing
+Page 13: [drag coefficient] 4.15. Variation of Drag coefficient for modified IRDT vehicle against CFD data [89] . 79
+Page 16: [drag coefficient] 5.3. Aerodynamic drag coefficient of EDL deployed second-stage with penetrator [96] 121
+Page 17: [drag coefficient] B.9. Comparison of Drag coefficient for Panel method and CFD data of IRDT . . . . 192
+Page 20: [ballistic coefficient] β Ballistic Coefficient N/m2
+Page 22: [drag coefficient] CD Drag Coefficient -
+Page 27: [ballistic coefficient] limited in terms of landed mass by the ballistic coefficient which is itself constrained by the
+Page 29: [ballistic coefficient] lower ballistic coefficients and higher drag levels at higher Mach speeds, expanding the deploy-
+Page 29: [drag coefficient] the lift and drag coefficients, heat transfer and surface temperatures. In fact, the application of
+Page 33: [drag coefficient] the impact of the decelerator’s half-taper angle on the drag coefficient at different speeds. The
+Page 33: [drag coefficient] findings revealed that increasing the half-taper angle resulted in a decreased drag coefficient,
+Page 35: [peak dynamic] low-frequency oscillations near the peak dynamic pressure. Interestingly, these instabilities were
+Page 38: [ballistic coefficient] Mars whilst offering a low ballistic coefficient with a 2.5 m-diameter IAD. While the design relies
+Page 38: [drag coefficient] at higher inflation pressures also resulted in a slightly larger drag coefficient. The added mass and
+Page 40: [ballistic coefficient] vehicle. In particular, the lift and drag forces, its ballistic coefficient and peak heating. Flight
+Page 58: [Cd =] CD =
+Page 59: [Cd =] CD = CN cos(α) + CA cos(α) (3.37)
+Page 64: [Cd =] CD = Cp sin(θ) CL = Cp cos(θ) (3.50)
+Page 68: [Cd =] CD = 2 cos(δ)
+Page 78: [nose radius] parameters such as the freestream density, the vehicle’s velocity and its nose radius. West and
+Page 83: [drag coefficient] while the lift and drag coefficients are described by Equation 4.3.
+Page 90: [ballistic coefficient] occurs, the structural mass is subtracted from the ballistic coefficientβ of the second stage to
+Page 98: [drag coefficient] and normalized drag coefficient are shown in Figure 4.7. It is observed that no change in drag
+Page 98: [drag coefficient] after 5,000 triangles. The convergence of the resulting normalised drag coefficient is also associ-
+Page 103: [drag coefficient] (a) Drag Coefficient
+Page 103: [drag coefficient] the drag coefficient, the CFD lift coefficient appears to exhibit more fluctuations. However,
+Page 103: [drag coefficient] No error bars are thus applied. The drag coefficient measured for0.2 ≤ M ≤ 15 is plotted in
+Page 103: [drag coefficient] under continuum flow conditions. The drag coefficient of the stacked toroid is correctly identified
+Page 104: [drag coefficient] Figure 4.15.: Variation of Drag coefficient for modified IRDT vehicle against CFD data [89]
+Page 110: [Cd =] ∆CD = ∆CN sin α + ∆CA cos α; ∆CL = ∆CN cos α − ∆CA sin α; (4.3)
+Page 119: [20.2] Sutton-Graves 0.2860 0.4652 0.7832 23.30 2.5562 +16.37 432.14 +0.118 47.1203 +20.21
+Page 146: [Cd =] CD = 0.6841M3
+Page 146: [drag coefficient] Table 5.3.: Aerodynamic drag coefficient of EDL deployed second-stage with penetrator [96]
+Page 150: [ballistic coefficient] factors. These factors include minimizing the impact velocity, ballistic coefficient, peak heat
+Page 162: [drag coefficient] the MetNet capsule has comparable drag coefficients (0.96-1.14 in subsonic and 1.39-1.41 in su-
+Page 165: [drag coefficient] as being ballistic. The drag coefficient is therefore plotted in Figure 6.13.As expected, a larger
+Page 165: [drag coefficient] drag coefficient is attained in the transitional regime, which is bridged from the FMF one. The
+Page 165: [drag coefficient] atmosphere, and thusV∞,FMF = Ve = 5 km/s leads to a drag coefficient of 1.7, while the bridging
+Page 166: [Mach 10] speeds larger than Mach 10. By assuming any Mach value for whichM > 10 prior to running
+Page 166: [Cd =] CD = 1.26 is found between 10 ≤ M ≤ 27, though only a very slight decrease is noted until
+Page 166: [drag coefficient] (a) Drag coefficient of both EDL stages
+Page 166: [drag coefficient] aerodynamic forces in this regime. The drag coefficient in the continuum regime, on the other
+Page 167: [drag coefficient] (a) Drag coefficient contribution due to
+Page 168: [drag coefficient] a function of altitude is comparable to the drag coefficient variation in Figure 6.13.
+Page 172: [peak dynamic] higher speeds cause the vehicle to be subjected to the peak dynamic pressure, heat flux and
+Page 174: [peak dynamic] of the peak dynamic pressure, heat flux and g-load occurs at lower altitudes with increasingly
+Page 182: [peak dynamic] elevated levels of peak dynamic pressure, and increased impact speeds in the second stage. These
+Page 189: [peak dynamic] a g-load of 21.7 and a peak dynamic pressure of 622 Pa. To ensure aerostability, a CoG
+Page 192: [Mach 10] regime. part 2. mach 4 to mach 10 feasibility investigation,” Goodyear Aircraft Corpora-
+Page 192: [Mach 10] mach 10,” Arnold Engineering Development Center, Arnold AFB TN, Tech. Rep., 1962.
+Page 206: [ballistic coefficient] thermal protection system for low ballistic coefficient ballute for ballistic earth re-entry,”
+Page 217: [drag coefficient] Drag CoefficientCD [−] Lift CoefficientCL [−]
+Page 217: [drag coefficient] Table B.9.: Comparison of Drag coefficient for Panel method and CFD data of IRDT
+Page 233: [drag coefficient] the drag coefficient of the IAD.
+Page 235: [stagnation pressure] implemented by relating the pressure coefficient to its equivalent value at the stagnation pressure
+Page 235: [stagnation pressure] to compute the ratio of stagnation pressure on the vehicle’s surface to the freestream pressure,
+Page 235: [Cd =] CD = Cp sin(θ) = 2 sin3(θ)
+Page 236: [stagnation pressure] Equation C.38, andp02 is the stagnation pressure from the Rankine-Hufoniot relation in Equa-

@@ -536,8 +536,8 @@ def main():
     sim.add_argument("--resume", action="store_true",
         help="Attempt to resume the simulation from the latest restart file in results_reference/ instead of starting from scratch.")
     sim.add_argument("--defaultPayload", action="store_true", default=False, help="Generate a default IRVE-3 cylindrical payload at the center back.")
-    sim.add_argument("--fnum", type=str, default="5e16",
-        help="Particle weighting factor (e.g. 5e16). Higher = fewer particles, faster run.")
+    sim.add_argument("--fnum", type=str, default="1.5e20",
+        help="Particle weighting factor (e.g. 1.5e20). Lower = more particles, better shockwave visibility.")
     
     # Geometry Overrides (Ref: Rapisarda 2023 Table 5.4)
     #
@@ -1203,7 +1203,7 @@ def main():
                 'env_preset': 'irve3',
                 'env_nrho': '3.5e22',
                 'env_temp_inf': '270.0',
-                'env_fnum': '1e21',
+                'env_fnum': '1.5e20',
                 'env_temp': '1000.0',
                 'env_step': '1e-6',
                 'env_run': str(args.steps) if args.steps is not None else '1100',

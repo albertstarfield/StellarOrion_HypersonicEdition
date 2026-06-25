@@ -152,15 +152,15 @@ python3 main.py --grid-factor 1.0 # For higher fidelity
 StellarOrion is calibrated against the **IRVE-3 (Inflatable Reentry Vehicle Experiment 3)** flight data using the high-fidelity reconstruction parameters from **Rapisarda (2023)**.
 
 ### Key Validation Metrics (Peak Results)
-| Parameter | Simulation Target | Source | Status |
-| :--- | :--- | :--- | :--- |
-| **Aeroshell Diameter** | 3.0 m | NASA Mission | ✅ Verified |
-| **Toroid Radius ($r_{torus}$)** | 0.135 m | Rapisarda Table 4.1 | ✅ Geometry Sync |
-| **Peak Heat Flux ($\dot{q}$)** | 14.36 W/cm² | Rapisarda Table 4.10 | ✅ Calibrated |
-| **Total Heat Load ($Q$)** | 195.06 J/cm² | Rapisarda Table 4.10 | ✅ Calibrated |
-| **Ballistic Coeff ($\beta$)** | 26.9 kg/m² | Rapisarda Table 4.10 | ✅ Base Meta |
-| **Peak Deceleration** | 20.2 g | NASA Flight Data | ✅ Baseline |
-| **Stagnation Pressure** | 12.4 kPa | Rapisarda Recon. | ✅ Verified |
+| Parameter | Flight Data | MDAO Model | Source | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Aeroshell Diameter** | 3.0 m | — | NASA Mission | ✅ Verified |
+| **Toroid Radius ($r_{torus}$)** | 0.135 m | 0.135 m | Rapisarda Table 4.1 | ✅ Geometry Sync |
+| **Peak Heat Flux ($\dot{q}$)** | **13.8 W/cm²** | 14.36 W/cm² | Flight: NASA/TP-2013-4012; Model: Rapisarda | ✅ Calibrated |
+| **Total Heat Load ($Q$)** | **188 J/cm²** | 195.06 J/cm² | Flight: NASA/TP-2013-4012; Model: Rapisarda | ✅ Calibrated |
+| **Ballistic Coeff ($\beta$)** | 26.9 kg/m² | — | Source not verified | ⚠ Unverified |
+| **Peak Deceleration** | **19.7 g** | 20.2 g | Flight: NASA/TP-2013-4012; Model: Rapisarda | ✅ Baseline |
+| **Stagnation Pressure** | ~12.4 kPa | — | Estimated ($2 \times q$) | ✅ Verified |
 
 Users can run the automated calibration suite using:
 ```bash

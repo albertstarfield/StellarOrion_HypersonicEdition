@@ -1,0 +1,520 @@
+
+
+========== LOFTID Overview - 3 pages ==========
+
+--- Page 1 ---
+⮜ Previous Article Next Article⮞
+FULL-LENGTH PAPERS
+Overview and Performance of the Low-Earth Orbit
+Flight Test of an Inflatable Decelerator
+Instrumentation Suite
+Gregory T. Swanson, Ruth A. Miller, Cole D. Kazemba, Hannah S. Alpert, Joseph D. Williams, Stephen J. Hughes and 
+Neil Cheatwood
+Published Online: 11 Apr 2025 • https://doi.org/10.2514/1.A36287
+Abstract
+On November 10, 2022, NASA launched the Low-Earth Orbit Flight Test of an Inflatable Decelerator
+(LOFTID) reentry vehicle as a secondary payload on an Atlas V launch vehicle from Vandenburg Space
+Force Base. The LOFTID technology demonstration mission successfully returned a 6-meter diameter,
+70° sphere-cone Hypersonic Inflatable Aerodynamic Decelerator (HIAD) from low earth orbit. The
+LOFTID vehicle was instrumented with a suite of sensors that measured high-value science data at over
+150 vehicle locations. Thermocouples embedded in the aeroshell monitored the temperature within the
+flexible thermal protection system and inflatable structure. Heat flux gauges and surface pressure
+transducers measured the conditions on the vehicle’s rigid nose. Loadcell pins measured the interface
+loads between the inflatable structure and the centerbody. Onboard visible light cameras and colocated
+infrared cameras captured a 360° view of structural deflection and temperature distribution on the aft
+side of the heatshield. The data collected by the LOFTID instrumentation suite enabled reconstruction of
+the aerodynamic, aerothermal, thermal, and structural performance of the vehicle and provide a wealth
+of information for the design of future HIAD missions. The LOFTID instrumentation, a summary of the
+in-flight performance, and examples of data products from the post-flight analysis effort are presented.
+ 🔧 🗫 ABOUT
+Volume 62, Issue 4
+🔍 🛒
+--- Page 2 ---
+Publications
+Journals
+Books
+Meeting Papers
+Standards
+Resources For
+Authors
+Booksellers
+Companies
+Educators
+Librarians
+Researchers
+Standards Contributors
+Students
+Information
+How to Order
+How to Videos
+About Publications
+License Agreement
+FAQs
+Publish with Us
+Rights & Permissions
+Send Us Your Feedback
+Advertise on ARC
+Connect
+Announcements
+Contact Us
+Join AIAA
+© 2026 American Institute of Aeronautics and Astronautics
+--- Page 3 ---
+American Institute of Aeronautics and Astronautics
+12700 Sunrise Valley Drive, Suite 200
+Reston, VA 20191-5807
+703.264.7500
+    
+Privacy Policy Terms of Use
+
+========== LOFTID Flight Test - 4 pages ==========
+
+--- Page 1 ---
+Low-Earth Orbit Flight Test of an Inﬂatable Decelerator (LOFTID)
+Illustration of LOFTID In Space
+Mission
+type
+Inﬂatable decelerator
+Operator NASA
+COSPAR
+ID
+2022-150C (https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2022-150C)
+SATCAT
+no.
+none
+Mission
+duration
+2 hours, 11 minutes
+Start of mission
+Launch
+date
+November 10, 2022
+Rocket Atlas V 401
+End of mission
+Landing
+date
+November 10, 2022
+Landing
+site
+Paciﬁc Ocean
+Low-Earth Orbit Flight Test of an
+Inflatable Decelerator
+Low-Earth Orbit Flight Test of an Inflatable Decelerator (LOFTID) was a NASA mission to
+test inflatable reentry systems.[1] It was the first such test of an inflatable decelerator from Earth-
+orbital speed.
+--- Page 2 ---
+LOFTID was launched on an Atlas V 401 in November 2022 as a secondary payload, along with the
+JPSS-2 weather satellite.[2] It deployed successfully and landed in the ocean near Hawaii on
+November 10, 2022, which NASA stated on November 17 was a "huge success".[3][4]
+LOFTID is the latest in a string of successful Hypersonic Inflatable Aerodynamic Decelerator (HIAD)
+development efforts. HIADs have a Viking-era genesis; developed by engineers at the NASA Langley
+Research Center as a possible system for crewed reentry. However, HIAD development ceased in the
+mid-1970s when it was shown disk-gap-band supersonic parachutes were suitable for the Viking,
+Pioneer Venus and Galileo mission environments.[5] More recently, the need to enable robotic and
+crewed missions with larger payload mass has generated new investment in HIAD development.
+Starting in 2006 with the Program to Advance Inflatable Decelerators for Atmospheric Entry
+(PAIDAE),[6] HIADs have undergone a series of incremental development efforts including design
+and analysis, ground based materials testing, manufacturing, wind-tunnel testing and flight tests and
+demonstrations. Two successful NASA Langley Research Center led sub-orbital flight demonstrations
+of HIAD technology have occurred; Inflatable Reentry Vehicle Experiment 2 (IRVE-2) [7] and IRVE-3
+[8] were flown in 2009 and 2012 respectively. LOFTID is the first orbital flight of a HIAD and the
+largest blunt aeroshell entry to date.
+It inflates to 6 metres (about 20 feet) in diameter.[9] Its total mass is about 2,400 lb (1,000 kg).
+It is formed from 7 inflatable tori (6 wide and one narrow), with a flexible woven silicon carbide black
+ceramic fabric[10][11] thermal protection layer on one side.[12]
+Launch and deployment (inflation, separation and splashdown from the Atlas V Centaur 2nd stage)
+were successful.[2]
+It reentered the atmosphere at about Mach 29, reached a peak deceleration of about 9 g, and splashed
+down under a subsonic parachute near Hawaii.[12] NASA stated on November 17 that LOFTID was a
+"huge success" and able to be used on future missions to Mars.[4]
+According to the principal investigator, Dr. Neil Cheatwood, the success means the technology is now
+ready to use on missions. [3]
+History
+Design
+Launch, deployment, and results
+--- Page 3 ---
+Dr. Cheatwood reports that about a dozen companies have contacted him to express interest in the
+technology. [3]
+Inﬂatable decelerator, including NASA's IRVE and HIAD
+1. Low-Earth Orbit Flight Test of an Inﬂatable Decelerator (LOFTID) (https://www.nasa.gov/mission_p
+ages/tdm/loftid/index.html)
+2. Gebhardt, Chris (10 November 2022). "Atlas rocket bids farewell to California as ULA readies for
+Vulcan" (https://www.nasaspaceﬂight.com/2022/11/jpss-2-launch/). NASASpaceFlight. Retrieved
+10 November 2022.
+3. NASA Launched an Inﬂatable Flying Saucer, Then Landed It in the Ocean (https://www.nytimes.co
+m/2022/11/10/science/nasa-loftid-inﬂatable-heat-shield.html)
+4. Strickland, Ashley (2022-11-17). "Inﬂatable heat shield a 'huge success' that could land humans
+on Mars, NASA says" (https://www.cnn.com/2022/11/17/world/loftid-heat-shield-nasa-success-scn/
+index.html). CNN. Retrieved 2022-11-18.
+5. Smith, Brandon P.; Tanner, Christopher L.; Mahzari, Milad; Clark, Ian G.; Braun, Robert D.;
+Cheatwood, F. McNeil (March 2010). Historical Review of Inﬂatable Aerodynamic Decelerator
+Technology Development (https://hdl.handle.net/1853/74116) (Report). Georgia Tech. Retrieved
+February 22, 2025.
+6. Del Corso, Joseph A.; Bruce, III, Walter E.; Liles, Kaitlin A.; Hughes, Stephen J. (August 2024).
+Thermal Analysis and Testing of Candidate Materials for PAIDAE Inﬂatable Aeroshell (https://ntrs.n
+asa.gov/api/citations/20090019746/downloads/20090019746.pdf) (PDF) (Report). NASA.
+Retrieved February 22, 2025.
+7. O'Keefe, Stephen; Bose, David (2010). "IRVE-II Post-Flight Trajectory Reconstruction" (https://arc.
+aiaa.org/doi/abs/10.2514/6.2010-7515). AIAA Atmospheric Flight Mechanics Conference.
+doi:10.2514/6.2010-7515 (https://doi.org/10.2514%2F6.2010-7515). hdl:2060/20100031103 (http
+s://hdl.handle.net/2060%2F20100031103). ISBN 978-1-62410-151-9.
+8. Olds, Aaron; Beck, Roger; Bose, David M.; White, Joseph; Edquist, Karl T.; Hollis, Brian R.;
+Lindell, Michael; Cheatwood, F. M.; Gsell, Valerie; Bowden, Ernest L. (2013). "IRVE-3 Post-Flight
+Reconstruction" (https://arc.aiaa.org/doi/10.2514/6.2013-1390). AIAA Aerodynamic Decelerator
+Systems (ADS) Conference. doi:10.2514/6.2013-1390 (https://doi.org/10.2514%2F6.2013-1390).
+hdl:2060/20130013398 (https://hdl.handle.net/2060%2F20130013398). ISBN 978-1-62410-202-8.
+9. "Low-Earth Orbit Flight Test of an Inﬂatable Decelerator (LOFTID)" (https://www.nasa.gov/mission
+_pages/tdm/loftid/index.html). NASA. 10 December 2022. Archived (https://web.archive.org/web/2
+0230521232621/https://www.nasa.gov/mission_pages/tdm/loftid/index.html) from the original on
+2023-05-21.
+10. "NASA Inﬂatable Heat Shield Finds Strength in Flexibility" (https://www.nasa.gov/feature/nasa-inﬂa
+table-heat-shield-ﬁnds-strength-in-ﬂexibility). NASA. 25 October 2022. Archived (https://web.archiv
+e.org/web/20230525004458/https://www.nasa.gov/feature/nasa-inﬂatable-heat-shield-ﬁnds-strengt
+h-in-ﬂexibility/) from the original on 2023-05-25.
+Commercial interest
+See also
+Refer
+--- Page 4 ---
+11. LOFTID cutaway (https://www.nasa.gov/sites/default/ﬁles/thumbnails/image/loftid_cut_away-01.pn
+g)
+12. LOFTID factsheet (https://www.nasa.gov/sites/default/ﬁles/atoms/ﬁles/loftid_fact_sheet_layout_09
+0922_508.pdf)
+Retrieved from "https://en.wikipedia.org/w/index.php?title=Low-
+Earth_Orbit_Flight_Test_of_an_Inﬂatable_Decelerator&oldid=1346632547"
+
+========== LOFTID Aerothermo - 31 pages ==========
+
+--- Page 1 ---
+  
+American Institute of Aeronautics and Astronautics  1 
+Aerothermodynamic Analyses for the LOFTID Technology Demonstration Mission Brian R. Hollis*, Adam J. Wise†, Derek S. Liechty†, Ashley M. Korzun‡, Kyle B. Thompson†, Neil S. Rodrigues§  and Elizabeth F. Rieken**  NASA Langley Research Center, Hampton, VA 23681 On November 10, 2023, the LOFTID flight test successfully demonstrated the aerodynamic and thermal protection system performance of an inflatable aeroshell at conditions relevant to an operational mission.  Aerodynamic performance and aeroheating environment databases for this mission were generated using multiple computational tools for the rarefied, hypersonic, and supersonic flow regimes, supplemented by wind tunnel testing to obtain aeroshell boundary-layer transition and wake flow simulation validation data.  A detailed discussion of tools, methods and results is presented herein. I. Nomenclature CA axial force coefficient Cm,CG pitching moment coefficient about center-of-gravity CN normal force coefficient D vehicle diameter (m) H0 total enthalpy (J/kg) HAW adiabatic wall enthalpy (J/kg) h heat-transfer film coefficient (kg/m2-s) hFR Fay-Riddell theory heat-transfer film coefficient KnD Knudsen number based on diameter M∞ free stream Mach number pw surface wall pressure (Pa) qconv convective heat transfer rate (W/cm2) qrad radiative heat transfer rate (W/cm2) Qconv convective heat transfer load (kJ/cm2) Qrad radiative heat transfer load (kJ/cm2) RC corner radius (m) RN nose radius (m) Re∞ free stream unit Reynolds number (1/m or 1/ft) Req momentum thickness Reynolds number T∞ free stream temperature (K) U∞ free stream velocity (m/s) a angle of attack (deg) tw,total wall total shear stress (Pa) ρ∞ free stream density (kg/m3) 
+  * AIAA Associate Fellow, Senior Technical Lead, Aerothermodynamics Branch, Research and Technology Directorate † AIAA Member, Aerothermodynamics Branch, Research and Technology Directorate ‡ AIAA Associate Fellow, Atmospheric Flight and Entry Systems Branch, Engineering Directorate § AIAA Member, Advanced Measurements and Data Systems Branch, Research and Technology Directorate ** AIAA Member, Engineering Integration Branch, Engineering Directorate 
+--- Page 2 ---
+  
+American Institute of Aeronautics and Astronautics  2 
+II. Introduction and Background A. Hypersonic Inflatable Aerodynamic Decelerator Technology Concept Hypersonic Inflatable Aerodynamic Decelerator (HIAD) technology [1] offers an effective, mass-saving alternative to the conventional aerodynamic decelerators used in previous entry, descent, and landing systems such as the Orion crew capsule or the Mars Science Laboratory / Mars 2020 aeroshells.  A HIAD has a lower mass and a smaller volume when packaged and stowed relative to a rigid aeroshell, but when deployed and inflated it provides a large surface area for drag production, resulting in a lower ballistic coefficient than a rigid aeroshell of equivalent surface area.  The lower ballistic coefficient of the HIAD results in a less stressful trajectory with lower heat fluxes and integrated heat loads, thus reducing the performance demands on the aeroshell flexible thermal protection system (FTPS).  For these reasons, HIAD systems are leading candidates for crew and cargo missions to Mars [2–4] that will require the delivery of landed masses up to a factor of 10 greater than has been possible using the rigid aeroshell technology of previous missions.  HIAD systems are also under consideration for the return of payloads from Low Earth Orbit (LEO) or for recovery and reuse of launch vehicle components [5]. The inflatable decelerator concept was first proposed in the 1960s [6–7] and since then various configurations, such as ram-inflated [8], tension-cone [9], trailing ballute [10], etc., have been proposed and studied.  However, no successful hypersonic flight test of an inflatable aeroshell had ever been conducted.  Thus, NASA committed to a program of development and demonstration flights to mature and validate this technology beginning with the Inflatable Reentry Vehicle Experiment (IRVE) series of flight tests launched on sounding rockets from the NASA Wallops Flight Facility. B. IRVE Series Suborbital Demonstration Flights The first IRVE mission [11–13] suffered a launch system failure that was not related to the HIAD payload.   A duplicate of the IRVE vehicle was built and in 2009 the IRVE-II [14–16] flight demonstrated exoatmospheric inflation of the aeroshell and aerodynamic stability at hypersonic conditions.    Because the IRVE-II vehicle was launched from a small, two-stage Black Brant IX sounding rocket, the aerothermal environment was quite benign: the maximum Mach number was 6.2, which produced peak heating rates of only ~2W/cm2.  Nevertheless, the success of IRVE-II provided the foundation for the next step in HIAD technology development, the IRVE-3 mission. The IRVE-3 mission [17–18] was a direct follow-on to IRVE-II, with the overall goal of demonstrating HIAD performance and gathering flight data in a mission-relevant environment.  The primary mission objective for IRVE-3 was to demonstrate FTPS survivability during the hypersonic segment of the flight at heating levels an or
+--- Page 3 ---
+  
+American Institute of Aeronautics and Astronautics  3 
+ Figure 1. LOFTID flight vehicle cross section and dimension. 
+  Figure 2. IR image of LOFTID splashdown [Source NASA]. Figure 3. Recovered LOFTID flight vehicle [Source NASA]  LOFTID was heavily instrumented [22] to measure its performance during reentry. Aerothermodynamic instrumentation included heat-flux sensors, pressure gauges, and a radiometer on the nose section and thermocouples embedded at various depths in the FTPS at multiple locations on the front and back of the aeroshell.  Additionally, visual and infrared cameras were mounted on the centerbody pointing forward to track the inflation, deployment, and in-flight deflections of the aeroshell structure along with its back-face temperature levels during reentry.  Additional backward facing cameras were also mounted on the centerbody to provide visual imaging of the wake flow. A key performance parameter of the mission was demonstrating the survivability at high temperatures of the multi-layer, flexible thermal protection system [23] covering the front face of the aeroshell.  Unlike operational missions where design conservatism would be desirable to ensure safety and success, the margins and uncertainties in the aerothermodynamic environment on the front of the LOFTID aeroshell were minimized to ensure that the FTPS would experience relevant temperatures for validation of its thermal performance. In contrast to the front-face of the aeroshell, the back-face carried no thermal protection because of the challenges in packaging and stowing FTPS material on the “inside” of the uninflated aeroshell within the payload.  While the heating levels on the back of the aeroshell were roughly an order of magnitude lower than those on the front, the lack of FTPS meant that the inflatable toroids and tension straps were directly exposed to the wake flow field.  Hence, extra conservatism was required in the definition of wake heating environments, which presented a design challenge to ensure high-heating on the front of the aeroshell while minimizing heating on the back. III. Aerothermodynamic Tools and Methods A combination of computational and experimental tools and methods were employed to develop the LOFTID flight aerothermodynamic database that defined the aerodynamic forces and moments from atmospheric entry to parachute deployment and the convective and radiative aeroheating fluxes and loads.  The aerodynamic data were incorporated into six degrees-of-freedom Monte Carlo simulations to define the vehicle trajectory.  The aeroheating data were employed as external boundary conditions for thermal analyses at selected points on the aeroshell rigid nose cap, the front and back of the inflatable aeroshell, and on the payload.  Several design analysis cycles were performed to develop these databases.  Additional post-flight analyses will also be conducted to assess the performance of the vehicle to evaluate the fidelity of the aerothermodynamic
+--- Page 4 ---
+  
+American Institute of Aeronautics and Astronautics  4 
+1. MAP Flow Field Solver The Multi-physics Algorithm with Particles (MAP) is a Direct Simulation Monte Carlo (DSMC) Boltzmann solver for high-altitude, rarefied flow field simulations [24].  MAP employs path tracking of representative particle populations on Cartesian/cut-cell topology grids and includes reacting gas and surface catalysis models. MAP was employed to determine the high-altitude aerodynamic and convective aeroheating environments for LOFTID from atmospheric entry down to Knudsen numbers of ~O(0.01).  Additional hybrid LAURA continuum forebody / MAP rarefied wake solutions were performed down to lower altitudes to help define the aeroheating environments of the low-density wake flow. 2. LAURA Flow Field Solver The Langley Aerothermodynamic Upwind Relaxation Algorithm (LAURA) is a three-dimensional, finite-volume structured grid topology Navier-Stokes solver for continuum flow field simulations [25, 26].  LAURA incorporates perfect-gas, equilibrium chemistry, and nonequilibrium reacting gas thermodynamic options, as well as a variety of turbulence models and coupled ablation and radiation transport models. LAURA was employed to provide aerodynamic and convective aeroheating environments from the high-altitude hypersonic rarefied overlap with MAP down to the high supersonic (M ~ 4) overlap with FUN3D solutions.  LAURA solutions were generated using a two-temperature (translational/rotational and vibroelectronic) 11-species reacting gas model (N2, O2, NO, N, O, N+, O+, NO+, N2+, O2+, e-) with a fully-catalytic, radiative equilibrium wall temperature boundary condition.  Solutions were generated both for laminar flow and for turbulent flow using the algebraic Cebeci-Smith model.  Although ionization along the trajectory is insignificant with respect to aerothermodynamic environments, the ionized species were included in the computations to provide the basis for supplemental evaluation of radio-frequency communications blackout. 3. FUN3D Flow Field Solver The Fully Unstructured in Three Dimensions (FUN3D) code is a three-dimensional, finite-volume, unstructured grid topology Navier-Stokes solver for continuum super / trans / subsonic flows [27].  FUN3D incorporates perfect-gas and equilibrium air models and shares the nonequilibrium reacting gas thermodynamics models implemented in LAURA.  FUN3D includes adjoint-based error estimation and grid adaption, which permit more efficient computations of complex vehicle topologies and flow fields. The FUN3D solver was used to define aerodynamic performance from the low hypersonic overlap with LAURA down to subsonic conditions.  FUN3D simulations were performed using a one-temperature, 5-species reacting gas model (N2, O2, NO, N, O) for hypersonic cases and a perfect-gas model for super / trans / subsonic aerodynamic cases. 4. HARA Radiation Transport Solver The High-temperature Aerothermodynamic Radiation Algorithm is a radiation transpor
+--- Page 5 ---
+  
+American Institute of Aeronautics and Astronautics  5 
+For these reasons, a new “stacked-block” structured grid topology and boundary conditions and a new algorithm to adapt and smooth these grids have been implemented [30] in the LAURA code to permit more accurate resolution of complicated flow fields.  The stacked-block grid topology removes the limitation of defining a grid with continuous k-index grid lines from the surface through the shock layer and into the freestream.  Instead, the flow domain is decomposed into feature-resolving blocks with arbitrary (i, j, k) face-to-face orientation.  As illustrated in Figure 4, three new stacked-block topology grid block types have been added to the original continuous k-line block type, which are defined as: Type-1: Boundary-layer block with solid-surface k-min boundary condition interfacing with a Type-2 block or a Type-4 block at the k-max boundary.  Type-1 blocks are adapted to cluster points closer to the wall at the k-min boundary, but their outer k-max boundary remains fixed. Type-2: Outer-boundary block with a freestream k-max boundary interfacing with a Type-1 block or a Type-4 block at the k-min boundary.  Type-2 blocks are adapted to expand/contract the k-max boundary to encompass the shock, but their inner k-min boundary remains fixed. Type-3: Standard continuous k-line block which can be adapted to cluster cells near the wall and at the shock and to extend/contract the outer boundary to fully encompass the bow shock. Type-4: Inner block which is bounded on all faces by other Type-1, -2 or -4 blocks.   The i-j-k orientation of these blocks with respect to their neighbors is arbitrary.  Type-4 blocks cannot be adapted, and their physical x-y-z coordinates remain fixed. This stacked block grid topology allows for much greater flexibility in grid design and results in greater fidelity than the standard topology for such configurations LOFTID with the convex shape of the aeroshell back face, exposed toroids and recessed centerbody.  An example of the stacked-block grid topology implementation for LOFTID wind tunnel case is shown in Figure 5. 
+ Figure 4. Stacked-block grid topology block types.  
+ Figure 5. Stacked-block grid topology for LOFTID at wind tunnel conditions.  
+Type-1: Boundary layer block Type-2 Outer boundary block Type-4 Interior block
+
+--- Page 6 ---
+  
+American Institute of Aeronautics and Astronautics  6 
+B. Experimental Methods Wind tunnel tests were conducted to obtain experimental data on physical phenomena for which computational methods are not suitable or have not been validated.   Boundary-layer transition and turbulent heating augmentation due to the deflection of the aeroshell FTPS from a smooth outer mold line (OML) are one such fluid dynamics/aeroheating problem that are beyond the state-of-the-art of the computational methodology.  Multiple wind tunnel tests were performed to generate experimental data on these phenomena.   Another computational challenge was the prediction of the LOFTID wake structure, which is defined by a large, separated and recirculating, unsteady, and potentially turbulent flow field.  While computational predictions for the wake flow are part of the LOFTID database, the uncertainty in these computations was large.  Thus, experimental data on the wake flow environment were obtained through multiple wind tunnel tests to help define the wake flow structure and reduce the computational uncertainty levels. 1. NASA Langley Aerothermodynamics Laboratory Wind Tunnels The NASA Langley Aerothermodynamics Laboratories (LAL) is comprised of three conventional, blow-down to vacuum hypersonic wind tunnels as well as a large vacuum sphere test chamber [31].  Two of the LAL wind tunnels, the 31-Inch Mach 10 Air Tunnel and the 20-Inch Mach 6 Air Tunnel, were utilized in the LOFTID project.   The NASA LaRC 31-Inch Mach 10 Air Tunnel is a perfect-gas, blow-down facility in which dried, filtered air is used as the working fluid.  The tunnel has been calibrated for reservoir conditions varying from 150 psi to 1450 psi at an operating temperature of 1850°R, which produces free stream unit Reynolds numbers from 0.25×106/ft to 2.2×106/ft.  The nozzle is water-cooled, has a three-dimensional contour, and ends with a 1.07×1.07 in square throat.  The 31×31 in square test section features optical access through side, top, and bottom windows for visual imaging techniques and has a side-mounted injection system with a ±45 deg pitch range and ±5 deg yaw range.  The test core varies from approximately 12×12 in at the lowest unit Reynolds number to 14×14 in at the highest unit Reynolds number.  This tunnel has the highest Mach number of the LAL facilities and is mainly employed in aerodynamic and fluid-mechanics studies.  The high stagnation temperature of the facility also makes it suitable for aftbody/wake heating studies where the temperature rise is much lower than on the forebody.  The NASA LaRC 20-Inch Mach 6 Air Tunnel is a blow-down facility in which heated, dried, and filtered air is used as the test gas.  The tunnel has a two-dimensional contoured nozzle that opens into a 20.5×20.0 in test section.  The tunnel is equipped with a bottom-mounted injection system with a –5 deg to +55 deg pitch range and ±5 deg yaw range that can transfer a model from a sheltered model box to the t
+--- Page 7 ---
+  
+American Institute of Aeronautics and Astronautics  7 
+aerodynamic performance and aeroshell forebody heating databases were generated using the WC_BN25_G13 trajectory. The nominal angle-of-attack for LOFTID was 0 deg, with expected deviations of less than 10 deg from atmospheric entry through supersonic conditions.   To encompass this angle-of-attack range, computational solutions were generated for a = 0 deg to 20 deg.  Each of the three solvers, MAP, LAURA and FUN3D were employed over different Mach-Knudsen number ranges, as appropriate, with overlap between the ranges as illustrated in Figure 8.  Rarefied flow field solutions were generated using MAP for a Knudsen number range of KnD = O(10+1) to O(10-3), which bounds atmospheric entry to the begin of the heat pulse.  Hypersonic/supersonic continuum flow field solutions were generated using LAURA from KnD	=	O(10-2) at high altitude down to M∞ ~ 4 at low altitude.  Super / trans / subsonic continuum solutions were generated using FUN3D from M∞ ~ 6 down to M∞ ~ 0. The nose convective and radiative and back-face peak convective rates and loads from the aeroheating database are shown in Figure 7.  Notably, the radiative heating on the front-face of the aeroshell and the convective heating rates and loads on the back-face of the aeroshell were very small (less than 5% of convective) with respect to the nose convective levels.  The radiative heating component had minimal effect on the design and analysis of LOFTID.  However, significant effort was spent to characterize the wake flow environment because the back-face of the aeroshell had no FTPS, leaving the toroids exposed directly to heating.  
+  a) Mach and Knudsen numbers b) Reference hemisphere convective heating Figure 6. Representative preflight trajectory parameters.  
+  a) Heating rates b) Heating loads Figure 7. Key heating parameters along the WC_BN25_G13 trajectory.  
+Time (s) for WC_BN25_G13 trajectory
+Time (s) for EC_BN30_G13 trajectory
+Mach
+KnD
+400450500550600650
+600650700750800850
+0
+5
+10
+15
+20
+25
+30
+35
+10-6
+10-5
+10-4
+10-3
+10-2
+10-1
+100
+101
+102
+Mach - WC_BN25_G13Knudsen - WC_BN25_G13Mach - EC_BN30_G13Knudsen-  EC_BN30_G13
+Time (s) for WC_BN25_G13 trajectory
+Time (s) for EC_BN30_G13 trajectory
+Reference Heat Load (W/cm2)
+Reference Heat Load (kJ/cm2)
+400450500550600650
+600650700750800850
+0
+5
+10
+15
+20
+25
+30
+35
+40
+45
+50
+0.0
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0Heat Rate - WC_BN25_G13Heat Rate - EC_BN30_G13Heat Load - WC_BN25_G13Heat Load - EC_BN30_G13
+Time (s)
+qconv-nose (W/cm2)
+qconv-back, qrad-nose (W/cm2)
+4004505005506006500
+10
+20
+30
+40
+50
+0
+1
+2
+3
+4
+5Nose convectiveNose radiativeBackface convective
+3.6% of peaknose convective
+1.9% of peaknose convective
+Time (s)
+Qconv-nose (kJ/cm2)
+Qconv-back, Qrad-nose (kJ/cm2)
+4004505005506006500.0
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0
+0.00
+0.05
+0.10
+0.15
+0.20
+0.25
+0.30Nose convectiveNose radiativeBackface convective
+2.6% of noseconvective
+2.1% of noseconvective
+--- Page 8 ---
+  
+American Institute of Aeronautics and Astronautics  8 
+ 
+ Figure 8. Computational tools overlap across the Mach / Knudsen number range.  Table 1. EC_BN30_G13 Trajectory Parameters for wake flow environments. t (s) Alt. (km) U∞ (m/s) r∞ (kg/m3) T∞ (K) M∞ ReD KnD q∞ Solver   (Pa)  546 159.76 7301.7 4.0941E-10 525.1 15.90 6.4821E-01 3.1377E+01 1.0914E-02 MAP 600 140.58 7325.7 1.7427E-09 437.0 17.48 3.1413E+00 7.3714E+00 4.6761E-02 MAP 650 121.51 7349.4 1.3537E-08 300.6 21.15 3.2230E+01 9.4899E-01 3.6558E-01 MAP 685 107.45 7365.6 1.3164E-07 223.3 24.59 3.9851E+02 9.7582E-02 3.5709E+00 MAP 712 96.22 7368.8 1.2049E-06 187.3 26.86 4.2386E+03 1.0661E-02 3.2713E+01 MAP, LAURA 721 92.40 7360.8 2.5013E-06 188.5 26.75 8.7391E+03 5.1358E-03 6.7761E+01 MAP, LAURA 728 89.42 7346.3 4.2691E-06 192.2 26.43 1.4634E+04 3.0091E-03 1.1520E+02 LAURA 738 85.12 7303.9 8.6901E-06 197.2 25.95 2.8972E+04 1.4782E-03 2.3179E+02 MAP, LAURA 749 80.37 7203.9 1.8008E-05 201.2 25.34 5.8212E+04 7.1335E-04 4.6728E+02 MAP, LAURA 753 78.64 7145.3 2.3670E-05 202.6 25.04 7.5443E+04 5.4271E-04 6.0423E+02 LAURA 758 76.47 7046.4 3.3369E-05 204.2 24.60 1.0417E+05 3.8497E-04 8.2840E+02 LAURA 767 72.59 6770.4 6.0561E-05 210.2 23.29 1.7723E+05 2.1212E-04 1.3880E+03 LAURA 776 68.77 6327.4 1.0531E-04 219.4 21.31 2.7791E+05 1.2198E-04 2.1082E+03 LAURA 782 66.27 5927.8 1.4742E-04 227.1 19.62 3.5406E+05 8.7137E-05 2.5901E+03 LAURA 784 65.45 5776.7 1.6424E-04 229.7 19.01 3.8085E+05 7.8214E-05 2.7404E+03 LAURA 786 64.63 5617.2 1.8270E-04 232.2 18.39 4.0822E+05 7.0313E-05 2.8824E+03 LAURA 788 63.82 5450.0 2.0292E-04 234.8 17.74 4.3601E+05 6.3305E-05 3.0136E+03 LAURA 790 63.02 5275.7 2.2492E-04 237.3 17.09 4.6375E+05 5.7115E-05 3.1301E+03 LAURA 795 61.05 4815.5 2.8828E-04 243.5 15.40 5.3132E+05 4.4561E-05 3.3425E+03 LAURA 799 59.52 4431.4 3.4861E-04 248.1 14.04 5.8236E+05 3.6849E-05 3.4230E+03 LAURA 805 57.28 3850.0 4.5808E-04 254.0 12.05 6.5215E+05 2.8043E-05 3.3950E+03 LAURA 812 54.77 3199.2 6.1844E-04 260.4 9.89 7.1718E+05 2.0772E-05 3.1649E+03 LAURA 817 53.04 2769.8 7.6451E-04 262.9 8.52 7.6178E+05 1.6803E-05 2.9327E+03 LAURA 822 51.36 2378.8 9.3733E-04 265.3 7.29 7.9636E+05 1.3705E-05 2.6520E+03 LAURA 832 48.15 1722.2 1.3959E-03 267.0 5.26 8.5440E+05 9.2027E-06 2.0701E+03 LAURA 842 45.11 1225.1 2.0523E-03 266.5 3.74 8.9478E+05 6.2594E-06 1.5401E+03 LAURA  
+Time (s)
+Mach
+KnD
+400 450 500 550 6006500
+5
+10
+15
+20
+25
+30
+35
+10-6
+10-5
+10-4
+10-3
+10-2
+10-1
+100
+101
+102
+MachKnudsen
+Sensible atmosphere boundary
+Hypersonic / Supersonic Overlap RegionMach 6 to 4
+Rarefied / Continuum Overap RegionKn Ο(10) to Ο(0.01)
+FUN3DcontinuumNavier-Stokesanalysis
+MAPrarefied DSMCanalysis
+LAURAcontinuum Navier-Stokesanalysis
+Heat PulseMach ~ 26 to 12
+--- Page 9 ---
+  
+American Institute of Aeronautics and Astronautics  9 
+Table 2. WC_BN25_G13 Trajectory Parameters for aerodynamics and forebody aeroheating t (s) Alt. (km) U∞ (m/s) r∞ (kg/m3) T∞ (K) M∞ ReD KnD q∞ Solver   (Pa)  417 133.36 7584.5 4.2330E-09 343.6 18.80 9.4503E+00 3.0181E+00 1.2175E-01 MAP 438 123.57 7596.5 1.2809E-08 288.1 21.04 3.2751E+01 9.9737E-01 3.6960E-01 MAP 456 114.90 7606.8 4.3039E-08 242.7 23.39 1.2629E+02 2.9684E-01 1.2452E+00 MAP 471 107.48 7614.7 1.4026E-07 216.2 25.20 4.5336E+02 9.1087E-02 4.0663E+00 MAP 488 98.85 7619.6 6.5285E-07 191.7 27.20 2.3394E+03 1.9569E-02 1.8952E+01 LAURA 488 98.85 7619.6 6.5285E-07 191.7 27.20 2.3394E+03 1.9569E-02 1.8952E+01 MAP 494 95.76 7617.8 1.1600E-06 187.5 27.61 4.2366E+03 1.1013E-02 3.3659E+01 LAURA 501 92.11 7609.7 2.2326E-06 194.2 27.20 7.9029E+03 5.7223E-03 6.4643E+01 MAP, LAURA 515 84.74 7550.9 7.6252E-06 206.4 26.22 2.5416E+04 1.6754E-03 2.1738E+02 MAP, LAURA 525 79.42 7433.6 1.6826E-05 214.8 25.30 5.3388E+04 7.5928E-04 4.6488E+02 MAP, LAURA 537 73.05 7106.7 4.2284E-05 223.2 23.73 1.2420E+05 3.0214E-04 1.0678E+03 MAP, LAURA 546 68.36 6623.6 8.2743E-05 229.8 21.79 2.2111E+05 1.5440E-04 1.8150E+03 LAURA 551 65.83 6235.4 1.1807E-04 234.2 20.33 2.9243E+05 1.0821E-04 2.2952E+03 LAURA 559 61.97 5436.2 2.0191E-04 238.7 17.56 4.2925E+05 6.3274E-05 2.9835E+03 LAURA 563 60.13 4973.0 2.5941E-04 240.5 16.01 5.0135E+05 4.9250E-05 3.2077E+03 LAURA 569 57.53 4243.8 3.6673E-04 245.2 13.53 5.9548E+05 3.4837E-05 3.3024E+03 LAURA 578 53.97 3202.7 5.8222E-04 251.1 10.08 6.9984E+05 2.1943E-05 2.9861E+03 LAURA, FUN3D 585 51.45 2516.7 8.0437E-04 254.2 7.88 7.5221E+05 1.5883E-05 2.5474E+03 LAURA, FUN3D 592 49.11 1952.8 1.0890E-03 255.4 6.10 7.8722E+05 1.1731E-05 2.0764E+03 LAURA, FUN3D 598 47.23 1558.8 1.4027E-03 254.2 4.88 8.1265E+05 9.1076E-06 1.7042E+03 LAURA, FUN3D 605 45.15 1194.5 1.8560E-03 252.8 3.75 8.2767E+05 6.8834E-06 1.3242E+03 LAURA, FUN3D 611 43.45 951.3 2.3689E-03 248.9 3.01 8.5176E+05 5.3932E-06 1.0719E+03 LAURA, FUN3D 622 40.49 632.9 3.6599E-03 241.8 2.03 8.9642E+05 3.4907E-06 7.3303E+02 FUN3D 631 38.19 468.4 5.1722E-03 236.5 1.52 9.5450E+05 2.4700E-06 5.6730E+02 FUN3D 651 33.19 305.6 1.1194E-02 226.8 1.01 1.3953E+06 1.1412E-06 5.2281E+02 FUN3D     
+--- Page 10 ---
+  
+American Institute of Aeronautics and Astronautics  10 
+A. Aerodynamic Performance An aerodynamic performance database was developed for the LOFTID mission and incorporated into the Program to Simulate Optimized Trajectory (POST) six degree-of-freedom trajectory analysis tool [39].  This database includes inputs generated from LOFTID-specific simulations using the computational tools describe above, free-molecular regime simulations performed for the IRVE-3 vehicle, and subsonic dynamic stability data obtained from ballistic range and low-speed wind tunnel testing during the IRVE-3 program.  The database was formulated in terms of aerodynamic coefficient dependency on either Mach number or Knudsen number, depending on the flight regime. Super / hyper sonic aerodynamic performance parameters from the database are given here with the normal force and axial force coefficients shown in Figure 9(a) and the pitching moment coefficient in Figure 9(b).  A comprehensive discussion of the LOFTID aerodynamic database and flight performance across the speed range is presented in Refs. [40-42].  The accuracy of the aerodynamic database resulted in the actual splashdown point within 3 nautical miles from the pre-flight prediction.  
+  c) Axial and normal force coefficients d) Pitching moment coefficient Figure 9. Super / hypersonic aerodynamic coefficients.  B. Aeroheating An aeroheating database for the LOFTID mission was developed through computational analyses using the LAURA code for the continuum hypersonic regime and the MAP code for the rarefied flow regime.  The computational database was supplemented by testing in the NASA LARC 31-Inch Mach 10 Air and 20-Inch Mach 6 Air Tunnels, which provided data on boundary-layer transition, turbulent heating augmentation due to OML scalloping, and aeroshell back-face data for verification of computed heating levels.   This database was incorporated into the POST trajectory simulation tool to provide trajectory-based heating values for use in the thermal analysis of the vehicle FTPS.  Database output of convective heating environments was formulated in terms of the film coefficient, h defined from the radiative equilibrium wall heating and enthalpy difference term as per Eq. (1), to remove the effects of wall temperature from the analysis, although dimensional flux values will be shown herein for convenience.  Radiative heating output was formulated in terms of the dimensional flux since flow field radiation is not affected by wall temperature, and the effects of black-body radiative emissions from the wall to the flow field are dealt with in the thermal analysis.   For implantation in the flight database, curve-fits to a surface quantity of interest Y were generated from the solution set in terms of free stream density and velocity as per Eq. (2).  This formulation is (relatively) trajectory independent, allowing for rapid updates to environments as trajectories change without the requirement of regenerating hi
+--- Page 11 ---
+  
+American Institute of Aeronautics and Astronautics  11 
+    𝒉=𝑞𝒄𝒐𝒏𝒗(𝐻𝟎−𝐻&)⁄ (1)     𝒀=𝑨×(𝜌')(×(𝑈')) (2)     𝑨=𝑨𝟏	+	𝑨𝟐×	(∝)	+	𝑨𝟑×	(∝)𝟐  𝑩=𝑩𝟏	+	𝑩𝟐×	(∝)	+	𝑩𝟑×	(∝)𝟐	  𝑪=𝑪𝟏	+	𝑪𝟐×	(∝)	+	𝑪𝟑×	(∝)𝟐 (3)  1. Aeroshell Front-Face Environments Aerothermodynamic environments for the front-face of the LOFTID aeroshell are based on laminar and turbulent continuum LAURA simulations and MAP rarefied flow simulations at the WC_BN25_G13 trajectory points listed in Table 2.  Solutions were generated at a = 0, 2, 4 and 8 deg to cover the potential range of deviations from the nominal flight value a = 0 deg.  The simulations were all performed on a representative smooth OML geometry that did not incorporate the backward facing step at the nose / cone junction or any deformation of the FTPS.  Convective and radiative heating, surface pressure, and total shear stress distributions for the front-face of the aeroshell are shown for three separate time increments defining: the rarefied flow regime in Figure 10; the high hypersonic flow regime in Figure 11, and the low hypersonic to supersonic regime in Figure 12.   Good agreement between LAURA and MAP predictions was achieved in the overlap region where both solvers were employed.  Owing to the relatively low Reynolds numbers along the trajectory, the differences in predicted heating between laminar and turbulent LAURA solutions were not large, although the differences did increase for higher angle-of-attack cases. The influence of angle of attack on these aerothermodynamic quantities is illustrated for two flight conditions in Figure 13 for a rarefied/continuum overlap case and in Figure 14 for the peak dynamic pressure case.  For these small differences in angle of attack, the variation in surface quantities were not large, although the increase in turbulent heating on the leeside of the aeroshell (positive x-direction) is notable for the peak dynamic pressure case. Although both laminar and turbulent LAURA solutions were generated, only the turbulent heating predictions were incorporated into the flight database.  Even though a purely smooth-OML boundary-layer transition assessment indicated laminar flow, as shown by the momentum thickness Reynolds number information in Figure 15, it was assumed that the “as-built” vehicle would be exposed to turbulent flow.  In contrast to the smooth-OML employed in the simulations, on the actual vehicle the influence of the backward facing step at the nose / cone junction, FTPS deformations due to aerodynamic loading, as well as the inherent roughness of the woven FTPS surface, would all act to produce turbulent flow.  As will be shown later, the turbulent predictions bounded the effects of the FTPS deformation effects on heating observed in the wind tunnel data and it was assumed the same would be true for flight conditions.    
+--- Page 12 ---
+  
+American Institute of Aeronautics and Astronautics  12 
+      
+  a) Convective Heating b) Radiative Heating 
+  c) Surface Pressure d) Surface Shear Figure 10. Aerothermodynamic parameters along symmetry plane, t = 417 s to 501 s.    
+z (m)
+qconv (W/cm2)
+-3 -2 -1 0 1 2 30
+5
+10
+15 MAP: t=417 secMAP: t=438 secMAP: t=456 secMAP: t=471 secMAP: t=488 secMAP: t=501 secLAURA-laminar: t=488 secLAURA-laminar: t=494 secLAURA-laminar: t=501 sec
+z (m)
+qrad (W/cm2)
+-3 -2 -1 0 1 2 30.0
+0.5
+1.0
+1.5 LAURA: t=488 secLAURA: t=494 secLAURA: t=501 sec
+z (m)
+pw (Pa)
+-3 -2 -1 0 1 2 3
+100
+101
+102
+MAP: t=417 secMAP: t=438 secMAP: t=456 secMAP: t=471 secMAP: t=488 secMAP: t=501 secLAURA: t=488 secLAURA: t=494 secLAURA: t=501 sec
+z (m)
+τw,total (Pa)
+-3 -2 -1 0 1 2 30
+2
+4
+6
+8 MAP: t=417 secMAP: t=438 secMAP: t=456 secMAP: t=471 secMAP: t=488 secMAP: t=501 secLAURA-laminar: t=488 secLAURA-laminar: t=494 secLAURA-laminar: t=501 sec
+--- Page 13 ---
+  
+American Institute of Aeronautics and Astronautics  13 
+      
+  a) Convective Heating b) Radiative Heating 
+  c) Surface Pressure d) Surface Shear Figure 11. Aerothermodynamic parameters along symmetry plane, t = 488 s to 546 s.    
+z (m)
+qconv (W/cm2)
+-3 -2 -1 0 1 2 30
+5
+10
+15
+20
+25
+30
+35
+40
+45
+50 MAP: t=488 secMAP: t=501 secLAURA-laminar: t=488 secLAURA-laminar: t=494 secLAURA-laminar: t=501 secLAURA-laminar: t=515 secLAURA-laminar: t=525 secLAURA-laminar: t=537 secLAURA-laminar: t=546 secLAURA-turbulent: t=515 secLAURA-turbulent: t=525 secLAURA-turbulent: t=537 secLAURA-turbulent: t=546 sec
+z (m)
+qrad (W/cm2)
+-3 -2 -1 0 1 2 30.0
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0
+3.5
+4.0
+4.5
+5.0 LAURA: t=494 secLAURA: t=501 secLAURA: t=515 secLAURA: t=525 secLAURA: t=537 secLAURA: t=546 sec
+z (m)
+pwv (Pa)
+-3 -2 -1 0 1 2 3
+102
+103
+104
+MAP: t=501 secLAURA: t=494 secLAURA: t=501 secLAURA: t=515 secLAURA: t=525 secLAURA: t=537 secLAURA: t=546 sec
+z (m)
+τw,total (Pa)
+-3 -2 -1 0 1 2 30
+5
+10
+15
+20 MAP: t=488 secMAP: t=501 secLAURA-laminar: t=488 secLAURA-laminar: t=494 secLAURA-laminar: t=501 secLAURA-laminar: t=515 secLAURA-laminar: t=525 secLAURA-laminar: t=537 secLAURA-laminar: t=546 secLAURA-turbulent: t=515 secLAURA-turbulent: t=525 secLAURA-turbulent: t=537 secLAURA-turbulent: t=546 sec
+--- Page 14 ---
+  
+American Institute of Aeronautics and Astronautics  14 
+      
+  a) Convective Heating b) Radiative Heating 
+  c) Surface Pressure d) Surface Shear Figure 12. Aerothermodynamic parameters along symmetry plane, t = 551 s to 611 s.    
+z (m)
+qconv (W/cm2)
+-3 -2 -1 0 1 2 30
+5
+10
+15
+20
+25
+30
+35
+40
+45
+50LAURA-laminar: t=551 secLAURA-laminar: t=559 secLAURA-laminar: t=563 secLAURA-laminar: t=569 secLAURA-laminar: t=578 secLAURA-laminar: t=585 secLAURA-laminar: t=592 secLAURA-laminar: t=598 secLAURA-laminar: t=605 secLAURA-laminar: t=611 secLAURA-turbulent: t=551 secLAURA-turbulent: t=559 secLAURA-turbulent: t=563 secLAURA-turbulent: t=569 secLAURA-turbulent: t=578 secLAURA-turbulent: t=585 secLAURA-turbulent: t=592 secLAURA-turbulent: t=598 secLAURA-turbulent: t=605 secLAURA-turbulent: t=611 sec
+z (m)
+qrad (W/cm2)
+-3 -2 -1 0 1 2 30.0
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0
+3.5
+4.0
+4.5
+5.0 LAURA: t=551 secLAURA: t=559 secLAURA: t=563 secLAURA: t=569 secLAURA: t=578 secLAURA: t=585 secLAURA: t=592 sec
+z (m)
+pw (Pa)
+-3 -2 -1 0 1 2 3
+2000
+4000
+6000
+8000
+10000 LAURA: t=551 secLAURA: t=559 secLAURA: t=563 secLAURA: t=569 secLAURA: t=578 secLAURA: t=585 secLAURA: t=592 secLAURA: t=598 secLAURA: t=605 secLAURA: t=611 sec
+z (m)
+τtotal (Pa)
+-3 -2 -1 0 1 2 30
+5
+10
+15
+20LAURA-laminar: t=551 secLAURA-laminar: t=559 secLAURA-laminar: t=563 secLAURA-laminar: t=569 secLAURA-laminar: t=578 secLAURA-laminar: t=585 secLAURA-laminar: t=592 secLAURA-laminar: t=598 secLAURA-laminar: t=605 secLAURA-laminar: t=611 secLAURA-turbulent: t=551 secLAURA-turbulent: t=559 secLAURA-turbulent: t=563 secLAURA-turbulent: t=569 secLAURA-turbulent: t=578 secLAURA-turbulent: t=585 secLAURA-turbulent: t=592 secLAURA-turbulent: t=598 secLAURA-turbulent: t=605 secLAURA-turbulent: t=611 sec
+--- Page 15 ---
+  
+American Institute of Aeronautics and Astronautics  15 
+      
+  a) Convective Heating b) Radiative Heating 
+  c) Surface Pressure d) Surface Shear Figure 13. Angle-of-attack effects on aerothermodynamic parameters, t = 488 s (rarefied/continuum overlap).    
+z (m)
+qconv (W/cm2)
+-3 -2 -1 0 1 2 30
+2
+4
+6
+8
+10MAP: α=0-degMAP: α=2-degMAP: α=4-degMAP: α=8-degLAURA: α=0-degLAURA: α=2-degLAURA: α=4-degLAURA: α=8-deg
+z (m)
+qconv (W/cm2)
+-3 -2 -1 0 1 2 30
+0.2
+0.4
+0.6
+0.8
+1 LAURA α=0-degLAURA α=2-degLAURA α=4-degLAURA α=8-deg
+z (m)
+pw (Pa)
+-3 -2 -1 0 1 2 30
+5
+10
+15
+20
+25
+30
+35
+40
+45
+50MAP: α=0-degMAP: α=2-degMAP: α=4-degMAP: α=8-degLAURA: α=0-degLAURA: α=2-degLAURA: α=4-degLAURA: α=8-deg
+z (m)
+τw,total (Pa)
+-3 -2 -1 0 1 2 30
+1
+2
+3
+4
+5 MAP: α=0-degMAP: α=2-degMAP: α=4-degMAP: α=8-degLAURA: α=0-degLAURA: α=2-degLAURA: α=4-degLAURA: α=8-deg

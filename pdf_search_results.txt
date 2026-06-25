@@ -1,0 +1,31 @@
+
+========== HIAD Sim ==========
+  Page 1: [Mach 10] behind a simplified HIAD model at Mach 10. The CFD simulations were performed using
+  Page 1: [peak heat] vehicles. For a given payload, a larger heatshield diameter yields lower peak heating and higher drag. Unfortunately,
+  Page 3: [Mach 10] predicting the wake velocities of a HIAD at Mach 10. First, a brief summary of the flowfield and associated physics is
+  Page 3: [Mach 10] Fig. 4 show a range of scales that suggest turbulent flow in some portion of the wake. However, experiments at Mach 10
+  Page 8: [Mach 10] A wind tunnel test using PLIF was performed on a representative LOFTID test article in the 31-inch Mach 10 Air
+  Page 24: [Mach 10] [21] Rodrigues, N. S., Tyrrell, O. K., Rieken, E., Hollis, B. R., and Danehy, P. M., “FLEET and PLIF Velocimetry within a Mach 10
+  Page 24: [Mach 10] Mach 10,” NASA TM 20240000817, NASA Langley Research Center, Hampton, VA, Apr. 2024.
+
+========== LOFTID Aero ==========
+  Page 1: [nose radius] Aerothermodynamic Analyses for the LOFTID Technology Demonstration Mission Brian R. Hollis*, Adam J. Wise†, Derek S. Liechty†, Ashley M. Korzun‡, Kyle B. Thompson†, Neil S. Rodrigues§  and Elizabeth F
+  Page 2: [ballistic] II. Introduction and Background A. Hypersonic Inflatable Aerodynamic Decelerator Technology Concept Hypersonic Inflatable Aerodynamic Decelerator (HIAD) technology [1] offers an effective, mass-saving
+  Page 2: [peak heat] II. Introduction and Background A. Hypersonic Inflatable Aerodynamic Decelerator Technology Concept Hypersonic Inflatable Aerodynamic Decelerator (HIAD) technology [1] offers an effective, mass-saving
+  Page 2: [Black Brant] II. Introduction and Background A. Hypersonic Inflatable Aerodynamic Decelerator Technology Concept Hypersonic Inflatable Aerodynamic Decelerator (HIAD) technology [1] offers an effective, mass-saving
+  Page 6: [Mach 10] B. Experimental Methods Wind tunnel tests were conducted to obtain experimental data on physical phenomena for which computational methods are not suitable or have not been validated.   Boundary-layer
+  Page 10: [ballistic] A. Aerodynamic Performance An aerodynamic performance database was developed for the LOFTID mission and incorporated into the Program to Simulate Optimized Trajectory (POST) six degree-of-freedom traj
+  Page 10: [Mach 10] c) Axial and normal force coefficients d) Pitching moment coefficient Figure 9. Super / hypersonic aerodynamic coefficients.  B. Aeroheating An aeroheating database for the LOFTID mission was develope
+  Page 17: [peak heat] a) Req Distribution at max dynamic pressure b) Req at shoulder along trajectory Figure 15. Boundary-layer transition metrics.  2. Aeroshell Back-Face and Payload Environments Aerothermodynamic environ
+  Page 18: [peak heat] Heating rate/load indicators on aeroshell backface at peak heating location
+  Page 21: [Mach 10] C. Wind Tunnel Aeroheating and Boundary-Layer Transition Data Two wind tunnel test programs were conducted to obtain data on the LOFTID vehicle for use in validation and uncertainty estimation of aero
+  Page 21: [nose radius] C. Wind Tunnel Aeroheating and Boundary-Layer Transition Data Two wind tunnel test programs were conducted to obtain data on the LOFTID vehicle for use in validation and uncertainty estimation of aero
+  Page 24: [Mach 10] Figure 23. Comparison of flight and wind tunnel Req values at a = 0 deg. Figure 24. Comparison of scallop heating data to predictions at a = 4 deg.  2. Aeroshell Back-Face and Payload Heating Because 
+  Page 24: [Mach 10] a) Smooth backface model b) Toroid backface model Figure 25. LOFTID models in 31-Inch Mach 10 Air Tunnel [source NASA].  Sample measured intensity and processed heating results at the highest Reynolds
+  Page 24: [peak heat] 250WInd Tunnel, Re∞=1.0E+06/ftWInd Tunnel, Re∞=2.0E+06/ftWInd Tunnel, Re∞=3.0E+06/ftWInd Tunnel, Re∞=5.0E+06/ftWInd Tunnel, Re∞=6.5E+06/ftWInd Tunnel, Re∞=7.3E+06/ftWInd Tunnel, Re∞=8.2E+06/ftFlight, 
+  Page 25: [Mach 10] c) Toroid backface intensity [source NASA] d) Toroid backface heating Figure 26. Intensity and heating data from 31-Inch Mach 10 Air Tunnel, Re∞ = 1.9×106/ft, a = 0 deg.
+  Page 26: [Mach 10] c) Toroid backface heating d) Payload heating (toroid backface) Figure 27. Distributed and averaged data from 31-Inch Mach 10 Air Tunnel, Re∞ = 1.9×106/ft, a = 0 deg.
+  Page 27: [Mach 10] c) Toroid backface d) Payload (toroid backface) Figure 28. Comparison of 31-Inch Mach 10 Air Tunnel data with LAURA predictions.
+  Page 28: [Mach 10] D. Wind Tunnel Flow Field Visualization Data Flow field visualization studies [36] were performed during two test entries in the LaRC 31-Inch Mach 10 Air Tunnel using both NO-PLIF and FLEET measuremen
+  Page 29: [Mach 10] V. Summary Aerothermodynamic databases for the LOFTID flight test demonstration mission were developed using a combination of computational and experiment methods.  The MAP, FUN3D, LAURA, and HARA cod
+  Page 30: [Mach 10] 15. O’Keefe, S. A. and Bose, D. M., “IRVE-II Post-Flight Trajectory Reconstruction,” AIAA Paper 2010-7515, AIAA Atmospheric Flight Mechanics Conference, Toronto, Canada, August 2-5, 2010. 16. Bose, D.

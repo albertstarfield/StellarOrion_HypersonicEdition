@@ -5,6 +5,15 @@ from StellarOrionEngineMach5Up import Api
 
 app = Api()
 
+# =============================================================================
+# StellarOrion — Run Both Baselines (IRVE-3 HIAD + Orion-HIAD)
+# =============================================================================
+# PARTICLE SCALING (applies to all configs):
+#   n_sim = (nrho × V_domain) / fnum
+#   fnum=1.5e20 → ~2M particles (minimum for visible shockwave)
+#   Lower fnum = more particles = better statistics = more RAM/CPU
+# =============================================================================
+
 # 1. Run IRVE-3 Baseline
 print("\n--- Running IRVE-3 Baseline ---")
 irve3_params = {
@@ -16,7 +25,7 @@ irve3_params = {
     'env_mach': '32.0',
     'env_alt': '40.0',
     'env_run': '2500',          # Run full steady-state steps
-    'env_fnum': '5.0e23',       # Adjusted fnum
+    'env_fnum': '1.5e20',       # ~2M particles for visible shockwave
     'env_xmin': '-1.69',
     'env_xmax': '4.5',
     'env_ymax': '3.976',
@@ -43,7 +52,7 @@ orion_hiad_params = {
     'env_mach': '32.0',
     'env_alt': '40.0',
     'env_run': '2500',          # Run full steady-state steps
-    'env_fnum': '5.0e23',       # Adjusted fnum
+    'env_fnum': '1.5e20',       # ~2M particles for visible shockwave
     'env_xmin': '-1.69',
     'env_xmax': '8.0',
     'env_ymax': '6.0',

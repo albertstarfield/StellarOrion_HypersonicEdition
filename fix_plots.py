@@ -14,7 +14,7 @@ sample_dict = {'diameter': 3.0}
 viz_metadata = engine._get_viz_params(opt_params, sample_dict)
 grid_file = "CADDesign/results_reference/grid.200.out"
 surf_file = "CADDesign/ORION_custom.surf"
-output_dir = "ProgressReport_Week5/figures/ORION-HIAD-Baseline"
+output_dir = "ProgressReport/Week 5/figures/ORION-HIAD-Baseline"
 os.makedirs(output_dir, exist_ok=True)
 
 visualizer.generate_plots(grid_file, output_dir, ref_params=viz_metadata, surf_file=surf_file)

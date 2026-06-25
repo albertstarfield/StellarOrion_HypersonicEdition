@@ -1290,6 +1290,15 @@ O recombine simple {gamma} O2
                 pass
         else:
             # Fresh start
+            # =========================================================================
+            # SPARTA PARTICLE INITIALIZATION:
+            #   "global nrho {n_rho} fnum {fnum} weight cell radius"
+            #   - nrho:  freestream number density [molecules/m³]
+            #   - fnum:   real molecules per simulated particle [molecules/particle]
+            #   - weight cell radius: each cell's particle count ∝ cell volume × nrho / fnum
+            #   - n_simulated ≈ (nrho × V_domain) / fnum (before AMR refinement)
+            #   - With fnum=1.5e20: ~2M particles after AMR (visible shockwave)
+            # =========================================================================
             init_block = f"""create_box      {xmin:.4f} {xmax:.4f} 0.0000 {ymax:.4f} -0.5 0.5
 create_grid     {nx} {ny} 1
 balance_grid    rcb cell
@@ -3527,6 +3536,13 @@ run             {steps}
         baseline_doc = self.get_irve_baseline_results_static()
         
         # Setup optimization parameters for the baseline mission
+        # =========================================================================
+        # DSMC PARTICLE SCALING:
+        #   n_sim = (nrho × V_domain) / fnum
+        #   fnum = real molecules per simulated particle
+        #   Lower fnum → more particles → better shockwave resolution → more RAM
+        #   fnum=1.5e20 → ~2M particles (recommended minimum for visible shockwave)
+        # =========================================================================
         opt_params = {
             'solver': solver,
             'sparta_gpu': sparta_gpu,
@@ -3544,11 +3560,8 @@ run             {steps}
             'default_payload': False,
             'env_duration': 60.0,
             'env_run': 1500, # 1.5x flow-through time for DSMC steady-state convergence (compromise for speed)
-            # --- fnum tuning (2026-05-31 calibration) ---
-            # Lowered from 1.5e20 to 2.5e20 (moderate compromise to keep particles ~1M)
-            # Prior value of 5e19 produced ~4.8M particles and took 2 hours to run.
-            'env_fnum': '2.5e20',
-            'env_cores': os.cpu_count() or 4,
+            'env_fnum': '1.5e20',  # ~2M particles — lower = more particles, better shock visibility
+            'env_cores': os.cpu_count() or 4,  # Use all available CPU threads
             'env_xmin': -5.0,
             'env_xmax': 9.0
         }
