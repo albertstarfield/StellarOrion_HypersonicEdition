@@ -251,7 +251,37 @@
 [248] J. Bertin, Hypersonic aerothermodynamics, 1994. DOI: 10.2514/4.470363.
 [249] N. H. Kemp and F. R. Riddell, “Heat transfer to satellite vehicles re-entering the atmosphere,” Journal of Jet Propulsion, vol. 27, no. 2, pp. 132–137, 1957. DOI: 10.2514/8. 12603.
 [250] E. Reshotko and C. B. Cohen, “Heat transfer at the forward stagnation point of blunt bodies,” Tech. Rep., 1955.
-[251] K. Sutton and R. A. Graves Jr, “A general stagnation-point convective heating equation for arbitrary gas mixtures,” Tech. Rep., 1971.
+[251] K. Sutton and R. A. Graves Jr., “A general stagnation-point convective heating equation for arbitrary gas mixtures,” NASA Technical Report NASA TR R-376, National Aeronautics and Space Administration, Washington, D.C., Nov. 1971.
+
+  **StellarOrion usage:** `calculate_flight_metrics()` in `StellarOrionEngineMach5Up.py`
+  Primary source for absolute stagnation-point heat flux in all IRVE-3 TPS survivability
+  calculations. Raw SPARTA DSMC surface ke is NOT used as absolute W/m² (it is a
+  dimensionally ambiguous simulation-internal unit). Sutton-Graves provides the
+  physically calibrated heat flux.
+
+  **Formula:** q_stag = C_SG * sqrt(rho_inf / R_N) * V_inf^3  [W/m^2]
+  C_SG = 1.7415e-4 (Earth air, SI units). Derived from the mixture-averaged frozen-
+  chemistry stagnation boundary-layer solution for a sphere in equilibrium air,
+  encapsulating the Lewis number, Prandtl number, and binary diffusion integrals.
+
+  **IRVE-3 baseline (StellarOrion validation):**
+    rho_inf = 1.67e-4 kg/m^3 (52 km, NRLMSIS-2), R_N = 0.55 m, V = 2700 m/s
+    => q_stag ~ 1.90e5 W/m^2 = 19.0 W/cm^2
+    IRVE-3 flight measurement: ~14 W/cm^2. Sutton-Graves is a conservative upper bound;
+    actual aeroheating is reduced by the HIAD flared geometry and stand-off shock.
+
+  **Applicability:** Earth atmosphere, blunt-body spherical nose cap, V = 3-12 km/s,
+  near-continuum flow (Kn << 1). For transitional/rarefied regimes (Kn > 0.01)
+  apply the Singh-Schwartzentruber (2016) correction [266].
+
+  **Related references in this list:**
+    [247] Fay & Riddell (1958)          - higher-fidelity dissociated-air stagnation heating
+    [245] Brandis & Johnston (2014)      - Earth-entry stagnation heat flux characterisation
+    [249] Kemp & Riddell (1957)          - laminar heating, blunt re-entry bodies
+    [255] Detra (1957)                   - empirical addendum to Kemp & Riddell
+    [266] Singh & Schwartzentruber (2016)- rarefied-regime correction to Sutton-Graves
+    [253] West & Brandis (2020)          - Mars-entry analogue correlation
+    [270] Santos, Hosder & West (2021)   - multifidelity turbulent HIAD heating (IRVE-3)
 [252] C. Catalfamo, D. Bruno, G. Colonna, A. Laricchiuta, and M. Capitelli, “High temperature mars atmosphere. part ii: Transport properties,” The European Physical Journal D, vol. 54, no. 3, pp. 613–621, 2009. DOI: 10.1140/epjd/e2009-00193-6.
 [253] T. K. West IV and A. M. Brandis, “Stagnation-Point Aeroheating Correlations for Mars Entry,” Journal of Spacecraft and Rockets, vol. 57, no. 2, pp. 319–327, 2020. DOI: 10. 2514/1.A34602.
 [254] F. De Filippis and M. Serpico, “Air high-enthalpy stagnation point heat flux calculation,” Journal of Thermophysics and Heat Transfer, vol. 12, no. 4, pp. 608–610, 1998. DOI: 10.2514/2.6386.

@@ -1,4 +1,3 @@
-import re
 
 file_path = "CADDesign/HIAD_GeometryEngine.py"
 with open(file_path, "r") as f:

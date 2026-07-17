@@ -1,4 +1,3 @@
-import sys
 from StellarOrionEngineMach5Up import Api
 api = Api()
 # Force env_cores=1 to bypass MPI shared memory issues

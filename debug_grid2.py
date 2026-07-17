@@ -1,6 +1,4 @@
-import numpy as np
 import StellarOrionEngineMach5Up
-from source import visualizer
 
 engine = StellarOrionEngineMach5Up.Api()
 opt_params = {

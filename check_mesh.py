@@ -1,5 +1,3 @@
-import numpy as np
-import matplotlib.pyplot as plt
 
 def parse_surf(file_path):
     pts = []

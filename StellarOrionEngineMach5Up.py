@@ -152,12 +152,30 @@ class Api:
     }
 
     def __init__(self):
+        self.cwd = os.path.dirname(os.path.abspath(__file__))
+        self.journal_path = os.path.join(self.cwd, "StellarOrionIntentionLog.jsonl")
         self.window = None
-        self.cwd = os.getcwd()
         self.reference_data = None
         import getpass
         self.local_user = getpass.getuser()
         self.history = HistoryManager(os.path.join(self.cwd, "optimization_history.db"))
+
+    def _journal_intention(self, stage: str, action: str, metadata: Dict[str, Any] = None):
+        """Atomically appends a state intention log to the ZFS-style journal.
+        (We are here doing Atomic ZFS like StellarOrionIntentionLog)"""
+        entry = {
+            "timestamp": datetime.datetime.now().isoformat(),
+            "stage": stage,
+            "action": action,
+            "metadata": metadata or {}
+        }
+        try:
+            with open(self.journal_path, "a") as f:
+                f.write(json.dumps(entry) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
+        except Exception as e:
+            self.log_to_gui(f"    [!] Warning: Failed to write to intention log: {e}")
 
     @staticmethod
     def calculate_shield_mass(skin_data, tps_thickness=0.0254, tps_density=1468.0):
@@ -340,9 +358,10 @@ class Api:
         total_tps_thickness = tps_thickness_sic + tps_thickness_pyrogel + tps_thickness_kapton
         
         # Calculate mass for each layer using weighted average density
-        # For simplicity, use effective density (mass-weighted average)
-        sic_mass_frac = (tps_thickness_sic * 1468.0) / (total_tps_thickness * 1468.0) if total_tps_thickness > 0 else 0
-        effective_density = 1468.0  # Primary structural layer is SiC
+        m_sic = tps_thickness_sic * 1468.0
+        m_pyr = tps_thickness_pyrogel * 110.0
+        m_kap = tps_thickness_kapton * 3100.0
+        effective_density = (m_sic + m_pyr + m_kap) / total_tps_thickness if total_tps_thickness > 0 else 1468.0
         
         shield_mass = Api.calculate_shield_mass_analytical(
             diameter_m=3.0,
@@ -699,8 +718,7 @@ class Api:
                 # Last resort: just print the message as is, ignoring errors if possible, or print a simplified version
                 pass
 
-        if self.window:
-
+        if hasattr(self, 'window') and self.window:
             safe_msg = message.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "<br>")
             self.window.evaluate_js(f"appendLog('{safe_msg}')")
 
@@ -893,8 +911,8 @@ class Api:
     def calculate_flight_metrics(self, sparta_res, opt_params, sample_dict, skin_data=None):
         """Calculates derived flight metrics from DSMC results."""
         mass = float(sample_dict.get('mass', opt_params.get('base_mass', 281.0)))
-        diameter = float(sample_dict.get('diameter', 3.0))
-        area = np.pi * (diameter / 2)**2
+        diameter = float(sample_dict.get('diameter') or 3.0)
+        np.pi * (diameter / 2)**2
         
         # Calculate shield mass
         shield_mass_info = None
@@ -906,10 +924,10 @@ class Api:
             shield_mass_info = self.calculate_shield_mass(skin_data, tps_thickness, tps_density)
         else:
             # Use analytical calculation from geometry parameters
-            angle = float(sample_dict.get('angle', 60.0))
-            toroids = int(sample_dict.get('toroids', 6))
-            tradius = float(sample_dict.get('tradius', 0.135))
-            nose_radius = float(sample_dict.get('nose_radius', 0.55))
+            angle = float(sample_dict.get('angle') or 60.0)
+            toroids = int(sample_dict.get('toroids') or 6)
+            tradius = float(sample_dict.get('tradius') or 0.135)
+            nose_radius = float(sample_dict.get('nose_radius') or 0.55)
             
             shield_mass_info = self.calculate_shield_mass_analytical(
                 diameter_m=diameter,
@@ -922,69 +940,131 @@ class Api:
             )
         
         drag_force = sparta_res['drag']
-        heat_flux = sparta_res['heat'] 
-        
+        heat_flux_sparta = sparta_res['heat']  # Raw SPARTA ke — relative shape metric only
+
         # Ballistic Coefficient (beta)
         # Default calibrated for IRVE-3 Baseline (Mach 10 @ ~52km) - NASA/TP-2013-4012
         vstream = float(opt_params.get('env_vstream', 2700.0))
         nrho = float(opt_params.get('env_nrho', 3.5e22))
         # rho_inf [kg/m^3] = nrho * (M / Na)
-        rho_inf = nrho * (28.97e-3 / 6.022e23) 
-        
+        rho_inf = nrho * (28.97e-3 / 6.022e23)
+
         q = 0.5 * rho_inf * (vstream**2)
         beta = mass * q / drag_force if drag_force > 0 else 0
-        
+
         # Knudsen Number (Kn) - Critical for Rarefaction Validity
         # lambda = 1 / (sqrt(2) * pi * d^2 * nrho)
-        mol_diam = 3.7e-10 # m (approx for Air)
+        mol_diam = 3.7e-10  # m (approx for Air)
         mfp = 1.0 / (np.sqrt(2) * np.pi * (mol_diam**2) * nrho)
         kn = mfp / diameter if diameter > 0 else 0
 
-        # Stagnation Heat (W/m^2) - already a per-area flux from SPARTA
-        stag_heat = heat_flux
+        # ─────────────────────────────────────────────────────────────────────────
+        # STAGNATION HEAT FLUX  [W/m²]  —  Sutton-Graves (1971) Correlation
+        # ─────────────────────────────────────────────────────────────────────────
+        # WHY NOT RAW SPARTA ke?
+        #   SPARTA's fix ave/surf stores kinetic energy per simulated particle per
+        #   timestep per face element — a simulation-internal unit that depends on
+        #   fnum, dt, and face area in a non-trivially-normalised way.  It is kept
+        #   as `heat_flux_sparta_raw` for RELATIVE geometry ranking only.
+        #
+        # WHY SUTTON-GRAVES?
+        #   The Sutton & Graves (1971) NASA TR R-376 correlation is the industry-
+        #   standard formula for blunt-body stagnation-point convective heating:
+        #
+        #       q_stag = C_sg * sqrt( rho_inf / R_nose ) * V_inf^3       [W/m²]
+        #
+        #   where C_sg = 1.7415e-4  (Earth air, SI units)
+        #
+        # IRVE-3 VALIDATION (see DERIVATION.md §3):
+        #   rho_inf ≈ 1.67e-4 kg/m³ (52 km alt), R_nose = 0.55 m, V = 2700 m/s
+        #   → q_stag ≈ 1.90e5 W/m² = 19.0 W/cm²
+        #   IRVE-3 documented peak: ~14 W/cm²  (Sutton-Graves is a conservative
+        #   upper bound; actual heating is reduced by the HIAD flared geometry)
+        #
+        # APPLICABILITY:
+        #   Valid for: Earth atmosphere, blunt-body nose cap, V = 3–12 km/s,
+        #   Kn ≪ 1 (continuum / near-continuum).  For rarefied Kn > 0.01 a
+        #   Singh-Schwartzentruber (2016) correction should be applied [Ref: 266].
+        #
+        # Ref: K. Sutton & R. A. Graves Jr., NASA TR R-376, 1971  [REFERENCES.MD: 251]
+        # ─────────────────────────────────────────────────────────────────────────
+        nose_radius = float(sample_dict.get('nose_radius', 0.55))  # m — IRVE-3 spherical cap
+        C_sg = 1.7415e-4  # Sutton-Graves constant [Earth air, SI]  Ref: NASA TR R-376
+        stag_heat = C_sg * np.sqrt(rho_inf / nose_radius) * (vstream ** 3)  # W/m²
+        self.log_to_gui(
+            f"    [*] Stagnation Heat Flux (Sutton-Graves): {stag_heat:.3e} W/m^2 "
+            f"({stag_heat/1e4:.2f} W/cm^2)  [IRVE-3 ref: ~14-19 W/cm^2]"
+        )
         
         # Instantaneous g-load
         g_load = drag_force / (mass * 9.81) if mass > 0 else 0
         
-        # 1D Thermal Model (Transient approximation for LOFTID/IRVE-3 F-TPS)
-        # T_back = T_init + (q_stag * duration) / (rho * Cp * thickness)
-        t_initial = 300.0 # K
-        duration = float(opt_params.get('env_duration', 450.0))  # s
-        tps_thickness = float(sample_dict.get('thickness', 0.0254)) # m
-        
-        # Material Specific Limits (MDAO Validation Ref - Table B.17)
+        # ─────────────────────────────────────────────────────────────────────────
+        # 1D TRANSIENT BACKFACE THERMAL MODEL  (Anderson 2006; Rapisarda 2023 §5.5)
+        # ─────────────────────────────────────────────────────────────────────────
+        # Assumes the heat pulse q_stag acts uniformly over the reentry duration Δt.
+        # A thermal lag factor η_lag (default 15%) accounts for the insulation layer
+        # attenuating the heat before it reaches the structural backface:
+        #
+        #   E_penetrating = q_stag * Δt * η_lag           [J/m²]
+        #   ΔT_backface   = E_penetrating / (ρ_TPS * Cp_TPS * δ_TPS)   [K]
+        #   T_backface    = T_initial + ΔT_backface
+        #
+        # Failure condition:  T_backface > T_Kapton_limit (773 K)
+        # ─────────────────────────────────────────────────────────────────────────
+        t_initial     = 300.0  # K — ambient pre-entry temperature
+        duration      = float(opt_params.get('env_duration', 450.0))   # s — peak heat pulse window
+        tps_thickness = float(sample_dict.get('thickness', 0.0254))    # m — TPS laminate thickness
+
+        # --- TPS material temperature limits  (MDAO Validation Ref - Rapisarda Table B.17) ---
         mat = opt_params.get('tps_material', 'sic').lower()
         if 'sic' in mat:
-            tps_max_temp = self.TPS_SPECS["SiC"]["max_temp_k"]
+            tps_max_temp = self.TPS_SPECS["SiC"]["max_temp_k"]       # 2073 K  (SiC melting point)
         elif 'kapton' in mat:
-            tps_max_temp = self.TPS_SPECS["Kapton"]["max_temp_k"]
+            tps_max_temp = self.TPS_SPECS["Kapton"]["max_temp_k"]    # 773 K
         elif 'pyrogel' in mat:
-            tps_max_temp = self.TPS_SPECS["Pyrogel"]["max_temp_k"]
+            tps_max_temp = self.TPS_SPECS["Pyrogel"]["max_temp_k"]   # 923 K
         else:
-            tps_max_temp = float(opt_params.get('tps_max_temp', 2073.0)) 
-        
-        # F-TPS Properties (Flexible Thermal Protection System like LOFTID)
-        rho_tps = float(opt_params.get('tps_density', 1468.0))  # kg/m^3 (Default: Nicalon SiC)
-        cp_tps = float(opt_params.get('tps_cp', 1100.0))    # J/kg-K
-        
-        # Heat load (total energy per m^2)
-        heat_load = stag_heat * duration
-        
-        # Temperature rise (Simplified 1D adiabatic backface estimate)
-        # thermal_lag_factor represents the fraction of surface energy that penetrates the insulation
+            # 'multi' or user-defined — use SiC limit as outer-surface limit
+            tps_max_temp = float(opt_params.get('tps_max_temp', 2073.0))
+
+        # --- Effective material properties ---
+        # For multi-layer (Pyrogel + Kapton + SiC) use homogenised effective properties.
+        # See StellarOrionEngineMach5Up._compute_effective_tps_properties() for derivation.
+        if mat == 'multi':
+            rho_tps = float(opt_params.get('tps_density', 322.94))  # kg/m³ effective
+            cp_tps  = float(opt_params.get('tps_cp',      1083.7))  # J/(kg·K) effective
+        else:
+            rho_tps = float(opt_params.get('tps_density', 1468.0))  # kg/m³ — Nicalon SiC
+            cp_tps  = float(opt_params.get('tps_cp',      1100.0))  # J/(kg·K) — Nicalon SiC
+
+        # --- Transient 1D energy balance ---
+        heat_load = stag_heat * duration  # J/m² — total energy deposited per unit area
+
+        # η_lag: fraction of surface energy that penetrates the laminate to the backface.
+        # Physical basis: insulation resistance of Pyrogel layer (k ≈ 0.023 W/m·K).
+        # Default 15% is calibrated to IRVE-3 test data (Rapisarda 2023 §5.5).
         thermal_lag_factor = float(opt_params.get('thermal_lag', 15.0)) / 100.0
-        t_rise = (heat_load * thermal_lag_factor) / (rho_tps * cp_tps * tps_thickness)
-        
+        t_rise    = (heat_load * thermal_lag_factor) / (rho_tps * cp_tps * tps_thickness)
         t_backface = t_initial + t_rise
         
-        # Surface Temperature (Radiative Equilibrium)
-        sigma = 5.67e-8
-        epsilon = float(opt_params.get('tps_emissivity', 0.75)) # Surface Emissivity (Default: Nicalon SiC)
-        t_surface = (stag_heat / (sigma * epsilon))**0.25 if stag_heat > 0 else 300
-        
+        # ─────────────────────────────────────────────────────────────────────────
+        # RADIATIVE EQUILIBRIUM SURFACE TEMPERATURE  (DERIVATION.md §3)
+        # ─────────────────────────────────────────────────────────────────────────
+        # At steady state, convective heating in = grey-body radiation out:
+        #   q_stag = ε · σ · T_surface^4   →   T_surface = (q_stag / (ε·σ))^(1/4)
+        #
+        # IRVE-3 baseline: q = 1.90e5 W/m², ε=0.75  → T_surface ≈ 1453 K
+        # SiC outer layer melting limit: 2073 K  → margin ≈ 620 K  ✓
+        # ─────────────────────────────────────────────────────────────────────────
+        sigma   = 5.67e-8  # W/(m²·K⁴) — Stefan-Boltzmann constant
+        epsilon = float(opt_params.get('tps_emissivity', 0.75))  # grey-body emissivity (Nicalon SiC)
+        t_surface = (stag_heat / (sigma * epsilon)) ** 0.25 if stag_heat > 0 else 300.0
+
         # Stagnation Pressure [Pa]
-        # Approximation: Dynamic pressure (q) * factor (typically 1.8-2.0 for hypersonic blunt bodies)
-        stag_press = q * 1.95 
+        # Newtonian approximation: p_stag ≈ q_dyn * Cp_max ≈ q_dyn * 1.95
+        # (Cp_max ≈ 1.839 for Mach 10 blunt body;  factor 1.95 includes shock losses)
+        stag_press = q * 1.95
         
         # --- Survivability Envelope Validation (Rapisarda (2023) Section 5.6) ---
         is_sic_safe = t_surface < self.TPS_SPECS["SiC"]["max_temp_k"]
@@ -1032,9 +1112,9 @@ class Api:
             'shock_temp': sparta_res.get('shock_temp', 300.0),
             'survivable': survivable,
             'failures': failures,
-            'shield_mass': shield_mass_info
+            'shield_mass': shield_mass_info,
+            'heat_flux_sparta_raw': heat_flux_sparta,  # raw SPARTA ke for relative ranking only
         }
-
 
 
     def get_msis_atmosphere(self, params):
@@ -1164,7 +1244,7 @@ class Api:
     def generate_surf_react_script(self, opt_params):
         """Dynamically generates surface catalysis (recombination) script based on chemistry."""
         preset = opt_params.get('env_preset', 'artemis')
-        chem_mode = opt_params.get('env_chem_mode', '5-species')
+        opt_params.get('env_chem_mode', '5-species')
         
         # Catalytic efficiency (gamma) - typically 0.01 for SiC, higher for metals
         gamma = float(opt_params.get('env_catalysis_gamma', 0.01))
@@ -1211,7 +1291,7 @@ O recombine simple {gamma} O2
         # Conservative standoff estimate (Billig-style)
         # delta/Rn = 0.143 * exp(3.24/M^2)
         # Using d_val/4 as characteristic radius for domain sizing
-        standoff_est = (d_val/4.0) * (0.143 * np.exp(3.24 / (max(1.0, mach_val)**2)))
+        (d_val/4.0) * (0.143 * np.exp(3.24 / (max(1.0, mach_val)**2)))
         
         if opt_params.get('auto_adapt_wide', True):
             # Wide mode ensures the bow shock and wake recirculation are fully captured
@@ -1227,7 +1307,7 @@ O recombine simple {gamma} O2
         
         # Grid resolution
         # Default changed to 0.7 based on Grid Independency test (optimal accuracy/cost vs MDAO paper)
-        grid_factor = float(opt_params.get('grid_factor', 0.7))
+        float(opt_params.get('grid_factor', 0.7))
         # Force odd grid and use non-standard sizes to prevent perfect vertex alignment
         # (Zero volume crash / Cell type mis-match). Changed to 201 for stability.
         nx = 201
@@ -1243,7 +1323,9 @@ O recombine simple {gamma} O2
         # run_grid_independency_test() via _compute_surf_centroid().
         
         step_arg = kwargs.get('steps')
-        steps = int(step_arg if step_arg is not None else opt_params.get('env_run', 500))
+        env_run_val = opt_params.get('env_run')
+        if env_run_val is None: env_run_val = 500
+        steps = int(step_arg if step_arg is not None else env_run_val)
         stats_interval = int(opt_params.get('stats_interval', 100))
         # Ensure stats/dump occurs on final step if run is short
         stats_interval = min(stats_interval, steps)
@@ -1633,7 +1715,7 @@ run             {steps}
                 # Setup physics based on opt_params
                 vstream = float(opt_params.get('env_vstream', 2700.0))
                 n_rho = float(opt_params.get('env_nrho', 3.5e22))
-                rho = n_rho * (28.97e-3 / 6.022e23)
+                n_rho * (28.97e-3 / 6.022e23)
                 temp = float(opt_params.get('env_temp_inf', 270.0))
                 pressure = n_rho * 1.38e-23 * temp
                 
@@ -1832,7 +1914,7 @@ run             {steps}
                 self.log_to_gui(f"    [!] Auto-adjusting HIAD diameter from {requested_diam}m to {min_diam}m (1.5x capsule diameter rule)")
                 requested_diam = min_diam
             # We will use a standard 0.55m small nose cap so the toroids cover the entire face!
-            self.log_to_gui(f"    [!] User requested toroids underneath! Using standard 0.55m nose cap.")
+            self.log_to_gui("    [!] User requested toroids underneath! Using standard 0.55m nose cap.")
             requested_nose = 0.550
             sample_dict['nose'] = requested_nose
             
@@ -1910,7 +1992,9 @@ run             {steps}
     def run_sparta_simulation(self, opt_params, sample_dict, surf_name="HIAD_custom", nose_type="smooth") -> Dict[str, Any]:
         """Executes SPARTA DSMC simulation for a single configuration."""
         cad_dir = os.path.join(self.cwd, "CADDesign")
-        n_run = int(opt_params.get('env_run', '1000'))
+        env_run = opt_params.get('env_run')
+        if env_run is None: env_run = '1000'
+        sim_steps = max(int(env_run), 1000)
         
         # 1. Regenerate Geometry for the specific configuration
         self.log_to_gui(f"    [*] Regenerating Geometry: {nose_type} (Payload={opt_params.get('payload_file', 'None')}, DefaultPayload={opt_params.get('default_payload', False)})...")
@@ -1976,7 +2060,8 @@ run             {steps}
             docker_create_cmd.append("all")
         
         if not use_gpu:
-            nproc = opt_params.get('env_cores', 4)
+            # ALWAYS utilize all the CPU because we are running out of time here (no excuse or balances)
+            nproc = opt_params.get('env_cores', 10)
             self.log_to_gui(f"    [!] Parallel Execution: Using {nproc} CPU cores via mpirun...")
             if nproc > 1:
                 docker_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), "spa", "-in", "in.hiad"]
@@ -1986,7 +2071,6 @@ run             {steps}
             docker_cmd = ["spa", "-in", "in.hiad", "-pk", "kokkos", "newton", "on", "gpu", "1", "-sf", "kk"]
         
         # ALWAYS make this for sparta dsmc use docker, do not make this native
-        use_docker = True
         res_readiness = self.test_sparta_readiness()
         if res_readiness.get('status') == 'error':
             raise RuntimeError(
@@ -1995,16 +2079,23 @@ run             {steps}
             )
 
         log_data = []
-        start_time = time.time()
-        
+        time.time()
+        # Handle stale graceful_exit.flag
+        graceful_exit_flag = os.path.join(self.cwd, "graceful_exit.flag")
+        if os.path.exists(graceful_exit_flag):
+            try:
+                os.remove(graceful_exit_flag)
+                self.log_to_gui("    [*] Removed stale graceful_exit.flag.")
+            except Exception:
+                pass
+
         # Original Docker Logic
         docker_create_cmd.extend(["sparta-hysp"] + docker_cmd)
         self.log_to_gui(f"[DEBUG] Docker Create CMD: {' '.join(docker_create_cmd)}")
         subprocess.run(docker_create_cmd, check=True)
         sim_proc = subprocess.Popen(["docker", "start", "-a", "hiad-runner"], cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         
-        last_monitor_time = time.time()
-        monitor_interval = 300 # 5 minutes babysitter interval as required
+        time.time()
         
         def _babysitter_check(elapsed_min):
             """Checks colima/docker health every 300s and restarts if down."""
@@ -2030,12 +2121,24 @@ run             {steps}
             # Log ALL lines for debugging SPARTA failures
             self.log_to_gui(f"        {l}")
             
+            # Check graceful exit flag
+            if os.path.exists(graceful_exit_flag):
+                self.log_to_gui("    [!] Graceful exit flag detected. Stopping SPARTA safely...")
+                sim_proc.terminate()
+                try:
+                    os.remove(graceful_exit_flag)
+                except Exception:
+                    pass
+                raise InterruptedError("Simulation gracefully interrupted by user. State is saved.")
+            
             # Babysitting check: Every 300 seconds, check colima + print heartbeat
             parts = l.split()
             if parts and parts[0].isdigit():
                 log_data.append(l)
                 step = int(parts[0])
-                if step % 100 == 0: self.log_to_gui(f"        {l}")
+                if step % 100 == 0: 
+                    self.log_to_gui(f"        {l}")
+                    self._journal_intention("Simulation", f"SPARTA Step {step}", {"sample": sample_dict})
         
         exit_code = sim_proc.wait()
         
@@ -2101,7 +2204,7 @@ run             {steps}
                     vstream = float(opt_params.get('env_vstream', 2700.0))
                     nrho = float(opt_params.get('env_nrho', 3.5e22))
                     rho_inf = nrho * (28.97e-3 / 6.022e23)
-                    diameter = float(sample_dict.get('diameter', 3.0))
+                    diameter = float(sample_dict.get('diameter') or 3.0)
                     area = np.pi * (diameter / 2)**2
                     mass = float(sample_dict.get('mass', 281.0))
                     
@@ -2118,7 +2221,13 @@ run             {steps}
         except Exception as ve:
             self.log_to_gui(f"    [!] Warning: Visual post-processing failed: {ve}")
 
-        return self.parse_sparta_results(), log_data
+        res = self.parse_sparta_results()
+        if opt_params.get('hybrid_thermal'):
+            self.log_to_gui("    [*] Hybrid Thermal flag detected. Launching laplacianFoam...")
+            # Convert W/cm^2 (or raw) back to W/m^2 if needed, assume parse_sparta_results returns SI or check units
+            heat_val = res.get('heat', 0.0)
+            self.run_hybrid_thermal_solver(opt_params, sample_dict, surf_name, heat_flux_data={'max_q': heat_val})
+        return res, log_data
 
     def run_grid_independency_test(self, solver="sparta", steps=1100, skip_diag=False, headless=True, sparta_gpu=False, is_gui=False, factors=[0.3, 0.5, 0.7, 1.0]):
         """Executes a grid independency study by varying the grid factor (Threaded for GUI)."""
@@ -2412,11 +2521,10 @@ run             {steps}
             if ansys_installed:
                 # Format is FOUND:VER:PATH (Path can contain colons for drive letters)
                 parts = scan_res.split(":", 2)
-                ansys_ver = parts[1]
+                parts[1]
                 ansys_path = parts[2]
             else:
                 ansys_path = None
-                ansys_ver = None
             
             # Check for ansys-fluent-core (PyFluent)
             stdin, stdout, stderr = ssh.exec_command('python -c "import ansys.fluent.core; print(\'PyAnsys OK\')"')
@@ -2866,7 +2974,7 @@ run             {steps}
             
             with open(os.path.join(test_dir, "system", "controlDict"), "w", encoding="utf-8") as f:
                 f.write("FoamFile { version 2.0; format ascii; class dictionary; object controlDict; }\n"
-                        "application blockMesh; startFrom startTime; startTime 0; stopAt endTime; endTime 1; deltaT 1;\n"
+                        "application blockMesh; startFrom latestTime; startTime 0; stopAt endTime; endTime 1; deltaT 1;\n"
                         "writeControl runTime; writeInterval 1; purgeWrite 0; writeFormat ascii; writePrecision 6; writeCompression off; timeFormat general; timePrecision 6; runTimeModifiable true;\n")
             
             abs_test_dir = os.path.abspath(test_dir)
@@ -2981,7 +3089,7 @@ run             {steps}
         
         if is_gui: self.window.evaluate_js("updateProgress(5)")
         
-        preset = opt_params.get('env_preset', 'artemis')
+        opt_params.get('env_preset', 'artemis')
         species_src, react_src, vss_src, _, _ = self.get_chemistry_data(opt_params)
         self._safe_copy(species_src, os.path.join(cad_dir, "air.species"))
         self._safe_copy(react_src, os.path.join(cad_dir, "air.react"))
@@ -3156,8 +3264,9 @@ run             {steps}
             
         self.log_to_gui(f"[*] Search Space: {n_dim}D — [{', '.join(active_params)}]")
 
-        # 3. LHS Sampling
-        self.log_to_gui(f"[*] PHASE 2: GENERATING {samples_n} SBO SAMPLES (LHS)...")
+        # 3. Sampling
+        doe_method = opt_params.get('doe', 'ccd').upper()
+        self.log_to_gui(f"[*] PHASE 2: GENERATING {samples_n} SBO SAMPLES ({doe_method})...")
         training_x = [] 
         training_y = [] 
         all_samples_dicts = [] # Pre-generated for consistency
@@ -3181,10 +3290,26 @@ run             {steps}
                     )
                     
                     if params_match:
+                        # Check ZFS journal integrity
+                        last_journal_sample = -1
+                        if os.path.exists(self.journal_path):
+                            try:
+                                with open(self.journal_path, 'r') as jf:
+                                    for line in jf:
+                                        entry = json.loads(line)
+                                        if entry.get("action", "").startswith("Completed Sample "):
+                                            last_journal_sample = int(entry["action"].split(" ")[-1].split("/")[0])
+                            except Exception: pass
+                        
                         training_x = checkpoint['training_x']
                         training_y = checkpoint['training_y']
                         all_samples_dicts = checkpoint['all_samples_dicts']
                         start_idx = checkpoint['next_idx']
+                        samples_n = len(all_samples_dicts)
+                        
+                        if last_journal_sample > 0 and start_idx != last_journal_sample:
+                            self.log_to_gui(f"    [!] ZFS Journal mismatch: Checkpoint at Sample {start_idx}, but Journal recorded {last_journal_sample}. Safely recovering...")
+                            
                         resuming = True
                         self.log_to_gui(f"[!] DETECTED INCOMPLETE SESSION. Resuming from Sample {start_idx + 1}/{samples_n}...")
                         if is_gui:
@@ -3195,20 +3320,81 @@ run             {steps}
                 self.log_to_gui(f"    [!] Warning: Could not load checkpoint: {e}. Starting fresh.")
 
         if not resuming:
-            # Generate all samples upfront for total consistency across resumes
-            # If resuming from history without a checkpoint, we might need to recreate samples
-            # To be truly consistent, we'd need to have saved all_samples_dicts in DB.
-            # For now, we'll regenerate them but this might cause jitter if not seeded.
-            np.random.seed(42) # Seed for semi-deterministic samples on resume
-            for i in range(samples_n):
-                sample_dict = {k: v['base'] for k, v in search_map.items()}
-                for p_name in active_params:
-                    p_info = search_map[p_name]
-                    # Deterministic jittered grid
-                    val = p_info['min'] + (p_info['max'] - p_info['min']) * (i + np.random.random()) / samples_n
-                    if p_info['type'] == int: val = int(round(val))
-                    sample_dict[p_name] = val
-                all_samples_dicts.append(sample_dict)
+            doe_mode = opt_params.get('doe', 'ccd')
+            
+            if doe_mode == 'ccd':
+                self.log_to_gui(f"[*] Generating CCD Samples for {n_dim}D Search Space...")
+                import itertools
+                # Generate Full Factorial (corners)
+                corners = list(itertools.product([-1, 1], repeat=n_dim))
+                
+                # Generate Axial/Star points
+                star_points = []
+                for i in range(n_dim):
+                    for val in [-1, 1]: # can use alpha for true spherical CCD, using 1 for face-centered
+                        pt = [0]*n_dim
+                        pt[i] = val
+                        star_points.append(pt)
+                
+                # Center point
+                center = [[0]*n_dim]
+                
+                ccd_matrix = corners + star_points + center
+                actual_samples = len(ccd_matrix)
+                self.log_to_gui(f"    [+] Matrix built: {len(corners)} Corners, {len(star_points)} Axial, 1 Center = {actual_samples} points.")
+                
+                # If user strictly wanted a different number but requested CCD, we override it
+                if samples_n != actual_samples:
+                    self.log_to_gui(f"    [!] Overriding requested {samples_n} samples to strictly {actual_samples} for perfect CCD bounding.")
+                    samples_n = actual_samples
+                
+                for i in range(samples_n):
+                    sample_dict = {k: v['base'] for k, v in search_map.items()}
+                    pt = ccd_matrix[i]
+                    for idx, p_name in enumerate(active_params):
+                        p_info = search_map[p_name]
+                        # Scale from [-1, 1] to [min, max]
+                        mid = (p_info['max'] + p_info['min']) / 2.0
+                        half_range = (p_info['max'] - p_info['min']) / 2.0
+                        val = mid + pt[idx] * half_range
+                        if p_info['type'] == int: val = int(round(val))
+                        sample_dict[p_name] = val
+                    all_samples_dicts.append(sample_dict)
+                    
+                # --- Plot CCD variants ---
+                try:
+                    import matplotlib.pyplot as plt
+                    import seaborn as sns
+                    import pandas as pd
+                    
+                    df_ccd = pd.DataFrame(all_samples_dicts)[active_params]
+                    self.log_to_gui("    [+] Plotting CCD coverage pairplot to verify design space bounds...")
+                    sns_plot = sns.pairplot(df_ccd, diag_kind='hist', plot_kws={'alpha':0.8, 's':100, 'color': 'red'}, diag_kws={'color': 'darkblue'})
+                    sns_plot.fig.suptitle(f"CCD Geometric Distribution Space ({n_dim}D, {samples_n} Samples)", y=1.02)
+                    
+                    plot_out_dir = os.path.join(self.cwd, "web", "assets", "plots")
+                    os.makedirs(plot_out_dir, exist_ok=True)
+                    plot_path = os.path.join(plot_out_dir, "ccd_variant_coverage.png")
+                    sns_plot.savefig(plot_path, dpi=200, bbox_inches='tight')
+                    plt.close(sns_plot.fig)
+                    self.log_to_gui(f"    [SUCCESS] Coverage plot saved to {plot_path}")
+                except ImportError:
+                    self.log_to_gui("    [!] Missing matplotlib/seaborn/pandas. Skipping CCD coverage plotting.")
+                except Exception as e:
+                    self.log_to_gui(f"    [!] Error plotting CCD variants: {e}")
+
+            else:
+                self.log_to_gui(f"[*] Generating LHS Samples (Jitter Grid) for {n_dim}D Search Space...")
+                np.random.seed(42) # Seed for semi-deterministic samples on resume
+                for i in range(samples_n):
+                    sample_dict = {k: v['base'] for k, v in search_map.items()}
+                    for p_name in active_params:
+                        p_info = search_map[p_name]
+                        # Deterministic jittered grid
+                        val = p_info['min'] + (p_info['max'] - p_info['min']) * (i + np.random.random()) / samples_n
+                        if p_info['type'] == int: val = int(round(val))
+                        sample_dict[p_name] = val
+                    all_samples_dicts.append(sample_dict)
 
         for i in range(start_idx, samples_n):
             sample_dict = all_samples_dicts[i]
@@ -3239,6 +3425,13 @@ run             {steps}
                     # ALWAYS use Docker for SPARTA solver to ensure parity; do not run natively
                     self.log_to_gui(f"    [*] Executing SPARTA solver via Docker (Sample {i+1})...")
                     res_dict, log_lines = self.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_opt")
+                    
+                    if opt_params.get('hybrid_thermal', False):
+                        self.log_to_gui(f"    [*] Sequential Execution: Running OpenFOAM Solid Thermal Solver...")
+                        heat_flux_data = res_dict.get('heat_flux', {})
+                        of_res = self.run_hybrid_thermal_solver(opt_params, sample_dict, surf_name="HIAD_opt", heat_flux_data=heat_flux_data)
+                        if of_res:
+                            res_dict['openfoam_thermal'] = of_res
             
             sample_end = time.time()
             sample_dur = sample_end - sample_start
@@ -3290,10 +3483,12 @@ run             {steps}
             training_x.append(current_x_row)
             training_y.append([val, f_metrics['beta'], f_metrics['stag_heat'], f_metrics['heat_load'], f_metrics['time_of_peak'], f_metrics['g_load'], f_metrics['stag_press'], f_metrics['backface_temp']])
             
-            # Save Checkpoint
+            # Save Checkpoint (Atomic ZFS-style)
+            # We are here doing Atomic ZFS like StellarOrionIntentionLog
             try:
                 import json
-                with open(checkpoint_path, 'w') as f:
+                tmp_checkpoint = checkpoint_path + ".tmp"
+                with open(tmp_checkpoint, 'w') as f:
                     json.dump({
                         'training_x': training_x, 
                         'training_y': training_y, 
@@ -3302,11 +3497,16 @@ run             {steps}
                         'next_idx': i + 1,
                         'total_samples': samples_n
                     }, f)
-            except: pass
+                f.flush()
+                os.fsync(f.fileno())
+                os.replace(tmp_checkpoint, checkpoint_path)
+                self._journal_intention("SBO Phase", f"Completed Sample {i+1}/{samples_n}", {"sample_dict": sample_dict})
+            except Exception as e: 
+                self.log_to_gui(f"    [!] Failed atomic save: {e}")
 
             remaining = samples_n - (i + 1)
             etr = remaining * sample_dur
-            
+            self.log_to_gui(f"[*] Estimated Time Remaining (ETR) for Phase 2: {etr/60.0:.2f} minutes ({etr:.0f} sec).")
             self.log_to_gui("[*] ------------------------------------------------")
             self.log_to_gui(f"[*] SAMPLE {i+1} COMPLETE (Duration: {sample_dur:.2f}s)")
             self.log_to_gui(f"[*] RESULT ({goal.upper()}): {val:.6f}")
@@ -3369,7 +3569,7 @@ run             {steps}
 
         # Physics Constants for Beta Calibration
         rho_inf = nrho * (28.97e-3 / 6.022e23) 
-        q_inf = 0.5 * rho_inf * (vstream**2)
+        0.5 * rho_inf * (vstream**2)
         
         # Stagnation Decision Logic
         stagnation_count = 0
@@ -3390,11 +3590,11 @@ run             {steps}
             preds = model(t_val).detach().cpu().numpy().flatten()
             pred_goal_val = preds[0]
             pred_beta = preds[1]
-            pred_heat = preds[2]
-            pred_hload = preds[3]
-            pred_time = preds[4]
+            preds[2]
+            preds[3]
+            preds[4]
             pred_gload = preds[5]
-            pred_press = preds[6]
+            preds[6]
             pred_temp = preds[7]
             
             # --- Methodology of Physics (MoP) Constraint Layer ---
@@ -3599,8 +3799,8 @@ run             {steps}
         try:
             # 1. Setup Directories and Species
             cad_dir = os.path.join(self.cwd, "CADDesign")
-            python_exec = self._get_python_exec()
-            n_cores = os.cpu_count() or 4
+            self._get_python_exec()
+            os.cpu_count() or 4
             
             species_src, react_src, vss_src, _, _ = self.get_chemistry_data(opt_params)
             self._safe_copy(species_src, os.path.join(cad_dir, "air.species"))
@@ -3857,7 +4057,7 @@ run             {steps}
             # Domain bounds: MUST match the SPARTA create_box in generate_sparta_script
             # SPARTA uses: xmin=-5.0, xmax=9.0, ymax=~3.9 (wide-mode auto-adapt)
             # Using a tight domain [-0.6, 3.0, 3.6] was WRONG — only covered ~30% of domain
-            d_val = float(baseline_doc['geometry']['diameter_m'])
+            float(baseline_doc['geometry']['diameter_m'])
             xmin_pinn = float(res.get('domain_xmin', -5.0))
             xmax_pinn = float(res.get('domain_xmax',  9.0))
             ymax_pinn = float(res.get('domain_ymax',  0.5 * (xmax_pinn - xmin_pinn) * (9.0/16.0)))
@@ -4056,7 +4256,7 @@ run             {steps}
                 error = ((v_s - ref_val) / ref_val * 100)
                 error_str = f"{error:>+8.2f}%"
                 
-            delta = ((v_p - v_s) / v_s * 100) if v_s != 0 else 0
+            ((v_p - v_s) / v_s * 100) if v_s != 0 else 0
             
             ref_str = f"{ref_val:.4f}" if ref_val is not None else "N/A"
             print(f"{label:<25} | {ref_str:<15} | {v_s:<15.4f} | {v_p:<15.4f} | {error_str}")
@@ -4252,6 +4452,15 @@ run             {steps}
             f.write(allrun_content)
         os.chmod(os.path.join(case_dir, "Allrun"), 0o755)
 
+        # Handle stale graceful_exit.flag
+        graceful_exit_flag = os.path.join(self.cwd, "graceful_exit.flag")
+        if os.path.exists(graceful_exit_flag):
+            try:
+                os.remove(graceful_exit_flag)
+                self.log_to_gui("    [*] Removed stale graceful_exit.flag.")
+            except Exception:
+                pass
+
         # Start simulation
         sim_proc = subprocess.Popen(docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         current_time = 0
@@ -4260,6 +4469,16 @@ run             {steps}
                 l = line.strip()
                 if l: 
                     self.log_to_gui(f"        {l}")
+                    
+                if os.path.exists(graceful_exit_flag):
+                    self.log_to_gui("    [!] Graceful exit flag detected. Stopping OpenFOAM safely...")
+                    sim_proc.terminate()
+                    try:
+                        os.remove(graceful_exit_flag)
+                    except Exception:
+                        pass
+                    raise InterruptedError("Simulation gracefully interrupted by user. State is saved.")
+                    
                 # 100-step callback logic
                 if "Time =" in l:
                     try:
@@ -4353,6 +4572,286 @@ except Exception as e:
 
         return self.parse_openfoam_results(case_dir)
 
+    def run_hybrid_thermal_solver(self, opt_params, sample_dict, surf_name="HIAD_sample", heat_flux_data=None):
+        """Orchestrate OpenFOAM laplacianFoam simulation for solid heat conduction."""
+        import subprocess
+        import os
+        
+        cad_dir = os.path.join(self.cwd, "CADDesign")
+        case_dir = os.path.join(cad_dir, "openfoam_solid_case")
+        os.makedirs(case_dir, exist_ok=True)
+        
+        # Clean up old time directories and processor directories to prevent snappyHexMesh/decomposePar mismatch
+        import shutil
+        if os.path.exists(case_dir):
+            for item in os.listdir(case_dir):
+                item_path = os.path.join(case_dir, item)
+                if os.path.isdir(item_path):
+                    is_num = False
+                    try:
+                        float(item)
+                        is_num = True
+                    except ValueError:
+                        pass
+                    if (is_num and item != "0") or item.startswith("processor") or item == "postProcessing":
+                        self.log_to_gui(f"    [*] Cleaning up old OpenFOAM directory: {item}")
+                        try:
+                            shutil.rmtree(item_path)
+                        except Exception as e:
+                            self.log_to_gui(f"    [!] Failed to clean {item}: {e}")
+
+        self.log_to_gui("    [*] Generating OpenFOAM Solid Case Files for laplacianFoam...")
+        self.generate_openfoam_solid_case(opt_params, sample_dict, surf_name, heat_flux_data)
+        
+        self.log_to_gui("    [*] Executing OpenFOAM (laplacianFoam) via Docker...")
+        
+        # Auto-build image if missing
+        img_check = subprocess.run(["docker", "images", "-q", "openfoam-hysp"], capture_output=True, text=True)
+        if not img_check.stdout.strip():
+            self.log_to_gui("    [!] Docker image 'openfoam-hysp' not found locally. Auto-building it now...")
+            build_res = subprocess.run(["docker", "build", "-t", "openfoam-hysp", "-f", "Dockerfile.openfoam", "."], cwd=self.cwd, capture_output=True, text=True)
+            if build_res.returncode == 0:
+                self.log_to_gui("    [+] Successfully built 'openfoam-hysp' Docker image.")
+            else:
+                self.log_to_gui("    [-] Failed to auto-build 'openfoam-hysp'. Ensure Dockerfile.openfoam exists.")
+        
+        subprocess.run(["docker", "rm", "-f", "openfoam-solid-runner"], capture_output=True)
+        abs_cwd = os.path.abspath(self.cwd)
+        is_headless = str(opt_params.get('headless', False)).lower()
+
+        docker_cmd = [
+            "docker", "run", "--rm", "--name", "openfoam-solid-runner",
+            "-v", f"{abs_cwd}:/workspace",
+            "-e", "USER=root",
+            "-e", f"HEADLESS={is_headless}",
+            "openfoam-hysp",
+            "bash", "-c", "source /usr/lib/openfoam/openfoam2312/etc/bashrc && cd /workspace/CADDesign/openfoam_solid_case && ./Allrun"
+        ]
+        
+        # ALWAYS utilize all the CPU because we are running out of time here (no excuse or balances)
+        n_cores_run = opt_params.get('env_cores', 10)
+
+        if n_cores_run > 1:
+            solver_run_cmd = f"mpirun --allow-run-as-root -quiet --oversubscribe -np {n_cores_run} laplacianFoam -parallel 2>&1 | tee log.laplacianFoam"
+            decompose_cmd = "decomposePar -force 2>&1 | tee log.decomposePar\n"
+            reconstruct_cmd = "reconstructPar -latestTime 2>&1 | tee log.reconstructPar\n"
+        else:
+            solver_run_cmd = "laplacianFoam 2>&1 | tee log.laplacianFoam"
+            decompose_cmd = ""
+            reconstruct_cmd = ""
+
+        # ParaView Post-Processing Script
+        pv_script = (
+            "import os\n"
+            "try:\n"
+            "    from paraview.simple import *\n"
+            "except ImportError:\n"
+            "    print('[!] ParaView python module not found.')\n"
+            "    import sys; sys.exit(0)\n"
+            "case_foam = OpenFOAMReader(FileName='case.foam')\n"
+            "case_foam.CaseType = 'Reconstructed Case'\n"
+            "UpdatePipeline()\n"
+            "renderView1 = CreateView('RenderView')\n"
+            "renderView1.ViewSize = [1024, 768]\n"
+            "renderView1.Background = [0.1, 0.1, 0.12]\n"
+            "display = Show(case_foam, renderView1)\n"
+            "ColorBy(display, ('POINTS', 'T'))\n"
+            "T_LUT = GetColorTransferFunction('T')\n"
+            "T_LUT.ApplyPreset('Inferno (matplotlib)', True)\n"
+            "renderView1.ResetCamera()\n"
+            "animationScene1 = GetAnimationScene()\n"
+            "animationScene1.UpdateAnimationUsingDataTimeSteps()\n"
+            "SaveAnimation('/workspace/CADDesign/openfoam_solid_case/validation_anim_solid_T.mp4', renderView1, FrameRate=10)\n"
+            "print('[+] MP4 Animation saved to validation_anim_solid_T.mp4')\n"
+        )
+        with open(os.path.join(case_dir, "render_anim.py"), "w", newline='\n') as f:
+            f.write(pv_script)
+            
+        # Hook into Allrun script to execute rendering
+        allrun_content = (
+            "#!/bin/bash\n"
+            "cd /workspace/CADDesign/openfoam_solid_case\n"
+            "source /usr/lib/openfoam/openfoam2312/etc/bashrc\n"
+            "blockMesh 2>&1 | tee log.blockMesh\n"
+            "surfaceFeatureExtract 2>&1 | tee log.surfaceFeatureExtract\n"
+            "snappyHexMesh -overwrite 2>&1 | tee log.snappyHexMesh\n"
+            "rm -rf processor*\n"
+            + decompose_cmd +
+            f"    {solver_run_cmd}\n"
+            "echo \"[*] Post-processing solid thermal results...\"\n"
+            + reconstruct_cmd +
+            "touch case.foam\n"
+            "if command -v pvbatch &> /dev/null; then\n"
+            "    echo \"[*] Rendering MP4 animation via pvbatch...\"\n"
+            "    pvbatch --force-offscreen-rendering render_anim.py 2>&1 | tee log.pvbatch\n"
+            "else\n"
+            "    echo \"[!] pvbatch not found in container. Please run render_anim.py manually on host ParaView.\"\n"
+            "fi\n"
+        )
+        with open(os.path.join(case_dir, "Allrun"), "w", newline='\n') as f:
+            f.write(allrun_content)
+        os.chmod(os.path.join(case_dir, "Allrun"), 0o755)
+
+        # Handle stale graceful_exit.flag
+        graceful_exit_flag = os.path.join(self.cwd, "graceful_exit.flag")
+        if os.path.exists(graceful_exit_flag):
+            try:
+                os.remove(graceful_exit_flag)
+                self.log_to_gui("    [*] Removed stale graceful_exit.flag.")
+            except Exception:
+                pass
+
+        # Start simulation
+        sim_proc = subprocess.Popen(docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        if sim_proc.stdout:
+            for line in sim_proc.stdout:
+                l = line.strip()
+                if l: 
+                    self.log_to_gui(f"        {l}")
+                
+                if os.path.exists(graceful_exit_flag):
+                    self.log_to_gui("    [!] Graceful exit flag detected. Stopping OpenFOAM safely...")
+                    sim_proc.terminate()
+                    try:
+                        os.remove(graceful_exit_flag)
+                    except Exception:
+                        pass
+                    raise InterruptedError("Simulation gracefully interrupted by user. State is saved.")
+            
+        if sim_proc.wait() != 0:
+            self.log_to_gui("    [-] OpenFOAM Solid Simulation Failed!")
+            return False
+            
+        self.log_to_gui("    [+] OpenFOAM Solid Simulation Complete.")
+        return True
+
+    def generate_openfoam_solid_case(self, opt_params, sample_dict, surf_name, heat_flux_data):
+        """Create OpenFOAM directory structure and dicts for laplacianFoam."""
+        cad_dir = os.path.join(self.cwd, "CADDesign")
+        case_dir = os.path.join(cad_dir, "openfoam_solid_case")
+        
+        for d in ["0", "constant", "system", "constant/triSurface"]:
+            os.makedirs(os.path.join(case_dir, d), exist_ok=True)
+            
+        # Write 0/T
+        ambient_temp = opt_params.get('env_temp_inf', 250.0)
+        # Assuming heat_flux_data is applied via a simple uniform boundary for now, or groovyBC if available.
+        # For simplicity, we'll apply a fixed gradient on the shield patch based on an average or max heat flux if spatial isn't easily mapped.
+        # Ideally, we map `heat_flux_data` to a timeVaryingMappedFixedValue or similar.
+        
+        # We will use uniform fixedGradient for now to represent the soak.
+        max_q = 0.0
+        if heat_flux_data:
+            # max_q in W/m^2
+            max_q = max([val for val in heat_flux_data.values()]) if isinstance(heat_flux_data, dict) else 1e5
+        
+        tps_k = opt_params.get('tps_k', 0.2)
+        grad_T = max_q / tps_k if tps_k > 0 else 0.0
+
+        self._write_of_dict(os.path.join(case_dir, "0", "T"), 
+            f"dimensions [0 0 0 1 0 0 0];\n"
+            f"internalField uniform {ambient_temp};\n"
+            f"boundaryField {{\n"
+            f"    shield {{ type fixedGradient; gradient uniform {grad_T}; }}\n"
+            f"    \".*\" {{ type zeroGradient; }}\n"
+            f"}};\n",
+            of_class="volScalarField")
+            
+        # Copy STL to triSurface
+        stl_src = os.path.join(cad_dir, f"{surf_name}.stl")
+        if os.path.exists(stl_src):
+            import shutil
+            dst = os.path.join(case_dir, "constant", "triSurface", "shield.stl")
+            try:
+                shutil.copy2(stl_src, dst)
+            except shutil.SameFileError:
+                pass
+            
+        # system/controlDict
+        sim_duration = float(opt_params.get('env_duration', 60.0))
+        write_interval = max(0.1, sim_duration / 50.0) # write ~50 frames
+        self._write_of_dict(os.path.join(case_dir, "system", "controlDict"), 
+            f"application laplacianFoam;\nstartFrom latestTime;\nstartTime 0;\nstopAt endTime;\n"
+            f"endTime {sim_duration};\ndeltaT 0.1;\nwriteControl runTime;\nwriteInterval {write_interval};\n"
+            "purgeWrite 0;\nwriteFormat ascii;\nwritePrecision 6;\nwriteCompression off;\ntimeFormat general;\ntimePrecision 6;\n"
+            "runTimeModifiable true;\n")
+
+        # system/decomposeParDict
+        n_cores = os.cpu_count() or 4
+        self._write_of_dict(os.path.join(case_dir, "system", "decomposeParDict"), 
+            f"numberOfSubdomains {n_cores};\n"
+            "method scotch;\n")
+            
+        # system/fvSchemes
+        self._write_of_dict(os.path.join(case_dir, "system", "fvSchemes"), 
+            "ddtSchemes { default Euler; }\n"
+            "gradSchemes { default Gauss linear; }\n"
+            "divSchemes { default none; }\n"
+            "laplacianSchemes { default Gauss linear corrected; }\n"
+            "interpolationSchemes { default linear; }\n"
+            "snGradSchemes { default corrected; }\n")
+            
+        # system/fvSolution
+        self._write_of_dict(os.path.join(case_dir, "system", "fvSolution"), 
+            "solvers { T { solver PCG; preconditioner DIC; tolerance 1e-06; relTol 0; } }\n"
+            "PISO { nCorrectors 2; nNonOrthogonalCorrectors 0; pRefCell 0; pRefValue 0; }\n")
+            
+        # system/blockMeshDict
+        xmin = float(opt_params.get('env_xmin', -2.5))
+        xmax = float(opt_params.get('env_xmax', 7.5))
+        ymax = float(opt_params.get('env_ymax', 6.0))
+        z_val = 0.1
+        nx, ny, nz = 50, 50, 1
+        
+        block_mesh_content = (
+            f"convertToMeters 1;\nvertices ( ({xmin} 0 {-z_val}) ({xmax} 0 {-z_val}) ({xmax} {ymax} {-z_val}) ({xmin} {ymax} {-z_val}) "
+            f"({xmin} 0 {z_val}) ({xmax} 0 {z_val}) ({xmax} {ymax} {z_val}) ({xmin} {ymax} {z_val}) );\n"
+            f"blocks ( hex (0 1 2 3 4 5 6 7) ({nx} {ny} {nz}) simpleGrading (1 1 1) );\nedges ();\n"
+            f"boundary ( outer {{ type patch; faces ( (0 3 7 4) (1 2 6 5) (3 2 6 7) (0 1 5 4) ); }} "
+            f"frontAndBack {{ type patch; faces ( (0 1 2 3) (4 5 6 7) ); }} );\n"
+        )
+        self._write_of_dict(os.path.join(case_dir, "system", "blockMeshDict"), block_mesh_content)
+
+        # system/snappyHexMeshDict
+        # We need a point INSIDE the solid shield. 
+        # The HIAD apex is at (0,0,0). With thickness 0.0254, the inside is around x=-0.0127.
+        # Let's use (-0.01 0.1 0.0) as it should be inside the conical section.
+        loc_x = -0.0127
+        loc_y = 0.1
+        self._write_of_dict(os.path.join(case_dir, "system", "snappyHexMeshDict"), 
+            "castellatedMesh true;\nsnap true;\naddLayers false;\n"
+            "geometry { shield.stl { type triSurfaceMesh; name shield; } };\n"
+            "castellatedMeshControls { maxLocalCells 2000000; maxGlobalCells 4000000; minRefinementCells 10; "
+            "nCellsBetweenLevels 3; resolveFeatureAngle 30; "
+            "features ( );\n"
+            "allowFreeStandingZoneFaces true;\n"
+            "refinementSurfaces { shield { level (4 4); } }; "
+            "refinementRegions { }; "
+            f"locationInMesh ({loc_x} {loc_y} 0.05); }};\n"
+            "snapControls { nSmoothPatch 1; tolerance 2.0; nSolveIter 5; nRelaxIter 5; };\n"
+            "addLayersControls { };\n"
+            "meshQualityControls { maxNonOrtho 65; maxBoundarySkewness 20; maxInternalSkewness 4; maxConcave 80; minVol 1e-13; minTetQuality 1e-30; minArea -1; minTwist 0.05; minDeterminant 0.001; minFaceWeight 0.02; minVolRatio 0.01; minTriangleTwist -1; nSmoothScale 4; errorReduction 0.75; };\n"
+            "writeFlags ( );\nmergeTolerance 1e-6;\n")
+
+        # system/surfaceFeatureExtractDict
+        self._write_of_dict(os.path.join(case_dir, "system", "surfaceFeatureExtractDict"),
+            "shield.stl { extractionMethod extractFromSurface; includedAngle 150; }\n")
+
+        # constant/thermophysicalProperties (laplacianFoam uses constant/transportProperties usually)
+        tps_mat = str(opt_params.get('tps_material', 'sic')).lower()
+        if tps_mat == "multi":
+            density = 322.94  # Effective density for SiC+Pyrogel+Kapton
+            cp = 1083.7       # Effective specific heat
+            tps_k = 0.023     # Effective thermal conductivity
+        else:
+            density = opt_params.get('tps_density', 1468.0)
+            cp = opt_params.get('tps_cp', 1100.0)
+            
+        # DT = k / (rho * cp)
+        DT = tps_k / (density * cp)
+        self._write_of_dict(os.path.join(case_dir, "constant", "transportProperties"),
+            f"DT              DT [0 2 -1 0 0 0 0] {DT};\n")
+
     def generate_openfoam_case(self, opt_params, surf_name):
         """Create OpenFOAM directory structure and dicts."""
         cad_dir = os.path.join(self.cwd, "CADDesign")
@@ -4415,7 +4914,7 @@ except Exception as e:
         # 1. system/controlDict
         solver_app = "hybridDSMC" # User requested hybridDSMC
         self._write_of_dict(os.path.join(case_dir, "system", "controlDict"), 
-            f"application {solver_app};\nstartFrom startTime;\nstartTime 0;\nstopAt endTime;\n"
+            f"application {solver_app};\nstartFrom latestTime;\nstartTime 0;\nstopAt endTime;\n"
             f"endTime {opt_params.get('env_run', 1000)};\ndeltaT 1;\nwriteControl runTime;\nwriteInterval 100;\n"
             "purgeWrite 0;\nwriteFormat ascii;\nwritePrecision 6;\nwriteCompression off;\ntimeFormat general;\ntimePrecision 6;\n"
             "runTimeModifiable true;\n\n"

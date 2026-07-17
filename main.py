@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import sys
-import io
 
 # Ensure UTF-8 encoding for stdout/stderr on Windows to prevent charmap errors
 if sys.platform == "win32":
@@ -18,6 +17,11 @@ if sys.platform == "win32":
 import os
 import subprocess
 from typing import Any
+import ctypes
+import shutil
+import json
+import argparse
+import re
 
 # --- Dependency Auto-Fix ----------------------------------------------------──
 # --- Environment Management (Shared with GUI) ------------------------------──
@@ -40,7 +44,8 @@ def ensure_venv():
         
         if os.path.exists(p):
             # Final sanity check: if we are on Unix but found an .exe, it's invalid
-            if sys.platform != "win32" and p.endswith(".exe"): return None
+            if sys.platform != "win32" and p.endswith(".exe"):
+                return None
             return os.path.abspath(p)
         return None
 
@@ -61,7 +66,8 @@ def ensure_venv():
                 try:
                     import shutil
                     shutil.rmtree(venv_dir)
-                except: pass
+                except Exception:
+                    pass
 
             print(f"[*] Creating shared virtual environment: {venv_dir}")
             try:
@@ -82,7 +88,7 @@ def ensure_venv():
 
             try:
                 subprocess.run([str(venv_python), "-m", "pip", "--version"], capture_output=True, check=True)
-            except:
+            except Exception:
                 print("[*] Pip missing in venv. Bootstrapping pip...")
                 subprocess.check_call([str(venv_python), "-m", "ensurepip", "--upgrade"])
                 
@@ -160,7 +166,7 @@ def run_self_diagnostic():
 
     # 4. Check ansys-fluent-core
     try:
-        import ansys.fluent.core as pyfluent  # type: ignore
+        import ansys.fluent.core as pyfluent  # type: ignore  # noqa: F401
         report_step("CFD Bridge (PyFluent)", "PASS", "Import successful")
     except ImportError:
         report_step("CFD Bridge (PyFluent)", "WARN", "ansys-fluent-core missing (Remote Fluent disabled)")
@@ -172,8 +178,14 @@ def run_self_diagnostic():
         if docker_check.returncode == 0:
             report_step("Container Engine (Docker)", "PASS", "Docker Desktop active")
         else:
-            report_step("Container Engine (Docker)", "FAIL", "Docker service not responding")
-            critical_errors.append("Docker not running")
+            # Try to start colima automatically
+            print("    [!] Docker not responding. Attempting to start Colima...")
+            colima_start = subprocess.run(["colima", "start"], capture_output=True)
+            if colima_start.returncode == 0:
+                report_step("Container Engine (Docker)", "PASS", "Colima started successfully")
+            else:
+                report_step("Container Engine (Docker)", "FAIL", "Docker/Colima service not responding")
+                critical_errors.append("Docker not running")
     except FileNotFoundError:
         report_step("Container Engine (Docker)", "FAIL", "Docker not installed")
         critical_errors.append("Docker missing")
@@ -223,12 +235,6 @@ def run_self_diagnostic():
 if "--skip-diag" not in sys.argv and "IN_DOCKER" not in os.environ:
     run_self_diagnostic()
 
-import ctypes
-import shutil
-import json
-import argparse
-import re
-
 sys.stdout.flush()
 
 
@@ -264,7 +270,8 @@ def build_sparta():
         os.path.join(SPARTA_SRC, "src"),
     ]
     for d in search_dirs:
-        if not os.path.exists(d): continue
+        if not os.path.exists(d):
+            continue
         for f in os.listdir(d):
             if ("libsparta" in f) and (f.endswith(".so") or f.endswith(".dylib") or ".so." in f):
                 found_path = os.path.join(d, f)
@@ -332,7 +339,7 @@ def run_simulation(steps=None):
     sys.path.insert(0, sparta_python_dir)
 
     # 3. Load library and import
-    lib_dir = os.path.dirname(lib_path)
+    os.path.dirname(lib_path)
     ctypes.CDLL(lib_path, mode=ctypes.RTLD_GLOBAL)
 
     from sparta import sparta  # type: ignore
@@ -378,7 +385,8 @@ def run_simulation(steps=None):
         
         # Override run steps if requested
         if command.startswith("run ") and steps is not None:
-            if me == 0: print(f"[*] Overriding: spa.command('run {steps}')")
+            if me == 0:
+                print(f"[*] Overriding: spa.command('run {steps}')")
             spa.command(f"run {steps}")
         else:
             spa.command(command)
@@ -410,7 +418,6 @@ def display_custom_help(parser):
     # ANSI color codes
     BOLD = "\033[1m"
     CYAN = "\033[36m"
-    GREEN = "\033[32m"
     RESET = "\033[0m"
 
     # Bold and uppercase major sections
@@ -434,6 +441,37 @@ def display_custom_help(parser):
     print("\n" + "="*80)
     sys.exit(0)
 
+def ensure_docker_colima():
+    import subprocess
+    import shutil
+    import atexit
+    
+    try:
+        res = subprocess.run(["docker", "info"], capture_output=True, timeout=5)
+        if res.returncode == 0:
+            return
+    except FileNotFoundError:
+        print("[!] Docker CLI not found.")
+        return
+    except subprocess.TimeoutExpired:
+        print("[!] Docker daemon timed out.")
+    except Exception:
+        pass
+        
+    if shutil.which("colima"):
+        print("[*] Docker unresponsive. Checking Colima status...")
+        res = subprocess.run(["colima", "status"], capture_output=True, text=True)
+        if "is running" not in res.stdout and "running" not in res.stderr.lower():
+            print("[*] Colima is NOT running. Starting Colima...")
+            try:
+                subprocess.run(["colima", "start"], check=True)
+                print("[+] Colima started successfully.")
+                def stop_colima():
+                    print("[*] Stopping Colima (on-demand mode)...")
+                    subprocess.run(["colima", "stop"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                atexit.register(stop_colima)
+            except Exception as e:
+                print(f"[-] Failed to start Colima: {e}")
 
 def main():
     parser = argparse.ArgumentParser(
@@ -516,8 +554,10 @@ def main():
         help="Frequency of simulation statistics output (in steps). Default: 100.")
     sim.add_argument("--grid-factor", type=float, default=1.5,
         help="Mesh density multiplier. Default: 1.5 (Optimized to resolve shock MFP). >1.0 increases grid resolution, <1.0 decreases it.")
-    sim.add_argument("--samples", type=int, default=5,
-        help="Number of Latin Hypercube Sampling (LHS) geometry samples per optimization iteration. Default: 5.")
+    sim.add_argument("--samples", type=int, default=25,
+        help="Number of geometry samples per optimization iteration. Default: 25 for full CCD.")
+    sim.add_argument("--doe", type=str, choices=["lhs", "ccd"], default="ccd",
+        help="Design of Experiments (DoE) method for sample generation (lhs or ccd).")
     sim.add_argument("--goal", type=str, default="drag", choices=["drag", "heat"],
         help="Optimization objective. 'drag' minimizes aerodynamic drag coefficient (Cd). 'heat' minimizes peak stagnation heat flux. Default: drag.")
     sim.add_argument("--nose-type", type=str, default="smooth", choices=["smooth", "pointy"],
@@ -533,8 +573,8 @@ def main():
     sim.add_argument("--payload", action="store_true", default=False,
         help="Enable a payload model on the backside of the HIAD shield. Requires --payload-file or --defaultPayload.")
     sim.add_argument("--payload-file", type=str, default="CADDesign/HIAD_custom_full.step", help="Path to payload STEP file")
-    sim.add_argument("--resume", action="store_true",
-        help="Attempt to resume the simulation from the latest restart file in results_reference/ instead of starting from scratch.")
+    sim.add_argument("--fresh-start", action="store_true",
+        help="Do not auto-resume. Start a completely fresh simulation and wipe old restart files.")
     sim.add_argument("--defaultPayload", action="store_true", default=False, help="Generate a default IRVE-3 cylindrical payload at the center back.")
     sim.add_argument("--fnum", type=str, default="1.5e20",
         help="Particle weighting factor (e.g. 1.5e20). Lower = more particles, better shockwave visibility.")
@@ -564,10 +604,11 @@ def main():
     geo.add_argument("--mass", type=float, default=281.0, help="Total entry mass [kg]. (IRVE-3: 281kg)")
     
     # Material Property Overrides (Ref: Rapisarda 2023 Table B.17)
-    sim.add_argument("--tps-material", type=str, default="sic", choices=["sic", "pyrogel", "kapton"],
+    sim.add_argument("--tps-material", type=str, default="sic", choices=["sic", "pyrogel", "kapton", "multi"],
         help="Predefined F-TPS material layup (outer layer). Sets defaults for density and emissivity.")
     sim.add_argument("--tps-density", type=float, default=1468.0, help="F-TPS Density [kg/m^3] (Default: 1468.0 for Nicalon SiC)")
     sim.add_argument("--tps-cp", type=float, default=1100.0, help="F-TPS Specific Heat [J/kg-K]")
+    sim.add_argument("--tps-k", type=float, default=0.2, help="F-TPS Thermal Conductivity [W/m-K] (Default: 0.2)")
     sim.add_argument("--tps-emissivity", type=float, default=0.75, help="F-TPS Surface Emissivity (Default: 0.75 for Nicalon SiC)")
     sim.add_argument("--thermal-lag", type=float, default=15.0, help="Thermal Lag Factor [%%]")
     sim.add_argument("--slice-angle", type=float, default=360.0,
@@ -613,6 +654,9 @@ def main():
     ssh.add_argument("--ssh-key",  type=str, help="Path to SSH private key file for key-based authentication.")
 
     args, unknown = parser.parse_known_args()
+    
+    if getattr(args, 'solver', None) in ['sparta', 'openfoam']:
+        ensure_docker_colima()
 
     # --- Rapisarda (2023) Structural & Geometric Validation ---
     #
@@ -653,7 +697,8 @@ def main():
     tps_presets = {
         "sic":     {"density": 1468.0, "cp": 1100.0, "emissivity": 0.75},
         "pyrogel": {"density": 180.0,  "cp": 1000.0, "emissivity": 0.80},
-        "kapton":  {"density": 1420.0, "cp": 1090.0, "emissivity": 0.77}
+        "kapton":  {"density": 1420.0, "cp": 1090.0, "emissivity": 0.77},
+        "multi":   {"density": 322.94, "cp": 1083.7, "emissivity": 0.75}
     }
     
     # If a material is selected, and values are at their global defaults, update them
@@ -696,6 +741,21 @@ def main():
         if args.steps == 500:
             args.steps = 1100
         args.test = "pinn_calibration"
+
+    if args.headless and os.path.isdir("/usr/local/AmaryllisIdleAutomode"):
+        import uuid
+        import shlex
+        exec_uuid = uuid.uuid4().hex[:8]
+        script_path = os.path.join(CONTAINER_WORKDIR, f"resumeDSMCResearch_{exec_uuid}_executeMeAtIdle.sh")
+        cmd_args = [sys.executable] + sys.argv
+        cmd = " ".join(shlex.quote(arg) for arg in cmd_args)
+        with open(script_path, "w") as f:
+            f.write("#!/bin/bash\n")
+            f.write("sleep 600\n")
+            f.write(f"cd {shlex.quote(CONTAINER_WORKDIR)}\n")
+            f.write(f"{cmd}\n")
+        os.chmod(script_path, 0o755)
+        print(f"[*] AmaryllisIdleAutomode detected. Created idle resume script: {script_path}")
 
     if args.LiteracyReferences:
         ref_path = os.path.join(CONTAINER_WORKDIR, "REFERENCES.MD")
@@ -807,7 +867,8 @@ def main():
                     headless=args.headless, 
                     sparta_gpu=args.sparta_gpu,
                     steps=args.steps,
-                    resume=args.resume,
+                    fresh_start=args.fresh_start,
+                    doe=args.doe,
                     mach=args.mach,
                     alt=args.alt,
                     flat_skin=args.flat_skin,
@@ -969,7 +1030,10 @@ def main():
                     'grid_factor': args.grid_factor, # Mesh adjustment: >1.0 denser, <1.0 sparser
                     'headless': args.headless,
                     'paraview': args.paraview,
-                    'sparta_gpu': args.sparta_gpu
+                    'sparta_gpu': args.sparta_gpu,
+                    'tps_k': args.tps_k,
+                    'fresh_start': args.fresh_start,
+                    'hybrid_thermal': True
                 }
                 
                 if args.mach is not None or args.alt is not None:
@@ -1215,6 +1279,7 @@ def main():
                 'pinn_accel': args.pinn,
                 'sparta_gpu': args.sparta_gpu,
                 'samples': args.samples,
+                'doe': args.doe,
                 'goal': args.goal,
                 'v_diameter': True,
                 'v_angle': True,
@@ -1230,7 +1295,10 @@ def main():
                 'tps_density': args.tps_density,
                 'tps_cp': args.tps_cp,
                 'tps_emissivity': args.tps_emissivity,
-                'thermal_lag': args.thermal_lag
+                'thermal_lag': args.thermal_lag,
+                'tps_k': args.tps_k,
+                'fresh_start': args.fresh_start,
+                'hybrid_thermal': True
             }
             
             print("[VERBOSE] Sending Optimization Parameters:")
@@ -1264,5 +1332,51 @@ def main():
         # We are inside the container
         run_simulation(steps=args.steps if '--steps' in sys.argv else None)
 
+def check_and_acquire_lock():
+    lock_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "main.lock")
+    if os.path.exists(lock_file):
+        pid: int = -1
+        try:
+            with open(lock_file, "r") as f:
+                pid = int(f.read().strip())
+        except ValueError:
+            print("[*] Lockfile corrupted. Overwriting...")
+            pid = -1
+
+        if pid > 0:
+            # Check if process is still running — prefer psutil, fall back to os.kill
+            process_alive = False
+            try:
+                import psutil  # type: ignore[import-untyped]
+                process_alive = psutil.pid_exists(pid)
+            except ImportError:
+                # psutil unavailable: use POSIX signal 0 as a liveness probe
+                try:
+                    os.kill(pid, 0)
+                    process_alive = True
+                except OSError:
+                    process_alive = False
+
+            if process_alive:
+                print(f"[!] Another instance of StellarOrion is currently running (PID {pid}). Exiting.")
+                sys.exit(1)
+            else:
+                print(f"[*] Found stale lockfile for PID {pid}. Overwriting...")
+
+    # Write current PID to lockfile
+    with open(lock_file, "w") as f:
+        f.write(str(os.getpid()))
+        
+    # Register atexit to clean up lockfile
+    import atexit
+    def cleanup_lock():
+        if os.path.exists(lock_file):
+            try:
+                os.remove(lock_file)
+            except Exception:
+                pass
+    atexit.register(cleanup_lock)
+
 if __name__ == "__main__":
+    check_and_acquire_lock()
     main()
