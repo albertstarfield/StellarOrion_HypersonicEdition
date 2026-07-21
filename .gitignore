@@ -247,5 +247,17 @@ AgentsInst.old.txt
 
 # Videos
 *.mp4
-*.mp4
-*.mp4
+
+# === Temporary Task Scripts ===
+resumeDSMCResearch_*.sh
+*_bgTask.sh
+ThesisOptimization_executeMeAtIdle.sh
+flagMonitor_bgTask.sh
+
+# === Simulation Results (generated, large) ===
+Result/
+results/
+results (reference)/
+
+# === OpenCode ===
+.opencode/
