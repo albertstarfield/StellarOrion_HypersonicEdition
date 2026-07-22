@@ -1,11 +1,15 @@
 # pyrefly: ignore-errors
+# ruff: noqa
 import os
+import math
 import sys
 import subprocess
 import threading
 import json
 import shutil
 import time
+import uuid
+import glob
 import numpy as np
 try:
     import paramiko
@@ -154,6 +158,18 @@ class Api:
     def __init__(self):
         self.cwd = os.path.dirname(os.path.abspath(__file__))
         self.journal_path = os.path.join(self.cwd, "StellarOrionIntentionLog.jsonl")
+        # ── Distributed Node Identity ──────────────────────────────────────
+        # Generate a deterministic UUID from this machine's environment so
+        # the same physical computer always gets the same identity.
+        # Derived from: hostname + MAC address + OS username.
+        # ──────────────────────────────────────────────────────────────────
+        import hashlib, getpass, platform
+        try:
+            mac = uuid.getnode()
+        except Exception:
+            mac = 0
+        env_fingerprint = f"{platform.node()}:{mac}:{getpass.getuser()}"
+        self.node_uuid = hashlib.sha256(env_fingerprint.encode()).hexdigest()[:12]
         self.window = None
         self.reference_data = None
         import getpass
@@ -3001,6 +3017,124 @@ run             {steps}
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
+    # ══════════════════════════════════════════════════════════════════════
+    #  DISTRIBUTED ATOMIC LOCKING — Syncthing Orchestration Layer
+    # ══════════════════════════════════════════════════════════════════════
+    #  Solution: "Wait-and-See Leader Election"
+    #    1. Each node writes a tiny .lock file containing its own UUID.
+    #    2. It then SLEEPS for a grace period (SYNCTHING_GRACE_SEC) to
+    #       let Syncthing propagate competing .lock files from other machines.
+    #    3. After the grace period, it reads ALL .lock files for that sample.
+    #       The node whose UUID sorts FIRST alphabetically wins the election.
+    # ══════════════════════════════════════════════════════════════════════
+
+    SYNCTHING_GRACE_SEC = 5   # seconds to wait for Syncthing propagation
+    LOCK_TIMEOUT_SEC = 7200   # 2 hours — treat older locks as stale/crashed
+
+    def _lock_dir(self):
+        """Return (and lazily create) the shared lock directory."""
+        d = os.path.join(self.cwd, "sync_locks")
+        os.makedirs(d, exist_ok=True)
+        return d
+
+    def _is_sample_done(self, run_id, sample_idx):
+        """Check whether ANY node has already completed this sample."""
+        done_marker = os.path.join(
+            self._lock_dir(),
+            f"run_{run_id}_sample_{sample_idx}.done"
+        )
+        return os.path.exists(done_marker)
+
+    def _mark_sample_done(self, run_id, sample_idx):
+        """Write a .done marker so all other nodes know this sample is finished."""
+        lock_dir = self._lock_dir()
+        done_path = os.path.join(lock_dir, f"run_{run_id}_sample_{sample_idx}.done")
+        tmp_done = done_path + ".tmp"
+        with open(tmp_done, "w") as f:
+            f.write(json.dumps({
+                "node": self.node_uuid,
+                "finished_at": time.time()
+            }))
+        os.replace(tmp_done, done_path)
+
+        my_lock = os.path.join(lock_dir, f"run_{run_id}_sample_{sample_idx}_{self.node_uuid}.lock")
+        try:
+            os.remove(my_lock)
+        except OSError:
+            pass
+
+    def acquire_distributed_lock(self, run_id, sample_idx):
+        """Attempt to claim exclusive ownership of a sample via Wait-and-See Leader Election."""
+        lock_dir = self._lock_dir()
+
+        if self._is_sample_done(run_id, sample_idx):
+            self.log_to_gui(f"    [→] Sample {sample_idx} already completed (synced .done marker found). Skipping.")
+            return False
+
+        my_lock = os.path.join(
+            lock_dir,
+            f"run_{run_id}_sample_{sample_idx}_{self.node_uuid}.lock"
+        )
+        with open(my_lock, "w") as f:
+            f.write(json.dumps({
+                "node": self.node_uuid,
+                "claimed_at": time.time()
+            }))
+
+        self.log_to_gui(
+            f"    [*] Attempting lock for sample {sample_idx}… "
+            f"(waiting {self.SYNCTHING_GRACE_SEC}s for Syncthing propagation)"
+        )
+
+        time.sleep(self.SYNCTHING_GRACE_SEC)
+
+        pattern = os.path.join(
+            lock_dir,
+            f"run_{run_id}_sample_{sample_idx}_*.lock"
+        )
+        locks = glob.glob(pattern)
+
+        active_uuids = []
+        current_time = time.time()
+        for lk in locks:
+            try:
+                mtime = os.path.getmtime(lk)
+                if current_time - mtime > self.LOCK_TIMEOUT_SEC:
+                    self.log_to_gui(
+                        f"    [!] Removing stale lock (age {current_time - mtime:.0f}s): "
+                        f"{os.path.basename(lk)}"
+                    )
+                    os.remove(lk)
+                else:
+                    uuid_str = os.path.basename(lk).rsplit("_", 1)[-1].replace(".lock", "")
+                    active_uuids.append(uuid_str)
+            except OSError:
+                pass
+
+        active_uuids.sort()
+
+        if not active_uuids:
+            if self._is_sample_done(run_id, sample_idx):
+                return False
+            self.log_to_gui(f"    [+] Lock acquired (no contention) for sample {sample_idx}")
+            return True
+
+        if active_uuids[0] == self.node_uuid:
+            self.log_to_gui(
+                f"    [+] Lock acquired for sample {sample_idx} "
+                f"(won election against {len(active_uuids) - 1} other node(s))"
+            )
+            return True
+        else:
+            self.log_to_gui(
+                f"    [→] Lock lost for sample {sample_idx}. Winner: {active_uuids[0]}. Skipping."
+            )
+            try:
+                os.remove(my_lock)
+            except OSError:
+                pass
+            return False
+
     def execute_optimization(self, opt_params, is_gui=False):
         """Core optimization logic, usable by both GUI and Headless runners."""
         samples_n = int(opt_params.get('opt_samples', 0)) 
@@ -3397,6 +3531,9 @@ run             {steps}
                     all_samples_dicts.append(sample_dict)
 
         for i in range(start_idx, samples_n):
+            if not self.acquire_distributed_lock(run_id, i):
+                continue
+
             sample_dict = all_samples_dicts[i]
             current_x_row = [sample_dict[p] for p in active_params]
             
@@ -3473,7 +3610,7 @@ run             {steps}
                 if grid_files:
                     viz_metadata = self._get_viz_params(opt_params, sample_dict)
                     visualizer.generate_animation(grid_files, os.path.join(sample_dir, "simulation_anim.mp4"), ref_params=viz_metadata)
-                    visualizer.generate_plots(grid_files[-1], sample_dir, ref_params=viz_metadata, surf_file=os.path.join(cad_dir, f"{surf_name}.surf"))
+                    visualizer.generate_plots(grid_files[-1], sample_dir, ref_params=viz_metadata, surf_file=os.path.join(cad_dir, "HIAD_opt.surf"))
                     visualizer.generate_convergence_plot(log_lines, sample_dir, ref_params=viz_metadata)
                     visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(sample_dir, "3d_temp.png"), 
                                                 surf_file=os.path.join(cad_dir, "HIAD_opt.surf"), prop='temp', ref_params=viz_metadata)
@@ -3503,6 +3640,8 @@ run             {steps}
                 self._journal_intention("SBO Phase", f"Completed Sample {i+1}/{samples_n}", {"sample_dict": sample_dict})
             except Exception as e: 
                 self.log_to_gui(f"    [!] Failed atomic save: {e}")
+
+            self._mark_sample_done(run_id, i)
 
             remaining = samples_n - (i + 1)
             etr = remaining * sample_dur

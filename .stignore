@@ -10,3 +10,15 @@ fluent-*-error.log
 fluent-*.log
 .venv_gui/
 .venv/
+
+# ── Distributed Lock Orchestration ──────────────────────────────────
+# The sync_locks/ directory MUST be synced across all lab computers.
+# It contains .lock and .done marker files used by the Wait-and-See
+# Leader Election protocol (see StellarOrionEngineMach5Up.py).
+# Without this, multi-computer orchestration will break.
+#
+# The opt_checkpoint.json must also sync so a second computer can
+# load the full sample matrix and training data when joining a run.
+# ────────────────────────────────────────────────────────────────────
+!sync_locks/
+!CADDesign/opt_checkpoint.json
