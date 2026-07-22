@@ -3664,6 +3664,35 @@ run             {steps}
             
             if is_gui: self.window.evaluate_js(f"updateProgress({10 + int((i+1)/samples_n * 50)})")
 
+        # ══════════════════════════════════════════════════════════════════════
+        # PHASE 3: CLUSTER SYNCHRONIZATION BARRIER & DATASET RE-ASSEMBLY
+        # ══════════════════════════════════════════════════════════════════════
+        self.log_to_gui(f"[*] PHASE 3: WAITING FOR ALL {samples_n} SAMPLES TO COMPLETE ACROSS CLUSTER...")
+        while True:
+            done_count = sum(1 for idx in range(samples_n) if self._is_sample_done(run_id, idx))
+            if done_count >= samples_n:
+                self.log_to_gui(f"    [+] Cluster Barrier Passed: All {samples_n}/{samples_n} samples completed across cluster!")
+                break
+            self.log_to_gui(f"    [*] Cluster Sync Progress: {done_count}/{samples_n} samples done. Waiting 10s...")
+            time.sleep(10)
+
+        # Re-assemble complete training dataset from History DB across all nodes
+        self.log_to_gui("[*] Re-assembling complete multi-node dataset from History DB...")
+        db_samples = self.history.get_samples_for_run(run_id) if hasattr(self.history, 'get_samples_for_run') else []
+        if len(db_samples) >= samples_n:
+            training_x = []
+            training_y = []
+            for s in db_samples:
+                s_dict = s.get('params', {})
+                x_row = [s_dict.get(p, 0.0) for p in active_params]
+                fm = s.get('flight_metrics', {})
+                v_res = s.get('val', 0.0)
+                y_row = [v_res, fm.get('beta', 0.0), fm.get('stag_heat', 0.0), fm.get('heat_load', 0.0),
+                         fm.get('time_of_peak', 0.0), fm.get('g_load', 0.0), fm.get('stag_press', 0.0), fm.get('backface_temp', 0.0)]
+                training_x.append(x_row)
+                training_y.append(y_row)
+            self.log_to_gui(f"    [+] Successfully assembled full dataset of {len(training_x)} samples for MoP training.")
+
         # Update History on Completion
         self.history.update_run_progress(run_id, samples_n, status="completed")
 
@@ -3779,8 +3808,15 @@ run             {steps}
         
         if is_gui: self.window.evaluate_js("updateProgress(85)")
 
-        # 6. Final Validation
-        self.log_to_gui("[*] Executing Final Validation SPARTA Simulation...")
+        # 6. Final Validation Leader Election
+        if not self.acquire_distributed_lock(run_id, "final_validation"):
+            self.log_to_gui("[*] Final Validation lock owned by another node. Waiting for final results to sync...")
+            while not self._is_sample_done(run_id, "final_validation"):
+                time.sleep(5)
+            self.log_to_gui("[+] Final Validation completed by cluster leader!")
+            return
+
+        self.log_to_gui("[*] Executing Final Validation SPARTA Simulation (Cluster Leader)...")
         cmd_final = [python_exec, "HIAD_GeometryEngine.py", "--diameter", str(best_config['diameter']), "--angle", str(best_config['angle']), 
                      "--toroids", str(best_config['toroids']), "--nose", str(best_config['nose']), "--thickness", str(best_config['thickness']),
                      "--scallop_pts", str(best_config['scallop_pts']), "--scallop_angle", str(best_config['scallop_angle']), "--output", "HIAD_final"]
@@ -3789,6 +3825,8 @@ run             {steps}
         # ALWAYS make this for sparta dsmc use docker, do not make this native
         self.log_to_gui("[*] Running Final Validation SPARTA Simulation via Docker...")
         res_dict, log_lines = self.run_sparta_simulation(opt_params, best_config, surf_name="HIAD_final")
+
+        self._mark_sample_done(run_id, "final_validation")
 
         # --- Final Post-processing (Always run to generate assets for report) ---
         self.log_to_gui("[*] Compiling Final Simulation Animation (Post-process)...")
