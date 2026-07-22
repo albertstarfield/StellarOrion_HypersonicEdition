@@ -40,7 +40,7 @@ RUN mkdir -p /workspace/sparta/build && cd /workspace/sparta/build && \
     -DPKG_MPI=no \
     -DCMAKE_CXX_FLAGS="-D_Static_assert=static_assert" && \
     make -j$(nproc) && \
-    cp spa /usr/local/bin/spa
+    cp src/spa_ /usr/local/bin/spa
 
 ENV OMP_NUM_THREADS=6
 ENV IN_DOCKER=1
