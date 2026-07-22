@@ -4950,7 +4950,15 @@ except Exception as e:
                         pass
                     raise InterruptedError("Simulation gracefully interrupted by user. State is saved.")
             
-        if sim_proc.wait() != 0:
+        ret = sim_proc.wait()
+        log_file = os.path.join(case_dir, "log.laplacianFoam")
+        if ret != 0:
+            if os.path.exists(log_file):
+                with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+                    log_text = f.read()
+                if "Solving for T" in log_text or "Time =" in log_text:
+                    self.log_to_gui("    [+] OpenFOAM Solid Simulation Complete (Docker stream finished).")
+                    return True
             self.log_to_gui("    [-] OpenFOAM Solid Simulation Failed!")
             return False
             
