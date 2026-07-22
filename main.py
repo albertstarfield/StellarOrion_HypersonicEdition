@@ -629,8 +629,8 @@ def main():
         help="Enable Physics-Informed Neural Network (PINN) surrogate for optimization acceleration. Default: enabled.")
     hw.add_argument("--no-pinn", action="store_false", dest="pinn",
         help="Disable the PINN surrogate. Optimization will rely entirely on direct simulation samples.")
-    hw.add_argument("--sparta-gpu", action="store_true", default=False,
-        help="Enable CUDA GPU acceleration for SPARTA via Kokkos. Requires an NVIDIA GPU and the CUDA-enabled sparta-hysp Docker image (Dockerfile.cuda).")
+    hw.add_argument("--sparta-gpu", action="store_true", default=None,
+        help="Enable CUDA GPU acceleration for SPARTA via Kokkos. Automatically detected by default if an NVIDIA GPU is present. Use --no-sparta-gpu to force CPU mode.")
     hw.add_argument("--no-sparta-gpu", action="store_false", dest="sparta_gpu",
         help="Force CPU-only SPARTA execution even if a GPU is detected.")
     hw.add_argument("--cores", type=int, default=None,
@@ -661,7 +661,7 @@ def main():
     ssh.add_argument("--ssh-key",  type=str, help="Path to SSH private key file for key-based authentication.")
 
     args, unknown = parser.parse_known_args()
-    
+
     if getattr(args, 'solver', None) in ['sparta', 'openfoam']:
         ensure_docker_colima()
 
@@ -797,6 +797,10 @@ def main():
     if not os.environ.get("IN_DOCKER"):
         from StellarOrionEngineMach5Up import Api
         api = Api()
+
+        if args.sparta_gpu is None:
+            has_gpu, gpu_info = api.detect_nvidia_gpu(verbose=args.verbose)
+            args.sparta_gpu = has_gpu
         
         if args.compareNoses:
             print("[*] Starting HIAD Nose-Type Comparison Study (Smooth vs Pointy)...")

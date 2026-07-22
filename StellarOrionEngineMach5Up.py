@@ -530,16 +530,52 @@ class Api:
         self.run_optimization(opt_params)
         return {"status": "success"}
 
-    def has_nvidia_gpu(self):
-        """Detects if an NVIDIA GPU is available via nvidia-smi."""
+    def detect_nvidia_gpu(self, verbose=True):
+        """Detects if an NVIDIA GPU with CUDA is available (on host system or inside Docker) and logs hardware details."""
+        gpu_detected = False
+        gpu_info = ""
+
+        # Check if running inside Docker container
+        is_inside_docker = os.environ.get("IN_DOCKER") == "1" or os.path.exists("/.dockerenv")
+
         try:
-            # Check for nvidia-smi output
-            result = subprocess.run(["nvidia-smi"], capture_output=True, text=True)
-            if result.returncode == 0 and "NVIDIA-SMI" in result.stdout:
-                return True
+            # Query GPU name, driver version, and memory via nvidia-smi
+            result = subprocess.run(
+                ["nvidia-smi", "--query-gpu=name,driver_version,memory.total", "--format=csv,noheader"],
+                capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                gpu_detected = True
+                gpu_info = result.stdout.strip()
         except Exception:
             pass
-        return False
+
+        if not gpu_detected:
+            # Fallback nvidia-smi check
+            try:
+                result = subprocess.run(["nvidia-smi"], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0 and ("NVIDIA-SMI" in result.stdout or "CUDA" in result.stdout):
+                    gpu_detected = True
+                    gpu_info = "NVIDIA GPU Detected"
+            except Exception:
+                pass
+
+        location_label = "Inside Docker Container" if is_inside_docker else "Host System"
+
+        if verbose:
+            if gpu_detected:
+                self.log_to_gui(f"[CUDA AUTO-DETECT] Environment: {location_label}")
+                self.log_to_gui(f"[CUDA AUTO-DETECT] Hardware Detected: {gpu_info}")
+                self.log_to_gui("[CUDA AUTO-DETECT] Automatically enabling CUDA acceleration & Kokkos backend for SPARTA DSMC (-pk kokkos -sf kk).")
+            else:
+                self.log_to_gui(f"[CUDA AUTO-DETECT] Environment: {location_label}")
+                self.log_to_gui("[CUDA AUTO-DETECT] No NVIDIA GPU hardware detected via nvidia-smi. SPARTA DSMC will use multi-core CPU MPI mode.")
+
+        return gpu_detected, gpu_info
+
+    def has_nvidia_gpu(self):
+        has_gpu, _ = self.detect_nvidia_gpu(verbose=False)
+        return has_gpu
 
 
     def _get_python_exec(self):
@@ -4451,8 +4487,11 @@ run             {steps}
         """Build the SPARTA Docker image locally with real-time logging."""
         import subprocess
         try:
-            self.log_to_readiness("[*] Starting local SPARTA Docker build...")
-            use_gpu = self.has_nvidia_gpu() and False # Forcing CPU by default as per user request
+            use_gpu, gpu_info = self.detect_nvidia_gpu(verbose=True)
+            if use_gpu:
+                self.log_to_readiness(f"[+] CUDA GPU Detected: {gpu_info}. Building SPARTA using Dockerfile.cuda (Kokkos GPU acceleration)...")
+            else:
+                self.log_to_readiness("[-] No CUDA GPU detected. Building SPARTA using Dockerfile.cpu...")
             dockerfile = "Dockerfile.cuda" if use_gpu else "Dockerfile.cpu"
             cmd = ["docker", "build", "-t", "sparta-hysp", "-f", dockerfile, "."]
 
