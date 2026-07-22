@@ -265,4 +265,7 @@ results (reference)/
 # === Lock Files & Markers ===
 *.lock
 *.done
+.*.lock
+.*.done
+
 
