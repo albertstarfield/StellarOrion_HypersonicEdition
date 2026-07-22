@@ -5009,7 +5009,7 @@ except Exception as e:
             "runTimeModifiable true;\n")
 
         # system/decomposeParDict
-        n_cores = os.cpu_count() or 4
+        n_cores = opt_params.get('env_cores', os.cpu_count() or 4)
         self._write_of_dict(os.path.join(case_dir, "system", "decomposeParDict"), 
             f"numberOfSubdomains {n_cores};\n"
             "method scotch;\n")
@@ -5164,7 +5164,7 @@ except Exception as e:
 
 
         # 1.5 system/decomposeParDict
-        n_cores = os.cpu_count() or 4
+        n_cores = opt_params.get('env_cores', os.cpu_count() or 4)
         self._write_of_dict(os.path.join(case_dir, "system", "decomposeParDict"), 
             f"numberOfSubdomains {n_cores};\n"
             "method scotch;\n")
