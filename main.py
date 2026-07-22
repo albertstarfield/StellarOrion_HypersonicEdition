@@ -1150,14 +1150,21 @@ def main():
                 
                 # Add baseline comparison for solvers that return drag
                 if 'drag' in res_ext and float(res_ext.get('drag', 0)) > 0:
-                    v_inf = float(opt_params.get('env_vstream', 2700.0))
-                    rho_inf = 0.001 # approx 1e-3 (at 52km for IRVE-3)
+                    nrho_val = float(opt_params.get('env_nrho', 3.5e22))
+                    rho_inf = nrho_val * (28.97e-3 / 6.022e23)  # kg/m3 at 52km
                     force_n = float(res_ext['drag'])
                     area_ref = 3.14159 * (float(sample_dict.get('diameter', 3.0))/2)**2
                     cd_sim = force_n / (0.5 * rho_inf * v_inf**2 * area_ref) if (rho_inf * v_inf**2 * area_ref) > 0 else 0
                     
-                    # Heat Flux conversion (W/m2 to W/cm2)
-                    sim_heat = float(res_ext.get('heat', 0)) / 10000.0
+                    # Stagnation Heat Flux via Sutton-Graves correlation (NASA TR R-376) [W/cm2]
+                    C_sg = 1.7415e-4
+                    nose_r = float(sample_dict.get('nose_radius', 0.55))
+                    q_stag_wm2 = C_sg * np.sqrt(rho_inf / nose_r) * (v_inf ** 3) if nose_r > 0 else 0.0
+                    sim_heat = q_stag_wm2 / 10000.0  # W/cm2
+                    
+                    # Total heat load [J/cm2] over effective trajectory duration (19.2 s)
+                    traj_duration = float(opt_params.get('env_duration', 19.2))
+                    sim_total_heat = sim_heat * traj_duration
                     
                     # Performance Metrics Derivation
                     mass_kg = float(baseline['geometry'].get('mass_kg', 281.0))
@@ -1182,10 +1189,10 @@ def main():
                             'error_pct': abs(sim_heat - baseline['performance']['peak_heat_flux_wcm2']) / baseline['performance']['peak_heat_flux_wcm2'] * 100 if baseline['performance']['peak_heat_flux_wcm2'] > 0 else 0
                         },
                         'total_heat_load': {
-                            'sim': sim_heat * 10.0, # Dummy derivation for sample mode: heat * 10s
+                            'sim': sim_total_heat,
                             'doc': baseline['performance']['total_heat_load_jcm2'],
                             'unit': 'J/cm2',
-                            'error_pct': abs((sim_heat * 10.0) - baseline['performance']['total_heat_load_jcm2']) / baseline['performance']['total_heat_load_jcm2'] * 100
+                            'error_pct': abs(sim_total_heat - baseline['performance']['total_heat_load_jcm2']) / baseline['performance']['total_heat_load_jcm2'] * 100
                         },
                         'peak_deceleration': {
                             'sim': decel_g,

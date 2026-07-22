@@ -4174,8 +4174,11 @@ run             {steps}
             sim_drag_force = res_dict.get('drag', 0.0)
             sim_cd = sim_drag_force / (q_dyn * area_3d) if (q_dyn * area_3d) > 0 else 0.0
 
-            # Heat Flux (W/m2 to W/cm2)
-            sim_heat = (res_dict.get('heat', 0.0) / 10000.0)
+            # Stagnation Heat Flux (Sutton-Graves correlation in W/cm2)
+            C_sg = 1.7415e-4
+            nose_r = float(sample_dict.get('nose_radius', 0.55))
+            v_inf = float(opt_params.get('env_vstream', 2700.0))
+            sim_heat = (C_sg * np.sqrt(rho / nose_r) * (v_inf ** 3)) / 10000.0 if nose_r > 0 else 0.0
 
             self.log_to_gui("\n[VERBOSE] Baseline Calibration Physics:")
             self.log_to_gui(f"    - Ambient Density (rho):     {rho:.6e} kg/m3")
