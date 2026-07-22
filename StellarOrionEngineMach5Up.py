@@ -2123,7 +2123,7 @@ run             {steps}
             docker_cmd = ["spa", "-in", "in.hiad", "-pk", "kokkos", "newton", "on", "gpu", "1", "-sf", "kk"]
         
         # ALWAYS make this for sparta dsmc use docker, do not make this native
-        res_readiness = self.test_sparta_readiness()
+        res_readiness = self.test_sparta_readiness(use_gpu=use_gpu)
         if res_readiness.get('status') == 'error':
             raise RuntimeError(
                 f"Docker execution failed: {res_readiness.get('message')}. "
@@ -2946,18 +2946,31 @@ run             {steps}
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
-    def test_sparta_readiness(self):
-        """Test if the local machine is ready for SPARTA (Docker + Image)."""
+    def test_sparta_readiness(self, use_gpu=None):
+        """Test if the local machine is ready for SPARTA (Docker + Image). Automatically rebuilds image if GPU/CPU mode mismatch."""
         import subprocess
         try:
             # Check if docker is installed
             subprocess.run(["docker", "--version"], check=True, capture_output=True)
             
-            # Check if image exists
-            res = subprocess.run(["docker", "images", "-q", "sparta-hysp"], check=True, capture_output=True)
-            if not res.stdout.strip():
-                return {"status": "error", "message": "Docker image 'sparta-hysp' not found.", "sparta_missing": True}
+            if use_gpu is None:
+                use_gpu = self.has_nvidia_gpu()
             
+            # Check if image exists and inspect its SPARTA_GPU setting
+            res = subprocess.run(["docker", "inspect", "--format", "{{range .Config.Env}}{{println .}}{{end}}", "sparta-hysp"], capture_output=True, text=True)
+            if res.returncode != 0 or not res.stdout.strip():
+                self.log_to_gui("    [*] SPARTA Docker image 'sparta-hysp' not found. Building image...")
+                self.build_sparta_image()
+            else:
+                image_env = res.stdout
+                image_gpu = "SPARTA_GPU=1" in image_env
+                if use_gpu and not image_gpu:
+                    self.log_to_gui("    [!] CUDA GPU detected, but existing 'sparta-hysp' image is CPU-only (SPARTA_GPU=0). Rebuilding with CUDA Kokkos backend (Dockerfile.cuda)...")
+                    self.build_sparta_image()
+                elif not use_gpu and image_gpu:
+                    self.log_to_gui("    [!] CPU mode requested, but existing 'sparta-hysp' image is GPU-enabled. Rebuilding with CPU MPI backend (Dockerfile.cpu)...")
+                    self.build_sparta_image()
+
             return {"status": "success", "message": "Docker and SPARTA image are ready."}
         except FileNotFoundError:
             return {"status": "error", "message": "Docker not found. Please install Docker Desktop or Colima."}
