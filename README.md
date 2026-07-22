@@ -1,5 +1,13 @@
 # StellarOrion HypersonicEdition
 
+**Author:** Albert Starfield Wahyu Suryo Samudro
+
+**Supervised by:**
+1. Dr.-Ing. Mochammad Agoes Moelyadi, ST., MSc.
+2. Yohanes Bimo Dwianto, S.T., M.T., Ph.D.
+
+---
+
 StellarOrion is a high-fidelity aerothermodynamic simulation and optimization suite for Hypersonic Inflatable Aerodynamic Decelerators (HIAD). It leverages the **SPARTA DSMC** solver for rarefied gas dynamics (Plimpton & Gallis, 2014) and a **PyTorch-based Metamodel Prognosis** for survivability optimization.
 
 ## 🚀 Architecture
