@@ -2120,7 +2120,7 @@ run             {steps}
             else:
                 docker_cmd = ["spa", "-in", "in.hiad"]
         else:
-            docker_cmd = ["spa", "-in", "in.hiad", "-pk", "kokkos", "newton", "on", "gpu", "1", "-sf", "kk"]
+            docker_cmd = ["spa", "-k", "on", "gpus", "1", "-sf", "kk", "-in", "in.hiad"]
         
         # ALWAYS make this for sparta dsmc use docker, do not make this native
         res_readiness = self.test_sparta_readiness(use_gpu=use_gpu)
