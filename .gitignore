@@ -261,3 +261,8 @@ results (reference)/
 
 # === OpenCode ===
 .opencode/
+
+# === Lock Files & Markers ===
+*.lock
+*.done
+
