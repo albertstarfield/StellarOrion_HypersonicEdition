@@ -3823,8 +3823,11 @@ run             {steps}
         subprocess.run(cmd_final, cwd=cad_dir, check=True)
         
         # ALWAYS make this for sparta dsmc use docker, do not make this native
-        self.log_to_gui("[*] Running Final Validation SPARTA Simulation via Docker...")
-        res_dict, log_lines = self.run_sparta_simulation(opt_params, best_config, surf_name="HIAD_final")
+        self.log_to_gui("[*] Running Final Validation SPARTA Simulation via Docker (10,000 steps Unsteady Validation)...")
+        opt_params_final = opt_params.copy()
+        opt_params_final['env_run'] = 10000
+        opt_params_final['stats_interval'] = 500
+        res_dict, log_lines = self.run_sparta_simulation(opt_params_final, best_config, surf_name="HIAD_final")
 
         self._mark_sample_done(run_id, "final_validation")
 

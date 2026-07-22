@@ -515,6 +515,8 @@ def main():
         ))
     mode.add_argument("--validation", action="store_true",
         help="Shorthand for: --headless --test baseline. Runs the full IRVE-3 baseline validation suite against mission documentation.")
+    mode.add_argument("--validationUnsteady", action="store_true",
+        help="Run a long-duration (10,000 steps) unsteady validation simulation on the final design to capture toroid valley recirculation. Saves periodic restart files.")
     mode.add_argument("--sample", type=int, metavar="STEPS",
         help="Shorthand for: --headless --test sample --steps STEPS. Runs a single IRVE-3 geometry simulation for N steps.")
     mode.add_argument("--compareCalibrate", action="store_true",
@@ -552,8 +554,13 @@ def main():
         help="Number of simulation timesteps. Default: Handled by engine (500 for sample, 1500 for baseline).")
     sim.add_argument("--stats-interval", type=int, default=100,
         help="Frequency of simulation statistics output (in steps). Default: 100.")
+    sim.add_argument("--restart-file", type=str, default=None,
+        help="Path to a SPARTA restart file to resume a simulation.")
     sim.add_argument("--grid-factor", type=float, default=1.5,
         help="Mesh density multiplier. Default: 1.5 (Optimized to resolve shock MFP). >1.0 increases grid resolution, <1.0 decreases it.")
+    # NOTE: 25 samples is the exact mathematical minimum for a 4-variable (Diameter, Angle, Nose, Toroids)
+    # Face-Centered Central Composite Design (CCD): 2^4 (factorial) + 2*4 (axial) + 1 (center) = 16 + 8 + 1 = 25.
+    # This provides a sufficient structural basis for the default IRVE-3 optimization using the PINN surrogate.
     sim.add_argument("--samples", type=int, default=25,
         help="Number of geometry samples per optimization iteration. Default: 25 for full CCD.")
     sim.add_argument("--doe", type=str, choices=["lhs", "ccd"], default="ccd",
@@ -725,6 +732,11 @@ def main():
         args.headless = True
         args.test = "baseline"
 
+    if args.validationUnsteady:
+        args.headless = True
+        args.test = "baseline"
+        args.steps = 10000
+
     if args.compareCalibrate:
         args.headless = True
         if not args.test:
@@ -868,6 +880,8 @@ def main():
                     sparta_gpu=args.sparta_gpu,
                     steps=args.steps,
                     fresh_start=args.fresh_start,
+                    resume=not args.fresh_start,
+                    restart_file=args.restart_file,
                     doe=args.doe,
                     mach=args.mach,
                     alt=args.alt,
