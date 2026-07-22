@@ -1254,7 +1254,7 @@ run             {steps}
                 "total_steps": int(opt_params.get('env_run', 1000)),
                 "dimension": opt_params.get('solver_dim', '2d'),
                 "use_gpu": opt_params.get('solver_gpu', True),
-                "n_cores": int(opt_params.get('env_cores', 4)),
+                "n_cores": int(opt_params.get('env_cores') or 4),
                 "bl_layers": int(opt_params.get('solver_bl_layers', 15)),
                 "viscous_model": opt_params.get('viscous_model', 'sst-k-omega')
             }
@@ -1354,7 +1354,7 @@ run             {steps}
 
             gui_flag = "" if show_gui else "-hidden"
             nm_flag = "" if show_gui else "-nm"
-            n_cores = int(opt_params.get('env_cores', 4))
+            n_cores = int(opt_params.get('env_cores') or 4)
             
             # --- GPU DETECTION (CUDA via PyTorch) ---
             use_gpu = False
@@ -1690,7 +1690,7 @@ run             {steps}
             docker_create_cmd.append("all")
         
         if not use_gpu:
-            nproc = opt_params.get('env_cores', 4)
+            nproc = opt_params.get('env_cores') or os.cpu_count() or 4
             self.log_to_gui(f"    [!] Parallel Execution: Using {nproc} CPU cores via mpirun...")
             if nproc > 1:
                 docker_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), "spa", "-in", "in.hiad"]

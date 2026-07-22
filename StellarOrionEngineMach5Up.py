@@ -530,52 +530,22 @@ class Api:
         self.run_optimization(opt_params)
         return {"status": "success"}
 
-    def detect_nvidia_gpu(self, verbose=True):
-        """Detects if an NVIDIA GPU with CUDA is available (on host system or inside Docker) and logs hardware details."""
-        gpu_detected = False
-        gpu_info = ""
-
-        # Check if running inside Docker container
-        is_inside_docker = os.environ.get("IN_DOCKER") == "1" or os.path.exists("/.dockerenv")
-
+    def has_nvidia_gpu(self):
+        """Detects if an NVIDIA GPU is available via nvidia-smi."""
         try:
-            # Query GPU name, driver version, and memory via nvidia-smi
-            result = subprocess.run(
-                ["nvidia-smi", "--query-gpu=name,driver_version,memory.total", "--format=csv,noheader"],
-                capture_output=True, text=True, timeout=5
-            )
-            if result.returncode == 0 and result.stdout.strip():
-                gpu_detected = True
-                gpu_info = result.stdout.strip()
+            # Check for nvidia-smi output
+            result = subprocess.run(["nvidia-smi"], capture_output=True, text=True)
+            if result.returncode == 0 and "NVIDIA-SMI" in result.stdout:
+                return True
         except Exception:
             pass
+        return False
 
-        if not gpu_detected:
-            # Fallback nvidia-smi check
-            try:
-                result = subprocess.run(["nvidia-smi"], capture_output=True, text=True, timeout=5)
-                if result.returncode == 0 and ("NVIDIA-SMI" in result.stdout or "CUDA" in result.stdout):
-                    gpu_detected = True
-                    gpu_info = "NVIDIA GPU Detected"
-            except Exception:
-                pass
-
-        location_label = "Inside Docker Container" if is_inside_docker else "Host System"
-
-        if verbose:
-            if gpu_detected:
-                self.log_to_gui(f"[CUDA AUTO-DETECT] Environment: {location_label}")
-                self.log_to_gui(f"[CUDA AUTO-DETECT] Hardware Detected: {gpu_info}")
-                self.log_to_gui("[CUDA AUTO-DETECT] Automatically enabling CUDA acceleration & Kokkos backend for SPARTA DSMC (-pk kokkos -sf kk).")
-            else:
-                self.log_to_gui(f"[CUDA AUTO-DETECT] Environment: {location_label}")
-                self.log_to_gui("[CUDA AUTO-DETECT] No NVIDIA GPU hardware detected via nvidia-smi. SPARTA DSMC will use multi-core CPU MPI mode.")
-
-        return gpu_detected, gpu_info
-
-    def has_nvidia_gpu(self):
-        has_gpu, _ = self.detect_nvidia_gpu(verbose=False)
-        return has_gpu
+    def detect_nvidia_gpu(self, verbose=False):
+        """Detects NVIDIA GPU and returns (has_gpu, gpu_info)."""
+        has_gpu = self.has_nvidia_gpu()
+        gpu_info = "NVIDIA GPU Detected" if has_gpu else "No NVIDIA GPU Detected"
+        return has_gpu, gpu_info
 
 
     def _get_python_exec(self):
@@ -1615,7 +1585,7 @@ run             {steps}
                 "total_steps": int(opt_params.get('env_run', 1000)),
                 "dimension": opt_params.get('solver_dim', '2d'),
                 "use_gpu": opt_params.get('solver_gpu', True),
-                "n_cores": int(opt_params.get('env_cores', 4)),
+                "n_cores": int(opt_params.get('env_cores') or 4),
                 "bl_layers": int(opt_params.get('solver_bl_layers', 15)),
                 "viscous_model": opt_params.get('viscous_model', 'sst-k-omega')
             }
@@ -1715,7 +1685,7 @@ run             {steps}
 
             gui_flag = "" if show_gui else "-hidden"
             nm_flag = "" if show_gui else "-nm"
-            n_cores = int(opt_params.get('env_cores', 4))
+            n_cores = int(opt_params.get('env_cores') or 4)
             
             # --- GPU DETECTION (CUDA via PyTorch) ---
             use_gpu = False
@@ -2113,17 +2083,17 @@ run             {steps}
         
         if not use_gpu:
             # ALWAYS utilize all the CPU because we are running out of time here (no excuse or balances)
-            nproc = opt_params.get('env_cores', 10)
+            nproc = opt_params.get('env_cores') or os.cpu_count() or 4
             self.log_to_gui(f"    [!] Parallel Execution: Using {nproc} CPU cores via mpirun...")
             if nproc > 1:
                 docker_cmd = ["mpirun", "--allow-run-as-root", "--oversubscribe", "-np", str(nproc), "spa", "-in", "in.hiad"]
             else:
                 docker_cmd = ["spa", "-in", "in.hiad"]
         else:
-            docker_cmd = ["spa", "-k", "on", "gpus", "1", "-sf", "kk", "-in", "in.hiad"]
+            docker_cmd = ["spa", "-in", "in.hiad", "-pk", "kokkos", "newton", "on", "gpu", "1", "-sf", "kk"]
         
         # ALWAYS make this for sparta dsmc use docker, do not make this native
-        res_readiness = self.test_sparta_readiness(use_gpu=use_gpu)
+        res_readiness = self.test_sparta_readiness()
         if res_readiness.get('status') == 'error':
             raise RuntimeError(
                 f"Docker execution failed: {res_readiness.get('message')}. "
@@ -2946,31 +2916,27 @@ run             {steps}
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
-    def test_sparta_readiness(self, use_gpu=None):
-        """Test if the local machine is ready for SPARTA (Docker + Image). Automatically rebuilds image if GPU/CPU mode mismatch."""
+    def _ensure_docker_env(self):
+        """Auto-detect Colima socket on macOS if DOCKER_HOST is unset."""
+        import sys, os
+        if sys.platform != 'win32' and 'DOCKER_HOST' not in os.environ:
+            colima_sock = os.path.expanduser('~/.colima/default/docker.sock')
+            if os.path.exists(colima_sock):
+                os.environ['DOCKER_HOST'] = f'unix://{colima_sock}'
+
+    def test_sparta_readiness(self):
+        """Test if the local machine is ready for SPARTA (Docker + Image)."""
         import subprocess
+        self._ensure_docker_env()
         try:
             # Check if docker is installed
             subprocess.run(["docker", "--version"], check=True, capture_output=True)
             
-            if use_gpu is None:
-                use_gpu = self.has_nvidia_gpu()
+            # Check if image exists
+            res = subprocess.run(["docker", "images", "-q", "sparta-hysp"], check=True, capture_output=True)
+            if not res.stdout.strip():
+                return {"status": "error", "message": "Docker image 'sparta-hysp' not found.", "sparta_missing": True}
             
-            # Check if image exists and inspect its SPARTA_GPU setting
-            res = subprocess.run(["docker", "inspect", "--format", "{{range .Config.Env}}{{println .}}{{end}}", "sparta-hysp"], capture_output=True, text=True)
-            if res.returncode != 0 or not res.stdout.strip():
-                self.log_to_gui("    [*] SPARTA Docker image 'sparta-hysp' not found. Building image...")
-                self.build_sparta_image()
-            else:
-                image_env = res.stdout
-                image_gpu = "SPARTA_GPU=1" in image_env
-                if use_gpu and not image_gpu:
-                    self.log_to_gui("    [!] CUDA GPU detected, but existing 'sparta-hysp' image is CPU-only (SPARTA_GPU=0). Rebuilding with CUDA Kokkos backend (Dockerfile.cuda)...")
-                    self.build_sparta_image()
-                elif not use_gpu and image_gpu:
-                    self.log_to_gui("    [!] CPU mode requested, but existing 'sparta-hysp' image is GPU-enabled. Rebuilding with CPU MPI backend (Dockerfile.cpu)...")
-                    self.build_sparta_image()
-
             return {"status": "success", "message": "Docker and SPARTA image are ready."}
         except FileNotFoundError:
             return {"status": "error", "message": "Docker not found. Please install Docker Desktop or Colima."}
@@ -3872,11 +3838,8 @@ run             {steps}
         subprocess.run(cmd_final, cwd=cad_dir, check=True)
         
         # ALWAYS make this for sparta dsmc use docker, do not make this native
-        self.log_to_gui("[*] Running Final Validation SPARTA Simulation via Docker (10,000 steps Unsteady Validation)...")
-        opt_params_final = opt_params.copy()
-        opt_params_final['env_run'] = 10000
-        opt_params_final['stats_interval'] = 500
-        res_dict, log_lines = self.run_sparta_simulation(opt_params_final, best_config, surf_name="HIAD_final")
+        self.log_to_gui("[*] Running Final Validation SPARTA Simulation via Docker...")
+        res_dict, log_lines = self.run_sparta_simulation(opt_params, best_config, surf_name="HIAD_final")
 
         self._mark_sample_done(run_id, "final_validation")
 
@@ -4174,11 +4137,8 @@ run             {steps}
             sim_drag_force = res_dict.get('drag', 0.0)
             sim_cd = sim_drag_force / (q_dyn * area_3d) if (q_dyn * area_3d) > 0 else 0.0
 
-            # Stagnation Heat Flux (Sutton-Graves correlation in W/cm2)
-            C_sg = 1.7415e-4
-            nose_r = float(sample_dict.get('nose_radius', 0.55))
-            v_inf = float(opt_params.get('env_vstream', 2700.0))
-            sim_heat = (C_sg * np.sqrt(rho / nose_r) * (v_inf ** 3)) / 10000.0 if nose_r > 0 else 0.0
+            # Heat Flux (W/m2 to W/cm2)
+            sim_heat = (res_dict.get('heat', 0.0) / 10000.0)
 
             self.log_to_gui("\n[VERBOSE] Baseline Calibration Physics:")
             self.log_to_gui(f"    - Ambient Density (rho):     {rho:.6e} kg/m3")
@@ -4503,11 +4463,8 @@ run             {steps}
         """Build the SPARTA Docker image locally with real-time logging."""
         import subprocess
         try:
-            use_gpu, gpu_info = self.detect_nvidia_gpu(verbose=True)
-            if use_gpu:
-                self.log_to_readiness(f"[+] CUDA GPU Detected: {gpu_info}. Building SPARTA using Dockerfile.cuda (Kokkos GPU acceleration)...")
-            else:
-                self.log_to_readiness("[-] No CUDA GPU detected. Building SPARTA using Dockerfile.cpu...")
+            self.log_to_readiness("[*] Starting local SPARTA Docker build...")
+            use_gpu = self.has_nvidia_gpu() and False # Forcing CPU by default as per user request
             dockerfile = "Dockerfile.cuda" if use_gpu else "Dockerfile.cpu"
             cmd = ["docker", "build", "-t", "sparta-hysp", "-f", dockerfile, "."]
 
@@ -4650,7 +4607,7 @@ run             {steps}
             ]
         
         # Write Allrun script
-        n_cores_run = opt_params.get('env_cores', os.cpu_count() or 4)
+        n_cores_run = opt_params.get('env_cores') or os.cpu_count() or 4
 
         if n_cores_run > 1:
             solver_run_cmd = f"mpirun --allow-run-as-root -quiet --oversubscribe -np {n_cores_run} dsmcFoam -parallel 2>&1 | tee log.dsmcFoam"
@@ -4864,7 +4821,7 @@ except Exception as e:
         ]
         
         # ALWAYS utilize all the CPU because we are running out of time here (no excuse or balances)
-        n_cores_run = opt_params.get('env_cores', 10)
+        n_cores_run = opt_params.get('env_cores') or os.cpu_count() or 4
 
         if n_cores_run > 1:
             solver_run_cmd = f"mpirun --allow-run-as-root -quiet --oversubscribe -np {n_cores_run} laplacianFoam -parallel 2>&1 | tee log.laplacianFoam"
@@ -4953,15 +4910,7 @@ except Exception as e:
                         pass
                     raise InterruptedError("Simulation gracefully interrupted by user. State is saved.")
             
-        ret = sim_proc.wait()
-        log_file = os.path.join(case_dir, "log.laplacianFoam")
-        if ret != 0:
-            if os.path.exists(log_file):
-                with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
-                    log_text = f.read()
-                if "Solving for T" in log_text or "Time =" in log_text:
-                    self.log_to_gui("    [+] OpenFOAM Solid Simulation Complete (Docker stream finished).")
-                    return True
+        if sim_proc.wait() != 0:
             self.log_to_gui("    [-] OpenFOAM Solid Simulation Failed!")
             return False
             
@@ -5020,7 +4969,7 @@ except Exception as e:
             "runTimeModifiable true;\n")
 
         # system/decomposeParDict
-        n_cores = opt_params.get('env_cores') or 10
+        n_cores = os.cpu_count() or 4
         self._write_of_dict(os.path.join(case_dir, "system", "decomposeParDict"), 
             f"numberOfSubdomains {n_cores};\n"
             "method scotch;\n")
@@ -5175,7 +5124,7 @@ except Exception as e:
 
 
         # 1.5 system/decomposeParDict
-        n_cores = opt_params.get('env_cores') or 10
+        n_cores = os.cpu_count() or 4
         self._write_of_dict(os.path.join(case_dir, "system", "decomposeParDict"), 
             f"numberOfSubdomains {n_cores};\n"
             "method scotch;\n")
