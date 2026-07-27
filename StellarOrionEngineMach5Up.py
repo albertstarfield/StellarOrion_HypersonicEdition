@@ -892,9 +892,20 @@ class Api:
                     all_heat_runs.append(abs(np.max(heat_vals)))
 
             # Final metrics: mean over the averaged dump files
+            raw_sparta_ke = float(np.mean(all_heat_runs)) if all_heat_runs else 1.0
+            
+            # Compute physical Sutton-Graves stagnation heat flux [W/m²]
+            C_sg = 1.7415e-4
+            rho_inf = getattr(self, 'rho_inf', 1.6837e-3)
+            vstream = getattr(self, 'vstream', 2700.0)
+            nose_r = getattr(self, 'nose_radius', 0.55)
+            sutton_graves_q = C_sg * np.sqrt(rho_inf / max(nose_r, 0.01)) * (vstream ** 3)
+
             metrics = {
                 'drag': float(np.mean(all_drag_runs)) if all_drag_runs else 1.0,
-                'heat': float(np.mean(all_heat_runs)) if all_heat_runs else 1.0,
+                'heat': float(sutton_graves_q),
+                'heat_flux_sparta_raw': float(raw_sparta_ke),
+                'heat_sutton_graves_wcm2': float(sutton_graves_q / 10000.0)
             }
             if len(all_drag_runs) > 1:
                 drag_std = float(np.std(all_drag_runs))
@@ -902,7 +913,7 @@ class Api:
                 self.log_to_gui(f"    [+] Drag multi-file avg: {metrics['drag']:.4f} N "
                                 f"(σ={drag_std:.4f}, CV={drag_cv:.1f}%)")
 
-            self.log_to_gui(f"    [+] Extracted Metrics: Drag={metrics['drag']:.4f} N, Heat={metrics['heat']:.2e} W/m2")
+            self.log_to_gui(f"    [+] Extracted Metrics: Drag={metrics['drag']:.4f} N, Heat (Sutton-Graves)={metrics['heat']:.2e} W/m2 ({metrics['heat']/1e4:.2f} W/cm2)")
 
             # Find latest grid file for shock temperature (numeric sort)
             grid_files = [f for f in os.listdir(results_dir) if f.startswith("grid.") and f.endswith(".out")]
