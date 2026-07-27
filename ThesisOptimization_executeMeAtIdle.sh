@@ -4,9 +4,16 @@ cd "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_Hypers
 
 mkdir -p Result
 
+# Detect Python interpreter with required modules
+if [ -f "./.venv/bin/python" ]; then
+    PYTHON_BIN="./.venv/bin/python"
+else
+    PYTHON_BIN="python3"
+fi
+
 # 1. Run Baseline Validation with Multi-layer TPS
 echo "[*] Running multi-layer TPS validation..."
-python3 main.py --headless --validation --tps-material multi > validation_idle_run.log 2>&1
+$PYTHON_BIN main.py --headless --validation --tps-material multi > validation_idle_run.log 2>&1
 
 # 2. Save Validation Results
 echo "[*] Saving validation results to Result/validationResultAfterLayerChanges/ ..."
@@ -17,7 +24,7 @@ cp validation_idle_run.log Result/validationResultAfterLayerChanges/ 2>/dev/null
 
 # 3. Run CCD Optimization Matrix
 echo "[*] Starting full CCD optimization matrix..."
-python3 main.py --headless --optimize --samples 25 --tps-material multi > optimization_idle_run.log 2>&1
+$PYTHON_BIN main.py --headless --optimize --samples 25 --tps-material multi > optimization_idle_run.log 2>&1
 
 # 4. Save Optimization Results
 echo "[*] Saving optimization results to Result/OptimizationResult/ ..."
