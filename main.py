@@ -26,27 +26,39 @@ import re
 # --- Dependency Auto-Fix ----------------------------------------------------──
 # --- Environment Management (Shared with GUI) ------------------------------──
 def ensure_venv():
-    """Ensures we are running inside the project's virtual environment (.venv_gui)."""
+    """Ensures we are running inside the project's virtual environment (.venv or .venv_gui)."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    venv_dir = os.path.join(base_dir, ".venv_gui")
     
     # Skip bootstrap if explicitly requested or if already inside the venv
     if "--skip-venv-bootstrap" in sys.argv:
         return
 
     def get_venv_python():
-        if sys.platform == "win32":
-            p = os.path.join(venv_dir, "Scripts", "python.exe")
-        else:
-            p = os.path.join(venv_dir, "bin", "python")
-            if not os.path.exists(p):
-                p = os.path.join(venv_dir, "bin", "python3")
-        
-        if os.path.exists(p):
-            # Final sanity check: if we are on Unix but found an .exe, it's invalid
-            if sys.platform != "win32" and p.endswith(".exe"):
-                return None
-            return os.path.abspath(p)
+        for dir_name in [".venv", ".venv_gui"]:
+            vd = os.path.join(base_dir, dir_name)
+            if sys.platform == "win32":
+                p = os.path.join(vd, "Scripts", "python.exe")
+            else:
+                p = os.path.join(vd, "bin", "python")
+                if not os.path.exists(p):
+                    p = os.path.join(vd, "bin", "python3")
+            if os.path.exists(p):
+                if sys.platform != "win32" and p.endswith(".exe"):
+                    continue
+                # Verify if python works and has numpy
+                try:
+                    res = subprocess.run([p, "-c", "import numpy"], capture_output=True, text=True)
+                    if res.returncode == 0:
+                        return os.path.abspath(p)
+                except Exception:
+                    pass
+                # Fallback: check if interpreter runs --version
+                try:
+                    res_v = subprocess.run([p, "--version"], capture_output=True, text=True)
+                    if res_v.returncode == 0:
+                        return os.path.abspath(p)
+                except Exception:
+                    pass
         return None
 
     venv_python = get_venv_python()

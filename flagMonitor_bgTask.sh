@@ -142,7 +142,7 @@ while true; do
         CRASH_FOUND=0
 
         if [ -f "$LOG_DIR/validation_idle_run.log" ]; then
-            CRASH_VAL=$(grep -iE "error|exception|traceback|killed|segfault" "$LOG_DIR/validation_idle_run.log" 2>/dev/null | grep -viE "No critical type errors|error waiting for container|Cannot connect to the Docker daemon|0 errors|trapFpe|FOAM_SIGFPE|Floating point exception" | wc -l | awk '{print $1}')
+            CRASH_VAL=$(grep -iE "error|exception|traceback|killed|segfault" "$LOG_DIR/validation_idle_run.log" 2>/dev/null | grep -viE "No critical type errors|error waiting for container|Cannot connect to the Docker daemon|0 errors|trapFpe|FOAM_SIGFPE|Floating point exception|grid partition is not clumped|error calculations" | wc -l | awk '{print $1}')
             if [ -n "$CRASH_VAL" ] && [ "$CRASH_VAL" -gt 0 ]; then
                 echo "[!] CRASH DETECTED in validation_idle_run.log ($CRASH_VAL error matches)!"
                 echo "--- Tail of validation_idle_run.log ---"
@@ -168,7 +168,7 @@ while true; do
         fi
 
         if [ -f "$LOG_DIR/optimization_idle_run.log" ]; then
-            CRASH_OPT=$(grep -iE "error|exception|traceback|killed|segfault" "$LOG_DIR/optimization_idle_run.log" 2>/dev/null | grep -viE "No critical type errors|error waiting for container|Cannot connect to the Docker daemon|0 errors|trapFpe|FOAM_SIGFPE|Floating point exception" | wc -l | awk '{print $1}')
+            CRASH_OPT=$(grep -iE "error|exception|traceback|killed|segfault" "$LOG_DIR/optimization_idle_run.log" 2>/dev/null | grep -viE "No critical type errors|error waiting for container|Cannot connect to the Docker daemon|0 errors|trapFpe|FOAM_SIGFPE|Floating point exception|grid partition is not clumped|error calculations" | wc -l | awk '{print $1}')
             if [ -n "$CRASH_OPT" ] && [ "$CRASH_OPT" -gt 0 ]; then
                 echo "[!] CRASH DETECTED in optimization_idle_run.log ($CRASH_OPT error matches)!"
                 echo "--- Tail of optimization_idle_run.log ---"
