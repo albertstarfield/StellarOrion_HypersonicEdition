@@ -15,7 +15,7 @@ if not exist Result mkdir Result
 
 :: 1. Run Baseline Validation
 echo [*] Running multi-layer TPS validation...
-python main.py --headless --validation --tps-material %TPS_MATERIAL% > validation_idle_run.log 2>&1
+python main.py --skip-venv-bootstrap --headless --validation --tps-material %TPS_MATERIAL% > validation_idle_run.log 2>&1
 
 :: 2. Save Validation Results
 echo [*] Saving validation results to Result\validationResultAfterLayerChanges\ ...
@@ -26,7 +26,7 @@ if exist validation_idle_run.log copy /Y validation_idle_run.log Result\validati
 
 :: 3. Run Optimization Sampling Matrix
 echo [*] Starting optimization sampling matrix...
-python main.py --headless --optimize --samples %SAMPLES% --tps-material %TPS_MATERIAL% > optimization_idle_run.log 2>&1
+python main.py --skip-venv-bootstrap --headless --optimize --samples %SAMPLES% --tps-material %TPS_MATERIAL% > optimization_idle_run.log 2>&1
 
 :: 4. Save Optimization Results
 echo [*] Saving optimization results to Result\OptimizationResult\ ...

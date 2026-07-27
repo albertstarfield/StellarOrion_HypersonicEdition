@@ -1190,8 +1190,17 @@ def generate_animation(grid_files, output_mp4, ref_params=None, prop='temp'):
                 bbox=dict(facecolor='#0f172a', alpha=0.85, edgecolor='#1e293b', boxstyle='round,pad=0.5'))
                 
     ani = animation.FuncAnimation(fig, update, frames=len(grid_files), blit=False)
-    plt.rcParams['animation.ffmpeg_path'] = find_ffmpeg()
-    ani.save(output_mp4, writer='ffmpeg', dpi=300); plt.close()
+    ffmpeg_path = find_ffmpeg()
+    import shutil
+    if ffmpeg_path == "ffmpeg" and not shutil.which("ffmpeg"):
+        # FFmpeg not found, fallback to GIF
+        output_gif = output_mp4.rsplit('.', 1)[0] + '.gif'
+        print(f"[*] FFmpeg not found. Falling back to GIF animation: {output_gif}")
+        ani.save(output_gif, writer='pillow', fps=10, dpi=100)
+    else:
+        plt.rcParams['animation.ffmpeg_path'] = ffmpeg_path
+        ani.save(output_mp4, writer='ffmpeg', dpi=300)
+    plt.close()
 
 def generate_preview(surf_file, output_path, params=None, ref_params=None):
     """Generates a 2D preview."""

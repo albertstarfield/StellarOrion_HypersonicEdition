@@ -3563,27 +3563,38 @@ run             {steps}
             
             sample_start = time.time()
             
-            if solver_mode == 'pyfluent':
-                res_dict = self.run_remote_pyfluent_simulation(opt_params, sample_dict)
-            elif solver_mode == 'pyansys':
-                res_dict = self.run_local_pyfluent_simulation(opt_params, sample_dict, show_gui=True)
-            else:
-                solver = opt_params.get('solver', 'sparta')
-                if solver == 'openfoam':
-                    self.log_to_gui(f"    [*] Executing OpenFOAM solver (Sample {i+1})...")
-                    res_dict = self.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_opt")
-                    log_lines = []
+            try:
+                if solver_mode == 'pyfluent':
+                    res_dict = self.run_remote_pyfluent_simulation(opt_params, sample_dict)
+                elif solver_mode == 'pyansys':
+                    res_dict = self.run_local_pyfluent_simulation(opt_params, sample_dict, show_gui=True)
                 else:
-                    # ALWAYS use Docker for SPARTA solver to ensure parity; do not run natively
-                    self.log_to_gui(f"    [*] Executing SPARTA solver via Docker (Sample {i+1})...")
-                    res_dict, log_lines = self.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_opt")
-                    
-                    if opt_params.get('hybrid_thermal', False):
-                        self.log_to_gui(f"    [*] Sequential Execution: Running OpenFOAM Solid Thermal Solver...")
-                        heat_flux_data = res_dict.get('heat_flux', {})
-                        of_res = self.run_hybrid_thermal_solver(opt_params, sample_dict, surf_name="HIAD_opt", heat_flux_data=heat_flux_data)
-                        if of_res:
-                            res_dict['openfoam_thermal'] = of_res
+                    solver = opt_params.get('solver', 'sparta')
+                    if solver == 'openfoam':
+                        self.log_to_gui(f"    [*] Executing OpenFOAM solver (Sample {i+1})...")
+                        res_dict = self.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_opt")
+                        log_lines = []
+                    else:
+                        # ALWAYS use Docker for SPARTA solver to ensure parity; do not run natively
+                        self.log_to_gui(f"    [*] Executing SPARTA solver via Docker (Sample {i+1})...")
+                        res_dict, log_lines = self.run_sparta_simulation(opt_params, sample_dict, surf_name="HIAD_opt")
+                        
+                        if opt_params.get('hybrid_thermal', False):
+                            self.log_to_gui(f"    [*] Sequential Execution: Running OpenFOAM Solid Thermal Solver...")
+                            heat_flux_data = res_dict.get('heat_flux', {})
+                            of_res = self.run_hybrid_thermal_solver(opt_params, sample_dict, surf_name="HIAD_opt", heat_flux_data=heat_flux_data)
+                            if of_res:
+                                res_dict['openfoam_thermal'] = of_res
+            except Exception as e:
+                self.log_to_gui(f"    [!] Sample {i+1} evaluation error: {e}. Marking sample as non-viable fallback...")
+                res_dict = {
+                    'Cd': 0.1,
+                    'max_heat_flux': 9999.0,
+                    'max_temp': 5000.0,
+                    'mass': 9999.0,
+                    'survivable': False,
+                    'error': str(e)
+                }
             
             sample_end = time.time()
             sample_dur = sample_end - sample_start
