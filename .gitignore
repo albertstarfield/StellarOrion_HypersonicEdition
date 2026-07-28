@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# AI Diffusion prompt lists (local preview scratch file)
+diffusionPreviewtoGenerate.txt
+**/diffusionPreviewtoGenerate.txt
+
 # C extensions
 *.so
 
