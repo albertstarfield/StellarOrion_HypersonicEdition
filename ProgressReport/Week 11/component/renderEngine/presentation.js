@@ -316,9 +316,17 @@ function setupPanZoom() {
         appModal.addEventListener('click', (e) => {
             if (e.target === appModal) {
                 closeHotspotModal();
+    // Global F12 Shortcut for opening Developer Inspector / Debugger
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'F12' || (e.key === 'I' && e.shiftKey && (e.metaKey || e.ctrlKey))) {
+            e.preventDefault();
+            if (window.pywebview && window.pywebview.api && window.pywebview.api.toggle_devtools) {
+                window.pywebview.api.toggle_devtools();
+            } else {
+                console.log("F12 Developer Debugger requested.");
             }
-        });
-    }
+        }
+    });
 }
 
 window.zoomInMap = function() {

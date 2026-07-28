@@ -145,6 +145,16 @@ class PresentationAPI:
                 return f.read()
         return '# REFERENCES.md\n\nRoot REFERENCES.md not found at project root.'
 
+    def toggle_devtools(self) -> None:
+        """Toggles or opens webview developer inspector if available."""
+        try:
+            if webview.windows:
+                win = webview.windows[0]
+                if hasattr(win, 'show_inspector'):
+                    win.show_inspector()
+        except Exception as e:
+            print('DevTools Inspector notice:', e)
+
 
 def _find_js_linter() -> tuple[str | None, str | None]:
     """Detects available JavaScript linter: eslint via npx, or node --check fallback."""
@@ -161,7 +171,6 @@ def _run_node_syntax_check(js_files: list[str]) -> tuple[bool, str]:
 
 def run_diagnostics() -> None:
     """Runs ruff, pyrefly, and JavaScript linting. Exits on any error or warning."""
-
 
 def main() -> None:
     run_diagnostics()
@@ -187,7 +196,7 @@ def main() -> None:
         resizable=True,
         background_color='#090a15'
     )
-    webview.start(debug=True)
+    webview.start(debug=False)
 
 
 _WEEK_OVERRIDES = {
