@@ -1,167 +1,284 @@
 ==========================================================================
    STELLAR ORION WEEK 11 — AI DIFFUSION PREVIEW IMAGES TO GENERATE      
+   (STRICTLY ENFORCED MAX 88 TOKENS PER PROMPT)                          
 ==========================================================================
 Total Nodes Requiring Custom Diffusion/AI Image Generation: 27
+
+BASE POSITIVE PROMPT (+):
+"masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, "
+
+BASE NEGATIVE PROMPT (-):
+"girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
+
+==========================================================================
 
 [1] NODE SLIDE ID: slide_scope_in
     TITLE: Research Scope & Included Boundary Physics
     CURRENT ASSET: /temp_slides_v2/slide-01.jpg
     REASON: Using slide-01 generic title placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Research Scope & Included Boundary Physics': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~50 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Research Scope & Included Boundary Physics' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [2] NODE SLIDE ID: slide_scope_out
     TITLE: Excluded Scope & Trajectory Boundaries
     CURRENT ASSET: /temp_slides_v2/slide-01.jpg
     REASON: Using slide-01 generic title placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Excluded Scope & Trajectory Boundaries': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~49 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Excluded Scope & Trajectory Boundaries' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [3] NODE SLIDE ID: slide_root_tps_comparison
     TITLE: Hypersonic Heatshield Technology Trade-off & HIAD Selection
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Hypersonic Heatshield Technology Trade-off & HIAD Selection': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~51 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Hypersonic Heatshield Technology Trade-off & HIAD Selection' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [4] NODE SLIDE ID: slide_hiad_usage
     TITLE: HIAD Inflatable Aeroshell Engineering Applications
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'HIAD Inflatable Aeroshell Engineering Applications': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~49 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'HIAD Inflatable Aeroshell Engineering Applications' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [5] NODE SLIDE ID: slide_latest_validation
     TITLE: 🔥 Latest Post-Layer Validation & Residual Convergence
     CURRENT ASSET: latestResult/thermal_map_smooth_M0_A0.png
     REASON: Using default thermal map fallback image
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for '🔥 Latest Post-Layer Validation & Residual Convergence': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~51 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic '🔥 Latest Post-Layer Validation & Residual Convergence' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [6] NODE SLIDE ID: slide_33_thesis_outline
     TITLE: Thesis Chapter Structure & Research Outline
     CURRENT ASSET: /temp_slides_v2/slide-33.jpg
-    REASON: Using default slide text layout (needs high-fidelity AI diffusion render)
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Thesis Chapter Structure & Research Outline': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    REASON: Using default slide text layout (needs custom high-fidelity AI render)
+    ESTIMATED TOKENS: ~50 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Thesis Chapter Structure & Research Outline' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [7] NODE SLIDE ID: slide_34_paper_draft
     TITLE: AIAA Hypersonic Conference Paper Draft
     CURRENT ASSET: /temp_slides_v2/slide-34.jpg
-    REASON: Using default slide text layout (needs high-fidelity AI diffusion render)
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'AIAA Hypersonic Conference Paper Draft': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    REASON: Using default slide text layout (needs custom high-fidelity AI render)
+    ESTIMATED TOKENS: ~49 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'AIAA Hypersonic Conference Paper Draft' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [8] NODE SLIDE ID: slide_35_methodology_doc
     TITLE: Validation Methodology & Verification Justification
     CURRENT ASSET: /temp_slides_v2/slide-35.jpg
-    REASON: Using default slide text layout (needs high-fidelity AI diffusion render)
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Validation Methodology & Verification Justification': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    REASON: Using default slide text layout (needs custom high-fidelity AI render)
+    ESTIMATED TOKENS: ~49 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Validation Methodology & Verification Justification' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [9] NODE SLIDE ID: slide_36_code_archival
     TITLE: StellarOrion Simulation Suite Code Archival & Reproducibility
     CURRENT ASSET: /temp_slides_v2/slide-36.jpg
-    REASON: Using default slide text layout (needs high-fidelity AI diffusion render)
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'StellarOrion Simulation Suite Code Archival & Reproducibility': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    REASON: Using default slide text layout (needs custom high-fidelity AI render)
+    ESTIMATED TOKENS: ~51 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'StellarOrion Simulation Suite Code Archival & Reproducibility' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [10] NODE SLIDE ID: slide_37_conclusions
     TITLE: Key Research Findings & Synthesis Summary
     CURRENT ASSET: /temp_slides_v2/slide-37.jpg
-    REASON: Using default slide text layout (needs high-fidelity AI diffusion render)
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Key Research Findings & Synthesis Summary': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    REASON: Using default slide text layout (needs custom high-fidelity AI render)
+    ESTIMATED TOKENS: ~50 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Key Research Findings & Synthesis Summary' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [11] NODE SLIDE ID: slide_38_future_gsi
     TITLE: Future Work: Non-Equilibrium Gas-Surface Interaction (GSI)
     CURRENT ASSET: /temp_slides_v2/slide-38.jpg
-    REASON: Using default slide text layout (needs high-fidelity AI diffusion render)
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Future Work: Non-Equilibrium Gas-Surface Interaction (GSI)': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    REASON: Using default slide text layout (needs custom high-fidelity AI render)
+    ESTIMATED TOKENS: ~50 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Future Work: Non-Equilibrium Gas-Surface Interaction (GSI)' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [12] NODE SLIDE ID: slide_39_future_gpu
     TITLE: Future Work: High-Performance GPU Acceleration for SPARTA
     CURRENT ASSET: /temp_slides_v2/slide-39.jpg
-    REASON: Using default slide text layout (needs high-fidelity AI diffusion render)
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Future Work: High-Performance GPU Acceleration for SPARTA': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    REASON: Using default slide text layout (needs custom high-fidelity AI render)
+    ESTIMATED TOKENS: ~51 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Future Work: High-Performance GPU Acceleration for SPARTA' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [13] NODE SLIDE ID: slide_40_closing
     TITLE: Final Concluding Remarks & Thesis Roadmap
     CURRENT ASSET: /temp_slides_v2/slide-40.jpg
-    REASON: Using default slide text layout (needs high-fidelity AI diffusion render)
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Final Concluding Remarks & Thesis Roadmap': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    REASON: Using default slide text layout (needs custom high-fidelity AI render)
+    ESTIMATED TOKENS: ~50 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Final Concluding Remarks & Thesis Roadmap' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [14] NODE SLIDE ID: slide_9_def_knudsen
     TITLE: Knudsen Number
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Knudsen Number': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~46 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Knudsen Number' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [15] NODE SLIDE ID: slide_9_def_pyrogel
     TITLE: Pyrogel Aerogel
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Pyrogel Aerogel': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~46 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Pyrogel Aerogel' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [16] NODE SLIDE ID: slide_9_def_kevlar
     TITLE: Kevlar / Vectran
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Kevlar / Vectran': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~47 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Kevlar / Vectran' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [17] NODE SLIDE ID: slide_9_def_insulation
     TITLE: FTPS Laminate
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'FTPS Laminate': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~46 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'FTPS Laminate' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [18] NODE SLIDE ID: slide_9_def_stagnationpress
     TITLE: Stagnation Pressure
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Stagnation Pressure': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~46 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Stagnation Pressure' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [19] NODE SLIDE ID: slide_9_def_stagnationtemp
     TITLE: Stagnation Temp
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Stagnation Temp': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~46 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Stagnation Temp' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [20] NODE SLIDE ID: slide_9_def_vhs
     TITLE: VHS Model
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'VHS Model': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~46 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'VHS Model' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [21] NODE SLIDE ID: slide_9_def_boltzmann
     TITLE: Boltzmann Equation
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Boltzmann Equation': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~46 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Boltzmann Equation' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [22] NODE SLIDE ID: slide_9_def_collision
     TITLE: Collision Integral
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Collision Integral': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~46 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Collision Integral' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [23] NODE SLIDE ID: slide_9_def_meanfree
     TITLE: Mean Free Path
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Mean Free Path': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~47 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Mean Free Path' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [24] NODE SLIDE ID: slide_9_def_rarefied
     TITLE: Rarefied Flow
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Rarefied Flow': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~46 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Rarefied Flow' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [25] NODE SLIDE ID: slide_9_def_shockwave
     TITLE: Shock Wave
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Shock Wave': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~46 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Shock Wave' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [26] NODE SLIDE ID: slide_9_def_toroidradius
     TITLE: Toroid Radius
     CURRENT ASSET: /temp_slides_v2/slide-09.jpg
     REASON: Using slide-09 generic glossary placeholder
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for 'Toroid Radius': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~46 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic 'Toroid Radius' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
 [27] NODE SLIDE ID: REFERENCES.md
     TITLE: 📚 Root Literature & Citations (REFERENCES.md)
     CURRENT ASSET: figures/Validation/thermal_map_smooth_M0_A0.png
     REASON: Using default thermal map fallback image
-    PROMPT SUGGESTION: Hypersonic aerothermal visualization for '📚 Root Literature & Citations (REFERENCES.md)': high-resolution sci-fi technical diagram, dark theme, glowing cyan/magenta energy lines, hypersonic flowfield, 8k render.
+    ESTIMATED TOKENS: ~50 tokens (Max <= 88)
+    POSITIVE PROMPT (+):
+    "masterpiece, best quality, amazing quality, very aesthetic, high resolution, ultra-detailed, newest, (dappled sunlight:1.2), 1boy:1.5, man:1.9, Masculine, Tall height, Adult, Round Face, Wide Body, Messy wavy curly brown Hair+, wearing white lab coat, using glasses brown eyes, examining hypersonic '📚 Root Literature & Citations (REFERENCES.md)' holo-display in lab"
+    NEGATIVE PROMPT (-):
+    "girl, woman, boy, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.8), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), conjoined, bad ai-generated"
 ---------------------------------------------------------------------------
