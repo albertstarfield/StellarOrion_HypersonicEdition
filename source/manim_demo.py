@@ -20,6 +20,8 @@ class DSMCVisualization(Scene):
         self.post_processing()
         self.pinn_refinement()
         self.survivability_optimization()
+        self.imagination_map_node()
+        self.result_table_slide()
         self.outro()
 
     def add_overlay(self):
