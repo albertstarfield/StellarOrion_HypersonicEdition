@@ -662,6 +662,34 @@ window.handleCobwebSearch = async function(query) {
     resultsContainer.classList.add('open');
 };
 
+function animateCameraTo(targetPanX, targetPanY, targetZoom, onComplete) {
+    const startPanX = panX;
+    const startPanY = panY;
+    const startZoom = zoomScale;
+    const startTime = performance.now();
+    const duration = 450;
+
+    function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+
+        panX = startPanX + (targetPanX - startPanX) * ease;
+        panY = startPanY + (targetPanY - startPanY) * ease;
+        zoomScale = startZoom + (targetZoom - startZoom) * ease;
+
+        updateTransform();
+
+        if (progress < 1) {
+            requestAnimationFrame(step);
+        } else if (onComplete) {
+            onComplete();
+        }
+    }
+
+    requestAnimationFrame(step);
+}
+
 window.clearCobwebSearch = function() {
     const input = document.getElementById('cobweb-search-input');
     const resultsContainer = document.getElementById('cobweb-search-results');
@@ -669,7 +697,6 @@ window.clearCobwebSearch = function() {
     if (input) input.value = '';
     if (clearBtn) clearBtn.style.display = 'none';
     if (resultsContainer) {
-        resultsContainer.innerHTML = '';
         resultsContainer.classList.remove('open');
     }
 };
@@ -678,12 +705,11 @@ window.focusNodeAndLaunch = function(slideId) {
     clearCobwebSearch();
     const container = document.getElementById('cobweb-canvas-container');
     const viewport = document.getElementById('cobweb-viewport');
-    if (!container || !viewport) return;
 
     const cleanId = slideId.replace('.py', '');
-    const targetBtn = container.querySelector(`[data-slide-id="${slideId}"], [data-slide-id="${cleanId}"]`);
+    const targetBtn = container ? container.querySelector(`[data-slide-id="${slideId}"], [data-slide-id="${cleanId}"]`) : null;
 
-    if (targetBtn) {
+    if (targetBtn && container && viewport) {
         container.querySelectorAll('.search-focused-node').forEach(el => {
             el.classList.remove('search-focused-node');
         });
@@ -693,14 +719,16 @@ window.focusNodeAndLaunch = function(slideId) {
         const vpRect = viewport.getBoundingClientRect();
         const targetCenter = getElementCenter(targetBtn, container);
 
-        zoomScale = 1.15;
-        panX = (vpRect.width / 2 - targetCenter.x) * zoomScale;
-        panY = (vpRect.height / 2 - targetCenter.y) * zoomScale;
+        const targetZoom = 1.15;
+        const targetPanX = (vpRect.width / 2 - targetCenter.x) * targetZoom;
+        const targetPanY = (vpRect.height / 2 - targetCenter.y) * targetZoom;
 
-        updateTransform();
+        animateCameraTo(targetPanX, targetPanY, targetZoom, () => {
+            openSlideModal(slideId);
+        });
+    } else {
+        openSlideModal(slideId);
     }
-
-    openSlideModal(slideId);
 };
 
 window.addEventListener('DOMContentLoaded', () => {

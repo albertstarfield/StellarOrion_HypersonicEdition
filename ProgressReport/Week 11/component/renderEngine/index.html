@@ -372,13 +372,13 @@
         }
 
         /* ── Detail Modal ── */
-        /* Modal Dialog (z-index 1000 to sit above full screen overlays) */
+        /* Modal Dialog (z-index 9999 to sit above full screen overlays) */
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(5, 7, 14, 0.85);
-            backdrop-filter: blur(16px);
-            z-index: 1000;
+            background: rgba(5, 7, 14, 0.88);
+            backdrop-filter: blur(20px);
+            z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -849,20 +849,28 @@
             top: calc(100% + 0.6rem);
             left: 0;
             width: 100%;
-            max-height: 340px;
+            max-height: 360px;
             overflow-y: auto;
             background: rgba(15, 23, 42, 0.96);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 18px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(24px);
-            display: none;
+            display: flex;
             flex-direction: column;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-12px) scale(0.97);
+            transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.28s ease;
+            pointer-events: none;
             z-index: 110;
         }
 
         .cobweb-search-results.open {
-            display: flex;
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
         }
 
         .search-result-item {
