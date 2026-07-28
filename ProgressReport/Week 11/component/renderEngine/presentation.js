@@ -325,7 +325,7 @@ function drawCobwebLines() {
 
     let svgContent = '';
 
-    const clusterIds = ['cluster-phase0', 'cluster-physics', 'cluster-sparta', 'cluster-mdao', 'cluster-glossary'];
+    const clusterIds = ['cluster-phase0', 'cluster-physics', 'cluster-sparta', 'cluster-mdao', 'cluster-execution', 'cluster-doc', 'cluster-future', 'cluster-glossary'];
 
     // 1. Connect Central Root to 1st Node of Each Cluster Box
     clusterIds.forEach(clusterId => {
