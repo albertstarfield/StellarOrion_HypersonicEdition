@@ -280,6 +280,45 @@ function setupPanZoom() {
             if (viewport) viewport.style.cursor = 'grab';
         }
     });
+
+    // Keyboard Arrow Keys / WASD Panning for Knowledge Derivation Network
+    window.addEventListener('keydown', (e) => {
+        const mapModal = document.getElementById('imagination-modal');
+        if (!mapModal || !mapModal.classList.contains('open')) return;
+
+        const searchInput = document.getElementById('cobweb-search-input');
+        const slideModal = document.getElementById('app-modal');
+        if (document.activeElement === searchInput || (slideModal && slideModal.classList.contains('open'))) return;
+
+        const step = 65;
+        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+            panY += step;
+            updateContainerTransform();
+            e.preventDefault();
+        } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+            panY -= step;
+            updateContainerTransform();
+            e.preventDefault();
+        } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+            panX += step;
+            updateContainerTransform();
+            e.preventDefault();
+        } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+            panX -= step;
+            updateContainerTransform();
+            e.preventDefault();
+        }
+    });
+
+    // Click backdrop outside modal card to close slide modal & return to network map
+    const appModal = document.getElementById('app-modal');
+    if (appModal) {
+        appModal.addEventListener('click', (e) => {
+            if (e.target === appModal) {
+                closeHotspotModal();
+            }
+        });
+    }
 }
 
 function getElementCenter(el, container) {
