@@ -7,21 +7,23 @@ Features a unified interactive infographic dashboard with zoom-in transitions.
 Includes Manim scene fallbacks for video generation.
 """
 
-import os
-import sys
-import re
-import subprocess
-import socket
 import http.server
+import os
+import socket
 import socketserver
 import threading
-from typing import Dict, Any, Tuple, List, Optional
+from typing import Any
 
 try:
     from manim import *
     HAS_MANIM = True
-except ImportError:
+except (ImportError, NameError):
     HAS_MANIM = False
+    class Scene: pass
+    class _DummyConfig:
+        frame_width = 16
+        frame_height = 9
+    config = _DummyConfig()
 
 # Global Port and Config
 HTTP_PORT = 8085
@@ -53,10 +55,10 @@ def start_local_server() -> None:
 
 class PresentationAPI:
     """API Exposed to JS inside the pywebview render engine."""
-    def __init__(self, slides: List[Dict[str, Any]]) -> None:
+    def __init__(self, slides: list[dict[str, Any]]) -> None:
         self.slides = slides
 
-    def get_slides_data(self) -> List[Dict[str, Any]]:
+    def get_slides_data(self) -> list[dict[str, Any]]:
         return self.slides
 
     def get_current_week(self) -> str:

@@ -1,7 +1,7 @@
 def get_slide_data() -> dict:
     return {
         'title': 'Week 11 MDAO Optimization: IRVE-3 Reference vs. AI Optimums',
-        'content': '''
+        'content': r'''
 # Week 11 MDAO Optimization: NASA IRVE-3 Reference vs. AI Optimums
 
 Comprehensive aerothermal performance comparison between the NASA IRVE-3 flight test baseline and the StellarOrion AI-optimized configurations:
@@ -19,7 +19,7 @@ Comprehensive aerothermal performance comparison between the NASA IRVE-3 flight 
 | **Shock Layer Temp ($T_{\\text{shock}}$)** | $12,362\\text{ K}$ | **$3,991.3\\text{ K}$** | $9,492.8\\text{ K}$ | **$-67.7\\%$** |
 | **Radiative Surf Temp ($T_{\\text{surf}}$)** | $1,453\\text{ K}$ | **$1,675\\text{ K}$** | $1,453\\text{ K}$ | $+222\\text{ K}$ |
 | **Backside Payload Temp ($T_{\\text{back}}$)** | $\\le 350\\text{ K}$ | **$338.5\\text{ K}$** | $341.2\\text{ K}$ | PASS ($\\le 350\\text{ K}$ limit) |
-| **Generated CAD \& Mesh Artifacts** | `HIAD_custom_full.step` | `geometry.step` | `geometry.step` | 3D STEP \& STL Produced |
+| **Generated CAD \\& Mesh Artifacts** | `HIAD_custom_full.step` | `geometry.step` | `geometry.step` | 3D STEP \\& STL Produced |
 
 <div style="margin-top: 1.5rem; display:flex; gap:1rem; flex-wrap:wrap; justify-content:flex-end;">
     <a href="#" class="back-btn" style="margin-bottom:0; background:rgba(99,102,241,0.15); border-color:rgba(99,102,241,0.3); color:#a5b4fc;" onclick="loadTheoremSlide(24)">View Genetic Search Dynamics &rarr;</a>
