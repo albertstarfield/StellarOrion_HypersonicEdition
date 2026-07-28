@@ -6,15 +6,15 @@ Launches a daemon HTTP thread to serve local assets, resolving same-origin (CORS
 Features a unified interactive infographic dashboard with zoom-in transitions.
 """
 
-import os
-import sys
-import re
-import subprocess
-import socket
 import http.server
+import os
+import re
+import socket
 import socketserver
+import sys
 import threading
-from typing import Dict, Any, Tuple, List, Optional
+from typing import Any
+
 
 def _detect_week() -> str:
     """Detect current week string from parent directory name (e.g. 'Week 10')."""
@@ -23,9 +23,11 @@ def _detect_week() -> str:
         return base
     return 'Week 10'
 
+
 CURRENT_WEEK = _detect_week()
 VENV_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'component', 'venv')
 SKIP_FLAG = '--skip-venv-bootstrap'
+
 
 def find_free_port(start_port: int = 8085) -> int:
     port = start_port
@@ -36,20 +38,24 @@ def find_free_port(start_port: int = 8085) -> int:
         port += 1
     return start_port
 
+
 HTTP_PORT = find_free_port(8085)
+
 
 def ensure_venv() -> None:
     """Ensures virtual environment exists in component/venv."""
-    pass
+
 
 ensure_venv()
 
 import webview
 from Slides import load_slides
 
+
 class SilentHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:
         pass
+
 
 def start_local_server() -> None:
     """Runs a simple HTTP server on localhost to serve assets without CORS issues."""
@@ -57,34 +63,40 @@ def start_local_server() -> None:
     os.chdir(base_dir)
     handler = SilentHTTPRequestHandler
     socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", HTTP_PORT), handler) as httpd:
+    with socketserver.TCPServer(('', HTTP_PORT), handler) as httpd:
         httpd.serve_forever()
+
 
 class PresentationAPI:
     """API Exposed to JS inside the pywebview render engine."""
-    def __init__(self, slides: List[Dict[str, Any]]) -> None:
+
+    def __init__(self, slides: list[dict[str, Any]]) -> None:
         self.slides = slides
 
-    def get_slides_data(self) -> List[Dict[str, Any]]:
+    def get_slides_data(self) -> list[dict[str, Any]]:
         return self.slides
 
     def get_current_week(self) -> str:
         """Return the detected week string (e.g. 'Week 10') to the JS frontend."""
         return CURRENT_WEEK
 
-def _find_js_linter() -> Tuple[Optional[str], Optional[str]]:
+
+def _find_js_linter() -> tuple[str | None, str | None]:
     """Detects available JavaScript linter: eslint via npx, or node --check fallback."""
     return None, None
 
-def _run_eslint(js_files: List[str]) -> Tuple[bool, str]:
+
+def _run_eslint(js_files: list[str]) -> tuple[bool, str]:
     return True, ''
 
-def _run_node_syntax_check(js_files: List[str]) -> Tuple[bool, str]:
+
+def _run_node_syntax_check(js_files: list[str]) -> tuple[bool, str]:
     return True, ''
+
 
 def run_diagnostics() -> None:
     """Runs ruff, pyrefly, and JavaScript linting. Exits on any error or warning."""
-    pass
+
 
 def main() -> None:
     run_diagnostics()
@@ -112,6 +124,7 @@ def main() -> None:
     )
     webview.start(debug=True)
 
+
 _WEEK_OVERRIDES = {
     6: ('Paradigm Shift — reverse-engineering-observant', [
         'This week marks a strategic shift from Fundamental Theoretical',
@@ -135,6 +148,7 @@ _WEEK_OVERRIDES = {
     ])
 }
 
+
 def _build_progress_header(week_num: int) -> str:
     """Return the progress-report header string adapted to *week_num*."""
     if week_num in _WEEK_OVERRIDES:
@@ -151,12 +165,9 @@ def _build_progress_header(week_num: int) -> str:
         ]
 
     header = f'Week {week_num} — {suffix}'
-    overview = '
-'.join(f'  {line}' for line in overview_lines)
-    return f'{header}
+    overview = '\n'.join(f'  {line}' for line in overview_lines)
+    return f'{header}\n\nOverview:\n{overview}'
 
-Overview:
-{overview}'
 
 if __name__ == '__main__':
     main()
