@@ -427,26 +427,46 @@ function drawCobwebLines() {
         }
     });
 
-    // 3. Inter-Cluster Highway Connections between Phase 1 -> Phase 2 -> Phase 3 -> Phase 4
-    const interClusterPairs = [
-        ['slide_8', 'slide_11_sparta_overview'],
-        ['slide_18_grid', 'slide_10_optimization'],
-        ['slide_31_result_comparison_table', 'slide_9_def_aeroshell'],
-        ['slide_9_def_stagnationpress', 'slide_2'],
-        ['slide_1', 'slide_11_sparta_overview'],
-        ['slide_11_sparta_overview', 'slide_10_optimization'],
-        ['slide_10_optimization', 'slide_9_def_aeroshell']
-    ];
+    // 3. Inter-Cluster Phase Chain Connections (Phase 0 -> Phase 1 -> Phase 2 -> Phase 3 -> Phase 4.1 -> Phase 4.2 -> Phase 5 -> Phase 6)
+    const phaseChain = ['cluster-phase0', 'cluster-physics', 'cluster-sparta', 'cluster-mdao', 'cluster-execution-part1', 'cluster-execution-part2', 'cluster-doc', 'cluster-future'];
 
-    interClusterPairs.forEach(([fromId, toId]) => {
-        const b1 = container.querySelector(`[data-slide-id="${fromId}"]`);
-        const b2 = container.querySelector(`[data-slide-id="${toId}"]`);
+    for (let i = 0; i < phaseChain.length - 1; i++) {
+        const box1 = document.getElementById(phaseChain[i]);
+        const box2 = document.getElementById(phaseChain[i + 1]);
+        if (!box1 || !box2) continue;
+
+        const btns1 = box1.querySelectorAll('.cobweb-node-btn');
+        const btns2 = box2.querySelectorAll('.cobweb-node-btn');
+
+        const btn1 = btns1[btns1.length - 1] || btns1[0];
+        const btn2 = btns2[0];
+
+        if (btn1 && btn2) {
+            const id1 = btn1.getAttribute('data-slide-id');
+            const id2 = btn2.getAttribute('data-slide-id');
+            const p1 = getElementCenter(btn1, container);
+            const p2 = getElementCenter(btn2, container);
+
+            svgContent += `<line class="cobweb-mesh-line" data-from-slide="${id1}" data-to-slide="${id2}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(6, 182, 212, 0.45)" stroke-width="3" stroke-dasharray="6,4" />`;
+        }
+    }
+
+    // 4. Cross-Derivation Connections to Knowledge Base Glossary
+    ['cluster-physics', 'cluster-sparta', 'cluster-mdao'].forEach(clusterId => {
+        const box = document.getElementById(clusterId);
+        const glossaryBox = document.getElementById('cluster-glossary');
+        if (!box || !glossaryBox) return;
+
+        const b1 = box.querySelector('.cobweb-node-btn');
+        const b2 = glossaryBox.querySelector('.cobweb-node-btn');
         if (!b1 || !b2) return;
 
+        const id1 = b1.getAttribute('data-slide-id');
+        const id2 = b2.getAttribute('data-slide-id');
         const p1 = getElementCenter(b1, container);
         const p2 = getElementCenter(b2, container);
 
-        svgContent += `<line class="cobweb-mesh-line" data-from-slide="${fromId}" data-to-slide="${toId}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(6, 182, 212, 0.30)" stroke-width="2" stroke-dasharray="5,5" />`;
+        svgContent += `<line class="cobweb-mesh-line" data-from-slide="${id1}" data-to-slide="${id2}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(34, 197, 94, 0.35)" stroke-width="2" stroke-dasharray="5,5" />`;
     });
 
     svgContent += `<circle cx="${rx}" cy="${ry}" r="8" fill="#06b6d4" />`;
