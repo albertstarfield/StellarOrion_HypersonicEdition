@@ -395,7 +395,7 @@ function drawCobwebLines() {
 
     const clusterIds = ['cluster-phase0', 'cluster-physics', 'cluster-sparta', 'cluster-mdao', 'cluster-execution-part1', 'cluster-execution-part2', 'cluster-doc', 'cluster-future', 'cluster-glossary'];
 
-    // 1. Connect Central Root to 1st Node of Each Cluster Box
+    // 1. Connect Central Root Hub to 1st Node of Phase 0 & Phase 1
     clusterIds.forEach(clusterId => {
         const clusterBox = document.getElementById(clusterId);
         if (!clusterBox) return;
@@ -405,7 +405,7 @@ function drawCobwebLines() {
         const slideId = firstBtn.getAttribute('data-slide-id');
         const pos = getElementCenter(firstBtn, container);
 
-        svgContent += `<line class="cobweb-mesh-line" data-from-slide="root" data-to-slide="${slideId}" x1="${rx}" y1="${ry}" x2="${pos.x}" y2="${pos.y}" stroke="rgba(6, 182, 212, 0.30)" stroke-width="2" stroke-dasharray="6,4" />`;
+        svgContent += `<line class="cobweb-mesh-line" data-from-slide="root" data-to-slide="${slideId}" x1="${rx}" y1="${ry}" x2="${pos.x}" y2="${pos.y}" stroke="rgba(6, 182, 212, 0.55)" stroke-width="2.5" stroke-dasharray="6,4" />`;
     });
 
     // 2. Sequential Intra-Cluster Derivation Lines (Node i -> Node i+1)
@@ -423,11 +423,11 @@ function drawCobwebLines() {
             const p1 = getElementCenter(b1, container);
             const p2 = getElementCenter(b2, container);
 
-            svgContent += `<line class="cobweb-mesh-line" data-from-slide="${id1}" data-to-slide="${id2}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(99, 102, 241, 0.30)" stroke-width="2" />`;
+            svgContent += `<line class="cobweb-mesh-line" data-from-slide="${id1}" data-to-slide="${id2}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(6, 182, 212, 0.65)" stroke-width="2.5" />`;
         }
     });
 
-    // 3. Inter-Cluster Phase Chain Connections (Phase 0 -> Phase 1 -> Phase 2 -> Phase 3 -> Phase 4.1 -> Phase 4.2 -> Phase 5 -> Phase 6)
+    // 3. Inter-Cluster Box-to-Box Highway Connections (Phase 0 -> Phase 1 -> Phase 2 -> Phase 3 -> Phase 4.1 -> Phase 4.2 -> Phase 5 -> Phase 6)
     const phaseChain = ['cluster-phase0', 'cluster-physics', 'cluster-sparta', 'cluster-mdao', 'cluster-execution-part1', 'cluster-execution-part2', 'cluster-doc', 'cluster-future'];
 
     for (let i = 0; i < phaseChain.length - 1; i++) {
@@ -435,24 +435,30 @@ function drawCobwebLines() {
         const box2 = document.getElementById(phaseChain[i + 1]);
         if (!box1 || !box2) continue;
 
+        const c1 = getElementCenter(box1, container);
+        const c2 = getElementCenter(box2, container);
+
+        // Center-to-Center Highway Connector Line
+        svgContent += `<line class="cobweb-mesh-line" data-from-slide="${phaseChain[i]}" data-to-slide="${phaseChain[i+1]}" x1="${c1.x}" y1="${c1.y}" x2="${c2.x}" y2="${c2.y}" stroke="rgba(99, 102, 241, 0.85)" stroke-width="4" stroke-dasharray="10,6" />`;
+
+        // Last Node of Phase N -> First Node of Phase N+1 Derivation Line
         const btns1 = box1.querySelectorAll('.cobweb-node-btn');
         const btns2 = box2.querySelectorAll('.cobweb-node-btn');
 
-        const btn1 = btns1[btns1.length - 1] || btns1[0];
-        const btn2 = btns2[0];
-
-        if (btn1 && btn2) {
+        if (btns1.length > 0 && btns2.length > 0) {
+            const btn1 = btns1[btns1.length - 1];
+            const btn2 = btns2[0];
             const id1 = btn1.getAttribute('data-slide-id');
             const id2 = btn2.getAttribute('data-slide-id');
             const p1 = getElementCenter(btn1, container);
             const p2 = getElementCenter(btn2, container);
 
-            svgContent += `<line class="cobweb-mesh-line" data-from-slide="${id1}" data-to-slide="${id2}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(6, 182, 212, 0.45)" stroke-width="3" stroke-dasharray="6,4" />`;
+            svgContent += `<line class="cobweb-mesh-line" data-from-slide="${id1}" data-to-slide="${id2}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(244, 63, 94, 0.75)" stroke-width="3" stroke-dasharray="6,4" />`;
         }
     }
 
-    // 4. Cross-Derivation Connections to Knowledge Base Glossary
-    ['cluster-physics', 'cluster-sparta', 'cluster-mdao'].forEach(clusterId => {
+    // 4. Cross-Derivation Connections to Knowledge Base Glossary Side Cluster
+    ['cluster-physics', 'cluster-sparta', 'cluster-mdao', 'cluster-execution-part1', 'cluster-execution-part2'].forEach(clusterId => {
         const box = document.getElementById(clusterId);
         const glossaryBox = document.getElementById('cluster-glossary');
         if (!box || !glossaryBox) return;
@@ -466,10 +472,10 @@ function drawCobwebLines() {
         const p1 = getElementCenter(b1, container);
         const p2 = getElementCenter(b2, container);
 
-        svgContent += `<line class="cobweb-mesh-line" data-from-slide="${id1}" data-to-slide="${id2}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(34, 197, 94, 0.35)" stroke-width="2" stroke-dasharray="5,5" />`;
+        svgContent += `<line class="cobweb-mesh-line" data-from-slide="${id1}" data-to-slide="${id2}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(34, 197, 94, 0.65)" stroke-width="3" stroke-dasharray="6,4" />`;
     });
 
-    svgContent += `<circle cx="${rx}" cy="${ry}" r="8" fill="#06b6d4" />`;
+    svgContent += `<circle cx="${rx}" cy="${ry}" r="10" fill="#06b6d4" />`;
     svg.innerHTML = svgContent;
 
     setupNodeHoverListeners();
