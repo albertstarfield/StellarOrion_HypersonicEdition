@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StellarOrion Week 11 — Experimental Presentation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #090a15;
+            --bg-card: rgba(17, 24, 39, 0.8);
+            --border-color: rgba(99, 102, 241, 0.25);
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent-blue: #6366f1;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation */
+        #sidebar {
+            width: 320px;
+            background: rgba(13, 17, 23, 0.95);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(12px);
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), transparent);
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.1rem;
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .sidebar-header p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .slide-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.75rem;
+            list-style: none;
+        }
+
+        .slide-item {
+            padding: 0.65rem 0.85rem;
+            margin-bottom: 0.4rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .slide-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .slide-item.active {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--accent-blue);
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .slide-num {
+            font-size: 0.7rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        /* Main Viewport */
+        #main-viewport {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.08), transparent 70%);
+        }
+
+        .slide-container {
+            flex: 1;
+            padding: 2.5rem;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .slide-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 1100px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(16px);
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(12px) scale(0.99); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .slide-card h1, .slide-card h2, .slide-card h3 {
+            color: #fff;
+            margin-bottom: 1.2rem;
+            font-weight: 700;
+        }
+
+        .slide-card h1 { font-size: 1.8rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
+        .slide-card h2 { font-size: 1.4rem; color: var(--accent-cyan); }
+        .slide-card p { font-size: 1rem; line-height: 1.6; color: var(--text-main); margin-bottom: 1rem; }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.88rem;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        th {
+            background: rgba(99, 102, 241, 0.25);
+            color: #fff;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Controls Footer */
+        .controls-footer {
+            height: 60px;
+            border-top: 1px solid var(--border-color);
+            background: rgba(13, 17, 23, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            backdrop-filter: blur(8px);
+        }
+
+        .btn {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid var(--accent-blue);
+            color: #fff;
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: var(--accent-blue);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .slide-counter {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <h1>StellarOrion Week 11</h1>
+            <p>MDAO Experimental Presentation</p>
+        </div>
+        <ul class="slide-list" id="slide-list"></ul>
+    </div>
+
+    <div id="main-viewport">
+        <div class="slide-container">
+            <div class="slide-card" id="slide-card">
+                <h1 id="slide-title">Loading Slides...</h1>
+                <div id="slide-content"></div>
+            </div>
+        </div>
+
+        <div class="controls-footer">
+            <button class="btn" id="btn-prev" onclick="prevSlide()">&larr; Previous</button>
+            <div class="slide-counter" id="slide-counter">Slide 1 / 1</div>
+            <button class="btn" id="btn-next" onclick="nextSlide()">Next &rarr;</button>
+        </div>
+    </div>
+
+    <script src="presentation.js"></script>
+</body>
+</html>
