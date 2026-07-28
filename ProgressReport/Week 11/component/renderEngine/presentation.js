@@ -14,6 +14,7 @@ function dismissSplash() {
 
 function animateSplash() {
     const loader = document.getElementById('loader-fill');
+    const text = document.getElementById('loader-text');
     const splash = document.getElementById('splash-screen');
     if (!splash) return;
 
@@ -23,13 +24,14 @@ function animateSplash() {
     const interval = setInterval(() => {
         width += 1;
         if (loader) loader.style.width = width + '%';
+        if (text) text.textContent = width + '%';
         if (width >= 100) {
             clearInterval(interval);
-            setTimeout(dismissSplash, 300);
+            setTimeout(dismissSplash, 350);
         }
-    }, 50);
+    }, 30);
 
-    setTimeout(dismissSplash, 5300);
+    setTimeout(dismissSplash, 3500);
 }
 
 function startImageShuffle() {
