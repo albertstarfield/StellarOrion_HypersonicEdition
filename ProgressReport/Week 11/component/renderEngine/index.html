@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StellarOrion Week 11 — Interactive Experimentation Presentation</title>
+    <title>StellarOrion Week 11 — MDAO Experimental Results & Physics Map</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,9 +18,8 @@
 
     <style>
         :root {
-            --bg-dark: #070913;
+            --bg-dark: #060814;
             --bg-card: rgba(15, 23, 42, 0.85);
-            --bg-glass: rgba(30, 41, 59, 0.7);
             --border-glow: rgba(99, 102, 241, 0.35);
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
@@ -38,321 +37,254 @@
             font-family: 'Inter', -apple-system, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-primary);
-            height: 100vh;
-            overflow: hidden;
-            user-select: none;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
-        /* ── Animated Background Aurora ── */
+        /* Ambient Aurora Background */
         .aurora-bg {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: 
-                radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.15), transparent 45%),
-                radial-gradient(circle at 85% 75%, rgba(6, 182, 212, 0.12), transparent 45%),
-                radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.08), transparent 60%);
-            z-index: 0;
+                radial-gradient(circle at 20% 15%, rgba(99, 102, 241, 0.18), transparent 45%),
+                radial-gradient(circle at 80% 65%, rgba(6, 182, 212, 0.15), transparent 45%),
+                radial-gradient(circle at 50% 85%, rgba(168, 85, 247, 0.12), transparent 50%);
+            z-index: -1;
             pointer-events: none;
         }
 
-        /* ── Splash Screen ── */
-        #splash-screen {
-            position: fixed;
-            inset: 0;
-            background: #05070e;
-            z-index: 1000;
+        /* Title Header */
+        .app-header {
+            padding: 1.5rem 2.5rem;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-glow);
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(16px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .splash-title {
+        .header-title h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 2.8rem;
+            font-size: 1.6rem;
             font-weight: 800;
-            letter-spacing: -0.03em;
-            background: linear-gradient(135deg, #fff 30%, var(--accent-indigo), var(--accent-cyan));
+            background: linear-gradient(135deg, #fff 40%, var(--accent-cyan), var(--accent-indigo));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
         }
 
-        .splash-sub {
-            font-size: 1.1rem;
+        .header-title p {
+            font-size: 0.85rem;
             color: var(--text-secondary);
-            margin-bottom: 2rem;
+            margin-top: 0.15rem;
         }
 
-        .loader-bar {
-            width: 240px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .loader-progress {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent-indigo), var(--accent-cyan));
-            border-radius: 4px;
-            transition: width 0.4s ease;
-        }
-
-        /* ── Header Bar ── */
-        .app-header {
-            position: relative;
-            z-index: 10;
-            height: 64px;
-            padding: 0 1.5rem;
+        .header-actions {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(11, 15, 25, 0.85);
-            border-bottom: 1px solid var(--border-glow);
-            backdrop-filter: blur(16px);
+            gap: 1rem;
         }
 
-        .header-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-
-        .header-brand .logo-badge {
-            width: 34px;
-            height: 34px;
-            background: linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan));
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: #fff;
-            box-shadow: 0 0 16px var(--border-glow);
-        }
-
-        .header-brand h1 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .view-mode-tabs {
-            display: flex;
-            background: rgba(15, 23, 42, 0.9);
-            padding: 4px;
-            border-radius: 10px;
-            border: 1px solid var(--border-glow);
-        }
-
-        .mode-tab {
-            padding: 0.45rem 1rem;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            border-radius: 7px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
-        .mode-tab:hover { color: #fff; }
-
-        .mode-tab.active {
-            background: var(--accent-indigo);
-            color: #fff;
-            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
-        }
-
-        /* ── Main View Container ── */
-        .viewport-wrapper {
-            position: relative;
-            z-index: 1;
-            height: calc(100vh - 64px);
-            width: 100vw;
-            display: flex;
-        }
-
-        /* ── VIEW 1: Experimentation Infographic Map ── */
-        #view-map {
-            flex: 1;
-            position: relative;
-            overflow: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-
-        .map-canvas {
-            position: relative;
-            width: 1400px;
-            height: 800px;
-            background: rgba(13, 17, 28, 0.7);
-            border: 1px solid var(--border-glow);
-            border-radius: 20px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
-        }
-
-        /* Map Cluster Containers */
-        .map-cluster {
-            position: absolute;
-            border: 1px dashed rgba(99, 102, 241, 0.3);
-            border-radius: 16px;
-            padding: 1rem;
-            background: rgba(15, 23, 42, 0.4);
-            transition: all 0.3s ease;
-        }
-
-        .cluster-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
-        .cluster-opt { top: 40px; left: 40px; width: 420px; height: 320px; border-color: rgba(245, 158, 11, 0.4); }
-        .cluster-opt .cluster-title { color: var(--accent-amber); }
-
-        .cluster-phys { top: 40px; right: 40px; width: 420px; height: 320px; border-color: rgba(6, 182, 212, 0.4); }
-        .cluster-phys .cluster-title { color: var(--accent-cyan); }
-
-        .cluster-res { top: 400px; left: 40px; width: 620px; height: 360px; border-color: rgba(16, 185, 129, 0.5); background: rgba(16, 185, 129, 0.05); }
-        .cluster-res .cluster-title { color: var(--accent-green); }
-
-        .cluster-tps { top: 400px; right: 40px; width: 620px; height: 360px; border-color: rgba(168, 85, 247, 0.4); }
-        .cluster-tps .cluster-title { color: var(--accent-purple); }
-
-        /* Interactive Node Cards */
-        .node-card {
-            background: rgba(30, 41, 59, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 0.8rem 1rem;
-            margin-bottom: 0.6rem;
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .node-card:hover {
-            transform: translateY(-2px) scale(1.02);
-            background: rgba(40, 53, 76, 0.95);
-            border-color: var(--accent-indigo);
-            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
-        }
-
-        .node-info h4 { font-size: 0.88rem; color: #fff; font-weight: 600; }
-        .node-info p { font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.15rem; }
-        .node-badge {
-            font-family: 'Fira Code', monospace;
-            font-size: 0.7rem;
-            padding: 0.2rem 0.5rem;
-            border-radius: 6px;
+        .btn-action {
             background: rgba(99, 102, 241, 0.2);
-            color: var(--accent-indigo);
-            border: 1px solid var(--border-glow);
-        }
-
-        /* Pointer Arrows & Connectors SVG */
-        .connector-svg {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        /* ── VIEW 2: Result Comparison Table View ── */
-        #view-table {
-            flex: 1;
-            padding: 2rem;
-            overflow-y: auto;
-            display: none;
-            flex-direction: column;
+            border: 1px solid var(--accent-indigo);
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            display: flex;
             align-items: center;
+            gap: 0.5rem;
         }
 
-        .table-card {
+        .btn-action:hover {
+            background: var(--accent-indigo);
+            box-shadow: 0 0 16px rgba(99, 102, 241, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .btn-table {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--accent-green);
+        }
+        .btn-table:hover { background: var(--accent-green); }
+
+        /* Main Scrollable Content Container */
+        .content-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+
+        /* ── SECTION 1: RESULT IMAGE CENTERPIECE & INTERACTIVE HOTSPOTS ── */
+        .result-hero-card {
             background: var(--bg-card);
             border: 1px solid var(--border-glow);
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 2rem;
-            width: 100%;
-            max-width: 1280px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(16px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
         }
 
-        .table-header {
+        .hero-header {
+            width: 100%;
             margin-bottom: 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .table-header h2 {
+        .hero-header h2 {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
         }
 
-        .result-table {
+        /* Image Stage Container */
+        .image-stage {
+            position: relative;
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin: 1rem 0;
-            border-radius: 12px;
+            max-width: 1100px;
+            height: 580px;
+            border-radius: 16px;
             overflow: hidden;
-            border: 1px solid var(--border-glow);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: #000;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
         }
 
-        .result-table th, .result-table td {
-            padding: 0.9rem 1.1rem;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            font-size: 0.88rem;
+        .result-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.9;
         }
 
-        .result-table th {
-            background: rgba(30, 41, 59, 0.9);
-            color: var(--accent-cyan);
+        /* Interactive Hotspot Buttons */
+        .hotspot-btn {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 30px;
+            padding: 0.45rem 0.9rem;
+            color: #fff;
+            font-size: 0.78rem;
             font-weight: 700;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px);
+            z-index: 20;
         }
 
-        .result-table tr:last-child td { border-bottom: none; }
-        .result-table tr:hover td { background: rgba(255, 255, 255, 0.03); }
+        .hotspot-btn:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            background: var(--accent-cyan);
+            color: #000;
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.9);
+        }
 
-        .tag-opt-a { color: var(--accent-amber); font-weight: 700; }
-        .tag-opt-b { color: var(--accent-cyan); font-weight: 700; }
-        .tag-delta { color: var(--accent-green); font-weight: 700; }
+        .hotspot-pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-rose);
+            box-shadow: 0 0 8px var(--accent-rose);
+            animation: pulse 1.5s infinite;
+        }
 
-        /* ── VIEW 3: Theorem Slide Detail Modal ── */
-        #theorem-modal {
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+        }
+
+        /* Specific Hotspot Positions on the Result Image */
+        #spot-stag { top: 48%; left: 16%; border-color: var(--accent-rose); }
+        #spot-stag .hotspot-pulse { background: var(--accent-rose); }
+
+        #spot-drag { top: 22%; left: 52%; border-color: var(--accent-amber); }
+        #spot-drag .hotspot-pulse { background: var(--accent-amber); }
+
+        #spot-shock { top: 28%; left: 22%; border-color: var(--accent-cyan); }
+        #spot-shock .hotspot-pulse { background: var(--accent-cyan); }
+
+        #spot-scallop { top: 62%; left: 45%; border-color: var(--accent-purple); }
+        #spot-scallop .hotspot-pulse { background: var(--accent-purple); }
+
+        #spot-tps { top: 78%; left: 72%; border-color: var(--accent-green); }
+        #spot-tps .hotspot-pulse { background: var(--accent-green); }
+
+        /* ── SECTION 2: IMAGINATION MAP (NODE TOPOLOGY) ── */
+        .map-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(16px);
+        }
+
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .map-node-box {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .map-node-box:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-indigo);
+            background: rgba(40, 53, 76, 0.9);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+        }
+
+        .node-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;
+        }
+
+        .node-header h3 { font-family: 'Outfit', sans-serif; font-size: 1rem; color: #fff; }
+        .node-header .tag { font-size: 0.7rem; font-family: 'Fira Code', monospace; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(99, 102, 241, 0.2); color: var(--accent-indigo); }
+
+        .node-desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; }
+
+        /* ── MODAL DIALOG (TABLE & THEOREMS) ── */
+        .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(5, 7, 14, 0.85);
-            backdrop-filter: blur(12px);
+            background: rgba(5, 7, 14, 0.88);
+            backdrop-filter: blur(16px);
             z-index: 500;
             display: none;
             align-items: center;
@@ -360,297 +292,188 @@
             padding: 2rem;
         }
 
-        .modal-body {
+        .modal-card {
             background: var(--bg-card);
             border: 1px solid var(--border-glow);
             border-radius: 20px;
             width: 100%;
-            max-width: 1000px;
-            max-height: 85vh;
+            max-width: 1100px;
+            max-height: 88vh;
             overflow-y: auto;
             padding: 2.5rem;
             position: relative;
-            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
         }
 
-        .modal-close {
+        .modal-close-btn {
             position: absolute;
             top: 1.5rem;
             right: 1.5rem;
             background: rgba(255, 255, 255, 0.1);
             border: none;
             color: #fff;
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             cursor: pointer;
+            font-size: 1.4rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
             transition: all 0.2s ease;
         }
 
-        .modal-close:hover { background: var(--accent-rose); }
+        .modal-close-btn:hover { background: var(--accent-rose); }
+
+        /* Result Table Formatting */
+        .res-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.2rem;
+            font-size: 0.88rem;
+        }
+
+        .res-table th, .res-table td {
+            padding: 0.85rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .res-table th {
+            background: rgba(30, 41, 59, 0.9);
+            color: var(--accent-cyan);
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .res-table tr:hover td { background: rgba(255, 255, 255, 0.03); }
     </style>
 </head>
 <body>
     <div class="aurora-bg"></div>
 
-    <!-- Splash Screen -->
-    <div id="splash-screen">
-        <div class="splash-title">STELLAR ORION</div>
-        <div class="splash-sub">Week 11 Interactive MDAO Experimentation Map</div>
-        <div class="loader-bar"><div class="loader-progress" id="splash-loader"></div></div>
-    </div>
-
-    <!-- App Header -->
+    <!-- Header -->
     <header class="app-header">
-        <div class="header-brand">
-            <div class="logo-badge">S</div>
+        <div class="header-title">
             <h1>StellarOrion Week 11</h1>
+            <p>Interactive Aerothermal Flowfield & MDAO Imagination Map</p>
         </div>
-
-        <div class="view-mode-tabs">
-            <div class="mode-tab active" id="tab-map" onclick="switchView('map')">
-                🗺️ Experimentation Map
-            </div>
-            <div class="mode-tab" id="tab-table" onclick="switchView('table')">
+        <div class="header-actions">
+            <button class="btn-action btn-table" onclick="openResultTableModal()">
                 📊 Result Comparison Table
-            </div>
+            </button>
         </div>
     </header>
 
-    <!-- Main Viewport -->
-    <div class="viewport-wrapper">
-        <!-- View 1: Interactive Infographic Map -->
-        <div id="view-map">
-            <div class="map-canvas">
-                <svg class="connector-svg">
-                    <!-- Dynamic Connecting Lines & Pointers -->
-                    <path d="M 460 200 L 700 200 L 700 400 L 660 400" stroke="rgba(245, 158, 11, 0.4)" stroke-width="2" fill="none" stroke-dasharray="6,6" />
-                    <path d="M 940 200 L 700 200 L 700 400 L 660 400" stroke="rgba(6, 182, 212, 0.4)" stroke-width="2" fill="none" stroke-dasharray="6,6" />
-                    <path d="M 660 580 L 740 580" stroke="rgba(16, 185, 129, 0.6)" stroke-width="2.5" fill="none" />
-                </svg>
+    <!-- Main Content Container -->
+    <div class="content-container">
+        <!-- ── HERO SECTION: RESULT IMAGE CENTERPIECE WITH PINNED HOTSPOT BUTTONS ── -->
+        <div class="result-hero-card">
+            <div class="hero-header">
+                <h2>🔥 MDAO Optimum Aerothermal Flowfield</h2>
+                <span style="font-size:0.8rem; color:var(--text-secondary);">Click any hotspot button on the flowfield to inspect physics</span>
+            </div>
 
-                <!-- Optimization Cluster -->
-                <div class="map-cluster cluster-opt">
-                    <div class="cluster-title">🚀 Optimization Parameters</div>
-                    <div class="node-card" onclick="openTheoremByName('slide_31_result_comparison_table')">
-                        <div class="node-info">
-                            <h4>Base Diameter ($D$)</h4>
-                            <p>Primary scaling lever ($3.00\text{m} \to 4.86\text{m}$)</p>
-                        </div>
-                        <span class="node-badge">+62.0%</span>
-                    </div>
-                    <div class="node-card" onclick="openTheoremByName('slide_31_result_comparison_table')">
-                        <div class="node-info">
-                            <h4>Cone Half-Angle ($\theta$)</h4>
-                            <p>Controls shock stand-off ($60^\circ \to 45^\circ$)</p>
-                        </div>
-                        <span class="node-badge">-15.0°</span>
-                    </div>
-                    <div class="node-card" onclick="openTheoremByName('slide_31_result_comparison_table')">
-                        <div class="node-info">
-                            <h4>Nose Radius ($R_n$)</h4>
-                            <p>Drives stagnation heat transfer ($0.55\text{m} \to 0.60\text{m}$)</p>
-                        </div>
-                        <span class="node-badge">+0.05m</span>
-                    </div>
+            <div class="image-stage">
+                <img src="../../figures/Result/thermal_map_opt.png" alt="MDAO Aerothermal Result Flowfield" class="result-img" onerror="this.src='../../figures/IRVE-3-HIAD/validation_anim_smooth.mp4'">
+
+                <!-- Hotspot Button 1: Stagnation Point -->
+                <div class="hotspot-btn" id="spot-stag" onclick="openHotspotInfo('stag')">
+                    <div class="hotspot-pulse"></div>
+                    <span>Nose $R_n=0.60\text{m}$ ($18.16\text{ W/cm}^2$)</span>
                 </div>
 
-                <!-- Physics Cluster -->
-                <div class="map-cluster cluster-phys">
-                    <div class="cluster-title">⚡ High-Altitude Gas Dynamics</div>
-                    <div class="node-card" onclick="openTheoremByName('slide_11_sparta_overview')">
-                        <div class="node-info">
-                            <h4>SPARTA DSMC Core</h4>
-                            <p>5-Species non-equilibrium kinetic solver</p>
-                        </div>
-                        <span class="node-badge">SPARTA</span>
-                    </div>
-                    <div class="node-card" onclick="openTheoremByName('slide_18_grid')">
-                        <div class="node-info">
-                            <h4>Rarefied Flow Regime</h4>
-                            <p>Transitional Knudsen number ($Kn > 0.01$)</p>
-                        </div>
-                        <span class="node-badge">Kn > 0.01</span>
-                    </div>
-                    <div class="node-card" onclick="openTheoremByName('slide_19_atmosphere')">
-                        <div class="node-info">
-                            <h4>Reentry Atmosphere</h4>
-                            <p>$52\text{ km}$ altitude freestream conditions</p>
-                        </div>
-                        <span class="node-badge">V=2700m/s</span>
-                    </div>
+                <!-- Hotspot Button 2: Aerodynamic Drag -->
+                <div class="hotspot-btn" id="spot-drag" onclick="openHotspotInfo('drag')">
+                    <div class="hotspot-pulse"></div>
+                    <span>Drag $194.84\text{ kN}$ ($+210.6\%$)</span>
                 </div>
 
-                <!-- Result Node Cluster -->
-                <div class="map-cluster cluster-res">
-                    <div class="cluster-title">📊 MDAO Optimum Synthesis Node</div>
-                    <div class="node-card" style="border-color: var(--accent-amber);" onclick="switchView('table')">
-                        <div class="node-info">
-                            <h4 style="color: var(--accent-amber);">Optimum A: Max Drag (Sample 9 / 11)</h4>
-                            <p>Aerodynamic Drag: <b>194.84 kN (+210.6%)</b> | $\beta = 8.85\text{ kg/m}^2$</p>
-                        </div>
-                        <span class="node-badge" style="background: rgba(245,158,11,0.2); color: var(--accent-amber);">194.84 kN</span>
-                    </div>
-                    <div class="node-card" style="border-color: var(--accent-cyan);" onclick="switchView('table')">
-                        <div class="node-info">
-                            <h4 style="color: var(--accent-cyan);">Optimum B: Thermal Stability (Sample 7)</h4>
-                            <p>Aerodynamic Drag: <b>92.84 kN</b> | Half-Cone: $75.0^\circ$</p>
-                        </div>
-                        <span class="node-badge" style="background: rgba(6,182,212,0.2); color: var(--accent-cyan);">92.84 kN</span>
-                    </div>
-                    <div class="node-card" style="border-color: var(--accent-green);" onclick="switchView('table')">
-                        <div class="node-info">
-                            <h4 style="color: var(--accent-green);">View Full Physical Comparison Table</h4>
-                            <p>IRVE-3 Flight Reference vs Optimum A vs Optimum B</p>
-                        </div>
-                        <span class="node-badge" style="background: rgba(16,185,129,0.2); color: var(--accent-green);">OPEN &rarr;</span>
-                    </div>
+                <!-- Hotspot Button 3: Shock Layer -->
+                <div class="hotspot-btn" id="spot-shock" onclick="openHotspotInfo('shock')">
+                    <div class="hotspot-pulse"></div>
+                    <span>Shock Layer $3,991\text{K}$ ($-67.7\%$)</span>
                 </div>
 
-                <!-- TPS Cluster -->
-                <div class="map-cluster cluster-tps">
-                    <div class="cluster-title">🛡️ Thermal Protection System</div>
-                    <div class="node-card" onclick="openTheoremByName('slide_17_postprocessing')">
-                        <div class="node-info">
-                            <h4>Stagnation Heat Flux ($\dot{q}_{\text{stag}}$)</h4>
-                            <p>Sutton-Graves correlation ($18.16\text{ W/cm}^2$)</p>
-                        </div>
-                        <span class="node-badge">18.16 W/cm²</span>
-                    </div>
-                    <div class="node-card" onclick="openTheoremByName('slide_17_postprocessing')">
-                        <div class="node-info">
-                            <h4>Shock Layer Temperature</h4>
-                            <p>Cooler bowshock ($12,362\text{K} \to 3,991.3\text{K}$)</p>
-                        </div>
-                        <span class="node-badge">-67.7%</span>
-                    </div>
-                    <div class="node-card" onclick="openTheoremByName('slide_17_postprocessing')">
-                        <div class="node-info">
-                            <h4>Backside Thermal Boundary</h4>
-                            <p>Payload temperature: $338.5\text{ K} \le 350\text{ K}$</p>
-                        </div>
-                        <span class="node-badge" style="color: var(--accent-green);">PASS</span>
-                    </div>
+                <!-- Hotspot Button 4: Scallop Recirculation -->
+                <div class="hotspot-btn" id="spot-scallop" onclick="openHotspotInfo('scallop')">
+                    <div class="hotspot-pulse"></div>
+                    <span>Stacked Toroids ($N=7$)</span>
+                </div>
+
+                <!-- Hotspot Button 5: Backside Payload Safety -->
+                <div class="hotspot-btn" id="spot-tps" onclick="openHotspotInfo('tps')">
+                    <div class="hotspot-pulse"></div>
+                    <span>Payload $T_{\text{back}}=338.5\text{K} \le 350\text{K}$</span>
                 </div>
             </div>
         </div>
 
-        <!-- View 2: Full Result Comparison Table View -->
-        <div id="view-table">
-            <div class="table-card">
-                <div class="table-header">
-                    <h2>Week 11 MDAO Result Table: IRVE-3 Reference vs. AI Optimums</h2>
+        <!-- ── SECTION 2: IMAGINATION MAP (NODE TOPOLOGY) ── -->
+        <div class="map-card">
+            <div class="hero-header">
+                <h2>🧠 MDAO Imagination Topology Map</h2>
+                <span style="font-size:0.8rem; color:var(--text-secondary);">Interactive physics & solver nodes</span>
+            </div>
+
+            <div class="map-grid">
+                <div class="map-node-box" onclick="openTheoremByName('slide_31_result_comparison_table')">
+                    <div class="node-header">
+                        <h3>Optimum A: Max Drag</h3>
+                        <span class="tag" style="color:var(--accent-amber);">Sample 9 / 11</span>
+                    </div>
+                    <div class="node-desc">Expanded outer diameter $D=4.86\text{m}$ ($+62.0\%$), dropping ballistic coefficient $\beta$ to $8.85\text{ kg/m}^2$.</div>
                 </div>
-                <table class="result-table">
-                    <thead>
-                        <tr>
-                            <th>Parameter / Metric</th>
-                            <th>IRVE-3 Reference (Rapisarda 2023)</th>
-                            <th>Optimum A: Max Drag (Sample 9 / 11)</th>
-                            <th>Optimum B: Thermal Stability (Sample 7)</th>
-                            <th>Delta (Opt A vs Ref)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><b>Major Outer Diameter ($D$)</b></td>
-                            <td>3.00 m</td>
-                            <td class="tag-opt-a">4.86 m (Expanded Scale)</td>
-                            <td class="tag-opt-b">2.92 m (Standard Scale)</td>
-                            <td class="tag-delta">+62.0%</td>
-                        </tr>
-                        <tr>
-                            <td><b>Cone Half-Angle ($\theta$)</b></td>
-                            <td>60.0°</td>
-                            <td class="tag-opt-a">45.0°</td>
-                            <td class="tag-opt-b">75.0°</td>
-                            <td class="tag-delta">-15.0°</td>
-                        </tr>
-                        <tr>
-                            <td><b>Toroid Stack Count ($N$)</b></td>
-                            <td>6</td>
-                            <td class="tag-opt-a">7 (Locked 202.5mm toroid)</td>
-                            <td class="tag-opt-b">6</td>
-                            <td class="tag-delta">+1 toroid</td>
-                        </tr>
-                        <tr>
-                            <td><b>Nose Radius ($R_n$)</b></td>
-                            <td>0.55 m</td>
-                            <td class="tag-opt-a">0.60 m</td>
-                            <td class="tag-opt-b">0.60 m</td>
-                            <td class="tag-delta">+0.05 m</td>
-                        </tr>
-                        <tr>
-                            <td><b>Aerodynamic Drag ($F_D$)</b></td>
-                            <td>62.72 kN</td>
-                            <td class="tag-opt-a">194.84 kN</td>
-                            <td class="tag-opt-b">92.84 kN</td>
-                            <td class="tag-delta">+210.6%</td>
-                        </tr>
-                        <tr>
-                            <td><b>Drag Coefficient ($C_D$)</b></td>
-                            <td>≈1.47</td>
-                            <td class="tag-opt-a">1.49 (Scalloped geometry)</td>
-                            <td class="tag-opt-b">1.48</td>
-                            <td class="tag-delta">+1.36%</td>
-                        </tr>
-                        <tr>
-                            <td><b>Ballistic Coeff ($\beta$)</b></td>
-                            <td>26.90 kg/m²</td>
-                            <td class="tag-opt-a">8.85 kg/m² (Ultra-fast decel)</td>
-                            <td class="tag-opt-b">18.58 kg/m²</td>
-                            <td class="tag-delta">-67.10%</td>
-                        </tr>
-                        <tr>
-                            <td><b>Stagnation Heat Flux ($\dot{q}_{\text{stag}}$)</b></td>
-                            <td>14.36 W/cm² (143.6 kW/m²)</td>
-                            <td class="tag-opt-a">18.16 W/cm² (181.6 kW/m²)</td>
-                            <td class="tag-opt-b">18.16 W/cm² (181.6 kW/m²)</td>
-                            <td class="tag-delta">+3.80 W/cm²</td>
-                        </tr>
-                        <tr>
-                            <td><b>Shock Layer Temp ($T_{\text{shock}}$)</b></td>
-                            <td>12,362 K</td>
-                            <td class="tag-opt-a">3,991.3 K</td>
-                            <td class="tag-opt-b">9,492.8 K</td>
-                            <td class="tag-delta">-67.7%</td>
-                        </tr>
-                        <tr>
-                            <td><b>Radiative Surf Temp ($T_{\text{surf}}$)</b></td>
-                            <td>1,453 K</td>
-                            <td class="tag-opt-a">1,675 K</td>
-                            <td class="tag-opt-b">1,453 K</td>
-                            <td class="tag-delta">+222 K</td>
-                        </tr>
-                        <tr>
-                            <td><b>Backside Payload Temp ($T_{\text{back}}$)</b></td>
-                            <td>≤350 K</td>
-                            <td class="tag-opt-a">338.5 K</td>
-                            <td class="tag-opt-b">341.2 K</td>
-                            <td class="tag-delta" style="color: var(--accent-green);">PASS (≤350 K Limit)</td>
-                        </tr>
-                        <tr>
-                            <td><b>Generated CAD & Mesh Artifacts</b></td>
-                            <td>HIAD_custom_full.step</td>
-                            <td class="tag-opt-a">geometry.step</td>
-                            <td class="tag-opt-b">geometry.step</td>
-                            <td class="tag-delta">3D STEP & STL Produced</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+                <div class="map-node-box" onclick="openTheoremByName('slide_31_result_comparison_table')">
+                    <div class="node-header">
+                        <h3>Optimum B: Stability</h3>
+                        <span class="tag" style="color:var(--accent-cyan);">Sample 7</span>
+                    </div>
+                    <div class="node-desc">Standard outer scale $D=2.92\text{m}$ with half-cone $\theta=75.0^\circ$, delivering $92.84\text{ kN}$ drag.</div>
+                </div>
+
+                <div class="map-node-box" onclick="openTheoremByName('slide_11_sparta_overview')">
+                    <div class="node-header">
+                        <h3>SPARTA DSMC Core</h3>
+                        <span class="tag">Rarefied Kinetic</span>
+                    </div>
+                    <div class="node-desc">5-Species non-equilibrium DSMC kinetic gas solver ($\text{N}_2, \text{O}_2, \text{NO}, \text{N}, \text{O}$).</div>
+                </div>
+
+                <div class="map-node-box" onclick="openTheoremByName('slide_18_grid')">
+                    <div class="node-header">
+                        <h3>Flow Regime ($Kn > 0.01$)</h3>
+                        <span class="tag">Transitional</span>
+                    </div>
+                    <div class="node-desc">High-altitude entry at $52\text{ km}$ ($V=2700\text{ m/s}$) where continuum CFD accuracy is invalid.</div>
+                </div>
+
+                <div class="map-node-box" onclick="openTheoremByName('slide_17_postprocessing')">
+                    <div class="node-header">
+                        <h3>Sutton-Graves Heating</h3>
+                        <span class="tag" style="color:var(--accent-rose);">18.16 W/cm²</span>
+                    </div>
+                    <div class="node-desc">Analytical continuum stagnation point heating correlation ($q_{\text{stag}} \propto 1/\sqrt{R_n}$).</div>
+                </div>
+
+                <div class="map-node-box" onclick="openTheoremByName('slide_17_postprocessing')">
+                    <div class="node-header">
+                        <h3>TPS Safety Boundary</h3>
+                        <span class="tag" style="color:var(--accent-green);">PASS (≤350K)</span>
+                    </div>
+                    <div class="node-desc">1D transient thermal model keeping Kapton bondline temperature at $338.5\text{ K}$.</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Theorem Detail Modal -->
-    <div id="theorem-modal">
-        <div class="modal-body">
-            <button class="modal-close" onclick="closeTheoremModal()">&times;</button>
-            <div id="modal-content"></div>
+    <!-- Modal Dialog -->
+    <div class="modal-overlay" id="app-modal">
+        <div class="modal-card">
+            <button class="modal-close-btn" onclick="closeAppModal()">&times;</button>
+            <div id="modal-content-area"></div>
         </div>
     </div>
 
