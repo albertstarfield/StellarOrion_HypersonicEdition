@@ -360,12 +360,15 @@ function drawCobwebLines() {
         }
     });
 
-    // 3. Inter-Cluster Highway Connections between Landmark Nodes
+    // 3. Inter-Cluster Highway Connections between Phase 1 -> Phase 2 -> Phase 3 -> Phase 4
     const interClusterPairs = [
         ['slide_8', 'slide_11_sparta_overview'],
         ['slide_18_grid', 'slide_10_optimization'],
         ['slide_31_result_comparison_table', 'slide_9_def_aeroshell'],
-        ['slide_9_def_stagnationpress', 'slide_2']
+        ['slide_9_def_stagnationpress', 'slide_2'],
+        ['slide_1', 'slide_11_sparta_overview'],
+        ['slide_11_sparta_overview', 'slide_10_optimization'],
+        ['slide_10_optimization', 'slide_9_def_aeroshell']
     ];
 
     interClusterPairs.forEach(([fromId, toId]) => {

@@ -536,12 +536,12 @@
 
         .cobweb-container {
             position: absolute;
-            width: 3000px;
-            height: 2100px;
+            width: 3600px;
+            height: 3600px;
             left: 50%;
             top: 50%;
-            margin-left: -1500px;
-            margin-top: -1050px;
+            margin-left: -1800px;
+            margin-top: -1800px;
             transform-origin: center center;
             will-change: transform;
             z-index: 2;
@@ -558,8 +558,8 @@
 
         /* SVG Vector Icon Styling */
         .svg-icon {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             fill: none;
             stroke: currentColor;
             stroke-width: 2;
@@ -572,33 +572,33 @@
         /* Central Root Hub Node (TOP CENTER) */
         .cobweb-hub-card {
             position: absolute;
-            top: 70px;
+            top: 60px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 20;
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(15, 23, 42, 0.88);
             border: 2px solid var(--accent-cyan);
-            border-radius: 24px;
-            padding: 1.6rem;
-            width: 480px;
+            border-radius: 28px;
+            padding: 1.8rem;
+            width: 520px;
             text-align: center;
-            box-shadow: 0 0 60px rgba(6, 182, 212, 0.5);
+            box-shadow: 0 0 70px rgba(6, 182, 212, 0.55);
             backdrop-filter: blur(20px);
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
         }
 
         .cobweb-hub-card:hover {
             transform: translateX(-50%) scale(1.04);
-            box-shadow: 0 0 75px rgba(6, 182, 212, 0.7);
+            box-shadow: 0 0 85px rgba(6, 182, 212, 0.75);
         }
 
         .hub-badge {
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             font-weight: 500;
             color: var(--accent-cyan);
             text-transform: uppercase;
             letter-spacing: 0.08em;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.4rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -606,62 +606,64 @@
         }
 
         .hub-title {
-            font-size: 1.25rem;
+            font-size: 1.3rem;
             font-weight: 500;
             color: #fff;
-            margin-bottom: 0.6rem;
+            margin-bottom: 0.7rem;
         }
 
         .hub-img {
             width: 100%;
-            border-radius: 14px;
+            border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
         }
 
         .hub-sub {
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
             margin-top: 0.6rem;
         }
 
-        /* Top-to-Bottom Hierarchical Cluster Containers (30% OPACITY & WIDE 1100px SPREAD OUT) */
+        /* Top-to-Bottom Vertically Aligned Cluster Containers (Phase 1 to Phase 4, 30% Opacity, Spacious 1400px) */
         .cobweb-cluster-box {
             position: absolute;
             z-index: 5;
             background: rgba(15, 23, 42, 0.30);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            border-radius: 28px;
-            padding: 2.8rem;
-            width: 1100px;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 32px;
+            padding: 3.2rem;
+            width: 1400px;
+            left: 50%;
+            transform: translateX(-50%);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
             transition: opacity 0.3s ease;
         }
 
-        /* Top-to-Bottom Hierarchical Level Positions */
-        .pos-level1-left { top: 520px; left: 80px; }
-        .pos-level1-right { top: 520px; right: 80px; }
-        .pos-level2-left { top: 1220px; left: 80px; }
-        .pos-level2-right { top: 1220px; right: 80px; }
+        /* Vertically Aligned Top-to-Bottom Phase Positions */
+        .pos-phase1 { top: 540px; }
+        .pos-phase2 { top: 1260px; }
+        .pos-phase3 { top: 1980px; }
+        .pos-phase4 { top: 2700px; }
 
         .cluster-head {
-            font-size: 1.05rem;
+            font-size: 1.15rem;
             font-weight: 500;
             color: #fff;
-            margin-bottom: 1.6rem;
-            padding-bottom: 0.6rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.8rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
             display: flex;
             align-items: center;
-            gap: 0.6rem;
+            gap: 0.75rem;
         }
 
         .node-pill-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 2.2rem 2.6rem;
-            padding: 0.8rem;
+            gap: 2.5rem 3.2rem;
+            padding: 1.2rem;
         }
 
         .cobweb-node-btn {
@@ -669,15 +671,15 @@
             z-index: 25;
             background: rgba(30, 41, 59, 0.95);
             border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 24px;
-            padding: 0.65rem 1.2rem;
+            border-radius: 26px;
+            padding: 0.85rem 1.5rem;
             color: #f1f5f9;
-            font-size: 0.82rem;
+            font-size: 0.9rem;
             font-weight: 400;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 0.55rem;
+            gap: 0.65rem;
             transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
             backdrop-filter: blur(10px);
         }
@@ -900,8 +902,8 @@
                     <div class="hub-sub">IRVE-3 Entry Calibration Continuum ($M_\infty = 9.0$, $V_\infty = 2,700\text{ m/s}$)</div>
                 </div>
 
-                <!-- LEVEL 1 LEFT: Physical Foundations -->
-                <div id="cluster-physics" class="cobweb-cluster-box pos-level1-left">
+                <!-- PHASE 1: Physical Foundations -->
+                <div id="cluster-physics" class="cobweb-cluster-box pos-phase1">
                     <div class="cluster-head">
                         <svg class="svg-icon" style="color:var(--accent-cyan);" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                         <span>Phase 1: Physical & Theoretical Foundations</span>
@@ -918,8 +920,8 @@
                     </div>
                 </div>
 
-                <!-- LEVEL 1 RIGHT: SPARTA Solver -->
-                <div id="cluster-sparta" class="cobweb-cluster-box pos-level1-right">
+                <!-- PHASE 2: SPARTA Solver -->
+                <div id="cluster-sparta" class="cobweb-cluster-box pos-phase2">
                     <div class="cluster-head">
                         <svg class="svg-icon" style="color:var(--accent-purple);" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="9" ry="3" transform="rotate(30 12 12)"/></svg>
                         <span>Phase 2: SPARTA DSMC Kinetic Solver Architecture</span>
@@ -938,8 +940,8 @@
                     </div>
                 </div>
 
-                <!-- LEVEL 2 LEFT: Aerothermal MDAO Optimization -->
-                <div id="cluster-mdao" class="cobweb-cluster-box pos-level2-left">
+                <!-- PHASE 3: Aerothermal MDAO Optimization -->
+                <div id="cluster-mdao" class="cobweb-cluster-box pos-phase3">
                     <div class="cluster-head">
                         <svg class="svg-icon" style="color:var(--accent-amber);" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                         <span>Phase 3: Aerothermal Multidisciplinary Optimization (MDAO)</span>
@@ -957,8 +959,8 @@
                     </div>
                 </div>
 
-                <!-- LEVEL 2 RIGHT: Material & Physics Glossary -->
-                <div id="cluster-glossary" class="cobweb-cluster-box pos-level2-right">
+                <!-- PHASE 4: Material & Physics Glossary -->
+                <div id="cluster-glossary" class="cobweb-cluster-box pos-phase4">
                     <div class="cluster-head">
                         <svg class="svg-icon" style="color:var(--accent-green);" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                         <span>Phase 4: Physics & Material Science Glossary</span>
