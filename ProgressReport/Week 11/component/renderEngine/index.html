@@ -668,10 +668,15 @@
             border: 1px solid rgba(251, 191, 36, 0.32);
             box-shadow: 0 25px 60px rgba(245, 158, 11, 0.12);
         }
-        #cluster-execution {
+        #cluster-execution-part1 {
             background: rgba(244, 63, 94, 0.07);
             border: 1px solid rgba(251, 113, 133, 0.32);
             box-shadow: 0 25px 60px rgba(244, 63, 94, 0.12);
+        }
+        #cluster-execution-part2 {
+            background: rgba(236, 72, 153, 0.07);
+            border: 1px solid rgba(244, 114, 182, 0.32);
+            box-shadow: 0 25px 60px rgba(236, 72, 153, 0.12);
         }
         #cluster-doc {
             background: rgba(16, 185, 129, 0.07);
@@ -691,20 +696,21 @@
 
         /* Vertically Aligned Top-to-Bottom Phase Positions (Phases 0-6 Down Center) */
         .pos-phase0 { top: 540px; }
-        .pos-phase1 { top: 1240px; }
-        .pos-phase2 { top: 1940px; }
-        .pos-phase3 { top: 2640px; }
-        .pos-phase4 { top: 3340px; }
-        .pos-phase5 { top: 4040px; }
-        .pos-phase6 { top: 4740px; }
+        .pos-phase1 { top: 1380px; }
+        .pos-phase2 { top: 2220px; }
+        .pos-phase3 { top: 3060px; }
+        .pos-phase4-1 { top: 3900px; }
+        .pos-phase4-2 { top: 4740px; }
+        .pos-phase5 { top: 5580px; }
+        .pos-phase6 { top: 6420px; }
 
         /* Side Reference Container (Glossary Placed on the Side) */
         .pos-side-glossary {
-            top: 1240px;
+            top: 1380px;
             right: 120px;
             left: auto;
             transform: none;
-            width: 720px;
+            width: 740px;
         }
 
         .cluster-head {
@@ -730,18 +736,47 @@
             position: relative;
             z-index: 25;
             background: rgba(30, 41, 59, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 26px;
-            padding: 0.85rem 1.5rem;
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 0.8rem 0.95rem;
             color: #f1f5f9;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 400;
             cursor: pointer;
             display: inline-flex;
+            flex-direction: column;
             align-items: center;
             gap: 0.65rem;
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-            backdrop-filter: blur(10px);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.3s ease;
+            backdrop-filter: blur(14px);
+            width: 225px;
+            text-align: center;
+        }
+
+        .node-dangling-thumb {
+            width: 100%;
+            height: 110px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.65);
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .node-pill-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            font-size: 0.82rem;
+            line-height: 1.35;
+            color: #f1f5f9;
+        }
+
+        .cobweb-node-btn:hover .node-dangling-thumb {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 12px 28px rgba(6, 182, 212, 0.5);
+            transform: scale(1.03);
         }
 
         .cobweb-node-btn.hovered {
@@ -1168,13 +1203,13 @@
                         <span>Phase 0: Research Motivation, Scope & Novelty</span>
                     </div>
                     <div class="node-pill-grid">
-                        <button class="cobweb-node-btn" data-slide-id="slide_1" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><span>What is this? (slide_1)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_1_background" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Background & Context</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_1_objectives" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Research Objectives</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_0_abstract" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>Abstract Summary</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_1_novelty" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Scientific Novelty</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_1_benefits" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Research Benefits (Manfaat)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_1_scope" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Research Scope & Boundaries</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_1" onclick="openSlideModal('slide_1')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-01.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><span>What is this? (slide_1)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_1_background" onclick="openSlideModal('slide_1_background')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-01.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Background & Context</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_1_objectives" onclick="openSlideModal('slide_1_objectives')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-01.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Research Objectives</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_0_abstract" onclick="openSlideModal('slide_0_abstract')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-01.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>Abstract Summary</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_1_novelty" onclick="openSlideModal('slide_1_novelty')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-01.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Scientific Novelty</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_1_benefits" onclick="openSlideModal('slide_1_benefits')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-01.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Research Benefits (Manfaat)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_1_scope" onclick="openSlideModal('slide_1_scope')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-01.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Research Scope & Boundaries</span></div></button>
                     </div>
                 </div>
 
@@ -1185,14 +1220,14 @@
                         <span>Phase 1: Physical & Theoretical Foundations</span>
                     </div>
                     <div class="node-pill-grid">
-                        <button class="cobweb-node-btn" data-slide-id="slide_1" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><span>Title & Scope (slide_1)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_2" onclick="openSlideModal('slide_2')"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="9" ry="3" transform="rotate(30 12 12)"/></svg><span>Boltzmann Eq (slide_2)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_3" onclick="openSlideModal('slide_3')"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Collision Integrals (slide_3)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_4" onclick="openSlideModal('slide_4')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M2 12h20M12 2v20"/></svg><span>Knudsen Regimes (slide_4)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_5" onclick="openSlideModal('slide_5')"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>DSMC Method (slide_5)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_6" onclick="openSlideModal('slide_6')"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg><span>VHS Model (slide_6)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_7" onclick="openSlideModal('slide_7')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Sutton-Graves (slide_7)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_8" onclick="openSlideModal('slide_8')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71.71-1.85 0-2.56l-1.44-1.44c-.71-.71-1.85-.71-2.56 0z"/></svg><span>Target State Variables (q_stag, p_0, m_FTPS, C_D) (slide_8)</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_1" onclick="openSlideModal('slide_1')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-01.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><span>Title & Scope (slide_1)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_2" onclick="openSlideModal('slide_2')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-02.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="9" ry="3" transform="rotate(30 12 12)"/></svg><span>Boltzmann Eq (slide_2)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_3" onclick="openSlideModal('slide_3')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-03.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Collision Integrals (slide_3)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_4" onclick="openSlideModal('slide_4')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-04.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M2 12h20M12 2v20"/></svg><span>Knudsen Regimes (slide_4)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_5" onclick="openSlideModal('slide_5')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-05.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>DSMC Method (slide_5)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_6" onclick="openSlideModal('slide_6')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-06.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg><span>VHS Model (slide_6)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_7" onclick="openSlideModal('slide_7')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-07.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Sutton-Graves (slide_7)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_8" onclick="openSlideModal('slide_8')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-08.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71.71-1.85 0-2.56l-1.44-1.44c-.71-.71-1.85-.71-2.56 0z"/></svg><span>Target State Variables (q_stag, p_0, m_FTPS, C_D) (slide_8)</span></div></button>
                     </div>
                 </div>
 
@@ -1203,16 +1238,16 @@
                         <span>Phase 2: SPARTA DSMC Kinetic Solver Architecture</span>
                     </div>
                     <div class="node-pill-grid">
-                        <button class="cobweb-node-btn" data-slide-id="slide_11_sparta_overview" onclick="openSlideModal('slide_11_sparta_overview')"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/></svg><span>SPARTA Solver (slide_11)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_12_move_step" onclick="openSlideModal('slide_12_move_step')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg><span>Move Step (slide_12)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_13_migrate_step" onclick="openSlideModal('slide_13_migrate_step')"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg><span>Domain Migration (slide_13)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_14_collide_step" onclick="openSlideModal('slide_14_collide_step')"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Collision Pair (slide_14)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_15_sort_step" onclick="openSlideModal('slide_15_sort_step')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M9 18h6"/></svg><span>Cell Sorting (slide_15)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_16_chemistry" onclick="openSlideModal('slide_16_chemistry')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 2v7.31L4.55 18A2 2 0 0 0 6.27 21h11.46a2 2 0 0 0 1.72-3L14 9.31V2z"/></svg><span>Vibrational Chemistry (slide_16)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_17_postprocessing" onclick="openSlideModal('slide_17_postprocessing')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Heat Extraction (slide_17)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_18_grid" onclick="openSlideModal('slide_18_grid')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span>Adaptive Mesh (slide_18)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_19_atmosphere" onclick="openSlideModal('slide_19_atmosphere')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M17.5 19.5A7 7 0 0 0 12 12a7 7 0 0 0-5.5 7.5"/></svg><span>Atmosphere (slide_19)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_27_sparta_openfoam_hybrid" onclick="openSlideModal('slide_27_sparta_openfoam_hybrid')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/></svg><span>DSMC-CFD Hybrid (slide_27)</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_11_sparta_overview" onclick="openSlideModal('slide_11_sparta_overview')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-11.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/></svg><span>SPARTA Solver (slide_11)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_12_move_step" onclick="openSlideModal('slide_12_move_step')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-12.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg><span>Move Step (slide_12)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_13_migrate_step" onclick="openSlideModal('slide_13_migrate_step')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-13.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg><span>Domain Migration (slide_13)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_14_collide_step" onclick="openSlideModal('slide_14_collide_step')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-14.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Collision Pair (slide_14)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_15_sort_step" onclick="openSlideModal('slide_15_sort_step')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-15.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M9 18h6"/></svg><span>Cell Sorting (slide_15)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_16_chemistry" onclick="openSlideModal('slide_16_chemistry')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-16.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 2v7.31L4.55 18A2 2 0 0 0 6.27 21h11.46a2 2 0 0 0 1.72-3L14 9.31V2z"/></svg><span>Vibrational Chemistry (slide_16)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_17_postprocessing" onclick="openSlideModal('slide_17_postprocessing')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-17.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Heat Extraction (slide_17)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_18_grid" onclick="openSlideModal('slide_18_grid')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-18.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span>Adaptive Mesh (slide_18)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_19_atmosphere" onclick="openSlideModal('slide_19_atmosphere')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-19.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M17.5 19.5A7 7 0 0 0 12 12a7 7 0 0 0-5.5 7.5"/></svg><span>Atmosphere (slide_19)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_27_sparta_openfoam_hybrid" onclick="openSlideModal('slide_27_sparta_openfoam_hybrid')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-27.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/></svg><span>DSMC-CFD Hybrid (slide_27)</span></div></button>
                     </div>
                 </div>
 
@@ -1223,29 +1258,39 @@
                         <span>Phase 3: Aerothermal Multidisciplinary Optimization (MDAO)</span>
                     </div>
                     <div class="node-pill-grid">
-                        <button class="cobweb-node-btn" data-slide-id="slide_10_optimization" onclick="openSlideModal('slide_10_optimization')"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>SBO Architecture (slide_10)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_20_opt_setup" onclick="openSlideModal('slide_20_opt_setup')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M2 20h20M5 20V8l7-5 7 5v12"/></svg><span>Problem Setup (slide_20)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_21_opt_baseline" onclick="openSlideModal('slide_21_opt_baseline')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/></svg><span>Baseline State (slide_21)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_22_opt_lhs" onclick="openSlideModal('slide_22_opt_lhs')"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>LHS Sampling (slide_22)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_23_opt_mop" onclick="openSlideModal('slide_23_opt_mop')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/></svg><span>MoP Metamodel (slide_23)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_24_opt_ga" onclick="openSlideModal('slide_24_opt_ga')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71.71-1.85 0-2.56l-1.44-1.44c-.71-.71-1.85-.71-2.56 0z"/></svg><span>Genetic Search (slide_24)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_25_sampling_variants" onclick="openSlideModal('slide_25_sampling_variants')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Design Variants (slide_25)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_26_sampling_methods" onclick="openSlideModal('slide_26_sampling_methods')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Sampling Methods (slide_26)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_31_result_comparison_table" onclick="openSlideModal('slide_31_result_comparison_table')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg><span>Pareto Results (slide_31)</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_10_optimization" onclick="openSlideModal('slide_10_optimization')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-10.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>SBO Architecture (slide_10)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_20_opt_setup" onclick="openSlideModal('slide_20_opt_setup')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-20.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M2 20h20M5 20V8l7-5 7 5v12"/></svg><span>Problem Setup (slide_20)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_21_opt_baseline" onclick="openSlideModal('slide_21_opt_baseline')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-21.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/></svg><span>Baseline State (slide_21)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_22_opt_lhs" onclick="openSlideModal('slide_22_opt_lhs')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-22.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>LHS Sampling (slide_22)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_23_opt_mop" onclick="openSlideModal('slide_23_opt_mop')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-23.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/></svg><span>MoP Metamodel (slide_23)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_24_opt_ga" onclick="openSlideModal('slide_24_opt_ga')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-24.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71.71-1.85 0-2.56l-1.44-1.44c-.71-.71-1.85-.71-2.56 0z"/></svg><span>Genetic Search (slide_24)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_25_sampling_variants" onclick="openSlideModal('slide_25_sampling_variants')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-25.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Design Variants (slide_25)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_26_sampling_methods" onclick="openSlideModal('slide_26_sampling_methods')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-26.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Sampling Methods (slide_26)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_31_result_comparison_table" onclick="openSlideModal('slide_31_result_comparison_table')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-31.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg><span>Pareto Results (slide_31)</span></div></button>
                     </div>
                 </div>
 
-                <!-- PHASE 4: Execution & Numerical Results Validation -->
-                <div id="cluster-execution" class="cobweb-cluster-box pos-phase4">
+                <!-- PHASE 4 (PART 1): Validation First Architecture Program -->
+                <div id="cluster-execution-part1" class="cobweb-cluster-box pos-phase4-1">
                     <div class="cluster-head">
                         <svg class="svg-icon" style="color:var(--accent-rose);" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                        <span>Phase 4: Execution & Numerical Results Validation</span>
+                        <span>Phase 4.1: Validation First — Baseline Solver Architecture Program</span>
                     </div>
                     <div class="node-pill-grid">
-                        <button class="cobweb-node-btn" data-slide-id="slide_28_execution1_aerothermal" onclick="openSlideModal('slide_28_execution1_aerothermal')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Execution 1 — Aerothermal Flowfield (slide_28)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_29_execution1_validation" onclick="openSlideModal('slide_29_execution1_validation')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Execution 1 — Validation & Physics Check (slide_29)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_30_execution2_mdao" onclick="openSlideModal('slide_30_execution2_mdao')"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Execution 2 — MDAO Pareto Trade-offs (slide_30)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_32_execution3_ftps" onclick="openSlideModal('slide_32_execution3_ftps')"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Execution 3 — FTPS Thermal Profile (slide_32)</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_28_execution1_aerothermal" onclick="openSlideModal('slide_28_execution1_aerothermal')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-28.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Execution 1 — Aerothermal Flowfield (slide_28)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_29_execution1_validation" onclick="openSlideModal('slide_29_execution1_validation')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-29.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Execution 1 — Validation & Physics Check (slide_29)</span></div></button>
+                    </div>
+                </div>
+
+                <!-- PHASE 4 (PART 2): Integrated Architecture, Optimization & Pareto Results -->
+                <div id="cluster-execution-part2" class="cobweb-cluster-box pos-phase4-2">
+                    <div class="cluster-head">
+                        <svg class="svg-icon" style="color:var(--accent-pink);" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/></svg>
+                        <span>Phase 4.2: Architecture, Aerothermal MDAO Optimization & Results</span>
+                    </div>
+                    <div class="node-pill-grid">
+                        <button class="cobweb-node-btn" data-slide-id="slide_30_execution2_mdao" onclick="openSlideModal('slide_30_execution2_mdao')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-30.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Execution 2 — MDAO Pareto Trade-offs (slide_30)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_32_execution3_ftps" onclick="openSlideModal('slide_32_execution3_ftps')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-32.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Execution 3 — FTPS Thermal Profile (slide_32)</span></div></button>
                     </div>
                 </div>
 
@@ -1256,10 +1301,10 @@
                         <span>Phase 5: Documentation Towards Paper & Thesis</span>
                     </div>
                     <div class="node-pill-grid">
-                        <button class="cobweb-node-btn" data-slide-id="slide_33_thesis_outline" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>Thesis Structure & Chapter Outline</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_34_paper_draft" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><span>AIAA Conference Paper Draft</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_35_methodology_doc" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Validation Methodology Justification</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_36_code_archival" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Code Verification & Archival</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_33_thesis_outline" onclick="openSlideModal('slide_33_thesis_outline')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-33.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>Thesis Structure & Chapter Outline</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_34_paper_draft" onclick="openSlideModal('slide_34_paper_draft')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-34.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><span>AIAA Conference Paper Draft</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_35_methodology_doc" onclick="openSlideModal('slide_35_methodology_doc')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-35.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Validation Methodology Justification</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_36_code_archival" onclick="openSlideModal('slide_36_code_archival')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-36.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Code Verification & Archival</span></div></button>
                     </div>
                 </div>
 
@@ -1270,10 +1315,10 @@
                         <span>Phase 6: Conclusion & Future Plan for Improvement</span>
                     </div>
                     <div class="node-pill-grid">
-                        <button class="cobweb-node-btn" data-slide-id="slide_37_conclusions" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Key Findings & Research Summary</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_38_future_gsi" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Future Work: Reactive Gas-Surface Interaction</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_39_future_gpu" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Future Work: High-Performance GPU Acceleration</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_40_closing" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/></svg><span>Final Concluding Remarks</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_37_conclusions" onclick="openSlideModal('slide_37_conclusions')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-37.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Key Findings & Research Summary</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_38_future_gsi" onclick="openSlideModal('slide_38_future_gsi')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-38.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Future Work: Reactive Gas-Surface Interaction</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_39_future_gpu" onclick="openSlideModal('slide_39_future_gpu')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-39.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Future Work: High-Performance GPU Acceleration</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_40_closing" onclick="openSlideModal('slide_40_closing')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-40.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/></svg><span>Final Concluding Remarks</span></div></button>
                     </div>
                 </div>
 
@@ -1284,15 +1329,15 @@
                         <span>Knowledge Base: Physics & Material Science Glossary</span>
                     </div>
                     <div class="node-pill-grid">
-                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_aeroshell" onclick="openSlideModal('slide_9_def_aeroshell')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Aeroshell (slide_9)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_knudsen" onclick="openSlideModal('slide_9_def_knudsen')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 3H3v18h18V3zM9 3v18M15 3v18"/></svg><span>Knudsen (slide_9)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_pyrogel" onclick="openSlideModal('slide_9_def_pyrogel')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2c1 3 2.5 4.5 4 6 2 2 3 4.5 3 7.5a7 7 0 0 1-14 0c0-3 1-5.5 3-7.5 1.5-1.5 3-3 4-6z"/></svg><span>Pyrogel (slide_9)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_kevlar" onclick="openSlideModal('slide_9_def_kevlar')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5l6.74-6.76z"/></svg><span>Kevlar / Vectran (slide_9)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_insulation" onclick="openSlideModal('slide_9_def_insulation')"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>FTPS Laminate (slide_9)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_stagnationpress" onclick="openSlideModal('slide_9_def_stagnationpress')"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Stagnation Press (slide_9)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_stagnationtemp" onclick="openSlideModal('slide_9_def_stagnationtemp')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 14.76V3a2 2 0 0 0-4 0v11.76a4.5 4.5 0 1 0 4 0z"/></svg><span>Stagnation Temp (slide_9)</span></button>
-                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_vhs" onclick="openSlideModal('slide_9_def_vhs')"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg><span>VHS Model (slide_9)</span></button>
-                        <button class="cobweb-node-btn" style="border-color:var(--accent-cyan); background:rgba(6,182,212,0.18);" data-slide-id="REFERENCES.md" onclick="openSlideModal('REFERENCES.md')"><svg class="svg-icon" style="color:var(--accent-cyan);" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>📚 Root Literature & Citations (REFERENCES.md)</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_aeroshell" onclick="openSlideModal('slide_9_def_aeroshell')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-09.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Aeroshell (slide_9)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_knudsen" onclick="openSlideModal('slide_9_def_knudsen')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-09.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 3H3v18h18V3zM9 3v18M15 3v18"/></svg><span>Knudsen (slide_9)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_pyrogel" onclick="openSlideModal('slide_9_def_pyrogel')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-09.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2c1 3 2.5 4.5 4 6 2 2 3 4.5 3 7.5a7 7 0 0 1-14 0c0-3 1-5.5 3-7.5 1.5-1.5 3-3 4-6z"/></svg><span>Pyrogel (slide_9)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_kevlar" onclick="openSlideModal('slide_9_def_kevlar')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-09.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5l6.74-6.76z"/></svg><span>Kevlar / Vectran (slide_9)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_insulation" onclick="openSlideModal('slide_9_def_insulation')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-09.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>FTPS Laminate (slide_9)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_stagnationpress" onclick="openSlideModal('slide_9_def_stagnationpress')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-09.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Stagnation Press (slide_9)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_stagnationtemp" onclick="openSlideModal('slide_9_def_stagnationtemp')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-09.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 14.76V3a2 2 0 0 0-4 0v11.76a4.5 4.5 0 1 0 4 0z"/></svg><span>Stagnation Temp (slide_9)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_9_def_vhs" onclick="openSlideModal('slide_9_def_vhs')"><img class="node-dangling-thumb" src="/temp_slides_v2/slide-09.jpg" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg><span>VHS Model (slide_9)</span></div></button>
+                        <button class="cobweb-node-btn" data-slide-id="REFERENCES.md" onclick="openSlideModal('REFERENCES.md')"><img class="node-dangling-thumb" src="figures/Validation/thermal_map_smooth_M0_A0.png" alt="Preview" onerror="this.src='figures/Validation/thermal_map_smooth_M0_A0.png'"><div class="node-pill-label"><svg class="svg-icon" style="color:var(--accent-cyan);" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>📚 Root Literature & Citations (REFERENCES.md)</span></div></button>
                     </div>
                 </div>
             </div>
