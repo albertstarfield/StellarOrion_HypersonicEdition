@@ -45,9 +45,12 @@ class SilentHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         pass
 
 def start_local_server() -> None:
-    """Runs a simple HTTP server on localhost to serve assets without CORS issues."""
+    """Runs a simple HTTP server on localhost from the project root to serve assets without CORS issues."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(base_dir)
+    root_dir = os.path.abspath(os.path.join(base_dir, "..", ".."))
+    if not os.path.exists(os.path.join(root_dir, "web", "index.html")):
+        root_dir = base_dir
+    os.chdir(root_dir)
     handler = SilentHTTPRequestHandler
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", HTTP_PORT), handler) as httpd:
@@ -197,7 +200,7 @@ def main() -> None:
     server_thread = threading.Thread(target=start_local_server, daemon=True)
     server_thread.start()
 
-    server_url = f"http://localhost:{HTTP_PORT}/component/renderEngine/index.html"
+    server_url = f"http://localhost:{HTTP_PORT}/web/index.html"
     print(f"[*] Local asset server started on http://localhost:{HTTP_PORT}")
     print("[*] Starting Pywebview window...")
     api = PresentationAPI(slides)
