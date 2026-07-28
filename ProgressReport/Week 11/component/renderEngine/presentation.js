@@ -229,7 +229,7 @@ function initStarfield() {
     renderStars();
 }
 
-// ── Pan and Zoom Controller with Smooth Inertia ──
+// ── Pan and Zoom Controller Anchored on Viewport Center & Cursor ──
 let zoomScale = 0.9;
 let panX = 0;
 let panY = 0;
@@ -244,18 +244,36 @@ function updateContainerTransform() {
     }
 }
 
+// Zoom anchored at a specific screen point (ClientX, ClientY)
+function zoomAtPoint(newZoom, clientX, clientY) {
+    const viewport = document.getElementById('cobweb-viewport');
+    if (!viewport) return;
+
+    const rect = viewport.getBoundingClientRect();
+    // Point relative to viewport origin
+    const px = clientX - rect.left;
+    const py = clientY - rect.top;
+
+    const ratio = newZoom / zoomScale;
+
+    // Adjust pan so the target point in the viewport stays invariant
+    panX = px - (px - panX) * ratio;
+    panY = py - (py - panY) * ratio;
+    zoomScale = newZoom;
+
+    updateContainerTransform();
+}
+
 function setupPanZoom() {
     const viewport = document.getElementById('cobweb-viewport');
     if (!viewport) return;
 
+    // Mouse wheel zoom anchored on mouse cursor position
     viewport.addEventListener('wheel', (e) => {
         e.preventDefault();
-        const zoomDelta = e.deltaY > 0 ? -0.06 : 0.06;
+        const zoomDelta = e.deltaY > 0 ? -0.08 : 0.08;
         const newZoom = Math.min(Math.max(0.35, zoomScale + zoomDelta), 2.5);
-        
-        // Smoothly adjust zoom centered on cursor
-        zoomScale = newZoom;
-        updateContainerTransform();
+        zoomAtPoint(newZoom, e.clientX, e.clientY);
     }, { passive: false });
 
     viewport.addEventListener('mousedown', (e) => {
@@ -281,7 +299,7 @@ function setupPanZoom() {
         }
     });
 
-    // Keyboard Arrow Keys / WASD Panning for Knowledge Derivation Network
+    // Keyboard Arrow Keys / WASD Panning
     window.addEventListener('keydown', (e) => {
         const mapModal = document.getElementById('imagination-modal');
         if (!mapModal || !mapModal.classList.contains('open')) return;
@@ -333,14 +351,28 @@ function setupPanZoom() {
     });
 }
 
+// Zoom In (+ button) anchored strictly on the center of the Viewport
 window.zoomInMap = function() {
-    zoomScale = Math.min(2.5, zoomScale + 0.18);
-    updateContainerTransform();
+    const viewport = document.getElementById('cobweb-viewport');
+    if (!viewport) return;
+    const rect = viewport.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const newZoom = Math.min(2.5, zoomScale + 0.18);
+    zoomAtPoint(newZoom, centerX, centerY);
 };
 
+// Zoom Out (- button) anchored strictly on the center of the Viewport
 window.zoomOutMap = function() {
-    zoomScale = Math.max(0.35, zoomScale - 0.18);
-    updateContainerTransform();
+    const viewport = document.getElementById('cobweb-viewport');
+    if (!viewport) return;
+    const rect = viewport.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const newZoom = Math.max(0.35, zoomScale - 0.18);
+    zoomAtPoint(newZoom, centerX, centerY);
 };
 
 window.zoomResetMap = function() {
