@@ -148,18 +148,7 @@ function closeHotspotModal() {
 }
 
 function renderMathInElement(el) {
-    try {
-        if (!window.katex || !el) return;
-        el.innerHTML = el.innerHTML.replace(/\$([^\$]+)\$/g, (match, expr) => {
-            try {
-                return katex.renderToString(expr, { throwOnError: false });
-            } catch (e) {
-                return match;
-            }
-        });
-    } catch (err) {
-        console.warn("KaTeX render notice:", err);
-    }
+    if (el) renderKaTeXOnElement(el);
 }
 
 let cachedSlidesData = null;
