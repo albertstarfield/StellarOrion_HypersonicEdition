@@ -901,6 +901,53 @@
         }
 
         /* Floating Fuzzy Search Bar in Imagination Map */
+        /* Floating Rounded Zoom Controls */
+        .cobweb-zoom-controls {
+            position: absolute;
+            bottom: 2.2rem;
+            right: 2.2rem;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .zoom-btn-rounded {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.90);
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(14px);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .zoom-btn-rounded:hover {
+            transform: scale(1.12);
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.22);
+            color: #ffffff;
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.65);
+        }
+
+        .zoom-btn-rounded:active {
+            transform: scale(0.94);
+        }
+
+        .zoom-btn-rounded .svg-icon {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            fill: none;
+        }
+
         .cobweb-search-container {
             position: absolute;
             top: 20px;
@@ -1205,6 +1252,19 @@
                     <button class="search-clear-btn" id="cobweb-search-clear" onclick="clearCobwebSearch()">&times;</button>
                 </div>
                 <div class="cobweb-search-results" id="cobweb-search-results"></div>
+            </div>
+
+            <!-- Floating Rounded Zoom Controls -->
+            <div class="cobweb-zoom-controls">
+                <button class="zoom-btn-rounded" onclick="zoomInMap()" title="Zoom In (+)" aria-label="Zoom In">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <button class="zoom-btn-rounded" onclick="zoomResetMap()" title="Reset View (Center)" aria-label="Reset View">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M3 12h3M18 12h3M12 3v3M12 18v3"/></svg>
+                </button>
+                <button class="zoom-btn-rounded" onclick="zoomOutMap()" title="Zoom Out (−)" aria-label="Zoom Out">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
             </div>
 
             <!-- Dynamic Starfield Canvas Background -->

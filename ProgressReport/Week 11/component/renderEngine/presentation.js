@@ -321,6 +321,23 @@ function setupPanZoom() {
     }
 }
 
+window.zoomInMap = function() {
+    zoomScale = Math.min(2.5, zoomScale + 0.18);
+    updateContainerTransform();
+};
+
+window.zoomOutMap = function() {
+    zoomScale = Math.max(0.35, zoomScale - 0.18);
+    updateContainerTransform();
+};
+
+window.zoomResetMap = function() {
+    zoomScale = 0.9;
+    panX = 0;
+    panY = 0;
+    updateContainerTransform();
+};
+
 function getElementCenter(el, container) {
     let x = el.offsetLeft + el.offsetWidth / 2;
     let y = el.offsetTop + el.offsetHeight / 2;
