@@ -198,9 +198,11 @@ function initStarfield() {
         starsList.push({
             x: Math.random() * width,
             y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.35,
+            vy: (Math.random() - 0.5) * 0.35,
             size: 2 + Math.random() * 4,
             alpha: 0.1 + Math.random() * 0.8,
-            speed: 0.005 + Math.random() * 0.015,
+            speed: 0.008 + Math.random() * 0.018,
             phase: Math.random() * Math.PI * 2
         });
     }
@@ -209,7 +211,15 @@ function initStarfield() {
         ctx.clearRect(0, 0, width, height);
 
         starsList.forEach(star => {
+            star.x += star.vx;
+            star.y += star.vy;
             star.phase += star.speed;
+
+            if (star.x < 0) star.x = width;
+            if (star.x > width) star.x = 0;
+            if (star.y < 0) star.y = height;
+            if (star.y > height) star.y = 0;
+
             const currentAlpha = 0.15 + (Math.sin(star.phase) + 1) * 0.4;
             const half = star.size / 2;
 
@@ -340,7 +350,7 @@ function drawCobwebLines() {
         const slideId = firstBtn.getAttribute('data-slide-id');
         const pos = getElementCenter(firstBtn, container);
 
-        svgContent += `<line class="cobweb-mesh-line" data-from-slide="root" data-to-slide="${slideId}" x1="${rx}" y1="${ry}" x2="${pos.x}" y2="${pos.y}" stroke="rgba(6, 182, 212, 0.7)" stroke-width="2.5" stroke-dasharray="6,4" />`;
+        svgContent += `<line class="cobweb-mesh-line" data-from-slide="root" data-to-slide="${slideId}" x1="${rx}" y1="${ry}" x2="${pos.x}" y2="${pos.y}" stroke="rgba(6, 182, 212, 0.30)" stroke-width="2" stroke-dasharray="6,4" />`;
     });
 
     // 2. Sequential Intra-Cluster Derivation Lines (Node i -> Node i+1)
@@ -358,7 +368,7 @@ function drawCobwebLines() {
             const p1 = getElementCenter(b1, container);
             const p2 = getElementCenter(b2, container);
 
-            svgContent += `<line class="cobweb-mesh-line" data-from-slide="${id1}" data-to-slide="${id2}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(99, 102, 241, 0.75)" stroke-width="2.2" />`;
+            svgContent += `<line class="cobweb-mesh-line" data-from-slide="${id1}" data-to-slide="${id2}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(99, 102, 241, 0.30)" stroke-width="2" />`;
         }
     });
 
@@ -381,7 +391,7 @@ function drawCobwebLines() {
         const p1 = getElementCenter(b1, container);
         const p2 = getElementCenter(b2, container);
 
-        svgContent += `<line class="cobweb-mesh-line" data-from-slide="${fromId}" data-to-slide="${toId}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(6, 182, 212, 0.65)" stroke-width="2" stroke-dasharray="5,5" />`;
+        svgContent += `<line class="cobweb-mesh-line" data-from-slide="${fromId}" data-to-slide="${toId}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(6, 182, 212, 0.30)" stroke-width="2" stroke-dasharray="5,5" />`;
     });
 
     svgContent += `<circle cx="${rx}" cy="${ry}" r="8" fill="#06b6d4" />`;
