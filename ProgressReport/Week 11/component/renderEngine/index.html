@@ -650,14 +650,15 @@
             transition: opacity 0.3s ease;
         }
 
-        /* Vertically Aligned Top-to-Bottom Phase Positions (Phases 1-3 Down Center) */
-        .pos-phase1 { top: 540px; }
-        .pos-phase2 { top: 1260px; }
-        .pos-phase3 { top: 1980px; }
+        /* Vertically Aligned Top-to-Bottom Phase Positions (Phases 0-3 Down Center) */
+        .pos-phase0 { top: 540px; }
+        .pos-phase1 { top: 1240px; }
+        .pos-phase2 { top: 1940px; }
+        .pos-phase3 { top: 2640px; }
 
         /* Side Reference Container (Glossary Placed on the Side) */
         .pos-side-glossary {
-            top: 1260px;
+            top: 1240px;
             right: 120px;
             left: auto;
             transform: none;
@@ -1118,6 +1119,23 @@
                     <div class="hub-sub">IRVE-3 Entry Calibration Continuum ($M_\infty = 9.0$, $V_\infty = 2,700\text{ m/s}$)</div>
                 </div>
 
+                <!-- PHASE 0: Research Motivation, Scope & Novelty -->
+                <div id="cluster-phase0" class="cobweb-cluster-box pos-phase0">
+                    <div class="cluster-head">
+                        <svg class="svg-icon" style="color:var(--accent-cyan);" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        <span>Phase 0: Research Motivation, Scope & Novelty</span>
+                    </div>
+                    <div class="node-pill-grid">
+                        <button class="cobweb-node-btn" data-slide-id="slide_1" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><span>What is this? (slide_1)</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_1_background" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Background & Context</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_1_objectives" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Research Objectives</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_0_abstract" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>Abstract Summary</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_1_novelty" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Scientific Novelty</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_1_benefits" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Research Benefits (Manfaat)</span></button>
+                        <button class="cobweb-node-btn" data-slide-id="slide_1_scope" onclick="openSlideModal('slide_1')"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Research Scope & Boundaries</span></button>
+                    </div>
+                </div>
+
                 <!-- PHASE 1: Physical Foundations -->
                 <div id="cluster-physics" class="cobweb-cluster-box pos-phase1">
                     <div class="cluster-head">
@@ -1190,6 +1208,7 @@
                         <button class="cobweb-node-btn" data-slide-id="slide_9_def_stagnationpress" onclick="openSlideModal('slide_9_def_stagnationpress')"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Stagnation Press (slide_9)</span></button>
                         <button class="cobweb-node-btn" data-slide-id="slide_9_def_stagnationtemp" onclick="openSlideModal('slide_9_def_stagnationtemp')"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 14.76V3a2 2 0 0 0-4 0v11.76a4.5 4.5 0 1 0 4 0z"/></svg><span>Stagnation Temp (slide_9)</span></button>
                         <button class="cobweb-node-btn" data-slide-id="slide_9_def_vhs" onclick="openSlideModal('slide_9_def_vhs')"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg><span>VHS Model (slide_9)</span></button>
+                        <button class="cobweb-node-btn" style="border-color:var(--accent-cyan); background:rgba(6,182,212,0.18);" data-slide-id="REFERENCES.md" onclick="openSlideModal('REFERENCES.md')"><svg class="svg-icon" style="color:var(--accent-cyan);" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>📚 Root Literature & Citations (REFERENCES.md)</span></button>
                     </div>
                 </div>
             </div>

@@ -136,6 +136,15 @@ class PresentationAPI:
         """Return the detected week string (e.g. 'Week 10') to the JS frontend."""
         return CURRENT_WEEK
 
+    def get_references_doc(self) -> str:
+        """Reads and returns the root REFERENCES.md from project root."""
+        root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        ref_path = os.path.join(root_dir, 'REFERENCES.md')
+        if os.path.exists(ref_path):
+            with open(ref_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        return '# REFERENCES.md\n\nRoot REFERENCES.md not found at project root.'
+
 
 def _find_js_linter() -> tuple[str | None, str | None]:
     """Detects available JavaScript linter: eslint via npx, or node --check fallback."""

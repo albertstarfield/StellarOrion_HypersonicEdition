@@ -325,7 +325,7 @@ function drawCobwebLines() {
 
     let svgContent = '';
 
-    const clusterIds = ['cluster-physics', 'cluster-sparta', 'cluster-mdao', 'cluster-glossary'];
+    const clusterIds = ['cluster-phase0', 'cluster-physics', 'cluster-sparta', 'cluster-mdao', 'cluster-glossary'];
 
     // 1. Connect Central Root to 1st Node of Each Cluster Box
     clusterIds.forEach(clusterId => {
@@ -549,6 +549,33 @@ async function openSlideModal(slideId) {
     const modal = document.getElementById('app-modal');
     const content = document.getElementById('modal-content');
     if (!modal || !content) return;
+
+    if (slideId.toUpperCase().includes('REFERENCES')) {
+        let refText = '';
+        if (window.pywebview && window.pywebview.api && window.pywebview.api.get_references_doc) {
+            try {
+                refText = await window.pywebview.api.get_references_doc();
+            } catch (e) {
+                console.warn("Pywebview references API notice:", e);
+            }
+        }
+        if (!refText) {
+            try {
+                const res = await fetch('/REFERENCES.md');
+                refText = await res.text();
+            } catch (e) {
+                refText = "# Root REFERENCES.md\n\nUnable to fetch REFERENCES.md from project root.";
+            }
+        }
+        let html = window.marked ? marked.parse(refText) : refText;
+        content.innerHTML = `
+            <h2 style="color:var(--accent-cyan); font-family:'Google Sans',sans-serif; font-weight:500; margin-bottom:1rem;">📚 Project Literature & Citations (REFERENCES.md)</h2>
+            <div style="font-weight:400; line-height:1.65; color:var(--text-secondary);" class="slide-md-body">${html}</div>
+        `;
+        renderKaTeXOnElement(content);
+        modal.classList.add('open');
+        return;
+    }
 
     const slides = await fetchSlidesData();
     const slide = slides.find(s => s.id === slideId || s.filename === slideId || s.filename === slideId + '.py');
