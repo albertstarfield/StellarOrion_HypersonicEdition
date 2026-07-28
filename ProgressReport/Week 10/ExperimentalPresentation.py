@@ -200,7 +200,7 @@ def main() -> None:
     server_thread = threading.Thread(target=start_local_server, daemon=True)
     server_thread.start()
 
-    server_url = f"http://localhost:{HTTP_PORT}/web/index.html"
+    server_url = f"http://localhost:{HTTP_PORT}/component/renderEngine/index.html"
     print(f"[*] Local asset server started on http://localhost:{HTTP_PORT}")
     print("[*] Starting Pywebview window...")
     api = PresentationAPI(slides)
