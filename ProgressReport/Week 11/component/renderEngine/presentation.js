@@ -27,11 +27,9 @@ function animateSplash() {
         if (text) text.textContent = width + '%';
         if (width >= 100) {
             clearInterval(interval);
-            setTimeout(dismissSplash, 350);
+            setTimeout(dismissSplash, 300);
         }
-    }, 30);
-
-    setTimeout(dismissSplash, 3500);
+    }, 20);
 }
 
 function startImageShuffle() {
@@ -616,10 +614,104 @@ window.loadTheoremSlide = async function(target) {
     }
 };
 
-window.zoomToSector = function(sector, idx) {
-    closeImaginationMap();
-    const modal = document.getElementById('app-modal');
-    if (modal) modal.classList.remove('open');
+window.handleCobwebSearch = async function(query) {
+    const resultsContainer = document.getElementById('cobweb-search-results');
+    const clearBtn = document.getElementById('cobweb-search-clear');
+    if (!resultsContainer) return;
+
+    if (clearBtn) clearBtn.style.display = query ? 'block' : 'none';
+
+    const q = (query || '').trim().toLowerCase();
+    if (!q) {
+        resultsContainer.innerHTML = '';
+        resultsContainer.classList.remove('open');
+        return;
+    }
+
+    const slides = await fetchSlidesData();
+    const matches = [];
+
+    slides.forEach(slide => {
+        const title = (slide.title || '').toLowerCase();
+        const id = (slide.id || slide.filename || '').toLowerCase();
+        const content = (slide.content || '').toLowerCase();
+
+        let score = 0;
+        if (title.includes(q)) score += 10;
+        if (id.includes(q)) score += 8;
+        if (content.includes(q)) score += 3;
+
+        if (score > 0) {
+            matches.push({
+                slideId: slide.id || slide.filename,
+                title: slide.title || slide.id || slide.filename,
+                sub: slide.filename,
+                score: score
+            });
+        }
+    });
+
+    matches.sort((a, b) => b.score - a.score);
+
+    if (matches.length === 0) {
+        resultsContainer.innerHTML = `<div class="search-result-item" style="cursor:default;"><span class="result-item-title" style="color:var(--text-secondary);">No derivation nodes found matching "${query}"</span></div>`;
+        resultsContainer.classList.add('open');
+        return;
+    }
+
+    let html = '';
+    matches.slice(0, 8).forEach(item => {
+        html += `
+            <div class="search-result-item" onclick="focusNodeAndLaunch('${item.slideId}')">
+                <span class="result-item-title">🔍 ${item.title}</span>
+                <span class="result-item-sub">Node: ${item.sub}</span>
+            </div>
+        `;
+    });
+
+    resultsContainer.innerHTML = html;
+    resultsContainer.classList.add('open');
+};
+
+window.clearCobwebSearch = function() {
+    const input = document.getElementById('cobweb-search-input');
+    const resultsContainer = document.getElementById('cobweb-search-results');
+    const clearBtn = document.getElementById('cobweb-search-clear');
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (resultsContainer) {
+        resultsContainer.innerHTML = '';
+        resultsContainer.classList.remove('open');
+    }
+};
+
+window.focusNodeAndLaunch = function(slideId) {
+    clearCobwebSearch();
+    const container = document.getElementById('cobweb-canvas-container');
+    const viewport = document.getElementById('cobweb-viewport');
+    if (!container || !viewport) return;
+
+    const cleanId = slideId.replace('.py', '');
+    const targetBtn = container.querySelector(`[data-slide-id="${slideId}"], [data-slide-id="${cleanId}"]`);
+
+    if (targetBtn) {
+        container.querySelectorAll('.search-focused-node').forEach(el => {
+            el.classList.remove('search-focused-node');
+        });
+
+        targetBtn.classList.add('search-focused-node');
+
+        const vpRect = viewport.getBoundingClientRect();
+        const targetCenter = getElementCenter(targetBtn, container);
+
+        zoomScale = 1.15;
+        panX = (vpRect.width / 2 - targetCenter.x) * zoomScale;
+        panY = (vpRect.height / 2 - targetCenter.y) * zoomScale;
+
+        updateTransform();
+    }
+
+    openSlideModal(slideId);
 };
 
 window.addEventListener('DOMContentLoaded', () => {
