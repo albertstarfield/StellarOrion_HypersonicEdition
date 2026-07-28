@@ -52,18 +52,74 @@ import webview
 from Slides import load_slides
 
 
-class SilentHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+class SilentTCPServer(socketserver.ThreadingTCPServer):
+    allow_reuse_address = True
+
+    def handle_error(self, request: Any, client_address: Any) -> None:
+        exc_type, _exc_val, _exc_tb = sys.exc_info()
+        if exc_type in (BrokenPipeError, ConnectionResetError):
+            return
+        super().handle_error(request, client_address)
+
+
+class RangeHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:
         pass
+
+    def do_GET(self) -> None:
+        path = self.translate_path(self.path)
+        if not os.path.exists(path) or os.path.isdir(path):
+            super().do_GET()
+            return
+
+        range_header = self.headers.get('Range')
+        if not range_header or not range_header.startswith('bytes='):
+            super().do_GET()
+            return
+
+        size = os.path.getsize(path)
+        try:
+            byte_range = range_header.split('=')[1].split('-')
+            start = int(byte_range[0]) if byte_range[0] else 0
+            end = int(byte_range[1]) if byte_range[1] else size - 1
+        except Exception:  # noqa: BLE001
+            super().do_GET()
+            return
+
+        if start >= size or end >= size:
+            self.send_error(416, 'Requested Range Not Satisfiable')
+            return
+
+        length = end - start + 1
+        self.send_response(206)
+        self.send_header('Content-Type', self.guess_type(path))
+        self.send_header('Content-Range', f'bytes {start}-{end}/{size}')
+        self.send_header('Content-Length', str(length))
+        self.send_header('Accept-Ranges', 'bytes')
+        self.end_headers()
+
+        try:
+            with open(path, 'rb') as f:
+                f.seek(start)
+                chunk_size = 64 * 1024
+                remaining = length
+                while remaining > 0:
+                    read_size = min(chunk_size, remaining)
+                    data = f.read(read_size)
+                    if not data:
+                        break
+                    self.wfile.write(data)
+                    remaining -= len(data)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
 
 def start_local_server() -> None:
     """Runs a simple HTTP server on localhost to serve assets without CORS issues."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(base_dir)
-    handler = SilentHTTPRequestHandler
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(('', HTTP_PORT), handler) as httpd:
+    handler = RangeHTTPRequestHandler
+    with SilentTCPServer(('', HTTP_PORT), handler) as httpd:
         httpd.serve_forever()
 
 
