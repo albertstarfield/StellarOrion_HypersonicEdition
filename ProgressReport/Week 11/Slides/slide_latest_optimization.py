@@ -12,11 +12,37 @@ def get_slide_data():
 
 ---
 
-## 1. MDAO Pareto Frontier Trade-Off Analysis
+## 1. Optimal Configuration Multi-Field Flowfield Animation Grid (2x2 MP4)
 
-<div style="display:flex; gap:1rem; align-items:center; justify-content:center; margin:1rem 0;">
-    <img src="latestResult/thermal_map_opt.png" style="width:48%; border-radius:12px; border:1px solid rgba(255,255,255,0.2);" alt="Optimized Thermal Contour">
-    <img src="latestResult/pressure_map_opt.png" style="width:48%; border-radius:12px; border:1px solid rgba(255,255,255,0.2);" alt="Optimized Pressure Contour">
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin: 1rem 0;">
+    <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(6, 182, 212, 0.4); border-radius: 10px; padding: 0.5rem; text-align: center;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: #06b6d4; margin-bottom: 0.3rem;">🔥 Temperature Transient Flowfield</div>
+        <video autoplay loop muted playsinline style="width: 100%; border-radius: 6px; aspect-ratio: 16/9; object-fit: cover;">
+            <source src="latestResult/opt_validation_anim_temp_smooth_M0_A0.mp4" type="video/mp4">
+            <source src="latestResult/validation_anim_temp_smooth_M0_A0.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(6, 182, 212, 0.4); border-radius: 10px; padding: 0.5rem; text-align: center;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: #06b6d4; margin-bottom: 0.3rem;">💨 Mach Shockwave Boundary</div>
+        <video autoplay loop muted playsinline style="width: 100%; border-radius: 6px; aspect-ratio: 16/9; object-fit: cover;">
+            <source src="latestResult/opt_validation_anim_mach_smooth_M0_A0.mp4" type="video/mp4">
+            <source src="latestResult/validation_anim_mach_smooth_M0_A0.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(6, 182, 212, 0.4); border-radius: 10px; padding: 0.5rem; text-align: center;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: #06b6d4; margin-bottom: 0.3rem;">⚡ Pressure Distribution</div>
+        <video autoplay loop muted playsinline style="width: 100%; border-radius: 6px; aspect-ratio: 16/9; object-fit: cover;">
+            <source src="latestResult/opt_validation_anim_pressure_smooth_M0_A0.mp4" type="video/mp4">
+            <source src="latestResult/validation_anim_pressure_smooth_M0_A0.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(6, 182, 212, 0.4); border-radius: 10px; padding: 0.5rem; text-align: center;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: #06b6d4; margin-bottom: 0.3rem;">🌌 Knudsen Breakdown Kinetic Field</div>
+        <video autoplay loop muted playsinline style="width: 100%; border-radius: 6px; aspect-ratio: 16/9; object-fit: cover;">
+            <source src="latestResult/opt_validation_anim_knudsen_smooth_M0_A0.mp4" type="video/mp4">
+            <source src="latestResult/validation_anim_knudsen_smooth_M0_A0.mp4" type="video/mp4">
+        </video>
+    </div>
 </div>
 
 - **Multi-Objective Trade-Off:** Minimizing structural insulation mass ($m_{\text{FTPS}}$) vs minimizing peak convective heat flux ($q_{\text{stag}}$) while maximizing aerodynamic drag coefficient ($C_D$).
