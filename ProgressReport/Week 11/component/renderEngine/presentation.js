@@ -316,14 +316,18 @@ function setupPanZoom() {
         appModal.addEventListener('click', (e) => {
             if (e.target === appModal) {
                 closeHotspotModal();
-    // Global F12 Shortcut for opening Developer Inspector / Debugger
+            }
+        });
+    }
+
+    // Global F12 Shortcut for relaunching application with debug=True
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'F12' || (e.key === 'I' && e.shiftKey && (e.metaKey || e.ctrlKey))) {
+        if (e.key === 'F12') {
             e.preventDefault();
-            if (window.pywebview && window.pywebview.api && window.pywebview.api.toggle_devtools) {
+            if (window.pywebview && window.pywebview.api && window.pywebview.api.relaunch_with_debug) {
+                window.pywebview.api.relaunch_with_debug();
+            } else if (window.pywebview && window.pywebview.api && window.pywebview.api.toggle_devtools) {
                 window.pywebview.api.toggle_devtools();
-            } else {
-                console.log("F12 Developer Debugger requested.");
             }
         }
     });

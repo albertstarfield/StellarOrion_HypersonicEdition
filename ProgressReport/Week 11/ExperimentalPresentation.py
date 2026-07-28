@@ -145,6 +145,15 @@ class PresentationAPI:
                 return f.read()
         return '# REFERENCES.md\n\nRoot REFERENCES.md not found at project root.'
 
+    def relaunch_with_debug(self) -> None:
+        """Relaunches ExperimentalPresentation.py with debug=True."""
+        import subprocess
+        print('[*] F12 Shortcut Triggered: Relaunching application with debug=True...')
+        python_exe = sys.executable
+        script_path = os.path.abspath(__file__)
+        subprocess.Popen([python_exe, script_path, '--debug'])
+        os._exit(0)
+
     def toggle_devtools(self) -> None:
         """Toggles or opens webview developer inspector if available."""
         try:
@@ -186,7 +195,8 @@ def main() -> None:
     api = PresentationAPI(slides)
     server_url = f'http://localhost:{HTTP_PORT}/component/renderEngine/index.html'
 
-    print('[*] Starting Pywebview window...')
+    is_debug = '--debug' in sys.argv or '-d' in sys.argv
+    print(f'[*] Starting Pywebview window (debug={is_debug})...')
     webview.create_window(
         f'StellarOrion {CURRENT_WEEK} — Experimental Presentation',
         server_url,
@@ -196,7 +206,7 @@ def main() -> None:
         resizable=True,
         background_color='#090a15'
     )
-    webview.start(debug=False)
+    webview.start(debug=is_debug)
 
 
 _WEEK_OVERRIDES = {
