@@ -67,10 +67,63 @@
         }
 
         .splash-sub {
-            font-size: 1rem;
+            font-size: 0.95rem;
             color: var(--text-secondary);
             font-weight: 400;
-            margin-bottom: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .splash-thesis {
+            font-size: 0.88rem;
+            color: #e2e8f0;
+            font-weight: 400;
+            font-style: italic;
+            max-width: 680px;
+            text-align: center;
+            line-height: 1.45;
+            margin-top: 0.4rem;
+        }
+
+        .splash-credits {
+            margin-top: 1.6rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            align-items: center;
+        }
+
+        .credit-author {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .credit-author span {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .credit-supervisors {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+        }
+
+        .sup-label {
+            font-size: 0.74rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.1rem;
+        }
+
+        .sup-name {
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            font-weight: 400;
         }
 
         .loader-bar {
@@ -79,6 +132,7 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 4px;
             overflow: hidden;
+            margin-top: 2rem;
         }
 
         .loader-fill {
@@ -359,6 +413,20 @@
     <div id="splash-screen">
         <div class="splash-logo">STELLAR ORION</div>
         <div class="splash-sub">Week 11 — Validation Flowfield Interactive Physics</div>
+        
+        <div class="splash-thesis">
+            "Multidisciplinary Aerothermal Design Optimization of Inflatable Aerodynamic Decelerators for Hypersonic Entry"
+        </div>
+
+        <div class="splash-credits">
+            <div class="credit-author">Written by <span>Wahyu Suryo Samudro</span></div>
+            <div class="credit-supervisors">
+                <div class="sup-label">Supervised by</div>
+                <div class="sup-name">Dr.-Ing. Mochammad Agoes Moelyadi, ST., MSc.</div>
+                <div class="sup-name">Yohanes Bimo Dwianto, S.T., M.T., Ph.D.</div>
+            </div>
+        </div>
+
         <div class="loader-bar"><div class="loader-fill" id="loader-fill"></div></div>
     </div>
 
