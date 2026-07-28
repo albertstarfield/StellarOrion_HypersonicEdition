@@ -133,7 +133,7 @@
             box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
         }
 
-        /* ── Background Shuffling Image Stage ── */
+        /* ── Background Shuffling Stage ── */
         .shuffle-stage {
             position: fixed;
             inset: 0;
@@ -161,7 +161,7 @@
         .stage-overlay {
             position: absolute;
             inset: 0;
-            background: radial-gradient(circle at 50% 50%, rgba(6, 8, 20, 0.2), rgba(6, 8, 20, 0.85));
+            background: radial-gradient(circle at 50% 50%, rgba(6, 8, 20, 0.25), rgba(6, 8, 20, 0.85));
             pointer-events: none;
         }
 
@@ -277,33 +277,33 @@
     <!-- Splash Screen -->
     <div id="splash-screen">
         <div class="splash-logo">STELLAR ORION</div>
-        <div class="splash-sub">Week 11 — Validation Flowfield Interactive Physics</div>
+        <div class="splash-sub">Week 11 — Imported Week 8/9 Baseline Validation Flowfield</div>
         <div class="loader-bar"><div class="loader-fill" id="loader-fill"></div></div>
     </div>
 
     <!-- App Header -->
     <header class="app-header">
         <div class="header-title">
-            <h1>StellarOrion Week 11 — Baseline Validation Flowfield</h1>
+            <h1>StellarOrion Week 11 — Baseline Validation Flowfield (Week 8/9 Telemetry)</h1>
         </div>
         <div class="header-controls">
-            <button class="btn-mode active" onclick="setBgImage(0)">🔥 Thermal Map</button>
-            <button class="btn-mode" onclick="setBgImage(1)">⚡ Mach Speed</button>
-            <button class="btn-mode" onclick="setBgImage(2)">💥 Pressure Map</button>
-            <button class="btn-mode" onclick="setBgImage(3)">⚛️ Knudsen Map</button>
-            <button class="btn-mode" onclick="setBgImage(4)">🕸️ Grid Mesh</button>
-            <button class="btn-mode" onclick="setBgImage(5)">🌊 Velocity Vectors</button>
+            <button class="btn-mode active" onclick="setBgImage(0)">🔥 Thermal Video</button>
+            <button class="btn-mode" onclick="setBgImage(1)">⚡ Mach Video</button>
+            <button class="btn-mode" onclick="setBgImage(2)">💥 Pressure Video</button>
+            <button class="btn-mode" onclick="setBgImage(3)">⚛️ Knudsen Video</button>
+            <button class="btn-mode" onclick="setBgImage(4)">🕸️ Grid Video</button>
+            <button class="btn-mode" onclick="setBgImage(5)">🌊 Velocity Video</button>
         </div>
     </header>
 
-    <!-- Background Shuffling Stage -->
+    <!-- Background Shuffling Stage with Video Support -->
     <div class="shuffle-stage">
-        <img src="../../figures/Validation/thermal_map_smooth_M0_A0.png" class="bg-slide active" alt="Thermal Map">
-        <img src="../../figures/Validation/mach_map_smooth_M0_A0.png" class="bg-slide" alt="Mach Map">
-        <img src="../../figures/Validation/pressure_map_smooth_M0_A0.png" class="bg-slide" alt="Pressure Map">
-        <img src="../../figures/Validation/knudsen_map_smooth_M0_A0.png" class="bg-slide" alt="Knudsen Map">
-        <img src="../../figures/Validation/grid_mesh_map_smooth.png" class="bg-slide" alt="Grid Mesh Map">
-        <img src="../../figures/Validation/velocity_vectors_smooth_M0_A0.png" class="bg-slide" alt="Velocity Vectors">
+        <video src="../../figures/Validation/validation_anim_smooth.mp4" class="bg-slide active" autoplay loop muted playsinline></video>
+        <video src="../../figures/Validation/validation_anim_mach_smooth.mp4" class="bg-slide" autoplay loop muted playsinline></video>
+        <video src="../../figures/Validation/validation_anim_pressure_smooth.mp4" class="bg-slide" autoplay loop muted playsinline></video>
+        <video src="../../figures/Validation/validation_anim_knudsen_smooth.mp4" class="bg-slide" autoplay loop muted playsinline></video>
+        <video src="../../figures/Validation/validation_anim_grid_smooth.mp4" class="bg-slide" autoplay loop muted playsinline></video>
+        <video src="../../figures/Validation/validation_anim_velocity_smooth.mp4" class="bg-slide" autoplay loop muted playsinline></video>
         <div class="stage-overlay"></div>
     </div>
 
