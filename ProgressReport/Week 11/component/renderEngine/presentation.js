@@ -610,40 +610,96 @@ window.handleCobwebSearch = async function(query) {
 
     if (clearBtn) clearBtn.style.display = query ? 'block' : 'none';
 
-    const q = (query || '').trim().toLowerCase();
-    if (!q) {
+    const rawQuery = (query || '').trim();
+    if (!rawQuery) {
         resultsContainer.innerHTML = '';
         resultsContainer.classList.remove('open');
         return;
     }
 
-    const slides = await fetchSlidesData();
-    const matches = [];
+    const tokens = rawQuery.toLowerCase().split(/[\s,_\-\/\\]+/).filter(t => t.length > 0);
+    if (tokens.length === 0) return;
 
+    const slides = await fetchSlidesData();
+    const matchesMap = new Map();
+
+    // 1. Index All 88 Slides from slides data
     slides.forEach(slide => {
-        const title = (slide.title || '').toLowerCase();
-        const id = (slide.id || slide.filename || '').toLowerCase();
-        const content = (slide.content || '').toLowerCase();
+        const sId = slide.id || slide.filename || '';
+        const sTitle = slide.title || sId;
+        const sContent = slide.content || '';
+        const sSub = slide.filename || sId;
 
         let score = 0;
-        if (title.includes(q)) score += 10;
-        if (id.includes(q)) score += 8;
-        if (content.includes(q)) score += 3;
+        let matchedTokensCount = 0;
+
+        tokens.forEach(t => {
+            let tScore = 0;
+            if (sTitle.toLowerCase().includes(t)) tScore += 15;
+            if (sId.toLowerCase().includes(t)) tScore += 10;
+            if (sContent.toLowerCase().includes(t)) tScore += 4;
+
+            if (tScore > 0) {
+                score += tScore;
+                matchedTokensCount++;
+            }
+        });
+
+        if (matchedTokensCount === tokens.length) score += 30; // Complete multi-word match bonus
 
         if (score > 0) {
-            matches.push({
-                slideId: slide.id || slide.filename,
-                title: slide.title || slide.id || slide.filename,
-                sub: slide.filename,
+            matchesMap.set(sId, {
+                slideId: sId,
+                title: sTitle,
+                sub: sSub,
                 score: score
             });
         }
     });
 
+    // 2. Index All DOM Node Buttons in Cobweb Canvas
+    const nodeBtns = document.querySelectorAll('#cobweb-canvas-container .cobweb-node-btn');
+    nodeBtns.forEach(btn => {
+        const bId = btn.getAttribute('data-slide-id') || '';
+        const bText = btn.textContent || '';
+
+        let score = 0;
+        let matchedTokensCount = 0;
+
+        tokens.forEach(t => {
+            let tScore = 0;
+            if (bText.toLowerCase().includes(t)) tScore += 20;
+            if (bId.toLowerCase().includes(t)) tScore += 12;
+
+            if (tScore > 0) {
+                score += tScore;
+                matchedTokensCount++;
+            }
+        });
+
+        if (matchedTokensCount === tokens.length) score += 35;
+
+        if (score > 0) {
+            const existing = matchesMap.get(bId);
+            if (existing) {
+                existing.score += score + 10; // Boost nodes currently rendered in network
+                if (bText) existing.title = bText;
+            } else {
+                matchesMap.set(bId, {
+                    slideId: bId,
+                    title: bText || bId,
+                    sub: bId,
+                    score: score + 5
+                });
+            }
+        }
+    });
+
+    const matches = Array.from(matchesMap.values());
     matches.sort((a, b) => b.score - a.score);
 
     if (matches.length === 0) {
-        resultsContainer.innerHTML = `<div class="search-result-item" style="cursor:default;"><span class="result-item-title" style="color:var(--text-secondary);">No derivation nodes found matching "${query}"</span></div>`;
+        resultsContainer.innerHTML = `<div class="search-result-item" style="cursor:default;"><span class="result-item-title" style="color:var(--text-secondary);">No derivation nodes found matching "${rawQuery}"</span></div>`;
         resultsContainer.classList.add('open');
         return;
     }
