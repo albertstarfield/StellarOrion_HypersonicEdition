@@ -44,6 +44,13 @@
         }
 
         /* ── Splash Screen ── */
+        .splash-institute-logo {
+            height: 72px;
+            width: auto;
+            margin-bottom: 1.2rem;
+            filter: drop-shadow(0 0 25px rgba(6, 182, 212, 0.45));
+            object-fit: contain;
+        }
         #splash-screen {
             position: fixed;
             inset: 0;
@@ -921,6 +928,7 @@
 <body>
     <!-- Splash Screen -->
     <div id="splash-screen">
+        <img src="figures/LogoInstitute.png" class="splash-institute-logo" alt="Institute Logo">
         <div class="splash-logo">STELLAR ORION</div>
         <div class="splash-sub">Week 11 — Validation Flowfield Interactive Physics</div>
         
@@ -966,31 +974,31 @@
         <div class="stage-overlay"></div>
     </div>
 
-    <!-- Interactive Hotspot Info Buttons (Observable Features) -->
+    <!-- Interactive Hotspot Info Buttons (Observable Hypersonic Aerothermal Phenomena) -->
     <div class="hotspot-container">
         <div class="hotspot-btn" id="spot-shock" onclick="openHotspotModal('shock')">
             <div class="pulse-dot"></div>
-            <span>Bow Shock Standoff</span>
-        </div>
-
-        <div class="hotspot-btn" id="spot-ballistic" onclick="openHotspotModal('ballistic')">
-            <div class="pulse-dot"></div>
-            <span>Ballistic ($\beta = 26.9\text{ kg/m}^2$)</span>
-        </div>
-
-        <div class="hotspot-btn" id="spot-particles" onclick="openHotspotModal('particles')">
-            <div class="pulse-dot"></div>
-            <span>Rarefied Particle Kinetic</span>
-        </div>
-
-        <div class="hotspot-btn" id="spot-thermal" onclick="openHotspotModal('thermal')">
-            <div class="pulse-dot"></div>
-            <span>Thermal ($14.36\text{ W/cm}^2$)</span>
+            <span>🔴 Bow Shock Wave & Standoff Layer</span>
         </div>
 
         <div class="hotspot-btn" id="spot-mach" onclick="openHotspotModal('mach')">
             <div class="pulse-dot"></div>
-            <span>Mach Speed ($V = 2,700\text{ m/s}$)</span>
+            <span>🟢 Freestream Flowfield State ($M_\infty = 9.0, V = 2,700\text{ m/s}$)</span>
+        </div>
+
+        <div class="hotspot-btn" id="spot-thermal" onclick="openHotspotModal('thermal')">
+            <div class="pulse-dot"></div>
+            <span>🔵 Stagnation Heat Flux Peak ($\dot{q}_{\text{stag}} = 14.36\text{ W/cm}^2$)</span>
+        </div>
+
+        <div class="hotspot-btn" id="spot-ballistic" onclick="openHotspotModal('ballistic')">
+            <div class="pulse-dot"></div>
+            <span>🟡 Aerodynamic Deceleration Drag ($\beta = 26.9\text{ kg/m}^2$, $C_D = 1.62$)</span>
+        </div>
+
+        <div class="hotspot-btn" id="spot-particles" onclick="openHotspotModal('particles')">
+            <div class="pulse-dot"></div>
+            <span>🟣 Rarefied Knudsen Transition ($Kn = 0.05$)</span>
         </div>
     </div>
 

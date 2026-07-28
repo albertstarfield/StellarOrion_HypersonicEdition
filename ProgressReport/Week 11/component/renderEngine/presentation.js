@@ -787,7 +787,16 @@ window.focusNodeAndLaunch = function(slideId) {
     }
 };
 
+function startVideoAutoplay() {
+    const videos = document.querySelectorAll('video');
+    videos.forEach(v => {
+        v.muted = true;
+        v.play().catch(err => console.warn("Video play error:", err));
+    });
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     animateSplash();
     renderMathInElement(document.body);
+    startVideoAutoplay();
 });
