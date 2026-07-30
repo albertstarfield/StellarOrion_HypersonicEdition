@@ -119,7 +119,7 @@ function openHotspotModal(key) {
             <h2 style="color:var(--accent-purple); font-family:'Google Sans',sans-serif; font-weight:500; margin-bottom:1rem;">⚛️ Rarefied Particle Kinetic Transport</h2>
             <p style="font-weight:400; line-height:1.6; color:var(--text-secondary);"><b>Knudsen Number ($Kn$):</b> $Kn = \\frac{\\lambda}{L} > 0.01$ (Transitional to Free-Molecular Flow Regime)</p>
             <p style="font-weight:400; line-height:1.6; color:var(--text-secondary); margin-top:0.8rem;"><b>Solver Architecture:</b> 5-Species non-equilibrium DSMC kinetic solver (SPARTA DSMC core).</p>
-            <p style="font-weight:400; line-height:1.6; color:var(--text-secondary); margin-top:0.8rem;"><b>Collision Kinetics:</b> VHS (Variable Hard Sphere) molecular model with NTC (No-Time-Counter) collision pairing algorithm.</p>
+            <p style="font-weight:400; line-height:1.6; color:var(--text-secondary); margin-top:0.8rem;"><b>Collision Kinetics:</b> VSS (Variable Soft Sphere) molecular model with NTC (No-Time-Counter) collision pairing algorithm.</p>
         `;
     } else if (key === 'thermal') {
         html = `
