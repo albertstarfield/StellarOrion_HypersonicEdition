@@ -237,7 +237,12 @@ let isPanning = false;
 let startPanX = 0;
 let startPanY = 0;
 
+function updateTransform() {
+    updateContainerTransform();
+}
+
 function updateContainerTransform() {
+    window.updateTransform = updateContainerTransform;
     const container = document.getElementById('cobweb-canvas-container');
     if (container) {
         container.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
@@ -887,7 +892,7 @@ function animateCameraTo(targetPanX, targetPanY, targetZoom, onComplete) {
         panY = startPanY + (targetPanY - startPanY) * ease;
         zoomScale = startZoom + (targetZoom - startZoom) * ease;
 
-        updateTransform();
+        updateContainerTransform();
 
         if (progress < 1) {
             requestAnimationFrame(step);
