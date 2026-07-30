@@ -12,36 +12,47 @@ def get_slide_data():
 
 ---
 
-## 1. Optimal Configuration Multi-Field Flowfield Animation Grid (2x2 MP4)
+## 1. Optimal Configuration Multi-Field Flowfield Animation Grid (6-Card Showcase Grid)
 
-<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin: 1rem 0;">
-    <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(6, 182, 212, 0.4); border-radius: 10px; padding: 0.5rem; text-align: center;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: #06b6d4; margin-bottom: 0.3rem;">🔥 Temperature Transient Flowfield</div>
+<div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.8rem; margin: 1rem 0;">
+    <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(6, 182, 212, 0.4); border-radius: 10px; padding: 0.5rem; text-anchor: center; text-align: center;">
+        <div style="font-size: 0.82rem; font-weight: 600; color: #06b6d4; margin-bottom: 0.3rem;">🔥 Temperature Flowfield</div>
         <video autoplay loop muted playsinline style="width: 100%; border-radius: 6px; aspect-ratio: 16/9; object-fit: cover;">
             <source src="latestResult/opt_validation_anim_temp_smooth_M0_A0.mp4" type="video/mp4">
             <source src="latestResult/validation_anim_temp_smooth_M0_A0.mp4" type="video/mp4">
         </video>
     </div>
     <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(6, 182, 212, 0.4); border-radius: 10px; padding: 0.5rem; text-align: center;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: #06b6d4; margin-bottom: 0.3rem;">💨 Mach Shockwave Boundary</div>
+        <div style="font-size: 0.82rem; font-weight: 600; color: #06b6d4; margin-bottom: 0.3rem;">💨 Mach Shock Front</div>
         <video autoplay loop muted playsinline style="width: 100%; border-radius: 6px; aspect-ratio: 16/9; object-fit: cover;">
             <source src="latestResult/opt_validation_anim_mach_smooth_M0_A0.mp4" type="video/mp4">
             <source src="latestResult/validation_anim_mach_smooth_M0_A0.mp4" type="video/mp4">
         </video>
     </div>
     <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(6, 182, 212, 0.4); border-radius: 10px; padding: 0.5rem; text-align: center;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: #06b6d4; margin-bottom: 0.3rem;">⚡ Pressure Distribution</div>
+        <div style="font-size: 0.82rem; font-weight: 600; color: #06b6d4; margin-bottom: 0.3rem;">⚡ Pressure Field</div>
         <video autoplay loop muted playsinline style="width: 100%; border-radius: 6px; aspect-ratio: 16/9; object-fit: cover;">
             <source src="latestResult/opt_validation_anim_pressure_smooth_M0_A0.mp4" type="video/mp4">
             <source src="latestResult/validation_anim_pressure_smooth_M0_A0.mp4" type="video/mp4">
         </video>
     </div>
     <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(6, 182, 212, 0.4); border-radius: 10px; padding: 0.5rem; text-align: center;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: #06b6d4; margin-bottom: 0.3rem;">🌌 Knudsen Breakdown Kinetic Field</div>
+        <div style="font-size: 0.82rem; font-weight: 600; color: #06b6d4; margin-bottom: 0.3rem;">🌌 Knudsen Field</div>
         <video autoplay loop muted playsinline style="width: 100%; border-radius: 6px; aspect-ratio: 16/9; object-fit: cover;">
             <source src="latestResult/opt_validation_anim_knudsen_smooth_M0_A0.mp4" type="video/mp4">
             <source src="latestResult/validation_anim_knudsen_smooth_M0_A0.mp4" type="video/mp4">
         </video>
+    </div>
+    <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(16, 185, 129, 0.5); border-radius: 10px; padding: 0.5rem; text-align: center;">
+        <div style="font-size: 0.82rem; font-weight: 600; color: #10b981; margin-bottom: 0.3rem;">🕸️ Optimized Mesh Topology Grid</div>
+        <video autoplay loop muted playsinline style="width: 100%; border-radius: 6px; aspect-ratio: 16/9; object-fit: cover;">
+            <source src="latestResult/opt_validation_anim_grid_smooth_M0_A0.mp4" type="video/mp4">
+            <source src="latestResult/opt_validation_anim_grid_smooth.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(245, 158, 11, 0.5); border-radius: 10px; padding: 0.5rem; text-align: center;">
+        <div style="font-size: 0.82rem; font-weight: 600; color: #f59e0b; margin-bottom: 0.3rem;">🚀 3D Mesh Topology Silhouette</div>
+        <img src="latestResult/opt_upscaled_3d_grid_smooth_M0_A0.png" alt="3D Mesh Topology" style="width: 100%; border-radius: 6px; aspect-ratio: 16/9; object-fit: cover;" />
     </div>
 </div>
 
