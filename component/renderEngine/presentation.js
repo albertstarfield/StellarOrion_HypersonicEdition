@@ -3,24 +3,33 @@ let currentBgIdx = 0;
 let shuffleInterval = null;
 let isShufflePaused = false;
 
+function dismissSplash() {
+    const splash = document.getElementById('splash-screen');
+    if (splash && splash.style.visibility !== 'hidden') {
+        splash.style.opacity = '0';
+        splash.style.visibility = 'hidden';
+        startImageShuffle();
+    }
+}
+
 function animateSplash() {
     const loader = document.getElementById('loader-fill');
     const splash = document.getElementById('splash-screen');
-    if (!loader || !splash) return;
+    if (!splash) return;
+
+    splash.addEventListener('click', dismissSplash);
 
     let width = 0;
     const interval = setInterval(() => {
-        width += 20;
-        loader.style.width = width + '%';
+        width += 1;
+        if (loader) loader.style.width = width + '%';
         if (width >= 100) {
             clearInterval(interval);
-            setTimeout(() => {
-                splash.style.opacity = '0';
-                splash.style.visibility = 'hidden';
-                startImageShuffle();
-            }, 300);
+            setTimeout(dismissSplash, 300);
         }
-    }, 40);
+    }, 50);
+
+    setTimeout(dismissSplash, 5300);
 }
 
 function startImageShuffle() {
@@ -130,23 +139,403 @@ function openHotspotModal(key) {
 
     content.innerHTML = html;
     renderMathInElement(content);
-    modal.style.display = 'flex';
+    modal.classList.add('open');
 }
 
 function closeHotspotModal() {
     const modal = document.getElementById('app-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) modal.classList.remove('open');
 }
 
 function renderMathInElement(el) {
-    if (!window.katex || !el) return;
-    el.innerHTML = el.innerHTML.replace(/\$([^\$]+)\$/g, (match, expr) => {
+    try {
+        if (!window.katex || !el) return;
+        el.innerHTML = el.innerHTML.replace(/\$([^\$]+)\$/g, (match, expr) => {
+            try {
+                return katex.renderToString(expr, { throwOnError: false });
+            } catch (e) {
+                return match;
+            }
+        });
+    } catch (err) {
+        console.warn("KaTeX render notice:", err);
+    }
+}
+
+let cachedSlidesData = null;
+
+async function fetchSlidesData() {
+    if (cachedSlidesData) return cachedSlidesData;
+    if (window.pywebview && window.pywebview.api) {
         try {
-            return katex.renderToString(expr, { throwOnError: false });
+            cachedSlidesData = await window.pywebview.api.get_slides_data();
+            return cachedSlidesData;
         } catch (e) {
-            return match;
+            console.warn("Pywebview API notice:", e);
+        }
+    }
+    return [];
+}
+
+// ── Twinkling Plus-Star Cross Background Canvas ──
+let starfieldAnimId = null;
+const starsList = [];
+
+function initStarfield() {
+    const canvas = document.getElementById('starfield-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const width = canvas.width = canvas.offsetWidth || window.innerWidth;
+    const height = canvas.height = canvas.offsetHeight || window.innerHeight;
+
+    starsList.length = 0;
+    const starCount = 140;
+
+    for (let i = 0; i < starCount; i++) {
+        starsList.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            size: 2 + Math.random() * 4,
+            alpha: 0.1 + Math.random() * 0.8,
+            speed: 0.005 + Math.random() * 0.015,
+            phase: Math.random() * Math.PI * 2
+        });
+    }
+
+    function renderStars() {
+        ctx.clearRect(0, 0, width, height);
+
+        starsList.forEach(star => {
+            star.phase += star.speed;
+            const currentAlpha = 0.15 + (Math.sin(star.phase) + 1) * 0.4;
+            const half = star.size / 2;
+
+            ctx.strokeStyle = `rgba(226, 232, 240, ${currentAlpha})`;
+            ctx.lineWidth = 1.2;
+
+            // Draw plus-cross star (+)
+            ctx.beginPath();
+            ctx.moveTo(star.x - half, star.y);
+            ctx.lineTo(star.x + half, star.y);
+            ctx.moveTo(star.x, star.y - half);
+            ctx.lineTo(star.x, star.y + half);
+            ctx.stroke();
+        });
+
+        starfieldAnimId = requestAnimationFrame(renderStars);
+    }
+
+    if (starfieldAnimId) cancelAnimationFrame(starfieldAnimId);
+    renderStars();
+}
+
+// ── Pan and Zoom Controller ──
+let zoomScale = 1.0;
+let panX = 0;
+let panY = 0;
+let isPanning = false;
+let startPanX = 0;
+let startPanY = 0;
+
+// ── Pan and Zoom Controller with Smooth Inertia ──
+let zoomScale = 0.9;
+let panX = 0;
+let panY = 0;
+let isPanning = false;
+let startPanX = 0;
+let startPanY = 0;
+
+function updateContainerTransform() {
+    const container = document.getElementById('cobweb-canvas-container');
+    if (container) {
+        container.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
+    }
+}
+
+function setupPanZoom() {
+    const viewport = document.getElementById('cobweb-viewport');
+    if (!viewport) return;
+
+    viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomDelta = e.deltaY > 0 ? -0.06 : 0.06;
+        const newZoom = Math.min(Math.max(0.35, zoomScale + zoomDelta), 2.5);
+        
+        // Smoothly adjust zoom centered on cursor
+        zoomScale = newZoom;
+        updateContainerTransform();
+    }, { passive: false });
+
+    viewport.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.cobweb-node-btn') || e.target.closest('.modal-close')) return;
+        isPanning = true;
+        startPanX = e.clientX - panX;
+        startPanY = e.clientY - panY;
+        viewport.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        panX = e.clientX - startPanX;
+        panY = e.clientY - startPanY;
+        updateContainerTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isPanning) {
+            isPanning = false;
+            const viewport = document.getElementById('cobweb-viewport');
+            if (viewport) viewport.style.cursor = 'grab';
         }
     });
+}
+
+function getElementCenter(el, container) {
+    let x = el.offsetLeft + el.offsetWidth / 2;
+    let y = el.offsetTop + el.offsetHeight / 2;
+
+    const style = window.getComputedStyle(el);
+    if (style.transform && style.transform !== 'none') {
+        try {
+            const matrix = new DOMMatrix(style.transform);
+            x += matrix.e;
+            y += matrix.f;
+        } catch (e) {}
+    }
+
+    let curr = el.offsetParent;
+    while (curr && curr !== container) {
+        x += curr.offsetLeft;
+        y += curr.offsetTop;
+        const pStyle = window.getComputedStyle(curr);
+        if (pStyle.transform && pStyle.transform !== 'none') {
+            try {
+                const pMatrix = new DOMMatrix(pStyle.transform);
+                x += pMatrix.e;
+                y += pMatrix.f;
+            } catch (e) {}
+        }
+        curr = curr.offsetParent;
+    }
+    return { x, y };
+}
+
+// ── Intra-Cluster Sequential Derivation & Inter-Cluster Mesh Lines ──
+function drawCobwebLines() {
+    const container = document.getElementById('cobweb-canvas-container');
+    const svg = document.getElementById('cobweb-svg');
+    const root = document.getElementById('node-root');
+    if (!container || !svg || !root) return;
+
+    const rootCenter = getElementCenter(root, container);
+    const rx = rootCenter.x;
+    const ry = rootCenter.y;
+
+    let svgContent = '';
+
+    const clusterIds = ['cluster-physics', 'cluster-sparta', 'cluster-mdao', 'cluster-glossary'];
+
+    // 1. Connect Central Root to 1st Node of Each Cluster Box
+    clusterIds.forEach(clusterId => {
+        const clusterBox = document.getElementById(clusterId);
+        if (!clusterBox) return;
+        const firstBtn = clusterBox.querySelector('.cobweb-node-btn');
+        if (!firstBtn) return;
+
+        const slideId = firstBtn.getAttribute('data-slide-id');
+        const pos = getElementCenter(firstBtn, container);
+
+        svgContent += `<line class="cobweb-mesh-line" data-from-slide="root" data-to-slide="${slideId}" x1="${rx}" y1="${ry}" x2="${pos.x}" y2="${pos.y}" stroke="rgba(6, 182, 212, 0.7)" stroke-width="2.5" stroke-dasharray="6,4" />`;
+    });
+
+    // 2. Sequential Intra-Cluster Derivation Lines (Node i -> Node i+1)
+    clusterIds.forEach(clusterId => {
+        const clusterBox = document.getElementById(clusterId);
+        if (!clusterBox) return;
+        const btns = Array.from(clusterBox.querySelectorAll('.cobweb-node-btn'));
+
+        for (let i = 0; i < btns.length - 1; i++) {
+            const b1 = btns[i];
+            const b2 = btns[i + 1];
+            const id1 = b1.getAttribute('data-slide-id');
+            const id2 = b2.getAttribute('data-slide-id');
+
+            const p1 = getElementCenter(b1, container);
+            const p2 = getElementCenter(b2, container);
+
+            svgContent += `<line class="cobweb-mesh-line" data-from-slide="${id1}" data-to-slide="${id2}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(99, 102, 241, 0.75)" stroke-width="2.2" />`;
+            svgContent += `<circle cx="${p2.x}" cy="${p2.y}" r="3.5" fill="#6366f1" />`;
+        }
+    });
+
+    // 3. Inter-Cluster Highway Connections between Landmark Nodes
+    const interClusterPairs = [
+        ['slide_8', 'slide_11_sparta_overview'],
+        ['slide_18_grid', 'slide_10_optimization'],
+        ['slide_31_result_comparison_table', 'slide_9_def_aeroshell'],
+        ['slide_9_def_stagnationpress', 'slide_2']
+    ];
+
+    interClusterPairs.forEach(([fromId, toId]) => {
+        const b1 = container.querySelector(`[data-slide-id="${fromId}"]`);
+        const b2 = container.querySelector(`[data-slide-id="${toId}"]`);
+        if (!b1 || !b2) return;
+
+        const p1 = getElementCenter(b1, container);
+        const p2 = getElementCenter(b2, container);
+
+        svgContent += `<line class="cobweb-mesh-line" data-from-slide="${fromId}" data-to-slide="${toId}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(6, 182, 212, 0.65)" stroke-width="2" stroke-dasharray="5,5" />`;
+    });
+
+    svgContent += `<circle cx="${rx}" cy="${ry}" r="8" fill="#06b6d4" />`;
+    svg.innerHTML = svgContent;
+
+    setupNodeHoverListeners();
+}
+
+function setupNodeHoverListeners() {
+    const container = document.getElementById('cobweb-canvas-container');
+    if (!container) return;
+
+    const allBtns = container.querySelectorAll('.cobweb-node-btn');
+    const allLines = container.querySelectorAll('.cobweb-mesh-line');
+    const hub = document.getElementById('node-root');
+
+    allBtns.forEach(btn => {
+        const slideId = btn.getAttribute('data-slide-id');
+        if (!slideId) return;
+
+        btn.onmouseenter = () => {
+            // Find connected nodes via lines
+            const connectedSlideIds = new Set([slideId]);
+            allLines.forEach(line => {
+                const fromId = line.getAttribute('data-from-slide');
+                const toId = line.getAttribute('data-to-slide');
+                if (fromId === slideId) connectedSlideIds.add(toId);
+                if (toId === slideId) connectedSlideIds.add(fromId);
+            });
+
+            // Highlight connected node buttons
+            allBtns.forEach(b => {
+                const bId = b.getAttribute('data-slide-id');
+                if (b === btn) {
+                    b.classList.add('hovered');
+                    b.classList.remove('dimmed');
+                } else if (connectedSlideIds.has(bId)) {
+                    b.classList.remove('hovered');
+                    b.classList.remove('dimmed');
+                    b.style.borderColor = 'var(--accent-cyan)';
+                    b.style.color = '#fff';
+                } else {
+                    b.classList.remove('hovered');
+                    b.classList.add('dimmed');
+                }
+            });
+
+            // Dim non-connected lines into dashed stripes, bold cyan for connected lines
+            allLines.forEach(line => {
+                const fromId = line.getAttribute('data-from-slide');
+                const toId = line.getAttribute('data-to-slide');
+                if (fromId === slideId || toId === slideId) {
+                    line.setAttribute('stroke', '#06b6d4');
+                    line.setAttribute('stroke-width', '3.5');
+                    line.removeAttribute('stroke-dasharray');
+                    line.style.opacity = '1';
+                    line.style.filter = 'drop-shadow(0 0 10px #06b6d4)';
+                } else {
+                    line.setAttribute('stroke', 'rgba(255,255,255,0.06)');
+                    line.setAttribute('stroke-width', '1');
+                    line.setAttribute('stroke-dasharray', '4,6');
+                    line.style.opacity = '0.12';
+                    line.style.filter = 'none';
+                }
+            });
+
+            if (connectedSlideIds.has('root')) {
+                if (hub) hub.style.opacity = '1';
+            } else {
+                if (hub) hub.style.opacity = '0.4';
+            }
+        };
+
+        btn.onmouseleave = () => {
+            // Reset all buttons
+            allBtns.forEach(b => {
+                b.classList.remove('hovered');
+                b.classList.remove('dimmed');
+                b.style.borderColor = '';
+                b.style.color = '';
+            });
+
+            // Reset all lines to default mesh state
+            allLines.forEach(line => {
+                const fromId = line.getAttribute('data-from-slide');
+                if (fromId === 'root') {
+                    line.setAttribute('stroke', 'rgba(6, 182, 212, 0.5)');
+                    line.setAttribute('stroke-width', '2');
+                    line.setAttribute('stroke-dasharray', '5,5');
+                } else {
+                    line.setAttribute('stroke', 'rgba(99, 102, 241, 0.45)');
+                    line.setAttribute('stroke-width', '1.8');
+                    line.removeAttribute('stroke-dasharray');
+                }
+                line.style.opacity = '1';
+                line.style.filter = 'none';
+            });
+
+            if (hub) hub.style.opacity = '1';
+        };
+    });
+}
+
+function openImaginationMap() {
+    const modal = document.getElementById('imagination-modal');
+    if (modal) {
+        modal.classList.add('open');
+        panX = 0; panY = 0; zoomScale = 1.0;
+        updateContainerTransform();
+        setTimeout(() => {
+            initStarfield();
+            setupPanZoom();
+            drawCobwebLines();
+        }, 120);
+    }
+}
+
+function closeImaginationMap() {
+    const modal = document.getElementById('imagination-modal');
+    if (modal) modal.classList.remove('open');
+}
+
+async function openSlideModal(slideId) {
+    const modal = document.getElementById('app-modal');
+    const content = document.getElementById('modal-content');
+    if (!modal || !content) return;
+
+    const slides = await fetchSlidesData();
+    const slide = slides.find(s => s.id === slideId || s.filename === slideId || s.filename === slideId + '.py');
+
+    if (slide) {
+        let renderedMd = slide.content;
+        if (window.marked) {
+            try {
+                renderedMd = marked.parse(slide.content);
+            } catch (e) { console.warn(e); }
+        }
+        content.innerHTML = `
+            <h2 style="color:var(--accent-cyan); font-family:'Google Sans',sans-serif; font-weight:500; margin-bottom:1rem;">${slide.title || slideId}</h2>
+            <div style="font-weight:400; line-height:1.65; color:var(--text-secondary);" class="slide-md-body">${renderedMd}</div>
+        `;
+    } else {
+        content.innerHTML = `
+            <h2 style="color:var(--accent-cyan); font-family:'Google Sans',sans-serif; font-weight:500; margin-bottom:1rem;">Derivation Node: ${slideId}</h2>
+            <p style="font-weight:400; line-height:1.6; color:var(--text-secondary);">Knowledge derivation node mapping <b>${slideId}.py</b> into baseline flowfield continuum.</p>
+        `;
+    }
+
+    renderMathInElement(content);
+    modal.classList.add('open');
 }
 
 // Close sandwich menu when clicking outside

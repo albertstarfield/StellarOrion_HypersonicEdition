@@ -39,6 +39,6 @@ if [ -f "./ThesisOptimization_executeMeAtIdle.sh" ]; then
 else
     echo "[!] ThesisOptimization_executeMeAtIdle.sh not found! Running default idle sequence..." | tee -a "$LOG_FILE"
     mkdir -p Result
-    python3 main.py --headless --validation --tps-material multi > validation_idle_run.log 2>&1
-    python3 main.py --headless --optimize --samples 2500 --tps-material multi > optimization_idle_run.log 2>&1
+    python3 main.py --headless --validation --tps-material multi --target-vehicle irve3 > validation_idle_run.log 2>&1
+    python3 main.py --headless --optimize --samples 2500 --tps-material multi --target-vehicle irve3 > optimization_idle_run.log 2>&1
 fi

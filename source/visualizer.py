@@ -181,11 +181,13 @@ def _annotate_orion_features(ax, surf_pts, ref_params):
             max_r_jump = r_jump
             interface_idx = i
 
+    is_orion = 'ORION' in target_vehicle and 'IRVE' not in target_vehicle
     if interface_idx > 0:
         iz, ir = surf_pts[interface_idx]
         ax.plot(iz, ir, 'go', markersize=8, zorder=50)
         ax.plot(iz, -ir, 'go', markersize=8, zorder=50)
-        ax.text(iz + 0.05, ir + 0.1, "Orion Interface", color='#22c55e',
+        lbl_if = "Orion Interface" if is_orion else "IRVE-3 Interface"
+        ax.text(iz + 0.05, ir + 0.1, lbl_if, color='#22c55e',
                 fontweight='bold', fontsize=10, zorder=50)
 
     # Find vertical payload wall for "Payload Centerbody" label
@@ -201,15 +203,16 @@ def _annotate_orion_features(ax, surf_pts, ref_params):
                     fontsize=8, ha='left', va='center', rotation=90)
             break
 
-    # Find horizontal back cap for "Orion Back" label
+    # Find horizontal back cap label
+    lbl_back = "Orion Back" if is_orion else "IRVE-3 Aft Cap"
     for i in range(len(surf_pts) - 1):
         z1, r1 = surf_pts[i]
         z2, r2 = surf_pts[i + 1]
         if abs(r1 - r2) < 0.01 and abs(z1 - z2) > 0.3 and r1 < 0.1:
             mid_z = (z1 + z2) / 2
-            ax.text(mid_z, r1 + 0.05, "Orion Back", color='#94a3b8',
+            ax.text(mid_z, r1 + 0.05, lbl_back, color='#94a3b8',
                     fontsize=8, ha='right', va='bottom')
-            ax.text(mid_z, -(r1 + 0.05), "Orion Back", color='#94a3b8',
+            ax.text(mid_z, -(r1 + 0.05), lbl_back, color='#94a3b8',
                     fontsize=8, ha='right', va='top')
             break
 

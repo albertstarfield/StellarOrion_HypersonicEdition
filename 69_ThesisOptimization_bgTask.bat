@@ -22,8 +22,8 @@ if exist ThesisOptimization_executeMeAtIdle.bat (
 ) else (
     echo [*] ThesisOptimization_executeMeAtIdle.bat not found. Running direct sampling execution...
     if not exist Result mkdir Result
-    python main.py --skip-venv-bootstrap --headless --validation --tps-material %TPS_MATERIAL% > validation_idle_run.log 2>&1
-    python main.py --skip-venv-bootstrap --headless --optimize --samples %SAMPLES% --tps-material %TPS_MATERIAL% > optimization_idle_run.log 2>&1
+    python main.py --skip-venv-bootstrap --headless --validation --tps-material %TPS_MATERIAL% --target-vehicle irve3 > validation_idle_run.log 2>&1
+    python main.py --skip-venv-bootstrap --headless --optimize --samples %SAMPLES% --tps-material %TPS_MATERIAL% --target-vehicle irve3 > optimization_idle_run.log 2>&1
 )
 
 if exist %FLAG_FILE% del /F /Q %FLAG_FILE%

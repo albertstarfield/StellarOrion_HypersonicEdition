@@ -114,4 +114,5 @@ plt.suptitle("Sequential Hybrid Pipeline: Boundary Condition Definitions", color
 out_dir = "ProgressReport/Week 10/figures/Result"
 os.makedirs(out_dir, exist_ok=True)
 plt.savefig(os.path.join(out_dir, "boundary_conditions.jpeg"), dpi=150, format='jpeg', bbox_inches='tight', facecolor=BG)
-print("Saved JPEG")
+plt.savefig("boundary_conditions.png", dpi=150, format='png', bbox_inches='tight', facecolor=BG)
+print("Saved JPEG & PNG")

@@ -99,7 +99,7 @@ if exist optimization_idle_run.log (
         echo --------------------------------
         set CRASH_DETECTED=1
         echo [*] AUTONOMOUS RECOVERY: Triggering recovery re-run...
-        python main.py --skip-venv-bootstrap --headless --optimize --samples %SAMPLES% --tps-material %TPS_MATERIAL% > optimization_idle_run_rerun.log 2>&1
+        python main.py --skip-venv-bootstrap --headless --optimize --samples %SAMPLES% --tps-material %TPS_MATERIAL% --target-vehicle irve3 > optimization_idle_run_rerun.log 2>&1
         if "!ERRORLEVEL!"=="0" (
             echo [+] Autonomous recovery re-run SUCCEEDED! Updating log file...
             copy /Y optimization_idle_run_rerun.log optimization_idle_run.log >nul

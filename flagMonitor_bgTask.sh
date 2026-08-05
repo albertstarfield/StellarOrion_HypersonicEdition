@@ -155,7 +155,7 @@ while true; do
                 export DOCKER_HOST="unix:///Users/albertstarfield/.colima/default/docker.sock"
                 PY_CMD="./.venv/bin/python"
                 if [ ! -f "$PY_CMD" ]; then PY_CMD="python3"; fi
-                $PY_CMD main.py --headless --validation --tps-material multi > validation_idle_run_rerun.log 2>&1
+                $PY_CMD main.py --headless --validation --tps-material multi --target-vehicle irve3 > validation_idle_run_rerun.log 2>&1
                 if [ $? -eq 0 ]; then
                     echo "[+] Validation recovery re-run SUCCEEDED!"
                     cp validation_idle_run_rerun.log validation_idle_run.log
@@ -181,7 +181,7 @@ while true; do
                 export DOCKER_HOST="unix:///Users/albertstarfield/.colima/default/docker.sock"
                 PY_CMD="./.venv/bin/python"
                 if [ ! -f "$PY_CMD" ]; then PY_CMD="python3"; fi
-                $PY_CMD main.py --headless --optimize --samples 2500 --tps-material multi > optimization_idle_run_rerun.log 2>&1
+                $PY_CMD main.py --headless --optimize --samples 2500 --tps-material multi --target-vehicle irve3 > optimization_idle_run_rerun.log 2>&1
                 if [ $? -eq 0 ]; then
                     echo "[+] Optimization recovery re-run SUCCEEDED!"
                     cp optimization_idle_run_rerun.log optimization_idle_run.log

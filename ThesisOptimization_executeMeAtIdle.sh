@@ -11,9 +11,9 @@ else
     PYTHON_BIN="python3"
 fi
 
-# 1. Run Baseline Validation with Multi-layer TPS
-echo "[*] Running multi-layer TPS validation..."
-$PYTHON_BIN main.py --headless --validation --tps-material multi > validation_idle_run.log 2>&1
+# 1. Run Baseline Validation with Multi-layer TPS (IRVE-3 Baseline)
+echo "[*] Running multi-layer TPS validation (IRVE-3)..."
+$PYTHON_BIN main.py --headless --validation --tps-material multi --target-vehicle irve3 > validation_idle_run.log 2>&1
 
 # 2. Save Validation Results
 echo "[*] Saving validation results to Result/validationResultAfterLayerChanges/ ..."
@@ -22,9 +22,9 @@ cp -r web/assets/plots Result/validationResultAfterLayerChanges/ 2>/dev/null
 cp OPTIMIZATION_LOG.md Result/validationResultAfterLayerChanges/ 2>/dev/null
 cp validation_idle_run.log Result/validationResultAfterLayerChanges/ 2>/dev/null
 
-# 3. Run CCD Optimization Matrix
-echo "[*] Starting full CCD optimization matrix..."
-$PYTHON_BIN main.py --headless --optimize --samples 25 --tps-material multi > optimization_idle_run.log 2>&1
+# 3. Run IRVE-3 Optimization Matrix
+echo "[*] Starting IRVE-3 optimization matrix..."
+$PYTHON_BIN main.py --headless --optimize --samples 25 --tps-material multi --target-vehicle irve3 > optimization_idle_run.log 2>&1
 
 # 4. Save Optimization Results
 echo "[*] Saving optimization results to Result/OptimizationResult/ ..."
