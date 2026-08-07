@@ -27,10 +27,25 @@ def generate_flight_vs_sim_plot():
     # PANEL 1: FLIGHT CONDITION ORIENTATION (Physical Geometry in Z-R Frame)
     # ==============================================================================
     # Geometry parameters
-    r_nose = 250
+    r_target = 1500 # 3m diameter
     t_count = 6
-    r_torus = 100
-    theta_c = np.radians(60)
+    theta_c = np.radians(60) # Half cone angle
+    theta_c_rad = np.pi/2 - theta_c # Angle from horizontal (30 deg)
+    
+    r_pay = 250
+    h_pay = 500
+    
+    # [Rapisarda Eq 3.4]: Structural Integration Constraint
+    r_nose = r_pay / np.cos(theta_c) # = r_pay / sin(theta_c_rad)
+    
+    r_torus_shoulder = 75
+    
+    # [Rapisarda Eq 3.3]: Toroid radius calculation
+    numerator = r_target - r_pay - r_torus_shoulder * (np.cos(theta_c_rad) - np.sin(theta_c_rad) + 1.0)
+    r_torus = numerator / (1.0 + np.sin(theta_c_rad) + (2.0 * t_count - 1.0) * np.cos(theta_c_rad))
+    
+    # [Rapisarda Eq C.3]: L_enclosure
+    L_shift = r_torus * (1.0 + np.sin(theta_c_rad)) / np.cos(theta_c_rad)
 
     # Generate synthetic analytical HIAD slice matching user image
     # Nose sphere
@@ -40,7 +55,7 @@ def generate_flight_vs_sim_plot():
 
     # The cone generator is at 30 deg from horizontal (R-axis). 
     # Therefore, tangency point on the nose sphere is exactly at beta = 30 deg (pi/6).
-    tangency_beta = np.pi/6
+    tangency_beta = theta_c_rad
     beta_half = beta[25:]
     tangency_idx = np.argmin(np.abs(beta_half - tangency_beta))
 
@@ -54,10 +69,9 @@ def generate_flight_vs_sim_plot():
     z_curr = z_shell[-1]
 
     for i in range(1, t_count + 1):
-        # [FIX]: Shift the toroid center INWARD from the tangency point. 
-        # The inward normal points UP and LEFT (120 deg from R-axis, or 30 deg from Z-axis).
-        cx = r_curr - r_torus * np.sin(np.pi/6)
-        cz = z_curr + r_torus * np.cos(np.pi/6)
+        s_i = L_shift + (i - 1) * 2 * r_torus
+        cx = r_curr + s_i * np.cos(theta_c_rad) - r_torus * np.sin(theta_c_rad)
+        cz = z_curr + s_i * np.sin(theta_c_rad) + r_torus * np.cos(theta_c_rad)
         
         # Circle for torus
         angles = np.linspace(0, 2*np.pi, 40)
@@ -77,14 +91,14 @@ def generate_flight_vs_sim_plot():
         z_shell.extend(arc_z)
         r_shell.extend(arc_r)
 
-        # Move to next tangency point (along the cone generator)
-        r_curr += 1.6 * r_torus * np.sin(theta_c)
-        z_curr += 1.6 * r_torus * np.cos(theta_c)
+        # Move to next tangency point is handled intrinsically by L_shift 
+        # for drawing the scallops we don't strictly need to move r_curr/z_curr 
+        # because we calculate cx,cz from the fixed tangency point.
 
     # Add Shoulder Toroid (N+1)
-    r_torus_shoulder = 75 # slightly smaller
-    cx_sh = r_curr - r_torus_shoulder * np.sin(np.pi/6)
-    cz_sh = z_curr + r_torus_shoulder * np.cos(np.pi/6)
+    s_sh = L_shift + 2 * (t_count - 1) * r_torus + r_torus + r_torus_shoulder
+    cx_sh = r_curr + s_sh * np.cos(theta_c_rad) - r_torus_shoulder * np.sin(theta_c_rad)
+    cz_sh = z_curr + s_sh * np.sin(theta_c_rad) + r_torus_shoulder * np.cos(theta_c_rad)
     
     # Circle for shoulder torus
     angles = np.linspace(0, 2*np.pi, 40)
@@ -113,16 +127,14 @@ def generate_flight_vs_sim_plot():
     disc = patches.Rectangle((-150, 100), 300, 40, fill=True, facecolor=ACCENT3, alpha=0.35, edgecolor=ACCENT3, linewidth=2)
     ax1.add_patch(disc)
 
-    # 1. r_tank (Gray Circle at the center of the nose sphere Z=250)
+    # 1. r_tank (Gray Circle at the center of the nose sphere Z=r_nose)
     r_tank_radius = 80
-    tank_circle = patches.Circle((0, 250), r_tank_radius, fill=True, facecolor='#94a3b8', alpha=0.8, edgecolor='#475569', linewidth=2, zorder=5)
+    tank_circle = patches.Circle((0, r_nose), r_tank_radius, fill=True, facecolor='#94a3b8', alpha=0.8, edgecolor='#475569', linewidth=2, zorder=5)
     ax1.add_patch(tank_circle)
-    ax1.text(0, 250, "r_tank", color='#0f172a', fontsize=9, ha='center', va='center', fontweight='bold', zorder=6)
+    ax1.text(0, r_nose, "r_tank", color='#0f172a', fontsize=9, ha='center', va='center', fontweight='bold', zorder=6)
 
-    # 2. Payload Main Body (Starts at Z=250, behind the tank)
-    r_pay = 200
-    h_pay = 500
-    z_base = 250
+    # 2. Payload Main Body (Starts at Z=r_nose, behind the tank)
+    z_base = r_nose
     top_rad = 50
     kappa = 0.55 * top_rad
     
