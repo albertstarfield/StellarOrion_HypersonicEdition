@@ -95,7 +95,12 @@ def generate_flight_vs_sim_plot():
     # ==============================================================================
     # PANEL 2: SPARTA 2D AXISYMMETRIC SIMULATION DOMAIN MAPPING
     # ==============================================================================
-    # In SPARTA: X_sim = Z_flight, Y_sim = R_flight
+    # Why this mapping is critical: In physical flight, the vehicle travels 
+    # downward into the atmosphere (often modeled as Z-axis). 
+    # However, SPARTA DSMC specifically requires 2D axisymmetric flow to come 
+    # from the 'xlo' boundary (X=0) moving in the +X direction. 
+    # Therefore, we MUST orient the vehicle so the nose points LEFT.
+    # We map coordinates: X_sim = Z_flight, Y_sim = R_flight
     # Flow moves along +X axis from Xlo to Xhi. Centerline is Ylo = 0.
     
     # Map coordinates: X_sim = Z_shell, Y_sim = R_shell
