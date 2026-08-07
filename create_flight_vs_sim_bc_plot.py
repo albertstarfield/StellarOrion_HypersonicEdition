@@ -38,18 +38,26 @@ def generate_flight_vs_sim_plot():
     z_nose = r_nose * (1 - np.cos(beta))
     r_nose_pts = r_nose * np.sin(beta)
 
-    # Scalloped Toroids
-    z_shell = list(z_nose[25:])
-    r_shell = list(r_nose_pts[25:])
+    # The cone generator is at 30 deg from horizontal (R-axis). 
+    # Therefore, tangency point on the nose sphere is exactly at beta = 30 deg (pi/6).
+    tangency_beta = np.pi/6
+    beta_half = beta[25:]
+    tangency_idx = np.argmin(np.abs(beta_half - tangency_beta))
 
-    # Generate 6 toroids along cone angle
-    r_curr = r_nose_pts[25]
-    z_curr = z_nose[25]
+    # [FIX]: Stop the nose shell exactly at the tangency point instead of drawing 
+    # it all the way to 90 degrees (which caused it to overlap Toroid 1).
+    z_shell = list(z_nose[25: 25 + tangency_idx + 1])
+    r_shell = list(r_nose_pts[25: 25 + tangency_idx + 1])
+
+    # [FIX]: Generate 6 toroids starting AT the tangency point, not at the nose tip (0,0).
+    r_curr = r_shell[-1]
+    z_curr = z_shell[-1]
 
     for i in range(1, t_count + 1):
-        # Torus center
-        cx = r_curr + r_torus * np.cos(theta_c)
-        cz = z_curr + r_torus * np.sin(theta_c)
+        # [FIX]: Shift the toroid center INWARD from the tangency point. 
+        # The inward normal points UP and LEFT (120 deg from R-axis, or 30 deg from Z-axis).
+        cx = r_curr - r_torus * np.sin(np.pi/6)
+        cz = z_curr + r_torus * np.cos(np.pi/6)
         
         # Circle for torus
         angles = np.linspace(0, 2*np.pi, 40)
@@ -58,13 +66,18 @@ def generate_flight_vs_sim_plot():
         ax1.text(cx, cz, str(i), color='#818cf8', fontsize=9, fontweight='bold', ha='center', va='center')
         ax1.text(-cx, cz, str(i), color='#818cf8', fontsize=9, fontweight='bold', ha='center', va='center')
 
-        # Wavy shell curve over torus
-        arc_angles = np.linspace(-np.pi/3, np.pi/3, 15)
+        # Wavy shell curve over torus (scalloped F-TPS)
+        # The toroid normal facing outward is theta_c - 90 deg (since it's placed outwards)
+        outward_normal = theta_c - np.pi/2
+        scallop_half_angle = np.radians(20)
+        arc_angles = np.linspace(outward_normal - scallop_half_angle, outward_normal + scallop_half_angle, 15)
+        
         arc_r = cx + r_torus * np.cos(arc_angles)
-        arc_z = cz - r_torus * np.sin(arc_angles)
+        arc_z = cz + r_torus * np.sin(arc_angles)
         z_shell.extend(arc_z)
         r_shell.extend(arc_r)
 
+        # Move to next tangency point (along the cone generator)
         r_curr += 1.6 * r_torus * np.sin(theta_c)
         z_curr += 1.6 * r_torus * np.cos(theta_c)
 

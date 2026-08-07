@@ -42,7 +42,10 @@ theta_c = np.radians(60)
 # vehicle must be oriented with its nose pointing LEFT, facing the inflow!
 # Nose center at (3.5, 0). Tip is placed at (3.5 - 0.8 = 2.7, 0)
 nose_cx, nose_cy = 3.5, 0.0
-angles = np.linspace(np.pi, np.pi - theta_c, 30)
+# True tangency angle: the normal to the cone is at 90 + theta_c.
+# Wait, if cone angle is theta_c=60 from horizontal, normal is 150 deg (pi/2 + theta_c).
+tangency_angle = np.pi/2 + theta_c
+angles = np.linspace(np.pi, tangency_angle, 30)
 x_nose = nose_cx + R_n_vis * np.cos(angles)
 y_nose = nose_cy + R_n_vis * np.sin(angles)
 
