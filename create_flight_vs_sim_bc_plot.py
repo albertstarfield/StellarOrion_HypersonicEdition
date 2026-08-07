@@ -81,6 +81,24 @@ def generate_flight_vs_sim_plot():
         r_curr += 1.6 * r_torus * np.sin(theta_c)
         z_curr += 1.6 * r_torus * np.cos(theta_c)
 
+    # Add Shoulder Toroid (N+1)
+    r_torus_shoulder = 75 # slightly smaller
+    cx_sh = r_curr - r_torus_shoulder * np.sin(np.pi/6)
+    cz_sh = z_curr + r_torus_shoulder * np.cos(np.pi/6)
+    
+    # Circle for shoulder torus
+    angles = np.linspace(0, 2*np.pi, 40)
+    ax1.plot(cx_sh + r_torus_shoulder*np.cos(angles), cz_sh + r_torus_shoulder*np.sin(angles), color='#818cf8', alpha=0.4, linewidth=1.2)
+    ax1.plot(-cx_sh + r_torus_shoulder*np.cos(angles), cz_sh + r_torus_shoulder*np.sin(angles), color='#818cf8', alpha=0.4, linewidth=1.2)
+    ax1.text(cx_sh, cz_sh, "7 (S)", color='#818cf8', fontsize=8, fontweight='bold', ha='center', va='center')
+    ax1.text(-cx_sh, cz_sh, "7 (S)", color='#818cf8', fontsize=8, fontweight='bold', ha='center', va='center')
+
+    # Scallop for shoulder torus
+    arc_r_sh = cx_sh + r_torus_shoulder * np.cos(arc_angles)
+    arc_z_sh = cz_sh + r_torus_shoulder * np.sin(arc_angles)
+    z_shell.extend(arc_z_sh)
+    r_shell.extend(arc_r_sh)
+
     z_shell = np.array(z_shell)
     r_shell = np.array(r_shell)
 
@@ -88,10 +106,52 @@ def generate_flight_vs_sim_plot():
     ax1.plot(r_shell, z_shell, color=ACCENT2, linewidth=3, label='Scalloped SPARTA Shell')
     ax1.plot(-r_shell, z_shell, color=ACCENT2, linewidth=3)
 
-    # Payload Box
-    pay_box = patches.Rectangle((-250, 50), 500, 500, fill=True, facecolor=ACCENT3, alpha=0.25, edgecolor=ACCENT3, linewidth=2)
-    ax1.add_patch(pay_box)
-    ax1.text(0, 300, "Payload Container\n(Centerbody)\nr_pay, h_pay", color=ACCENT3, fontsize=11, ha='center', va='center', fontweight='bold')
+    import matplotlib.path as mpath
+    Path = mpath.Path
+    
+    # 0. Blue flat disc (between nose shell and r_tank)
+    disc = patches.Rectangle((-150, 100), 300, 40, fill=True, facecolor=ACCENT3, alpha=0.35, edgecolor=ACCENT3, linewidth=2)
+    ax1.add_patch(disc)
+
+    # 1. r_tank (Gray Circle at the center of the nose sphere Z=250)
+    r_tank_radius = 80
+    tank_circle = patches.Circle((0, 250), r_tank_radius, fill=True, facecolor='#94a3b8', alpha=0.8, edgecolor='#475569', linewidth=2, zorder=5)
+    ax1.add_patch(tank_circle)
+    ax1.text(0, 250, "r_tank", color='#0f172a', fontsize=9, ha='center', va='center', fontweight='bold', zorder=6)
+
+    # 2. Payload Main Body (Starts at Z=250, behind the tank)
+    r_pay = 200
+    h_pay = 500
+    z_base = 250
+    top_rad = 50
+    kappa = 0.55 * top_rad
+    
+    verts = [
+        (-r_pay, z_base),
+        (-r_pay, z_base + h_pay - top_rad),
+        (-r_pay, z_base + h_pay - top_rad + kappa),
+        (-r_pay + top_rad - kappa, z_base + h_pay),
+        (-r_pay + top_rad, z_base + h_pay),
+        (r_pay - top_rad, z_base + h_pay),
+        (r_pay - top_rad + kappa, z_base + h_pay),
+        (r_pay, z_base + h_pay - top_rad + kappa),
+        (r_pay, z_base + h_pay - top_rad),
+        (r_pay, z_base),
+        (0, 0)
+    ]
+    codes = [
+        Path.MOVETO,
+        Path.LINETO,
+        Path.CURVE4, Path.CURVE4, Path.CURVE4,
+        Path.LINETO,
+        Path.CURVE4, Path.CURVE4, Path.CURVE4,
+        Path.LINETO,
+        Path.CLOSEPOLY
+    ]
+    path = Path(verts, codes)
+    pay_patch = patches.PathPatch(path, fill=True, facecolor=ACCENT3, alpha=0.25, edgecolor=ACCENT3, linewidth=2, zorder=4)
+    ax1.add_patch(pay_patch)
+    ax1.text(0, 500, "Payload Container\n(Centerbody)\nr_pay, h_pay", color=ACCENT3, fontsize=11, ha='center', va='center', fontweight='bold', zorder=6)
 
     # Incoming Flow Arrow
     ax1.arrow(0, -150, 0, 100, head_width=50, head_length=40, fc=ACCENT1, ec=ACCENT1, linewidth=3)
