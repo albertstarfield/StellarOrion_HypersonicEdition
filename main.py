@@ -623,8 +623,8 @@ def main():
     geo.add_argument("--angle", type=float, default=60.0, help="Half-cone angle [deg]. Rapisarda Limit: 40-80°. (IRVE-3: 60°)")
     geo.add_argument("--nose", type=float, default=0.55, help="Nose-cone radius [m]. (IRVE-3: 0.55m)")
     geo.add_argument("--toroids", type=int, default=6, help="Number of stacked toroids. Limit: 1-12. (IRVE-3 Rapisarda MDAO: 6)")
-    geo.add_argument("--tradius", type=float, help="Toroid radius [m]. (IRVE-3: 0.135m)")
-    geo.add_argument("--oradius", type=float, help="Outer shoulder toroid radius [m]. (IRVE-3: 0.0508m)")
+    geo.add_argument("--tradius", type=float, default=0.135, help="Toroid radius [m]. (IRVE-3: 0.135m)")
+    geo.add_argument("--oradius", type=float, default=0.0508, help="Outer shoulder toroid radius [m]. (IRVE-3: 0.0508m)")
     geo.add_argument("--mass", type=float, default=281.0, help="Total entry mass [kg]. (IRVE-3: 281kg)")
     
     # Material Property Overrides (Ref: Rapisarda 2023 Table B.17)
