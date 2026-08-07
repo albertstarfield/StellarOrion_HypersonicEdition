@@ -219,23 +219,34 @@ def draw_parametric_geometry(ax):
     # Wait, perpendicular away from axis/payload and toward flow:
     # Cone direction: (sin(theta), cos(theta)) = outward, upward
     # Perpendicular downward (toward flow): (cos(theta), -sin(theta))
-    
+    # ---------------------------------------------------------
+    # DRAW F-TPS BLANKET (SCALLOPED SKIN)
+    # ---------------------------------------------------------
+    # Why this is needed: The toroids are bumpy, but the Flexible 
+    # Thermal Protection System (F-TPS) acts like a tensioned blanket 
+    # draped over them. 
+    # If we just connect tangency points, it's a straight line (unrealistic).
+    # If we draw 180-degree arcs, we get deep grooves (also unrealistic).
+    # The engine uses a 40-deg scallop angle (±20 deg from tangency) 
+    # to realistically model the slight inward dip of the stretched fabric.
     shell_pts_x = []
     shell_pts_y = []
     
-    # Engine defaults to scallop_angle = 40 deg (±20 deg from tangency).
     scallop_half_angle = np.radians(20)
     
     for cx, cy in toroid_centers_right:
-        # The angle of tangency (normal to the cone pointing toward flow) is -theta in the Panel 1 coordinate system
-        # (Since cone goes up and out, normal pointing down and out is -theta)
+        # In Panel 1's coordinate system (Y is vertical axis, X is radial):
+        # The cone goes UP (+y) and OUT (+x). The normal pointing TOWARD the flow 
+        # (down and out) is mathematically `-theta`.
         arc_angles = np.linspace(-theta - scallop_half_angle, -theta + scallop_half_angle, 15)
+        
+        # We sweep the arc around the physical center of the toroid
         x_arc = cx + r_t * np.cos(arc_angles)
         y_arc = cy + r_t * np.sin(arc_angles)
         shell_pts_x.extend(x_arc)
         shell_pts_y.extend(y_arc)
         
-    # Add outer torus
+    # Add the outermost shoulder torus with the same shallow scallop
     arc_angles_out = np.linspace(-theta - scallop_half_angle, -theta + scallop_half_angle, 15)
     x_arc_out = out_cx + r_out * np.cos(arc_angles_out)
     y_arc_out = out_cy + r_out * np.sin(arc_angles_out)

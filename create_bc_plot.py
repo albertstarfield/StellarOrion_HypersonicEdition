@@ -52,22 +52,33 @@ x_t = x_nose[-1]
 y_t = y_nose[-1]
 
 for i in range(N_toroids):
+    # ---------------------------------------------------------
+    # SCALLOPED F-TPS BLANKET GENERATION
+    # ---------------------------------------------------------
+    # Why this is needed: The IRVE-3 toroids are bumpy, but the Flexible 
+    # Thermal Protection System (F-TPS) acts like a tensioned blanket 
+    # draped over them. 
+    # If we just connect tangency points, it's a straight line (unrealistic).
+    # If we draw 180-degree arcs, we get deep grooves (also unrealistic).
+    # The engine uses a 40-deg scallop angle (±20 deg from tangency) 
+    # to realistically model the slight inward dip of the stretched fabric.
+    
     # Distance along the cone surface
     dist_surface = (2*i + 1) * r_torus
     
-    # Point on the cone surface
+    # Point exactly on the cone envelope line
     surf_x = x_t + dist_surface * np.cos(theta_c)
     surf_y = y_t + dist_surface * np.sin(theta_c)
     
-    # Toroid center is shifted INWARD by r_torus
-    # Inward normal is theta_c - pi/2 (pointing down and right)
+    # To draw the arc correctly, we MUST shift the toroid center 
+    # INWARD by r_torus (away from the fluid). 
+    # The inward normal points down and right (theta_c - 90 deg).
     inward_normal = theta_c - np.pi/2
     cx = surf_x + r_torus * np.cos(inward_normal)
     cy = surf_y + r_torus * np.sin(inward_normal)
     
-    # The F-TPS blanket creates shallow scallops, not deep grooves.
-    # Engine defaults to scallop_angle = 40 deg (±20 deg from tangency).
-    # Tangency normal (outward into fluid) is theta_c + pi/2
+    # Tangency normal (pointing outward into fluid) is theta_c + 90 deg.
+    # We sweep a shallow ±20 deg arc around this outward normal.
     scallop_half_angle = np.radians(20)
     outward_normal = theta_c + np.pi/2
     arc_angles = np.linspace(outward_normal - scallop_half_angle, outward_normal + scallop_half_angle, 10)
