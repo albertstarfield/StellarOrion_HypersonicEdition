@@ -33,7 +33,14 @@ ax1.add_patch(domain_box)
 R_n_vis = 0.8  # scaled for visibility
 theta_c = np.radians(60)
 
-# Nose center at (3.5, 0). Tip at (3.5 - 0.8 = 2.7, 0)
+# ---------------------------------------------------------
+# VEHICLE PLACEMENT & ORIENTATION
+# ---------------------------------------------------------
+# Why this was changed: The previous diagram had the nose facing RIGHT.
+# In SPARTA DSMC, the freestream inflow typically comes from the 'xlo' 
+# (left) boundary at x=0. To simulate hypersonic flow correctly, the 
+# vehicle must be oriented with its nose pointing LEFT, facing the inflow!
+# Nose center at (3.5, 0). Tip is placed at (3.5 - 0.8 = 2.7, 0)
 nose_cx, nose_cy = 3.5, 0.0
 angles = np.linspace(np.pi, np.pi - theta_c, 30)
 x_nose = nose_cx + R_n_vis * np.cos(angles)
