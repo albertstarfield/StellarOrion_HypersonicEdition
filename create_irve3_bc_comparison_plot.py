@@ -377,12 +377,37 @@ def draw_sparta_bc(ax):
     x_nose = nose_cx + R_n_vis * np.cos(angles)
     y_nose = nose_cy + R_n_vis * np.sin(angles)
     
-    # Cone line (60 deg from X-axis)
-    # dx = L * cos(90 - 60) wait, angle from centerline (X-axis) is 60 deg.
-    # So dx = L * cos(60), dy = L * sin(60)
+    # Cone line (scalloped with 6 toroids)
+    N_toroids = 6
     cone_L = 2.5
-    x_cone = x_nose[-1] + np.linspace(0, cone_L * np.cos(theta_c), 20)
-    y_cone = y_nose[-1] + np.linspace(0, cone_L * np.sin(theta_c), 20)
+    r_torus = cone_L / (2 * N_toroids)
+    
+    x_cone_list = []
+    y_cone_list = []
+    
+    # Starting point of the cone (tangency point)
+    x_t = x_nose[-1]
+    y_t = y_nose[-1]
+    
+    for i in range(N_toroids):
+        # Center of this toroid
+        dist_c = (2*i + 1) * r_torus
+        cx = x_t + dist_c * np.cos(theta_c)
+        cy = y_t + dist_c * np.sin(theta_c)
+        
+        # Draw arc from -90 deg (relative to cone angle) to +90 deg
+        arc_angles = np.linspace(theta_c - np.pi/2, theta_c + np.pi/2, 10)
+        # However, the toroids are facing LEFT and UP.
+        # Wait, theta_c is 60 deg (pi/3).
+        # Normal to the cone is theta_c + pi/2.
+        # So we draw from theta_c - pi/2 to theta_c + pi/2.
+        x_arc = cx + r_torus * np.cos(arc_angles + np.pi/2) # shift phase so it bulges outward (left/up)
+        y_arc = cy + r_torus * np.sin(arc_angles + np.pi/2)
+        x_cone_list.extend(x_arc)
+        y_cone_list.extend(y_arc)
+        
+    x_cone = np.array(x_cone_list)
+    y_cone = np.array(y_cone_list)
     
     # Full shape for filling (surface + back + centerline)
     x_surf = np.concatenate([x_nose, x_cone])
