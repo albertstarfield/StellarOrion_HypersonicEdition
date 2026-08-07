@@ -377,36 +377,10 @@ def draw_sparta_bc(ax):
     x_nose = nose_cx + R_n_vis * np.cos(angles)
     y_nose = nose_cy + R_n_vis * np.sin(angles)
     
-    # Cone line (scalloped with 6 toroids)
-    N_toroids = 6
+    # Cone line (represents tightly tensioned F-TPS blanket)
     cone_L = 2.5
-    r_torus = cone_L / (2 * N_toroids)
-    
-    x_cone_list = []
-    y_cone_list = []
-    
-    # Starting point of the cone (tangency point)
-    x_t = x_nose[-1]
-    y_t = y_nose[-1]
-    
-    for i in range(N_toroids):
-        # Center of this toroid
-        dist_c = (2*i + 1) * r_torus
-        cx = x_t + dist_c * np.cos(theta_c)
-        cy = y_t + dist_c * np.sin(theta_c)
-        
-        # The F-TPS blanket creates shallow scallops, not deep grooves.
-        # Engine defaults to scallop_angle = 40 deg (±20 deg from tangency).
-        scallop_half_angle = np.radians(20)
-        arc_angles = np.linspace(theta_c + np.pi/2 - scallop_half_angle, theta_c + np.pi/2 + scallop_half_angle, 10)
-        
-        x_arc = cx + r_torus * np.cos(arc_angles)
-        y_arc = cy + r_torus * np.sin(arc_angles)
-        x_cone_list.extend(x_arc)
-        y_cone_list.extend(y_arc)
-        
-    x_cone = np.array(x_cone_list)
-    y_cone = np.array(y_cone_list)
+    x_cone = x_nose[-1] + np.linspace(0, cone_L * np.cos(theta_c), 20)
+    y_cone = y_nose[-1] + np.linspace(0, cone_L * np.sin(theta_c), 20)
     
     # Full shape for filling (surface + back + centerline)
     x_surf = np.concatenate([x_nose, x_cone])
