@@ -28,24 +28,34 @@ ax1.axis('off')
 domain_box = patches.Rectangle((0, 0), 8, 5, fill=False, edgecolor=SUBTEXT, linestyle='--', linewidth=1.5)
 ax1.add_patch(domain_box)
 
-# HIAD shape (simple curved line + straight lines)
-# Stagnation at (3, 0), curves up to (2.5, 3)
-theta = np.linspace(-np.pi/2, 0, 50)
-x_hiad = 3.0 + 0.5 * np.cos(theta)
-y_hiad = 0.5 + 0.5 * np.sin(theta)
-# Add straight flank
-x_hiad = np.concatenate((x_hiad, [1.5]))
-y_hiad = np.concatenate((y_hiad, [3.5]))
-# Add straight back
-x_hiad = np.concatenate((x_hiad, [1.5, 3.0]))
-y_hiad = np.concatenate((y_hiad, [0, 0]))
+# HIAD shape (axisymmetric, y >= 0)
+# Nose points LEFT towards inflow (x=0)
+R_n_vis = 0.8  # scaled for visibility
+theta_c = np.radians(60)
 
-ax1.plot(x_hiad, y_hiad, color=ACCENT4, linewidth=4, zorder=5)
-ax1.fill(x_hiad, y_hiad, color=ACCENT2, alpha=0.3, zorder=4)
+# Nose center at (3.5, 0). Tip at (3.5 - 0.8 = 2.7, 0)
+nose_cx, nose_cy = 3.5, 0.0
+angles = np.linspace(np.pi, np.pi - theta_c, 30)
+x_nose = nose_cx + R_n_vis * np.cos(angles)
+y_nose = nose_cy + R_n_vis * np.sin(angles)
+
+# Cone line (60 deg from X-axis)
+cone_L = 2.5
+x_cone = x_nose[-1] + np.linspace(0, cone_L * np.cos(theta_c), 20)
+y_cone = y_nose[-1] + np.linspace(0, cone_L * np.sin(theta_c), 20)
+
+# Full shape for filling (surface + back + centerline)
+x_surf = np.concatenate([x_nose, x_cone])
+y_surf = np.concatenate([y_nose, y_cone])
+x_fill = np.concatenate([x_surf, [x_surf[-1], x_surf[0]]])
+y_fill = np.concatenate([y_surf, [0, 0]])
+
+ax1.plot(x_surf, y_surf, color=ACCENT4, linewidth=4, zorder=5)
+ax1.fill(x_fill, y_fill, color=ACCENT2, alpha=0.3, zorder=4)
 
 # Left Boundary: Inflow
 ax1.plot([0, 0], [0, 5], color=ACCENT1, linewidth=4)
-ax1.text(-0.5, 2.5, "Inflow (xlo)\nemit/face\nv = 2700 m/s\nT = 250 K", 
+ax1.text(-0.5, 2.5, "Inflow (xlo)\nemit/face\nv = 2700 m/s\nT = 270 K", 
          color=ACCENT1, fontsize=11, ha='right', va='center', fontweight='bold')
 for y_arr in np.linspace(0.5, 4.5, 5):
     ax1.arrow(0.1, y_arr, 0.8, 0, head_width=0.2, head_length=0.2, fc=ACCENT1, ec=ACCENT1)
@@ -68,8 +78,10 @@ ax1.text(4, -0.4, "Axisymmetric Centreline (ylo = 0)\nboundary 'a'",
          color=TEXT, fontsize=11, ha='center', va='top', fontweight='bold')
 
 # HIAD Surface BC
-ax1.text(1.7, 4.0, "HIAD Surface\nDiffuse Isothermal Wall\n$T_{wall}$ = 1453 K\n(Captures $\dot{q}_{stag}$)", 
-         color=ACCENT4, fontsize=11, ha='right', va='bottom', fontweight='bold')
+ax1.annotate('', xy=(3.0, 1.2), xytext=(2.0, 3.5),
+            arrowprops=dict(arrowstyle='->', color=ACCENT4, lw=2))
+ax1.text(2.0, 3.7, "HIAD Surface\nDiffuse Isothermal Wall\n$T_{wall}$ = 1000 K\n(Captures $\dot{q}_{stag}$)", 
+         color=ACCENT4, fontsize=11, ha='center', va='bottom', fontweight='bold')
 
 ax1.set_title("1. SPARTA DSMC (External Aero / Gas Domain)", color=TEXT, fontsize=14, fontweight='bold', pad=20)
 

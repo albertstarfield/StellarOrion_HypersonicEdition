@@ -614,7 +614,7 @@ def main():
     # | Diameter   | 3.0 m          | 5.02 m          | HIAD min for Orion: 7.5m       |
     # | Angle      | 60.0°          | 32.5°           | Half-cone angle                |
     # | Nose       | 0.55 m         | ~0.3 m          | Stagnation radius              |
-    # | Toroids    | 7              | 0 (rigid)       | Stacked inflatable toroids     |
+    # | Toroids    | 6              | 0 (rigid)       | Stacked inflatable toroids     |
     # | Mass       | 281 kg         | ~10,400 kg      | 37x lighter than Orion capsule |
     # | β (ballistic coeff) | 26.9 kg/m² | ~400 kg/m² | 15x lower → high-alt braking  |
     # ====================================================================
@@ -622,7 +622,7 @@ def main():
     geo.add_argument("--diameter", type=float, default=3.0, help="HIAD major diameter [m]. Limit: 0.5-15.0m. (IRVE-3: 3.0m)")
     geo.add_argument("--angle", type=float, default=60.0, help="Half-cone angle [deg]. Rapisarda Limit: 40-80°. (IRVE-3: 60°)")
     geo.add_argument("--nose", type=float, default=0.55, help="Nose-cone radius [m]. (IRVE-3: 0.55m)")
-    geo.add_argument("--toroids", type=int, default=7, help="Number of stacked toroids. Limit: 1-12. (IRVE-3: 7)")
+    geo.add_argument("--toroids", type=int, default=6, help="Number of stacked toroids. Limit: 1-12. (IRVE-3 Rapisarda MDAO: 6)")
     geo.add_argument("--tradius", type=float, help="Toroid radius [m]. (IRVE-3: 0.135m)")
     geo.add_argument("--oradius", type=float, help="Outer shoulder toroid radius [m]. (IRVE-3: 0.0508m)")
     geo.add_argument("--mass", type=float, default=281.0, help="Total entry mass [kg]. (IRVE-3: 281kg)")
@@ -1064,8 +1064,8 @@ def main():
                 opt_params = {
                     'solver': args.solver,
                     'env_vstream': 2700.0,
-                    'env_temp_inf': 250.0,
-                    'env_nrho': 1e22,
+                    'env_temp_inf': 270.0,  # Rapisarda Table 4.5: 270.65 K at 50km
+                    'env_nrho': 3.47e21,    # Baseline validation density at ~52km
                     'env_run': args.steps,
                     'env_fnum': args.fnum,
                     'grid_factor': args.grid_factor, # Mesh adjustment: >1.0 denser, <1.0 sparser

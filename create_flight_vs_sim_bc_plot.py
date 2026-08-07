@@ -102,7 +102,7 @@ def generate_flight_vs_sim_plot():
     x_sim = z_shell
     y_sim = r_shell
 
-    ax2.plot(x_sim, y_sim, color=ACCENT2, linewidth=3, label='Scalloped Wall BC (Isothermal 1453K)')
+    ax2.plot(x_sim, y_sim, color=ACCENT2, linewidth=3, label='Scalloped Wall BC (Isothermal 1000K)')
     
     # Simulation Domain Boundary Box
     domain_box = patches.Rectangle((-150, 0), 1150, 1500, fill=False, edgecolor='#64748b', linestyle='--', linewidth=2)
@@ -110,7 +110,7 @@ def generate_flight_vs_sim_plot():
 
     # Inflow Boundary (xlo)
     ax2.plot([-150, -150], [0, 1500], color=ACCENT1, linewidth=4)
-    ax2.text(-170, 750, "Inflow (xlo emit/face)\nv = 2700 m/s, T = 250 K\nFreestream Air (N2, O2)", 
+    ax2.text(-170, 750, "Inflow (xlo emit/face)\nv = 2700 m/s, T = 270 K\nFreestream Air (N2, O2)", 
              color=ACCENT1, fontsize=10, ha='right', va='center', fontweight='bold')
     for y_in in [300, 750, 1200]:
         ax2.arrow(-140, y_in, 100, 0, head_width=40, head_length=30, fc=ACCENT1, ec=ACCENT1)
