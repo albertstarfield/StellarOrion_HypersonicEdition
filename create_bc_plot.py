@@ -57,10 +57,12 @@ for i in range(N_toroids):
     cx = x_t + dist_c * np.cos(theta_c)
     cy = y_t + dist_c * np.sin(theta_c)
     
-    # Draw arc (bulging outward to the left/up)
-    arc_angles = np.linspace(theta_c - np.pi/2, theta_c + np.pi/2, 10)
-    x_arc = cx + r_torus * np.cos(arc_angles + np.pi/2)
-    y_arc = cy + r_torus * np.sin(arc_angles + np.pi/2)
+    # The F-TPS blanket creates shallow scallops, not deep grooves.
+    # Engine defaults to scallop_angle = 40 deg (±20 deg from tangency).
+    scallop_half_angle = np.radians(20)
+    arc_angles = np.linspace(theta_c + np.pi/2 - scallop_half_angle, theta_c + np.pi/2 + scallop_half_angle, 10)
+    x_arc = cx + r_torus * np.cos(arc_angles)
+    y_arc = cy + r_torus * np.sin(arc_angles)
     x_cone_list.extend(x_arc)
     y_cone_list.extend(y_arc)
 

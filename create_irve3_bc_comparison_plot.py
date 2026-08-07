@@ -395,14 +395,13 @@ def draw_sparta_bc(ax):
         cx = x_t + dist_c * np.cos(theta_c)
         cy = y_t + dist_c * np.sin(theta_c)
         
-        # Draw arc from -90 deg (relative to cone angle) to +90 deg
-        arc_angles = np.linspace(theta_c - np.pi/2, theta_c + np.pi/2, 10)
-        # However, the toroids are facing LEFT and UP.
-        # Wait, theta_c is 60 deg (pi/3).
-        # Normal to the cone is theta_c + pi/2.
-        # So we draw from theta_c - pi/2 to theta_c + pi/2.
-        x_arc = cx + r_torus * np.cos(arc_angles + np.pi/2) # shift phase so it bulges outward (left/up)
-        y_arc = cy + r_torus * np.sin(arc_angles + np.pi/2)
+        # The F-TPS blanket creates shallow scallops, not deep grooves.
+        # Engine defaults to scallop_angle = 40 deg (±20 deg from tangency).
+        scallop_half_angle = np.radians(20)
+        arc_angles = np.linspace(theta_c + np.pi/2 - scallop_half_angle, theta_c + np.pi/2 + scallop_half_angle, 10)
+        
+        x_arc = cx + r_torus * np.cos(arc_angles)
+        y_arc = cy + r_torus * np.sin(arc_angles)
         x_cone_list.extend(x_arc)
         y_cone_list.extend(y_arc)
         
