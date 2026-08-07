@@ -222,19 +222,28 @@ def draw_parametric_geometry(ax):
     
     shell_pts_x = []
     shell_pts_y = []
-    for cx, cy in toroid_centers_right:
-        sx = cx + r_t * np.cos(theta)   # perpendicular offset toward flow
-        sy = cy - r_t * np.sin(theta)
-        shell_pts_x.append(sx)
-        shell_pts_y.append(sy)
-    # Add outer torus
-    sx = out_cx + r_out * np.cos(theta)
-    sy = out_cy - r_out * np.sin(theta)
-    shell_pts_x.append(sx)
-    shell_pts_y.append(sy)
     
-    ax.plot(shell_pts_x, shell_pts_y, color=RED, linewidth=2, linestyle='--', alpha=0.6, zorder=4)
-    ax.plot([-x for x in shell_pts_x], shell_pts_y, color=RED, linewidth=2, linestyle='--', alpha=0.6, zorder=4)
+    # Engine defaults to scallop_angle = 40 deg (±20 deg from tangency).
+    scallop_half_angle = np.radians(20)
+    
+    for cx, cy in toroid_centers_right:
+        # The angle of tangency (normal to the cone pointing toward flow) is -theta in the Panel 1 coordinate system
+        # (Since cone goes up and out, normal pointing down and out is -theta)
+        arc_angles = np.linspace(-theta - scallop_half_angle, -theta + scallop_half_angle, 15)
+        x_arc = cx + r_t * np.cos(arc_angles)
+        y_arc = cy + r_t * np.sin(arc_angles)
+        shell_pts_x.extend(x_arc)
+        shell_pts_y.extend(y_arc)
+        
+    # Add outer torus
+    arc_angles_out = np.linspace(-theta - scallop_half_angle, -theta + scallop_half_angle, 15)
+    x_arc_out = out_cx + r_out * np.cos(arc_angles_out)
+    y_arc_out = out_cy + r_out * np.sin(arc_angles_out)
+    shell_pts_x.extend(x_arc_out)
+    shell_pts_y.extend(y_arc_out)
+    
+    ax.plot(shell_pts_x, shell_pts_y, color=RED, linewidth=2, linestyle='-', alpha=0.8, zorder=4)
+    ax.plot([-x for x in shell_pts_x], shell_pts_y, color=RED, linewidth=2, linestyle='-', alpha=0.8, zorder=4)
     ax.text(-shell_pts_x[-1] - 80, shell_pts_y[-1] - 60, "Torus Shell", 
             color=RED, fontsize=9, fontweight='bold', zorder=6)
     
@@ -377,10 +386,46 @@ def draw_sparta_bc(ax):
     x_nose = nose_cx + R_n_vis * np.cos(angles)
     y_nose = nose_cy + R_n_vis * np.sin(angles)
     
-    # Cone line (represents tightly tensioned F-TPS blanket)
+    # Cone line (shallow F-TPS blanket scallops)
+    N_toroids = 6
     cone_L = 2.5
-    x_cone = x_nose[-1] + np.linspace(0, cone_L * np.cos(theta_c), 20)
-    y_cone = y_nose[-1] + np.linspace(0, cone_L * np.sin(theta_c), 20)
+    r_torus = cone_L / (2 * N_toroids)
+    
+    x_cone_list = []
+    y_cone_list = []
+    
+    # Starting point of the cone (tangency point on the skin)
+    x_t = x_nose[-1]
+    y_t = y_nose[-1]
+    
+    for i in range(N_toroids):
+        # Distance along the cone surface
+        dist_surface = (2*i + 1) * r_torus
+        
+        # Point on the cone surface
+        surf_x = x_t + dist_surface * np.cos(theta_c)
+        surf_y = y_t + dist_surface * np.sin(theta_c)
+        
+        # Toroid center is shifted INWARD by r_torus
+        # Inward normal is theta_c - pi/2 (pointing down and right)
+        inward_normal = theta_c - np.pi/2
+        cx = surf_x + r_torus * np.cos(inward_normal)
+        cy = surf_y + r_torus * np.sin(inward_normal)
+        
+        # The F-TPS blanket creates shallow scallops, not deep grooves.
+        # Engine defaults to scallop_angle = 40 deg (±20 deg from tangency).
+        # Tangency normal (outward into fluid) is theta_c + pi/2
+        scallop_half_angle = np.radians(20)
+        outward_normal = theta_c + np.pi/2
+        arc_angles = np.linspace(outward_normal - scallop_half_angle, outward_normal + scallop_half_angle, 10)
+        
+        x_arc = cx + r_torus * np.cos(arc_angles)
+        y_arc = cy + r_torus * np.sin(arc_angles)
+        x_cone_list.extend(x_arc)
+        y_cone_list.extend(y_arc)
+        
+    x_cone = np.array(x_cone_list)
+    y_cone = np.array(y_cone_list)
     
     # Full shape for filling (surface + back + centerline)
     x_surf = np.concatenate([x_nose, x_cone])
