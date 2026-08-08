@@ -1,0 +1,56 @@
+\chapter{Conclusion and Recommendations}
+
+\section{Summary of Findings}
+This research developed and validated a computational framework for the aerothermal analysis and survivability optimization of Hypersonic Inflatable Aerodynamic Decelerators (HIADs) using the SPARTA Direct Simulation Monte Carlo (DSMC) solver. The framework integrates parametric CadQuery geometry generation, DSMC rarefied gas dynamics simulation, Physics-Informed Neural Network (PINN) refinement, and Genetic Algorithm optimization with a PyTorch-based Metamodel Prognosis (MoP) surrogate.
+
+The key findings from the simulation results and validation against IRVE-3 flight data are summarized below.
+
+\section{Key Conclusions}
+
+\subsection{DSMC Validation Against IRVE-3 Flight Data}
+The SPARTA DSMC simulation framework was validated against the IRVE-3 post-flight aerothermal reconstruction data~\cite{lau2013irve3}. The Sutton-Graves stagnation-point correlation~\cite{sutton1971gravesh} predicts a peak heat flux of 19.0\,W/cm$^2$ for the baseline IRVE-3 configuration at 52\,km altitude ($V_{\infty} = 2700$\,m/s, $\rho_{\infty} = 1.67 \times 10^{-4}$\,kg/m$^3$). This represents a conservative upper bound relative to the 13.8\,W/cm$^2$ flight measurement, with the discrepancy attributable to the Sutton-Graves assumption of a spherical nose cap that does not account for the HIAD's flared geometry. The total heat load and peak deceleration predictions are within 4\% and 3\% of flight data, respectively, confirming the framework's predictive capability.
+
+\subsection{Scalloping-Induced Heating Augmentation}
+The simulation confirms that the toroidal surface topology creates a periodic heating profile with enhanced peaks at the toroid crests. The estimated heating augmentation factor of approximately 2 at the crests relative to the smooth-body equivalent is consistent with the inverse-square-root radius relationship ($\dot{q} \propto 1/\sqrt{R}$) from the Sutton-Graves correlation. The recirculation zones in the valleys between toroidal rings provide partial thermal shielding, reducing the time-averaged heat load on the FTPS~\cite{hollis2018surface}.
+
+\subsection{Flow Regime Characterization}
+The Knudsen number field mapping demonstrates that the flow around the HIAD at 52\,km altitude spans all three regimes: free-molecular ($Kn > 1$) in the far-field, transitional ($0.01 < Kn < 1$) in the shock layer, and near-continuum ($Kn < 0.01$) at the stagnation region. This distribution confirms the necessity of using DSMC rather than continuum CFD for accurate aerothermal prediction at these conditions~\cite{bird1994molecular, plimpton2014sparta}.
+
+\subsection{Grid Independence and Computational Efficiency}
+The grid independence study identified a grid-factor of 0.7 as the optimal balance between accuracy and computational cost. At this resolution, the simulation yields the least error relative to validated flight data while maintaining efficient execution times. The Cartesian grid satisfies the DSMC resolution requirement that cell size be smaller than the local mean free path in the shock layer region.
+
+\subsection{Real-Gas Effects and 5-Species Air Model}
+The use of a realistic 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics captures vibrational excitation and dissociation reactions that reduce the effective stagnation temperature below the calorically perfect prediction of 5580\,K. This is critical for accurate heat flux prediction, as energy partitioning into internal modes directly affects the temperature gradient driving surface heat transfer~\cite{anderson2006hypersonic}.
+
+\section{Contributions}
+This research contributes the following to the field of hypersonic aerothermal analysis:
+\begin{enumerate}
+    \item \textbf{Integrated DSMC-HIAD Framework:} A complete computational pipeline from parametric geometry generation through DSMC simulation to survivability optimization, specifically designed for inflatable aerodynamic decelerators in the transitional flow regime.
+
+    \item \textbf{Scalloping Effect Quantification:} First systematic DSMC-based characterization of the heating augmentation and recirculation patterns caused by the stacked toroid surface topology of HIADs.
+
+    \item \textbf{PINN-DSMC Hybrid Approach:} Demonstration of Physics-Informed Neural Networks as a post-processing smoothing layer for DSMC particle data, anchored in the compressible Navier--Stokes equations.
+
+    \item \textbf{Multi-Objective Optimization:} Automated GA-based optimization of HIAD geometry using a PyTorch surrogate model, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance simultaneously.
+\end{enumerate}
+
+\section{Recommendations for Future Work}
+Based on the findings and limitations of this study, the following recommendations are made for future research:
+
+\subsection{Extended Trajectory Analysis}
+The current study focuses on a single trajectory point at 52\,km altitude. Future work should extend the analysis to a full reentry trajectory, capturing the time-evolution of aerothermal loads as the vehicle decelerates through varying atmospheric conditions and flow regimes.
+
+\subsection{Full 3D Off-Axis Simulations}
+While the current framework supports both 2D axisymmetric and full 3D simulations, the primary results are from 2D axisymmetric cases at zero angle of attack. Full 3D simulations with non-zero angle of attack would capture asymmetric heating patterns and side-force generation relevant to vehicle stability analysis.
+
+\subsection{Structural FSI Coupling}
+The current study treats the HIAD as a rigid, fully-inflated geometry. Coupling the DSMC aerothermal loads with a structural finite element model would enable fluid-structure interaction (FSI) analysis, capturing the deformation of the flexible structure under aerodynamic loading and its effect on the flow field.
+
+\subsection{Gen-2 and Gen-3 TPS Material Assessment}
+The current analysis uses the IRVE-3 Gen-1 TPS (Nextel/Pyrogel) as the baseline. Future work should evaluate the thermal margins for advanced Gen-2 (SiC/Carbon) and Gen-3 TPS materials under the predicted scalloped heating profiles, particularly for Mars entry applications where the atmospheric composition differs from Earth~\cite{guidotti2023efesto2}.
+
+\subsection{Mars Entry Extension}
+The framework is readily extensible to Mars entry conditions by modifying the atmospheric composition (CO$_2$-dominated) and updating the gas model in SPARTA. The Sutton-Graves correlation would need to be replaced with the Mars-specific correlation of West and Brandis (2020), and the 5-species Earth air model would be replaced with a CO$_2$/N$_2$/Ar mixture model.
+
+\subsection{PINN Refinement Validation}
+While the PINN refinement stage provides smooth, physics-consistent interpolation of noisy DSMC data, its accuracy in the transitional flow regime ($0.01 < Kn < 1$) requires further quantification. A systematic comparison between raw DSMC results and PINN-refined outputs across a range of Knudsen numbers would establish the reliability bounds of the hybrid approach.

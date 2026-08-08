@@ -239,6 +239,11 @@ fluent-*.log
 *.toc
 *.bbl
 *.blg
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.out
 *.run.xml
 *.bcf
 **web/assets/videos**
