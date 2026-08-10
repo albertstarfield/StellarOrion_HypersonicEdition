@@ -1229,8 +1229,13 @@ def generate_preview(surf_file, output_path, params=None, ref_params=None):
         return True
     except: return False
 
-def _write_single_vtu(data, output_path, ref_params=None):
+def _write_single_vtu(data, output_path, ref_params=None, subdivide=4):
     """Write a single SPARTA grid dump to VTK XML UnstructuredGrid (.vtu).
+
+    Each SPARTA cell is subdivided into ``subdivide x subdivide`` smaller
+    quads so ParaView renders a denser mesh.  All sub-cells inherit the
+    parent cell's data values (constant interpolation), which is faithful
+    to SPARTA's cell-averaged storage.
 
     Parameters
     ----------
@@ -1240,6 +1245,9 @@ def _write_single_vtu(data, output_path, ref_params=None):
         Destination ``.vtu`` file path.
     ref_params : dict, optional
         Reference parameters (``nose_radius``, ``env_preset``).
+    subdivide : int
+        Number of subdivisions per axis (default 4 → 16 sub-cells per
+        SPARTA cell).
 
     Returns
     -------
@@ -1280,20 +1288,76 @@ def _write_single_vtu(data, output_path, ref_params=None):
     L_char = float(ref_params.get("nose_radius", 0.55)) if ref_params and ref_params.get("nose_radius") else 0.55
     knudsen = mfp / L_char
 
-    # Build 2D quad corners (extruded to z=0 for VTK)
-    n_points = n_cells * 4
-    points = np.empty((n_points, 3), dtype=np.float64)
-    for i in range(n_cells):
-        base = i * 4
-        points[base]     = [xlo[i], ylo[i], 0.0]
-        points[base + 1] = [xhi[i], ylo[i], 0.0]
-        points[base + 2] = [xhi[i], yhi[i], 0.0]
-        points[base + 3] = [xlo[i], yhi[i], 0.0]
+    # --- Subdivide each SPARTA cell into sub x sub smaller quads ---
+    s = int(max(1, subdivide))
+    sx = np.linspace(0.0, 1.0, s + 1)  # fractional positions along x
 
-    # Connectivity: each cell references 4 sequential point indices
-    connectivity = np.arange(n_points, dtype=np.int32)
-    offsets = np.arange(4, n_points + 1, 4, dtype=np.int32)
-    cell_types = np.full(n_cells, 9, dtype=np.int32)  # VTK_QUAD
+    # Build all sub-cell points and connectivity vectorised per parent cell
+    # Each parent cell → (s+1)^2 grid points → s^2 quads
+    pts_per_parent = (s + 1) * (s + 1)
+    cells_per_parent = s * s
+    total_points = n_cells * pts_per_parent
+    total_cells = n_cells * cells_per_parent
+
+    # Pre-allocate point array (x, y, z=0)
+    all_points = np.empty((total_points, 3), dtype=np.float64)
+    # Pre-allocate connectivity, offsets, cell_types
+    all_conn = np.empty(total_cells * 4, dtype=np.int32)
+    all_offsets = np.arange(4, total_cells * 4 + 1, 4, dtype=np.int32)
+    all_types = np.full(total_cells, 9, dtype=np.int32)  # VTK_QUAD
+
+    # Per-sub-cell data arrays (replicate parent values)
+    sub_temp = np.empty(total_cells, dtype=np.float64)
+    sub_u = np.empty(total_cells, dtype=np.float64)
+    sub_v = np.empty(total_cells, dtype=np.float64)
+    sub_w = np.empty(total_cells, dtype=np.float64)
+    sub_vel_mag = np.empty(total_cells, dtype=np.float64)
+    sub_mach = np.empty(total_cells, dtype=np.float64)
+    sub_pressure = np.empty(total_cells, dtype=np.float64)
+    sub_knudsen = np.empty(total_cells, dtype=np.float64)
+    sub_nrho = np.empty(total_cells, dtype=np.float64)
+
+    for i in range(n_cells):
+        # Grid of (s+1)x(s+1) points for this parent cell
+        gx = xlo[i] + sx * (xhi[i] - xlo[i])
+        gy = ylo[i] + sx * (yhi[i] - ylo[i])
+        gx2d, gy2d = np.meshgrid(gx, gy, indexing="ij")  # shape (s+1, s+1)
+        flat_x = gx2d.ravel()
+        flat_y = gy2d.ravel()
+
+        pt_base = i * pts_per_parent
+        all_points[pt_base:pt_base + pts_per_parent, 0] = flat_x
+        all_points[pt_base:pt_base + pts_per_parent, 1] = flat_y
+        all_points[pt_base:pt_base + pts_per_parent, 2] = 0.0
+
+        # Build s^2 quad connectivity
+        c_base = i * cells_per_parent
+        conn_idx = c_base * 4
+        for xi in range(s):
+            for yi in range(s):
+                # Four corners of this sub-quad in the (s+1)x(s+1) grid
+                n0 = pt_base + xi * (s + 1) + yi
+                n1 = n0 + 1
+                n2 = n0 + (s + 1) + 1
+                n3 = n0 + (s + 1)
+                all_conn[conn_idx] = n0
+                all_conn[conn_idx + 1] = n1
+                all_conn[conn_idx + 2] = n2
+                all_conn[conn_idx + 3] = n3
+                conn_idx += 4
+
+        # Replicate parent cell data to all sub-cells
+        c_start = c_base
+        c_end = c_base + cells_per_parent
+        sub_temp[c_start:c_end] = temp[i]
+        sub_u[c_start:c_end] = u[i]
+        sub_v[c_start:c_end] = v[i]
+        sub_w[c_start:c_end] = w[i]
+        sub_vel_mag[c_start:c_end] = vel_mag[i]
+        sub_mach[c_start:c_end] = mach[i]
+        sub_pressure[c_start:c_end] = pressure[i]
+        sub_knudsen[c_start:c_end] = knudsen[i]
+        sub_nrho[c_start:c_end] = nrho[i]
 
     # --- Write VTK XML UnstructuredGrid (.vtu) ASCII ---
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
@@ -1301,12 +1365,12 @@ def _write_single_vtu(data, output_path, ref_params=None):
         f.write('<?xml version="1.0"?>\n')
         f.write('<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">\n')
         f.write("  <UnstructuredGrid>\n")
-        f.write(f'    <Piece NumberOfPoints="{n_points}" NumberOfCells="{n_cells}">\n')
+        f.write(f'    <Piece NumberOfPoints="{total_points}" NumberOfCells="{total_cells}">\n')
 
         # Points
         f.write("      <Points>\n")
         f.write('        <DataArray type="Float64" NumberOfComponents="3" format="ascii">\n')
-        for p in points:
+        for p in all_points:
             f.write(f"          {p[0]:.10e} {p[1]:.10e} {p[2]:.10e}\n")
         f.write("        </DataArray>\n")
         f.write("      </Points>\n")
@@ -1314,27 +1378,27 @@ def _write_single_vtu(data, output_path, ref_params=None):
         # Cells
         f.write("      <Cells>\n")
         f.write('        <DataArray type="Int32" Name="connectivity" format="ascii">\n')
-        f.write("          " + " ".join(str(c) for c in connectivity) + "\n")
+        f.write("          " + " ".join(str(c) for c in all_conn) + "\n")
         f.write("        </DataArray>\n")
         f.write('        <DataArray type="Int32" Name="offsets" format="ascii">\n')
-        f.write("          " + " ".join(str(o) for o in offsets) + "\n")
+        f.write("          " + " ".join(str(o) for o in all_offsets) + "\n")
         f.write("        </DataArray>\n")
         f.write('        <DataArray type="Int32" Name="types" format="ascii">\n')
-        f.write("          " + " ".join(str(t) for t in cell_types) + "\n")
+        f.write("          " + " ".join(str(t) for t in all_types) + "\n")
         f.write("        </DataArray>\n")
         f.write("      </Cells>\n")
 
         # Cell data arrays
         arrays = [
-            ("Temperature", temp),
-            ("Velocity_U", u),
-            ("Velocity_V", v),
-            ("Velocity_W", w),
-            ("Velocity_Magnitude", vel_mag),
-            ("Mach_Number", mach),
-            ("Pressure", pressure),
-            ("Knudsen_Number", knudsen),
-            ("Number_Density", nrho),
+            ("Temperature", sub_temp),
+            ("Velocity_U", sub_u),
+            ("Velocity_V", sub_v),
+            ("Velocity_W", sub_w),
+            ("Velocity_Magnitude", sub_vel_mag),
+            ("Mach_Number", sub_mach),
+            ("Pressure", sub_pressure),
+            ("Knudsen_Number", sub_knudsen),
+            ("Number_Density", sub_nrho),
         ]
         f.write("      <CellData>\n")
         for name, arr in arrays:
@@ -1347,6 +1411,7 @@ def _write_single_vtu(data, output_path, ref_params=None):
         f.write("  </UnstructuredGrid>\n")
         f.write("</VTKFile>\n")
 
+    print(f"[VTK] {total_cells} sub-cells ({s}x{s} per SPARTA cell) → {output_path}")
     return output_path
 
 
@@ -1599,13 +1664,14 @@ def export_sparta_vtk(grid_file, output_path, ref_params=None):
     return vtu_paths
 
 
-def launch_paraview_for_sparta(vtk_file, output_dir=None, vtk_3d_file=None):
+def launch_paraview_for_sparta(vtk_file, output_dir=None, vtk_3d_file=None, geometry_stl=None):
     """Generate a ParaView Python state script and open it.
 
-    Creates a ``.py`` state file that loads the VTU(s) and optional 3D VTP(s),
-    applies colour maps, and resets the camera.  When *vtk_file* is a list (from
-    :func:`export_sparta_vtk` with multiple grid dumps), ParaView treats
-    each file as a timestep and the VCR controls animate through them.
+    Creates a ``.py`` state file that loads the VTU(s), optional 3D VTP(s),
+    and the HIAD STL geometry, applies colour maps, and resets the camera.
+    When *vtk_file* is a list (from :func:`export_sparta_vtk` with multiple
+    grid dumps), ParaView treats each file as a timestep and the VCR
+    controls animate through them.
 
     Parameters
     ----------
@@ -1618,6 +1684,10 @@ def launch_paraview_for_sparta(vtk_file, output_dir=None, vtk_3d_file=None):
         Path(s) to ``.vtp`` files produced by :func:`export_sparta_vtk_3d`.
         When provided a second reader is added so the 3D upscaled geometry
         loads alongside the 2D grid.
+    geometry_stl : str, optional
+        Path to the HIAD STL geometry file (e.g. ``HIAD_opt.stl``).
+        When provided a third reader is added so the 3D model surface
+        is visible alongside the flow field.
     """
     # Normalise inputs
     if isinstance(vtk_file, str):
@@ -1642,6 +1712,7 @@ def launch_paraview_for_sparta(vtk_file, output_dir=None, vtk_3d_file=None):
     # Resolve absolute paths
     vtu_abs_list = [os.path.abspath(f).replace("\\", "/") for f in vtu_list]
     vtp_abs_list = [os.path.abspath(f).replace("\\", "/") for f in vtp_list]
+    stl_abs = os.path.abspath(geometry_stl).replace("\\", "/") if geometry_stl and os.path.isfile(geometry_stl) else None
     is_timeseries = len(vtu_abs_list) > 1
 
     # Build the FileName argument — list or single string
@@ -1691,6 +1762,20 @@ print("[ParaView] Use VCR controls (Play/Pause) to animate timesteps.")"""
             f'print(f"[ParaView] 3D upscaled geometry loaded: {vtp_count} file(s)")\n'
         )
 
+    # Build STL geometry section (if file provided)
+    stl_section = ""
+    if stl_abs:
+        stl_section = (
+            f"\n# --- Load HIAD STL geometry ---\n"
+            f"reader_stl = XMLPolyDataReader(FileName='{stl_abs}')\n"
+            f"reader_stl.UpdatePipeline()\n"
+            f"display_stl = Show(reader_stl, view)\n"
+            f"ColorBy(display_stl, None)  # solid colour, no data array\n"
+            f"display_stl.DiffuseColor = [0.85, 0.85, 0.85]  # light grey\n"
+            f"display_stl.Opacity = 0.85\n"
+            f'print(f"[ParaView] HIAD STL geometry loaded: {stl_abs}")\n'
+        )
+
     script = f'''\
 # Auto-generated ParaView state script -- StellarOrion
 # Open with: paraview --script=paraview_state.pv.py
@@ -1714,7 +1799,7 @@ display.RescaleTransferFunctionToDataRange(True)
 # Temperature colour map (hot)
 tf = GetColorTransferFunction('Temperature')
 tf.ApplyPreset('Black-Body Radiation', True)
-{vtp_section}
+{vtp_section}{stl_section}
 # --- Reset camera ---
 view.ResetCamera()
 Render()

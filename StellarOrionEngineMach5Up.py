@@ -3362,9 +3362,11 @@ run             {steps}
             vtk_result = visualizer.export_sparta_vtk(grid_files, vtk_dir, ref_params=viz_metadata)
             vtk_3d_dir = os.path.join(vtk_dir, "3d_upscaled")
             vtk_3d_result = visualizer.export_sparta_vtk_3d(grid_files[-1], vtk_3d_dir, ref_params=viz_metadata)
+            baseline_stl = os.path.join(self.cwd, "CADDesign", "HIAD_custom.stl")
             if vtk_result:
                 visualizer.launch_paraview_for_sparta(
-                    vtk_result, output_dir=vtk_dir, vtk_3d_file=vtk_3d_result)
+                    vtk_result, output_dir=vtk_dir, vtk_3d_file=vtk_3d_result,
+                    geometry_stl=baseline_stl)
             
             # --- PINN Refinement Stage ---
             if opt_params.get('pinn_accel', True):
@@ -3665,9 +3667,11 @@ run             {steps}
                     vtk_result = visualizer.export_sparta_vtk(grid_files, vtk_dir, ref_params=viz_metadata)
                     vtk_3d_dir = os.path.join(vtk_dir, "3d_upscaled")
                     vtk_3d_result = visualizer.export_sparta_vtk_3d(grid_files[-1], vtk_3d_dir, ref_params=viz_metadata)
+                    sample_stl = os.path.join(cad_dir, "HIAD_opt.stl")
                     if vtk_result:
                         visualizer.launch_paraview_for_sparta(
-                            vtk_result, output_dir=vtk_dir, vtk_3d_file=vtk_3d_result)
+                            vtk_result, output_dir=vtk_dir, vtk_3d_file=vtk_3d_result,
+                            geometry_stl=sample_stl)
             except Exception as ve:
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed for Sample {i+1}: {ve}")
 
