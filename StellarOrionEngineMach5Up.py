@@ -3356,12 +3356,15 @@ run             {steps}
                 for s in ['N2', 'O2', 'NO', 'N', 'O']:
                     self.window.evaluate_js(f"document.getElementById('img-species-{s}').src = 'assets/plots/species_{s}_map.png?' + new Date().getTime()")
 
-            self.log_to_gui("    [+] Exporting baseline results to ParaView (VTK time series)...")
+            self.log_to_gui("    [+] Exporting baseline results to ParaView (VTK time series + 3D upscaled)...")
             vtk_dir = os.path.join(self.cwd, "web", "assets", "data", "baseline_paraview")
             os.makedirs(vtk_dir, exist_ok=True)
             vtk_result = visualizer.export_sparta_vtk(grid_files, vtk_dir, ref_params=viz_metadata)
+            vtk_3d_dir = os.path.join(vtk_dir, "3d_upscaled")
+            vtk_3d_result = visualizer.export_sparta_vtk_3d(grid_files[-1], vtk_3d_dir, ref_params=viz_metadata)
             if vtk_result:
-                visualizer.launch_paraview_for_sparta(vtk_result, output_dir=vtk_dir)
+                visualizer.launch_paraview_for_sparta(
+                    vtk_result, output_dir=vtk_dir, vtk_3d_file=vtk_3d_result)
             
             # --- PINN Refinement Stage ---
             if opt_params.get('pinn_accel', True):
@@ -3660,8 +3663,11 @@ run             {steps}
                     vtk_dir = os.path.join(sample_dir, f"paraview_sample_{i+1}")
                     os.makedirs(vtk_dir, exist_ok=True)
                     vtk_result = visualizer.export_sparta_vtk(grid_files, vtk_dir, ref_params=viz_metadata)
+                    vtk_3d_dir = os.path.join(vtk_dir, "3d_upscaled")
+                    vtk_3d_result = visualizer.export_sparta_vtk_3d(grid_files[-1], vtk_3d_dir, ref_params=viz_metadata)
                     if vtk_result:
-                        visualizer.launch_paraview_for_sparta(vtk_result, output_dir=vtk_dir)
+                        visualizer.launch_paraview_for_sparta(
+                            vtk_result, output_dir=vtk_dir, vtk_3d_file=vtk_3d_result)
             except Exception as ve:
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed for Sample {i+1}: {ve}")
 

@@ -1350,6 +1350,192 @@ def _write_single_vtu(data, output_path, ref_params=None):
     return output_path
 
 
+def _write_single_vtp_3d(data, output_path, ref_params=None, n_thetas=80):
+    """Write revolved 3D axisymmetric VTK PolyData (.vtp) from a SPARTA grid dump.
+
+    Revolves 2D cell-centre data around the Y-axis (same revolution used by
+    :func:`upscale_2d_to_3d`) and writes point cloud geometry so ParaView can
+    display the full 3D upscaled field.
+
+    Parameters
+    ----------
+    data : ndarray
+        Parsed grid dump array (from :func:`parse_grid_dump`).
+    output_path : str
+        Destination ``.vtp`` file path.
+    ref_params : dict, optional
+        Reference parameters (``nose_radius``, ``env_preset``).
+    n_thetas : int
+        Number of revolution angles (default 80, matching ``upscale_2d_to_3d``).
+
+    Returns
+    -------
+    str or None
+        *output_path* on success, ``None`` if data is empty.
+    """
+    valid_mask = np.all(np.isfinite(data[:, :10]), axis=1)
+    data = data[valid_mask]
+    if len(data) == 0:
+        return None
+
+    # Cell centres
+    cx = (data[:, 0] + data[:, 2]) / 2.0
+    cy = (data[:, 1] + data[:, 3]) / 2.0
+
+    # Filter vacuum regions (nrho < 0.1 % of max) — same as upscale_2d_to_3d
+    nrho_raw = data[:, 9]
+    n_max = np.nanmax(nrho_raw) if len(nrho_raw) > 0 else 1.0
+    keep = nrho_raw >= n_max * 0.001
+    cx, cy = cx[keep], cy[keep]
+    data = data[keep]
+    if len(data) == 0:
+        return None
+
+    # Sub-sample if very large (keeps ParaView responsive)
+    step = max(1, len(cx) // 5000)
+    cx, cy = cx[::step], cy[::step]
+    data = data[::step]
+    n_2d = len(cx)
+
+    # Derived quantities for the 2D slice
+    u = data[:, 5]; v = data[:, 6]; w = data[:, 7]
+    temp = data[:, 8]; nrho = data[:, 9]; n_raw = data[:, 4]
+    vel_mag = np.sqrt(u**2 + v**2 + w**2)
+    pressure = nrho * 1.380649e-23 * temp
+    preset = str(ref_params.get("env_preset", "mars")).lower() if ref_params else "mars"
+    gamma, R = (1.29, 188.9) if "mars" in preset else (1.4, 287.05)
+    sound_speed = np.sqrt(gamma * R * np.maximum(temp, 1.0))
+    mach = vel_mag / np.maximum(sound_speed, 1e-30)
+    d_mol = 3.7e-10
+    n_safe = np.maximum(np.nan_to_num(n_raw), 1.0)
+    mfp = 1.0 / (np.sqrt(2) * np.pi * d_mol**2 * n_safe)
+    L_char = float(ref_params.get("nose_radius", 0.55)) if ref_params and ref_params.get("nose_radius") else 0.55
+    knudsen = mfp / L_char
+
+    # Revolve around Y-axis: (x, y) → (x, y*cosθ, y*sinθ)
+    thetas = np.linspace(0, 2 * np.pi, n_thetas, endpoint=False)
+    total_pts = n_2d * n_thetas
+
+    # Vectorised revolution — build full 3D point array
+    theta_arr = np.repeat(thetas, n_2d)
+    cx_rep = np.tile(cx, n_thetas)
+    cy_rep = np.tile(cy, n_thetas)
+    points_x = cx_rep
+    points_y = cy_rep * np.cos(theta_arr)
+    points_z = cy_rep * np.sin(theta_arr)
+
+    # Repeat per-point data for each revolution angle
+    def _rep(arr):
+        return np.tile(arr, n_thetas)
+
+    pt_temp = _rep(temp)
+    pt_vel_mag = _rep(vel_mag)
+    pt_u = _rep(u); pt_v = _rep(v); pt_w = _rep(w)
+    pt_mach = _rep(mach)
+    pt_pressure = _rep(pressure)
+    pt_knudsen = _rep(knudsen)
+    pt_nrho = _rep(nrho)
+
+    # --- Write VTK XML PolyData (.vtp) ASCII ---
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write('<?xml version="1.0"?>\n')
+        f.write('<VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">\n')
+        f.write("  <PolyData>\n")
+        f.write(f'    <Piece NumberOfPoints="{total_pts}" NumberOfVerts="{total_pts}">\n')
+
+        # Points
+        f.write("      <Points>\n")
+        f.write('        <DataArray type="Float64" NumberOfComponents="3" format="ascii">\n')
+        for i in range(total_pts):
+            f.write(f"          {points_x[i]:.10e} {points_y[i]:.10e} {points_z[i]:.10e}\n")
+        f.write("        </DataArray>\n")
+        f.write("      </Points>\n")
+
+        # Verts (one vertex per point — point cloud)
+        f.write("      <Verts>\n")
+        f.write('        <DataArray type="Int32" Name="connectivity" format="ascii">\n')
+        f.write("          " + " ".join(str(i) for i in range(total_pts)) + "\n")
+        f.write("        </DataArray>\n")
+        f.write('        <DataArray type="Int32" Name="offsets" format="ascii">\n')
+        f.write("          " + " ".join(str(i + 1) for i in range(total_pts)) + "\n")
+        f.write("        </DataArray>\n")
+        f.write("      </Verts>\n")
+
+        # Point data arrays
+        arrays = [
+            ("Temperature", pt_temp),
+            ("Velocity_U", pt_u),
+            ("Velocity_V", pt_v),
+            ("Velocity_W", pt_w),
+            ("Velocity_Magnitude", pt_vel_mag),
+            ("Mach_Number", pt_mach),
+            ("Pressure", pt_pressure),
+            ("Knudsen_Number", pt_knudsen),
+            ("Number_Density", pt_nrho),
+        ]
+        f.write("      <PointData>\n")
+        for name, arr in arrays:
+            f.write(f'        <DataArray type="Float64" Name="{name}" format="ascii">\n')
+            f.write("          " + " ".join(f"{v:.10e}" for v in arr) + "\n")
+            f.write("        </DataArray>\n")
+        f.write("      </PointData>\n")
+
+        f.write("    </Piece>\n")
+        f.write("  </PolyData>\n")
+        f.write("</VTKFile>\n")
+
+    return output_path
+
+
+def export_sparta_vtk_3d(grid_file, output_path, ref_params=None):
+    """Export revolved 3D axisymmetric VTK for ParaView.
+
+    Accepts a single ``str`` path or a ``list[str]`` of grid dump files
+    (one per timestep).  When a list is given, individual ``.vtp`` files are
+    written to the *output_path* directory and the list of paths is returned
+    (suitable for ``launch_paraview_for_sparta``).
+
+    Parameters
+    ----------
+    grid_file : str or list[str]
+        Path(s) to SPARTA ``grid.N.out`` files.
+    output_path : str
+        Destination file path (single) **or** directory (list).
+    ref_params : dict, optional
+        Reference parameters forwarded to :func:`_write_single_vtp_3d`.
+
+    Returns
+    -------
+    str, list[str], or None
+    """
+    if isinstance(grid_file, list):
+        if not grid_file:
+            return None
+        os.makedirs(output_path, exist_ok=True)
+        base = os.path.splitext(os.path.basename(output_path))[0]
+        vtp_files = []
+        for idx, gf in enumerate(grid_file):
+            data = parse_grid_dump(gf)
+            if len(data) == 0:
+                continue
+            vtp_path = os.path.join(output_path, f"{base}_t{idx:04d}.vtp")
+            result = _write_single_vtp_3d(data, vtp_path, ref_params)
+            if result:
+                vtp_files.append(result)
+        if not vtp_files:
+            print("[VTK-3D] No valid timesteps found, skipping 3D export.")
+            return None
+        print(f"[VTK-3D] Time series: {len(vtp_files)} timesteps in {output_path}")
+        return vtp_files
+    else:
+        data = parse_grid_dump(grid_file)
+        if len(data) == 0:
+            print(f"[VTK-3D] No data in {grid_file}, skipping.")
+            return None
+        return _write_single_vtp_3d(data, output_path, ref_params)
+
+
 def export_sparta_vtk(grid_file, output_path, ref_params=None):
     """Export SPARTA grid dump(s) to VTK for ParaView.
 
@@ -1413,11 +1599,11 @@ def export_sparta_vtk(grid_file, output_path, ref_params=None):
     return vtu_paths
 
 
-def launch_paraview_for_sparta(vtk_file, output_dir=None):
+def launch_paraview_for_sparta(vtk_file, output_dir=None, vtk_3d_file=None):
     """Generate a ParaView Python state script and open it.
 
-    Creates a ``.py`` state file that loads the VTU(s), applies colour maps,
-    and resets the camera.  When *vtk_file* is a list (from
+    Creates a ``.py`` state file that loads the VTU(s) and optional 3D VTP(s),
+    applies colour maps, and resets the camera.  When *vtk_file* is a list (from
     :func:`export_sparta_vtk` with multiple grid dumps), ParaView treats
     each file as a timestep and the VCR controls animate through them.
 
@@ -1428,12 +1614,24 @@ def launch_paraview_for_sparta(vtk_file, output_dir=None):
     output_dir : str, optional
         Directory for the generated ``.pv.py`` script.  Defaults to the
         same directory as *vtk_file*.
+    vtk_3d_file : str or list[str], optional
+        Path(s) to ``.vtp`` files produced by :func:`export_sparta_vtk_3d`.
+        When provided a second reader is added so the 3D upscaled geometry
+        loads alongside the 2D grid.
     """
     # Normalise inputs
     if isinstance(vtk_file, str):
         vtu_list = [vtk_file]
     else:
         vtu_list = list(vtk_file)
+
+    # Normalise 3D inputs
+    vtp_list = []
+    if vtk_3d_file is not None:
+        if isinstance(vtk_3d_file, str):
+            vtp_list = [vtk_3d_file]
+        else:
+            vtp_list = list(vtk_3d_file)
 
     if output_dir is None:
         output_dir = os.path.dirname(vtu_list[0])
@@ -1443,6 +1641,7 @@ def launch_paraview_for_sparta(vtk_file, output_dir=None):
 
     # Resolve absolute paths
     vtu_abs_list = [os.path.abspath(f).replace("\\", "/") for f in vtu_list]
+    vtp_abs_list = [os.path.abspath(f).replace("\\", "/") for f in vtp_list]
     is_timeseries = len(vtu_abs_list) > 1
 
     # Build the FileName argument — list or single string
@@ -1469,18 +1668,41 @@ print("[ParaView] Use VCR controls (Play/Pause) to animate timesteps.")"""
 
     label = f"{len(vtu_abs_list)} timesteps" if is_timeseries else "single VTU"
 
+    # Build 3D VTP section (if files provided)
+    vtp_section = ""
+    if vtp_abs_list:
+        if len(vtp_abs_list) == 1:
+            vtp_reader = f"reader_3d = XMLPolyDataReader(FileName='{vtp_abs_list[0]}')"
+        else:
+            vtp_reader = f"reader_3d = XMLPolyDataReader(FileName={str(vtp_abs_list)})"
+        vtp_count = len(vtp_abs_list)
+        vtp_section = (
+            f"\n# --- Load 3D upscaled geometry ({vtp_count} VTP) ---\n"
+            f"{vtp_reader}\n"
+            f"reader_3d.UpdatePipeline()\n"
+            f"display_3d = Show(reader_3d, view)\n"
+            f"ColorBy(display_3d, ('POINTS', 'Temperature'))\n"
+            f"display_3d.RescaleTransferFunctionToDataRange(True)\n"
+            f"display_3d.Opacity = 0.6\n"
+            f"\n"
+            f"# 3D temperature colour map (distinct from 2D)\n"
+            f"tf_3d = GetColorTransferFunction('Temperature')\n"
+            f"tf_3d.ApplyPreset('Jet', True)\n"
+            f'print(f"[ParaView] 3D upscaled geometry loaded: {vtp_count} file(s)")\n'
+        )
+
     script = f'''\
-# Auto-generated ParaView state script — StellarOrion
+# Auto-generated ParaView state script -- StellarOrion
 # Open with: paraview --script=paraview_state.pv.py
 # Or load manually: File > Open > {os.path.basename(vtu_list[0])}
 
 from paraview.simple import *
 
-# ── Load VTU ({label}) ───────────────────────────────────────────
+# --- Load VTU ({label}) ---
 {reader_line}
 {time_section}
 
-# ── Default colouring: Temperature ────────────────────────────
+# --- Default colouring: Temperature ---
 view = CreateRenderView()
 view.ViewSize = [1920, 1080]
 view.Background = [0.06, 0.07, 0.11]  # StellarOrion dark theme
@@ -1492,14 +1714,15 @@ display.RescaleTransferFunctionToDataRange(True)
 # Temperature colour map (hot)
 tf = GetColorTransferFunction('Temperature')
 tf.ApplyPreset('Black-Body Radiation', True)
-
-# ── Reset camera ──────────────────────────────────────────────
+{vtp_section}
+# --- Reset camera ---
 view.ResetCamera()
 Render()
 
-print("[ParaView] Loaded: {len(vtu_list)} timestep(s) from {os.path.dirname(vtu_list[0])}")
-print("[ParaView] Use the VCR controls (▶/⏸) to animate through timesteps.")
-print("[ParaView] Switch arrays in the Properties panel under Cell Data.")
+print("[ParaView] Loaded: {len(vtu_list)} 2D timestep(s) from {os.path.dirname(vtu_list[0])}")
+{"print('[ParaView] 3D upscaled geometry also loaded (rotate to see full revolution).')" if vtp_abs_list else ""}
+print("[ParaView] Use the VCR controls to animate through timesteps.")
+print("[ParaView] Switch arrays in the Properties panel.")
 
 # Uncomment to save a screenshot:
 # SaveScreenshot('{os.path.join(output_dir, "paraview_screenshot.png")}', view)
