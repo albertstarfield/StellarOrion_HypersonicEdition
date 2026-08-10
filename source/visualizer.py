@@ -1229,6 +1229,232 @@ def generate_preview(surf_file, output_path, params=None, ref_params=None):
         return True
     except: return False
 
+def export_sparta_vtk(grid_file, output_path, ref_params=None):
+    """Export SPARTA grid dump to VTK XML UnstructuredGrid (.vtu) for ParaView.
+
+    Each 2D cell (xlo,ylo,xhi,yhi) becomes a VTK Quad with cell data arrays:
+        Temperature, Velocity_U, Velocity_V, Velocity_W, Velocity_Magnitude,
+        Mach_Number, Pressure, Knudsen_Number, Number_Density.
+
+    Parameters
+    ----------
+    grid_file : str
+        Path to SPARTA ``grid.N.out`` file.
+    output_path : str
+        Destination ``.vtu`` file path.
+    ref_params : dict, optional
+        Reference parameters (``nose_radius``, ``env_preset``).
+    """
+    data = parse_grid_dump(grid_file)
+    if len(data) == 0:
+        print(f"[VTK] No data in {grid_file}, skipping export.")
+        return None
+
+    valid_mask = np.all(np.isfinite(data[:, :10]), axis=1)
+    data = data[valid_mask]
+    n_cells = len(data)
+    if n_cells == 0:
+        print(f"[VTK] No valid data in {grid_file}, skipping export.")
+        return None
+
+    # Extract base columns
+    xlo, ylo = data[:, 0], data[:, 1]
+    xhi, yhi = data[:, 2], data[:, 3]
+    n_raw = data[:, 4]
+    u, v, w = data[:, 5], data[:, 6], data[:, 7]
+    temp = data[:, 8]
+    nrho = data[:, 9]
+
+    # Derived quantities
+    vel_mag = np.sqrt(u**2 + v**2 + w**2)
+    pressure = nrho * 1.380649e-23 * temp
+
+    # Mach number
+    preset = str(ref_params.get("env_preset", "mars")).lower() if ref_params else "mars"
+    if "mars" in preset:
+        gamma, R = 1.29, 188.9
+    else:
+        gamma, R = 1.4, 287.05
+    sound_speed = np.sqrt(gamma * R * np.maximum(temp, 1.0))
+    mach = vel_mag / np.maximum(sound_speed, 1e-30)
+
+    # Knudsen number
+    d_mol = 3.7e-10
+    n_safe = np.maximum(np.nan_to_num(n_raw), 1.0)
+    mfp = 1.0 / (np.sqrt(2) * np.pi * d_mol**2 * n_safe)
+    L_char = float(ref_params.get("nose_radius", 0.55)) if ref_params and ref_params.get("nose_radius") else 0.55
+    knudsen = mfp / L_char
+
+    # Build 2D quad corners (extruded to z=0 for VTK)
+    n_points = n_cells * 4
+    points = np.empty((n_points, 3), dtype=np.float64)
+    for i in range(n_cells):
+        base = i * 4
+        points[base]     = [xlo[i], ylo[i], 0.0]
+        points[base + 1] = [xhi[i], ylo[i], 0.0]
+        points[base + 2] = [xhi[i], yhi[i], 0.0]
+        points[base + 3] = [xlo[i], yhi[i], 0.0]
+
+    # Connectivity: each cell references 4 sequential point indices
+    connectivity = np.arange(n_points, dtype=np.int32)
+    offsets = np.arange(4, n_points + 1, 4, dtype=np.int32)
+    cell_types = np.full(n_cells, 9, dtype=np.int32)  # VTK_QUAD
+
+    # --- Write VTK XML UnstructuredGrid (.vtu) ASCII ---
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write('<?xml version="1.0"?>\n')
+        f.write('<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">\n')
+        f.write("  <UnstructuredGrid>\n")
+        f.write(f'    <Piece NumberOfPoints="{n_points}" NumberOfCells="{n_cells}">\n')
+
+        # Points
+        f.write("      <Points>\n")
+        f.write('        <DataArray type="Float64" NumberOfComponents="3" format="ascii">\n')
+        for p in points:
+            f.write(f"          {p[0]:.10e} {p[1]:.10e} {p[2]:.10e}\n")
+        f.write("        </DataArray>\n")
+        f.write("      </Points>\n")
+
+        # Cells
+        f.write("      <Cells>\n")
+        f.write('        <DataArray type="Int32" Name="connectivity" format="ascii">\n')
+        f.write("          " + " ".join(str(c) for c in connectivity) + "\n")
+        f.write("        </DataArray>\n")
+        f.write('        <DataArray type="Int32" Name="offsets" format="ascii">\n')
+        f.write("          " + " ".join(str(o) for o in offsets) + "\n")
+        f.write("        </DataArray>\n")
+        f.write('        <DataArray type="Int32" Name="types" format="ascii">\n')
+        f.write("          " + " ".join(str(t) for t in cell_types) + "\n")
+        f.write("        </DataArray>\n")
+        f.write("      </Cells>\n")
+
+        # Cell data arrays
+        arrays = [
+            ("Temperature", temp),
+            ("Velocity_U", u),
+            ("Velocity_V", v),
+            ("Velocity_W", w),
+            ("Velocity_Magnitude", vel_mag),
+            ("Mach_Number", mach),
+            ("Pressure", pressure),
+            ("Knudsen_Number", knudsen),
+            ("Number_Density", nrho),
+        ]
+        f.write("      <CellData>\n")
+        for name, arr in arrays:
+            f.write(f'        <DataArray type="Float64" Name="{name}" format="ascii">\n')
+            f.write("          " + " ".join(f"{v:.10e}" for v in arr) + "\n")
+            f.write("        </DataArray>\n")
+        f.write("      </CellData>\n")
+
+        f.write("    </Piece>\n")
+        f.write("  </UnstructuredGrid>\n")
+        f.write("</VTKFile>\n")
+
+    print(f"[VTK] Exported {n_cells} cells to {output_path}")
+    return output_path
+
+
+def launch_paraview_for_sparta(vtk_file, output_dir=None):
+    """Generate a ParaView Python state script and open it.
+
+    Creates a ``.py`` state file that loads the VTU, applies colour maps,
+    and resets the camera.  Launches ParaView in ``--script`` mode when
+    available, otherwise just prints the script path for manual loading.
+
+    Parameters
+    ----------
+    vtk_file : str
+        Path to the ``.vtu`` file produced by :func:`export_sparta_vtk`.
+    output_dir : str, optional
+        Directory for the generated ``.pv.py`` script.  Defaults to the
+        same directory as *vtk_file*.
+    """
+    if output_dir is None:
+        output_dir = os.path.dirname(vtk_file)
+    os.makedirs(output_dir, exist_ok=True)
+
+    script_path = os.path.join(output_dir, "paraview_state.pv.py")
+
+    # Resolve absolute path for the VTU inside the script
+    vtk_abs = os.path.abspath(vtk_file).replace("\\", "/")
+
+    script = f'''\
+# Auto-generated ParaView state script — StellarOrion
+# Open with: paraview --script=paraview_state.pv.py
+# Or load manually: File > Open > {os.path.basename(vtk_file)}
+
+from paraview.simple import *
+
+# ── Load VTU ──────────────────────────────────────────────────
+reader = XMLUnstructuredGridReader(FileName='{vtk_abs}')
+reader.UpdatePipeline()
+
+# ── Default colouring: Temperature ────────────────────────────
+view = CreateRenderView()
+view.ViewSize = [1920, 1080]
+view.Background = [0.06, 0.07, 0.11]  # StellarOrion dark theme
+
+display = Show(reader, view)
+ColorBy(display, ('CELLS', 'Temperature'))
+display.RescaleTransferFunctionToDataRange(True)
+
+# Temperature colour map (hot)
+tf = GetColorTransferFunction('Temperature')
+tf.ApplyPreset('Black-Body Radiation', True)
+
+# ── Reset camera ──────────────────────────────────────────────
+view.ResetCamera()
+Render()
+
+print("[ParaView] Loaded: {os.path.basename(vtk_file)}")
+print("[ParaView] Switch between arrays in the Properties panel.")
+print("[ParaView] Available arrays:")
+for i in range(reader.GetNumberOfArrays()):
+    name = reader.GetCellDataArrayName(i)
+    print(f"    - {{name}}")
+
+# Uncomment to save a screenshot:
+# SaveScreenshot('{os.path.join(output_dir, "paraview_screenshot.png")}', view)
+'''
+
+    with open(script_path, "w", encoding="utf-8") as f:
+        f.write(script)
+
+    print(f"[ParaView] State script written to {script_path}")
+
+    # Attempt to launch ParaView in background
+    import subprocess
+    paraview_bin = None
+    import shutil
+    for candidate in ["paraview", "ParaView", "/Applications/ParaView.app/Contents/MacOS/paraview"]:
+        found = shutil.which(candidate)
+        if found:
+            paraview_bin = found
+            break
+        if os.path.isfile(candidate):
+            paraview_bin = candidate
+            break
+
+    if paraview_bin:
+        try:
+            subprocess.Popen(
+                [paraview_bin, "--script", script_path],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            print(f"[ParaView] Launched with script: {script_path}")
+        except Exception as e:
+            print(f"[ParaView] Could not auto-launch ({e}). Load script manually.")
+    else:
+        print("[ParaView] ParaView not found on PATH. Load script manually:")
+        print(f"    paraview --script={script_path}")
+
+    return script_path
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="StellarOrion Visualizer CLI")
     parser.add_argument("--grid", type=str, help="Path to grid.X.out file")

@@ -3356,10 +3356,12 @@ run             {steps}
                 for s in ['N2', 'O2', 'NO', 'N', 'O']:
                     self.window.evaluate_js(f"document.getElementById('img-species-{s}').src = 'assets/plots/species_{s}_map.png?' + new Date().getTime()")
 
-            # self.log_to_gui("    [+] Exporting 3D Results to ParaView (VTK)...")
-            # vtk_path = os.path.join(self.cwd, "web", "assets", "data", "upscaled_baseline.vtk")
-            # os.makedirs(os.path.dirname(vtk_path), exist_ok=True)
-            # visualizer.export_upscaled_vtk(grid_files[-1], vtk_path)
+            self.log_to_gui("    [+] Exporting baseline results to ParaView (VTK)...")
+            vtk_path = os.path.join(self.cwd, "web", "assets", "data", "baseline_paraview.vtu")
+            os.makedirs(os.path.dirname(vtk_path), exist_ok=True)
+            vtk_result = visualizer.export_sparta_vtk(grid_files[-1], vtk_path, ref_params=viz_metadata)
+            if vtk_result:
+                visualizer.launch_paraview_for_sparta(vtk_path, output_dir=os.path.dirname(vtk_path))
             
             # --- PINN Refinement Stage ---
             if opt_params.get('pinn_accel', True):
@@ -3654,6 +3656,11 @@ run             {steps}
                     visualizer.generate_convergence_plot(log_lines, sample_dir, ref_params=viz_metadata)
                     visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(sample_dir, "3d_temp.png"), 
                                                 surf_file=os.path.join(cad_dir, "HIAD_opt.surf"), prop='temp', ref_params=viz_metadata)
+                    # VTK export + ParaView (always runs by default)
+                    vtk_path = os.path.join(sample_dir, f"paraview_sample_{i+1}.vtu")
+                    vtk_result = visualizer.export_sparta_vtk(grid_files[-1], vtk_path, ref_params=viz_metadata)
+                    if vtk_result:
+                        visualizer.launch_paraview_for_sparta(vtk_path, output_dir=sample_dir)
             except Exception as ve:
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed for Sample {i+1}: {ve}")
 
@@ -3874,6 +3881,7 @@ run             {steps}
         grid_dir = os.path.join(cad_dir, "results_reference")
         grid_files = sorted([os.path.join(grid_dir, f) for f in os.listdir(grid_dir) if f.startswith("grid.") and f.endswith(".out")], key=lambda x: int(os.path.basename(x).split('.')[1]))
         viz_metadata = self._get_viz_params(opt_params, best_config)
+        ani_path = os.path.join(self.cwd, "web", "assets", "plots", "validation_anim_opt.mp4")
         visualizer.generate_animation(grid_files, ani_path, ref_params=viz_metadata)
         viz_metadata = self._get_viz_params(opt_params, best_config)
         visualizer.generate_plots(grid_files[-1], os.path.join(self.cwd, "web", "assets", "plots"), ref_params=viz_metadata, surf_file=os.path.join(self.cwd, "CADDesign", "HIAD_final.surf"))
