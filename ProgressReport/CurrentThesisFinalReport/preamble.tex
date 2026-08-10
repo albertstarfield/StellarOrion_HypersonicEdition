@@ -7,8 +7,11 @@
 \usepackage{graphicx}      %menghandle gambar
 \usepackage{tabularx}
 \usepackage{float}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 
-\usepackage[hang,nooneline,scriptsize,md]{subfigure}
+% subfigure removed: incompatible with subcaption (causes Illegal parameter errors)
+% \usepackage[hang,nooneline,scriptsize,md]{subfigure}
 \usepackage{epsfig}
 \usepackage[font=small,labelfont=bf]{caption}
 \usepackage[onehalfspacing]{setspace}      %buat kombinasi spacing
@@ -65,7 +68,7 @@
 \titlespacing*{\chapter}{0pt}{-1.5\baselineskip}{1em}
 
 %menambahkan titik titik di daftar isi, gambar, tabel
-\usepackage[subfigure]{tocloft}
+\usepackage{tocloft}
 \renewcommand{\cftpartleader}{\dotfill}
 \renewcommand{\cftpartafterpnum}{\cftparfillskip}
 \renewcommand{\cftchapleader}{\dotfill} 

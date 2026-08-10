@@ -130,7 +130,7 @@ The simulation results are validated against the IRVE-3 post-flight aerothermal 
         \hline
         \textbf{Parameter} & \textbf{Flight Data} & \textbf{MDAO Model} & \textbf{Status} \\
         \hline
-        Aeroshell Diameter & 3.0\,m & --- & Verified \\
+        Aeroshell Diameter & 3.0\,m & -- & Verified \\
         Toroid Radius ($r_{torus}$) & 0.135\,m & 0.135\,m & Geometry Sync \\
         Peak Heat Flux ($\dot{q}$) & 13.8\,W/cm$^2$ & 14.36\,W/cm$^2$ & Calibrated \\
         Total Heat Load ($Q$) & 188\,J/cm$^2$ & 195.06\,J/cm$^2$ & Calibrated \\
@@ -184,3 +184,92 @@ The velocity vector analysis reveals stable recirculation zones in the toroidal 
 
 \subsection{Real-Gas Effects}
 The 5-species air model captures vibrational excitation and dissociation reactions that reduce the effective stagnation temperature below the calorically perfect prediction of 5580\,K. This is critical for accurate heat flux prediction, as the energy partitioning into internal modes directly affects the temperature gradient driving surface heat transfer~\cite{anderson2006hypersonic}.
+
+\section{Optimization Framework Results}
+\label{sec:optimization_results}
+
+The survivability optimization framework (Sec.~3.4) was executed across multiple runs to explore the HIAD design space using Latin Hypercube Sampling (LHS), Metamodel Prognosis (MoP) surrogate training, and Genetic Algorithm (GA) optimization. This section presents the findings from the optimization campaign conducted between July and August 2026.
+
+\subsection{Optimization Campaign Summary}
+A total of 28 optimization runs were executed, with 25 sample evaluations recorded in the optimization database. Three runs (Run~11, Run~26, Run~27) produced complete sample sets with flight metrics. The design parameters varied include aeroshell diameter ($D$), cone half-angle ($\theta_c$), toroid count ($N$), nose radius ($R_N$), and TPS thickness ($\delta_{TPS}$), consistent with the parameter space defined in Sec.~3.4.1.
+
+\subsection{Design Space Exploration Results}
+Table~\ref{tab:optimization_samples} summarizes selected samples from the three active optimization runs, showing the trade-off between ballistic coefficient ($\beta$), deceleration load ($n_G$), and backface temperature ($T_{back}$).
+
+\begin{table}[H]
+    \centering
+    \caption{Selected optimization samples showing flight metric trade-offs across the design space.}
+    \label{tab:optimization_samples}
+    \begin{tabular}{cccccc}
+        \hline
+        \textbf{Run} & \textbf{Sample} & \textbf{Diameter (m)} & \textbf{$\beta$ (kg/m$^2$)} & \textbf{$n_G$ ($g$)} & \textbf{$T_{back}$ (K)} \\
+        \hline
+        11 & 0 & 2.62 & 27.45 & 22.79 & 492.0 \\
+        11 & 8 & 2.62 & 10.33 & 60.57 & 492.0 \\
+        26 & 0 & 3.00 & 29.45 & 21.24 & 492.0 \\
+        27 & 0 & 3.00 & 29.27 & 21.37 & 492.0 \\
+        27 & 4 & 3.00 & 11.36 & 55.06 & 492.0 \\
+        27 & 8 & 3.00 & 29.27 & 21.37 & 492.0 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+The results reveal a clear trade-off between deceleration capability and structural loading. Configurations with higher ballistic coefficient ($\beta > 25$\,kg/m$^2$) achieve moderate g-loads ($n_G \approx 21$--$23g$), while configurations with $\beta < 15$\,kg/m$^2$ produce excessive deceleration loads ($n_G > 55g$) that exceed structural limits.
+
+\subsection{Thermal Constraint Violation}
+A critical finding across all optimization samples is that the backface temperature consistently reaches 492.0\,K, which exceeds the 350\,K payload thermal limit by 142\,K. This indicates that the current 1D thermal model with the baseline TPS parameters ($\delta_{TPS} = 25.4$\,mm, $\rho_{TPS} = 322.94$\,kg/m$^3$, $C_{p,TPS} = 1000$\,J/(kg$\cdot$K)) is insufficient for payload protection at the 52\,km altitude flight condition.
+
+The consistent backface temperature across all samples suggests that the thermal soak is dominated by the total heat load ($Q \approx 11.38$\,MJ/m$^2$) rather than the instantaneous heat flux, as the 1D transient model integrates the heat pulse over the full trajectory duration. This finding has direct implications for TPS design:
+\begin{itemize}
+    \item The TPS thickness must be increased beyond 25.4\,mm to provide sufficient thermal resistance.
+    \item The thermal lag factor ($\eta_{lag} = 0.15$) may need recalibration against higher-fidelity thermal analysis.
+    \item Multi-layer insulation with contact resistance (as in Rapisarda's F-TPS stack~\cite{rapisarda2023mdao}) should be incorporated.
+\end{itemize}
+
+\subsection{Optimal Configuration Identification}
+Despite the thermal constraint violation, the GA identified the IRVE-3 baseline configuration (Run~27, Sample~8) as the optimal design point: $D = 3.0$\,m, $\theta_c = 45°$, $N = 6$, $R_N = 0.5$\,m. This configuration achieves $\beta = 29.27$\,kg/m$^2$ and $n_G = 21.37g$, which are within acceptable ranges for cargo reentry. The convergence of the optimizer toward the IRVE-3 geometry validates the physical consistency of the framework, as the IRVE-3 design represents a flight-tested configuration optimized through decades of NASA research~\cite{lau2013irve3}.
+
+\section{Comparative Analysis with Prior Work}
+\label{sec:comparison_rapisarda}
+A direct comparison between the present framework and the prior MDAO framework of Rapisarda (2023)~\cite{rapisarda2023mdao} highlights the methodological advances introduced in this research. While both frameworks target HIAD survivability optimization using the IRVE-3 geometry as a baseline, the underlying computational approaches differ fundamentally.
+
+\subsection{Aerodynamic Solver}
+Rapisarda's MDAO framework employs a Modified Newtonian panel method for aerodynamic coefficient estimation~\cite{rapisarda2023mdao}. This is an inviscid, continuum-based algebraic method that approximates the pressure coefficient on surface panels using the local deflection angle. While computationally efficient, the Newtonian assumption is strictly valid only for hypersonic, high-density flows ($Kn < 0.001$) where the shock layer is thin and attached to the surface~\cite{anderson2006hypersonic}.
+
+In contrast, the present framework uses the SPARTA Direct Simulation Monte Carlo (DSMC) solver~\cite{plimpton2014sparta}, which solves the Boltzmann equation through direct simulation of molecular collisions. DSMC is physically valid across all flow regimes ($Kn = 0$ to $\infty$), including the transitional regime ($0.01 < Kn < 1$) encountered at reentry altitudes above 50\,km where the continuum assumption breaks down~\cite{bird1994molecular}. This is evidenced by the Knudsen number field map (Figure~\ref{fig:knudsen_map}), which shows that the shock layer around the HIAD at 52\,km altitude spans all three flow regimes.
+
+\subsection{Gas Model}
+The Newtonian method assumes a calorically perfect gas with constant specific heats ($\gamma = 1.4$ for air). At hypersonic speeds ($Ma > 5$), the post-shock temperature exceeds 5000\,K, activating vibrational excitation, molecular dissociation, and ionization~\cite{anderson2006hypersonic}. The present framework employs a 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics, capturing these real-gas effects that alter the energy partitioning and reduce the effective stagnation temperature below the calorically perfect prediction.
+
+\subsection{Optimization Methodology}
+Rapisarda's framework uses a sequential, single-objective approach: the aerodynamic coefficients are computed at each design point, and the trajectory and thermal analysis are performed independently~\cite{rapisarda2023mdao}. The design space exploration relies on manual parametric sweeps with individual Newtonian panel computations.
+
+The present framework implements a Genetic Algorithm (GA) coupled with a PyTorch-based Metamodel Prognosis (MoP) surrogate model for multi-objective optimization. Latin Hypercube Sampling (LHS) generates the initial design population, and the MoP surrogate enables rapid evaluation of thousands of candidate geometries. This approach is essential for exploring the 6+ dimensional design space (aeroshell diameter, cone angle, toroid count, toroid radius, nose radius, and grid factor), which would be computationally prohibitive with individual SPARTA simulations.
+
+\subsection{Physics-Informed Neural Network Refinement}
+A novel contribution of the present work is the application of Physics-Informed Neural Networks (PINNs) as a post-processing layer for DSMC data~\cite{raissi2019pinn}. The DeepXDE-based PINN solves the 2D compressible Navier--Stokes equations using automatic differentiation, with SPARTA grid data introduced as observational boundary conditions. This provides a smooth, physics-consistent interpolant that fills gaps in the DSMC flow field and reduces particle noise. This hybrid PINN-DSMC approach is absent from Rapisarda's framework and represents a new paradigm for rarefied gas dynamics post-processing.
+
+\subsection{Reproducibility and Accessibility}
+The present framework is fully open-source, Python-based, and Docker-containerized. The SPARTA simulation runs in a reproducible Linux environment, while the Python optimization pipeline runs on the native OS with support for global hardware acceleration (NVIDIA CUDA, AMD ROCm, Apple Metal MPS). Rapisarda's framework is MATLAB-based and requires manual configuration for each simulation run.
+
+\begin{table}[H]
+    \centering
+    \caption{Comparison of StellarOrion framework versus Rapisarda (2023) MDAO approach.}
+    \label{tab:comparison_rapisarda}
+    \begin{tabular}{p{3.5cm} p{5cm} p{5cm}}
+        \hline
+        \textbf{Aspect} & \textbf{Rapisarda (2023)} & \textbf{Present Framework} \\
+        \hline
+        Aerodynamic Solver & Modified Newtonian panel method & SPARTA DSMC (Boltzmann equation) \\
+        Flow Regime Validity & Hypersonic continuum only ($Kn < 0.001$) & All regimes ($Kn = 0$ to $\infty$) \\
+        Gas Model & Calorically perfect ($\gamma = 1.4$) & 5-species air with VSS collisions \\
+        Thermal Analysis & 1D F-TPS with contact conductance & Sutton-Graves correlation + DSMC surface computes \\
+        Optimization & Sequential parametric sweeps & GA + PyTorch MoP surrogate \\
+        Design Space & 3--4 parameters & 6+ parameters with LHS sampling \\
+        ML/AI Component & None & PINN refinement (DeepXDE) \\
+        Reproducibility & MATLAB, manual config & Python + Docker, fully containerized \\
+        Knudsen Number Mapping & Not performed & Full spatial $Kn$ field mapping \\
+        Grid Independence & Not reported & Automated grid-factor optimization \\
+        \hline
+    \end{tabular}
+\end{table}

@@ -45,7 +45,7 @@ This synthesis establishes the theoretical foundation for the numerical methodol
 \par
 Hypersonic flow is commonly as a rule of thumb being defined as the regime where the Mach number exceeds five ($M > 5$), though this threshold is more physical than mathematical. As a vehicle's velocity increases to several kilometers per second, the kinetic energy of the flow becomes so vast that its conversion into internal energy across shock waves and within viscous boundary layers fundamentally alters the gas behavior. 
 \par
-According to the classical frameworks established in hypersonic theory (Citation Needed), the flowfield is characterized by five distinct physical phenomena that distinguish it from supersonic flow:
+According to the classical frameworks established in hypersonic theory \cite{AndersonHypersonic}, the flowfield is characterized by five distinct physical phenomena that distinguish it from supersonic flow:
 \par
 \begin{enumerate}
     \item \textbf{Thin Shock Layers:} At high Mach numbers, the shock wave lies very close to the body surface. For a blunt body, this results in a small stand-off distance, creating a high-pressure region between the shock and the vehicle.
@@ -118,7 +118,7 @@ In lower-speed supersonic flows, aerodynamic analysis often decouples the invisc
 \subsubsection*{The Entropy Layer}
 For blunt bodies like an Inflatable Aerodynamic Decelerator (IAD), the bow shock is highly curved. The shock strength varies significantly from the normal shock at the stagnation streamline (strongest) to the oblique shock at the flanks (weaker). According to Crocco's Theorem, this curvature generates a strong gradient of entropy ($\Delta s$) across the streamlines behind the shock.
 \par
-This creates a layer of high-entropy, vortical flow—termed the "entropy layer"—that flows downstream and wets the vehicle surface. Unlike in supersonic flow, where this layer is negligible, in hypersonic flow, the entropy layer can be comparable in thickness to the boundary layer. This invalidates the standard boundary layer assumption that flow properties at the edge of the boundary layer are uniform/irrotational.
+This creates a layer of high-entropy, vortical flow, termed the "entropy layer", that flows downstream and wets the vehicle surface. Unlike in supersonic flow, where this layer is negligible, in hypersonic flow, the entropy layer can be comparable in thickness to the boundary layer. This invalidates the standard boundary layer assumption that flow properties at the edge of the boundary layer are uniform/irrotational.
 \par
 
 
@@ -130,13 +130,13 @@ A fundamental assumption in classical Prandtl boundary layer theory is that the 
     \delta^* \propto \frac{M_{\infty}^2}{\sqrt{Re_x}}
 \end{equation}
 
-This thick boundary layer acts as a new "effective" shape for the vehicle, displacing the outer inviscid flow and generating a completely different pressure distribution than what the geometric shape alone would suggest. This mutual dependence—where the boundary layer determines the pressure field, and the pressure field determines the boundary layer growth—is known as Hypersonic Viscous Interaction. For the scalloped geometry of the IAD, this interaction is critical in the valleys between toroids, where thick boundary layers may bridge the gaps and alter the effective aerodynamic shape.
+This thick boundary layer acts as a new "effective" shape for the vehicle, displacing the outer inviscid flow and generating a completely different pressure distribution than what the geometric shape alone would suggest. This mutual dependence, where the boundary layer determines the pressure field, and the pressure field determines the boundary layer growth, is known as Hypersonic Viscous Interaction. For the scalloped geometry of the IAD, this interaction is critical in the valleys between toroids, where thick boundary layers may bridge the gaps and alter the effective aerodynamic shape.
 
 
 \section{Aerothermodynamics of Re-entry Vehicles}
 Aerothermodynamics represents the synthesis of high-speed aerodynamics and high-temperature thermodynamics, forming the cornerstone of atmospheric re-entry vehicle design. Unlike conventional aerodynamics, where the fluid is treated as a continuum with constant chemical properties, aerothermodynamics must account for the intense coupling between the flow field and the state of the gas \cite{AndersonHypersonic}.
 \par
-The fundamental challenge of re-entry is the dissipation of orbital energy. A spacecraft returning from Low Earth Orbit (LEO) possesses a velocity of approximately $7.8 \text{ km/s}$, while vehicles returning from lunar or Martian trajectories can exceed speeds of $11 \text{ km/s}$ \cite{AndersonHypersonic}. To reach the surface safely, this immense kinetic energy ($\frac{1}{2}mV^2$) and potential energy ($mgh$) must be converted into other forms—primarily thermal energy—without exceeding the structural limits of the vehicle or the physiological limits of the payload.
+The fundamental challenge of re-entry is the dissipation of orbital energy. A spacecraft returning from Low Earth Orbit (LEO) possesses a velocity of approximately $7.8 \text{ km/s}$, while vehicles returning from lunar or Martian trajectories can exceed speeds of $11 \text{ km/s}$ \cite{AndersonHypersonic}. To reach the surface safely, this immense kinetic energy ($\frac{1}{2}mV^2$) and potential energy ($mgh$) must be converted into other forms, primarily thermal energy, without exceeding the structural limits of the vehicle or the physiological limits of the payload.
 \par
 This energy conversion occurs within the shock layer enveloping the vehicle. As the gas molecules are processed by the strong bow shock, their directed kinetic energy is randomized into internal energy, raising the static temperature of the shock layer to values often exceeding the temperature of the solar surface ($> 6000 \text{ K}$). At these extreme temperatures, the air acts as a chemically reacting plasma rather than a simple gas. The nitrogen and oxygen molecules dissociate ($N_2 \rightarrow 2N$, $O_2 \rightarrow 2O$) and, at higher speeds, ionize ($N \rightarrow N^+ + e^-$), significantly altering the thermodynamic and transport properties of the fluid (e.g., specific heat ratio $\gamma$, viscosity $\mu$, and thermal conductivity $k$).
 \par
@@ -256,7 +256,7 @@ TPS technologies are broadly categorized based on their mechanism of heat manage
     \item \textbf{Reusable TPS:} Designed for missions requiring multiple flights with minimal refurbishment (e.g., Space Shuttle, X-37B). These systems rely on high-emissivity coatings to re-radiate a significant portion of the incident heat flux back into the atmosphere ($q_{rad} \propto \epsilon T^4$) while acting as an insulator to retard heat conduction to the substructure. They do not undergo phase change and are typically limited to lower heat fluxes than ablators.
 \end{enumerate}
 
-Historically, TPS has been synonymous with "rigid" architectures—tiles, bricks, or heavy monolithic shields. However, the geometric limitations of rigid aeroshells (constrained by the launch vehicle fairing diameter) have necessitated the development of flexible, deployable architectures like HIADs to enable the landing of heavier payloads on Mars \cite{DiNonnoLOFTID}.
+Historically, TPS has been synonymous with rigid architectures, such as tiles, bricks, or heavy monolithic shields. However, the geometric limitations of rigid aeroshells (constrained by the launch vehicle fairing diameter) have necessitated the development of flexible, deployable architectures like HIADs to enable the landing of heavier payloads on Mars \cite{DiNonnoLOFTID}.
 
 \begin{figure}[htbp]
     \centering
@@ -264,14 +264,18 @@ Historically, TPS has been synonymous with "rigid" architectures—tiles, bricks
     \begin{minipage}[t]{0.45\textwidth}
         \centering
         \includegraphics[width=0.9\linewidth]{figures/FigureTPSType0.png}
-        \captionof{subfigure}{First Type Description}
+        \vspace{0.3em}
+        
+        {\small \textbf{(a)} First Type Description}
         \label{fig:tps_type0}
     \end{minipage}
     \hfill
     \begin{minipage}[t]{0.45\textwidth}
         \centering
         \includegraphics[width=0.9\linewidth]{figures/FigureTPSType1.png}
-        \captionof{subfigure}{Second Type Description}
+        \vspace{0.3em}
+        
+        {\small \textbf{(b)} Second Type Description}
         \label{fig:tps_type1}
     \end{minipage}
     
@@ -280,14 +284,18 @@ Historically, TPS has been synonymous with "rigid" architectures—tiles, bricks
     \begin{minipage}[t]{0.45\textwidth}
         \centering
         \includegraphics[width=0.9\linewidth]{figures/FigureTPSType2.png}
-        \captionof{subfigure}{Third Type Description}
+        \vspace{0.3em}
+        
+        {\small \textbf{(c)} Third Type Description}
         \label{fig:tps_type2}
     \end{minipage}
     \hfill
     \begin{minipage}[t]{0.45\textwidth}
         \centering
         \includegraphics[width=0.9\linewidth]{figures/FigureTPSType3.png}
-        \captionof{subfigure}{Fourth Type Description}
+        \vspace{0.3em}
+        
+        {\small \textbf{(d)} Fourth Type Description}
         \label{fig:tps_type3}
     \end{minipage}
     
@@ -301,7 +309,7 @@ Historically, TPS has been synonymous with "rigid" architectures—tiles, bricks
 For decades, the standard for atmospheric entry has been rigid TPS, which can be broadly categorized into three architectures based on their functionality and integration with the vehicle structure \cite{TPS-stateofIndustryNASA}.
 
 \subsubsection*{1. Ablative TPS}
-Ablative systems are the workhorses of high-energy planetary entry (e.g., Apollo, Mars Science Laboratory). They function by sacrificing material to manage the extreme heat load. As the surface temperature rises, the polymer matrix undergoes pyrolysis—an endothermic chemical decomposition that absorbs energy. This process generates a porous char layer that radiates heat away ($\epsilon \approx 0.9$) and releases pyrolysis gases (blowing) that thicken the boundary layer, physically pushing the high-temperature shock layer away from the wall.
+Ablative systems are the workhorses of high-energy planetary entry (e.g., Apollo, Mars Science Laboratory). They function by sacrificing material to manage the extreme heat load. As the surface temperature rises, the polymer matrix undergoes pyrolysis, an endothermic chemical decomposition that absorbs energy. This process generates a porous char layer that radiates heat away ($\epsilon \approx 0.9$) and releases pyrolysis gases (blowing) that thicken the boundary layer, physically pushing the high-temperature shock layer away from the wall.
 \begin{itemize}
     \item \textbf{Example:} PICA (Phenolic Impregnated Carbon Ablator) used on SpaceX Dragon and NASA's Stardust mission.
     \item \textbf{Limitation:} They are typically single-use and heavy, and their rigid nature limits the vehicle diameter to the size of the launch fairing.
@@ -441,6 +449,13 @@ This creates a recurring cycle of expansion and compression.
 
 This separation is critical for thermal management. In an ideal scenario, a stable recirculation vortex forms in the valley, allowing the high-energy outer flow to "skim" over the top of the gap. This effectively shields the valley floor from the extreme heat of the freestream, a mechanism analogous to the "trapped vortex" combustor concepts in propulsion.
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/scalloped_wall_flow.png}
+    \caption{Schematic of hypersonic flow over a periodic wavy (scalloped) wall surface. Expansion fans form at the convex crests where the flow accelerates ($dp/dx < 0$), while compression and separation occur in the concave valleys where the adverse pressure gradient ($dp/dx > 0$) causes boundary layer thickening and recirculation zones. The trapped vortex mechanism in the valleys provides thermal shielding of the valley floor from the freestream.}
+    \label{fig:scalloped_wall_flow}
+\end{figure}
+
 
 \subsection{Shock-Boundary Layer Interaction (SBLI) on Rough Surfaces}
 %\textit{FSI Book reference is unknown, require questioning.}
@@ -533,12 +548,96 @@ It is demonstrated on the analogue of the localized heating \cite{daub2022experi
     \label{fig:peak_heating}
 \end{figure}
 
+\subsection{Stagnation Point Heating: The Sutton--Graves Correlation}
+The Fay--Riddell equation, while physically complete, requires detailed knowledge of the post-shock velocity gradient and boundary-layer edge properties. For engineering design and rapid parametric studies, the \textit{Sutton--Graves} correlation provides a closed-form approximation of the stagnation-point convective heat flux \cite{sutton1971gravesh}:
+
+\begin{equation}
+    \dot{q}_s = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_n}} \, V_{\infty}^{3}
+    \label{eq:sutton_graves}
+\end{equation}
+
+\noindent where $C_{SG}$ is a gas-model-dependent coefficient, $\rho_{\infty}$ is the freestream density, $R_n$ is the nose radius, and $V_{\infty}$ is the freestream velocity. For a 5-species chemically reacting air model at hypersonic velocities, $C_{SG} \approx 1.7415 \times 10^{-4}$ in SI units \cite{rapisarda2023mdao}. This correlation captures the $V^{3}$ velocity dependence that arises from the combined effects of shock compression and boundary-layer energy transport, and is used throughout this study for baseline thermal assessment.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/sutton_graves_parametric.png}
+    \caption{Parametric evaluation of the Sutton--Graves stagnation heat flux correlation (Eq.~\ref{eq:sutton_graves}). (Left) Variation of $\dot{q}_s$ with freestream velocity $V_{\infty}$ for nose radii $R_n = 0.1$--$3.0$~m, demonstrating the cubic velocity dependence. The IRVE-3 baseline condition ($R_n = 0.3$~m, $V_{\infty} \approx 10.5$~km/s) is highlighted. (Right) Variation of $\dot{q}_s$ with nose radius at fixed Mach numbers, illustrating the $1/\sqrt{R_n}$ scaling that motivates the blunt-body design philosophy.}
+    \label{fig:sutton_graves_parametric}
+\end{figure}
+
+\subsection{Flight Performance Metrics}
+To translate surface force and heat-flux data from a DSMC simulation into engineering performance quantities, several derived metrics are computed. These metrics form the optimization objective space for the Survivability-Based Optimization (SBO) framework described in Chapter~3.
+
+\subsubsection*{Mass Density from Number Density}
+DSMC solvers such as SPARTA report the number density $n_{\rho}$ (particles per cubic metre). The physical mass density is recovered via the mean molecular mass of the gas mixture:
+
+\begin{equation}
+    \rho = n_{\rho} \cdot \frac{M_{\text{air}}}{N_A}
+    \label{eq:mass_density}
+\end{equation}
+
+\noindent where $M_{\text{air}} \approx 28.97$ g/mol is the molar mass of air and $N_A = 6.022 \times 10^{23}$ mol$^{-1}$ is Avogadro's constant \cite{anderson2006hypersonic}.
+
+\subsubsection*{Dynamic Pressure}
+The dynamic pressure quantifies the kinetic energy flux of the freestream and is defined as:
+
+\begin{equation}
+    q = \frac{1}{2} \rho \, V_{\infty}^{2}
+    \label{eq:dynamic_pressure}
+\end{equation}
+
+\noindent This quantity appears in the definition of aerodynamic coefficients and is a primary driver of structural loading on the HIAD.
+
+\subsubsection*{Ballistic Coefficient}
+The ballistic coefficient $\beta$ measures the vehicle's ability to decelerate against aerodynamic drag:
+
+\begin{equation}
+    \beta = \frac{m \cdot q}{F_{\text{drag}}}
+    \label{eq:ballistic_coefficient}
+\end{equation}
+
+\noindent where $m$ is the vehicle mass and $F_{\text{drag}}$ is the total drag force obtained by integrating the surface pressure and shear stress over the vehicle. A lower $\beta$ indicates more effective deceleration, which is the primary objective for HIAD design \cite{anderson2006hypersonic}.
+
+\subsubsection*{Instantaneous Deceleration (g-load)}
+The deceleration experienced by the vehicle, expressed in multiples of Earth's standard gravity $g_0 = 9.81$ m/s$^{2}$, is:
+
+\begin{equation}
+    n = \frac{F_{\text{drag}}}{m \cdot g_0}
+    \label{eq:gload}
+\end{equation}
+
+\noindent The peak g-load is a critical structural and payload constraint; for the IRVE-3 mission, the recorded peak was approximately $19.7\,g$ \cite{old2013irve3postflight}.
+
+\subsection{Thermal Protection System Thermal Response}
+The aerothermal loads on the HIAD must be converted into temperature predictions for the Thermal Protection System (TPS). Two complementary models are employed.
+
+\subsubsection*{Radiative Equilibrium Surface Temperature}
+At the outer surface of the TPS, the incoming convective heat flux $\dot{q}$ is balanced by radiative emission to the environment. Under the assumption of radiative equilibrium \cite{anderson2006hypersonic}:
+
+\begin{equation}
+    T_{\text{surface}} = \left( \frac{\dot{q}}{\sigma \, \epsilon} \right)^{1/4}
+    \label{eq:radiative_equilibrium}
+\end{equation}
+
+\noindent where $\sigma = 5.67 \times 10^{-8}$ W/(m$^{2}$$\cdot$K$^{4}$) is the Stefan--Boltzmann constant and $\epsilon$ is the surface emissivity. This equation governs the peak surface temperature that the TPS material must withstand.
+
+\subsubsection*{One-Dimensional Backface Temperature}
+For flexible TPS architectures (e.g., Aerogel/Spylon stacks on LOFTID), the transient heat conduction through the insulation layer is approximated by a one-dimensional thermal lag model \cite{hollis2017backface}:
+
+\begin{equation}
+    T_{\text{back}} = T_{\text{init}} + \frac{\dot{q} \cdot \Delta t \cdot \eta_{\text{lag}}}{\rho_{\text{TPS}} \cdot C_{p,\text{TPS}} \cdot \delta_{\text{TPS}}}
+    \label{eq:backface_temperature}
+\end{equation}
+
+\noindent where $T_{\text{init}}$ is the initial temperature, $\Delta t$ is the heat pulse duration, $\eta_{\text{lag}}$ is a thermal lag efficiency factor (typically $\sim 0.15$), $\rho_{\text{TPS}}$ is the TPS material density, $C_{p,\text{TPS}}$ is its specific heat capacity, and $\delta_{\text{TPS}}$ is the insulation thickness. The backface temperature $T_{\text{back}}$ must remain below the structural limit of the underlying substructure (typically $\leq 350$ K for the HIAD toroidal frame).
+
 \section{Theoretical Framework of CFD}
+\label{sec:cfd_framework}
 %\textit{CFD Book () Linkage}
 %\par
 Computational Fluid Dynamics (CFD) serves as the third pillar of fluid dynamics research, complementing theoretical analysis and experimental testing. It involves the systematic application of numerical methods to solve the governing equations of fluid motion, transforming the continuous mathematical models into discrete algebraic equations that can be solved computationally \cite{versteeg2007cfd}.
 \par
-For hypersonic research, where flight tests are prohibitively expensive and ground-based facilities (such as wind tunnels) often suffer from scaling limitations or wall interference, CFD provides a critical capability to resolve complex flow physics. By discretizing the spatial domain into a grid, CFD allows for the detailed interrogation of flow properties—such as shock structures and thermal gradients—that are often difficult to measure experimentally.
+For hypersonic research, where flight tests are prohibitively expensive and ground-based facilities (such as wind tunnels) often suffer from scaling limitations or wall interference, CFD provides a critical capability to resolve complex flow physics. By discretizing the spatial domain into a grid, CFD allows for the detailed interrogation of flow properties, such as shock structures and thermal gradients, that are often difficult to measure experimentally.
 \par
 The theoretical foundation of this analysis rests upon the Continuum Hypothesis. This assumption treats the fluid not as a collection of discrete molecules, but as a continuous substance where macroscopic properties (density, pressure, velocity, and temperature) are well-defined at every point in space and time. Based on this hypothesis, the flow physics are governed by three fundamental conservation laws:
 \begin{itemize}
@@ -630,135 +729,21 @@ The terms on the right-hand side represent the specific mechanisms of energy tra
 \end{itemize}
 
 
-\subsection{Finite Volume Method (FVM) Discretization (The basis of Ansys/OpenFOAM)}
-
-The system of partial differential equations (PDEs) derived in the previous sections is analytically unsolvable for arbitrary geometries. To compute a solution, the continuous domain must be discretized. The standard approach employed by modern CFD solvers, including ANSYS Fluent and OpenFOAM, is the Finite Volume Method (FVM) \cite{versteeg2007cfd}.
-
-Unlike Finite Difference methods which discretize the differential form of the equations at grid points, FVM discretizes the integral form of the conservation laws over a set of contiguous control volumes (cells).
-
-
-
-\subsubsection*{The General Transport Equation}
-The conservation of any scalar property $\phi$ (such as enthalpy, turbulence kinetic energy, or a velocity component) can be expressed in a generic integral form over a control volume $V$ bounded by a surface $S$:
-
-\begin{equation}
-    \underbrace{\frac{\partial}{\partial t} \int_{V} \rho \phi \, dV}_{\text{Transient Term}} + \underbrace{\oint_{S} \rho \phi \mathbf{u} \cdot \mathbf{n} \, dS}_{\text{Convective Flux}} = \underbrace{\oint_{S} \Gamma_{\phi} \nabla \phi \cdot \mathbf{n} \, dS}_{\text{Diffusive Flux}} + \underbrace{\int_{V} S_{\phi} \, dV}_{\text{Source Term}}
-\end{equation}
-
-Where $\mathbf{n}$ is the unit normal vector to the surface, and $\Gamma_{\phi}$ is the diffusion coefficient.
-
-\subsubsection*{Discretization into Algebraic Equations}
-The FVM transforms this integral equation into a system of algebraic equations by approximating the surface integrals as the sum of fluxes crossing the faces of the control volume. For a cell $P$ with a set of faces $f$:
-
-\begin{equation}
-    \sum_{f} (\rho \phi \mathbf{u} \cdot \mathbf{n} A)_f = \sum_{f} (\Gamma_{\phi} \nabla \phi \cdot \mathbf{n} A)_f + S_{\phi} V_P
-\end{equation}
-
-The solver then solves this linear system $[A] \{x\} = \{b\}$ to find the value of $\phi$ at the cell centers.
-
-\subsubsection*{Why FVM is Required for Hypersonics}
-The primary advantage of FVM for high-speed aerodynamics is the property of conservativeness. The flux leaving a control volume across a specific face is numerically identical to the flux entering the adjacent control volume through that same face. This ensures that mass, momentum, and energy are strictly conserved across the entire domain, even in the presence of flow discontinuities like shock waves, where differential methods often fail \cite{versteeg2007cfd}.
-
-
 \section{Turbulence Modeling for High-Speed Flows}
-Turbulence remains one of the most complex and challenging aspects of fluid dynamics to model accurately. In the context of hypersonic re-entry, the state of the boundary layer—whether laminar, transitional, or fully turbulent—has a profound impact on the aerothermal loads.
+Turbulence remains one of the most complex and challenging aspects of fluid dynamics to model accurately. In the context of hypersonic re-entry, the state of the boundary layer -- whether laminar, transitional, or fully turbulent -- has a profound impact on the aerothermal loads.
 \par
 While laminar flow is characterized by smooth, ordered fluid motion, turbulent flow involves chaotic, three-dimensional, time-dependent fluctuations. For an Inflatable Aerodynamic Decelerator (IAD), the onset of turbulence is a critical design constraint because turbulent boundary layers possess much higher energy gradients at the wall. Consequently, turbulent heating rates are typically 3 to 5 times higher than laminar heating rates for the same flight condition \cite{AndersonHypersonic}.
 \par
-Resolving these fluctuations directly via Direct Numerical Simulation (DNS) requires a grid fine enough to capture the smallest scales of turbulent energy dissipation (the Kolmogorov scales). The computational cost scales with $Re^{9/4}$, making DNS impossible for the high Reynolds number flows ($Re > 10^6$) encountered during re-entry. Therefore, engineering analysis relies on Turbulence Modeling—mathematical approximations that predict the effect of turbulence on the mean flow without resolving the full spectrum of turbulent fluctuations \cite{versteeg2007cfd}.
-
-
-\subsection{The Closure Problem (RANS Equations)}
-%\textit{Viscous flow Book?}
-%\par
-To make the calculation of turbulent flows computationally feasible for engineering applications, the standard approach is to solve the Reynolds-Averaged Navier-Stokes (RANS) equations. This method is based on the Reynolds Decomposition, proposed by Osborne Reynolds (1895), which separates the instantaneous flow variables into a time-averaged mean component and a fluctuating turbulent component \cite{versteeg2007cfd}.
-
-
-
-For velocity $\mathbf{u}$ and pressure $p$:
-\begin{equation}
-    \mathbf{u}(\mathbf{x}, t) = \overline{\mathbf{u}}(\mathbf{x}) + \mathbf{u}'(\mathbf{x}, t)
-\end{equation}
-\begin{equation}
-    p(\mathbf{x}, t) = \overline{p}(\mathbf{x}) + p'(\mathbf{x}, t)
-\end{equation}
-
-Where $\overline{\mathbf{u}}$ is the mean velocity and $\mathbf{u}'$ is the turbulent fluctuation, with the property that the time average of the fluctuation is zero ($\overline{\mathbf{u}'} = 0$).
-
-Substituting these decomposed variables into the instantaneous Navier-Stokes equations and time-averaging the entire equation yields the RANS Momentum Equation:
-
-\begin{equation}
-    \frac{\partial (\rho \overline{u}_i)}{\partial t} + \frac{\partial}{\partial x_j} (\rho \overline{u}_i \overline{u}_j) = -\frac{\partial \overline{p}}{\partial x_i} + \frac{\partial}{\partial x_j} \left[ \mu \left( \frac{\partial \overline{u}_i}{\partial x_j} + \frac{\partial \overline{u}_j}{\partial x_i} \right) - \rho \overline{u'_i u'_j} \right]
-\end{equation}
-
-While this equation closely resembles the laminar Navier-Stokes equation, it contains a critical new term: $-\rho \overline{u'_i u'_j}$. This term represents the transport of momentum due to turbulent fluctuations and acts as an additional apparent stress on the fluid. It is known as the Reynolds Stress Tensor ($\tau_{ij}^{Re}$). 
-
-\subsubsection*{The Closure Problem}
-The Reynolds stress tensor is symmetric and introduces six additional unknown components (normal and shear stresses) to the system of equations. However, we do not have six additional equations to solve for them.
-\begin{itemize}
-    \item \textbf{Unknowns:} Mean pressure $\overline{p}$, three mean velocity components $\overline{u}, \overline{v}, \overline{w}$, and six Reynolds stresses.
-    \item \textbf{Equations:} One continuity equation and three momentum equations.
-\end{itemize}
-
-Since the number of unknowns exceeds the number of conservation equations, the system is mathematically "open." The Closure Problem refers to the necessity of modeling these Reynolds stresses as a function of the mean flow variables to close the system and obtain a solution.
-
-\subsection{Comparison of $k-\epsilon$ vs. $k-\omega$ models}
-The most widely used turbulence models in engineering CFD are the two-equation models, which introduce two additional transport equations to compute the eddy viscosity $\mu_t$. The two dominant variants are the Standard $k-\epsilon$ model and the Wilcox $k-\omega$ model. While both rely on the Boussinesq hypothesis, they differ fundamentally in their formulation of the turbulent length scale \cite{versteeg2007cfd}.
-
-\subsubsection*{The Standard $k-\epsilon$ Model}
-Developed by Jones and Launder, this model solves for turbulent kinetic energy ($k$) and the rate of dissipation ($\epsilon$).
-\begin{itemize}
-    \item \textbf{Strengths:} It is numerically robust, computationally efficient, and well-validated for fully turbulent free-shear flows (e.g., wakes and jets).
-    \item \textbf{Weaknesses:} Its formulation is invalid in the near-wall region where viscous effects dominate. To bridge the gap between the turbulent core and the wall, it relies on empirical "wall functions," which degrades accuracy for flows with separation or severe pressure gradients. Consequently, it often over-predicts heat flux and delays separation in adverse pressure gradients \cite{versteeg2007cfd}.
-\end{itemize}
-
-\subsubsection*{The Wilcox $k-\omega$ Model}
-Developed by Wilcox, this model solves for $k$ and the specific dissipation rate ($\omega$).
-\begin{itemize}
-    \item \textbf{Strengths:} The $k-\omega$ formulation is mathematically stable in the viscous sublayer and can be integrated directly to the wall without damping functions. This allows for superior prediction of boundary layer separation and wall heat transfer, making it ideal for the scalloped valleys of an IAD.
-    \item \textbf{Weaknesses:} It suffers from a critical deficiency known as "freestream sensitivity." The results inside the boundary layer depend strongly on the arbitrary value of $\omega$ specified at the far-field inlet. For external aerodynamics, this can lead to unacceptable errors in drag and lift prediction.
-\end{itemize}
-
-For the analysis of a HIAD, neither model is sufficient on its own. The $k-\epsilon$ model cannot accurately resolve the complex recirculation in the valleys, while the standard $k-\omega$ model is too unreliable for the external shock layer. This limitation necessitates the use of a hybrid formulation. ~\cite{articlessk}
+Resolving these fluctuations directly via Direct Numerical Simulation (DNS) requires a grid fine enough to capture the smallest scales of turbulent energy dissipation (the Kolmogorov scales). The computational cost scales with $Re^{9/4}$, making DNS impossible for the high Reynolds number flows ($Re > 10^6$) encountered during re-entry. Therefore, engineering analysis relies on Turbulence Modeling -- mathematical approximations that predict the effect of turbulence on the mean flow without resolving the full spectrum of turbulent fluctuations \cite{versteeg2007cfd}.
+\par
+The standard approach is to solve the Reynolds-Averaged Navier-Stokes (RANS) equations, which decompose the instantaneous flow variables into a time-averaged mean component and a fluctuating turbulent component using the Reynolds Decomposition \cite{versteeg2007cfd}. This introduces the Reynolds Stress Tensor ($-\rho \overline{u'_i u'_j}$), which must be modeled to close the system of equations. The two dominant closures are the $k-\epsilon$ model (robust for free-shear flows but inaccurate near walls) and the $k-\omega$ model (accurate near walls but sensitive to freestream conditions). Menter's Shear Stress Transport (SST) $k-\omega$ model \cite{menter1994SST} blends these formulations using a zonal blending function $F_1$ and a shear stress limiter, making it the industry standard for aerodynamic heating predictions. While the SST $k-\omega$ model is widely used for continuum CFD solvers such as ANSYS Fluent and OpenFOAM \cite{versteeg2007cfd}, it is important to note that this study employs the Direct Simulation Monte Carlo (DSMC) method, which resolves turbulence at the molecular level without requiring a turbulence model.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/elocity-contour-for-different-values-of-velocity-for-SST-K-o-model.jpg.png}
-    \caption{Figure for Comparison of k-epsilon vs. k-omega models.}
+    \caption{Comparison of $k-\epsilon$ vs. $k-\omega$ turbulence model predictions for velocity contours.}
     \label{fig:k_epsilon_omega}
 \end{figure}
-
-\subsection{The SST (Shear Stress Transport) $k-\omega$ Model (Why it is chosen for Wall Heat Flux)}
-\textit{Paper}
-\par
-To overcome the limitations of the standard two-equation models, Menter (1994) developed the Shear Stress Transport (SST) $k-\omega$ model. This model effectively blends the robust and accurate formulation of the $k-\omega$ model in the near-wall region with the freestream independence of the $k-\epsilon$ model in the far field.
-
-
-
-\subsubsection*{1. Zonal Blending Functions}
-The core innovation of the SST model is the use of a blending function, $F_1$, which transitions the model formulation based on the distance from the wall ($y$).
-\begin{itemize}
-    \item \textbf{Near Wall ($F_1 = 1$):} The model activates the standard $k-\omega$ equations, allowing for direct resolution of the viscous sublayer without damping functions. This ensures accurate prediction of wall heat flux ($q_w$) and wall shear stress ($\tau_w$).
-    \item \textbf{Far Field ($F_1 = 0$):} The model smoothly transitions to the $k-\epsilon$ formulation (mathematically transformed into $k-\omega$ variables). This eliminates the sensitivity to freestream turbulence properties that plagues the standard $k-\omega$ model.
-\end{itemize}
-
-\subsubsection*{2. The Shear Stress Limiter}
-In flows with strong adverse pressure gradients—such as the deceleration zone in the valleys of a scalloped IAD—standard two-equation models often over-predict the eddy viscosity ($\mu_t$). This leads to a failure to predict flow separation, resulting in erroneous aerodynamic coefficients.
-
-The SST formulation introduces a limiter to the eddy viscosity definition to satisfy the Bradshaw assumption (that shear stress is proportional to kinetic energy in boundary layers):
-
-\begin{equation}
-    \mu_t = \frac{\rho k}{\omega} \frac{1}{\max\left( \frac{1}{\alpha^*}, \frac{S F_2}{a_1 \omega} \right)}
-\end{equation}
-
-Where $S$ is the strain rate magnitude and $F_2$ is a second blending function. This limiter prevents the buildup of excessive turbulence levels in stagnation regions and separation zones.
-
-\subsubsection*{Justification for HIAD Analysis}
-For this research, the SST $k-\omega$ model is selected as the turbulence closure for the following reasons:
-\begin{enumerate}
-    \item \textbf{Heat Transfer Accuracy:} It is widely regarded as the industry standard for aerodynamic heating predictions \cite{menter1994SST}, typically predicting heat flux within 5-10\% of experimental data for attached flows.
-    \item \textbf{Separation Prediction:} The shear stress transport formulation is critical for accurately capturing the size and stability of the recirculation vortices inside the toroidal valleys, which directly drive the local thermal environment.
-\end{enumerate}
 
 \section{Thermodynamic Gas Models}
 
@@ -772,6 +757,13 @@ The immense kinetic energy converted into heat across the bow shock raises the g
     \item \textbf{$T > 4000$ K:} Nitrogen molecules begin to dissociate ($N_2 \rightarrow 2N$).
     \item \textbf{$T > 9000$ K:} Atoms begin to ionize ($N \rightarrow N^+ + e^-$).
 \end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/temperature_chemistry_regime.png}
+    \caption{Air chemistry regimes as a function of temperature, showing vibrational excitation, molecular dissociation, and ionization thresholds \protect\cite{AndersonHypersonic}.}
+    \label{fig:temperature_chemistry_regime}
+\end{figure}
 
 Accurately modeling these phenomena is essential for an Inflatable Aerodynamic Decelerator (IAD). Failure to account for variable specific heat, for instance, can lead to an over-prediction of the post-shock temperature and a significant under-prediction of the density, resulting in incorrect shock stand-off distances and non-physical heat flux results.
 
@@ -843,6 +835,13 @@ In CFD simulations for hypersonic re-entry, $C_p(T)$ is typically modeled using 
 \end{equation}
 Using a Thermally Perfect Gas model is essential for the HIAD analysis because the absorption of energy into vibrational modes lowers the peak shock layer temperature compared to a Calorically Perfect prediction, resulting in more accurate (and often less conservative) density and heat flux calculations \cite{AndersonHypersonic}.
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/cp_temperature_nasa.png}
+    \caption{Specific heat capacity $C_p(T)$ for air as a function of temperature. The horizontal line represents the calorically perfect gas (CPG) assumption ($C_p = \text{const.}$), while the curve shows the NASA polynomial fit for the thermally perfect gas (TPG) model. The vibrational excitation onset near 800~K marks the transition where the CPG assumption becomes invalid for hypersonic flow calculations.}
+    \label{fig:cp_nasa_polynomial}
+\end{figure}
+
 \subsection{Temperature-Dependent Viscosity (Sutherland’s Law)}
 
 In classical low-speed aerodynamics, fluid viscosity is often treated as a constant property. However, in the hypersonic regime where temperature variations within the shock layer can span thousands of degrees, the viscosity of the gas changes largely. Unlike liquids, where viscosity decreases with heat, the viscosity of a gas \textit{increases} with temperature due to the increased molecular agitation and momentum exchange between fluid layers.
@@ -851,6 +850,7 @@ To accurately model the viscous stresses and heat transfer in the boundary layer
 
 \begin{equation}
     \mu(T) = \mu_{ref} \left( \frac{T}{T_{ref}} \right)^{3/2} \frac{T_{ref} + S}{T + S}
+    \label{eq:sutherland}
 \end{equation}
 
 Where:
@@ -876,67 +876,525 @@ Implementing Sutherland's Law is vital for the thermal analysis of an IAD. Since
     \label{fig:sutherlands_law}
 \end{figure}
 
-\section{Numerical Solvers and Schemes}
-The numerical simulation of hypersonic flow fields requires a solver architecture capable of handling the strong coupling between the velocity field, density, and energy equation. For this study, the Density-Based Coupled Solver is selected over the traditional Pressure-Based solver \cite{versteeg2007cfd}.
+%% ============================================================
+%% NEW SECTIONS: Kinetic Theory, DSMC, and Machine Learning
+%% ============================================================
 
-\subsection{Density-Based Solver Formulation}
-In low-speed (incompressible) flows, density is constant, and the pressure field is derived from the continuity equation (typically using algorithms like SIMPLE or PISO). However, in hypersonic flows ($Ma > 5$), density is a variable function of pressure and temperature (via the Equation of State).
+\section{Kinetic Theory and the Boltzmann Equation}
 
-The Density-Based solver integrates the continuity, momentum, energy, and species transport equations simultaneously (coupled) rather than sequentially.
-\begin{itemize}
-    \item \textbf{Coupling:} The governing equations are solved as a vector system. This robust coupling is essential for resolving the high-gradient shock structures where density changes abruptly.
-    \item \textbf{Time Formulation:} An Implicit formulation is employed to allow for larger Courant-Friedrichs-Lewy (CFL) numbers while maintaining unconditional stability during the convergence process towards a steady-state solution.
-\end{itemize}
+The Navier--Stokes equations presented in Section~\ref{sec:cfd_framework} are derived under the \textit{continuum hypothesis}, which assumes that the fluid can be treated as a continuous medium. This assumption is valid when the mean free path $\lambda$ of the gas molecules is much smaller than the characteristic length $L$ of the flow domain. However, at high altitudes ($h > 50$~km) and during the early phases of atmospheric re-entry, the gas becomes sufficiently rarefied that the continuum assumption breaks down \cite{bird1994molecular}.
 
+\subsection{The Liouville Theorem and Phase Space}
 
-\subsection{Flux Discretization Schemes}
-To compute the fluxes of mass, momentum, and energy across the cell faces, specific discretization schemes are chosen to balance numerical stability with accuracy.
+The state of a gas is described by the $N$-particle distribution function $f_N(\mathbf{r}_1, \mathbf{v}_1, t; \ldots; \mathbf{r}_N, \mathbf{v}_N, t)$, which gives the probability of finding particle 1 at position $\mathbf{r}_1$ with velocity $\mathbf{v}_1$, particle 2 at $(\mathbf{r}_2, \mathbf{v}_2)$, and so on. The time evolution of $f_N$ is governed by Liouville's theorem:
 
-\subsubsection*{1. Convective Flux Type: Roe-FDS}
-The Roe Flux-Difference Splitting (Roe-FDS) scheme is selected for the inviscid flux formulation. The Roe scheme is a Godunov-type upwind method that solves an approximate Riemann problem at each cell face.
-\begin{itemize}
-    \item \textbf{Justification:} It is widely renowned for its superior shock-capturing capabilities, providing crisp resolution of discontinuities (shocks) without introducing excessive numerical diffusion (smearing) \cite{versteeg2007cfd}.
-\end{itemize}
-
-\subsubsection*{2. Spatial Discretization: Second-Order Upwind}
-To ensure the solution is grid-independent and physically accurate:
-\begin{itemize}
-    \item \textbf{Gradients:} The Least Squares Cell-Based method is used to compute gradients, as it is less sensitive to grid skewness on the unstructured mesh of the scalloped toroids.
-    \item \textbf{Flow Variables:} A Second-Order Upwind scheme is applied to the flow, turbulence, and energy equations. This scheme reconstructs face values using a Taylor series expansion from the cell center, offering significantly higher accuracy than First-Order schemes, which are prone to false diffusion that can artificially thicken the bow shock.
-\end{itemize}
-
-
-\subsection{Shock Capturing Schemes (Upwind, Flux splitting)}
-The defining characteristic of hypersonic flow is the presence of strong discontinuities (shock waves) where flow properties change abruptly over a microscopic distance. Standard central-difference schemes, commonly used in subsonic flow, are non-dissipative and essentially "blind" to the direction of flow propagation. When applied to a shock wave, they invariably produce unphysical oscillations (Gibbs phenomenon) that lead to solution divergence.
-
-To resolve these discontinuities without numerical instability, modern CFD relies on Shock Capturing techniques rooted in the mathematical theory of hyperbolic conservation laws \cite{versteeg2007cfd}.
-
-
-
-\subsubsection{The Upwind Philosophy}
-The physical basis for upwinding is the transport of information. In supersonic flow, disturbances cannot propagate upstream against the flow; information travels only along characteristic lines from upstream to downstream.
-\begin{itemize}
-    \item \textbf{Concept:} The numerical flux at a cell face should be calculated using the state variables from the "upwind" side (the side from which the fluid is flowing).
-    \item \textbf{Implementation:} First-order upwind schemes simply take the cell center value of the upstream cell. While stable, this is highly diffusive, causing sharp shock waves to appear "smeared" across many grid cells.
-    \item \textbf{High-Resolution Schemes:} To achieve accuracy, Second-Order Upwind schemes are employed. These reconstruct the face value using a Taylor series expansion based on upstream gradients. To prevent oscillations near shocks, Flux Limiters (e.g., Min-Mod, Barth-Jespersen) are applied to strictly enforce monotonicity (TVD - Total Variation Diminishing properties).
-\end{itemize}
-
-\subsubsection{Flux Splitting Schemes}
-To mathematically determine "which way is upstream" for the complex system of Navier-Stokes equations (where sound waves can travel in multiple directions), Flux Splitting methods are used. These schemes decompose the total flux into wave components.
-
-\textbf{1. Flux Vector Splitting (FVS):}
-Methods like \textit{Steger-Warming} or \textit{Van Leer} split the flux vector into positive (forward-moving) and negative (backward-moving) components based on the sign of the eigenvalues (wave speeds).
 \begin{equation}
-    F = F^+(\lambda^+) + F^-(\lambda^-)
+    \frac{\partial f_N}{\partial t} + \sum_{i=1}^{N} \left( \mathbf{v}_i \cdot \nabla_{\mathbf{r}_i} f_N + \frac{\mathbf{F}_i}{m} \cdot \nabla_{\mathbf{v}_i} f_N \right) = 0
+    \label{eq:liouville}
 \end{equation}
-While robust, FVS schemes are known to be excessively dissipative in boundary layers, often over-predicting skin friction and heat transfer.
 
-\textbf{2. Flux Difference Splitting (FDS) - The Preferred Choice:}
-Methods like Roe’s Scheme (Approximate Riemann Solver) model the interface between two cells as a localized shock tube problem (Riemann problem).
+\noindent where $\mathbf{F}_i$ is the external force on particle $i$ and $m$ is the molecular mass. This equation is exact but intractable for $N \sim 10^{23}$ particles.
+
+\subsection{The Boltzmann Transport Equation}
+
+By integrating the Liouville equation over $N-1$ particle degrees of freedom and introducing the \textit{molecular chaos} assumption (Stosszahlansatz) -- that pre-collision velocities of colliding pairs are uncorrelated -- one obtains the \textit{Boltzmann transport equation} for the single-particle distribution function $f(\mathbf{r}, \mathbf{v}, t)$ \cite{bird1994molecular}:
+
+\begin{equation}
+    \frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla_{\mathbf{r}} f + \frac{\mathbf{F}}{m} \cdot \nabla_{\mathbf{v}} f = \left( \frac{\partial f}{\partial t} \right)_{\text{coll}}
+    \label{eq:boltzmann}
+\end{equation}
+
+\noindent The right-hand side is the \textit{collision integral}, which accounts for binary molecular collisions:
+
+\begin{equation}
+    \left( \frac{\partial f}{\partial t} \right)_{\text{coll}} = \int \int \left( f' f'_1 - f f_1 \right) g \, \sigma(g, \Omega) \, d\Omega \, d\mathbf{v}_1
+    \label{eq:collision_integral}
+\end{equation}
+
+\noindent where $g = |\mathbf{v} - \mathbf{v}_1|$ is the relative speed, $\sigma(g, \Omega)$ is the differential scattering cross-section, and primed quantities denote post-collision values.
+
+\subsection{The H-Theorem and Equilibrium Distribution}
+
+Boltzmann's $H$-theorem states that the quantity $H(t) = \int f \ln f \, d\mathbf{v}$ is non-increasing in time ($dH/dt \leq 0$), reaching a minimum at thermodynamic equilibrium. The equilibrium distribution is the Maxwell--Boltzmann distribution:
+
+\begin{equation}
+    f_{\text{eq}} = n \left( \frac{m}{2\pi k_B T} \right)^{3/2} \exp\left( -\frac{m|\mathbf{v} - \mathbf{u}|^2}{2 k_B T} \right)
+    \label{eq:maxwell_boltzmann}
+\end{equation}
+
+\noindent where $n$ is the number density, $\mathbf{u}$ is the bulk velocity, $T$ is the temperature, and $k_B$ is the Boltzmann constant. Macroscopic quantities are recovered as moments of $f$:
+
+\begin{align}
+    n &= \int f \, d\mathbf{v} \label{eq:moment_density} \\
+    n\mathbf{u} &= \int \mathbf{v} f \, d\mathbf{v} \label{eq:moment_momentum} \\
+    \frac{3}{2} n k_B T &= \int \frac{1}{2} m |\mathbf{v} - \mathbf{u}|^2 f \, d\mathbf{v} \label{eq:moment_energy}
+\end{align}
+
+\subsection{Chapman--Enskog Expansion: From Boltzmann to Navier--Stokes}
+
+The Chapman--Enskog expansion provides a systematic derivation of the Navier--Stokes equations as the first-order approximation to the Boltzmann equation in the limit $Kn \to 0$ \cite{bird1994molecular}. The distribution function is expanded as:
+
+\begin{equation}
+    f = f_{\text{eq}} \left( 1 + \Phi^{(1)} + \Phi^{(2)} + \cdots \right)
+    \label{eq:chapman_enskog}
+\end{equation}
+
+\noindent where $\Phi^{(1)}$ is the first-order perturbation proportional to $Kn$. Substituting into the Boltzmann equation and collecting terms at each order yields:
+
 \begin{itemize}
-    \item Instead of splitting the flux itself, Roe's scheme solves for the difference in flux across the wave structure.
-    \item \textbf{Relevance to HIADs:} FDS schemes are significantly less dissipative than FVS schemes. This makes them the standard choice for hypersonic viscous flows because they can accurately capture the crispness of the bow shock while simultaneously resolving the delicate shear gradients in the boundary layer \cite{toro2009riemann}.
+    \item \textbf{Zeroth order} ($Kn^0$): Euler equations (inviscid, compressible flow).
+    \item \textbf{First order} ($Kn^1$): Navier--Stokes equations with transport coefficients.
 \end{itemize}
 
-\textbf{3. AUSM (Advection Upstream Splitting Method):}
-A hybrid approach often used in modern codes (like ANSYS Fluent's "AUSM+" option). It splits the flux into a convective term (treated as a scalar) and a pressure term (treated acoustically). This method is designed to be as accurate as Roe's scheme but more robust against the "carbuncle phenomenon" (a numerical instability often seen near the stagnation point of blunt bodies).s
+The first-order correction $\Phi^{(1)}$ is a linear combination of Sonine polynomials and yields the \textit{transport coefficients}:
+
+\begin{align}
+    \mu &= \frac{5}{16} \frac{\sqrt{\pi m k_B T}}{\pi d^2 \Omega_\mu^{(1,1)*}} \label{eq:chapman_viscosity} \\
+    \kappa &= \frac{25}{32} \frac{\sqrt{\pi m k_B T}}{\pi d^2 \Omega_\kappa^{(1,1)*}} \, c_v \label{eq:chapman_conductivity}
+\end{align}
+
+\noindent where $\Omega^{(l,s)*}$ are the reduced collision integrals. This expansion confirms that the Navier--Stokes equations are the \textit{continuum limit} of the Boltzmann equation, valid when $Kn \ll 1$.
+
+\section{The Direct Simulation Monte Carlo (DSMC) Method}
+
+When $Kn > 0.01$, the Navier--Stokes equations lose accuracy, and the full Boltzmann equation must be solved. The Direct Simulation Monte Carlo (DSMC) method, introduced by Bird \cite{bird1994molecular}, provides a stochastic numerical solution to the Boltzmann equation.
+
+\subsection{Physical Basis}
+
+DSMC models the gas as a collection of simulation particles, where each particle represents a large number of real molecules ($\sim 10^{10}$--$10^{15}$). The algorithm proceeds in discrete time steps $\Delta t$, alternating between two phases:
+
+\begin{enumerate}
+    \item \textbf{Streamer Phase:} Particles are moved ballistically: $\mathbf{r}_{i}^{n+1} = \mathbf{r}_{i}^{n} + \mathbf{v}_{i}^{n} \Delta t$. Particles that cross domain boundaries are processed according to boundary conditions (inlet, outlet, reflection).
+    
+    \item \textbf{Collision Phase:} Within each computational cell, particle pairs are selected for collision. The collision probability is proportional to the relative speed $g$ and the collision cross-section $\sigma$. Post-collision velocities are determined by conservation of momentum and energy.
+\end{enumerate}
+
+\subsection{The Bird Algorithm}
+
+The standard DSMC implementation follows Bird's No-Time-Counter (NTC) algorithm:
+
+\begin{enumerate}
+    \item \textbf{Grid construction:} A Cartesian grid overlays the flow domain. The cell size $\Delta x$ must be smaller than the local mean free path $\lambda$ to resolve gradients.
+    \item \textbf{Particle movement:} Each particle is moved by $\mathbf{v} \Delta t$. Boundary interactions (specular/diffuse reflection at walls, periodic boundaries) are applied.
+    \item \textbf{Collision pairing:} Within each cell, pairs are randomly selected. The number of collisions per cell per time step is:
+    \begin{equation}
+        N_c = \frac{N_{\text{cell}} (N_{\text{cell}} - 1)}{2} \frac{\sigma g \Delta t}{V_{\text{cell}}}
+        \label{eq:ntc_collisions}
+    \end{equation}
+    where $N_{\text{cell}}$ is the number of particles in the cell, $V_{\text{cell}}$ is the cell volume, and $\sigma g$ is the collision rate.
+    \item \textbf{Collision dynamics:} For each selected pair, post-collision velocities are computed using the chosen molecular interaction model (e.g., Variable Soft Sphere).
+    \item \textbf{Sampling:} Macroscopic properties (density, velocity, temperature) are accumulated as time-averaged particle statistics within each cell.
+\end{enumerate}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/dsmc_algorithm_flowchart.png}
+    \caption{Flowchart of Bird's No-Time-Counter (NTC) DSMC algorithm. The two-phase alternation between particle movement (streamer phase) and collision pairing (collision phase) is shown, with macroscopic property sampling accumulating at each time step.}
+    \label{fig:dsmc_flowchart}
+\end{figure}
+
+\subsection{Statistical Accuracy}
+
+DSMC is a Monte Carlo method, and the statistical noise scales as $1/\sqrt{N_{\text{samples}}}$. To reduce noise, properties are accumulated over many time steps. The standard deviation of the sampled temperature is:
+
+\begin{equation}
+    \sigma_T = \frac{T}{\sqrt{N_{\text{samples}}}} \sqrt{\frac{2}{\gamma - 1} + \frac{T_{\text{snapshot}}}{T}}
+    \label{eq:dsmc_noise}
+\end{equation}
+
+\noindent Typical re-entry simulations require $N_{\text{samples}} > 100$ per cell for adequate accuracy.
+
+\subsection{Molecular Interaction Model: The Variable Soft Sphere (VSS)}
+
+The accuracy of DSMC depends critically on the molecular interaction model used to determine post-collision velocities. The Variable Soft Sphere (VSS) model, introduced by Koura and Matsumoto \cite{bird1994molecular}, allows the collision cross-section to vary with the relative speed of colliding molecules:
+
+\begin{equation}
+    \sigma = \pi d_{\text{ref}}^2 \left( \frac{g_{\text{ref}}}{g} \right)^{2(\omega - 0.5)}
+    \label{eq:vss_cross_section}
+\end{equation}
+
+\noindent where $d_{\text{ref}}$ is the reference molecular diameter at reference speed $g_{\text{ref}}$, $g = |\mathbf{v}_1 - \mathbf{v}_2|$ is the relative speed of the colliding pair, and $\omega$ is the viscosity index (a gas-specific parameter that characterizes the intermolecular potential). For a hard-sphere model, $\omega = 0.5$ and the cross-section is constant; for the VSS model, $\omega > 0.5$ produces a velocity-dependent cross-section that accurately reproduces the temperature-dependent viscosity of real gases \cite{bird1994molecular}.
+
+\subsection{Mean Free Path}
+
+The mean free path $\lambda$ -- the average distance a molecule travels between successive collisions -- is a fundamental quantity that determines the appropriate simulation method. For a gas of hard spheres with molecular diameter $d$ and number density $n$:
+
+\begin{equation}
+    \lambda = \frac{1}{\sqrt{2} \, \pi \, d^2 \, n}
+    \label{eq:mean_free_path}
+\end{equation}
+
+\noindent The mean free path is related to the Knudsen number ($Kn = \lambda / L$) and directly determines the required grid resolution in DSMC: the cell size must be smaller than $\lambda$ to resolve local gradients in the flow field \cite{bird1994molecular}. In the SPARTA solver used in this study, the computational grid is refined such that each cell contains sufficient particles for statistically meaningful sampling while maintaining cell dimensions below the local mean free path.
+
+\section{Flow Regime Classification: The Knudsen Number}
+
+The appropriate simulation method depends on the flow regime, characterized by the \textit{Knudsen number}:
+
+\begin{equation}
+    Kn = \frac{\lambda}{L}
+    \label{eq:knudsen_definition}
+\end{equation}
+
+\noindent where $\lambda$ is the local mean free path and $L$ is the characteristic length (e.g., the aeroshell diameter). Table~\ref{tab:knudsen_regimes} classifies the flow regimes relevant to hypersonic re-entry.
+
+\begin{table}[H]
+    \centering
+    \caption{Flow regime classification by Knudsen number.}
+    \label{tab:knudsen_regimes}
+    \begin{tabular}{|l|c|c|p{4.5cm}|}
+    \hline
+    \textbf{Regime} & \textbf{$Kn$ Range} & \textbf{Method} & \textbf{Physical Description} \\ \hline
+    Continuum & $< 0.001$ & RANS / NS & Molecular collisions dominate; continuum hypothesis valid \\ \hline
+    Slip Flow & $0.001$--$0.01$ & NS + slip BC & Continuum with velocity/temperature slip at walls \\ \hline
+    Transitional & $0.01$--$0.1$ & DSMC & Molecular structure becomes important; NS equations degrade \\ \hline
+    Free Molecular & $> 0.1$ & DSMC & Molecule--wall collisions dominate; molecule--molecule collisions rare \\ \hline
+    \end{tabular}
+\end{table}
+
+\noindent For the IRVE-3 vehicle at 52~km altitude, the characteristic length is $L = 3.0$~m and the mean free path is approximately $\lambda \approx 0.08$~m, yielding $Kn \approx 0.027$ -- firmly in the \textit{transitional regime} where DSMC is required \cite{bird1994molecular}.
+
+\section{Continuum CFD vs. DSMC: Comparative Framework}
+
+Table~\ref{tab:cfd_vs_dsmc} provides a systematic comparison of the continuum (RANS/NS) and kinetic (DSMC) approaches.
+
+\begin{table}[H]
+    \centering
+    \caption{Comparison of continuum CFD and DSMC approaches.}
+    \label{tab:cfd_vs_dsmc}
+    \begin{tabular}{|p{3.5cm}|p{5cm}|p{5cm}|}
+    \hline
+    \textbf{Aspect} & \textbf{Continuum CFD (RANS/NS)} & \textbf{DSMC} \\ \hline
+    Governing equations & Navier--Stokes (conservation laws) & Boltzmann transport equation \\ \hline
+    Valid regime & $Kn < 0.01$ (continuum / slip flow) & $Kn > 0.01$ (transitional / free molecular) \\ \hline
+    Physical model & Continuous fluid, stress tensor & Discrete particles, molecular collisions \\ \hline
+    Turbulence & RANS (SST $k$--$\omega$), LES, DNS & Resolution of molecular chaos (no turbulence model needed) \\ \hline
+    Computational cost & $O(N_{\text{grid}})$ per iteration & $O(N_{\text{particles}})$ per time step \\ \hline
+    Statistical noise & Deterministic (none) & Stochastic ($\propto 1/\sqrt{N_{\text{samples}}}$) \\ \hline
+    Shock handling & Requires artificial dissipation, limiters & Naturally captured by particle dynamics \\ \hline
+    Real-gas effects & Requires additional species transport equations & Built-in via molecular collision models (VSS, VHS) \\ \hline
+    Code implementation & ANSYS Fluent, OpenFOAM, COMSOL & SPARTA, DAC, SMILE \\ \hline
+    \end{tabular}
+\end{table}
+
+\noindent This study employs \textit{both} paradigms: continuum CFD (SST $k$--$\omega$) is used in the literature review and methodology chapters to establish theoretical foundations, while DSMC (SPARTA) is used for the actual high-fidelity simulation of the HIAD re-entry flow field, as the IRVE-3 flight conditions fall in the transitional regime ($Kn \approx 0.03$).
+
+\section{Machine Learning in Computational Fluid Dynamics}
+
+The integration of machine learning (ML) with computational fluid dynamics has emerged as a powerful paradigm for accelerating simulations, reducing computational cost, and discovering closure models. This section reviews the foundations relevant to the Physics-Informed Neural Network (PINN) refinement used in this study.
+
+\subsection{Neural Network Approximation Theory}
+
+The Universal Approximation Theorem (Cybenko, 1989; Hornik et al., 1989) states that a feedforward neural network with a single hidden layer containing a finite number of neurons can approximate any continuous function on a compact subset of $\mathbb{R}^n$ to arbitrary accuracy. For a network with input $\mathbf{x} \in \mathbb{R}^d$ and output $\mathbf{y} \in \mathbb{R}^k$:
+
+\begin{equation}
+    \mathbf{y}(\mathbf{x}) = \mathbf{W}_L \sigma(\mathbf{W}_{L-1} \sigma(\cdots \sigma(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) \cdots) + \mathbf{b}_{L-1}) + \mathbf{b}_L
+    \label{eq:neural_network}
+\end{equation}
+
+\noindent where $\mathbf{W}_i$ and $\mathbf{b}_i$ are the weight matrices and bias vectors, $\sigma(\cdot)$ is a nonlinear activation function (e.g., $\tanh$), and $L$ is the number of layers. The \textit{depth} (number of layers) and \textit{width} (neurons per layer) determine the network's expressive capacity.
+
+\subsection{Physics-Informed Neural Networks (PINNs)}
+
+Physics-Informed Neural Networks (PINNs), introduced by Raissi et al. (2019), embed the governing partial differential equations (PDEs) directly into the loss function of the neural network. Instead of solving the PDE on a mesh, the PINN learns a continuous solution $\hat{u}(\mathbf{x}, t)$ that satisfies both the PDE and the boundary/initial conditions.
+
+The PINN loss function has two components:
+
+\begin{equation}
+    \mathcal{L}_{\text{total}} = \mathcal{L}_{\text{PDE}} + \mathcal{L}_{\text{BC}} + \mathcal{L}_{\text{data}}
+    \label{eq:pinn_loss_general}
+\end{equation}
+
+\noindent where:
+\begin{itemize}
+    \item $\mathcal{L}_{\text{PDE}} = \frac{1}{N_r} \sum_{i=1}^{N_r} |\mathcal{N}[\hat{u}(\mathbf{x}_i)]|^2$ penalizes violations of the governing PDE at $N_r$ collocation points.
+    \item $\mathcal{L}_{\text{BC}} = \frac{1}{N_b} \sum_{j=1}^{N_b} |\hat{u}(\mathbf{x}_j) - u_{\text{BC}}(\mathbf{x}_j)|^2$ enforces boundary conditions at $N_b$ boundary points.
+    \item $\mathcal{L}_{\text{data}} = \frac{1}{N_d} \sum_{k=1}^{N_d} |\hat{u}(\mathbf{x}_k) - u_{\text{obs}}(\mathbf{x}_k)|^2$ matches observed data at $N_d$ measurement points.
+\end{itemize}
+
+\noindent The PDE residual $\mathcal{N}[\hat{u}]$ is computed using automatic differentiation, which provides exact derivatives of the neural network output with respect to its inputs, up to machine precision.
+
+\subsection{Automatic Differentiation for PDE Residuals}
+
+Unlike finite-difference methods, automatic differentiation (AD) computes exact derivatives of the network output $\hat{u}$ with respect to its inputs $(x, y)$ through the computational graph. For a velocity field $\hat{u}(x, y)$:
+
+\begin{equation}
+    \frac{\partial \hat{u}}{\partial x} = \frac{\partial \hat{u}}{\partial \hat{u}_L} \frac{\partial \hat{u}_L}{\partial \hat{u}_{L-1}} \cdots \frac{\partial \hat{u}_2}{\partial \hat{u}_1} \frac{\partial \hat{u}_1}{\partial x}
+    \label{eq:auto_diff}
+\end{equation}
+
+\noindent This chain rule application through all network layers yields exact gradients without truncation error or mesh dependence. Libraries such as DeepXDE \cite{lu2021deepxde} implement AD through the full PINN pipeline, enabling efficient computation of second-order derivatives (e.g., $\partial^2 \hat{u}/\partial x^2$ for diffusion terms).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/pinn_architecture.png}
+    \caption{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $ to flow variables $ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring in a two-stage training strategy.}
+    \label{fig:pinn_architecture}
+\end{figure}
+
+\subsection{Applications in Hypersonic Aerothermodynamics}
+
+PINNs have been applied to several areas relevant to this study:
+
+\begin{itemize}
+    \item \textbf{Flow field reconstruction:} PINNs can fill spatial gaps in sparse DSMC data, providing a continuous field from discrete particle statistics.
+    \item \textbf{Turbulence closure:} ML-based Reynolds stress models have shown promise in capturing non-equilibrium turbulence effects.
+    \item \textbf{Inverse problems:} PINNs enable estimation of unknown parameters (e.g., surface heat flux) from sparse measurements.
+    \item \textbf{Multi-fidelity fusion:} PINNs can combine low-fidelity (RANS) and high-fidelity (DSMC) data into a unified solution.
+\end{itemize}
+
+\noindent In this study, a PINN is implemented using the DeepXDE library \cite{lu2021deepxde} with a fully connected feedforward architecture consisting of 2 input features (radial and axial coordinates in the axisymmetric plane), 5 hidden layers of 128 neurons each with $\tanh$ activation, and 5 output features (velocity components, temperature, and pressure). The network is trained in two stages: first, pre-training on synthetic boundary condition data to establish the solution topology, and second, fine-tuning using sampled DSMC field data to correct statistical noise and fill spatial gaps. This two-stage protocol ensures the network satisfies the governing partial differential equations while remaining anchored to the physics captured by the particle simulation. The detailed training protocol and validation results are presented in Chapter~3.
+
+\section{Parametric HIAD Geometry Modelling}
+
+The aerodynamic performance of a HIAD is governed by its inflated outer mold line (OML), which is constructed from a series of stacked toroidal bladders encapsulated by a flexible thermal protection system (TPS) skin. Unlike rigid aeroshells, the HIAD geometry is defined by a small set of continuous design variables, making it amenable to parametric modelling and gradient-free optimization. This section presents the mathematical framework for parametric HIAD geometry generation, following the formulation of Rapisarda \cite{rapisarda2023mdao}, which is itself a modified and optimized adaptation of the original IRVE-3 (Inflatable Reentry Vehicle Experiment 3) material configuration and structural layout \cite{dillman2015irve3, NASA2013TP4012}.
+
+\subsection{Design Variables and Constraints}
+
+The HIAD OML is parameterized by five primary design variables:
+
+\begin{equation}
+    \mathbf{x} = \left[ D,\; \theta_c,\; N_t,\; r_{\text{tor}},\; R_N \right]
+    \label{eq:hiad_design_variables}
+\end{equation}
+
+\noindent where $D$ is the target inflated aeroshell diameter, $\theta_c$ is the half-cone angle measured from the symmetry axis, $N_t$ is the number of toroidal bladders in the stack, $r_{\text{tor}}$ is the individual toroid minor radius, and $R_N$ is the nose sphere radius. The design space is bounded by structural and packaging constraints:
+
+\begin{equation}
+    \begin{aligned}
+        D &\in [2.0,\; 15.0] \text{ m} \\
+        \theta_c &\in [45^\circ,\; 75^\circ] \\
+        N_t &\in [1,\; 12] \\
+        r_{\text{tor}} &\in [50,\; 300] \text{ mm} \\
+        R_N &\geq R_{\text{pay}} / \sin(\theta_c)
+    \end{aligned}
+    \label{eq:design_bounds}
+\end{equation}
+
+\noindent The lower bound on $R_N$ arises from the structural integration constraint: the nose sphere must be large enough to encapsulate the payload adapter without geometric interference.
+
+\subsection{Structural Integration Constraint (Rapisarda Eq.\ 3.4)}
+
+The nose sphere radius is not a free parameter in the Rapisarda formulation. It is strictly determined by the payload adapter geometry and the cone angle through the structural integration constraint \cite{rapisarda2023mdao}:
+
+\begin{equation}
+    R_N = \frac{R_{\text{pay}}}{\sin(\theta_c)}
+    \label{eq:structural_integration}
+\end{equation}
+
+\noindent where $R_{\text{pay}}$ is the payload adapter radius. This constraint ensures that the tangent point between the nose sphere and the conical toroid stack aligns precisely with the payload boundary, preventing geometric overlap or gaps that would compromise structural integrity. For the IRVE-3 baseline configuration ($R_{\text{pay}} = 500$ mm, $\theta_c = 60^\circ$), this yields $R_N = 577.4$ mm.
+
+\subsection{Toroid Radius Derivation (Rapisarda Eq.\ 3.3)}
+
+Given a target inflated diameter $D$ and a fixed number of toroids $N_t$, the individual toroid minor radius $r_{\text{tor}}$ must be derived such that the outermost toroid centerline intersects the target radius exactly. Rapisarda \cite{rapisarda2023mdao} derives this by enforcing geometric closure along the conical stack:
+
+\begin{equation}
+    r_{\text{tor}} = \frac{r_{\text{target}} - R_{\text{pay}} - r_{\text{sh}} \left( \cos\theta_c - \sin\theta_c + 1 \right)}{2 N_t \cos\theta_c}
+    \label{eq:toroid_radius}
+\end{equation}
+
+\noindent where $r_{\text{target}} = D/2$ is the target inflated radius, $R_{\text{pay}}$ is the payload radius (which equals the tangency point radius $R_{\text{tang}}$), and $r_{\text{sh}}$ is the shoulder torus radius at the aft end of the stack. This equation accounts for the geometric contribution of the shoulder torus, which provides the transition between the inflatable structure and the payload adapter.
+
+\subsection{Scalloped Skin Geometry}
+
+The flexible TPS skin is not a smooth conical surface. Due to the discrete toroidal bladder structure, the skin deflects inward between adjacent toroids, creating a scalloped profile. The local skin deflection at the midpoint between toroid $i$ and toroid $i+1$ is approximated by:
+
+\begin{equation}
+    \delta_{\text{scallop}} \approx r_{\text{tor}} \left(1 - \cos\theta_c\right) \cdot \xi
+    \label{eq:scallop_deflection}
+\end{equation}
+
+\noindent where $\xi \in [0, 1]$ is a skin tension factor that depends on internal inflation pressure and skin material stiffness. This scalloped geometry generates localized flow separation and reattachment patterns that significantly amplify the peak stagnation heating at the toroid crests, as discussed in Section~2.4.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/scalloped_wall_flow.png}
+    \caption{Schematic of hypersonic flow over the scalloped HIAD surface. The periodic toroidal bladder geometry creates alternating favorable ($dp/dx < 0$, flow acceleration at crests) and adverse ($dp/dx > 0$, flow deceleration in valleys) pressure gradients, leading to boundary layer separation, recirculation zones, and localized peak heating amplification at toroid crests.}
+    \label{fig:scalloped_wall_flow_parametric}
+\end{figure}
+
+\subsection{IRVE-3 Baseline and Rapisarda Material Configuration}
+
+The IRVE-3 flight experiment (2012) demonstrated the first successful deployment of a 3.0~m HIAD at Mach~10+ re-entry conditions, achieving a peak deceleration of 19.7~g and a peak stagnation heat flux of 13.8~W/cm$^2$ \cite{NASA2013TP4012, Lau2013}. The original IRVE-3 TPS stack consisted of separate inner and outer thermal protection layers with distinct material compositions: an inner layer of Pyrogel\texttrademark\ XTE aerogel blanket for thermal insulation, and an outer layer of Kapton\texttrademark\ polyimide film for aerodynamic skin integrity \cite{dillman2015irve3}.
+
+Rapisarda \cite{rapisarda2023mdao} subsequently developed a multidisciplinary design analysis and optimization (MDAO) framework that modified and optimized this original IRVE-3 material configuration. The Rapisarda formulation introduces a unified TPS material model with three configurations:
+
+\begin{itemize}
+    \item \textbf{Stiff TPS:} 50~mm Pyrogel\texttrademark\ XTE ($\rho = 200$ kg/m$^3$, $C_p = 2500$ J/(kg$\cdot$K), $\varepsilon = 0.85$).
+    \item \textbf{Hybrid TPS:} 25~mm Pyrogel\texttrademark\ XTE + 3~mm Kapton\texttrademark\ ($\rho = 380$ kg/m$^3$, $C_p = 1100$ J/(kg$\cdot$K), $\varepsilon = 0.80$).
+    \item \textbf{Flexible TPS:} 15~mm Pyrogel\texttrademark\ XTE + 1.5~mm Kapton\texttrademark\ ($\rho = 300$ kg/m$^3$, $C_p = 1500$ J/(kg$\cdot$K), $\varepsilon = 0.82$).
+\end{itemize}
+
+\noindent These configurations represent optimized material stackups that account for the coupled thermal--structural response of the inflated aeroshell. The Rapisarda model is used as the baseline for all simulations in this study, calibrated against the IRVE-3 flight data (peak heat flux 14.36~W/cm$^2$ model vs.\ 13.8~W/cm$^2$ flight; total heat load 195.06~J/cm$^2$ model vs.\ 188~J/cm$^2$ flight).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/hiad_parametric_cross_section.png}
+    \caption{Parametric cross-section of the 3.0~m HIAD showing the stacked toroidal bladder configuration (T1--T6), shoulder torus (T7), nose sphere, and scalloped aerodynamic skin. The geometry is defined by the Rapisarda MDAO baseline parameters: $D = 3.0$~m, $\theta_c = 60^\circ$, $N_t = 6$, $R_N = 577$~mm.}
+    \label{fig:hiad_parametric_cross_section}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/hiad_design_sensitivity.png}
+    \caption{Design variable sensitivity analysis for the parametric HIAD geometry. (a)~Toroid count vs.\ effective inflated diameter, showing convergence to the 3.0~m target. (b)~Half-cone angle vs.\ nose sphere radius (Eq.~\ref{eq:structural_integration}), demonstrating the strong coupling between $\theta_c$ and $R_N$. (c)~Toroid count vs.\ individual toroid minor radius (Eq.~\ref{eq:toroid_radius}), showing the inverse relationship required to maintain geometric closure.}
+    \label{fig:hiad_design_sensitivity}
+\end{figure}
+
+\section{Optimization Theory Fundamentals}
+
+The design of a HIAD involves multiple competing objectives: maximizing drag for deceleration, minimizing peak heat flux for thermal protection, and minimizing structural mass for launch efficiency. These objectives are coupled through the shared design variables (Eq.~\ref{eq:hiad_design_variables}), creating a multidisciplinary design optimization (MDO) problem. This section presents the theoretical foundations of the optimization framework used in this study.
+
+\subsection{Multidisciplinary Design Optimization (MDO)}
+
+MDO is a methodology for the design of complex engineering systems that are governed by mutually interacting physical phenomena and analyzed by separate disciplinary codes \cite{Kroo2005}. For the HIAD problem, the disciplines include:
+
+\begin{enumerate}
+    \item \textbf{Aerodynamics:} Drag coefficient $C_D$ and stagnation heat flux $\dot{q}_s$ as functions of geometry.
+    \item \textbf{Thermal Protection:} Backface temperature $T_{\text{back}}$ as a function of TPS material and thickness.
+    \item \textbf{Structural Mechanics:} Mass budget and deployment reliability as functions of toroid count and skin material.
+\end{enumerate}
+
+\noindent The MDO formulation seeks the design vector $\mathbf{x}^*$ that minimizes a composite cost function $J(\mathbf{x})$ subject to equality and inequality constraints:
+
+\begin{equation}
+    \begin{aligned}
+        \min_{\mathbf{x}} \quad & J(\mathbf{x}) \\
+        \text{s.t.} \quad & g_j(\mathbf{x}) \leq 0, \quad j = 1, \ldots, n_g \\
+        & h_k(\mathbf{x}) = 0, \quad k = 1, \ldots, n_h \\
+        & \mathbf{x}_{\text{lb}} \leq \mathbf{x} \leq \mathbf{x}_{\text{ub}}
+    \end{aligned}
+    \label{eq:mdo_formulation}
+\end{equation}
+
+\noindent where $g_j$ are inequality constraints (e.g., maximum backface temperature, minimum structural margin), $h_k$ are equality constraints (e.g., geometric closure Eq.~\ref{eq:toroid_radius}), and $\mathbf{x}_{\text{lb}}, \mathbf{x}_{\text{ub}}$ are the design variable bounds (Eq.~\ref{eq:design_bounds}).
+
+\subsection{Design of Experiments (DOE)}
+
+Before optimization, the design space must be sampled to build a surrogate model (metamodel). Two DOE strategies are employed in this study:
+
+\subsubsection{Latin Hypercube Sampling (LHS)}
+
+LHS \cite{mckay1979lhs} is a stratified sampling technique that ensures uniform coverage of the design space. For $N$ samples across $d$ design variables, each variable axis is divided into $N$ equal-probability intervals, and exactly one sample is placed in each interval:
+
+\begin{equation}
+    x_{i,j} = x_j^{\min} + \left( x_j^{\max} - x_j^{\min} \right) \frac{i + r_{i,j}}{N}
+    \label{eq:lhs}
+\end{equation}
+
+\noindent where $r_{i,j} \in [0, 1)$ is a random perturbation. LHS is preferred for initial space-filling because it guarantees that no two samples share the same projection onto any coordinate axis, avoiding the clustering that can occur with pure random sampling.
+
+\subsubsection{Central Composite Design (CCD)}
+
+CCD \cite{Montgomery2017} is a second-order response surface design that consists of three types of points: factorial points ($2^d$ corners of a hypercube), axial points ($2d$ points along each axis at distance $\alpha$ from the center), and center points. For $d = 5$ design variables, a full CCD requires $2^5 + 2 \times 5 + 1 = 43$ samples. CCD is used when a quadratic surrogate model is desired, as it provides sufficient degrees of freedom to estimate all linear, interaction, and quadratic terms.
+
+\subsection{Surrogate Modelling (Metamodel Prognosis)}
+
+Each SPARTA DSMC simulation requires approximately 30--60 minutes of wall-clock time, making direct optimization via evolutionary algorithms infeasible (requiring $10^3$--$10^4$ function evaluations). A surrogate model, or metamodel, is therefore trained to approximate the expensive simulation:
+
+\begin{equation}
+    \hat{y} = \mathcal{M}(\mathbf{x}; \boldsymbol{\theta}) : \mathbb{R}^d \rightarrow \mathbb{R}
+    \label{eq:surrogate}
+\end{equation}
+
+\noindent where $\mathcal{M}$ is a multilayer perceptron (MLP) with parameters $\boldsymbol{\theta} = \{\mathbf{W}_i, \mathbf{b}_i\}$, and $\hat{y}$ is the predicted performance metric (e.g., peak heat flux, ballistic coefficient). The MLP architecture for this study:
+
+\begin{equation}
+    \hat{y} = \mathbf{W}_3 \, \text{ReLU}\!\left(\mathbf{W}_2 \, \text{ReLU}\!\left(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1\right) + \mathbf{b}_2\right) + \mathbf{b}_3
+    \label{eq:mlp}
+\end{equation}
+
+\noindent The surrogate is trained by minimizing the mean squared error (MSE) between predictions and SPARTA simulation results:
+
+\begin{equation}
+    \mathcal{L}_{\text{MSE}} = \frac{1}{N} \sum_{i=1}^{N} \left| \mathcal{M}(\mathbf{x}_i; \boldsymbol{\theta}) - y_i \right|^2
+    \label{eq:mse_loss}
+\end{equation}
+
+\noindent For multi-objective optimization, the surrogate outputs a vector $[\hat{y}_1, \ldots, \hat{y}_k]^T$ and the loss becomes the weighted sum across all outputs.
+
+\subsection{Genetic Algorithm Optimization}
+
+The Genetic Algorithm (GA) is a population-based stochastic optimizer inspired by natural selection \cite{Goldberg1989}. The GA operates on a population of candidate designs $\{\mathbf{x}_1, \ldots, \mathbf{x}_P\}$ and iteratively improves the population through three operators:
+
+\subsubsection{Selection}
+
+Individuals are selected for reproduction with probability proportional to their fitness. The cost function $J(\mathbf{x})$ is minimized, so the fitness is $f_i = 1 / (1 + J_i)$.
+
+\subsubsection{Crossover}
+
+Two parent designs $\mathbf{x}^{(1)}$ and $\mathbf{x}^{(2)}$ produce offspring via uniform crossover:
+
+\begin{equation}
+    x_i^{\text{child}} = \begin{cases} x_i^{(1)} & \text{if } m_i = 1 \\ x_i^{(2)} & \text{if } m_i = 0 \end{cases}
+    \label{eq:crossover}
+\end{equation}
+
+\noindent where $m_i \in \{0, 1\}$ is a binary mask with probability 0.5 for each gene.
+
+\subsubsection{Mutation}
+
+Gaussian mutation perturbs the offspring:
+
+\begin{equation}
+    x_i^{\text{mutated}} = x_i + \mathcal{N}(0, \sigma_m^2)
+    \label{eq:mutation}
+\end{equation}
+
+\noindent where $\sigma_m$ is the mutation step size, typically set to 5--10\% of the variable range. Constraint handling uses an exterior penalty function:
+
+\begin{equation}
+    J_{\text{constrained}}(\mathbf{x}) = J(\mathbf{x}) + \sum_{j=1}^{n_g} \lambda_j \cdot \phi_j\!\left(g_j(\mathbf{x})\right)
+    \label{eq:penalty}
+\end{equation}
+
+\noindent where $\phi_j(g_j) = 0$ if $g_j \leq 0$ (feasible), and $\phi_j(g_j) = g_j^2$ otherwise (infeasible).
+
+\subsection{Cost Function and Optimization Objective}
+
+The optimization objective is to find the HIAD design that maximizes survivability, defined as the ability to decelerate the payload to safe landing conditions while keeping the backface temperature below the structural limit. The composite cost function is:
+
+\begin{equation}
+    J(\mathbf{x}) = w_\beta \left( \frac{\beta_{\text{calc}} - \beta_{\text{target}}}{\sigma_\beta} \right)^2 + w_{\dot{q}} \left( \frac{\dot{q}_{\text{pred}} - \dot{q}_{\text{limit}}}{\sigma_{\dot{q}}} \right)^2 + w_{T} \left( \frac{T_{\text{back}} - T_{\text{limit}}}{\sigma_T} \right)^2
+    \label{eq:cost_function}
+\end{equation}
+
+\noindent where $\beta_{\text{calc}}$ is the ballistic coefficient, $\dot{q}_{\text{pred}}$ is the predicted peak stagnation heat flux, $T_{\text{back}}$ is the predicted backface temperature, and $w_\beta, w_{\dot{q}}, w_T$ are weighting factors that encode the designer's priorities. The normalization by $\sigma$ terms ensures that each objective contributes comparably to the total cost regardless of its absolute magnitude.
+
+\subsection{Why Optimization is Necessary}
+
+The HIAD design problem cannot be solved by engineering intuition alone for three reasons:
+
+\begin{enumerate}
+    \item \textbf{Coupled physics:} Increasing the cone angle $\theta_c$ reduces stagnation heating (larger nose radius) but increases the vehicle mass and shifts the center of pressure, affecting aerodynamic stability.
+    \item \textbf{Discrete--continuous interaction:} The toroid count $N_t$ is a discrete variable that interacts continuously with $r_{\text{tor}}$ through Eq.~\ref{eq:toroid_radius}, creating a mixed-integer design space.
+    \item \textbf{Computational expense:} Each SPARTA simulation requires 30--60~min, limiting the total number of evaluations to $\mathcal{O}(10^2)$, which necessitates efficient global search via GA coupled with surrogate acceleration.
+\end{enumerate}
+
+\noindent The optimization framework thus provides a systematic, reproducible methodology for navigating this complex design space and identifying Pareto-optimal configurations that would be inaccessible through parametric sweeps or trial-and-error approaches.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.80\textwidth]{figures/knudsen_regime_map.png}
+    \caption{Knudsen regime map as a function of altitude for the 3.0~m HIAD. The Knudsen number $Kn = \lambda / L$ determines the appropriate flow solver: continuum Navier--Stokes ($Kn < 0.01$), transitional DSMC ($0.01 < Kn < 10$), or free molecular ($Kn > 10$). At the IRVE-3 re-entry reference altitude of 52~km, the flow is in the transitional regime ($Kn \approx 0.03$), requiring DSMC simulation.}
+    \label{fig:knudsen_regime_map}
+\end{figure}
+
+\section{Summary of Literature Review}
+
+The literature review establishes the theoretical foundations across six pillars:
+
+\begin{enumerate}
+    \item \textbf{Hypersonic Aerodynamics:} The flow field around a HIAD at $Ma > 10$ is characterized by strong shock waves, high-temperature real-gas effects, and complex shock--boundary layer interactions driven by the scalloped surface geometry (Sections 2.2--2.5).
+    
+    \item \textbf{Continuum CFD:} The Navier--Stokes equations and RANS turbulence modeling (SST $k$--$\omega$) form the classical approach for hypersonic simulation (Sections 2.6--2.7). However, these are valid only in the continuum regime ($Kn < 0.01$).
+    
+    \item \textbf{Kinetic Theory and DSMC:} The Boltzmann equation provides the fundamental description of rarefied gas dynamics. The DSMC method, incorporating the Variable Soft Sphere collision model and mean free path formulation, solves the Boltzmann equation stochastically and is the appropriate tool for the transitional regime ($Kn \approx 0.03$) encountered during HIAD re-entry at 52~km altitude (Sections 2.8--2.11).
+    
+    \item \textbf{Machine Learning for CFD:} Physics-Informed Neural Networks embed governing PDEs into the loss function, enabling mesh-free solution refinement and gap-filling from sparse DSMC data (Section 2.14).
+    
+    \item \textbf{Parametric HIAD Geometry:} The HIAD OML is parameterized by five design variables ($D$, $\theta_c$, $N_t$, $r_{\text{tor}}$, $R_N$) with two governing equations: the structural integration constraint (Eq.~\ref{eq:structural_integration}) and the toroid radius derivation (Eq.~\ref{eq:toroid_radius}). The Rapisarda MDAO framework provides an optimized adaptation of the original IRVE-3 material configuration (Section 2.15).
+    
+    \item \textbf{Optimization Theory:} Multidisciplinary design optimization (MDO) combined with Latin Hypercube sampling, surrogate modelling (MoP), and genetic algorithm search provides the theoretical framework for navigating the coupled aerodynamic--thermal--structural design space (Section 2.16).
+\end{enumerate}
+
+\noindent These foundations justify the methodology adopted in Chapter~3: a parametric HIAD geometry engine based on Rapisarda's modified IRVE-3 configuration, DSMC-based simulation (SPARTA) for the primary flow field computation, PINN refinement for continuous field reconstruction, and genetic algorithm optimization for survivability maximization.
