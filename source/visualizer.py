@@ -1355,8 +1355,8 @@ def export_sparta_vtk(grid_file, output_path, ref_params=None):
 
     Accepts a single ``grid.N.out`` path **or** a list of paths (time series).
     When a list is given, individual ``.vtu`` files are written per timestep
-    and a ``.pvd`` (ParaView Data) file is generated so ParaView can animate
-    through the timesteps.
+    and returned as a list.  ParaView loads them as timesteps via
+    ``XMLUnstructuredGridReader(FileName=list)`` — no ``.pvd`` needed.
 
     Each 2D cell (xlo,ylo,xhi,yhi) becomes a VTK Quad with cell data arrays:
         Temperature, Velocity_U, Velocity_V, Velocity_W, Velocity_Magnitude,
@@ -1368,8 +1368,8 @@ def export_sparta_vtk(grid_file, output_path, ref_params=None):
         Path(s) to SPARTA ``grid.N.out`` file(s).
     output_path : str
         Destination path.  For a single file this is the ``.vtu`` path.
-        For a list, this is the ``.pvd`` path (individual VTUs are placed
-        in the same directory with ``_t000.vtu`` suffixes).
+        For a list, this is the output **directory** (individual ``.vtu``
+        files are written inside it with ``_t0000.vtu`` suffixes).
     ref_params : dict, optional
         Reference parameters (``nose_radius``, ``env_preset``).
     """
@@ -1387,90 +1387,96 @@ def export_sparta_vtk(grid_file, output_path, ref_params=None):
         return result
 
     # --- Multiple files (time series) ---
+    # Returns a LIST of .vtu file paths (ParaView reads them as timesteps
+    # via XMLUnstructuredGridReader(FileName=[list]) — no .pvd needed).
     grid_files = grid_file  # list
-    out_dir = os.path.dirname(output_path) or "."
-    pvd_path = output_path if output_path.endswith(".pvd") else output_path + ".pvd"
+    out_dir = output_path if os.path.isdir(output_path) else os.path.dirname(output_path) or "."
+    base_name = os.path.splitext(os.path.basename(output_path))[0]
     os.makedirs(out_dir, exist_ok=True)
 
-    vtu_entries = []  # (timestep_value, filename)
+    vtu_paths = []
     for idx, gf in enumerate(grid_files):
         data = parse_grid_dump(gf)
         if len(data) == 0:
             continue
-        vtu_name = f"{os.path.splitext(os.path.basename(pvd_path))[0]}_t{idx:04d}.vtu"
+        vtu_name = f"{base_name}_t{idx:04d}.vtu"
         vtu_full = os.path.join(out_dir, vtu_name)
         result = _write_single_vtu(data, vtu_full, ref_params)
         if result:
-            vtu_entries.append((float(idx), vtu_name))
+            vtu_paths.append(vtu_full)
 
-    if not vtu_entries:
+    if not vtu_paths:
         print("[VTK] No valid timesteps found, skipping time-series export.")
         return None
 
-    # Write .pvd file
-    with open(pvd_path, "w", encoding="utf-8") as f:
-        f.write('<?xml version="1.0"?>\n')
-        f.write('<VTKFile type="Collection" version="0.1">\n')
-        f.write("  <Collection>\n")
-        for t, fname in vtu_entries:
-            f.write(f'    <DataSet timestep="{t:.6e}" file="{fname}"/>\n')
-        f.write("  </Collection>\n")
-        f.write("</VTKFile>\n")
-
-    print(f"[VTK] Time series: {len(vtu_entries)} timesteps → {pvd_path}")
-    return pvd_path
+    print(f"[VTK] Time series: {len(vtu_paths)} timesteps in {out_dir}")
+    return vtu_paths
 
 
 def launch_paraview_for_sparta(vtk_file, output_dir=None):
     """Generate a ParaView Python state script and open it.
 
-    Creates a ``.py`` state file that loads the VTU/PVD, applies colour maps,
-    and resets the camera.  For ``.pvd`` time series, enables the animation
-    controls.  Launches ParaView in ``--script`` mode when available,
-    otherwise just prints the script path for manual loading.
+    Creates a ``.py`` state file that loads the VTU(s), applies colour maps,
+    and resets the camera.  When *vtk_file* is a list (from
+    :func:`export_sparta_vtk` with multiple grid dumps), ParaView treats
+    each file as a timestep and the VCR controls animate through them.
 
     Parameters
     ----------
-    vtk_file : str
-        Path to the ``.vtu`` or ``.pvd`` file produced by :func:`export_sparta_vtk`.
+    vtk_file : str or list[str]
+        Path(s) to ``.vtu`` files produced by :func:`export_sparta_vtk`.
     output_dir : str, optional
         Directory for the generated ``.pv.py`` script.  Defaults to the
         same directory as *vtk_file*.
     """
+    # Normalise inputs
+    if isinstance(vtk_file, str):
+        vtu_list = [vtk_file]
+    else:
+        vtu_list = list(vtk_file)
+
     if output_dir is None:
-        output_dir = os.path.dirname(vtk_file)
+        output_dir = os.path.dirname(vtu_list[0])
     os.makedirs(output_dir, exist_ok=True)
 
     script_path = os.path.join(output_dir, "paraview_state.pv.py")
 
-    # Resolve absolute path for the VTU/PVD inside the script
-    vtk_abs = os.path.abspath(vtk_file).replace("\\", "/")
-    is_pvd = vtk_file.lower().endswith(".pvd")
+    # Resolve absolute paths
+    vtu_abs_list = [os.path.abspath(f).replace("\\", "/") for f in vtu_list]
+    is_timeseries = len(vtu_abs_list) > 1
 
-    if is_pvd:
-        reader_line = f"reader = XMLCollectionReader(FileName='{vtk_abs}')"
-        time_section = """\
-# ── Enable time animation ──────────────────────────────────────
-timesteps = reader.GetNumberOfTimeSteps()
-if timesteps > 0:
-    print(f"[ParaView] Time series: {timesteps} steps found")
-    # Set to last timestep for initial view
-    reader.UpdatePipeline(reader.GetTimeRange()[1])
-else:
-    print("[ParaView] No timesteps found in PVD")
-    reader.UpdatePipeline()"""
+    # Build the FileName argument — list or single string
+    if is_timeseries:
+        file_list_str = str(vtu_abs_list)
+        reader_line = f"reader = XMLUnstructuredGridReader(FileName={file_list_str})"
     else:
-        reader_line = f"reader = XMLUnstructuredGridReader(FileName='{vtk_abs}')"
+        reader_line = f"reader = XMLUnstructuredGridReader(FileName='{vtu_abs_list[0]}')"
+
+    time_section = ""
+    if is_timeseries:
+        time_section = f"""\
+# ── Time series: {len(vtu_abs_list)} timesteps ──────────────────────────────
+# ParaView 6.x: TimestepValues is a VectorProperty on XMLUnstructuredGridReader
+ts = list(reader.TimestepValues)
+print(f"[ParaView] Time series loaded: {{len(ts)}} timesteps")
+if ts:
+    reader.UpdatePipeline(ts[-1])  # jump to last timestep for initial view
+else:
+    reader.UpdatePipeline()
+print("[ParaView] Use VCR controls (Play/Pause) to animate timesteps.")"""
+    else:
         time_section = "reader.UpdatePipeline()"
+
+    label = f"{len(vtu_abs_list)} timesteps" if is_timeseries else "single VTU"
 
     script = f'''\
 # Auto-generated ParaView state script — StellarOrion
 # Open with: paraview --script=paraview_state.pv.py
-# Or load manually: File > Open > {os.path.basename(vtk_file)}
+# Or load manually: File > Open > {os.path.basename(vtu_list[0])}
 
 from paraview.simple import *
 
-# ── Load {"PVD time series" if is_pvd else "VTU"} ──────────────────────────────────────────────
+# ── Load VTU ({label}) ───────────────────────────────────────────
 {reader_line}
 {time_section}
 
@@ -1491,19 +1497,9 @@ tf.ApplyPreset('Black-Body Radiation', True)
 view.ResetCamera()
 Render()
 
-print("[ParaView] Loaded: {os.path.basename(vtk_file)}")
-print("[ParaView] Switch between arrays in the Properties panel.")
-print("[ParaView] Available arrays:")
-try:
-    output = reader.GetOutput()
-    if output:
-        for i in range(output.GetCellData().GetNumberOfArrays()):
-            name = output.GetCellData().GetArray(i).GetName()
-            print(f"    - {{name}}")
-except Exception as e:
-    print(f"    (Could not enumerate arrays: {{e}})")
-
-{"print('[ParaView] Use the VCR controls (Play/Pause) at the top to animate through timesteps.')" if is_pvd else ""}
+print("[ParaView] Loaded: {len(vtu_list)} timestep(s) from {os.path.dirname(vtu_list[0])}")
+print("[ParaView] Use the VCR controls (▶/⏸) to animate through timesteps.")
+print("[ParaView] Switch arrays in the Properties panel under Cell Data.")
 
 # Uncomment to save a screenshot:
 # SaveScreenshot('{os.path.join(output_dir, "paraview_screenshot.png")}', view)
@@ -1534,7 +1530,7 @@ except Exception as e:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            print(f"[ParaView] Launched with script: {script_path}")
+            print(f"[ParaView] Launched with script ({label}): {script_path}")
         except Exception as e:
             print(f"[ParaView] Could not auto-launch ({e}). Load script manually.")
     else:
