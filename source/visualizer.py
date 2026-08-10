@@ -1411,9 +1411,15 @@ Render()
 print("[ParaView] Loaded: {os.path.basename(vtk_file)}")
 print("[ParaView] Switch between arrays in the Properties panel.")
 print("[ParaView] Available arrays:")
-for i in range(reader.GetNumberOfArrays()):
-    name = reader.GetCellDataArrayName(i)
-    print(f"    - {{name}}")
+try:
+    reader.UpdatePipeline()
+    output = reader.GetOutput()
+    if output:
+        for i in range(output.GetCellData().GetNumberOfArrays()):
+            name = output.GetCellData().GetArray(i).GetName()
+            print(f"    - {{name}}")
+except Exception as e:
+    print(f"    (Could not enumerate arrays: {{e}})")
 
 # Uncomment to save a screenshot:
 # SaveScreenshot('{os.path.join(output_dir, "paraview_screenshot.png")}', view)
