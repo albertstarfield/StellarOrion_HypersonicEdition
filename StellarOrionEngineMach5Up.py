@@ -3356,12 +3356,12 @@ run             {steps}
                 for s in ['N2', 'O2', 'NO', 'N', 'O']:
                     self.window.evaluate_js(f"document.getElementById('img-species-{s}').src = 'assets/plots/species_{s}_map.png?' + new Date().getTime()")
 
-            self.log_to_gui("    [+] Exporting baseline results to ParaView (VTK)...")
-            vtk_path = os.path.join(self.cwd, "web", "assets", "data", "baseline_paraview.vtu")
+            self.log_to_gui("    [+] Exporting baseline results to ParaView (VTK time series)...")
+            vtk_path = os.path.join(self.cwd, "web", "assets", "data", "baseline_paraview.pvd")
             os.makedirs(os.path.dirname(vtk_path), exist_ok=True)
-            vtk_result = visualizer.export_sparta_vtk(grid_files[-1], vtk_path, ref_params=viz_metadata)
+            vtk_result = visualizer.export_sparta_vtk(grid_files, vtk_path, ref_params=viz_metadata)
             if vtk_result:
-                visualizer.launch_paraview_for_sparta(vtk_path, output_dir=os.path.dirname(vtk_path))
+                visualizer.launch_paraview_for_sparta(vtk_result, output_dir=os.path.dirname(vtk_path))
             
             # --- PINN Refinement Stage ---
             if opt_params.get('pinn_accel', True):
@@ -3656,11 +3656,11 @@ run             {steps}
                     visualizer.generate_convergence_plot(log_lines, sample_dir, ref_params=viz_metadata)
                     visualizer.upscale_2d_to_3d(grid_files[-1], os.path.join(sample_dir, "3d_temp.png"), 
                                                 surf_file=os.path.join(cad_dir, "HIAD_opt.surf"), prop='temp', ref_params=viz_metadata)
-                    # VTK export + ParaView (always runs by default)
-                    vtk_path = os.path.join(sample_dir, f"paraview_sample_{i+1}.vtu")
-                    vtk_result = visualizer.export_sparta_vtk(grid_files[-1], vtk_path, ref_params=viz_metadata)
+                    # VTK export + ParaView time series (always runs by default)
+                    vtk_path = os.path.join(sample_dir, f"paraview_sample_{i+1}.pvd")
+                    vtk_result = visualizer.export_sparta_vtk(grid_files, vtk_path, ref_params=viz_metadata)
                     if vtk_result:
-                        visualizer.launch_paraview_for_sparta(vtk_path, output_dir=sample_dir)
+                        visualizer.launch_paraview_for_sparta(vtk_result, output_dir=sample_dir)
             except Exception as ve:
                 self.log_to_gui(f"    [!] Warning: Visual post-processing failed for Sample {i+1}: {ve}")
 
