@@ -64,6 +64,21 @@ Based on the literature review, several gaps are identified in the current state
     \item \textbf{Multi-Objective Survivability Optimization:} The simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and structural mass for HIAD configurations using surrogate-assisted genetic algorithms has not been demonstrated.
 \end{itemize}
 
+\section{Novelty and Contributions}
+The present work makes the following novel contributions to the field of hypersonic aerothermodynamic analysis and HIAD design:
+
+\begin{enumerate}
+    \item \textbf{First Integrated DSMC-PINN-Optimization Framework for HIAD:} This study presents the first computational framework that couples automated parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics (SPARTA), Physics-Informed Neural Network refinement (DeepXDE), and surrogate-assisted genetic algorithm optimization in a unified pipeline for HIAD survivability analysis.
+
+    \item \textbf{DSMC-Based Design Space Exploration:} Unlike prior studies limited to continuum CFD (RANS/LES), this framework employs particle-based DSMC to accurately capture the transitional flow regime ($0.01 < Kn < 10$) encountered at reentry altitudes above 50 km, enabling physically correct aerothermal load prediction for inflatable decelerators.
+
+    \item \textbf{PINN as DSMC Post-Processor:} The application of Physics-Informed Neural Networks as a smoothing and interpolation layer for noisy DSMC particle data is novel in the context of HIAD aerothermal analysis. The two-stage training protocol (data-only followed by data+PDE) provides a physics-consistent continuous field from discrete particle simulations.
+
+    \item \textbf{Multi-Objective Surrogate-Assisted Optimization:} The simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and drag performance using a PyTorch MoP surrogate coupled with a genetic algorithm demonstrates a computationally efficient approach to HIAD design that would be infeasible with direct simulation alone.
+
+    \item \textbf{Comprehensive ML Documentation Standards:} The framework adheres to established machine learning research standards, including explicit architecture documentation, reproducibility requirements (random seeds, environment specifications), validation metrics ($R^2$, RMSE, MAE), and uncertainty quantification through ensemble prediction.
+\end{enumerate}
+
 \section{Scope and Limitations}
 
 The scope of this research is defined to provide aerothermal analysis and survivability optimization of the Flexible Thermal Protection System (FTPS) within the constraints of available computational resources. The boundaries and limitations of this study are as follows:
@@ -124,3 +139,8 @@ The structure of this thesis is arranged as follows. A brief description of each
 \textbf{CHAPTER IV} This chapter presents the simulation results and discussion derived from the SPARTA DSMC computational framework. It covers the baseline IRVE-3 geometry configuration, aerothermal surface distributions, flow field characteristics, validation against flight data, and a comparative analysis with prior Newtonian-panel-based approaches highlighting the methodological advances of the present DSMC framework.
 
 \textbf{CHAPTER V} This chapter contains the summary of research findings derived from the data analysis and optimization results. It presents the final conclusions regarding the aerothermal performance and survivability optimization of the scalloped HIAD and provides recommendations for future researchers and aerospace engineers.
+
+\section*{Chapter Summary}
+This chapter has established the research context by presenting the background on hypersonic inflatable aerodynamic decelerators (HIADs), identifying the critical need for accurate aerothermal analysis in the transitional flow regime, and defining eight specific research objectives. The novelty of this work lies in the first integrated DSMC-PINN-optimization framework for HIAD design, which addresses four identified research gaps in rarefied regime modeling, automated design space exploration, PINN-DSMC hybrid approaches, and multi-objective survivability optimization.
+
+The scope of this research is bounded by the IRVE-3 baseline configuration, 2D axisymmetric and 3D simulations, 5-species air chemistry, and the Sutton-Graves heating correlation. The following chapter presents the theoretical foundations and literature review supporting the computational methodology described herein.
