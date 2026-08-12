@@ -1598,6 +1598,11 @@ def export_sparta_vtk_3d(grid_file, output_path, ref_params=None):
         if len(data) == 0:
             print(f"[VTK-3D] No data in {grid_file}, skipping.")
             return None
+        # If output_path is a directory, generate a filename inside it
+        if os.path.isdir(output_path) or not output_path.endswith(".vtp"):
+            os.makedirs(output_path, exist_ok=True)
+            base = os.path.splitext(os.path.basename(grid_file))[0]
+            output_path = os.path.join(output_path, f"{base}_3d.vtp")
         return _write_single_vtp_3d(data, output_path, ref_params)
 
 
@@ -1767,10 +1772,9 @@ print("[ParaView] Use VCR controls (Play/Pause) to animate timesteps.")"""
     if stl_abs:
         stl_section = (
             f"\n# --- Load HIAD STL geometry ---\n"
-            f"reader_stl = XMLPolyDataReader(FileName='{stl_abs}')\n"
+            f"reader_stl = STLReader(FileNames='{stl_abs}')\n"
             f"reader_stl.UpdatePipeline()\n"
             f"display_stl = Show(reader_stl, view)\n"
-            f"ColorBy(display_stl, None)  # solid colour, no data array\n"
             f"display_stl.DiffuseColor = [0.85, 0.85, 0.85]  # light grey\n"
             f"display_stl.Opacity = 0.85\n"
             f'print(f"[ParaView] HIAD STL geometry loaded: {stl_abs}")\n'

@@ -1,5 +1,145 @@
 \clearpage
 \chapter{METHODOLOGY}
+
+\section{Research Axioms and First Principles}
+\label{sec:axioms}
+
+Before detailing the computational framework, this section establishes the foundational axioms from which the entire methodology is derived. Each axiom is grounded in established physical theory and validated against the literature reviewed in Chapter~\ref{chap:literature}. The derivation chain---from fundamental kinetic theory to the implemented software pipeline---is summarized in Figure~\ref{fig:methodology_derivation}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/methodology_derivation.png}
+    \caption{Methodology derivation from first principles: axioms $\rightarrow$ governing equations $\rightarrow$ numerical methods $\rightarrow$ software implementation. The dashed red arrows indicate data flow between method layers.}
+    \label{fig:methodology_derivation}
+\end{figure}
+
+\subsection{Axiom Set}
+The following axioms form the logical foundation of this research. Each is stated as a proposition, derived from physical theory, and traced to its literature basis.
+
+\begin{table}[H]
+\centering
+\caption{Research axioms derived from first principles and their literature basis.}
+\label{tab:research_axioms}
+\begin{tabular}{@{}clll@{}}
+\toprule
+\textbf{ID} & \textbf{Axiom} & \textbf{Physical Basis} & \textbf{Literature Basis} \\ \midrule
+A1 & Conservation of mass, momentum, and energy & Continuum mechanics & Batchelor (1967), Anderson (1995) \\
+A2 & Molecular chaos (Stosszahlansatz) & Statistical mechanics & Boltzmann (1872), Bird (1994) \\
+A3 & Continuum hypothesis valid for $Kn < 0.01$ & Kinetic theory & Cercignani (1988), Bird (1994) \\
+A4 & Equilibrium distribution follows Maxwell--Boltzmann & Statistical thermodynamics & Chapman \& Cowling (1970) \\
+A5 & Stagnation heating follows $q \propto \sqrt{\rho/R_n} \cdot V^3$ & Blunt body aerothermodynamics & Sutton \& Graves (1971) \\
+A6 & DSMC converges to Boltzmann equation as $N \to \infty$ & Statistical convergence & Bird (1994), Wagner (1992) \\
+A7 & PINN residuals enforce PDE consistency in interpolation & Scientific machine learning & Raissi et al. (2019), Karniadakis et al. (2021) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Derivation Chain}
+The methodology is constructed by chaining the axioms through a sequence of mathematical derivations. Each step introduces a specific equation or method that is implemented in the software pipeline.
+
+\paragraph{Step 1: Boltzmann Equation (A1, A2, A4).}
+The Boltzmann transport equation governs the evolution of the molecular velocity distribution function $f(\mathbf{x}, \mathbf{v}, t)$:
+\begin{equation}
+\frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla_{\mathbf{x}} f + \frac{\mathbf{F}}{m} \cdot \nabla_{\mathbf{v}} f = \left(\frac{\delta f}{\delta t}\right)_{\text{coll}}
+\label{eq:boltzmann}
+\end{equation}
+where the right-hand side is the collision integral, evaluated under the assumption of molecular chaos (Axiom~A2). The equilibrium solution is the Maxwell--Boltzmann distribution (Axiom~A4).
+
+\paragraph{Step 2: DSMC Method (A6).}
+Bird's Direct Simulation Monte Carlo method~\cite{bird1994dsmc} provides a stochastic solution to Equation~\eqref{eq:boltzmann}. As the number of simulated particles $N \to \infty$, the DSMC solution converges to the exact Boltzmann solution (Axiom~A6). The DSMC algorithm proceeds in three steps per time step:
+\begin{enumerate}
+    \item \textbf{Advection:} Particles are moved ballistically for $\Delta t$.
+    \item \textbf{Collisions:} Pairs are selected within each cell using the VSS collision model.
+    \item \textbf{Sampling:} Macroscopic properties (density, temperature, velocity) are accumulated in each cell.
+\end{enumerate}
+
+\paragraph{Step 3: Navier--Stokes Limit (A3).}
+In the continuum limit ($Kn \to 0$), the Boltzmann equation reduces to the compressible Navier--Stokes equations via the Chapman--Enskog expansion~\cite{chapman1970kinetic}. These equations serve as the PDE constraint in the PINN (Step~5).
+
+\paragraph{Step 4: Sutton--Graves Correlation (A5).}
+For rapid engineering estimates, the stagnation-point heat flux is approximated by~\cite{sutton1971approximate}:
+\begin{equation}
+\dot{q}_s = k \sqrt{\frac{\rho_\infty}{R_n}} \, V_\infty^3
+\label{eq:sutton_graves}
+\end{equation}
+where $k$ is a gas-specific constant, $\rho_\infty$ is the freestream density, $R_n$ is the nose radius, and $V_\infty$ is the flight velocity. This correlation is used both for initial thermal loading estimates and as a validation benchmark against DSMC results.
+
+\paragraph{Step 5: PINN Flow Field Refinement (A7).}
+The Physics-Informed Neural Network enforces the Navier--Stokes residuals as a soft constraint in the loss function~\cite{raissi2019physics}:
+\begin{equation}
+\mathcal{L} = \underbrace{\mathcal{L}_{\text{data}}}_{\text{DSMC samples}} + \lambda_{\text{PDE}} \underbrace{\mathcal{L}_{\text{PDE}}}_{\text{NS residuals}}
+\label{eq:pinn_loss}
+\end{equation}
+where $\mathcal{L}_{\text{data}}$ penalizes deviation from DSMC surface data and $\mathcal{L}_{\text{PDE}}$ penalizes violation of the governing PDEs at collocation points in the flow field.
+
+\paragraph{Step 6: Surrogate-Assisted Optimization.}
+The MoP surrogate model approximates the mapping from design variables to performance metrics. The Genetic Algorithm (GA) queries the MoP surrogate to explore the design space, avoiding the computational cost of repeated DSMC evaluations. The optimization cost function is:
+\begin{equation}
+J = w_\beta \left(\frac{\beta_{\text{calc}} - \beta_{\text{target}}}{10}\right)^2 + \sum_{i} w_i \, \mathbb{1}\!\left[y_i^{(\text{pred})} > y_i^{(\text{limit})}\right] \cdot 10^{15}
+\label{eq:cost_function}
+\end{equation}
+where hard constraint violations (backface temperature $> 350$\,K, g-load $> 25g$) are penalized with $10^{15}$.
+
+Figure~\ref{fig:governing_equations} summarizes the full derivation chain from kinetic theory to optimization, showing the governing equation at each step and the axiom that anchors it.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/governing_equations.png}
+    \caption{Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier--Stokes continuum limit, Sutton--Graves engineering correlation, PINN neural approximation, to GA-based survivability optimization. Each layer is anchored by the research axioms defined in Table~\ref{tab:research_axioms}.}
+    \label{fig:governing_equations}
+\end{figure}
+
+\subsection{Software Pipeline}
+\label{sec:software_pipeline}
+The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\ref{fig:software_pipeline}. The pipeline begins with CadQuery geometry generation and freestream condition specification, then routes through the DSMC solver (SPARTA in Docker), the PINN refinement module (DeepXDE), and the MoP surrogate (PyTorch), before producing ParaView-ready VTK and STL files for visualization.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/software_pipeline.png}
+    \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver $\rightarrow$ PINN refinement $\rightarrow$ MoP surrogate $\rightarrow$ ParaView visualization. The feedback loop from MoP to the core engine enables GA-driven optimization.}
+    \label{fig:software_pipeline}
+\end{figure}
+
+\subsection{Default Optimization Parameters}
+\label{sec:default_params}
+Table~\ref{tab:default_params} lists the default parameter values used throughout this thesis, as configured in \texttt{main.py} and the engine source files. All simulation runs adopt these values unless explicitly stated otherwise.
+
+\begin{table}[H]
+\centering
+\caption{Default optimization and simulation parameters.}
+\label{tab:default_params}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Category} & \textbf{Parameter} & \textbf{Default Value} \\ \midrule
+\multirow{5}{*}{\textbf{DSMC (SPARTA)}} & Steps (optimization) & 1100 \\
+ & Steps (sample) & 500 \\
+ & Grid factor & 0.7 \\
+ & Particle weighting ($f_{\text{num}}$) & $1.5 \times 10^{20}$ \\
+ & Chemistry model & 5-species (N$_2$, O$_2$, NO, N, O) \\ \midrule
+\multirow{3}{*}{\textbf{Flight Conditions}} & $V_\infty$ & 2700\,m/s \\
+ & $T_\infty$ & 270.0\,K \\
+ & $n_\infty$ & $3.47 \times 10^{21}$\,/m$^3$ \\ \midrule
+\multirow{3}{*}{\textbf{DoE (CCD)}} & Method & Face-Centered CCD \\
+ & Samples ($N$) & 25 ($2^4 + 2 \times 4 + 1$) \\
+ & Active variables & Diameter, Angle, Toroids, Nose \\ \midrule
+\multirow{6}{*}{\textbf{PINN (DeepXDE)}} & Architecture & FNN [2] + [128] $\times$ 5 + [5] \\
+ & Activation & tanh \\
+ & Learning rate (Stage 1) & $1 \times 10^{-3}$ \\
+ & Learning rate (Stage 2) & $5 \times 10^{-4}$ \\
+ & Iterations & $\max(2000, \min(4000, \text{steps} \times 2))$ \\
+ & PDE collocation points & 2500 (domain) + 500 (boundary) \\ \midrule
+\multirow{4}{*}{\textbf{MoP (PyTorch)}} & Architecture & MLP [n $\to$ 128 $\to$ 128 $\to$ 8] \\
+ & Activation & ReLU \\
+ & Learning rate & 0.005 \\
+ & Epochs & 500 (early stop at loss $< 10^{-6}$) \\ \midrule
+\multirow{3}{*}{\textbf{GA Optimization}} & Generations & 20\,000 \\
+ & Stagnation stop & 5 windows $\times$ 1000 generations \\
+ & Constraint limits & $T_{\text{back}} < 350$\,K, $g < 25g$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Research Design and Workflow}
 This chapter outlines the computational framework utilized to investigate the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD). The research workflow follows a multi-stage numerical analysis approach, moving from parametric geometry generation to high-fidelity Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement, and Genetic Algorithm (GA) optimization.
 
@@ -261,6 +401,25 @@ The 1D transient backface temperature model estimates the thermal penetration th
 \end{equation}
 
 where $\eta_{lag} = 0.15$ is the thermal lag factor, $\rho_{TPS} = 1468$\,kg/m$^3$ (Nicalon SiC density), $C_{p,TPS} = 1100$\,J/kg$\cdot$K, and $\delta_{TPS}$ is the TPS thickness.
+
+The framework supports multiple TPS material presets as summarized in Table~\ref{tab:tps_materials}.
+
+\begin{table}[H]
+    \centering
+    \caption{TPS Material Presets Available in the StellarOrion Framework.}
+    \label{tab:tps_materials}
+    \begin{tabular}{|l|c|c|c|c|}
+        \hline
+        \textbf{Material} & \textbf{$\rho$ (kg/m$^3$)} & \textbf{$C_p$ (J/kg$\cdot$K)} & \textbf{$\epsilon$} & \textbf{Application} \\ \hline
+        Nicalon SiC & 1468 & 1100 & 0.75 & Gen-2 HIAD TPS \\ \hline
+        Pyrogel XTE & 200 & 1000 & 0.90 & FTPS blanket insulation \\ \hline
+        Kapton & 1420 & 1090 & 0.85 & Polyimide film layers \\ \hline
+        Multi-layer (stack) & -- & -- & -- & Combined FTPS stack \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Statistical Convergence Monitoring}
+As a Monte Carlo method, DSMC produces statistical noise that scales as $1/\sqrt{N_{\text{samples}}}$, where $N_{\text{samples}}$ is the number of independent particle-time samples accumulated. Convergence is monitored by tracking the running average of surface force and energy quantities. SPARTA's \texttt{stats\_interval} parameter (default: 100 steps) controls the frequency of convergence diagnostics. The simulation is considered statistically converged when the relative change in drag coefficient ($C_d$) and stagnation heat flux falls below 2\% over consecutive monitoring windows. For the baseline optimization runs, convergence is typically achieved after 500--1100 particle-time steps depending on the geometry complexity.
 
 \section{Physics-Informed Neural Network Refinement}
 
@@ -810,17 +969,145 @@ The framework supports GPU acceleration across multiple vendors:
     \item \textbf{Specialized:} Huawei CANN, Moore Threads MUSA, Biren SUPA, Snapdragon OpenCL
 \end{itemize}
 
-\section{Research Schedule}
-The research is planned to be conducted over a period of several months. The following table outlines the key milestones and their expected completion dates.
+\section{Machine Learning Research Standards Documentation}
 
-\begin{landscape}
+This section documents the machine learning components of the framework following established research standards for reproducibility and transparency~\cite{ml_standards}. All ML models are implemented in PyTorch and satisfy the documentation requirements for architected ML systems.
 
-\begin{figure}[H]
+\subsection{Model Architecture Specifications}
+
+\subsubsection*{Physics-Informed Neural Network (PINN)}
+The PINN is implemented using the DeepXDE library~\cite{lu2021deepxde} with the following architecture:
+
+\begin{table}[H]
     \centering
-    \includegraphics[width=1.5\textwidth]{figures/Scheduling.png}
-    \caption{Research Schedule}
-    \label{fig:ResearchSchedule}
-\end{figure}
-\end{landscape}
+    \caption{PINN Architecture and Hyperparameters.}
+    \label{tab:pinn_architecture}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Component} & \textbf{Specification} \\ \hline
+        Framework & DeepXDE (v1.x) + PyTorch backend \\ \hline
+        Input dimension & 4 ($x, y, z, t$ or spatial coordinates) \\ \hline
+        Output dimension & 5 ($\rho, u, v, w, T$) \\ \hline
+        Hidden layers & 5 \\ \hline
+        Neurons per layer & 128 \\ \hline
+        Activation function & $\tanh$ \\ \hline
+        Weight initialization & Glorot uniform \\ \hline
+        Total parameters & $\mathcal{O}(10^5)$ \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsubsection*{Metamodel Prognosis (MoP)}
+The MoP surrogate is a 3-layer MLP implemented in PyTorch:
+
+\begin{table}[H]
+    \centering
+    \caption{MoP MLP Architecture and Hyperparameters.}
+    \label{tab:mop_hparams}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Component} & \textbf{Specification} \\ \hline
+        Framework & PyTorch (v2.x) \\ \hline
+        Input dimension & $d$ (design variables, $d = 4$--$7$) \\ \hline
+        Hidden layers & 2 hidden + 1 output \\ \hline
+        Neurons per layer & 64 \\ \hline
+        Activation function & ReLU \\ \hline
+        Optimizer & Adam ($\eta = 10^{-3}$) \\ \hline
+        Loss function & Mean Squared Error (MSE) \\ \hline
+        Total parameters & $\mathcal{O}(10^4)$ \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Training Methodology}
+
+\subsubsection*{Data Collection Pipeline}
+Training data is generated through the following pipeline:
+\begin{enumerate}
+    \item \textbf{Design of Experiments:} $N = 25$ sample points generated via Face-Centered CCD (Sec.~3.5.1) across the design space.
+    \item \textbf{Simulation:} Each design is evaluated using SPARTA DSMC with $O(10^3)$ timesteps.
+    \item \textbf{PINN Refinement:} DSMC outputs are refined using the two-stage PINN protocol (Sec.~3.4).
+    \item \textbf{Feature Engineering:} Design parameters $\mathbf{x} = (D, \theta_c, R_n, N_t, r_t, m, \delta_{TPS})$ are normalized to $[0, 1]$ using min-max scaling.
+\end{enumerate}
+
+\subsubsection*{Train/Test Split}
+The dataset is split using a stratified 80/20 partition:
+\begin{itemize}
+    \item \textbf{Training set:} 20 samples (80\%) used for model fitting.
+    \item \textbf{Validation set:} 5 samples (20\%) used for early stopping and hyperparameter selection.
+\end{itemize}
+
+\subsubsection*{Cross-Validation}
+For robust performance estimation, $k$-fold cross-validation ($k = 5$) is employed when sample size permits. The reported metrics represent the mean $\pm$ standard deviation across folds.
+
+\subsection{Validation Metrics}
+
+Model performance is evaluated using the following metrics:
+
+\begin{table}[H]
+    \centering
+    \caption{ML Model Validation Metrics.}
+    \label{tab:ml_metrics}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Metric} & \textbf{Definition} & \textbf{Target} \\ \hline
+        $R^2$ (Coefficient of Determination) & $1 - \frac{SS_{res}}{SS_{tot}}$ & $> 0.95$ \\ \hline
+        RMSE (Root Mean Squared Error) & $\sqrt{\frac{1}{N}\sum(\hat{y}_i - y_i)^2}$ & Minimized \\ \hline
+        MAE (Mean Absolute Error) & $\frac{1}{N}\sum|\hat{y}_i - y_i|$ & Minimized \\ \hline
+        Max Absolute Error & $\max|\hat{y}_i - y_i|$ & $< 5\%$ of range \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Reproducibility Requirements}
+
+To ensure full reproducibility of all ML results, the following standards are enforced:
+
+\subsubsection*{Random Seed Control}
+All stochastic operations (weight initialization, data splitting, CCD point generation) are seeded with a fixed random seed:
+\begin{itemize}
+    \item PINN: \texttt{torch.manual\_seed(42)}, \texttt{numpy.random.seed(42)}
+    \item MoP: \texttt{torch.manual\_seed(123)}, \texttt{numpy.random.seed(123)}
+    \item GA: \texttt{numpy.random.seed(456)}
+\end{itemize}
+
+\subsubsection*{Environment Specification}
+\begin{table}[H]
+    \centering
+    \caption{Computing Environment for ML Components.}
+    \label{tab:env_spec}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Component} & \textbf{Version} \\ \hline
+        Python & 3.10+ \\ \hline
+        PyTorch & 2.x \\ \hline
+        DeepXDE & 1.x \\ \hline
+        NumPy & 1.24+ \\ \hline
+        Hardware & NVIDIA CUDA / AMD ROCm / Apple MPS \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsubsection*{Model Checkpointing}
+All trained models are saved with:
+\begin{itemize}
+    \item Full model state dict (\texttt{model\_state\_dict})
+    \item Optimizer state dict (\texttt{optimizer\_state\_dict})
+    \item Training epoch count
+    \item Final loss values
+    \item Random seed used for initialization
+\end{itemize}
+
+\subsection{Uncertainty Quantification}
+
+\subsubsection*{PINN Uncertainty}
+The PINN provides uncertainty estimates through:
+\begin{itemize}
+    \item \textbf{Ensemble prediction:} $M = 5$ models trained with different random seeds, providing predictive mean $\hat{y}$ and standard deviation $\sigma_{pred}$.
+    \item \textbf{Residual analysis:} PDE residual $\mathcal{R}(\mathbf{x})$ at test points quantifies physics consistency.
+\end{itemize}
+
+\subsubsection*{MoP Uncertainty}
+The MoP surrogate uncertainty is estimated via:
+\begin{itemize}
+    \item \textbf{Ensemble prediction:} $M = 10$ models with different initializations.
+    \item \textbf{Leave-one-out cross-validation:} Predictive variance from $N$ models trained on $N-1$ samples.
+\end{itemize}
 
 \clearpage

@@ -41,11 +41,9 @@ def generate_flight_vs_sim_plot():
     r_torus_shoulder = 75
     
     # [Rapisarda Eq 3.3]: Toroid radius calculation
-    numerator = r_target - r_pay - r_torus_shoulder * (np.cos(theta_c_rad) - np.sin(theta_c_rad) + 1.0)
-    r_torus = numerator / (1.0 + np.sin(theta_c_rad) + (2.0 * t_count - 1.0) * np.cos(theta_c_rad))
-    
-    # [Rapisarda Eq C.3]: L_enclosure
-    L_shift = r_torus * (1.0 + np.sin(theta_c_rad)) / np.cos(theta_c_rad)
+    # Outer radius is: R_tang + r_torus + 2(N-1)r_torus cos(theta) + r_out cos(theta) + r_out = r_target
+    numerator = r_target - r_pay - r_torus_shoulder * (1.0 + np.cos(theta_c_rad))
+    r_torus = numerator / (1.0 + (2.0 * t_count - 1.0) * np.cos(theta_c_rad))
 
     # Generate synthetic analytical HIAD slice matching user image
     # Nose sphere
@@ -53,52 +51,46 @@ def generate_flight_vs_sim_plot():
     z_nose = r_nose * (1 - np.cos(beta))
     r_nose_pts = r_nose * np.sin(beta)
 
-    # The cone generator is at 30 deg from horizontal (R-axis). 
-    # Therefore, tangency point on the nose sphere is exactly at beta = 30 deg (pi/6).
     tangency_beta = theta_c_rad
-    beta_half = beta[25:]
-    tangency_idx = np.argmin(np.abs(beta_half - tangency_beta))
+    tangency_idx = np.argmin(np.abs(beta - tangency_beta))
+    z_shell = list(z_nose[: tangency_idx + 1])
+    r_shell = list(r_nose_pts[: tangency_idx + 1])
 
-    # [FIX]: Stop the nose shell exactly at the tangency point instead of drawing 
-    # it all the way to 90 degrees (which caused it to overlap Toroid 1).
-    z_shell = list(z_nose[25: 25 + tangency_idx + 1])
-    r_shell = list(r_nose_pts[25: 25 + tangency_idx + 1])
+    # [FIX]: Generate 6 toroids starting exactly at the analytical tangency point.
+    r_tang = r_pay
+    z_tang = r_nose * (1 - np.cos(theta_c_rad))
+    r_curr = r_tang
+    z_curr = z_tang
 
-    # [FIX]: Generate 6 toroids starting AT the tangency point, not at the nose tip (0,0).
-    r_curr = r_shell[-1]
-    z_curr = z_shell[-1]
-
-    for i in range(1, t_count + 1):
-        s_i = L_shift + (i - 1) * 2 * r_torus
-        cx = r_curr + s_i * np.cos(theta_c_rad) - r_torus * np.sin(theta_c_rad)
-        cz = z_curr + s_i * np.sin(theta_c_rad) + r_torus * np.cos(theta_c_rad)
+    for i in range(t_count):
+        # [FIX]: Shift the toroid center OUTWARD from the inner cone envelope!
+        # The inner cone generator passes through the tangency point.
+        # The toroids sit perfectly outside the inner cone and are tangent to the payload cylinder.
+        cx = r_curr + r_torus + 2 * i * r_torus * np.cos(theta_c_rad)
+        cz = z_curr + r_torus * (1.0 + np.sin(theta_c_rad))/np.cos(theta_c_rad) + 2 * i * r_torus * np.sin(theta_c_rad)
         
         # Circle for torus
         angles = np.linspace(0, 2*np.pi, 40)
         ax1.plot(cx + r_torus*np.cos(angles), cz + r_torus*np.sin(angles), color='#818cf8', alpha=0.4, linewidth=1.2)
         ax1.plot(-cx + r_torus*np.cos(angles), cz + r_torus*np.sin(angles), color='#818cf8', alpha=0.4, linewidth=1.2)
-        ax1.text(cx, cz, str(i), color='#818cf8', fontsize=9, fontweight='bold', ha='center', va='center')
-        ax1.text(-cx, cz, str(i), color='#818cf8', fontsize=9, fontweight='bold', ha='center', va='center')
+        ax1.text(cx, cz, str(i+1), color='#818cf8', fontsize=9, fontweight='bold', ha='center', va='center')
+        ax1.text(-cx, cz, str(i+1), color='#818cf8', fontsize=9, fontweight='bold', ha='center', va='center')
 
         # Wavy shell curve over torus (scalloped F-TPS)
-        # The toroid normal facing outward is theta_c - 90 deg (since it's placed outwards)
-        outward_normal = theta_c - np.pi/2
+        # The toroid normal facing outward (flow side) is theta_c_rad - pi/2
+        outward_normal = theta_c_rad - np.pi/2
         scallop_half_angle = np.radians(20)
-        arc_angles = np.linspace(outward_normal - scallop_half_angle, outward_normal + scallop_half_angle, 15)
+        arc_angles = np.linspace(outward_normal + scallop_half_angle, outward_normal - scallop_half_angle, 15)
         
         arc_r = cx + r_torus * np.cos(arc_angles)
         arc_z = cz + r_torus * np.sin(arc_angles)
         z_shell.extend(arc_z)
         r_shell.extend(arc_r)
 
-        # Move to next tangency point is handled intrinsically by L_shift 
-        # for drawing the scallops we don't strictly need to move r_curr/z_curr 
-        # because we calculate cx,cz from the fixed tangency point.
-
     # Add Shoulder Toroid (N+1)
-    s_sh = L_shift + 2 * (t_count - 1) * r_torus + r_torus + r_torus_shoulder
-    cx_sh = r_curr + s_sh * np.cos(theta_c_rad) - r_torus_shoulder * np.sin(theta_c_rad)
-    cz_sh = z_curr + s_sh * np.sin(theta_c_rad) + r_torus_shoulder * np.cos(theta_c_rad)
+    # Distance between last toroid center and shoulder torus center is (r_torus + r_sh)
+    cx_sh = cx + (r_torus + r_torus_shoulder) * np.cos(theta_c_rad)
+    cz_sh = cz + (r_torus + r_torus_shoulder) * np.sin(theta_c_rad)
     
     # Circle for shoulder torus
     angles = np.linspace(0, 2*np.pi, 40)
@@ -133,8 +125,8 @@ def generate_flight_vs_sim_plot():
     ax1.add_patch(tank_circle)
     ax1.text(0, r_nose, "r_tank", color='#0f172a', fontsize=9, ha='center', va='center', fontweight='bold', zorder=6)
 
-    # 2. Payload Main Body (Starts at Z=r_nose, behind the tank)
-    z_base = r_nose
+    # 2. Payload Main Body (Starts at Z=z_tang, behind the tank)
+    z_base = r_nose * (1 - np.cos(theta_c_rad))
     top_rad = 50
     kappa = 0.55 * top_rad
     
@@ -149,7 +141,7 @@ def generate_flight_vs_sim_plot():
         (r_pay, z_base + h_pay - top_rad + kappa),
         (r_pay, z_base + h_pay - top_rad),
         (r_pay, z_base),
-        (0, 0)
+        (-r_pay, z_base)
     ]
     codes = [
         Path.MOVETO,
@@ -173,6 +165,7 @@ def generate_flight_vs_sim_plot():
     ax1.set_title("1. Physical Flight Condition Frame (R vs Z Physical Geometry)", color=TEXT, fontsize=13, fontweight='bold', pad=12)
     ax1.set_xlabel("Radius R [mm]", color=TEXT, fontsize=10)
     ax1.set_ylabel("Z Height (Axial Length) [mm]", color=TEXT, fontsize=10)
+    ax1.set_aspect('equal')
     ax1.set_xlim(-1600, 1600)
     ax1.set_ylim(-250, 1000)
     ax1.legend(facecolor='#0f172a', edgecolor='#475569', labelcolor=TEXT, loc='upper right')
@@ -220,6 +213,7 @@ def generate_flight_vs_sim_plot():
     ax2.set_title("2. SPARTA 2D Axisymmetric Solver Frame (Mapped X_sim vs Y_sim)", color=TEXT, fontsize=13, fontweight='bold', pad=12)
     ax2.set_xlabel("X_sim (Axial Position along Flow) [mm]", color=TEXT, fontsize=10)
     ax2.set_ylabel("Y_sim (Radial Distance R from Axis) [mm]", color=TEXT, fontsize=10)
+    ax2.set_aspect('equal')
     ax2.set_xlim(-400, 1300)
     ax2.set_ylim(-150, 1700)
     ax2.legend(facecolor='#0f172a', edgecolor='#475569', labelcolor=TEXT, loc='upper left')
@@ -229,7 +223,7 @@ def generate_flight_vs_sim_plot():
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     
-    out_img = "flight_vs_simulation_bc_comparison.png"
+    out_img = "flight_vs_sim_bc_FIXED.png"
     plt.savefig(out_img, dpi=200, facecolor=BG, edgecolor='none')
     print(f"[+] Saved comparison plot: {out_img}")
 
