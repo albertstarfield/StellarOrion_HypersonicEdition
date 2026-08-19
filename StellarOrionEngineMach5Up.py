@@ -432,16 +432,13 @@ class Api:
                 "ambient_temp_k": 270.65
             },
             "shield_mass_analysis": shield_mass,
-            # --- 2D → 3D Axisymmetric Force Correction ---
-            # SPARTA runs in dimension 2 (axisymmetric via 'boundary o ao p').
-            # The surface-force compute returns forces in N per unit depth (the 2D slice).
-            # To recover the true 3D drag force on the revolving body, multiply by:
-            #   F_3D = F_2D_slice × 2π × ȳ_centroid
-            # where ȳ_centroid is the radial distance of the surface area centroid from
-            # the symmetry axis. For the 3.0m IRVE-3 HIAD (60° sphere-cone, Rn=0.55m,
-            # 6 toroids) this is derived geometrically as ~0.675 m.
-            # This correction is applied automatically by _compute_surf_centroid() if a
-            # .surf file is present; otherwise the estimate below is used as fallback.
+            # --- Drag Force Extraction from SPARTA ---
+            # SPARTA runs in dimension 2 with 'boundary o ao p' (axisymmetric).
+            # The raw force sum (Σ|fx|) from compute surf already represents the
+            # total force on the axisymmetric body — fnum scales the simulated
+            # particle count to the real particle count. No additional 2π×ȳ
+            # correction is needed (ao boundary only affects normflux, not force).
+            # Reference area uses y_max from the .surf geometry (not stated diameter).
             "axisym_correction": {
                 "method": "surface_centroid_revolution",
                 "y_centroid_fallback_m": 0.675,
@@ -576,17 +573,59 @@ class Api:
         except Exception:
             return "unknown"
 
+    def _compute_surf_y_max(self, surf_file_path):
+        """Computes the maximum radial extent (y_max) of a SPARTA .surf surface.
+
+        For axisymmetric geometry, y_max defines the maximum radius of the body,
+        which is needed for the correct reference area: A_ref = π × y_max².
+
+        Returns:
+            (float) y_max in metres. Falls back to 1.5 m for a 3m IRVE-3 HIAD
+            if the file cannot be parsed.
+        """
+        FALLBACK_Y_MAX = 1.5  # m (half of 3.0m diameter)
+        try:
+            if not surf_file_path or not os.path.exists(surf_file_path):
+                return FALLBACK_Y_MAX
+
+            y_max = 0.0
+            with open(surf_file_path, 'r') as fh:
+                in_points = False
+                for raw in fh:
+                    row = raw.strip()
+                    if not row or row.startswith('#'):
+                        continue
+                    if row.lower().startswith('points'):
+                        in_points = True
+                        continue
+                    if row.lower().startswith(('lines', 'triangles', 'surfs')):
+                        in_points = False
+                        continue
+                    if in_points:
+                        parts = row.split()
+                        if len(parts) >= 3:
+                            try:
+                                y = abs(float(parts[2]))
+                                if y > y_max:
+                                    y_max = y
+                            except ValueError:
+                                pass
+
+            return float(y_max) if y_max > 0 else FALLBACK_Y_MAX
+
+        except Exception as e:
+            self.log_to_gui(f"    [!] _compute_surf_y_max fallback ({e}): using y_max = {FALLBACK_Y_MAX:.3f} m")
+            return FALLBACK_Y_MAX
+
     def _compute_surf_centroid(self, surf_file_path):
-        """Computes the area-weighted radial centroid (ȳ) of a SPARTA .surf surface.
+        """Computes the length-weighted radial centroid (ȳ) of a SPARTA .surf surface.
 
-        SPARTA dimension-2 axisymmetric simulations output forces on the 2D slice
-        (units: N / m-depth, i.e. force per unit out-of-plane thickness). To convert
-        to the true 3D drag force on the revolved body, multiply by 2π × ȳ_centroid:
+        SPARTA dimension-2 simulations with 'boundary o ao p' output forces on the
+        2D axisymmetric slice. The raw force sum (Σ|fx|) already represents the total
+        force on the axisymmetric body (fnum scales to real particle count). No
+        additional 2π×ȳ correction is needed.
 
-            F_drag_3D  =  F_drag_2D_slice  ×  2π × ȳ
-            Cd         =  F_drag_3D        /  (q_dyn × A_ref_3D)
-
-        This function reads the triangles/segments in the .surf file and returns the
+        This function reads the line segments in the .surf file and returns the
         length-weighted centroid y-coordinate (radius in axisymmetric coordinates).
 
         Returns:
@@ -1347,13 +1386,13 @@ O recombine simple {gamma} O2
         ny = 201
 
 
-        # NOTE on axisymmetric force output (2026-05-31 calibration fix):
+        # NOTE on axisymmetric force output (2026-08-13 Cd fix):
         # This script uses 'dimension 2' with 'boundary o ao p' (axisymmetric).
-        # All surface force computes (c_surfF[1] = fx) produce forces in N on the
-        # 2D Cartesian slice — NOT the full 3D revolution body force.
-        # Downstream Cd calculation MUST apply:  F_3D = F_2D × 2π × ȳ_centroid
-        # This is handled automatically in run_baseline_validation() and
-        # run_grid_independency_test() via _compute_surf_centroid().
+        # The raw force sum (Σ|fx|) from compute surf already represents the total
+        # force on the axisymmetric body — fnum scales simulated to real particles.
+        # The ao boundary only affects normflux, NOT force (fx, fy, fz).
+        # No additional 2π×ȳ correction is needed for drag force.
+        # Reference area must use y_max from .surf geometry (not stated diameter).
         
         step_arg = kwargs.get('steps')
         env_run_val = opt_params.get('env_run')
@@ -2075,6 +2114,34 @@ run             {steps}
         print(f"[DEBUG] Writing in.hiad with {len(script_content)} bytes")
         with open(os.path.join(cad_dir, "in.hiad"), 'w', newline='\n', encoding="utf-8") as f:
             f.write(script_content)
+
+        # --- Pre-Simulation Input Validation (verbose) ---
+        # Catch garbage/crumpled geometry and invalid scripts BEFORE wasting compute.
+        # Axiom: Murphy's Law — dump ALL geometry data on failure for diagnosis.
+        try:
+            import sys as _sys
+            _sys.path.insert(0, self.cwd)
+            from validate_simulation_input import validate_and_dump_geometry as _val_verbose
+            surf_path = os.path.join(cad_dir, f"{surf_name}.surf")
+            stl_path = os.path.join(cad_dir, f"{surf_name}.stl")
+            script_path = os.path.join(cad_dir, "in.hiad")
+            self.log_to_gui("    [*] Running pre-simulation input validation (verbose)...")
+            val_report = _val_verbose(
+                surf_path=surf_path if os.path.exists(surf_path) else None,
+                script_path=script_path if os.path.exists(script_path) else None,
+                script_dir=cad_dir
+            )
+            if not val_report.passed:
+                self.log_to_gui("    [!] VALIDATION FAILED — Invalid geometry/script detected. "
+                                "Full geometry dump printed above. Aborting to save compute.")
+                return {'drag': 0, 'heat': 0, 'status': 'error',
+                        'message': 'Pre-simulation validation failed - garbage geometry or invalid script '
+                                   '(verbose geometry dump printed to stdout)'}, []
+            self.log_to_gui("    [+] Pre-simulation validation passed.")
+        except ImportError:
+            self.log_to_gui("    [!] validate_simulation_input.py not found - skipping validation")
+        except Exception as val_err:
+            self.log_to_gui(f"    [!] Validation error: {val_err} - continuing anyway")
 
         # 2. Launch Docker
         self.log_to_gui("    [*] Executing SPARTA via Docker...")

@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-08-13T00:00:00Z",
+  "libraries": {
+    "sparta": {
+      "files": [
+        {
+          "filename": "compute-surf-force-units-dimension2.md",
+          "topic": "compute surf fx fy fz force units dimension 2 axisymmetric",
+          "tech_stack": "SPARTA DSMC solver",
+          "fetched": "2026-08-13T00:00:00Z",
+          "source": "Official SPARTA Documentation (sparta.github.io)"
+        },
+        {
+          "filename": "compute-surf-source-code-analysis.md",
+          "topic": "compute surf force calculation source code",
+          "tech_stack": "SPARTA DSMC solver",
+          "fetched": "2026-08-13T00:00:00Z",
+          "source": "SPARTA Source Code (local installation)"
+        },
+        {
+          "filename": "fix-ave-surf-averaging.md",
+          "topic": "fix ave/surf averaging behavior",
+          "tech_stack": "SPARTA DSMC solver",
+          "fetched": "2026-08-13T00:00:00Z",
+          "source": "Official SPARTA Documentation (sparta.github.io)"
+        },
+        {
+          "filename": "boundary-ao-axisymmetric-dimension2.md",
+          "topic": "boundary ao axisymmetric dimension 2",
+          "tech_stack": "SPARTA DSMC solver",
+          "fetched": "2026-08-13T00:00:00Z",
+          "source": "Official SPARTA Documentation (sparta.github.io)"
+        }
+      ]
+    }
+  }
+}

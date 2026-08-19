@@ -992,6 +992,9 @@ def main():
         help="Run a grid independency study using SPARTA DSMC. Tests grid factors 0.3, 0.5, 0.7, and 1.0 using 1100 steps. Compares Cd against reference and prints mesh statistics.")
     mode.add_argument("--demo", action="store_true",
         help="Generate the Manim DSMC visualization video headlessly and synchronously.")
+    mode.add_argument("--validate-only", action="store_true",
+        help="Run pre-simulation geometry and script validation only (no simulation). "
+             "Checks .surf, .stl, and in.hiad for garbage/crumpled geometry.")
     mode.add_argument("--self-test", action="store_true",
         help="Run built-in unit tests + coverage gate for main.py and exit. "
              "Coverage must reach 70%% to pass (same gate as pyrefly/ruff). "
@@ -1298,6 +1301,21 @@ def main():
                 print("[-] Error: Headless Manim Demo Rendering Failed.")
             sys.exit(0)
 
+        if args.validate_only:
+            print("[*] Running Pre-Simulation Input Validation (standalone mode, verbose)...")
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from validate_simulation_input import validate_and_dump_geometry
+            cad_dir = os.path.join(api.cwd, "CADDesign")
+            surf_path = os.path.join(cad_dir, "HIAD_custom.surf")
+            stl_path = os.path.join(cad_dir, "HIAD_custom.stl")
+            script_path = os.path.join(cad_dir, "in.hiad")
+            val_report = validate_and_dump_geometry(
+                surf_path=surf_path if os.path.exists(surf_path) else None,
+                script_path=script_path if os.path.exists(script_path) else None,
+                script_dir=cad_dir
+            )
+            sys.exit(0 if val_report.passed else 1)
+
         # Pre-flight check for Docker if using SPARTA or OpenFOAM
         skip_docker = False
         if args.test == "pinn_calibration":
@@ -1347,6 +1365,67 @@ def main():
                 print(f"[*] Message: {res.get('message', '')}")
             elif args.test == "baseline":
                 print("[*] Starting IRVE-3 Baseline Validation Simulation...")
+                # ============================================================
+                # STEP 1: Generate 3D CAD FIRST (3D-first pipeline)
+                # ============================================================
+                # The baseline MUST generate 3D geometry from CADDesign/HIAD_GeometryEngine.py
+                # before validation or simulation. This ensures the .surf cross-section
+                # is derived from a real 3D solid, not hardcoded 2D points.
+                cad_dir = os.path.join(api.cwd, "CADDesign")
+                python_exec = api._get_python_exec()
+                print("[*] Step 1/3: Generating IRVE-3 baseline 3D CAD...")
+                cmd_cad = [
+                    python_exec, os.path.join(cad_dir, "HIAD_GeometryEngine.py"),
+                    "--diameter", str(args.diameter),        # IRVE-3: 3.0m
+                    "--angle", str(args.angle),              # IRVE-3: 60°
+                    "--toroids", str(args.toroids),          # IRVE-3: 6
+                    "--thickness", "0.0254",
+                    "--nose_type", args.nose_type,           # IRVE-3: smooth
+                    "--output", "HIAD_custom",               # Output as HIAD_custom.surf
+                    "--slice_angle", str(args.slice_angle)   # 360.0 for full 3D revolution
+                ]
+                if args.flat_skin:
+                    cmd_cad.append("--flat_skin")
+                try:
+                    subprocess.run(cmd_cad, cwd=cad_dir, check=True,
+                                   capture_output=True, text=True)
+                    print("[+] 3D CAD generated successfully (3D→2D cross-section).\n")
+                except subprocess.CalledProcessError as cad_err:
+                    print(f"\033[31m[!] CAD generation FAILED: {cad_err}\033[0m")
+                    print("[!] Cannot proceed without valid geometry.")
+                    sys.exit(1)
+
+                # ============================================================
+                # STEP 2: Validate the freshly-generated geometry (verbose)
+                # ============================================================
+                # Catch garbage/crumpled geometry BEFORE wasting hours of compute
+                try:
+                    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+                    from validate_simulation_input import validate_and_dump_geometry
+                    baseline_surf = os.path.join(cad_dir, "HIAD_custom.surf")
+                    baseline_script = os.path.join(cad_dir, "in.hiad")
+                    print("[*] Step 2/3: Running pre-baseline geometry validation...")
+                    val_report = validate_and_dump_geometry(
+                        surf_path=baseline_surf if os.path.exists(baseline_surf) else None,
+                        script_path=baseline_script if os.path.exists(baseline_script) else None,
+                        script_dir=cad_dir
+                    )
+                    if not val_report.passed:
+                        print("\033[31m[!] VALIDATION FAILED — Geometry is invalid. "
+                              "Fix geometry before submitting to simulation engine.\033[0m")
+                        sys.exit(1)
+                    print("[+] Geometry validation passed.\n")
+                except ImportError:
+                    print("[!] validate_simulation_input.py not found - skipping validation")
+                except SystemExit:
+                    raise  # re-raise sys.exit(1) from validation failure
+                except Exception as val_err:
+                    print(f"[!] Validation error: {val_err} - continuing anyway")
+
+                # ============================================================
+                # STEP 3: Run simulation with freshly-generated 3D geometry
+                # ============================================================
+                print("[*] Step 3/3: Submitting to simulation engine...\n")
                 res = api.run_baseline_validation(
                     solver=args.solver, 
                     skip_diag=args.skip_diag, 
@@ -1514,7 +1593,7 @@ def main():
                     'solver': args.solver,
                     'env_vstream': 2700.0,
                     'env_temp_inf': 270.0,  # Rapisarda Table 4.5: 270.65 K at 50km
-                    'env_nrho': 3.47e21,    # Baseline validation density at ~52km
+                    'env_nrho': 3.47e22,    # Baseline validation density at ~52km (Rapisarda 2023 Table 4.5)
                     'env_run': args.steps,
                     'env_fnum': args.fnum,
                     'grid_factor': args.grid_factor, # Mesh adjustment: >1.0 denser, <1.0 sparser
@@ -1608,6 +1687,29 @@ def main():
                         cmd_cad.extend(["--payload_file", args.payload_file])
                 subprocess.run(cmd_cad, cwd=cad_dir, check=True)
 
+                # --- Pre-Simulation Geometry Validation (verbose) ---
+                # Catch garbage/crumpled geometry BEFORE wasting compute
+                try:
+                    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+                    from validate_simulation_input import validate_and_dump_geometry
+                    cad_dir = os.path.join(api.cwd, "CADDesign")
+                    surf_path = os.path.join(cad_dir, "HIAD_sample.surf")
+                    print("[*] Running pre-simulation geometry validation...")
+                    val_report = validate_and_dump_geometry(
+                        surf_path=surf_path if os.path.exists(surf_path) else None
+                    )
+                    if not val_report.passed:
+                        print("\033[31m[!] VALIDATION FAILED — Geometry is invalid. "
+                              "Fix geometry before submitting to simulation engine.\033[0m")
+                        sys.exit(1)
+                    print("[+] Geometry validation passed. Proceeding to simulation.\n")
+                except ImportError:
+                    print("[!] validate_simulation_input.py not found - skipping validation")
+                except SystemExit:
+                    raise  # re-raise sys.exit(1) from validation failure
+                except Exception as val_err:
+                    print(f"[!] Validation error: {val_err} - continuing anyway")
+
                 if args.solver == 'openfoam':
                     api.test_openfoam_readiness()
                     res_raw = api.run_openfoam_simulation(opt_params, sample_dict, surf_name="HIAD_sample")
@@ -1623,10 +1725,26 @@ def main():
                 # Add baseline comparison for solvers that return drag
                 if 'drag' in res_ext and float(res_ext.get('drag', 0)) > 0:
                     v_inf = float(opt_params.get('env_vstream', 2700.0))
-                    nrho_val = float(opt_params.get('env_nrho', 3.5e22))
+                    nrho_val = float(opt_params.get('env_nrho', 3.47e22))
                     rho_inf = nrho_val * (28.97e-3 / 6.022e23)  # kg/m3 at 52km
-                    force_n = float(res_ext['drag'])
-                    area_ref = 3.14159 * (float(sample_dict.get('diameter', 3.0))/2)**2
+                    force_2d = float(res_ext['drag'])
+                    
+                    # --- Drag Force & Reference Area from Geometry ---
+                    # SPARTA dimension=2 with 'boundary o ao p' runs an axisymmetric
+                    # simulation. The raw force sum (Σ|fx|) already represents the total
+                    # force on the axisymmetric body — fnum scales the simulated
+                    # particles to the real particle count. No additional 2π×ȳ
+                    # correction is needed (confirmed by ExternalScout analysis of
+                    # SPARTA source code: ao boundary only affects normflux, not force).
+                    #
+                    # Reference area must use the ACTUAL maximum radius from the .surf
+                    # geometry (y_max), not the stated aeroshell diameter, because the
+                    # 60° cone geometry extends the radius beyond 1.5m.
+                    surf_file = os.path.join(cad_dir, "HIAD_sample.surf")
+                    y_max = api._compute_surf_y_max(surf_file)
+                    force_n = force_2d  # No axisymmetric correction needed
+                    
+                    area_ref = 3.14159 * y_max**2  # π × y_max² (actual frontal area)
                     cd_sim = force_n / (0.5 * rho_inf * v_inf**2 * area_ref) if (rho_inf * v_inf**2 * area_ref) > 0 else 0
                     
                     # Stagnation Heat Flux via Sutton-Graves correlation (NASA TR R-376) [W/cm2]

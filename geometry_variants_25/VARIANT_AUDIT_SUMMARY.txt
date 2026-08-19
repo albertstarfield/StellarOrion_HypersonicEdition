@@ -1,0 +1,43 @@
+
+============================================================================================================================================
+  IRVE-3 / HIAD GEOMETRY VARIANT AUDIT — 25 VARIANTS (SURF + STL + STEP + JPG) — 3D-FIRST PIPELINE
+============================================================================================================================================
+  Generated: 2026-08-14 10:32:03
+  Pipeline: 3D CAD → cross-section → .surf (SPARTA) + STL + STEP + JPG
+  Total variants: 25
+  Passed: 25
+  Failed: 0
+  STL exported: 25/25  |  STEP: 25/25  |  JPG: 25/25
+  Cross-section: 25/25 from 3D solid  |  0/25 from analytical 2D
+============================================================================================================================================
+
+#    Name                           Diam  Angle  T#     Tr    Pr   Pts    CS  STL  STEP  JPG   Status
+--------------------------------------------------------------------------------------------------------------------------------------------
+0    V00_IRVE3_Baseline              3.0   60.0   6  0.135  0.50    40    3D   OK    OK   OK     PASS
+1    V01_Diam_2.5m                   2.5   60.0   6  0.135  0.50    40    3D   OK    OK   OK     PASS
+2    V02_Diam_3.5m                   3.5   60.0   6  0.135  0.50    40    3D   OK    OK   OK     PASS
+3    V03_Diam_4.0m                   4.0   60.0   6  0.135  0.50    40    3D   OK    OK   OK     PASS
+4    V04_Angle_45deg                 3.0   45.0   6  0.135  0.50    40    3D   OK    OK   OK     PASS
+5    V05_Angle_55deg                 3.0   55.0   6  0.135  0.50    40    3D   OK    OK   OK     PASS
+6    V06_Angle_70deg                 3.0   70.0   6  0.135  0.50    38    3D   OK    OK   OK     PASS
+7    V07_Toroids_4                   3.0   60.0   4  0.135  0.50    40    3D   OK    OK   OK     PASS
+8    V08_Toroids_8                   3.0   60.0   8  0.135  0.50    40    3D   OK    OK   OK     PASS
+9    V09_TRad_0.10m                  3.0   60.0   6  0.100  0.50    40    3D   OK    OK   OK     PASS
+10   V10_TRad_0.18m                  3.0   60.0   6  0.180  0.50    40    3D   OK    OK   OK     PASS
+11   V11_PayR_0.3m                   3.0   60.0   6  0.135  0.30    40    3D   OK    OK   OK     PASS
+12   V12_PayR_0.7m                   3.0   60.0   6  0.135  0.70    40    3D   OK    OK   OK     PASS
+13   V13_Pointy_Nose                 3.0   60.0   6  0.135  0.50    40    3D   OK    OK   OK     PASS
+14   V14_Smooth_Scallop              3.0   60.0   6  0.135  0.50    40    3D   OK    OK   OK     PASS
+15   V15_Compact_Blunt               2.5   70.0   4  0.135  0.50   326    3D   OK    OK   OK     PASS
+16   V16_Large_Steep                 4.0   45.0   8  0.135  0.50    40    3D   OK    OK   OK     PASS
+17   V17_LOFTID_Class                3.8   65.0   7  0.150  0.50    38    3D   OK    OK   OK     PASS
+18   V18_Mini_IRVE                   2.0   60.0   5  0.135  0.40    40    3D   OK    OK   OK     PASS
+19   V19_Flat_Extreme                3.5   80.0   6  0.135  0.50    52    3D   OK    OK   OK     PASS
+20   V20_MinParams                   2.0   45.0   3  0.080  0.30    40    3D   OK    OK   OK     PASS
+21   V21_MaxParams                   4.5   75.0  10  0.200  0.80    38    3D   OK    OK   OK     PASS
+22   V22_Auto_Toroid_Rad             3.0   60.0   6  0.000  0.50    40    3D   OK    OK   OK     PASS
+23   V23_Pointy_Compact              2.5   60.0   4  0.135  0.50    40    3D   OK    OK   OK     PASS
+24   V24_Orion_Scale                 5.0   60.0   8  0.160  0.60    40    3D   OK    OK   OK     PASS
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+ALL VARIANTS PASSED VALIDATION.
