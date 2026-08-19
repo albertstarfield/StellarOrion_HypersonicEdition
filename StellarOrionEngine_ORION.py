@@ -201,16 +201,13 @@ class Api:
                 "ambient_pressure_pa": 75.77,
                 "ambient_temp_k": 270.65
             },
-            # --- 2D → 3D Axisymmetric Force Correction ---
-            # SPARTA runs in dimension 2 (axisymmetric via 'boundary o ao p').
-            # The surface-force compute returns forces in N per unit depth (the 2D slice).
-            # To recover the true 3D drag force on the revolving body, multiply by:
-            #   F_3D = F_2D_slice × 2π × ȳ_centroid
-            # where ȳ_centroid is the radial distance of the surface area centroid from
-            # the symmetry axis. For the 3.0m IRVE-3 HIAD (60° sphere-cone, Rn=0.55m,
-            # 6 toroids) this is derived geometrically as ~0.675 m.
-            # This correction is applied automatically by _compute_surf_centroid() if a
-            # .surf file is present; otherwise the estimate below is used as fallback.
+            # --- Drag Force Extraction from SPARTA ---
+            # SPARTA runs in dimension 2 with 'boundary o ao p' (axisymmetric).
+            # The raw force sum (Σ|fx|) from compute surf already represents the
+            # total force on the axisymmetric body — fnum scales simulated to real particles.
+            # The ao boundary only affects normflux, NOT force (fx, fy, fz).
+            # No additional 2π×ȳ correction is needed for drag force.
+            # Reference area uses y_max from the .surf geometry (not stated diameter).
             "axisym_correction": {
                 "method": "surface_centroid_revolution",
                 "y_centroid_fallback_m": 0.675,
@@ -340,16 +337,15 @@ class Api:
             return "unknown"
 
     def _compute_surf_centroid(self, surf_file_path):
-        """Computes the area-weighted radial centroid (ȳ) of a SPARTA .surf surface.
+        """Computes the length-weighted radial centroid (ȳ) of a SPARTA .surf surface.
 
-        SPARTA dimension-2 axisymmetric simulations output forces on the 2D slice
-        (units: N / m-depth, i.e. force per unit out-of-plane thickness). To convert
-        to the true 3D drag force on the revolved body, multiply by 2π × ȳ_centroid:
+        SPARTA dimension-2 simulations with 'boundary o ao p' output forces on the
+        2D axisymmetric slice. The raw force sum (Σ|fx|) already represents the total
+        force on the axisymmetric body (fnum scales to real particle count). No
+        additional 2π×ȳ correction is needed.
 
-            F_drag_3D  =  F_drag_2D_slice  ×  2π × ȳ
-            Cd         =  F_drag_3D        /  (q_dyn × A_ref_3D)
-
-        This function reads the triangles/segments in the .surf file and returns the
+        This function reads the line segments in the .surf file and returns the
+        length-weighted centroid y-coordinate (radius in axisymmetric coordinates).
         length-weighted centroid y-coordinate (radius in axisymmetric coordinates).
 
         Returns:
@@ -999,13 +995,13 @@ O recombine simple {gamma} O2
         nx = int(400 * grid_factor)
         ny = int(400 * grid_factor)
 
-        # NOTE on axisymmetric force output (2026-05-31 calibration fix):
+        # NOTE on axisymmetric force output (2026-08-13 Cd fix):
         # This script uses 'dimension 2' with 'boundary o ao p' (axisymmetric).
-        # All surface force computes (c_surfF[1] = fx) produce forces in N on the
-        # 2D Cartesian slice — NOT the full 3D revolution body force.
-        # Downstream Cd calculation MUST apply:  F_3D = F_2D × 2π × ȳ_centroid
-        # This is handled automatically in run_baseline_validation() and
-        # run_grid_independency_test() via _compute_surf_centroid().
+        # The raw force sum (Σ|fx|) from compute surf already represents the total
+        # force on the axisymmetric body — fnum scales simulated to real particles.
+        # The ao boundary only affects normflux, NOT force (fx, fy, fz).
+        # No additional 2π×ȳ correction is needed for drag force.
+        # Reference area must use y_max from .surf geometry (not stated diameter).
         
         step_arg = kwargs.get('steps')
         steps = int(step_arg if step_arg is not None else opt_params.get('env_run', 500))
