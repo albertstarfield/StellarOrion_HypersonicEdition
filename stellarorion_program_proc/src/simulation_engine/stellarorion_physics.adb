@@ -228,11 +228,7 @@ package body StellarOrion_Physics is
         Ballistic_Coefficient (Geo.Mass_Kg, Dyn_Q, Results.Drag_Force);
 
       --  3. Number density  n = rho * N_A / M_air
-      if M_AIR > 0.0 then
-         Number_Den := Flight.Density_Kgm3 * N_AVOGADRO / M_AIR;
-      else
-         Number_Den := 0.0;
-      end if;
+      Number_Den := Flight.Density_Kgm3 * N_AVOGADRO / M_AIR;
 
       --  4. Mean free path & Knudsen number
       MFP := Mean_Free_Path (Number_Den, MOL_DIAM);

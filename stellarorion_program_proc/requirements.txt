@@ -1,0 +1,36 @@
+# StellarOrion HypersonicEdition -- Python Dependencies
+# Core simulation and analysis stack
+numpy>=1.24.0
+scipy>=1.10.0
+matplotlib>=3.7.0
+
+# Atmospheric models (NRLMSIS 2.1)
+pymsis>=0.9.0
+
+# PINN surrogate (DeepXDE for physics-informed neural networks)
+deepxde>=1.12.0
+
+# GPU-accelerated metamodel (PyTorch)
+torch>=2.0.0
+
+# Native GUI (pywebview for Baloon Shield Maker)
+pywebview>=4.0.0
+
+# Geometry generation (CadQuery-based, used by sidecar UI)
+# cadquery>=2.4.0  # Optional: requires OCP
+
+# Database (optimization history)
+# sqlite3 is in stdlib
+
+# HTTP sidecar server (for UI)
+# http.server is in stdlib
+
+# Static analysis / formal verification
+pyrefly>=0.1.0
+ruff>=0.1.0
+
+# Property-based testing
+crosshair-tool>=0.0.22
+
+# Test infrastructure
+coverage>=7.0.0
