@@ -4781,7 +4781,7 @@ def _build_smt_solver_availability_patterns() -> list[Pattern]:
 
         # ── Check 2: cvc5 ────────────────────────────────────────────────
         try:
-            import cvc5  # noqa: F401
+            import cvc5  # noqa: F401  # pyrefly: ignore-errors
         except ImportError:
             violations.append(Violation(
                 filepath=filepath,
@@ -5895,7 +5895,7 @@ def _cross_check_with_cvc5(constraints: list[tuple[str, int, int]], label: str) 
         "unknown" if cvc5 couldn't determine.
     """
     try:
-        from cvc5 import Kind, Solver
+        from cvc5 import Kind, Solver  # pyrefly: ignore-errors
     except ImportError:
         return "unknown"
 
@@ -5970,7 +5970,7 @@ def _get_active_provers() -> list[str]:
     """Return list of active SMT solvers available in the runtime environment."""
     provers = ["z3"]
     try:
-        import cvc5  # noqa: F401
+        import cvc5  # noqa: F401  # pyrefly: ignore-errors
         provers.append("cvc5")
     except ImportError:
         pass
