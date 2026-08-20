@@ -21,17 +21,15 @@ Usage:
 Author: Albert Starfield Wahyu Suryo Samudro
 """
 
-from http.server import HTTPServer, SimpleHTTPRequestHandler
 import csv
 import json
-import os
 import sys
 import threading
 import time
 import urllib.parse
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from typing import Any
-
 
 # ── Constants ───────────────────────────────────────────────────────────
 
@@ -215,9 +213,11 @@ class SidecarAPI:
         while not self._shutdown_event.is_set():
             try:
                 self._poll_backend_status()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 # Log and continue — never crash the monitor
-                pass
+                import logging
+                _log = logging.getLogger(__name__)
+                _log.debug("monitor poll failed", exc_info=True)
             self._shutdown_event.wait(POLL_INTERVAL_S)
 
     def _poll_backend_status(self) -> None:
@@ -397,7 +397,6 @@ class SidecarHandler(SimpleHTTPRequestHandler):
 
     def log_message(self, fmt: str, *args: Any) -> None:
         """Suppress default access log noise."""
-        pass
 
 
 # ── Server startup ──────────────────────────────────────────────────────
@@ -447,7 +446,7 @@ def main() -> None:
 
     print(f"StellarOrion Sidecar UI v{VERSION}")
     print(f"Serving frontend from: {FRONTEND_DIR}")
-    print(f"API endpoints: /api/status, /api/results, /api/history, /api/config")
+    print("API endpoints: /api/status, /api/results, /api/history, /api/config")
     print(f"Listening on http://0.0.0.0:{port}")
 
     try:

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Standalone PINN Calibration Test Sidecar.
 
 Ported from StellarOrionEngineMach5Up.py:run_pinn_calibration()
@@ -12,8 +11,8 @@ import argparse
 import glob
 import json
 import os
-import sys
 import subprocess
+import sys
 import traceback
 
 # Ensure we can import from the same directory
@@ -148,15 +147,13 @@ def _parse_grid_output(grid_file, steps):
 
     n_cells = len(data_cells)
     temps = [c["temp_K"] for c in data_cells if c["temp_K"] > 0]
-    vxs = [abs(c["vx_ms"]) for c in data_cells]
+    _vxs = [abs(c["vx_ms"]) for c in data_cells]
     densities = [c["num_density"] for c in data_cells if c["num_density"] > 0]
-    particles = [c["particles"] for c in data_cells]
+    _particles = [c["particles"] for c in data_cells]
 
     max_temp = max(temps) if temps else 0.0
     avg_temp = sum(temps) / len(temps) if temps else 0.0
-    max_vx = max(vxs) if vxs else 0.0
     avg_density = sum(densities) / len(densities) if densities else 0.0
-    total_particles = sum(particles)
 
     # IRVE-3 parameters
     diameter = IRVE3_BASELINE["geometry"]["diameter_m"]
@@ -236,7 +233,7 @@ def compute_pinn_metrics(pinn, sim_result, baseline_doc, domain):
     """
     import numpy as np
 
-    xmin, xmax, ymax = domain
+    xmin, _xmax, _ymax = domain
 
     # --- (A) Stagnation line query at y=0.01 offset ---
     x_nose = np.linspace(xmin, 0.1, 100)
@@ -392,7 +389,7 @@ def main():
 
     try:
         pinn = run_pinn_training(grid_files, domain, device_name, pinn_iters, pinn_ckpt)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         print(f"[-] PINN training failed: {exc}")
         traceback.print_exc()
         result = {"status": "error", "message": f"PINN training failed: {exc}"}
@@ -404,7 +401,7 @@ def main():
 
     try:
         final_result = compute_pinn_metrics(pinn, sim_result, IRVE3_BASELINE, domain)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         print(f"[-] PINN metric extraction failed: {exc}")
         traceback.print_exc()
         result = {"status": "error", "message": f"PINN metric extraction failed: {exc}"}
