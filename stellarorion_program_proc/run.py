@@ -69,6 +69,8 @@ _REQUIREMENTS: tuple[str, ...] = (
     "ruff>=0.1.0",
     # Property-based testing
     "crosshair-tool>=0.0.22",
+    # SMT solvers for formal verification (sabotage_verifier)
+    "cvc5>=0.2.0",
     # Test infrastructure
     "coverage>=7.0.0",
 )
@@ -445,6 +447,42 @@ def _phase1_venv(skip_hashes: bool, verbose: bool) -> None:
     if not ok:
         fatal("Failed to install Python requirements", 1)
 
+    # -- Ensure alt-ergo (OCaml SMT solver) is installed via opam
+    import shutil as _shutil
+    _ALT_ERGO_PATHS = [
+        "alt-ergo",
+        str(Path.home() / ".local" / "bin" / "alt-ergo"),
+        str(Path.home() / ".opam" / "default" / "bin" / "alt-ergo"),
+    ]
+    _alt_ergo_found = any(
+        (_shutil.which(p) if "/" not in p else os.path.isfile(p))
+        for p in _ALT_ERGO_PATHS
+    )
+    if not _alt_ergo_found:
+        opam_bin = _shutil.which("opam")
+        if opam_bin:
+            t = step_start("Installing alt-ergo via opam")
+            # Ensure opam is initialised
+            ok_init, _, _ = _run([opam_bin, "init", "--disable-sandboxing", "--bare", "-y"],
+                                 verbose=verbose)
+            # Create/update default switch if needed
+            _run([opam_bin, "switch", "create", "default", "ocaml-system"],
+                 verbose=verbose)
+            ok_ae, stdout_ae, stderr_ae = _run(
+                [opam_bin, "install", "alt-ergo", "-y"],
+                verbose=verbose,
+                timeout=600,
+            )
+            elapsed_ae = time.monotonic() - t
+            step_result(ok_ae, "alt-ergo installed" if ok_ae else "alt-ergo install failed",
+                        elapsed_ae, verbose, stdout_ae, stderr_ae)
+            if not ok_ae:
+                step_info("WARNING: alt-ergo install failed -- SMT triple-validation will be degraded")
+        else:
+            step_info("WARNING: opam not found -- alt-ergo unavailable (brew install opam)")
+    else:
+        step_info("alt-ergo already installed")
+
     # -- Save hashes
     if not skip_hashes:
         _save_hashes()
@@ -464,10 +502,11 @@ def _phase2_python_analysis(verbose: bool) -> None:
     if not _VENV_PYTHON.exists():
         fatal("Venv Python not found -- run without --skip-hashes first", 1)
 
-    # -- pyrefly check
+    # -- pyrefly check (use venv Python so installed packages are found)
     t = step_start("pyrefly check .")
     ok, stdout, stderr = _run(
-        [str(_VENV_PYREFLY), "check", "."],
+        [str(_VENV_PYREFLY), "check", ".",
+         "--python-interpreter-path", str(_VENV_PYTHON)],
         cwd=_PROJECT_ROOT,
         verbose=verbose,
     )
