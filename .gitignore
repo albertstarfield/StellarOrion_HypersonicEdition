@@ -271,6 +271,34 @@ results (reference)/
 # === OpenCode ===
 .opencode/
 
+# === Ada/Alire Build Artifacts ===
+*.o
+*.ali
+b__*.adb
+b__*.ads
+*.bexch
+*.cswi
+stellarorion_program_proc/bin/
+stellarorion_program_proc/obj/
+stellarorion_program_proc/main
+stellarorion_program_proc/main.adb.stderr
+stellarorion_program_proc/main.adb.stdout
+stellarorion_program_proc/*.adb.stderr
+stellarorion_program_proc/*.adb.stdout
+stellarorion_program_proc/*.ads.stderr
+stellarorion_program_proc/*.ads.stdout
+stellarorion_program_proc/.src_hashes.json
+stellarorion_program_proc/results_validation/
+stellarorion_program_proc/Dockerfile
+stellarorion_program_proc/HIAD_custom.surf
+stellarorion_program_proc/air.react
+stellarorion_program_proc/air.species
+stellarorion_program_proc/air.vss
+
+# === Temporary Slides ===
+temp_slides/
+temp_slides_v2/
+
 # === Lock Files & Markers ===
 *.lock
 *.done
