@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """StellarOrion PINN Accelerator — DeepXDE surrogate bridge.
 
 Provides a Python-side PINN surrogate model that accelerates the
@@ -15,6 +14,7 @@ Requires: deepxde, torch (installed via requirements.txt).
 """
 import os
 import sys
+
 import numpy as np
 
 # Auto-install DeepXDE if missing
@@ -26,7 +26,7 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "deepxde"])
     import deepxde as dde
 
-import torch
+import torch  # noqa: I001
 
 
 # ========================================================================
@@ -62,7 +62,7 @@ class AxisymmetricPDE:
     State vector: [rho, u, v, T] (density, axial velocity, radial velocity, temperature)
     Derived:      p = rho * R_gas * T   (ideal gas law)
     """
-    pass  # Placeholder — DeepXDE dynamic PDE is built at train time
+    # Placeholder — DeepXDE dynamic PDE is built at train time
 
 
 def _make_pde(alpha_x=1.0, alpha_y=1.0):
@@ -97,11 +97,11 @@ def _make_pde(alpha_x=1.0, alpha_y=1.0):
         # Laplacians
         u_xx = dde.grad.hessian(Y, x, component=1, i=0, j=0)
         u_yy = dde.grad.hessian(Y, x, component=1, i=1, j=1)
+        v_xx = dde.grad.hessian(Y, x, component=2, i=0, j=0)
+        v_yy = dde.grad.hessian(Y, x, component=2, i=1, j=1)
         T_xx = dde.grad.hessian(Y, x, component=3, i=0, j=0)
         T_yy = dde.grad.hessian(Y, x, component=3, i=1, j=1)
 
-        # Axisymmetric continuity: d(rho*u*r)/dx + d(rho*v*r)/dy = 0, r = y
-        eq1 = rho_x * u * x[:, 1:2] + rho * u * 0 + rho_y * v * x[:, 1:2] + rho * (v + x[:, 1:2] * v_y)
         # Simplified: (rho*u)_x + (rho*v)_y + rho*v/y = 0
         continuity = rho_x * u + rho * u_x + rho_y * v + rho * v_y + rho * v / (x[:, 1:2] + 1e-8)
 
@@ -235,7 +235,7 @@ class PINNAccelerator:
                 try:
                     x_center = (float(parts[1]) + float(parts[3])) / 2.0
                     y_center = (float(parts[2]) + float(parts[4])) / 2.0
-                    particles = float(parts[5])
+                    _particles = float(parts[5])
                     temp_K = float(parts[6])
                     vx_ms = float(parts[7])
                     vy_ms = float(parts[8])
@@ -275,7 +275,7 @@ class PINNAccelerator:
             save_path: Path to save/load checkpoint
         """
         self.domain_bounds = domain_bounds
-        xmin, xmax, ymax = domain_bounds
+        _xmin, _xmax, _ymax = domain_bounds
 
         # Check for existing checkpoint
         if save_path and os.path.exists(save_path):
@@ -284,7 +284,7 @@ class PINNAccelerator:
                 self.model = dde.utils.ensure_serializable(save_path)
                 print("[+] PINN restored successfully.")
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001
                 print("[!] Checkpoint restore failed. Retraining ...")
 
         # Parse grid data
@@ -298,10 +298,10 @@ class PINNAccelerator:
 
         # Normalize
         xy_norm, self.mean_x, self.std_x = self._normalize(xy)
-        t_norm, self.mean_t, self.std_t = self._normalize(targets)
+        _t_norm, self.mean_t, self.std_t = self._normalize(targets)
 
         # Build DeepXDE dataset
-        observe_x = dde.bc.PointSet(xy_norm)
+        _observe_x = dde.bc.PointSet(xy_norm)
         ic = dde.icbc.IC(
             xy_norm,
             lambda _, np: np.zeros(len(xy_norm)),
@@ -315,7 +315,7 @@ class PINNAccelerator:
         def simple_pde(x, Y):
             """Simplified PDE for training stability."""
             rho = Y[:, 0:1]
-            T = Y[:, 1:2]
+            _T = Y[:, 1:2]
             u = Y[:, 2:3]
 
             rho_x = dde.grad.jacobian(Y, x, i=0, j=0)
@@ -357,7 +357,7 @@ class PINNAccelerator:
                 if hasattr(model, "state_dict"):
                     torch.save(model.state_dict(), save_path)
                     print(f"[+] PINN checkpoint saved: {save_path}")
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 print(f"[!] Checkpoint save failed: {exc}")
 
         print("[+] PINN training complete.")
