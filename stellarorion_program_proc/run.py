@@ -73,6 +73,8 @@ _REQUIREMENTS: tuple[str, ...] = (
     "cvc5>=0.2.0",
     # Test infrastructure
     "coverage>=7.0.0",
+    # SSH for remote PyFluent solver
+    "paramiko>=3.4.0",
 )
 _SABOTAGE_VERIFIER = _UTILS_DIR / "sabotage_verifier.py"
 _GPR_FILE = _PROJECT_ROOT / "stellarorion_program_proc.gpr"
