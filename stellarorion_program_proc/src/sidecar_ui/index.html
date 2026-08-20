@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StellarOrion — Simulation Monitor</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <h1>StellarOrion HypersonicEdition</h1>
+        <span class="status-badge status-idle">IDLE</span>
+    </header>
+
+    <main class="dashboard">
+        <div class="card">
+            <h2>Simulation Step</h2>
+            <div class="value" id="step">0</div>
+        </div>
+        <div class="card">
+            <h2>Progress</h2>
+            <div class="value" id="progress">0%</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+        </div>
+        <div class="card">
+            <h2>Drag Force</h2>
+            <div class="value"><span id="drag">0</span><span class="unit" id="drag-unit">N</span></div>
+        </div>
+        <div class="card">
+            <h2>Heat Flux</h2>
+            <div class="value"><span id="heat-flux">0</span><span class="unit" id="heat-flux-unit">W/m²</span></div>
+        </div>
+        <div class="card">
+            <h2>Ballistic Coefficient (β)</h2>
+            <div class="value"><span id="beta">0</span><span class="unit" id="beta-unit">kg/m²</span></div>
+        </div>
+        <div class="card">
+            <h2>Peak Deceleration</h2>
+            <div class="value"><span id="decel-g">0</span><span class="unit" id="decel-g-unit">g</span></div>
+        </div>
+        <div class="card">
+            <h2>Surface Temperature</h2>
+            <div class="value"><span id="surface-temp">0</span><span class="unit" id="surface-temp-unit">K</span></div>
+        </div>
+
+        <div class="card log-panel" id="log">
+            <div class="log-entry"><span class="level-info">[INFO]</span> Waiting for simulation...</div>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

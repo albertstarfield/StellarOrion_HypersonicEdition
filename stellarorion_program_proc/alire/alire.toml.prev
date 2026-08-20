@@ -1,0 +1,12 @@
+name = "stellarorion_program_proc"
+version = "0.1.0-dev"
+description = "HIAD aerothermodynamic simulation suite"
+
+authors = ["Albert Starfield Wahyu Suryo Samudro <stellarorion@users.noreply.github.com>"]
+maintainers = ["Albert Starfield Wahyu Suryo Samudro <stellarorion@users.noreply.github.com>"]
+licenses = "MIT"
+tags = ["hypersonic", "hiad", "dsmc"]
+
+executables = ["stellarorion_project"]
+
+project-files = ["stellarorion_program_proc.gpr"]

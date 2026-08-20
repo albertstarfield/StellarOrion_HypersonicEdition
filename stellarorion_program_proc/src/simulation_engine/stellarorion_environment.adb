@@ -175,12 +175,8 @@ package body StellarOrion_Environment is
       if H <= 11.0 then
          Lapse := -6.5e-3;
          T := Atmosphere_Temperature (H);
-         if T > 0.0 and T0 > 0.0 then
-            Expon := G0_LOC / (R_AIR * abs Lapse) + 1.0;
-            Rho := RHO0 * Pow_Float (T / T0, Expon);
-         else
-            Rho := 0.0;
-         end if;
+         Expon := G0_LOC / (R_AIR * abs Lapse) + 1.0;
+         Rho := RHO0 * Pow_Float (T / T0, Expon);
 
       --  11 - 20 km : Tropopause, isothermal T = 216.65
       elsif H <= 20.0 then

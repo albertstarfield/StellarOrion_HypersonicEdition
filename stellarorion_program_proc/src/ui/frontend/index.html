@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StellarOrion HypersonicEdition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SPLASH SCREEN OVERLAY (INC-SPLASH-002)
+     Animates on load, dismissed by initSplashScreen() in main.ts.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div id="splash-overlay">
+    <div class="splash-content">
+        <div class="splash-logo">
+            <svg viewBox="0 0 120 120" width="120" height="120">
+                <circle cx="60" cy="60" r="55" fill="none" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+                <circle cx="60" cy="60" r="40" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.2"/>
+                <path d="M60 15 L75 50 L60 40 L45 50 Z" fill="#00d4ff" opacity="0.8"/>
+                <path d="M60 105 L45 70 L60 80 L75 70 Z" fill="#ff6b35" opacity="0.6"/>
+                <circle cx="60" cy="60" r="5" fill="#00d4ff"/>
+            </svg>
+        </div>
+        <h1 class="splash-title">StellarOrion</h1>
+        <p class="splash-subtitle">HypersonicEdition</p>
+        <div class="splash-loader">
+            <div class="splash-bar"></div>
+        </div>
+        <p class="splash-status">Initializing DSMC sidecar...</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MAIN APPLICATION
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div id="app" class="hidden">
+
+    <!-- Header -->
+    <header id="app-header">
+        <div class="header-left">
+            <svg viewBox="0 0 24 24" width="24" height="24" class="header-icon">
+                <path d="M12 2 L15 10 L12 8 L9 10 Z" fill="#00d4ff"/>
+                <circle cx="12" cy="12" r="2" fill="#00d4ff"/>
+            </svg>
+            <h1>StellarOrion <span class="version-tag">HypersonicEdition</span></h1>
+        </div>
+        <div class="header-right">
+            <span id="status-badge" class="badge badge-stopped">STOPPED</span>
+            <span id="poll-indicator" class="poll-dot" title="Live polling"></span>
+        </div>
+    </header>
+
+    <!-- Dashboard Grid -->
+    <main id="dashboard">
+
+        <!-- Panel: Simulation Status -->
+        <section id="panel-status" class="panel">
+            <h2>Simulation Status</h2>
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-label">State</span>
+                    <span id="sim-state" class="status-value">--</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Run Name</span>
+                    <span id="sim-run-name" class="status-value">--</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Progress</span>
+                    <div class="progress-bar-container">
+                        <div id="sim-progress-bar" class="progress-bar" style="width: 0%"></div>
+                    </div>
+                    <span id="sim-progress-pct" class="status-value progress-text">0%</span>
+                </div>
+            </div>
+            <div class="panel-actions">
+                <button id="btn-start" class="btn btn-primary">Start Simulation</button>
+                <button id="btn-stop" class="btn btn-danger" disabled>Stop</button>
+            </div>
+        </section>
+
+        <!-- Panel: Real-Time Metrics -->
+        <section id="panel-metrics" class="panel">
+            <h2>Real-Time Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="metric-label">Heat Flux</span>
+                    <span id="m-heat-flux" class="metric-value">--</span>
+                    <span class="metric-unit">W/cm&sup2;</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Drag Force</span>
+                    <span id="m-drag" class="metric-value">--</span>
+                    <span class="metric-unit">N</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">G-Load</span>
+                    <span id="m-gload" class="metric-value">--</span>
+                    <span class="metric-unit">g</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Surface Temp</span>
+                    <span id="m-surf-temp" class="metric-value">--</span>
+                    <span class="metric-unit">K</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Knudsen</span>
+                    <span id="m-knudsen" class="metric-value">--</span>
+                    <span class="metric-unit">--</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Ballistic &beta;</span>
+                    <span id="m-ballistic" class="metric-value">--</span>
+                    <span class="metric-unit">kg/m&sup2;</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panel: Configuration -->
+        <section id="panel-config" class="panel">
+            <h2>Configuration</h2>
+            <form id="config-form" class="config-form">
+                <fieldset>
+                    <legend>Geometry</legend>
+                    <div class="form-row">
+                        <label for="cfg-diameter">Diameter (m)</label>
+                        <input type="number" id="cfg-diameter" step="0.1" min="0.5" max="15.0" value="3.0">
+                    </div>
+                    <div class="form-row">
+                        <label for="cfg-angle">Angle (deg)</label>
+                        <input type="number" id="cfg-angle" step="1" min="40" max="80" value="60">
+                    </div>
+                    <div class="form-row">
+                        <label for="cfg-nose-radius">Nose Radius (m)</label>
+                        <input type="number" id="cfg-nose-radius" step="0.01" min="0.05" max="2.0" value="0.55">
+                    </div>
+                    <div class="form-row">
+                        <label for="cfg-toroid-count">Toroid Count</label>
+                        <input type="number" id="cfg-toroid-count" step="1" min="1" max="12" value="6">
+                    </div>
+                    <div class="form-row">
+                        <label for="cfg-toroid-radius">Toroid Radius (m)</label>
+                        <input type="number" id="cfg-toroid-radius" step="0.001" min="0.01" max="1.0" value="0.135">
+                    </div>
+                    <div class="form-row">
+                        <label for="cfg-mass">Mass (kg)</label>
+                        <input type="number" id="cfg-mass" step="1" min="10" max="5000" value="281">
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Flight Conditions</legend>
+                    <div class="form-row">
+                        <label for="cfg-mach">Mach Number</label>
+                        <input type="number" id="cfg-mach" step="0.5" min="1" max="30" value="10">
+                    </div>
+                    <div class="form-row">
+                        <label for="cfg-altitude">Altitude (km)</label>
+                        <input type="number" id="cfg-altitude" step="1" min="20" max="120" value="52">
+                    </div>
+                    <div class="form-row">
+                        <label for="cfg-velocity">Velocity (m/s)</label>
+                        <input type="number" id="cfg-velocity" step="10" min="100" max="12000" value="2700">
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Solver</legend>
+                    <div class="form-row">
+                        <label for="cfg-solver">Backend</label>
+                        <select id="cfg-solver">
+                            <option value="SPARTA" selected>SPARTA (DSMC)</option>
+                            <option value="OpenFOAM">OpenFOAM</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label for="cfg-chemistry">Chemistry</label>
+                        <select id="cfg-chemistry">
+                            <option value="FiveSpecies" selected>5-Species (N2, O2, NO, N, O)</option>
+                            <option value="ElevenSpecies">11-Species</option>
+                            <option value="Mars">Mars (CO2)</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label for="cfg-grid-factor">Grid Factor</label>
+                        <input type="number" id="cfg-grid-factor" step="0.1" min="0.3" max="1.5" value="0.7">
+                    </div>
+                </fieldset>
+                <button type="submit" class="btn btn-primary">Apply Configuration</button>
+            </form>
+        </section>
+
+        <!-- Panel: Run History -->
+        <section id="panel-history" class="panel panel-wide">
+            <h2>Run History</h2>
+            <div class="table-container">
+                <table id="history-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                            <th>Mach</th>
+                            <th>Altitude (km)</th>
+                            <th>Diameter (m)</th>
+                            <th>Heat Flux (W/cm&sup2;)</th>
+                            <th>G-Load</th>
+                            <th>Survivable</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body">
+                        <tr><td colspan="9" class="empty-state">No runs recorded</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Panel: Validation Results -->
+        <section id="panel-validation" class="panel panel-wide">
+            <h2>Validation Results</h2>
+            <div class="validation-grid">
+                <div class="validation-item">
+                    <span class="val-label">IRVE-3 Peak Heat Flux</span>
+                    <span id="v-peak-heat" class="val-expected">13.8 W/cm&sup2;</span>
+                    <span class="val-arrow">&rarr;</span>
+                    <span id="v-peak-heat-sim" class="val-sim">--</span>
+                    <span id="v-peak-heat-status" class="val-status">--</span>
+                </div>
+                <div class="validation-item">
+                    <span class="val-label">IRVE-3 Total Heat Load</span>
+                    <span class="val-expected">188 J/cm&sup2;</span>
+                    <span class="val-arrow">&rarr;</span>
+                    <span id="v-total-heat-sim" class="val-sim">--</span>
+                    <span id="v-total-heat-status" class="val-status">--</span>
+                </div>
+                <div class="validation-item">
+                    <span class="val-label">IRVE-3 Peak Deceleration</span>
+                    <span class="val-expected">19.7 g</span>
+                    <span class="val-arrow">&rarr;</span>
+                    <span id="v-peak-g-sim" class="val-sim">--</span>
+                    <span id="v-peak-g-status" class="val-status">--</span>
+                </div>
+                <div class="validation-item">
+                    <span class="val-label">IRVE-3 Stagnation Pressure</span>
+                    <span class="val-expected">~12.4 kPa</span>
+                    <span class="val-arrow">&rarr;</span>
+                    <span id="v-stag-press-sim" class="val-sim">--</span>
+                    <span id="v-stag-press-status" class="val-status">--</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer id="app-footer">
+        <span>StellarOrion HypersonicEdition &mdash; DSMC Sidecar UI</span>
+        <span id="footer-version"></span>
+    </footer>
+
+</div>
+
+<script src="main.js"></script>
+</body>
+</html>

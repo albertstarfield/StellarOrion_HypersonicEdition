@@ -15,13 +15,9 @@
 
 with Ada.Text_IO;           use Ada.Text_IO;
 with Ada.Strings;           use Ada.Strings;
-with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Directories;       use Ada.Directories;
 with Ada.Exceptions;        use Ada.Exceptions;
-with Ada.Calendar;          use Ada.Calendar;
-
-with StellarOrion_Types;    use StellarOrion_Types;
 
 package body StellarOrion_Sparta is
    pragma SPARK_Mode (Off);
@@ -100,7 +96,8 @@ package body StellarOrion_Sparta is
       Vstream     : constant Float := Flight.Velocity_Ms;
       Temp_Inf    : constant Float := Flight.Temperature_K;
       T_Wall      : constant Float := 1000.0;
-      D_Val       : constant Float := Geo.Diameter_M;
+       D_Val       : constant Float := Geo.Diameter_M;
+       pragma Unreferenced (D_Val);
       Surf_Name   : constant String := "HIAD_custom";
       Gamma       : Float;
       R_Gas       : Float;
@@ -348,7 +345,7 @@ package body StellarOrion_Sparta is
    is
       Graceful_Flag : constant String := Cwd & "/graceful_exit.flag";
       Exit_Flag     : constant String := Cwd & "/simulation_complete.flag";
-      Start_Time    : Time;
+      pragma Unreferenced (Exit_Flag);
    begin
       Success := False;
       Put_Line ("[SPARTA] Executing SPARTA via Docker...");
@@ -393,8 +390,6 @@ package body StellarOrion_Sparta is
             Copy_File (Cwd & "/../HIAD_custom.surf", Cwd & "/HIAD_custom.surf");
          end if;
       exception when others => null; end;
-
-      Start_Time := Clock;
 
       -- Build and create+start container in one step
       declare
@@ -468,17 +463,18 @@ package body StellarOrion_Sparta is
       Max_Y    : Float := 0.0;
       Line     : String (1 .. 1024);
       Last     : Natural;
-      Col      : Natural;
-      In_Data  : Boolean;
-      Val_Str  : String (1 .. 64);
-      V_Len    : Natural;
-   begin
-      begin
-         Start_Search (Search, Output_Dir, "surf.*.out");
-      exception
-         when others =>
-            return 0.0;
-      end;
+       Col      : Natural;
+        In_Data  : Boolean;
+        pragma Unreferenced (In_Data);
+        Val_Str  : String (1 .. 64) := (others => ' ');
+       V_Len    : Natural;
+    begin
+       begin
+          Start_Search (Search, Output_Dir, "surf.*.out");
+       exception
+          when others =>
+             return 0.0;
+       end;
 
       while More_Entries (Search) loop
          Get_Next_Entry (Search, Dir_Ent);
@@ -580,11 +576,12 @@ package body StellarOrion_Sparta is
       Count    : Natural := 0;
       Line     : String (1 .. 1024);
       Last     : Natural;
-      Col      : Natural;
-      In_Data  : Boolean;
-      Val_Str  : String (1 .. 64);
-      V_Len    : Natural;
-      Col_Values : array (1 .. 5) of Float := (others => 0.0);
+       Col      : Natural;
+        In_Data  : Boolean;
+        pragma Unreferenced (In_Data);
+        Val_Str  : String (1 .. 64) := (others => ' ');
+       V_Len    : Natural;
+       Col_Values : array (1 .. 5) of Float := (others => 0.0);
       Col_Filled : array (1 .. 5) of Boolean := (others => False);
    begin
       Centroid_X := 0.0;
@@ -696,7 +693,8 @@ package body StellarOrion_Sparta is
       N_Files   : Natural := 0;
       Result    : Simulation_Results;
       All_Drag  : array (1 .. Max_Files) of Float := (others => 0.0);
-      All_Heat  : array (1 .. Max_Files) of Float := (others => 0.0);
+       All_Heat  : array (1 .. Max_Files) of Float := (others => 0.0);
+       pragma Unreferenced (All_Heat);
       Drag_N    : Natural := 0;
       Heat_N    : Natural := 0;
    begin
@@ -800,9 +798,10 @@ package body StellarOrion_Sparta is
                      then
                         In_Data := True;
                      elsif In_Data then
-                        -- Parse columns: id f_1[1] f_1[2] f_1[3]
-                        --                f_surfavg[1] f_surfavg[2] f_surfavg[3]
-                        -- Col 5 = fx (drag), Col 3 = ke (heat)
+                         -- Parse columns: id f_1[1] f_1[2] f_1[3]
+                         --                f_surfavg[1] f_surfavg[2] f_surfavg[3]
+                         -- Col 5 = f_surfavg[1] = fx (drag)
+                         -- Col 4 = f_1[3] = ke (kinetic energy / heat metric)
                         declare
                            Cols : array (1 .. 7) of Float := (others => 0.0);
                            CIdx : Natural := 0;

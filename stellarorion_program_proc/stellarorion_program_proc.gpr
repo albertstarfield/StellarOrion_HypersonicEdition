@@ -1,0 +1,29 @@
+project StellarOrion_Program_Proc is
+
+   for Source_Dirs use ("src/simulation_engine");
+   for Main use ("main.adb");
+   for Languages use ("Ada");
+   for Object_Dir use "obj";
+   for Exec_Dir use "bin";
+
+   package Compiler is
+       for Switches ("ada") use
+        ("-gnat12",
+         "-gnatwa",     --  All warnings
+         "-gnatW8",     --  UTF-8 encoding
+         "-gnatQ",      --  No message edition
+         "-gnatdAME");  --  Enable assertion mode for SPARK
+   end Compiler;
+
+   package Binder is
+      for Switches ("ada") use
+        ("-E",          --  Stack backtrace on exception
+         "-x");         --  Include extended main unit info
+   end Binder;
+
+   package Linker is
+      for Switches ("ada") use
+        ("-g");         --  Debug symbols for profiling
+   end Linker;
+
+end StellarOrion_Program_Proc;
