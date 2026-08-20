@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Standalone PyFluent SSH Integration Test Sidecar.
 
 Ported from StellarOrionEngineMach5Up.py:run_integration_test() and
@@ -12,7 +11,6 @@ import argparse
 import json
 import os
 import sys
-import time
 
 
 def test_ssh_connection(host, user, password=None, key_path=None):
@@ -44,11 +42,11 @@ def test_ssh_connection(host, user, password=None, key_path=None):
             return {"status": "error", "message": "Either SSH key or password required."}
 
         # Check OS version
-        stdin, stdout, stderr = ssh.exec_command("ver")
+        _stdin, stdout, _stderr = ssh.exec_command("ver")
         os_ver = stdout.read().decode().strip()
 
         # Check Python
-        stdin, stdout, stderr = ssh.exec_command(
+        _stdin, stdout, _stderr = ssh.exec_command(
             'python -c "import platform; print(f\'{platform.python_version()} ({platform.machine()})\')"'
         )
         py_info = stdout.read().decode().strip()
@@ -77,7 +75,7 @@ def test_ssh_connection(host, user, password=None, key_path=None):
             "}; "
             'if (-not $found) { Write-Host \'MISSING\' }"'
         )
-        stdin, stdout, stderr = ssh.exec_command(scan_cmd)
+        _stdin, stdout, _stderr = ssh.exec_command(scan_cmd)
         scan_res = stdout.read().decode().strip()
         ansys_installed = "FOUND" in scan_res
         ansys_path = None
@@ -89,14 +87,14 @@ def test_ssh_connection(host, user, password=None, key_path=None):
                 ansys_path = parts[2]
 
         # Check for ansys-fluent-core (PyFluent)
-        stdin, stdout, stderr = ssh.exec_command(
+        _stdin, stdout, _stderr = ssh.exec_command(
             'python -c "import ansys.fluent.core; print(\'PyAnsys OK\')"'
         )
         pyansys_status = stdout.read().decode().strip()
         pyansys_installed = "PyAnsys OK" in pyansys_status
 
         # Check processor architecture
-        stdin, stdout, stderr = ssh.exec_command("echo %PROCESSOR_ARCHITECTURE%")
+        _stdin, stdout, _stderr = ssh.exec_command("echo %PROCESSOR_ARCHITECTURE%")
         arch = stdout.read().decode().strip().upper()
 
         ssh.close()
@@ -152,8 +150,8 @@ def test_ssh_connection(host, user, password=None, key_path=None):
             "pyfluent_installed": pyansys_installed,
         }
 
-    except Exception as exc:
-        return {"status": "error", "message": f"SSH connection failed: {str(exc)}"}
+    except Exception as exc:  # noqa: BLE001 — sidecar must catch all SSH errors
+        return {"status": "error", "message": f"SSH connection failed: {exc!s}"}
 
 
 def run_integration_test(host, user, password=None, key_path=None):
@@ -197,7 +195,7 @@ def run_integration_test(host, user, password=None, key_path=None):
                 "print('Handshake OK'); "
                 '"'
             )
-            stdin, stdout, stderr = ssh.exec_command(handshake_cmd, timeout=30)
+            _stdin, stdout, stderr = ssh.exec_command(handshake_cmd, timeout=30)
             output = stdout.read().decode().strip()
             err = stderr.read().decode().strip()
 
@@ -213,7 +211,7 @@ def run_integration_test(host, user, password=None, key_path=None):
                 result["handshake"] = False
                 result["message"] += " Fluent handshake did not confirm."
 
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — sidecar must catch all SSH errors
             print(f"[!] Fluent handshake failed: {exc}")
             result["handshake"] = False
     else:
@@ -233,7 +231,7 @@ def main():
     parser.add_argument("--ssh-key", default="", help="Path to SSH private key")
     args = parser.parse_args()
 
-    print(f"[*] PyFluent SSH Integration Test")
+    print("[*] PyFluent SSH Integration Test")
     print(f"[*] Host: {args.ssh_host}")
     print(f"[*] User: {args.ssh_user}")
     if args.ssh_key:
