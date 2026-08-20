@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """StellarOrion sidecar UI — HTTP server entry point.
 
 Serves the monitoring frontend and provides a REST API for the Ada
@@ -10,8 +9,6 @@ Usage:
 
 import argparse
 import json
-import os
-import sys
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from typing import Any

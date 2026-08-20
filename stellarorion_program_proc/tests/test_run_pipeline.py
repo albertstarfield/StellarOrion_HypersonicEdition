@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for StellarOrion run.py pipeline orchestrator.
 
 Run with:
@@ -9,9 +8,7 @@ Run with:
 
 import hashlib
 import json
-import os
 import sys
-import tempfile
 from pathlib import Path
 from unittest import TestCase, main as unittest_main
 

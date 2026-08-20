@@ -462,9 +462,9 @@ def _phase1_venv(skip_hashes: bool, verbose: bool) -> None:
         opam_bin = _shutil.which("opam")
         if opam_bin:
             t = step_start("Installing alt-ergo via opam")
-            # Ensure opam is initialised
-            ok_init, _, _ = _run([opam_bin, "init", "--disable-sandboxing", "--bare", "-y"],
-                                 verbose=verbose)
+            # Ensure opam is initialised (result intentionally ignored)
+            _run([opam_bin, "init", "--disable-sandboxing", "--bare", "-y"],
+                 verbose=verbose)
             # Create/update default switch if needed
             _run([opam_bin, "switch", "create", "default", "ocaml-system"],
                  verbose=verbose)
