@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Standalone PyAnsys Local Integration Test Sidecar.
 
 Ported from StellarOrionEngineMach5Up.py:run_local_pyfluent_test().
@@ -120,10 +119,10 @@ def run_local_pyfluent_test(show_gui=True):
             "message": "ansys-fluent-core (PyFluent) not installed locally. "
                        "Install with: pip install ansys-fluent-core",
         }
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — sidecar must catch all
         return {
             "status": "error",
-            "message": f"Local Integration Test Failed: {str(exc)}",
+            "message": f"Local Integration Test Failed: {exc!s}",
         }
 
 
@@ -146,7 +145,7 @@ def main():
 
     show_gui = not args.no_gui
 
-    print(f"[*] PyAnsys Local Integration Test")
+    print("[*] PyAnsys Local Integration Test")
     print(f"[*] Platform: {sys.platform}")
     print(f"[*] GUI: {'ON' if show_gui else 'OFF'}")
 
@@ -155,7 +154,7 @@ def main():
             "status": "error",
             "message": f"Local PyAnsys mode requires Windows. Current platform: {sys.platform}",
         }
-        print(f"\n[*] Result: ERROR")
+        print("\n[*] Result: ERROR")
         print(f"[*] Message: {result['message']}")
         print("\n[RESULT_JSON]")
         print(json.dumps(result, indent=2))
