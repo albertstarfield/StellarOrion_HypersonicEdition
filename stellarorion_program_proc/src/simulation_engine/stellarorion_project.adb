@@ -1526,6 +1526,9 @@ package body StellarOrion_Project is
       Tolerance_Heat   : constant Float := 0.15;  -- 15%
       Tolerance_Decel  : constant Float := 0.10;  -- 10%
       Tolerance_Beta   : constant Float := 0.20;  -- 20%
+      Tolerance_Cd     : constant Float := 0.20;  -- 20% (Cd is geometry-dependent)
+      Tolerance_Press  : constant Float := 0.15;  -- 15% (pressure/geometry)
+      Tolerance_Temp   : constant Float := 0.10;  -- 10% (ISA temperature)
 
       --  IRVE-3 flight data reference targets
       Target_Heat_Flux : constant Float := 13.8;    -- W/cm^2
@@ -1533,6 +1536,14 @@ package body StellarOrion_Project is
       Target_Decel_G   : constant Float := 19.7;    -- g
       Target_Beta      : constant Float := 26.9;    -- kg/m^2
       Target_Pressure  : constant Float := 12400.0;  -- Pa (12.4 kPa)
+
+      --  MDAO doc baseline targets (Rapisarda 2023 / IRVE-3 MDAO paper)
+      Target_Cd            : constant Float := 1.47;    -- drag coefficient
+      Target_Dyn_Press_KPa : constant Float := 6.2;     -- kPa
+      Target_Toroid_Radius : constant Float := 0.135;   -- m
+      Target_Ambient_Temp  : constant Float := 270.65;  -- K
+      Target_Ambient_Press : constant Float := 75.77;   -- Pa
+      Target_Payload_Height: constant Float := 1.70;    -- m
 
       --  Fnum: real molecules per simulated particle
       Fnum : Float;
@@ -1686,7 +1697,7 @@ package body StellarOrion_Project is
       Put_Line ("  Source: NASA/TP-2013-4012 (IRVE-3 Flight Data);");
       Put_Line ("          Rapisarda (2023) HIAD MDAO thesis, Table 4.1");
       Put_Line ("  ---------------------------------------------------------------------");
-      Put_Line ("  Parameter             | Simulated    | Flight Target | Error %  | Status");
+      Put_Line ("  Parameter             | Simulated    | Target       | Error %  | Status");
       Put_Line ("  ---------------------------------------------------------------------");
 
       --  Heat flux comparison
@@ -1762,7 +1773,7 @@ package body StellarOrion_Project is
                    (if Press_OK then "PASS" else "WARN"));
       end;
 
-      --  Drag coefficient (Cd)
+      --  Drag coefficient (Cd) comparison
       declare
          Ref_Area : constant Float :=
            Ada.Numerics.Pi * (Geo.Diameter_M / 2.0) ** 2;
@@ -1772,35 +1783,100 @@ package body StellarOrion_Project is
            (if Dyn_Pres > 0.0 then
               Results.Drag_Force / (Dyn_Pres * Ref_Area)
             else 0.0);
+         Cd_Dev : constant Float :=
+           abs (Cd_Val - Target_Cd) / Target_Cd;
+         Cd_OK  : constant Boolean := Cd_Dev <= Tolerance_Cd;
+         Cd_Pct : constant Float := Cd_Dev * 100.0;
       begin
          Put_Line ("  Drag coeff (Cd)       | " &
-                   Float'Image (Cd_Val) &
-                   "   |     ---       |    ---   | INFO");
+                   Float'Image (Cd_Val) & " | " &
+                   Float'Image (Target_Cd) & "          | " &
+                   Float'Image (Cd_Pct) & "%  | " &
+                   (if Cd_OK then "PASS" else "WARN"));
       end;
 
-      --  Dynamic pressure (kPa)
+      --  Dynamic pressure (kPa) comparison
       declare
          Dyn_Pres_KPa : constant Float :=
            0.5 * Flight.Density_Kgm3 * Flight.Velocity_Ms ** 2
            / 1_000.0;
+         DP_Dev : constant Float :=
+           abs (Dyn_Pres_KPa - Target_Dyn_Press_KPa) / Target_Dyn_Press_KPa;
+         DP_OK  : constant Boolean := DP_Dev <= Tolerance_Press;
+         DP_Pct : constant Float := DP_Dev * 100.0;
       begin
          Put_Line ("  Dyn pressure (kPa)    | " &
-                   Float'Image (Dyn_Pres_KPa) &
-                   " |     ---       |    ---   | INFO");
+                   Float'Image (Dyn_Pres_KPa) & " | " &
+                   Float'Image (Target_Dyn_Press_KPa) & "          | " &
+                   Float'Image (DP_Pct) & "%  | " &
+                   (if DP_OK then "PASS" else "WARN"));
       end;
 
-      --  Toroid radius (m)
-      Put_Line ("  Toroid radius (m)     | " &
-                Float'Image (Geo.Toroid_Radius_M) &
-                "  |     0.135     |    ---   | INFO");
+      --  Toroid radius (m) comparison
+      declare
+         TR_Dev : constant Float :=
+           abs (Geo.Toroid_Radius_M - Target_Toroid_Radius)
+           / Target_Toroid_Radius;
+         TR_OK  : constant Boolean := TR_Dev <= Tolerance_Press;
+         TR_Pct : constant Float := TR_Dev * 100.0;
+      begin
+         Put_Line ("  Toroid radius (m)     | " &
+                   Float'Image (Geo.Toroid_Radius_M) & " | " &
+                   Float'Image (Target_Toroid_Radius) & "          | " &
+                   Float'Image (TR_Pct) & "%  | " &
+                   (if TR_OK then "PASS" else "WARN"));
+      end;
 
-      --  Ambient temperature (K)
-      Put_Line ("  Ambient temp (K)      | " &
-                Float'Image (Flight.Temperature_K) &
-                "    |     ---       |    ---   | INFO");
+      --  Ambient temperature (K) comparison
+      declare
+         AT_Dev : constant Float :=
+           abs (Flight.Temperature_K - Target_Ambient_Temp)
+           / Target_Ambient_Temp;
+         AT_OK  : constant Boolean := AT_Dev <= Tolerance_Temp;
+         AT_Pct : constant Float := AT_Dev * 100.0;
+      begin
+         Put_Line ("  Ambient temp (K)      | " &
+                   Float'Image (Flight.Temperature_K) & " | " &
+                   Float'Image (Target_Ambient_Temp) & "          | " &
+                   Float'Image (AT_Pct) & "%  | " &
+                   (if AT_OK then "PASS" else "WARN"));
+      end;
+
+      --  Payload height (m) comparison (simulated geometry payload height)
+      declare
+         Payload_H : constant Float :=
+           Geo.Diameter_M - 2.0 * Geo.Toroid_Radius_M;
+         PH_Dev : constant Float :=
+           abs (Payload_H - Target_Payload_Height) / Target_Payload_Height;
+         PH_OK  : constant Boolean := PH_Dev <= Tolerance_Press;
+         PH_Pct : constant Float := PH_Dev * 100.0;
+      begin
+         Put_Line ("  Payload height (m)    | " &
+                   Float'Image (Payload_H) & " | " &
+                   Float'Image (Target_Payload_Height) & "          | " &
+                   Float'Image (PH_Pct) & "%  | " &
+                   (if PH_OK then "PASS" else "WARN"));
+      end;
+
+      --  Ambient pressure (Pa) comparison (ISA: P = rho * R_specific * T)
+      declare
+         R_Air     : constant Float := 287.058;  -- J/(kg*K)
+         Amb_Press : constant Float :=
+           Flight.Density_Kgm3 * R_Air * Flight.Temperature_K;
+         AP_Dev : constant Float :=
+           abs (Amb_Press - Target_Ambient_Press) / Target_Ambient_Press;
+         AP_OK  : constant Boolean := AP_Dev <= Tolerance_Press;
+         AP_Pct : constant Float := AP_Dev * 100.0;
+      begin
+         Put_Line ("  Ambient press (Pa)    | " &
+                   Float'Image (Amb_Press) & " | " &
+                   Float'Image (Target_Ambient_Press) & "          | " &
+                   Float'Image (AP_Pct) & "%  | " &
+                   (if AP_OK then "PASS" else "WARN"));
+      end;
 
       Put_Line ("  ---------------------------------------------------------------------");
-      Put_Line ("  [INFO] INFO rows are informational (no IRVE-3 flight target).");
+      Put_Line ("  [NOTE] Flight = IRVE-3 (NASA/TP-2013-4012), MDAO = Rapisarda 2023.");
       New_Line;
 
       --  Step 10: Summary
