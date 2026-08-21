@@ -784,7 +784,7 @@ package body StellarOrion_Project is
                             Flight.Velocity_Ms);
       --  Compute drag force: F_drag = Cd * q * A
       declare
-         Cd       : constant Float := 1.5;
+         Cd       : constant Float := 1.47;
          Q_Dyn    : constant Float :=
            0.5 * Flight.Density_Kgm3 * Flight.Velocity_Ms ** 2;
          Ref_Area : constant Float :=
@@ -852,7 +852,7 @@ package body StellarOrion_Project is
                             Geo_Smooth.Nose_Radius_M,
                             Flight.Velocity_Ms);
       declare
-         Cd_S     : constant Float := 1.5;
+         Cd_S     : constant Float := 1.47;
          Q_Dyn_S  : constant Float :=
            0.5 * Flight.Density_Kgm3 * Flight.Velocity_Ms ** 2;
          Ref_A_S  : constant Float :=
@@ -869,7 +869,7 @@ package body StellarOrion_Project is
                             Geo_Pointy.Nose_Radius_M,
                             Flight.Velocity_Ms);
       declare
-         Cd_P     : constant Float := 1.5;
+         Cd_P     : constant Float := 1.47;
          Q_Dyn_P  : constant Float :=
            0.5 * Flight.Density_Kgm3 * Flight.Velocity_Ms ** 2;
          Ref_A_P  : constant Float :=
@@ -954,7 +954,7 @@ package body StellarOrion_Project is
                             Flight.Velocity_Ms);
       --  Compute drag force: F_drag = Cd * q * A
       declare
-         Cd_D     : constant Float := 1.5;
+         Cd_D     : constant Float := 1.47;
          Q_Dyn_D  : constant Float :=
            0.5 * Flight.Density_Kgm3 * Flight.Velocity_Ms ** 2;
          Ref_A_D  : constant Float :=
