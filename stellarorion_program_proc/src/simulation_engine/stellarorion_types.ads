@@ -112,6 +112,9 @@ package StellarOrion_Types is
       Temperature_K : Float := 270.65;
    end record;
 
+   --  Nose geometry profile (affects shock attachment and drag).
+   type Nose_Type_Kind is (Smooth, Pointy);
+
    --  Geometric definition of the HIAD aeroshell.
    --  Defaults correspond to IRVE-3 (Rapisarda 2023, Table 4.1).
    type Geometry_Parameters is record
@@ -123,6 +126,7 @@ package StellarOrion_Types is
       Outer_Radius_M  : Float    := 0.0508;
       Mass_Kg         : Float    := 281.0;
       Slice_Angle_Deg : Float    := 360.0;
+      Nose_Profile    : Nose_Type_Kind := Smooth;
    end record;
 
    --  Thermal Protection System material card.

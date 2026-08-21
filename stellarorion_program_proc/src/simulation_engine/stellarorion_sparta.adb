@@ -35,6 +35,14 @@ package body StellarOrion_Sparta is
       end case;
    end Chem_To_String;
 
+   function Nose_To_String (N : Nose_Type_Kind) return String is
+   begin
+      case N is
+         when Smooth => return "smooth";
+         when Pointy => return "pointy";
+      end case;
+   end Nose_To_String;
+
    function Img (V : Float) return String is
       S : constant String := Float'Image (V);
    begin
@@ -198,7 +206,8 @@ package body StellarOrion_Sparta is
       Put_Line (File, "# Chemistry: " & Chem_To_String (Chemistry) &
                 " | Mach " & Img (Mach_Val) &
                 " | T_inf=" & Img (Temp_Inf) & "K");
-      Put_Line (File, "# Tuning: fnum=" & Img (Fnum) &
+      Put_Line (File, "# Nose: " & Nose_To_String (Geo.Nose_Profile) &
+                " | Tuning: fnum=" & Img (Fnum) &
                 ", steps=" & Img (Steps_Rem));
       Put_Line (File, "");
       Put_Line (File, "seed            12345");
