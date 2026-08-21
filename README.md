@@ -10,25 +10,39 @@
 
 StellarOrion is a high-fidelity aerothermodynamic simulation and optimization suite for Hypersonic Inflatable Aerodynamic Decelerators (HIAD). It leverages the **SPARTA DSMC** solver for rarefied gas dynamics (Plimpton & Gallis, 2014) and a **PyTorch-based Metamodel Prognosis** for survivability optimization.
 
-## 🚀 Architecture
+> **Note:** `main.py` is **deprecated** as of 2026-08-21. All functionality has been
+> ported to the Ada/SPARK binary. Use `python3 stellarorion_program_proc/run.py` instead.
+
+## 🚀 Quick Start
+
+```bash
+cd stellarorion_program_proc
+python3 run.py --self-test        # Run 13 verification tests
+python3 run.py --test sample      # Run single SPARTA sample with 11-metric comparison
+python3 run.py --help             # Show all CLI flags
+```
+
+## 🏗️ Architecture
 
 This project uses a hybrid architecture for running simulations:
 
-- **Docker:** Used exclusively for running the SPARTA simulation in a containerized Linux environment. This ensures reproducibility of the SPARTA build and execution.
-- **Native OS:** The Python environment (including PyTorch) runs on the native OS to leverage global hardware acceleration. Supported platforms include **NVIDIA CUDA**, **AMD ROCm**, **Apple Metal (MPS)**, **Intel OneAPI/OpenCL**, and specialized accelerators from **Huawei (CANN)**, **Moore Threads (MUSA)**, **Biren (SUPA)**, and **Qualcomm (Snapdragon)**. This environment powers the **DeepXDE** PINN refinement and the MoP optimization loops.
+- **Ada/SPARK Binary:** Primary simulation engine (`stellarorion_program_proc/`). Compiled with Alire, formally verified with GNATprove. Handles all 21 CLI modes including validation, optimization, calibration, and integration tests.
+- **Docker:** Used exclusively for running the SPARTA DSMC simulation in a containerized Linux environment.
+- **Python Sidecar:** Native OS Python environment for PINN refinement (DeepXDE), PyFluent/PyAnsys integration, and GUI launcher. Supports NVIDIA CUDA, AMD ROCm, Apple Metal (MPS), Intel OneAPI/OpenCL, and specialized accelerators.
 
 ---
 
 ## 🛠️ Requirements & Installation
 
 - **Docker:** Required for SPARTA simulation.
-- **Python 3.10+**: Recommended.
-- **Dependencies:** `torch`, `numpy`, `matplotlib`, `pymsis`.
-- **DeepXDE:** Required for PINN refinement (Auto-installed on first use if missing).
+- **Python 3.10+**: Recommended (for build pipeline and PINN sidecar).
+- **Ada/Alire:** Required for the primary simulation binary.
+- **Dependencies:** Auto-installed by `run.py` (hash-gated venv).
 
 ```bash
-pip install torch numpy matplotlib pymsis
-# DeepXDE is installed automatically when refinement is triggered
+cd stellarorion_program_proc
+python3 run.py --help          # Show all CLI flags
+python3 run.py --self-test     # Run 13 verification tests
 ```
 
 ---
@@ -153,7 +167,7 @@ To ensure the simulation accuracy balances computational cost, a **Grid Independ
 
 Users can manually override this via:
 ```bash
-python3 main.py --grid-factor 1.0 # For higher fidelity
+cd stellarorion_program_proc && python3 run.py --grid-factor 1.0 --test sample
 ```
 
 ## 🛰️ Calibration & Validation: IRVE-3 (Rapisarda 2023 Baseline)
@@ -172,7 +186,7 @@ StellarOrion is calibrated against the **IRVE-3 (Inflatable Reentry Vehicle Expe
 
 Users can run the automated calibration suite using:
 ```bash
-python3 main.py --compareCalibrate --solver sparta --steps 1000
+cd stellarorion_program_proc && python3 run.py --compareCalibrate --solver sparta --steps 1000
 ```
 
 ## 📚 References
