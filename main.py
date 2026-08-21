@@ -1,4 +1,24 @@
 #!/usr/bin/env python
+"""
+StellarOrion HypersonicEdition -- DEPRECATED
+=============================================
+This file is DEPRECATED as of 2026-08-21.
+
+All functionality has been ported to the Ada/SPARK binary:
+    cd stellarorion_program_proc && python3 run.py [flags]
+
+The Ada binary provides:
+- Full parity with all 21 CLI modes
+- Superior comparison tables (computed values, not hardcoded)
+- 3-tier grading (PASS/WARN/FAIL) vs binary PASS/FAIL
+- Compiled SPARK formal verification
+- 13 self-tests (vs 16 Python unittests)
+
+This file is retained for backward compatibility only and will be
+removed in a future release.
+
+Author: Albert Starfield Wahyu Suryo Samudro
+"""
 import sys
 
 # Ensure UTF-8 encoding for stdout/stderr on Windows to prevent charmap errors
