@@ -23,7 +23,8 @@ project StellarOrion_Program_Proc is
 
    package Linker is
       for Switches ("ada") use
-        ("-g");         --  Debug symbols for profiling
+        ("-g",          --  Debug symbols for profiling
+         "-Wl,-syslibroot,/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk");
    end Linker;
 
 end StellarOrion_Program_Proc;

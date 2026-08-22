@@ -1931,11 +1931,13 @@ package body StellarOrion_Project is
       Target_Cd            : constant Float := 1.47;   -- smooth cone baseline
       Target_Stag_Press_KPa : constant Float := 12.4;  -- kPa (estimated 2*q)
 
-      --  Tolerances for PASS/WARN/FAIL grading
-      Tolerance_Flight : constant Float := 0.15;  -- 15% for heat/decel
-      Tolerance_Beta   : constant Float := 0.20;  -- 20% for beta
-      Tolerance_Cd     : constant Float := 0.20;  -- 20% for Cd
-      Tolerance_Press  : constant Float := 0.15;  -- 15% for stagnation pressure
+      --  Tolerances for PASS/WARN/FAIL grading (PERCENTAGE scale, 0-100)
+      --  Error_Pct values are computed as abs(sim-target)/target*100.0,
+      --  so tolerances must also be in percentage units for Grade() to work.
+      Tolerance_Flight : constant Float := 15.0;  -- 15% for heat/decel
+      Tolerance_Beta   : constant Float := 20.0;  -- 20% for beta
+      Tolerance_Cd     : constant Float := 20.0;  -- 20% for Cd
+      Tolerance_Press  : constant Float := 15.0;  -- 15% for stagnation pressure
 
       pragma Unreferenced (Steps);
    begin
@@ -2083,15 +2085,26 @@ package body StellarOrion_Project is
                end if;
             end Grade;
 
-            --  Format float with fixed width (N.MMM)
+            --  Format float to "N.DD" (2 decimal places, no scientific notation).
+            --  Axiom: Integer conversion + arithmetic avoids Float'Image truncation.
+            --  Uses Long_Long_Integer to avoid range overflow for large values.
+            --  Clamps decimal digits to 0..99 to guard against floating point edge cases.
             function F6 (V : Float) return String is
-               S : constant String := Float'Image (V);
+               Abs_V : constant Float := abs V + 0.005;
+               IP    : constant Long_Long_Integer := Long_Long_Integer (Abs_V);
+               Raw   : constant Long_Long_Integer :=
+                 Long_Long_Integer ((Abs_V - Float (IP)) * 100.0);
+               --  Clamp DP to 0..99 to prevent floating point precision overflow
+               DP    : constant Long_Long_Integer :=
+                 (if Raw < 0 then 0 elsif Raw > 99 then 99 else Raw);
+               Sign  : constant String := (if V < 0.0 then "-" else "");
+               IStr  : constant String := Long_Long_Integer'Image (IP);
+               D1    : constant Character :=
+                 Character'Val (Character'Pos ('0') + Integer (DP / 10));
+               D2    : constant Character :=
+                 Character'Val (Character'Pos ('0') + Integer (DP rem 10));
             begin
-               if S'Length >= 8 then
-                  return S (S'First .. S'First + 7);
-               else
-                  return S;
-               end if;
+               return Sign & IStr (IStr'First + 1 .. IStr'Last) & "." & D1 & D2;
             end F6;
 
          begin
