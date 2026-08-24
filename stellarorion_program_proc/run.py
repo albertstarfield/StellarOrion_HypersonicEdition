@@ -497,8 +497,16 @@ def _phase1_venv(skip_hashes: bool, verbose: bool) -> None:
 # Phase 2: Python Static Analysis
 
 
-def _phase2_python_analysis(verbose: bool) -> None:
-    """Phase 2 -- pyrefly, ruff, crosshair checks using the venv."""
+def _phase2_python_analysis(
+    verbose: bool,
+    min_coverage: float | None = None,
+) -> None:
+    """Phase 2 -- pyrefly, ruff, crosshair checks using the venv.
+
+    When min_coverage is given, additionally run the Python unit tests
+    under coverage.py with branch measurement and enforce a minimum
+    coverage percentage on run.py (Std §7 branch-coverage gate).
+    """
     phase_header(2, "Python Static Analysis")
 
     if not _VENV_PYTHON.exists():
@@ -561,6 +569,45 @@ def _phase2_python_analysis(verbose: bool) -> None:
             fatal("crosshair check failed", 1)
     else:
         step_info("crosshair not installed -- skipping")
+
+    # -- Python branch-coverage gate (Std §7; opt-in via --py-coverage [MIN])
+    if min_coverage is not None:
+        tests_dir = _PROJECT_ROOT / "tests"
+        if not (tests_dir / "test_run_pipeline.py").is_file():
+            fatal("tests/test_run_pipeline.py not found "
+                  "-- cannot run coverage gate", 1)
+        t = step_start(
+            f"coverage --branch gate (fail-under {min_coverage:g}%)"
+        )
+        ok_cov, cov_out, cov_err = _run(
+            [str(_VENV_PYTHON), "-m", "coverage", "run", "--branch",
+             "-m", "unittest", "discover", "-s", "tests",
+             "-p", "test_run_pipeline.py"],
+            cwd=_PROJECT_ROOT,
+            verbose=verbose,
+        )
+        rep_out = ""
+        ok_gate = False
+        if ok_cov:
+            ok_gate, rep_out, _ = _run(
+                [str(_VENV_PYTHON), "-m", "coverage", "report",
+                 "--include=run.py",
+                 f"--fail-under={min_coverage:g}"],
+                cwd=_PROJECT_ROOT,
+                verbose=verbose,
+            )
+        else:
+            # Surface the unittest failure output for diagnosis.
+            print(cov_out)
+            print(cov_err)
+        elapsed = time.monotonic() - t
+        step_result(
+            ok_cov and ok_gate,
+            f"run.py branch coverage >= {min_coverage:g}%",
+            elapsed, verbose, cov_out + rep_out, cov_err,
+        )
+        if not (ok_cov and ok_gate):
+            fatal("Python branch-coverage gate failed", 1)
 
     print()
 
@@ -929,6 +976,21 @@ def _parse_args() -> tuple[argparse.Namespace, list[str]]:
         action="store_true",
         help="Stop Colima (macOS Docker runtime) after simulation finishes",
     )
+    parser.add_argument(
+        "--py-coverage",
+        nargs="?",
+        const=100.0,
+        default=None,
+        type=float,
+        metavar="MIN",
+        help=(
+            "Run the Python unit tests under coverage.py with --branch "
+            "and enforce a minimum coverage percentage on run.py.  "
+            "Passing the flag without a value enforces the standard's "
+            "100%% target; pass a number (e.g. --py-coverage 40) for a "
+            "custom floor.  See docs/COVERAGE_FUZZING_STATUS.md."
+        ),
+    )
     args, unknown = parser.parse_known_args()
     return args, unknown
 
@@ -958,7 +1020,10 @@ def main() -> None:
 
         # -- Phase 2: Python Static Analysis
         if not args.ada_only:
-            _phase2_python_analysis(verbose=args.verbose)
+            _phase2_python_analysis(
+                verbose=args.verbose,
+                min_coverage=args.py_coverage,
+            )
         else:
             print("[Phase 2] Python Static Analysis")
             print("  '-- Skipped (--ada-only)")

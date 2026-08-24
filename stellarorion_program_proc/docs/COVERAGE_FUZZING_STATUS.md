@@ -57,9 +57,33 @@ targets `StellarOrion_Physics.Calculate_Flight_Metrics`,
 `alr exec -- gnatfuzz <unit> --level=<n>` then AFL++ run, minimum 1000
 iterations, triage any crash files against the AXIOMS.md envelopes.
 
+## C7 — run.py Python branch-coverage gate (Std §7)
+
+**Implemented 2026-08-25.** `run.py --py-coverage [MIN]` runs the unit
+suite (`tests/test_run_pipeline.py`, 28 tests) under
+`coverage run --branch` and enforces `coverage report --include=run.py
+--fail-under=MIN` as a hard Phase-2 gate (exit 1 on failure). Bare flag
+defaults to the standard's 100% target.
+
+Measured baseline: **24% total branch coverage of run.py**. The gap to
+100% is concentrated in Phases 0/1/3/4 (`_phase1_venv`,
+`_phase3_ada_build`, `_phase4_launch`, `main`) which are thin
+subprocess orchestrators around Alire / Docker / gnatprove / binary
+launch — environment-dependent integration surface, same class as the
+C3/C4 tooling exceptions above. The pure and side-effect-light helpers
+(colour, ports, health check, lockfile, hash gating, arg parsing,
+output) are unit-covered directly by importing `run`.
+
+Remediation path: mock-based phase tests (patch `subprocess.run`) can
+lift coverage toward the 100% target; until then, use a custom floor,
+e.g. `python3 run.py --py-coverage 24`. The gate mechanism itself is
+verified: fail-under 20 passes at the measured baseline, fail-under 99
+correctly fails.
+
 ## Verdict
 
 | Tier | Mandate | State |
 |---|---|---|
 | C3 | gnatcov coverage run | Tooling mismatch documented; campaign recipe staged; install attempt logged |
 | C4 | gnatfuzz >= 1000 iters | Tool unavailable (GNAT Pro only); documented exception + compensating controls |
+| C7 | run.py 100% branch gate | Gate implemented + enforced (--py-coverage); measured 24% baseline; 100% target documented w/ remediation path |

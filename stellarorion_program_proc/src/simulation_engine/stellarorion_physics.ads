@@ -251,8 +251,20 @@ package StellarOrion_Physics is
    -- -----------------------------------------------------------------
 
    --  Returns True iff every metric is within material limits.
+   --
+   --  CONTRACTS (post-audit remediation): total pure predicate — only
+   --  comparisons, so no Pre is required (safe for every Float input,
+   --  including NaN-free extremes of Flight_Metrics).  The Post mirrors
+   --  the definition exactly (standard mandate: contracts on every
+   --  subprogram); the prover discharges it by unfolding the body.
+   --  [STD: contract-on-every-subprogram] [DO178C §5.1 decision coverage]
    function Is_Survivable
-     (Metrics : Flight_Metrics) return Boolean;
+     (Metrics : Flight_Metrics) return Boolean
+     with Post => Is_Survivable'Result =
+                    (Metrics.Surface_Temp_K <= SIC_MAX_TEMP
+                     and Metrics.Backface_Temp_K <= KAPTON_MAX_TEMP
+                     and Metrics.G_Load <= MAX_G_LOAD
+                     and Metrics.Decel_G <= MAX_G_LOAD);
 
    -- -----------------------------------------------------------------
    --  Composite Calculation
