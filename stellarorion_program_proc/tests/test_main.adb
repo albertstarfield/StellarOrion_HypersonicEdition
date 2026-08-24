@@ -19,6 +19,12 @@
 --  in Tier A3 (commits 525ab7e..072c263); several tests deliberately
 --  sit ON contract boundaries as regression guards.
 --
+--  Tier B additions: deep unit tests for StellarOrion_Atomic_Parity
+--  (popcount, parity predicate, XOR checksum, corruption detection,
+--  recovery strategy) and StellarOrion_Dual_Watchdog (grace ladder,
+--  cross-monitoring recovery, emergency latch) beyond the smoke-level
+--  self-test coverage embedded in the production binary.
+--
 --  Build & run (from stellarorion_program_proc/):
 --    alr exec -- gprbuild -P tests/stellarorion_tests.gpr -j0
 --    ./bin/test_main
@@ -27,11 +33,14 @@
 
 with Ada.Text_IO;             use Ada.Text_IO;
 with Ada.Command_Line;
+with Interfaces;
 
 with StellarOrion_Types;       use StellarOrion_Types;
 with StellarOrion_Physics;     use StellarOrion_Physics;
 with StellarOrion_Geometry;    use StellarOrion_Geometry;
 with StellarOrion_Environment; use StellarOrion_Environment;
+with StellarOrion_Atomic_Parity;
+with StellarOrion_Dual_Watchdog;
 
 procedure Test_Main is
 
@@ -240,6 +249,140 @@ begin
              V_Max > 5.47e4 and V_Max < 5.52e4
              and V_Max < Velocity_Range'Last,
              "V = " & Float'Image (V_Max));
+   end;
+
+   -------------------------------------------------------------
+   --  Atomic parity (Tier B2): byte + frame integrity, recovery
+   -------------------------------------------------------------
+   declare
+   begin
+      Check ("Count_Set_Bits boundaries (0x00, 0xFF, 0xA5)",
+             StellarOrion_Atomic_Parity.Count_Set_Bits (16#00#) = 0
+             and then StellarOrion_Atomic_Parity.Count_Set_Bits (16#FF#) = 8
+             and then StellarOrion_Atomic_Parity.Count_Set_Bits (16#A5#) = 4,
+             "popcounts wrong");
+   end;
+
+   declare
+      --  16#03# carries two set bits -> even parity True, odd False;
+      --  16#01# carries one set bit -> the reverse.
+   begin
+      Check ("Calculate_Parity even/odd semantics",
+             StellarOrion_Atomic_Parity.Calculate_Parity (16#03#, StellarOrion_Atomic_Parity.Even)
+               and then not StellarOrion_Atomic_Parity.Calculate_Parity (16#03#, StellarOrion_Atomic_Parity.Odd)
+             and then not StellarOrion_Atomic_Parity.Calculate_Parity (16#01#, StellarOrion_Atomic_Parity.Even)
+               and then StellarOrion_Atomic_Parity.Calculate_Parity (16#01#, StellarOrion_Atomic_Parity.Odd),
+             "parity predicate wrong");
+   end;
+
+   declare
+      use type Interfaces.Unsigned_8;
+      Block : constant StellarOrion_Atomic_Parity.Data_Block :=
+        (1 => 16#01#, 2 => 16#02#, 3 => 16#04#, 4 => 16#08#, others => 16#00#);
+      --  XOR fold: 1 xor 2 xor 4 xor 8 = 15 = 16#0F#.
+   begin
+      Check ("Block_Checksum XOR-fold identity",
+             StellarOrion_Atomic_Parity.Block_Checksum
+               ((others => 16#00#)) = 16#00#
+             and then StellarOrion_Atomic_Parity.Block_Checksum (Block) = 16#0F#,
+             "checksum wrong");
+   end;
+
+   declare
+      use type Interfaces.Unsigned_8;
+      Frame : constant StellarOrion_Atomic_Parity.Parity_Frame :=
+        StellarOrion_Atomic_Parity.Add_Output_Parity
+          ((1 => 16#AA#, others => 16#00#));
+      Corrupt : StellarOrion_Atomic_Parity.Parity_Frame := Frame;
+   begin
+      Corrupt.Payload (3) := Corrupt.Payload (3) xor 16#01#;  --  flip one bit
+      Check ("Frame roundtrip verifies; single-bit corruption detected",
+             StellarOrion_Atomic_Parity.Verify_Input_Parity (Frame)
+             and then not StellarOrion_Atomic_Parity.Verify_Input_Parity (Corrupt),
+             "detection failed");
+   end;
+
+   declare
+      use type StellarOrion_Atomic_Parity.Recovery_Status;
+      use type StellarOrion_Atomic_Parity.Parity_Frame;
+      Bad     : constant StellarOrion_Atomic_Parity.Parity_Frame :=
+        StellarOrion_Atomic_Parity.Add_Output_Parity ((others => 16#5A#));
+      Retry   : constant StellarOrion_Atomic_Parity.Recovery_Result :=
+        StellarOrion_Atomic_Parity.Recover_From_Parity_Error
+          (Bad, StellarOrion_Atomic_Parity.Max_Retries - 1);
+      Exhaust : constant StellarOrion_Atomic_Parity.Recovery_Result :=
+        StellarOrion_Atomic_Parity.Recover_From_Parity_Error
+          (Bad, StellarOrion_Atomic_Parity.Max_Retries);
+   begin
+      Check ("Recovery: retry budget returns Success w/ original; exhausted substitutes safe frame",
+             Retry.Status = StellarOrion_Atomic_Parity.Success
+             and then Retry.Frame = Bad
+             and then Exhaust.Status = StellarOrion_Atomic_Parity.Recovered
+             and then StellarOrion_Atomic_Parity.Verify_Input_Parity (Exhaust.Frame),
+             "recovery strategy wrong");
+   end;
+
+   -------------------------------------------------------------
+   --  Dual watchdog (Tier B3): grace ladder, cross-recovery, emergency
+   -------------------------------------------------------------
+   declare
+      use type StellarOrion_Dual_Watchdog.Health_Status;
+      use all type StellarOrion_Dual_Watchdog.Watchdog_ID;
+      S : StellarOrion_Dual_Watchdog.System_State;
+   begin
+      --  Scenario 1: single-watchdog starvation and peer recovery.
+      --  Timeout 5 ticks; A is fed, B is starved from tick 0.
+      StellarOrion_Dual_Watchdog.Initialize (S, Timeout_Ticks => 5);
+      Check ("Watchdog Initialize brings both up Healthy",
+             S.A.Status = StellarOrion_Dual_Watchdog.Healthy
+             and then S.B.Status = StellarOrion_Dual_Watchdog.Healthy
+             and then not S.Emergency_Latched);
+
+      StellarOrion_Dual_Watchdog.Update_Heartbeat (S, Watchdog_A, Now => 20);
+      Check ("Heartbeat refresh records tick",
+             S.A.Last_Heartbeat = 20
+             and then S.A.Status = StellarOrion_Dual_Watchdog.Healthy);
+
+      StellarOrion_Dual_Watchdog.Evaluate (S, Now => 21);
+      --  A age 1 <= 5 stays Healthy; B age 21 > 5 degrades (grace step).
+      Check ("Grace ladder: first overdue evaluation degrades only",
+             S.A.Status = StellarOrion_Dual_Watchdog.Healthy
+             and then S.B.Status = StellarOrion_Dual_Watchdog.Degraded
+             and then S.B.Failure_Count = 0);
+
+      StellarOrion_Dual_Watchdog.Evaluate (S, Now => 22);
+      --  Second consecutive stale evaluation fails B; counter increments.
+      Check ("Grace ladder: second overdue evaluation fails + counts",
+             S.A.Status = StellarOrion_Dual_Watchdog.Healthy
+             and then S.B.Status = StellarOrion_Dual_Watchdog.Failed
+             and then S.B.Failure_Count = 1);
+
+      StellarOrion_Dual_Watchdog.Cross_Check (S);
+      Check ("Cross-monitoring: live A starts recovery of failed B",
+             S.B.Status = StellarOrion_Dual_Watchdog.Recovering);
+
+      StellarOrion_Dual_Watchdog.Advance_Recovery (S, Watchdog_B, Now => 23);
+      Check ("Advance_Recovery restores B Healthy with fresh heartbeat",
+             S.B.Status = StellarOrion_Dual_Watchdog.Healthy
+             and then S.B.Last_Heartbeat = 23);
+   end;
+
+   declare
+      use type StellarOrion_Dual_Watchdog.Health_Status;
+      S : StellarOrion_Dual_Watchdog.System_State;
+   begin
+      --  Scenario 2: both watchdogs starve -> emergency safe state.
+      StellarOrion_Dual_Watchdog.Initialize (S, Timeout_Ticks => 5);
+      StellarOrion_Dual_Watchdog.Evaluate (S, Now => 11);   --  both degrade
+      StellarOrion_Dual_Watchdog.Evaluate (S, Now => 12);   --  both fail
+      Check ("Both-starve detected as emergency condition",
+             StellarOrion_Dual_Watchdog.Needs_Emergency (S));
+
+      StellarOrion_Dual_Watchdog.Emergency_Safe_State (S);
+      Check ("Emergency safe state: both Dead, latch sticky",
+             S.A.Status = StellarOrion_Dual_Watchdog.Dead
+             and then S.B.Status = StellarOrion_Dual_Watchdog.Dead
+             and then S.Emergency_Latched);
    end;
 
    -------------------------------------------------------------

@@ -65,6 +65,8 @@ with StellarOrion_Validation; use StellarOrion_Validation;
 with StellarOrion_Sparta;     use StellarOrion_Sparta;
 with StellarOrion_Optimization; use StellarOrion_Optimization;
 with StellarOrion_Status_Writer; use StellarOrion_Status_Writer;
+with StellarOrion_Atomic_Parity;  use StellarOrion_Atomic_Parity;
+with StellarOrion_Dual_Watchdog;  use StellarOrion_Dual_Watchdog;
 
 with Ada.Directories;    use Ada.Directories;
 --  Ada.IO_Exceptions / Ada.Numerics are referenced via expanded names only
@@ -421,7 +423,7 @@ package body StellarOrion_Project is
       NT : Nose_Type_Kind;
    begin
       Write_Status (STATUS_DIR, "self_test", Status_Running, 0.0);
-      Put_Line ("[TEST] Running self-test (13 tests) ...");
+      Put_Line ("[TEST] Running self-test (15 tests) ...");
       New_Line;
 
       --  ==================================================================
@@ -758,6 +760,99 @@ package body StellarOrion_Project is
       New_Line;
 
       --  ==================================================================
+      --  Test 14: Atomic parity round-trip + corruption detection (B2)
+      --  ==================================================================
+      declare
+         Payload  : constant Data_Block :=
+           (1 => 16#5A#, 2 => 16#A5#, others => 16#00#);
+         Frame    : constant Parity_Frame := Add_Output_Parity (Payload);
+         Corrupt  : Parity_Frame          := Frame;
+         Recovery : Recovery_Result;
+      begin
+         --  Byte 3 is 0 in Frame (others => 16#00#); forcing it to 1 breaks
+         --  the checksum without needing Unsigned_8 operator visibility.
+         Corrupt.Payload (3) := 16#01#;
+         Put_Line ("[TEST 14] Atomic parity: round-trip, detect, recover");
+         if Verify_Input_Parity (Frame)
+           and then not Verify_Input_Parity (Corrupt)
+           and then Count_Set_Bits (16#FF#) = 8
+           and then Count_Set_Bits (16#00#) = 0
+         then
+            Put_Line ("[TEST 14]   PASS");
+            Pass_Count := Pass_Count + 1;
+         else
+            Put_Line ("[TEST 14]   FAIL (parity round-trip broken)");
+            Fail_Count := Fail_Count + 1;
+         end if;
+         --  Exhausted-retry path must substitute a verifiable safe frame.
+         Recovery := Recover_From_Parity_Error (Corrupt,
+                       StellarOrion_Atomic_Parity.Max_Retries);
+         if Recovery.Status = Recovered
+           and then Verify_Input_Parity (Recovery.Frame)
+         then
+            Put_Line ("[TEST 14]   recovery path PASS");
+            Pass_Count := Pass_Count + 1;
+         else
+            Put_Line ("[TEST 14]   recovery path FAIL");
+            Fail_Count := Fail_Count + 1;
+         end if;
+      end;
+      New_Line;
+
+      --  ==================================================================
+      --  Test 15: Dual watchdog degrade/fail/cross-recover cycle (B3)
+      --  ==================================================================
+      declare
+         W : System_State;
+      begin
+         Initialize (W);
+         --  Only A keeps beating; B starves past its timeout.
+         for T in 1 .. 12 loop
+            Update_Heartbeat (W, Watchdog_A, T);
+            Evaluate (W, T);
+         end loop;
+         --  After 12 ticks without a heartbeat B is Degraded->Failed while
+         --  A stays Healthy (age 0 at each evaluation).
+         Put_Line ("[TEST 15] Watchdog cycle: starve B, cross-recover");
+         if W.B.Status = Failed and then W.A.Status = Healthy then
+            Put_Line ("[TEST 15]   starvation detection PASS");
+            Pass_Count := Pass_Count + 1;
+         else
+            Put_Line ("[TEST 15]   starvation detection FAIL");
+            Fail_Count := Fail_Count + 1;
+         end if;
+
+         Cross_Check (W);              -- live A starts recovery of failed B
+         Advance_Recovery (W, Watchdog_B, 13);
+         if W.B.Status = Healthy and then W.B.Failure_Count >= 1 then
+            Put_Line ("[TEST 15]   cross-recovery PASS");
+            Pass_Count := Pass_Count + 1;
+         else
+            Put_Line ("[TEST 15]   cross-recovery FAIL");
+            Fail_Count := Fail_Count + 1;
+         end if;
+
+         --  Both-starvation escalation to latched emergency safe state.
+         for T in 20 .. 45 loop
+            Evaluate (W, T);
+         end loop;
+         Cross_Check (W);
+         if Needs_Emergency (W) then
+            Emergency_Safe_State (W);
+         end if;
+         if W.Emergency_Latched
+           and then W.A.Status = Dead and then W.B.Status = Dead
+         then
+            Put_Line ("[TEST 15]   emergency latch PASS");
+            Pass_Count := Pass_Count + 1;
+         else
+            Put_Line ("[TEST 15]   emergency latch FAIL");
+            Fail_Count := Fail_Count + 1;
+         end if;
+      end;
+      New_Line;
+
+      --  ==================================================================
       --  Summary
       --  ==================================================================
       Put_Line ("========================================");
@@ -767,7 +862,7 @@ package body StellarOrion_Project is
       Put_Line ("========================================");
 
       if Fail_Count = 0 then
-         Put_Line ("[TEST] All 13 self-tests PASSED.");
+         Put_Line ("[TEST] All 15 self-tests PASSED.");
          Write_Status (STATUS_DIR, "self_test", Status_Completed, 1.0);
       else
          Put_Line ("[TEST] SOME TESTS FAILED!");
