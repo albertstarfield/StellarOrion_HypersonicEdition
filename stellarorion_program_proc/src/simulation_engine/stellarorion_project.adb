@@ -67,6 +67,8 @@ with StellarOrion_Optimization; use StellarOrion_Optimization;
 with StellarOrion_Status_Writer; use StellarOrion_Status_Writer;
 with StellarOrion_Atomic_Parity;  use StellarOrion_Atomic_Parity;
 with StellarOrion_Dual_Watchdog;  use StellarOrion_Dual_Watchdog;
+--  Decomposition Stage 1: pure CLI helpers moved to StellarOrion_Cli
+with StellarOrion_Cli;            use StellarOrion_Cli;
 
 with Ada.Directories;    use Ada.Directories;
 --  Ada.IO_Exceptions / Ada.Numerics are referenced via expanded names only
@@ -188,57 +190,9 @@ package body StellarOrion_Project is
       Put_Line ("  --stop-colima             Stop Colima/Docker daemon after run");
    end Print_Usage;
 
-   --  Simple argument search (returns True if flag found)
-   function Has_Flag (Flag : String) return Boolean is
-   begin
-      for I in 1 .. Argument_Count loop
-         if Argument (I) = Flag then
-            return True;
-         end if;
-      end loop;
-      return False;
-   end Has_Flag;
-
-   --  Get value for --flag <value>
-   function Get_Option (Flag : String; Default : String) return String is
-   begin
-      for I in 1 .. Argument_Count - 1 loop
-         if Argument (I) = Flag then
-            return Argument (I + 1);
-         end if;
-      end loop;
-      return Default;
-   end Get_Option;
-
-   function Get_Float (Flag : String; Default : Float) return Float is
-      Val : constant String := Get_Option (Flag, "");
-   begin
-      if Val'Length > 0 then
-         return Float'Value (Val);
-      else
-         return Default;
-      end if;
-   end Get_Float;
-
-   --  Clamp V into [Lo, Hi].
-   --  Murphy's Law: CLI values are untrusted input.  Record components
-   --  now carry physical-envelope subtypes (StellarOrion_Types), so an
-   --  unclamped out-of-range value would raise Constraint_Error at the
-   --  assignment.  Sanitizing into the envelope keeps the run alive and
-   --  the physics contracts dischargeable.
-   function Clamp_Float (V, Lo, Hi : Float) return Float is
-     (Float'Min (Float'Max (V, Lo), Hi))
-     with Pre => Lo <= Hi;
-
-   function Get_Positive (Flag : String; Default : Positive) return Positive is
-      Val : constant String := Get_Option (Flag, "");
-   begin
-      if Val'Length > 0 then
-         return Positive'Value (Val);
-      else
-         return Default;
-      end if;
-   end Get_Positive;
+   --  CLI helpers (Has_Flag, Get_Option, Get_Float, Clamp_Float,
+   --  Get_Positive) extracted to StellarOrion_Cli at Decomposition
+   --  Stage 1 — see docs/PROJECT_DECOMPOSITION_PLAN.md.
 
    -- ==================================================================
    --  Lock File Helpers  (matches Python check_and_acquire_lock)

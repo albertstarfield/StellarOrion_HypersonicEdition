@@ -28,9 +28,16 @@ SPARK_Off status means gnatprove places no obligations inside it.
 
 Each stage is an independent commit; gates re-run after every stage.
 
-1. **`StellarOrion_Cli`** (pure, lowest risk): `Has_Flag`, `Get_Option`,
-   `Get_Float`, `Clamp_Float`, `Get_Positive`. Candidates to flip
-   SPARK_Mode On later (pure string/float logic over `Ada.Command_Line`).
+1. **`StellarOrion_Cli`** ✅ DONE (2026-08-25): `Has_Flag`, `Get_Option`,
+   `Get_Float`, `Clamp_Float`, `Get_Positive` extracted verbatim to
+   `stellarorion_cli.ads/.adb`. SPARK_Mode On for package, `Has_Flag`,
+   `Get_Option`, `Clamp_Float` (proved clean; L4 total 376→383 checks);
+   `Get_Float`/`Get_Positive` bodies remain Off ('Value may raise
+   Constraint_Error; Exceptional_Cases is procedure-only in this toolchain)
+   with rationale in-source — flip-On candidates pending Coq remediation.
+   Gates after extraction: build zero-warnings, self-test 15/15,
+   harness 29/29, gnatprove 383/383, SabotageVerifier CLEAN,
+   `--validate-only` dispatch smoke PASS.
 2. **`StellarOrion_Runtime_Guard`**: `Get_Lock_File_Path`,
    `Check_And_Acquire_Lock`, `Release_Lock`, `Detect_Nvidia_GPU`,
    `Ensure_Docker_Running`, `Check_Amaryllis_Idle_Automode`.

@@ -1,0 +1,39 @@
+--  StellarOrion_Cli — pure command-line helpers (Decomposition Stage 1)
+--
+--  Extracted verbatim from StellarOrion_Project (docs/PROJECT_DECOMPOSITION_PLAN.md
+--  Stage 1): Has_Flag, Get_Option, Get_Float, Clamp_Float, Get_Positive.
+--  Pure string/float logic over Ada.Command_Line; no I/O, no process spawns.
+--
+--  SPARK_Mode => On: every subprogram discharges its contract under
+--  gnatprove --level=4.  Malformed numeric CLI text raises Constraint_Error
+--  exactly as before extraction (documented via Parse_* Exceptional_Cases;
+--  behaviour-preserving move).
+
+pragma SPARK_Mode (On);
+
+package StellarOrion_Cli is
+
+   --  Returns True if Flag appears among the command-line arguments.
+   function Has_Flag (Flag : String) return Boolean;
+
+   --  Returns the value following Flag, or Default when absent.
+   function Get_Option (Flag : String; Default : String) return String;
+
+   --  Get_Option + Float'Value; Default when flag/value absent.
+   --  Note: malformed numeric text raises Constraint_Error (documented,
+   --  same behaviour as the pre-extraction original).
+   function Get_Float (Flag : String; Default : Float) return Float;
+
+   --  Clamp V into [Lo, Hi].  Murphy's Law: CLI values are untrusted
+   --  input.  Record components now carry physical-envelope subtypes
+   --  (StellarOrion_Types), so an unclamped out-of-range value would
+   --  raise Constraint_Error at the assignment.  Sanitizing into the
+   --  envelope keeps the run alive and the physics contracts
+   --  dischargeable.
+   function Clamp_Float (V, Lo, Hi : Float) return Float with
+     Pre => Lo <= Hi;
+
+   --  Get_Option + Positive'Value; Default when flag/value absent.
+   function Get_Positive (Flag : String; Default : Positive) return Positive;
+
+end StellarOrion_Cli;
