@@ -128,7 +128,9 @@ package body StellarOrion_Optimization is
       Cd      : Float;
       Beta_C  : Float;
       Ref_Area: Float;
-      pragma Unreferenced (TPS);
+      --  TPS and Flight are not used by the simplified estimator (Cd is
+      --  angle-only; Mach/altitude-dependent Cd refinement is future work).
+      pragma Unreferenced (TPS, Flight);
    begin
       --  Simplified Cd from angle (higher angle = more drag)
       Cd := 1.2 + 0.02 * Geo.Angle_Deg;
@@ -287,12 +289,15 @@ package body StellarOrion_Optimization is
    end Random_Geometry;
 
    --  Sort indices by ascending cost (insertion sort for small N).
+   --  NOTE: J is Natural (not Positive) because it may legitimately reach 0
+   --  when the key shifts to the front of the array; declaring it Positive
+   --  would raise Constraint_Error on "J := J - 1" at J = 1.
    procedure Sort_By_Cost (Indices : in out Index_Array;
                            Costs   : Cost_Array;
                            N       : Natural)
    is
-      J, Key : Positive;
-      Temp   : Positive;
+      Key : Positive;
+      J   : Natural;
    begin
       for I in 2 .. N loop
          Key := Indices (I);
