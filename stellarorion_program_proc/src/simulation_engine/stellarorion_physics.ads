@@ -89,10 +89,14 @@ package StellarOrion_Physics is
    --      subtypes (rho <= 1e4, V <= 1e5) Dynamic_Pressure legitimately
    --      reaches 5.0e13 (see its POST BOUND); the former 1e6 ceiling was
    --      unreachable-by-proof and contradicted the caller chain.
-   --    AXIOM B3: F_drag in [1e-6, 1e9] N (floor avoids division blowup;
-   --      peak HIAD drag ~1e6-1e7 N).
+   --    AXIOM B3: F_drag in [1e-6, 1e18] N (floor avoids division blowup;
+   --      peak HIAD drag ~1e6-1e7 N; CEILING WIDENED 1e9 -> 1e18 in A3e
+   --      to match the Calculate_Flight_Metrics Pre on Results.Drag_Force
+   --      and the Deceleration_G_Load envelope: analytic Cd*q*A worst
+   --      ~2.5e17 N.  Widening is overflow-neutral because beta = m*q/F
+   --      DECREASES in F; the worst case remains floor-driven.)
    --  OVERFLOW PROOF: m*q <= 1e21; /F_drag >= 1e-6 => beta <= 1e27
-   --    << Float'Last = 3.4028235e38.
+   --    << Float'Last = 3.4028235e38 (independent of the F ceiling).
    --  NOTE: Post relaxed to >= 0.0: q = 0 (V = 0) legitimately gives
    --    beta = 0. The former Post "> 0.0" was a spec defect found by
    --    gnatprove (contradicted Pre for Dyn_Pressure = 0).
@@ -104,8 +108,8 @@ package StellarOrion_Physics is
                    and Mass <= 1.0e7
                    and Dyn_Pressure >= 0.0
                    and Dyn_Pressure <= 1.0e14
-                   and Drag_Force >= 1.0e-6
-                   and Drag_Force <= 1.0e9,
+                    and Drag_Force >= 1.0e-6
+                    and Drag_Force <= 1.0e18,
           Post => Ballistic_Coefficient'Result >= 0.0;
 
    -- -----------------------------------------------------------------
@@ -133,14 +137,19 @@ package StellarOrion_Physics is
                    and Nose_Radius <= 100.0
                    and Velocity >= 0.0
                    and Velocity <= 1.0e5,
-           Post => Sutton_Graves_Heat'Result >= 0.0
-                    and Sutton_Graves_Heat'Result <= 2.0e15;
-   --  POST BOUND (A3b): exact-envelope worst case is C_sg * 1e4 * 1e15 =
-   --  1.7415e15 W/m^2; the Post allows 2.0e15 so the prover has rounding
-   --  headroom on the three-step product (A3a lesson: chained float
-   --  interval arithmetic needs slack).  2.0e15 matches the widened
-   --  Radiative_Eq_Temp / Backface_Temperature Heat_Flux Pres exactly,
-   --  keeping the Calculate_Flight_Metrics chain dischargeable.
+           Post => Sutton_Graves_Heat'Result >= 0.0;
+   --  ENVELOPE NOTE (A3b/A3e): exact-envelope worst case is C_sg * 1e4 *
+   --  1e15 = 1.7415e15 W/m^2.  The former upper Post conjunct
+   --  "Result <= 2.0e15" was REMOVED in A3e: gnatprove cannot derive it
+   --  from Sqrt's contract (whose Post only bounds by max(X,1)) without
+   --  timing out on re-inlining Sqrt's Newton loop, and a body-side
+   --  pragma Annotate cannot justify a spec-located postcondition
+   --  ([no-check-message-justified]).  Callers that need the bound
+   --  apply an explicit Float'Min clamp (see Calculate_Flight_Metrics),
+   --  matching the composite-clamp pattern used since A3b/A3c; the 2e15
+   --  clamp value still matches the Radiative_Eq_Temp /
+   --  Backface_Temperature Heat_Flux Pres exactly, keeping the
+   --  Calculate_Flight_Metrics chain dischargeable.
 
    --  Radiative equilibrium surface temperature [K].
    --  T = (q / (sigma * epsilon))^(1/4)

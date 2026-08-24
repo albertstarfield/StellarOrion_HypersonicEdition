@@ -49,17 +49,14 @@ package body StellarOrion_Physics is
       --            X/Y >= X, hence Y + X/Y >= 2X.
       for I in 1 .. 25 loop
          pragma Unreferenced (I);
-         --  Belt-and-braces justification (see hand proof below): the
-         --  quotient X/Y is bounded by max(2, sqrt(X)) <= 4.2e9 for all
-         --  caller-bounded X <= 1.77e19, far under Float'Last.  [ASWSS]
+         --  QUOTIENT BOUND (A3e): X/Y is bounded by max(2, sqrt(X)) <=
+         --  4.2e9 for all caller-bounded X <= 1.77e19, far under
+         --  Float'Last.  Formerly carried a False_Positive annotate;
+         --  removed in A3e because gnatprove (--timeout=180) now proves
+         --  the overflow check directly from the band invariants below,
+         --  which had turned the pragma into an orphan
+         --  ([no-check-message-justified]).  [ASWSS]
          Y_New := (Y + X / Y) / 2.0;
-         pragma Annotate
-           (GNATprove,
-            False_Positive,
-            "float overflow check might fail",
-            String'("Newton iterates stay in [min(X,1), max(X,1)] by "
-                    & "the AM-GM band argument in the header comment, "
-                    & "so X/Y <= max(2, sqrt(X)) <= 4.2e9"));
          Y     := Y_New;
          pragma Loop_Invariant (Y >= Float'Min (X, 1.0));
          pragma Loop_Invariant (Y <= Float'Max (X, 1.0));
@@ -165,9 +162,12 @@ package body StellarOrion_Physics is
       --  GNATprove times out re-inlining Sqrt's 25 Newton iterations
       --  at this call site even though Sqrt'Post suffices; justified
       --  per project standard's documented-exception process.  [ASWSS]
-      --  GNATprove times out re-inlining Sqrt's 25 Newton iterations
-      --  at this call site even though Sqrt'Post suffices; justified
-      --  per project standard's documented-exception process.  [ASWSS]
+      --
+      --  NOTE (A3e): the former upper Post conjunct "Result <= 2.0e15"
+      --  was removed from the spec (see ENVELOPE NOTE there): a
+      --  body-side pragma Annotate cannot justify a spec-located
+      --  postcondition, and the prover cannot derive the bound from
+      --  Sqrt's contract.  Callers clamp instead.
       declare
          Heat_Result : Float;
       begin
@@ -331,6 +331,15 @@ package body StellarOrion_Physics is
          Stag_Q := Sutton_Graves_Heat
            (Flight.Density_Kgm3, Geo.Nose_Radius_M, Flight.Velocity_Ms);
       end if;
+      --  COMPOSITE CLAMP (A3e): Sutton_Graves_Heat no longer carries an
+      --  upper Post (unprovable from Sqrt's contract; see ENVELOPE NOTE
+      --  in the spec).  The analytic envelope max is 1.7415e15 W/m^2,
+      --  so this clamp is a mathematical no-op inside the physical
+      --  envelope and only guards pathological SPARTA dumps; it restores
+      --  the 2e15 ceiling required by Radiative_Eq_Temp / Backface_
+      --  Temperature Pres below.  Same pattern as the A3c velocity /
+      --  density composite clamps.
+      Stag_Q := Float'Min (Stag_Q, 2.0e15);
       Metrics.Stag_Heat_Flux_Wm2 := Stag_Q;
       Metrics.Stag_Heat_Flux_Wcm2 := Stag_Q / 1.0e4;
 
