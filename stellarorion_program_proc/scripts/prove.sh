@@ -45,5 +45,11 @@ for f in glob.glob('obj/gnatprove/data_representation/*.json'):
 print(f"dropped {dropped} duplicate-location entries")
 EOF
 
-echo "== [3/3] gnatprove --level=$LEVEL $* =="
-gnatprove --level="$LEVEL" -j0 "$@"
+echo "== [3/3] gnatprove ${LEVEL:+--level=$LEVEL }$* =="
+if [ "$LEVEL" = "skip" ]; then
+   #  LEVEL=skip: caller supplies its own effort flags (e.g. --timeout=90),
+   #  since --level is mutually exclusive with --timeout/--steps.
+   gnatprove -j0 "$@"
+else
+   gnatprove --level="$LEVEL" -j0 "$@"
+fi
