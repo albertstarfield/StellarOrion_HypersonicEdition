@@ -2343,9 +2343,17 @@ package body StellarOrion_Project is
       --  Parse numeric options (--alt with --altitude alias)
       Steps              := Get_Positive ("--steps", Steps);
       Grid_Factor        := Get_Float ("--grid-factor", 0.7);
-      Mach_Override      := Get_Float ("--mach", 0.0);
-      Alt_Override       := Get_Float ("--alt",
-                            Get_Float ("--altitude", 0.0));
+      --  --mach/--alt clamped to the StellarOrion_Environment contract
+      --  envelopes (E1: Mach 0..50; E2/E4: altitude 0..500 km).  All
+      --  Mach_Alt_To_Flight call sites funnel through these two values
+      --  (or use in-envelope literals), so no downstream precondition
+      --  can fail at runtime regardless of user input (Murphy's Law).
+      Mach_Override      := Clamp_Float (Get_Float ("--mach", 0.0),
+                                         0.0, 50.0);
+      Alt_Override       := Clamp_Float
+                              (Get_Float ("--alt",
+                                          Get_Float ("--altitude", 0.0)),
+                               0.0, 500.0);
       Cores              := Get_Positive ("--cores", 4);
       Slice_Angle        := Get_Float ("--slice-angle", 360.0);
       Emissivity_Override := Get_Float ("--tps-emissivity", 0.0);
