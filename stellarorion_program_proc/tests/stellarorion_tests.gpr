@@ -1,0 +1,48 @@
+--  StellarOrion HypersonicEdition -- Unit Test Harness Project
+--
+--  Imports the production project so test sources link against the
+--  very objects that ship (same compiler switch set => no object-dir
+--  churn between `alr build` and test builds).  The linker package
+--  (including the macOS syslibroot requirement) is inherited from
+--  the imported project.
+--
+--  This project is intentionally NOT listed in alire.toml's
+--  project-files: `alr build` keeps building only the production
+--  binary, and the gnatprove pipeline (scripts/prove.sh) targets the
+--  production GPR exclusively.  Tests are built explicitly:
+--
+--    alr exec -- gprbuild -P tests/stellarorion_tests.gpr -j0
+--    ./bin/test_main
+
+with "../stellarorion_program_proc";
+
+project StellarOrion_Tests is
+
+   for Source_Dirs use (".");
+   for Main use ("test_main.adb");
+   for Object_Dir use "obj";
+   for Exec_Dir use "../bin";
+
+   --  Mirror the production warning gate so the -gnatwa zero-warning
+   --  standard applies to test sources too.
+   package Compiler is
+      for Switches ("ada") use
+       ("-gnat12",
+        "-gnatwa",     --  All warnings
+        "-gnatW8",     --  UTF-8 encoding
+        "-gnatQ",      --  No message edition
+        "-gnatdAME");  --  Enable assertion mode for SPARK
+   end Compiler;
+
+   --  GPR semantics: at link time only the MAIN project's Linker
+   --  package applies (imported projects' Linker packages are NOT
+   --  merged).  Restate the macOS syslibroot requirement here; see
+   --  the production GPR for the full rationale and KNOWN EXCEPTION
+   --  note (benign gprbind clang deployment-version notices).
+   package Linker is
+      for Switches ("ada") use
+        ("-g",
+         "-Wl,-syslibroot,/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+   end Linker;
+
+end StellarOrion_Tests;
