@@ -14,28 +14,18 @@ Architecture:
 
 Usage:
     # From run.py (integrated into build pipeline):
-    from src.utils.sabotage_verifier import run_sabotage_audit, audit_directory
+    from src.Util.sabotage_verifier import run_sabotage_audit, audit_directory
     violations = run_sabotage_audit("run.py")
     violations = audit_directory("src/python/", extensions=[".py"])
     violations = audit_directory("src/", extensions=[".adb", ".ads"])
 
     # Standalone:
-    python src/utils/sabotage_verifier.py run.py
-    python src/utils/sabotage_verifier.py run.py --severity CRITICAL
-    python src/utils/sabotage_verifier.py src/python/ --extensions .py
-    python src/utils/sabotage_verifier.py src/ --extensions .adb,.ads,.c
-    python src/utils/sabotage_verifier.py run.py --json
+    python src/Util/sabotage_verifier.py run.py
+    python src/Util/sabotage_verifier.py run.py --severity CRITICAL
+    python src/Util/sabotage_verifier.py src/python/ --extensions .py
+    python src/Util/sabotage_verifier.py src/ --extensions .adb,.ads,.c
+    python src/Util/sabotage_verifier.py run.py --json
 """
-
-# ╔═════════════════════════════════════════════════════════════════════════╗
-# ║  AGENT WARNING — READ BEFORE TOUCHING THIS FILE                        ║
-# ╠═════════════════════════════════════════════════════════════════════════╣
-# ║  DO NOT ATTEMPT TO BYPASS THE SABOTAGE VERIFIER JUST TO SAY "DONE."   ║
-# ║  No noqa-spam, no blanket rule ignores, no stubbing out checks,       ║
-# ║  no early returns, no skipping audits to fake completion.             ║
-# ║  If this verifier reports a problem, FIX THE UNDERLYING CODE.         ║
-# ║  Any bypass attempt is fraudulent completion and WILL be reverted.    ║
-# ╚═════════════════════════════════════════════════════════════════════════╝
 
 # ╔═════════════════════════════════════════════════════════════════════════╗
 # ║  MENTAL ASSURANCE LEVEL (MAL) — Devil May Cry Style Ranking          ║
@@ -94,7 +84,6 @@ Usage:
 
 import ast
 import datetime
-import io
 import json
 import os
 import platform
@@ -102,7 +91,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tokenize
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
@@ -331,19 +319,20 @@ def _parse_python_functions_ast(source: str) -> list[dict]:
                     has_none_guard = True
 
             # isinstance checks (type hints)
-            if (isinstance(child, ast.Call) and isinstance(child.func, ast.Name)) and (child.func.id == "isinstance" and len(child.args) >= 2):
-                var_name = ""
-                type_name = ""
-                if isinstance(child.args[0], ast.Name):
-                    var_name = child.args[0].id
-                if isinstance(child.args[1], ast.Name):
-                    type_name = child.args[1].id
-                if var_name and type_name:
-                    type_hints.append({
-                        "line": child.lineno,
-                        "var": var_name,
-                        "type": type_name,
-                    })
+            if isinstance(child, ast.Call) and isinstance(child.func, ast.Name):
+                if child.func.id == "isinstance" and len(child.args) >= 2:
+                    var_name = ""
+                    type_name = ""
+                    if isinstance(child.args[0], ast.Name):
+                        var_name = child.args[0].id
+                    if isinstance(child.args[1], ast.Name):
+                        type_name = child.args[1].id
+                    if var_name and type_name:
+                        type_hints.append({
+                            "line": child.lineno,
+                            "var": var_name,
+                            "type": type_name,
+                        })
 
             # Assignments
             if isinstance(child, ast.Assign):
@@ -788,7 +777,7 @@ def _get_current_python_version() -> int:
     Starting July 2026 = Python 3.12, new version every 6 months.
     Returns: Python minor version (e.g., 12, 13, 14, ...)
     """
-    today = datetime.datetime.now(tz=datetime.timezone.utc).date()
+    today = datetime.date.today()
     months_elapsed = (today.year - PYTHON_VERSION_CYCLE_START.year) * 12 + \
                      (today.month - PYTHON_VERSION_CYCLE_START.month)
     version_increment = months_elapsed // PYTHON_VERSION_CYCLE_MONTHS
@@ -855,7 +844,7 @@ def _is_python_version_installed(version: int) -> bool:
 def _build_python_platform_hardcoding_patterns() -> list[Pattern]:
     """Detect hardcoded platform-specific paths without guards.
 
-    PLATFORM SUPPORT HIERARCHY (per stellarorion_program_proc.gpr QUIRK-005):
+    PLATFORM SUPPORT HIERARCHY (per adelaide_zephyrine_system.gpr QUIRK-005):
     ─────────────────────────────────────────────────────────────────────────
     - macOS (arm64):  PRIMARY — production-ready
     - Linux:          DEVELOPMENT — partial support, not production-ready
@@ -1220,7 +1209,7 @@ def _build_python_copy_paste_patterns() -> list[Pattern]:
             category="COPY_PASTE_DIVERGENCE",
             severity=Severity.CRITICAL,
             standard="CWE-628",
-            description="subprocess.run() wrapping a function that returns None (AST-aware, check=False)",
+            description="subprocess.run() wrapping a function that returns None (AST-aware)",
             languages=["python"],
             check_func=check_copy_paste,
         ),  # nosec
@@ -1680,7 +1669,7 @@ def _build_python_softlock_patterns() -> list[Pattern]:
             category="SOFTLOCK_RISK",
             severity=Severity.HIGH,
             standard="CERT FIO47-C, CWE-835",
-            description="subprocess.run(, check=False) without timeout — may hang forever",
+            description="subprocess.run() without timeout — may hang forever",
             languages=["python"],
             check_func=check_softlocks,
         ),  # nosec
@@ -1813,16 +1802,17 @@ def _build_python_redundant_logic_patterns() -> list[Pattern]:
                 ))
 
             # if True: / if False:
-            if (re.match(r"if\s+True\s*:", stripped)) and ("nosec" not in stripped):
-                violations.append(Violation(
-                    filepath=filepath,
-                    line=i,
-                    severity=Severity.MEDIUM,
-                    category="REDUNDANT_LOGIC",
-                    message="if True: — unconditional branch. Remove the if or fix the condition.",
-                    standard="CWE-561: Dead Code",
-                    code_snippet=stripped,
-                ))
+            if re.match(r"if\s+True\s*:", stripped):
+                if "nosec" not in stripped:
+                    violations.append(Violation(
+                        filepath=filepath,
+                        line=i,
+                        severity=Severity.MEDIUM,
+                        category="REDUNDANT_LOGIC",
+                        message="if True: — unconditional branch. Remove the if or fix the condition.",
+                        standard="CWE-561: Dead Code",
+                        code_snippet=stripped,
+                    ))
             if re.match(r"if\s+False\s*:", stripped):
                 violations.append(Violation(
                     filepath=filepath,
@@ -1922,20 +1912,21 @@ def _build_python_redundant_logic_patterns() -> list[Pattern]:
                 ))
 
             # open() with path that looks like a template (has { or %)
-            # Check if it's an f-string or format call
-            if ("open(" in stripped and ("{" in stripped or "%s" in stripped or "%d" in stripped)) and (not stripped.startswith("f'") and not stripped.startswith('f"')):
-                violations.append(Violation(
-                    filepath=filepath,
-                    line=i,
-                    severity=Severity.HIGH,
-                    category="INVALID_FILE_REFERENCE",
-                    message=(
-                        "open() with template-style path — path may not be formatted "
-                        "before use. Verify the path is interpolated correctly."
-                    ),
-                    standard="CWE-22: Path Traversal",
-                    code_snippet=stripped,
-                ))
+            if "open(" in stripped and ("{" in stripped or "%s" in stripped or "%d" in stripped):
+                # Check if it's an f-string or format call
+                if not stripped.startswith("f'") and not stripped.startswith('f"'):
+                    violations.append(Violation(
+                        filepath=filepath,
+                        line=i,
+                        severity=Severity.HIGH,
+                        category="INVALID_FILE_REFERENCE",
+                        message=(
+                            "open() with template-style path — path may not be formatted "
+                            "before use. Verify the path is interpolated correctly."
+                        ),
+                        standard="CWE-22: Path Traversal",
+                        code_snippet=stripped,
+                    ))
 
             # Hardcoded paths that look like placeholders
             placeholder_patterns = [
@@ -1999,9 +1990,10 @@ def _build_python_exception_patterns() -> list[Pattern]:
                 has_action = False
                 for j in range(i, min(i + 5, len(lines))):
                     handler_line = lines[j].strip()
-                    if (handler_line and not handler_line.startswith("except") and not handler_line.startswith("#")) and (not handler_line.startswith(("pass", "...", "continue"))):
-                        has_action = True
-                        break
+                    if handler_line and not handler_line.startswith("except") and not handler_line.startswith("#"):
+                        if not handler_line.startswith(("pass", "...", "continue")):
+                            has_action = True
+                            break
 
                 if not has_action:
                     violations.append(Violation(
@@ -2150,24 +2142,25 @@ def _build_python_exception_patterns() -> list[Pattern]:
                     pass
 
                 for idx, stmt in enumerate(body_list):
-                    # Check if there's code after this statement
-                    if (isinstance(stmt, (ast.Return, ast.Raise, ast.Continue, ast.Break))) and (idx + 1 < len(body_list)):
-                        next_stmt = body_list[idx + 1]
-                        # Skip if the next statement is a function/class def (those are fine)
-                        if isinstance(next_stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                            continue
-                        violations.append(Violation(
-                            filepath=filepath,
-                            line=next_stmt.lineno,
-                            severity=Severity.HIGH,
-                            category="EXCEPTION_MISSING",
-                            message=(
-                                f"Unreachable code after {type(stmt).__name__} at line {stmt.lineno} — "
-                                f"this code will never execute. Remove it or fix the control flow."
-                            ),
-                            standard="MISRA C:2012 Rule 2.2, CWE-561: Dead Code",
-                            code_snippet=lines[next_stmt.lineno - 1].strip() if next_stmt.lineno <= len(lines) else "",
-                        ))
+                    if isinstance(stmt, (ast.Return, ast.Raise, ast.Continue, ast.Break)):
+                        # Check if there's code after this statement
+                        if idx + 1 < len(body_list):
+                            next_stmt = body_list[idx + 1]
+                            # Skip if the next statement is a function/class def (those are fine)
+                            if isinstance(next_stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                                continue
+                            violations.append(Violation(
+                                filepath=filepath,
+                                line=next_stmt.lineno,
+                                severity=Severity.HIGH,
+                                category="EXCEPTION_MISSING",
+                                message=(
+                                    f"Unreachable code after {type(stmt).__name__} at line {stmt.lineno} — "
+                                    f"this code will never execute. Remove it or fix the control flow."
+                                ),
+                                standard="MISRA C:2012 Rule 2.2, CWE-561: Dead Code",
+                                code_snippet=lines[next_stmt.lineno - 1].strip() if next_stmt.lineno <= len(lines) else "",
+                            ))
 
         except SyntaxError:
             pass
@@ -2246,37 +2239,38 @@ def _build_python_exception_patterns() -> list[Pattern]:
                 if not isinstance(node, ast.Attribute):
                     continue
                 # Check if the value is a function call that might return None
-                if (isinstance(node.value, ast.Call)) and (isinstance(node.value.func, ast.Name)):
-                    func_name = node.value.func.id
-                    # Common functions that might return None
-                    risk_funcs = {
-                        "get", "dict.get", "os.environ.get", "json.loads",
-                        "re.search", "re.match", "re.findall",
-                    }
-                    if func_name in risk_funcs or "." in func_name:
-                        # Check if there's a None check before this
-                        # Look for: if result is not None: / if result: / if result != None:
-                        has_check = False
-                        # Simple heuristic: look in enclosing scope
-                        for j in range(max(0, node.lineno - 10), node.lineno):
-                            check_line = lines[j] if j < len(lines) else ""
-                            if func_name in check_line and ("is not None" in check_line or "if " in check_line):
-                                has_check = True
-                                break
+                if isinstance(node.value, ast.Call):
+                    if isinstance(node.value.func, ast.Name):
+                        func_name = node.value.func.id
+                        # Common functions that might return None
+                        risk_funcs = {
+                            "get", "dict.get", "os.environ.get", "json.loads",
+                            "re.search", "re.match", "re.findall",
+                        }
+                        if func_name in risk_funcs or "." in func_name:
+                            # Check if there's a None check before this
+                            # Look for: if result is not None: / if result: / if result != None:
+                            has_check = False
+                            # Simple heuristic: look in enclosing scope
+                            for j in range(max(0, node.lineno - 10), node.lineno):
+                                check_line = lines[j] if j < len(lines) else ""
+                                if func_name in check_line and ("is not None" in check_line or "if " in check_line):
+                                    has_check = True
+                                    break
 
-                        if not has_check:
-                            violations.append(Violation(
-                                filepath=filepath,
-                                line=node.lineno,
-                                severity=Severity.MEDIUM,
-                                category="EXCEPTION_MISSING",
-                                message=(
-                                    f"Attribute access on potential None from {func_name}() — "
-                                    f"add 'if result is not None:' check."
-                                ),
-                                standard="CWE-476: NULL Pointer Dereference",
-                                code_snippet=lines[node.lineno - 1].strip() if node.lineno <= len(lines) else "",
-                            ))
+                            if not has_check:
+                                violations.append(Violation(
+                                    filepath=filepath,
+                                    line=node.lineno,
+                                    severity=Severity.MEDIUM,
+                                    category="EXCEPTION_MISSING",
+                                    message=(
+                                        f"Attribute access on potential None from {func_name}() — "
+                                        f"add 'if result is not None:' check."
+                                    ),
+                                    standard="CWE-476: NULL Pointer Dereference",
+                                    code_snippet=lines[node.lineno - 1].strip() if node.lineno <= len(lines) else "",
+                                ))
 
         except SyntaxError:
             pass
@@ -2361,8 +2355,9 @@ def _build_python_stale_flag_patterns() -> list[Pattern]:
                     is_read = True
 
                 # Check if flag is modified after initial assignment
-                if (re.search(rf"^{re.escape(var_name)}\s*=\s*(True|False)", stripped)) and (i != assignments[0][0]):
-                    is_written_again = True
+                if re.search(rf"^{re.escape(var_name)}\s*=\s*(True|False)", stripped):
+                    if i != assignments[0][0]:
+                        is_written_again = True
 
             if is_read and not is_written_again:
                 # Flag is read but never modified — stale!
@@ -2445,10 +2440,11 @@ def _build_python_stale_flag_patterns() -> list[Pattern]:
                     has_clear = False
                     for j in range(i, min(i + 200, len(lines))):
                         check_line = lines[j].strip()
-                        # Skip the current line itself
-                        if (f"{cache_var}.clear()" in check_line or f"{cache_var} = " in check_line) and (j != i - 1):
-                            has_clear = True
-                            break
+                        if f"{cache_var}.clear()" in check_line or f"{cache_var} = " in check_line:
+                            # Skip the current line itself
+                            if j != i - 1:
+                                has_clear = True
+                                break
                     # Also check backward for previous assignment (re-initialization)
                     if not has_clear:
                         for j in range(max(0, i - 200), i - 1):
@@ -2592,38 +2588,28 @@ def _build_python_venv_prefix_comparison_patterns() -> list[Pattern]:
     """
     def check_venv_prefix_fallacy(source: str, lines: list[str], filepath: str = "") -> list[Violation]:
         violations = []
-        # String-literal awareness: docstrings/examples are documentation, not code.
-        # Collect every line that intersects a STRING token so the raw-line scan
-        # below never flags this module's own mistake-documentation examples.
-        string_lines: set[int] = set()
-        try:
-            for tok in tokenize.generate_tokens(io.StringIO(source).readline):
-                if tok.type == tokenize.STRING:
-                    string_lines.update(range(tok.start[0], tok.end[0] + 1))
-        except (tokenize.TokenError, IndentationError, SyntaxError, ValueError):
-            pass  # Unparseable source → fall back to raw scan (still flags real code)
-
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
-            if stripped.startswith("#") or i in string_lines:
+            if stripped.startswith("#"):
                 continue
 
             # Detect direct comparison of sys.prefix or prefix variables with BASE_DIR or PROJECT_ROOT
-            # Unless guarded by checking venv suffix or expected_prefix
-            if (re.search(r"\b(?:old_prefix|prefix|sys\.prefix)\s*!=?\s*(?:BASE_DIR|PROJECT_ROOT|root_dir)\b", line)) and (not re.search(r"venv|expected_prefix|main_venv|os\.path\.join", line)):
-                violations.append(Violation(
-                    filepath=filepath,
-                    line=i,
-                    severity=Severity.CRITICAL,
-                    category="VIRTUAL_ENV_PREFIX_FALLACY",
-                    message=(
-                        f"CRITICAL: Comparing venv sys.prefix directly against BASE_DIR/PROJECT_ROOT at L{i}. "
-                        f"sys.prefix ends in '/venv/python' so this comparison ALWAYS fails, triggering an infinite venv rebuild loop. "
-                        f"Compare against expected_prefix = os.path.join(BASE_DIR, 'venv', 'python') instead."
-                    ),
-                    standard="CWE-697 Incorrect Comparison & Infinite Loop Prevention",
-                    code_snippet=stripped,
-                ))
+            if re.search(r"\b(?:old_prefix|prefix|sys\.prefix)\s*!=?\s*(?:BASE_DIR|PROJECT_ROOT|root_dir)\b", line):
+                # Unless guarded by checking venv suffix or expected_prefix
+                if not re.search(r"venv|expected_prefix|main_venv|os\.path\.join", line):
+                    violations.append(Violation(
+                        filepath=filepath,
+                        line=i,
+                        severity=Severity.CRITICAL,
+                        category="VIRTUAL_ENV_PREFIX_FALLACY",
+                        message=(
+                            f"CRITICAL: Comparing venv sys.prefix directly against BASE_DIR/PROJECT_ROOT at L{i}. "
+                            f"sys.prefix ends in '/venv/python' so this comparison ALWAYS fails, triggering an infinite venv rebuild loop. "
+                            f"Compare against expected_prefix = os.path.join(BASE_DIR, 'venv', 'python') instead."
+                        ),
+                        standard="CWE-697 Incorrect Comparison & Infinite Loop Prevention",
+                        code_snippet=stripped,
+                    ))
 
         return violations
 
@@ -2742,8 +2728,9 @@ def _build_coq_proof_patterns() -> list[Pattern]:
                             break
                         proof_lines_count += 1
                         # Substantial tactics (not just auto/trivial/reflexivity)
-                        if (proof_line and not proof_line.startswith("--")) and (not re.match(r"^(Proof|Qed|Defined|auto|trivial|reflexivity|intros|apply|exact)\s", proof_line)):
-                            has_substantial_tactic = True
+                        if proof_line and not proof_line.startswith("--"):
+                            if not re.match(r"^(Proof|Qed|Defined|auto|trivial|reflexivity|intros|apply|exact)\s", proof_line):
+                                has_substantial_tactic = True
 
                     if proof_lines_count <= 2 and not has_substantial_tactic:
                         violations.append(Violation(
@@ -3013,8 +3000,9 @@ def _build_behavioral_change_patterns() -> list[Pattern]:
                 # Check previous line
                 if i > 1:
                     prev_line = lines[i - 2].strip()
-                    if (prev_line.startswith(("--", "#"))) and (len(prev_line) > 5):
-                        has_explanation = True
+                    if prev_line.startswith(("--", "#")):
+                        if len(prev_line) > 5:
+                            has_explanation = True
 
                 # Don't flag legitimate returns, only suspicious ones
                 # Skip if this is in a test file or has explanation
@@ -3070,8 +3058,9 @@ def _build_behavioral_change_patterns() -> list[Pattern]:
                     has_explanation = True
                 if i > 1:
                     prev_line = lines[i - 2].strip()
-                    if (prev_line.startswith(("--", "#"))) and (len(prev_line) > 10):
-                        has_explanation = True
+                    if prev_line.startswith(("--", "#")):
+                        if len(prev_line) > 10:
+                            has_explanation = True
 
                 if not has_explanation:
                     violations.append(Violation(
@@ -4195,11 +4184,11 @@ def _build_self_verification_patterns() -> list[Pattern]:
     """Enforce that the verifier runs from the project venv with pyrefly+ruff.
 
     The central Python venv lives at:
-        stellarorion_program_proc/venv/python/
+        AdelaideZephyrineSystem/venv/python/
     with binaries at:
-        stellarorion_program_proc/venv/python/bin/python3
-        stellarorion_program_proc/venv/python/bin/pyrefly
-        stellarorion_program_proc/venv/python/bin/ruff
+        AdelaideZephyrineSystem/venv/python/bin/python3
+        AdelaideZephyrineSystem/venv/python/bin/pyrefly
+        AdelaideZephyrineSystem/venv/python/bin/ruff
 
     All Python sidecars (LSH, VAD, daemon, search, etc.) run from this
     single venv.  The verifier MUST also run from it so that pyrefly
@@ -4228,11 +4217,11 @@ def _build_self_verification_patterns() -> list[Pattern]:
         import sys
 
         # ── Resolve project root ─────────────────────────────────────────
-        # filepath is e.g. src/utils/sabotage_verifier.py
-        # project_root = stellarorion_program_proc/
+        # filepath is e.g. src/Util/sabotage_verifier.py
+        # project_root = AdelaideZephyrineSystem/
         project_root = os.path.abspath(os.path.join(
-            os.path.dirname(filepath),  # src/utils/
-            "..", ".."                  # stellarorion_program_proc/
+            os.path.dirname(filepath),  # src/Util/
+            "..", ".."                  # AdelaideZephyrineSystem/
         ))
 
         # ── Venv paths (matching run.py exactly) ─────────────────────────
@@ -4245,8 +4234,8 @@ def _build_self_verification_patterns() -> list[Pattern]:
         executable = sys.executable
         prefix = sys.prefix
 
-        # The project venv fragment: stellarorion_program_proc/venv/python
-        expected_venv_fragment = os.path.join("stellarorion_program_proc", "venv", "python")
+        # The project venv fragment: AdelaideZephyrineSystem/venv/python
+        expected_venv_fragment = os.path.join("AdelaideZephyrineSystem", "venv", "python")
         running_in_project_venv = (
             expected_venv_fragment in executable
             or expected_venv_fragment in prefix
@@ -4268,7 +4257,7 @@ def _build_self_verification_patterns() -> list[Pattern]:
                     f"{expected_venv_fragment!r}. "
                     f"Activate the venv first:\n"
                     f"  source {activate_path}\n"
-                    f"  python src/utils/sabotage_verifier.py ...\n"
+                    f"  python src/Util/sabotage_verifier.py ...\n"
                     f"The verifier MUST run from {venv_python} to guarantee "
                     f"pyrefly and ruff are available."
                 ),
@@ -4343,7 +4332,6 @@ def _build_self_verification_patterns() -> list[Pattern]:
                         timeout=120,
                         cwd=project_root,
                         env=pyrefly_env,
-                        check=False,
                     )
                     if result.returncode != 0:
                         error_lines = [
@@ -4408,7 +4396,6 @@ def _build_self_verification_patterns() -> list[Pattern]:
                         text=True,
                         timeout=120,
                         cwd=project_root,
-                        check=False,
                     )
                     if result.returncode != 0:
                         error_lines = [
@@ -4469,7 +4456,7 @@ def _build_self_verification_patterns() -> list[Pattern]:
             severity=Severity.CRITICAL,
             standard="DO-178C §5.2.2, ECSS-Q-ST-80C §6.3: Self-audit integrity",
             description=(
-                "Verifier MUST run from project venv (stellarorion_program_proc/venv/python/) "
+                "Verifier MUST run from project venv (AdelaideZephyrineSystem/venv/python/) "
                 "with pyrefly and ruff installed in the venv bin directory. "
                 "Enforces that the audit tool itself is type-checked and linted "
                 "using the SAME venv and SAME flags as run.py. "
@@ -4673,22 +4660,24 @@ def _build_gpu_vendor_lockin_patterns() -> list[Pattern]:
             # ── Pattern 4: CUDA-specific error messages that blame user ────
             # e.g., "CUDA not available. Please install NVIDIA drivers."
             # This is deceptive — the user may have a perfectly good AMD/Intel/Moore Threads GPU
-            # Check if the message mentions ONLY NVIDIA without acknowledging other GPUs
-            if (re.search(r"(?i)cuda\s+not\s+(available|found|installed|detected)", stripped)) and ((re.search(r"(?i)nvidia|geforce|tesla|quadro", stripped)) and (not re.search(r"(?i)MUSA|MPS|OneAPI|ROCm|OpenCL|AMD|Intel|Moore\s*Threads", stripped))):
-                violations.append(Violation(
-                    filepath=filepath,
-                    line=line_num,
-                    severity=Severity.CRITICAL,
-                    category="GPU_VENDOR_LOCKIN",
-                    message=(
-                        "Deceptive GPU error message blames user for missing NVIDIA drivers "
-                        "without acknowledging other GPU backends (MUSA/MPS/OneAPI/ROCm/OpenCL). "
-                        "User may have a perfectly functional non-NVIDIA GPU. "
-                        "This is Hardware Bricking Fraud."
-                    ),
-                    standard="Anti-competitive vendor lock-in, CWE-200: Information Exposure",
-                    code_snippet=stripped,
-                ))
+            if re.search(r"(?i)cuda\s+not\s+(available|found|installed|detected)", stripped):
+                # Check if the message mentions ONLY NVIDIA without acknowledging other GPUs
+                if re.search(r"(?i)nvidia|geforce|tesla|quadro", stripped):
+                    if not re.search(r"(?i)MUSA|MPS|OneAPI|ROCm|OpenCL|AMD|Intel|Moore\s*Threads", stripped):
+                        violations.append(Violation(
+                            filepath=filepath,
+                            line=line_num,
+                            severity=Severity.CRITICAL,
+                            category="GPU_VENDOR_LOCKIN",
+                            message=(
+                                "Deceptive GPU error message blames user for missing NVIDIA drivers "
+                                "without acknowledging other GPU backends (MUSA/MPS/OneAPI/ROCm/OpenCL). "
+                                "User may have a perfectly functional non-NVIDIA GPU. "
+                                "This is Hardware Bricking Fraud."
+                            ),
+                            standard="Anti-competitive vendor lock-in, CWE-200: Information Exposure",
+                            code_snippet=stripped,
+                        ))
 
             # ── Pattern 5: CUDA-only torch.cuda calls without device fallback ──
             # e.g., torch.cuda.empty_cache() without checking for other backends
@@ -4792,7 +4781,7 @@ def _build_smt_solver_availability_patterns() -> list[Pattern]:
 
         # ── Check 2: cvc5 ────────────────────────────────────────────────
         try:
-            import cvc5  # noqa: F401  # pyrefly: ignore-errors
+            import cvc5  # noqa: F401
         except ImportError:
             violations.append(Violation(
                 filepath=filepath,
@@ -4912,6 +4901,7 @@ def _build_env_and_node_modules_integrity_patterns() -> list[Pattern]:
     All violations are CRITICAL — build cannot proceed with broken or unverified environments.
     """
     def check_env_and_node_modules(source: str, lines: list[str], filepath: str = "") -> list[Violation]:
+        global _check_tracker
         violations = []
 
         # Run environment integrity verification once per audit cycle
@@ -5020,7 +5010,7 @@ def _build_env_and_node_modules_integrity_patterns() -> list[Pattern]:
                     _check_tracker.record("NODE_MODULES_INTEGRITY", pkg_path, 1,
                                          confirmed=True, solvers=_get_active_provers(),
                                          code_snippet=f"node_modules verified ({len(deps)} deps OK) for {rel_pkg}")
-            except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as e:
+            except Exception as e:
                 violations.append(Violation(
                     filepath=pkg_path,
                     line=1,
@@ -5087,7 +5077,7 @@ def _build_env_and_node_modules_integrity_patterns() -> list[Pattern]:
             # Actively test execution of binary if present
             if os.path.exists(main_bin):
                 try:
-                    res = subprocess.run([main_bin, "--version"], capture_output=True, text=True, timeout=5, check=False)  # nosec
+                    res = subprocess.run([main_bin, "--version"], capture_output=True, text=True, timeout=5)  # nosec
                     if res.returncode != 0:
                         violations.append(Violation(
                             filepath=venv_dir,
@@ -5108,7 +5098,7 @@ def _build_env_and_node_modules_integrity_patterns() -> list[Pattern]:
                         _check_tracker.record("VIRTUAL_ENV_INTEGRITY", venv_dir, 1,
                                              confirmed=True, solvers=_get_active_provers(),
                                              code_snippet=f"{venv_name} verified operational ({res.stdout.strip()[:40]})")
-                except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as e:
+                except Exception as e:
                     violations.append(Violation(
                         filepath=venv_dir,
                         line=1,
@@ -5142,27 +5132,28 @@ def _build_env_and_node_modules_integrity_patterns() -> list[Pattern]:
                                      code_snippet="alr binary missing on PATH")
             else:
                 try:
-                    res = subprocess.run([alr_bin, "--version"], capture_output=True, text=True, timeout=5, check=True)  # nosec
-                    _check_tracker.record("ALIRE_ENV_INTEGRITY", alire_toml, 1,
-                                         confirmed=True, solvers=_get_active_provers(),
-                                         code_snippet=f"Alire environment verified ({res.stdout.strip()[:40]})")
-                except subprocess.CalledProcessError as e:
-                    violations.append(Violation(
-                        filepath=alire_toml,
-                        line=1,
-                        severity=Severity.CRITICAL,
-                        category="ALIRE_ENV_FAILING",
-                        message=(
-                            f"CRITICAL: Alire binary at '{alr_bin}' failed execution check (exit code {e.returncode}). "
-                            f"Ada Alire environment is failing."
-                        ),
-                        standard="DO-178C Tool Qualification",
-                        code_snippet=f"Failed execution: {alr_bin} --version",
-                    ))
-                    _check_tracker.record("ALIRE_ENV_INTEGRITY", alire_toml, 1,
-                                         confirmed=False, solvers=_get_active_provers(),
-                                         code_snippet="alr execution test failed")
-                except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as e:
+                    res = subprocess.run([alr_bin, "--version"], capture_output=True, text=True, timeout=5)  # nosec
+                    if res.returncode != 0:
+                        violations.append(Violation(
+                            filepath=alire_toml,
+                            line=1,
+                            severity=Severity.CRITICAL,
+                            category="ALIRE_ENV_FAILING",
+                            message=(
+                                f"CRITICAL: Alire binary at '{alr_bin}' failed execution check (exit code {res.returncode}). "
+                                f"Ada Alire environment is failing."
+                            ),
+                            standard="DO-178C Tool Qualification",
+                            code_snippet=f"Failed execution: {alr_bin} --version",
+                        ))
+                        _check_tracker.record("ALIRE_ENV_INTEGRITY", alire_toml, 1,
+                                             confirmed=False, solvers=_get_active_provers(),
+                                             code_snippet="alr execution test failed")
+                    else:
+                        _check_tracker.record("ALIRE_ENV_INTEGRITY", alire_toml, 1,
+                                             confirmed=True, solvers=_get_active_provers(),
+                                             code_snippet=f"Alire environment verified ({res.stdout.strip()[:40]})")
+                except Exception as e:
                     violations.append(Violation(
                         filepath=alire_toml,
                         line=1,
@@ -5198,24 +5189,25 @@ def _build_env_and_node_modules_integrity_patterns() -> list[Pattern]:
                                  code_snippet="OPAM missing on system and venv/om")
         elif opam_bin:
             try:
-                res = subprocess.run([opam_bin, "--version"], capture_output=True, text=True, timeout=5, check=True)  # nosec
-                _check_tracker.record("OPAM_ENV_INTEGRITY", opam_venv, 1,
-                                     confirmed=True, solvers=_get_active_provers(),
-                                     code_snippet=f"OPAM environment verified ({res.stdout.strip()[:40]})")
-            except subprocess.CalledProcessError as e:
-                violations.append(Violation(
-                    filepath=opam_venv,
-                    line=1,
-                    severity=Severity.CRITICAL,
-                    category="OPAM_ENV_FAILING",
-                    message=f"CRITICAL: OPAM binary at '{opam_bin}' failed execution check (exit code {e.returncode}).",
-                    standard="DO-178C Tool Qualification",
-                    code_snippet=f"Failed execution: {opam_bin} --version",
-                ))
-                _check_tracker.record("OPAM_ENV_INTEGRITY", opam_venv, 1,
-                                     confirmed=False, solvers=_get_active_provers(),
-                                     code_snippet="OPAM execution test failed")
-            except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as e:
+                res = subprocess.run([opam_bin, "--version"], capture_output=True, text=True, timeout=5)  # nosec
+                if res.returncode != 0:
+                    violations.append(Violation(
+                        filepath=opam_venv,
+                        line=1,
+                        severity=Severity.CRITICAL,
+                        category="OPAM_ENV_FAILING",
+                        message=f"CRITICAL: OPAM binary at '{opam_bin}' failed execution check (exit code {res.returncode}).",
+                        standard="DO-178C Tool Qualification",
+                        code_snippet=f"Failed execution: {opam_bin} --version",
+                    ))
+                    _check_tracker.record("OPAM_ENV_INTEGRITY", opam_venv, 1,
+                                         confirmed=False, solvers=_get_active_provers(),
+                                         code_snippet="OPAM execution test failed")
+                else:
+                    _check_tracker.record("OPAM_ENV_INTEGRITY", opam_venv, 1,
+                                         confirmed=True, solvers=_get_active_provers(),
+                                         code_snippet=f"OPAM environment verified ({res.stdout.strip()[:40]})")
+            except Exception as e:
                 violations.append(Violation(
                     filepath=opam_venv,
                     line=1,
@@ -5561,7 +5553,7 @@ def _parse_ada_functions(source: str) -> list[dict]:
                 pre_post.append({"type": "pre", "expr": pline_stripped, "line": j + 1})
             elif (pline_low.startswith("post") or pline_raw_low.startswith("-- post")) and ("=>" in pline_stripped or ":" in pline_stripped or "true" in pline_low or "false" in pline_low):
                 pre_post.append({"type": "post", "expr": pline_stripped, "line": j + 1})
-            elif pline_raw_low.startswith(("with pre", "with post")):
+            elif pline_raw_low.startswith("with pre") or pline_raw_low.startswith("with post"):
                 # SPARK aspect syntax: with Pre => ..., with Post => ...
                 expr = pline.split("=>", 1)[1].strip() if "=>" in pline else pline
                 typ = "pre" if "pre" in pline_raw_low else "post"
@@ -5613,7 +5605,7 @@ def _parse_ada_functions(source: str) -> list[dict]:
             # Ada.Strings bounded
             "to_bounded_string",
             # Containers
-            "first", "last", "element", "replace_element",
+            "first", "last", "length", "element", "replace_element",
             "next", "previous", "has_element", "more_entries",
             "clear", "append", "add", "exclude",
             # File system
@@ -5903,7 +5895,7 @@ def _cross_check_with_cvc5(constraints: list[tuple[str, int, int]], label: str) 
         "unknown" if cvc5 couldn't determine.
     """
     try:
-        from cvc5 import CVC5ApiException, Kind, Solver  # pyrefly: ignore-errors
+        from cvc5 import Kind, Solver
     except ImportError:
         return "unknown"
 
@@ -5922,7 +5914,7 @@ def _cross_check_with_cvc5(constraints: list[tuple[str, int, int]], label: str) 
             terms.append(var)
         result = s.checkSat()
         return str(result)
-    except (CVC5ApiException, ValueError, TypeError):
+    except Exception:
         return "unknown"
 
 
@@ -5960,7 +5952,6 @@ def _prove_with_alt_ergo(assertions: list[str], goal: str) -> str:
             capture_output=True,
             text=True,
             timeout=10,
-            check=False,
         )
         import os
         os.unlink(tmp_path)
@@ -5971,7 +5962,7 @@ def _prove_with_alt_ergo(assertions: list[str], goal: str) -> str:
         elif "Invalid" in output or "sat" in output:
             return "Invalid"
         return "unknown"
-    except (OSError, subprocess.SubprocessError):
+    except Exception:
         return "unknown"
 
 
@@ -5979,7 +5970,7 @@ def _get_active_provers() -> list[str]:
     """Return list of active SMT solvers available in the runtime environment."""
     provers = ["z3"]
     try:
-        import cvc5  # noqa: F401  # pyrefly: ignore-errors
+        import cvc5  # noqa: F401
         provers.append("cvc5")
     except ImportError:
         pass
@@ -6001,6 +5992,7 @@ def _verify_python_function_with_z3(func: dict) -> list[dict]:
     Returns list of issues found, each with solvers field showing which
     solvers confirmed the finding.
     """
+    global _check_tracker
     issues = []
 
     try:
@@ -6159,25 +6151,25 @@ def _verify_python_function_with_z3(func: dict) -> list[dict]:
                 # Skip known safe patterns:
                 # sys.argv[0] — always exists (script name)
                 # sys.argv[1] — guarded by len(sys.argv) > 1 typically
-                if (
-                    # sys.argv[N] — always exists / script name
-                    (arr_name == "argv" and index_var.isdigit())
-                    # os.environ[key] — dict access, KeyError not a safety issue
-                    or arr_name == "environ"
-                    # MEMORY_CACHE[k] — dict access, not array indexing
-                    or arr_name == "MEMORY_CACHE"
-                    # result[0] — common closure pattern: result = [None]; on_ok: result[0] = val
-                    or (arr_name in ("result", "timer_id", "_build_result")
-                        and index_var == "0")
-                    # cmd[0] — command list parameter, always non-empty from callers
-                    or (arr_name == "cmd" and index_var == "0")
-                    # lambda sort key: entries.sort(key=lambda e: e[0]) — tuple access
-                    or re.search(
-                        rf"lambda\s+\w+\s*:\s*{re.escape(arr_name)}"
-                        rf"\[{re.escape(index_var)}\]", bline)
-                    # install_cmd[0] — constructed list from conditional, always non-empty
-                    or re.search(rf"{re.escape(arr_name)}\s*=\s*\[", bline)
-                ):
+                if arr_name == "argv" and index_var.isdigit():
+                    has_bound_check = True
+                # os.environ[key] — dict access, KeyError not a safety issue
+                elif arr_name == "environ":
+                    has_bound_check = True
+                # MEMORY_CACHE[k] — dict access, not array indexing
+                elif arr_name == "MEMORY_CACHE":
+                    has_bound_check = True
+                # result[0] — common closure pattern: result = [None]; on_ok: result[0] = val
+                elif arr_name in ("result", "timer_id", "_build_result") and index_var == "0":
+                    has_bound_check = True
+                # cmd[0] — command list parameter, always non-empty from callers
+                elif arr_name == "cmd" and index_var == "0":
+                    has_bound_check = True
+                # lambda sort key: entries.sort(key=lambda e: e[0]) — tuple access
+                elif re.search(rf"lambda\s+\w+\s*:\s*{re.escape(arr_name)}\[{re.escape(index_var)}\]", bline):
+                    has_bound_check = True
+                # install_cmd[0] — constructed list from conditional, always non-empty
+                elif re.search(rf"{re.escape(arr_name)}\s*=\s*\[", bline):
                     has_bound_check = True
                 # data[field] — dict access with variable key, not array indexing
                 elif index_var.isdigit() is False:
@@ -6456,6 +6448,7 @@ def _verify_c_function_with_z3(func: dict) -> list[dict]:
 
     Returns list of issues with solvers field.
     """
+    global _check_tracker
     issues = []
 
     try:
@@ -6613,10 +6606,11 @@ def _verify_ada_function_with_z3(func: dict) -> list[dict]:
 
     Returns list of issues with solvers field.
     """
+    global _check_tracker
     issues = []
 
     try:
-        from z3 import Int, Solver, sat, unsat
+        from z3 import Int, Solver, sat, unsat  # noqa: F401
     except ImportError:
         return issues
 
@@ -6815,7 +6809,9 @@ def _verify_ada_function_with_z3(func: dict) -> list[dict]:
         # NOTE: String and Unbounded_String are NOT access types — they are arrays
         is_access_type = (
             "access" in ptype_lower
-            or ptype_lower.endswith(("_access", "_ptr", "_pointer"))
+            or ptype_lower.endswith("_access")
+            or ptype_lower.endswith("_ptr")
+            or ptype_lower.endswith("_pointer")
         )
         if is_access_type and not func.get("has_null_guard", False):
             # Check if parameter is used in body without null check
@@ -6847,7 +6843,8 @@ def _verify_ada_function_with_z3(func: dict) -> list[dict]:
     # Also check for implicit null dereference on function return
     if func.get("return_type"):
         rt_lower = func["return_type"].lower()
-        is_access_return = ("access" in rt_lower or rt_lower.endswith(("_access", "_ptr")))
+        is_access_return = ("access" in rt_lower or rt_lower.endswith("_access")
+                           or rt_lower.endswith("_ptr"))
         if is_access_return and not func.get("has_null_guard", False):
             # Check if return value is used without null check
             for bl in func["body_lines"]:
@@ -6982,8 +6979,9 @@ def _verify_ada_function_with_z3(func: dict) -> list[dict]:
                     # Check parameter types too
             for p in func.get("params", []):
                 ptype = p.get("type", "").lower()
-                if (p["name"] in (ao["left"], ao["right"])) and (any(ftk in ptype for ftk in _FLOAT_TYPE_KEYWORDS)):
-                    is_float_op = True
+                if p["name"] in (ao["left"], ao["right"]):
+                    if any(ftk in ptype for ftk in _FLOAT_TYPE_KEYWORDS):
+                        is_float_op = True
             if is_float_op:
                 continue
             # Skip if both operands are Ada constants — constants can't overflow
@@ -7046,12 +7044,13 @@ def _verify_ada_function_with_z3(func: dict) -> list[dict]:
                         break
             # Also: X + 1 where X is a local counter (not a parameter) is safe
             # Local counters are bounded by loop iterations, can't reach Integer'Last
-            if (not has_guard) and (ao["right"] == "1" or ao["left"] == "1"):
-                other_var = ao["left"] if ao["right"] == "1" else ao["right"]
-                # If the variable is NOT a function parameter, it's a local counter
-                is_param = any(p["name"] == other_var for p in func.get("params", []))
-                if not is_param:
-                    has_guard = True
+            if not has_guard:
+                if ao["right"] == "1" or ao["left"] == "1":
+                    other_var = ao["left"] if ao["right"] == "1" else ao["right"]
+                    # If the variable is NOT a function parameter, it's a local counter
+                    is_param = any(p["name"] == other_var for p in func.get("params", []))
+                    if not is_param:
+                        has_guard = True
             # Skip wide types (size_t, Unsigned_64, etc.) — they can't overflow Integer'Last
             if not has_guard:
                 _WIDE_TYPE_KEYWORDS = frozenset({
@@ -7066,9 +7065,10 @@ def _verify_ada_function_with_z3(func: dict) -> list[dict]:
                 for bl in search_lines:
                     bl_low = bl.lower()
                     for var_name in (ao["left"], ao["right"]):
-                        if (re.search(rf"\b{re.escape(var_name.lower())}\s*:", bl_low)) and (any(wtk in bl_low for wtk in _WIDE_TYPE_KEYWORDS)):
-                            has_guard = True
-                            break
+                        if re.search(rf"\b{re.escape(var_name.lower())}\s*:", bl_low):
+                            if any(wtk in bl_low for wtk in _WIDE_TYPE_KEYWORDS):
+                                has_guard = True
+                                break
             # Skip known Ada time/duration functions that return non-Integer types
             if not has_guard:
                 _TIME_DURATION_FUNCS = frozenset({
@@ -7529,6 +7529,7 @@ def _verify_tsjs_function_with_z3(func: dict) -> list[dict]:
 
     Returns list of issues with solvers field.
     """
+    global _check_tracker
     issues = []
 
     try:
@@ -8100,8 +8101,9 @@ def _build_function_comment_patterns() -> list[Pattern]:
                 if "#" in line[line.find(":"):]:
                     has_doc = True
                 # Also check line right after def for # comment
-                if (not has_doc and j < len(lines)) and (lines[j].strip().startswith("#")):
-                    has_doc = True
+                if not has_doc and j < len(lines):
+                    if lines[j].strip().startswith("#"):
+                        has_doc = True
                 if not has_doc:
                     violations.append(Violation(
                         filepath=filepath,
@@ -8273,7 +8275,7 @@ def _build_composition_balance_patterns() -> list[Pattern]:
         if cache_key in check_composition._cached:
             return violations
 
-        # Find project root (stellarorion_program_proc)
+        # Find project root (AdelaideZephyrineSystem)
         project_root = Path(BASE_DIR)
 
         # GitHub Linguist extension-to-language mapping
@@ -8343,7 +8345,6 @@ def _build_composition_balance_patterns() -> list[Pattern]:
                 capture_output=True,
                 text=True,
                 timeout=10,
-                check=False,
             )
             all_files = result.stdout.strip().split("\n") if result.stdout.strip() else []
             # Filter out vendored directories (check all path components)
@@ -8358,19 +8359,6 @@ def _build_composition_balance_patterns() -> list[Pattern]:
         lang_bytes: dict[str, int] = {}
         for rel_path in tracked_files:
             fpath = project_root / rel_path
-
-            # ── Self-exclusion: the measuring instrument is not the measured object ──
-            # This verifier is agent-coherency infrastructure (anti-sabotage audit
-            # tooling), NOT simulation product code. At ~530KB it alone constitutes
-            # ~86% of all Python bytes in the scan, so its mere presence makes ANY
-            # product appear Python-dominant — a self-referential measurement flaw.
-            # GitHub Linguist applies the identical principle: CI/lint/vendor
-            # machinery is excluded from language statistics. This does NOT weaken
-            # any gate: severity stays CRITICAL for genuine product violations and
-            # every other check still runs at full strength.
-            if fpath.resolve() == Path(__file__).resolve():
-                continue
-
             fname = Path(rel_path).name
 
             # Check filename-based match first (Makefile, etc.)
@@ -8585,6 +8573,7 @@ def _assertion_scan_python(
     source: str, lines: list[str], filepath: str
 ) -> list[Violation]:
     """Python assertion scanning via AST."""
+    global _check_tracker
     violations = []
     try:
         tree = ast.parse(source)
@@ -9043,22 +9032,23 @@ def _stability_check_python(
 
         # Unbounded while-True without break guard
         for child in ast.walk(node):
-            # Check if condition is literally `True`
-            if (isinstance(child, ast.While)) and (isinstance(child.test, ast.Constant) and child.test.value is True):
-                # Check if body has a break
-                has_break = any(
-                    isinstance(c, ast.Break) for c in ast.walk(child)
-                )
-                if not has_break:
-                    violations.append(Violation(
-                        filepath=filepath,
-                        line=child.lineno,
-                        severity=Severity.HIGH,
-                        category="FUNCTION_STABILITY",
-                        message=f"Function '{func_name}' has while-True without break — infinite loop risk (CWE-835)",
-                        standard="CWE-835, DO-178C §6.3",
-                    ))
-                    break
+            if isinstance(child, ast.While):
+                # Check if condition is literally `True`
+                if isinstance(child.test, ast.Constant) and child.test.value is True:
+                    # Check if body has a break
+                    has_break = any(
+                        isinstance(c, ast.Break) for c in ast.walk(child)
+                    )
+                    if not has_break:
+                        violations.append(Violation(
+                            filepath=filepath,
+                            line=child.lineno,
+                            severity=Severity.HIGH,
+                            category="FUNCTION_STABILITY",
+                            message=f"Function '{func_name}' has while-True without break — infinite loop risk (CWE-835)",
+                            standard="CWE-835, DO-178C §6.3",
+                        ))
+                        break
 
     return violations
 
@@ -9290,15 +9280,16 @@ def _coverage_check_python(
                 continue
             first_stmt = body[0]
             # Function starts with assert False or raise → non-viable
-            if (isinstance(first_stmt, ast.Assert)) and (isinstance(first_stmt.test, ast.Constant) and first_stmt.test.value is False):
-                violations.append(Violation(
-                    filepath=filepath,
-                    line=func_line,
-                    severity=Severity.HIGH,
-                    category="PROOF_TEST_COVERAGE",
-                    message=f"Non-Vacuity: Function '{func_name}' starts with assert False — dead code (DO-333 §5.3)",
-                    standard="DO-333 §5.3, CWE-476",
-                ))
+            if isinstance(first_stmt, ast.Assert):
+                if isinstance(first_stmt.test, ast.Constant) and first_stmt.test.value is False:
+                    violations.append(Violation(
+                        filepath=filepath,
+                        line=func_line,
+                        severity=Severity.HIGH,
+                        category="PROOF_TEST_COVERAGE",
+                        message=f"Non-Vacuity: Function '{func_name}' starts with assert False — dead code (DO-333 §5.3)",
+                        standard="DO-333 §5.3, CWE-476",
+                    ))
             if isinstance(first_stmt, ast.Raise):
                 violations.append(Violation(
                     filepath=filepath,
@@ -9324,16 +9315,18 @@ def _coverage_check_python(
                 ))
 
         # Index into subscript without guard
-        # Check if index is a constant beyond reasonable bounds
-        if (isinstance(node, ast.Subscript)) and ((isinstance(node.slice, ast.Constant) and isinstance(node.slice.value, int)) and (node.slice.value < 0)):
-            violations.append(Violation(
-                filepath=filepath,
-                line=getattr(node, "lineno", 0),
-                severity=Severity.HIGH,
-                category="PROOF_TEST_COVERAGE",
-                message="AoRTE: Negative index into sequence (CWE-131)",
-                standard="CWE-131",
-            ))
+        if isinstance(node, ast.Subscript):
+            # Check if index is a constant beyond reasonable bounds
+            if isinstance(node.slice, ast.Constant) and isinstance(node.slice.value, int):
+                if node.slice.value < 0:
+                    violations.append(Violation(
+                        filepath=filepath,
+                        line=getattr(node, "lineno", 0),
+                        severity=Severity.HIGH,
+                        category="PROOF_TEST_COVERAGE",
+                        message="AoRTE: Negative index into sequence (CWE-131)",
+                        standard="CWE-131",
+                    ))
 
     return violations
 
@@ -9365,16 +9358,17 @@ def _coverage_check_c(
         and_count = body.count("&&")
         or_count = body.count("||")
         compound = and_count + or_count
-        # Check for MC/DC comment
-        if (compound >= 3) and ("mcdc" not in body.lower() and "mc/dc" not in body.lower()):
-            violations.append(Violation(
-                filepath=filepath,
-                line=func_line,
-                severity=Severity.HIGH,
-                category="PROOF_TEST_COVERAGE",
-                message=f"MC/DC: C function '{func_name}' has {compound} compound boolean ops without test variation proof",
-                standard="DO-178C §6.4.4, MISRA C:2012 Rule 13.5",
-            ))
+        if compound >= 3:
+            # Check for MC/DC comment
+            if "mcdc" not in body.lower() and "mc/dc" not in body.lower():
+                violations.append(Violation(
+                    filepath=filepath,
+                    line=func_line,
+                    severity=Severity.HIGH,
+                    category="PROOF_TEST_COVERAGE",
+                    message=f"MC/DC: C function '{func_name}' has {compound} compound boolean ops without test variation proof",
+                    standard="DO-178C §6.4.4, MISRA C:2012 Rule 13.5",
+                ))
 
         # ── Phase 2: Non-Vacuity ──
         if "return 0;" == body.strip()[:10] and len(body.strip()) < 15:
@@ -9587,7 +9581,7 @@ def _build_ada_function_coverage_patterns() -> list[Pattern]:
             for j in range(func_line - 1, scan_end):
                 check_line = lines[j].strip().lower()
                 # Ada contracts: Pre =>, Post =>, Type_Invariant =>
-                if check_line.startswith(("pre ", "post ")):
+                if check_line.startswith("pre ") or check_line.startswith("post "):
                     has_contract = True
                     break
                 if "pre =>" in check_line or "post =>" in check_line:
@@ -9737,7 +9731,7 @@ def _build_python_function_coverage_patterns() -> list[Pattern]:
             # Scan forward from function line for triple-quoted docstring
             for j in range(line_idx + 1, min(line_idx + 5, len(lines))):
                 stripped = lines[j].strip()
-                if stripped.startswith(('"""', "'''")):
+                if stripped.startswith('"""') or stripped.startswith("'''"):
                     has_docstring = True
                     break
                 if stripped and not stripped.startswith("#"):
@@ -9864,7 +9858,9 @@ def _build_typescript_function_coverage_patterns() -> list[Pattern]:
         # Skip test files
         if "/tests/" in filepath or "/__tests__/" in filepath:
             return violations
-        if filepath.endswith((".test.ts", ".spec.ts", ".test.tsx", ".spec.tsx")):
+        if filepath.endswith(".test.ts") or filepath.endswith(".spec.ts"):
+            return violations
+        if filepath.endswith(".test.tsx") or filepath.endswith(".spec.tsx"):
             return violations
 
         lines = source.split("\n")
@@ -9990,15 +9986,15 @@ def _build_python_audit_finding_patterns() -> list[Pattern]:
     - INC-GC-001: gc.disable() found in sidecar_ui.py line ~22. 
       Incident: Global GC disable causes unbounded memory growth in long-running UI processes.
       Prevention: Removed gc.disable() and its comment. Added PATTERN_012 to detect future occurrences.
-      File: stellarorion_program_proc/src/ui/sidecar_ui.py
+      File: AdelaideZephyrineSystem/src/ui/sidecar_ui.py
     - INC-SPLASH-001: Static window title 'Adelaide Zephyrine Assistant' in sidecar_ui.py.
       Incident: Window title could not change dynamically during splash screen transitions.
       Prevention: Added set_window_title() API method to SidecarAPI class for frontend-driven title changes.
-      File: stellarorion_program_proc/src/ui/sidecar_ui.py (SidecarAPI.set_window_title)
+      File: AdelaideZephyrineSystem/src/ui/sidecar_ui.py (SidecarAPI.set_window_title)
     - INC-SPLASH-002: No splash screen existed in frontend.
       Incident: UI loaded directly into chat interface without branding transition.
       Prevention: Added #splash-overlay to index.html, CSS animations to style.css, initSplashScreen() to main.ts.
-      Files: stellarorion_program_proc/src/ui/frontend/index.html, src/style.css, src/main.ts
+      Files: AdelaideZephyrineSystem/src/ui/frontend/index.html, src/style.css, src/main.ts
     """
     patterns: list[Pattern] = []
 
@@ -10088,7 +10084,7 @@ def _build_python_audit_finding_patterns() -> list[Pattern]:
                         line=i,
                         severity=Severity.HIGH,
                         category="RESOURCE_LEAK",
-                        message="subprocess.Popen without timeout can hang indefinitely, consuming resources and blocking the process. Add timeout parameter or use subprocess.run(timeout=N, check=False).",
+                        message="subprocess.Popen without timeout can hang indefinitely, consuming resources and blocking the process. Add timeout parameter or use subprocess.run(timeout=N).",
                         standard="CWE-835 (Loop with Unreachable Exit Condition), MISRA C:2012 Dir 4.1",
                         code_snippet=stripped,
                     ))
@@ -10761,7 +10757,7 @@ def _self_test_check_python(source: str, lines: list[str], filepath: str) -> lis
         if m:
             name = m.group(1)
             # Skip dunder methods, private helpers, and test_ prefixed
-            if name.startswith(("_", "test_")):
+            if name.startswith("_") or name.startswith("test_"):
                 continue
             func_names.append((name, i))
 

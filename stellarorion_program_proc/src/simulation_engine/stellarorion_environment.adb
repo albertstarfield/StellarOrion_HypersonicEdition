@@ -300,6 +300,7 @@ package body StellarOrion_Environment is
       Temperature  : out Float)
    is
       pragma SPARK_Mode (Off);
+      --  extern: ISA fallback; full MSIS needs external Python pymsis via C popen bridge
       pragma Unreferenced (Latitude_Deg);
       pragma Unreferenced (Day_Of_Year);
       pragma Unreferenced (F107);

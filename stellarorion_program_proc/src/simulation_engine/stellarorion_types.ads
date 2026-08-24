@@ -123,10 +123,11 @@ package StellarOrion_Types is
       Nose_Radius_M   : Float    := 0.55;
       Toroid_Count    : Positive := 6;
       Toroid_Radius_M : Float    := 0.135;
-      Outer_Radius_M  : Float    := 0.0508;
-      Mass_Kg         : Float    := 281.0;
-      Slice_Angle_Deg : Float    := 360.0;
-      Nose_Profile    : Nose_Type_Kind := Smooth;
+       Outer_Radius_M  : Float    := 0.0508;
+       Mass_Kg         : Float    := 281.0;
+       Payload_Height_M: Float    := 1.70;  -- MDAO Table 4.1 h_pay
+       Slice_Angle_Deg : Float    := 360.0;
+       Nose_Profile    : Nose_Type_Kind := Smooth;
    end record;
 
    --  Thermal Protection System material card.

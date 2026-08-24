@@ -21,6 +21,7 @@ with Ada.Exceptions;        use Ada.Exceptions;
 
 package body StellarOrion_Sparta is
    pragma SPARK_Mode (Off);
+   --  extern: writes SPARTA run scripts + Ada.Directories/Exceptions I/O (non-SPARK)
 
    -- ==================================================================
    --  Internal Helpers

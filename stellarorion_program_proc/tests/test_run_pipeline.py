@@ -10,7 +10,8 @@ import hashlib
 import json
 import sys
 from pathlib import Path
-from unittest import TestCase, main as unittest_main
+from unittest import TestCase
+from unittest import main as unittest_main
 
 # Ensure project root is on sys.path
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent

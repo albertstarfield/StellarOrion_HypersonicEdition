@@ -22,6 +22,7 @@ with StellarOrion_Types; use StellarOrion_Types;
 
 package StellarOrion_Optimization is
    pragma SPARK_Mode (Off);
+   --  extern: GA/LHS API uses non-SPARK runtime (Elementary_Functions, Text_IO diagnostics)
 
    -- -----------------------------------------------------------------
    --  Latin Hypercube Sampling (Stratified)
