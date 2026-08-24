@@ -293,14 +293,35 @@ package body StellarOrion_Physics is
       Dyn_Q := Dynamic_Pressure (Flight.Density_Kgm3, Flight.Velocity_Ms);
 
       --  2. Ballistic coefficient  beta = m * q / F_drag
-      Metrics.Ballistic_Coeff :=
-        Ballistic_Coefficient (Geo.Mass_Kg, Dyn_Q, Results.Drag_Force);
+      --  GUARD (A3b): Simulation_Results.Drag_Force defaults to 0.0 and
+      --  SPARTA dumps may legitimately report zero drag (no surface
+      --  hits).  Ballistic_Coefficient's Pre floors F_drag at 1e-6 N to
+      --  keep the division bounded; below that floor beta is physically
+      --  undefined, so we report 0.0 rather than divide by ~0.
+      if Results.Drag_Force >= 1.0e-6 then
+         Metrics.Ballistic_Coeff :=
+           Ballistic_Coefficient (Geo.Mass_Kg, Dyn_Q, Results.Drag_Force);
+      else
+         Metrics.Ballistic_Coeff := 0.0;
+      end if;
 
       --  3. Number density  n = rho * N_A / M_air
+      --  BOUNDS: rho <= 1e4 (Density_Range) => n <= 1e4 * 6.02e23 /
+      --  2.897e-2 = 2.08e29 <= Mean_Free_Path's Pre ceiling of 1e30;
+      --  both intermediate products stay << Float'Last.
       Number_Den := Flight.Density_Kgm3 * N_AVOGADRO / M_AIR;
 
       --  4. Mean free path & Knudsen number
-      MFP := Mean_Free_Path (Number_Den, MOL_DIAM);
+      --  GUARD (A3b): Mean_Free_Path's Pre floors n at 5e13 m^-3 because
+      --  its closed form divides by n.  Below that density the flow is
+      --  deep free-molecular; saturating MFP at the Knudsen_Number
+      --  envelope ceiling (1e9 m, discharged by its Post) keeps Kn
+      --  finite and monotone-in-rarefaction.
+      if Number_Den >= 5.0e13 then
+         MFP := Mean_Free_Path (Number_Den, MOL_DIAM);
+      else
+         MFP := 1.0e9;
+      end if;
       Metrics.Knudsen_Number := Knudsen_Number (MFP, Geo.Diameter_M);
 
       --  5. Stagnation heat flux  (Sutton-Graves correlation)

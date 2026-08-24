@@ -74,17 +74,25 @@ package StellarOrion_Physics is
                    and Density <= 1.0e4
                    and Velocity >= 0.0
                    and Velocity <= 1.0e5,
-          Post => Dynamic_Pressure'Result >= 0.0;
+           Post => Dynamic_Pressure'Result >= 0.0
+                    and Dynamic_Pressure'Result <= 5.0e13;
+   --  POST BOUND (A3b): q <= 0.5 * rho_max * V_max^2 = 5.0e13 Pa within
+   --  the AXIOM Q1/Q2 envelope; discharges Ballistic_Coefficient's
+   --  widened Dyn_Pressure Pre at the Calculate_Flight_Metrics call site.
 
    --  Ballistic coefficient [kg/m^2].
    --  beta = m * q / F_drag
    --
    --  AXIOMS (physical envelope):
    --    AXIOM B1: m in (0, 1e7] kg (largest launch vehicles ~1e6).
-   --    AXIOM B2: q in [0, 1e6] Pa (peak reentry ~1e5 Pa).
+   --    AXIOM B2: q in [0, 1e14] Pa.  WIDENED in A3b: within the input
+   --      subtypes (rho <= 1e4, V <= 1e5) Dynamic_Pressure legitimately
+   --      reaches 5.0e13 (see its POST BOUND); the former 1e6 ceiling was
+   --      unreachable-by-proof and contradicted the caller chain.
    --    AXIOM B3: F_drag in [1e-6, 1e9] N (floor avoids division blowup;
    --      peak HIAD drag ~1e6-1e7 N).
-   --  OVERFLOW PROOF: m*q <= 1e13; /F_drag >= 1e-6 => beta <= 1e19.
+   --  OVERFLOW PROOF: m*q <= 1e21; /F_drag >= 1e-6 => beta <= 1e27
+   --    << Float'Last = 3.4028235e38.
    --  NOTE: Post relaxed to >= 0.0: q = 0 (V = 0) legitimately gives
    --    beta = 0. The former Post "> 0.0" was a spec defect found by
    --    gnatprove (contradicted Pre for Dyn_Pressure = 0).
@@ -95,7 +103,7 @@ package StellarOrion_Physics is
      with Pre  => Mass > 0.0
                    and Mass <= 1.0e7
                    and Dyn_Pressure >= 0.0
-                   and Dyn_Pressure <= 1.0e6
+                   and Dyn_Pressure <= 1.0e14
                    and Drag_Force >= 1.0e-6
                    and Drag_Force <= 1.0e9,
           Post => Ballistic_Coefficient'Result >= 0.0;
@@ -125,7 +133,14 @@ package StellarOrion_Physics is
                    and Nose_Radius <= 100.0
                    and Velocity >= 0.0
                    and Velocity <= 1.0e5,
-          Post => Sutton_Graves_Heat'Result >= 0.0;
+           Post => Sutton_Graves_Heat'Result >= 0.0
+                    and Sutton_Graves_Heat'Result <= 2.0e15;
+   --  POST BOUND (A3b): exact-envelope worst case is C_sg * 1e4 * 1e15 =
+   --  1.7415e15 W/m^2; the Post allows 2.0e15 so the prover has rounding
+   --  headroom on the three-step product (A3a lesson: chained float
+   --  interval arithmetic needs slack).  2.0e15 matches the widened
+   --  Radiative_Eq_Temp / Backface_Temperature Heat_Flux Pres exactly,
+   --  keeping the Calculate_Flight_Metrics chain dischargeable.
 
    --  Radiative equilibrium surface temperature [K].
    --  T = (q / (sigma * epsilon))^(1/4)
@@ -134,16 +149,17 @@ package StellarOrion_Physics is
    --  real TPS coatings (typically 0.05 .. 0.95).
    --
    --  AXIOMS (physical envelope):
-   --    AXIOM R1: q in [0, 1e9] W/m^2 (IRVE-3 peak ~1.44e6; 1e9 is
-   --      extreme margin beyond aerocapture at giant planets).
+   --    AXIOM R1: q in [0, 2e15] W/m^2.  WIDENED in A3b: Sutton-Graves
+   --      legitimately reaches 1.75e15 within its input envelope (see its
+   --      POST BOUND); the former 1e9 ceiling contradicted that chain.
    --    AXIOM R2: eps in [1e-3, 1].
-   --  OVERFLOW PROOF: denom >= 5.67e-11; ratio <= 1.77e19 << Float'Last;
-   --    double sqrt yields T <= 6.6e4 K.
+   --  OVERFLOW PROOF: denom >= 5.67e-11; ratio <= 3.6e25 << Float'Last;
+   --    double sqrt yields T <= 4.9e6 K.
    function Radiative_Eq_Temp
      (Heat_Flux  : Float;
       Emissivity : Float) return Float
      with Pre  => Heat_Flux >= 0.0
-                   and Heat_Flux <= 1.0e9
+                   and Heat_Flux <= 2.0e15
                    and Emissivity >= 1.0e-3
                    and Emissivity <= 1.0,
           Post => Radiative_Eq_Temp'Result >= 0.0;
@@ -154,12 +170,13 @@ package StellarOrion_Physics is
    --
    --  AXIOMS (physical envelope):
    --    AXIOM T1: T_init in [0, 3000] K (soak-back ceiling of stack).
-   --    AXIOM T2: q in [0, 1e9] W/m^2; dt in [0, 1e4] s (2.8 h pulse);
+   --    AXIOM T2: q in [0, 2e15] W/m^2 (WIDENED in A3b, see
+   --      Radiative_Eq_Temp R1); dt in [0, 1e4] s (2.8 h pulse);
    --      eta_lag in (0, 1].
    --    AXIOM T3: rho_TPS in [10, 1e4] kg/m^3 (aerogel ~10; C-C ~1600);
    --      Cp in [100, 1e4] J/(kg K); thickness in [1e-4, 1] m.
-   --  OVERFLOW PROOF: capacitance in [0.1, 1e8]; numerator <= 1e13;
-   --    ratio <= 1e14; T_back <= 3000 + 1e14 << Float'Last.
+   --  OVERFLOW PROOF: capacitance in [0.1, 1e8]; numerator <= 2e19;
+   --    ratio <= 2e20; T_back <= 3000 + 2e20 << Float'Last.
    function Backface_Temperature
      (Init_Temp    : Float;
        Heat_Flux    : Float;
@@ -171,7 +188,7 @@ package StellarOrion_Physics is
      with Pre  => Init_Temp >= 0.0
                    and Init_Temp <= 3000.0
                    and Heat_Flux >= 0.0
-                   and Heat_Flux <= 1.0e9
+                   and Heat_Flux <= 2.0e15
                    and Duration >= 0.0
                    and Duration <= 1.0e4
                    and Thermal_Lag > 0.0
@@ -189,15 +206,17 @@ package StellarOrion_Physics is
    --  g0 = 9.80665 m/s^2.
    --
    --  AXIOMS (physical envelope):
-   --    AXIOM D1: F_drag in [0, 1e9] N.
+   --    AXIOM D1: F_drag in [0, 1e18] N.  WIDENED in A3b: analytic drag
+   --      estimators (Cd * q * A) legitimately reach ~2.5e17 within the
+   --      input subtypes; the former 1e9 ceiling contradicted that chain.
    --    AXIOM D2: m in [1e-3, 1e7] kg (gram-scale probe to super-heavy).
    --  OVERFLOW PROOF: m*g0 in [9.81e-3, 9.81e7];
-   --    n <= 1e9 / 9.81e-3 = 1.02e11 << Float'Last.
+   --    n <= 1e18 / 9.81e-3 = 1.02e20 << Float'Last.
    function Deceleration_G_Load
      (Drag_Force : Float;
       Mass       : Float) return Float
      with Pre  => Drag_Force >= 0.0
-                   and Drag_Force <= 1.0e9
+                   and Drag_Force <= 1.0e18
                    and Mass >= 1.0e-3
                    and Mass <= 1.0e7,
           Post => Deceleration_G_Load'Result >= 0.0;
@@ -234,11 +253,28 @@ package StellarOrion_Physics is
    --  flight conditions, geometry, and TPS material card.
    --  The procedure aggregates all physics functions above into
    --  a single comprehensive metric calculation.
+   --
+   --  CONTRACTS (A3b): Flight/Geo/TPS component envelopes are enforced
+   --  structurally by the record-component subtypes in StellarOrion_Types
+   --  (Velocity_Range, Density_Range, Mass_Kg_Range, Diameter_Range,
+   --  Nose_Radius_Range, TPS_*_Range), so no explicit Pre conjuncts are
+   --  needed for them.  Simulation_Results intentionally remains
+   --  unconstrained (its defaults are 0.0 and SPARTA dumps may carry
+   --  arbitrary magnitudes), so its forwarded bounds are stated here.
+   --    Drag_Force  <= 1e18 : discharges Deceleration_G_Load's widened
+   --      D1 envelope; analytic Cd*q*A worst case ~2.5e17 fits.
+   --    Heat_Flux_Wm2 <= 2e15: discharges Radiative_Eq_Temp / Backface_
+   --      Temperature's widened R1/T2 envelopes; Sutton-Graves Post
+   --      ceiling is 1.75e15.
    procedure Calculate_Flight_Metrics
      (Results : Simulation_Results;
       Flight  : Flight_Parameters;
       Geo     : Geometry_Parameters;
       TPS     : TPS_Material;
-      Metrics : out Flight_Metrics);
+      Metrics : out Flight_Metrics)
+     with Pre => Results.Drag_Force >= 0.0
+                   and Results.Drag_Force <= 1.0e18
+                   and Results.Heat_Flux_Wm2 >= 0.0
+                   and Results.Heat_Flux_Wm2 <= 2.0e15;
 
 end StellarOrion_Physics;
