@@ -5,26 +5,18 @@ package body StellarOrion_Geometry is
    pragma SPARK_Mode (On);
 
    -- ==================================================================
-   --  Trig helpers (SPARK-safe, no Numerics dependency)
-   --  Taylor-series approximations truncated at O(x^7).
+   --  Trig helper (SPARK-safe, no Numerics dependency)
+   --  Taylor-series approximation truncated at O(x^7).
    --  Sufficient for 40-80 degree range with < 0.01% error.
-   --  MUST be declared before Shield_Mass_Analytical which calls them.
+   --  MUST be declared before Shield_Mass_Analytical which calls it.
+   --  NOTE: a former Cos_Deg twin was removed as dead code when its only
+   --  consumer (unused Cos_A) was deleted.
    -- ==================================================================
 
    function Deg_To_Rad (Deg : Float) return Float is
    begin
       return Deg * Pi / 180.0;
    end Deg_To_Rad;
-
-   function Cos_Deg (Deg : Float) return Float is
-      X  : constant Float := Deg_To_Rad (Deg);
-      X2 : constant Float := X * X;
-      X4 : constant Float := X2 * X2;
-      X6 : constant Float := X4 * X2;
-   begin
-      --  cos(x) = 1 - x^2/2 + x^4/24 - x^6/720
-      return 1.0 - X2 / 2.0 + X4 / 24.0 - X6 / 720.0;
-   end Cos_Deg;
 
    function Sin_Deg (Deg : Float) return Float is
       X  : constant Float := Deg_To_Rad (Deg);
@@ -36,13 +28,16 @@ package body StellarOrion_Geometry is
       return X - X3 / 6.0 + X5 / 120.0 - X7 / 5040.0;
    end Sin_Deg;
 
-   -- ==================================================================
+   --  ==================================================================
    --  Frontal_Area
-   -- ==================================================================
+   --  ==================================================================
    --  A = pi * Y_max^2
+   --  NOTE: explicit Y_Max * Y_Max instead of '**' — GNATprove cannot
+   --  discharge overflow VCs through the opaque float-exponentiation call.
    function Frontal_Area (Y_Max : Float) return Float is
+      Y2 : constant Float := Y_Max * Y_Max;
    begin
-      return Pi * (Y_Max ** 2);
+      return Pi * Y2;
    end Frontal_Area;
 
    -- ==================================================================
@@ -67,8 +62,6 @@ package body StellarOrion_Geometry is
       R_nose   : Float;   -- nose-cap radius (hemisphere)
       R_base   : Float;   -- base radius of the frustum
       H_nose   : Float;   -- nose-cap height
-       Cos_A    : Float;
-       pragma Unreferenced (Cos_A);
        Sin_A    : Float;
       L_slant  : Float;   -- slant length of frustum
       A_nose   : Float;   -- nose-cap surface area
@@ -82,8 +75,9 @@ package body StellarOrion_Geometry is
       --  but for a generic nose cap we use the hemisphere approximation:
       R_nose  := R_base * 0.3;  -- empirical nose-cap radius fraction
 
-      --  Trig via Taylor-series approximations (SPARK-compatible)
-      Cos_A := Cos_Deg (Angle_Deg);
+      --  Trig via Taylor-series approximations (SPARK-compatible).
+      --  Only Sin_A is needed (slant-length projection); the former unused
+      --  Cos_A computation was removed as dead code.
       Sin_A := Sin_Deg (Angle_Deg);
 
       if Sin_A < 1.0e-10 then
@@ -108,8 +102,10 @@ package body StellarOrion_Geometry is
 
       --  4. Toroids: 2 * pi^2 * R_tor * r_tor^2 * t * rho
       --    (volume of torus * thickness * density, simplified)
-      --  Using R_tor = base radius for toroid placement
-      A_toroid := Two_Pi * Pi * R_base * (Toroid_Radius ** 2)
+      --  Using R_tor = base radius for toroid placement.
+      --  NOTE: explicit Toroid_Radius * Toroid_Radius instead of '**' —
+      --  GNATprove cannot see through the opaque float-exponentiation call.
+      A_toroid := Two_Pi * Pi * R_base * (Toroid_Radius * Toroid_Radius)
                   * TPS_Thickness * TPS_Density;
 
       --  Total shield mass
@@ -138,8 +134,10 @@ package body StellarOrion_Geometry is
    is
       Pi_Sq : constant Float := Pi * Pi;
    begin
+      --  NOTE: explicit Toroid_Radius * Toroid_Radius instead of '**' —
+      --  GNATprove cannot see through the opaque float-exponentiation call.
       return Float (Num_Toroids) * Density * Pi_Sq
-             * Diameter * (Toroid_Radius ** 2);
+              * Diameter * (Toroid_Radius * Toroid_Radius);
    end Shield_Mass_Pappus;
 
    -- ==================================================================
