@@ -38,10 +38,16 @@ Each stage is an independent commit; gates re-run after every stage.
    Gates after extraction: build zero-warnings, self-test 15/15,
    harness 29/29, gnatprove 383/383, SabotageVerifier CLEAN,
    `--validate-only` dispatch smoke PASS.
-2. **`StellarOrion_Runtime_Guard`**: `Get_Lock_File_Path`,
+2. **`StellarOrion_Runtime_Guard`** ✅ DONE (2026-08-25): `Get_Lock_File_Path`,
    `Check_And_Acquire_Lock`, `Release_Lock`, `Detect_Nvidia_GPU`,
-   `Ensure_Docker_Running`, `Check_Amaryllis_Idle_Automode`.
-   Keeps `GNAT.OS_Lib` imports in one place.
+   `Ensure_Docker_Running`, `Check_Amaryllis_Idle_Automode` extracted
+   verbatim to `stellarorion_runtime_guard.ads/.adb` (SPARK_Mode Off —
+   file I/O + GNAT.OS_Lib subprocess dispatch concentrated in one unit).
+   150 lines removed from stellarorion_project.adb; 5 call sites resolve
+   via use-clause. Proof skeleton added per SabotageVerifier convention.
+   Gates: build zero-warnings, self-test 15/15, harness 29/29,
+   gnatprove 383/383 (unchanged — moved code is Off), SabotageVerifier
+   CLEAN, `--validate-only` dispatch smoke PASS.
 3. **`StellarOrion_Self_Test`** (~477 lines, L397–873): the whole
    `Run_Self_Test` including Tests 14/15 (parity/watchdog wiring). Pure move;
    banner text and PASS counting unchanged.
