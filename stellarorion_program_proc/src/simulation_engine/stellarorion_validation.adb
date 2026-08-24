@@ -26,12 +26,14 @@ package body StellarOrion_Validation is
       Valid_TPS : Boolean;
    begin
       --  Geometry range checks
+      --  NOTE: Toroid_Count lower bound (>= 1) is enforced by the Positive
+      --  subtype of Geometry_Parameters.Toroid_Count, so only the upper
+      --  bound (<= 12) is re-checked here.
       Valid_Geo :=
         Geo.Diameter_M    >= 0.5
         and Geo.Diameter_M    <= 15.0
         and Geo.Angle_Deg     >= 40.0
         and Geo.Angle_Deg     <= 80.0
-        and Geo.Toroid_Count  >= 1
         and Geo.Toroid_Count  <= 12
         and Geo.Toroid_Radius_M > 0.0
         and Geo.Nose_Radius_M   > 0.0

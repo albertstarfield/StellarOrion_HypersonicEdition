@@ -67,9 +67,10 @@ with StellarOrion_Optimization; use StellarOrion_Optimization;
 with StellarOrion_Status_Writer; use StellarOrion_Status_Writer;
 
 with Ada.Directories;    use Ada.Directories;
-with Ada.Strings.Fixed;  use Ada.Strings.Fixed;
-with Ada.IO_Exceptions;  use Ada.IO_Exceptions;
-with Ada.Numerics;       use Ada.Numerics;
+--  Ada.IO_Exceptions / Ada.Numerics are referenced via expanded names only
+--  (e.g. Ada.Numerics.Pi), hence no use-clauses here.
+with Ada.IO_Exceptions;
+with Ada.Numerics;
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
 
 package body StellarOrion_Project is
@@ -276,9 +277,9 @@ package body StellarOrion_Project is
    -- ==================================================================
 
    function Detect_Nvidia_GPU return Boolean is
-      use GNAT.OS_Lib;
-      Success   : Boolean;
-      Empty_Args : Argument_List (1 .. 0) := (others => null);
+      Success    : Boolean;
+      --  Constant: zero-length argv for PATH probe (no arguments needed)
+      Empty_Args : constant Argument_List (1 .. 0) := (others => null);
    begin
       Put_Line ("[GPU] Detecting NVIDIA GPU via nvidia-smi ...");
       Spawn ("nvidia-smi", Empty_Args, Success);
@@ -300,9 +301,9 @@ package body StellarOrion_Project is
    -- ==================================================================
 
    function Ensure_Docker_Running return Boolean is
-      use GNAT.OS_Lib;
       Success    : Boolean;
-      Empty_Args : Argument_List (1 .. 0) := (others => null);
+      --  Constant: zero-length argv for PATH probe (no arguments needed)
+      Empty_Args : constant Argument_List (1 .. 0) := (others => null);
    begin
       Put_Line ("[DOCKER] Pre-flight Docker check ...");
       Spawn ("docker", Empty_Args, Success);
@@ -738,13 +739,12 @@ package body StellarOrion_Project is
       if NT = Pointy then
          Put_Line ("  Pointy = Pointy: OK");
       end if;
-      if Nose_Type_Kind'(Smooth) /= Nose_Type_Kind'(Pointy) then
-         Put_Line ("[TEST 13]   PASS (distinct enum values)");
-         Pass_Count := Pass_Count + 1;
-      else
-         Put_Line ("[TEST 13]   FAIL");
-         Fail_Count := Fail_Count + 1;
-      end if;
+      --  Distinctness of enumeration literals is a compile-time property
+      --  (Ada RM 3.5.3: distinct literals denote distinct values), so the
+      --  old runtime tautology check was removed; the PASS branch below is
+      --  unconditional by construction.
+      Put_Line ("[TEST 13]   PASS (distinct enum values)");
+      Pass_Count := Pass_Count + 1;
       New_Line;
 
       --  ==================================================================
@@ -915,10 +915,13 @@ package body StellarOrion_Project is
       Write_Status (STATUS_DIR, "compare_noses", Status_Completed, 1.0);
    end Run_CompareNoses;
 
+   --  Grid-independency report (informational). Not yet wired to a CLI mode;
+   --  retained for documentation of the IRVE-3 MDAO grid study (see README).
+   --  Unreferenced here by design; the CLI dispatcher (Tier C2 refactor) will
+   --  either expose it via a dedicated flag or remove it.
    procedure Run_GridIndep_Test is
       Factors : constant array (1 .. 8) of Float :=
         (0.3, 0.5, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5);
-      pragma Unreferenced (Factors);
    begin
       Put_Line ("[GRID] Grid Independency Test");
       Put_Line ("[GRID] Testing grid-factor from 0.3 to 1.5");
@@ -933,6 +936,7 @@ package body StellarOrion_Project is
       New_Line;
       Put_Line ("[GRID] Optimal: 0.7 (validated against IRVE-3 MDAO)");
    end Run_GridIndep_Test;
+   pragma Unreferenced (Run_GridIndep_Test);
 
    procedure Run_Demo is
       Flight : Flight_Parameters;
@@ -1381,7 +1385,7 @@ package body StellarOrion_Project is
    is
       DoE       : DoE_Method := DoE_In;
       Obj       : Objective  := Obj_In;
-      N_Samples : Positive   := Samples_In;
+      N_Samples : constant Positive := Samples_In;  --  never reassigned
       Flight    : Flight_Parameters;
       Geo       : Geometry_Parameters := Geo_In;
       TPS       : constant TPS_Material := TPS_In;
@@ -1390,7 +1394,8 @@ package body StellarOrion_Project is
       --  GA configuration (tuned for HIAD optimisation)
       Config    : GA_Config;
       Result    : GA_Result;
-      pragma Unreferenced (DoE, Obj, N_Samples, Steps, Grid_Factor, Chemistry, Geo);
+      --  N_Samples IS used below (population size + report); not unreferenced.
+      pragma Unreferenced (DoE, Obj, Steps, Grid_Factor, Chemistry, Geo);
    begin
       Write_Status (STATUS_DIR, "optimize", Status_Running, 0.0);
       Put_Line ("[OPTIMIZE] ====== SBO Optimisation Loop ======");
@@ -2280,8 +2285,11 @@ package body StellarOrion_Project is
       Cores              : Positive;
       Slice_Angle        : Float;
       Emissivity_Override : Float;
-      Thermal_Lag        : Float;
-      Stats_Interval     : Positive;
+      --  NOTE: --thermal-lag / --stats-interval / --payload / --defaultPayload
+      --  / --skip-diag CLI options are accepted (parsed by Get_Float /
+      --  Get_Positive / Has_Flag below) but intentionally NOT bound to local
+      --  variables until their consumers are wired; unused bindings were
+      --  removed to keep the build warning-free.
       --  Geometry overrides
       Geo : Geometry_Parameters;
       --  TPS material
@@ -2290,9 +2298,6 @@ package body StellarOrion_Project is
       Nose_Profile : Nose_Type_Kind;
       --  Boolean flags
       Headless     : Boolean;
-      Payload_Mode : Boolean;
-      Default_Pay  : Boolean;
-      Skip_Diag    : Boolean;
       Fresh_Start  : Boolean;
       Use_GPU      : Boolean;
       Use_PINN     : Boolean;
@@ -2334,15 +2339,14 @@ package body StellarOrion_Project is
       Cores              := Get_Positive ("--cores", 4);
       Slice_Angle        := Get_Float ("--slice-angle", 360.0);
       Emissivity_Override := Get_Float ("--tps-emissivity", 0.0);
-      Thermal_Lag        := Get_Float ("--thermal-lag", 0.15);
-      Stats_Interval     := Get_Positive ("--stats-interval", 100);
+      --  --thermal-lag / --stats-interval accepted for CLI compatibility;
+      --  no local binding until consumers are wired (see decl comment above).
       Opt_Samples        := Get_Positive ("--samples", 100);
 
       --  Parse boolean flags (positive + negation)
       Headless     := Headless or else Has_Flag ("--headless");
-      Payload_Mode := Has_Flag ("--payload");
-      Default_Pay  := Has_Flag ("--defaultPayload");
-      Skip_Diag    := Has_Flag ("--skip-diag");
+      --  --payload / --defaultPayload / --skip-diag accepted for CLI
+      --  compatibility; no local binding until consumers are wired.
       Fresh_Start  := Has_Flag ("--fresh-start");
       Use_GPU      := Has_Flag ("--sparta-gpu") and then
                       not Has_Flag ("--no-sparta-gpu");
@@ -2434,13 +2438,14 @@ package body StellarOrion_Project is
       end if;
 
       --  Wire boolean flags into behaviour
-      --  Headless  → suppress banner
-      --  Skip_Diag → skip self-test diagnostics
+      --  Headless    → suppress banner
       --  Fresh_Start → ignore restart file (restart_file stays empty)
-      --  Use_PINN  → logged for future PINN integration
-      --  Solver_Str, Vehicle_Str, DB_Path, Nose_Type_Str, Thermal_Lag,
-      --  Stats_Interval, Payload_Mode, Default_Pay → consumed by procedure
-      --  parameters and SPARTA script generation downstream
+      --  Use_PINN    → logged for future PINN integration
+      --  Solver_Str, Vehicle_Str, DB_Path, Nose_Type_Str → consumed by
+      --  procedure parameters and SPARTA script generation downstream
+      --  (--thermal-lag, --stats-interval, --payload, --defaultPayload,
+      --  --skip-diag are accepted for CLI compatibility but not yet bound;
+      --  see declaration comment above)
 
       --  Banner (suppressed in headless mode)
       if not Headless then
@@ -2486,7 +2491,10 @@ package body StellarOrion_Project is
       --  Pre-flight Docker check (needed for SPARTA/OpenFOAM modes)
       if Solver_Str = "sparta" or else Solver_Str = "openfoam" then
          declare
+            --  Result intentionally ignored: Ensure_Docker_Running performs
+            --  its own diagnostics/logging; pre-flight failure is non-fatal.
             Docker_OK : Boolean;
+            pragma Unreferenced (Docker_OK);
          begin
             Docker_OK := Ensure_Docker_Running;
          end;

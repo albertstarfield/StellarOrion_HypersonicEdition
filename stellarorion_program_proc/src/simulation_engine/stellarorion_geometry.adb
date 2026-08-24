@@ -149,13 +149,15 @@ package body StellarOrion_Geometry is
    --    Angle        40 .. 80 deg
    --    Toroid_Count 1 .. 12
    --    Diameter     0.5 .. 15.0 m
+   --  NOTE: Toroid_Count lower bound (>= 1) is enforced by the Positive
+   --  subtype of Geometry_Parameters.Toroid_Count, so only the upper bound
+   --  is re-checked here.
    function Validate_Geometry (Params : Geometry_Parameters) return Boolean
    is
    begin
       return
         Params.Angle_Deg     >= 40.0
         and Params.Angle_Deg <= 80.0
-        and Params.Toroid_Count >= 1
         and Params.Toroid_Count <= 12
         and Params.Diameter_M   >= 0.5
         and Params.Diameter_M   <= 15.0;

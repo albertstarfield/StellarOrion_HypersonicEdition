@@ -22,9 +22,22 @@ project StellarOrion_Program_Proc is
    end Binder;
 
    package Linker is
-      for Switches ("ada") use
-        ("-g",          --  Debug symbols for profiling
-         "-Wl,-syslibroot,/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk");
+       for Switches ("ada") use
+         ("-g",         --  Debug symbols for profiling
+          --  syslibroot is REQUIRED on macOS: the GNAT native toolchain's
+          --  ld cannot resolve -lSystem without an explicit SDK.
+          --  We use the unversioned MacOSX.sdk symlink (-> current SDK) so
+          --  (a) the path survives OS/Xcode upgrades, and
+           --  (b) the SDK version matches clang's default deployment target,
+           --      keeping the LINK phase free of "overriding deployment
+           --      version" diagnostics.
+           --  KNOWN EXCEPTION: gprbind still compiles b__main.c via the
+           --  toolchain's internal clang driver, whose baked-in objects
+           --  carry minos 16.0; against Xcode's default SDK this emits
+           --  ~11 benign [-Woverriding-deployment-version] notices at Bind.
+           --  Not controllable via Compiler/Binder/Linker switches; harmless
+           --  (deployment target is overridden UPWARD).
+           "-Wl,-syslibroot,/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
    end Linker;
 
 end StellarOrion_Program_Proc;
