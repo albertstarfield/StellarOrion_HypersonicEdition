@@ -22,12 +22,23 @@ package StellarOrion_Environment is
    --  Convert Mach number to true airspeed [m/s].
    --  V = Mach * sqrt(gamma * R * T)
    --  gamma = 1.4 (air), R = 287.058 J/(kg*K)
-   --  Mach must be non-negative; temperature must be positive for the
-   --  square root of gamma*R*T to be real and meaningful.
+   --
+   --  AXIOM (E1) [ISA]: Mach envelope 0 .. 50 covers all atmospheric
+   --    flight regimes of interest (IRVE-3 entry ~Mach 25; escape velocity
+   --    at sea level ~Mach 50.2).  Temperature envelope 1 .. 3000 K covers
+   --    the ISA profile (186.87 .. 288.15 K) with headroom for hot-wall
+   --    recovery temperatures.
+   --  OVERFLOW PROOF: gamma*R*T <= 1.4*287.058*3000 = 1.2056e6;
+   --    sqrt <= Max(1.2056e6, 1); V <= 50 * 1.2056e6 = 6.03e7 << Float'Last.
+   --    Physically V <= 50*sqrt(1.4*287.058*3000) ~= 5.49e4 m/s, which is
+   --    below Velocity_Range'Last (1e5); the composite consumer
+   --    Mach_Alt_To_Flight clamps to the component subtype as belt-and-
+   --    braces against approximator overshoot (Murphy's Law).
    function Mach_To_Velocity
      (Mach        : Float;
       Temperature : Float) return Float
-     with Pre  => Mach >= 0.0 and Temperature > 0.0,
+     with Pre  => Mach >= 0.0 and Mach <= 50.0
+                  and Temperature >= 1.0 and Temperature <= 3000.0,
           Post => Mach_To_Velocity'Result >= 0.0;
 
    -- -----------------------------------------------------------------
@@ -36,21 +47,33 @@ package StellarOrion_Environment is
 
    --  Standard atmosphere temperature [K] at altitude [km].
    --  Piecewise linear profile from ISO 2533:1975.
-   --  Altitude must be non-negative (below sea level is clamped).
-   --  ISA guarantees positive temperature throughout the modelled
-   --  atmosphere (minimum ~187 K in the thermosphere).
+   --
+   --  AXIOM (E2) [ISA]: modelled altitude envelope 0 .. 500 km covers the
+   --    ISA definition (0 .. 84.852 km layered + exponential tail) and all
+   --    HIAD missions of interest (IRVE-3 apogee ~10 km; orbital entry
+   --    interfaces < 150 km).
+   --  POST BAND PROOF: every piecewise branch returns a value in
+   --    [186.86, 288.15] by interval arithmetic on constants and H:
+   --    troposphere T0-6.5*H with H in [0,11] -> [216.65, 288.15];
+   --    isothermal layers return constants; gradient layers are linear
+   --    interpolations within the same band; the exponential tail returns
+   --    the constant 186.87 K ([US76] Table I thermosphere floor).
    function Atmosphere_Temperature
      (Altitude_Km : Float) return Float
-     with Pre  => Altitude_Km >= 0.0,
-          Post => Atmosphere_Temperature'Result >= 0.0;
+     with Pre  => Altitude_Km >= 0.0 and Altitude_Km <= 500.0,
+          Post => Atmosphere_Temperature'Result >= 186.86
+                  and Atmosphere_Temperature'Result <= 288.15;
 
    --  Standard atmosphere density [kg/m^3] at altitude [km].
    --  Piecewise exponential/linear model from ISO 2533:1975.
-   --  Altitude must be non-negative; density is always non-negative
-   --  (approaches zero at very high altitudes).
+   --  Density is always non-negative (approaches zero at very high
+   --  altitudes).  The upper side is not contractually bounded because
+   --  the approximator helpers (Exp/Pow) have no provable closed-form
+   --  ceiling; the composite consumer Mach_Alt_To_Flight clamps to
+   --  Density_Range'Last at the assignment site (Murphy's Law).
    function Atmosphere_Density
      (Altitude_Km : Float) return Float
-     with Pre  => Altitude_Km >= 0.0,
+     with Pre  => Altitude_Km >= 0.0 and Altitude_Km <= 500.0,
           Post => Atmosphere_Density'Result >= 0.0;
 
    -- -----------------------------------------------------------------
@@ -59,12 +82,21 @@ package StellarOrion_Environment is
 
    --  Given a Mach number and altitude, populate a Flight_Parameters
    --  record with density, temperature, and velocity.
-   --  Mach and altitude must be non-negative for meaningful results.
+   --
+   --  AXIOM (E3): envelope contracts inherited from the two functions
+   --    called here (E1: Mach 0..50; E2: altitude 0..500 km).  The CLI
+   --    chokepoint in StellarOrion_Project clamps --mach/--alt to these
+   --    envelopes before any call can occur.
+   --  POSTCONDITION NOTE: Velocity_Ms / Density_Kgm3 are constrained
+   --    subtypes (Velocity_Range / Density_Range); the body clamps the
+   --    assigned values to the subtype bounds so no runtime range check
+   --    can fire (Murphy's Law: approximator overshoot is contained).
    procedure Mach_Alt_To_Flight
      (Mach    : Float;
       Alt_Km  : Float;
       Flight  : out Flight_Parameters)
-      with Pre => Mach >= 0.0 and Alt_Km >= 0.0;
+      with Pre => Mach >= 0.0 and Mach <= 50.0
+                  and Alt_Km >= 0.0 and Alt_Km <= 500.0;
 
    -- -----------------------------------------------------------------
    --  NRLMSIS 2.1 Atmosphere Model (Python pymsis wrapper)
@@ -91,6 +123,10 @@ package StellarOrion_Environment is
       Density      : out Float;
       Temperature  : out Float)
       with SPARK_Mode => Off,
-           Pre => Alt_Km >= 0.0;
+           Pre => Alt_Km >= 0.0 and Alt_Km <= 500.0;
+   --  AXIOM (E4): altitude envelope mirrors E2.  Currently an ISA-fallback
+   --  placeholder with no callers (full NRLMSIS 2.1 requires the Python
+   --  pymsis sidecar via a C popen bridge); the envelope is declared now
+   --  so future wiring inherits the contract.
 
 end StellarOrion_Environment;
