@@ -99,6 +99,52 @@ package StellarOrion_Types is
    type Objective is (Drag_Obj, Heat_Obj);
 
    -- ===================================================================
+   --  Physical Envelope Subtypes (record-component constraints)
+   -- ===================================================================
+   --  These named subtypes mirror the precondition envelopes of the
+   --  StellarOrion_Physics leaf functions EXACTLY.  Using them as record
+   --  component types makes every holder of these records provably satisfy
+   --  the corresponding physics preconditions, and turns out-of-range
+   --  writes into immediate, localized Constraint_Error instead of silent
+   --  garbage propagation downstream (Murphy's Law: fail fast, fail loud).
+   --
+   --  Writer-site discipline: every external input path (CLI parsing,
+   --  CSV history load) MUST clamp into the subtype before assignment.
+   --  Internal writers (GA sampling, atmosphere model) were audited to
+   --  produce values strictly inside these envelopes.
+   --
+   --  Sources: Rapisarda 2023 Table 5.4 (geometry search space),
+   --  NASA TR R-376 / Bird 1994 envelopes (see StellarOrion_Physics.axioms).
+
+   --  Freestream velocity [m/s]: planetary entry worst case ~7e4 (A2/Q2/S3).
+   subtype Velocity_Range is Float range 0.0 .. 1.0e5;
+
+   --  Mass density [kg/m^3]: sea level 1.225; giant-planet atmospheres << 1e4.
+   subtype Density_Range is Float range 0.0 .. 1.0e4;
+
+   --  Vehicle mass [kg]: gram-scale probe to super-heavy launcher (B1/D2).
+   subtype Mass_Kg_Range is Float range 1.0e-3 .. 1.0e7;
+
+   --  Aeroshell diameter [m]: Rapisarda 2023 Table 5.4 search space,
+   --  also satisfies Knudsen_Number's Char_Length >= 1e-3 floor (K2).
+   subtype Diameter_Range is Float range 0.5 .. 15.0;
+
+   --  Nose radius [m]: sounding-probe tips to HIAD scale (S2).
+   subtype Nose_Radius_Range is Float range 1.0e-4 .. 100.0;
+
+   --  TPS material density [kg/m^3]: aerogel ~10 to C-C ~1600 (T3).
+   subtype TPS_Density_Range is Float range 10.0 .. 1.0e4;
+
+   --  TPS specific heat [J/(kg*K)] (T3).
+   subtype TPS_Cp_Range is Float range 100.0 .. 1.0e4;
+
+   --  TPS emissivity (dimensionless): real coatings 0.05 .. 0.95 (R2).
+   subtype TPS_Emissivity_Range is Float range 1.0e-3 .. 1.0;
+
+   --  TPS layer thickness [m] (T3).
+   subtype TPS_Thickness_Range is Float range 1.0e-4 .. 1.0;
+
+   -- ===================================================================
    --  Record Types
    -- ===================================================================
 
@@ -107,8 +153,8 @@ package StellarOrion_Types is
    type Flight_Parameters is record
       Mach          : Float := 10.0;
       Altitude_Km   : Float := 52.0;
-      Velocity_Ms   : Float := 2700.0;
-      Density_Kgm3  : Float := 6.9674e-4;
+      Velocity_Ms   : Velocity_Range := 2700.0;
+      Density_Kgm3  : Density_Range  := 6.9674e-4;
       Temperature_K : Float := 270.65;
    end record;
 
@@ -118,13 +164,13 @@ package StellarOrion_Types is
    --  Geometric definition of the HIAD aeroshell.
    --  Defaults correspond to IRVE-3 (Rapisarda 2023, Table 4.1).
    type Geometry_Parameters is record
-      Diameter_M      : Float    := 3.0;
+      Diameter_M      : Diameter_Range    := 3.0;
       Angle_Deg       : Float    := 60.0;
-      Nose_Radius_M   : Float    := 0.55;
+      Nose_Radius_M   : Nose_Radius_Range := 0.55;
       Toroid_Count    : Positive := 6;
       Toroid_Radius_M : Float    := 0.135;
        Outer_Radius_M  : Float    := 0.0508;
-       Mass_Kg         : Float    := 281.0;
+       Mass_Kg         : Mass_Kg_Range     := 281.0;
        Payload_Height_M: Float    := 1.70;  -- MDAO Table 4.1 h_pay
        Slice_Angle_Deg : Float    := 360.0;
        Nose_Profile    : Nose_Type_Kind := Smooth;
@@ -134,11 +180,11 @@ package StellarOrion_Types is
    --  Defaults model a SiC tile stack (LOFTID-style F-TPS).
    type TPS_Material is record
       Name       : String (1 .. 6) := "SiC   ";
-      Density    : Float := 1468.0;   -- kg/m^3
-      Cp         : Float := 1100.0;   -- J/(kg*K)
+      Density    : TPS_Density_Range    := 1468.0;   -- kg/m^3
+      Cp         : TPS_Cp_Range         := 1100.0;   -- J/(kg*K)
       Thermal_K  : Float := 0.2;      -- W/(m*K)
-      Emissivity : Float := 0.75;     -- dimensionless
-      Thickness  : Float := 0.0254;   -- m  (1 inch)
+      Emissivity : TPS_Emissivity_Range := 0.75;     -- dimensionless
+      Thickness  : TPS_Thickness_Range  := 0.0254;   -- m  (1 inch)
    end record;
 
    -- ===================================================================

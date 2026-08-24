@@ -350,19 +350,33 @@ package body StellarOrion_History is
       end if;
 
       --  Fields  2-6: Flight_Parameters
+      --  Constrained components are clamped into their envelope subtypes
+      --  (Murphy's Law: a corrupt/hostile CSV row must not crash the
+      --  history load with Constraint_Error at the range check; values
+      --  are sanitized to the nearest legal bound instead).
       Rec.Flight.Mach          := F (2);
       Rec.Flight.Altitude_Km   := F (3);
-      Rec.Flight.Velocity_Ms   := F (4);
-      Rec.Flight.Density_Kgm3  := F (5);
+      Rec.Flight.Velocity_Ms   :=
+        Float'Min (Float'Max (F (4), Velocity_Range'First),
+                   Velocity_Range'Last);
+      Rec.Flight.Density_Kgm3  :=
+        Float'Min (Float'Max (F (5), Density_Range'First),
+                   Density_Range'Last);
       Rec.Flight.Temperature_K := F (6);
 
       --  Fields  7-12: Geometry_Parameters
-      Rec.Geo.Diameter_M      := F (7);
+      Rec.Geo.Diameter_M      :=
+        Float'Min (Float'Max (F (7), Diameter_Range'First),
+                   Diameter_Range'Last);
       Rec.Geo.Angle_Deg       := F (8);
-      Rec.Geo.Nose_Radius_M   := F (9);
+      Rec.Geo.Nose_Radius_M   :=
+        Float'Min (Float'Max (F (9), Nose_Radius_Range'First),
+                   Nose_Radius_Range'Last);
       Rec.Geo.Toroid_Count    := Integer'Max (1, I (10));
       Rec.Geo.Toroid_Radius_M := F (11);
-      Rec.Geo.Mass_Kg         := F (12);
+      Rec.Geo.Mass_Kg         :=
+        Float'Min (Float'Max (F (12), Mass_Kg_Range'First),
+                   Mass_Kg_Range'Last);
 
       --  Fields 13-17: Simulation_Results
       Rec.Results.Drag_Force      := F (13);

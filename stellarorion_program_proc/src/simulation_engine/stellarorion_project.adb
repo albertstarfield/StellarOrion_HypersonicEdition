@@ -218,6 +218,16 @@ package body StellarOrion_Project is
       end if;
    end Get_Float;
 
+   --  Clamp V into [Lo, Hi].
+   --  Murphy's Law: CLI values are untrusted input.  Record components
+   --  now carry physical-envelope subtypes (StellarOrion_Types), so an
+   --  unclamped out-of-range value would raise Constraint_Error at the
+   --  assignment.  Sanitizing into the envelope keeps the run alive and
+   --  the physics contracts dischargeable.
+   function Clamp_Float (V, Lo, Hi : Float) return Float is
+     (Float'Min (Float'Max (V, Lo), Hi))
+     with Pre => Lo <= Hi;
+
    function Get_Positive (Flag : String; Default : Positive) return Positive is
       Val : constant String := Get_Option (Flag, "");
    begin
@@ -2394,14 +2404,22 @@ package body StellarOrion_Project is
          Nose_Profile := Smooth;
       end if;
 
-      --  Build geometry from CLI overrides (defaults match IRVE-3)
-      Geo := (Diameter_M      => Get_Float ("--diameter", 3.0),
+      --  Build geometry from CLI overrides (defaults match IRVE-3).
+      --  Constrained components are clamped into their envelope subtypes
+      --  (see Clamp_Float note above); unconstrained ones pass through.
+      Geo := (Diameter_M      => Clamp_Float (Get_Float ("--diameter", 3.0),
+                                              Diameter_Range'First,
+                                              Diameter_Range'Last),
                Angle_Deg       => Get_Float ("--angle", 60.0),
-               Nose_Radius_M   => Get_Float ("--nose", 0.55),
+               Nose_Radius_M   => Clamp_Float (Get_Float ("--nose", 0.55),
+                                               Nose_Radius_Range'First,
+                                               Nose_Radius_Range'Last),
                Toroid_Count    => Get_Positive ("--toroids", 6),
                Toroid_Radius_M => Get_Float ("--tradius", 0.135),
                Outer_Radius_M  => Get_Float ("--oradius", 0.0508),
-               Mass_Kg         => Get_Float ("--mass", 281.0),
+               Mass_Kg         => Clamp_Float (Get_Float ("--mass", 281.0),
+                                               Mass_Kg_Range'First,
+                                               Mass_Kg_Range'Last),
                Payload_Height_M => Get_Float ("--payload-height", 1.70),
                Slice_Angle_Deg => Slice_Angle,
                Nose_Profile    => Nose_Profile);
@@ -2423,15 +2441,22 @@ package body StellarOrion_Project is
          TPS := TPS_SiC;
       end if;
 
-      --  Apply TPS property overrides
+      --  Apply TPS property overrides (clamped into envelope subtypes;
+      --  see Clamp_Float note above)
       if Emissivity_Override > 0.0 then
-         TPS.Emissivity := Emissivity_Override;
+         TPS.Emissivity := Clamp_Float (Emissivity_Override,
+                                        TPS_Emissivity_Range'First,
+                                        TPS_Emissivity_Range'Last);
       end if;
       if Has_Flag ("--tps-density") then
-         TPS.Density := Get_Float ("--tps-density", TPS.Density);
+         TPS.Density := Clamp_Float (Get_Float ("--tps-density", TPS.Density),
+                                     TPS_Density_Range'First,
+                                     TPS_Density_Range'Last);
       end if;
       if Has_Flag ("--tps-cp") then
-         TPS.Cp := Get_Float ("--tps-cp", TPS.Cp);
+         TPS.Cp := Clamp_Float (Get_Float ("--tps-cp", TPS.Cp),
+                                TPS_Cp_Range'First,
+                                TPS_Cp_Range'Last);
       end if;
       if Has_Flag ("--tps-k") then
          TPS.Thermal_K := Get_Float ("--tps-k", TPS.Thermal_K);
