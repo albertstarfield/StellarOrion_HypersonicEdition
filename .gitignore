@@ -307,3 +307,6 @@ temp_slides_v2/
 
 
 tests/obj/
+
+# === B1 sabotage audit reports ===
+stellarorion_program_proc/data/audits/
