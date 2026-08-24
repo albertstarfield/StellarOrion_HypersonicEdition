@@ -1,0 +1,159 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+--  StellarOrion_Dual_Watchdog — body (Tier B3)
+--  See spec header for the state machine, time model, and references.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
+
+   -- ---------------------------------------------------------------------
+   --  Lifecycle
+   -- ---------------------------------------------------------------------
+
+   procedure Initialize
+     (S : out System_State; Timeout_Ticks : Natural := Default_Timeout)
+   is
+   begin
+      S := (A                => (Last_Heartbeat    => 0,
+                              Timeout           => Timeout_Ticks,
+                              Status            => Healthy,
+                              Failure_Count     => 0,
+                              Recovery_Attempts => 0),
+            B                => (Last_Heartbeat    => 0,
+                              Timeout           => Timeout_Ticks,
+                              Status            => Healthy,
+                              Failure_Count     => 0,
+                              Recovery_Attempts => 0),
+            Emergency_Latched => False);
+   end Initialize;
+
+   procedure Update_Heartbeat
+     (S   : in out System_State;
+      W   : Watchdog_ID;
+      Now : Tick_Type)
+   is
+   begin
+      case W is
+         when Watchdog_A =>
+            if S.A.Status in Healthy | Degraded then
+               S.A.Status         := Healthy;
+               S.A.Last_Heartbeat := Now;
+            end if;
+         when Watchdog_B =>
+            if S.B.Status in Healthy | Degraded then
+               S.B.Status         := Healthy;
+               S.B.Last_Heartbeat := Now;
+            end if;
+      end case;
+      --  Failed/Dead monitors ignore heartbeats (no silent resurrection);
+      --  untouched slots trivially satisfy their postcondition conjunct
+      --  because Status'Old = Status and Last_Heartbeat'Old unchanged.
+   end Update_Heartbeat;
+
+   -- ---------------------------------------------------------------------
+   --  Monitoring
+   -- ---------------------------------------------------------------------
+
+   procedure Evaluate
+     (S   : in out System_State;
+      Now : Tick_Type)
+   is
+      --  Local classification of one watchdog against logical time.
+      --  Age computation guarded by Now >= Last_Heartbeat so no subtraction
+      --  can go negative regardless of caller tick discipline (AXIOM W1).
+      function Is_Stale (WS : Watchdog_State) return Boolean is
+        (if Now >= WS.Last_Heartbeat
+         then Now - WS.Last_Heartbeat > WS.Timeout
+         else False);
+   begin
+      --  Grace ladder: first overdue evaluation degrades, a second
+      --  consecutive overdue evaluation fails.  Failure counters only
+      --  grow (Post: monotonicity) — they are audit evidence.
+      if S.A.Status in Healthy | Degraded and then Is_Stale (S.A) then
+         if S.A.Status = Healthy then
+            S.A.Status := Degraded;
+         else
+            S.A.Status := Failed;
+            --  Saturating increment (B5 gate): counters are audit evidence;
+            --  the ceiling guard makes the overflow VC trivially provable.
+            if S.A.Failure_Count < Max_Audit_Count then
+               S.A.Failure_Count := S.A.Failure_Count + 1;
+            end if;
+         end if;
+      end if;
+
+      if S.B.Status in Healthy | Degraded and then Is_Stale (S.B) then
+         if S.B.Status = Healthy then
+            S.B.Status := Degraded;
+         else
+            S.B.Status := Failed;
+            if S.B.Failure_Count < Max_Audit_Count then
+               S.B.Failure_Count := S.B.Failure_Count + 1;
+            end if;
+         end if;
+      end if;
+   end Evaluate;
+
+   procedure Cross_Check
+     (S : in out System_State)
+   is
+   begin
+      --  A supervises B: live A starts recovery of failed B.
+      if S.B.Status = Failed
+        and then S.A.Status in Healthy | Degraded
+      then
+      S.B.Status := Recovering;
+      if S.B.Recovery_Attempts < Max_Audit_Count then
+         S.B.Recovery_Attempts := S.B.Recovery_Attempts + 1;
+      end if;
+      end if;
+
+      --  B supervises A: live B starts recovery of failed A.  Evaluated
+      --  against the CURRENT statuses, so both-failed states fall through
+      --  to Needs_Emergency / Emergency_Safe_State instead.
+      if S.A.Status = Failed
+        and then S.B.Status in Healthy | Degraded
+      then
+      S.A.Status := Recovering;
+      if S.A.Recovery_Attempts < Max_Audit_Count then
+         S.A.Recovery_Attempts := S.A.Recovery_Attempts + 1;
+      end if;
+      end if;
+   end Cross_Check;
+
+   procedure Advance_Recovery
+     (S   : in out System_State;
+      W   : Watchdog_ID;
+      Now : Tick_Type)
+   is
+   begin
+      case W is
+         when Watchdog_A =>
+            if S.A.Status = Recovering then
+               S.A.Status         := Healthy;
+               S.A.Last_Heartbeat := Now;
+            end if;
+         when Watchdog_B =>
+            if S.B.Status = Recovering then
+               S.B.Status         := Healthy;
+               S.B.Last_Heartbeat := Now;
+            end if;
+      end case;
+   end Advance_Recovery;
+
+   procedure Emergency_Safe_State
+     (S : in out System_State)
+   is
+   begin
+      --  Pre guarantees both already Failed; latch makes this sticky.
+      --  Dead is terminal: nothing in this package transitions out of it.
+      S.A.Status         := Dead;
+      S.B.Status         := Dead;
+      S.Emergency_Latched := True;
+   end Emergency_Safe_State;
+
+   function Needs_Emergency (S : System_State) return Boolean is
+   begin
+      return S.A.Status = Failed and then S.B.Status = Failed;
+   end Needs_Emergency;
+
+end StellarOrion_Dual_Watchdog;
