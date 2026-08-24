@@ -24,6 +24,7 @@ with Ada.Characters.Handling;  use Ada.Characters.Handling;
 
 package body StellarOrion_History is
    pragma SPARK_Mode (Off);
+   --  extern: Ada.Directories/Ada.Exceptions file persistence for run history (non-SPARK libs)
 
    --  Internal state
    DB_Directory   : Unbounded_String;

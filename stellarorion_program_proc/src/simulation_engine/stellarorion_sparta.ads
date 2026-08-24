@@ -15,6 +15,7 @@ with StellarOrion_Types; use StellarOrion_Types;
 
 package StellarOrion_Sparta is
    pragma SPARK_Mode (Off);
+   --  extern: SPARTA Docker script generation with Ada.Directories file I/O
 
    -- -----------------------------------------------------------------
    --  Script Generation

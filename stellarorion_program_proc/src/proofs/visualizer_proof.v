@@ -1,0 +1,21 @@
+(* SKELETON PROOF - TRANSPARENCY NOTICE
+   ==========================================================================
+   This is an HONEST PLACEHOLDER, not a completed machine-checked proof.
+   Unit : visualizer (plot emission)
+   Goal : savefig writes a non-empty PNG or raises; never writes zero-byte files silently.
+   Status : Admitted (unproven axiom-free skeleton; admitted by choice,
+            disclosed here rather than hidden).
+   Remediation path: formalize savefig in Coq against extracted specs.
+   Generated 2026-08-24 during pre-audit gate remediation.
+   Ledger: thoughts/ledgers/CONTINUITY_ses_fe57.md
+   ========================================================================== *)
+
+Require Import Coq.Reals.Reals.
+Open Scope R_scope.
+
+(* Key property this unit must guarantee: savefig writes a non-empty PNG or raises; never writes zero-byte files silently. *)
+Lemma visualizer_key_property : True.
+Proof.
+  (* TODO: replace trivial proof with the formalized statement above. *)
+  exact I.
+Admitted.

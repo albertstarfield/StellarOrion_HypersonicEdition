@@ -48,13 +48,21 @@ IRVE3_BASELINE = {
 
 
 def detect_device():
-    """Detect best available compute device."""
+    """Detect best available compute device (multi-vendor).
+
+    Hardware-neutral fallback order: NVIDIA CUDA -> Apple MPS ->
+    Intel XPU (OneAPI) -> Moore Threads MUSA -> CPU.
+    """
     try:
         import torch
         if torch.cuda.is_available():
             return "cuda", torch.cuda.get_device_name(0)
-        if torch.backends.mps.is_available():
+        if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
             return "mps", "Apple MPS"
+        if hasattr(torch, "xpu") and torch.xpu.is_available():
+            return "xpu", "Intel XPU (OneAPI)"
+        if hasattr(torch, "musa") and torch.musa.is_available():
+            return "musa", "Moore Threads MUSA"
     except ImportError:
         pass
     return "cpu", "CPU"

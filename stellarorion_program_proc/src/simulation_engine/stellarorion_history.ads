@@ -15,6 +15,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package StellarOrion_History is
    pragma SPARK_Mode (Off);
+   --  extern: run-history API backed by non-SPARK runtime libs (Unbounded_String, Directories)
 
    -- -----------------------------------------------------------------
    --  Run Record (in-memory representation of a CSV row)

@@ -14,6 +14,7 @@ with StellarOrion_Physics;          use StellarOrion_Physics;
 
 package body StellarOrion_Optimization is
    pragma SPARK_Mode (Off);
+   --  extern: Elementary_Functions + Text_IO are non-SPARK runtime libraries
 
    --  Float'Round is for fixed-point only; use manual rounding for Float.
    function To_Int (V : Float) return Integer is

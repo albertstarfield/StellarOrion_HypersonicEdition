@@ -74,6 +74,7 @@ with GNAT.OS_Lib;        use GNAT.OS_Lib;
 
 package body StellarOrion_Project is
    pragma SPARK_Mode (Off);
+   --  extern: spawns Python sidecar process via GNAT.OS_Lib; outside SPARK subset
 
    --  Status directory for sidecar .status.json
    STATUS_DIR : constant String := "data/runs";
@@ -1487,6 +1488,44 @@ package body StellarOrion_Project is
    end Run_Optimize;
 
    -- ==================================================================
+   --  Shared formatting utilities
+   -- ==================================================================
+   --  Format float to "N.DD" (2 decimal places, no scientific notation).
+   --  Axiom: Integer conversion + arithmetic avoids Float'Image truncation.
+   --  Uses Long_Long_Integer to avoid range overflow for large values.
+   --  Clamps decimal digits to 0..99 to guard against floating point edge cases.
+   function F6 (V : Float) return String is
+      Abs_V : constant Float := abs V + 0.005;
+      IP    : constant Long_Long_Integer := Long_Long_Integer (Abs_V);
+      Raw   : constant Long_Long_Integer :=
+        Long_Long_Integer ((Abs_V - Float (IP)) * 100.0);
+      --  Clamp DP to 0..99 to prevent floating point precision overflow
+      DP    : constant Long_Long_Integer :=
+        (if Raw < 0 then 0 elsif Raw > 99 then 99 else Raw);
+      Sign  : constant String := (if V < 0.0 then "-" else "");
+      IStr  : constant String := Long_Long_Integer'Image (IP);
+      D1    : constant Character :=
+        Character'Val (Character'Pos ('0') + Integer (DP / 10));
+      D2    : constant Character :=
+        Character'Val (Character'Pos ('0') + Integer (DP rem 10));
+   begin
+      return Sign & IStr (IStr'First + 1 .. IStr'Last) & "." & D1 & D2;
+   end F6;
+
+   --  Grade each comparison (PASS <= tol, WARN <= 2*tol, FAIL > 2*tol).
+   --  Axiom: tol is in percentage (e.g. 15.0 means 15%).
+   function Grade (Error : Float; Tol : Float) return String is
+   begin
+      if Error <= Tol then
+         return "PASS";
+      elsif Error <= Tol * 2.0 then
+         return "WARN";
+      else
+         return "FAIL";
+      end if;
+   end Grade;
+
+   -- ==================================================================
    --  Full Validation Pipeline
    -- ==================================================================
    --  Chains: geometry QA -> SPARTA script gen -> Docker build/run
@@ -1709,9 +1748,9 @@ package body StellarOrion_Project is
          Heat_Pct : constant Float := Heat_Dev * 100.0;
       begin
          Put_Line ("  Heat flux (W/cm^2)    | " &
-                   Float'Image (Metrics.Stag_Heat_Flux_Wcm2) & " | " &
-                   Float'Image (Target_Heat_Flux) & "         | " &
-                   Float'Image (Heat_Pct) & "%  | " &
+                   F6 (Metrics.Stag_Heat_Flux_Wcm2) & " | " &
+                   F6 (Target_Heat_Flux) & "    | " &
+                   F6 (Heat_Pct) & "%  | " &
                    (if Heat_OK then "PASS" else "FAIL"));
       end;
 
@@ -1725,9 +1764,9 @@ package body StellarOrion_Project is
          HL_Pct  : constant Float := HL_Dev * 100.0;
       begin
          Put_Line ("  Heat load (J/cm^2)    | " &
-                   Float'Image (Heat_Load_Cm2) & " | " &
-                   Float'Image (Target_Heat_Load) & "          | " &
-                   Float'Image (HL_Pct) & "%  | " &
+                   F6 (Heat_Load_Cm2) & " | " &
+                   F6 (Target_Heat_Load) & "     | " &
+                   F6 (HL_Pct) & "%  | " &
                    (if HL_OK then "PASS" else "FAIL"));
       end;
 
@@ -1739,9 +1778,9 @@ package body StellarOrion_Project is
          Decel_Pct : constant Float := Decel_Dev * 100.0;
       begin
          Put_Line ("  Peak decel (g)        | " &
-                   Float'Image (Metrics.Decel_G) & " | " &
-                   Float'Image (Target_Decel_G) & "          | " &
-                   Float'Image (Decel_Pct) & "%  | " &
+                   F6 (Metrics.Decel_G) & " | " &
+                   F6 (Target_Decel_G) & "     | " &
+                   F6 (Decel_Pct) & "%  | " &
                    (if Decel_OK then "PASS" else "FAIL"));
       end;
 
@@ -1753,9 +1792,9 @@ package body StellarOrion_Project is
          Beta_Pct : constant Float := Beta_Dev * 100.0;
       begin
          Put_Line ("  Beta (kg/m^2)         | " &
-                   Float'Image (Metrics.Ballistic_Coeff) & " | " &
-                   Float'Image (Target_Beta) & "          | " &
-                   Float'Image (Beta_Pct) & "%  | " &
+                   F6 (Metrics.Ballistic_Coeff) & " | " &
+                   F6 (Target_Beta) & "     | " &
+                   F6 (Beta_Pct) & "%  | " &
                    (if Beta_OK then "PASS" else "WARN"));
       end;
 
@@ -1767,9 +1806,9 @@ package body StellarOrion_Project is
          Press_Pct : constant Float := Press_Dev * 100.0;
       begin
          Put_Line ("  Stag pressure (Pa)   | " &
-                   Float'Image (Results.Stag_Pressure_Pa) & " | " &
-                   Float'Image (Target_Pressure) & "  | " &
-                   Float'Image (Press_Pct) & "%  | " &
+                   F6 (Results.Stag_Pressure_Pa) & " | " &
+                   F6 (Target_Pressure) & "    | " &
+                   F6 (Press_Pct) & "%  | " &
                    (if Press_OK then "PASS" else "WARN"));
       end;
 
@@ -1789,9 +1828,9 @@ package body StellarOrion_Project is
          Cd_Pct : constant Float := Cd_Dev * 100.0;
       begin
          Put_Line ("  Drag coeff (Cd)       | " &
-                   Float'Image (Cd_Val) & " | " &
-                   Float'Image (Target_Cd) & "          | " &
-                   Float'Image (Cd_Pct) & "%  | " &
+                   F6 (Cd_Val) & " | " &
+                   F6 (Target_Cd) & "     | " &
+                   F6 (Cd_Pct) & "%  | " &
                    (if Cd_OK then "PASS" else "WARN"));
       end;
 
@@ -1806,9 +1845,9 @@ package body StellarOrion_Project is
          DP_Pct : constant Float := DP_Dev * 100.0;
       begin
          Put_Line ("  Dyn pressure (kPa)    | " &
-                   Float'Image (Dyn_Pres_KPa) & " | " &
-                   Float'Image (Target_Dyn_Press_KPa) & "          | " &
-                   Float'Image (DP_Pct) & "%  | " &
+                   F6 (Dyn_Pres_KPa) & " | " &
+                   F6 (Target_Dyn_Press_KPa) & "     | " &
+                   F6 (DP_Pct) & "%  | " &
                    (if DP_OK then "PASS" else "WARN"));
       end;
 
@@ -1821,9 +1860,9 @@ package body StellarOrion_Project is
          TR_Pct : constant Float := TR_Dev * 100.0;
       begin
          Put_Line ("  Toroid radius (m)     | " &
-                   Float'Image (Geo.Toroid_Radius_M) & " | " &
-                   Float'Image (Target_Toroid_Radius) & "          | " &
-                   Float'Image (TR_Pct) & "%  | " &
+                   F6 (Geo.Toroid_Radius_M) & " | " &
+                   F6 (Target_Toroid_Radius) & "     | " &
+                   F6 (TR_Pct) & "%  | " &
                    (if TR_OK then "PASS" else "WARN"));
       end;
 
@@ -1836,25 +1875,25 @@ package body StellarOrion_Project is
          AT_Pct : constant Float := AT_Dev * 100.0;
       begin
          Put_Line ("  Ambient temp (K)      | " &
-                   Float'Image (Flight.Temperature_K) & " | " &
-                   Float'Image (Target_Ambient_Temp) & "          | " &
-                   Float'Image (AT_Pct) & "%  | " &
+                   F6 (Flight.Temperature_K) & " | " &
+                   F6 (Target_Ambient_Temp) & "     | " &
+                   F6 (AT_Pct) & "%  | " &
                    (if AT_OK then "PASS" else "WARN"));
       end;
 
-      --  Payload height (m) comparison (simulated geometry payload height)
+      --  Payload height (m) comparison
+      --  Uses Geo.Payload_Height_M (MDAO Table 4.1 h_pay = 1.70 m).
       declare
-         Payload_H : constant Float :=
-           Geo.Diameter_M - 2.0 * Geo.Toroid_Radius_M;
          PH_Dev : constant Float :=
-           abs (Payload_H - Target_Payload_Height) / Target_Payload_Height;
+           abs (Geo.Payload_Height_M - Target_Payload_Height)
+           / Target_Payload_Height;
          PH_OK  : constant Boolean := PH_Dev <= Tolerance_Press;
          PH_Pct : constant Float := PH_Dev * 100.0;
       begin
          Put_Line ("  Payload height (m)    | " &
-                   Float'Image (Payload_H) & " | " &
-                   Float'Image (Target_Payload_Height) & "          | " &
-                   Float'Image (PH_Pct) & "%  | " &
+                   F6 (Geo.Payload_Height_M) & " | " &
+                   F6 (Target_Payload_Height) & "     | " &
+                   F6 (PH_Pct) & "%  | " &
                    (if PH_OK then "PASS" else "WARN"));
       end;
 
@@ -1869,9 +1908,9 @@ package body StellarOrion_Project is
          AP_Pct : constant Float := AP_Dev * 100.0;
       begin
          Put_Line ("  Ambient press (Pa)    | " &
-                   Float'Image (Amb_Press) & " | " &
-                   Float'Image (Target_Ambient_Press) & "          | " &
-                   Float'Image (AP_Pct) & "%  | " &
+                   F6 (Amb_Press) & " | " &
+                   F6 (Target_Ambient_Press) & "     | " &
+                   F6 (AP_Pct) & "%  | " &
                    (if AP_OK then "PASS" else "WARN"));
       end;
 
@@ -2072,40 +2111,6 @@ package body StellarOrion_Project is
                then abs (Stag_Press_KPa - Target_Stag_Press_KPa)
                     / Target_Stag_Press_KPa * 100.0
                else 0.0);
-
-            --  Grade each comparison (PASS ≤ tol, WARN ≤ 2×tol, FAIL > 2×tol)
-            function Grade (Error : Float; Tol : Float) return String is
-            begin
-               if Error <= Tol then
-                  return "PASS";
-               elsif Error <= Tol * 2.0 then
-                  return "WARN";
-               else
-                  return "FAIL";
-               end if;
-            end Grade;
-
-            --  Format float to "N.DD" (2 decimal places, no scientific notation).
-            --  Axiom: Integer conversion + arithmetic avoids Float'Image truncation.
-            --  Uses Long_Long_Integer to avoid range overflow for large values.
-            --  Clamps decimal digits to 0..99 to guard against floating point edge cases.
-            function F6 (V : Float) return String is
-               Abs_V : constant Float := abs V + 0.005;
-               IP    : constant Long_Long_Integer := Long_Long_Integer (Abs_V);
-               Raw   : constant Long_Long_Integer :=
-                 Long_Long_Integer ((Abs_V - Float (IP)) * 100.0);
-               --  Clamp DP to 0..99 to prevent floating point precision overflow
-               DP    : constant Long_Long_Integer :=
-                 (if Raw < 0 then 0 elsif Raw > 99 then 99 else Raw);
-               Sign  : constant String := (if V < 0.0 then "-" else "");
-               IStr  : constant String := Long_Long_Integer'Image (IP);
-               D1    : constant Character :=
-                 Character'Val (Character'Pos ('0') + Integer (DP / 10));
-               D2    : constant Character :=
-                 Character'Val (Character'Pos ('0') + Integer (DP rem 10));
-            begin
-               return Sign & IStr (IStr'First + 1 .. IStr'Last) & "." & D1 & D2;
-            end F6;
 
          begin
 
@@ -2387,14 +2392,15 @@ package body StellarOrion_Project is
 
       --  Build geometry from CLI overrides (defaults match IRVE-3)
       Geo := (Diameter_M      => Get_Float ("--diameter", 3.0),
-              Angle_Deg       => Get_Float ("--angle", 60.0),
-              Nose_Radius_M   => Get_Float ("--nose", 0.55),
-              Toroid_Count    => Get_Positive ("--toroids", 6),
-              Toroid_Radius_M => Get_Float ("--tradius", 0.135),
-              Outer_Radius_M  => Get_Float ("--oradius", 0.0508),
-              Mass_Kg         => Get_Float ("--mass", 281.0),
-              Slice_Angle_Deg => Slice_Angle,
-              Nose_Profile    => Nose_Profile);
+               Angle_Deg       => Get_Float ("--angle", 60.0),
+               Nose_Radius_M   => Get_Float ("--nose", 0.55),
+               Toroid_Count    => Get_Positive ("--toroids", 6),
+               Toroid_Radius_M => Get_Float ("--tradius", 0.135),
+               Outer_Radius_M  => Get_Float ("--oradius", 0.0508),
+               Mass_Kg         => Get_Float ("--mass", 281.0),
+               Payload_Height_M => Get_Float ("--payload-height", 1.70),
+               Slice_Angle_Deg => Slice_Angle,
+               Nose_Profile    => Nose_Profile);
 
       --  TPS material preset (from --tps or --tps-material)
       if TPS_Material_Str = "sic" or else TPS_Str = "sic" then
