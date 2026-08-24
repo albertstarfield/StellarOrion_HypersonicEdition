@@ -18,24 +18,41 @@ package StellarOrion_Physics is
    --  Mean free path [m].
    --  lambda = 1 / (sqrt(2) * pi * d^2 * n)
    --  Source: Bird 1994, Eq. (1.32)
-   --  Physical constraint: number density and molecular diameter must be
-   --  positive for the formula to be meaningful (non-colliding gas at
-   --  zero density has infinite mean free path).
+   --
+   --  AXIOMS (physical envelope, IEEE-754 single precision safe):
+   --    AXIOM A1: number density n in [5e13, 1e30] m^-3
+   --      (thermosphere at 500 km ~3e14; floor keeps lambda bounded).
+   --    AXIOM A2: molecular diameter d in [1e-10, 1e-6] m
+   --      (air ~3.7e-10; helium 2.6e-10; large organics ~1e-9).
+   --  OVERFLOW PROOF: denom = sqrt(2)*pi*d^2*n in [2.2e-6, 4.5e18]
+   --    => lambda <= 4.5e8 << Float'Last = 3.4028235e38.
+   --  POST BOUND: lambda <= 1e9 discharges Knudsen_Number's Pre at the
+   --    sole call site (Calculate_Flight_Metrics).
    function Mean_Free_Path
      (Number_Density : Float;
       Mol_Diameter   : Float) return Float
-     with Pre  => Number_Density > 0.0 and Mol_Diameter > 0.0,
-          Post => Mean_Free_Path'Result >= 0.0;
+     with Pre  => Number_Density >= 5.0e13
+                   and Number_Density <= 1.0e30
+                   and Mol_Diameter >= 1.0e-10
+                   and Mol_Diameter <= 1.0e-6,
+          Post => Mean_Free_Path'Result >= 0.0
+                   and Mean_Free_Path'Result <= 1.0e9;
 
    --  Knudsen number (dimensionless).
    --  Kn = lambda / L
    --  Source: Bird 1994, Sec. 1.4
-   --  MFP is non-negative (physical mean free path); Char_Length must
-   --  be positive (characteristic length of the body, e.g. diameter).
+   --
+   --  AXIOMS (physical envelope):
+   --    AXIOM K1: MFP in [0, 1e9] m (discharged by Mean_Free_Path's Post
+   --      at the sole call site; interplanetary limit ~4.5e8 m).
+   --    AXIOM K2: Char_Length >= 1e-3 m (vehicle scale, millimetre floor).
+   --  OVERFLOW PROOF: Kn <= 1e9 / 1e-3 = 1e12 << Float'Last.
    function Knudsen_Number
      (MFP         : Float;
       Char_Length : Float) return Float
-     with Pre  => MFP >= 0.0 and Char_Length > 0.0,
+     with Pre  => MFP >= 0.0
+                   and MFP <= 1.0e9
+                   and Char_Length >= 1.0e-3,
           Post => Knudsen_Number'Result >= 0.0;
 
    -- -----------------------------------------------------------------
@@ -44,23 +61,44 @@ package StellarOrion_Physics is
 
    --  Dynamic pressure [Pa].
    --  q = 0.5 * rho * V^2
-   --  Density and velocity are non-negative physical quantities.
+   --
+   --  AXIOMS (physical envelope):
+   --    AXIOM Q1: rho in [0, 1e4] kg/m^3 (Venus surface ~65; 1e4 margin).
+   --    AXIOM Q2: V in [0, 1e5] m/s (Earth escape 11.2e3; solar-system
+   --      entry worst case ~7e4; 1e5 margin).
+   --  OVERFLOW PROOF: q <= 0.5 * 1e4 * (1e5)^2 = 5.0e13 << Float'Last.
    function Dynamic_Pressure
      (Density  : Float;
       Velocity : Float) return Float
-     with Pre  => Density >= 0.0 and Velocity >= 0.0,
+     with Pre  => Density >= 0.0
+                   and Density <= 1.0e4
+                   and Velocity >= 0.0
+                   and Velocity <= 1.0e5,
           Post => Dynamic_Pressure'Result >= 0.0;
 
    --  Ballistic coefficient [kg/m^2].
    --  beta = m * q / F_drag
-   --  Mass, dynamic pressure, and drag force must be positive for a
-   --  physically meaningful ballistic coefficient (non-zero drag needed).
+   --
+   --  AXIOMS (physical envelope):
+   --    AXIOM B1: m in (0, 1e7] kg (largest launch vehicles ~1e6).
+   --    AXIOM B2: q in [0, 1e6] Pa (peak reentry ~1e5 Pa).
+   --    AXIOM B3: F_drag in [1e-6, 1e9] N (floor avoids division blowup;
+   --      peak HIAD drag ~1e6-1e7 N).
+   --  OVERFLOW PROOF: m*q <= 1e13; /F_drag >= 1e-6 => beta <= 1e19.
+   --  NOTE: Post relaxed to >= 0.0: q = 0 (V = 0) legitimately gives
+   --    beta = 0. The former Post "> 0.0" was a spec defect found by
+   --    gnatprove (contradicted Pre for Dyn_Pressure = 0).
    function Ballistic_Coefficient
      (Mass       : Float;
       Dyn_Pressure : Float;
       Drag_Force : Float) return Float
-     with Pre  => Mass > 0.0 and Dyn_Pressure >= 0.0 and Drag_Force > 0.0,
-          Post => Ballistic_Coefficient'Result > 0.0;
+     with Pre  => Mass > 0.0
+                   and Mass <= 1.0e7
+                   and Dyn_Pressure >= 0.0
+                   and Dyn_Pressure <= 1.0e6
+                   and Drag_Force >= 1.0e-6
+                   and Drag_Force <= 1.0e9,
+          Post => Ballistic_Coefficient'Result >= 0.0;
 
    -- -----------------------------------------------------------------
    --  Aerothermodynamics
@@ -69,57 +107,99 @@ package StellarOrion_Physics is
    --  Sutton-Graves stagnation-point convective heat flux [W/m^2].
    --  q_stag = C_sg * sqrt(rho / R_n) * V^3
    --  Source: NASA TR R-376 (Sutton & Graves, 1972)
-   --  Density must be non-negative; nose radius and velocity positive
-   --  for the square-root and cubic terms to be physically meaningful.
+   --  C_SG = 1.7415e-4 (Earth, SI units; from StellarOrion_Types).
+   --
+   --  AXIOMS (physical envelope):
+   --    AXIOM S1: rho in (0, 1e4] kg/m^3.
+   --    AXIOM S2: R_n in [1e-4, 100] m (sounding probes ~1 cm to HIAD).
+   --    AXIOM S3: V in [0, 1e5] m/s (as Dynamic_Pressure).
+   --  OVERFLOW PROOF: rho/R_n <= 1e8; sqrt <= 1e4; C_sg*sqrt <= 1.75;
+   --    V^3 <= 1e15 => q_stag <= 1.75e15 << Float'Last.
    function Sutton_Graves_Heat
      (Density    : Float;
       Nose_Radius : Float;
       Velocity   : Float) return Float
-     with Pre  => Density >= 0.0 and Nose_Radius > 0.0 and Velocity >= 0.0,
+     with Pre  => Density >= 0.0
+                   and Density <= 1.0e4
+                   and Nose_Radius >= 1.0e-4
+                   and Nose_Radius <= 100.0
+                   and Velocity >= 0.0
+                   and Velocity <= 1.0e5,
           Post => Sutton_Graves_Heat'Result >= 0.0;
 
    --  Radiative equilibrium surface temperature [K].
    --  T = (q / (sigma * epsilon))^(1/4)
    --  Source: Stefan-Boltzmann law
-   --  Heat flux must be non-negative; emissivity must be positive
-   --  (zero emissivity is a black-body singularity).
+   --  sigma = 5.670374419e-8 W/(m^2 K^4); eps in [1e-3, 1] covers all
+   --  real TPS coatings (typically 0.05 .. 0.95).
+   --
+   --  AXIOMS (physical envelope):
+   --    AXIOM R1: q in [0, 1e9] W/m^2 (IRVE-3 peak ~1.44e6; 1e9 is
+   --      extreme margin beyond aerocapture at giant planets).
+   --    AXIOM R2: eps in [1e-3, 1].
+   --  OVERFLOW PROOF: denom >= 5.67e-11; ratio <= 1.77e19 << Float'Last;
+   --    double sqrt yields T <= 6.6e4 K.
    function Radiative_Eq_Temp
      (Heat_Flux  : Float;
       Emissivity : Float) return Float
-     with Pre  => Heat_Flux >= 0.0 and Emissivity > 0.0,
+     with Pre  => Heat_Flux >= 0.0
+                   and Heat_Flux <= 1.0e9
+                   and Emissivity >= 1.0e-3
+                   and Emissivity <= 1.0,
           Post => Radiative_Eq_Temp'Result >= 0.0;
 
    --  1-D transient backface temperature [K].
    --  T_back = T_init + (q * dt * eta_lag) / (rho_TPS * Cp * delta)
    --  Source: Anderson 2006; Rapisarda 2023 Sec 5.5
-   --  eta_lag (thermal lag efficiency) typically ~0.15
-   --  All TPS properties must be positive; heat flux and duration
-   --  non-negative for a physically meaningful backface estimate.
+   --
+   --  AXIOMS (physical envelope):
+   --    AXIOM T1: T_init in [0, 3000] K (soak-back ceiling of stack).
+   --    AXIOM T2: q in [0, 1e9] W/m^2; dt in [0, 1e4] s (2.8 h pulse);
+   --      eta_lag in (0, 1].
+   --    AXIOM T3: rho_TPS in [10, 1e4] kg/m^3 (aerogel ~10; C-C ~1600);
+   --      Cp in [100, 1e4] J/(kg K); thickness in [1e-4, 1] m.
+   --  OVERFLOW PROOF: capacitance in [0.1, 1e8]; numerator <= 1e13;
+   --    ratio <= 1e14; T_back <= 3000 + 1e14 << Float'Last.
    function Backface_Temperature
      (Init_Temp    : Float;
-      Heat_Flux    : Float;
-      Duration     : Float;
-      Thermal_Lag  : Float;
-      TPS_Density  : Float;
-      TPS_Cp       : Float;
-      TPS_Thickness : Float) return Float
+       Heat_Flux    : Float;
+       Duration     : Float;
+       Thermal_Lag  : Float;
+       TPS_Density  : Float;
+       TPS_Cp       : Float;
+       TPS_Thickness : Float) return Float
      with Pre  => Init_Temp >= 0.0
-                  and Heat_Flux >= 0.0
-                  and Duration >= 0.0
-                  and Thermal_Lag > 0.0
-                  and TPS_Density > 0.0
-                  and TPS_Cp > 0.0
-                  and TPS_Thickness > 0.0,
-          Post => Backface_Temperature'Result >= 0.0;
+                   and Init_Temp <= 3000.0
+                   and Heat_Flux >= 0.0
+                   and Heat_Flux <= 1.0e9
+                   and Duration >= 0.0
+                   and Duration <= 1.0e4
+                   and Thermal_Lag > 0.0
+                   and Thermal_Lag <= 1.0
+                   and TPS_Density >= 10.0
+                   and TPS_Density <= 1.0e4
+                   and TPS_Cp >= 100.0
+                   and TPS_Cp <= 1.0e4
+                   and TPS_Thickness >= 1.0e-4
+                   and TPS_Thickness <= 1.0,
+           Post => Backface_Temperature'Result >= 0.0;
 
    --  Deceleration in Earth g's.
    --  n = F_drag / (m * g0)
-   --  Drag force is non-negative; mass must be positive to avoid
-   --  division by zero and produce a meaningful g-load.
+   --  g0 = 9.80665 m/s^2.
+   --
+   --  AXIOMS (physical envelope):
+   --    AXIOM D1: F_drag in [0, 1e9] N.
+   --    AXIOM D2: m in [1e-3, 1e7] kg (gram-scale probe to super-heavy).
+   --  OVERFLOW PROOF: m*g0 in [9.81e-3, 9.81e7];
+   --    n <= 1e9 / 9.81e-3 = 1.02e11 << Float'Last.
    function Deceleration_G_Load
      (Drag_Force : Float;
       Mass       : Float) return Float
-     with Pre  => Drag_Force >= 0.0 and Mass > 0.0,
+     with Pre  => Drag_Force >= 0.0
+                   and Drag_Force <= 1.0e9
+                   and Mass >= 1.0e-3
+                   and Mass <= 1.0e7,
           Post => Deceleration_G_Load'Result >= 0.0;
 
    -- -----------------------------------------------------------------
@@ -128,10 +208,14 @@ package StellarOrion_Physics is
 
    --  Mass density from number density [kg/m^3].
    --  rho = n * M_air / N_A
-   --  Number density must be non-negative for a physical density.
+   --  M_air = 28.97e-3 kg/mol; N_A = 6.02214076e23 /mol.
+   --
+   --  AXIOMS (physical envelope): same n range as Mean_Free_Path (A1).
+   --  OVERFLOW PROOF: n*M_air <= 2.9e28; /N_A <= 4.8e4 << Float'Last.
    function Density_From_Number
      (N_Number : Float) return Float
-     with Pre  => N_Number >= 0.0,
+     with Pre  => N_Number >= 0.0
+                   and N_Number <= 1.0e30,
           Post => Density_From_Number'Result >= 0.0;
 
    -- -----------------------------------------------------------------
