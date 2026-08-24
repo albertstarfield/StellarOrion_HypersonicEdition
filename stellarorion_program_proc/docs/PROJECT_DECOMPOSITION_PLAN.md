@@ -48,9 +48,15 @@ Each stage is an independent commit; gates re-run after every stage.
    Gates: build zero-warnings, self-test 15/15, harness 29/29,
    gnatprove 383/383 (unchanged — moved code is Off), SabotageVerifier
    CLEAN, `--validate-only` dispatch smoke PASS.
-3. **`StellarOrion_Self_Test`** (~477 lines, L397–873): the whole
-   `Run_Self_Test` including Tests 14/15 (parity/watchdog wiring). Pure move;
-   banner text and PASS counting unchanged.
+3. **`StellarOrion_Self_Test`** ✅ DONE (2026-08-25): `Run_Self_Test`
+   (476 lines, Tests 1-15 incl. parity/watchdog wiring) extracted
+   verbatim to `stellarorion_self_test.ads/.adb` (SPARK_Mode Off with
+   extern justification; STATUS_DIR local copy documented in-source).
+   project.adb 2708→2236 lines; unused with/use pairs for Geometry,
+   Atomic_Parity, Dual_Watchdog removed from project.adb (self-test was
+   their only consumer). Proof skeleton added. Gates: build
+   zero-warnings, self-test 15/15, harness 29/29, gnatprove 383/383,
+   SabotageVerifier CLEAN, `--validate-only` smoke PASS.
 4. **`StellarOrion_Test_Modes`**: all `Run_Test_*` / `Run_GetIRVE3_Baseline` /
    `Run_CompareNoses` / `Run_Demo` / `Run_Validate_Only` /
    `Run_Test_Sparta_Integration` etc. — the sidecar-spawn surface documented
