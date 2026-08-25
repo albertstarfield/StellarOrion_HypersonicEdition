@@ -73,6 +73,15 @@ Each stage is an independent commit; gates re-run after every stage.
    Proof skeleton added. Gates: build zero-warnings, self-test 15/15,
    harness 29/29, gnatprove 383/383, SabotageVerifier CLEAN,
    `--validate-only` smoke PASS.
+5. **`StellarOrion_Reports`** ✅ DONE (2026-08-25): `Run_Compare_Calibrate`
+   (264 lines incl. banner comments) and `Run_GridIndep_Sparta` (42 lines)
+   extracted verbatim to `stellarorion_reports.ads/.adb` (SPARK_Mode Off with
+   extern justification; consumes Test_Modes' exported F6/Grade/
+   Run_Validate_Full). project.adb 1240→908 lines; now-unused Physics and
+   Ada.Numerics with/use pairs removed from project.adb. Proof skeleton
+   added. Context-clause split lesson applied: spec carries only Types
+   (signature types); Text_IO/Numerics/Environment/Physics/Test_Modes live
+   in body (spec-side extras trigger -gnatwu).
 6. **Remainder**: `Main_Program` keeps only argument interpretation +
    dispatch; target < 300 lines.
 
