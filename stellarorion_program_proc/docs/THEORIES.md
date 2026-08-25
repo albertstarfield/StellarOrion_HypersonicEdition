@@ -4,7 +4,7 @@
 > `docs/AXIOMS.md`). Each theory is a proof obligation that GNATprove
 > discharges at `--level=4 --report=all --timeout=180` (gate command:
 > `scripts/prove.sh skip --level=4 --report=all --timeout=180`,
-> 339+ checks proved, zero findings).
+> 383 checks proved, zero findings).
 
 ---
 
@@ -18,12 +18,12 @@ as SPARK `Post` conditions that the prover checks:
 
 | Function | Worst-case intermediate | Bound |
 |----------|------------------------|-------|
-| Mean_Free_Path | denom = √2·π·d²·n ∈ [2.2e-6, 4.5e18] | λ ≤ 4.5e8 ≪ Float'Last |
+| Mean_Free_Path | denom = √2·π·d²·n ∈ [2.2e-6, 4.5e18] | λ ≤ 4.5e5 (envelope max; Post 1e9 covers K1 interplanetary ref 4.5e8) ≪ Float'Last |
 | Knudsen_Number | Kn = MFP/Char_Length ≤ 1e9/1e-3 | ≤ 1e12 |
 | Dynamic_Pressure | q = ½ρV² ≤ 0.5·1e4·(1e5)² | ≤ 5.0e13 (Post) |
 | Ballistic_Coefficient | β = m·q/F; worst m·q ≤ 1e21, F ≥ 1e-6 | ≤ 1e27 |
 | Sutton_Graves_Heat | ρ/R_n ≤ 1e8 → √ ≤ 1e4; C_sg√ ≤ 1.75; V³ ≤ 1e15 | ≤ 1.75e15 (clamped to 2.0e15 at call site) |
-| Radiative_Eq_Temp | denominator ≥ 5.67e-11 → ratio ≤ 3.6e25; double √ | T ≤ 4.9e6 K |
+| Radiative_Eq_Temp | denominator ≥ 5.67e-11 → ratio ≤ 3.6e25; double √ | T ≤ 2.45e6 K ((3.6e25)^¼; audit-corrected from earlier factor-2 slip 4.9e6, conservative direction) |
 | Backface_Temperature | numerator ≤ 2e19; thermal capacitance ≥ 0.1 → ratio ≤ 2e20 | |
 | Deceleration_G_Load | n = F/(m·g₀); m·g₀ ∈ [9.81e-3, 9.81e7] | ≤ 1.02e20 |
 | Density_From_Number | n·M_air ≤ 2.9e28; /N_A | ρ ≤ 4.8e4 |
