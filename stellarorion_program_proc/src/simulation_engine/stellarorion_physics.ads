@@ -25,8 +25,12 @@ package StellarOrion_Physics is
    --    AXIOM A2: molecular diameter d in [1e-10, 1e-6] m
    --      (air ~3.7e-10; helium 2.6e-10; large organics ~1e-9).
    --  OVERFLOW PROOF: denom = sqrt(2)*pi*d^2*n in [2.2e-6, 4.5e18]
-   --    => lambda <= 4.5e8 << Float'Last = 3.4028235e38.
-   --  POST BOUND: lambda <= 1e9 discharges Knudsen_Number's Pre at the
+   --    => lambda <= 4.5e5 m at the envelope maximum (theory-audit
+   --    correction: an earlier revision wrote 4.5e8 here, conflating
+   --    the envelope max with the K1 interplanetary reference ~4.5e8;
+   --    both are << Float'Last = 3.4028235e38).
+   --  POST BOUND: lambda <= 1e9 covers the envelope max with >3 decades
+   --    of headroom and discharges Knudsen_Number's Pre at the
    --    sole call site (Calculate_Flight_Metrics).
    function Mean_Free_Path
      (Number_Density : Float;
@@ -163,7 +167,9 @@ package StellarOrion_Physics is
    --      POST BOUND); the former 1e9 ceiling contradicted that chain.
    --    AXIOM R2: eps in [1e-3, 1].
    --  OVERFLOW PROOF: denom >= 5.67e-11; ratio <= 3.6e25 << Float'Last;
-   --    double sqrt yields T <= 4.9e6 K.
+   --    double sqrt yields T <= 2.45e6 K ((3.6e25)^(1/4); theory-audit
+   --    correction: an earlier revision stated 4.9e6 K - a factor-2
+   --    arithmetic slip, conservative direction, bound still valid).
    function Radiative_Eq_Temp
      (Heat_Flux  : Float;
       Emissivity : Float) return Float
