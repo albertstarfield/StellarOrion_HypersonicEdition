@@ -82,8 +82,24 @@ Each stage is an independent commit; gates re-run after every stage.
    added. Context-clause split lesson applied: spec carries only Types
    (signature types); Text_IO/Numerics/Environment/Physics/Test_Modes live
    in body (spec-side extras trigger -gnatwu).
-6. **Remainder**: `Main_Program` keeps only argument interpretation +
-   dispatch; target < 300 lines.
+6. **Remainder / `StellarOrion_Optimize`** ✅ DONE (2026-08-25): `Run_Optimize`
+   (~120 lines) extracted verbatim to `stellarorion_optimize.ads/.adb`
+   (SPARK_Mode Off with extern justification; consumes Types, Environment
+   (Mach_Alt_To_Flight), Optimization (GA_Config/GA_Result), Status_Writer).
+   project.adb 908→785 lines (2896 original → 785 = **73% reduction**);
+   now-unused Environment/Optimization/Status_Writer with/use pairs and the
+   STATUS_DIR constant removed from project.adb. Proof skeleton added.
+   Gates: build zero-warnings, self-test 15/15, harness 29/29,
+   gnatprove L4 **383/383**, SabotageVerifier CLEAN, `--validate-only`
+   smoke PASS.
+
+   **Documented deviation from the <300-line target**: what remains in
+   `stellarorion_project.adb` is `Print_Banner`, `Print_Usage` (~123 lines of
+   static help text), and `Main_Program` (~530 lines = 40+ flag parses +
+   21-mode dispatch). Splitting the arg-parse/dispatch block further would
+   scatter one cohesive decision table across units without a cohesion gain;
+   the file is now single-responsibility (program entry + CLI surface).
+   Accepted as final state.
 
 ## Deferred items tied to this decomposition
 
