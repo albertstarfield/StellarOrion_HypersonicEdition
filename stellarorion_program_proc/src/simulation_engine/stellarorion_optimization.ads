@@ -59,6 +59,9 @@ package StellarOrion_Optimization is
         Post => CCD_Centre'Result >= Param_Min
                 and CCD_Centre'Result <= Param_Max;
 
+   --  Return one CCD axial point: x_c +/- Alpha * (x_max - x_min) / 2,
+   --  where x_c is the centre point (see CCD_Centre).  Positive_Direction
+   --  selects the plus or minus arm.
    function CCD_Axial
      (Param_Min : Float;
       Param_Max : Float;

@@ -19,13 +19,19 @@ package StellarOrion_Test_Modes is
       Geo_In        : Geometry_Parameters := (others => <>);
       TPS_In        : TPS_Material := (others => <>))
    ;
+   --  Analytical grid-factor sweep; prints the validated optimum (0.7)
+   --  without launching any SPARTA runs.
    procedure Run_GridIndep_Test ;
+   --  Quick demo: Mach 10 / 52 km flight with IRVE-3 defaults and
+   --  analytically derived flight metrics.
    procedure Run_Demo ;
+   --  Pre-simulation geometry/TPS QA gates only; no solver is invoked.
    procedure Run_Validate_Only
      (Geo_In : Geometry_Parameters := (others => <>);
       TPS_In : TPS_Material := (others => <>))
    ;
 
+   --  Baseline SPARTA run reproducing the IRVE-3 reference case.
    procedure Run_Test_Baseline
      (Steps      : Positive := 1_000;
       Geo_In     : Geometry_Parameters := (others => <>);
@@ -33,6 +39,7 @@ package StellarOrion_Test_Modes is
       Mach_Override : Float := 0.0;
       Alt_Override  : Float := 0.0)
    ;
+   --  Single SPARTA sample run with the full 11-metric comparison report.
    procedure Run_Test_Sample
      (Steps      : Positive := 1_000;
       Geo_In     : Geometry_Parameters := (others => <>);
@@ -40,18 +47,26 @@ package StellarOrion_Test_Modes is
       Mach_Override : Float := 0.0;
       Alt_Override  : Float := 0.0)
    ;
+   --  Compare-calibrate delegated to the Python DeepXDE PINN sidecar.
    procedure Run_Test_PINN_Calibration (Steps : Positive := 1_000) ;
+   --  End-to-end SPARTA pipeline integration check.
    procedure Run_Test_Sparta_Integration ;
+   --  PyFluent sidecar integration over SSH using the supplied host,
+   --  user, password, and key path.
    procedure Run_Test_PyFluent_Integration
      (SSH_Host : String;
       SSH_User : String;
       SSH_Pass : String;
       SSH_Key  : String)
    ;
+   --  PyAnsys sidecar integration check.
    procedure Run_Test_PyAnsys_Integration ;
+   --  OpenFOAM solver-path integration check.
    procedure Run_Test_OpenFOAM_Integration ;
 
-      procedure Run_Validate_Full
+   --  Full validation pipeline: SPARTA run with explicit grid factor,
+   --  chemistry model, core count/GPU toggle, and output locations.
+   procedure Run_Validate_Full
      (Steps         : Positive;
       Grid_Factor   : Float;
       Chemistry     : Chemistry_Mode;

@@ -27,6 +27,9 @@ package body StellarOrion_Runtime_Guard is
       return "main.lock";
    end Get_Lock_File_Path;
 
+   --  Acquire main.lock for this process: break any existing (stale) lock
+   --  file first, then create a fresh one.  Returns False when the stale
+   --  lock cannot be removed.
    function Check_And_Acquire_Lock return Boolean is
       Lock_File : File_Type;
       Lock_Path : constant String := Get_Lock_File_Path;
@@ -50,6 +53,8 @@ package body StellarOrion_Runtime_Guard is
       return True;
    end Check_And_Acquire_Lock;
 
+   --  Release main.lock by deleting it; a no-op when the lock is absent
+   --  or the delete fails.
    procedure Release_Lock is
       Lock_Path : constant String := Get_Lock_File_Path;
       Success   : Boolean;

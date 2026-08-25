@@ -19,6 +19,8 @@ package StellarOrion_Reports is
       Steps         : Positive := 1_000)
    ;
 
+   --  Grid-independency sweep backed by real SPARTA runs: varies the grid
+   --  factor over the tested range and compares derived metrics per point.
    procedure Run_GridIndep_Sparta
      (Steps         : Positive;
       Chemistry     : Chemistry_Mode;

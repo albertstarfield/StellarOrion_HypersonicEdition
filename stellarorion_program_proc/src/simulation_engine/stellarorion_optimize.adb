@@ -11,6 +11,9 @@ package body StellarOrion_Optimize with SPARK_Mode => Off is
 
    STATUS_DIR : constant String := "data/runs";
 
+   --  Entry point for the SBO optimisation mode (--optimize): configures
+   --  the genetic algorithm against MoP_Fitness, runs it to convergence
+   --  (target beta = IRVE-3's 26.9 kg/m^2), and reports the best geometry.
    procedure Run_Optimize
      (DoE_In     : DoE_Method := LHS;
       Obj_In     : Objective  := Drag_Obj;

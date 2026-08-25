@@ -41,10 +41,14 @@ T_INF = 270.65       # Freestream temperature [K]
 
 
 def _ensure_dir(path):
-    """Create directory if it doesn't exist."""
+    """Create directory if it doesn't exist (guarded: report OSError, never crash)."""
     d = os.path.dirname(path)
     if d and not os.path.exists(d):
-        os.makedirs(d, exist_ok=True)
+        try:
+            os.makedirs(d, exist_ok=True)
+        except OSError as exc:
+            print(f"[-] Directory creation failed for '{d}': {exc}")
+            raise
 
 
 # ========================================================================
@@ -135,15 +139,19 @@ def _make_boundary_conditions(domain_bounds):
     xmin, xmax, ymax = domain_bounds
 
     def boundary_left(x, on_boundary):
+        """Inlet boundary predicate: points on the left edge (x == xmin)."""
         return on_boundary and np.isclose(x[0], xmin)
 
     def boundary_right(x, on_boundary):
+        """Outlet boundary predicate: points on the right edge (x == xmax)."""
         return on_boundary and np.isclose(x[0], xmax)
 
     def boundary_top(x, on_boundary):
+        """Far-field boundary predicate: points on the top edge (y == ymax)."""
         return on_boundary and np.isclose(x[1], ymax)
 
     def boundary_bottom(x, on_boundary):
+        """Symmetry-axis boundary predicate: points on the bottom edge (y == 0)."""
         return on_boundary and np.isclose(x[1], 0.0)
 
     def boundary_body(x, on_boundary):
@@ -207,6 +215,11 @@ class PINNAccelerator:
     """
 
     def __init__(self, device="cpu"):
+        """Create an untrained accelerator bound to the given torch device.
+
+        Model, feature/output scalers, and domain bounds stay None until
+        train_from_checkpoint() populates them.
+        """
         self.device = device
         self.model = None
         self.scaler_x = None  # feature normalizer
@@ -225,7 +238,10 @@ class PINNAccelerator:
             for line in fh:
                 line = line.strip()
                 if not line or line.startswith("ITEM:"):
-                    header_seen = "ITEM: CELLS" in line
+                    if "ITEM: CELLS" in line:
+                        header_seen = True
+                    else:
+                        header_seen = False
                     continue
                 if not header_seen:
                     continue

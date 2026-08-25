@@ -221,7 +221,21 @@ def run_integration_test(host, user, password=None, key_path=None):
     return result
 
 
+def _safe_json_dumps(obj):
+    """Serialize obj to indented JSON; never raises (Murphy's Law fallback)."""
+    try:
+        return json.dumps(obj, indent=2)
+    except (TypeError, ValueError) as exc:
+        print(f"[-] JSON serialization failed: {exc}")
+        return json.dumps({"error": f"serialization failed: {exc}"})
+
+
 def main():
+    """CLI entry point for the remote PyFluent SSH integration sidecar.
+
+    Requires --ssh-host and --ssh-user plus either --ssh-key or --ssh-pass;
+    runs the remote Fluent connectivity check and prints RESULT_JSON output.
+    """
     parser = argparse.ArgumentParser(
         description="StellarOrion PyFluent SSH Integration Test Sidecar"
     )
@@ -248,11 +262,11 @@ def main():
     print(f"[*] Message: {result['message']}")
 
     print("\n[RESULT_JSON]")
-    print(json.dumps(result, indent=2))
+    print(_safe_json_dumps(result))
 
     if result["status"] == "error":
-        sys.exit(1)
-    sys.exit(0)
+        raise SystemExit(1)
+    raise SystemExit(0)
 
 
 if __name__ == "__main__":
