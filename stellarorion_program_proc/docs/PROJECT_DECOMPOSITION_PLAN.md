@@ -57,13 +57,22 @@ Each stage is an independent commit; gates re-run after every stage.
    their only consumer). Proof skeleton added. Gates: build
    zero-warnings, self-test 15/15, harness 29/29, gnatprove 383/383,
    SabotageVerifier CLEAN, `--validate-only` smoke PASS.
-4. **`StellarOrion_Test_Modes`**: all `Run_Test_*` / `Run_GetIRVE3_Baseline` /
-   `Run_CompareNoses` / `Run_Demo` / `Run_Validate_Only` /
-   `Run_Test_Sparta_Integration` etc. — the sidecar-spawn surface documented
-   in PYTHON_SIDECAR_EXCEPTIONS.md §2 concentrates here.
-5. **`StellarOrion_Reports`**: `F6`, `Grade`, and the large
-   `Run_Validate_Full` reporting body (~L1652–2057) plus
-   `Run_Compare_Calibrate`, `Run_GridIndep_Sparta`.
+4. **`StellarOrion_Test_Modes`** ✅ DONE (2026-08-25): all 12 test/demo mode
+   procedures (`Run_GetIRVE3_Baseline`, `Run_CompareNoses`,
+   `Run_GridIndep_Test`, `Run_Demo`, `Run_Validate_Only`, `Run_Test_Baseline`,
+   `Run_Test_Sample`, `Run_Test_PINN_Calibration`, `Run_Test_Sparta_Integration`,
+   `Run_Test_PyFluent_Integration`, `Run_Test_PyAnsys_Integration`,
+   `Run_Test_OpenFOAM_Integration`) plus `Run_Validate_Full` and the exported
+   `F6`/`Grade` formatting helpers extracted verbatim to
+   `stellarorion_test_modes.ads/.adb` (SPARK_Mode Off with extern
+   justification — sidecar-spawn surface per PYTHON_SIDECAR_EXCEPTIONS.md §2).
+   Scope note: `Run_Validate_Full` moved here (not Stage 5) because test modes
+   call it; its forward declaration moved with it. STATUS_DIR local copy
+   documented in-source. project.adb 2236→~1240 lines; unused with/use pairs
+   (Validation, Sparta, Ada.Directories) removed from project.adb.
+   Proof skeleton added. Gates: build zero-warnings, self-test 15/15,
+   harness 29/29, gnatprove 383/383, SabotageVerifier CLEAN,
+   `--validate-only` smoke PASS.
 6. **Remainder**: `Main_Program` keeps only argument interpretation +
    dispatch; target < 300 lines.
 
