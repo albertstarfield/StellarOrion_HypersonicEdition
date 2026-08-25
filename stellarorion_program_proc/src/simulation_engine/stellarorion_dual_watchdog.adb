@@ -26,6 +26,9 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
             Emergency_Latched => False);
    end Initialize;
 
+   --  Liveness signal: refresh watchdog W's Last_Heartbeat to Now and
+   --  restore Healthy, but only from Healthy | Degraded — Failed/Dead
+   --  monitors ignore heartbeats so a dead unit can never resurrect.
    procedure Update_Heartbeat
      (S   : in out System_State;
       W   : Watchdog_ID;
@@ -93,6 +96,9 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       end if;
    end Evaluate;
 
+   --  Mutual supervision: each still-live watchdog flips a Failed partner
+   --  to Recovering and bumps its saturating Recovery_Attempts audit
+   --  counter; both-failed states fall through to Needs_Emergency instead.
    procedure Cross_Check
      (S : in out System_State)
    is
@@ -120,6 +126,9 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       end if;
    end Cross_Check;
 
+   --  Recovery completion: promote watchdog W from Recovering back to
+   --  Healthy and stamp its heartbeat with Now; any other state is left
+   --  untouched (recovery only ever applies to units being repaired).
    procedure Advance_Recovery
      (S   : in out System_State;
       W   : Watchdog_ID;
@@ -140,6 +149,9 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       end case;
    end Advance_Recovery;
 
+   --  Last-resort safe state (Pre: both watchdogs already Failed): drive
+   --  both units to terminal Dead and latch Emergency_Latched so the
+   --  total failure stays visible and cannot be silently cleared.
    procedure Emergency_Safe_State
      (S : in out System_State)
    is
@@ -151,6 +163,9 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       S.Emergency_Latched := True;
    end Emergency_Safe_State;
 
+   --  Escalation predicate: True iff both watchdogs are simultaneously
+   --  Failed, i.e. Cross_Check has no live supervisor left and the caller
+   --  must invoke Emergency_Safe_State.
    function Needs_Emergency (S : System_State) return Boolean is
    begin
       return S.A.Status = Failed and then S.B.Status = Failed;

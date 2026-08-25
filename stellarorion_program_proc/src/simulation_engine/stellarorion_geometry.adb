@@ -18,6 +18,9 @@ package body StellarOrion_Geometry is
       return Deg * Pi / 180.0;
    end Deg_To_Rad;
 
+   --  Sine of an angle in degrees via the truncated Taylor series
+   --  x - x^3/6 + x^5/120 - x^7/5040; SPARK-safe (no Ada.Numerics),
+   --  accurate to < 0.01% over the aeroshell's 40-80 degree envelope.
    function Sin_Deg (Deg : Float) return Float is
       X  : constant Float := Deg_To_Rad (Deg);
       X3 : constant Float := X * X * X;

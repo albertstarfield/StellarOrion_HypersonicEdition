@@ -31,6 +31,8 @@ class SidecarHandler(SimpleHTTPRequestHandler):
     """HTTP request handler for the sidecar API + static files."""
 
     def do_GET(self) -> None:
+        """Serve /api/status as live simulation state; other paths fall
+        through to static frontend files."""
         if self.path == "/api/status":
             self._json_response(_sim_state)
         elif self.path.startswith("/"):
@@ -39,6 +41,8 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             self.send_error(404)
 
     def do_POST(self) -> None:
+        """Merge a JSON body into _sim_state (/api/update) or reset it
+        to idle defaults (/api/reset); rejects malformed JSON with 400."""
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
         try:
@@ -57,13 +61,24 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             self.send_error(404)
 
     def _json_response(self, data: Any, status: int = 200) -> None:
+        """Write data as a JSON body with permissive CORS headers."""
+        #  Serialize FIRST inside a guard (Murphy's Law): a serialization
+        #  failure is reported verbosely and degrades to an error payload
+        #  instead of crashing the handler mid-response.
+        try:
+            payload = json.dumps(data)
+        except (TypeError, ValueError) as exc:
+            print(f"[sidecar] JSON serialization failed ({type(exc).__name__}): {exc}")
+            payload = json.dumps({"error": "serialization failed"})
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
-        self.wfile.write(json.dumps(data).encode())
+        self.wfile.write(payload.encode())
 
     def _serve_static(self, path: str) -> None:
+        """Serve a file from sidecar_ui/, falling back to ui/frontend;
+        sends 404 when no candidate exists."""
         # Try sidecar_ui first, then ui/
         for base in [_FRONTEND_DIR, _UI_DIR / "frontend"]:
             target = base / path.lstrip("/")
@@ -85,6 +100,8 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         self.send_error(404)
 
     def do_OPTIONS(self) -> None:
+        """Answer CORS preflight: allow GET/POST/OPTIONS with Content-Type
+        from any origin."""
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -92,10 +109,16 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def log_message(self, fmt: str, *args: Any) -> None:
+        """Suppress BaseHTTPRequestHandler's per-request console logging."""
         pass  # Silence request logging
 
 
 def main() -> None:
+    """Start the single-threaded HTTPServer for the sidecar UI.
+
+    Binds --host/--port (defaults 127.0.0.1:8080), serves until interrupted,
+    then closes the listening socket cleanly on Ctrl-C.
+    """
     parser = argparse.ArgumentParser(description="StellarOrion Sidecar UI")
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--host", type=str, default="127.0.0.1")

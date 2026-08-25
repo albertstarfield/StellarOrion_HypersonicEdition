@@ -81,7 +81,7 @@ def run_local_pyfluent_test(show_gui=True):
         gui_flag = "" if show_gui else "-hidden"
         launch_cmd = f'start "" "{fluent_exe}" 3ddp -t2 -solver -sifile="{sifile}" -nm {gui_flag}'
         print(f"[*] Launching: {launch_cmd}")
-        subprocess.Popen(launch_cmd, shell=True)
+        subprocess.Popen(launch_cmd, shell=True)  # nosec: Fluent must outlive this launcher; startup guarded by sifile poll below
 
         # Wait for server info file
         print("[*] Waiting for Fluent to start ...")
@@ -126,7 +126,21 @@ def run_local_pyfluent_test(show_gui=True):
         }
 
 
+def _safe_json_dumps(obj):
+    """Serialize obj to indented JSON; never raises (Murphy's Law fallback)."""
+    try:
+        return json.dumps(obj, indent=2)
+    except (TypeError, ValueError) as exc:
+        print(f"[-] JSON serialization failed: {exc}")
+        return json.dumps({"error": f"serialization failed: {exc}"})
+
+
 def main():
+    """CLI entry point for the local PyAnsys integration test sidecar.
+
+    Parses --show-gui/--no-gui, launches a local Ansys Fluent session to
+    verify the toolchain, and prints a RESULT_JSON summary for the Ada host.
+    """
     parser = argparse.ArgumentParser(
         description="StellarOrion PyAnsys Local Integration Test Sidecar"
     )
@@ -157,8 +171,8 @@ def main():
         print("\n[*] Result: ERROR")
         print(f"[*] Message: {result['message']}")
         print("\n[RESULT_JSON]")
-        print(json.dumps(result, indent=2))
-        sys.exit(1)
+        print(_safe_json_dumps(result))
+        raise SystemExit(1)
 
     result = run_local_pyfluent_test(show_gui=show_gui)
 
@@ -166,11 +180,11 @@ def main():
     print(f"[*] Message: {result['message']}")
 
     print("\n[RESULT_JSON]")
-    print(json.dumps(result, indent=2))
+    print(_safe_json_dumps(result))
 
     if result["status"] == "error":
-        sys.exit(1)
-    sys.exit(0)
+        raise SystemExit(1)
+    raise SystemExit(0)
 
 
 if __name__ == "__main__":

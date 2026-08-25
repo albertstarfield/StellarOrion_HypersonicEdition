@@ -63,8 +63,10 @@ def detect_device():
             return "xpu", "Intel XPU (OneAPI)"
         if hasattr(torch, "musa") and torch.musa.is_available():
             return "musa", "Moore Threads MUSA"
-    except ImportError:
-        pass
+    except ImportError as exc:
+        #  VERBOSE fallback (Murphy's Law): torch absent is expected on some
+        #  hosts; report it instead of silently swallowing the import error.
+        print(f"[i] torch import failed ({exc}) - accelerator detection falls back to CPU.")
     return "cpu", "CPU"
 
 
@@ -124,7 +126,10 @@ def _parse_grid_output(grid_file, steps):
         for line in fh:
             line = line.strip()
             if not line or line.startswith("ITEM:"):
-                header_seen = "ITEM: CELLS" in line
+                if "ITEM: CELLS" in line:
+                    header_seen = True
+                else:
+                    header_seen = False
                 continue
             if not header_seen:
                 continue
@@ -280,6 +285,7 @@ def compute_pinn_metrics(pinn, sim_result, baseline_doc, domain):
     mass = baseline_doc["geometry"]["mass_kg"]
 
     def get_err(val, ref):
+        """Relative error of val against ref, in percent (0 when ref <= 0)."""
         return abs(val - ref) / ref * 100 if ref > 0 else 0
 
     return {
@@ -327,6 +333,12 @@ def compute_pinn_metrics(pinn, sim_result, baseline_doc, domain):
 
 
 def main():
+    """CLI entry point for the PINN calibration sidecar.
+
+    Parses --steps/--solver/--skip-diag/--headless/--sparta-gpu/--project-root,
+    locates the project root, then drives the SPARTA baseline + DeepXDE PINN
+    refinement and emits the comparison JSON consumed by the Ada binary.
+    """
     parser = argparse.ArgumentParser(description="StellarOrion PINN Calibration Test Sidecar")
     parser.add_argument("--steps", type=int, default=1500, help="Number of SPARTA simulation steps")
     parser.add_argument("--solver", default="sparta", help="Solver to use (default: sparta)")
@@ -365,7 +377,7 @@ def main():
         print("[-] Baseline validation failed. Exiting.")
         result = {"status": "error", "message": "Baseline validation failed."}
         print(json.dumps(result, indent=2))
-        sys.exit(1)
+        raise SystemExit(1)
 
     print(f"[+] Baseline OK: {sim_result['n_cells']} cells parsed.")
 
@@ -381,7 +393,7 @@ def main():
         print("[-] No grid output files found for PINN training.")
         result = {"status": "error", "message": "No grid files for PINN training."}
         print(json.dumps(result, indent=2))
-        sys.exit(1)
+        raise SystemExit(1)
 
     xmin = float(sim_result.get("domain_xmin", -5.0))
     xmax = float(sim_result.get("domain_xmax", 9.0))
@@ -402,7 +414,7 @@ def main():
         traceback.print_exc()
         result = {"status": "error", "message": f"PINN training failed: {exc}"}
         print(json.dumps(result, indent=2))
-        sys.exit(1)
+        raise SystemExit(1)
 
     # --- Step 3: Extract refined metrics and 3-way comparison ---
     print("\n[Step 3/3] Extracting PINN-refined metrics ...")
@@ -414,7 +426,7 @@ def main():
         traceback.print_exc()
         result = {"status": "error", "message": f"PINN metric extraction failed: {exc}"}
         print(json.dumps(result, indent=2))
-        sys.exit(1)
+        raise SystemExit(1)
 
     # Print comparison table
     comp = final_result["comparison"]

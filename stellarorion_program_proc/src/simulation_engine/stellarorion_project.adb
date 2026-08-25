@@ -93,6 +93,8 @@ package body StellarOrion_Project is
       New_Line;
    end Print_Banner;
 
+   --  Print the full CLI usage text: every supported mode flag with a
+   --  one-line description of what it runs.
    procedure Print_Usage is
    begin
       Put_Line ("Usage: stellarorion_project [OPTIONS]");
@@ -234,7 +236,8 @@ package body StellarOrion_Project is
    --          -> result parse -> flight metrics -> survivability
    --          -> compare against IRVE-3 flight data.
    --
-   --  IRVE-3 flight data targets (NASA/TP-2013-4012, Rapisarda 2023):
+   --  IRVE-3 reference targets: see StellarOrion_Test_Modes provenance note
+   --  (NASA TP-2013-4012 primary; Rapisarda 2023 Table 4.10 cross-ref).
    --  Run_Validate_Full extracted verbatim to StellarOrion_Test_Modes at
    --  Decomposition Stage 4 — see docs/PROJECT_DECOMPOSITION_PLAN.md.
 
@@ -711,6 +714,9 @@ package body StellarOrion_Project is
             Last     : Natural;
             Found    : Boolean := False;
 
+            --  Dump the first REFERENCES.MD found among candidate paths;
+            --  a missing file (Name_Error) is silently skipped so later
+            --  candidates still get tried.
             procedure Try_Open (Path : String) is
             begin
                if not Found then

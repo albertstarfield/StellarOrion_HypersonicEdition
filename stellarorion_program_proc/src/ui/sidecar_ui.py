@@ -45,6 +45,8 @@ class SimulationState:
     """Mutable simulation state protected by a threading lock."""
 
     def __init__(self) -> None:
+        """Create the state holder: one lock plus stopped/idle defaults
+        and the standard IRVE-3 configuration."""
         self._lock = threading.Lock()
         self.status: str = "stopped"
         self.run_name: str = ""
@@ -65,21 +67,27 @@ class SimulationState:
             }
 
     def update(self, **kwargs: Any) -> None:
+        """Thread-safely assign the given keyword arguments onto attributes
+        that already exist (unknown keys are ignored)."""
         with self._lock:
             for k, v in kwargs.items():
                 if hasattr(self, k):
                     setattr(self, k, v)
 
     def get_config(self) -> dict[str, Any]:
+        """Return a shallow copy of the current run configuration."""
         with self._lock:
             return dict(self.config)
 
     def set_config(self, cfg: dict[str, Any]) -> None:
+        """Merge cfg into the stored configuration under the lock."""
         with self._lock:
             self.config.update(cfg)
 
     @staticmethod
     def _default_config() -> dict[str, Any]:
+        """Baseline configuration: IRVE-3 geometry, Mach 10 / 52 km flight,
+        SPARTA solver with five-species chemistry and grid factor 0.7."""
         return {
             "geometry": {
                 "diameter_m": 3.0,
@@ -117,9 +125,17 @@ class SidecarAPI:
     """
 
     def __init__(self, db_dir: str | None = None) -> None:
+        """Wire up fresh SimulationState, default window title, and the
+        runs directory; a malformed db_dir falls back to data/runs."""
         self.state = SimulationState()
         self._title = "StellarOrion HypersonicEdition"
-        self._db_dir = Path(db_dir) if db_dir else Path(__file__).parent.parent.parent / "data" / "runs"
+        #  Guarded construction (Murphy's Law): bad db_dir types/values are
+        #  reported verbosely; we fall back to the default runs directory.
+        try:
+            self._db_dir = Path(db_dir) if db_dir else Path(__file__).parent.parent.parent / "data" / "runs"
+        except (TypeError, OSError) as exc:
+            print(f"[sidecar-ui] Invalid db_dir '{db_dir}' ({exc}); using default data/runs.")
+            self._db_dir = Path(__file__).parent.parent.parent / "data" / "runs"
         self._monitor_thread: threading.Thread | None = None
         self._shutdown_event = threading.Event()
 
@@ -246,6 +262,8 @@ class SidecarHandler(SimpleHTTPRequestHandler):
     api: SidecarAPI  # Injected at server creation
 
     def do_GET(self) -> None:
+        """Route /api/status|results|history|config|title GETs to their
+        handlers; anything else is served from frontend/ static files."""
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path.rstrip("/")
 
@@ -298,6 +316,7 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         self._json_response(data)
 
     def _handle_results(self) -> None:
+        """GET /api/results: latest results and metrics snapshots."""
         snap = self.api.state.snapshot()
         self._json_response({
             "results": snap["results"],
@@ -305,30 +324,37 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         })
 
     def _handle_history(self) -> None:
+        """GET /api/history: list of past runs read from the DB directory."""
         history = self.api.get_history()
         self._json_response({"runs": history})
 
     def _handle_config(self) -> None:
+        """GET /api/config: current simulation configuration."""
         self._json_response(self.api.state.get_config())
 
     def _handle_title(self) -> None:
+        """GET /api/title: current dynamic browser window title."""
         self._json_response({"title": self.api.get_window_title()})
 
     def _handle_start(self, payload: dict[str, Any]) -> None:
+        """POST /api/start: begin a simulation; 409 when it cannot start."""
         result = self.api.start_simulation(payload or None)
         code = 200 if result.get("ok") else 409
         self._json_response(result, code)
 
     def _handle_stop(self) -> None:
+        """POST /api/stop: halt the running simulation; 409 when idle."""
         result = self.api.stop_simulation()
         code = 200 if result.get("ok") else 409
         self._json_response(result, code)
 
     def _handle_set_config(self, payload: dict[str, Any]) -> None:
+        """POST /api/config: merge payload into the stored configuration."""
         self.api.state.set_config(payload)
         self._json_response({"ok": True})
 
     def _handle_set_title(self, payload: dict[str, Any]) -> None:
+        """POST /api/title: set the window title and echo it back."""
         title = payload.get("title", "")
         self.api.set_window_title(title)
         self._json_response({"title": self.api.get_window_title()})
@@ -355,11 +381,16 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             self.send_header("Cache-Control", "no-cache")
             self.end_headers()
             self.wfile.write(data)
-        except OSError:
+        except OSError as exc:
+            #  VERBOSE error path (Murphy's Law): log before the JSON error
+            #  response so the failure is visible in server logs.
+            print(f"[sidecar-ui] Static file read failed for '{file_path}': {exc}")
             self._json_response({"error": "Read error"}, 500)
 
     @staticmethod
     def _guess_content_type(ext: str) -> str:
+        """Map a file extension to its MIME type; unknown extensions get
+        application/octet-stream."""
         mapping = {
             ".html": "text/html; charset=utf-8",
             ".css": "text/css; charset=utf-8",

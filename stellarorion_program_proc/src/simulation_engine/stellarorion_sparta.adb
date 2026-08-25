@@ -36,6 +36,8 @@ package body StellarOrion_Sparta is
       end case;
    end Chem_To_String;
 
+   --  Map a nose-cone kind to its descriptor string in the generated
+   --  SPARTA input script.
    function Nose_To_String (N : Nose_Type_Kind) return String is
    begin
       case N is
@@ -44,6 +46,8 @@ package body StellarOrion_Sparta is
       end case;
    end Nose_To_String;
 
+   --  Float'Image with the leading space GNAT emits for non-negative
+   --  values stripped, so generated scripts stay column-aligned.
    function Img (V : Float) return String is
       S : constant String := Float'Image (V);
    begin
@@ -53,6 +57,7 @@ package body StellarOrion_Sparta is
       return S;
    end Img;
 
+   --  Integer counterpart of Img above.
    function Img (V : Integer) return String is
       S : constant String := Integer'Image (V);
    begin
@@ -62,6 +67,8 @@ package body StellarOrion_Sparta is
       return S;
    end Img;
 
+   --  Square root via 8 fixed Newton iterations starting from X/2;
+   --  returns 0.0 for X <= 0 so callers never see an invalid result.
    function Sqrt (X : Float) return Float is
       Y, Y_New : Float;
    begin
@@ -75,12 +82,15 @@ package body StellarOrion_Sparta is
       return Y;
    end Sqrt;
 
+   --  Branch-based absolute value used when computing geometry deltas.
    function Abs_F (X : Float) return Float is
    begin
       if X < 0.0 then return -X; end if;
       return X;
    end Abs_F;
 
+   --  Binding to C system(3): dispatches shell commands (Docker runs)
+   --  from this otherwise pure-Ada package.
    procedure System (Cmd : String);
    pragma Import (C, System);
 

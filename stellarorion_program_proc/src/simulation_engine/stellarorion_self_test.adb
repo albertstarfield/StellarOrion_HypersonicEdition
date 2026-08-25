@@ -31,6 +31,10 @@ package body StellarOrion_Self_Test is
 
    STATUS_DIR : constant String := "data/runs";
 
+   --  Built-in verification suite (Tests 1-15): exercises geometry,
+   --  physics, environment mapping, LHS/CCD sampling, optimisation cost,
+   --  survivability gating, atomic parity, and dual-watchdog wiring,
+   --  printing PASS/FAIL per test and a final summary count.
    procedure Run_Self_Test is
       T1, T2, T3 : Float;
       Geo   : Geometry_Parameters;

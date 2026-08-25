@@ -120,11 +120,47 @@ package StellarOrion_Physics is
    --  Aerothermodynamics
    -- -----------------------------------------------------------------
 
-   --  Sutton-Graves stagnation-point convective heat flux [W/m^2].
-   --  q_stag = C_sg * sqrt(rho / R_n) * V^3
-   --  Source: NASA TR R-376 (Sutton & Graves, 1972)
-   --  C_SG = 1.7415e-4 (Earth, SI units; from StellarOrion_Types).
-   --
+    --  Sutton-Graves stagnation-point convective heat flux [W/m^2].
+    --  q_stag = C_sg * sqrt(rho / R_n) * V^3
+    --  Source: NASA TR R-376 (Sutton & Graves, 1972)
+    --  C_SG = 1.7415e-4 (Earth, SI units; from StellarOrion_Types).
+    --
+    --  DERIVATION (from Fay-Riddell stagnation-point theory):
+    --    Fay & Riddell (1958), J. Aeronaut. Sci. 25(2), give the
+    --    stagnation-point laminar boundary-layer heat flux
+    --      q_stag ~ k * sqrt(rho_e * mu_e * (du_e/dx)_stag) * h_recovery,
+    --    which, under Le = 1, Pr = 0.71, frozen chemistry and a
+    --    Newtonian stagnation-region velocity gradient
+    --    (du_e/dx ~ (1/R_n)*sqrt(2*(p_e - p_inf)/rho_e)), collapses to
+    --    the engineering form used here:
+    --      q_stag = C_sg * sqrt(rho_inf / R_n) * V^3,   C_sg = 1.7415e-4
+    --    (SI: [W/m^2], rho [kg/m^3], R_n [m], V [m/s]).
+    --    The V^3 scaling follows from kinetic energy flux (rho*V^3)
+    --    times the sqrt(R_n)-dilution of the boundary layer; the
+    --    sqrt(rho) (not linear rho) reflects BL thickening with depth.
+    --
+    --  APPLICABILITY / REGIME OF VALIDITY (audit note, Rapisarda 2023):
+    --    VALID:   continuum, attached blunt-body flow, Knudsen number
+    --             Kn = lambda/L << 0.01, chemically-frozen-or-equilibrium
+    --             air at V <~ 12 km/s (above that, ionization changes the
+    --             effective C_sg).
+    --    INVALID: transition and free-molecular flow (Kn >~ 0.01), where
+    --             boundary-layer theory itself fails. Free-molecular
+    --             heating scales differently (surface-accommodation
+    --             driven; no sqrt(R_n) dilution). The Boltzmann Transport
+    --             Equation (BTE) governs there, NOT Navier-Stokes.
+    --    IN THIS CODEBASE: SPARTA DSMC numerically solves the BTE by
+    --             direct particle simulation (Bird 1994; Plimpton &
+    --             Gallis 2014), so DSMC output is the PRIMARY aerothermal
+    --             physics across all rarefaction levels. This function
+    --             serves ONLY as a conservative engineering envelope /
+    --             reference band: Rapisarda Table 4.10 selected
+    --             Sutton-Graves precisely because it was the ONLY model
+    --             overpredicting BOTH IRVE-3 flight peaks
+    --             (+6.26% flux, +14.81% load). Do NOT treat its absolute
+    --             accuracy as trustworthy at high Kn - use it as an
+    --             upper-bound sanity check against DSMC results.
+    --
    --  AXIOMS (physical envelope):
    --    AXIOM S1: rho in (0, 1e4] kg/m^3.
    --    AXIOM S2: R_n in [1e-4, 100] m (sounding probes ~1 cm to HIAD).

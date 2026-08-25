@@ -344,6 +344,8 @@ package body StellarOrion_Optimization is
                              Alpha  : Float;
                              C1, C2 : out Geometry_Parameters)
    is
+      --  Blend one real-valued gene: sample both children uniformly from
+      --  the BLX-alpha interval around the parents, clamped to [Lo, Hi].
       procedure Blend_Gene (V1, V2, Lo, Hi : Float;
                              OV1, OV2 : out Float) is
          Range_V : Float;
@@ -357,6 +359,8 @@ package body StellarOrion_Optimization is
          OV2 := Clamp (Uniform_Rand (Lo_Bound, Hi_Bound), Lo, Hi);
       end Blend_Gene;
 
+      --  Integer-gene variant of Blend_Gene: blends in Float space, then
+      --  rounds and re-clamps so results stay within [Lo, Hi].
       procedure Blend_Int (V1, V2 : Integer; Lo, Hi : Integer;
                             OV1, OV2 : out Integer) is
          FV1, FV2 : Float;

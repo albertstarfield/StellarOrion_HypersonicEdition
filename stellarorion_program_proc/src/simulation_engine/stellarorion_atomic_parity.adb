@@ -33,6 +33,9 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
       return C;
    end Count_Set_Bits;
 
+   --  Total-parity predicate over one byte: True iff the number of set bits
+   --  in Value has the parity requested by Kind (even count for Even,
+   --  odd count for Odd).  Mirrors the Post'Class expression exactly.
    function Calculate_Parity
      (Value : Interfaces.Unsigned_8;
       Kind  : Parity_Type := Even) return Boolean
@@ -59,12 +62,18 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
       return Acc;
    end Block_Checksum;
 
+   --  Frame integrity gate: returns True only when the transmitted Checksum
+   --  equals a fresh XOR fold of the received Payload, i.e. the frame shows
+   --  no detectable corruption.  Verification is recomputation of the Post.
    function Verify_Input_Parity (Data : Parity_Frame) return Boolean is
    begin
       --  Same expression as the Post: verification is recomputation.
       return Block_Checksum (Data.Payload) = Data.Checksum;
    end Verify_Input_Parity;
 
+   --  Producer-side framing: attach the Block_Checksum of Payload so the
+   --  receiver can Verify_Input_Parity the frame without any hidden
+   --  state; the returned frame always satisfies Verify_Input_Parity.
    function Add_Output_Parity (Payload : Data_Block) return Parity_Frame is
       Result : constant Parity_Frame :=
         (Payload  => Payload,

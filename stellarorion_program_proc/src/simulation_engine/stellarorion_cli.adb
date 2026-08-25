@@ -26,6 +26,9 @@ package body StellarOrion_Cli with SPARK_Mode => On is
       return Default;
    end Get_Option;
 
+   --  Fetch a Float-valued CLI option: parses the text following Flag via
+   --  Float'Value and returns it, or Default when the flag is absent.
+   --  Body is SPARK_Mode => Off because 'Value may raise on malformed input.
    function Get_Float (Flag : String; Default : Float) return Float with
      SPARK_Mode => Off is
       --  Body outside SPARK subset: Float'Value may raise Constraint_Error
@@ -51,6 +54,9 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    function Clamp_Float (V, Lo, Hi : Float) return Float is
       (Float'Min (Float'Max (V, Lo), Hi));
 
+   --  Fetch a Positive-valued CLI option: Positive'Value of the text after
+   --  Flag, or Default when absent; raises Constraint_Error on malformed or
+   --  non-positive values (same contract as Get_Float, SPARK_Mode => Off).
    function Get_Positive (Flag : String; Default : Positive) return Positive with
      SPARK_Mode => Off is
       --  See Get_Float note.

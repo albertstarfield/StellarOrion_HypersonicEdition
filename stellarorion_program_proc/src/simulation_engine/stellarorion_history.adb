@@ -147,6 +147,8 @@ package body StellarOrion_History is
       end case;
    end Solver_To_Str;
 
+   --  Parse a solver name (case-insensitive); any unrecognised string
+   --  falls back to SPARTA, the project's primary DSMC solver.
    function Str_To_Solver (S : String) return Solver_Kind is
       LS : constant String := To_Lower (Trim (S, Both));
    begin
@@ -167,6 +169,8 @@ package body StellarOrion_History is
       end case;
    end Chem_To_Str;
 
+   --  Parse a chemistry mode tag ("5sp", "11sp", "mars", case-insensitive);
+   --  any unrecognised string defaults to the five-species air model.
    function Str_To_Chem (S : String) return Chemistry_Mode is
       LS : constant String := To_Lower (Trim (S, Both));
    begin
@@ -307,6 +311,8 @@ package body StellarOrion_History is
                                   Field_Count : Natural;
                                   Rec         : out Run_Record)
    is
+      --  Field accessors for Populate_Run_Record: fetch field Idx as the
+      --  requested type, returning a neutral default when the row is short.
       function F (Idx : Positive) return Float is
       begin
          if Idx <= Field_Count then
@@ -316,6 +322,7 @@ package body StellarOrion_History is
          end if;
       end F;
 
+      --  Integer accessor: 0 when the row has no such field.
       function I (Idx : Positive) return Integer is
       begin
          if Idx <= Field_Count then
@@ -325,6 +332,7 @@ package body StellarOrion_History is
          end if;
       end I;
 
+      --  Boolean accessor: False when the row has no such field.
       function B (Idx : Positive) return Boolean is
       begin
          if Idx <= Field_Count then
@@ -334,6 +342,7 @@ package body StellarOrion_History is
          end if;
       end B;
 
+      --  String accessor: empty string when the row has no such field.
       function S (Idx : Positive) return String is
       begin
          if Idx <= Field_Count then
@@ -1095,6 +1104,8 @@ package body StellarOrion_History is
          return 0;
    end Run_Count;
 
+   --  Number of data rows in samples.csv; returns 0 when the database is
+   --  not initialised, the file is missing, or any read error occurs.
    function Sample_Count return Natural is
       F    : File_Type;
       Path : constant String :=

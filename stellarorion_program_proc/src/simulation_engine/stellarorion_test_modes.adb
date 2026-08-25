@@ -53,6 +53,9 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       end if;
    end Grade;
 
+   --  Analytical IRVE-3 baseline (--gettheirvebbaseline): Sutton-Graves
+   --  stagnation heating plus Cd=1.47 drag at Mach 10 / 52 km defaults,
+   --  reported through Calculate_Flight_Metrics.
    procedure Run_GetIRVE3_Baseline is
       Flight : constant Flight_Parameters := (others => <>);
       Geo    : constant Geometry_Parameters := (others => <>);
@@ -97,6 +100,9 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Write_Status (STATUS_DIR, "irve3_baseline", Status_Completed, 1.0);
    end Run_GetIRVE3_Baseline;
 
+   --  Nose-cone trade study (--compareNoses): evaluates smooth (R=0.55 m)
+   --  vs pointy (R=0.10 m) noses over identical flight conditions and
+   --  grades each metric with PASS/WARN/FAIL tolerances.
    procedure Run_CompareNoses
      (Mach_Override : Float := 0.0;
       Alt_Override  : Float := 0.0;
@@ -225,6 +231,8 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    end Run_GridIndep_Test;
    pragma Unreferenced (Run_GridIndep_Test);
 
+   --  Quick demonstration run (--demo): Mach 10 / 52 km with IRVE-3
+   --  geometry and SiC TPS defaults, analytical metrics only.
    procedure Run_Demo is
       Flight : Flight_Parameters;
       Geo    : Geometry_Parameters;
@@ -280,6 +288,8 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
                 Boolean'Image (Metrics.Survivable));
    end Run_Demo;
 
+   --  Pre-simulation QA gate (--validate-only): runs Validate_And_Dump on
+   --  the supplied geometry/TPS without starting any solver.
    procedure Run_Validate_Only
      (Geo_In : Geometry_Parameters := (others => <>);
       TPS_In : TPS_Material := (others => <>))
@@ -299,6 +309,8 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       end if;
    end Run_Validate_Only;
 
+   --  Baseline test (--test baseline): full SPARTA pipeline on IRVE-3
+   --  defaults, delegating to Run_Validate_Full with grid factor 0.7.
    procedure Run_Test_Baseline
      (Steps      : Positive := 1_000;
       Geo_In     : Geometry_Parameters := (others => <>);
@@ -327,6 +339,8 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
                          Results_Dir   => "results_test_baseline");
    end Run_Test_Baseline;
 
+   --  Sample test (--test sample): same SPARTA pipeline as baseline but
+   --  writing to results_test_sample for the 11-metric comparison report.
    procedure Run_Test_Sample
      (Steps      : Positive := 1_000;
       Geo_In     : Geometry_Parameters := (others => <>);
@@ -355,6 +369,9 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
                          Results_Dir   => "results_test_sample");
    end Run_Test_Sample;
 
+   --  PINN calibration mode (--compareCalibratePINN): spawns the standalone
+   --  Python sidecar src/python/pinn_test.py, which baselines SPARTA data,
+   --  trains a DeepXDE PINN, and produces a 3-way comparison vs IRVE-3.
    procedure Run_Test_PINN_Calibration (Steps : Positive := 1_000) is
       --  PINN calibration requires DeepXDE + PyTorch (Python-only).
       --  Spawns standalone sidecar: src/python/pinn_test.py which handles:
@@ -404,6 +421,9 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Write_Status (STATUS_DIR, "test_sparta", Status_Completed, 1.0);
    end Run_Test_Sparta_Integration;
 
+   --  Remote PyFluent integration (--test pyfluent): validates SSH options
+   --  and spawns src/python/pyfluent_test.py with key- or password-based
+   --  credentials toward the remote Ansys Fluent host.
    procedure Run_Test_PyFluent_Integration
      (SSH_Host : String;
       SSH_User : String;
@@ -472,6 +492,9 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Write_Status (STATUS_DIR, "test_pyfluent", Status_Completed, 1.0);
    end Run_Test_PyFluent_Integration;
 
+   --  Local PyAnsys integration (--test pyansys): spawns the standalone
+   --  src/python/pyansys_test.py sidecar; requires Windows with Ansys
+   --  Fluent installed locally.
    procedure Run_Test_PyAnsys_Integration is
       Success : Boolean;
    begin
@@ -497,6 +520,9 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Write_Status (STATUS_DIR, "test_pyansys", Status_Completed, 1.0);
    end Run_Test_PyAnsys_Integration;
 
+   --  OpenFOAM integration (--test openfoam): builds a minimal blockMesh
+   --  case under scratch/openfoam_test and runs blockMesh inside the
+   --  openfoam-hysp Docker container to verify the toolchain.
    procedure Run_Test_OpenFOAM_Integration is
       --  Mirrors StellarOrionEngine_ORION.py:2564-2608
       --  Creates a minimal blockMesh case and runs blockMesh inside the
@@ -679,7 +705,13 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Tolerance_Press  : constant Float := 0.15;  -- 15% (pressure/geometry)
       Tolerance_Temp   : constant Float := 0.10;  -- 10% (ISA temperature)
 
-      --  IRVE-3 flight data reference targets
+      --  IRVE-3 reference targets — PROVENANCE (2026-08-25 paper audit):
+      --  13.8 W/cm² / 188 J/cm² / 19.7 g / 26.9 kg/m² / 12.4 kPa are the
+      --  NASA TP-2013-4012 mission-report values (Dillman et al. 2013).
+      --  Rapisarda (2023) Table 4.10 gives FLIGHT qmax=14.36 W/cm²,
+      --  Q=195.06 J/cm² and Fay-Riddell MODEL 13.83/195.17; SG model
+      --  +6.26%/+14.81% vs flight. Targets kept at the tighter NASA-TP
+      --  band deliberately (conservative); see docs/RAPISARDA_AUDIT.md.
       Target_Heat_Flux : constant Float := 13.8;    -- W/cm^2
       Target_Heat_Load : constant Float := 188.0;   -- J/cm^2
       Target_Decel_G   : constant Float := 19.7;    -- g
