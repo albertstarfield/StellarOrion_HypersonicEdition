@@ -21,6 +21,7 @@ package StellarOrion_Status_Writer is
    --  Progress : 0.0 .. 1.0 fraction complete
    --  Results  : key-value pairs to embed in "results" object
    --  Metrics  : key-value pairs to embed in "metrics" object
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Write_Status
      (Dir_Path : String;
       Run_Name : String;
@@ -30,6 +31,7 @@ package StellarOrion_Status_Writer is
       Metrics  : String := "");
 
    --  Remove the .status.json file (call on shutdown/cleanup)
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Clear_Status (Dir_Path : String);
 
 end StellarOrion_Status_Writer;

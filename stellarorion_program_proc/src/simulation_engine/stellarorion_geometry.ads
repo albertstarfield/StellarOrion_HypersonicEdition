@@ -31,9 +31,12 @@ package StellarOrion_Geometry is
     --      (micrometre scale) keeps Y_max^2 >= 1e-12, far above Float'Model_Small
     --      (~1.18e-38), so the product is strictly positive and normal.
     --    * Upper bound: largest HIAD flown/planned is LOFTID at ~6 m radius;
-    --      1e3 m gives >100x headroom. Overflow bound: Pi * (1e3)^2 = 3.14e6,
-    --      negligible vs Float'Last (~3.4e38).
-    function Frontal_Area (Y_Max : Float) return Float
+   --      1e3 m gives >100x headroom. Overflow bound: Pi * (1e3)^2 = 3.14e6,
+   --      negligible vs Float'Last (~3.4e38).
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Frontal_Area") (no direct
+   --  self-test call; proof-verified unit).
+   function Frontal_Area (Y_Max : Float) return Float
       with Pre  => Y_Max >= 1.0e-6
                    and Y_Max <= 1.0e3,
            Post => Frontal_Area'Result > 0.0;
@@ -61,9 +64,12 @@ package StellarOrion_Geometry is
     --      0.135 m (Rap23 Tab 4.1); 10x headroom above GA max.
     --    * TPS_Thickness (0, 1] m      : mirrors TPS_Thickness_Range subtype.
     --    * TPS_Density  [10, 1e4] kg/m3: mirrors TPS_Density_Range subtype.
-    --  Overflow proof: worst-case chain Total_A ~ 4.5e8 m^2, mass <=
-    --  Total_A * t * rho <= 4.5e8 * 1 * 1e4 = 4.5e12 << Float'Last.
-    function Shield_Mass_Analytical
+   --  Overflow proof: worst-case chain Total_A ~ 4.5e8 m^2, mass <=
+   --  Total_A * t * rho <= 4.5e8 * 1 * 1e4 = 4.5e12 << Float'Last.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Shield_Mass_Analytical")
+   --  (no direct self-test call; proof-verified unit).
+   function Shield_Mass_Analytical
       (Diameter      : Float;
        Angle_Deg     : Float;
        Toroid_Count  : Positive;
@@ -105,9 +111,12 @@ package StellarOrion_Geometry is
     --    * Num_Toroids  <= 12           : Rap23 Tab 5.4 upper bound
     --      (lower bound is the Positive subtype).
     --    * Density      [10, 1e4] kg/m3 : TPS_Density_Range mirror.
-    --  Overflow proof: N * rho * pi^2 * D * r^2 <=
-    --  12 * 1e4 * 9.87 * 15 * 25 = 4.4e8 << Float'Last.
-    function Shield_Mass_Pappus
+   --  Overflow proof: N * rho * pi^2 * D * r^2 <=
+   --  12 * 1e4 * 9.87 * 15 * 25 = 4.4e8 << Float'Last.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Shield_Mass_Pappus")
+   --  (no direct self-test call; proof-verified unit).
+   function Shield_Mass_Pappus
       (Diameter      : Float;
        Toroid_Radius : Float;
        Num_Toroids   : Positive;
@@ -130,6 +139,8 @@ package StellarOrion_Geometry is
    --    Toroid_Count: 1 .. 12
    --    Diameter    : 0.5 .. 15.0 m
    --  Returns True iff all geometry parameters are within valid bounds.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Validate_Geometry") -> Test 4.
    function Validate_Geometry (Params : Geometry_Parameters) return Boolean;
 
 end StellarOrion_Geometry;

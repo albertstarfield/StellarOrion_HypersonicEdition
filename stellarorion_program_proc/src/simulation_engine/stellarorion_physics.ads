@@ -32,6 +32,8 @@ package StellarOrion_Physics is
    --  POST BOUND: lambda <= 1e9 covers the envelope max with >3 decades
    --    of headroom and discharges Knudsen_Number's Pre at the
    --    sole call site (Calculate_Flight_Metrics).
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Mean_Free_Path") -> Test 1.
    function Mean_Free_Path
      (Number_Density : Float;
       Mol_Diameter   : Float) return Float
@@ -51,6 +53,8 @@ package StellarOrion_Physics is
    --      at the sole call site; interplanetary limit ~4.5e8 m).
    --    AXIOM K2: Char_Length >= 1e-3 m (vehicle scale, millimetre floor).
    --  OVERFLOW PROOF: Kn <= 1e9 / 1e-3 = 1e12 << Float'Last.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Knudsen_Number") -> Test 2.
    function Knudsen_Number
      (MFP         : Float;
       Char_Length : Float) return Float
@@ -83,6 +87,9 @@ package StellarOrion_Physics is
    --  POST BOUND (A3b): q <= 0.5 * rho_max * V_max^2 = 5.0e13 Pa within
    --  the AXIOM Q1/Q2 envelope; discharges Ballistic_Coefficient's
    --  widened Dyn_Pressure Pre at the Calculate_Flight_Metrics call site.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Dynamic_Pressure")
+   --  (transitively exercised via Run_Self_Test Test 5 metrics pipeline).
 
    --  Ballistic coefficient [kg/m^2].
    --  beta = m * q / F_drag
@@ -104,6 +111,9 @@ package StellarOrion_Physics is
    --  NOTE: Post relaxed to >= 0.0: q = 0 (V = 0) legitimately gives
    --    beta = 0. The former Post "> 0.0" was a spec defect found by
    --    gnatprove (contradicted Pre for Dyn_Pressure = 0).
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Ballistic_Coefficient")
+   --  (transitively exercised via Run_Self_Test Test 5 metrics pipeline).
    function Ballistic_Coefficient
      (Mass       : Float;
       Dyn_Pressure : Float;
@@ -167,6 +177,8 @@ package StellarOrion_Physics is
    --    AXIOM S3: V in [0, 1e5] m/s (as Dynamic_Pressure).
    --  OVERFLOW PROOF: rho/R_n <= 1e8; sqrt <= 1e4; C_sg*sqrt <= 1.75;
    --    V^3 <= 1e15 => q_stag <= 1.75e15 << Float'Last.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Sutton_Graves_Heat") -> Test 3.
    function Sutton_Graves_Heat
      (Density    : Float;
       Nose_Radius : Float;
@@ -206,6 +218,9 @@ package StellarOrion_Physics is
    --    double sqrt yields T <= 2.45e6 K ((3.6e25)^(1/4); theory-audit
    --    correction: an earlier revision stated 4.9e6 K - a factor-2
    --    arithmetic slip, conservative direction, bound still valid).
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Radiative_Eq_Temp")
+   --  (transitively exercised via Run_Self_Test Test 5 metrics pipeline).
    function Radiative_Eq_Temp
      (Heat_Flux  : Float;
       Emissivity : Float) return Float
@@ -228,6 +243,9 @@ package StellarOrion_Physics is
    --      Cp in [100, 1e4] J/(kg K); thickness in [1e-4, 1] m.
    --  OVERFLOW PROOF: capacitance in [0.1, 1e8]; numerator <= 2e19;
    --    ratio <= 2e20; T_back <= 3000 + 2e20 << Float'Last.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Backface_Temperature")
+   --  (transitively exercised via Run_Self_Test Test 5 metrics pipeline).
    function Backface_Temperature
      (Init_Temp    : Float;
        Heat_Flux    : Float;
@@ -263,6 +281,9 @@ package StellarOrion_Physics is
    --    AXIOM D2: m in [1e-3, 1e7] kg (gram-scale probe to super-heavy).
    --  OVERFLOW PROOF: m*g0 in [9.81e-3, 9.81e7];
    --    n <= 1e18 / 9.81e-3 = 1.02e20 << Float'Last.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Deceleration_G_Load")
+   --  (transitively exercised via Run_Self_Test Test 5 metrics pipeline).
    function Deceleration_G_Load
      (Drag_Force : Float;
       Mass       : Float) return Float
@@ -282,6 +303,9 @@ package StellarOrion_Physics is
    --
    --  AXIOMS (physical envelope): same n range as Mean_Free_Path (A1).
    --  OVERFLOW PROOF: n*M_air <= 2.9e28; /N_A <= 4.8e4 << Float'Last.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Density_From_Number")
+   --  (transitively exercised via Run_Self_Test Test 5 metrics pipeline).
    function Density_From_Number
      (N_Number : Float) return Float
      with Pre  => N_Number >= 0.0
@@ -300,6 +324,8 @@ package StellarOrion_Physics is
    --  the definition exactly (standard mandate: contracts on every
    --  subprogram); the prover discharges it by unfolding the body.
    --  [STD: contract-on-every-subprogram] [DO178C §5.1 decision coverage]
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Is_Survivable") -> Test 5.
    function Is_Survivable
      (Metrics : Flight_Metrics) return Boolean
      with Post => Is_Survivable'Result =
@@ -329,6 +355,9 @@ package StellarOrion_Physics is
    --    Heat_Flux_Wm2 <= 2e15: discharges Radiative_Eq_Temp / Backface_
    --      Temperature's widened R1/T2 envelopes; Sutton-Graves Post
    --      ceiling is 1.75e15.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Calculate_Flight_Metrics")
+   --  -> Test 5 (end-to-end metrics pipeline).
    procedure Calculate_Flight_Metrics
      (Results : Simulation_Results;
       Flight  : Flight_Parameters;

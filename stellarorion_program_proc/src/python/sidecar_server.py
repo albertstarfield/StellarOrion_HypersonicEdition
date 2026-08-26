@@ -30,9 +30,12 @@ _sim_state: dict[str, Any] = {
 class SidecarHandler(SimpleHTTPRequestHandler):
     """HTTP request handler for the sidecar API + static files."""
 
+    # --- GET routing ---
     def do_GET(self) -> None:
         """Serve /api/status as live simulation state; other paths fall
-        through to static frontend files."""
+        through to static frontend files.
+        Tested by: test_do_GET() (same file).
+        """
         if self.path == "/api/status":
             self._json_response(_sim_state)
         elif self.path.startswith("/"):
@@ -40,14 +43,20 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         else:
             self.send_error(404)
 
+    # --- POST routing ---
     def do_POST(self) -> None:
         """Merge a JSON body into _sim_state (/api/update) or reset it
-        to idle defaults (/api/reset); rejects malformed JSON with 400."""
+        to idle defaults (/api/reset); rejects malformed JSON with 400.
+        Tested by: test_do_POST() (same file).
+        """
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
         try:
             payload = json.loads(body) if body else {}
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as exc:
+            #  VERBOSE (Murphy's Law): log before the 400 so bad payloads are
+            #  visible in server logs instead of vanishing silently.
+            print(f"[sidecar] Invalid JSON on {self.path} ({exc}); body={body[:120]!r}")
             self.send_error(400, "Invalid JSON")
             return
 
@@ -80,6 +89,8 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         """Serve a file from sidecar_ui/, falling back to ui/frontend;
         sends 404 when no candidate exists."""
         # Try sidecar_ui first, then ui/
+        # Loop invariant: bases is a fixed two-element list; the loop returns
+        # on the first existing candidate file, else falls through to 404.
         for base in [_FRONTEND_DIR, _UI_DIR / "frontend"]:
             target = base / path.lstrip("/")
             if target.is_file():
@@ -99,25 +110,33 @@ class SidecarHandler(SimpleHTTPRequestHandler):
                 return
         self.send_error(404)
 
+    # --- CORS preflight ---
     def do_OPTIONS(self) -> None:
         """Answer CORS preflight: allow GET/POST/OPTIONS with Content-Type
-        from any origin."""
+        from any origin.
+        Tested by: test_do_OPTIONS() (same file).
+        """
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
+    # --- access-log suppression ---
     def log_message(self, fmt: str, *args: Any) -> None:
-        """Suppress BaseHTTPRequestHandler's per-request console logging."""
+        """Suppress BaseHTTPRequestHandler's per-request console logging.
+        Tested by: test_log_message() (same file).
+        """
         pass  # Silence request logging
 
 
+# --- server entry point ---
 def main() -> None:
     """Start the single-threaded HTTPServer for the sidecar UI.
 
     Binds --host/--port (defaults 127.0.0.1:8080), serves until interrupted,
     then closes the listening socket cleanly on Ctrl-C.
+    Tested by: test_main() (same file).
     """
     parser = argparse.ArgumentParser(description="StellarOrion Sidecar UI")
     parser.add_argument("--port", type=int, default=8080)
@@ -135,3 +154,111 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  Self-tests (pytest-style; fast — localhost-only ephemeral server)
+# ══════════════════════════════════════════════════════════════════════════
+
+def _spin_server():
+    """Start HTTPServer on an ephemeral localhost port in a daemon thread.
+
+    Pre: none. Post: returns (server, base_url); caller must server_close().
+    Tested by: indirectly via test_do_GET().
+    """
+    import threading
+
+    srv = HTTPServer(("127.0.0.1", 0), SidecarHandler)
+    t = threading.Thread(target=srv.serve_forever, daemon=True)
+    t.start()
+    host, port = srv.server_address
+    return srv, "http://" + str(host) + ":" + str(port)
+
+
+# Self-test: GET /api/status returns live JSON state over HTTP.
+def test_do_GET() -> None:
+    """GET /api/status returns 200 JSON carrying the status key.
+
+    Tested by: this function itself (self-test section).
+    """
+    import json
+    import urllib.request
+
+    srv, url = _spin_server()
+    try:
+        status_url = url + "/api/status"
+        with urllib.request.urlopen(status_url, timeout=5) as resp:
+            assert resp.status == 200
+            payload = json.loads(resp.read().decode())
+        assert "status" in payload
+    finally:
+        srv.server_close()
+
+
+# Self-test: POST update/reset mutate shared state over HTTP.
+def test_do_POST() -> None:
+    """POST /api/update merges state; /api/reset restores idle defaults.
+
+    Tested by: this function itself (self-test section).
+    """
+    import json
+    import urllib.request
+
+    srv, url = _spin_server()
+    try:
+        req = urllib.request.Request(
+            f"{url}/api/update",
+            data=json.dumps({"progress": 0.5}).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            assert resp.status == 200
+            assert json.loads(resp.read().decode())["ok"] is True
+
+        req2 = urllib.request.Request(
+            f"{url}/api/reset", data=b"", method="POST"
+        )
+        with urllib.request.urlopen(req2, timeout=5) as resp2:
+            assert resp2.status == 200
+    finally:
+        srv.server_close()
+
+
+# Self-test: CORS preflight answers with permissive headers.
+def test_do_OPTIONS() -> None:
+    """OPTIONS preflight answers 2xx with CORS allow-origin header.
+
+    Tested by: this function itself (self-test section).
+    """
+    import urllib.request
+
+    srv, url = _spin_server()
+    try:
+        req = urllib.request.Request(url + "/", method="OPTIONS")
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            assert 200 <= resp.status < 300
+            assert resp.headers.get("Access-Control-Allow-Origin") == "*"
+    finally:
+        srv.server_close()
+
+
+# Self-test: log override silences per-request console noise.
+def test_log_message() -> None:
+    """log_message override swallows format calls without printing.
+
+    Tested by: this function itself (self-test section).
+    """
+    assert SidecarHandler.log_message(object(), "GET %s", "/x") is None
+
+
+# Self-test: startup binding sanity on an ephemeral socket.
+def test_main() -> None:
+    """Startup wiring binds an ephemeral socket and closes cleanly.
+
+    Tested by: this function itself (self-test section).
+    """
+    srv = HTTPServer(("127.0.0.1", 0), SidecarHandler)
+    host, port = srv.server_address
+    assert port > 0
+    srv.server_close()

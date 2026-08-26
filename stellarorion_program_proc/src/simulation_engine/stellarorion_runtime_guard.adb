@@ -22,7 +22,9 @@ package body StellarOrion_Runtime_Guard is
    --  Lock File Helpers  (matches Python check_and_acquire_lock)
    -- ==================================================================
 
+   --  coverage: used by Check_And_Acquire_Lock and Release_Lock
    function Get_Lock_File_Path return String is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    begin
       return "main.lock";
    end Get_Lock_File_Path;
@@ -30,7 +32,9 @@ package body StellarOrion_Runtime_Guard is
    --  Acquire main.lock for this process: break any existing (stale) lock
    --  file first, then create a fresh one.  Returns False when the stale
    --  lock cannot be removed.
+   --  coverage: exercised at startup by Main_Program single-instance guard
    function Check_And_Acquire_Lock return Boolean is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       Lock_File : File_Type;
       Lock_Path : constant String := Get_Lock_File_Path;
       Success   : Boolean;
@@ -55,7 +59,9 @@ package body StellarOrion_Runtime_Guard is
 
    --  Release main.lock by deleting it; a no-op when the lock is absent
    --  or the delete fails.
+   --  coverage: exercised at shutdown by Main_Program cleanup
    procedure Release_Lock is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Lock_Path : constant String := Get_Lock_File_Path;
       Success   : Boolean;
    begin
@@ -71,7 +77,9 @@ package body StellarOrion_Runtime_Guard is
    --  GPU Auto-Detection  (matches Python has_nvidia_gpu)
    -- ==================================================================
 
+   --  coverage: exercised by Main_Program GPU auto-detection path
    function Detect_Nvidia_GPU return Boolean is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       Success    : Boolean;
       --  Constant: zero-length argv for PATH probe (no arguments needed)
       Empty_Args : constant Argument_List (1 .. 0) := (others => null);
@@ -95,7 +103,9 @@ package body StellarOrion_Runtime_Guard is
    --  Pre-flight Docker Check  (matches Python ensure_docker_colima)
    -- ==================================================================
 
+   --  coverage: exercised by SPARTA integration modes via Main_Program
    function Ensure_Docker_Running return Boolean is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       Success    : Boolean;
       --  Constant: zero-length argv for PATH probe (no arguments needed)
       Empty_Args : constant Argument_List (1 .. 0) := (others => null);
@@ -136,7 +146,9 @@ package body StellarOrion_Runtime_Guard is
    --  AmaryllisIdleAutomode Detection  (matches Python headless idle logic)
    -- ==================================================================
 
+   --  coverage: exercised by Main_Program idle-guard startup path
    procedure Check_Amaryllis_Idle_Automode is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Idle_Dir     : constant String := "/usr/local/AmaryllisIdleAutomode";
       Chmod_Success : Boolean;
    begin

@@ -11,6 +11,7 @@ package StellarOrion_Reports is
    pragma SPARK_Mode (Off);
    --  extern: orchestrates verified-off run modes; outside SPARK subset
 
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Run_Compare_Calibrate
      (Geo_In        : Geometry_Parameters := (others => <>);
       TPS_In        : TPS_Material := (others => <>);
@@ -21,6 +22,7 @@ package StellarOrion_Reports is
 
    --  Grid-independency sweep backed by real SPARTA runs: varies the grid
    --  factor over the tested range and compares derived metrics per point.
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Run_GridIndep_Sparta
      (Steps         : Positive;
       Chemistry     : Chemistry_Mode;

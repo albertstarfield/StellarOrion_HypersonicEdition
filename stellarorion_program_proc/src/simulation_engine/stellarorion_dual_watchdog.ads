@@ -115,6 +115,7 @@ package StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    --  Re-evaluate both watchdogs against logical time Now.  A watchdog
    --  whose heartbeat age exceeds its timeout degrades first (one grace
    --  evaluation) then fails; failure counters increment monotonically.
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Evaluate
      (S   : in out System_State;
       Now : Tick_Type)

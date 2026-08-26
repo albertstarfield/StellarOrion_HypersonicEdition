@@ -10,7 +10,9 @@ package body StellarOrion_Status_Writer is
    --  ------------------------------------------------------------------
    --  Float_Image : trimmed Image for Float values (no leading space)
    --  ------------------------------------------------------------------
+   --  coverage: used by Write_Status progress formatting (all modes)
    function Float_Image (V : Float) return String is
+   --  Contract: pre => True (no input constraints); post => returns trimmed image of V without leading space
       S : constant String := Float'Image (V);
    begin
       --  Ada.Float'Image puts a leading space; strip it
@@ -23,7 +25,9 @@ package body StellarOrion_Status_Writer is
    --  ------------------------------------------------------------------
    --  Status_String : map Status_Kind to JSON string value
    --  ------------------------------------------------------------------
+   --  coverage: used by Write_Status JSON status field
    function Status_String (Kind : Status_Kind) return String is
+   --  Contract: pre => True (no input constraints); post => returns JSON status literal for Kind
    begin
       case Kind is
          when Status_Idle      => return "idle";
@@ -44,6 +48,7 @@ package body StellarOrion_Status_Writer is
       Results  : String := "";
       Metrics  : String := "")
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Status_File : File_Type;
       Full_Path   : constant String :=
         Dir_Path & "/" & ".status.json";
@@ -105,7 +110,9 @@ package body StellarOrion_Status_Writer is
    --  ------------------------------------------------------------------
    --  Clear_Status
    --  ------------------------------------------------------------------
+   --  coverage: exported Status_Writer API for status reset
    procedure Clear_Status (Dir_Path : String) is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Full_Path : constant String :=
         Dir_Path & "/" & ".status.json";
    begin

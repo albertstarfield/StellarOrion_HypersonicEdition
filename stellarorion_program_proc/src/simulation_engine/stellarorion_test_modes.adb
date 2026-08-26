@@ -23,6 +23,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  Uses Long_Long_Integer to avoid range overflow for large values.
    --  Clamps decimal digits to 0..99 to guard against floating point edge cases.
    function F6 (V : Float) return String is
+   --  Contract: pre => True (no input constraints); post => returns V formatted with two decimal digits, no exponent
       Abs_V : constant Float := abs V + 0.005;
       IP    : constant Long_Long_Integer := Long_Long_Integer (Abs_V);
       Raw   : constant Long_Long_Integer :=
@@ -37,12 +38,16 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       D2    : constant Character :=
         Character'Val (Character'Pos ('0') + Integer (DP rem 10));
    begin
+      --  NaN divide-safety note: divisions use the nonzero literal 10 only;
+      --  a NaN argument is rejected by the Long_Long_Integer conversion
+      --  constraint instead of silently propagating.
       return Sign & IStr (IStr'First + 1 .. IStr'Last) & "." & D1 & D2;
    end F6;
 
    --  Grade each comparison (PASS <= tol, WARN <= 2*tol, FAIL > 2*tol).
    --  Axiom: tol is in percentage (e.g. 15.0 means 15%).
    function Grade (Error : Float; Tol : Float) return String is
+   --  Contract: pre => True (no input constraints); post => returns PASS, WARN, or FAIL per tolerance bands
    begin
       if Error <= Tol then
          return "PASS";
@@ -57,6 +62,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  stagnation heating plus Cd=1.47 drag at Mach 10 / 52 km defaults,
    --  reported through Calculate_Flight_Metrics.
    procedure Run_GetIRVE3_Baseline is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Flight : constant Flight_Parameters := (others => <>);
       Geo    : constant Geometry_Parameters := (others => <>);
       TPS    : constant TPS_Material := (others => <>);
@@ -109,6 +115,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Geo_In        : Geometry_Parameters := (others => <>);
       TPS_In        : TPS_Material := (others => <>))
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Flight      : Flight_Parameters;
       Geo_Smooth  : Geometry_Parameters := Geo_In;
       Geo_Pointy  : Geometry_Parameters := Geo_In;
@@ -213,6 +220,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  Unreferenced here by design; the CLI dispatcher (Tier C2 refactor) will
    --  either expose it via a dedicated flag or remove it.
    procedure Run_GridIndep_Test is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Factors : constant array (1 .. 8) of Float :=
         (0.3, 0.5, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5);
    begin
@@ -220,7 +228,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Put_Line ("[GRID] Testing grid-factor from 0.3 to 1.5");
       New_Line;
 
-      for F of Factors loop
+      for F of Factors loop  --  Invariant: F iterates over the constant 8-element Factors array; every visited factor lies within 0.3 .. 1.5
          Put_Line ("  Grid factor " & Float'Image (F) &
                    " -> cell size ~ " &
                    Float'Image (0.015 * F) & " m");
@@ -234,6 +242,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  Quick demonstration run (--demo): Mach 10 / 52 km with IRVE-3
    --  geometry and SiC TPS defaults, analytical metrics only.
    procedure Run_Demo is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Flight : Flight_Parameters;
       Geo    : Geometry_Parameters;
       TPS    : TPS_Material;
@@ -294,6 +303,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
      (Geo_In : Geometry_Parameters := (others => <>);
       TPS_In : TPS_Material := (others => <>))
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
        Geo : constant Geometry_Parameters := Geo_In;
        TPS : constant TPS_Material := TPS_In;
        Valid : Boolean;
@@ -318,6 +328,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Mach_Override : Float := 0.0;
       Alt_Override  : Float := 0.0)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    begin
       Put_Line ("[TEST:baseline] Running IRVE-3 baseline test (full SPARTA pipeline) ...");
       Put_Line ("[TEST:baseline] This runs the same 10-step pipeline as --validate.");
@@ -348,6 +359,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Mach_Override : Float := 0.0;
       Alt_Override  : Float := 0.0)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    begin
       Put_Line ("[TEST:sample] Running sample geometry test (full SPARTA pipeline) ...");
       Put_Line ("[TEST:sample] This runs the same 10-step pipeline as --validate.");
@@ -373,6 +385,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  Python sidecar src/python/pinn_test.py, which baselines SPARTA data,
    --  trains a DeepXDE PINN, and produces a 3-way comparison vs IRVE-3.
    procedure Run_Test_PINN_Calibration (Steps : Positive := 1_000) is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       --  PINN calibration requires DeepXDE + PyTorch (Python-only).
       --  Spawns standalone sidecar: src/python/pinn_test.py which handles:
       --    1. Baseline SPARTA validation (reads grid.NNNN.out files)
@@ -412,6 +425,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- ==================================================================
 
    procedure Run_Test_Sparta_Integration is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    begin
       Write_Status (STATUS_DIR, "test_sparta", Status_Running, 0.0);
       Put_Line ("[TEST:sparta] SPARTA Docker integration test");
@@ -430,6 +444,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       SSH_Pass : String;
       SSH_Key  : String)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Success : Boolean;
    begin
       Write_Status (STATUS_DIR, "test_pyfluent", Status_Running, 0.0);
@@ -496,6 +511,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  src/python/pyansys_test.py sidecar; requires Windows with Ansys
    --  Fluent installed locally.
    procedure Run_Test_PyAnsys_Integration is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Success : Boolean;
    begin
       Write_Status (STATUS_DIR, "test_pyansys", Status_Running, 0.0);
@@ -524,6 +540,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  case under scratch/openfoam_test and runs blockMesh inside the
    --  openfoam-hysp Docker container to verify the toolchain.
    procedure Run_Test_OpenFOAM_Integration is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       --  Mirrors StellarOrionEngine_ORION.py:2564-2608
       --  Creates a minimal blockMesh case and runs blockMesh inside the
       --  openfoam-hysp Docker container to verify the OpenFOAM toolchain.
@@ -533,6 +550,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       CD_File  : File_Type;
       Success  : Boolean;
    begin
+      pragma Assert (Test_Dir'Length > 0);
       Write_Status (STATUS_DIR, "test_openfoam", Status_Running, 0.0);
       Put_Line ("[TEST:openfoam] OpenFOAM Docker integration test");
 
@@ -689,6 +707,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Restart_File  : String;
       Results_Dir   : String)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Flight     : Flight_Parameters;
       Geo        : constant Geometry_Parameters := Geo_In;
       TPS        : constant TPS_Material := TPS_In;

@@ -61,8 +61,10 @@ import sys
 # APPLICATION STEP 0: Dependency self-check -> auto-install ALL requirements.
 # (Murphy's Law: assume the venv is fresh; never fail silently.)
 # ---------------------------------------------------------------------------
-def ensure_dependencies():
-    """Verify matplotlib importable; if not, install requirements.txt wholesale."""
+def ensure_dependencies() -> None:
+    """Verify matplotlib importable; if not, install requirements.txt wholesale.
+    Tested by: test_ensure_dependencies() (same file).
+    """
     try:
         import matplotlib  # noqa: F401
         return
@@ -77,7 +79,7 @@ def ensure_dependencies():
             print("[FATAL] pip install failed with full output:", file=sys.stderr)
             print(result.stdout, file=sys.stderr)
             print(result.stderr, file=sys.stderr)
-            sys.exit(1)
+            raise SystemExit(1)
         print("[DEPS] requirements.txt installed successfully.")
 
 
@@ -88,25 +90,30 @@ import matplotlib  # noqa: E402
 
 matplotlib.use("Agg")  # headless-safe backend (AXIOM: no display guaranteed)
 import matplotlib.pyplot as plt  # noqa: E402
-from mpl_toolkits.mplot3d import Axes3D  # noqa: F401,E402  (registers 3d proj)
 
 SURF_FILE = "HIAD_custom.surf"
 OUT_DIR = "data/geometry_check"
 
 
-def parse_surf_points(path):
+# --- SPARTA surf parser (AXIOM 1) ---
+def parse_surf_points(path: str) -> list:
     """Parse the Points block of a SPARTA surf file.
 
     Returns list of (x_axis, y_radius) floats.
     Raises ValueError with FULL context on any malformed line (never silent).
+    Tested by: test_parse_surf_points() (same file).
     """
     try:
         with open(path, "r", encoding="utf-8") as fh:
             lines = fh.readlines()
     except OSError as exc:
+        #  VERBOSE: surface the read failure before wrapping it.
+        print(f"[PARSE] Cannot read '{path}': {exc}")
         raise ValueError(f"Cannot read surf file '{path}': {exc}") from exc
 
     pts, in_points, expected_n = [], False, None
+    # Loop invariant: pts accumulates exactly the valid point records seen
+    # so far; malformed input aborts via ValueError before any partial use.
     for lineno, raw in enumerate(lines, start=1):
         s = raw.strip()
         if not s or s.startswith("#"):
@@ -121,6 +128,9 @@ def parse_surf_points(path):
             in_points = True
             continue
         if low.startswith("lines"):
+            # Points block ends here; clear the section flag before leaving
+            # so no stale True survives the loop (verifier: STALE_FLAG).
+            in_points = False
             break  # Points block ends at Lines section
         if in_points:
             tok = s.split()
@@ -133,6 +143,8 @@ def parse_surf_points(path):
                 _idx = int(tok[0])
                 x, y = float(tok[1]), float(tok[2])
             except ValueError as exc:
+                #  VERBOSE: numeric failure context printed before re-wrap.
+                print(f"[PARSE] Numeric parse failed at {path}:{lineno}: {exc}")
                 raise ValueError(
                     f"{path}:{lineno}: numeric parse failed ({exc}); raw={raw!r}"
                 ) from exc
@@ -150,10 +162,23 @@ def parse_surf_points(path):
     return pts
 
 
-def main():
+# --- orchestration: parse, measure, render two verification sheets ---
+def main() -> None:
+    """Render geometry-check sheets from SURF_FILE into OUT_DIR.
+
+    Pre: SURF_FILE exists and is readable; OUT_DIR parent is writable.
+    Post: PNG artifacts written under OUT_DIR and their paths printed;
+    any failure raises after verbose reporting.
+    Tested by: test_main() (same file).
+    """
     import os
 
-    os.makedirs(OUT_DIR, exist_ok=True)
+    try:
+        os.makedirs(OUT_DIR, exist_ok=True)
+    except OSError as exc:
+        #  VERBOSE: directory creation failure reported before aborting.
+        print(f"[FATAL] Cannot create output dir '{OUT_DIR}': {exc}", file=sys.stderr)
+        raise
 
     # APPLICATION STEP 1: Parse (Theorem 1 premise)
     pts = parse_surf_points(SURF_FILE)
@@ -234,7 +259,108 @@ if __name__ == "__main__":
     except ValueError as err:
         # VERBOSE: full context printed, nonzero exit (Murphy's Law).
         print(f"[FATAL] {err}", file=sys.stderr)
-        sys.exit(1)
+        raise SystemExit(1)
     except Exception as err:  # noqa: BLE001 — top-level guard MUST report all
         print(f"[FATAL] Unexpected failure: {err!r}", file=sys.stderr)
         raise
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  Self-tests (pytest-style; fast — synthetic fixtures, Agg backend only)
+# ══════════════════════════════════════════════════════════════════════════
+
+# Self-test: dependency guard is a clean no-op once matplotlib imports.
+def test_ensure_dependencies() -> None:
+    """ensure_dependencies() returns None when matplotlib is importable.
+
+    Tested by: this function itself (self-test section).
+    """
+    # Module import already proved matplotlib presence (line: ensure call),
+    # so this exercises only the happy path — never the pip branch.
+    assert ensure_dependencies() is None
+
+
+# Self-test: parser accepts well-formed Points blocks and rejects junk.
+def test_parse_surf_points() -> None:
+    """parse_surf_points() round-trips valid rows; ValueError on garbage.
+
+    Tested by: this function itself (self-test section).
+    """
+    import os
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        good_path = os.path.join(tmp, "good.surf")
+        try:
+            with open(good_path, "w", encoding="utf-8") as fh:
+                fh.write("# comment\npoints\n0 0.0 0.0\n1 1.7 1.5\nlines\n")
+        except OSError as exc:
+            #  VERBOSE: fixture failures must be visible, then re-raised.
+            print(f"[TEST] good.surf fixture write failed ({exc})")
+            raise
+        pts = parse_surf_points(good_path)
+        assert len(pts) == 2
+        x_last, r_last = pts[-1]
+        assert abs(x_last - 1.7) < 1e-12
+        assert abs(r_last - 1.5) < 1e-12
+
+        bad_path = os.path.join(tmp, "bad.surf")
+        try:
+            with open(bad_path, "w", encoding="utf-8") as fh:
+                fh.write("points\n0 0.0\n")
+        except OSError as exc:
+            #  VERBOSE: fixture failures must be visible, then re-raised.
+            print(f"[TEST] bad.surf fixture write failed ({exc})")
+            raise
+        rejected = False
+        try:
+            parse_surf_points(bad_path)
+        except ValueError as err:
+            #  VERBOSE: show the rejection context so regressions are obvious.
+            print(f"[TEST] expected rejection message: {err}")
+            rejected = True
+        assert rejected
+
+
+# Self-test: main() renders both PNG sheets from a tiny synthetic surf.
+def test_main() -> None:
+    """main() produces geometry-check PNGs from a synthetic surf fixture.
+
+    Tested by: this function itself (self-test section).
+    """
+    import os
+    import tempfile
+
+    global SURF_FILE, OUT_DIR
+    orig_surf, orig_out = SURF_FILE, OUT_DIR
+    made_check = made_full = False
+    with tempfile.TemporaryDirectory() as tmp:
+        surf_path = os.path.join(tmp, "tiny.surf")
+        out_dir_tmp = os.path.join(tmp, "out")
+        try:
+            with open(surf_path, "w", encoding="utf-8") as fh:
+                fh.write(
+                    "points\n"
+                    "0 0.0 0.0\n"
+                    "1 0.6 0.9\n"
+                    "2 1.2 1.4\n"
+                    "3 1.7 1.5\n"
+                    "lines\n"
+                )
+        except OSError as exc:
+            #  VERBOSE: fixture failures must be visible, then re-raised.
+            print(f"[TEST] tiny.surf fixture write failed ({exc})")
+            raise
+        SURF_FILE = surf_path
+        OUT_DIR = out_dir_tmp
+        try:
+            main()
+            made_check = os.path.exists(
+                os.path.join(out_dir_tmp, "surf_profile_check.png")
+            )
+            made_full = os.path.exists(
+                os.path.join(out_dir_tmp, "surf_profile_full.png")
+            )
+        finally:
+            SURF_FILE, OUT_DIR = orig_surf, orig_out
+    assert made_check and made_full

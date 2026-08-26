@@ -16,6 +16,7 @@ package StellarOrion_Self_Test is
    --  Execute all 15 self-tests; prints [TEST nn] PASS/FAIL lines and
    --  the final "All 15 self-tests PASSED." banner. Exits via exception
    --  only on catastrophic internal error (never in normal operation).
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Run_Self_Test;
 
 end StellarOrion_Self_Test;

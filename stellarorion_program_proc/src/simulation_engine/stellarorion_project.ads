@@ -10,6 +10,7 @@ package StellarOrion_Project is
    --  The Main_Procedure itself must be SPARK_Mode => Off because it
    --  performs I/O, subprocess dispatching, and GUI launching.
    --  It is declared here but its body is in the .adb.
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Main_Program
      with SPARK_Mode => Off;
 

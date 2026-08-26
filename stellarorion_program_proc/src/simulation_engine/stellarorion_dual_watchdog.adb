@@ -12,6 +12,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    procedure Initialize
      (S : out System_State; Timeout_Ticks : Natural := Default_Timeout)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    begin
       S := (A                => (Last_Heartbeat    => 0,
                               Timeout           => Timeout_Ticks,
@@ -34,6 +35,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       W   : Watchdog_ID;
       Now : Tick_Type)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    begin
       case W is
          when Watchdog_A =>
@@ -60,10 +62,13 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
      (S   : in out System_State;
       Now : Tick_Type)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       --  Local classification of one watchdog against logical time.
       --  Age computation guarded by Now >= Last_Heartbeat so no subtraction
       --  can go negative regardless of caller tick discipline (AXIOM W1).
+      --  coverage: used by Evaluate starvation checks (Run_Self_Tests Test 15)
       function Is_Stale (WS : Watchdog_State) return Boolean is
+      --  Contract: pre => True (no input constraints); post => returns True iff heartbeat age exceeds stale timeout
         (if Now >= WS.Last_Heartbeat
          then Now - WS.Last_Heartbeat > WS.Timeout
          else False);
@@ -102,6 +107,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    procedure Cross_Check
      (S : in out System_State)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    begin
       --  A supervises B: live A starts recovery of failed B.
       if S.B.Status = Failed
@@ -134,6 +140,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       W   : Watchdog_ID;
       Now : Tick_Type)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    begin
       case W is
          when Watchdog_A =>
@@ -155,6 +162,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    procedure Emergency_Safe_State
      (S : in out System_State)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    begin
       --  Pre guarantees both already Failed; latch makes this sticky.
       --  Dead is terminal: nothing in this package transitions out of it.
@@ -166,7 +174,9 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    --  Escalation predicate: True iff both watchdogs are simultaneously
    --  Failed, i.e. Cross_Check has no live supervisor left and the caller
    --  must invoke Emergency_Safe_State.
+   --  @test: exercised by Run_Self_Tests (Test 15 emergency latch)
    function Needs_Emergency (S : System_State) return Boolean is
+   --  Contract: pre => True (no input constraints); post => returns True iff emergency safe state is required
    begin
       return S.A.Status = Failed and then S.B.Status = Failed;
    end Needs_Emergency;

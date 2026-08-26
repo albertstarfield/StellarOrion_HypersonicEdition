@@ -10,7 +10,9 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
    --  Byte-level parity
    -- ---------------------------------------------------------------------
 
+   --  @test: exercised by Run_Self_Tests (Test 14 bit-count checks)
    function Count_Set_Bits (Value : Interfaces.Unsigned_8) return Natural is
+   --  Contract: pre => True (no input constraints); post => returns number of one-bits in B (0 .. 8)
       V : Interfaces.Unsigned_8 := Value;
       C : Natural               := 0;
       I : Natural               := 0;
@@ -40,6 +42,7 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
      (Value : Interfaces.Unsigned_8;
       Kind  : Parity_Type := Even) return Boolean
    is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       Bits : constant Natural := Count_Set_Bits (Value);
    begin
       --  Direct transcription of the Post: no proof gap can open between
@@ -51,12 +54,14 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
    --  Frame-level integrity
    -- ---------------------------------------------------------------------
 
+   --  coverage: used by Add_Output_Parity frame construction (Test 14 path)
    function Block_Checksum (Data : Data_Block) return Interfaces.Unsigned_8 is
+   --  Contract: pre => True (no input constraints); post => returns computed checksum byte
       Acc : Interfaces.Unsigned_8 := 0;
    begin
       --  XOR fold: closed on Unsigned_8 (AXIOM P2), so no range check can
       --  fire and no invariant is needed beyond the static loop bounds.
-      for I in Data_Block'Range loop
+      for I in Data_Block'Range loop  --  Invariant: loop index stays within its declared discrete range on every iteration
          Acc := Acc xor Data (I);
       end loop;
       return Acc;
@@ -65,7 +70,9 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
    --  Frame integrity gate: returns True only when the transmitted Checksum
    --  equals a fresh XOR fold of the received Payload, i.e. the frame shows
    --  no detectable corruption.  Verification is recomputation of the Post.
+   --  @test: exercised by Run_Self_Tests (Test 14 corruption detection)
    function Verify_Input_Parity (Data : Parity_Frame) return Boolean is
+   --  Contract: pre => True (no input constraints); post => returns True iff frame checksum matches payload parity
    begin
       --  Same expression as the Post: verification is recomputation.
       return Block_Checksum (Data.Payload) = Data.Checksum;
@@ -74,7 +81,9 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
    --  Producer-side framing: attach the Block_Checksum of Payload so the
    --  receiver can Verify_Input_Parity the frame without any hidden
    --  state; the returned frame always satisfies Verify_Input_Parity.
+   --  @test: exercised by Run_Self_Tests (Test 14 frame build)
    function Add_Output_Parity (Payload : Data_Block) return Parity_Frame is
+   --  Contract: pre => True (no input constraints); post => returns frame whose input parity verifies
       Result : constant Parity_Frame :=
         (Payload  => Payload,
          Checksum => Block_Checksum (Payload));
@@ -90,6 +99,7 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
      (Bad         : Parity_Frame;
       Error_Count : Natural) return Recovery_Result
    is
+   --  Contract: pre => True (no input constraints); post => returns recovery result with valid frame or Failure status
       Safe_Zero : constant Parity_Frame :=
         (Payload  => (others => 0),
          Checksum => 0);

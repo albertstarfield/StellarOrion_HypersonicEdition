@@ -123,6 +123,8 @@ def _parse_grid_output(grid_file, steps):
     header_seen = False
 
     with open(grid_file, "r") as fh:
+        # Loop invariant: header_seen is True only inside an "ITEM: CELLS"
+        # block; data_cells grows exclusively with fully-valid row dicts.
         for line in fh:
             line = line.strip()
             if not line or line.startswith("ITEM:"):
@@ -239,6 +241,16 @@ def run_pinn_training(grid_files, domain, device, iterations, save_path):
     return pinn
 
 
+def get_err(val, ref):
+    """Relative error of val against ref, in percent (0 when ref <= 0).
+
+    Pre: val and ref are numeric (int/float); ref == 0 hits the guard.
+    Post: returns non-negative percentage abs(val-ref)/ref*100, or 0.
+    Tested by: test_get_err() (same file).
+    """
+    return abs(val - ref) / ref * 100 if ref > 0 else 0
+
+
 def compute_pinn_metrics(pinn, sim_result, baseline_doc, domain):
     """Extract refined metrics from trained PINN and build 3-way comparison.
 
@@ -283,10 +295,6 @@ def compute_pinn_metrics(pinn, sim_result, baseline_doc, domain):
     q_dyn = 0.5 * rho * v ** 2
     area = 3.14159 * (baseline_doc["geometry"]["diameter_m"] / 2) ** 2
     mass = baseline_doc["geometry"]["mass_kg"]
-
-    def get_err(val, ref):
-        """Relative error of val against ref, in percent (0 when ref <= 0)."""
-        return abs(val - ref) / ref * 100 if ref > 0 else 0
 
     return {
         "status": "success",
@@ -436,6 +444,7 @@ def main():
     print(f"{'Variable':<25} | {'Simulation':<12} | {'PINN (DDE)':<12} | {'Document':<12} | {'PINN Err %':<10} | {'Improve %':<8}")
     print("-" * 110)
 
+    # Loop invariant: every comp entry carries sim/pinn/doc/pinn_error_pct/unit keys.
     for k, v in comp.items():
         sim_val = v["sim"]
         pinn_val = v["pinn"]
@@ -466,3 +475,114 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  Self-tests (pytest-style; fast — no SPARTA run, no Docker, no training)
+# ══════════════════════════════════════════════════════════════════════════
+
+def _load_accelerator():
+    """Import PINNAccelerator lazily; return class or None when unavailable.
+
+    Pre: none. Post: returns PINNAccelerator class, or None with a printed
+    reason when deepxde/torch are not installed in this environment.
+    Tested by: indirectly via test_run_pinn_training().
+    """
+    try:
+        from pinn_accelerator import PINNAccelerator
+    except Exception as exc:  # noqa: BLE001 — heavy deps may be absent
+        print(f"[i] pinn_accelerator unavailable ({exc}); skipping heavy test.")
+        return None
+    return PINNAccelerator
+
+
+def test_detect_device() -> None:
+    """detect_device returns a known (device, label) tuple.
+
+    Tested by: this function itself (self-test section).
+    """
+    device, label = detect_device()
+    assert device in {"cuda", "mps", "xpu", "musa", "cpu"}
+    assert isinstance(label, str) and len(label) > 0
+
+
+def test_run_baseline_validation_missing_inputs() -> None:
+    """Missing grid file and missing SPARTA script yield a clean None.
+
+    Tested by: this function itself (self-test section).
+    """
+    result = run_baseline_validation("/nonexistent/cad_dir", 42)
+    assert result is None
+
+
+def test_run_pinn_training_signature() -> None:
+    """Training wrapper forwards args to PINNAccelerator (guarded import).
+
+    Tested by: this function itself (self-test section).
+    """
+    cls = _load_accelerator()
+    if cls is None:
+        return
+    acc = cls(device="cpu")
+    assert hasattr(acc, "model") and acc.model is None
+
+
+def test_compute_pinn_metrics_untrained_raises() -> None:
+    """compute_pinn_metrics surfaces RuntimeError from an untrained model.
+
+    Tested by: this function itself (self-test section).
+    """
+    cls = _load_accelerator()
+    if cls is None:
+        return
+    import numpy as np
+
+    acc = cls(device="cpu")
+    try:
+        compute_pinn_metrics(acc, {"comparison": {}, "stag_press": 0.0},
+                             IRVE3_BASELINE, [0.0, 1.0, 1.0])
+    except RuntimeError as exc:
+        #  VERBOSE: expected refusal printed so silent-pass can't hide bugs.
+        print(f"[TEST] expected RuntimeError raised: {exc}")
+        return
+    except Exception as exc:  # noqa: BLE001
+        print(f"[TEST] unexpected exception type: {exc!r}")
+        raise AssertionError(f"expected RuntimeError, got {exc!r}") from exc
+    raise AssertionError("expected RuntimeError from untrained model")
+
+
+def test_get_err() -> None:
+    """get_err formula: pct error, zero-guarded for non-positive refs.
+
+    Tested by: this function itself (self-test section).
+    """
+    assert get_err(110.0, 100.0) == 10.0
+    assert get_err(90.0, 100.0) == 10.0
+    assert get_err(5.0, 0.0) == 0
+    assert get_err(0.0, -1.0) == 0
+
+
+def test_main_help_exits_zero() -> None:
+    """--help prints usage and exits cleanly (SystemExit 0).
+
+    Tested by: this function itself (self-test section).
+    """
+    import contextlib
+    import io
+
+    argv_backup = sys.argv
+    sys.argv = ["pinn_test.py", "--help"]
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            try:
+                main()
+            except SystemExit as exc:
+                #  VERBOSE: exit code printed so failures are attributable.
+                print(f"[TEST] main exited with code {exc.code}")
+                assert exc.code in (0, None), f"expected clean exit, got {exc.code}"
+            else:
+                pass  # some argparse configs return instead of exiting
+    finally:
+        sys.argv = argv_backup
+    assert "--steps" in buf.getvalue()

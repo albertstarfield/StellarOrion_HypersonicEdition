@@ -10,6 +10,7 @@ package StellarOrion_Optimize is
    --  extern: orchestrates GA/metamodel runs writing run artifacts;
    --  outside SPARK subset
 
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Run_Optimize
      (DoE_In     : DoE_Method := LHS;
       Obj_In     : Objective  := Drag_Obj;
