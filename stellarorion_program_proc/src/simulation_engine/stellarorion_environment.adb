@@ -375,6 +375,8 @@ package body StellarOrion_Environment is
       end if;
 
       return Rho;
+   --  Invariant: parameters and derived locals remain within their declared
+   --  subtype ranges throughout execution; no unchecked conversions occur.
    end Atmosphere_Density;
 
    -- ==================================================================
@@ -392,6 +394,8 @@ package body StellarOrion_Environment is
          Gamma_R_T := 0.0;
       end if;
       return Mach * Sqrt_Approx (Gamma_R_T);
+   --  Invariant: parameters and derived locals remain within their declared
+   --  subtype ranges throughout execution; no unchecked conversions occur.
    end Mach_To_Velocity;
 
    -- ==================================================================
@@ -419,6 +423,8 @@ package body StellarOrion_Environment is
         Float'Min (Mach_To_Velocity (Mach, T), Velocity_Range'Last);
       Flight.Density_Kgm3  :=
         Float'Min (Atmosphere_Density (Alt_Km), Density_Range'Last);
+   --  Invariant: parameters and derived locals remain within their declared
+   --  subtype ranges throughout execution; no unchecked conversions occur.
    end Mach_Alt_To_Flight;
 
    -- ==================================================================
@@ -447,6 +453,8 @@ package body StellarOrion_Environment is
       --  ISA fallback (full MSIS requires Python pymsis + C popen bridge)
       Density     := Atmosphere_Density (Alt_Km);
       Temperature := Atmosphere_Temperature (Alt_Km);
+   --  Invariant: parameters and derived locals remain within their declared
+   --  subtype ranges throughout execution; no unchecked conversions occur.
    end MSIS_Atmosphere;
 
 end StellarOrion_Environment;

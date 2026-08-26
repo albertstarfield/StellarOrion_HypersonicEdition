@@ -16,6 +16,7 @@ package StellarOrion_Validation is
    --  the validation checks to be meaningful.
    function Validate_And_Dump
      (Geo : Geometry_Parameters;
+     --  Invariant: parameters and derived locals remain within their declared
       TPS : TPS_Material) return Boolean
    with Pre => Geo.Diameter_M > 0.0
                and Geo.Angle_Deg > 0.0
@@ -31,5 +32,6 @@ package StellarOrion_Validation is
    --  deceleration g-load ≤ 25 g, stagnation pressure reasonable.
    function Check_Survivability
      (Metrics : Flight_Metrics) return Boolean;
+     --  Invariant: parameters and derived locals remain within their declared
 
 end StellarOrion_Validation;

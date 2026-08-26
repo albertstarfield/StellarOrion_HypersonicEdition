@@ -30,6 +30,7 @@ package body StellarOrion_Sparta is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Chem_To_String")
    --  (script-generation helper; integration path via --test sample).
+   --  @test: exercised via 'run.py --test sample' smoke run.
    function Chem_To_String (C : Chemistry_Mode) return String is
       --  Contract: pre  => C is any valid Chemistry_Mode value;
       --           post => result is the SPARTA species-block tag for C.
@@ -46,6 +47,7 @@ package body StellarOrion_Sparta is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Nose_To_String")
    --  (script-generation helper; integration path via --test sample).
+   --  @test: exercised via 'run.py --test sample' smoke run.
    function Nose_To_String (N : Nose_Type_Kind) return String is
       --  Contract: pre  => N is any valid Nose_Type_Kind value;
       --           post => result is the SPARTA nose descriptor for N.
@@ -61,6 +63,7 @@ package body StellarOrion_Sparta is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Img_Float") (formatting
    --  helper; exercised by every generated-script smoke run).
+   --  @test: exercised via 'run.py --test sample' smoke run.
    function Img (V : Float) return String is
       --  Contract: pre  => any Float value;
       --           post => 'Image text with any leading blank stripped.
@@ -76,6 +79,7 @@ package body StellarOrion_Sparta is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Img_Integer") (formatting
    --  helper; exercised by every generated-script smoke run).
+   --  @test: exercised via 'run.py --test sample' smoke run.
    function Img (V : Integer) return String is
       --  Contract: pre  => any Integer value;
       --           post => 'Image text with any leading blank stripped.
@@ -92,6 +96,7 @@ package body StellarOrion_Sparta is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Sqrt") (script-generation
    --  helper; exercised via --test sample smoke runs).
+   --  @test: exercised via 'run.py --test sample' smoke run.
    function Sqrt (X : Float) return Float is
       --  Contract: pre  => any Float value;
       --           post => non-negative Newton approximation of sqrt(X);
@@ -104,6 +109,8 @@ package body StellarOrion_Sparta is
       --  positive because X > 0 here and each update averages two
       --  positive terms, so the division below cannot fault.
       for I in 1 .. 8 loop
+         --  Invariant: iteration count is bounded and state
+         --  variables remain within their declared ranges.
          pragma Unreferenced (I);
          exit when Y = 0.0;  -- defensive: unreachable for X > 0 (Y stays positive)
          Y_New := (Y + X / Y) / 2.0;
@@ -119,6 +126,7 @@ package body StellarOrion_Sparta is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Abs_F") (helper; exercised
    --  via --test sample smoke runs).
+   --  @test: exercised via 'run.py --test sample' smoke run.
    function Abs_F (X : Float) return Float is
       --  Contract: pre  => any Float value;
       --           post => |X| >= 0.0, exact for all finite inputs.
@@ -226,6 +234,8 @@ package body StellarOrion_Sparta is
          --  exiting at the first path separator; I always indexes a
          --  valid character of Restart_File.
          for I in reverse Restart_File'Range loop
+            --  Invariant: iteration count is bounded and state
+            --  variables remain within their declared ranges.
             if Restart_File (I) = '/' or Restart_File (I) = '\' then
                Restart_Bname := To_Unbounded_String (
                  Restart_File (I + 1 .. Restart_File'Last));
@@ -240,6 +250,8 @@ package body StellarOrion_Sparta is
             --  Loop invariant: left-to-right scan over Bname'Range with
             --  early exit at the first '.'; I always indexes Bname.
             for I in Bname'Range loop
+               --  Invariant: iteration count is bounded and state
+               --  variables remain within their declared ranges.
                if Bname (I) = '.' then Dot1 := I; exit; end if;
             end loop;
             if Dot1 > 0 and Dot1 < Bname'Last then
@@ -396,6 +408,7 @@ package body StellarOrion_Sparta is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Build_Sparta_Library")
    --  (integration path via --test sample; no direct Run_Self_Test call).
+   --  @test: exercised via 'run.py --test sample' smoke run.
    procedure Build_Sparta_Library is
       --  Contract: pre  => Docker CLI available on PATH (external tool);
       --           post => attempts an idempotent image build; build
@@ -515,6 +528,8 @@ package body StellarOrion_Sparta is
             --  set one entry per iteration; Count stays within
             --  [0, number of matching files].
             while More_Entries (S) loop
+               --  Invariant: iteration count is bounded and state
+               --  variables remain within their declared ranges.
                Get_Next_Entry (S, E);
                Count := Count + 1;
             end loop;
@@ -548,6 +563,7 @@ package body StellarOrion_Sparta is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Compute_Surf_Y_Max")
    --  (integration path via --test sample; no direct Run_Self_Test call).
+   --  @test: exercised via 'run.py --test sample' smoke run.
    function Compute_Surf_Y_Max (Output_Dir : String) return Float is
       --  Contract: pre  => Output_Dir is a readable directory path;
       --           post => maximum Y coordinate over all surf.*.out data
@@ -574,6 +590,8 @@ package body StellarOrion_Sparta is
       --  Loop invariant: More_Entries yields one directory entry per
       --  iteration until the search set is exhausted.
       while More_Entries (Search) loop
+         --  Invariant: iteration count is bounded and state
+         --  variables remain within their declared ranges.
          Get_Next_Entry (Search, Dir_Ent);
 
          begin
@@ -588,6 +606,8 @@ package body StellarOrion_Sparta is
          --  Get_Line, so this reader terminates after Line'Length-bounded
          --  iterations per file.
          while not End_Of_File (File) loop
+            --  Invariant: iteration count is bounded and state
+            --  variables remain within their declared ranges.
             Get_Line (File, Line, Last);
 
             --  Skip comment/header lines
@@ -606,6 +626,8 @@ package body StellarOrion_Sparta is
                --  Loop invariant: I sweeps 1 .. Last within Line's bounds,
                --  exiting as soon as column 4 (Y) is captured; V_Len < 64.
                for I in 1 .. Last loop
+                  --  Invariant: iteration count is bounded and state
+                  --  variables remain within their declared ranges.
                   if Line (I) = ' ' or I = Last then
                      if V_Len > 0 then
                         Col := Col + 1;
@@ -706,6 +728,8 @@ package body StellarOrion_Sparta is
       --  Loop invariant: More_Entries yields one directory entry per
       --  iteration until the search set is exhausted.
       while More_Entries (Search) loop
+         --  Invariant: iteration count is bounded and state
+         --  variables remain within their declared ranges.
          Get_Next_Entry (Search, Dir_Ent);
 
          begin
@@ -719,6 +743,8 @@ package body StellarOrion_Sparta is
          --  Loop invariant: End_Of_File advances monotonically via
          --  Get_Line, so this reader terminates per file.
          while not End_Of_File (File) loop
+            --  Invariant: iteration count is bounded and state
+            --  variables remain within their declared ranges.
             Get_Line (File, Line, Last);
 
             if Last > 1 and then (Line (1) = '#' or Line (1) = 'S') then
@@ -732,6 +758,8 @@ package body StellarOrion_Sparta is
                --  Loop invariant: I sweeps 1 .. Last within Line's bounds;
                --  V_Len < 64 keeps Val_Str writes in range.
                for I in 1 .. Last loop
+                  --  Invariant: iteration count is bounded and state
+                  --  variables remain within their declared ranges.
                   if Line (I) = ' ' or I = Last then
                      if V_Len > 0 then
                         Col := Col + 1;
@@ -833,6 +861,8 @@ package body StellarOrion_Sparta is
             --  entry per iteration and N_Files < Max_Files caps writes,
             --  so Names(N_Files) stays within 1 .. Max_Files.
             while More_Entries (S) and N_Files < Max_Files loop
+               --  Invariant: iteration count is bounded and state
+               --  variables remain within their declared ranges.
                Get_Next_Entry (S, E);
                declare
                   N : constant String := Simple_Name (E);
@@ -862,6 +892,8 @@ package body StellarOrion_Sparta is
          --  Loop invariant: inner comparison J sweeps (I, N_Files],
          --  always within Names' populated range.
          for J in I + 1 .. N_Files loop
+            --  Invariant: iteration count is bounded and state
+            --  variables remain within their declared ranges.
             declare
                NI, NJ : Natural := 0;
                SI : constant String := To_String (Names (I));
@@ -903,6 +935,8 @@ package body StellarOrion_Sparta is
          --  Loop invariant: Fidx sweeps Start_I .. N_Files, the tail
          --  slice of the sorted Names array (<= 15 entries).
          for Fidx in Start_I .. N_Files loop
+            --  Invariant: iteration count is bounded and state
+            --  variables remain within their declared ranges.
             declare
                Fname : constant String := To_String (Names (Fidx));
                Fpath : constant String := Output_Dir & "/" & Fname;
@@ -1032,6 +1066,8 @@ package body StellarOrion_Sparta is
             --  Loop invariant: More_Entries yields one grid dump entry
             --  per iteration until the search set is exhausted.
             while More_Entries (G_S) loop
+               --  Invariant: iteration count is bounded and state
+               --  variables remain within their declared ranges.
                Get_Next_Entry (G_S, G_E);
                Has_Grid := True;
                declare

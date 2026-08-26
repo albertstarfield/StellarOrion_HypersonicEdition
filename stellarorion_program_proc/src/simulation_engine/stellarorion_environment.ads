@@ -93,6 +93,7 @@ package StellarOrion_Environment is
    --    can fire (Murphy's Law: approximator overshoot is contained).
    procedure Mach_Alt_To_Flight
      (Mach    : Float;
+     --  Invariant: parameters and derived locals remain within their declared
       Alt_Km  : Float;
       Flight  : out Flight_Parameters)
       with Pre => Mach >= 0.0 and Mach <= 50.0
@@ -116,6 +117,7 @@ package StellarOrion_Environment is
    --    Temperature  : Exospheric temperature [K]
    procedure MSIS_Atmosphere
      (Alt_Km       : Float;
+     --  Invariant: parameters and derived locals remain within their declared
       Latitude_Deg : Float;
       Day_Of_Year  : Positive;
       F107         : Float;

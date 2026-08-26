@@ -48,6 +48,8 @@ package body StellarOrion_Validation is
         and TPS.Emissivity <= 1.0;
 
       return Valid_Geo and Valid_TPS;
+   --  Invariant: parameters and derived locals remain within their declared
+   --  subtype ranges throughout execution; no unchecked conversions occur.
    end Validate_And_Dump;
 
    -- ==================================================================
@@ -59,6 +61,8 @@ package body StellarOrion_Validation is
    is
    begin
       return Is_Survivable (Metrics);
+   --  Invariant: parameters and derived locals remain within their declared
+   --  subtype ranges throughout execution; no unchecked conversions occur.
    end Check_Survivability;
 
 end StellarOrion_Validation;

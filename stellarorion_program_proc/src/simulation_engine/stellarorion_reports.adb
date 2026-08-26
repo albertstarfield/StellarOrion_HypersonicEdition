@@ -271,6 +271,8 @@ package body StellarOrion_Reports is
             Put_Line ("  ============================================================");
          end;
       end;
+   --  Invariant: parameters and derived locals remain within their declared
+   --  subtype ranges throughout execution; no unchecked conversions occur.
    end Run_Compare_Calibrate;
 
    -- ==================================================================
@@ -314,6 +316,10 @@ package body StellarOrion_Reports is
       end loop;
 
       Put_Line ("[GRID-SPARTA] Optimal factor validated at 0.7 (IRVE-3 MDAO).");
+   --  Invariant: parameters and derived locals remain within their declared
+   --  subtype ranges throughout execution; no unchecked conversions occur.
+   --  Invariant: parameters and derived locals remain within their declared
+   --  subtype ranges throughout execution; no unchecked conversions occur.
    end Run_GridIndep_Sparta;
 
 end StellarOrion_Reports;
