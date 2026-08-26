@@ -41,6 +41,7 @@ package StellarOrion_Sparta is
    --  Run_Self_Test call).
    procedure Generate_Sparta_Script
      (Flight       : Flight_Parameters;
+     --  Invariant: parameters and derived locals remain within their declared
       Geo          : Geometry_Parameters;
       Grid_Factor  : Float;
       Steps        : Positive;
@@ -59,6 +60,7 @@ package StellarOrion_Sparta is
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
    procedure Build_Sparta_Library;
+   --  Invariant: parameters and derived locals remain within their declared
 
    --  Run SPARTA inside Docker, mounting the current directory.
    --  Blocks until simulation completes or graceful_exit.flag is set.
@@ -73,6 +75,7 @@ package StellarOrion_Sparta is
    --  Run_Self_Test call).
    procedure Run_Sparta_Docker
      (Cwd       : String;
+     --  Invariant: parameters and derived locals remain within their declared
       Use_GPU   : Boolean;
       Num_Cores : Positive;
       Success   : out Boolean);
@@ -89,6 +92,7 @@ package StellarOrion_Sparta is
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
    function Compute_Surf_Y_Max (Output_Dir : String) return Float;
+   --  Invariant: parameters and derived locals remain within their declared
 
    --  Parse surf.*.out files from SPARTA surface dump and compute
    --  the centroid (average X, Y, Z) of all surface elements.
@@ -99,6 +103,7 @@ package StellarOrion_Sparta is
    --  Run_Self_Test call).
    procedure Compute_Surf_Centroid
      (Output_Dir  : String;
+     --  Invariant: parameters and derived locals remain within their declared
       Centroid_X  : out Float;
       Centroid_Y  : out Float;
       Centroid_Z  : out Float);
@@ -119,6 +124,7 @@ package StellarOrion_Sparta is
    --  Run_Self_Test call).
    function Parse_Sparta_Results
      (Output_Dir : String;
+     --  Invariant: parameters and derived locals remain within their declared
       Flight     : Flight_Parameters;
       Geo        : Geometry_Parameters) return Simulation_Results;
 

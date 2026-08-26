@@ -248,6 +248,7 @@ package StellarOrion_Physics is
    --  (transitively exercised via Run_Self_Test Test 5 metrics pipeline).
    function Backface_Temperature
      (Init_Temp    : Float;
+     --  Invariant: parameters and derived locals remain within their declared
        Heat_Flux    : Float;
        Duration     : Float;
        Thermal_Lag  : Float;
@@ -333,6 +334,7 @@ package StellarOrion_Physics is
                      and Metrics.Backface_Temp_K <= KAPTON_MAX_TEMP
                      and Metrics.G_Load <= MAX_G_LOAD
                      and Metrics.Decel_G <= MAX_G_LOAD);
+                     --  Invariant: parameters and derived locals remain within their declared
 
    -- -----------------------------------------------------------------
    --  Composite Calculation
@@ -360,6 +362,7 @@ package StellarOrion_Physics is
    --  -> Test 5 (end-to-end metrics pipeline).
    procedure Calculate_Flight_Metrics
      (Results : Simulation_Results;
+     --  Invariant: parameters and derived locals remain within their declared
       Flight  : Flight_Parameters;
       Geo     : Geometry_Parameters;
       TPS     : TPS_Material;

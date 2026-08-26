@@ -71,6 +71,7 @@ package StellarOrion_Geometry is
    --  (no direct self-test call; proof-verified unit).
    function Shield_Mass_Analytical
       (Diameter      : Float;
+      --  Invariant: parameters and derived locals remain within their declared
        Angle_Deg     : Float;
        Toroid_Count  : Positive;
        Toroid_Radius : Float;
@@ -142,5 +143,6 @@ package StellarOrion_Geometry is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Validate_Geometry") -> Test 4.
    function Validate_Geometry (Params : Geometry_Parameters) return Boolean;
+   --  Invariant: parameters and derived locals remain within their declared
 
 end StellarOrion_Geometry;

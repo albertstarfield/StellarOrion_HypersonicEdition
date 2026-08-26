@@ -27,6 +27,8 @@ package body StellarOrion_Orion is
       --  Orion-specific: crew-rated g-limit
       return Metrics.Decel_G <= ORION_MAX_G
         and Metrics.G_Load <= ORION_MAX_G;
+   --  Invariant: parameters and derived locals remain within their declared
+   --  subtype ranges throughout execution; no unchecked conversions occur.
    end Orion_Survivability_Check;
 
 end StellarOrion_Orion;

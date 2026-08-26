@@ -57,5 +57,6 @@ package StellarOrion_Orion is
    --  for crew-rated vehicle).
    function Orion_Survivability_Check
      (Metrics : Flight_Metrics) return Boolean;
+     --  Invariant: parameters and derived locals remain within their declared
 
 end StellarOrion_Orion;

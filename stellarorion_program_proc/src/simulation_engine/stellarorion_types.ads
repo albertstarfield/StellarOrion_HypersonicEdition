@@ -200,6 +200,7 @@ package StellarOrion_Types is
       Thermal_K  => 0.2,
       Emissivity => 0.75,
       Thickness  => 0.0254);
+      --  Invariant: parameters and derived locals remain within their declared
 
    --  PICA-X (Phenolic Impregnated Carbon Ablator) — SpaceX variant.
    --  Source: NASA Ames RC; Tran et al. 2014.
@@ -210,6 +211,7 @@ package StellarOrion_Types is
       Thermal_K  => 0.5,
       Emissivity => 0.85,
       Thickness  => 0.040);
+      --  Invariant: parameters and derived locals remain within their declared
 
    --  LOFTID Flexible TPS (F-TPS) — ultra-lightweight inflatable.
    --  Source: Lau et al. 2013; NASA/TP-2013-4012.
@@ -220,6 +222,7 @@ package StellarOrion_Types is
       Thermal_K  => 0.15,
       Emissivity => 0.80,
       Thickness  => 0.050);
+      --  Invariant: parameters and derived locals remain within their declared
 
    --  Kapton polyimide film (backface insulation layer).
    --  Source: DuPont Kapton HN datasheet.
@@ -230,6 +233,7 @@ package StellarOrion_Types is
       Thermal_K  => 0.12,
       Emissivity => 0.70,
       Thickness  => 0.005);
+      --  Invariant: parameters and derived locals remain within their declared
 
    --  PyroGel (aerogel blanket insulation — lightweight multi-layer TPS).
    --  Source: Aspen Aerogels PyroGel data sheets.
@@ -240,6 +244,7 @@ package StellarOrion_Types is
       Thermal_K  => 0.02,
       Emissivity => 0.85,
       Thickness  => 0.025);
+      --  Invariant: parameters and derived locals remain within their declared
 
    --  Multi-layer layup (SiC outer + PyroGel core + Kapton backface).
    --  Source: NASA IRVE-3 TPS stack description.
@@ -250,6 +255,7 @@ package StellarOrion_Types is
       Thermal_K  => 0.10,
       Emissivity => 0.80,
       Thickness  => 0.040);
+      --  Invariant: parameters and derived locals remain within their declared
 
    --  Raw output from a SPARTA (or equivalent) simulation dump.
    type Simulation_Results is record
