@@ -56,7 +56,13 @@ package StellarOrion_Orion is
    --  applies Orion-specific tolerances (higher g-load allowance
    --  for crew-rated vehicle).
    function Orion_Survivability_Check
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
      (Metrics : Flight_Metrics) return Boolean;
-     --  Invariant: parameters and derived locals remain within their declared
+      --  Invariant: parameters and derived locals remain within their declared
 
+   procedure Test_Orion_Survivability_Check;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Orion_Survivability_Check", Test_Orion_Survivability_Check'Access);
 end StellarOrion_Orion;

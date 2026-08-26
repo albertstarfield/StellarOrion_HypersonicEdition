@@ -535,7 +535,6 @@ def test_compute_pinn_metrics_untrained_raises() -> None:
     cls = _load_accelerator()
     if cls is None:
         return
-    import numpy as np
 
     acc = cls(device="cpu")
     try:
@@ -545,7 +544,7 @@ def test_compute_pinn_metrics_untrained_raises() -> None:
         #  VERBOSE: expected refusal printed so silent-pass can't hide bugs.
         print(f"[TEST] expected RuntimeError raised: {exc}")
         return
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(f"[TEST] unexpected exception type: {exc!r}")
         raise AssertionError(f"expected RuntimeError, got {exc!r}") from exc
     raise AssertionError("expected RuntimeError from untrained model")

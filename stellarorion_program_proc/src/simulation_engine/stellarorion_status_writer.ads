@@ -34,4 +34,13 @@ package StellarOrion_Status_Writer is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Clear_Status (Dir_Path : String);
 
+   procedure Test_Write_Status;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  STC coverage wrapper.
+   procedure Test_Clear_Status;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Clear_Status", Test_Clear_Status'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Write_Status", Test_Write_Status'Access);
 end StellarOrion_Status_Writer;

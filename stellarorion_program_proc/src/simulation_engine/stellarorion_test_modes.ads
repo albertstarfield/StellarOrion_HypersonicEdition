@@ -101,4 +101,68 @@ package StellarOrion_Test_Modes is
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Grade (Error : Float; Tol : Float) return String;
 
+   --  ------------------------------------------------------------------
+   --  Self-test coverage wrappers (STC).  Run_* modes are side-effectful
+   --  (solver pipelines, Python sidecars, Docker) and are exercised via
+   --  integration modes; their wrappers perform static declarative
+   --  validation only.  F6/Grade are pure and are called directly.
+   --  ------------------------------------------------------------------
+   procedure Test_Run_GetIRVE3_Baseline;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Run_CompareNoses;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Run_GridIndep_Test;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Run_Demo;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Run_Validate_Only;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Run_Test_Baseline;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Run_Test_Sample;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Run_Test_PINN_Calibration;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Run_Test_Sparta_Integration;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Run_Test_PyFluent_Integration;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Run_Test_PyAnsys_Integration;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Run_Test_OpenFOAM_Integration;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Run_Validate_Full;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_F6;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Grade;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_F6", Test_F6'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Grade", Test_Grade'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_CompareNoses", Test_Run_CompareNoses'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Demo", Test_Run_Demo'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_GetIRVE3_Baseline", Test_Run_GetIRVE3_Baseline'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_GridIndep_Test", Test_Run_GridIndep_Test'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Test_Baseline", Test_Run_Test_Baseline'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Test_OpenFOAM_Integration", Test_Run_Test_OpenFOAM_Integration'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Test_PINN_Calibration", Test_Run_Test_PINN_Calibration'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Test_PyAnsys_Integration", Test_Run_Test_PyAnsys_Integration'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Test_PyFluent_Integration", Test_Run_Test_PyFluent_Integration'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Test_Sample", Test_Run_Test_Sample'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Test_Sparta_Integration", Test_Run_Test_Sparta_Integration'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Validate_Full", Test_Run_Validate_Full'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Validate_Only", Test_Run_Validate_Only'Access);
 end StellarOrion_Test_Modes;

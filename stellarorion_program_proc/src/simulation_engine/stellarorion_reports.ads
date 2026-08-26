@@ -37,4 +37,14 @@ package StellarOrion_Reports is
       Results_Dir   : String)
    ;
 
+   --  STC coverage wrapper.
+   procedure Test_Run_Compare_Calibrate;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  STC coverage wrapper.
+   procedure Test_Run_GridIndep_Sparta;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Compare_Calibrate", Test_Run_Compare_Calibrate'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_GridIndep_Sparta", Test_Run_GridIndep_Sparta'Access);
 end StellarOrion_Reports;

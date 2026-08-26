@@ -127,7 +127,7 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         """Suppress BaseHTTPRequestHandler's per-request console logging.
         Tested by: test_log_message() (same file).
         """
-        pass  # Silence request logging
+        # Silence request logging
 
 
 # --- server entry point ---
@@ -171,7 +171,7 @@ def _spin_server():
     srv = HTTPServer(("127.0.0.1", 0), SidecarHandler)
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
-    host, port = srv.server_address
+    host, port = srv.server_address[:2]
     return srv, "http://" + str(host) + ":" + str(port)
 
 
@@ -259,6 +259,6 @@ def test_main() -> None:
     Tested by: this function itself (self-test section).
     """
     srv = HTTPServer(("127.0.0.1", 0), SidecarHandler)
-    host, port = srv.server_address
+    _host, port = srv.server_address[:2]
     assert port > 0
     srv.server_close()
