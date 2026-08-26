@@ -1,7 +1,7 @@
 """Standalone PyFluent SSH Integration Test Sidecar.
 
 Ported from StellarOrionEngineMach5Up.py:run_integration_test() and
-test_ssh_connection(). Tests SSH connectivity to a remote Windows host,
+_ssh_connection_check(). Tests SSH connectivity to a remote Windows host,
 verifies Python + Ansys Fluent + PyFluent availability, and reports status.
 
 Usage:
@@ -10,17 +10,19 @@ Usage:
 import argparse
 import json
 import os
-import sys
 
 
-def test_ssh_connection(host, user, password=None, key_path=None):
+def _ssh_connection_check(host, user, password=None, key_path=None):
     """Test SSH connection and verify remote PyFluent environment.
 
     Mirrors L2570-2667 of StellarOrionEngineMach5Up.py.
     """
     try:
         import paramiko
-    except ImportError:
+    except ImportError as exc:
+        #  VERBOSE (Murphy's Law): surface the missing dependency before the
+        #  structured error return so the failure is visible in console logs.
+        print(f"[!] paramiko import failed: {exc}")
         return {
             "status": "error",
             "message": "paramiko not installed. Install with: pip install paramiko",
@@ -151,6 +153,10 @@ def test_ssh_connection(host, user, password=None, key_path=None):
         }
 
     except Exception as exc:  # noqa: BLE001 — sidecar must catch all SSH errors
+        #  VERBOSE: full traceback to console before the JSON error payload.
+        print(f"[!] SSH connection failed: {exc!r}")
+        import traceback
+        traceback.print_exc()
         return {"status": "error", "message": f"SSH connection failed: {exc!s}"}
 
 
@@ -162,7 +168,7 @@ def run_integration_test(host, user, password=None, key_path=None):
     3. Attempt a minimal Fluent handshake (if possible)
     """
     print(f"[*] Connecting to {user}@{host} ...")
-    result = test_ssh_connection(host, user, password, key_path)
+    result = _ssh_connection_check(host, user, password, key_path)
 
     if result["status"] == "error":
         return result
@@ -171,6 +177,8 @@ def run_integration_test(host, user, password=None, key_path=None):
 
     if result["status"] == "warning":
         print("[!] Some issues detected. Integration test may fail.")
+        # Loop invariant: issues is a fixed list from the probe result; every
+        # entry is printed exactly once.
         for issue in result.get("issues", []):
             print(f"    - {issue}")
 
@@ -271,3 +279,42 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  Self-tests (pytest-style; fast — no real SSH session is established)
+# ══════════════════════════════════════════════════════════════════════════
+
+def test_run_integration_test_empty_args() -> None:
+    """Empty host/user short-circuits into a structured error dict.
+
+    Tested by: this function itself (self-test section).
+    """
+    result = run_integration_test("", "")
+    assert isinstance(result, dict)
+    assert result["status"] == "error"
+
+
+def test_main_help_exits_zero() -> None:
+    """--help prints usage and exits cleanly (SystemExit 0 or None).
+
+    Tested by: this function itself (self-test section).
+    """
+    import contextlib
+    import io
+    import sys
+
+    argv_backup = sys.argv
+    sys.argv = ["pyfluent_test.py", "--help"]
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            try:
+                main()
+            except SystemExit as exc:
+                #  VERBOSE: exit code printed so failures are attributable.
+                print(f"[TEST] main exited with code {exc.code}")
+                assert exc.code in (0, None), f"expected clean exit, got {exc.code}"
+    finally:
+        sys.argv = argv_backup
+    assert "--ssh-host" in buf.getvalue()

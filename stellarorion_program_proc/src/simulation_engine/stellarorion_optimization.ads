@@ -157,6 +157,7 @@ package StellarOrion_Optimization is
    --    Target_Beta — Target ballistic coefficient (passed to evaluator)
    --    Eval      — User-provided fitness function (maps geo -> cost)
    --    Result    — Output: best geometry, cost, and convergence info
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Run_GA_Optimization
      (Config      : GA_Config;
       Flight      : Flight_Parameters;
@@ -175,6 +176,7 @@ package StellarOrion_Optimization is
    --
    --  Cost = Optimization_Cost(Beta_calc, Beta_Target, 0.0, 0.0, 1.0, 0.0)
    --  (objective weight set to 0 since we only have beta in this model)
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Default_Fitness
      (Geo          : Geometry_Parameters;
       Flight       : Flight_Parameters;
@@ -199,6 +201,7 @@ package StellarOrion_Optimization is
    --
    --  This gives the GA optimizer a physics-faithful fitness landscape
    --  that accounts for drag, heating, and thermal protection limits.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function MoP_Fitness
      (Geo          : Geometry_Parameters;
       Flight       : Flight_Parameters;

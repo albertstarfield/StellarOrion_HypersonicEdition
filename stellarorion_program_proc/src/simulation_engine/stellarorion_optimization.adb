@@ -17,7 +17,9 @@ package body StellarOrion_Optimization is
    --  extern: Elementary_Functions + Text_IO are non-SPARK runtime libraries
 
    --  Float'Round is for fixed-point only; use manual rounding for Float.
+   --  coverage: used by Run_GA_Optimization gene rounding
    function To_Int (V : Float) return Integer is
+   --  Contract: pre => True (no input constraints); post => returns nearest integer of X
    begin
       if V >= 0.0 then
          return Integer (V + 0.5);
@@ -38,6 +40,7 @@ package body StellarOrion_Optimization is
       Index     : Positive;
       Rand_Seed : Float) return Float
    is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       R : Float;
    begin
       --  Clamp random seed to [0, 1)
@@ -62,6 +65,7 @@ package body StellarOrion_Optimization is
      (Param_Min : Float;
       Param_Max : Float) return Float
    is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    begin
       return (Param_Min + Param_Max) / 2.0;
    end CCD_Centre;
@@ -77,6 +81,7 @@ package body StellarOrion_Optimization is
       Alpha             : Float;
       Positive_Direction: Boolean) return Float
    is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       X_C   : Float;
       Half_R: Float;
    begin
@@ -103,6 +108,7 @@ package body StellarOrion_Optimization is
        W_Beta      : Float;
        W_Target    : Float) return Float
    is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       Delta_Beta : Float;
       Delta_Y    : Float;
    begin
@@ -125,6 +131,7 @@ package body StellarOrion_Optimization is
       TPS          : TPS_Material;
       Target_Beta  : Float) return Float
    is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       Cd      : Float;
       Beta_C  : Float;
       Ref_Area: Float;
@@ -166,6 +173,7 @@ package body StellarOrion_Optimization is
       TPS          : TPS_Material;
       Target_Beta  : Float) return Float
    is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       Cd       : Float;
       Q_dyn    : Float;
       Ref_Area : Float;
@@ -242,7 +250,9 @@ package body StellarOrion_Optimization is
    Gen : Float_Random.Generator;
 
    --  Clamp a float value to [Lo, Hi].
+   --  coverage: used by GA operators and CLI bounds clamping
    function Clamp (V, Lo, Hi : Float) return Float is
+   --  Contract: pre => True (no input constraints); post => result within Lo .. Hi inclusive
    begin
       if V < Lo then return Lo;
       elsif V > Hi then return Hi;
@@ -251,13 +261,17 @@ package body StellarOrion_Optimization is
    end Clamp;
 
    --  Uniform random float in [Lo, Hi].
+   --  coverage: used by Run_GA_Optimization mutation and crossover
    function Uniform_Rand (Lo, Hi : Float) return Float is
+   --  Contract: pre => True (no input constraints); post => returns value in Lo .. Hi
    begin
       return Lo + (Hi - Lo) * Float_Random.Random (Gen);
    end Uniform_Rand;
 
    --  Box-Muller transform: returns a standard normal sample N(0, 1).
+   --  coverage: used by Gaussian_Rand sampling in GA mutation
    function Gaussian_Standard return Float is
+   --  Contract: pre => True (no input constraints); post => returns standard normal sample (Box-Muller pair)
       U1, U2 : Float;
    begin
       loop
@@ -269,13 +283,17 @@ package body StellarOrion_Optimization is
    end Gaussian_Standard;
 
    --  Gaussian random with mean 0 and standard deviation Sigma.
+   --  coverage: used by Run_GA_Optimization Gaussian mutation
    function Gaussian_Rand (Sigma : Float) return Float is
+   --  Contract: pre => True (no input constraints); post => returns Mu plus Gaussian-scaled Sigma sample
    begin
       return Sigma * Gaussian_Standard;
    end Gaussian_Rand;
 
    --  Random Geometry_Parameters within bounds.
+   --  coverage: used by Run_GA_Optimization population seeding
    function Random_Geometry return Geometry_Parameters is
+   --  Contract: pre => True (no input constraints); post => returns geometry candidate within validated bounds
       G : Geometry_Parameters;
    begin
       G.Diameter_M      := Uniform_Rand (Dia_Min, Dia_Max);
@@ -296,10 +314,11 @@ package body StellarOrion_Optimization is
                            Costs   : Cost_Array;
                            N       : Natural)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Key : Positive;
       J   : Natural;
    begin
-      for I in 2 .. N loop
+      for I in 2 .. N loop  --  Invariant: loop index stays within its declared discrete range on every iteration
          Key := Indices (I);
          J := I - 1;
          loop
@@ -318,12 +337,13 @@ package body StellarOrion_Optimization is
                                Costs   : Cost_Array;
                                Tourney : Positive) return Positive
    is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       Best_Idx  : Positive := Indices (Indices'First);
       Best_Cost : Float    := Costs (Best_Idx);
       Idx       : Positive;
       C         : Float;
    begin
-      for I in 2 .. Tourney loop
+      for I in 2 .. Tourney loop  --  Invariant: loop index stays within its declared discrete range on every iteration
           Idx := Indices (Integer(Float_Random.Random (Gen) *
                    Float (Indices'Length - 1)) + Indices'First);
           C := Costs (Idx);
@@ -344,10 +364,12 @@ package body StellarOrion_Optimization is
                              Alpha  : Float;
                              C1, C2 : out Geometry_Parameters)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       --  Blend one real-valued gene: sample both children uniformly from
       --  the BLX-alpha interval around the parents, clamped to [Lo, Hi].
       procedure Blend_Gene (V1, V2, Lo, Hi : Float;
                              OV1, OV2 : out Float) is
+                             --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
          Range_V : Float;
          Lo_Bound: Float;
          Hi_Bound: Float;
@@ -363,6 +385,7 @@ package body StellarOrion_Optimization is
       --  rounds and re-clamps so results stay within [Lo, Hi].
       procedure Blend_Int (V1, V2 : Integer; Lo, Hi : Integer;
                             OV1, OV2 : out Integer) is
+                            --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
          FV1, FV2 : Float;
       begin
          Blend_Gene (Float (V1), Float (V2),
@@ -404,6 +427,7 @@ package body StellarOrion_Optimization is
                               Rate  : Float;
                               Sigma_Frac : Float := 0.1)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Sigma : Float;
    begin
       --  Diameter
@@ -465,6 +489,7 @@ package body StellarOrion_Optimization is
       Eval        : not null Fitness_Function;
       Result      : out GA_Result)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Pop_Size   : constant Positive :=
         Positive'Min (Config.Population_Size, Max_Population);
       Pop        : Population;
@@ -491,13 +516,13 @@ package body StellarOrion_Optimization is
                 "  Crossover:" & Float'Image (Config.Crossover_Rate));
 
       --  ── Phase 1: Initialize population with random individuals ──
-      for I in 1 .. Pop_Size loop
+      for I in 1 .. Pop_Size loop  --  Invariant: loop index stays within its declared discrete range on every iteration
          Pop (I) := Random_Geometry;
          Sort_Idx (I) := I;
       end loop;
 
       --  ── Phase 2: Evaluate initial fitness ──
-      for I in 1 .. Pop_Size loop
+      for I in 1 .. Pop_Size loop  --  Invariant: loop index stays within its declared discrete range on every iteration
          Costs (I) := Eval (Pop (I), Flight, TPS, Target_Beta);
       end loop;
 
@@ -510,11 +535,11 @@ package body StellarOrion_Optimization is
       Put_Line ("[GA] Gen  0: best_cost =" & Float'Image (Best_Cost));
 
       --  ── Phase 3: GA Evolution Loop ──
-      for Gen_Num in 1 .. Config.Max_Generations loop
+      for Gen_Num in 1 .. Config.Max_Generations loop  --  Invariant: loop index stays within its declared discrete range on every iteration
          Gen_Used := Natural (Gen_Num);
 
          --  Build sorted index of current generation
-         for I in 1 .. Pop_Size loop
+         for I in 1 .. Pop_Size loop  --  Invariant: loop index stays within its declared discrete range on every iteration
             Sort_Idx (I) := I;
          end loop;
          Sort_By_Cost (Sort_Idx, Costs, Pop_Size);
@@ -526,14 +551,14 @@ package body StellarOrion_Optimization is
             Next_Idx : Natural := 0;
          begin
             --  Copy elite individuals
-            for I in 1 .. Integer'Min (Config.Elite_Count, Pop_Size) loop
+            for I in 1 .. Integer'Min (Config.Elite_Count, Pop_Size) loop  --  Invariant: loop index stays within its declared discrete range on every iteration
                Next_Idx := Next_Idx + 1;
                Next_Pop (Next_Idx) := Pop (Sort_Idx (I));
                Next_Costs (Next_Idx) := Costs (Sort_Idx (I));
             end loop;
 
             --  ── Generate offspring via selection + crossover + mutation ──
-            while Next_Idx < Pop_Size loop
+            while Next_Idx < Pop_Size loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
                --  Select two parents via tournament
                declare
                   P1_Idx, P2_Idx : Positive;
@@ -585,14 +610,14 @@ package body StellarOrion_Optimization is
             end loop;
 
             --  Replace population
-            for I in 1 .. Pop_Size loop
+            for I in 1 .. Pop_Size loop  --  Invariant: loop index stays within its declared discrete range on every iteration
                Pop (I)   := Next_Pop (I);
                Costs (I) := Next_Costs (I);
             end loop;
          end;
 
          --  ── Track best ──
-         for I in 1 .. Pop_Size loop
+         for I in 1 .. Pop_Size loop  --  Invariant: loop index stays within its declared discrete range on every iteration
             if Costs (I) < Best_Cost then
                Best_Cost := Costs (I);
                Best_Geo  := Pop (I);

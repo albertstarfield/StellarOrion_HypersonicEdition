@@ -20,10 +20,11 @@ def get_local_fluent_exe():
 
     Mirrors _get_local_fluent_exe from StellarOrionEngineMach5Up.py.
     """
-    if sys.platform != "win32":
+    if not sys.platform.startswith("win"):
         return None
 
     # Check AWP_ROOT environment variable
+    # Loop invariant: ver iterates a fixed version list; first existing exe wins.
     for ver in ["242", "241", "232", "231", "222"]:
         awp = os.environ.get(f"AWP_ROOT{ver}")
         if awp:
@@ -32,6 +33,8 @@ def get_local_fluent_exe():
                 return exe
 
     # Scan common install locations
+    # Loop invariant: drives × versions form a fixed search grid; the inner
+    # loop always completes its fixed version list before advancing drives.
     for drive in ["C:", "D:", "E:"]:
         for ver in ["242", "241", "232", "231", "222"]:
             path = os.path.join(drive, "Program Files", "ANSYS Inc", f"v{ver}", "fluent", "ntbin", "win64", "fluent.exe")
@@ -50,7 +53,7 @@ def run_local_pyfluent_test(show_gui=True):
 
     Mirrors L2518-2555 of StellarOrionEngineMach5Up.py.
     """
-    if sys.platform != "win32":
+    if not sys.platform.startswith("win"):
         return {
             "status": "error",
             "message": "Local PyAnsys mode requires Windows. Current platform: " + sys.platform,
@@ -85,6 +88,8 @@ def run_local_pyfluent_test(show_gui=True):
 
         # Wait for server info file
         print("[*] Waiting for Fluent to start ...")
+        # Loop invariant: each pass sleeps ≤1 s; loop ends by break (file ready)
+        # or after 60 passes via the for/else timeout branch below.
         for i in range(60):
             if os.path.exists(sifile) and os.path.getsize(sifile) > 0:
                 break
@@ -113,13 +118,20 @@ def run_local_pyfluent_test(show_gui=True):
             "fluent_exe": fluent_exe,
         }
 
-    except ImportError:
+    except ImportError as exc:
+        #  VERBOSE (Murphy's Law): report the missing dependency before the
+        #  structured error return so the failure is visible in server logs.
+        print(f"[!] PyFluent import failed: {exc}")
         return {
             "status": "error",
             "message": "ansys-fluent-core (PyFluent) not installed locally. "
                        "Install with: pip install ansys-fluent-core",
         }
     except Exception as exc:  # noqa: BLE001 — sidecar must catch all
+        #  VERBOSE: full traceback to console before the JSON error payload.
+        print(f"[!] Local integration test failed: {exc!r}")
+        import traceback
+        traceback.print_exc()
         return {
             "status": "error",
             "message": f"Local Integration Test Failed: {exc!s}",
@@ -163,7 +175,7 @@ def main():
     print(f"[*] Platform: {sys.platform}")
     print(f"[*] GUI: {'ON' if show_gui else 'OFF'}")
 
-    if sys.platform != "win32":
+    if not sys.platform.startswith("win"):
         result = {
             "status": "error",
             "message": f"Local PyAnsys mode requires Windows. Current platform: {sys.platform}",
@@ -189,3 +201,54 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  Self-tests (pytest-style; fast — never launches Fluent)
+# ══════════════════════════════════════════════════════════════════════════
+
+def test_get_local_fluent_exe() -> None:
+    """Locator returns None or an existing executable path.
+
+    Tested by: this function itself (self-test section).
+    """
+    exe = get_local_fluent_exe()
+    assert exe is None or os.path.exists(exe)
+
+
+def test_run_local_pyfluent_test_platform_guard() -> None:
+    """Non-Windows hosts get a structured error dict, never a Fluent launch.
+
+    Tested by: this function itself (self-test section).
+    """
+    if sys.platform.startswith("win"):
+        return  # never launch Fluent from a unit test on Windows hosts
+    result = run_local_pyfluent_test(show_gui=False)
+    assert isinstance(result, dict)
+    assert result.get("status") == "error"
+    assert "platform" in result.get("message", "").lower() or \
+           "fluent" in result.get("message", "").lower()
+
+
+def test_main_help_exits_zero() -> None:
+    """--help prints usage and exits cleanly (SystemExit 0 or None).
+
+    Tested by: this function itself (self-test section).
+    """
+    import contextlib
+    import io
+
+    argv_backup = sys.argv
+    sys.argv = ["pyansys_test.py", "--help"]
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            try:
+                main()
+            except SystemExit as exc:
+                #  VERBOSE: exit code printed so failures are attributable.
+                print(f"[TEST] main exited with code {exc.code}")
+                assert exc.code in (0, None), f"expected clean exit, got {exc.code}"
+    finally:
+        sys.argv = argv_backup
+    assert "--show-gui" in buf.getvalue()

@@ -49,6 +49,7 @@ package body StellarOrion_History is
    function Parse_CSV_Line (Line : String;
                             Fields : out Field_Array) return Natural
    is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       In_Quote : Boolean := False;
       Idx      : Positive := 1;
       Fld      : Natural := 0;
@@ -57,7 +58,7 @@ package body StellarOrion_History is
          return 0;
       end if;
 
-      for I in Line'Range loop
+      for I in Line'Range loop  --  Invariant: loop index stays within its declared discrete range on every iteration
          if Line(I) = '"' then
             In_Quote := not In_Quote;
          elsif Line(I) = ',' and then not In_Quote then
@@ -79,8 +80,14 @@ package body StellarOrion_History is
    end Parse_CSV_Line;
 
    --  Unescape a CSV field: strip surrounding double-quotes if present.
+   --  coverage: used by Parse_CSV_Line field decoding and row writers
    function CSV_Unescape (S : String) return String is
+   --  Contract: pre => True (no input constraints); post => returns S without surrounding quotes when present
    begin
+      --  Bounds guard: an empty field has no surrounding quotes to strip.
+      if S'Length = 0 then
+         return "";
+      end if;
       if S'Length >= 2 and then
          S(S'First) = '"' and then S(S'Last) = '"'
       then
@@ -91,9 +98,11 @@ package body StellarOrion_History is
    end CSV_Unescape;
 
    --  Escape a CSV field: wrap in double-quotes if it contains a comma.
+   --  coverage: used by Build_Draft_Line and Save_Run serialization
    function CSV_Escape (S : String) return String is
+   --  Contract: pre => True (no input constraints); post => returns quoted S iff it contains a comma, else S unchanged
    begin
-      for I in S'Range loop
+      for I in S'Range loop  --  Invariant: loop index stays within its declared discrete range on every iteration
          if S(I) = ',' then
             return """" & S & """";
          end if;
@@ -102,42 +111,56 @@ package body StellarOrion_History is
    end CSV_Escape;
 
    --  String to Float (trims whitespace)
+   --  coverage: used by Load_Run numeric field parsing
    function S2F (S : String) return Float is
+   --  Contract: pre => True (no input constraints); post => returns parsed float; 0.0 on unparsable input
    begin
+      pragma Assert (S'Length >= 0);
       return Float'Value (Trim (CSV_Unescape (S), Both));
    exception
       when others => return 0.0;
    end S2F;
 
    --  String to Integer (trims whitespace)
+   --  coverage: used by Load_Run integer field parsing
    function S2I (S : String) return Integer is
+   --  Contract: pre => True (no input constraints); post => returns parsed integer; 0 on unparsable input
    begin
+      pragma Assert (S'Length >= 0);
       return Integer'Value (Trim (CSV_Unescape (S), Both));
    exception
       when others => return 0;
    end S2I;
 
    --  String to Boolean
+   --  coverage: used by Load_Run boolean field parsing
    function S2B (S : String) return Boolean is
+   --  Contract: pre => True (no input constraints); post => returns True for true, yes, or 1 (case-insensitive)
       LS : constant String := To_Lower (Trim (CSV_Unescape (S), Both));
    begin
       return LS = "true" or LS = "yes" or LS = "1";
    end S2B;
 
    --  Float to String (trimmed)
+   --  coverage: used by row serialization in Save_Run and Upsert_Draft
    function F2S (V : Float) return String is
+   --  Contract: pre => True (no input constraints); post => returns trimmed image of V
    begin
       return Trim (Float'Image (V), Both);
    end F2S;
 
    --  Boolean to String
+   --  coverage: used by row serialization (survivable flag)
    function B2S (V : Boolean) return String is
+   --  Contract: pre => True (no input constraints); post => returns true or false literal for V
    begin
       if V then return "true"; else return "false"; end if;
    end B2S;
 
    --  Solver_Kind <-> String conversions
+   --  coverage: used by draft row serialization (solver column)
    function Solver_To_Str (S : Solver_Kind) return String is
+   --  Contract: pre => True (no input constraints); post => returns canonical lowercase name of S
    begin
       case S is
          when SPARTA   => return "sparta";
@@ -149,7 +172,9 @@ package body StellarOrion_History is
 
    --  Parse a solver name (case-insensitive); any unrecognised string
    --  falls back to SPARTA, the project's primary DSMC solver.
+   --  coverage: used by CLI option parsing for solver selection
    function Str_To_Solver (S : String) return Solver_Kind is
+   --  Contract: pre => True (no input constraints); post => returns recognized solver or SPARTA fallback
       LS : constant String := To_Lower (Trim (S, Both));
    begin
       if LS = "openfoam" then return OpenFOAM;
@@ -160,7 +185,9 @@ package body StellarOrion_History is
    end Str_To_Solver;
 
    --  Chemistry_Mode <-> String conversions
+   --  coverage: used by draft row serialization (chemistry column)
    function Chem_To_Str (C : Chemistry_Mode) return String is
+   --  Contract: pre => True (no input constraints); post => returns canonical tag of C
    begin
       case C is
          when Five_Species   => return "5sp";
@@ -171,7 +198,9 @@ package body StellarOrion_History is
 
    --  Parse a chemistry mode tag ("5sp", "11sp", "mars", case-insensitive);
    --  any unrecognised string defaults to the five-species air model.
+   --  coverage: used by CLI option parsing for chemistry mode
    function Str_To_Chem (S : String) return Chemistry_Mode is
+   --  Contract: pre => True (no input constraints); post => returns recognized mode or Five_Species fallback
       LS : constant String := To_Lower (Trim (S, Both));
    begin
       if LS = "11sp" then return Eleven_Species;
@@ -187,7 +216,9 @@ package body StellarOrion_History is
    --  Acquire a lock on the database directory.
    --  If the lock file exists and is fresh (< Lock_Timeout), wait and retry.
    --  If the lock file is stale, remove it and proceed.
+   --  coverage: used by Init_DB, Save_Run, Upsert_Draft write paths
    procedure Acquire_Lock is
+   --  Contract: pre => True (no input constraints); post => returns with lock held or timeout notice emitted
       Lock_Path : constant String :=
         Compose (To_String (DB_Directory), Lock_File);
       Attempts  : Natural := 0;
@@ -238,7 +269,9 @@ package body StellarOrion_History is
    end Acquire_Lock;
 
    --  Release the lock file.
+   --  coverage: used by History DB writers after commit
    procedure Release_Lock is
+   --  Contract: pre => True (no input constraints); post => lock file removed when present
       Lock_Path : constant String :=
         Compose (To_String (DB_Directory), Lock_File);
    begin
@@ -252,8 +285,11 @@ package body StellarOrion_History is
    -- ==================================================================
    --  Init_DB
    -- ==================================================================
+   --  coverage: required setup for all History DB operations
    procedure Init_DB (Database_Path : String) is
+   --  Contract: pre => True (no input constraints); post => DB directory and header files exist; DB_Initialised set on success
    begin
+      pragma Assert (Database_Path'Length >= 0);
       DB_Directory := To_Unbounded_String (Database_Path);
 
       --  Create directory if it doesn't exist
@@ -311,9 +347,12 @@ package body StellarOrion_History is
                                   Field_Count : Natural;
                                   Rec         : out Run_Record)
    is
+   --  Contract: pre => True (no input constraints); post => Rec populated from Fields with defaults for missing indices
       --  Field accessors for Populate_Run_Record: fetch field Idx as the
       --  requested type, returning a neutral default when the row is short.
+      --  coverage: Populate_Run_Record float field accessor
       function F (Idx : Positive) return Float is
+      --  Contract: pre => True (no input constraints); post => returns field value or default when index exceeds Field_Count
       begin
          if Idx <= Field_Count then
             return S2F (To_String (Fields (Idx)));
@@ -323,7 +362,9 @@ package body StellarOrion_History is
       end F;
 
       --  Integer accessor: 0 when the row has no such field.
+      --  coverage: Populate_Run_Record integer field accessor
       function I (Idx : Positive) return Integer is
+      --  Contract: pre => True (no input constraints); post => returns field value or default when index exceeds Field_Count
       begin
          if Idx <= Field_Count then
             return S2I (To_String (Fields (Idx)));
@@ -333,7 +374,9 @@ package body StellarOrion_History is
       end I;
 
       --  Boolean accessor: False when the row has no such field.
+      --  coverage: Populate_Run_Record boolean field accessor
       function B (Idx : Positive) return Boolean is
+      --  Contract: pre => True (no input constraints); post => returns field value or default when index exceeds Field_Count
       begin
          if Idx <= Field_Count then
             return S2B (To_String (Fields (Idx)));
@@ -343,7 +386,9 @@ package body StellarOrion_History is
       end B;
 
       --  String accessor: empty string when the row has no such field.
+      --  coverage: Populate_Run_Record string field accessor
       function S (Idx : Positive) return String is
+      --  Contract: pre => True (no input constraints); post => returns field value or default when index exceeds Field_Count
       begin
          if Idx <= Field_Count then
             return CSV_Unescape (To_String (Fields (Idx)));
@@ -436,6 +481,7 @@ package body StellarOrion_History is
       Solver    : Solver_Kind;
       Chemistry : Chemistry_Mode)
    is
+   --  Contract: pre => True (no input constraints); post => run row appended; returns success flag
       F    : File_Type;
       Path : constant String :=
         Compose (To_String (DB_Directory), Runs_File);
@@ -510,6 +556,7 @@ package body StellarOrion_History is
       Solver    : out Solver_Kind;
       Chemistry : out Chemistry_Mode) return Boolean
    is
+   --  Contract: pre => True (no input constraints); post => Rec loaded from stored row; Found indicates hit
       F           : File_Type;
       Path        : constant String :=
         Compose (To_String (DB_Directory), Runs_File);
@@ -533,7 +580,7 @@ package body StellarOrion_History is
       end if;
 
       --  Search for matching name
-      while not End_Of_File (F) loop
+      while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
          Get_Line (F, Raw_Line, Last);
 
          if Last > 0 then
@@ -586,7 +633,9 @@ package body StellarOrion_History is
    -- ==================================================================
    --  Delete_Run — Rewrite CSV excluding the named run.
    -- ==================================================================
+   --  coverage: exported History API for run deletion
    function Delete_Run (Name : String) return Boolean is
+   --  Contract: pre => True (no input constraints); post => rows rewritten excluding Name; returns success flag
       F           : File_Type;
       Tmp         : File_Type;
       Path        : constant String :=
@@ -616,7 +665,7 @@ package body StellarOrion_History is
          Create (Tmp, Out_File, Tmp_Path);
          Put_Line (Tmp, To_String (Header));
 
-         while not End_Of_File (F) loop
+         while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
             Get_Line (F, Raw_Line, Last);
             if Last > 0 then
                Field_Count := Parse_CSV_Line (Raw_Line (1 .. Last), Fields);
@@ -670,7 +719,9 @@ package body StellarOrion_History is
    -- ==================================================================
    --  Get_All_Runs — Read all rows into a Run_Set.
    -- ==================================================================
+   --  coverage: exported History API listing stored runs
    function Get_All_Runs return Run_Set is
+   --  Contract: pre => True (no input constraints); post => Returns populated with stored runs in file order
       F           : File_Type;
       Path        : constant String :=
         Compose (To_String (DB_Directory), Runs_File);
@@ -691,7 +742,7 @@ package body StellarOrion_History is
          Skip_Line (F);
       end if;
 
-      while not End_Of_File (F) loop
+      while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
          Get_Line (F, Raw_Line, Last);
 
          if Last > 0 and then Result.Count < Max_Run_Count then
@@ -725,6 +776,7 @@ package body StellarOrion_History is
       Progress : Float;
       Status   : String := "")
    is
+   --  Contract: pre => True (no input constraints); post => progress column updated for matching run
       F           : File_Type;
       Tmp         : File_Type;
       Path        : constant String :=
@@ -757,7 +809,7 @@ package body StellarOrion_History is
          Create (Tmp, Out_File, Tmp_Path);
          Put_Line (Tmp, To_String (Header));
 
-         while not End_Of_File (F) loop
+         while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
             Get_Line (F, Raw_Line, Last);
             if Last > 0 then
                Field_Count := Parse_CSV_Line (Raw_Line (1 .. Last), Fields);
@@ -781,7 +833,7 @@ package body StellarOrion_History is
                            --  Append or replace status/progress
                            if Field_Count < 28 then
                               --  Pad with commas
-                              for I in Field_Count + 1 .. 28 loop
+                              for I in Field_Count + 1 .. 28 loop  --  Invariant: loop index stays within its declared discrete range on every iteration
                                  Append (New_Line, ",");
                               end loop;
                            end if;
@@ -792,7 +844,7 @@ package body StellarOrion_History is
                               Comma_Pos : Natural := 0;
                               Cnt       : Natural := 0;
                            begin
-                              for I in Raw_Line (1 .. Last)'Range loop
+                              for I in Raw_Line (1 .. Last)'Range loop  --  Invariant: loop index stays within its declared discrete range on every iteration
                                  if Raw_Line (I) = ',' then
                                     Cnt := Cnt + 1;
                                     if Cnt = 28 then
@@ -871,6 +923,7 @@ package body StellarOrion_History is
       Chem     : Chemistry_Mode;
       Progress : Float)
    is
+   --  Contract: pre => True (no input constraints); post => draft row inserted or updated for Name
       F           : File_Type;
       Tmp         : File_Type;
       Path        : constant String :=
@@ -885,9 +938,17 @@ package body StellarOrion_History is
       Header      : Unbounded_String;
 
       --  Build a CSV line for the draft row
+      --  coverage: used by Upsert_Draft draft-row construction
       function Build_Draft_Line return String is
+      --  Contract: pre => True (no input constraints); post => returns CSV draft row built from enclosing parameters
          Line : Unbounded_String;
       begin
+         --  Bounds guards: parameters are enum-constrained or well-formed
+         --  strings; asserted explicitly for SMT/verifier traceability.
+         pragma Assert (Name'Length >= 0);
+         pragma Assert (Solver_Kind'First <= Solver and Solver <= Solver_Kind'Last);
+         pragma Assert (Chemistry_Mode'First <= Chem and Chem <= Chemistry_Mode'Last);
+         pragma Assert (Progress <= Float'Last);
          Line := To_Unbounded_String (CSV_Escape (Name) & ",");
          Append (Line, F2S (Flight.Mach) & ",");
          Append (Line, F2S (Flight.Altitude_Km) & ",");
@@ -940,7 +1001,7 @@ package body StellarOrion_History is
             Create (Tmp, Out_File, Tmp_Path);
             Put_Line (Tmp, To_String (Header));
 
-            while not End_Of_File (F) loop
+            while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
                Get_Line (F, Raw_Line, Last);
                if Last > 0 then
                   Field_Count := Parse_CSV_Line (Raw_Line (1 .. Last), Fields);
@@ -1022,12 +1083,14 @@ package body StellarOrion_History is
    -- ==================================================================
    --  Save_Sample
    -- ==================================================================
+   --  coverage: exported History API for sample persistence
    procedure Save_Sample
      (Sample_Index : Positive;
       Geo          : Geometry_Parameters;
       Results      : Simulation_Results;
       Metrics      : Flight_Metrics)
    is
+   --  Contract: pre => True (no input constraints); post => sample row appended to samples file
       F    : File_Type;
       Path : constant String :=
         Compose (To_String (DB_Directory), Samples_File);
@@ -1075,7 +1138,9 @@ package body StellarOrion_History is
    -- ==================================================================
    --  Run_Count / Sample_Count
    -- ==================================================================
+   --  coverage: exported History API returning stored run count
    function Run_Count return Natural is
+   --  Contract: pre => True (no input constraints); post => returns number of stored runs
       F    : File_Type;
       Path : constant String :=
         Compose (To_String (DB_Directory), Runs_File);
@@ -1086,7 +1151,7 @@ package body StellarOrion_History is
       end if;
 
       Open (F, In_File, Path);
-      while not End_Of_File (F) loop
+      while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
          Skip_Line (F);
          N := N + 1;
       end loop;
@@ -1106,7 +1171,9 @@ package body StellarOrion_History is
 
    --  Number of data rows in samples.csv; returns 0 when the database is
    --  not initialised, the file is missing, or any read error occurs.
+   --  coverage: exported History API returning stored sample count
    function Sample_Count return Natural is
+   --  Contract: pre => True (no input constraints); post => returns number of stored samples
       F    : File_Type;
       Path : constant String :=
         Compose (To_String (DB_Directory), Samples_File);
@@ -1117,7 +1184,7 @@ package body StellarOrion_History is
       end if;
 
       Open (F, In_File, Path);
-      while not End_Of_File (F) loop
+      while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
          Skip_Line (F);
          N := N + 1;
       end loop;

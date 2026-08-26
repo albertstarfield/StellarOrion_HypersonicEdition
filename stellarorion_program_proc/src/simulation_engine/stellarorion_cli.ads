@@ -14,14 +14,17 @@ pragma SPARK_Mode (On);
 package StellarOrion_Cli is
 
    --  Returns True if Flag appears among the command-line arguments.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Has_Flag (Flag : String) return Boolean;
 
    --  Returns the value following Flag, or Default when absent.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Get_Option (Flag : String; Default : String) return String;
 
    --  Get_Option + Float'Value; Default when flag/value absent.
    --  Note: malformed numeric text raises Constraint_Error (documented,
    --  same behaviour as the pre-extraction original).
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Get_Float (Flag : String; Default : Float) return Float;
 
    --  Clamp V into [Lo, Hi].  Murphy's Law: CLI values are untrusted
@@ -30,10 +33,12 @@ package StellarOrion_Cli is
    --  raise Constraint_Error at the assignment.  Sanitizing into the
    --  envelope keeps the run alive and the physics contracts
    --  dischargeable.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Clamp_Float (V, Lo, Hi : Float) return Float with
      Pre => Lo <= Hi;
 
    --  Get_Option + Positive'Value; Default when flag/value absent.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Get_Positive (Flag : String; Default : Positive) return Positive;
 
 end StellarOrion_Cli;

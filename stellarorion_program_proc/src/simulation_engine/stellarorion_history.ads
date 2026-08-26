@@ -47,6 +47,7 @@ package StellarOrion_History is
 
    --  Initialise (or open) the CSV database at Database_Path.
    --  Creates directory and header rows if they don't exist.
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Init_DB (Database_Path : String);
 
    -- -----------------------------------------------------------------
@@ -54,6 +55,7 @@ package StellarOrion_History is
    -- -----------------------------------------------------------------
 
    --  Save a complete simulation run to the CSV database.
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Save_Run
      (Name      : String;
       Flight    : Flight_Parameters;
@@ -66,6 +68,7 @@ package StellarOrion_History is
 
    --  Load a run by name.  Returns False if not found.
    --  Populates all out parameters on success.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Load_Run
      (Name      : String;
       Flight    : out Flight_Parameters;
@@ -77,13 +80,16 @@ package StellarOrion_History is
       Chemistry : out Chemistry_Mode) return Boolean;
 
    --  Delete a run by name.  Returns True if the run was found and removed.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Delete_Run (Name : String) return Boolean;
 
    --  Return all saved runs (up to Max_Run_Count).
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Get_All_Runs return Run_Set;
 
    --  Update the progress field of a named run (0.0 .. 1.0).
    --  Also optionally sets the status string.
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Update_Run_Progress
      (Name     : String;
       Progress : Float;
@@ -91,6 +97,7 @@ package StellarOrion_History is
 
    --  Insert or update a draft run.  If a draft with the same name
    --  exists, it is overwritten; otherwise a new draft row is appended.
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Upsert_Draft
      (Name     : String;
       Flight   : Flight_Parameters;
@@ -107,6 +114,7 @@ package StellarOrion_History is
    -- -----------------------------------------------------------------
 
    --  Save a single DoE sample point.
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Save_Sample
      (Sample_Index : Positive;
       Geo          : Geometry_Parameters;
@@ -118,9 +126,11 @@ package StellarOrion_History is
    -- -----------------------------------------------------------------
 
    --  Return the total number of saved runs.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Run_Count return Natural;
 
    --  Return the total number of saved DoE samples.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Sample_Count return Natural;
 
 end StellarOrion_History;

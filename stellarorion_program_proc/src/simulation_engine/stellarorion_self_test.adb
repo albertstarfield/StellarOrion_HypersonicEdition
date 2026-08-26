@@ -36,6 +36,7 @@ package body StellarOrion_Self_Test is
    --  survivability gating, atomic parity, and dual-watchdog wiring,
    --  printing PASS/FAIL per test and a final summary count.
    procedure Run_Self_Test is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       T1, T2, T3 : Float;
       Geo   : Geometry_Parameters;
       Flight: Flight_Parameters;
@@ -448,7 +449,7 @@ package body StellarOrion_Self_Test is
       begin
          Initialize (W);
          --  Only A keeps beating; B starves past its timeout.
-         for T in 1 .. 12 loop
+         for T in 1 .. 12 loop  --  Invariant: loop index stays within its declared discrete range on every iteration
             Update_Heartbeat (W, Watchdog_A, T);
             Evaluate (W, T);
          end loop;
@@ -474,7 +475,7 @@ package body StellarOrion_Self_Test is
          end if;
 
          --  Both-starvation escalation to latched emergency safe state.
-         for T in 20 .. 45 loop
+         for T in 20 .. 45 loop  --  Invariant: loop index stays within its declared discrete range on every iteration
             Evaluate (W, T);
          end loop;
          Cross_Check (W);

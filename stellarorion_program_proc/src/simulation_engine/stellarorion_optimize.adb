@@ -26,6 +26,7 @@ package body StellarOrion_Optimize with SPARK_Mode => Off is
       Mach_Override : Float := 0.0;
       Alt_Override  : Float := 0.0)
    is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       DoE       : DoE_Method := DoE_In;
       Obj       : Objective  := Obj_In;
       N_Samples : constant Positive := Samples_In;  --  never reassigned

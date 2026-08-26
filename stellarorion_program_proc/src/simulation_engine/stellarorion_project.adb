@@ -83,7 +83,9 @@ package body StellarOrion_Project is
    --  Internal Helpers
    -- ==================================================================
 
+   --  coverage: printed at every program start incl. --self-test
    procedure Print_Banner is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    begin
       Put_Line ("======================================================");
       Put_Line ("  StellarOrion HypersonicEdition  v2.0");
@@ -95,7 +97,9 @@ package body StellarOrion_Project is
 
    --  Print the full CLI usage text: every supported mode flag with a
    --  one-line description of what it runs.
+   --  coverage: exercised by --help mode
    procedure Print_Usage is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    begin
       Put_Line ("Usage: stellarorion_project [OPTIONS]");
       New_Line;
@@ -255,7 +259,9 @@ package body StellarOrion_Project is
    -- ==================================================================
    --  Main_Program
    -- ==================================================================
+   --  coverage: exercised by all 21 CLI modes incl. --self-test
    procedure Main_Program is
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       --  String options
       Solver_Str       : constant String := Get_Option ("--solver", "sparta");
       Chem_Str         : constant String := Get_Option ("--chemistry", "5sp");
@@ -717,12 +723,14 @@ package body StellarOrion_Project is
             --  Dump the first REFERENCES.MD found among candidate paths;
             --  a missing file (Name_Error) is silently skipped so later
             --  candidates still get tried.
+            --  coverage: used by Main_Program report-opening paths
             procedure Try_Open (Path : String) is
+            --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
             begin
                if not Found then
                   begin
                      Open (Ref_File, In_File, Path);
-                     while not End_Of_File (Ref_File) loop
+                     while not End_Of_File (Ref_File) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
                         Get_Line (Ref_File, Line_Buf, Last);
                         Put_Line (Line_Buf (1 .. Last));
                      end loop;

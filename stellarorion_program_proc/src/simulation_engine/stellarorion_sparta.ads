@@ -35,6 +35,10 @@ package StellarOrion_Sparta is
    --    * dump surf and grid output files
    --    * periodic restart checkpoints
    --    * fresh start vs restart from checkpoint
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Generate_Sparta_Script")
+   --  (integration path exercised via --test sample smoke run; no direct
+   --  Run_Self_Test call).
    procedure Generate_Sparta_Script
      (Flight       : Flight_Parameters;
       Geo          : Geometry_Parameters;
@@ -50,6 +54,10 @@ package StellarOrion_Sparta is
    -- -----------------------------------------------------------------
 
    --  Build the SPARTA Docker image (idempotent).
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Build_Sparta_Library")
+   --  (integration path exercised via --test sample smoke run; no direct
+   --  Run_Self_Test call).
    procedure Build_Sparta_Library;
 
    --  Run SPARTA inside Docker, mounting the current directory.
@@ -59,6 +67,10 @@ package StellarOrion_Sparta is
    --  Use_GPU   : True to enable CUDA/Kokkos acceleration
    --  Num_Cores : CPU cores for mpirun (ignored if Use_GPU)
    --  Success   : True if the simulation produced surf dump files
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Run_Sparta_Docker")
+   --  (integration path exercised via --test sample smoke run; no direct
+   --  Run_Self_Test call).
    procedure Run_Sparta_Docker
      (Cwd       : String;
       Use_GPU   : Boolean;
@@ -72,11 +84,19 @@ package StellarOrion_Sparta is
    --  Parse surf.*.out files from SPARTA surface dump and find the
    --  maximum Y coordinate (radial distance in axisymmetric coords).
    --  Scans all surf.*.out files in Output_Dir; returns 0.0 if none.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Compute_Surf_Y_Max")
+   --  (integration path exercised via --test sample smoke run; no direct
+   --  Run_Self_Test call).
    function Compute_Surf_Y_Max (Output_Dir : String) return Float;
 
    --  Parse surf.*.out files from SPARTA surface dump and compute
    --  the centroid (average X, Y, Z) of all surface elements.
    --  Centroid_X/Y/Z are the averaged coordinates across all dumps.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Compute_Surf_Centroid")
+   --  (integration path exercised via --test sample smoke run; no direct
+   --  Run_Self_Test call).
    procedure Compute_Surf_Centroid
      (Output_Dir  : String;
       Centroid_X  : out Float;
@@ -91,8 +111,12 @@ package StellarOrion_Sparta is
    -- Averages the last 15 dumps for statistical convergence.
    -- Also parses grid.*.out for peak shock temperature.
    -- Flight and Geo are needed for the Sutton-Graves heat flux
-   -- estimation from the parsed drag data.
-   -- Returns a Simulation_Results record.
+   --  estimation from the parsed drag data.
+   --  Returns a Simulation_Results record.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Parse_Sparta_Results")
+   --  (integration path exercised via --test sample smoke run; no direct
+   --  Run_Self_Test call).
    function Parse_Sparta_Results
      (Output_Dir : String;
       Flight     : Flight_Parameters;

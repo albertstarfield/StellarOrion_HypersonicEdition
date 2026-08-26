@@ -23,24 +23,30 @@ package StellarOrion_Runtime_Guard is
    --  extern: file I/O + GNAT.OS_Lib subprocess dispatch; outside SPARK subset
 
    --  Path of the single-instance lock file ("main.lock").
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Get_Lock_File_Path return String;
 
    --  Acquire the lock file; a pre-existing (stale) lock is broken.
    --  Returns True on success, False if the stale lock cannot be removed.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Check_And_Acquire_Lock return Boolean;
 
    --  Remove the lock file if present (idempotent).
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Release_Lock;
 
    --  True if nvidia-smi is available on PATH (NVIDIA GPU present).
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Detect_Nvidia_GPU return Boolean;
 
    --  Pre-flight check: docker binary on PATH and daemon responding;
    --  attempts 'colima start' as fallback. True if SPARTA can run.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Ensure_Docker_Running return Boolean;
 
    --  If /usr/local/AmaryllisIdleAutomode exists, create the shell
    --  idle-resume script that re-launches validation after 600 s idle.
+   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Check_Amaryllis_Idle_Automode;
 
 end StellarOrion_Runtime_Guard;

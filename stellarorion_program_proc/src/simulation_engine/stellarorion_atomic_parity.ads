@@ -41,12 +41,14 @@ package StellarOrion_Atomic_Parity with SPARK_Mode => On is
    --  AXIOM (P1): an 8-bit value has at most 8 set bits; the shift-and-mask
    --    loop inspects exactly 8 bit positions, incrementing C at most once
    --    per position (Loop_Invariant C <= I discharges the bound formally).
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Count_Set_Bits (Value : Interfaces.Unsigned_8) return Natural
      with Post => Count_Set_Bits'Result <= 8;
 
    --  Parity predicate of a single byte.
    --  Even parity: True iff the byte carries an even number of set bits.
    --  Odd parity:  True iff odd.  Matches the standard's Post shape exactly.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Calculate_Parity
      (Value : Interfaces.Unsigned_8;
       Kind  : Parity_Type := Even) return Boolean
@@ -68,6 +70,7 @@ package StellarOrion_Atomic_Parity with SPARK_Mode => On is
    --  XOR-fold checksum of a block.  AXIOM (P2): XOR of Unsigned_8 values
    --  is closed on Unsigned_8 (bitwise op cannot overflow), so no range
    --  check can fire regardless of contents (Murphy's Law).
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Block_Checksum (Data : Data_Block) return Interfaces.Unsigned_8;
 
    --  A parity-protected frame: payload + XOR checksum computed over it.
@@ -78,6 +81,7 @@ package StellarOrion_Atomic_Parity with SPARK_Mode => On is
 
    --  Verify input integrity: recompute the checksum and compare.
    --  Post mirrors the definition so callers may rely on exact agreement.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Verify_Input_Parity (Data : Parity_Frame) return Boolean
      with Post =>
        Verify_Input_Parity'Result =
@@ -86,6 +90,7 @@ package StellarOrion_Atomic_Parity with SPARK_Mode => On is
    --  Produce a verifiable output frame: attach the checksum of Payload.
    --  Post guarantees the result passes verification (standard requirement
    --  "Add parity to output before return").
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Add_Output_Parity (Payload : Data_Block) return Parity_Frame
      with Post => Verify_Input_Parity (Add_Output_Parity'Result);
 
