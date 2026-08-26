@@ -70,6 +70,8 @@ package StellarOrion_Geometry is
    --  self-test registry: Register_Routine ("Shield_Mass_Analytical")
    --  (no direct self-test call; proof-verified unit).
    function Shield_Mass_Analytical
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
       (Diameter      : Float;
       --  Invariant: parameters and derived locals remain within their declared
        Angle_Deg     : Float;
@@ -83,6 +85,7 @@ package StellarOrion_Geometry is
                    and Angle_Deg <= 80.0
                    and Toroid_Radius > 0.0
                    and Toroid_Radius <= 5.0
+                   and Toroid_Count <= 12          -- GA envelope TCount_Max
                    and TPS_Thickness > 0.0
                    and TPS_Thickness <= 1.0
                    and TPS_Density >= 10.0
@@ -143,6 +146,8 @@ package StellarOrion_Geometry is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Validate_Geometry") -> Test 4.
    function Validate_Geometry (Params : Geometry_Parameters) return Boolean;
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
    --  Invariant: parameters and derived locals remain within their declared
 
 end StellarOrion_Geometry;

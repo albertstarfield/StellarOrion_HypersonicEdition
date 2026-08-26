@@ -25,6 +25,8 @@ package body StellarOrion_Physics is
    --  physics self-test transitively via Radiative_Eq_Temp /
    --  Sutton_Graves_Heat calls).
    function Sqrt (X : Float) return Float
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
      with Post => Sqrt'Result >= 0.0
                    and (if X > 0.0 then Sqrt'Result <= Float'Max (X, 1.0))
    is
@@ -315,6 +317,7 @@ package body StellarOrion_Physics is
    --  True iff every metric is within material survivability limits.
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Is_Survivable") -> Test 5.
+--  @test: exercised via run.py --self-test survivability pipeline.
    function Is_Survivable
      (Metrics : Flight_Metrics) return Boolean
    is

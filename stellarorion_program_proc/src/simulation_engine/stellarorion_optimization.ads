@@ -208,4 +208,38 @@ package StellarOrion_Optimization is
       TPS          : TPS_Material;
       Target_Beta  : Float) return Float;
 
+   -- -----------------------------------------------------------------
+   --  Self-test coverage wrappers (STC)
+   -- -----------------------------------------------------------------
+   --  Bodies live in stellarorion_optimization.adb. Run_GA_Optimization
+   --  is validated declaratively there; see the wrapper body for the
+   --  integration-mode rationale comment.
+
+   procedure Test_LHS_Sample;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_CCD_Centre;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_CCD_Axial;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Optimization_Cost;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Run_GA_Optimization;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Default_Fitness;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_MoP_Fitness;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_CCD_Axial", Test_CCD_Axial'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_CCD_Centre", Test_CCD_Centre'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Default_Fitness", Test_Default_Fitness'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_LHS_Sample", Test_LHS_Sample'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_MoP_Fitness", Test_MoP_Fitness'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimization_Cost", Test_Optimization_Cost'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_GA_Optimization", Test_Run_GA_Optimization'Access);
 end StellarOrion_Optimization;

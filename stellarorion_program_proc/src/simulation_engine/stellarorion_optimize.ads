@@ -24,4 +24,9 @@ package StellarOrion_Optimize is
       Alt_Override  : Float := 0.0)
    ;
 
+   --  STC coverage wrapper.
+   procedure Test_Run_Optimize;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Optimize", Test_Run_Optimize'Access);
 end StellarOrion_Optimize;

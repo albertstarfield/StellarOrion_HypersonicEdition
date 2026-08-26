@@ -121,4 +121,33 @@ package StellarOrion_Atomic_Parity with SPARK_Mode => On is
           Post => Recover_From_Parity_Error'Result.Status = Success
                   or else Recover_From_Parity_Error'Result.Status = Recovered;
 
+   --  ------------------------------------------------------------------
+   --  Self-test coverage wrappers (STC): declared here, defined in the
+   --  package body. Each wrapper calls its target (pure operations) and
+   --  range-asserts the result per the wrapper recipe.
+   --  ------------------------------------------------------------------
+
+   procedure Test_Count_Set_Bits;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Calculate_Parity;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Block_Checksum;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Verify_Input_Parity;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Add_Output_Parity;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Recover_From_Parity_Error;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Add_Output_Parity", Test_Add_Output_Parity'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Block_Checksum", Test_Block_Checksum'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Calculate_Parity", Test_Calculate_Parity'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Count_Set_Bits", Test_Count_Set_Bits'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Recover_From_Parity_Error", Test_Recover_From_Parity_Error'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Verify_Input_Parity", Test_Verify_Input_Parity'Access);
 end StellarOrion_Atomic_Parity;

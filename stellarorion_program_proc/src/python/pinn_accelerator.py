@@ -585,7 +585,7 @@ def test_train_from_checkpoint_missing_file() -> None:
         #  VERBOSE: expected failure printed so silent-pass can't hide bugs.
         print(f"[TEST] expected FileNotFoundError raised: {exc}")
         return
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(f"[TEST] unexpected exception type: {exc!r}")
         raise AssertionError(f"expected FileNotFoundError, got {exc!r}") from exc
     raise AssertionError("expected FileNotFoundError for missing grid file")

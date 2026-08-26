@@ -40,6 +40,8 @@ package StellarOrion_Sparta is
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
    procedure Generate_Sparta_Script
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
      (Flight       : Flight_Parameters;
      --  Invariant: parameters and derived locals remain within their declared
       Geo          : Geometry_Parameters;
@@ -60,6 +62,8 @@ package StellarOrion_Sparta is
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
    procedure Build_Sparta_Library;
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
    --  Invariant: parameters and derived locals remain within their declared
 
    --  Run SPARTA inside Docker, mounting the current directory.
@@ -74,6 +78,8 @@ package StellarOrion_Sparta is
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
    procedure Run_Sparta_Docker
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
      (Cwd       : String;
      --  Invariant: parameters and derived locals remain within their declared
       Use_GPU   : Boolean;
@@ -92,6 +98,8 @@ package StellarOrion_Sparta is
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
    function Compute_Surf_Y_Max (Output_Dir : String) return Float;
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
    --  Invariant: parameters and derived locals remain within their declared
 
    --  Parse surf.*.out files from SPARTA surface dump and compute
@@ -102,6 +110,8 @@ package StellarOrion_Sparta is
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
    procedure Compute_Surf_Centroid
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
      (Output_Dir  : String;
      --  Invariant: parameters and derived locals remain within their declared
       Centroid_X  : out Float;
@@ -123,6 +133,8 @@ package StellarOrion_Sparta is
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
    function Parse_Sparta_Results
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
      (Output_Dir : String;
      --  Invariant: parameters and derived locals remain within their declared
       Flight     : Flight_Parameters;

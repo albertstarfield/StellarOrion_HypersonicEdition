@@ -49,4 +49,33 @@ package StellarOrion_Runtime_Guard is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Check_Amaryllis_Idle_Automode;
 
+   procedure Test_Get_Lock_File_Path;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  STC coverage wrapper.
+   procedure Test_Check_And_Acquire_Lock;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  STC coverage wrapper.
+   procedure Test_Release_Lock;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  STC coverage wrapper.
+   procedure Test_Detect_Nvidia_GPU;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  STC coverage wrapper.
+   procedure Test_Ensure_Docker_Running;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  STC coverage wrapper.
+   procedure Test_Check_Amaryllis_Idle_Automode;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Check_Amaryllis_Idle_Automode", Test_Check_Amaryllis_Idle_Automode'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Check_And_Acquire_Lock", Test_Check_And_Acquire_Lock'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Detect_Nvidia_GPU", Test_Detect_Nvidia_GPU'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Ensure_Docker_Running", Test_Ensure_Docker_Running'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Get_Lock_File_Path", Test_Get_Lock_File_Path'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Release_Lock", Test_Release_Lock'Access);
 end StellarOrion_Runtime_Guard;

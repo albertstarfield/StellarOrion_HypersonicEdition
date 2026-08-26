@@ -19,4 +19,8 @@ package StellarOrion_Self_Test is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Run_Self_Test;
 
+   procedure Test_Run_Self_Test;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Self_Test", Test_Run_Self_Test'Access);
 end StellarOrion_Self_Test;

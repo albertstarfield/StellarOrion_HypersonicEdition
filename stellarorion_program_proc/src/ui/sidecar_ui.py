@@ -593,7 +593,7 @@ def _spin_ui_server(db_dir=None):
     srv = HTTPServer(("127.0.0.1", 0), SidecarHandler)
     worker = threading.Thread(target=srv.serve_forever, daemon=True)
     worker.start()
-    host, port = srv.server_address
+    host, port = srv.server_address[:2]
     return srv, api, "http://" + str(host) + ":" + str(port)
 
 
@@ -781,7 +781,7 @@ def test_do_GET() -> None:
     import urllib.error
     import urllib.request
 
-    srv, api, base = _spin_ui_server()
+    srv, _api, base = _spin_ui_server()
     try:
         status_url = base + "/api/status"
         with urllib.request.urlopen(status_url, timeout=5) as resp:
@@ -812,7 +812,7 @@ def test_do_POST() -> None:
     import urllib.error
     import urllib.request
 
-    srv, api, base = _spin_ui_server()
+    srv, _api, base = _spin_ui_server()
     try:
         start_req = urllib.request.Request(
             base + "/api/start",
@@ -864,7 +864,7 @@ def test_do_OPTIONS() -> None:
     """
     import urllib.request
 
-    srv, api, base = _spin_ui_server()
+    srv, _api, base = _spin_ui_server()
     try:
         preflight = urllib.request.Request(base + "/", method="OPTIONS")
         with urllib.request.urlopen(preflight, timeout=5) as resp:
@@ -914,7 +914,7 @@ def test_create_server() -> None:
         try:
             assert isinstance(api, SidecarAPI)
             assert SidecarHandler.api is api
-            host, port = srv.server_address
+            _host, port = srv.server_address[:2]
             assert port > 0
         finally:
             srv.server_close()

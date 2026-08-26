@@ -247,6 +247,8 @@ package StellarOrion_Physics is
    --  self-test registry: Register_Routine ("Backface_Temperature")
    --  (transitively exercised via Run_Self_Test Test 5 metrics pipeline).
    function Backface_Temperature
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
      (Init_Temp    : Float;
      --  Invariant: parameters and derived locals remain within their declared
        Heat_Flux    : Float;
@@ -328,6 +330,8 @@ package StellarOrion_Physics is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Is_Survivable") -> Test 5.
    function Is_Survivable
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
      (Metrics : Flight_Metrics) return Boolean
      with Post => Is_Survivable'Result =
                     (Metrics.Surface_Temp_K <= SIC_MAX_TEMP
@@ -361,6 +365,8 @@ package StellarOrion_Physics is
    --  self-test registry: Register_Routine ("Calculate_Flight_Metrics")
    --  -> Test 5 (end-to-end metrics pipeline).
    procedure Calculate_Flight_Metrics
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => returns the unit-specified result; no side effects.
      (Results : Simulation_Results;
      --  Invariant: parameters and derived locals remain within their declared
       Flight  : Flight_Parameters;

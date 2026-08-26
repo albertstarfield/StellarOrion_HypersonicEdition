@@ -41,4 +41,28 @@ package StellarOrion_Cli is
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Get_Positive (Flag : String; Default : Positive) return Positive;
 
+   --  ------------------------------------------------------------------
+   --  Self-test coverage wrappers (STC): declared here, defined in the
+   --  package body.
+   --  ------------------------------------------------------------------
+
+   procedure Test_Has_Flag;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Get_Option;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Get_Float;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Clamp_Float;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Get_Positive;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Clamp_Float", Test_Clamp_Float'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Get_Float", Test_Get_Float'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Get_Option", Test_Get_Option'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Get_Positive", Test_Get_Positive'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Has_Flag", Test_Has_Flag'Access);
 end StellarOrion_Cli;

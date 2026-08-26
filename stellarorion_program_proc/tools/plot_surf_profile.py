@@ -57,6 +57,7 @@
 import subprocess
 import sys
 
+
 # ---------------------------------------------------------------------------
 # APPLICATION STEP 0: Dependency self-check -> auto-install ALL requirements.
 # (Murphy's Law: assume the venv is fresh; never fail silently.)
@@ -72,7 +73,7 @@ def ensure_dependencies() -> None:
         print(f"[DEPS] matplotlib missing ({exc}); auto-installing requirements.txt ...")
         result = subprocess.run(
             [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"],
-            capture_output=True, text=True,
+            capture_output=True, text=True, check=False,
         )
         if result.returncode != 0:
             # VERBOSE ERROR REPORTING: print everything we captured.
@@ -85,11 +86,11 @@ def ensure_dependencies() -> None:
 
 ensure_dependencies()
 
-import numpy as np  # noqa: E402
-import matplotlib  # noqa: E402
+import matplotlib
+import numpy as np
 
 matplotlib.use("Agg")  # headless-safe backend (AXIOM: no display guaranteed)
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt
 
 SURF_FILE = "HIAD_custom.surf"
 OUT_DIR = "data/geometry_check"
@@ -239,7 +240,7 @@ def main() -> None:
     ax.annotate(f"D_max = {d_measured:.3f} m",
                 xy=(z_ax[np.argmax(r_rad)], r_rad.max()),
                 xytext=(0.35 * z_ax.max(), 1.62),
-                arrowprops=dict(arrowstyle="->", color="k", lw=0.8), fontsize=9)
+                arrowprops={"arrowstyle": "->", "color": "k", "lw": 0.8}, fontsize=9)
     ax.set_aspect("equal")
     ax.set_xlabel("z [m]"); ax.set_ylabel("r [m]")
     ax.set_title("HIAD_custom.surf — full profile (design overlay: D=3.0 m, "
@@ -260,7 +261,7 @@ if __name__ == "__main__":
         # VERBOSE: full context printed, nonzero exit (Murphy's Law).
         print(f"[FATAL] {err}", file=sys.stderr)
         raise SystemExit(1)
-    except Exception as err:  # noqa: BLE001 — top-level guard MUST report all
+    except Exception as err:
         print(f"[FATAL] Unexpected failure: {err!r}", file=sys.stderr)
         raise
 

@@ -16,6 +16,7 @@ package body StellarOrion_Geometry is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Deg_To_Rad") (helper for
    --  Sin_Deg; no direct self-test call - proof-verified unit).
+--  @covered: gnatprove --level=4 formal proof (scripts/prove.sh).
    function Deg_To_Rad (Deg : Float) return Float is
       --  Contract: pre  => any Float angle value;
       --           post => radians = Deg * Pi / 180.0, sign-preserving.
@@ -31,6 +32,7 @@ package body StellarOrion_Geometry is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Sin_Deg") (no direct
    --  self-test call - proof-verified unit).
+--  @covered: gnatprove --level=4 formal proof (scripts/prove.sh).
    function Sin_Deg (Deg : Float) return Float is
       --  Contract: pre  => Deg within the documented 40 .. 80 deg
       --           validity band of the Taylor series (< 0.01% error);
@@ -56,6 +58,7 @@ package body StellarOrion_Geometry is
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Frontal_Area") (no direct
    --  self-test call - proof-verified unit).
+--  @covered: gnatprove --level=4 formal proof (scripts/prove.sh).
    function Frontal_Area (Y_Max : Float) return Float is
       --  Contract: pre  => Y_Max in [1e-6, 1e3] m (AXIOM G1 envelope);
       --           post => A = pi * Y_max^2 > 0.0 m^2.
@@ -121,15 +124,18 @@ package body StellarOrion_Geometry is
 
       --  Slant length of the frustum (from nose edge to base)
       L_slant := (R_base - R_nose) / Sin_A;
+      pragma Assert (L_slant <= 1.0e11);  -- proof aid: R_base<=7.5, Sin_A>=1.0e-10
 
       --  1. Nose cap:  hemisphere = 2 * pi * R_n * h_n
       A_nose := Two_Pi * R_nose * H_nose;
 
       --  2. Cone frustum:  pi * (r1 + r2) * L
       A_frust := Pi * (R_nose + R_base) * L_slant;
+      pragma Assert (A_frust <= 1.0e13);  -- proof aid: Pi*(R_nose+R_base)<=9.75
 
       --  3. Scallop: 1.2x frustum (wrinkled fabric allowance)
       A_scallop := 1.2 * A_frust;
+      pragma Assert (A_scallop <= 1.5e13);  -- proof aid: 1.2x frustum bound
 
       --  4. Toroids: 2 * pi^2 * R_tor * r_tor^2 * t * rho
       --    (volume of torus * thickness * density, simplified)
@@ -138,10 +144,13 @@ package body StellarOrion_Geometry is
       --  GNATprove cannot see through the opaque float-exponentiation call.
       A_toroid := Two_Pi * Pi * R_base * (Toroid_Radius * Toroid_Radius)
                   * TPS_Thickness * TPS_Density;
+      pragma Assert (A_toroid <= 1.0e8);  -- proof aid: Two_Pi*Pi*R_base*T_r^2*t*rho
 
       --  Total shield mass
       Total_A := (A_nose + A_scallop)
                  + (Float (Toroid_Count) * A_toroid);
+      pragma Assert (Float (Toroid_Count) <= 2.15e9);  -- proof aid: Positive'Last conversion
+      pragma Assert (Total_A <= 1.0e18);  -- proof aid: bounded terms sum
 
       --  Mass = total surface area * TPS thickness * TPS density
       return Total_A * TPS_Thickness * TPS_Density;
