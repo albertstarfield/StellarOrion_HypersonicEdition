@@ -1,0 +1,483 @@
+
+===== main.adb =====
+L11 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Main' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L11 [MEDIUM] ASSERTION_SCANNER: Ada 'Main' missing Pre aspect/contract
+L11 [MEDIUM] ASSERTION_SCANNER: Ada 'Main' missing Post aspect/contract
+L11 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Main' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+
+===== stellarorion_atomic_parity.adb =====
+L13 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Count_Set_Bits' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L13 [MEDIUM] ASSERTION_SCANNER: Ada 'Count_Set_Bits' missing Pre aspect/contract
+L13 [MEDIUM] ASSERTION_SCANNER: Ada 'Count_Set_Bits' missing Post aspect/contract
+L13 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Count_Set_Bits' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L39 [MEDIUM] ASSERTION_SCANNER: Ada 'Calculate_Parity' missing Pre aspect/contract
+L39 [MEDIUM] ASSERTION_SCANNER: Ada 'Calculate_Parity' missing Post aspect/contract
+L54 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Block_Checksum' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L54 [MEDIUM] ASSERTION_SCANNER: Ada 'Block_Checksum' missing Pre aspect/contract
+L54 [MEDIUM] ASSERTION_SCANNER: Ada 'Block_Checksum' missing Post aspect/contract
+L54 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Block_Checksum' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L59 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L68 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Verify_Input_Parity' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L68 [MEDIUM] ASSERTION_SCANNER: Ada 'Verify_Input_Parity' missing Pre aspect/contract
+L68 [MEDIUM] ASSERTION_SCANNER: Ada 'Verify_Input_Parity' missing Post aspect/contract
+L68 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Verify_Input_Parity' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L77 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Add_Output_Parity' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L77 [MEDIUM] ASSERTION_SCANNER: Ada 'Add_Output_Parity' missing Pre aspect/contract
+L77 [MEDIUM] ASSERTION_SCANNER: Ada 'Add_Output_Parity' missing Post aspect/contract
+L77 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Add_Output_Parity' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L89 [MEDIUM] ASSERTION_SCANNER: Ada 'Recover_From_Parity_Error' missing Pre aspect/contract
+L89 [MEDIUM] ASSERTION_SCANNER: Ada 'Recover_From_Parity_Error' missing Post aspect/contract
+
+===== stellarorion_atomic_parity.ads =====
+L44 [MEDIUM] ASSERTION_SCANNER: Ada 'Count_Set_Bits' missing Pre aspect/contract
+L50 [MEDIUM] ASSERTION_SCANNER: Ada 'Calculate_Parity' missing Pre aspect/contract
+L71 [MEDIUM] ASSERTION_SCANNER: Ada 'Block_Checksum' missing Pre aspect/contract
+L81 [MEDIUM] ASSERTION_SCANNER: Ada 'Verify_Input_Parity' missing Pre aspect/contract
+L89 [MEDIUM] ASSERTION_SCANNER: Ada 'Add_Output_Parity' missing Pre aspect/contract
+
+===== stellarorion_cli.adb =====
+L8 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Has_Flag' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L8 [MEDIUM] ASSERTION_SCANNER: Ada 'Has_Flag' missing Pre aspect/contract
+L8 [MEDIUM] ASSERTION_SCANNER: Ada 'Has_Flag' missing Post aspect/contract
+L8 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Has_Flag' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L10 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L19 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Get_Option' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L19 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Option' missing Pre aspect/contract
+L19 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Option' missing Post aspect/contract
+L19 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Get_Option' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L21 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L32 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Float' missing Pre aspect/contract
+L32 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Float' missing Post aspect/contract
+L54 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Clamp_Float' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L54 [MEDIUM] ASSERTION_SCANNER: Ada 'Clamp_Float' missing Pre aspect/contract
+L54 [MEDIUM] ASSERTION_SCANNER: Ada 'Clamp_Float' missing Post aspect/contract
+L54 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Clamp_Float' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L60 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Positive' missing Pre aspect/contract
+L60 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Positive' missing Post aspect/contract
+
+===== stellarorion_cli.ads =====
+L17 [MEDIUM] ASSERTION_SCANNER: Ada 'Has_Flag' missing Pre aspect/contract
+L17 [MEDIUM] ASSERTION_SCANNER: Ada 'Has_Flag' missing Post aspect/contract
+L20 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Option' missing Post aspect/contract
+L25 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Float' missing Post aspect/contract
+L33 [MEDIUM] ASSERTION_SCANNER: Ada 'Clamp_Float' missing Post aspect/contract
+L37 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Positive' missing Post aspect/contract
+
+===== stellarorion_dual_watchdog.adb =====
+L12 [MEDIUM] ASSERTION_SCANNER: Ada 'Initialize' missing Pre aspect/contract
+L12 [MEDIUM] ASSERTION_SCANNER: Ada 'Initialize' missing Post aspect/contract
+L32 [MEDIUM] ASSERTION_SCANNER: Ada 'Update_Heartbeat' missing Pre aspect/contract
+L32 [MEDIUM] ASSERTION_SCANNER: Ada 'Update_Heartbeat' missing Post aspect/contract
+L59 [MEDIUM] ASSERTION_SCANNER: Ada 'Evaluate' missing Pre aspect/contract
+L59 [MEDIUM] ASSERTION_SCANNER: Ada 'Evaluate' missing Post aspect/contract
+L66 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Is_Stale' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L66 [MEDIUM] ASSERTION_SCANNER: Ada 'Is_Stale' missing Pre aspect/contract
+L66 [MEDIUM] ASSERTION_SCANNER: Ada 'Is_Stale' missing Post aspect/contract
+L66 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Is_Stale' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L102 [MEDIUM] ASSERTION_SCANNER: Ada 'Cross_Check' missing Pre aspect/contract
+L102 [MEDIUM] ASSERTION_SCANNER: Ada 'Cross_Check' missing Post aspect/contract
+L132 [MEDIUM] ASSERTION_SCANNER: Ada 'Advance_Recovery' missing Pre aspect/contract
+L132 [MEDIUM] ASSERTION_SCANNER: Ada 'Advance_Recovery' missing Post aspect/contract
+L155 [MEDIUM] ASSERTION_SCANNER: Ada 'Emergency_Safe_State' missing Pre aspect/contract
+L155 [MEDIUM] ASSERTION_SCANNER: Ada 'Emergency_Safe_State' missing Post aspect/contract
+L169 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Needs_Emergency' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L169 [MEDIUM] ASSERTION_SCANNER: Ada 'Needs_Emergency' missing Pre aspect/contract
+L169 [MEDIUM] ASSERTION_SCANNER: Ada 'Needs_Emergency' missing Post aspect/contract
+L169 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Needs_Emergency' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+
+===== stellarorion_dual_watchdog.ads =====
+L118 [MEDIUM] ASSERTION_SCANNER: Ada 'Evaluate' missing Pre aspect/contract
+
+===== stellarorion_history.adb =====
+L49 [MEDIUM] ASSERTION_SCANNER: Ada 'Parse_CSV_Line' missing Pre aspect/contract
+L49 [MEDIUM] ASSERTION_SCANNER: Ada 'Parse_CSV_Line' missing Post aspect/contract
+L60 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L82 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'CSV_Unescape' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L82 [MEDIUM] ASSERTION_SCANNER: Ada 'CSV_Unescape' missing Pre aspect/contract
+L82 [MEDIUM] ASSERTION_SCANNER: Ada 'CSV_Unescape' missing Post aspect/contract
+L82 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'CSV_Unescape' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L94 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'CSV_Escape' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L94 [MEDIUM] ASSERTION_SCANNER: Ada 'CSV_Escape' missing Pre aspect/contract
+L94 [MEDIUM] ASSERTION_SCANNER: Ada 'CSV_Escape' missing Post aspect/contract
+L94 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'CSV_Escape' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L96 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L105 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'S2F' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L105 [MEDIUM] ASSERTION_SCANNER: Ada 'S2F' missing Pre aspect/contract
+L105 [MEDIUM] ASSERTION_SCANNER: Ada 'S2F' missing Post aspect/contract
+L105 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'S2F' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L106 [HIGH] SMT_LOGIC_VERIFICATION: z3+cvc5: Index 'S' in 'CSV_Unescape(S)' has no bounds check in Ada function 'S2F'.  Solvers confirmed: z3.
+L113 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'S2I' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L113 [MEDIUM] ASSERTION_SCANNER: Ada 'S2I' missing Pre aspect/contract
+L113 [MEDIUM] ASSERTION_SCANNER: Ada 'S2I' missing Post aspect/contract
+L113 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'S2I' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L114 [HIGH] SMT_LOGIC_VERIFICATION: z3+cvc5: Index 'S' in 'CSV_Unescape(S)' has no bounds check in Ada function 'S2I'.  Solvers confirmed: z3.
+L121 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'S2B' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L121 [MEDIUM] ASSERTION_SCANNER: Ada 'S2B' missing Pre aspect/contract
+L121 [MEDIUM] ASSERTION_SCANNER: Ada 'S2B' missing Post aspect/contract
+L121 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'S2B' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L128 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'F2S' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L128 [MEDIUM] ASSERTION_SCANNER: Ada 'F2S' missing Pre aspect/contract
+L128 [MEDIUM] ASSERTION_SCANNER: Ada 'F2S' missing Post aspect/contract
+L128 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'F2S' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L134 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'B2S' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L134 [MEDIUM] ASSERTION_SCANNER: Ada 'B2S' missing Pre aspect/contract
+L134 [MEDIUM] ASSERTION_SCANNER: Ada 'B2S' missing Post aspect/contract
+L134 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'B2S' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L140 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Solver_To_Str' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L140 [MEDIUM] ASSERTION_SCANNER: Ada 'Solver_To_Str' missing Pre aspect/contract
+L140 [MEDIUM] ASSERTION_SCANNER: Ada 'Solver_To_Str' missing Post aspect/contract
+L140 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Solver_To_Str' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L152 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Str_To_Solver' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L152 [MEDIUM] ASSERTION_SCANNER: Ada 'Str_To_Solver' missing Pre aspect/contract
+L152 [MEDIUM] ASSERTION_SCANNER: Ada 'Str_To_Solver' missing Post aspect/contract
+L152 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Str_To_Solver' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L163 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Chem_To_Str' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L163 [MEDIUM] ASSERTION_SCANNER: Ada 'Chem_To_Str' missing Pre aspect/contract
+L163 [MEDIUM] ASSERTION_SCANNER: Ada 'Chem_To_Str' missing Post aspect/contract
+L163 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Chem_To_Str' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L174 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Str_To_Chem' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L174 [MEDIUM] ASSERTION_SCANNER: Ada 'Str_To_Chem' missing Pre aspect/contract
+L174 [MEDIUM] ASSERTION_SCANNER: Ada 'Str_To_Chem' missing Post aspect/contract
+L174 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Str_To_Chem' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L190 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Acquire_Lock' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L190 [MEDIUM] ASSERTION_SCANNER: Ada 'Acquire_Lock' missing Pre aspect/contract
+L190 [MEDIUM] ASSERTION_SCANNER: Ada 'Acquire_Lock' missing Post aspect/contract
+L190 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Acquire_Lock' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L241 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Release_Lock' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L241 [MEDIUM] ASSERTION_SCANNER: Ada 'Release_Lock' missing Pre aspect/contract
+L241 [MEDIUM] ASSERTION_SCANNER: Ada 'Release_Lock' missing Post aspect/contract
+L241 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Release_Lock' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L255 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Init_DB' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L255 [MEDIUM] ASSERTION_SCANNER: Ada 'Init_DB' missing Pre aspect/contract
+L255 [MEDIUM] ASSERTION_SCANNER: Ada 'Init_DB' missing Post aspect/contract
+L255 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Init_DB' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L260 [HIGH] SMT_LOGIC_VERIFICATION: z3+cvc5: Index 'Database_Path' in 'Create_Directory(Database_Path)' has no bounds check in Ada function 'Init_DB'.  Solvers confirmed: z3.
+L310 [MEDIUM] ASSERTION_SCANNER: Ada 'Populate_Run_Record' missing Pre aspect/contract
+L310 [MEDIUM] ASSERTION_SCANNER: Ada 'Populate_Run_Record' missing Post aspect/contract
+L316 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'F' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L316 [MEDIUM] ASSERTION_SCANNER: Ada 'F' missing Pre aspect/contract
+L316 [MEDIUM] ASSERTION_SCANNER: Ada 'F' missing Post aspect/contract
+L316 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'F' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L326 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'I' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L326 [MEDIUM] ASSERTION_SCANNER: Ada 'I' missing Pre aspect/contract
+L326 [MEDIUM] ASSERTION_SCANNER: Ada 'I' missing Post aspect/contract
+L326 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'I' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L336 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'B' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L336 [MEDIUM] ASSERTION_SCANNER: Ada 'B' missing Pre aspect/contract
+L336 [MEDIUM] ASSERTION_SCANNER: Ada 'B' missing Post aspect/contract
+L336 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'B' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L346 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'S' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L346 [MEDIUM] ASSERTION_SCANNER: Ada 'S' missing Pre aspect/contract
+L346 [MEDIUM] ASSERTION_SCANNER: Ada 'S' missing Post aspect/contract
+L346 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'S' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L429 [MEDIUM] ASSERTION_SCANNER: Ada 'Save_Run' missing Pre aspect/contract
+L429 [MEDIUM] ASSERTION_SCANNER: Ada 'Save_Run' missing Post aspect/contract
+L503 [MEDIUM] ASSERTION_SCANNER: Ada 'Load_Run' missing Pre aspect/contract
+L503 [MEDIUM] ASSERTION_SCANNER: Ada 'Load_Run' missing Post aspect/contract
+L536 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L589 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Delete_Run' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L589 [MEDIUM] ASSERTION_SCANNER: Ada 'Delete_Run' missing Pre aspect/contract
+L589 [MEDIUM] ASSERTION_SCANNER: Ada 'Delete_Run' missing Post aspect/contract
+L589 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Delete_Run' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L619 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L673 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Get_All_Runs' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L673 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_All_Runs' missing Pre aspect/contract
+L673 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_All_Runs' missing Post aspect/contract
+L673 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Get_All_Runs' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L694 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L723 [MEDIUM] ASSERTION_SCANNER: Ada 'Update_Run_Progress' missing Pre aspect/contract
+L723 [MEDIUM] ASSERTION_SCANNER: Ada 'Update_Run_Progress' missing Post aspect/contract
+L760 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L784 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L795 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L863 [MEDIUM] ASSERTION_SCANNER: Ada 'Upsert_Draft' missing Pre aspect/contract
+L863 [MEDIUM] ASSERTION_SCANNER: Ada 'Upsert_Draft' missing Post aspect/contract
+L888 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Build_Draft_Line' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L888 [MEDIUM] ASSERTION_SCANNER: Ada 'Build_Draft_Line' missing Pre aspect/contract
+L888 [MEDIUM] ASSERTION_SCANNER: Ada 'Build_Draft_Line' missing Post aspect/contract
+L888 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Build_Draft_Line' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L889 [HIGH] SMT_LOGIC_VERIFICATION: z3+cvc5: Index 'Name' in 'CSV_Escape(Name)' has no bounds check in Ada function 'Build_Draft_Line'.  Solvers confirmed: z3.
+L915 [HIGH] SMT_LOGIC_VERIFICATION: z3+cvc5: Index 'Solver' in 'Solver_To_Str(Solver)' has no bounds check in Ada function 'Build_Draft_Line'.  Solvers confirmed: z3.
+L916 [HIGH] SMT_LOGIC_VERIFICATION: z3+cvc5: Index 'Chem' in 'Chem_To_Str(Chem)' has no bounds check in Ada function 'Build_Draft_Line'.  Solvers confirmed: z3.
+L918 [HIGH] SMT_LOGIC_VERIFICATION: z3+cvc5: Index 'Progress' in 'F2S(Progress)' has no bounds check in Ada function 'Build_Draft_Line'.  Solvers confirmed: z3.
+L943 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L1025 [MEDIUM] ASSERTION_SCANNER: Ada 'Save_Sample' missing Pre aspect/contract
+L1025 [MEDIUM] ASSERTION_SCANNER: Ada 'Save_Sample' missing Post aspect/contract
+L1078 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Run_Count' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L1078 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Count' missing Pre aspect/contract
+L1078 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Count' missing Post aspect/contract
+L1078 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Run_Count' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L1089 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L1109 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Sample_Count' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L1109 [MEDIUM] ASSERTION_SCANNER: Ada 'Sample_Count' missing Pre aspect/contract
+L1109 [MEDIUM] ASSERTION_SCANNER: Ada 'Sample_Count' missing Post aspect/contract
+L1109 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Sample_Count' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L1120 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+
+===== stellarorion_history.ads =====
+L50 [MEDIUM] ASSERTION_SCANNER: Ada 'Init_DB' missing Pre aspect/contract
+L50 [MEDIUM] ASSERTION_SCANNER: Ada 'Init_DB' missing Post aspect/contract
+L57 [MEDIUM] ASSERTION_SCANNER: Ada 'Save_Run' missing Pre aspect/contract
+L57 [MEDIUM] ASSERTION_SCANNER: Ada 'Save_Run' missing Post aspect/contract
+L69 [MEDIUM] ASSERTION_SCANNER: Ada 'Load_Run' missing Pre aspect/contract
+L69 [MEDIUM] ASSERTION_SCANNER: Ada 'Load_Run' missing Post aspect/contract
+L80 [MEDIUM] ASSERTION_SCANNER: Ada 'Delete_Run' missing Pre aspect/contract
+L80 [MEDIUM] ASSERTION_SCANNER: Ada 'Delete_Run' missing Post aspect/contract
+L83 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_All_Runs' missing Pre aspect/contract
+L83 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_All_Runs' missing Post aspect/contract
+L87 [MEDIUM] ASSERTION_SCANNER: Ada 'Update_Run_Progress' missing Pre aspect/contract
+L87 [MEDIUM] ASSERTION_SCANNER: Ada 'Update_Run_Progress' missing Post aspect/contract
+L94 [MEDIUM] ASSERTION_SCANNER: Ada 'Upsert_Draft' missing Pre aspect/contract
+L94 [MEDIUM] ASSERTION_SCANNER: Ada 'Upsert_Draft' missing Post aspect/contract
+L110 [MEDIUM] ASSERTION_SCANNER: Ada 'Save_Sample' missing Pre aspect/contract
+L110 [MEDIUM] ASSERTION_SCANNER: Ada 'Save_Sample' missing Post aspect/contract
+L121 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Count' missing Pre aspect/contract
+L121 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Count' missing Post aspect/contract
+L124 [MEDIUM] ASSERTION_SCANNER: Ada 'Sample_Count' missing Pre aspect/contract
+L124 [MEDIUM] ASSERTION_SCANNER: Ada 'Sample_Count' missing Post aspect/contract
+
+===== stellarorion_optimization.adb =====
+L20 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'To_Int' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L20 [MEDIUM] ASSERTION_SCANNER: Ada 'To_Int' missing Pre aspect/contract
+L20 [MEDIUM] ASSERTION_SCANNER: Ada 'To_Int' missing Post aspect/contract
+L20 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'To_Int' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L34 [MEDIUM] ASSERTION_SCANNER: Ada 'LHS_Sample' missing Pre aspect/contract
+L34 [MEDIUM] ASSERTION_SCANNER: Ada 'LHS_Sample' missing Post aspect/contract
+L61 [MEDIUM] ASSERTION_SCANNER: Ada 'CCD_Centre' missing Pre aspect/contract
+L61 [MEDIUM] ASSERTION_SCANNER: Ada 'CCD_Centre' missing Post aspect/contract
+L74 [MEDIUM] ASSERTION_SCANNER: Ada 'CCD_Axial' missing Pre aspect/contract
+L74 [MEDIUM] ASSERTION_SCANNER: Ada 'CCD_Axial' missing Post aspect/contract
+L98 [MEDIUM] ASSERTION_SCANNER: Ada 'Optimization_Cost' missing Pre aspect/contract
+L98 [MEDIUM] ASSERTION_SCANNER: Ada 'Optimization_Cost' missing Post aspect/contract
+L122 [MEDIUM] ASSERTION_SCANNER: Ada 'Default_Fitness' missing Pre aspect/contract
+L122 [MEDIUM] ASSERTION_SCANNER: Ada 'Default_Fitness' missing Post aspect/contract
+L163 [MEDIUM] ASSERTION_SCANNER: Ada 'MoP_Fitness' missing Pre aspect/contract
+L163 [MEDIUM] ASSERTION_SCANNER: Ada 'MoP_Fitness' missing Post aspect/contract
+L245 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Clamp' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L245 [MEDIUM] ASSERTION_SCANNER: Ada 'Clamp' missing Pre aspect/contract
+L245 [MEDIUM] ASSERTION_SCANNER: Ada 'Clamp' missing Post aspect/contract
+L245 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Clamp' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L254 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Uniform_Rand' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L254 [MEDIUM] ASSERTION_SCANNER: Ada 'Uniform_Rand' missing Pre aspect/contract
+L254 [MEDIUM] ASSERTION_SCANNER: Ada 'Uniform_Rand' missing Post aspect/contract
+L254 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Uniform_Rand' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L260 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Gaussian_Standard' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L260 [MEDIUM] ASSERTION_SCANNER: Ada 'Gaussian_Standard' missing Pre aspect/contract
+L260 [MEDIUM] ASSERTION_SCANNER: Ada 'Gaussian_Standard' missing Post aspect/contract
+L260 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Gaussian_Standard' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L272 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Gaussian_Rand' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L272 [MEDIUM] ASSERTION_SCANNER: Ada 'Gaussian_Rand' missing Pre aspect/contract
+L272 [MEDIUM] ASSERTION_SCANNER: Ada 'Gaussian_Rand' missing Post aspect/contract
+L272 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Gaussian_Rand' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L278 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Random_Geometry' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L278 [MEDIUM] ASSERTION_SCANNER: Ada 'Random_Geometry' missing Pre aspect/contract
+L278 [MEDIUM] ASSERTION_SCANNER: Ada 'Random_Geometry' missing Post aspect/contract
+L278 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Random_Geometry' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L295 [MEDIUM] ASSERTION_SCANNER: Ada 'Sort_By_Cost' missing Pre aspect/contract
+L295 [MEDIUM] ASSERTION_SCANNER: Ada 'Sort_By_Cost' missing Post aspect/contract
+L302 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L317 [MEDIUM] ASSERTION_SCANNER: Ada 'Tournament_Select' missing Pre aspect/contract
+L317 [MEDIUM] ASSERTION_SCANNER: Ada 'Tournament_Select' missing Post aspect/contract
+L326 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L343 [MEDIUM] ASSERTION_SCANNER: Ada 'BLX_Crossover' missing Pre aspect/contract
+L343 [MEDIUM] ASSERTION_SCANNER: Ada 'BLX_Crossover' missing Post aspect/contract
+L349 [MEDIUM] ASSERTION_SCANNER: Ada 'Blend_Gene' missing Pre aspect/contract
+L349 [MEDIUM] ASSERTION_SCANNER: Ada 'Blend_Gene' missing Post aspect/contract
+L364 [MEDIUM] ASSERTION_SCANNER: Ada 'Blend_Int' missing Pre aspect/contract
+L364 [MEDIUM] ASSERTION_SCANNER: Ada 'Blend_Int' missing Post aspect/contract
+L403 [MEDIUM] ASSERTION_SCANNER: Ada 'Gaussian_Mutate' missing Pre aspect/contract
+L403 [MEDIUM] ASSERTION_SCANNER: Ada 'Gaussian_Mutate' missing Post aspect/contract
+L460 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GA_Optimization' missing Pre aspect/contract
+L460 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GA_Optimization' missing Post aspect/contract
+L494 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L500 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L513 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L517 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L529 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L536 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L588 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L595 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+
+===== stellarorion_optimization.ads =====
+L160 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GA_Optimization' missing Pre aspect/contract
+L160 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GA_Optimization' missing Post aspect/contract
+L178 [MEDIUM] ASSERTION_SCANNER: Ada 'Default_Fitness' missing Pre aspect/contract
+L178 [MEDIUM] ASSERTION_SCANNER: Ada 'Default_Fitness' missing Post aspect/contract
+L202 [MEDIUM] ASSERTION_SCANNER: Ada 'MoP_Fitness' missing Pre aspect/contract
+L202 [MEDIUM] ASSERTION_SCANNER: Ada 'MoP_Fitness' missing Post aspect/contract
+
+===== stellarorion_optimize.adb =====
+L17 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Optimize' missing Pre aspect/contract
+L17 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Optimize' missing Post aspect/contract
+
+===== stellarorion_optimize.ads =====
+L13 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Optimize' missing Pre aspect/contract
+L13 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Optimize' missing Post aspect/contract
+
+===== stellarorion_project.adb =====
+L86 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Print_Banner' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L86 [MEDIUM] ASSERTION_SCANNER: Ada 'Print_Banner' missing Pre aspect/contract
+L86 [MEDIUM] ASSERTION_SCANNER: Ada 'Print_Banner' missing Post aspect/contract
+L86 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Print_Banner' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L98 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Print_Usage' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L98 [MEDIUM] ASSERTION_SCANNER: Ada 'Print_Usage' missing Pre aspect/contract
+L98 [MEDIUM] ASSERTION_SCANNER: Ada 'Print_Usage' missing Post aspect/contract
+L98 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Print_Usage' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L258 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Main_Program' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L258 [MEDIUM] ASSERTION_SCANNER: Ada 'Main_Program' missing Pre aspect/contract
+L258 [MEDIUM] ASSERTION_SCANNER: Ada 'Main_Program' missing Post aspect/contract
+L258 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Main_Program' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L720 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Try_Open' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L720 [MEDIUM] ASSERTION_SCANNER: Ada 'Try_Open' missing Pre aspect/contract
+L720 [MEDIUM] ASSERTION_SCANNER: Ada 'Try_Open' missing Post aspect/contract
+L720 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Try_Open' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L725 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+
+===== stellarorion_project.ads =====
+L13 [MEDIUM] ASSERTION_SCANNER: Ada 'Main_Program' missing Pre aspect/contract
+L13 [MEDIUM] ASSERTION_SCANNER: Ada 'Main_Program' missing Post aspect/contract
+
+===== stellarorion_reports.ads =====
+L14 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Compare_Calibrate' missing Pre aspect/contract
+L14 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Compare_Calibrate' missing Post aspect/contract
+L24 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GridIndep_Sparta' missing Pre aspect/contract
+L24 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GridIndep_Sparta' missing Post aspect/contract
+
+===== stellarorion_runtime_guard.adb =====
+L25 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Get_Lock_File_Path' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L25 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Lock_File_Path' missing Pre aspect/contract
+L25 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Lock_File_Path' missing Post aspect/contract
+L25 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Get_Lock_File_Path' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L33 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Check_And_Acquire_Lock' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L33 [MEDIUM] ASSERTION_SCANNER: Ada 'Check_And_Acquire_Lock' missing Pre aspect/contract
+L33 [MEDIUM] ASSERTION_SCANNER: Ada 'Check_And_Acquire_Lock' missing Post aspect/contract
+L33 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Check_And_Acquire_Lock' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L58 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Release_Lock' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L58 [MEDIUM] ASSERTION_SCANNER: Ada 'Release_Lock' missing Pre aspect/contract
+L58 [MEDIUM] ASSERTION_SCANNER: Ada 'Release_Lock' missing Post aspect/contract
+L58 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Release_Lock' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L74 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Detect_Nvidia_GPU' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L74 [MEDIUM] ASSERTION_SCANNER: Ada 'Detect_Nvidia_GPU' missing Pre aspect/contract
+L74 [MEDIUM] ASSERTION_SCANNER: Ada 'Detect_Nvidia_GPU' missing Post aspect/contract
+L74 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Detect_Nvidia_GPU' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L98 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Ensure_Docker_Running' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L98 [MEDIUM] ASSERTION_SCANNER: Ada 'Ensure_Docker_Running' missing Pre aspect/contract
+L98 [MEDIUM] ASSERTION_SCANNER: Ada 'Ensure_Docker_Running' missing Post aspect/contract
+L98 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Ensure_Docker_Running' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L139 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Check_Amaryllis_Idle_Automode' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L139 [MEDIUM] ASSERTION_SCANNER: Ada 'Check_Amaryllis_Idle_Automode' missing Pre aspect/contract
+L139 [MEDIUM] ASSERTION_SCANNER: Ada 'Check_Amaryllis_Idle_Automode' missing Post aspect/contract
+L139 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Check_Amaryllis_Idle_Automode' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+
+===== stellarorion_runtime_guard.ads =====
+L26 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Lock_File_Path' missing Pre aspect/contract
+L26 [MEDIUM] ASSERTION_SCANNER: Ada 'Get_Lock_File_Path' missing Post aspect/contract
+L30 [MEDIUM] ASSERTION_SCANNER: Ada 'Check_And_Acquire_Lock' missing Pre aspect/contract
+L30 [MEDIUM] ASSERTION_SCANNER: Ada 'Check_And_Acquire_Lock' missing Post aspect/contract
+L33 [MEDIUM] ASSERTION_SCANNER: Ada 'Release_Lock;' missing Pre aspect/contract
+L33 [MEDIUM] ASSERTION_SCANNER: Ada 'Release_Lock;' missing Post aspect/contract
+L36 [MEDIUM] ASSERTION_SCANNER: Ada 'Detect_Nvidia_GPU' missing Pre aspect/contract
+L36 [MEDIUM] ASSERTION_SCANNER: Ada 'Detect_Nvidia_GPU' missing Post aspect/contract
+L40 [MEDIUM] ASSERTION_SCANNER: Ada 'Ensure_Docker_Running' missing Pre aspect/contract
+L40 [MEDIUM] ASSERTION_SCANNER: Ada 'Ensure_Docker_Running' missing Post aspect/contract
+L44 [MEDIUM] ASSERTION_SCANNER: Ada 'Check_Amaryllis_Idle_Automode;' missing Pre aspect/contract
+L44 [MEDIUM] ASSERTION_SCANNER: Ada 'Check_Amaryllis_Idle_Automode;' missing Post aspect/contract
+
+===== stellarorion_self_test.adb =====
+L38 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Self_Test' missing Pre aspect/contract
+L38 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Self_Test' missing Post aspect/contract
+L451 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L477 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+
+===== stellarorion_self_test.ads =====
+L19 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Self_Test;' missing Pre aspect/contract
+L19 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Self_Test;' missing Post aspect/contract
+
+===== stellarorion_status_writer.adb =====
+L13 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Float_Image' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L13 [MEDIUM] ASSERTION_SCANNER: Ada 'Float_Image' missing Pre aspect/contract
+L13 [MEDIUM] ASSERTION_SCANNER: Ada 'Float_Image' missing Post aspect/contract
+L13 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Float_Image' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L26 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Status_String' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L26 [MEDIUM] ASSERTION_SCANNER: Ada 'Status_String' missing Pre aspect/contract
+L26 [MEDIUM] ASSERTION_SCANNER: Ada 'Status_String' missing Post aspect/contract
+L26 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: function 'Status_String' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+L39 [MEDIUM] ASSERTION_SCANNER: Ada 'Write_Status' missing Pre aspect/contract
+L39 [MEDIUM] ASSERTION_SCANNER: Ada 'Write_Status' missing Post aspect/contract
+L108 [HIGH] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Clear_Status' lacks Pre/Post contracts (DO-178C §6.4.4, Ada SPARK RM §6.1.1)
+L108 [MEDIUM] ASSERTION_SCANNER: Ada 'Clear_Status' missing Pre aspect/contract
+L108 [MEDIUM] ASSERTION_SCANNER: Ada 'Clear_Status' missing Post aspect/contract
+L108 [MEDIUM] ADA_FUNCTION_COVERAGE: Ada Function Coverage: procedure 'Clear_Status' lacks test reference annotation — add -- @test: or -- test_ref: to mark coverage (DO-178C §6.4.4)
+
+===== stellarorion_status_writer.ads =====
+L24 [MEDIUM] ASSERTION_SCANNER: Ada 'Write_Status' missing Pre aspect/contract
+L24 [MEDIUM] ASSERTION_SCANNER: Ada 'Write_Status' missing Post aspect/contract
+L33 [MEDIUM] ASSERTION_SCANNER: Ada 'Clear_Status' missing Pre aspect/contract
+L33 [MEDIUM] ASSERTION_SCANNER: Ada 'Clear_Status' missing Post aspect/contract
+
+===== stellarorion_test_modes.adb =====
+L25 [MEDIUM] ASSERTION_SCANNER: Ada 'F6' missing Pre aspect/contract
+L25 [MEDIUM] ASSERTION_SCANNER: Ada 'F6' missing Post aspect/contract
+L27 [HIGH] SMT_LOGIC_VERIFICATION: z3+cvc5: Float division in 'F6' can produce NaN/Inf but no guard detected.  Solvers confirmed: z3, cvc5.
+L45 [MEDIUM] ASSERTION_SCANNER: Ada 'Grade' missing Pre aspect/contract
+L45 [MEDIUM] ASSERTION_SCANNER: Ada 'Grade' missing Post aspect/contract
+L59 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GetIRVE3_Baseline' missing Pre aspect/contract
+L59 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GetIRVE3_Baseline' missing Post aspect/contract
+L106 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_CompareNoses' missing Pre aspect/contract
+L106 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_CompareNoses' missing Post aspect/contract
+L215 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GridIndep_Test' missing Pre aspect/contract
+L215 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GridIndep_Test' missing Post aspect/contract
+L223 [MEDIUM] ASSERTION_SCANNER: Ada loop missing Loop_Invariant pragma/aspect (SPARK RM 5.5)
+L236 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Demo' missing Pre aspect/contract
+L236 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Demo' missing Post aspect/contract
+L293 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Validate_Only' missing Pre aspect/contract
+L293 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Validate_Only' missing Post aspect/contract
+L314 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_Baseline' missing Pre aspect/contract
+L314 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_Baseline' missing Post aspect/contract
+L344 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_Sample' missing Pre aspect/contract
+L344 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_Sample' missing Post aspect/contract
+L375 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_PINN_Calibration' missing Pre aspect/contract
+L375 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_PINN_Calibration' missing Post aspect/contract
+L414 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_Sparta_Integration' missing Pre aspect/contract
+L414 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_Sparta_Integration' missing Post aspect/contract
+L427 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_PyFluent_Integration' missing Pre aspect/contract
+L427 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_PyFluent_Integration' missing Post aspect/contract
+L498 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_PyAnsys_Integration' missing Pre aspect/contract
+L498 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_PyAnsys_Integration' missing Post aspect/contract
+L526 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_OpenFOAM_Integration' missing Pre aspect/contract
+L526 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_OpenFOAM_Integration' missing Post aspect/contract
+L532 [HIGH] SMT_LOGIC_VERIFICATION: z3+cvc5: Index 'Test_Dir' in 'Create_Directory(Test_Dir)' has no bounds check in Ada function 'Run_Test_OpenFOAM_Integration'.  Solvers confirmed: z3.
+L678 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Validate_Full' missing Pre aspect/contract
+L678 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Validate_Full' missing Post aspect/contract
+
+===== stellarorion_test_modes.ads =====
+L15 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GetIRVE3_Baseline' missing Pre aspect/contract
+L15 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GetIRVE3_Baseline' missing Post aspect/contract
+L16 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_CompareNoses' missing Pre aspect/contract
+L16 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_CompareNoses' missing Post aspect/contract
+L24 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GridIndep_Test' missing Pre aspect/contract
+L24 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_GridIndep_Test' missing Post aspect/contract
+L27 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Demo' missing Pre aspect/contract
+L27 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Demo' missing Post aspect/contract
+L29 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Validate_Only' missing Pre aspect/contract
+L29 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Validate_Only' missing Post aspect/contract
+L35 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_Baseline' missing Pre aspect/contract
+L35 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_Baseline' missing Post aspect/contract
+L43 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_Sample' missing Pre aspect/contract
+L43 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_Sample' missing Post aspect/contract
+L51 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_PINN_Calibration' missing Pre aspect/contract
+L51 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_PINN_Calibration' missing Post aspect/contract
+L53 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_Sparta_Integration' missing Pre aspect/contract
+L53 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_Sparta_Integration' missing Post aspect/contract
+L56 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_PyFluent_Integration' missing Pre aspect/contract
+L56 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_PyFluent_Integration' missing Post aspect/contract
+L63 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_PyAnsys_Integration' missing Pre aspect/contract
+L63 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_PyAnsys_Integration' missing Post aspect/contract
+L65 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_OpenFOAM_Integration' missing Pre aspect/contract
+L65 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Test_OpenFOAM_Integration' missing Post aspect/contract
+L69 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Validate_Full' missing Pre aspect/contract
+L69 [MEDIUM] ASSERTION_SCANNER: Ada 'Run_Validate_Full' missing Post aspect/contract
+L84 [MEDIUM] ASSERTION_SCANNER: Ada 'F6' missing Pre aspect/contract
+L84 [MEDIUM] ASSERTION_SCANNER: Ada 'F6' missing Post aspect/contract
+L87 [MEDIUM] ASSERTION_SCANNER: Ada 'Grade' missing Pre aspect/contract
+L87 [MEDIUM] ASSERTION_SCANNER: Ada 'Grade' missing Post aspect/contract

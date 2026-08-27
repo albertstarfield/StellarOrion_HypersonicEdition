@@ -766,7 +766,7 @@ package body StellarOrion_Optimization is
    begin
       Geo.Diameter_M      := 3.0;
       Geo.Angle_Deg       := 60.0;
-      Geo.Nose_Radius_M   := 0.55;
+               Geo.Nose_Radius_M := 1.0;
       Geo.Toroid_Count    := 6;
       Geo.Toroid_Radius_M := 0.135;
       Geo.Mass_Kg         := 281.0;

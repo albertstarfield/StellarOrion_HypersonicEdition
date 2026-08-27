@@ -1,0 +1,16 @@
+Phase 1 of 3: generation of data representation information ...
+Phase 2 of 3: generation of Global contracts ...
+Phase 3 of 3: full checking of SPARK legality rules ...
+stellarorion_cli.adb:12:21: warning: no Global contract available for "Argument_Count" [assumed-global-null]
+stellarorion_cli.adb:12:21: warning: assuming "Argument_Count" has no effect on global items
+stellarorion_cli.adb:13:13: warning: no Global contract available for "Argument" [assumed-global-null]
+stellarorion_cli.adb:13:13: warning: assuming "Argument" has no effect on global items
+stellarorion_cli.adb:25:21: warning: no Global contract available for "Argument_Count" [assumed-global-null]
+stellarorion_cli.adb:25:21: warning: assuming "Argument_Count" has no effect on global items
+stellarorion_cli.adb:26:13: warning: no Global contract available for "Argument" [assumed-global-null]
+stellarorion_cli.adb:26:13: warning: assuming "Argument" has no effect on global items
+stellarorion_cli.adb:27:20: warning: no Global contract available for "Argument" [assumed-global-null]
+stellarorion_cli.adb:27:20: warning: assuming "Argument" has no effect on global items
+stellarorion_geometry.adb:41:30: info: analyzing call to "Deg_To_Rad" in context
+stellarorion_geometry.adb:115:16: info: analyzing call to "Sin_Deg" in context
+Summary logged in /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/obj/gnatprove/gnatprove.out
