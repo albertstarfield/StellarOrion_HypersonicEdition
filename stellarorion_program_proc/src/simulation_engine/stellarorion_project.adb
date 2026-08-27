@@ -417,7 +417,7 @@ package body StellarOrion_Project is
                                               Diameter_Range'First,
                                               Diameter_Range'Last),
                Angle_Deg       => Get_Float ("--angle", 60.0),
-               Nose_Radius_M   => Clamp_Float (Get_Float ("--nose", 0.55),
+               Nose_Radius_M   => Clamp_Float (Get_Float ("--nose", 1.0),
                                                Nose_Radius_Range'First,
                                                Nose_Radius_Range'Last),
                Toroid_Count    => Get_Positive ("--toroids", 6),

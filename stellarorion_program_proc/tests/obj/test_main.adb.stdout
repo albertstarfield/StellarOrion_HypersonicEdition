@@ -1,0 +1,564 @@
+
+Representation information for unit Test_Main (body)
+----------------------------------------------------
+
+procedure Test_Main declared at test_main.adb:45:11
+convention : Ada
+
+procedure Check declared at test_main.adb:54:14
+convention : Ada
+   Name      : passed by reference
+   Condition : passed by copy
+   Detail    : passed by reference
+
+for Check.T1b'Alignment use 1;
+for Check.T1b'Component_Size use 8;
+
+for Check.S2b'Alignment use 1;
+for Check.S2b'Component_Size use 8;
+
+for Check.S3b'Alignment use 1;
+for Check.S3b'Component_Size use 8;
+
+for Check.B4b.T5b'Size use 48;
+for Check.B4b.T5b'Alignment use 1;
+for Check.B4b.T5b'Component_Size use 8;
+
+for Check.B4b.Ts8bs'Size use ??;
+for Check.B4b.Ts8bs'Alignment use 1;
+for Check.B4b.Ts8bs'Component_Size use 8;
+
+for Check.T9b'Size use 0;
+for Check.T9b'Alignment use 1;
+for Check.T9b'Component_Size use 8;
+
+for Check.B10b.T11b'Size use 48;
+for Check.B10b.T11b'Alignment use 1;
+for Check.B10b.T11b'Component_Size use 8;
+
+for Check.B10b.T12b'Size use 0;
+for Check.B10b.T12b'Alignment use 1;
+for Check.B10b.T12b'Component_Size use 8;
+
+for Check.B10b.T13b'Size use 48;
+for Check.B10b.T13b'Alignment use 1;
+for Check.B10b.T13b'Component_Size use 8;
+
+for Check.B10b.Ts16bs'Size use ??;
+for Check.B10b.Ts16bs'Alignment use 1;
+for Check.B10b.Ts16bs'Component_Size use 8;
+
+for Check.B10b.Ts25bs'Size use ??;
+for Check.B10b.Ts25bs'Alignment use 1;
+for Check.B10b.Ts25bs'Component_Size use 8;
+
+for B_1.T29b'Size use 368;
+for B_1.T29b'Alignment use 1;
+for B_1.T29b'Component_Size use 8;
+
+for B_1.B30b.Ts31bs'Size use 96;
+for B_1.B30b.Ts31bs'Alignment use 1;
+for B_1.B30b.Ts31bs'Component_Size use 8;
+
+for B_1.B30b.T35b'Size use ??;
+for B_1.B30b.T35b'Alignment use 1;
+for B_1.B30b.T35b'Component_Size use 8;
+
+for B_1.B30b.T36b'Size use 72;
+for B_1.B30b.T36b'Alignment use 1;
+for B_1.B30b.T36b'Component_Size use 8;
+
+for B_1.B30b.Ts41bs'Size use 168;
+for B_1.B30b.Ts41bs'Alignment use 1;
+for B_1.B30b.Ts41bs'Component_Size use 8;
+
+for B_1.B30b.T43b'Size use ??;
+for B_1.B30b.T43b'Alignment use 1;
+for B_1.B30b.T43b'Component_Size use 8;
+
+for B_2.T44b'Size use 248;
+for B_2.T44b'Alignment use 1;
+for B_2.T44b'Component_Size use 8;
+
+for B_2.B45b.Ts46bs'Size use 96;
+for B_2.B45b.Ts46bs'Alignment use 1;
+for B_2.B45b.Ts46bs'Component_Size use 8;
+
+for B_2.B45b.T50b'Size use ??;
+for B_2.B45b.T50b'Alignment use 1;
+for B_2.B45b.T50b'Component_Size use 8;
+
+for B_2.B45b.T51b'Size use 40;
+for B_2.B45b.T51b'Alignment use 1;
+for B_2.B45b.T51b'Component_Size use 8;
+
+for B_2.B45b.Ts56bs'Size use 136;
+for B_2.B45b.Ts56bs'Alignment use 1;
+for B_2.B45b.Ts56bs'Component_Size use 8;
+
+for B_2.B45b.T58b'Size use ??;
+for B_2.B45b.T58b'Alignment use 1;
+for B_2.B45b.T58b'Component_Size use 8;
+
+for B_3.T59b'Size use 336;
+for B_3.T59b'Alignment use 1;
+for B_3.T59b'Component_Size use 8;
+
+for B_3.B60b.Ts61bs'Size use 96;
+for B_3.B60b.Ts61bs'Alignment use 1;
+for B_3.B60b.Ts61bs'Component_Size use 8;
+
+for B_3.B60b.T65b'Size use ??;
+for B_3.B60b.T65b'Alignment use 1;
+for B_3.B60b.T65b'Component_Size use 8;
+
+for B_3.B60b.T66b'Size use 48;
+for B_3.B60b.T66b'Alignment use 1;
+for B_3.B60b.T66b'Component_Size use 8;
+
+for B_3.B60b.Ts71bs'Size use 144;
+for B_3.B60b.Ts71bs'Alignment use 1;
+for B_3.B60b.Ts71bs'Component_Size use 8;
+
+for B_3.B60b.T73b'Size use ??;
+for B_3.B60b.T73b'Alignment use 1;
+for B_3.B60b.T73b'Component_Size use 8;
+
+for B_4.T74b'Size use 456;
+for B_4.T74b'Alignment use 1;
+for B_4.T74b'Component_Size use 8;
+
+for B_4.B75b.Ts76bs'Size use 96;
+for B_4.B75b.Ts76bs'Alignment use 1;
+for B_4.B75b.Ts76bs'Component_Size use 8;
+
+for B_4.B75b.T80b'Size use ??;
+for B_4.B75b.T80b'Alignment use 1;
+for B_4.B75b.T80b'Component_Size use 8;
+
+for B_4.B75b.T81b'Size use 32;
+for B_4.B75b.T81b'Alignment use 1;
+for B_4.B75b.T81b'Component_Size use 8;
+
+for B_4.B75b.Ts86bs'Size use 128;
+for B_4.B75b.Ts86bs'Alignment use 1;
+for B_4.B75b.Ts86bs'Component_Size use 8;
+
+for B_4.B75b.T88b'Size use ??;
+for B_4.B75b.T88b'Alignment use 1;
+for B_4.B75b.T88b'Component_Size use 8;
+
+for B_5.T89b'Size use 280;
+for B_5.T89b'Alignment use 1;
+for B_5.T89b'Component_Size use 8;
+
+for B_5.B90b.Ts91bs'Size use 96;
+for B_5.B90b.Ts91bs'Alignment use 1;
+for B_5.B90b.Ts91bs'Component_Size use 8;
+
+for B_5.B90b.T95b'Size use ??;
+for B_5.B90b.T95b'Alignment use 1;
+for B_5.B90b.T95b'Component_Size use 8;
+
+for B_5.B90b.T96b'Size use 56;
+for B_5.B90b.T96b'Alignment use 1;
+for B_5.B90b.T96b'Component_Size use 8;
+
+for B_5.B90b.Ts101bs'Size use 152;
+for B_5.B90b.Ts101bs'Alignment use 1;
+for B_5.B90b.Ts101bs'Component_Size use 8;
+
+for B_5.B90b.T103b'Size use ??;
+for B_5.B90b.T103b'Alignment use 1;
+for B_5.B90b.T103b'Component_Size use 8;
+
+for B_6.T104b'Size use 328;
+for B_6.T104b'Alignment use 1;
+for B_6.T104b'Component_Size use 8;
+
+for B_6.B105b.Ts106bs'Size use 96;
+for B_6.B105b.Ts106bs'Alignment use 1;
+for B_6.B105b.Ts106bs'Component_Size use 8;
+
+for B_6.B105b.T110b'Size use ??;
+for B_6.B105b.T110b'Alignment use 1;
+for B_6.B105b.T110b'Component_Size use 8;
+
+for B_6.B105b.T111b'Size use 64;
+for B_6.B105b.T111b'Alignment use 1;
+for B_6.B105b.T111b'Component_Size use 8;
+
+for B_6.B105b.Ts116bs'Size use 160;
+for B_6.B105b.Ts116bs'Alignment use 1;
+for B_6.B105b.Ts116bs'Component_Size use 8;
+
+for B_6.B105b.T118b'Size use ??;
+for B_6.B105b.T118b'Alignment use 1;
+for B_6.B105b.T118b'Component_Size use 8;
+
+for B_7.T119b'Size use 336;
+for B_7.T119b'Alignment use 1;
+for B_7.T119b'Component_Size use 8;
+
+for B_7.B120b.Ts121bs'Size use 96;
+for B_7.B120b.Ts121bs'Alignment use 1;
+for B_7.B120b.Ts121bs'Component_Size use 8;
+
+for B_7.B120b.T125b'Size use ??;
+for B_7.B120b.T125b'Alignment use 1;
+for B_7.B120b.T125b'Component_Size use 8;
+
+for B_7.B120b.T126b'Size use 32;
+for B_7.B120b.T126b'Alignment use 1;
+for B_7.B120b.T126b'Component_Size use 8;
+
+for B_7.B120b.Ts131bs'Size use 128;
+for B_7.B120b.Ts131bs'Alignment use 1;
+for B_7.B120b.Ts131bs'Component_Size use 8;
+
+for B_7.B120b.T133b'Size use ??;
+for B_7.B120b.T133b'Alignment use 1;
+for B_7.B120b.T133b'Component_Size use 8;
+
+for B_8.T134b'Size use 320;
+for B_8.T134b'Alignment use 1;
+for B_8.T134b'Component_Size use 8;
+
+for B_8.B135b.Ts136bs'Size use 96;
+for B_8.B135b.Ts136bs'Alignment use 1;
+for B_8.B135b.Ts136bs'Component_Size use 8;
+
+for B_8.B135b.T140b'Size use ??;
+for B_8.B135b.T140b'Alignment use 1;
+for B_8.B135b.T140b'Component_Size use 8;
+
+for B_8.B135b.T141b'Size use 72;
+for B_8.B135b.T141b'Alignment use 1;
+for B_8.B135b.T141b'Component_Size use 8;
+
+for B_8.B135b.Ts146bs'Size use 168;
+for B_8.B135b.Ts146bs'Alignment use 1;
+for B_8.B135b.Ts146bs'Component_Size use 8;
+
+for B_8.B135b.T148b'Size use ??;
+for B_8.B135b.T148b'Alignment use 1;
+for B_8.B135b.T148b'Component_Size use 8;
+
+for B_9.T149b'Size use 272;
+for B_9.T149b'Alignment use 1;
+for B_9.T149b'Component_Size use 8;
+
+for B_9.B150b.Ts151bs'Size use 96;
+for B_9.B150b.Ts151bs'Alignment use 1;
+for B_9.B150b.Ts151bs'Component_Size use 8;
+
+for B_9.B150b.T155b'Size use ??;
+for B_9.B150b.T155b'Alignment use 1;
+for B_9.B150b.T155b'Component_Size use 8;
+
+for B_9.B150b.T156b'Size use 32;
+for B_9.B150b.T156b'Alignment use 1;
+for B_9.B150b.T156b'Component_Size use 8;
+
+for B_9.B150b.Ts161bs'Size use 128;
+for B_9.B150b.Ts161bs'Alignment use 1;
+for B_9.B150b.Ts161bs'Component_Size use 8;
+
+for B_9.B150b.T163b'Size use ??;
+for B_9.B150b.T163b'Alignment use 1;
+for B_9.B150b.T163b'Component_Size use 8;
+
+for B_10.T164b'Size use 328;
+for B_10.T164b'Alignment use 1;
+for B_10.T164b'Component_Size use 8;
+
+for B_10.T165b'Size use 136;
+for B_10.T165b'Alignment use 1;
+for B_10.T165b'Component_Size use 8;
+
+for B_11.T166b'Size use 392;
+for B_11.T166b'Alignment use 1;
+for B_11.T166b'Component_Size use 8;
+
+for B_11.T167b'Size use 184;
+for B_11.T167b'Alignment use 1;
+for B_11.T167b'Component_Size use 8;
+
+for B_12.T168b'Size use 368;
+for B_12.T168b'Alignment use 1;
+for B_12.T168b'Component_Size use 8;
+
+for B_12.T169b'Size use 120;
+for B_12.T169b'Alignment use 1;
+for B_12.T169b'Component_Size use 8;
+
+for B_13.T170b'Size use 336;
+for B_13.T170b'Alignment use 1;
+for B_13.T170b'Component_Size use 8;
+
+for B_13.B171b.Ts172bs'Size use 96;
+for B_13.B171b.Ts172bs'Alignment use 1;
+for B_13.B171b.Ts172bs'Component_Size use 8;
+
+for B_13.B171b.T176b'Size use ??;
+for B_13.B171b.T176b'Alignment use 1;
+for B_13.B171b.T176b'Component_Size use 8;
+
+for B_13.B171b.T177b'Size use 32;
+for B_13.B171b.T177b'Alignment use 1;
+for B_13.B171b.T177b'Component_Size use 8;
+
+for B_13.B171b.Ts182bs'Size use 128;
+for B_13.B171b.Ts182bs'Alignment use 1;
+for B_13.B171b.Ts182bs'Component_Size use 8;
+
+for B_13.B171b.T184b'Size use ??;
+for B_13.B171b.T184b'Alignment use 1;
+for B_13.B171b.T184b'Component_Size use 8;
+
+for B_14.T185b'Size use 352;
+for B_14.T185b'Alignment use 1;
+for B_14.T185b'Component_Size use 8;
+
+for B_14.B186b.Ts187bs'Size use 96;
+for B_14.B186b.Ts187bs'Alignment use 1;
+for B_14.B186b.Ts187bs'Component_Size use 8;
+
+for B_14.B186b.T191b'Size use ??;
+for B_14.B186b.T191b'Alignment use 1;
+for B_14.B186b.T191b'Component_Size use 8;
+
+for B_14.B186b.T192b'Size use 32;
+for B_14.B186b.T192b'Alignment use 1;
+for B_14.B186b.T192b'Component_Size use 8;
+
+for B_14.B186b.Ts197bs'Size use 128;
+for B_14.B186b.Ts197bs'Alignment use 1;
+for B_14.B186b.Ts197bs'Component_Size use 8;
+
+for B_14.B186b.T199b'Size use ??;
+for B_14.B186b.T199b'Alignment use 1;
+for B_14.B186b.T199b'Component_Size use 8;
+
+for B_15.T200b'Size use 336;
+for B_15.T200b'Alignment use 1;
+for B_15.T200b'Component_Size use 8;
+
+for B_15.B201b.Ts202bs'Size use 96;
+for B_15.B201b.Ts202bs'Alignment use 1;
+for B_15.B201b.Ts202bs'Component_Size use 8;
+
+for B_15.B201b.T206b'Size use ??;
+for B_15.B201b.T206b'Alignment use 1;
+for B_15.B201b.T206b'Component_Size use 8;
+
+for B_15.B201b.T207b'Size use 56;
+for B_15.B201b.T207b'Alignment use 1;
+for B_15.B201b.T207b'Component_Size use 8;
+
+for B_15.B201b.T208b'Size use 72;
+for B_15.B201b.T208b'Alignment use 1;
+for B_15.B201b.T208b'Component_Size use 8;
+
+for B_15.B201b.Ts209bs'Size use 96;
+for B_15.B201b.Ts209bs'Alignment use 1;
+for B_15.B201b.Ts209bs'Component_Size use 8;
+
+for B_15.B201b.T213b'Size use ??;
+for B_15.B201b.T213b'Alignment use 1;
+for B_15.B201b.T213b'Component_Size use 8;
+
+for B_15.B201b.T214b'Size use 72;
+for B_15.B201b.T214b'Alignment use 1;
+for B_15.B201b.T214b'Component_Size use 8;
+
+for B_15.B201b.Ts215bs'Size use 96;
+for B_15.B201b.Ts215bs'Alignment use 1;
+for B_15.B201b.Ts215bs'Component_Size use 8;
+
+for B_15.B201b.T219b'Size use ??;
+for B_15.B201b.T219b'Alignment use 1;
+for B_15.B201b.T219b'Component_Size use 8;
+
+for B_15.B201b.Ts234bs'Size use 488;
+for B_15.B201b.Ts234bs'Alignment use 1;
+for B_15.B201b.Ts234bs'Component_Size use 8;
+
+for B_15.B201b.T236b'Size use ??;
+for B_15.B201b.T236b'Alignment use 1;
+for B_15.B201b.T236b'Component_Size use 8;
+
+for B_16.T237b'Size use 400;
+for B_16.T237b'Alignment use 1;
+for B_16.T237b'Component_Size use 8;
+
+for B_16.B238b.Ts239bs'Size use 96;
+for B_16.B238b.Ts239bs'Alignment use 1;
+for B_16.B238b.Ts239bs'Component_Size use 8;
+
+for B_16.B238b.T243b'Size use ??;
+for B_16.B238b.T243b'Alignment use 1;
+for B_16.B238b.T243b'Component_Size use 8;
+
+for B_16.B238b.T244b'Size use 32;
+for B_16.B238b.T244b'Alignment use 1;
+for B_16.B238b.T244b'Component_Size use 8;
+
+for B_16.B238b.Ts249bs'Size use 128;
+for B_16.B238b.Ts249bs'Alignment use 1;
+for B_16.B238b.Ts249bs'Component_Size use 8;
+
+for B_16.B238b.T251b'Size use ??;
+for B_16.B238b.T251b'Alignment use 1;
+for B_16.B238b.T251b'Component_Size use 8;
+
+for B_17.T252b'Size use 352;
+for B_17.T252b'Alignment use 1;
+for B_17.T252b'Component_Size use 8;
+
+for B_17.T258b'Size use 120;
+for B_17.T258b'Alignment use 1;
+for B_17.T258b'Component_Size use 8;
+
+for B_18.T259b'Size use 280;
+for B_18.T259b'Alignment use 1;
+for B_18.T259b'Component_Size use 8;
+
+for B_18.T267b'Size use 176;
+for B_18.T267b'Alignment use 1;
+for B_18.T267b'Component_Size use 8;
+
+for B_19.T269b'Alignment use 1;
+for B_19.T269b'Component_Size use 8;
+
+for B_19.T271b'Size use 64;
+for B_19.T271b'Alignment use 1;
+for B_19.T271b'Component_Size use 8;
+
+for B_19.T272b'Size use 256;
+for B_19.T272b'Alignment use 1;
+for B_19.T272b'Component_Size use 8;
+
+for B_19.T274b'Alignment use 1;
+for B_19.T274b'Component_Size use 8;
+
+for B_19.T276b'Size use 64;
+for B_19.T276b'Alignment use 1;
+for B_19.T276b'Component_Size use 8;
+
+for B_19.T280b'Size use 112;
+for B_19.T280b'Alignment use 1;
+for B_19.T280b'Component_Size use 8;
+
+for B_20.T282b'Alignment use 1;
+for B_20.T282b'Component_Size use 8;
+
+for B_20.T284b'Size use 64;
+for B_20.T284b'Alignment use 1;
+for B_20.T284b'Component_Size use 8;
+
+for B_20.T285b'Size use 448;
+for B_20.T285b'Alignment use 1;
+for B_20.T285b'Component_Size use 8;
+
+for B_20.T289b'Size use 128;
+for B_20.T289b'Alignment use 1;
+for B_20.T289b'Component_Size use 8;
+
+for B_21.T291b'Alignment use 1;
+for B_21.T291b'Component_Size use 8;
+
+for B_21.T293b'Size use 64;
+for B_21.T293b'Alignment use 1;
+for B_21.T293b'Component_Size use 8;
+
+for B_21.T294b'Size use 672;
+for B_21.T294b'Alignment use 1;
+for B_21.T294b'Component_Size use 8;
+
+for B_21.T297b'Size use 184;
+for B_21.T297b'Alignment use 1;
+for B_21.T297b'Component_Size use 8;
+
+for B_22.T298b'Size use 336;
+for B_22.T298b'Alignment use 1;
+for B_22.T298b'Component_Size use 8;
+
+for B_22.T300b'Size use 240;
+for B_22.T300b'Alignment use 1;
+for B_22.T300b'Component_Size use 8;
+
+for B_22.T302b'Size use 416;
+for B_22.T302b'Alignment use 1;
+for B_22.T302b'Component_Size use 8;
+
+for B_22.T304b'Size use 432;
+for B_22.T304b'Alignment use 1;
+for B_22.T304b'Component_Size use 8;
+
+for B_22.T306b'Size use 416;
+for B_22.T306b'Alignment use 1;
+for B_22.T306b'Component_Size use 8;
+
+for B_22.T308b'Size use 448;
+for B_22.T308b'Alignment use 1;
+for B_22.T308b'Component_Size use 8;
+
+for B_23.T310b'Size use 344;
+for B_23.T310b'Alignment use 1;
+for B_23.T310b'Component_Size use 8;
+
+for B_23.T312b'Size use 360;
+for B_23.T312b'Alignment use 1;
+for B_23.T312b'Component_Size use 8;
+
+for T27b'Alignment use 1;
+for T27b'Component_Size use 8;
+
+for T28b'Size use 416;
+for T28b'Alignment use 1;
+for T28b'Component_Size use 8;
+
+for T314b'Size use 376;
+for T314b'Alignment use 1;
+for T314b'Component_Size use 8;
+
+for B315b.Ts316bs'Size use 88;
+for B315b.Ts316bs'Alignment use 1;
+for B315b.Ts316bs'Component_Size use 8;
+
+for B315b.T320b'Size use ??;
+for B315b.T320b'Alignment use 1;
+for B315b.T320b'Component_Size use 8;
+
+for B315b.T321b'Size use 80;
+for B315b.T321b'Alignment use 1;
+for B315b.T321b'Component_Size use 8;
+
+for B315b.T322b'Size use 72;
+for B315b.T322b'Alignment use 1;
+for B315b.T322b'Component_Size use 8;
+
+for B315b.Ts323bs'Size use 88;
+for B315b.Ts323bs'Alignment use 1;
+for B315b.Ts323bs'Component_Size use 8;
+
+for B315b.T327b'Size use ??;
+for B315b.T327b'Alignment use 1;
+for B315b.T327b'Component_Size use 8;
+
+for B315b.Ts337bs'Size use 328;
+for B315b.Ts337bs'Alignment use 1;
+for B315b.Ts337bs'Component_Size use 8;
+
+for B315b.T339b'Size use ??;
+for B315b.T339b'Alignment use 1;
+for B315b.T339b'Component_Size use 8;
+
+for T340b'Size use 128;
+for T340b'Alignment use 1;
+for T340b'Component_Size use 8;
+
+for T341b'Size use 168;
+for T341b'Alignment use 1;
+for T341b'Component_Size use 8;

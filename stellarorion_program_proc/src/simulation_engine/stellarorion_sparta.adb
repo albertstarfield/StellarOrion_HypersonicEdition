@@ -846,10 +846,9 @@ package body StellarOrion_Sparta is
       Names     : Name_Arr;
       N_Files   : Natural := 0;
       Result    : Simulation_Results;
-      All_Drag  : array (1 .. Max_Files) of Float := (others => 0.0);
-       All_Heat  : array (1 .. Max_Files) of Float := (others => 0.0);
-       pragma Unreferenced (All_Heat);
-      Drag_N    : Natural := 0;
+       All_Drag  : array (1 .. Max_Files) of Float := (others => 0.0);
+        All_Heat  : array (1 .. Max_Files) of Float := (others => 0.0);
+       Drag_N    : Natural := 0;
       Heat_N    : Natural := 0;
    begin
       Put_Line ("[SPARTA] Parsing results from: " & Output_Dir);
@@ -1009,7 +1008,7 @@ package body StellarOrion_Sparta is
                             if CIdx >= 5 then
                                N_Elem := N_Elem + 1;
                                --  Col 5 = f_surfavg[1] = fx (drag force)
-                               Drag_Sum := Drag_Sum + Abs_F (Cols (5));
+                                Drag_Sum := Drag_Sum + Cols (5);
                                --  Col 4 = f_1[3] = ke (kinetic energy / heat metric)
                                --  Col 3 was WRONG (f_1[2] = mflux ≈ 0 for axisymmetric)
                                if Abs_F (Cols (4)) > Heat_Max then

@@ -147,7 +147,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       New_Line;
 
       --  Smooth nose (R=0.55)
-      Geo_Smooth.Nose_Radius_M := 0.55;
+      Geo_Smooth.Nose_Radius_M := 1.0;
       Results_S.Heat_Flux_Wm2 :=
         Sutton_Graves_Heat (Flight.Density_Kgm3,
                             Geo_Smooth.Nose_Radius_M,

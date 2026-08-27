@@ -1,0 +1,56 @@
+# SPARTA Input Script - StellarOrion DSMC Simulation
+# Chemistry: 5sp | Mach 9.15528E+00 | T_inf=2.67850E+02K
+# Nose: smooth | Tuning: fnum=3.50000E+19, steps=1100
+
+seed            12345
+dimension       2
+global          gridcut 0.0 comm/sort yes
+boundary        o ao p
+
+create_box      -5.00000E+00 9.00000E+00 0.0000 3.93750E+00 -0.5 0.5
+create_grid     139 139 1
+balance_grid    rcb cell
+
+global          nrho 1.56022E+22 fnum 3.50000E+19 weight cell radius
+
+species         air.species N2 O2 NO N O
+mixture         air N2 O2 NO N O
+mixture         air N2 frac 0.79
+mixture         air O2 frac 0.21
+mixture         air vstream 3.28091E+03 0.0 0.0
+mixture         air temp 2.67850E+02
+
+fix             in emit/face air xlo
+collide         vss air air.vss
+react           tce air.react
+
+read_surf       HIAD_custom.surf group hiad_surf
+surf_collide    1 diffuse 1.00000E+03 1.0
+surf_modify     all collide 1
+create_particles air n 0
+balance_grid    rcb part
+
+compute         1 surf hiad_surf air nflux mflux ke
+fix             1 ave/surf hiad_surf 1 100 100 c_1[*]
+
+compute         surfF surf hiad_surf air fx fy fz
+fix             surfavg ave/surf hiad_surf 1 100 100 c_surfF[*]
+
+compute         drag reduce sum f_surfavg[1]
+compute         lift reduce sum f_surfavg[2]
+compute         heat reduce max f_1[3]
+
+
+
+timestep        1e-6
+
+stats           100
+stats_style     step cpu np c_drag c_lift c_heat
+
+dump            1 surf all 100 results_test_sample/surf.*.out id f_1[*] f_surfavg[*]
+
+fix             balance_grid balance 100 1.1 rcb part
+
+restart         100 results_test_sample/restart.*.sparta
+
+run             1100
