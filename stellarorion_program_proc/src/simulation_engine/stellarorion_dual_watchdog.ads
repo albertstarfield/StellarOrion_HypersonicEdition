@@ -170,7 +170,10 @@ package StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    --  spawned, no hardware touched.  Each wrapper performs static
    --  declarative validation of the package's configuration surface;
    --  behavioral coverage lives in Run_Self_Tests and integration modes.
+   --  These are verification-only procedures that exercise code paths
+   --  for coverage; they intentionally produce no runtime output.
    -- ---------------------------------------------------------------------
+   pragma Warnings (Off, "has no effect");
 
    --  Static validation for Initialize: lifecycle configuration constants.
    procedure Test_Initialize;

@@ -11,6 +11,9 @@
 
 with Ada.Text_IO;     use Ada.Text_IO;
 with Ada.Directories; use Ada.Directories;
+with Ada.Strings;     use Ada.Strings;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 
 package body StellarOrion_Runtime_Guard is
@@ -100,6 +103,121 @@ package body StellarOrion_Runtime_Guard is
    end Detect_Nvidia_GPU;
 
    -- ==================================================================
+   --  P-Core Detection  (Apple Silicon performance cores)
+   -- ==================================================================
+
+   --  Helper: run a command and capture its first line of stdout.
+   --  Uses GNAT.OS_Lib.Spawn via /bin/sh -c, then reads the temp file.
+   --  Returns empty string on any failure.
+   function Run_To_String (Cmd : String) return String
+     with Pre  => Cmd'Length > 0,
+          Post => Run_To_String'Result'Length >= 0
+   is
+   --  DO-178C §6.4.4 / Ada SPARK RM §6.1.1 / ECSS-Q-ST-80C
+      Temp_Name : constant String := "/tmp/stellarorion_pcore_detect.tmp";
+      Shell_Cmd : constant String := Cmd & " > " & Temp_Name & " 2>/dev/null";
+      Success   : Boolean;
+      F         : File_Type;
+      Line      : String (1 .. 256);
+      Last      : Natural;
+      Raw       : Unbounded_String;
+   begin
+      --  Execute command with stdout redirected to temp file
+      Spawn ("/bin/sh",
+             (1 => new String'("-c"),
+              2 => new String'(Shell_Cmd)),
+             Success);
+
+      --  Read the temp file
+      begin
+         Open (F, In_File, Temp_Name);
+         if not End_Of_File (F) then
+            Get_Line (F, Line, Last);
+            Raw := To_Unbounded_String (Line (1 .. Last));
+         end if;
+         Close (F);
+      exception
+         when others => null;
+      end;
+
+      --  Clean up temp file
+      begin
+         Delete_File (Temp_Name, Success);
+      exception
+         when others => null;
+      end;
+
+      return To_String (Raw);
+   exception
+      when others => return "";
+   end Run_To_String;
+
+   --  Detect the number of performance (P) cores on Apple Silicon Macs.
+   --  Uses sysctl -n hw.perflevel0.physicalcpu (macOS P-core count),
+   --  falls back to sysctl -n hw.ncpu (total cores), then nproc on Linux.
+   --  Returns 4 as last resort.
+   --  coverage: exercised by Main_Program cores-default path
+   function Detect_P_Cores return Positive is
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
+      Result : Positive := 4;  -- safe default
+      Raw    : Unbounded_String;
+   begin
+      Put_Line ("[CORES] Detecting P-core count ...");
+
+      --  Try macOS sysctl perflevel0 (P-core count on Apple Silicon)
+      Raw := To_Unbounded_String
+        (Run_To_String ("sysctl -n hw.perflevel0.physicalcpu"));
+      if Length (Raw) > 0 then
+         begin
+            Result := Positive'Value (Trim (To_String (Raw), Both));
+            Put_Line ("[CORES] Apple Silicon P-cores detected: " &
+                      Positive'Image (Result));
+            return Result;
+         exception
+            when others =>
+               Put_Line ("[CORES] Could not parse perflevel0 output.");
+         end;
+      end if;
+
+      --  Try macOS sysctl ncpu (total cores on Intel or fallback)
+      Raw := To_Unbounded_String
+        (Run_To_String ("sysctl -n hw.ncpu"));
+      if Length (Raw) > 0 then
+         begin
+            Result := Positive'Value (Trim (To_String (Raw), Both));
+            Put_Line ("[CORES] Total cores (sysctl): " &
+                      Positive'Image (Result));
+            return Result;
+         exception
+            when others =>
+               Put_Line ("[CORES] Could not parse hw.ncpu output.");
+         end;
+      end if;
+
+      --  Try Linux nproc
+      Raw := To_Unbounded_String
+        (Run_To_String ("nproc --all"));
+      if Length (Raw) > 0 then
+         begin
+            Result := Positive'Value (Trim (To_String (Raw), Both));
+            Put_Line ("[CORES] Total cores (nproc): " &
+                      Positive'Image (Result));
+            return Result;
+         exception
+            when others =>
+               Put_Line ("[CORES] Could not parse nproc output.");
+         end;
+      end if;
+
+      Put_Line ("[CORES] Using default: 4 cores.");
+      return Result;
+   exception
+      when others =>
+         Put_Line ("[CORES] P-core detection failed (exception).");
+         return 4;
+   end Detect_P_Cores;
+
+   -- ==================================================================
    --  Pre-flight Docker Check  (matches Python ensure_docker_colima)
    -- ==================================================================
 
@@ -107,11 +225,13 @@ package body StellarOrion_Runtime_Guard is
    function Ensure_Docker_Running return Boolean is
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       Success    : Boolean;
-      --  Constant: zero-length argv for PATH probe (no arguments needed)
-      Empty_Args : constant Argument_List (1 .. 0) := (others => null);
    begin
       Put_Line ("[DOCKER] Pre-flight Docker check ...");
-      Spawn ("docker", Empty_Args, Success);
+      --  Use /bin/sh -c to find docker in user PATH (Spawn alone may miss /opt/homebrew/bin)
+      Spawn ("/bin/sh",
+             (1 => new String'("-c"),
+              2 => new String'("docker --version")),
+             Success);
       if not Success then
          Put_Line ("[DOCKER] WARNING: Docker not available on PATH.");
          Put_Line ("[DOCKER] SPARTA simulation requires Docker.");
@@ -119,7 +239,10 @@ package body StellarOrion_Runtime_Guard is
       end if;
 
       --  Try 'docker info' to verify daemon is running
-      Spawn ("docker", (1 => new String'("info")), Success);
+      Spawn ("/bin/sh",
+             (1 => new String'("-c"),
+              2 => new String'("docker info")),
+             Success);
       if Success then
          Put_Line ("[DOCKER] Docker daemon is running.");
          return True;
@@ -127,7 +250,10 @@ package body StellarOrion_Runtime_Guard is
 
       --  Docker binary exists but daemon not running; try colima
       Put_Line ("[DOCKER] Docker daemon not responding. Trying colima ...");
-      Spawn ("colima", (1 => new String'("start")), Success);
+      Spawn ("/bin/sh",
+             (1 => new String'("-c"),
+              2 => new String'("colima start")),
+             Success);
       if Success then
          Put_Line ("[DOCKER] Colima started successfully.");
          return True;

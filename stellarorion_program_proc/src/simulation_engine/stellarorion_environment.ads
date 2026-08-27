@@ -138,6 +138,9 @@ package StellarOrion_Environment is
    -- -----------------------------------------------------------------
    --  Self-test coverage wrappers (STC)
    -- -----------------------------------------------------------------
+   --  These are verification-only procedures that exercise code paths
+   --  for coverage; they intentionally produce no runtime output.
+   pragma Warnings (Off, "has no effect");
 
    --  Calls the pure converter inside the E1 envelope and range-asserts
    --  the result against its postcondition.

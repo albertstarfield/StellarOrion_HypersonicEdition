@@ -13,3 +13,6 @@ project-files = ["stellarorion_program_proc.gpr"]
 
 [[depends-on]]
 gnatprove = "^16.1.0"
+
+[[depends-on]]
+gnatcov = "^26.2.1"

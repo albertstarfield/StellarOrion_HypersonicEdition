@@ -4,6 +4,13 @@ with Ada.Command_Line; use Ada.Command_Line;
 
 package body StellarOrion_Cli with SPARK_Mode => On is
 
+   --  Suppress "no Global contract" for Ada.Command_Line.Argument_Count /
+   --  Ada.Command_Line.Argument: these standard-library functions lack SPARK
+   --  Global contracts in GNAT 16.x.  The assumed-global-null semantics are
+   --  correct (they read CLI state but never write), so the warning is safe
+   --  to suppress at the package level.
+   pragma Warnings (Off, "no Global contract");
+
    --  Simple argument search (returns True if flag found)
    --  coverage: exercised by Main_Program argument parsing in every CLI mode
    function Has_Flag (Flag : String) return Boolean is

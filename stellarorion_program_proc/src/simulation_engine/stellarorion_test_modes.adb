@@ -322,11 +322,15 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  Baseline test (--test baseline): full SPARTA pipeline on IRVE-3
    --  defaults, delegating to Run_Validate_Full with grid factor 0.7.
    procedure Run_Test_Baseline
-     (Steps      : Positive := 1_000;
-      Geo_In     : Geometry_Parameters := (others => <>);
-      TPS_In     : TPS_Material := (others => <>);
-      Mach_Override : Float := 0.0;
-      Alt_Override  : Float := 0.0)
+      (Steps         : Positive := 1_000;
+       Geo_In        : Geometry_Parameters := (others => <>);
+       TPS_In        : TPS_Material := (others => <>);
+       Mach_Override : Float := 0.0;
+       Alt_Override  : Float := 0.0;
+       Grid_Factor   : Float := 0.7;
+       Cores         : Positive := 4;
+       Use_GPU       : Boolean := False;
+       Fnum_Str      : String := "3.5e19")
    is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    begin
@@ -335,17 +339,17 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Put_Line ("[TEST:baseline] Geometry: IRVE-3 defaults | Steps:" & Positive'Image (Steps));
       New_Line;
 
-      --  Delegate to Run_Validate_Full with IRVE-3 defaults
+      --  Delegate to Run_Validate_Full with CLI-provided values
       Run_Validate_Full (Steps         => Steps,
-                         Grid_Factor   => 0.7,
+                         Grid_Factor   => Grid_Factor,
                          Chemistry     => Five_Species,
                          Geo_In        => Geo_In,
                          TPS_In        => TPS_In,
                          Mach_Override => Mach_Override,
                          Alt_Override  => Alt_Override,
-                         Cores         => 4,
-                         Use_GPU       => False,
-                         Fnum_Str      => "1.5e20",
+                         Cores         => Cores,
+                         Use_GPU       => Use_GPU,
+                         Fnum_Str      => Fnum_Str,
                          Restart_File  => "",
                          Results_Dir   => "results_test_baseline");
    end Run_Test_Baseline;
@@ -353,11 +357,15 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  Sample test (--test sample): same SPARTA pipeline as baseline but
    --  writing to results_test_sample for the 11-metric comparison report.
    procedure Run_Test_Sample
-     (Steps      : Positive := 1_000;
-      Geo_In     : Geometry_Parameters := (others => <>);
-      TPS_In     : TPS_Material := (others => <>);
-      Mach_Override : Float := 0.0;
-      Alt_Override  : Float := 0.0)
+      (Steps         : Positive := 1_000;
+       Geo_In        : Geometry_Parameters := (others => <>);
+       TPS_In        : TPS_Material := (others => <>);
+       Mach_Override : Float := 0.0;
+       Alt_Override  : Float := 0.0;
+       Grid_Factor   : Float := 0.7;
+       Cores         : Positive := 4;
+       Use_GPU       : Boolean := False;
+       Fnum_Str      : String := "3.5e19")
    is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    begin
@@ -366,17 +374,17 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Put_Line ("[TEST:sample] Steps:" & Positive'Image (Steps));
       New_Line;
 
-      --  Delegate to Run_Validate_Full with default grid and IRVE-3 chemistry
+      --  Delegate to Run_Validate_Full with CLI-provided values
       Run_Validate_Full (Steps         => Steps,
-                         Grid_Factor   => 0.7,
+                         Grid_Factor   => Grid_Factor,
                          Chemistry     => Five_Species,
                          Geo_In        => Geo_In,
                          TPS_In        => TPS_In,
                          Mach_Override => Mach_Override,
                          Alt_Override  => Alt_Override,
-                         Cores         => 4,
-                         Use_GPU       => False,
-                         Fnum_Str      => "1.5e20",
+                         Cores         => Cores,
+                         Use_GPU       => Use_GPU,
+                         Fnum_Str      => Fnum_Str,
                          Restart_File  => "",
                          Results_Dir   => "results_test_sample");
    end Run_Test_Sample;
@@ -822,10 +830,11 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Put_Line ("[VALIDATE] Step 5: Running SPARTA simulation ...");
       Put_Line ("  This may take several minutes depending on steps count.");
       Run_Sparta_Docker
-        (Cwd       => ".",
-         Use_GPU   => Use_GPU,
-         Num_Cores => Cores,
-         Success   => DOK);
+        (Cwd        => ".",
+         Use_GPU    => Use_GPU,
+         Num_Cores  => Cores,
+         Results_Dir => Results_Dir,
+         Success    => DOK);
       New_Line;
 
       if not DOK then

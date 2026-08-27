@@ -17,7 +17,8 @@ package body StellarOrion_Geometry is
    --  self-test registry: Register_Routine ("Deg_To_Rad") (helper for
    --  Sin_Deg; no direct self-test call - proof-verified unit).
 --  @covered: gnatprove --level=4 formal proof (scripts/prove.sh).
-   function Deg_To_Rad (Deg : Float) return Float is
+   function Deg_To_Rad (Deg : Float) return Float
+     with Global => null is
       --  Contract: pre  => any Float angle value;
       --           post => radians = Deg * Pi / 180.0, sign-preserving.
    begin
@@ -33,7 +34,8 @@ package body StellarOrion_Geometry is
    --  self-test registry: Register_Routine ("Sin_Deg") (no direct
    --  self-test call - proof-verified unit).
 --  @covered: gnatprove --level=4 formal proof (scripts/prove.sh).
-   function Sin_Deg (Deg : Float) return Float is
+   function Sin_Deg (Deg : Float) return Float
+     with Global => null is
       --  Contract: pre  => Deg within the documented 40 .. 80 deg
       --           validity band of the Taylor series (< 0.01% error);
       --           post => sin(Deg) via truncated series x - x^3/6 +

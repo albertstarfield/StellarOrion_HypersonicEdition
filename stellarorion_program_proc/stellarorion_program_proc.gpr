@@ -12,7 +12,7 @@ project StellarOrion_Program_Proc is
          "-gnatwa",     --  All warnings
          "-gnatW8",     --  UTF-8 encoding
          "-gnatQ",      --  No message edition
-         "-gnatdAME");  --  Enable assertion mode for SPARK
+        "-gnatdAME");   --  Enable assertion mode for SPARK
    end Compiler;
 
    package Binder is

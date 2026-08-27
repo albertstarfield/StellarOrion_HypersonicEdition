@@ -80,11 +80,12 @@ package StellarOrion_Sparta is
    procedure Run_Sparta_Docker
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
-     (Cwd       : String;
+     (Cwd        : String;
      --  Invariant: parameters and derived locals remain within their declared
-      Use_GPU   : Boolean;
-      Num_Cores : Positive;
-      Success   : out Boolean);
+      Use_GPU    : Boolean;
+      Num_Cores  : Positive;
+      Results_Dir : String;
+      Success    : out Boolean);
 
    -- -----------------------------------------------------------------
    --  Surf File Parsing
