@@ -250,6 +250,18 @@
             </div>
         </section>
 
+        <!-- Panel: HIAD 3D Geometry (live surface-of-revolution viewer) -->
+        <section id="panel-geometry" class="panel panel-wide">
+            <h2>HIAD 3D Geometry</h2>
+            <div class="geo-toolbar">
+                <label for="geo-history" class="geo-label">Snapshot</label>
+                <select id="geo-history" class="geo-select"></select>
+                <button id="geo-save" class="btn btn-primary">Save Snapshot</button>
+                <span id="geo-status" class="geo-status">Loading…</span>
+            </div>
+            <canvas id="geo-canvas" class="geo-canvas" width="800" height="360"></canvas>
+        </section>
+
     </main>
 
     <!-- Footer -->
@@ -261,5 +273,6 @@
 </div>
 
 <script src="main.js"></script>
+<script src="geometry-viewer.js"></script>
 </body>
 </html>
