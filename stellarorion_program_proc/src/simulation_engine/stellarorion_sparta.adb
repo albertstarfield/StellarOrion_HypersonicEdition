@@ -1160,8 +1160,13 @@ package body StellarOrion_Sparta is
          Result.Stag_Pressure_Pa := 2.0 * 0.5 * Rho * (V ** 2);
       end;
 
-      -- Total heat load (integrated over 60s exposure)
-      Result.Total_Heat_Load := Result.Heat_Flux_Wm2 * 60.0;
+      -- Total heat load: integrate the steady-state SPARTA surface heat flux
+      -- over the MDAO-consistent effective heating-pulse duration.  MDAO
+      -- reports Q_max = 195.06 J/cm^2 at q_max = 14.36 W/cm^2, i.e. an
+      -- effective peak-heating window of 195.06 / 14.36 ~= 13.58 s
+      -- (trajectory-integrated).  The previous hard-coded 60 s over-predicted
+      -- the load by ~4.4x relative to the documented MDAO total heat load.
+      Result.Total_Heat_Load := Result.Heat_Flux_Wm2 * 13.58;
 
       Put_Line ("[SPARTA] Drag       = " & Img (Result.Drag_Force) &
                 " N");
