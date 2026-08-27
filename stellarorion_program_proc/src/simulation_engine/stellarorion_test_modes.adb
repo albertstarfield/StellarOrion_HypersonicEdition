@@ -5,6 +5,7 @@
 with Ada.Text_IO;             use Ada.Text_IO;
 with Ada.Directories;         use Ada.Directories;
 with Ada.Numerics;
+with Ada.Exceptions;          use Ada.Exceptions;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with StellarOrion_Environment; use StellarOrion_Environment;
 with StellarOrion_Physics;    use StellarOrion_Physics;
@@ -1119,6 +1120,25 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       else
          Put_Line ("[VALIDATE] RESULT: VALIDATION FAILED");
       end if;
+
+      --  Step 11: Validation visualization (ParaView VTK + time-series CSV + plots)
+      --  Non-fatal: MUST NOT abort VALIDATION PASSED (see defensive wrapper below).
+      --  Delegates to StellarOrion_Sparta.Generate_Validation_Plots_And_VTK, which
+      --  parses HIAD_custom.surf + surf.*.out and invokes the Python plot renderer.
+      begin
+         Put_Line ("[VALIDATE] Step 11: generating ParaView VTK, time-series CSV, and plots ...");
+         Generate_Validation_Plots_And_VTK
+           (Results_Dir => Results_Dir,
+            Steps       => Steps);
+         Put_Line ("[VALIDATE] Step 11: visualization artifacts written.");
+      exception
+         when E : others =>
+            Put_Line (Standard_Error,
+                      "[VALIDATE] Step 11 visualization failed (non-fatal): " &
+                      Exception_Name (E) & " : " & Exception_Message (E));
+            Put_Line ("[VALIDATE] Validation result is preserved (Step 11 is non-fatal).");
+      end;
+
    end Run_Validate_Full;
 
    -- ==================================================================

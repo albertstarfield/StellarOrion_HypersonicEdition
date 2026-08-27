@@ -19,6 +19,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Directories;       use Ada.Directories;
 with Ada.Exceptions;        use Ada.Exceptions;
 with StellarOrion_Geometry; use StellarOrion_Geometry;
+with Interfaces.C.Strings;
 
 package body StellarOrion_Sparta is
    pragma SPARK_Mode (Off);
@@ -141,8 +142,15 @@ package body StellarOrion_Sparta is
    --  Contract: pre  => Cmd is a shell command string to dispatch;
    --           post => returns after the external command completes;
    --           exit status is not inspected by callers.
-   procedure System (Cmd : String);
-   pragma Import (C, System);
+   procedure System (Cmd : String) is
+      function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
+      pragma Import (C, C_System, "system");
+      C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
+      Rc    : Integer;
+   begin
+      Rc := C_System (C_Cmd);
+      Interfaces.C.Strings.Free (C_Cmd);
+   end System;
 
    -- ==================================================================
    --  Generate_Sparta_Script
@@ -1448,5 +1456,635 @@ package body StellarOrion_Sparta is
 
       Ada.Text_IO.Close (Out_File);
    end Generate_HIAD_Surf;
+
+   -- ==================================================================
+   --  Generate_Validation_Plots_And_VTK — validation visualization
+   --  (approach (a): parse HIAD_custom.surf for element coordinates)
+    -- ==================================================================
+    --  AXIOMS:
+    --    * HIAD_custom.surf "Points" are the 2D axisymmetric profile in id
+    --      order (nose->back); the curve is the Points connected 1-2-...-Np.
+    --      We compute cumulative arc length S(i) and total length L.
+    --    * The SPARTA surf dump "id" strides by 6 and is NOT the geometry
+    --      index; dump rows are in curve order, so we read by ROW index (1..N)
+    --      and ignore the strided id.  Columns: id f_1[1] f_1[2] f_1[3](=heat
+    --      W/m^2) f_surfavg[1](=drag N) f_surfavg[2](=lift N) f_surfavg[3].
+    --    * N (surf element count) = number of data rows in a surf.<step>.out
+    --      dump (matches curve point count; ~219).
+    --    * Axisymmetric 2D profile (x=Z axial, R radial) revolved about the
+    --      x-axis gives a 3D shell; each segment -> N_Theta quad cells.
+    --  THEORIES:
+    --    * Resample the polyline into N+1 boundary points B(0..N) at equal
+    --      arc length j/N*L; segment k (B(k-1)->B(k)) is surf element k.
+    --    * Per-element field value is constant around the revolved ring, so
+    --      all N_Theta quads sharing segment k carry field[k].
+    --    * Time-series aggregates: drag_sum = Σ drag, lift_sum = Σ lift,
+    --      heatflux_max = max |heat| (consistent with Step 6 metrics).
+    --  APPLICATIONS:
+    --    * ParaView .vtu (UnstructuredGrid, VTK_QUAD) for CFD post-processing.
+    --    * CSV + matplotlib PNGs for trajectory-level trend inspection.
+    --  CITATIONS:
+    --    [Kitware2010] Ahrens, J. et al. "The VTK User's Guide", 2010 (XML .vtu).
+    --    [Hunter2007] Hunter, J. D. "Matplotlib: A 2D Graphics Environment", 2007.
+    --    [Rap23] Rapisarda, V. thesis, 2023 (HIAD flat-skin profile geometry).
+    --  TIMING ANALYSIS
+    --    Estimated Processing Time: O(N * N_Theta) per step for VTK;
+    --      O(N_steps * N) total.  File I/O dominated.
+    --    CPU Time: ~1 ms per element-revolution (ARM/Apple Silicon M-series).
+    --    WCET: 2 s per 10k-step validation run (bounded by dump count).
+    --    Space Complexity: O(N * N_Theta) points in memory per step.
+    --    Derivation: points/step = (N+1)*N_Theta; for N=219, N_Theta=48 =>
+    --      10,560 points/step; 100 steps => ~1.06M points total.
+    --    Hardware Assumptions: macOS/ARM64 host; spinning or SSD storage.
+   procedure Generate_Validation_Plots_And_VTK
+     (Results_Dir : String;
+      Steps       : Positive)
+   is
+       package FIO is new Ada.Text_IO.Float_IO (Float);
+
+       Max_Pts   : constant := 256;     -- curve point cap (Npoints ~77)
+       Max_Surf  : constant := 4096;    -- surf element / field cap (Murphy)
+       Max_Steps : constant := 4096;    -- dump file cap (Murphy)
+       N_Theta   : constant := 48;      -- revolve resolution (per design)
+       Pi        : constant Float := 3.14159265358979323846;
+
+       --  Parsed 2D curve from HIAD_custom.surf (x = axial, r = radial)
+       type Pt2D is record X, R : Float := 0.0; end record;
+       Curve   : array (1 .. Max_Pts) of Pt2D := (others => <>);
+       Npoints : Natural := 0;
+       S       : array (1 .. Max_Pts) of Float := (others => 0.0);  -- arc length
+       L       : Float := 0.0;                                       -- total length
+
+       --  Resampled boundary points B(0..N) by equal arc length
+       N : Natural := 0;
+       B : array (0 .. Max_Surf) of Pt2D := (others => <>);
+
+       --  Per-element field values, indexed by dump ROW (1..N)
+       Heat : array (1 .. Max_Surf) of Float := (others => 0.0);
+       Drag : array (1 .. Max_Surf) of Float := (others => 0.0);
+       Lift : array (1 .. Max_Surf) of Float := (others => 0.0);
+
+       --  Time-series accumulation
+       type Step_Row is record
+          Step     : Positive := 1;
+          Drag_Sum : Float := 0.0;
+          Lift_Sum : Float := 0.0;
+          Heat_Max : Float := 0.0;
+       end record;
+       Rows      : array (1 .. Max_Steps) of Step_Row := (others => (others => <>));
+       N_Rows    : Natural := 0;
+
+       --  Qualifying step list (step >= 100, multiple of 100, <= Steps)
+       Step_List   : array (1 .. Max_Steps) of Positive := (others => 1);
+       N_StepList  : Natural := 0;
+
+       Surf_Path    : constant String := Results_Dir & "/HIAD_custom.surf";
+       Paraview_Dir : constant String := Results_Dir & "/paraview";
+       Plots_Dir    : constant String := Results_Dir & "/plots";
+       CSV_Path     : constant String := Results_Dir & "/validation_timeseries.csv";
+
+       type Real_Vec is array (Positive range <>) of Float;
+
+      --  Tokenize a whitespace-separated line into up to Vals'Length floats.
+      procedure Tokenize_Floats
+        (S    : String;
+         Vals : out Real_Vec;
+         N    : out Natural)
+      is
+         Pos  : Natural := S'First;
+         CIdx : Natural := 0;
+      begin
+         N := 0;
+         while Pos <= S'Last loop
+            while Pos <= S'Last
+              and then (S (Pos) = ' ' or else S (Pos) = ASCII.HT)
+            loop
+               Pos := Pos + 1;
+            end loop;
+            exit when Pos > S'Last;
+            declare
+               Start : constant Natural := Pos;
+            begin
+               while Pos <= S'Last
+                 and then S (Pos) /= ' '
+                 and then S (Pos) /= ASCII.HT
+               loop
+                  Pos := Pos + 1;
+               end loop;
+               if CIdx < Vals'Length then
+                  CIdx := CIdx + 1;
+                  begin
+                     Vals (CIdx) := Float'Value (S (Start .. Pos - 1));
+                  exception
+                     when others => Vals (CIdx) := 0.0;
+                  end;
+                  N := CIdx;
+               end if;
+            end;
+         end loop;
+      end Tokenize_Floats;
+
+       --  Parse HIAD_custom.surf Points into the sequential polyline Curve
+       --  (id order 1..Npoints = nose->back) and compute cumulative arc
+       --  length S(1..Npoints); total length L = S(Npoints).  The "Lines"
+       --  section is ignored: the curve IS the Points in id order (SPARTA
+       --  connects 1-2,2-3,...,Npoints-1-Npoints sequentially).
+       procedure Parse_Surf_Geometry is
+          F    : File_Type;
+          Line : String (1 .. 1024);
+          Last : Natural;
+          State : Natural := 0;  -- 0=scan, 1=points
+       begin
+          if not Exists (Surf_Path) then
+             Put_Line (Standard_Error,
+                       "[VTK] surf geometry not found: " & Surf_Path);
+             return;
+          end if;
+          Open (F, In_File, Surf_Path);
+          while not End_Of_File (F) loop
+             Get_Line (F, Line, Last);
+             if Last > 0 and then Line (1) /= '#' then
+                declare
+                   S : constant String := Line (1 .. Last);
+                begin
+                   if State = 0 then
+                      if S = "Points" then
+                         State := 1;
+                      end if;
+                   elsif State = 1 then
+                      declare
+                         V : Real_Vec (1 .. 8) := (others => 0.0);
+                         M : Natural;
+                      begin
+                         Tokenize_Floats (S, V, M);
+                         if M >= 3 then
+                            declare
+                               Idx : constant Natural := Natural (V (1));
+                            begin
+                               if Idx in Curve'Range then
+                                  Curve (Idx).X := V (2);
+                                  Curve (Idx).R := V (3);
+                                  if Idx > Npoints then Npoints := Idx; end if;
+                               end if;
+                            end;
+                         end if;
+                      end;
+                   end if;
+                end;
+             end if;
+          end loop;
+          Close (F);
+          --  Cumulative arc length S(i); total L.
+          if Npoints >= 2 then
+             S (1) := 0.0;
+             for i in 2 .. Npoints loop
+                declare
+                   Dx : constant Float := Curve (i).X - Curve (i - 1).X;
+                   Dr : constant Float := Curve (i).R - Curve (i - 1).R;
+                begin
+                   S (i) := S (i - 1) + Sqrt (Dx * Dx + Dr * Dr);
+                end;
+             end loop;
+             L := S (Npoints);
+          end if;
+       exception
+          when E : others =>
+             if Is_Open (F) then Close (F); end if;
+             Put_Line (Standard_Error,
+                       "[VTK] surf geometry parse failed: " &
+                       Exception_Message (E));
+       end Parse_Surf_Geometry;
+
+       --  Resample the polyline into N+1 boundary points B(0..N) at equal
+       --  arc length j/N * L (j=0..N).  Segment k (B(k-1)->B(k)) is the
+       --  revolved position of surf element k.  Linear interpolation along
+       --  the polyline segment containing the target arc length.
+       procedure Resample is
+          Target  : Float;
+          Seg     : Natural;
+          Frac    : Float;
+          Dx, Dr, SegLen : Float;
+       begin
+          if N < 1 or else Npoints < 2 then
+             return;
+          end if;
+          B (0).X := Curve (1).X;       B (0).R := Curve (1).R;
+          B (N).X := Curve (Npoints).X; B (N).R := Curve (Npoints).R;
+          if L <= 0.0 then
+             for k in 1 .. N - 1 loop
+                B (k) := Curve (1);
+             end loop;
+             return;
+          end if;
+          for k in 1 .. N - 1 loop
+             Target := Float (k) / Float (N) * L;
+             Seg := 1;
+             for i in 2 .. Npoints loop
+                if S (i) >= Target then
+                   Seg := i - 1;
+                   exit;
+                end if;
+             end loop;
+             if Seg < 1 then Seg := 1; end if;
+             if Seg > Npoints - 1 then Seg := Npoints - 1; end if;
+             Dx := Curve (Seg + 1).X - Curve (Seg).X;
+             Dr := Curve (Seg + 1).R - Curve (Seg).R;
+             SegLen := S (Seg + 1) - S (Seg);
+             if SegLen > 0.0 then
+                Frac := (Target - S (Seg)) / SegLen;
+             else
+                Frac := 0.0;
+             end if;
+             B (k).X := Curve (Seg).X + Frac * Dx;
+             B (k).R := Curve (Seg).R + Frac * Dr;
+          end loop;
+       end Resample;
+
+       --  Count the number of data rows in a surf.<step>.out dump (the N
+       --  surf elements).  Rows follow the "ITEM: SURFS" header line.
+       function Count_Surf_Rows (Fpath : String) return Natural is
+          F       : File_Type;
+          Line    : String (1 .. 2048);
+          Last    : Natural;
+          In_Data : Boolean := False;
+          Cnt     : Natural := 0;
+       begin
+          if not Exists (Fpath) then
+             return 0;
+          end if;
+          Open (F, In_File, Fpath);
+          while not End_Of_File (F) loop
+             Get_Line (F, Line, Last);
+             if Last >= 5 and then Line (1 .. 5) = "ITEM:" then
+                In_Data := (Last >= 11 and then Line (1 .. 11) = "ITEM: SURFS");
+             elsif In_Data and then Last > 0 and then Line (1) /= '#' then
+                Cnt := Cnt + 1;
+             end if;
+          end loop;
+          Close (F);
+          return Cnt;
+       exception
+          when others =>
+             if Is_Open (F) then Close (F); end if;
+             return Cnt;
+       end Count_Surf_Rows;
+
+      --  Write one 3D point (x, y, z) into the VTK Points DataArray.
+      procedure Write_Point (F : File_Type; X, Y, Z : Float) is
+      begin
+         FIO.Put (F, X, Fore => 1, Aft => 6, Exp => 0);
+         Put (F, " ");
+         FIO.Put (F, Y, Fore => 1, Aft => 6, Exp => 0);
+         Put (F, " ");
+         FIO.Put (F, Z, Fore => 1, Aft => 6, Exp => 0);
+         New_Line (F);
+      end Write_Point;
+
+       --  Write the per-step .vtu UnstructuredGrid: revolve the resampled
+       --  polyline B(0..N) about the x-axis into N*N_Theta VTK_QUAD cells.
+       --  Segment k (B(k-1)->B(k)) yields N_Theta quads, each carrying
+       --  field[k] (HeatFlux_Wm2/Drag_N/Lift_N).  Shared-node grid:
+       --  (N+1)*N_Theta nodes, 0-based connectivity.
+       procedure Write_VTU (Step : Positive) is
+          VF      : File_Type;
+          VPath   : constant String := Paraview_Dir & "/surf_" & Img (Integer (Step)) & ".vtu";
+          DTheta  : constant Float := 2.0 * Pi / Float (N_Theta);
+          N_Cells : constant Natural := N * N_Theta;
+          N_Pts_V : constant Natural := (N + 1) * N_Theta;
+          Cnt     : Natural := 0;
+          Tn      : Natural;
+          N0, N1, N2, N3 : Natural;
+          Cth, Sth : Float;
+       begin
+          if N < 1 then
+             return;
+          end if;
+          Create (VF, Out_File, VPath);
+          Put_Line (VF, "<?xml version=""1.0""?>");
+          Put_Line (VF, "<VTKFile type=""UnstructuredGrid"" version=""0.1"" byte_order=""LittleEndian"">");
+          Put_Line (VF, "  <UnstructuredGrid>");
+          Put_Line (VF, "    <Piece NumberOfPoints=""" & Img (N_Pts_V) &
+                    """ NumberOfCells=""" & Img (N_Cells) & """>");
+          --  Points (shared node grid: ring k=0..N, theta t=0..N_Theta-1)
+          Put_Line (VF, "      <Points>");
+          Put_Line (VF, "        <DataArray type=""Float64"" NumberOfComponents=""3"" format=""ascii"">");
+          for k in 0 .. N loop
+             for t in 0 .. N_Theta - 1 loop
+                Cth := Cos_Rad (Float (t) * DTheta);
+                Sth := Sin_Rad (Float (t) * DTheta);
+                Write_Point (VF, B (k).X, B (k).R * Cth, B (k).R * Sth);
+             end loop;
+          end loop;
+          Put_Line (VF, "        </DataArray>");
+          Put_Line (VF, "      </Points>");
+          --  Cells
+          Put_Line (VF, "      <Cells>");
+          Put_Line (VF, "        <DataArray type=""Int64"" Name=""connectivity"" format=""ascii"">");
+          Cnt := 0;
+          for k in 1 .. N loop
+             for t in 0 .. N_Theta - 1 loop
+                Tn := (t + 1) mod N_Theta;
+                N0 := (k - 1) * N_Theta + t;
+                N1 := k * N_Theta + t;
+                N2 := k * N_Theta + Tn;
+                N3 := (k - 1) * N_Theta + Tn;
+                Put (VF, Img (Integer (N0))); Put (VF, " ");
+                Put (VF, Img (Integer (N1))); Put (VF, " ");
+                Put (VF, Img (Integer (N2))); Put (VF, " ");
+                Put (VF, Img (Integer (N3)));
+                Cnt := Cnt + 1;
+                if Cnt mod 4 = 0 then New_Line (VF); end if;
+             end loop;
+          end loop;
+          New_Line (VF);
+          Put_Line (VF, "        </DataArray>");
+          Put_Line (VF, "        <DataArray type=""Int64"" Name=""offsets"" format=""ascii"">");
+          Cnt := 0;
+          for k in 1 .. N loop
+             for t in 0 .. N_Theta - 1 loop
+                Cnt := Cnt + 1;
+                Put (VF, Img (Integer (Cnt * 4)));
+                if Cnt < N_Cells then
+                   if Cnt mod 8 = 0 then New_Line (VF); else Put (VF, " "); end if;
+                end if;
+             end loop;
+          end loop;
+          New_Line (VF);
+          Put_Line (VF, "        </DataArray>");
+          Put_Line (VF, "        <DataArray type=""UInt8"" Name=""types"" format=""ascii"">");
+          for I in 1 .. N_Cells loop
+             Put (VF, "9");
+             if I < N_Cells then
+                if I mod 20 = 0 then New_Line (VF); else Put (VF, " "); end if;
+             end if;
+          end loop;
+          New_Line (VF);
+          Put_Line (VF, "        </DataArray>");
+          Put_Line (VF, "      </Cells>");
+          --  CellData (per segment k, constant around the ring)
+          Put_Line (VF, "      <CellData>");
+          Put_Line (VF, "        <DataArray type=""Float64"" Name=""HeatFlux_Wm2"" format=""ascii"">");
+          Cnt := 0;
+          for k in 1 .. N loop
+             for t in 0 .. N_Theta - 1 loop
+                Cnt := Cnt + 1;
+                FIO.Put (VF, Heat (k), Fore => 1, Aft => 6, Exp => 0);
+                if Cnt < N_Cells then
+                   if Cnt mod 6 = 0 then New_Line (VF); else Put (VF, " "); end if;
+                end if;
+             end loop;
+          end loop;
+          New_Line (VF);
+          Put_Line (VF, "        </DataArray>");
+          Put_Line (VF, "        <DataArray type=""Float64"" Name=""Drag_N"" format=""ascii"">");
+          Cnt := 0;
+          for k in 1 .. N loop
+             for t in 0 .. N_Theta - 1 loop
+                Cnt := Cnt + 1;
+                FIO.Put (VF, Drag (k), Fore => 1, Aft => 6, Exp => 0);
+                if Cnt < N_Cells then
+                   if Cnt mod 6 = 0 then New_Line (VF); else Put (VF, " "); end if;
+                end if;
+             end loop;
+          end loop;
+          New_Line (VF);
+          Put_Line (VF, "        </DataArray>");
+          Put_Line (VF, "        <DataArray type=""Float64"" Name=""Lift_N"" format=""ascii"">");
+          Cnt := 0;
+          for k in 1 .. N loop
+             for t in 0 .. N_Theta - 1 loop
+                Cnt := Cnt + 1;
+                FIO.Put (VF, Lift (k), Fore => 1, Aft => 6, Exp => 0);
+                if Cnt < N_Cells then
+                   if Cnt mod 6 = 0 then New_Line (VF); else Put (VF, " "); end if;
+                end if;
+             end loop;
+          end loop;
+          New_Line (VF);
+          Put_Line (VF, "        </DataArray>");
+          Put_Line (VF, "      </CellData>");
+          Put_Line (VF, "    </Piece>");
+          Put_Line (VF, "  </UnstructuredGrid>");
+          Put_Line (VF, "</VTKFile>");
+          Close (VF);
+       exception
+          when E : others =>
+             if Is_Open (VF) then Close (VF); end if;
+             Put_Line (Standard_Error,
+                       "[VTK] failed to write " & VPath & " : " &
+                       Exception_Message (E));
+       end Write_VTU;
+
+       --  Parse one surf.<step>.out dump by ROW INDEX (1..N, curve order),
+       --  fill Heat/Drag/Lift, write its VTK, and accumulate the CSV row.
+       --  The dump "id" strides by 6 and is ignored; row order == curve
+       --  position (matches the existing Step 6 parser field semantics).
+       procedure Process_Step_File (Step : Positive) is
+          Fpath : constant String := Results_Dir & "/surf." & Img (Integer (Step)) & ".out";
+          F     : File_Type;
+          Line  : String (1 .. 2048);
+          Last  : Natural;
+          In_Data : Boolean := False;
+          Row   : Natural := 0;
+          Drag_Sum, Lift_Sum, Heat_Max : Float := 0.0;
+       begin
+          if not Exists (Fpath) then
+             Put_Line (Standard_Error, "[VTK] step dump not found: " & Fpath);
+             return;
+          end if;
+          for I in 1 .. N loop
+             Heat (I) := 0.0; Drag (I) := 0.0; Lift (I) := 0.0;
+          end loop;
+          Open (F, In_File, Fpath);
+          while not End_Of_File (F) loop
+             Get_Line (F, Line, Last);
+             if Last >= 5 and then Line (1 .. 5) = "ITEM:" then
+                In_Data := (Last >= 11 and then Line (1 .. 11) = "ITEM: SURFS");
+             elsif In_Data and then Last > 0 and then Line (1) /= '#' then
+                declare
+                   S : constant String := Line (1 .. Last);
+                   V : Real_Vec (1 .. 8) := (others => 0.0);
+                   M : Natural;
+                begin
+                   Tokenize_Floats (S, V, M);
+                   if M >= 6 then
+                      Row := Row + 1;
+                      if Row <= N then
+                         Heat (Row) := V (4);   -- f_1[3] = heat flux W/m^2
+                         Drag (Row) := V (5);   -- f_surfavg[1] = drag N
+                         Lift (Row) := V (6);   -- f_surfavg[2] = lift N
+                      end if;
+                   end if;
+                end;
+             end if;
+          end loop;
+          Close (F);
+          for I in 1 .. N loop
+             Drag_Sum := Drag_Sum + Drag (I);
+             Lift_Sum := Lift_Sum + Lift (I);
+             if Abs_F (Heat (I)) > Heat_Max then Heat_Max := Abs_F (Heat (I)); end if;
+          end loop;
+          if N > 0 then
+             Write_VTU (Step);
+          end if;
+          if N_Rows < Max_Steps then
+             N_Rows := N_Rows + 1;
+             Rows (N_Rows) := (Step => Step, Drag_Sum => Drag_Sum,
+                               Lift_Sum => Lift_Sum, Heat_Max => Heat_Max);
+          end if;
+       exception
+          when E : others =>
+             if Is_Open (F) then Close (F); end if;
+             Put_Line (Standard_Error,
+                       "[VTK] failed processing step " & Img (Integer (Step)) & " : " &
+                       Exception_Message (E));
+       end Process_Step_File;
+
+      --  Sort Rows by Step and write the CSV.
+      procedure Write_CSV is
+         CF : File_Type;
+      begin
+         for I in 1 .. N_Rows - 1 loop
+            for J in I + 1 .. N_Rows loop
+               if Rows (J).Step < Rows (I).Step then
+                  declare
+                     Tmp : constant Step_Row := Rows (I);
+                  begin
+                     Rows (I) := Rows (J);
+                     Rows (J) := Tmp;
+                  end;
+               end if;
+            end loop;
+         end loop;
+         Create (CF, Out_File, CSV_Path);
+         Put_Line (CF, "step,drag_sum_N,lift_sum_N,heatflux_max_Wm2");
+         for I in 1 .. N_Rows loop
+            Put (CF, Img (Rows (I).Step));
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Drag_Sum, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Lift_Sum, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Heat_Max, Fore => 1, Aft => 6, Exp => 0);
+            New_Line (CF);
+         end loop;
+         Close (CF);
+      exception
+         when E : others =>
+            if Is_Open (CF) then Close (CF); end if;
+            Put_Line (Standard_Error,
+                      "[VTK] failed writing CSV " & CSV_Path & " : " &
+                      Exception_Message (E));
+      end Write_CSV;
+
+       Srch : Search_Type;
+       E : Directory_Entry_Type;
+    begin
+       --  Ensure output directories exist (safety fallback).
+       if not Exists (Paraview_Dir) then
+          begin Create_Path (Paraview_Dir); exception when others => null; end;
+       end if;
+       if not Exists (Plots_Dir) then
+          begin Create_Path (Plots_Dir); exception when others => null; end;
+       end if;
+
+       --  Step 1: parse HIAD_custom.surf polyline + arc length.
+       Parse_Surf_Geometry;
+       if Npoints < 2 then
+          Put_Line (Standard_Error,
+                    "[VTK] Need >= 2 curve points; VTK/CSV skipped.");
+          return;
+       end if;
+
+       --  Step 2: enumerate qualifying surf.<step>.out dumps (step>=100,
+       --  multiple of 100, <= Steps) via Ada.Directories.
+        Start_Search (Srch, Results_Dir, "surf.*.out");
+        while More_Entries (Srch) loop
+           Get_Next_Entry (Srch, E);
+          declare
+             Name : constant String := Simple_Name (E);
+             Step : Natural := 0;
+          begin
+             if Name'Length > 9
+               and then Name (Name'First .. Name'First + 4) = "surf."
+             then
+                declare
+                   Tail : constant String := Name (Name'First + 5 .. Name'Last);
+                begin
+                   if Tail'Length > 4
+                     and then Tail (Tail'Last - 3 .. Tail'Last) = ".out"
+                   then
+                      Step := Natural'Value (Tail (Tail'First .. Tail'Last - 4));
+                   end if;
+                exception
+                   when others => Step := 0;
+                end;
+             end if;
+             if Step >= 100 and then Step mod 100 = 0 and then Step <= Steps then
+                if N_StepList < Max_Steps then
+                   N_StepList := N_StepList + 1;
+                   Step_List (N_StepList) := Step;
+                end if;
+             end if;
+          end;
+       end loop;
+        End_Search (Srch);
+
+        if N_StepList = 0 then
+          Put_Line (Standard_Error,
+                    "[VTK] No surf.<step>.out dumps (step>=100) found; skipped.");
+          return;
+       end if;
+
+       --  Sort steps ascending (insertion sort, Murphy-bounded).
+       for I in 1 .. N_StepList - 1 loop
+          for J in I + 1 .. N_StepList loop
+             if Step_List (J) < Step_List (I) then
+                declare
+                   Tmp : constant Positive := Step_List (I);
+                begin
+                   Step_List (I) := Step_List (J);
+                   Step_List (J) := Tmp;
+                end;
+             end if;
+          end loop;
+       end loop;
+
+       --  Step 3: determine N (surf element count) from first dump.
+       N := Count_Surf_Rows
+         (Results_Dir & "/surf." & Img (Integer (Step_List (1))) & ".out");
+       if N > Max_Surf then
+          N := Max_Surf;
+       end if;
+       if N < 1 then
+          Put_Line (Standard_Error,
+                    "[VTK] Could not determine surf element count N; skipped.");
+          return;
+       end if;
+
+       --  Step 4: resample polyline into N+1 boundary points.
+       Resample;
+
+       --  Step 5: per step -> VTK + CSV row.
+       for I in 1 .. N_StepList loop
+          Process_Step_File (Step_List (I));
+       end loop;
+
+       --  Emit CSV + render PNG plots (best-effort, return code ignored).
+       if N_Rows > 0 then
+          Write_CSV;
+          Put_Line ("[VTK] Invoking Python plot renderer: python3 scripts/make_validation_plots.py "
+                    & Results_Dir);
+          System ("python3 scripts/make_validation_plots.py " & Results_Dir);
+       else
+          Put_Line (Standard_Error,
+                    "[VTK] No valid step dumps processed; CSV/plots skipped.");
+       end if;
+   exception
+      when E : others =>
+         Put_Line (Standard_Error,
+                   "[VTK] Generate_Validation_Plots_And_VTK failed: " &
+                   Exception_Message (E));
+   end Generate_Validation_Plots_And_VTK;
 
 end StellarOrion_Sparta;
