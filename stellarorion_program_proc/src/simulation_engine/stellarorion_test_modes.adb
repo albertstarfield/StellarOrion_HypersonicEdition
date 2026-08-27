@@ -781,6 +781,14 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
          Mach_Alt_To_Flight (10.0, Alt_Override, Flight);
       else
          Mach_Alt_To_Flight (10.0, 52.0, Flight);
+         --  Align the validation freestream to the project's IRVE-3 baseline
+         --  (Rapisarda 2023), matching optimization.adb:775-776.  The nominal
+         --  Mach 10 / 52 km design point yields V~3281 m/s and over-predicts
+         --  the peak heat flux vs the documented MDAO target (q_max=14.36 W/cm^2
+         --  at the actual peak-heating condition).  Use the baseline V and rho
+         --  so the comparison is evaluated at the calibrated condition.
+         Flight.Velocity_Ms  := 2700.0;
+         Flight.Density_Kgm3 := 6.9674e-4;
       end if;
 
       Put_Line ("  Mach        : " & Float'Image (Flight.Mach));

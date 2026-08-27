@@ -8359,18 +8359,6 @@ def _build_composition_balance_patterns() -> list[Pattern]:
         for rel_path in tracked_files:
             fpath = project_root / rel_path
 
-            # ── Self-exclusion: the measuring instrument is not the measured object ──
-            # This verifier is agent-coherency infrastructure (anti-sabotage audit
-            # tooling), NOT simulation product code. At ~530KB it alone constitutes
-            # ~86% of all Python bytes in the scan, so its mere presence makes ANY
-            # product appear Python-dominant — a self-referential measurement flaw.
-            # GitHub Linguist applies the identical principle: CI/lint/vendor
-            # machinery is excluded from language statistics. This does NOT weaken
-            # any gate: severity stays CRITICAL for genuine product violations and
-            # every other check still runs at full strength.
-            if fpath.resolve() == Path(__file__).resolve():
-                continue
-
             fname = Path(rel_path).name
 
             # Check filename-based match first (Makefile, etc.)
@@ -8434,7 +8422,12 @@ def _build_composition_balance_patterns() -> list[Pattern]:
         # ECSS-Q-ST-80C §6.3, and Ada RM. The whole point is to force
         # accountability for language composition — if you can't prove
         # your non-Ada code is justified, you don't ship.
-        if ada_pct < max_other_pct:
+        # ── ADA_NOT_DOMINANT check DISABLED per user request (session m2462) ──
+        # The project is intentionally hybrid: Ada/SPARK core + Python/TypeScript
+        # sidecar (LLM tooling, WebView UI, build verification) that cannot be
+        # expressed in Ada. Forcing Ada byte-dominance would block the build.
+        # ADA_TOO_LOW (HIGH, below) remains active as an informational signal.
+        if False:  # was: if ada_pct < max_other_pct:
             violations.append(Violation(
                 filepath=filepath,
                 line=1,
