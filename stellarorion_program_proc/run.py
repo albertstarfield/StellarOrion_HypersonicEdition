@@ -69,12 +69,16 @@ _REQUIREMENTS: tuple[str, ...] = (
     "ruff>=0.1.0",
     # Property-based testing
     "crosshair-tool>=0.0.22",
+    # Design-by-contract library consumed by CrossHair for postcondition checks
+    "deal>=4.0.0",
     # SMT solvers for formal verification (sabotage_verifier)
     "cvc5>=0.2.0",
     # Test infrastructure
     "coverage>=7.0.0",
     # SSH for remote PyFluent solver
     "paramiko>=3.4.0",
+    # 3D visualization (interactive HIAD surface-of-revolution plots)
+    "plotly>=5.18.0",
 )
 _SABOTAGE_VERIFIER = _UTILS_DIR / "sabotage_verifier.py"
 _GPR_FILE = _PROJECT_ROOT / "stellarorion_program_proc.gpr"
