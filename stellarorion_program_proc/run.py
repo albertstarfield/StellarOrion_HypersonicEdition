@@ -78,7 +78,7 @@ _REQUIREMENTS: tuple[str, ...] = (
 )
 _SABOTAGE_VERIFIER = _UTILS_DIR / "sabotage_verifier.py"
 _GPR_FILE = _PROJECT_ROOT / "stellarorion_program_proc.gpr"
-_BINARY_NAME = "stellarorion_project"
+_BINARY_NAME = "main"
 _SIDECAR_SERVER = _SRC_DIR / "ui" / "sidecar_ui.py"
 _SIDECAR_FRONTEND = _SRC_DIR / "ui" / "frontend"
 _DATA_DIR = _PROJECT_ROOT / "data" / "runs"
@@ -684,9 +684,12 @@ def _phase3_ada_build(verbose: bool) -> None:
         "JSON bug (macOS ARM64).  --mode=flow analysis (level 4) was applied."
     )
 
-    t = step_start("gnatprove --level=4 (full)")
+    # Use prove.sh which works around the GNAT 16.x JSON duplicate-location bug.
+    # prove.sh: 1) regenerates rep-info JSONs, 2) deduplicates, 3) runs gnatprove.
+    t = step_start("gnatprove --level=4 (via prove.sh)")
+    prove_sh = _PROJECT_ROOT / "scripts" / "prove.sh"
     ok, stdout, stderr = _run(
-        ["alr", "exec", "--", "gnatprove", "--level=4", "-P", str(_GPR_FILE)],
+        ["bash", str(prove_sh), "4"],
         cwd=_PROJECT_ROOT,
         verbose=verbose,
         timeout=1800,
@@ -697,53 +700,14 @@ def _phase3_ada_build(verbose: bool) -> None:
         detail = "all checks pass"
         step_result(True, detail, elapsed, verbose, stdout, stderr)
     else:
-        # Check if it's the known JSON bug → fallback to flow
+        detail = "gnatprove failed"
         combined = (stdout or "") + (stderr or "")
-        if "ill-formed JSON" in combined or "json" in combined.lower():
-            step_result(
-                False,
-                "prove phase failed (known toolchain bug) -- falling back to flow",
-                elapsed,
-                verbose,
-                stdout,
-                stderr,
-            )
-            print(f"  {_GNATPROVE_NOTE}")
-
-            t = step_start("gnatprove --level=4 --mode=flow (fallback)")
-            ok2, stdout2, stderr2 = _run(
-                [
-                    "alr", "exec", "--", "gnatprove", "--level=4", "--mode=flow",
-                    "-P", str(_GPR_FILE),
-                ],
-                cwd=_PROJECT_ROOT,
-                verbose=verbose,
-                timeout=1800,
-            )
-            elapsed2 = time.monotonic() - t
-            if ok2:
-                detail2 = "flow analysis: all checks pass (level 4)"
-            else:
-                detail2 = "flow analysis FAILED"
-                for line in (stdout2 or "").strip().splitlines():
-                    if "failed" in line.lower():
-                        detail2 = line.strip()
-                        break
-            step_result(ok2, detail2, elapsed2, verbose, stdout2, stderr2)
-            if not ok2:
-                fatal("GNATprove flow analysis failed", 2)
-            # Flow passed — consider the step successful
-            ok = True
-        else:
-            # Some other failure
-            detail = "all checks pass"
-            if stdout:
-                for line in stdout.strip().splitlines():
-                    if "failed" in line.lower() or "not proved" in line.lower():
-                        detail = line.strip()
-                        break
-            step_result(False, detail, elapsed, verbose, stdout, stderr)
-            fatal("GNATprove verification failed", 2)
+        for line in combined.strip().splitlines():
+            if "failed" in line.lower() or "not proved" in line.lower():
+                detail = line.strip()
+                break
+        step_result(False, detail, elapsed, verbose, stdout, stderr)
+        fatal("GNATprove verification failed", 2)
 
     print()
 

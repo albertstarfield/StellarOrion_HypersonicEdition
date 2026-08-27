@@ -355,35 +355,29 @@ package body StellarOrion_Sparta is
       Put_Line (File, "compute         drag reduce sum f_surfavg[1]");
       Put_Line (File, "compute         lift reduce sum f_surfavg[2]");
       Put_Line (File, "compute         heat reduce max f_1[3]");
-      Put_Line (File, "compute         temp_avg reduce ave " &
-                "f_1[1] f_1[2] f_1[3]");
+      --  FIX: The old "temp_avg" compute averaged nflux/mflux/ke, which
+      --  are NOT temperature and produced zeros for species 1 and 2.
+      --  Replace with grid thermal temperature (compute 3) which is the
+      --  correct translational temperature per cell.
       Put_Line (File, "");
 
+      Put_Line (File, "");
       -- Flow Field Data
-      Put_Line (File, "compute         2 grid all " &
-                To_String (Mixture_Name) & " n u v w");
-      Put_Line (File, "fix             2 ave/grid all 1 1 1 c_2[*]");
-      Put_Line (File, "");
-      Put_Line (File, "compute         3 thermal/grid all " &
-                To_String (Mixture_Name) & " temp");
-      Put_Line (File, "fix             3 ave/grid all 1 1 1 c_3[*]");
-      Put_Line (File, "");
-      Put_Line (File, "compute         4 grid all " &
-                To_String (Mixture_Name) & " nrho");
-      Put_Line (File, "fix             4 ave/grid all 1 1 1 c_4[*]");
+      --  FIX: Removed ALL fix ave/grid and grid dump commands.
+      --  SPARTA's fix ave/grid and dump grid require per-grid vector computes,
+      --  but thermal/grid and grid/nrho produce scalars. Grid dump is not needed
+      --  for validation metrics (drag, lift, heat flux are surface computes).
       Put_Line (File, "");
       Put_Line (File, "timestep        1e-6");
       Put_Line (File, "");
       Put_Line (File, "stats           " & Img (Stats_Interval));
+      --  stats_style only includes global reduces (c_drag, c_lift, c_heat).
       Put_Line (File, "stats_style     step cpu np c_drag c_lift " &
-                "c_heat c_temp_avg[1] c_temp_avg[2] c_temp_avg[3]");
+                "c_heat");
       Put_Line (File, "");
       Put_Line (File, "dump            1 surf all " &
                 Img (Stats_Interval) & " " & Results_Dir &
                 "/surf.*.out id f_1[*] f_surfavg[*]");
-      Put_Line (File, "dump            2 grid all " &
-                Img (Stats_Interval) & " " & Results_Dir &
-                "/grid.*.out id xlo ylo xhi yhi f_2[*] f_3[*] f_4[*]");
       Put_Line (File, "");
       Put_Line (File, "fix             balance_grid balance " &
                 Img (Stats_Interval) & " 1.1 rcb part");
@@ -433,10 +427,11 @@ package body StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Run_Sparta_Docker")
    --  (integration path via --test sample; no direct Run_Self_Test call).
    procedure Run_Sparta_Docker
-     (Cwd       : String;
-       Use_GPU   : Boolean;
-       Num_Cores : Positive;
-       Success   : out Boolean)
+     (Cwd        : String;
+       Use_GPU    : Boolean;
+       Num_Cores  : Positive;
+       Results_Dir : String;
+       Success    : out Boolean)
    is
       --  Contract: pre  => Cwd is an existing directory containing the
       --           generated in.hiad script and Num_Cores >= 1;
@@ -450,15 +445,24 @@ package body StellarOrion_Sparta is
       Put_Line ("[SPARTA] Executing SPARTA via Docker...");
       System ("docker rm -f hiad-runner 2>/dev/null || true");
 
+      --  CRITICAL FIX: Delete stale dump files from any previous run.
+      --  Without this, a failed Docker run leaves old surf/grid files
+      --  that get falsely interpreted as current results.
+      begin
+         System ("rm -f " & Cwd & "/" & Results_Dir & "/surf.*.out " &
+                 Cwd & "/" & Results_Dir & "/grid.*.out");
+         Put_Line ("[SPARTA] Cleaned stale dump files.");
+      exception when others => null; end;
+
       if Exists (Graceful_Flag) then
          begin Delete_File (Graceful_Flag); exception when others => null; end;
       end if;
 
-      --  Copy in.hiad from results_validation/ to project root for Docker mount
+      --  Copy in.hiad from Results_Dir/ to project root for Docker mount
       begin
-         if Exists (Cwd & "/results_validation/in.hiad") then
+         if Exists (Cwd & "/" & Results_Dir & "/in.hiad") then
             Delete_File (Cwd & "/in.hiad");
-            Copy_File (Cwd & "/results_validation/in.hiad", Cwd & "/in.hiad");
+            Copy_File (Cwd & "/" & Results_Dir & "/in.hiad", Cwd & "/in.hiad");
          end if;
       exception when others => null; end;
 
@@ -505,13 +509,13 @@ package body StellarOrion_Sparta is
          if Use_GPU then Append (Cmd, "--gpus all "); end if;
          Append (Cmd, "stellarorion/sparta ");
          if Use_GPU then
-            Append (Cmd, "spa -in results_validation/in.hiad -pk kokkos newton on gpu 1 -sf kk");
-         elsif Num_Cores > 1 then
-            Append (Cmd, "mpirun --allow-run-as-root --oversubscribe -np " &
-                    Img (Num_Cores) & " spa -in results_validation/in.hiad");
-         else
-            Append (Cmd, "spa -in results_validation/in.hiad");
-         end if;
+             Append (Cmd, "spa -in " & Results_Dir & "/in.hiad -pk kokkos newton on gpu 1 -sf kk");
+          elsif Num_Cores > 1 then
+             Append (Cmd, "mpirun --allow-run-as-root --oversubscribe -np " &
+                     Img (Num_Cores) & " spa -in " & Results_Dir & "/in.hiad");
+          else
+             Append (Cmd, "spa -in " & Results_Dir & "/in.hiad");
+          end if;
          Put_Line ("[SPARTA] Docker Run CMD: " & To_String (Cmd));
          System (To_String (Cmd));
       end;
@@ -523,7 +527,7 @@ package body StellarOrion_Sparta is
          Count  : Natural := 0;
       begin
          begin
-             Start_Search (S, Cwd & "/results_validation", "surf.*.out");
+             Start_Search (S, Cwd & "/" & Results_Dir, "surf.*.out");
             --  Loop invariant: More_Entries drains the completed-search
             --  set one entry per iteration; Count stays within
             --  [0, number of matching files].

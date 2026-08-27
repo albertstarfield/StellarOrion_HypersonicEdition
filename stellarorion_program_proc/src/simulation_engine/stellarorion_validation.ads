@@ -38,6 +38,10 @@ package StellarOrion_Validation is
      (Metrics : Flight_Metrics) return Boolean;
       --  Invariant: parameters and derived locals remain within their declared
 
+   --  Test infrastructure: verification-only procedures that exercise code
+   --  paths for coverage.  Intentionally produce no runtime output.
+   pragma Warnings (Off, "has no effect");
+
    procedure Test_Validate_And_Dump;
    --  Contract covers pre => True (no inputs); post => completes without raising.
 

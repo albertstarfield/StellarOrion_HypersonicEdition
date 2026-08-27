@@ -270,7 +270,9 @@ package body StellarOrion_Project is
       TPS_Material_Str : constant String := Get_Option ("--tps-material", "");
       DB_Path          : constant String := Get_Option ("--db", "./stellarorion_db");
       Nose_Type_Str    : constant String := Get_Option ("--nose-type", "smooth");
-      Fnum_Str         : constant String := Get_Option ("--fnum", "1.5e20");
+      --  FIX: Lower default fnum from 1.5e20 (335K particles) to 1.2e19
+      --  (~4M particles at Mach 10 / 52 km conditions for accurate DSMC).
+   Fnum_Str : constant String := Get_Option ("--fnum", "3.5e19");
       Restart_File     : constant String := Get_Option ("--restart-file", "");
       Payload_File_Str : constant String := Get_Option ("--payload-file", "CADDesign/HIAD_custom_full.step");
       SSH_Host         : constant String := Get_Option ("--ssh-host", "");
@@ -347,7 +349,10 @@ package body StellarOrion_Project is
                               (Get_Float ("--alt",
                                           Get_Float ("--altitude", 0.0)),
                                0.0, 500.0);
-      Cores              := Get_Positive ("--cores", 4);
+      --  FIX: Auto-detect P-core count instead of hardcoded 4.
+      --  Detect_P_Cores probes sysctl (macOS) or nproc (Linux).
+      Cores              := Get_Positive ("--cores",
+                                          Detect_P_Cores);
       Slice_Angle        := Get_Float ("--slice-angle", 360.0);
       Emissivity_Override := Get_Float ("--tps-emissivity", 0.0);
       --  --thermal-lag / --stats-interval accepted for CLI compatibility;
@@ -514,16 +519,19 @@ package body StellarOrion_Project is
       end if;
       New_Line;
 
-      --  Pre-flight Docker check (needed for SPARTA/OpenFOAM modes)
+      --  Pre-flight Docker check (needed for SPARTA/OpenFOAM modes).
+      --  CRITICAL FIX: The return value is now checked.  When Docker is
+      --  unavailable we MUST abort rather than silently falling back to
+      --  stale dump files from a previous run.
       if Solver_Str = "sparta" or else Solver_Str = "openfoam" then
-         declare
-            --  Result intentionally ignored: Ensure_Docker_Running performs
-            --  its own diagnostics/logging; pre-flight failure is non-fatal.
-            Docker_OK : Boolean;
-            pragma Unreferenced (Docker_OK);
-         begin
-            Docker_OK := Ensure_Docker_Running;
-         end;
+         if not Ensure_Docker_Running then
+            Put_Line ("[DOCKER] FATAL: Docker/Colima is not available.");
+            Put_Line ("[DOCKER] SPARTA requires a running Docker daemon.");
+            Put_Line ("[DOCKER] Please start Docker Desktop or run:");
+            Put_Line ("  colima start");
+            Put_Line ("[DOCKER] Aborting.");
+            return;
+         end if;
       end if;
 
       --  AmaryllisIdleAutomode detection (headless + idle dir exists)
@@ -547,7 +555,11 @@ package body StellarOrion_Project is
                           Geo_In        => Geo,
                           TPS_In        => TPS,
                           Mach_Override => Mach_Override,
-                           Alt_Override  => Alt_Override);
+                          Alt_Override  => Alt_Override,
+                          Grid_Factor   => Grid_Factor,
+                          Cores         => Cores,
+                          Use_GPU       => Use_GPU,
+                          Fnum_Str      => Fnum_Str);
          goto Cleanup;
       end if;
 
@@ -670,7 +682,11 @@ package body StellarOrion_Project is
                                 Geo_In        => Geo,
                                 TPS_In        => TPS,
                                 Mach_Override => Mach_Override,
-                                Alt_Override  => Alt_Override);
+                                Alt_Override  => Alt_Override,
+                                Grid_Factor   => Grid_Factor,
+                                Cores         => Cores,
+                                Use_GPU       => Use_GPU,
+                                Fnum_Str      => Fnum_Str);
             elsif Mode = "pinn_calibration" then
                 Run_Test_PINN_Calibration (Steps => Steps);
             elsif Mode = "sparta" then
@@ -690,7 +706,11 @@ package body StellarOrion_Project is
                                   Geo_In        => Geo,
                                   TPS_In        => TPS,
                                   Mach_Override => Mach_Override,
-                                  Alt_Override  => Alt_Override);
+                                  Alt_Override  => Alt_Override,
+                                  Grid_Factor   => Grid_Factor,
+                                  Cores         => Cores,
+                                  Use_GPU       => Use_GPU,
+                                  Fnum_Str      => Fnum_Str);
             end if;
          end;
          goto Cleanup;

@@ -39,20 +39,28 @@ package StellarOrion_Test_Modes is
    --  Baseline SPARTA run reproducing the IRVE-3 reference case.
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Run_Test_Baseline
-     (Steps      : Positive := 1_000;
-      Geo_In     : Geometry_Parameters := (others => <>);
-      TPS_In     : TPS_Material := (others => <>);
-      Mach_Override : Float := 0.0;
-      Alt_Override  : Float := 0.0)
+      (Steps         : Positive := 1_000;
+       Geo_In        : Geometry_Parameters := (others => <>);
+       TPS_In        : TPS_Material := (others => <>);
+       Mach_Override : Float := 0.0;
+       Alt_Override  : Float := 0.0;
+       Grid_Factor   : Float := 0.7;
+       Cores         : Positive := 4;
+       Use_GPU       : Boolean := False;
+       Fnum_Str      : String := "3.5e19")
    ;
    --  Single SPARTA sample run with the full 11-metric comparison report.
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    procedure Run_Test_Sample
-     (Steps      : Positive := 1_000;
-      Geo_In     : Geometry_Parameters := (others => <>);
-      TPS_In     : TPS_Material := (others => <>);
-      Mach_Override : Float := 0.0;
-      Alt_Override  : Float := 0.0)
+      (Steps         : Positive := 1_000;
+       Geo_In        : Geometry_Parameters := (others => <>);
+       TPS_In        : TPS_Material := (others => <>);
+       Mach_Override : Float := 0.0;
+       Alt_Override  : Float := 0.0;
+       Grid_Factor   : Float := 0.7;
+       Cores         : Positive := 4;
+       Use_GPU       : Boolean := False;
+       Fnum_Str      : String := "3.5e19")
    ;
    --  Compare-calibrate delegated to the Python DeepXDE PINN sidecar.
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs

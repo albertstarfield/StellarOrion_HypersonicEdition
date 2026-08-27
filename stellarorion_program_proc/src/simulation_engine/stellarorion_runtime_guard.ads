@@ -39,6 +39,13 @@ package StellarOrion_Runtime_Guard is
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
    function Detect_Nvidia_GPU return Boolean;
 
+   --  Detect the number of performance (P) cores on Apple Silicon Macs.
+   --  Uses: sysctl -n hw.perflevel0.physicalcpu (macOS P-core count)
+   --  Falls back to: sysctl -n hw.ncpu (total cores) on non-Macs or
+   --  if the perflevel query fails.  Returns 4 as last resort.
+   --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
+   function Detect_P_Cores return Positive;
+
    --  Pre-flight check: docker binary on PATH and daemon responding;
    --  attempts 'colima start' as fallback. True if SPARTA can run.
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters

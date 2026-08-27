@@ -125,7 +125,10 @@ package StellarOrion_Atomic_Parity with SPARK_Mode => On is
    --  Self-test coverage wrappers (STC): declared here, defined in the
    --  package body. Each wrapper calls its target (pure operations) and
    --  range-asserts the result per the wrapper recipe.
+   --  These are verification-only procedures that exercise code paths
+   --  for coverage; they intentionally produce no runtime output.
    --  ------------------------------------------------------------------
+   pragma Warnings (Off, "has no effect");
 
    procedure Test_Count_Set_Bits;
    --  Contract covers pre => True (no inputs); post => completes without raising.
