@@ -827,7 +827,10 @@ def _phase4_launch(
                 cmd,
                 cwd=_PROJECT_ROOT,
                 verbose=verbose,
-                timeout=3600,
+                # SPARTA DSMC validation runs take 2-3h at 2200 steps; give
+                # generous headroom so the parent launcher never SIGTERMs the
+                # in-flight simulation (Murphy: a 1h cap killed it at step ~1300).
+                timeout=18000,
                 capture=False,
             )
             elapsed = time.monotonic() - t
@@ -857,7 +860,10 @@ def _phase4_launch(
             cwd=_PROJECT_ROOT,
             verbose=verbose,
             capture=False,
-            timeout=3600,
+            # SPARTA DSMC validation runs take 2-3h at 2200 steps; give
+            # generous headroom so the parent launcher never SIGTERMs the
+            # in-flight simulation (Murphy: a 1h cap killed it at step ~1300).
+            timeout=18000,
         )
         elapsed = time.monotonic() - t
         if not ok:

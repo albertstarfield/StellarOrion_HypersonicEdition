@@ -106,7 +106,6 @@ def build_revolution_mesh(
     THEOREM 1: x = r*cos(theta), y = r*sin(theta), z = z
     Returns (X, Y, Z) as 2D lists for plotly go.Surface.
     """
-    n_pts = len(profile)
     X: list[list[float]] = []
     Y: list[list[float]] = []
     Z: list[list[float]] = []
@@ -310,7 +309,7 @@ def main() -> int:
     except FileNotFoundError:
         print(f"ERROR: Surface file not found: {surf_path}", file=sys.stderr)
         return 1
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         print(f"ERROR: Failed to read {surf_path}: {exc}", file=sys.stderr)
         return 1
 
