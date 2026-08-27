@@ -170,6 +170,25 @@ package StellarOrion_Sparta is
      (Output_Dir : String;
      --  Invariant: parameters and derived locals remain within their declared
       Flight     : Flight_Parameters;
-      Geo        : Geometry_Parameters) return Simulation_Results;
+       Geo        : Geometry_Parameters) return Simulation_Results;
+
+   -- -----------------------------------------------------------------
+   --  Validation Visualization (ParaView VTK + time-series CSV + plots)
+   -- -----------------------------------------------------------------
+   --  Generate per-step ParaView VTK UnstructuredGrid files (revolved
+   --  axisymmetric surface), a validation time-series CSV, and invoke the
+   --  Python plotting wrapper.  Element (x,y) coordinates are read from
+   --  HIAD_custom.surf (approach (a)) so the existing Step 6 surf parser
+   --  and validation metrics are left untouched.  Non-fatal by design:
+   --  callers wrap it in exception handling.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Generate_Validation_Plots_And_VTK").
+   procedure Generate_Validation_Plots_And_VTK
+   --  Contract: pre  => Results_Dir is a non-empty, writable directory path;
+   --           post => VTK/CSV/plots produced when surf dumps are present;
+   --           never propagates (logs to Standard_Error instead).
+     (Results_Dir : String;
+      Steps       : Positive)
+     with Pre => Results_Dir'Length > 0;
 
 end StellarOrion_Sparta;
