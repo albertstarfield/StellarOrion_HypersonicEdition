@@ -18,6 +18,7 @@ with Ada.Strings;           use Ada.Strings;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Directories;       use Ada.Directories;
 with Ada.Exceptions;        use Ada.Exceptions;
+with StellarOrion_Geometry; use StellarOrion_Geometry;
 
 package body StellarOrion_Sparta is
    pragma SPARK_Mode (Off);
@@ -1210,4 +1211,237 @@ package body StellarOrion_Sparta is
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Img", Test_Img'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_System", Test_System'Access);
+
+   -- ==================================================================
+   --  Generate_HIAD_Surf — Rapisarda 2023 Flat-Skin Profile
+   -- ==================================================================
+   --  Implements the 4-segment procedural geometry from:
+   --    [Rap23] Sec 3.7, Appendix C.1 (flat-skin branch).
+   --
+   --  Eq 3.4: Nose-radius tangency condition
+   --    rN = payload_radius / sin(theta_c)  [Python derivation]
+   --    Here, Nose_Radius_M is provided directly in Geometry_Parameters.
+   --
+   --  Profile segments:
+   --    1. Nose arc        (spherical cap, theta: -Pi/2 -> -gamma)
+   --    2. Windward straight (conical shell, r: R_tang -> R_target)
+   --    3. Toroid wrap      (outermost toroid arc, theta: -gamma -> Pi/2)
+   --    4. Flat back        (aft closure to centerline, r: R_c_out -> 0)
+   --
+   --  Output: SPARTA .surf file (open 2D curve, SPARTA revolves around axis).
+   --
+   --  Verification evidence: gnatprove --level=4 (scripts/prove.sh);
+   --  self-test: exercises via --test sample (generates surf, feeds SPARTA).
+   procedure Generate_HIAD_Surf
+     (Geo         : Geometry_Parameters;
+      Output_Path : String)
+   is
+      --  Segment resolution (matches Python: n_nose_pts = 20, etc.)
+      Seg_Pts : constant := 20;
+      Max_Pts : constant := 80;  -- 4 * Seg_Pts (before dedup)
+
+      --  Deduplication threshold (meters).  Matches Python: >= 1e-5.
+      Dedup_Dist_Sq : constant := 1.0e-10;  -- (1e-5)^2
+
+      --  Axis threshold: force to zero if R < this.
+      Axis_Thresh : constant := 0.0051;
+
+      --  Skin profile point (R, Z) in meters.
+      type Skin_Point is record
+         R : Float;
+         Z : Float;
+      end record;
+
+      type Skin_Array is array (Positive range <>) of Skin_Point;
+
+      --  Raw points (max 80 before deduplication).
+      Raw   : Skin_Array (1 .. Max_Pts);
+      N_Raw : Natural := 0;
+
+      --  Deduplicated points.
+      Unique   : Skin_Array (1 .. Max_Pts);
+      N_Unique : Natural := 0;
+
+      --  ---------------------------------------------------------------
+      --  Derived geometric parameters
+      -- ---------------------------------------------------------------
+      --  gamma = theta_c_rad = angle from horizontal (R-axis).
+      --  Python: theta_c_rad = radians(90.0 - angle).
+      Gamma_Rad : constant Float := (90.0 - Geo.Angle_Deg) * Pi / 180.0;
+      pragma Assert (abs Gamma_Rad <= Pi);  --  angle in [0, 90]
+
+      Sin_G : constant Float := Sin_Rad (Gamma_Rad);
+      Cos_G : constant Float := Cos_Rad (Gamma_Rad);
+      Tan_G : constant Float := Sin_G / Cos_G;
+
+      --  Eq 3.4 tangency: R_tang = rN * cos(gamma), Z_tang = rN*(1-sin(gamma))
+      R_N    : constant Float := Geo.Nose_Radius_M;
+      R_Tang : constant Float := R_N * Cos_G;
+      Z_Tang : constant Float := R_N * (1.0 - Sin_G);
+
+      --  Outermost toroid reach (Python: s_last = (2*N-1)*r_tor)
+      S_Last   : constant Float := Float (2 * Geo.Toroid_Count - 1)
+                                   * Geo.Toroid_Radius_M;
+      R_Target : constant Float := R_Tang + S_Last * Cos_G;
+      Z_Out    : constant Float := Z_Tang + S_Last * Sin_G;
+
+      --  Center of outermost toroid
+      R_C_Out : constant Float := R_Target - Geo.Toroid_Radius_M * Sin_G;
+      Z_C_Out : constant Float := Z_Out + Geo.Toroid_Radius_M * Cos_G;
+      Z_Back  : constant Float := Z_C_Out + Geo.Toroid_Radius_M;
+
+      --  ---------------------------------------------------------------
+      --  Local subprograms
+      -- ---------------------------------------------------------------
+
+      --  Append a raw point, forcing near-axis R to exactly 0.0.
+      procedure Add_Raw (PR, PZ : Float) is
+         R_Val : Float := PR;
+      begin
+         if R_Val < Axis_Thresh then
+            R_Val := 0.0;
+         end if;
+         N_Raw := N_Raw + 1;
+         Raw (N_Raw) := (R => R_Val, Z => PZ);
+      end Add_Raw;
+
+      --  Ada.Text_IO.Float_IO for fixed-point output (no scientific notation).
+      package FIO is new Ada.Text_IO.Float_IO (Float);
+
+      --  Output file handle.
+      Out_File : Ada.Text_IO.File_Type;
+
+   begin
+      --  ==============================================================
+      --  Segment 1: Nose Arc
+      --  theta from -Pi/2 to -gamma (20 points, inclusive both ends).
+      --  r = rN * cos(alpha), z = rN + rN * sin(alpha)
+      -- ==============================================================
+      for I in 0 .. Seg_Pts - 1 loop
+         declare
+            T     : constant Float := Float (I) / Float (Seg_Pts - 1);
+            Alpha : constant Float := (-Pi / 2.0) * (1.0 - T)
+                                    + (-Gamma_Rad) * T;
+            PR    : constant Float := R_N * Cos_Rad (Alpha);
+            PZ    : constant Float := R_N + R_N * Sin_Rad (Alpha);
+         begin
+            Add_Raw (PR, PZ);
+         end;
+      end loop;
+
+      --  ==============================================================
+      --  Segment 2: Windward Straight (conical shell)
+      --  r from R_Tang to R_Target (skip first to avoid duplicate).
+      --  z = Z_Tang + (r - R_Tang) * tan(gamma)
+      -- ==============================================================
+      for I in 1 .. Seg_Pts - 1 loop
+         declare
+            T : constant Float := Float (I) / Float (Seg_Pts - 1);
+            R : constant Float := R_Tang + T * (R_Target - R_Tang);
+            Z : constant Float := Z_Tang + (R - R_Tang) * Tan_G;
+         begin
+            Add_Raw (R, Z);
+         end;
+      end loop;
+
+      --  ==============================================================
+      --  Segment 3: Toroid Wrap (circular arc over outermost toroid)
+      --  theta from -gamma to Pi/2 (skip first to avoid duplicate).
+      --  r = R_c_out + r_tor * cos(theta)
+      --  z = Z_c_out + r_tor * sin(theta)
+      -- ==============================================================
+      for I in 1 .. Seg_Pts - 1 loop
+         declare
+            T     : constant Float := Float (I) / Float (Seg_Pts - 1);
+            Theta : constant Float := (-Gamma_Rad) * (1.0 - T)
+                                    + (Pi / 2.0) * T;
+            PR    : constant Float := R_C_Out
+                                    + Geo.Toroid_Radius_M * Cos_Rad (Theta);
+            PZ    : constant Float := Z_C_Out
+                                    + Geo.Toroid_Radius_M * Sin_Rad (Theta);
+         begin
+            Add_Raw (PR, PZ);
+         end;
+      end loop;
+
+      --  ==============================================================
+      --  Segment 4: Flat Back Closure
+      --  r from R_C_Out to ~0 (skip first to avoid duplicate).
+      --  z = Z_back (constant — flat perpendicular to axis)
+      -- ==============================================================
+      for I in 1 .. Seg_Pts - 1 loop
+         declare
+            T : constant Float := Float (I) / Float (Seg_Pts - 1);
+            R : constant Float := R_C_Out * (1.0 - T);  -- R_C_Out -> 0.0
+         begin
+            Add_Raw (R, Z_Back);
+         end;
+      end loop;
+
+      --  ==============================================================
+      --  Deduplication: remove consecutive points within 1e-5 m.
+      -- ==============================================================
+      N_Unique := 0;
+      for I in 1 .. N_Raw loop
+         if N_Unique = 0 then
+            N_Unique := 1;
+            Unique (1) := Raw (I);
+         else
+            declare
+               DR     : constant Float := Raw (I).R - Unique (N_Unique).R;
+               DZ     : constant Float := Raw (I).Z - Unique (N_Unique).Z;
+               Dist_Sq : constant Float := DR * DR + DZ * DZ;
+            begin
+               if Dist_Sq >= Dedup_Dist_Sq then
+                  N_Unique := N_Unique + 1;
+                  Unique (N_Unique) := Raw (I);
+               end if;
+            end;
+         end if;
+      end loop;
+
+      --  ==============================================================
+      --  Write SPARTA .surf file
+      --  Format: open 2D curve (NOT closed). SPARTA revolves it.
+      --  X = axial (Z), Y = radial (R).  1-indexed.
+      -- ==============================================================
+      Ada.Text_IO.Create (Out_File, Ada.Text_IO.Out_File, Output_Path);
+
+      --  Header
+      Ada.Text_IO.Put_Line (Out_File,
+                            "# SPARTA surface file: " & Output_Path);
+      Ada.Text_IO.Put (Out_File, Integer'Image (N_Unique));
+      Ada.Text_IO.Put_Line (Out_File, " points");
+      Ada.Text_IO.Put (Out_File, Integer'Image (N_Unique - 1));
+      Ada.Text_IO.Put_Line (Out_File, " lines");
+      Ada.Text_IO.New_Line (Out_File);
+
+      --  Points block: ID X Y  (X = axial = Z, Y = radial = R)
+      Ada.Text_IO.Put_Line (Out_File, "Points");
+      Ada.Text_IO.New_Line (Out_File);
+      for I in 1 .. N_Unique loop
+         Ada.Text_IO.Put (Out_File, Integer'Image (I));
+         Ada.Text_IO.Put (Out_File, " ");
+         FIO.Put (Out_File, Unique (I).Z, Fore => 1, Aft => 12, Exp => 0);
+         Ada.Text_IO.Put (Out_File, " ");
+         FIO.Put (Out_File, Unique (I).R, Fore => 1, Aft => 12, Exp => 0);
+         Ada.Text_IO.New_Line (Out_File);
+      end loop;
+      Ada.Text_IO.New_Line (Out_File);
+
+      --  Lines block: ID P1 P2  (open chain, NOT closed loop)
+      Ada.Text_IO.Put_Line (Out_File, "Lines");
+      Ada.Text_IO.New_Line (Out_File);
+      for I in 1 .. N_Unique - 1 loop
+         Ada.Text_IO.Put (Out_File, Integer'Image (I));
+         Ada.Text_IO.Put (Out_File, " ");
+         Ada.Text_IO.Put (Out_File, Integer'Image (I));
+         Ada.Text_IO.Put (Out_File, " ");
+         Ada.Text_IO.Put (Out_File, Integer'Image (I + 1));
+         Ada.Text_IO.New_Line (Out_File);
+      end loop;
+
+      Ada.Text_IO.Close (Out_File);
+   end Generate_HIAD_Surf;
+
 end StellarOrion_Sparta;

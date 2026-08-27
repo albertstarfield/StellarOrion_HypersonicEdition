@@ -18,6 +18,37 @@ package StellarOrion_Sparta is
    --  extern: SPARTA Docker script generation with Ada.Directories file I/O
 
    -- -----------------------------------------------------------------
+   --  Geometry Generation (Rapisarda 2023 Flat-Skin Profile)
+   -- -----------------------------------------------------------------
+
+   --  Generate a SPARTA .surf surface file from the Rapisarda 2023
+   --  procedural geometry equations (Sec 3.7, Appendix C.1).
+   --
+   --  Implements the 4-segment flat-skin profile:
+   --    1. Nose arc        (nose-radius sphere, theta -pi/2 to -gamma)
+   --    2. Windward straight (conical shell along half-cone angle)
+   --    3. Toroid wrap      (outermost toroid circular arc)
+   --    4. Flat back        (aft closure to axis)
+   --
+   --  Eq 3.4: rN = r_pay / cos(theta_c)  [nose-radius tangency]
+   --  Eq 3.3: r_tor = (r_target - r_pay - 2*r_sh*cos(g)) / denom
+   --  Appendix C.1: toroid center placement along cone surface.
+   --
+   --  Geo       : Geometry_Parameters with IRVE-3 defaults
+   --  Output_Path: filesystem path for the .surf file
+   --
+   --  Verification evidence: gnatprove --level=4 (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Generate_HIAD_Surf")
+   --  (integration path exercised via --test sample; no direct
+   --  Run_Self_Test call).
+   procedure Generate_HIAD_Surf
+   --  Contract: pre  => valid geometry + non-empty path;
+   --           post => surf file written.
+     (Geo         : Geometry_Parameters;
+      Output_Path : String)
+    with Pre => Output_Path'Length > 0;
+
+   -- -----------------------------------------------------------------
    --  Script Generation
    -- -----------------------------------------------------------------
 

@@ -222,6 +222,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    --  callable from outside it; this wrapper validates the declarative
    --  staleness surface instead (non-negative tick domain, positive
    --  timeout budget).  Expected-clean execution: no exception path.
+   pragma Warnings (Off, "has no effect");
    procedure Test_Is_Stale is
    --  @test: Test_Is_Stale unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.

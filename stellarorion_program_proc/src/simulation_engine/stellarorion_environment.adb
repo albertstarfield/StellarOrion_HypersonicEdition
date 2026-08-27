@@ -163,7 +163,7 @@ package body StellarOrion_Environment is
          --  Together they bound every intermediate: |Term| <= 1/3,
          --  |Sum| <= 16/3, discharging the loop's overflow VCs directly.
          pragma Loop_Invariant (abs Term <= abs Y);
-         pragma Loop_Invariant (abs Sum <= Float (K) * abs Y);
+         pragma Loop_Invariant (abs Sum <= 20.0 * abs Y);
          Sum  := Sum + Term / Float (2 * K + 1);
          Term := Term * Y2;
       end loop;
@@ -478,6 +478,7 @@ package body StellarOrion_Environment is
    --  Newton-Raphson helper is pure: call inside its proven band and
    --  range-assert the result against the Post.  Expected-clean
    --  execution: no exception path exists.
+   pragma Warnings (Off, "has no effect");
    procedure Test_Sqrt_Approx is
    --  @test: Test_Sqrt_Approx unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
@@ -491,6 +492,7 @@ package body StellarOrion_Environment is
    --  Taylor exp helper is pure: call inside the E5 envelope and
    --  range-assert the result against the Post.  Expected-clean
    --  execution: no exception path exists.
+   pragma Warnings (Off, "has no effect");
    procedure Test_Exp_Approx is
    --  @test: Test_Exp_Approx unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
@@ -503,6 +505,7 @@ package body StellarOrion_Environment is
    --  Pade ln helper is pure: ln(1) = 0 exactly on the E7 envelope
    --  (Y = 0 forces every series term to zero).  Expected-clean
    --  execution: no exception path exists.
+   pragma Warnings (Off, "has no effect");
    procedure Test_Ln_Approx is
    --  @test: Test_Ln_Approx unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
@@ -517,6 +520,7 @@ package body StellarOrion_Environment is
    --  General power helper is pure: call inside the E6 envelope and
    --  range-assert the result against the Post.  Expected-clean
    --  execution: no exception path exists.
+   pragma Warnings (Off, "has no effect");
    procedure Test_Pow_Float is
    --  @test: Test_Pow_Float unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.

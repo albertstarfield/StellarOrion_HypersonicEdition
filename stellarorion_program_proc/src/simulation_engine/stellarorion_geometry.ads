@@ -150,4 +150,42 @@ package StellarOrion_Geometry is
    --           post => returns the unit-specified result; no side effects.
    --  Invariant: parameters and derived locals remain within their declared
 
+   -- -----------------------------------------------------------------
+   --  SPARK-Safe Radian/Trig Helpers (Taylor Series)
+   -- -----------------------------------------------------------------
+
+   --  Cosine of an angle in degrees via truncated Taylor series:
+   --    cos(x) = 1 - x^2/2 + x^4/24 - x^6/720
+   --  SPARK-safe (no Ada.Numerics dependency).
+   --  AXIOM T1: |Deg| <= 360 => |X| <= 2*Pi ~ 6.28, X^6 ~ 6.0e4
+   --    << Float'Last (~3.4e38). No overflow possible.
+   --  Verification evidence: gnatprove --level=4 (scripts/prove.sh).
+   function Cos_Deg (Deg : Float) return Float
+     with Global => null,
+          Pre  => abs Deg <= 360.0,
+          Post => Cos_Deg'Result >= -1.001
+                  and Cos_Deg'Result <= 1.001;
+
+   --  Sine of an angle in radians via truncated Taylor series:
+   --    sin(x) = x - x^3/6 + x^5/120 - x^7/5040
+   --  SPARK-safe.  Pre bounded to [-Pi, Pi] for proof tractability.
+   --  AXIOM T2: |X| <= Pi => |X^7| ~ 3.0e3 << Float'Last.
+   --  Verification evidence: gnatprove --level=4 (scripts/prove.sh).
+   function Sin_Rad (X : Float) return Float
+     with Global => null,
+          Pre  => abs X <= Pi,
+          Post => Sin_Rad'Result >= -1.001
+                  and Sin_Rad'Result <= 1.001;
+
+   --  Cosine of an angle in radians via truncated Taylor series:
+   --    cos(x) = 1 - x^2/2 + x^4/24 - x^6/720
+   --  SPARK-safe.  Pre bounded to [-Pi, Pi] for proof tractability.
+   --  AXIOM T3: identical overflow profile to Sin_Rad (same |X| bound).
+   --  Verification evidence: gnatprove --level=4 (scripts/prove.sh).
+   function Cos_Rad (X : Float) return Float
+     with Global => null,
+          Pre  => abs X <= Pi,
+          Post => Cos_Rad'Result >= -1.001
+                  and Cos_Rad'Result <= 1.001;
+
 end StellarOrion_Geometry;

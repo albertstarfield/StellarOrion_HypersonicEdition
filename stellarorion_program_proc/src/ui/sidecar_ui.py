@@ -31,6 +31,20 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from typing import Any
 
+# ── Formal verification contracts (CrossHair / deal) ──────────────────
+# CrossHair verifies these postconditions; `deal` is the dev-only contract
+# library managed by run.py's hash-gated venv. The decorator degrades to a
+# no-op when `deal` is unavailable, so this module stays loadable in
+# production environments that lack the verification toolchain.
+try:  # pragma: no cover - dev dependency
+    from deal import post as postcondition
+except ImportError:  # pragma: no cover - dev dependency
+    def postcondition(*_args: Any, **_kwargs: Any):
+        """No-op stand-in when the deal package is unavailable."""
+        def _decorator(func):
+            return func
+        return _decorator
+
 # ── Constants ───────────────────────────────────────────────────────────
 
 DEFAULT_PORT = 8080
@@ -104,6 +118,12 @@ class SimulationState:
             self.config.update(cfg)
 
     @staticmethod
+    @postcondition(
+        lambda result: isinstance(result, dict)
+        and "geometry" in result
+        and result["geometry"]["nose_radius_m"] == 0.55
+        and result.get("solver") == "SPARTA"
+    )
     def _default_config() -> dict[str, Any]:
         """Baseline configuration: IRVE-3 geometry, Mach 10 / 52 km flight,
         SPARTA solver with five-species chemistry and grid factor 0.7."""
@@ -114,7 +134,7 @@ class SimulationState:
                 "nose_radius_m": 0.55,
                 "toroid_count": 6,
                 "toroid_radius_m": 0.135,
-                "outer_radius_m": 0.0508,
+                "outer_radius_m": 0.1016,
                 "mass_kg": 281.0,
                 "slice_angle_deg": 360.0,
             },
@@ -447,6 +467,9 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             self._json_response({"error": "Read error"}, 500)
 
     @staticmethod
+    @postcondition(
+        lambda result: isinstance(result, str) and "/" in result
+    )
     def _guess_content_type(ext: str) -> str:
         """Map a file extension to its MIME type; unknown extensions get
         application/octet-stream."""

@@ -166,10 +166,10 @@ package StellarOrion_Types is
    type Geometry_Parameters is record
       Diameter_M      : Diameter_Range    := 3.0;
       Angle_Deg       : Float    := 60.0;
-      Nose_Radius_M   : Nose_Radius_Range := 1.0;
+      Nose_Radius_M   : Nose_Radius_Range := 0.55;
       Toroid_Count    : Positive := 6;
       Toroid_Radius_M : Float    := 0.135;
-       Outer_Radius_M  : Float    := 0.0508;
+       Outer_Radius_M  : Float    := 0.1016;
        Mass_Kg         : Mass_Kg_Range     := 281.0;
        Payload_Height_M: Float    := 1.70;  -- MDAO Table 4.1 h_pay
        Slice_Angle_Deg : Float    := 360.0;
