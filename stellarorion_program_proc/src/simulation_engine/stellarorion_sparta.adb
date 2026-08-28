@@ -1975,9 +1975,39 @@ package body StellarOrion_Sparta is
             Put_Line (Standard_Error,
                       "[VTK] failed writing CSV " & CSV_Path & " : " &
                       Exception_Message (E));
-      end Write_CSV;
+       end Write_CSV;
 
-       Srch : Search_Type;
+        --  Write the ParaView .pvd collection that groups all per-step
+        --  .vtu files into a single timeline (timestep = dump step).
+        procedure Write_PVD is
+           PF    : File_Type;
+           PPath : constant String := Paraview_Dir & "/validation.pvd";
+        begin
+           if N_StepList < 1 or else N < 1 then
+              return;
+           end if;
+           Create (PF, Out_File, PPath);
+           Put_Line (PF, "<?xml version=""1.0""?>");
+           Put_Line (PF, "<VTKFile type=""Collection"" version=""1.0"" byte_order=""LittleEndian"">");
+           Put_Line (PF, "  <Collection>");
+           for I in 1 .. N_StepList loop
+              Put_Line (PF, "    <DataSet timestep=""" & Img (Integer (Step_List (I))) &
+                        """ group="""" part=""0"" file=""surf_" &
+                        Img (Integer (Step_List (I))) & ".vtu""/>");
+           end loop;
+           Put_Line (PF, "  </Collection>");
+           Put_Line (PF, "</VTKFile>");
+           Close (PF);
+           Put_Line ("[VTK] Wrote ParaView collection: " & PPath);
+        exception
+           when E : others =>
+              if Is_Open (PF) then Close (PF); end if;
+              Put_Line (Standard_Error,
+                        "[VTK] failed writing PVD " & PPath & " : " &
+                        Exception_Message (E));
+        end Write_PVD;
+
+        Srch : Search_Type;
        E : Directory_Entry_Type;
     begin
        --  Ensure output directories exist (safety fallback).
@@ -2065,12 +2095,15 @@ package body StellarOrion_Sparta is
        --  Step 4: resample polyline into N+1 boundary points.
        Resample;
 
-       --  Step 5: per step -> VTK + CSV row.
-       for I in 1 .. N_StepList loop
-          Process_Step_File (Step_List (I));
-       end loop;
+        --  Step 5: per step -> VTK + CSV row.
+        for I in 1 .. N_StepList loop
+           Process_Step_File (Step_List (I));
+        end loop;
 
-       --  Emit CSV + render PNG plots (best-effort, return code ignored).
+        --  Emit ParaView .pvd collection (groups all .vtu into one timeline).
+        Write_PVD;
+
+        --  Emit CSV + render PNG plots (best-effort, return code ignored).
        if N_Rows > 0 then
           Write_CSV;
           Put_Line ("[VTK] Invoking Python plot renderer: python3 scripts/make_validation_plots.py "
