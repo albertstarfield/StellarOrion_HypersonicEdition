@@ -142,15 +142,29 @@ package body StellarOrion_Sparta is
    --  Contract: pre  => Cmd is a shell command string to dispatch;
    --           post => returns after the external command completes;
    --           exit status is not inspected by callers.
-   procedure System (Cmd : String) is
-      function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
-      pragma Import (C, C_System, "system");
-      C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
-      Rc    : Integer;
-   begin
-      Rc := C_System (C_Cmd);
-      Interfaces.C.Strings.Free (C_Cmd);
-   end System;
+    procedure System (Cmd : String) is
+       function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
+       pragma Import (C, C_System, "system");
+       C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
+       Rc    : Integer;
+    begin
+       Rc := C_System (C_Cmd);
+       Interfaces.C.Strings.Free (C_Cmd);
+    end System;
+
+    --  Same C binding but returns the exit status for callers that need it.
+    --  Use-case: plot-script invocation (line ~2111) where a nonzero exit
+    --  indicates matplotlib/Python failure that should be reported.
+    function System_Return (Cmd : String) return Integer is
+       function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
+       pragma Import (C, C_System, "system");
+       C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
+       Rc    : Integer;
+    begin
+       Rc := C_System (C_Cmd);
+       Interfaces.C.Strings.Free (C_Cmd);
+       return Rc;
+    end System_Return;
 
    -- ==================================================================
    --  Generate_Sparta_Script
@@ -1524,13 +1538,14 @@ package body StellarOrion_Sparta is
        Drag : array (1 .. Max_Surf) of Float := (others => 0.0);
        Lift : array (1 .. Max_Surf) of Float := (others => 0.0);
 
-       --  Time-series accumulation
-       type Step_Row is record
-          Step     : Positive := 1;
-          Drag_Sum : Float := 0.0;
-          Lift_Sum : Float := 0.0;
-          Heat_Max : Float := 0.0;
-       end record;
+        --  Time-series accumulation
+        type Step_Row is record
+           Step     : Positive := 1;
+           Drag_Sum : Float := 0.0;
+           Lift_Sum : Float := 0.0;
+           Heat_Max : Float := 0.0;
+           Heat_Sum : Float := 0.0;  -- sum of |Heat(i)| over all elements
+        end record;
        Rows      : array (1 .. Max_Steps) of Step_Row := (others => (others => <>));
        N_Rows    : Natural := 0;
 
@@ -1886,7 +1901,7 @@ package body StellarOrion_Sparta is
           Last  : Natural;
           In_Data : Boolean := False;
           Row   : Natural := 0;
-          Drag_Sum, Lift_Sum, Heat_Max : Float := 0.0;
+           Drag_Sum, Lift_Sum, Heat_Max, Heat_Sum : Float := 0.0;
        begin
           if not Exists (Fpath) then
              Put_Line (Standard_Error, "[VTK] step dump not found: " & Fpath);
@@ -1917,28 +1932,44 @@ package body StellarOrion_Sparta is
                    end if;
                 end;
              end if;
-          end loop;
-          Close (F);
-          for I in 1 .. N loop
-             Drag_Sum := Drag_Sum + Drag (I);
-             Lift_Sum := Lift_Sum + Lift (I);
-             if Abs_F (Heat (I)) > Heat_Max then Heat_Max := Abs_F (Heat (I)); end if;
-          end loop;
-          if N > 0 then
-             Write_VTU (Step);
-          end if;
-          if N_Rows < Max_Steps then
-             N_Rows := N_Rows + 1;
-             Rows (N_Rows) := (Step => Step, Drag_Sum => Drag_Sum,
-                               Lift_Sum => Lift_Sum, Heat_Max => Heat_Max);
-          end if;
-       exception
-          when E : others =>
-             if Is_Open (F) then Close (F); end if;
-             Put_Line (Standard_Error,
-                       "[VTK] failed processing step " & Img (Integer (Step)) & " : " &
-                       Exception_Message (E));
-       end Process_Step_File;
+           end loop;
+           Close (F);
+           --  AUDIT FIX (M3): warn if dump had fewer data rows than expected
+           --  (N elements parsed from the first dump).  Silent zero-fill is
+           --  safe (VTK cells get 0.0) but an incomplete dump may indicate a
+           --  truncated SPARTA output or a geometry mismatch that the user
+           --  should investigate.  We log once per affected step.
+           if Row < N then
+              Put_Line (Standard_Error,
+                        "[VTK] step " & Img (Integer (Step)) &
+                        ": dump has " & Img (Row) & " rows but expected " &
+                        Img (N) & "; trailing elements zero-filled.");
+           end if;
+           for I in 1 .. N loop
+              Drag_Sum := Drag_Sum + Drag (I);
+              Lift_Sum := Lift_Sum + Lift (I);
+              Heat_Sum := Heat_Sum + Abs_F (Heat (I));
+              --  AUDIT NOTE (M4): Abs_F gives max-magnitude heat flux, not
+              --  max signed.  This is correct for a worst-case thermal metric
+              --  (both heating and cooling extremes matter for TPS sizing).
+              if Abs_F (Heat (I)) > Heat_Max then Heat_Max := Abs_F (Heat (I)); end if;
+           end loop;
+           if N > 0 then
+              Write_VTU (Step);
+           end if;
+           if N_Rows < Max_Steps then
+              N_Rows := N_Rows + 1;
+               Rows (N_Rows) := (Step => Step, Drag_Sum => Drag_Sum,
+                                 Lift_Sum => Lift_Sum, Heat_Max => Heat_Max,
+                                 Heat_Sum => Heat_Sum);
+           end if;
+        exception
+           when E : others =>
+              if Is_Open (F) then Close (F); end if;
+              Put_Line (Standard_Error,
+                        "[VTK] failed processing step " & Img (Integer (Step)) & " : " &
+                        Exception_Message (E));
+        end Process_Step_File;
 
       --  Sort Rows by Step and write the CSV.
       procedure Write_CSV is
@@ -1957,7 +1988,7 @@ package body StellarOrion_Sparta is
             end loop;
          end loop;
          Create (CF, Out_File, CSV_Path);
-         Put_Line (CF, "step,drag_sum_N,lift_sum_N,heatflux_max_Wm2");
+         Put_Line (CF, "step,drag_sum_N,lift_sum_N,heatflux_max_Wm2,heat_sum_Wm2,drag_avg_N,lift_avg_N");
          for I in 1 .. N_Rows loop
             Put (CF, Img (Rows (I).Step));
             Put (CF, ",");
@@ -1966,6 +1997,12 @@ package body StellarOrion_Sparta is
             FIO.Put (CF, Rows (I).Lift_Sum, Fore => 1, Aft => 6, Exp => 0);
             Put (CF, ",");
             FIO.Put (CF, Rows (I).Heat_Max, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Heat_Sum, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Drag_Sum / Float (Rows (I).Step), Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Lift_Sum / Float (Rows (I).Step), Fore => 1, Aft => 6, Exp => 0);
             New_Line (CF);
          end loop;
          Close (CF);
@@ -2103,12 +2140,25 @@ package body StellarOrion_Sparta is
         --  Emit ParaView .pvd collection (groups all .vtu into one timeline).
         Write_PVD;
 
-        --  Emit CSV + render PNG plots (best-effort, return code ignored).
-       if N_Rows > 0 then
-          Write_CSV;
-          Put_Line ("[VTK] Invoking Python plot renderer: python3 scripts/make_validation_plots.py "
-                    & Results_Dir);
-          System ("python3 scripts/make_validation_plots.py " & Results_Dir);
+         --  Emit CSV + render PNG plots (best-effort; exit code now logged).
+        if N_Rows > 0 then
+           Write_CSV;
+           Put_Line ("[VTK] Invoking Python plot renderer: python3 scripts/make_validation_plots.py "
+                     & Results_Dir);
+           --  AUDIT FIX (M1): use System_Return to capture the Python script's
+           --  exit status.  A nonzero code indicates matplotlib import failure,
+           --  missing venv, or a plot-rendering error — all of which should be
+           --  visible in the log rather than silently swallowed.
+           declare
+              Plot_Rc : constant Integer :=
+                System_Return ("python3 scripts/make_validation_plots.py " & Results_Dir);
+           begin
+              if Plot_Rc /= 0 then
+                 Put_Line (Standard_Error,
+                           "[VTK] Python plot renderer exited with code " &
+                           Img (Plot_Rc) & "; PNGs may be missing.");
+              end if;
+           end;
        else
           Put_Line (Standard_Error,
                     "[VTK] No valid step dumps processed; CSV/plots skipped.");
