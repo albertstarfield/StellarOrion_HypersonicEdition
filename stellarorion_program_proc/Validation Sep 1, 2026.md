@@ -267,3 +267,108 @@ Rapisarda reports SG = **15.26 W/cm²** (Table 4.10). Our code produces **12.20 
 4. **Verify ballistic coefficient**: Check β = m / (C_d × A_ref) calculation. If C_d = 1.47 and A_ref = π(1.5)² = 7.069 m², then β = 281 / (1.47 × 7.069) = 26.9 kg/m². Our SPARTA-derived Cd of 1.45–1.58 should give β in the range 25.2–27.4, but we get 22.31 — suggesting our drag force or dynamic pressure calculation has an error.
 5. **Add 7-toroid option**: The flight vehicle used 7 toroids; add this as a configuration parameter.
 6. **Log ambient conditions**: Record pressure, temperature, number density at each timestep for comparison with Rapisarda Table 4.5.
+
+---
+
+## Goal Revision 2 — Items Implemented (September 1, 2026)
+
+### Item 1: Outer Toroid Radius Equivalence
+**File**: `stellarorion_types.ads:175`
+- Added 6-line comment documenting that `Outer_Radius_M = 0.1016` is EQUIVALENT to Rapisarda 2023 Table 4.1 "Outer Toroid Radius" = 0.0508 m
+- This is the tube radius of the outermost (shoulder) toroid
+- Default 0.1016 m is FLIGHT IRVE-3 value (2 × 0.0508 m); MDAO value is 0.0508 m
+- See also: `--oradius` CLI flag for override
+
+### Item 2: Ambient Pressure Tracking
+**Files**: `stellarorion_environment.ads`, `stellarorion_environment.adb:388-410`
+- Added `Atmosphere_Pressure(Altitude_Km)` function implementing ISA barometric formula
+- Formula: P = ρ × R_specific × T (R_AIR = 287.058 J/(kg·K))
+- Citation: ISO 2533:1975 (International Standard Atmosphere)
+- Verification: at 50 km → ~79.8 Pa (within ISA tolerance; Rapisarda: 75.77 Pa)
+- Added `Test_Atmosphere_Pressure` self-test wrapper
+
+### Item 3: Ambient Temperature Tracking
+**Files**: `stellarorion_types.ads:308-318`, `stellarorion_physics.adb:660-697`, `stellarorion_sparta.adb:1569-1597,2075-2155,2175,2222-2232`
+- Added 3 new fields to `Trajectory_Sample` record:
+  - `Heat_Flux_Wm2 : Float` — SG heat flux at this trajectory point
+  - `Ambient_Pressure_Pa : Float` — ISA pressure at altitude
+  - `Ambient_Temp_K : Float` — ISA temperature at altitude
+- Updated `Compute_Trajectory_Profile` to populate all 3 fields per integration step
+- Updated CSV output to include `ambient_pressure_pa,ambient_temp_k,heat_flux_wm2`
+- Updated both Row population sites (trajectory-matched and fallback)
+
+### Item 4: Time of Peak Heating
+**Files**: `stellarorion_physics.ads:533-537`, `stellarorion_physics.adb:829-831,885-896,953-954`, `stellarorion_sparta.adb:2429-2454`
+- Added `Peak_Heat_Time_S` and `Peak_Heat_Flux_Wm2` output parameters to `Compute_Trajectory_Profile`
+- Tracks peak SG heat flux and its timestamp across the full trajectory
+- Citation: Rapisarda 2023 Table 4.5 — time of peak heating = 677.49 s for IRVE-3 Earth entry at ~2700 m/s
+- Caller reports peak values for Rapisarda comparison
+
+### Item 5: Fay-Riddell Heat Flux
+**Files**: `stellarorion_types.ads:30-34` (constants), `stellarorion_physics.ads:206-310` (declaration), `stellarorion_physics.adb:12-112` (Ln/Exp/Pow), `:223-418` (body), `stellarorion_sparta.adb:1569-1597,2075-2155,2175,2222-2232` (CSV)
+
+**Constants added to `stellarorion_types.ads`:**
+- `PRANDTL_AIR : constant Float := 0.71` — frozen Prandtl number
+- `SUTHERLAND_CONST_AIR : constant Float := 110.4` — Sutherland constant [K]
+- `MU_REF_AIR : constant Float := 1.716e-5` — reference viscosity at 273.15 K [Pa·s]
+- `T_REF_SUTHERLAND : constant Float := 273.15` — reference temperature [K]
+- `CP_AIR : constant Float := 1004.0` — specific heat at constant pressure [J/(kg·K)]
+
+**SPARK-safe elementary functions (`stellarorion_physics.adb:12-112`):**
+- `Ln(X)` — Natural logarithm via Maclaurin series (30 terms, reduced argument), error < 1e-7
+- `Exp(X)` — Exponential via Taylor series with squaring reduction (30 terms), error < 1e-7
+- `Pow(X, A)` — Power function: X^A = Exp(A × Ln(X)) for X > 0
+- All functions are SPARK_Mode (On) compatible (no Ada.Numerics dependency)
+
+**Fay_Riddell_Heat function (Rapisarda 2023 Eq 3.82):**
+```
+q_s = 0.763 × Pr^(-0.6) × (ρ_w × μ_w)^0.1 × (ρ_s × μ_s)^0.4 × (h_s - h_w) × √(du/dy|_s)
+```
+
+**Derivation steps:**
+1. T_inf = V² / (M² × γ × R) — freestream temperature from Mach/velocity
+2. T_s = T_inf × (1 + 0.2 × M²) — isentropic stagnation temperature
+3. p_s = p_inf × (1 + 0.2 × M²)^3.5 — isentropic stagnation pressure
+4. ρ_s, ρ_w — ideal gas law at stagnation and wall temperatures
+5. μ_s, μ_w — Sutherland's law: μ = μ_ref × (T/T_ref)^1.5 × (T_ref + S) / (T + S)
+6. du/dy|_s = (1/R_n) × √(2 × (p_s - p_inf) / ρ_s) — Newtonian velocity gradient
+7. h_s = Cp × T_s, h_w = Cp × T_w — enthalpies
+8. Assembly with Pr^(-0.6) via Pow function
+
+**Why Fay-Riddell differs from Sutton-Graves:**
+- SG uses freestream values only (ρ_inf, V³); FR accounts for boundary layer property variations
+- FR includes stagnation-point properties (T_s, ρ_s, μ_s) and wall corrections (ρ_w, μ_w)
+- FR typically predicts LOWER peak heat flux (Rapisarda Table 4.10: FR=13.83 vs SG=15.26 W/cm², −9.3%)
+- At moderate Mach (M < 8), difference is ~3-5%; at high Mach (M > 10), FR is more accurate
+
+**CSV output**: Added `heat_flux_fr_wm2` column to SPARTA trajectory CSV
+
+### Item 6: Earth vs Mars Context and Scalloped vs Smooth
+**File**: `stellarorion_sparta.adb:2427-2446`
+- Added 16-line comment block documenting:
+  - **Earth vs Mars**: Rapisarda's 14.36 W/cm² trajectory-integrated peak heating is for IRVE-3 Earth entry at ~2700 m/s. Our code models Earth entry (ISA atmosphere, R_EARTH=6371 km). Mars entry (CO2 atmosphere) is NOT currently implemented.
+  - **Scalloped vs Smooth**: Rapisarda's IRVE-3 simulation uses SMOOTH skin geometry. Our code supports both Smooth and Scalloped skins. Scalloped increases drag but has minimal effect on stagnation-point heat flux (+0.9% confirmed). Rapisarda comparison values apply to the SMOOTH case.
+
+---
+
+## Build Status
+
+- **Compilation**: 0 errors, clean build (exit 0)
+- **SPARK mode**: All physics functions in `SPARK_Mode (On)`
+- **Self-tests**: `Test_Atmosphere_Pressure` registered
+- **CSV columns**: `step, drag_sum_N, lift_sum_N, heatflux_max_Wm2, heat_sum_Wm2, heatflux_avg_Wm2, heatflux_sg_Wm2, drag_avg_N, lift_avg_N, time_s, alt_km, vel_ms, mach, dyn_press_pa, cd, cl, g_load, downrange_km, heat_load_jcm2, ambient_pressure_pa, ambient_temp_k, heat_flux_fr_wm2`
+
+---
+
+## Remaining Gaps (vs Rapisarda)
+
+| # | Gap | Status |
+|---|-----|--------|
+| 1 | Trajectory-integrated heating (single-point vs full trajectory) | Partially addressed — trajectory integration added, but single-point DSMC still primary |
+| 2 | Fay-Riddell heat flux | ✅ Implemented — `Fay_Riddell_Heat` function added |
+| 3 | Number density (3.47e21 vs 1.67e21 m⁻³) | NOT addressed — needs atmosphere model investigation |
+| 4 | Ballistic coefficient (22.31 vs 26.9 kg/m²) | NOT addressed — needs β = m/(C_d × A_ref) verification |
+| 5 | 7-toroid flight config (flight had 7, code uses 6) | NOT addressed — needs configuration parameter |
+| 6 | Ambient conditions tracking | ✅ Implemented — pressure, temperature now in trajectory CSV |
+| 7 | Time of peak heating | ✅ Implemented — tracked and reported in trajectory output |
+| 8 | Peak G-load (16.83g vs 19.7g) | NOT addressed — consistent with lower ballistic coefficient |

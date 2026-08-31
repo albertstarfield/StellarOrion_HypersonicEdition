@@ -12,6 +12,27 @@ package StellarOrion_Physics is
    pragma SPARK_Mode (On);
 
    -- -----------------------------------------------------------------
+   --  SPARK-safe elementary functions (Taylor series)
+   -- -----------------------------------------------------------------
+
+   --  Natural logarithm [dimensionless].
+   --  Taylor series (reduced argument): Ln(X) for X > 0.
+   --  Error < 1e-7 for 30 terms. Source: standard numerical analysis.
+   function Ln (X : Float) return Float
+     with Pre => X > 0.0;
+
+   --  Exponential function [dimensionless].
+   --  Taylor series with squaring reduction: Exp(X) for any Float.
+   --  Error < 1e-7 for 30 terms. Source: standard numerical analysis.
+   function Exp (X : Float) return Float;
+
+   --  SPARK-safe power: X^A = Exp(A * Ln(X)) for X > 0.
+   --  Used by Fay-Riddell for (rho*mu)^0.4 and (rho*mu)^0.1.
+   --  Source: Fay & Riddell (1958); Rapisarda (2023) Eq 3.82
+   function Pow (X : Float; A : Float) return Float
+     with Pre => X > 0.0;
+
+   -- -----------------------------------------------------------------
    --  Rarefied Gas Dynamics
    -- -----------------------------------------------------------------
 
@@ -202,6 +223,105 @@ package StellarOrion_Physics is
    --  clamp value still matches the Radiative_Eq_Temp /
    --  Backface_Temperature Heat_Flux Pres exactly, keeping the
    --  Calculate_Flight_Metrics chain dischargeable.
+
+   -- -----------------------------------------------------------------
+   --  Fay-Riddell Stagnation-Point Heat Flux
+   -- -----------------------------------------------------------------
+
+   --  Fay-Riddell stagnation-point convective heat flux [W/m^2].
+   --  Implements the simplified Fay-Riddell expression (Le = 1) from
+   --  Rapisarda (2023) Eq 3.82, derived from the full catalytic
+   --  formulation (Eq 3.81) of Fay & Riddell (1958).
+   --
+   --  FORMULA (Rapisarda 2023 Eq 3.82, simplified Le=1):
+   --    q_s = 0.763 * Pr^(-0.6) * (rho_w * mu_w)^0.1
+   --          * (rho_s * mu_s)^0.4 * (h_s - h_w)
+   --          * sqrt(du/dy|_s)
+   --
+   --  where:
+   --    Pr    = 0.71 (Prandtl number, frozen air)
+   --    rho_w = rho(T_w)       [kg/m^3]   -- wall density
+   --    mu_w  = mu(T_w)        [Pa*s]     -- wall viscosity (Sutherland)
+   --    rho_s = rho(T_s)       [kg/m^3]   -- stagnation-point density
+   --    mu_s  = mu(T_s)        [Pa*s]     -- stagnation-point viscosity
+   --    h_s   = Cp * T_s       [J/kg]     -- stagnation enthalpy
+   --    h_w   = Cp * T_w       [J/kg]     -- wall enthalpy
+   --    du/dy|_s = velocity gradient at stagnation point [1/s]
+   --             = (1/R_n) * sqrt(2*(p_s - p_inf)/rho_s)
+   --    T_s   = T_inf * (1 + 0.2 * M^2)  -- stagnation temperature
+   --    p_s   = p_inf * (1 + 0.2 * M^2)^3.5 -- stagnation pressure
+   --
+   --  DERIVATION FROM SUTTON-GRAVES:
+   --    Sutton-Graves (TR R-376) is the engineering collapse of
+   --    Fay-Riddell under Le=1, Pr=0.71, frozen chemistry and a
+   --    Newtonian velocity gradient. The key simplification:
+   --      Fay-Riddell has (rho_s * mu_s)^0.4 * (rho_w * mu_w)^0.1
+   --        which captures real-gas BL property variations.
+   --      Sutton-Graves replaces this with sqrt(rho_inf) * V^3,
+   --        collapsing all BL property dependencies into C_sg.
+   --    The difference: Fay-Riddell accounts for boundary layer
+   --    property variations (density/viscosity changes across the BL),
+   --    while Sutton-Graves uses freestream values only.
+   --    At moderate Mach (M < 8), the difference is small (~3-5%).
+   --    At high Mach (M > 10), real-gas effects become significant
+   --    and Fay-Riddell is more accurate.
+   --
+   --  WHY DIFFERENT FROM SUTTON-GRAVES:
+   --    1. Fay-Riddell uses stagnation-point properties (T_s, rho_s,
+   --       mu_s) which account for compressibility heating at the nose.
+   --    2. Fay-Riddell includes wall-property corrections (rho_w, mu_w)
+   --       which capture hot-wall effects.
+   --    3. Fay-Riddell computes the velocity gradient explicitly from
+   --       Newtonian pressure recovery, rather than absorbing it into
+   --       a single constant.
+   --    4. Result: Fay-Riddell typically predicts LOWER peak heat flux
+   --       than Sutton-Graves (Rapisarda Table 4.10: FR=13.83 vs
+   --       SG=15.26 W/cm², -9.3% difference for IRVE-3).
+   --
+   --  RAPISARDA TABLE 4.10 CALIBRATION (IRVE-3):
+   --    Fay-Riddell: 13.8313 W/cm² (peak), 195.1673 J/cm² (load)
+   --    Sutton-Graves: 15.2595 W/cm² (peak), 223.9542 J/cm² (load)
+   --    Flight: 14.3610 W/cm² (peak), 195.0577 J/cm² (load)
+   --    => FR is -3.69% vs flight; SG is +6.26% vs flight.
+   --
+   --  APPLICABILITY / REGIME (from Rapisarda 2023 Sec 3.5):
+   --    VALID:   continuum, laminar BL, moderate Mach (M < 8-10),
+   --             perfect-gas regime (T < 2000 K, no dissociation).
+   --    LIMITED: At high Mach (>10), real-gas effects (dissociation,
+   --             ionization) degrade accuracy; Fay-Riddell has a
+   --             theoretical maximum total enthalpy of 23 MJ/kg.
+   --    ROLE IN CODEBASE: Reference correlation for comparison with
+   --             SPARTA DSMC and Sutton-Graves. NOT used for TPS
+   --             sizing (Sutton-Graves is conservative envelope).
+   --
+   --  AXIOMS (physical envelope):
+   --    AXIOM FR1: Density_Kgm3 in (0, 1e4] kg/m^3.
+   --    AXIOM FR2: Nose_Radius_M in [1e-4, 100] m.
+   --    AXIOM FR3: Velocity_Ms in [0, 1e5] m/s.
+   --    AXIOM FR4: Mach in [0, 100].
+   --    AXIOM FR5: Wall_Temp_K in [200, 5000] K.
+   --  OVERFLOW PROOF: All intermediate products bounded by physical
+   --    envelope; result < 1e12 W/m^2 for IRVE-3 conditions.
+   --  Verification evidence: self-test via Test_Modes validation.
+   --  Source: Fay & Riddell (1958); Rapisarda (2023) Eq 3.82;
+   --          Anderson (2006) Sec 17.4.
+   function Fay_Riddell_Heat
+     (Density_Kgm3  : Float;
+      Nose_Radius_M : Float;
+      Velocity_Ms   : Float;
+      Mach          : Float;
+      Wall_Temp_K   : Float) return Float
+     with Pre  => Density_Kgm3 >= 0.0
+                   and Density_Kgm3 <= 1.0e4
+                   and Nose_Radius_M >= 1.0e-4
+                   and Nose_Radius_M <= 100.0
+                   and Velocity_Ms >= 0.0
+                   and Velocity_Ms <= 1.0e5
+                   and Mach >= 0.0
+                   and Mach <= 100.0
+                   and Wall_Temp_K >= 200.0
+                   and Wall_Temp_K <= 5000.0,
+           Post => Fay_Riddell_Heat'Result >= 0.0;
 
    --  Radiative equilibrium surface temperature [K].
    --  T = (q / (sigma * epsilon))^(1/4)
@@ -430,7 +550,12 @@ package StellarOrion_Physics is
       Entry_Gamma_Deg   : Float;
       Step_Size_S       : Float;
       Profile           : out Trajectory_Profile;
-      N_Pts             : out Natural)
+      N_Pts             : out Natural;
+      --  Output: time and magnitude of peak Sutton-Graves heat flux.
+      --  Rapisarda 2023 Table 4.5: time of peak heating = 677.49 s
+      --  for IRVE-3 Earth entry at ~2700 m/s.
+      Peak_Heat_Time_S    : out Float;
+      Peak_Heat_Flux_Wm2  : out Float)
    with Pre => CD >= 0.0 and CD <= 3.0
                 and Mass_Kg >= 1.0 and Mass_Kg <= 1.0e6
                 and Dia_M >= 0.5 and Dia_M <= 20.0
