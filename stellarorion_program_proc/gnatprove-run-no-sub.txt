@@ -1,0 +1,8 @@
+Phase 1 of 3: generation of data representation information ...
+Phase 2 of 3: generation of Global contracts ...
+stellarorion_orion.ads:31:06: error: no value supplied for component "Payload_Height_M"
+stellarorion_orion.ads:31:06: error: no value supplied for component "Nose_Profile"
+stellarorion_orion.ads:31:06: error: no value supplied for component "Skin"
+stellarorion_orion.ads:31:06: error: no value supplied for component "Scallop_Points"
+stellarorion_orion.ads:31:06: error: no value supplied for component "Scallop_Amplitude_M"
+gnatprove: error during generation of Global contracts

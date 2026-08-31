@@ -45,13 +45,26 @@ matplotlib.use("Agg")  # headless / non-interactive backend
 
 
 # Unit lookup for common column names (fallback: use raw column name)
+# Handles both old 7-column and new 17-column CSV formats
 _UNITS: dict[str, str] = {
+    # Old format (7-col)
     "drag_sum_N": "Drag sum (N)",
     "lift_sum_N": "Lift sum (N)",
     "heatflux_max_Wm2": "Heat flux (W/m^2)",
     "heat_sum_Wm2": "Heat sum (W/m^2)",
     "drag_avg_N": "Avg drag (N)",
     "lift_avg_N": "Avg lift (N)",
+    # New format (17-col) — Rapisarda MDAO trajectory variables
+    "time_s": "Time (s)",
+    "alt_km": "Altitude (km)",
+    "vel_ms": "Velocity (m/s)",
+    "mach": "Mach Number",
+    "dyn_press_pa": "Dynamic Pressure (Pa)",
+    "cd": "Drag Coefficient (CD)",
+    "cl": "Lift Coefficient (CL)",
+    "g_load": "G-Load (g)",
+    "downrange_km": "Downrange (km)",
+    "heat_load_jcm2": "Heat Load (J/cm^2)",
 }
 
 

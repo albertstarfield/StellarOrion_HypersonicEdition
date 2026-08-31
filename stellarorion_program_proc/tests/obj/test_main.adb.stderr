@@ -1,2 +1,0 @@
-stellarorion_sparta.adb:17:29: warning: use clause for package "Strings" has no effect [-gnatwu]
-stellarorion_sparta.adb:850:09: warning: variable "All_Heat" is assigned but never read [-gnatwm]
