@@ -27,15 +27,20 @@ package StellarOrion_Orion is
    --  Geometry: Orion aeroshell (5.02 m diameter, 32.5-deg half-angle,
    --  no toroids — rigid PICA-X style).
    --  Source: NASA Orion spacecraft technical reports
-   ORION_GEOMETRY_DEFAULTS : constant Geometry_Parameters :=
-     (Diameter_M      => 5.02,
-      Angle_Deg       => 32.5,
-      Nose_Radius_M   => 1.5,
-      Toroid_Count    => 1,   --  minimum 1 for the record constraint
-      Toroid_Radius_M => 0.0,
-      Outer_Radius_M  => 0.0,
-      Mass_Kg         => 10400.0,
-      Slice_Angle_Deg => 360.0);
+    ORION_GEOMETRY_DEFAULTS : constant Geometry_Parameters :=
+      (Diameter_M            => 5.02,
+       Angle_Deg             => 32.5,
+       Nose_Radius_M         => 1.5,
+       Toroid_Count          => 1,   --  minimum 1 for the record constraint
+       Toroid_Radius_M       => 0.0,
+       Outer_Radius_M        => 0.0,
+       Mass_Kg               => 10400.0,
+       Payload_Height_M      => 1.70,
+       Slice_Angle_Deg       => 360.0,
+       Nose_Profile          => Smooth,
+       Skin                  => Smooth,
+       Scallop_Points        => 8,
+       Scallop_Amplitude_M   => 0.030);
 
    --  TPS material: PICA-X (Phenolic Impregnated Carbon Ablator)
    --  Source: NASA Ames / SpaceX PICA-X data
