@@ -25,6 +25,25 @@ package StellarOrion_Types is
    --  Source: NASA TR R-376, Table 1  (Sutton & Graves, 1972)
    C_SG : constant Float := 1.7415e-4;
 
+   --  Prandtl number for air (frozen chemistry, T < 1500 K)
+   --  Source: Anderson (2006) Table A.1; standard aerodynamics reference
+   PRANDTL_AIR : constant Float := 0.71;
+
+   --  Sutherland constant for air viscosity [K]
+   --  Source: Sutherland (1893); NASA CEA technical notes
+   SUTHERLAND_CONST_AIR : constant Float := 110.4;
+
+   --  Reference viscosity for air at T_ref = 273.15 K [Pa*s]
+   --  Source: Sutherland's law calibration; standard value 1.716e-5
+   MU_REF_AIR : constant Float := 1.716e-5;
+
+   --  Reference temperature for Sutherland's law [K]
+   T_REF_SUTHERLAND : constant Float := 273.15;
+
+   --  Specific heat at constant pressure for air [J/(kg*K)]
+   --  Source: standard thermodynamics; valid T < 1500 K (perfect gas)
+   CP_AIR : constant Float := 1004.0;
+
    --  Stefan-Boltzmann constant [W / (m^2 * K^4)]
    --  Source: CODATA 2018, exact value  5.670 374 419e-8
    SIGMA_BOLTZMANN : constant Float := 5.670374419e-8;
@@ -171,8 +190,14 @@ package StellarOrion_Types is
       Angle_Deg       : Float    := 60.0;
       Nose_Radius_M   : Nose_Radius_Range := 0.55;
       Toroid_Count    : Positive := 6;
-      Toroid_Radius_M : Float    := 0.135;
-       Outer_Radius_M  : Float    := 0.1016;
+       Toroid_Radius_M : Float    := 0.135;
+        --  Outer_Radius_M: Outer shoulder toroid radius [m].
+        --  EQUIVALENT TO: Rapisarda 2023 Table 4.1 "Outer Toroid Radius" = 0.0508 m.
+        --  This is the tube radius of the outermost (shoulder) toroid in the
+        --  stacked-toroid HIAD configuration.  The default 0.1016 m is the
+        --  FLIGHT IRVE-3 value (2 × 0.0508 m); the MDAO value is 0.0508 m.
+        --  See also: --oradius CLI flag in StellarOrion_Project.
+        Outer_Radius_M  : Float    := 0.1016;
        Mass_Kg         : Mass_Kg_Range     := 281.0;
        Payload_Height_M: Float    := 1.70;  -- MDAO Table 4.1 h_pay
         Slice_Angle_Deg : Float    := 360.0;
@@ -315,6 +340,13 @@ package StellarOrion_Types is
       CL                 : Float := 0.0;
       G_Load             : Float := 0.0;
       Downrange_Km       : Float := 0.0;
+      --  Heat flux: Sutton-Graves stagnation at this trajectory point [W/m^2].
+      --  Source: NASA TR R-376 (Sutton & Graves, 1972).
+      Heat_Flux_Wm2      : Float := 0.0;
+      --  Ambient atmospheric conditions at this trajectory point.
+      --  Source: ISA 1975 (ISO 2533:1975).
+      Ambient_Pressure_Pa: Float := 0.0;
+      Ambient_Temp_K     : Float := 0.0;
    end record;
 
    --  ------------------------------------------------------------------

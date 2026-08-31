@@ -76,6 +76,19 @@ package StellarOrion_Environment is
      with Pre  => Altitude_Km >= 0.0 and Altitude_Km <= 500.0,
           Post => Atmosphere_Density'Result >= 0.0;
 
+   --  Standard atmosphere pressure [Pa] at altitude [km].
+   --  Computed via ideal gas law: P = rho * R_specific * T
+   --  where R_specific = 287.058 J/(kg*K) for dry air [ISA].
+   --
+   --  Source: ISO 2533:1975, U.S. Standard Atmosphere 1976.
+   --  AXIOM (E2b) [ISA]: altitude envelope mirrors E2 (0 .. 500 km).
+   --  POSTCONDITION: P >= 0.0 Pa (density and temperature are non-negative
+   --  in the ISA model, and R_specific > 0).
+   function Atmosphere_Pressure
+     (Altitude_Km : Float) return Float
+     with Pre  => Altitude_Km >= 0.0 and Altitude_Km <= 500.0,
+          Post => Atmosphere_Pressure'Result >= 0.0;
+
    -- -----------------------------------------------------------------
    --  Composite: Mach + Altitude  ->  Flight_Parameters
    -- -----------------------------------------------------------------
@@ -153,8 +166,13 @@ package StellarOrion_Environment is
    --  Contract covers pre => True (no inputs); post => completes without raising.
 
    --  Calls the pure density profile inside the E2 envelope and
-   --  range-asserts the result against its postcondition.
+   --  range-asserts the result against the postcondition.
    procedure Test_Atmosphere_Density;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+
+   --  Calls the pure pressure profile inside the E2b envelope and
+   --  range-asserts the result against the postcondition.
+   procedure Test_Atmosphere_Pressure;
    --  Contract covers pre => True (no inputs); post => completes without raising.
 
    --  Calls the composite population routine inside the E1/E2 envelopes
@@ -167,6 +185,7 @@ package StellarOrion_Environment is
    --  Contract covers pre => True (no inputs); post => completes without raising.
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Atmosphere_Density", Test_Atmosphere_Density'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Atmosphere_Pressure", Test_Atmosphere_Pressure'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Atmosphere_Temperature", Test_Atmosphere_Temperature'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_MSIS_Atmosphere", Test_MSIS_Atmosphere'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Mach_Alt_To_Flight", Test_Mach_Alt_To_Flight'Access);
