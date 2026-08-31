@@ -1,0 +1,9 @@
+Phase 1 of 3: generation of data representation information ...
+Phase 2 of 3: generation of Global contracts ...
+Phase 3 of 3: flow analysis and proof ...
+error: GNAT generated an ill-formed JSON file data_representation/stellarorion_project.adb.json for data representation.
+error: Try installing a more recent version of GNAT.
+error: As possible workarounds, remove GNAT from your PATH or use the switch -gnateT=<target.atp> to pass an explicit target parametrization file.
+Summary logged in /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/obj/gnatprove/gnatprove.out
+gnatprove: error during flow analysis and proof
+ERROR: Command ["gnatprove", "-P", "stellarorion_program_proc.gpr", "-P", "stellarorion_program_proc.gpr", "--level=4", "-j0", "--output=oneline", "--output-header"] exited with code 1

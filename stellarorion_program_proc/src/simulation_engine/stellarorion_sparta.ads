@@ -188,7 +188,22 @@ package StellarOrion_Sparta is
    --           post => VTK/CSV/plots produced when surf dumps are present;
    --           never propagates (logs to Standard_Error instead).
      (Results_Dir : String;
-      Steps       : Positive)
+      Steps       : Positive;
+      Flight      : Flight_Parameters;
+      Geo         : Geometry_Parameters;
+      Results     : Simulation_Results)
+     with Pre => Results_Dir'Length > 0;
+
+   -- -----------------------------------------------------------------
+   --  Ephemeral State Cleanup
+   -- -----------------------------------------------------------------
+   --  Remove restart files, surface/grid dumps, and generated SPARTA
+   --  inputs from Results_Dir after a non-resumable run completes.
+   --  Keeps only useful output: CSV data, comparison reports, VTK,
+   --  and plot images.  Non-fatal: logs warnings on delete failures.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh).
+   procedure Cleanup_Ephemeral_State
+     (Results_Dir : String)
      with Pre => Results_Dir'Length > 0;
 
 end StellarOrion_Sparta;

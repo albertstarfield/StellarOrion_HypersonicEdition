@@ -265,16 +265,24 @@ package body StellarOrion_Geometry is
    --    Hardware Assumptions: IEEE 754 FPU
    --  Verification evidence: gnatprove --level=4 (scripts/prove.sh).
 --  @covered: gnatprove --level=4 formal proof (scripts/prove.sh).
-   function Sin_Rad (X : Float) return Float is
-      X3 : constant Float := X * X * X;
-      pragma Assert (abs X3 <= 35.0);  --  Pi^3 ~ 31
-      X5 : constant Float := X3 * X * X;
-      pragma Assert (abs X5 <= 310.0);  --  Pi^5 ~ 306
-      X7 : constant Float := X5 * X * X;
-   begin
-      --  sin(x) = x - x^3/6 + x^5/120 - x^7/5040
-      return X - X3 / 6.0 + X5 / 120.0 - X7 / 5040.0;
-   end Sin_Rad;
+    function Sin_Rad (X : Float) return Float is
+       Two_Pi  : constant Float := 2.0 * Pi;
+       Reduced : Float := X - Two_Pi * Float'Floor (X / Two_Pi);  --  fold into [0, 2*Pi)
+    begin
+       if Reduced > Pi then
+          Reduced := Reduced - Two_Pi;  --  fold into [-Pi, Pi)
+       end if;
+       declare
+          X3 : constant Float := Reduced * Reduced * Reduced;
+          pragma Assert (abs X3 <= 35.0);  --  Pi^3 ~ 31
+          X5 : constant Float := X3 * Reduced * Reduced;
+          pragma Assert (abs X5 <= 310.0);  --  Pi^5 ~ 306
+          X7 : constant Float := X5 * Reduced * Reduced;
+       begin
+          --  sin(x) = x - x^3/6 + x^5/120 - x^7/5040  (valid for |Reduced| <= Pi)
+          return Reduced - X3 / 6.0 + X5 / 120.0 - X7 / 5040.0;
+       end;
+    end Sin_Rad;
 
    -- ==================================================================
    --  Cos_Rad — Cosine via Taylor series (radians)
@@ -291,15 +299,23 @@ package body StellarOrion_Geometry is
    --    Hardware Assumptions: IEEE 754 FPU
    --  Verification evidence: gnatprove --level=4 (scripts/prove.sh).
 --  @covered: gnatprove --level=4 formal proof (scripts/prove.sh).
-   function Cos_Rad (X : Float) return Float is
-      X2 : constant Float := X * X;
-      pragma Assert (abs X2 <= 10.0);  --  Pi^2 ~ 9.87
-      X4 : constant Float := X2 * X2;
-      pragma Assert (abs X4 <= 100.0);  --  9.87^2 ~ 97.4
-      X6 : constant Float := X4 * X2;
-   begin
-      --  cos(x) = 1 - x^2/2 + x^4/24 - x^6/720
-      return 1.0 - X2 / 2.0 + X4 / 24.0 - X6 / 720.0;
-   end Cos_Rad;
+    function Cos_Rad (X : Float) return Float is
+       Two_Pi  : constant Float := 2.0 * Pi;
+       Reduced : Float := X - Two_Pi * Float'Floor (X / Two_Pi);  --  fold into [0, 2*Pi)
+    begin
+       if Reduced > Pi then
+          Reduced := Two_Pi - Reduced;  --  fold into [0, Pi] (cos is even)
+       end if;
+       declare
+          X2 : constant Float := Reduced * Reduced;
+          pragma Assert (abs X2 <= 10.0);  --  Pi^2 ~ 9.87
+          X4 : constant Float := X2 * X2;
+          pragma Assert (abs X4 <= 100.0);  --  9.87^2 ~ 97.4
+          X6 : constant Float := X4 * X2;
+       begin
+          --  cos(x) = 1 - x^2/2 + x^4/24 - x^6/720  (valid for |Reduced| <= Pi)
+          return 1.0 - X2 / 2.0 + X4 / 24.0 - X6 / 720.0;
+       end;
+    end Cos_Rad;
 
 end StellarOrion_Geometry;

@@ -170,7 +170,8 @@ package body StellarOrion_Project is
       Put_Line ("  --headless                Headless mode (no GUI)");
       Put_Line ("  --payload                 Payload mode");
       Put_Line ("  --defaultPayload          Default payload mode");
-      Put_Line ("  --nose-type <name>        smooth | pointy");
+       Put_Line ("  --nose-type <name>        smooth | pointy");
+       Put_Line ("  --skin <name>             smooth | scalloped (validation skin variant)");
       Put_Line ("  --verbose                 Verbose output (default)");
       Put_Line ("  --no-verbose              Non-verbose output");
       Put_Line ("  --skip-diag               Skip diagnostic output");
@@ -269,7 +270,8 @@ package body StellarOrion_Project is
       TPS_Str          : constant String := Get_Option ("--tps", "sic");
       TPS_Material_Str : constant String := Get_Option ("--tps-material", "");
       DB_Path          : constant String := Get_Option ("--db", "./stellarorion_db");
-      Nose_Type_Str    : constant String := Get_Option ("--nose-type", "smooth");
+       Nose_Type_Str    : constant String := Get_Option ("--nose-type", "smooth");
+       Skin_Type_Str    : constant String := Get_Option ("--skin", "none");
       --  FIX: Lower default fnum from 1.5e20 (335K particles) to 1.2e19
       --  (~4M particles at Mach 10 / 52 km conditions for accurate DSMC).
    Fnum_Str : constant String := Get_Option ("--fnum", "3.5e19");
@@ -300,7 +302,8 @@ package body StellarOrion_Project is
       --  TPS material
       TPS : TPS_Material;
       Chemistry : Chemistry_Mode;
-      Nose_Profile : Nose_Type_Kind;
+       Nose_Profile : Nose_Type_Kind;
+       Skin         : Skin_Kind;
       --  Boolean flags
       Headless     : Boolean;
       Fresh_Start  : Boolean;
@@ -403,12 +406,19 @@ package body StellarOrion_Project is
          Chemistry := Five_Species;
       end if;
 
-      --  Nose type (smooth = blunted sphere, pointy = sharp cone)
-      if Nose_Type_Str = "pointy" then
-         Nose_Profile := Pointy;
-      else
-         Nose_Profile := Smooth;
-      end if;
+       --  Nose type (smooth = blunted sphere, pointy = sharp cone)
+       if Nose_Type_Str = "pointy" then
+          Nose_Profile := Pointy;
+       else
+          Nose_Profile := Smooth;
+       end if;
+
+       --  Skin morphology (smooth = flat shell, scalloped = corrugated shell)
+       if Skin_Type_Str = "scalloped" then
+          Skin := Scalloped;
+       else
+          Skin := Smooth;
+       end if;
 
       --  Build geometry from CLI overrides (defaults match IRVE-3).
       --  Constrained components are clamped into their envelope subtypes
@@ -427,8 +437,12 @@ package body StellarOrion_Project is
                                                Mass_Kg_Range'First,
                                                Mass_Kg_Range'Last),
                Payload_Height_M => Get_Float ("--payload-height", 1.70),
-               Slice_Angle_Deg => Slice_Angle,
-               Nose_Profile    => Nose_Profile);
+                Slice_Angle_Deg => Slice_Angle,
+                Nose_Profile    => Nose_Profile,
+                Skin            => Skin,
+                --  Scallop params are not CLI-overridable; mirror type defaults.
+                 Scallop_Points  => 8,
+                 Scallop_Amplitude_M => 0.030);
 
       --  TPS material preset (from --tps or --tps-material)
       if TPS_Material_Str = "sic" or else TPS_Str = "sic" then
@@ -625,7 +639,10 @@ package body StellarOrion_Project is
                            Use_GPU       => Use_GPU,
                            Fnum_Str      => Fnum_Str,
                            Restart_File  => Restart_File,
-                           Results_Dir   => "results_validation");
+                            Results_Dir   => "results_validation" &
+                              (if Skin = Scalloped then "_scalloped"
+                               elsif Skin_Type_Str = "smooth" then "_smooth"
+                               else ""));
          goto Cleanup;
       end if;
 
@@ -642,7 +659,10 @@ package body StellarOrion_Project is
                            Use_GPU       => Use_GPU,
                            Fnum_Str      => Fnum_Str,
                            Restart_File  => Restart_File,
-                           Results_Dir   => "results_validation_unsteady");
+                            Results_Dir   => "results_validation_unsteady" &
+                              (if Skin = Scalloped then "_scalloped"
+                               elsif Skin_Type_Str = "smooth" then "_smooth"
+                               else ""));
          goto Cleanup;
       end if;
 
