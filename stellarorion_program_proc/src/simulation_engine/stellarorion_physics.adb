@@ -10,6 +10,104 @@ package body StellarOrion_Physics is
    pragma SPARK_Mode (On);
 
    -- ==================================================================
+   --  SPARK-safe real exponentiation (Taylor-series Ln/Exp).
+   --  Required because Ada.Numerics.Elementary_Functions is not
+   --  available in SPARK 2014 mode.
+   --  Identity: x^a = Exp(a * Ln(x)) for x > 0.
+   --  Source: Fay & Riddell (1958); Rapisarda (2023) Eq 3.82
+   -- ==================================================================
+
+   --  Natural logarithm via Maclaurin series (reduced argument).
+   --  For X > 0: Ln(X) = Ln(u) + n*Ln(2) where u = X / 2^n ∈ (0.5, 1.0],
+   --  then Ln(u) via series: sum_{k=1}^{30} (-1)^{k+1} * (u-1)^k / k.
+   --  Converges in ≤ 30 terms for u ∈ (0.5, 1.0]; error < 1e-7.
+    function Ln (X : Float) return Float
+    is
+      U      : Float := X;
+      N      : Integer := 0;
+      Sum    : Float := 0.0;
+      Term   : Float;
+      X_Minus_1 : Float;
+      K      : Integer;
+   begin
+      --  Reduce argument: divide by 2 until U ∈ (0.5, 1.0].
+      while U > 1.0 loop
+         U := U / 2.0;
+         N := N + 1;
+      end loop;
+      while U <= 0.5 loop
+         U := U * 2.0;
+         N := N - 1;
+      end loop;
+      --  Maclaurin series: Ln(U) = sum_{k=1}^{30} (-1)^{k+1} * (U-1)^k / k
+      X_Minus_1 := U - 1.0;
+      Term := X_Minus_1;  --  first term: (U-1)^1 / 1
+      Sum := Term;
+      for K_Iter in 2 .. 30 loop
+         K := K_Iter;
+         Term := Term * (-X_Minus_1);  --  multiply by -(U-1)
+         Sum := Sum + Term / Float (K);
+      end loop;
+      return Sum + Float (N) * 0.6931471805599453;  --  Ln(2) constant
+   end Ln;
+
+   --  Exponential via Taylor series: Exp(X) = sum_{k=0}^{30} X^k / k!
+   --  For large |X|, reduce: Exp(X) = Exp(X/2)^2 (halving method).
+   --  Reduces to |X| < 1.0 where series converges in ≤ 30 terms.
+    function Exp (X : Float) return Float
+    is
+      Y          : Float;
+      Is_Neg     : Boolean;
+      Result     : Float;
+      Term       : Float;
+      Fact       : Float;
+   begin
+      if X = 0.0 then
+         return 1.0;
+      end if;
+      --  Exp(-X) = 1/Exp(X), so handle sign separately.
+      Is_Neg := X < 0.0;
+      Y := (if Is_Neg then -X else X);
+      --  Reduce via squaring: Exp(Y) = (Exp(Y/2^n))^{2^n}
+      --  Reduce until Y < 1.0 for fast series convergence.
+      declare
+         N_Reduce : Natural := 0;
+         Y_Work   : Float := Y;
+      begin
+         while Y_Work >= 1.0 loop
+            Y_Work := Y_Work / 2.0;
+            N_Reduce := N_Reduce + 1;
+         end loop;
+         --  Taylor series for Exp(Y_Work) where Y_Work < 1.0
+         Result := 1.0;
+         Term   := 1.0;
+         Fact   := 1.0;
+         for K_Iter in 1 .. 30 loop
+            Fact   := Fact * Float (K_Iter);
+            Term   := Term * Y_Work;
+            Result := Result + Term / Fact;
+         end loop;
+         --  Un-squaring: Result = Exp(Y_Work) raised to 2^N_Reduce
+         for I in 1 .. N_Reduce loop
+            Result := Result * Result;
+         end loop;
+      end;
+      if Is_Neg then
+         return 1.0 / Result;
+      else
+         return Result;
+      end if;
+   end Exp;
+
+   --  Power function: X^A = Exp(A * Ln(X)) for X > 0.
+   --  Source: Fay & Riddell (1958); Rapisarda (2023) Eq 3.82
+    function Pow (X : Float; A : Float) return Float
+    is
+   begin
+      return Exp (A * Ln (X));
+   end Pow;
+
+   -- ==================================================================
    --  SPARK-safe square root (Newton-Raphson, 25 iterations)
    --  Required because Ada.Numerics.Elementary_Functions is not
    --  available in SPARK 2014 mode.
@@ -216,9 +314,212 @@ package body StellarOrion_Physics is
             String'("Bound chain via Pre ranges and Sqrt'Post: "
                    & "C_sg*sqrt(rho/R_n)*V^3 <= 1.75e19 << Float'Last; "
                    & "prover timeout on Sqrt re-inlining only"));
-         return Heat_Result;
-      end;
-   end Sutton_Graves_Heat;
+          return Heat_Result;
+       end;
+    end Sutton_Graves_Heat;
+
+    -- ==================================================================
+    --  Fay_Riddell_Heat
+    -- ==================================================================
+    --  Implements the simplified Fay-Riddell stagnation-point heat flux
+    --  (Le = 1, perfect gas) from Rapisarda (2023) Eq 3.82.
+    --
+    --  FORMULA:
+    --    q_s = 0.763 * Pr^(-0.6) * (rho_w * mu_w)^0.1
+    --          * (rho_s * mu_s)^0.4 * (h_s - h_w)
+    --          * sqrt(du/dy|_s)
+    --
+    --  DERIVATION STEPS:
+    --    1. Compute stagnation temperature: T_s = T_inf * (1 + 0.2*M^2)
+    --       [Isentropic relations for calorically perfect gas, gamma=1.4]
+    --    2. Compute stagnation pressure: p_s = p_inf * (1 + 0.2*M^2)^3.5
+    --       [Isentropic relation]
+    --    3. Compute density at stagnation and wall via ideal gas law:
+    --       rho = P / (R_specific * T), R_specific = Cp*(gamma-1)/gamma
+    --    4. Compute viscosity via Sutherland's law:
+    --       mu = mu_ref * (T/T_ref)^1.5 * (T_ref + S)/(T + S)
+    --    5. Compute velocity gradient at stagnation point (Newtonian):
+    --       du/dy|_s = (1/R_n) * sqrt(2*(p_s - p_inf)/rho_s)
+    --    6. Compute enthalpy: h = Cp * T
+    --    7. Assemble: q_s = 0.763 * Pr^(-0.6) * (rho_w*mu_w)^0.1
+    --                      * (rho_s*mu_s)^0.4 * (h_s - h_w)
+    --                      * sqrt(du/dy|_s)
+    --
+    --  Source: Fay & Riddell (1958) J. Aeronaut. Sci. 25(2), 49-58;
+    --         Rapisarda (2023) Eq 3.82, Sec C.4;
+    --         Anderson (2006) Hypersonic & High Temp Gas Dynamics.
+    --  Verification evidence: self-test via Test_Modes validation;
+    --         cross-checked against Rapisarda Table 4.10 FR value.
+    function Fay_Riddell_Heat
+      (Density_Kgm3  : Float;
+       Nose_Radius_M : Float;
+       Velocity_Ms   : Float;
+       Mach          : Float;
+       Wall_Temp_K   : Float) return Float
+    is
+       --  Physical constants (from stellarorion_types.ads)
+       R_S : constant Float := CP_AIR * (GAMMA_AIR - 1.0) / GAMMA_AIR;
+       --  R_specific = Cp * (gamma-1)/gamma = 1004 * 0.4/1.4 = 287.0 J/(kg*K)
+
+       --  Step 1: Stagnation temperature [K]
+       --  T_s = T_inf * (1 + ((gamma-1)/2) * M^2)
+       --  For gamma=1.4: T_s = T_inf * (1 + 0.2*M^2)
+       --  Source: Anderson (2006) Eq 8.11; isentropic relation
+       T_S : Float;
+
+       --  Step 2: Freestream static temperature [K] from ideal gas: P = rho*R*T
+       --  We use ISA conditions: T_inf from altitude, but for single-point
+       --  we derive from Mach and velocity: T_inf = V^2 / (M^2 * gamma * R)
+       --  Source: ideal gas + Mach definition
+       T_Inf : Float;
+
+       --  Step 3: Stagnation pressure [Pa]
+       --  p_s = p_inf * (1 + 0.2*M^2)^3.5  [isentropic, gamma=1.4]
+       --  Source: Anderson (2006) Eq 8.12
+       P_S : Float;
+
+       --  Step 4: Density at stagnation and wall [kg/m^3] via ideal gas
+       --  rho_s = p_s / (R * T_s),  rho_w = p_s / (R * T_w)
+       --  (wall pressure ≈ stagnation pressure for blunt body)
+       Rho_S : Float;
+       Rho_W : Float;
+
+       --  Step 5: Viscosity via Sutherland's law [Pa*s]
+       --  mu(T) = mu_ref * (T/T_ref)^1.5 * (T_ref + S)/(T + S)
+       --  Source: Sutherland (1893); NASA CEA
+       Mu_S : Float;
+       Mu_W : Float;
+
+       --  Step 6: Velocity gradient at stagnation point [1/s]
+       --  du/dy|_s = (1/R_n) * sqrt(2*(p_s - p_inf)/rho_s)
+       --  Source: Newtonian pressure recovery + stagnation BL theory
+       --         Fay & Riddell (1958) Appendix; Rapisarda Eq C.40
+       Du_Dy : Float;
+
+       --  Step 7: Enthalpy [J/kg]
+       --  h_s = Cp * T_s,  h_w = Cp * T_w
+       H_S : Float;
+       H_W : Float;
+
+       --  Intermediate products
+       Rho_Mu_S : Float;  -- (rho_s * mu_s)^0.4
+       Rho_Mu_W : Float;  -- (rho_w * mu_w)^0.1
+       Pr_Factor : Float; -- 0.763 * Pr^(-0.6)
+
+       --  Result
+       Q_FR : Float;
+    begin
+       --  GUARD: degenerate inputs return 0.0
+       if Density_Kgm3 <= 0.0 or Nose_Radius_M <= 0.01
+         or Velocity_Ms <= 0.0 or Mach <= 0.0
+       then
+          return 0.0;
+       end if;
+
+       --  Step 1: Freestream static temperature from Mach and velocity
+       --  T_inf = V^2 / (M^2 * gamma * R)
+       --  derivation: M = V / sqrt(gamma*R*T) => T = V^2 / (M^2 * gamma * R)
+       T_Inf := (Velocity_Ms * Velocity_Ms)
+                / (Mach * Mach * GAMMA_AIR * R_S);
+
+       --  Step 2: Stagnation temperature (isentropic)
+       --  T_s = T_inf * (1 + 0.2 * M^2)
+       T_S := T_Inf * (1.0 + 0.2 * (Mach * Mach));
+
+       --  Step 3: Stagnation pressure (isentropic, gamma=1.4)
+       --  p_s = p_inf * (1 + 0.2*M^2)^3.5
+       --  p_inf = rho_inf * R * T_inf (ideal gas)
+       declare
+          P_Inf : constant Float :=
+            Density_Kgm3 * R_S * T_Inf;
+          --  (1 + 0.2*M^2)^3.5 — computed via repeated multiplication
+         --  to avoid '**' operator (opaque to gnatprove)
+          Tmp   : constant Float := 1.0 + 0.2 * (Mach * Mach);
+          Tmp2  : constant Float := Tmp * Tmp;     -- ^2
+          Tmp4  : constant Float := Tmp2 * Tmp2;   -- ^4
+          Tmp3  : constant Float := Tmp4 / Tmp;     -- ^3 (tmp4/tmp = tmp3)
+          Tmp35 : constant Float := Tmp3 * Sqrt (Tmp); -- ^3.5 = ^3 * ^0.5
+       begin
+          P_S := P_Inf * Tmp35;
+       end;
+
+       --  Step 4: Density at stagnation and wall (ideal gas: rho = P/(R*T))
+       --  Stagnation density: rho_s = p_s / (R * T_s)
+       --  Wall density: rho_w = p_s / (R * T_w)  [p_w ≈ p_s for blunt body]
+       Rho_S := P_S / (R_S * T_S);
+       Rho_W := P_S / (R_S * Wall_Temp_K);
+
+       --  Step 5: Viscosity via Sutherland's law [Pa*s]
+       --  mu(T) = mu_ref * (T/T_ref)^1.5 * (T_ref + S)/(T + S)
+       --  Source: Sutherland (1893); NASA CEA
+       declare
+          function Sutherland_Mu (T : Float) return Float is
+             Rat : constant Float := T / T_REF_SUTHERLAND;
+             --  Rat^1.5 = Rat * sqrt(Rat)  (avoid '**')
+             Rat_1_5 : constant Float := Rat * Sqrt (Rat);
+          begin
+             return MU_REF_AIR * Rat_1_5
+                    * (T_REF_SUTHERLAND + SUTHERLAND_CONST_AIR)
+                    / (T + SUTHERLAND_CONST_AIR);
+          end Sutherland_Mu;
+       begin
+          Mu_S := Sutherland_Mu (T_S);
+          Mu_W := Sutherland_Mu (Wall_Temp_K);
+       end;
+
+       --  Step 6: Velocity gradient at stagnation point [1/s]
+       --  du/dy|_s = (1/R_n) * sqrt(2*(p_s - p_inf)/rho_s)
+       --  Source: Newtonian stagnation pressure recovery
+       --         Fay & Riddell (1958) Appendix; Rapisarda Eq C.40
+       declare
+          P_Inf_Grad : constant Float :=
+            Density_Kgm3 * R_S * T_Inf;
+          Delta_P    : constant Float := P_S - P_Inf_Grad;
+       begin
+          if Delta_P > 0.0 and then Rho_S > 0.0 then
+             Du_Dy := (1.0 / Nose_Radius_M)
+                      * Sqrt (2.0 * Delta_P / Rho_S);
+          else
+             --  Fallback: Newtonian estimate du/dy ≈ V/R_n
+             --  (lower bound when pressure recovery is degenerate)
+             Du_Dy := Velocity_Ms / Nose_Radius_M;
+          end if;
+       end;
+
+       --  Step 7: Enthalpy [J/kg]
+       --  h_s = Cp * T_s,  h_w = Cp * T_w
+       H_S := CP_AIR * T_S;
+       H_W := CP_AIR * Wall_Temp_K;
+
+       --  Step 8: Assemble Fay-Riddell heat flux [W/m^2]
+       --  q_s = 0.763 * Pr^(-0.6) * (rho_w*mu_w)^0.1
+       --        * (rho_s*mu_s)^0.4 * (h_s - h_w) * sqrt(du/dy|_s)
+       --
+       --  Pr^(-0.6) = 0.71^(-0.6) ≈ 1.306  (pre-computed constant)
+       --  Source: Fay & Riddell (1958); Rapisarda (2023) Eq 3.82
+       --  Pr^(-0.6) = 0.71^(-0.6) ≈ 1.306 — pre-computed constant.
+       --  Ada '**' operator requires integer exponents; using SPARK-safe
+       --  Pow function: x^a = Exp(a * Ln(x)).
+       --  Source: Fay & Riddell (1958); Rapisarda (2023) Eq 3.82
+       Pr_Factor := 0.763 * Pow (Prandtl_AIR, -0.6);
+
+       --  (rho*mu) products — Ada '**' requires integer exponents;
+       --  use SPARK-safe Pow function: x^a = Exp(a * Ln(x)).
+       --  (rho*mu)^0.4 = Pow(rho*mu, 0.4)
+       --  (rho*mu)^0.1 = Pow(rho*mu, 0.1)
+       Rho_Mu_S := Pow (Rho_S * Mu_S, 0.4);
+       Rho_Mu_W := Pow (Rho_W * Mu_W, 0.1);
+
+       Q_FR := Pr_Factor * Rho_Mu_W * Rho_Mu_S
+               * (H_S - H_W) * Sqrt (Du_Dy);
+
+       --  Clamp: physical heat flux must be non-negative
+       if Q_FR < 0.0 then
+          return 0.0;
+       end if;
+
+       return Q_FR;
+    end Fay_Riddell_Heat;
 
    -- ==================================================================
    --  Radiative_Eq_Temp
@@ -591,9 +892,14 @@ package body StellarOrion_Physics is
       Entry_Alt_Km      : Float;
       Entry_Vel_Ms      : Float;
       Entry_Gamma_Deg   : Float;
-      Step_Size_S       : Float;
-      Profile           : out Trajectory_Profile;
-      N_Pts             : out Natural)
+       Step_Size_S       : Float;
+       Profile           : out Trajectory_Profile;
+       N_Pts             : out Natural;
+       --  Output: time and magnitude of peak Sutton-Graves heat flux.
+       --  Rapisarda 2023 Table 4.5: time of peak heating = 677.49 s
+       --  for IRVE-3 Earth entry at ~2700 m/s.
+       Peak_Heat_Time_S    : out Float;
+       Peak_Heat_Flux_Wm2  : out Float)
    is
       --  R_EARTH: Earth mean equatorial radius [m].
       --  Source: WGS-84, 6371.0 km (mean).
@@ -626,6 +932,12 @@ package body StellarOrion_Physics is
       DX_Dt         : Float;
       V_Sq          : Float;
       Mach_Local    : Float;
+
+      --  Peak heat tracking across trajectory.
+      --  Rapisarda 2023 Table 4.5: time of peak heating = 677.49 s.
+      Best_Heat_Flux : Float := 0.0;
+      Best_Heat_Time : Float := 0.0;
+      Cur_Heat_Flux  : Float;
    begin
       N_Pts := 0;
 
@@ -670,6 +982,27 @@ package body StellarOrion_Physics is
          Dyn_Q := 0.5 * Rho * Vel * Vel;
          Profile (Step).Dyn_Press_Pa := Dyn_Q;
 
+         --  Sutton-Graves stagnation heat flux at this trajectory point.
+         --  q_sg = C_SG * sqrt(rho / R_n) * V^3 [W/m^2].
+         --  Source: NASA TR R-376 (Sutton & Graves, 1972).
+         --  Uses the same formula as SPARTA post-processing for consistency.
+         if Rho > 0.0 and then Vel > 0.0 then
+            Cur_Heat_Flux := C_SG * Sqrt (Rho / 0.55) * ((Vel * Vel) * Vel);
+            Profile (Step).Heat_Flux_Wm2 := Cur_Heat_Flux;
+
+            --  Track peak heat flux and its time for Rapisarda comparison.
+            if Cur_Heat_Flux > Best_Heat_Flux then
+               Best_Heat_Flux := Cur_Heat_Flux;
+               Best_Heat_Time := Time_S;
+            end if;
+         end if;
+
+         --  Ambient atmospheric conditions (ISA ideal gas law).
+         --  P = rho * R_specific * T; R_specific = 287.058 J/(kg*K).
+         --  Source: ISO 2533:1975.
+         Profile (Step).Ambient_Temp_K     := T;
+         Profile (Step).Ambient_Pressure_Pa := Rho * 287.058 * T;
+
          --  Drag force: D = q * CD * A [N].
          Drag_F := Dyn_Q * CD * Frontal_Area;
 
@@ -712,6 +1045,11 @@ package body StellarOrion_Physics is
 
          N_Pts := Step;
       end loop;
+
+      --  Return peak heat flux and its time for Rapisarda comparison.
+      --  Rapisarda 2023 Table 4.5: time of peak heating = 677.49 s.
+      Peak_Heat_Time_S   := Best_Heat_Time;
+      Peak_Heat_Flux_Wm2 := Best_Heat_Flux;
    end Compute_Trajectory_Profile;
 
 end StellarOrion_Physics;
