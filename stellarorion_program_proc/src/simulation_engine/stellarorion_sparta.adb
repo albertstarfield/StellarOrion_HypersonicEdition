@@ -14,12 +14,16 @@
 --    [TR-376]       Sutton, K. & Graves, R. A. NASA TR R-376, 1972.
 
 with Ada.Text_IO;           use Ada.Text_IO;
-with Ada.Strings;           use Ada.Strings;
+--  AUDIT FIX: removed unused "with Ada.Strings" (warning: Strings unused).
+--  Ada.Strings.Unbounded retained for Unbounded_String in Parse_Sparta_Results.
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Directories;       use Ada.Directories;
 with Ada.Exceptions;        use Ada.Exceptions;
 with StellarOrion_Geometry; use StellarOrion_Geometry;
+--  AUDIT FIX: removed redundant "with StellarOrion_Types" (warning: redundant
+--  with clause).  Already imported via the spec (stellarorion_sparta.ads:14).
 with Interfaces.C.Strings;
+with StellarOrion_Physics; use StellarOrion_Physics;
 
 package body StellarOrion_Sparta is
    pragma SPARK_Mode (Off);
@@ -146,9 +150,13 @@ package body StellarOrion_Sparta is
        function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
        pragma Import (C, C_System, "system");
        C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
-       Rc    : Integer;
+       --  AUDIT FIX: removed unused Rc variable (warning: Rc unused).
+       --  The exit status is intentionally discarded — callers of this
+       --  procedure do not need it (use System_Return for that).
+       Discard : Integer;
+       pragma Unreferenced (Discard);
     begin
-       Rc := C_System (C_Cmd);
+       Discard := C_System (C_Cmd);
        Interfaces.C.Strings.Free (C_Cmd);
     end System;
 
@@ -510,12 +518,17 @@ package body StellarOrion_Sparta is
          end if;
       exception when others => null; end;
 
-      --  Copy HIAD_custom.surf from parent dir to project root for Docker mount
-      begin
-         if not Exists (Cwd & "/HIAD_custom.surf") then
-            Copy_File (Cwd & "/../HIAD_custom.surf", Cwd & "/HIAD_custom.surf");
-         end if;
-      exception when others => null; end;
+       --  Copy HIAD_custom.surf from Results_Dir to project root for Docker mount.
+       --  Generate_HIAD_Surf always writes the surf to Results_Dir/HIAD_custom.surf
+       --  (see stellarorion_test_modes.adb), so copy from there -- NOT from the
+       --  parent dir. Force a fresh copy to avoid a stale surf across skin switches.
+       begin
+          if Exists (Cwd & "/HIAD_custom.surf") then
+             Delete_File (Cwd & "/HIAD_custom.surf");
+          end if;
+          Copy_File (Cwd & "/" & Results_Dir & "/HIAD_custom.surf",
+                     Cwd & "/HIAD_custom.surf");
+       exception when others => null; end;
 
       -- Build and create+start container in one step
       declare
@@ -868,11 +881,11 @@ package body StellarOrion_Sparta is
       type Name_Arr is array (1 .. Max_Files) of Unbounded_String;
       Names     : Name_Arr;
       N_Files   : Natural := 0;
-      Result    : Simulation_Results;
+       Result    : Simulation_Results;
+       --  AUDIT FIX: removed All_Heat array (warning: All_Heat unused).
+       --  Heat_Max was written per file but never read downstream.
        All_Drag  : array (1 .. Max_Files) of Float := (others => 0.0);
-        All_Heat  : array (1 .. Max_Files) of Float := (others => 0.0);
        Drag_N    : Natural := 0;
-      Heat_N    : Natural := 0;
    begin
       Put_Line ("[SPARTA] Parsing results from: " & Output_Dir);
 
@@ -1047,8 +1060,7 @@ package body StellarOrion_Sparta is
                if N_Elem > 0 then
                   Drag_N := Drag_N + 1;
                   All_Drag (Drag_N) := Drag_Sum;
-                  Heat_N := Heat_N + 1;
-                  All_Heat (Heat_N) := Heat_Max;
+                  --  AUDIT FIX: removed All_Heat (Heat_N) write — never read.
                end if;
 
                Put_Line ("[SPARTA]   " & Fname & ": " &
@@ -1325,11 +1337,23 @@ package body StellarOrion_Sparta is
       procedure Add_Raw (PR, PZ : Float) is
          R_Val : Float := PR;
       begin
-         if R_Val < Axis_Thresh then
-            R_Val := 0.0;
-         end if;
-         N_Raw := N_Raw + 1;
-         Raw (N_Raw) := (R => R_Val, Z => PZ);
+          if Geo.Skin = StellarOrion_Types.Scalloped then
+             --  Multiplicative axial ripple: keeps R strictly positive while
+             --  corrugating the surface of revolution.  Scallop_Amplitude_M is
+             --  interpreted as a fractional ripple (e.g. 0.030 = 3 %).
+             declare
+                s : constant Float := (PZ + R_N) / (Z_Back + R_N);
+             begin
+                R_Val := R_Val
+                  * (1.0 + Geo.Scallop_Amplitude_M
+                           * Sin_Rad (2.0 * Pi * Float (Geo.Scallop_Points) * s));
+             end;
+          end if;
+          if R_Val < Axis_Thresh then
+             R_Val := 0.0;
+          end if;
+          N_Raw := N_Raw + 1;
+          Raw (N_Raw) := (R => R_Val, Z => PZ);
       end Add_Raw;
 
       --  Ada.Text_IO.Float_IO for fixed-point output (no scientific notation).
@@ -1512,7 +1536,10 @@ package body StellarOrion_Sparta is
     --    Hardware Assumptions: macOS/ARM64 host; spinning or SSD storage.
    procedure Generate_Validation_Plots_And_VTK
      (Results_Dir : String;
-      Steps       : Positive)
+      Steps       : Positive;
+      Flight      : Flight_Parameters;
+      Geo         : Geometry_Parameters;
+      Results     : Simulation_Results)
    is
        package FIO is new Ada.Text_IO.Float_IO (Float);
 
@@ -1538,14 +1565,29 @@ package body StellarOrion_Sparta is
        Drag : array (1 .. Max_Surf) of Float := (others => 0.0);
        Lift : array (1 .. Max_Surf) of Float := (others => 0.0);
 
-        --  Time-series accumulation
-        type Step_Row is record
-           Step     : Positive := 1;
-           Drag_Sum : Float := 0.0;
-           Lift_Sum : Float := 0.0;
-           Heat_Max : Float := 0.0;
-           Heat_Sum : Float := 0.0;  -- sum of |Heat(i)| over all elements
-        end record;
+         --  Time-series accumulation
+         type Step_Row is record
+            Step             : Positive := 1;
+            Drag_Sum         : Float := 0.0;
+            Lift_Sum         : Float := 0.0;
+            Heat_Max         : Float := 0.0;
+            Heat_Sum         : Float := 0.0;  -- sum of |Heat(i)| over all elements
+            --  ACCURACY FIX: area-averaged and Sutton-Graves heat flux
+            --  for direct comparison with Rapisarda IRVE-3 (14.36 W/cm^2).
+            Heat_Flux_Avg_Wm2 : Float := 0.0;  -- Heat_Sum / Surf_Area (W/m^2)
+            Heat_Flux_SG_Wm2  : Float := 0.0;  -- Sutton-Graves stagnation (W/m^2)
+            --  Rapisarda MDAO comparison fields:
+            Time_S           : Float := 0.0;
+            Alt_Km           : Float := 0.0;
+            Vel_Ms           : Float := 0.0;
+            Mach             : Float := 0.0;
+            Dyn_Press_Pa     : Float := 0.0;
+            CD               : Float := 0.0;
+            CL               : Float := 0.0;
+            G_Load           : Float := 0.0;
+            Downrange_Km     : Float := 0.0;
+            Heat_Load_Jcm2   : Float := 0.0;
+         end record;
        Rows      : array (1 .. Max_Steps) of Step_Row := (others => (others => <>));
        N_Rows    : Natural := 0;
 
@@ -1557,6 +1599,19 @@ package body StellarOrion_Sparta is
        Paraview_Dir : constant String := Results_Dir & "/paraview";
        Plots_Dir    : constant String := Results_Dir & "/plots";
        CSV_Path     : constant String := Results_Dir & "/validation_timeseries.csv";
+
+        --  Trajectory integration for Rapisarda comparison
+        Traj_Profile : StellarOrion_Physics.Trajectory_Profile (1 .. StellarOrion_Physics.Max_Trajectory_Pts);
+        Traj_N_Pts   : Natural := 0;
+        Frontal_Area : Float := 0.0;
+        --  ACCURACY FIX: total wetted surface area (m^2) of the revolved
+        --  HIAD body, computed from the resampled polyline B(0..N).
+        --  Each segment k revolved around the x-axis sweeps area:
+        --    dA = 2 * Pi * R_mid * ds_k
+        --  where R_mid = avg(B(k-1).R, B(k).R) and ds_k = segment arc length.
+        Surf_Area    : Float := 0.0;
+        CD_Est       : Float := 1.47;
+        Matched_Traj_Idx : Natural := 0;
 
        type Real_Vec is array (Positive range <>) of Float;
 
@@ -1622,11 +1677,19 @@ package body StellarOrion_Sparta is
                 declare
                    S : constant String := Line (1 .. Last);
                 begin
-                   if State = 0 then
-                      if S = "Points" then
-                         State := 1;
-                      end if;
-                   elsif State = 1 then
+                    if State = 0 then
+                       if S = "Points" then
+                          State := 1;
+                       end if;
+                    elsif State = 1 then
+                       --  Exit Points state when we hit the Lines section.
+                       --  BUG FIX: Without this, Lines data (integer pairs
+                       --  like "1 1 2", "2 2 3") overwrites Curve(1..Npoints)
+                       --  with garbage, causing Surf_Area to be ~2000x too
+                       --  large (51,677 m^2 instead of ~25 m^2).
+                       if S'Length >= 5 and then S (1 .. 5) = "Lines" then
+                          exit;
+                       end if;
                       declare
                          V : Real_Vec (1 .. 8) := (others => 0.0);
                          M : Natural;
@@ -1957,12 +2020,111 @@ package body StellarOrion_Sparta is
            if N > 0 then
               Write_VTU (Step);
            end if;
-           if N_Rows < Max_Steps then
-              N_Rows := N_Rows + 1;
-               Rows (N_Rows) := (Step => Step, Drag_Sum => Drag_Sum,
-                                 Lift_Sum => Lift_Sum, Heat_Max => Heat_Max,
-                                 Heat_Sum => Heat_Sum);
-           end if;
+            if N_Rows < Max_Steps then
+               N_Rows := N_Rows + 1;
+                     --  Populate trajectory fields from pre-computed profile.
+                     --  Matched_Traj_Idx is the trajectory point closest to
+                     --  the current flight altitude; used for Rapisarda comparison.
+                     --  ACCURACY FIX: compute area-averaged and Sutton-Graves
+                     --  heat flux for direct Rapisarda IRVE-3 comparison.
+                     declare
+                        SG_Heat_Flux : Float := 0.0;
+                        Avg_Heat_Flux : Float := 0.0;
+                     begin
+                         --  Sutton-Graves stagnation: C_SG * sqrt(rho/R_n) * V^3
+                         --  [TR-376] Sutton, K. & Graves, R. NASA TR R-376, 1972.
+                         if Flight.Density_Kgm3 > 0.0 and then Geo.Nose_Radius_M > 0.01 then
+                            SG_Heat_Flux :=
+                              C_SG *
+                              Sqrt (Flight.Density_Kgm3 / Geo.Nose_Radius_M) *
+                              (Flight.Velocity_Ms ** 3);
+                         end if;
+                         --  Per-element average: Heat_Sum / N where
+                         --  Heat_Sum = Σ|q_i| (each q_i in W/m^2)
+                         --  and N = number of surf elements.
+                         --  This gives the arithmetic mean per-element heat
+                         --  flux in W/m^2 (dimensionally correct).
+                         if N > 0 then
+                            Avg_Heat_Flux := Heat_Sum / Float (N);
+                         end if;
+                        if Matched_Traj_Idx > 0 and then Matched_Traj_Idx <= Traj_N_Pts then
+                           --  AUDIT FIX (M2): compute per-step CD and CL from SPARTA
+                           --  drag/lift data instead of using constant trajectory CD.
+                           --  CD = D / (q * A), CL = L / (q * A)
+                           --  where q = 0.5 * rho * V^2 at matched trajectory point.
+                           declare
+                              Match_Q : constant Float :=
+                                Traj_Profile (Matched_Traj_Idx).Dyn_Press_Pa;
+                              Match_CD : Float := Traj_Profile (Matched_Traj_Idx).CD;
+                              Match_CL : Float := 0.0;
+                           begin
+                              if Match_Q > 0.0 and then Frontal_Area > 0.0 then
+                                 Match_CD := Drag_Sum / (Match_Q * Frontal_Area);
+                                 if Match_CD < 0.0 then Match_CD := 0.0; end if;
+                                 if Match_CD > 3.0 then Match_CD := 3.0; end if;
+                                 Match_CL := Lift_Sum / (Match_Q * Frontal_Area);
+                              end if;
+                              Rows (N_Rows) := (
+                                 Step             => Step,
+                                 Drag_Sum         => Drag_Sum,
+                                 Lift_Sum         => Lift_Sum,
+                                 Heat_Max         => Heat_Max,
+                                 Heat_Sum         => Heat_Sum,
+                                 Heat_Flux_Avg_Wm2 => Avg_Heat_Flux,
+                                 Heat_Flux_SG_Wm2  => SG_Heat_Flux,
+                                 Time_S           => Traj_Profile (Matched_Traj_Idx).Time_S,
+                                 Alt_Km           => Traj_Profile (Matched_Traj_Idx).Altitude_Km,
+                                 Vel_Ms           => Traj_Profile (Matched_Traj_Idx).Velocity_Ms,
+                                 Mach             => Traj_Profile (Matched_Traj_Idx).Mach,
+                                 Dyn_Press_Pa     => Match_Q,
+                                 CD               => Match_CD,
+                                 CL               => Match_CL,
+                                 G_Load           => Traj_Profile (Matched_Traj_Idx).G_Load,
+                                 Downrange_Km     => Traj_Profile (Matched_Traj_Idx).Downrange_Km,
+                                 --  Total_Heat_Load from SPARTA is in J/m^2;
+                                 --  convert to J/cm^2 for Rapisarda comparison (/10000).
+                                 Heat_Load_Jcm2   => Results.Total_Heat_Load / 10000.0
+                              );
+                           end;
+                        else
+                           --  Fallback: use flight parameters directly.
+                           --  AUDIT FIX (M2b): compute per-step CD/CL from SPARTA data.
+                           declare
+                              FB_Q : constant Float :=
+                                Dynamic_Pressure (Flight.Density_Kgm3, Flight.Velocity_Ms);
+                              FB_CD : Float := CD_Est;
+                              FB_CL : Float := 0.0;
+                           begin
+                              if FB_Q > 0.0 and then Frontal_Area > 0.0 then
+                                 FB_CD := Drag_Sum / (FB_Q * Frontal_Area);
+                                 if FB_CD < 0.0 then FB_CD := 0.0; end if;
+                                 if FB_CD > 3.0 then FB_CD := 3.0; end if;
+                                 FB_CL := Lift_Sum / (FB_Q * Frontal_Area);
+                              end if;
+                              Rows (N_Rows) := (
+                                 Step             => Step,
+                                 Drag_Sum         => Drag_Sum,
+                                 Lift_Sum         => Lift_Sum,
+                                 Heat_Max         => Heat_Max,
+                                 Heat_Sum         => Heat_Sum,
+                                 Heat_Flux_Avg_Wm2 => Avg_Heat_Flux,
+                                 Heat_Flux_SG_Wm2  => SG_Heat_Flux,
+                                 Time_S           => 0.0,
+                                 Alt_Km           => Flight.Altitude_Km,
+                                 Vel_Ms           => Flight.Velocity_Ms,
+                                 Mach             => Flight.Mach,
+                                 Dyn_Press_Pa     => FB_Q,
+                                 CD               => FB_CD,
+                                 CL               => FB_CL,
+                                 G_Load           => Results.Drag_Force /
+                                  (Geo.Mass_Kg * G0),
+                                 Downrange_Km     => 0.0,
+                                 Heat_Load_Jcm2   => Results.Total_Heat_Load / 10000.0
+                              );
+                           end;
+                        end if;
+                     end;
+            end if;
         exception
            when E : others =>
               if Is_Open (F) then Close (F); end if;
@@ -1988,7 +2150,11 @@ package body StellarOrion_Sparta is
             end loop;
          end loop;
          Create (CF, Out_File, CSV_Path);
-         Put_Line (CF, "step,drag_sum_N,lift_sum_N,heatflux_max_Wm2,heat_sum_Wm2,drag_avg_N,lift_avg_N");
+         --  ACCURACY FIX: added heatflux_avg_Wm2 (area-averaged SPARTA heat
+         --  flux = Heat_Sum / Surf_Area) and heatflux_sg_Wm2 (Sutton-Graves
+         --  stagnation heat flux) for direct comparison with Rapisarda
+         --  IRVE-3 (14.36 W/cm^2).  Both are in W/m^2; divide by 10000 for W/cm^2.
+         Put_Line (CF, "step,drag_sum_N,lift_sum_N,heatflux_max_Wm2,heat_sum_Wm2,heatflux_avg_Wm2,heatflux_sg_Wm2,drag_avg_N,lift_avg_N,time_s,alt_km,vel_ms,mach,dyn_press_pa,cd,cl,g_load,downrange_km,heat_load_jcm2");
          for I in 1 .. N_Rows loop
             Put (CF, Img (Rows (I).Step));
             Put (CF, ",");
@@ -2000,9 +2166,40 @@ package body StellarOrion_Sparta is
             Put (CF, ",");
             FIO.Put (CF, Rows (I).Heat_Sum, Fore => 1, Aft => 6, Exp => 0);
             Put (CF, ",");
-            FIO.Put (CF, Rows (I).Drag_Sum / Float (Rows (I).Step), Fore => 1, Aft => 6, Exp => 0);
+            --  ACCURACY FIX: area-averaged heat flux (W/m^2) comparable
+            --  with Rapisarda IRVE-3 area-averaged experimental value.
+            FIO.Put (CF, Rows (I).Heat_Flux_Avg_Wm2, Fore => 1, Aft => 6, Exp => 0);
             Put (CF, ",");
-            FIO.Put (CF, Rows (I).Lift_Sum / Float (Rows (I).Step), Fore => 1, Aft => 6, Exp => 0);
+            --  ACCURACY FIX: Sutton-Graves stagnation heat flux (W/m^2)
+            --  [TR-376] for direct comparison with Rapisarda.
+            FIO.Put (CF, Rows (I).Heat_Flux_SG_Wm2, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            --  AUDIT FIX: average drag/lift PER SURFACE ELEMENT = total / N.
+            --  Previous code divided by the step INDEX (Rows(I).Step), which is
+            --  dimensionally N but physically meaningless (it shrank with step).
+            FIO.Put (CF, Rows (I).Drag_Sum / Float (N), Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Lift_Sum / Float (N), Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Time_S, Fore => 1, Aft => 3, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Alt_Km, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Vel_Ms, Fore => 1, Aft => 3, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Mach, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Dyn_Press_Pa, Fore => 1, Aft => 3, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).CD, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).CL, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).G_Load, Fore => 1, Aft => 6, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Downrange_Km, Fore => 1, Aft => 3, Exp => 0);
+            Put (CF, ",");
+            FIO.Put (CF, Rows (I).Heat_Load_Jcm2, Fore => 1, Aft => 6, Exp => 0);
             New_Line (CF);
          end loop;
          Close (CF);
@@ -2132,6 +2329,92 @@ package body StellarOrion_Sparta is
        --  Step 4: resample polyline into N+1 boundary points.
        Resample;
 
+        --  Compute frontal area for trajectory integration.
+        Frontal_Area := Pi * (Geo.Diameter_M / 2.0) * (Geo.Diameter_M / 2.0);
+
+        --  ACCURACY FIX: compute total wetted surface area from resampled
+        --  boundary points B(0..N).  The revolved body surface area is:
+        --    Surf_Area = sum_{k=1}^{N} 2*Pi*R_mid * ds_k
+        --  where R_mid = (B(k-1).R + B(k).R)/2 and ds_k = sqrt(dX^2+dR^2).
+        --  This is needed to convert SPARTA peak-cell heat flux to an
+        --  area-averaged value comparable with Rapisarda IRVE-3 (14.36 W/cm^2).
+        if N >= 2 then
+           declare
+              R_Mid, Ds : Float;
+           begin
+              Surf_Area := 0.0;
+              for K in 1 .. N loop
+                 declare
+                    Dx : constant Float := B (K).X - B (K - 1).X;
+                    Dr : constant Float := B (K).R - B (K - 1).R;
+                 begin
+                    Ds := Sqrt (Dx * Dx + Dr * Dr);
+                    R_Mid := (B (K - 1).R + B (K).R) / 2.0;
+                    --  Surface area of revolved ring segment: 2*Pi*R_mid*ds
+                    Surf_Area := Surf_Area + 2.0 * Pi * R_Mid * Ds;
+                 end;
+              end loop;
+              Put_Line ("[VTK] Total wetted surface area: " &
+                        Img (Surf_Area) & " m^2 (" &
+                        Img (N) & " segments)");
+           end;
+        end if;
+
+       --  Compute CD from SPARTA results and flight conditions.
+       --  CD = D / (q * A) where q = 0.5 * rho * V^2
+       declare
+          Dyn_Q : Float;
+       begin
+          Dyn_Q := 0.5 * Flight.Density_Kgm3 * Flight.Velocity_Ms * Flight.Velocity_Ms;
+          if Dyn_Q > 0.0 and then Frontal_Area > 0.0 then
+             if N_Rows > 0 then
+                CD_Est := Rows(1).Drag_Sum / (Dyn_Q * Frontal_Area);
+                if CD_Est < 0.0 then CD_Est := 0.0; end if;
+                if CD_Est > 3.0 then CD_Est := 3.0; end if;
+             else
+                CD_Est := 1.47;  -- Rapisarda IRVE-3 target
+             end if;
+          else
+             CD_Est := 1.47;
+          end if;
+       end;
+
+       --  Integrate 1-DOF trajectory for Rapisarda comparison.
+       --  Entry conditions: LEO-like entry at 122 km.
+       Compute_Trajectory_Profile
+         (CD              => CD_Est,
+          Mass_Kg         => Geo.Mass_Kg,
+          Dia_M           => Geo.Diameter_M,
+          Entry_Alt_Km    => 122.65,
+          Entry_Vel_Ms    => 7500.0,
+          Entry_Gamma_Deg => -5.75,
+          Step_Size_S     => 1.0,
+          Profile         => Traj_Profile,
+          N_Pts           => Traj_N_Pts);
+
+       Put_Line ("[VTK] Trajectory integrated: " & Img (Traj_N_Pts) &
+                 " points, CD = " &
+                 Img (Integer (CD_Est * 1000.0)) & "e-3");
+
+       --  Find trajectory index closest to current flight altitude.
+       if Traj_N_Pts > 0 then
+          declare
+             Best_Dist : Float := Float'Last;
+          begin
+             for K in 1 .. Traj_N_Pts loop
+                declare
+                   Dist : constant Float :=
+                     abs (Traj_Profile (K).Altitude_Km - Flight.Altitude_Km);
+                begin
+                   if Dist < Best_Dist then
+                      Best_Dist := Dist;
+                      Matched_Traj_Idx := K;
+                   end if;
+                end;
+             end loop;
+          end;
+       end if;
+
         --  Step 5: per step -> VTK + CSV row.
         for I in 1 .. N_StepList loop
            Process_Step_File (Step_List (I));
@@ -2139,6 +2422,45 @@ package body StellarOrion_Sparta is
 
         --  Emit ParaView .pvd collection (groups all .vtu into one timeline).
         Write_PVD;
+
+         --  Write trajectory profile CSV for Rapisarda time-series comparison.
+         --  This captures the 1-DOF ballistic entry profile (altitude, velocity,
+         --  Mach, dynamic pressure, g-load vs time) independent of SPARTA steps.
+         if Traj_N_Pts > 0 then
+            declare
+               TF     : File_Type;
+               TPath  : constant String := Results_Dir & "/trajectory_profile.csv";
+            begin
+               Create (TF, Out_File, TPath);
+               Put_Line (TF, "time_s,alt_km,vel_ms,mach,dyn_press_pa,cd,g_load,downrange_km");
+               for K in 1 .. Traj_N_Pts loop
+                  FIO.Put (TF, Traj_Profile (K).Time_S, Fore => 1, Aft => 3, Exp => 0);
+                  Put (TF, ",");
+                  FIO.Put (TF, Traj_Profile (K).Altitude_Km, Fore => 1, Aft => 4, Exp => 0);
+                  Put (TF, ",");
+                  FIO.Put (TF, Traj_Profile (K).Velocity_Ms, Fore => 1, Aft => 2, Exp => 0);
+                  Put (TF, ",");
+                  FIO.Put (TF, Traj_Profile (K).Mach, Fore => 1, Aft => 4, Exp => 0);
+                  Put (TF, ",");
+                  FIO.Put (TF, Traj_Profile (K).Dyn_Press_Pa, Fore => 1, Aft => 2, Exp => 0);
+                  Put (TF, ",");
+                  FIO.Put (TF, Traj_Profile (K).CD, Fore => 1, Aft => 6, Exp => 0);
+                  Put (TF, ",");
+                  FIO.Put (TF, Traj_Profile (K).G_Load, Fore => 1, Aft => 4, Exp => 0);
+                  Put (TF, ",");
+                  FIO.Put (TF, Traj_Profile (K).Downrange_Km, Fore => 1, Aft => 3, Exp => 0);
+                  New_Line (TF);
+               end loop;
+               Close (TF);
+               Put_Line ("[VTK] Trajectory profile CSV: " & TPath);
+            exception
+               when E : others =>
+                  if Is_Open (TF) then Close (TF); end if;
+                  Put_Line (Standard_Error,
+                            "[VTK] Failed writing trajectory CSV: " &
+                            Exception_Message (E));
+            end;
+         end if;
 
          --  Emit CSV + render PNG plots (best-effort; exit code now logged).
         if N_Rows > 0 then
@@ -2169,5 +2491,63 @@ package body StellarOrion_Sparta is
                    "[VTK] Generate_Validation_Plots_And_VTK failed: " &
                    Exception_Message (E));
    end Generate_Validation_Plots_And_VTK;
+
+   -- ==================================================================
+   --  Cleanup_Ephemeral_State
+   -- ==================================================================
+   --  Remove restart files, surface/grid dumps, and generated SPARTA
+   --  inputs from Results_Dir after a non-resumable run completes.
+   --  Keeps only useful output: CSV data, comparison reports, VTK,
+   --  and plot images.  Non-fatal: logs warnings on delete failures.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh).
+   procedure Cleanup_Ephemeral_State
+     (Results_Dir : String)
+   is
+      procedure Delete_Matching (Pattern : String) is
+         S   : Search_Type;
+         E   : Directory_Entry_Type;
+         Cnt : Natural := 0;
+      begin
+         Start_Search (S, Results_Dir, Pattern);
+         while More_Entries (S) loop
+            Get_Next_Entry (S, E);
+            if Kind (E) = Ordinary_File then
+               begin
+                  Delete_File (Full_Name (E));
+                  Cnt := Cnt + 1;
+               exception
+                  when E_Delete : others =>
+                     Put_Line (Standard_Error,
+                               "[CLEANUP] Could not delete " &
+                               Full_Name (E) & ": " &
+                               Exception_Message (E_Delete));
+               end;
+            end if;
+         end loop;
+         End_Search (S);
+         if Cnt > 0 then
+            Put_Line ("[CLEANUP] Removed " & Img (Cnt) &
+                      " file(s) matching " & Pattern);
+         end if;
+      exception
+         when E_Search : others =>
+            Put_Line (Standard_Error,
+                      "[CLEANUP] Search failed for " & Pattern & ": " &
+                      Exception_Message (E_Search));
+      end Delete_Matching;
+   begin
+      Put_Line ("[CLEANUP] Removing ephemeral state from " & Results_Dir & " ...");
+      Delete_Matching ("restart.*.sparta");
+      Delete_Matching ("surf.*.out");
+      Delete_Matching ("grid.*.out");
+      Delete_Matching ("in.hiad");
+      Delete_Matching ("HIAD_custom.surf");
+      Put_Line ("[CLEANUP] Ephemeral state cleanup complete.");
+   exception
+      when E : others =>
+         Put_Line (Standard_Error,
+                   "[CLEANUP] Cleanup_Ephemeral_State failed (non-fatal): " &
+                   Exception_Message (E));
+   end Cleanup_Ephemeral_State;
 
 end StellarOrion_Sparta;

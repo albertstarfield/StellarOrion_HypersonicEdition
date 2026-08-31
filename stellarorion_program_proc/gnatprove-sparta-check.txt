@@ -1,0 +1,2 @@
+limit-subp: incorrect line specification - missing ':' followed by operand
+Try "gnatprove --help" for more information.

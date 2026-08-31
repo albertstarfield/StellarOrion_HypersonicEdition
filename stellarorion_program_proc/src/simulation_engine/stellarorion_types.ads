@@ -89,8 +89,11 @@ package StellarOrion_Types is
    --  Design-of-Experiments sampling strategy
    type DoE_Method is (LHS, CCD);
 
-   --  Nose-cone geometry style
-   type Nose_Kind is (Smooth, Pointy);
+    --  Nose-cone geometry style
+    type Nose_Kind is (Smooth, Pointy);
+
+    --  Aeroshell skin morphology
+    type Skin_Kind is (Smooth, Scalloped);
 
    --  Vehicle configuration
    type Vehicle_Kind is (IRVE3, Orion);
@@ -172,9 +175,12 @@ package StellarOrion_Types is
        Outer_Radius_M  : Float    := 0.1016;
        Mass_Kg         : Mass_Kg_Range     := 281.0;
        Payload_Height_M: Float    := 1.70;  -- MDAO Table 4.1 h_pay
-       Slice_Angle_Deg : Float    := 360.0;
-       Nose_Profile    : Nose_Type_Kind := Smooth;
-   end record;
+        Slice_Angle_Deg : Float    := 360.0;
+        Nose_Profile    : Nose_Type_Kind := Smooth;
+        Skin                : Skin_Kind := Smooth;
+        Scallop_Points      : Positive  := 8;
+        Scallop_Amplitude_M : Float     := 0.030;
+    end record;
 
    --  Thermal Protection System material card.
    --  Defaults model a SiC tile stack (LOFTID-style F-TPS).
@@ -283,6 +289,32 @@ package StellarOrion_Types is
       Decel_G             : Float  := 0.0;   -- g's
       G_Load              : Float  := 0.0;   -- g's (sustained)
       Survivable          : Boolean := False;
+   end record;
+
+   -- ===================================================================
+   --  Trajectory Integration Types
+   -- ===================================================================
+   --  1-DOF ballistic entry trajectory sample for Rapisarda MDAO comparison.
+   --  Source: Rapisarda 2023, Figs 4.6, 6.11-6.13.
+   --  AXIOM (T1): all components within physical envelope:
+   --    Time_S in [0, 6000] (entry duration ~600-1200 s for Earth).
+   --    Altitude_Km in [0, 200] (entry interface ~122 km).
+   --    Velocity_Ms in [0, 1e5] (orbital velocity ~7.8e3 m/s).
+   --    Mach in [0, 50] (entry Mach ~25).
+   --    Dyn_Press_Pa in [0, 5e6] (max q ~100-500 kPa for blunt bodies).
+   --    CD, CL dimensionless [0, 3].
+   --    G_Load in [0, 50] (IRVE-3 peak ~19.7g).
+   --    Downrange_Km in [0, 2e4] (intercontinental ~15000 km).
+   type Trajectory_Sample is record
+      Time_S             : Float := 0.0;
+      Altitude_Km        : Float := 0.0;
+      Velocity_Ms        : Float := 0.0;
+      Mach               : Float := 0.0;
+      Dyn_Press_Pa       : Float := 0.0;
+      CD                 : Float := 0.0;
+      CL                 : Float := 0.0;
+      G_Load             : Float := 0.0;
+      Downrange_Km       : Float := 0.0;
    end record;
 
    --  ------------------------------------------------------------------

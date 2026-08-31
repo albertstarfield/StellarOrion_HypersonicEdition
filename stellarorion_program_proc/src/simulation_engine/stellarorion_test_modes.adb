@@ -757,6 +757,12 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       --  Fnum: real molecules per simulated particle
       Fnum : Float;
    begin
+      --  Ensure the results directory exists (auto-create for --skin variants
+      --  such as results_validation_scalloped / results_validation_smooth).
+      if not Exists (Results_Dir) then
+         Create_Path (Results_Dir);
+      end if;
+
       --  Parse Fnum from string
       if Fnum_Str'Length > 0 then
          begin
@@ -1129,7 +1135,10 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
          Put_Line ("[VALIDATE] Step 11: generating ParaView VTK, time-series CSV, and plots ...");
          Generate_Validation_Plots_And_VTK
            (Results_Dir => Results_Dir,
-            Steps       => Steps);
+            Steps       => Steps,
+            Flight      => Flight,
+            Geo         => Geo,
+            Results     => Results);
          Put_Line ("[VALIDATE] Step 11: visualization artifacts written.");
       exception
          when E : others =>
@@ -1137,6 +1146,22 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
                       "[VALIDATE] Step 11 visualization failed (non-fatal): " &
                       Exception_Name (E) & " : " & Exception_Message (E));
             Put_Line ("[VALIDATE] Validation result is preserved (Step 11 is non-fatal).");
+      end;
+
+      --  Step 12: Clean up ephemeral state (restart files, surf/grid dumps,
+      --  generated SPARTA inputs).  Keeps only useful output: CSV data,
+      --  comparison reports, VTK, and plot images.
+      --  Non-fatal: MUST NOT abort VALIDATION PASSED.
+      begin
+         Put_Line ("[VALIDATE] Step 12: cleaning ephemeral state files ...");
+         Cleanup_Ephemeral_State (Results_Dir => Results_Dir);
+         Put_Line ("[VALIDATE] Step 12: ephemeral state cleanup complete.");
+      exception
+         when E : others =>
+            Put_Line (Standard_Error,
+                      "[VALIDATE] Step 12 cleanup failed (non-fatal): " &
+                      Exception_Name (E) & " : " & Exception_Message (E));
+            Put_Line ("[VALIDATE] Validation result is preserved (Step 12 is non-fatal).");
       end;
 
    end Run_Validate_Full;

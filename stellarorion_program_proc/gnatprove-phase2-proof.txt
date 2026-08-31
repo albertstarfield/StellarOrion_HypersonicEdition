@@ -1,0 +1,2 @@
+error: wrong argument for --mode
+Try "gnatprove --help" for more information.

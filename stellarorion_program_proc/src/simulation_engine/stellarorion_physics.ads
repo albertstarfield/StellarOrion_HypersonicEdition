@@ -378,4 +378,67 @@ package StellarOrion_Physics is
                    and Results.Heat_Flux_Wm2 >= 0.0
                    and Results.Heat_Flux_Wm2 <= 2.0e15;
 
+   -- ==================================================================
+   --  1-DOF Ballistic Entry Trajectory Integration
+   -- ==================================================================
+
+   Max_Trajectory_Pts : constant := 2000;
+
+   subtype Trajectory_Index is Integer range 1 .. Max_Trajectory_Pts;
+
+   type Trajectory_Profile is array (Trajectory_Index range <>) of Trajectory_Sample;
+
+   --  Integrate a 1-DOF ballistic entry trajectory from entry interface
+   --  to ground impact or Mach 0.5.
+   --
+   --  Equations of motion (Chapman 1959, Vinh 1980):
+   --    dv/dt = -D/m - g*sin(gamma)
+   --    dgamma/dt = -(g/V - V/(R_earth + h)) * cos(gamma)
+   --    dh/dt = V * sin(gamma)
+   --    dx/dt = V * cos(gamma) / (R_earth + h)
+   --
+   --  where D = 0.5 * rho(h) * V^2 * CD * A_frontal
+   --        g = g0 * (R_earth / (R_earth + h))^2
+   --        rho(h) from ISA atmosphere model
+   --
+   --  Inputs:
+   --    CD         : Drag coefficient (from SPARTA or empirical)
+   --    Mass_Kg    : Vehicle mass [kg]
+   --    Dia_M      : Aeroshell diameter [m] (for frontal area)
+   --    Entry_Alt_Km : Entry interface altitude [km] (typically 122.65)
+   --    Entry_Vel_Ms : Entry velocity [m/s] (typically 7500 for LEO)
+   --    Entry_Gamma_Deg : Entry flight path angle [deg] (typically -5.75)
+   --    Step_Size_S : Integration time step [s] (typically 1.0)
+   --  Output:
+   --    Profile    : Array of trajectory samples (time-ordered)
+   --    N_Pts      : Number of valid samples in Profile
+   --
+   --  AXIOMS:
+   --    TRAJ_A1: CD in [0.0, 3.0] (blunt body hypersonic range).
+   --    TRAJ_A2: Mass_Kg in [1.0, 1.0e6] (probe to crew vehicle).
+   --    TRAJ_A3: Dia_M in [0.5, 20.0] (small probe to giant HIAD).
+   --    TRAJ_A4: Entry_Alt_Km in [80.0, 200.0] (above atmosphere).
+   --    TRAJ_A5: Entry_Vel_Ms in [1000.0, 15000.0] (suborbital to escape).
+   --    TRAJ_A6: abs(Entry_Gamma_Deg) in [1.0, 30.0] (steep to shallow).
+   --    TRAJ_A7: Step_Size_S in [0.01, 100.0] (resolution vs stability).
+   procedure Compute_Trajectory_Profile
+     (CD                : Float;
+      Mass_Kg           : Float;
+      Dia_M             : Float;
+      Entry_Alt_Km      : Float;
+      Entry_Vel_Ms      : Float;
+      Entry_Gamma_Deg   : Float;
+      Step_Size_S       : Float;
+      Profile           : out Trajectory_Profile;
+      N_Pts             : out Natural)
+   with Pre => CD >= 0.0 and CD <= 3.0
+                and Mass_Kg >= 1.0 and Mass_Kg <= 1.0e6
+                and Dia_M >= 0.5 and Dia_M <= 20.0
+                and Entry_Alt_Km >= 80.0 and Entry_Alt_Km <= 200.0
+                and Entry_Vel_Ms >= 1000.0 and Entry_Vel_Ms <= 15000.0
+                and abs (Entry_Gamma_Deg) >= 1.0
+                and abs (Entry_Gamma_Deg) <= 30.0
+                and Step_Size_S >= 0.01
+                and Step_Size_S <= 100.0;
+
 end StellarOrion_Physics;
