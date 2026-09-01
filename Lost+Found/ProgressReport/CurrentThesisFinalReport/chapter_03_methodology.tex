@@ -492,7 +492,7 @@ The PINN approximates the flow field mapping $\mathcal{N}: \mathbb{R}^2 \to \mat
         Activation function & $\tanh$ \\ \hline
         Weight initialization & Glorot normal \\ \hline
         Output dimension & 3 $(\rho, T, u)$ \\ \hline
-        Total trainable parameters & $2 \times 64 + 3 \times 64^2 + 3 \times 64 + 3 \approx 12{,}600$ \\ \hline
+        Total trainable parameters & $2 \times 64 + 2 \times 64^2 + 3 \times 64 + 3 \approx 8{,}700$ \\ \hline
     \end{tabular}
 \end{table}
 
@@ -990,7 +990,7 @@ The PINN is implemented using the DeepXDE library~\cite{lu2021deepxde} with the 
         Neurons per layer & 64 \\ \hline
         Activation function & $\tanh$ \\ \hline
         Weight initialization & Glorot normal \\ \hline
-        Total parameters & $\mathcal{O}(10^4)$ \\ \hline
+        Total parameters & $\approx 8{,}700$ \\ \hline
     \end{tabular}
 \end{table}
 
@@ -1011,7 +1011,7 @@ The MoP surrogate is a 3-layer MLP implemented in PyTorch:
         Activation function & ReLU \\ \hline
         Optimizer & Adam ($\eta = 5 \times 10^{-3}$) \\ \hline
         Loss function & Mean Squared Error (MSE) \\ \hline
-        Total parameters & $\mathcal{O}(10^4)$ \\ \hline
+        Total parameters & $\approx 8{,}700$ \\ \hline
     \end{tabular}
 \end{table}
 
