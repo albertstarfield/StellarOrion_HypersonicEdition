@@ -1,0 +1,7 @@
+Then I also want you to audit the /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/Lost+Found/ProgressReport/CurrentThesisFinalReport thesis and sync with the current progress code and validation
+
+
+fix every last one of them like date and (this is not a proporsal but rather final phase thesis) also compile the latex pdflatex (reaudit again!)
+(Compare against the code of stellarorion_program_proc)
+Reaudit and fix all thing until i said stop, Do not STOP as you will missed something or some detail.
+(also read from markdown) also then each cycle sleep 3600 as it is continously being modified by other agent thread. then do another cycle of audit

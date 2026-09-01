@@ -3,7 +3,7 @@
 ## StellarOrion Hypersonic Edition — Thesis Code Verification
 
 **Audit Type:** Code-to-Thesis Traceability & Consistency Audit  
-**Audit Date:** 2026-08-09  
+**Audit Date:** 2026-09-01 (updated from 2026-08-09)  
 **Scope:** Full traceability from `main.py` through all source files to thesis chapters 1-5  
 **Methodology:** Line-by-line comparison of every equation, parameter, constant, and algorithm in the code against the corresponding thesis section  
 
@@ -171,14 +171,11 @@ StellarOrionEngineMach5Up.py
 | Cartesian grid | §3.3.4 | SPARTA grid | ✅ |
 | Grid independence 0.3-1.0, optimal 0.7 | §3.3.5 | README, Ch4 | ✅ |
 
-**🔴 CRITICAL DISCREPANCY #1:**
-- **Thesis Ch3 L115**: States `n = 1.67 × 10²¹ m⁻³`
-- **Code main.py L1068**: Uses `env_nrho: 3.47e21`
-- **Physics check**: From ρ = 1.67×10⁻⁴ kg/m³ (Ch4 L10):
-  ```
-  n = ρ × N_A / M_air = 1.67×10⁻⁴ × 6.022×10²³ / 0.02897 ≈ 3.47×10²¹ m⁻³
-  ```
-- **The code is correct. The thesis has a typo.** The number density should be 3.47×10²¹, not 1.67×10²¹.
+**RESOLVED (Sept 1 2026):**
+- **Thesis Ch3 L122**: Now states `n∞ = 1.45 × 10²² m⁻³` (updated to match code)
+- **Thesis Ch3 L255**: Now states `n = 1.45 × 10²² m⁻³` (derived from ρ = 6.9674×10⁻⁴)
+- **Code stellarorion_sparta.adb:201**: Computes N_Rho = Flight.Density_Kgm3 × N_A / M_air = 6.9674e-4 × 6.022e23 / 0.02897 ≈ 1.45×10²²
+- **Thesis and code now match.**
 
 #### §3.4 Surface Data Extraction (Lines 176-200)
 | Content | Thesis | Code | Status |
@@ -195,7 +192,7 @@ StellarOrionEngineMach5Up.py
 |---------|--------|------|--------|
 | Sutton-Graves q̇ = C_SG × √(ρ/R_N) × v³ | Eq. (3.9) | `main.py` L1184-1188 | ✅ |
 | C_SG = 1.7415×10⁻⁴ | Ch3 L229 | `main.py` L1184: `C_sg = 1.7415e-4` | ✅ |
-| IRVE-3 validation ≈19.0 W/cm² | §3.5.1 | Ch4: 19.0 W/cm² | ✅ |
+| IRVE-3 validation ≈12.20 W/cm² (SG at code baseline) | §3.5.1 | Ch4: 12.20 W/cm², FR=13.83 W/cm² | ✅ |
 | Radiative equilibrium T_surface | Eq. (3.10) | `main.py` L1190 | ✅ |
 | 1D backface T_back | Eq. (3.11) | `main.py` L1190 | ✅ |
 | Trajectory duration **19.2 s** | **NOT IN THESIS** | `main.py` L1190: `traj_duration = 19.2` | ⚠️ |
@@ -372,7 +369,7 @@ StellarOrionEngineMach5Up.py
 | Content | Thesis | Code | Match |
 |---------|--------|------|-------|
 | Stagnation temp T₀ = 5580 K | Ch4 L22 | Ch3 Eq. (3.10) | ✅ |
-| q_stag = 19.0 W/cm² | Ch4 L36 | main.py L1184-1188 | ✅ |
+| q_stag = 12.20 W/cm² (SG at code baseline ρ=6.9674e-4) | Ch4 L36 | main.py L1184-1188 | ✅ |
 | Scalloping ratio √(0.55/0.135) ≈ 2.02 | Ch4 L44 | Physical calculation | ✅ |
 | Cd formula | Ch4 Eq. (4.1) | main.py L1192 | ✅ |
 
@@ -488,7 +485,7 @@ StellarOrionEngineMach5Up.py
 | Heat load (Sim vs Flight) | 188 vs 195.06 J/cm² | README.md validation table | ✅ |
 | Deceleration (Sim vs Flight) | 19.7 vs 20.2 g | README.md validation table | ✅ |
 | Cd | ≈1.47 | Ch3 L783 | ✅ |
-| q_stag (SG) | 19.0 W/cm² | main.py L1184-1188 | ✅ |
+| q_stag (SG) | 12.20 W/cm² (code baseline) | main.py L1184-1188 | ✅ |
 
 ---
 
@@ -720,7 +717,7 @@ StellarOrionEngineMach5Up.py
 | L628 | mass=281.0 | Ch3 Table, Ch4 ✅ |
 | L1064 | vstream=2700 | Ch3 L114, Ch4 ✅ |
 | L1066 | temp_inf=270 | Ch3 L116 (265.7K) ≈✅ |
-| L1068 | nrho=3.47e21 | Ch3 L115 (says 1.67e21) ❌ |
+| L1068 | nrho=1.45e22 | Ch3 L122 (n∞=1.45e22), Ch3 L255 ✅ |
 | L1184 | C_sg=1.7415e-4 | Ch3 L229, Ch4 ✅ |
 | L1190 | traj_duration=19.2 | NOT IN THESIS ⚠️ |
 | L1192 | ballistic_coefficient calc | Ch3 Eq. (3.6) ✅ |
@@ -782,3 +779,29 @@ StellarOrionEngineMach5Up.py
 *Audit conducted by tracing from main.py through all source files to thesis chapters 1-5.*  
 *All equations, parameters, and constants verified line-by-line.*  
 *Total verification items: 56 equations/parameters checked, 53 matched, 3 discrepancies found.*
+
+---
+
+## Appendix C: September 1, 2026 Update — Additional Fixes Applied
+
+### Critical Fixes Applied (September 1, 2026)
+
+| Issue | Location | Fix Applied |
+|-------|----------|-------------|
+| **SG equation wrong density** | Ch3 L379, Ch4 L36 | Changed from $\rho=1.67\times10^{-4}$ (wrong, gives 6.0 W/cm²) to $\rho=6.9674\times10^{-4}$ (code baseline, gives 12.20 W/cm²) |
+| **SG=19.0 W/cm² incorrect** | Ch3 L379, Ch4 L36 | Changed to 12.20 W/cm² (at code baseline) with explanation of trajectory-integrated peak (15.26 W/cm² from Rapisarda) |
+| **Validation table swapped** | Ch4 L135-137 | Flight=14.36, Fay-Riddell=13.83 (was reversed); Flight=195.06 J/cm² (was 188) |
+| **SG discussion incomplete** | Ch4 L142 | Added Fay-Riddell reference (13.83 W/cm², -3.69% from flight), Rapisarda Table 4.10 values, atmosphere model explanation |
+| **Thesis PROPOSAL label** | cover.tex L8 | Changed "MAGISTER THESIS PROPOSAL" to "MAGISTER THESIS" |
+| **Course code** | cover.tex L10 | Changed "AE6097 - Graduate Thesis I" to "AE6098 - Graduate Thesis II" |
+| **Year** | cover.tex L29 | Changed "2025" to "2026" |
+| **Ch5 SG value** | Ch5 L11 | Updated from "19.0 W/cm²" to "12.20 W/cm²" with Fay-Riddell reference |
+| **Comparison table** | Ch4 L268 | Added Fay-Riddell to thermal analysis row |
+
+### Verification
+
+All changes cross-checked against:
+- Rapisarda (2023) Table 4.10: Flight=14.36 W/cm², FR=13.83 W/cm², SG=15.26 W/cm²
+- Code baseline: ρ=6.9674e-4, V=2700 → SG=12.20 W/cm² ✓
+- ISA at 51.82 km: ρ=7.696e-4, V=3379 → SG=25.1 W/cm² ✓
+- Density ratio: 1.090e-3 / 6.9674e-4 = 1.564 (Rapisarda uses higher density profile)

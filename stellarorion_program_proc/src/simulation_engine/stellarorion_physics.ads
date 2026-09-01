@@ -153,8 +153,15 @@ package StellarOrion_Physics is
 
     --  Sutton-Graves stagnation-point convective heat flux [W/m^2].
     --  q_stag = C_sg * sqrt(rho / R_n) * V^3
-    --  Source: NASA TR R-376 (Sutton & Graves, 1972)
-    --  C_SG = 1.7415e-4 (Earth, SI units; from StellarOrion_Types).
+    --  Source: Sutton, K. & Graves, R.A. (1971) "A General Stagnation-
+    --         Point Convective Heating Equation for Arbitrary Gas
+    --         Mixtures," NASA TR R-376, Nov 1971.
+    --         [Citation: https://ntrs.nasa.gov/citations/19720003329]
+    --         [Citation: NASA-TR-R-376, L-7885]
+    --  C_SG = 1.7415e-4 (Earth air, SI units; Table 1 of TR R-376).
+    --  Derived for: stagnation-point convective heating of blunt
+    --         axisymmetric bodies in chemical equilibrium gases.
+    --         Valid for Earth air (N2/O2 mix) at V < 12 km/s.
     --
     --  DERIVATION (from Fay-Riddell stagnation-point theory):
     --    Fay & Riddell (1958), J. Aeronaut. Sci. 25(2), give the

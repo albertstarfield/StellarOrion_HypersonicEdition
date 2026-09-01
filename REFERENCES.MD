@@ -516,10 +516,11 @@
   encapsulating the Lewis number, Prandtl number, and binary diffusion integrals.
 
   **IRVE-3 baseline (StellarOrion validation):**
-    rho_inf = 1.67e-4 kg/m^3 (52 km, NRLMSIS-2), R_N = 0.55 m, V = 2700 m/s
-    => q_stag ~ 1.90e5 W/m^2 = 19.0 W/cm^2
-    IRVE-3 flight measurement: ~14 W/cm^2. Sutton-Graves is a conservative upper bound;
-    actual aeroheating is reduced by the HIAD flared geometry and stand-off shock.
+    rho_inf = 6.9674e-4 kg/m^3 (code baseline), R_N = 0.55 m, V = 2700 m/s
+    => q_stag ~ 1.22e5 W/m^2 = 12.20 W/cm^2
+    IRVE-3 flight measurement: 14.36 W/cm^2. Rapisarda (2023) trajectory-integrated SG peak: 15.26 W/cm^2,
+    Fay-Riddell CFD: 13.83 W/cm^2 (Table 4.10). SG at code baseline is below flight because the
+    single-point condition differs from the actual trajectory-integrated peak heating conditions.
 
   **Applicability:** Earth atmosphere, blunt-body spherical nose cap, V = 3-12 km/s,
   near-continuum flow (Kn << 1). For transitional/rarefied regimes (Kn > 0.01)

@@ -153,7 +153,7 @@ $$\dot{q}_{\text{stag}} = 1.7415 \times 10^{-4} \sqrt{\frac{\rho_{\infty}}{R_N}}
 
 - ✅ Formula correct
 - ✅ C_SG = 1.7415 × 10⁻⁴ matches exactly
-- ✅ Validated: 19.0 W/cm² vs IRVE-3 13.8 W/cm²
+- ✅ Validated: 12.20 W/cm² (SG at code baseline) vs IRVE-3 14.36 W/cm²
 - ✅ Matches `main.py` L1184
 
 **Radiative Equilibrium Temperature (Ch3 L245):**
@@ -468,12 +468,12 @@ The following code features are implemented but not documented in the thesis:
 
 | Metric | Flight | Model | Error | Status |
 |--------|--------|-------|-------|--------|
-| Peak heat flux | 13.8 W/cm² | 19.0 W/cm² | +37.7% | ⚠️ Conservative |
+| Peak heat flux | 14.36 W/cm² | 12.20 W/cm² (SG baseline) | -15.0% | ⚠️ Below flight (baseline vs trajectory peak) |
 | Total heat load | 188 J/cm² | 195.06 J/cm² | +3.8% | ✅ Within 4% |
 | Peak deceleration | 19.7g | 20.2g | +2.5% | ✅ Within 3% |
 | Cd | 1.47 | 1.47 | 0% | ✅ Match |
 
-**Note:** The 37.7% heat flux discrepancy is acknowledged in the thesis as "conservative upper bound" due to Sutton-Graves assuming spherical nose cap. This is acceptable for design purposes but should be explicitly discussed as a known limitation.
+**Note:** The SG heat flux (12.20 W/cm²) is 15% below flight (14.36 W/cm²) because the code uses a single-point baseline condition (ρ=6.9674e-4, V=2700), while the actual trajectory-integrated peak occurs at different conditions. Rapisarda (2023) reports the trajectory-integrated SG peak as 15.26 W/cm² (+6.26% above flight). The Fay-Riddell correlation (13.83 W/cm², -3.69%) is more physically accurate for HIAD geometries.
 
 ### 8.2 Grid Independence Study
 
