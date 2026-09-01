@@ -1006,10 +1006,10 @@ The MoP surrogate is a 3-layer MLP implemented in PyTorch:
         \textbf{Component} & \textbf{Specification} \\ \hline
         Framework & PyTorch (v2.x) \\ \hline
         Input dimension & $d$ (design variables, $d = 4$--$7$) \\ \hline
-        Hidden layers & 2 hidden + 1 output \\ \hline
+        Hidden layers & 3 hidden + 1 output \\ \hline
         Neurons per layer & 64 \\ \hline
         Activation function & ReLU \\ \hline
-        Optimizer & Adam ($\eta = 10^{-3}$) \\ \hline
+        Optimizer & Adam ($\eta = 5 \times 10^{-3}$) \\ \hline
         Loss function & Mean Squared Error (MSE) \\ \hline
         Total parameters & $\mathcal{O}(10^4)$ \\ \hline
     \end{tabular}
