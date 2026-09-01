@@ -738,10 +738,10 @@ The MoP is implemented as a 3-layer Multi-Layer Perceptron (MLP) in PyTorch:
 The forward pass through the network is:
 
 \begin{equation}
-    \hat{y} = \mathbf{W}_3 \cdot \text{ReLU}\!\big(\mathbf{W}_2 \cdot \text{ReLU}(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2\big) + \mathbf{b}_3
+    \hat{y} = \mathbf{W}_4 \cdot \text{ReLU}\!\big(\mathbf{W}_3 \cdot \text{ReLU}\!\big(\mathbf{W}_2 \cdot \text{ReLU}(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2\big) + \mathbf{b}_3\big) + \mathbf{b}_4
 \end{equation}
 
-where $\mathbf{W}_1 \in \mathbb{R}^{64 \times d}$, $\mathbf{W}_2 \in \mathbb{R}^{64 \times 64}$, $\mathbf{W}_3 \in \mathbb{R}^{1 \times 64}$ are weight matrices, $\mathbf{b}_i$ are bias vectors, and $\text{ReLU}(z) = \max(0, z)$ is the rectified linear activation.
+where $\mathbf{W}_1 \in \mathbb{R}^{64 \times d}$, $\mathbf{W}_2, \mathbf{W}_3 \in \mathbb{R}^{64 \times 64}$, $\mathbf{W}_4 \in \mathbb{R}^{1 \times 64}$ are weight matrices, $\mathbf{b}_i$ are bias vectors, and $\text{ReLU}(z) = \max(0, z)$ is the rectified linear activation.
 
 \subsubsection*{Training Objective}
 The MoP is trained via supervised learning on the dataset $\{(\mathbf{x}_i, y_i)\}_{i=1}^{N}$ collected from SPARTA simulations. The loss function is the Mean Squared Error (MSE):
@@ -750,13 +750,13 @@ The MoP is trained via supervised learning on the dataset $\{(\mathbf{x}_i, y_i)
     \mathcal{L}_{MSE}(\boldsymbol{\theta}) = \frac{1}{N} \sum_{i=1}^{N} \big|\hat{y}_i - y_i\big|^2 = \frac{1}{N} \sum_{i=1}^{N} \big|\mathcal{M}(\mathbf{x}_i; \boldsymbol{\theta}) - y_i\big|^2
 \end{equation}
 
-where $\boldsymbol{\theta} = \{\mathbf{W}_1, \mathbf{b}_1, \mathbf{W}_2, \mathbf{b}_2, \mathbf{W}_3, \mathbf{b}_3\}$ are all trainable parameters. The model is optimized using the Adam optimizer with a learning rate of $\eta = 10^{-3}$ and trained for $O(10^2)$--$O(10^3)$ epochs until the validation loss plateaus.
+where $\boldsymbol{\theta} = \{\mathbf{W}_1, \mathbf{b}_1, \mathbf{W}_2, \mathbf{b}_2, \mathbf{W}_3, \mathbf{b}_3, \mathbf{W}_4, \mathbf{b}_4\}$ are all trainable parameters. The model is optimized using the Adam optimizer with a learning rate of $\eta = 5 \times 10^{-3}$ and trained for $O(10^2)$--$O(10^3)$ epochs until the validation loss plateaus.
 
 \subsubsection*{Multi-Objective Extension}
 When multiple performance metrics must be simultaneously predicted (e.g., $C_d$ and $\dot{q}$), the MoP is extended to a multi-output MLP:
 
 \begin{equation}
-    \begin{bmatrix} \hat{y}_1 \\ \hat{y}_2 \\ \vdots \\ \hat{y}_k \end{bmatrix} = \mathbf{W}_{out} \cdot \text{ReLU}(\mathbf{W}_2 \cdot \text{ReLU}(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2) + \mathbf{b}_{out}
+    \begin{bmatrix} \hat{y}_1 \\ \hat{y}_2 \\ \vdots \\ \hat{y}_k \end{bmatrix} = \mathbf{W}_{out} \cdot \text{ReLU}\!\big(\mathbf{W}_3 \cdot \text{ReLU}(\mathbf{W}_2 \cdot \text{ReLU}(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2) + \mathbf{b}_3\big) + \mathbf{b}_{out}
 \end{equation}
 
 where $\mathbf{W}_{out} \in \mathbb{R}^{k \times 64}$ produces $k$ output metrics. The loss becomes:
