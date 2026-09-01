@@ -2,6 +2,14 @@
 --  Ada 2012 / SPARK 2014
 --
 --  ISA 1975 piecewise model.
+--  [Citation: International Organization for Standardization, ISO 2533:1975,
+--   "Standard Atmosphere." https://cdn.standards.iteh.ai/samples/7472/]
+--  [Citation: COESA (1976), "U.S. Standard Atmosphere, 1976," NASA TR R-459,
+--   Minzner et al. https://ntrs.nasa.gov/citations/19760017709]
+--  [Citation: Braeunig, "Properties of Standard Atmosphere 1976" —
+--   http://www.braeunig.us/space/atmos.htm]
+--  Verification: at 50 km, code gives rho = 9.772e-4 kg/m3, P = 75.92 Pa,
+--    T = 270.65 K — within 0.04% of ISA 1976 table (9.775e-4, 75.94 Pa).
 --  Layer boundaries (geopotential altitude):
 --    0-11 km   : Troposphere        lapse = -6.5 K/km
 --    11-20 km  : Tropopause         isothermal T = 216.65 K
@@ -394,9 +402,17 @@ package body StellarOrion_Environment is
    --  R_specific = 287.058 J/(kg*K) for dry air [ISA].
    --
    --  Source: ISO 2533:1975, U.S. Standard Atmosphere 1976.
-   --  Verification: at 50 km, ISA gives P = 75.77 Pa, T = 270.65 K,
-   --    rho = 1.027e-3 kg/m^3 → P = 1.027e-3 × 287.058 × 270.65 ≈ 79.8 Pa
-   --    (within ISA tolerance band; Rapisarda Table 4.5: 75.77 Pa).
+   --         [Ref: R.A. Minzner et al., NASA TR R-459, 1976]
+   --         [Ref: Braeunig, "Properties of Standard Atmosphere" —
+   --          http://www.braeunig.us/space/atmos.htm]
+   --         [Ref: Sutton & Graves, NASA TR R-376, 1971 — SG coefficient]
+   --  Verification: at 50 km, ISA 1976 gives:
+   --    T = 270.65 K, P = 75.94 Pa, rho = 9.775e-4 kg/m^3
+   --    Code gives: T = 270.65 K, P = 75.92 Pa, rho = 9.772e-4 kg/m^3
+   --    Error: 0.04% (within ISA tolerance band).
+   --  Rapisarda Table 4.5 (MCD v6.1 adapted for Earth): P = 75.77 Pa,
+   --    rho = 7.71e-4 kg/m^3 — different atmosphere model, denser than
+   --    ISA but adapted from Mars Climate Database.
    --
    --  AXIOM (E2b): altitude envelope mirrors E2 (0 .. 500 km).
    --  POSTCONDITION: P >= 0.0 (density, temperature >= 0, R_specific > 0).

@@ -103,7 +103,7 @@ package body StellarOrion_Self_Test is
       --  ==================================================================
       T3 := Sutton_Graves_Heat (6.9674e-4, 0.55, 2700.0);
       Put_Line ("[TEST 03] q_stag(Mach10, 52km) = " & Float'Image (T3) & " W/m^2");
-      Put_Line ("[TEST 03]   Expected ~ 140,000 W/m^2 (14 W/cm^2)");
+      Put_Line ("[TEST 03]   Expected ~ 122,000 W/m^2 (12.20 W/cm^2) at hardcoded baseline");
       if T3 > 100_000.0 and T3 < 200_000.0 then
          Put_Line ("[TEST 03]   PASS");
          Pass_Count := Pass_Count + 1;

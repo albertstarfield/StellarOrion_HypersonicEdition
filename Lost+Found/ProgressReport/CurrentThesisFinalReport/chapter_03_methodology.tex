@@ -41,12 +41,12 @@ The methodology is constructed by chaining the axioms through a sequence of math
 The Boltzmann transport equation governs the evolution of the molecular velocity distribution function $f(\mathbf{x}, \mathbf{v}, t)$:
 \begin{equation}
 \frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla_{\mathbf{x}} f + \frac{\mathbf{F}}{m} \cdot \nabla_{\mathbf{v}} f = \left(\frac{\delta f}{\delta t}\right)_{\text{coll}}
-\label{eq:boltzmann}
+\label{eq:boltzmann_dsmc}
 \end{equation}
 where the right-hand side is the collision integral, evaluated under the assumption of molecular chaos (Axiom~A2). The equilibrium solution is the Maxwell--Boltzmann distribution (Axiom~A4).
 
 \paragraph{Step 2: DSMC Method (A6).}
-Bird's Direct Simulation Monte Carlo method~\cite{bird1994dsmc} provides a stochastic solution to Equation~\eqref{eq:boltzmann}. As the number of simulated particles $N \to \infty$, the DSMC solution converges to the exact Boltzmann solution (Axiom~A6). The DSMC algorithm proceeds in three steps per time step:
+Bird's Direct Simulation Monte Carlo method~\cite{bird1994molecular} provides a stochastic solution to Equation~\eqref{eq:boltzmann_dsmc}. As the number of simulated particles $N \to \infty$, the DSMC solution converges to the exact Boltzmann solution (Axiom~A6). The DSMC algorithm proceeds in three steps per time step:
 \begin{enumerate}
     \item \textbf{Advection:} Particles are moved ballistically for $\Delta t$.
     \item \textbf{Collisions:} Pairs are selected within each cell using the VSS collision model.
@@ -57,15 +57,15 @@ Bird's Direct Simulation Monte Carlo method~\cite{bird1994dsmc} provides a stoch
 In the continuum limit ($Kn \to 0$), the Boltzmann equation reduces to the compressible Navier--Stokes equations via the Chapman--Enskog expansion~\cite{chapman1970kinetic}. These equations serve as the PDE constraint in the PINN (Step~5).
 
 \paragraph{Step 4: Sutton--Graves Correlation (A5).}
-For rapid engineering estimates, the stagnation-point heat flux is approximated by~\cite{sutton1971approximate}:
+For rapid engineering estimates, the stagnation-point heat flux is approximated by~\cite{sutton1971gravesh}:
 \begin{equation}
 \dot{q}_s = k \sqrt{\frac{\rho_\infty}{R_n}} \, V_\infty^3
-\label{eq:sutton_graves}
+\label{eq:sutton_graves_methodology}
 \end{equation}
 where $k$ is a gas-specific constant, $\rho_\infty$ is the freestream density, $R_n$ is the nose radius, and $V_\infty$ is the flight velocity. This correlation is used both for initial thermal loading estimates and as a validation benchmark against DSMC results.
 
 \paragraph{Step 5: PINN Flow Field Refinement (A7).}
-The Physics-Informed Neural Network enforces the Navier--Stokes residuals as a soft constraint in the loss function~\cite{raissi2019physics}:
+The Physics-Informed Neural Network enforces the Navier--Stokes residuals as a soft constraint in the loss function~\cite{raissi2019pinn}:
 \begin{equation}
 \mathcal{L} = \underbrace{\mathcal{L}_{\text{data}}}_{\text{DSMC samples}} + \lambda_{\text{PDE}} \underbrace{\mathcal{L}_{\text{PDE}}}_{\text{NS residuals}}
 \label{eq:pinn_loss}
@@ -76,7 +76,7 @@ where $\mathcal{L}_{\text{data}}$ penalizes deviation from DSMC surface data and
 The MoP surrogate model approximates the mapping from design variables to performance metrics. The Genetic Algorithm (GA) queries the MoP surrogate to explore the design space, avoiding the computational cost of repeated DSMC evaluations. The optimization cost function is:
 \begin{equation}
 J = w_\beta \left(\frac{\beta_{\text{calc}} - \beta_{\text{target}}}{10}\right)^2 + \sum_{i} w_i \, \mathbb{1}\!\left[y_i^{(\text{pred})} > y_i^{(\text{limit})}\right] \cdot 10^{15}
-\label{eq:cost_function}
+\label{eq:cost_function_optimization}
 \end{equation}
 where hard constraint violations (backface temperature $> 350$\,K, g-load $> 25g$) are penalized with $10^{15}$.
 
@@ -119,7 +119,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
  & Chemistry model & 5-species (N$_2$, O$_2$, NO, N, O) \\ \midrule
 \multirow{3}{*}{\textbf{Flight Conditions}} & $V_\infty$ & 2700\,m/s \\
  & $T_\infty$ & 270.0\,K \\
- & $n_\infty$ & $3.47 \times 10^{21}$\,/m$^3$ \\ \midrule
+ & $n_\infty$ & $1.45 \times 10^{22}$\,/m$^3$ \\ \midrule
 \multirow{3}{*}{\textbf{DoE (CCD)}} & Method & Face-Centered CCD \\
  & Samples ($N$) & 25 ($2^4 + 2 \times 4 + 1$) \\
  & Active variables & Diameter, Angle, Toroids, Nose \\ \midrule
@@ -252,8 +252,8 @@ The freestream conditions are prescribed to match the target trajectory point fo
 
 \begin{itemize}
     \item \textbf{Freestream Velocity ($v_{\infty}$):} 2700\,m/s (corresponding to Mach $\approx$ 10 at altitude)
-    \item \textbf{Number Density ($n$):} $3.47 \times 10^{21}$\,m$^{-3}$ (derived from atmospheric density $\rho \approx 1.67 \times 10^{-4}$\,kg/m$^3$ via $n = \rho N_A / M_{air}$)
-    \item \textbf{Freestream Temperature ($T_{\infty}$):} 265.7\,K (US Standard Atmosphere at 52\,km)
+    \item \textbf{Number Density ($n$):} $1.45 \times 10^{22}$\,m$^{-3}$ (derived from atmospheric density $\rho \approx 6.9674 \times 10^{-4}$\,kg/m$^3$ via $n = \rho N_A / M_{air}$)
+    \item \textbf{Freestream Temperature ($T_{\infty}$):} 270.65\,K (ISA 1975, code baseline)
     \item \textbf{Particle Weighting Factor ($f_{num}$):} $1.5 \times 10^{20}$ (configurable via \texttt{--fnum})
 \end{itemize}
 
@@ -373,13 +373,13 @@ where:
 \end{itemize}
 
 \subsubsection*{IRVE-3 Validation}
-For the IRVE-3 baseline configuration ($\rho_{\infty} = 1.67 \times 10^{-4}$\,kg/m$^3$, $R_N = 0.55$\,m, $V_{\infty} = 2700$\,m/s):
+For the IRVE-3 baseline configuration at the SPARTA baseline conditions ($\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$, $R_N = 0.55$\,m, $V_{\infty} = 2700$\,m/s):
 
 \begin{equation}
-    \dot{q}_{stag} = 1.7415 \times 10^{-4} \sqrt{\frac{1.67 \times 10^{-4}}{0.55}} \times 2700^3 \approx 19.0 \ \text{W/cm}^2
+    \dot{q}_{stag} = 1.7415 \times 10^{-4} \sqrt{\frac{6.9674 \times 10^{-4}}{0.55}} \times 2700^3 \approx 12.20 \ \text{W/cm}^2
 \end{equation}
 
-This is consistent with the IRVE-3 documented peak heat flux of $\sim$14\,W/cm$^2$, with the difference reflecting that the Sutton-Graves correlation is a conservative upper bound -- actual aeroheating is reduced by the HIAD's flared geometry and stand-off shock.
+This value is computed at the hardcoded Rapisarda baseline density, which is lower than the actual trajectory-integrated peak density. Rapisarda (2023) reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ (+6.26\% above the 14.36\,W/cm$^2$ flight measurement) and a Fay--Riddell CFD prediction of 13.83\,W/cm$^2$ (-3.69\% below flight)~\cite{rapisarda2023mdao}. The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure.
 
 \subsubsection*{Note on SPARTA Surface Energy}
 The raw SPARTA DSMC kinetic energy ($ke$) surface compute cannot be used directly as an absolute heat flux in W/m$^2$. SPARTA's \texttt{fix ave/surf} outputs kinetic energy per simulated particle per timestep per face element -- a simulation-internal unit that depends on $f_{num}$, timestep $dt$, and face area in a non-trivially-normalized way. It is retained only as a \textbf{relative shape-ranking signal} for the optimizer (comparing geometries against each other). For all absolute thermal calculations, the Sutton-Graves correlation is used.
@@ -881,7 +881,7 @@ The simulation domain is initialized with freestream particles injected from the
 
 \begin{itemize}
     \item \textbf{Velocity:} Directed flow at $v_{\infty} = 2700$\,m/s
-    \item \textbf{Temperature:} $T_{\infty} = 265.7$\,K
+    \item \textbf{Temperature:} $T_{\infty} = 270.65$\,K
     \item \textbf{Species Fractions:} N$_2$ (78\%), O$_2$ (21\%), NO (1\%) at freestream; dissociated species (N, O) generated through collisions in the shock layer
 \end{itemize}
 
@@ -981,7 +981,7 @@ The PINN is implemented using the DeepXDE library~\cite{lu2021deepxde} with the 
 \begin{table}[H]
     \centering
     \caption{PINN Architecture and Hyperparameters.}
-    \label{tab:pinn_architecture}
+    \label{tab:pinn_hyperparameters}
     \begin{tabular}{|l|l|}
         \hline
         \textbf{Component} & \textbf{Specification} \\ \hline
