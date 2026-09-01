@@ -19,18 +19,24 @@ package StellarOrion_Physics is
    --  Taylor series (reduced argument): Ln(X) for X > 0.
    --  Error < 1e-7 for 30 terms. Source: standard numerical analysis.
    function Ln (X : Float) return Float
-     with Pre => X > 0.0;
+      with Pre  => X > 0.0,
+           --  POST BOUND: Ln(X) for X in (0, Float'Last] is bounded by
+           --  Ln(Float'Last) ~ 88.7. The -1000..1000 range covers this with
+           --  >10 decades of headroom. Helps gnatprove prove Pow overflow.
+           Post => Ln'Result >= -1000.0
+                    and then Ln'Result <= 1000.0;
 
    --  Exponential function [dimensionless].
    --  Taylor series with squaring reduction: Exp(X) for any Float.
    --  Error < 1e-7 for 30 terms. Source: standard numerical analysis.
-   function Exp (X : Float) return Float;
+   function Exp (X : Float) return Float
+     with Pre => abs X <= 700.0;
 
    --  SPARK-safe power: X^A = Exp(A * Ln(X)) for X > 0.
    --  Used by Fay-Riddell for (rho*mu)^0.4 and (rho*mu)^0.1.
    --  Source: Fay & Riddell (1958); Rapisarda (2023) Eq 3.82
-   function Pow (X : Float; A : Float) return Float
-     with Pre => X > 0.0;
+    function Pow (X : Float; A : Float) return Float
+      with Pre => X > 0.0 and then abs A <= 100.0;
 
    -- -----------------------------------------------------------------
    --  Rarefied Gas Dynamics
@@ -318,16 +324,16 @@ package StellarOrion_Physics is
       Velocity_Ms   : Float;
       Mach          : Float;
       Wall_Temp_K   : Float) return Float
-     with Pre  => Density_Kgm3 >= 0.0
-                   and Density_Kgm3 <= 1.0e4
-                   and Nose_Radius_M >= 1.0e-4
-                   and Nose_Radius_M <= 100.0
-                   and Velocity_Ms >= 0.0
-                   and Velocity_Ms <= 1.0e5
-                   and Mach >= 0.0
-                   and Mach <= 100.0
-                   and Wall_Temp_K >= 200.0
-                   and Wall_Temp_K <= 5000.0,
+      with Pre  => Density_Kgm3 >= 0.0
+                    and Density_Kgm3 <= 1.0e4
+                    and Nose_Radius_M >= 1.0e-4
+                    and Nose_Radius_M <= 100.0
+                    and Velocity_Ms >= 0.0
+                    and Velocity_Ms <= 1.0e5
+                    and Mach > 0.0
+                    and Mach <= 100.0
+                    and Wall_Temp_K >= 200.0
+                    and Wall_Temp_K <= 5000.0,
            Post => Fay_Riddell_Heat'Result >= 0.0;
 
    --  Radiative equilibrium surface temperature [K].
