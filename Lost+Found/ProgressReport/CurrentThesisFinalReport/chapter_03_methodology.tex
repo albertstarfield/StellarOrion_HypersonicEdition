@@ -412,8 +412,8 @@ The framework supports multiple TPS material presets as summarized in Table~\ref
         \hline
         \textbf{Material} & \textbf{$\rho$ (kg/m$^3$)} & \textbf{$C_p$ (J/kg$\cdot$K)} & \textbf{$\epsilon$} & \textbf{Application} \\ \hline
         Nicalon SiC & 1468 & 1100 & 0.75 & Gen-2 HIAD TPS \\ \hline
-        Pyrogel XTE & 200 & 1000 & 0.90 & FTPS blanket insulation \\ \hline
-        Kapton & 1420 & 1090 & 0.85 & Polyimide film layers \\ \hline
+        Pyrogel XTE & 200 & 1000 & 0.85 & FTPS blanket insulation \\ \hline
+        Kapton & 1420 & 1090 & 0.70 & Polyimide film layers \\ \hline
         Multi-layer (stack) & -- & -- & -- & Combined FTPS stack \\ \hline
     \end{tabular}
 \end{table}
@@ -432,7 +432,7 @@ DSMC simulations produce inherently noisy data due to the stochastic nature of p
 \end{enumerate}
 
 \subsection{PINN Governing Equations}
-The PINN, implemented using DeepXDE~\cite{lu2021deepxde}, solves the 2D Compressible Navier--Stokes equations using automatic differentiation. The network $\mathcal{N}(x, y) \to (\rho, u, v, T, p)$ is constrained by the following residuals:
+The PINN, implemented using DeepXDE~\cite{lu2021deepxde}, solves the 2D Compressible Navier--Stokes equations using automatic differentiation. The network $\mathcal{N}(x, y) \to (\rho, T, u)$ is constrained by the following residuals:
 
 \subsubsection*{Continuity Equation (Axisymmetric)}
 \begin{equation}
@@ -477,7 +477,7 @@ The use of continuum Navier--Stokes equations in the PINN is an intentional prag
 \end{enumerate}
 
 \subsection{Network Architecture}
-The PINN approximates the flow field mapping $\mathcal{N}: \mathbb{R}^2 \to \mathbb{R}^5$ using a fully-connected feedforward neural network (FNN). The architecture is:
+The PINN approximates the flow field mapping $\mathcal{N}: \mathbb{R}^2 \to \mathbb{R}^3$ using a fully-connected feedforward neural network (FNN). The architecture is:
 
 \begin{table}[H]
     \centering
@@ -546,7 +546,7 @@ The checkpoint exchange between SPARTA and the PINN proceeds through the followi
     
     \item \textbf{Anchor Point Creation:} The parsed and subsampled data points serve as \textit{anchor points} $\mathbf{X}_{anchors}$ for the PINN. These are passed to DeepXDE as observation boundary conditions via \texttt{PointSetBC}, which adds a data-matching residual to the loss function:
     \begin{equation}
-        \mathcal{L}_{data} = \frac{1}{N_{obs}} \sum_{k=1}^{N_{obs}} \sum_{m=1}^{5} \big|\hat{y}_m(\mathbf{x}_k) - y_m^{obs}(\mathbf{x}_k)\big|^2
+        \mathcal{L}_{data} = \frac{1}{N_{obs}} \sum_{k=1}^{N_{obs}} \sum_{m=1}^{3} \big|\hat{y}_m(\mathbf{x}_k) - y_m^{obs}(\mathbf{x}_k)\big|^2
     \end{equation}
     where $\hat{y}_m$ is the PINN prediction for component $m$ at observation point $\mathbf{x}_k$, and $y_m^{obs}$ is the corresponding SPARTA value.
 \end{enumerate}
@@ -558,7 +558,7 @@ The PINN employs a two-stage training strategy to decouple data fitting from phy
 During the first half of training ($N_{iter}/2$ iterations), only the observational data loss is active. The PDE residuals are suppressed by setting their loss weights to zero:
 
 \begin{equation}
-    \mathcal{L}^{(1)} = \underbrace{0 \cdot \mathcal{L}_{cont} + 0 \cdot \mathcal{L}_{mom,x} + 0 \cdot \mathcal{L}_{mom,y} + 0 \cdot \mathcal{L}_{EOS} + 0 \cdot \mathcal{L}_{energy}}_{\text{PDE terms (disabled)}} + \sum_{m=1}^{5} 1.0 \cdot \mathcal{L}_{data,m}
+    \mathcal{L}^{(1)} = \underbrace{0 \cdot \mathcal{L}_{cont} + 0 \cdot \mathcal{L}_{mom,x} + 0 \cdot \mathcal{L}_{mom,y} + 0 \cdot \mathcal{L}_{EOS} + 0 \cdot \mathcal{L}_{energy}}_{\text{PDE terms (disabled)}} + \sum_{m=1}^{3} 1.0 \cdot \mathcal{L}_{data,m}
 \end{equation}
 
 This stage trains the network to reproduce the SPARTA observation data without physics constraints, allowing rapid initial convergence. The learning rate is $\eta_1 = 10^{-3}$.
@@ -567,7 +567,7 @@ This stage trains the network to reproduce the SPARTA observation data without p
 During the second half of training, the PDE residual weights are activated at $\lambda_{PDE} = 10^{-4}$, while data weights remain at $1.0$:
 
 \begin{equation}
-    \mathcal{L}^{(2)} = \sum_{i=1}^{5} \lambda_{PDE} \cdot \mathcal{L}_{PDE,i} + \sum_{m=1}^{5} 1.0 \cdot \mathcal{L}_{data,m}
+    \mathcal{L}^{(2)} = \sum_{i=1}^{5} \lambda_{PDE} \cdot \mathcal{L}_{PDE,i} + \sum_{m=1}^{3} 1.0 \cdot \mathcal{L}_{data,m}
 \end{equation}
 
 The learning rate is reduced to $\eta_2 = 5 \times 10^{-4}$ for fine-tuning. The complete loss weight vector is:
@@ -585,10 +585,8 @@ The learning rate is reduced to $\eta_2 = 5 \times 10^{-4}$ for fine-tuning. The
         $\mathcal{L}_{EOS}$ (Equation of State) & 0 & $10^{-4}$ \\ \hline
         $\mathcal{L}_{energy}$ (Energy) & 0 & $10^{-4}$ \\ \hline
         $\mathcal{L}_{data,\rho}$ (Density data) & 1.0 & 1.0 \\ \hline
-        $\mathcal{L}_{data,u}$ ($u$-velocity data) & 1.0 & 1.0 \\ \hline
-        $\mathcal{L}_{data,v}$ ($v$-velocity data) & 1.0 & 1.0 \\ \hline
         $\mathcal{L}_{data,T}$ (Temperature data) & 1.0 & 1.0 \\ \hline
-        $\mathcal{L}_{data,p}$ (Pressure data) & 1.0 & 1.0 \\ \hline
+        $\mathcal{L}_{data,u}$ ($u$-velocity data) & 1.0 & 1.0 \\ \hline
     \end{tabular}
 \end{table}
 
