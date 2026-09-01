@@ -123,13 +123,13 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \multirow{3}{*}{\textbf{DoE (CCD)}} & Method & Face-Centered CCD \\
  & Samples ($N$) & 25 ($2^4 + 2 \times 4 + 1$) \\
  & Active variables & Diameter, Angle, Toroids, Nose \\ \midrule
-\multirow{6}{*}{\textbf{PINN (DeepXDE)}} & Architecture & FNN [2] + [128] $\times$ 5 + [5] \\
+\multirow{6}{*}{\textbf{PINN (DeepXDE)}} & Architecture & FNN [2] + [64] $\times$ 3 + [3] \\
  & Activation & tanh \\
  & Learning rate (Stage 1) & $1 \times 10^{-3}$ \\
  & Learning rate (Stage 2) & $5 \times 10^{-4}$ \\
  & Iterations & $\max(2000, \min(4000, \text{steps} \times 2))$ \\
  & PDE collocation points & 2500 (domain) + 500 (boundary) \\ \midrule
-\multirow{4}{*}{\textbf{MoP (PyTorch)}} & Architecture & MLP [n $\to$ 128 $\to$ 128 $\to$ 8] \\
+\multirow{4}{*}{\textbf{MoP (PyTorch)}} & Architecture & MLP [n $\to$ 64 $\to$ 64 $\to$ 64 $\to$ 1] \\
  & Activation & ReLU \\
  & Learning rate & 0.005 \\
  & Epochs & 500 (early stop at loss $< 10^{-6}$) \\ \midrule
@@ -486,13 +486,13 @@ The PINN approximates the flow field mapping $\mathcal{N}: \mathbb{R}^2 \to \mat
     \begin{tabular}{|l|l|}
         \hline
         \textbf{Parameter} & \textbf{Value} \\ \hline
-        Input dimension & 2 $(x, y)$ \\ \hline
-        Hidden layers & 5 \\ \hline
-        Neurons per layer & 128 \\ \hline
+        Input dimension & 2 $(x, r)$ \\ \hline
+        Hidden layers & 3 \\ \hline
+        Neurons per layer & 64 \\ \hline
         Activation function & $\tanh$ \\ \hline
-        Weight initialization & Glorot uniform \\ \hline
-        Output dimension & 5 $(\rho, u, v, T, p)$ \\ \hline
-        Total trainable parameters & $2 \times 128 + 4 \times 128^2 + 5 \times 128 + 5 \approx 67{,}000$ \\ \hline
+        Weight initialization & Glorot normal \\ \hline
+        Output dimension & 3 $(\rho, T, u)$ \\ \hline
+        Total trainable parameters & $2 \times 64 + 3 \times 64^2 + 3 \times 64 + 3 \approx 12{,}600$ \\ \hline
     \end{tabular}
 \end{table}
 
@@ -938,8 +938,8 @@ The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012
     \begin{tabular}{|l|c|c|c|}
         \hline
         \textbf{Parameter} & \textbf{Flight Data} & \textbf{Simulation} & \textbf{Status} \\ \hline
-        Peak Heat Flux ($\dot{q}$) & 13.8 W/cm$^2$ & 14.36 W/cm$^2$ & $\checkmark$ Calibrated \\ \hline
-        Total Heat Load ($Q$) & 188 J/cm$^2$ & 195.06 J/cm$^2$ & $\checkmark$ Calibrated \\ \hline
+        Peak Heat Flux ($\dot{q}$) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & $\checkmark$ Calibrated \\ \hline
+        Total Heat Load ($Q$) & 195.06 J/cm$^2$ & 195.17 J/cm$^2$ & $\checkmark$ Calibrated \\ \hline
         Peak Deceleration & 19.7$g$ & 20.2$g$ & $\checkmark$ Baseline \\ \hline
         Drag Coefficient ($C_d$) & 1.47 & $\approx$ 1.47 & $\checkmark$ Verified \\ \hline
     \end{tabular}
@@ -986,12 +986,12 @@ The PINN is implemented using the DeepXDE library~\cite{lu2021deepxde} with the 
         \hline
         \textbf{Component} & \textbf{Specification} \\ \hline
         Framework & DeepXDE (v1.x) + PyTorch backend \\ \hline
-        Input dimension & 4 ($x, y, z, t$ or spatial coordinates) \\ \hline
-        Output dimension & 5 ($\rho, u, v, w, T$) \\ \hline
-        Hidden layers & 5 \\ \hline
-        Neurons per layer & 128 \\ \hline
+        Input dimension & 2 $(x, r)$ — axisymmetric \\ \hline
+        Output dimension & 3 $(\rho, T, u)$ \\ \hline
+        Hidden layers & 3 \\ \hline
+        Neurons per layer & 64 \\ \hline
         Activation function & $\tanh$ \\ \hline
-        Weight initialization & Glorot uniform \\ \hline
+        Weight initialization & Glorot normal \\ \hline
         Total parameters & $\mathcal{O}(10^5)$ \\ \hline
     \end{tabular}
 \end{table}

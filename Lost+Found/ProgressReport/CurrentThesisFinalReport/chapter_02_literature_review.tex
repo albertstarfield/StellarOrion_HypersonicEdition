@@ -274,7 +274,7 @@ Historically, TPS has been synonymous with rigid architectures, such as tiles, b
         \includegraphics[width=0.9\linewidth]{figures/FigureTPSType0.png}
         \vspace{0.3em}
         
-        {\small \textbf{(a)} First Type Description}
+        {\small \textbf{(a)} Ablative TPS -- charring ablator}
         \label{fig:tps_type0}
     \end{minipage}
     \hfill
@@ -283,7 +283,7 @@ Historically, TPS has been synonymous with rigid architectures, such as tiles, b
         \includegraphics[width=0.9\linewidth]{figures/FigureTPSType1.png}
         \vspace{0.3em}
         
-        {\small \textbf{(b)} Second Type Description}
+        {\small \textbf{(b)} Reusable Surface Insulation -- tile architecture}
         \label{fig:tps_type1}
     \end{minipage}
     
@@ -294,7 +294,7 @@ Historically, TPS has been synonymous with rigid architectures, such as tiles, b
         \includegraphics[width=0.9\linewidth]{figures/FigureTPSType2.png}
         \vspace{0.3em}
         
-        {\small \textbf{(c)} Third Type Description}
+        {\small \textbf{(c)} Hot Structures -- C/C or CMC nose cap}
         \label{fig:tps_type2}
     \end{minipage}
     \hfill
@@ -303,7 +303,7 @@ Historically, TPS has been synonymous with rigid architectures, such as tiles, b
         \includegraphics[width=0.9\linewidth]{figures/FigureTPSType3.png}
         \vspace{0.3em}
         
-        {\small \textbf{(d)} Fourth Type Description}
+        {\small \textbf{(d)} Flexible TPS -- HIAD inflatable stack}
         \label{fig:tps_type3}
     \end{minipage}
     
@@ -567,7 +567,7 @@ The Fay--Riddell equation, while physically complete, requires detailed knowledg
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/sutton_graves_parametric.png}
-    \caption{Parametric evaluation of the Sutton--Graves stagnation heat flux correlation (Eq.~\ref{eq:sutton_graves}). (Left) Variation of $\dot{q}_s$ with freestream velocity $V_{\infty}$ for nose radii $R_n = 0.1$--$3.0$~m, demonstrating the cubic velocity dependence. The IRVE-3 baseline condition ($R_n = 0.3$~m, $V_{\infty} \approx 10.5$~km/s) is highlighted. (Right) Variation of $\dot{q}_s$ with nose radius at fixed Mach numbers, illustrating the $1/\sqrt{R_n}$ scaling that motivates the blunt-body design philosophy.}
+    \caption{Parametric evaluation of the Sutton--Graves stagnation heat flux correlation (Eq.~\ref{eq:sutton_graves}). (Left) Variation of $\dot{q}_s$ with freestream velocity $V_{\infty}$ for nose radii $R_n = 0.1$--$3.0$~m, demonstrating the cubic velocity dependence. The IRVE-3 baseline condition ($R_n = 0.55$~m, $V_{\infty} = 2.7$~km/s) is highlighted. (Right) Variation of $\dot{q}_s$ with nose radius at fixed Mach numbers, illustrating the $1/\sqrt{R_n}$ scaling that motivates the blunt-body design philosophy.}
     \label{fig:sutton_graves_parametric}
 \end{figure}
 
@@ -1133,7 +1133,7 @@ Unlike finite-difference methods, automatic differentiation (AD) computes exact 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/pinn_architecture.png}
-    \caption{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $ to flow variables $ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring in a two-stage training strategy.}
+    \caption{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $\mathbf{x} = (x, r)$ to flow variables $(\rho, u, v, T, p)$ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring in a two-stage training strategy.}
     \label{fig:pinn_architecture}
 \end{figure}
 
@@ -1209,7 +1209,7 @@ The flexible TPS skin is not a smooth conical surface. Due to the discrete toroi
     \label{eq:scallop_deflection}
 \end{equation}
 
-\noindent where $\xi \in [0, 1]$ is a skin tension factor that depends on internal inflation pressure and skin material stiffness. This scalloped geometry generates localized flow separation and reattachment patterns that significantly amplify the peak stagnation heating at the toroid crests, as discussed in Section~2.4.
+\noindent where $\xi \in [0, 1]$ is a skin tension factor that depends on internal inflation pressure and skin material stiffness. This scalloped geometry generates localized flow separation and reattachment patterns that significantly amplify the peak stagnation heating at the toroid crests, as discussed in Section~2.5.
 
 \begin{figure}[htbp]
     \centering
@@ -1220,7 +1220,7 @@ The flexible TPS skin is not a smooth conical surface. Due to the discrete toroi
 
 \subsection{IRVE-3 Baseline and Rapisarda Material Configuration}
 
-The IRVE-3 flight experiment (2012) demonstrated the first successful deployment of a 3.0~m HIAD at Mach~10+ re-entry conditions, achieving a peak deceleration of 19.7~g and a peak stagnation heat flux of 13.8~W/cm$^2$ \cite{NASA2013TP4012, Lau2013}. The original IRVE-3 TPS stack consisted of separate inner and outer thermal protection layers with distinct material compositions: an inner layer of Pyrogel\texttrademark\ XTE aerogel blanket for thermal insulation, and an outer layer of Kapton\texttrademark\ polyimide film for aerodynamic skin integrity \cite{dillman2015irve3}.
+The IRVE-3 flight experiment (2012) demonstrated the first successful deployment of a 3.0~m HIAD at Mach~10+ re-entry conditions, achieving a peak deceleration of 19.7~g and a peak stagnation heat flux of 14.36~W/cm$^2$ \cite{NASA2013TP4012, Lau2013}. The original IRVE-3 TPS stack consisted of separate inner and outer thermal protection layers with distinct material compositions: an inner layer of Pyrogel\texttrademark\ XTE aerogel blanket for thermal insulation, and an outer layer of Kapton\texttrademark\ polyimide film for aerodynamic skin integrity \cite{dillman2015irve3}.
 
 Rapisarda \cite{rapisarda2023mdao} subsequently developed a multidisciplinary design analysis and optimization (MDAO) framework that modified and optimized this original IRVE-3 material configuration. The Rapisarda formulation introduces a unified TPS material model with three configurations:
 
@@ -1230,7 +1230,7 @@ Rapisarda \cite{rapisarda2023mdao} subsequently developed a multidisciplinary de
     \item \textbf{Flexible TPS:} 15~mm Pyrogel\texttrademark\ XTE + 1.5~mm Kapton\texttrademark\ ($\rho = 300$ kg/m$^3$, $C_p = 1500$ J/(kg$\cdot$K), $\varepsilon = 0.82$).
 \end{itemize}
 
-\noindent These configurations represent optimized material stackups that account for the coupled thermal--structural response of the inflated aeroshell. The Rapisarda model is used as the baseline for all simulations in this study, calibrated against the IRVE-3 flight data (peak heat flux 14.36~W/cm$^2$ model vs.\ 13.8~W/cm$^2$ flight; total heat load 195.06~J/cm$^2$ model vs.\ 188~J/cm$^2$ flight).
+\noindent These configurations represent optimized material stackups that account for the coupled thermal--structural response of the inflated aeroshell. The Rapisarda model is used as the baseline for all simulations in this study, calibrated against the IRVE-3 flight data (peak heat flux 13.83~W/cm$^2$ Fay--Riddell model vs.\ 14.36~W/cm$^2$ flight; total heat load 195.17~J/cm$^2$ model vs.\ 195.06~J/cm$^2$ flight).
 
 \begin{figure}[htbp]
     \centering
@@ -1396,11 +1396,11 @@ The literature review establishes the theoretical foundations across six pillars
     
     \item \textbf{Kinetic Theory and DSMC:} The Boltzmann equation provides the fundamental description of rarefied gas dynamics. The DSMC method, incorporating the Variable Soft Sphere collision model and mean free path formulation, solves the Boltzmann equation stochastically and is the appropriate tool for the transitional regime ($Kn \approx 0.03$) encountered during HIAD re-entry at 52~km altitude (Sections 2.8--2.11).
     
-    \item \textbf{Machine Learning for CFD:} Physics-Informed Neural Networks embed governing PDEs into the loss function, enabling mesh-free solution refinement and gap-filling from sparse DSMC data (Section 2.14).
+    \item \textbf{Machine Learning for CFD:} Physics-Informed Neural Networks embed governing PDEs into the loss function, enabling mesh-free solution refinement and gap-filling from sparse DSMC data (Section 2.13).
     
-    \item \textbf{Parametric HIAD Geometry:} The HIAD OML is parameterized by five design variables ($D$, $\theta_c$, $N_t$, $r_{\text{tor}}$, $R_N$) with two governing equations: the structural integration constraint (Eq.~\ref{eq:structural_integration}) and the toroid radius derivation (Eq.~\ref{eq:toroid_radius}). The Rapisarda MDAO framework provides an optimized adaptation of the original IRVE-3 material configuration (Section 2.15).
+    \item \textbf{Parametric HIAD Geometry:} The HIAD OML is parameterized by five design variables ($D$, $\theta_c$, $N_t$, $r_{\text{tor}}$, $R_N$) with two governing equations: the structural integration constraint (Eq.~\ref{eq:structural_integration}) and the toroid radius derivation (Eq.~\ref{eq:toroid_radius}). The Rapisarda MDAO framework provides an optimized adaptation of the original IRVE-3 material configuration (Section 2.14).
     
-    \item \textbf{Optimization Theory:} Multidisciplinary design optimization (MDO) combined with Latin Hypercube sampling, surrogate modelling (MoP), and genetic algorithm search provides the theoretical framework for navigating the coupled aerodynamic--thermal--structural design space (Section 2.16).
+    \item \textbf{Optimization Theory:} Multidisciplinary design optimization (MDO) combined with Latin Hypercube sampling, surrogate modelling (MoP), and genetic algorithm search provides the theoretical framework for navigating the coupled aerodynamic--thermal--structural design space (Section 2.15).
 \end{enumerate}
 
 \noindent These foundations justify the methodology adopted in Chapter~3: a parametric HIAD geometry engine based on Rapisarda's modified IRVE-3 configuration, DSMC-based simulation (SPARTA) for the primary flow field computation, PINN refinement for continuous field reconstruction, and genetic algorithm optimization for survivability maximization.
