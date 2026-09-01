@@ -40,7 +40,7 @@ The specific objectives are:
 \begin{enumerate}
     \item \textbf{Parametric Geometry Generation:} To develop an automated 3D CAD pipeline using CadQuery for generating HIAD profiles based on IRVE-3 specifications, enabling parametric variation of toroid count, cone angle, nose radius, and aeroshell diameter for design space exploration.
 
-    \item \textbf{DSMC Aerothermal Analysis:} To perform high-fidelity rarefied gas dynamics simulations using the SPARTA DSMC solver, capturing the Boltzmann-level molecular collisions and transport phenomena in the transitional flow regime ($0.01 < Kn < 10$) relevant to HIAD reentry at 50--60 km altitude.
+    \item \textbf{DSMC Aerothermal Analysis:} To perform high-fidelity rarefied gas dynamics simulations using the SPARTA DSMC solver, capturing the Boltzmann-level molecular collisions and transport phenomena in the transitional flow regime ($0.01 < Kn < 1$) relevant to HIAD reentry at 50--60 km altitude.
 
     \item \textbf{Knudsen Number Field Mapping:} To analyze the spatial distribution of the Knudsen number across the HIAD surface and surrounding flow field, identifying continuum ($Kn < 0.01$), transitional ($0.01 < Kn < 1$), and free-molecular ($Kn > 1$) regions to characterize the flow physics governing aerothermal loads.
 
@@ -69,7 +69,7 @@ The present work makes the following novel contributions to the field of hyperso
 \begin{enumerate}
     \item \textbf{First Integrated DSMC-PINN-Optimization Framework for HIAD:} This study presents the first computational framework that couples automated parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics (SPARTA), Physics-Informed Neural Network refinement (DeepXDE), and surrogate-assisted genetic algorithm optimization in a unified pipeline for HIAD survivability analysis.
 
-    \item \textbf{DSMC-Based Design Space Exploration:} Unlike prior studies limited to continuum CFD (RANS/LES), this framework employs particle-based DSMC to accurately capture the transitional flow regime ($0.01 < Kn < 10$) encountered at reentry altitudes above 50 km, enabling physically correct aerothermal load prediction for inflatable decelerators.
+    \item \textbf{DSMC-Based Design Space Exploration:} Unlike prior studies limited to continuum CFD (RANS/LES), this framework employs particle-based DSMC to accurately capture the transitional flow regime ($0.01 < Kn < 1$) encountered at reentry altitudes above 50 km, enabling physically correct aerothermal load prediction for inflatable decelerators.
 
     \item \textbf{PINN as DSMC Post-Processor:} The application of Physics-Informed Neural Networks as a smoothing and interpolation layer for noisy DSMC particle data is novel in the context of HIAD aerothermal analysis. The two-stage training protocol (data-only followed by data+PDE) provides a physics-consistent continuous field from discrete particle simulations.
 
