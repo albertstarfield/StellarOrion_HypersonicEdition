@@ -1048,10 +1048,10 @@ class Api:
         #   where C_sg = 1.7415e-4  (Earth air, SI units)
         #
         # IRVE-3 VALIDATION (see DERIVATION.md §3):
-        #   rho_inf ≈ 1.67e-4 kg/m³ (52 km alt), R_nose = 0.55 m, V = 2700 m/s
-        #   → q_stag ≈ 1.90e5 W/m² = 19.0 W/cm²
-        #   IRVE-3 documented peak: ~14 W/cm²  (Sutton-Graves is a conservative
-        #   upper bound; actual heating is reduced by the HIAD flared geometry)
+        #   rho_inf ≈ 6.9674e-4 kg/m³ (code baseline), R_nose = 0.55 m, V = 2700 m/s
+        #   → q_stag ≈ 1.22e5 W/m² = 12.20 W/cm²
+        #   IRVE-3 flight measurement: 14.36 W/cm². Rapisarda (2023) trajectory-integrated
+        #   SG peak: 15.26 W/cm², Fay-Riddell CFD: 13.83 W/cm² (Table 4.10)
         #
         # APPLICABILITY:
         #   Valid for: Earth atmosphere, blunt-body nose cap, V = 3–12 km/s,

@@ -6,13 +6,24 @@
 --  Refs:
 --    [TR-376]  Sutton, K. & Graves, R. A. "A General Stagnation-Point
 --              Convective Heating Equation for Arbitrary Gas Mixtures,"
---              NASA TR R-376, 1972.
+--              NASA TR R-376, 1971.
+--              [Citation: https://ntrs.nasa.gov/citations/19720003329]
+--              [Citation: https://hdl.handle.net/2060/19720003329]
 --    [CODATA]  CODATA 2018 recommended values (https://physics.nist.gov)
 --    [Bird94]  Bird, G. A. "Molecular Gas Dynamics and the Direct
 --              Simulation of Gas Flows," Oxford Univ. Press, 1994.
 --    [Rap23]   Rapisarda, V. "Multidisciplinary Design Analysis and
 --              Optimization of HIAD," Ph.D. thesis, 2023.
 --    [ISA]     International Standard Atmosphere, ISO 2533:1975.
+--              [Citation: https://cdn.standards.iteh.ai/samples/7472/]
+--    [FR58]    Fay, J.A. & Riddell, F.R. "Theory of Stagnation Point
+--              Heat Transfer in Dissociated Air," J. Aerosp. Sci.
+--              25(2), 73-85, 1958.
+--              [Citation: https://doi.org/10.2514/8.7517]
+--    [A06]     Anderson, J.D. "Hypersonic and High-Temperature Gas
+--              Dynamics," 2nd ed., AIAA Education Series, 2006.
+--    [Suth1893] Sutherland, W. "The Viscosity of Gases and Molecular
+--               Force," Phil. Mag. 36(5), 507-531, 1893.
 
 package StellarOrion_Types is
    pragma SPARK_Mode (On);
@@ -189,7 +200,11 @@ package StellarOrion_Types is
       Diameter_M      : Diameter_Range    := 3.0;
       Angle_Deg       : Float    := 60.0;
       Nose_Radius_M   : Nose_Radius_Range := 0.55;
-      Toroid_Count    : Positive := 6;
+       Toroid_Count    : Positive := 6;
+        --  FLIGHT IRVE-3 USED 7 TOROIDS (Rapisarda 2023 Table 4.1):
+        --  The MDAO optimization model used 6 toroids, but the actual
+        --  flight vehicle had 7 toroids. Use --toroids 7 to match flight.
+        --  Default 6 matches the MDAO model for direct comparison.
        Toroid_Radius_M : Float    := 0.135;
         --  Outer_Radius_M: Outer shoulder toroid radius [m].
         --  EQUIVALENT TO: Rapisarda 2023 Table 4.1 "Outer Toroid Radius" = 0.0508 m.

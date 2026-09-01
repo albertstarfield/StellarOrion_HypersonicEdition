@@ -52,7 +52,7 @@
 
 3. **Mean element heat flux is 3.9% LOWER for scalloped** — the scalloped geometry redistributes thermal load across more area (larger R_max), reducing per-element average despite higher total surface area.
 
-4. **Sutton-Graves stagnation heat flux (12.20 W/cm²)** is within 15% of the Rapisarda IRVE-3 reference (14.36 W/cm²). Difference is expected because SG uses a fixed nose radius (R_n) while the actual HIAD has a distributed stagnation region.
+4. **Sutton-Graves stagnation heat flux (12.20 W/cm²)** is 15% LOWER than the Rapisarda IRVE-3 reference (14.36 W/cm²). The SG=12.20 value is computed at HARDCODED Rapisarda baseline conditions (ρ=6.9674e-4, V=2700 m/s), NOT at actual trajectory conditions. At actual sim conditions (ISA ρ=7.696e-4 at 51.82 km, V=3379 m/s), TRUE SG ≈ 25.1 W/cm² (75% above flight = very conservative). See `Validation Sep 1, 2026.md` Sections R.10-R.11 for detailed analysis.
 
 5. **Peak G-load (16.83g) is below the 19.7g target** — the vehicle survives at this flight condition.
 
