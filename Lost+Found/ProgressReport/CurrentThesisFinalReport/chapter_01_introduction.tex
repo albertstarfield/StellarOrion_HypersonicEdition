@@ -125,7 +125,7 @@ The raw DSMC output is post-processed using a Physics-Informed Neural Network (P
 A Genetic Algorithm (GA) coupled with a PyTorch Multi-Layer Perceptron (MoP) surrogate model performs multi-objective optimization of the HIAD geometry. Latin Hypercube Sampling (LHS) generates the initial design population. The GA evaluates candidates using the MoP surrogate for rapid screening, with expensive SPARTA simulations reserved for elite candidates and final validation. The cost function balances ballistic coefficient, peak deceleration, backface temperature, and drag performance against user-defined targets.
 
 \subsection*{f. Validation and Analysis}
-The simulation results are validated against IRVE-3 flight data~\cite{rapisarda2023mdao} using the Sutton-Graves correlation. Key validation metrics include peak heat flux (13.8 W/cm$^2$ flight vs.~14.36 W/cm$^2$ model), total heat load (188 J/cm$^2$ flight vs.~195.06 J/cm$^2$ model), and peak deceleration (19.7$g$ flight vs.~20.2$g$ model). The final optimized design undergoes a high-fidelity SPARTA validation run \textit{without} PINN refinement to eliminate neural network bias.
+The simulation results are validated against IRVE-3 flight data~\cite{rapisarda2023mdao} using the Sutton-Graves correlation. Key validation metrics include peak heat flux (14.36\,W/cm$^2$ flight vs.~13.83\,W/cm$^2$ model), total heat load (195.06\,J/cm$^2$ flight vs.~195.17\,J/cm$^2$ model), and peak deceleration (19.7$g$ flight vs.~20.2$g$ model). The final optimized design undergoes a high-fidelity SPARTA validation run \textit{without} PINN refinement to eliminate neural network bias.
 
 \section{Thesis Outline}
 The structure of this thesis is arranged as follows. A brief description of each chapter is outlined below:
