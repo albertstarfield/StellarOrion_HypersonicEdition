@@ -1052,8 +1052,8 @@ The appropriate simulation method depends on the flow regime, characterized by t
     \textbf{Regime} & \textbf{$Kn$ Range} & \textbf{Method} & \textbf{Physical Description} \\ \hline
     Continuum & $< 0.001$ & RANS / NS & Molecular collisions dominate; continuum hypothesis valid \\ \hline
     Slip Flow & $0.001$--$0.01$ & NS + slip BC & Continuum with velocity/temperature slip at walls \\ \hline
-    Transitional & $0.01$--$0.1$ & DSMC & Molecular structure becomes important; NS equations degrade \\ \hline
-    Free Molecular & $> 0.1$ & DSMC & Molecule--wall collisions dominate; molecule--molecule collisions rare \\ \hline
+    Transitional & $0.01$--$1$ & DSMC & Molecular structure becomes important; NS equations degrade \\ \hline
+    Free Molecular & $> 1$ & DSMC & Molecule--wall collisions dominate; molecule--molecule collisions rare \\ \hline
     \end{tabular}
 \end{table}
 
