@@ -501,13 +501,13 @@ The forward pass computes:
     \hat{\mathbf{y}}(\mathbf{x}) = \mathbf{W}_6 \cdot \tanh\!\Big(\mathbf{W}_5 \cdot \tanh\!\big(\cdots \tanh(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1)\cdots\big) + \mathbf{b}_5\Big) + \mathbf{b}_6
 \end{equation}
 
-where $\mathbf{x} = (x, y)$ is the spatial coordinate and $\hat{\mathbf{y}} = (\hat{\rho}, \hat{u}, \hat{v}, \hat{T}, \hat{p})$ is the predicted flow field vector. All outputs are in normalized (dimensionless) form; physical units are recovered by multiplication with the scaling factors.
+where $\mathbf{x} = (x, r)$ is the spatial coordinate and $\hat{\mathbf{y}} = (\hat{\rho}, \hat{T}, \hat{u})$ is the predicted flow field vector (density, temperature, and axial velocity; the radial velocity $v$ and pressure $p$ are derived from the continuity equation and equation of state, respectively). All outputs are in normalized (dimensionless) form; physical units are recovered by multiplication with the scaling factors.
 
 \subsection{Normalization and Scaling}
 Before training, all physical quantities are non-dimensionalized using characteristic scales derived from the SPARTA data:
 
 \begin{equation}
-    \bar{\rho} = \frac{\rho}{\rho_{ref}}, \quad \bar{u} = \frac{u}{u_{ref}}, \quad \bar{v} = \frac{v}{u_{ref}}, \quad \bar{T} = \frac{T}{T_{ref}}, \quad \bar{p} = \frac{p}{p_{ref}}, \quad \bar{\mathbf{x}} = \frac{\mathbf{x}}{L_{ref}}
+    \bar{\rho} = \frac{\rho}{\rho_{ref}}, \quad \bar{T} = \frac{T}{T_{ref}}, \quad \bar{u} = \frac{u}{u_{ref}}, \quad \bar{\mathbf{x}} = \frac{\mathbf{x}}{L_{ref}}
 \end{equation}
 
 where the reference scales are computed from the SPARTA grid data:
@@ -651,13 +651,13 @@ The PINN refinement stage rests on the following formal assumptions:
         Learning rate $\eta$ & $10^{-3}$ & $5 \times 10^{-4}$ \\ \hline
         Optimizer & Adam & Adam \\ \hline
         Training iterations & $N_{iter}/2$ & $N_{iter} - N_{iter}/2$ \\ \hline
-        PDE loss weights & $[0, 0, 0, 0, 0]$ & $[10^{-4}] \times 5$ \\ \hline
-        Data loss weights & $[1.0] \times 5$ & $[1.0] \times 5$ \\ \hline
+        PDE loss weights & $[0, 0, 0]$ & $[10^{-4}] \times 3$ \\ \hline
+        Data loss weights & $[1.0] \times 3$ & $[1.0] \times 3$ \\ \hline
         Collocation points ($N_{dom}$) & 2500 & 2500 \\ \hline
         Boundary points ($N_{bnd}$) & 500 & 500 \\ \hline
         Anchor points ($N_{obs}$) & $\leq 5000$ (subsampled) & $\leq 5000$ \\ \hline
         Activation & $\tanh$ & $\tanh$ \\ \hline
-        Initialization & Glorot uniform & (continued from Stage 1) \\ \hline
+        Initialization & Glorot normal & (continued from Stage 1) \\ \hline
     \end{tabular}
 \end{table}
 
@@ -992,7 +992,7 @@ The PINN is implemented using the DeepXDE library~\cite{lu2021deepxde} with the 
         Neurons per layer & 64 \\ \hline
         Activation function & $\tanh$ \\ \hline
         Weight initialization & Glorot normal \\ \hline
-        Total parameters & $\mathcal{O}(10^5)$ \\ \hline
+        Total parameters & $\mathcal{O}(10^4)$ \\ \hline
     \end{tabular}
 \end{table}
 

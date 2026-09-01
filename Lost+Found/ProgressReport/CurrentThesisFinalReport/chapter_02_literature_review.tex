@@ -1133,7 +1133,7 @@ Unlike finite-difference methods, automatic differentiation (AD) computes exact 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/pinn_architecture.png}
-    \caption{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $\mathbf{x} = (x, r)$ to flow variables $(\rho, u, v, T, p)$ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring in a two-stage training strategy.}
+    \caption{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $\mathbf{x} = (x, r)$ to flow variables $(\rho, T, u)$ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring in a two-stage training strategy.}
     \label{fig:pinn_architecture}
 \end{figure}
 
@@ -1148,7 +1148,7 @@ PINNs have been applied to several areas relevant to this study:
     \item \textbf{Multi-fidelity fusion:} PINNs can combine low-fidelity (RANS) and high-fidelity (DSMC) data into a unified solution.
 \end{itemize}
 
-\noindent In this study, a PINN is implemented using the DeepXDE library \cite{lu2021deepxde} with a fully connected feedforward architecture consisting of 2 input features (radial and axial coordinates in the axisymmetric plane), 5 hidden layers of 128 neurons each with $\tanh$ activation, and 5 output features (velocity components, temperature, and pressure). The network is trained in two stages: first, pre-training on synthetic boundary condition data to establish the solution topology, and second, fine-tuning using sampled DSMC field data to correct statistical noise and fill spatial gaps. This two-stage protocol ensures the network satisfies the governing partial differential equations while remaining anchored to the physics captured by the particle simulation. The detailed training protocol and validation results are presented in Chapter~3.
+\noindent In this study, a PINN is implemented using the DeepXDE library \cite{lu2021deepxde} with a fully connected feedforward architecture consisting of 2 input features (axial and radial coordinates in the axisymmetric plane), 3 hidden layers of 64 neurons each with $\tanh$ activation, and 3 output features (density, temperature, and axial velocity). The network is trained in two stages: first, pre-training on synthetic boundary condition data to establish the solution topology, and second, fine-tuning using sampled DSMC field data to correct statistical noise and fill spatial gaps. This two-stage protocol ensures the network satisfies the governing partial differential equations while remaining anchored to the physics captured by the particle simulation. The detailed training protocol and validation results are presented in Chapter~3.
 
 \section{Parametric HIAD Geometry Modelling}
 
@@ -1381,7 +1381,7 @@ The HIAD design problem cannot be solved by engineering intuition alone for thre
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.80\textwidth]{figures/knudsen_regime_map.png}
-    \caption{Knudsen regime map as a function of altitude for the 3.0~m HIAD. The Knudsen number $Kn = \lambda / L$ determines the appropriate flow solver: continuum Navier--Stokes ($Kn < 0.01$), transitional DSMC ($0.01 < Kn < 10$), or free molecular ($Kn > 10$). At the IRVE-3 re-entry reference altitude of 52~km, the flow is in the transitional regime ($Kn \approx 0.03$), requiring DSMC simulation.}
+    \caption{Knudsen regime map as a function of altitude for the 3.0~m HIAD. The Knudsen number $Kn = \lambda / L$ determines the appropriate flow solver: continuum Navier--Stokes ($Kn < 0.001$), slip flow ($0.001 < Kn < 0.01$), transitional DSMC ($0.01 < Kn < 0.1$), or free molecular ($Kn > 0.1$). At the IRVE-3 re-entry reference altitude of 52~km, the flow is in the transitional regime ($Kn \approx 0.03$), requiring DSMC simulation.}
     \label{fig:knudsen_regime_map}
 \end{figure}
 
