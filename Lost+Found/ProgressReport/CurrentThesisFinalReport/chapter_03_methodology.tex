@@ -498,7 +498,7 @@ The PINN approximates the flow field mapping $\mathcal{N}: \mathbb{R}^2 \to \mat
 
 The forward pass computes:
 \begin{equation}
-    \hat{\mathbf{y}}(\mathbf{x}) = \mathbf{W}_6 \cdot \tanh\!\Big(\mathbf{W}_5 \cdot \tanh\!\big(\cdots \tanh(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1)\cdots\big) + \mathbf{b}_5\Big) + \mathbf{b}_6
+    \hat{\mathbf{y}}(\mathbf{x}) = \mathbf{W}_4 \cdot \tanh\!\Big(\mathbf{W}_3 \cdot \tanh\!\big(\mathbf{W}_2 \cdot \tanh(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2\big) + \mathbf{b}_3\Big) + \mathbf{b}_4
 \end{equation}
 
 where $\mathbf{x} = (x, r)$ is the spatial coordinate and $\hat{\mathbf{y}} = (\hat{\rho}, \hat{T}, \hat{u})$ is the predicted flow field vector (density, temperature, and axial velocity; the radial velocity $v$ and pressure $p$ are derived from the continuity equation and equation of state, respectively). All outputs are in normalized (dimensionless) form; physical units are recovered by multiplication with the scaling factors.
