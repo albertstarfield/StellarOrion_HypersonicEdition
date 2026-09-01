@@ -86,17 +86,21 @@ $$\boxed{\dot{q}_{stag} = C_{SG} \sqrt{\frac{\rho_\infty}{R_N}} \cdot V_\infty^3
 |---|---|---|
 | $\dot{q}_{stag}$ | Stagnation-point heat flux | W/m² |
 | $C_{SG}$ | Sutton-Graves constant (Earth air) | $1.7415 \times 10^{-4}$ |
-| $\rho_\infty$ | Freestream density | $\approx 1.67 \times 10^{-4}$ kg/m³ (52 km) |
+| $\rho_\infty$ | Freestream density | $\approx 6.9674 \times 10^{-4}$ kg/m³ (code baseline) |
 | $R_N$ | Nose radius | 0.55 m |
 | $V_\infty$ | Freestream velocity | 2700 m/s |
 
 **IRVE-3 Validation:**
 
-$$\dot{q}_{stag} = 1.7415 \times 10^{-4} \sqrt{\frac{1.67 \times 10^{-4}}{0.55}} \times 2700^3 \approx 1.90 \times 10^5 \ \text{W/m}^2 = 19.0 \ \text{W/cm}^2$$
+$$\dot{q}_{stag} = 1.7415 \times 10^{-4} \sqrt{\frac{6.9674 \times 10^{-4}}{0.55}} \times 2700^3 \approx 1.22 \times 10^5 \ \text{W/m}^2 = 12.20 \ \text{W/cm}^2$$
 
-This is consistent with the IRVE-3 documented peak heat flux of ~14 W/cm² (difference reflects
-that the Sutton-Graves correlation is a conservative upper bound — actual aeroheating is reduced by
-the HIAD's flared geometry and stand-off shock).
+This is compared against the IRVE-3 flight measurement of 14.36 W/cm². The difference reflects
+that our code uses a single-point baseline condition (ρ=6.9674e-4, V=2700), while the actual
+trajectory-integrated peak heating occurs at different conditions. Rapisarda (2023) reports
+the trajectory-integrated Sutton-Graves peak as 15.26 W/cm² (+6.26% above flight) and the
+Fay-Riddell CFD prediction as 13.83 W/cm² (-3.69% below flight) [Table 4.10]. The Fay-Riddell
+correlation is more physically accurate for HIAD geometries because it accounts for the actual
+shock layer structure, while Sutton-Graves assumes a spherical nose cap.
 
 **Applicability note:** Sutton-Graves is valid for:
 - Earth atmosphere, continuum and near-continuum flow ($\text{Kn} \ll 1$)
