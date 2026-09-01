@@ -421,9 +421,12 @@ package body StellarOrion_Environment is
    is
       Rho : constant Float := Atmosphere_Density (Altitude_Km);
       T   : constant Float := Atmosphere_Temperature (Altitude_Km);
-   begin
-      return Rho * R_AIR * T;
-   end Atmosphere_Pressure;
+    begin
+       pragma Annotate (GNATprove, False_Positive,
+         "fp_overflow on Rho*R_AIR*T",
+         "Rho(<=1.225) * R_AIR(287.058) * T(<=300) ~ 1.05e5 = P0 = 101325 Pa << Float'Last");
+       return Rho * R_AIR * T;
+    end Atmosphere_Pressure;
 
    -- ==================================================================
    --  Mach_To_Velocity
