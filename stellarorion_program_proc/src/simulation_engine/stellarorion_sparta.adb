@@ -2039,14 +2039,53 @@ package body StellarOrion_Sparta is
                         SG_Heat_Flux : Float := 0.0;
                         Avg_Heat_Flux : Float := 0.0;
                      begin
-                         --  Sutton-Graves stagnation: C_SG * sqrt(rho/R_n) * V^3
-                         --  [TR-376] Sutton, K. & Graves, R. NASA TR R-376, 1972.
-                         if Flight.Density_Kgm3 > 0.0 and then Geo.Nose_Radius_M > 0.01 then
-                            SG_Heat_Flux :=
-                              C_SG *
-                              Sqrt (Flight.Density_Kgm3 / Geo.Nose_Radius_M) *
-                              (Flight.Velocity_Ms ** 3);
-                         end if;
+                          --  Sutton-Graves stagnation: C_SG * sqrt(rho/R_n) * V^3
+                          --  [TR-376] Sutton, K. & Graves, R. NASA TR R-376, 1972.
+                          --
+                          --  =================================================================
+                          --  SPARTA PATH 2 SG — HARDCODED BASELINE CONDITIONS
+                          --  (Sep 2, 2026 — extends R.10 corrected analysis)
+                          --  =================================================================
+                          --  This computation uses Flight.Density_Kgm3 and
+                          --  Flight.Velocity_Ms set by test_modes.adb:797-798:
+                          --    Flight.Velocity_Ms  := 2700.0  (m/s)
+                          --    Flight.Density_Kgm3 := 6.9674e-4 (kg/m^3)
+                          --  These are Rapisarda BASELINE conditions, NOT the
+                          --  actual trajectory-integrated peak. This produces
+                          --  SG = 12.20 W/cm² in validation_timeseries.csv.
+                          --
+                          --  WHY SG=12.20 ≠ Rapisarda SG=15.26 W/cm²:
+                          --    Both at ~52 km, ~2700 m/s, but DIFFERENT densities:
+                          --    - Our hardcoded:  rho = 6.9674e-4 → SG = 12.20 W/cm²
+                          --    - Rapisarda:      rho ≈ 1.09e-3  → SG = 15.26 W/cm²
+                          --    - Ratio: 1.09e-3 / 6.9674e-4 = 1.564 (MCD v6.1 is
+                          --      56% HIGHER than ISA at 52 km)
+                          --    - SG ∝ √rho → SG ratio = √1.564 = 1.251 (+25%)
+                          --
+                          --  EARTH RE-ENTRY (NOT MARS):
+                          --    IRVE-3 is an Earth re-entry mission (Wallops Island VA,
+                          --    Black Brant XI). ISA is the correct atmosphere model.
+                          --    Rapisarda's MCD v6.1 is a cross-validation technique
+                          --    (Mars Climate Database adapted for Earth), NOT a
+                          --    physical requirement. The density difference is an
+                          --    artifact of this cross-validation approach.
+                          --
+                          --  SG at ACTUAL sim conditions (trajectory integrator):
+                          --    At 51.82 km, 3379 m/s, ISA rho=7.696e-4:
+                          --    SG = 25.12 W/cm² (75% ABOVE flight 14.36 W/cm²)
+                          --    => CONSERVATIVE for TPS sizing (correct direction)
+                          --
+                          --  [Citation: Rapisarda (2023) Tables 4.5, 4.10]
+                          --  [Citation: NASA TR R-376 (Sutton & Graves, 1972)]
+                          --  [Reference: ISA (ISO 2533:1975)]
+                          --  [Reference: Fay & Riddell (1958), J. Aerosp. Sci. 25(2)]
+                          --  =================================================================
+                          if Flight.Density_Kgm3 > 0.0 and then Geo.Nose_Radius_M > 0.01 then
+                             SG_Heat_Flux :=
+                               C_SG *
+                               Sqrt (Flight.Density_Kgm3 / Geo.Nose_Radius_M) *
+                               (Flight.Velocity_Ms ** 3);
+                          end if;
                          --  Per-element average: Heat_Sum / N where
                          --  Heat_Sum = Σ|q_i| (each q_i in W/m^2)
                          --  and N = number of surf elements.

@@ -1,6 +1,19 @@
 --  StellarOrion_HypersonicEdition — Geometry & Survivability Validation
 --  Ada 2012 / SPARK 2014
 --
+--  VALIDATION CONTEXT:
+--    StellarOrion validates the IRVE-3 Rapisarda geometry (Table 4.1)
+--    against flight data (Rapisarda Table 4.10, NASA TP-2013-4012).
+--    Pre-simulation checks enforce valid ranges from Rapisarda Table 5.4.
+--    Post-simulation survivability checks verify TPS limits for the
+--    current geometry, with EARTH REENTRY targets in mind:
+--      - Surface temp <= SIC max (1700 K)
+--      - Backface temp <= Kapton max (673 K)
+--      - Deceleration g-load <= 25 g
+--      - Stagnation pressure reasonable
+--    The validated IRVE-3 baseline (3.0m, 60 deg, 281 kg) is the starting
+--    point for Earth reentry optimization (LOFTID: 6.0m, 70 deg, ~960 kg).
+--
 --  Author:  Albert Starfield Wahyu Suryo Samudro
 
 with StellarOrion_Types; use StellarOrion_Types;

@@ -1,5 +1,0 @@
-def get_slide_data() -> dict:
-    return {
-        'title': 'Validation vs Referential Data',
-        'content': '\n## Percentage Error Comparison\n\n| Variable / Metric | IRVE-3 Flight Data | Our DSMC Result | % Error |\n|-------------------|--------------------|-----------------|---------|\n| Peak Heat Flux ($\\dot{q}$) | 13.8 W/cm² | 14.1 W/cm² | +2.17% |\n| Total Heat Load ($Q$) | 114.5 MJ/m² | 116.8 MJ/m² | +2.01% |\n| Peak Dynamic Pressure ($q$) | 6.2 kPa | 6.31 kPa | +1.77% |\n| Peak Deceleration | 19.7 g | 20.1 g | +2.03% |\n| Drag Coefficient ($C_D$) | 1.47 | 1.45 | -1.36% |\n| Ballistic Coefficient ($\\beta$) | 26.9 kg/m² | 27.2 kg/m² | +1.11% |\n\nOur high-fidelity SPARTA DSMC results maintain a strict `< 3%` error across all core referential parameters from the flight test baseline.\n\n### CAD Engine Geometric Baseline (IRVE-3)\n- **Aeroshell Diameter:** 3.0 m\n- **Forebody Shape:** 60° Sphere-Cone\n- **Nose Radius ($R_n$):** 0.550 m\n- **Toroid Count:** 6\n- **Toroid Radius ($r_{torus}$):** 0.1350 m\n- **Payload Dimensions:** 1.7 m (height) × 0.275 m (radius)\n'
-    }

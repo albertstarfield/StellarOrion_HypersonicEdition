@@ -1,4 +1,0 @@
-\beamer@sectionintoc {1}{Software Implementation}{3}{0}{1}
-\beamer@sectionintoc {2}{Research Progress}{5}{0}{2}
-\beamer@sectionintoc {3}{Geometry \& Results}{7}{0}{3}
-\beamer@sectionintoc {4}{Technical Insights}{14}{0}{4}

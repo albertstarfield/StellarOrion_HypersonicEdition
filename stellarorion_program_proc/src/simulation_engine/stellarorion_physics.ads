@@ -2,6 +2,28 @@
 --  Ada 2012 / SPARK 2014
 --  Pure-math routines with no side effects.
 --
+--  PHYSICS CONTEXT:
+--    StellarOrion DSMC replicates the IRVE-3 flight vehicle (Rapisarda 2023)
+--    and optimizes for Earth reentry. The analytical models (SG, FR) are
+--    calibrated against IRVE-3 flight data (Rapisarda Tables 4.9-4.10):
+--      - Sutton-Graves: +6.26% peak heat flux vs IRVE-3 flight (conservative)
+--      - Fay-Riddell: -3.69% peak heat flux vs IRVE-3 flight (accurate)
+--    SG is used as the conservative engineering envelope for TPS sizing.
+--    FR is used as the reference correlation for comparison with DSMC.
+--    Both models are valid for continuum, laminar BL, V < 12 km/s.
+--    SPARTA DSMC provides the primary aerothermal physics across all
+--    rarefaction levels (Bird 1994; Plimpton & Gallis 2014).
+--
+--  EARTH REENTRY OPTIMIZATION:
+--    The validated IRVE-3 baseline (3.0m, 60 deg, 281 kg) is the starting
+--    point for LEO reentry optimization (V_entry ~7.8 km/s). The trajectory
+--    integrator (Compute_Trajectory_Profile) integrates 1-DOF ballistic entry
+--    from 122.65 km to ground, computing peak heating and deceleration.
+--    LOFTID (6.0m, 70 deg, ~960 kg) serves as the scaling benchmark:
+--      - LOFTID peak heat: 39.27 W/cm² (2.7x IRVE-3)
+--      - LOFTID peak decel: 9.66g (0.5x IRVE-3)
+--    Reference: Deshmukh et al. AIAA-2024-1501; Hollis et al. AIAA-2024-1498.
+--
 --  Citations are given inline per function.
 --
 --  Author:  Albert Starfield Wahyu Suryo Samudro
@@ -198,12 +220,17 @@ package StellarOrion_Physics is
     --             Gallis 2014), so DSMC output is the PRIMARY aerothermal
     --             physics across all rarefaction levels. This function
     --             serves ONLY as a conservative engineering envelope /
-    --             reference band: Rapisarda Table 4.10 selected
+    --             reference band: Rapisarda Tables 4.9-4.10 selected
     --             Sutton-Graves precisely because it was the ONLY model
-    --             overpredicting BOTH IRVE-3 flight peaks
-    --             (+6.26% flux, +14.81% load). Do NOT treat its absolute
-    --             accuracy as trustworthy at high Kn - use it as an
-    --             upper-bound sanity check against DSMC results.
+    --             overpredicting BOTH flight peaks for BOTH missions:
+    --               IRVE-3 (Table 4.10): +6.26% flux, +14.81% load
+    --               IRVE-II (Table 4.9):  +16.37% flux, +20.21% load
+    --             All other models (FR, Chapman, DKR) underpredict peak
+    --             flux for IRVE-3; Van-Driest underpredicts both.
+    --             [Citation: Rapisarda (2023) Tables 4.9, 4.10; Sec 4.4]
+    --             Do NOT treat its absolute accuracy as trustworthy at
+    --             high Kn - use it as an upper-bound sanity check
+    --             against DSMC results.
     --
    --  AXIOMS (physical envelope):
    --    AXIOM S1: rho in (0, 1e4] kg/m^3.
