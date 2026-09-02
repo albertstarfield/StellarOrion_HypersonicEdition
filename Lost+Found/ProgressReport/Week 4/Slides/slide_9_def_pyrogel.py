@@ -1,5 +1,0 @@
-def get_slide_data() -> dict:
-    return {
-        'title': 'Pyrogel 3350',
-        'content': '\n# Glossary: Pyrogel 3350\n\n**Pyrogel 3350** is a flexible, high-temperature silica aerogel composite insulation designed to restrict convective and conductive heat transfer.\n\n### Context\nIt acts as the primary $k(T)$ thermal barrier inside the F-TPS, maintaining structural integrity up to $1373\\text{ K}$.\n\n<div style="margin-top: 2rem; text-align: center;">\n    <img src="figures/k_T_pyrogel.png" alt="Pyrogel Thermal Conductivity Plot" style="max-width: 80%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" />\n    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">$k(T)$ characterization showing superior insulation properties up to limit</p>\n</div>\n\n<div style="margin-top: 1.5rem; text-align: right;">\n    <a href="#" class="back-btn" style="margin-bottom:0; background:rgba(99,102,241,0.15); border-color:rgba(99,102,241,0.3); color:#a5b4fc;" onclick="loadTheoremSlide(1)">Return to Material Properties Table &rarr;</a>\n</div>\n'
-    }
