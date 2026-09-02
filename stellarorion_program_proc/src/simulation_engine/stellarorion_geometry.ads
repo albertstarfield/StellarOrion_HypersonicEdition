@@ -2,10 +2,35 @@
 --  Ada 2012 / SPARK 2014
 --  Pure-math aeroshell geometry calculations.
 --
+--  GEOMETRY REPLICATION CHAIN:
+--    StellarOrion DSMC replicates the IRVE-3 flight vehicle using
+--    Rapisarda's (2023) parametric geometry model (Table 4.1, Page 94):
+--      - Sphere-cone half-angle: 60 deg
+--      - Number of tori: N=6 (5 structural + 1 shoulder)
+--      - Torus minor radius: 0.1350 m
+--      - Shoulder torus outer radius: 0.0508 m
+--      - Payload height: 1.7 m, radius: 0.275 m
+--      - Aeroshell diameter: 3.0 m, mass: 281 kg
+--    The parametric 2D cross-section is revolved to create a 3D surface
+--    (Rapisarda Sec 3.5.1), then imported into SPARTA for DSMC simulation.
+--
+--  OPTIMIZATION PROGRESSION:
+--    The validated IRVE-3 Rapisarda baseline is the starting point for
+--    Earth reentry optimization. The GA optimizer (stellarorion_optimization)
+--    searches the design space [Diameter 0.5-15m, Angle 40-80 deg,
+--    Torus 0.01-0.5m, Mass 10-1000kg, Toroid count 1-12] to find
+--    geometries that survive LEO reentry (V_entry ~7.8 km/s).
+--    Reference: LOFTID (6m, 70 deg, 6+1 tori) as scaling benchmark.
+--
 --  Citations:
 --    [Rap23]  Rapisarda, V. "Multidisciplinary Design Analysis and
 --              Optimization of HIAD," Ph.D. thesis, 2023.
+--              Table 4.1 (IRVE-3 parametric geometry, Page 94)
+--              Table 5.4 (valid geometry ranges for optimization)
+--              Section 3.1 (mathematical framework for stacked-toroid)
+--              Section 3.5.1 (surface of revolution procedure)
 --    [Pappus] Pappus's centroid theorem for surfaces of revolution.
+--    [NASA-TP-2013-4012] IRVE-3 Mission Report (3.0m diameter, 281 kg).
 --
 --  Author:  Albert Starfield Wahyu Suryo Samudro
 

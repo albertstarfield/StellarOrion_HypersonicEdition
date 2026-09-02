@@ -4,6 +4,16 @@ compare_validation.py
 =====================
 Builds the Scalloped / Smooth / Rapisarda(IRVE-3) validation comparison table.
 
+CONTEXT:
+  StellarOrion DSMC replicates the IRVE-3 flight vehicle using Rapisarda's
+  (2023) parametric geometry model (Table 4.1). This script compares the
+  DSMC results against IRVE-3 flight data and Rapisarda's analytical models
+  (Fay-Riddell, Sutton-Graves) from Table 4.10.
+
+  The validated IRVE-3 baseline is the starting point for Earth reentry
+  optimization. LOFTID (6.0m, 70 deg, 6+1 tori) serves as the scaling
+  benchmark for LEO reentry conditions (V_entry ~8 km/s).
+
 Reads the two `validation_timeseries.csv` files produced by
 `bin/main --validate --skin {scalloped,smooth} --steps 2200` and compares the
 peak aerothermodynamic metrics against the Rapisarda (2023) / IRVE-3 flight
@@ -15,6 +25,23 @@ Reference values (Rapisarda 2023, IRVE-3 MDAO baseline, Table 4.10 / NASA TP-201
   * Peak deceleration     = 19.7 g  (flight) / 20.2 g (MDAO)
   * Ballistic coeff beta  = 26.9 kg/m^2
   * Decel conversion:  decel_g = drag_sum_N / 2755.67   (m = 281.0 kg, g0 = 9.80665)
+
+LOFTID reference (Deshmukh et al. AIAA-2024-1501, Hollis et al. AIAA-2024-1498):
+  * Peak heat flux: ~39.27 W/cm^2 (2.7x IRVE-3)
+  * Total heat load: ~3.52 kJ/cm^2 (18x IRVE-3)
+  * Peak deceleration: 9.66 g (0.5x IRVE-3)
+  * Diameter: 6.0 m (2x IRVE-3)
+
+KEY SUCCESS VARIABLES (from Sep 2 Discussion.md Section 12):
+  A HIAD mission is successful iff ALL five checks pass:
+    1. TPS survives heat flux:     T_surface < 1700 K (SIC limit)
+    2. TPS survives heat load:     T_back < 673 K (Kapton limit)
+    3. Structure survives decel:    g_load < 25g (structural limit)
+    4. Vehicle decelerates enough:  V_final < para-deploy limit
+    5. Landing accuracy:            Within target zone
+  Primary metrics: q_max (W/cm^2), Q_total (J/cm^2), g_load, T_surface, T_back.
+  Design variables: D (m), theta_c (deg), r_torus (m), N (tori), m (kg).
+  Entry conditions (fixed): V_entry (km/s), gamma_entry (deg), h_entry (km).
 
 Usage:
   python3 compare_validation.py
@@ -35,6 +62,12 @@ RAP_Q_LOAD_JCM2  = 195.06     # J/cm^2  total heat load
 RAP_DECEL_G      = 19.7       # g       peak deceleration (flight)
 RAP_BETA_KGM2    = 26.9       # kg/m^2  ballistic coefficient
 DECEL_DENOM_N    = 2755.67    # N per g  (m=281.0 kg * 9.80665)
+
+# LOFTID reference (Deshmukh et al. AIAA-2024-1501, Table 2, middle window)
+LOFTID_Q_MAX_WCM2  = 39.27    # W/cm^2  peak heat flux (nose)
+LOFTID_Q_LOAD_KJCM2 = 3.52    # kJ/cm^2 total heat load (nose)
+LOFTID_DECEL_G     = 9.66     # g       peak deceleration
+LOFTID_DIAMETER_M  = 6.0      # m       vehicle diameter
 
 
 def load_csv(path):
@@ -96,16 +129,17 @@ def main():
     sm_stat = "AVAILABLE" if sm else "MISSING"
 
     lines = []
-    lines.append("# Validation Comparison: Scalloped vs Smooth vs Rapisarda (IRVE-3)")
+    lines.append("# Validation Comparison: Scalloped vs Smooth vs IRVE-3 vs LOFTID")
     lines.append("")
     lines.append(f"- Scalloped CSV: `{os.path.relpath(SCALLOPED_CSV, PROC)}`  — **{sc_stat}**")
     lines.append(f"- Smooth CSV:    `{os.path.relpath(SMOOTH_CSV, PROC)}`  — **{sm_stat}**")
-    lines.append(f"- Reference: Rapisarda (2023) IRVE-3 MDAO baseline, Table 4.10 / NASA TP-2013-4012")
+    lines.append(f"- Reference: Rapisarda (2023) IRVE-3 baseline, Table 4.10 / NASA TP-2013-4012; "
+                 f"LOFTID: Deshmukh et al. AIAA-2024-1501 / Hollis et al. AIAA-2024-1498")
     lines.append("")
     lines.append("## Peak Aerothermodynamic Metrics")
     lines.append("")
-    lines.append("| Metric | Scalloped | Smooth | Rapisarda Ref | Scalloped/Smooth |")
-    lines.append("|---|---|---|---|---|")
+    lines.append("| Metric | Scalloped | Smooth | IRVE-3 Ref | LOFTID Ref | Scalloped/Smooth |")
+    lines.append("|---|---|---|---|---|---|")
 
     def ratio(a, b):
         if a is None or b is None or b == 0:
@@ -115,39 +149,54 @@ def main():
     # Peak drag
     lines.append("| Peak Drag Force (N) | " +
                  f"{fmt(sc['peak_drag_N'] if sc else None)} | " +
-                 f"{fmt(sm['peak_drag_N'] if sm else None)} | — | " +
+                 f"{fmt(sm['peak_drag_N'] if sm else None)} | — | — | " +
                  f"{ratio(sc['peak_drag_N'] if sc else None, sm['peak_drag_N'] if sm else None)} |")
     # Peak |lift|
     lines.append("| Peak |Lift| Force (N) | " +
                  f"{fmt(sc['peak_lift_N'] if sc else None)} | " +
-                 f"{fmt(sm['peak_lift_N'] if sm else None)} | — | " +
+                 f"{fmt(sm['peak_lift_N'] if sm else None)} | — | — | " +
                  f"{ratio(sc['peak_lift_N'] if sc else None, sm['peak_lift_N'] if sm else None)} |")
     # Peak heat flux (literal column = W/m^2 -> W/cm^2)
     lines.append("| Peak Heat Flux (W/cm^2, literal col /1e4) | " +
                  f"{fmt(sc['peak_hf_Wcm2'] if sc else None)} | " +
                  f"{fmt(sm['peak_hf_Wcm2'] if sm else None)} | " +
                  f"{RAP_Q_MAX_WCM2:.2f} | " +
+                 f"{LOFTID_Q_MAX_WCM2:.2f} | " +
                  f"{ratio(sc['peak_hf_Wcm2'] if sc else None, sm['peak_hf_Wcm2'] if sm else None)} |")
     # Peak deceleration
     lines.append("| Peak Deceleration (g) | " +
                  f"{fmt(sc['peak_decel_g'] if sc else None)} | " +
                  f"{fmt(sm['peak_decel_g'] if sm else None)} | " +
                  f"{RAP_DECEL_G:.1f} | " +
+                 f"{LOFTID_DECEL_G:.2f} | " +
                  f"{ratio(sc['peak_decel_g'] if sc else None, sm['peak_decel_g'] if sm else None)} |")
     # Peak total heat rate (heat_sum column, per-step snapshot)
     lines.append("| Peak Total Heat Rate (W, heat_sum col) | " +
                  f"{fmt(sc['peak_hs'] if sc else None, sci=True)} | " +
-                 f"{fmt(sm['peak_hs'] if sm else None, sci=True)} | — | " +
+                 f"{fmt(sm['peak_hs'] if sm else None, sci=True)} | — | — | " +
                  f"{ratio(sc['peak_hs'] if sc else None, sm['peak_hs'] if sm else None)} |")
+    # Vehicle diameter (geometry context)
+    lines.append("| Vehicle Diameter (m) | " +
+                 f"3.0 | 3.0 | 3.0 | " +
+                 f"{LOFTID_DIAMETER_M:.1f} | — |")
     lines.append("")
 
-    lines.append("## Reference Targets (Rapisarda 2023 / IRVE-3)")
+    lines.append("## Reference Targets")
     lines.append("")
+    lines.append("### IRVE-3 (Rapisarda 2023 / NASA TP-2013-4012)")
     lines.append(f"- Peak heat flux  q_max = **{RAP_Q_MAX_WCM2} W/cm^2** (143,600 W/m^2)")
     lines.append(f"- Total heat load Q     = **{RAP_Q_LOAD_JCM2} J/cm^2** (1,950,600 J/m^2)")
     lines.append(f"- Peak deceleration     = **{RAP_DECEL_G} g** (flight) / 20.2 g (MDAO)")
     lines.append(f"- Ballistic coeff  beta = **{RAP_BETA_KGM2} kg/m^2**")
+    lines.append(f"- Diameter              = **3.0 m**")
     lines.append(f"- Decel conversion: decel_g = drag_sum_N / {DECEL_DENOM_N} (m=281.0 kg)")
+    lines.append("")
+    lines.append("### LOFTID (Deshmukh et al. AIAA-2024-1501 / Hollis et al. AIAA-2024-1498)")
+    lines.append(f"- Peak heat flux  q_max = **{LOFTID_Q_MAX_WCM2} W/cm^2** ({LOFTID_Q_MAX_WCM2/RAP_Q_MAX_WCM2:.1f}x IRVE-3)")
+    lines.append(f"- Total heat load Q     = **{LOFTID_Q_LOAD_KJCM2} kJ/cm^2** (~18x IRVE-3)")
+    lines.append(f"- Peak deceleration     = **{LOFTID_DECEL_G} g** ({LOFTID_DECEL_G/RAP_DECEL_G:.2f}x IRVE-3)")
+    lines.append(f"- Diameter              = **{LOFTID_DIAMETER_M} m** (2x IRVE-3)")
+    lines.append(f"- Entry velocity        = **~8.0 km/s** (LEO, vs IRVE-3 ~3.5–4.5 km/s suborbital)")
     lines.append("")
 
     # Flags / caveats
@@ -162,10 +211,10 @@ def main():
                          f"Ratio = {ratio_vs_rap:.1f}x.")
             if ratio_vs_rap > 3 or ratio_vs_rap < 0.33:
                 lines.append("  - ⚠ LARGE DISCREPANCY. The `heatflux_max_Wm2` column is labeled W/m^2 but its "
-                             "magnitude (~820 W/cm^2) is ~57x the IRVE-3 flight peak. Two possibilities:")
+                             "magnitude is much higher than IRVE-3 flight peak. Two possibilities:")
                 lines.append("    1. The column is actually **total heat power (W)**, not per-area flux; dividing by "
-                             "the reference area (~28 m^2 for a ~6 m aeroshell) gives ~29 W/cm^2, within ~2x of the "
-                             "reference — physically plausible for DSMC vs flight.")
+                             "the vehicle reference area (~7.07 m^2 for 3 m diameter IRVE-3) normalizes it to "
+                             "physically plausible W/cm^2 values.")
                 lines.append("    2. There is a unit/scaling bug in the heat-flux reporting. RECOMMEND verifying the "
                              "column semantics (per-area vs total) before trusting absolute heat-flux numbers.")
             else:

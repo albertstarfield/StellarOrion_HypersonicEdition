@@ -76,6 +76,12 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       New_Line;
 
       --  Use Sutton-Graves for quick analytical estimate
+      --  Note: Flight defaults to ISA at 52 km (Rho=6.9674e-4, V=2700 m/s).
+      --  This produces SG ≈ 12.20 W/cm² vs Rapisarda SG=15.26 W/cm²
+      --  due to ISA density being ~36% lower than Rapisarda's MCD v6.1.
+      --  At actual trajectory conditions (V=3379 m/s, Rho=7.696e-4),
+      --  TRUE SG ≈ 25.12 W/cm² (75% above flight, very conservative).
+      --  [Citation: Rapisarda (2023) Tables 4.5, 4.10; NASA TR R-376]
       Results.Heat_Flux_Wm2 :=
         Sutton_Graves_Heat (Flight.Density_Kgm3,
                             Geo.Nose_Radius_M,

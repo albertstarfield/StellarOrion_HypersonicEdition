@@ -1,5 +1,0 @@
-#!/bin/sh
-# Presentation.pptx — Interactive Shell Shim Launcher for StellarOrion Presentation
-DIR="$(cd "$(dirname "$0")" && pwd)"
-echo "[*] Launching StellarOrion Presentation via Presentation.pptx shim..."
-exec python3 "$DIR/Presentation.py" "$@"

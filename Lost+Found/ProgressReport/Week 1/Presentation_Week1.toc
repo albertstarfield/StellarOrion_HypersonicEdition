@@ -1,6 +1,0 @@
-\beamer@sectionintoc {1}{Introduction}{3}{0}{1}
-\beamer@sectionintoc {2}{Project Overview}{6}{0}{2}
-\beamer@sectionintoc {3}{Research Objectives}{8}{0}{3}
-\beamer@sectionintoc {4}{Methodology}{9}{0}{4}
-\beamer@sectionintoc {5}{Software Evolution}{16}{0}{5}
-\beamer@sectionintoc {6}{Current Progress}{18}{0}{6}

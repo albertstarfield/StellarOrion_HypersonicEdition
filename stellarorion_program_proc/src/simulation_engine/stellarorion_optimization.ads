@@ -2,6 +2,18 @@
 --  Ada 2012 / SPARK 2014
 --  LHS sampling, CCD, cost function, and Genetic Algorithm optimiser.
 --
+--  OPTIMIZATION CONTEXT:
+--    StellarOrion optimizes HIAD geometry for Earth reentry survival,
+--    starting from the validated IRVE-3 Rapisarda baseline (Table 4.1):
+--      - IRVE-3 baseline: Diameter=3.0m, Angle=60 deg, N=6 tori,
+--        r_torus=0.135m, Mass=281 kg, beta=26.9 kg/m^2
+--      - Target: LEO Earth reentry (V_entry ~7.8 km/s, gamma ~-5.75 deg)
+--      - Constraints: q_max < TPS limit, g_load < 25g, T_back < Kapton limit
+--    GA search space (from Rapisarda Table 5.4):
+--      Diameter [0.5, 15.0] m, Angle [40, 80] deg, Nose [0.01, 1.0] m,
+--      Torus [0.01, 0.5] m, Mass [10, 1000] kg, Toroid count [1, 12]
+--    Reference: LOFTID (6.0m, 70 deg, 6+1 tori) as scaling benchmark.
+--
 --  SPARK_Mode => Off for the GA portion (requires Ada.Numerics.Float_Random,
 --  Ada.Calendar, and access types).
 --
@@ -15,6 +27,10 @@
 --               Foundations of Genetic Algorithms, 1993.
 --    [Goldberg89] Goldberg, D. E. "Genetic Algorithms in Search,
 --               Optimization, and Machine Learning," Addison-Wesley, 1989.
+--    [Rap23]    Rapisarda, V. "Multidisciplinary Design Analysis and
+--               Optimisation of HIAD," Ph.D. thesis, 2023.
+--               Table 4.1 (IRVE-3 geometry), Table 5.4 (design space).
+--    [NASA-TP-2013-4012] IRVE-3 Mission Report.
 --
 --  Author:  Albert Starfield Wahyu Suryo Samudro
 
