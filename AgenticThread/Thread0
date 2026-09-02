@@ -2,3 +2,5 @@
 
 Re-audit again and fix the code Prove it! (gnatprove level=4 -j0) use script/prove.sh, ignore the verifier subsystem of the goal being offline (read code-quality.md)
 until i said stop. DO NOT STOP AS YOU WILL MISSED SOME DETAIL, do audit and fix repeatedly 
+(the program is on folder that have name _program_proc)
+Also find referential and cite it for IRVE-3 LOFTID mission (and what materials are different on us) what are the reference value compare it rapisarda and us. then create table to and coments inside the code)
