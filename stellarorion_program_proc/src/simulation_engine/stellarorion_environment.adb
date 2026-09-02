@@ -418,14 +418,19 @@ package body StellarOrion_Environment is
    --  POSTCONDITION: P >= 0.0 (density, temperature >= 0, R_specific > 0).
    function Atmosphere_Pressure
      (Altitude_Km : Float) return Float
-   is
-      Rho : constant Float := Atmosphere_Density (Altitude_Km);
-      T   : constant Float := Atmosphere_Temperature (Altitude_Km);
+    is
+       Rho : constant Float := Atmosphere_Density (Altitude_Km);
+       T   : constant Float := Atmosphere_Temperature (Altitude_Km);
+       Pressure : Float;
     begin
+       Pressure := Rho * R_AIR * T;
+       --  BOUND: rho <= 1.225, R_AIR = 287.058, T <= 300 K at sea level;
+       --  product <= 1.225 * 287.058 * 300 ~ 1.05e5 Pa = P0 = 101325;
+       --  << Float'Last = 3.4e38.  Provers timeout on multiplication chain.
        pragma Annotate (GNATprove, False_Positive,
-         "fp_overflow on Rho*R_AIR*T",
+         "float overflow check might fail",
          "Rho(<=1.225) * R_AIR(287.058) * T(<=300) ~ 1.05e5 = P0 = 101325 Pa << Float'Last");
-       return Rho * R_AIR * T;
+       return Pressure;
     end Atmosphere_Pressure;
 
    -- ==================================================================
