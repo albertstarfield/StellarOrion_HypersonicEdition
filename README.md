@@ -152,10 +152,10 @@ Three comment blocks added to `stellarorion_sparta.adb` documenting:
 
 | Document | Path | Content |
 | :--- | :--- | :--- |
-| **Discussion** | `stellarorion_program_proc/Discussion.md` | 13 sections + Appendix: vehicle comparison, IRVE-3/LOFTID data, DSMC results, delta comparison (vs Rapisarda/flight), Sutton-Graves vs Fay-Riddell analysis, mathematical derivation, physics verification, optimization chain |
-| **Validation** | `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md` | 12 sections: simulation config, convergence, results, comparison, heat flux investigation, 51 plots, survivability, code fixes, DSMC noise methodology, storage paths, open items |
+| **Discussion** | `stellarorion_program_proc/Discussion.md` | 12 numbered sections (1–10, 12–13) + Appendix: vehicle comparison, IRVE-3/LOFTID data, DSMC results, delta comparison, SG vs FR analysis, physics verification, optimization chain |
+| **Validation** | `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md` | 11 numbered sections (1–11) + References: simulation config, convergence, results, comparison, heat flux investigation, 51 plots, survivability, code fixes, DSMC noise methodology, storage paths, open items |
 
-### Discussion.md Sections (13 + Appendix)
+### Discussion.md Sections (12 + Appendix)
 
 1. Executive Summary
 2. Vehicle Comparison (Rapisarda Table 4.1)
@@ -170,7 +170,7 @@ Three comment blocks added to `stellarorion_sparta.adb` documenting:
 8. StellarOrion Physics Verification (GNATprove)
 9. Key Findings and Next Steps
 10. IRVE-3 Rapisarda Baseline → Earth Reentry Optimization Chain
-12. Key Success Variables
+12. Key Success Variables: What Determines Mission Success?
 13. References
 - Appendix A: Raw StellarOrion DSMC Data
 
