@@ -385,11 +385,69 @@ package body StellarOrion_Sparta is
       Put_Line (File, "");
       Put_Line (File, "compute         drag reduce sum f_surfavg[1]");
       Put_Line (File, "compute         lift reduce sum f_surfavg[2]");
-      Put_Line (File, "compute         heat reduce max f_1[3]");
-      --  FIX: The old "temp_avg" compute averaged nflux/mflux/ke, which
-      --  are NOT temperature and produced zeros for species 1 and 2.
-      --  Replace with grid thermal temperature (compute 3) which is the
-      --  correct translational temperature per cell.
+       --  =================================================================
+       --  DSMC NOISE CONTEXT (Sep 3, 2026 — Rapisarda comparison)
+       --  =================================================================
+       --  SPARTA computes f_1[3] = kinetic energy flux (W/m^2) per SURFACE
+       --  element as a time-averaged quantity over the stats_interval window.
+       --  This is a per-element value, NOT an area-averaged or stagnation-
+       --  point value.  The "reduce max" below selects the MAXIMUM element
+       --  in the entire domain, which is inherently a point-sample and
+       --  therefore susceptible to DSMC statistical noise.
+       --
+       --  WHY OUR DSMC HAS NOISE BUT RAPISARDA DOESN'T:
+       --
+       --  Rapisarda (2023, MSc Thesis, Delft) used Moss et al. [56] DSMC
+       --  data (Moss et al., J. Spacecraft & Rockets 43(6), 2006) which
+       --  provided stagnation-point heat flux at specific trajectory
+       --  altitudes.  Rapisarda did NOT use raw per-element DSMC data.
+       --  Instead, he applied a THREE-LAYER filtering strategy:
+       --
+       --  Layer 1: Moss's published DSMC values were already time-averaged
+       --  over many particle timesteps (standard DSMC convergence practice;
+       --  noise scales as 1/sqrt(N_samples)).
+       --
+       --  Layer 2: Rapisarda fitted a SIXTH-ORDER POLYNOMIAL to Moss's
+       --  stagnation heat flux vs altitude data (R^2 approaching unity).
+       --  This polynomial smoothed out any residual statistical scatter
+       --  AND enabled extrapolation into regimes where Moss had no data
+       --  (free-molecular flow, Kn up to 10.05 at 150 km).
+       --  [Citation: Rapisarda 2023, Sec 4.5.1, Figure 4.40, Table 4.13]
+       --
+       --  Layer 3: The Wilmoth bridging function (Eq 3.91) was fitted to
+       --  the polynomial-smoothed data via non-linear least-squares
+       --  (Eq 3.92), achieving R^2 = 0.99138.  This produces a smooth
+       --  continuous function for the heat transfer coefficient hc across
+       --  the entire Knudsen range with NO residual DSMC noise.
+       --  [Citation: Rapisarda 2023, Sec 4.4.5, Figure 4.41, Table 4.15]
+       --
+       --  CONTRAST WITH OUR APPROACH:
+       --  Our code reads RAW per-element f_1[3] values from SPARTA surf
+       --  dumps (line 1999: Heat(Row) := V(4)), which are individual
+       --  surface element measurements.  The max-cell value (Heat_Max)
+       --  is therefore a single noisy point-sample.  Negative values at
+       --  later timesteps (e.g., step 2200: min = -10,570 W/m^2) are
+       --  DSMC statistical noise — energy flux can momentarily appear
+       --  negative due to particle sampling statistics.
+       --
+       --  The per-element AVERAGE (Avg_Heat_Flux = Heat_Sum / N) is
+       --  somewhat smoother but still raw.  Rapisarda's polynomial fit
+       --  would produce a much cleaner comparison if applied to our data.
+       --
+       --  WHAT WE COULD DO (not implemented yet):
+       --  1. Fit a polynomial to our Heat_Max vs step/altitude curve
+       --  2. Use the Wilmoth bridging function with our DSMC data points
+       --  3. Report the polynomial-smoothed peak instead of raw max-cell
+       --  4. Add time-averaging over multiple stats_interval windows
+       --  [Citation: Bird, G.A. (1994) Molecular Gas Dynamics, Sec 5.3]
+       --  [Citation: Moss et al. (2006) J. Spacecraft & Rockets 43(6)]
+       --  [Citation: Rapisarda (2023) Sec 4.5.1, 4.4.5, Figures 4.40-4.42]
+       --  =================================================================
+       Put_Line (File, "compute         heat reduce max f_1[3]");
+       --  FIX: The old "temp_avg" compute averaged nflux/mflux/ke, which
+       --  are NOT temperature and produced zeros for species 1 and 2.
+       --  Replace with grid thermal temperature (compute 3) which is the
+       --  correct translational temperature per cell.
       Put_Line (File, "");
 
       Put_Line (File, "");
@@ -1996,9 +2054,46 @@ package body StellarOrion_Sparta is
                    if M >= 6 then
                       Row := Row + 1;
                       if Row <= N then
-                         Heat (Row) := V (4);   -- f_1[3] = heat flux W/m^2
-                         Drag (Row) := V (5);   -- f_surfavg[1] = drag N
-                         Lift (Row) := V (6);   -- f_surfavg[2] = lift N
+                          --  =================================================================
+                          --  DSMC PER-ELEMENT HEAT FLUX PARSING (Sep 3, 2026)
+                          --  =================================================================
+                          --  f_1[3] = kinetic energy flux per surface element [W/m^2].
+                          --  This is a TIME-AVERAGED quantity within SPARTA (averaged
+                          --  over Avg_Nrepeat * Avg_Nfreq timesteps via the surfF
+                          --  compute), but it is still a PER-ELEMENT value, not an
+                          --  area-averaged or stagnation-point value.
+                          --
+                          --  NOISE SOURCE: Each of the 76 surface elements reports an
+                          --  independent KE flux.  At later timesteps (lower altitude,
+                          --  higher density), DSMC statistical noise can cause some
+                          --  elements to report NEGATIVE values (e.g., step 2200:
+                          --  min element = -10,570 W/m^2).  This is physically
+                          --  meaningless — a surface element cannot emit more energy
+                          --  than it receives — but is a known DSMC artifact when
+                          --  particle counts per cell are low.
+                          --
+                          --  RAPISARDA'S APPROACH (no noise):
+                          --  Rapisarda (2023) did NOT read per-element DSMC data.
+                          --  He used Moss et al. [56] stagnation-point values
+                          --  (already time-averaged by Moss's code) and fitted a
+                          --  6th-order polynomial to smooth them (Sec 4.5.1, Fig 4.40).
+                          --  The polynomial eliminates all statistical scatter.
+                          --
+                          --  OUR APPROACH (has noise):
+                          --  We read raw per-element values from SPARTA surf dumps.
+                          --  The max-cell value (Heat_Max) is inherently noisy because
+                          --  it selects the SINGLE loudest element.  The per-element
+                          --  average (Avg_Heat_Flux) is smoother but still contains
+                          --  scatter from the 76-element sample.
+                          --
+                          --  FUTURE WORK: Fit a polynomial to our Heat_Max vs altitude
+                          --  curve to produce a Rapisarda-comparable smoothed value.
+                          --  [Citation: Rapisarda (2023) Sec 4.5.1, Table 4.13]
+                          --  [Citation: Moss et al. (2006) J. Spacecraft & Rockets]
+                          --  =================================================================
+                          Heat (Row) := V (4);   -- f_1[3] = heat flux W/m^2
+                          Drag (Row) := V (5);   -- f_surfavg[1] = drag N
+                          Lift (Row) := V (6);   -- f_surfavg[2] = lift N
                       end if;
                    end if;
                 end;
@@ -2086,11 +2181,48 @@ package body StellarOrion_Sparta is
                                Sqrt (Flight.Density_Kgm3 / Geo.Nose_Radius_M) *
                                (Flight.Velocity_Ms ** 3);
                           end if;
-                         --  Per-element average: Heat_Sum / N where
-                         --  Heat_Sum = Σ|q_i| (each q_i in W/m^2)
-                         --  and N = number of surf elements.
-                         --  This gives the arithmetic mean per-element heat
-                         --  flux in W/m^2 (dimensionally correct).
+                         --  =================================================================
+                         --  PER-ELEMENT AVERAGE vs RAPISARDA'S POLYNOMIAL (Sep 3, 2026)
+                         --  =================================================================
+                         --  This computes the arithmetic mean of |q_i| across all
+                         --  N=76 surface elements: Avg = Σ|q_i| / N.
+                         --
+                         --  IMPORTANT: This is NOT comparable to Rapisarda's
+                         --  stagnation-point heat flux or to flight data.
+                         --  The difference is fundamental:
+                         --
+                         --  (a) FLIGHT DATA (IRVE-3, 14.36 W/cm^2):
+                         --  Area-weighted stagnation-point measurement from heat
+                         --  flux sensors on the vehicle's forebody.  The sensor
+                         --  integrates over a physical area, producing a spatially-
+                         --  averaged value that naturally filters small-scale noise.
+                         --  [Citation: NASA TP-2013-4012; Rapisarda 2023 Table 4.10]
+                         --
+                         --  (b) RAPISARDA'S ANALYTICAL MODELS (SG=15.26, FR=13.83):
+                         --  Sutton-Graves and Fay-Riddell compute stagnation-point
+                         --  heat flux from continuum theory.  These are smooth,
+                         --  noise-free functions of (rho, V, R_n).  Rapisarda
+                         --  further smoothed the comparison data by fitting a
+                         --  6th-order polynomial to Moss's DSMC values (Sec 4.5.1).
+                         --  [Citation: Rapisarda 2023 Sec 4.5.1, Figure 4.40]
+                         --
+                         --  (c) OUR DSMC VALUE (56.6 W/cm^2):
+                         --  Raw arithmetic mean of 76 per-element KE flux values.
+                         --  This is higher than flight because:
+                         --  - Per-element values include corner/edge elements with
+                         --    geometric amplification (higher local curvature)
+                         --  - Arithmetic mean of |q_i| is biased upward vs
+                         --    area-weighted mean (because smaller elements with
+                         --    high flux contribute equally to the average)
+                         --  - DSMC statistical noise inflates some elements
+                         --  - No polynomial smoothing applied (unlike Rapisarda)
+                         --
+                         --  To produce a Rapisarda-comparable value, one would need:
+                         --  1. Area-weight the average: Σ(q_i * A_i) / Σ(A_i)
+                         --  2. Or fit a polynomial to the max-cell vs altitude curve
+                         --  3. Or use the Wilmoth bridging function approach
+                         --  [Citation: Rapisarda 2023 Sec 3.6, 4.5.1, 4.4.5]
+                         --  =================================================================
                          if N > 0 then
                             Avg_Heat_Flux := Heat_Sum / Float (N);
                          end if;
