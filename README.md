@@ -95,7 +95,7 @@ Each source uses different atmosphere models, geometry, and solvers — this dir
 | Condition | NASA Flight | Rapisarda Models | StellarOrion DSMC |
 | :--- | :--- | :--- | :--- |
 | **Atmosphere Model** | Actual atmosphere (flight data) | MCD v6.1 (Mars Climate Database adapted for Earth) — ~56% higher density than ISA at 52 km | ISA (International Standard Atmosphere) |
-| **Gas Composition** | Real air | MCD v6.1 composition | Five_Species: N₂, O₂, NO, N, O |
+| **Gas Composition** | Real air | Earth air (MCD v6.1 used for density/temperature profiles only, not species) | Five_Species: N₂, O₂, NO, N, O |
 | **Geometry** | IRVE-3 inflatable aeroshell (3.0 m dia.) | IRVE-3 baseline (smooth toroid, $r_{torus}$ = 0.135 m) | **Scalloped** (grooved-torus), 3.0 m dia., $r_{torus}$ = 0.135 m |
 | **Solver Method** | Flight instrumentation (thermocouple + accelerometer) | Fay-Riddell CFD / Sutton-Graves correlation (trajectory-integrated) | SPARTA DSMC (VSS collision model, grid factor 0.7) |
 | **Trajectory** | Full reentry trajectory (Wallops Island VA, Black Brant XI) | Full trajectory integration along IRVE-3 profile | **Single trajectory point** (step 2200, headless, 6 MPI ranks) |
@@ -135,15 +135,17 @@ StellarOrion supports a `--chemistry mars` mode using a CO2-dominated atmosphere
 cd stellarorion_program_proc && python3 run.py --chemistry mars --test sample --steps 1000
 ```
 
-## 🔬 DSMC Noise Methodology: Why Our Data Has Noise But Rapisarda Doesn't
+## 🔬 DSMC Noise Methodology: Raw DSMC vs Post-Processed DSMC
 
-Rapisarda (2023, MSc Thesis, Delft University of Technology) used Moss et al. (2006) stagnation-point DSMC data but applied three layers of noise filtering:
+Both StellarOrion and Rapisarda (2023) use DSMC — it is the standard method for rarefied gas dynamics (Bird, 1994). The difference is in how the raw DSMC output is processed:
+
+Rapisarda (2023, MSc Thesis, Delft University of Technology) used Moss et al. (2006) stagnation-point DSMC data and applied three layers of noise filtering:
 
 1. **Pre-processed data** — Moss's published values were already time-averaged over many particle timesteps
 2. **6th-order polynomial fit** — Smoothed residual scatter and extrapolated into the free-molecular flow regime (R²→1) (Sec 4.5.1, Fig 4.40, Table 4.13)
 3. **Wilmoth bridging function** — Fitted to polynomial-smoothed data via non-linear least-squares (R²=0.99138 per thesis text; Table 4.15 reports R²=0.9792 for the specific coefficient fit) (Sec 4.4.5, Fig 4.41, Table 4.15)
 
-**Contrast with our approach:** We read raw per-element `f_1[3]` (kinetic energy flux, W/m²) from SPARTA surf dumps. The max-cell value is a single noisy point-sample. Negative values at later steps (e.g., −10,570 W/m² at step 2200) are DSMC statistical noise. Three code comment blocks in `stellarorion_sparta.adb` (~lines 388, ~2057, ~2185) document this noise context and cite Rapisarda's methodology.
+**Contrast with our approach:** Both StellarOrion and Rapisarda use DSMC — it is the standard method for rarefied hypersonic flow (Bird, 1994). The difference is post-processing. We read raw per-element `f_1[3]` (kinetic energy flux, W/m²) from SPARTA surf dumps and apply no smoothing. The max-cell value is a single noisy point-sample. Negative values at later steps (e.g., −10,570 W/m² at step 2200) are DSMC statistical noise — inherent to any raw DSMC output. Rapisarda's 3-layer filtering (polynomial fit + Wilmoth bridging) removes this noise at the cost of introducing model-dependent smoothing. Three code comment blocks in `stellarorion_sparta.adb` (~lines 388, ~2057, ~2185) document this noise context and cite Rapisarda's methodology.
 
 See `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md` Section 9 for full comparison.
 
