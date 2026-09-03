@@ -1,80 +1,72 @@
 ---
 session: ses_f9e1
-updated: 2026-09-02T14:39:12.675Z
+updated: 2026-09-02T21:33:17.331Z
 ---
 
 # Session Summary
 
 ## Goal
-Iteratively elaborate the StellarOrion codebase documentation (Sep 2 Discussion.md and Ada/SPARK .ads source headers) to comprehensively document IRVE-3/Rapisarda validation context, LOFTID Earth reentry comparison, and explicitly identify the key success variables for HIAD mission success — with continuous audit-fix cycles until the user says stop.
+Audit and fix all numerical inconsistencies in `Sep 2 Discussion.md` and `VALIDATION_Sep_2_2026.md` to ensure all heat flux, drag, and aerodynamic coefficient values are consistent with the new scalloped DSMC simulation CSV data, iteratively fixing issues until user says stop.
 
 ## Constraints & Preferences
-- StellarOrion DSMC replicates the **IRVE-3 flight vehicle** using Rapisarda's (2023) parametric geometry model (Table 4.1) — this must be clearly stated in both Discussion.md and code headers
-- The optimization chain starts from IRVE-3 Rapisarda baseline, then optimizes further for Earth reentry — this progression must be elaborated
-- LOFTID (6.0m, 70°, 6+1 tori) serves as the scaling benchmark for LEO reentry
-- All citations must use "Rapisarda, V." (not "S.") — a prior audit found and fixed this error
-- The simulation uses 3m IRVE-3 geometry (7.07 m² reference area), NOT 6m LOFTID geometry — a prior audit fixed a wrong reference to "28 m² for ~6m aeroshell"
-- User explicitly requested iterative audit-fix cycles: "do it over and fix iteratively again until i said stop because you will missed a lot"
-- Code .ads files are located at `stellarorion_program_proc/src/simulation_engine/` (NOT directly in `stellarorion_program_proc/`)
+- User instruction: "do it over and fix iteratively again until i said stop"
+- All values must trace back to `validation_timeseries.csv` (22 rows, 22 columns)
+- `heatflux_max_Wm2` IS per-element kinetic energy flux (W/m²), NOT total power — this was a critical earlier misunderstanding that caused double-dividing by area
+- SPARTA `compute 1 surf ... ke` outputs W/m² directly
+- Reference area is 7.07 m² (for C_d normalization), NOT for heat flux normalization
+- Single-point DSMC snapshot at Mach 10.29, not full trajectory
 
 ## Progress
 ### Done
-- [x] Fixed tori count in Discussion.md: IRVE-3 has N=6 (5 structural + 1 shoulder)
-- [x] Added Section 10 "Optimization Chain: IRVE-3 → Earth Reentry" to Discussion.md
-- [x] Added IRVE-3/Rapisarda context to `stellarorion_geometry.ads` header (Rapisarda Table 4.1 params, optimization progression, LOFTID reference)
-- [x] Added IRVE-3/Rapisarda context to `stellarorion_physics.ads` header (SG/FR calibrated against Tables 4.9-4.10, LOFTID benchmarks)
-- [x] Added IRVE-3/Rapisarda context to `stellarorion_optimization.ads` header (GA bounds from Rapisarda Table 5.4, LOFTID benchmark)
-- [x] Added IRVE-3/Rapisarda context to `stellarorion_validation.ads` header (survivability limits: SIC 1700K, Kapton 673K, 25g)
-- [x] Added IRVE-3/Rapisarda/LOFTID context to `compare_validation.py` (LOFTID constants, reference section, data-quality note)
-- [x] **Audit round 1 (earlier session)**: Fixed Rapisarda initial S→V in Discussion.md References; added LOFTID column to compare_validation.py table
-- [x] **Audit round 2 (earlier session)**: Fixed wrong reference area in data-quality note (6m→3m IRVE-3 geometry, 7.07 m²); added LOFTID to reference header line
-- [x] **Added Section 12 "Key Success Variables" to Discussion.md** — comprehensive subsections: 12.1 Primary Survival Variables, 12.2 Aerodynamic Performance Variables, 12.3 TPS Variables, 12.4 Geometry Variables, 12.5 Entry Condition Variables, 12.6 Summary Decision Matrix
-- [x] Added success variables to `compare_validation.py` docstring (5-pass checklist, primary metrics, design variables, entry conditions)
-- [x] Verified all 4 .ads files already have comprehensive LOFTID/IRVE-3 context in headers (no changes needed)
-- [x] Renumbered Discussion.md Section 11 → Section 13 (References) to accommodate new Section 12
+- [x] Rebuilt binary (9 Ada files modified since last compile)
+- [x] Launched and completed fresh validation DSMC simulation (headless, step 2200, scalloped, 6 MPI)
+- [x] Verified simulation completed successfully; analyzed new CSV data
+- [x] Regenerated all plots (make_validation_plots.py + make_derived_plots.py)
+- [x] Regenerated VTU visualization plots (fixed sort bug in make_vtu_visualization.py)
+- [x] Updated `VALIDATION_Sep_2_2026.md` with new results and comparisons
+- [x] **Discussion.md — 10 fixes applied total:**
+  1. Section 5 comparison table (lines 210-219): Updated all values to new run data
+  2. Section 5.3 data-quality flag (line 223): Fixed "total power" → "per-element KE flux W/m²"
+  3. Section 9.1 Finding 1 (line 312): C_d 1.58 → 1.46
+  4. Section 10.2 Stage 1 (line 411): C_d 1.58 → 1.46
+  5. Section 12.2 Decision Matrix (line 486): ~1.58 → ~1.46
+  6. Appendix A convergence table (lines 557-562): Updated all 6 rows
+  7. **Section 6 q_max table (line 237)**: ~60.7 → ~182.5 W/cm²
+  8. **Section 6 footnote (line 244)**: Rewrote to explain column IS W/m², peak=182.5 W/cm², old 4,288,030 was pre-convergence spike
+  9. **Section 9.1 Finding 5 (line 320)**: Rewrote to correct "total power" → "per-element KE flux", added peak vs area-averaged comparison
+  10. **Section 9.2 Next Steps table (line 328)**: "Normalize DSMC heat flux by reference area" → "Refine DSMC mesh (grid-factor > 0.7) to reduce peak heat flux noise"
 
 ### In Progress
-- [ ] **Audit round 1 of latest additions** — reading Section 12 to verify correctness; was reading lines 457-577 when context hit limit
+- [ ] Audit validation .md iteratively — reading Discussion.md sections to verify full consistency (was mid-audit at lines 495-564 when context limit hit)
 
 ### Blocked
 - (none)
 
 ## Key Decisions
-- **Section 12 placement**: Inserted as new Section 12 before References (renumbered to 13), after Key Findings (9) and Optimization Chain (10)
-- **5-check success criterion**: A HIAD mission is successful iff ALL five pass: (1) TPS heat flux, (2) TPS heat load, (3) structural decel, (4) deceleration to para-deploy, (5) landing accuracy
-- **Key metrics identified**: q_max, Q_total, g_load, T_surface, T_back for survival; β, C_d, L/D, q_dyn for aerodynamic performance
-- **Code files already had LOFTID context**: physics, optimization, validation, and geometry .ads headers already documented in prior sessions — no additional code header changes needed for LOFTID success variables
+- **heatflux_max_Wm2 = W/m², not total power**: SPARTA `compute 1 surf ... ke` reports kinetic energy flux per unit area per surface element. The old calculation dividing by 7.07 m² reference area was a double-divide error. Correct peak at step 2200: 182.5 W/cm².
+- **Peak 4,583,240 W/m² vs converged 1,824,880 W/m²**: The step 100 value is a pre-convergence spike; step 2200 (converged) value of 182.5 W/cm² should be used for comparisons.
+- **C_d updated from 1.58 to 1.46**: Old value came from previous run; new scalloped simulation gives cd=1.4625 at step 2200.
 
 ## Next Steps
-1. **Complete audit round 1** of the newly added Section 12 and compare_validation.py changes — re-read the full Section 12 (lines 457-577) to check for:
-   - Numerical accuracy (e.g., IRVE-3 Q_total = 195.06 J/cm², LOFTID Q_total = 3,520 J/cm² = 3.52 kJ/cm²)
-   - Unit consistency across tables
-   - Citation accuracy (Deshmukh AIAA-2024-1501, Hollis AIAA-2024-1498, Rapisarda 2023)
-   - Cross-reference consistency between Discussion.md Section 12 and compare_validation.py docstring
-   - Table formatting issues (LOFTID heat load column shows "3,520 (3.52 kJ/cm²)" — verify this is consistent with other references)
-2. **Fix any issues found** in audit round 1
-3. **Repeat audit-fix cycles** (rounds 2, 3, ...) until user says stop
-4. Consider checking: Does the Decision Matrix (12.6) accurately reflect current StellarOrion capabilities vs TODOs?
+1. Continue audit of Discussion.md — finish reading lines 495-564+ for any remaining inconsistencies
+2. Audit `VALIDATION_Sep_2_2026.md` for any remaining issues
+3. Check for any "60.7", "606,500", "total power", or "normalize" references in all .md files
+4. Verify cross-references between Discussion.md and validation .md are consistent
+5. Continue iterative fixing until user says stop
 
 ## Critical Context
-- **IRVE-3 key values**: D=3.0m, θ=60°, N=6 tori, r_torus=0.135m, mass=281kg, β=26.9 kg/m², q_max=14.36 W/cm², Q=195.06 J/cm², n_max=19.7g
-- **LOFTID key values**: D=6.0m, θ=70°, N=7 tori (6+1), mass≈960kg, V_entry>8.0km/s, γ=−2.3°, q_max=39.27 W/cm², Q=3.52 kJ/cm², n_max=9.66g, q_dyn=2,158 Pa
-- **StellarOrion DSMC single-point results**: C_d=1.58 (scalloped), decel=16.83g, L/D=0.34 (scalloped), at alt=51.82km, vel=3379m/s, Mach=10.29
-- **TPS limits**: SIC max 1700K, Kapton max 673K, structural limit 25g
-- **Key references**: Rapisarda 2023 (PhD thesis, Tables 4.1, 4.9, 4.10, 5.4), NASA TP-2013-4012, Deshmukh et al. AIAA-2024-1501, Hollis et al. AIAA-2024-1498
-- **Section numbering**: Sections 1-12, then Section 13 (References), then Appendix A (DSMC time-series data)
-- **Code .ads file path**: `stellarorion_program_proc/src/simulation_engine/stellarorion_*.ads`
+- **New scalloped CSV key values (step 2200)**: cd=1.4625, cl=-0.5560, L/D=0.3802, drag_sum=45,410 N, lift_sum=-17,263 N, heatflux_max=1,824,880 W/m², heatflux_avg=565,865 W/m², heatflux_sg=122,029 W/m², heat_flux_fr=1,615,525 W/m², heat_load=165.72 J/cm², g_load=16.83, ambient_pressure=59.28 Pa, ambient_temp=268.36 K
+- **Scalloped peak values**: peak drag=62,470 N (step 100), peak heatflux=4,583,240 W/m² (step 100), avg drag=49,226 N, avg element heatflux=696,364 W/m²
+- **Reference values**: IRVE-3 q_max=14.36 W/cm², LOFTID q_max=39.27 W/cm²
+- **Only remaining "60.7" reference**: In old `Validation Aug29_ValidationProgress.md` line 107 (historical file, not actively maintained)
 
 ## File Operations
 ### Read
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/Sep 2 Discussion.md` (lines 0-483, full file)
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/compare_validation.py` (lines 0-48, 120-160, 29-49)
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_physics.ads` (lines 0-60)
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_optimization.ads` (lines 0-60)
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_validation.ads` (lines 0-50)
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_geometry.ads` (lines 0-60)
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/Sep 2 Discussion.md` (full read, lines 1-564)
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md` (lines 1-130)
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_timeseries.csv`
 
 ### Modified
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/Sep 2 Discussion.md` — Added Section 12 (Key Success Variables, ~120 lines of tables/subsections), renumbered References to Section 13
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/compare_validation.py` — Added KEY SUCCESS VARIABLES block to docstring (after LOFTID reference, before Usage); earlier fixed data-quality note reference area (6m→3m); added LOFTID to reference header
-- (Earlier session modifications to .ads files are already complete and verified — no new changes needed this session)
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/Sep 2 Discussion.md` — 4 edits in this final round (lines 237, 244, 320, 328), 6 edits in prior round = 10 total
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md`
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/scripts/make_vtu_visualization.py`
