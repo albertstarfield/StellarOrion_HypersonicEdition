@@ -214,6 +214,15 @@ QA_**
 **/QA_**
 # **ProgressReport** (Uncomment to ignore all progress reports)
 
+# Large split files: originals kept locally, reassemble with reassemble.sh
+Lost+Found/ProgressReport/Week 6.tar.zst
+Lost+Found/ProgressReport/Week 7.tar.zst
+Lost+Found/ProgressReport/Week 8.tar.zst
+Lost+Found/ProgressReport/Week 9.tar.zst
+Lost+Found/ProgressReport/Week 10.tar.zst
+Lost+Found/ProgressReport/Week 11.tar.zst
+Lost+Found/ProgressReport/Iter2Latex.tar.zst
+
 # macOS
 .DS_Store
 
