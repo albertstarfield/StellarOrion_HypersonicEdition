@@ -138,7 +138,7 @@ See `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_202
 
 Three comment blocks added to `stellarorion_sparta.adb` documenting:
 
-1. **~line 388**: DSMC noise context near `compute heat reduce max f_1[3]` — why SPARTA max produces noise, Rapisarda's 3-layer strategy, future work options
+1. **~line 388**: DSMC noise context near surf compute/fix commands — why SPARTA "reduce max" on `f_1[3]` produces noise, Rapisarda's 3-layer strategy, future work options
 2. **~line 2057**: Per-element heat flux parsing near `Heat(Row) := V(4)` — noise source, negative values, Rapisarda's polynomial smoothing
 3. **~line 2185**: Per-element average vs Rapisarda's polynomial near `Avg_Heat_Flux := Heat_Sum / Float(N)` — 3 types of data (flight area-weighted, Rapisarda polynomial-smoothed, our raw per-element)
 
