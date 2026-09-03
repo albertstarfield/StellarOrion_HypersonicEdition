@@ -26,7 +26,7 @@ python3 run.py --help             # Show all CLI flags
 
 This project uses a hybrid architecture for running simulations:
 
-- **Ada/SPARK Binary:** Primary simulation engine (`stellarorion_program_proc/`). Compiled with Alire, formally verified with GNATprove. Handles all 21 CLI modes including validation, optimization, calibration, and integration tests.
+- **Ada/SPARK Binary:** Primary simulation engine (`stellarorion_program_proc/`). Compiled with Alire, formally verified with GNATprove (889 checks, 75% proved, 0 new failures). Handles all 21 CLI modes including validation, optimization, calibration, and integration tests.
 - **Docker:** Used exclusively for running the SPARTA DSMC simulation in a containerized Linux environment.
 - **Python Sidecar:** Native OS Python environment for PINN refinement (DeepXDE), PyFluent/PyAnsys integration, and GUI launcher. Supports NVIDIA CUDA, AMD ROCm, Apple Metal (MPS), Intel OneAPI/OpenCL, and specialized accelerators.
 
@@ -47,114 +47,9 @@ python3 run.py --self-test     # Run 13 verification tests
 
 ---
 
-## 🧮 Mathematical Foundations
+## 🧮 Theory & Derivation
 
-The following equations form the basis of the simulation engine and the performance metrics calculated in `StellarOrionEngineMach5Up.py`.
-
-### 1. General DSMC & Rarefied Gas Dynamics
-Direct Simulation Monte Carlo (DSMC) is used where the continuum assumption fails ($Kn > 0.01$) (Bird, 1994).
-
-*   **Mean Free Path ($\lambda$):**
-    $$\lambda = \frac{1}{\sqrt{2} \pi d^2 n}$$
-    *Where $d$ is the molecular diameter and $n$ is the number density.*
-
-*   **Knudsen Number ($Kn$):**
-    $$Kn = \frac{\lambda}{L}$$
-    *Where $L$ is the characteristic length (e.g., aeroshell diameter).*
-
-*   **VSS (Variable Soft Sphere) Collision Model:**
-    The cross-section $\sigma$ varies with relative velocity $g$:
-    $$\sigma = \pi d_{ref}^2 \left( \frac{g_{ref}}{g} \right)^{2(\omega - 0.5)}$$
-
-*   **Grid Dependency:**
-    While a particle method, DSMC requires a **computational grid** to restrict **collision pairing** to $O(N)$ (within cells) and to provide sampling volumes for **macroscopic property accumulation** (e.g., Density, Temperature). Resolution must typically be finer than the local mean free path ($\lambda$).
-
-**Variables:**
-*   $\lambda$: Mean free path $[m]$
-*   $d$: Molecular diameter $[m]$
-*   $n$: Number density $[m^{-3}]$
-*   $Kn$: Knudsen number (dimensionless)
-*   $L$: Characteristic length $[m]$
-*   $\sigma$: Collision cross-section $[m^2]$
-*   $g$: Relative velocity of colliding molecules $[m/s]$
-*   $\omega$: Viscosity index (gas-specific)
-
-### 2. Aerodynamics & Flight Metrics
-Implemented in `calculate_flight_metrics` to derive performance from SPARTA surface results.
-
-*   **Mass Density ($\rho$):**
-    $$\rho = n_{rho} \cdot \frac{M_{air}}{N_A}$$
-    *Where $M_{air} \approx 28.97 \text{ g/mol}$ and $N_A$ is Avogadro's constant.*
-
-*   **Dynamic Pressure ($q$):**
-    $$q = \frac{1}{2} \rho v_{\infty}^2$$
-
-*   **Ballistic Coefficient ($\beta$):**
-    $$\beta = \frac{m \cdot q}{F_{drag}}$$
-    *A measure of the vehicle's ability to overcome air resistance.*
-
-*   **Instantaneous g-load ($n$):**
-    $$n = \frac{F_{drag}}{m \cdot g_0}$$
-
-**Variables:**
-*   $\rho$: Mass density $[kg/m^3]$
-*   $n_{rho}$: Number density $[m^{-3}]$
-*   $M_{air}$: Molar mass of air $[kg/mol]$
-*   $N_A$: Avogadro's constant ($6.022 \times 10^{23} mol^{-1}$)
-*   $q$: Dynamic pressure $[Pa]$
-*   $v_{\infty}$: Freestream velocity $[m/s]$
-*   $\beta$: Ballistic coefficient $[kg/m^2]$
-*   $m$: Vehicle mass $[kg]$
-*   $F_{drag}$: Drag force $[N]$
-*   $n$: Deceleration in Earth gravities $[g's]$
-*   $g_0$: Standard gravity $[9.81 m/s^2]$
-
-### 3. Aerothermodynamics & Thermal Protection (TPS)
-Estimates for the flexible TPS (e.g., LOFTID/IRVE-3 F-TPS stack) (Lau et al., 2013 / Lippincott et al., 2019).
-
-*   **Heat Flux Proxy ($\dot{q}$):**
-    $$\dot{q} = \frac{Q_{total}}{A_{ref}}$$
-
-*   **Radiative Equilibrium Surface Temperature ($T_{surface}$):**
-    $$T_{surface} = \left( \frac{\dot{q}}{\sigma \epsilon} \right)^{1/4}$$
-    *Where $\sigma$ is the Stefan-Boltzmann constant and $\epsilon$ is emissivity.*
-
-*   **1D Transient Backface Temperature ($T_{back}$):**
-    $$T_{back} = T_{init} + \frac{\dot{q} \cdot \Delta t \cdot \eta_{lag}}{\rho_{TPS} \cdot C_{p,TPS} \cdot \delta_{TPS}}$$
-
-**Variables:**
-*   $\dot{q}$: Surface heat flux $[W/m^2]$
-*   $Q_{total}$: Total heat rate $[W]$
-*   $A_{ref}$: Reference area $[m^2]$
-*   $T_{surface}$: Radiative equilibrium surface temperature $[K]$
-*   $\sigma$: Stefan-Boltzmann constant ($5.67 \times 10^{-8} W/m^2K^4$)
-*   $\epsilon$: Emissivity (dimensionless)
-*   $T_{back}$: Payload/Backface temperature $[K]$
-*   $\Delta t$: Heat pulse duration $[s]$
-*   $\eta_{lag}$: Thermal lag efficiency (typically 0.15)
-*   $\rho_{TPS}$: TPS density $[kg/m^3]$
-*   $C_{p,TPS}$: TPS specific heat $[J/kg \cdot K]$
-*   $\delta_{TPS}$: TPS thickness $[m]$
-
-### 4. Survivability Optimization (SBO)
-The Genetic Algorithm (GA) optimizes the HIAD geometry using a Metamodel Prognosis (MoP).
-
-*   **Optimization Cost Function ($J$):**
-    $$J = w_{\beta} \left( \frac{\beta_{calc} - \beta_{target}}{10} \right)^2 + w_{target} \left( \frac{y_{pred} - y_{target}}{1} \right)^2$$
-
-*   **LHS Sampling (Stratified):**
-    $$x_i = x_{min} + (x_{max} - x_{min}) \cdot \frac{i + r}{N}$$ (McKay et al., 1979)
-
-**Variables:**
-*   $J$: Optimization cost value
-*   $w_{\beta}, w_{target}$: Weight coefficients
-*   $\beta_{calc}$: Derived ballistic coefficient
-*   $y_{pred}$: Metamodel prediction
-*   $x_i$: Sample value for parameter $x$
-*   $r$: Random number $\in [0, 1)$
-*   $N$: Total samples
-
-For a deep dive into the specific derivations, SPARTA data column mappings, and code-level implementation details, see [DERIVATION.MD](file:///Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/DERIVATION.md).
+For all mathematical models (DSMC rarefied gas dynamics, aerothermodynamics, Sutton-Graves, radiative equilibrium, 1D thermal model, optimization cost functions, PINN Navier-Stokes), see **[DERIVATION.md](DERIVATION.md)**.
 
 ---
 
@@ -189,5 +84,106 @@ Users can run the automated calibration suite using:
 cd stellarorion_program_proc && python3 run.py --compareCalibrate --solver sparta --steps 1000
 ```
 
+## 🧪 DSMC Validation Results (Sep 2, 2026 — Scalloped Geometry)
+
+A fresh validation simulation was run with the scalloped (grooved-torus) geometry at step 2200, headless mode, 6 MPI ranks.
+
+| Parameter | StellarOrion DSMC | IRVE-3 Flight | Delta |
+| :--- | :--- | :--- | :--- |
+| **C_d** | 1.4625 | — | Within LOFTID range (1.4–1.7) |
+| **L/D** | 0.3802 | — | — |
+| **Peak heat flux** | 182.5 W/cm² (single cell) | 14.36 W/cm² | ~12.7× (noise, not comparable) |
+| **Per-element avg** | 56.6 W/cm² | — | Between Sutton-Graves and Fay-Riddell |
+| **Heat load** | 165.72 J/cm² | 195.06 J/cm² | −15% (single-point vs trajectory) |
+| **G-load** | 16.83 g | 19.7 g | −15% (single-point vs trajectory) |
+| **Ballistic coeff** | 27.70 kg/m² | 26.9 kg/m² | +3% (geometry fidelity confirmed) |
+
+**Plots generated:** 51 PNGs total (21 CSV time-series + 6 derived thermal + 24 VTU visualizations).
+
+**Key analytical comparisons (Step 2200):**
+
+| Model | Stagnation heat flux | Ratio vs DSMC avg |
+| :--- | :--- | :--- |
+| Sutton-Graves | 12.2 W/cm² | 0.22× |
+| Fay-Riddell | 161.6 W/cm² | 2.86× |
+| DSMC per-element avg | 56.6 W/cm² | 1.00× |
+
+See `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md` for full results.
+
+## 🔬 DSMC Noise Methodology: Why Our Data Has Noise But Rapisarda Doesn't
+
+Rapisarda (2023, MSc Thesis, Delft University of Technology) used Moss et al. (2006) stagnation-point DSMC data but applied three layers of noise filtering:
+
+1. **Pre-processed data** — Moss's published values were already time-averaged over many particle timesteps
+2. **6th-order polynomial fit** — Smoothed residual scatter and extrapolated into the free-molecular flow regime (R²→1) (Sec 4.5.1, Fig 4.40, Table 4.13)
+3. **Wilmoth bridging function** — Fitted to polynomial-smoothed data via non-linear least-squares (R²=0.99138 per thesis text; Table 4.15 reports R²=0.9792 for the specific coefficient fit) (Sec 4.4.5, Fig 4.41, Table 4.15)
+
+**Contrast with our approach:** We read raw per-element `f_1[3]` (kinetic energy flux, W/m²) from SPARTA surf dumps. The max-cell value is a single noisy point-sample. Negative values at later steps (e.g., −10,570 W/m² at step 2200) are DSMC statistical noise. Three code comment blocks in `stellarorion_sparta.adb` (~lines 388, ~2057, ~2185) document this noise context and cite Rapisarda's methodology.
+
+See `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md` Section 9 for full comparison.
+
+## 📝 Code Updates (Ada/SPARK)
+
+### Ada Fixes Applied
+
+| Fix | File | Description |
+| :--- | :--- | :--- |
+| **Sin_Rad/Cos_Rad range reduction** | `stellarorion_geometry.adb` | Fold large arguments into [-π, π] for Taylor series accuracy |
+| **Run_SPARTA surf copy path** | `stellarorion_sparta.adb` | Read surf file from `Results_Dir`, not hardcoded repo root |
+| **Parse_Surf_Geometry state exit** | `stellarorion_sparta.adb` | Exit State=1 when "Lines" keyword detected, preventing Curve corruption |
+| **Heat_Flux_Avg dimensional correction** | `stellarorion_sparta.adb` | Changed from `Heat_Sum / Surf_Area` (W/m⁴) to `Heat_Sum / Float(N)` (W/m²) |
+| **VTU connectivity spacing** | `stellarorion_sparta.adb` | Fixed missing space after N3 in quad connectivity (VTK XML parse error) |
+
+### DSMC Noise Documentation (Code Comments)
+
+Three comment blocks added to `stellarorion_sparta.adb` documenting:
+
+1. **~line 388**: DSMC noise context near `compute heat reduce max f_1[3]` — why SPARTA max produces noise, Rapisarda's 3-layer strategy, future work options
+2. **~line 2057**: Per-element heat flux parsing near `Heat(Row) := V(4)` — noise source, negative values, Rapisarda's polynomial smoothing
+3. **~line 2185**: Per-element average vs Rapisarda's polynomial near `Avg_Heat_Flux := Heat_Sum / Float(N)` — 3 types of data (flight area-weighted, Rapisarda polynomial-smoothed, our raw per-element)
+
+### GNATprove Level 4 Validation
+
+- 889 checks total, 666 proved (75%), 35 justified (4%), 54 unproved (6%)
+- All 54 unproved checks are pre-existing in other units (not in `stellarorion_sparta.adb`)
+- 0 new failures introduced by code changes
+
+## 📄 Documentation
+
+| Document | Path | Content |
+| :--- | :--- | :--- |
+| **Discussion** | `stellarorion_program_proc/Discussion.md` | 13 sections + Appendix: vehicle comparison, IRVE-3/LOFTID data, DSMC results, delta comparison (vs Rapisarda/flight), Sutton-Graves vs Fay-Riddell analysis, mathematical derivation, physics verification, optimization chain |
+| **Validation** | `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md` | 12 sections: simulation config, convergence, results, comparison, heat flux investigation, 51 plots, survivability, code fixes, DSMC noise methodology, storage paths, open items |
+
+### Discussion.md Sections (13 + Appendix)
+
+1. Executive Summary
+2. Vehicle Comparison (Rapisarda Table 4.1)
+3. IRVE-3 Validation Data (Rapisarda Table 4.10, NASA TP-2013-4012)
+4. LOFTID Flight Data (Deshmukh AIAA 2024-1501, Hollis AIAA 2024-1498)
+5. StellarOrion DSMC Validation Results — includes:
+   - 5.4 Delta Comparison: StellarOrion vs Rapisarda IRVE-3 vs Flight
+   - 5.5 Sutton-Graves vs Fay-Riddell: When Each Is Good, When Each Fails
+   - 5.6 Mathematical Derivation: Why Our DSMC, Fay-Riddell, and Sutton-Graves Give Different Answers
+6. Cross-Mission Comparison Table
+7. Rapisarda Model Performance Across Missions
+8. StellarOrion Physics Verification (GNATprove)
+9. Key Findings and Next Steps
+10. IRVE-3 Rapisarda Baseline → Earth Reentry Optimization Chain
+12. Key Success Variables
+13. References
+- Appendix A: Raw StellarOrion DSMC Data
+
+## 📦 Split Archive Files
+
+Large weekly report archives (>50 MB) are split into 25 MB chunks for GitHub compliance:
+
+```bash
+# Reassemble split archives locally
+cd Lost+Found/ProgressReport && bash reassemble.sh
+```
+
+Original `.tar.zst` files are excluded from git tracking (see `.gitignore`). Split parts are tracked.
+
 ## 📚 References
-For detailed scientific citations and mission parameters (IRVE-3, LOFTID), see [REFERENCES.MD](file:///Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/REFERENCES.MD).
+For detailed scientific citations and mission parameters (IRVE-3, LOFTID), see [REFERENCES.MD](REFERENCES.MD).
