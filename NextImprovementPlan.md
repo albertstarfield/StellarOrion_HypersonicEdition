@@ -2,7 +2,7 @@
 
 **Author:** Albert Starfield Wahyu Suryo Samudro
 **Date:** September 4, 2026
-**Version:** 2.4 (Audit Cycle 19 — cyclic until user says stop)
+**Version:** 2.5 (Audit Cycle 20 — cyclic until user says stop)
 
 ---
 
@@ -986,6 +986,7 @@ The following corrections were identified during Audit Cycle 2 (September 3, 202
 
 | File | Path | Lines | Status |
 |------|------|-------|--------|
+| `DERIVATION.md` | `DERIVATION.md` | ~320 | MODIFIED (Cycle 20: Added Section 6 — BTE→NS Chapman-Enskog derivation, Kriging bridge, 7 references) |
 | `pinn_accelerator.py` | `stellarorion_program_proc/src/python/pinn_accelerator.py` | ~681 | MODIFIED (Cycle 19: Fixes #52-#54 — 6-col grid parse, 4-output PDE, [rho,vx,vy,T] ordering; pyrefly+ruff PASSED) |
 | `pinn_test.py` | `stellarorion_program_proc/src/python/pinn_test.py` | 587 | READ |
 | `pipeline_checkpoint.py` | `stellarorion_program_proc/src/python/pipeline_checkpoint.py` | ~280 | CREATED (4-step pipeline tracker, 8 self-tests PASSED) |
@@ -1017,4 +1018,4 @@ grid.1000.out:
 
 ---
 
-*End of Audit Cycle 19 — Findings: #52 CRITICAL _parse_grid_file collapsed vx/vy into scalar speed (FIXED); #53 CRITICAL simple_pde used same scalar for both x/y continuity (FIXED — rewritten with proper 2D continuity); #54 CRITICAL n_output=3 mismatched _make_pde expecting 4 outputs (FIXED — changed to n_output=4, ordering [rho,vx,vy,T]); pyrefly+ruff PASSED. Previous findings: #26 retracted as FALSE, #27 noise reduction corrected to 3.5–12.7×, #28 Kriging operates on grid not surf, #34–#51 Cycles 14-18 completions. Document version v2.4. Next cycle: continue until user says stop.*
+*End of Audit Cycle 20 — Finding: #55 DERIVATION.md missing Section 6 (BTE→NS Chapman-Enskog derivation, Kriging bridge justification) — GoalThread0 Deliverable #1 gap (FIXED: added ~130 lines, 7 references covering Chapman-Enskog expansion, Kn regimes, Kriging as BLUP, complete pipeline chain). Previous findings: #52-#54 CRITICAL PINN bugs (Cycles 19), #26 retracted as FALSE, #27-#28 noise/Kriging corrections, #34-#51 Cycles 14-18 completions. Document version v2.5. Next cycle: continue until user says stop.*
