@@ -10,6 +10,10 @@ pymsis>=0.9.0
 # PINN surrogate (DeepXDE for physics-informed neural networks)
 deepxde>=1.12.0
 
+# Kriging denoiser (Gaussian Process Regression for DSMC noise filtering)
+# [Citation: Rasmussen & Williams (2006), "Gaussian Processes for ML", MIT Press]
+scikit-learn>=1.3.0
+
 # GPU-accelerated metamodel (PyTorch)
 torch>=2.0.0
 
