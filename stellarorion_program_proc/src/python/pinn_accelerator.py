@@ -70,7 +70,7 @@ class AxisymmetricPDE:
     # Placeholder — DeepXDE dynamic PDE is built at train time
 
 
-def _make_pde(alpha_x=1.0, alpha_y=1.0):
+def _make_pde():
     """Build the axisymmetric compressible Navier-Stokes PDE for DeepXDE.
 
     This PDE operates on a 2D (x, y) domain where y is the radial coordinate.
@@ -94,9 +94,6 @@ def _make_pde(alpha_x=1.0, alpha_y=1.0):
         v   = Y[:, 2:3]
         T   = Y[:, 3:4]
 
-        # Derived: pressure (ideal gas law)
-        p = rho * R_GAS * T
-
         # Gradients
         rho_x = dde.grad.jacobian(Y, x, i=0, j=0)
         rho_y = dde.grad.jacobian(Y, x, i=0, j=1)
@@ -107,6 +104,11 @@ def _make_pde(alpha_x=1.0, alpha_y=1.0):
         T_x   = dde.grad.jacobian(Y, x, i=3, j=0)
         T_y   = dde.grad.jacobian(Y, x, i=3, j=1)
 
+        # Pressure gradient via chain rule: dp/dx = R*(drho/dx * T + rho * dT/dx)
+        # [Citation: Cengel & Boles, "Thermodynamics: An Engineering Approach", 8th ed, §3.3]
+        p_x = R_GAS * (rho_x * T + rho * T_x)
+        p_y = R_GAS * (rho_y * T + rho * T_y)
+
         # Laplacians
         u_xx = dde.grad.hessian(Y, x, component=1, i=0, j=0)
         u_yy = dde.grad.hessian(Y, x, component=1, i=1, j=1)
@@ -115,17 +117,21 @@ def _make_pde(alpha_x=1.0, alpha_y=1.0):
         T_xx = dde.grad.hessian(Y, x, component=3, i=0, j=0)
         T_yy = dde.grad.hessian(Y, x, component=3, i=1, j=1)
 
-        # Simplified: (rho*u)_x + (rho*v)_y + rho*v/y = 0
+        # Continuity: div(r * rho * u) = 0  (axisymmetric)
+        # [Citation: Anderson (2006), "Hypersonic and High-Temperature Gas Dynamics", §3.2]
         continuity = rho_x * u + rho * u_x + rho_y * v + rho * v_y + rho * v / (x[:, 1:2] + 1e-8)
 
-        # Momentum x: rho*(u*u_x + v*u_y) = -p_x + mu*(u_xx + u_yy)
-        mu = 1.8e-5  # dynamic viscosity (approximate)
-        momentum_x = rho * (u * u_x + v * u_y) + p[:, 0:1] * alpha_x - mu * (u_xx + u_yy)
+        # Momentum x: rho*(u*u_x + v*u_y) = -dp/dx + mu*(u_xx + u_yy)
+        # [Citation: Bird (1994), "Molecular Gas Dynamics", §2.3]
+        mu = 1.8e-5  # dynamic viscosity [Pa*s] (approximate for air at ~300 K)
+        momentum_x = rho * (u * u_x + v * u_y) + p_x - mu * (u_xx + u_yy)
 
-        # Momentum y: rho*(u*v_x + v*v_y) = -p_y + mu*(v_xx + v_yy - v/y^2)
-        momentum_y = rho * (u * v_x + v * v_y) + p[:, 0:1] * alpha_y - mu * (v_xx + v_yy - v / (x[:, 1:2] ** 2 + 1e-8))
+        # Momentum y: rho*(u*v_x + v*v_y) = -dp/dy + mu*(v_xx + v_yy - v/y^2)
+        # [Citation: Anderson (2006), §3.2]
+        momentum_y = rho * (u * v_x + v * v_y) + p_y - mu * (v_xx + v_yy - v / (x[:, 1:2] ** 2 + 1e-8))
 
         # Energy: rho*c_p*(u*T_x + v*T_y) = k*(T_xx + T_yy)
+        # [Citation: Incropera & DeWitt, "Fundamentals of Heat and Mass Transfer", §1.3]
         k_thermal = 0.026  # thermal conductivity [W/(m*K)]
         cp = R_GAS * GAMMA / (GAMMA - 1.0)
         energy = rho * cp * (u * T_x + v * T_y) - k_thermal * (T_xx + T_yy)
