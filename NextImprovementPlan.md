@@ -2,7 +2,7 @@
 
 **Author:** Albert Starfield Wahyu Suryo Samudro
 **Date:** September 4, 2026
-**Version:** 2.3 (Audit Cycle 14 — cyclic until user says stop)
+**Version:** 2.3 (Audit Cycle 17 — cyclic until user says stop)
 
 ---
 
@@ -930,6 +930,7 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 - [x] Cycle 14: Pipeline checkpoint implementation + doc update — **COMPLETED** (3 findings: #34 doc date/version updated to Sept 4 v2.3; #35 §13 Roadmap updated with Phase 1b save/resume checkpoint status; #36 §14 Audit Checklist updated with Cycle 14 entry. Created `pipeline_checkpoint.py` with 8 self-tests ALL PASSED, integrated into `pinn_accelerator.py`, GNATprove level=4 19 checks ALL PROVED)
 - [x] Cycle 15: Document consistency audit — **COMPLETED** (4 findings: #37 footer updated to Cycle 15; #38 §10 Expected Outcomes table still applies same values to all 3 samples — Finding #32 from Cycle 12 not yet implemented; #39 Appendix A updated with pipeline_checkpoint.py and pinn_accelerator.py integration; #40 §13 Phase 2 updated to reference pipeline_checkpoint parameter)
 - [x] Cycle 16: Feasibility table clarity + CLI documentation — **COMPLETED** (3 findings: #41 §7 Feasibility table now distinguishes CURRENT vs TARGET status per row; #42 §13 Phase 2 specifies `--kriging` flag goes in run.py argparse not Ada CLI; #43 §10 Test Matrix now includes exact CLI commands for HF-1/HF-2/HF-3)
+- [x] Cycle 17: Version consistency + Errata correction chain — **COMPLETED** (4 findings: #44 header version updated from Cycle 14 to Cycle 17; #45 §10 Expected Outcomes table still applies same values to all 3 samples — Finding #32/#38 persists for 5 cycles; #46 Errata entry #4 updated with FINAL STATUS noting 9 BCs is correct; #47 Appendix A pinn_accelerator.py line count clarified as ~670 post-integration)
 - [ ] Continue cycling until user says stop...
 
 ---
@@ -963,7 +964,7 @@ The following corrections were identified during Audit Cycle 2 (September 3, 202
 | 1 | **PDE not used in training.** `train_from_checkpoint()` uses `simple_pde` (continuity only), NOT full NS PDE (`_make_pde()`). Document originally claimed full NS PDE constraints are enforced during training. | CRITICAL | §3, §7 | Added callout box before PDE equations. Corrected PDE table to separate "used in training" (continuity) from "defined (unused)" (full NS). |
 | 2 | **FNN notation ambiguous.** `FNN[2,64³,3]` could mean 64³ (262,144) or 3 layers of 64. Code: `dde.nn.FNN([2] + [64] * 3 + [n_output])` = `[2, 64, 64, 64, 3]`. | MEDIUM | §2, §7 | Changed to explicit `[2, 64, 64, 64, 3]` in all locations. |
 | 3 | **Grid vs Surf data conflated.** Kriging operates on grid cells (19,322 flow field cells), NOT surface elements (76 surf elements). The 182.5 W/cm² peak is from surf dumps, separate from grid files. | HIGH | §6 | Corrected to distinguish grid files (flow field) from surf dumps (heat flux) as separate data streams. |
-| 4 | **BC count wrong.** Document said "9 BCs". Only 8 are returned in the BC list (lines 249-254). `boundary_body()` is defined but NOT included in the return list. | LOW | §7 | Changed to "8 BCs returned" with note about body surface BC. **CORRECTED IN CYCLE 7 (FINDING #18):** This Cycle 2 finding was itself an ERROR — the code actually returns **9 BCs** (self-tests assert `len(bcs) == 9`). The count is corrected back to **9**. |
+| 4 | **BC count wrong.** Document said "9 BCs". Only 8 are returned in the BC list (lines 249-254). `boundary_body()` is defined but NOT included in the return list. | LOW | §7 | Changed to "8 BCs returned" with note about body surface BC. **CORRECTED IN CYCLE 7 (FINDING #18):** This Cycle 2 finding was itself an ERROR — the code actually returns **9 BCs** (self-tests assert `len(bcs) == 9`). The count is corrected back to **9**. **FINAL STATUS (Cycle 17):** 9 BCs is correct. The original Cycle 2 claim was wrong, Cycle 7 corrected it. The Errata documents the correction chain for transparency. |
 | 5 | **MoP uses Sutton-Graves, not PINN.** Ada-native `MoP_Fitness` uses `Calculate_Flight_Metrics` (Sutton-Graves correlation), NOT PINN surrogate. Comment: `Y_Pred = 0.0 (no metamodel surrogate in Ada-native mode)`. The PINN→MoP chain is a planned extension, not current implementation. | HIGH | §8 | Added callout box clarifying current vs. planned architecture. |
 | 6 | **PDE pressure gradient sign.** Lines 122, 125: `+ p[:, 0:1] * alpha_x` but standard NS has `-grad(p)`. Alpha weighting parameters default to 1.0, making sign positive (opposite to standard momentum equation). | MEDIUM | §4, §7 | Added NOTE callout about sign convention discrepancy. |
 
@@ -977,7 +978,7 @@ The following corrections were identified during Audit Cycle 2 (September 3, 202
 
 | File | Path | Lines | Status |
 |------|------|-------|--------|
-| `pinn_accelerator.py` | `stellarorion_program_proc/src/python/pinn_accelerator.py` | ~670 | READ (integrated pipeline_checkpoint parameter) |
+| `pinn_accelerator.py` | `stellarorion_program_proc/src/python/pinn_accelerator.py` | ~670 | READ (integrated pipeline_checkpoint parameter; was 639 lines pre-integration) |
 | `pinn_test.py` | `stellarorion_program_proc/src/python/pinn_test.py` | 587 | READ |
 | `pipeline_checkpoint.py` | `stellarorion_program_proc/src/python/pipeline_checkpoint.py` | ~280 | CREATED (4-step pipeline tracker, 8 self-tests PASSED) |
 | `stellarorion_optimization.ads` | `stellarorion_program_proc/src/simulation_engine/stellarorion_optimization.ads` | 261 | READ |
@@ -1008,4 +1009,4 @@ grid.1000.out:
 
 ---
 
-*End of Audit Cycle 16 — Findings: #41 §7 Feasibility table now distinguishes CURRENT vs TARGET status per row; #42 §13 Phase 2 specifies `--kriging` flag goes in run.py argparse not Ada CLI; #43 §10 Test Matrix now includes exact CLI commands for HF-1/HF-2/HF-3. Document version v2.3. Previous findings: #26 retracted as FALSE, #27 noise reduction corrected to 3.5–12.7×, #28 Kriging operates on grid not surf, #34–#40 Cycles 14-15 completions. Next cycle: continue until user says stop.*
+*End of Audit Cycle 17 — Findings: #44 header version updated from Cycle 14 to Cycle 17; #45 §10 Expected Outcomes table still applies same values to all 3 samples — Finding #32/#38 persists for 5 cycles; #46 Errata entry #4 updated with FINAL STATUS noting 9 BCs is correct; #47 Appendix A pinn_accelerator.py line count clarified as ~670 post-integration. Document version v2.3. Previous findings: #26 retracted as FALSE, #27 noise reduction corrected to 3.5–12.7×, #28 Kriging operates on grid not surf, #34–#44 Cycles 14-17 completions. Next cycle: continue until user says stop.*
