@@ -2057,11 +2057,15 @@ package body StellarOrion_Sparta is
                           --  =================================================================
                           --  DSMC PER-ELEMENT HEAT FLUX PARSING (Sep 3, 2026)
                           --  =================================================================
-                          --  f_1[3] = kinetic energy flux per surface element [W/m^2].
-                          --  This is a TIME-AVERAGED quantity within SPARTA (averaged
-                          --  over Avg_Nrepeat * Avg_Nfreq timesteps via the surfF
-                          --  compute), but it is still a PER-ELEMENT value, not an
-                          --  area-averaged or stagnation-point value.
+                           --  f_1[3] = kinetic energy flux per surface element [W/m^2].
+                           --  This is a TIME-AVERAGED quantity within SPARTA (averaged
+                           --  over Avg_Nrepeat * Avg_Nfreq timesteps via the
+                           --  "fix 1 ave/surf" command applied to "compute 1 surf ... ke"),
+                           --  but it is still a PER-ELEMENT value, not an
+                           --  area-averaged or stagnation-point value.
+                           --  NOTE (Audit Cycle 13): f_surfavg[3] is the z-component of
+                           --  surface force (Newtons), NOT time-averaged heat flux.
+                           --  f_1[3] is the correct column for heat flux (V(4)).
                           --
                           --  NOISE SOURCE: Each of the 76 surface elements reports an
                           --  independent KE flux.  At later timesteps (lower altitude,
