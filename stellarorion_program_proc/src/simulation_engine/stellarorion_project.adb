@@ -18,6 +18,7 @@
 --    --validationUnsteady      Unsteady validation (10000 steps)
 --    --compareCalibratePINN    Compare calibrate with PINN (requires Python sidecar)
 --    --validationPINN          Validation with PINN (requires Python sidecar)
+--    --validation-base-sim-same-algotest  Rapisarda-equivalent: Mars env, smooth toroid
 --    --LiteracyReferences       Display REFERENCES.MD
 --    --solver <name>           Solver backend (sparta / openfoam / ...)
 --    --steps <N>               SPARTA timestep count
@@ -116,6 +117,10 @@ package body StellarOrion_Project is
       Put_Line ("  --compareCalibrate        Compare analytical vs IRVE-3 flight data");
       Put_Line ("  --compareCalibratePINN    Compare-calibrate with PINN (sidecar)");
       Put_Line ("  --validationPINN          Validation with PINN (sidecar)");
+      Put_Line ("  --validation-base-sim-same-algotest");
+      Put_Line ("                            Rapisarda-equivalent: Mars env (MCD v6.1),");
+      Put_Line ("                            smooth toroid, chemistry=mars. Compare algo");
+      Put_Line ("                            output vs Rapisarda Table 4.10 directly.");
       Put_Line ("  --test <mode>             Run test (baseline / sample / pinn_calibration)");
       Put_Line ("  --sample <N>              Shorthand: --headless --test sample --steps N");
       Put_Line ("  --optimize                Run SBO optimisation loop");
@@ -749,6 +754,29 @@ package body StellarOrion_Project is
          Put_Line ("[INFO] --validationPINN: PINN-refined validation with SPARTA.");
          Put_Line ("[INFO] Delegating to Python sidecar (DeepXDE PINN) ...");
          Run_Test_PINN_Calibration (Steps => 1_100);
+         goto Cleanup;
+      end if;
+
+      --  Rapisarda-equivalent validation: Mars env (MCD v6.1), smooth toroid,
+      --  chemistry=mars.  Forces the same environment as Rapisarda (2023)
+      --  Table 4.10 so we can compare our DSMC algorithm output directly.
+      if Has_Flag ("--validation-base-sim-same-algotest") then
+         Put_Line ("[INFO] --validation-base-sim-same-algotest:");
+         Put_Line ("[INFO]   Rapisarda-equivalent validation mode.");
+         Put_Line ("[INFO]   Forcing: chemistry=mars, skin=smooth.");
+         Put_Line ("[INFO]   Purpose: compare our algo vs Rapisarda Table 4.10.");
+         Run_Validate_Full (Steps         => Steps,
+                           Grid_Factor   => Grid_Factor,
+                           Chemistry     => Mars,
+                           Geo_In        => Geo,
+                           TPS_In        => TPS,
+                           Mach_Override => Mach_Override,
+                           Alt_Override  => Alt_Override,
+                           Cores         => Cores,
+                           Use_GPU       => Use_GPU,
+                           Fnum_Str      => Fnum_Str,
+                           Restart_File  => Restart_File,
+                           Results_Dir   => "results_validation_rapisarda");
          goto Cleanup;
       end if;
 
