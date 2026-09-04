@@ -319,3 +319,6 @@ tests/obj/
 
 # === B1 sabotage audit reports ===
 stellarorion_program_proc/data/audits/
+
+# === Goal threads (local planning only, not committed) ===
+GoalThread*.md
