@@ -2,7 +2,7 @@
 
 **Author:** Albert Starfield Wahyu Suryo Samudro
 **Date:** September 4, 2026
-**Version:** 2.5 (Audit Cycle 20 — cyclic until user says stop)
+**Version:** 2.7 (Audit Cycle 22 — cyclic until user says stop)
 
 ---
 
@@ -1019,4 +1019,53 @@ grid.1000.out:
 
 ---
 
-*End of Audit Cycle 21 — Findings: #56 CRITICAL pressure gradient bug (p*alpha → dp/dx via chain rule), #57 unused params cleanup, #58 DERIVATION.md Section 5 inconsistency with code (FIXED: rewrote to match 4-output viscous axisymmetric NS). Previous: #55 DERIVATION.md missing Section 6 (FIXED Cycle 20), #52-#54 CRITICAL PINN bugs (Cycles 19), #26 retracted as FALSE, #27-#28 noise/Kriging corrections, #34-#51 Cycles 14-18 completions. Document version v2.6. Next cycle: continue until user says stop.*
+---
+
+## Audit Cycle 22 — Findings
+
+**Date:** September 4, 2026
+**Version:** 2.7
+
+### Validation Summary
+
+| Check | Status | Details |
+|:---|:---|:---|
+| **GNATprove Level 0** | ✅ PASSED | 889 checks total, 552 proved (62%), 45 justified (5%), 0 NEW failures |
+| **ruff check** (5 Python files) | ✅ PASSED | All checks passed — 0 errors |
+| **py_compile** (5 Python files) | ✅ PASSED | All OK |
+| **pyrefly check** | ✅ PASSED | Only `deepxde` missing-import (expected GPU-only dep) |
+| **kriging_denoise.py self-tests** | ✅ PASSED | 7/7 tests pass |
+| **pipeline_checkpoint.py self-tests** | ✅ PASSED | 8/8 tests pass |
+
+### Fixes Applied (Cycle 22)
+
+1. **kriging_denoise.py** — Replaced 7 `except Exception` with specific exceptions:
+   - Tests 1, 5 (file I/O): `(AssertionError, ValueError, OSError)`
+   - Tests 2, 3, 7 (GP fitting): `(AssertionError, ValueError, RuntimeError)`
+   - Tests 4, 6 (constant/kernel): `(AssertionError, ValueError)`
+   - Rationale: PEP 8 / ruff E722 compliance, prevents swallowing unexpected errors
+
+2. **pipeline_checkpoint.py** — Fixed 6 ruff issues:
+   - F401: Removed unused `import time`
+   - UP045: Removed `from typing import Optional`, replaced all 6 `Optional[X]` → `X | None`
+   - I001: Auto-fixed import sort order
+   - Rationale: PEP 604 (Python 3.10+) modern type unions, import hygiene
+
+### Deliverable Status (unchanged, all verified)
+
+| # | Deliverable | Status | Evidence |
+|:---|:---|:---|:---|
+| 1 | Math Derivation §6 in DERIVATION.md | ✅ COMPLETE | 38 matches for Chapman-Enskog/BTE→NS/Kn/asymptotic |
+| 2 | `--validate` & `--validation-base-sim-same-algotest` in help | ✅ COMPLETE | stellarorion_project.adb lines 115, 120-123 |
+| 3 | Colima fallback in run.py | ✅ COMPLETE | 22 references: `_is_docker_ok()`, `_try_start_colima()`, `_stop_colima_if_requested()` |
+| 4 | Pipeline checkpoint (4-step) | ✅ COMPLETE | `PIPELINE_STEPS = ("sparta", "kriging", "pinn", "mop")` |
+| 5 | pinn_accelerator.py FINDING #56 fix | ✅ COMPLETE | Chain-rule pressure gradient: `p_x = R_GAS * (rho_x * T + rho * T_x)` |
+| 6 | Python ruff/pyrefly clean | ✅ COMPLETE | 5 files pass all checks |
+
+### No New Findings
+
+No new code quality, correctness, or logic issues found in Cycle 22. All prior findings (#56-#58) remain resolved.
+
+---
+
+*End of Audit Cycle 22 — All 6 deliverables COMPLETE. Python files now fully ruff-clean with specific exception handling. GNATprove: 889 checks, 0 new failures. Document version v2.7. Next cycle: continue until user says stop.*
