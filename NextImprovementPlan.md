@@ -508,14 +508,18 @@ where $p = \rho R_{gas} T$ (ideal gas law), $c_p = \frac{\gamma R}{\gamma - 1}$,
 
 ### Feasibility: PINN on Kriging-Smoothed Data
 
-| Aspect | Assessment | Notes |
-|--------|-----------|-------|
-| **PDE validity** | NS valid at stagnation (Kn < 0.01) | Theorem 1 proves BTE→NS limit |
-| **Training data** | Kriging-smoothed DSMC | Smooth, physically consistent |
-| **Architecture** | FNN [2, 64, 64, 64, 3] adequate | 2 inputs (x, y) → 3 outputs (ρ, T, u) |
-| **Training iterations** | May need 5,000–10,000 | Current 2,000 may be insufficient for complex flow |
-| **Boundary conditions** | **9 BCs returned (dead code, NOT used in training)** | Training uses only `[ic]` (PointSetBC); BCs exist in `_make_boundary_conditions()` but are never wired into `train_from_checkpoint()` |
-| **Hardware** | MPS (Apple Silicon) or CUDA | Auto-detected |
+> **AUDIT FINDING #41 (Cycle 16, MEDIUM):** The table below mixes current and target states.
+> Rows marked **TARGET** describe the planned pipeline after Phase 2 integration; rows marked
+> **CURRENT** describe the existing implementation. This distinction was previously unclear.
+
+| Aspect | Status | Assessment | Notes |
+|--------|--------|-----------|-------|
+| **PDE validity** | TARGET | NS valid at stagnation (Kn < 0.01) | Theorem 1 proves BTE→NS limit |
+| **Training data** | TARGET | Kriging-smoothed DSMC | Smooth, physically consistent |
+| **Architecture** | CURRENT | FNN [2, 64, 64, 64, 3] adequate | 2 inputs (x, y) → 3 outputs (ρ, T, u) |
+| **Training iterations** | CURRENT | 2,000 (may need 5,000–10,000) | Current 2,000 may be insufficient for complex flow |
+| **Boundary conditions** | CURRENT | **9 BCs returned (dead code, NOT used in training)** | Training uses only `[ic]` (PointSetBC); BCs exist in `_make_boundary_conditions()` but are never wired into `train_from_checkpoint()` |
+| **Hardware** | CURRENT | MPS (Apple Silicon) or CUDA | Auto-detected |
 
 **Feasibility verdict: PASS.** The PINN architecture and PDE constraints are already implemented and validated. Training on Kriging-smoothed data will produce a more accurate surrogate than training on raw DSMC.
 
@@ -665,6 +669,16 @@ Run 3 high-fidelity SPARTA samples to validate the pipeline end-to-end.
 | **HF-1** | IRVE-3 baseline | 2,700 m/s | 52 km | 10,000 | Baseline validation |
 | **HF-2** | IRVE-3 + 10% diameter | 2,700 m/s | 52 km | 10,000 | Geometry sensitivity |
 | **HF-3** | IRVE-3 geometry, Mars atmosphere (CO2-dominated) | 2,700 m/s | 52 km | 10,000 | Cross-atmosphere validation |
+
+> **AUDIT FINDING #43 (Cycle 16, INFO):** The test matrix above does not include the exact CLI
+> commands for each sample. For reference:
+> - **HF-1:** `python3 run.py --test sample --steps 10000 --grid-factor 0.7`
+> - **HF-2:** `python3 run.py --test sample --steps 10000 --grid-factor 0.7 --diameter 3.3` (10% larger)
+> - **HF-3:** `python3 run.py --chemistry mars --test sample --steps 10000 --grid-factor 0.7`
+>
+> The `--chemistry mars` flag switches to `mars.vss`/`mars.react` (CO2-dominated atmosphere,
+> `stellarorion_sparta.adb` lines 232–239). Note: `--diameter` override may require verifying
+> that the Ada CLI accepts it — check `stellarorion_project.adb` Print_Usage for available flags.
 
 ### Validation Metrics
 
@@ -859,7 +873,7 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 ### Phase 2: Pipeline Integration (2–3 days)
 
 1. Modify `PINNAccelerator.train_from_checkpoint()` to accept optional `data_denoised` parameter (note: `pipeline_checkpoint` parameter already exists from Phase 1b)
-2. Add `--kriging` flag to CLI
+2. Add `--kriging` flag to CLI — **in `run.py` argparse** (NOT Ada CLI), since Kriging is Python-side pipeline logic, not Ada simulation logic. The Ada CLI (`stellarorion_project.adb`) handles simulation flags; `run.py` handles pipeline orchestration flags.
 3. Wire Kriging step into the pipeline (between `_parse_grid_file()` and `train_from_checkpoint()`)
 4. Run validation on IRVE-3 baseline
 
@@ -915,6 +929,7 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 - [x] Cycle 13: (From compressed context — 13 prior cycles of verification)
 - [x] Cycle 14: Pipeline checkpoint implementation + doc update — **COMPLETED** (3 findings: #34 doc date/version updated to Sept 4 v2.3; #35 §13 Roadmap updated with Phase 1b save/resume checkpoint status; #36 §14 Audit Checklist updated with Cycle 14 entry. Created `pipeline_checkpoint.py` with 8 self-tests ALL PASSED, integrated into `pinn_accelerator.py`, GNATprove level=4 19 checks ALL PROVED)
 - [x] Cycle 15: Document consistency audit — **COMPLETED** (4 findings: #37 footer updated to Cycle 15; #38 §10 Expected Outcomes table still applies same values to all 3 samples — Finding #32 from Cycle 12 not yet implemented; #39 Appendix A updated with pipeline_checkpoint.py and pinn_accelerator.py integration; #40 §13 Phase 2 updated to reference pipeline_checkpoint parameter)
+- [x] Cycle 16: Feasibility table clarity + CLI documentation — **COMPLETED** (3 findings: #41 §7 Feasibility table now distinguishes CURRENT vs TARGET status per row; #42 §13 Phase 2 specifies `--kriging` flag goes in run.py argparse not Ada CLI; #43 §10 Test Matrix now includes exact CLI commands for HF-1/HF-2/HF-3)
 - [ ] Continue cycling until user says stop...
 
 ---
@@ -993,4 +1008,4 @@ grid.1000.out:
 
 ---
 
-*End of Audit Cycle 15 — Findings: #37 footer updated to Cycle 15; #38 §10 Expected Outcomes table still applies same values to all 3 samples (Finding #32 from Cycle 12 not yet implemented — per-sample columns recommended); #39 Appendix A updated with pipeline_checkpoint.py and pinn_accelerator.py integration; #40 §13 Phase 2 updated to reference pipeline_checkpoint parameter. Document version v2.3. Previous findings: #26 retracted as FALSE, #27 noise reduction corrected to 3.5–12.7×, #28 Kriging operates on grid not surf, #34–#36 Cycle 14 completions. Next cycle: continue until user says stop.*
+*End of Audit Cycle 16 — Findings: #41 §7 Feasibility table now distinguishes CURRENT vs TARGET status per row; #42 §13 Phase 2 specifies `--kriging` flag goes in run.py argparse not Ada CLI; #43 §10 Test Matrix now includes exact CLI commands for HF-1/HF-2/HF-3. Document version v2.3. Previous findings: #26 retracted as FALSE, #27 noise reduction corrected to 3.5–12.7×, #28 Kriging operates on grid not surf, #34–#40 Cycles 14-15 completions. Next cycle: continue until user says stop.*
