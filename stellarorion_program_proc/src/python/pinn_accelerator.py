@@ -9,6 +9,7 @@ Architecture:
   - PyTorch backend for hardware acceleration (CUDA/MPS/CPU)
   - Checkpoint save/restore for incremental training
   - Gap-fill prediction from SPARTA grid output files
+  - Pipeline-level save/resume via PipelineCheckpoint
 
 Requires: deepxde, torch (installed via requirements.txt).
 """
@@ -341,7 +342,8 @@ class PINNAccelerator:
         return (data - mean) / std, mean, std
 
     # --- training entry point ---
-    def train_from_checkpoint(self, grid_file, domain_bounds, iterations=2000, save_path=None) -> None:
+    def train_from_checkpoint(self, grid_file, domain_bounds, iterations=2000,
+                              save_path=None, pipeline_checkpoint=None) -> None:
         """Train or restore PINN from a SPARTA grid output file.
         Tested by: test_train_from_checkpoint_missing_file() (same file).
 
@@ -349,17 +351,35 @@ class PINNAccelerator:
             grid_file: Path to grid.NNNN.out
             domain_bounds: [xmin, xmax, ymax]
             iterations: Number of training iterations
-            save_path: Path to save/load checkpoint
+            save_path: Path to save/load model checkpoint
+            pipeline_checkpoint: Optional PipelineCheckpoint instance. If provided,
+                                 the 'pinn' step is marked running/completed/failed
+                                 for save/resume tracking.
         """
         self.domain_bounds = domain_bounds
         _xmin, _xmax, _ymax = domain_bounds
 
-        # Check for existing checkpoint
+        # Mark pipeline step as running (if checkpoint provided)
+        if pipeline_checkpoint is not None:
+            if pipeline_checkpoint.is_step_completed("pinn"):
+                print("[checkpoint] PINN step already completed — restoring model.")
+                if save_path and os.path.exists(save_path):
+                    try:
+                        self.model = dde.utils.ensure_serializable(save_path)
+                        print("[+] PINN restored from pipeline checkpoint.")
+                        return
+                    except Exception:  # noqa: BLE001
+                        print("[!] PINN restore from checkpoint failed. Retraining ...")
+            pipeline_checkpoint.mark_step_running("pinn")
+
+        # Check for existing model checkpoint
         if save_path and os.path.exists(save_path):
             print(f"[*] Restoring PINN from checkpoint: {save_path}")
             try:
                 self.model = dde.utils.ensure_serializable(save_path)
                 print("[+] PINN restored successfully.")
+                if pipeline_checkpoint is not None:
+                    pipeline_checkpoint.mark_step_completed("pinn", output_files=[save_path])
                 return
             except Exception:  # noqa: BLE001
                 print("[!] Checkpoint restore failed. Retraining ...")
@@ -441,6 +461,14 @@ class PINNAccelerator:
                     print(f"[+] PINN checkpoint saved: {save_path}")
             except Exception as exc:  # noqa: BLE001
                 print(f"[!] Checkpoint save failed: {exc}")
+                if pipeline_checkpoint is not None:
+                    pipeline_checkpoint.mark_step_failed("pinn", error=str(exc))
+                return
+
+        # Mark pipeline step as completed
+        if pipeline_checkpoint is not None:
+            output_files = [save_path] if save_path else []
+            pipeline_checkpoint.mark_step_completed("pinn", output_files=output_files)
 
         print("[+] PINN training complete.")
 
