@@ -285,7 +285,7 @@ class PINNAccelerator:
     def _parse_grid_file(self, grid_file):
         """Parse SPARTA grid.NNNN.out into training data.
 
-        Returns: numpy array of shape (N, 5) — [x, y, rho, T, u]
+        Returns: numpy array of shape (N, 6) — [x, y, rho, T, vx, vy]
         """
         cells = []
         header_seen = False
@@ -323,7 +323,12 @@ class PINNAccelerator:
                     rho = num_density * M_air / N_A
 
                     if temp_K > 0 and rho > 0:
-                        cells.append([x_center, y_center, rho, temp_K, np.sqrt(vx_ms**2 + vy_ms**2)])
+                        # [Citation: Bird 1994, "Molecular Gas Dynamics", §2.3]
+                        # Preserve separate vx,vy components for 2D continuity PDE.
+                        # Collapsing to scalar speed loses directional information and
+                        # makes the 2D continuity equation ∂(ρvx)/∂x + ∂(ρvy)/∂y = 0
+                        # physically unsolvable (Finding #22, #52).
+                        cells.append([x_center, y_center, rho, temp_K, vx_ms, vy_ms])
                 except (ValueError, IndexError):
                     continue
 
@@ -390,8 +395,10 @@ class PINNAccelerator:
         print(f"[+] Parsed {len(raw_data)} cells.")
 
         # Extract features and targets
-        xy = raw_data[:, :2]       # [x, y]
-        targets = raw_data[:, 2:5]  # [rho, T, u]
+        # Grid file now returns [x, y, rho, T, vx, vy] (6 columns).
+        # Reorder targets to [rho, vx, vy, T] to match _make_pde / BCs ordering.
+        xy = raw_data[:, :2]                    # [x, y]
+        targets = raw_data[:, [2, 4, 5, 3]]    # [rho, vx, vy, T]
 
         # Normalize
         xy_norm, self.mean_x, self.std_x = self._normalize(xy)
@@ -405,28 +412,31 @@ class PINNAccelerator:
             lambda _, on: True,
         )
 
-        # Output layer: 3 variables (rho, T, u)
-        n_output = 3
+        # Output layer: 4 variables (rho, vx, vy, T)
+        n_output = 4
 
         # Define PDE (simplified for stability)
+        # [Citation: Bird 1994, "Molecular Gas Dynamics", §2.3]
+        # [Reference: 2D compressible continuity equation]
         def simple_pde(x, Y) -> list:
-            """Simplified PDE for training stability.
+            """Simplified 2D continuity PDE for training stability.
 
-            Pre: Y columns ordered [rho, T, u] on the normalized domain.
-            Post: returns [continuity] residual.
+            Pre: Y columns ordered [rho, vx, vy, T] on the normalized domain.
+            Post: returns [continuity] residual = d(rho*vx)/dx + d(rho*vy)/dy.
             Tested by: test_simple_pde_source_present() (same file).
             """
             rho = Y[:, 0:1]
-            _T = Y[:, 1:2]
-            u = Y[:, 2:3]
+            vx = Y[:, 1:2]
+            vy = Y[:, 2:3]
+            _T = Y[:, 3:4]
 
             rho_x = dde.grad.jacobian(Y, x, i=0, j=0)
             rho_y = dde.grad.jacobian(Y, x, i=0, j=1)
-            u_x = dde.grad.jacobian(Y, x, i=2, j=0)
-            u_y = dde.grad.jacobian(Y, x, i=2, j=1)
+            vx_x = dde.grad.jacobian(Y, x, i=1, j=0)
+            vy_y = dde.grad.jacobian(Y, x, i=2, j=1)
 
-            # Simplified continuity: div(rho * u) = 0
-            continuity = rho_x * u[:, 0:1] + rho * u_x + rho_y * u[:, 0:1] + rho * u_y
+            # 2D continuity: d(rho*vx)/dx + d(rho*vy)/dy = 0
+            continuity = rho_x * vx + rho * vx_x + rho_y * vy + rho * vy_y
 
             return [continuity]
 
@@ -439,7 +449,7 @@ class PINNAccelerator:
             num_test=500,
         )
 
-        # Network: 4 inputs (x, y) -> 3 outputs (rho, T, u)
+        # Network: 2 inputs (x, y) -> 4 outputs (rho, vx, vy, T)
         net = dde.nn.FNN([2] + [64] * 3 + [n_output], "tanh", "Glorot normal")
 
         model = dde.Model(data, net)
@@ -478,10 +488,10 @@ class PINNAccelerator:
         Tested by: test_predict_gap_fill_untrained_raises() (same file).
 
         Args:
-            query_points: numpy array of shape (N, 2) — [x, y]
+            query_points: numpy array of shape (N, 2) -- [x, y]
 
         Returns:
-            numpy array of shape (N, 3) — [rho, T, u]
+            numpy array of shape (N, 4) -- [rho, vx, vy, T]
         """
         if self.model is None:
             raise RuntimeError("PINN model not trained. Call train_from_checkpoint first.")
@@ -499,24 +509,28 @@ class PINNAccelerator:
 
     # --- full-state inference ---
     def predict_full_state(self, query_points) -> np.ndarray:
-        """Predict full state vector [rho, T, u, v, p] at query points.
+        """Predict full state vector [rho, vx, vy, T, p] at query points.
 
-        v (radial velocity) is estimated from continuity.
-        p is computed from ideal gas law.
+        p is computed from ideal gas law: p = rho * R * T.
         Tested by: test_predict_full_state_untrained_raises() (same file).
-        """
-        base = self.predict_gap_fill(query_points)  # [rho, T, u]
-        rho = base[:, 0:1]
-        T = base[:, 1:2]
-        u = base[:, 2:3]
 
-        # Ideal gas pressure
+        Args:
+            query_points: numpy array of shape (N, 2) -- [x, y]
+
+        Returns:
+            numpy array of shape (N, 5) -- [rho, vx, vy, T, p]
+        """
+        base = self.predict_gap_fill(query_points)  # [rho, vx, vy, T]
+        rho = base[:, 0:1]
+        vx = base[:, 1:2]
+        vy = base[:, 2:3]
+        T = base[:, 3:4]
+
+        # Ideal gas pressure: p = rho * R_specific * T
+        # [Citation: Cengel & Boles, "Thermodynamics: An Engineering Approach", 8th ed., §3.3]
         p = rho * R_GAS * T
 
-        # Radial velocity: estimate from symmetry (small for bluff body)
-        v = np.zeros_like(u)
-
-        return np.hstack([rho, u, v, T, p])
+        return np.hstack([rho, vx, vy, T, p])
 
 
 # ========================================================================
