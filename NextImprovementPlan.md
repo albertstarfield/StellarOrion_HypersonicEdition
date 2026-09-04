@@ -2,7 +2,7 @@
 
 **Author:** Albert Starfield Wahyu Suryo Samudro
 **Date:** September 4, 2026
-**Version:** 2.3 (Audit Cycle 18 — cyclic until user says stop)
+**Version:** 2.4 (Audit Cycle 19 — cyclic until user says stop)
 
 ---
 
@@ -937,6 +937,7 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 - [x] Cycle 16: Feasibility table clarity + CLI documentation — **COMPLETED** (3 findings: #41 §7 Feasibility table now distinguishes CURRENT vs TARGET status per row; #42 §13 Phase 2 specifies `--kriging` flag goes in run.py argparse not Ada CLI; #43 §10 Test Matrix now includes exact CLI commands for HF-1/HF-2/HF-3)
 - [x] Cycle 17: Version consistency + Errata correction chain — **COMPLETED** (4 findings: #44 header version updated from Cycle 14 to Cycle 17; #45 §10 Expected Outcomes table still applies same values to all 3 samples — Finding #32/#38 persists for 5 cycles; #46 Errata entry #4 updated with FINAL STATUS noting 9 BCs is correct; #47 Appendix A pinn_accelerator.py line count clarified as ~670 post-integration)
 - [x] Cycle 18: Kn clarification + Risk register + PyTorch citation — **COMPLETED** (4 findings: #48 §1 Executive Summary Kn description rewritten to distinguish freestream Kn≈2.5×10⁻⁵ from local shock-layer Kn~0.01–0.1 with cross-ref to §3; #49 §10 Finding #32 callout updated with DEFERRED note for Phase 3; #50 §12 Risk Register Kriging O(N²) updated with memory estimate (~2.87 GB fits in 8 GB RAM); #51 §15 References added PyTorch citation #16 Paszke et al. 2019)
+- [x] Cycle 19: PINN output ordering + PDE physics fixes — **COMPLETED** (3 findings: #52 CRITICAL — `_parse_grid_file` collapsed vx/vy into scalar speed `np.sqrt(vx²+vy²)`, destroying separate velocity components needed for 2D continuity; fixed to return 6 columns [x,y,rho,T,vx,vy]; #53 CRITICAL — `simple_pde` used same scalar `u` for both x/y continuity terms (`rho_x*u + rho*u_x + rho_y*u + rho*u_y`), violating 2D compressible continuity `∂(ρvx)/∂x + ∂(ρvy)/∂y = 0`; rewritten with separate vx,vy gradients; #54 CRITICAL — `n_output=3` with ordering [rho,T,u] mismatched `_make_pde` which expects [rho,u,v,T] (4 outputs); fixed to `n_output=4` with ordering [rho,vx,vy,T]; also: targets reordered via `raw_data[:,[2,4,5,3]]`, predict_gap_fill/predict_full_state updated, docstrings corrected, pyrefly+ruff PASSED)
 - [ ] Continue cycling until user says stop...
 
 ---
@@ -985,7 +986,7 @@ The following corrections were identified during Audit Cycle 2 (September 3, 202
 
 | File | Path | Lines | Status |
 |------|------|-------|--------|
-| `pinn_accelerator.py` | `stellarorion_program_proc/src/python/pinn_accelerator.py` | ~670 | READ (integrated pipeline_checkpoint parameter; was 639 lines pre-integration) |
+| `pinn_accelerator.py` | `stellarorion_program_proc/src/python/pinn_accelerator.py` | ~681 | MODIFIED (Cycle 19: Fixes #52-#54 — 6-col grid parse, 4-output PDE, [rho,vx,vy,T] ordering; pyrefly+ruff PASSED) |
 | `pinn_test.py` | `stellarorion_program_proc/src/python/pinn_test.py` | 587 | READ |
 | `pipeline_checkpoint.py` | `stellarorion_program_proc/src/python/pipeline_checkpoint.py` | ~280 | CREATED (4-step pipeline tracker, 8 self-tests PASSED) |
 | `stellarorion_optimization.ads` | `stellarorion_program_proc/src/simulation_engine/stellarorion_optimization.ads` | 261 | READ |
@@ -1016,4 +1017,4 @@ grid.1000.out:
 
 ---
 
-*End of Audit Cycle 18 — Findings: #48 §1 Executive Summary Kn description rewritten to distinguish freestream vs local shock-layer; #49 §10 Finding #32 DEFERRED to Phase 3; #50 §12 Risk Register Kriging O(N²) memory estimate (~2.87 GB); #51 §15 References added PyTorch citation. Document version v2.3. Previous findings: #26 retracted as FALSE, #27 noise reduction corrected to 3.5–12.7×, #28 Kriging operates on grid not surf, #34–#47 Cycles 14-17 completions. Next cycle: continue until user says stop.*
+*End of Audit Cycle 19 — Findings: #52 CRITICAL _parse_grid_file collapsed vx/vy into scalar speed (FIXED); #53 CRITICAL simple_pde used same scalar for both x/y continuity (FIXED — rewritten with proper 2D continuity); #54 CRITICAL n_output=3 mismatched _make_pde expecting 4 outputs (FIXED — changed to n_output=4, ordering [rho,vx,vy,T]); pyrefly+ruff PASSED. Previous findings: #26 retracted as FALSE, #27 noise reduction corrected to 3.5–12.7×, #28 Kriging operates on grid not surf, #34–#51 Cycles 14-18 completions. Document version v2.4. Next cycle: continue until user says stop.*
