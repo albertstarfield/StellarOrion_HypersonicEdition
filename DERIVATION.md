@@ -167,21 +167,34 @@ $$J = w_{\beta} \left( \frac{\beta_{calc} - \beta_{target}}{10} \right)^2 + w_{m
 
 ## 5. PINN Refinement Derivation (DeepXDE)
 
-The **Physics-Informed Neural Network (PINN)** stage uses the **2D Compressible Navier-Stokes Equations** (Anderson, 2006) to refine the flow field data from SPARTA.
+The **Physics-Informed Neural Network (PINN)** stage uses the **2D Axisymmetric Compressible Navier-Stokes Equations** (Anderson, 2006) to refine the flow field data from SPARTA.
 
-### 2D Compressible Navier-Stokes Equations (Axisymmetric)
-The network $\mathcal{N}(x, y) \to (\rho, u, v, T, p)$ is constrained by the following residuals:
+### 2D Axisymmetric Compressible Navier-Stokes Equations
+The network $\mathcal{N}(x, y) \to (\rho, u, v, T)$ predicts four state variables.
+Pressure is derived via the ideal gas law: $p = \rho R T$ (not a network output).
 
-1.  **Continuity Residual ($R_{cont}$):**
-    $$\nabla \cdot (\rho \mathbf{u}) = \frac{\partial (\rho u)}{\partial x} + \frac{\partial (\rho v)}{\partial y} = 0$$
-2.  **Momentum Residuals ($R_{mom,x}, R_{mom,y}$):**
-    $$\rho(u \frac{\partial u}{\partial x} + v \frac{\partial u}{\partial y}) + \frac{\partial p}{\partial x} = 0$$
-    $$\rho(u \frac{\partial v}{\partial x} + v \frac{\partial v}{\partial y}) + \frac{\partial p}{\partial y} = 0$$
-3.  **Equation of State Residual ($R_{EOS}$):**
-    $$p - \rho R T = 0$$
+The network is constrained by the following residuals:
 
-### PINN Implementation (source/pinn_accelerator.py)
-*   **Automatic Differentiation:** `dde.grad.jacobian` is used to calculate spatial derivatives without mesh-based discretization.
+1.  **Continuity Residual ($R_{cont}$):** Axisymmetric form
+    $$\frac{\partial (\rho u)}{\partial x} + \frac{\partial (\rho v)}{\partial y} + \frac{\rho v}{y} = 0$$
+
+2.  **Momentum-x Residual ($R_{mom,x}$):** Viscous, with pressure gradient via chain rule
+    $$\rho\left(u \frac{\partial u}{\partial x} + v \frac{\partial u}{\partial y}\right) + \frac{\partial p}{\partial x} - \mu \nabla^2 u = 0$$
+    where $\frac{\partial p}{\partial x} = R \left(\frac{\partial \rho}{\partial x} T + \rho \frac{\partial T}{\partial x}\right)$
+
+3.  **Momentum-y Residual ($R_{mom,y}$):** Axisymmetric viscous with centrifugal correction
+    $$\rho\left(u \frac{\partial v}{\partial x} + v \frac{\partial v}{\partial y}\right) + \frac{\partial p}{\partial y} - \mu \left(\nabla^2 v - \frac{v}{y^2}\right) = 0$$
+    where $\frac{\partial p}{\partial y} = R \left(\frac{\partial \rho}{\partial y} T + \rho \frac{\partial T}{\partial y}\right)$
+
+4.  **Energy Residual ($R_{energy}$):** Compressed form for ideal gas
+    $$\rho c_p \left(u \frac{\partial T}{\partial x} + v \frac{\partial T}{\partial y}\right) - k \nabla^2 T = 0$$
+
+*[Citation: Anderson (2006), "Hypersonic and High-Temperature Gas Dynamics", §3.2;
+ Bird (1994), "Molecular Gas Dynamics", §2.3]*
+
+### PINN Implementation (stellarorion_program_proc/src/python/pinn_accelerator.py)
+*   **Automatic Differentiation:** `dde.grad.jacobian` computes first derivatives; `dde.grad.hessian` computes Laplacians — no mesh-based discretization needed.
+*   **Pressure Gradient:** Computed via chain rule from the EOS $p = \rho R T$, avoiding the need for a separate pressure network output.
 *   **Checkpoint Exchange:** SPARTA grid data is introduced via `dde.icbc.PointSetBC`, which adds a data-matching term to the loss function:
     $$\mathcal{L}_{total} = \mathcal{L}_{PDE} + w_{data} \mathcal{L}_{data}$$
     *Where $\mathcal{L}_{data} = \frac{1}{N_{obs}} \sum |y_{pred} - y_{obs}|^2$.*
