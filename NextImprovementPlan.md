@@ -2,7 +2,7 @@
 
 **Author:** Albert Starfield Wahyu Suryo Samudro
 **Date:** September 4, 2026
-**Version:** 2.3 (Audit Cycle 17 — cyclic until user says stop)
+**Version:** 2.3 (Audit Cycle 18 — cyclic until user says stop)
 
 ---
 
@@ -34,7 +34,7 @@ This document audits the feasibility of a 4-step pipeline architecture for HIAD 
 SPARTA (DSMC) → Kriging (GP denoising) → PINN (NS surrogate) → MoP (virtual samples) → Optimized Geometry
 ```
 
-**Key finding:** The pipeline is physically justified. At HIAD re-entry altitudes (50–80 km), the Knudsen number Kn ~ 0.01–1.0 places the flow in the **transition regime** where neither pure continuum Navier-Stokes nor pure free-molecular flow is valid. SPARTA solves the Boltzmann Transport Equation (BTE) via Direct Simulation Monte Carlo (DSMC), which is valid across all Kn regimes. The PINN then solves the Navier-Stokes equations as a surrogate model, which is valid in the near-continuum region (Kn < 0.1) that dominates the stagnation zone. This BTE→NS handoff is justified because:
+**Key finding:** The pipeline is physically justified. At HIAD re-entry altitudes (50–80 km), the **local shock-layer** Knudsen number Kn ~ 0.01–0.1 places the stagnation zone in the **slip-flow to transition regime** where DSMC is justified. The **freestream** Kn at 52 km is actually ~2.5×10⁻⁵ (deep continuum — see §3, FINDING #31), meaning the bulk flow is well-described by Navier-Stokes. SPARTA solves the Boltzmann Transport Equation (BTE) via Direct Simulation Monte Carlo (DSMC), which is valid across all Kn regimes. The PINN then solves the Navier-Stokes equations as a surrogate model, which is valid in the near-continuum region (Kn < 0.1) that dominates the stagnation zone. This BTE→NS handoff is justified because:
 
 1. DSMC captures the full rarefied physics (BTE) but is noisy and expensive
 2. Kriging denoises the DSMC output spatially, producing a smooth training dataset
@@ -710,6 +710,11 @@ For each sample, compare:
 >   would **not** land at ~14–17 W/cm² — it would be materially different.
 > **Recommendation:** The Expected Outcomes table should be **per-sample** (HF-1/HF-2/HF-3 columns)
 > with estimated deltas, rather than one shared row set. The values shown are valid for **HF-1 only**.
+>
+> **DEFERRED (Cycle 18):** This finding has been flagged for 6 cycles (#32, #38, #45, #49). The
+> per-sample expected values can only be determined after running the actual HF-2 and HF-3
+> simulations (Phase 3). The table is retained as HF-1 reference values with the understanding
+> that HF-2/HF-3 columns will be added during Phase 3 implementation.
 
 > **⚠️ AUDIT FINDING #24 / #25 (Cycle 9, units consistency):** Two distinct unit conventions
 > coexist in the pipeline and must not be conflated:
@@ -838,7 +843,7 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 
 | Risk | Severity | Probability | Mitigation |
 |------|----------|-------------|------------|
-| Kriging memory O(N²) with N=19,322 | HIGH | MEDIUM | Local Kriging patches or Sparse GP |
+| Kriging memory O(N²) with N=19,322 | HIGH | MEDIUM | N=19,322 → ~2.87 GB kernel matrix (fits in 8 GB RAM; Sparse GP fallback if needed) |
 | Kriging over-smoothing physical gradients | MEDIUM | LOW | Cross-validate length scale; use physical bounds |
 | PINN convergence failure on smoothed data | MEDIUM | LOW | Increase iterations to 10,000; adjust learning rate |
 | MoP accuracy degradation for extrapolation | HIGH | MEDIUM | Constrain GA search space to training domain |
@@ -931,6 +936,7 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 - [x] Cycle 15: Document consistency audit — **COMPLETED** (4 findings: #37 footer updated to Cycle 15; #38 §10 Expected Outcomes table still applies same values to all 3 samples — Finding #32 from Cycle 12 not yet implemented; #39 Appendix A updated with pipeline_checkpoint.py and pinn_accelerator.py integration; #40 §13 Phase 2 updated to reference pipeline_checkpoint parameter)
 - [x] Cycle 16: Feasibility table clarity + CLI documentation — **COMPLETED** (3 findings: #41 §7 Feasibility table now distinguishes CURRENT vs TARGET status per row; #42 §13 Phase 2 specifies `--kriging` flag goes in run.py argparse not Ada CLI; #43 §10 Test Matrix now includes exact CLI commands for HF-1/HF-2/HF-3)
 - [x] Cycle 17: Version consistency + Errata correction chain — **COMPLETED** (4 findings: #44 header version updated from Cycle 14 to Cycle 17; #45 §10 Expected Outcomes table still applies same values to all 3 samples — Finding #32/#38 persists for 5 cycles; #46 Errata entry #4 updated with FINAL STATUS noting 9 BCs is correct; #47 Appendix A pinn_accelerator.py line count clarified as ~670 post-integration)
+- [x] Cycle 18: Kn clarification + Risk register + PyTorch citation — **COMPLETED** (4 findings: #48 §1 Executive Summary Kn description rewritten to distinguish freestream Kn≈2.5×10⁻⁵ from local shock-layer Kn~0.01–0.1 with cross-ref to §3; #49 §10 Finding #32 callout updated with DEFERRED note for Phase 3; #50 §12 Risk Register Kriging O(N²) updated with memory estimate (~2.87 GB fits in 8 GB RAM); #51 §15 References added PyTorch citation #16 Paszke et al. 2019)
 - [ ] Continue cycling until user says stop...
 
 ---
@@ -952,6 +958,7 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 13. Hollis, B. et al. "LOFTID Aerothermal Environment" (2024), AIAA 2024-1498
 14. DeepXDE documentation: https://deepxde.readthedocs.io/
 15. scikit-learn GaussianProcessRegressor: https://scikit-learn.org/stable/modules/gaussian_process.html
+16. Paszke, A. et al. "PyTorch: An Imperative Style, High-Performance Deep Learning Library" (2019), NeurIPS
 
 ---
 
@@ -1009,4 +1016,4 @@ grid.1000.out:
 
 ---
 
-*End of Audit Cycle 17 — Findings: #44 header version updated from Cycle 14 to Cycle 17; #45 §10 Expected Outcomes table still applies same values to all 3 samples — Finding #32/#38 persists for 5 cycles; #46 Errata entry #4 updated with FINAL STATUS noting 9 BCs is correct; #47 Appendix A pinn_accelerator.py line count clarified as ~670 post-integration. Document version v2.3. Previous findings: #26 retracted as FALSE, #27 noise reduction corrected to 3.5–12.7×, #28 Kriging operates on grid not surf, #34–#44 Cycles 14-17 completions. Next cycle: continue until user says stop.*
+*End of Audit Cycle 18 — Findings: #48 §1 Executive Summary Kn description rewritten to distinguish freestream vs local shock-layer; #49 §10 Finding #32 DEFERRED to Phase 3; #50 §12 Risk Register Kriging O(N²) memory estimate (~2.87 GB); #51 §15 References added PyTorch citation. Document version v2.3. Previous findings: #26 retracted as FALSE, #27 noise reduction corrected to 3.5–12.7×, #28 Kriging operates on grid not surf, #34–#47 Cycles 14-17 completions. Next cycle: continue until user says stop.*
