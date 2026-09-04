@@ -34,11 +34,9 @@ Author: Albert Starfield Wahyu Suryo Samudro
 
 import json
 import os
-import time
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
-
+from typing import Any
 
 # ========================================================================
 #  Pipeline step definitions
@@ -95,7 +93,7 @@ class PipelineCheckpoint:
                              on first start() or mark_step_running() call).
         """
         self.checkpoint_path = checkpoint_path
-        self._data: Optional[dict[str, Any]] = None
+        self._data: dict[str, Any] | None = None
 
     # --- persistence ---
 
@@ -135,8 +133,8 @@ class PipelineCheckpoint:
 
     # --- lifecycle ---
 
-    def start(self, pipeline_id: Optional[str] = None,
-              config: Optional[dict[str, Any]] = None) -> None:
+    def start(self, pipeline_id: str | None = None,
+              config: dict[str, Any] | None = None) -> None:
         """Initialize a new pipeline run or resume an existing one.
 
         If the checkpoint file exists and has a prior run, it is preserved
@@ -187,7 +185,7 @@ class PipelineCheckpoint:
 
     # --- step queries ---
 
-    def get_next_step(self) -> Optional[str]:
+    def get_next_step(self) -> str | None:
         """Return the first step that is not yet completed, or None if all done.
 
         Tested by: test_checkpoint_get_next_step() (same file).
@@ -238,7 +236,7 @@ class PipelineCheckpoint:
         self._save()
 
     def mark_step_completed(self, step: str,
-                            output_files: Optional[list[str]] = None) -> None:
+                             output_files: list[str] | None = None) -> None:
         """Mark a step as completed with optional output file list. Saves immediately.
 
         Args:
@@ -254,7 +252,7 @@ class PipelineCheckpoint:
             self._data["steps"][step]["output_files"] = output_files
         self._save()
 
-    def mark_step_failed(self, step: str, error: Optional[str] = None) -> None:
+    def mark_step_failed(self, step: str, error: str | None = None) -> None:
         """Mark a step as failed. Saves immediately.
 
         Args:
