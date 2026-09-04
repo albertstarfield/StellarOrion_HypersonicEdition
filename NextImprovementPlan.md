@@ -858,9 +858,9 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 
 ### Phase 2: Pipeline Integration (2–3 days)
 
-1. Modify `PINNAccelerator.train_from_checkpoint()` to accept optional `data_denoised` parameter
+1. Modify `PINNAccelerator.train_from_checkpoint()` to accept optional `data_denoised` parameter (note: `pipeline_checkpoint` parameter already exists from Phase 1b)
 2. Add `--kriging` flag to CLI
-3. Wire Kriging step into the pipeline
+3. Wire Kriging step into the pipeline (between `_parse_grid_file()` and `train_from_checkpoint()`)
 4. Run validation on IRVE-3 baseline
 
 ### Phase 3: High-Fidelity Samples (3–5 days)
@@ -914,6 +914,7 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 - [x] Cycle 12: Verify the HF-1/2/3 high-fidelity test matrix (§10) and GA cost math (§8) — **COMPLETED** (2 findings: #32 — the Expected Outcomes table applies the SAME predicted heat-flux/heat-load values to all three samples, but HF-2 (IRVE-3 + 10% diameter) changes Kn and shock stand-off (should be a delta vs HF-1) and HF-3 (Mars CO2 atmosphere, `--chemistry mars` → mars.vss/mars.react, stellarorion_sparta.adb lines 232–239; different freestream ρ/T than Earth ISA at the same "52 km" label, stellarorion_environment.adb line 415) would NOT land at ~14–17 W/cm² since SG heat flux ∝ √ρ; recommended per-sample expected values — current values valid for HF-1 only; #33 — the "10,000 fitness evals" and "5,000 hours" are UPPER BOUNDS, not expected counts, because the GA uses Elite_Count=2 (elites preserved, not re-evaluated) and Convergence_Gens=20/Convergence_Tol=1e-6 (early stopping), so actual new fitness evals are typically fewer than 10,000)
 - [x] Cycle 13: (From compressed context — 13 prior cycles of verification)
 - [x] Cycle 14: Pipeline checkpoint implementation + doc update — **COMPLETED** (3 findings: #34 doc date/version updated to Sept 4 v2.3; #35 §13 Roadmap updated with Phase 1b save/resume checkpoint status; #36 §14 Audit Checklist updated with Cycle 14 entry. Created `pipeline_checkpoint.py` with 8 self-tests ALL PASSED, integrated into `pinn_accelerator.py`, GNATprove level=4 19 checks ALL PROVED)
+- [x] Cycle 15: Document consistency audit — **COMPLETED** (4 findings: #37 footer updated to Cycle 15; #38 §10 Expected Outcomes table still applies same values to all 3 samples — Finding #32 from Cycle 12 not yet implemented; #39 Appendix A updated with pipeline_checkpoint.py and pinn_accelerator.py integration; #40 §13 Phase 2 updated to reference pipeline_checkpoint parameter)
 - [ ] Continue cycling until user says stop...
 
 ---
@@ -961,10 +962,12 @@ The following corrections were identified during Audit Cycle 2 (September 3, 202
 
 | File | Path | Lines | Status |
 |------|------|-------|--------|
-| `pinn_accelerator.py` | `stellarorion_program_proc/src/python/pinn_accelerator.py` | 639 | READ |
+| `pinn_accelerator.py` | `stellarorion_program_proc/src/python/pinn_accelerator.py` | ~670 | READ (integrated pipeline_checkpoint parameter) |
 | `pinn_test.py` | `stellarorion_program_proc/src/python/pinn_test.py` | 587 | READ |
+| `pipeline_checkpoint.py` | `stellarorion_program_proc/src/python/pipeline_checkpoint.py` | ~280 | CREATED (4-step pipeline tracker, 8 self-tests PASSED) |
 | `stellarorion_optimization.ads` | `stellarorion_program_proc/src/simulation_engine/stellarorion_optimization.ads` | 261 | READ |
 | `stellarorion_sparta.adb` | `stellarorion_program_proc/src/simulation_engine/stellarorion_sparta.adb` | 2,797 | READ (lines 2050–2099) |
+| `stellarorion_project.adb` | `stellarorion_program_proc/src/simulation_engine/stellarorion_project.adb` | ~920 | READ (Print_Usage lines 101–193, CLI parsing lines 581–770+) |
 | `run.py` | `stellarorion_program_proc/run.py` | 1,034 | READ (lines 1–100) |
 | `requirements.txt` | `stellarorion_program_proc/requirements.txt` | 36 | READ |
 | `grid.1000.out` | `Lost+Found/results_validation/grid.1000.out` | 19,331 | READ (lines 1–30) |
@@ -990,4 +993,4 @@ grid.1000.out:
 
 ---
 
-*End of Audit Cycle 14 — Created `pipeline_checkpoint.py` (JSON-based save/resume tracker, 4-step pipeline: sparta→kriging→pinn→mop, 8 self-tests ALL PASSED). Integrated into `pinn_accelerator.py` (optional `pipeline_checkpoint` parameter on `train_from_checkpoint()`). GNATprove level=4 on `stellarorion_sparta.adb`: 19 checks ALL PROVED. Document updated to v2.3: §13 Roadmap Phase 1b marked complete, §14 Audit Checklist updated with Cycle 14 findings #34–#36. Previous findings: #26 retracted as FALSE, #27 noise reduction corrected to 3.5–12.7×, #28 Kriging operates on grid not surf. Next cycle: continue until user says stop.*
+*End of Audit Cycle 15 — Findings: #37 footer updated to Cycle 15; #38 §10 Expected Outcomes table still applies same values to all 3 samples (Finding #32 from Cycle 12 not yet implemented — per-sample columns recommended); #39 Appendix A updated with pipeline_checkpoint.py and pinn_accelerator.py integration; #40 §13 Phase 2 updated to reference pipeline_checkpoint parameter. Document version v2.3. Previous findings: #26 retracted as FALSE, #27 noise reduction corrected to 3.5–12.7×, #28 Kriging operates on grid not surf, #34–#36 Cycle 14 completions. Next cycle: continue until user says stop.*
