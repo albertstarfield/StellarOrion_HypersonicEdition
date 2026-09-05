@@ -40,6 +40,28 @@ package body StellarOrion_Optimize with SPARK_Mode => Off is
       Result    : GA_Result;
       --  N_Samples IS used below (population size + report); not unreferenced.
       pragma Unreferenced (DoE, Obj, Steps, Grid_Factor, Chemistry, Geo);
+
+   -- AXIOMS: Surrogate-Based Optimization (SBO) using a Genetic Algorithm
+   --    (GA) converges to a global optimum when the population size,
+   --    mutation rate, and crossover rate are tuned for the design space
+   --    topology. The IRVE-3 ballistic coefficient (beta = 26.9 kg/m^2)
+   --    serves as the target.
+   -- THEORIES: Goldberg (1989) proves GA convergence under elitism and
+   --    adequate population diversity. BLX-alpha crossover (Eshelman &
+   --    Schaffer, 1993) maintains exploration in continuous design spaces.
+   --    MoP_Fitness evaluates the full physics pipeline (geometry,
+   --    environment, SPARTA DSMC, thermal) for each candidate.
+   -- APPLICATIONS: Configures GA parameters (population, generations,
+   --    mutation/crossover rates, elitism, tournament size, convergence
+   --    criteria), resolves flight conditions from Mach/altitude overrides,
+   --    invokes Run_GA_Optimization with MoP_Fitness as the evaluator,
+   --    and prints the optimal geometry with a comparison table against
+   --    IRVE-3 targets.
+   -- CITATIONS: Goldberg (1989), "Genetic Algorithms in Search,
+   --    Optimization, and Machine Learning"; Eshelman & Schaffer (1993),
+   --    "Real-Coded Genetic Algorithms and Interval-Schemata" (BLX-alpha);
+   --    Rapisarda (2023) MSc Thesis, TU Delft; NASA TP-2013-4012.
+
    begin
       Write_Status (STATUS_DIR, "optimize", Status_Running, 0.0);
       Put_Line ("[OPTIMIZE] ====== SBO Optimisation Loop ======");

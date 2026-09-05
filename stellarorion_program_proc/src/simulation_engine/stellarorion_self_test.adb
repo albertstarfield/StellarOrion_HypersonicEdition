@@ -63,6 +63,28 @@ package body StellarOrion_Self_Test is
 
       --  Helper: Nose_Type_Kind
       NT : Nose_Type_Kind;
+
+   -- AXIOMS: A built-in verification suite must exercise all computational
+   --    subsystems (geometry, physics, environment, sampling, optimization,
+   --    survivability, parity, watchdog) to detect regressions at runtime
+   --    without external test infrastructure.
+   -- THEORIES: ISO/IEC 25010:2021 defines functional suitability and
+   --    reliability quality characteristics. IEEE 829 prescribes structured
+   --    test documentation with pass/fail criteria. Each test validates a
+   --    specific subsystem contract against known expected values.
+   -- APPLICATIONS: Executes 15 sequential tests: mean free path (Test 1),
+   --    Knudsen number (Test 2), Sutton-Graves heat flux (Test 3),
+   --    geometry validation (Test 4), full metrics pipeline (Test 5),
+   --    LHS sampling (Test 6), CCD sampling (Test 7), ISA environment
+   --    model (Test 8), optimization cost function (Test 9), TPS material
+   --    presets (Test 10), geometry edge cases (Test 11), survivability
+   --    gate (Test 12), nose type enum (Test 13), atomic parity round-trip
+   --    (Test 14), dual watchdog cycle (Test 15). Reports pass/fail counts
+   --    and writes status via Status_Writer.
+   -- CITATIONS: ISO/IEC 25010:2021 (Software Quality Model);
+   --    IEEE 829-2008 (Test Documentation); NASA TP-2013-4012 (IRVE-3);
+   --    Rapisarda (2023) MSc Thesis, TU Delft.
+
    begin
       Write_Status (STATUS_DIR, "self_test", Status_Running, 0.0);
       Put_Line ("[TEST] Running self-test (15 tests) ...");

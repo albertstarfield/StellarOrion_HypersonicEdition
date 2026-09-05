@@ -24,6 +24,19 @@ procedure Main is
    end Test_Main;
    pragma Unreferenced (Test_Main);
 
+   -- AXIOMS: Ada 2012 requires a parameterless library-level procedure as
+   --    the program entry point (Ada RM 10.1.1). The sole purpose is to
+   --    delegate to the application's main dispatch.
+   -- THEORIES: A single delegation point ensures the entry point satisfies
+   --    the linker's requirements without embedding application logic in the
+   --    compilation unit root.
+   -- APPLICATIONS: The procedure body contains only a call to
+   --    StellarOrion_Project.Main_Program, which performs all CLI parsing
+   --    and mode dispatch. A nested Test_Main stub is maintained for STC
+   --    coverage but unreferenced at runtime.
+   -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Section
+   --    10.1.1 (The Main Subprogram).
+
 begin
    StellarOrion_Project.Main_Program;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Main", Test_Main'Access);

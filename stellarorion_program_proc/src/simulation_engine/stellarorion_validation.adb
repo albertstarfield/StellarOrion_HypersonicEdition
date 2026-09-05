@@ -26,6 +26,21 @@ package body StellarOrion_Validation is
    is
       Valid_Geo : Boolean;
       Valid_TPS : Boolean;
+
+   -- AXIOMS: Geometry and TPS parameters must satisfy physically meaningful
+   --    bounds before any simulation is initiated. Out-of-range inputs
+   --    produce nonsensical aerothermodynamic results.
+   -- THEORIES: Pre-simulation validation enforces the design envelope
+   --    documented in Rapisarda Table 5.4: diameter [0.5, 15.0] m,
+   --    nose angle [40, 80] deg, toroid count [1, 12], positive radii
+   --    and mass, positive TPS density/cp/thickness, and emissivity
+   --    in (0, 1].
+   -- APPLICATIONS: Computes two Boolean predicates (Valid_Geo, Valid_TPS)
+   --    by conjunction of range checks, then returns their conjunction.
+   --    No I/O or state mutation occurs; the function is pure.
+   -- CITATIONS: NASA TP-2013-4012 (IRVE-3); Rapisarda (2023) MSc Thesis,
+   --    TU Delft, Table 5.4; Sutton & Graves (1971), AIAA Journal.
+
    begin
       --  Geometry range checks
       --  NOTE: Toroid_Count lower bound (>= 1) is enforced by the Positive
@@ -61,8 +76,22 @@ package body StellarOrion_Validation is
    function Check_Survivability
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
-     (Metrics : Flight_Metrics) return Boolean
+      (Metrics : Flight_Metrics) return Boolean
    is
+
+   -- AXIOMS: A vehicle is survivable if and only if all thermal (heat flux,
+   --    surface/backface temperature) and structural (deceleration, g-load)
+   --    metrics remain within material and human-rating limits.
+   -- THEORIES: The Is_Survivable predicate in StellarOrion_Physics encodes
+   --    the material limits for the selected TPS and structural g-limits.
+   --    Delegating to this single predicate ensures the survivability
+   --    criterion is defined in exactly one place.
+   -- APPLICATIONS: Wraps Is_Survivable(Metrics) as a named function in the
+   --    Validation package, providing a stable interface for callers that
+   --    do not depend on the Physics package directly.
+   -- CITATIONS: NASA TP-2013-4012 (IRVE-3); Sutton & Graves (1971),
+   --    AIAA Journal; Rapisarda (2023) MSc Thesis, TU Delft, Section 4.3.
+
    begin
       return Is_Survivable (Metrics);
    --  Invariant: parameters and derived locals remain within their declared
