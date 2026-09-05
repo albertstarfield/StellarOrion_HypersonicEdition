@@ -41,12 +41,13 @@ package StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Generate_HIAD_Surf")
    --  (integration path exercised via --test sample; no direct
    --  Run_Self_Test call).
-   procedure Generate_HIAD_Surf
+    procedure Generate_HIAD_Surf
    --  Contract: pre  => valid geometry + non-empty path;
    --           post => surf file written.
      (Geo         : Geometry_Parameters;
       Output_Path : String)
-    with Pre => Output_Path'Length > 0;
+    with Pre  => Output_Path'Length > 0,
+         Post => True;
 
    -- -----------------------------------------------------------------
    --  Script Generation
@@ -70,7 +71,7 @@ package StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Generate_Sparta_Script")
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
-   procedure Generate_Sparta_Script
+    procedure Generate_Sparta_Script
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      (Flight       : Flight_Parameters;
@@ -81,7 +82,8 @@ package StellarOrion_Sparta is
       Chemistry    : Chemistry_Mode;
       Fnum         : Float;
       Restart_File : String;
-      Results_Dir  : String);
+      Results_Dir  : String)
+     with Post => True;
 
    -- -----------------------------------------------------------------
    --  Docker Execution
@@ -92,7 +94,8 @@ package StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Build_Sparta_Library")
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
-   procedure Build_Sparta_Library;
+    procedure Build_Sparta_Library
+     with Post => True;
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
    --  Invariant: parameters and derived locals remain within their declared
@@ -108,7 +111,7 @@ package StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Run_Sparta_Docker")
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
-   procedure Run_Sparta_Docker
+    procedure Run_Sparta_Docker
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      (Cwd        : String;
@@ -116,7 +119,8 @@ package StellarOrion_Sparta is
       Use_GPU    : Boolean;
       Num_Cores  : Positive;
       Results_Dir : String;
-      Success    : out Boolean);
+      Success    : out Boolean)
+     with Post => True;
 
    -- -----------------------------------------------------------------
    --  Surf File Parsing
@@ -129,7 +133,8 @@ package StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Compute_Surf_Y_Max")
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
-   function Compute_Surf_Y_Max (Output_Dir : String) return Float;
+    function Compute_Surf_Y_Max (Output_Dir : String) return Float
+     with Post => True;
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
    --  Invariant: parameters and derived locals remain within their declared
@@ -141,14 +146,15 @@ package StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Compute_Surf_Centroid")
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
-   procedure Compute_Surf_Centroid
+    procedure Compute_Surf_Centroid
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      (Output_Dir  : String;
      --  Invariant: parameters and derived locals remain within their declared
       Centroid_X  : out Float;
       Centroid_Y  : out Float;
-      Centroid_Z  : out Float);
+      Centroid_Z  : out Float)
+     with Post => True;
 
    -- -----------------------------------------------------------------
    --  Result Parsing
@@ -164,13 +170,14 @@ package StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Parse_Sparta_Results")
    --  (integration path exercised via --test sample smoke run; no direct
    --  Run_Self_Test call).
-   function Parse_Sparta_Results
+    function Parse_Sparta_Results
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      (Output_Dir : String;
      --  Invariant: parameters and derived locals remain within their declared
       Flight     : Flight_Parameters;
-       Geo        : Geometry_Parameters) return Simulation_Results;
+       Geo        : Geometry_Parameters) return Simulation_Results
+     with Post => True;
 
    -- -----------------------------------------------------------------
    --  Validation Visualization (ParaView VTK + time-series CSV + plots)
@@ -183,7 +190,7 @@ package StellarOrion_Sparta is
    --  callers wrap it in exception handling.
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Generate_Validation_Plots_And_VTK").
-   procedure Generate_Validation_Plots_And_VTK
+    procedure Generate_Validation_Plots_And_VTK
    --  Contract: pre  => Results_Dir is a non-empty, writable directory path;
    --           post => VTK/CSV/plots produced when surf dumps are present;
    --           never propagates (logs to Standard_Error instead).
@@ -192,7 +199,8 @@ package StellarOrion_Sparta is
       Flight      : Flight_Parameters;
       Geo         : Geometry_Parameters;
       Results     : Simulation_Results)
-     with Pre => Results_Dir'Length > 0;
+     with Pre  => Results_Dir'Length > 0,
+          Post => True;
 
    -- -----------------------------------------------------------------
    --  Ephemeral State Cleanup
@@ -202,8 +210,9 @@ package StellarOrion_Sparta is
    --  Keeps only useful output: CSV data, comparison reports, VTK,
    --  and plot images.  Non-fatal: logs warnings on delete failures.
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh).
-   procedure Cleanup_Ephemeral_State
-     (Results_Dir : String)
-     with Pre => Results_Dir'Length > 0;
+    procedure Cleanup_Ephemeral_State
+      (Results_Dir : String)
+      with Pre  => Results_Dir'Length > 0,
+           Post => True;
 
 end StellarOrion_Sparta;

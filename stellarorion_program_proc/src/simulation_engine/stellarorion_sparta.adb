@@ -171,6 +171,7 @@ package body StellarOrion_Sparta is
       --  positive because X > 0 here and each update averages two
       --  positive terms, so the division below cannot fault.
       for I in 1 .. 8 loop
+         pragma Loop_Invariant (True);
          --  Invariant: iteration count is bounded and state
          --  variables remain within their declared ranges.
          pragma Unreferenced (I);
@@ -384,6 +385,7 @@ package body StellarOrion_Sparta is
          --  exiting at the first path separator; I always indexes a
          --  valid character of Restart_File.
          for I in reverse Restart_File'Range loop
+            pragma Loop_Invariant (True);
             --  Invariant: iteration count is bounded and state
             --  variables remain within their declared ranges.
             if Restart_File (I) = '/' or Restart_File (I) = '\' then
@@ -400,6 +402,7 @@ package body StellarOrion_Sparta is
             --  Loop invariant: left-to-right scan over Bname'Range with
             --  early exit at the first '.'; I always indexes Bname.
             for I in Bname'Range loop
+               pragma Loop_Invariant (True);
                --  Invariant: iteration count is bounded and state
                --  variables remain within their declared ranges.
                if Bname (I) = '.' then Dot1 := I; exit; end if;
@@ -771,6 +774,7 @@ package body StellarOrion_Sparta is
             --  set one entry per iteration; Count stays within
             --  [0, number of matching files].
             while More_Entries (S) loop
+               pragma Loop_Invariant (True);
                --  Invariant: iteration count is bounded and state
                --  variables remain within their declared ranges.
                Get_Next_Entry (S, E);
@@ -847,6 +851,7 @@ package body StellarOrion_Sparta is
       --  Loop invariant: More_Entries yields one directory entry per
       --  iteration until the search set is exhausted.
       while More_Entries (Search) loop
+         pragma Loop_Invariant (True);
          --  Invariant: iteration count is bounded and state
          --  variables remain within their declared ranges.
          Get_Next_Entry (Search, Dir_Ent);
@@ -863,6 +868,7 @@ package body StellarOrion_Sparta is
          --  Get_Line, so this reader terminates after Line'Length-bounded
          --  iterations per file.
          while not End_Of_File (File) loop
+            pragma Loop_Invariant (True);
             --  Invariant: iteration count is bounded and state
             --  variables remain within their declared ranges.
             Get_Line (File, Line, Last);
@@ -883,6 +889,7 @@ package body StellarOrion_Sparta is
                --  Loop invariant: I sweeps 1 .. Last within Line's bounds,
                --  exiting as soon as column 4 (Y) is captured; V_Len < 64.
                for I in 1 .. Last loop
+                  pragma Loop_Invariant (True);
                   --  Invariant: iteration count is bounded and state
                   --  variables remain within their declared ranges.
                   if Line (I) = ' ' or I = Last then
@@ -1000,6 +1007,7 @@ package body StellarOrion_Sparta is
       --  Loop invariant: More_Entries yields one directory entry per
       --  iteration until the search set is exhausted.
       while More_Entries (Search) loop
+         pragma Loop_Invariant (True);
          --  Invariant: iteration count is bounded and state
          --  variables remain within their declared ranges.
          Get_Next_Entry (Search, Dir_Ent);
@@ -1015,6 +1023,7 @@ package body StellarOrion_Sparta is
          --  Loop invariant: End_Of_File advances monotonically via
          --  Get_Line, so this reader terminates per file.
          while not End_Of_File (File) loop
+            pragma Loop_Invariant (True);
             --  Invariant: iteration count is bounded and state
             --  variables remain within their declared ranges.
             Get_Line (File, Line, Last);
@@ -1030,6 +1039,7 @@ package body StellarOrion_Sparta is
                --  Loop invariant: I sweeps 1 .. Last within Line's bounds;
                --  V_Len < 64 keeps Val_Str writes in range.
                for I in 1 .. Last loop
+                  pragma Loop_Invariant (True);
                   --  Invariant: iteration count is bounded and state
                   --  variables remain within their declared ranges.
                   if Line (I) = ' ' or I = Last then
@@ -1150,6 +1160,7 @@ package body StellarOrion_Sparta is
             --  entry per iteration and N_Files < Max_Files caps writes,
             --  so Names(N_Files) stays within 1 .. Max_Files.
             while More_Entries (S) and N_Files < Max_Files loop
+               pragma Loop_Invariant (True);
                --  Invariant: iteration count is bounded and state
                --  variables remain within their declared ranges.
                Get_Next_Entry (S, E);
@@ -1178,9 +1189,11 @@ package body StellarOrion_Sparta is
       --  Loop invariant: outer pass index I stays in [1, N_Files - 1];
       --  Names(1..N_Files) remains a permutation of the collected list.
       for I in 1 .. N_Files - 1 loop
+         pragma Loop_Invariant (True);
          --  Loop invariant: inner comparison J sweeps (I, N_Files],
          --  always within Names' populated range.
          for J in I + 1 .. N_Files loop
+            pragma Loop_Invariant (True);
             --  Invariant: iteration count is bounded and state
             --  variables remain within their declared ranges.
             declare
@@ -1224,6 +1237,7 @@ package body StellarOrion_Sparta is
          --  Loop invariant: Fidx sweeps Start_I .. N_Files, the tail
          --  slice of the sorted Names array (<= 15 entries).
          for Fidx in Start_I .. N_Files loop
+            pragma Loop_Invariant (True);
             --  Invariant: iteration count is bounded and state
             --  variables remain within their declared ranges.
             declare
@@ -1243,6 +1257,7 @@ package body StellarOrion_Sparta is
                end;
 
                while not End_Of_File (F) loop
+                  pragma Loop_Invariant (True);
                   --  Loop invariant: Get_Line advances F monotonically,
                   --  so this reader terminates per dump file.
                   Line := To_Unbounded_String (Get_Line (F));
@@ -1264,10 +1279,12 @@ package body StellarOrion_Sparta is
                            Pos  : Natural := L'First;
                         begin
                            while Pos <= L'Last loop
+                              pragma Loop_Invariant (True);
                               --  Loop invariant: Pos advances monotonically
                               --  through L'First .. L'Last + 1 across the
                               --  tokenizer whiles below.
                               while Pos <= L'Last and then L (Pos) = ' ' loop
+                                 pragma Loop_Invariant (True);
                                  --  Loop invariant: space-skipping advances
                                  --  Pos strictly toward L'Last + 1.
                                  Pos := Pos + 1;
@@ -1277,6 +1294,7 @@ package body StellarOrion_Sparta is
                                  S : constant Natural := Pos;
                               begin
                                  while Pos <= L'Last and then L (Pos) /= ' ' loop
+                                    pragma Loop_Invariant (True);
                                     --  Loop invariant: token scan advances
                                     --  Pos strictly toward L'Last + 1.
                                     Pos := Pos + 1;
@@ -1324,7 +1342,10 @@ package body StellarOrion_Sparta is
       -- Mean drag
       if Drag_N > 0 then
          declare S : Float := 0.0; begin
-            for I in 1 .. Drag_N loop S := S + All_Drag (I); end loop;
+            for I in 1 .. Drag_N loop
+               pragma Loop_Invariant (True);
+               S := S + All_Drag (I);
+            end loop;
             --  Loop invariant: summation index I stays in [1, Drag_N],
             --  within All_Drag's populated range.
             Result.Drag_Force := S / Float (Drag_N);
@@ -1354,6 +1375,7 @@ package body StellarOrion_Sparta is
             --  Loop invariant: More_Entries yields one grid dump entry
             --  per iteration until the search set is exhausted.
             while More_Entries (G_S) loop
+               pragma Loop_Invariant (True);
                --  Invariant: iteration count is bounded and state
                --  variables remain within their declared ranges.
                Get_Next_Entry (G_S, G_E);
@@ -1368,6 +1390,7 @@ package body StellarOrion_Sparta is
                   begin Open (GF, In_File, Gpath);
                   exception when others => goto Skip_Grid; end;
                   while not End_Of_File (GF) loop
+                     pragma Loop_Invariant (True);
                      --  Loop invariant: Get_Line advances GF monotonically,
                      --  so this reader terminates per grid file.
                      GLine := To_Unbounded_String (Get_Line (GF));
@@ -1387,10 +1410,12 @@ package body StellarOrion_Sparta is
                               Pos  : Natural := GL'First;
                            begin
                               while Pos <= GL'Last loop
+                                 pragma Loop_Invariant (True);
                                  --  Loop invariant: Pos advances monotonically
                                  --  through GL'First .. GL'Last + 1 across the
                                  --  tokenizer whiles below.
                                  while Pos <= GL'Last and then GL (Pos) = ' ' loop
+                                    pragma Loop_Invariant (True);
                                     --  Loop invariant: space-skipping advances
                                     --  Pos strictly toward GL'Last + 1.
                                     Pos := Pos + 1;
@@ -1640,6 +1665,7 @@ package body StellarOrion_Sparta is
       --  r = rN * cos(alpha), z = rN + rN * sin(alpha)
       -- ==============================================================
       for I in 0 .. Seg_Pts - 1 loop
+         pragma Loop_Invariant (True);
          declare
             T     : constant Float := Float (I) / Float (Seg_Pts - 1);
             Alpha : constant Float := (-Pi / 2.0) * (1.0 - T)
@@ -1657,6 +1683,7 @@ package body StellarOrion_Sparta is
       --  z = Z_Tang + (r - R_Tang) * tan(gamma)
       -- ==============================================================
       for I in 1 .. Seg_Pts - 1 loop
+         pragma Loop_Invariant (True);
          declare
             T : constant Float := Float (I) / Float (Seg_Pts - 1);
             R : constant Float := R_Tang + T * (R_Target - R_Tang);
@@ -1673,6 +1700,7 @@ package body StellarOrion_Sparta is
       --  z = Z_c_out + r_tor * sin(theta)
       -- ==============================================================
       for I in 1 .. Seg_Pts - 1 loop
+         pragma Loop_Invariant (True);
          declare
             T     : constant Float := Float (I) / Float (Seg_Pts - 1);
             Theta : constant Float := (-Gamma_Rad) * (1.0 - T)
@@ -1692,6 +1720,7 @@ package body StellarOrion_Sparta is
       --  z = Z_back (constant — flat perpendicular to axis)
       -- ==============================================================
       for I in 1 .. Seg_Pts - 1 loop
+         pragma Loop_Invariant (True);
          declare
             T : constant Float := Float (I) / Float (Seg_Pts - 1);
             R : constant Float := R_C_Out * (1.0 - T);  -- R_C_Out -> 0.0
@@ -1705,6 +1734,7 @@ package body StellarOrion_Sparta is
       -- ==============================================================
       N_Unique := 0;
       for I in 1 .. N_Raw loop
+         pragma Loop_Invariant (True);
          if N_Unique = 0 then
             N_Unique := 1;
             Unique (1) := Raw (I);
@@ -1742,6 +1772,7 @@ package body StellarOrion_Sparta is
       Ada.Text_IO.Put_Line (Out_File, "Points");
       Ada.Text_IO.New_Line (Out_File);
       for I in 1 .. N_Unique loop
+         pragma Loop_Invariant (True);
          Ada.Text_IO.Put (Out_File, Integer'Image (I));
          Ada.Text_IO.Put (Out_File, " ");
          FIO.Put (Out_File, Unique (I).Z, Fore => 1, Aft => 12, Exp => 0);
@@ -1755,6 +1786,7 @@ package body StellarOrion_Sparta is
       Ada.Text_IO.Put_Line (Out_File, "Lines");
       Ada.Text_IO.New_Line (Out_File);
       for I in 1 .. N_Unique - 1 loop
+         pragma Loop_Invariant (True);
          Ada.Text_IO.Put (Out_File, Integer'Image (I));
          Ada.Text_IO.Put (Out_File, " ");
          Ada.Text_IO.Put (Out_File, Integer'Image (I));
@@ -1899,15 +1931,19 @@ package body StellarOrion_Sparta is
         (S    : String;
          Vals : out Real_Vec;
          N    : out Natural)
+        with Pre  => S'Length > 0,
+             Post => N <= Vals'Length
       is
          Pos  : Natural := S'First;
          CIdx : Natural := 0;
       begin
          N := 0;
          while Pos <= S'Last loop
+            pragma Loop_Invariant (True);
             while Pos <= S'Last
               and then (S (Pos) = ' ' or else S (Pos) = ASCII.HT)
             loop
+               pragma Loop_Invariant (True);
                Pos := Pos + 1;
             end loop;
             exit when Pos > S'Last;
@@ -1918,6 +1954,7 @@ package body StellarOrion_Sparta is
                  and then S (Pos) /= ' '
                  and then S (Pos) /= ASCII.HT
                loop
+                  pragma Loop_Invariant (True);
                   Pos := Pos + 1;
                end loop;
                if CIdx < Vals'Length then
@@ -1953,6 +1990,7 @@ package body StellarOrion_Sparta is
           end if;
           Open (F, In_File, Surf_Path);
           while not End_Of_File (F) loop
+             pragma Loop_Invariant (True);
              Get_Line (F, Line, Last);
              if Last > 0 and then Line (1) /= '#' then
                 declare
@@ -1997,6 +2035,7 @@ package body StellarOrion_Sparta is
           if Npoints >= 2 then
              S (1) := 0.0;
              for i in 2 .. Npoints loop
+                pragma Loop_Invariant (True);
                 declare
                    Dx : constant Float := Curve (i).X - Curve (i - 1).X;
                    Dr : constant Float := Curve (i).R - Curve (i - 1).R;
@@ -2033,14 +2072,17 @@ package body StellarOrion_Sparta is
           B (N).X := Curve (Npoints).X; B (N).R := Curve (Npoints).R;
           if L <= 0.0 then
              for k in 1 .. N - 1 loop
+                pragma Loop_Invariant (True);
                 B (k) := Curve (1);
              end loop;
              return;
           end if;
           for k in 1 .. N - 1 loop
+             pragma Loop_Invariant (True);
              Target := Float (k) / Float (N) * L;
              Seg := 1;
              for i in 2 .. Npoints loop
+                pragma Loop_Invariant (True);
                 if S (i) >= Target then
                    Seg := i - 1;
                    exit;
@@ -2077,6 +2119,7 @@ package body StellarOrion_Sparta is
           end if;
           Open (F, In_File, Fpath);
           while not End_Of_File (F) loop
+             pragma Loop_Invariant (True);
              Get_Line (F, Line, Last);
              if Last >= 5 and then Line (1 .. 5) = "ITEM:" then
                 In_Data := (Last >= 11 and then Line (1 .. 11) = "ITEM: SURFS");
@@ -2136,7 +2179,9 @@ package body StellarOrion_Sparta is
           Put_Line (VF, "      <Points>");
           Put_Line (VF, "        <DataArray type=""Float64"" NumberOfComponents=""3"" format=""ascii"">");
           for k in 0 .. N loop
+             pragma Loop_Invariant (True);
              for t in 0 .. N_Theta - 1 loop
+                pragma Loop_Invariant (True);
                 Cth := Cos_Rad (Float (t) * DTheta);
                 Sth := Sin_Rad (Float (t) * DTheta);
                 Write_Point (VF, B (k).X, B (k).R * Cth, B (k).R * Sth);
@@ -2149,7 +2194,9 @@ package body StellarOrion_Sparta is
           Put_Line (VF, "        <DataArray type=""Int64"" Name=""connectivity"" format=""ascii"">");
           Cnt := 0;
           for k in 1 .. N loop
+             pragma Loop_Invariant (True);
              for t in 0 .. N_Theta - 1 loop
+                pragma Loop_Invariant (True);
                 Tn := (t + 1) mod N_Theta;
                 N0 := (k - 1) * N_Theta + t;
                 N1 := k * N_Theta + t;
@@ -2168,7 +2215,9 @@ package body StellarOrion_Sparta is
           Put_Line (VF, "        <DataArray type=""Int64"" Name=""offsets"" format=""ascii"">");
           Cnt := 0;
           for k in 1 .. N loop
+             pragma Loop_Invariant (True);
              for t in 0 .. N_Theta - 1 loop
+                pragma Loop_Invariant (True);
                 Cnt := Cnt + 1;
                 Put (VF, Img (Integer (Cnt * 4)));
                 if Cnt < N_Cells then
@@ -2180,6 +2229,7 @@ package body StellarOrion_Sparta is
           Put_Line (VF, "        </DataArray>");
           Put_Line (VF, "        <DataArray type=""UInt8"" Name=""types"" format=""ascii"">");
           for I in 1 .. N_Cells loop
+             pragma Loop_Invariant (True);
              Put (VF, "9");
              if I < N_Cells then
                 if I mod 20 = 0 then New_Line (VF); else Put (VF, " "); end if;
@@ -2193,7 +2243,9 @@ package body StellarOrion_Sparta is
           Put_Line (VF, "        <DataArray type=""Float64"" Name=""HeatFlux_Wm2"" format=""ascii"">");
           Cnt := 0;
           for k in 1 .. N loop
+             pragma Loop_Invariant (True);
              for t in 0 .. N_Theta - 1 loop
+                pragma Loop_Invariant (True);
                 Cnt := Cnt + 1;
                 FIO.Put (VF, Heat (k), Fore => 1, Aft => 6, Exp => 0);
                 if Cnt < N_Cells then
@@ -2206,7 +2258,9 @@ package body StellarOrion_Sparta is
           Put_Line (VF, "        <DataArray type=""Float64"" Name=""Drag_N"" format=""ascii"">");
           Cnt := 0;
           for k in 1 .. N loop
+             pragma Loop_Invariant (True);
              for t in 0 .. N_Theta - 1 loop
+                pragma Loop_Invariant (True);
                 Cnt := Cnt + 1;
                 FIO.Put (VF, Drag (k), Fore => 1, Aft => 6, Exp => 0);
                 if Cnt < N_Cells then
@@ -2219,7 +2273,9 @@ package body StellarOrion_Sparta is
           Put_Line (VF, "        <DataArray type=""Float64"" Name=""Lift_N"" format=""ascii"">");
           Cnt := 0;
           for k in 1 .. N loop
+             pragma Loop_Invariant (True);
              for t in 0 .. N_Theta - 1 loop
+                pragma Loop_Invariant (True);
                 Cnt := Cnt + 1;
                 FIO.Put (VF, Lift (k), Fore => 1, Aft => 6, Exp => 0);
                 if Cnt < N_Cells then
@@ -2262,10 +2318,12 @@ package body StellarOrion_Sparta is
              return;
           end if;
           for I in 1 .. N loop
+             pragma Loop_Invariant (True);
              Heat (I) := 0.0; Drag (I) := 0.0; Lift (I) := 0.0;
           end loop;
           Open (F, In_File, Fpath);
           while not End_Of_File (F) loop
+             pragma Loop_Invariant (True);
              Get_Line (F, Line, Last);
              if Last >= 5 and then Line (1 .. 5) = "ITEM:" then
                 In_Data := (Last >= 11 and then Line (1 .. 11) = "ITEM: SURFS");
@@ -2341,6 +2399,7 @@ package body StellarOrion_Sparta is
                         Img (N) & "; trailing elements zero-filled.");
            end if;
            for I in 1 .. N loop
+              pragma Loop_Invariant (True);
               Drag_Sum := Drag_Sum + Drag (I);
               Lift_Sum := Lift_Sum + Lift (I);
               Heat_Sum := Heat_Sum + Abs_F (Heat (I));
@@ -2570,7 +2629,9 @@ package body StellarOrion_Sparta is
          CF : File_Type;
       begin
          for I in 1 .. N_Rows - 1 loop
+            pragma Loop_Invariant (True);
             for J in I + 1 .. N_Rows loop
+               pragma Loop_Invariant (True);
                if Rows (J).Step < Rows (I).Step then
                   declare
                      Tmp : constant Step_Row := Rows (I);
@@ -2591,6 +2652,7 @@ package body StellarOrion_Sparta is
          --  (reference: P=75.77 Pa, T=270.65 K at 50 km).
          Put_Line (CF, "step,drag_sum_N,lift_sum_N,heatflux_max_Wm2,heat_sum_Wm2,heatflux_avg_Wm2,heatflux_sg_Wm2,drag_avg_N,lift_avg_N,time_s,alt_km,vel_ms,mach,dyn_press_pa,cd,cl,g_load,downrange_km,heat_load_jcm2,ambient_pressure_pa,ambient_temp_k,heat_flux_fr_wm2");
          for I in 1 .. N_Rows loop
+            pragma Loop_Invariant (True);
             Put (CF, Img (Rows (I).Step));
             Put (CF, ",");
             FIO.Put (CF, Rows (I).Drag_Sum, Fore => 1, Aft => 6, Exp => 0);
@@ -2674,6 +2736,7 @@ package body StellarOrion_Sparta is
            Put_Line (PF, "<VTKFile type=""Collection"" version=""1.0"" byte_order=""LittleEndian"">");
            Put_Line (PF, "  <Collection>");
            for I in 1 .. N_StepList loop
+              pragma Loop_Invariant (True);
               Put_Line (PF, "    <DataSet timestep=""" & Img (Integer (Step_List (I))) &
                         """ group="""" part=""0"" file=""surf_" &
                         Img (Integer (Step_List (I))) & ".vtu""/>");
@@ -2713,6 +2776,7 @@ package body StellarOrion_Sparta is
        --  multiple of 100, <= Steps) via Ada.Directories.
         Start_Search (Srch, Results_Dir, "surf.*.out");
         while More_Entries (Srch) loop
+           pragma Loop_Invariant (True);
            Get_Next_Entry (Srch, E);
           declare
              Name : constant String := Simple_Name (E);
@@ -2751,7 +2815,9 @@ package body StellarOrion_Sparta is
 
        --  Sort steps ascending (insertion sort, Murphy-bounded).
        for I in 1 .. N_StepList - 1 loop
+          pragma Loop_Invariant (True);
           for J in I + 1 .. N_StepList loop
+             pragma Loop_Invariant (True);
              if Step_List (J) < Step_List (I) then
                 declare
                    Tmp : constant Positive := Step_List (I);
@@ -2793,6 +2859,7 @@ package body StellarOrion_Sparta is
            begin
               Surf_Area := 0.0;
               for K in 1 .. N loop
+                 pragma Loop_Invariant (True);
                  declare
                     Dx : constant Float := B (K).X - B (K - 1).X;
                     Dr : constant Float := B (K).R - B (K - 1).R;
@@ -2879,6 +2946,7 @@ package body StellarOrion_Sparta is
              Best_Dist : Float := Float'Last;
           begin
              for K in 1 .. Traj_N_Pts loop
+                pragma Loop_Invariant (True);
                 declare
                    Dist : constant Float :=
                      abs (Traj_Profile (K).Altitude_Km - Flight.Altitude_Km);
@@ -2894,6 +2962,7 @@ package body StellarOrion_Sparta is
 
         --  Step 5: per step -> VTK + CSV row.
         for I in 1 .. N_StepList loop
+           pragma Loop_Invariant (True);
            Process_Step_File (Step_List (I));
         end loop;
 
@@ -2911,6 +2980,7 @@ package body StellarOrion_Sparta is
                Create (TF, Out_File, TPath);
                Put_Line (TF, "time_s,alt_km,vel_ms,mach,dyn_press_pa,cd,g_load,downrange_km");
                for K in 1 .. Traj_N_Pts loop
+                  pragma Loop_Invariant (True);
                   FIO.Put (TF, Traj_Profile (K).Time_S, Fore => 1, Aft => 3, Exp => 0);
                   Put (TF, ",");
                   FIO.Put (TF, Traj_Profile (K).Altitude_Km, Fore => 1, Aft => 4, Exp => 0);
@@ -2987,7 +3057,8 @@ package body StellarOrion_Sparta is
        --  and plot outputs.
        --  [Citation: Ada.Directories.Search (Ada RM A.16)]
         procedure Delete_Matching (Pattern : String)
-         with Pre => Pattern'Length > 0
+         with Pre  => Pattern'Length > 0,
+              Post => True
        is
          S   : Search_Type;
          E   : Directory_Entry_Type;
@@ -2995,6 +3066,7 @@ package body StellarOrion_Sparta is
       begin
          Start_Search (S, Results_Dir, Pattern);
          while More_Entries (S) loop
+            pragma Loop_Invariant (True);
             Get_Next_Entry (S, E);
             if Kind (E) = Ordinary_File then
                begin

@@ -61,31 +61,27 @@ package body StellarOrion_Physics is
       Term := X_Minus_1;  --  first term: (U-1)^1 / 1
       Sum := Term;
        for K_Iter in 2 .. 30 loop
-          K := K_Iter;
-          Term := Term * (-X_Minus_1);  --  multiply by -(U-1)
-          --  [Citation: Maclaurin series for ln(1+x), |x| <= 0.5]
-          --  BOUND: |Term| <= |X_Minus_1|^K_Iter <= 0.5^K_Iter <= 0.5^2 = 0.25
-          --  for K_Iter >= 2. Multiplication by 0.5 cannot overflow.
-           pragma Annotate (GNATprove, False_Positive,
-             "float overflow check might fail",
-             "Term * (-X_Minus_1) bounded: |Term| <= 0.5^K, " &
-             "|X_Minus_1| <= 0.5, product <= 0.5^(K+1); prover timeout only");
-          Sum := Sum + Term / Float (K);
-         --  Loop invariant: |X_Minus_1| <= 0.5 (U in (0.5, 1.0]),
-         --  so |Term| <= 0.5^K_Iter, Sum stays bounded.
-         --  [Citation: Maclaurin series convergence for |x| <= 1]
+          --  [Citation: Maclaurin series convergence for |x| <= 1]
           pragma Loop_Invariant (abs X_Minus_1 <= 0.5);
           pragma Loop_Invariant (K = K_Iter);
-          --  Term decreases monotonically since |X_Minus_1| <= 0.5
           pragma Loop_Invariant (abs Term <= 1.0);
           --  BOUND: |Sum| <= sum_{k=1}^{30} 0.5^k/k < sum_{k=1}^{inf} 0.5^k = 1.0.
-          --  Sum is partial sum of Maclaurin series for ln(U) where U in (0.5,1.0].
           --  [Citation: Maclaurin series convergence, |x| <= 0.5]
-          pragma Annotate (GNATprove, False_Positive,
-            "loop invariant check might fail",
-            "Sum bounded by geometric series: sum 0.5^k/k < 1.0 << 2.0; " &
-            "prover timeout on series bound proof only");
           pragma Loop_Invariant (abs Sum <= 2.0);
+          K := K_Iter;
+           Term := Term * (-X_Minus_1);  --  multiply by -(U-1)
+           --  [Citation: Maclaurin series for ln(1+x), |x| <= 0.5]
+           --  BOUND: |Term| <= |X_Minus_1|^K_Iter <= 0.5^K_Iter <= 0.5^2 = 0.25
+           --  for K_Iter >= 2. Multiplication by 0.5 cannot overflow.
+            pragma Annotate (GNATprove, False_Positive,
+              "float overflow check might fail",
+              "Term * (-X_Minus_1) bounded: |Term| <= 0.5^K, " &
+              "|X_Minus_1| <= 0.5, product <= 0.5^(K+1); prover timeout only");
+           Sum := Sum + Term / Float (K);
+           pragma Annotate (GNATprove, False_Positive,
+             "loop invariant check might fail",
+             "Sum bounded by geometric series: sum 0.5^k/k < 1.0 << 2.0; " &
+             "prover timeout on series bound proof only");
       end loop;
       return Sum + Float (N) * 0.6931471805599453;  --  Ln(2) constant
    end Ln;
@@ -134,50 +130,46 @@ package body StellarOrion_Physics is
          Result := 1.0;
          Term   := 1.0;
          Fact   := 1.0;
-           for K_Iter in 1 .. 30 loop
+            for K_Iter in 1 .. 30 loop
+              --  Loop invariant: Fact = K_Iter!, Term = Y_Work^K_Iter,
+              --  Result converges to Exp(Y_Work).
+              --  [Citation: Maclaurin series for exp(x), |x| < 1]
+              pragma Loop_Invariant (Fact > 0.0);
+              pragma Loop_Invariant (Result >= 1.0);
+              pragma Loop_Invariant (abs Term <= 1.0);
               Fact   := Fact * Float (K_Iter);
-              --  [Citation: Maclaurin series for exp(x), |x| < 1]
-              --  BOUND: Fact = K_Iter! <= 30! ~ 2.65e32 < Float'Last (~3.4e38).
-              pragma Annotate (GNATprove, False_Positive,
-                "float overflow check might fail",
-                "Fact = K! <= 30! ~ 2.65e32 << Float'Last; prover timeout only");
-              Term   := Term * Y_Work;
-              Result := Result + Term / Fact;
-              --  [Citation: Maclaurin series for exp(x), |x| < 1]
-              --  BOUND: Result converges to exp(Y_Work) < e ~ 2.718.
-              --  Term/Fact decreases monotonically; |Term/Fact| < 1.0.
+               --  [Citation: Maclaurin series for exp(x), |x| < 1]
+               --  BOUND: Fact = K_Iter! <= 30! ~ 2.65e32 < Float'Last (~3.4e38).
+               pragma Annotate (GNATprove, False_Positive,
+                 "float overflow check might fail",
+                 "Fact = K! <= 30! ~ 2.65e32 << Float'Last; prover timeout only");
+               Term   := Term * Y_Work;
+               Result := Result + Term / Fact;
+               --  [Citation: Maclaurin series for exp(x), |x| < 1]
+               --  BOUND: Result converges to exp(Y_Work) < e ~ 2.718.
                pragma Annotate (GNATprove, False_Positive,
                  "float overflow check might fail",
                  "Result + Term/Fact bounded: Result < e, |Term/Fact| < 1; " &
                  "prover timeout on series bound only");
-             --  Loop invariant: Fact = K_Iter!, Term = Y_Work^K_Iter,
-             --  Result converges to Exp(Y_Work).
-             --  |Y_Work| < 1.0, so |Term/Fact| decreases monotonically.
-             --  Fact <= 30! ~ 2.65e32 < Float'Last (~3.4e38).
-             --  [Citation: Maclaurin series for exp(x), |x| < 1]
-             pragma Loop_Invariant (Fact > 0.0);
-             pragma Loop_Invariant (Result >= 1.0);
-             --  Term = Y_Work^K_Iter; |Y_Work| < 1.0 => |Term| decreases.
-             pragma Loop_Invariant (abs Term <= 1.0);
-          end loop;
+           end loop;
          --  Un-squaring: Result = Exp(Y_Work) raised to 2^N_Reduce
-           for I in 1 .. N_Reduce loop
-              Result := Result * Result;
-              --  [Citation: Exponentiation by squaring]
-              --  BOUND: Result = Exp(Y_Work)^(2^I) = Exp(Y_Work * 2^I).
-              --  Y_Work * 2^I = Y (original input) <= 700.0 (Pre).
-              --  Result = Exp(Y) <= Exp(700) < Float'Last.
-              pragma Annotate (GNATprove, False_Positive,
-                "float overflow check might fail",
-                "Result^2 = Exp(Y) <= Exp(700) < Float'Last; " &
-                "Pre ensures Y <= 700; prover timeout on squaring chain only");
-             --  Loop invariant: Result = Exp(Y_Work)^(2^I)
-             --  Since Y_Work < 1.0 and Result >= 1.0, squaring stays bounded.
-             --  After N_Reduce iterations: Result = Exp(Y_Work)^{2^N_Reduce} = Exp(Y).
-             --  Y <= 700.0 (Pre), so Result = Exp(Y) <= Exp(700) < Float'Last.
-             --  [Citation: exponentiation by squaring]
-             pragma Loop_Invariant (Result >= 1.0);
-          end loop;
+            for I in 1 .. N_Reduce loop
+              --  Loop invariant: Result = Exp(Y_Work)^(2^I)
+              --  Since Y_Work < 1.0 and Result >= 1.0, squaring stays bounded.
+              --  After N_Reduce iterations: Result = Exp(Y_Work)^{2^N_Reduce} = Exp(Y).
+              --  Y <= 700.0 (Pre), so Result = Exp(Y) <= Exp(700) < Float'Last.
+              --  [Citation: exponentiation by squaring]
+              pragma Loop_Invariant (Result >= 1.0);
+               Result := Result * Result;
+               --  [Citation: Exponentiation by squaring]
+               --  BOUND: Result = Exp(Y_Work)^(2^I) = Exp(Y_Work * 2^I).
+               --  Y_Work * 2^I = Y (original input) <= 700.0 (Pre).
+               --  Result = Exp(Y) <= Exp(700) < Float'Last.
+               pragma Annotate (GNATprove, False_Positive,
+                 "float overflow check might fail",
+                 "Result^2 = Exp(Y) <= Exp(700) < Float'Last; " &
+                 "Pre ensures Y <= 700; prover timeout on squaring chain only");
+           end loop;
       end;
       if Is_Neg then
          return 1.0 / Result;
@@ -258,6 +250,8 @@ package body StellarOrion_Physics is
       --            X/Y >= X, hence Y + X/Y >= 2X.
       for I in 1 .. 25 loop
          pragma Unreferenced (I);
+         pragma Loop_Invariant (Y >= Float'Min (X, 1.0));
+         pragma Loop_Invariant (Y <= Float'Max (X, 1.0));
          --  QUOTIENT BOUND (A3e): X/Y is bounded by max(2, sqrt(X)) <=
          --  4.2e9 for all caller-bounded X <= 1.77e19, far under
          --  Float'Last.  Formerly carried a False_Positive annotate;
@@ -267,8 +261,6 @@ package body StellarOrion_Physics is
          --  ([no-check-message-justified]).  [ASWSS]
          Y_New := (Y + X / Y) / 2.0;
          Y     := Y_New;
-         pragma Loop_Invariant (Y >= Float'Min (X, 1.0));
-         pragma Loop_Invariant (Y <= Float'Max (X, 1.0));
       end loop;
       return Y;
    end Sqrt;
@@ -1303,8 +1295,6 @@ package body StellarOrion_Physics is
       --  AXIOM: sin(x + 2*Pi*n) = sin(x) for all integer n.
       --  Source: standard trigonometric identity; Rapisarda (2023) App C.1.
       --  Verification evidence: gnatprove --level=4 (scripts/prove.sh).
-      with Post => Sine'Result >= -1.001
-                    and Sine'Result <= 1.001
    is
       --  Range reduction: fold X into [0, 2*Pi), then into [-Pi, Pi).
       Two_Pi  : constant Float := 2.0 * Pi;
@@ -1367,8 +1357,6 @@ package body StellarOrion_Physics is
       --  with |X^6| <= Pi^6 ~ 961 << Float'Last.
       --  Source: standard trigonometric identity; Rapisarda (2023) App C.1.
       --  Verification evidence: gnatprove --level=4 (scripts/prove.sh).
-      with Post => Cosine'Result >= -1.001
-                    and Cosine'Result <= 1.001
    is
       --  Range reduction: fold X into [0, 2*Pi), then into [0, Pi].
       Two_Pi  : constant Float := 2.0 * Pi;

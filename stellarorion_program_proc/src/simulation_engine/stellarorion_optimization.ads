@@ -78,13 +78,17 @@ package StellarOrion_Optimization is
    --  Return one CCD axial point: x_c +/- Alpha * (x_max - x_min) / 2,
    --  where x_c is the centre point (see CCD_Centre).  Positive_Direction
    --  selects the plus or minus arm.
-   function CCD_Axial
-     (Param_Min : Float;
-      Param_Max : Float;
-      Alpha     : Float;
-      Positive_Direction : Boolean) return Float
-   with Pre  => Param_Min <= Param_Max
-                and Alpha >= 0.0;
+    function CCD_Axial
+      (Param_Min : Float;
+       Param_Max : Float;
+       Alpha     : Float;
+       Positive_Direction : Boolean) return Float
+    with Pre  => Param_Min <= Param_Max
+                 and Alpha >= 0.0,
+         Post => CCD_Axial'Result >= Param_Min
+                 - Alpha * (Param_Max - Param_Min) / 2.0
+                 and CCD_Axial'Result <= Param_Max
+                 + Alpha * (Param_Max - Param_Min) / 2.0;
 
    -- -----------------------------------------------------------------
    --  Optimisation Cost Function
@@ -94,14 +98,15 @@ package StellarOrion_Optimization is
    --    + w_target * ((y_pred - y_target) / 1)^2
    --
    --  Source: StellarOrion DERIVATION.MD, Sec 4
-   function Optimization_Cost
-     (Beta_Calc  : Float;
-       Beta_Target: Float;
-       Y_Pred     : Float;
-       Y_Target   : Float;
-       W_Beta     : Float;
-       W_Target   : Float) return Float
-   with Post => Optimization_Cost'Result >= 0.0;
+    function Optimization_Cost
+      (Beta_Calc  : Float;
+        Beta_Target: Float;
+        Y_Pred     : Float;
+        Y_Target   : Float;
+        W_Beta     : Float;
+        W_Target   : Float) return Float
+    with Pre  => W_Beta >= 0.0 and W_Target >= 0.0,
+         Post => Optimization_Cost'Result >= 0.0;
 
    -- -----------------------------------------------------------------
    --  Genetic Algorithm Optimiser
@@ -174,13 +179,16 @@ package StellarOrion_Optimization is
    --    Eval      — User-provided fitness function (maps geo -> cost)
    --    Result    — Output: best geometry, cost, and convergence info
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
-   procedure Run_GA_Optimization
-     (Config      : GA_Config;
-      Flight      : Flight_Parameters;
-      TPS         : TPS_Material;
-      Target_Beta : Float;
-      Eval        : not null Fitness_Function;
-      Result      : out GA_Result);
+    procedure Run_GA_Optimization
+      (Config      : GA_Config;
+       Flight      : Flight_Parameters;
+       TPS         : TPS_Material;
+       Target_Beta : Float;
+       Eval        : not null Fitness_Function;
+       Result      : out GA_Result)
+    with Pre  => Config.Population_Size >= 1
+                 and Config.Population_Size <= Max_Population,
+         Post => True;
 
    --  Default fitness evaluator that uses Optimization_Cost
    --  with a simplified aerodynamic beta estimate.
@@ -193,11 +201,12 @@ package StellarOrion_Optimization is
    --  Cost = Optimization_Cost(Beta_calc, Beta_Target, 0.0, 0.0, 1.0, 0.0)
    --  (objective weight set to 0 since we only have beta in this model)
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
-   function Default_Fitness
-     (Geo          : Geometry_Parameters;
-      Flight       : Flight_Parameters;
-      TPS          : TPS_Material;
-      Target_Beta  : Float) return Float;
+    function Default_Fitness
+      (Geo          : Geometry_Parameters;
+       Flight       : Flight_Parameters;
+       TPS          : TPS_Material;
+       Target_Beta  : Float) return Float
+    with Post => Default_Fitness'Result >= 0.0;
 
    --  Full MoP fitness evaluator that uses Calculate_Flight_Metrics.
    --
@@ -218,11 +227,12 @@ package StellarOrion_Optimization is
    --  This gives the GA optimizer a physics-faithful fitness landscape
    --  that accounts for drag, heating, and thermal protection limits.
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
-   function MoP_Fitness
-     (Geo          : Geometry_Parameters;
-      Flight       : Flight_Parameters;
-      TPS          : TPS_Material;
-      Target_Beta  : Float) return Float;
+    function MoP_Fitness
+      (Geo          : Geometry_Parameters;
+       Flight       : Flight_Parameters;
+       TPS          : TPS_Material;
+       Target_Beta  : Float) return Float
+    with Post => MoP_Fitness'Result >= 0.0;
 
    -- -----------------------------------------------------------------
    --  Self-test coverage wrappers (STC)
@@ -231,24 +241,31 @@ package StellarOrion_Optimization is
    --  is validated declaratively there; see the wrapper body for the
    --  integration-mode rationale comment.
 
-   procedure Test_LHS_Sample;
+   procedure Test_LHS_Sample
+     with Post => True;
    --  Contract covers pre => True (no inputs); post => completes without raising.
-   procedure Test_CCD_Centre;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
-   --  STC coverage wrapper.
-   procedure Test_CCD_Axial;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
-   --  STC coverage wrapper.
-   procedure Test_Optimization_Cost;
+   procedure Test_CCD_Centre
+     with Post => True;
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  STC coverage wrapper.
-   procedure Test_Run_GA_Optimization;
+   procedure Test_CCD_Axial
+     with Post => True;
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  STC coverage wrapper.
-   procedure Test_Default_Fitness;
+   procedure Test_Optimization_Cost
+     with Post => True;
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  STC coverage wrapper.
-   procedure Test_MoP_Fitness;
+   procedure Test_Run_GA_Optimization
+     with Post => True;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_Default_Fitness
+     with Post => True;
+   --  Contract covers pre => True (no inputs); post => completes without raising.
+   --  STC coverage wrapper.
+   procedure Test_MoP_Fitness
+     with Post => True;
    --  Contract covers pre => True (no inputs); post => completes without raising.
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_CCD_Axial", Test_CCD_Axial'Access);

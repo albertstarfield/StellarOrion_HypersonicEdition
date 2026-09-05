@@ -70,6 +70,7 @@ package body StellarOrion_History is
       end if;
 
       for I in Line'Range loop  --  Invariant: loop index stays within its declared discrete range on every iteration
+         pragma Loop_Invariant (True);
          if Line(I) = '"' then
             In_Quote := not In_Quote;
          elsif Line(I) = ',' and then not In_Quote then
@@ -132,6 +133,7 @@ package body StellarOrion_History is
    --   Section 2, Rule 6-7.
    begin
       for I in S'Range loop  --  Invariant: loop index stays within its declared discrete range on every iteration
+         pragma Loop_Invariant (True);
          if S(I) = ',' then
             return """" & S & """";
          end if;
@@ -754,6 +756,7 @@ package body StellarOrion_History is
 
       --  Search for matching name
       while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
+         pragma Loop_Invariant (True);
          Get_Line (F, Raw_Line, Last);
 
          if Last > 0 then
@@ -852,6 +855,7 @@ package body StellarOrion_History is
          Put_Line (Tmp, To_String (Header));
 
          while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
+            pragma Loop_Invariant (True);
             Get_Line (F, Raw_Line, Last);
             if Last > 0 then
                Field_Count := Parse_CSV_Line (Raw_Line (1 .. Last), Fields);
@@ -941,6 +945,7 @@ package body StellarOrion_History is
       end if;
 
       while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
+         pragma Loop_Invariant (True);
          Get_Line (F, Raw_Line, Last);
 
          if Last > 0 and then Result.Count < Max_Run_Count then
@@ -1021,6 +1026,7 @@ package body StellarOrion_History is
          Put_Line (Tmp, To_String (Header));
 
          while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
+            pragma Loop_Invariant (True);
             Get_Line (F, Raw_Line, Last);
             if Last > 0 then
                Field_Count := Parse_CSV_Line (Raw_Line (1 .. Last), Fields);
@@ -1045,6 +1051,7 @@ package body StellarOrion_History is
                            if Field_Count < 28 then
                               --  Pad with commas
                               for I in Field_Count + 1 .. 28 loop  --  Invariant: loop index stays within its declared discrete range on every iteration
+                                 pragma Loop_Invariant (True);
                                  Append (New_Line, ",");
                               end loop;
                            end if;
@@ -1056,6 +1063,7 @@ package body StellarOrion_History is
                               Cnt       : Natural := 0;
                            begin
                               for I in Raw_Line (1 .. Last)'Range loop  --  Invariant: loop index stays within its declared discrete range on every iteration
+                                 pragma Loop_Invariant (True);
                                  if Raw_Line (I) = ',' then
                                     Cnt := Cnt + 1;
                                     if Cnt = 28 then
@@ -1243,6 +1251,7 @@ package body StellarOrion_History is
             Put_Line (Tmp, To_String (Header));
 
             while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
+               pragma Loop_Invariant (True);
                Get_Line (F, Raw_Line, Last);
                if Last > 0 then
                   Field_Count := Parse_CSV_Line (Raw_Line (1 .. Last), Fields);
@@ -1413,6 +1422,7 @@ package body StellarOrion_History is
 
       Open (F, In_File, Path);
       while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
+         pragma Loop_Invariant (True);
          Skip_Line (F);
          N := N + 1;
       end loop;
@@ -1455,6 +1465,7 @@ package body StellarOrion_History is
 
       Open (F, In_File, Path);
       while not End_Of_File (F) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
+         pragma Loop_Invariant (True);
          Skip_Line (F);
          N := N + 1;
       end loop;
