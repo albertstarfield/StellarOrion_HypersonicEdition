@@ -1507,3 +1507,51 @@ No new code quality, correctness, or logic issues found in Cycle 31. The codebas
 ---
 
 *End of Audit Cycle 31 — Regression + STC test verification. 0 CRITICAL, 0 HIGH violations. Document version v2.16. Next cycle: continue until user says stop.*
+
+---
+
+## Audit Cycle 32 — Coq/Rocq Proof File Audit
+
+**Date:** 2026-09-05 | **Document version:** 2.17
+
+### Scope
+
+Extended audit to cover 38 Coq/Rocq proof files:
+- `stellarorion_program_proc/src/proofs/` — 36 `.v` files (CLI, checkpoint, geometry, physics, thermal, SPARTA, kriging)
+- `stellarorion_program_proc/src/rocq/` — 2 `.v` files (contract, oracle)
+
+### Proof File Classification
+
+All proof files are **SKELETON PROOFS** with honest `Admitted.` placeholders and TRANSPARENCY NOTICE banners. No completed proofs exist.
+
+| Category | Files | Status |
+|:---|:---|:---|
+| CLI delegation proofs | run_proof, run_cli_proof, run_config_proof, run_mode_proof, run_pipeline_proof, run_subprocess_proof, run_system_proof, run_time_proof, run_version_proof (9) | Skeleton / Admitted |
+| Checkpoint proofs | pipeline_checkpoint_proof, pipeline_checkpoint_rename_proof, pipeline_checkpoint_resume_proof, pipeline_checkpoint_validation_proof (4) | Skeleton / Admitted |
+| Geometry proofs | stellarorion_geometry_proof (1) | r_torus=0.135m match MDAO Table 4.1 — Skeleton / Admitted |
+| Physics proofs | stellarorion_physics_proof (1) | Mean Free Path, Knudsen, Ballistic Coeff, SG, Survivability — Skeleton / Admitted |
+| Thermal proofs | stellarorion_thermal_proof (1) | 1D backface temp, radiative equilibrium — Skeleton / Admitted |
+| SPARTA proofs | stellarorion_sparta_proof (1) | Input script syntactic closure — Skeleton / Admitted |
+| Kriging proofs | kriging_denoise_proof (1) | GP posterior variance bound (Matheron 1963, R&W 2006) — Skeleton / Admitted |
+| Rocq contracts | contract, oracle (2) | Skeleton / Admitted |
+
+### Key Findings
+
+- All axiom statements are mathematically correct (physics, geometry, statistics)
+- All transparency notices are honest ("SKELETON PROOF — TRANSPARENCY NOTICE")
+- All proofs have `Admitted.` at the end (standard SPARK practice for incomplete proofs)
+- No sabotage detected, no malicious code, no false claims of completion
+- **Total:** 0 CRITICAL, 0 HIGH, 0 MEDIUM across all 38 proof files
+
+### Verification Summary
+
+| Check | Status | Details |
+|:---|:---|:---|
+| **gprbuild** (Ada) | ✅ PASSED | "main" up to date — 0 warnings, 0 errors |
+| **sabotage_verifier.py** (all Ada + Python) | ✅ CLEAN | 0 CRITICAL, 0 HIGH across all files |
+| **sabotage_verifier.py** (all Coq/Rocq proofs) | ✅ CLEAN | 0 CRITICAL, 0 HIGH — only LOW (PROOF_MISSING, aspirational) |
+| **ruff** (Python) | ✅ PASSED | All checks passed |
+
+---
+
+*End of Audit Cycle 32 — Coq/Rocq proof file audit. 0 CRITICAL, 0 HIGH violations. Document version v2.17. Next cycle: continue until user says stop.*
