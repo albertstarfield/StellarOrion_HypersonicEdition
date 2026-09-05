@@ -2,7 +2,7 @@
 
 **Author:** Albert Starfield Wahyu Suryo Samudro
 **Date:** September 4, 2026
-**Version:** 3.26 (Audit Cycle 141 — cyclic until user says stop)
+**Version:** 3.27 (Audit Cycle 142 — cyclic until user says stop)
 
 ---
 
@@ -4435,3 +4435,30 @@ Routine maintenance re-verification cycle. All infrastructure checks pass. No co
 ---
 
 *End of Audit Cycle 141 — Maintenance re-verification complete. Document version v3.26. Next cycle: continue until user says stop.*
+
+---
+
+## Audit Cycle 142 — Code Audit + Fix (September 6, 2026)
+
+**Status:** FIX APPLIED — `--validation` help text missing
+
+| Check | Result |
+| :--- | :--- |
+| gprbuild | UP TO DATE (rebuilt after fix — OK) |
+| sabotage_verifier | CRITICAL: 0, HIGH: 0 — CLEAN |
+| pyrefly | 0 errors (2 expected deepxde missing-import) |
+| ruff | All checks passed |
+| git status | Code change: stellarorion_project.adb |
+
+**Code Fix Applied:**
+- `stellarorion_project.adb` line 116: Added `--validation` to Print_Usage help text with description "Earth env validation (ISA, IRVE-3 baseline)". The flag was already handled in code (line 635: `Has_Flag ("--validation")`) but was missing from the user-facing help output.
+
+**Deliverable Verification (all 4 confirmed present):**
+1. Math Derivation: ✅ DERIVATION.md §6 + NextImprovementPlan.md §4
+2. Help Page: ✅ All flags present (now including `--validation`)
+3. Colima Fallback: ✅ Full chain in run.py (lines 109-213, 866-903)
+4. Checkpoint: ✅ pipeline_checkpoint.py covers sparta/kriging/pinn/mop, atomic save
+
+---
+
+*End of Audit Cycle 142 — Code fix applied. Document version v3.27. Next cycle: continue until user says stop.*
