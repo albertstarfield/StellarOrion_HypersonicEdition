@@ -41,7 +41,6 @@ TIMING ANALYSIS:
 """
 from __future__ import annotations
 
-import csv
 import math
 import os
 import sys
@@ -220,7 +219,7 @@ def main(argv: list[str]) -> int:
     dyn_press = data.get("dyn_press_pa", [])
     heat_load = data.get("heat_load_jcm2", [])
     g_load = data.get("g_load", [])
-    time_s = data.get("time_s", [])
+    _time_s = data.get("time_s", [])  # reserved for future time-based analysis
 
     n = len(steps)
     if not all(len(v) == n for v in [q_avg, drag_sum, dyn_press]):
@@ -258,11 +257,11 @@ def main(argv: list[str]) -> int:
     t_back_limits = [
         (KAPTON_MAX_TEMP, "Kapton adhesive limit"),
     ]
-    g_load_limits = [
+    _g_load_limits = [
         (MAX_G_LOAD, "Structural limit"),
-    ]
+    ]  # reserved for future survivability overlay
 
-    print(f"[derived-plots] Generating plots...")
+    print("[derived-plots] Generating plots...")
 
     # 1. T_surface vs Step (area-averaged, comparable with IRVE-3 flight)
     _plot_derived(
@@ -358,7 +357,7 @@ def main(argv: list[str]) -> int:
     fig.savefig(os.path.join(plots_dir, "physical_dashboard.png"),
                 dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  [OK] physical_dashboard.png")
+    print("  [OK] physical_dashboard.png")
 
     # 6. Survivability summary plot
     fig, ax = plt.subplots(figsize=(12, 7))
@@ -390,10 +389,10 @@ def main(argv: list[str]) -> int:
     fig.savefig(os.path.join(plots_dir, "survivability_assessment.png"),
                 dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  [OK] survivability_assessment.png")
+    print("  [OK] survivability_assessment.png")
 
     # Print summary
-    print(f"\n[derived-plots] Summary:")
+    print("\n[derived-plots] Summary:")
     print(f"  T_surface range: {min(t_surface):.0f} - {max(t_surface):.0f} K")
     print(f"  T_back range:    {min(t_back):.0f} - {max(t_back):.0f} K")
     print(f"  Beta range:      {min(beta):.2f} - {max(beta):.2f} kg/m²")
@@ -402,7 +401,7 @@ def main(argv: list[str]) -> int:
     # Survivability check
     t_surv = max(t_surface) <= SIC_MAX_TEMP
     t_back_surv = max(t_back) <= KAPTON_MAX_TEMP
-    print(f"\n  Survivability:")
+    print("\n  Survivability:")
     print(f"    T_surface < {SIC_MAX_TEMP}K (SIC): {'PASS' if t_surv else 'FAIL'} (max={max(t_surface):.0f}K)")
     print(f"    T_back < {KAPTON_MAX_TEMP}K (Kapton): {'PASS' if t_back_surv else 'FAIL'} (max={max(t_back):.0f}K)")
 

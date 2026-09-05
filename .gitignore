@@ -187,7 +187,10 @@ cython_debug/
 *.stl
 
 # StellarOrion Specific
+HIAD_3D_model.html
 tmp_sparta_build/
+gnatcov_rts-*/
+stellarorion_program_proc/proofs/
 log.sparta
 workspace/
 scratch/
