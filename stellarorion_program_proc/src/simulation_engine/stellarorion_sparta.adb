@@ -146,7 +146,9 @@ package body StellarOrion_Sparta is
    --  Contract: pre  => Cmd is a shell command string to dispatch;
    --           post => returns after the external command completes;
    --           exit status is not inspected by callers.
-    procedure System (Cmd : String) is
+    procedure System (Cmd : String)
+      with Pre => Cmd'Length > 0
+    is
        function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
        pragma Import (C, C_System, "system");
        C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
@@ -163,7 +165,9 @@ package body StellarOrion_Sparta is
     --  Same C binding but returns the exit status for callers that need it.
     --  Use-case: plot-script invocation (line ~2111) where a nonzero exit
     --  indicates matplotlib/Python failure that should be reported.
-    function System_Return (Cmd : String) return Integer is
+    function System_Return (Cmd : String) return Integer
+      with Pre => Cmd'Length > 0
+    is
        function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
        pragma Import (C, C_System, "system");
        C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
@@ -1392,7 +1396,9 @@ package body StellarOrion_Sparta is
       -- ---------------------------------------------------------------
 
       --  Append a raw point, forcing near-axis R to exactly 0.0.
-      procedure Add_Raw (PR, PZ : Float) is
+      procedure Add_Raw (PR, PZ : Float)
+        with Pre => True, Post => True
+      is
          R_Val : Float := PR;
       begin
           if Geo.Skin = StellarOrion_Types.Scalloped then
@@ -1725,7 +1731,9 @@ package body StellarOrion_Sparta is
        --  length S(1..Npoints); total length L = S(Npoints).  The "Lines"
        --  section is ignored: the curve IS the Points in id order (SPARTA
        --  connects 1-2,2-3,...,Npoints-1-Npoints sequentially).
-       procedure Parse_Surf_Geometry is
+       procedure Parse_Surf_Geometry
+         with Pre => True, Post => True
+       is
           F    : File_Type;
           Line : String (1 .. 1024);
           Last : Natural;
@@ -1803,7 +1811,9 @@ package body StellarOrion_Sparta is
        --  arc length j/N * L (j=0..N).  Segment k (B(k-1)->B(k)) is the
        --  revolved position of surf element k.  Linear interpolation along
        --  the polyline segment containing the target arc length.
-       procedure Resample is
+        procedure Resample
+          with Pre => True, Post => True
+        is
           Target  : Float;
           Seg     : Natural;
           Frac    : Float;
@@ -1846,7 +1856,9 @@ package body StellarOrion_Sparta is
 
        --  Count the number of data rows in a surf.<step>.out dump (the N
        --  surf elements).  Rows follow the "ITEM: SURFS" header line.
-       function Count_Surf_Rows (Fpath : String) return Natural is
+        function Count_Surf_Rows (Fpath : String) return Natural
+          with Pre => Fpath'Length > 0, Post => Count_Surf_Rows'Result >= 0
+        is
           F       : File_Type;
           Line    : String (1 .. 2048);
           Last    : Natural;
@@ -1874,7 +1886,9 @@ package body StellarOrion_Sparta is
        end Count_Surf_Rows;
 
       --  Write one 3D point (x, y, z) into the VTK Points DataArray.
-      procedure Write_Point (F : File_Type; X, Y, Z : Float) is
+       procedure Write_Point (F : File_Type; X, Y, Z : Float)
+         with Pre => True, Post => True
+       is
       begin
          FIO.Put (F, X, Fore => 1, Aft => 6, Exp => 0);
          Put (F, " ");
@@ -1889,7 +1903,9 @@ package body StellarOrion_Sparta is
        --  Segment k (B(k-1)->B(k)) yields N_Theta quads, each carrying
        --  field[k] (HeatFlux_Wm2/Drag_N/Lift_N).  Shared-node grid:
        --  (N+1)*N_Theta nodes, 0-based connectivity.
-       procedure Write_VTU (Step : Positive) is
+        procedure Write_VTU (Step : Positive)
+          with Pre => Step > 0, Post => True
+        is
           VF      : File_Type;
           VPath   : constant String := Paraview_Dir & "/surf_" & Img (Integer (Step)) & ".vtu";
           DTheta  : constant Float := 2.0 * Pi / Float (N_Theta);
@@ -2023,7 +2039,9 @@ package body StellarOrion_Sparta is
        --  fill Heat/Drag/Lift, write its VTK, and accumulate the CSV row.
        --  The dump "id" strides by 6 and is ignored; row order == curve
        --  position (matches the existing Step 6 parser field semantics).
-       procedure Process_Step_File (Step : Positive) is
+       procedure Process_Step_File (Step : Positive)
+         with Pre => Step > 0, Post => True
+       is
           Fpath : constant String := Results_Dir & "/surf." & Img (Integer (Step)) & ".out";
           F     : File_Type;
           Line  : String (1 .. 2048);
@@ -2339,7 +2357,9 @@ package body StellarOrion_Sparta is
         end Process_Step_File;
 
       --  Sort Rows by Step and write the CSV.
-      procedure Write_CSV is
+      procedure Write_CSV
+        with Pre => True, Post => True
+      is
          CF : File_Type;
       begin
          for I in 1 .. N_Rows - 1 loop
@@ -2433,7 +2453,9 @@ package body StellarOrion_Sparta is
 
         --  Write the ParaView .pvd collection that groups all per-step
         --  .vtu files into a single timeline (timestep = dump step).
-        procedure Write_PVD is
+         procedure Write_PVD
+           with Pre => True, Post => True
+         is
            PF    : File_Type;
            PPath : constant String := Paraview_Dir & "/validation.pvd";
         begin
@@ -2751,7 +2773,9 @@ package body StellarOrion_Sparta is
    procedure Cleanup_Ephemeral_State
      (Results_Dir : String)
    is
-      procedure Delete_Matching (Pattern : String) is
+       procedure Delete_Matching (Pattern : String)
+         with Pre => Pattern'Length > 0
+       is
          S   : Search_Type;
          E   : Directory_Entry_Type;
          Cnt : Natural := 0;
