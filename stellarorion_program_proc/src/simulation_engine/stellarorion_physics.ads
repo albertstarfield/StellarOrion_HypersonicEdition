@@ -53,13 +53,29 @@ package StellarOrion_Physics is
    --  Error < 1e-7 for 30 terms. Source: standard numerical analysis.
    -- @test: Run_All_Tests (stellarorion_project.adb)
    function Exp (X : Float) return Float
-     with Pre => abs X <= 700.0;
+     with Pre  => abs X <= 700.0,
+          Post => Exp'Result >= 0.0;
 
    --  SPARK-safe power: X^A = Exp(A * Ln(X)) for X > 0.
    --  Used by Fay-Riddell for (rho*mu)^0.4 and (rho*mu)^0.1.
    --  Source: Fay & Riddell (1958); Rapisarda (2023) Eq 3.82
     function Pow (X : Float; A : Float) return Float
-      with Pre => X > 0.0 and then abs A <= 100.0;
+      with Pre  => X > 0.0 and then abs A <= 100.0,
+           Post => Pow'Result >= 0.0;
+
+   --  SPARK-safe sine function [dimensionless].
+   --  7th-order Taylor polynomial with range reduction to [-Pi, Pi].
+   --  Source: Taylor 1715; Rapisarda (2023) Appendix C.1.
+   function Sine (X : Float) return Float
+      with Post => Sine'Result >= -1.001
+                    and then Sine'Result <= 1.001;
+
+   --  SPARK-safe cosine function [dimensionless].
+   --  6th-order Taylor polynomial with range reduction to [-Pi, Pi].
+   --  Source: Abramowitz & Stegun Sec 6.1.2; Rapisarda (2023) Appendix C.1.
+   function Cosine (X : Float) return Float
+      with Post => Cosine'Result >= -1.001
+                    and then Cosine'Result <= 1.001;
 
    -- -----------------------------------------------------------------
    --  Rarefied Gas Dynamics
@@ -597,7 +613,7 @@ package StellarOrion_Physics is
       --  for IRVE-3 Earth entry at ~2700 m/s.
       Peak_Heat_Time_S    : out Float;
       Peak_Heat_Flux_Wm2  : out Float)
-   with Pre => CD >= 0.0 and CD <= 3.0
+   with Pre  => CD >= 0.0 and CD <= 3.0
                 and Mass_Kg >= 1.0 and Mass_Kg <= 1.0e6
                 and Dia_M >= 0.5 and Dia_M <= 20.0
                 and Entry_Alt_Km >= 80.0 and Entry_Alt_Km <= 200.0
@@ -605,6 +621,9 @@ package StellarOrion_Physics is
                 and abs (Entry_Gamma_Deg) >= 1.0
                 and abs (Entry_Gamma_Deg) <= 30.0
                 and Step_Size_S >= 0.01
-                and Step_Size_S <= 100.0;
+                and Step_Size_S <= 100.0,
+        Post => N_Pts >= 0
+                 and then N_Pts <= Max_Trajectory_Pts
+                 and then Peak_Heat_Flux_Wm2 >= 0.0;
 
 end StellarOrion_Physics;
