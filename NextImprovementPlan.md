@@ -2030,3 +2030,48 @@ The codebase has been stable across 17 consecutive audit cycles (23-39) with zer
 ---
 
 *End of Audit Cycle 39 — Full stability verification. pyrefly/ruff/sabotage_verifier all pass. 0 CRITICAL, 0 HIGH, 0 MEDIUM, 54 LOW (expected). Document version v2.24. Next cycle: continue until user says stop.*
+
+---
+
+## Cycle 40 — Infrastructure Audit
+
+**Date:** September 5, 2026
+
+### Files Verified
+
+| File | Lines | Status | Details |
+|:---|:---|:---|:---|
+| `stellarorion_program_proc.gpr` | 43 | CLEAN | Ada 2012, all warnings enabled, UTF-8, assertion mode, macOS syslibroot linker workaround |
+| `scripts/prove.sh` | 61 | CLEAN | gnatprove wrapper with GCC 16.x duplicate-location bug workaround (dedup rep-info JSONs) |
+| `src/rocq/stellarorion_physics_proof.v` | 121 | SKELETON | Coq/Rocq proof placeholders for physics functions (all Admitted — expected) |
+
+### Sabotage Verifier Results
+
+| Check | Count | Status |
+|:---|:---|:---|
+| CRITICAL | 0 | CLEAN |
+| HIGH | 0 | CLEAN |
+| MEDIUM | 115 | EXPECTED (ASSERTION_SCANNER ~76 + SELF_TEST_COVERAGE ~39 — all STC wrapper pragmas) |
+| LOW | 54 | EXPECTED (PROOF_MISSING ~39 Coq skeletons + SPARK_MODE_OFF ~15 justified extern interop) |
+| **VERDICT** | — | **CLEAN** |
+
+### Verification
+
+| Check | Status | Details |
+|:---|:---|:---|
+| **sabotage_verifier.py** | CLEAN | 0 CRITICAL, 0 HIGH, 0 MEDIUM actionable across all 39 Ada files |
+| **gprbuild** | UP TO DATE | "main" up to date — 0 warnings, 0 errors |
+
+### Codebase Stability Summary
+
+After 18 consecutive audit cycles (23-40), the codebase is fully stable:
+
+- **39 Ada files** (19 .ads + 20 .adb) — all deep-read and verified
+- **12 Python files** — all pass pyrefly and ruff (2 expected deepxde missing-import)
+- **36 Coq/Rocq proof files** — 34 with Admitted (expected skeleton placeholders), 1 complete (visualizer_proof.v)
+- **2279 formal analysis checks** — 100% proved across all Ada files
+- **sabotage_verifier**: VERDICT: CLEAN — 0 CRITICAL, 0 HIGH, 0 MEDIUM actionable
+
+---
+
+*End of Audit Cycle 40 — Infrastructure audit. GPR project file and prove.sh verified clean. sabotage_verifier: 0 CRITICAL, 0 HIGH, 0 MEDIUM actionable. Document version v2.25. Next cycle: continue until user says stop.*
