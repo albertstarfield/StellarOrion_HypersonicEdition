@@ -93,9 +93,10 @@ package body StellarOrion_Validation is
       Probe   : constant Flight_Metrics := (others => <>);
       Verdict : constant Boolean := Check_Survivability (Probe);
    begin
-      pragma Assert (Probe'Size >= 0);  -- static bounds context
-      --  Verdict-equivalence with Is_Survivable verified via integration
-      --  modes; the deep semantic tie is out of scope for a unit smoke.
+       pragma Assert (Probe'Size >= 0);  -- static bounds context
+       pragma Assert (Verdict);  -- smoke: Check_Survivability returns True on defaults
+       --  Verdict-equivalence with Is_Survivable verified via integration
+       --  modes; the deep semantic tie is out of scope for a unit smoke.
    end Test_Check_Survivability;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Check_Survivability", Test_Check_Survivability'Access);
