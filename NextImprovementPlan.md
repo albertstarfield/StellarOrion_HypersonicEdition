@@ -1627,3 +1627,63 @@ Full deep-read audit of all 8 Python scripts in the project:
 ---
 
 *End of Audit Cycle 33 — Python scripts full audit. 0 CRITICAL (actionable), 0 HIGH (actionable) violations. Document version v2.18. Next cycle: continue until user says stop.*
+
+---
+
+## Audit Cycle 34 — Build Config & Shell Script Audit
+
+**Date:** 2026-09-05 | **Document version:** 2.19
+
+### Scope
+
+Full deep-read audit of build configuration and shell scripts:
+
+| File | Lines | Role | Status |
+|:---|:---|:---|:---|
+| `stellarorion_program_proc.gpr` | 43 | Ada project file — compilation flags, linker, binder | CLEAN |
+| `alire.toml` | 18 | Package manifest — dependencies, metadata | CLEAN |
+| `prove.sh` | 61 | 3-phase gnatprove wrapper (GCC 16.x workaround) | CLEAN |
+| `SabotageVerifier.sh` | 123 | Pre-build sabotage audit gate (Tier B1) | CLEAN |
+
+### Key Findings Per File
+
+**stellarorion_program_proc.gpr (43 lines):**
+- Ada 2012 mode (-gnat12), all warnings (-gnatwa), UTF-8 (-gnatW8), assertion mode (-gnatdAME)
+- Binder: stack backtrace (-E), extended info (-x)
+- Linker: debug symbols (-g), macOS SDK syslibroot
+- Extensive macOS deployment target documentation
+
+**alire.toml (18 lines):**
+- Version 0.1.0-dev, license MIT
+- Dependencies: gnatprove ^16.1.0, gnatcov ^26.2.1
+- Executable: stellarorion_project
+
+**prove.sh (61 lines):**
+- 3-phase gnatprove wrapper for GCC 16.x -gnatR2js duplicate-location bug
+- Phase 1: gprbuild data-representation
+- Phase 2: Python deduplication of rep-info JSONs
+- Phase 3: gnatprove with configurable level (default 4)
+- set -euo pipefail, LEVEL=skip mode
+
+**SabotageVerifier.sh (123 lines):**
+- Pre-build sabotage audit gate (Tier B1)
+- Gate: CRITICAL→exit 1, HIGH/MEDIUM→reported, LOW→informational
+- Targets: src/simulation_engine (Ada), src/python (Python), src/ui (Python)
+- --exclude-files prevents self-audit recursion
+- Timestamped JSON reports
+
+### Verification Summary
+
+| Check | Status | Details |
+|:---|:---|:---|
+| **gprbuild** (Ada) | ✅ PASSED | "main" up to date — 0 warnings, 0 errors |
+| **sabotage_verifier.py** | ✅ CLEAN | 0 CRITICAL, 0 HIGH across all files |
+| **ruff** (Python) | ✅ PASSED | All checks passed |
+
+### No New Findings
+
+All 4 build/config/shell files are clean with proper documentation and safety guards. The codebase has been stable across 12 consecutive audit cycles (23-34) with zero new violations.
+
+---
+
+*End of Audit Cycle 34 — Build config & shell script audit. 0 CRITICAL, 0 HIGH violations. Document version v2.19. Next cycle: continue until user says stop.*
