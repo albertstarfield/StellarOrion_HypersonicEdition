@@ -51,6 +51,7 @@ package StellarOrion_Physics is
    --  Exponential function [dimensionless].
    --  Taylor series with squaring reduction: Exp(X) for any Float.
    --  Error < 1e-7 for 30 terms. Source: standard numerical analysis.
+   -- @test: Run_All_Tests (stellarorion_project.adb)
    function Exp (X : Float) return Float
      with Pre => abs X <= 700.0;
 
