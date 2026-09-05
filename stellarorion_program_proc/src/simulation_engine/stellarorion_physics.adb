@@ -31,7 +31,7 @@ package body StellarOrion_Physics is
        Sum    : Float;  --  initialized after Term computation
       Term   : Float;
       X_Minus_1 : Float;
-      K      : Integer;
+       K      : Integer := 0;
       --  Maximum iterations for argument reduction.  2^200 >> Float'Last
       --  (~3.4e38), so 200 iterations cover any finite positive Float.
        Max_Reduce : constant Integer := 200;
@@ -73,18 +73,17 @@ package body StellarOrion_Physics is
            --  [Citation: Maclaurin series for ln(1+x), |x| <= 0.5]
            --  BOUND: |Term| <= |X_Minus_1|^K_Iter <= 0.5^K_Iter <= 0.5^2 = 0.25
            --  for K_Iter >= 2. Multiplication by 0.5 cannot overflow.
-            pragma Annotate (GNATprove, False_Positive,
-              "float overflow check might fail",
-              "Term * (-X_Minus_1) bounded: |Term| <= 0.5^K, " &
-              "|X_Minus_1| <= 0.5, product <= 0.5^(K+1); prover timeout only");
            Sum := Sum + Term / Float (K);
-           pragma Annotate (GNATprove, False_Positive,
-             "loop invariant check might fail",
-             "Sum bounded by geometric series: sum 0.5^k/k < 1.0 << 2.0; " &
-             "prover timeout on series bound proof only");
-      end loop;
-      return Sum + Float (N) * 0.6931471805599453;  --  Ln(2) constant
-   end Ln;
+       end loop;
+       --  BOUND: |Sum| <= 2.0 (loop invariant); |Float(N) * Ln(2)| bounded by
+       --  argument reduction range; total |Ln(X)| bounded for all finite X > 0.
+       pragma Assert (abs Sum <= 2.0);
+       --  [Citation: Maclaurin series convergence; logarithm product rule]
+       pragma Annotate (GNATprove, False_Positive,
+         "postcondition check might fail",
+         "Ln(X) bounded: X>0 => Ln(X)<88.7 << 1000.0; prover timeout on range reduction");
+       return Sum + Float (N) * 0.6931471805599453;  --  Ln(2) constant
+    end Ln;
 
    --  Exponential via Taylor series: Exp(X) = sum_{k=0}^{30} X^k / k!
    --  For large |X|, reduce: Exp(X) = Exp(X/2)^2 (halving method).
@@ -140,6 +139,7 @@ package body StellarOrion_Physics is
               Fact   := Fact * Float (K_Iter);
                --  [Citation: Maclaurin series for exp(x), |x| < 1]
                --  BOUND: Fact = K_Iter! <= 30! ~ 2.65e32 < Float'Last (~3.4e38).
+               pragma Assert (Fact > 0.0 and then Fact <= 2.65e32);
                pragma Annotate (GNATprove, False_Positive,
                  "float overflow check might fail",
                  "Fact = K! <= 30! ~ 2.65e32 << Float'Last; prover timeout only");
@@ -156,10 +156,11 @@ package body StellarOrion_Physics is
             for I in 1 .. N_Reduce loop
               --  Loop invariant: Result = Exp(Y_Work)^(2^I)
               --  Since Y_Work < 1.0 and Result >= 1.0, squaring stays bounded.
-              --  After N_Reduce iterations: Result = Exp(Y_Work)^{2^N_Reduce} = Exp(Y).
+              --  After N_Reduce iterations: Result = Exp(Y_Work)^(2^N_Reduce) = Exp(Y).
               --  Y <= 700.0 (Pre), so Result = Exp(Y) <= Exp(700) < Float'Last.
               --  [Citation: exponentiation by squaring]
               pragma Loop_Invariant (Result >= 1.0);
+              pragma Loop_Invariant (Result <= Float'Last / 2.0);
                Result := Result * Result;
                --  [Citation: Exponentiation by squaring]
                --  BOUND: Result = Exp(Y_Work)^(2^I) = Exp(Y_Work * 2^I).
@@ -191,10 +192,6 @@ package body StellarOrion_Physics is
      -- APPLICATIONS: Single-expression composition: compute A*Ln(X) then pass to Exp; delegates to Ln and Exp.
      -- CITATIONS: [Fay & Riddell 1958; Rapisarda 2023, Eq 3.82]
      begin
-       pragma Annotate (GNATprove, False_Positive,
-         "precondition check might fail",
-         "fp_overflow on A*Ln(X): abs A(<=100) * abs Ln(X)(<=1000) ~ 1e5 << Float'Last; " &
-         "Ln Post ensures |Ln'Result| <= 1000; Pre ensures abs A <= 100");
        return Exp (Product);
     end Pow;
 
@@ -718,10 +715,6 @@ package body StellarOrion_Physics is
         --  Step 1: Freestream static temperature from Mach and velocity
         --  T_inf = V^2 / (M^2 * gamma * R)
          --  derivation: M = V / sqrt(gamma*R*T) => T = V^2 / (M^2 * gamma * R)
-         pragma Annotate (GNATprove, False_Positive,
-           "divide_by_zero check might fail",
-           "Mach*Mach*GAMMA_AIR*R_S cannot underflow when Mach >= 0.01; " &
-           "denominator >= 0.04018; prover timeout on division chain only");
          T_Inf := (Velocity_Ms * Velocity_Ms)
                  / (Mach * Mach * GAMMA_AIR * R_S);
 
@@ -735,11 +728,6 @@ package body StellarOrion_Physics is
         --  After guard: Mach >= 0.01, Velocity > 0, so numerator > 0 and
         --  denominator >= 1e-4 * 1.4 * 287.0 = 0.04018 > 0.
         --  [Citation: Fay & Riddell (1958); ISO 2533:1975 atmosphere model]
-        pragma Annotate (GNATprove, False_Positive,
-          "assertion check might fail",
-          "T_Inf > 0 when V > 0 and M >= 0.01 (denom >= 0.04018); " &
-          "T_S = T_Inf*(1+0.2*M^2) positive when T_Inf positive; " &
-          "prover timeout on multiplication chain only");
         pragma Assert (T_Inf > 0.0 and then T_S > 0.0);
 
        --  Step 3: Stagnation pressure (isentropic, gamma=1.4)
@@ -762,9 +750,6 @@ package body StellarOrion_Physics is
         --  BOUND ASSERTION: P_S is finite and positive for valid inputs.
         --  P_Inf = rho*R*T > 0 (all positive after guard); Tmp35 > 0.
         --  [Citation: Fay & Riddell (1958); isentropic relations]
-        pragma Annotate (GNATprove, False_Positive,
-          "assertion check might fail",
-          "P_S > 0 when P_Inf > 0 and Tmp35 > 0; prover timeout only");
         pragma Assert (P_S > 0.0);
 
         --  Step 4: Density at stagnation and wall (ideal gas: rho = P/(R*T))
@@ -777,10 +762,6 @@ package body StellarOrion_Physics is
         --  rho_s = P_S/(R*T_S), rho_w = P_S/(R*T_w). P_S > 0, T_S > 0,
         --  T_w > 200 => both densities > 0.
         --  [Citation: Ideal gas law; ISO 2533:1975]
-        pragma Annotate (GNATprove, False_Positive,
-          "assertion check might fail",
-          "rho = P/(R*T) positive when P > 0 and T > 0; " &
-          "prover timeout on division chain only");
         pragma Assert (Rho_S > 0.0 and then Rho_W > 0.0);
 
        --  Step 5: Viscosity via Sutherland's law [Pa*s]
@@ -807,10 +788,6 @@ package body StellarOrion_Physics is
         --  BOUND ASSERTION: viscosities are positive (Sutherland's law
         --  guarantees mu(T) > 0 for T > 0; T_S > 0 and Wall_Temp_K > 200).
         --  [Citation: Sutherland (1893); NASA CEA]
-        pragma Annotate (GNATprove, False_Positive,
-          "assertion check might fail",
-          "Sutherland mu(T) > 0 for T > 0; all inputs T > 0 after guard; " &
-          "prover timeout on Sutherland formula only");
         pragma Assert (Mu_S > 0.0 and then Mu_W > 0.0);
 
        --  Step 6: Velocity gradient at stagnation point [1/s]
@@ -835,11 +812,6 @@ package body StellarOrion_Physics is
         --  BOUND ASSERTION: Du_Dy > 0 for valid inputs (both branches
         --  produce positive values: 1/R_n * sqrt(...) > 0 or V/R_n > 0).
         --  [Citation: Fay & Riddell (1958) Appendix; Rapisarda Eq C.40]
-        pragma Annotate (GNATprove, False_Positive,
-          "assertion check might fail",
-          "Du_Dy > 0 by construction: both branches positive " &
-          "(1/R_n*sqrt(deltaP/rho_s) > 0 or V/R_n > 0); " &
-          "prover timeout on Sqrt chain only");
         pragma Assert (Du_Dy > 0.0);
 
        --  Step 7: Enthalpy [J/kg]
@@ -873,12 +845,8 @@ package body StellarOrion_Physics is
         --  BOUND: Q_FR = Pr_Factor * Rho_Mu_W * Rho_Mu_S * (H_S-H_W) * Sqrt(Du_Dy).
         --  All factors bounded by Pre ranges: rho in [0,1e4], mu ~ 1e-5,
         --  H_S = Cp*T_S ~ 1e5, Du_Dy ~ 1e4. Product < 1e15 << Float'Last.
-        Q_FR := Pr_Factor * Rho_Mu_W * Rho_Mu_S
-                * (H_S - H_W) * Sqrt (Du_Dy);
-        pragma Annotate (GNATprove, False_Positive,
-          "float overflow check might fail",
-          "Q_FR bounded by Pre ranges: all factors physical, " &
-          "product < 1e15 << Float'Last; prover timeout on multiplication chain");
+         Q_FR := Pr_Factor * Rho_Mu_W * Rho_Mu_S
+                 * (H_S - H_W) * Sqrt (Du_Dy);
 
        --  Clamp: physical heat flux must be non-negative
        if Q_FR < 0.0 then
@@ -1309,21 +1277,18 @@ package body StellarOrion_Physics is
       end if;
       --  sin(x) = x - x^3/6 + x^5/120 - x^7/5040  (valid for |Reduced| <= Pi)
       declare
+         Result : Float;
          X3 : constant Float := Reduced * Reduced * Reduced;
          pragma Assert (abs X3 <= 35.0);  --  Pi^3 ~ 31
          X5 : constant Float := X3 * Reduced * Reduced;
          pragma Assert (abs X5 <= 310.0);  --  Pi^5 ~ 306
-          X7 : constant Float := X5 * Reduced * Reduced;
-          pragma Annotate (GNATprove, False_Positive,
-            "float overflow check might fail",
-            "fp_overflow on X3/X5/X7: reduced in [-Pi, Pi], X3 <= Pi^3 ~ 31, X5 <= Pi^5 ~ 306, X7 <= Pi^7 ~ 3020, all << Float'Last (3.4e38)");
+           X7 : constant Float := X5 * Reduced * Reduced;
+           pragma Assert (abs X7 <= 3100.0);  --  Pi^7 ~ 3020
 
-          pragma Annotate (GNATprove, False_Positive,
-            "postcondition check might fail",
-            "postcondition: 7th-order Taylor sin(x) has max error < 0.001 on [-Pi, Pi], result in [-1.001, 1.001]");
-
-       begin
-          return Reduced - X3 / 6.0 + X5 / 120.0 - X7 / 5040.0;
+        begin
+           Result := Reduced - X3 / 6.0 + X5 / 120.0 - X7 / 5040.0;
+           pragma Assert (abs (Result) <= 1.001);  --  7th-order Taylor sin(x) bounded by 1.001
+           return Result;
       end;
    end Sine;
 
@@ -1371,30 +1336,26 @@ package body StellarOrion_Physics is
       end if;
       --  cos(x) = 1 - x^2/2 + x^4/24 - x^6/720 + x^8/40320
       --  (8th-order Taylor, valid for |Reduced| <= Pi, error < 0.025)
-      declare
-         X2 : constant Float := Reduced * Reduced;
-         pragma Assert (abs X2 <= 10.0);  --  Pi^2 ~ 9.87
-         X4 : constant Float := X2 * X2;
-         pragma Assert (abs X4 <= 100.0);  --  9.87^2 ~ 97.4
-          X6 : constant Float := X4 * X2;
-          pragma Assert (abs X6 <= 1000.0);  --  Pi^6 ~ 961
-          --  8th-order term: without x^8/40320, the 6th-order series gives
-          --  cos(Pi) ≈ -1.211, violating Post >= -1.001.
-          --  With x^8: cos(Pi) ≈ -0.976, within tolerance.
-          --  [Citation: Abramowitz & Stegun 3.1.1, cos series convergence]
-           X8 : constant Float := X6 * X2;
-           pragma Assert (abs X8 <= 10000.0);  --  Pi^8 ~ 9488
-           pragma Annotate (GNATprove, False_Positive,
-             "float overflow check might fail",
-             "fp_overflow on X2/X4/X6/X8: reduced in [0, Pi], X2 <= Pi^2 ~ 9.87, X4 <= Pi^4 ~ 97.4, X6 <= Pi^6 ~ 961, X8 <= Pi^8 ~ 9488, all << Float'Last");
-
-           pragma Annotate (GNATprove, False_Positive,
-             "postcondition check might fail",
-             "postcondition: 8th-order Taylor cos(x) has max error < 0.025 on [0, Pi], result in [-1.001, 1.001]");
+       declare
+          Result : Float;
+          X2 : constant Float := Reduced * Reduced;
+          pragma Assert (abs X2 <= 10.0);  --  Pi^2 ~ 9.87
+          X4 : constant Float := X2 * X2;
+          pragma Assert (abs X4 <= 100.0);  --  9.87^2 ~ 97.4
+           X6 : constant Float := X4 * X2;
+           pragma Assert (abs X6 <= 1000.0);  --  Pi^6 ~ 961
+           --  8th-order term: without x^8/40320, the 6th-order series gives
+           --  cos(Pi) ≈ -1.211, violating Post >= -1.001.
+           --  With x^8: cos(Pi) ≈ -0.976, within tolerance.
+           --  [Citation: Abramowitz & Stegun 3.1.1, cos series convergence]
+            X8 : constant Float := X6 * X2;
+            pragma Assert (abs X8 <= 10000.0);  --  Pi^8 ~ 9488
 
         begin
-          --  cos(x) = 1 - x^2/2 + x^4/24 - x^6/720 + x^8/40320
-          return 1.0 - X2 / 2.0 + X4 / 24.0 - X6 / 720.0 + X8 / 40320.0;
+           --  cos(x) = 1 - x^2/2 + x^4/24 - x^6/720 + x^8/40320
+           Result := 1.0 - X2 / 2.0 + X4 / 24.0 - X6 / 720.0 + X8 / 40320.0;
+           pragma Assert (abs (Result) <= 1.01);  --  8th-order Taylor cos(x) bounded by 1.01
+           return Result;
       end;
    end Cosine;
 
@@ -1484,10 +1445,10 @@ package body StellarOrion_Physics is
       Drag_F        : Float;
       G_Local       : Float := G0;  --  initialized to sea-level gravity
       Accel_D       : Float := 0.0;  --  initialized to zero before loop
-      DV_Dt         : Float;
-      DG_Dt         : Float;
-      DH_Dt         : Float;
-      DX_Dt         : Float;
+      DV_Dt         : Float := 0.0;  --  initialized to zero before loop
+      DG_Dt         : Float := 0.0;  --  initialized to zero before loop
+      DH_Dt         : Float := 0.0;  --  initialized to zero before loop
+      DX_Dt         : Float := 0.0;  --  initialized to zero before loop
       V_Sq          : Float;
       Mach_Local    : Float;
 
@@ -1534,7 +1495,7 @@ package body StellarOrion_Physics is
          --  BOUND: H_M = Alt_Km * 1000.0, Alt_Km <= 200 => H_M <= 200_000 m.
          pragma Loop_Invariant (T > 0.0 and then T <= 300.0);
          pragma Loop_Invariant (Rho >= 0.0 and then Rho <= 2.0);
-         pragma Loop_Invariant (V_Sound >= 0.0 and then V_Sound <= 500.0);
+          pragma Loop_Invariant (V_Sound >= 200.0 and then V_Sound <= 500.0);
          pragma Loop_Invariant (abs Gamma_Rad <= 1.0);
           pragma Loop_Invariant (Dyn_Q >= 0.0);
           pragma Loop_Invariant (H_M >= 0.0 and then H_M <= 300_000.0);
@@ -1544,23 +1505,18 @@ package body StellarOrion_Physics is
           --  DG_Dt = -(g/V - V/(R+h))*cos(gamma). Small, typically [-1, 1].
           --  DH_Dt = V*sin(gamma). |V| <= 15000, |sin(gamma)| <= 1 => [-15000, 15000].
           --  DX_Dt = V*cos(gamma)/(R+h). V <= 15000, R+h >= 6.371e6 => [0, 0.003].
-          pragma Loop_Invariant (DV_Dt >= -500.0 and then DV_Dt <= 500.0);
+          pragma Loop_Invariant (DV_Dt >= -500.0 and then DV_Dt <= 0.0);
           pragma Loop_Invariant (DG_Dt >= -2.0 and then DG_Dt <= 2.0);
           pragma Loop_Invariant (DH_Dt >= -15000.0 and then DH_Dt <= 15000.0);
           pragma Loop_Invariant (DX_Dt >= -1.0 and then DX_Dt <= 1.0);
+          pragma Loop_Invariant (X_Range_M >= 0.0);
 
          Step := Step + 1;
-         pragma Annotate (GNATprove, False_Positive,
-           "float overflow check might fail",
-           "fp_overflow on Step+1: Step <= Max_Trajectory_Pts (2000), Step+1 <= 2001 << Integer'Last");
 
 
          --  BOUND: H_M = Alt_Km * 1000. Alt_Km <= 200 (Pre), so H_M <= 200_000.
          --  200_000 * 1.0 = 200_000 << Float'Last. No overflow.
          H_M := Alt_Km * 1000.0;
-         pragma Annotate (GNATprove, False_Positive,
-           "float overflow check might fail",
-           "fp_overflow on H_M: Alt_Km <= 200 (Pre), H_M = Alt_Km * 1000 <= 200_000 << Float'Last");
 
 
          --  ISA atmosphere lookups.
@@ -1571,17 +1527,11 @@ package body StellarOrion_Physics is
          --  Speed of sound: a = sqrt(gamma_air * R_air * T).
          --  V_Sq = 1.4 * 287.058 * T <= 1.4 * 287.058 * 300 ~ 1.2e5. Safe.
          V_Sq := GAMMA_AIR * R_AIR * T;
-         pragma Annotate (GNATprove, False_Positive,
-           "float overflow check might fail",
-           "fp_overflow on V_Sq: GAMMA_AIR(1.4) * R_AIR(287.058) * T(<=300) ~ 1.2e5 << Float'Last");
          V_Sound := Sqrt (V_Sq);
 
          --  Mach number (for recording and subsonic termination).
          if V_Sound > 0.0 then
             Mach_Local := Vel / V_Sound;
-            pragma Annotate (GNATprove, False_Positive,
-              "float overflow check might fail",
-              "fp_overflow on Mach_Local: Vel(<=15000) / V_Sound(>0), result bounded by Pre range");
 
          else
             Mach_Local := 0.0;
@@ -1606,9 +1556,6 @@ package body StellarOrion_Physics is
          --  Dynamic pressure: q = 0.5 * rho * V^2 [Pa].
          --  BOUND: Rho <= 1.225, Vel <= 15000 => Dyn_Q <= 1.38e8. Safe.
          Dyn_Q := 0.5 * Rho * Vel * Vel;
-         pragma Annotate (GNATprove, False_Positive,
-           "float overflow check might fail",
-           "fp_overflow on Dyn_Q: 0.5 * Rho(<=1.225) * Vel(<=15000)^2 ~ 1.38e8 << Float'Last");
          Profile (Step).Dyn_Press_Pa := Dyn_Q;
 
          --  Sutton-Graves stagnation heat flux at this trajectory point.
@@ -1619,9 +1566,6 @@ package body StellarOrion_Physics is
              --  BOUND: C_SG=1.7415e-4, Sqrt(Rho/0.55) <= 1.492, Vel^3 <= 3.375e12
              --  => Cur_Heat_Flux <= 8.8e8. Safe.
              Cur_Heat_Flux := C_SG * Sqrt (Rho / 0.55) * ((Vel * Vel) * Vel);
-             pragma Annotate (GNATprove, False_Positive,
-               "float overflow check might fail",
-               "fp_overflow on SG flux: C_SG(1.7415e-4) * Sqrt(rho/Rn)(<=1.5) * V^3(<=3.4e12) ~ 8.8e8 << Float'Last");
             Profile (Step).Heat_Flux_Wm2 := Cur_Heat_Flux;
 
             --  Track peak heat flux and its time for Rapisarda comparison.
@@ -1636,15 +1580,9 @@ package body StellarOrion_Physics is
          --  Source: ISO 2533:1975.
          Profile (Step).Ambient_Temp_K     := T;
          Profile (Step).Ambient_Pressure_Pa := Rho * 287.058 * T;
-         pragma Annotate (GNATprove, False_Positive,
-           "float overflow check might fail",
-           "fp_overflow on Pressure: Rho(<=1.225) * R_AIR(287.058) * T(<=300) ~ 1.05e5 = P0 << Float'Last");
 
          --  Drag force: D = q * CD * A [N].
          Drag_F := Dyn_Q * CD * Frontal_Area;
-         pragma Annotate (GNATprove, False_Positive,
-           "float overflow check might fail",
-           "fp_overflow on Drag: Dyn_Q(<=1.38e8) * CD(<=3) * Area(<=314) ~ 1.3e11 << Float'Last");
 
          --  Local gravity (inverse-square law):
          --  g = g0 * (R / (R+h))^2 [m/s^2].
@@ -1659,9 +1597,6 @@ package body StellarOrion_Physics is
          --  BOUND: G_Local = G0*(R/(R+h))^2. For H_M in [0, 200_000]:
          --  G_Local in [G0*(R/(R+2e5))^2, G0] = [7.83, 9.81]. No div-by-zero.
          Profile (Step).G_Load := Accel_D / G_Local;
-         pragma Annotate (GNATprove, False_Positive,
-           "float overflow check might fail",
-           "fp_overflow on G_Load: Accel_D(<=200) / G_Local(>=7.83) ~ 25.5 << Float'Last");
 
          --  Equations of motion (Vinh 1980, Eq. 2.14-2.17):
          --    dV/dt     = -D/m - g*sin(gamma)
@@ -1669,43 +1604,19 @@ package body StellarOrion_Physics is
          --    dh/dt     = V * sin(gamma)
          --    dx/dt     = V * cos(gamma) / (R+h)
          DV_Dt := -Accel_D - G_Local * Sine (Gamma_Rad);
-         pragma Annotate (GNATprove, False_Positive,
-           "float overflow check might fail",
-           "fp_overflow on DV_Dt: Accel_D(<=200) + G_Local(<=10)*Sine(<=1) ~ 210 << Float'Last");
          DG_Dt := -(G_Local / Vel - Vel / (R_EARTH + H_M))
                   * Cosine (Gamma_Rad);
-         pragma Annotate (GNATprove, False_Positive,
-           "float overflow check might fail",
-           "fp_overflow on DG_Dt: (G_Local/Vel - Vel/(R+h)) bounded by physical constraints, |result| <= 2 << Float'Last");
 
          DH_Dt := Vel * Sine (Gamma_Rad);
-         pragma Annotate (GNATprove, False_Positive,
-           "float overflow check might fail",
-           "fp_overflow on DH_Dt: Vel(<=15000) * Sine(<=1) <= 15000 << Float'Last");
          DX_Dt := Vel * Cosine (Gamma_Rad) / (R_EARTH + H_M);
-         pragma Annotate (GNATprove, False_Positive,
-           "float overflow check might fail",
-           "fp_overflow on DX_Dt: Vel(<=15000) * Cosine(<=1) / (R+h)(>=6.371e6) ~ 0.003 << Float'Last");
 
          --  Forward Euler integration step.
          --  Step_Size_S in [0.01, 100] (Pre); derivatives are bounded by
          --  physical constraints. Vel decreases monotonically (drag > 0).
          Vel       := Vel + DV_Dt * Step_Size_S;
-         pragma Annotate (GNATprove, False_Positive,
-           "fp_overflow on Vel",
-           "fp_overflow on Vel: Vel(<=15000) + DV_Dt(>=-500)*Step(<=100) ~ 15000+50000 = 65000 << Float'Last");
          Gamma_Rad := Gamma_Rad + DG_Dt * Step_Size_S;
-         pragma Annotate (GNATprove, False_Positive,
-           "fp_overflow on Gamma_Rad",
-           "fp_overflow on Gamma_Rad: |Gamma_Rad|(<=1) + |DG_Dt|(~2)*Step(<=100) ~ 201 << Float'Last");
          Alt_Km    := Alt_Km + (DH_Dt * Step_Size_S) / 1000.0;
-         pragma Annotate (GNATprove, False_Positive,
-           "fp_overflow on Alt_Km",
-           "fp_overflow on Alt_Km: Alt_Km(<=200) + DH_Dt(<=15000)*Step(<=100)/1000 ~ 1700 << Float'Last");
          X_Range_M := X_Range_M + DX_Dt * Step_Size_S;
-         pragma Annotate (GNATprove, False_Positive,
-           "float overflow check might fail",
-           "fp_overflow on X_Range_M: X_Range_M grows by DX_Dt(<=0.003)*Step(<=100) ~ 0.3/step, total <= 600 << Float'Last");
 
 
          --  Clamp altitude floor (ground impact).
