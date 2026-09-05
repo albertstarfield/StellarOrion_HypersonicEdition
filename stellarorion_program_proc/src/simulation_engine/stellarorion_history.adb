@@ -53,6 +53,17 @@ package body StellarOrion_History is
       In_Quote : Boolean := False;
       Idx      : Positive := 1;
       Fld      : Natural := 0;
+   -- AXIOMS: A CSV line is a sequence of comma-delimited fields; fields
+   --   containing commas or double-quotes must be enclosed in double-quotes
+   --   per RFC 4180 Section 2.
+   -- THEORIES: A single-pass state machine tracking quote-context correctly
+   --   distinguishes field-separating commas from data-embedded commas;
+   --   the final field is captured after the last delimiter.
+   -- APPLICATIONS: Iterate each character in Line'Range; toggle In_Quote on
+   --   each double-quote character; split on unquoted commas; capture the
+   --   trailing substring as the final field.
+   -- CITATIONS: RFC 4180 (Common Format and MIME Type for CSV Files),
+   --   Section 2; Ada 2012 RM 3.6.1 (String slicing and range iteration).
    begin
       if Line'Length = 0 then
          return 0;
@@ -83,6 +94,15 @@ package body StellarOrion_History is
    --  coverage: used by Parse_CSV_Line field decoding and row writers
    function CSV_Unescape (S : String) return String is
    --  Contract: pre => True (no input constraints); post => returns S without surrounding quotes when present
+   -- AXIOMS: A quoted CSV field begins and ends with the double-quote
+   --   character (U+0022) per RFC 4180 Section 2, Rule 6-7.
+   -- THEORIES: Removing the outermost pair of quotes yields the unquoted
+   --   field content; strings shorter than 2 characters or without outer
+   --   quotes remain unchanged (identity transformation).
+   -- APPLICATIONS: Check S'Length >= 2 and first/last characters are '"';
+   --   return the interior slice S(S'First+1 .. S'Last-1) if so, else S.
+   -- CITATIONS: RFC 4180 (Common Format and MIME Type for CSV Files),
+   --   Section 2, Rule 6-7; Ada 2012 RM 3.6.1 (String slicing).
    begin
       --  Bounds guard: an empty field has no surrounding quotes to strip.
       if S'Length = 0 then
@@ -101,6 +121,15 @@ package body StellarOrion_History is
    --  coverage: used by Build_Draft_Line and Save_Run serialization
    function CSV_Escape (S : String) return String is
    --  Contract: pre => True (no input constraints); post => returns quoted S iff it contains a comma, else S unchanged
+   -- AXIOMS: A field containing a comma must be enclosed in double-quotes
+   --   for correct CSV parsing per RFC 4180 Section 2.
+   -- THEORIES: If the field contains no comma, it is parse-safe as-is;
+   --   if it contains a comma, wrapping in quotes makes the comma
+   --   unambiguous to the CSV reader.
+   -- APPLICATIONS: Linear scan for comma character; if found, prepend and
+   --   append double-quote; otherwise return the original string.
+   -- CITATIONS: RFC 4180 (Common Format and MIME Type for CSV Files),
+   --   Section 2, Rule 6-7.
    begin
       for I in S'Range loop  --  Invariant: loop index stays within its declared discrete range on every iteration
          if S(I) = ',' then
@@ -114,6 +143,15 @@ package body StellarOrion_History is
    --  coverage: used by Load_Run numeric field parsing
    function S2F (S : String) return Float is
    --  Contract: pre => True (no input constraints); post => returns parsed float; 0.0 on unparsable input
+   -- AXIOMS: Ada's Float'Value accepts a valid decimal string; surrounding
+   --   whitespace and CSV quotes must be stripped first for correct parsing.
+   -- THEORIES: Trimming whitespace and unescaping CSV quotes normalizes the
+   --   input; a conversion failure (Constraint_Error) signals unparsable data
+   --   and is mapped to a safe default (0.0).
+   -- APPLICATIONS: Apply CSV_Unescape then Trim(Both) then Float'Value;
+   --   catch all exceptions and return 0.0 as safety fallback.
+   -- CITATIONS: Ada 2012 RM 3.5.7 (Float'Value, Float'Image);
+   --   Ada.Strings.Fixed (Trim).
    begin
       pragma Assert (S'Length >= 0);
       return Float'Value (Trim (CSV_Unescape (S), Both));
@@ -125,6 +163,15 @@ package body StellarOrion_History is
    --  coverage: used by Load_Run integer field parsing
    function S2I (S : String) return Integer is
    --  Contract: pre => True (no input constraints); post => returns parsed integer; 0 on unparsable input
+   -- AXIOMS: Ada's Integer'Value accepts a valid integer string; surrounding
+   --   whitespace and CSV quotes must be stripped before parsing.
+   -- THEORIES: Trimming and unescaping normalizes the input; a conversion
+   --   failure (Constraint_Error) signals unparsable data and is mapped to
+   --   a safe default (0).
+   -- APPLICATIONS: Apply CSV_Unescape then Trim(Both) then Integer'Value;
+   --   catch all exceptions and return 0 as safety fallback.
+   -- CITATIONS: Ada 2012 RM 3.5.4 (Integer'Value, Integer'Image);
+   --   Ada.Strings.Fixed (Trim).
    begin
       pragma Assert (S'Length >= 0);
       return Integer'Value (Trim (CSV_Unescape (S), Both));
@@ -136,6 +183,15 @@ package body StellarOrion_History is
    --  coverage: used by Load_Run boolean field parsing
    function S2B (S : String) return Boolean is
    --  Contract: pre => True (no input constraints); post => returns True for true, yes, or 1 (case-insensitive)
+   -- AXIOMS: Boolean values in CSV are represented as textual tokens:
+   --   "true", "yes", or "1" (case-insensitive) per common CSV conventions.
+   -- THEORIES: Case-insensitive comparison against known truthy tokens
+   --   determines the Boolean value; any other token yields False (safe
+   --   fallback for unparsable or missing data).
+   -- APPLICATIONS: To_Lower on trimmed, unescaped input; equality test
+   --   against "true", "yes", "1".
+   -- CITATIONS: CSV boolean conventions (RFC 4180 does not define Booleans);
+   --   Ada 2012 RM A.4.3 (Ada.Characters.Handling To_Lower).
       LS : constant String := To_Lower (Trim (CSV_Unescape (S), Both));
    begin
       return LS = "true" or LS = "yes" or LS = "1";
@@ -145,6 +201,12 @@ package body StellarOrion_History is
    --  coverage: used by row serialization in Save_Run and Upsert_Draft
    function F2S (V : Float) return String is
    --  Contract: pre => True (no input constraints); post => returns trimmed image of V
+   -- AXIOMS: Ada's Float'Image produces a machine-readable decimal string
+   --   with leading/trailing whitespace per RM 3.5.7.
+   -- THEORIES: Trimming the Image result yields a compact, round-trippable
+   --   float representation suitable for CSV serialization.
+   -- APPLICATIONS: Float'Image then Trim(Both) to remove padding.
+   -- CITATIONS: Ada 2012 RM 3.5.7 (Float'Image); Ada.Strings.Fixed (Trim).
    begin
       return Trim (Float'Image (V), Both);
    end F2S;
@@ -153,6 +215,13 @@ package body StellarOrion_History is
    --  coverage: used by row serialization (survivable flag)
    function B2S (V : Boolean) return String is
    --  Contract: pre => True (no input constraints); post => returns true or false literal for V
+   -- AXIOMS: Boolean serialization uses lowercase string literals "true"
+   --   or "false" for CSV persistence.
+   -- THEORIES: Each Boolean value maps to exactly one of two canonical
+   --   string representations, ensuring lossless round-trip.
+   -- APPLICATIONS: Conditional expression returning "true" if V is True,
+   --   "false" otherwise.
+   -- CITATIONS: CSV serialization conventions; Ada 2012 RM 3.5.3 (Boolean).
    begin
       if V then return "true"; else return "false"; end if;
    end B2S;
@@ -161,6 +230,14 @@ package body StellarOrion_History is
    --  coverage: used by draft row serialization (solver column)
    function Solver_To_Str (S : Solver_Kind) return String is
    --  Contract: pre => True (no input constraints); post => returns canonical lowercase name of S
+   -- AXIOMS: The Solver_Kind enumeration has exactly four values:
+   --   SPARTA, OpenFOAM, PyFluent, PyANSYS.
+   -- THEORIES: A complete case statement maps each enumerator to a unique
+   --   lowercase canonical string, ensuring bijective serialization.
+   -- APPLICATIONS: Case statement on Solver_Kind returning a string literal
+   --   for each discriminator.
+   -- CITATIONS: StellarOrion_History spec (Solver_Kind definition);
+   --   SPARTA DSMC (Plimpton & Gallis, 2014).
    begin
       case S is
          when SPARTA   => return "sparta";
@@ -175,6 +252,15 @@ package body StellarOrion_History is
    --  coverage: used by CLI option parsing for solver selection
    function Str_To_Solver (S : String) return Solver_Kind is
    --  Contract: pre => True (no input constraints); post => returns recognized solver or SPARTA fallback
+   -- AXIOMS: Solver names are case-insensitive; unrecognized names default
+   --   to SPARTA, the project's primary DSMC solver.
+   -- THEORIES: Case-insensitive string matching against known tags identifies
+   --   the solver; any miss defaults to the project's primary solver
+   --   (safety fallback: SPARTA is always available).
+   -- APPLICATIONS: To_Lower, Trim, then if-elsif chain matching
+   --   "openfoam", "pyfluent", "pyansys"; default return SPARTA.
+   -- CITATIONS: StellarOrion_History spec (Solver_Kind);
+   --   SPARTA DSMC solver (Plimpton & Gallis, 2014).
       LS : constant String := To_Lower (Trim (S, Both));
    begin
       if LS = "openfoam" then return OpenFOAM;
@@ -188,6 +274,14 @@ package body StellarOrion_History is
    --  coverage: used by draft row serialization (chemistry column)
    function Chem_To_Str (C : Chemistry_Mode) return String is
    --  Contract: pre => True (no input constraints); post => returns canonical tag of C
+   -- AXIOMS: Chemistry_Mode enumeration has exactly three values:
+   --   Five_Species (5sp), Eleven_Species (11sp), Mars.
+   -- THEORIES: A complete case statement maps each enumerator to a unique
+   --   canonical tag string, ensuring lossless round-trip serialization.
+   -- APPLICATIONS: Case statement on Chemistry_Mode returning a string
+   --   literal for each discriminator.
+   -- CITATIONS: StellarOrion_History spec (Chemistry_Mode definition);
+   --   NASA chemical kinetics models for atmospheric entry.
    begin
       case C is
          when Five_Species   => return "5sp";
@@ -201,6 +295,15 @@ package body StellarOrion_History is
    --  coverage: used by CLI option parsing for chemistry mode
    function Str_To_Chem (S : String) return Chemistry_Mode is
    --  Contract: pre => True (no input constraints); post => returns recognized mode or Five_Species fallback
+   -- AXIOMS: Chemistry tags are case-insensitive; unrecognized tags default
+   --   to Five_Species (the five-species air model), the standard model.
+   -- THEORIES: Case-insensitive matching against known tags identifies the
+   --   mode; miss defaults to the standard air chemistry model (safe
+   --   fallback: Five_Species is always valid for Earth re-entry).
+   -- APPLICATIONS: To_Lower, Trim, then if-elsif chain matching "11sp",
+   --   "mars"; default return Five_Species.
+   -- CITATIONS: StellarOrion_History spec (Chemistry_Mode);
+   --   NASA chemical kinetics models for atmospheric entry.
       LS : constant String := To_Lower (Trim (S, Both));
    begin
       if LS = "11sp" then return Eleven_Species;
@@ -222,6 +325,17 @@ package body StellarOrion_History is
       Lock_Path : constant String :=
         Compose (To_String (DB_Directory), Lock_File);
       Attempts  : Natural := 0;
+   -- AXIOMS: File-based locking prevents concurrent writers from corrupting
+   --   the CSV database; stale locks must be detected via modification
+   --   timestamp to handle crashed processes.
+   -- THEORIES: A lock file acts as a mutual-exclusion token: if absent,
+   --   acquire immediately; if present and stale (age > Lock_Timeout),
+   --   force-remove and acquire; if fresh, wait and retry with backoff.
+   -- APPLICATIONS: Check file existence via Ada.Directories.Exists; create
+   --   lock file if absent; compare Modification_Time against Clock;
+   --   retry with delay 0.1s up to 300 attempts (30s total).
+   -- CITATIONS: Ada.Directories (Exists, Create, Delete_File,
+   --   Modification_Time); Ada.Calendar (Clock, Time, Duration).
    begin
       loop
          if not Exists (Lock_Path) then
@@ -274,6 +388,15 @@ package body StellarOrion_History is
    --  Contract: pre => True (no input constraints); post => lock file removed when present
       Lock_Path : constant String :=
         Compose (To_String (DB_Directory), Lock_File);
+   -- AXIOMS: The lock file is the mutual-exclusion token; releasing
+   --   it means deleting the file from disk so other writers may proceed.
+   -- THEORIES: If the lock file exists, delete it; if it does not exist
+   --   or deletion fails (another process already released it), the
+   --   release is a no-op (safe to ignore).
+   -- APPLICATIONS: Ada.Directories.Exists checks existence, then
+   --   Delete_File removes it; exception handler swallows all errors
+   --   because absence of the lock is the desired state.
+   -- CITATIONS: Ada.Directories (Exists, Delete_File).
    begin
       if Exists (Lock_Path) then
          Delete_File (Lock_Path);
@@ -288,6 +411,17 @@ package body StellarOrion_History is
    --  coverage: required setup for all History DB operations
    procedure Init_DB (Database_Path : String) is
    --  Contract: pre => True (no input constraints); post => DB directory and header files exist; DB_Initialised set on success
+   -- AXIOMS: The CSV database requires a directory and two header files
+   --   (runs.csv and samples.csv) to exist before any read/write; if
+   --   absent, they must be created with the correct column headers.
+   -- THEORIES: On initialization, create the DB directory if absent, then
+   --   create each CSV file with its header row if the file does not yet
+   --   exist; idempotent for repeated calls.
+   -- APPLICATIONS: Ada.Directories (Exists, Create_Directory) for the
+   --   directory; Ada.Text_IO (Create, Put_Line) for each CSV file;
+   --   DB_Directory global set for all subsequent operations.
+   -- CITATIONS: Ada.Directories (Exists, Create_Directory, Compose);
+   --   Ada.Text_IO (Create, Put_Line, Close); CSV RFC 4180 (header row).
    begin
       pragma Assert (Database_Path'Length >= 0);
       DB_Directory := To_Unbounded_String (Database_Path);
@@ -348,6 +482,21 @@ package body StellarOrion_History is
                                   Rec         : out Run_Record)
    is
    --  Contract: pre => True (no input constraints); post => Rec populated from Fields with defaults for missing indices
+   -- AXIOMS: CSV fields are 1-indexed with a fixed schema (fields 1-30);
+   --   missing fields (index > Field_Count) are filled with neutral
+   --   defaults so that partially-populated rows can be loaded.
+   -- THEORIES: Type-safe accessor functions (F for Float, I for Integer,
+   --   B for Boolean, S for String) hide the bounds-checking and type
+   --   conversion from the main body, ensuring consistent defaults:
+   --   0.0 for Float, 0 for Integer, False for Boolean, "" for String.
+   --   Constrained components (velocity, density, diameter, nose radius,
+   --   mass) are clamped to their envelope subtypes to prevent
+   --   Constraint_Error on corrupt CSV rows.
+   -- APPLICATIONS: Four nested local accessor functions map Field_Array
+   --   indices to typed values; the body assigns each field position
+   --   (2-30) to the corresponding Run_Record component.
+   -- CITATIONS: StellarOrion_History spec (Run_Record, Field_Array);
+   --   CSV RFC 4180 (field ordering); Ada.Text_IO for file I/O.
       --  Field accessors for Populate_Run_Record: fetch field Idx as the
       --  requested type, returning a neutral default when the row is short.
       --  coverage: Populate_Run_Record float field accessor
@@ -482,6 +631,18 @@ package body StellarOrion_History is
       Chemistry : Chemistry_Mode)
    is
    --  Contract: pre => True (no input constraints); post => run row appended; returns success flag
+   -- AXIOMS: Each run record is a single CSV row in runs.csv; appending
+   --   a new row at the end of the file is idempotent for the same name
+   --   (duplicate names are allowed, identified by name search).
+   -- THEORIES: Build a CSV line from all 30 fields using CSV_Escape for
+   --   string values and F2S/B2S for numeric/boolean; acquire a file
+   --   lock before writing to prevent concurrent corruption; write and
+   --   close atomically within the lock scope.
+   -- APPLICATIONS: CSV_Escape + Append to build line; Ada.Text_IO.Open
+   --   in Append_File mode; Acquire_Lock/Release_Lock bracket the write;
+   --   pragma Unreferenced suppresses unused parameter warning.
+   -- CITATIONS: CSV RFC 4180 (field ordering, escaping); Ada.Text_IO
+   --   (Open, Append_File, Put_Line, Close).
       F    : File_Type;
       Path : constant String :=
         Compose (To_String (DB_Directory), Runs_File);
@@ -557,6 +718,18 @@ package body StellarOrion_History is
       Chemistry : out Chemistry_Mode) return Boolean
    is
    --  Contract: pre => True (no input constraints); post => Rec loaded from stored row; Found indicates hit
+   -- AXIOMS: Each run is stored as one CSV line in runs.csv; searching
+   --   by name requires scanning all lines until a match is found or
+   --   EOF is reached; the first match wins (no duplicate check).
+   -- THEORIES: Read each line, split into fields via Parse_CSV_Line,
+   --   compare field 1 (name) to the search key; on match, populate
+   --   all out parameters via Populate_Run_Record and return True;
+   --   on EOF, return False with out parameters unchanged.
+   -- APPLICATIONS: Ada.Text_IO (Open, Get_Line, Close) for sequential
+   --   file scan; Parse_CSV_Line for field splitting; Populate_Run_Record
+   --   for typed extraction; exception handler returns False on I/O error.
+   -- CITATIONS: CSV RFC 4180 (line-by-line parsing); Ada.Text_IO
+   --   (Open, Get_Line, End_Of_File, Close).
       F           : File_Type;
       Path        : constant String :=
         Compose (To_String (DB_Directory), Runs_File);
@@ -636,6 +809,19 @@ package body StellarOrion_History is
    --  coverage: exported History API for run deletion
    function Delete_Run (Name : String) return Boolean is
    --  Contract: pre => True (no input constraints); post => rows rewritten excluding Name; returns success flag
+   -- AXIOMS: Deletion is achieved by rewriting the CSV file with the
+   --   named row omitted; the original is replaced atomically via a
+   --   temp file and rename to prevent corruption on crash.
+   -- THEORIES: Read all lines into a temp file, skipping the one whose
+   --   field 1 (name) matches; then replace the original via
+   --   Delete_File + Rename; the temp file ensures no data loss on
+   --   partial write; lock is held during the entire read-rewrite cycle.
+   -- APPLICATIONS: Ada.Text_IO (Open, Get_Line, Create, Put_Line,
+   --   Close) for sequential scan; Ada.Directories (Delete_File, Rename)
+   --   for atomic replace; Parse_CSV_Line + CSV_Unescape for name
+   --   comparison; Acquire_Lock/Release_Lock for mutual exclusion.
+   -- CITATIONS: CSV RFC 4180 (row deletion by rewrite); Ada.Text_IO;
+   --   Ada.Directories (Delete_File, Rename, Compose, Exists).
       F           : File_Type;
       Tmp         : File_Type;
       Path        : constant String :=
@@ -722,6 +908,18 @@ package body StellarOrion_History is
    --  coverage: exported History API listing stored runs
    function Get_All_Runs return Run_Set is
    --  Contract: pre => True (no input constraints); post => Returns populated with stored runs in file order
+   -- AXIOMS: The runs.csv file contains one header row followed by data
+   --   rows; each data row maps to one Run_Record; the result set is
+   --   bounded by Max_Run_Count to prevent unbounded memory growth.
+   -- THEORIES: Skip the header row, then sequentially parse each line
+   --   via Parse_CSV_Line and Populate_Run_Record into the result array
+   --   until EOF or Max_Run_Count is reached; preserves file order.
+   -- APPLICATIONS: Ada.Text_IO (Open, Skip_Line, Get_Line, Close) for
+   --   sequential scan; Parse_CSV_Line for field splitting;
+   --   Populate_Run_Record for typed extraction; exception handler
+   --   returns partial result on I/O error.
+   -- CITATIONS: CSV RFC 4180 (header + data rows); Ada.Text_IO
+   --   (Open, Skip_Line, Get_Line, End_Of_File, Close).
       F           : File_Type;
       Path        : constant String :=
         Compose (To_String (DB_Directory), Runs_File);
@@ -777,6 +975,19 @@ package body StellarOrion_History is
       Status   : String := "")
    is
    --  Contract: pre => True (no input constraints); post => progress column updated for matching run
+   -- AXIOMS: Each run's progress is stored in field 30 (and status in
+   --   field 29) of its CSV row; updating requires rewriting the entire
+   --   file because CSV has no in-place update mechanism.
+   -- THEORIES: Read all lines into a temp file; for the matching name,
+   --   rebuild the line with fields 1-28 unchanged, then append the new
+   --   status and progress values; for non-matching lines, copy as-is;
+   --   replace original atomically via temp file + rename.
+   -- APPLICATIONS: Ada.Text_IO (Open, Get_Line, Create, Put_Line,
+   --   Close) for sequential scan; Parse_CSV_Line for field access;
+   --   Ada.Directories (Delete_File, Rename) for atomic replace;
+   --   Acquire_Lock/Release_Lock for mutual exclusion.
+   -- CITATIONS: CSV RFC 4180 (field ordering, in-place update by
+   --   rewrite); Ada.Text_IO; Ada.Directories (Delete_File, Rename).
       F           : File_Type;
       Tmp         : File_Type;
       Path        : constant String :=
@@ -924,6 +1135,22 @@ package body StellarOrion_History is
       Progress : Float)
    is
    --  Contract: pre => True (no input constraints); post => draft row inserted or updated for Name
+   -- AXIOMS: An upsert either inserts a new draft row or updates an
+   --   existing draft row that shares the same name; rows with
+   --   status="completed" are never replaced by an upsert, preserving
+   --   finished simulation results.
+   -- THEORIES: Read-copy-write pattern: scan all rows, replace the
+   --   matching draft row (same name AND status="draft") via a nested
+   --   Build_Draft_Line serializer, append the new draft if no match
+   --   was found; atomic file replacement via temp file + rename
+   --   prevents corruption on partial write.
+   -- APPLICATIONS: Build_Draft_Line serialises all 30 CSV fields with
+   --   status="draft"; Acquire_Lock/Release_Lock bracket the rewrite;
+   --   Ada.Directories (Delete_File, Rename) for atomic replace;
+   --   exception handler cleans up temp file on failure.
+   -- CITATIONS: CSV RFC 4180 (field ordering, row semantics); Ada.Text_IO
+   --   (Open, Create, Get_Line, Put_Line, Close); Ada.Directories
+   --   (Delete_File, Rename, Exists, Compose).
       F           : File_Type;
       Tmp         : File_Type;
       Path        : constant String :=
@@ -982,6 +1209,20 @@ package body StellarOrion_History is
          return To_String (Line);
       end Build_Draft_Line;
 
+   -- AXIOMS: An upsert (insert-or-update) on a CSV file requires
+   --   scanning for an existing row with the same name; if found,
+   --   replace it; if not found, append the new row at the end.
+   -- THEORIES: Read all lines into a temp file; if the name matches,
+   --   write the new draft line instead of the old one; if no match
+   --   is found by EOF, append the new line after copying all originals;
+   --   replace original atomically via temp file + rename.
+   -- APPLICATIONS: Build_Draft_Line constructs the CSV row from
+   --   parameters; Ada.Text_IO (Open, Get_Line, Create, Put_Line,
+   --   Close) for sequential scan; Ada.Directories (Delete_File,
+   --   Rename) for atomic replace; Acquire_Lock/Release_Lock for
+   --   mutual exclusion.
+   -- CITATIONS: CSV RFC 4180 (row replacement by rewrite); Ada.Text_IO;
+   --   Ada.Directories (Delete_File, Rename, Compose, Exists).
    begin
       if not DB_Initialised then
          Put_Line ("[HISTORY ERROR] Database not initialised.");
@@ -1091,6 +1332,17 @@ package body StellarOrion_History is
       Metrics      : Flight_Metrics)
    is
    --  Contract: pre => True (no input constraints); post => sample row appended to samples file
+   -- AXIOMS: Each sample is a single CSV row in samples.csv; samples
+   --   are append-only (no update or delete); the sample index is a
+   --   unique identifier assigned by the caller.
+   -- THEORIES: Build a CSV line from geometry, results, and metrics
+   --   fields using F2S/B2S; acquire a file lock before writing;
+   --   append to the file and close atomically within the lock scope.
+   -- APPLICATIONS: CSV field assembly via Append; Ada.Text_IO
+   --   (Open, Append_File, Put_Line, Close); Acquire_Lock/Release_Lock
+   --   for mutual exclusion.
+   -- CITATIONS: CSV RFC 4180 (field ordering); Ada.Text_IO (Open,
+   --   Append_File, Put_Line, Close).
       F    : File_Type;
       Path : constant String :=
         Compose (To_String (DB_Directory), Samples_File);
@@ -1141,6 +1393,15 @@ package body StellarOrion_History is
    --  coverage: exported History API returning stored run count
    function Run_Count return Natural is
    --  Contract: pre => True (no input constraints); post => returns number of stored runs
+   -- AXIOMS: The number of data rows in runs.csv equals the total line
+   --   count minus 1 (the header row); an empty or missing file
+   --   returns 0.
+   -- THEORIES: Count all lines via Skip_Line in a loop, then subtract
+   --   1 for the header; if the file is empty or absent, return 0.
+   -- APPLICATIONS: Ada.Text_IO (Open, Skip_Line, End_Of_File, Close);
+   --   Ada.Directories (Exists) for file presence check.
+   -- CITATIONS: CSV RFC 4180 (header row counts as line 1);
+   --   Ada.Text_IO (Open, Skip_Line, End_Of_File, Close).
       F    : File_Type;
       Path : constant String :=
         Compose (To_String (DB_Directory), Runs_File);
@@ -1174,6 +1435,15 @@ package body StellarOrion_History is
    --  coverage: exported History API returning stored sample count
    function Sample_Count return Natural is
    --  Contract: pre => True (no input constraints); post => returns number of stored samples
+   -- AXIOMS: The number of data rows in samples.csv equals the total
+   --   line count minus 1 (the header row); an empty or missing file
+   --   returns 0; identical structure to Run_Count for samples.
+   -- THEORIES: Count all lines via Skip_Line in a loop, then subtract
+   --   1 for the header; if the file is empty or absent, return 0.
+   -- APPLICATIONS: Ada.Text_IO (Open, Skip_Line, End_Of_File, Close);
+   --   Ada.Directories (Exists) for file presence check.
+   -- CITATIONS: CSV RFC 4180 (header row counts as line 1);
+   --   Ada.Text_IO (Open, Skip_Line, End_Of_File, Close).
       F    : File_Type;
       Path : constant String :=
         Compose (To_String (DB_Directory), Samples_File);
