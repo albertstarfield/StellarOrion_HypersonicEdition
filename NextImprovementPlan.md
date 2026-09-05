@@ -2,7 +2,7 @@
 
 **Author:** Albert Starfield Wahyu Suryo Samudro
 **Date:** September 4, 2026
-**Version:** 4.40 (Audit Cycle 255 — cyclic until user says stop)
+**Version:** 4.41 (Audit Cycle 256 — cyclic until user says stop)
 
 ---
 
@@ -5595,4 +5595,4 @@ All `.v` files in `src/proofs/` had `Admitted.` (axiom placeholder) at line 21. 
 
 **Status:** All systems nominal. No code fixes needed.
 
-*End of Audit Cycle 255 — Maintenance re-verification complete. Document version v4.40. Next cycle: continue until user says stop.*
+*End of Audit Cycle 256 — Maintenance re-verification complete. Document version v4.41. Next cycle: continue until user says stop.*
