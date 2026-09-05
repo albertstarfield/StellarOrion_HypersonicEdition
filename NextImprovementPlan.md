@@ -1817,3 +1817,54 @@ All 10 files in src/python/ are clean. The codebase has been stable across 13 co
 ---
 
 *End of Audit Cycle 35 — src/python/ directory full audit. 0 CRITICAL, 0 HIGH violations. Document version v2.20. Next cycle: continue until user says stop.*
+
+---
+
+## Audit Cycle 36 — Ada simulation_engine Deep Audit
+
+**Date:** 2026-09-05
+**Scope:** Full deep-read of all 8 core Ada simulation_engine files (40 files total in directory)
+
+### Files Deep-Read (Full Content)
+
+| File | Lines | SPARK_Mode | Status |
+|:---|:---|:---|:---|
+| `main.adb` | 31 | N/A | CLEAN |
+| `stellarorion_project.adb` | 917 | Off (I/O, subprocess) | CLEAN |
+| `stellarorion_optimization.adb` | 990 | Off (extern GA driver) | CLEAN |
+| `stellarorion_orion.adb` | 53 | On | CLEAN |
+| `stellarorion_optimize.adb` | 153 | Off (extern GA driver) | CLEAN |
+| `stellarorion_runtime_guard.adb` | 397 | Off (file I/O, subprocess) | CLEAN |
+| `stellarorion_dual_watchdog.adb` | 282 | On | CLEAN |
+| `stellarorion_atomic_parity.adb` | 207 | On | CLEAN |
+
+### Key Findings
+
+1. **stellarorion_project.adb** (917 lines) — Main entry point with 21 CLI modes, full argument parsing, Docker pre-flight, lock file, and 7 test submodes. All 40+ CLI flags documented in `Print_Usage`. STC coverage wrappers for main flows. No violations.
+
+2. **stellarorion_optimization.adb** (990 lines) — LHS (McKay et al. 1979), CCD, Default_Fitness, MoP_Fitness. Full GA with Box-Muller, Gaussian mutation, tournament selection, BLX crossover, elitism, convergence detection. 19 STC coverage wrappers. No violations.
+
+3. **stellarorion_orion.adb** (53 lines) — SPARK_Mode On. Thin wrapper for Orionsolver integration. No violations.
+
+4. **stellarorion_optimize.adb** (153 lines) — SPARK_Mode Off (extern GA driver). STC coverage wrappers for Generate_LHS_Sample, Get_Fitness, Run_GA_Optimization. No violations.
+
+5. **stellarorion_runtime_guard.adb** (397 lines) — SPARK_Mode Off (file I/O, subprocess). Runtime guard with timeout, resource monitoring. No violations.
+
+6. **stellarorion_dual_watchdog.adb** (282 lines) — SPARK_Mode On. Dual watchdog with heartbeats, timeout detection. No violations.
+
+7. **stellarorion_atomic_parity.adb** (207 lines) — SPARK_Mode On. Atomic parity checks for corruption detection. No violations.
+
+### Verification
+
+| Check | Status | Details |
+|:---|:---|:---|
+| **sabotage_verifier.py** | CLEAN | 0 CRITICAL, 0 HIGH across all 40 Ada files |
+| **gprbuild** | UP TO DATE | "main" up to date — 0 warnings, 0 errors |
+
+### No New Actionable Findings
+
+All 40 Ada files in src/simulation_engine/ are clean. The codebase has been stable across 14 consecutive audit cycles (23-36) with zero new actionable violations. The 4-step pipeline (SPARTA → Kriging → PINN → MoP) is fully implemented with all logic in Ada/SPARK and Python as library bindings only.
+
+---
+
+*End of Audit Cycle 36 — Ada simulation_engine deep audit (8 core files, 40 total). 0 CRITICAL, 0 HIGH violations. Document version v2.21. Next cycle: continue until user says stop.*
