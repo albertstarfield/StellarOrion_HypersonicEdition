@@ -2,7 +2,7 @@
 
 **Author:** Albert Starfield Wahyu Suryo Samudro
 **Date:** September 4, 2026
-**Version:** 3.27 (Audit Cycle 142 — cyclic until user says stop)
+**Version:** 3.28 (Audit Cycle 143 — cyclic until user says stop)
 
 ---
 
@@ -4462,3 +4462,24 @@ Routine maintenance re-verification cycle. All infrastructure checks pass. No co
 ---
 
 *End of Audit Cycle 142 — Code fix applied. Document version v3.27. Next cycle: continue until user says stop.*
+
+---
+
+## Audit Cycle 143 — Comment Accuracy Fix (September 6, 2026)
+
+**Status:** FIX APPLIED — MFP expected value comment corrected
+
+| Check | Result |
+| :--- | :--- |
+| gprbuild | UP TO DATE (rebuilt after fix — OK) |
+| sabotage_verifier | CRITICAL: 0, HIGH: 0 — CLEAN |
+| pyrefly | 0 errors (2 expected deepxde missing-import) |
+| ruff | All checks passed |
+| git status | Code change: stellarorion_self_test.adb |
+
+**Code Fix Applied:**
+- `stellarorion_self_test.adb` line 76: Corrected MFP expected value comment from "~ 5.2e-3 m" to "~ 1.6e-5 m". The actual value is λ = 1/(√2·π·d²·n) = 1/(4.4429 × 1.369e-19 × 1e23) ≈ 1.64e-5 m. The original comment was off by ~316×.
+
+---
+
+*End of Audit Cycle 143 — Comment accuracy fix applied. Document version v3.28. Next cycle: continue until user says stop.*
