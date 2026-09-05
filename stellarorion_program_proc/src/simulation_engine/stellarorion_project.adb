@@ -113,6 +113,7 @@ package body StellarOrion_Project is
       Put_Line ("  --demo                    Quick demo run");
       Put_Line ("  --validate-only           Validate geometry only");
       Put_Line ("  --validate                Full validation pipeline (SPARTA)");
+      Put_Line ("  --validation              Earth env validation (ISA, IRVE-3 baseline)");
       Put_Line ("  --validationUnsteady      High-step validation (10,000 steps)");
       Put_Line ("  --compareCalibrate        Compare analytical vs IRVE-3 flight data");
       Put_Line ("  --compareCalibratePINN    Compare-calibrate with PINN (sidecar)");
