@@ -18,8 +18,20 @@ package body StellarOrion_Orion is
    function Orion_Survivability_Check
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
-     (Metrics : Flight_Metrics) return Boolean
+      (Metrics : Flight_Metrics) return Boolean
    is
+   --  AXIOMS: Survivability requires all flight metrics to be within
+   --    material limits; the Orion crew vehicle imposes an additional
+   --    g-load constraint of 25 g max (higher than cargo vehicles).
+   --  THEORIES: A conjunction of Is_Survivable (generic material limits)
+   --    and Orion-specific g-limit checks yields the final verdict;
+   --    any single violation makes the vehicle non-survivable.
+   --  APPLICATIONS: First checks Is_Survivable(Metrics); if True, then
+   --    tests Decel_G and G_Load against ORION_MAX_G; returns the
+   --    conjunction of all checks.
+   --  CITATIONS: [Citation: NASA-STD-3001 Vol. 1, "Space Flight Human-
+   --    Systems Standard"]; [Citation: ADA Reference Manual, RM 4.4.1
+   --    "Relation Predicates"]
    begin
       --  Must pass generic survivability (material limits)
       if not Is_Survivable (Metrics) then

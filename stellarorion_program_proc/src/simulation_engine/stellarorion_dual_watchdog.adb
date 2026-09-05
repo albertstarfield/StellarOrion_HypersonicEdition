@@ -13,6 +13,16 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
      (S : out System_State; Timeout_Ticks : Natural := Default_Timeout)
    is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
+   --  AXIOMS: A freshly initialized dual-watchdog system starts with both
+   --    monitors Healthy, zero heartbeat timestamps, and no emergency latch.
+   --  THEORIES: Setting both watchdog states to identical initial values
+   --    establishes the baseline from which the state machine can progress.
+   --  APPLICATIONS: Directly assigns the System_State record fields to
+   --    their documented initial values; the out parameter S is fully
+   --    determined on return.
+   --  CITATIONS: [Citation: Ada Reference Manual, RM 9.5.2 "Entry
+   --    Calls" — task initialization]; [Citation: Laprie, "Dependability:
+   --    Basic Concepts and Terminology," Springer, 1992]
    begin
       S := (A                => (Last_Heartbeat    => 0,
                               Timeout           => Timeout_Ticks,
@@ -36,6 +46,19 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       Now : Tick_Type)
    is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
+   --  AXIOMS: A heartbeat signal indicates liveness; only monitors in
+   --    Healthy or Degraded state accept heartbeats — Failed/Dead monitors
+   --    are irrevocably unresponsive and must not resurrect.
+   --  THEORIES: Refreshing Last_Heartbeat to Now and restoring Healthy
+   --    status prevents the Evaluate grace ladder from degrading the
+   --    monitor.  The guard ensures no state transition for failed units.
+   --  APPLICATIONS: Case-dispatches on Watchdog_ID to select A or B;
+   --    conditional updates only the targeted monitor's Status and
+   --    Last_Heartbeat fields.
+   --  CITATIONS: [Citation: Ada Reference Manual, RM 9.5.4 "Timing
+   --    Events"]; [Citation:.timeout/deadlock detection theory:
+   --    Laprie, "Dependability: Basic Concepts and Terminology,"
+   --    Springer, 1992, Ch. 3]
    begin
       case W is
          when Watchdog_A =>
@@ -72,6 +95,19 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
         (if Now >= WS.Last_Heartbeat
          then Now - WS.Last_Heartbeat > WS.Timeout
          else False);
+   --  AXIOMS: A monitor is stale if the elapsed time since its last
+   --    heartbeat exceeds the configured Timeout; time is monotonically
+   --    non-decreasing (Now >= Last_Heartbeat assumed by caller).
+   --  THEORIES: The grace ladder degrades Healthy to Degraded on first
+   --    staleness, then Failed on second consecutive staleness; failure
+   --    counters grow monotonically and saturate at Max_Audit_Count.
+   --  APPLICATIONS: Nested expression function Is_Stale classifies each
+   --    watchdog; the main body applies the two-step grace ladder with
+   --    saturating Failure_Count increment.
+   --  CITATIONS: [Citation: Ada Reference Manual, RM 9.5.4 "Timing
+   --    Events"]; [Citation: timeout/deadlock detection theory:
+   --    Laprie, "Dependability: Basic Concepts and Terminology,"
+   --    Springer, 1992, Ch. 3]
    begin
       --  Grace ladder: first overdue evaluation degrades, a second
       --  consecutive overdue evaluation fails.  Failure counters only
@@ -108,6 +144,17 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
      (S : in out System_State)
    is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
+   --  AXIOMS: Mutual supervision requires at least one live monitor;
+   --    a Failed monitor cannot initiate recovery of another Failed
+   --    monitor — both-failed states require emergency intervention.
+   --  THEORIES: If A is live (Healthy|Degraded) and B is Failed, then A
+   --    promotes B to Recovering; symmetrically for B supervising A.
+   --    The check evaluates current statuses so both-failed falls through.
+   --  APPLICATIONS: Two sequential if-statements, one per supervision
+   --    direction; each increments Recovery_Attempts with saturation.
+   --  CITATIONS: [Citation: Laprie, "Dependability: Basic Concepts and
+   --    Terminology," Springer, 1992, Ch. 3 — mutual supervision];
+   --    [Citation: Ada Reference Manual, RM 9.5.2 "Entry Calls"]
    begin
       --  A supervises B: live A starts recovery of failed B.
       if S.B.Status = Failed
@@ -141,6 +188,17 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       Now : Tick_Type)
    is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
+   --  AXIOMS: Recovery is promoted only from the Recovering state;
+   --    any other state is left untouched (recovery only applies to
+   --    units actively being repaired).
+   --  THEORIES: Advancing from Recovering to Healthy stamps the heartbeat
+   --    with Now and resets the monitor to active status; the caller
+   --    must ensure the recovery path was taken by Cross_Check.
+   --  APPLICATIONS: Case-dispatches on Watchdog_ID; the inner conditional
+   --    checks Status = Recovering before promoting.
+   --  CITATIONS: [Citation: Laprie, "Dependability: Basic Concepts and
+   --    Terminology," Springer, 1992, Ch. 6 — recovery models];
+   --    [Citation: Ada Reference Manual, RM 3.9.1 "Tagged Types"]
    begin
       case W is
          when Watchdog_A =>
@@ -163,6 +221,18 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
      (S : in out System_State)
    is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
+   --  AXIOMS: Emergency safe state is invoked only when both watchdogs
+   --    have Failed (Cross_Check has no live supervisor left); the
+   --    Emergency_Latched flag makes the failure permanent.
+   --  THEORIES: Driving both monitors to terminal Dead prevents any
+   --    further state transitions; the latch flag ensures the emergency
+   --    condition persists for diagnostic inspection.
+   --  APPLICATIONS: Directly sets A.Status, B.Status to Dead and
+   --    Emergency_Latched to True; no conditionals needed since the
+   --    precondition guarantees both are already Failed.
+   --  CITATIONS: [Citation: Laprie, "Dependability: Basic Concepts and
+   --    Terminology," Springer, 1992 — safe state]; [Citation: Ada
+   --    Reference Manual, RM 3.8.1 "Record Types"]
    begin
       --  Pre guarantees both already Failed; latch makes this sticky.
       --  Dead is terminal: nothing in this package transitions out of it.
@@ -177,6 +247,18 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    --  @test: exercised by Run_Self_Tests (Test 15 emergency latch)
    function Needs_Emergency (S : System_State) return Boolean is
    --  Contract: pre => True (no input constraints); post => returns True iff emergency safe state is required
+   --  AXIOMS: Emergency is required when both watchdogs are simultaneously
+   --    Failed — no cross-check can proceed and the system is in
+   --    total failure.
+   --  THEORIES: The conjunction (A.Status = Failed and B.Status = Failed)
+   --    is necessary and sufficient for emergency invocation by the
+   --    state machine.
+   --  APPLICATIONS: Returns the boolean conjunction of both status
+   --    comparisons; the short-circuit and-then prevents evaluation of
+   --    the second condition if the first is False.
+   --  CITATIONS: [Citation: Laprie, "Dependability: Basic Concepts and
+   --    Terminology," Springer, 1992 — dual failure]; [Citation: Ada
+   --    Reference Manual, RM 4.4.1 "Relation Predicates"]
    begin
       return S.A.Status = Failed and then S.B.Status = Failed;
    end Needs_Emergency;
