@@ -5684,6 +5684,11 @@ def _parse_ada_functions(source: str) -> list[dict]:
             "prepare", "column_text", "column_int", "column_double",
             # FFI / process spawn
             "spawn", "execute",
+            # SPARK/Ada pragma expressions (Loop_Invariant(True) etc.)
+            "loop_invariant", "pragma",
+            # Ada pragma names that look like array indexing
+            "unreferenced", "suppress",
+            # Ada boolean literals used as pragma arguments
         })
 
         # Divisions: Ada uses / for integer division, / for float division.
@@ -8733,12 +8738,79 @@ def _assertion_scan_python(
     return violations
 
 
+def _load_ads_contracts(adb_filepath: str) -> set[str]:
+    """Load corresponding .ads spec file and return set of function names with Pre/Post contracts.
+    
+    In Ada/SPARK, contracts (Pre/Post) belong in .ads spec files, NOT .adb body files.
+    When scanning a .adb file, we must also check the .ads spec to avoid false positives.
+    
+    Args:
+        adb_filepath: Path to the .adb body file
+        
+    Returns:
+        Set of function/procedure names that have Pre or Post contracts in the .ads spec
+    """
+    ads_contracts = set()
+    
+    # Derive .ads path from .adb path
+    if not adb_filepath.endswith(".adb"):
+        return ads_contracts
+    
+    ads_filepath = adb_filepath[:-4] + ".ads"
+    
+    try:
+        import os
+        if not os.path.exists(ads_filepath):
+            return ads_contracts
+            
+        with open(ads_filepath, "r", encoding="utf-8", errors="replace") as f:
+            ads_content = f.read()
+        
+        ads_lines = ads_content.split("\n")
+        
+        # Parse .ads file for function/procedure declarations with Pre/Post
+        for i, line in enumerate(ads_lines):
+            stripped = line.strip().lower()
+            if stripped.startswith(("procedure ", "function ")):
+                # Extract function name
+                parts = line.strip().split()
+                if len(parts) > 1:
+                    name = parts[1].split("(")[0].strip()
+                    
+                    # Check for Pre/Post in surrounding lines (aspect list)
+                    # Contracts can span multiple lines with "with Pre => ... ; Post => ... ;"
+                    # Ada contracts can span 20+ lines for complex preconditions
+                    # [Citation: Ada RM 6.1.1 - Pre/Post Expressions]
+                    block = ""
+                    for j in range(max(0, i - 5), min(len(ads_lines), i + 25)):
+                        if 0 <= j < len(ads_lines):
+                            block += ads_lines[j].lower() + "\n"
+                    
+                    has_pre = "pre =>" in block or "pre  =>" in block
+                    has_post = "post =>" in block or "post  =>" in block
+                    
+                    if has_pre or has_post:
+                        ads_contracts.add(name)
+    except (OSError, IOError):
+        pass
+    
+    return ads_contracts
+
+
 def _assertion_scan_ada(
     source: str, lines: list[str], filepath: str
 ) -> list[Violation]:
-    """Ada assertion scanning — check for Loop_Invariant, Pre, Post aspects."""
+    """Ada assertion scanning — check for Loop_Invariant, Pre, Post aspects.
+    
+    When scanning .adb body files, also checks the corresponding .ads spec file
+    for Pre/Post contracts (Ada/SPARK contracts belong in .ads, not .adb).
+    """
     violations = []
     source.lower()
+    
+    # Load contracts from corresponding .ads spec file if scanning .adb body
+    # [Citation: Ada RM 6.1.1 - Pre/Post Expressions, SPARK RM 3.3]
+    ads_contract_names = _load_ads_contracts(filepath) if filepath.endswith(".adb") else set()
 
     # Check every loop for Loop_Invariant
     for i, line in enumerate(lines, 1):
@@ -8791,9 +8863,11 @@ def _assertion_scan_ada(
                 continue
 
             # Look backward and forward for Pre/Post
-            # Check up to 15 lines before and after for aspect list
+            # Check up to 30 lines before and after for aspect list
+            # [FIX: increased from 15→30 to catch multi-line contracts like
+            #  Fay_Riddell_Heat Post at line 381 when decl starts at line 365]
             block = ""
-            for j in range(max(0, i - 15), min(len(lines), i + 15)):
+            for j in range(max(0, i - 15), min(len(lines), i + 30)):
                 # SAFETY: bounds check — satisfies z3/cvc5 static verification
                 if 0 <= j < len(lines):
                     block += lines[j].lower() + "\n"
@@ -8805,6 +8879,12 @@ def _assertion_scan_ada(
                 continue
 
             name = line.strip().split()[1].split("(")[0] if len(line.strip().split()) > 1 else "unknown"
+            
+            # Skip if function has contracts in corresponding .ads spec file
+            # [Citation: Ada RM 6.1.1, SPARK RM 3.3 - contracts belong in spec]
+            if name in ads_contract_names:
+                continue
+            
             if not has_pre:
                 violations.append(Violation(
                     filepath=filepath,
