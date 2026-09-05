@@ -149,10 +149,15 @@ package body StellarOrion_Sparta is
     procedure System (Cmd : String)
       with Pre => Cmd'Length > 0
     is
-       function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
-       pragma Import (C, C_System, "system");
-       C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
-       --  AUDIT FIX: removed unused Rc variable (warning: Rc unused).
+        --  C FFI binding to the POSIX system(3) call.
+        --  [Citation: ISO/IEC 9899:2018 §7.22.4.8 — system function]
+        --  Invokes the host shell to execute Cmd.  Exit status is intentionally
+        --  discarded by callers of the System procedure (see System_Return for
+        --  the returning variant).  SPARK_Mode => Off required for Import.
+        function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
+        pragma Import (C, C_System, "system");
+        C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
+        --  AUDIT FIX: removed unused Rc variable (warning: Rc unused).
        --  The exit status is intentionally discarded — callers of this
        --  procedure do not need it (use System_Return for that).
        Discard : Integer;
@@ -167,9 +172,14 @@ package body StellarOrion_Sparta is
     --  indicates matplotlib/Python failure that should be reported.
     function System_Return (Cmd : String) return Integer
       with Pre => Cmd'Length > 0
-    is
-       function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
-       pragma Import (C, C_System, "system");
+     is
+        --  C FFI binding to the POSIX system(3) call (returning variant).
+        --  [Citation: ISO/IEC 9899:2018 §7.22.4.8 — system function]
+        --  Identical to the System procedure's binding but preserves the exit
+        --  status for callers that need to detect shell command failures
+        --  (e.g., plot-script invocation where nonzero = Python/matplotlib error).
+        function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
+        pragma Import (C, C_System, "system");
        C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
        Rc    : Integer;
     begin
@@ -2770,10 +2780,16 @@ package body StellarOrion_Sparta is
    --  Keeps only useful output: CSV data, comparison reports, VTK,
    --  and plot images.  Non-fatal: logs warnings on delete failures.
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh).
-   procedure Cleanup_Ephemeral_State
-     (Results_Dir : String)
-   is
-       procedure Delete_Matching (Pattern : String)
+    procedure Cleanup_Ephemeral_State
+      (Results_Dir : String)
+    is
+       --  Local helper: delete all regular files in Results_Dir matching Pattern.
+       --  Non-fatal on individual delete failures (logs warning to stderr).
+       --  Used by Cleanup_Ephemeral_State to remove intermediate SPARTA artefacts
+       --  (restart files, log files, dump files) while preserving CSV, VTK,
+       --  and plot outputs.
+       --  [Citation: Ada.Directories.Search (Ada RM A.16)]
+        procedure Delete_Matching (Pattern : String)
          with Pre => Pattern'Length > 0
        is
          S   : Search_Type;
