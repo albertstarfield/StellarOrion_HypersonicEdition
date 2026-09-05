@@ -38,11 +38,9 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Optional
 
 import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 
 matplotlib.use("Agg")  # headless / non-interactive backend
 
@@ -98,7 +96,7 @@ def _read_csv(
 
 def _get_col(
     col_names: list[str], data_cols: list[list[float]], name: str
-) -> Optional[list[float]]:
+) -> list[float] | None:
     """Return data for a named column, or None if absent."""
     try:
         idx = col_names.index(name)
@@ -114,10 +112,10 @@ def _plot_with_ref(
     title: str,
     xlabel: str,
     ylabel: str,
-    ref_lines: Optional[list[tuple[float, str, str]]] = None,
-    ref_markers: Optional[list[tuple[float, float, str, str]]] = None,
-    twin_ylabel: Optional[str] = None,
-    twin_y: Optional[list[float]] = None,
+    ref_lines: list[tuple[float, str, str]] | None = None,
+    ref_markers: list[tuple[float, float, str, str]] | None = None,
+    twin_ylabel: str | None = None,
+    twin_y: list[float] | None = None,
 ) -> None:
     """Plot with optional reference horizontal lines and markers."""
     fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -260,7 +258,7 @@ def main(argv: list[str]) -> int:
             traj_time = traj_alt = traj_vel = traj_mach = None
             traj_dp = traj_cd_t = traj_g = traj_dr = None
             if os.path.isfile(traj_path):
-                traj_steps, traj_cols, traj_names = _read_csv(traj_path)
+                _traj_steps, _traj_cols, _traj_names = _read_csv(traj_path)
                 # trajectory CSV uses "time_s" as first col (no step col)
                 # Re-read as generic CSV
                 with open(traj_path, "r", encoding="utf-8") as fh:

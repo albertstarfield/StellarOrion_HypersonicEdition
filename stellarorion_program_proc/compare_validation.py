@@ -49,7 +49,6 @@ Writes: results_validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md
 """
 import csv
 import os
-import sys
 
 PROC = os.path.dirname(os.path.abspath(__file__))
 SCALLOPED_CSV = os.path.join(PROC, "results_validation_scalloped", "validation_timeseries.csv")
@@ -133,8 +132,8 @@ def main():
     lines.append("")
     lines.append(f"- Scalloped CSV: `{os.path.relpath(SCALLOPED_CSV, PROC)}`  — **{sc_stat}**")
     lines.append(f"- Smooth CSV:    `{os.path.relpath(SMOOTH_CSV, PROC)}`  — **{sm_stat}**")
-    lines.append(f"- Reference: Rapisarda (2023) IRVE-3 baseline, Table 4.10 / NASA TP-2013-4012; "
-                 f"LOFTID: Deshmukh et al. AIAA-2024-1501 / Hollis et al. AIAA-2024-1498")
+    lines.append("- Reference: Rapisarda (2023) IRVE-3 baseline, Table 4.10 / NASA TP-2013-4012; "
+                 "LOFTID: Deshmukh et al. AIAA-2024-1501 / Hollis et al. AIAA-2024-1498")
     lines.append("")
     lines.append("## Peak Aerothermodynamic Metrics")
     lines.append("")
@@ -177,7 +176,7 @@ def main():
                  f"{ratio(sc['peak_hs'] if sc else None, sm['peak_hs'] if sm else None)} |")
     # Vehicle diameter (geometry context)
     lines.append("| Vehicle Diameter (m) | " +
-                 f"3.0 | 3.0 | 3.0 | " +
+                 "3.0 | 3.0 | 3.0 | " +
                  f"{LOFTID_DIAMETER_M:.1f} | — |")
     lines.append("")
 
@@ -188,7 +187,7 @@ def main():
     lines.append(f"- Total heat load Q     = **{RAP_Q_LOAD_JCM2} J/cm^2** (1,950,600 J/m^2)")
     lines.append(f"- Peak deceleration     = **{RAP_DECEL_G} g** (flight) / 20.2 g (MDAO)")
     lines.append(f"- Ballistic coeff  beta = **{RAP_BETA_KGM2} kg/m^2**")
-    lines.append(f"- Diameter              = **3.0 m**")
+    lines.append("- Diameter              = **3.0 m**")
     lines.append(f"- Decel conversion: decel_g = drag_sum_N / {DECEL_DENOM_N} (m=281.0 kg)")
     lines.append("")
     lines.append("### LOFTID (Deshmukh et al. AIAA-2024-1501 / Hollis et al. AIAA-2024-1498)")
@@ -196,7 +195,7 @@ def main():
     lines.append(f"- Total heat load Q     = **{LOFTID_Q_LOAD_KJCM2} kJ/cm^2** (~18x IRVE-3)")
     lines.append(f"- Peak deceleration     = **{LOFTID_DECEL_G} g** ({LOFTID_DECEL_G/RAP_DECEL_G:.2f}x IRVE-3)")
     lines.append(f"- Diameter              = **{LOFTID_DIAMETER_M} m** (2x IRVE-3)")
-    lines.append(f"- Entry velocity        = **~8.0 km/s** (LEO, vs IRVE-3 ~3.5–4.5 km/s suborbital)")
+    lines.append("- Entry velocity        = **~8.0 km/s** (LEO, vs IRVE-3 ~3.5–4.5 km/s suborbital)")
     lines.append("")
 
     # Flags / caveats
@@ -232,11 +231,11 @@ def main():
     lines.append("")
     lines.append("## Storage Locations")
     lines.append("")
-    lines.append(f"- Scalloped surf : `stellarorion_program_proc/results_validation_scalloped/HIAD_custom.surf`")
-    lines.append(f"- Scalloped CSV  : `stellarorion_program_proc/results_validation_scalloped/validation_timeseries.csv`")
-    lines.append(f"- Smooth surf   : `stellarorion_program_proc/results_validation_smooth/HIAD_custom.surf`")
-    lines.append(f"- Smooth CSV    : `stellarorion_program_proc/results_validation_smooth/validation_timeseries.csv`")
-    lines.append(f"- This report    : `stellarorion_program_proc/results_validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md`")
+    lines.append("- Scalloped surf : `stellarorion_program_proc/results_validation_scalloped/HIAD_custom.surf`")
+    lines.append("- Scalloped CSV  : `stellarorion_program_proc/results_validation_scalloped/validation_timeseries.csv`")
+    lines.append("- Smooth surf   : `stellarorion_program_proc/results_validation_smooth/HIAD_custom.surf`")
+    lines.append("- Smooth CSV    : `stellarorion_program_proc/results_validation_smooth/validation_timeseries.csv`")
+    lines.append("- This report    : `stellarorion_program_proc/results_validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md`")
     lines.append("")
 
     out = "\n".join(lines)

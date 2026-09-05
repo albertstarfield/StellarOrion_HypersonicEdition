@@ -25,7 +25,13 @@ cd "$PROJ_DIR"
 export PATH="$HOME/.alire/libexec/spark/bin:$HOME/.alire/bin:$PATH"
 
 echo "== [1/3] regenerating data-representation info =="
-rm -rf obj/gnatprove
+# Retry rm -rf in case prior gprbuild holds open FDs on macOS
+rm -rf obj/gnatprove 2>/dev/null || {
+    sleep 2
+    rm -rf obj/gnatprove 2>/dev/null || true
+}
+# Ensure obj/gnatprove does not exist before rebuilding
+test ! -d obj/gnatprove || rm -rf obj/gnatprove || true
 gprbuild --subdirs=gnatprove/data_representation --no-object-check \
          --restricted-to-languages=ada --target=aarch64-darwin -s -v -j10 -c \
          -cargs:Ada -S -gnatR2js -gnatws -gnatx -gnatis > /dev/null

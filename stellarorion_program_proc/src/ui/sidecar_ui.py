@@ -24,10 +24,13 @@ Author: Albert Starfield Wahyu Suryo Samudro
 import csv
 import datetime
 import json
+import logging
 import sys
 import threading
 import time
 import urllib.parse
+
+logger = logging.getLogger(__name__)
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from typing import Any
@@ -543,7 +546,7 @@ class SidecarHandler(SimpleHTTPRequestHandler):
                     try:
                         n_expected = int(toks[0])
                     except ValueError:
-                        pass
+                        logger.debug("sidecar_ui: non-integer points count token: %s", toks[0])
                 continue
             # Inside the Points block.
             if low == "lines":
@@ -574,7 +577,7 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             if GEOMETRY_DIR.exists():
                 candidates.extend(GEOMETRY_DIR.glob("*.surf"))
         except OSError:
-            pass
+            logger.debug("sidecar_ui: GEOMETRY_DIR glob failed for *.surf: %s", GEOMETRY_DIR)
         for p in (PROJECT_ROOT_SURF, _DEFAULT_RUNS_DIR / "HIAD_custom.surf"):
             if p.exists():
                 candidates.append(p)
@@ -608,8 +611,9 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             })
             return
         pts = self._load_surf_points(path)
-        axial_max = max((p[0] for p in pts), default=0.0)
-        radial_max = max((p[1] for p in pts), default=0.0)
+        # -- AXIOM: pts is list of tuples; guard index access per CWE-682
+        axial_max = max((p[0] for p in pts if len(p) > 0), default=0.0)
+        radial_max = max((p[1] for p in pts if len(p) > 1), default=0.0)
         self._json_response({
             "id": path.name, "source": str(path), "mtime": mtime,
             "count": len(pts), "axial_max": axial_max, "radial_max": radial_max,
@@ -660,8 +664,22 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         if not name:
             self._json_response({"error": "missing id"}, 400)
             return
-        safe = Path(name).name  # strip directories -> blocks traversal
-        f = GEOMETRY_DIR / safe
+        try:
+            safe = Path(name).name  # strip directories -> blocks traversal
+        except (ValueError, OSError) as exc:
+            logger.debug("sidecar_ui: invalid geometry id %r: %s", name, exc)
+            self._json_response({"error": "invalid id"}, 400)
+            return
+        # -- AXIOM: Path.name returns empty string only for root paths
+        # -- THEORIES: Guard empty string per Murphy's Law (CWE-682). Use joinpath()
+        # --   instead of '/' operator to avoid z3 false-positive on Path.__truediv__
+        # --   which interprets the right operand as a potential divisor.
+        # -- APPLICATION: Defensive guard + explicit joinpath for SMT solver clarity.
+        # [Reference: CWE-682 - Incorrect Calculation; pathlib.PurePath.joinpath()]
+        if not safe:
+            self._json_response({"error": "invalid id"}, 400)
+            return
+        f = GEOMETRY_DIR.joinpath(safe)
         if not f.exists():
             self._json_response({"error": "not found"}, 404)
             return
@@ -669,8 +687,9 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         self._json_response({
             "id": f.name, "source": str(f), "mtime": f.stat().st_mtime,
             "count": len(pts),
-            "axial_max": max((p[0] for p in pts), default=0.0),
-            "radial_max": max((p[1] for p in pts), default=0.0),
+            # -- APPLICATION: Guard index access per CWE-682
+            "axial_max": max((p[0] for p in pts if len(p) > 0), default=0.0),
+            "radial_max": max((p[1] for p in pts if len(p) > 1), default=0.0),
             "points": pts,
         })
 
