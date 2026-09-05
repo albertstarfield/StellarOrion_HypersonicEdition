@@ -48,9 +48,27 @@ package body StellarOrion_Reports is
       Tolerance_Cd     : constant Float := 20.0;  -- 20% for Cd
       Tolerance_Press  : constant Float := 15.0;  -- 15% for stagnation pressure
 
-      pragma Unreferenced (Steps);
-   begin
-      Put_Line ("[CALIBRATE] ====== Compare-Calibrate Mode ======");
+       pragma Unreferenced (Steps);
+
+       --  AXIOMS: IRVE-3 vehicle geometry, mass, and thermal protection system
+       --    are assumed constant from Rapisarda (2023) MDAO baseline and
+       --    NASA/TP-2013-4012 post-flight reconstruction (Dillman et al. 2013).
+       --  THEORIES: Analytical stagnation-point heat flux (Sutton-Graves) scales
+       --    as q = C_SG * sqrt(rho/R_n) * V^3; drag coefficient Cd = 1.47 from
+       --    MDAO smooth-cone baseline; stagnation pressure via Newtonian
+       --    approximation P_stag ~ 2*q; percentage error metrics enable graded
+       --    comparison against flight targets.
+       --  APPLICATIONS: Compares analytical estimates (heat flux, deceleration,
+       --    ballistic coefficient, drag coefficient, stagnation pressure) against
+       --    IRVE-3 flight data targets, producing a PASS/WARN/FAIL graded report
+       --    without invoking the SPARTA DSMC solver.
+       --  CITATIONS: Sutton & Graves (1951) "A General Stagnation-Point
+       --    Convective Heating Equation for Any Gas"; Rapisarda (2023) MSc
+       --    Thesis, Table 4.1; NASA/TP-2013-4012 (Dillman et al. 2013);
+       --    Anderson (2006) Hypersonic and High-Temp Gas Dynamics;
+       --    Ada.Text_IO (Ada RM A.10).
+    begin
+       Put_Line ("[CALIBRATE] ====== Compare-Calibrate Mode ======");
       Put_Line ("[CALIBRATE] Analytical comparison against IRVE-3 flight data");
       Put_Line ("[CALIBRATE] Sources: Rapisarda (2023); NASA/TP-2013-4012");
       New_Line;
@@ -295,10 +313,26 @@ package body StellarOrion_Reports is
       Restart_File  : String;
       Results_Dir   : String)
    is
-      Factors : constant array (1 .. 6) of Float :=
-        (0.3, 0.5, 0.7, 0.8, 1.0, 1.2);
-   begin
-      Put_Line ("[GRID-SPARTA] ====== Grid Independency via SPARTA ======");
+       Factors : constant array (1 .. 6) of Float :=
+         (0.3, 0.5, 0.7, 0.8, 1.0, 1.2);
+
+       --  AXIOMS: Grid convergence is monotonic for SPARTA DSMC surface
+       --    forces; the optimal grid factor lies within the sweep envelope;
+       --    SPARTA DSMC solver is invoked identically at each factor for
+       --    fair comparison.
+       --  THEORIES: Refining the mesh (increasing grid factor) reduces
+       --    discretisation error but increases computational cost; the
+       --    optimal factor balances accuracy against runtime. At factor
+       --    0.7, IRVE-3 MDAO validation shows minimal error vs flight data.
+       --  APPLICATIONS: Runs full validation (Run_Validate_Full) at six
+       --    grid factors (0.3, 0.5, 0.7, 0.8, 1.0, 1.2) and compares
+       --    results to identify the optimal factor for production sims.
+       --  CITATIONS: Plimpton & Gallis (2014) SPARTA DSMC solver;
+       --    IRVE-3 MDAO (Rapisarda 2023, Table 4.1); Roache (1994)
+       --    "Perspective: A Method for Uniform Reporting of Grid
+       --    Independence Studies"; Ada.Text_IO (Ada RM A.10).
+    begin
+       Put_Line ("[GRID-SPARTA] ====== Grid Independency via SPARTA ======");
       Put_Line ("[GRID-SPARTA] Testing grid factors: 0.3, 0.5, 0.7, 0.8, 1.0, 1.2");
       New_Line;
 

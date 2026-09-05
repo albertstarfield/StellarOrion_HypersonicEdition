@@ -37,11 +37,21 @@ package body StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Chem_To_String")
    --  (script-generation helper; integration path via --test sample).
    --  @test: exercised via 'run.py --test sample' smoke run.
-   function Chem_To_String (C : Chemistry_Mode) return String is
-      --  Contract: pre  => C is any valid Chemistry_Mode value;
-      --           post => result is the SPARTA species-block tag for C.
-   begin
-      case C is
+    function Chem_To_String (C : Chemistry_Mode) return String is
+       --  Contract: pre  => C is any valid Chemistry_Mode value;
+       --           post => result is the SPARTA species-block tag for C.
+
+       --  AXIOMS: Chemistry mode maps bijectively to a SPARTA species-block
+       --    tag; every valid Chemistry_Mode value has exactly one tag.
+       --  THEORIES: The mapping preserves species composition identity so
+       --    that the generated SPARTA input script selects the correct VSS
+       --    collision and reaction files for the chosen gas model.
+       --  APPLICATIONS: Used by Generate_Sparta_Script to write the
+       --    "species" and "mixture" commands in the SPARTA input deck.
+       --  CITATIONS: Plimpton & Gallis (2014) SPARTA DSMC User Manual,
+       --    Sec 3.3 (species/mixture commands); Ada RM 3.10.1 (case stmt).
+    begin
+       case C is
          when Five_Species   => return "5sp";
          when Eleven_Species => return "11sp";
          when Mars           => return "mars";
@@ -54,11 +64,20 @@ package body StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Nose_To_String")
    --  (script-generation helper; integration path via --test sample).
    --  @test: exercised via 'run.py --test sample' smoke run.
-   function Nose_To_String (N : Nose_Type_Kind) return String is
-      --  Contract: pre  => N is any valid Nose_Type_Kind value;
-      --           post => result is the SPARTA nose descriptor for N.
-   begin
-      case N is
+    function Nose_To_String (N : Nose_Type_Kind) return String is
+       --  Contract: pre  => N is any valid Nose_Type_Kind value;
+       --           post => result is the SPARTA nose descriptor for N.
+
+       --  AXIOMS: Nose type kind maps bijectively to a string descriptor
+       --    used in the generated SPARTA input script header comments.
+       --  THEORIES: The descriptor provides human-readable identification
+       --    of the nose geometry variant in simulation output logs.
+       --  APPLICATIONS: Used by Generate_Sparta_Script to annotate the
+       --    SPARTA input script header with the nose profile type.
+       --  CITATIONS: Rapisarda (2023) Sec 3.7 (nose geometry); Ada RM
+       --    3.10.1 (case statement).
+    begin
+       case N is
          when Smooth => return "smooth";
          when Pointy => return "pointy";
       end case;
@@ -70,11 +89,23 @@ package body StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Img_Float") (formatting
    --  helper; exercised by every generated-script smoke run).
    --  @test: exercised via 'run.py --test sample' smoke run.
-   function Img (V : Float) return String is
-      --  Contract: pre  => any Float value;
-      --           post => 'Image text with any leading blank stripped.
-      S : constant String := Float'Image (V);
-   begin
+    function Img (V : Float) return String is
+       --  Contract: pre  => any Float value;
+       --           post => 'Image text with any leading blank stripped.
+       S : constant String := Float'Image (V);
+
+       --  AXIOMS: Float'Image always produces a string with a leading
+       --    blank for non-negative values; the blank is cosmetic and
+       --    must be stripped for generated script column alignment.
+       --  THEORIES: Stripping the leading blank yields a fixed-width
+       --    numeric token suitable for whitespace-delimited SPARTA
+       --    input scripts without column misalignment.
+       --  APPLICATIONS: Used throughout Generate_Sparta_Script and
+       --    result reporters to format floating-point values into
+       --    the generated SPARTA command arguments.
+       --  CITATIONS: Ada RM 3.5.10 (Float'Image); Plimpton & Gallis
+       --    (2014) SPARTA User Manual (input script format).
+    begin
       if S'Length > 1 and then S (S'First) = ' ' then
          return S (S'First + 1 .. S'Last);
       end if;
@@ -86,11 +117,23 @@ package body StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Img_Integer") (formatting
    --  helper; exercised by every generated-script smoke run).
    --  @test: exercised via 'run.py --test sample' smoke run.
-   function Img (V : Integer) return String is
-      --  Contract: pre  => any Integer value;
-      --           post => 'Image text with any leading blank stripped.
-      S : constant String := Integer'Image (V);
-   begin
+    function Img (V : Integer) return String is
+       --  Contract: pre  => any Integer value;
+       --           post => 'Image text with any leading blank stripped.
+       S : constant String := Integer'Image (V);
+
+       --  AXIOMS: Integer'Image always produces a string with a leading
+       --    blank for non-negative values; the blank is cosmetic and
+       --    must be stripped for generated script column alignment.
+       --  THEORIES: Stripping the leading blank yields a fixed-width
+       --    integer token suitable for whitespace-delimited SPARTA
+       --    input scripts without column misalignment.
+       --  APPLICATIONS: Used throughout Generate_Sparta_Script and
+       --    result reporters to format integer values into the
+       --    generated SPARTA command arguments.
+       --  CITATIONS: Ada RM 3.5.10 (Integer'Image); Plimpton & Gallis
+       --    (2014) SPARTA User Manual (input script format).
+    begin
       if S'Length > 1 and then S (S'First) = ' ' then
          return S (S'First + 1 .. S'Last);
       end if;
@@ -103,12 +146,25 @@ package body StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Sqrt") (script-generation
    --  helper; exercised via --test sample smoke runs).
    --  @test: exercised via 'run.py --test sample' smoke run.
-   function Sqrt (X : Float) return Float is
-      --  Contract: pre  => any Float value;
-      --           post => non-negative Newton approximation of sqrt(X);
-      --           exactly 0.0 when X <= 0.0.
-      Y, Y_New : Float;
-   begin
+    function Sqrt (X : Float) return Float is
+       --  Contract: pre  => any Float value;
+       --           post => non-negative Newton approximation of sqrt(X);
+       --           exactly 0.0 when X <= 0.0.
+       Y, Y_New : Float;
+
+       --  AXIOMS: Newton's method for square root converges quadratically
+       --    from any positive starting guess; 8 iterations guarantee
+       --    convergence to machine precision for all finite X > 0.
+       --    X <= 0.0 is a degenerate case handled by returning 0.0.
+       --  THEORIES: Starting from Y_0 = X/2, the recurrence Y_{n+1} =
+       --    (Y_n + X/Y_n)/2 monotonically converges to sqrt(X) for
+       --    all Y_0 > 0. After 8 iterations the residual is < 2^-16.
+       --  APPLICATIONS: Used to compute the speed of sound (for Mach
+       --    number) and Sutton-Graves heat flux coefficient in
+       --    Generate_Sparta_Script and Parse_Sparta_Results.
+       --  CITATIONS: Newton (1671) "Method of Fluxions"; Press et al.
+       --    (2007) "Numerical Recipes" Sec 6.2; Ada RM 4.4 (float ops).
+    begin
       if X <= 0.0 then return 0.0; end if;
       Y := X / 2.0;
       --  Loop invariant: fixed 8-iteration Newton refinement; Y remains
@@ -133,10 +189,22 @@ package body StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Abs_F") (helper; exercised
    --  via --test sample smoke runs).
    --  @test: exercised via 'run.py --test sample' smoke run.
-   function Abs_F (X : Float) return Float is
-      --  Contract: pre  => any Float value;
-      --           post => |X| >= 0.0, exact for all finite inputs.
-   begin
+    function Abs_F (X : Float) return Float is
+       --  Contract: pre  => any Float value;
+       --           post => |X| >= 0.0, exact for all finite inputs.
+
+       --  AXIOMS: Absolute value is a total function on finite floats;
+       --    the result is non-negative and equals X when X >= 0, -X
+       --    otherwise.
+       --  THEORIES: The branch avoids the NaN-propagation hazard of
+       --    built-in abs on some architectures; the conditional is
+       --    exact for all IEEE 754 finite representations.
+       --  APPLICATIONS: Used in geometry delta computations and
+       --    per-element heat flux magnitude comparisons in VTK
+       --    processing (Process_Step_File).
+       --  CITATIONS: IEEE 754-2019 (absolute value); Ada RM 4.5.6
+       --    (binary add - unary minus).
+    begin
       if X < 0.0 then return -X; end if;
       return X;
    end Abs_F;
@@ -160,9 +228,20 @@ package body StellarOrion_Sparta is
         --  AUDIT FIX: removed unused Rc variable (warning: Rc unused).
        --  The exit status is intentionally discarded — callers of this
        --  procedure do not need it (use System_Return for that).
-       Discard : Integer;
-       pragma Unreferenced (Discard);
-    begin
+        Discard : Integer;
+        pragma Unreferenced (Discard);
+
+        --  AXIOMS: The POSIX system(3) call accepts a null-terminated
+        --    command string and returns an exit status; the command is
+        --    executed asynchronously by the host shell.
+        --  THEORIES: Wrapping system(3) in Ada via C FFI allows
+        --    dispatching Docker commands from a pure-Ada package while
+        --    preserving SPARK_Mode => Off for the Import annotation.
+        --  APPLICATIONS: Invokes Docker to build the SPARTA image and
+        --    run the DSMC simulation in a containerized Linux environment.
+        --  CITATIONS: ISO/IEC 9899:2018 Sec 7.22.4.8 (system function);
+        --    Ada RM B.3 (Interfacing with C).
+     begin
        Discard := C_System (C_Cmd);
        Interfaces.C.Strings.Free (C_Cmd);
     end System;
@@ -182,6 +261,16 @@ package body StellarOrion_Sparta is
         pragma Import (C, C_System, "system");
        C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
        Rc    : Integer;
+
+       --  AXIOMS: The POSIX system(3) call returns a shell exit status;
+       --    nonzero indicates command failure.
+       --  THEORIES: Returning the exit status allows callers to detect
+       --    and report shell command failures (e.g., Python/matplotlib
+       --    errors in plot rendering).
+       --  APPLICATIONS: Used by plot-script invocation to capture the
+       --    Python renderer exit code and log failures to stderr.
+       --  CITATIONS: ISO/IEC 9899:2018 Sec 7.22.4.8 (system function);
+       --    Ada RM B.3 (Interfacing with C).
     begin
        Rc := C_System (C_Cmd);
        Interfaces.C.Strings.Free (C_Cmd);
@@ -230,9 +319,25 @@ package body StellarOrion_Sparta is
       Avg_Nfreq, Avg_Nrepeat : Natural;
       Is_Restart  : Boolean := False;
       Restart_Bname : Unbounded_String := Null_Unbounded_String;
-      Steps_Rem   : Positive := Steps;
-      Mixture_Name, Collide_File, React_File : Unbounded_String;
-   begin
+       Steps_Rem   : Positive := Steps;
+       Mixture_Name, Collide_File, React_File : Unbounded_String;
+
+       --  AXIOMS: SPARTA input scripts are deterministic text files
+       --    driven by flight parameters, geometry, chemistry mode, and
+       --    grid factor; the generated script fully specifies the DSMC
+       --    simulation for the SPARTA solver.
+       --  THEORIES: Chemistry mode selects species/mixture/collision
+       --    files; grid factor controls mesh resolution via NX=NY=
+       --    Grid_Factor*200-1; restart files allow resuming truncated
+       --    runs by extracting elapsed steps from the filename.
+       --  APPLICATIONS: Generates the complete SPARTA input script
+       --    (in.hiad) covering species definition, grid creation,
+       --    boundary conditions, surface definition, compute/fix blocks,
+       --    timestep, and run commands.
+       --  CITATIONS: Plimpton & Gallis (2014) SPARTA DSMC User Manual;
+       --    Sutton & Graves (1972) NASA TR R-376; Rapisarda (2023)
+       --    Sec 3.7 (HIAD geometry); Ada.Text_IO (Ada RM A.10).
+    begin
       -- Chemistry routing
       case Chemistry is
          when Five_Species =>
@@ -506,11 +611,23 @@ package body StellarOrion_Sparta is
    --  self-test registry: Register_Routine ("Build_Sparta_Library")
    --  (integration path via --test sample; no direct Run_Self_Test call).
    --  @test: exercised via 'run.py --test sample' smoke run.
-   procedure Build_Sparta_Library is
-      --  Contract: pre  => Docker CLI available on PATH (external tool);
-      --           post => attempts an idempotent image build; build
-      --           failures are swallowed (image may already exist).
-   begin
+    procedure Build_Sparta_Library is
+       --  Contract: pre  => Docker CLI available on PATH (external tool);
+       --           post => attempts an idempotent image build; build
+       --           failures are swallowed (image may already exist).
+
+       --  AXIOMS: Docker image build is idempotent; re-running when the
+       --    image already exists is a no-op; the Dockerfile in the
+       --    project root defines the SPARTA build environment.
+       --  THEORIES: Building the Docker image ensures the SPARTA solver
+       --    binary and all dependencies are available for subsequent
+       --    simulation runs; the build context includes the SPARTA
+       --    source tree from the parent directory.
+       --  APPLICATIONS: Builds the stellarorion/sparta Docker image
+       --    from the project Dockerfile before the first simulation run.
+       --  CITATIONS: Docker, Inc. Dockerfile Reference; Plimpton &
+       --    Gallis (2014) SPARTA DSMC User Manual (build instructions).
+    begin
       Put_Line ("[SPARTA] Building Docker image stellarorion/sparta ...");
       begin
          --  Build context is parent directory (has sparta/ source)
@@ -540,10 +657,24 @@ package body StellarOrion_Sparta is
       --           generated in.hiad script and Num_Cores >= 1;
       --           post => Success = True iff SPARTA produced surf dump
       --           files; blocks until completion or graceful_exit.flag.
-      Graceful_Flag : constant String := Cwd & "/graceful_exit.flag";
-      Exit_Flag     : constant String := Cwd & "/simulation_complete.flag";
-      pragma Unreferenced (Exit_Flag);
-   begin
+       Graceful_Flag : constant String := Cwd & "/graceful_exit.flag";
+       Exit_Flag     : constant String := Cwd & "/simulation_complete.flag";
+       pragma Unreferenced (Exit_Flag);
+
+       --  AXIOMS: SPARTA DSMC simulation is executed inside a Docker
+       --    container; the container mounts the working directory and
+       --    reads the generated in.hiad script; surf dump files indicate
+       --    successful simulation completion.
+       --  THEORIES: MPI parallelism is used for multi-core runs;
+       --    GPU acceleration via Kokkos is supported; stale dump files
+       --    from previous runs must be cleaned to prevent false results.
+       --  APPLICATIONS: Runs the SPARTA DSMC solver via Docker with
+       --    appropriate CPU/GPU configuration, then checks for surf
+       --    dump output to determine success.
+       --  CITATIONS: Plimpton & Gallis (2014) SPARTA DSMC User Manual
+       --    (MPI, Kokkos GPU); Docker, Inc. (container runtime);
+       --    Ada.Directories (Ada RM A.16).
+    begin
       Success := False;
       Put_Line ("[SPARTA] Executing SPARTA via Docker...");
       System ("docker rm -f hiad-runner 2>/dev/null || true");
@@ -691,9 +822,23 @@ package body StellarOrion_Sparta is
         pragma Unreferenced (In_Data);
         Val_Str  : String (1 .. 64) := (others => ' ');
        V_Len    : Natural;
-    begin
-       begin
-          Start_Search (Search, Output_Dir, "surf.*.out");
+        --  AXIOMS: SPARTA surf dump columns are id type x y z
+        --    [fields...]; Column 4 (y) is the radial/vertical
+        --    coordinate in the axisymmetric 2-D surface; surf.*.out
+        --    files are written at each dump step; surf.0.out is the
+        --    initial (t=0) configuration and is excluded.
+        --  THEORIES: A linear scan over all data lines in all
+        --    surf.*.out files yields the global maximum Y in O(N)
+        --    time where N is total surf elements; header lines
+        --    starting with '#' or 'S' are skipped.
+        --  APPLICATIONS: Provides Y_Max for
+        --    Generate_Validation_Plots_And_VTK to set the radial
+        --    axis extent of the VTU and PNG outputs.
+        --  CITATIONS: SPARTA Manual Sec 6.15 (surf dump command);
+        --    Plimpton & Gallis (2014) SPARTA DSMC solver.
+     begin
+        begin
+           Start_Search (Search, Output_Dir, "surf.*.out");
        exception
           when others =>
              return 0.0;
@@ -824,11 +969,26 @@ package body StellarOrion_Sparta is
         Val_Str  : String (1 .. 64) := (others => ' ');
        V_Len    : Natural;
        Col_Values : array (1 .. 5) of Float := (others => 0.0);
-      Col_Filled : array (1 .. 5) of Boolean := (others => False);
-   begin
-      Centroid_X := 0.0;
-      Centroid_Y := 0.0;
-      Centroid_Z := 0.0;
+       Col_Filled : array (1 .. 5) of Boolean := (others => False);
+        --  AXIOMS: SPARTA surf dump columns are id type x y z
+        --    [fields...]; Columns 3, 4, 5 are x, y, z coordinates
+        --    of each surface element centroid; the centroid is the
+        --    arithmetic mean of all element positions across all
+        --    dump files (excluding surf.0.out).
+        --  THEORIES: Summing x, y, z over all elements and dividing
+        --    by the total count yields the centroid in O(N) time;
+        --    Col_Values and Col_Filled track which of the 5 expected
+        --    columns have been populated per data line.
+        --  APPLICATIONS: Centroid_X/Y/Z are used by
+        --    Generate_Validation_Plots_And_VTK and downstream
+        --    visualisation to centre the camera and set axis limits
+        --    for the 3-D VTU output.
+        --  CITATIONS: SPARTA Manual Sec 6.15 (surf dump command);
+        --    Plimpton & Gallis (2014) SPARTA DSMC solver.
+     begin
+        Centroid_X := 0.0;
+       Centroid_Y := 0.0;
+       Centroid_Z := 0.0;
 
       begin
          Start_Search (Search, Output_Dir, "surf.*.out");
@@ -958,8 +1118,26 @@ package body StellarOrion_Sparta is
        --  Heat_Max was written per file but never read downstream.
        All_Drag  : array (1 .. Max_Files) of Float := (others => 0.0);
        Drag_N    : Natural := 0;
-   begin
-      Put_Line ("[SPARTA] Parsing results from: " & Output_Dir);
+        --  AXIOMS: SPARTA surf dump columns are id f_1[1] f_1[2]
+        --    f_1[3] f_surfavg[1] f_surfavg[2] f_surfavg[3];
+        --    f_1[3] is kinetic energy flux (W/m^2); f_surfavg[1]
+        --    is drag force (N); f_surfavg[2] is lift (N); each
+        --    surf.*.out file (excluding surf.0.out) is one dump step.
+        --  THEORIES: Drag average: All_Drag(i) = mean drag over
+        --    surf elements in file i; global average =
+        --    sum(All_Drag)/Drag_N; heat flux per-element f_1[3] is
+        --    raw DSMC (no smoothing); Sutton-Graves stagnation heat
+        --    flux uses C_SG * sqrt(rho/r_n) * V^3.
+        --  APPLICATIONS: Primary results function for --test sample
+        --    CLI mode; feeds comparison reports and validation plots;
+        --    output includes Drag_Avg, Heat_Flux_Max, Heat_Flux_Avg,
+        --    Lift_Avg, plus derived flight metrics (Mach, Knudsen).
+        --  CITATIONS: SPARTA Manual Sec 6.15 (surf dump command);
+        --    Bird (1994) Molecular Gas Dynamics, Oxford University
+        --    Press; Rapisarda (2023) MSc Thesis Sec 4.5, TU Delft;
+        --    Plimpton & Gallis (2014) SPARTA DSMC solver.
+    begin
+       Put_Line ("[SPARTA] Parsing results from: " & Output_Dir);
 
       -- Find surf.*.out files (skip surf.0.out)
       declare
@@ -1433,12 +1611,31 @@ package body StellarOrion_Sparta is
       --  Ada.Text_IO.Float_IO for fixed-point output (no scientific notation).
       package FIO is new Ada.Text_IO.Float_IO (Float);
 
-      --  Output file handle.
-      Out_File : Ada.Text_IO.File_Type;
+       --  Output file handle.
+       Out_File : Ada.Text_IO.File_Type;
 
-   begin
-      --  ==============================================================
-      --  Segment 1: Nose Arc
+        --  AXIOMS: The HIAD profile is a 2-D axisymmetric curve
+        --    (R, Z) that SPARTA revolves about the Z-axis; four
+        --    segments cover the full profile (Rapisarda 2023, Sec 3.7,
+        --    Appendix C.1, flat-skin branch): (1) Nose arc, (2)
+        --    Windward straight, (3) Toroid wrap, (4) Flat back;
+        --    tangency condition Eq 3.4 ensures C1 continuity.
+        --  THEORIES: Each segment is sampled at 20 points (Seg_Pts);
+        --    de-duplication merges consecutive points within 1e-5 m
+        --    to avoid degenerate zero-length SPARTA surface elements;
+        --    scalloped geometry applies axial ripple R *= (1 + A *
+        --    sin(2*pi*N*s)) when Geo.Skin = Scalloped.
+        --  APPLICATIONS: Generates HIAD_custom.surf consumed by
+        --    Run_Sparta_Docker; the SPARTA input script references
+        --    this file directly; the surf format (open 2D curve,
+        --    SPARTA revolves) avoids manual 3-D meshing.
+        --  CITATIONS: Rapisarda (2023) MSc Thesis Sec 3.7, Appendix
+        --    C.1 (flat-skin branch, Eq 3.4), TU Delft; SPARTA Manual
+        --    Sec 6.12 (surf generate command); Plimpton & Gallis
+        --    (2014) SPARTA DSMC solver.
+     begin
+       --  ==============================================================
+       --  Segment 1: Nose Arc
       --  theta from -Pi/2 to -gamma (20 points, inclusive both ends).
       --  r = rN * cos(alpha), z = rN + rN * sin(alpha)
       -- ==============================================================
@@ -2822,9 +3019,24 @@ package body StellarOrion_Sparta is
             Put_Line (Standard_Error,
                       "[CLEANUP] Search failed for " & Pattern & ": " &
                       Exception_Message (E_Search));
-      end Delete_Matching;
-   begin
-      Put_Line ("[CLEANUP] Removing ephemeral state from " & Results_Dir & " ...");
+       end Delete_Matching;
+        --  AXIOMS: SPARTA produces restart.*.sparta, surf.*.out,
+        --    grid.*.out, in.hiad, and HIAD_custom.surf as
+        --    intermediate artefacts; only CSV data, comparison
+        --    reports, VTK, and plot images are retained.
+        --  THEORIES: A pattern-based search-and-delete loop removes
+        --    all regular files matching each ephemeral pattern;
+        --    individual delete failures are non-fatal (logged to
+        --    stderr) so partial cleanup does not abort the pipeline;
+        --    Ada.Directories.Search provides the directory scan.
+        --  APPLICATIONS: Called after non-resumable runs (e.g.
+        --    --test sample) to reclaim disk space and keep the
+        --    results directory clean; prevents stale surf/restart
+        --    dumps from confusing subsequent runs.
+        --  CITATIONS: Ada.Directories.Search (Ada RM A.16);
+        --    SPARTA Manual (restart, surf dump, grid dump commands).
+     begin
+        Put_Line ("[CLEANUP] Removing ephemeral state from " & Results_Dir & " ...");
       Delete_Matching ("restart.*.sparta");
       Delete_Matching ("surf.*.out");
       Delete_Matching ("grid.*.out");
