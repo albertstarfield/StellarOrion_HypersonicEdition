@@ -73,7 +73,7 @@ package body StellarOrion_Self_Test is
       --  ==================================================================
       T1 := Mean_Free_Path (1.0e23, MOL_DIAM);
       Put_Line ("[TEST 01] MFP(n=1e23, d=3.7e-10) = " & Float'Image (T1) & " m");
-      Put_Line ("[TEST 01]   Expected ~ 5.2e-3 m");
+      Put_Line ("[TEST 01]   Expected ~ 1.6e-5 m");
       if T1 > 0.0 and T1 < 1.0 then
          Put_Line ("[TEST 01]   PASS");
          Pass_Count := Pass_Count + 1;
