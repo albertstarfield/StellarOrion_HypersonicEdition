@@ -40,10 +40,10 @@ CITATIONS:
   [ISA1975] COESA, "U.S. Standard Atmosphere, 1975".
 """
 
-import math
 import csv
-import sys
+import math
 import os
+import sys
 
 # ============================================================================
 # Constants (matching stellarorion_physics.adb)
@@ -204,12 +204,10 @@ def compute_trajectory():
         t_new = t + DT_S
 
         # Clamp altitude
-        if alt_new < 0.0:
-            alt_new = 0.0
+        alt_new = max(alt_new, 0.0)
 
         # Clamp velocity
-        if vel_new < 0.0:
-            vel_new = 0.0
+        vel_new = max(vel_new, 0.0)
 
         # Record sample
         mach = vel / a_sound if a_sound > 0 else 0.0
@@ -264,13 +262,13 @@ def main():
 
     # Find key metrics
     max_g = max(s['g_load'] for s in samples)
-    max_g_alt = [s for s in samples if s['g_load'] == max_g][0]
+    max_g_alt = next(s for s in samples if s['g_load'] == max_g)
     max_q = max(s['dyn_press_pa'] for s in samples)
-    max_q_alt = [s for s in samples if s['dyn_press_pa'] == max_q][0]
+    max_q_alt = next(s for s in samples if s['dyn_press_pa'] == max_q)
     max_vel = max(s['vel_ms'] for s in samples)
     max_mach = max(s['mach'] for s in samples)
 
-    print(f"\n=== Trajectory Profile Summary ===")
+    print("\n=== Trajectory Profile Summary ===")
     print(f"Points: {len(samples)}")
     print(f"Entry: {ALT_0_KM} km, {VEL_0_MS} m/s, {GAMMA_0_DEG} deg")
     print(f"Termination: {samples[-1]['alt_km']:.1f} km, {samples[-1]['vel_ms']:.0f} m/s, t={samples[-1]['time_s']:.0f} s")

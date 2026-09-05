@@ -186,9 +186,9 @@ def plot_2d_cross_section(points: np.ndarray, heat: np.ndarray,
     z_max = z[mask][idx_max]
     ax.annotate(f"Stagnation\n{q_cm2[mask][idx_max]:.1f} W/cm²",
                 xy=(x_max, z_max), xytext=(x_max + 0.3, z_max + 0.3),
-                arrowprops=dict(arrowstyle="->", color="white"),
+                arrowprops={"arrowstyle": "->", "color": "white"},
                 fontsize=9, color="white", fontweight="bold",
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="black", alpha=0.7))
+                bbox={"boxstyle": "round,pad=0.3", "facecolor": "black", "alpha": 0.7})
 
     fig.tight_layout()
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
