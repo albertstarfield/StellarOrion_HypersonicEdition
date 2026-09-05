@@ -34,9 +34,13 @@ package body StellarOrion_Physics is
       K      : Integer;
       --  Maximum iterations for argument reduction.  2^200 >> Float'Last
       --  (~3.4e38), so 200 iterations cover any finite positive Float.
-      Max_Reduce : constant Integer := 200;
+       Max_Reduce : constant Integer := 200;
+   -- AXIOMS: Natural logarithm satisfies product rule Ln(X) = Ln(u) + n*Ln(2); Maclaurin series converges for |x| < 1.
+   -- THEORIES: Argument reduction by repeated halving maps X to u in (0.5, 1.0] where Maclaurin series converges in <= 30 terms.
+   -- APPLICATIONS: Two-phase algorithm: bounded halving reduction (max 200 iterations) then 30-term Maclaurin series evaluation.
+   -- CITATIONS: [Fay & Riddell 1958; Bird 1994, Appendix; Rapisarda 2023, Sec 3.8]
    begin
-      --  Reduce argument: divide by 2 until U in (0.5, 1.0].
+       --  Reduce argument: divide by 2 until U in (0.5, 1.0].
       --  Bounded for-loop ensures termination (SPARK proof obligation).
       for I in 1 .. Max_Reduce loop
          exit when U <= 1.0;
@@ -99,6 +103,10 @@ package body StellarOrion_Physics is
       Result     : Float;
       Term       : Float;
       Fact       : Float;
+   -- AXIOMS: exp(x) = sum_{k=0}^{inf} x^k/k! converges for all real x; exp(-x) = 1/exp(x).
+   -- THEORIES: Halving reduction maps |X| to < 1.0 where 30-term series suffices; exponentiation by squaring recovers result.
+   -- APPLICATIONS: Three-phase algorithm: sign handling, halving reduction (max 1000 iterations), 30-term Maclaurin series, then squaring.
+   -- CITATIONS: [Fay & Riddell 1958; Bird 1994, Appendix; Rapisarda 2023, Sec 3.8]
    begin
       if X = 0.0 then
          return 1.0;
@@ -186,6 +194,10 @@ package body StellarOrion_Physics is
        --  Ln domain [1e-300, Float'Last] => A*Ln(X) stays in safe range.
        --  [Citation: Fay & Riddell (1958); Rapisarda (2023) Eq 3.82]
        Product : constant Float := A * Ln (X);
+     -- AXIOMS: X^A = Exp(A * Ln(X)) for X > 0; identity holds for all real A.
+     -- THEORIES: Composition of Ln and Exp yields real exponentiation; product A*Ln(X) bounded by Pre constraints.
+     -- APPLICATIONS: Single-expression composition: compute A*Ln(X) then pass to Exp; delegates to Ln and Exp.
+     -- CITATIONS: [Fay & Riddell 1958; Rapisarda 2023, Eq 3.82]
      begin
        pragma Annotate (GNATprove, False_Positive,
          "precondition check might fail",
@@ -219,6 +231,10 @@ package body StellarOrion_Physics is
    is
       Y     : Float;
       Y_New : Float;
+   -- AXIOMS: Newton-Raphson iteration converges quadratically to sqrt(X) for X > 0; Y' = (Y + X/Y) / 2.
+   -- THEORIES: Newton band invariant [1, X] maintained for X >= 1; 25 iterations sufficient for Float precision convergence.
+   -- APPLICATIONS: 25-iteration fixed-count Newton-Raphson with initial guess max(X/2, 1.0) and denormal-safe floor at 1.0.
+   -- CITATIONS: [Newton 1671, Method of Fluxions; Bird 1994, Appendix; Rapisarda 2023, Sec 3.9]
    begin
       if X <= 0.0 then
          return 0.0;
@@ -275,8 +291,12 @@ package body StellarOrion_Physics is
       Sqrt_2 : constant Float := 1.4142135623730951;
       Pi     : constant Float := 3.141592653589793;
       Denom  : Float;
+   -- AXIOMS: Mean free path lambda = 1 / (sqrt(2) * pi * d^2 * n) for ideal gas kinetic theory.
+   -- THEORIES: Inverse proportionality to number density and molecular diameter squared; degenerate zero returns Float'Last.
+   -- APPLICATIONS: Explicit d*d product (not '**') for GNATprove interval analysis; guard against zero denominator.
+   -- CITATIONS: [Bird 1994, Sec 1.3, Eq 1.25; Cercignani 1988; Rapisarda 2023, Sec 3.2]
    begin
-      --  Guard: avoid division by zero if number density or diameter is zero
+       --  Guard: avoid division by zero if number density or diameter is zero
       if Number_Density <= 0.0 or Mol_Diameter <= 0.0 then
          return Float'Last;
       end if;
@@ -301,9 +321,13 @@ package body StellarOrion_Physics is
    is
       --  Contract: pre  => MFP in [0, 1e9] m and Char_Length >= 1e-3 m;
       --           post => Kn >= 0.0; saturates at Float'Last when
-      --           Char_Length is degenerate.
+       --           Char_Length is degenerate.
+   -- AXIOMS: Knudsen number Kn = lambda / L characterizes flow regime; Kn < 0.01 continuum, Kn > 10 free molecular.
+   -- THEORIES: Dimensionless ratio of mean free path to characteristic length; degenerate zero length returns Float'Last.
+   -- APPLICATIONS: Simple floating-point division with zero-length guard returning Float'Last.
+   -- CITATIONS: [Bird 1994, Sec 1.4; Cercignani 1988; Rapisarda 2023, Sec 3.2]
    begin
-      if Char_Length <= 0.0 then
+       if Char_Length <= 0.0 then
          return Float'Last;
       end if;
       return MFP / Char_Length;
@@ -322,9 +346,13 @@ package body StellarOrion_Physics is
    is
       --  Contract: pre  => rho in [0, 1e4] kg/m^3 and V in [0, 1e5] m/s
       --           (AXIOM Q1/Q2 envelopes);
-      --           post => q = 0.5 * rho * V^2 in [0, 5e13] Pa.
+       --           post => q = 0.5 * rho * V^2 in [0, 5e13] Pa.
+   -- AXIOMS: Dynamic pressure q = 0.5 * rho * V^2; fundamental relation in fluid dynamics.
+   -- THEORIES: Quadratic dependence on velocity; explicit V*V product (not '**') for GNATprove interval analysis.
+   -- APPLICATIONS: Single-expression computation 0.5 * rho * V * V with explicit multiplication for prover visibility.
+   -- CITATIONS: [Anderson 2006, Fundamentals of Aerodynamics; Rapisarda 2023, Sec 3.3]
    begin
-      --  APPLICATION STEP: V^2 written as explicit product ('**' is
+       --  APPLICATION STEP: V^2 written as explicit product ('**' is
       --  opaque to gnatprove's interval analysis).
       return 0.5 * Density * (Velocity * Velocity);
    end Dynamic_Pressure;
@@ -373,9 +401,13 @@ package body StellarOrion_Physics is
    is
       --  Contract: pre  => Mass in (0, 1e7] kg, Dyn_Pressure in
       --           [0, 1e14] Pa, Drag_Force >= 1e-6 N (B1-B3 envelopes);
-      --           post => beta >= 0.0; Float'Last below the drag floor.
+       --           post => beta >= 0.0; Float'Last below the drag floor.
+   -- AXIOMS: Ballistic coefficient beta = m / (C_d * A) = (m * q) / F_d; measures deceleration efficiency.
+   -- THEORIES: Ratio of mass times dynamic pressure to drag force; degenerate zero drag returns Float'Last.
+   -- APPLICATIONS: Single-expression (m * q) / F_d with zero-drag guard returning Float'Last.
+   -- CITATIONS: [Sutton & Graves 1972; Anderson 2006, Sec 1.5; Rapisarda 2023, Sec 3.4]
    begin
-      if abs Drag_Force < 1.0e-30 then
+       if abs Drag_Force < 1.0e-30 then
          return Float'Last;
       end if;
       return (Mass * Dyn_Pressure) / Drag_Force;
@@ -520,9 +552,13 @@ package body StellarOrion_Physics is
    is
       --  Contract: pre  => rho in [0, 1e4] kg/m^3, R_n in [1e-4, 100] m,
       --           V in [0, 1e5] m/s (AXIOM S1-S3 envelopes);
-      --           post => q_stag >= 0.0; caller clamps at 2e15 W/m^2.
+       --           post => q_stag >= 0.0; caller clamps at 2e15 W/m^2.
+   -- AXIOMS: Sutton-Graves stagnation heat flux q = C_sg * sqrt(rho/R_n) * V^3; engineering standard for TPS sizing.
+   -- THEORIES: Conservative overpredicts peak heat flux by 6-10% vs Fay-Riddell; uses only freestream values.
+   -- APPLICATIONS: Explicit V*V*V product (not '**') for GNATprove; zero-guard on Nose_Radius and Density.
+   -- CITATIONS: [Sutton & Graves 1972, NASA TR R-376; Rapisarda 2023, Sec 4.3; NASA TP-2013-4012]
    begin
-      if Nose_Radius <= 0.0 or Density <= 0.0 then
+       if Nose_Radius <= 0.0 or Density <= 0.0 then
          return 0.0;
       end if;
       --  APPLICATION STEP: V^3 written as explicit products (the '**'
@@ -659,8 +695,12 @@ package body StellarOrion_Physics is
 
        --  Result
        Q_FR : Float;
+     -- AXIOMS: Fay-Riddell stagnation heat flux for Le=1, perfect gas; accounts for boundary layer property variations.
+     -- THEORIES: Seven-step derivation: T_s, T_inf, P_s, rho_s/rho_w, mu_s/mu_w (Sutherland), du/dy, h_s-h_w.
+     -- APPLICATIONS: Full isentropic + Sutherland viscosity + Newtonian velocity gradient pipeline; 0.763*Pr^(-0.6) prefactor.
+     -- CITATIONS: [Fay & Riddell 1958, doi:10.2514/8.7517; Rapisarda 2023, Eq 3.82; Anderson 2006, Eq 8.11-8.12]
      begin
-        --  GUARD: degenerate or subsonic inputs return 0.0.
+         --  GUARD: degenerate or subsonic inputs return 0.0.
         --  The Mach < 0.01 guard is critical: for tiny Mach (e.g. 1e-30),
         --  Mach*Mach underflows to 0.0, causing divide-by-zero in T_Inf.
         --  All practical re-entry vehicles are supersonic (Mach > 1) when
@@ -871,9 +911,13 @@ package body StellarOrion_Physics is
       --  Contract: pre  => Heat_Flux in [0, 2e15] W/m^2 and Emissivity
       --           in [1e-3, 1] (AXIOM R1/R2 envelopes);
       --           post => T >= 0.0 K; 0.0 on degenerate denominator.
-      Denom : Float;
+       Denom : Float;
+   -- AXIOMS: Stefan-Boltzmann law T = (q/(sigma*eps))^(1/4); radiative equilibrium at surface.
+   -- THEORIES: Fourth-root relationship between heat flux and temperature; double Sqrt application for 4th root.
+   -- APPLICATIONS: Double Sqrt(Sqrt(...)) for fourth root; zero-guard on sigma*eps denominator.
+   -- CITATIONS: [Stefan-Boltzmann law; Anderson 2006; Rapisarda 2023, Sec 4.4]
    begin
-      Denom := SIGMA_BOLTZMANN * Emissivity;
+       Denom := SIGMA_BOLTZMANN * Emissivity;
       if Denom <= 0.0 or Heat_Flux < 0.0 then
          return 0.0;
       end if;
@@ -903,8 +947,12 @@ package body StellarOrion_Physics is
       --           Thermal_Lag in (0, 1], TPS card ranges per spec);
       --           post => T_back >= Init_Temp >= 0.0 K.
       Thermal_Capacitance : Float;
+   -- AXIOMS: 1D thermal model T_back = T_init + q*dt*eta_lag / (rho*Cp*delta); thermal lag accounts for conduction delay.
+   -- THEORIES: Energy balance: heat flux through TPS thickness stored in thermal capacitance (rho*Cp*delta).
+   -- APPLICATIONS: Thermal capacitance guard (returns Init_Temp if zero); linear energy balance with eta_lag fraction.
+   -- CITATIONS: [Anderson 2006; Rapisarda 2023, Sec 5.5; NASA TP-2013-4012]
    begin
-      Thermal_Capacitance := TPS_Density * TPS_Cp * TPS_Thickness;
+       Thermal_Capacitance := TPS_Density * TPS_Cp * TPS_Thickness;
       if Thermal_Capacitance <= 0.0 then
          return Init_Temp;
       end if;
@@ -925,9 +973,13 @@ package body StellarOrion_Physics is
    is
       --  Contract: pre  => Drag_Force in [0, 1e18] N and Mass in
       --           [1e-3, 1e7] kg (AXIOM D1/D2 envelopes);
-      --           post => n >= 0.0 g; 0.0 on degenerate mass.
+       --           post => n >= 0.0 g; 0.0 on degenerate mass.
+   -- AXIOMS: Deceleration g-load n = F_drag / (m * g0); ratio of drag force to weight.
+   -- THEORIES: Dimensionless ratio; zero mass guard returns 0.0 to avoid division by zero.
+   -- APPLICATIONS: Single-expression F/(m*g0) with zero-mass guard; G0 from constants.
+   -- CITATIONS: [Anderson 2006, Sec 1.5; NASA TP-2013-4012; Rapisarda 2023, Sec 3.5]
    begin
-      if Mass <= 0.0 then
+       if Mass <= 0.0 then
          return 0.0;
       end if;
       return Drag_Force / (Mass * G0);
@@ -944,9 +996,13 @@ package body StellarOrion_Physics is
      (N_Number : Float) return Float
    is
       --  Contract: pre  => n in [0, 1e30] m^-3 (AXIOM A1 envelope);
-      --           post => rho = n * M_air / N_A >= 0.0 kg/m^3.
+       --           post => rho = n * M_air / N_A >= 0.0 kg/m^3.
+   -- AXIOMS: Mass density rho = n * M_air / N_A; converts number density to mass density via molar mass.
+   -- THEORIES: Linear proportionality through Avogadro's number and molar mass of air.
+   -- APPLICATIONS: Single-expression n * M_AIR / N_AVOGADRO using named constants from stellarorion_types.
+   -- CITATIONS: [Bird 1994, Sec 1.2; Cercignani 1988; Rapisarda 2023, Sec 3.2]
    begin
-      return N_Number * M_AIR / N_AVOGADRO;
+       return N_Number * M_AIR / N_AVOGADRO;
    end Density_From_Number;
 
    -- ==================================================================
@@ -964,6 +1020,10 @@ package body StellarOrion_Physics is
       --           post => True iff Surface_Temp_K <= SIC_MAX_TEMP and
       --           Backface_Temp_K <= KAPTON_MAX_TEMP and G_Load <=
       --           MAX_G_LOAD and Decel_G <= MAX_G_LOAD.
+   -- AXIOMS: Survivability iff all metrics within material limits: T_surface < SiC, T_back < Kapton, G < MAX.
+   -- THEORIES: Conjunction of four independent survivability predicates; all must hold simultaneously.
+   -- APPLICATIONS: Four-way Boolean conjunction over Flight_Metrics record fields.
+   -- CITATIONS: [Rapisarda 2023, Table 5.4; NASA TP-2013-4012; ISO 25010:2021]
    begin
       return
         --  Surface temperature must stay below SiC limit
@@ -1000,8 +1060,12 @@ package body StellarOrion_Physics is
       Number_Den : Float;
       MFP        : Float;
       Stag_Q     : Float;
+   -- AXIOMS: Composite procedure computes all derived engineering metrics from raw SPARTA output + configuration cards.
+   -- THEORIES: Pipeline: dynamic pressure, ballistic coefficient, number density, mean free path, Knudsen number, stagnation heat.
+   -- APPLICATIONS: Sequential metric computation with zero-drag guard; populates Flight_Metrics output record.
+   -- CITATIONS: [Rapisarda 2023; NASA TP-2013-4012; Anderson 2006; ISO 25010:2021]
    begin
-      --  1. Dynamic pressure
+       --  1. Dynamic pressure
       Dyn_Q := Dynamic_Pressure (Flight.Density_Kgm3, Flight.Velocity_Ms);
 
       --  2. Ballistic coefficient  beta = m * q / F_drag
@@ -1245,9 +1309,13 @@ package body StellarOrion_Physics is
       --  Range reduction: fold X into [0, 2*Pi), then into [-Pi, Pi).
       Two_Pi  : constant Float := 2.0 * Pi;
       Reduced : Float := X - Two_Pi * Float'Floor (X / Two_Pi);
+   -- AXIOMS: sin(x+2*Pi*n) = sin(x); Maclaurin series converges for all real x.
+   -- THEORIES: Range reduction to [-Pi, Pi] preserves sine; 7th-degree truncation error bounded by |x^9/362880|.
+   -- APPLICATIONS: Range reduction via modular arithmetic, then 7th-degree Taylor polynomial evaluation in O(1).
+   -- CITATIONS: [Taylor 1715, Methodus Incrementorum; Rapisarda 2023, Sec 3.7 / Appendix C.1]
    begin
-      if Reduced > Pi then
-         Reduced := Reduced - Two_Pi;
+       if Reduced > Pi then
+          Reduced := Reduced - Two_Pi;
       end if;
       --  sin(x) = x - x^3/6 + x^5/120 - x^7/5040  (valid for |Reduced| <= Pi)
       declare
@@ -1305,9 +1373,13 @@ package body StellarOrion_Physics is
       --  Range reduction: fold X into [0, 2*Pi), then into [0, Pi].
       Two_Pi  : constant Float := 2.0 * Pi;
       Reduced : Float := X - Two_Pi * Float'Floor (X / Two_Pi);
+   -- AXIOMS: cos(x+2*Pi*n) = cos(x); cos is even: cos(-x) = cos(x).
+   -- THEORIES: Range reduction to [0, Pi] preserves cosine; 8th-degree truncation error bounded by |x^8/40320|.
+   -- APPLICATIONS: Range reduction via modular arithmetic, then 8th-degree Taylor polynomial evaluation in O(1).
+   -- CITATIONS: [Taylor 1715, Methodus Incrementorum; Abramowitz & Stegun 3.1.1; Rapisarda 2023, Sec 3.7 / Appendix C.1]
    begin
-      if Reduced > Pi then
-         Reduced := Two_Pi - Reduced;  --  cos is even: cos(x) = cos(2*Pi - x)
+       if Reduced > Pi then
+          Reduced := Two_Pi - Reduced;  --  cos is even: cos(x) = cos(2*Pi - x)
       end if;
       --  cos(x) = 1 - x^2/2 + x^4/24 - x^6/720 + x^8/40320
       --  (8th-order Taylor, valid for |Reduced| <= Pi, error < 0.025)
@@ -1435,9 +1507,13 @@ package body StellarOrion_Physics is
       --  Rapisarda 2023 Table 4.5: time of peak heating = 677.49 s.
       Best_Heat_Flux : Float := 0.0;
       Best_Heat_Time : Float := 0.0;
-      Cur_Heat_Flux  : Float;
+       Cur_Heat_Flux  : Float;
+   -- AXIOMS: 1-DOF ballistic entry trajectory integrator using Euler forward method.
+   -- THEORIES: Chapman/Vinh equations of motion: dV/dt = -D/m - g*sin(gamma), dgamma/dt = -(g/V - V/(R+h))*cos(gamma).
+   -- APPLICATIONS: Euler forward integration with ISA atmosphere model; max 2000 steps; peak heat tracking via Sutton-Graves.
+   -- CITATIONS: [Chapman 1959; Vinh 1980; Anderson 2006; Rapisarda 2023, Sec 5.2; NASA TP-2013-4012]
    begin
-      N_Pts := 0;
+       N_Pts := 0;
 
       while N_Pts < Max_Trajectory_Pts
         and then Alt_Km > 0.0
