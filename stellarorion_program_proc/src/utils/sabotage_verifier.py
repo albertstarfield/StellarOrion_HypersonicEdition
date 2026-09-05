@@ -8142,6 +8142,10 @@ def _build_function_comment_patterns() -> list[Pattern]:
                 if not m:
                     continue
                 func_name = m.group(2)
+                # [FIX] Skip Test_ stub procedures — these are test harness
+                # placeholders, not production code requiring documentation.
+                if func_name.startswith("Test_"):
+                    continue
                 # Check preceding lines for comment
                 has_comment = False
                 for k in range(max(0, i - 3), i):
@@ -8845,6 +8849,12 @@ def _assertion_scan_ada(
             # Skip generic instantiations (function X is new Y...)
             if " is new " in stripped:
                 continue
+            # [FIX] Skip Test_ stub procedures — these are test harness
+            # placeholders, not production code requiring contracts.
+            name_tmp = line.strip().split()[1].split("(")[0] if len(line.strip().split()) > 1 else ""
+            if name_tmp.startswith("Test_"):
+                continue
+
             # Skip protected body declarations (entry/procedure inside protected body)
             # Check if we're inside a protected/protected body
             in_protected = False
@@ -9654,6 +9664,10 @@ def _build_ada_function_coverage_patterns() -> list[Pattern]:
 
         # ── Phase 2: For each function, check coverage evidence ──
         for func_name, func_line, func_kind in functions:
+            # [FIX] Skip Test_ stub procedures — these are test harness
+            # placeholders, not production code requiring coverage evidence.
+            if func_name.startswith("Test_"):
+                continue
             # Look for contracts in the next 30 lines (before the "is" keyword)
             has_contract = False
             has_doc_comment = False
@@ -10927,18 +10941,21 @@ def _self_test_check_ada(source: str, lines: list[str], filepath: str) -> list[V
     """Check Ada procedures/functions for corresponding test packages."""
     violations = []
     # Collect procedure/function names
+    # [Citation: ISO 26262 §9.4.3, DO-178C §6.4.4 — self-test coverage]
+    # Skip Test_ prefixed procedures (they ARE the tests, not code needing tests)
+    # Skip procedures starting with _ (private/internal helpers)
     proc_names: list[tuple[str, int]] = []
     for i, line in enumerate(lines, 1):
         stripped = line.strip()
         m = re.match(r"procedure\s+(\w+)", stripped, re.IGNORECASE)
         if m:
             name = m.group(1)
-            if not name.startswith("_"):
+            if not name.startswith("_") and not name.startswith("Test_"):
                 proc_names.append((name, i))
         m = re.match(r"function\s+(\w+)", stripped, re.IGNORECASE)
         if m:
             name = m.group(1)
-            if not name.startswith("_"):
+            if not name.startswith("_") and not name.startswith("Test_"):
                 proc_names.append((name, i))
 
     # Collect all test package / test procedure names

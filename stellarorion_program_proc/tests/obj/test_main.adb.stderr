@@ -1,1 +1,6 @@
-stellarorion_validation.adb:94:07: warning: constant "Verdict" is not referenced [-gnatwu]
+stellarorion_physics.adb:66:34: warning: "K" may be referenced before it has a value [enabled by default]
+stellarorion_physics.adb:1547:34: warning: "DV_Dt" may be referenced before it has a value [enabled by default]
+stellarorion_physics.adb:1548:34: warning: "DG_Dt" may be referenced before it has a value [enabled by default]
+stellarorion_physics.adb:1549:34: warning: "DH_Dt" may be referenced before it has a value [enabled by default]
+stellarorion_physics.adb:1550:34: warning: "DX_Dt" may be referenced before it has a value [enabled by default]
+stellarorion_physics.adb:1736:14: warning: procedure "Test_Sutherland_Mu" is not referenced [-gnatwu]

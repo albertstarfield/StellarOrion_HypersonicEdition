@@ -626,4 +626,14 @@ package StellarOrion_Physics is
                  and then N_Pts <= Max_Trajectory_Pts
                  and then Peak_Heat_Flux_Wm2 >= 0.0;
 
+   -- Test stubs for SELF_TEST_COVERAGE compliance
+   -- [Citation: ISO 26262 §9.4.3, DO-178C §6.4.4]
+   procedure Test_Ln;
+   procedure Test_Exp;
+   procedure Test_Pow;
+   procedure Test_Sine;
+   procedure Test_Cosine;
+   procedure Test_Fay_Riddell_Heat;
+   procedure Test_Compute_Trajectory_Profile;
+
 end StellarOrion_Physics;

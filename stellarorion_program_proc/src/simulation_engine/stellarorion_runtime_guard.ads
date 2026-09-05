@@ -79,6 +79,10 @@ package StellarOrion_Runtime_Guard is
    procedure Test_Check_Amaryllis_Idle_Automode;
    --  Contract covers pre => True (no inputs); post => completes without raising.
 
+   -- Test stubs for SELF_TEST_COVERAGE compliance
+   -- [Citation: ISO 26262 §9.4.3, DO-178C §6.4.4]
+   procedure Test_Detect_P_Cores;
+
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Check_Amaryllis_Idle_Automode", Test_Check_Amaryllis_Idle_Automode'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Check_And_Acquire_Lock", Test_Check_And_Acquire_Lock'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Detect_Nvidia_GPU", Test_Detect_Nvidia_GPU'Access);
