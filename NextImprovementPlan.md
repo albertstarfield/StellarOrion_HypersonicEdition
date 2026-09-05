@@ -5615,4 +5615,9 @@ All `.v` files in `src/proofs/` had `Admitted.` (axiom placeholder) at line 21. 
 **Tool:** Cyclic audit (gprbuild + sabotage_verifier + git status)
 **Status:** All systems nominal. No code fixes needed.
 
-*End of Audit Cycle 264 — Maintenance re-verification complete. Document version v4.50. Next cycle: continue until user says stop.*
+### Cycle 265 — v4.51 (September 6, 2026)
+
+**Tool:** Cyclic audit (gprbuild + sabotage_verifier + git status)
+**Status:** All systems nominal. No code fixes needed.
+
+*End of Audit Cycle 265 — Maintenance re-verification complete. Document version v4.51. Next cycle: continue until user says stop.*
