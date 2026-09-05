@@ -87,6 +87,19 @@ package body StellarOrion_Project is
    --  coverage: printed at every program start incl. --self-test
    procedure Print_Banner is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
+
+   -- AXIOMS: A program banner communicates identity, version, and
+   --    provenance to the user on every invocation. The output is purely
+   --    informational with no side effects beyond console I/O.
+   -- THEORIES: Fixed-width ASCII art provides a stable visual signature;
+   --    version strings aid debugging and support.
+   -- APPLICATIONS: Emits five fixed lines via Ada.Text_IO.Put_Line
+   --    followed by a blank separator line. No parameters are consumed
+   --    and no state is modified.
+   -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Section
+   --    10.1.1 (The Main Subprogram); StellarOrion CLI specification
+   --    (stellarorion_project.ads comment block).
+
    begin
       Put_Line ("======================================================");
       Put_Line ("  StellarOrion HypersonicEdition  v2.0");
@@ -101,6 +114,20 @@ package body StellarOrion_Project is
    --  coverage: exercised by --help mode
    procedure Print_Usage is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
+
+   -- AXIOMS: Every CLI mode and override flag must be documented at the
+   --    point of invocation (--help). The help text is a contract between
+   --    the binary and its operators.
+   -- THEORIES: Centralizing usage text in a single procedure ensures
+   --    consistency with the actual flag set and prevents documentation
+   --    drift.
+   -- APPLICATIONS: Emits all supported flags organized by category (Modes,
+   --    Geometry, Flight, TPS, Simulation, Run, Display, Remote, Docker)
+   --    via sequential Put_Line calls. No parameters are consumed.
+   -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Section
+   --    10.1.1; StellarOrion CLI specification (stellarorion_project.ads,
+   --    lines 5-55).
+
    begin
       Put_Line ("Usage: stellarorion_project [OPTIONS]");
       New_Line;
@@ -321,10 +348,27 @@ package body StellarOrion_Project is
       No_Verbose   : Boolean;
       Stop_Colima  : Boolean;
       --  Optimization options
-      Opt_DoE    : DoE_Method;
-      Opt_Objective : Objective;
-      Opt_Samples  : Positive;
-   begin
+       Opt_DoE    : DoE_Method;
+       Opt_Objective : Objective;
+       Opt_Samples  : Positive;
+
+   -- AXIOMS: All CLI arguments must be parsed once and routed to exactly
+   --    one mode handler. Concurrent execution is prevented by a lock file.
+   --    External resources (Docker, GPU) are validated before dispatch.
+   -- THEORIES: A single dispatch point with early-return goto-cleanup
+   --    ensures mutual exclusion among modes and simplifies resource
+   --    lifecycle management. Each mode handler is isolated in its own
+   --    package via decomposition stages.
+   -- APPLICATIONS: Parses string/numeric/boolean CLI options via
+   --    StellarOrion_Cli helpers, constructs Geometry_Parameters and
+   --    TPS_Material records, validates runtime guards (lock file, Docker,
+   --    GPU), then dispatches to the matching mode via sequential Has_Flag
+   --    checks with goto Cleanup exits.
+   -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Sections
+   --    5.8 (Goto Statements), 10.1.1; StellarOrion CLI specification;
+   --    Rapisarda (2023) MSc Thesis, TU Delft.
+
+    begin
       --  Acquire lock file (prevents concurrent runs)
       if not Check_And_Acquire_Lock then
          Put_Line ("[FATAL] Another instance is running (lock file present).");

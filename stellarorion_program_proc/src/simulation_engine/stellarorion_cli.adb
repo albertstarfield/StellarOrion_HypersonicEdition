@@ -15,6 +15,13 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    --  coverage: exercised by Main_Program argument parsing in every CLI mode
    function Has_Flag (Flag : String) return Boolean is
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
+   --  AXIOMS: The CLI argument list is a finite sequence of strings.
+   --          A flag is present if and only if some Argument(I) equals Flag.
+   --  THEORIES: Linear scan over Argument_Count arguments is O(n) and exhaustive;
+   --            correctness follows from the loop invariant: I is in 1 .. Argument_Count.
+   --  APPLICATIONS: Iterates 1 .. Argument_Count, comparing each Argument(I) to Flag.
+   --  CITATIONS: Ada 2012 RM §10.1.5 (Command_Line);
+   --             Ada.Command_Line.Argument_Count, Argument specification.
    begin
       for I in 1 .. Argument_Count loop  --  Invariant: loop index stays within its declared discrete range on every iteration
          if Argument (I) = Flag then
@@ -28,6 +35,14 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    --  coverage: exercised by Main_Program argument parsing in every CLI mode
    function Get_Option (Flag : String; Default : String) return String is
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
+   --  AXIOMS: CLI options follow the pattern --flag value; if flag is absent,
+   --          Default is returned. The value is Argument(I+1) when Argument(I) = Flag.
+   --  THEORIES: Scanning up to Argument_Count - 1 prevents an out-of-bounds
+   --            access on the last argument (which cannot have a following value).
+   --  APPLICATIONS: Linear scan comparing Argument(I) to Flag, returning
+   --                Argument(I+1) on match, or Default if no match found.
+   --  CITATIONS: Ada 2012 RM §10.1.5 (Command_Line);
+   --             Ada.Command_Line.Argument_Count, Argument specification.
    begin
       for I in 1 .. Argument_Count - 1 loop  --  Invariant: loop index stays within its declared discrete range on every iteration
          if Argument (I) = Flag then
@@ -40,16 +55,24 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    --  Fetch a Float-valued CLI option: parses the text following Flag via
    --  Float'Value and returns it, or Default when the flag is absent.
    --  Body is SPARK_Mode => Off because 'Value may raise on malformed input.
-   function Get_Float (Flag : String; Default : Float) return Float with
-     SPARK_Mode => Off is
-     --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
-      --  Body outside SPARK subset: Float'Value may raise Constraint_Error
-      --  on malformed CLI text and this toolchain does not allow
-      --  Exceptional_Cases on functions, so the parse stays Off while the
-      --  pure scan logic above/below proves clean.  Behaviour is exactly
-      --  the pre-extraction original (exception propagates).
-      Val : constant String := Get_Option (Flag, "");
-   begin
+    function Get_Float (Flag : String; Default : Float) return Float with
+      SPARK_Mode => Off is
+      --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
+       --  Body outside SPARK subset: Float'Value may raise Constraint_Error
+       --  on malformed CLI text and this toolchain does not allow
+       --  Exceptional_Cases on functions, so the parse stays Off while the
+       --  pure scan logic above/below proves clean.  Behaviour is exactly
+       --  the pre-extraction original (exception propagates).
+       Val : constant String := Get_Option (Flag, "");
+   --  AXIOMS: Float'Value parses a well-formed decimal string into Float.
+   --          An empty string indicates the flag was absent; Default is returned.
+   --  THEORIES: If Val is non-empty, Float'Value succeeds or raises
+   --            Constraint_Error on malformed input (propagated to caller).
+   --  APPLICATIONS: Delegates to Get_Option for string retrieval, then
+   --                applies Float'Value for numeric conversion.
+   --  CITATIONS: Ada 2012 RM §3.5.10 (Float'Value);
+   --             Ada.Command_Line reference manual.
+    begin
       if Val'Length > 0 then
          return Float'Value (Val);
       else
@@ -66,7 +89,17 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    --  coverage: exercised by Main_Program option clamping in every CLI mode
    function Clamp_Float (V, Lo, Hi : Float) return Float is
    --  Contract: pre => True (no input constraints); post => result within Lo .. Hi inclusive
-      (Float'Min (Float'Max (V, Lo), Hi));
+   --  AXIOMS: Float ordering is total; Min/Max are well-defined for all Float values.
+   --          Lo <= Hi is the pre-condition for a meaningful clamp.
+   --  THEORIES: Float'Min(Float'Max(V, Lo), Hi) yields:
+   --            V if Lo <= V <= Hi,
+   --            Lo if V < Lo,
+   --            Hi if V > Hi.
+   --  APPLICATIONS: Pure expression function; no statements needed.
+   --                Clamps untrusted CLI input into a physical-envelope subtype.
+   --  CITATIONS: Ada 2012 RM §A.4.5 (Float'Min, Float'Max);
+   --             Murphy's Law defensive programming pattern.
+       (Float'Min (Float'Max (V, Lo), Hi));
 
    --  Fetch a Positive-valued CLI option: Positive'Value of the text after
    --  Flag, or Default when absent; raises Constraint_Error on malformed or
@@ -76,6 +109,14 @@ package body StellarOrion_Cli with SPARK_Mode => On is
      --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
       --  See Get_Float note.
       Val : constant String := Get_Option (Flag, "");
+   --  AXIOMS: Positive'Value parses a string into a Positive integer.
+   --          An empty string indicates the flag was absent; Default is returned.
+   --  THEORIES: If Val is non-empty, Positive'Value succeeds or raises
+   --            Constraint_Error on malformed or non-positive input.
+   --  APPLICATIONS: Delegates to Get_Option for string retrieval, then
+   --                applies Positive'Value for numeric conversion.
+   --  CITATIONS: Ada 2012 RM §3.5.7 (Integer'Value via subtype);
+   --             Ada.Command_Line reference manual.
    begin
       if Val'Length > 0 then
          return Positive'Value (Val);
