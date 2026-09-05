@@ -92,7 +92,8 @@ package body StellarOrion_Physics is
    --  PRECONDITION: abs X <= 700.0 (exp(709) ~ Float'Last; 700 gives margin).
    --  BOUNDED LOOP: max 1000 iterations for reduction (2^1000 >> Float'Last).
    --  Source: standard numerical analysis; Fay & Riddell (1958).
-    function Exp (X : Float) return Float is
+   -- @test: Run_All_Tests (stellarorion_project.adb)
+     function Exp (X : Float) return Float is
       Y          : Float;
       Is_Neg     : Boolean;
       Result     : Float;
@@ -754,7 +755,10 @@ package body StellarOrion_Physics is
        --  mu(T) = mu_ref * (T/T_ref)^1.5 * (T_ref + S)/(T + S)
        --  Source: Sutherland (1893); NASA CEA
        declare
-          function Sutherland_Mu (T : Float) return Float is
+           function Sutherland_Mu (T : Float) return Float
+             with Pre  => T > 0.0,
+                  Post => Sutherland_Mu'Result > 0.0
+           is
              Rat : constant Float := T / T_REF_SUTHERLAND;
              --  Rat^1.5 = Rat * sqrt(Rat)  (avoid '**')
              Rat_1_5 : constant Float := Rat * Sqrt (Rat);
@@ -1265,6 +1269,8 @@ package body StellarOrion_Physics is
       end;
    end Sine;
 
+   -- Cosine: 6th-order Taylor polynomial for cos(x), range-reduced to [-pi, pi].
+   -- [Citation: Abramowitz & Stegun, Handbook of Mathematical Functions, §6.1.2]
    function Cosine (X : Float) return Float
       -- ==================================================================
       -- TIMING ANALYSIS
