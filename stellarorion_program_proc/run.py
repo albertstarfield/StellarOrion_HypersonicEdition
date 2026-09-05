@@ -96,13 +96,43 @@ def _find_free_port() -> int:
 
 
 def _check_docker() -> bool:
-    """Return True if Docker daemon is reachable."""
+    """Return True if Docker daemon is reachable.
+
+    AXIOMS:
+      - Docker daemon is reachable iff 'docker info' exits 0.
+      - Timeout of 10 s avoids blocking on hung daemon.
+    """
     ok, _, _ = _run(["docker", "info"], timeout=10)
     return ok
 
 
+def _check_colima_status() -> str:
+    """Check Colima daemon status. Returns 'Running', 'Stopped', or 'NotFound'.
+
+    AXIOMS:
+      - 'colima status' exits 0 iff the VM is running.
+      - If colima binary is absent, returns 'NotFound'.
+
+    [Citation: https://github.com/abiosoft/colima#readme]
+    """
+    import shutil
+    if shutil.which("colima") is None:
+        return "NotFound"
+    ok, stdout, _ = _run(["colima", "status"], timeout=10)
+    if ok and "running" in (stdout or "").lower():
+        return "Running"
+    return "Stopped"
+
+
 def _try_start_colima() -> bool:
-    """Attempt to start Colima (macOS Docker runtime).  Returns True on success."""
+    """Attempt to start Colima (macOS Docker runtime).  Returns True on success.
+
+    AXIOMS:
+      - colima start exits 0 iff VM boots and exposes Docker socket.
+      - Timeout of 120 s allows VM boot and QEMU init.
+
+    [Citation: https://github.com/abiosoft/colima#readme]
+    """
     import shutil
     if shutil.which("colima") is None:
         return False
@@ -111,7 +141,14 @@ def _try_start_colima() -> bool:
 
 
 def _stop_colima_if_requested(stop: bool) -> None:
-    """Stop Colima if --stop-colima was passed."""
+    """Stop Colima if --stop-colima was passed.
+
+    AXIOMS:
+      - colima stop exits 0 iff VM shuts down cleanly.
+      - Non-fatal if colima is absent or already stopped.
+
+    [Citation: https://github.com/abiosoft/colima#readme]
+    """
     if not stop:
         return
     import shutil
@@ -121,6 +158,61 @@ def _stop_colima_if_requested(stop: bool) -> None:
     step_info("Stopping Colima ...")
     ok, _, _ = _run(["colima", "stop"], timeout=60)
     step_result(ok, "Colima stopped", 0.0)
+
+
+def _print_container_runtime_error(colima_state: str) -> None:
+    """Print a clear error message with install instructions when neither
+    Docker nor Colima is available.
+
+    AXIOMS:
+      - User must have at least one container runtime (Docker or Colima)
+        for SPARTA/OpenFOAM simulations.
+      - Error message must include actionable install instructions.
+
+    [Citation: https://docs.docker.com/desktop/install/mac-install/]
+    [Citation: https://github.com/abiosoft/colima#installation]
+    """
+    import platform
+    system = platform.system()
+    step_info("=" * 60)
+    step_info("FATAL: No container runtime available")
+    step_info("SPARTA/OpenFOAM solvers require Docker or Colima.")
+    step_info("")
+    if system == "Darwin":
+        step_info("To install Docker Desktop (macOS):")
+        step_info("  1. Download from https://docs.docker.com/desktop/install/mac-install/")
+        step_info("  2. Drag Docker.app to Applications folder")
+        step_info("  3. Launch Docker.app and wait for whale icon in menu bar")
+        step_info("")
+        step_info("To install Colima (lightweight alternative, no Docker Desktop):")
+        step_info("  brew install colima docker")
+        step_info("  colima start")
+        step_info("")
+        step_info("Note: Colima provides Docker-compatible CLI via Lima VMs.")
+        step_info("After installing, run: colima start && docker info")
+    elif system == "Linux":
+        step_info("To install Docker Engine (Linux):")
+        step_info("  curl -fsSL https://get.docker.com | sh")
+        step_info("  sudo usermod -aG docker $USER")
+        step_info("  # Log out and back in, then:")
+        step_info("  docker info")
+        step_info("")
+        step_info("To install Colima (rootless alternative):")
+        step_info("  # On Ubuntu/Debian with Lima support:")
+        step_info("  wget https://github.com/abiosoft/colima/releases/latest/download/colima-Linux-x86_64 -O /usr/local/bin/colima")
+        step_info("  chmod +x /usr/local/bin/colima")
+        step_info("  colima start")
+    elif system == "Windows":
+        step_info("To install Docker Desktop (Windows):")
+        step_info("  1. Download from https://docs.docker.com/desktop/install/windows-install/")
+        step_info("  2. Run installer, enable WSL2 backend")
+        step_info("  3. Launch Docker Desktop and wait for whale icon in system tray")
+    else:
+        step_info("Please install Docker or Colima for your platform.")
+        step_info("Docker: https://docs.docker.com/get-docker/")
+        step_info("Colima: https://github.com/abiosoft/colima")
+    step_info("=" * 60)
+    step_info("SPARTA simulations will FAIL without a container runtime.")
 
 
 def _sidecar_health_check(port: int, timeout_s: float = 15.0) -> bool:
@@ -782,17 +874,33 @@ def _phase4_launch(
     phase_header(4, "Launch")
 
     # Docker / Colima pre-flight (needed for SPARTA/OpenFOAM solvers)
+    # Fallback chain: docker info -> colima status -> colima start -> error
+    # [Citation: https://docs.docker.com/engine/reference/commandline/info/]
+    # [Citation: https://github.com/abiosoft/colima#readme]
     t = step_start("Docker pre-flight check")
     docker_ok = _check_docker()
     if docker_ok:
         step_result(True, "Docker daemon reachable", time.monotonic() - t)
     else:
-        step_result(False, "Docker not reachable -- attempting Colima start", time.monotonic() - t)
-        if _try_start_colima():
-            step_info("Colima started successfully")
-            docker_ok = _check_docker()
+        # Docker not reachable -- check Colima status before attempting start
+        colima_state = _check_colima_status()
+        if colima_state == "Running":
+            step_info("Colima VM is running but Docker socket not responding -- "
+                      "attempting Colima restart")
+            _run(["colima", "stop"], timeout=60)
+            if _try_start_colima():
+                step_info("Colima restarted successfully")
+                docker_ok = _check_docker()
+        elif colima_state == "Stopped":
+            step_info("Colima installed but stopped -- attempting Colima start")
+            if _try_start_colima():
+                step_info("Colima started successfully")
+                docker_ok = _check_docker()
+        else:
+            # colima_state == "NotFound" -- neither Docker nor Colima available
+            pass
         if not docker_ok:
-            step_info("WARNING: Docker unavailable -- SPARTA/OpenFOAM solvers will fail")
+            _print_container_runtime_error(colima_state)
     print()
 
     # Start sidecar server if --gui requested
