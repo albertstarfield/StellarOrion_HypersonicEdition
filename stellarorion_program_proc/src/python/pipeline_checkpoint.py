@@ -219,10 +219,13 @@ class PipelineCheckpoint:
         Tested by: test_checkpoint_all_completed() (same file).
         """
         self._ensure_initialized()
-        return all(
-            self._data["steps"][s]["status"] == StepStatus.COMPLETED
-            for s in PIPELINE_STEPS
-        )
+        try:
+            return all(
+                self._data["steps"][s]["status"] == StepStatus.COMPLETED
+                for s in PIPELINE_STEPS
+            )
+        except (ValueError, TypeError):
+            return False
 
     # --- step mutations ---
 
@@ -263,7 +266,8 @@ class PipelineCheckpoint:
         """
         self._ensure_initialized()
         self._data["steps"][step]["status"] = StepStatus.FAILED
-        if error:
+        # -- AXIOM: error may be None per signature; guard per CWE-682
+        if error is not None and error:
             self._data["steps"][step]["error"] = error
         self._save()
 
