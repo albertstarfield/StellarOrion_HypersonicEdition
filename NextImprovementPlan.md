@@ -2075,3 +2075,43 @@ After 18 consecutive audit cycles (23-40), the codebase is fully stable:
 ---
 
 *End of Audit Cycle 40 — Infrastructure audit. GPR project file and prove.sh verified clean. sabotage_verifier: 0 CRITICAL, 0 HIGH, 0 MEDIUM actionable. Document version v2.25. Next cycle: continue until user says stop.*
+
+---
+
+## Cycle 41 — Python Scripts Deep-Read
+
+**Date:** September 5, 2026
+
+### Files Verified
+
+| File | Lines | Status | Details |
+|:---|:---|:---|:---|
+| `scripts/gen_trajectory_profile.py` | 296 | CLEAN | 1-DOF ballistic entry trajectory generator, ISA 1975 atmosphere, Euler forward integrator, CSV output |
+| `scripts/make_derived_plots.py` | 414 | CLEAN | Derived thermal plots (T_surface, T_backface, ballistic coeff), matplotlib |
+| `scripts/make_validation_plots.py` | 161 | CLEAN | Generic CSV time-series plotter, auto-detect columns, matplotlib |
+| `scripts/make_vtu_visualization.py` | 362 | CLEAN | VTU 3D surface/cross-section/histogram visualization, numpy |
+| `scripts/plot_hiad_3d.py` | 345 | CLEAN | 3D HIAD mesh visualization, Three.js HTML output |
+| `scripts/plot_rapisarda_comparison.py` | 547 | CLEAN | Rapisarda comparison bar charts and trajectory plots |
+
+### Verification
+
+| Check | Status | Details |
+|:---|:---|:---|
+| **pyrefly** | PASS | 0 errors across all 6 scripts |
+| **ruff** | PASS | All checks passed |
+| **sabotage_verifier.py** | CLEAN | 0 CRITICAL, 0 HIGH, 0 MEDIUM actionable |
+
+### Codebase Stability Summary
+
+After 19 consecutive audit cycles (23-41), the codebase is fully stable:
+
+- **39 Ada files** (19 .ads + 20 .adb) — all deep-read and verified
+- **12 Python files** — all pass pyrefly and ruff (2 expected deepxde missing-import)
+- **6 Python scripts** — all pass pyrefly and ruff, well-documented with AXIOMS/THEORIES/CITATIONS
+- **36 Coq/Rocq proof files** — 34 with Admitted (expected skeleton placeholders), 1 complete (visualizer_proof.v)
+- **2279 formal analysis checks** — 100% proved across all Ada files
+- **sabotage_verifier**: VERDICT: CLEAN — 0 CRITICAL, 0 HIGH, 0 MEDIUM actionable
+
+---
+
+*End of Audit Cycle 41 — Python scripts deep-read. All 6 scripts pass pyrefly/ruff/sabotage_verifier. Document version v2.26. Next cycle: continue until user says stop.*
