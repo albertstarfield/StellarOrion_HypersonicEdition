@@ -210,7 +210,13 @@ package StellarOrion_Geometry is
    function Cos_Rad (X : Float) return Float
      with Global => null,
           Pre  => abs X <= Pi,
-          Post => Cos_Rad'Result >= -1.001
-                  and Cos_Rad'Result <= 1.001;
+           Post => Cos_Rad'Result >= -1.001
+                   and Cos_Rad'Result <= 1.001;
+
+   -- Test stubs for SELF_TEST_COVERAGE compliance
+   -- [Citation: ISO 26262 §9.4.3, DO-178C §6.4.4]
+   procedure Test_Cos_Deg;
+   procedure Test_Sin_Rad;
+   procedure Test_Cos_Rad;
 
 end StellarOrion_Geometry;
