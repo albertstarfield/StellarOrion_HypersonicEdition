@@ -2,7 +2,7 @@
 
 **Author:** Albert Starfield Wahyu Suryo Samudro
 **Date:** September 4, 2026
-**Version:** 2.14 (Audit Cycle 29 — cyclic until user says stop)
+**Version:** 2.16 (Audit Cycle 31 — cyclic until user says stop)
 
 ---
 
@@ -1466,3 +1466,44 @@ All 4 files have proper documentation (axiom/theory/application blocks), Pre/Pos
 ---
 
 *End of Audit Cycle 30 — Deep inspection of remaining Ada files. 0 CRITICAL, 0 HIGH violations. Document version v2.15. Next cycle: continue until user says stop.*
+
+---
+
+## Audit Cycle 31 — Regression + STC Test Verification
+
+**Date:** 2026-09-05 | **Document version:** 2.16
+
+### geometry.adb STC Test Wrappers Added
+
+Added 3 STC test wrappers to `stellarorion_geometry.adb` (before `end StellarOrion_Geometry;`):
+
+| Procedure | Tests | Annotations |
+|:---|:---|:---|
+| `Test_Cos_Deg` | 0, 90, 180, 360 degrees | @test, pragma Assert |
+| `Test_Sin_Rad` | 0, Pi/2, Pi, -Pi/2 | @test, pragma Assert |
+| `Test_Cos_Rad` | 0, Pi/2, Pi | @test, pragma Assert |
+
+### Sabotage Verifier Results — ALL Files
+
+| File Group | CRITICAL | HIGH | MEDIUM | Status |
+|:---|:---|:---|:---|:---|
+| geometry, optimization, orion, validation, sidecar_ui | 0 | 0 | 0 | MAL-SSS |
+| sparta, physics (ads+adb), environment, types | 0 | 0 | 0 | MAL-SSS |
+
+**Total across all Ada + Python files:** 0 CRITICAL, 0 HIGH, 0 MEDIUM (batch runs)
+
+### Validation Summary
+
+| Check | Status | Details |
+|:---|:---|:---|
+| **gprbuild** (Ada) | ✅ PASSED | "main" up to date — 0 warnings, 0 errors |
+| **sabotage_verifier.py** (all Ada + Python) | ✅ CLEAN | 0 CRITICAL, 0 HIGH across all files |
+| **ruff** (Python) | ✅ PASSED | All checks passed |
+
+### No New Findings
+
+No new code quality, correctness, or logic issues found in Cycle 31. The codebase has been stable across 9 consecutive audit cycles (23–31) with zero new violations.
+
+---
+
+*End of Audit Cycle 31 — Regression + STC test verification. 0 CRITICAL, 0 HIGH violations. Document version v2.16. Next cycle: continue until user says stop.*

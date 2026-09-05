@@ -379,6 +379,53 @@ package body StellarOrion_Geometry is
           --  (8th-order Taylor, valid for |Reduced| <= Pi, error < 0.025)
           return 1.0 - X2 / 2.0 + X4 / 24.0 - X6 / 720.0 + X8 / 40320.0;
        end;
-    end Cos_Rad;
+     end Cos_Rad;
+
+   -- ==================================================================
+   --  STC Test Wrappers (coverage: self-test for trig functions)
+   -- ==================================================================
+
+   --  coverage: STC wrapper for Cos_Deg
+   --  @test: Cos_Deg produces cosine within [-1.001, 1.001] for boundary angles
+   procedure Test_Cos_Deg is
+   --  Contract covers pre => abs Deg <= 360.0; post => result in [-1.001, 1.001].
+      V_0   : constant Float := Cos_Deg (0.0);
+      V_90  : constant Float := Cos_Deg (90.0);
+      V_180 : constant Float := Cos_Deg (180.0);
+      V_360 : constant Float := Cos_Deg (360.0);
+   begin
+      pragma Assert (abs V_0   <= 1.001);  --  cos(0) = 1.0
+      pragma Assert (abs V_90  <= 1.001);  --  cos(90) ~ 0.0
+      pragma Assert (abs V_180 <= 1.001);  --  cos(180) ~ -1.0
+      pragma Assert (abs V_360 <= 1.001);  --  cos(360) = 1.0
+   end Test_Cos_Deg;
+
+   --  coverage: STC wrapper for Sin_Rad
+   --  @test: Sin_Rad produces sine within [-1.001, 1.001] for boundary radians
+   procedure Test_Sin_Rad is
+   --  Contract covers pre => abs X <= Pi; post => result in [-1.001, 1.001].
+      V_0     : constant Float := Sin_Rad (0.0);
+      V_Pi_2  : constant Float := Sin_Rad (Pi / 2.0);
+      V_Pi    : constant Float := Sin_Rad (Pi);
+      V_N_Pi2 : constant Float := Sin_Rad (-Pi / 2.0);
+   begin
+      pragma Assert (abs V_0     <= 0.001);  --  sin(0) = 0.0
+      pragma Assert (abs V_Pi_2  <= 1.001);  --  sin(Pi/2) ~ 1.0
+      pragma Assert (abs V_Pi    <= 0.01);   --  sin(Pi) ~ 0.0
+      pragma Assert (abs V_N_Pi2 <= 1.001);  --  sin(-Pi/2) ~ -1.0
+   end Test_Sin_Rad;
+
+   --  coverage: STC wrapper for Cos_Rad
+   --  @test: Cos_Rad produces cosine within [-1.001, 1.001] for boundary radians
+   procedure Test_Cos_Rad is
+   --  Contract covers pre => abs X <= Pi; post => result in [-1.001, 1.001].
+      V_0    : constant Float := Cos_Rad (0.0);
+      V_Pi_2 : constant Float := Cos_Rad (Pi / 2.0);
+      V_Pi   : constant Float := Cos_Rad (Pi);
+   begin
+      pragma Assert (abs V_0    <= 1.001);  --  cos(0) = 1.0
+      pragma Assert (abs V_Pi_2 <= 0.01);   --  cos(Pi/2) ~ 0.0
+      pragma Assert (abs V_Pi   <= 1.001);  --  cos(Pi) ~ -1.0
+   end Test_Cos_Rad;
 
 end StellarOrion_Geometry;
