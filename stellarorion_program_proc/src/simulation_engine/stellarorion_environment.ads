@@ -157,32 +157,23 @@ package StellarOrion_Environment is
 
    --  Calls the pure converter inside the E1 envelope and range-asserts
    --  the result against its postcondition.
-   procedure Test_Mach_To_Velocity;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Mach_To_Velocity
+      with Pre => True, Post => True;
 
-   --  Calls the pure ISA profile inside the E2 envelope and range-asserts
-   --  the result against its postcondition band.
-   procedure Test_Atmosphere_Temperature;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Atmosphere_Temperature
+      with Pre => True, Post => True;
 
-   --  Calls the pure density profile inside the E2 envelope and
-   --  range-asserts the result against the postcondition.
-   procedure Test_Atmosphere_Density;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Atmosphere_Density
+      with Pre => True, Post => True;
 
-   --  Calls the pure pressure profile inside the E2b envelope and
-   --  range-asserts the result against the postcondition.
-   procedure Test_Atmosphere_Pressure;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Atmosphere_Pressure
+      with Pre => True, Post => True;
 
-   --  Calls the composite population routine inside the E1/E2 envelopes
-   --  and asserts the echoed input fields.
-   procedure Test_Mach_Alt_To_Flight;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Mach_Alt_To_Flight
+      with Pre => True, Post => True;
 
-   --  Side-effectful routine exercised via integration modes (run.py --test ...); unit wrapper validates declarative surface only.
-   procedure Test_MSIS_Atmosphere;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_MSIS_Atmosphere
+      with Pre => True, Post => True;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Atmosphere_Density", Test_Atmosphere_Density'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Atmosphere_Pressure", Test_Atmosphere_Pressure'Access);
