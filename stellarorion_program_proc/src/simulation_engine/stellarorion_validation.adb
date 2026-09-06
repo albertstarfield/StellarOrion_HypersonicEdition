@@ -104,6 +104,12 @@ package body StellarOrion_Validation is
    procedure Test_Validate_And_Dump is
    --  @test: Test_Validate_And_Dump unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
+   -- AXIOMS: IRVE-3-default Geometry_Parameters and TPS_SiC satisfy all
+   --   documented range checks, so Validate_And_Dump must return True.
+   -- THEORIES: Default geometry (D=3.0, A=60, T=6) and SiC preset are
+   --   within Rapisarda Table 5.4 bounds; conjunction of range checks holds.
+   -- APPLICATIONS: Instantiate defaults, call Validate_And_Dump, assert OK.
+   -- CITATIONS: Rapisarda (2023) Table 5.4; StellarOrion_Validation spec.
       Geo : constant Geometry_Parameters := (others => <>);
       TPS : constant TPS_Material        := TPS_SiC;
       OK  : constant Boolean := Validate_And_Dump (Geo, TPS);
@@ -119,6 +125,13 @@ package body StellarOrion_Validation is
    procedure Test_Check_Survivability is
    --  @test: Test_Check_Survivability unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
+   -- AXIOMS: Default Flight_Metrics has zero g-loads and heat fluxes, which
+   --   satisfy all material limits encoded in Is_Survivable.
+   -- THEORIES: If all metrics are zero, then Is_Survivable returns True
+   --   because no material limit is exceeded.
+   -- APPLICATIONS: Instantiate default Flight_Metrics, call Check_Survivability,
+   --   assert Verdict is True.
+   -- CITATIONS: NASA TP-2013-4012 (IRVE-3); StellarOrion_Physics spec.
       Probe   : constant Flight_Metrics := (others => <>);
       Verdict : constant Boolean := Check_Survivability (Probe);
    begin
