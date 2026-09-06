@@ -10,7 +10,10 @@ package StellarOrion_Optimize is
    --  extern: orchestrates GA/metamodel runs writing run artifacts;
    --  outside SPARK subset
 
-   --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
+   --  AXIOMS: Optimization driver mode (--optimize CLI path).
+   --  THEORIES: Runs GA/metamodel optimization loop with configurable parameters.
+   --  APPLICATIONS: Orchestrates StellarOrion_Optimization and StellarOrion_Status_Writer.
+   --  CITATIONS: Goldberg (1989) Genetic Algorithms in Search, Optimization, and Machine Learning.
    procedure Run_Optimize
      (DoE_In     : DoE_Method := LHS;
       Obj_In     : Objective  := Drag_Obj;
@@ -22,11 +25,13 @@ package StellarOrion_Optimize is
       TPS_In     : TPS_Material := (others => <>);
       Mach_Override : Float := 0.0;
       Alt_Override  : Float := 0.0)
-   ;
+     with Pre  => Samples_In > 0 and Steps > 0,
+          Post => True;
 
+   --  AXIOMS: Test stub for Run_Optimize — exercises optimization path.
    --  STC coverage wrapper.
-   procedure Test_Run_Optimize;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Run_Optimize
+     with Pre => True, Post => True;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_Optimize", Test_Run_Optimize'Access);
 end StellarOrion_Optimize;
