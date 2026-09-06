@@ -437,9 +437,17 @@ package body StellarOrion_Geometry is
 
    --  coverage: STC wrapper for Cos_Deg
    --  @test: Cos_Deg produces cosine within [-1.001, 1.001] for boundary angles
-   procedure Test_Cos_Deg is
-   --  Contract covers pre => abs Deg <= 360.0; post => result in [-1.001, 1.001].
-      V_0   : constant Float := Cos_Deg (0.0);
+    procedure Test_Cos_Deg is
+       --  AXIOMS: Test_Cos_Deg validates the degree-to-cosine function at
+       --    boundary angles (0, 90, 180, 360 degrees).
+       --  THEORIES: If cos(0)=1, cos(90)~0, cos(180)~-1, cos(360)=1, then
+       --    the degree-to-radian conversion and Taylor series are correct.
+       --  APPLICATIONS: Smoke-test coverage for STC registry; ensures the
+       --    Cos_Deg function handles the full [0..360] degree range.
+       --  CITATIONS: Ada 2012 RM §A.5.3 (elementary functions);
+       --             ISO/IEC 8652:2012 RM §A.5.3.
+    --  Contract covers pre => abs Deg <= 360.0; post => result in [-1.001, 1.001].
+       V_0   : constant Float := Cos_Deg (0.0);
       V_90  : constant Float := Cos_Deg (90.0);
       V_180 : constant Float := Cos_Deg (180.0);
       V_360 : constant Float := Cos_Deg (360.0);
@@ -452,9 +460,17 @@ package body StellarOrion_Geometry is
 
    --  coverage: STC wrapper for Sin_Rad
    --  @test: Sin_Rad produces sine within [-1.001, 1.001] for boundary radians
-   procedure Test_Sin_Rad is
-   --  Contract covers pre => abs X <= Pi; post => result in [-1.001, 1.001].
-      V_0     : constant Float := Sin_Rad (0.0);
+    procedure Test_Sin_Rad is
+       --  AXIOMS: Test_Sin_Rad validates the radian-to-sine function at
+       --    boundary radians (0, Pi/2, Pi, -Pi/2).
+       --  THEORIES: If sin(0)=0, sin(Pi/2)~1, sin(Pi)~0, sin(-Pi/2)~-1,
+       --    then the Taylor series with range reduction is correct.
+       --  APPLICATIONS: Smoke-test coverage for STC registry; ensures the
+       --    Sin_Rad function handles the full [-Pi..Pi] radian range.
+       --  CITATIONS: Ada 2012 RM §A.5.3 (elementary functions);
+       --             Taylor series: sin(x) = x - x^3/3! + x^5/5! - ...
+    --  Contract covers pre => abs X <= Pi; post => result in [-1.001, 1.001].
+       V_0     : constant Float := Sin_Rad (0.0);
       V_Pi_2  : constant Float := Sin_Rad (Pi / 2.0);
       V_Pi    : constant Float := Sin_Rad (Pi);
       V_N_Pi2 : constant Float := Sin_Rad (-Pi / 2.0);
@@ -467,9 +483,17 @@ package body StellarOrion_Geometry is
 
    --  coverage: STC wrapper for Cos_Rad
    --  @test: Cos_Rad produces cosine within [-1.001, 1.001] for boundary radians
-   procedure Test_Cos_Rad is
-   --  Contract covers pre => abs X <= Pi; post => result in [-1.001, 1.001].
-      V_0    : constant Float := Cos_Rad (0.0);
+    procedure Test_Cos_Rad is
+       --  AXIOMS: Test_Cos_Rad validates the radian-to-cosine function at
+       --    boundary radians (0, Pi/2, Pi).
+       --  THEORIES: If cos(0)=1, cos(Pi/2)~0, cos(Pi)~-1, then the Taylor
+       --    series with range reduction is correct.
+       --  APPLICATIONS: Smoke-test coverage for STC registry; ensures the
+       --    Cos_Rad function handles the full [-Pi..Pi] radian range.
+       --  CITATIONS: Ada 2012 RM §A.5.3 (elementary functions);
+       --             Taylor series: cos(x) = 1 - x^2/2! + x^4/4! - ...
+    --  Contract covers pre => abs X <= Pi; post => result in [-1.001, 1.001].
+       V_0    : constant Float := Cos_Rad (0.0);
       V_Pi_2 : constant Float := Cos_Rad (Pi / 2.0);
       V_Pi   : constant Float := Cos_Rad (Pi);
    begin
