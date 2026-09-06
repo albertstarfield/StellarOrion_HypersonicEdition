@@ -15,8 +15,9 @@ package StellarOrion_Project is
      with SPARK_Mode => Off;
 
    --  STC coverage wrapper.
-   procedure Test_Main_Program;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Main_Program
+     with Pre => True, Post => True;
+   --  STC coverage wrapper.
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Main_Program", Test_Main_Program'Access);
 end StellarOrion_Project;

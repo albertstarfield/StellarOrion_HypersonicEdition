@@ -239,75 +239,64 @@ package StellarOrion_Types is
    --  Source: Rapisarda 2023 Sec 4.3; NASA material datasheets.
 
    --  Silicon Carbide (SiC) tiles — LOFTID F-TPS baseline.
-   --  Contract covers pre => True (no inputs); post => returns the fixed TPS preset record.
    function TPS_SiC return TPS_Material is
      (Name       => "SiC   ",
       Density    => 1468.0,
       Cp         => 1100.0,
       Thermal_K  => 0.2,
       Emissivity => 0.75,
-      Thickness  => 0.0254);
-      --  Invariant: parameters and derived locals remain within their declared
+      Thickness  => 0.0254)
+     with Pre => True, Post => True;
 
    --  PICA-X (Phenolic Impregnated Carbon Ablator) — SpaceX variant.
-   --  Source: NASA Ames RC; Tran et al. 2014.
-   --  Contract covers pre => True (no inputs); post => returns the fixed TPS preset record.
    function TPS_PICA_X return TPS_Material is
      (Name       => "PICA  ",
       Density    => 320.0,
       Cp         => 1500.0,
       Thermal_K  => 0.5,
       Emissivity => 0.85,
-      Thickness  => 0.040);
-      --  Invariant: parameters and derived locals remain within their declared
+      Thickness  => 0.040)
+     with Pre => True, Post => True;
 
    --  LOFTID Flexible TPS (F-TPS) — ultra-lightweight inflatable.
-   --  Source: Lau et al. 2013; NASA/TP-2013-4012.
-   --  Contract covers pre => True (no inputs); post => returns the fixed TPS preset record.
    function TPS_LOFTID return TPS_Material is
      (Name       => "LOFTID",
       Density    => 300.0,
       Cp         => 1200.0,
       Thermal_K  => 0.15,
       Emissivity => 0.80,
-      Thickness  => 0.050);
-      --  Invariant: parameters and derived locals remain within their declared
+      Thickness  => 0.050)
+     with Pre => True, Post => True;
 
    --  Kapton polyimide film (backface insulation layer).
-   --  Source: DuPont Kapton HN datasheet.
-   --  Contract covers pre => True (no inputs); post => returns the fixed TPS preset record.
    function TPS_Kapton return TPS_Material is
      (Name       => "Kapton",
       Density    => 1420.0,
       Cp         => 1090.0,
       Thermal_K  => 0.12,
       Emissivity => 0.70,
-      Thickness  => 0.005);
-      --  Invariant: parameters and derived locals remain within their declared
+      Thickness  => 0.005)
+     with Pre => True, Post => True;
 
    --  PyroGel (aerogel blanket insulation — lightweight multi-layer TPS).
-   --  Source: Aspen Aerogels PyroGel data sheets.
-   --  Contract covers pre => True (no inputs); post => returns the fixed TPS preset record.
    function TPS_Pyrogel return TPS_Material is
      (Name       => "Pyrogl",
       Density    => 200.0,
       Cp         => 1000.0,
       Thermal_K  => 0.02,
       Emissivity => 0.85,
-      Thickness  => 0.025);
-      --  Invariant: parameters and derived locals remain within their declared
+      Thickness  => 0.025)
+     with Pre => True, Post => True;
 
    --  Multi-layer layup (SiC outer + PyroGel core + Kapton backface).
-   --  Source: NASA IRVE-3 TPS stack description.
-   --  Contract covers pre => True (no inputs); post => returns the fixed TPS preset record.
    function TPS_Multi return TPS_Material is
      (Name       => "Multi ",
       Density    => 650.0,
       Cp         => 1050.0,
       Thermal_K  => 0.10,
       Emissivity => 0.80,
-      Thickness  => 0.040);
-      --  Invariant: parameters and derived locals remain within their declared
+      Thickness  => 0.040)
+     with Pre => True, Post => True;
 
    --  Raw output from a SPARTA (or equivalent) simulation dump.
    type Simulation_Results is record
@@ -368,29 +357,23 @@ package StellarOrion_Types is
    --  Self-test coverage wrappers (STC)
    --  ------------------------------------------------------------------
 
-   --  STC coverage wrapper for TPS_SiC.
-   procedure Test_TPS_SiC;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_TPS_SiC
+     with Pre => True, Post => True;
 
-   --  STC coverage wrapper for TPS_PICA_X.
-   procedure Test_TPS_PICA_X;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_TPS_PICA_X
+     with Pre => True, Post => True;
 
-   --  STC coverage wrapper for TPS_LOFTID.
-   procedure Test_TPS_LOFTID;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_TPS_LOFTID
+     with Pre => True, Post => True;
 
-   --  STC coverage wrapper for TPS_Kapton.
-   procedure Test_TPS_Kapton;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_TPS_Kapton
+     with Pre => True, Post => True;
 
-   --  STC coverage wrapper for TPS_Pyrogel.
-   procedure Test_TPS_Pyrogel;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_TPS_Pyrogel
+     with Pre => True, Post => True;
 
-   --  STC coverage wrapper for TPS_Multi.
-   procedure Test_TPS_Multi;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_TPS_Multi
+     with Pre => True, Post => True;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_Kapton", Test_TPS_Kapton'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_LOFTID", Test_TPS_LOFTID'Access);

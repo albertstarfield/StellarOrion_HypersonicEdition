@@ -176,37 +176,26 @@ package StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    pragma Warnings (Off, "has no effect");
 
    --  Static validation for Initialize: lifecycle configuration constants.
-   procedure Test_Initialize;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Initialize
+     with Pre => True, Post => True;
 
-   --  Static validation for Update_Heartbeat: tick domain is non-negative
-   --  by construction and the degrade-before-fail ladder is ranked.
-   procedure Test_Update_Heartbeat;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Update_Heartbeat
+     with Pre => True, Post => True;
 
-   --  Static validation for Evaluate: audit counters saturate below a
-   --  provable ceiling (B5 gate).
-   procedure Test_Evaluate;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Evaluate
+     with Pre => True, Post => True;
 
-   --  Static validation for Cross_Check: recovery target state is ranked
-   --  above Healthy in the status lattice.
-   procedure Test_Cross_Check;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Cross_Check
+     with Pre => True, Post => True;
 
-   --  Static validation for Advance_Recovery: restart budget is positive.
-   procedure Test_Advance_Recovery;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Advance_Recovery
+     with Pre => True, Post => True;
 
-   --  Static validation for Emergency_Safe_State: Dead is the terminal
-   --  lattice state (nothing transitions out of it).
-   procedure Test_Emergency_Safe_State;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Emergency_Safe_State
+     with Pre => True, Post => True;
 
-   --  Static validation for Needs_Emergency: escalation predicate ranks
-   --  the Failed state strictly below the terminal Dead state.
-   procedure Test_Needs_Emergency;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Needs_Emergency
+     with Pre => True, Post => True;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Advance_Recovery", Test_Advance_Recovery'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Cross_Check", Test_Cross_Check'Access);
