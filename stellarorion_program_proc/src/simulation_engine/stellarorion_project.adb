@@ -857,6 +857,7 @@ package body StellarOrion_Project is
                   begin
                      Open (Ref_File, In_File, Path);
                      while not End_Of_File (Ref_File) loop  --  Invariant: entry condition holds at each iteration start and body makes progress toward termination
+                        pragma Loop_Invariant (not End_Of_File (Ref_File));
                         Get_Line (Ref_File, Line_Buf, Last);
                         Put_Line (Line_Buf (1 .. Last));
                      end loop;

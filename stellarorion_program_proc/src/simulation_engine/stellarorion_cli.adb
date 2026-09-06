@@ -24,6 +24,7 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    --             Ada.Command_Line.Argument_Count, Argument specification.
    begin
       for I in 1 .. Argument_Count loop  --  Invariant: loop index stays within its declared discrete range on every iteration
+         pragma Loop_Invariant (I in 1 .. Argument_Count);
          if Argument (I) = Flag then
             return True;
          end if;
@@ -45,6 +46,7 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    --             Ada.Command_Line.Argument_Count, Argument specification.
    begin
       for I in 1 .. Argument_Count - 1 loop  --  Invariant: loop index stays within its declared discrete range on every iteration
+         pragma Loop_Invariant (I in 1 .. Argument_Count - 1);
          if Argument (I) = Flag then
             return Argument (I + 1);
          end if;

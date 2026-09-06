@@ -338,6 +338,7 @@ package body StellarOrion_Reports is
 
       for F of Factors loop
          --  Invariant: iteration count is bounded by the loop's discrete range; state stays in declared ranges.
+         pragma Loop_Invariant (F in Factors'Range);
          Put_Line ("[GRID-SPARTA] --- Grid factor " & Float'Image (F) & " ---");
          Run_Validate_Full (Steps         => Steps,
                            Grid_Factor   => F,

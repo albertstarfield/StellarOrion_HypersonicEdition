@@ -472,6 +472,7 @@ package body StellarOrion_Self_Test is
          Initialize (W);
          --  Only A keeps beating; B starves past its timeout.
          for T in 1 .. 12 loop  --  Invariant: loop index stays within its declared discrete range on every iteration
+            pragma Loop_Invariant (T in 1 .. 12);
             Update_Heartbeat (W, Watchdog_A, T);
             Evaluate (W, T);
          end loop;
@@ -498,6 +499,7 @@ package body StellarOrion_Self_Test is
 
          --  Both-starvation escalation to latched emergency safe state.
          for T in 20 .. 45 loop  --  Invariant: loop index stays within its declared discrete range on every iteration
+            pragma Loop_Invariant (T in 20 .. 45);
             Evaluate (W, T);
          end loop;
          Cross_Check (W);
