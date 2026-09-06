@@ -1007,14 +1007,13 @@ package body StellarOrion_Project is
    -- THEORIES: A non-empty path is a necessary precondition for Open to
    --    succeed; asserting length > 0 confirms the constant is well-formed.
    -- APPLICATIONS: Asserts Candidate'Length > 0 for a fixed candidate string.
-   -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Section A.13.7
-   --    (File Management); Section 11.4.2 (Pragma Assert).
+    -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Section A.13.7
+    --    (File Management); Section 11.4.2 (Pragma Assert).
 
-   begin
-      Candidate : constant String := "REFERENCES.MD";
-   begin
-      pragma Assert (Candidate'Length > 0);
-   end Test_Try_Open;
+    Candidate : constant String := "REFERENCES.MD";
+    begin
+       pragma Assert (Candidate'Length > 0);
+    end Test_Try_Open;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Main_Program", Test_Main_Program'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Print_Banner", Test_Print_Banner'Access);
