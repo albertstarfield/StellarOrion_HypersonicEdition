@@ -3182,6 +3182,17 @@ package body StellarOrion_Sparta is
        --  (restart files, log files, dump files) while preserving CSV, VTK,
        --  and plot outputs.
        --  [Citation: Ada.Directories.Search (Ada RM A.16)]
+       --  AXIOMS: Delete_Matching iterates over directory entries matching Pattern,
+       --    deleting only Ordinary_File entries. Individual delete failures are
+       --    absorbed via exception handler to avoid aborting the cleanup sweep.
+       --  THEORIES: Start_Search + More_Entries + Get_Next_Entry is the standard
+       --    Ada.Directories traversal pattern. Kind(E) = Ordinary_File filters out
+       --    subdirectories. Delete_File removes the matched entry; on failure,
+       --    the exception handler logs to stderr and continues.
+       --  APPLICATIONS: Used by Cleanup_Ephemeral_State to remove SPARTA restart,
+       --    log, and dump files while preserving CSV, VTK, and plot outputs.
+       --  CITATIONS: Ada 2012 RM §A.16 (Ada.Directories.Search);
+       --             Ada 2012 RM §A.16 (Delete_File, Kind, Full_Name).
         procedure Delete_Matching (Pattern : String)
          with Pre  => Pattern'Length > 0,
               Post => True
