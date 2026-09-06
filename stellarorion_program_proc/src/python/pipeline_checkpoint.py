@@ -86,13 +86,11 @@ class PipelineCheckpoint:
     """
 
     def __init__(self, checkpoint_path: str) -> None:
-        """Bind to a checkpoint file path. Does NOT create/overwrite on init.
+        """Bind to a checkpoint file path. Does NOT create/overwrite on init. # test: test_init()
 
         Args:
             checkpoint_path: Path to pipeline_checkpoint.json (will be created
                              on first start() or mark_step_running() call).
-
-        # test: test_init()
         """
         self.checkpoint_path = checkpoint_path
         self._data: dict[str, Any] | None = None
@@ -139,7 +137,7 @@ class PipelineCheckpoint:
 
     def start(self, pipeline_id: str | None = None,
               config: dict[str, Any] | None = None) -> None:
-        """Initialize a new pipeline run or resume an existing one.
+        """Initialize a new pipeline run or resume an existing one. # test: test_start()
 
         If the checkpoint file exists and has a prior run, it is preserved
         (resume mode). If not, a fresh checkpoint is created.
@@ -148,8 +146,6 @@ class PipelineCheckpoint:
             pipeline_id: Unique identifier for this run (e.g. timestamp or UUID).
                          Generated automatically if not provided.
             config: Pipeline configuration (grid_file, domain_bounds, etc.).
-
-        # test: test_start()
         """
         existing = self._load()
         if existing and existing.get("steps"):
@@ -252,14 +248,11 @@ class PipelineCheckpoint:
 
     def mark_step_completed(self, step: str,
                              output_files: list[str] | None = None) -> None:
-        """Mark a step as completed with optional output file list. Saves immediately.
+        """Mark a step as completed with optional output file list. Saves immediately. # test: test_checkpoint_mark_completed_and_query()
 
         Args:
             step: Step name (one of PIPELINE_STEPS).
             output_files: List of files produced by this step.
-
-        Tested by: test_checkpoint_mark_completed_and_query() (same file).
-        # test: test_checkpoint_mark_completed_and_query()
         """
         self._ensure_initialized()
         self._data["steps"][step]["status"] = StepStatus.COMPLETED
@@ -269,14 +262,11 @@ class PipelineCheckpoint:
         self._save()
 
     def mark_step_failed(self, step: str, error: str | None = None) -> None:
-        """Mark a step as failed. Saves immediately.
+        """Mark a step as failed. Saves immediately. # test: test_checkpoint_mark_failed()
 
         Args:
             step: Step name.
             error: Optional error message to record.
-
-        Tested by: test_checkpoint_mark_failed() (same file).
-        # test: test_checkpoint_mark_failed()
         """
         self._ensure_initialized()
         self._data["steps"][step]["status"] = StepStatus.FAILED
@@ -292,10 +282,10 @@ class PipelineCheckpoint:
         self._ensure_initialized()
         return self._data.get("config", {})
 
-    def update_config(self, **kwargs: Any) -> None:
+    def update_config(self, config: dict[str, Any]) -> None:
         """Merge key-value pairs into the config dict. Saves immediately. # test: test_update_config()"""
         self._ensure_initialized()
-        self._data["config"].update(kwargs)
+        self._data["config"].update(config)
         self._save()
 
     def get_output_files(self, step: str) -> list[str]:
@@ -571,7 +561,7 @@ def test_update_config() -> None:
     with tempfile.TemporaryDirectory() as td:
         pc = PipelineCheckpoint(os.path.join(td, "cp.json"))
         pc.start(config={"a": 1})
-        pc.update_config(b=2)
+        pc.update_config({"b": 2})
         cfg = pc.get_config()
         assert cfg["a"] == 1 and cfg["b"] == 2
     print("[TEST] test_update_config PASSED")

@@ -33,7 +33,7 @@ import urllib.parse
 logger = logging.getLogger(__name__)
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 # ── Formal verification contracts (CrossHair / deal) ──────────────────
 # CrossHair verifies these postconditions; `deal` is the dev-only contract
@@ -46,7 +46,7 @@ except ImportError:  # pragma: no cover - dev dependency
     # test: self-test verifies no-op postcondition (test_postcondition_noop)
     import logging as _dev_logging
     _dev_logging.getLogger(__name__).debug("deal package unavailable; using no-op postcondition")
-    def postcondition(*_args: Any, **_kwargs: Any):
+    def postcondition(contract: Any = None) -> Callable[..., Any]:
         """No-op stand-in when the deal package is unavailable.
 
         Pre: deal package is not installed in the current environment.
@@ -120,17 +120,27 @@ class SimulationState:
             }
 
     # --- thread-safe write ---
-    def update(self, **kwargs: Any) -> None:
-        """Thread-safely assign the given keyword arguments onto attributes
-        that already exist (unknown keys are ignored).
+    def update(self,
+               status: str | None = None,
+               run_name: str | None = None,
+               progress: float | None = None,
+               results: dict[str, Any] | None = None,
+               metrics: dict[str, Any] | None = None) -> None:
+        """Thread-safely update attributes that already exist (None = unchanged).
         Tested by: test_update() (same file).
         """
         with self._lock:
-            # Loop invariant: kwargs is a fixed mapping; only pre-existing
-            # attributes are assigned, so the attribute set never grows.
-            for k, v in kwargs.items():
-                if hasattr(self, k):
-                    setattr(self, k, v)
+            # Loop invariant: only non-None values overwrite existing attrs.
+            if status is not None:
+                self.status = status
+            if run_name is not None:
+                self.run_name = run_name
+            if progress is not None:
+                self.progress = progress
+            if results is not None:
+                self.results = results
+            if metrics is not None:
+                self.metrics = metrics
 
     # --- config readers/writers ---
     def get_config(self) -> dict[str, Any]:
@@ -903,16 +913,17 @@ def test_snapshot() -> None:
     assert st.snapshot()["results"]["heat_flux_wcm2"] == 14.36
 
 
-# Self-test: update assigns known attributes and ignores unknown keys.
+# Self-test: update assigns known attributes via explicit params.
 def test_update() -> None:
-    """update() sets known fields under lock and drops unknown keys.
+    """update() sets known fields under lock.
 
     Tested by: this function itself (self-test section).
     """
     st = SimulationState()
-    st.update(status="running", totally_unknown_key=123)
+    st.update(status="running")
     assert st.status == "running"
-    assert not hasattr(st, "totally_unknown_key")
+    # Verify other defaults are untouched.
+    assert st.progress == 0.0
 
 
 # Self-test: get_config returns IRVE-3 defaults as an isolated copy.
