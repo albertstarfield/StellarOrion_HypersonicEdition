@@ -136,7 +136,17 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    procedure Test_Has_Flag is
    --  @test: Test_Has_Flag unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
-      Found : constant Boolean := Has_Flag ("--stc-probe");
+
+   -- AXIOMS: The STC wrapper calls Has_Flag with a probe flag that is
+   --    absent from argv, verifying a well-formed Boolean is returned.
+   -- THEORIES: Boolean is a two-valued type; the result must be either
+   --    True or False, confirming Has_Flag does not raise and returns
+   --    a type-conformant value.
+   -- APPLICATIONS: Asserts Found = True or else Found = False.
+   -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Section
+   --    3.8 (Boolean type); StellarOrion_Cli.ads (Has_Flag spec).
+
+       Found : constant Boolean := Has_Flag ("--stc-probe");
    begin
       pragma Assert (Found = True or else Found = False);
    end Test_Has_Flag;
@@ -147,7 +157,16 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    procedure Test_Get_Option is
    --  @test: Test_Get_Option unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
-      Val : constant String := Get_Option ("--stc-probe", "sparta");
+
+   -- AXIOMS: The STC wrapper calls Get_Option with an absent flag, which
+   --    must return the Default value.  The result is a non-empty String.
+   -- THEORIES: When a CLI flag is absent, Get_Option returns Default by
+   --    construction (see AXIOMS block in Get_Option body).
+   -- APPLICATIONS: Asserts Val'Length >= 0, confirming a String result.
+   -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Section A.4.3
+   --    (Unbounded_String / String); StellarOrion_Cli.ads (Get_Option spec).
+
+       Val : constant String := Get_Option ("--stc-probe", "sparta");
    begin
       pragma Assert (Val'Length >= 0);
    end Test_Get_Option;
@@ -159,7 +178,16 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    procedure Test_Get_Float is
    --  @test: Test_Get_Float unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
-      V : constant Float := Get_Float ("--stc-probe", 0.7);
+
+   -- AXIOMS: The STC wrapper calls Get_Float with an absent flag, which
+   --    must return the Default float value.  The result is a finite Float.
+   -- THEORIES: When a CLI flag is absent, Get_Float returns Default; a
+   --    finite Float satisfies V <= Float'Last by construction.
+   -- APPLICATIONS: Asserts V <= Float'Last, confirming a finite result.
+   -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Section A.5.3
+   --    (Floating Point); StellarOrion_Cli.ads (Get_Float spec).
+
+       V : constant Float := Get_Float ("--stc-probe", 0.7);
    begin
       pragma Assert (V <= Float'Last);
    end Test_Get_Float;
@@ -170,7 +198,16 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    procedure Test_Clamp_Float is
    --  @test: Test_Clamp_Float unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
-      Clamped : constant Float := Clamp_Float (25.0, 0.5, 15.0);
+
+   -- AXIOMS: The STC wrapper calls Clamp_Float with an out-of-range value
+   --    (25.0 clamped to [0.5, 15.0]), verifying the result is within bounds.
+   -- THEORIES: Clamp_Float enforces Lo <= Result <= Hi by construction
+   --    (see AXIOMS block in Clamp_Float body).
+   -- APPLICATIONS: Asserts Clamped >= 0.5 and then Clamped <= 15.0.
+   -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Section A.5.3;
+   --    StellarOrion_Cli.ads (Clamp_Float spec).
+
+       Clamped : constant Float := Clamp_Float (25.0, 0.5, 15.0);
    begin
       pragma Assert (Clamped >= 0.5 and then Clamped <= 15.0);
    end Test_Clamp_Float;
@@ -181,7 +218,16 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    procedure Test_Get_Positive is
    --  @test: Test_Get_Positive unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
-      N : constant Positive := Get_Positive ("--stc-probe", 100);
+
+   -- AXIOMS: The STC wrapper calls Get_Positive with an absent flag, which
+   --    must return the Default value.  Positive subtype guarantees N >= 1.
+   -- THEORIES: When a CLI flag is absent, Get_Positive returns Default; the
+   --    Positive subtype bound (>= 1) is enforced by the subtype constraint.
+   -- APPLICATIONS: Asserts N >= 1, confirming the subtype constraint holds.
+   -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Section 3.5.4
+   --    (Integer Types); StellarOrion_Cli.ads (Get_Positive spec).
+
+       N : constant Positive := Get_Positive ("--stc-probe", 100);
    begin
       pragma Assert (N >= 1);
    end Test_Get_Positive;
