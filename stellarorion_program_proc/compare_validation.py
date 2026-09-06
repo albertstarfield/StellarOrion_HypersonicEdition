@@ -98,6 +98,8 @@ def summarize(rows):
     peak_lift  = max(abs(r["lift_sum_N"]) for r in rows)
     peak_hf    = max(r["heatflux_max_Wm2"] for r in rows)   # W/m^2
     peak_hs    = max(r["heat_sum_Wm2"] for r in rows)       # per-step total heat rate (W or W/m^2)
+    # [SMT guard: CWE-682] DECEL_DENOM_N = m*g0 = 281.0*9.80665 ≈ 2755.67, always > 0
+    assert DECEL_DENOM_N > 0, "DECEL_DENOM_N must be positive (m*g0)"
     peak_decel = peak_drag / DECEL_DENOM_N
     return {
         "peak_drag_N":  peak_drag,
