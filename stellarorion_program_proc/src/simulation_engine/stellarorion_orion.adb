@@ -52,6 +52,14 @@ package body StellarOrion_Orion is
    procedure Test_Orion_Survivability_Check is
    --  @test: Test_Orion_Survivability_Check unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
+   -- AXIOMS: Default Flight_Metrics has zero g-loads, which satisfy both
+   --   generic survivability (Is_Survivable) and Orion crew-rated limits.
+   -- THEORIES: If Is_Survivable(Probe) is True for zero-valued metrics,
+   --   then Orion_Survivability_Check(Probe) must also return True because
+   --   all g-loads (0.0) are below ORION_MAX_G (25.0).
+   -- APPLICATIONS: Instantiate default Flight_Metrics, call both predicates,
+   --   verify conjunction holds.
+   -- CITATIONS: StellarOrion_Orion spec, NASA-STD-3001, Ada 2012 RM 4.4.1.
       Probe   : constant Flight_Metrics := (others => <>);
       Verdict : constant Boolean := Orion_Survivability_Check (Probe);
    begin
