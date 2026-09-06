@@ -9926,9 +9926,8 @@ def _build_python_function_coverage_patterns() -> list[Pattern]:
                 if stripped.startswith(('"""', "'''")):
                     has_docstring = True
                     break
-                if past_signature:
-                    if stripped and not stripped.startswith("#"):
-                        break  # After signature end, real code without docstring
+                if past_signature and stripped and not stripped.startswith("#"):
+                    break  # After signature end, real code without docstring
                 if not past_signature and ")" in lines[j]:
                     past_signature = True
 
