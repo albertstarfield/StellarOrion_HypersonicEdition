@@ -202,7 +202,7 @@ def _build_kernel(noise_upper_bound=1.0):
     return signal_kernel + noise_kernel
 
 
-def denoise_grid(raw_data, n_restarts=5, random_state=42):
+def denoise_grid(raw_data: "np.ndarray", n_restarts: int = 5, random_state: int = 42) -> "np.ndarray":
     """Apply Kriging (GP) denoising to DSMC grid data.
     # test: verified by test_denoise_grid() at module level
 
@@ -307,7 +307,7 @@ def denoise_grid(raw_data, n_restarts=5, random_state=42):
     return denoised
 
 
-def denoise_grid_file(input_file, output_file=None, n_restarts=5, random_state=42):
+def denoise_grid_file(input_file: str, output_file: "str | None" = None, n_restarts: int = 5, random_state: int = 42) -> str:
     """High-level API: denoise a SPARTA grid file and optionally write output.
     # test: verified by test_denoise_grid_file() at module level
 
@@ -504,7 +504,7 @@ def _run_self_tests():
 # MODULE-LEVEL TEST STUBS (SELF_TEST_COVERAGE requirement)
 # ============================================================================
 
-def test_denoise_grid():
+def test_denoise_grid() -> None:
     """Verify denoise_grid() via synthetic data — noise reduction check.
     # test: SELF_TEST_COVERAGE stub for denoise_grid()
     """
@@ -526,7 +526,7 @@ def test_denoise_grid():
     assert denoised_std < raw_std, f"Denoising failed: {denoised_std:.4f} >= {raw_std:.4f}"
 
 
-def test_denoise_grid_file():
+def test_denoise_grid_file() -> None:
     """Verify denoise_grid_file() round-trip via temporary file.
     # test: SELF_TEST_COVERAGE stub for denoise_grid_file()
     """
