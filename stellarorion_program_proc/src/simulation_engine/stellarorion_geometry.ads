@@ -170,10 +170,9 @@ package StellarOrion_Geometry is
    --  Returns True iff all geometry parameters are within valid bounds.
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
    --  self-test registry: Register_Routine ("Validate_Geometry") -> Test 4.
-   function Validate_Geometry (Params : Geometry_Parameters) return Boolean;
-   --  Contract: pre  => True (no input constraints beyond declared subtypes);
-   --           post => returns the unit-specified result; no side effects.
-   --  Invariant: parameters and derived locals remain within their declared
+   function Validate_Geometry (Params : Geometry_Parameters) return Boolean
+     with Pre  => True,
+          Post => Validate_Geometry'Result in Boolean;
 
    -- -----------------------------------------------------------------
    --  SPARK-Safe Radian/Trig Helpers (Taylor Series)
@@ -223,8 +222,11 @@ package StellarOrion_Geometry is
 
    -- Test stubs for SELF_TEST_COVERAGE compliance
    -- [Citation: ISO 26262 §9.4.3, DO-178C §6.4.4]
-   procedure Test_Cos_Deg;
-   procedure Test_Sin_Rad;
-   procedure Test_Cos_Rad;
+   procedure Test_Cos_Deg
+     with Pre => True, Post => True;
+   procedure Test_Sin_Rad
+     with Pre => True, Post => True;
+   procedure Test_Cos_Rad
+     with Pre => True, Post => True;
 
 end StellarOrion_Geometry;

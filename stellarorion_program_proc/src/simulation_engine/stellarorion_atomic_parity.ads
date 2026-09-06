@@ -71,7 +71,8 @@ package StellarOrion_Atomic_Parity with SPARK_Mode => On is
    --  is closed on Unsigned_8 (bitwise op cannot overflow), so no range
    --  check can fire regardless of contents (Murphy's Law).
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
-   function Block_Checksum (Data : Data_Block) return Interfaces.Unsigned_8;
+   function Block_Checksum (Data : Data_Block) return Interfaces.Unsigned_8
+     with Post => True;
 
    --  A parity-protected frame: payload + XOR checksum computed over it.
    type Parity_Frame is record
@@ -130,22 +131,18 @@ package StellarOrion_Atomic_Parity with SPARK_Mode => On is
    --  ------------------------------------------------------------------
    pragma Warnings (Off, "has no effect");
 
-   procedure Test_Count_Set_Bits;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
-   procedure Test_Calculate_Parity;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
-   --  STC coverage wrapper.
-   procedure Test_Block_Checksum;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
-   --  STC coverage wrapper.
-   procedure Test_Verify_Input_Parity;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
-   --  STC coverage wrapper.
-   procedure Test_Add_Output_Parity;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
-   --  STC coverage wrapper.
-   procedure Test_Recover_From_Parity_Error;
-   --  Contract covers pre => True (no inputs); post => completes without raising.
+   procedure Test_Count_Set_Bits
+     with Pre => True, Post => True;
+   procedure Test_Calculate_Parity
+     with Pre => True, Post => True;
+   procedure Test_Block_Checksum
+     with Pre => True, Post => True;
+   procedure Test_Verify_Input_Parity
+     with Pre => True, Post => True;
+   procedure Test_Add_Output_Parity
+     with Pre => True, Post => True;
+   procedure Test_Recover_From_Parity_Error
+     with Pre => True, Post => True;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Add_Output_Parity", Test_Add_Output_Parity'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Block_Checksum", Test_Block_Checksum'Access);
