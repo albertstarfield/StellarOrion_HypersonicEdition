@@ -1429,6 +1429,7 @@ package body StellarOrion_Sparta is
                                     loop
                                        --  Loop invariant: token scan advances
                                        --  Pos strictly toward GL'Last + 1.
+                                       pragma Loop_Invariant (Pos in 1 .. GL'Last + 1);
                                        Pos := Pos + 1;
                                     end loop;
                                     CIdx := CIdx + 1;

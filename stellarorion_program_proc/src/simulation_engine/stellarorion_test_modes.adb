@@ -256,6 +256,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       New_Line;
 
       for F of Factors loop  --  Invariant: F iterates over the constant 8-element Factors array; every visited factor lies within 0.3 .. 1.5
+         pragma Loop_Invariant (F in 0.3 .. 1.5);
          Put_Line ("  Grid factor " & Float'Image (F) &
                    " -> cell size ~ " &
                    Float'Image (0.015 * F) & " m");

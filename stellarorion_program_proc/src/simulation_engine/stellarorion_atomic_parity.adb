@@ -97,6 +97,7 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
       --  XOR fold: closed on Unsigned_8 (AXIOM P2), so no range check can
       --  fire and no invariant is needed beyond the static loop bounds.
       for I in Data_Block'Range loop  --  Invariant: loop index stays within its declared discrete range on every iteration
+         pragma Loop_Invariant (I in Data_Block'Range);
          Acc := Acc xor Data (I);
       end loop;
       return Acc;
