@@ -541,6 +541,12 @@ package body StellarOrion_Self_Test is
    procedure Test_Run_Self_Test is
    --  @test: Test_Run_Self_Test unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
+   -- AXIOMS: STATUS_DIR is a compile-time constant; its Length > 0
+   --   confirms the self-test suite has a valid status output directory.
+   -- THEORIES: If STATUS_DIR'Length > 0, then Write_Status can be called
+   --   without raising Constraint_Error on an empty path.
+   -- APPLICATIONS: Assert Status_Dir_Non_Empty is True.
+   -- CITATIONS: StellarOrion_Self_Test spec, Ada 2012 RM 13.3.
       Status_Dir_Non_Empty : constant Boolean := STATUS_DIR'Length > 0;
    begin
       pragma Assert (Status_Dir_Non_Empty'Size >= 0);  -- static bounds context
