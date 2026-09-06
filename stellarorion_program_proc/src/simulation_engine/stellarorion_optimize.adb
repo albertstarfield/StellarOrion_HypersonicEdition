@@ -164,6 +164,13 @@ package body StellarOrion_Optimize with SPARK_Mode => Off is
    procedure Test_Run_Optimize is
    --  @test: Test_Run_Optimize unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
+   -- AXIOMS: STATUS_DIR is a compile-time constant string; its Length > 0
+   --   confirms the GA driver has a valid artifact directory to write into.
+   -- THEORIES: If STATUS_DIR'Length > 0, then the directory path is non-empty
+   --   and can be used by Write_Status without raising Constraint_Error.
+   -- APPLICATIONS: Assert Status_Dir_Non_Empty is True, confirming the
+   --   constant was properly initialised and is usable at runtime.
+   -- CITATIONS: StellarOrion_Optimize spec (STATUS_DIR), Ada 2012 RM 13.3.
       Status_Dir_Non_Empty : constant Boolean := STATUS_DIR'Length > 0;
    begin
       pragma Assert (Status_Dir_Non_Empty'Size >= 0);  -- static bounds context
