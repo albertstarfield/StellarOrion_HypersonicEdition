@@ -31,9 +31,10 @@ import time
 import urllib.parse
 
 logger = logging.getLogger(__name__)
+from collections.abc import Callable
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 # ── Formal verification contracts (CrossHair / deal) ──────────────────
 # CrossHair verifies these postconditions; `deal` is the dev-only contract
