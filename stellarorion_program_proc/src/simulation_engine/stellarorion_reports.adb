@@ -367,6 +367,12 @@ package body StellarOrion_Reports is
    procedure Test_Run_Compare_Calibrate is
    --  @test: Test_Run_Compare_Calibrate unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
+   -- AXIOMS: Default TPS_Material has Density > 0, satisfying the
+   --   precondition for any physics calculation that requires positive density.
+   -- THEORIES: If Baseline.Density > 0.0, then the record conforms to
+   --   the TPS material contract expected by Calculate_Flight_Metrics.
+   -- APPLICATIONS: Assert Baseline.Density > 0.0.
+   -- CITATIONS: StellarOrion_Types spec (TPS_Material), Ada 2012 RM 4.4.
       Baseline : constant TPS_Material := (others => <>);
    begin
       pragma Assert (Baseline.Density > 0.0);
@@ -378,6 +384,12 @@ package body StellarOrion_Reports is
    procedure Test_Run_GridIndep_Sparta is
    --  @test: Test_Run_GridIndep_Sparta unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
+   -- AXIOMS: The validated optimal grid factor (0.7) must lie within the
+   --   sweep envelope [0.3, 1.2] for the grid independency test to be valid.
+   -- THEORIES: If 0.7 >= 0.3 and 0.7 <= 1.2, then the optimal factor is
+   --   reachable by the SPARTA grid sweep and the test is well-formed.
+   -- APPLICATIONS: Assert 0.7 is within the sweep bounds.
+   -- CITATIONS: Roache (1994) Grid Independence; IRVE-3 MDAO (Rapisarda 2023).
    begin
       pragma Assert (0.7 >= 0.3 and then 0.7 <= 1.2);
    end Test_Run_GridIndep_Sparta;
