@@ -120,8 +120,7 @@ class SimulationState:
             }
 
     # --- thread-safe write ---
-    def update(self,
-               status: str | None = None,
+    def update(self, status: str | None = None,
                run_name: str | None = None,
                progress: float | None = None,
                results: dict[str, Any] | None = None,
