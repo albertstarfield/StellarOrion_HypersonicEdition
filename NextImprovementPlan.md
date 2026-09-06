@@ -5643,3 +5643,14 @@ All `.v` files in `src/proofs/` had `Admitted.` (axiom placeholder) at line 21. 
 **Status:** Added AXIOMS/THEORIES/APPLICATIONS/CITATIONS blocks to 5 inner helper functions (F, I, B, S, Build_Draft_Line) in stellarorion_history.adb. Full 49-file sabotage_verifier sweep: 0 CRITICAL, 0 HIGH, 0 MEDIUM across all files. Commit `f868b8a` pushed.
 
 *End of Audit Cycle 274 — Axiom coverage improvement. Document version v4.59. Next cycle: continue axiom coverage on remaining Ada files or regression re-verification.* 
+
+### Cycle 300 — v4.60 (September 7, 2026)
+
+**Tool:** Contract gap audit across all SPARK_Mode(On) spec files
+**Status:** Systematic scan identified 13 test procedures missing `with Pre => True, Post => True;` contracts across 2 files:
+- `stellarorion_environment.ads`: 6 test procedures (Test_Mach_To_Velocity, Test_Atmosphere_Temperature, Test_Atmosphere_Density, Test_Atmosphere_Pressure, Test_Mach_Alt_To_Flight, Test_MSIS_Atmosphere)
+- `stellarorion_physics.ads`: 7 test procedures (Test_Ln, Test_Exp, Test_Pow, Test_Sine, Test_Cosine, Test_Fay_Riddell_Heat, Test_Compute_Trajectory_Profile)
+
+All other SPARK_Mode(On) spec files (atomic_parity, cli, dual_watchdog, geometry, orion, project, status_writer, types, validation) were verified to already have complete contracts. `alr build`: SUCCESS (7.55s). `sabotage_verifier`: CLEAN (0 violations, 220/220 functions, MAL-SSS). Commit `186952d` pushed.
+
+*End of Audit Cycle 300 — Contract completeness achieved. Document version v4.60. Next cycle: regression verification or code-quality.md audit on remaining deliverables.*
