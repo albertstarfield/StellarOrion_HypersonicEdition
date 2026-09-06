@@ -504,6 +504,15 @@ package body StellarOrion_History is
       --  coverage: Populate_Run_Record float field accessor
       function F (Idx : Positive) return Float is
       --  Contract: pre => True (no input constraints); post => returns field value or default when index exceeds Field_Count
+      -- AXIOMS: Fields array is 1-indexed; accessing an index beyond Field_Count
+      --   yields a safe neutral default (0.0 for Float) per Murphy's Law defensive
+      --   programming principle.
+      -- THEORIES: Bounds-checked delegation to S2F converts a CSV string field
+      --   to Float; short rows are clamped to defaults without raising exceptions.
+      -- APPLICATIONS: Guard Idx <= Field_Count before indexing; delegate to
+      --   S2F(To_String(Fields(Idx))); return 0.0 otherwise.
+      -- CITATIONS: StellarOrion_History spec (Run_Record, Field_Array);
+      --   Ada 2012 RM 3.6.1 (Array indexing); Ada 2012 RM 4.4 (Float'Value).
       begin
          if Idx <= Field_Count then
             return S2F (To_String (Fields (Idx)));
@@ -516,6 +525,15 @@ package body StellarOrion_History is
       --  coverage: Populate_Run_Record integer field accessor
       function I (Idx : Positive) return Integer is
       --  Contract: pre => True (no input constraints); post => returns field value or default when index exceeds Field_Count
+      -- AXIOMS: Fields array is 1-indexed; accessing an index beyond Field_Count
+      --   yields a safe neutral default (0 for Integer) per Murphy's Law defensive
+      --   programming principle.
+      -- THEORIES: Bounds-checked delegation to S2I converts a CSV string field
+      --   to Integer; short rows are clamped to defaults without raising exceptions.
+      -- APPLICATIONS: Guard Idx <= Field_Count before indexing; delegate to
+      --   S2I(To_String(Fields(Idx))); return 0 otherwise.
+      -- CITATIONS: StellarOrion_History spec (Run_Record, Field_Array);
+      --   Ada 2012 RM 3.6.1 (Array indexing); Ada 2012 RM 4.4 (Integer'Value).
       begin
          if Idx <= Field_Count then
             return S2I (To_String (Fields (Idx)));
@@ -528,6 +546,15 @@ package body StellarOrion_History is
       --  coverage: Populate_Run_Record boolean field accessor
       function B (Idx : Positive) return Boolean is
       --  Contract: pre => True (no input constraints); post => returns field value or default when index exceeds Field_Count
+      -- AXIOMS: Fields array is 1-indexed; accessing an index beyond Field_Count
+      --   yields a safe neutral default (False for Boolean) per Murphy's Law defensive
+      --   programming principle.
+      -- THEORIES: Bounds-checked delegation to S2B converts a CSV string field
+      --   to Boolean; short rows are clamped to defaults without raising exceptions.
+      -- APPLICATIONS: Guard Idx <= Field_Count before indexing; delegate to
+      --   S2B(To_String(Fields(Idx))); return False otherwise.
+      -- CITATIONS: StellarOrion_History spec (Run_Record, Field_Array);
+      --   Ada 2012 RM 3.6.1 (Array indexing); Ada 2012 RM 4.5.3 (Boolean type).
       begin
          if Idx <= Field_Count then
             return S2B (To_String (Fields (Idx)));
@@ -540,6 +567,15 @@ package body StellarOrion_History is
       --  coverage: Populate_Run_Record string field accessor
       function S (Idx : Positive) return String is
       --  Contract: pre => True (no input constraints); post => returns field value or default when index exceeds Field_Count
+      -- AXIOMS: Fields array is 1-indexed; accessing an index beyond Field_Count
+      --   yields a safe neutral default (empty String) per Murphy's Law defensive
+      --   programming principle.
+      -- THEORIES: Bounds-checked CSV_Unescape delegation strips surrounding
+      --   quotes from a CSV field; short rows return empty string without raising.
+      -- APPLICATIONS: Guard Idx <= Field_Count before indexing; delegate to
+      --   CSV_Unescape(To_String(Fields(Idx))); return "" otherwise.
+      -- CITATIONS: StellarOrion_History spec (Run_Record, Field_Array);
+      --   Ada 2012 RM 3.6.1 (Array indexing); RFC 4180 Section 2 (CSV format).
       begin
          if Idx <= Field_Count then
             return CSV_Unescape (To_String (Fields (Idx)));
@@ -1176,6 +1212,16 @@ package body StellarOrion_History is
       --  coverage: used by Upsert_Draft draft-row construction
       function Build_Draft_Line return String is
       --  Contract: pre => True (no input constraints); post => returns CSV draft row built from enclosing parameters
+      -- AXIOMS: All parameters (Name, Flight, Geo, Results, Metrics, Solver, Chem,
+      --   Progress) are valid Ada values within their declared ranges.
+      -- THEORIES: A CSV row is constructed by serialising each field in the
+      --   documented column order using the shared type converters (F2S, B2S,
+      --   Solver_To_Str, Chem_To_Str, CSV_Escape); the result is a single
+      --   comma-delimited line matching the runs.csv schema.
+      -- APPLICATIONS: Build an Unbounded_String by appending each field
+      --   sequentially; convert via To_String before returning.
+      -- CITATIONS: StellarOrion_History spec (Run_Record, runs.csv schema);
+      --   CSV RFC 4180 (field ordering); Ada.Text_IO.Unbounded (Append).
          Line : Unbounded_String;
       begin
          --  Bounds guards: parameters are enum-constrained or well-formed
