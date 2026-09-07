@@ -123,7 +123,7 @@ cd stellarorion_program_proc && python3 run.py --compareCalibrate --solver spart
 
 StellarOrion supports a `--chemistry mars` mode using a CO2-dominated atmosphere model (`mars.vss`, `mars.react`). This is relevant because Rapisarda (2023) used the **Mars Climate Database v6.1 (MCD v6.1)** as a cross-validation technique — applying Mars-derived atmosphere data to Earth re-entry validation.
 
-**Key distinction (from source code comments in `stellarorion_sparta.adb` ~line 2601):**
+**Key distinction (from source code comments in `stellarorion_sparta.adb` ~line 2629):**
 - IRVE-3 is an **Earth re-entry** mission (Wallops Island VA, Black Brant XI)
 - Our code uses ISA (International Standard Atmosphere) — correct for Earth
 - Rapisarda's MCD v6.1 gives ~56% higher density than ISA at 52 km
