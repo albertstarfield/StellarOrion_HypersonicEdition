@@ -26,7 +26,7 @@ python3 run.py --help             # Show all CLI flags
 
 This project uses a hybrid architecture for running simulations:
 
-- **Ada/SPARK Binary:** Primary simulation engine (`stellarorion_program_proc/`). Compiled with Alire, formally verified with GNATprove (889 checks, 75% proved, 0 new failures). Handles all 21 CLI modes including validation, optimization, calibration, and integration tests.
+- **Ada/SPARK Binary:** Primary simulation engine (`stellarorion_program_proc/`). Compiled with Alire, formally verified with GNATprove (889 checks, 612 proved, 0 new failures). Handles all 21 CLI modes including validation, optimization, calibration, and integration tests.
 - **Docker:** Used exclusively for running the SPARTA DSMC simulation in a containerized Linux environment.
 - **Python Sidecar:** Native OS Python environment for PINN refinement (DeepXDE), PyFluent/PyAnsys integration, and GUI launcher. Supports NVIDIA CUDA, AMD ROCm, Apple Metal (MPS), Intel OneAPI/OpenCL, and specialized accelerators.
 
@@ -171,7 +171,7 @@ Three comment blocks added to `stellarorion_sparta.adb` documenting:
 
 ### GNATprove Level 4 Validation
 
-- 889 checks total, 666 proved (75%), 35 justified (4%), 54 unproved (6%)
+- 889 checks total: 612 proved by prover (69%), 35 justified (4%), 54 unproved (6%), 134 flow analysis checks (all pass)
 - All 54 unproved checks are pre-existing in other units (not in `stellarorion_sparta.adb`)
 - 0 new failures introduced by code changes
 
