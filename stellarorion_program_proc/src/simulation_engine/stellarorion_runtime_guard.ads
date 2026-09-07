@@ -81,7 +81,7 @@ package StellarOrion_Runtime_Guard is
 
    -- Test stubs for SELF_TEST_COVERAGE compliance
    -- [Citation: ISO 26262 §9.4.3, DO-178C §6.4.4]
-   procedure Test_Detect_P_Cores;
+   procedure Test_Detect_P_Cores with Pre => True, Post => True;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Check_Amaryllis_Idle_Automode", Test_Check_Amaryllis_Idle_Automode'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Check_And_Acquire_Lock", Test_Check_And_Acquire_Lock'Access);
