@@ -17,7 +17,7 @@ StellarOrion is a high-fidelity aerothermodynamic simulation and optimization su
 
 ```bash
 cd stellarorion_program_proc
-python3 run.py --self-test        # Run 13 verification tests
+python3 run.py --self-test        # Run 15 verification tests
 python3 run.py --test sample      # Run single SPARTA sample with 11-metric comparison
 python3 run.py --help             # Show all CLI flags
 ```
@@ -42,7 +42,7 @@ This project uses a hybrid architecture for running simulations:
 ```bash
 cd stellarorion_program_proc
 python3 run.py --help          # Show all CLI flags
-python3 run.py --self-test     # Run 13 verification tests
+python3 run.py --self-test     # Run 15 verification tests
 ```
 
 ---
@@ -145,7 +145,7 @@ Rapisarda (2023, MSc Thesis, Delft University of Technology) used Moss et al. (2
 2. **6th-order polynomial fit** — Smoothed residual scatter and extrapolated into the free-molecular flow regime (R²→1) (Sec 4.5.1, Fig 4.40, Table 4.13)
 3. **Wilmoth bridging function** — Fitted to polynomial-smoothed data via non-linear least-squares (R²=0.99138 per thesis text; Table 4.15 reports R²=0.9792 for the specific coefficient fit) (Sec 4.4.5, Fig 4.41, Table 4.15)
 
-**Contrast with our approach:** Both StellarOrion and Rapisarda use DSMC — it is the standard method for rarefied hypersonic flow (Bird, 1994). The difference is post-processing. We read raw per-element `f_1[3]` (kinetic energy flux, W/m²) from SPARTA surf dumps and apply no smoothing. The max-cell value is a single noisy point-sample. Negative values at later steps (e.g., −10,570 W/m² at step 2200) are DSMC statistical noise — inherent to any raw DSMC output. Rapisarda's 3-layer filtering (polynomial fit + Wilmoth bridging) removes this noise at the cost of introducing model-dependent smoothing. Three code comment blocks in `stellarorion_sparta.adb` (~lines 388, ~2057, ~2185) document this noise context and cite Rapisarda's methodology.
+**Contrast with our approach:** Both StellarOrion and Rapisarda use DSMC — it is the standard method for rarefied hypersonic flow (Bird, 1994). The difference is post-processing. We read raw per-element `f_1[3]` (kinetic energy flux, W/m²) from SPARTA surf dumps and apply no smoothing. The max-cell value is a single noisy point-sample. Negative values at later steps (e.g., −10,570 W/m² at step 2200) are DSMC statistical noise — inherent to any raw DSMC output. Rapisarda's 3-layer filtering (polynomial fit + Wilmoth bridging) removes this noise at the cost of introducing model-dependent smoothing. Three code comment blocks in `stellarorion_sparta.adb` (~lines 552, ~2522, ~2668) document this noise context and cite Rapisarda's methodology.
 
 See `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md` Section 9 for full comparison.
 
@@ -165,9 +165,9 @@ See `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_202
 
 Three comment blocks added to `stellarorion_sparta.adb` documenting:
 
-1. **~line 388**: DSMC noise context near surf compute/fix commands — why SPARTA "reduce max" on `f_1[3]` produces noise, Rapisarda's 3-layer strategy, future work options
-2. **~line 2057**: Per-element heat flux parsing near `Heat(Row) := V(4)` — noise source, negative values, Rapisarda's polynomial smoothing
-3. **~line 2185**: Per-element average vs Rapisarda's polynomial near `Avg_Heat_Flux := Heat_Sum / Float(N)` — 3 types of data (flight area-weighted, Rapisarda polynomial-smoothed, our raw per-element)
+1. **~line 552**: DSMC noise context near surf compute/fix commands — why SPARTA "reduce max" on `f_1[3]` produces noise, Rapisarda's 3-layer strategy, future work options
+2. **~line 2522**: Per-element heat flux parsing near `Heat(Row) := V(4)` (line 2562) — noise source, negative values, Rapisarda's polynomial smoothing
+3. **~line 2668**: Per-element average vs Rapisarda's polynomial near `Avg_Heat_Flux := Heat_Sum / Float(N)` (line 2696) — 3 types of data (flight area-weighted, Rapisarda polynomial-smoothed, our raw per-element)
 
 ### GNATprove Level 4 Validation
 
