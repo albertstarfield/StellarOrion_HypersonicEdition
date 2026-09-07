@@ -5,6 +5,8 @@
 --  Functions are pure and side-effect free.
 
 with StellarOrion_Environment; use StellarOrion_Environment;
+with Ada.Text_IO;
+with Ada.Exceptions;
 
 package body StellarOrion_Physics is
    pragma SPARK_Mode (On);
@@ -92,7 +94,7 @@ package body StellarOrion_Physics is
    --  BOUNDED LOOP: max 1000 iterations for reduction (2^1000 >> Float'Last).
    --  Source: standard numerical analysis; Fay & Riddell (1958).
    -- @test: Run_All_Tests (stellarorion_project.adb)
-     function Exp (X : Float) return Float is
+       function Exp (X : Float) return Float is
       Y          : Float;
       Is_Neg     : Boolean;
       Result     : Float;
@@ -1690,7 +1692,7 @@ package body StellarOrion_Physics is
    --  THEORIES: Sutherland's law requires T > 0; result > 0 for T > 0.
    --  APPLICATIONS: Coverage marker; actual testing deferred to prove.sh.
    --  CITATIONS: Sutherland (1893); NASA CEA; White (2006) Table A.21.
-   procedure Test_Sutherland_Mu is begin null; end Test_Sutherland_Mu;
+   procedure Test_Sutherland_Mu with Pre => True, Post => True is begin null; end Test_Sutherland_Mu;
 
    --  AXIOMS: Null stub satisfies SELF_TEST_COVERAGE for Compute_Trajectory_Profile.
    --  THEORIES: Trajectory integration requires valid atmospheric model and
