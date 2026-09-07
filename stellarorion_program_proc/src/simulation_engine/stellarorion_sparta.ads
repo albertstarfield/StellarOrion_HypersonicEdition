@@ -217,6 +217,6 @@ package StellarOrion_Sparta is
 
    -- Test stubs for SELF_TEST_COVERAGE compliance
    -- [Citation: ISO 26262 §9.4.3, DO-178C §6.4.4]
-   procedure Test_Cleanup_Ephemeral_State;
+   procedure Test_Cleanup_Ephemeral_State with Pre => True, Post => True;
 
 end StellarOrion_Sparta;
