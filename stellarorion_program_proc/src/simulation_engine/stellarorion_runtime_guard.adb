@@ -166,10 +166,16 @@ package body StellarOrion_Runtime_Guard is
    --             Ada 2012 RM §A.10 (Text_IO), GNAT.OS_Lib.Spawn.
    begin
       --  Execute command with stdout redirected to temp file
-      Spawn ("/bin/sh",
-             (1 => new String'("-c"),
-              2 => new String'(Shell_Cmd)),
-             Success);
+      --  DYNAMIC_ALLOCATION fix: preallocate Spawn arguments on stack.
+      --  [Ref: code-quality.md §Conservative Safe Fallback]
+      declare
+         Arg_C    : aliased constant String := "-c";
+         Arg_Cmd  : aliased constant String := Shell_Cmd;
+         Arg_List : GNAT.OS_Lib.Argument_List (1 .. 2) :=
+           (Arg_C'Unrestricted_Access, Arg_Cmd'Unrestricted_Access);
+      begin
+         Spawn ("/bin/sh", Arg_List, Success);
+      end;
 
       --  Read the temp file
       begin
@@ -288,13 +294,19 @@ package body StellarOrion_Runtime_Guard is
    --                "colima start" as fallback. Returns Boolean at each stage.
    --  CITATIONS: Docker CLI reference — docker-info(1), docker-version(1);
    --             Colima documentation — colima-start(1).
-    begin
+     begin
       Put_Line ("[DOCKER] Pre-flight Docker check ...");
       --  Use /bin/sh -c to find docker in user PATH (Spawn alone may miss /opt/homebrew/bin)
-      Spawn ("/bin/sh",
-             (1 => new String'("-c"),
-              2 => new String'("docker --version")),
-             Success);
+      --  DYNAMIC_ALLOCATION fix: preallocate Spawn arguments on stack.
+      --  [Ref: code-quality.md §Conservative Safe Fallback]
+      declare
+         Arg_C     : aliased constant String := "-c";
+         Arg_Docker_Ver : aliased constant String := "docker --version";
+         Arg_List_Ver : GNAT.OS_Lib.Argument_List (1 .. 2) :=
+           (Arg_C'Unrestricted_Access, Arg_Docker_Ver'Unrestricted_Access);
+      begin
+         Spawn ("/bin/sh", Arg_List_Ver, Success);
+      end;
       if not Success then
          Put_Line ("[DOCKER] WARNING: Docker not available on PATH.");
          Put_Line ("[DOCKER] SPARTA simulation requires Docker.");
@@ -302,10 +314,15 @@ package body StellarOrion_Runtime_Guard is
       end if;
 
       --  Try 'docker info' to verify daemon is running
-      Spawn ("/bin/sh",
-             (1 => new String'("-c"),
-              2 => new String'("docker info")),
-             Success);
+      --  DYNAMIC_ALLOCATION fix: preallocate Spawn arguments on stack.
+      declare
+         Arg_C      : aliased constant String := "-c";
+         Arg_Docker_Info : aliased constant String := "docker info";
+         Arg_List_Info : GNAT.OS_Lib.Argument_List (1 .. 2) :=
+           (Arg_C'Unrestricted_Access, Arg_Docker_Info'Unrestricted_Access);
+      begin
+         Spawn ("/bin/sh", Arg_List_Info, Success);
+      end;
       if Success then
          Put_Line ("[DOCKER] Docker daemon is running.");
          return True;
@@ -313,10 +330,15 @@ package body StellarOrion_Runtime_Guard is
 
       --  Docker binary exists but daemon not running; try colima
       Put_Line ("[DOCKER] Docker daemon not responding. Trying colima ...");
-      Spawn ("/bin/sh",
-             (1 => new String'("-c"),
-              2 => new String'("colima start")),
-             Success);
+      --  DYNAMIC_ALLOCATION fix: preallocate Spawn arguments on stack.
+      declare
+         Arg_C         : aliased constant String := "-c";
+         Arg_Colima    : aliased constant String := "colima start";
+         Arg_List_Start : GNAT.OS_Lib.Argument_List (1 .. 2) :=
+           (Arg_C'Unrestricted_Access, Arg_Colima'Unrestricted_Access);
+      begin
+         Spawn ("/bin/sh", Arg_List_Start, Success);
+      end;
       if Success then
          Put_Line ("[DOCKER] Colima started successfully.");
          return True;
@@ -372,10 +394,15 @@ package body StellarOrion_Runtime_Guard is
          Close (Script_File);
 
           --  Make executable (chmod 0o755)
-          GNAT.OS_Lib.Spawn
-            ("chmod",
-             (new String'("755"), new String'(Script_Name)),
-             Chmod_Success);
+          --  DYNAMIC_ALLOCATION fix: preallocate Spawn arguments on stack.
+          declare
+             Arg_755        : aliased constant String := "755";
+             Arg_Script     : aliased constant String := Script_Name;
+             Arg_Chmod_List : GNAT.OS_Lib.Argument_List (1 .. 2) :=
+               (Arg_755'Unrestricted_Access, Arg_Script'Unrestricted_Access);
+          begin
+             GNAT.OS_Lib.Spawn ("chmod", Arg_Chmod_List, Chmod_Success);
+          end;
          Put_Line ("[IDLE] Resume script: " & Script_Name);
       end;
    exception
