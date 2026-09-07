@@ -907,12 +907,16 @@ package body StellarOrion_Project is
       --  Stop Colima/Docker daemon if requested
       if Stop_Colima then
          declare
-            Colima_Stop_OK : Boolean;
+            --  DYNAMIC_ALLOCATION fix: preallocate Spawn arguments on stack
+            --  instead of using new String'(...) which allocates on the heap.
+            --  [Ref: code-quality.md §Conservative Safe Fallback]
+            Colima_Stop_Arg : aliased constant String := "stop";
+            Colima_Args     : GNAT.OS_Lib.Argument_List (1 .. 1) :=
+              (1 => Colima_Stop_Arg'Unrestricted_Access);
+            Colima_Stop_OK  : Boolean;
          begin
             Put_Line ("[CLEANUP] Stopping Colima Docker daemon ...");
-            Spawn ("colima",
-                   (1 => new String'("stop")),
-                   Colima_Stop_OK);
+            Spawn ("colima", Colima_Args, Colima_Stop_OK);
             if Colima_Stop_OK then
                Put_Line ("[CLEANUP] Colima stopped.");
             else

@@ -451,19 +451,26 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- THEORIES: PINN trains physics-informed neural network on SPARTA data; produces 3-way comparison vs IRVE-3.
    -- APPLICATIONS: Spawns python3 src/python/pinn_test.py with steps and solver arguments via GNAT.OS_Lib.Spawn.
    -- CITATIONS: [Raissi et al. 2019, Physics-Informed Neural Networks; DeepXDE library; PyTorch]
+      --  Preallocated args for Spawn (zero heap allocation).
+      Arg_Script : aliased constant String := "src/python/pinn_test.py";
+      Arg_Steps  : aliased constant String := "--steps";
+      Arg_StepV  : aliased constant String := Steps_Arg;
+      Arg_Solver : aliased constant String := "--solver";
+      Arg_Sparta : aliased constant String := "sparta";
+      Pinn_Args  : GNAT.OS_Lib.Argument_List (1 .. 5) :=
+        (Arg_Script'Unrestricted_Access,
+         Arg_Steps'Unrestricted_Access,
+         Arg_StepV'Unrestricted_Access,
+         Arg_Solver'Unrestricted_Access,
+         Arg_Sparta'Unrestricted_Access);
+      -- [Citation: code-quality.md — DYNAMIC_ALLOCATION fix: preallocated aliased strings]
    begin
       Write_Status (STATUS_DIR, "pinn_calibration", Status_Running, 0.0);
       Put_Line ("[TEST:pinn_calibration] PINN calibration test");
       Put_Line ("[TEST] Spawning standalone PINN sidecar ...");
       Put_Line ("[TEST] Steps :" & Steps_Arg);
 
-      Spawn ("python3",
-             (1 => new String'("src/python/pinn_test.py"),
-              2 => new String'("--steps"),
-              3 => new String'(Steps_Arg),
-              4 => new String'("--solver"),
-              5 => new String'("sparta")),
-             Success);
+      Spawn ("python3", Pinn_Args, Success);
 
       if Success then
          Put_Line ("[TEST:pinn_calibration] PINN calibration completed.");
@@ -530,35 +537,58 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Put_Line ("[TEST:pyfluent] Spawning standalone PyFluent sidecar ...");
 
       --  Spawn src/python/pyfluent_test.py --ssh-host ... --ssh-user ...
-      if SSH_Key'Length > 0 then
-         Spawn ("python3",
-                (1 => new String'("src/python/pyfluent_test.py"),
-                 2 => new String'("--ssh-host"),
-                 3 => new String'(SSH_Host),
-                 4 => new String'("--ssh-user"),
-                 5 => new String'(SSH_User),
-                 6 => new String'("--ssh-key"),
-                 7 => new String'(SSH_Key)),
-                Success);
-      elsif SSH_Pass'Length > 0 then
-         Spawn ("python3",
-                (1 => new String'("src/python/pyfluent_test.py"),
-                 2 => new String'("--ssh-host"),
-                 3 => new String'(SSH_Host),
-                 4 => new String'("--ssh-user"),
-                 5 => new String'(SSH_User),
-                 6 => new String'("--ssh-pass"),
-                 7 => new String'(SSH_Pass)),
-                Success);
-      else
-         Spawn ("python3",
-                (1 => new String'("src/python/pyfluent_test.py"),
-                 2 => new String'("--ssh-host"),
-                 3 => new String'(SSH_Host),
-                 4 => new String'("--ssh-user"),
-                 5 => new String'(SSH_User)),
-                Success);
-      end if;
+      --  Preallocated args for Spawn (zero heap allocation).
+      declare
+         Arg_Script : aliased constant String := "src/python/pyfluent_test.py";
+         Arg_Host   : aliased String := SSH_Host;
+         Arg_User   : aliased String := SSH_User;
+         Arg_HFlag  : aliased constant String := "--ssh-host";
+         Arg_UFlag  : aliased constant String := "--ssh-user";
+         Arg_KFlag  : aliased constant String := "--ssh-key";
+         Arg_Key    : aliased String := SSH_Key;
+         Arg_PFlag  : aliased constant String := "--ssh-pass";
+         Arg_Pass   : aliased String := SSH_Pass;
+         -- [Citation: code-quality.md — DYNAMIC_ALLOCATION fix: preallocated aliased strings]
+      begin
+         if SSH_Key'Length > 0 then
+            declare
+               Pf_Args : GNAT.OS_Lib.Argument_List (1 .. 7) :=
+                 (Arg_Script'Unrestricted_Access,
+                  Arg_HFlag'Unrestricted_Access,
+                  Arg_Host'Unrestricted_Access,
+                  Arg_UFlag'Unrestricted_Access,
+                  Arg_User'Unrestricted_Access,
+                  Arg_KFlag'Unrestricted_Access,
+                  Arg_Key'Unrestricted_Access);
+            begin
+               Spawn ("python3", Pf_Args, Success);
+            end;
+         elsif SSH_Pass'Length > 0 then
+            declare
+               Pf_Args : GNAT.OS_Lib.Argument_List (1 .. 7) :=
+                 (Arg_Script'Unrestricted_Access,
+                  Arg_HFlag'Unrestricted_Access,
+                  Arg_Host'Unrestricted_Access,
+                  Arg_UFlag'Unrestricted_Access,
+                  Arg_User'Unrestricted_Access,
+                  Arg_PFlag'Unrestricted_Access,
+                  Arg_Pass'Unrestricted_Access);
+            begin
+               Spawn ("python3", Pf_Args, Success);
+            end;
+         else
+            declare
+               Pf_Args : GNAT.OS_Lib.Argument_List (1 .. 5) :=
+                 (Arg_Script'Unrestricted_Access,
+                  Arg_HFlag'Unrestricted_Access,
+                  Arg_Host'Unrestricted_Access,
+                  Arg_UFlag'Unrestricted_Access,
+                  Arg_User'Unrestricted_Access);
+            begin
+               Spawn ("python3", Pf_Args, Success);
+            end;
+         end if;
+      end;
 
       if Success then
          Put_Line ("[TEST:pyfluent] PyFluent integration test PASSED.");
@@ -588,9 +618,15 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Put_Line ("[TEST] Spawning standalone PyAnsys sidecar ...");
 
       --  Spawn src/python/pyansys_test.py
-      Spawn ("python3",
-             (1 => new String'("src/python/pyansys_test.py")),
-             Success);
+      --  Preallocated arg for Spawn (zero heap allocation).
+      declare
+         Arg_Script : aliased constant String := "src/python/pyansys_test.py";
+         Ans_Args   : GNAT.OS_Lib.Argument_List (1 .. 1) :=
+           (1 => Arg_Script'Unrestricted_Access);
+         -- [Citation: code-quality.md — DYNAMIC_ALLOCATION fix: preallocated aliased strings]
+      begin
+         Spawn ("python3", Ans_Args, Success);
+      end;
 
       if Success then
          Put_Line ("[TEST:pyansys] PyAnsys local integration test PASSED.");
@@ -735,18 +771,31 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Put_Line ("[TEST] Running OpenFOAM Docker container ...");
 
       --  Run OpenFOAM Docker (mirrors Python: docker run --rm -v ...)
-      Spawn ("docker",
-             (1 => new String'("run"),
-              2 => new String'("--rm"),
-              3 => new String'("-v"),
-              4 => new String'(Test_Dir & ":/workspace"),
-              5 => new String'("openfoam-hysp"),
-              6 => new String'("bash"),
-              7 => new String'("-c"),
-              8 => new String'(
-                "source /usr/lib/openfoam/openfoam2312/etc/bashrc"
-                & " && cd /workspace && blockMesh")),
-             Success);
+      --  Preallocated args for Spawn (zero heap allocation).
+      declare
+         Arg_Run   : aliased constant String := "run";
+         Arg_Rm    : aliased constant String := "--rm";
+         Arg_V     : aliased constant String := "-v";
+         Arg_Vol   : aliased constant String := Test_Dir & ":/workspace";
+         Arg_Image : aliased constant String := "openfoam-hysp";
+         Arg_Bash  : aliased constant String := "bash";
+         Arg_C     : aliased constant String := "-c";
+         Arg_Cmd   : aliased constant String :=
+           "source /usr/lib/openfoam/openfoam2312/etc/bashrc"
+           & " && cd /workspace && blockMesh";
+         Of_Args   : GNAT.OS_Lib.Argument_List (1 .. 8) :=
+           (Arg_Run'Unrestricted_Access,
+            Arg_Rm'Unrestricted_Access,
+            Arg_V'Unrestricted_Access,
+            Arg_Vol'Unrestricted_Access,
+            Arg_Image'Unrestricted_Access,
+            Arg_Bash'Unrestricted_Access,
+            Arg_C'Unrestricted_Access,
+            Arg_Cmd'Unrestricted_Access);
+         -- [Citation: code-quality.md — DYNAMIC_ALLOCATION fix: preallocated aliased strings]
+      begin
+         Spawn ("docker", Of_Args, Success);
+      end;
 
       if Success then
          Put_Line ("[TEST:openfoam] OpenFOAM integration test PASSED.");

@@ -8,7 +8,7 @@ Phases:
   0. Boot -- locale check, PID lockfile, optional clean
   1. Python Venv Bootstrap -- create venv, install deps, hash-gated reinstall
   2. Python Static Analysis -- pyrefly, ruff, crosshair
-  3. Ada/SPARK Build -- alr with, alr build, sabotage_verifier, gnatprove
+  3. Ada/SPARK Build -- alr with, alr build, gnatcov, sabotage_verifier, gnatprove
   4. Launch -- run the compiled binary (or test/validate modes)
 
 Exit Codes:
@@ -751,6 +751,35 @@ def _phase3_ada_build(verbose: bool) -> None:
     step_result(ok, "build successful", elapsed, verbose, stdout, stderr)
     if not ok:
         fatal("alr build failed -- compilation errors in Ada source", 2)
+
+    # -- gnatcov (coverage instrumentation check, optional)
+    #  [Citation: GNAT Pro gnatcov — https://docs.adacore.com/gnatcov-docs/]
+    #  gnatcov provides statement/decision/branch coverage for Ada/SPARK.
+    #  It is optional: the pipeline continues even if gnatcov is not installed.
+    t = step_start("gnatcov coverage check")
+    ok, stdout, stderr = _run(
+        ["alr", "exec", "--", "gnatcov", "--version"],
+        cwd=_PROJECT_ROOT,
+        verbose=verbose,
+        timeout=30,
+    )
+    elapsed = time.monotonic() - t
+    if ok:
+        # gnatcov is available — run statement-level coverage on the project
+        step_result(True, "gnatcov available", elapsed, verbose, stdout, stderr)
+        t2 = step_start("gnatcov coverage analysis")
+        ok2, stdout2, stderr2 = _run(
+            ["alr", "exec", "--", "gnatcov", "--level=stmt",
+             "stellarorion_program.gpr"],
+            cwd=_PROJECT_ROOT,
+            verbose=verbose,
+            timeout=600,
+        )
+        elapsed2 = time.monotonic() - t2
+        step_result(ok2, "coverage analysis complete", elapsed2, verbose, stdout2, stderr2)
+        # Non-fatal: coverage failure does not block the build
+    else:
+        step_result(True, "gnatcov not installed (optional, skipping)", elapsed, verbose, stdout, stderr)
 
     # -- sabotage_verifier (pre-gnatprove audit)
     t = step_start("sabotage_verifier pre-audit")
