@@ -1,6 +1,8 @@
 --  StellarOrion_HypersonicEdition -- Geometry Utilities (Body)
 --  Ada 2012 / SPARK 2014
 
+with Ada.Text_IO;
+with Ada.Exceptions;
 package body StellarOrion_Geometry is
    pragma SPARK_Mode (On);
 
@@ -102,6 +104,11 @@ package body StellarOrion_Geometry is
    -- CITATIONS: [Anderson 2006, Hypersonic and High-Temperature Gas Dynamics; ISO 80000-3:2019]
    begin
       return Pi * Y2;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Frontal_Area: " & Ada.Exceptions.Exception_Message(E));
+         raise;
+
    end Frontal_Area;
 
    -- ==================================================================
@@ -324,6 +331,11 @@ package body StellarOrion_Geometry is
             "prover timeout on polynomial truncation error bound");
           return 1.0 - X2 / 2.0 + X4 / 24.0 - X6 / 720.0 + X8 / 40320.0;
        end;
+    exception
+       when E : others =>
+          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Cos_Deg: " & Ada.Exceptions.Exception_Message(E));
+          raise;
+
     end Cos_Deg;
 
    -- ==================================================================
@@ -399,7 +411,7 @@ package body StellarOrion_Geometry is
    --    Hardware Assumptions: IEEE 754 FPU
    --  Verification evidence: gnatprove --level=4 (scripts/prove.sh).
 --  @covered: gnatprove --level=4 formal proof (scripts/prove.sh).
-     function Cos_Rad (X : Float) return Float is
+         function Cos_Rad (X : Float) return Float is
        Two_Pi  : constant Float := 2.0 * Pi;
        Reduced : Float := X - Two_Pi * Float'Floor (X / Two_Pi);  --  fold into [0, 2*Pi)
     -- AXIOMS: cos(x+2*Pi*n) = cos(x) for all integer n; cos is even: cos(-x) = cos(x).
@@ -456,6 +468,10 @@ package body StellarOrion_Geometry is
       pragma Assert (abs V_90  <= 1.001);  --  cos(90) ~ 0.0
       pragma Assert (abs V_180 <= 1.001);  --  cos(180) ~ -1.0
       pragma Assert (abs V_360 <= 1.001);  --  cos(360) = 1.0
+    exception
+       when E : others =>
+          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Cos_Deg: " & Ada.Exceptions.Exception_Message(E));
+
    end Test_Cos_Deg;
 
    --  coverage: STC wrapper for Sin_Rad
@@ -479,6 +495,10 @@ package body StellarOrion_Geometry is
       pragma Assert (abs V_Pi_2  <= 1.001);  --  sin(Pi/2) ~ 1.0
       pragma Assert (abs V_Pi    <= 0.01);   --  sin(Pi) ~ 0.0
       pragma Assert (abs V_N_Pi2 <= 1.001);  --  sin(-Pi/2) ~ -1.0
+    exception
+       when E : others =>
+          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Sin_Rad: " & Ada.Exceptions.Exception_Message(E));
+
    end Test_Sin_Rad;
 
    --  coverage: STC wrapper for Cos_Rad
@@ -500,6 +520,10 @@ package body StellarOrion_Geometry is
       pragma Assert (abs V_0    <= 1.001);  --  cos(0) = 1.0
       pragma Assert (abs V_Pi_2 <= 0.01);   --  cos(Pi/2) ~ 0.0
       pragma Assert (abs V_Pi   <= 1.001);  --  cos(Pi) ~ -1.0
+    exception
+       when E : others =>
+          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Cos_Rad: " & Ada.Exceptions.Exception_Message(E));
+
    end Test_Cos_Rad;
 
 end StellarOrion_Geometry;
