@@ -121,6 +121,15 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       -- Space Complexity: O(1) stack + O(n) heap if allocating
       -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
       function Is_Stale (WS : Watchdog_State) return Boolean is -- nosec
+      --  AXIOMS: A monitor is stale if the elapsed time since its last
+      --    heartbeat exceeds the configured Timeout; time is monotonically
+      --    non-decreasing (Now >= Last_Heartbeat assumed by caller).
+      --  THEORIES: The grace ladder degrades Healthy to Degraded on first
+      --    staleness, then Failed on second consecutive staleness; failure
+      --    counters grow monotonically and saturate at Max_Audit_Count.
+      --  APPLICATIONS: Nested expression function Is_Stale classifies each
+      --    monitor by comparing Now against Last_Heartbeat + Timeout.
+      --  CITATIONS: Ada RM 9.6 (duration arithmetic); CWE-672 (timeout)
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
@@ -128,15 +137,16 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
         (if Now >= WS.Last_Heartbeat
          then Now - WS.Last_Heartbeat > WS.Timeout
          else False);
-   --  AXIOMS: A monitor is stale if the elapsed time since its last
-   --    heartbeat exceeds the configured Timeout; time is monotonically
-   --    non-decreasing (Now >= Last_Heartbeat assumed by caller).
-   --  THEORIES: The grace ladder degrades Healthy to Degraded on first
-   --    staleness, then Failed on second consecutive staleness; failure
-   --    counters grow monotonically and saturate at Max_Audit_Count.
-   --  APPLICATIONS: Nested expression function Is_Stale classifies each  --  Safe_Fallback: comment reference (Sabotage §5.1)
-   --    watchdog; the main body applies the two-step grace ladder with
-   --    saturating Failure_Count increment.
+   --  AXIOMS: Evaluate applies the dual-watchdog grace ladder each tick:
+   --    first staleness degrades Healthy→Degraded, second consecutive
+   --    staleness fails Degraded→Failed; monitors are cross-checked for
+   --    mutual consistency and recovery advances through stages.
+   --  THEORIES: The grace ladder is monotonic — Health_Status can only
+   --    worsen within a single Evaluate call; Failure_Count saturates
+   --    at Max_Audit_Count to prevent overflow (B5 gate).
+   --  APPLICATIONS: Combines Is_Stale local classification with
+   --    two-step grace ladder, saturating Failure_Count increment,
+   --    and cross-check logic for mutual supervision.
    --  CITATIONS: [Citation: Ada Reference Manual, RM 9.5.4 "Timing
    --    Events"]; [Citation: timeout/deadlock detection theory:
    --    Laprie, "Dependability: Basic Concepts and Terminology,"
