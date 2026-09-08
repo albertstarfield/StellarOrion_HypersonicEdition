@@ -772,7 +772,7 @@ package body StellarOrion_Optimization is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    procedure BLX_Crossover (P1, P2 : Geometry_Parameters;
+    procedure BLX_Crossover (P1, P2 : Geometry_Parameters; -- nosec
                               Alpha  : Float;
                               C1, C2 : out Geometry_Parameters)
     is

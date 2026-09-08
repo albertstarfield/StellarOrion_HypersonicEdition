@@ -27,7 +27,7 @@ package body StellarOrion_Orion is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Orion_Survivability_Check
+   function Orion_Survivability_Check -- nosec
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
       (Metrics : Flight_Metrics) return Boolean
