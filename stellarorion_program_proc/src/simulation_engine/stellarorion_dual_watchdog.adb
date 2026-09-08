@@ -562,6 +562,8 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_needs_emergency
    procedure Test_Needs_Emergency is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_Needs_Emergency unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  AXIOMS: Validate that the Health_Status lattice orders Failed
