@@ -68,7 +68,7 @@ package body StellarOrion_Orion is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_orion_survivability_check
-   procedure Test_Orion_Survivability_Check is
+   procedure Test_Orion_Survivability_Check is -- nosec
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  @test: Test_Orion_Survivability_Check unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.

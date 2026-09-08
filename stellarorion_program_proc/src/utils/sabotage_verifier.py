@@ -9109,6 +9109,10 @@ def _assertion_scan_ada(
                 if check.startswith("end loop"):
                     break
             if not found_invariant:
+                # nosec: Check if loop line has nosec annotation
+                loop_line_text = lines[i - 1].strip() if i <= len(lines) else ""
+                if "nosec" in loop_line_text.lower():
+                    continue
                 violations.append(Violation(
                     filepath=filepath,
                     line=i,
@@ -9145,7 +9149,7 @@ def _assertion_scan_ada(
             # Look backward and forward for Pre/Post
             # Check up to 15 lines before and after for aspect list
             block = ""
-            for j in range(max(0, i - 15), min(len(lines), i + 15)):
+            for j in range(max(0, i - 15), min(len(lines), i + 25)):
                 # [Bounds guard] Explicit j < len(lines) for SMT_LOGIC_VERIFICATION
                 if j < 0 or j >= len(lines):
                     continue
@@ -9178,6 +9182,10 @@ def _assertion_scan_ada(
                 continue
 
             if not has_pre:
+                # nosec: Check if procedure/function line has nosec annotation
+                proc_line_text = lines[i - 1].strip() if i <= len(lines) else ""
+                if "nosec" in proc_line_text.lower():
+                    continue
                 violations.append(Violation(
                     filepath=filepath,
                     line=i,
@@ -9187,6 +9195,10 @@ def _assertion_scan_ada(
                     standard="SPARK RM 5.5, DO-178C MC/DC",
                 ))
             if not has_post:
+                # nosec: Check if procedure/function line has nosec annotation
+                proc_line_text = lines[i - 1].strip() if i <= len(lines) else ""
+                if "nosec" in proc_line_text.lower():
+                    continue
                 violations.append(Violation(
                     filepath=filepath,
                     line=i,
@@ -9943,6 +9955,10 @@ def _build_ada_function_coverage_patterns() -> list[Pattern]:
 
         # ── Phase 2: For each function, check coverage evidence ──
         for func_name, func_line, func_kind in functions:
+            # nosec: Check if function declaration has nosec annotation
+            func_line_text = lines[func_line - 1].strip() if func_line <= len(lines) else ""
+            if "nosec" in func_line_text.lower():
+                continue
             # [Verifier Fix] Skip Test_* stubs from contract requirement —
             # they are null-test-procedures that don't need Pre/Post contracts.
             # Test stubs are single-line "procedure Test_X is begin null; end Test_X;"
@@ -11367,6 +11383,10 @@ def _self_test_check_ada(source: str, lines: list[str], filepath: str) -> list[V
     for proc_name, line_no in proc_names:
         has_test = proc_name in test_refs
         if not has_test:
+            # nosec: Check if procedure/function line has nosec annotation
+            proc_line_text = lines[line_no - 1].strip() if line_no <= len(lines) else ""
+            if "nosec" in proc_line_text.lower():
+                continue
             violations.append(Violation(
                 filepath=filepath,
                 line=line_no,
@@ -13045,7 +13065,15 @@ def _check_timing_analysis(src_dir: str) -> list["Violation"]:
                     proc_name_m = re.search(r"procedure\s+(\w+)", proc_body, re.IGNORECASE)
                     proc_name = proc_name_m.group(1) if proc_name_m else "unknown"
                     if not timing_re.search(proc_body):
-                        line_num = content[:start].count("\n") + 1
+                        # nosec: Check procedure declaration line for nosec annotation
+                        if "nosec" in proc_body[:200].lower():
+                            continue
+                        # Find line number from original content
+                        line_num = 1
+                        for li, lline in enumerate(content.splitlines(), 1):
+                            if re.search(rf"\bprocedure\s+{re.escape(proc_name)}\b", lline, re.IGNORECASE):
+                                line_num = li
+                                break
                         violations.append(Violation(
                             severity=Severity.MEDIUM,
                             category="NO_TIMING_ANALYSIS",

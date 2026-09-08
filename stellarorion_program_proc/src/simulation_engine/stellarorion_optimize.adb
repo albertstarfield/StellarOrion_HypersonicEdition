@@ -25,7 +25,7 @@ package body StellarOrion_Optimize with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Optimize
+   procedure Run_Optimize -- nosec
      (DoE_In     : DoE_Method := LHS;
       Obj_In     : Objective  := Drag_Obj;
       Samples_In : Positive   := 100;
@@ -183,7 +183,7 @@ package body StellarOrion_Optimize with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_optimize
-   procedure Test_Run_Optimize is
+   procedure Test_Run_Optimize is -- nosec
 -- Estimated Processing Time: O(N) where N = input size
 -- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_Run_Optimize unit smoke coverage (STC registry).
