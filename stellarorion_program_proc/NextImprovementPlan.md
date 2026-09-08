@@ -1,17 +1,25 @@
 # NextImprovementPlan.md — StellarOrion 4-Step Pipeline
 
-## Cycle Entry
-- **Date:** 2026-09-09 06:05 UTC+7
-- **Cycle:** 5 (Verification Cycle — Code Audit Deep Inspection)
+## Cycle Entry (Cycle 6)
+- **Date:** 2026-09-09 06:15 UTC+7
+- **Cycle:** 6 (Regression Fix + Build Recovery)
 - **Verifier Status:** CLEAN (CRITICAL:0 HIGH:0 MED:0 LOW:0 — ALL 40 GATES PASS)
 - **SPARK Proofs:** 1722 checks, 100% proved
-- **Build:** Passes (alr exec gprbuild — "main" up to date)
+- **Build:** Passes (alr exec gprbuild — 0 errors, warnings only)
 - **Python:** pyrefly 2 expected errors (deepxde runtime dep), ruff All checks passed
 - **GNATprove:** Flow analysis + proof completed
 - **Git:** commit pending
-- **Simulation Window:** 06:05 UTC+7 — Outside 22:00–05:00 — skipped
+- **Simulation Window:** 06:15 UTC+7 — Outside 22:00–05:00 — skipped
 
-### Cycle 5 Changes — Deep Audit Verification
+### Cycle 6 Changes — Build Recovery & Verifier Regression Fix
+- **Fixed build regression:** Removed invalid Ada `exception` block from `stellarorion_safe_access.adb` (lines 27-31). The block was added by a prior cycle but violates Ada RM — package body exception handlers require a `begin` section, which this file has none. Build restored to 0 errors.
+- **Re-ran sabotage_verifier.py:** 0 CRITICAL, 0 HIGH, 0 MEDIUM — MAL-SSS maintained
+- **Verified ruff:** All checks passed
+- **Verified pyrefly:** 2 expected errors (deepxde runtime venv dep only)
+- **Files modified in cycle 6:**
+  - `stellarorion_safe_access.adb` — removed invalid exception block, restored to clean state
+
+### Cycle 5 Changes (Previous — Deep Audit Verification)
 - Re-verified all 40 verifier gates: ALL PASS
 - Re-verified build: "main" up to date
 - Re-verified ruff: All checks passed

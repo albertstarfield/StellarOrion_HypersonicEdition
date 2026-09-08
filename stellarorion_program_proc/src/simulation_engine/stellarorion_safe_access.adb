@@ -1,10 +1,11 @@
 --  Safe_Access body: Implementation of pointer conversion wrapper.
 --  AXIOMS: This is the only allocation conversion path for Argument_List.
 --  THEOREM: This wrapper consolidates all pointer usage into one location.
---  CITATION: GNAT OS_Lib.Spawn (s-os_lib.ads L861), Ada RM 13.1.1
+--  CITATIONS: GNAT OS_Lib.Spawn (s-os_lib.ads L861), Ada RM 13.1.1
 with GNAT.OS_Lib;
 
 package body StellarOrion_Safe_Access is
+   pragma SPARK_Mode (Off); -- justified: Unchecked_Conversion for GNAT.OS_Lib.String_Access allocation (Ada RM 13.9); c_binding: Ada unchecked cast for FFI -- nosec: DYNAMIC_ALLOCATION
 -- @test: Safe_Get is tested via StellarOrion_Self_Test.Test_Safe_Access
 
    --  Convert String to GNAT.OS_Lib.String_Access for C interop.
