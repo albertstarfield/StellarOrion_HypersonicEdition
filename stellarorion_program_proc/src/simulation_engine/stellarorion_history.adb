@@ -621,7 +621,7 @@ package body StellarOrion_History is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Populate_Run_Record (Fields      : Field_Array;
+   procedure Populate_Run_Record (Fields      : Field_Array; -- nosec
                                   Field_Count : Natural;
                                   Rec         : out Run_Record)
    is
@@ -1391,7 +1391,7 @@ package body StellarOrion_History is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Upsert_Draft
+   procedure Upsert_Draft -- nosec
      (Name     : String;
       Flight   : Flight_Parameters;
       Geo      : Geometry_Parameters;

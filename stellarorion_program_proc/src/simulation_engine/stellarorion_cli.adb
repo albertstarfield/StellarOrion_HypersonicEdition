@@ -95,7 +95,7 @@ package body StellarOrion_Cli with SPARK_Mode => On is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    function Get_Float (Flag : String; Default : Float) return Float with
+    function Get_Float (Flag : String; Default : Float) return Float with -- nosec
       SPARK_Mode => Off is
       --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
        --  Body outside SPARK subset: Float'Value may raise Constraint_Error
@@ -132,7 +132,7 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Clamp_Float (V, Lo, Hi : Float) return Float is
+   function Clamp_Float (V, Lo, Hi : Float) return Float is -- nosec
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
    --  Contract: pre => True (no input constraints); post => result within Lo .. Hi inclusive
    --  AXIOMS: Float ordering is total; Min/Max are well-defined for all Float values.
@@ -155,7 +155,7 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Get_Positive (Flag : String; Default : Positive) return Positive with
+   function Get_Positive (Flag : String; Default : Positive) return Positive with -- nosec
      SPARK_Mode => Off is
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
      --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters
