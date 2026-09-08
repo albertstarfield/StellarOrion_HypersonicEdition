@@ -7,6 +7,7 @@ with Ada.Directories;         use Ada.Directories;
 with Ada.Numerics;
 with Ada.Exceptions;          use Ada.Exceptions;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with StellarOrion_Safe_Access; use StellarOrion_Safe_Access;
 with StellarOrion_Environment; use StellarOrion_Environment;
 with StellarOrion_Physics;    use StellarOrion_Physics;
 with StellarOrion_Sparta;       use StellarOrion_Sparta;
