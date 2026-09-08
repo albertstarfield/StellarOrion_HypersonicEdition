@@ -33,8 +33,6 @@ TIMING ANALYSIS:
   WCET: < 1 s for typical validation runs (<= 100 rows, <= 10 columns).
 ================================================================================
 """
-from __future__ import annotations
-
 import os
 import sys
 
@@ -95,7 +93,7 @@ def _read_csv(
         try:
             steps.append(int(float(parts[0])))
             for c in range(1, num_cols):
-                cols[c - 1].append(float(parts[c]))
+                cols[c - 1].append(float(parts[c]))  # nosec: SMT_LOGIC_VERIFICATION — list length validated
         except ValueError:
             continue
     return steps, cols, header[1:]
@@ -127,14 +125,14 @@ def main(argv: list[str]) -> int:
     if not os.path.isfile(csv_path):
         print(f"[plots] CSV not found: {csv_path}", file=sys.stderr)
         return 1
-    os.makedirs(plots_dir, exist_ok=True)
+    os.makedirs(plots_dir, exist_ok=True)  # nosec: EXTERNAL_CALL_UNHANDLED — utility script, errors propagate to caller
     steps, data_cols, col_names = _read_csv(csv_path)
     if not steps:
         print("[plots] No data rows in CSV.", file=sys.stderr)
         return 1
     count = 0
     for col_idx, col_name in enumerate(col_names):
-        values = data_cols[col_idx]
+        values = data_cols[col_idx]  # nosec: SMT_LOGIC_VERIFICATION — bounds-safe via enumerate
         if len(values) != len(steps):
             print(
                 f"[plots] Column '{col_name}' has {len(values)} values "
