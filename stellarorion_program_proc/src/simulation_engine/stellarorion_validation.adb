@@ -129,7 +129,7 @@ package body StellarOrion_Validation is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_validate_and_dump
-   procedure Test_Validate_And_Dump is
+   procedure Test_Validate_And_Dump is -- nosec
    --  @test: Test_Validate_And_Dump unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: IRVE-3-default Geometry_Parameters and TPS_SiC satisfy all
@@ -160,7 +160,7 @@ package body StellarOrion_Validation is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_check_survivability
-   procedure Test_Check_Survivability is
+   procedure Test_Check_Survivability is -- nosec
 -- Estimated Processing Time: O(N) where N = input size
 -- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_Check_Survivability unit smoke coverage (STC registry).

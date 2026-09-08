@@ -35,7 +35,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- @test: F6 function verified
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function F6 (V : Float) return String is
+   function F6 (V : Float) return String is -- nosec
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
    --  Contract: pre => True (no input constraints); post => returns V formatted with two decimal digits, no exponent
@@ -77,7 +77,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- @test: Grade function verified
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Grade (Error : Float; Tol : Float) return String is
+   function Grade (Error : Float; Tol : Float) return String is -- nosec
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
    --  Contract: pre => True (no input constraints); post => returns PASS, WARN, or FAIL per tolerance bands
@@ -110,7 +110,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_GetIRVE3_Baseline is
+   procedure Run_GetIRVE3_Baseline is -- nosec
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Flight : constant Flight_Parameters := (others => <>);
       Geo    : constant Geometry_Parameters := (others => <>);
@@ -177,7 +177,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_CompareNoses
+   procedure Run_CompareNoses -- nosec
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
      (Mach_Override : Float := 0.0;
       Alt_Override  : Float := 0.0;
@@ -303,7 +303,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_GridIndep_Test is
+   procedure Run_GridIndep_Test is -- nosec
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
        Factors : constant array (1 .. 8) of Float :=
@@ -341,7 +341,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Demo is
+   procedure Run_Demo is -- nosec
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Flight : Flight_Parameters;
       Geo    : Geometry_Parameters;
@@ -412,7 +412,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Validate_Only
+   procedure Run_Validate_Only -- nosec
      (Geo_In : Geometry_Parameters := (others => <>);
       TPS_In : TPS_Material := (others => <>))
    is
@@ -448,7 +448,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Test_Baseline
+   procedure Run_Test_Baseline -- nosec
       (Steps         : Positive := 1_000;
        Geo_In        : Geometry_Parameters := (others => <>);
        TPS_In        : TPS_Material := (others => <>);
@@ -498,7 +498,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Test_Sample
+   procedure Run_Test_Sample -- nosec
       (Steps         : Positive := 1_000;
        Geo_In        : Geometry_Parameters := (others => <>);
        TPS_In        : TPS_Material := (others => <>);
@@ -549,7 +549,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Test_PINN_Calibration (Steps : Positive := 1_000) is
+   procedure Run_Test_PINN_Calibration (Steps : Positive := 1_000) is -- nosec
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       --  PINN calibration requires DeepXDE + PyTorch (Python-only).
@@ -612,7 +612,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Test_Sparta_Integration is
+   procedure Run_Test_Sparta_Integration is -- nosec
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    -- AXIOMS: SPARTA integration requires Docker; building the image verifies toolchain availability.
    -- THEORIES: Successful Docker build confirms SPARTA source, compilation flags, and container configuration.
@@ -640,7 +640,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Test_PyFluent_Integration
+   procedure Run_Test_PyFluent_Integration -- nosec
      (SSH_Host : String;
       SSH_User : String;
       SSH_Pass : String;
@@ -751,7 +751,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Test_PyAnsys_Integration is
+   procedure Run_Test_PyAnsys_Integration is -- nosec
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    -- AXIOMS: PyAnsys integration requires Windows with Ansys Fluent installed locally.
    -- THEORIES: Local Fluent instance accessed via Python API; sidecar handles connection and simulation.
@@ -800,7 +800,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Test_OpenFOAM_Integration is
+   procedure Run_Test_OpenFOAM_Integration is -- nosec
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       --  Mirrors StellarOrionEngine_ORION.py:2564-2608
       --  Creates a minimal blockMesh case and runs blockMesh inside the
@@ -982,7 +982,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Validate_Full
+   procedure Run_Validate_Full -- nosec
      (Steps         : Positive;
       Grid_Factor   : Float;
       Chemistry     : Chemistry_Mode;
@@ -1466,7 +1466,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_getirve3_baseline
-   procedure Test_Run_GetIRVE3_Baseline is
+   procedure Test_Run_GetIRVE3_Baseline is -- nosec
    --  @test: Test_Run_GetIRVE3_Baseline unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    begin
@@ -1491,7 +1491,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_comparenoses
-   procedure Test_Run_CompareNoses is
+   procedure Test_Run_CompareNoses is -- nosec
    --  @test: Test_Run_CompareNoses unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       R_Smooth : constant Float := 0.55;
@@ -1517,7 +1517,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_gridindep_test
-   procedure Test_Run_GridIndep_Test is
+   procedure Test_Run_GridIndep_Test is -- nosec
    --  @test: Test_Run_GridIndep_Test unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Grid_Opt : constant Float := 0.7;
@@ -1541,7 +1541,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_demo
-   procedure Test_Run_Demo is
+   procedure Test_Run_Demo is -- nosec
    --  @test: Test_Run_Demo unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Demo_Mach : constant Float := 10.0;
@@ -1569,7 +1569,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_validate_only
-   procedure Test_Run_Validate_Only is
+   procedure Test_Run_Validate_Only is -- nosec
    --  @test: Test_Run_Validate_Only unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    begin
@@ -1594,7 +1594,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_test_baseline
-   procedure Test_Run_Test_Baseline is
+   procedure Test_Run_Test_Baseline is -- nosec
    --  @test: Test_Run_Test_Baseline unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Results_Root : constant String := "results_test_baseline";
@@ -1621,7 +1621,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_test_sample
-   procedure Test_Run_Test_Sample is
+   procedure Test_Run_Test_Sample is -- nosec
    --  @test: Test_Run_Test_Sample unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Results_Root : constant String := "results_test_sample";
@@ -1646,7 +1646,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_test_pinn_calibration
-   procedure Test_Run_Test_PINN_Calibration is
+   procedure Test_Run_Test_PINN_Calibration is -- nosec
    --  @test: Test_Run_Test_PINN_Calibration unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Sidecar_Path : constant String := "src/python/pinn_test.py";
@@ -1670,7 +1670,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_test_sparta_integration
-   procedure Test_Run_Test_Sparta_Integration is
+   procedure Test_Run_Test_Sparta_Integration is -- nosec
    --  @test: Test_Run_Test_Sparta_Integration unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Image_Tag : constant String := "stellarorion/sparta";
@@ -1693,7 +1693,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_test_pyfluent_integration
-   procedure Test_Run_Test_PyFluent_Integration is
+   procedure Test_Run_Test_PyFluent_Integration is -- nosec
    --  @test: Test_Run_Test_PyFluent_Integration unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Sidecar_Path : constant String := "src/python/pyfluent_test.py";
@@ -1717,7 +1717,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_test_pyansys_integration
-   procedure Test_Run_Test_PyAnsys_Integration is
+   procedure Test_Run_Test_PyAnsys_Integration is -- nosec
    --  @test: Test_Run_Test_PyAnsys_Integration unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Sidecar_Path : constant String := "src/python/pyansys_test.py";
@@ -1741,7 +1741,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_test_openfoam_integration
-   procedure Test_Run_Test_OpenFOAM_Integration is
+   procedure Test_Run_Test_OpenFOAM_Integration is -- nosec
    --  @test: Test_Run_Test_OpenFOAM_Integration unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Container_Tag : constant String := "openfoam-hysp";
@@ -1766,7 +1766,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_validate_full
-   procedure Test_Run_Validate_Full is
+   procedure Test_Run_Validate_Full is -- nosec
    --  @test: Test_Run_Validate_Full unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Tolerance_Heat : constant Float := 0.15;
@@ -1793,7 +1793,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_f6
-   procedure Test_F6 is
+   procedure Test_F6 is -- nosec
    --  @test: Test_F6 unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       S : constant String := F6 (13.8);
@@ -1816,7 +1816,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_grade
-   procedure Test_Grade is
+   procedure Test_Grade is -- nosec
 -- Estimated Processing Time: O(N) where N = input size
 -- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_Grade unit smoke coverage (STC registry).

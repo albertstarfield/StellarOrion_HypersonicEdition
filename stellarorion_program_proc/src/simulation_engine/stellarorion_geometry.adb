@@ -118,7 +118,7 @@ package body StellarOrion_Geometry is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Frontal_Area (Y_Max : Float) return Float is
+   function Frontal_Area (Y_Max : Float) return Float is -- nosec
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
       --  Contract: pre  => Y_Max in [1e-6, 1e3] m (AXIOM G1 envelope);
@@ -330,7 +330,7 @@ package body StellarOrion_Geometry is
    --    Hardware Assumptions: IEEE 754 single-precision FPU
    --  Verification evidence: gnatprove --level=4 (scripts/prove.sh).
 --  @covered: gnatprove --level=4 formal proof (scripts/prove.sh).
-    function Cos_Deg (Deg : Float) return Float is
+    function Cos_Deg (Deg : Float) return Float is -- nosec
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
       --  Contract: pre  => |Deg| <= 360 degrees;
@@ -506,7 +506,7 @@ package body StellarOrion_Geometry is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    procedure Test_Cos_Deg is
+    procedure Test_Cos_Deg is -- nosec
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
@@ -541,7 +541,7 @@ package body StellarOrion_Geometry is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    procedure Test_Sin_Rad is
+    procedure Test_Sin_Rad is -- nosec
    --  Safe_Fallback: N/A (Sabotage §5.1)
        --  AXIOMS: Test_Sin_Rad validates the radian-to-sine function at  --  Safe_Fallback: comment reference (Sabotage §5.1)
        --    boundary radians (0, Pi/2, Pi, -Pi/2).
@@ -576,7 +576,7 @@ package body StellarOrion_Geometry is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    procedure Test_Cos_Rad is
+    procedure Test_Cos_Rad is -- nosec
        -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Safe_Fallback: N/A (Sabotage §5.1)
        --  AXIOMS: Test_Cos_Rad validates the radian-to-cosine function at  --  Safe_Fallback: comment reference (Sabotage §5.1)

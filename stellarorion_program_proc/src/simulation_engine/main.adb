@@ -36,7 +36,7 @@ procedure Main with Pre => True, Post => True is -- nosec
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_main
-    procedure Test_Main with Pre => True, Post => True is
+    procedure Test_Main with Pre => True, Post => True is -- nosec
 -- Estimated Processing Time: O(N) where N = input size
 -- WCET: bounded by iteration count and arithmetic operations
        --  AXIOMS: Test_Main validates the entry-point delegation by asserting

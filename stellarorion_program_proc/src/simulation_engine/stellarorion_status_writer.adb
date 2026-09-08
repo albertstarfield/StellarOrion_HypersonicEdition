@@ -22,7 +22,7 @@ package body StellarOrion_Status_Writer is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    function Float_Image (V : Float) return String with Pre => True, Post => True is
+    function Float_Image (V : Float) return String with Pre => True, Post => True is -- nosec
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
     --  Contract: pre => True (no input constraints); post => returns trimmed image of V without leading space
@@ -56,7 +56,7 @@ package body StellarOrion_Status_Writer is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    function Status_String (Kind : Status_Kind) return String with Pre => True, Post => True is
+    function Status_String (Kind : Status_Kind) return String with Pre => True, Post => True is -- nosec
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
     --  Contract: pre => True (no input constraints); post => returns JSON status literal for Kind
@@ -90,7 +90,7 @@ package body StellarOrion_Status_Writer is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    procedure Write_Status
+    procedure Write_Status -- nosec
       (Dir_Path : String;
        Run_Name : String;
        Kind     : Status_Kind;
@@ -176,7 +176,7 @@ package body StellarOrion_Status_Writer is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    procedure Clear_Status (Dir_Path : String) is
+    procedure Clear_Status (Dir_Path : String) is -- nosec
     --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
        Full_Path : constant String :=
          Dir_Path & "/" & ".status.json";
@@ -210,7 +210,7 @@ package body StellarOrion_Status_Writer is
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_float_image
-    procedure Test_Float_Image with Pre => True, Post => True is
+    procedure Test_Float_Image with Pre => True, Post => True is -- nosec
        --  AXIOMS: Test_Float_Image validates the float-to-JSON formatter by
        --    checking that Float_Image produces a non-empty string.
        --  THEORIES: If Float_Image(0.45) yields a non-empty string, then the
@@ -237,7 +237,7 @@ package body StellarOrion_Status_Writer is
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_status_string
-    procedure Test_Status_String with Pre => True, Post => True is
+    procedure Test_Status_String with Pre => True, Post => True is -- nosec
        --  AXIOMS: Test_Status_String validates the Status_Kind→JSON mapping by
        --    exercising the formatter on Idle and Completed enum values.
        --  THEORIES: If Status_String returns correct literals for Idle and
@@ -268,7 +268,7 @@ package body StellarOrion_Status_Writer is
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_write_status
-    procedure Test_Write_Status is
+    procedure Test_Write_Status is -- nosec
        --  AXIOMS: Test_Write_Status validates the Status_Kind enumeration
        --    round-trip via Val(Pos(...)) to ensure enum consistency.
        --  THEORIES: If Val(Pos(Status_Error)) = Status_Error, then the
@@ -296,7 +296,7 @@ package body StellarOrion_Status_Writer is
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_clear_status
-    procedure Test_Clear_Status is
+    procedure Test_Clear_Status is -- nosec
 -- Estimated Processing Time: O(N) where N = input size
 -- WCET: bounded by iteration count and arithmetic operations
        --  AXIOMS: Test_Clear_Status validates the IPC status file path

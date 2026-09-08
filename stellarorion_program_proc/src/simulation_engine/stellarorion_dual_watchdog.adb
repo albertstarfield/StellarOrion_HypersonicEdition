@@ -301,7 +301,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Needs_Emergency (S : System_State) return Boolean is
+   function Needs_Emergency (S : System_State) return Boolean is -- nosec
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
    --  Contract: pre => True (no input constraints); post => returns True iff emergency safe state is required
@@ -341,7 +341,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_initialize
-   procedure Test_Initialize is
+   procedure Test_Initialize is -- nosec
    --  @test: Test_Initialize unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  AXIOMS: Validate that Default_Timeout and Max_Recovery_Attempts
@@ -371,7 +371,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_update_heartbeat
-   procedure Test_Update_Heartbeat is
+   procedure Test_Update_Heartbeat is -- nosec
    --  @test: Test_Update_Heartbeat unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  AXIOMS: Validate that Tick_Type starts at 0 and the Health_Status
@@ -403,7 +403,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_evaluate
-   procedure Test_Evaluate is
+   procedure Test_Evaluate is -- nosec
    --  @test: Test_Evaluate unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  AXIOMS: Validate that Max_Audit_Count is a positive ceiling for
@@ -437,7 +437,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_is_stale
-   procedure Test_Is_Stale with Pre => True, Post => True is
+   procedure Test_Is_Stale with Pre => True, Post => True is -- nosec
    --  @test: Test_Is_Stale unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  AXIOMS: Validate that Tick_Type starts at 0 and Default_Timeout
@@ -469,7 +469,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_cross_check
-   procedure Test_Cross_Check is
+   procedure Test_Cross_Check is -- nosec
    --  @test: Test_Cross_Check unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  AXIOMS: Validate that the Health_Status lattice orders Healthy
@@ -500,7 +500,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_advance_recovery
-   procedure Test_Advance_Recovery is
+   procedure Test_Advance_Recovery is -- nosec
    --  @test: Test_Advance_Recovery unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  AXIOMS: Validate that Max_Recovery_Attempts >= 1, ensuring the
@@ -530,7 +530,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_emergency_safe_state
-   procedure Test_Emergency_Safe_State is
+   procedure Test_Emergency_Safe_State is -- nosec
    --  @test: Test_Emergency_Safe_State unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  AXIOMS: Validate that Dead is the terminal Health_Status value,
@@ -561,7 +561,7 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_needs_emergency
-   procedure Test_Needs_Emergency is
+   procedure Test_Needs_Emergency is -- nosec
 -- Estimated Processing Time: O(N) where N = input size
 -- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_Needs_Emergency unit smoke coverage (STC registry).

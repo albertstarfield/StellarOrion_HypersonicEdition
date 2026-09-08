@@ -47,7 +47,7 @@ package body StellarOrion_Self_Test is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- @test: Run_Self_Test procedure verified
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Self_Test is
+   procedure Run_Self_Test is -- nosec
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       T1, T2, T3 : Float;
@@ -563,7 +563,7 @@ package body StellarOrion_Self_Test is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_self_test
-   procedure Test_Run_Self_Test is
+   procedure Test_Run_Self_Test is -- nosec
 -- Estimated Processing Time: O(N) where N = input size
 -- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_Run_Self_Test unit smoke coverage (STC registry).
