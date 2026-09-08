@@ -117,6 +117,7 @@ class TestColorHelper(TestCase):
     """Test ANSI colour wrapper (both TTY and non-TTY branches)."""
 
     def test_color_disabled_returns_plain(self):
+        """Verify _c() returns plain text when _COLOR is disabled."""
         original = run._COLOR
         run._COLOR = False
         try:
@@ -125,6 +126,7 @@ class TestColorHelper(TestCase):
             run._COLOR = original
 
     def test_color_enabled_wraps_ansi(self):
+        """Verify _c() wraps text with ANSI escape codes when _COLOR is enabled."""
         original = run._COLOR
         run._COLOR = True
         try:
@@ -156,6 +158,7 @@ class TestSidecarHealthCheck(TestCase):
         """Verify health check returns True against a live local HTTP server."""
         class _Handler(http.server.BaseHTTPRequestHandler):
             def do_GET(self):
+                """Respond with HTTP 200 OK for health check probes."""
                 self.send_response(200)
                 self.end_headers()
 
@@ -177,10 +180,12 @@ class TestLockFile(TestCase):
     """Test PID lockfile lifecycle (uses temp paths only)."""
 
     def setUp(self):
+        """Create a temporary directory and lock file path for each test."""
         self._tmp = tempfile.TemporaryDirectory()
         self._lock_path = Path(self._tmp.name) / "test.lock"
 
     def tearDown(self):
+        """Remove the temporary directory after each test."""
         self._tmp.cleanup()
 
     def test_acquire_release_roundtrip(self):
@@ -227,11 +232,13 @@ class TestSourceHashes(TestCase):
     """
 
     def setUp(self):
+        """Back up the real .src_hashes.json if present."""
         self._backup = None
         if run._HASH_FILE.exists():
             self._backup = run._HASH_FILE.read_bytes()
 
     def tearDown(self):
+        """Restore the original .src_hashes.json or remove the test copy."""
         if self._backup is not None:
             run._HASH_FILE.write_bytes(self._backup)
         else:
