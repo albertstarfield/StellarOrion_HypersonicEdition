@@ -3,6 +3,7 @@
 with Ada.Command_Line; use Ada.Command_Line;
 with Ada.Text_IO;
 with Ada.Exceptions;
+with Ada.Calendar;
 
 package body StellarOrion_Cli with SPARK_Mode => On is
 --  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
@@ -46,7 +47,11 @@ package body StellarOrion_Cli with SPARK_Mode => On is
       return False;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Has_Flag: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Has_Flag");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
          raise;
 
    end Has_Flag;
@@ -80,7 +85,11 @@ package body StellarOrion_Cli with SPARK_Mode => On is
       return Default;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Get_Option: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Get_Option");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
          raise;
 
    end Get_Option;
@@ -209,7 +218,11 @@ package body StellarOrion_Cli with SPARK_Mode => On is
       pragma Assert (Found = True or else Found = False);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Has_Flag: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Has_Flag");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
    end Test_Has_Flag;
 
@@ -239,7 +252,11 @@ package body StellarOrion_Cli with SPARK_Mode => On is
       pragma Assert (Val'Length >= 0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Get_Option: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Get_Option");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
    end Test_Get_Option;
 
@@ -270,7 +287,11 @@ package body StellarOrion_Cli with SPARK_Mode => On is
       pragma Assert (V <= Float'Last);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Get_Float: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Get_Float");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
    end Test_Get_Float;
 
@@ -300,7 +321,12 @@ package body StellarOrion_Cli with SPARK_Mode => On is
       pragma Assert (Clamped >= 0.5 and then Clamped <= 15.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Clamp_Float: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Clamp_Float");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
 
    end Test_Clamp_Float;
 
@@ -314,8 +340,6 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_get_positive
    procedure Test_Get_Positive is -- nosec
--- Estimated Processing Time: O(N) where N = input size
--- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_Get_Positive unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
 
@@ -332,7 +356,12 @@ package body StellarOrion_Cli with SPARK_Mode => On is
       pragma Assert (N >= 1);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Get_Positive: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Get_Positive");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
 
    end Test_Get_Positive;
 
