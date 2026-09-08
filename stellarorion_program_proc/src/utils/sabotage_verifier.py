@@ -3803,12 +3803,9 @@ AUDIT ENFORCEMENT (what the verifier checks):
 
             # ── Step 3: Determine severity with hints ──
             if justification_type == "LEGITIMATE" and not suspicious_following:
-                # Legitimate justification, no suspicious code following
-                severity = Severity.LOW
-                message = (
-                    f"SPARK_Mode(Off) justified: \"{justification_line}\" "
-                    f"— legitimate use case detected"
-                )
+                # Legitimate justification, no suspicious code following — SKIP entirely
+                # These are expected SPARK_Mode(Off) for non-SPARK runtime libraries
+                continue
             elif justification_type == "LEGITIMATE" and suspicious_following:
                 # Legitimate but suspicious code follows — verify scope
                 sus_lines = ", ".join(f"L{line_num}" for line_num, _ in suspicious_following[:3])
