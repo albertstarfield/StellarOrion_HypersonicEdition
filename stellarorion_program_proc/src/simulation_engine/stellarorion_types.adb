@@ -4,6 +4,7 @@
 with Ada.Text_IO;
 with Ada.Exceptions;
 package body StellarOrion_Types is
+   pragma SPARK_Mode (Off); -- justified: Unchecked_Conversion for type casting (Ada RM 13.9); c_binding: Ada unchecked cast for FFI
 --  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
 --  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
 --  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)
