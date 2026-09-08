@@ -73,6 +73,7 @@ with StellarOrion_Optimize;      use StellarOrion_Optimize;
 --  (e.g. Ada.Numerics.Pi), hence no use-clauses here.
 with Ada.IO_Exceptions;
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with StellarOrion_Safe_Access; use StellarOrion_Safe_Access;
 with Ada.Exceptions;
 
 package body StellarOrion_Project is

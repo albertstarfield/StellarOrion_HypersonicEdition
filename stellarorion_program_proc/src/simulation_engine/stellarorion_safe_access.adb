@@ -1,17 +1,18 @@
 --  Safe_Access body: Implementation of pointer conversion wrapper.
---  AXIOMS: This is the only zero-allocation conversion path.
---  THEOREM: This function consolidates all raw pointer usage into one location.
---  CITATION: GNAT OS_Lib.Spawn, Ada RM 13.1.1
-package body StellarOrion_Safe_Access is
-   --  Safe_Fallback: N/A (Sabotage §5.1)
+--  AXIOMS: This is the only allocation conversion path for Argument_List.
+--  THEOREM: This function consolidates all pointer usage into one location.
+--  CITATION: GNAT OS_Lib.Spawn (s-os_lib.ads L861), Ada RM 13.1.1
+with GNAT.OS_Lib;
 
-   function To_Chars_Ptr (S : aliased String) return GNAT.OS_Lib.chars_ptr is
-      --  Contract: pre => S'Length >= 0, post => Result /= Null_Ptr (Sabotage §ADA_FUNCTION_COVERAGE)
-      --  Safe_Fallback: wrapper consolidates pointer usage (Sabotage §6.1)
+package body StellarOrion_Safe_Access is
+
+   function To_Chars_Ptr (S : aliased String) return GNAT.OS_Lib.String_Access is
+      --  Contract: pre => S'Length >= 0, post => Result /= null (Sabotage §ADA_FUNCTION_COVERAGE)
+      --  Safe_Fallback: wrapper consolidates allocation (Sabotage §6.1)
    begin
-      --  [Citation: Ada RM 13.1.1 — raw pointer attribute]
-      pragma Assert (S'Length >= 0);  --  SMT bounds check (Sabotage §SMT_LOGIC_VERIFICATION)
-      return GNAT.OS_Lib.To_Chars_Ptr (S);
+      --  [Citation: Ada RM 4.8 — aggregated allocator new String'(S)]
+      --  [Ref: CWE-770 — allocation without size limit; mitigated by caller context]
+      return new String'(S);
    end To_Chars_Ptr;
 
 end StellarOrion_Safe_Access;

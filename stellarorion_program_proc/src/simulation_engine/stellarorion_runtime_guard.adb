@@ -15,6 +15,7 @@ with Ada.Strings;     use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
+with StellarOrion_Safe_Access; use StellarOrion_Safe_Access;
 with Ada.Exceptions;
 
 package body StellarOrion_Runtime_Guard is
