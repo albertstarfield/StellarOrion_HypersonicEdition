@@ -290,7 +290,11 @@ def denoise_grid(raw_data: "np.ndarray", n_restarts: int = 5, random_state: int 
             continue
 
         # Predict denoised values at all grid points
-        y_denoised, _y_std = gp.predict(X_norm, return_std=True)
+        # [Citation: Scikit-learn GaussianProcessRegressor.predict — return_std=True
+        #  returns (y_mean, y_std) as a 2-tuple. Type narrowing required because
+        #  pyrefly sees the union return type: tuple[2] | tuple[3] | ndarray]
+        _gp_pred = gp.predict(X_norm, return_std=True)
+        y_denoised = _gp_pred[0] if isinstance(_gp_pred, tuple) else _gp_pred
 
         denoised[:, vi] = y_denoised
 
