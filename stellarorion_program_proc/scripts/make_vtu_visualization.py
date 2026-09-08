@@ -272,6 +272,7 @@ def plot_heat_flux_vs_x(points: np.ndarray, heat: np.ndarray,
 
 
 def main(argv: list[str]) -> int:
+    """Entry point: parse args, find VTU files, generate PNG plots."""
     results_dir = argv[1] if len(argv) > 1 else "results_validation_scalloped"
     paraview_dir = os.path.join(results_dir, "paraview")
     plots_dir = os.path.join(results_dir, "plots")

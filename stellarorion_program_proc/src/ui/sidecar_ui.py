@@ -127,6 +127,7 @@ class SimulationState:
                results: dict[str, Any] | None = None,
                metrics: dict[str, Any] | None = None) -> None:
         """Thread-safely update attributes that already exist (None = unchanged).
+        # test: test_update()
         Tested by: test_update() (same file).
         """
         with self._lock:

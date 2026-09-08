@@ -356,6 +356,7 @@ class PINNAccelerator:
     def train_from_checkpoint(self, grid_file, domain_bounds, iterations=2000,
                               save_path=None, pipeline_checkpoint=None) -> None:
         """Train or restore PINN from a SPARTA grid output file.
+        # test: test_train_from_checkpoint_missing_file()
         Tested by: test_train_from_checkpoint_missing_file() (same file).
 
         Args:
