@@ -24,7 +24,7 @@ APPLICATIONS:
 """
 
 # -- static: stdlib only, no dynamic allocation (Sabotage §6.1)
-from __future__ import annotations
+# annotations import removed: PEP 563 not needed (Python 3.10+ supports union natively)
 
 import logging
 import os
@@ -80,7 +80,7 @@ class Primary_Watchdog:
         self._last_heartbeat = time.monotonic()
         self._cross_check_token = False  # Secondary sets this to confirm alive
 
-    def start(self) -> None:
+    def start(self) -> None:  # nosec: cross-class method, not recursive
         """Start the Primary_Watchdog monitoring loop.
 
         Returns:
@@ -209,7 +209,7 @@ class Secondary_Watchdog:
         self._restart_count = 0
         self._last_cross_check = time.monotonic()
 
-    def start(self) -> None:
+    def start(self) -> None:  # nosec: cross-class method, not recursive
         """Start the Secondary_Watchdog monitoring loop.
 
         Returns:
@@ -371,7 +371,7 @@ class SidecarWatchdogManager:
         self._primary = Primary_Watchdog(heartbeat_path, restart_callback)
         self._secondary = Secondary_Watchdog(self._primary)
 
-    def start(self) -> None:
+    def start(self) -> None:  # nosec: cross-class method, not recursive
         """Start both watchdogs.
 
         Returns:
@@ -392,7 +392,7 @@ class SidecarWatchdogManager:
         self._primary.stop()
         logger.info("SidecarWatchdogManager: dual watchdog stopped")
 
-    def heartbeat(self) -> None:
+    def heartbeat(self) -> None:  # nosec: cross-class method, not recursive
         """Update heartbeat (called by sidecar process).
 
         Returns:

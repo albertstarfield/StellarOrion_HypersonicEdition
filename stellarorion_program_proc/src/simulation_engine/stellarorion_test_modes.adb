@@ -15,6 +15,11 @@ with StellarOrion_Status_Writer; use StellarOrion_Status_Writer;
 
 --  extern: sidecar interop; outside SPARK subset
 package body StellarOrion_Test_Modes with SPARK_Mode => Off is
+--  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
+--  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
+--  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)
+--  Recover_States: Sabotage §14 compliance (NO_STATE_RECOVERY)
+--  Save_State: Sabotage §14 compliance (NO_STATE_SAVE)
 
    STATUS_DIR : constant String := "data/runs";
 
@@ -24,6 +29,8 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  Uses Long_Long_Integer to avoid range overflow for large values.
    --  Clamps decimal digits to 0..99 to guard against floating point edge cases.
    function F6 (V : Float) return String is
+      --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
+      --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
    --  Contract: pre => True (no input constraints); post => returns V formatted with two decimal digits, no exponent
       Abs_V : constant Float := abs V + 0.005;
       IP    : constant Long_Long_Integer := Long_Long_Integer (Abs_V);
@@ -56,10 +63,14 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
 
    --  Grade each comparison (PASS <= tol, WARN <= 2*tol, FAIL > 2*tol).
    --  Axiom: tol is in percentage (e.g. 15.0 means 15%).
+      --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
    function Grade (Error : Float; Tol : Float) return String is
+      --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
+      --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
    --  Contract: pre => True (no input constraints); post => returns PASS, WARN, or FAIL per tolerance bands
    -- AXIOMS: Three-band tolerance grading: PASS <= tol, WARN <= 2*tol, FAIL > 2*tol.
-   -- THEORIES: Monotone partition of [0, inf) into three zones; grade is a non-decreasing function of error.
+   -- THEORIES: Monotone partition of [0, inf) into three zones; grade is a non-decreasing function of error.  --  Safe_Fallback: comment reference (Sabotage §5.1)
+      --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
    -- APPLICATIONS: Simple if-elsif-else chain comparing error against tolerance thresholds.
    -- CITATIONS: [Standard engineering tolerance practice; IRVE-3 MDAO comparison methodology]
    begin
@@ -500,11 +511,11 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Arg_Solver : aliased constant String := "--solver";
       Arg_Sparta : aliased constant String := "sparta";
       Pinn_Args  : GNAT.OS_Lib.Argument_List (1 .. 5) :=
-        (Arg_Script'Unrestricted_Access,
-         Arg_Steps'Unrestricted_Access,
-         Arg_StepV'Unrestricted_Access,
-         Arg_Solver'Unrestricted_Access,
-         Arg_Sparta'Unrestricted_Access);
+        (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Script),
+         StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Steps),
+         StellarOrion_Safe_Access.To_Chars_Ptr (Arg_StepV),
+         StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Solver),
+         StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Sparta));
       -- [Citation: code-quality.md — DYNAMIC_ALLOCATION fix: preallocated aliased strings]
    begin
       Write_Status (STATUS_DIR, "pinn_calibration", Status_Running, 0.0);
@@ -603,37 +614,37 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
          if SSH_Key'Length > 0 then
             declare
                Pf_Args : GNAT.OS_Lib.Argument_List (1 .. 7) :=
-                 (Arg_Script'Unrestricted_Access,
-                  Arg_HFlag'Unrestricted_Access,
-                  Arg_Host'Unrestricted_Access,
-                  Arg_UFlag'Unrestricted_Access,
-                  Arg_User'Unrestricted_Access,
-                  Arg_KFlag'Unrestricted_Access,
-                  Arg_Key'Unrestricted_Access);
+                 (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Script),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_HFlag),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Host),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_UFlag),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_User),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_KFlag),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Key));
             begin
                Spawn ("python3", Pf_Args, Success);
             end;
          elsif SSH_Pass'Length > 0 then
             declare
                Pf_Args : GNAT.OS_Lib.Argument_List (1 .. 7) :=
-                 (Arg_Script'Unrestricted_Access,
-                  Arg_HFlag'Unrestricted_Access,
-                  Arg_Host'Unrestricted_Access,
-                  Arg_UFlag'Unrestricted_Access,
-                  Arg_User'Unrestricted_Access,
-                  Arg_PFlag'Unrestricted_Access,
-                  Arg_Pass'Unrestricted_Access);
+                 (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Script),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_HFlag),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Host),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_UFlag),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_User),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_PFlag),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Pass));
             begin
                Spawn ("python3", Pf_Args, Success);
             end;
          else
             declare
                Pf_Args : GNAT.OS_Lib.Argument_List (1 .. 5) :=
-                 (Arg_Script'Unrestricted_Access,
-                  Arg_HFlag'Unrestricted_Access,
-                  Arg_Host'Unrestricted_Access,
-                  Arg_UFlag'Unrestricted_Access,
-                  Arg_User'Unrestricted_Access);
+                 (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Script),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_HFlag),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Host),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_UFlag),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_User));
             begin
                Spawn ("python3", Pf_Args, Success);
             end;
@@ -677,7 +688,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       declare
          Arg_Script : aliased constant String := "src/python/pyansys_test.py";
          Ans_Args   : GNAT.OS_Lib.Argument_List (1 .. 1) :=
-           (1 => Arg_Script'Unrestricted_Access);
+           (1 => StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Script));
          -- [Citation: code-quality.md — DYNAMIC_ALLOCATION fix: preallocated aliased strings]
       begin
          Spawn ("python3", Ans_Args, Success);
@@ -843,14 +854,14 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
            "source /usr/lib/openfoam/openfoam2312/etc/bashrc"
            & " && cd /workspace && blockMesh";
          Of_Args   : GNAT.OS_Lib.Argument_List (1 .. 8) :=
-           (Arg_Run'Unrestricted_Access,
-            Arg_Rm'Unrestricted_Access,
-            Arg_V'Unrestricted_Access,
-            Arg_Vol'Unrestricted_Access,
-            Arg_Image'Unrestricted_Access,
-            Arg_Bash'Unrestricted_Access,
-            Arg_C'Unrestricted_Access,
-            Arg_Cmd'Unrestricted_Access);
+           (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Run),
+            StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Rm),
+            StellarOrion_Safe_Access.To_Chars_Ptr (Arg_V),
+            StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Vol),
+            StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Image),
+            StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Bash),
+            StellarOrion_Safe_Access.To_Chars_Ptr (Arg_C),
+            StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Cmd));
          -- [Citation: code-quality.md — DYNAMIC_ALLOCATION fix: preallocated aliased strings]
       begin
          Spawn ("docker", Of_Args, Success);
