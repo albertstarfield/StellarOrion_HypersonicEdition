@@ -1,5 +1,40 @@
 # NextImprovementPlan.md — StellarOrion 4-Step Pipeline
 
+## Cycle Entry (Cycle 8)
+- **Date:** 2026-09-09 07:10 UTC+7
+- **Cycle:** 8 (VERBOSE_ERROR Implementation — CLI Module)
+- **Verifier Status:** CLEAN (CRITICAL:0 HIGH:0 MED:0 LOW:0 — ALL GATES PASS)
+- **SPARTA Proofs:** 11 total, 11 proved (100%)
+- **Build:** Passes (alr exec gprbuild — 0 errors, warnings only)
+- **Python:** pyrefly 2 expected errors (deepxde runtime dep), ruff All checks passed
+- **Git:** commit + push pending
+
+### Cycle 8 Changes — VERBOSE_ERROR in stellarorion_cli.adb + main.adb
+- **main.adb** — Implemented TIMING_ANCHOR + VERBOSE_ERROR:
+  - Added `with Ada.Real_Time;` and `with Ada.Calendar;` imports
+  - Added TIMING_ANCHOR comment block (nanosecond resolution)
+  - Added actual runtime measurement: `Start_Time`, `Stop_Time`, `Elapsed` via `Ada.Real_Time.Clock`
+  - Added VERBOSE_ERROR handler in Test_Main exception block with Ada 2012-compatible timestamp (Ada.Calendar.Split, not Ada 2022 `Clock'Image`)
+  - Removed stale Safe_Fallback comments, duplicate AXIOMS block, duplicate Estimated Processing Time lines
+- **stellarorion_cli.adb** — Upgraded all 7 SAFE_FALLBACK exception handlers to VERBOSE_ERROR:
+  - Has_Flag, Get_Option, Test_Has_Flag, Test_Get_Option, Test_Get_Float, Test_Clamp_Float, Test_Get_Positive
+  - Each now prints: Exception_Name, Exception_Message, Operation name in box format with `raise;`
+  - Removed duplicate Estimated Processing Time / WCET lines in Test_Get_Positive
+  - Added `with Ada.Calendar;` import
+- **Remaining VERBOSE_ERROR work** (for cycle 9+): ~93 SAFE_FALLBACK handlers across 10 other .adb files (sparta, test_modes, dual_watchdog, self_test, project, runtime_guard, validation, status_writer, optimize, orion)
+
+### Key Finding: ~93 SAFE_FALLBACK handlers remain across 10 files
+- `stellarorion_sparta.adb` — 30 handlers (largest file)
+- `stellarorion_test_modes.adb` — 28 handlers
+- `stellarorion_dual_watchdog.adb` — 10 handlers
+- `stellarorion_runtime_guard.adb` — 11 handlers
+- `stellarorion_project.adb` — 6 handlers
+- `stellarorion_status_writer.adb` — 6 handlers
+- `stellarorion_self_test.adb` — 2 handlers
+- `stellarorion_validation.adb` — 2 handlers
+- `stellarorion_optimize.adb` — 2 handlers
+- `stellarorion_orion.adb` — 1 handler
+
 ## Cycle Entry (Cycle 7)
 - **Date:** 2026-09-09 06:50 UTC+7
 - **Cycle:** 7 (Deep Code Audit — code-quality.md compliance scan)

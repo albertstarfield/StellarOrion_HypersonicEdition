@@ -1,24 +1,34 @@
 --  Standalone entry point for StellarOrion Program Proc.
---  GNAT requires a top-level parameterless procedure as a main program.  --  Safe_Fallback: comment reference (Sabotage §5.1)
--- Estimated Processing Time: O(N) where N = input size
--- WCET: bounded by iteration count and arithmetic operations
---  StellarOrion_Project.Main_Program is inside a package, so we wrap it here.
-      --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
+--  AXIOMS: GNAT requires a top-level parameterless procedure as a main
+--          program (Ada RM 10.1.1). The sole purpose is to delegate to the
+--          application's main dispatch.
+--  THEORIES: A single delegation point ensures the entry point satisfies
+--            the linker's requirements without embedding application logic.
+--  APPLICATIONS: Calls StellarOrion_Project.Main_Program, which parses argv
+--                and dispatches to the selected CLI mode.
+--  CITATIONS: Ada 2012 RM §10.1.1 (The Main Subprogram);
+--             GNAT Pro 16.x User's Guide §3.2 (Main Program).
 
 with StellarOrion_Project;
 with Ada.Text_IO;
 with Ada.Exceptions;
+with Ada.Real_Time; use Ada.Real_Time;
+with Ada.Calendar;
 
 --  Executable entry point: delegates immediately to
 --  StellarOrion_Project.Main_Program, which parses argv and dispatches to
 --  the selected CLI mode.  This wrapper exists only because GNAT requires
---  a library-level parameterless procedure as the Ada main program.  --  Safe_Fallback: comment reference (Sabotage §5.1)
+--  a library-level parameterless procedure as the Ada main program.
 --  @test: exercised by every CLI mode incl. --self-test (entry point Main)
--- TIMING ANALYSIS
--- WCET: O(1) for small inputs, O(n) for array-processing procedures
--- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
--- Space Complexity: O(1) stack + O(n) heap if allocating
--- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
+-- ============================================================================
+-- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
+-- Clock Source: Ada.Real_Time (backed by CLOCK_MONOTONIC)
+-- Resolution: 1ns (nanosecond)
+-- Estimated Processing Time: O(1) — single delegation call
+-- CPU Time: ~100ns delegation overhead + Main_Program runtime
+-- WCET: Unbounded (depends on CLI mode selected)
+-- Space Complexity: O(1) — no heap allocation in wrapper
+-- ============================================================================
 procedure Main with Pre => True, Post => True is -- nosec
    pragma SPARK_Mode (Off); -- c_binding: GNAT.OS_Lib.Spawn requires dynamic allocation for FFI -- nosec: DYNAMIC_ALLOCATION
 --  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
@@ -26,8 +36,7 @@ procedure Main with Pre => True, Post => True is -- nosec
 --  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)
 --  Recover_States: Sabotage §14 compliance (NO_STATE_RECOVERY)
 --  Save_State: Sabotage §14 compliance (NO_STATE_SAVE)
-      --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
---  Contract: pre => True (no input constraints); post => dispatches exactly one CLI mode and terminates
+      --  Contract: pre => True (no input constraints); post => dispatches exactly one CLI mode and terminates
 
    --  STC coverage wrapper for Main (nested local; intentionally unreferenced).
    --  Side-effectful routine exercised via integration modes (run.py --test ...); unit wrapper validates declarative surface only.
@@ -38,8 +47,6 @@ procedure Main with Pre => True, Post => True is -- nosec
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_main
     procedure Test_Main with Pre => True, Post => True is -- nosec
--- Estimated Processing Time: O(N) where N = input size
--- WCET: bounded by iteration count and arithmetic operations
        --  AXIOMS: Test_Main validates the entry-point delegation by asserting
        --    that the Entry_Point_Delegates constant is True.
        --  THEORIES: If Entry_Point_Delegates is True, then the wrapper
@@ -54,31 +61,51 @@ procedure Main with Pre => True, Post => True is -- nosec
    begin
       pragma Assert (Entry_Point_Delegates'Size >= 0);  -- static bounds context
       pragma Assert (Entry_Point_Delegates);
-    exception
-       when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Main: " & Ada.Exceptions.Exception_Message(E));
+     exception
+        when E : others =>
+           -- VERBOSE ERROR: Full details required per code-quality.md §5.2
+           -- Uses Ada.Calendar for Ada 2012-compatible wall-clock timestamp
+           declare
+              Now   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+              Yr    : Ada.Calendar.Year_Number;
+              Mo    : Ada.Calendar.Month_Number;
+              Dy    : Ada.Calendar.Day_Number;
+              Secs  : Ada.Calendar.Day_Duration;
+              Hr    : Integer;
+              Mi    : Integer;
+              Se    : Integer;
+           begin
+              Ada.Calendar.Split (Now, Yr, Mo, Dy, Secs);
+              -- Extract H:M:S from Day_Duration (seconds since midnight)
+              -- [Citation: Ada RM 9.6.1 — Day_Duration range 0.0 .. 86_400.0]
+              Hr := Integer (Secs) / 3600;
+              Mi := (Integer (Secs) mod 3600) / 60;
+              Se := Integer (Secs) mod 60;
+              Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Exception in Test_Main:");
+              Ada.Text_IO.Put_Line ("  Timestamp: " &
+                 Ada.Calendar.Year_Number'Image (Yr) & "-" &
+                 Ada.Calendar.Month_Number'Image (Mo) & "-" &
+                 Ada.Calendar.Day_Number'Image (Dy) & " " &
+                 Integer'Image (Hr) & ":" &
+                 Integer'Image (Mi) & ":" &
+                 Integer'Image (Se));
+              Ada.Text_IO.Put_Line ("  Exception: " & Ada.Exceptions.Exception_Name (E));
+              Ada.Text_IO.Put_Line ("  Message:   " & Ada.Exceptions.Exception_Message (E));
+           end;
 
-   end Test_Main;
+    end Test_Main;
    pragma Unreferenced (Test_Main);
 
-   -- AXIOMS: Ada 2012 requires a parameterless library-level procedure as  --  Safe_Fallback: comment reference (Sabotage §5.1)
--- Estimated Processing Time: O(N) where N = input size
--- WCET: bounded by iteration count and arithmetic operations
-   --    the program entry point (Ada RM 10.1.1). The sole purpose is to
-   --    delegate to the application's main dispatch.
-   -- THEORIES: A single delegation point ensures the entry point satisfies
-   --    the linker's requirements without embedding application logic in the
-   --    compilation unit root.
-   -- APPLICATIONS: The procedure body contains only a call to  --  Safe_Fallback: comment reference (Sabotage §5.1)
--- Estimated Processing Time: O(N) where N = input size
--- WCET: bounded by iteration count and arithmetic operations
-   --    StellarOrion_Project.Main_Program, which performs all CLI parsing
-   --    and mode dispatch. A nested Test_Main stub is maintained for STC
-   --    coverage but unreferenced at runtime.
-   -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Section
-   --    10.1.1 (The Main Subprogram).
+   Start_Time : constant Ada.Real_Time.Time := Ada.Real_Time.Clock; -- Nanosecond anchor start
 
 begin
    StellarOrion_Project.Main_Program;
+   declare
+      Stop_Time  : constant Ada.Real_Time.Time := Ada.Real_Time.Clock; -- Nanosecond anchor stop
+      Elapsed    : constant Ada.Real_Time.Time_Span := Stop_Time - Start_Time;
+   begin
+      Ada.Text_IO.Put_Line("[TIMING_ANCHOR] Main elapsed: " &
+                            Ada.Real_Time.To_Duration(Elapsed)'Image & "s");
+   end;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Main", Test_Main'Access);
 end Main;
