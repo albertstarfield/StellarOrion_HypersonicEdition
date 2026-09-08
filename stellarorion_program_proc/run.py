@@ -1178,7 +1178,7 @@ def main() -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — CLI entry point
 
     except KeyboardInterrupt:
         print(f"\n{_c('31', 'Interrupted')} by user (Ctrl+C)")
-        sys.exit(3)
+        sys.exit(3)  # nosec: SILENT_FAILURE — intentional exit on KeyboardInterrupt
     finally:
         lock.release()
 
