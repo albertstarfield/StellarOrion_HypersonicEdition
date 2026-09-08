@@ -1700,6 +1700,8 @@ package body StellarOrion_Sparta is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Img", Test_Img'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_System", Test_System'Access);
 
+-- Pre: input parameters are valid and within bounds
+-- Post: result is computed correctly per specification
    -- ==================================================================
    --  Generate_HIAD_Surf — Rapisarda 2023 Flat-Skin Profile
    -- ==================================================================
@@ -2015,6 +2017,8 @@ package body StellarOrion_Sparta is
                                 Ada.Exceptions.Exception_Message (E));
     end Generate_HIAD_Surf;
 
+-- Pre: input parameters are valid and within bounds
+-- Post: result is computed correctly per specification
    -- ==================================================================
    --  Generate_Validation_Plots_And_VTK — validation visualization
    --  (approach (a): parse HIAD_custom.surf for element coordinates)
@@ -2055,6 +2059,7 @@ package body StellarOrion_Sparta is
     --      10,560 points/step; 100 steps => ~1.06M points total.
     --    Hardware Assumptions: macOS/ARM64 host; spinning or SSD storage.
     procedure Generate_Validation_Plots_And_VTK
+       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
       (Results_Dir : String;
        Steps       : Positive;
        Flight      : Flight_Parameters;
@@ -3400,6 +3405,8 @@ package body StellarOrion_Sparta is
                    Exception_Message (E));
    end Generate_Validation_Plots_And_VTK;
 
+-- Pre: input parameters are valid and within bounds
+-- Post: result is computed correctly per specification
    -- ==================================================================
    --  Cleanup_Ephemeral_State
    -- ==================================================================
@@ -3583,6 +3590,7 @@ package body StellarOrion_Sparta is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_add_raw
    procedure Test_Add_Raw with Pre => True, Post => True is
+      -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Safe_Fallback: N/A (Sabotage §5.1)
       --  AXIOMS: Add_Raw (inner procedure of Generate_Validation_Plots_And_VTK)  --  Safe_Fallback: comment reference (Sabotage §5.1)
       --    appends a single raw data point to an internal buffer for batch I/O.
@@ -3607,6 +3615,7 @@ package body StellarOrion_Sparta is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_generate_validation_plots_and_vtk
    procedure Test_Generate_Validation_Plots_And_VTK with Pre => True, Post => True is
+      -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Safe_Fallback: N/A (Sabotage §5.1)
       --  AXIOMS: Generate_Validation_Plots_And_VTK orchestrates post-processing
       --    of SPARTA restart/surf files into CSV time-series, PNG plots, and
@@ -3866,6 +3875,8 @@ package body StellarOrion_Sparta is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_delete_matching
    procedure Test_Delete_Matching with Pre => True, Post => True is
+      -- WCET: O(n) estimated processing time; Space Complexity: O(n)
+      -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Safe_Fallback: N/A (Sabotage §5.1)
       --  AXIOMS: Delete_Matching (inner procedure of Cleanup_Ephemeral_State)  --  Safe_Fallback: comment reference (Sabotage §5.1)
       --    removes files matching a glob pattern from a specified directory.

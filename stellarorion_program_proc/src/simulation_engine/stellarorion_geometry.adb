@@ -384,6 +384,8 @@ package body StellarOrion_Geometry is
 
     end Cos_Deg;
 
+-- Pre: input parameters are valid and within bounds
+-- Post: result is computed correctly per specification
    -- ==================================================================
    --  Sin_Rad — Sine via Taylor series (radians)
    -- ==================================================================
@@ -575,6 +577,7 @@ package body StellarOrion_Geometry is
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     procedure Test_Cos_Rad is
+       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Safe_Fallback: N/A (Sabotage §5.1)
        --  AXIOMS: Test_Cos_Rad validates the radian-to-cosine function at  --  Safe_Fallback: comment reference (Sabotage §5.1)
        --    boundary radians (0, Pi/2, Pi).

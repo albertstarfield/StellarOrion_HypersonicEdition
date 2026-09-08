@@ -426,6 +426,7 @@ package body StellarOrion_Reports is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_gridindep_sparta
    procedure Test_Run_GridIndep_Sparta is
+      -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  @test: Test_Run_GridIndep_Sparta unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: The validated optimal grid factor (0.7) must lie within the

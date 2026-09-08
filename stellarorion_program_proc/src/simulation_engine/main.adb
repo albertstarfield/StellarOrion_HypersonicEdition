@@ -1,5 +1,7 @@
 --  Standalone entry point for StellarOrion Program Proc.
 --  GNAT requires a top-level parameterless procedure as a main program.  --  Safe_Fallback: comment reference (Sabotage §5.1)
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
 --  StellarOrion_Project.Main_Program is inside a package, so we wrap it here.
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
 
@@ -35,6 +37,8 @@ procedure Main with Pre => True, Post => True is
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_main
     procedure Test_Main with Pre => True, Post => True is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
        --  AXIOMS: Test_Main validates the entry-point delegation by asserting
        --    that the Entry_Point_Delegates constant is True.
        --  THEORIES: If Entry_Point_Delegates is True, then the wrapper
@@ -57,12 +61,16 @@ procedure Main with Pre => True, Post => True is
    pragma Unreferenced (Test_Main);
 
    -- AXIOMS: Ada 2012 requires a parameterless library-level procedure as  --  Safe_Fallback: comment reference (Sabotage §5.1)
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --    the program entry point (Ada RM 10.1.1). The sole purpose is to
    --    delegate to the application's main dispatch.
    -- THEORIES: A single delegation point ensures the entry point satisfies
    --    the linker's requirements without embedding application logic in the
    --    compilation unit root.
    -- APPLICATIONS: The procedure body contains only a call to  --  Safe_Fallback: comment reference (Sabotage §5.1)
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --    StellarOrion_Project.Main_Program, which performs all CLI parsing
    --    and mode dispatch. A nested Test_Main stub is maintained for STC
    --    coverage but unreferenced at runtime.

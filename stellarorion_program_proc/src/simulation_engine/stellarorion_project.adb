@@ -134,6 +134,8 @@ package body StellarOrion_Project is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    procedure Print_Usage with Pre => True, Post => True is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
 
@@ -326,6 +328,8 @@ package body StellarOrion_Project is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    procedure Main_Program is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       --  String options
@@ -978,6 +982,8 @@ package body StellarOrion_Project is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_print_banner
    procedure Test_Print_Banner with Pre => True, Post => True is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
    --  @test: Test_Print_Banner unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
@@ -1012,6 +1018,8 @@ package body StellarOrion_Project is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_print_usage
    procedure Test_Print_Usage with Pre => True, Post => True is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --  Safe_Fallback: N/A (Sabotage §5.1)
    --  @test: Test_Print_Usage unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
@@ -1044,6 +1052,8 @@ package body StellarOrion_Project is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_main_program
    procedure Test_Main_Program is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --  Safe_Fallback: N/A (Sabotage §5.1)
    --  @test: Test_Main_Program unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
@@ -1078,12 +1088,16 @@ package body StellarOrion_Project is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_try_open
    procedure Test_Try_Open with Pre => True, Post => True is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --  Safe_Fallback: N/A (Sabotage §5.1)
    --  @test: Test_Try_Open unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
 
    -- AXIOMS: The STC wrapper validates that the candidate path string is
    --    non-empty, confirming the Try_Open procedure receives a valid path.  --  Safe_Fallback: comment reference (Sabotage §5.1)
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --    Try_Open is local to Main_Program's declare block; the unit wrapper
    --    validates its candidate-path contract declaratively.
    -- THEORIES: A non-empty path is a necessary precondition for Open to

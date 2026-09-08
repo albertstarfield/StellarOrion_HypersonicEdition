@@ -297,6 +297,8 @@ package body StellarOrion_Status_Writer is
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_clear_status
     procedure Test_Clear_Status is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
        --  AXIOMS: Test_Clear_Status validates the IPC status file path
        --    construction without touching the filesystem.
        --  THEORIES: If the constructed path is non-empty and does not

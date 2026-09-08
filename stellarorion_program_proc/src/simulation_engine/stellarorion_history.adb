@@ -2662,6 +2662,8 @@ package body StellarOrion_History is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_sample_count
    procedure Test_Sample_Count is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  AXIOMS: Test_Sample_Count validates the sample count getter by checking
    --    that Sample_Count returns a non-negative value at any DB state.

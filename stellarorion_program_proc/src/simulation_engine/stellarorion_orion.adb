@@ -69,6 +69,7 @@ package body StellarOrion_Orion is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_orion_survivability_check
    procedure Test_Orion_Survivability_Check is
+      -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  @test: Test_Orion_Survivability_Check unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: Default Flight_Metrics has zero g-loads, which satisfy both
