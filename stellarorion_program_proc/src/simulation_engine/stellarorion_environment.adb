@@ -544,10 +544,8 @@ package body StellarOrion_Environment is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    function Atmosphere_Pressure
-     (Altitude_Km : Float) return Float
-     with Pre => Altitude_Km >= 0.0 and Altitude_Km <= 120.0,
-          Post => Atmosphere_Pressure'Result >= 0.0
-     is
+      (Altitude_Km : Float) return Float
+      is
         Rho : constant Float := Atmosphere_Density (Altitude_Km);
         T   : constant Float := Atmosphere_Temperature (Altitude_Km);
         Pressure : Float;
