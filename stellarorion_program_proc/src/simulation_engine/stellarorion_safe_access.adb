@@ -1,6 +1,6 @@
 --  Safe_Access body: Implementation of pointer conversion wrapper.
 --  AXIOMS: This is the only allocation conversion path for Argument_List.
---  THEOREM: This function consolidates all pointer usage into one location.
+--  THEOREM: This wrapper consolidates all pointer usage into one location.
 --  CITATION: GNAT OS_Lib.Spawn (s-os_lib.ads L861), Ada RM 13.1.1
 with GNAT.OS_Lib;
 

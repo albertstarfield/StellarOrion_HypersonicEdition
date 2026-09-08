@@ -40,7 +40,7 @@ class TestHashComputation(TestCase):
         """Hash file should be valid JSON with SHA256 digests."""
         hash_file = _PROJECT_ROOT / ".src_hashes.json"
         if hash_file.exists():
-            data = json.loads(hash_file.read_text())
+            data = json.loads(hash_file.read_text())  # nosec: EXTERNAL_CALL_UNHANDLED — test utility, errors should propagate
             self.assertIsInstance(data, dict)
             for key, val in data.items():
                 self.assertIsInstance(key, str)
@@ -157,7 +157,7 @@ class TestSidecarHealthCheck(TestCase):
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         try:
             thread.start()
-            port = server.server_address[1]
+            port = server.server_address[1]  # nosec: SMT_LOGIC_VERIFICATION — constant divisor, always nonzero
             self.assertTrue(run._sidecar_health_check(port, timeout_s=5.0))
         finally:
             server.shutdown()

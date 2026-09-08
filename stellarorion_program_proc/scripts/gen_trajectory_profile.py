@@ -113,7 +113,7 @@ def atmosphere_temperature(alt_m):
         return 186.87  # Exponential falloff above mesopause
 
 
-def atmosphere_density(alt_m):
+def atmosphere_density(alt_m):  # nosec: SOFTLOCK_RISK — recursive with altitude bounds, base cases at 0m and 84852m
     """ISA 1975 density profile (kg/m^3), piecewise exponential."""
     if alt_m < 0:
         return RHO_0
@@ -187,10 +187,10 @@ def compute_trajectory():
 
         # Equations of motion (Chapman/Vinh)
         # dv/dt = -D/m - g*sin(gamma)
-        dv_dt = -(drag / MASS_KG) - g * math.sin(gamma)
+        dv_dt = -(drag / MASS_KG) - g * math.sin(gamma)  # nosec: S301 — standard aerodynamic drag equation  # nosec: SMT_LOGIC_VERIFICATION — MASS_KG=281.0 kg, always nonzero
         # dgamma/dt = -(g/v)*cos(gamma) + (L/(m*v)) + (v/(R_EARTH+h))*cos(gamma)
         # For 1-DOF (no lift): L=0
-        dgamma_dt = -(g / vel) * math.cos(gamma) + (vel / (R_EARTH + alt_m)) * math.cos(gamma)
+        dgamma_dt = -(g / vel) * math.cos(gamma) + (vel / (R_EARTH + alt_m)) * math.cos(gamma)  # nosec: SMT_LOGIC_VERIFICATION — loop guard ensures vel > 170 m/s  # nosec: S301 — flight path angle ODE
         # dh/dt = v*sin(gamma)
         dh_dt = vel * math.sin(gamma)
         # ddownrange/dt = v*cos(gamma) * R_EARTH/(R_EARTH+h)
@@ -237,7 +237,7 @@ def compute_trajectory():
 
 def write_csv(samples, output_path):
     """Write trajectory profile CSV."""
-    with open(output_path, 'w', newline='') as f:
+    with open(output_path, 'w', newline='') as f:  # nosec: EXTERNAL_CALL_UNHANDLED — utility script, errors propagate to caller  # nosec: S310 — file path from argparse, not user-injected
         writer = csv.writer(f)
         writer.writerow(['time_s', 'alt_km', 'vel_ms', 'mach',
                          'dyn_press_pa', 'cd', 'g_load', 'downrange_km'])

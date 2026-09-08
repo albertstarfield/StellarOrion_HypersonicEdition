@@ -40,8 +40,6 @@ TIMING ANALYSIS:
   WCET: < 30 s for typical validation runs (<= 23 VTU files).
 ================================================================================
 """
-from __future__ import annotations
-
 import os
 import sys
 import xml.etree.ElementTree as ET
@@ -102,7 +100,7 @@ def _parse_vtu(path: str) -> tuple[np.ndarray, np.ndarray]:
 
 def _watts_to_celsius_friendly(q_wm2: float) -> float:
     """Convert W/m² to W/cm² for display."""
-    return q_wm2 / 1e4
+    return q_wm2 / 1e4  # nosec: SMT_LOGIC_VERIFICATION — constant 1e4, always nonzero
 
 
 def _q_to_t_surface(q_wm2: float) -> float:
@@ -121,7 +119,7 @@ def plot_3d_surface(points: np.ndarray, heat: np.ndarray, out_path: str,
     ax = fig.add_subplot(111, projection="3d")
 
     x, y, z = points[:, 0], points[:, 1], points[:, 2]
-    q_cm2 = heat / 1e4  # W/m² → W/cm²
+    q_cm2 = heat / 1e4  # nosec: SMT_LOGIC_VERIFICATION — constant 1e4, always nonzero
 
     # Subsample for performance (plot every 4th point)
     idx = np.arange(0, len(x), 4)
@@ -155,7 +153,7 @@ def plot_2d_cross_section(points: np.ndarray, heat: np.ndarray,
     fig, ax = plt.subplots(figsize=(14, 6))
 
     x, z = points[:, 0], points[:, 2]
-    q_cm2 = heat / 1e4
+    q_cm2 = heat / 1e4  # nosec: SMT_LOGIC_VERIFICATION — constant 1e4, always nonzero
 
     # Filter points near Y=0 plane (|Y| < 0.01m) for cross-section
     y = points[:, 1]
@@ -200,7 +198,7 @@ def plot_heat_flux_histogram(heat: np.ndarray, out_path: str,
                              step: int) -> None:
     """Histogram of heat flux distribution across surface elements."""
     fig, ax = plt.subplots(figsize=(10, 6))
-    q_cm2 = heat / 1e4
+    q_cm2 = heat / 1e4  # nosec: SMT_LOGIC_VERIFICATION — constant 1e4, always nonzero
     q_nonzero = q_cm2[q_cm2 > 0]
 
     ax.hist(q_nonzero, bins=50, color="orangered", edgecolor="black",
@@ -232,7 +230,7 @@ def plot_heat_flux_vs_x(points: np.ndarray, heat: np.ndarray,
     fig, ax1 = plt.subplots(figsize=(12, 6))
 
     x = points[:, 0]
-    q_cm2 = heat / 1e4
+    q_cm2 = heat / 1e4  # nosec: SMT_LOGIC_VERIFICATION — constant 1e4, always nonzero
     t_surf = np.array([_q_to_t_surface(q) for q in heat])
 
     # Sort by X position

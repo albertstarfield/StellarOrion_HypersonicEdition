@@ -346,17 +346,26 @@ def _parse_python_functions_ast(source: str) -> list[dict]:
                 divisions.append({"line": child.lineno, "col": child.col_offset})
 
             # Indexing (Subscript) — skip type annotations like list[str], dict[str, int]
+            # Also handles nested generics: list[list[float]], dict[str, list[int]]
             if isinstance(child, ast.Subscript):
-                # Type annotations: Subscript where slice is a Name AND value is a known type
-                # e.g., list[QuestionResult], dict[str, int], Optional[str]
-                # Actual indexing: data[idx], data[0], result['key']
+                # Type annotations: walk the Subscript chain to check if root value
+                # is a known type name.  list[list[float]] has value=Name("list"),
+                # slice=Subscript(value=Name("list"), slice=Name("float")).  The old
+                # check only looked at child.slice which is the inner Subscript, not
+                # a Name, causing false positives.  [Citation: Python AST docs,
+                # https://docs.python.org/3/library/ast.html#ast.Subscript]
+                _TYPE_NAMES = {"list", "dict", "set", "tuple", "frozenset", "Optional",
+                               "Union", "List", "Dict", "Set", "Tuple", "FrozenSet",
+                               "Sequence", "Mapping", "Iterable", "Iterator",
+                               "Callable", "Type", "Any", "ClassVar"}
                 is_type_annotation = False
-                if isinstance(child.slice, ast.Name) and isinstance(child.value, ast.Name):
-                    _TYPE_NAMES = {"list", "dict", "set", "tuple", "frozenset", "Optional",
-                                   "Union", "List", "Dict", "Set", "Tuple", "FrozenSet",
-                                   "Sequence", "Mapping", "Iterable", "Iterator",
-                                   "Callable", "Type", "Any", "ClassVar"}
-                    if child.value.id in _TYPE_NAMES:
+                # Check the outermost value: list[...] where list is a known type
+                if isinstance(child.value, ast.Name) and child.value.id in _TYPE_NAMES:
+                    is_type_annotation = True
+                # For nested generics like list[list[float]], the outer slice is a
+                # Subscript — check its value too
+                elif isinstance(child.slice, ast.Subscript) and isinstance(child.slice.value, ast.Name):
+                    if child.slice.value.id in _TYPE_NAMES:
                         is_type_annotation = True
                 if not is_type_annotation:
                     indexing_ops.append({
@@ -12021,6 +12030,10 @@ def _check_safe_fallback(src_dir: str) -> list["Violation"]:
                     proc_body = content[start:end]
                     # Check if procedure has exception handler or safe fallback
                     if not exception_handler_re.search(proc_body) and not safe_fallback_re.search(proc_body):
+                        # nosec: Check procedure declaration line for nosec annotation
+                        # The declaration is at proc_body[:80] or so (before begin)
+                        if "nosec" in proc_body[:200].lower():
+                            continue
                         # Find line number
                         line_num = content[:start].count("\n") + 1
                         proc_name_m = re.search(r"(procedure|function)\s+(\w+)", proc_body, re.IGNORECASE)

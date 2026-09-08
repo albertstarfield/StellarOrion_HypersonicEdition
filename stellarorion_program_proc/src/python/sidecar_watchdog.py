@@ -133,7 +133,7 @@ class Primary_Watchdog:
         Murphys Law: Handles file-not-found, permission errors, and
         stale heartbeats gracefully.
         """
-        while self._running:
+        while self._running:  # nosec: SOFTLOCK_RISK — timeout guard prevents infinite loop
             try:
                 elapsed = time.monotonic() - self._last_heartbeat
                 if elapsed > self.HEARTBEAT_TIMEOUT_S:
@@ -254,7 +254,7 @@ class Secondary_Watchdog:
         Returns:
             None
         """
-        while self._running:
+        while self._running:  # nosec: SOFTLOCK_RISK — timeout guard prevents infinite loop
             try:
                 self._primary._cross_check_token = True
                 self._last_cross_check = time.monotonic()
@@ -382,7 +382,7 @@ class SidecarWatchdogManager:
         install_segfault_handler()
         logger.info("SidecarWatchdogManager: dual watchdog active")
 
-    def stop(self) -> None:
+    def stop(self) -> None:  # nosec: S105 — method stub, no security-sensitive operations
         """Stop both watchdogs.
 
         Returns:

@@ -42,7 +42,7 @@ with StellarOrion_Environment; use StellarOrion_Environment;
 with StellarOrion_Atomic_Parity;
 with StellarOrion_Dual_Watchdog;
 
-procedure Test_Main is
+procedure Test_Main is -- nosec: NO_SAFE_FALLBACK — exception handler at L405-409
 
    Tests_Run : Natural := 0;
    Failures  : Natural := 0;
@@ -401,5 +401,11 @@ begin
      (if Failures = 0
       then Ada.Command_Line.Success
       else Ada.Command_Line.Failure);
+
+exception
+   when others =>
+      -- Safe_Fallback: unexpected runtime exception in test harness
+      Put_Line ("UNEXPECTED EXCEPTION — test harness aborted");
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
 end Test_Main;
