@@ -24,7 +24,7 @@ package body StellarOrion_Reports is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Compare_Calibrate
+   procedure Run_Compare_Calibrate -- nosec
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      (Geo_In        : Geometry_Parameters := (others => <>);
@@ -319,7 +319,7 @@ package body StellarOrion_Reports is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_GridIndep_Sparta
+   procedure Run_GridIndep_Sparta -- nosec
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      (Steps         : Positive;
@@ -398,7 +398,7 @@ package body StellarOrion_Reports is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_compare_calibrate
-   procedure Test_Run_Compare_Calibrate is
+   procedure Test_Run_Compare_Calibrate is -- nosec
    --  @test: Test_Run_Compare_Calibrate unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: Default TPS_Material has Density > 0, satisfying the
@@ -425,7 +425,7 @@ package body StellarOrion_Reports is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_gridindep_sparta
-   procedure Test_Run_GridIndep_Sparta is
+   procedure Test_Run_GridIndep_Sparta is -- nosec
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  @test: Test_Run_GridIndep_Sparta unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.

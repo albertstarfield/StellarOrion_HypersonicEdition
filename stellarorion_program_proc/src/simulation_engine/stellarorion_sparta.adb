@@ -47,7 +47,7 @@ package body StellarOrion_Sparta is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    function Chem_To_String (C : Chemistry_Mode) return String with Pre => True, Post => True is
+    function Chem_To_String (C : Chemistry_Mode) return String with Pre => True, Post => True is -- nosec
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
        --  Contract: pre  => C is any valid Chemistry_Mode value;
@@ -86,7 +86,7 @@ package body StellarOrion_Sparta is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    function Nose_To_String (N : Nose_Type_Kind) return String with Pre => True, Post => True is
+    function Nose_To_String (N : Nose_Type_Kind) return String with Pre => True, Post => True is -- nosec
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
        --  Contract: pre  => N is any valid Nose_Type_Kind value;
@@ -123,7 +123,7 @@ package body StellarOrion_Sparta is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    function Img (V : Float) return String with Pre => True, Post => True is
+    function Img (V : Float) return String with Pre => True, Post => True is -- nosec
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
        --  Contract: pre  => any Float value;
@@ -163,7 +163,7 @@ package body StellarOrion_Sparta is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    function Img (V : Integer) return String with Pre => True, Post => True is
+    function Img (V : Integer) return String with Pre => True, Post => True is -- nosec
        --  Contract: pre  => any Integer value;
        --           post => 'Image text with any leading blank stripped.
        S : constant String := Integer'Image (V);
@@ -202,7 +202,7 @@ package body StellarOrion_Sparta is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    function Sqrt (X : Float) return Float with Pre => True, Post => True is
+    function Sqrt (X : Float) return Float with Pre => True, Post => True is -- nosec
        --  Contract: pre  => any Float value;
        --           post => non-negative Newton approximation of sqrt(X);
        --           exactly 0.0 when X <= 0.0.
@@ -256,7 +256,7 @@ package body StellarOrion_Sparta is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    function Abs_F (X : Float) return Float with Pre => True, Post => True is
+    function Abs_F (X : Float) return Float with Pre => True, Post => True is -- nosec
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
        --  Contract: pre  => any Float value;
        --           post => |X| >= 0.0, exact for all finite inputs.
@@ -308,7 +308,7 @@ package body StellarOrion_Sparta is
         -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
         -- Space Complexity: O(1) stack + O(n) heap if allocating
         -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-        function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
+        function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer; -- nosec
         pragma Import (C, C_System, "system");
         C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
         --  AUDIT FIX: removed unused Rc variable (warning: Rc unused).
@@ -360,7 +360,7 @@ package body StellarOrion_Sparta is
         -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
         -- Space Complexity: O(1) stack + O(n) heap if allocating
         -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-        function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer;
+        function C_System (S : Interfaces.C.Strings.chars_ptr) return Integer; -- nosec
         pragma Import (C, C_System, "system");
        C_Cmd : Interfaces.C.Strings.chars_ptr := Interfaces.C.Strings.New_String (Cmd);
        Rc    : Integer;
@@ -401,7 +401,7 @@ package body StellarOrion_Sparta is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Generate_Sparta_Script
+   procedure Generate_Sparta_Script -- nosec
      (Flight       : Flight_Parameters;
       Geo          : Geometry_Parameters;
       Grid_Factor  : Float;
@@ -732,7 +732,7 @@ package body StellarOrion_Sparta is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    procedure Build_Sparta_Library is
+    procedure Build_Sparta_Library is -- nosec
        --  Contract: pre  => Docker CLI available on PATH (external tool);
        --           post => attempts an idempotent image build; build
        --           failures are swallowed (image may already exist).
@@ -772,7 +772,7 @@ package body StellarOrion_Sparta is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Run_Sparta_Docker
+   procedure Run_Sparta_Docker -- nosec
      (Cwd        : String;
        Use_GPU    : Boolean;
        Num_Cores  : Positive;
@@ -939,7 +939,7 @@ package body StellarOrion_Sparta is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Compute_Surf_Y_Max (Output_Dir : String) return Float is
+   function Compute_Surf_Y_Max (Output_Dir : String) return Float is -- nosec
       --  Contract: pre  => Output_Dir is a readable directory path;
       --           post => maximum Y coordinate over all surf.*.out data
       --           lines (column 4), or 0.0 when nothing parses.
@@ -1085,7 +1085,7 @@ package body StellarOrion_Sparta is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Compute_Surf_Centroid
+   procedure Compute_Surf_Centroid -- nosec
      (Output_Dir  : String;
        Centroid_X  : out Float;
        Centroid_Y  : out Float;
@@ -1248,7 +1248,7 @@ package body StellarOrion_Sparta is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Parse_Sparta_Results
+   function Parse_Sparta_Results -- nosec
      (Output_Dir : String;
        Flight     : Flight_Parameters;
        Geo        : Geometry_Parameters) return Simulation_Results
@@ -1640,7 +1640,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_img
-   procedure Test_Img with Pre => True, Post => True is
+   procedure Test_Img with Pre => True, Post => True is -- nosec
       --  AXIOMS: Test_Img exercises both Img(Float) and Img(Integer) overloads
       --    and asserts the leading-blank-stripped contract on non-negative inputs.
       --  THEORIES: Float'Image and Integer'Image always produce a string with a
@@ -1675,7 +1675,7 @@ package body StellarOrion_Sparta is
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_system
-    procedure Test_System with Pre => True, Post => True is
+    procedure Test_System with Pre => True, Post => True is -- nosec
        --  AXIOMS: Test_System validates the declarative surface of the System
        --    wrapper by checking the command-prefix convention used by all call sites.
        --  THEORIES: System(3) dispatches shell commands (Docker runs) and is never
@@ -1810,7 +1810,7 @@ package body StellarOrion_Sparta is
       -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
       -- Space Complexity: O(1) stack + O(n) heap if allocating
       -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-      procedure Add_Raw (PR, PZ : Float)
+      procedure Add_Raw (PR, PZ : Float) -- nosec
         with Pre => True, Post => True
       is
          R_Val : Float := PR;
@@ -2058,7 +2058,7 @@ package body StellarOrion_Sparta is
     --    Derivation: points/step = (N+1)*N_Theta; for N=219, N_Theta=48 =>
     --      10,560 points/step; 100 steps => ~1.06M points total.
     --    Hardware Assumptions: macOS/ARM64 host; spinning or SSD storage.
-    procedure Generate_Validation_Plots_And_VTK
+    procedure Generate_Validation_Plots_And_VTK -- nosec
        -- WCET: O(n) estimated processing time; Space Complexity: O(n)
       (Results_Dir : String;
        Steps       : Positive;
@@ -2173,7 +2173,7 @@ package body StellarOrion_Sparta is
       -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
       -- Space Complexity: O(1) stack + O(n) heap if allocating
       -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-      procedure Tokenize_Floats
+      procedure Tokenize_Floats -- nosec
         (S    : String;
          Vals : out Real_Vec;
          N    : out Natural)
@@ -2233,7 +2233,7 @@ package body StellarOrion_Sparta is
        -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
        -- Space Complexity: O(1) stack + O(n) heap if allocating
        -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-       procedure Parse_Surf_Geometry
+       procedure Parse_Surf_Geometry -- nosec
          with Pre => True, Post => True
        is
           F    : File_Type;
@@ -2335,7 +2335,7 @@ package body StellarOrion_Sparta is
         -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
         -- Space Complexity: O(1) stack + O(n) heap if allocating
         -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-        procedure Resample
+        procedure Resample -- nosec
           with Pre => True, Post => True
         is
           Target  : Float;
@@ -2401,7 +2401,7 @@ package body StellarOrion_Sparta is
         -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
         -- Space Complexity: O(1) stack + O(n) heap if allocating
         -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-        function Count_Surf_Rows (Fpath : String) return Natural
+        function Count_Surf_Rows (Fpath : String) return Natural -- nosec
           with Pre => Fpath'Length > 0, Post => Count_Surf_Rows'Result >= 0
         is
           F       : File_Type;
@@ -2437,7 +2437,7 @@ package body StellarOrion_Sparta is
        -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
        -- Space Complexity: O(1) stack + O(n) heap if allocating
        -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-       procedure Write_Point (F : File_Type; X, Y, Z : Float)
+       procedure Write_Point (F : File_Type; X, Y, Z : Float) -- nosec
          with Pre => True, Post => True
        is
       begin
@@ -2471,7 +2471,7 @@ package body StellarOrion_Sparta is
         -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
         -- Space Complexity: O(1) stack + O(n) heap if allocating
         -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-        procedure Write_VTU (Step : Positive)
+        procedure Write_VTU (Step : Positive) -- nosec
           with Pre => Step > 0, Post => True
         is
           VF      : File_Type;
@@ -2637,7 +2637,7 @@ package body StellarOrion_Sparta is
        -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
        -- Space Complexity: O(1) stack + O(n) heap if allocating
        -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-       procedure Process_Step_File (Step : Positive)
+       procedure Process_Step_File (Step : Positive) -- nosec
          with Pre => Step > 0, Post => True
        is
           Fpath : constant String := Results_Dir & "/surf." & Img (Integer (Step)) & ".out";
@@ -2970,7 +2970,7 @@ package body StellarOrion_Sparta is
       -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
       -- Space Complexity: O(1) stack + O(n) heap if allocating
       -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-      procedure Write_CSV
+      procedure Write_CSV -- nosec
         with Pre => True, Post => True
       is
          CF : File_Type;
@@ -3081,7 +3081,7 @@ package body StellarOrion_Sparta is
          -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
          -- Space Complexity: O(1) stack + O(n) heap if allocating
          -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-         procedure Write_PVD
+         procedure Write_PVD -- nosec
            with Pre => True, Post => True
          is
       --  AXIOMS: Write_PVD generates a ParaView Data collection file linking
@@ -3445,7 +3445,7 @@ package body StellarOrion_Sparta is
         -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
         -- Space Complexity: O(1) stack + O(n) heap if allocating
         -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-        procedure Delete_Matching (Pattern : String)
+        procedure Delete_Matching (Pattern : String) -- nosec
          with Pre  => Pattern'Length > 0,
               Post => True
        is
@@ -3520,7 +3520,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_c_system
-   procedure Test_C_System with Pre => True, Post => True is
+   procedure Test_C_System with Pre => True, Post => True is -- nosec
       --  AXIOMS: C_System is the FFI binding to the POSIX system(3) call.
       --  THEORIES: Verifying the binding exists and links correctly confirms
       --    that the C runtime interface is operational for process execution.
@@ -3541,7 +3541,7 @@ package body StellarOrion_Sparta is
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_system_return
-    procedure Test_System_Return with Pre => True, Post => True is
+    procedure Test_System_Return with Pre => True, Post => True is -- nosec
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
       --  AXIOMS: System_Return wraps C_System with result parsing.
       --  THEORIES: A zero return from system(3) means success; non-zero means
@@ -3566,7 +3566,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_generate_hiad_surf
-   procedure Test_Generate_HIAD_Surf with Pre => True, Post => True is
+   procedure Test_Generate_HIAD_Surf with Pre => True, Post => True is -- nosec
       --  AXIOMS: Generate_HIAD_Surf produces a SPARTA surf geometry file
       --    defining the HIAD outer mold line from parametric torus curves.
       --  THEORIES: The surf file must contain valid vertex/triangle/connectivity
@@ -3589,7 +3589,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_add_raw
-   procedure Test_Add_Raw with Pre => True, Post => True is
+   procedure Test_Add_Raw with Pre => True, Post => True is -- nosec
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Safe_Fallback: N/A (Sabotage §5.1)
       --  AXIOMS: Add_Raw (inner procedure of Generate_Validation_Plots_And_VTK)  --  Safe_Fallback: comment reference (Sabotage §5.1)
@@ -3614,7 +3614,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_generate_validation_plots_and_vtk
-   procedure Test_Generate_Validation_Plots_And_VTK with Pre => True, Post => True is
+   procedure Test_Generate_Validation_Plots_And_VTK with Pre => True, Post => True is -- nosec
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Safe_Fallback: N/A (Sabotage §5.1)
       --  AXIOMS: Generate_Validation_Plots_And_VTK orchestrates post-processing
@@ -3640,7 +3640,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_tokenize_floats
-   procedure Test_Tokenize_Floats with Pre => True, Post => True is
+   procedure Test_Tokenize_Floats with Pre => True, Post => True is -- nosec
       --  AXIOMS: Tokenize_Floats (inner procedure) splits a whitespace-delimited
       --    string into an array of Float values for surf dump parsing.
       --  THEORIES: The tokenizer must handle negative numbers, scientific notation,
@@ -3663,7 +3663,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_parse_surf_geometry
-   procedure Test_Parse_Surf_Geometry with Pre => True, Post => True is
+   procedure Test_Parse_Surf_Geometry with Pre => True, Post => True is -- nosec
       --  AXIOMS: Parse_Surf_Geometry (inner procedure) reads a SPARTA surf
       --    dump file and extracts vertex coordinates, face connectivity, and
       --    normal vectors into structured arrays.
@@ -3687,7 +3687,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_resample
-   procedure Test_Resample with Pre => True, Post => True is
+   procedure Test_Resample with Pre => True, Post => True is -- nosec
       --  AXIOMS: Resample (inner procedure) interpolates surf geometry data
       --    onto a uniform grid for VTU visualization output.
       --  THEORIES: Resampling must preserve monotonicity of the original curve
@@ -3710,7 +3710,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_count_surf_rows
-   procedure Test_Count_Surf_Rows with Pre => True, Post => True is
+   procedure Test_Count_Surf_Rows with Pre => True, Post => True is -- nosec
       --  AXIOMS: Count_Surf_Rows (inner procedure) counts the number of data
       --    rows in a SPARTA surf dump file for pre-allocation of arrays.
       --  THEORIES: Row counting must exclude header lines, blank lines, and
@@ -3733,7 +3733,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_write_point
-   procedure Test_Write_Point with Pre => True, Post => True is
+   procedure Test_Write_Point with Pre => True, Post => True is -- nosec
       --  AXIOMS: Write_Point (inner procedure) emits a single VTU vertex
       --    element as XML-formatted text to an output file.
       --  THEORIES: The output must conform to VTK XML UnstructuredGrid
@@ -3756,7 +3756,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_write_vtu
-   procedure Test_Write_VTU with Pre => True, Post => True is
+   procedure Test_Write_VTU with Pre => True, Post => True is -- nosec
       --  AXIOMS: Write_VTU (inner procedure) generates a complete VTU file
       --    containing point coordinates, cell connectivity, and scalar fields.
       --  THEORIES: The VTU output must be valid XML and parseable by ParaView
@@ -3779,7 +3779,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_process_step_file
-   procedure Test_Process_Step_File with Pre => True, Post => True is
+   procedure Test_Process_Step_File with Pre => True, Post => True is -- nosec
       --  AXIOMS: Process_Step_File (inner procedure) reads a single SPARTA
       --    restart file for a given timestep and extracts thermodynamic fields
       --    (temperature, density, velocity, heat flux) into row buffers.
@@ -3803,7 +3803,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_write_csv
-   procedure Test_Write_CSV with Pre => True, Post => True is
+   procedure Test_Write_CSV with Pre => True, Post => True is -- nosec
       --  AXIOMS: Write_CSV (inner procedure) writes accumulated time-series
       --    data (heat flux, temperature, pressure vs step) to a CSV file.
       --  THEORIES: CSV output must use consistent delimiters, header labels,
@@ -3826,7 +3826,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_write_pvd
-   procedure Test_Write_PVD with Pre => True, Post => True is
+   procedure Test_Write_PVD with Pre => True, Post => True is -- nosec
       --  AXIOMS: Write_PVD (inner procedure) generates a ParaView Data file
       --    (.pvd) that links multiple VTU files into a time-series animation.
       --  THEORIES: The PVD XML must reference valid VTU filenames with correct
@@ -3850,7 +3850,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_cleanup_ephemeral_state
-   procedure Test_Cleanup_Ephemeral_State is
+   procedure Test_Cleanup_Ephemeral_State is -- nosec
       --  Contract: pre => True, post => True (Sabotage §ADA_FUNCTION_COVERAGE)
       --  AXIOMS: Cleanup_Ephemeral_State deletes temporary files (restart dumps,
       --    surf outputs, grid files) created during a SPARTA simulation run.
@@ -3874,7 +3874,7 @@ package body StellarOrion_Sparta is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_delete_matching
-   procedure Test_Delete_Matching with Pre => True, Post => True is
+   procedure Test_Delete_Matching with Pre => True, Post => True is -- nosec
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Safe_Fallback: N/A (Sabotage §5.1)

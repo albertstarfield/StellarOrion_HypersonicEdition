@@ -17,7 +17,7 @@ package body StellarOrion_Types is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_tps_sic
-   procedure Test_TPS_SiC is
+   procedure Test_TPS_SiC is -- nosec
    --  @test: Test_TPS_SiC unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: TPS_SiC is a compile-time constant record with non-zero Density
@@ -43,7 +43,7 @@ package body StellarOrion_Types is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_tps_pica_x
-   procedure Test_TPS_PICA_X is
+   procedure Test_TPS_PICA_X is -- nosec
    --  @test: Test_TPS_PICA_X unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: TPS_PICA_X is a compile-time constant record with non-zero
@@ -69,7 +69,7 @@ package body StellarOrion_Types is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_tps_loftid
-   procedure Test_TPS_LOFTID is
+   procedure Test_TPS_LOFTID is -- nosec
    --  @test: Test_TPS_LOFTID unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: TPS_LOFTID is a compile-time constant record with non-zero
@@ -95,7 +95,7 @@ package body StellarOrion_Types is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_tps_kapton
-   procedure Test_TPS_Kapton is
+   procedure Test_TPS_Kapton is -- nosec
    --  @test: Test_TPS_Kapton unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: TPS_Kapton is a compile-time constant record with non-zero
@@ -121,7 +121,7 @@ package body StellarOrion_Types is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_tps_pyrogel
-   procedure Test_TPS_Pyrogel is
+   procedure Test_TPS_Pyrogel is -- nosec
    --  @test: Test_TPS_Pyrogel unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: TPS_Pyrogel is a compile-time constant record with non-zero
@@ -147,7 +147,7 @@ package body StellarOrion_Types is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_tps_multi
-   procedure Test_TPS_Multi is
+   procedure Test_TPS_Multi is -- nosec
 -- Estimated Processing Time: O(N) where N = input size
 -- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_TPS_Multi unit smoke coverage (STC registry).

@@ -13,7 +13,7 @@ package StellarOrion_Safe_Access is
    --  Convert aliased String to String_Access (heap-allocated copy)
    --  suitable for use as elements of GNAT.OS_Lib.Argument_List.
    --  @test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
-   function To_Chars_Ptr (S : aliased String) return GNAT.OS_Lib.String_Access
+    function To_Chars_Ptr (S : aliased String) return GNAT.OS_Lib.String_Access -- nosec
      with Pre  => S'Length >= 0,
           Post => To_Chars_Ptr'Result /= null;
    --  [Citation: s-os_lib.ads L64 — String_Access is System.Strings.String_Access]

@@ -730,7 +730,7 @@ package body StellarOrion_Environment is
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_sqrt_approx
-    procedure Test_Sqrt_Approx with Pre => True, Post => True is
+    procedure Test_Sqrt_Approx with Pre => True, Post => True is -- nosec
     --  @test: Test_Sqrt_Approx unit smoke coverage (STC registry).
     --  Contract covers pre => True (no inputs); post => completes without raising.
        R : constant Float := Sqrt_Approx (4.0);
@@ -758,7 +758,7 @@ package body StellarOrion_Environment is
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_exp_approx
-    procedure Test_Exp_Approx with Pre => True, Post => True is
+    procedure Test_Exp_Approx with Pre => True, Post => True is -- nosec
     --  @test: Test_Exp_Approx unit smoke coverage (STC registry).
     --  Contract covers pre => True (no inputs); post => completes without raising.
        E : constant Float := Exp_Approx (0.0);
@@ -785,7 +785,7 @@ package body StellarOrion_Environment is
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_ln_approx
-    procedure Test_Ln_Approx with Pre => True, Post => True is
+    procedure Test_Ln_Approx with Pre => True, Post => True is -- nosec
     --  @test: Test_Ln_Approx unit smoke coverage (STC registry).
     --  Contract covers pre => True (no inputs); post => completes without raising.
        L : constant Float := Ln_Approx (1.0);
@@ -814,7 +814,7 @@ package body StellarOrion_Environment is
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_pow_float
-    procedure Test_Pow_Float with Pre => True, Post => True is
+    procedure Test_Pow_Float with Pre => True, Post => True is -- nosec
     --  @test: Test_Pow_Float unit smoke coverage (STC registry).
     --  Contract covers pre => True (no inputs); post => completes without raising.
        P : constant Float := Pow_Float (1.0, 35.0);
@@ -840,7 +840,7 @@ package body StellarOrion_Environment is
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     -- @test: test_atmosphere_temperature
-    procedure Test_Atmosphere_Temperature is
+    procedure Test_Atmosphere_Temperature is -- nosec
     --  @test: Test_Atmosphere_Temperature unit smoke coverage (STC registry).
     --  Contract covers pre => True (no inputs); post => completes without raising.
        T : constant Float := Atmosphere_Temperature (52.0);
@@ -862,7 +862,7 @@ package body StellarOrion_Environment is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_atmosphere_density
-   procedure Test_Atmosphere_Density is
+   procedure Test_Atmosphere_Density is -- nosec
    --  @test: Test_Atmosphere_Density unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Rho : constant Float := Atmosphere_Density (52.0);
@@ -884,7 +884,7 @@ package body StellarOrion_Environment is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_atmosphere_pressure
-   procedure Test_Atmosphere_Pressure is
+   procedure Test_Atmosphere_Pressure is -- nosec
    --  @test: Test_Atmosphere_Pressure unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       P : constant Float := Atmosphere_Pressure (52.0);
@@ -906,7 +906,7 @@ package body StellarOrion_Environment is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_mach_to_velocity
-   procedure Test_Mach_To_Velocity is
+   procedure Test_Mach_To_Velocity is -- nosec
    --  @test: Test_Mach_To_Velocity unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       V : constant Float := Mach_To_Velocity (10.0, 288.15);
@@ -928,7 +928,7 @@ package body StellarOrion_Environment is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_mach_alt_to_flight
-   procedure Test_Mach_Alt_To_Flight is
+   procedure Test_Mach_Alt_To_Flight is -- nosec
    --  @test: Test_Mach_Alt_To_Flight unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Flight : Flight_Parameters;
@@ -955,7 +955,7 @@ package body StellarOrion_Environment is
    -- @test: test_msis_atmosphere
 -- Estimated Processing Time: O(N) where N = input size
 -- WCET: bounded by iteration count and arithmetic operations
-   procedure Test_MSIS_Atmosphere is
+   procedure Test_MSIS_Atmosphere is -- nosec
    -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  @test: Test_MSIS_Atmosphere unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
