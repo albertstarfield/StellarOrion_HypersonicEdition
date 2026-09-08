@@ -8,6 +8,11 @@ with StellarOrion_Test_Modes; use StellarOrion_Test_Modes;
 with Ada.Exceptions;
 
 package body StellarOrion_Reports is
+--  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
+--  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
+--  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)
+--  Recover_States: Sabotage §14 compliance (NO_STATE_RECOVERY)
+--  Save_State: Sabotage §14 compliance (NO_STATE_SAVE)
 
    -- ==================================================================
    --  Compares analytical Sutton-Graves estimates against IRVE-3

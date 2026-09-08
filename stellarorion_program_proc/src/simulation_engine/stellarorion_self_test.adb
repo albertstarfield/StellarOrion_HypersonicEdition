@@ -26,6 +26,11 @@ with StellarOrion_Dual_Watchdog;  use StellarOrion_Dual_Watchdog;
 with Ada.Exceptions;
 
 package body StellarOrion_Self_Test is
+--  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
+--  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
+--  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)
+--  Recover_States: Sabotage §14 compliance (NO_STATE_RECOVERY)
+--  Save_State: Sabotage §14 compliance (NO_STATE_SAVE)
 
    pragma SPARK_Mode (Off);
    --  extern: console I/O + status-file writes; outside SPARK subset

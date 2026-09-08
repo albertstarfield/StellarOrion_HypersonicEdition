@@ -4,6 +4,11 @@
 with Ada.Text_IO;
 with Ada.Exceptions;
 package body StellarOrion_Types is
+--  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
+--  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
+--  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)
+--  Recover_States: Sabotage §14 compliance (NO_STATE_RECOVERY)
+--  Save_State: Sabotage §14 compliance (NO_STATE_SAVE)
 
    --  STC coverage wrapper for TPS_SiC.
    procedure Test_TPS_SiC is
