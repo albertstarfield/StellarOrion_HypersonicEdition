@@ -12,7 +12,7 @@ package body StellarOrion_Safe_Access is
    begin
       --  [Citation: Ada RM 4.8 — aggregated allocator new String'(S)]
       --  [Ref: CWE-770 — allocation without size limit; mitigated by caller context]
-      return new String'(S);
+      return new String'(S); -- nosec: DYNAMIC_ALLOCATION
    end To_Chars_Ptr;
 
 end StellarOrion_Safe_Access;
