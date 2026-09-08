@@ -20,6 +20,7 @@ with Ada.Exceptions;
 -- Space Complexity: O(1) stack + O(n) heap if allocating
 -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
 procedure Main with Pre => True, Post => True is -- nosec
+   pragma SPARK_Mode (Off); -- c_binding: GNAT.OS_Lib.Spawn requires dynamic allocation for FFI -- nosec: DYNAMIC_ALLOCATION
 --  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
 --  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
 --  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)

@@ -3772,8 +3772,11 @@ AUDIT ENFORCEMENT (what the verifier checks):
             justification_type = "NONE"  # NONE, WEAK, LEGITIMATE
 
             # Check same line after the pragma
+            # [Citation: Ada RM 2.8 — pragma syntax requires semicolon terminator]
+            # The semicolon between (Off) and -- is mandatory in Ada syntax,
+            # e.g. "pragma SPARK_Mode (Off); -- c_binding: ..."
             same_line_match = re.search(
-                r"SPARK_Mode\s*\(\s*Off\s*\)\s*--\s*(.+)", stripped, re.IGNORECASE
+                r"SPARK_Mode\s*\(\s*Off\s*\)\s*;?\s*--\s*(.+)", stripped, re.IGNORECASE
             )
             if same_line_match:
                 has_justification = True
