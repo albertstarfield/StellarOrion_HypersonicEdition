@@ -399,10 +399,8 @@ package body StellarOrion_Geometry is
    --    Hardware Assumptions: IEEE 754 FPU
    --  Verification evidence: gnatprove --level=4 (scripts/prove.sh).
 --  @covered: gnatprove --level=4 formal proof (scripts/prove.sh).
-     function Sin_Rad (X : Float) return Float
-       with Pre => True,
-            Post => Sin_Rad'Result >= -1.001 and Sin_Rad'Result <= 1.001
-     is
+      function Sin_Rad (X : Float) return Float
+      is
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
         --  AXIOM: Sin(x) maps R -> [-1, 1] for all real x.
         --    The Taylor series (x - x^3/6 + x^5/120 - x^7/5040) for

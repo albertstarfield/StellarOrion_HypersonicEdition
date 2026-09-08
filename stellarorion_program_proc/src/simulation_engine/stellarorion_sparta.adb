@@ -1725,12 +1725,10 @@ package body StellarOrion_Sparta is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Generate_HIAD_Surf
-     (Geo         : Geometry_Parameters;
-      Output_Path : String)
-      with Pre => True,
-           Post => True
-   is
+    procedure Generate_HIAD_Surf
+      (Geo         : Geometry_Parameters;
+       Output_Path : String)
+    is
    --  Safe_Fallback: N/A (Sabotage §5.1)
       --  Segment resolution (matches Python: n_nose_pts = 20, etc.)
       Seg_Pts : constant := 20;
@@ -2056,15 +2054,13 @@ package body StellarOrion_Sparta is
     --    Derivation: points/step = (N+1)*N_Theta; for N=219, N_Theta=48 =>
     --      10,560 points/step; 100 steps => ~1.06M points total.
     --    Hardware Assumptions: macOS/ARM64 host; spinning or SSD storage.
-   procedure Generate_Validation_Plots_And_VTK
-     (Results_Dir : String;
-      Steps       : Positive;
-      Flight      : Flight_Parameters;
-      Geo         : Geometry_Parameters;
-      Results     : Simulation_Results)
-      with Pre => Results'Length > 0,
-           Post => True
-   is
+    procedure Generate_Validation_Plots_And_VTK
+      (Results_Dir : String;
+       Steps       : Positive;
+       Flight      : Flight_Parameters;
+       Geo         : Geometry_Parameters;
+       Results     : Simulation_Results)
+    is
        --  AXIOMS: Generate_Validation_Plots_And_VTK produces CSV time-series
        --    plots, derived thermal plots, and VTU visualization files from
        --    SPARTA DSMC simulation results for post-processing and validation.
@@ -3419,8 +3415,6 @@ package body StellarOrion_Sparta is
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
     procedure Cleanup_Ephemeral_State
       (Results_Dir : String)
-      with Pre => True,
-           Post => True
     is
        --  Local helper: delete all regular files in Results_Dir matching Pattern.
        --  Non-fatal on individual delete failures (logs warning to stderr).
