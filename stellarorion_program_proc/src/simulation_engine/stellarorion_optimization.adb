@@ -55,7 +55,17 @@ package body StellarOrion_Optimization is
       end if;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in To_Int: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      To_Int");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end To_Int;
@@ -112,8 +122,17 @@ package body StellarOrion_Optimization is
         * (Float (Index) + R) / Float (N);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in LHS_Sample: " &
-                              Ada.Exceptions.Exception_Message (E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      LHS_Sample");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end LHS_Sample;
@@ -148,8 +167,17 @@ package body StellarOrion_Optimization is
       return (Param_Min + Param_Max) / 2.0;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in CCD_Centre: " &
-                              Ada.Exceptions.Exception_Message (E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      CCD_Centre");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end CCD_Centre;
@@ -201,8 +229,17 @@ package body StellarOrion_Optimization is
       end if;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in CCD_Axial: " &
-                              Ada.Exceptions.Exception_Message (E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      CCD_Axial");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end CCD_Axial;
@@ -255,8 +292,17 @@ package body StellarOrion_Optimization is
            + W_Target * (Delta_Y ** 2);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Optimization_Cost: " &
-                              Ada.Exceptions.Exception_Message (E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Optimization_Cost");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Optimization_Cost;
@@ -334,8 +380,17 @@ package body StellarOrion_Optimization is
          W_Target    => 0.0);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Default_Fitness: " &
-                              Ada.Exceptions.Exception_Message (E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Default_Fitness");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Default_Fitness;
@@ -453,8 +508,17 @@ package body StellarOrion_Optimization is
          W_Target    => 0.0);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in MoP_Fitness: " &
-                              Ada.Exceptions.Exception_Message (E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      MoP_Fitness");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end MoP_Fitness;
@@ -497,7 +561,17 @@ package body StellarOrion_Optimization is
       end if;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Clamp: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Clamp");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Clamp;
@@ -529,7 +603,17 @@ package body StellarOrion_Optimization is
       return Lo + (Hi - Lo) * Float_Random.Random (Gen);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Uniform_Rand: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Uniform_Rand");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Uniform_Rand;
@@ -572,7 +656,17 @@ package body StellarOrion_Optimization is
       return Sqrt (-2.0 * Log (U1)) * Cos (2.0 * Pi * U2);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Gaussian_Standard: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Gaussian_Standard");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Gaussian_Standard;
@@ -603,7 +697,17 @@ package body StellarOrion_Optimization is
       return Sigma * Gaussian_Standard;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Gaussian_Rand: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Gaussian_Rand");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Gaussian_Rand;
@@ -648,7 +752,17 @@ package body StellarOrion_Optimization is
       return G;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Random_Geometry: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Random_Geometry");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Random_Geometry;
@@ -702,8 +816,17 @@ package body StellarOrion_Optimization is
       end loop;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Sort_By_Cost: " &
-                              Ada.Exceptions.Exception_Message (E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sort_By_Cost");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Sort_By_Cost;
 
@@ -756,8 +879,17 @@ package body StellarOrion_Optimization is
       return Best_Idx;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Tournament_Select: " &
-                              Ada.Exceptions.Exception_Message (E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Tournament_Select");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Tournament_Select;
@@ -827,8 +959,17 @@ package body StellarOrion_Optimization is
          OV2 := Clamp (Uniform_Rand (Lo_Bound, Hi_Bound), Lo, Hi);
       exception
          when E : others =>
-            Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Blend_Gene: " &
-                                Ada.Exceptions.Exception_Message (E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Blend_Gene");
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+            raise;
 
       end Blend_Gene;
 
@@ -859,8 +1000,17 @@ package body StellarOrion_Optimization is
          if OV2 < Lo then OV2 := Lo; end if;
       exception
          when E : others =>
-            Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Blend_Int: " &
-                                Ada.Exceptions.Exception_Message (E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Blend_Int");
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+            raise;
 
       end Blend_Int;
 
@@ -878,8 +1028,17 @@ package body StellarOrion_Optimization is
       C2.Toroid_Count := C2_Torus;
       exception
          when E : others =>
-            Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in BLX_Crossover: " &
-                                Ada.Exceptions.Exception_Message (E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      BLX_Crossover");
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+            raise;
 
       Blend_Gene (P1.Toroid_Radius_M, P2.Toroid_Radius_M,
                   TRad_Min, TRad_Max,
@@ -977,8 +1136,17 @@ package body StellarOrion_Optimization is
       end if;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Gaussian_Mutate: " &
-                              Ada.Exceptions.Exception_Message (E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Gaussian_Mutate");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Gaussian_Mutate;
 
@@ -1226,8 +1394,17 @@ package body StellarOrion_Optimization is
       end;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Run_GA_Optimization: " &
-                              Ada.Exceptions.Exception_Message (E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Run_GA_Optimization");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Run_GA_Optimization;
 
@@ -1257,7 +1434,17 @@ package body StellarOrion_Optimization is
       pragma Assert (To_Int (0.0) = 0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_To_Int: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_To_Int");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_To_Int;
 
@@ -1284,7 +1471,17 @@ package body StellarOrion_Optimization is
       pragma Assert (X >= 0.0 and X <= 10.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_LHS_Sample: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_LHS_Sample");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_LHS_Sample;
 
@@ -1307,7 +1504,17 @@ package body StellarOrion_Optimization is
       pragma Assert (X >= 0.0 and X <= 10.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_CCD_Centre: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_CCD_Centre");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_CCD_Centre;
 
@@ -1337,7 +1544,17 @@ package body StellarOrion_Optimization is
       pragma Assert (X_Minus >= -10.0 and X_Plus <= 20.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_CCD_Axial: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_CCD_Axial");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_CCD_Axial;
 
@@ -1369,7 +1586,17 @@ package body StellarOrion_Optimization is
       pragma Assert (J < 100.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Optimization_Cost: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Optimization_Cost");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Optimization_Cost;
 
@@ -1396,7 +1623,17 @@ package body StellarOrion_Optimization is
       pragma Assert (Cost >= 0.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Default_Fitness: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Default_Fitness");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Default_Fitness;
 
@@ -1436,7 +1673,17 @@ package body StellarOrion_Optimization is
       pragma Assert (Cost >= 0.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_MoP_Fitness: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_MoP_Fitness");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_MoP_Fitness;
 
@@ -1459,7 +1706,17 @@ package body StellarOrion_Optimization is
       pragma Assert (Clamp (11.0, 0.0, 10.0) = 10.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Clamp: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Clamp");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Clamp;
 
@@ -1483,7 +1740,17 @@ package body StellarOrion_Optimization is
       pragma Assert (X >= 2.0 and X <= 3.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Uniform_Rand: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Uniform_Rand");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Uniform_Rand;
 
@@ -1507,7 +1774,17 @@ package body StellarOrion_Optimization is
       pragma Assert (Z > -10.0 and Z < 10.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Gaussian_Standard: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Gaussian_Standard");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Gaussian_Standard;
 
@@ -1530,7 +1807,17 @@ package body StellarOrion_Optimization is
       pragma Assert (Z > -10.0 and Z < 10.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Gaussian_Rand: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Gaussian_Rand");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Gaussian_Rand;
 
@@ -1562,7 +1849,17 @@ package body StellarOrion_Optimization is
       pragma Assert (G.Mass_Kg >= Mass_Min and G.Mass_Kg <= Mass_Max);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Random_Geometry: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Random_Geometry");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Random_Geometry;
 
@@ -1591,7 +1888,17 @@ package body StellarOrion_Optimization is
       pragma Assert (Idx (3) = 1);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Sort_By_Cost: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Sort_By_Cost");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Sort_By_Cost;
 
@@ -1621,7 +1928,17 @@ package body StellarOrion_Optimization is
       pragma Assert (Pick = 1);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Tournament_Select: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Tournament_Select");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Tournament_Select;
 
@@ -1657,7 +1974,17 @@ package body StellarOrion_Optimization is
       pragma Assert (C1.Mass_Kg >= Mass_Min and C1.Mass_Kg <= Mass_Max);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_BLX_Crossover: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_BLX_Crossover");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_BLX_Crossover;
 
@@ -1691,7 +2018,17 @@ package body StellarOrion_Optimization is
       pragma Assert (Mass_Min < Mass_Max);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Blend_Gene: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Blend_Gene");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Blend_Gene;
 
@@ -1719,7 +2056,17 @@ package body StellarOrion_Optimization is
       pragma Assert (TCount_Max >= TCount_Min);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Blend_Int: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Blend_Int");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Blend_Int;
 
@@ -1756,7 +2103,17 @@ package body StellarOrion_Optimization is
       pragma Assert (Ind.Mass_Kg >= Mass_Min and Ind.Mass_Kg <= Mass_Max);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Gaussian_Mutate: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Gaussian_Mutate");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Gaussian_Mutate;
 
@@ -1799,7 +2156,17 @@ package body StellarOrion_Optimization is
       pragma Assert (Config.Tournament_Size <= Config.Population_Size);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Run_GA_Optimization: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Run_GA_Optimization");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Run_GA_Optimization;
 

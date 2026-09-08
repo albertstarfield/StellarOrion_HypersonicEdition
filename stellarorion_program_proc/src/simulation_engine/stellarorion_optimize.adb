@@ -169,8 +169,17 @@ package body StellarOrion_Optimize with SPARK_Mode => Off is
       Write_Status (STATUS_DIR, "optimize", Status_Completed, 1.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Run_Optimize: " &
-                             Ada.Exceptions.Exception_Message (E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Run_Optimize");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Run_Optimize;
 
@@ -201,7 +210,17 @@ package body StellarOrion_Optimize with SPARK_Mode => Off is
       pragma Assert (Status_Dir_Non_Empty);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Run_Optimize: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Run_Optimize");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Run_Optimize;
 

@@ -132,7 +132,17 @@ package body StellarOrion_Geometry is
       return Pi * Y2;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Frontal_Area: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Frontal_Area");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
          raise;
 
    end Frontal_Area;
@@ -379,7 +389,17 @@ package body StellarOrion_Geometry is
        end;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Cos_Deg: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Cos_Deg");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
     end Cos_Deg;
@@ -530,7 +550,17 @@ package body StellarOrion_Geometry is
       pragma Assert (abs V_360 <= 1.001);  --  cos(360) = 1.0
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Cos_Deg: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Cos_Deg");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_Cos_Deg;
 
@@ -565,7 +595,17 @@ package body StellarOrion_Geometry is
       pragma Assert (abs V_N_Pi2 <= 1.001);  --  sin(-Pi/2) ~ -1.0
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Sin_Rad: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Sin_Rad");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_Sin_Rad;
 
@@ -597,7 +637,17 @@ package body StellarOrion_Geometry is
       pragma Assert (abs V_Pi   <= 1.001);  --  cos(Pi) ~ -1.0
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Cos_Rad: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Cos_Rad");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_Cos_Rad;
 
