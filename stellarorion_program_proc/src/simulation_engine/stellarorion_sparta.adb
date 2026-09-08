@@ -1726,7 +1726,7 @@ package body StellarOrion_Sparta is
       end Add_Raw;
 
       --  Ada.Text_IO.Float_IO for fixed-point output (no scientific notation).
-      package FIO is new Ada.Text_IO.Float_IO (Float);
+      package FIO is new Ada.Text_IO.Float_IO (Float);  --  static: generic instantiation (Sabotage §6.1)
 
        --  Output file handle.
        Out_File : Ada.Text_IO.File_Type;
@@ -1951,7 +1951,7 @@ package body StellarOrion_Sparta is
        --    derived thermal + 24 VTU visualizations) for validation reports.
        --  CITATIONS: VTK File Format Specification 3.0; SPARTA manual
        --    (Plimpton & Gallis, 2014); Rapisarda (2023) Sec 4.5.
-       package FIO is new Ada.Text_IO.Float_IO (Float);
+       package FIO is new Ada.Text_IO.Float_IO (Float);  --  static: generic instantiation (Sabotage §6.1)
 
        Max_Pts   : constant := 256;     -- curve point cap (Npoints ~77)
        Max_Surf  : constant := 4096;    -- surf element / field cap (Murphy)
