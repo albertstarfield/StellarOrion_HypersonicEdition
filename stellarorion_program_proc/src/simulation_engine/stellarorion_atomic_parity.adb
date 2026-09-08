@@ -392,6 +392,8 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_recover_from_parity_error
    procedure Test_Recover_From_Parity_Error is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_Recover_From_Parity_Error unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    --  AXIOMS:

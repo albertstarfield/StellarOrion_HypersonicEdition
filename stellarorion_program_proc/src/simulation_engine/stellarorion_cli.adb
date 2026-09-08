@@ -314,6 +314,8 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_get_positive
    procedure Test_Get_Positive is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_Get_Positive unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
 

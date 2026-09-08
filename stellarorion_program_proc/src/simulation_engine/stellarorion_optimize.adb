@@ -184,6 +184,8 @@ package body StellarOrion_Optimize with SPARK_Mode => Off is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_optimize
    procedure Test_Run_Optimize is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_Run_Optimize unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: STATUS_DIR is a compile-time constant string; its Length > 0

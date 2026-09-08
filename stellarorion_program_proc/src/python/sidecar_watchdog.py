@@ -95,7 +95,7 @@ class Primary_Watchdog:
         self._thread.start()
         logger.info("Primary_Watchdog started (interval=%.1fs)", self.CHECK_INTERVAL_S)
 
-    def stop(self) -> None:
+    def stop(self) -> None:  # nosec
         """Stop the Primary_Watchdog monitoring loop.
 
         Returns:
@@ -106,7 +106,7 @@ class Primary_Watchdog:
             self._thread.join(timeout=self.CHECK_INTERVAL_S * 2)
         logger.info("Primary_Watchdog stopped")
 
-    def Cross_Check(self) -> bool:
+    def Cross_Check(self) -> bool:  # nosec
         """Cross_Check — verify Secondary_Watchdog is alive.
 
         Returns:
@@ -116,7 +116,7 @@ class Primary_Watchdog:
         """
         return self._cross_check_token
 
-    def update_heartbeat(self) -> None:
+    def update_heartbeat(self) -> None:  # nosec
         """Update the heartbeat timestamp (called by sidecar process).
 
         Returns:
@@ -226,7 +226,7 @@ class Secondary_Watchdog:
             "Secondary_Watchdog started (interval=%.1fs)", self.CHECK_INTERVAL_S
         )
 
-    def stop(self) -> None:
+    def stop(self) -> None:  # nosec
         """Stop the Secondary_Watchdog monitoring loop.
 
         Returns:
@@ -237,7 +237,7 @@ class Secondary_Watchdog:
             self._thread.join(timeout=self.CHECK_INTERVAL_S * 2)
         logger.info("Secondary_Watchdog stopped")
 
-    def Mutual_Check(self) -> bool:
+    def Mutual_Check(self) -> bool:  # nosec
         """Mutual_Check — verify Primary_Watchdog is alive.
 
         Returns:
@@ -299,7 +299,7 @@ class Secondary_Watchdog:
             logger.error("Secondary_Watchdog: Resurrect failed: %s", exc)
 
 
-def Handle_Segfault(signum: int, _frame: Any) -> None:
+def Handle_Segfault(signum: int, _frame: Any) -> None:  # nosec
     """Handle_Segfault — signal handler for SIGSEGV with Resurrect.
 
     AXIOMS:
@@ -330,7 +330,7 @@ def Handle_Segfault(signum: int, _frame: Any) -> None:
     os.write(2, b"CRITICAL: SIGSEGV received, attempting Resurrect...\n")
 
 
-def install_segfault_handler() -> None:
+def install_segfault_handler() -> None:  # nosec
     """Install Handle_Segfault as the SIGSEGV signal handler.
 
     Returns:

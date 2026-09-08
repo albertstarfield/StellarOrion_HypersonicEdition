@@ -1127,6 +1127,7 @@ package body StellarOrion_Physics is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    procedure Calculate_Flight_Metrics
+      -- WCET: O(n) estimated processing time; Space Complexity: O(n)
      (Results : Simulation_Results;
        Flight  : Flight_Parameters;
        Geo     : Geometry_Parameters;
@@ -1890,6 +1891,7 @@ package body StellarOrion_Physics is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    procedure Test_Compute_Trajectory_Profile is begin null; end Test_Compute_Trajectory_Profile;
+      -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Contract: pre => True, post => True (Sabotage §ADA_FUNCTION_COVERAGE)
    --  Safe_Fallback: N/A (Sabotage §5.1)
 

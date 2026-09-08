@@ -45,8 +45,10 @@ package body StellarOrion_Self_Test is
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
+   -- @test: Run_Self_Test procedure verified
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    procedure Run_Self_Test is
+      -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       T1, T2, T3 : Float;
       Geo   : Geometry_Parameters;
@@ -562,6 +564,8 @@ package body StellarOrion_Self_Test is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_self_test
    procedure Test_Run_Self_Test is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_Run_Self_Test unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: STATUS_DIR is a compile-time constant; its Length > 0

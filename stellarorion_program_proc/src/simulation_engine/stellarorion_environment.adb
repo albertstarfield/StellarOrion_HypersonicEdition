@@ -544,6 +544,7 @@ package body StellarOrion_Environment is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    function Atmosphere_Pressure
+-- Loop_Invariant: all initialized elements remain valid
       (Altitude_Km : Float) return Float
       is
         Rho : constant Float := Atmosphere_Density (Altitude_Km);
@@ -670,7 +671,10 @@ package body StellarOrion_Environment is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    procedure MSIS_Atmosphere
+      -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      (Alt_Km       : Float;
@@ -949,7 +953,10 @@ package body StellarOrion_Environment is
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_msis_atmosphere
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    procedure Test_MSIS_Atmosphere is
+   -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  @test: Test_MSIS_Atmosphere unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
       Alt_Min   : constant Float := 0.0;

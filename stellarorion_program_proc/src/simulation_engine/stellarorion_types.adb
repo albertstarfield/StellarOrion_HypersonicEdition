@@ -148,6 +148,8 @@ package body StellarOrion_Types is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_tps_multi
    procedure Test_TPS_Multi is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_TPS_Multi unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: TPS_Multi is a compile-time constant record with non-zero

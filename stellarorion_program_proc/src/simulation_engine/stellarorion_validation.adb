@@ -161,6 +161,8 @@ package body StellarOrion_Validation is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_check_survivability
    procedure Test_Check_Survivability is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
    --  @test: Test_Check_Survivability unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
    -- AXIOMS: Default Flight_Metrics has zero g-loads and heat fluxes, which

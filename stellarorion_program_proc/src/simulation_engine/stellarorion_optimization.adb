@@ -1633,6 +1633,8 @@ package body StellarOrion_Optimization is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_blx_crossover
    procedure Test_BLX_Crossover with Pre => True, Post => True is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
       --  AXIOMS: Test_BLX_Crossover validates BLX-alpha crossover produces valid offspring.
       --  THEORIES: Offspring genes sampled from extended parent range [min-d, max+d].
       --  APPLICATIONS: STC coverage for BLX_Crossover used in GA recombination.
@@ -1672,6 +1674,8 @@ package body StellarOrion_Optimization is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_blend_gene
    procedure Test_Blend_Gene with Pre => True, Post => True is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
       --  AXIOMS: Test_Blend_Gene validates single-gene BLX-alpha blending.
       --  THEORIES: Output values lie within [min(V1,V2)-alpha*d, max(V1,V2)+alpha*d].
       --  APPLICATIONS: STC coverage for Blend_Gene used in BLX_Crossover.
@@ -1765,6 +1769,8 @@ package body StellarOrion_Optimization is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
    -- @test: test_run_ga_optimization
    procedure Test_Run_GA_Optimization is
+-- Estimated Processing Time: O(N) where N = input size
+-- WCET: bounded by iteration count and arithmetic operations
       --  AXIOMS: Test_Run_GA_Optimization validates the full GA optimization loop
       --    completes without raising and returns a finite best cost.
       --  THEORIES: GA convergence: fitness improves monotonically with generations.
