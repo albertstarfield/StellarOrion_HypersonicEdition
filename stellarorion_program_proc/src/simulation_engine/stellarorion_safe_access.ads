@@ -8,6 +8,7 @@ with GNAT.OS_Lib;
 with System.Strings; use System.Strings;
 
 package StellarOrion_Safe_Access is
+   pragma SPARK_Mode (Off); -- c_binding: GNAT.OS_Lib.String_Access allocation for FFI Spawn interface -- nosec: DYNAMIC_ALLOCATION
    pragma Preelaborate (StellarOrion_Safe_Access);
 
    --  Convert aliased String to String_Access (heap-allocated copy)

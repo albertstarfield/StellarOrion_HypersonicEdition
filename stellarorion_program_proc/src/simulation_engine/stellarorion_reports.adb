@@ -8,6 +8,7 @@ with StellarOrion_Test_Modes; use StellarOrion_Test_Modes;
 with Ada.Exceptions;
 
 package body StellarOrion_Reports is
+   pragma SPARK_Mode (Off); -- c_binding: I/O and exception handling for report generation (Ada.Text_IO)
 --  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
 --  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
 --  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)
