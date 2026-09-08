@@ -325,3 +325,10 @@ stellarorion_program_proc/data/audits/
 
 # === Goal threads (local planning only, not committed) ===
 GoalThread*.md
+
+# === Temp scratch dirs ===
+.tmp/
+thoughts/
+
+# === One-off fix scripts ===
+fix_sabotage*.py
