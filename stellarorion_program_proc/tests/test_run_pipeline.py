@@ -37,7 +37,7 @@ class TestHashComputation(TestCase):
     """Test source hash computation for cache invalidation."""
 
     def test_hash_file_format(self):
-        """Hash file should be valid JSON with SHA256 digests."""
+        """Verify hash_file returns a 64-character hex SHA-256 digest."""
         hash_file = _PROJECT_ROOT / ".src_hashes.json"
         if hash_file.exists():
             data = json.loads(hash_file.read_text())  # nosec: EXTERNAL_CALL_UNHANDLED — test utility, errors should propagate
@@ -47,7 +47,7 @@ class TestHashComputation(TestCase):
                 self.assertEqual(len(val), 64)  # SHA256 hex digest
 
     def test_hash_determinism(self):
-        """Same file content should produce same hash."""
+        """Verify that hashing the same content twice yields identical hex digests."""
         content = b"test content for hashing"
         h1 = hashlib.sha256(content).hexdigest()
         h2 = hashlib.sha256(content).hexdigest()
@@ -58,7 +58,7 @@ class TestVenvPaths(TestCase):
     """Test that venv paths are correctly resolved."""
 
     def test_venv_python_exists_after_bootstrap(self):
-        """After Phase 1, venv/bin/python3 should exist."""
+        """Verify the venv python path resolves to a bin/python3 suffix."""
         venv_python = _PROJECT_ROOT / "venv" / "python" / "bin" / "python3"
         # This test only validates path resolution, not existence
         self.assertTrue(str(venv_python).endswith("bin/python3"))
@@ -68,10 +68,12 @@ class TestRequirementsFile(TestCase):
     """Test that requirements.txt exists and is valid."""
 
     def test_requirements_exists(self):
+        """Verify that requirements.txt is present in the project root."""
         req = _PROJECT_ROOT / "requirements.txt"
         self.assertTrue(req.exists(), "requirements.txt must exist")
 
     def test_requirements_not_empty(self):
+        """Verify that requirements.txt contains at least one dependency."""
         req = _PROJECT_ROOT / "requirements.txt"
         if req.exists():
             content = req.read_text().strip()
@@ -82,10 +84,12 @@ class TestSabotageVerifierExists(TestCase):
     """Test that sabotage_verifier.py exists and is importable."""
 
     def test_verifier_exists(self):
+        """Verify that sabotage_verifier.py exists at the expected location."""
         verifier = _PROJECT_ROOT / "src" / "utils" / "sabotage_verifier.py"
         self.assertTrue(verifier.exists(), "sabotage_verifier.py must exist")
 
     def test_verifier_not_empty(self):
+        """Verify that sabotage_verifier.py is a substantial file (>1000 bytes)."""
         verifier = _PROJECT_ROOT / "src" / "utils" / "sabotage_verifier.py"
         if verifier.exists():
             size = verifier.stat().st_size
@@ -96,10 +100,12 @@ class TestGPRAFile(TestCase):
     """Test GPR file has SPARK switches."""
 
     def test_gpr_exists(self):
+        """Verify that the GPR project file exists in the project root."""
         gpr = _PROJECT_ROOT / "stellarorion_program_proc.gpr"
         self.assertTrue(gpr.exists(), "GPR file must exist")
 
     def test_gpr_has_spark(self):
+        """Verify that the GPR file contains Source_Dirs and Main declarations."""
         gpr = _PROJECT_ROOT / "stellarorion_program_proc.gpr"
         if gpr.exists():
             content = gpr.read_text()
@@ -131,6 +137,7 @@ class TestFindFreePort(TestCase):
     """Test ephemeral port selection."""
 
     def test_returns_valid_port(self):
+        """Verify _find_free_port returns an integer in the ephemeral range."""
         port = run._find_free_port()
         self.assertIsInstance(port, int)
         self.assertGreaterEqual(port, 1024)
@@ -141,10 +148,12 @@ class TestSidecarHealthCheck(TestCase):
     """Test sidecar health polling against live and dead endpoints."""
 
     def test_unreachable_endpoint_returns_false(self):
+        """Verify health check returns False when the endpoint is unreachable."""
         # Port 1 on localhost is reserved and virtually never serving.
         self.assertFalse(run._sidecar_health_check(1, timeout_s=0.5))
 
     def test_live_endpoint_returns_true(self):
+        """Verify health check returns True against a live local HTTP server."""
         class _Handler(http.server.BaseHTTPRequestHandler):
             def do_GET(self):
                 self.send_response(200)
@@ -175,6 +184,7 @@ class TestLockFile(TestCase):
         self._tmp.cleanup()
 
     def test_acquire_release_roundtrip(self):
+        """Verify a lock can be acquired and released cleanly."""
         lock = run._LockFile(self._lock_path)
         lock.acquire()
         self.assertTrue(self._lock_path.exists())
@@ -183,6 +193,7 @@ class TestLockFile(TestCase):
         self.assertFalse(self._lock_path.exists())
 
     def test_stale_lock_is_recovered(self):
+        """Verify a stale PID lock is replaced by the current process."""
         self._lock_path.write_text("999999999")  # dead PID
         lock = run._LockFile(self._lock_path)
         lock.acquire()  # must not raise; stale lock replaced
@@ -190,6 +201,7 @@ class TestLockFile(TestCase):
         lock.release()
 
     def test_corrupt_lock_is_recovered(self):
+        """Verify a corrupt (non-integer) lock file is replaced."""
         self._lock_path.write_text("not-a-pid")
         lock = run._LockFile(self._lock_path)
         lock.acquire()
@@ -197,6 +209,7 @@ class TestLockFile(TestCase):
         lock.release()
 
     def test_live_pid_lock_raises_system_exit(self):
+        """Verify acquiring a lock held by a live PID raises SystemExit(3)."""
         self._lock_path.write_text(str(os.getpid()))  # our own live PID
         lock = run._LockFile(self._lock_path)
         with self.assertRaises(SystemExit) as ctx:
@@ -225,6 +238,7 @@ class TestSourceHashes(TestCase):
             run._HASH_FILE.unlink(missing_ok=True)
 
     def test_compute_source_hashes_nonempty_sha256(self):
+        """Verify _compute_source_hashes returns a non-empty dict of 64-char hex digests."""
         hashes = run._compute_source_hashes()
         self.assertGreater(len(hashes), 0, "src/ contains .py files")
         for key, val in hashes.items():
@@ -232,14 +246,17 @@ class TestSourceHashes(TestCase):
             self.assertEqual(len(val), 64)
 
     def test_save_then_changed_is_false(self):
+        """Verify _hashes_changed returns False immediately after saving."""
         run._save_hashes()
         self.assertFalse(run._hashes_changed())
 
     def test_missing_hash_file_means_changed(self):
+        """Verify _hashes_changed returns True when .src_hashes.json is absent."""
         run._HASH_FILE.unlink(missing_ok=True)
         self.assertTrue(run._hashes_changed())
 
     def test_corrupt_hash_file_means_changed(self):
+        """Verify _hashes_changed returns True when .src_hashes.json is malformed."""
         run._HASH_FILE.write_text("{not valid json")
         self.assertTrue(run._hashes_changed())
 
@@ -257,6 +274,7 @@ class TestParseArgs(TestCase):
             sys.argv = original
 
     def test_defaults_are_false_with_passthrough(self):
+        """Verify all flags default to False and unknown args are passed through."""
         args, unknown = self._parse([])
         self.assertFalse(args.clean)
         self.assertFalse(args.no_launch)
@@ -264,6 +282,7 @@ class TestParseArgs(TestCase):
         self.assertEqual(unknown, [])
 
     def test_known_flag_and_unknown_forwarding(self):
+        """Verify known flags are parsed and unknown flags are forwarded."""
         # NOTE: "--test" would abbreviate-match "--test-build-integrity-only"
         # (argparse allow_abbrev default), so we use unambiguous sim flags.
         args, unknown = self._parse(
@@ -275,6 +294,7 @@ class TestParseArgs(TestCase):
         self.assertIn("100", unknown)
 
     def test_abbrev_flag_matches_long_form(self):
+        """Verify --test abbreviates to --test-build-integrity-only."""
         # Documents the argparse abbreviation behaviour explicitly.
         args, _unknown = self._parse(["--test"])
         self.assertTrue(args.test_build_integrity_only)
@@ -284,12 +304,14 @@ class TestOutputHelpers(TestCase):
     """Smoke-test console output helpers (no exceptions, sane content)."""
 
     def test_banner_prints_pipeline_name(self):
+        """Verify banner() outputs text containing 'Build Pipeline'."""
         buf = io.StringIO()
         with redirect_stdout(buf):
             run.banner()
         self.assertIn("Build Pipeline", buf.getvalue())
 
     def test_phase_header_formats(self):
+        """Verify phase_header() outputs phase number and title."""
         buf = io.StringIO()
         with redirect_stdout(buf):
             run.phase_header(2, "Python Static Analysis")
@@ -297,6 +319,7 @@ class TestOutputHelpers(TestCase):
         self.assertIn("Python Static Analysis", buf.getvalue())
 
     def test_step_info_and_leaf(self):
+        """Verify step_info() and step_leaf() both produce output."""
         buf = io.StringIO()
         with redirect_stdout(buf):
             run.step_info("info message")
@@ -305,6 +328,7 @@ class TestOutputHelpers(TestCase):
         self.assertIn("leaf message", buf.getvalue())
 
     def test_ensure_utf8_locale_idempotent(self):
+        """Verify _ensure_utf8_locale sets a UTF-8 locale in LC_ALL."""
         run._ensure_utf8_locale()
         enc = os.environ.get("LC_ALL", "")
         if enc:

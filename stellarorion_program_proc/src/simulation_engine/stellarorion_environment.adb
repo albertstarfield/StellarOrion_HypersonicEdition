@@ -78,7 +78,7 @@ package body StellarOrion_Environment is
       if X <= 0.0 then
          return 0.0;
       end if;
-      Y := Float'Max (X / 2.0, 1.0);  -- denormal-safe initial guess
+      Y := Float'Max (X / 2.0, 1.0);  -- denormal-safe Newton iteration seed (not assumption; see Heron's method)
       for I in 1 .. 25 loop
          pragma Unreferenced (I);
          --  Band invariants: Y stays inside [Min(X,1), Max(X,1)].

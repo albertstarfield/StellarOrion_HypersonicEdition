@@ -107,6 +107,20 @@ def _plot(
     xlabel: str,
     ylabel: str,
 ) -> None:
+    """Render a single validation plot and save to disk.
+
+    AXIOM: x and y are equal-length lists of numeric data.
+    THEOREM: Matplotlib produces publication-quality output at 120 DPI.
+    APPLICATION: Writes PNG file to out_path.
+
+    Args:
+        x: Independent variable values (e.g., simulation steps).
+        y: Dependent variable values (e.g., heat flux).
+        out_path: Output file path for the PNG.
+        title: Plot title.
+        xlabel: X-axis label.
+        ylabel: Y-axis label.
+    """
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(x, y, marker="o", linestyle="-", color="tab:blue")
     ax.set_title(title)
@@ -119,6 +133,21 @@ def _plot(
 
 
 def main(argv: list[str]) -> int:
+    """Generate per-column validation plots from time-series CSV.
+
+    Reads all numeric columns from validation_timeseries.csv and produces
+    one PNG plot per column using the _plot() helper.
+
+    AXIOM: CSV file exists at results_dir/validation_timeseries.csv.
+    THEOREM: Each column represents a distinct aerothermodynamic quantity.
+    APPLICATION: Produces publication-quality per-metric plots.
+
+    Args:
+        argv: Command-line args. argv[1] is optional results directory.
+
+    Returns:
+        0 on success, 1 if CSV missing or empty.
+    """
     results_dir = argv[1] if len(argv) > 1 else "results_validation"
     csv_path = os.path.join(results_dir, "validation_timeseries.csv")
     plots_dir = os.path.join(results_dir, "plots")

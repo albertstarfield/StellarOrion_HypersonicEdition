@@ -195,6 +195,21 @@ def _plot_multi_axis(
 
 
 def main(argv: list[str]) -> int:
+    """Generate derived thermal plots from validation time-series CSV.
+
+    Reads step/heat_flux/heat_sum columns, computes derived quantities
+    (T_surface, T_back, beta), and writes 6 PNG plots to results_dir/plots/.
+
+    AXIOM: CSV file exists at results_dir/validation_timeseries.csv.
+    THEOREM: Derived thermal quantities follow from radiative equilibrium.
+    APPLICATION: Produces publication-quality thermal analysis plots.
+
+    Args:
+        argv: Command-line args. argv[1] is optional results directory.
+
+    Returns:
+        0 on success, 1 if CSV missing or empty.
+    """
     results_dir = argv[1] if len(argv) > 1 else "results_validation_scalloped"
     csv_path = os.path.join(results_dir, "validation_timeseries.csv")
     plots_dir = os.path.join(results_dir, "plots")
