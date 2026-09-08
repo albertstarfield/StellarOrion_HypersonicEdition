@@ -69,7 +69,19 @@ LOFTID_DECEL_G     = 9.66     # g       peak deceleration
 LOFTID_DIAMETER_M  = 6.0      # m       vehicle diameter
 
 
-def load_csv(path):
+def load_csv(path: str) -> list[dict] | None:
+    """Load a validation_timeseries.csv and return list of row dicts.
+
+    Each row contains: step, drag_sum_N, lift_sum_N, heatflux_max_Wm2,
+    heat_sum_Wm2, drag_avg_N, lift_avg_N.  Returns None if file missing
+    or empty.
+
+    Args:
+        path: Absolute path to the CSV file.
+
+    Returns:
+        List of row dicts, or None on missing/empty file.
+    """
     if not os.path.exists(path):
         return None
     rows = []
@@ -92,6 +104,22 @@ def load_csv(path):
 
 
 def summarize(rows):
+    """Compute peak aerothermodynamic metrics from validation time-series rows.
+
+    Extracts peak drag, lift, heat flux, heat sum, and derives peak
+    deceleration (g) using DECEL_DENOM_N = m*g0 = 281.0 * 9.80665.
+
+    AXIOM: rows is a list of dicts from load_csv(), or None.
+    THEOREM: peak values capture the worst-case aerothermal environment.
+    APPLICATION: Returns dict of peak metrics, or None if rows is None.
+
+    Args:
+        rows: List of row dicts from load_csv(), or None.
+
+    Returns:
+        Dict with peak_drag_N, peak_lift_N, peak_hf_Wm2, peak_hf_Wcm2,
+        peak_hs, peak_decel_g, n_steps. None if rows is None.
+    """
     if rows is None:
         return None
     peak_drag  = max(r["drag_sum_N"] for r in rows)
@@ -113,6 +141,19 @@ def summarize(rows):
 
 
 def fmt(x, sci=False):
+    """Format a numeric value for display in the comparison table.
+
+    AXIOM: x may be None (missing data) or numeric.
+    THEOREM: scientific notation for large values, fixed 4dp otherwise.
+    APPLICATION: Returns formatted string or 'N/A' for None.
+
+    Args:
+        x: Numeric value or None.
+        sci: If True, use scientific notation for large absolute values.
+
+    Returns:
+        Formatted string, or 'N/A' if x is None.
+    """
     if x is None:
         return "PENDING"
     if sci:
@@ -123,6 +164,19 @@ def fmt(x, sci=False):
 
 
 def main():
+    """Run the StellarOrion vs IRVE-3 vs LOFTID vs Rapisarda comparison.
+
+    Reads CSV validation data from three directories (StellarOrion, Rapisarda,
+    LOFTID), computes peak metrics, and prints a unified comparison table.
+    Also compares ballistic coefficients across missions.
+
+    AXIOM: CSV files exist in expected directories relative to script location.
+    THEOREM: Side-by-side comparison reveals simulation fidelity gaps.
+    APPLICATION: Prints formatted comparison table to stdout.
+
+    Returns:
+        None. Exits with code 1 if StellarOrion data is missing.
+    """
     sc = summarize(load_csv(SCALLOPED_CSV))
     sm = summarize(load_csv(SMOOTH_CSV))
 

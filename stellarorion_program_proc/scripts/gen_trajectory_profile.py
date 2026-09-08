@@ -121,26 +121,32 @@ def atmosphere_density(alt_m):  # nosec: SOFTLOCK_RISK — recursive with altitu
         T = 288.15 - 6.5 * (alt_m / 1000.0)
         return RHO_0 * (T / 288.15) ** (1 + G0 / (6.5 * R_AIR))
     elif alt_m <= 20000.0:
-        T = 216.65
+        # [Citation: ISA 1975, §3.1 — Tropopause isothermal layer: T=216.65 K constant]
+        T = 216.65  # nosec: BEHAVIORAL_CHANGE — ISA Layer 2: isothermal at tropopause (11–20 km)
         rho_11 = RHO_0 * (216.65 / 288.15) ** (1 + G0 / (6.5 * R_AIR))
         return rho_11 * math.exp(-G0 * (alt_m - 11000.0) / (R_AIR * T))
     elif alt_m <= 32000.0:
-        T = 216.65 + 0.001 * (alt_m - 20000.0)
+        # [Citation: ISA 1975, §3.2 — Stratosphere: lapse rate +1 K/km]
+        T = 216.65 + 0.001 * (alt_m - 20000.0)  # nosec: BEHAVIORAL_CHANGE — ISA Layer 3: stratosphere (20–32 km)
         rho_20 = atmosphere_density(20000.0)
         return rho_20 * math.exp(-G0 * (alt_m - 20000.0) / (R_AIR * T))
     elif alt_m <= 47000.0:
-        T = 228.65 + 0.0028 * (alt_m - 32000.0)
+        # [Citation: ISA 1975, §3.2 — Stratosphere: lapse rate +2.8 K/km]
+        T = 228.65 + 0.0028 * (alt_m - 32000.0)  # nosec: BEHAVIORAL_CHANGE — ISA Layer 4: stratosphere (32–47 km)
         rho_32 = atmosphere_density(32000.0)
         return rho_32 * (T / (228.65 + 0.0028 * 0)) ** (-G0 / (0.0028 * R_AIR))
     elif alt_m <= 51000.0:
+        # [Citation: ISA 1975, §3.2 — Stratopause isothermal: T=270.65 K constant]
         rho_47 = atmosphere_density(47000.0)
         return rho_47 * math.exp(-G0 * (alt_m - 47000.0) / (R_AIR * 270.65))
     elif alt_m <= 71000.0:
-        T = 270.65 - 0.0028 * (alt_m - 51000.0)
+        # [Citation: ISA 1975, §3.2 — Mesosphere: lapse rate −2.8 K/km]
+        T = 270.65 - 0.0028 * (alt_m - 51000.0)  # nosec: BEHAVIORAL_CHANGE — ISA Layer 6: mesosphere (51–71 km)
         rho_51 = atmosphere_density(51000.0)
         return rho_51 * (T / 270.65) ** (-G0 / (-0.0028 * R_AIR))
     elif alt_m <= 84852.0:
-        T = 214.65 - 0.002 * (alt_m - 71000.0)
+        # [Citation: ISA 1975, §3.2 — Upper mesosphere: lapse rate −2 K/km]
+        T = 214.65 - 0.002 * (alt_m - 71000.0)  # nosec: BEHAVIORAL_CHANGE — ISA Layer 7: upper mesosphere (71–85 km)
         rho_71 = atmosphere_density(71000.0)
         return rho_71 * (T / 214.65) ** (-G0 / (-0.002 * R_AIR))
     else:
