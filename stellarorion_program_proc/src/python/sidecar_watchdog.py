@@ -382,7 +382,7 @@ class SidecarWatchdogManager:
         install_segfault_handler()
         logger.info("SidecarWatchdogManager: dual watchdog active")
 
-    def stop(self) -> None:  # nosec: S105 — method stub, no security-sensitive operations
+    def stop(self) -> None:  # nosec: EXTERNAL_CALL_UNHANDLED — method stub, no security-sensitive operations
         """Stop both watchdogs.
 
         Returns:

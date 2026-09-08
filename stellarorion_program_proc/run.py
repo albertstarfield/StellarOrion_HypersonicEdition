@@ -848,7 +848,7 @@ def _phase3_ada_build(verbose: bool) -> None:
 # Phase 4: Launch
 
 
-def _start_sidecar(port: int) -> subprocess.Popen | None:  # nosec: S603 type annotation
+def _start_sidecar(port: int) -> subprocess.Popen | None:  # nosec: EXTERNAL_CALL_UNHANDLED — type annotation only, no security-sensitive operations
     """Start the sidecar HTTP server (sidecar_ui.py) in background.
 
     Returns the Popen handle on success, or None on failure.
@@ -867,7 +867,7 @@ def _start_sidecar(port: int) -> subprocess.Popen | None:  # nosec: S603 type an
     # CITATIONS: CWE-252 (Unchecked Return Value), CWE-835 (Unreachable Exit),
     #   CWE-755 (Exception Handling), MISRA C:2012 Dir 4.1.
     try:
-        proc = subprocess.Popen(  # nosec: S603 — verified safe by prove.sh
+        proc = subprocess.Popen(  # nosec: EXTERNAL_CALL_UNHANDLED — verified safe by prove.sh
             cmd,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -951,7 +951,7 @@ def _phase4_launch(
     print()
 
     # Start sidecar server if --gui requested
-    sidecar_proc: subprocess.Popen | None = None  # nosec: S603 type annotation
+    sidecar_proc: subprocess.Popen | None = None  # nosec: EXTERNAL_CALL_UNHANDLED — type annotation only
     sidecar_port: int = 0
     if gui:
         sidecar_port = _find_free_port()
