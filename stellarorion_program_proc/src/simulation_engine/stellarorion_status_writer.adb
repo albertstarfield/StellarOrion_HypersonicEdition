@@ -43,7 +43,17 @@ package body StellarOrion_Status_Writer is
       return S;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Float_Image: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Float_Image");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Float_Image;
@@ -78,7 +88,17 @@ package body StellarOrion_Status_Writer is
       end case;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Status_String: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Status_String");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Status_String;
@@ -226,7 +246,17 @@ package body StellarOrion_Status_Writer is
       pragma Assert (Trimmed'Length > 0);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Float_Image: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Float_Image");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_Float_Image;
 
@@ -256,7 +286,17 @@ package body StellarOrion_Status_Writer is
       pragma Assert (Status_Idle'Size >= 0);  -- static bounds context
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Status_String: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Status_String");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_Status_String;
 
@@ -284,7 +324,17 @@ package body StellarOrion_Status_Writer is
                        = Status_Error);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Write_Status: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Write_Status");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_Write_Status;
 
@@ -316,7 +366,17 @@ package body StellarOrion_Status_Writer is
                        and then Full_Path (Full_Path'First) /= '/');
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Clear_Status: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Clear_Status");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_Clear_Status;
 

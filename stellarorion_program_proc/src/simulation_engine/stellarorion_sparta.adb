@@ -70,7 +70,17 @@ package body StellarOrion_Sparta is
       end case;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Chem_To_String: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Chem_To_String");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Chem_To_String;
@@ -107,7 +117,17 @@ package body StellarOrion_Sparta is
       end case;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Nose_To_String: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Nose_To_String");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Nose_To_String;
@@ -148,7 +168,17 @@ package body StellarOrion_Sparta is
       return S;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Img: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Img");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Img;
@@ -186,7 +216,17 @@ package body StellarOrion_Sparta is
       return S;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Img: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Img");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Img;
@@ -241,7 +281,17 @@ package body StellarOrion_Sparta is
       return Y;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Sqrt: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sqrt");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Sqrt;
@@ -277,7 +327,17 @@ package body StellarOrion_Sparta is
       return X;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Abs_F: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Abs_F");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
    end Abs_F;
@@ -333,8 +393,17 @@ package body StellarOrion_Sparta is
        Interfaces.C.Strings.Free (C_Cmd);
      exception
         when E : others =>
-           Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in System: " &
-                               Ada.Exceptions.Exception_Message (E));
+           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      System");
+
+           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+           raise;
 
     end System;
 
@@ -380,8 +449,17 @@ package body StellarOrion_Sparta is
        return Rc;
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in System_Return: " &
-                              Ada.Exceptions.Exception_Message (E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      System_Return");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
           raise;
 
     end System_Return;
@@ -1659,7 +1737,17 @@ package body StellarOrion_Sparta is
       pragma Assert (S_I (S_I'First) /= ' ');
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Img: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Img");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Img;
    pragma Unreferenced (Test_Img);
@@ -1692,7 +1780,17 @@ package body StellarOrion_Sparta is
         (Cmd_Prefix (Cmd_Prefix'First .. Cmd_Prefix'First + 5) = "docker");
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_System: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_System");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_System;
    pragma Unreferenced (Test_System);
@@ -1843,8 +1941,17 @@ package body StellarOrion_Sparta is
           Raw (N_Raw) := (R => R_Val, Z => PZ);
       exception
          when E : others =>
-            Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Add_Raw: " &
-                                Ada.Exceptions.Exception_Message (E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Add_Raw");
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+            raise;
 
       end Add_Raw;
 
@@ -2013,8 +2120,17 @@ package body StellarOrion_Sparta is
        Ada.Text_IO.Close (Out_File);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Generate_HIAD_Surf: " &
-                                Ada.Exceptions.Exception_Message (E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Generate_HIAD_Surf");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
     end Generate_HIAD_Surf;
 
 -- Pre: input parameters are valid and within bounds
@@ -2389,8 +2505,17 @@ package body StellarOrion_Sparta is
           end loop;
        exception
           when E : others =>
-             Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Resample: " &
-                                 Ada.Exceptions.Exception_Message (E));
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Resample");
+
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+             raise;
 
        end Resample;
 
@@ -2456,8 +2581,17 @@ package body StellarOrion_Sparta is
          New_Line (F);
       exception
          when E : others =>
-            Ada.Text_IO.Put_Line ("[SAFE_FALLBACK] Exception in Write_Point: " &
-                                Ada.Exceptions.Exception_Message (E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Write_Point");
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+            raise;
 
       end Write_Point;
 
@@ -3530,7 +3664,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_C_System: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_C_System");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_C_System;
 
@@ -3555,7 +3699,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_System_Return: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_System_Return");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_System_Return;
 
@@ -3578,7 +3732,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Generate_HIAD_Surf: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Generate_HIAD_Surf");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Generate_HIAD_Surf;
 
@@ -3603,7 +3767,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Add_Raw: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Add_Raw");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Add_Raw;
 
@@ -3629,7 +3803,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Generate_Validation_Plots_And_VTK: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Generate_Validation_Plots_And_VTK");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Generate_Validation_Plots_And_VTK;
 
@@ -3652,7 +3836,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Tokenize_Floats: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Tokenize_Floats");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Tokenize_Floats;
 
@@ -3676,7 +3870,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Parse_Surf_Geometry: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Parse_Surf_Geometry");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Parse_Surf_Geometry;
 
@@ -3699,7 +3903,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Resample: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Resample");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Resample;
 
@@ -3722,7 +3936,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Count_Surf_Rows: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Count_Surf_Rows");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Count_Surf_Rows;
 
@@ -3745,7 +3969,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Write_Point: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Write_Point");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Write_Point;
 
@@ -3768,7 +4002,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Write_VTU: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Write_VTU");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Write_VTU;
 
@@ -3792,7 +4036,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Process_Step_File: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Process_Step_File");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Process_Step_File;
 
@@ -3815,7 +4069,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Write_CSV: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Write_CSV");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Write_CSV;
 
@@ -3839,7 +4103,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Write_PVD: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Write_PVD");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Write_PVD;
 
@@ -3863,7 +4137,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Cleanup_Ephemeral_State: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Cleanup_Ephemeral_State");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Cleanup_Ephemeral_State;
 
@@ -3889,7 +4173,17 @@ package body StellarOrion_Sparta is
       null;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Delete_Matching: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Delete_Matching");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Delete_Matching;
 

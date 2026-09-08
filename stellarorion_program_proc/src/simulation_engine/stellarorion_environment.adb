@@ -739,7 +739,17 @@ package body StellarOrion_Environment is
       pragma Assert (R <= 4.0);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Sqrt_Approx: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Sqrt_Approx");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_Sqrt_Approx;
    pragma Unreferenced (Test_Sqrt_Approx);
@@ -766,7 +776,17 @@ package body StellarOrion_Environment is
       pragma Assert (E >= 0.0);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Exp_Approx: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Exp_Approx");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_Exp_Approx;
    pragma Unreferenced (Test_Exp_Approx);
@@ -795,7 +815,17 @@ package body StellarOrion_Environment is
       --  integration modes; unit smoke exercises the pure call path.
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Ln_Approx: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Ln_Approx");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_Ln_Approx;
    pragma Unreferenced (Test_Ln_Approx);
@@ -822,7 +852,17 @@ package body StellarOrion_Environment is
       pragma Assert (P >= 0.0);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Pow_Float: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Pow_Float");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_Pow_Float;
    pragma Unreferenced (Test_Pow_Float);
@@ -848,7 +888,17 @@ package body StellarOrion_Environment is
       pragma Assert (T >= 186.86 and T <= 288.15);
     exception
        when E : others =>
-          Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Atmosphere_Temperature: " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Atmosphere_Temperature");
+
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+          raise;
 
    end Test_Atmosphere_Temperature;
 
@@ -870,7 +920,17 @@ package body StellarOrion_Environment is
       pragma Assert (Rho >= 0.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Atmosphere_Density: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Atmosphere_Density");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Atmosphere_Density;
 
@@ -892,7 +952,17 @@ package body StellarOrion_Environment is
       pragma Assert (P >= 0.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Atmosphere_Pressure: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Atmosphere_Pressure");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Atmosphere_Pressure;
 
@@ -914,7 +984,17 @@ package body StellarOrion_Environment is
       pragma Assert (V >= 0.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Mach_To_Velocity: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Mach_To_Velocity");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Mach_To_Velocity;
 
@@ -939,7 +1019,17 @@ package body StellarOrion_Environment is
       --  envelope clamping semantics live in the callee contract.
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Mach_Alt_To_Flight: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Mach_Alt_To_Flight");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Mach_Alt_To_Flight;
 
@@ -968,7 +1058,17 @@ package body StellarOrion_Environment is
       pragma Assert (T_Band_Lo < T_Band_Hi);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_MSIS_Atmosphere: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_MSIS_Atmosphere");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_MSIS_Atmosphere;
 
