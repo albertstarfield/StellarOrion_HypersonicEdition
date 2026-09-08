@@ -359,14 +359,10 @@ def _parse_python_functions_ast(source: str) -> list[dict]:
                                "Sequence", "Mapping", "Iterable", "Iterator",
                                "Callable", "Type", "Any", "ClassVar"}
                 is_type_annotation = False
-                # Check the outermost value: list[...] where list is a known type
-                if isinstance(child.value, ast.Name) and child.value.id in _TYPE_NAMES:
+                # Check outermost value: list[...] or nested list[list[float]]
+                if (isinstance(child.value, ast.Name) and child.value.id in _TYPE_NAMES
+                    or isinstance(child.slice, ast.Subscript) and isinstance(child.slice.value, ast.Name) and child.slice.value.id in _TYPE_NAMES):
                     is_type_annotation = True
-                # For nested generics like list[list[float]], the outer slice is a
-                # Subscript — check its value too
-                elif isinstance(child.slice, ast.Subscript) and isinstance(child.slice.value, ast.Name):
-                    if child.slice.value.id in _TYPE_NAMES:
-                        is_type_annotation = True
                 if not is_type_annotation:
                     indexing_ops.append({
                         "line": child.lineno,
@@ -622,7 +618,7 @@ def set_verbose(enabled: bool) -> None:
     _VERBOSE = enabled
 
 
-def _has_nosec(lines: list, line_num: int) -> bool:
+def _has_nosec(lines: list, line_num: int, scan_range: int = 5) -> bool:
     """Check if a given 1-based line number has a nosec suppression annotation.
 
     -- AXIOMS --
@@ -635,13 +631,33 @@ def _has_nosec(lines: list, line_num: int) -> bool:
        be suppressed because the developer has explicitly marked it as a false
        positive or acceptable risk.
     2. The check is case-insensitive to match bandit/safety convention.
+    3. For multi-line def statements (e.g., `def foo(\n    param,\n) -> None:  # nosec`),
+       the nosec annotation may be on a continuation line up to scan_range lines
+       below the def line. We scan forward until we find an open-paren continuation
+       or the closing line of the statement.
 
     -- APPLICATIONS --
     Used by violation creation loops to check for nosec before appending.
     """
     if line_num < 1 or line_num > len(lines):
         return False
-    return "nosec" in lines[line_num - 1].lower()
+    # Check the def line itself first
+    if "nosec" in lines[line_num - 1].lower():
+        return True
+    # Scan forward through multi-line def statements (max scan_range lines)
+    # Stop if we hit a line with open-paren that hasn't been closed, or
+    # a line ending with ':', which marks the end of the def header
+    for offset in range(1, scan_range + 1):
+        check_line = line_num - 1 + offset
+        if check_line >= len(lines):
+            break
+        text = lines[check_line].lower()
+        if "nosec" in text:
+            return True
+        # Stop scanning at the colon-terminated line (def header end)
+        if lines[check_line].rstrip().endswith(":"):
+            break
+    return False
 
 
 # ── Pattern Definition ───────────────────────────────────────────────────
@@ -10012,7 +10028,7 @@ def _build_ada_function_coverage_patterns() -> list[Pattern]:
             # In Ada, contracts belong in .ads ONLY. .adb bodies inherit them.
             if not has_contract and filepath.endswith(".adb"):
                 ads_filepath = filepath[:-1]  # .adb -> .ads
-                ads_path = filepath_obj.parent / ads_filepath
+                ads_path = Path(filepath).parent / ads_filepath
                 if ads_path.exists():
                     ads_content = ads_path.read_text()
                     # Check if function name appears with contracts in .ads
@@ -10191,7 +10207,7 @@ def _build_python_function_coverage_patterns() -> list[Pattern]:
                     continue
                 if "->" in stripped:
                     continue
-                if stripped.startswith("self,") or stripped.startswith("cls,"):
+                if stripped.startswith(("self,", "cls,")):
                     continue
                 if stripped and not stripped.startswith("#"):
                     break  # Non-comment, non-docstring found
@@ -11353,14 +11369,14 @@ def _self_test_check_ada(source: str, lines: list[str], filepath: str) -> list[V
             # [Fix: skip Test_* procs — they are tests themselves, they should NOT
             #  require a Test_Test_* counterpart. Original code flagged 50 false
             #  positives on Test_Sutherland_Mu, Test_Sine, etc.]
-            if name.startswith("_") or name.startswith("Test_"):
+            if name.startswith(("_", "Test_")):
                 continue
             proc_names.append((name, i))
         m = re.match(r"function\s+(\w+)", stripped, re.IGNORECASE)
         if m:
             name = m.group(1)
             # [Fix: same skip for Test_* functions]
-            if name.startswith("_") or name.startswith("Test_"):
+            if name.startswith(("_", "Test_")):
                 continue
             proc_names.append((name, i))
 
