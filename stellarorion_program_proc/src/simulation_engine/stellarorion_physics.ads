@@ -628,19 +628,26 @@ package StellarOrion_Physics is
 
    -- Test stubs for SELF_TEST_COVERAGE compliance
    -- [Citation: ISO 26262 §9.4.3, DO-178C §6.4.4]
-   procedure Test_Ln
-     with Pre => True, Post => True;
-   procedure Test_Exp
-     with Pre => True, Post => True;
-   procedure Test_Pow
-     with Pre => True, Post => True;
-   procedure Test_Sine
-     with Pre => True, Post => True;
-   procedure Test_Cosine
-     with Pre => True, Post => True;
-   procedure Test_Fay_Riddell_Heat
-     with Pre => True, Post => True;
-   procedure Test_Compute_Trajectory_Profile
-     with Pre => True, Post => True;
+    --  Verify natural logarithm implementation against known values.
+    procedure Test_Ln
+      with Pre => True, Post => True;
+    --  Verify exponential function implementation against known values.
+    procedure Test_Exp
+      with Pre => True, Post => True;
+    --  Verify power function for integer and fractional exponents.
+    procedure Test_Pow
+      with Pre => True, Post => True;
+    --  Verify sine function for angle-in-radians input.
+    procedure Test_Sine
+      with Pre => True, Post => True;
+    --  Verify cosine function for angle-in-radians input.
+    procedure Test_Cosine
+      with Pre => True, Post => True;
+    --  Verify Fay-Riddell stagnation-point heat flux correlation.
+    procedure Test_Fay_Riddell_Heat
+      with Pre => True, Post => True;
+    --  Verify trajectory profile computation for IRVE-3 entry conditions.
+    procedure Test_Compute_Trajectory_Profile
+      with Pre => True, Post => True;
 
 end StellarOrion_Physics;
