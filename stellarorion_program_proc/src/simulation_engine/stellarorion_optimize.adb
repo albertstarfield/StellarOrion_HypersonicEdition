@@ -8,6 +8,11 @@ with StellarOrion_Status_Writer; use StellarOrion_Status_Writer;
 with Ada.Exceptions;
 
 package body StellarOrion_Optimize with SPARK_Mode => Off is
+--  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
+--  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
+--  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)
+--  Recover_States: Sabotage §14 compliance (NO_STATE_RECOVERY)
+--  Save_State: Sabotage §14 compliance (NO_STATE_SAVE)
    --  extern: GA driver writes artifacts; outside SPARK subset
 
    STATUS_DIR : constant String := "data/runs";

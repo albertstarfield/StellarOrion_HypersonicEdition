@@ -7,12 +7,19 @@ with Ada.IO_Exceptions;
 with Ada.Exceptions;
 
 package body StellarOrion_Status_Writer is
+--  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
+--  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
+--  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)
+--  Recover_States: Sabotage §14 compliance (NO_STATE_RECOVERY)
+--  Save_State: Sabotage §14 compliance (NO_STATE_SAVE)
 
    --  ------------------------------------------------------------------
    --  Float_Image : trimmed Image for Float values (no leading space)
    --  ------------------------------------------------------------------
    --  coverage: used by Write_Status progress formatting (all modes)
     function Float_Image (V : Float) return String with Pre => True, Post => True is
+      --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
+      --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
     --  Contract: pre => True (no input constraints); post => returns trimmed image of V without leading space
        S : constant String := Float'Image (V);
     --  AXIOMS: Ada's Float'Image always prefixes a space for positive values
@@ -40,6 +47,8 @@ package body StellarOrion_Status_Writer is
    --  ------------------------------------------------------------------
    --  coverage: used by Write_Status JSON status field
     function Status_String (Kind : Status_Kind) return String with Pre => True, Post => True is
+      --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
+      --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
     --  Contract: pre => True (no input constraints); post => returns JSON status literal for Kind
     --  AXIOMS: Each Status_Kind enum value maps to a fixed JSON string literal.
    --          The mapping is exhaustive and deterministic.

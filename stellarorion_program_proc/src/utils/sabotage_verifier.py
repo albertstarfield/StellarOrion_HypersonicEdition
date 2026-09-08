@@ -10085,6 +10085,15 @@ def _build_python_function_coverage_patterns() -> list[Pattern]:
             # Get line number from character offset
             func_line = source[:match.start()].count("\n") + 1
             line_idx = func_line - 1
+            # [Fix: off-by-N in func_line] The regex ``^\\s*def`` with re.MULTILINE
+            # causes ``\\s*`` to consume blank lines before ``def``, so
+            # ``match.start()`` may point to a blank line ABOVE the actual def.
+            # Search forward to find the line that truly contains ``def <name>``.
+            for _scan in range(line_idx, min(line_idx + 5, len(lines))):
+                if re.search(r"\bdef\s+" + re.escape(func_name) + r"\b", lines[_scan]):
+                    func_line = _scan + 1
+                    line_idx = _scan
+                    break
 
             # Skip private/dunder methods
             if func_name.startswith("_") and func_name != "__init__":

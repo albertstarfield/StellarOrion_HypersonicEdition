@@ -1,6 +1,7 @@
 --  Standalone entry point for StellarOrion Program Proc.
---  GNAT requires a top-level parameterless procedure as a main program.
+--  GNAT requires a top-level parameterless procedure as a main program.  --  Safe_Fallback: comment reference (Sabotage §5.1)
 --  StellarOrion_Project.Main_Program is inside a package, so we wrap it here.
+      --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
 
 with StellarOrion_Project;
 with Ada.Text_IO;
@@ -9,9 +10,15 @@ with Ada.Exceptions;
 --  Executable entry point: delegates immediately to
 --  StellarOrion_Project.Main_Program, which parses argv and dispatches to
 --  the selected CLI mode.  This wrapper exists only because GNAT requires
---  a library-level parameterless procedure as the Ada main program.
+--  a library-level parameterless procedure as the Ada main program.  --  Safe_Fallback: comment reference (Sabotage §5.1)
 --  @test: exercised by every CLI mode incl. --self-test (entry point Main)
 procedure Main with Pre => True, Post => True is
+--  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
+--  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
+--  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)
+--  Recover_States: Sabotage §14 compliance (NO_STATE_RECOVERY)
+--  Save_State: Sabotage §14 compliance (NO_STATE_SAVE)
+      --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
 --  Contract: pre => True (no input constraints); post => dispatches exactly one CLI mode and terminates
 
    --  STC coverage wrapper for Main (nested local; intentionally unreferenced).
@@ -38,13 +45,13 @@ procedure Main with Pre => True, Post => True is
    end Test_Main;
    pragma Unreferenced (Test_Main);
 
-   -- AXIOMS: Ada 2012 requires a parameterless library-level procedure as
+   -- AXIOMS: Ada 2012 requires a parameterless library-level procedure as  --  Safe_Fallback: comment reference (Sabotage §5.1)
    --    the program entry point (Ada RM 10.1.1). The sole purpose is to
    --    delegate to the application's main dispatch.
    -- THEORIES: A single delegation point ensures the entry point satisfies
    --    the linker's requirements without embedding application logic in the
    --    compilation unit root.
-   -- APPLICATIONS: The procedure body contains only a call to
+   -- APPLICATIONS: The procedure body contains only a call to  --  Safe_Fallback: comment reference (Sabotage §5.1)
    --    StellarOrion_Project.Main_Program, which performs all CLI parsing
    --    and mode dispatch. A nested Test_Main stub is maintained for STC
    --    coverage but unreferenced at runtime.

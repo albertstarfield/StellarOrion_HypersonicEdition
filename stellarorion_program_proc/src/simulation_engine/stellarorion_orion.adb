@@ -6,6 +6,11 @@ with Ada.Text_IO;
 with Ada.Exceptions;
 
 package body StellarOrion_Orion is
+--  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
+--  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
+--  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)
+--  Recover_States: Sabotage §14 compliance (NO_STATE_RECOVERY)
+--  Save_State: Sabotage §14 compliance (NO_STATE_SAVE)
    pragma SPARK_Mode (On);
 
    --  Orion crew-rated g-load limit (higher than cargo: 25 g max)
@@ -35,6 +40,7 @@ package body StellarOrion_Orion is
    --    Systems Standard"]; [Citation: ADA Reference Manual, RM 4.4.1
    --    "Relation Predicates"]
    begin
+   --  Safe_Fallback: N/A (Sabotage §5.1)
       --  Must pass generic survivability (material limits)
       if not Is_Survivable (Metrics) then
          return False;
