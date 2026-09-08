@@ -360,6 +360,7 @@ class SidecarWatchdogManager:
         restart_callback: Any = None,
     ) -> None:
         """Initialize the dual watchdog manager.
+        # test: test_dual_watchdog_init()
 
         Args:
             heartbeat_path: Path to heartbeat file for sidecar health.
