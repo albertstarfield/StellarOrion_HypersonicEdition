@@ -127,7 +127,7 @@ def _write_grid_file(grid_file, data):
     AXIOMS:
       1. Output format matches input format (grid.NNNN.out)
       2. Columns: id xlo xhi ylo yhi particles temp vx vy num_density
-      3. We reconstruct cell bounds from centers (assume uniform spacing)
+      3. We reconstruct cell bounds from centers (uniform spacing constraint — SPARTA grid is uniform)
 
     data: numpy array of shape (N, 6) — [x, y, rho, T, vx, vy]
     """
