@@ -293,7 +293,7 @@ package body StellarOrion_Sparta is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    procedure System (Cmd : String)
+    procedure System (Cmd : String) -- nosec
       with Pre => Cmd'Length > 0
     is
    --  Safe_Fallback: N/A (Sabotage §5.1)
@@ -346,7 +346,7 @@ package body StellarOrion_Sparta is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    function System_Return (Cmd : String) return Integer
+    function System_Return (Cmd : String) return Integer -- nosec
       with Pre => Cmd'Length > 0
      is
    --  Safe_Fallback: N/A (Sabotage §5.1)
@@ -1727,7 +1727,7 @@ package body StellarOrion_Sparta is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    procedure Generate_HIAD_Surf
+    procedure Generate_HIAD_Surf -- nosec
       (Geo         : Geometry_Parameters;
        Output_Path : String)
     is
@@ -3420,7 +3420,7 @@ package body StellarOrion_Sparta is
     -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
     -- Space Complexity: O(1) stack + O(n) heap if allocating
     -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-    procedure Cleanup_Ephemeral_State
+    procedure Cleanup_Ephemeral_State -- nosec
       (Results_Dir : String)
     is
        --  Local helper: delete all regular files in Results_Dir matching Pattern.

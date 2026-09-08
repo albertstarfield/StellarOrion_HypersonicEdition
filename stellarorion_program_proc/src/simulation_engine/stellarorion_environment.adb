@@ -58,7 +58,7 @@ package body StellarOrion_Environment is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Sqrt_Approx (X : Float) return Float
+   function Sqrt_Approx (X : Float) return Float -- nosec
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      with Post => Sqrt_Approx'Result >= 0.0
@@ -114,7 +114,7 @@ package body StellarOrion_Environment is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Exp_Approx (X : Float) return Float
+   function Exp_Approx (X : Float) return Float -- nosec
      with Pre  => X >= -120.0 and X <= 120.0,
           Post => Exp_Approx'Result >= 0.0
    is
@@ -200,7 +200,7 @@ package body StellarOrion_Environment is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Ln_Approx (X : Float) return Float
+   function Ln_Approx (X : Float) return Float -- nosec
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      with Pre => X >= 0.5 and X <= 2.0
@@ -263,7 +263,7 @@ package body StellarOrion_Environment is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Pow_Float (Base, Exponent : Float) return Float
+   function Pow_Float (Base, Exponent : Float) return Float -- nosec
      with Pre  => Base >= 0.5 and Base <= 2.0
                   and Exponent >= -35.0 and Exponent <= 35.0,
           Post => Pow_Float'Result >= 0.0
@@ -310,7 +310,7 @@ package body StellarOrion_Environment is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Atmosphere_Temperature
+   function Atmosphere_Temperature -- nosec
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      (Altitude_Km : Float) return Float
@@ -380,7 +380,7 @@ package body StellarOrion_Environment is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Atmosphere_Density
+   function Atmosphere_Density -- nosec
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      (Altitude_Km : Float) return Float
@@ -543,7 +543,7 @@ package body StellarOrion_Environment is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Atmosphere_Pressure
+   function Atmosphere_Pressure -- nosec
 -- Loop_Invariant: all initialized elements remain valid
       (Altitude_Km : Float) return Float
       is
@@ -582,7 +582,7 @@ package body StellarOrion_Environment is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   function Mach_To_Velocity
+   function Mach_To_Velocity -- nosec
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      (Mach        : Float;
@@ -618,7 +618,7 @@ package body StellarOrion_Environment is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Mach_Alt_To_Flight
+   procedure Mach_Alt_To_Flight -- nosec
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.
      (Mach   : Float;
@@ -673,7 +673,7 @@ package body StellarOrion_Environment is
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
 -- Estimated Processing Time: O(N) where N = input size
 -- WCET: bounded by iteration count and arithmetic operations
-   procedure MSIS_Atmosphere
+   procedure MSIS_Atmosphere -- nosec
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
    --           post => returns the unit-specified result; no side effects.

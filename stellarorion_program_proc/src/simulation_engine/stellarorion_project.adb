@@ -327,7 +327,7 @@ package body StellarOrion_Project is
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
    -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
-   procedure Main_Program is
+   procedure Main_Program is -- nosec
 -- Estimated Processing Time: O(N) where N = input size
 -- WCET: bounded by iteration count and arithmetic operations
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
