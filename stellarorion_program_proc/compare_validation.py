@@ -197,6 +197,7 @@ def main():
     lines.append("|---|---|---|---|---|---|")
 
     def ratio(a, b):
+        """Compute ratio a/b as string, returning dash if invalid."""
         if a is None or b is None or b == 0:
             return "—"
         return f"{a/b:.3f}"

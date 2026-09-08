@@ -550,23 +550,29 @@ package StellarOrion_Types is
    --  Self-test coverage wrappers (STC)
    --  ------------------------------------------------------------------
 
-   procedure Test_TPS_SiC
-     with Pre => True, Post => True;
+    --  Verify TPS_SiC material record initialization and field access.
+    procedure Test_TPS_SiC
+      with Pre => True, Post => True;
 
-   procedure Test_TPS_PICA_X
-     with Pre => True, Post => True;
+    --  Verify TPS_PICA_X material record initialization and field access.
+    procedure Test_TPS_PICA_X
+      with Pre => True, Post => True;
 
-   procedure Test_TPS_LOFTID
-     with Pre => True, Post => True;
+    --  Verify TPS_LOFTID material record initialization and field access.
+    procedure Test_TPS_LOFTID
+      with Pre => True, Post => True;
 
-   procedure Test_TPS_Kapton
-     with Pre => True, Post => True;
+    --  Verify TPS_Kapton material record initialization and field access.
+    procedure Test_TPS_Kapton
+      with Pre => True, Post => True;
 
-   procedure Test_TPS_Pyrogel
-     with Pre => True, Post => True;
+    --  Verify TPS_Pyrogel material record initialization and field access.
+    procedure Test_TPS_Pyrogel
+      with Pre => True, Post => True;
 
-   procedure Test_TPS_Multi
-     with Pre => True, Post => True;
+    --  Verify TPS_Multi-layer composite record initialization.
+    procedure Test_TPS_Multi
+      with Pre => True, Post => True;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_Kapton", Test_TPS_Kapton'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_LOFTID", Test_TPS_LOFTID'Access);

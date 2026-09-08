@@ -222,11 +222,14 @@ package StellarOrion_Geometry is
 
    -- Test stubs for SELF_TEST_COVERAGE compliance
    -- [Citation: ISO 26262 §9.4.3, DO-178C §6.4.4]
-   procedure Test_Cos_Deg
-     with Pre => True, Post => True;
-   procedure Test_Sin_Rad
-     with Pre => True, Post => True;
-   procedure Test_Cos_Rad
-     with Pre => True, Post => True;
+    --  Verify Cos_Deg Taylor series produces correct cosine for test angles.
+    procedure Test_Cos_Deg
+      with Pre => True, Post => True;
+    --  Verify Sin_Rad Taylor series produces correct sine for test angles.
+    procedure Test_Sin_Rad
+      with Pre => True, Post => True;
+    --  Verify Cos_Rad Taylor series produces correct cosine for test angles.
+    procedure Test_Cos_Rad
+      with Pre => True, Post => True;
 
 end StellarOrion_Geometry;

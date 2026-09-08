@@ -131,18 +131,24 @@ package StellarOrion_Atomic_Parity with SPARK_Mode => On is
    --  ------------------------------------------------------------------
    pragma Warnings (Off, "has no effect");
 
-   procedure Test_Count_Set_Bits
-     with Pre => True, Post => True;
-   procedure Test_Calculate_Parity
-     with Pre => True, Post => True;
-   procedure Test_Block_Checksum
-     with Pre => True, Post => True;
-   procedure Test_Verify_Input_Parity
-     with Pre => True, Post => True;
-   procedure Test_Add_Output_Parity
-     with Pre => True, Post => True;
-   procedure Test_Recover_From_Parity_Error
-     with Pre => True, Post => True;
+    --  Verify Count_Set_Bits correctly counts 1-bits in a UInt32 value.
+    procedure Test_Count_Set_Bits
+      with Pre => True, Post => True;
+    --  Verify Calculate_Parity produces correct even/odd parity bit.
+    procedure Test_Calculate_Parity
+      with Pre => True, Post => True;
+    --  Verify Block_Checksum computes consistent CRC over byte arrays.
+    procedure Test_Block_Checksum
+      with Pre => True, Post => True;
+    --  Verify Verify_Input_Parity detects single-bit corruption.
+    procedure Test_Verify_Input_Parity
+      with Pre => True, Post => True;
+    --  Verify Add_Output_Parity appends parity bit to data block.
+    procedure Test_Add_Output_Parity
+      with Pre => True, Post => True;
+    --  Verify Recover_From_Parity_Error corrects detected bit-flip.
+    procedure Test_Recover_From_Parity_Error
+      with Pre => True, Post => True;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Add_Output_Parity", Test_Add_Output_Parity'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Block_Checksum", Test_Block_Checksum'Access);

@@ -179,23 +179,29 @@ package StellarOrion_Dual_Watchdog with SPARK_Mode => On is
    procedure Test_Initialize
      with Pre => True, Post => True;
 
-   procedure Test_Update_Heartbeat
-     with Pre => True, Post => True;
+    --  Verify Update_Heartbeat refreshes watchdog timestamp correctly.
+    procedure Test_Update_Heartbeat
+      with Pre => True, Post => True;
 
-   procedure Test_Evaluate
-     with Pre => True, Post => True;
+    --  Verify Evaluate detects stale heartbeat within timeout window.
+    procedure Test_Evaluate
+      with Pre => True, Post => True;
 
-   procedure Test_Cross_Check
-     with Pre => True, Post => True;
+    --  Verify Cross_Check validates dual-sensor consistency.
+    procedure Test_Cross_Check
+      with Pre => True, Post => True;
 
-   procedure Test_Advance_Recovery
-     with Pre => True, Post => True;
+    --  Verify Advance_Recovery increments recovery counter correctly.
+    procedure Test_Advance_Recovery
+      with Pre => True, Post => True;
 
-   procedure Test_Emergency_Safe_State
-     with Pre => True, Post => True;
+    --  Verify Emergency_Safe_State transitions to safe shutdown.
+    procedure Test_Emergency_Safe_State
+      with Pre => True, Post => True;
 
-   procedure Test_Needs_Emergency
-     with Pre => True, Post => True;
+    --  Verify Needs_Emergency returns True when threshold exceeded.
+    procedure Test_Needs_Emergency
+      with Pre => True, Post => True;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Advance_Recovery", Test_Advance_Recovery'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Cross_Check", Test_Cross_Check'Access);

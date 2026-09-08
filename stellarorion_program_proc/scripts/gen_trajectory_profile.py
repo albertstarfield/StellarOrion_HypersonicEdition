@@ -256,6 +256,7 @@ def write_csv(samples, output_path):
 
 
 def main():
+    """Entry point: parse args, run trajectory, write CSV."""
     if len(sys.argv) < 2:
         print("Usage: gen_trajectory_profile.py <results_dir>")
         print("  Generates trajectory_profile.csv in the specified directory.")

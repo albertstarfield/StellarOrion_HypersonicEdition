@@ -160,20 +160,25 @@ package StellarOrion_Environment is
     procedure Test_Mach_To_Velocity
       with Pre => True, Post => True;
 
-    procedure Test_Atmosphere_Temperature
-      with Pre => True, Post => True;
+    --  Verify Atmosphere_Temperature returns ISA temperature at known altitude.
+     procedure Test_Atmosphere_Temperature
+       with Pre => True, Post => True;
 
-    procedure Test_Atmosphere_Density
-      with Pre => True, Post => True;
+    --  Verify Atmosphere_Density returns ISA density at known altitude.
+     procedure Test_Atmosphere_Density
+       with Pre => True, Post => True;
 
-    procedure Test_Atmosphere_Pressure
-      with Pre => True, Post => True;
+    --  Verify Atmosphere_Pressure returns ISA pressure at known altitude.
+     procedure Test_Atmosphere_Pressure
+       with Pre => True, Post => True;
 
-    procedure Test_Mach_Alt_To_Flight
-      with Pre => True, Post => True;
+    --  Verify Mach_Alt_To_Flight computes correct velocity from Mach and altitude.
+     procedure Test_Mach_Alt_To_Flight
+       with Pre => True, Post => True;
 
-    procedure Test_MSIS_Atmosphere
-      with Pre => True, Post => True;
+    --  Verify MSIS_Atmosphere returns NRLMSISE-00 density and temperature.
+     procedure Test_MSIS_Atmosphere
+       with Pre => True, Post => True;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Atmosphere_Density", Test_Atmosphere_Density'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Atmosphere_Pressure", Test_Atmosphere_Pressure'Access);

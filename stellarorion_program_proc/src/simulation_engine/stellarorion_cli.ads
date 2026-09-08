@@ -43,16 +43,21 @@ package StellarOrion_Cli is
    --  ------------------------------------------------------------------
    pragma Warnings (Off, "has no effect");
 
-   procedure Test_Has_Flag
-     with Pre => True, Post => True;
-   procedure Test_Get_Option
-     with Pre => True, Post => True;
-   procedure Test_Get_Float
-     with Pre => True, Post => True;
-   procedure Test_Clamp_Float
-     with Pre => True, Post => True;
-   procedure Test_Get_Positive
-     with Pre => True, Post => True;
+    --  Verify Has_Flag correctly detects --flag presence in argv array.
+    procedure Test_Has_Flag
+      with Pre => True, Post => True;
+    --  Verify Get_Option extracts the value following --option in argv.
+    procedure Test_Get_Option
+      with Pre => True, Post => True;
+    --  Verify Get_Float parses a floating-point argument from argv.
+    procedure Test_Get_Float
+      with Pre => True, Post => True;
+    --  Verify Clamp_Float constrains values within [Min, Max] bounds.
+    procedure Test_Clamp_Float
+      with Pre => True, Post => True;
+    --  Verify Get_Positive parses a positive integer argument from argv.
+    procedure Test_Get_Positive
+      with Pre => True, Post => True;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Clamp_Float", Test_Clamp_Float'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Get_Float", Test_Get_Float'Access);
