@@ -121,7 +121,17 @@ package body StellarOrion_Project is
       New_Line;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Print_Banner: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Print_Banner");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Print_Banner;
 
@@ -249,7 +259,17 @@ package body StellarOrion_Project is
       Put_Line ("  --stop-colima             Stop Colima/Docker daemon after run");
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Print_Usage: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Print_Usage");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Print_Usage;
 
@@ -1004,7 +1024,17 @@ package body StellarOrion_Project is
                        and then 3.0 <= Diameter_Range'Last);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Print_Banner: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Print_Banner");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Print_Banner;
 
@@ -1038,7 +1068,17 @@ package body StellarOrion_Project is
       pragma Assert (Solver_Kind'Pos (SPARTA) = 0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Print_Usage: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Print_Usage");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Print_Usage;
 
@@ -1073,7 +1113,17 @@ package body StellarOrion_Project is
       pragma Assert (MAX_G_LOAD = 25.0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Main_Program: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Main_Program");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Main_Program;
 
@@ -1111,7 +1161,17 @@ package body StellarOrion_Project is
        pragma Assert (Candidate'Length > 0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Try_Open: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Try_Open");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
     end Test_Try_Open;
 

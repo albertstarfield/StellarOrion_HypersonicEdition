@@ -331,7 +331,17 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       return S.A.Status = Failed and then S.B.Status = Failed;
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Needs_Emergency: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Needs_Emergency");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
          raise;
 
    end Needs_Emergency;
@@ -369,7 +379,17 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       pragma Assert (Max_Recovery_Attempts >= 1);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Initialize: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Initialize");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Initialize;
 
@@ -401,7 +421,17 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
                        < Health_Status'Pos (Failed));
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Update_Heartbeat: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Update_Heartbeat");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Update_Heartbeat;
 
@@ -430,7 +460,17 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       pragma Assert (Max_Audit_Count > 0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Evaluate: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Evaluate");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Evaluate;
 
@@ -466,7 +506,17 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       pragma Assert (Default_Timeout > 0);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Is_Stale: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Is_Stale");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Is_Stale;
    pragma Unreferenced (Test_Is_Stale);
@@ -498,7 +548,17 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
                        < Health_Status'Pos (Recovering));
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Cross_Check: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Cross_Check");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Cross_Check;
 
@@ -528,7 +588,17 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       pragma Assert (Max_Recovery_Attempts >= 1);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Advance_Recovery: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Advance_Recovery");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Advance_Recovery;
 
@@ -559,7 +629,17 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       pragma Assert (Health_Status'Last = Dead);
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Emergency_Safe_State: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Emergency_Safe_State");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Emergency_Safe_State;
 
@@ -592,7 +672,17 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
                        < Health_Status'Pos (Dead));
    exception
       when E : others =>
-         Ada.Text_IO.Put_Line("[SAFE_FALLBACK] Exception in Test_Needs_Emergency: " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Needs_Emergency");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
 
    end Test_Needs_Emergency;
 
