@@ -72,7 +72,6 @@ package body StellarOrion_Runtime_Guard is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
          raise;
-         raise;
 
    end Get_Lock_File_Path;
 
@@ -135,7 +134,6 @@ package body StellarOrion_Runtime_Guard is
 
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-         raise;
          raise;
 
    end Check_And_Acquire_Lock;

@@ -155,7 +155,6 @@ package body StellarOrion_Geometry is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
          raise;
-         raise;
 
    end Frontal_Area;
 
@@ -423,7 +422,6 @@ package body StellarOrion_Geometry is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
     end Cos_Deg;

@@ -85,7 +85,6 @@ package body StellarOrion_Sparta is
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
           raise;
-          raise;
 
    end Chem_To_String;
 
@@ -135,7 +134,6 @@ package body StellarOrion_Sparta is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
    end Nose_To_String;
@@ -191,7 +189,6 @@ package body StellarOrion_Sparta is
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
           raise;
-          raise;
 
    end Img;
 
@@ -242,7 +239,6 @@ package body StellarOrion_Sparta is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
    end Img;
@@ -312,7 +308,6 @@ package body StellarOrion_Sparta is
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
           raise;
-          raise;
 
    end Sqrt;
 
@@ -361,7 +356,6 @@ package body StellarOrion_Sparta is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
    end Abs_F;
@@ -499,7 +493,6 @@ package body StellarOrion_Sparta is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
     end System_Return;
