@@ -944,6 +944,13 @@ package body StellarOrion_Project is
                       when Ada.IO_Exceptions.Name_Error => null;
                   end;
                end if;
+            exception
+            when E : others =>
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Try_Open");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
             end Try_Open;
          begin
             Try_Open ("REFERENCES.MD");
@@ -1002,6 +1009,13 @@ package body StellarOrion_Project is
          end;
       end if;
       Release_Lock;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Main_Program");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Main_Program;
 
    --  ------------------------------------------------------------------

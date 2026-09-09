@@ -1766,6 +1766,13 @@ package body StellarOrion_Sparta is
                 Img (Result.Total_Heat_Load) & " J/m^2");
 
       return Result;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Parse_Sparta_Results");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Parse_Sparta_Results;
 
    -- ==================================================================
@@ -2420,6 +2427,13 @@ package body StellarOrion_Sparta is
                end if;
             end;
          end loop;
+      exception
+      when E : others =>
+      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Tokenize_Floats");
+      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
       end Tokenize_Floats;
 
        --  Parse HIAD_custom.surf Points into the sequential polyline Curve

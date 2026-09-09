@@ -139,6 +139,13 @@ package body StellarOrion_Cli with SPARK_Mode => On is
       else
          return Default;
       end if;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Get_Float");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Get_Float;
 
    --  Clamp V into [Lo, Hi].
@@ -204,6 +211,13 @@ package body StellarOrion_Cli with SPARK_Mode => On is
       else
          return Default;
       end if;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Get_Positive");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Get_Positive;
 
    --  ------------------------------------------------------------------
