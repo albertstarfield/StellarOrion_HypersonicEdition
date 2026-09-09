@@ -60,6 +60,13 @@ package body StellarOrion_Orion is
         and Metrics.G_Load <= ORION_MAX_G;
    --  Invariant: parameters and derived locals remain within their declared
    --  subtype ranges throughout execution; no unchecked conversions occur.
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Orion_Survivability_Check");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Orion_Survivability_Check;
 
    --  STC coverage wrapper for Orion_Survivability_Check.

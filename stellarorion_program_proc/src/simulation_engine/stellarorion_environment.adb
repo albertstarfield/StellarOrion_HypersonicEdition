@@ -97,6 +97,13 @@ package body StellarOrion_Environment is
          Y     := Y_New;
       end loop;
       return Y;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sqrt_Approx");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Sqrt_Approx;
 
    --  exp(x) via Taylor series for small |x|.
@@ -184,6 +191,13 @@ package body StellarOrion_Environment is
       else
          return Sum;
       end if;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Exp_Approx");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Exp_Approx;
 
    --  Natural logarithm via Padé approximant for x > 0.
@@ -255,6 +269,13 @@ package body StellarOrion_Environment is
       --  the tighter geometric bound 0.75 is recorded in E7 above).
       R := 2.0 * Sum;
       return R;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Ln_Approx");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Ln_Approx;
 
    --  General power: base^exponent for positive base.
@@ -316,6 +337,13 @@ package body StellarOrion_Environment is
                          & "(E5/E6: |ln B| <= ln 2 on [0.5,2] up to series "
                          & "truncation error ~1e-6) [ASWSS]");
       return R;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Pow_Float");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Pow_Float;
 
    -- ==================================================================
@@ -387,6 +415,13 @@ package body StellarOrion_Environment is
       else
          return 186.87;
       end if;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Atmosphere_Temperature");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Atmosphere_Temperature;
 
    -- ==================================================================
@@ -539,6 +574,13 @@ package body StellarOrion_Environment is
       return Rho;
    --  Invariant: parameters and derived locals remain within their declared
    --  subtype ranges throughout execution; no unchecked conversions occur.
+    exception
+    when E : others =>
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Atmosphere_Density");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
     end Atmosphere_Density;
 
    -- ==================================================================
@@ -599,6 +641,13 @@ package body StellarOrion_Environment is
          "float overflow check might fail",
          "Rho(<=1.225) * R_AIR(287.058) * T(<=300) ~ 1.05e5 = P0 = 101325 Pa << Float'Last");
        return Pressure;
+    exception
+    when E : others =>
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Atmosphere_Pressure");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
     end Atmosphere_Pressure;
 
    -- ==================================================================
@@ -640,6 +689,13 @@ package body StellarOrion_Environment is
       return Mach * Sqrt_Approx (Gamma_R_T);
    --  Invariant: parameters and derived locals remain within their declared
    --  subtype ranges throughout execution; no unchecked conversions occur.
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Mach_To_Velocity");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Mach_To_Velocity;
 
    -- ==================================================================
@@ -692,6 +748,13 @@ package body StellarOrion_Environment is
         Float'Min (Atmosphere_Density (Alt_Km), Density_Range'Last);
    --  Invariant: parameters and derived locals remain within their declared
    --  subtype ranges throughout execution; no unchecked conversions occur.
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Mach_Alt_To_Flight");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Mach_Alt_To_Flight;
 
    -- ==================================================================
@@ -750,6 +813,13 @@ package body StellarOrion_Environment is
       Temperature := Atmosphere_Temperature (Alt_Km);
    --  Invariant: parameters and derived locals remain within their declared
    --  subtype ranges throughout execution; no unchecked conversions occur.
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      MSIS_Atmosphere");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end MSIS_Atmosphere;
 
    -- ==================================================================

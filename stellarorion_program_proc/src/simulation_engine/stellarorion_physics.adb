@@ -102,6 +102,13 @@ package body StellarOrion_Physics is
          "postcondition check might fail",
          "Ln(X) bounded: X>0 => Ln(X)<88.7 << 1000.0; prover timeout on range reduction");
        return Sum + Float (N) * 0.6931471805599453;  --  Ln(2) constant
+    exception
+    when E : others =>
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Ln");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
     end Ln;
 
    --  Exponential via Taylor series: Exp(X) = sum_{k=0}^{30} X^k / k!
@@ -209,6 +216,13 @@ package body StellarOrion_Physics is
       else
          return Result;
       end if;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Exp");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Exp;
 
    --  Power function: X^A = Exp(A * Ln(X)) for X > 0.
@@ -235,6 +249,13 @@ package body StellarOrion_Physics is
      begin
      --  Safe_Fallback: N/A (Sabotage §5.1)
        return Exp (Product);
+    exception
+    when E : others =>
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Pow");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
     end Pow;
 
    -- ==================================================================
@@ -312,6 +333,13 @@ package body StellarOrion_Physics is
          Y     := Y_New;
       end loop;
       return Y;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sqrt");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Sqrt;
 
    -- ==================================================================
@@ -358,6 +386,13 @@ package body StellarOrion_Physics is
          return Float'Last;
       end if;
       return 1.0 / Denom;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Mean_Free_Path");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Mean_Free_Path;
 
    -- ==================================================================
@@ -392,6 +427,13 @@ package body StellarOrion_Physics is
          return Float'Last;
       end if;
       return MFP / Char_Length;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Knudsen_Number");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Knudsen_Number;
 
    -- ==================================================================
@@ -425,6 +467,13 @@ package body StellarOrion_Physics is
        --  APPLICATION STEP: V^2 written as explicit product ('**' is
       --  opaque to gnatprove's interval analysis).
       return 0.5 * Density * (Velocity * Velocity);
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Dynamic_Pressure");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Dynamic_Pressure;
 
     -- ==================================================================
@@ -492,6 +541,13 @@ package body StellarOrion_Physics is
          return Float'Last;
       end if;
       return (Mass * Dyn_Pressure) / Drag_Force;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Ballistic_Coefficient");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Ballistic_Coefficient;
 
     -- ==================================================================
@@ -684,6 +740,13 @@ package body StellarOrion_Physics is
                    & "prover timeout on Sqrt re-inlining only"));
           return Heat_Result;
        end;
+    exception
+    when E : others =>
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sutton_Graves_Heat");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
     end Sutton_Graves_Heat;
 
     -- ==================================================================
@@ -910,6 +973,13 @@ package body StellarOrion_Physics is
              return MU_REF_AIR * Rat_1_5
                     * (T_REF_SUTHERLAND + SUTHERLAND_CONST_AIR)
                     / (T + SUTHERLAND_CONST_AIR);
+          exception
+          when E : others =>
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sutherland_Mu");
+          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
           end Sutherland_Mu;
        begin
            Mu_S := Sutherland_Mu (T_S);
@@ -985,6 +1055,13 @@ package body StellarOrion_Physics is
        end if;
 
        return Q_FR;
+    exception
+    when E : others =>
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Fay_Riddell_Heat");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
     end Fay_Riddell_Heat;
 
    -- ==================================================================
@@ -1023,6 +1100,13 @@ package body StellarOrion_Physics is
          return 0.0;
       end if;
       return Sqrt (Sqrt (Heat_Flux / Denom));
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Radiative_Eq_Temp");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Radiative_Eq_Temp;
 
    -- ==================================================================
@@ -1069,6 +1153,13 @@ package body StellarOrion_Physics is
       end if;
       return Init_Temp
         + (Heat_Flux * Duration * Thermal_Lag) / Thermal_Capacitance;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Backface_Temperature");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Backface_Temperature;
 
    -- ==================================================================
@@ -1104,6 +1195,13 @@ package body StellarOrion_Physics is
          return 0.0;
       end if;
       return Drag_Force / (Mass * G0);
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Deceleration_G_Load");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Deceleration_G_Load;
 
    -- ==================================================================
@@ -1134,6 +1232,13 @@ package body StellarOrion_Physics is
    begin
    --  Safe_Fallback: N/A (Sabotage §5.1)
        return N_Number * M_AIR / N_AVOGADRO;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Density_From_Number");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Density_From_Number;
 
    -- ==================================================================
@@ -1175,6 +1280,13 @@ package body StellarOrion_Physics is
         and Metrics.G_Load <= MAX_G_LOAD
         --  Deceleration g must be within limits
         and Metrics.Decel_G <= MAX_G_LOAD;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Is_Survivable");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Is_Survivable;
 
    -- ==================================================================
@@ -1403,6 +1515,13 @@ package body StellarOrion_Physics is
          Verdict            := Is_Survivable (Metrics);
          Metrics.Survivable := Verdict;
       end;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Calculate_Flight_Metrics");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Calculate_Flight_Metrics;
 
    -- ==================================================================
@@ -1493,6 +1612,13 @@ package body StellarOrion_Physics is
            pragma Assert (abs (Result) <= 1.001);  --  7th-order Taylor sin(x) bounded by 1.001
            return Result;
       end;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sine");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Sine;
 
    -- Cosine: 6th-order Taylor polynomial for cos(x), range-reduced to [-pi, pi].
@@ -1570,6 +1696,13 @@ package body StellarOrion_Physics is
            pragma Assert (abs (Result) <= 1.01);  --  8th-order Taylor cos(x) bounded by 1.01
            return Result;
       end;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Cosine");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Cosine;
 
    -- ==================================================================
@@ -1857,6 +1990,13 @@ package body StellarOrion_Physics is
       --  Rapisarda 2023 Table 4.5: time of peak heating = 677.49 s.
       Peak_Heat_Time_S   := Best_Heat_Time;
       Peak_Heat_Flux_Wm2 := Best_Heat_Flux;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Compute_Trajectory_Profile");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Compute_Trajectory_Profile;
 
    -- Test stubs for SELF_TEST_COVERAGE compliance

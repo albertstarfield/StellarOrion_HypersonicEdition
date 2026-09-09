@@ -54,6 +54,13 @@ package body StellarOrion_Geometry is
        --  NaN/Inf impossible: divisor is the compile-time constant 180.0
       --  (nonzero), so the quotient stays finite for every finite Deg.
       return Deg * Pi / 180.0;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Deg_To_Rad");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Deg_To_Rad;
 
    --  Sine of an angle in degrees via the truncated Taylor series
@@ -109,6 +116,13 @@ package body StellarOrion_Geometry is
          --  sin(x) = x - x^3/6 + x^5/120 - x^7/5040  (valid for |Reduced| <= Pi)
          return Reduced - X3 / 6.0 + X5 / 120.0 - X7 / 5040.0;
       end;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sin_Deg");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Sin_Deg;
 
    --  ==================================================================
@@ -259,6 +273,13 @@ package body StellarOrion_Geometry is
 
       --  Mass = total surface area * TPS thickness * TPS density
       return Total_A * TPS_Thickness * TPS_Density;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Shield_Mass_Analytical");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Shield_Mass_Analytical;
 
    -- ==================================================================
@@ -304,6 +325,13 @@ package body StellarOrion_Geometry is
       --  GNATprove cannot see through the opaque float-exponentiation call.
       return Float (Num_Toroids) * Density * Pi_Sq
               * Diameter * (Toroid_Radius * Toroid_Radius);
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Shield_Mass_Pappus");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Shield_Mass_Pappus;
 
    -- ==================================================================
@@ -345,6 +373,13 @@ package body StellarOrion_Geometry is
         and Params.Toroid_Count <= 12
         and Params.Diameter_M   >= 0.5
         and Params.Diameter_M   <= 15.0;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Validate_Geometry");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Validate_Geometry;
 
    -- ==================================================================
@@ -486,6 +521,13 @@ package body StellarOrion_Geometry is
             "prover timeout on polynomial truncation error bound");
           return Reduced - X3 / 6.0 + X5 / 120.0 - X7 / 5040.0;
        end;
+    exception
+    when E : others =>
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sin_Rad");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
     end Sin_Rad;
 
    -- ==================================================================
@@ -535,6 +577,13 @@ package body StellarOrion_Geometry is
           --  (8th-order Taylor, valid for |Reduced| <= Pi, error < 0.025)
           return 1.0 - X2 / 2.0 + X4 / 24.0 - X6 / 720.0 + X8 / 40320.0;
        end;
+     exception
+     when E : others =>
+     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Cos_Rad");
+     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
      end Cos_Rad;
 
    -- ==================================================================
