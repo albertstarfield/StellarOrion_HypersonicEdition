@@ -87,6 +87,13 @@ package body StellarOrion_Validation is
       return Valid_Geo and Valid_TPS;
    --  Invariant: parameters and derived locals remain within their declared
    --  subtype ranges throughout execution; no unchecked conversions occur.
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Validate_And_Dump");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Validate_And_Dump;
 
    -- ==================================================================
@@ -126,6 +133,13 @@ package body StellarOrion_Validation is
       return Is_Survivable (Metrics);
    --  Invariant: parameters and derived locals remain within their declared
    --  subtype ranges throughout execution; no unchecked conversions occur.
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Check_Survivability");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Check_Survivability;
 
    --  STC coverage wrapper for Validate_And_Dump.

@@ -113,6 +113,13 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
       --  Direct transcription of the Post: no proof gap can open between
       --  body and contract because they are the same expression.
       return (if Kind = Even then Bits mod 2 = 0 else Bits mod 2 = 1);
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Calculate_Parity");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Calculate_Parity;
 
    -- ---------------------------------------------------------------------
@@ -155,6 +162,13 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
          Acc := Acc xor Data (I);
       end loop;
       return Acc;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Block_Checksum");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Block_Checksum;
 
    --  Frame integrity gate: returns True only when the transmitted Checksum
@@ -297,6 +311,13 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
          return (Frame  => Safe_Zero,
                  Status => Recovered);
       end if;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Recover_From_Parity_Error");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Recover_From_Parity_Error;
 
    --  ------------------------------------------------------------------

@@ -52,6 +52,14 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
                               Failure_Count     => 0,
                               Recovery_Attempts => 0),
             Emergency_Latched => False);
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Initialize");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
    end Initialize;
 
    --  Liveness signal: refresh watchdog W's Last_Heartbeat to Now and
@@ -102,6 +110,14 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       --  Failed/Dead monitors ignore heartbeats (no silent resurrection);
       --  untouched slots trivially satisfy their postcondition conjunct
       --  because Status'Old = Status and Last_Heartbeat'Old unchanged.
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Update_Heartbeat");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
    end Update_Heartbeat;
 
    -- ---------------------------------------------------------------------
@@ -150,9 +166,21 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
       --  Contract: pre => True (no input constraints); post => returns True iff heartbeat age exceeds stale timeout
-        (if Now >= WS.Last_Heartbeat
-         then Now - WS.Last_Heartbeat > WS.Timeout
-         else False);
+      begin
+         if Now >= WS.Last_Heartbeat then
+            return Now - WS.Last_Heartbeat > WS.Timeout;
+         else
+            return False;
+         end if;
+      exception
+         when E : others =>
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Is_Stale");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+            raise;
+      end Is_Stale;
    --  AXIOMS: Evaluate applies the dual-watchdog grace ladder each tick:
    --    first staleness degrades Healthy→Degraded, second consecutive
    --    staleness fails Degraded→Failed; monitors are cross-checked for
@@ -194,6 +222,14 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
             end if;
          end if;
       end if;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Evaluate");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
    end Evaluate;
 
    --  Mutual supervision: each still-live watchdog flips a Failed partner
@@ -245,6 +281,14 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
          S.A.Recovery_Attempts := S.A.Recovery_Attempts + 1;
       end if;
       end if;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Cross_Check");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
    end Cross_Check;
 
    --  Recovery completion: promote watchdog W from Recovering back to
@@ -291,6 +335,14 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
                S.B.Last_Heartbeat := Now;
             end if;
       end case;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Advance_Recovery");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
    end Advance_Recovery;
 
    --  Last-resort safe state (Pre: both watchdogs already Failed): drive
@@ -328,6 +380,14 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
       S.A.Status         := Dead;
       S.B.Status         := Dead;
       S.Emergency_Latched := True;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Emergency_Safe_State");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
    end Emergency_Safe_State;
 
    --  Escalation predicate: True iff both watchdogs are simultaneously
