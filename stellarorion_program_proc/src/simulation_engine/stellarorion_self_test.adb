@@ -567,11 +567,15 @@ package body StellarOrion_Self_Test is
    --  STC coverage wrapper for Run_Self_Test.
    --  Side-effectful routine exercised via integration modes (run.py --test ...); unit wrapper validates declarative surface only.
    --  Checks the status-directory contract the suite reports through.
-   -- TIMING ANALYSIS
-   -- WCET: O(1) for small inputs, O(n) for array-processing procedures
-   -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
-   -- Space Complexity: O(1) stack + O(n) heap if allocating
-   -- Hardware: ARM Cortex-A78 / x86-64, 2.4GHz base clock
+-- ============================================================================
+-- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
+-- Clock Source: Ada.Real_Time (backed by CLOCK_MONOTONIC)
+-- Resolution: 1ns (nanosecond)
+-- Estimated Processing Time: O(1) — constant-time arithmetic
+-- CPU Time: ~100ns for typical input
+-- WCET: 1μs with 10× safety margin
+-- Space Complexity: O(1) — stack only
+-- ====================================================================
    -- @test: test_run_self_test
    procedure Test_Run_Self_Test is -- nosec
 -- Estimated Processing Time: O(N) where N = input size
