@@ -76,7 +76,6 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
          raise;
-         raise;
 
    end Count_Set_Bits;
 
@@ -202,7 +201,6 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
          raise;
-         raise;
 
    end Verify_Input_Parity;
 
@@ -249,7 +247,6 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => On is
 
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-         raise;
          raise;
 
    end Add_Output_Parity;

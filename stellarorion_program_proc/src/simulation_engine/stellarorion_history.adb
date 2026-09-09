@@ -118,7 +118,6 @@ package body StellarOrion_History is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
          raise;
-         raise;
 
    end Parse_CSV_Line;
 
@@ -171,7 +170,6 @@ package body StellarOrion_History is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
          raise;
-         raise;
 
    end CSV_Unescape;
 
@@ -219,7 +217,6 @@ package body StellarOrion_History is
 
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-         raise;
          raise;
 
    end CSV_Escape;
@@ -320,7 +317,6 @@ package body StellarOrion_History is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
          raise;
-         raise;
 
    end S2B;
 
@@ -357,7 +353,6 @@ package body StellarOrion_History is
 
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-         raise;
          raise;
 
    end F2S;
@@ -396,7 +391,6 @@ package body StellarOrion_History is
 
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-         raise;
          raise;
 
    end B2S;
@@ -441,7 +435,6 @@ package body StellarOrion_History is
 
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-         raise;
          raise;
 
    end Solver_To_Str;
@@ -489,7 +482,6 @@ package body StellarOrion_History is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
          raise;
-         raise;
 
    end Str_To_Solver;
 
@@ -532,7 +524,6 @@ package body StellarOrion_History is
 
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-         raise;
          raise;
 
    end Chem_To_Str;
@@ -578,7 +569,6 @@ package body StellarOrion_History is
 
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-         raise;
          raise;
 
    end Str_To_Chem;
@@ -849,7 +839,6 @@ package body StellarOrion_History is
             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
             raise;
-            raise;
 
       end F;
 
@@ -893,7 +882,6 @@ package body StellarOrion_History is
 
             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-            raise;
             raise;
 
       end I;
@@ -939,7 +927,6 @@ package body StellarOrion_History is
             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
             raise;
-            raise;
 
       end B;
 
@@ -983,7 +970,6 @@ package body StellarOrion_History is
 
             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-            raise;
             raise;
 
       end S;
@@ -1759,7 +1745,6 @@ package body StellarOrion_History is
 
             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-            raise;
             raise;
 
       end Build_Draft_Line;

@@ -70,7 +70,6 @@ package body StellarOrion_Optimization is
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
           raise;
-          raise;
 
    end To_Int;
 
@@ -141,7 +140,6 @@ package body StellarOrion_Optimization is
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
           raise;
-          raise;
 
    end LHS_Sample;
 
@@ -189,7 +187,6 @@ package body StellarOrion_Optimization is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
    end CCD_Centre;
@@ -256,7 +253,6 @@ package body StellarOrion_Optimization is
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
           raise;
-          raise;
 
    end CCD_Axial;
 
@@ -322,7 +318,6 @@ package body StellarOrion_Optimization is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
    end Optimization_Cost;
@@ -414,7 +409,6 @@ package body StellarOrion_Optimization is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
    end Default_Fitness;
@@ -547,7 +541,6 @@ package body StellarOrion_Optimization is
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
           raise;
-          raise;
 
    end MoP_Fitness;
 
@@ -604,7 +597,6 @@ package body StellarOrion_Optimization is
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
           raise;
-          raise;
 
    end Clamp;
 
@@ -649,7 +641,6 @@ package body StellarOrion_Optimization is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
    end Uniform_Rand;
@@ -707,7 +698,6 @@ package body StellarOrion_Optimization is
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
           raise;
-          raise;
 
    end Gaussian_Standard;
 
@@ -751,7 +741,6 @@ package body StellarOrion_Optimization is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
    end Gaussian_Rand;
@@ -810,7 +799,6 @@ package body StellarOrion_Optimization is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
    end Random_Geometry;
@@ -945,7 +933,6 @@ package body StellarOrion_Optimization is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
    end Tournament_Select;

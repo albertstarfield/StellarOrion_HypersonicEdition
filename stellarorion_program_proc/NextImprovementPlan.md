@@ -1,12 +1,21 @@
 # NextImprovementPlan.md — StellarOrion 4-Step Pipeline
 
-## Cycle Entry (Cycle 12)
+## Cycle Entry (Cycle 13)
 - **Date:** 2026-09-09 07:15 UTC+7
-- **Cycle:** 12 (TIMING_ANCHOR Implementation — 311 Blocks)
+- **Cycle:** 13 (Dead Code Fix — Double raise; Removal)
 - **Verifier Status:** CLEAN (CRITICAL:0 HIGH:0 MED:0 LOW:0 — ALL GATES PASS)
 - **Build:** Passes (alr exec gprbuild — 0 errors, warnings only)
 - **Python:** pyrefly 2 expected errors (deepxde runtime dep), ruff All checks passed
 - **Git:** commit + push pending
+
+### Cycle 13 Changes — Double raise; Dead Code Removal
+- **Found 47 unreachable double `raise;` statements** across 9 .adb files
+- **Root cause:** Batch SAFE_FALLBACK → VERBOSE_ERROR conversion in cycle 9 introduced duplicate `raise;` lines
+- **Files fixed:** atomic_parity (3), dual_watchdog (1), geometry (2), history (15), optimization (13), runtime_guard (2), sparta (7), status_writer (2), test_modes (2)
+- **Total:** 47 dead code statements removed
+- **Verification:** Build 0 errors, Sabotage 0 violations MAL-SSS, Ruff passed
+
+### Cycle 12 Changes (previously documented)
 
 ### Cycle 12 Changes — TIMING_ANCHOR Across Entire Codebase
 - **Converted 311 TIMING ANALYSIS blocks to TIMING ANCHOR format** across all 20 .adb files:

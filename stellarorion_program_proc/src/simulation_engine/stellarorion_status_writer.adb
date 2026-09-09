@@ -58,7 +58,6 @@ package body StellarOrion_Status_Writer is
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
           raise;
-          raise;
 
    end Float_Image;
 
@@ -106,7 +105,6 @@ package body StellarOrion_Status_Writer is
 
           Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-          raise;
           raise;
 
    end Status_String;

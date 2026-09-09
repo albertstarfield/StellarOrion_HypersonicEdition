@@ -74,7 +74,6 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
          raise;
-         raise;
 
    end F6;
 
@@ -116,7 +115,6 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
 
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-         raise;
          raise;
 
    end Grade;
