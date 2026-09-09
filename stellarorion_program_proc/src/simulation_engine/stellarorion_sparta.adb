@@ -830,8 +830,11 @@ package body StellarOrion_Sparta is
       Put_Line ("[SPARTA] Script written: " & Script_Path);
    exception
       when E : others =>
-         Put_Line ("[SPARTA ERROR] Generate_Sparta_Script: " &
-                    Exception_Message (E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Generate_Sparta_Script");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
          if Is_Open (File) then Close (File); end if;
    end Generate_Sparta_Script;
 
@@ -1041,8 +1044,11 @@ package body StellarOrion_Sparta is
       exception when others => null; end;
    exception
       when E : others =>
-         Put_Line ("[SPARTA ERROR] Run_Sparta_Docker: " &
-                    Exception_Message (E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Run_Sparta_Docker");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
          begin System ("docker rm -f hiad-runner 2>/dev/null || true");
          exception when others => null; end;
    end Run_Sparta_Docker;
@@ -2517,6 +2523,11 @@ package body StellarOrion_Sparta is
           end if;
        exception
           when E : others =>
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Parse_Surf_Geometry");
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
              if Is_Open (F) then Close (F); end if;
              Put_Line (Standard_Error,
                        "[VTK] surf geometry parse failed: " &
@@ -2853,6 +2864,11 @@ package body StellarOrion_Sparta is
           Close (VF);
        exception
           when E : others =>
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Write_VTU");
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
              if Is_Open (VF) then Close (VF); end if;
              Put_Line (Standard_Error,
                        "[VTK] failed to write " & VPath & " : " &
@@ -3193,6 +3209,11 @@ package body StellarOrion_Sparta is
             end if;
         exception
            when E : others =>
+              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Process_Step_File");
+              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
               if Is_Open (F) then Close (F); end if;
               Put_Line (Standard_Error,
                         "[VTK] failed processing step " & Img (Integer (Step)) & " : " &
@@ -3307,6 +3328,11 @@ package body StellarOrion_Sparta is
          Close (CF);
       exception
          when E : others =>
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Write_CSV");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
             if Is_Open (CF) then Close (CF); end if;
             Put_Line (Standard_Error,
                       "[VTK] failed writing CSV " & CSV_Path & " : " &
@@ -3356,6 +3382,11 @@ package body StellarOrion_Sparta is
            Put_Line ("[VTK] Wrote ParaView collection: " & PPath);
         exception
            when E : others =>
+              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Write_PVD");
+              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
               if Is_Open (PF) then Close (PF); end if;
               Put_Line (Standard_Error,
                         "[VTK] failed writing PVD " & PPath & " : " &
@@ -3611,6 +3642,11 @@ package body StellarOrion_Sparta is
                Put_Line ("[VTK] Trajectory profile CSV: " & TPath);
             exception
                when E : others =>
+                  Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+                  Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+                  Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+                  Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Generate_Validation_Plots_And_VTK_Trajectory");
+                  Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
                   if Is_Open (TF) then Close (TF); end if;
                   Put_Line (Standard_Error,
                             "[VTK] Failed writing trajectory CSV: " &
@@ -3643,6 +3679,11 @@ package body StellarOrion_Sparta is
        end if;
    exception
       when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Generate_Validation_Plots_And_VTK");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
          Put_Line (Standard_Error,
                    "[VTK] Generate_Validation_Plots_And_VTK failed: " &
                    Exception_Message (E));
@@ -3713,11 +3754,13 @@ package body StellarOrion_Sparta is
                   Delete_File (Full_Name (E));
                   Cnt := Cnt + 1;
                exception
-                  when E_Delete : others =>
-                     Put_Line (Standard_Error,
-                               "[CLEANUP] Could not delete " &
-                               Full_Name (E) & ": " &
-                               Exception_Message (E_Delete));
+               when E_Delete : others =>
+                      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+                      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E_Delete));
+                      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E_Delete));
+                      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Delete_Matching (delete)");
+                      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] File:          " & Full_Name (E));
+                      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
                end;
             end if;
          end loop;
@@ -3728,9 +3771,12 @@ package body StellarOrion_Sparta is
          end if;
       exception
          when E_Search : others =>
-            Put_Line (Standard_Error,
-                      "[CLEANUP] Search failed for " & Pattern & ": " &
-                      Exception_Message (E_Search));
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E_Search));
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E_Search));
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Delete_Matching (search)");
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Pattern:       " & Pattern);
+             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
        end Delete_Matching;
         --  AXIOMS: SPARTA produces restart.*.sparta, surf.*.out,
         --    grid.*.out, in.hiad, and HIAD_custom.surf as
@@ -3757,6 +3803,11 @@ package body StellarOrion_Sparta is
       Put_Line ("[CLEANUP] Ephemeral state cleanup complete.");
    exception
       when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Cleanup_Ephemeral_State");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
          Put_Line (Standard_Error,
                    "[CLEANUP] Cleanup_Ephemeral_State failed (non-fatal): " &
                    Exception_Message (E));

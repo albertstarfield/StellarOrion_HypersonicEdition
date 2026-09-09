@@ -1587,6 +1587,11 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
          Put_Line ("[VALIDATE] Step 11: visualization artifacts written.");
       exception
          when E : others =>
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Run_Validate_Full_Step_11");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
             Put_Line (Standard_Error,
                       "[VALIDATE] Step 11 visualization failed (non-fatal): " &
                       Exception_Name (E) & " : " & Exception_Message (E));
@@ -1603,6 +1608,11 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
          Put_Line ("[VALIDATE] Step 12: ephemeral state cleanup complete.");
       exception
          when E : others =>
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Run_Validate_Full_Step_12");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
             Put_Line (Standard_Error,
                       "[VALIDATE] Step 12 cleanup failed (non-fatal): " &
                       Exception_Name (E) & " : " & Exception_Message (E));

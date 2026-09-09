@@ -648,8 +648,11 @@ package body StellarOrion_History is
       end loop;
    exception
       when E : others =>
-         Put_Line ("[HISTORY WARNING] Acquire_Lock: " &
-                    Exception_Message (E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Acquire_Lock");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Acquire_Lock;
 
    --  Release the lock file.
@@ -756,8 +759,11 @@ package body StellarOrion_History is
       Put_Line ("[HISTORY] Database initialised at: " & Database_Path);
    exception
       when E : others =>
-         Put_Line ("[HISTORY ERROR] Init_DB: " &
-                    Exception_Message (E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Init_DB");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    end Init_DB;
 
    -- ==================================================================
@@ -1146,8 +1152,11 @@ package body StellarOrion_History is
          Put_Line ("[HISTORY] Run saved: " & Name);
       exception
          when E : others =>
-            Put_Line ("[HISTORY ERROR] Save_Run: " &
-                       Exception_Message (E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Save_Run");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
             if Is_Open (F) then
                Close (F);
             end if;
@@ -1256,8 +1265,11 @@ package body StellarOrion_History is
 
    exception
       when E : others =>
-         Put_Line ("[HISTORY ERROR] Load_Run: " &
-                    Exception_Message (E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Load_Run");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
          if Is_Open (F) then
             Close (F);
          end if;
@@ -1444,8 +1456,11 @@ package body StellarOrion_History is
 
    exception
       when E : others =>
-         Put_Line ("[HISTORY ERROR] Get_All_Runs: " &
-                    Exception_Message (E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Get_All_Runs");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
          if Is_Open (F) then
             Close (F);
          end if;
@@ -1605,8 +1620,11 @@ package body StellarOrion_History is
 
       exception
          when E : others =>
-            Put_Line ("[HISTORY ERROR] Update_Run_Progress: " &
-                       Exception_Message (E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Update_Run_Progress");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
             if Is_Open (F) then Close (F); end if;
             if Is_Open (Tmp) then Close (Tmp); end if;
             if Exists (Tmp_Path) then
@@ -1849,8 +1867,11 @@ package body StellarOrion_History is
 
       exception
          when E : others =>
-            Put_Line ("[HISTORY ERROR] Upsert_Draft: " &
-                       Exception_Message (E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Upsert_Draft");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
             if Is_Open (F) then Close (F); end if;
             if Is_Open (Tmp) then Close (Tmp); end if;
             if Exists (Tmp_Path) then
@@ -1928,8 +1949,11 @@ package body StellarOrion_History is
                    Trim (Positive'Image (Sample_Index), Both) & " saved.");
       exception
          when E : others =>
-            Put_Line ("[HISTORY ERROR] Save_Sample: " &
-                       Exception_Message (E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Save_Sample");
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
             if Is_Open (F) then
                Close (F);
             end if;
