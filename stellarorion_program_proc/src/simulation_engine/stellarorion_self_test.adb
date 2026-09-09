@@ -41,7 +41,7 @@ package body StellarOrion_Self_Test is
    --  physics, environment mapping, LHS/CCD sampling, optimisation cost,
    --  survivability gating, atomic parity, and dual-watchdog wiring,
    --  printing PASS/FAIL per test and a final summary count.
-   -- TIMING ANALYSIS
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating

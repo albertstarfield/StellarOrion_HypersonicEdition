@@ -1436,7 +1436,7 @@ package body StellarOrion_Physics is
 -- ====================================================================
     function Sine (X : Float) return Float -- nosec
       -- ==================================================================
-      -- TIMING ANALYSIS
+      -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
       -- ==================================================================
       -- Estimated Processing Time: O(1) — fixed 7th-order polynomial
       -- CPU Time: ~12ns (range reduction + 4 mult + 3 add/div)
@@ -1508,7 +1508,7 @@ package body StellarOrion_Physics is
 -- ====================================================================
    function Cosine (X : Float) return Float -- nosec
       -- ==================================================================
-      -- TIMING ANALYSIS
+      -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
       -- ==================================================================
       -- Estimated Processing Time: O(1) — fixed 6th-order polynomial
       -- CPU Time: ~10ns (range reduction + 3 mult + 3 add/div)
@@ -1577,7 +1577,7 @@ package body StellarOrion_Physics is
    -- ==================================================================
    --  1-DOF ballistic entry trajectory integrator (Euler forward).
    --
-   --  TIMING ANALYSIS
+   --  TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    --  Estimated Processing Time: O(N) where N = number of timesteps
    --  CPU Time: ~0.5μs per timestep (6 FLOP + 2 atmosphere lookups)
    --  WCET: ~1.5ms for N=2000 timesteps (Max_Trajectory_Pts)

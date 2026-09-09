@@ -29,7 +29,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  Axiom: Integer conversion + arithmetic avoids Float'Image truncation.
    --  Uses Long_Long_Integer to avoid range overflow for large values.
    --  Clamps decimal digits to 0..99 to guard against floating point edge cases.
-   -- TIMING ANALYSIS
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
@@ -80,7 +80,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  Grade each comparison (PASS <= tol, WARN <= 2*tol, FAIL > 2*tol).
    --  Axiom: tol is in percentage (e.g. 15.0 means 15%).
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
-   -- TIMING ANALYSIS
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- @test: Grade function verified
@@ -122,7 +122,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  Analytical IRVE-3 baseline (--gettheirvebbaseline): Sutton-Graves
    --  stagnation heating plus Cd=1.47 drag at Mach 10 / 52 km defaults,
    --  reported through Calculate_Flight_Metrics.
-   -- TIMING ANALYSIS
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
    -- @test: Run_GetIRVE3_Baseline procedure verified
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
@@ -338,7 +338,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  retained for documentation of the IRVE-3 MDAO grid study (see README).
    --  Unreferenced here by design; the CLI dispatcher (Tier C2 refactor) will
    --  either expose it via a dedicated flag or remove it.
-   -- TIMING ANALYSIS
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    -- @test: Run_GridIndep_Test procedure verified
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
@@ -583,7 +583,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
 
    --  Sample test (--test sample): same SPARTA pipeline as baseline but
    --  writing to results_test_sample for the 11-metric comparison report.
-   -- TIMING ANALYSIS
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating
@@ -762,7 +762,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  Remote PyFluent integration (--test pyfluent): validates SSH options
    --  and spawns src/python/pyfluent_test.py with key- or password-based
    --  credentials toward the remote Ansys Fluent host.
-   -- TIMING ANALYSIS
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
@@ -882,7 +882,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  Local PyAnsys integration (--test pyansys): spawns the standalone
    --  src/python/pyansys_test.py sidecar; requires Windows with Ansys
    --  Fluent installed locally.
-   -- TIMING ANALYSIS
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
@@ -1136,7 +1136,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --    Ballistic coeff:   26.9 kg/m^2
    --    Stagnation pressure: ~12.4 kPa
 
-   -- TIMING ANALYSIS
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
 
    -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
@@ -1659,7 +1659,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  THEORIES: SG heat flux scales as 1/sqrt(R_n); pointy is hotter.
    --  APPLICATIONS: Unit coverage for SELF_TEST_COVERAGE registry.
    --  CITATIONS: Sutton-Graves (1956); Rapisarda (2023) Table 4.1.
-   -- TIMING ANALYSIS
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
@@ -1695,7 +1695,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    --  THEORIES: Solution convergence requires mesh refinement sweep.
    --  APPLICATIONS: Unit coverage for SELF_TEST_COVERAGE registry.
    --  CITATIONS: IRVE-3 MDAO grid independency study.
-   -- TIMING ANALYSIS
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)

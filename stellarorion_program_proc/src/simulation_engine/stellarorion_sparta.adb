@@ -2238,7 +2238,7 @@ package body StellarOrion_Sparta is
     --    [Kitware2010] Ahrens, J. et al. "The VTK User's Guide", 2010 (XML .vtu).
     --    [Hunter2007] Hunter, J. D. "Matplotlib: A 2D Graphics Environment", 2007.
     --    [Rap23] Rapisarda, V. thesis, 2023 (HIAD flat-skin profile geometry).
-    --  TIMING ANALYSIS
+    --  TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
     --    Estimated Processing Time: O(N * N_Theta) per step for VTK;
     --      O(N_steps * N) total.  File I/O dominated.
     --    CPU Time: ~1 ms per element-revolution (ARM/Apple Silicon M-series).
