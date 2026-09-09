@@ -1,5 +1,22 @@
 # NextImprovementPlan.md — StellarOrion 4-Step Pipeline
 
+## Cycle Entry (Cycle 22)
+- **Date:** 2026-09-09 07:48 UTC+7
+- **Cycle:** 22 (VERBOSE_ERROR Box Format Upgrade — 22 Remaining Handlers)
+- **Verifier Status:** CLEAN (CRITICAL:0 HIGH:0 MED:0 LOW:0 — ALL GATES PASS — MAL-SSS)
+- **Build:** Passes (0 errors)
+- **Python:** pyrefly 2 expected errors (deepxde runtime dep), ruff All checks passed
+- **Git:** 3 modified files (history, sparta, test_modes)
+
+### Cycle 22 Changes — VERBOSE_ERROR Box Format Upgrade
+- **Target:** 22 remaining exception handlers lacking VERBOSE_ERROR box format
+- **Files modified:**
+  - `stellarorion_history.adb` — 8 handlers upgraded (lines 67, 127, 267, 275, 311, 353, 399, 448)
+  - `stellarorion_sparta.adb` — 12 handlers upgraded (lines 3682, 3758, 3774, 3806, 3839, 3878, 3915, 3954, 3994, 4031, 4069, 4106)
+  - `stellarorion_test_modes.adb` — 2 handlers upgraded (lines 1119, 1590)
+- **Build fix:** Corrected E_Delete/E_Search variable name mismatch in stellarorion_sparta.adb (script used generic `E` instead of named exception variables)
+- **Old Put_Line removed:** Duplicate `[CLEANUP]` lines removed from E_Delete/E_Search handlers
+
 ## Cycle Entry (Cycle 21)
 - **Date:** 2026-09-09 07:44 UTC+7
 - **Cycle:** 21 (Verification Cycle — All Gates CLEAN)
