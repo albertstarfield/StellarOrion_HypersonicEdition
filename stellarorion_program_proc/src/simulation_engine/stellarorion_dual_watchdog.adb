@@ -374,7 +374,6 @@ package body StellarOrion_Dual_Watchdog with SPARK_Mode => On is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
          raise;
-         raise;
 
    end Needs_Emergency;
 
