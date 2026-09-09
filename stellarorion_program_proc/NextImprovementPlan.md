@@ -1,5 +1,34 @@
 # NextImprovementPlan.md — StellarOrion 4-Step Pipeline
 
+## Cycle Entry (Cycle 10)
+- **Date:** 2026-09-09 07:00 UTC+7
+- **Cycle:** 10 (DERIVATION.md + Deliverable Verification)
+- **Verifier Status:** CLEAN (CRITICAL:0 HIGH:0 MED:0 LOW:0 — ALL GATES PASS)
+- **Build:** Passes (alr exec gprbuild — "main" up to date)
+- **Python:** pyrefly 2 expected errors (deepxde runtime dep), ruff All checks passed
+- **Git:** pushed as 67ecc19
+
+### Cycle 10 Changes — DERIVATION.md + Deliverable Audit
+- **DERIVATION.md** created (428 lines): Formal math derivation for the 4-step pipeline
+  - Step 1: DSMC via BTE — Kn ≈ 0.074 transition regime, collision integral, convergence proof
+  - Step 2: Kriging denoising — Matérn 5/2 kernel, SNR analysis (0.013), BLUE prediction
+  - Step 3: PINN Navier-Stokes — physics loss, BTE→NS bridge, computational cost argument
+  - Step 4: Gaussian optimization — EI acquisition, metamodel prognosis
+  - References: Bird (1994), Cercignani (1988), Chapman & Cowling (1970), Raissi (2019)
+- **Deliverable audit:** Verified #2-4 already implemented:
+  - #2 Help flags: `--validation` and `--validation-base-sim-same-algotest` in stellarorion_project.adb
+  - #3 Colima fallback: Full chain in run.py (docker→colima status→colima start→error)
+  - #4 Checkpoint: pipeline_checkpoint.py covers all 4 steps, atomic save, 19 self-tests
+- **All 21 .adb files audited** for AXIOMS compliance — all have proper headers
+
+### Remaining Goal Deliverables
+1. ✅ DERIVATION.md — DONE
+2. ✅ Help page flags — DONE (already implemented)
+3. ✅ Colima fallback — DONE (already implemented)
+4. ✅ Checkpoint verification — DONE (already implemented)
+5. ⏳ Validation simulation — needs window 22:00-05:00 UTC+7
+6. 🔄 Continue cyclic audit — ongoing
+
 ## Cycle Entry (Cycle 8)
 - **Date:** 2026-09-09 07:10 UTC+7
 - **Cycle:** 8 (VERBOSE_ERROR Implementation — CLI Module)
