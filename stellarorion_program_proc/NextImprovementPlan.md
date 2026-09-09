@@ -1,5 +1,34 @@
 # NextImprovementPlan.md — StellarOrion 4-Step Pipeline
 
+## Cycle Entry (Cycle 18)
+- **Date:** 2026-09-09 14:32 UTC+7
+- **Cycle:** 18 (Verification Cycle — Build + Sabotage + Compliance)
+- **Verifier Status:** CLEAN (CRITICAL:0 HIGH:0 MED:0 LOW:0 — ALL GATES PASS — MAL-SSS)
+- **Build:** Passes (alr exec gprbuild — 0 errors, 0 warnings)
+- **Python:** pyrefly 2 expected errors (deepxde runtime dep), ruff All checks passed
+- **Git:** clean (only sparta submodule modified)
+
+### Cycle 18 Changes — Verification Only (No Code Changes)
+- **Build verification:** `alr exec -- gprbuild -P stellarorion_program_proc.gpr` — 0 errors, 0 warnings
+- **Sabotage verifier:** `python3 src/utils/sabotage_verifier.py src/simulation_engine/ --extensions .adb,.ads` — 0 CRITICAL/0 HIGH/0 MEDIUM/0 LOW — MAL-SSS
+- **Citations audit:** 12/21 .adb files have substantive Citation/Reference/Based on blocks (beyond TIMING ANCHOR template). All 21 have CITATIONS in TIMING ANCHOR blocks.
+- **TIMING ANCHOR:** 331 blocks across all 21 .adb files (0 old TIMING ANALYSIS remaining)
+- **VERBOSE_ERROR:** 187 handlers across all files (single raise; per handler)
+- **pragma Unreferenced:** 28 instances — all legitimate (loop counters, unused params, FFI discards)
+- **Code-quality.md compliance:** All major mandates addressed — AXIOMS, TIMING ANCHOR, VERBOSE_ERROR, SPARK_Mode, Ada 2012
+
+### Code-Quality.md Compliance Status (cycles 6-18):
+- ✅ AXIOMS/THEORIES/APPLICATIONS/CITATIONS headers — all 21 .adb files
+- ✅ TIMING ANCHOR comment blocks — 331 blocks across all 21 files
+- ✅ TIMING ANALYSIS (old format) — 0 remaining
+- ✅ VERBOSE_ERROR — 187 handlers (single raise; per handler)
+- ✅ SPARK_Mode pragma — 18 On, 8 Off (aspect syntax)
+- ✅ Double raise; dead code — 47 removed, 0 remaining
+- ✅ Invalid exception blocks — removed from safe_access.adb
+- ✅ Ada 2012 compliance — no Ada 2022 features
+- ⚠️ Atomic Parity — framework exists, NOT applied to every function
+- ⚠️ Actual runtime measurement — only in main.adb (Test_Main)
+
 ## Cycle Entry (Cycle 17)
 - **Date:** 2026-09-09 07:26 UTC+7
 - **Cycle:** 17 (Deep Compliance Scan — Verification Cycle)
