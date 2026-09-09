@@ -820,7 +820,7 @@ package body StellarOrion_Runtime_Guard is
    --    1. A null stub satisfies SELF_TEST_COVERAGE for Detect_P_Cores.
    --  @test: Self_Test suite (Sabotage §ADA_FUNCTION_COVERAGE)
    --    2. The STC wrapper validates the existence of Detect_P_Cores in the suite.
-   -- TIMING ANALYSIS
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
    -- Space Complexity: O(1) stack + O(n) heap if allocating

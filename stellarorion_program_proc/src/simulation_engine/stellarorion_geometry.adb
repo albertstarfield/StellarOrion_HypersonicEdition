@@ -356,7 +356,7 @@ package body StellarOrion_Geometry is
    --  THEOREM: Post => result in [-1.001, 1.001] (truncation error < 0.1%).
    --  APPLICATION: Rapisarda HIAD profile generation (nose/toroid arcs).
    --  CITATION: [Rap23] Sec 3.7 / Appendix C.1 flat-skin profile.
-   --  TIMING ANALYSIS:
+   --  TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    --    WCET: O(1) — 6 multiply + 3 add/divide operations
    --    CPU Time: ~5 ns (Apple M4 Pro, single-threaded)
    --    Space Complexity: O(1) — 4 Float locals (~16 bytes)
@@ -436,7 +436,7 @@ package body StellarOrion_Geometry is
    --  THEOREM: Post => result in [-1.001, 1.001].
    --  APPLICATION: Rapisarda HIAD profile generation (nose/toroid arcs).
    --  CITATION: [Rap23] Sec 3.7 / Appendix C.1.
-   --  TIMING ANALYSIS:
+   --  TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    --    WCET: O(1) — 7 multiply + 3 add/divide operations
    --    CPU Time: ~6 ns (Apple M4 Pro)
    --    Space Complexity: O(1) — 4 Float locals (~16 bytes)
@@ -496,7 +496,7 @@ package body StellarOrion_Geometry is
    --  THEOREM: Post => result in [-1.001, 1.001].
    --  APPLICATION: Rapisarda HIAD profile generation (nose/toroid arcs).
    --  CITATION: [Rap23] Sec 3.7 / Appendix C.1.
-   --  TIMING ANALYSIS:
+   --  TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    --    WCET: O(1) — 6 multiply + 3 add/divide operations
    --    CPU Time: ~5 ns (Apple M4 Pro)
    --    Space Complexity: O(1) — 4 Float locals (~16 bytes)
