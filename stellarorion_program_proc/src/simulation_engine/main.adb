@@ -112,4 +112,33 @@ begin
                             Ada.Real_Time.To_Duration(Elapsed)'Image & "s");
    end;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Main", Test_Main'Access);
+   exception
+      when E : others =>
+         -- VERBOSE ERROR: Full details required per code-quality.md §5.2
+         -- Uses Ada.Calendar for Ada 2012-compatible wall-clock timestamp
+         declare
+            Now   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+            Yr    : Ada.Calendar.Year_Number;
+            Mo    : Ada.Calendar.Month_Number;
+            Dy    : Ada.Calendar.Day_Number;
+            Secs  : Ada.Calendar.Day_Duration;
+            Hr    : Integer;
+            Mi    : Integer;
+            Se    : Integer;
+         begin
+            Ada.Calendar.Split (Now, Yr, Mo, Dy, Secs);
+            Hr := Integer (Secs) / 3600;
+            Mi := (Integer (Secs) mod 3600) / 60;
+            Se := Integer (Secs) mod 60;
+            Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Exception in Main:");
+            Ada.Text_IO.Put_Line ("  Timestamp: " &
+               Ada.Calendar.Year_Number'Image (Yr) & "-" &
+               Ada.Calendar.Month_Number'Image (Mo) & "-" &
+               Ada.Calendar.Day_Number'Image (Dy) & " " &
+               Integer'Image (Hr) & ":" &
+               Integer'Image (Mi) & ":" &
+               Integer'Image (Se));
+            Ada.Text_IO.Put_Line ("  Exception: " & Ada.Exceptions.Exception_Name (E));
+            Ada.Text_IO.Put_Line ("  Message:   " & Ada.Exceptions.Exception_Message (E));
+         end;
 end Main;
