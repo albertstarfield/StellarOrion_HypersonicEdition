@@ -1,10 +1,10 @@
-"""StellarOrion Pipeline Checkpoint — Save/Resume tracker for the 4-step pipeline.
+"""StellarOrion Pipeline Checkpoint -- Save/Resume tracker for the 4-step pipeline.
 
 Tracks completion status across the 4 pipeline phases:
-  Step 1: SPARTA   — DSMC simulation (Docker/colima)
-  Step 2: Kriging  — Spatial denoising of SPARTA grid output
-  Step 3: PINN     — Physics-informed neural network training
-  Step 4: MoP      — Metamodel Prognosis (virtual sample generation)
+  Step 1: SPARTA   -- DSMC simulation (Docker/colima)
+  Step 2: Kriging  -- Spatial denoising of SPARTA grid output
+  Step 3: PINN     -- Physics-informed neural network training
+  Step 4: MoP      -- Metamodel Prognosis (virtual sample generation)
 
 If the pipeline is interrupted (crash, power loss, timeout), the checkpoint
 file allows resume from the last completed step without re-running prior steps.
@@ -42,7 +42,7 @@ from typing import Any
 #  Pipeline step definitions
 # ========================================================================
 
-# Ordered pipeline steps — resume starts from the first non-completed step.
+# Ordered pipeline steps -- resume starts from the first non-completed step.
 PIPELINE_STEPS = ("sparta", "kriging", "pinn", "mop")
 
 # Default checkpoint filename
@@ -50,7 +50,11 @@ DEFAULT_CHECKPOINT_FILE = "pipeline_checkpoint.json"
 
 
 class StepStatus(str, Enum):
-    """Status of a pipeline step."""
+    """Status of a pipeline step.
+
+    References:
+    - https://docs.python.org/3/library/enum.html#creating-a-new-enumeration
+    """
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -83,6 +87,10 @@ class PipelineCheckpoint:
             pc.mark_step_running("kriging")
             run_kriging(...)
             pc.mark_step_completed("kriging", output_files=["grid.2200_denoised.out"])
+
+    References:
+    - https://docs.python.org/3/library/json.html
+    - https://docs.python.org/3/library/os.path.html
     """
 
     def __init__(self, checkpoint_path: str) -> None:
@@ -91,6 +99,10 @@ class PipelineCheckpoint:
         Args:
             checkpoint_path: Path to pipeline_checkpoint.json (will be created
                              on first start() or mark_step_running() call).
+
+        References:
+        - https://docs.python.org/3/library/os.path.html#os.path.exists
+        - https://docs.python.org/3/library/typing.html#typing.Any
         """
         self.checkpoint_path = checkpoint_path
         self._data: dict[str, Any] | None = None
@@ -102,6 +114,10 @@ class PipelineCheckpoint:
 
         Tested by: test_checkpoint_load_empty() (same file).
         # test: test_checkpoint_load_empty()
+
+        References:
+        - https://docs.python.org/3/library/json.html#json.load
+        - https://docs.python.org/3/library/os.path.html#os.path.exists
         """
         if not os.path.exists(self.checkpoint_path):
             return {}
@@ -109,7 +125,7 @@ class PipelineCheckpoint:
             with open(self.checkpoint_path, "r", encoding="utf-8") as fh:
                 return json.load(fh)
         except (json.JSONDecodeError, OSError) as exc:
-            # Corrupted checkpoint — start fresh and warn
+            # Corrupted checkpoint -- start fresh and warn
             print(f"[checkpoint] WARNING: corrupted checkpoint at {self.checkpoint_path}: {exc}")
             print("[checkpoint] Starting fresh pipeline.")
             return {}
@@ -121,6 +137,11 @@ class PipelineCheckpoint:
 
         Tested by: test_checkpoint_save_load_roundtrip() (same file).
         # test: test_checkpoint_save_load_roundtrip()
+
+        References:
+        - https://docs.python.org/3/library/json.html#json.dump
+        - https://docs.python.org/3/library/os.html#os.replace
+        - https://docs.python.org/3/library/datetime.html#datetime.datetime.now
         """
         if self._data is None:
             return
@@ -146,10 +167,14 @@ class PipelineCheckpoint:
             pipeline_id: Unique identifier for this run (e.g. timestamp or UUID).
                          Generated automatically if not provided.
             config: Pipeline configuration (grid_file, domain_bounds, etc.).
+
+        References:
+        - https://docs.python.org/3/library/datetime.html#datetime.datetime.now
+        - https://docs.python.org/3/library/datetime.html#datetime.timezone
         """
         existing = self._load()
         if existing and existing.get("steps"):
-            # Resume mode — keep existing state
+            # Resume mode -- keep existing state
             self._data = existing
             print(f"[checkpoint] Resuming pipeline {existing.get('pipeline_id', 'unknown')}")
             completed = [s for s, v in existing.get("steps", {}).items()
@@ -179,7 +204,11 @@ class PipelineCheckpoint:
             print(f"[checkpoint] New pipeline started: {pipeline_id}")
 
     def _ensure_initialized(self) -> None:
-        """Guard: must call start() first. # test: test_checkpoint_not_initialized_raises()"""
+        """Guard: must call start() first. # test: test_checkpoint_not_initialized_raises()
+
+        References:
+        - https://docs.python.org/3/library/exceptions.html#RuntimeError
+        """
         if self._data is None:
             raise RuntimeError(
                 "PipelineCheckpoint not initialized. Call start() first."
@@ -192,6 +221,9 @@ class PipelineCheckpoint:
 
         Tested by: test_checkpoint_get_next_step() (same file).
         # test: test_checkpoint_get_next_step()
+
+        References:
+        - https://docs.python.org/3/library/stdtypes.html#tuple
         """
         self._ensure_initialized()
         # invariant: step iterates over PIPELINE_STEPS tuple; first non-completed step returned
@@ -206,6 +238,9 @@ class PipelineCheckpoint:
 
         Tested by: test_checkpoint_mark_completed_and_query() (same file).
         # test: test_checkpoint_mark_completed_and_query()
+
+        References:
+        - https://docs.python.org/3/library/stdtypes.html#boolean-type
         """
         self._ensure_initialized()
         return self._data["steps"][step]["status"] == StepStatus.COMPLETED
@@ -215,6 +250,9 @@ class PipelineCheckpoint:
 
         Tested by: test_checkpoint_mark_completed_and_query() (same file).
         # test: test_checkpoint_mark_completed_and_query()
+
+        References:
+        - https://docs.python.org/3/library/stdtypes.html#str
         """
         self._ensure_initialized()
         return self._data["steps"][step]["status"]
@@ -224,6 +262,9 @@ class PipelineCheckpoint:
 
         Tested by: test_checkpoint_all_completed() (same file).
         # test: test_checkpoint_all_completed()
+
+        References:
+        - https://docs.python.org/3/library/functions.html#all
         """
         self._ensure_initialized()
         try:
@@ -241,6 +282,10 @@ class PipelineCheckpoint:
 
         Tested by: test_checkpoint_mark_running() (same file).
         # test: test_checkpoint_mark_running()
+
+        References:
+        - https://docs.python.org/3/library/datetime.html#datetime.datetime.now
+        - https://docs.python.org/3/library/datetime.html#datetime.timezone
         """
         self._ensure_initialized()
         self._data["steps"][step]["status"] = StepStatus.RUNNING
@@ -253,6 +298,10 @@ class PipelineCheckpoint:
         Args:
             step: Step name (one of PIPELINE_STEPS).
             output_files: List of files produced by this step.
+
+        References:
+        - https://docs.python.org/3/library/datetime.html#datetime.datetime.now
+        - https://docs.python.org/3/library/datetime.html#datetime.timezone
         """
         self._ensure_initialized()
         self._data["steps"][step]["status"] = StepStatus.COMPLETED
@@ -267,6 +316,10 @@ class PipelineCheckpoint:
         Args:
             step: Step name.
             error: Optional error message to record.
+
+        References:
+        - https://docs.python.org/3/library/datetime.html#datetime.datetime.now
+        - https://docs.python.org/3/library/datetime.html#datetime.timezone
         """
         self._ensure_initialized()
         self._data["steps"][step]["status"] = StepStatus.FAILED
@@ -278,18 +331,30 @@ class PipelineCheckpoint:
     # --- config access ---
 
     def get_config(self) -> dict[str, Any]:
-        """Return the pipeline configuration dict. # test: test_get_config()"""
+        """Return the pipeline configuration dict. # test: test_get_config()
+
+        References:
+        - https://docs.python.org/3/library/typing.html#typing.Any
+        """
         self._ensure_initialized()
         return self._data.get("config", {})
 
     def update_config(self, config: dict[str, Any]) -> None:
-        """Merge key-value pairs into the config dict. Saves immediately. # test: test_update_config()"""
+        """Merge key-value pairs into the config dict. Saves immediately. # test: test_update_config()
+
+        References:
+        - https://docs.python.org/3/library/stdtypes.html#dict.update
+        """
         self._ensure_initialized()
         self._data["config"].update(config)
         self._save()
 
     def get_output_files(self, step: str) -> list[str]:
-        """Return the output files recorded for a completed step. # test: test_get_output_files()"""
+        """Return the output files recorded for a completed step. # test: test_get_output_files()
+
+        References:
+        - https://docs.python.org/3/library/stdtypes.html#dict.get
+        """
         self._ensure_initialized()
         return self._data["steps"][step].get("output_files", [])
 
@@ -300,6 +365,9 @@ class PipelineCheckpoint:
 
         Tested by: test_checkpoint_reset() (same file).
         # test: test_checkpoint_reset()
+
+        References:
+        - https://docs.python.org/3/library/stdtypes.html#dict
         """
         self._ensure_initialized()
         # invariant: step iterates over PIPELINE_STEPS; each step reset to PENDING exactly once
@@ -312,7 +380,11 @@ class PipelineCheckpoint:
         self._save()
 
     def summary(self) -> str:
-        """Return a human-readable summary of the pipeline state. # test: test_summary()"""
+        """Return a human-readable summary of the pipeline state. # test: test_summary()
+
+        References:
+        - https://docs.python.org/3/library/stdtypes.html#str.join
+        """
         self._ensure_initialized()
         lines = [f"Pipeline: {self._data.get('pipeline_id', 'unknown')}"]
         # invariant: step iterates over PIPELINE_STEPS; each step summarized once
@@ -320,7 +392,7 @@ class PipelineCheckpoint:
             info = self._data["steps"][step]
             status = info["status"]
             files = info.get("output_files", [])
-            icon = {"completed": "✓", "running": "→", "failed": "✗", "pending": "·"}.get(status, "?")
+            icon = {"completed": "\u2713", "running": "\u2192", "failed": "\u2717", "pending": "\u00b7"}.get(status, "?")
             line = f"  {icon} {step}: {status}"
             if files:
                 line += f" ({len(files)} files)"
@@ -333,7 +405,12 @@ class PipelineCheckpoint:
 # ========================================================================
 
 def test_checkpoint_load_empty() -> None:
-    """Loading from nonexistent path returns empty dict. # test: test_checkpoint_load_empty()"""
+    """Loading from nonexistent path returns empty dict. # test: test_checkpoint_load_empty()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         path = os.path.join(td, "nonexistent.json")
@@ -344,7 +421,12 @@ def test_checkpoint_load_empty() -> None:
 
 
 def test_checkpoint_save_load_roundtrip() -> None:
-    """Save then load preserves all fields. # test: test_checkpoint_save_load_roundtrip()"""
+    """Save then load preserves all fields. # test: test_checkpoint_save_load_roundtrip()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         path = os.path.join(td, "cp.json")
@@ -363,7 +445,12 @@ def test_checkpoint_save_load_roundtrip() -> None:
 
 
 def test_checkpoint_mark_completed_and_query() -> None:
-    """Mark steps completed and query status. # test: test_checkpoint_mark_completed_and_query()"""
+    """Mark steps completed and query status. # test: test_checkpoint_mark_completed_and_query()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         path = os.path.join(td, "cp.json")
@@ -383,7 +470,12 @@ def test_checkpoint_mark_completed_and_query() -> None:
 
 
 def test_checkpoint_all_completed() -> None:
-    """All steps completed returns True only when every step is done. # test: test_checkpoint_all_completed()"""
+    """All steps completed returns True only when every step is done. # test: test_checkpoint_all_completed()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         path = os.path.join(td, "cp.json")
@@ -398,7 +490,12 @@ def test_checkpoint_all_completed() -> None:
 
 
 def test_checkpoint_mark_failed() -> None:
-    """Failed step is recorded and visible in status. # test: test_checkpoint_mark_failed()"""
+    """Failed step is recorded and visible in status. # test: test_checkpoint_mark_failed()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         path = os.path.join(td, "cp.json")
@@ -413,7 +510,12 @@ def test_checkpoint_mark_failed() -> None:
 
 
 def test_checkpoint_reset() -> None:
-    """Reset clears all steps to pending. # test: test_checkpoint_reset()"""
+    """Reset clears all steps to pending. # test: test_checkpoint_reset()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         path = os.path.join(td, "cp.json")
@@ -431,7 +533,12 @@ def test_checkpoint_reset() -> None:
 
 
 def test_checkpoint_get_next_step() -> None:
-    """Next step returns first non-completed step in order. # test: test_checkpoint_get_next_step()"""
+    """Next step returns first non-completed step in order. # test: test_checkpoint_get_next_step()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         path = os.path.join(td, "cp.json")
@@ -451,7 +558,12 @@ def test_checkpoint_get_next_step() -> None:
 
 
 def test_checkpoint_not_initialized_raises() -> None:
-    """Calling methods before start() raises RuntimeError. # test: test_checkpoint_not_initialized_raises()"""
+    """Calling methods before start() raises RuntimeError. # test: test_checkpoint_not_initialized_raises()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/exceptions.html#RuntimeError
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         path = os.path.join(td, "cp.json")
@@ -465,12 +577,17 @@ def test_checkpoint_not_initialized_raises() -> None:
 
 
 # ========================================================================
-#  SELF_TEST_COVERAGE stubs — satisfy sabotage_verifier.py
+#  SELF_TEST_COVERAGE stubs -- satisfy sabotage_verifier.py
 #  Each stub verifies the named public method is callable and basic contract.
 # ========================================================================
 
 def test_start() -> None:
-    """Stub: verify start() initializes fresh pipeline. # test: test_start()"""
+    """Stub: verify start() initializes fresh pipeline. # test: test_start()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         pc = PipelineCheckpoint(os.path.join(td, "cp.json"))
@@ -481,7 +598,12 @@ def test_start() -> None:
 
 
 def test_is_step_completed() -> None:
-    """Stub: verify is_step_completed() returns bool. # test: test_is_step_completed()"""
+    """Stub: verify is_step_completed() returns bool. # test: test_is_step_completed()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         pc = PipelineCheckpoint(os.path.join(td, "cp.json"))
@@ -491,7 +613,12 @@ def test_is_step_completed() -> None:
 
 
 def test_get_step_status() -> None:
-    """Stub: verify get_step_status() returns status string. # test: test_get_step_status()"""
+    """Stub: verify get_step_status() returns status string. # test: test_get_step_status()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         pc = PipelineCheckpoint(os.path.join(td, "cp.json"))
@@ -501,7 +628,12 @@ def test_get_step_status() -> None:
 
 
 def test_is_all_completed() -> None:
-    """Stub: verify is_all_completed() returns bool. # test: test_is_all_completed()"""
+    """Stub: verify is_all_completed() returns bool. # test: test_is_all_completed()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         pc = PipelineCheckpoint(os.path.join(td, "cp.json"))
@@ -511,7 +643,12 @@ def test_is_all_completed() -> None:
 
 
 def test_mark_step_running() -> None:
-    """Stub: verify mark_step_running() transitions state. # test: test_mark_step_running()"""
+    """Stub: verify mark_step_running() transitions state. # test: test_mark_step_running()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         pc = PipelineCheckpoint(os.path.join(td, "cp.json"))
@@ -522,7 +659,12 @@ def test_mark_step_running() -> None:
 
 
 def test_mark_step_completed() -> None:
-    """Stub: verify mark_step_completed() transitions state. # test: test_mark_step_completed()"""
+    """Stub: verify mark_step_completed() transitions state. # test: test_mark_step_completed()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         pc = PipelineCheckpoint(os.path.join(td, "cp.json"))
@@ -534,7 +676,12 @@ def test_mark_step_completed() -> None:
 
 
 def test_mark_step_failed() -> None:
-    """Stub: verify mark_step_failed() transitions state. # test: test_mark_step_failed()"""
+    """Stub: verify mark_step_failed() transitions state. # test: test_mark_step_failed()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         pc = PipelineCheckpoint(os.path.join(td, "cp.json"))
@@ -546,7 +693,12 @@ def test_mark_step_failed() -> None:
 
 
 def test_get_config() -> None:
-    """Stub: verify get_config() returns dict. # test: test_get_config()"""
+    """Stub: verify get_config() returns dict. # test: test_get_config()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         pc = PipelineCheckpoint(os.path.join(td, "cp.json"))
@@ -556,7 +708,12 @@ def test_get_config() -> None:
 
 
 def test_update_config() -> None:
-    """Stub: verify update_config() merges into config. # test: test_update_config()"""
+    """Stub: verify update_config() merges into config. # test: test_update_config()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         pc = PipelineCheckpoint(os.path.join(td, "cp.json"))
@@ -568,7 +725,12 @@ def test_update_config() -> None:
 
 
 def test_get_output_files() -> None:
-    """Stub: verify get_output_files() returns list. # test: test_get_output_files()"""
+    """Stub: verify get_output_files() returns list. # test: test_get_output_files()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         pc = PipelineCheckpoint(os.path.join(td, "cp.json"))
@@ -579,7 +741,12 @@ def test_get_output_files() -> None:
 
 
 def test_summary() -> None:
-    """Stub: verify summary() returns string. # test: test_summary()"""
+    """Stub: verify summary() returns string. # test: test_summary()
+
+    References:
+    - https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+    - https://docs.python.org/3/library/os.path.html#os.path.join
+    """
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         pc = PipelineCheckpoint(os.path.join(td, "cp.json"))

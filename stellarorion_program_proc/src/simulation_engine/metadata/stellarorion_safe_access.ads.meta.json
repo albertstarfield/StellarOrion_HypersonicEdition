@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_safe_access.ads",
+  "source_hash": "c7c7bd6ec08338c4facd7c704b1e6358ffb2ce955afdf8315fb82125784a30d8",
+  "rs_checksum": "136e852611ed642cf8808ba178648ddb71585a6911b827403fb8c48d6d2093c3",
+  "gc_checksum": "aad18c433fb23c54fc90f8ed9fced1e874f888cad44e9bc6f153ef775fbdaa87",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 3
+}

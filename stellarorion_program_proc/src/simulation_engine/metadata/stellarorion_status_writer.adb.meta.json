@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_status_writer.adb",
+  "source_hash": "3eab17b0b392c33848ec3427a5e828792a13c50500db4852b5642160c4ccd3c6",
+  "rs_checksum": "53674ecc71ab060403a7db99e3dcb7bbd0a8d1b8986888cff1f21371c9329872",
+  "gc_checksum": "2a1beda70d1b1cd1f875cb4e04e7fb691481d7c7a1b132714d17eea4985611e5",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 40
+}

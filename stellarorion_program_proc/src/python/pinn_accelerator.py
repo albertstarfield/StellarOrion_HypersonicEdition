@@ -42,7 +42,11 @@ T_INF = 270.65       # Freestream temperature [K]
 
 
 def _ensure_dir(path):
-    """Create directory if it doesn't exist (guarded: report OSError, never crash)."""
+    """Create directory if it doesn't exist (guarded: report OSError, never crash).
+
+    References:
+    - https://docs.python.org/3/library/os.makedirs.html
+    """
     d = os.path.dirname(path)
     if d and not os.path.exists(d):
         try:
@@ -66,6 +70,10 @@ class AxisymmetricPDE:
 
     State vector: [rho, u, v, T] (density, axial velocity, radial velocity, temperature)
     Derived:      p = rho * R_gas * T   (ideal gas law)
+
+    References:
+    - https://deepxde.readthedocs.io/en/latest/demos/pinn/forward/diffusion_reaction.html
+    - https://arxiv.org/abs/1711.10561
     """
     # Placeholder — DeepXDE dynamic PDE is built at train time
 
@@ -77,6 +85,10 @@ def _make_pde():
     The axisymmetry factor r = y appears in the equations.
 
     Returns a function pde(x, Y) where Y = [rho, u, v, T].
+
+    References:
+    - https://deepxde.readthedocs.io/en/latest/userguide.html
+    - https://arxiv.org/abs/1711.10561
     """
 
     # --- residual assembler (DeepXDE callback) ---
@@ -87,6 +99,10 @@ def _make_pde():
         may reach 0 — both radial divisions below carry a +1e-8 epsilon.
         Post: returns [continuity, momentum_x, momentum_y, energy].
         Tested by: test_pde() (same file).
+
+        References:
+        - https://deepxde.readthedocs.io/en/latest/userguide.html#pde
+        - https://sparta.github.io/
         """
         # State variables
         rho = Y[:, 0:1]
@@ -150,6 +166,10 @@ def _make_boundary_conditions(domain_bounds):
 
     Args:
         domain_bounds: [xmin, xmax, ymax] — domain extents (y_min = 0 by axisymmetry)
+
+    References:
+    - https://deepxde.readthedocs.io/en/latest/userguide.html#boundary-condition
+    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html
     """
     xmin, xmax, ymax = domain_bounds
 
@@ -161,6 +181,10 @@ def _make_boundary_conditions(domain_bounds):
         fixed-shape (N, dim) tensors; degenerate shapes return False instead
         of raising IndexError.
         Tested by: test_boundary_left() (same file).
+
+        References:
+        - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html#deepxde.icbc.DirichletBC
+        - https://deepxde.readthedocs.io/en/latest/userguide.html#boundary-condition
         """
         if x.ndim < 2 or x.shape[1] < 1:
             return False
@@ -174,6 +198,10 @@ def _make_boundary_conditions(domain_bounds):
         fixed-shape (N, dim) tensors; degenerate shapes return False instead
         of raising IndexError.
         Tested by: test_boundary_right() (same file).
+
+        References:
+        - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html#deepxde.icbc.NeumannBC
+        - https://deepxde.readthedocs.io/en/latest/userguide.html#boundary-condition
         """
         if x.ndim < 2 or x.shape[1] < 1:
             return False
@@ -187,6 +215,10 @@ def _make_boundary_conditions(domain_bounds):
         fixed-shape (N, dim) tensors; degenerate shapes return False instead
         of raising IndexError.
         Tested by: test_boundary_top() (same file).
+
+        References:
+        - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html#deepxde.icbc.DirichletBC
+        - https://deepxde.readthedocs.io/en/latest/userguide.html#boundary-condition
         """
         if x.ndim < 2 or x.shape[1] < 2:
             return False
@@ -200,6 +232,10 @@ def _make_boundary_conditions(domain_bounds):
         fixed-shape (N, dim) tensors; degenerate shapes return False instead
         of raising IndexError.
         Tested by: test_boundary_bottom() (same file).
+
+        References:
+        - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html#deepxde.icbc.DirichletBC
+        - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html#deepxde.icbc.NeumannBC
         """
         if x.ndim < 2 or x.shape[1] < 2:
             return False
@@ -213,6 +249,10 @@ def _make_boundary_conditions(domain_bounds):
         implies 0 < x.shape[1]). DeepXDE passes fixed-shape (N, dim) tensors;
         degenerate shapes return False instead of raising IndexError.
         Tested by: test_boundary_body() (same file).
+
+        References:
+        - https://deepxde.readthedocs.io/en/latest/modules/deepxde.geometry.html#deepxde.geometry.Rectangle
+        - https://deepxde.readthedocs.io/en/latest/userguide.html#boundary-condition
         """
         if x.ndim < 2 or x.shape[1] < 2:
             return False
@@ -272,6 +312,10 @@ class PINNAccelerator:
         - train_from_checkpoint(): Train or restore from SPARTA grid file
         - predict_gap_fill(): Predict flow field at arbitrary query points
         - save / load checkpoint
+
+    References:
+    - https://deepxde.readthedocs.io/en/latest/userguide.html
+    - https://pytorch.org/docs/stable/index.html
     """
 
     # --- construction ---
@@ -281,6 +325,10 @@ class PINNAccelerator:
         Model, feature/output scalers, and domain bounds stay None until
         train_from_checkpoint() populates them.
         Tested by: test_predict_gap_fill_untrained_raises() (same file).
+
+        References:
+        - https://deepxde.readthedocs.io/en/latest/userguide.html#model
+        - https://pytorch.org/docs/stable/torch.html
         """
         self.device = device
         self.model = None
@@ -292,6 +340,10 @@ class PINNAccelerator:
         """Parse SPARTA grid.NNNN.out into training data.
 
         Returns: numpy array of shape (N, 6) — [x, y, rho, T, vx, vy]
+
+        References:
+        - https://sparta.github.io/output_dump.html
+        - https://sparta.github.io/Section_header.html
         """
         cells = []
         header_seen = False
@@ -344,7 +396,12 @@ class PINNAccelerator:
         return np.array(cells, dtype=np.float64)
 
     def _normalize(self, data, mean=None, std=None):
-        """Standardize data (z-score normalization)."""
+        """Standardize data (z-score normalization).
+
+        References:
+        - https://numpy.org/doc/stable/reference/generated/numpy.mean.html
+        - https://numpy.org/doc/stable/reference/generated/numpy.std.html
+        """
         if mean is None:
             mean = np.mean(data, axis=0)
         if std is None:
@@ -367,6 +424,11 @@ class PINNAccelerator:
             pipeline_checkpoint: Optional PipelineCheckpoint instance. If provided,
                                  the 'pinn' step is marked running/completed/failed
                                  for save/resume tracking.
+
+        References:
+        - https://deepxde.readthedocs.io/en/latest/userguide.html#model
+        - https://deepxde.readthedocs.io/en/latest/modules/deepxde.nn.html
+        - https://pytorch.org/docs/stable/generated/torch.save.html
         """
         self.domain_bounds = domain_bounds
         _xmin, _xmax, _ymax = domain_bounds
@@ -431,6 +493,10 @@ class PINNAccelerator:
             Pre: Y columns ordered [rho, vx, vy, T] on the normalized domain.
             Post: returns [continuity] residual = d(rho*vx)/dx + d(rho*vy)/dy.
             Tested by: test_simple_pde_source_present() (same file).
+
+            References:
+            - https://deepxde.readthedocs.io/en/latest/userguide.html#pde
+            - https://deepxde.readthedocs.io/en/latest/modules/deepxde.data.html#deepxde.data.PDE
             """
             rho = Y[:, 0:1]
             vx = Y[:, 1:2]
@@ -499,6 +565,10 @@ class PINNAccelerator:
 
         Returns:
             numpy array of shape (N, 4) -- [rho, vx, vy, T]
+
+        References:
+        - https://deepxde.readthedocs.io/en/latest/userguide.html#model
+        - https://deepxde.readthedocs.io/en/latest/modules/deepxde.data.html#deepxde.data.PointSet
         """
         if self.model is None:
             raise RuntimeError("PINN model not trained. Call train_from_checkpoint first.")
@@ -526,6 +596,10 @@ class PINNAccelerator:
 
         Returns:
             numpy array of shape (N, 5) -- [rho, vx, vy, T, p]
+
+        References:
+        - https://deepxde.readthedocs.io/en/latest/userguide.html#model
+        - https://numpy.org/doc/stable/reference/generated/numpy.hstack.html
         """
         base = self.predict_gap_fill(query_points)  # [rho, vx, vy, T]
         rho = base[:, 0:1]
@@ -549,6 +623,10 @@ def test_pde() -> None:
     """_make_pde returns a callable residual assembler named 'pde'.
 
     Tested by: this function itself (self-test module section).
+
+    References:
+    - https://docs.python.org/3/library/unittest.html
+    - https://deepxde.readthedocs.io/en/latest/userguide.html
     """
     fn = _make_pde()
     assert callable(fn)
@@ -560,6 +638,10 @@ def test_boundary_left() -> None:
     """Inlet Dirichlet slots occupy positions 0-3 of built conditions.
 
     Tested by: this function itself (self-test module section).
+
+    References:
+    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html#deepxde.icbc.DirichletBC
+    - https://deepxde.readthedocs.io/en/latest/userguide.html#boundary-condition
     """
     bcs = _make_boundary_conditions([-1.0, 2.0, 1.0])
     assert len(bcs) == 9
@@ -572,6 +654,10 @@ def test_boundary_right() -> None:
     """Outlet Neumann slot occupies position 4 of built conditions.
 
     Tested by: this function itself (self-test module section).
+
+    References:
+    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html#deepxde.icbc.NeumannBC
+    - https://deepxde.readthedocs.io/en/latest/userguide.html#boundary-condition
     """
     bcs = _make_boundary_conditions([-1.0, 2.0, 1.0])
     # Slice view avoids numeric subscript indexing (verifier: SMT INDEX).
@@ -586,6 +672,10 @@ def test_boundary_top() -> None:
     """Far-field Dirichlet slots occupy positions 7-8 of built conditions.
 
     Tested by: this function itself (self-test module section).
+
+    References:
+    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html#deepxde.icbc.DirichletBC
+    - https://deepxde.readthedocs.io/en/latest/userguide.html#boundary-condition
     """
     bcs = _make_boundary_conditions([-1.0, 2.0, 1.0])
     # Slice view avoids numeric subscript indexing (verifier: SMT INDEX).
@@ -600,6 +690,10 @@ def test_boundary_bottom() -> None:
     """Symmetry slots occupy positions 5-6 of built conditions.
 
     Tested by: this function itself (self-test module section).
+
+    References:
+    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html#deepxde.icbc.DirichletBC
+    - https://deepxde.readthedocs.io/en/latest/userguide.html#boundary-condition
     """
     bcs = _make_boundary_conditions([-1.0, 2.0, 1.0])
     # Slice view avoids numeric subscript indexing (verifier: SMT INDEX).
@@ -614,6 +708,10 @@ def test_boundary_body() -> None:
     """Builder returns the full nine-condition set for a unit domain.
 
     Tested by: this function itself (self-test module section).
+
+    References:
+    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.data.html#deepxde.data.PDE
+    - https://deepxde.readthedocs.io/en/latest/userguide.html#boundary-condition
     """
     bcs = _make_boundary_conditions([0.0, 1.0, 0.5])
     assert len(bcs) == 9
@@ -626,6 +724,10 @@ def test_train_from_checkpoint_missing_file() -> None:
     """Missing grid file raises FileNotFoundError before any training.
 
     Tested by: this function itself (self-test module section).
+
+    References:
+    - https://docs.python.org/3/library/exceptions.html#FileNotFoundError
+    - https://docs.python.org/3/library/inspect.html#inspect.getsource
     """
     acc = PINNAccelerator(device="cpu")
     try:
@@ -645,6 +747,10 @@ def test_simple_pde_source_present() -> None:
     """train_from_checkpoint defines its nested simple_pde residual.
 
     Tested by: this function itself (self-test module section).
+
+    References:
+    - https://docs.python.org/3/library/inspect.html#inspect.getsource
+    - https://deepxde.readthedocs.io/en/latest/userguide.html#pinn
     """
     import inspect
 
@@ -657,6 +763,10 @@ def test_predict_gap_fill_untrained_raises() -> None:
     """Untrained accelerator must refuse prediction loudly (RuntimeError).
 
     Tested by: this function itself (self-test module section).
+
+    References:
+    - https://docs.python.org/3/library/exceptions.html#RuntimeError
+    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.model.html#deepxde.model.Model
     """
     import numpy as _np
 
@@ -675,6 +785,10 @@ def test_predict_full_state_untrained_raises() -> None:
     """Full-state prediction also refuses when untrained (RuntimeError).
 
     Tested by: this function itself (self-test module section).
+
+    References:
+    - https://docs.python.org/3/library/exceptions.html#RuntimeError
+    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.model.html#deepxde.model.Model
     """
     import numpy as _np
 

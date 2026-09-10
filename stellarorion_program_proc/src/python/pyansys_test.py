@@ -19,6 +19,10 @@ def get_local_fluent_exe():
     """Locate Ansys Fluent executable on Windows.
 
     Mirrors _get_local_fluent_exe from StellarOrionEngineMach5Up.py.
+
+    References:
+    - https://innovationspace.ansys.com/knowledge/forums/topic/fluent-environment-variables/
+    - https://innovationspace.ansys.com/knowledge/forums/topic/how-to-find-where-ansys-is-installed-on-my-system/
     """
     if not sys.platform.startswith("win"):
         return None
@@ -52,6 +56,10 @@ def run_local_pyfluent_test(show_gui=True):
     """Verify local PyAnsys installation and basic handshake.
 
     Mirrors L2518-2555 of StellarOrionEngineMach5Up.py.
+
+    References:
+    - https://fluent.docs.pyansys.com/version/stable/api/index.html
+    - https://fluent.docs.pyansys.com/version/stable/contributing/coding-guidelines.html
     """
     if not sys.platform.startswith("win"):
         return {
@@ -139,7 +147,12 @@ def run_local_pyfluent_test(show_gui=True):
 
 
 def _safe_json_dumps(obj):
-    """Serialize obj to indented JSON; never raises (Murphy's Law fallback)."""
+    """Serialize obj to indented JSON; never raises (Murphy's Law fallback).
+
+    References:
+    - https://docs.python.org/3/library/json.html#json.dumps
+    - https://docs.python.org/3/library/json.html#basic-usage
+    """
     try:
         return json.dumps(obj, indent=2)
     except (TypeError, ValueError) as exc:
@@ -152,6 +165,10 @@ def main():
 
     Parses --show-gui/--no-gui, launches a local Ansys Fluent session to
     verify the toolchain, and prints a RESULT_JSON summary for the Ada host.
+
+    References:
+    - https://docs.python.org/3/library/argparse.html
+    - https://docs.python.org/3/library/sys.html#sys.exit
     """
     parser = argparse.ArgumentParser(
         description="StellarOrion PyAnsys Local Integration Test Sidecar"
@@ -211,6 +228,10 @@ def test_get_local_fluent_exe() -> None:
     """Locator returns None or an existing executable path.
 
     Tested by: this function itself (self-test section).
+
+    References:
+    - https://docs.pytest.org/en/stable/getting-started.html
+    - https://docs.pytest.org/en/stable/how-to/assert.html
     """
     exe = get_local_fluent_exe()
     assert exe is None or os.path.exists(exe)
@@ -220,6 +241,10 @@ def test_run_local_pyfluent_test_platform_guard() -> None:
     """Non-Windows hosts get a structured error dict, never a Fluent launch.
 
     Tested by: this function itself (self-test section).
+
+    References:
+    - https://docs.pytest.org/en/stable/getting-started.html
+    - https://docs.python.org/3/library/sys.html#sys.platform
     """
     if sys.platform.startswith("win"):
         return  # never launch Fluent from a unit test on Windows hosts
@@ -234,6 +259,10 @@ def test_main_help_exits_zero() -> None:
     """--help prints usage and exits cleanly (SystemExit 0 or None).
 
     Tested by: this function itself (self-test section).
+
+    References:
+    - https://docs.pytest.org/en/stable/getting-started.html
+    - https://docs.python.org/3/library/argparse.html
     """
     import contextlib
     import io

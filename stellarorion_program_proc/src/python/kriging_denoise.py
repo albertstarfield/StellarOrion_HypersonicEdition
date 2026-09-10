@@ -71,6 +71,10 @@ def _parse_grid_file(grid_file):
       3. x_center = (xlo + xhi) / 2, y_center = (ylo + yhi) / 2
 
     Returns: numpy array of shape (N, 6) — [x, y, rho, T, vx, vy]
+
+    References:
+    - https://sparta.github.io/grid.html
+    - https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html
     """
     cells = []
     header_seen = False
@@ -130,6 +134,10 @@ def _write_grid_file(grid_file, data):
       3. We reconstruct cell bounds from centers (uniform spacing constraint — SPARTA grid is uniform)
 
     data: numpy array of shape (N, 6) — [x, y, rho, T, vx, vy]
+
+    References:
+    - https://sparta.github.io/grid.html
+    - https://numpy.org/doc/stable/reference/generated/numpy.savetxt.html
     """
     if data.shape[0] == 0:
         raise ValueError("Cannot write empty grid data")
@@ -184,6 +192,10 @@ def _build_kernel(noise_upper_bound=1.0):
     by white noise. [Citation: Rasmussen & Williams (2006), §4.2]
 
     Returns: sklearn kernel object
+
+    References:
+    - https://scikit-learn.org/stable/modules/gaussian_process.html
+    - https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.kernels.Matern.html
     """
     # σ_f² × Matérn 5/2 — signal kernel
     # [Citation: Rasmussen & Williams (2006), §4.2]
@@ -223,6 +235,11 @@ def denoise_grid(raw_data: "np.ndarray", n_restarts: int = 5, random_state: int 
       3. Return denoised data [x, y, rho_denoised, T_denoised, vx_denoised, vy_denoised]
 
     RETURNS: numpy array of shape (N, 6) — [x, y, rho_kriged, T_kriged, vx_kriged, vy_kriged]
+
+    References:
+    - https://scikit-learn.org/stable/modules/gaussian_process.html
+    - https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html
+    - https://www.gaussianprocess.org/gpml/
     """
     if raw_data.ndim != 2 or raw_data.shape[1] != 6:
         raise ValueError(f"Expected (N, 6) array, got shape {raw_data.shape}")
@@ -326,6 +343,10 @@ def denoise_grid_file(input_file: str, output_file: "str | None" = None, n_resta
       3. Write output grid file
 
     RETURNS: (denoised_data, output_file_path)
+
+    References:
+    - https://scikit-learn.org/stable/modules/gaussian_process.html
+    - https://sparta.github.io/grid.html
     """
     if output_file is None:
         base, ext = os.path.splitext(input_file)
@@ -368,6 +389,10 @@ def _run_self_tests():
       7. test_denoise_grid_large — Verify subsampling for large grids
 
     RETURNS: list of (test_name, passed, message) tuples
+
+    References:
+    - https://docs.python.org/3/library/unittest.html
+    - https://numpy.org/doc/stable/reference/generated/numpy.testing.html
     """
     results = []
 
@@ -511,6 +536,10 @@ def _run_self_tests():
 def test_denoise_grid() -> None:
     """Verify denoise_grid() via synthetic data — noise reduction check.
     # test: SELF_TEST_COVERAGE stub for denoise_grid()
+
+    References:
+    - https://scikit-learn.org/stable/modules/gaussian_process.html
+    - https://numpy.org/doc/stable/reference/generated/numpy.random.RandomState.html
     """
     rng = np.random.RandomState(42)
     N_test = 100
@@ -533,6 +562,10 @@ def test_denoise_grid() -> None:
 def test_denoise_grid_file() -> None:
     """Verify denoise_grid_file() round-trip via temporary file.
     # test: SELF_TEST_COVERAGE stub for denoise_grid_file()
+
+    References:
+    - https://scikit-learn.org/stable/modules/gaussian_process.html
+    - https://sparta.github.io/grid.html
     """
     import tempfile
     rng = np.random.RandomState(42)
