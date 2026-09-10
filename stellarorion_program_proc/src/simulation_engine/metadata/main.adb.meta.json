@@ -1,0 +1,9 @@
+{
+  "source_file": "main.adb",
+  "source_hash": "a62085a7c1749a8790ff9e23129167b60f79f5a967d4fba2abf602c971c5106f",
+  "rs_checksum": "8a408ece19b10a1f415a715c26d6e25365a198d137ea75190439b0ba6a5b269d",
+  "gc_checksum": "ce51a7127d030cb2aef69f6a6984d2ae79031e4bbb8a0e4a85ad19334597595b",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 15
+}

@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_status_writer.ads",
+  "source_hash": "d9099dda89ba2b4cc8b10a43af8d186a79bce3b5537d6deca3cb71f342575818",
+  "rs_checksum": "3b4dc567fdac46c19b3a793171c08ecdef537ca6777223509101ec065d65991c",
+  "gc_checksum": "18953efb638fb1df95a6cba0480896bc6bc51afcdb397beaf0fbd0a8fa4740d1",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 5
+}

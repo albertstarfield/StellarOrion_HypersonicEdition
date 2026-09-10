@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_physics.adb",
+  "source_hash": "46ed6bfd7d66abc9812a25cb74c6a76c57c9f52b13fbb941d1fa763a3454b00e",
+  "rs_checksum": "9b9ac4a71bf8e1959b65fd65bb57753eab4c037b7cf9f339d4dc241c2a436fc2",
+  "gc_checksum": "239125b59ed33237d53c89919c89f769b84d319d22c4ea87933b9734715a343a",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 224
+}

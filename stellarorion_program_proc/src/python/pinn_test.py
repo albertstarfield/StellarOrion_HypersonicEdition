@@ -52,6 +52,12 @@ def detect_device():
 
     Hardware-neutral fallback order: NVIDIA CUDA -> Apple MPS ->
     Intel XPU (OneAPI) -> Moore Threads MUSA -> CPU.
+
+    References:
+        - https://pytorch.org/docs/stable/notes/cuda.html#cuda-semantics
+        - https://pytorch.org/docs/stable/notes/mps.html
+        - https://pytorch.org/docs/stable/xpu.html
+        - https://pytorch.org/docs/stable/notes/musa.html
     """
     try:
         import torch
@@ -76,6 +82,11 @@ def run_baseline_validation(cad_dir, steps, solver="sparta"):
     Mirrors the logic from StellarOrionEngineMach5Up.py run_baseline_validation
     but as a simplified standalone version that reads existing grid files or
     runs SPARTA Docker.
+
+    References:
+        - https://sparta.github.io/
+        - https://docs.docker.com/engine/reference/commandline/run/
+        - https://docs.python.org/3/library/subprocess.html
     """
     grid_dir = os.path.join(cad_dir, "results_reference")
     grid_file = os.path.join(grid_dir, f"grid.{steps}.out")
@@ -118,6 +129,10 @@ def _parse_grid_output(grid_file, steps):
 
     Columns: id xlo ylo xhi yhi f_2[1] f_2[2] f_2[3] f_2[4] f_3[*] f_4[*]
              id  xlo  ylo  xhi  yhi  particles  temp(K)  vx(m/s)  vy(m/s)  ke(eV)  num_density
+
+    References:
+        - https://sparta.github.io/pdf/spartaManual.pdf
+        - https://numpy.org/doc/stable/
     """
     data_cells = []
     header_seen = False
@@ -228,6 +243,11 @@ def run_pinn_training(grid_files, domain, device, iterations, save_path):
     """Train DeepXDE PINN on SPARTA grid data.
 
     Uses pinn_accelerator.PINNAccelerator for the actual training.
+
+    References:
+        - https://deepxde.readthedocs.io/en/latest/demos/pinn_forward.html
+        - https://deepxde.readthedocs.io/en/latest/modules/model.html
+        - https://pytorch.org/tutorials/intermediate/pinns_fundamentals_tutorial.html
     """
     from pinn_accelerator import PINNAccelerator
 
@@ -247,6 +267,9 @@ def get_err(val, ref):
     Pre: val and ref are numeric (int/float); ref == 0 hits the guard.
     Post: returns non-negative percentage abs(val-ref)/ref*100, or 0.
     Tested by: test_get_err() (same file).
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
     """
     return abs(val - ref) / ref * 100 if ref > 0 else 0
 
@@ -255,6 +278,11 @@ def compute_pinn_metrics(pinn, sim_result, baseline_doc, domain):
     """Extract refined metrics from trained PINN and build 3-way comparison.
 
     Mirrors L4386-4475 of StellarOrionEngineMach5Up.py.
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
+        - https://deepxde.readthedocs.io/en/latest/demos/pinn_forward.html
+        - https://sparta.github.io/pdf/spartaManual.pdf
     """
     import numpy as np
 
@@ -346,6 +374,11 @@ def main():
     Parses --steps/--solver/--skip-diag/--headless/--sparta-gpu/--project-root,
     locates the project root, then drives the SPARTA baseline + DeepXDE PINN
     refinement and emits the comparison JSON consumed by the Ada binary.
+
+    References:
+        - https://docs.python.org/3/library/argparse.html
+        - https://docs.python.org/3/library/json.html
+        - https://deepxde.readthedocs.io/en/latest/demos/pinn_forward.html
     """
     parser = argparse.ArgumentParser(description="StellarOrion PINN Calibration Test Sidecar")
     parser.add_argument("--steps", type=int, default=1500, help="Number of SPARTA simulation steps")
@@ -487,6 +520,10 @@ def _load_accelerator():
     Pre: none. Post: returns PINNAccelerator class, or None with a printed
     reason when deepxde/torch are not installed in this environment.
     Tested by: indirectly via test_run_pinn_training().
+
+    References:
+        - https://deepxde.readthedocs.io/en/latest/
+        - https://pytorch.org/docs/stable/
     """
     try:
         from pinn_accelerator import PINNAccelerator
@@ -500,6 +537,10 @@ def test_detect_device() -> None:
     """detect_device returns a known (device, label) tuple.
 
     Tested by: this function itself (self-test section).
+
+    References:
+        - https://pytorch.org/docs/stable/notes/cuda.html#cuda-semantics
+        - https://pytorch.org/docs/stable/notes/mps.html
     """
     device, label = detect_device()
     assert device in {"cuda", "mps", "xpu", "musa", "cpu"}
@@ -510,6 +551,10 @@ def test_run_baseline_validation_missing_inputs() -> None:
     """Missing grid file and missing SPARTA script yield a clean None.
 
     Tested by: this function itself (self-test section).
+
+    References:
+        - https://sparta.github.io/
+        - https://docs.python.org/3/library/os.path.html
     """
     result = run_baseline_validation("/nonexistent/cad_dir", 42)
     assert result is None
@@ -519,6 +564,10 @@ def test_run_pinn_training_signature() -> None:
     """Training wrapper forwards args to PINNAccelerator (guarded import).
 
     Tested by: this function itself (self-test section).
+
+    References:
+        - https://deepxde.readthedocs.io/en/latest/demos/pinn_forward.html
+        - https://pytorch.org/docs/stable/
     """
     cls = _load_accelerator()
     if cls is None:
@@ -531,6 +580,10 @@ def test_compute_pinn_metrics_untrained_raises() -> None:
     """compute_pinn_metrics surfaces RuntimeError from an untrained model.
 
     Tested by: this function itself (self-test section).
+
+    References:
+        - https://deepxde.readthedocs.io/en/latest/demos/pinn_forward.html
+        - https://numpy.org/doc/stable/reference/routines.math.html
     """
     cls = _load_accelerator()
     if cls is None:
@@ -554,6 +607,9 @@ def test_get_err() -> None:
     """get_err formula: pct error, zero-guarded for non-positive refs.
 
     Tested by: this function itself (self-test section).
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
     """
     assert get_err(110.0, 100.0) == 10.0
     assert get_err(90.0, 100.0) == 10.0
@@ -565,6 +621,10 @@ def test_main_help_exits_zero() -> None:
     """--help prints usage and exits cleanly (SystemExit 0).
 
     Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/argparse.html
+        - https://docs.python.org/3/library/sys.html
     """
     import contextlib
     import io

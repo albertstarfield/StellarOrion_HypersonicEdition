@@ -69,6 +69,10 @@ def parse_vtu_surface(vtu_file):
       3. CellData arrays: HeatFlux_Wm2, Drag_N, Lift_N
 
     RETURNS: dict with keys 'x', 'y', 'heatflux', 'drag', 'lift', 'n_cells'
+
+    References:
+      - https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf - VTK XML UnstructuredGrid file format specification
+      - https://sparta.github.io/ - SPARTA DSMC simulator documentation for VTU surf dump format
     """
     tree = ET.parse(vtu_file)
     root = tree.getroot()
@@ -115,6 +119,10 @@ def _fix_vtu_connectivity(raw_text, n_pts):
       4. Some concatenations may be non-repeated (N1*10^d2 + N2)
 
     [Citation: SPARTA VTU writer bug — missing space between connectivity values]
+
+    References:
+      - https://sparta.github.io/ - SPARTA DSMC simulator documentation
+      - https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf - VTK XML UnstructuredGrid file format
     """
     tokens = raw_text.split()
     max_idx = n_pts - 1
@@ -159,6 +167,10 @@ def extract_cell_centroids(vtu_file):
     [Citation: VTK File Format — https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf]
 
     RETURNS: (centroids_x, centroids_y) arrays of shape (n_cells,)
+
+    References:
+      - https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf - VTK XML UnstructuredGrid format
+      - https://numpy.org/doc/stable/reference/generated/numpy.mean.html - NumPy mean for centroid averaging
     """
     tree = ET.parse(vtu_file)
     root = tree.getroot()
@@ -247,6 +259,11 @@ def denoise_surface_heatflux(x, y, heatflux, n_restarts=2, random_state=42):
       3. Predict denoised heatflux at all training points
 
     RETURNS: denoised heatflux array, GP model, noise stats dict
+
+    References:
+      - https://scikit-learn.org/stable/modules/gaussian_process.html - Scikit-learn Gaussian Process regression guide
+      - https://www.gaussianprocess.org/gpml/ - Rasmussen & Williams (2006) Gaussian Processes for Machine Learning
+      - https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html - GPRegressor API reference
     """
     X = np.column_stack([x, y])
     N = len(x)
@@ -338,6 +355,11 @@ def build_temporal_surrogate(steps, metrics, max_steps=2200):
       max_steps: maximum step for extrapolation
 
     Returns: dict of metric_name → (extrapolated_values, gp_model, stats)
+
+    References:
+      - https://scikit-learn.org/stable/modules/gaussian_process.html - Scikit-learn GP for temporal regression
+      - https://doi.org/10.1016/j.jcp.2018.10.045 - Raissi et al. (2019) Physics-informed neural networks, JCP 378
+      - https://deepxde.readthedocs.io/ - DeepXDE PINN framework documentation
     """
     t = steps.astype(float).reshape(-1, 1)
 
@@ -411,6 +433,10 @@ def compare_denoise_raw(raw_hf, denoised_hf):
       1. DSMC noise is zero-mean (Bird 1994)
       2. Variance reduction indicates effective denoising
       3. Mean preservation indicates no systematic bias
+
+    References:
+      - https://doi.org/10.1017/CBO9781139811347 - Bird (1994) Molecular Gas Dynamics and DSMC noise scaling
+      - https://numpy.org/doc/stable/reference/generated/numpy.std.html - NumPy standard deviation for noise analysis
     """
     raw_mean = np.mean(raw_hf)
     den_mean = np.mean(denoised_hf)
@@ -436,7 +462,12 @@ def compare_denoise_raw(raw_hf, denoised_hf):
 # ============================================================================
 
 def main():
-    """Run the full comparison pipeline on VTU data."""
+    """Run the full comparison pipeline on VTU data.
+
+    References:
+      - https://sparta.github.io/ - SPARTA DSMC simulator for generating VTU surface data
+      - https://scikit-learn.org/stable/modules/gaussian_process.html - GP denoising and temporal surrogate
+    """
     print("=" * 72)
     print("StellarOrion Pipeline Comparison: Raw vs Denoised vs PINN Surrogate")
     print("=" * 72)
@@ -638,6 +669,10 @@ def main():
           3. X = mu + sigma * Z ~ Normal(mu, sigma)
 
         [Citation: Box & Muller (1958), "A Note on Random Number Generation"]
+
+        References:
+          - https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform - Box-Muller transform derivation and properties
+          - https://numpy.org/doc/stable/reference/random/generated/numpy.random.Generator.standard_normal.html - NumPy Gaussian random number generation
         """
         u1 = rng.uniform(1e-10, 1.0, n)
         u2 = rng.uniform(0.0, 1.0, n)
@@ -654,6 +689,10 @@ def main():
 
         [Citation: Herrera et al. (1998), "A survey on the application of
          genetic programming to classification", IEEE Trans SMC]
+
+        References:
+          - https://ieeexplore.ieee.org/document/693335 - Herrera et al. (1998) BLX-alpha crossover in genetic algorithms
+          - https://en.wikipedia.org/wiki/Crossover_(genetic_algorithm) - Genetic algorithm crossover operator overview
         """
         d = np.abs(parent1 - parent2)
         lo = np.minimum(parent1, parent2) - alpha * d
@@ -671,6 +710,10 @@ def main():
 
         [Citation: Goldberg (1989), "Genetic Algorithms in Search,
          Optimization, and Machine Learning", Addison-Wesley]
+
+        References:
+          - https://en.wikipedia.org/wiki/Mutation_(genetic_algorithm) - Gaussian mutation operator in genetic algorithms
+          - https://numpy.org/doc/stable/reference/random/generated/numpy.random.Generator.standard_normal.html - NumPy Gaussian random number generation
         """
         child = individual.copy()
         n = len(child)
@@ -709,7 +752,12 @@ def main():
 
     # 4. GA convergence test: minimize f(x) = (x-0.7)^2 + (y-2.5)^2
     def test_cost(params):
-        """Simple quadratic test cost function."""
+        """Simple quadratic test cost function.
+
+        References:
+          - https://en.wikipedia.org/wiki/Test_functions_for_optimization - Standard optimization test functions
+          - https://docs.scipy.org/doc/scipy/reference/optimize.html - SciPy optimization reference
+        """
         return (params[0] - 0.7) ** 2 + (params[1] - 2.5) ** 2
 
     pop_size = 20

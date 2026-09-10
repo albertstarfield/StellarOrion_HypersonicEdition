@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_dual_watchdog.adb",
+  "source_hash": "1dbcb5beae77f3649ca44d2b57ba43b3819e3d46fab36eb9069a963d32d018f6",
+  "rs_checksum": "3ce305a4c02b91210998080eb7836a3a6dab6a7a93b994d7c80cb2a822651c6a",
+  "gc_checksum": "f38b18d775ed99b724d2b0d34d08e3434ed7a0d06d885122b26cd4016fb083e8",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 84
+}

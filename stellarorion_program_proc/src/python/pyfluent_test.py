@@ -16,6 +16,10 @@ def _ssh_connection_check(host, user, password=None, key_path=None):
     """Test SSH connection and verify remote PyFluent environment.
 
     Mirrors L2570-2667 of StellarOrionEngineMach5Up.py.
+
+    References:
+    - https://www.paramiko.org/stable/api/client.html
+    - https://www.paramiko.org/stable/api/ssh_client.html
     """
     try:
         import paramiko
@@ -166,6 +170,10 @@ def run_integration_test(host, user, password=None, key_path=None):
     1. Verify SSH connection
     2. Check Python + PyFluent availability
     3. Attempt a minimal Fluent handshake (if possible)
+
+    References:
+    - https://fluent.docs.pyansys.com/version/stable/api/index.html
+    - https://www.paramiko.org/stable/api/client.html
     """
     print(f"[*] Connecting to {user}@{host} ...")
     result = _ssh_connection_check(host, user, password, key_path)
@@ -230,7 +238,12 @@ def run_integration_test(host, user, password=None, key_path=None):
 
 
 def _safe_json_dumps(obj):
-    """Serialize obj to indented JSON; never raises (Murphy's Law fallback)."""
+    """Serialize obj to indented JSON; never raises (Murphy's Law fallback).
+
+    References:
+    - https://docs.python.org/3/library/json.html#json.dumps
+    - https://docs.python.org/3/library/json.html#basic-usage
+    """
     try:
         return json.dumps(obj, indent=2)
     except (TypeError, ValueError) as exc:
@@ -243,6 +256,10 @@ def main():
 
     Requires --ssh-host and --ssh-user plus either --ssh-key or --ssh-pass;
     runs the remote Fluent connectivity check and prints RESULT_JSON output.
+
+    References:
+    - https://docs.python.org/3/library/argparse.html
+    - https://docs.python.org/3/library/sys.html#sys.exit
     """
     parser = argparse.ArgumentParser(
         description="StellarOrion PyFluent SSH Integration Test Sidecar"
@@ -289,6 +306,10 @@ def test_run_integration_test_empty_args() -> None:
     """Empty host/user short-circuits into a structured error dict.
 
     Tested by: this function itself (self-test section).
+
+    References:
+    - https://docs.pytest.org/en/stable/getting-started.html
+    - https://docs.pytest.org/en/stable/how-to/assert.html
     """
     result = run_integration_test("", "")
     assert isinstance(result, dict)
@@ -299,6 +320,10 @@ def test_main_help_exits_zero() -> None:
     """--help prints usage and exits cleanly (SystemExit 0 or None).
 
     Tested by: this function itself (self-test section).
+
+    References:
+    - https://docs.pytest.org/en/stable/getting-started.html
+    - https://docs.python.org/3/library/argparse.html
     """
     import contextlib
     import io

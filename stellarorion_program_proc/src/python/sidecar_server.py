@@ -28,13 +28,23 @@ _sim_state: dict[str, Any] = {
 
 
 class SidecarHandler(SimpleHTTPRequestHandler):
-    """HTTP request handler for the sidecar API + static files."""
+    """HTTP request handler for the sidecar API + static files.
+
+    References:
+    - https://docs.python.org/3/library/http.server.html#http.server.SimpleHTTPRequestHandler
+    - https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler
+    """
 
     # --- GET routing ---
     def do_GET(self) -> None:
         """Serve /api/status as live simulation state; other paths fall
         through to static frontend files.
+
         Tested by: test_do_GET() (same file).
+
+        References:
+        - https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.do_GET
+        - https://docs.python.org/3/library/http.server.html#http.server.SimpleHTTPRequestHandler
         """
         if self.path == "/api/status":
             self._json_response(_sim_state)
@@ -47,7 +57,12 @@ class SidecarHandler(SimpleHTTPRequestHandler):
     def do_POST(self) -> None:
         """Merge a JSON body into _sim_state (/api/update) or reset it
         to idle defaults (/api/reset); rejects malformed JSON with 400.
+
         Tested by: test_do_POST() (same file).
+
+        References:
+        - https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.do_POST
+        - https://docs.python.org/3/library/json.html#json.loads
         """
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
@@ -70,7 +85,13 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             self.send_error(404)
 
     def _json_response(self, data: Any, status: int = 200) -> None:
-        """Write data as a JSON body with permissive CORS headers."""
+        """Write data as a JSON body with permissive CORS headers.
+
+        References:
+        - https://docs.python.org/3/library/json.html#json.dumps
+        - https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.send_response
+        - https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+        """
         #  Serialize FIRST inside a guard (Murphy's Law): a serialization
         #  failure is reported verbosely and degrades to an error payload
         #  instead of crashing the handler mid-response.
@@ -87,7 +108,13 @@ class SidecarHandler(SimpleHTTPRequestHandler):
 
     def _serve_static(self, path: str) -> None:
         """Serve a file from sidecar_ui/, falling back to ui/frontend;
-        sends 404 when no candidate exists."""
+        sends 404 when no candidate exists.
+
+        References:
+        - https://docs.python.org/3/library/pathlib.html#pathlib.Path.is_file
+        - https://docs.python.org/3/library/http.server.html#http.server.SimpleHTTPRequestHandler
+        - https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
+        """
         # Try sidecar_ui first, then ui/
         # Loop invariant: bases is a fixed two-element list; the loop returns
         # on the first existing candidate file, else falls through to 404.
@@ -114,7 +141,13 @@ class SidecarHandler(SimpleHTTPRequestHandler):
     def do_OPTIONS(self) -> None:
         """Answer CORS preflight: allow GET/POST/OPTIONS with Content-Type
         from any origin.
+
         Tested by: test_do_OPTIONS() (same file).
+
+        References:
+        - https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.do_OPTIONS
+        - https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+        - https://fetch.spec.whatwg.org/#cors-preflight-fetch
         """
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -125,7 +158,12 @@ class SidecarHandler(SimpleHTTPRequestHandler):
     # --- access-log suppression ---
     def log_message(self, fmt: str, *args: Any) -> None:
         """Suppress BaseHTTPRequestHandler's per-request console logging.
+
         Tested by: test_log_message() (same file).
+
+        References:
+        - https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.log_message
+        - https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.log_request
         """
         # Silence request logging
 
@@ -136,7 +174,13 @@ def main() -> None:
 
     Binds --host/--port (defaults 127.0.0.1:8080), serves until interrupted,
     then closes the listening socket cleanly on Ctrl-C.
+
     Tested by: test_main() (same file).
+
+    References:
+    - https://docs.python.org/3/library/http.server.html#http.server.HTTPServer
+    - https://docs.python.org/3/library/argparse.html
+    - https://docs.python.org/3/library/signal.html#signal.signal
     """
     parser = argparse.ArgumentParser(description="StellarOrion Sidecar UI")
     parser.add_argument("--port", type=int, default=8080)
@@ -164,7 +208,13 @@ def _spin_server():
     """Start HTTPServer on an ephemeral localhost port in a daemon thread.
 
     Pre: none. Post: returns (server, base_url); caller must server_close().
+
     Tested by: indirectly via test_do_GET().
+
+    References:
+    - https://docs.python.org/3/library/http.server.html#http.server.HTTPServer
+    - https://docs.python.org/3/library/threading.html#threading.Thread
+    - https://docs.python.org/3/library/socket.html#socket.getsockname
     """
     import threading
 
@@ -180,6 +230,11 @@ def test_do_GET() -> None:
     """GET /api/status returns 200 JSON carrying the status key.
 
     Tested by: this function itself (self-test section).
+
+    References:
+    - https://docs.python.org/3/library/urllib.request.html#urllib.request.urlopen
+    - https://docs.python.org/3/library/json.html#json.loads
+    - https://docs.pytest.org/en/stable/getting-started.html
     """
     import json
     import urllib.request
@@ -200,6 +255,11 @@ def test_do_POST() -> None:
     """POST /api/update merges state; /api/reset restores idle defaults.
 
     Tested by: this function itself (self-test section).
+
+    References:
+    - https://docs.python.org/3/library/urllib.request.html#urllib.request.Request
+    - https://docs.python.org/3/library/json.html#json.dumps
+    - https://docs.pytest.org/en/stable/getting-started.html
     """
     import json
     import urllib.request
@@ -230,6 +290,11 @@ def test_do_OPTIONS() -> None:
     """OPTIONS preflight answers 2xx with CORS allow-origin header.
 
     Tested by: this function itself (self-test section).
+
+    References:
+    - https://docs.python.org/3/library/urllib.request.html#urllib.request.Request
+    - https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+    - https://docs.pytest.org/en/stable/getting-started.html
     """
     import urllib.request
 
@@ -248,6 +313,10 @@ def test_log_message() -> None:
     """log_message override swallows format calls without printing.
 
     Tested by: this function itself (self-test section).
+
+    References:
+    - https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.log_message
+    - https://docs.pytest.org/en/stable/getting-started.html
     """
     assert SidecarHandler.log_message(object(), "GET %s", "/x") is None
 
@@ -257,6 +326,11 @@ def test_main() -> None:
     """Startup wiring binds an ephemeral socket and closes cleanly.
 
     Tested by: this function itself (self-test section).
+
+    References:
+    - https://docs.python.org/3/library/http.server.html#http.server.HTTPServer
+    - https://docs.python.org/3/library/socket.html#socket.getsockname
+    - https://docs.pytest.org/en/stable/getting-started.html
     """
     srv = HTTPServer(("127.0.0.1", 0), SidecarHandler)
     _host, port = srv.server_address[:2]

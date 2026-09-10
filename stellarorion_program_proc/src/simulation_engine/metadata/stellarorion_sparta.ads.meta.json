@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_sparta.ads",
+  "source_hash": "c3558cad70dedd9ab3fcfe2a45ff1150c1f185115fd5954c29d018079efbe140",
+  "rs_checksum": "19c266fe75eeccbafe044b890d0a76cfcc5e6b7b6ef78819d3109a42417d5535",
+  "gc_checksum": "e56ecbe63c21061ccf783749fe34008493a21f494c4bbd857a424a21dea3d0ad",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 22
+}

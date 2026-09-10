@@ -21,7 +21,13 @@ VERBOSE_ERROR_TEMPLATE = """            exception
                   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");"""
 
 def find_procedures_without_handlers(content):
-    """Find all procedure/function begin blocks that lack exception handlers."""
+    """Find all procedure/function begin blocks that lack exception handlers.
+
+    References:
+    - https://docs.python.org/3/library/re.html
+    - https://docs.python.org/3/library/stdtypes.html#str.split
+    - https://docs.python.org/3/library/stdtypes.html#str.strip
+    """
     lines = content.split('\n')
     results = []
 
@@ -102,9 +108,32 @@ def find_procedures_without_handlers(content):
 
 
 def add_exception_handlers(filepath):
-    """Add exception handlers to all procedures/functions missing them."""
-    with open(filepath, 'r') as f:
-        content = f.read()
+    """Add exception handlers to all procedures/functions missing them.
+
+    References:
+    - https://docs.python.org/3/library/functions.html#open
+    - https://docs.python.org/3/library/stdtypes.html#str.join
+    - https://docs.python.org/3/library/stdtypes.html#list.sort
+    """
+    try:
+        with open(filepath, 'r') as f:
+            content = f.read()
+    except FileNotFoundError:
+        # [Safety Fallback]: File does not exist at given path
+        print(f"ERROR: File not found: {filepath}", file=sys.stderr)
+        return -1
+    except PermissionError:
+        # [Safety Fallback]: Insufficient permissions to read the file
+        print(f"ERROR: Permission denied reading: {filepath}", file=sys.stderr)
+        return -1
+    except IsADirectoryError:
+        # [Safety Fallback]: Path points to a directory, not a file
+        print(f"ERROR: Path is a directory, not a file: {filepath}", file=sys.stderr)
+        return -1
+    except OSError as e:
+        # [Safety Fallback]: Catch-all for other OS-level file errors
+        print(f"ERROR: OS error reading {filepath}: {e}", file=sys.stderr)
+        return -1
 
     procedures = find_procedures_without_handlers(content)
 
@@ -142,8 +171,21 @@ def add_exception_handlers(filepath):
 
         count += 1
 
-    with open(filepath, 'w') as f:
-        f.write('\n'.join(lines))
+    try:
+        with open(filepath, 'w') as f:
+            f.write('\n'.join(lines))
+    except PermissionError:
+        # [Safety Fallback]: Insufficient permissions to write the file
+        print(f"ERROR: Permission denied writing: {filepath}", file=sys.stderr)
+        return -1
+    except IsADirectoryError:
+        # [Safety Fallback]: Path points to a directory, not a file
+        print(f"ERROR: Path is a directory, not a file: {filepath}", file=sys.stderr)
+        return -1
+    except OSError as e:
+        # [Safety Fallback]: Catch-all for other OS-level file write errors
+        print(f"ERROR: OS error writing {filepath}: {e}", file=sys.stderr)
+        return -1
 
     return count
 
