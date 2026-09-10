@@ -3,6 +3,8 @@
 --  THEOREM: This wrapper consolidates all pointer usage into one location.
 --  CITATIONS: GNAT OS_Lib.Spawn (s-os_lib.ads L861), Ada RM 13.1.1
 with GNAT.OS_Lib;
+with Ada.Text_IO;
+with Ada.Exceptions;
 
 package body StellarOrion_Safe_Access is
    pragma SPARK_Mode (Off); -- justified: Unchecked_Conversion for GNAT.OS_Lib.String_Access allocation (Ada RM 13.9); c_binding: Ada unchecked cast for FFI -- nosec: DYNAMIC_ALLOCATION
@@ -27,6 +29,14 @@ package body StellarOrion_Safe_Access is
       --  [Citation: Ada RM 4.8 — aggregated allocator new String'(S)]
       --  [Ref: CWE-770 — allocation without size limit; mitigated by caller context]
       return new String'(S); -- nosec: DYNAMIC_ALLOCATION
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      To_Chars_Ptr");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
    end To_Chars_Ptr;
 
 end StellarOrion_Safe_Access;

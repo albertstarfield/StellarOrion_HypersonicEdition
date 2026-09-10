@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_cli.ads",
+  "source_hash": "3dc3e5735ca5de7c59db1ac4066aa673a57996646c36fff2676c3c5ae10d0bfd",
+  "rs_checksum": "251f383f359738ed999ab5341e2e724d1d1610d38f58594608f30fba5b232e7d",
+  "gc_checksum": "a2489704d2a734a8c621364b124adce10b21434db45d8856fd32fb8b72cf94c6",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 7
+}

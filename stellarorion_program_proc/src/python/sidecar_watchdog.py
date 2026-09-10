@@ -70,6 +70,10 @@ class Primary_Watchdog:
 
         Raises:
             ValueError: If heartbeat_path is empty.
+
+        References:
+            - https://docs.python.org/3/library/threading.html
+            - https://docs.python.org/3/library/time.html
         """
         if not heartbeat_path:
             raise ValueError("heartbeat_path must not be empty")
@@ -86,6 +90,9 @@ class Primary_Watchdog:
 
         Returns:
             None
+
+        References:
+            - https://docs.python.org/3/library/threading.html
         """
         self._running = True
         self._thread = threading.Thread(
@@ -101,6 +108,9 @@ class Primary_Watchdog:
 
         Returns:
             None
+
+        References:
+            - https://docs.python.org/3/library/threading.html
         """
         self._running = False
         if self._thread is not None:
@@ -114,6 +124,9 @@ class Primary_Watchdog:
             True if Secondary_Watchdog has pinged recently.
 
         [Based on: code-quality.md §5.8 — Cross-monitoring]
+
+        References:
+            - https://docs.python.org/3/library/threading.html
         """
         return self._cross_check_token
 
@@ -122,6 +135,9 @@ class Primary_Watchdog:
 
         Returns:
             None
+
+        References:
+            - https://docs.python.org/3/library/time.html
         """
         self._last_heartbeat = time.monotonic()
 
@@ -133,6 +149,10 @@ class Primary_Watchdog:
 
         Murphys Law: Handles file-not-found, permission errors, and
         stale heartbeats gracefully.
+
+        References:
+            - https://docs.python.org/3/library/time.html
+            - https://docs.python.org/3/library/threading.html
         """
         while self._running:  # nosec: SOFTLOCK_RISK — timeout guard prevents infinite loop
             try:
@@ -156,6 +176,9 @@ class Primary_Watchdog:
 
         Returns:
             None
+
+        References:
+            - https://docs.python.org/3/library/time.html
         """
         self._restart_count += 1
         if self._restart_count > self.MAX_RESTART_ATTEMPTS:
@@ -204,6 +227,10 @@ class Secondary_Watchdog:
 
         Returns:
             None
+
+        References:
+            - https://docs.python.org/3/library/threading.html
+            - https://docs.python.org/3/library/time.html
         """
         self._primary = primary_watchdog
         self._running = False
@@ -216,6 +243,9 @@ class Secondary_Watchdog:
 
         Returns:
             None
+
+        References:
+            - https://docs.python.org/3/library/threading.html
         """
         self._running = True
         self._thread = threading.Thread(
@@ -233,6 +263,9 @@ class Secondary_Watchdog:
 
         Returns:
             None
+
+        References:
+            - https://docs.python.org/3/library/threading.html
         """
         self._running = False
         if self._thread is not None:
@@ -246,6 +279,9 @@ class Secondary_Watchdog:
             True if Primary_Watchdog has cross-checked recently.
 
         [Based on: code-quality.md §5.8 — Mutual cross-monitoring]
+
+        References:
+            - https://docs.python.org/3/library/time.html
         """
         elapsed = time.monotonic() - self._last_cross_check
         return elapsed < self.PRIMARY_TIMEOUT_S
@@ -255,6 +291,10 @@ class Secondary_Watchdog:
 
         Returns:
             None
+
+        References:
+            - https://docs.python.org/3/library/time.html
+            - https://docs.python.org/3/library/threading.html
         """
         while self._running:  # nosec: SOFTLOCK_RISK — timeout guard prevents infinite loop
             try:
@@ -283,6 +323,10 @@ class Secondary_Watchdog:
             None
 
         [Based on: code-quality.md §5.7 — Handle_Segfault Resurrect requirement]
+
+        References:
+            - https://docs.python.org/3/library/threading.html
+            - https://docs.python.org/3/library/time.html
         """
         self._restart_count += 1
         if self._restart_count > self.MAX_RESTART_ATTEMPTS:
@@ -323,6 +367,10 @@ def Handle_Segfault(signum: int, _frame: Any) -> None:  # nosec
 
     [Based on: code-quality.md §5.7 — Handle_Segfault signal handler requirement]
     [Citation: SEI CERT C Coding Standard SIG30-C — Handle signals safely]
+
+    References:
+        - https://docs.python.org/3/library/signal.html
+        - https://docs.python.org/3/library/os.html
     """
     logger.critical(
         "Handle_Segfault: received signal %d (SIGSEGV), initiating Resurrect",
@@ -339,6 +387,9 @@ def install_segfault_handler() -> None:  # nosec
         None
 
     [Based on: code-quality.md §5.7 — Signal handler installation]
+
+    References:
+        - https://docs.python.org/3/library/signal.html
     """
     if hasattr(signal, "SIGSEGV"):
         signal.signal(signal.SIGSEGV, Handle_Segfault)  # type: ignore[arg-type]
@@ -370,6 +421,9 @@ class SidecarWatchdogManager:
 
         Returns:
             None
+
+        References:
+            - https://docs.python.org/3/library/threading.html
         """
         self._primary = Primary_Watchdog(heartbeat_path, restart_callback)
         self._secondary = Secondary_Watchdog(self._primary)
@@ -379,6 +433,10 @@ class SidecarWatchdogManager:
 
         Returns:
             None
+
+        References:
+            - https://docs.python.org/3/library/threading.html
+            - https://docs.python.org/3/library/signal.html
         """
         self._primary.start()
         self._secondary.start()
@@ -390,6 +448,9 @@ class SidecarWatchdogManager:
 
         Returns:
             None
+
+        References:
+            - https://docs.python.org/3/library/threading.html
         """
         self._secondary.stop()
         self._primary.stop()
@@ -400,5 +461,8 @@ class SidecarWatchdogManager:
 
         Returns:
             None
+
+        References:
+            - https://docs.python.org/3/library/time.html
         """
         self._primary.update_heartbeat()

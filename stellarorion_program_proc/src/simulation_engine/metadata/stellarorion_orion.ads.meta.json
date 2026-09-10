@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_orion.ads",
+  "source_hash": "eaef5c7e3553ac4d1dce5184c2817cc26485426ac4b049154f9e7673c853f817",
+  "rs_checksum": "91bc00792f5d1e0a258e700b03daf81aa04037225e928fd321a01578726e9576",
+  "gc_checksum": "d4e3ce649534a9516cd51cf5ff28db612ebee73326aa8ff1ffaf19f25654629a",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 8
+}

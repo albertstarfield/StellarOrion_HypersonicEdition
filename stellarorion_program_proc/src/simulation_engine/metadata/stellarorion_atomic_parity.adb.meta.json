@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_atomic_parity.adb",
+  "source_hash": "e26d1814380de0374cb51890d48f0d60ab94057a3e32713eb9cd5cbfeb64733e",
+  "rs_checksum": "f1c86dd1c72984fd36242d38963fec79da520a810f721b354e7922bc87d311d8",
+  "gc_checksum": "5b84f61e9f17d1f07cbe63315ae5b299687a7d139b4d7ab457895430b731fa33",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 59
+}

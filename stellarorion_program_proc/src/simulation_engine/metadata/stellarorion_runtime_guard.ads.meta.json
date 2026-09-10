@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_runtime_guard.ads",
+  "source_hash": "fd9e2871ecb609585edc4c61b5ae314d9462d31b9c2ffbd679efd64eae5bb305",
+  "rs_checksum": "00146a72aa7383bee04cc424ebb38c490381b9ba3758106d7ce68f3f1849a374",
+  "gc_checksum": "e2ce8321eff3d9282088b79387145cfc1e2cd6e558018adbc8c97a53faf2caaa",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 10
+}
