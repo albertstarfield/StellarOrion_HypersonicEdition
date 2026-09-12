@@ -1,0 +1,13 @@
+# pyrefly configuration — exclude virtualenvs and build artifacts
+# [Citation: pyrefly docs — https://github.com/facebook/pyrefly]
+
+exclude = [
+    "venv_validation/",
+    "venv/",
+    ".venv/",
+    "__pycache__/",
+    "*.pyc",
+    "build/",
+    "dist/",
+    "*.egg-info/",
+]
