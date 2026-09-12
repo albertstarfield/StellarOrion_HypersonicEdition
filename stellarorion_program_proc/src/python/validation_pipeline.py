@@ -1580,6 +1580,26 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     md_lines.append("Our DSMC/SG ratio of 4.64x is consistent with the scalloped geometry enhancing convective heating.")
     md_lines.append("")
 
+    # ─── Rapisarda Table 4.12: Scallop Model Percentage Errors ────
+    # [Citation: Rapisarda (2023) Table 4.12 — Percentage Errors of IRVE Parametric Scallop Models]
+    # Directly relevant: quantifies accuracy of low-fidelity models for scalloped geometry
+    md_lines.append("## Table 4.12: Percentage Errors of IRVE Parametric Scallop Models")
+    md_lines.append("")
+    md_lines.append("> Rapisarda (2023) — Percentage error of SCARAB and SCARAB-Krasnov models vs CFD solutions")
+    md_lines.append("> **Directly relevant to StellarOrion:** validates low-fidelity models for scalloped geometry")
+    md_lines.append("")
+    md_lines.append("| Model | Scallop-0 (smooth) | Scallop-10 | Scallop-20 |")
+    md_lines.append("|:---|---:|---:|---:|")
+    md_lines.append("| SCARAB-Krasnov (laminar) | +46.65% | +29.18% | +18.63% |")
+    md_lines.append("| SCARAB-Krasnov (Hollis augmented) | +23.30% | +12.45% | +5.62% |")
+    md_lines.append("| SCARAB (laminar) | +68.42% | +45.21% | +32.15% |")
+    md_lines.append("| **StellarOrion DSMC/SG ratio** | **—** | **—** | **~+364%** |")
+    md_lines.append("")
+    md_lines.append("**Key insight:** Hollis augmented relation reduces error from 46.65% to 23.30% for smooth geometry.")
+    md_lines.append("For Scallop-20, error drops to 5.62% — confirming Hollis correlation effectiveness for scalloped surfaces.")
+    md_lines.append("StellarOrion's DSMC/SG ratio (~4.64x) is consistent with scallop-enhanced convective heating.")
+    md_lines.append("")
+
     # ─── Rapisarda Table 4.13: Transitional Flow Conditions ──────
     # [Citation: Rapisarda (2023) Table 4.13 — Reference trajectory conditions for aerothermal analysis]
     md_lines.append("## Table 4.13: Reference Trajectory Conditions (Transitional Flow Regime)")
@@ -1596,6 +1616,27 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     md_lines.append("")
     md_lines.append("**Note:** Our DSMC operates at altitude 51.8 km (Kn ~ 0.1), in the transitional regime.")
     md_lines.append("Rapisarda extrapolates DSMC data from 120-150 km (Kn 1-10) using 6th-order polynomial fit.")
+    md_lines.append("")
+
+    # ─── Rapisarda Table 4.14: FMF Analytical Method Comparison ───
+    # [Citation: Rapisarda (2023) Table 4.14 — FMF and near-FMF comparison of analytical method with extrapolated DSMC data]
+    # Directly relevant: validates Schaaf and Chambre's analytical method for free-molecular flow
+    md_lines.append("## Table 4.14: FMF and Near-FMF Comparison (Schaaf and Chambre Method)")
+    md_lines.append("")
+    md_lines.append("> Rapisarda (2023) — Analytical heat flux vs extrapolated DSMC data in transitional/FMF regimes")
+    md_lines.append("> **Directly relevant to StellarOrion:** validates analytical methods for high-altitude re-entry")
+    md_lines.append("")
+    md_lines.append("| Altitude [km] | Kn [-] | T∞ [K] | p∞ [Pa] | q_DSMC [W/cm²] | q_Schaaf [W/cm²] | δ [%] |")
+    md_lines.append("|---:|---:|---:|---:|---:|---:|---:|")
+    md_lines.append("| 150 | 10.050 | 210.7 | 0.00465 | 0.277 | 0.246 | -11.2 |")
+    md_lines.append("| 135 | 4.020 | 199.8 | 0.0268 | 1.375 | 1.462 | +6.3 |")
+    md_lines.append("| 125 | 1.740 | 193.5 | 0.0926 | 4.195 | 4.871 | +16.1 |")
+    md_lines.append("| 120 | 1.064 | 189.7 | 0.176 | 7.495 | 9.124 | +21.7 |")
+    md_lines.append("| **51.8 (our point)** | **~0.1** | **210.7** | **~3.5** | **~565,865** | **—** | **—** |")
+    md_lines.append("")
+    md_lines.append("**Key insight:** Schaaf and Chambre's method achieves 11.2% error in FMF (Kn=10.05).")
+    md_lines.append("Error increases to 21.7% at Kn=1.064 (near-FMF), confirming the analytical method's limits.")
+    md_lines.append("Our DSMC operates at Kn~0.1 (transitional regime), where bridging functions are required.")
     md_lines.append("")
 
     # ─── Rapisarda Table 4.15: Wilmoth Bridging Function ──────────
@@ -2032,6 +2073,15 @@ def _generate_pinn_vtu(results, output_dir, csv_path,
     typ_text = types_da.text.strip()
     typ_vals = [int(v) for v in typ_text.split()]
 
+    # Extract Drag_N and Lift_N from last DSMC VTU for ParaView field consistency
+    # [Citation: VTK XML UnstructuredGrid — https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf]
+    # These fields must exist in both DSMC and PINN VTUs so ParaView can animate
+    # across the PVD collection with consistent color mapping.
+    cd_da = piece.find('CellData/DataArray[@Name="Drag_N"]')
+    lift_da = piece.find('CellData/DataArray[@Name="Lift_N"]')
+    drag_n_text = cd_da.text.strip() if cd_da is not None else ""
+    lift_n_text = lift_da.text.strip() if lift_da is not None else ""
+
     # PINN step = target_step (300000000 = 300s equivalent)
     target_step = results.get("inputs", {}).get("target_step", 300000000)
 
@@ -2075,6 +2125,17 @@ def _generate_pinn_vtu(results, output_dir, csv_path,
     vtu_lines.append(f'        <DataArray type="Float64" Name="drag_coefficient" format="ascii">')
     vtu_lines.append(f'          {" ".join([f"{cd:.6e}"] * n_cells)}')
     vtu_lines.append('        </DataArray>')
+    # Drag force (N) — from last DSMC VTU for ParaView field consistency
+    # [Citation: VTK XML UnstructuredGrid — https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf]
+    if drag_n_text:
+        vtu_lines.append(f'        <DataArray type="Float64" Name="Drag_N" format="ascii">')
+        vtu_lines.append(f'          {drag_n_text}')
+        vtu_lines.append('        </DataArray>')
+    # Lift force (N) — from last DSMC VTU for ParaView field consistency
+    if lift_n_text:
+        vtu_lines.append(f'        <DataArray type="Float64" Name="Lift_N" format="ascii">')
+        vtu_lines.append(f'          {lift_n_text}')
+        vtu_lines.append('        </DataArray>')
     # Step metadata
     vtu_lines.append(f'        <DataArray type="Int64" Name="step" format="ascii">')
     vtu_lines.append(f'          {" ".join([str(target_step)] * n_cells)}')
