@@ -1,0 +1,1353 @@
+{
+  "https://ieeexplore.ieee.org/document/1057456": {
+    "verified": true,
+    "status_code": 202,
+    "error_message": "",
+    "timestamp": 1789008047.853973,
+    "checked_by": "HEAD"
+  },
+  "https://tools.ietf.org/html/rfc4880": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008048.524649,
+    "checked_by": "HEAD"
+  },
+  "https://en.wikipedia.org/wiki/Finite_field": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008048.6206021,
+    "checked_by": "HEAD"
+  },
+  "https://en.wikipedia.org/wiki/Reed%E2%80%93Solomon_error_correction": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008048.687142,
+    "checked_by": "HEAD"
+  },
+  "https://parchive.sourceforge.net/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008049.0616782,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/hashlib.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008049.158066,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/pathlib.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008049.227884,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/os.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008049.598688,
+    "checked_by": "HEAD"
+  },
+  "https://cwe.mitre.org/data/definitions/704.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008050.9100769,
+    "checked_by": "HEAD"
+  },
+  "https://owasp.org/www-project-top-ten/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008051.0378711,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/ast.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008051.1051679,
+    "checked_by": "HEAD"
+  },
+  "https://arxiv.org/abs/0810.4840": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008051.204294,
+    "checked_by": "HEAD"
+  },
+  "https://cvc5.github.io/docs/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008051.5398788,
+    "checked_by": "HEAD"
+  },
+  "https://github.com/pschanely/CrossHair": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008052.220763,
+    "checked_by": "HEAD"
+  },
+  "https://smtlib.cs.uiowa.edu/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008054.444788,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008054.600587,
+    "checked_by": "HEAD"
+  },
+  "https://tools.ietf.org/html/rfc7231": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008055.104726,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/datetime.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008055.171357,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/json.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008055.539925,
+    "checked_by": "HEAD"
+  },
+  "https://cwe.mitre.org/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008056.6906,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/sys.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008056.7575612,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/platform.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008056.827585,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/logging.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008056.8986938,
+    "checked_by": "HEAD"
+  },
+  "https://coq.inria.fr/refman/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008061.123472,
+    "checked_by": "HEAD"
+  },
+  "https://github.com/AdaCore/spark2014": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008062.052233,
+    "checked_by": "HEAD"
+  },
+  "https://github.com/AdaCore/ada_language_server": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008062.96914,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/unittest.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008063.036545,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/venv.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008063.327688,
+    "checked_by": "HEAD"
+  },
+  "https://alt-ergo.ocamlpro.com/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008064.5411851,
+    "checked_by": "HEAD"
+  },
+  "https://why3.org/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008065.490759,
+    "checked_by": "HEAD"
+  },
+  "https://gitlab.inria.fr/why3/why3": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008066.901878,
+    "checked_by": "HEAD"
+  },
+  "https://z3prover.github.io/api/html/z3.z3.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008068.2501929,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/gc.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789008068.324425,
+    "checked_by": "HEAD"
+  },
+  "https://ieeexplore.ieee.org/document/7082860": {
+    "verified": true,
+    "status_code": 202,
+    "error_message": "",
+    "timestamp": 1789008068.391552,
+    "checked_by": "HEAD"
+  },
+  "https://git-scm.com/docs/gitrepository-layout": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789011024.445218,
+    "checked_by": "HEAD"
+  },
+  "https://packaging.python.org/en/latest/tutorials/packaging-projects/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789011024.7955809,
+    "checked_by": "HEAD"
+  },
+  "https://nodejs.org/api/packages.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789011024.919607,
+    "checked_by": "HEAD"
+  },
+  "https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789011025.319131,
+    "checked_by": "HEAD"
+  },
+  "https://peps.python.org/pep-0405/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789011025.4209,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/json.html#json.load": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012438.229334,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/os.path.html#os.path.exists": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012438.525307,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/json.html#json.dump": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012438.58942,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/os.html#os.replace": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012438.965108,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/datetime.html#datetime.datetime.now": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012439.2687092,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/datetime.html#datetime.timezone": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012439.339464,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/exceptions.html#RuntimeError": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012439.6389918,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/stdtypes.html#tuple": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012439.779027,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/stdtypes.html#boolean-type": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012439.854056,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/stdtypes.html#str": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012439.926271,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/functions.html#all": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012440.2631521,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/typing.html#typing.Any": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012440.331712,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/stdtypes.html#dict.update": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012440.406765,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/stdtypes.html#dict.get": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012440.476956,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/stdtypes.html#dict": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012440.550059,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/stdtypes.html#str.join": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012440.623285,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012440.691038,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/os.path.html#os.path.join": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012440.846571,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.do_GET": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012441.189536,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/http.server.html#http.server.SimpleHTTPRequestHandler": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012441.333642,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.do_POST": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012441.405386,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/json.html#json.loads": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012441.4715369,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/json.html#json.dumps": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012441.537166,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.send_response": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012441.606372,
+    "checked_by": "HEAD"
+  },
+  "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012442.187084,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/pathlib.html#pathlib.Path.is_file": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012442.475378,
+    "checked_by": "HEAD"
+  },
+  "https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012444.133621,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.do_OPTIONS": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012444.201762,
+    "checked_by": "HEAD"
+  },
+  "https://fetch.spec.whatwg.org/#cors-preflight-fetch": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012446.078919,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.log_message": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012446.1475,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.log_request": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012446.2150242,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/http.server.html#http.server.HTTPServer": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012446.283041,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/argparse.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012446.349765,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/signal.html#signal.signal": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012446.649075,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/threading.html#threading.Thread": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012447.1026502,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/socket.html#socket.getsockname": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012447.512553,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/urllib.request.html#urllib.request.urlopen": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012447.898038,
+    "checked_by": "HEAD"
+  },
+  "https://docs.pytest.org/en/stable/getting-started.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012448.277525,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/urllib.request.html#urllib.request.Request": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012448.349704,
+    "checked_by": "HEAD"
+  },
+  "https://innovationspace.ansys.com/knowledge/forums/topic/fluent-environment-variables/": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012450.614569,
+    "checked_by": "HEAD"
+  },
+  "https://innovationspace.ansys.com/knowledge/forums/topic/how-to-find-where-ansys-is-installed-on-my-system/": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012452.1220832,
+    "checked_by": "HEAD"
+  },
+  "https://fluent.docs.pyansys.com/version/stable/api/index.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012452.444049,
+    "checked_by": "HEAD"
+  },
+  "https://fluent.docs.pyansys.com/version/stable/contributing/coding-guidelines.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012452.755723,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/json.html#basic-usage": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012452.907265,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/sys.html#sys.exit": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012453.245709,
+    "checked_by": "HEAD"
+  },
+  "https://docs.pytest.org/en/stable/how-to/assert.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012453.658273,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/sys.html#sys.platform": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012453.726578,
+    "checked_by": "HEAD"
+  },
+  "https://sparta.github.io/grid.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012454.268912,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012454.464957,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.savetxt.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012454.944242,
+    "checked_by": "HEAD"
+  },
+  "https://scikit-learn.org/stable/modules/gaussian_process.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012455.467649,
+    "checked_by": "HEAD"
+  },
+  "https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.kernels.Matern.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012455.804422,
+    "checked_by": "HEAD"
+  },
+  "https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012456.518487,
+    "checked_by": "HEAD"
+  },
+  "https://www.gaussianprocess.org/gpml/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012457.563149,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.testing.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012457.905761,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.random.RandomState.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012458.257131,
+    "checked_by": "HEAD"
+  },
+  "https://www.paramiko.org/stable/api/client.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012459.138413,
+    "checked_by": "HEAD"
+  },
+  "https://www.paramiko.org/stable/api/ssh_client.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012459.565927,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/threading.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012459.7210839,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/time.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012460.007415,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/signal.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012460.1870599,
+    "checked_by": "HEAD"
+  },
+  "https://pytorch.org/docs/stable/notes/cuda.html#cuda-semantics": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012460.749472,
+    "checked_by": "HEAD"
+  },
+  "https://pytorch.org/docs/stable/notes/mps.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012460.9229891,
+    "checked_by": "HEAD"
+  },
+  "https://pytorch.org/docs/stable/xpu.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012461.643618,
+    "checked_by": "HEAD"
+  },
+  "https://pytorch.org/docs/stable/notes/musa.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012462.3913221,
+    "checked_by": "HEAD"
+  },
+  "https://sparta.github.io/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012462.806433,
+    "checked_by": "HEAD"
+  },
+  "https://docs.docker.com/engine/reference/commandline/run/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012463.3312798,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/subprocess.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012463.761323,
+    "checked_by": "HEAD"
+  },
+  "https://sparta.github.io/pdf/spartaManual.pdf": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012464.166673,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012464.379431,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/demos/pinn_forward.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012464.903784,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/model.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012465.432848,
+    "checked_by": "HEAD"
+  },
+  "https://pytorch.org/tutorials/intermediate/pinns_fundamentals_tutorial.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012466.476382,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/routines.math.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012466.866621,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012467.378051,
+    "checked_by": "HEAD"
+  },
+  "https://pytorch.org/docs/stable/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012468.050817,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/os.path.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012468.117558,
+    "checked_by": "HEAD"
+  },
+  "https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012469.1773388,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.mean.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012469.524322,
+    "checked_by": "HEAD"
+  },
+  "https://doi.org/10.1016/j.jcp.2018.10.045": {
+    "verified": false,
+    "status_code": 403,
+    "error_message": "HTTP 403: Forbidden",
+    "timestamp": 1789012470.939281,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012471.435906,
+    "checked_by": "HEAD"
+  },
+  "https://doi.org/10.1017/CBO9781139811347": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012471.747263,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.std.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012472.1264598,
+    "checked_by": "HEAD"
+  },
+  "https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012472.294689,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/random/generated/numpy.random.Generator.standard_normal.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012472.805739,
+    "checked_by": "HEAD"
+  },
+  "https://ieeexplore.ieee.org/document/693335": {
+    "verified": true,
+    "status_code": 202,
+    "error_message": "",
+    "timestamp": 1789012472.901591,
+    "checked_by": "HEAD"
+  },
+  "https://en.wikipedia.org/wiki/Crossover_(genetic_algorithm": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012473.344733,
+    "checked_by": "HEAD"
+  },
+  "https://en.wikipedia.org/wiki/Mutation_(genetic_algorithm": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012473.875911,
+    "checked_by": "HEAD"
+  },
+  "https://en.wikipedia.org/wiki/Test_functions_for_optimization": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012474.3417091,
+    "checked_by": "HEAD"
+  },
+  "https://docs.scipy.org/doc/scipy/reference/optimize.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012475.161451,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/os.makedirs.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012475.657137,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/userguide.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012476.1850188,
+    "checked_by": "HEAD"
+  },
+  "https://arxiv.org/abs/1711.10561": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012476.304003,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/userguide.html#pde": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012476.4792588,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/userguide.html#boundary-condition": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012476.5949178,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012477.1065211,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html#deepxde.icbc.DirichletBC": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012477.1999092,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html#deepxde.icbc.NeumannBC": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012477.291735,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.geometry.html#deepxde.geometry.Rectangle": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012477.721062,
+    "checked_by": "HEAD"
+  },
+  "https://sparta.github.io/output_dump.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012478.018154,
+    "checked_by": "HEAD"
+  },
+  "https://sparta.github.io/Section_header.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012478.335412,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/userguide.html#model": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012478.445539,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.nn.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012478.911409,
+    "checked_by": "HEAD"
+  },
+  "https://pytorch.org/docs/stable/generated/torch.save.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012479.39821,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.data.html#deepxde.data.PDE": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012479.825236,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.data.html#deepxde.data.PointSet": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012479.9223459,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.hstack.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012480.280202,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/exceptions.html#FileNotFoundError": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012480.379926,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/inspect.html#inspect.getsource": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012480.691586,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/userguide.html#pinn": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012480.7879648,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.model.html#deepxde.model.Model": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789012481.215786,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/re.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012482.2066162,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/stdtypes.html#str.split": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012482.279387,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/stdtypes.html#str.strip": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012482.351399,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/functions.html#open": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012482.420458,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/stdtypes.html#list.sort": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789012482.4886599,
+    "checked_by": "HEAD"
+  },
+  "https://deal.readthedocs.io/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013137.1453729,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/typing.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013137.2348301,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/http.server.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013137.301137,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/csv.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013137.366611,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/urllib.parse.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013137.672504,
+    "checked_by": "HEAD"
+  },
+  "https://owasp.org/www-community/attacks/Path_Traversal": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013138.129576,
+    "checked_by": "HEAD"
+  },
+  "https://innovationspace.ansys.com/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013274.4605298,
+    "checked_by": "HEAD"
+  },
+  "https://docs.paramiko.org/en/stable/api/client.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013275.2520561,
+    "checked_by": "HEAD"
+  },
+  "https://docs.paramiko.org/en/stable/api/ssh_client.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789013275.673781,
+    "checked_by": "HEAD"
+  },
+  "https://docs.pyansys.com/version/stable/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013276.695433,
+    "checked_by": "HEAD"
+  },
+  "https://pytorch.org/tutorials/intermediate/pinns_tutorial.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789013295.0829902,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/testing.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013313.289904,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/random/index.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013313.643807,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013314.256486,
+    "checked_by": "HEAD"
+  },
+  "https://gaussianprocess.org/gpml/chapters/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013315.082858,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/os.html#os.makedirs": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013315.36955,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.html#module-deepxde.model": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789013315.467088,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/user/boundary_conditions.html": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1789013334.247086,
+    "checked_by": "HEAD"
+  },
+  "https://www.osti.gov/biblio/1595805": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789015613.2547278,
+    "checked_by": "HEAD"
+  },
+  "https://en.wikipedia.org/wiki/Crossover_%28genetic_algorithm%29": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789016633.724687,
+    "checked_by": "HEAD"
+  },
+  "https://en.wikipedia.org/wiki/Mutation_%28genetic_algorithm%29": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789016634.23377,
+    "checked_by": "HEAD"
+  },
+  "https://en.wikipedia.org/wiki/Parchive": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789016642.442813,
+    "checked_by": "HEAD"
+  },
+  "https://en.wikipedia.org/wiki/Erasure_code": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789016643.049095,
+    "checked_by": "HEAD"
+  },
+  "https://www.ada-auth.org/standards/rm12_wtc1.html": {
+    "verified": false,
+    "status_code": 0,
+    "error_message": "Connection failed: <urlopen error timed out>",
+    "timestamp": 1789019724.3512452,
+    "checked_by": "GET"
+  },
+  "https://www.ada-auth.org/standards/rm12.html": {
+    "verified": false,
+    "status_code": 0,
+    "error_message": "Connection failed: <urlopen error timed out>",
+    "timestamp": 1789020124.199113,
+    "checked_by": "GET"
+  },
+  "https://docs.adacore.com/live/wave/arm12/html/arm12/arm12-11.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789021969.876357,
+    "checked_by": "HEAD"
+  },
+  "https://docs.microsoft.com/en-us/typography/opentype/spec/stat": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789160028.4282508,
+    "checked_by": "HEAD"
+  },
+  "https://docs.microsoft.com/en-us/typography/opentype/spec/name#name-ids": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789160028.8355799,
+    "checked_by": "HEAD"
+  },
+  "https://www.numberanalytics.com/blog/ultimate-guide-to-derangements-in-combinatorics": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789160490.91379,
+    "checked_by": "HEAD"
+  },
+  "https://oeis.org/A000166": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789160491.26855,
+    "checked_by": "HEAD"
+  },
+  "https://betterexplained.com/articles/intuitive-convolution/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789160492.9005141,
+    "checked_by": "HEAD"
+  },
+  "https://www.youtube.com/watch?v=KuXjwB4LzSA": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789160493.4499671,
+    "checked_by": "HEAD"
+  },
+  "https://bugs.python.org/issue29249": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789161812.935731,
+    "checked_by": "HEAD"
+  },
+  "https://bugs.python.org/issue34731": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789161813.981482,
+    "checked_by": "HEAD"
+  },
+  "http://link.springer.com/article/10.1007/s00453-007-9064-z": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789161916.364824,
+    "checked_by": "HEAD"
+  },
+  "http://www.cecm.sfu.ca/personal/pborwein/PAPERS/P117.ps": {
+    "verified": false,
+    "status_code": 403,
+    "error_message": "HTTP 403: Forbidden",
+    "timestamp": 1789163082.565548,
+    "checked_by": "HEAD"
+  },
+  "http://en.wikipedia.org/wiki/Dirichlet_eta_function": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1789163083.0477319,
+    "checked_by": "HEAD"
+  },
+  "https://stackoverflow.com/questions/328107": {
+    "verified": false,
+    "status_code": 403,
+    "error_message": "HTTP 403: Forbidden",
+    "timestamp": 1789164803.700775,
+    "checked_by": "HEAD"
+  }
+}

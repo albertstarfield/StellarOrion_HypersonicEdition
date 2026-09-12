@@ -23,5 +23,6 @@
     <DataSet timestep="2000" group="" part="0" file="surf_2000.vtu"/>
     <DataSet timestep="2100" group="" part="0" file="surf_2100.vtu"/>
     <DataSet timestep="2200" group="" part="0" file="surf_2200.vtu"/>
+    <DataSet timestep="300000000" group="" part="0" file="surf_pinn_300000000.vtu"/>
   </Collection>
 </VTKFile>

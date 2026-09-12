@@ -1,0 +1,9 @@
+{
+  "source_file": "sidecar_ui.py",
+  "source_hash": "bc1b2a69186e9ef845c6229a6f477e470c4837f3b6f50564639e954f6b0829e2",
+  "rs_checksum": "0c9c7c3f814a00d7b62d32aa6dc3c003358b77d2ea02264dc008f9955427b415",
+  "gc_checksum": "187c92291103e20127b3ba2797475f31bf56ef10d729e9c64631aa3e2f69e886",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 117
+}

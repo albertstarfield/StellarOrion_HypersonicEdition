@@ -2898,8 +2898,9 @@ def _build_coq_proof_patterns() -> list[Pattern]:
         is_python = filepath.endswith(".py")
         is_c = filepath.endswith((".c", ".h"))
 
-        # Skip vendor, tests, and build artifacts
-        skip_dirs = ["vendor", "node_modules", "__pycache__", ".git", "build", "tests"]
+        # Skip vendor, tests, build artifacts, and venv dirs (venv is for dependency reference only)
+        skip_dirs = ["vendor", "node_modules", "__pycache__", ".git", "build", "tests",
+                     "venv", ".venv", "env", ".env", ".sabotage_verifier_venv"]
         if any(skip_dir in filepath for skip_dir in skip_dirs):
             return violations
 
@@ -4483,27 +4484,36 @@ def _check_c_missing_free(source: str, lines: list[str], filepath: str = "") -> 
 def _build_self_verification_patterns() -> list[Pattern]:
     """Enforce that the verifier runs from the project venv with pyrefly+ruff.
 
-    The central Python venv lives at:
-        AdelaideZephyrineSystem/venv/python/
-    with binaries at:
-        AdelaideZephyrineSystem/venv/python/bin/python3
-        AdelaideZephyrineSystem/venv/python/bin/pyrefly
-        AdelaideZephyrineSystem/venv/python/bin/ruff
+    AXIOMS:
+        - The verifier must use the same venv and tools it enforces on others.
+        - Project root and venv must be detected dynamically, not hardcoded.
+        - Any project with a venv containing pyrefly+ruff is valid.
 
-    All Python sidecars (LSH, VAD, daemon, search, etc.) run from this
-    single venv.  The verifier MUST also run from it so that pyrefly
-    and ruff are guaranteed available and the verifier is subject to
-    the same checks it enforces on others.
+    THEORIES:
+        - Project root detection: Walk up from filepath looking for markers
+          (.git, run.py, pyproject.toml, setup.py, Makefile).
+        - Venv detection: Check sys.prefix != sys.base_prefix (indicates venv),
+          plus common venv locations (venv/, .venv/, env/).
+        - Running from project venv: Check if sys.executable is inside the
+          detected project root's venv directory.
+
+    APPLICATIONS:
+        - Self-verification works for ANY project, not just AdelaideZephyrineSystem.
+        - Checks sys.executable, pyrefly/ruff availability, and runs linters.
 
     Checks:
       1. sys.executable must be the project venv Python
       2. pyrefly must exist in the venv bin directory
       3. ruff must exist in the venv bin directory
-      4. pyrefly check must pass on src/python/ with strict flags
-      5. ruff check must pass on src/python/
+      4. pyrefly check must pass on sabotage_verifier.py with strict flags
+      5. ruff check must pass on sabotage_verifier.py
 
     All violations are CRITICAL — the verifier cannot be trusted if it
     bypasses its own enforcement tools.
+
+    References:
+        - DO-178C §5.2.2: Self-audit integrity
+        - ECSS-Q-ST-80C §6.3: Auditor must be subject to its own rules
     """
     def check_self_verification(source: str, lines: list[str], filepath: str = "") -> list[Violation]:
         """Enforce that the verifier runs from the project venv with pyrefly+ruff.
@@ -4522,19 +4532,73 @@ def _build_self_verification_patterns() -> list[Pattern]:
 
         import sys
 
-        # ── Resolve project root ─────────────────────────────────────────
-        # filepath is e.g. src/Util/sabotage_verifier.py
-        # project_root = AdelaideZephyrineSystem/
-        project_root = os.path.abspath(os.path.join(
-            os.path.dirname(filepath),  # src/Util/
-            "..", ".."                  # AdelaideZephyrineSystem/
-        ))
+        # ── Resolve project root dynamically ──────────────────────────────
+        # AXIOM: Project root must be detected, not hardcoded.
+        # THEORIES: Walk up from filepath looking for common project markers.
+        # APPLICATIONS: Works for ANY project structure.
+        def _find_project_root(start_path: str) -> str:
+            """Walk up from start_path looking for project root markers.
 
-        # ── Venv paths (matching run.py exactly) ─────────────────────────
-        venv_dir = os.path.join(project_root, "venv", "python")
-        venv_python = os.path.join(venv_dir, "bin", "python3")
-        venv_pyrefly = os.path.join(venv_dir, "bin", "pyrefly")
-        venv_ruff = os.path.join(venv_dir, "bin", "ruff")
+            AXIOMS: Every project has at least one marker file/directory.
+            THEORIES: .git, run.py, pyproject.toml, setup.py, Makefile are common.
+            APPLICATIONS: Returns the first directory containing a marker.
+            """
+            current = os.path.abspath(start_path)
+            markers = (".git", "run.py", "pyproject.toml", "setup.py", "Makefile")
+            for _ in range(10):  # Safety: don't walk more than 10 levels
+                for marker in markers:
+                    marker_path = os.path.join(current, marker)
+                    if os.path.exists(marker_path):
+                        return current
+                parent = os.path.dirname(current)
+                if parent == current:  # Reached filesystem root
+                    break
+                current = parent
+            # Fallback: go up 2 levels from filepath (original behavior)
+            return os.path.abspath(os.path.join(
+                os.path.dirname(filepath), "..", ".."
+            ))
+
+        project_root = _find_project_root(os.path.dirname(filepath))
+
+        # ── Detect venv dynamically ───────────────────────────────────────
+        # AXIOM: Venv location varies per project; detect from sys.prefix or disk.
+        # THEORIES: Check sys.prefix != sys.base_prefix (running in venv),
+        #   plus common venv locations relative to project root.
+        # APPLICATIONS: Finds the actual venv without hardcoding paths.
+        def _find_venv_dir(proj_root: str) -> str:
+            """Detect the project venv directory dynamically.
+
+            AXIOMS: A venv is indicated by sys.prefix != sys.base_prefix,
+                or by common directory names (venv/, .venv/, env/).
+            THEORIES: Check sys.prefix first (most reliable), then disk.
+            APPLICATIONS: Returns the venv directory path, or empty string.
+            """
+            # If currently running in a venv, sys.prefix IS the venv dir
+            if sys.prefix != sys.base_prefix and os.path.isfile(
+                os.path.join(sys.prefix, "bin", "python3")
+            ):
+                return sys.prefix
+
+            # Check common venv locations relative to project root
+            candidates = ["venv", ".venv", "env", ".env", "venv/python"]
+            for candidate in candidates:
+                venv_path = os.path.join(proj_root, candidate)
+                if os.path.isfile(os.path.join(venv_path, "bin", "python3")):
+                    return venv_path
+
+            # Check parent directories (in case verifier is in a subdirectory)
+            for candidate in candidates:
+                venv_path = os.path.join(proj_root, "..", candidate)
+                if os.path.isfile(os.path.join(venv_path, "bin", "python3")):
+                    return os.path.abspath(venv_path)
+
+            return ""
+
+        venv_dir = _find_venv_dir(project_root)
+        venv_python = os.path.join(venv_dir, "bin", "python3") if venv_dir else ""
+        venv_pyrefly = os.path.join(venv_dir, "bin", "pyrefly") if venv_dir else ""
+        venv_ruff = os.path.join(venv_dir, "bin", "ruff") if venv_dir else ""
 
         # Also check the self-test venv as a fallback
         self_test_venv_dir = os.path.join(project_root, ".sabotage_verifier_venv")
@@ -4543,21 +4607,35 @@ def _build_self_verification_patterns() -> list[Pattern]:
         self_test_venv_ruff = os.path.join(self_test_venv_dir, "bin", "ruff")
 
         # ── Check 1: Verify we're running from the project venv ──────────
+        # AXIOM: The verifier must run from a venv that contains pyrefly+ruff.
+        # THEORIES: Check if sys.executable is inside any detected venv.
+        # APPLICATIONS: Works for ANY project, not just hardcoded paths.
         executable = sys.executable
-        prefix = sys.prefix
 
-        # The project venv fragment: AdelaideZephyrineSystem/venv/python
-        expected_venv_fragment = os.path.join("AdelaideZephyrineSystem", "venv", "python")
-        running_in_project_venv = (
-            expected_venv_fragment in executable
-            or expected_venv_fragment in prefix
-        )
+        # Check if we're running from ANY venv (not just a specific one)
+        running_in_venv = sys.prefix != sys.base_prefix
 
-        # Also detect: venv exists on disk but we're NOT using it
-        venv_exists = os.path.exists(venv_python)
+        # Check if we're running from the PROJECT's venv specifically
+        running_in_project_venv = False
+        if venv_dir and running_in_venv:
+            # Normalize paths for comparison
+            norm_exec = os.path.normpath(executable)
+            norm_venv = os.path.normpath(venv_dir)
+            running_in_project_venv = norm_exec.startswith(norm_venv)
 
-        if venv_exists and not running_in_project_venv:
-            activate_path = os.path.join(venv_dir, "bin", "activate")
+        # Also check: are we in ANY venv that has pyrefly+ruff?
+        has_tools_in_current_venv = False
+        if running_in_venv:
+            current_pyrefly = os.path.join(sys.prefix, "bin", "pyrefly")
+            current_ruff = os.path.join(sys.prefix, "bin", "ruff")
+            has_tools_in_current_venv = (
+                os.path.isfile(current_pyrefly) and os.path.isfile(current_ruff)
+            )
+
+        # Only flag if a project venv EXISTS but we're NOT using it
+        venv_exists = bool(venv_dir and os.path.exists(venv_python))
+        if venv_exists and not running_in_project_venv and not has_tools_in_current_venv:
+            activate_path = os.path.join(venv_dir, "bin", "activate") if venv_dir else "venv/bin/activate"
             violations.append(Violation(
                 filepath=filepath,
                 line=1,
@@ -4565,16 +4643,16 @@ def _build_self_verification_patterns() -> list[Pattern]:
                 category="SELF_VERIFICATION",
                 message=(
                     f"Sabotage verifier is NOT running from the project venv. "
-                    f"sys.executable = {executable!r}, expected to contain "
-                    f"{expected_venv_fragment!r}. "
+                    f"sys.executable = {executable!r}, "
+                    f"detected venv = {venv_dir!r}. "
                     f"Activate the venv first:\n"
                     f"  source {activate_path}\n"
-                    f"  python src/Util/sabotage_verifier.py ...\n"
-                    f"The verifier MUST run from {venv_python} to guarantee "
-                    f"pyrefly and ruff are available."
+                    f"  python sabotage_verifier.py ...\n"
+                    f"The verifier MUST run from a venv with pyrefly and ruff "
+                    f"to guarantee type safety and lint enforcement."
                 ),
                 standard="DO-178C §5.2.2, ECSS-Q-ST-80C §6.3: Self-audit integrity",
-                code_snippet=f"sys.executable = {executable}",
+                code_snippet=f"sys.executable = {executable}, venv_dir = {venv_dir}",
             ))
 
         # ── Check 2: Verify pyrefly is in the venv ───────────────────────
@@ -4782,7 +4860,7 @@ def _build_self_verification_patterns() -> list[Pattern]:
             severity=Severity.CRITICAL,
             standard="DO-178C §5.2.2, ECSS-Q-ST-80C §6.3: Self-audit integrity",
             description=(
-                "Verifier MUST run from project venv (AdelaideZephyrineSystem/venv/python/) "
+                "Verifier MUST run from the project venv (detected dynamically) "
                 "with pyrefly and ruff installed in the venv bin directory. "
                 "Enforces that the audit tool itself is type-checked and linted "
                 "using the SAME venv and SAME flags as run.py. "
@@ -8566,7 +8644,7 @@ def _build_composition_balance_patterns() -> list[Pattern]:
         if cache_key in check_composition._cached:
             return violations
 
-        # Find project root (AdelaideZephyrineSystem)
+        # Find project root (detected dynamically)
         project_root = Path(BASE_DIR)
 
         # GitHub Linguist extension-to-language mapping
@@ -10702,7 +10780,11 @@ def audit_directory(
     if extensions is None:
         extensions = [".py", ".c", ".h", ".adb", ".ads"]
     if exclude_dirs is None:
-        exclude_dirs = ["vendor", "node_modules", ".git", "__pycache__", "obj", "build"]
+        exclude_dirs = [
+            "vendor", "node_modules", ".git", "__pycache__", "obj", "build",
+            "venv", ".venv", "env", ".env",
+            ".sabotage_verifier_venv",  # verifier's own venv
+        ]
     if exclude_files is None:
         exclude_files = []
 

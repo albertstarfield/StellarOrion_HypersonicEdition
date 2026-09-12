@@ -15,8 +15,10 @@ AXIOMS:
            values for stacked-toroid IAD decelerators at Mars EDL.
 
 THEORIES:
-  THEOREM 1: Trajectory variables can be plotted vs time or vs altitude
-             to match Rapisarda Figures 4.6, 6.11, 6.13, 6.16, 6.18.
+   THEOREM 1: Trajectory variables can be plotted vs time or vs altitude
+              to match Rapisarda Figures 4.6, 6.11, 6.13, 6.18.
+              NOTE: Fig 6.16 (moment coefficients) requires CFD surface pressure
+              integration not available from SPARTA DSMC force data.
   THEOREM 2: Both old (7-col) and new (17-col) CSV formats are handled;
              old format plots basic SPARTA metrics only.
   THEOREM 3: Rapisarda reference values are overlaid as horizontal/vertical

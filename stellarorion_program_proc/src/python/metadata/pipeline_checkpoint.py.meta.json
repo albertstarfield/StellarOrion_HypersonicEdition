@@ -1,0 +1,9 @@
+{
+  "source_file": "pipeline_checkpoint.py",
+  "source_hash": "6ee1311546395a9080dd96ca36839384a8822bf37bc5b2eb7c356bc6f12be286",
+  "rs_checksum": "dec17fa70f342caef8942d8cee73dd293a408c878609201ff88d9e6b187855d7",
+  "gc_checksum": "19bdc972ad354ec9a249a9330540ab2177a149555ae3f34bbf2522c90f922433",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 61
+}
