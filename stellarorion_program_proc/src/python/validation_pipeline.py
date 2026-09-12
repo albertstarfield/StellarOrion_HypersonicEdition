@@ -1569,20 +1569,20 @@ def _generate_pinn_vtu(results, output_dir, csv_path,
 
     # Cell data — PINN extrapolated values (uniform across all cells)
     vtu_lines.append('      <CellData>')
-    # Heat flux (avg — physically meaningful)
-    vtu_lines.append(f'        <DataArray type="Float64" Name="heat_flux_avg_Wm2" format="ascii">')
+    # Heat flux (avg — physically meaningful) — matches DSMC field name HeatFlux_Wm2
+    vtu_lines.append(f'        <DataArray type="Float64" Name="HeatFlux_Wm2" format="ascii">')
     vtu_lines.append(f'          {" ".join([f"{hf_avg * 10000:.4e}"] * n_cells)}')
     vtu_lines.append('        </DataArray>')
     # Heat flux (max — noisy single-cell)
-    vtu_lines.append(f'        <DataArray type="Float64" Name="heat_flux_max_Wm2" format="ascii">')
+    vtu_lines.append(f'        <DataArray type="Float64" Name="HeatFlux_Max_Wm2" format="ascii">')
     vtu_lines.append(f'          {" ".join([f"{hf_max * 10000:.4e}"] * n_cells)}')
     vtu_lines.append('        </DataArray>')
     # Heat load (J/cm²)
-    vtu_lines.append(f'        <DataArray type="Float64" Name="heat_load_Jcm2" format="ascii">')
+    vtu_lines.append(f'        <DataArray type="Float64" Name="HeatLoad_Jcm2" format="ascii">')
     vtu_lines.append(f'          {" ".join([f"{qload:.4e}"] * n_cells)}')
     vtu_lines.append('        </DataArray>')
     # G-load
-    vtu_lines.append(f'        <DataArray type="Float64" Name="g_load" format="ascii">')
+    vtu_lines.append(f'        <DataArray type="Float64" Name="G_Load" format="ascii">')
     vtu_lines.append(f'          {" ".join([f"{g_load:.4e}"] * n_cells)}')
     vtu_lines.append('        </DataArray>')
     # Drag coefficient
