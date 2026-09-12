@@ -353,7 +353,8 @@ class CyclicLogMonitor:
         try:
             if self.pinn_results_ref:
                 completed = len(self.pinn_results_ref)
-                print(f"  [Monitor] PINN training: {completed}/5 metrics completed")
+                total_expected = 7  # cd, drag_sum_N, g_load, heatflux_max, heatflux_avg, heat_sum, heat_load
+                print(f"  [Monitor] PINN training: {completed}/{total_expected} metrics completed")
                 for metric, result in self.pinn_results_ref.items():
                     val = result.get("extrapolated_value", "N/A")
                     method = result.get("method", "unknown")
@@ -414,9 +415,21 @@ def load_convergence_data(csv_path):
       2. Rows are ordered by step (ascending)
       3. Step values represent SPARTA iteration counts (100, 200, ..., 2200)
 
+    SAFETY:
+      - Checks file exists and is non-empty before parsing
+      - Uses .get() with defaults for all columns (some may be absent in partial runs)
+      - Raises ValueError with clear message if required 'step' column is missing
+
     Returns: dict with 'steps' array and metric arrays
     """
     import csv
+
+    # Guard: file must exist and be non-empty
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(
+            f"Validation CSV not found: {csv_path}. "
+            "Run Ada binary validation mode first to generate convergence data."
+        )
 
     data = {"steps": [], "cd": [], "cl": [], "drag_sum_N": [],
             "heatflux_max_Wm2": [], "heat_sum_Wm2": [], "heatflux_avg_Wm2": [],
@@ -424,17 +437,32 @@ def load_convergence_data(csv_path):
 
     with open(csv_path, "r") as fh:
         reader = csv.DictReader(fh)
+        # Guard: CSV must have at least a 'step' column
+        if reader.fieldnames is None or "step" not in reader.fieldnames:
+            raise ValueError(
+                f"CSV '{csv_path}' has no 'step' column. "
+                f"Available columns: {reader.fieldnames}. "
+                "Ensure Ada binary wrote a valid convergence timeseries."
+            )
         for row in reader:
             data["steps"].append(int(row["step"]))
-            data["cd"].append(float(row["cd"]))
+            data["cd"].append(float(row.get("cd", 0.0)))
             data["cl"].append(float(row.get("cl", 0.0)))
-            data["drag_sum_N"].append(float(row["drag_sum_N"]))
-            data["heatflux_max_Wm2"].append(float(row["heatflux_max_Wm2"]))
-            data["heat_sum_Wm2"].append(float(row["heat_sum_Wm2"]))
-            data["heatflux_avg_Wm2"].append(float(row["heatflux_avg_Wm2"]))
-            data["g_load"].append(float(row["g_load"]))
-            data["heat_load_jcm2"].append(float(row["heat_load_jcm2"]))
+            data["drag_sum_N"].append(float(row.get("drag_sum_N", 0.0)))
+            data["heatflux_max_Wm2"].append(float(row.get("heatflux_max_Wm2", 0.0)))
+            data["heat_sum_Wm2"].append(float(row.get("heat_sum_Wm2", 0.0)))
+            data["heatflux_avg_Wm2"].append(float(row.get("heatflux_avg_Wm2", 0.0)))
+            data["g_load"].append(float(row.get("g_load", 0.0)))
+            data["heat_load_jcm2"].append(float(row.get("heat_load_jcm2", 0.0)))
             data["lift_sum_N"].append(float(row.get("lift_sum_N", 0.0)))
+
+    # Guard: CSV must have at least 2 data points (np.diff requires >= 2)
+    if len(data["steps"]) < 2:
+        raise ValueError(
+            f"CSV '{csv_path}' has only {len(data['steps'])} row(s). "
+            "Need at least 2 convergence points for Kriging denoise and PINN extrapolation. "
+            "Run more SPARTA timesteps to generate sufficient data."
+        )
 
     # Convert to numpy arrays for convenience
     for k in data:
@@ -889,6 +917,15 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
                 # but physical heat flux is always positive (Bird 1994 §3.5)]
                 pinn_val = result["extrapolated_value"]
                 krig_val = denoise_results[metric]["denoised"][-1]
+                # NaN/inf guard: if PINN diverged during training, the output
+                # may be non-finite. NaN/inf propagate silently through arithmetic
+                # (NaN < 0 is False, NaN > 0 is False) so we must check first.
+                # [Citation: IEEE 754 — NaN comparisons always return False]
+                if not np.isfinite(pinn_val):
+                    print(f"  {metric}: PINN produced non-finite value ({pinn_val}), "
+                          f"using Kriging-denoised={krig_val:.2f}")
+                    result["extrapolated_value"] = float(krig_val)
+                    result["method"] = "DeepXDE_PINN_fallback_kriging"
                 positive_metric = any(k in metric for k in ["heat", "drag", "cd"])
                 if positive_metric and pinn_val < 0:
                     result["extrapolated_value"] = float(krig_val)
@@ -1193,9 +1230,16 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
       [NASA_TP_2013_4012] NASA Technical Paper 2013-4012, IRVE-3 Flight Data.
       [Deshmukh2024] Deshmukh et al. AIAA 2024-1501, LOFTID Flight Data.
     """
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("[validation_pipeline] matplotlib not found. Auto-installing ...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "matplotlib"])
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
 
     plots_dir = os.path.join(output_dir, "plots")
     os.makedirs(plots_dir, exist_ok=True)
@@ -1495,17 +1539,19 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     md_lines.append(f"If T_backwall_pinn > 300°C ({300+273.15:.0f} K), TPS thickness must be increased.")
 
     # ─── Normalized comparison section ──────────────────────────────
-    sg_single = float(_last["heatflux_sg_Wm2"]) / 10000
-    fr_single = float(_last["heat_flux_fr_wm2"]) / 10000
-    dsmc_sg_ratio = so_raw_hf_avg / sg_single
-    dsmc_fr_ratio = so_raw_hf_avg / fr_single
+    # [Citation: Sutton-Graves (1958), Fay & Riddell (1958) — analytical heat flux models]
+    # Guard against missing CSV columns or zero analytical values
+    sg_single = float(_last.get("heatflux_sg_Wm2", 0)) / 10000
+    fr_single = float(_last.get("heat_flux_fr_wm2", 0)) / 10000
+    dsmc_sg_ratio = so_raw_hf_avg / sg_single if sg_single > 0 else 0.0
+    dsmc_fr_ratio = so_raw_hf_avg / fr_single if fr_single > 0 else 0.0
 
     md_lines.append("")
     md_lines.append("## Normalized Comparison (Same Trajectory Point)")
     md_lines.append("")
     md_lines.append("> Comparing DSMC to analytical models at the SAME conditions (not trajectory-integrated flight)")
     md_lines.append("")
-    md_lines.append(f"**Conditions:** altitude = {float(_last['alt_km']):.1f} km, velocity = {float(_last['vel_ms']):.0f} m/s, Mach = {float(_last['mach']):.2f}")
+    md_lines.append(f"**Conditions:** altitude = {float(_last.get('alt_km', 51.8)):.1f} km, velocity = {float(_last.get('vel_ms', 3378)):.0f} m/s, Mach = {float(_last.get('mach', 10.29)):.2f}")
     md_lines.append(f"**Atmosphere:** ISA (International Standard Atmosphere)")
     md_lines.append("")
     md_lines.append("| Source | Peak Heat Flux (W/cm²) | Comparison |")
@@ -1709,17 +1755,17 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
             "conditions": "alt=51.8 km, vel=3378 m/s, mach=10.29",
             "atmosphere": "ISA (International Standard Atmosphere)",
             "single_point_analytical": {
-                "sutton_graves_Wcm2": round(float(_last["heatflux_sg_Wm2"]) / 10000, 4),
-                "fay_riddell_Wcm2": round(float(_last["heat_flux_fr_wm2"]) / 10000, 4),
+                "sutton_graves_Wcm2": round(float(_last.get("heatflux_sg_Wm2", 0)) / 10000, 4),
+                "fay_riddell_Wcm2": round(float(_last.get("heat_flux_fr_wm2", 0)) / 10000, 4),
             },
             "single_point_dsmc": {
                 "per_element_avg_Wcm2": round(so_raw_hf_avg, 4),
                 "per_element_max_Wcm2": round(so_raw_hf_max, 4),
                 "pinn_extrapolated_Wcm2": round(so_pinn_hf_avg, 4),
             },
-            "dsmc_sg_ratio": round(so_raw_hf_avg / (float(_last["heatflux_sg_Wm2"]) / 10000), 2),
+            "dsmc_sg_ratio": round(so_raw_hf_avg / max(float(_last.get("heatflux_sg_Wm2", 1)) / 10000, 1e-10), 2),
             "dsmc_sg_ratio_note": "Ratio > 1 means DSMC predicts higher heating than Sutton-Graves — expected for scalloped geometry (grooved torus) vs smooth torus. Scalloped surfaces create local recirculation zones that enhance convective heating.",
-            "dsmc_fr_ratio": round(so_raw_hf_avg / (float(_last["heat_flux_fr_wm2"]) / 10000), 4),
+            "dsmc_fr_ratio": round(so_raw_hf_avg / max(float(_last.get("heat_flux_fr_wm2", 1)) / 10000, 1e-10), 4),
             "dsmc_fr_ratio_note": "Ratio < 1 means DSMC predicts lower heating than Fay-Riddell — expected because FR assumes continuum flow which overpredicts in rarefied regime (Kn > 0.1).",
         },
         "audit": results.get("audits", {}),

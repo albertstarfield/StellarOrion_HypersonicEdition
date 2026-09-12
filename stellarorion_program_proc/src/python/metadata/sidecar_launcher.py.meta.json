@@ -1,0 +1,9 @@
+{
+  "source_file": "sidecar_launcher.py",
+  "source_hash": "434a45ad34af64786ca4a9edf2c173772807d69bc9a2e71ecd67d464e89099e2",
+  "rs_checksum": "b9d49cdbb5265f4e639abe277ccb04c19966b2b565b72c80662f3a4e4a9459be",
+  "gc_checksum": "a767a52f40f92bc4c59f6d873074c291ed7c9fc8e1f7641340674f707aaf790e",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 4
+}

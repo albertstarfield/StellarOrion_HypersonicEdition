@@ -1,0 +1,284 @@
+{
+  "type": "galois_chunk",
+  "blocks": [
+    {
+      "offset": 0,
+      "size": 512,
+      "gc_checksum": "ccfb1f7c239180bdb49cf446a1da859530d92f499c2e8671ce28a3c229667298",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 512,
+      "size": 512,
+      "gc_checksum": "5221d3261dc9056d3c53309f1ef98e9322d92cf3db09a34020448706cf9790aa",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 1024,
+      "size": 512,
+      "gc_checksum": "be89af0749e3300d570b7bccdac1548880d199dfb000fce9dcab26c5c5ce7ad4",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 1536,
+      "size": 512,
+      "gc_checksum": "eedd308eebece7137313f1c4f53a1a02b252fbe1a0224dad593eead010b65e48",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 2048,
+      "size": 512,
+      "gc_checksum": "9614410cb8e99a61697207625438b2c2ddffdda9ac17853f8ef8459886f5c744",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 2560,
+      "size": 512,
+      "gc_checksum": "9213045b3cd685831879adb16aa9ef95c8a9674040429fbe6489b97f7c10ef46",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 3072,
+      "size": 512,
+      "gc_checksum": "fb7f05ba53376b9b3b2e54ed9f6668afedf68edd96edbe1a2bd479202cf9ffef",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 3584,
+      "size": 512,
+      "gc_checksum": "caa0046547778299b2a4d34cc7ec33caae9096eb32c1302c07ce22b119c79053",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 4096,
+      "size": 512,
+      "gc_checksum": "280de6dfca211f4895d9e549f72e954f1a95e2eaa76737ba6544ba570d360552",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 4608,
+      "size": 512,
+      "gc_checksum": "37d4473bc48baf080bf25f1ca417fa475baaa8f2a9ef8cfbafc6184610210d31",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 5120,
+      "size": 512,
+      "gc_checksum": "be1d5ea23ffbb3cbb6071e1758af1ad9d45f4aca0ed64bde352a7e6a55cf4192",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 5632,
+      "size": 512,
+      "gc_checksum": "1845dbd701384c01d3e2d52fe41a7e0a6fe2f0a6b253f82714202b2cff2504f5",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 6144,
+      "size": 512,
+      "gc_checksum": "b1044e3d1adbf43c8d9df32b2aca52b91a7c6ca6305b32c7d1b16dfe70368e47",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 6656,
+      "size": 512,
+      "gc_checksum": "337e6882f730c52cdd76a6cbe549a17d12fedcb25fbb23c04f424d632eda58b8",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 7168,
+      "size": 512,
+      "gc_checksum": "3a833ee042e6693a8e17bc3b79953b45a9233fb3befef61ae1525569f7a3146f",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 7680,
+      "size": 512,
+      "gc_checksum": "b111e9eea3f7028397ef56b08afba5b03388b850015b51e024c918f1bda528e5",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 8192,
+      "size": 512,
+      "gc_checksum": "3548d7eec74fd53ca31712323efc37c9411c6392097741b5a6a5c0523bbdd29e",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 8704,
+      "size": 512,
+      "gc_checksum": "438a5440c6702bafa85f895577f0cee50a200d9efc54e0f99a27897cbf81b074",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 9216,
+      "size": 512,
+      "gc_checksum": "85a9f62b18ec623f9baa6b73ddea17929a17020e8d7856979abb2005e36f7a92",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 9728,
+      "size": 512,
+      "gc_checksum": "760224300c4ce24a4012a8d5a29cb4b18b51588d5d6c26fd11e260061c8fc8b3",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 10240,
+      "size": 512,
+      "gc_checksum": "cb4323e87d686f0b1ca08c8afaf485f77030c2851682f3d84a7e347d5dcdcb38",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 10752,
+      "size": 512,
+      "gc_checksum": "bc9e4f477702eed851db7e1f5c9da2a249576f98cb39b2e35c0515df694bbeeb",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 11264,
+      "size": 512,
+      "gc_checksum": "000a88946d186c1e3805981d46782aeaee74edd937389d77290d4db6f06d772b",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 11776,
+      "size": 512,
+      "gc_checksum": "4fce9c2a3259e80350d286898e954223f03e2b35adef993d00305b2c4ea28194",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 12288,
+      "size": 512,
+      "gc_checksum": "d13964ea1a521e7db3cacd3a9b8e612801af03ad480032554c2b10cc14004b1f",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 12800,
+      "size": 512,
+      "gc_checksum": "d4aac8ebfc170d3ac85754767ec2c09f3b4a455be930c8992d70bf23aba1e000",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 13312,
+      "size": 512,
+      "gc_checksum": "7f816cf93f491e8a1cadc6bd0378beca06afc37d46a0e07195a972d2b46c51a4",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 13824,
+      "size": 512,
+      "gc_checksum": "48758799a68109ab3b14d306353601e1f5348f7a0858cbebbfa66fdea49e609b",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 14336,
+      "size": 512,
+      "gc_checksum": "412c74e337601a70bfab27eda2e269b3f8eb8bc071bee67996062bf3bb3126e1",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 14848,
+      "size": 512,
+      "gc_checksum": "0270b6b65f4ce420e8866301d6874a8622e2d16a040d3fe8afac36d82c06e8a2",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    },
+    {
+      "offset": 15360,
+      "size": 122,
+      "gc_checksum": "536497df05151b64fc77239c322c15619f2706320ada07d10ded9770fc3b0d69",
+      "gc_params": {
+        "field": "GF(2^8)",
+        "polynomial": 285
+      }
+    }
+  ]
+}

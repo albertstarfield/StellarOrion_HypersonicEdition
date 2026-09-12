@@ -1,7 +1,7 @@
 {
   "metadata": {
     "generated_by": "StellarOrion Validation Pipeline",
-    "timestamp": "2026-09-12T17:17:03.245213+00:00",
+    "timestamp": "2026-09-12T17:26:39.250519+00:00",
     "references": {
       "IRVE-3": "NASA TP-2013-4012",
       "LOFTID": "Deshmukh et al. AIAA 2024-1501",
@@ -55,7 +55,7 @@
         "cd": 1.462536
       },
       "kriging_denoised": {
-        "peak_heat_flux_avg_Wcm2": 56.93984744699649,
+        "peak_heat_flux_avg_Wcm2": 56.939847360375175,
         "peak_heat_flux_max_Wcm2": 194.65640408304017,
         "total_heat_load_Jcm2": 165.715973
       },
@@ -103,17 +103,17 @@
   "audit": {
     "cd": {
       "noise_analysis": {
-        "noise_mean": 0.00028127109340213665,
-        "noise_std": 0.05005349410031334,
-        "noise_range": 0.30601036737819776,
-        "snr_db": 7.188057880349758,
-        "noise_fraction": 0.389201359040175
+        "noise_mean": 0.0002812716752685402,
+        "noise_std": 0.05005350260125621,
+        "noise_range": 0.3060103989236338,
+        "snr_db": 7.188055566285127,
+        "noise_fraction": 0.3892014251410253
       },
       "convergence_metrics": {
         "raw_total_change": 0.5494430000000001,
-        "denoised_total_change": 0.36743806689681113,
+        "denoised_total_change": 0.3674379767792666,
         "raw_std": 0.12860565087375916,
-        "convergence_ratio": 0.6687464703286984,
+        "convergence_ratio": 0.6687463063125137,
         "stability_index": 0.9188827876757742
       },
       "n_fall_regions": 6,
@@ -121,17 +121,17 @@
     },
     "drag_sum_N": {
       "noise_analysis": {
-        "noise_mean": 8.733149432095987,
-        "noise_std": 1554.1052081033797,
-        "noise_range": 9501.279206411404,
-        "snr_db": 7.18807550025017,
-        "noise_fraction": 0.38920070591987116
+        "noise_mean": 8.733143956927961,
+        "noise_std": 1554.1051108021466,
+        "noise_range": 9501.278849693335,
+        "snr_db": 7.188076340454276,
+        "noise_fraction": 0.389200681552339
       },
       "convergence_metrics": {
         "raw_total_change": 17059.621093999995,
-        "denoised_total_change": 11408.567397109036,
+        "denoised_total_change": 11408.56841438738,
         "raw_std": 3993.0688317490867,
-        "convergence_ratio": 0.6687468223500884,
+        "convergence_ratio": 0.6687468819808586,
         "stability_index": 0.9188827330574729
       },
       "n_fall_regions": 6,
@@ -175,17 +175,17 @@
     },
     "heatflux_avg_Wm2": {
       "noise_analysis": {
-        "noise_mean": 262.5332244666484,
-        "noise_std": 49621.83540925978,
-        "noise_range": 320754.2742000392,
-        "snr_db": 11.57706057107058,
-        "noise_fraction": 0.24764036229336675
+        "noise_mean": 262.53243922639047,
+        "noise_std": 49621.822895769714,
+        "noise_range": 320754.1908730357,
+        "snr_db": 11.577063196017166,
+        "noise_fraction": 0.24764029984414077
       },
       "convergence_metrics": {
         "raw_total_change": 890787.3125,
-        "denoised_total_change": 727992.4512422488,
+        "denoised_total_change": 727992.5357018055,
         "raw_std": 200378.6254781656,
-        "convergence_ratio": 0.817246093457633,
+        "convergence_ratio": 0.8172461882721365,
         "stability_index": 0.7122500543710587
       },
       "n_fall_regions": 2,
@@ -193,17 +193,17 @@
     },
     "heat_sum_Wm2": {
       "noise_analysis": {
-        "noise_mean": 19952.454346723855,
-        "noise_std": 3771256.6602457957,
-        "noise_range": 24377307.387683406,
-        "snr_db": 11.577067747353487,
-        "noise_fraction": 0.24764018170949276
+        "noise_mean": 19952.44874041121,
+        "noise_std": 3771257.4060676405,
+        "noise_range": 24377311.853614748,
+        "snr_db": 11.577065896112666,
+        "noise_fraction": 0.24764023068400545
       },
       "convergence_metrics": {
         "raw_total_change": 67699832.0,
-        "denoised_total_change": 55327438.1283061,
+        "denoised_total_change": 55327434.64719452,
         "raw_std": 15228775.210114589,
-        "convergence_ratio": 0.8172463135256539,
+        "convergence_ratio": 0.8172462621058575,
         "stability_index": 0.7122500583726727
       },
       "n_fall_regions": 2,
@@ -270,6 +270,22 @@
     "backwall_temperature_C": 1554.0,
     "delta_T_K": 24.0,
     "conduction_heat_flux_Wm2": 565865.0,
+    "thermal_conductivity_WmK": 120.0,
+    "thermal_diffusivity_m2s": "4.98e-05",
+    "emissivity": 0.85,
+    "tps_thickness_mm": 5.0,
+    "material": "SIC (Silicon Carbide)"
+  },
+  "material_conduction_pinn": {
+    "description": "1D thermal model using PINN-extrapolated heat flux (300s / 20,000 steps)",
+    "reference": "Incropera & DeWitt (2011); Raissi et al. (2019)",
+    "surface_heat_flux_Wm2": 557898.0,
+    "surface_temperature_K": 1845.0,
+    "surface_temperature_C": 1571.0,
+    "backwall_temperature_K": 1821.0,
+    "backwall_temperature_C": 1548.0,
+    "delta_T_K": 23.0,
+    "conduction_heat_flux_Wm2": 557898.0,
     "thermal_conductivity_WmK": 120.0,
     "thermal_diffusivity_m2s": "4.98e-05",
     "emissivity": 0.85,

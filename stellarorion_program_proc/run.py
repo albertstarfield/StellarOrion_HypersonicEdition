@@ -750,10 +750,14 @@ def _phase2b_pinn_extrapolate(extra_args: list) -> None:  # noqa: ARG001
     ``validation_pipeline.py`` which performs:
 
       1. Load DSMC convergence CSV (22 rows, step 100→2200)
-      2. GP kriging denoise (scikit-learn, RBF kernel)
-      3. DeepXDE PINN extrapolation (step 2200→20000)
+      2. GP kriging denoise (scikit-learn, Matérn 5/2 + WhiteKernel)
+      3. DeepXDE PINN extrapolation (step 2200→300000000)
       4. Convergence audit (fall/increase regions, SNR, noise fraction)
       5. Comparison table vs IRVE-3 reference
+      6. Material conduction analysis (raw + PINN-extrapolated)
+      7. Cyclic log monitor (Python/Docker/Colima/Ada logs every 300s)
+      8. Interactive HTML plots (Plotly) + static PNGs
+      9. VTU/PVD generation for ParaView animation
     """
     step_info("Phase 2b: PINN Extrapolation (headless validation pipeline)")
 

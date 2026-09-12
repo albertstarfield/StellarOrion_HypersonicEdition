@@ -1,0 +1,9 @@
+{
+  "source_file": "sidecar_watchdog.py",
+  "source_hash": "ceace75d9748a15d32444430c3fc31d809ab60486da69c5729145e09024b5623",
+  "rs_checksum": "915d68e6df06d8bf40704507416183389fc4d3063333a51ca3d785da4caefd83",
+  "gc_checksum": "8160ad8fadc548a8a7f497262f2c5c9af342c9208ed32284535befde53328d7a",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 36
+}
