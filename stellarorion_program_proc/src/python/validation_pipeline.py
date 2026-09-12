@@ -1423,14 +1423,30 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     md_lines.append("> and smooth-torus geometry. Our single-point results below use ISA and scalloped geometry.")
     md_lines.append("")
 
-    # ── StellarOrion: Single-Point DSMC Results (our conditions)
+    # ── StellarOrion: Fixed-Condition DSMC Results (our simulation setup)
     # [Citation: StellarOrion DSMC — SPARTA solver, scalloped geometry, ISA,
     #  single trajectory point (51.8 km, Mach 10.29). NOT trajectory-integrated.]
-    md_lines.append("## StellarOrion: Single-Point DSMC Results (Our Conditions)")
+    # What "single point" means: SPARTA DSMC runs at ONE fixed inlet condition
+    # (altitude=51.8 km, velocity=3378 m/s, Mach=10.29, ISA atmosphere). The flow
+    # develops around the scalloped geometry for 2200 timesteps while the vehicle
+    # is FROZEN at that altitude. The vehicle does NOT descend — it's a steady-state
+    # snapshot. This is different from IRVE-3 flight (full reentry trajectory from
+    # ~120 km to ~50 km, altitude/velocity changing continuously) and from Rapisarda's
+    # models (trajectory-integrated along the full IRVE-3 path using MCD v6.1).
+    md_lines.append("## StellarOrion: Fixed-Condition DSMC Results (Our Simulation)")
     md_lines.append("")
-    md_lines.append("> **All values below are single trajectory-point results** (51.8 km, Mach 10.29, ISA).")
-    md_lines.append("> These are NOT trajectory-integrated and NOT directly comparable to IRVE-3 flight data.")
-    md_lines.append("> Delta vs IRVE-3 shown for reference only — the comparison is physically invalid.")
+    md_lines.append("> **What 'single point' means:** SPARTA DSMC runs at ONE fixed inlet condition")
+    md_lines.append("> (altitude=51.8 km, velocity=3378 m/s, Mach=10.29, ISA atmosphere).")
+    md_lines.append("> The flow develops around the scalloped geometry for 2200 timesteps while")
+    md_lines.append("> the vehicle is **frozen at that altitude**. The vehicle does NOT descend —")
+    md_lines.append("> it's a steady-state aerothermal snapshot at one point in the trajectory.")
+    md_lines.append(">")
+    md_lines.append("> **This is different from:**")
+    md_lines.append("> - **IRVE-3 flight:** Full reentry from ~120 km to ~50 km, altitude/velocity changing continuously")
+    md_lines.append("> - **Rapisarda's models:** Trajectory-integrated along the full IRVE-3 path using MCD v6.1")
+    md_lines.append("> - **LOFTID flight:** Full LEO reentry at >8 km/s, continuous deceleration")
+    md_lines.append(">")
+    md_lines.append("> These are NOT directly comparable to our fixed-condition snapshot.")
     md_lines.append("")
     md_lines.append("| Model | q_max [W/cm²] | Q_max [J/cm²] | Notes |")
     md_lines.append("|:---|---:|---:|:---|")
@@ -1758,6 +1774,10 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     print("[pipeline] Generated: unified_comparison_table.md")
 
     # ─── 5. CSV comparison table ────────────────────────────────────
+    # WARNING: delta_pinn_vs_irve3_pct and delta_pinn_vs_loftid_pct columns compare
+    # single-point DSMC values (fixed altitude 51.8 km) against trajectory-integrated
+    # flight data (IRVE-3/LOFTID full reentry). These deltas are INFORMATIONAL ONLY —
+    # physically invalid comparison (different atmosphere, geometry, trajectory integration).
     csv_lines = ["metric,irve3_flight,loftid_flight,so_raw,so_kriging,so_pinn,delta_pinn_vs_irve3_pct,delta_pinn_vs_loftid_pct"]
     csv_lines.append(f"peak_heat_flux_avg_Wcm2,{IRVE3_QMAX},{LOFTID_QMAX},{so_raw_hf_avg:.4f},{so_krig_hf_avg:.4f},{so_pinn_hf_avg:.4f},{(so_pinn_hf_avg-IRVE3_QMAX)/IRVE3_QMAX*100:.2f},{(so_pinn_hf_avg-LOFTID_QMAX)/LOFTID_QMAX*100:.2f}")
     csv_lines.append(f"peak_heat_flux_max_Wcm2,{IRVE3_QMAX},{LOFTID_QMAX},{so_raw_hf_max:.4f},{so_krig_hf_max:.4f},{so_pinn_hf_max:.4f},{(so_pinn_hf_max-IRVE3_QMAX)/IRVE3_QMAX*100:.2f},{(so_pinn_hf_max-LOFTID_QMAX)/LOFTID_QMAX*100:.2f}")
