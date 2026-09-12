@@ -1318,6 +1318,59 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     md_lines.append("| PINN Physics | Navier-Stokes PDE enforces physical consistency | Extrapolation validity |")
     md_lines.append("| Statistical Averaging | Converged mean over last 20% of data | CV < 5% gating |")
 
+    # Material Conduction/Convection Analysis
+    # [Citation: Incropera & DeWitt (2011) "Fundamentals of Heat and Mass Transfer"]
+    # [Citation: Rapisarda (2023) Sec 4.5 — Thermal analysis of HIAD TPS]
+    # SIC (Silicon Carbide) TPS material properties for IRVE-3
+    k_tps = 120.0          # Thermal conductivity [W/(m*K)] — SIC at 1000K
+    rho_tps = 3210.0       # Density [kg/m³]
+    cp_tps = 750.0         # Specific heat [J/(kg*K)]
+    thickness_tps = 0.005  # TPS thickness [m] (5mm)
+    emissivity = 0.85      # Surface emissivity (SIC)
+    sigma_sb = 5.67e-8     # Stefan-Boltzmann constant [W/(m²*K⁴)]
+    T_ambient = 268.36     # Ambient temperature [K] (from CSV)
+
+    # Surface temperature from radiative equilibrium: q_conv = epsilon * sigma * T_s^4
+    # q_conv = per-element avg heat flux = 565,865 W/m²
+    q_conv = so_raw_hf_avg * 10000.0  # Convert W/cm² to W/m²
+    if q_conv > 0:
+        T_surface = (q_conv / (emissivity * sigma_sb)) ** 0.25
+    else:
+        T_surface = T_ambient
+
+    # Temperature at backwall (1D steady-state conduction)
+    # q = k * (T_surface - T_backwall) / thickness
+    T_backwall = T_surface - (q_conv * thickness_tps / k_tps)
+
+    # Heat flux through material (conduction)
+    q_conduction = k_tps * (T_surface - T_backwall) / thickness_tps
+
+    # Thermal diffusivity
+    alpha = k_tps / (rho_tps * cp_tps)
+
+    md_lines.append("")
+    md_lines.append("## Material Conduction/Convection Analysis (1D Thermal Model)")
+    md_lines.append("")
+    md_lines.append("> SIC (Silicon Carbide) TPS — Incropera & DeWitt (2011)")
+    md_lines.append("")
+    md_lines.append("| Parameter | Value | Unit | Description |")
+    md_lines.append("|:---|---:|:---|:---|")
+    md_lines.append(f"| Surface Heat Flux (convection) | {q_conv:.0f} | W/m² | DSMC per-element avg |")
+    md_lines.append(f"| Surface Temperature | {T_surface:.0f} | K | Radiative equilibrium: εσT⁴ = q_conv |")
+    md_lines.append(f"| Surface Temperature | {T_surface - 273.15:.0f} | °C | Celsius |")
+    md_lines.append(f"| Backwall Temperature | {T_backwall:.0f} | K | 1D steady-state conduction |")
+    md_lines.append(f"| Backwall Temperature | {T_backwall - 273.15:.0f} | °C | Celsius |")
+    md_lines.append(f"| ΔT (surface→backwall) | {T_surface - T_backwall:.0f} | K | Through {thickness_tps*1000:.1f}mm SIC |")
+    md_lines.append(f"| Conduction Heat Flux | {q_conduction:.0f} | W/m² | Fourier's law: q = kΔT/L |")
+    md_lines.append(f"| Thermal Conductivity (k) | {k_tps} | W/(m·K) | SIC at ~1000K |")
+    md_lines.append(f"| Thermal Diffusivity (α) | {alpha:.2e} | m²/s | k/(ρ·cp) |")
+    md_lines.append(f"| Emissivity (ε) | {emissivity} | — | SIC surface |")
+    md_lines.append(f"| TPS Thickness | {thickness_tps*1000:.1f} | mm | |")
+    md_lines.append("")
+    md_lines.append("**Physics:** Convective heat flux from DSMC → radiative equilibrium at surface →")
+    md_lines.append("1D steady-state conduction through TPS material → backwall temperature.")
+    md_lines.append("If T_backwall > 300°C, TPS thickness must be increased for thermal protection.")
+
     with open(os.path.join(output_dir, "unified_comparison_table.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(md_lines))
     print("[pipeline] Generated: unified_comparison_table.md")
@@ -1426,10 +1479,19 @@ def _generate_pinn_vtu(results, output_dir, csv_path,
         print("  [VTU] No paraview/ directory found — skipping VTU generation")
         return
 
-    # Find last DSMC VTU file
+    # Find last DSMC VTU file (exclude PINN VTU files)
+    all_vtu_files = glob.glob(os.path.join(vtu_dir, "surf_*.vtu"))
+    # Filter to only numeric step files (exclude surf_pinn_*.vtu)
+    def _step_from_name(f):
+        name = os.path.basename(f).replace("surf_", "").replace(".vtu", "")
+        try:
+            return int(name)
+        except ValueError:
+            return -1  # Exclude non-numeric filenames
+
     vtu_files = sorted(
-        glob.glob(os.path.join(vtu_dir, "surf_*.vtu")),
-        key=lambda f: int(os.path.basename(f).replace("surf_", "").replace(".vtu", "")),
+        [f for f in all_vtu_files if _step_from_name(f) >= 0],
+        key=_step_from_name,
     )
     if not vtu_files:
         print("  [VTU] No surf_*.vtu files found — skipping VTU generation")
