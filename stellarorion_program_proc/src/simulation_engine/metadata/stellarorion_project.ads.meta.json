@@ -1,9 +1,9 @@
 {
   "source_file": "stellarorion_project.ads",
-  "source_hash": "48e4a5d15ae0ba6fadd7537388280e8228a984375a3c69f1686b8eb04eeb834d",
-  "rs_checksum": "ab4e44b5c978d3efb5ec935b073c98895f46dba6da2150333006d257b1acb466",
-  "gc_checksum": "413a4025d5497706117baf9c21ba3624ba6c6730c4da5cba4254a648b00ecc99",
+  "source_hash": "d930b5dd4369425c3751040624a0e7d15dfbf729566f97d9af4cb8aba313bb43",
+  "rs_checksum": "7431c17207f5e44e0e7701c87936182c4cf08b1e1c598d93748ff424d9ed529e",
+  "gc_checksum": "ee9ae38bead0d56b9d8e17be666820211ebd553d4c5586820c277eb77d7b1432",
   "version": "2.0",
   "block_size": 512,
-  "total_blocks": 2
+  "total_blocks": 6
 }

@@ -1,0 +1,9 @@
+{
+  "source_file": "kriging_denoise.py",
+  "source_hash": "5d3fe91feea0f73843807d0aa0a91d1716eda752e876f58976651a164b5b84b1",
+  "rs_checksum": "a4dc47d64932155642fd849db17a386d7455407fe4838988c52ba2dfc47f0f70",
+  "gc_checksum": "85c8bcf393c24dc2e40fd5df27f49b8b5b3a2ac73fcdd0249e5d700cb52d6456",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 54
+}

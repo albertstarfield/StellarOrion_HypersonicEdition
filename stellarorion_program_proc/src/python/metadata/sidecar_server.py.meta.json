@@ -1,0 +1,9 @@
+{
+  "source_file": "sidecar_server.py",
+  "source_hash": "ed7c1fa8e9991964720b5e652538dd9c8f1cf8116081ddb01ca026fa3058e233",
+  "rs_checksum": "acf79bcf9cebb13c34cec11d61109313eb60f555154a0545013a8fcc86c091fa",
+  "gc_checksum": "82b38789288f8a34587810d085a0c5328ea785573824ab7106926be6d764afb3",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 29
+}

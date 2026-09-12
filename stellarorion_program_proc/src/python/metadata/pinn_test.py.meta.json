@@ -1,0 +1,9 @@
+{
+  "source_file": "pinn_test.py",
+  "source_hash": "92c59ecc2cb20346c8d967ed40dd4abf95f1845c55f2c06526c321d8733c39a8",
+  "rs_checksum": "26ecb18065b8f7e4b5d149a5b413d5df2f523ff104b5f55629d49d89114f91f5",
+  "gc_checksum": "73ecca5c28dd31b394d9cb0f32a54cf97b2b8dfb2803399544cc3bcf52201315",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 53
+}
