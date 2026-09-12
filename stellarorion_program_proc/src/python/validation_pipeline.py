@@ -701,7 +701,7 @@ def compute_convergence_audit(raw_values, denoised_values, steps):
         "noise_mean": float(np.mean(noise)),
         "noise_std": float(np.std(noise)),
         "noise_range": float(np.max(noise) - np.min(noise)),
-        "snr_db": float(20 * np.log10(np.std(denoised_values) / np.std(noise))) if np.std(noise) > 0 else float("inf"),
+        "snr_db": float(20 * np.log10(np.std(denoised_values) / np.std(noise))) if np.std(noise) > 0 else None,
         "noise_fraction": float(np.std(noise) / np.std(raw_values)) if np.std(raw_values) > 0 else 0.0,
     }
 
@@ -865,8 +865,9 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
         n_falls = len(audit["fall_regions"])
         n_increases = len(audit["increase_regions"])
         snr = audit["noise_analysis"]["snr_db"]
+        snr_str = f"{snr:.1f}" if snr is not None else "∞"
         print(f"  {metric}: {n_falls} fall regions, {n_increases} increase regions, "
-              f"SNR={snr:.1f} dB, noise_fraction={audit['noise_analysis']['noise_fraction']:.3f}")
+              f"SNR={snr_str} dB, noise_fraction={audit['noise_analysis']['noise_fraction']:.3f}")
 
     # ─── Step 5: Build comparison table ──────────────────────────────
     print("\n[Step 5/5] Building comparison table vs IRVE-3 reference ...")
@@ -956,7 +957,7 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
 
         n = a["noise_analysis"]
         print(f"    Noise: mean={n['noise_mean']:.2f}, std={n['noise_std']:.2f}, "
-              f"SNR={n['snr_db']:.1f} dB, fraction={n['noise_fraction']:.3f}")
+              f"SNR={n['snr_db'] if n['snr_db'] is not None else 0:.1f} dB, fraction={n['noise_fraction']:.3f}")
 
     print("=" * 90)
 
@@ -1074,7 +1075,7 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
                      f"{c[f'pinn_extrapolated_{target_step}']:.4f},"
                      f"{c['raw_error_pct']:.2f},{c['denoised_error_pct']:.2f},"
                      f"{c['pinn_error_pct']:.2f},"
-                     f"{a['noise_analysis']['snr_db']:.2f},"
+                     f"{(a['noise_analysis']['snr_db'] or 999.0):.2f},"
                      f"{a['noise_analysis']['noise_fraction']:.4f}\n")
     print(f"[+] Audit CSV saved to: {audit_csv_path}")
 
@@ -1295,8 +1296,8 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     md_lines.append(f"| Total Heat Load [J/cm²] | {IRVE3_QLOAD:.4f} | {LOFTID_QLOAD:.4f} | {so_raw_qload:.4f} | {so_krig_qload:.4f} | {so_pinn_qload:.4f} | {d_ql} | {d_ql_l} |")
     d_g = f"{(so_pinn_g - IRVE3_G) / IRVE3_G * 100:+.1f}%" if IRVE3_G else "N/A"
     d_g_l = f"{(so_pinn_g - LOFTID_G) / LOFTID_G * 100:+.1f}%" if LOFTID_G else "N/A"
-    md_lines.append(f"| Peak G-Load [g] | {IRVE3_G:.4f} | {LOFTID_G:.4f} | {so_raw_g:.4f} | — | {so_pinn_g:.4f} | {d_g} | {d_g_l} |")
-    md_lines.append(f"| Drag Coefficient Cd | — | — | {so_raw_cd:.4f} | — | {so_pinn_cd:.4f} | — | — |")
+    md_lines.append(f"| Peak G-Load [g] | {IRVE3_G:.4f} | {LOFTID_G:.4f} | {so_raw_g:.4f} | {so_raw_g:.4f} | {so_pinn_g:.4f} | {d_g} | {d_g_l} |")
+    md_lines.append(f"| Drag Coefficient Cd | — | — | {so_raw_cd:.4f} | {so_raw_cd:.4f} | {so_pinn_cd:.4f} | — | — |")
     md_lines.append("")
 
     # Root-cause analysis
@@ -1424,6 +1425,22 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
         },
         "audit": results.get("audits", {}),
         "root_causes": results.get("root_causes", {}),
+        "material_conduction": {
+            "description": "1D thermal model: SIC (Silicon Carbide) TPS",
+            "reference": "Incropera & DeWitt (2011) Fundamentals of Heat and Mass Transfer",
+            "surface_heat_flux_Wm2": round(q_conv, 0),
+            "surface_temperature_K": round(T_surface, 0),
+            "surface_temperature_C": round(T_surface - 273.15, 0),
+            "backwall_temperature_K": round(T_backwall, 0),
+            "backwall_temperature_C": round(T_backwall - 273.15, 0),
+            "delta_T_K": round(T_surface - T_backwall, 0),
+            "conduction_heat_flux_Wm2": round(q_conduction, 0),
+            "thermal_conductivity_WmK": k_tps,
+            "thermal_diffusivity_m2s": f"{alpha:.2e}",
+            "emissivity": emissivity,
+            "tps_thickness_mm": round(thickness_tps * 1000, 1),
+            "material": "SIC (Silicon Carbide)",
+        },
     }
 
     with open(os.path.join(output_dir, "unified_comparison_data.json"), "w", encoding="utf-8") as fh:
