@@ -164,11 +164,14 @@ class CyclicLogMonitor:
         # 2. Docker / Colima container status
         self._check_container_status()
 
-        # 3. Disk usage for output dir
+        # 3. Ada/SPARK binary program logs
+        self._check_ada_logs()
+
+        # 4. Disk usage for output dir
         if self.output_dir:
             self._check_disk_usage()
 
-        # 4. PINN training state (if shared ref is populated)
+        # 5. PINN training state (if shared ref is populated)
         self._check_pinn_state()
 
         print(f"  {'─'*70}")
@@ -280,6 +283,63 @@ class CyclicLogMonitor:
                             print(f"  [Monitor] Disk free: {parts[3]} ({parts[4]} used) on {parts[5]}")
         except Exception as exc:
             print(f"  [Monitor] Disk check failed: {exc}")
+
+    def _check_ada_logs(self):
+        """Check Ada/SPARK binary program logs for errors or warnings.
+
+        AXIOMS:
+          1. Ada binary writes run_output.log in results directories
+          2. Errors/warnings in Ada logs indicate simulation issues
+          3. Log file modification time indicates if simulation is active
+          4. Searches results_validation_smooth/ and results_validation_scalloped/
+
+        [Citation: StellarOrion Ada binary — run_output.log convention]
+        """
+        try:
+            # Search for Ada program logs in common results directories
+            cad_dir = os.path.join(os.path.dirname(self.output_dir) if self.output_dir else os.getcwd())
+            log_dirs = [
+                os.path.join(cad_dir, "results_validation_smooth"),
+                os.path.join(cad_dir, "results_validation_scalloped"),
+                os.path.join(cad_dir, "results_test_sample"),
+            ]
+
+            found_logs = 0
+            for log_dir in log_dirs:
+                log_path = os.path.join(log_dir, "run_output.log")
+                if os.path.exists(log_path):
+                    found_logs += 1
+                    # Check file modification time to see if simulation is active
+                    mtime = os.path.getmtime(log_path)
+                    age_s = time.time() - mtime
+                    size_kb = os.path.getsize(log_path) / 1024
+
+                    # Read last 10 lines for error/warning check
+                    try:
+                        with open(log_path, "r", errors="replace") as fh:
+                            lines = fh.readlines()
+                            last_lines = lines[-10:] if len(lines) >= 10 else lines
+
+                        errors = [l.strip() for l in last_lines if "error" in l.lower() or "exception" in l.lower()]
+                        warnings = [l.strip() for l in last_lines if "warning" in l.lower() or "warn" in l.lower()]
+
+                        status = "ACTIVE" if age_s < 600 else "IDLE"
+                        print(f"  [Monitor] Ada log [{status}] ({os.path.basename(log_dir)}): {size_kb:.0f} KB, last modified {age_s:.0f}s ago")
+                        if errors:
+                            print(f"    [WARN] {len(errors)} error(s) in last 10 lines:")
+                            for e in errors[:3]:
+                                print(f"      {e[:120]}")
+                        if warnings:
+                            print(f"    [INFO] {len(warnings)} warning(s) in last 10 lines")
+                            for w in warnings[:2]:
+                                print(f"      {w[:120]}")
+                    except Exception:
+                        print(f"  [Monitor] Ada log ({os.path.basename(log_dir)}): {size_kb:.0f} KB (unreadable)")
+
+            if found_logs == 0:
+                print("  [Monitor] Ada logs: no run_output.log found (simulation may not have run yet)")
+        except Exception as exc:
+            print(f"  [Monitor] Ada log check failed: {exc}")
 
     def _check_pinn_state(self):
         """Check PINN training state from the shared results reference.
@@ -1402,6 +1462,37 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     md_lines.append("1D steady-state conduction through TPS material → backwall temperature.")
     md_lines.append("If T_backwall > 300°C, TPS thickness must be increased for thermal protection.")
 
+    # ─── PINN-Extrapolated Material Conduction/Convection Analysis ──
+    # [Citation: Incropera & DeWitt (2011) "Fundamentals of Heat and Mass Transfer"]
+    # [Citation: PINN extrapolation — Raissi et al. (2019) Physics-informed neural networks]
+    # Same SIC TPS properties, but using PINN-extrapolated heat flux (300s equivalent)
+    q_conv_pinn = so_pinn_hf_avg * 10000.0  # Convert W/cm² to W/m²
+    if q_conv_pinn > 0:
+        T_surface_pinn = (q_conv_pinn / (emissivity * sigma_sb)) ** 0.25
+    else:
+        T_surface_pinn = T_ambient
+    T_backwall_pinn = T_surface_pinn - (q_conv_pinn * thickness_tps / k_tps)
+    q_conduction_pinn = k_tps * (T_surface_pinn - T_backwall_pinn) / thickness_tps
+
+    md_lines.append("")
+    md_lines.append("### PINN-Extrapolated Thermal Response (300s / 20,000 steps)")
+    md_lines.append("")
+    md_lines.append("> Same TPS material, but using PINN-extrapolated heat flux (physics-constrained)")
+    md_lines.append("")
+    md_lines.append("| Parameter | Raw DSMC | PINN Extrapolated | Delta |")
+    md_lines.append("|:---|---:|---:|---:|")
+    md_lines.append(f"| Heat Flux (W/m²) | {q_conv:.0f} | {q_conv_pinn:.0f} | {(q_conv_pinn-q_conv)/q_conv*100 if q_conv > 0 else 0:+.1f}% |")
+    md_lines.append(f"| Surface Temperature (K) | {T_surface:.0f} | {T_surface_pinn:.0f} | {T_surface_pinn-T_surface:+.0f} K |")
+    md_lines.append(f"| Surface Temperature (°C) | {T_surface-273.15:.0f} | {T_surface_pinn-273.15:.0f} | {(T_surface_pinn-T_surface):+.0f} K |")
+    md_lines.append(f"| Backwall Temperature (K) | {T_backwall:.0f} | {T_backwall_pinn:.0f} | {T_backwall_pinn-T_backwall:+.0f} K |")
+    md_lines.append(f"| Backwall Temperature (°C) | {T_backwall-273.15:.0f} | {T_backwall_pinn-273.15:.0f} | {(T_backwall_pinn-T_backwall):+.0f} K |")
+    md_lines.append(f"| ΔT (surface→backwall) | {T_surface-T_backwall:.0f} | {T_surface_pinn-T_backwall_pinn:.0f} | |")
+    md_lines.append(f"| Conduction Heat Flux | {q_conduction:.0f} | {q_conduction_pinn:.0f} | |")
+    md_lines.append("")
+    md_lines.append("**Note:** PINN extrapolation extends DSMC convergence from 2200 steps to 20,000 steps (300s).")
+    md_lines.append("The PINN uses physics constraints (Navier-Stokes PDE) to produce a more physically consistent extrapolation.")
+    md_lines.append(f"If T_backwall_pinn > 300°C ({300+273.15:.0f} K), TPS thickness must be increased.")
+
     # ─── Normalized comparison section ──────────────────────────────
     sg_single = float(_last["heatflux_sg_Wm2"]) / 10000
     fr_single = float(_last["heat_flux_fr_wm2"]) / 10000
@@ -1601,6 +1692,22 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
             "backwall_temperature_C": round(T_backwall - 273.15, 0),
             "delta_T_K": round(T_surface - T_backwall, 0),
             "conduction_heat_flux_Wm2": round(q_conduction, 0),
+            "thermal_conductivity_WmK": k_tps,
+            "thermal_diffusivity_m2s": f"{alpha:.2e}",
+            "emissivity": emissivity,
+            "tps_thickness_mm": round(thickness_tps * 1000, 1),
+            "material": "SIC (Silicon Carbide)",
+        },
+        "material_conduction_pinn": {
+            "description": "1D thermal model using PINN-extrapolated heat flux (300s / 20,000 steps)",
+            "reference": "Incropera & DeWitt (2011); Raissi et al. (2019)",
+            "surface_heat_flux_Wm2": round(q_conv_pinn, 0),
+            "surface_temperature_K": round(T_surface_pinn, 0),
+            "surface_temperature_C": round(T_surface_pinn - 273.15, 0),
+            "backwall_temperature_K": round(T_backwall_pinn, 0),
+            "backwall_temperature_C": round(T_backwall_pinn - 273.15, 0),
+            "delta_T_K": round(T_surface_pinn - T_backwall_pinn, 0),
+            "conduction_heat_flux_Wm2": round(q_conduction_pinn, 0),
             "thermal_conductivity_WmK": k_tps,
             "thermal_diffusivity_m2s": f"{alpha:.2e}",
             "emissivity": emissivity,
