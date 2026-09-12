@@ -1307,7 +1307,11 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
 
     bars1 = ax1.bar(models_avg, qmax_vals_avg, color=qmax_colors, edgecolor="black", linewidth=0.5)
     ax1.set_ylabel("Peak Heat Flux [W/cm²]", fontsize=11)
-    ax1.set_title("Table 4.10: q_max (Per-Element Avg)\nRapisarda 2023 vs StellarOrion", fontsize=12, fontweight="bold")
+    # [Citation: Rapisarda (2023) Table 4.10 — trajectory-integrated models]
+    # Blue = trajectory-integrated (Rapisarda + IRVE-3 flight)
+    # Red/Orange/Purple = single-point (StellarOrion) — NOT directly comparable
+    ax1.set_title("Table 4.10: q_max (Per-Element Avg)\nRapisarda 2023 vs StellarOrion\n"
+                  "⚠ Blue: trajectory-integrated | Red/Orange/Purple: single-point", fontsize=10, fontweight="bold")
     ax1.axhline(y=IRVE3_QMAX, color="green", linestyle="--", alpha=0.5, label=f"IRVE-3 Flight = {IRVE3_QMAX:.2f}")
     for bar, val in zip(bars1, qmax_vals_avg):
         ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1,
@@ -1327,8 +1331,12 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     ax2.legend(fontsize=8)
     ax2.tick_params(axis="x", labelsize=6)
 
-    fig.suptitle("StellarOrion vs Rapisarda Models vs IRVE-3 Flight (AIAA 2023 / NASA TP-2013-4012)",
-                 fontsize=13, fontweight="bold", y=1.02)
+    # [Citation: Rapisarda (2023) Table 4.10; NASA TP-2013-4012]
+    # ⚠ Blue bars = trajectory-integrated (valid comparison)
+    # ⚠ Red/Orange/Purple bars = single-point (NOT directly comparable to blue bars)
+    fig.suptitle("StellarOrion vs Rapisarda Models vs IRVE-3 Flight (AIAA 2023 / NASA TP-2013-4012)\n"
+                 "⚠ Blue = trajectory-integrated (MCD v6.1) | Red/Orange/Purple = single-point (ISA)",
+                 fontsize=11, fontweight="bold", y=1.02)
     fig.tight_layout()
     fig.savefig(os.path.join(plots_dir, "rapisarda_table4_10.png"), dpi=200, bbox_inches="tight")
     plt.close(fig)
@@ -1394,11 +1402,14 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     md_lines.append("---")
     md_lines.append("")
 
-    # Table 4.10 style — using per-element avg (physically meaningful) as primary
-    md_lines.append("## Table 4.10: Aerothermal Modelling vs IRVE-3 Flight Data")
+    # ── Table 4.10: Rapisarda Reference Models (trajectory-integrated, MCD v6.1)
+    # [Citation: Rapisarda (2023) Table 4.10 — trajectory-integrated models
+    #  applied to IRVE-3 reentry using MCD v6.1 atmosphere (56% denser than ISA
+    #  at 52 km). These are VALID comparisons to IRVE-3 flight data.]
+    md_lines.append("## Table 4.10: Aerothermal Modelling vs IRVE-3 Flight Data (Rapisarda Reference)")
     md_lines.append("")
-    md_lines.append("> **Primary metric: Per-element average heat flux** (physically meaningful)")
-    md_lines.append("> Noisy single-cell max shown in parentheses for reference")
+    md_lines.append("> **All values below are trajectory-integrated** using MCD v6.1 atmosphere.")
+    md_lines.append("> Deltas are relative to IRVE-3 flight data — these are valid comparisons.")
     md_lines.append("")
     md_lines.append("| Model | q_max [W/cm²] | δ(q_max) [%] | Q_max [J/cm²] | δ(Q_max) [%] | R² |")
     md_lines.append("|:---|---:|---:|---:|---:|---:|")
@@ -1407,18 +1418,61 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
         dq = (vals["qmax"] - IRVE3_QMAX) / IRVE3_QMAX * 100
         dQ = (vals["Qmax"] - IRVE3_QLOAD) / IRVE3_QLOAD * 100
         md_lines.append(f"| {model} | {vals['qmax']:.4f} | {dq:+.2f} | {vals['Qmax']:.4f} | {dQ:+.2f} | {vals['R2']:.4f} |")
-    dq_raw = (so_raw_hf_avg - IRVE3_QMAX) / IRVE3_QMAX * 100 if IRVE3_QMAX else 0
-    dq_krig = (so_krig_hf_avg - IRVE3_QMAX) / IRVE3_QMAX * 100 if IRVE3_QMAX else 0
-    dq_pinn = (so_pinn_hf_avg - IRVE3_QMAX) / IRVE3_QMAX * 100 if IRVE3_QMAX else 0
-    dQ_raw = (so_raw_qload - IRVE3_QLOAD) / IRVE3_QLOAD * 100 if IRVE3_QLOAD else 0
-    dQ_pinn = (so_pinn_qload - IRVE3_QLOAD) / IRVE3_QLOAD * 100 if IRVE3_QLOAD else 0
-    md_lines.append(f"| **StellarOrion Raw DSMC** | {so_raw_hf_avg:.4f} ({so_raw_hf_max:.2f} max) | {dq_raw:+.2f} | {so_raw_qload:.4f} | {dQ_raw:+.2f} | — |")
-    md_lines.append(f"| **StellarOrion Kriging** | {so_krig_hf_avg:.4f} ({so_krig_hf_max:.2f} max) | {dq_krig:+.2f} | {so_krig_qload:.4f} | — | — |")
-    md_lines.append(f"| **StellarOrion PINN 300s** | {so_pinn_hf_avg:.4f} ({so_pinn_hf_max:.2f} max) | {dq_pinn:+.2f} | {so_pinn_qload:.4f} | {dQ_pinn:+.2f} | — |")
+    md_lines.append("")
+    md_lines.append("> **Note:** Rapisarda's models use MCD v6.1 atmosphere (~56% higher density than ISA at 52 km)")
+    md_lines.append("> and smooth-torus geometry. Our single-point results below use ISA and scalloped geometry.")
     md_lines.append("")
 
-    # Multi-mission table — per-element avg for heat flux
-    md_lines.append("## Multi-Mission: LOFTID vs IRVE-3 vs StellarOrion")
+    # ── StellarOrion: Single-Point DSMC Results (our conditions)
+    # [Citation: StellarOrion DSMC — SPARTA solver, scalloped geometry, ISA,
+    #  single trajectory point (51.8 km, Mach 10.29). NOT trajectory-integrated.]
+    md_lines.append("## StellarOrion: Single-Point DSMC Results (Our Conditions)")
+    md_lines.append("")
+    md_lines.append("> **All values below are single trajectory-point results** (51.8 km, Mach 10.29, ISA).")
+    md_lines.append("> These are NOT trajectory-integrated and NOT directly comparable to IRVE-3 flight data.")
+    md_lines.append("> Delta vs IRVE-3 shown for reference only — the comparison is physically invalid.")
+    md_lines.append("")
+    md_lines.append("| Model | q_max [W/cm²] | Q_max [J/cm²] | Notes |")
+    md_lines.append("|:---|---:|---:|:---|")
+    md_lines.append(f"| **StellarOrion Raw DSMC** | {so_raw_hf_avg:.4f} ({so_raw_hf_max:.2f} max) | {so_raw_qload:.4f} | Raw per-element avg, noisy |")
+    md_lines.append(f"| **StellarOrion Kriging** | {so_krig_hf_avg:.4f} ({so_krig_hf_max:.2f} max) | {so_krig_qload:.4f} | GP-denoised |")
+    md_lines.append(f"| **StellarOrion PINN 300s** | {so_pinn_hf_avg:.4f} ({so_pinn_hf_max:.2f} max) | {so_pinn_qload:.4f} | DeepXDE-extrapolated |")
+    md_lines.append("")
+    md_lines.append("> **⚠ WARNING:** The deltas below are **informational only** — they compare")
+    md_lines.append("> single-point values (our DSMC) against trajectory-integrated values (IRVE-3 flight).")
+    md_lines.append("> This is an apples-to-oranges comparison. Do NOT use these deltas for validation.")
+    md_lines.append("")
+
+    # ── Honest Picture: What Is and Isn't Comparable
+    md_lines.append("## Honest Picture: What Is and Isn't Comparable")
+    md_lines.append("")
+    md_lines.append("### ✅ Valid Comparisons (same physical conditions)")
+    md_lines.append("")
+    md_lines.append("| Comparison | q_max [W/cm²] | Q_max [J/cm²] | Δ [%] | Why Valid |")
+    md_lines.append("|:---|---:|---:|---:|:---|")
+    # Our DSMC vs Our SG (single-point, ISA, scalloped geometry)
+    # [Citation: Sutton-Graves correlation — q = K * sqrt(ρ/R_n) * V³, single-point]
+    our_sg_qmax = 12.2  # W/cm² from CSV (single-point SG)
+    our_fr_qmax = 161.6  # W/cm² from CSV (single-point FR)
+    dq_so_vs_sg = ((so_raw_hf_avg - our_sg_qmax) / our_sg_qmax * 100) if our_sg_qmax else 0
+    dq_so_vs_fr = ((so_raw_hf_avg - our_fr_qmax) / our_fr_qmax * 100) if our_fr_qmax else 0
+    md_lines.append(f"| StellarOrion DSMC vs Our SG | {so_raw_hf_avg:.4f} vs {our_sg_qmax:.2f} | — | {dq_so_vs_sg:+.1f}% | Same point, ISA, scalloped |")
+    md_lines.append(f"| StellarOrion DSMC vs Our FR | {so_raw_hf_avg:.4f} vs {our_fr_qmax:.2f} | — | {dq_so_vs_fr:+.1f}% | Same point, ISA, scalloped |")
+    md_lines.append("")
+    md_lines.append("### ❌ Invalid Comparisons (different physical conditions)")
+    md_lines.append("")
+    md_lines.append("| Comparison | Our Value | Reference Value | Why Invalid |")
+    md_lines.append("|:---|---:|---:|:---|")
+    dq_vs_irve3 = ((so_raw_hf_avg - IRVE3_QMAX) / IRVE3_QMAX * 100) if IRVE3_QMAX else 0
+    dq_vs_rap_sg = ((so_raw_hf_avg - RAP_MODELS["Sutton-Graves"]["qmax"]) / RAP_MODELS["Sutton-Graves"]["qmax"] * 100) if RAP_MODELS["Sutton-Graves"]["qmax"] else 0
+    dq_vs_rap_fr = ((so_raw_hf_avg - RAP_MODELS["Fay-Riddell"]["qmax"]) / RAP_MODELS["Fay-Riddell"]["qmax"] * 100) if RAP_MODELS["Fay-Riddell"]["qmax"] else 0
+    md_lines.append(f"| Our DSMC vs IRVE-3 Flight | {so_raw_hf_avg:.4f} W/cm² | {IRVE3_QMAX:.4f} W/cm² | Single-point vs trajectory-integrated, ISA vs real atmosphere |")
+    md_lines.append(f"| Our SG vs Rapisarda's SG | {our_sg_qmax:.2f} W/cm² | {RAP_MODELS['Sutton-Graves']['qmax']:.4f} W/cm² | ISA vs MCD v6.1 (56% density diff), smooth vs scalloped |")
+    md_lines.append(f"| Our FR vs Rapisarda's FR | {our_fr_qmax:.2f} W/cm² | {RAP_MODELS['Fay-Riddell']['qmax']:.4f} W/cm² | ISA vs MCD v6.1, single-point vs trajectory-integrated |")
+    md_lines.append("")
+    md_lines.append("### 📊 Multi-Mission Overview (for context only)")
+    md_lines.append("")
+    md_lines.append("> **⚠ These columns mix different physical quantities.** Use for context, not validation.")
     md_lines.append("")
     md_lines.append("| Parameter | IRVE-3 Flight | LOFTID Flight | StellarOrion Raw | StellarOrion Kriging | StellarOrion PINN 300s | Δ PINN vs IRVE-3 | Δ PINN vs LOFTID |")
     md_lines.append("|:---|---:|---:|---:|---:|---:|---:|---:|")
@@ -1883,6 +1937,7 @@ def _generate_interactive_html(results, output_dir, csv_path,
     }
 
     # ─── Fig 1: Table 4.10 Heat Flux Comparison (Interactive) ────
+    # [Citation: Rapisarda (2023) Table 4.10 — trajectory-integrated models]
     fig1 = make_subplots(
         rows=1, cols=2,
         subplot_titles=("Peak Heat Flux (W/cm²)", "Total Heat Load (J/cm²)"),
@@ -1906,10 +1961,15 @@ def _generate_interactive_html(results, output_dir, csv_path,
         name="Heat Load", hovertemplate="%{x}<br>%{y:.1f} J/cm²<extra></extra>",
     ), row=1, col=2)
 
+    # [Citation: Rapisarda (2023) Table 4.10 — MCD v6.1 atmosphere]
+    # Blue = trajectory-integrated (Rapisarda models + IRVE-3 flight)
+    # Red/Orange/Purple = single-point (StellarOrion) — NOT directly comparable
     fig1.update_layout(
-        title_text="Rapisarda Table 4.10: Aerothermal Modelling vs IRVE-3 (Interactive)",
+        title_text="Rapisarda Table 4.10: Aerothermal Modelling vs IRVE-3<br>"
+                   "<sup>⚠ Blue bars: trajectory-integrated (MCD v6.1). "
+                   "Red/Orange/Purple: single-point (ISA) — NOT directly comparable</sup>",
         title_font_size=16, showlegend=False,
-        template="plotly_white", height=500,
+        template="plotly_white", height=550,
     )
     fig1.write_html(os.path.join(html_dir, "rapisarda_table4_10_interactive.html"))
     print(f"  [HTML] Generated: interactive/rapisarda_table4_10_interactive.html")
@@ -1936,9 +1996,13 @@ def _generate_interactive_html(results, output_dir, csv_path,
             name=title, showlegend=False,
         ), row=1, col=idx)
 
+    # [Citation: StellarOrion DSMC — single-point, ISA, scalloped geometry]
+    # IRVE-3/LOFTID = flight data (trajectory-integrated, real atmosphere)
+    # StellarOrion = single-point DSMC — different physical quantity
     fig2.update_layout(
-        title_text="Multi-Mission Comparison: LOFTID vs IRVE-3 vs StellarOrion (Interactive)",
-        title_font_size=16, template="plotly_white", height=500,
+        title_text="Multi-Mission Comparison: LOFTID vs IRVE-3 vs StellarOrion<br>"
+                   "<sup>⚠ Flight data is trajectory-integrated; StellarOrion is single-point DSMC</sup>",
+        title_font_size=16, template="plotly_white", height=550,
     )
     fig2.write_html(os.path.join(html_dir, "multi_mission_interactive.html"))
     print(f"  [HTML] Generated: interactive/multi_mission_interactive.html")
