@@ -82,10 +82,11 @@ except ImportError:
 class CyclicLogMonitor:
     """Background thread that logs system/pipe health every 300 seconds.
 
-    Checks:
+    Checks (all 4 sources requested by user):
       - Python process memory usage (RSS)
       - Docker container status (if SPARTA containers running)
       - Colima VM status (if using Colima)
+      - Ada/SPARK binary program logs (run_output.log — errors/warnings/age)
       - Disk usage for results directory
       - PINN training progress (last loss value from training history)
     """
