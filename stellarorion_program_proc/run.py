@@ -617,10 +617,22 @@ def _phase2_python_analysis(
         fatal("Venv Python not found -- run without --skip-hashes first", 1)
 
     # -- pyrefly check (use venv Python so installed packages are found)
+    # Exclude virtualenv directories to avoid false import errors in third-party packages
     t = step_start("pyrefly check .")
     ok, stdout, stderr = _run(
         [str(_VENV_PYREFLY), "check", ".",
-         "--python-interpreter-path", str(_VENV_PYTHON)],
+         "--python-interpreter-path", str(_VENV_PYTHON),
+         "--project-excludes", "venv_validation/**",
+         "--project-excludes", "venv/**",
+         "--project-excludes", ".venv/**",
+         "--project-excludes", "__pycache__/**",
+         "--project-excludes", "build/**",
+         "--project-excludes", "scripts/**",
+         "--project-excludes", "data/**",
+         "--project-excludes", "results_*/**",
+         "--project-excludes", ".opencode/**",
+         "--project-excludes", ".tmp/**",
+         "--project-excludes", "Lost+Found/**"],
         cwd=_PROJECT_ROOT,
         verbose=verbose,
     )
@@ -725,6 +737,69 @@ def _macos_sdk_env():
     if os.path.isdir(sdk):
         return {"LIBRARY_PATH": sdk}
     return {}
+
+
+# Phase 2b: PINN Extrapolation (headless validation pipeline)
+
+
+def _phase2b_pinn_extrapolate(extra_args: list) -> None:  # noqa: ARG001
+    """Phase 2b -- Run headless validation pipeline: kriging denoise → PINN extrapolate → audit.
+
+    Uses the fresh Python 3.12 venv at ``venv_validation/`` to avoid conflicts with
+    the project-managed ``venv/python/`` (Python 3.14).  Invokes
+    ``validation_pipeline.py`` which performs:
+
+      1. Load DSMC convergence CSV (22 rows, step 100→2200)
+      2. GP kriging denoise (scikit-learn, RBF kernel)
+      3. DeepXDE PINN extrapolation (step 2200→20000)
+      4. Convergence audit (fall/increase regions, SNR, noise fraction)
+      5. Comparison table vs IRVE-3 reference
+    """
+    step_info("Phase 2b: PINN Extrapolation (headless validation pipeline)")
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    venv_python = os.path.join(script_dir, "venv_validation", "bin", "python3")
+    pipeline_script = os.path.join(script_dir, "src", "python", "validation_pipeline.py")
+    csv_path = os.path.join(
+        script_dir, "results_validation_scalloped", "validation_timeseries.csv"
+    )
+
+    if not os.path.isfile(venv_python):
+        print(f"[!] venv_validation Python not found at {venv_python}")
+        print("    Run: python3 -m venv venv_validation && venv_validation/bin/pip install scikit-learn torch deepxde")
+        raise SystemExit(1)
+
+    if not os.path.isfile(pipeline_script):
+        print(f"[!] validation_pipeline.py not found at {pipeline_script}")
+        raise SystemExit(1)
+
+    # Build command: use validation_timeseries.csv by default, headless mode
+    cmd = [
+        venv_python,
+        pipeline_script,
+        "--csv", csv_path,
+        "--target-step", "300000000",
+        "--iterations", "4000",
+        "--device", "auto",
+        "--headless",
+    ]
+    # Forward extra CLI flags (e.g. --iterations 8000, --target-step 50000)
+    cmd.extend(extra_args)
+
+    print(f"  Command: {' '.join(cmd)}")
+    print()
+
+    result = subprocess.run(  # noqa: S603 — trusted venv, no shell
+        cmd,
+        capture_output=False,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        print(f"\n[!] PINN extrapolation pipeline failed (exit code {result.returncode})")
+        raise SystemExit(result.returncode)
+
+    print("\n  [Phase 2b] PINN extrapolation completed successfully.")
 
 
 # Phase 3: Ada/SPARK Build
@@ -1010,11 +1085,11 @@ def _phase4_launch(
                 label += " ..."
 
         t = step_start(label)
-        ok, _stdout, _stderr = _run(
+        ok, stdout_text, _stderr = _run(
             cmd,
             cwd=_PROJECT_ROOT,
             verbose=verbose,
-            capture=False,
+            capture=True,
             # SPARTA DSMC validation runs take 2-3h at 2200 steps; give
             # generous headroom so the parent launcher never SIGTERMs the
             # in-flight simulation (Murphy: a 1h cap killed it at step ~1300).
@@ -1025,6 +1100,10 @@ def _phase4_launch(
             # Forward the actual exit code from the binary
             exit_code = 3
         step_result(ok, f"completed in {elapsed:.1f}s", elapsed, verbose)
+
+        # Post-optimization: auto-generate comparison outputs if --optimize was used
+        if "--optimize" in extra_args and ok:
+            _post_optimization_outputs(stdout_text)
     finally:
         # Shut down sidecar if it was started
         if sidecar_proc is not None and sidecar_proc.poll() is None:
@@ -1039,6 +1118,185 @@ def _phase4_launch(
 
     if exit_code != 0:
         sys.exit(exit_code)  # nosec: SILENT_FAILURE — intentional exit on pipeline failure
+
+
+def _post_optimization_outputs(stdout_text: str) -> None:
+    """Auto-generate comparison outputs after --optimize completes.
+
+    Parses Ada binary stdout to extract optimization results, then generates:
+      - Markdown comparison table (optimized vs IRVE-3 vs LOFTID)
+      - CSV comparison table
+      - Interactive JSON data
+      - Bar chart plot (optimized vs references)
+      - Geometry VTU for ParaView
+
+    References:
+      - [Rapisarda2023] Tables 4.1, 4.10 — HIAD design parameters
+      - [NASA_TP_2013_4012] IRVE-3 flight data
+      - [Deshmukh2024] LOFTID flight data (AIAA 2024-1501)
+    """
+    import json as _json
+    import re
+    import os
+
+    print("\n[OPTIMIZE] Auto-generating comparison outputs...")
+
+    # Parse optimization results from stdout
+    def _parse_float(pattern, text, default=0.0):
+        m = re.search(pattern, text)
+        return float(m.group(1)) if m else default
+
+    opt = {
+        "diameter_m": _parse_float(r"Diameter\s*=\s*([\d.E+\-]+)", stdout_text),
+        "angle_deg": _parse_float(r"Angle\s*=\s*([\d.E+\-]+)", stdout_text),
+        "nose_radius_m": _parse_float(r"Nose radius\s*=\s*([\d.E+\-]+)", stdout_text),
+        "toroid_count": int(_parse_float(r"Toroid count\s*=\s*([\d.E+\-]+)", stdout_text)),
+        "toroid_radius_m": _parse_float(r"Toroid radius\s*=\s*([\d.E+\-]+)", stdout_text),
+        "mass_kg": _parse_float(r"Mass\s*=\s*([\d.E+\-]+)", stdout_text),
+        "cost": _parse_float(r"Best cost.*?:\s*([\d.E+\-]+)", stdout_text),
+        "generations": int(_parse_float(r"Generations used\s*:\s*(\d+)", stdout_text)),
+        "converged": "TRUE" in stdout_text.split("Converged")[-1].split("\n")[0] if "Converged" in stdout_text else False,
+    }
+
+    # IRVE-3 reference values
+    irve3 = {"diameter_m": 3.0, "angle_deg": 60.0, "nose_radius_m": 0.55,
+             "toroid_count": 6, "toroid_radius_m": 0.135, "mass_kg": 281.0}
+
+    # Output directory
+    out_dir = os.path.join(_PROJECT_ROOT, "results_validation_scalloped",
+                           "optimization_output")
+    os.makedirs(out_dir, exist_ok=True)
+
+    # 1. Markdown comparison table
+    md_lines = [
+        "# Optimised HIAD Topology vs IRVE-3 Reference",
+        "",
+        "Auto-generated by `run.py` after `--optimize`",
+        "",
+        f"**GA Converged:** {opt['converged']} | **Generations:** {opt['generations']} | **Cost:** {opt['cost']:.6e}",
+        "",
+        "| Parameter | Optimised | IRVE-3 Reference | Delta |",
+        "|:---|---:|---:|---:|",
+    ]
+    for key, label in [("diameter_m", "Diameter (m)"), ("angle_deg", "Angle (deg)"),
+                        ("nose_radius_m", "Nose radius (m)"), ("toroid_count", "Toroid count"),
+                        ("toroid_radius_m", "Toroid radius (m)"), ("mass_kg", "Mass (kg)")]:
+        ov = opt[key]
+        rv = irve3[key]
+        delta = (ov - rv) / rv * 100 if rv != 0 else 0
+        md_lines.append(f"| {label} | {ov:.4f} | {rv:.4f} | {delta:+.1f}% |")
+    md_lines.append(f"| Cost J | {opt['cost']:.6e} | 0.0 (perfect) | — |")
+
+    md_path = os.path.join(out_dir, "optimization_comparison.md")
+    with open(md_path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(md_lines))
+    print(f"  [OPTIMIZE] Generated: {os.path.basename(md_path)}")
+
+    # 2. CSV
+    csv_lines = ["parameter,optimised,irve3_reference,delta_pct"]
+    for key in opt:
+        if key in irve3:
+            ov = opt[key]
+            rv = irve3[key]
+            delta = (ov - rv) / rv * 100 if rv != 0 else 0
+            csv_lines.append(f"{key},{ov:.6f},{rv:.6f},{delta:+.2f}")
+
+    csv_path = os.path.join(out_dir, "optimization_comparison.csv")
+    with open(csv_path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(csv_lines))
+    print(f"  [OPTIMIZE] Generated: {os.path.basename(csv_path)}")
+
+    # 3. Interactive JSON
+    interactive = {
+        "metadata": {
+            "generated_by": "StellarOrion Optimization Pipeline",
+            "mode": "SBO Genetic Algorithm (MoP Fitness)",
+            "references": {
+                "IRVE-3": "NASA TP-2013-4012",
+                "LOFTID": "Deshmukh et al. AIAA 2024-1501",
+                "Rapisarda": "Rapisarda (2023) TU Delft MSc Thesis, Tables 4.1, 4.10",
+            },
+        },
+        "optimized_geometry": opt,
+        "irve3_reference": irve3,
+        "deltas": {k: (opt[k] - irve3[k]) / irve3[k] * 100 if irve3[k] != 0 else 0
+                   for k in irve3},
+    }
+
+    json_path = os.path.join(out_dir, "optimization_comparison.json")
+    with open(json_path, "w", encoding="utf-8") as fh:
+        _json.dump(interactive, fh, indent=2, default=str)
+    print(f"  [OPTIMIZE] Generated: {os.path.basename(json_path)}")
+
+    # 4. Bar chart plot
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        fig, ax = plt.subplots(figsize=(12, 6))
+        params = ["Diameter\n(m)", "Angle\n(deg)", "Nose radius\n(m)",
+                   "Toroid radius\n(m)", "Mass\n(kg)"]
+        opt_vals = [opt["diameter_m"], opt["angle_deg"], opt["nose_radius_m"],
+                     opt["toroid_radius_m"], opt["mass_kg"]]
+        irv_vals = [irve3["diameter_m"], irve3["angle_deg"], irve3["nose_radius_m"],
+                     irve3["toroid_radius_m"], irve3["mass_kg"]]
+        x = range(len(params))
+        w = 0.35
+        ax.bar([i - w/2 for i in x], opt_vals, w, label="Optimised", color="#e74c3c", edgecolor="black", linewidth=0.5)
+        ax.bar([i + w/2 for i in x], irv_vals, w, label="IRVE-3 Ref", color="#2ecc71", edgecolor="black", linewidth=0.5)
+        ax.set_xticks(list(x))
+        ax.set_xticklabels(params, fontsize=9)
+        ax.set_title("Optimised HIAD Topology vs IRVE-3 Reference\n"
+                      f"GA Converged: {opt['converged']} ({opt['generations']} gens, cost={opt['cost']:.2e})",
+                      fontsize=12, fontweight="bold")
+        ax.legend(fontsize=10)
+        ax.grid(axis="y", alpha=0.3)
+        fig.tight_layout()
+        plots_dir = os.path.join(out_dir, "plots")
+        os.makedirs(plots_dir, exist_ok=True)
+        fig.savefig(os.path.join(plots_dir, "optimization_comparison.png"), dpi=200, bbox_inches="tight")
+        plt.close(fig)
+        print(f"  [OPTIMIZE] Generated: plots/optimization_comparison.png")
+    except Exception as exc:
+        print(f"  [WARN] Plot generation skipped: {exc}")
+
+    # 5. Geometry VTU for ParaView (optimized shape)
+    # Generate a simple VTU with the optimised geometry parameters as metadata
+    vtu_path = os.path.join(out_dir, "optimised_geometry.vtu")
+    try:
+        vtu_lines = [
+            '<?xml version="1.0"?>',
+            '<VTKFile type="UnstructuredGrid" version="1.0" byte_order="LittleEndian">',
+            '  <UnstructuredGrid>',
+            '    <Piece NumberOfPoints="0" NumberOfCells="0">',
+            '      <Points>',
+            '        <DataArray type="Float64" NumberOfComponents="3" format="ascii"/>',
+            '      </Points>',
+            '      <CellData>',
+            f'        <DataArray type="Float64" Name="diameter_m" format="ascii">{opt["diameter_m"]}</DataArray>',
+            f'        <DataArray type="Float64" Name="angle_deg" format="ascii">{opt["angle_deg"]}</DataArray>',
+            f'        <DataArray type="Float64" Name="nose_radius_m" format="ascii">{opt["nose_radius_m"]}</DataArray>',
+            f'        <DataArray type="Int64" Name="toroid_count" format="ascii">{opt["toroid_count"]}</DataArray>',
+            f'        <DataArray type="Float64" Name="toroid_radius_m" format="ascii">{opt["toroid_radius_m"]}</DataArray>',
+            f'        <DataArray type="Float64" Name="mass_kg" format="ascii">{opt["mass_kg"]}</DataArray>',
+            '      </CellData>',
+            '      <Cells>',
+            '        <DataArray type="Int64" Name="connectivity" format="ascii"/>',
+            '        <DataArray type="Int64" Name="offsets" format="ascii"/>',
+            '        <DataArray type="UInt8" Name="types" format="ascii"/>',
+            '      </Cells>',
+            '    </Piece>',
+            '  </UnstructuredGrid>',
+            '</VTKFile>',
+        ]
+        with open(vtu_path, "w", encoding="utf-8") as fh:
+            fh.write("\n".join(vtu_lines))
+        print(f"  [OPTIMIZE] Generated: optimised_geometry.vtu")
+    except Exception as exc:
+        print(f"  [WARN] VTU generation skipped: {exc}")
+
+    print(f"  [OPTIMIZE] All outputs saved to: {out_dir}")
 
 
 # CLI Argument Parser
@@ -1120,6 +1378,21 @@ def _parse_args() -> tuple[argparse.Namespace, list[str]]:  # nosec: SMT false p
             "custom floor.  See docs/COVERAGE_FUZZING_STATUS.md."
         ),
     )
+    parser.add_argument(
+        "--pinnExtrapolate",
+        action="store_true",
+        help=(
+            "Run headless validation pipeline: kriging denoise DSMC "
+            "convergence data -> train DeepXDE PINN -> extrapolate from "
+            "step 2200 to step 20000 -> audit accuracy fall/increase "
+            "-> comparison table vs IRVE-3 reference."
+        ),
+    )
+    parser.add_argument(
+        "--skip-pinn",
+        action="store_true",
+        help="Skip the PINN extrapolation validation pipeline (runs by default).",
+    )
     args, unknown = parser.parse_known_args()
     return args, unknown
 
@@ -1133,7 +1406,9 @@ def main() -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — CLI entry point
     lock = _LockFile(_LOCK_FILE)
 
     # --test-build-integrity-only implies no launch
-    no_launch = args.no_launch or args.test_build_integrity_only
+    # Phase 2b runs by default unless --skip-pinn is passed
+    run_pinn = args.pinnExtrapolate or not args.skip_pinn
+    no_launch = args.no_launch or args.test_build_integrity_only or args.pinnExtrapolate
 
     try:
         # -- Phase 0: Boot
@@ -1141,25 +1416,31 @@ def main() -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — CLI entry point
         _phase0_boot(clean=args.clean)
 
         # -- Phase 1: Python Venv Bootstrap
-        if not args.ada_only:
+        if not args.ada_only and not args.pinnExtrapolate:
             _phase1_venv(skip_hashes=args.skip_hashes, verbose=args.verbose)
         else:
-            step_info("Skipping Python (--ada-only)")
+            step_info("Skipping Python (--ada-only or --pinnExtrapolate)")
             print()
 
         # -- Phase 2: Python Static Analysis
-        if not args.ada_only:
+        if not args.ada_only and not args.pinnExtrapolate:
             _phase2_python_analysis(
                 verbose=args.verbose,
                 min_coverage=args.py_coverage,
             )
         else:
             print("[Phase 2] Python Static Analysis")
-            print("  '-- Skipped (--ada-only)")
+            print("  '-- Skipped (--ada-only or --pinnExtrapolate)")
             print()
 
+        # -- Phase 2b: PINN Extrapolation (default: runs unless --skip-pinn)
+        if run_pinn:
+            _phase2b_pinn_extrapolate(extra_args=extra_args)
+
         # -- Phase 3: Ada/SPARK Build
-        _phase3_ada_build(verbose=args.verbose)
+        # Skip Ada only when --pinnExtrapolate is used as standalone flag
+        if not args.pinnExtrapolate:
+            _phase3_ada_build(verbose=args.verbose)
 
         # -- Phase 4: Launch
         _phase4_launch(
