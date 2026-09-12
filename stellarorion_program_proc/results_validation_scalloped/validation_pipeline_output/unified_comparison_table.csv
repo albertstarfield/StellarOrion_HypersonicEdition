@@ -1,0 +1,6 @@
+metric,irve3_flight,loftid_flight,so_raw,so_kriging,so_pinn,delta_pinn_vs_irve3_pct,delta_pinn_vs_loftid_pct
+peak_heat_flux_avg_Wcm2,14.361,39.27,56.5865,56.9398,55.7898,288.48,42.07
+peak_heat_flux_max_Wcm2,14.361,39.27,182.4880,194.6564,194.6564,1255.45,395.69
+total_heat_load_Jcm2,195.0577,3520.0,165.7160,165.7160,165.7160,-15.04,-95.29
+peak_g_load,19.7,9.66,16.8334,,16.8334,-14.55,74.26
+drag_coefficient_cd,,,,,1.4632,,
