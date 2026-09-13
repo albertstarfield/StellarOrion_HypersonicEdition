@@ -18,6 +18,29 @@ package body StellarOrion_PINN_Trajectory is
    --  All math delegates to SPARK-safe routines in StellarOrion_Physics.
 
    -- -----------------------------------------------------------------
+   --  Local Sqrt (Newton-Raphson, 25 iterations)
+   --  [Citation: Newton 1671, Method of Fluxions]
+   -- -----------------------------------------------------------------
+   function Local_Sqrt (X : Float) return Float is
+      Y     : Float;
+      Y_New : Float;
+   begin
+      if X <= 0.0 then
+         return 0.0;
+      end if;
+      Y := X / 2.0;
+      if Y < 1.0 then
+         Y := 1.0;
+      end if;
+      for I in 1 .. 25 loop
+         pragma Unreferenced (I);
+         Y_New := (Y + X / Y) / 2.0;
+         Y     := Y_New;
+      end loop;
+      return Y;
+   end Local_Sqrt;
+
+   -- -----------------------------------------------------------------
    --  ISA Atmosphere Layers
    -- -----------------------------------------------------------------
    --  [Citation: NASA SP-7468 (1976), Table 1]
@@ -121,7 +144,7 @@ package body StellarOrion_PINN_Trajectory is
 
       --  Speed of sound: a = sqrt(gamma * R * T)
       if T > 0.0 then
-         A := StellarOrion_Physics.Sqrt (GAMMA_AIR * R_AIR * T);
+         A := Local_Sqrt (GAMMA_AIR * R_AIR * T);
       else
          A := 0.0;
       end if;
@@ -161,7 +184,7 @@ package body StellarOrion_PINN_Trajectory is
          return 0.0;
       end if;
       V_Cubed := Velocity_Ms * Velocity_Ms * Velocity_Ms;
-      return C_SG * StellarOrion_Physics.Sqrt (Density_Kgm3 / Nose_Radius_M) * V_Cubed;
+      return C_SG * Local_Sqrt (Density_Kgm3 / Nose_Radius_M) * V_Cubed;
    end Sutton_Graves_Heat_Flux;
 
    -- -----------------------------------------------------------------
