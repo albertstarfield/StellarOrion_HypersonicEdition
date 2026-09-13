@@ -1405,16 +1405,127 @@ def generate_convergence_plot(data, pinn_curve, output_dir, metric="heatflux_avg
     return plot_path
 
 
+def generate_multi_metric_convergence_plot(data, pinn_curve, output_dir):
+    """Generate a 2x2 multi-metric convergence plot with altitude trajectory.
+
+    Shows heat_flux_avg (top-left), drag (top-right), g_load (bottom-left),
+    lift (bottom-right), each with DSMC (blue) + PINN (red dashed) + altitude
+    trajectory on shared right y-axis for the first subplot.
+
+    [Citation: matplotlib docs — https://matplotlib.org/stable/gallery/]
+    [Citation: Goal audit requirement — all 16 variables must appear across outputs]
+
+    AXIOMS:
+      1. Four key aerothermodynamic metrics: heat flux, drag, g-load, lift
+      2. DSMC portion (steps 100-2200) shown in blue solid
+      3. PINN portion (steps 2200-300M) shown in red dashed
+      4. Vertical transition line at step 2200
+      5. Right y-axis on top-left panel shows altitude trajectory (gray, inverted)
+
+    Args:
+        data: DSMC convergence data dict
+        pinn_curve: Per-100-step PINN extrapolation result dict
+        output_dir: Output directory for the plot
+
+    Returns: path to saved PNG
+    """
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("[pipeline] matplotlib not available — skipping multi-metric plot")
+        return None
+
+    plots_dir = os.path.join(output_dir, "plots")
+    os.makedirs(plots_dir, exist_ok=True)
+
+    fig, axes = plt.subplots(2, 2, figsize=(18, 12))
+    fig.suptitle(
+        "StellarOrion Hybrid DSMC→PINN Multi-Metric Convergence\n"
+        "IRVE-3 Trajectory (120 km → 50 km) | Step 100 → 300,000,000",
+        fontsize=14, fontweight="bold"
+    )
+
+    # Metric definitions: (data_key, label, unit, color)
+    metrics = [
+        ("heatflux_avg_Wm2", "Heat Flux Avg", "W/m²", "#e74c3c"),
+        ("drag_sum_N", "Drag", "N", "#2ecc71"),
+        ("g_load", "G-Load", "g", "#f39c12"),
+        ("lift_sum_N", "Lift", "N", "#3498db"),
+    ]
+
+    dsmc_steps = data["steps"]
+    transition_step = int(dsmc_steps[-1])
+
+    for idx, (key, label, unit, color) in enumerate(metrics):
+        row, col = divmod(idx, 2)
+        ax = axes[row][col]
+
+        # DSMC portion
+        dsmc_vals = np.array(data[key], dtype=float)
+        ax.plot(dsmc_steps, dsmc_vals, "b-", linewidth=1.5, label="DSMC (Raw)", alpha=0.7)
+
+        # PINN portion
+        if pinn_curve and key in pinn_curve.get("metrics", {}):
+            pinn_steps = pinn_curve["steps"]
+            pinn_vals = pinn_curve["metrics"][key]
+            ax.plot(pinn_steps, pinn_vals, "r--", linewidth=2.0, label="PINN Extrapolation", alpha=0.8)
+
+        # Transition line
+        ax.axvline(x=transition_step, color="k", linestyle=":", linewidth=1.5, alpha=0.6)
+
+        ax.set_ylabel(f"{label} [{unit}]", fontsize=11)
+        ax.set_xlabel("Step", fontsize=10)
+        ax.set_title(label, fontsize=12, fontweight="bold")
+        ax.legend(fontsize=8, loc="upper right")
+        ax.grid(True, alpha=0.3)
+
+        # Right y-axis for altitude on top-left panel (idx 0)
+        if idx == 0 and pinn_curve and "trajectory" in pinn_curve:
+            ax2 = ax.twinx()
+            # DSMC portion: trajectory at each DSMC step
+            dsmc_alt = np.array([irve3_trajectory_model(int(s))["altitude_km"] for s in dsmc_steps])
+            ax2.plot(dsmc_steps, dsmc_alt, "gray", linestyle="-", linewidth=1.0, alpha=0.5)
+            # PINN portion
+            pinn_steps = pinn_curve["steps"]
+            pinn_alt = pinn_curve["trajectory"]["altitude_km"]
+            ax2.plot(pinn_steps, pinn_alt, "gray", linestyle=":", linewidth=1.5, alpha=0.7)
+            ax2.set_ylabel("Altitude [km]", fontsize=11, color="gray")
+            ax2.tick_params(axis="y", labelcolor="gray")
+            ax2.invert_yaxis()
+
+    fig.tight_layout(rect=[0, 0, 1, 0.94])
+    plot_path = os.path.join(plots_dir, "convergence_multi_metric_dual_axis.png")
+    fig.savefig(plot_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[pipeline] Generated: plots/convergence_multi_metric_dual_axis.png")
+    return plot_path
+
+
 # ========================================================================
 #  Per-100-Step CSV Export
 # ========================================================================
 
 def generate_per_step_csv(data, pinn_curve, output_dir):
-    """Generate per-100-step CSV with trajectory conditions.
+    """Generate per-100-step CSV with trajectory conditions and full variable set.
 
-    Columns: step, metric_value, altitude_km, velocity_ms, mach_number,
-             heat_flux_avg, heat_flux_max, drag_sum, g_load, cd, cl,
-             heat_load, dynamic_pressure, Sutton_Graves_Wcm2
+    [Citation: Goal audit requirement — cross-check all CSV columns against the full
+    set of simulated variables: heat_flux_avg, heat_flux_max, heat_load, drag, lift,
+    g_load, cd, cl, altitude, velocity, mach, dynamic_pressure, ambient_pressure,
+    ambient_temp, knudsen_number, reynolds_number, etc.]
+
+    Columns: step, altitude_km, velocity_ms, mach_number,
+             heat_flux_avg_Wm2, heat_flux_max_Wm2, drag_sum_N, lift_sum_N,
+             g_load, cd, cl, heat_load_jcm2, heat_sum_Wm2,
+             dynamic_pressure_Pa, Sutton_Graves_Wcm2,
+             ambient_pressure_Pa, ambient_temp_K, knudsen_number, reynolds_number
+
+    AXIOMS:
+      1. ISA atmosphere provides ambient_pressure, ambient_temp, and dynamic_viscosity
+      2. Knudsen number = mean_free_path / characteristic_length (3.0 m vehicle diameter)
+      3. Reynolds number = rho * V * L / mu (inertial/viscous ratio)
+      4. Lift is computed from DSMC data or extrapolated from DSMC final value
 
     Args:
         data: DSMC convergence data dict
@@ -1424,24 +1535,34 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
     Returns: path to saved CSV
     """
     csv_path = os.path.join(output_dir, "pinn_trajectory_per_step.csv")
+    char_length_m = 3.0  # IRVE-3 vehicle diameter [m]
 
     with open(csv_path, "w") as fh:
-        # Header
+        # Header — full variable set per audit requirement
         cols = ["step", "altitude_km", "velocity_ms", "mach_number",
-                "heat_flux_avg_Wm2", "heat_flux_max_Wm2", "drag_sum_N",
+                "heat_flux_avg_Wm2", "heat_flux_max_Wm2", "drag_sum_N", "lift_sum_N",
                 "g_load", "cd", "cl", "heat_load_jcm2", "heat_sum_Wm2",
-                "dynamic_pressure_Pa", "Sutton_Graves_Wcm2"]
+                "dynamic_pressure_Pa", "Sutton_Graves_Wcm2",
+                "ambient_pressure_Pa", "ambient_temp_K",
+                "knudsen_number", "reynolds_number"]
         fh.write(",".join(cols) + "\n")
 
         # DSMC portion (steps 100-2200)
         # AXIOM: DSMC data was collected at ONE fixed point (~51.8 km, ~3378 m/s)
         # The trajectory model maps each step to a virtual altitude along the IRVE-3 profile
         # (120 km at step 100 → 50 km at step 2200). The metrics are real DSMC values.
-        # SG and dynamic pressure use the trajectory conditions for comparison context.
+        # SG, dynamic pressure, and atmospheric conditions use the trajectory altitude.
         for i, s in enumerate(data["steps"]):
             traj = irve3_trajectory_model(int(s))
             sg = sutton_graves_heat_flux(traj["altitude_km"], traj["velocity_ms"])
-            dyn_q = 0.5 * isa_atmosphere(traj["altitude_km"])["density_kgm3"] * traj["velocity_ms"] ** 2
+            isa = isa_atmosphere(traj["altitude_km"])
+            dyn_q = 0.5 * isa["density_kgm3"] * traj["velocity_ms"] ** 2
+            # Knudsen number: Kn = λ / L_char where λ = mean_free_path from ISA
+            kn = isa["mean_free_path_m"] / char_length_m if char_length_m > 0 else 0.0
+            # Reynolds number: Re = ρ * V * L / μ
+            re = (isa["density_kgm3"] * traj["velocity_ms"] * char_length_m /
+                  isa["dynamic_viscosity_Pas"]) if isa["dynamic_viscosity_Pas"] > 0 else 0.0
+
             vals = [
                 f"{int(s)}",
                 f"{traj['altitude_km']:.4f}",
@@ -1450,6 +1571,7 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
                 f"{float(data['heatflux_avg_Wm2'][i]):.2f}",
                 f"{float(data['heatflux_max_Wm2'][i]):.2f}",
                 f"{float(data['drag_sum_N'][i]):.2f}",
+                f"{float(data['lift_sum_N'][i]):.2f}",
                 f"{float(data['g_load'][i]):.4f}",
                 f"{float(data['cd'][i]):.6f}",
                 f"{float(data['cl'][i]):.6f}",
@@ -1457,6 +1579,10 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
                 f"{float(data['heat_sum_Wm2'][i]):.2f}",
                 f"{dyn_q:.2f}",
                 f"{sg['heat_flux_Wcm2']:.4f}",
+                f"{isa['pressure_Pa']:.2f}",
+                f"{isa['temperature_K']:.2f}",
+                f"{kn:.6e}",
+                f"{re:.2f}",
             ]
             fh.write(",".join(vals) + "\n")
 
@@ -1468,7 +1594,11 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
                 vel = pinn_curve["trajectory"]["velocity_ms"][i]
                 mach = pinn_curve["trajectory"]["mach_number"][i]
                 sg = sutton_graves_heat_flux(alt, vel)
-                dyn_q = 0.5 * isa_atmosphere(alt)["density_kgm3"] * vel ** 2
+                isa = isa_atmosphere(alt)
+                dyn_q = 0.5 * isa["density_kgm3"] * vel ** 2
+                kn = isa["mean_free_path_m"] / char_length_m if char_length_m > 0 else 0.0
+                re = (isa["density_kgm3"] * vel * char_length_m /
+                      isa["dynamic_viscosity_Pas"]) if isa["dynamic_viscosity_Pas"] > 0 else 0.0
 
                 # Get PINN metric values
                 hf_avg = pinn_curve["metrics"].get("heatflux_avg_Wm2",
@@ -1476,6 +1606,8 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
                 hf_max = pinn_curve["metrics"].get("heatflux_max_Wm2",
                         np.zeros(len(pinn_curve["steps"])))[i]
                 drag = pinn_curve["metrics"].get("drag_sum_N",
+                        np.zeros(len(pinn_curve["steps"])))[i]
+                lift = pinn_curve["metrics"].get("lift_sum_N",
                         np.zeros(len(pinn_curve["steps"])))[i]
                 gload = pinn_curve["metrics"].get("g_load",
                         np.zeros(len(pinn_curve["steps"])))[i]
@@ -1495,6 +1627,7 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
                     f"{hf_avg:.2f}",
                     f"{hf_max:.2f}",
                     f"{drag:.2f}",
+                    f"{lift:.2f}",
                     f"{gload:.4f}",
                     f"{cd_val:.6f}",
                     f"{cl_val:.6f}",
@@ -1502,6 +1635,10 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
                     f"{hsum:.2f}",
                     f"{dyn_q:.2f}",
                     f"{sg['heat_flux_Wcm2']:.4f}",
+                    f"{isa['pressure_Pa']:.2f}",
+                    f"{isa['temperature_K']:.2f}",
+                    f"{kn:.6e}",
+                    f"{re:.2f}",
                 ]
                 fh.write(",".join(vals) + "\n")
 
@@ -1544,8 +1681,10 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
     # DSMC final values (at step 2200, 51.8 km)
     dsmc_hf_avg_final = float(data["heatflux_avg_Wm2"][-1]) / 10000.0  # W/cm²
     dsmc_drag_final = float(data["drag_sum_N"][-1])
+    dsmc_lift_final = float(data["lift_sum_N"][-1])
     dsmc_g_final = float(data["g_load"][-1])
     dsmc_cd_final = float(data["cd"][-1])
+    dsmc_cl_final = float(data["cl"][-1])
     dsmc_hload_final = float(data["heat_load_jcm2"][-1])
 
     md_lines = []
@@ -1583,8 +1722,10 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
     md_lines.append("|:---|---:|")
     md_lines.append(f"| Heat Flux Avg [W/cm²] | {dsmc_hf_avg_final:.4f} |")
     md_lines.append(f"| Drag Sum [N] | {dsmc_drag_final:.2f} |")
+    md_lines.append(f"| Lift Sum [N] | {dsmc_lift_final:.2f} |")
     md_lines.append(f"| G-Load [g] | {dsmc_g_final:.4f} |")
     md_lines.append(f"| Drag Coefficient C_d | {dsmc_cd_final:.6f} |")
+    md_lines.append(f"| Lift Coefficient C_l | {dsmc_cl_final:.6f} |")
     md_lines.append(f"| Heat Load [J/cm²] | {dsmc_hload_final:.4f} |")
     md_lines.append("")
     md_lines.append("---")
@@ -1603,8 +1744,8 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
     md_lines.append("")
 
     # Find which PINN steps correspond to each altitude milestone
-    md_lines.append("| Alt [km] | Velocity [m/s] | Mach | SG q̇ [W/cm²] | PINN q̇ [W/cm²] | δ(SG-PINN) [%] | IRVE-3 Ref |")
-    md_lines.append("|---:|---:|---:|---:|---:|---:|---:|")
+    md_lines.append("| Alt [km] | Vel [m/s] | Mach | SG q̇ [W/cm²] | PINN q̇ [W/cm²] | δ [%] | Drag [kN] | Lift [kN] | G-Load | P_amb [Pa] | T_amb [K] | Kn | Re |")
+    md_lines.append("|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
 
     for alt_target in alt_milestones:
         # Always use the trajectory model for velocity/mach at each altitude
@@ -1639,9 +1780,25 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
         else:
             delta_str = "N/A"
 
+        # [Citation: Goal audit requirement — lift, ambient conditions, Kn, Re must appear in markdown tables]
+        char_length_m = 3.0  # IRVE-3 vehicle diameter [m]
+        kn = atm["mean_free_path_m"] / char_length_m if char_length_m > 0 else 0.0
+        re = (atm["density_kgm3"] * vel * char_length_m /
+              atm["dynamic_viscosity_Pas"]) if atm["dynamic_viscosity_Pas"] > 0 else 0.0
+        # Use DSMC final lift/drag/gload scaled by dynamic pressure ratio for PINN estimates
+        dyn_q_ref = 0.5 * isa_atmosphere(51.8)["density_kgm3"] * 3378.0 ** 2  # Reference at DSMC point
+        dyn_q_now = 0.5 * atm["density_kgm3"] * vel ** 2
+        dp_ratio = dyn_q_now / dyn_q_ref if dyn_q_ref > 0 else 1.0
+        drag_est = dsmc_drag_final * dp_ratio  # N
+        lift_est = float(data["lift_sum_N"][-1]) * dp_ratio  # N
+        gload_est = dsmc_g_final * dp_ratio
+
         md_lines.append(
             f"| {closest_alt:.1f} | {vel:.0f} | {mach:.2f} | "
-            f"{sg_wcm2:.4f} | {hf_avg:.4f} | {delta_str} | {irve3_ref} |"
+            f"{sg_wcm2:.4f} | {hf_avg:.4f} | {delta_str} | "
+            f"{drag_est / 1000:.2f} | {lift_est / 1000:.2f} | {gload_est:.2f} | "
+            f"{atm['pressure_Pa']:.2f} | {atm['temperature_K']:.1f} | "
+            f"{kn:.2e} | {re:.0f} |"
         )
 
     md_lines.append("")
@@ -1765,6 +1922,7 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
     dsmc_hf_avg = data["heatflux_avg_Wm2"] / 10000.0  # Convert to W/cm²
     dsmc_drag = data["drag_sum_N"]
     dsmc_g = data["g_load"]
+    dsmc_lift = data["lift_sum_N"]
 
     # DSMC frames: one frame per 100 steps
     dsmc_frame_steps = np.arange(int(dsmc_steps[0]), int(dsmc_steps[-1]) + 1, steps_per_frame)
@@ -1779,6 +1937,8 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
                     np.zeros(len(pinn_frame_steps)))
         pinn_g = pinn_curve["metrics"].get("g_load",
                  np.zeros(len(pinn_frame_steps)))
+        pinn_lift = pinn_curve["metrics"].get("lift_sum_N",
+                    np.zeros(len(pinn_frame_steps)))
         pinn_alt = pinn_curve["trajectory"]["altitude_km"]
         pinn_vel = pinn_curve["trajectory"]["velocity_ms"]
         pinn_mach = pinn_curve["trajectory"]["mach_number"]
@@ -1787,6 +1947,7 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
         pinn_hf_avg = np.array([])
         pinn_drag = np.array([])
         pinn_g = np.array([])
+        pinn_lift = np.array([])
         pinn_alt = np.array([])
         pinn_vel = np.array([])
         pinn_mach = np.array([])
@@ -1800,6 +1961,7 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
     dsmc_hf_at_frames = np.interp(dsmc_frame_steps, dsmc_steps, dsmc_hf_avg)
     dsmc_drag_at_frames = np.interp(dsmc_frame_steps, dsmc_steps, dsmc_drag)
     dsmc_g_at_frames = np.interp(dsmc_frame_steps, dsmc_steps, dsmc_g)
+    dsmc_lift_at_frames = np.interp(dsmc_frame_steps, dsmc_steps, dsmc_lift)
 
     total_frames = len(dsmc_frame_steps) + len(pinn_frame_steps)
     print(f"[pipeline] Generating MP4: {total_frames} frames ({len(dsmc_frame_steps)} DSMC + {len(pinn_frame_steps)} PINN)")
@@ -1896,11 +2058,14 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
         ax_alt.grid(True, alpha=0.3)
 
         # --- Bar Chart: Current Metrics (bottom-right) ---
-        metrics_names = ["q̇ [W/cm²]", "Drag [kN]", "G-Load [g]"]
-        metrics_vals = [hf, drag / 1000.0, gload]
+        # [Citation: Goal audit requirement — lift must appear in MP4 bar chart]
+        lift = pinn_lift[pinn_idx] if is_pinn else dsmc_lift_at_frames[idx]
+        metrics_names = ["q̇ [W/cm²]", "Drag [kN]", "G-Load [g]", "Lift [kN]"]
+        metrics_vals = [hf, drag / 1000.0, gload, lift / 1000.0]
         metrics_colors = ["#e74c3c" if hf > 10 else "#3498db",
                          "#2ecc71" if drag < 50000 else "#e74c3c",
-                         "#f39c12" if gload < 20 else "#e74c3c"]
+                         "#f39c12" if gload < 20 else "#e74c3c",
+                         "#9b59b6"]
         bars = ax_bar.bar(metrics_names, metrics_vals, color=metrics_colors,
                          edgecolor="black", linewidth=0.5)
         for bar, val in zip(bars, metrics_vals):
@@ -2362,6 +2527,16 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
             results["outputs"]["convergence_plot"] = plot_path
     except Exception as exc:
         print(f"  [WARN] Convergence plot failed ({exc})")
+
+    # Step 6b2: Multi-metric convergence plot (4 panels: heat_flux, drag, g_load, lift)
+    print("\n[Step 6b2] Generating multi-metric convergence plot (4 panels) ...")
+    try:
+        multi_plot_path = generate_multi_metric_convergence_plot(data, pinn_curve, output_dir)
+        if multi_plot_path:
+            results["outputs"] = results.get("outputs", {})
+            results["outputs"]["convergence_multi_metric_plot"] = multi_plot_path
+    except Exception as exc:
+        print(f"  [WARN] Multi-metric convergence plot failed ({exc})")
 
     # Step 6c: Per-100-step CSV export
     print("\n[Step 6c] Generating per-100-step trajectory CSV ...")
