@@ -4,6 +4,19 @@ project StellarOrion_PINN_Lib is
    for Object_Dir use "obj";
    for Library_Name use "stellarorion_pinn";
    for Library_Kind use "Dynamic";
+   --  Exclude main.adb (it has a procedure body, incompatible with library)
+   for Source_Files use (
+      "stellarorion_types.ads",
+      "stellarorion_types.adb",
+      "stellarorion_environment.ads",
+      "stellarorion_environment.adb",
+      "stellarorion_geometry.ads",
+      "stellarorion_geometry.adb",
+      "stellarorion_physics.ads",
+      "stellarorion_physics.adb",
+      "stellarorion_pinn_trajectory.ads",
+      "stellarorion_pinn_trajectory.adb"
+   );
 
    package Compiler is
       for Switches ("ada") use
