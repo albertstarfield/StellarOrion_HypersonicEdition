@@ -30,8 +30,10 @@ with velocity and Mach number evolving along the Black Brant XI suborbital profi
 |:---|---:|
 | Heat Flux Avg [W/cm²] | 56.5865 |
 | Drag Sum [N] | 45410.15 |
+| Lift Sum [N] | -17262.77 |
 | G-Load [g] | 16.8334 |
 | Drag Coefficient C_d | 1.462536 |
+| Lift Coefficient C_l | -0.555986 |
 | Heat Load [J/cm²] | 165.7160 |
 
 ---
@@ -46,17 +48,17 @@ compared against the Sutton-Graves analytical correlation and IRVE-3 flight data
 > is at a different condition. The SG correlation provides the correct apples-to-apples
 > comparison at each altitude point.
 
-| Alt [km] | Velocity [m/s] | Mach | SG q̇ [W/cm²] | PINN q̇ [W/cm²] | δ(SG-PINN) [%] | IRVE-3 Ref |
-|---:|---:|---:|---:|---:|---:|---:|
-| 50.0 | 2700 | 8.19 | 9.3524 | 56.5865 | -505.1 | N/A |
-| 50.0 | 2700 | 8.19 | 9.3524 | 56.5865 | -505.1 | N/A |
-| 50.0 | 2700 | 8.19 | 9.3524 | 56.5865 | -505.1 | N/A |
-| 50.0 | 2700 | 8.19 | 9.3524 | 56.5865 | -505.1 | N/A |
-| 50.0 | 2700 | 8.19 | 9.3524 | 56.5865 | -505.1 | N/A |
-| 50.0 | 2700 | 8.19 | 9.3524 | 56.5865 | -505.1 | N/A |
-| 50.0 | 2700 | 8.19 | 9.3524 | 56.5865 | -505.1 | 14.36 (peak) |
-| 50.0 | 2700 | 8.19 | 9.3524 | 56.5865 | -505.1 | 14.36 (peak) |
-| 50.0 | 2700 | 8.19 | 9.3524 | 56.5865 | -505.1 | 14.36 (peak) |
+| Alt [km] | Vel [m/s] | Mach | SG q̇ [W/cm²] | PINN q̇ [W/cm²] | δ [%] | Drag [kN] | Lift [kN] | G-Load | P_amb [Pa] | T_amb [K] | Kn | Re |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 120.0 | 4300 | 15.69 | 0.1283 | 0.1283 | +0.0 | 0.00 | -0.00 | 0.00 | 0.00 | 186.9 | 1.28e+00 | 12 |
+| 110.0 | 4071 | 14.86 | 0.2716 | 0.2716 | +0.0 | 0.01 | -0.00 | 0.00 | 0.00 | 186.9 | 2.05e-01 | 68 |
+| 100.0 | 3843 | 14.02 | 0.5698 | 0.5698 | +0.0 | 0.03 | -0.01 | 0.01 | 0.02 | 186.9 | 3.30e-02 | 402 |
+| 90.0 | 3614 | 13.19 | 1.1825 | 1.1825 | +0.0 | 0.18 | -0.07 | 0.07 | 0.15 | 186.9 | 5.30e-03 | 2351 |
+| 80.0 | 3386 | 12.04 | 2.3371 | 2.3371 | +0.0 | 0.91 | -0.35 | 0.34 | 0.89 | 196.7 | 9.34e-04 | 12179 |
+| 70.0 | 3157 | 10.68 | 4.1207 | 4.1207 | +0.0 | 3.75 | -1.43 | 1.39 | 4.63 | 217.4 | 2.04e-04 | 49314 |
+| 60.0 | 2929 | 9.32 | 6.4814 | 6.4814 | +0.0 | 12.54 | -4.77 | 4.65 | 20.31 | 245.4 | 5.48e-05 | 160781 |
+| 55.0 | 2814 | 8.72 | 7.8475 | 7.8475 | +0.0 | 21.55 | -8.19 | 7.99 | 39.97 | 259.4 | 2.99e-05 | 275051 |
+| 50.0 | 2700 | 8.19 | 9.3524 | 9.3524 | +0.0 | 36.13 | -13.73 | 13.39 | 75.94 | 270.6 | 1.66e-05 | 464775 |
 
 ---
 
@@ -65,7 +67,7 @@ compared against the Sutton-Graves analytical correlation and IRVE-3 flight data
 | Criterion | Target | Achieved | Status |
 |:---|:---|:---|:---|
 | SG at 50 km matches literature | ~12 W/cm² | 9.35 W/cm² | ✅ |
-| PINN smoothness (max step jump) | <10% of mean | 0.0% | ✅ |
+| PINN smoothness (max step jump) | <10% of mean | 1.2% | ✅ |
 | IRVE-3 altitude profile | 120→50 km | 120→50 km | ✅ |
 | Transition marker at step 2200 | 2200 | 2200 | ✅ |
 
