@@ -95,8 +95,9 @@ package body StellarOrion_Validation is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Validate_And_Dump");
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
-   end Validate_And_Dump;
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    return False;
+    end Validate_And_Dump;
 
    -- ==================================================================
    --  Check_Survivability
@@ -140,9 +141,10 @@ package body StellarOrion_Validation is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Check_Survivability");
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
-   end Check_Survivability;
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Check_Survivability");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    return False;
+    end Check_Survivability;
 
    --  STC coverage wrapper for Validate_And_Dump.
    --  Pure predicate exercised on IRVE-3-default geometry plus the SiC

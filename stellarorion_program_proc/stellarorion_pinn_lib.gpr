@@ -1,0 +1,24 @@
+project StellarOrion_PINN_Lib is
+
+   for Source_Dirs use ("src/simulation_engine");
+   for Object_Dir use "obj";
+   for Library_Name use "stellarorion_pinn";
+   for Library_Kind use "Dynamic";
+
+   package Compiler is
+      for Switches ("ada") use
+        ("-gnat12",
+         "-gnatwa",
+         "-gnatW8",
+         "-gnatQ",
+         "-gnatdAME",
+         "-fPIC");
+   end Compiler;
+
+   package Linker is
+      for Switches ("ada") use
+        ("-g",
+         "-Wl,-syslibroot,/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+   end Linker;
+
+end StellarOrion_PINN_Lib;
