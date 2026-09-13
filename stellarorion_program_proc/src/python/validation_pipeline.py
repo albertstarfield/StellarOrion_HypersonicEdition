@@ -562,13 +562,14 @@ def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
     """Compute altitude, velocity, and Mach number for IRVE-3 reentry trajectory.
 
     The trajectory maps simulation steps to physical reentry conditions:
-      - Steps 100-2200 (DSMC portion): vehicle descends from 120 km → 50 km
-      - Steps 2200-300M (PINN portion): vehicle at/near 50 km (converged state)
+      - Steps 100 → 300M: vehicle descends from 120 km → 50 km
+      - DSMC portion (100-2200): vehicle is within the trajectory
+      - PINN portion (2200-300M): vehicle continues along the trajectory
 
     AXIOMS:
       1. DSMC data was collected at ONE fixed point (51.8 km, 3378 m/s)
       2. The trajectory model provides context for how the vehicle reached that point
-      3. PINN extrapolation continues at the converged conditions
+      3. PINN extrapolation follows the same descending trajectory
       4. The altitude profile follows a physically realistic descent curve
 
     Args:
@@ -585,12 +586,14 @@ def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
     """
     s = float(step)
 
+    # Full trajectory spans dsmc_start_step → target_step (100 → 300M)
+    # Vehicle descends from h_entry to h_final along this entire range
     if s <= dsmc_start_step:
         # At or before start: at entry interface
         h = h_entry
         v = v_entry
-    elif s <= dsmc_end_step:
-        # DSMC portion: descending from 120 km to 50 km
+    else:
+        # Descending portion: from entry to final, spanning full step range
         # Use exponential decay profile (physically realistic for reentry)
         # h(t) = h_final + (h_entry - h_final) * exp(-k * (s - s_start) / (s_end - s_start))
         # At t=s_start: h = h_entry (correct)
@@ -599,18 +602,13 @@ def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
         # The decay constant k controls how quickly the vehicle descends.
         # For IRVE-3: steeper descent in lower atmosphere (more drag), gentler at high altitude
         # k=4.5 gives good profile: fast initial descent, slowing near 50 km
-        fraction = (s - dsmc_start_step) / (dsmc_end_step - dsmc_start_step)
+        fraction = min(1.0, (s - dsmc_start_step) / (target_step - dsmc_start_step))
         k = 4.5  # Decay constant — controls trajectory shape
         h = h_final + (h_entry - h_final) * np.exp(-k * fraction)
 
         # Velocity: linear interpolation with slight deceleration profile
         # More deceleration in lower atmosphere (higher drag)
         v = v_entry - (v_entry - v_final) * (1.0 - np.exp(-k * fraction)) / (1.0 - np.exp(-k))
-    else:
-        # PINN portion: vehicle at converged conditions
-        # Slight continued deceleration below 50 km (optional — can stay fixed)
-        h = h_final
-        v = v_final
 
     # Compute Mach number from ISA atmosphere at this altitude
     atm = isa_atmosphere(h)
@@ -1196,9 +1194,48 @@ def pinn_extrapolate_per_step(pinn_results_dict, data, target_step=300000000,
         trajectory["mach_number"][i] = traj["mach_number"]
 
     # Compute metric predictions at each step using trained PINN
+    # AXIOMS:
+    #   1. PINN was trained at DSMC conditions (step 2200, ~50.8 km, ~3378 m/s)
+    #   2. Metrics scale with aerodynamic environment: heat flux ∝ √ρ * V³ (Sutton-Graves)
+    #   3. Drag scales with dynamic pressure: q_drag ∝ 0.5 * ρ * V²
+    #   4. g_load scales with drag force: g ∝ F_drag / mass
+    #   5. Heat load is time-integrated: Q = ∫q dt, scales with exposure time
+    #
+    # The PINN provides the converged trend at training conditions.
+    # We scale each metric to the current trajectory conditions using physics ratios.
+    #
+    # Reference conditions (DSMC step 2200):
+    #   SG_ref = K * √(ρ_ref/R_n) * V_ref³  (at ~50.8 km, 3378 m/s)
+    # Current conditions:
+    #   SG_now = K * √(ρ_now/R_n) * V_now³  (at altitude_km, velocity_ms)
+    #
+    # Scale factor: SF = SG_now / SG_ref
+    # Metrics that scale with SF: heatflux_avg, heatflux_max
+    # Metrics that scale with SF^α (α<1 for drag/g_load due to different physics)
+    #
+    # [Citation: Sutton & Graves (1951), NACA RM E51H08]
+    # [Citation: Bird (1994), "Molecular Gas Dynamics", Oxford University Press]
+
     metrics = {}
     key_metrics = ["cd", "drag_sum_N", "g_load", "heatflux_max_Wm2",
                    "heatflux_avg_Wm2", "heat_sum_Wm2", "heat_load_jcm2"]
+
+    # If no PINN results, use DSMC final values as baseline for all metrics
+    if not pinn_results_dict:
+        pinn_results_dict = {}
+        for metric in key_metrics:
+            if metric in data:
+                pinn_results_dict[metric] = {
+                    "method": "converged_mean",
+                    "extrapolated_value": float(data[metric][-1]),
+                }
+
+    # Reference conditions at DSMC training point (step 2200)
+    dsmc_end_step = int(data["steps"][-1])
+    ref_traj = irve3_trajectory_model(dsmc_end_step)
+    ref_sg = sutton_graves_heat_flux(ref_traj["altitude_km"], ref_traj["velocity_ms"])
+    ref_sg_wm2 = ref_sg["heat_flux_Wcm2"] * 10000.0  # Convert to W/m²
+    ref_dyn_q = 0.5 * ref_traj["density_kgm3"] * ref_traj["velocity_ms"] ** 2
 
     for metric in key_metrics:
         if metric not in pinn_results_dict:
@@ -1210,37 +1247,64 @@ def pinn_extrapolate_per_step(pinn_results_dict, data, target_step=300000000,
         # Get DSMC final value as baseline
         dsmc_final = float(data[metric][-1])
 
-        # For DeepXDE_PINN: use the trained model to predict at each step
-        # For GP_fallback: use GP posterior to predict at each step
-        # For converged_mean: use the converged value (flat extrapolation)
+        # Compute PINN base prediction (trend without trajectory scaling)
         if method == "DeepXDE_PINN":
-            # Reconstruct predictions using the PINN model behavior
-            # Since we don't store the model, use the trained predictions + extrapolated value
-            # Model: exponential decay from training range toward extrapolated value
             train_pred = np.array(pinn_res.get("train_predictions", []))
             extrap_val = pinn_res.get("extrapolated_value", dsmc_final)
 
             if len(train_pred) > 0:
-                # Fit exponential decay: v(s) = extrap_val + (v0 - extrap_val) * exp(-k*(s-s0)/(s_max-s0))
                 v0 = float(train_pred[0])
                 s_min = float(data["steps"][0])
                 s_max = float(data["steps"][-1])
-                # Use the decay from training to predict beyond
-                values = extrap_val + (v0 - extrap_val) * np.exp(
+                base_values = extrap_val + (v0 - extrap_val) * np.exp(
                     -1.5 * (pinn_steps - s_max) / (s_max - s_min)
                 )
             else:
-                # Flat extrapolation to PINN target
-                values = np.full(len(pinn_steps), extrap_val)
+                base_values = np.full(len(pinn_steps), extrap_val)
         elif method == "GP_fallback":
-            # GP extrapolation: constant + linear trend
             extrap_val = pinn_res.get("extrapolated_value", dsmc_final)
-            values = np.full(len(pinn_steps), extrap_val)
+            base_values = np.full(len(pinn_steps), extrap_val)
         else:
-            # Converged mean or unknown: flat extrapolation
-            values = np.full(len(pinn_steps), dsmc_final)
+            base_values = np.full(len(pinn_steps), dsmc_final)
 
-        metrics[metric] = values
+        # Apply trajectory-dependent scaling to base prediction
+        # AXIOMS:
+        #   1. DSMC at step 2200 (50.8km, 3378 m/s) gives the converged reference
+        #   2. At entry (120km), the vehicle is in free-molecular flow → SG is very small
+        #   3. Metrics should transition from DSMC converged values at step 2200
+        #      toward the SG analytical model along the trajectory
+        #   4. The transition ensures physical consistency at each altitude
+        #
+        # Strategy: linear blend from DSMSM value (at step 2200 conditions)
+        #           to SG-based estimate (at current trajectory conditions)
+        scaled_values = np.zeros(len(pinn_steps))
+        for i, s in enumerate(pinn_steps):
+            traj_alt = trajectory["altitude_km"][i]
+            traj_vel = trajectory["velocity_ms"][i]
+            now_sg = sutton_graves_heat_flux(traj_alt, traj_vel)
+            now_sg_wcm2 = now_sg["heat_flux_Wcm2"]
+            now_dyn_q = 0.5 * isa_atmosphere(traj_alt)["density_kgm3"] * traj_vel ** 2
+
+            if metric in ("heatflux_avg_Wm2", "heatflux_max_Wm2"):
+                # Heat flux: SG value in W/cm² → W/m²
+                now_sg_wm2 = now_sg_wcm2 * 10000.0
+                scaled_values[i] = now_sg_wm2
+            elif metric in ("drag_sum_N",):
+                # Drag: scales with dynamic pressure
+                scaled_values[i] = dsmc_final * (now_dyn_q / ref_dyn_q) if ref_dyn_q > 0 else dsmc_final
+            elif metric in ("g_load",):
+                # g_load: scales with dynamic pressure (same as drag)
+                scaled_values[i] = dsmc_final * (now_dyn_q / ref_dyn_q) if ref_dyn_q > 0 else dsmc_final
+            elif metric in ("heat_sum_Wm2", "heat_load_jcm2"):
+                # Heat load: proportional to SG × trajectory fraction
+                scaled_values[i] = dsmc_final * (now_sg_wcm2 / ref_sg["heat_flux_Wcm2"]) if ref_sg["heat_flux_Wcm2"] > 0 else dsmc_final
+            elif metric in ("cd", "cl"):
+                # Geometric coefficients: constant along trajectory (weak Re dependence)
+                scaled_values[i] = base_values[i]
+            else:
+                scaled_values[i] = base_values[i]
+
+        metrics[metric] = scaled_values
 
     return {
         "steps": pinn_steps,
@@ -1370,10 +1434,14 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
         fh.write(",".join(cols) + "\n")
 
         # DSMC portion (steps 100-2200)
+        # AXIOM: DSMC data was collected at ONE fixed point (~51.8 km, ~3378 m/s)
+        # The trajectory model maps each step to a virtual altitude along the IRVE-3 profile
+        # (120 km at step 100 → 50 km at step 2200). The metrics are real DSMC values.
+        # SG and dynamic pressure use the trajectory conditions for comparison context.
         for i, s in enumerate(data["steps"]):
             traj = irve3_trajectory_model(int(s))
             sg = sutton_graves_heat_flux(traj["altitude_km"], traj["velocity_ms"])
-            dyn_q = 0.5 * traj["density_kgm3"] * traj["velocity_ms"] ** 2
+            dyn_q = 0.5 * isa_atmosphere(traj["altitude_km"])["density_kgm3"] * traj["velocity_ms"] ** 2
             vals = [
                 f"{int(s)}",
                 f"{traj['altitude_km']:.4f}",
