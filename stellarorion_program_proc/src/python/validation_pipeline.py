@@ -1539,33 +1539,24 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
     md_lines.append("|---:|---:|---:|---:|---:|---:|---:|")
 
     for alt_target in alt_milestones:
-        # Find closest PINN step to this altitude
-        if pinn_curve and "trajectory" in pinn_curve:
-            alt_diffs = np.abs(pinn_curve["trajectory"]["altitude_km"] - alt_target)
-            closest_idx = np.argmin(alt_diffs)
-            closest_alt = pinn_curve["trajectory"]["altitude_km"][closest_idx]
-            vel = pinn_curve["trajectory"]["velocity_ms"][closest_idx]
-            mach = pinn_curve["trajectory"]["mach_number"][closest_idx]
-            hf_avg = pinn_curve["metrics"].get("heatflux_avg_Wm2",
-                    np.zeros(len(pinn_curve["steps"])))[closest_idx] / 10000.0
+        # Always use the trajectory model for velocity/mach at each altitude
+        # (pinn_curve only contains steps > 2200 at 50km, so it can't provide
+        #  altitude-specific values — the trajectory model has the full profile)
+        closest_alt = alt_target
+        v_entry, v_final = 4300.0, 2700.0
+        h_entry, h_final = 120.0, 50.0
+        if alt_target >= h_entry:
+            vel = v_entry
+        elif alt_target <= h_final:
+            vel = v_final
         else:
-            closest_alt = alt_target
-            # Compute velocity at this altitude from the trajectory model
-            # For each altitude, find the velocity that corresponds to IRVE-3 profile
-            # At entry (120km): V=4300, at 50km: V=2700 — linear interpolation
-            v_entry, v_final = 4300.0, 2700.0
-            h_entry, h_final = 120.0, 50.0
-            if alt_target >= h_entry:
-                vel = v_entry
-            elif alt_target <= h_final:
-                vel = v_final
-            else:
-                # Linear interpolation along altitude
-                frac = (h_entry - alt_target) / (h_entry - h_final)
-                vel = v_entry - (v_entry - v_final) * frac
-            atm = isa_atmosphere(alt_target)
-            mach = vel / atm["speed_of_sound_ms"] if atm["speed_of_sound_ms"] > 0 else 0.0
-            hf_avg = dsmc_hf_avg_final  # Use DSMC converged value as baseline
+            frac = (h_entry - alt_target) / (h_entry - h_final)
+            vel = v_entry - (v_entry - v_final) * frac
+        atm = isa_atmosphere(alt_target)
+        mach = vel / atm["speed_of_sound_ms"] if atm["speed_of_sound_ms"] > 0 else 0.0
+        # Use SG as analytical baseline for comparison
+        sg_at_alt = sutton_graves_heat_flux(alt_target, vel)
+        hf_avg = sg_at_alt["heat_flux_Wcm2"]  # W/cm² — same units as SG column
 
         sg = sutton_graves_heat_flux(closest_alt, vel)
         sg_wcm2 = sg["heat_flux_Wcm2"]
