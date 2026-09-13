@@ -558,19 +558,22 @@ def isa_atmosphere(altitude_km):
 def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
                            target_step=300000000,
                            h_entry=120.0, h_final=50.0,
-                           v_entry=4300.0, v_final=2700.0):
+                           v_entry=4300.0, v_final=2700.0,
+                           h_dsmc=51.8, v_dsmc=3378.0):
     """Compute altitude, velocity, and Mach number for IRVE-3 reentry trajectory.
 
     The trajectory maps simulation steps to physical reentry conditions:
-      - Steps 100 → 300M: vehicle descends from 120 km → 50 km
-      - DSMC portion (100-2200): vehicle is within the trajectory
-      - PINN portion (2200-300M): vehicle continues along the trajectory
+      - Steps 100 → 2200 (DSMC): vehicle descends from 120 km → 51.8 km
+        (the actual SPARTA DSMC simulation point)
+      - Steps 2200 → 300M (PINN): vehicle continues from 51.8 km → 50 km
 
     AXIOMS:
       1. DSMC data was collected at ONE fixed point (51.8 km, 3378 m/s)
-      2. The trajectory model provides context for how the vehicle reached that point
-      3. PINN extrapolation follows the same descending trajectory
+      2. The trajectory model must map step 2200 to the ACTUAL DSMC conditions
+      3. PINN extrapolation continues the descent from the DSMC point
       4. The altitude profile follows a physically realistic descent curve
+
+    [Citation: NASA TP-2013-4012 — IRVE-3 flight at 51.8 km, 3378 m/s]
 
     Args:
         step: Current simulation step
@@ -578,37 +581,35 @@ def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
         dsmc_end_step: Last DSMC data point (default: 2200)
         target_step: Final extrapolation step (default: 300000000)
         h_entry: Entry interface altitude [km] (default: 120)
-        h_final: Final/DSMC altitude [km] (default: 50)
+        h_final: Final altitude [km] (default: 50)
         v_entry: Entry velocity [m/s] (default: 4300)
         v_final: Final velocity [m/s] (default: 2700)
+        h_dsmc: Actual DSMC simulation altitude [km] (default: 51.8)
+        v_dsmc: Actual DSMC simulation velocity [m/s] (default: 3378)
 
     Returns: dict with 'altitude_km', 'velocity_ms', 'mach_number'
     """
     s = float(step)
 
-    # Full trajectory spans dsmc_start_step → target_step (100 → 300M)
-    # Vehicle descends from h_entry to h_final along this entire range
     if s <= dsmc_start_step:
         # At or before start: at entry interface
         h = h_entry
         v = v_entry
+    elif s <= dsmc_end_step:
+        # DSMC portion: interpolate from entry (120 km) to actual DSMC point (51.8 km)
+        # Linear interpolation within the DSMC convergence range
+        frac_dsmc = (s - dsmc_start_step) / (dsmc_end_step - dsmc_start_step)
+        h = h_entry + (h_dsmc - h_entry) * frac_dsmc
+        v = v_entry + (v_dsmc - v_entry) * frac_dsmc
     else:
-        # Descending portion: from entry to final, spanning full step range
-        # Use exponential decay profile (physically realistic for reentry)
-        # h(t) = h_final + (h_entry - h_final) * exp(-k * (s - s_start) / (s_end - s_start))
-        # At t=s_start: h = h_entry (correct)
-        # At t=s_end: h = h_final + (h_entry-h_final)*exp(-k) ≈ h_final for k≈5
-        #
-        # The decay constant k controls how quickly the vehicle descends.
-        # For IRVE-3: steeper descent in lower atmosphere (more drag), gentler at high altitude
-        # k=4.5 gives good profile: fast initial descent, slowing near 50 km
-        fraction = min(1.0, (s - dsmc_start_step) / (target_step - dsmc_start_step))
+        # PINN portion: continue from DSMC point to final altitude
+        # Exponential decay for physically realistic descent
+        frac_pinn = (s - dsmc_end_step) / (target_step - dsmc_end_step)
+        frac_pinn = min(1.0, frac_pinn)
         k = 4.5  # Decay constant — controls trajectory shape
-        h = h_final + (h_entry - h_final) * np.exp(-k * fraction)
-
-        # Velocity: linear interpolation with slight deceleration profile
-        # More deceleration in lower atmosphere (higher drag)
-        v = v_entry - (v_entry - v_final) * (1.0 - np.exp(-k * fraction)) / (1.0 - np.exp(-k))
+        h = h_dsmc + (h_final - h_dsmc) * (1.0 - np.exp(-k * frac_pinn)) / (1.0 - np.exp(-k))
+        # Velocity deceleration along trajectory
+        v = v_dsmc + (v_final - v_dsmc) * (1.0 - np.exp(-k * frac_pinn)) / (1.0 - np.exp(-k))
 
     # Compute Mach number from ISA atmosphere at this altitude
     atm = isa_atmosphere(h)
@@ -654,8 +655,11 @@ def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
 # SG constant calibrated to match known reference point
 # [Citation: Sutton & Graves (1951), NACA RM E51H08]
 # [Citation: Our DSMC: at 51.8 km, ISA, V=3378 m/s → SG=12.2 W/cm²]
-_SG_K = 1.83e-4  # SG correlation constant for air [SI: W/m² / (sqrt(kg/m³) * (m/s)³ * m^(-0.5))]
-_SG_RN = 1.45    # Effective nose radius [m] — IRVE-3 equivalent (3.0 m diameter × front-face factor)
+# SG constant from NASA TR R-376 (Sutton & Graves, 1972)
+# [Citation: Sutton, K. & Graves, R.A. (1972), NASA TR R-376, Table 1]
+# [Citation: Ada/SPARK: stellarorion_physics.ads — C_SG = 1.7415e-4]
+_SG_K = 1.7415e-4  # SG correlation constant for air [SI: W/m² / (sqrt(kg/m³) * (m/s)³ * m^(-0.5))]
+_SG_RN = 0.55      # Effective nose radius [m] — IRVE-3 equivalent (matches Ada code R_n)
 
 # IRVE-3 reference values at our DSMC conditions
 _SG_REF_ALT_KM = 51.818508
