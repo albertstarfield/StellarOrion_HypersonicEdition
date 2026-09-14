@@ -25,7 +25,7 @@ if _HERE not in sys.path:
 IRVE3_BASELINE = {
     "geometry": {
         "diameter_m": 3.0,
-        "nose_radius_m": 0.55,
+        "nose_radius_m": 1.5,
         "angle_deg": 60.0,
         "toroids": 6,
         "toroid_radius_m": 0.135,
