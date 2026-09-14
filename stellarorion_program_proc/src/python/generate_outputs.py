@@ -142,7 +142,16 @@ def _render_animated_frame(fargs):
 
     from PIL import Image, ImageDraw, ImageFont
 
-    W, H = resolution
+    W, H_orig = resolution
+
+    # ── Auto-expand vertical resolution if content won't fit ──
+    # Layout uses percentage-based y-coordinates.  For 5 rows (28% each)
+    # + gaps + title bar, content extends to ~160% of the canvas height.
+    # If the user-provided height is too small, expand it proportionally
+    # so all panels fit without clipping.  Width stays fixed.
+    _content_height_pct = 160.0
+    _min_h = int(W * _content_height_pct / 100)
+    H = max(H_orig, _min_h)
     BG = (20, 20, 40)
     FG = (220, 220, 220)
     GRID = (50, 50, 70)
