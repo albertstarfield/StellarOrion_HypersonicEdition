@@ -50,6 +50,9 @@ try:
     from ada_pinn_wrapper import isa_atmosphere as _ada_isa
     from ada_pinn_wrapper import irve3_trajectory_model as _ada_trajectory
     from ada_pinn_wrapper import sutton_graves_heat_flux as _ada_sg
+    from ada_pinn_wrapper import drag_force as _ada_drag
+    from ada_pinn_wrapper import g_load as _ada_gload
+    from ada_pinn_wrapper import dynamic_pressure as _ada_dynq
     _ADA_PHYSICS_AVAILABLE = True
     print("[validation_pipeline] Ada/SPARK physics library loaded — all physics via Ada FFI")
 except OSError:
@@ -1232,18 +1235,22 @@ def pinn_extrapolate_per_step(pinn_results_dict, data, target_step=300000000,
                 now_sg_wm2 = now_sg_wcm2 * 10000.0
                 scaled_values[i] = now_sg_wm2
             elif metric in ("drag_sum_N",):
-                # Drag: always compute from Ada backbone: F = 0.5 * Cd * A * rho * V^2
+                # Drag: computed entirely in Ada/SPARK 2014 via FFI
                 # [Citation: Anderson (2006), Hypersonic Gas Dynamics]
-                _pi = 3.141592653589793
-                _area = _pi * (3.0 * 0.5) ** 2
-                scaled_values[i] = 0.5 * 1.4625 * _area * isa_atmosphere(traj_alt)["density_kgm3"] * traj_vel ** 2
+                # [Citation: Ada Drag_Force in stellarorion_pinn_trajectory.ads]
+                scaled_values[i] = _ada_drag(
+                    isa_atmosphere(traj_alt)["density_kgm3"],
+                    traj_vel, 1.4625, 3.0,
+                )
             elif metric in ("g_load",):
-                # G-load: always compute from Ada backbone: n = F_drag / (m * g0)
+                # G-load: computed entirely in Ada/SPARK 2014 via FFI
                 # [Citation: Anderson (2006), Hypersonic Gas Dynamics]
-                _pi = 3.141592653589793
-                _area = _pi * (3.0 * 0.5) ** 2
-                _drag = 0.5 * 1.4625 * _area * isa_atmosphere(traj_alt)["density_kgm3"] * traj_vel ** 2
-                scaled_values[i] = _drag / (281.0 * 9.80665)
+                # [Citation: Ada G_Load in stellarorion_pinn_trajectory.ads]
+                _drag_n = _ada_drag(
+                    isa_atmosphere(traj_alt)["density_kgm3"],
+                    traj_vel, 1.4625, 3.0,
+                )
+                scaled_values[i] = _ada_gload(_drag_n, 281.0)
             elif metric in ("heat_sum_Wm2", "heat_load_jcm2"):
                 # Heat load: always compute from Ada backbone
                 # AXIOM: heat_load ≈ SG [W/cm²] × contact_time [s]
@@ -1435,10 +1442,20 @@ def generate_multi_metric_convergence_plot(data, pinn_curve, output_dir):
             if key == "heatflux_avg_Wm2":
                 corrected[i] = sg["heat_flux_Wcm2"] * 10000.0
             elif key == "drag_sum_N":
-                corrected[i] = 0.5 * IRVE3_CD * _frontal_area * isa["density_kgm3"] * traj["velocity_ms"] ** 2
+                # Drag computed entirely in Ada/SPARK 2014 via FFI
+                # [Citation: Ada Drag_Force in stellarorion_pinn_trajectory.ads]
+                corrected[i] = _ada_drag(
+                    isa["density_kgm3"], traj["velocity_ms"],
+                    IRVE3_CD, IRVE3_DIAMETER_M,
+                )
             elif key == "g_load":
-                drag = 0.5 * IRVE3_CD * _frontal_area * isa["density_kgm3"] * traj["velocity_ms"] ** 2
-                corrected[i] = drag / (IRVE3_MASS_KG * G0)
+                # G-load computed entirely in Ada/SPARK 2014 via FFI
+                # [Citation: Ada G_Load in stellarorion_pinn_trajectory.ads]
+                _drag_n = _ada_drag(
+                    isa["density_kgm3"], traj["velocity_ms"],
+                    IRVE3_CD, IRVE3_DIAMETER_M,
+                )
+                corrected[i] = _ada_gload(_drag_n, IRVE3_MASS_KG)
             elif key == "lift_sum_N":
                 corrected[i] = 0.0  # Symmetric vehicle, lift = 0 at each altitude
         dsmc_corrected[key] = corrected
@@ -1557,15 +1574,16 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
             re = (isa["density_kgm3"] * traj["velocity_ms"] * char_length_m /
                   isa["dynamic_viscosity_Pas"]) if isa["dynamic_viscosity_Pas"] > 0 else 0.0
 
-            # Compute trajectory-corrected metrics from Ada physics backbone
-            # AXIOM: g_load = F_drag / (m * g0) where F_drag = 0.5 * Cd * A * rho * V^2
+            # Compute trajectory-corrected metrics via Ada/SPARK 2014 FFI
+            # AXIOM: g_load = F_drag / (m * g0), drag = 0.5 * Cd * A * rho * V^2
             # AXIOM: heat_flux = Sutton-Graves = C_sg * sqrt(rho/R_n) * V^3
-            # AXIOM: drag = 0.5 * Cd * A * rho * V^2
             # [Citation: Anderson (2006), Hypersonic Gas Dynamics]
-            pi = 3.141592653589793
-            frontal_area = pi * (IRVE3_DIAMETER_M * 0.5) ** 2
-            drag_corrected = 0.5 * IRVE3_CD * frontal_area * isa["density_kgm3"] * traj["velocity_ms"] ** 2
-            g_load_corrected = drag_corrected / (IRVE3_MASS_KG * 9.80665)  # g0 = 9.80665 m/s^2
+            # [Citation: Ada Drag_Force, G_Load in stellarorion_pinn_trajectory.ads]
+            drag_corrected = _ada_drag(
+                isa["density_kgm3"], traj["velocity_ms"],
+                IRVE3_CD, IRVE3_DIAMETER_M,
+            )
+            g_load_corrected = _ada_gload(drag_corrected, IRVE3_MASS_KG)
             hf_avg_corrected = sg["heat_flux_Wcm2"] * 10000.0  # W/cm^2 → W/m^2
             hf_max_corrected = hf_avg_corrected  # Stagnation point is the max
 
@@ -1801,13 +1819,11 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
         kn = atm["mean_free_path_m"] / char_length_m if char_length_m > 0 else 0.0
         re = (atm["density_kgm3"] * vel * char_length_m /
               atm["dynamic_viscosity_Pas"]) if atm["dynamic_viscosity_Pas"] > 0 else 0.0
-        # Compute drag/g_load from Ada backbone directly: F = 0.5*Cd*A*rho*V^2, g = F/(m*g0)
+        # Compute drag/g_load via Ada/SPARK 2014 FFI
         # [Citation: Anderson (2006), Hypersonic Gas Dynamics]
-        # [Citation: code-quality.md — ALL physics from Ada/SPARK 2014 backbone]
-        _pi = 3.141592653589793
-        _area = _pi * (3.0 * 0.5) ** 2
-        drag_est = 0.5 * 1.4625 * _area * atm["density_kgm3"] * vel ** 2  # N
-        gload_est = drag_est / (281.0 * 9.80665)  # g
+        # [Citation: Ada Drag_Force, G_Load in stellarorion_pinn_trajectory.ads]
+        drag_est = _ada_drag(atm["density_kgm3"], vel, 1.4625, 3.0)  # N
+        gload_est = _ada_gload(drag_est, 281.0)  # g
         lift_est = 0.0  # Symmetric vehicle at zero angle of attack
 
         md_lines.append(
@@ -1948,15 +1964,17 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
     _frontal_area = _pi * (IRVE3_DIAMETER_M * 0.5) ** 2
 
     def _compute_trajectory_metrics(step):
-        """Compute g_load, heat flux, drag at a given step using Ada backbone.
+        """Compute g_load, heat flux, drag at a given step using Ada/SPARK 2014 FFI.
+        All physics computed in Ada — Python is wrapper only.
         AXIOM: g_load = F_drag / (m * g0), F_drag = 0.5 * Cd * A * rho * V^2
         AXIOM: heat_flux = C_sg * sqrt(rho/R_n) * V^3 (Sutton-Graves)
-        [Citation: Anderson (2006), Hypersonic Gas Dynamics]"""
+        [Citation: Anderson (2006), Hypersonic Gas Dynamics]
+        [Citation: Ada Drag_Force, G_Load, Sutton_Graves in stellarorion_pinn_trajectory.ads]"""
         traj = irve3_trajectory_model(float(step))
         isa = isa_atmosphere(traj["altitude_km"])
         sg = sutton_graves_heat_flux(traj["altitude_km"], traj["velocity_ms"])
-        drag = 0.5 * IRVE3_CD * _frontal_area * isa["density_kgm3"] * traj["velocity_ms"] ** 2
-        g_load = drag / (IRVE3_MASS_KG * G0)
+        drag = _ada_drag(isa["density_kgm3"], traj["velocity_ms"], IRVE3_CD, IRVE3_DIAMETER_M)
+        g_load = _ada_gload(drag, IRVE3_MASS_KG)
         hf_wcm2 = sg["heat_flux_Wcm2"]
         return hf_wcm2, drag, g_load
 
@@ -2755,10 +2773,10 @@ def generate_aerodynamics_profiles(output_dir):
         sg = sutton_graves_heat_flux(alt, v)
         sgs[i] = sg["heat_flux_Wcm2"]
 
-        # Drag and g-load
-        drag = 0.5 * IRVE3_CD * _area * densities[i] * v**2
+        # Drag and g-load via Ada/SPARK 2014 FFI
+        drag = _ada_drag(densities[i], v, IRVE3_CD, IRVE3_DIAMETER_M)
         drags[i] = drag
-        gloads[i] = drag / (IRVE3_MASS_KG * G0)
+        gloads[i] = _ada_gload(drag, IRVE3_MASS_KG)
         dynqs[i] = 0.5 * densities[i] * v**2
 
         # Reynolds number
@@ -2942,16 +2960,15 @@ def generate_paraview_vtu(output_dir, key_steps=None):
     if key_steps is None:
         key_steps = [100, 200, 500, 1000, 1500, 2200, 5000, 10000, 50000, 300000000]
 
-    IRVE3_MASS_KG = 281.0; IRVE3_DIAMETER_M = 3.0; IRVE3_CD = 1.4625
-    G0 = 9.80665; _pi = 3.141592653589793; _area = _pi * (IRVE3_DIAMETER_M * 0.5)**2
+        IRVE3_MASS_KG = 281.0; IRVE3_DIAMETER_M = 3.0; IRVE3_CD = 1.4625
 
     vtu_files = []
     for step in key_steps:
         traj = irve3_trajectory_model(float(step))
         sg = sutton_graves_heat_flux(traj["altitude_km"], traj["velocity_ms"])
         isa = isa_atmosphere(traj["altitude_km"])
-        drag = 0.5 * IRVE3_CD * _area * isa["density_kgm3"] * traj["velocity_ms"]**2
-        gload = drag / (IRVE3_MASS_KG * G0)
+        drag = _ada_drag(isa["density_kgm3"], traj["velocity_ms"], IRVE3_CD, IRVE3_DIAMETER_M)
+        gload = _ada_gload(drag, IRVE3_MASS_KG)
         dynq = 0.5 * isa["density_kgm3"] * traj["velocity_ms"]**2
 
         alt = traj["altitude_km"]
