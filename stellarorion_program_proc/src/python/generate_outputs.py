@@ -86,10 +86,13 @@ def _compute_frame_data(step):
         "altitude_km": traj["altitude_km"],
         "velocity_ms": traj["velocity_ms"],
         "mach_number": traj["mach_number"],
-        "heat_flux_avg_Wm2": sg["heat_flux_Wcm2"] * 10000.0,
+        "heat_flux_wcm2": sg["heat_flux_Wcm2"],
         "drag_sum_N": drag,
         "g_load": gload,
         "dynamic_pressure_Pa": dynq,
+        "density_kgm3": isa["density_kgm3"],
+        "temperature_K": isa["temperature_K"],
+        "pressure_Pa": isa["pressure_Pa"],
         "pinn_loss": pinn_loss,
         "pinn_accuracy": pinn_accuracy,
         "dsmc_pinn_error": dsmc_pinn_error,
@@ -133,7 +136,9 @@ def _render_animated_frame(fargs):
     """
     (frame_idx, step, alt, vel, mach, hf, drag, gload,
      show_steps, show_alt, show_hf, show_vel, show_mach,
-     show_drag, show_g, out_dir, prefix, resolution) = fargs
+     show_drag, show_g, out_dir, prefix, resolution,
+     show_pinn_loss, show_pinn_acc, show_dsmc_pinn_err,
+     show_density, show_temp, show_press) = fargs
 
     from PIL import Image, ImageDraw, ImageFont
 
@@ -340,6 +345,23 @@ def _render_animated_frame(fargs):
         p = _pct_to_px(34, title_h + 61, 64, 33)
         _draw_vehicle_panel(draw, *p, alt, vel, mach, hf)
 
+        # Row 4: PINN statistics (loss, accuracy, DSMC-PINN error)
+        pinn_loss_val = show_pinn_loss[frame_idx] if frame_idx < len(show_pinn_loss) else 0.0
+        pinn_acc_val = show_pinn_acc[frame_idx] if frame_idx < len(show_pinn_acc) else 0.0
+        dsmc_err_val = show_dsmc_pinn_err[frame_idx] if frame_idx < len(show_dsmc_pinn_err) else 0.0
+        p = _pct_to_px(2, title_h + 96, 31, 0)
+        _draw_animated_panel(draw, *p, "PINN Training Loss", "Loss",
+                             show_steps, show_pinn_loss, (0, 200, 100), pinn_loss_val, "",
+                             fmt="{:.4f}", frame_idx=frame_idx)
+        p = _pct_to_px(34, title_h + 96, 31, 0)
+        _draw_animated_panel(draw, *p, "PINN Accuracy", "Acc [%]",
+                             show_steps, show_pinn_acc, (100, 200, 255), pinn_acc_val, "%",
+                             fmt="{:.1f}", frame_idx=frame_idx)
+        p = _pct_to_px(66, title_h + 96, 32, 0)
+        _draw_animated_panel(draw, *p, "DSMC vs PINN Error", "Error [%]",
+                             show_steps, show_dsmc_pinn_err, (255, 150, 0), dsmc_err_val, "%",
+                             fmt="{:.1f}", frame_idx=frame_idx)
+
     elif prefix == "traj":
         # ── TRAJECTORY GROUP: 3 panels side by side ─────────────
         draw.rectangle([0, 0, W, int(title_h * H / 100)], fill=(15, 15, 30))
@@ -444,12 +466,15 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
     frame_alt = np.array([d["altitude_km"] for d in frame_data])
     frame_vel = np.array([d["velocity_ms"] for d in frame_data])
     frame_mach = np.array([d["mach_number"] for d in frame_data])
-    frame_hf = np.array([d["heat_flux_avg_Wm2"] / 10000.0 for d in frame_data])
+    frame_hf = np.array([d["heat_flux_wcm2"] for d in frame_data])
     frame_drag = np.array([d["drag_sum_N"] for d in frame_data])
     frame_g = np.array([d["g_load"] for d in frame_data])
     frame_pinn_loss = np.array([d["pinn_loss"] for d in frame_data])
     frame_pinn_acc = np.array([d["pinn_accuracy"] for d in frame_data])
     frame_dsmc_pinn_err = np.array([d["dsmc_pinn_error"] for d in frame_data])
+    frame_density = np.array([d["density_kgm3"] for d in frame_data])
+    frame_temp = np.array([d["temperature_K"] for d in frame_data])
+    frame_press = np.array([d["pressure_Pa"] for d in frame_data])
     all_frame_steps = np.array(all_steps)
 
     elapsed = time.time() - t0
@@ -470,6 +495,7 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
             frame_vel, frame_mach, frame_drag, frame_g,
             frames_dir, "dash", resolution,
             frame_pinn_loss, frame_pinn_acc, frame_dsmc_pinn_err,
+            frame_density, frame_temp, frame_press,
         ))
 
     anim_paths = []
@@ -484,37 +510,6 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
     frame_idx += len(anim_paths)
     elapsed = time.time() - t0
     print(f"[MP4] Dashboard: {elapsed:.1f}s ({n_anim / max(0.01, elapsed):.0f} fr/s)")
-
-    # ══════════════════════════════════════════════════════════════════
-    # SECTION 2b: Render GROUP frames (ALL animated, curves grow)
-    # ══════════════════════════════════════════════════════════════════
-    print(f"[MP4] Rendering {n_anim} x 3 group frames (trajectory/thermal/mechanical) ...")
-    group_prefixes = ["traj", "therm", "mech"]
-    group_paths_all = {p: [] for p in group_prefixes}
-
-    for prefix in group_prefixes:
-        g_args = []
-        for i in range(n_anim):
-            g_args.append((
-                i, int(all_frame_steps[i]),
-                frame_alt[i], frame_vel[i], frame_mach[i],
-                frame_hf[i], frame_drag[i], frame_g[i],
-                all_frame_steps, frame_alt, frame_hf,
-                frame_vel, frame_mach, frame_drag, frame_g,
-                frames_dir, prefix, resolution
-            ))
-        g_paths = []
-        t0 = time.time()
-        with Pool(n_workers) as pool:
-            for fp in tqdm(pool.imap(_render_animated_frame, g_args, chunksize=50),
-                           total=n_anim, desc=f"[MP4] {prefix}",
-                           unit="fr", ncols=80):
-                g_paths.append(fp)
-        for gp in g_paths:
-            all_paths.append(("anim", gp))
-            group_paths_all[prefix].append(gp)
-        elapsed = time.time() - t0
-        print(f"[MP4] {prefix}: {elapsed:.1f}s")
 
     # ══════════════════════════════════════════════════════════════════
     # SECTION 3: Encode with ffmpeg
