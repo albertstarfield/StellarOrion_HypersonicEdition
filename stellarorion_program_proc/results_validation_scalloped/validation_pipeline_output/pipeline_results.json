@@ -2,9 +2,9 @@
   "status": "success",
   "pipeline": "StellarOrion Validation Pipeline",
   "version": "1.0.0",
-  "timestamp": "2026-09-13T21:55:26.047975+00:00",
+  "timestamp": "2026-09-14T11:10:18.252730+00:00",
   "inputs": {
-    "csv_path": "stellarorion_program_proc/results_validation_scalloped/validation_timeseries.csv",
+    "csv_path": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_timeseries.csv",
     "target_step": 300000000,
     "iterations": 4000,
     "device": "auto",
@@ -16,23 +16,23 @@
   },
   "denoise_results": {
     "cd": {
-      "noise_std": 0.0500534927194834,
-      "noise_variance": 0.0025053521334193777,
-      "r2_score": 0.8485175271399421,
+      "noise_std": 0.05005349632119992,
+      "noise_variance": 0.0025053524939763734,
+      "r2_score": 0.8485175053376419,
       "kernel_params": {
-        "constant": 6.032254151774184,
-        "length_scale": 2226.735991173222,
-        "noise_level": 0.17934618956271123
+        "constant": 6.032255134192926,
+        "length_scale": 2226.737662615758,
+        "noise_level": 0.1793462284377146
       }
     },
     "drag_sum_N": {
-      "noise_std": 1554.1050778894853,
-      "noise_variance": 2415242.593121883,
-      "r2_score": 0.8485180525998848,
+      "noise_std": 1554.1051096882097,
+      "noise_variance": 2415242.6919590025,
+      "r2_score": 0.8485180463955309,
       "kernel_params": {
-        "constant": 6.032279674288798,
-        "length_scale": 2226.737249983784,
-        "noise_level": 0.17934560282714412
+        "constant": 6.032274953849931,
+        "length_scale": 2226.7367511195657,
+        "noise_level": 0.17934563037794118
       }
     },
     "g_load": {
@@ -41,38 +41,38 @@
       "r2_score": 0.0,
       "kernel_params": {
         "constant": 1.0000000000000004e-06,
-        "length_scale": 100000.00000000001,
+        "length_scale": 63120.030458370165,
         "noise_level": 0.010000000000000005
       }
     },
     "heatflux_max_Wm2": {
-      "noise_std": 300430.4058745527,
-      "noise_variance": 90258428773.94849,
-      "r2_score": 0.7617859507178,
+      "noise_std": 300430.40823937766,
+      "noise_variance": 90258430194.87912,
+      "r2_score": 0.7617859470752075,
       "kernel_params": {
-        "constant": 3.796504362628962,
-        "length_scale": 1018.6425213968789,
-        "noise_level": 0.3017694995989432
+        "constant": 3.796512188687855,
+        "length_scale": 1018.643547925641,
+        "noise_level": 0.3017695370273438
       }
     },
     "heatflux_avg_Wm2": {
-      "noise_std": 49621.82148192017,
-      "noise_variance": 2462325167.1835537,
-      "r2_score": 0.9386725688126031,
+      "noise_std": 49621.824731439105,
+      "noise_variance": 2462325489.6776614,
+      "r2_score": 0.938672560779289,
       "kernel_params": {
-        "constant": 12.26768225589342,
-        "length_scale": 1018.263539597982,
-        "noise_level": 0.08978329263998854
+        "constant": 12.267678372136817,
+        "length_scale": 1018.263475384084,
+        "noise_level": 0.08978331743979129
       }
     },
     "heat_sum_Wm2": {
-      "noise_std": 3771257.3460076763,
-      "noise_variance": 14222381969816.863,
-      "r2_score": 0.9386726015228914,
+      "noise_std": 3771253.960043798,
+      "noise_variance": 14222356431146.03,
+      "r2_score": 0.9386727116663556,
       "kernel_params": {
-        "constant": 12.267666333123875,
-        "length_scale": 1018.2629778786694,
-        "noise_level": 0.08978326370309439
+        "constant": 12.267747245473354,
+        "length_scale": 1018.2644279140438,
+        "noise_level": 0.08978297705176032
       }
     },
     "heat_load_jcm2": {
@@ -80,7 +80,7 @@
       "noise_variance": 0.0,
       "r2_score": 1.0,
       "kernel_params": {
-        "constant": 0.8950911796216083,
+        "constant": 0.8950909644811235,
         "length_scale": 100000.00000000001,
         "noise_level": 0.010000000000000005
       }
@@ -103,9 +103,9 @@
       "train_loss": 0.0
     },
     "heatflux_max_Wm2": {
-      "extrapolated_value": 1946564.0408304017,
+      "extrapolated_value": 1946564.00598052,
       "method": "DeepXDE_PINN_fallback_kriging",
-      "train_loss": 1.1324877050356008e-05
+      "train_loss": 1.1377133887435775e-05
     },
     "heatflux_avg_Wm2": {
       "extrapolated_value": 557897.75,
@@ -126,24 +126,24 @@
   "comparison": {
     "cd": {
       "raw_dsmc": 1.462536,
-      "kriging_denoised": 1.4582647288209292,
+      "kriging_denoised": 1.4582647279715033,
       "pinn_extrapolated_300000000": 1.4631820000000002,
       "irve3_reference": 1.47,
       "raw_error_pct": 0.5077551020408105,
-      "denoised_error_pct": 0.7983177672837284,
+      "denoised_error_pct": 0.7983178250678007,
       "pinn_error_pct": 0.46380952380950813,
-      "denoise_improvement_pct": -0.29056266524291785,
+      "denoise_improvement_pct": -0.29056272302699016,
       "pinn_improvement_pct": 0.04394557823130241
     },
     "drag_sum_N": {
       "raw_dsmc": 45410.152344,
-      "kriging_denoised": 45277.53901645701,
+      "kriging_denoised": 45277.53906915687,
       "pinn_extrapolated_300000000": 45430.212891,
       "irve3_reference": 45410.0,
       "raw_error_pct": 0.0003354855758685391,
-      "denoised_error_pct": 0.29170002982379956,
+      "denoised_error_pct": 0.2916999137703849,
       "pinn_error_pct": 0.04451198194230975,
-      "denoise_improvement_pct": -0.291364544247931,
+      "denoise_improvement_pct": -0.29136442819451636,
       "pinn_improvement_pct": -0.04417649636644121
     },
     "g_load": {
@@ -159,29 +159,29 @@
     },
     "heatflux_max_Wm2": {
       "raw_dsmc": 1824880.0,
-      "kriging_denoised": 1946564.0408304017,
-      "pinn_extrapolated_300000000": 1946564.0408304017,
+      "kriging_denoised": 1946564.00598052,
+      "pinn_extrapolated_300000000": 1946564.00598052,
       "irve3_reference": 1824880.0,
       "raw_error_pct": 0.0,
-      "denoised_error_pct": 6.668057123230114,
-      "pinn_error_pct": 6.668057123230114,
-      "denoise_improvement_pct": -6.668057123230114,
-      "pinn_improvement_pct": -6.668057123230114
+      "denoised_error_pct": 6.668055213521987,
+      "pinn_error_pct": 6.668055213521987,
+      "denoise_improvement_pct": -6.668055213521987,
+      "pinn_improvement_pct": -6.668055213521987
     },
     "heatflux_avg_Wm2": {
       "raw_dsmc": 565864.9375,
-      "kriging_denoised": 569398.4734122409,
+      "kriging_denoised": 569398.4730019167,
       "pinn_extrapolated_300000000": 557897.75,
       "irve3_reference": 565865.0,
       "raw_error_pct": 1.1045037243865586e-05,
-      "denoised_error_pct": 0.624437527014545,
+      "denoised_error_pct": 0.6244374545018088,
       "pinn_error_pct": 1.4079771676990096,
-      "denoise_improvement_pct": -0.6244264819773011,
+      "denoise_improvement_pct": -0.6244264094645648,
       "pinn_improvement_pct": -1.4079661226617657
     },
     "heat_sum_Wm2": {
       "raw_dsmc": 43005736.0,
-      "kriging_denoised": 43274283.61903612,
+      "kriging_denoised": 43274283.904960126,
       "pinn_extrapolated_300000000": 42400228.0,
       "irve3_reference": 0.0,
       "raw_error_pct": 0.0,
@@ -205,17 +205,17 @@
   "audits": {
     "cd": {
       "noise_analysis": {
-        "noise_mean": 0.00028127143693632765,
-        "noise_std": 0.0500534927194834,
-        "noise_range": 0.3060103638622147,
-        "snr_db": 7.188058108641782,
-        "noise_fraction": 0.3892013483032445
+        "noise_mean": 0.00028127150850578504,
+        "noise_std": 0.05005349632119992,
+        "noise_range": 0.3060103765852855,
+        "snr_db": 7.188057187155827,
+        "noise_fraction": 0.38920137630914076
       },
       "convergence_metrics": {
         "raw_total_change": 0.5494430000000001,
-        "denoised_total_change": 0.3674380762833547,
+        "denoised_total_change": 0.3674380401993913,
         "raw_std": 0.12860565087375916,
-        "convergence_ratio": 0.6687464874124424,
+        "convergence_ratio": 0.6687464217387267,
         "stability_index": 0.9188827876757742
       },
       "n_fall_regions": 6,
@@ -223,17 +223,17 @@
     },
     "drag_sum_N": {
       "noise_analysis": {
-        "noise_mean": 8.73313936014198,
-        "noise_std": 1554.1050778894853,
-        "noise_range": 9501.278718955524,
-        "snr_db": 7.188076654441957,
-        "noise_fraction": 0.3892006733098912
+        "noise_mean": 8.733144444939006,
+        "noise_std": 1554.1051096882097,
+        "noise_range": 9501.278847631082,
+        "snr_db": 7.188076344097272,
+        "noise_fraction": 0.3892006812733714
       },
       "convergence_metrics": {
         "raw_total_change": 17059.621093999995,
-        "denoised_total_change": 11408.56879139191,
+        "denoised_total_change": 11408.568419431482,
         "raw_std": 3993.0688317490867,
-        "convergence_ratio": 0.668746904080091,
+        "convergence_ratio": 0.6687468822765334,
         "stability_index": 0.9188827330574729
       },
       "n_fall_regions": 6,
@@ -259,17 +259,17 @@
     },
     "heatflux_max_Wm2": {
       "noise_analysis": {
-        "noise_mean": 4074.1675865731772,
-        "noise_std": 300430.4058745527,
-        "noise_range": 1562679.573686745,
-        "snr_db": 4.25632540567756,
-        "noise_fraction": 0.48802689366296914
+        "noise_mean": 4074.162614768953,
+        "noise_std": 300430.40823937766,
+        "noise_range": 1562679.5571727417,
+        "snr_db": 4.256325574025526,
+        "noise_fraction": 0.4880268975044517
       },
       "convergence_metrics": {
         "raw_total_change": 2758360.0,
-        "denoised_total_change": 1657912.3265390806,
+        "denoised_total_change": 1657912.3781728796,
         "raw_std": 615602.1517986868,
-        "convergence_ratio": 0.6010500175970797,
+        "convergence_ratio": 0.6010500363161008,
         "stability_index": 0.724024314687411
       },
       "n_fall_regions": 7,
@@ -277,17 +277,17 @@
     },
     "heatflux_avg_Wm2": {
       "noise_analysis": {
-        "noise_mean": 262.5323362374011,
-        "noise_std": 49621.82148192017,
-        "noise_range": 320754.1813220312,
-        "snr_db": 11.577063496887984,
-        "noise_fraction": 0.24764029278825073
+        "noise_mean": 262.5324433850156,
+        "noise_std": 49621.824731439105,
+        "noise_range": 320754.20203641476,
+        "snr_db": 11.57706284433085,
+        "noise_fraction": 0.24764030900514478
       },
       "convergence_metrics": {
         "raw_total_change": 890787.3125,
-        "denoised_total_change": 727992.5456671873,
+        "denoised_total_change": 727992.5266017003,
         "raw_std": 200378.6254781656,
-        "convergence_ratio": 0.8172461994592983,
+        "convergence_ratio": 0.8172461780563364,
         "stability_index": 0.7122500543710587
       },
       "n_fall_regions": 2,
@@ -295,17 +295,17 @@
     },
     "heat_sum_Wm2": {
       "noise_analysis": {
-        "noise_mean": 19952.469013098966,
-        "noise_std": 3771257.3460076763,
-        "noise_range": 24377311.683265284,
-        "snr_db": 11.57706596678006,
-        "noise_fraction": 0.24764022674015815
+        "noise_mean": 19952.335793501614,
+        "noise_std": 3771253.960043798,
+        "noise_range": 24377289.89306669,
+        "snr_db": 11.577074998936771,
+        "noise_fraction": 0.2476400044002896
       },
       "convergence_metrics": {
         "raw_total_change": 67699832.0,
-        "denoised_total_change": 55327434.3402406,
+        "denoised_total_change": 55327454.845468566,
         "raw_std": 15228775.210114589,
-        "convergence_ratio": 0.8172462575718149,
+        "convergence_ratio": 0.8172465604562884,
         "stability_index": 0.7122500583726727
       },
       "n_fall_regions": 2,
@@ -361,5 +361,30 @@
       "delta_explanation": "The 288% delta vs flight is expected: single-point vs trajectory-integrated comparison. When compared at same conditions, DSMC/SG ratio is 4.6x \u2014 due to scalloped geometry increasing local heating vs smooth torus.",
       "correct_comparison": "Compare DSMC to analytical models (SG/FR) at the SAME trajectory point, NOT to trajectory-integrated flight peak"
     }
+  },
+  "outputs": {
+    "aerodynamics_profiles": [
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/plots/trajectory_profiles.png",
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/plots/atmospheric_profiles.png",
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/plots/aerodynamic_loads.png",
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/plots/flow_regime_map.png"
+    ],
+    "paraview_vtu": [
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/vtu/irve3_alt120km_step100.vtu",
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/vtu/irve3_alt117km_step200.vtu",
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/vtu/irve3_alt107km_step500.vtu",
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/vtu/irve3_alt91km_step1000.vtu",
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/vtu/irve3_alt75km_step1500.vtu",
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/vtu/irve3_alt52km_step2200.vtu",
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/vtu/irve3_alt52km_step5000.vtu",
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/vtu/irve3_alt52km_step10000.vtu",
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/vtu/irve3_alt52km_step50000.vtu",
+      "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/vtu/irve3_alt50km_step300000000.vtu"
+    ],
+    "convergence_plot": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/plots/convergence_heatflux_avg_Wm2_dual_axis.png",
+    "convergence_multi_metric_plot": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/plots/convergence_multi_metric_dual_axis.png",
+    "trajectory_csv": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/pinn_trajectory_per_step.csv",
+    "dsmc_pinn_switch_md": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/dsmc_pinn_switch_section.md",
+    "hybrid_animation": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_pipeline_output/plots/hybrid_dsmc_pinn_animation.mp4"
   }
 }
