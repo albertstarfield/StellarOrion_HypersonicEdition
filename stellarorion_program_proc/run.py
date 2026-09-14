@@ -56,6 +56,8 @@ _REQUIREMENTS: tuple[str, ...] = (
     "numpy>=1.24.0",
     "scipy>=1.10.0",
     "matplotlib>=3.7.0",
+    # Progress bars (generate_outputs.py MP4 rendering)
+    "tqdm>=4.65.0",
     # Atmospheric models (NRLMSIS 2.1)
     "pymsis>=0.9.0",
     # PINN surrogate (DeepXDE)
