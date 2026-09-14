@@ -1604,7 +1604,7 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
         IRVE3_MASS_KG    = 281.0
         IRVE3_DIAMETER_M = 3.0
         IRVE3_CD         = 1.4625
-        IRVE3_NOSE_R_M   = 0.55
+        IRVE3_NOSE_R_M   = 1.5
         for i, s in enumerate(data["steps"]):
             traj = irve3_trajectory_model(int(s))
             sg = sutton_graves_heat_flux(traj["altitude_km"], traj["velocity_ms"])
