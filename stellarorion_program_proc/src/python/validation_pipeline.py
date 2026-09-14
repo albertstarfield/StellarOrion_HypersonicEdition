@@ -1226,7 +1226,8 @@ def pinn_extrapolate_per_step(pinn_results_dict, data, target_step=300000000,
             traj_vel = trajectory["velocity_ms"][i]
             now_sg = sutton_graves_heat_flux(traj_alt, traj_vel)
             now_sg_wcm2 = now_sg["heat_flux_Wcm2"]
-            now_dyn_q = 0.5 * isa_atmosphere(traj_alt)["density_kgm3"] * traj_vel ** 2
+            # Dynamic pressure via Ada/SPARK 2014 FFI
+            now_dyn_q = _ada_dynq(isa_atmosphere(traj_alt)["density_kgm3"], traj_vel)
 
             if metric in ("heatflux_avg_Wm2", "heatflux_max_Wm2"):
                 # Heat flux: always use Sutton-Graves from Ada backbone
@@ -1567,7 +1568,7 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
             traj = irve3_trajectory_model(int(s))
             sg = sutton_graves_heat_flux(traj["altitude_km"], traj["velocity_ms"])
             isa = isa_atmosphere(traj["altitude_km"])
-            dyn_q = 0.5 * isa["density_kgm3"] * traj["velocity_ms"] ** 2
+            dyn_q = _ada_dynq(isa["density_kgm3"], traj["velocity_ms"])
             # Knudsen number: Kn = λ / L_char where λ = mean_free_path from ISA
             kn = isa["mean_free_path_m"] / char_length_m if char_length_m > 0 else 0.0
             # Reynolds number: Re = ρ * V * L / μ
@@ -1629,7 +1630,7 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
                 mach = pinn_curve["trajectory"]["mach_number"][i]
                 sg = sutton_graves_heat_flux(alt, vel)
                 isa = isa_atmosphere(alt)
-                dyn_q = 0.5 * isa["density_kgm3"] * vel ** 2
+                dyn_q = _ada_dynq(isa["density_kgm3"], vel)
                 kn = isa["mean_free_path_m"] / char_length_m if char_length_m > 0 else 0.0
                 re = (isa["density_kgm3"] * vel * char_length_m /
                       isa["dynamic_viscosity_Pas"]) if isa["dynamic_viscosity_Pas"] > 0 else 0.0
@@ -2777,7 +2778,7 @@ def generate_aerodynamics_profiles(output_dir):
         drag = _ada_drag(densities[i], v, IRVE3_CD, IRVE3_DIAMETER_M)
         drags[i] = drag
         gloads[i] = _ada_gload(drag, IRVE3_MASS_KG)
-        dynqs[i] = 0.5 * densities[i] * v**2
+        dynqs[i] = _ada_dynq(densities[i], v)
 
         # Reynolds number
         if viscosities[i] > 0:
@@ -2969,7 +2970,7 @@ def generate_paraview_vtu(output_dir, key_steps=None):
         isa = isa_atmosphere(traj["altitude_km"])
         drag = _ada_drag(isa["density_kgm3"], traj["velocity_ms"], IRVE3_CD, IRVE3_DIAMETER_M)
         gload = _ada_gload(drag, IRVE3_MASS_KG)
-        dynq = 0.5 * isa["density_kgm3"] * traj["velocity_ms"]**2
+        dynq = _ada_dynq(isa["density_kgm3"], traj["velocity_ms"])
 
         alt = traj["altitude_km"]
         vel = traj["velocity_ms"]
