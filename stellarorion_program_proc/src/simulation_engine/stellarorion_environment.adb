@@ -106,6 +106,7 @@ package body StellarOrion_Environment is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sqrt_Approx");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Sqrt_Approx;
 
    --  exp(x) via Taylor series for small |x|.
@@ -200,6 +201,7 @@ package body StellarOrion_Environment is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Exp_Approx");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Exp_Approx;
 
    --  Natural logarithm via Padé approximant for x > 0.
@@ -278,6 +280,7 @@ package body StellarOrion_Environment is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Ln_Approx");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Ln_Approx;
 
    --  General power: base^exponent for positive base.
@@ -346,6 +349,7 @@ package body StellarOrion_Environment is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Pow_Float");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Pow_Float;
 
    -- ==================================================================
@@ -424,6 +428,7 @@ package body StellarOrion_Environment is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Atmosphere_Temperature");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Atmosphere_Temperature;
 
    -- ==================================================================
@@ -585,6 +590,7 @@ package body StellarOrion_Environment is
     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Atmosphere_Density");
     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    raise;
     end Atmosphere_Density;
 
    -- ==================================================================
@@ -653,6 +659,7 @@ package body StellarOrion_Environment is
     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Atmosphere_Pressure");
     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    raise;
     end Atmosphere_Pressure;
 
    -- ==================================================================
@@ -701,6 +708,7 @@ package body StellarOrion_Environment is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Mach_To_Velocity");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Mach_To_Velocity;
 
    -- ==================================================================
