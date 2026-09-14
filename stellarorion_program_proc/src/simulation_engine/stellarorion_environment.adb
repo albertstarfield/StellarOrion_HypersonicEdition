@@ -304,7 +304,7 @@ package body StellarOrion_Environment is
 -- ====================================================================
    function Pow_Float (Base, Exponent : Float) return Float -- nosec
      with Pre  => Base >= 0.5 and Base <= 2.0
-                  and Exponent >= -35.0 and Exponent <= 35.0,
+                  and Exponent >= -40.0 and Exponent <= 40.0,
           Post => Pow_Float'Result >= 0.0
    is
        L : Float;
@@ -478,7 +478,10 @@ package body StellarOrion_Environment is
       if H <= 11.0 then
          Lapse := -6.5e-3;
          T := Atmosphere_Temperature (H);
-         Expon := G0_LOC / (R_AIR * abs Lapse) + 1.0;
+         --  [FIX] Correct ISA barometric exponent: -(g/(R*L) + 1)
+         --  For L < 0: -(g/(R*(-|L|)) + 1) = g/(R*|L|) - 1
+         --  [Citation: NASA SP-7468 (1976); ISO 2533:1975]
+         Expon := G0_LOC / (R_AIR * abs Lapse) - 1.0;
          --  Hand bound: T/T0 in [0.648, 1.0] (Temperature post band) so
          --  Pow <= 1; Rho <= RHO0 = 1.225 << Float'Last.
          Rho := RHO0 * Pow_Float (T / T0, Expon);
@@ -501,11 +504,10 @@ package body StellarOrion_Environment is
          Lapse := 1.0e-3;
          T := Atmosphere_Temperature (H);
          if T > 0.0 then
-            Expon := G0_LOC / (R_AIR * Lapse) - 1.0;
-            --  Hand bound: ratio <= 288.15/216.65 = 1.3297 (post band),
-            --  exponent 33.163 => Pow <= 1.3297^33.163 ~ 1.28e4;
-            --  Rho <= 0.08801 * 1.28e4 ~ 1127 << Float'Last (product
-            --  overflow proves via contextual inlining).
+            --  [FIX] Correct ISA barometric exponent: -(g/(R*L) + 1)
+            --  For L > 0: -g/(R*L) - 1
+            --  [Citation: NASA SP-7468 (1976); ISO 2533:1975]
+            Expon := -G0_LOC / (R_AIR * Lapse) - 1.0;
             Rho := 0.08801 * Pow_Float (T / 216.65, Expon);
          else
             Rho := 0.0;
@@ -516,10 +518,10 @@ package body StellarOrion_Environment is
          Lapse := 2.8e-3;
          T := Atmosphere_Temperature (H);
          if T > 0.0 then
-            Expon := G0_LOC / (R_AIR * Lapse) - 1.0;
-            --  Hand bound: ratio <= 288.15/228.65 = 1.2602, exponent
-            --  11.20 => Pow <= 1.2602^11.2 ~ 13.3; Rho <= 0.176
-            --  (product overflow proves via contextual inlining).
+            --  [FIX] Correct ISA barometric exponent: -(g/(R*L) + 1)
+            --  For L > 0: -g/(R*L) - 1
+            --  [Citation: NASA SP-7468 (1976); ISO 2533:1975]
+            Expon := -G0_LOC / (R_AIR * Lapse) - 1.0;
             Rho := 0.01322 * Pow_Float (T / 228.65, Expon);
          else
             Rho := 0.0;
@@ -538,10 +540,10 @@ package body StellarOrion_Environment is
          Lapse := -2.8e-3;
          T := Atmosphere_Temperature (H);
          if T > 0.0 then
-            Expon := G0_LOC / (R_AIR * abs Lapse) + 1.0;
-            --  Hand bound: ratio <= 288.15/270.65 = 1.0647, exponent
-            --  13.20 => Pow <= 1.0647^13.2 ~ 2.29; Rho <= 0.00197
-            --  (product overflow proves via contextual inlining).
+            --  [FIX] Correct ISA barometric exponent: -(g/(R*L) + 1)
+            --  For L < 0: -(g/(R*(-|L|)) + 1) = g/(R*|L|) - 1
+            --  [Citation: NASA SP-7468 (1976); ISO 2533:1975]
+            Expon := G0_LOC / (R_AIR * abs Lapse) - 1.0;
             Rho := 0.000861 * Pow_Float (T / 270.65, Expon);
          else
             Rho := 0.0;
@@ -552,10 +554,10 @@ package body StellarOrion_Environment is
          Lapse := -2.0e-3;
          T := Atmosphere_Temperature (H);
          if T > 0.0 then
-            Expon := G0_LOC / (R_AIR * abs Lapse) + 1.0;
-            --  Hand bound: ratio <= 288.15/214.65 = 1.3424, exponent
-            --  18.08 => Pow <= 1.3424^18.08 ~ 2.06e2; Rho <= 0.0132
-            --  (product overflow proves via contextual inlining).
+            --  [FIX] Correct ISA barometric exponent: -(g/(R*L) + 1)
+            --  For L < 0: -(g/(R*(-|L|)) + 1) = g/(R*|L|) - 1
+            --  [Citation: NASA SP-7468 (1976); ISO 2533:1975]
+            Expon := G0_LOC / (R_AIR * abs Lapse) - 1.0;
             Rho := 0.000064 * Pow_Float (T / 214.65, Expon);
          else
             Rho := 0.0;
