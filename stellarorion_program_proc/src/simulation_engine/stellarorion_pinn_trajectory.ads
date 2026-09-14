@@ -216,4 +216,36 @@ package StellarOrion_PINN_Trajectory is
                    and Ref_SG_Flux_Wcm2 >= 0.0
                    and Now_SG_Flux_Wcm2 >= 0.0;
 
+   -- -----------------------------------------------------------------
+   --  Geometry Cross-Section (for dashboard visualization)
+   -- -----------------------------------------------------------------
+
+   --  Maximum number of points in the 2D cross-section profile.
+   MAX_CROSS_SECTION_PTS : constant Positive := 200;
+
+   --  Fixed-length array for cross-section coordinates (x or y).
+   subtype Cross_Section_Index is Positive range 1 .. MAX_CROSS_SECTION_PTS;
+   type Array_Float_200 is array (Cross_Section_Index) of Float;
+
+   --  Return the 2D axisymmetric cross-section of the HIAD vehicle.
+   --
+   --  Generates the exact 4-segment flat-skin profile used by SPARTA:
+   --    1. Nose arc        (sphere rN=1.5m, theta -pi/2 to -gamma)
+   --    2. Windward straight (cone half-angle gamma)
+   --    3. Toroid wrap      (r_torus=0.135m)
+   --    4. Flat back        (aft closure to axis)
+   --
+   --  X coords: axis direction (nose points +X)
+   --  Y coords: half-width (positive = upper surface)
+   --  N_Pts: actual number of points returned
+   --
+   --  [Citation: Rapisarda (2023) Sec 3.7 — HIAD flat-skin profile]
+   --  [Citation: stellarorion_sparta.ads — 4-segment geometry spec]
+   procedure Get_HIAD_Cross_Section
+     (X_Arr  : out Array_Float_200;
+      Y_Arr  : out Array_Float_200;
+      N_Pts  : out Integer)
+      with Pre => True, Post => N_Pts >= 0
+                   and N_Pts <= MAX_CROSS_SECTION_PTS;
+
 end StellarOrion_PINN_Trajectory;
