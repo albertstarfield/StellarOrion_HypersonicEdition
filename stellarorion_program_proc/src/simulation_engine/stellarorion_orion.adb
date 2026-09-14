@@ -69,6 +69,7 @@ package body StellarOrion_Orion is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Orion_Survivability_Check");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Orion_Survivability_Check;
 
    --  STC coverage wrapper for Orion_Survivability_Check.

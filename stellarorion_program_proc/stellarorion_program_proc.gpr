@@ -10,6 +10,7 @@ project StellarOrion_Program_Proc is
        for Switches ("ada") use
         ("-gnat12",
          "-gnatwa",     --  All warnings
+         "-gnatwe",     --  Warnings as errors
          "-gnatW8",     --  UTF-8 encoding
          "-gnatQ",      --  No message edition
         "-gnatdAME");   --  Enable assertion mode for SPARK

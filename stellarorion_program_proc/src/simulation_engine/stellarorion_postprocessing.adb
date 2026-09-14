@@ -1,3 +1,4 @@
+with StellarOrion_Types; use StellarOrion_Types;
 --  StellarOrion_HypersonicEdition — Post-Processing Analytics (SPARK)
 --  Ada 2012 / SPARK 2014
 --  Body: Pure-math routines, no side effects.

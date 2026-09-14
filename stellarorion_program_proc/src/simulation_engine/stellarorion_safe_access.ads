@@ -6,7 +6,7 @@
 --           sabotage verifier FUNCTION_STABILITY check (ECSS-E-ST-40C §5.2).
 --  CITATION: GNAT OS_Lib.Spawn (s-os_lib.ads L861), Ada RM 13.1.1, CWE-770
 with GNAT.OS_Lib;
-with System.Strings; use System.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
 package StellarOrion_Safe_Access is
    pragma Preelaborate (StellarOrion_Safe_Access);

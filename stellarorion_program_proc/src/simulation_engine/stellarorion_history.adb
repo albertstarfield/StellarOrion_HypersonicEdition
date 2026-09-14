@@ -666,6 +666,7 @@ package body StellarOrion_History is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Acquire_Lock");
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Acquire_Lock;
 
    --  Release the lock file.
@@ -779,6 +780,7 @@ package body StellarOrion_History is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Init_DB");
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Init_DB;
 
    -- ==================================================================

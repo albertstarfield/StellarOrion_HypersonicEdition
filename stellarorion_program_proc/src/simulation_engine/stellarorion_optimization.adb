@@ -1094,20 +1094,6 @@ package body StellarOrion_Optimization is
                   C1_Torus,          C2_Torus);
       C1.Toroid_Count := C1_Torus;
       C2.Toroid_Count := C2_Torus;
-      exception
-         when E : others =>
-            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
-
-            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
-
-            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
-
-            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      BLX_Crossover");
-
-            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
-
-            raise;
-
       Blend_Gene (P1.Toroid_Radius_M, P2.Toroid_Radius_M,
                   TRad_Min, TRad_Max,
                   C1.Toroid_Radius_M, C2.Toroid_Radius_M);
@@ -1118,6 +1104,14 @@ package body StellarOrion_Optimization is
       C1.Slice_Angle_Deg := P1.Slice_Angle_Deg;
       C2.Outer_Radius_M  := P1.Outer_Radius_M;
       C2.Slice_Angle_Deg := P1.Slice_Angle_Deg;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      BLX_Crossover");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
    end BLX_Crossover;
 
    --  Gaussian mutation with adaptive step size.
@@ -1527,6 +1521,7 @@ package body StellarOrion_Optimization is
          raise;
 
    end Test_To_Int;
+   pragma Unreferenced (Test_To_Int);
 
    --  coverage: STC wrapper for LHS_Sample
 -- ============================================================================
@@ -1827,6 +1822,7 @@ package body StellarOrion_Optimization is
          raise;
 
    end Test_Clamp;
+   pragma Unreferenced (Test_Clamp);
 
    --  coverage: STC wrapper for Uniform_Rand
 -- ============================================================================
@@ -1865,6 +1861,7 @@ package body StellarOrion_Optimization is
          raise;
 
    end Test_Uniform_Rand;
+   pragma Unreferenced (Test_Uniform_Rand);
 
    --  coverage: STC wrapper for Gaussian_Standard
 -- ============================================================================
@@ -1903,6 +1900,7 @@ package body StellarOrion_Optimization is
          raise;
 
    end Test_Gaussian_Standard;
+   pragma Unreferenced (Test_Gaussian_Standard);
 
    --  coverage: STC wrapper for Gaussian_Rand
 -- ============================================================================
@@ -1940,6 +1938,7 @@ package body StellarOrion_Optimization is
          raise;
 
    end Test_Gaussian_Rand;
+   pragma Unreferenced (Test_Gaussian_Rand);
 
    --  coverage: STC wrapper for Random_Geometry
 -- ============================================================================
@@ -1986,6 +1985,7 @@ package body StellarOrion_Optimization is
          raise;
 
    end Test_Random_Geometry;
+   pragma Unreferenced (Test_Random_Geometry);
 
    --  coverage: STC wrapper for Sort_By_Cost
 -- ============================================================================
@@ -2029,6 +2029,7 @@ package body StellarOrion_Optimization is
          raise;
 
    end Test_Sort_By_Cost;
+   pragma Unreferenced (Test_Sort_By_Cost);
 
    --  coverage: STC wrapper for Tournament_Select
 -- ============================================================================
@@ -2075,6 +2076,7 @@ package body StellarOrion_Optimization is
          raise;
 
    end Test_Tournament_Select;
+   pragma Unreferenced (Test_Tournament_Select);
 
    --  coverage: STC wrapper for BLX_Crossover
 -- ============================================================================
@@ -2125,6 +2127,7 @@ package body StellarOrion_Optimization is
          raise;
 
    end Test_BLX_Crossover;
+   pragma Unreferenced (Test_BLX_Crossover);
 
    --  Blend_Gene is a nested procedure of BLX_Crossover (body-level scope)  --  Safe_Fallback: comment reference (Sabotage §5.1)
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
@@ -2173,6 +2176,7 @@ package body StellarOrion_Optimization is
          raise;
 
    end Test_Blend_Gene;
+   pragma Unreferenced (Test_Blend_Gene);
 
    --  Blend_Int is a nested procedure of BLX_Crossover (body-level scope)  --  Safe_Fallback: comment reference (Sabotage §5.1)
    --  and is exercised transitively by Test_BLX_Crossover. This wrapper
@@ -2215,6 +2219,7 @@ package body StellarOrion_Optimization is
          raise;
 
    end Test_Blend_Int;
+   pragma Unreferenced (Test_Blend_Int);
 
    --  coverage: STC wrapper for Gaussian_Mutate
 -- ============================================================================
@@ -2266,6 +2271,7 @@ package body StellarOrion_Optimization is
          raise;
 
    end Test_Gaussian_Mutate;
+   pragma Unreferenced (Test_Gaussian_Mutate);
 
    --  Side-effectful routine exercised via integration modes (run.py --test ...);
    --  unit wrapper validates declarative surface only.
