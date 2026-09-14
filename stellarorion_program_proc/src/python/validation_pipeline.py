@@ -39,6 +39,14 @@ from datetime import datetime, timezone
 
 import numpy as np
 
+# TeX font configuration (conditional on pdflatex availability)
+# [Citation: matplotlib usetex — https://matplotlib.org/stable/gallery/text_labels_and_annotations/usetex_demo.html]
+try:
+    from _tex_config import setup_tex_fonts as _setup_tex
+    _setup_tex()
+except Exception:
+    pass  # _tex_config not available — use default fonts
+
 # Auto-install dependencies if missing (per project constraints: auto-install)
 _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
