@@ -35,7 +35,7 @@ package StellarOrion_Types is
 
    --  Sutton-Graves stagnation-point heating coefficient [W/m^2 / (sqrt(kg/m^3)/m * (m/s)^3)]
    --  Source: NASA TR R-376, Table 1  (Sutton & Graves, 1972)
-   C_SG : constant Float := 1.7415e-4;
+   C_SG : constant Float := 1.83e-4;
 
    --  Prandtl number for air (frozen chemistry, T < 1500 K)
    --  Source: Anderson (2006) Table A.1; standard aerodynamics reference
@@ -242,7 +242,7 @@ package StellarOrion_Types is
    --    Nose_Radius_M   : Nose bluntness radius [m]. Directly enters
    --                      Sutton-Graves as sqrt(1/R_n): larger radius
    --                      reduces peak heating (thicker boundary layer).
-   --                      IRVE-3: 0.55 m (Rapisarda Table 4.1).
+   --                      IRVE-3: 1.5 m (3m diameter sphere-cone)
    --    Toroid_Count    : Number of inflatable toroids in the HIAD stack.
    --                      IRVE-3 flight used 7 toroids; MDAO model used 6.
    --                      More toroids increase structural stiffness.
