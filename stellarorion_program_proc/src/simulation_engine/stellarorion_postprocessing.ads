@@ -21,8 +21,6 @@
 --
 --  Author:  Albert Starfield Wahyu Suryo Samudro
 
-with StellarOrion_Types; use StellarOrion_Types;
-
 package StellarOrion_PostProcessing is
    pragma SPARK_Mode (On);
 

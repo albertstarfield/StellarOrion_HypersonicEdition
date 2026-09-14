@@ -768,6 +768,7 @@ package body StellarOrion_Environment is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Mach_Alt_To_Flight");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Mach_Alt_To_Flight;
 
    -- ==================================================================
@@ -833,6 +834,7 @@ package body StellarOrion_Environment is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      MSIS_Atmosphere");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end MSIS_Atmosphere;
 
    -- ==================================================================

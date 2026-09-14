@@ -278,6 +278,7 @@ package body StellarOrion_Status_Writer is
           raise;
 
    end Test_Float_Image;
+   pragma Unreferenced (Test_Float_Image);
 
    --  STC coverage wrapper for Status_String.
    --  Pure mapper exercised on representative enum members.
@@ -322,6 +323,7 @@ package body StellarOrion_Status_Writer is
           raise;
 
    end Test_Status_String;
+   pragma Unreferenced (Test_Status_String);
 
    --  STC coverage wrapper for Write_Status.
    --  Side-effectful routine exercised via integration modes (run.py --test ...); unit wrapper validates declarative surface only.

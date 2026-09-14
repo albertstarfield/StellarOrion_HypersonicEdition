@@ -1772,9 +1772,10 @@ package body StellarOrion_Sparta is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Parse_Sparta_Results");
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
-   end Parse_Sparta_Results;
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Parse_Sparta_Results");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    raise;
+    end Parse_Sparta_Results;
 
    -- ==================================================================
    --  Self-test coverage wrappers (STC)
@@ -2437,6 +2438,7 @@ package body StellarOrion_Sparta is
       Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
       Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Tokenize_Floats");
       Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+      raise;
       end Tokenize_Floats;
 
        --  Parse HIAD_custom.surf Points into the sequential polyline Curve
@@ -3794,6 +3796,7 @@ package body StellarOrion_Sparta is
              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Delete_Matching (search)");
              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Pattern:       " & Pattern);
              Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+       raise;
        end Delete_Matching;
         --  AXIOMS: SPARTA produces restart.*.sparta, surf.*.out,
         --    grid.*.out, in.hiad, and HIAD_custom.surf as
@@ -3867,6 +3870,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_C_System;
+   pragma Unreferenced (Test_C_System);
 
     --  Verify system(3) wrapper returns correct status code.
 -- ============================================================================
@@ -3907,6 +3911,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_System_Return;
+   pragma Unreferenced (Test_System_Return);
 
    --  Verify surf file generation produces valid geometry.
 -- ============================================================================
@@ -3945,6 +3950,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Generate_HIAD_Surf;
+   pragma Unreferenced (Test_Generate_HIAD_Surf);
 
    --  Verify raw data buffer append without corruption.
 -- ============================================================================
@@ -3985,6 +3991,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Add_Raw;
+   pragma Unreferenced (Test_Add_Raw);
 
    --  Verify post-processing orchestration links and runs.
 -- ============================================================================
@@ -4026,6 +4033,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Generate_Validation_Plots_And_VTK;
+   pragma Unreferenced (Test_Generate_Validation_Plots_And_VTK);
 
    --  Verify float tokenizer handles edge cases.
 -- ============================================================================
@@ -4064,6 +4072,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Tokenize_Floats;
+   pragma Unreferenced (Test_Tokenize_Floats);
 
    --  Verify surf geometry parser extracts vertices and faces.
 -- ============================================================================
@@ -4103,6 +4112,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Parse_Surf_Geometry;
+   pragma Unreferenced (Test_Parse_Surf_Geometry);
 
    --  Verify resampling preserves curve monotonicity.
 -- ============================================================================
@@ -4141,6 +4151,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Resample;
+   pragma Unreferenced (Test_Resample);
 
    --  Verify surf row counting excludes headers and blanks.
 -- ============================================================================
@@ -4179,6 +4190,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Count_Surf_Rows;
+   pragma Unreferenced (Test_Count_Surf_Rows);
 
    --  Verify VTU vertex emission produces valid XML.
 -- ============================================================================
@@ -4217,6 +4229,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Write_Point;
+   pragma Unreferenced (Test_Write_Point);
 
    --  Verify complete VTU file generation.
 -- ============================================================================
@@ -4255,6 +4268,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Write_VTU;
+   pragma Unreferenced (Test_Write_VTU);
 
    --  Verify restart file parsing extracts thermodynamic fields.
 -- ============================================================================
@@ -4294,6 +4308,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Process_Step_File;
+   pragma Unreferenced (Test_Process_Step_File);
 
    --  Verify CSV time-series output format.
 -- ============================================================================
@@ -4332,6 +4347,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Write_CSV;
+   pragma Unreferenced (Test_Write_CSV);
 
    --  Verify ParaView Data file links VTU sequence.
 -- ============================================================================
@@ -4371,6 +4387,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Write_PVD;
+   pragma Unreferenced (Test_Write_PVD);
 
    --  Verify ephemeral file cleanup removes temp files.
 -- ============================================================================
@@ -4451,6 +4468,7 @@ package body StellarOrion_Sparta is
          raise;
 
    end Test_Delete_Matching;
+   pragma Unreferenced (Test_Delete_Matching);
 
 end StellarOrion_Sparta;
 

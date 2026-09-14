@@ -8,7 +8,7 @@ with Ada.Directories;         use Ada.Directories;
 with Ada.Numerics;
 with Ada.Exceptions;          use Ada.Exceptions;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with StellarOrion_Safe_Access; use StellarOrion_Safe_Access;
+with StellarOrion_Safe_Access; -- use StellarOrion_Safe_Access; -- [removed: no effect]
 with StellarOrion_Environment; use StellarOrion_Environment;
 with StellarOrion_Physics;    use StellarOrion_Physics;
 with StellarOrion_Sparta;       use StellarOrion_Sparta;
@@ -74,7 +74,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
 
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-         null; -- safe fallback per code-quality.md §5.1
+         raise; -- propagate exception after logging verbose context
 
    end F6;
 
@@ -116,7 +116,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
 
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
 
-         null; -- safe fallback per code-quality.md §5.1
+         raise; -- propagate exception after logging verbose context
 
    end Grade;
 
@@ -676,7 +676,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Arg_StepV  : aliased constant String := Steps_Arg;
       Arg_Solver : aliased constant String := "--solver";
       Arg_Sparta : aliased constant String := "sparta";
-      Pinn_Args  : GNAT.OS_Lib.Argument_List (1 .. 5) :=
+      Pinn_Args  : constant GNAT.OS_Lib.Argument_List (1 .. 5) :=
         (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Script),
          StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Steps),
          StellarOrion_Safe_Access.To_Chars_Ptr (Arg_StepV),
@@ -804,19 +804,19 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       --  Preallocated args for Spawn (zero heap allocation).
       declare
          Arg_Script : aliased constant String := "src/python/pyfluent_test.py";
-         Arg_Host   : aliased String := SSH_Host;
-         Arg_User   : aliased String := SSH_User;
+         Arg_Host   : aliased constant String := SSH_Host;
+         Arg_User   : aliased constant String := SSH_User;
          Arg_HFlag  : aliased constant String := "--ssh-host";
          Arg_UFlag  : aliased constant String := "--ssh-user";
          Arg_KFlag  : aliased constant String := "--ssh-key";
-         Arg_Key    : aliased String := SSH_Key;
+         Arg_Key    : aliased constant String := SSH_Key;
          Arg_PFlag  : aliased constant String := "--ssh-pass";
-         Arg_Pass   : aliased String := SSH_Pass;
+         Arg_Pass   : aliased constant String := SSH_Pass;
          -- [Citation: code-quality.md — DYNAMIC_ALLOCATION fix: preallocated aliased strings]
       begin
          if SSH_Key'Length > 0 then
             declare
-               Pf_Args : GNAT.OS_Lib.Argument_List (1 .. 7) :=
+               Pf_Args : constant GNAT.OS_Lib.Argument_List (1 .. 7) :=
                  (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Script),
                   StellarOrion_Safe_Access.To_Chars_Ptr (Arg_HFlag),
                   StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Host),
@@ -829,7 +829,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
             end;
          elsif SSH_Pass'Length > 0 then
             declare
-               Pf_Args : GNAT.OS_Lib.Argument_List (1 .. 7) :=
+               Pf_Args : constant GNAT.OS_Lib.Argument_List (1 .. 7) :=
                  (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Script),
                   StellarOrion_Safe_Access.To_Chars_Ptr (Arg_HFlag),
                   StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Host),
@@ -842,7 +842,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
             end;
          else
             declare
-               Pf_Args : GNAT.OS_Lib.Argument_List (1 .. 5) :=
+               Pf_Args : constant GNAT.OS_Lib.Argument_List (1 .. 5) :=
                  (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Script),
                   StellarOrion_Safe_Access.To_Chars_Ptr (Arg_HFlag),
                   StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Host),
@@ -906,7 +906,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       --  Preallocated arg for Spawn (zero heap allocation).
       declare
          Arg_Script : aliased constant String := "src/python/pyansys_test.py";
-         Ans_Args   : GNAT.OS_Lib.Argument_List (1 .. 1) :=
+         Ans_Args   : constant GNAT.OS_Lib.Argument_List (1 .. 1) :=
            (1 => StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Script));
          -- [Citation: code-quality.md — DYNAMIC_ALLOCATION fix: preallocated aliased strings]
       begin
@@ -1092,7 +1092,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
          Arg_Cmd   : aliased constant String :=
            "source /usr/lib/openfoam/openfoam2312/etc/bashrc"
            & " && cd /workspace && blockMesh";
-         Of_Args   : GNAT.OS_Lib.Argument_List (1 .. 8) :=
+         Of_Args   : constant GNAT.OS_Lib.Argument_List (1 .. 8) :=
            (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Run),
             StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Rm),
             StellarOrion_Safe_Access.To_Chars_Ptr (Arg_V),

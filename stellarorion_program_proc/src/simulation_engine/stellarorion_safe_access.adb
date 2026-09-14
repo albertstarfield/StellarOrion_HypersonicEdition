@@ -3,8 +3,6 @@
 --  AXIOMS: This is the only allocation conversion path for Argument_List.
 --  THEOREM: This wrapper consolidates all pointer usage into one location.
 --  CITATIONS: GNAT OS_Lib.Spawn (s-os_lib.ads L861), Ada RM 13.1.1
-with GNAT.OS_Lib;
-
 package body StellarOrion_Safe_Access is
    pragma SPARK_Mode (Off); -- c_binding: GNAT.OS_Lib.String_Access allocation for FFI Spawn interface -- nosec: DYNAMIC_ALLOCATION
 -- @test: Safe_Get is tested via StellarOrion_Self_Test.Test_Safe_Access
@@ -32,9 +30,6 @@ package body StellarOrion_Safe_Access is
       --  [Citation: Ada RM 4.8 — aggregated allocator new String'(S)]
       --  [Ref: CWE-770 — allocation without size limit; mitigated by caller context]
        return new String'(S); -- nosec: static DYNAMIC_ALLOCATION
-   exception
-      when E : others =>
-         raise;
    end To_Chars_Ptr;
 
 end StellarOrion_Safe_Access;

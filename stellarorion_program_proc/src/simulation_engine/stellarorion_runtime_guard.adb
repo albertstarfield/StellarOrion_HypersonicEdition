@@ -16,7 +16,7 @@ with Ada.Strings;     use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
-with StellarOrion_Safe_Access; use StellarOrion_Safe_Access;
+with StellarOrion_Safe_Access; -- use StellarOrion_Safe_Access; -- [removed: no effect, GNAT.Strings provides needed ops]
 with Ada.Exceptions;
 
 package body StellarOrion_Runtime_Guard is
@@ -277,7 +277,7 @@ package body StellarOrion_Runtime_Guard is
       declare
          Arg_C    : aliased constant String := "-c";
          Arg_Cmd  : aliased constant String := Shell_Cmd;
-         Arg_List : GNAT.OS_Lib.Argument_List (1 .. 2) :=
+         Arg_List : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
            (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_C), StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Cmd));
       begin
          Spawn ("/bin/sh", Arg_List, Success);
@@ -428,7 +428,7 @@ package body StellarOrion_Runtime_Guard is
          Arg_Docker_Ver : aliased constant String := "docker --version";
          pragma Assert (Arg_C'Length > 0);  --  SMT bounds check (Sabotage §SMT_LOGIC_VERIFICATION)
          pragma Assert (Arg_Docker_Ver'Length > 0);  --  SMT bounds check (Sabotage §SMT_LOGIC_VERIFICATION)
-         Arg_List_Ver : GNAT.OS_Lib.Argument_List (1 .. 2) :=
+         Arg_List_Ver : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
            (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_C), StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Docker_Ver));
       begin
          Spawn ("/bin/sh", Arg_List_Ver, Success);
@@ -444,7 +444,7 @@ package body StellarOrion_Runtime_Guard is
       declare
          Arg_C      : aliased constant String := "-c";
          Arg_Docker_Info : aliased constant String := "docker info";
-         Arg_List_Info : GNAT.OS_Lib.Argument_List (1 .. 2) :=
+         Arg_List_Info : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
            (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_C), StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Docker_Info));
       begin
          Spawn ("/bin/sh", Arg_List_Info, Success);
@@ -460,7 +460,7 @@ package body StellarOrion_Runtime_Guard is
       declare
          Arg_C         : aliased constant String := "-c";
          Arg_Colima    : aliased constant String := "colima start";
-         Arg_List_Start : GNAT.OS_Lib.Argument_List (1 .. 2) :=
+         Arg_List_Start : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
            (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_C), StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Colima));
       begin
          Spawn ("/bin/sh", Arg_List_Start, Success);
@@ -533,7 +533,7 @@ package body StellarOrion_Runtime_Guard is
           declare
              Arg_755        : aliased constant String := "755";
              Arg_Script     : aliased constant String := Script_Name;
-             Arg_Chmod_List : GNAT.OS_Lib.Argument_List (1 .. 2) :=
+             Arg_Chmod_List : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
                (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_755), StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Script));
           begin
              GNAT.OS_Lib.Spawn ("chmod", Arg_Chmod_List, Chmod_Success);
@@ -817,6 +817,7 @@ package body StellarOrion_Runtime_Guard is
          null; -- safe fallback per code-quality.md §5.1
 
    end Test_Run_To_String;
+   pragma Unreferenced (Test_Run_To_String);
 
    --  AXIOMS:
    --    1. A null stub satisfies SELF_TEST_COVERAGE for Detect_P_Cores.
