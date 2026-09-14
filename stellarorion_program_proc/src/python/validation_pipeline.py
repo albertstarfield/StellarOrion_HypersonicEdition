@@ -596,7 +596,7 @@ def sutton_graves_heat_flux(altitude_km, velocity_ms, rn=None):
     Args:
         altitude_km: Altitude in km
         velocity_ms: Velocity in m/s
-        rn: Nose radius in m (default: 0.55 m for IRVE-3)
+        rn: Nose radius in m (default: 1.5 m for IRVE-3, 3m diameter sphere-cone)
 
     Returns: dict with heat_flux_Wm2, heat_flux_Wcm2, density_kgm3, velocity_ms
     """

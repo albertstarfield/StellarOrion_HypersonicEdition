@@ -97,7 +97,7 @@ def isa_atmosphere(altitude_km):
 def sutton_graves_heat_flux(altitude_km, velocity_ms, rn=None):
     atm = isa_atmosphere(altitude_km)
     if rn is None:
-        rn = 0.55
+        rn = 1.5
     wm2 = _ada_lib.stellarorion_pinn_trajectory__sutton_graves_heat_flux(
         ctypes.c_float(atm["density_kgm3"]),
         ctypes.c_float(rn),
