@@ -2036,14 +2036,28 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
     # PINN frames: subsample to ~200 frames for reasonable MP4 duration
     # AXIOM: 5000+ PINN evaluation points produce a 168s MP4 — must subsample
     # for a ~13s animation (200 PINN frames at 30fps = 6.7s PINN phase)
-    # [Citation: code-quality.md — Python is wrapper only, frame count is presentation]
+    #
+    # CRITICAL: Select frames by ALTITUDE distribution, not step index.
+    # The PINN steps are logarithmically spaced — selecting by index would
+    # cluster 80% of frames near the DSMC end (51.8 km), showing almost
+    # no altitude change. Instead, we select frames that are evenly
+    # distributed in altitude space (51.8→10 km), so the MP4 shows the
+    # full descent trajectory with smooth altitude progression.
+    #
+    # [Citation: code-quality.md — Python is wrapper only, frame selection is presentation]
     _MAX_PINN_MP4_FRAMES = 200
     if pinn_curve and len(pinn_curve.get("steps", [])) > 0:
         pinn_all_steps = pinn_curve["steps"]
         n_all = len(pinn_all_steps)
+        pinn_all_alt = pinn_curve["trajectory"]["altitude_km"]
         if n_all > _MAX_PINN_MP4_FRAMES:
-            # Evenly subsample indices (preserves start/end points)
-            idx = np.linspace(0, n_all - 1, _MAX_PINN_MP4_FRAMES, dtype=int)
+            # Select frames evenly distributed in altitude space
+            alt_max = float(np.max(pinn_all_alt))
+            alt_min = float(np.min(pinn_all_alt))
+            target_alts = np.linspace(alt_max, alt_min, _MAX_PINN_MP4_FRAMES)
+            # For each target altitude, find the nearest evaluation point
+            idx = np.array([np.argmin(np.abs(pinn_all_alt - ta)) for ta in target_alts])
+            idx = np.unique(idx)  # remove duplicates
             pinn_frame_steps = pinn_all_steps[idx]
             pinn_hf_avg = pinn_curve["metrics"].get("heatflux_avg_Wm2",
                           np.zeros(n_all))[idx] / 10000.0
