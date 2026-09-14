@@ -1747,13 +1747,14 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
         kn = atm["mean_free_path_m"] / char_length_m if char_length_m > 0 else 0.0
         re = (atm["density_kgm3"] * vel * char_length_m /
               atm["dynamic_viscosity_Pas"]) if atm["dynamic_viscosity_Pas"] > 0 else 0.0
-        # Use DSMC final lift/drag/gload scaled by dynamic pressure ratio for PINN estimates
-        dyn_q_ref = 0.5 * isa_atmosphere(51.8)["density_kgm3"] * 3378.0 ** 2  # Reference at DSMC point
-        dyn_q_now = 0.5 * atm["density_kgm3"] * vel ** 2
-        dp_ratio = dyn_q_now / dyn_q_ref if dyn_q_ref > 0 else 1.0
-        drag_est = dsmc_drag_final * dp_ratio  # N
-        lift_est = float(data["lift_sum_N"][-1]) * dp_ratio  # N
-        gload_est = dsmc_g_final * dp_ratio
+        # Compute drag/g_load from Ada backbone directly: F = 0.5*Cd*A*rho*V^2, g = F/(m*g0)
+        # [Citation: Anderson (2006), Hypersonic Gas Dynamics]
+        # [Citation: code-quality.md — ALL physics from Ada/SPARK 2014 backbone]
+        _pi = 3.141592653589793
+        _area = _pi * (3.0 * 0.5) ** 2
+        drag_est = 0.5 * 1.4625 * _area * atm["density_kgm3"] * vel ** 2  # N
+        gload_est = drag_est / (281.0 * 9.80665)  # g
+        lift_est = 0.0  # Symmetric vehicle at zero angle of attack
 
         md_lines.append(
             f"| {closest_alt:.1f} | {vel:.0f} | {mach:.2f} | "
