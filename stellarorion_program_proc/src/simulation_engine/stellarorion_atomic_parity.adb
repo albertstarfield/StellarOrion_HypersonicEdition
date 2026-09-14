@@ -122,6 +122,7 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => Off is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Calculate_Parity");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Calculate_Parity;
 
    -- ---------------------------------------------------------------------
@@ -172,6 +173,7 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => Off is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Block_Checksum");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Block_Checksum;
 
    --  Frame integrity gate: returns True only when the transmitted Checksum
@@ -323,6 +325,7 @@ package body StellarOrion_Atomic_Parity with SPARK_Mode => Off is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Recover_From_Parity_Error");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Recover_From_Parity_Error;
 
    --  ------------------------------------------------------------------

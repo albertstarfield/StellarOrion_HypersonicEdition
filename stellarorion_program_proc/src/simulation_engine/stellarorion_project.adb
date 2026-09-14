@@ -75,7 +75,7 @@ with StellarOrion_Optimize;      use StellarOrion_Optimize;
 --  (e.g. Ada.Numerics.Pi), hence no use-clauses here.
 with Ada.IO_Exceptions;
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
-with StellarOrion_Safe_Access; use StellarOrion_Safe_Access;
+with StellarOrion_Safe_Access; -- use StellarOrion_Safe_Access; -- [removed: no effect, GNAT.Strings provides needed ops]
 with StellarOrion_PostProcessing; use StellarOrion_PostProcessing;
 with Ada.Exceptions;
 
@@ -1412,6 +1412,7 @@ package body StellarOrion_Project is
             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Try_Open");
             Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+            raise;
             end Try_Open;
          begin
             Try_Open ("REFERENCES.MD");
@@ -1456,7 +1457,7 @@ package body StellarOrion_Project is
             --  instead of using new String'(...) which allocates on the heap.
             --  [Ref: code-quality.md §Conservative Safe Fallback]
             Colima_Stop_Arg : aliased constant String := "stop";
-            Colima_Args     : GNAT.OS_Lib.Argument_List (1 .. 1) :=
+            Colima_Args     : constant GNAT.OS_Lib.Argument_List (1 .. 1) :=
               (1 => StellarOrion_Safe_Access.To_Chars_Ptr (Colima_Stop_Arg));
             Colima_Stop_OK  : Boolean;
          begin
@@ -1477,6 +1478,7 @@ package body StellarOrion_Project is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Main_Program");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Main_Program;
 
    --  ------------------------------------------------------------------
@@ -1532,6 +1534,7 @@ package body StellarOrion_Project is
          raise;
 
    end Test_Print_Banner;
+   pragma Unreferenced (Test_Print_Banner);
 
    --  STC coverage wrapper for Print_Usage.
    --  Side-effectful routine exercised via integration modes (run.py --test ...); unit wrapper validates declarative surface only.
@@ -1580,6 +1583,7 @@ package body StellarOrion_Project is
          raise;
 
    end Test_Print_Usage;
+   pragma Unreferenced (Test_Print_Usage);
 
    --  STC coverage wrapper for Main_Program.
    --  Side-effectful routine exercised via integration modes (run.py --test ...); unit wrapper validates declarative surface only.
@@ -1681,6 +1685,7 @@ package body StellarOrion_Project is
          raise;
 
     end Test_Try_Open;
+    pragma Unreferenced (Test_Try_Open);
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Main_Program", Test_Main_Program'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Print_Banner", Test_Print_Banner'Access);

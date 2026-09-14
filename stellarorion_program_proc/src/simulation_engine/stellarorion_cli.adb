@@ -4,7 +4,7 @@
 with Ada.Command_Line; use Ada.Command_Line;
 with Ada.Text_IO;
 with Ada.Exceptions;
-with Ada.Calendar;
+-- with Ada.Calendar; -- [removed: not referenced]
 
 package body StellarOrion_Cli with SPARK_Mode => On is
 --  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
@@ -149,6 +149,7 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Get_Float");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Get_Float;
 
    --  Clamp V into [Lo, Hi].
@@ -222,6 +223,7 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Get_Positive");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
    end Get_Positive;
 
    --  ------------------------------------------------------------------
@@ -251,13 +253,13 @@ package body StellarOrion_Cli with SPARK_Mode => On is
    -- THEORIES: Boolean is a two-valued type; the result must be either
    --    True or False, confirming Has_Flag does not raise and returns
    --    a type-conformant value.
-   -- APPLICATIONS: Asserts Found = True or else Found = False.
+   -- APPLICATIONS: Asserts Found  or else Found = False.
    -- CITATIONS: Ada 2012 Reference Manual, ISO/IEC 8652:2012, Section
    --    3.8 (Boolean type); StellarOrion_Cli.ads (Has_Flag spec).
 
        Found : constant Boolean := Has_Flag ("--stc-probe");
    begin
-      pragma Assert (Found = True or else Found = False);
+      pragma Assert (Found  or else Found = False);
    exception
       when E : others =>
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");

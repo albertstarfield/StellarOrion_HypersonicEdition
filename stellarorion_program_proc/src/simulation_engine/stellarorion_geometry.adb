@@ -62,8 +62,9 @@ package body StellarOrion_Geometry is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Deg_To_Rad");
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Deg_To_Rad");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    raise;
    end Deg_To_Rad;
 
    --  Sine of an angle in degrees via the truncated Taylor series
@@ -124,8 +125,9 @@ package body StellarOrion_Geometry is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sin_Deg");
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sin_Deg");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    raise;
    end Sin_Deg;
 
    --  ==================================================================
@@ -281,8 +283,9 @@ package body StellarOrion_Geometry is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Shield_Mass_Analytical");
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Shield_Mass_Analytical");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    raise;
    end Shield_Mass_Analytical;
 
    -- ==================================================================
@@ -333,8 +336,9 @@ package body StellarOrion_Geometry is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Shield_Mass_Pappus");
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Shield_Mass_Pappus");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    raise;
    end Shield_Mass_Pappus;
 
    -- ==================================================================
@@ -381,8 +385,9 @@ package body StellarOrion_Geometry is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Validate_Geometry");
-   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Validate_Geometry");
+    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+    raise;
    end Validate_Geometry;
 
    -- ==================================================================
@@ -529,9 +534,10 @@ package body StellarOrion_Geometry is
     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
-    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sin_Rad");
-    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
-    end Sin_Rad;
+     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Sin_Rad");
+     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+     raise;
+     end Sin_Rad;
 
    -- ==================================================================
    --  Cos_Rad — Cosine via Taylor series (radians)
@@ -585,9 +591,10 @@ package body StellarOrion_Geometry is
      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
-     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Cos_Rad");
-     Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
-     end Cos_Rad;
+      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Cos_Rad");
+      Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+      raise;
+      end Cos_Rad;
 
    -- ==================================================================
    --  STC Test Wrappers (coverage: self-test for trig functions)

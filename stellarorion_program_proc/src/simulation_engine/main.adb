@@ -11,7 +11,7 @@
 --             GNAT Pro 16.x User's Guide §3.2 (Main Program).
 
 with StellarOrion_Project;
-with StellarOrion_PostProcessing;
+-- with StellarOrion_PostProcessing; -- [removed: not referenced]
 with Ada.Text_IO;
 with Ada.Exceptions;
 with Ada.Real_Time; use Ada.Real_Time;
