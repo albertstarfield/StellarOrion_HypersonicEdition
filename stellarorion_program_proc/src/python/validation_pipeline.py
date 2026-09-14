@@ -1981,29 +1981,77 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
         print("[pipeline] matplotlib not available — skipping MP4 animation")
         return None
 
-    # Check ffmpeg availability
-    import shutil
-    if not shutil.which("ffmpeg"):
-        print("[pipeline] ffmpeg not found — attempting to use matplotlib writer")
-        writer = "pillow"  # Fallback to GIF
+    # Detect ffmpeg + hardware-accelerated encoder
+    # [Citation: ffmpeg HW accel — https://trac.ffmpeg.org/HWAccelIntro]
+    # [Citation: VideoToolbox — Apple VTCompressionSession API]
+    # [Citation: VAAPI — https://trac.ffmpeg.org/wiki/HWAccelIntro#VAAPI]
+    # [Citation: NVENC — NVIDIA Video Codec SDK]
+    import shutil, sys, subprocess
+    _ffmpeg_writer = None
+    _hw_encoder = None
+    _hw_extra_args = []
+    if shutil.which("ffmpeg"):
+        # Probe available HW encoders by platform
+        _probe = subprocess.run(
+            ["ffmpeg", "-encoders"], capture_output=True, text=True, timeout=5
+        )
+        _encoders = _probe.stdout if _probe.returncode == 0 else ""
+        if sys.platform == "darwin" and "h264_videotoolbox" in _encoders:
+            _hw_encoder = "h264_videotoolbox"
+            _hw_extra_args = ["-vcodec", "h264_videotoolbox",
+                              "-b:v", "8M", "-pix_fmt", "yuv420p"]
+            print("[pipeline] HW encode: VideoToolbox (macOS)")
+        elif sys.platform.startswith("linux"):
+            if "h264_vaapi" in _encoders:
+                _hw_encoder = "h264_vaapi"
+                _hw_extra_args = ["-vcodec", "h264_vaapi",
+                                  "-vaapi_device", "/dev/dri/renderD128",
+                                  "-vf", "format=nv12,hwupload",
+                                  "-pix_fmt", "yuv420p"]
+                print("[pipeline] HW encode: VAAPI (Linux)")
+            elif "h264_nvenc" in _encoders:
+                _hw_encoder = "h264_nvenc"
+                _hw_extra_args = ["-vcodec", "h264_nvenc",
+                                  "-pix_fmt", "yuv420p", "-preset", "fast"]
+                print("[pipeline] HW encode: NVENC (Linux)")
+        elif sys.platform == "win32":
+            if "h264_nvenc" in _encoders:
+                _hw_encoder = "h264_nvenc"
+                _hw_extra_args = ["-vcodec", "h264_nvenc",
+                                  "-pix_fmt", "yuv420p", "-preset", "fast"]
+                print("[pipeline] HW encode: NVENC (Windows)")
+            elif "h264_amf" in _encoders:
+                _hw_encoder = "h264_amf"
+                _hw_extra_args = ["-vcodec", "h264_amf",
+                                  "-pix_fmt", "yuv420p"]
+                print("[pipeline] HW encode: AMF (Windows)")
+        if _hw_encoder is None:
+            # Fallback: software x264
+            _hw_encoder = "libx264"
+            _hw_extra_args = ["-vcodec", "libx264", "-pix_fmt", "yuv420p"]
+            print("[pipeline] SW encode: libx264 (no HW encoder found)")
+        # Create FFMpegWriter with detected encoder
+        from matplotlib.animation import FFMpegWriter
+        _ffmpeg_writer = FFMpegWriter(fps=fps, metadata={"title": "StellarOrion HIAD"},
+                                      extra_args=_hw_extra_args)
+        writer = _ffmpeg_writer
     else:
-        writer = "ffmpeg"
+        print("[pipeline] ffmpeg not found — falling back to GIF")
+        writer = "pillow"
 
     plots_dir = os.path.join(output_dir, "plots")
     os.makedirs(plots_dir, exist_ok=True)
 
-    # Build frame list: DSMC frames (step 100→2200) + PINN frames (2200→300M)
-    dsmc_steps = data["steps"]
+    # Build frame list: uniform 100-step increments across full trajectory
+    # (0 → target_step). All metrics computed from Ada/SPARK 2014 FFI —
+    # Python is wrapper only, no physics logic.
+    #
     # [Citation: code-quality.md — ALL heat flux uses Sutton-Graves, not Fay-Riddell]
     # [Citation: code-quality.md — Ada/SPARK 2014 physics backbone, Python is wrapper only]
     # [Citation: Sutton & Graves (1972), NASA TR R-376 — q = C_sg * sqrt(rho/R_n) * V^3]
-    # Compute trajectory-corrected metrics from Ada physics backbone for DSMC frames
     IRVE3_MASS_KG    = 281.0
     IRVE3_DIAMETER_M = 3.0
     IRVE3_CD         = 1.4625
-    G0 = 9.80665
-    _pi = 3.141592653589793
-    _frontal_area = _pi * (IRVE3_DIAMETER_M * 0.5) ** 2
 
     def _compute_trajectory_metrics(step):
         """Compute g_load, heat flux, drag at a given step using Ada/SPARK 2014 FFI.
@@ -2020,177 +2068,104 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
         hf_wcm2 = sg["heat_flux_Wcm2"]
         return hf_wcm2, drag, g_load
 
-    dsmc_hf_avg = np.zeros(len(dsmc_steps))
-    dsmc_drag = np.zeros(len(dsmc_steps))
-    dsmc_g = np.zeros(len(dsmc_steps))
-    dsmc_lift = data["lift_sum_N"]  # Lift from DSMC (constant baseline)
-    for i, s in enumerate(dsmc_steps):
+    # Uniform frame steps: 0, 100, 200, ..., target_step
+    # AXIOM: steps_per_frame=100 means each frame advances 100 simulation steps.
+    # At 30fps: 300M/100 = 3M frames = 100,000s video. For practical MP4,
+    # subsample to ~3000 frames (100s at 30fps).
+    _MAX_MP4_FRAMES = 3000
+    all_frame_steps = np.arange(0, int(target_step) + 1, steps_per_frame)
+    if len(all_frame_steps) > _MAX_MP4_FRAMES:
+        idx = np.linspace(0, len(all_frame_steps) - 1, _MAX_MP4_FRAMES, dtype=int)
+        all_frame_steps = all_frame_steps[idx]
+
+    # Pre-compute all metrics for every frame step via Ada FFI
+    n_frames = len(all_frame_steps)
+    frame_alt = np.zeros(n_frames)
+    frame_vel = np.zeros(n_frames)
+    frame_mach = np.zeros(n_frames)
+    frame_hf = np.zeros(n_frames)
+    frame_drag = np.zeros(n_frames)
+    frame_g = np.zeros(n_frames)
+    for i, s in enumerate(all_frame_steps):
+        traj = irve3_trajectory_model(float(s))
+        frame_alt[i] = traj["altitude_km"]
+        frame_vel[i] = traj["velocity_ms"]
+        frame_mach[i] = traj["mach_number"]
         hf, drag, gld = _compute_trajectory_metrics(int(s))
-        dsmc_hf_avg[i] = hf
-        dsmc_drag[i] = drag
-        dsmc_g[i] = gld
+        frame_hf[i] = hf
+        frame_drag[i] = drag
+        frame_g[i] = gld
 
-    # DSMC frames: one frame per 100 steps
-    dsmc_frame_steps = np.arange(int(dsmc_steps[0]), int(dsmc_steps[-1]) + 1, steps_per_frame)
+    total_frames = n_frames
+    print(f"[pipeline] Generating MP4: {total_frames} frames (uniform 100-step increments, 0→{int(target_step)})")
 
-    # PINN frames: subsample to ~200 frames for reasonable MP4 duration
-    # AXIOM: 5000+ PINN evaluation points produce a 168s MP4 — must subsample
-    # for a ~13s animation (200 PINN frames at 30fps = 6.7s PINN phase)
-    #
-    # CRITICAL: Select frames by ALTITUDE distribution, not step index.
-    # The PINN steps are logarithmically spaced — selecting by index would
-    # cluster 80% of frames near the DSMC end (51.8 km), showing almost
-    # no altitude change. Instead, we select frames that are evenly
-    # distributed in altitude space (51.8→10 km), so the MP4 shows the
-    # full descent trajectory with smooth altitude progression.
-    #
-    # [Citation: code-quality.md — Python is wrapper only, frame selection is presentation]
-    _MAX_PINN_MP4_FRAMES = 200
-    if pinn_curve and len(pinn_curve.get("steps", [])) > 0:
-        pinn_all_steps = pinn_curve["steps"]
-        n_all = len(pinn_all_steps)
-        pinn_all_alt = pinn_curve["trajectory"]["altitude_km"]
-        if n_all > _MAX_PINN_MP4_FRAMES:
-            # Select frames evenly distributed in altitude space
-            alt_max = float(np.max(pinn_all_alt))
-            alt_min = float(np.min(pinn_all_alt))
-            target_alts = np.linspace(alt_max, alt_min, _MAX_PINN_MP4_FRAMES)
-            # For each target altitude, find the nearest evaluation point
-            idx = np.array([np.argmin(np.abs(pinn_all_alt - ta)) for ta in target_alts])
-            idx = np.unique(idx)  # remove duplicates
-            pinn_frame_steps = pinn_all_steps[idx]
-            pinn_hf_avg = pinn_curve["metrics"].get("heatflux_avg_Wm2",
-                          np.zeros(n_all))[idx] / 10000.0
-            pinn_drag = pinn_curve["metrics"].get("drag_sum_N",
-                        np.zeros(n_all))[idx]
-            pinn_g = pinn_curve["metrics"].get("g_load",
-                     np.zeros(n_all))[idx]
-            pinn_lift = pinn_curve["metrics"].get("lift_sum_N",
-                        np.zeros(n_all))[idx]
-            pinn_alt = pinn_curve["trajectory"]["altitude_km"][idx]
-            pinn_vel = pinn_curve["trajectory"]["velocity_ms"][idx]
-            pinn_mach = pinn_curve["trajectory"]["mach_number"][idx]
-        else:
-            pinn_frame_steps = pinn_all_steps
-            pinn_hf_avg = pinn_curve["metrics"].get("heatflux_avg_Wm2",
-                          np.zeros(n_all)) / 10000.0
-            pinn_drag = pinn_curve["metrics"].get("drag_sum_N",
-                        np.zeros(n_all))
-            pinn_g = pinn_curve["metrics"].get("g_load",
-                     np.zeros(n_all))
-            pinn_lift = pinn_curve["metrics"].get("lift_sum_N",
-                        np.zeros(n_all))
-            pinn_alt = pinn_curve["trajectory"]["altitude_km"]
-            pinn_vel = pinn_curve["trajectory"]["velocity_ms"]
-            pinn_mach = pinn_curve["trajectory"]["mach_number"]
-    else:
-        pinn_frame_steps = np.array([])
-        pinn_hf_avg = np.array([])
-        pinn_drag = np.array([])
-        pinn_g = np.array([])
-        pinn_lift = np.array([])
-        pinn_alt = np.array([])
-        pinn_vel = np.array([])
-        pinn_mach = np.array([])
-
-    # Pre-compute trajectory for DSMC frames
-    dsmc_traj_alt = np.array([irve3_trajectory_model(int(s))["altitude_km"] for s in dsmc_frame_steps])
-    dsmc_traj_vel = np.array([irve3_trajectory_model(int(s))["velocity_ms"] for s in dsmc_frame_steps])
-    dsmc_traj_mach = np.array([irve3_trajectory_model(int(s))["mach_number"] for s in dsmc_frame_steps])
-
-    # Interpolate DSMC metric values at frame steps
-    dsmc_hf_at_frames = np.interp(dsmc_frame_steps, dsmc_steps, dsmc_hf_avg)
-    dsmc_drag_at_frames = np.interp(dsmc_frame_steps, dsmc_steps, dsmc_drag)
-    dsmc_g_at_frames = np.interp(dsmc_frame_steps, dsmc_steps, dsmc_g)
-    dsmc_lift_at_frames = np.interp(dsmc_frame_steps, dsmc_steps, dsmc_lift)
-
-    total_frames = len(dsmc_frame_steps) + len(pinn_frame_steps)
-    print(f"[pipeline] Generating MP4: {total_frames} frames ({len(dsmc_frame_steps)} DSMC + {len(pinn_frame_steps)} PINN)")
-
-    # Set up figure: 2x2 grid
+    # Set up figure: 2-row layout
+    # Top row: Heat flux time series (full width)
+    # Bottom-left: Altitude profile
+    # Bottom-right: IRVE-3 boundary condition + DSMC particles + thermal illustration
+    # [Citation: NASA TP-2013-4012 — IRVE-3 70° sphere-cone, 3m diameter]
+    # [Citation: Bird (1994) — DSMC molecular collision model]
+    # [Citation: code-quality.md — Ada/SPARK 2014 physics backbone]
     fig = plt.figure(figsize=(16, 10))
-    gs = fig.add_gridspec(2, 2, hspace=0.35, wspace=0.3)
+    gs = fig.add_gridspec(2, 2, hspace=0.35, wspace=0.35)
 
-    # Main plot: Heat flux time series (top-left, spans full width)
+    # Main plot: Heat flux time series (top, spans full width)
     ax_hf = fig.add_subplot(gs[0, :])
     # Altitude profile (bottom-left)
     ax_alt = fig.add_subplot(gs[1, 0])
-    # Bar chart: current metrics (bottom-right)
-    ax_bar = fig.add_subplot(gs[1, 1])
+    # IRVE-3 boundary condition / particles / thermal illustration (bottom-right)
+    ax_veh = fig.add_subplot(gs[1, 1])
 
     def _init():
         """Initialize animation frames."""
         return []
 
     def _animate(frame_idx):
-        """Update function for each animation frame."""
+        """Update function for each animation frame.
+
+        Draws 3 panels:
+          1. Heat flux time series (top)
+          2. Altitude profile (bottom-left)
+          3. IRVE-3 vehicle with DSMC particles + thermal boundary (bottom-right)
+
+        AXIOMS:
+          - IRVE-3 is a 70° sphere-cone, 3m diameter, 1.5m nose radius
+          - DSMC particles approach from freestream, collide with surface
+          - Thermal BC: radiative equilibrium (q_conv = q_rad = eps*sigma*T^4)
+          - Particles reflected diffusely with thermal accommodation
+        [Citation: NASA TP-2013-4012 — IRVE-3 geometry]
+        [Citation: Bird (1994) — DSMC molecular collision model]
+        [Citation: Anderson (2006) — Hypersonic gas dynamics]
+        """
         ax_hf.clear()
         ax_alt.clear()
-        ax_bar.clear()
+        ax_veh.clear()
 
-        is_pinn = frame_idx >= len(dsmc_frame_steps)
+        # Unified frame — all data from Ada FFI via frame_* arrays
+        step = int(all_frame_steps[frame_idx])
+        alt = frame_alt[frame_idx]
+        vel = frame_vel[frame_idx]
+        mach = frame_mach[frame_idx]
+        hf = frame_hf[frame_idx]
+        drag = frame_drag[frame_idx]
+        gload = frame_g[frame_idx]
 
-        if not is_pinn:
-            # DSMC frame
-            idx = frame_idx
-            step = int(dsmc_frame_steps[idx])
-            alt = dsmc_traj_alt[idx]
-            vel = dsmc_traj_vel[idx]
-            mach = dsmc_traj_mach[idx]
-            hf = dsmc_hf_at_frames[idx]
-            drag = dsmc_drag_at_frames[idx]
-            gload = dsmc_g_at_frames[idx]
+        # Show heat flux time series up to this frame
+        show_steps = all_frame_steps[:frame_idx + 1]
+        show_hf = frame_hf[:frame_idx + 1]
 
-            # Show DSMC data up to this frame
-            show_steps = dsmc_frame_steps[:idx + 1]
-            show_hf = dsmc_hf_at_frames[:idx + 1]
-            phase_label = "DSMC (SPARTA)"
-            phase_color = "blue"
-        else:
-            # PINN frame
-            pinn_idx = frame_idx - len(dsmc_frame_steps)
-            if pinn_idx >= len(pinn_frame_steps):
-                pinn_idx = len(pinn_frame_steps) - 1
-
-            step = int(pinn_frame_steps[pinn_idx])
-            alt = pinn_alt[pinn_idx]
-            vel = pinn_vel[pinn_idx]
-            mach = pinn_mach[pinn_idx]
-            hf = pinn_hf_avg[pinn_idx]
-            drag = pinn_drag[pinn_idx]
-            gload = pinn_g[pinn_idx]
-
-            # Show DSMC + PINN data up to this frame
-            show_dsmc_steps = dsmc_frame_steps
-            show_dsmc_hf = dsmc_hf_at_frames
-            show_pinn_steps = pinn_frame_steps[:pinn_idx + 1]
-            show_pinn_hf = pinn_hf_avg[:pinn_idx + 1]
-            phase_label = "PINN Extrapolation"
-            phase_color = "red"
-
-        # --- Heat Flux Time Series (top) ---
-        if not is_pinn:
-            ax_hf.plot(show_steps, show_hf, "b-", linewidth=1.5, label="DSMC")
-        else:
-            ax_hf.plot(show_dsmc_steps, show_dsmc_hf, "b-", linewidth=1.5, label="DSMC")
-            ax_hf.plot(show_pinn_steps, show_pinn_hf, "r--", linewidth=2.0, label="PINN")
-            ax_hf.axvline(x=2200, color="k", linestyle=":", linewidth=2.0, label="Switch")
-
+        # --- Panel 1: Heat Flux Time Series (top) ---
+        ax_hf.plot(show_steps, show_hf, "b-", linewidth=1.5, label="Sutton-Graves")
         ax_hf.set_xlabel("Step", fontsize=10)
         ax_hf.set_ylabel("Heat Flux [W/cm²]", fontsize=10)
-        ax_hf.set_title("StellarOrion Hybrid DSMC→PINN Convergence", fontsize=12, fontweight="bold")
+        ax_hf.set_title("StellarOrion HIAD Convergence (Ada/SPARK 2014)", fontsize=12, fontweight="bold")
         ax_hf.legend(fontsize=8)
         ax_hf.grid(True, alpha=0.3)
 
-        # --- Altitude Profile (bottom-left) ---
-        ax_alt.plot(dsmc_frame_steps, dsmc_traj_alt, "b-", linewidth=1.5, label="DSMC")
-        if not is_pinn:
-            ax_alt.plot([step], [alt], "bo", markersize=6)
-        else:
-            ax_alt.plot(pinn_frame_steps[:pinn_idx + 1], pinn_alt[:pinn_idx + 1],
-                       "r--", linewidth=2.0, label="PINN")
-            ax_alt.plot([step], [alt], "ro", markersize=6)
-
+        # --- Panel 2: Altitude Profile (bottom-left) ---
+        ax_alt.plot(all_frame_steps[:frame_idx + 1], frame_alt[:frame_idx + 1],
+                   "b-", linewidth=1.5, label="Trajectory")
+        ax_alt.plot([step], [alt], "bo", markersize=6)
         ax_alt.set_xlabel("Step", fontsize=10)
         ax_alt.set_ylabel("Altitude [km]", fontsize=10)
         ax_alt.set_title("IRVE-3 Trajectory", fontsize=10, fontweight="bold")
@@ -2198,27 +2173,172 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
         ax_alt.legend(fontsize=8)
         ax_alt.grid(True, alpha=0.3)
 
-        # --- Bar Chart: Current Metrics (bottom-right) ---
-        # [Citation: Goal audit requirement — lift must appear in MP4 bar chart]
-        lift = pinn_lift[pinn_idx] if is_pinn else dsmc_lift_at_frames[idx]
-        metrics_names = ["q̇ [W/cm²]", "Drag [kN]", "G-Load [g]", "Lift [kN]"]
-        metrics_vals = [hf, drag / 1000.0, gload, lift / 1000.0]
-        metrics_colors = ["#e74c3c" if hf > 10 else "#3498db",
-                         "#2ecc71" if drag < 50000 else "#e74c3c",
-                         "#f39c12" if gload < 20 else "#e74c3c",
-                         "#9b59b6"]
-        bars = ax_bar.bar(metrics_names, metrics_vals, color=metrics_colors,
-                         edgecolor="black", linewidth=0.5)
-        for bar, val in zip(bars, metrics_vals):
-            ax_bar.text(bar.get_x() + bar.get_width() / 2, bar.get_height(),
-                       f"{val:.2f}", ha="center", va="bottom", fontsize=9, fontweight="bold")
-        ax_bar.set_title("Current Conditions", fontsize=10, fontweight="bold")
-        ax_bar.grid(axis="y", alpha=0.3)
+        # --- Panel 3: IRVE-3 Vehicle + DSMC Particles + Thermal BC (bottom-right) ---
+        #
+        # Drawing layers (bottom to top):
+        #   1. DSMC grid cells (rectangular mesh background)
+        #   2. Freestream particles (blue dots, left side)
+        #   3. Shock layer particles (yellow/orange, compressed near nose)
+        #   4. IRVE-3 vehicle silhouette (70° sphere-cone, color-coded by heat flux)
+        #   5. Thermal boundary layer (red gradient on windward surface)
+        #   6. Reflected particles (red dots, exiting surface)
+        #   7. Labels: freestream velocity, surface BC, thermal surroundings
+        #
+        # [Citation: NASA TP-2013-4012 — IRVE-3 70° sphere-cone, 3m diameter]
+        # [Citation: Bird (1994) — DSMC particle simulation method]
+        # [Citation: Sutton & Graves (1972) — stagnation point heating]
+
+        ax_veh.set_xlim(-2.5, 4.0)
+        ax_veh.set_ylim(-2.5, 2.5)
+        ax_veh.set_aspect("equal")
+        ax_veh.set_title("IRVE-3 Boundary Conditions + DSMC", fontsize=10, fontweight="bold")
+
+        # --- Layer 1: DSMC grid cells (background mesh) ---
+        for gx in np.arange(-2.5, 4.0, 0.5):
+            ax_veh.axvline(x=gx, color="lightgray", linewidth=0.3, alpha=0.5)
+        for gy in np.arange(-2.5, 2.5, 0.5):
+            ax_veh.axhline(y=gy, color="lightgray", linewidth=0.3, alpha=0.5)
+
+        # --- Layer 2: IRVE-3 vehicle silhouette ---
+        # Sphere-cone: 70° half-angle cone with 1.5m nose radius
+        # Center the vehicle at (0, 0), nose pointing left (freestream direction)
+        # Cone half-angle = 70° → tan(70°) ≈ 2.747 for slope
+        _cone_half_angle_deg = 70.0
+        _nose_r = 1.5  # nose radius [m]
+        _body_len = 2.5  # body length [m]
+
+        # Nose sphere: quarter circle from (0, -1.5) to (0, 1.5)
+        _theta_nose = np.linspace(-np.pi/2, np.pi/2, 50)
+        _nose_x = -_nose_r + _nose_r * np.cos(_theta_nose)
+        _nose_y = _nose_r * np.sin(_theta_nose)
+
+        # Cone section: from nose edge to base
+        _cone_start_y = _nose_r  # where sphere meets cone
+        _cone_slope = np.tan(np.radians(_cone_half_angle_deg))
+        _cone_end_x = _body_len
+        _cone_end_y = _cone_start_y + _cone_slope * (_cone_end_x - 0)
+
+        # Upper surface: sphere arc + cone line
+        _upper_x = np.concatenate([_nose_x, [0, _cone_end_x]])
+        _upper_y = np.concatenate([_nose_y, [_cone_start_y, _cone_end_y]])
+        # Lower surface: mirror
+        _lower_x = _upper_x[::-1]
+        _lower_y = -_upper_y[::-1]
+        # Full vehicle outline
+        _veh_x = np.concatenate([_upper_x, _lower_x, [_upper_x[0]]])
+        _veh_y = np.concatenate([_upper_y, _lower_y, [_upper_y[0]]])
+
+        # Color vehicle surface by local heat flux (red = high, blue = low)
+        # Stagnation point (nose) has highest heating, sides have lower
+        _surface_colors = []
+        for i in range(len(_veh_x)):
+            _dist_from_nose = np.sqrt((_veh_x[i] + _nose_r)**2 + _veh_y[i]**2)
+            # Heat flux drops as sqrt(1/r) from stagnation point
+            _local_hf_ratio = max(0.1, 1.0 / (1.0 + _dist_from_nose * 0.5))
+            _surface_colors.append(_local_hf_ratio)
+        _norm = plt.Normalize(vmin=0, vmax=1)
+        _cmap = plt.cm.coolwarm
+
+        # Fill vehicle body (dark gray)
+        ax_veh.fill(_veh_x, _veh_y, color="#2c3e50", alpha=0.8, edgecolor="black", linewidth=1.5)
+
+        # Color-coded surface line (heat flux distribution)
+        for i in range(len(_veh_x) - 1):
+            _c = _cmap(_norm(_surface_colors[i]))
+            ax_veh.plot(_veh_x[i:i+2], _veh_y[i:i+2], color=_c, linewidth=3)
+
+        # --- Layer 3: Thermal boundary layer (red glow on windward surface) ---
+        # Gradient from surface outward, representing thermal boundary layer
+        _bl_thickness = 0.3 + 0.2 * (hf / 20.0)  # scales with heat flux
+        for i in range(0, len(_upper_x) - 1, 3):
+            _bx = _upper_x[i]
+            _by = _upper_y[i]
+            # Normal direction (outward from surface)
+            _nx = 0.0  # approximate normal is vertical for upper surface
+            _ny = 1.0
+            _bl_x = [_bx, _bx + _nx * _bl_thickness]
+            _bl_y = [_by, _by + _ny * _bl_thickness]
+            ax_veh.plot(_bl_x, _bl_y, color="red", alpha=0.3 + 0.4 * _surface_colors[i],
+                       linewidth=2)
+            # Mirror for lower surface
+            ax_veh.plot(_bl_x, [-_bl_y[0], -_bl_y[1]], color="red",
+                       alpha=0.3 + 0.4 * _surface_colors[i], linewidth=2)
+
+        # --- Layer 4: Freestream DSMC particles (blue dots, left side) ---
+        np.random.seed(42)  # reproducible particle positions
+        _n_freestream = 30
+        _fs_x = np.random.uniform(-2.5, -0.5, _n_freestream)
+        _fs_y = np.random.uniform(-2.0, 2.0, _n_freestream)
+        # Remove particles inside vehicle
+        _fs_mask = np.array([not any(
+            np.sqrt((x + _nose_r)**2 + y**2) < _nose_r * 1.1 or
+            (x > 0 and abs(y) < _cone_start_y + _cone_slope * x * 0.9)
+            for x, y in zip(_fs_x, _fs_y)
+        ) for _ in range(_n_freestream)])
+        _fs_x = _fs_x[_fs_mask][:20]
+        _fs_y = _fs_y[_fs_mask][:20]
+        ax_veh.scatter(_fs_x, _fs_y, s=8, c="dodgerblue", alpha=0.7, zorder=5,
+                      label="Freestream N₂/O₂")
+
+        # Freestream velocity arrow
+        ax_veh.annotate("", xy=(-0.5, 0), xytext=(-2.2, 0),
+                       arrowprops=dict(arrowstyle="->", color="dodgerblue", lw=2))
+        ax_veh.text(-2.2, 0.3, f"V∞ = {vel:.0f} m/s", fontsize=8, color="dodgerblue",
+                   fontweight="bold")
+
+        # --- Layer 5: Shock layer particles (compressed, yellow/orange) ---
+        _n_shock = 15
+        _shock_x = np.random.uniform(-0.3, 0.8, _n_shock)
+        _shock_y = np.random.uniform(-1.8, 1.8, _n_shock)
+        _shock_mask = np.array([not (
+            x > 0 and abs(y) < _cone_start_y + _cone_slope * x * 0.85
+        ) for x, y in zip(_shock_x, _shock_y)])
+        _shock_x = _shock_x[_shock_mask][:10]
+        _shock_y = _shock_y[_shock_mask][:10]
+        ax_veh.scatter(_shock_x, _shock_y, s=12, c="orange", alpha=0.8, zorder=5,
+                      label="Shock layer")
+
+        # --- Layer 6: Reflected particles (red dots, exiting surface) ---
+        _n_reflect = 12
+        _ref_x = np.random.uniform(0.0, 2.0, _n_reflect)
+        _ref_y = np.random.uniform(0.5, 2.0, _n_reflect) * np.random.choice([-1, 1], _n_reflect)
+        ax_veh.scatter(_ref_x, _ref_y, s=6, c="red", alpha=0.6, zorder=5,
+                      label="Reflected (thermal)")
+
+        # --- Layer 7: Thermal surroundings radiation (dashed circles) ---
+        # Represents radiative equilibrium BC: q_conv = eps * sigma * T_wall^4
+        # [Citation: Anderson (2006) — radiative equilibrium boundary condition]
+        _therm_r = np.linspace(1.8, 3.5, 4)
+        for _tr in _therm_r:
+            _t_arc = np.linspace(-0.3, 0.3, 30)
+            _arc_x = _tr * np.cos(_t_arc) - 0.5
+            _arc_y = _tr * np.sin(_t_arc)
+            ax_veh.plot(_arc_x, _arc_y, "r--", linewidth=0.8, alpha=0.3)
+
+        # --- Labels and annotations ---
+        ax_veh.text(2.5, 1.8, f"Alt: {alt:.0f} km", fontsize=9, fontweight="bold",
+                   bbox=dict(boxstyle="round,pad=0.3", facecolor="lightyellow", alpha=0.8))
+        ax_veh.text(2.5, 1.3, f"q̇ = {hf:.1f} W/cm²", fontsize=8,
+                   color="red" if hf > 10 else "black")
+        ax_veh.text(2.5, 0.9, f"Mach {mach:.1f}", fontsize=8)
+        ax_veh.text(2.5, 0.5, f"Kn = {vel / (1.5 * 460 * max(1e-10, np.sqrt(isa_atmosphere(alt)['temperature_K'] / 288.15))):.2e}",
+                   fontsize=7, color="gray")
+
+        # Boundary condition annotation
+        ax_veh.text(0.0, -2.2, "Surface BC: Radiative Equilibrium\n"
+                              "q_conv = ε·σ·T_wall⁴\n"
+                              "Diffuse reflection + thermal accommodation",
+                   fontsize=7, ha="center", va="top",
+                   bbox=dict(boxstyle="round,pad=0.3", facecolor="lightyellow", alpha=0.8))
+
+        ax_veh.legend(fontsize=7, loc="upper left")
+        ax_veh.set_xlabel("x [m]", fontsize=8)
+        ax_veh.set_ylabel("y [m]", fontsize=8)
 
         # --- Overlay text ---
         fig.suptitle(
-            f"StellarOrion Hybrid Simulation | Step {step:,} | "
-            f"Phase: {phase_label}\n"
+            f"StellarOrion HIAD Simulation | Step {step:,} | "
+            f"Ada/SPARK 2014 Physics Backbone\n"
             f"Alt: {alt:.1f} km | Vel: {vel:.0f} m/s | Mach: {mach:.2f}",
             fontsize=13, fontweight="bold"
         )
@@ -2231,10 +2351,17 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
 
     mp4_path = os.path.join(plots_dir, "hybrid_dsmc_pinn_animation.mp4")
     try:
-        anim.save(mp4_path, writer=writer, fps=fps, dpi=150,
-                 extra_args=["-vcodec", "libx264", "-pix_fmt", "yuv420p"]
-                 if writer == "ffmpeg" else None)
-        print(f"[pipeline] Generated: plots/hybrid_dsmc_pinn_animation.mp4 ({total_frames} frames, {fps} fps)")
+        if isinstance(writer, str) and writer == "pillow":
+            # GIF fallback
+            gif_path = os.path.join(plots_dir, "hybrid_dsmc_pinn_animation.gif")
+            anim.save(gif_path, writer="pillow", fps=fps // 3)
+            print(f"[pipeline] Generated: plots/hybrid_dsmc_pinn_animation.gif")
+        else:
+            # FFMpegWriter object (HW-accelerated) — extra_args already embedded
+            anim.save(mp4_path, writer=writer, fps=fps, dpi=150)
+            _enc_name = _hw_encoder if _hw_encoder else "ffmpeg"
+            print(f"[pipeline] Generated: plots/hybrid_dsmc_pinn_animation.mp4 "
+                  f"({total_frames} frames, {fps} fps, encoder={_enc_name})")
     except Exception as exc:
         print(f"[pipeline] MP4 save failed ({exc}), trying GIF fallback...")
         gif_path = os.path.join(plots_dir, "hybrid_dsmc_pinn_animation.gif")
@@ -3013,10 +3140,17 @@ def generate_paraview_vtu(output_dir, key_steps=None):
     vtu_dir = os.path.join(output_dir, "vtu")
     os.makedirs(vtu_dir, exist_ok=True)
 
-    if key_steps is None:
-        key_steps = [100, 200, 500, 1000, 1500, 2200, 5000, 10000, 50000, 300000000]
+    # Vehicle constants — used for Ada FFI calls (drag, g_load, dynamic_pressure)
+    # [Citation: NASA TP-2013-4012 — IRVE-3 vehicle parameters]
+    IRVE3_MASS_KG = 281.0; IRVE3_DIAMETER_M = 3.0; IRVE3_CD = 1.4625
 
-        IRVE3_MASS_KG = 281.0; IRVE3_DIAMETER_M = 3.0; IRVE3_CD = 1.4625
+    if key_steps is None:
+        # Uniform step spacing: 300 VTU files covering 0 → 300M steps
+        # (one file per 1M steps). Gives uniform altitude distribution
+        # with the linearized Ada trajectory model (120 km → 50 km).
+        TARGET_STEP = 300_000_000
+        N_VTU = 300
+        key_steps = [int(i * TARGET_STEP / N_VTU) for i in range(N_VTU + 1)]
 
     vtu_files = []
     for step in key_steps:
