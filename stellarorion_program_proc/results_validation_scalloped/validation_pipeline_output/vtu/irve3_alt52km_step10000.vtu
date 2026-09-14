@@ -14,19 +14,19 @@
       </CellData>
       <PointData>
         <DataArray type="Float64" Name="heat_flux_Wm2" format="ascii">
-          253605.765625
+          161369.875
         </DataArray>
         <DataArray type="Float64" Name="heat_flux_Wcm2" format="ascii">
-          25.3605765625
+          16.1369875
         </DataArray>
         <DataArray type="Float64" Name="drag_force_N" format="ascii">
-          46305.74555913267
+          46305.74609375
         </DataArray>
         <DataArray type="Float64" Name="g_load" format="ascii">
-          16.80381476892466
+          16.803813934326172
         </DataArray>
         <DataArray type="Float64" Name="dynamic_pressure_Pa" format="ascii">
-          4479.2635437289555
+          4479.263671875
         </DataArray>
         <DataArray type="Float64" Name="altitude_km" format="ascii">
           51.79978561401367
