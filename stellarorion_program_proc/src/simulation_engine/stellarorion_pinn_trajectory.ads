@@ -165,18 +165,22 @@ package StellarOrion_PINN_Trajectory is
 
    --  Compute IRVE-3 reentry trajectory conditions at a given step.
    --
-   --  The trajectory maps simulation steps to physical conditions:
-   --    Steps 100-2200 (DSMC): 120 km → 51.8 km (linear)
-   --    Steps 2200-300M (PINN): 51.8 km → 50 km (exponential decay)
+   --  The trajectory maps simulation steps to physical conditions via
+   --  uniform linear interpolation:
+   --    H = H_Entry + (H_Final - H_Entry) * Step / Target_Step
+   --    V = V_Entry + (V_Final - V_Entry) * Step / Target_Step
+   --
+   --  This gives 120 km → 50 km across steps 0 → 300M with uniform
+   --  altitude distribution (no regime boundaries or exponential jumps).
    --
    --  AXIOMS:
-   --    TRAJ_A1: Step >= 100 (first DSMC data point).
-   --    TRAJ_A2: Target_Step >= 2200 (DSMC end).
-   --    TRAJ_A3: H_Entry >= 100.0 (above atmosphere).
-   --    TRAJ_A4: H_Final >= 40.0 (below mesopause).
-   --    TRAJ_A5: V_Entry > V_Final (vehicle decelerates).
+   --    TRAJ_A1: Step >= 0.0 (start of simulation).
+   --    TRAJ_A2: Target_Step > 0.0 (simulation duration).
+   --    TRAJ_A3: H_Entry > H_Final (vehicle descends).
+   --    TRAJ_A4: V_Entry > V_Final (vehicle decelerates).
    --
    --  [Citation: NASA TP-2013-4012 — IRVE-3 flight]
+   --  [Citation: code-quality.md — ALL physics in Ada/SPARK 2014]
    function IRVE3_Trajectory
      (Step           : Float;
       Target_Step    : Float := 3.0e8;
@@ -186,12 +190,9 @@ package StellarOrion_PINN_Trajectory is
       V_Final_Ms     : Float := 2700.0;
       H_DSMC_Km      : Float := 51.8;
       V_DSMC_Ms      : Float := 3378.0) return Trajectory_Result
-      with Pre  => Step >= 100.0
-                    and Target_Step >= 2200.0
-                    and H_Entry_Km > H_DSMC_Km
-                    and H_DSMC_Km > H_Final_Km
-                    and V_Entry_Ms > V_DSMC_Ms
-                    and V_DSMC_Ms > V_Final_Ms;
+      with Pre  => Target_Step > 0.0
+                    and H_Entry_Km > H_Final_Km
+                    and V_Entry_Ms > V_Final_Ms;
 
    -- -----------------------------------------------------------------
    --  Metric Scaling (PINN extrapolation)

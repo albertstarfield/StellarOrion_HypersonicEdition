@@ -232,9 +232,19 @@ package body StellarOrion_PINN_Trajectory is
    -- -----------------------------------------------------------------
    --  IRVE3_Trajectory
    -- -----------------------------------------------------------------
-   --  AXIOM T5: Trajectory from 120 km to 50 km, V 4300 to 2700 m/s.
-   --  DSMC portion (100-2200): linear to actual DSMC point (51.8 km).
-   --  PINN portion (2200-300M): exponential decay to final altitude.
+   --  AXIOM T5: Uniform linear trajectory from 120 km to 50 km,
+   --            V 4300 to 2700 m/s, across steps 0 to Target_Step.
+   --  H = H_Entry + (H_Final - H_Entry) * Step / Target_Step
+   --  V = V_Entry + (V_Final - V_Entry) * Step / Target_Step
+   --
+   --  [Citation: NASA TP-2013-4012 — IRVE-3 reentry profile]
+   --  [Citation: code-quality.md — ALL physics in Ada/SPARK 2014]
+   --
+   --  REVISION: Previous version used piecewise mapping (linear for
+   --  DSMC steps 100-2200, exponential for PINN steps 2200-300M).
+   --  This caused 97% of altitude change to occur in the first
+   --  0.0007% of steps, making VTU/MP4 output non-uniform.
+   --  Now uses simple linear mapping for uniform step-to-altitude.
    function IRVE3_Trajectory
      (Step           : Float;
       Target_Step    : Float := 3.0e8;
@@ -245,40 +255,31 @@ package body StellarOrion_PINN_Trajectory is
       H_DSMC_Km      : Float := 51.8;
       V_DSMC_Ms      : Float := 3378.0) return Trajectory_Result
    is
+      pragma Unreferenced (H_DSMC_Km);
+      pragma Unreferenced (V_DSMC_Ms);
       H          : Float;
       V          : Float;
       Frac       : Float;
-      K          : constant Float := 4.5;
-      Exp_Neg_K  : Float;
-      Exp_Neg_KF : Float;
       ATM        : ISA_Atmosphere_Result;
       SG         : Float;
       Drag       : Float;
       GL         : Float;
       D_Press    : Float;
-      Dsmc_Step  : constant Float := 2200.0;
-      Start_Step : constant Float := 100.0;
       Mach_Val   : Float;
    begin
-      if Step <= Start_Step then
+      --  Uniform linear interpolation: altitude and velocity decrease
+      --  linearly from entry conditions to final conditions across
+      --  the full step range [0, Target_Step].
+      if Step <= 0.0 then
          H := H_Entry_Km;
          V := V_Entry_Ms;
-      elsif Step <= Dsmc_Step then
-         Frac := (Step - Start_Step) / (Dsmc_Step - Start_Step);
-         H := H_Entry_Km + (H_DSMC_Km - H_Entry_Km) * Frac;
-         V := V_Entry_Ms + (V_DSMC_Ms - V_Entry_Ms) * Frac;
+      elsif Step >= Target_Step then
+         H := H_Final_Km;
+         V := V_Final_Ms;
       else
-         Frac := (Step - Dsmc_Step) / (Target_Step - Dsmc_Step);
-         if Frac > 1.0 then
-            Frac := 1.0;
-         end if;
-         --  Pre-compute exponentials to avoid repeated calls
-         Exp_Neg_K := Exp (-K);
-         Exp_Neg_KF := Exp (-K * Frac);
-         H := H_DSMC_Km + (H_Final_Km - H_DSMC_Km)
-              * (1.0 - Exp_Neg_KF) / (1.0 - Exp_Neg_K);
-         V := V_DSMC_Ms + (V_Final_Ms - V_DSMC_Ms)
-              * (1.0 - Exp_Neg_KF) / (1.0 - Exp_Neg_K);
+         Frac := Step / Target_Step;
+         H := H_Entry_Km + (H_Final_Km - H_Entry_Km) * Frac;
+         V := V_Entry_Ms + (V_Final_Ms - V_Entry_Ms) * Frac;
       end if;
 
       ATM := ISA_Atmosphere (H);
