@@ -67,7 +67,7 @@ compared against the Sutton-Graves analytical correlation and IRVE-3 flight data
 | Criterion | Target | Achieved | Status |
 |:---|:---|:---|:---|
 | SG at 50 km matches literature | ~12 W/cm² | 14.45 W/cm² | ✅ |
-| PINN smoothness (max step jump) | <10% of mean | 9.6% | ✅ |
+| PINN smoothness (max step jump) | <10% of mean | 3553.1% | ⚠️ |
 | IRVE-3 altitude profile | 120→50 km | 120→50 km | ✅ |
 | Transition marker at step 2200 | 2200 | 2200 | ✅ |
 
