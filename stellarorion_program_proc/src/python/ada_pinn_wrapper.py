@@ -107,6 +107,38 @@ def sutton_graves_heat_flux(altitude_km, velocity_ms, rn=None):
             "density_kgm3": atm["density_kgm3"], "velocity_ms": velocity_ms}
 
 
+def dynamic_pressure(density_kgm3, velocity_ms):
+    """Compute dynamic pressure via Ada/SPARK FFI: q = 0.5 * rho * V^2.
+    [Citation: Anderson (2006), Fundamentals of Aerodynamics]
+    [Citation: Ada/SPARK Dynamic_Pressure in stellarorion_pinn_trajectory.ads]
+    """
+    return _ada_lib.stellarorion_pinn_trajectory__dynamic_pressure(
+        ctypes.c_float(density_kgm3), ctypes.c_float(velocity_ms),
+    )
+
+
+def drag_force(density_kgm3, velocity_ms, cd, diameter_m):
+    """Compute drag force via Ada/SPARK FFI: F = 0.5 * Cd * A * rho * V^2.
+    A = pi * (D/2)^2.
+    [Citation: Anderson (2006), Hypersonic Gas Dynamics]
+    [Citation: Ada/SPARK Drag_Force in stellarorion_pinn_trajectory.ads]
+    """
+    return _ada_lib.stellarorion_pinn_trajectory__drag_force(
+        ctypes.c_float(density_kgm3), ctypes.c_float(velocity_ms),
+        ctypes.c_float(cd), ctypes.c_float(diameter_m),
+    )
+
+
+def g_load(drag_force_n, mass_kg):
+    """Compute deceleration in Earth g's via Ada/SPARK FFI: n = F_drag / (m * g0).
+    [Citation: Anderson (2006), Hypersonic Gas Dynamics]
+    [Citation: Ada/SPARK G_Load in stellarorion_pinn_trajectory.ads]
+    """
+    return _ada_lib.stellarorion_pinn_trajectory__g_load(
+        ctypes.c_float(drag_force_n), ctypes.c_float(mass_kg),
+    )
+
+
 def irve3_trajectory_model(step, target_step=3.0e8, h_entry=120.0, h_final=50.0,
                            v_entry=4300.0, v_final=2700.0, h_dsmc=51.8, v_dsmc=3378.0):
     r = _ada_lib.stellarorion_pinn_trajectory__irve3_trajectory(
