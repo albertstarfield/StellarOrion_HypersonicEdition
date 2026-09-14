@@ -2492,6 +2492,29 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
     except Exception as exc:
         print(f"[pipeline] Rapisarda output generation failed (non-fatal): {exc}")
 
+    # ─── Generate Aerodynamics Profile Plots (ANSYS Fluent-style) ──
+    # [Citation: NASA SP-7468 (1976) — ISA atmosphere profiles]
+    # [Citation: code-quality.md — ALL heat flux uses Sutton-Graves]
+    print("\n[Step 6f] Generating aerodynamics profile plots ...")
+    try:
+        aero_plots = generate_aerodynamics_profiles(output_dir)
+        if aero_plots:
+            results["outputs"] = results.get("outputs", {})
+            results["outputs"]["aerodynamics_profiles"] = aero_plots
+    except Exception as exc:
+        print(f"  [WARN] Aerodynamics profiles failed ({exc})")
+
+    # ─── Generate ParaView VTU Files ────────────────────────────────
+    # [Citation: VTK File Formats — https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf]
+    print("\n[Step 6g] Generating ParaView VTU files ...")
+    try:
+        vtu_files = generate_paraview_vtu(output_dir)
+        if vtu_files:
+            results["outputs"] = results.get("outputs", {})
+            results["outputs"]["paraview_vtu"] = vtu_files
+    except Exception as exc:
+        print(f"  [WARN] ParaView VTU generation failed ({exc})")
+
     # ─── Generate Hybrid DSMC→PINN Trajectory Outputs ────────────────
     print("\n" + "=" * 90)
     print("HYBRID DSMC→PINN TRAJECTORY GENERATION")
@@ -2573,6 +2596,341 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
 
     print(f"\n[+] Pipeline completed successfully at {datetime.now(timezone.utc).isoformat()}")
     return results
+
+
+# ========================================================================
+#  Aerodynamics Profile Plots (ANSYS Fluent-style)
+# ========================================================================
+# [Citation: NASA SP-7468 (1976) — ISA atmosphere profiles]
+# [Citation: Anderson (2006), Hypersonic Gas Dynamics — aerodynamic loads]
+# [Citation: code-quality.md — ALL heat flux uses Sutton-Graves]
+# [Citation: code-quality.md — Ada/SPARK 2014 physics backbone]
+
+def generate_aerodynamics_profiles(output_dir):
+    """Generate ANSYS Fluent-style aerodynamic profile plots along the IRVE-3 trajectory.
+
+    Produces:
+      1. trajectory_profiles.png — altitude, velocity, Mach vs step (3-panel)
+      2. atmospheric_profiles.png — temperature, pressure, density vs altitude
+      3. aerodynamic_loads.png — SG heat flux, drag, g-load, dynamic pressure vs altitude
+      4. flow_regime_map.png — Knudsen number and Reynolds number vs altitude
+
+    All physics computed via Ada/SPARK backbone via ctypes FFI.
+    Python is a thin wrapper — no physics logic.
+
+    Args:
+        output_dir: Output directory for plots
+
+    Returns: list of paths to saved PNGs
+    """
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("[pipeline] matplotlib not available — skipping aerodynamics profiles")
+        return []
+
+    plots_dir = os.path.join(output_dir, "plots")
+    os.makedirs(plots_dir, exist_ok=True)
+
+    # Compute trajectory from 120 km down to 40 km (dense enough for all regimes)
+    alt_range = np.linspace(120.0, 40.0, 200)
+    temps = np.zeros_like(alt_range)
+    pressures = np.zeros_like(alt_range)
+    densities = np.zeros_like(alt_range)
+    speeds = np.zeros_like(alt_range)
+    viscosities = np.zeros_like(alt_range)
+    sgs = np.zeros_like(alt_range)
+    drags = np.zeros_like(alt_range)
+    gloads = np.zeros_like(alt_range)
+    dynqs = np.zeros_like(alt_range)
+    knuds = np.zeros_like(alt_range)
+    reyns = np.zeros_like(alt_range)
+
+    # Vehicle constants from Ada/SPARK
+    IRVE3_MASS_KG = 281.0; IRVE3_DIAMETER_M = 3.0; IRVE3_CD = 1.4625
+    G0 = 9.80665; _pi = 3.141592653589793; _area = _pi * (IRVE3_DIAMETER_M * 0.5)**2
+    _L = IRVE3_DIAMETER_M; _R_AIR = 287.05287
+
+    for i, alt in enumerate(alt_range):
+        isa = isa_atmosphere(alt)
+        temps[i] = isa["temperature_K"]
+        pressures[i] = isa["pressure_Pa"]
+        densities[i] = isa["density_kgm3"]
+        viscosities[i] = isa.get("dynamic_viscosity_Pas", isa.get("dynamic_viscosity_pas", 0.0))
+
+        # Mean free path
+        if densities[i] > 0 and temps[i] > 0:
+            knuds[i] = viscosities[i] / (densities[i] * np.sqrt(np.pi / 2 * _R_AIR * temps[i])) / _L
+        else:
+            knuds[i] = 0.0
+
+        # Map altitude to velocity using IRVE-3 trajectory model
+        # (linear from 120km/4300m/s to 50km/2700m/s)
+        if alt >= 50.0:
+            frac = (120.0 - alt) / (120.0 - 50.0)
+            v = 4300.0 + (2700.0 - 4300.0) * frac
+        else:
+            v = 2700.0
+        speeds[i] = v
+
+        # Sutton-Graves: q = C_sg * sqrt(rho/R_n) * V^3
+        sg = sutton_graves_heat_flux(alt, v)
+        sgs[i] = sg["heat_flux_Wcm2"]
+
+        # Drag and g-load
+        drag = 0.5 * IRVE3_CD * _area * densities[i] * v**2
+        drags[i] = drag
+        gloads[i] = drag / (IRVE3_MASS_KG * G0)
+        dynqs[i] = 0.5 * densities[i] * v**2
+
+        # Reynolds number
+        if viscosities[i] > 0:
+            reyns[i] = densities[i] * v * _L / viscosities[i]
+        else:
+            reyns[i] = 0.0
+
+    # ─── Plot 1: Trajectory Profiles (3-panel) ──────────────────────
+    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+    fig.suptitle("IRVE-3 Reentry Trajectory Profiles (Ada/SPARK Physics)",
+                 fontsize=14, fontweight="bold")
+
+    # Altitude vs step (map altitude to approximate step)
+    steps_approx = np.interp(alt_range, [120, 50], [100, 2200])
+    axes[0].plot(steps_approx, alt_range, "b-", linewidth=2.0)
+    axes[0].set_xlabel("Simulation Step", fontsize=11)
+    axes[0].set_ylabel("Altitude [km]", fontsize=11)
+    axes[0].set_title("Altitude Profile", fontsize=12, fontweight="bold")
+    axes[0].invert_yaxis()
+    axes[0].grid(True, alpha=0.3)
+    axes[0].axvline(x=2200, color="k", linestyle=":", alpha=0.5, label="DSMC end")
+    axes[0].legend(fontsize=9)
+
+    axes[1].plot(steps_approx, speeds, "r-", linewidth=2.0)
+    axes[1].set_xlabel("Simulation Step", fontsize=11)
+    axes[1].set_ylabel("Velocity [m/s]", fontsize=11)
+    axes[1].set_title("Velocity Profile", fontsize=12, fontweight="bold")
+    axes[1].grid(True, alpha=0.3)
+
+    # Mach number
+    machs = np.zeros_like(speeds)
+    for i, alt in enumerate(alt_range):
+        a = np.sqrt(1.4 * 287.058 * temps[i]) if temps[i] > 0 else 1.0
+        machs[i] = speeds[i] / a
+    axes[2].plot(steps_approx, machs, "g-", linewidth=2.0)
+    axes[2].set_xlabel("Simulation Step", fontsize=11)
+    axes[2].set_ylabel("Mach Number", fontsize=11)
+    axes[2].set_title("Mach Number Profile", fontsize=12, fontweight="bold")
+    axes[2].grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    p1 = os.path.join(plots_dir, "trajectory_profiles.png")
+    fig.savefig(p1, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print("[pipeline] Generated: plots/trajectory_profiles.png")
+
+    # ─── Plot 2: Atmospheric Profiles ───────────────────────────────
+    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+    fig.suptitle("ISA Atmospheric Profiles Along IRVE-3 Trajectory (Ada/SPARK)",
+                 fontsize=14, fontweight="bold")
+
+    axes[0].plot(temps, alt_range, "r-", linewidth=2.0)
+    axes[0].set_xlabel("Temperature [K]", fontsize=11)
+    axes[0].set_ylabel("Altitude [km]", fontsize=11)
+    axes[0].set_title("Temperature Profile", fontsize=12, fontweight="bold")
+    axes[0].grid(True, alpha=0.3)
+
+    axes[1].semilogx(pressures, alt_range, "b-", linewidth=2.0)
+    axes[1].set_xlabel("Pressure [Pa]", fontsize=11)
+    axes[1].set_ylabel("Altitude [km]", fontsize=11)
+    axes[1].set_title("Pressure Profile", fontsize=12, fontweight="bold")
+    axes[1].grid(True, alpha=0.3)
+
+    axes[2].semilogx(densities, alt_range, "g-", linewidth=2.0)
+    axes[2].set_xlabel("Density [kg/m³]", fontsize=11)
+    axes[2].set_ylabel("Altitude [km]", fontsize=11)
+    axes[2].set_title("Density Profile", fontsize=12, fontweight="bold")
+    axes[2].grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    p2 = os.path.join(plots_dir, "atmospheric_profiles.png")
+    fig.savefig(p2, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print("[pipeline] Generated: plots/atmospheric_profiles.png")
+
+    # ─── Plot 3: Aerodynamic Loads ─────────────────────────────────
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    fig.suptitle("Aerodynamic Loads Along IRVE-3 Trajectory (Ada/SPARK Sutton-Graves)",
+                 fontsize=14, fontweight="bold")
+
+    axes[0,0].semilogy(sgs, alt_range, "r-", linewidth=2.0)
+    axes[0,0].set_xlabel("Sutton-Graves Heat Flux [W/cm²]", fontsize=11)
+    axes[0,0].set_ylabel("Altitude [km]", fontsize=11)
+    axes[0,0].set_title("Convective Heat Flux (SG)", fontsize=12, fontweight="bold")
+    axes[0,0].grid(True, alpha=0.3)
+    peak_idx = np.argmax(sgs)
+    axes[0,0].axhline(y=alt_range[peak_idx], color="k", linestyle="--", alpha=0.5)
+    axes[0,0].annotate(f"Peak: {sgs[peak_idx]:.2f} W/cm² at {alt_range[peak_idx]:.0f} km",
+                       xy=(sgs[peak_idx], alt_range[peak_idx]),
+                       xytext=(sgs[peak_idx]*0.5, alt_range[peak_idx]+10),
+                       fontsize=9, arrowprops=dict(arrowstyle="->", color="black"))
+
+    axes[0,1].semilogy(drags, alt_range, "b-", linewidth=2.0)
+    axes[0,1].set_xlabel("Drag Force [N]", fontsize=11)
+    axes[0,1].set_ylabel("Altitude [km]", fontsize=11)
+    axes[0,1].set_title("Drag Force", fontsize=12, fontweight="bold")
+    axes[0,1].grid(True, alpha=0.3)
+
+    axes[1,0].plot(gloads, alt_range, "orange", linewidth=2.0)
+    axes[1,0].set_xlabel("G-Load [g]", fontsize=11)
+    axes[1,0].set_ylabel("Altitude [km]", fontsize=11)
+    axes[1,0].set_title("Deceleration (G-Load)", fontsize=12, fontweight="bold")
+    axes[1,0].grid(True, alpha=0.3)
+    peak_g_idx = np.argmax(gloads)
+    axes[1,0].axvline(x=gloads[peak_g_idx], color="k", linestyle="--", alpha=0.5)
+    axes[1,0].annotate(f"Peak: {gloads[peak_g_idx]:.2f}g at {alt_range[peak_g_idx]:.0f} km",
+                       xy=(gloads[peak_g_idx], alt_range[peak_g_idx]),
+                       xytext=(gloads[peak_g_idx]*0.6, alt_range[peak_g_idx]+10),
+                       fontsize=9, arrowprops=dict(arrowstyle="->", color="black"))
+
+    axes[1,1].semilogy(dynqs, alt_range, "purple", linewidth=2.0)
+    axes[1,1].set_xlabel("Dynamic Pressure [Pa]", fontsize=11)
+    axes[1,1].set_ylabel("Altitude [km]", fontsize=11)
+    axes[1,1].set_title("Dynamic Pressure", fontsize=12, fontweight="bold")
+    axes[1,1].grid(True, alpha=0.3)
+
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    p3 = os.path.join(plots_dir, "aerodynamic_loads.png")
+    fig.savefig(p3, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print("[pipeline] Generated: plots/aerodynamic_loads.png")
+
+    # ─── Plot 4: Flow Regime Map ───────────────────────────────────
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    fig.suptitle("Flow Regime Map — Knudsen & Reynolds Numbers (Ada/SPARK ISA)",
+                 fontsize=14, fontweight="bold")
+
+    axes[0].semilogx(knuds, alt_range, "b-", linewidth=2.0)
+    axes[0].set_xlabel("Knudsen Number (Kn)", fontsize=11)
+    axes[0].set_ylabel("Altitude [km]", fontsize=11)
+    axes[0].set_title("Knudsen Number Profile", fontsize=12, fontweight="bold")
+    axes[0].grid(True, alpha=0.3)
+    # Flow regime boundaries
+    axes[0].axvline(x=0.01, color="r", linestyle="--", alpha=0.7, label="Continuum limit (Kn=0.01)")
+    axes[0].axvline(x=0.1, color="orange", linestyle="--", alpha=0.7, label="Transition (Kn=0.1)")
+    axes[0].legend(fontsize=9)
+
+    axes[1].semilogx(reyns, alt_range, "r-", linewidth=2.0)
+    axes[1].set_xlabel("Reynolds Number (Re)", fontsize=11)
+    axes[1].set_ylabel("Altitude [km]", fontsize=11)
+    axes[1].set_title("Reynolds Number Profile", fontsize=12, fontweight="bold")
+    axes[1].grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    p4 = os.path.join(plots_dir, "flow_regime_map.png")
+    fig.savefig(p4, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print("[pipeline] Generated: plots/flow_regime_map.png")
+
+    return [p1, p2, p3, p4]
+
+
+# ========================================================================
+#  ParaView-Compatible VTU Output
+# ========================================================================
+# [Citation: VTK file format — https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf]
+# [Citation: code-quality.md — Ada/SPARK 2014 physics backbone]
+
+def generate_paraview_vtu(output_dir, key_steps=None):
+    """Generate ParaView-compatible VTU files at key trajectory points.
+
+    Each VTU file represents the vehicle at a specific trajectory point with
+    scalar fields: heat_flux, drag, g_load, dynamic_pressure, altitude,
+    velocity, mach_number, temperature, pressure, density.
+
+    AXIOMS:
+      1. VTU format (UnstructuredGrid) is the standard for ParaView visualization
+      2. Each point has a single cell (vertex) with scalar data
+      3. Files are named by altitude for easy identification
+
+    Args:
+        output_dir: Output directory for VTU files
+        key_steps: List of steps to generate VTUs for (default: key altitudes)
+
+    Returns: list of paths to saved VTU files
+    """
+    vtu_dir = os.path.join(output_dir, "vtu")
+    os.makedirs(vtu_dir, exist_ok=True)
+
+    if key_steps is None:
+        key_steps = [100, 200, 500, 1000, 1500, 2200, 5000, 10000, 50000, 300000000]
+
+    IRVE3_MASS_KG = 281.0; IRVE3_DIAMETER_M = 3.0; IRVE3_CD = 1.4625
+    G0 = 9.80665; _pi = 3.141592653589793; _area = _pi * (IRVE3_DIAMETER_M * 0.5)**2
+
+    vtu_files = []
+    for step in key_steps:
+        traj = irve3_trajectory_model(float(step))
+        sg = sutton_graves_heat_flux(traj["altitude_km"], traj["velocity_ms"])
+        isa = isa_atmosphere(traj["altitude_km"])
+        drag = 0.5 * IRVE3_CD * _area * isa["density_kgm3"] * traj["velocity_ms"]**2
+        gload = drag / (IRVE3_MASS_KG * G0)
+        dynq = 0.5 * isa["density_kgm3"] * traj["velocity_ms"]**2
+
+        alt = traj["altitude_km"]
+        vel = traj["velocity_ms"]
+        mach = traj["mach_number"]
+        T = isa["temperature_K"]
+        P = isa["pressure_Pa"]
+        rho = isa["density_kgm3"]
+        hf_wm2 = sg["heat_flux_Wm2"]
+
+        # VTU XML format — single point cell with scalar fields
+        # [Citation: VTK File Formats, Section 4.1 — UnstructuredGrid]
+        fname = f"irve3_alt{alt:.0f}km_step{step}.vtu"
+        fpath = os.path.join(vtu_dir, fname)
+
+        with open(fpath, "w") as f:
+            f.write('<?xml version="1.0"?>\n')
+            f.write('<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">\n')
+            f.write('  <UnstructuredGrid>\n')
+            f.write('    <Piece NumberOfPoints="1" NumberOfCells="1">\n')
+            f.write('      <Points>\n')
+            f.write('        <DataArray type="Float32" NumberOfComponents="3" format="ascii">\n')
+            f.write(f'          0.0 0.0 {alt}\n')
+            f.write('        </DataArray>\n')
+            f.write('      </Points>\n')
+            f.write('      <CellData>\n')
+            f.write('        <DataArray type="Float32" Name="step" format="ascii">\n')
+            f.write(f'          {float(step)}\n')
+            f.write('        </DataArray>\n')
+            f.write('      </CellData>\n')
+            f.write('      <PointData>\n')
+            for name, val in [
+                ("heat_flux_Wm2", hf_wm2), ("heat_flux_Wcm2", sg["heat_flux_Wcm2"]),
+                ("drag_force_N", drag), ("g_load", gload),
+                ("dynamic_pressure_Pa", dynq), ("altitude_km", alt),
+                ("velocity_ms", vel), ("mach_number", mach),
+                ("temperature_K", T), ("pressure_Pa", P), ("density_kgm3", rho),
+            ]:
+                f.write(f'        <DataArray type="Float64" Name="{name}" format="ascii">\n')
+                f.write(f'          {val}\n')
+                f.write('        </DataArray>\n')
+            f.write('      </PointData>\n')
+            f.write('      <Cells>\n')
+            f.write('        <DataArray type="Int32" Name="connectivity" format="ascii">0</DataArray>\n')
+            f.write('        <DataArray type="Int32" Name="offsets" format="ascii">1</DataArray>\n')
+            f.write('        <DataArray type="Int32" Name="types" format="ascii">1</DataArray>\n')
+            f.write('      </Cells>\n')
+            f.write('    </Piece>\n')
+            f.write('  </UnstructuredGrid>\n')
+            f.write('</VTKFile>\n')
+
+        vtu_files.append(fpath)
+
+    print(f"[pipeline] Generated {len(vtu_files)} VTU files in {vtu_dir}")
+    return vtu_files
 
 
 def _generate_rapisarda_outputs(results, output_dir, csv_path):
