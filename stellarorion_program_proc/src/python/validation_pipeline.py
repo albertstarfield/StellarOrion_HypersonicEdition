@@ -1134,12 +1134,21 @@ def pinn_extrapolate_per_step(pinn_results_dict, data, target_step=300000000,
         else:
             # Beyond DSMC range — extrapolate using IRVE-3 flight profile
             #
-            # Step 1: Extrapolate altitude linearly in step-space
-            #   The DSMC range covers step 100→2200, alt 120→51.8 km
-            #   Descent rate: 0.03248 km/step
-            _DSMC_ALT_RATE = (120.0 - _ALT_DSMC_END) / (2200.0 - 100.0)
-            alt_extrap = _ALT_DSMC_END - _DSMC_ALT_RATE * (s - dsmc_end)
-            alt_extrap = max(alt_extrap, _ALT_MIN_KM)
+            # MAP PINN steps to physical descent proportionally:
+            #   Step 2200 (dsmc_end) → Alt 51.8 km, Vel 3378 m/s
+            #   Step target_step     → Alt 10 km, Vel 50 m/s
+            #
+            # The PINN step range represents convergence iterations, not physical time.
+            # We map steps linearly to the altitude range so the trajectory smoothly
+            # traverses the full descent over the entire PINN step range.
+            # This gives a physically meaningful animation where each PINN frame
+            # shows the vehicle at a progressively lower altitude.
+            #
+            # [Citation: NASA TP-2013-4012 — IRVE-3 reentry trajectory profile]
+            # [Citation: code-quality.md — Python is wrapper only, mapping is presentation]
+            frac = (s - dsmc_end) / (target_step - dsmc_end) if (target_step - dsmc_end) > 0 else 0.0
+            frac = min(frac, 1.0)
+            alt_extrap = _ALT_DSMC_END - frac * (_ALT_DSMC_END - _ALT_MIN_KM)
 
             # Step 2: Interpolate velocity from IRVE-3 flight profile
             #   Use linear interpolation in altitude space — the standard
@@ -1151,14 +1160,15 @@ def pinn_extrapolate_per_step(pinn_results_dict, data, target_step=300000000,
                 vel_extrap = _IRVE3_TRAJ_VELS_MS[-1]
             else:
                 # Linear interpolation between bracketing altitude points
-                idx = np.searchsorted(-_IRVE3_TRAJ_ALTS_KM, -alt_extrap)  # descending order
-                idx = max(0, min(idx, len(_IRVE3_TRAJ_ALTS_KM) - 2))
-                h_lo = _IRVE3_TRAJ_ALTS_KM[idx + 1]
-                h_hi = _IRVE3_TRAJ_ALTS_KM[idx]
-                v_lo = _IRVE3_TRAJ_VELS_MS[idx + 1]
-                v_hi = _IRVE3_TRAJ_VELS_MS[idx]
-                frac = (alt_extrap - h_lo) / (h_hi - h_lo) if (h_hi - h_lo) > 0 else 0.0
-                vel_extrap = v_lo + (v_hi - v_lo) * frac
+                # searchsorted on negated arrays finds position in descending order
+                idx = np.searchsorted(-_IRVE3_TRAJ_ALTS_KM, -alt_extrap)
+                idx = max(1, min(idx, len(_IRVE3_TRAJ_ALTS_KM) - 1))
+                h_hi = _IRVE3_TRAJ_ALTS_KM[idx - 1]  # higher altitude
+                h_lo = _IRVE3_TRAJ_ALTS_KM[idx]       # lower altitude
+                v_hi = _IRVE3_TRAJ_VELS_MS[idx - 1]
+                v_lo = _IRVE3_TRAJ_VELS_MS[idx]
+                frac_v = (alt_extrap - h_lo) / (h_hi - h_lo) if (h_hi - h_lo) > 0 else 0.0
+                vel_extrap = v_lo + (v_hi - v_lo) * frac_v
 
             # Step 3: Compute Mach number from Ada ISA atmosphere
             isa_at = isa_atmosphere(alt_extrap)
