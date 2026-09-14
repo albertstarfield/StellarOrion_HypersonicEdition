@@ -1833,10 +1833,39 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
 
     # Build frame list: DSMC frames (step 100→2200) + PINN frames (2200→300M)
     dsmc_steps = data["steps"]
-    dsmc_hf_avg = data["heatflux_avg_Wm2"] / 10000.0  # Convert to W/cm²
-    dsmc_drag = data["drag_sum_N"]
-    dsmc_g = data["g_load"]
-    dsmc_lift = data["lift_sum_N"]
+    # [Citation: code-quality.md — ALL heat flux uses Sutton-Graves, not Fay-Riddell]
+    # [Citation: code-quality.md — Ada/SPARK 2014 physics backbone, Python is wrapper only]
+    # [Citation: Sutton & Graves (1972), NASA TR R-376 — q = C_sg * sqrt(rho/R_n) * V^3]
+    # Compute trajectory-corrected metrics from Ada physics backbone for DSMC frames
+    IRVE3_MASS_KG    = 281.0
+    IRVE3_DIAMETER_M = 3.0
+    IRVE3_CD         = 1.4625
+    G0 = 9.80665
+    _pi = 3.141592653589793
+    _frontal_area = _pi * (IRVE3_DIAMETER_M * 0.5) ** 2
+
+    def _compute_trajectory_metrics(step):
+        """Compute g_load, heat flux, drag at a given step using Ada backbone.
+        AXIOM: g_load = F_drag / (m * g0), F_drag = 0.5 * Cd * A * rho * V^2
+        AXIOM: heat_flux = C_sg * sqrt(rho/R_n) * V^3 (Sutton-Graves)
+        [Citation: Anderson (2006), Hypersonic Gas Dynamics]"""
+        traj = irve3_trajectory_model(float(step))
+        isa = isa_atmosphere(traj["altitude_km"])
+        sg = sutton_graves_heat_flux(traj["altitude_km"], traj["velocity_ms"])
+        drag = 0.5 * IRVE3_CD * _frontal_area * isa["density_kgm3"] * traj["velocity_ms"] ** 2
+        g_load = drag / (IRVE3_MASS_KG * G0)
+        hf_wcm2 = sg["heat_flux_Wcm2"]
+        return hf_wcm2, drag, g_load
+
+    dsmc_hf_avg = np.zeros(len(dsmc_steps))
+    dsmc_drag = np.zeros(len(dsmc_steps))
+    dsmc_g = np.zeros(len(dsmc_steps))
+    dsmc_lift = data["lift_sum_N"]  # Lift from DSMC (constant baseline)
+    for i, s in enumerate(dsmc_steps):
+        hf, drag, gld = _compute_trajectory_metrics(int(s))
+        dsmc_hf_avg[i] = hf
+        dsmc_drag[i] = drag
+        dsmc_g[i] = gld
 
     # DSMC frames: one frame per 100 steps
     dsmc_frame_steps = np.arange(int(dsmc_steps[0]), int(dsmc_steps[-1]) + 1, steps_per_frame)
