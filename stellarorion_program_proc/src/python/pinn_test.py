@@ -193,8 +193,10 @@ def _parse_grid_output(grid_file, steps):
     v_stream = IRVE3_BASELINE["performance"]["velocity_ms"]
     ambient_density = IRVE3_BASELINE["validation_targets"]["ambient_density_kgm3"]
 
-    # Dynamic pressure
-    q_dyn = 0.5 * ambient_density * v_stream ** 2
+    # Dynamic pressure — via Ada/SPARK 2014 FFI
+    # [Citation: code-quality.md — all physics via Ada backbone, Python is wrapper only]
+    from ada_pinn_wrapper import dynamic_pressure as _ada_dynq
+    q_dyn = _ada_dynq(ambient_density, v_stream)
 
     # Pressure from average number density (p = n * kB * T)
     kB = 1.38e-23
@@ -321,7 +323,10 @@ def compute_pinn_metrics(pinn, sim_result, baseline_doc, domain):
 
     rho = baseline_doc["validation_targets"]["ambient_pressure_pa"] / (287.05 * baseline_doc["validation_targets"]["ambient_temp_k"])
     v = baseline_doc["performance"]["velocity_ms"]
-    q_dyn = 0.5 * rho * v ** 2
+    # Dynamic pressure — via Ada/SPARK 2014 FFI
+    # [Citation: code-quality.md — all physics via Ada backbone, Python is wrapper only]
+    from ada_pinn_wrapper import dynamic_pressure as _ada_dynq2
+    q_dyn = _ada_dynq2(rho, v)
     area = 3.14159 * (baseline_doc["geometry"]["diameter_m"] / 2) ** 2
     mass = baseline_doc["geometry"]["mass_kg"]
 
