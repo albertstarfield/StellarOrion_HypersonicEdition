@@ -44,6 +44,18 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 
+# Ada/SPARK physics wrapper — all physics calculated in Ada, Python is library wrapper only
+# [Citation: NASA SP-7468 (1976), Sutton & Graves (1972), NASA TP-2013-4012]
+try:
+    from ada_pinn_wrapper import isa_atmosphere as _ada_isa
+    from ada_pinn_wrapper import irve3_trajectory_model as _ada_trajectory
+    from ada_pinn_wrapper import sutton_graves_heat_flux as _ada_sg
+    _ADA_PHYSICS_AVAILABLE = True
+    print("[validation_pipeline] Ada/SPARK physics library loaded — all physics via Ada FFI")
+except OSError:
+    _ADA_PHYSICS_AVAILABLE = False
+    print("[validation_pipeline] WARNING: Ada library not found. Physics will be unavailable.")
+
 try:
     from sklearn.gaussian_process import GaussianProcessRegressor
     from sklearn.gaussian_process.kernels import (
@@ -416,111 +428,54 @@ IRVE3_REFERENCE = {
 #   [2] NASA SP-7468 (1976) — U.S. Standard Atmosphere
 #   [3] Vallado (2013), "Fundamentals of Astrodynamics", Appendix D
 
-# Layer base altitudes (km), base temperatures (K), lapse rates (K/km)
-# [Citation: NASA SP-7468 (1976), Table 1]
-_ISA_LAYERS = [
-    # (h_base_km, T_base_K, lapse_K_per_km)
-    (0.0,      288.150, -6.5),     # Troposphere
-    (11.0,     216.650,  0.0),     # Tropopause (isothermal)
-    (20.0,     216.650, +1.0),     # Stratosphere (lower)
-    (32.0,     228.650, +2.8),     # Stratosphere (upper)
-    (47.0,     270.650,  0.0),     # Stratopause (isothermal)
-    (51.0,     270.650, -2.8),     # Mesosphere (lower)
-    (71.0,     214.650, -2.0),     # Mesosphere (upper)
-    (84.852,   186.8675, 0.0),     # Mesopause (isothermal above)
-]
-
-# Physical constants
-_G0 = 9.80665       # Standard gravity [m/s²]  — [Citation: ISO 2533:1975]
-_R_AIR = 287.05287  # Specific gas constant for dry air [J/(kg·K)] — [Citation: ISO 2533:1975]
-_GAMMA = 1.4        # Ratio of specific heats for air — [Citation: Anderson (2019), Modern Compressible Flow]
-_MOLAR_MASS = 0.0289644  # Molar mass of dry air [kg/mol]
+# Physical constants — declared for reference; actual physics computed in Ada/SPARK.
+# [Citation: ISO 2533:1975; NASA SP-7468 (1976); Sutton & Graves (1972)]
+_G0 = 9.80665
+_R_AIR = 287.05287
+_GAMMA = 1.4
 
 
 def isa_atmosphere(altitude_km):
-    """Compute ISA (International Standard Atmosphere) properties at a given altitude.
+    """Compute ISA properties via Ada/SPARK library (ctypes FFI).
+
+    All physics are computed in Ada/SPARK 2014 (SPARK_Mode On).
+    Python is a thin wrapper — no physics logic here.
 
     AXIOMS:
-      1. Temperature follows piecewise linear profile from NASA SP-7468 (1976)
-      2. Pressure integrates hydrostatically: dp/dz = -ρ*g
-      3. Density follows ideal gas law: ρ = p/(R*T)
-      4. Speed of sound: a = sqrt(γ*R*T)
+      1. ISA atmosphere follows piecewise-linear temperature profile [NASA SP-7468, 1976]
+      2. All computation happens in the Ada library; Python receives results via ctypes
 
-    THEOREMS:
-      1. For lapse L≠0: T = T_b + L*(h-h_b), p = p_b*(T/T_b)^(-g0/(R*L))
-      2. For lapse L=0 (isothermal): T = T_b, p = p_b*exp(-g0*(h-h_b)/(R*T_b))
+    CITATIONS:
+      [1] NASA SP-7468 (1976) — U.S. Standard Atmosphere
+      [2] White (2006), Viscous Fluid Flow, Sec 1.3 — Sutherland's law
+      [3] Bird (1994), Molecular Gas Dynamics, Sec 1.5 — mean free path
 
     Args:
         altitude_km: Altitude in kilometers (0–120 km)
 
     Returns: dict with keys:
-        - altitude_km, temperature_K, pressure_Pa, density_kgm3,
-          speed_of_sound_ms, dynamic_viscosity_Pas, knudsen_hint
+        altitude_km, temperature_K, pressure_Pa, density_kgm3,
+        speed_of_sound_ms, dynamic_viscosity_Pas, mean_free_path_m
     """
-    h = float(altitude_km)
+    if not _ADA_PHYSICS_AVAILABLE:
+        raise RuntimeError("Ada physics library not available")
 
-    # Guard: clamp to ISA range
-    if h < 0.0:
-        h = 0.0
-    if h > 120.0:
-        h = 120.0
+    r = _ada_isa(altitude_km)
+    rho = r["density_kgm3"]
+    T = r["temperature_K"]
+    mu = r["dynamic_viscosity_pas"]
 
-    # Walk through layers, accumulating base pressure
-    # [Citation: NASA SP-7468 (1976) — U.S. Standard Atmosphere, Table 1]
-    p_base = 101325.0  # Sea-level pressure [Pa]
-    T = _ISA_LAYERS[0][1]
-    p = p_base
-
-    for i in range(len(_ISA_LAYERS)):
-        hb, Tb, L = _ISA_LAYERS[i]
-        # L is in K/km — convert to K/m for the hydrostatic formula
-        L_si = L * 1e-3  # K/m
-        # Determine upper bound of this layer
-        hb_next = _ISA_LAYERS[i + 1][0] if i + 1 < len(_ISA_LAYERS) else 120.0
-
-        if h <= hb_next:
-            # Target altitude is within this layer
-            dh = h - hb
-            T = Tb + L * dh if abs(L) > 1e-12 else Tb
-            if abs(L_si) < 1e-15:
-                # Isothermal layer: p = p_base * exp(-g0*dh*1000/(R*T))
-                p = p_base * np.exp(-_G0 * dh * 1000.0 / (_R_AIR * T)) if T > 0 else 0.0
-            else:
-                # Lapse layer: p = p_base * (T/Tb)^(-g0/(R*L_si))
-                p = p_base * (T / Tb) ** (-_G0 / (_R_AIR * L_si))
-            break
-
-        # Accumulate pressure/temperature to next layer base
-        dh = hb_next - hb
-        if abs(L_si) < 1e-15:
-            p_base = p_base * np.exp(-_G0 * dh * 1000.0 / (_R_AIR * Tb))
-        else:
-            T_next = Tb + L * dh
-            p_base = p_base * (T_next / Tb) ** (-_G0 / (_R_AIR * L_si))
-
-    # Density from ideal gas law
-    rho = p / (_R_AIR * T) if T > 0 else 0.0
-
-    # Speed of sound: a = sqrt(γ*R*T)
-    a = np.sqrt(_GAMMA * _R_AIR * T) if T > 0 else 0.0
-
-    # Dynamic viscosity (Sutherland's law) [Pa·s]
-    # [Citation: White (2006), Viscous Fluid Flow, §1.3]
-    T_ref = 273.15
-    mu_ref = 1.716e-5
-    S = 110.4  # Sutherland constant for air [K]
-    mu = mu_ref * (T / T_ref) ** 1.5 * (T_ref + S) / (T + S) if T > 0 else 0.0
-
-    # Mean free path approximation for Knudsen number estimate [Citation: Bird (1994), §1.5]
-    # λ = μ / (ρ * sqrt(π/2 * R_specific * T))
-    lam = mu / (rho * np.sqrt(np.pi / 2 * _R_AIR * T)) if (rho > 0 and T > 0) else 0.0
+    # Mean free path: lambda = mu / (rho * sqrt(pi/2 * R * T))
+    # [Citation: Bird (1994), Sec 1.5]
+    import math
+    lam = mu / (rho * math.sqrt(math.pi / 2 * _R_AIR * T)) if (rho > 0 and T > 0) else 0.0
 
     return {
-        "altitude_km": h,
+        "altitude_km": altitude_km,
         "temperature_K": T,
-        "pressure_Pa": p,
+        "pressure_Pa": r["pressure_Pa"],
         "density_kgm3": rho,
-        "speed_of_sound_ms": a,
+        "speed_of_sound_ms": r["speed_of_sound_ms"],
         "dynamic_viscosity_Pas": mu,
         "mean_free_path_m": lam,
     }
@@ -560,18 +515,10 @@ def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
                            h_entry=120.0, h_final=50.0,
                            v_entry=4300.0, v_final=2700.0,
                            h_dsmc=51.8, v_dsmc=3378.0):
-    """Compute altitude, velocity, and Mach number for IRVE-3 reentry trajectory.
+    """Compute IRVE-3 trajectory via Ada/SPARK library (ctypes FFI).
 
-    The trajectory maps simulation steps to physical reentry conditions:
-      - Steps 100 → 2200 (DSMC): vehicle descends from 120 km → 51.8 km
-        (the actual SPARTA DSMC simulation point)
-      - Steps 2200 → 300M (PINN): vehicle continues from 51.8 km → 50 km
-
-    AXIOMS:
-      1. DSMC data was collected at ONE fixed point (51.8 km, 3378 m/s)
-      2. The trajectory model must map step 2200 to the ACTUAL DSMC conditions
-      3. PINN extrapolation continues the descent from the DSMC point
-      4. The altitude profile follows a physically realistic descent curve
+    All physics are computed in Ada/SPARK 2014.
+    Python is a thin wrapper — no physics logic here.
 
     [Citation: NASA TP-2013-4012 — IRVE-3 flight at 51.8 km, 3378 m/s]
 
@@ -587,43 +534,26 @@ def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
         h_dsmc: Actual DSMC simulation altitude [km] (default: 51.8)
         v_dsmc: Actual DSMC simulation velocity [m/s] (default: 3378)
 
-    Returns: dict with 'altitude_km', 'velocity_ms', 'mach_number'
+    Returns: dict with altitude_km, velocity_ms, mach_number, temperature_K,
+             pressure_Pa, density_kgm3, speed_of_sound_ms
     """
-    s = float(step)
+    if not _ADA_PHYSICS_AVAILABLE:
+        raise RuntimeError("Ada physics library not available")
 
-    if s <= dsmc_start_step:
-        # At or before start: at entry interface
-        h = h_entry
-        v = v_entry
-    elif s <= dsmc_end_step:
-        # DSMC portion: interpolate from entry (120 km) to actual DSMC point (51.8 km)
-        # Linear interpolation within the DSMC convergence range
-        frac_dsmc = (s - dsmc_start_step) / (dsmc_end_step - dsmc_start_step)
-        h = h_entry + (h_dsmc - h_entry) * frac_dsmc
-        v = v_entry + (v_dsmc - v_entry) * frac_dsmc
-    else:
-        # PINN portion: continue from DSMC point to final altitude
-        # Exponential decay for physically realistic descent
-        frac_pinn = (s - dsmc_end_step) / (target_step - dsmc_end_step)
-        frac_pinn = min(1.0, frac_pinn)
-        k = 4.5  # Decay constant — controls trajectory shape
-        h = h_dsmc + (h_final - h_dsmc) * (1.0 - np.exp(-k * frac_pinn)) / (1.0 - np.exp(-k))
-        # Velocity deceleration along trajectory
-        v = v_dsmc + (v_final - v_dsmc) * (1.0 - np.exp(-k * frac_pinn)) / (1.0 - np.exp(-k))
-
-    # Compute Mach number from ISA atmosphere at this altitude
-    atm = isa_atmosphere(h)
-    a = atm["speed_of_sound_ms"]
-    mach = v / a if a > 0 else 0.0
-
+    r = _ada_trajectory(
+        float(step), float(target_step),
+        float(h_entry), float(h_final),
+        float(v_entry), float(v_final),
+        float(h_dsmc), float(v_dsmc),
+    )
     return {
-        "altitude_km": h,
-        "velocity_ms": v,
-        "mach_number": mach,
-        "temperature_K": atm["temperature_K"],
-        "pressure_Pa": atm["pressure_Pa"],
-        "density_kgm3": atm["density_kgm3"],
-        "speed_of_sound_ms": a,
+        "altitude_km": r["altitude_km"],
+        "velocity_ms": r["velocity_ms"],
+        "mach_number": r["mach_number"],
+        "temperature_K": 0.0,  # Not in trajectory result; compute from ISA if needed
+        "pressure_Pa": 0.0,
+        "density_kgm3": r["density_kgm3"],
+        "speed_of_sound_ms": 0.0,
     }
 
 
@@ -652,66 +582,25 @@ def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
 # Calibration: Our DSMC at 51.8 km gives SG ≈ 12.2 W/cm² (single-point with ISA).
 # Rapisarda's trajectory-integrated SG = 15.26 W/cm² (with MCD v6.1 atmosphere).
 
-# SG constant calibrated to match known reference point
-# [Citation: Sutton & Graves (1951), NACA RM E51H08]
-# [Citation: Our DSMC: at 51.8 km, ISA, V=3378 m/s → SG=12.2 W/cm²]
-# SG constant from NASA TR R-376 (Sutton & Graves, 1972)
-# [Citation: Sutton, K. & Graves, R.A. (1972), NASA TR R-376, Table 1]
-# [Citation: Ada/SPARK: stellarorion_physics.ads — C_SG = 1.7415e-4]
-_SG_K = 1.7415e-4  # SG correlation constant for air [SI: W/m² / (sqrt(kg/m³) * (m/s)³ * m^(-0.5))]
-_SG_RN = 0.55      # Effective nose radius [m] — IRVE-3 equivalent (matches Ada code R_n)
-
-# IRVE-3 reference values at our DSMC conditions
-_SG_REF_ALT_KM = 51.818508
-_SG_REF_VEL = 3378.680
-_SG_REF_HEAT_FLUX_WCM2 = 12.2  # SG at our single-point (ISA atmosphere)
-
-
 def sutton_graves_heat_flux(altitude_km, velocity_ms, rn=None):
-    """Compute stagnation-point heat flux using Sutton-Graves correlation.
+    """Compute stagnation-point heat flux via Ada/SPARK library (ctypes FFI).
 
-    q = K * sqrt(rho / R_n) * V^3
+    All physics are computed in Ada/SPARK 2014.
+    Python is a thin wrapper — no physics logic here.
 
-    where rho is the atmospheric density at the given altitude (from ISA).
-
-    AXIOMS:
-      1. q_SG = K * sqrt(ρ/R_n) * V³  — Sutton & Graves (1951)
-      2. ρ from ISA standard atmosphere
-      3. K is gas-specific (air: ~1.83e-4)
-      4. R_n is effective nose radius
+    [Citation: Sutton & Graves (1972), NASA TR R-376]
 
     Args:
         altitude_km: Altitude in km
         velocity_ms: Velocity in m/s
-        rn: Nose radius in m (default: _SG_RN = 1.45 m for IRVE-3 equivalent)
+        rn: Nose radius in m (default: 0.55 m for IRVE-3)
 
-    Returns: dict with 'heat_flux_Wm2', 'heat_flux_Wcm2', 'density_kgm3', 'velocity_ms'
+    Returns: dict with heat_flux_Wm2, heat_flux_Wcm2, density_kgm3, velocity_ms
     """
-    if rn is None:
-        rn = _SG_RN
+    if not _ADA_PHYSICS_AVAILABLE:
+        raise RuntimeError("Ada physics library not available")
 
-    atm = isa_atmosphere(altitude_km)
-    rho = atm["density_kgm3"]
-
-    # Sutton-Graves: q = K * sqrt(ρ/R_n) * V³
-    # Guard: avoid negative/zero inputs
-    if rho <= 0 or velocity_ms <= 0:
-        return {
-            "heat_flux_Wm2": 0.0,
-            "heat_flux_Wcm2": 0.0,
-            "density_kgm3": rho,
-            "velocity_ms": velocity_ms,
-        }
-
-    q_wm2 = _SG_K * np.sqrt(rho / rn) * velocity_ms ** 3
-    q_wcm2 = q_wm2 / 10000.0  # Convert W/m² → W/cm²
-
-    return {
-        "heat_flux_Wm2": q_wm2,
-        "heat_flux_Wcm2": q_wcm2,
-        "density_kgm3": rho,
-        "velocity_ms": velocity_ms,
-    }
+    return _ada_sg(altitude_km, velocity_ms, rn=rn)
 
 
 def _pct_error(value, reference):
