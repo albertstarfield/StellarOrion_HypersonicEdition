@@ -1127,8 +1127,6 @@ def pinn_extrapolate_per_step(pinn_results_dict, data, target_step=300000000,
     dsmc_end_step = int(data["steps"][-1])
     ref_traj = irve3_trajectory_model(dsmc_end_step)
     ref_sg = sutton_graves_heat_flux(ref_traj["altitude_km"], ref_traj["velocity_ms"])
-    ref_sg_wm2 = ref_sg["heat_flux_Wcm2"] * 10000.0  # Convert to W/m²
-    ref_dyn_q = 0.5 * ref_traj["density_kgm3"] * ref_traj["velocity_ms"] ** 2
 
     for metric in key_metrics:
         if metric not in pinn_results_dict:
@@ -1198,8 +1196,15 @@ def pinn_extrapolate_per_step(pinn_results_dict, data, target_step=300000000,
                 _drag = 0.5 * 1.4625 * _area * isa_atmosphere(traj_alt)["density_kgm3"] * traj_vel ** 2
                 scaled_values[i] = _drag / (281.0 * 9.80665)
             elif metric in ("heat_sum_Wm2", "heat_load_jcm2"):
-                # Heat load: proportional to SG × trajectory fraction
-                scaled_values[i] = dsmc_final * (now_sg_wcm2 / ref_sg["heat_flux_Wcm2"]) if ref_sg["heat_flux_Wcm2"] > 0 else dsmc_final
+                # Heat load: always compute from Ada backbone
+                # AXIOM: heat_load ≈ SG [W/cm²] × contact_time [s]
+                # [Citation: Sutton & Graves (1972), NASA TR R-376]
+                _contact_time = 3.0 / max(traj_vel, 1.0)
+                _sg_wcm2 = now_sg["heat_flux_Wcm2"]
+                if metric == "heat_load_jcm2":
+                    scaled_values[i] = _sg_wcm2 * _contact_time
+                else:
+                    scaled_values[i] = _sg_wcm2 * 10000.0 * _contact_time
             elif metric in ("cd", "cl"):
                 # Geometric coefficients: constant along trajectory (weak Re dependence)
                 scaled_values[i] = base_values[i]
