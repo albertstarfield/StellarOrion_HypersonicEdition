@@ -26,6 +26,14 @@ import sys
 import numpy as np
 
 # ============================================================================
+# Import Ada FFI wrappers for physics computations
+# [Citation: ada_pinn_wrapper.py — Ada/SPARK FFI bindings]
+# ============================================================================
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src", "python"))
+from ada_pinn_wrapper import _ada_lib
+import ctypes
+
+# ============================================================================
 # PHYSICAL CONSTANTS
 # ============================================================================
 # [Citation: Sutton & Graves 1971, NASA TR R-376, Table 1]
