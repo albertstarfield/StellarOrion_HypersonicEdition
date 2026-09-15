@@ -18,6 +18,7 @@ import sys
 import csv
 import time
 import shutil
+import math as _math
 import glob
 import re
 import subprocess
@@ -113,6 +114,16 @@ def _compute_frame_data(step):
     # DSMC vs PINN error: decreases with more training data
     dsmc_pinn_error = max(0.5, 15.0 * (1.0 - progress))
 
+    # Ballistic coefficient: beta = m / (Cd * A_ref)
+    # A_ref = pi * (D/2)^2 for IRVE-3
+    # [Citation: Anderson (2006), Hypersonic Gas Dynamics — ballistic reentry]
+    A_ref = np.pi * (IRVE3_DIAMETER_M / 2.0) ** 2
+    ballistic_coeff = IRVE3_MASS_KG / (IRVE3_CD * A_ref)
+
+    # Stagnation pressure: P_stag = P_amb + 0.5 * rho * V^2
+    # [Citation: Anderson (2006), Fundamentals of Aerodynamics]
+    stagnation_pressure_Pa = isa["pressure_Pa"] + 0.5 * isa["density_kgm3"] * traj["velocity_ms"] ** 2
+
     return {
         "step": step,
         "altitude_km": traj["altitude_km"],
@@ -129,6 +140,8 @@ def _compute_frame_data(step):
         "pinn_accuracy": pinn_accuracy,
         "dsmc_pinn_error": dsmc_pinn_error,
         "knudsen_number": kn,
+        "ballistic_coeff_kgm2": ballistic_coeff,
+        "stagnation_pressure_Pa": stagnation_pressure_Pa,
     }
 
 
@@ -185,18 +198,21 @@ def _render_animated_frame(fargs):
      show_drag, show_g, out_dir, prefix, resolution,
      show_pinn_loss, show_pinn_acc, show_dsmc_pinn_err,
      show_density, show_temp, show_press,
-     show_kn) = fargs
+     show_kn,
+     show_peak_hf, show_total_heat, show_ballistic,
+     show_stag_press, show_alt_peak_heat, show_peak_dynq) = fargs
 
     from PIL import Image, ImageDraw, ImageFont
 
     W, H_orig = resolution
 
     # ── Auto-expand vertical resolution if content won't fit ──
-    # Layout uses percentage-based y-coordinates.  For 5 rows (28-33% each)
-    # + gaps + title bar, content extends to ~155% of the canvas height.
+    # Layout uses percentage-based y-coordinates.  For 8 rows (9-11% each)
+    # + gaps + title bar, content extends to ~100% of the canvas height.
     # If the user-provided height is too small, expand it proportionally
     # so all panels fit without clipping.  Width stays fixed.
-    _content_height_pct = 155.0
+    # !! DO NOT INCREASE THIS PAST 102 — rows are designed to fit in 100% !!
+    _content_height_pct = 102.0
     _min_h = int(W * _content_height_pct / 100)
     H = max(H_orig, _min_h)
     BG = (20, 20, 40)
@@ -231,14 +247,19 @@ def _render_animated_frame(fargs):
     _title_pct = title_h  # Title bar height as %
 
     def _pct_to_px(xp, yp, wp, hp):
-        # Convert percentage positions to pixels at design height, then scale
-        # y-positions to fit expanded canvas. Heights stay at design pixels.
-        y_px = int(yp * _H_orig_for_layout / 100)
-        h_px = int(hp * _H_orig_for_layout / 100)
-        y_scaled = int(y_px * _y_scale)
-        h_scaled = h_px  # Heights stay at design size
-        return (int(xp * W / 100), y_scaled,
-                int((xp + wp) * W / 100), y_scaled + h_scaled)
+        # Convert percentage coordinates to pixels, scaling both positions
+        # AND heights proportionally to fit the expanded canvas.
+        # !! DO NOT REVERT TO THE OLD BROKEN BEHAVIOR !!
+        # The old code scaled y-positions by _y_scale but kept heights at
+        # design pixels (h_scaled = h_px). This caused gaps between rows
+        # and panels falling off-canvas at 155% expansion.
+        # FIXED: Both y and h now use H (expanded height) directly, so
+        # everything scales uniformly. If you change this, you MUST verify
+        # all 5 rows of 13 panels render without gaps or clipping.
+        y_px = int(yp * H / 100)
+        h_px = int(hp * H / 100)
+        return (int(xp * W / 100), y_px,
+                int((xp + wp) * W / 100), y_px + h_px)
 
     def _draw_animated_panel(draw, x0, y0, x1, y1, title, ylabel,
                              data_x, data_y, color, current_val,
@@ -351,9 +372,13 @@ def _render_animated_frame(fargs):
 
         # Segment 2: Cone from nose tangent to torus start
         # Cone extends from tangent point at angle -gamma backward
+        # [Citation: stellarorion_pinn_trajectory.adb lines 398-399]
+        # Tangent point is at complement angle Gamma_Rad = (90 - half_cone) * Pi/180
+        # Ada: R_Tang = R_N * Cos(Gamma_Rad), Z_Tang = R_N * (1 - Sin(Gamma_Rad))
+        gamma_complement = np.radians(90.0 - gamma_deg)  # Ada Gamma_Rad
         cone_len = R_veh / np.sin(gamma) - rN / np.tan(gamma)
-        cone_start_x = rN * np.cos(-gamma)
-        cone_start_y = rN * np.sin(-gamma)
+        cone_start_x = rN * np.cos(-gamma_complement)
+        cone_start_y = rN * np.sin(-gamma_complement)
         cone_end_x = cone_start_x - cone_len * np.cos(gamma)
         cone_end_y = cone_start_y + cone_len * np.sin(gamma)  # goes to -R_veh
         cone_pts = [(cone_start_x, cone_start_y), (cone_end_x, cone_end_y)]
@@ -507,76 +532,276 @@ def _render_animated_frame(fargs):
                   f"q={hf:.1f} W/cm2 | G: {gload:.1f} | Drag: {drag:.0f} N",
                   fill=(180, 180, 180), font=font_md)
 
-        # Row 1: altitude / velocity / mach
-        p = _pct_to_px(2, title_h + 1, 31, 28)
+        # Row 1 (y=6%, h=11%): altitude / velocity / mach
+        p = _pct_to_px(2, title_h + 1, 31, 11)
         _draw_animated_panel(draw, *p, "Altitude Profile", "Alt [km]",
                              show_steps, show_alt, (100, 150, 255), alt, "km",
                              frame_idx=frame_idx)
-        p = _pct_to_px(34, title_h + 1, 31, 28)
+        p = _pct_to_px(34, title_h + 1, 31, 11)
         _draw_animated_panel(draw, *p, "Velocity", "Vel [m/s]",
                              show_steps, show_vel, (100, 220, 100), vel, "m/s",
                              fmt="{:.0f}", frame_idx=frame_idx)
-        p = _pct_to_px(66, title_h + 1, 32, 28)
+        p = _pct_to_px(66, title_h + 1, 32, 11)
         _draw_animated_panel(draw, *p, "Mach Number", "Mach",
                              show_steps, show_mach, (220, 100, 220), mach,
                              fmt="{:.2f}", frame_idx=frame_idx)
 
-        # Row 2: heat flux (wide) / g-load
-        p = _pct_to_px(2, title_h + 31, 64, 28)
+        # Row 2 (y=18%, h=11%): heat flux (wide) / g-load
+        p = _pct_to_px(2, title_h + 12, 64, 11)
         _draw_animated_panel(draw, *p, "Sutton-Graves Heat Flux", r"q [W/cm2]",
                              show_steps, show_hf, (255, 80, 80), hf, r"W/cm2",
                              frame_idx=frame_idx)
-        p = _pct_to_px(67, title_h + 31, 31, 28)
+        p = _pct_to_px(67, title_h + 12, 31, 11)
         _draw_animated_panel(draw, *p, "Deceleration (G-load)", "G [g]",
                              show_steps, show_g, (80, 220, 220), gload, "g",
                              frame_idx=frame_idx)
 
-        # Row 3: drag / vehicle
-        p = _pct_to_px(2, title_h + 61, 31, 33)
+        # Row 3 (y=30%, h=11%): drag / vehicle
+        p = _pct_to_px(2, title_h + 23, 31, 11)
         _draw_animated_panel(draw, *p, "Drag Force", "Drag [N]",
                              show_steps, show_drag, (255, 180, 50), drag, "N",
                              fmt="{:.0f}", frame_idx=frame_idx)
-        p = _pct_to_px(34, title_h + 61, 64, 33)
+        p = _pct_to_px(34, title_h + 23, 64, 11)
         _draw_vehicle_panel(draw, *p, alt, vel, mach, hf)
 
-        # Row 4: PINN statistics + Knudsen number (4 panels)
+        # Row 4 (y=42%, h=11%): PINN statistics + Knudsen number (4 panels)
         pinn_loss_val = show_pinn_loss[frame_idx] if frame_idx < len(show_pinn_loss) else 0.0
         pinn_acc_val = show_pinn_acc[frame_idx] if frame_idx < len(show_pinn_acc) else 0.0
         dsmc_err_val = show_dsmc_pinn_err[frame_idx] if frame_idx < len(show_dsmc_pinn_err) else 0.0
         kn_val = show_kn[frame_idx] if frame_idx < len(show_kn) else 0.0
-        p = _pct_to_px(2, title_h + 96, 23, 25)
+        p = _pct_to_px(2, title_h + 34, 23, 11)
         _draw_animated_panel(draw, *p, "PINN Training Loss", "Loss",
                              show_steps, show_pinn_loss, (0, 200, 100), pinn_loss_val, "",
                              fmt="{:.4f}", frame_idx=frame_idx)
-        p = _pct_to_px(26, title_h + 96, 23, 25)
+        p = _pct_to_px(26, title_h + 34, 23, 11)
         _draw_animated_panel(draw, *p, "PINN Accuracy", "Acc [%]",
                              show_steps, show_pinn_acc, (100, 200, 255), pinn_acc_val, "%",
                              fmt="{:.1f}", frame_idx=frame_idx)
-        p = _pct_to_px(50, title_h + 96, 23, 25)
+        p = _pct_to_px(50, title_h + 34, 23, 11)
         _draw_animated_panel(draw, *p, "DSMC vs PINN Error", "Error [%]",
                              show_steps, show_dsmc_pinn_err, (255, 150, 0), dsmc_err_val, "%",
                              fmt="{:.1f}", frame_idx=frame_idx)
-        p = _pct_to_px(74, title_h + 96, 24, 25)
+        p = _pct_to_px(74, title_h + 34, 24, 11)
         _draw_animated_panel(draw, *p, "Knudsen Number (Kn)", "Kn [-]",
                              show_steps, show_kn, (200, 100, 255), kn_val, "",
                              fmt="{:.2e}", frame_idx=frame_idx)
 
-        # Row 5: atmosphere environment (density, temperature, pressure)
+        # Row 5 (y=54%, h=11%): atmosphere environment (density, temperature, pressure)
         dens_val = show_density[frame_idx] if frame_idx < len(show_density) else 0.0
         temp_val = show_temp[frame_idx] if frame_idx < len(show_temp) else 0.0
         press_val = show_press[frame_idx] if frame_idx < len(show_press) else 0.0
-        p = _pct_to_px(2, title_h + 124, 31, 25)
+        p = _pct_to_px(2, title_h + 45, 31, 11)
         _draw_animated_panel(draw, *p, "Atmospheric Density", r"rho [kg/m3]",
                              show_steps, show_density, (180, 220, 255), dens_val, r"kg/m3",
                              fmt="{:.4f}", frame_idx=frame_idx)
-        p = _pct_to_px(34, title_h + 124, 31, 25)
+        p = _pct_to_px(34, title_h + 45, 31, 11)
         _draw_animated_panel(draw, *p, "Atmospheric Temperature", "T [K]",
                              show_steps, show_temp, (255, 200, 100), temp_val, "K",
                              fmt="{:.1f}", frame_idx=frame_idx)
-        p = _pct_to_px(66, title_h + 124, 32, 25)
+        p = _pct_to_px(66, title_h + 45, 32, 11)
         _draw_animated_panel(draw, *p, "Atmospheric Pressure", "P [Pa]",
                              show_steps, show_press, (200, 150, 255), press_val, "Pa",
                              fmt="{:.0f}", frame_idx=frame_idx)
+
+        # Row 6 (y=66%, h=11%): thermal loads (peak heat flux, total heat load, ballistic coeff)
+        peak_hf_val = show_peak_hf[frame_idx] if frame_idx < len(show_peak_hf) else 0.0
+        total_heat_val = show_total_heat[frame_idx] if frame_idx < len(show_total_heat) else 0.0
+        ballistic_val = show_ballistic[frame_idx] if frame_idx < len(show_ballistic) else 0.0
+        p = _pct_to_px(2, title_h + 56, 31, 11)
+        _draw_animated_panel(draw, *p, "Peak Heat Flux", r"q_peak [W/cm2]",
+                             show_steps, show_peak_hf, (255, 50, 50), peak_hf_val, r"W/cm2",
+                             fmt="{:.1f}", frame_idx=frame_idx)
+        p = _pct_to_px(34, title_h + 56, 31, 11)
+        _draw_animated_panel(draw, *p, "Total Heat Load", r"Q [J/cm2]",
+                             show_steps, show_total_heat, (255, 120, 0), total_heat_val, r"J/cm2",
+                             fmt="{:.1f}", frame_idx=frame_idx)
+        p = _pct_to_px(66, title_h + 56, 32, 11)
+        _draw_animated_panel(draw, *p, "Ballistic Coefficient", r"beta [kg/m2]",
+                             show_steps, show_ballistic, (0, 180, 200), ballistic_val, r"kg/m2",
+                             fmt="{:.2f}", frame_idx=frame_idx)
+
+        # Row 7 (y=78%, h=11%): pressure loads (peak dynamic, stagnation, alt of peak heating)
+        peak_dynq_val = show_peak_dynq[frame_idx] if frame_idx < len(show_peak_dynq) else 0.0
+        stag_press_val = show_stag_press[frame_idx] if frame_idx < len(show_stag_press) else 0.0
+        alt_peak_val = show_alt_peak_heat[frame_idx] if frame_idx < len(show_alt_peak_heat) else 0.0
+        p = _pct_to_px(2, title_h + 67, 31, 11)
+        _draw_animated_panel(draw, *p, "Peak G-Load", "G_peak [g]",
+                             show_steps, show_peak_dynq, (255, 220, 0), peak_dynq_val, "g",
+                             fmt="{:.1f}", frame_idx=frame_idx)
+        p = _pct_to_px(34, title_h + 67, 31, 11)
+        _draw_animated_panel(draw, *p, "Stagnation Pressure", "P_stag [Pa]",
+                             show_steps, show_stag_press, (150, 100, 255), stag_press_val, "Pa",
+                             fmt="{:.0f}", frame_idx=frame_idx)
+        p = _pct_to_px(66, title_h + 67, 32, 11)
+        _draw_animated_panel(draw, *p, "Altitude of Peak Heating", "Alt_peak [km]",
+                             show_steps, show_alt_peak_heat, (255, 180, 200), alt_peak_val, "km",
+                             fmt="{:.1f}", frame_idx=frame_idx)
+
+        # Row 8 (y=90%, h=8%): Earth + flight trajectory
+        # -- AXIOMS: Reentry trajectory starts far from Earth (deep space),
+        #    approaches the planet, enters the atmosphere, and descends.
+        #    The vehicle MUST be shown moving TOWARD Earth, not away from it.
+        #    Trajectory must terminate at/near the Earth's atmosphere boundary.
+        # -- THEORIES: Use parametric curve from (far-right, high) to
+        #    (Earth-atmosphere-edge, low). Earth is a circle on the left.
+        #    Vehicle position advances along this curve each frame.
+        # -- APPLICATIONS: Cubic easing for natural deceleration curve.
+        #    Trajectory ends exactly at Earth's atmosphere boundary (r_earth + margin).
+        p = _pct_to_px(2, title_h + 78, 96, 8)
+        draw.rectangle([p[0], p[1], p[2], p[3]], fill=(30, 30, 55), outline=GRID, width=1)
+        draw.text((p[0] + int(10 * _scale), p[1] + int(3 * _scale)),
+                  "Earth Position & Flight Trajectory", fill=FG, font=font_md)
+
+        # Draw Earth circle — LARGE and prominent with animated spiral
+        cx_earth = p[0] + int(160 * _scale)
+        cy_earth = (p[1] + p[3]) // 2 + int(15 * _scale)
+        r_earth = int(90 * _scale)
+        # Gradient fill: dark blue core → lighter blue edge
+        for ri in range(r_earth, 0, -1):
+            frac = ri / r_earth
+            cr = int(20 + 30 * (1 - frac))
+            cg = int(60 + 60 * (1 - frac))
+            cb = int(140 + 60 * (1 - frac))
+            draw.ellipse([cx_earth - ri, cy_earth - ri,
+                          cx_earth + ri, cy_earth + ri],
+                         fill=(cr, cg, cb))
+        # Animated spiral on Earth surface (rotates with frame)
+        spiral_offset = frame_idx * 0.5  # rotation speed
+        spiral_pts = []
+        for ang_deg in range(0, 720, 2):  # 2 full rotations
+            ang = _math.radians(ang_deg + spiral_offset)
+            # Spiral radius grows from center to edge
+            t = ang_deg / 720.0
+            sr = r_earth * 0.1 + r_earth * 0.85 * t
+            sx = cx_earth + int(sr * _math.cos(ang))
+            sy = cy_earth + int(sr * _math.sin(ang))
+            spiral_pts.append((sx, sy))
+        # Draw spiral with fading opacity
+        for i in range(len(spiral_pts) - 1):
+            t = i / len(spiral_pts)
+            alpha = int(40 + 80 * t)  # fades from faint to bright
+            green = int(80 + 60 * t)
+            draw.line([spiral_pts[i], spiral_pts[i + 1]],
+                      fill=(30, green, 100 + int(50 * t)), width=2)
+        draw.ellipse([cx_earth - r_earth, cy_earth - r_earth,
+                      cx_earth + r_earth, cy_earth + r_earth],
+                     outline=(80, 140, 220), width=2)
+        draw.text((cx_earth, cy_earth), "EARTH", fill=(200, 220, 255),
+                  font=font_sm, anchor="mm")
+
+        # Draw atmosphere glow ring around Earth (dashed arc, thick & visible)
+        r_atm = r_earth + int(18 * _scale)  # wider atmosphere band
+        for ang_deg in range(0, 360, 2):
+            ang = _math.radians(ang_deg)
+            ax1 = cx_earth + int((r_atm - 4) * _math.cos(ang))
+            ay1 = cy_earth + int((r_atm - 4) * _math.sin(ang))
+            ax2 = cx_earth + int((r_atm + 4) * _math.cos(ang))
+            ay2 = cy_earth + int((r_atm + 4) * _math.sin(ang))
+            if ang_deg % 8 < 4:  # dashed pattern, wider segments
+                draw.line([(ax1, ay1), (ax2, ay2)], fill=(120, 170, 255, 180), width=3)
+        # Label atmosphere
+        draw.text((cx_earth + r_atm + int(6 * _scale), cy_earth - int(8 * _scale)),
+                  "120 km", fill=(120, 170, 255), font=font_sm)
+
+        # -- REENTRY TRAJECTORY --
+        # Physics: vehicle approaches from deep space on a nearly horizontal path,
+        # gravity curves it downward into a steepening arc, and it enters the
+        # atmosphere at a sharp angle. This is a ballistic reentry arc.
+        # We use a CUBIC BEZIER with two control points to create the shape:
+        #   Start (far right, top) → CP1 (mid-right, top — keeps it horizontal initially)
+        #   → CP2 (mid-left, bottom — steepens descent) → End (near Earth, bottom)
+
+        # Panel coordinates
+        traj_left = cx_earth + r_earth + int(15 * _scale)   # near Earth's right edge
+        traj_right = p[2] - int(20 * _scale)                 # far right of panel
+        traj_top = p[1] + int(8 * _scale)                    # top of panel
+        traj_bottom = p[3] - int(5 * _scale)                 # bottom of panel
+        mid_x = (traj_left + traj_right) // 2
+
+        # Cubic bezier control points for dramatic reentry arc:
+        # CP1: keeps trajectory nearly horizontal at start (deep space approach)
+        # CP2: pulls trajectory steeply downward as it nears Earth
+        cp1_x = traj_right - int(0.15 * (traj_right - traj_left))  # 15% from right
+        cp1_y = traj_top + int(3 * _scale)                          # stays near top
+        cp2_x = traj_left + int(0.25 * (traj_right - traj_left))   # 25% from left
+        cp2_y = traj_bottom - int(2 * _scale)                       # near bottom
+
+        # Generate trajectory points along the cubic bezier
+        # B(t) = (1-t)³·P0 + 3(1-t)²t·P1 + 3(1-t)t²·P2 + t³·P3
+        traj_pts = []
+        num_pts = 300  # smooth curve
+        for i in range(num_pts + 1):
+            t = i / num_pts
+            u = 1.0 - t
+            tx = u**3 * traj_right + 3*u**2*t * cp1_x + 3*u*t**2 * cp2_x + t**3 * traj_left
+            ty = u**3 * traj_top + 3*u**2*t * cp1_y + 3*u*t**2 * cp2_y + t**3 * traj_bottom
+            traj_pts.append((int(tx), int(ty)))
+
+        if len(traj_pts) >= 2:
+            draw.line(traj_pts, fill=(255, 100, 100), width=max(3, int(4 * _scale)))
+            # Arrowhead at trajectory END (near Earth) — LARGE and prominent
+            ax, ay = traj_pts[-2]
+            bx, by = traj_pts[-1]
+            angle = _math.atan2(by - ay, bx - ax)
+            arrow_len = int(30 * _scale)  # much bigger arrow
+            # Draw filled arrowhead polygon
+            tip_x = bx
+            tip_y = by
+            left_x = bx - arrow_len * _math.cos(angle + _math.pi * 0.2)
+            left_y = by - arrow_len * _math.sin(angle + _math.pi * 0.2)
+            right_x = bx - arrow_len * _math.cos(angle - _math.pi * 0.2)
+            right_y = by - arrow_len * _math.sin(angle - _math.pi * 0.2)
+            base_x = bx - arrow_len * 0.4 * _math.cos(angle)
+            base_y = by - arrow_len * 0.4 * _math.sin(angle)
+            # Filled bright orange arrowhead
+            draw.polygon([(int(tip_x), int(tip_y)),
+                          (int(left_x), int(left_y)),
+                          (int(base_x), int(base_y)),
+                          (int(right_x), int(right_y))],
+                         fill=(255, 160, 0))  # bright orange for contrast
+
+        # Phase labels along trajectory
+        draw.text((traj_right - int(5 * _scale), traj_top + int(2 * _scale)),
+                  "DEEP SPACE →", fill=(150, 150, 180), font=font_sm, anchor="rt")
+        draw.text((traj_left + int(5 * _scale), traj_bottom - int(3 * _scale)),
+                  "← ENTRY", fill=(255, 180, 80), font=font_sm, anchor="lt")
+
+        # Current position on trajectory (yellow dot + vehicle triangle)
+        if frame_idx < len(show_alt):
+            curr_t = frame_idx / max(1, len(show_alt) - 1)
+            u = 1.0 - curr_t
+            curr_tx = int(u**3 * traj_right + 3*u**2*curr_t * cp1_x + 3*u*curr_t**2 * cp2_x + curr_t**3 * traj_left)
+            curr_ty = int(u**3 * traj_top + 3*u**2*curr_t * cp1_y + 3*u*curr_t**2 * cp2_y + curr_t**3 * traj_bottom)
+            curr_ty = max(p[1] + int(5 * _scale), min(p[3] - int(3 * _scale), curr_ty))
+            # Yellow glow dot
+            r_dot = max(5, int(7 * _scale))
+            draw.ellipse([curr_tx - r_dot - 2, curr_ty - r_dot - 2,
+                          curr_tx + r_dot + 2, curr_ty + r_dot + 2],
+                         fill=(255, 255, 0, 60))
+            draw.ellipse([curr_tx - r_dot, curr_ty - r_dot, curr_tx + r_dot, curr_ty + r_dot],
+                         fill=(255, 255, 0))
+            # Small vehicle triangle pointing toward Earth
+            tri_sz = int(8 * _scale)
+            # Direction toward Earth (from current pos toward traj endpoint)
+            dx = traj_left - curr_tx
+            dy = traj_bottom - curr_ty
+            dist = _math.sqrt(dx*dx + dy*dy) + 0.001
+            nx, ny = dx/dist, dy/dist
+            # Triangle: tip forward, base behind
+            tip_x = curr_tx + nx * tri_sz
+            tip_y = curr_ty + ny * tri_sz
+            base_x = curr_tx - nx * tri_sz * 0.5
+            base_y = curr_ty - ny * tri_sz * 0.5
+            perp_x, perp_y = -ny, nx
+            b1 = (base_x + perp_x * tri_sz * 0.4, base_y + perp_y * tri_sz * 0.4)
+            b2 = (base_x - perp_x * tri_sz * 0.4, base_y - perp_y * tri_sz * 0.4)
+            draw.polygon([(int(tip_x), int(tip_y)), (int(b1[0]), int(b1[1])), (int(b2[0]), int(b2[1]))],
+                         fill=(255, 200, 50))
+
+        # Labels
+        draw.text((p[0] + int(130 * _scale), p[3] - int(5 * _scale)),
+                  f"Alt: {alt:.1f} km | Vel: {vel:.0f} m/s | Mach: {mach:.2f}",
+                  fill=(180, 180, 180), font=font_sm)
 
     elif prefix == "traj":
         # ── TRAJECTORY GROUP: 3 panels side by side ─────────────
@@ -657,7 +882,7 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
     os.makedirs(frames_dir, exist_ok=True)
 
     # ── Compute expanded resolution (same logic as _render_animated_frame) ──
-    _content_height_pct = 155.0
+    _content_height_pct = 102.0
     _expanded_h = max(resolution[1], int(resolution[0] * _content_height_pct / 100))
     _expanded_resolution = (resolution[0], _expanded_h)
 
@@ -707,7 +932,17 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
     frame_temp = np.array([d["temperature_K"] for d in frame_data])
     frame_press = np.array([d["pressure_Pa"] for d in frame_data])
     frame_kn = np.array([d["knudsen_number"] for d in frame_data])
+    frame_ballistic = np.array([d["ballistic_coeff_kgm2"] for d in frame_data])
+    frame_stag_press = np.array([d["stagnation_pressure_Pa"] for d in frame_data])
     all_frame_steps = np.array(all_steps)
+
+    # Derived cumulative arrays (running max / cumulative integral)
+    frame_peak_hf = np.maximum.accumulate(frame_hf)  # Peak heat flux so far
+    frame_total_heat = np.cumsum(frame_hf) * (steps_per_frame / 1e6)  # J/cm² approx
+    frame_peak_dynq = np.maximum.accumulate(frame_g)  # Peak g-load (proxy for peak dynq)
+    # Altitude of peak heating: altitude at which max heat flux occurs
+    _peak_hf_idx = np.argmax(frame_hf)
+    frame_alt_peak_heat = np.full_like(frame_alt, frame_alt[_peak_hf_idx])
 
     elapsed = time.time() - t0
     print(f"[MP4] Ada FFI computed {n_anim} points in {elapsed:.1f}s ({n_workers} workers)")
@@ -729,6 +964,8 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
             frame_pinn_loss, frame_pinn_acc, frame_dsmc_pinn_err,
             frame_density, frame_temp, frame_press,
             frame_kn,
+            frame_peak_hf, frame_total_heat, frame_ballistic,
+            frame_stag_press, frame_alt_peak_heat, frame_peak_dynq,
         ))
 
     anim_paths = []
