@@ -10,7 +10,8 @@
 --    [3] NASA TP-2013-4012 — IRVE-3
 --    [4] Anderson (2006), Hypersonic Gas Dynamics
 
-with StellarOrion_Physics; use StellarOrion_Physics;
+with StellarOrion_Physics;  use StellarOrion_Physics;
+with StellarOrion_Geometry; use StellarOrion_Geometry;
 
 package body StellarOrion_PINN_Trajectory is
    pragma SPARK_Mode (Off);
@@ -345,5 +346,139 @@ package body StellarOrion_PINN_Trajectory is
             return Base_Value;
       end case;
    end Scale_Metric;
+
+   -- -----------------------------------------------------------------
+   --  Get_HIAD_Cross_Section
+   -- -----------------------------------------------------------------
+   --  AXIOM G1: The HIAD flat-skin profile is a 4-segment parametric
+   --            curve (Rapisarda 2023, Sec 3.7, Appendix C.1):
+   --            (1) Nose arc:      theta in [-Pi/2, -gamma]
+   --            (2) Windward cone: r from R_Tang to R_Target
+   --            (3) Toroid wrap:   theta in [-gamma, Pi/2]
+   --            (4) Flat back:     r from R_C_Out to 0
+   --
+   --  THEORIES:
+   --    gamma = (90 - half_cone_deg) * Pi / 180  [rad]
+   --    rN = IRVE3_NOSE_R_M = 1.5 m  [tangency: Eq 3.4]
+   --    R_Tang = rN * cos(gamma)       [tangent point]
+   --    Z_Tang = rN * (1 - sin(gamma))
+   --    S_Last = (2*N_Tori - 1) * r_tor  [outermost toroid reach]
+   --    R_Target = R_Tang + S_Last * cos(gamma)
+   --    Z_Out = Z_Tang + S_Last * sin(gamma)
+   --    R_C_Out = R_Target - r_tor * sin(gamma)  [toroid center]
+   --    Z_C_Out = Z_Out + r_tor * cos(gamma)
+   --    Z_Back = Z_C_Out + r_tor  [flat back plane]
+   --
+   --  APPLICATIONS: Python calls via ctypes to get the exact 4-segment
+   --  profile for vehicle visualization; replaces Python re-implementation.
+   --
+   --  CITATIONS:
+   --    [Rap23] Rapisarda (2023) Sec 3.7, Appendix C.1 (flat-skin)
+   --    [IRVE3] NASA TP-2013-4012 — IRVE-3 geometry parameters
+   -- -----------------------------------------------------------------
+   procedure Get_HIAD_Cross_Section
+     (X_Arr  : out Array_Float_200;
+      Y_Arr  : out Array_Float_200;
+      N_Pts  : access Integer)
+   is
+      --  IRVE-3 geometry constants (from stellarorion_postprocessing.ads)
+      Pi            : constant Float := 3.141592653589793;
+      Half_Cone_Deg : constant Float := 60.0;     -- IRVE3_HALF_CONE_DEG
+      R_N           : constant Float := 1.5;      -- IRVE3_NOSE_R_M
+      R_Torus       : constant Float := 0.1350;   -- IRVE3_R_TORUS_M
+      N_Tori        : constant Natural := 6;       -- IRVE3_N_TORI
+      Seg_Pts       : constant := 15;             -- points per segment
+
+      --  Derived angles
+      Gamma_Rad : constant Float := (90.0 - Half_Cone_Deg) * Pi / 180.0;
+      Sin_G     : constant Float := Sin_Rad (Gamma_Rad);
+      Cos_G     : constant Float := Cos_Rad (Gamma_Rad);
+      Tan_G     : constant Float := Sin_G / Cos_G;
+
+      --  Tangency point (Eq 3.4)
+      R_Tang : constant Float := R_N * Cos_G;
+      Z_Tang : constant Float := R_N * (1.0 - Sin_G);
+
+      --  Outermost toroid reach
+      S_Last   : constant Float := Float (2 * N_Tori - 1) * R_Torus;
+      R_Target : constant Float := R_Tang + S_Last * Cos_G;
+      Z_Out    : constant Float := Z_Tang + S_Last * Sin_G;
+
+      --  Toroid center and back plane
+      R_C_Out : constant Float := R_Target - R_Torus * Sin_G;
+      Z_C_Out : constant Float := Z_Out + R_Torus * Cos_G;
+      Z_Back  : constant Float := Z_C_Out + R_Torus;
+
+      --  Local index counter
+      Idx : Natural := 0;
+
+      --  Add a point to the output arrays, clamping Idx to MAX_CROSS_SECTION_PTS
+      procedure Add_Point (PX, PY : Float) is
+      begin
+         if Idx < MAX_CROSS_SECTION_PTS then
+            Idx := Idx + 1;
+            X_Arr (Idx) := PX;
+            Y_Arr (Idx) := PY;
+         end if;
+      end Add_Point;
+
+   begin
+      --  Segment 1: Nose Arc (theta: -Pi/2 to -gamma)
+      --  r = rN * cos(alpha), z = rN + rN * sin(alpha)
+      --  X = axial (z), Y = radial (r)
+      for I in 0 .. Seg_Pts - 1 loop
+         pragma Loop_Invariant (True);
+         declare
+            T     : constant Float := Float (I) / Float (Seg_Pts - 1);
+            Alpha : constant Float := (-Pi / 2.0) * (1.0 - T)
+                                    + (-Gamma_Rad) * T;
+            PR    : constant Float := R_N * Cos_Rad (Alpha);
+            PZ    : constant Float := R_N + R_N * Sin_Rad (Alpha);
+         begin
+            Add_Point (PZ, PR);
+         end;
+      end loop;
+
+      --  Segment 2: Windward Straight (conical shell)
+      --  r from R_Tang to R_Target, z = Z_Tang + (r - R_Tang) * tan(gamma)
+      for I in 1 .. Seg_Pts - 1 loop
+         pragma Loop_Invariant (True);
+         declare
+            T : constant Float := Float (I) / Float (Seg_Pts - 1);
+            R : constant Float := R_Tang + T * (R_Target - R_Tang);
+            Z : constant Float := Z_Tang + (R - R_Tang) * Tan_G;
+         begin
+            Add_Point (Z, R);
+         end;
+      end loop;
+
+      --  Segment 3: Toroid Wrap (theta: -gamma to Pi/2)
+      --  r = R_C_Out + r_tor * cos(theta), z = Z_C_Out + r_tor * sin(theta)
+      for I in 1 .. Seg_Pts - 1 loop
+         pragma Loop_Invariant (True);
+         declare
+            T     : constant Float := Float (I) / Float (Seg_Pts - 1);
+            Theta : constant Float := (-Gamma_Rad) * (1.0 - T)
+                                    + (Pi / 2.0) * T;
+            PR    : constant Float := R_C_Out + R_Torus * Cos_Rad (Theta);
+            PZ    : constant Float := Z_C_Out + R_Torus * Sin_Rad (Theta);
+         begin
+            Add_Point (PZ, PR);
+         end;
+      end loop;
+
+      --  Segment 4: Flat Back (r from R_C_Out to 0, z = Z_Back)
+      for I in 1 .. Seg_Pts - 1 loop
+         pragma Loop_Invariant (True);
+         declare
+            T : constant Float := Float (I) / Float (Seg_Pts - 1);
+            R : constant Float := R_C_Out * (1.0 - T);
+         begin
+            Add_Point (Z_Back, R);
+         end;
+      end loop;
+
+      N_Pts.all := Idx;
+   end Get_HIAD_Cross_Section;
 
 end StellarOrion_PINN_Trajectory;
