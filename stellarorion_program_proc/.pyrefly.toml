@@ -1,13 +1,22 @@
-# pyrefly configuration — exclude virtualenvs and build artifacts
+# pyrefly configuration — treat ALL warnings as errors
 # [Citation: pyrefly docs — https://github.com/facebook/pyrefly]
+# Updated: 2026-09-15 — migrated to project-includes format + strict mode
 
-exclude = [
+project-includes = [
+    "src/**/*.py*",
+    "scripts/**/*.py*",
+    "*.py*",
+]
+
+project-excludes = [
     "venv_validation/",
     "venv/",
     ".venv/",
     "__pycache__/",
-    "*.pyc",
     "build/",
     "dist/",
-    "*.egg-info/",
 ]
+
+# STRICT MODE: treat all type warnings as errors — warnings-as-errors enforcement
+# [Citation: pyrefly strict preset — enables all error kinds at Error severity]
+preset = "strict"
