@@ -32,6 +32,32 @@ This project uses a hybrid architecture for running simulations:
 
 ---
 
+## 🎬 Live Dashboard Animation
+
+Real-time aerothermodynamic visualization of the IRVE-3 HIAD reentry — featuring Sutton-Graves heat flux, PINN training metrics, composite material cross-section with heat propagation, and animated Earth trajectory.
+
+![Dashboard Frame](stellarorion_program_proc/results_validation_scalloped/plots/dashboard_frame.png)
+
+**Full animation:** [hybrid_dsmc_pinn_animation.mp4](stellarorion_program_proc/results_validation_scalloped/plots/hybrid_dsmc_pinn_animation.mp4) (102s, 30fps, 80 MB)
+
+**Dashboard panels:**
+- Row 1: Altitude / Velocity / Mach Number
+- Row 2: Sutton-Graves Heat Flux / Peak Heat Flux / Deceleration (G-load)
+- Row 3: Drag Force / IRVE-3 Vehicle (with composite material inset & heat propagation)
+- Row 4: PINN Training Loss / PINN Accuracy / DSMC vs PINN Error / Knudsen Number
+- Row 5: Atmospheric Density / Temperature / Pressure
+- Row 6: Peak Heat Flux / Total Heat Load / Ballistic Coefficient
+- Row 7: Peak G-Load / Stagnation Pressure / Altitude of Peak Heating
+- Row 8: Earth Position & Flight Trajectory (animated spiral Earth, orange arrowhead)
+
+```bash
+# Regenerate animation
+cd stellarorion_program_proc/src/python
+python3 generate_outputs.py --mp4-only
+```
+
+---
+
 ## 🛠️ Requirements & Installation
 
 - **Docker:** Required for SPARTA simulation.
