@@ -51,6 +51,13 @@ import numpy as np
 matplotlib.use("Agg")  # headless backend
 
 # ---------------------------------------------------------------------------
+# Import Ada FFI wrappers for physics computations
+# [Citation: ada_pinn_wrapper.py — Ada/SPARK FFI bindings]
+# ---------------------------------------------------------------------------
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src", "python"))
+from ada_pinn_wrapper import radiative_eq_temp
+
+# ---------------------------------------------------------------------------
 # Physical constants for T_surface mapping
 # [Source: stellarorion_physics.ads; Stefan-Boltzmann law]
 # ---------------------------------------------------------------------------
@@ -105,11 +112,12 @@ def _watts_to_celsius_friendly(q_wm2: float) -> float:
 
 def _q_to_t_surface(q_wm2: float) -> float:
     """Compute T_surface from heat flux using Stefan-Boltzmann law.
-    T = (q / (sigma * epsilon))^0.25
-    [Source: stellarorion_physics.ads Radiative_Eq_Temp]"""
+    Delegates to Ada/SPARK via FFI: Radiative_Eq_Temp_C.
+    [Citation: stellarorion_physics.ads Radiative_Eq_Temp]
+    """
     if q_wm2 <= 0:
         return 300.0
-    return (q_wm2 / (SIGMA_SB * EMISSIVITY)) ** 0.25
+    return radiative_eq_temp(q_wm2, EMISSIVITY)
 
 
 def plot_3d_surface(points: np.ndarray, heat: np.ndarray, out_path: str,

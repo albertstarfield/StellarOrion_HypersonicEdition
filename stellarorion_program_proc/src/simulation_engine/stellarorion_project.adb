@@ -257,6 +257,15 @@ package body StellarOrion_Project is
       Put_Line ("  --fresh-start             Fresh start (no restart)");
       Put_Line ("  --payload-file <path>     Payload input file");
       New_Line;
+      Put_Line ("Output Options:");
+      Put_Line ("  --results-dir <path>      Results directory (default: results_validation_scalloped)");
+      Put_Line ("  --plots                   Generate all post-simulation plots");
+      Put_Line ("  --derived-plots           Generate derived thermal plots (T_surface, T_back, beta)");
+      Put_Line ("  --vtu-plots               Generate VTU visualization plots");
+      Put_Line ("  --rapisarda               Generate Rapisarda MDAO comparison plots");
+      Put_Line ("  --trajectory-profile      Generate 1-DOF trajectory profile CSV");
+      Put_Line ("  --hiad-3d                 Generate interactive 3D HIAD model (HTML)");
+      New_Line;
       Put_Line ("Display Options:");
       Put_Line ("  --imageDebug              Debug image generation");
       Put_Line ("  --paraview                ParaView output");
@@ -1161,6 +1170,113 @@ package body StellarOrion_Project is
          Run_Self_Test;
          goto Cleanup;
       end if;
+
+      --  Results directory (shared by all plot/trajectory modes)
+      declare
+         Results_Dir : constant String := Get_Option ("--results-dir", "results_validation_scalloped");
+         Script_Dir : constant String := "scripts";
+         --  Preallocated aliased strings for Spawn (zero heap allocation)
+         -- [Citation: code-quality.md — DYNAMIC_ALLOCATION fix: preallocated aliased strings]
+         Arg_Python  : aliased constant String := "python3";
+         Arg_RDir    : aliased constant String := Results_Dir;
+         Arg_ValPlt  : aliased constant String := Script_Dir & "/make_validation_plots.py";
+         Arg_DerPlt  : aliased constant String := Script_Dir & "/make_derived_plots.py";
+         Arg_VtuPlt  : aliased constant String := Script_Dir & "/make_vtu_visualization.py";
+         Arg_RapPlt  : aliased constant String := Script_Dir & "/plot_rapisarda_comparison.py";
+         Arg_TrajPrf : aliased constant String := Script_Dir & "/gen_trajectory_profile.py";
+         Arg_Hiad3d  : aliased constant String := Script_Dir & "/plot_hiad_3d.py";
+         Success : Boolean;
+      begin
+         --  Generate all post-simulation plots
+         if Has_Flag ("--plots") then
+            Put_Line ("[PLOTS] Generating all validation plots...");
+            declare
+               Val_Args : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
+                 (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_ValPlt),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_RDir));
+               Der_Args : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
+                 (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_DerPlt),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_RDir));
+               Vtu_Args : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
+                 (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_VtuPlt),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_RDir));
+               Rap_Args : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
+                 (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_RapPlt),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_RDir));
+            begin
+               Spawn (Arg_Python, Val_Args, Success);
+               Spawn (Arg_Python, Der_Args, Success);
+               Spawn (Arg_Python, Vtu_Args, Success);
+               Spawn (Arg_Python, Rap_Args, Success);
+            end;
+            Put_Line ("[PLOTS] All plots generated in " & Results_Dir & "/plots/");
+            goto Cleanup;
+         end if;
+
+         --  Derived thermal plots only
+         if Has_Flag ("--derived-plots") then
+            Put_Line ("[PLOTS] Generating derived thermal plots...");
+            declare
+               Der_Args : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
+                 (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_DerPlt),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_RDir));
+            begin
+               Spawn (Arg_Python, Der_Args, Success);
+            end;
+            goto Cleanup;
+         end if;
+
+         --  VTU visualization plots only
+         if Has_Flag ("--vtu-plots") then
+            Put_Line ("[PLOTS] Generating VTU visualization plots...");
+            declare
+               Vtu_Args : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
+                 (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_VtuPlt),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_RDir));
+            begin
+               Spawn (Arg_Python, Vtu_Args, Success);
+            end;
+            goto Cleanup;
+         end if;
+
+         --  Rapisarda MDAO comparison plots only
+         if Has_Flag ("--rapisarda") then
+            Put_Line ("[PLOTS] Generating Rapisarda comparison plots...");
+            declare
+               Rap_Args : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
+                 (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_RapPlt),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_RDir));
+            begin
+               Spawn (Arg_Python, Rap_Args, Success);
+            end;
+            goto Cleanup;
+         end if;
+
+         --  Trajectory profile generation
+         if Has_Flag ("--trajectory-profile") then
+            Put_Line ("[TRAJ] Generating 1-DOF trajectory profile...");
+            declare
+               Traj_Args : constant GNAT.OS_Lib.Argument_List (1 .. 2) :=
+                 (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_TrajPrf),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_RDir));
+            begin
+               Spawn (Arg_Python, Traj_Args, Success);
+            end;
+            goto Cleanup;
+         end if;
+
+         --  3D HIAD model generation
+         if Has_Flag ("--hiad-3d") then
+            Put_Line ("[3D] Generating interactive 3D HIAD model...");
+            declare
+               Hiad_Args : constant GNAT.OS_Lib.Argument_List (1 .. 1) :=
+                 (1 => StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Hiad3d));
+            begin
+               Spawn (Arg_Python, Hiad_Args, Success);
+            end;
+            goto Cleanup;
+         end if;
+      end;
 
       --  IRVE-3 baseline
       if Has_Flag ("--gettheirvebbaseline") then

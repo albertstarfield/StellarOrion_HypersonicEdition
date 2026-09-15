@@ -841,6 +841,22 @@ def _phase3_ada_build(verbose: bool) -> None:
     if not ok:
         fatal("alr build failed -- compilation errors in Ada source", 2)
 
+    # -- FFI shared library build (libstellarorion_pinn.dylib)
+    #  [Citation: stellarorion_pinn_lib.gpr — Dynamic library for Python ctypes FFI]
+    t = step_start("FFI shared library build")
+    ok, stdout, stderr = _run(
+        ["alr", "exec", "--", "gprbuild", "-P",
+         "stellarorion_pinn_lib.gpr", "-f"],
+        cwd=_PROJECT_ROOT,
+        env=_macos_sdk_env(),
+        verbose=verbose,
+        timeout=900,
+    )
+    elapsed = time.monotonic() - t
+    step_result(ok, "FFI shared library built", elapsed, verbose, stdout, stderr)
+    if not ok:
+        fatal("FFI shared library build failed -- check stellarorion_pinn_lib.gpr", 2)
+
     # -- gnatcov (coverage instrumentation check, optional)
     #  [Citation: GNAT Pro gnatcov — https://docs.adacore.com/gnatcov-docs/]
     #  gnatcov provides statement/decision/branch coverage for Ada/SPARK.

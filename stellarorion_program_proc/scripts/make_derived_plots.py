@@ -11,7 +11,7 @@ AXIOMS:
   AXIOM 2: The CSV contains columns: heatflux_avg_Wm2, heatflux_max_Wm2,
            drag_sum_N, dyn_press_pa, time_s, step.
   AXIOM 3: Derived variables (T_surface, T_back, beta) are computed from
-           physics formulas in stellarorion_physics.ads.
+           physics formulas in stellarorion_physics.ads via Ada FFI.
 
 THEORIES:
   THEOREM 1: T_surface = (q_avg / (sigma * epsilon))^0.25
@@ -23,7 +23,7 @@ THEORIES:
 
 APPLICATIONS:
   - Read <results_dir>/validation_timeseries.csv
-  - Compute T_surface, T_back, beta for each step
+  - Compute T_surface, T_back, beta for each step via Ada FFI
   - Plot derived variables vs step as PNG
   - Write PNGs into <results_dir>/plots/
 
@@ -47,6 +47,17 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 matplotlib.use("Agg")  # headless / non-interactive backend
+
+# ---------------------------------------------------------------------------
+# Import Ada FFI wrappers for physics computations
+# [Citation: ada_pinn_wrapper.py — Ada/SPARK FFI bindings]
+# ---------------------------------------------------------------------------
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src", "python"))
+from ada_pinn_wrapper import (
+    radiative_eq_temp,
+    backface_temperature,
+    ballistic_coefficient,
+)
 
 # ---------------------------------------------------------------------------
 # Physical constants and material properties
@@ -98,30 +109,36 @@ def _read_csv(path: str) -> tuple[list[int], dict[str, list[float]]]:
 
 def _compute_t_surface(q_avg_wm2: float) -> float:
     """Radiative equilibrium surface temperature [K].
-    T = (q / (sigma * epsilon))^0.25
-    [Source: Stefan-Boltzmann law; stellarorion_physics.ads Radiative_Eq_Temp]"""
+    Delegates to Ada/SPARK via FFI: Radiative_Eq_Temp_C.
+    [Citation: Stefan-Boltzmann law; stellarorion_physics.ads Radiative_Eq_Temp]
+    """
     if q_avg_wm2 <= 0:
         return T_INIT
-    return (q_avg_wm2 / (SIGMA_SB * EMISSIVITY)) ** 0.25
+    return radiative_eq_temp(q_avg_wm2, EMISSIVITY)
 
 
 def _compute_t_back(q_total_jm2: float) -> float:
     """1D transient backface temperature [K].
-    T_back = T_init + (Q_total * eta_lag) / (rho_TPS * Cp * delta)
-    [Source: stellarorion_physics.ads Backface_Temperature]
+    Delegates to Ada/SPARK via FFI: Backface_Temperature_C.
+    [Citation: stellarorion_physics.ads Backface_Temperature]
     Uses cumulative heat load (J/m²) directly, NOT time-based formula.
-    Q_total is the area-integrated heat load from the DSMC simulation."""
-    capacitance = RHO_TPS * CP_TPS * DELTA_TPS  # [J/(m^2 K)] = 8800
-    return T_INIT + (q_total_jm2 * ETA_LAG) / capacitance
+    Q_total is the area-integrated heat load from the DSMC simulation.
+    """
+    # Ada FFI expects heat_flux in W/m^2 and duration in seconds.
+    # For cumulative heat load, we pass Q_total as heat_flux and dt=1.0
+    # since Backface_Temperature uses q * dt = Q_total.
+    return backface_temperature(
+        T_INIT, q_total_jm2, 1.0, ETA_LAG, RHO_TPS, CP_TPS, DELTA_TPS)
 
 
 def _compute_beta(dyn_press_pa: float, drag_sum_n: float) -> float:
     """Ballistic coefficient [kg/m^2].
-    beta = m * q / F_drag
-    [Source: stellarorion_physics.ads Ballistic_Coefficient]"""
+    Delegates to Ada/SPARK via FFI: Ballistic_Coefficient_C.
+    [Citation: stellarorion_physics.ads Ballistic_Coefficient]
+    """
     if drag_sum_n <= 0:
         return float('inf')
-    return MASS_IRVE3 * dyn_press_pa / drag_sum_n
+    return ballistic_coefficient(MASS_IRVE3, dyn_press_pa, drag_sum_n)
 
 
 def _plot_derived(
