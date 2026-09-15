@@ -516,6 +516,68 @@ def _render_animated_frame(fargs):
         draw.text((x1 - int(220 * _scale), y0 + int(90 * _scale)),
                   "70° cone, 6 tori, r=0.135m", fill=(120, 120, 140), font=font_sm)
 
+        # ── Composite Material Inset (left side, empty area) ──
+        # [Citation: NASA TP-2013-4012 — IRVE-3 flexible TPS composite]
+        # [Citation: Rapisarda (2023) Sec 3.7 — HIAD material stack]
+        inset_x = x0 + int(10 * _scale)
+        inset_y = y0 + int(10 * _scale)
+        inset_w = int(180 * _scale)
+        inset_h = int(130 * _scale)
+        draw.rectangle([inset_x, inset_y, inset_x + inset_w, inset_y + inset_h],
+                       fill=(20, 20, 40), outline=(80, 100, 140), width=1)
+        draw.text((inset_x + int(5 * _scale), inset_y + int(3 * _scale)),
+                  "Composite Shield Cross-Section", fill=(180, 200, 255), font=font_sm)
+
+        # Layer positions (from outer to inner)
+        layer_names = ["TPS Fabric", "Insulation", "Structural"]
+        layer_colors = [(200, 80, 60), (180, 140, 80), (100, 120, 160)]
+        layer_h = [int(25 * _scale), int(25 * _scale), int(25 * _scale)]
+        layer_y_start = inset_y + int(18 * _scale)
+        layer_x = inset_x + int(20 * _scale)
+        layer_w = int(120 * _scale)
+
+        # Draw layers
+        current_y = layer_y_start
+        for i, (name, color, h) in enumerate(zip(layer_names, layer_colors, layer_h)):
+            draw.rectangle([layer_x, current_y, layer_x + layer_w, current_y + h],
+                           fill=color, outline=(60, 80, 100))
+            draw.text((layer_x + int(3 * _scale), current_y + int(2 * _scale)),
+                      name, fill=(255, 255, 255), font=font_sm)
+            current_y += h
+
+        # ── Heat Flow Arrows (convection + conduction) ──
+        # Convection: arrows from gas to outer surface (horizontal)
+        arrow_x = layer_x + layer_w + int(5 * _scale)
+        for i in range(3):
+            ay = layer_y_start + int(10 * _scale) + i * int(10 * _scale)
+            # Convection arrow (red, pointing left into surface)
+            draw.line([(arrow_x + int(30 * _scale), ay), (arrow_x, ay)],
+                      fill=(255, 100, 50), width=2)
+            # Arrowhead
+            draw.polygon([(arrow_x, ay),
+                          (arrow_x + int(6 * _scale), ay - int(3 * _scale)),
+                          (arrow_x + int(6 * _scale), ay + int(3 * _scale))],
+                         fill=(255, 100, 50))
+
+        # Conduction: arrows through layers (vertical, downward)
+        cond_x = layer_x + layer_w // 2
+        for i in range(3):
+            cy = layer_y_start + i * int(25 * _scale)
+            # Conduction arrow (yellow, pointing down through layers)
+            draw.line([(cond_x, cy + int(5 * _scale)), (cond_x, cy + int(20 * _scale))],
+                      fill=(255, 220, 50), width=2)
+            # Arrowhead
+            draw.polygon([(cond_x, cy + int(20 * _scale)),
+                          (cond_x - int(3 * _scale), cy + int(14 * _scale)),
+                          (cond_x + int(3 * _scale), cy + int(14 * _scale))],
+                         fill=(255, 220, 50))
+
+        # Labels for heat flow
+        draw.text((arrow_x + int(15 * _scale), layer_y_start - int(8 * _scale)),
+                  "Convection", fill=(255, 120, 80), font=font_sm)
+        draw.text((layer_x - int(5 * _scale), current_y + int(2 * _scale)),
+                  "Conduction", fill=(255, 220, 80), font=font_sm)
+
     # ══════════════════════════════════════════════════════════════════
     # LAYOUT: Percentage-based, adapts to resolution
     # ══════════════════════════════════════════════════════════════════
@@ -546,12 +608,17 @@ def _render_animated_frame(fargs):
                              show_steps, show_mach, (220, 100, 220), mach,
                              fmt="{:.2f}", frame_idx=frame_idx)
 
-        # Row 2 (y=18%, h=11%): heat flux (wide) / g-load
-        p = _pct_to_px(2, title_h + 12, 64, 11)
+        # Row 2 (y=18%, h=11%): sutton-graves heat flux / peak heat flux / g-load
+        p = _pct_to_px(2, title_h + 12, 32, 11)
         _draw_animated_panel(draw, *p, "Sutton-Graves Heat Flux", r"q [W/cm2]",
                              show_steps, show_hf, (255, 80, 80), hf, r"W/cm2",
                              frame_idx=frame_idx)
-        p = _pct_to_px(67, title_h + 12, 31, 11)
+        peak_hf_val = show_peak_hf[frame_idx] if frame_idx < len(show_peak_hf) else 0.0
+        p = _pct_to_px(35, title_h + 12, 32, 11)
+        _draw_animated_panel(draw, *p, "Peak Heat Flux", r"q_peak [W/cm2]",
+                             show_steps, show_peak_hf, (255, 50, 50), peak_hf_val, r"W/cm2",
+                             fmt="{:.1f}", frame_idx=frame_idx)
+        p = _pct_to_px(68, title_h + 12, 30, 11)
         _draw_animated_panel(draw, *p, "Deceleration (G-load)", "G [g]",
                              show_steps, show_g, (80, 220, 220), gload, "g",
                              frame_idx=frame_idx)
