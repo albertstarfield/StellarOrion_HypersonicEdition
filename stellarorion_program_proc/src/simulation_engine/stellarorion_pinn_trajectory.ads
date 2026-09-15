@@ -241,11 +241,11 @@ package StellarOrion_PINN_Trajectory is
    --
    --  [Citation: Rapisarda (2023) Sec 3.7 — HIAD flat-skin profile]
    --  [Citation: stellarorion_sparta.ads — 4-segment geometry spec]
-   procedure Get_HIAD_Cross_Section
-     (X_Arr  : out Array_Float_200;
-      Y_Arr  : out Array_Float_200;
-      N_Pts  : out Integer)
-      with Pre => True, Post => N_Pts >= 0
-                   and N_Pts <= MAX_CROSS_SECTION_PTS;
+    procedure Get_HIAD_Cross_Section
+      (X_Arr  : out Array_Float_200;
+       Y_Arr  : out Array_Float_200;
+       N_Pts  : access Integer)
+       with Pre => True, Post => N_Pts.all >= 0
+                    and N_Pts.all <= MAX_CROSS_SECTION_PTS;
 
 end StellarOrion_PINN_Trajectory;

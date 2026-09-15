@@ -78,7 +78,7 @@ echo ""
 echo "Running: alr exec -- gnatprove -P stellarorion_program_proc.gpr --level=$LEVEL"
 echo ""
 
-if alr exec -- gnatprove -P stellarorion_program_proc.gpr --level="$LEVEL" --output-report=off; then
+if alr exec -- gnatprove -P stellarorion_program_proc.gpr --level="$LEVEL"; then
     echo ""
     echo "GNATprove: PASSED (Level $LEVEL)"
 else

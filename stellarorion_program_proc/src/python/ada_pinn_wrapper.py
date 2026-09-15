@@ -155,6 +155,55 @@ def irve3_trajectory_model(step, target_step=3.0e8, h_entry=120.0, h_final=50.0,
     }
 
 
+# -----------------------------------------------------------------
+#  Get_HIAD_Cross_Section FFI binding
+# -----------------------------------------------------------------
+#  AXIOM: All geometry math is in Ada/SPARK. Python calls via ctypes.
+#  Ada procedure uses `out Array_Float_200` parameters passed by
+#  reference (pointer to 200-element float arrays).
+#
+#  [Citation: Rapisarda (2023) Sec 3.7 — HIAD flat-skin profile]
+#  [Citation: Ada 2012 RM §6.2 — out parameter passing]
+# -----------------------------------------------------------------
+_MAX_CROSS_SECTION_PTS = 200
+_Float_Array_200 = ctypes.c_float * _MAX_CROSS_SECTION_PTS
+
+_ada_lib.stellarorion_pinn_trajectory__get_hiad_cross_section.restype = None
+_ada_lib.stellarorion_pinn_trajectory__get_hiad_cross_section.argtypes = [
+    ctypes.POINTER(_Float_Array_200),   # X_Arr (axial coords, by reference)
+    ctypes.POINTER(_Float_Array_200),   # Y_Arr (radial coords, by reference)
+    ctypes.POINTER(ctypes.c_int),       # N_Pts (access Integer — pointer)
+]
+
+
+def get_hiad_cross_section():
+    """Return the 4-segment HIAD flat-skin cross-section from Ada/SPARK.
+
+    Returns dict with:
+      x : list[float]  — axial coordinates (nose points +X)
+      y : list[float]  — radial coordinates (half-width)
+      n : int          — actual number of valid points
+
+    All geometry math is computed in Ada/SPARK; Python is a thin wrapper.
+    [Citation: Rapisarda (2023) Sec 3.7, Appendix C.1]
+    [Citation: stellarorion_pinn_trajectory.ads — Get_HIAD_Cross_Section]
+    """
+    x_arr = _Float_Array_200()
+    y_arr = _Float_Array_200()
+    n_pts = ctypes.c_int(0)
+    #  Ada out params: X_Arr/Y_Arr passed by reference, N_Pts passed by copy.
+    #  We pass all via byref() to ensure correct pointer semantics.
+    _ada_lib.stellarorion_pinn_trajectory__get_hiad_cross_section(
+        ctypes.byref(x_arr), ctypes.byref(y_arr), ctypes.byref(n_pts),
+    )
+    n = n_pts.value
+    return {
+        "x": [x_arr[i] for i in range(n)],
+        "y": [y_arr[i] for i in range(n)],
+        "n": n,
+    }
+
+
 if __name__ == "__main__":
     print("=== Ada/SPARK PINN Trajectory Wrapper Self-Test ===")
     atm = isa_atmosphere(50.0)
@@ -167,4 +216,21 @@ if __name__ == "__main__":
     print(f"Step 2200: alt={t2200['altitude_km']:.1f}km, g={t2200['g_load']:.2f}")
     t300 = irve3_trajectory_model(300000000)
     print(f"Step 300M: alt={t300['altitude_km']:.1f}km, g={t300['g_load']:.2f}")
-    print("Self-test complete.")
+
+    # --- HIAD Cross-Section self-test ---
+    print("\n--- HIAD Cross-Section Test ---")
+    cs = get_hiad_cross_section()
+    print(f"Points returned: {cs['n']} (expected 56 = 4 segments * 15 pts - 3 overlap)")
+    print(f"X range: [{min(cs['x']):.4f}, {max(cs['x']):.4f}] m")
+    print(f"Y range: [{min(cs['y']):.4f}, {max(cs['y']):.4f}] m")
+    print(f"Nose tip (first pt): X={cs['x'][0]:.4f}, Y={cs['y'][0]:.4f}")
+    print(f"Back plane (last pt): X={cs['x'][-1]:.4f}, Y={cs['y'][-1]:.4f}")
+    # Verify max radial extent - IRVE-3 with 6 tori extends beyond nose radius
+    max_r = max(cs['y'])
+    print(f"Max radial extent: {max_r:.4f} m (IRVE-3 nose=1.5m, toroid extends to ~2.65m)")
+    # For IRVE-3 with 6 tori, max radius is around 2.65m (nose + toroid wrap)
+    if cs['n'] > 0 and 2.5 < max_r < 2.7:
+        print("PASS: Cross-section geometry matches IRVE-3 toroid parameters")
+    else:
+        print("WARN: Cross-section geometry outside expected range (2.5-2.7m)")
+    print("\nSelf-test complete.")
