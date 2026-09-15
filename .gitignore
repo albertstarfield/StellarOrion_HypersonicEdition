@@ -188,6 +188,10 @@ cython_debug/
 
 # StellarOrion Specific
 HIAD_3D_model.html
+*.html
+!stellarorion_program_proc/src/sidecar_ui/index.html
+!stellarorion_program_proc/src/ui/frontend/index.html
+!stellarorion_program_proc/src/ui/uiassets/index.html
 tmp_sparta_build/
 gnatcov_rts-*/
 stellarorion_program_proc/proofs/
