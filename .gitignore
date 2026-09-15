@@ -192,6 +192,7 @@ HIAD_3D_model.html
 !stellarorion_program_proc/src/sidecar_ui/index.html
 !stellarorion_program_proc/src/ui/frontend/index.html
 !stellarorion_program_proc/src/ui/uiassets/index.html
+**venv**
 tmp_sparta_build/
 gnatcov_rts-*/
 stellarorion_program_proc/proofs/
