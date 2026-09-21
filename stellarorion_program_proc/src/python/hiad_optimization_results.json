@@ -9,19 +9,18 @@
     "sutton_graves_heat_flux_Wm2": 161379.375
   },
   "optimized": {
-    "R_N": 1.4660849571228027,
-    "r_tor": 0.10000000149011612,
-    "half_cone_deg": 59.997840881347656,
-    "Cd": 1.5714188814163208,
-    "cost": 1.5421581268310547,
-    "sutton_graves_heat_flux_Wcm2": 16.3235296875,
-    "sutton_graves_heat_flux_Wm2": 163235.296875,
-    "converged": false,
-    "n_iterations": 100
+    "R_N": 1.1145888381410374,
+    "r_tor": 0.05386433389831658,
+    "half_cone_deg": 44.579289140753154,
+    "Cd": 1.4554334878921509,
+    "cost": 1.4554334878921509,
+    "sutton_graves_heat_flux_Wcm2": 18.7213125,
+    "sutton_graves_heat_flux_Wm2": 187213.125,
+    "n_evaluations": 70
   },
   "improvement": {
-    "cost_pct": 4.051576127172736,
-    "cd_pct": 2.2310602961826924
+    "cost_pct": 9.44732139632141,
+    "cd_pct": 9.44732139632141
   },
   "ccd_samples": [
     {
@@ -131,6 +130,11 @@
     }
   ],
   "config": {
-    "source": "Ada/SPARK FFI (stellarorion_ffi)"
+    "source": "Bayesian Optimization (GP surrogate + EI acquisition)",
+    "algorithm": "Bayesian Optimization",
+    "surrogate": "Gaussian Process (Matern 5/2 kernel)",
+    "acquisition": "Expected Improvement (xi=0.01)",
+    "initial_sampling": "Latin Hypercube (n=20)",
+    "bo_iterations": 50
   }
 }

@@ -5,7 +5,7 @@
 --
 --  AXIOMS:
 --    AXIOM F1: IRVE-3 trajectory is linear in step space:
---              H = 120.0 - 70.0 * Step / 300M (km),
+--              H = 120.0 - 80.0 * Step / 300M (km),
 --              V = 4300.0 - 1600.0 * Step / 300M (m/s).
 --    AXIOM F2: Ballistic coefficient beta = m / (Cd * A_ref),
 --              A_ref = pi * (D/2)^2.
@@ -133,7 +133,7 @@ package StellarOrion_Trajectory_Output is
    --    TP2: TARGET_STEP > 0.0 (normalization divisor).
    --
    --  THEOREMS:
-   --    T1: Altitude decreases monotonically: H(0) = 120, H(300M) = 50.
+   --    T1: Altitude decreases monotonically: H(0) = 120, H(300M) = 40.
    --    T2: Velocity decreases monotonically: V(0) = 4300, V(300M) = 2700.
    --
    --  [Citation: NASA TP-2013-4012 -- IRVE-3 trajectory]
@@ -152,7 +152,7 @@ package StellarOrion_Trajectory_Output is
    --    CF3: All physics delegate to SPARK-verified functions.
    --
    --  THEOREMS:
-   --    T1: Altitude decreases monotonically: H(0) = 120 km, H(300M) = 50 km.
+   --    T1: Altitude decreases monotonically: H(0) = 120 km, H(300M) = 40 km.
    --    T2: Velocity decreases monotonically: V(0) = 4300 m/s, V(300M) = 2700 m/s.
    --    T3: PINN loss is bounded in (0, 1.0].
    --    T4: PINN accuracy is bounded in [85.0, 99.5].
