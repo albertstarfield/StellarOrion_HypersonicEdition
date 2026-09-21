@@ -233,7 +233,7 @@ package body StellarOrion_PINN_Trajectory is
    -- -----------------------------------------------------------------
    --  IRVE3_Trajectory
    -- -----------------------------------------------------------------
-   --  AXIOM T5: Uniform linear trajectory from 120 km to 50 km,
+   --  AXIOM T5: Uniform linear trajectory from 120 km to 40 km,
    --            V 4300 to 2700 m/s, across steps 0 to Target_Step.
    --  H = H_Entry + (H_Final - H_Entry) * Step / Target_Step
    --  V = V_Entry + (V_Final - V_Entry) * Step / Target_Step
@@ -250,7 +250,7 @@ package body StellarOrion_PINN_Trajectory is
      (Step           : Float;
       Target_Step    : Float := 3.0e8;
       H_Entry_Km     : Float := 120.0;
-      H_Final_Km     : Float := 50.0;
+       H_Final_Km     : Float := 40.0;
       V_Entry_Ms     : Float := 4300.0;
       V_Final_Ms     : Float := 2700.0;
       H_DSMC_Km      : Float := 51.8;

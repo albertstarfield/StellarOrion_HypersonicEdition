@@ -139,7 +139,7 @@ def g_load(drag_force_n, mass_kg):
     )
 
 
-def irve3_trajectory_model(step, target_step=3.0e8, h_entry=120.0, h_final=50.0,
+def irve3_trajectory_model(step, target_step=3.0e8, h_entry=120.0, h_final=40.0,
                            v_entry=4300.0, v_final=2700.0, h_dsmc=51.8, v_dsmc=3378.0):
     r = _ada_lib.stellarorion_pinn_trajectory__irve3_trajectory(
         ctypes.c_float(float(step)), ctypes.c_float(target_step),
@@ -478,6 +478,195 @@ def run_mop_optimize(
     }
 
 
+# ---------------------------------------------------------------------------
+#  Bayesian Optimization — Global optimization via GP surrogate
+# ---------------------------------------------------------------------------
+
+# [Citation: Mockus (1978), "Bayesian Approach to Global Optimization"]
+# [Citation: Jones et al. (1998), "Efficient Global Optimization of Expensive
+#  Black-Box Functions", J. Global Optimization 13, 455-492]
+# [Citation: Scikit-learn: https://scikit-learn.org/stable/modules/gaussian_process.html]
+
+# Parameter bounds for HIAD geometry optimization
+# [Citation: stellarorion_optimization.ads — Constraints]
+# R_N: nose sphere radius (m), r_tor: torus minor radius (m),
+# half_cone_deg: half-cone angle (degrees)
+_BOUNDS = [
+    (0.5, 3.0),    # R_N — nose radius: 0.5m to 3.0m
+    (0.05, 0.5),   # r_tor — torus radius: 0.05m to 0.5m
+    (40.0, 80.0),  # half_cone_deg — half-cone angle: 40° to 80°
+]
+
+
+def _latin_hypercube_sample(n_samples, bounds, seed=None):
+    """Generate Latin Hypercube Design of Experiments.
+
+    Parameters:
+        n_samples -- number of sample points
+        bounds    -- list of (min, max) tuples for each dimension
+        seed      -- random seed for reproducibility
+
+    Returns:
+        numpy array of shape (n_samples, n_dims)
+
+    [Citation: McKay et al. (1979), "A Comparison of Three Methods for
+     Selecting Values of Input Variables in the Analysis of Output from
+     a Computer Code", Technometrics 21(2), 239-245]
+    """
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    n_dims = len(bounds)
+    samples = np.zeros((n_samples, n_dims))
+    for j in range(n_dims):
+        perm = rng.permutation(n_samples)
+        for i in range(n_samples):
+            samples[i, j] = (perm[i] + rng.random()) / n_samples
+    # Scale to bounds
+    for j, (lo, hi) in enumerate(bounds):
+        samples[:, j] = lo + samples[:, j] * (hi - lo)
+    return samples
+
+
+def _expected_improvement(X_candidate, gp, y_best, xi=0.01):
+    """Compute Expected Improvement acquisition function.
+
+    EI(x) = E[max(0, f_best - f(x) - xi)]
+          = (f_best - mu(x) - xi) * Phi(Z) + sigma(x) * phi(Z)
+    where Z = (f_best - mu(x) - xi) / sigma(x)
+
+    Parameters:
+        X_candidate -- candidate points (n, d)
+        gp          -- fitted GaussianProcessRegressor
+        y_best      -- best observed cost value (minimum)
+        xi          -- exploration-exploitation tradeoff (default 0.01)
+
+    Returns:
+        EI values (n,)
+
+    [Citation: Jones et al. (1998), Eq. (2)]
+    [Citation: https://scikit-learn.org/stable/modules/gaussian_process.html]
+    """
+    from scipy.stats import norm
+    import numpy as np
+    mu, sigma = gp.predict(X_candidate, return_std=True)
+    sigma = np.maximum(sigma, 1e-9)
+    Z = (y_best - mu - xi) / sigma
+    ei = (y_best - mu - xi) * norm.cdf(Z) + sigma * norm.pdf(Z)
+    return ei
+
+
+def run_bayesian_optimize(
+    cost_fn,
+    n_initial: int = 20,
+    n_iter: int = 50,
+    xi: float = 0.01,
+    seed: int = 42,
+) -> dict:
+    """Run Bayesian Optimization for HIAD geometry parameters.
+
+    Uses Gaussian Process surrogate with Expected Improvement acquisition
+    to find global optimum of the cost function.
+
+    Parameters:
+        cost_fn   -- callable(R_N, r_tor, half_cone_deg) -> float
+        n_initial -- initial Latin Hypercube sample count (default 20)
+        n_iter    -- BO iterations after initial sampling (default 50)
+        xi        -- exploration-exploitation tradeoff (default 0.01)
+        seed      -- random seed for reproducibility
+
+    Returns:
+        dict with keys: x_opt (tuple), cost, n_evals, history (list of dicts)
+
+    [Citation: Mockus (1978), Bayesian Approach to Global Optimization]
+    [Citation: Jones et al. (1998), Efficient Global Optimization]
+    """
+    from sklearn.gaussian_process import GaussianProcessRegressor
+    from sklearn.gaussian_process.kernels import Matern, ConstantKernel
+    import numpy as np
+
+    bounds = _BOUNDS
+    n_dims = len(bounds)
+
+    # --- Step 1: Latin Hypercube initial sampling ---
+    X_init = _latin_hypercube_sample(n_initial, bounds, seed=seed)
+    y_init = np.array([cost_fn(float(x[0]), float(x[1]), float(x[2]))
+                       for x in X_init])
+
+    X_obs = list(X_init)
+    y_obs = list(y_init)
+    history = []
+    for i, (x, y) in enumerate(zip(X_init, y_init)):
+        history.append({
+            "iteration": i,
+            "R_N": float(x[0]),
+            "r_tor": float(x[1]),
+            "half_cone_deg": float(x[2]),
+            "cost": float(y),
+            "type": "initial",
+        })
+
+    y_best = float(min(y_obs))
+
+    # --- Step 2: Bayesian Optimization loop ---
+    for i in range(n_iter):
+        X_arr = np.array(X_obs)
+        y_arr = np.array(y_obs)
+
+        # Fit GP surrogate
+        kernel = (ConstantKernel(1.0, constant_value_bounds=(1e-3, 1e3))
+                  * Matern(length_scale=[1.0]*n_dims,
+                           length_scale_bounds=[(1e-3, 1e3)]*n_dims,
+                           nu=2.5))
+        gp = GaussianProcessRegressor(
+            kernel=kernel, n_restarts_optimizer=5, normalize_y=True,
+            alpha=1e-6,
+        )
+        gp.fit(X_arr, y_arr)
+
+        # Generate candidates via random search in bounds
+        n_candidates = 5000
+        X_cand = np.zeros((n_candidates, n_dims))
+        rng = np.random.default_rng(seed + i)
+        for j, (lo, hi) in enumerate(bounds):
+            X_cand[:, j] = rng.uniform(lo, hi, n_candidates)
+
+        # Compute Expected Improvement
+        ei = _expected_improvement(X_cand, gp, y_best, xi=xi)
+        best_idx = int(np.argmax(ei))
+
+        # Evaluate cost at best candidate
+        x_new = X_cand[best_idx]
+        y_new = cost_fn(float(x_new[0]), float(x_new[1]), float(x_new[2]))
+
+        X_obs.append(x_new)
+        y_obs.append(y_new)
+
+        if y_new < y_best:
+            y_best = y_new
+
+        history.append({
+            "iteration": n_initial + i,
+            "R_N": float(x_new[0]),
+            "r_tor": float(x_new[1]),
+            "half_cone_deg": float(x_new[2]),
+            "cost": float(y_new),
+            "type": "bo",
+            "ei_max": float(ei[best_idx]),
+        })
+
+    # --- Step 3: Return best result ---
+    best_idx = int(np.argmin(y_obs))
+    x_opt = X_obs[best_idx]
+    y_opt = y_obs[best_idx]
+
+    return {
+        "x_opt": (float(x_opt[0]), float(x_opt[1]), float(x_opt[2])),
+        "cost": float(y_opt),
+        "n_evals": len(X_obs),
+        "history": history,
+    }
+
+
 def generate_ccd_samples() -> list:
     """Generate CCD samples via Ada FFI.
 
@@ -517,12 +706,12 @@ def generate_ccd_samples() -> list:
 
 if __name__ == "__main__":
     print("=== Ada/SPARK PINN Trajectory Wrapper Self-Test ===")
-    atm = isa_atmosphere(50.0)
-    print(f"ISA at 50 km: T={atm['temperature_K']:.1f}K, rho={atm['density_kgm3']:.4e}kg/m3")
+    atm = isa_atmosphere(40.0)
+    print(f"ISA at 40 km: T={atm['temperature_K']:.1f}K, rho={atm['density_kgm3']:.4e}kg/m3")
     sg = sutton_graves_heat_flux(51.8, 3378.0)
     print(f"SG at 51.8km: {sg['heat_flux_Wcm2']:.3f} W/cm2 (expected ~25.4)")
-    sg50 = sutton_graves_heat_flux(50.0, 2700.0)
-    print(f"SG at 50km: {sg50['heat_flux_Wcm2']:.3f} W/cm2 (expected ~14.5)")
+    sg40 = sutton_graves_heat_flux(40.0, 2700.0)
+    print(f"SG at 40km: {sg40['heat_flux_Wcm2']:.3f} W/cm2 (expected ~14.5)")
     t2200 = irve3_trajectory_model(2200)
     print(f"Step 2200: alt={t2200['altitude_km']:.1f}km, g={t2200['g_load']:.2f}")
     t300 = irve3_trajectory_model(300000000)
@@ -550,6 +739,20 @@ if __name__ == "__main__":
 # ──────────────────────────────────────────────────────────────────────
 #  Post-Processing FFI bindings (from stellarorion_ffi)
 # ──────────────────────────────────────────────────────────────────────
+
+# [Citation: stellarorion_ffi.ads — Sutton_Graves_Heat_C]
+_ada_lib.Sutton_Graves_Heat_C.restype = ctypes.c_double
+_ada_lib.Sutton_Graves_Heat_C.argtypes = [ctypes.c_double, ctypes.c_double, ctypes.c_double]
+
+# [Citation: stellarorion_ffi.ads — Sutherland_Viscosity_C]
+_ada_lib.Sutherland_Viscosity_C.restype = ctypes.c_double
+_ada_lib.Sutherland_Viscosity_C.argtypes = [ctypes.c_double]
+
+# [Citation: stellarorion_ffi.ads — Fay_Riddell_Heat_C]
+_ada_lib.Fay_Riddell_Heat_C.restype = ctypes.c_double
+_ada_lib.Fay_Riddell_Heat_C.argtypes = [
+    ctypes.c_double, ctypes.c_double, ctypes.c_double,
+    ctypes.c_double, ctypes.c_double]
 
 # [Citation: stellarorion_ffi.ads — Radiative_Eq_Temp_C]
 _ada_lib.Radiative_Eq_Temp_C.restype = ctypes.c_double

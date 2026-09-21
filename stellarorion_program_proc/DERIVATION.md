@@ -213,10 +213,10 @@ DSMC cost scales linearly with the number of particles $N$ and the number of tim
 
 $$C_{\text{DSMC}} = O(N \cdot T)$$
 
-For a 20,000-step simulation (to reach steady-state):
+For a 300,000,000-step simulation (0→300M steps, 300s at 1 step = 1μs):
 - $N \approx 10^6$ particles (required for convergence at Kn ≈ 0.074)
-- $T = 20,000$ timesteps
-- $C_{\text{DSMC}} \approx 2 \times 10^{10}$ particle-timesteps
+- $T = 300,000,000$ timesteps
+- $C_{\text{DSMC}} \approx 3 \times 10^{14}$ particle-timesteps
 
 PINN inference cost:
 
@@ -336,9 +336,9 @@ where $f^{(0)}$ is the Maxwellian (local equilibrium) and $f^{(1)}$ gives the NS
 
 ### 6.2 The Computational Cost Argument
 
-DSMC at 20,000 steps requires ~$2 \times 10^{10}$ particle-timesteps. PINN inference requires ~$10^4$ forward passes. The speedup is:
+DSMC at 300,000,000 steps requires ~$3 \times 10^{14}$ particle-timesteps. PINN inference requires ~$10^4$ forward passes. The speedup is:
 
-$$\text{Speedup} = \frac{C_{\text{DSMC}}}{C_{\text{PINN}}} \approx \frac{2 \times 10^{10}}{10^4} \approx 2 \times 10^6$$
+$$\text{Speedup} = \frac{C_{\text{DSMC}}}{C_{\text{PINN}}} \approx \frac{3 \times 10^{14}}{10^4} \approx 3 \times 10^{10}$$
 
 This enables the 1,000+ virtual samples required for Step 4 optimization, which would be impossible with DSMC.
 
