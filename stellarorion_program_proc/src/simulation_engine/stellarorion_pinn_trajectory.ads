@@ -15,7 +15,7 @@
 --              [Sutton & Graves, 1972, NASA TR R-376].
 --    AXIOM T3: Drag force F = 0.5 * Cd * A * rho * V^2 [Anderson 2006].
 --    AXIOM T4: G-load n = F_drag / (m * g0) [standard dynamics].
---    AXIOM T5: IRVE-3 trajectory: 120 km → 50 km, V_entry=4300 m/s,
+--    AXIOM T5: IRVE-3 trajectory: 120 km → 40 km, V_entry=4300 m/s,
 --              V_final=2700 m/s [NASA TP-2013-4012].
 --
 --  CITATIONS:
@@ -170,7 +170,7 @@ package StellarOrion_PINN_Trajectory is
    --    H = H_Entry + (H_Final - H_Entry) * Step / Target_Step
    --    V = V_Entry + (V_Final - V_Entry) * Step / Target_Step
    --
-   --  This gives 120 km → 50 km across steps 0 → 300M with uniform
+   --  This gives 120 km → 40 km across steps 0 → 300M with uniform
    --  altitude distribution (no regime boundaries or exponential jumps).
    --
    --  AXIOMS:
@@ -185,7 +185,7 @@ package StellarOrion_PINN_Trajectory is
      (Step           : Float;
       Target_Step    : Float := 3.0e8;
       H_Entry_Km     : Float := 120.0;
-      H_Final_Km     : Float := 50.0;
+       H_Final_Km     : Float := 40.0;
       V_Entry_Ms     : Float := 4300.0;
       V_Final_Ms     : Float := 2700.0;
       H_DSMC_Km      : Float := 51.8;

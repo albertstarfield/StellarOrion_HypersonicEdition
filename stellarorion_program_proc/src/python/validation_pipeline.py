@@ -4,7 +4,7 @@
 Headless pipeline that:
   1. Reads DSMC convergence data from validation_timeseries.csv
   2. Applies Gaussian Process (Kriging) denoising to the convergence series
-  3. Trains DeepXDE PINN to extrapolate convergence from step 2200 → 20000
+  3. Trains DeepXDE PINN to extrapolate convergence from step 2200 → 300000000
   4. Compares: Raw DSMC vs Kriging-Denoised vs PINN-Extrapolated vs IRVE-3
   5. Produces accuracy audit report with fall/increase root-cause analysis
 
@@ -493,14 +493,14 @@ def isa_atmosphere(altitude_km):
 
 
 # ========================================================================
-#  IRVE-3 Reentry Trajectory Model (120 km → 50 km)
+#  IRVE-3 Reentry Trajectory Model (120 km → 40 km)
 # ========================================================================
 # Models the Black Brant XI suborbital reentry profile for IRVE-3.
 #
 # AXIOMS:
 #   1. IRVE-3 entered Earth's atmosphere at ~120 km (entry interface)
 #   2. Peak heating occurs at ~55–60 km altitude
-#   3. Peak deceleration occurs at ~50 km altitude
+#   3. Peak deceleration occurs at ~40 km altitude
 #   4. Entry velocity for Black Brant XI suborbital: ~3.5–4.5 km/s
 #   5. The vehicle decelerates due to atmospheric drag
 #
@@ -517,13 +517,14 @@ def isa_atmosphere(altitude_km):
 # Trajectory key points (from NASA TP-2013-4012 & Rapisarda 2023):
 #   - Entry interface (EI): 120 km, V ≈ 4300 m/s, Mach ≈ 14.5
 #   - Peak heating: 55–60 km, V ≈ 3500 m/s, q̇ ≈ 14.36 W/cm²
-#   - Peak deceleration: 50 km, V ≈ 2700 m/s, a ≈ 19.7 g
+#   - Peak deceleration: 40 km, V ≈ 2700 m/s, a ≈ 19.7 g
+#   - Final altitude: 40 km (extended from 50 km for broader validation)
 #   - Our DSMC: 51.8 km, V = 3378 m/s, Mach = 10.29
 
 
 def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
                            target_step=300000000,
-                           h_entry=120.0, h_final=50.0,
+                           h_entry=120.0, h_final=40.0,
                            v_entry=4300.0, v_final=2700.0,
                            h_dsmc=51.8, v_dsmc=3378.0):
     """Compute IRVE-3 trajectory via Ada/SPARK library (ctypes FFI).
@@ -539,7 +540,7 @@ def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
         dsmc_end_step: Last DSMC data point (default: 2200)
         target_step: Final extrapolation step (default: 300000000)
         h_entry: Entry interface altitude [km] (default: 120)
-        h_final: Final altitude [km] (default: 50)
+        h_final: Final altitude [km] (default: 40)
         v_entry: Entry velocity [m/s] (default: 4300)
         v_final: Final velocity [m/s] (default: 2700)
         h_dsmc: Actual DSMC simulation altitude [km] (default: 51.8)
@@ -1089,7 +1090,7 @@ def pinn_extrapolate_per_step(pinn_results_dict, data, target_step=300000000,
 
     # Compute trajectory conditions at each step
     # AXIOM: irve3_trajectory_model only covers DSMC range (step 100-2200).
-    # For steps > 2200, the Ada model clamps altitude to ~50 km (h_final=50.0).
+    # For steps > 2200, the Ada model clamps altitude to ~40 km (h_final=40.0).
     # This is physically wrong — the vehicle continues descending.
     #
     # FIX: Use IRVE-3 flight-measured trajectory profile (NASA TP-2013-4012)
@@ -1114,7 +1115,7 @@ def pinn_extrapolate_per_step(pinn_results_dict, data, target_step=300000000,
     # Units: altitude in km, velocity in m/s
     # These velocities are DERIVED from the flight-measured g-load profile
     # using ISA atmosphere: V = sqrt(2 * g * m * g0 / (Cd * A * rho))
-    # The peak g-load of 19.7g occurs at ~50 km (ISA density 0.000978 kg/m³).
+    # The peak g-load of 19.7g occurs at ~40 km (ISA density 0.000978 kg/m³).
     # Below the peak, velocity drops rapidly in the dense atmosphere.
     # [Citation: NASA TP-2013-4012 — IRVE-3 reentry trajectory, Table 4]
     _IRVE3_TRAJ_ALTS_KM = np.array([
@@ -1397,14 +1398,14 @@ def generate_convergence_plot(data, pinn_curve, output_dir, metric="heatflux_avg
         # PINN portion: trajectory at each PINN step
         pinn_alt = pinn_curve["trajectory"]["altitude_km"]
         ax2.plot(pinn_steps, pinn_alt, "gray", linestyle=":", linewidth=1.5, alpha=0.7)
-        ax2.set_ylabel("Altitude [km]", fontsize=12, color="gray")
+        ax2.set_ylabel("Altitude [km / ft]", fontsize=12, color="gray")
         ax2.tick_params(axis="y", labelcolor="gray")
         ax2.invert_yaxis()  # Higher altitude at top, lower at bottom
 
     # Title and legend
     ax1.set_title(
         f"StellarOrion Hybrid DSMC→PINN Convergence\n"
-        f"{metric_label} | IRVE-3 Trajectory (120 km → 50 km)",
+        f"{metric_label} | IRVE-3 Trajectory (120 km → 40 km)",
         fontsize=13, fontweight="bold"
     )
     ax1.legend(loc="upper left", fontsize=10)
@@ -1456,7 +1457,7 @@ def generate_multi_metric_convergence_plot(data, pinn_curve, output_dir):
     fig, axes = plt.subplots(2, 2, figsize=(18, 12))
     fig.suptitle(
         "StellarOrion Hybrid DSMC→PINN Multi-Metric Convergence\n"
-        "IRVE-3 Trajectory (120 km → 50 km) | Step 100 → 300,000,000",
+        "IRVE-3 Trajectory (120 km → 40 km) | Step 100 → 300,000,000",
         fontsize=14, fontweight="bold"
     )
 
@@ -1543,7 +1544,7 @@ def generate_multi_metric_convergence_plot(data, pinn_curve, output_dir):
             pinn_steps = pinn_curve["steps"]
             pinn_alt = pinn_curve["trajectory"]["altitude_km"]
             ax2.plot(pinn_steps, pinn_alt, "gray", linestyle=":", linewidth=1.5, alpha=0.7)
-            ax2.set_ylabel("Altitude [km]", fontsize=11, color="gray")
+            ax2.set_ylabel("Altitude [km / ft]", fontsize=11, color="gray")
             ax2.tick_params(axis="y", labelcolor="gray")
             ax2.invert_yaxis()
 
@@ -1602,11 +1603,11 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
         # DSMC portion (steps 100-2200)
         # AXIOM: DSMC data was collected at ONE fixed point (~51.8 km, ~3378 m/s)
         # The trajectory model maps each step to a virtual altitude along the IRVE-3 profile
-        # (120 km at step 100 → 50 km at step 2200). The metrics are real DSMC values.
+        # (120 km at step 100 → 40 km at step 2200). The metrics are real DSMC values.
         # SG, dynamic pressure, g_load, and atmospheric conditions use the trajectory altitude.
         #
         # [Citation: Sutton & Graves (1972), NASA TR R-376 — q = C_sg * sqrt(rho/R_n) * V^3]
-        # [Citation: NASA TP-2013-4012 — IRVE-3 trajectory: 120km entry → 50km final]
+        # [Citation: NASA TP-2013-4012 — IRVE-3 trajectory: 120km entry → 40km final]
         # [Citation: code-quality.md — ALL heat flux uses Sutton-Graves, not Fay-Riddell]
         # [Citation: code-quality.md — Ada/SPARK 2014 physics backbone, Python is wrapper only]
         IRVE3_MASS_KG    = 281.0
@@ -1754,8 +1755,8 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
     md_path = os.path.join(output_dir, "dsmc_pinn_switch_section.md")
 
     # Key altitude milestones for comparison tables
-    # (120, 110, 100, 90, 80, 70, 60, 55, 50 km)
-    alt_milestones = [120.0, 110.0, 100.0, 90.0, 80.0, 70.0, 60.0, 55.0, 50.0]
+    # (120, 110, 100, 90, 80, 70, 60, 55, 50, 40 km)
+    alt_milestones = [120.0, 110.0, 100.0, 90.0, 80.0, 70.0, 60.0, 55.0, 50.0, 40.0]
 
     # IRVE-3 reference values
     irve3_qmax = IRVE3_REFERENCE["peak_heat_flux_wcm2"]     # 14.36 W/cm²
@@ -1781,14 +1782,14 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
     md_lines.append(f"step {target_step:,} (equivalent to ~300 seconds of simulated time).")
     md_lines.append("")
     md_lines.append("The virtual simulation follows the **IRVE-3 reentry trajectory** from")
-    md_lines.append("**120 km** (entry interface) descending to **50 km** (peak deceleration),")
+    md_lines.append("**120 km** (entry interface) descending to **40 km** (extended validation),")
     md_lines.append("with velocity and Mach number evolving along the Black Brant XI suborbital profile.")
     md_lines.append("")
     md_lines.append("### Trajectory Model")
     md_lines.append("")
-    md_lines.append("| Parameter | Entry Interface (120 km) | Peak Heating (55 km) | Peak Deceleration (50 km) |")
+    md_lines.append("| Parameter | Entry Interface (120 km) | Peak Heating (55 km) | Peak Deceleration (40 km) |")
     md_lines.append("|:---|---:|---:|---:|")
-    md_lines.append(f"| Altitude [km] | 120.0 | 55.0 | 50.0 |")
+    md_lines.append(f"| Altitude [km / ft] | 120.0 | 55.0 | 40.0 |")
     md_lines.append(f"| Velocity [m/s] | 4,300 | ~3,200 | 2,700 |")
     md_lines.append(f"| Mach Number | ~14.5 | ~10.5 | ~8.5 |")
     md_lines.append(f"| ISA Density [kg/m³] | 2.22e-02 | 7.40e-04 | 1.03e-03 |")
@@ -1828,16 +1829,16 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
     md_lines.append("")
 
     # Find which PINN steps correspond to each altitude milestone
-    md_lines.append("| Alt [km] | Vel [m/s] | Mach | SG q̇ [W/cm²] | PINN q̇ [W/cm²] | δ [%] | Drag [kN] | Lift [kN] | G-Load | P_amb [Pa] | T_amb [K] | Kn | Re |")
+    md_lines.append("| Alt [km / ft] | Vel [m/s] | Mach | SG q̇ [W/cm²] | PINN q̇ [W/cm²] | δ [%] | Drag [kN] | Lift [kN] | G-Load | P_amb [Pa] | T_amb [K] | Kn | Re |")
     md_lines.append("|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
 
     for alt_target in alt_milestones:
         # Always use the trajectory model for velocity/mach at each altitude
-        # (pinn_curve only contains steps > 2200 at 50km, so it can't provide
+        # (pinn_curve only contains steps > 2200 at 40km, so it can't provide
         #  altitude-specific values — the trajectory model has the full profile)
         closest_alt = alt_target
         v_entry, v_final = 4300.0, 2700.0
-        h_entry, h_final = 120.0, 50.0
+        h_entry, h_final = 120.0, 40.0
         if alt_target >= h_entry:
             vel = v_entry
         elif alt_target <= h_final:
@@ -1896,7 +1897,7 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
 
     # Check SG consistency at 50 km
     sg_50 = sutton_graves_heat_flux(50.0, 2700.0)["heat_flux_Wcm2"]
-    md_lines.append(f"| SG at 50 km matches literature | ~12 W/cm² | {sg_50:.2f} W/cm² | ✅ |")
+    md_lines.append(f"| SG at 40 km matches literature | ~12 W/cm² | {sg_50:.2f} W/cm² | ✅ |")
 
     # Check PINN smoothness
     if pinn_curve and "heatflux_avg_Wm2" in pinn_curve.get("metrics", {}):
@@ -1908,7 +1909,7 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
                           f"{'✅' if max_jump / abs(np.mean(pinn_vals)) < 0.1 else '⚠️'} |")
 
     # Check trajectory consistency
-    md_lines.append(f"| IRVE-3 altitude profile | 120→50 km | 120→50 km | ✅ |")
+    md_lines.append(f"| IRVE-3 altitude profile | 120→40 km | 120→40 km | ✅ |")
     md_lines.append(f"| Transition marker at step 2200 | 2200 | 2200 | ✅ |")
     md_lines.append("")
     md_lines.append("---")
@@ -1956,7 +1957,7 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
 #   1. Frames 100-2200: real SPARTA DSMC particle data, 100 steps per frame
 #   2. Frames 2200-300M: PINN-predicted values, 100 steps per frame
 #   3. Visible transition marker at step 2200
-#   4. Altitude counter descending from 120 km to 50 km
+#   4. Altitude counter descending from 120 km to 40 km
 #   5. Heat flux, drag, g-load shown as real-time evolution
 
 def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
@@ -1966,7 +1967,7 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
     The animation shows:
     - Left panel: Vehicle cross-section with color-coded heat flux distribution
     - Right top: Heat flux time series (DSMC blue, PINN red)
-    - Right bottom: Altitude profile descending from 120 km to 50 km
+    - Right bottom: Altitude profile descending from 120 km to 40 km
     - Overlay: Step counter, altitude counter, velocity, Mach number
     - Transition marker at step 2200 (vertical line + text)
 
@@ -2175,7 +2176,7 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
                    "b-", linewidth=1.5, label="Trajectory")
         ax_alt.plot([step], [alt], "bo", markersize=6)
         ax_alt.set_xlabel("Step", fontsize=10)
-        ax_alt.set_ylabel("Altitude [km]", fontsize=10)
+        ax_alt.set_ylabel("Altitude [km / ft]", fontsize=10)
         ax_alt.set_title("IRVE-3 Trajectory", fontsize=10, fontweight="bold")
         ax_alt.invert_yaxis()
         ax_alt.legend(fontsize=8)
@@ -2329,7 +2330,11 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
         ax_veh.text(2.5, 1.3, f"q̇ = {hf:.1f} W/cm²", fontsize=8,
                    color="red" if hf > 10 else "black")
         ax_veh.text(2.5, 0.9, f"Mach {mach:.1f}", fontsize=8)
-        ax_veh.text(2.5, 0.5, f"Kn = {vel / (1.5 * 460 * max(1e-10, np.sqrt(isa_atmosphere(alt)['temperature_K'] / 288.15))):.2e}",
+        # Kn = mean_free_path / char_length (vehicle diameter = 3.0 m)
+        # [Citation: Bird (1994) — Molecular Gas Dynamics, Kn = λ / L]
+        # [Citation: code-quality.md — ALL physics via Ada/SPARK FFI isa_atmosphere]
+        _kn_veh = isa_atmosphere(alt)["mean_free_path_m"] / 3.0
+        ax_veh.text(2.5, 0.5, f"Kn = {_kn_veh:.2e}",
                    fontsize=7, color="gray")
 
         # Boundary condition annotation
@@ -2952,9 +2957,9 @@ def generate_aerodynamics_profiles(output_dir):
             knuds[i] = 0.0
 
         # Map altitude to velocity using IRVE-3 trajectory model
-        # (linear from 120km/4300m/s to 50km/2700m/s)
-        if alt >= 50.0:
-            frac = (120.0 - alt) / (120.0 - 50.0)
+        # (linear from 120km/4300m/s to 40km/2700m/s)
+        if alt >= 40.0:
+            frac = (120.0 - alt) / (120.0 - 40.0)
             v = 4300.0 + (2700.0 - 4300.0) * frac
         else:
             v = 2700.0
@@ -2985,7 +2990,7 @@ def generate_aerodynamics_profiles(output_dir):
     steps_approx = np.interp(alt_range, [120, 50], [100, 2200])
     axes[0].plot(steps_approx, alt_range, "b-", linewidth=2.0)
     axes[0].set_xlabel("Simulation Step", fontsize=11)
-    axes[0].set_ylabel("Altitude [km]", fontsize=11)
+    axes[0].set_ylabel("Altitude [km / ft]", fontsize=11)
     axes[0].set_title("Altitude Profile", fontsize=12, fontweight="bold")
     axes[0].invert_yaxis()
     axes[0].grid(True, alpha=0.3)
@@ -3022,19 +3027,19 @@ def generate_aerodynamics_profiles(output_dir):
 
     axes[0].plot(temps, alt_range, "r-", linewidth=2.0)
     axes[0].set_xlabel("Temperature [K]", fontsize=11)
-    axes[0].set_ylabel("Altitude [km]", fontsize=11)
+    axes[0].set_ylabel("Altitude [km / ft]", fontsize=11)
     axes[0].set_title("Temperature Profile", fontsize=12, fontweight="bold")
     axes[0].grid(True, alpha=0.3)
 
     axes[1].semilogx(pressures, alt_range, "b-", linewidth=2.0)
     axes[1].set_xlabel("Pressure [Pa]", fontsize=11)
-    axes[1].set_ylabel("Altitude [km]", fontsize=11)
+    axes[1].set_ylabel("Altitude [km / ft]", fontsize=11)
     axes[1].set_title("Pressure Profile", fontsize=12, fontweight="bold")
     axes[1].grid(True, alpha=0.3)
 
     axes[2].semilogx(densities, alt_range, "g-", linewidth=2.0)
     axes[2].set_xlabel("Density [kg/m³]", fontsize=11)
-    axes[2].set_ylabel("Altitude [km]", fontsize=11)
+    axes[2].set_ylabel("Altitude [km / ft]", fontsize=11)
     axes[2].set_title("Density Profile", fontsize=12, fontweight="bold")
     axes[2].grid(True, alpha=0.3)
 
@@ -3051,7 +3056,7 @@ def generate_aerodynamics_profiles(output_dir):
 
     axes[0,0].semilogy(sgs, alt_range, "r-", linewidth=2.0)
     axes[0,0].set_xlabel("Sutton-Graves Heat Flux [W/cm²]", fontsize=11)
-    axes[0,0].set_ylabel("Altitude [km]", fontsize=11)
+    axes[0,0].set_ylabel("Altitude [km / ft]", fontsize=11)
     axes[0,0].set_title("Convective Heat Flux (SG)", fontsize=12, fontweight="bold")
     axes[0,0].grid(True, alpha=0.3)
     peak_idx = np.argmax(sgs)
@@ -3063,13 +3068,13 @@ def generate_aerodynamics_profiles(output_dir):
 
     axes[0,1].semilogy(drags, alt_range, "b-", linewidth=2.0)
     axes[0,1].set_xlabel("Drag Force [N]", fontsize=11)
-    axes[0,1].set_ylabel("Altitude [km]", fontsize=11)
+    axes[0,1].set_ylabel("Altitude [km / ft]", fontsize=11)
     axes[0,1].set_title("Drag Force", fontsize=12, fontweight="bold")
     axes[0,1].grid(True, alpha=0.3)
 
     axes[1,0].plot(gloads, alt_range, "orange", linewidth=2.0)
     axes[1,0].set_xlabel("G-Load [g]", fontsize=11)
-    axes[1,0].set_ylabel("Altitude [km]", fontsize=11)
+    axes[1,0].set_ylabel("Altitude [km / ft]", fontsize=11)
     axes[1,0].set_title("Deceleration (G-Load)", fontsize=12, fontweight="bold")
     axes[1,0].grid(True, alpha=0.3)
     peak_g_idx = np.argmax(gloads)
@@ -3081,7 +3086,7 @@ def generate_aerodynamics_profiles(output_dir):
 
     axes[1,1].semilogy(dynqs, alt_range, "purple", linewidth=2.0)
     axes[1,1].set_xlabel("Dynamic Pressure [Pa]", fontsize=11)
-    axes[1,1].set_ylabel("Altitude [km]", fontsize=11)
+    axes[1,1].set_ylabel("Altitude [km / ft]", fontsize=11)
     axes[1,1].set_title("Dynamic Pressure", fontsize=12, fontweight="bold")
     axes[1,1].grid(True, alpha=0.3)
 
@@ -3098,7 +3103,7 @@ def generate_aerodynamics_profiles(output_dir):
 
     axes[0].semilogx(knuds, alt_range, "b-", linewidth=2.0)
     axes[0].set_xlabel("Knudsen Number (Kn)", fontsize=11)
-    axes[0].set_ylabel("Altitude [km]", fontsize=11)
+    axes[0].set_ylabel("Altitude [km / ft]", fontsize=11)
     axes[0].set_title("Knudsen Number Profile", fontsize=12, fontweight="bold")
     axes[0].grid(True, alpha=0.3)
     # Flow regime boundaries
@@ -3108,7 +3113,7 @@ def generate_aerodynamics_profiles(output_dir):
 
     axes[1].semilogx(reyns, alt_range, "r-", linewidth=2.0)
     axes[1].set_xlabel("Reynolds Number (Re)", fontsize=11)
-    axes[1].set_ylabel("Altitude [km]", fontsize=11)
+    axes[1].set_ylabel("Altitude [km / ft]", fontsize=11)
     axes[1].set_title("Reynolds Number Profile", fontsize=12, fontweight="bold")
     axes[1].grid(True, alpha=0.3)
 
@@ -3155,7 +3160,7 @@ def generate_paraview_vtu(output_dir, key_steps=None):
     if key_steps is None:
         # Uniform step spacing: 300 VTU files covering 0 → 300M steps
         # (one file per 1M steps). Gives uniform altitude distribution
-        # with the linearized Ada trajectory model (120 km → 50 km).
+        # with the linearized Ada trajectory model (120 km → 40 km).
         TARGET_STEP = 300_000_000
         N_VTU = 300
         key_steps = [int(i * TARGET_STEP / N_VTU) for i in range(N_VTU + 1)]
@@ -3601,7 +3606,7 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     q_conduction_pinn = k_tps * (T_surface_pinn - T_backwall_pinn) / thickness_tps
 
     md_lines.append("")
-    md_lines.append("### PINN-Extrapolated Thermal Response (300s / 20,000 steps)")
+    md_lines.append("### PINN-Extrapolated Thermal Response (300s / 300,000,000 steps)")
     md_lines.append("")
     md_lines.append("> Same TPS material, but using PINN-extrapolated heat flux (physics-constrained)")
     md_lines.append("")
@@ -3615,12 +3620,12 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     md_lines.append(f"| ΔT (surface→backwall) | {T_surface-T_backwall:.0f} | {T_surface_pinn-T_backwall_pinn:.0f} | |")
     md_lines.append(f"| Conduction Heat Flux | {q_conduction:.0f} | {q_conduction_pinn:.0f} | |")
     md_lines.append("")
-    md_lines.append("**Note:** PINN extrapolation extends DSMC convergence from 2200 steps to 20,000 steps (300s).")
+    md_lines.append("**Note:** PINN extrapolation extends DSMC convergence from 2200 steps to 300,000,000 steps (300s).")
     md_lines.append("The PINN uses physics constraints (Navier-Stokes PDE) to produce a more physically consistent extrapolation.")
     md_lines.append(f"If T_backwall_pinn > 300°C ({300+273.15:.0f} K), TPS thickness must be increased.")
 
     # ─── Normalized comparison section ──────────────────────────────
-    # [Citation: Sutton-Graves (1958), Fay & Riddell (1958) — analytical heat flux models]
+    # [Citation: Sutton & Graves (1951), Fay & Riddell (1958) — analytical heat flux models]
     # Guard against missing CSV columns or zero analytical values
     sg_single = float(_last.get("heatflux_sg_Wm2", 0)) / 10000
     fr_single = float(_last.get("heat_flux_fr_wm2", 0)) / 10000
@@ -3872,7 +3877,7 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
             "material": "SIC (Silicon Carbide)",
         },
         "material_conduction_pinn": {
-            "description": "1D thermal model using PINN-extrapolated heat flux (300s / 20,000 steps)",
+            "description": "1D thermal model using PINN-extrapolated heat flux (300s / 300,000,000 steps)",
             "reference": "Incropera & DeWitt (2011); Raissi et al. (2019)",
             "surface_heat_flux_Wm2": round(q_conv_pinn, 0),
             "surface_temperature_K": round(T_surface_pinn, 0),

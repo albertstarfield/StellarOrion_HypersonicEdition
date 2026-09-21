@@ -80,6 +80,7 @@ SIM_CONDITIONS = {
     "altitude_km": 51.82,
     "mach": 10.29,
     "wall_temp_K": 1500.0,       # Typical TPS surface temperature
+    "temperature_K": 267.85,     # ISA at ~52 km [Citation: ISA 1975]
 }
 
 
@@ -90,75 +91,64 @@ SIM_CONDITIONS = {
 def sutton_graves_heat(rho, R_n, V):
     """Sutton-Graves stagnation-point convective heat flux [W/m^2].
 
-    q_sg = C_sg * sqrt(rho / R_n) * V^3
+    Delegates to Ada FFI: StellarOrion_Physics.Sutton_Graves_Heat_C.
 
     [Citation: Sutton & Graves 1971, NASA TR R-376]
     Valid for: continuum, V < 12 km/s, Earth air.
     """
-    return C_SG * math.sqrt(rho / R_n) * V**3
+    try:
+        return _ada_lib.Sutton_Graves_Heat_C(
+            ctypes.c_double(rho), ctypes.c_double(R_n), ctypes.c_double(V)
+        )
+    except Exception as e:
+        print(f"[WARNING] Ada FFI Sutton_Graves_Heat_C failed: {e}, using Python fallback")
+        return C_SG * math.sqrt(rho / R_n) * V**3
 
 
 def sutherland_viscosity(T):
     """Sutherland's law for dynamic viscosity of air [Pa*s].
 
-    mu = mu_ref * (T/T_ref)^1.5 * (T_ref + S) / (T + S)
+    Delegates to Ada FFI: StellarOrion_Physics.Sutherland_Viscosity_C.
 
     [Citation: Sutherland 1893; Anderson 2006, Sec 15.2]
     """
-    return MU_REF * (T / T_REF)**1.5 * (T_REF + SUTHERLAND_S) / (T + SUTHERLAND_S)
+    try:
+        return _ada_lib.Sutherland_Viscosity_C(ctypes.c_double(T))
+    except Exception as e:
+        print(f"[WARNING] Ada FFI Sutherland_Viscosity_C failed: {e}, using Python fallback")
+        return MU_REF * (T / T_REF)**1.5 * (T_REF + SUTHERLAND_S) / (T + SUTHERLAND_S)
 
 
 def fay_riddell_heat(rho, R_n, V, Mach, T_wall):
     """Fay-Riddell stagnation-point convective heat flux [W/m^2].
 
-    Simplified Le=1 form from Rapisarda (2023) Eq 3.82:
-      q_s = 0.763 * Pr^(-0.6) * (rho_w * mu_w)^0.1
-            * (rho_s * mu_s)^0.4 * (h_s - h_w)
-            * sqrt(du/dy|_s)
-
-    where:
-      T_s = T_inf * (1 + 0.2 * M^2)  — stagnation temperature
-      p_s = p_inf * (1 + 0.2 * M^2)^3.5 — stagnation pressure
-      rho_s = p_s / (R * T_s) — stagnation density
-      mu_s = Sutherland(T_s) — stagnation viscosity
-      rho_w = rho * T_s / T_w — wall density (ideal gas)
-      mu_w = Sutherland(T_w) — wall viscosity
-      h_s = Cp * T_s — stagnation enthalpy
-      h_w = Cp * T_w — wall enthalpy
-      du/dy|_s = (1/R_n) * sqrt(2*(p_s - p_inf)/rho_s)
+    Delegates to Ada FFI: StellarOrion_Physics.Fay_Riddell_Heat_C.
 
     [Citation: Fay & Riddell 1958; Rapisarda 2023 Eq 3.82]
     Valid for: continuum, laminar BL, M < 10.
     """
-    Cp = GAMMA * R_GAS / (GAMMA - 1)  # Specific heat at constant pressure
-
-    # Stagnation conditions (isentropic)
-    T_s = T_wall  # Use T_s from freestream for now
-    T_stag = SIM_CONDITIONS["temperature_K"] * (1 + 0.2 * Mach**2)
-    p_inf = rho * R_GAS * SIM_CONDITIONS["temperature_K"]
-    p_stag = p_inf * (1 + 0.2 * Mach**2)**3.5
-
-    # Stagnation-point density and viscosity
-    rho_s = p_stag / (R_GAS * T_stag)
-    mu_s = sutherland_viscosity(T_stag)
-
-    # Wall properties
-    rho_w = rho * T_stag / T_wall
-    mu_w = sutherland_viscosity(T_wall)
-
-    # Stagnation enthalpy difference
-    h_s = Cp * T_stag
-    h_w = Cp * T_wall
-    dh = h_s - h_w
-
-    # Velocity gradient at stagnation point (Newtonian)
-    du_dy = (1.0 / R_n) * math.sqrt(2.0 * (p_stag - p_inf) / rho_s)
-
-    # Fay-Riddell (Le=1, Rapisarda Eq 3.82)
-    q = 0.763 * PRANDTL**(-0.6) * (rho_w * mu_w)**0.1 * \
-        (rho_s * mu_s)**0.4 * dh * math.sqrt(du_dy)
-
-    return max(q, 0.0)
+    try:
+        return _ada_lib.Fay_Riddell_Heat_C(
+            ctypes.c_double(rho), ctypes.c_double(R_n), ctypes.c_double(V),
+            ctypes.c_double(Mach), ctypes.c_double(T_wall)
+        )
+    except Exception as e:
+        print(f"[WARNING] Ada FFI Fay_Riddell_Heat_C failed: {e}, using Python fallback")
+        Cp = GAMMA * R_GAS / (GAMMA - 1)
+        T_stag = SIM_CONDITIONS["temperature_K"] * (1 + 0.2 * Mach**2)
+        p_inf = rho * R_GAS * SIM_CONDITIONS["temperature_K"]
+        p_stag = p_inf * (1 + 0.2 * Mach**2)**3.5
+        rho_s = p_stag / (R_GAS * T_stag)
+        mu_s = MU_REF * (T_stag / T_REF)**1.5 * (T_REF + SUTHERLAND_S) / (T_stag + SUTHERLAND_S)
+        rho_w = rho * T_stag / T_wall
+        mu_w = MU_REF * (T_wall / T_REF)**1.5 * (T_REF + SUTHERLAND_S) / (T_wall + SUTHERLAND_S)
+        h_s = Cp * T_stag
+        h_w = Cp * T_wall
+        dh = h_s - h_w
+        du_dy = (1.0 / R_n) * math.sqrt(2.0 * (p_stag - p_inf) / rho_s)
+        q = 0.763 * PRANDTL**(-0.6) * (rho_w * mu_w)**0.1 * \
+            (rho_s * mu_s)**0.4 * dh * math.sqrt(du_dy)
+        return max(q, 0.0)
 
 
 # ============================================================================

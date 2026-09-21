@@ -3,7 +3,7 @@
 
 AXIOMS:
   1. Ada/SPARK 2014 backbone: ALL physics via FFI
-  2. Linear trajectory: H = 120 - 70*Step/300M, V = 4300 - 1600*Step/300M
+  2. Linear trajectory: H = 120 - 80*Step/300M, V = 4300 - 1600*Step/300M
   3. Sutton-Graves heat flux: q = C_sg * sqrt(rho/R_n) * V^3
   4. Multithreaded frame rendering via multiprocessing.Pool
   5. TeX fonts via pdflatex (conditional on system availability)
@@ -13,17 +13,16 @@ AXIOMS:
 [Citation: Sutton & Graves (1972), NASA TR R-376]
 """
 
-import os
-import sys
-import csv
-import time
-import shutil
-import math as _math
 import glob
-import re
+import math as _math
+import os
 import subprocess
-import numpy as np
+import sys
+import time
 from multiprocessing import Pool, cpu_count
+
+import numpy as np
+
 
 # ── Self-bootstrap: auto-install missing deps when run directly ──
 # [Citation: PEP 668 — https://peps.python.org/pep-0668/]
@@ -54,20 +53,27 @@ _ensure_deps()
 from tqdm import tqdm
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-from validation_pipeline import (
-    irve3_trajectory_model, sutton_graves_heat_flux, isa_atmosphere,
-    _ada_drag, _ada_gload, _ada_dynq,
-    generate_paraview_vtu,
-)
-
 # Pre-build matplotlib font cache ONCE before any Pool spawns.
 import matplotlib
+
+from validation_pipeline import (
+    _ada_drag,
+    _ada_dynq,
+    _ada_gload,
+    generate_paraview_vtu,
+    irve3_trajectory_model,
+    isa_atmosphere,
+    sutton_graves_heat_flux,
+)
+
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt
+
 _ = plt.figure()
 plt.close(_)
 
-from _tex_config import setup_tex_fonts  # noqa: E402
+from _tex_config import setup_tex_fonts
+
 TeX_ACTIVE = setup_tex_fonts()
 
 # ─── Constants ────────────────────────────────────────────────────────
@@ -77,7 +83,19 @@ IRVE3_CD         = 1.4625
 IRVE3_NOSE_R_M   = 1.5
 CHAR_LENGTH_M    = 3.0
 TARGET_STEP      = 300_000_000
+# [Citation: NIST — 1 km = 3280.84 ft exact]
+KM_TO_FT         = 3280.84   # conversion factor: kilometers to feet
 G0               = 9.80665
+
+# ── IRVE-3 flight reference values (NASA TP-2013-4012) ───────────────
+# [Citation: NASA TP-2013-4012 — IRVE-3 flight data]
+# [Citation: Rapisarda (2023) Table 4.10 — IRVE-3 validation metrics]
+IRVE3_REFERENCE = {
+    "peak_heat_flux_Wcm2":  14.36,   # W/cm² — stagnation point peak
+    "total_heat_load_Jcm2": 195.06,  # J/cm² — integrated heat load
+    "ballistic_coeff_kgm2": 26.9,    # kg/m² — ballistic coefficient
+    "peak_deceleration_g":  19.7,    # g — peak deceleration
+}
 RESULTS_DIR      = os.path.join(os.path.dirname(__file__), "..", "..",
                                 "results_validation_scalloped")
 
@@ -167,7 +185,7 @@ def _make_title_card(title, subtitle, out_dir, idx, resolution=(1920, 1080)):
         font_title = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", _fs(48))
         font_sub = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", _fs(24))
         font_sm = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", _fs(14))
-    except Exception:
+    except OSError:
         font_title = font_sub = font_sm = ImageFont.load_default()
 
     # Center text vertically
@@ -200,7 +218,8 @@ def _render_animated_frame(fargs):
      show_density, show_temp, show_press,
      show_kn,
      show_peak_hf, show_total_heat, show_ballistic,
-     show_stag_press, show_alt_peak_heat, show_peak_dynq) = fargs
+     show_stag_press, show_alt_peak_heat, show_peak_dynq,
+     validation) = fargs
 
     from PIL import Image, ImageDraw, ImageFont
 
@@ -232,7 +251,7 @@ def _render_animated_frame(fargs):
         font_md = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", _fs(15))
         font_lg = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", _fs(18))
         font_title = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", _fs(22))
-    except Exception:
+    except OSError:
         font_sm = font_md = font_lg = font_title = ImageFont.load_default()
 
     # ── Percentage-based panel layout ────────────────────────────
@@ -355,7 +374,6 @@ def _render_animated_frame(fargs):
         rN = 1.5          # Nose radius [m]
         gamma_deg = 60.0  # Half-cone angle [deg] (full cone = 120°, Ada spec)
         r_torus = 0.135   # Torus tube radius [m]
-        r_out = 0.0508    # Torus outer radius [m]
         R_veh = 1.5       # Vehicle radius [m] (half of 3.0m diameter)
 
         gamma = np.radians(gamma_deg)
@@ -395,7 +413,6 @@ def _render_animated_frame(fargs):
             torus_pts.append((tx, ty))
 
         # Segment 4: Flat back closure
-        back_pts = [(cone_end_x, -R_veh), (cone_end_x, R_veh)]
 
         # Combine top half: nose + cone + torus + back
         top_half = nose_pts + cone_pts + torus_pts
@@ -507,7 +524,7 @@ def _render_animated_frame(fargs):
 
         # ── Info text ──
         draw.text((x1 - int(220 * _scale), y0 + int(25 * _scale)),
-                  f"Alt: {alt:.0f} km", fill=FG, font=font_lg)
+                  f"Alt: {alt:.0f} km ({alt * KM_TO_FT:,.0f} ft)", fill=FG, font=font_lg)
         hf_color = (255, 80, 80) if hf > 10 else FG
         draw.text((x1 - int(220 * _scale), y0 + int(50 * _scale)),
                   f"q={hf:.1f} W/cm2", fill=hf_color, font=font_md)
@@ -590,13 +607,13 @@ def _render_animated_frame(fargs):
                   f"StellarOrion HIAD Live Dashboard | Step {step:,} / {TARGET_STEP:,} "
                   f"({pct:.1f}%) | Ada/SPARK 2014", fill=FG, font=font_title)
         draw.text((int(20 * _scale), int(40 * _scale)),
-                  f"Alt: {alt:.1f} km | Vel: {vel:.0f} m/s | Mach: {mach:.2f} | "
+                  f"Alt: {alt:.1f} km ({alt * 1000:.0f} m / {alt * KM_TO_FT:,.0f} ft) | Vel: {vel:.0f} m/s | Mach: {mach:.2f} | "
                   f"q={hf:.1f} W/cm2 | G: {gload:.1f} | Drag: {drag:.0f} N",
                   fill=(180, 180, 180), font=font_md)
 
         # Row 1 (y=6%, h=11%): altitude / velocity / mach
         p = _pct_to_px(2, title_h + 1, 31, 11)
-        _draw_animated_panel(draw, *p, "Altitude Profile", "Alt [km]",
+        _draw_animated_panel(draw, *p, "Altitude Profile", "Alt [km / ft]",
                              show_steps, show_alt, (100, 150, 255), alt, "km",
                              frame_idx=frame_idx)
         p = _pct_to_px(34, title_h + 1, 31, 11)
@@ -746,7 +763,7 @@ def _render_animated_frame(fargs):
         # Draw spiral with fading opacity
         for i in range(len(spiral_pts) - 1):
             t = i / len(spiral_pts)
-            alpha = int(40 + 80 * t)  # fades from faint to bright
+            int(40 + 80 * t)  # fades from faint to bright
             green = int(80 + 60 * t)
             draw.line([spiral_pts[i], spiral_pts[i + 1]],
                       fill=(30, green, 100 + int(50 * t)), width=2)
@@ -783,7 +800,7 @@ def _render_animated_frame(fargs):
         traj_right = p[2] - int(20 * _scale)                 # far right of panel
         traj_top = p[1] + int(8 * _scale)                    # top of panel
         traj_bottom = p[3] - int(5 * _scale)                 # bottom of panel
-        mid_x = (traj_left + traj_right) // 2
+        (traj_left + traj_right) // 2
 
         # Cubic bezier control points for dramatic reentry arc:
         # CP1: keeps trajectory nearly horizontal at start (deep space approach)
@@ -867,7 +884,7 @@ def _render_animated_frame(fargs):
 
         # Labels
         draw.text((p[0] + int(130 * _scale), p[3] - int(5 * _scale)),
-                  f"Alt: {alt:.1f} km | Vel: {vel:.0f} m/s | Mach: {mach:.2f}",
+                  f"Alt: {alt:.1f} km ({alt * KM_TO_FT:,.0f} ft) | Vel: {vel:.0f} m/s | Mach: {mach:.2f}",
                   fill=(180, 180, 180), font=font_sm)
 
     elif prefix == "traj":
@@ -879,7 +896,7 @@ def _render_animated_frame(fargs):
         pw = 30
         gap = 2
         for i, (title, ylabel, data_y, color, unit, fmt) in enumerate([
-            ("Altitude Profile", "Alt [km]", show_alt, (100, 150, 255), "km", "{:.1f}"),
+            ("Altitude Profile", "Alt [km / ft]", show_alt, (100, 150, 255), "km", "{:.1f}"),
             ("Velocity", "Vel [m/s]", show_vel, (100, 220, 100), "m/s", "{:.0f}"),
             ("Mach Number", "Mach", show_mach, (220, 100, 220), "", "{:.2f}"),
         ]):
@@ -917,12 +934,30 @@ def _render_animated_frame(fargs):
                              show_steps, show_g, (80, 220, 220), gload, "g",
                              frame_idx=frame_idx)
 
+    # ── Validation overlay (Task 5): only on dash prefix ──
+    # [Citation: NASA TP-2013-4012 — IRVE-3 flight data]
+    # [Citation: Rapisarda (2023) Table 4.10 — validation metrics]
+    if validation and prefix == "dash":
+        peak_hf_val_v = show_peak_hf[frame_idx] if frame_idx < len(show_peak_hf) else 0.0
+        total_heat_val = show_total_heat[frame_idx] if frame_idx < len(show_total_heat) else 0.0
+        ballistic_val = show_ballistic[frame_idx] if frame_idx < len(show_ballistic) else 0.0
+        peak_g_val = show_peak_dynq[frame_idx] if frame_idx < len(show_peak_dynq) else 0.0
+        # Overlay: top-right corner, ~30% width, ~25% height
+        ov_x0 = int(W * 0.68)
+        ov_y0 = int(H * 0.02)
+        ov_x1 = int(W * 0.99)
+        ov_y1 = int(H * 0.28)
+        _draw_validation_overlay(draw, ov_x0, ov_y0, ov_x1, ov_y1,
+                                 peak_hf_val_v, total_heat_val,
+                                 ballistic_val, peak_g_val,
+                                 font_sm, font_md, _scale)
+
     frame_path = os.path.join(out_dir, f"{prefix}_{frame_idx:05d}.png")
     img.save(frame_path, "PNG")
     return frame_path
 
 
-def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_frame=100_000, resolution=(1920, 1080)):
+def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_frame=100_000, resolution=(1920, 1080), pixel_scale=1.0, validation=False):
     """Generate pure live-animation MP4 — EVERYTHING is animated, NO static frames.
 
     Structure:
@@ -935,6 +970,11 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
 
     Ada FFI computes all physics. PIL renders all frames. Zero matplotlib.
     [Citation: ffmpeg HW accel — https://trac.ffmpeg.org/HWAccelIntro]
+
+    FUTURE (lowest priority): GPU-accelerated rendering via torch.mps (Metal on Apple
+    Silicon). System has M2 Pro + Metal 4 + torch 2.11.0 with MPS backend available.
+    Potential speedups: batch NEAREST upscale on GPU, batch compositing. Currently
+    CPU-only — PIL drawing + sequential PNG save is the bottleneck, not the compute.
     """
     plots_dir = os.path.join(output_dir, "plots")
     frames_dir = os.path.join(output_dir, "mp4_frames")
@@ -950,8 +990,13 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
 
     # ── Compute expanded resolution (same logic as _render_animated_frame) ──
     _content_height_pct = 102.0
-    _expanded_h = max(resolution[1], int(resolution[0] * _content_height_pct / 100))
-    _expanded_resolution = (resolution[0], _expanded_h)
+    # ── Pixel-scale: render at lower res for retro/jagged aesthetic ──
+    # Frames are rendered at resolution/pixel_scale, then upscaled with NEAREST
+    # [Citation: PIL.Image.NEAREST — https://pillow.readthedocs.io/en/stable/handbook/concepts.html#resampling-filters]
+    _render_w = int(resolution[0] * pixel_scale) if pixel_scale != 1.0 else resolution[0]
+    _render_h = int(resolution[1] * pixel_scale) if pixel_scale != 1.0 else resolution[1]
+    _expanded_h = max(_render_h, int(_render_w * _content_height_pct / 100))
+    _expanded_resolution = (_render_w, _expanded_h)
 
     all_paths = []
     frame_idx = 0
@@ -972,6 +1017,9 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
     # SECTION 2: Compute ALL trajectory via Ada FFI
     # ══════════════════════════════════════════════════════════════════
     all_steps = list(range(0, TARGET_STEP + 1, steps_per_frame))
+    # Apply max_frames limit (if specified, truncate trajectory to first N frames)
+    if max_frames and len(all_steps) > max_frames:
+        all_steps = all_steps[:max_frames]
     n_anim = len(all_steps)
     fps = 30
 
@@ -1027,12 +1075,13 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
             frame_hf[i], frame_drag[i], frame_g[i],
             all_frame_steps, frame_alt, frame_hf,
             frame_vel, frame_mach, frame_drag, frame_g,
-            frames_dir, "dash", resolution,
+            frames_dir, "dash", _expanded_resolution,
             frame_pinn_loss, frame_pinn_acc, frame_dsmc_pinn_err,
             frame_density, frame_temp, frame_press,
             frame_kn,
             frame_peak_hf, frame_total_heat, frame_ballistic,
             frame_stag_press, frame_alt_peak_heat, frame_peak_dynq,
+            validation,
         ))
 
     anim_paths = []
@@ -1049,13 +1098,31 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
     print(f"[MP4] Dashboard: {elapsed:.1f}s ({n_anim / max(0.01, elapsed):.0f} fr/s)")
 
     # ══════════════════════════════════════════════════════════════════
+    # SECTION 2b: Pixel-scale upscale (NEAREST for jagged retro look)
+    # ══════════════════════════════════════════════════════════════════
+    if pixel_scale != 1.0:
+        from PIL import Image as _PILImage
+        # Upscale to full resolution with the same 2% content expansion
+        _upscale_w = resolution[0]
+        _upscale_h = max(resolution[1], int(resolution[0] * _content_height_pct / 100))
+        _t0_up = time.time()
+        _frame_files = sorted(glob.glob(os.path.join(frames_dir, "*.png")))
+        for _fp in tqdm(_frame_files, desc="[MP4] Pixel-scale", unit="fr", ncols=80):
+            _img = _PILImage.open(_fp)
+            _img = _img.resize((_upscale_w, _upscale_h), resample=_PILImage.NEAREST)
+            _img.save(_fp, "PNG")
+        _up_elapsed = time.time() - _t0_up
+        print(f"[MP4] Upscaled {len(_frame_files)} frames to {_upscale_w}x{_upscale_h} "
+              f"(NEAREST, pixel_scale={pixel_scale}) in {_up_elapsed:.1f}s")
+
+    # ══════════════════════════════════════════════════════════════════
     # SECTION 3: Encode with ffmpeg
     # ══════════════════════════════════════════════════════════════════
     _extra = ["-vcodec", "libx264", "-pix_fmt", "yuv420p"]
     _enc_name = "libx264"
     try:
         _probe = subprocess.run(["ffmpeg", "-encoders"], capture_output=True,
-                                text=True, timeout=5)
+                                text=True, timeout=5, check=False)
         _encs = _probe.stdout
         import sys as _sys
         if _sys.platform == "darwin" and "h264_videotoolbox" in _encs:
@@ -1076,8 +1143,8 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
             _enc_name = "h264_nvenc"
             _extra = ["-vcodec", "h264_nvenc", "-pix_fmt", "yuv420p"]
             print("[MP4] HW encoder: NVENC (Windows)")
-    except Exception:
-        pass
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        pass  # ffmpeg not available — defaults to libx264
 
     if _enc_name == "libx264":
         print("[MP4] SW encoder: libx264 (no HW encoder found)")
@@ -1112,7 +1179,7 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
     t0 = time.time()
     subprocess.run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_list,
                     "-vf", f"fps={fps}", "-pix_fmt", "yuv420p"] + _extra + [mp4_path],
-                   capture_output=True, timeout=600)
+                   capture_output=True, timeout=600, check=False)
     elapsed = time.time() - t0
 
     if os.path.exists(mp4_path):
@@ -1123,7 +1190,7 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
         subprocess.run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_list,
                         "-vf", f"fps={fps}", "-pix_fmt", "yuv420p",
                         "-vcodec", "libx264", mp4_path],
-                       capture_output=True, timeout=600)
+                       capture_output=True, timeout=600, check=False)
         if os.path.exists(mp4_path):
             sz = os.path.getsize(mp4_path) / (1024 * 1024)
             print(f"[MP4] Fallback SW encode: {mp4_path} ({sz:.1f} MB)")
@@ -1137,6 +1204,80 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
     return mp4_path
 
 
+def _draw_validation_overlay(draw, x0, y0, x1, y1, peak_hf, total_heat,
+                             ballistic, peak_g, font_sm, font_md, _scale):
+    """Draw validation overlay panel comparing simulation vs IRVE-3 flight data.
+
+    Shows 4 metrics with color-coded delta indicators:
+      green  < 20% delta — within acceptable range
+      yellow 20-50% delta — moderate discrepancy
+      red    > 50% delta — significant discrepancy
+
+    -- AXIOMS: IRVE-3 flight data is the ground truth for HIAD validation.
+    -- THEORIES: Delta percentage quantifies agreement with flight data.
+    -- APPLICATIONS: Visual overlay for MP4 dashboard.
+    -- CITATION: NASA TP-2013-4012 — IRVE-3 flight data
+    -- CITATION: Rapisarda (2023) Table 4.10 — validation metrics
+    """
+    FG = (220, 220, 220)
+    GRID = (50, 50, 70)
+
+    draw.rectangle([x0, y0, x1, y1], fill=(25, 25, 50), outline=GRID, width=1)
+    draw.text((x0 + int(10 * _scale), y0 + int(5 * _scale)),
+              "IRVE-3 Validation Comparison", fill=(200, 220, 255), font=font_md)
+
+    metrics = [
+        ("Peak Heat Flux", peak_hf, IRVE3_REFERENCE["peak_heat_flux_Wcm2"], "W/cm2"),
+        ("Total Heat Load", total_heat, IRVE3_REFERENCE["total_heat_load_Jcm2"], "J/cm2"),
+        ("Ballistic Coeff", ballistic, IRVE3_REFERENCE["ballistic_coeff_kgm2"], "kg/m2"),
+        ("Peak Decel", peak_g, IRVE3_REFERENCE["peak_deceleration_g"], "g"),
+    ]
+
+    row_h = int((y1 - y0 - 30 * _scale) / 4)
+    for i, (name, sim_val, ref_val, unit) in enumerate(metrics):
+        ry = y0 + int(30 * _scale) + i * row_h
+        # Compute delta percentage
+        if ref_val > 0:
+            delta_pct = abs(sim_val - ref_val) / ref_val * 100.0
+        else:
+            delta_pct = 0.0
+
+        # Color coding: green < 20%, yellow 20-50%, red > 50%
+        if delta_pct < 20:
+            color = (80, 220, 80)    # green
+            status = "OK"
+        elif delta_pct < 50:
+            color = (255, 200, 50)   # yellow
+            status = "WARN"
+        else:
+            color = (255, 80, 80)    # red
+            status = "HIGH"
+
+        # Metric name + status
+        draw.text((x0 + int(10 * _scale), ry),
+                  f"{name}", fill=FG, font=font_sm)
+        draw.text((x0 + int(150 * _scale), ry),
+                  status, fill=color, font=font_sm)
+
+        # Sim value vs Reference value
+        draw.text((x0 + int(10 * _scale), ry + int(14 * _scale)),
+                  f"Sim: {sim_val:.1f} {unit}", fill=(180, 180, 180), font=font_sm)
+        draw.text((x0 + int(10 * _scale), ry + int(28 * _scale)),
+                  f"Ref: {ref_val:.1f} {unit} ({delta_pct:.1f}% delta)",
+                  fill=color, font=font_sm)
+
+        # Delta bar (visual indicator)
+        bar_x0 = x0 + int(250 * _scale)
+        bar_x1 = x1 - int(10 * _scale)
+        bar_y = ry + int(14 * _scale)
+        bar_w = bar_x1 - bar_x0
+        bar_fill = int(bar_w * min(delta_pct, 100) / 100.0)
+        draw.rectangle([bar_x0, bar_y, bar_x1, bar_y + int(6 * _scale)],
+                       fill=(40, 40, 60))
+        draw.rectangle([bar_x0, bar_y, bar_x0 + bar_fill, bar_y + int(6 * _scale)],
+                       fill=color)
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="StellarOrion Output Generator")
@@ -1148,6 +1289,10 @@ def main():
                         help="Target video duration in seconds (overrides natural duration)")
     parser.add_argument("--resolution", type=str, default="1920x1080",
                         help="Output video resolution WxH (default: 1920x1080)")
+    parser.add_argument("--pixel-scale", type=float, default=1.0,
+                        help="Pixel scale factor for retro aesthetic (0.5 = half-res render, NEAREST upscale to full)")
+    parser.add_argument("--validation", action="store_true",
+                        help="Show IRVE-3 validation overlay panel in MP4 dashboard")
     args = parser.parse_args()
 
     # Parse resolution
@@ -1165,7 +1310,7 @@ def main():
 
     if not args.mp4_only:
         print("\n[1/3] Generating per-step CSV ...")
-        csv_path = generate_csv(RESULTS_DIR)
+        print("  [SKIP] generate_csv not implemented")
 
         print("\n[2/3] Generating ParaView VTU files ...")
         vtu_files = generate_paraview_vtu(RESULTS_DIR)
@@ -1177,7 +1322,8 @@ def main():
     print(f"\n[3/3] Generating live dashboard MP4 ({n_frames} frames, "
           f"{args.steps_per_frame:,} steps/frame, {resolution[0]}x{resolution[1]}) ...")
     mp4_path = generate_mp4(RESULTS_DIR, steps_per_frame=args.steps_per_frame,
-                            target_duration=args.duration, resolution=resolution)
+                            target_duration=args.duration, resolution=resolution,
+                            pixel_scale=args.pixel_scale, validation=args.validation)
 
     print("\n" + "=" * 70)
     print("  DONE")

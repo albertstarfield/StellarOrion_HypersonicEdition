@@ -49,17 +49,17 @@ package body StellarOrion_Trajectory_Output is
    --  Compute_Trajectory_Point
    -- -----------------------------------------------------------------
    --  AXIOMS:
-   --    F1: Linear IRVE-3 trajectory: H = 120 - 70*Step/300M,
+   --    F1: Linear IRVE-3 trajectory: H = 120 - 80*Step/300M,
    --        V = 4300 - 1600*Step/300M.
    --    F2: ISA atmosphere from StellarOrion_PINN_Trajectory.ISA_Atmosphere.
    --    F3: Mach = V / a (speed of sound from ISA).
    --
    --  THEOREMS:
-   --    T1: H(0) = 120.0, H(300M) = 50.0 -- monotonic descent.
-   --    T2: V(0) = 4300.0, V(300M) = 2700.0 -- monotonic deceleration.
-   --
-   --  APPLICATIONS:
-   --    A1: Lightweight trajectory query for kinematic-only callers.
+    --    T1: H(0) = 120.0, H(300M) = 40.0 -- monotonic descent.
+    --    T2: V(0) = 4300.0, V(300M) = 2700.0 -- monotonic deceleration.
+    --
+    --  APPLICATIONS:
+    --    A1: Lightweight trajectory query for kinematic-only callers.
    --
    --  SAFETY FALLBACK:
    --    If altitude exceeds ISA range (0-120 km), ISA_Atmosphere clamps.
@@ -73,14 +73,14 @@ package body StellarOrion_Trajectory_Output is
       Vel_Ms : Float;
       Isa    : ISA_Atmosphere_Result;
    begin
-      --  IRVE-3 linear trajectory
-      --  [Citation: NASA TP-2013-4012]
-      Alt_Km := 120.0 - 70.0 * Step / TARGET_STEP;
-      Vel_Ms := 4300.0 - 1600.0 * Step / TARGET_STEP;
+       --  IRVE-3 linear trajectory
+       --  [Citation: NASA TP-2013-4012]
+       Alt_Km := 120.0 - 80.0 * Step / TARGET_STEP;
+       Vel_Ms := 4300.0 - 1600.0 * Step / TARGET_STEP;
 
-      --  ISA atmosphere at this altitude
-      --  [Citation: NASA SP-7468 (1976)]
-      Isa := ISA_Atmosphere (Alt_Km);
+       --  ISA atmosphere at this altitude
+       --  [Citation: NASA SP-7468 (1976)]
+       Isa := ISA_Atmosphere (Alt_Km);
 
       --  Mach number: M = V / a
       --  Safety: if speed of sound is zero, set Mach to zero.
@@ -101,7 +101,7 @@ package body StellarOrion_Trajectory_Output is
    --  Compute_Frame_Data
    -- -----------------------------------------------------------------
    --  AXIOMS:
-   --    F1: Linear IRVE-3 trajectory: H = 120 - 70*Step/300M, V = 4300 - 1600*Step/300M.
+   --    F1: Linear IRVE-3 trajectory: H = 120 - 80*Step/300M, V = 4300 - 1600*Step/300M.
    --    F2: ISA atmosphere from StellarOrion_PINN_Trajectory.ISA_Atmosphere.
    --    F3: Sutton-Graves from StellarOrion_PINN_Trajectory.Sutton_Graves_Heat_Flux.
    --    F4: Drag from StellarOrion_PINN_Trajectory.Drag_Force.
@@ -111,7 +111,7 @@ package body StellarOrion_Trajectory_Output is
    --    F8: PINN metrics are algebraic training-progress simulations.
    --
    --  THEOREMS:
-   --    T1: H(0) = 120.0, H(300M) = 50.0 -- monotonic descent.
+   --    T1: H(0) = 120.0, H(300M) = 40.0 -- monotonic descent.
    --    T2: V(0) = 4300.0, V(300M) = 2700.0 -- monotonic deceleration.
    --    T3: PINN loss in (0, 1.0] -- bounded by construction.
    --    T4: PINN accuracy in [85.0, 99.5] -- clamped range.
@@ -137,7 +137,7 @@ package body StellarOrion_Trajectory_Output is
       Result : Frame_Data;
 
       --  IRVE-3 trajectory model (linear)
-      --  H = 120.0 - 70.0 * Step / 300M  [km]
+       --  H = 120.0 - 80.0 * Step / 300M  [km]
       --  V = 4300.0 - 1600.0 * Step / 300M  [m/s]
       --  [Citation: NASA TP-2013-4012 -- IRVE-3 flight]
       Alt_Km : Float;
@@ -176,9 +176,9 @@ package body StellarOrion_Trajectory_Output is
       Progress : Float;
 
    begin
-      --  1. IRVE-3 linear trajectory
-      --  [Citation: NASA TP-2013-4012]
-      Alt_Km := 120.0 - 70.0 * Step / TARGET_STEP;
+       --  1. IRVE-3 linear trajectory
+       --  [Citation: NASA TP-2013-4012]
+       Alt_Km := 120.0 - 80.0 * Step / TARGET_STEP;
       Vel_Ms := 4300.0 - 1600.0 * Step / TARGET_STEP;
 
       --  2. ISA atmosphere at this altitude
@@ -310,7 +310,7 @@ package body StellarOrion_Trajectory_Output is
    -- -----------------------------------------------------------------
    --  AXIOMS:
    --    ST1: Test at step=0 (entry interface: 120 km, 4300 m/s).
-   --    ST2: Test at step=TARGET_STEP (end of trajectory: 50 km, 2700 m/s).
+   --    ST2: Test at step=TARGET_STEP (end of trajectory: 40 km, 2700 m/s).
    --    ST3: All physical invariants must hold at both test points.
    --
    --  SAFETY FALLBACK:
@@ -379,7 +379,7 @@ package body StellarOrion_Trajectory_Output is
       DEnd := Compute_Frame_Data (TARGET_STEP);
 
       --  Step=TARGET_STEP: end of trajectory
-      Assert (DEnd.Altitude_Km = 50.0,
+      Assert (DEnd.Altitude_Km = 40.0,
               "Alt mismatch at end: " & Float'Image (DEnd.Altitude_Km));
       Assert (DEnd.Velocity_Ms = 2700.0,
               "Vel mismatch at end: " & Float'Image (DEnd.Velocity_Ms));

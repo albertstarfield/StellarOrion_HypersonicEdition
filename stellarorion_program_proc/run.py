@@ -1406,7 +1406,7 @@ def _parse_args() -> tuple[argparse.Namespace, list[str]]:  # nosec: SMT false p
         help=(
             "Run headless validation pipeline: kriging denoise DSMC "
             "convergence data -> train DeepXDE PINN -> extrapolate from "
-            "step 2200 to step 20000 -> audit accuracy fall/increase "
+            "step 2200 to step 300000000 -> audit accuracy fall/increase "
             "-> comparison table vs IRVE-3 reference."
         ),
     )

@@ -277,7 +277,7 @@
     "material": "SIC (Silicon Carbide)"
   },
   "material_conduction_pinn": {
-    "description": "1D thermal model using PINN-extrapolated heat flux (300s / 20,000 steps)",
+    "description": "1D thermal model using PINN-extrapolated heat flux (300s / 300000000 steps)",
     "reference": "Incropera & DeWitt (2011); Raissi et al. (2019)",
     "surface_heat_flux_Wm2": 557898.0,
     "surface_temperature_K": 1845.0,
