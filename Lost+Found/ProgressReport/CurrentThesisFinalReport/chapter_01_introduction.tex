@@ -48,7 +48,7 @@ The specific objectives are:
 
     \item \textbf{PINN Flow Field Refinement:} To apply Physics-Informed Neural Networks (DeepXDE) as a post-processing step to smooth noisy DSMC data, fill gaps in the flow field, and provide a continuous interpolant anchored in the compressible Navier--Stokes equations.
 
-    \item \textbf{Survivability Optimization:} To implement a Genetic Algorithm (GA) coupled with a PyTorch-based Metamodel Prognosis (MoP) for automated optimization of HIAD geometry, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
+    \item \textbf{Survivability Optimization:} To implement a Genetic Algorithm (GA) coupled with Bayesian Optimization (GP Matérn 5/2 surrogate + Expected Improvement) for automated optimization of HIAD geometry, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
 \end{enumerate}
 
 \section{Research Gap}
@@ -73,7 +73,7 @@ The present work makes the following novel contributions to the field of hyperso
 
     \item \textbf{PINN as DSMC Post-Processor:} The application of Physics-Informed Neural Networks as a smoothing and interpolation layer for noisy DSMC particle data is novel in the context of HIAD aerothermal analysis. The two-stage training protocol (data-only followed by data+PDE) provides a physics-consistent continuous field from discrete particle simulations.
 
-    \item \textbf{Multi-Objective Surrogate-Assisted Optimization:} The simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and drag performance using a PyTorch MoP surrogate coupled with a genetic algorithm demonstrates a computationally efficient approach to HIAD design that would be infeasible with direct simulation alone.
+    \item \textbf{Multi-Objective Surrogate-Assisted Optimization:} The simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and drag performance using a Bayesian Optimization (GP surrogate) coupled with a genetic algorithm demonstrates a computationally efficient approach to HIAD design that would be infeasible with direct simulation alone.
 
     \item \textbf{Comprehensive ML Documentation Standards:} The framework adheres to established machine learning research standards, including explicit architecture documentation, reproducibility requirements (random seeds, environment specifications), validation metrics ($R^2$, RMSE, MAE), and uncertainty quantification through ensemble prediction.
 \end{enumerate}
@@ -95,7 +95,7 @@ The scope of this research is defined to provide aerothermal analysis and surviv
 
     \item \textbf{Thermal Analysis:} Surface heat flux is estimated using the Sutton-Graves stagnation-point correlation~\cite{sutton1971gravesh}, validated against IRVE-3 flight data. The 1D transient backface temperature model assumes a thermal lag factor ($\eta_{lag} = 0.15$) through the FTPS insulation stack. SPARTA surface kinetic energy quantities are retained as relative shape-ranking signals for the optimizer, not as absolute heat flux values.
 
-    \item \textbf{Optimization:} The Genetic Algorithm explores the design space using Latin Hypercube Sampling (LHS) for initial population generation, with a PyTorch Multi-Layer Perceptron (MoP) as the surrogate model. PINN refinement using DeepXDE is applied during the exploration phase but is bypassed during final validation to eliminate neural network bias.
+    \item \textbf{Optimization:} The Genetic Algorithm explores the design space using Latin Hypercube Sampling (LHS) for initial population generation, with a Gaussian Process (Matérn 5/2) Bayesian Optimization surrogate as the evaluator. PINN refinement using DeepXDE is applied during the exploration phase but is bypassed during final validation to eliminate neural network bias.
 \end{enumerate}
 
 \section{Methodology Overview}
@@ -121,7 +121,7 @@ The SPARTA solver executes the DSMC simulation within a Docker-containerized Lin
 The raw DSMC output is post-processed using a Physics-Informed Neural Network (PINN) implemented in DeepXDE. The PINN solves the 2D compressible Navier--Stokes equations using automatic differentiation, with SPARTA grid data introduced as observational boundary conditions. The total loss function combines PDE residuals with data-matching terms, providing a smooth, physics-consistent interpolant that fills gaps in the DSMC flow field and reduces particle noise.
 
 \subsection*{e. Survivability Optimization}
-A Genetic Algorithm (GA) coupled with a PyTorch Multi-Layer Perceptron (MoP) surrogate model performs multi-objective optimization of the HIAD geometry. Latin Hypercube Sampling (LHS) generates the initial design population. The GA evaluates candidates using the MoP surrogate for rapid screening, with expensive SPARTA simulations reserved for elite candidates and final validation. The cost function balances ballistic coefficient, peak deceleration, backface temperature, and drag performance against user-defined targets.
+A Genetic Algorithm (GA) coupled with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate performs multi-objective optimization of the HIAD geometry. Latin Hypercube Sampling (LHS) generates the initial design population. The GA evaluates candidates using the GP surrogate for rapid screening, with expensive SPARTA simulations reserved for elite candidates and final validation. The cost function balances ballistic coefficient, peak deceleration, backface temperature, and drag performance against user-defined targets.
 
 \subsection*{f. Validation and Analysis}
 The simulation results are validated against IRVE-3 flight data~\cite{rapisarda2023mdao} using the Sutton-Graves correlation. Key validation metrics include peak heat flux (14.36\,W/cm$^2$ flight vs.~13.83\,W/cm$^2$ model), total heat load (195.06\,J/cm$^2$ flight vs.~195.17\,J/cm$^2$ model), and peak deceleration (19.7$g$ flight vs.~20.2$g$ model). The final optimized design undergoes a high-fidelity SPARTA validation run \textit{without} PINN refinement to eliminate neural network bias.

@@ -5,7 +5,7 @@
 --    Step 1: SPARTA   — DSMC simulation (Docker/colima)
 --    Step 2: Kriging  — Spatial denoising of SPARTA grid output
 --    Step 3: PINN     — Physics-informed neural network training
---    Step 4: MoP      — Metamodel Prognosis (virtual sample generation)
+--    Step 4: Bayes Opt — Bayesian Optimization (GP surrogate + Expected Improvement)
 --
 --  If the pipeline is interrupted (crash, power loss, timeout), the checkpoint
 --  file allows resume from the last completed step without re-running prior steps.
@@ -46,7 +46,7 @@ package StellarOrion_Pipeline_Checkpoint is
    --  Pipeline Step Definitions
    -- ==================================================================
    --  The ordered pipeline steps; resume starts from the first non-completed step.
-   --  AXIOM: Pipeline order is fixed: SPARTA → Kriging → PINN → MoP.
+   --  AXIOM: Pipeline order is fixed: SPARTA → Kriging → PINN → Bayes Opt.
 
    subtype Step_Name is String (1 .. 8);
    --  Maximum step name length; all four steps fit in 8 characters.

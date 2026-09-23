@@ -153,7 +153,7 @@
 --- Frame 28 ---
 {LHS Population Strategy: Data Observation}
     \begin{itemize}
-        \item \textbf{Objective}: Train a stable Metamodel (MoP) using Latin Hypercube
+        \item \textbf{Objective}: Train a stable GP surrogate (Bayesian Opt) using Latin Hypercube
 --- Frame 29 ---
 {Geometry Engine v8}
     \begin{columns}

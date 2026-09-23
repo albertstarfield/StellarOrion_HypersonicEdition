@@ -20,3 +20,32 @@ project-excludes = [
 # STRICT MODE: treat all type warnings as errors — warnings-as-errors enforcement
 # [Citation: pyrefly strict preset — enables all error kinds at Error severity]
 preset = "strict"
+
+# ── Import resolution ────────────────────────────────────────────────
+# Local sibling modules (validation_pipeline, _tex_config) live in src/python/,
+# but the heuristic import root is inferred as src/ — add src/python/ so
+# `from validation_pipeline import ...` / `from _tex_config import ...` resolve.
+# [Citation: pyrefly search-path — https://pyrefly.org/en/docs/configuration]
+search-path = ["src/python"]
+
+# ── Interpreter selection ────────────────────────────────────────────
+# Query the healthy system interpreter instead of the project .venv.
+# AXIOM: .venv site-packages is corrupted on this machine (verified 2026-09-23):
+#   matplotlib/pyplot.py is 0 bytes, PIL/Image.py + PIL/ImageDraw.py +
+#   PIL/ImageFont.py + packaging/version.py + pip/__init__.py + numpy/__init__.py
+#   fail ast.parse (syntax corruption), and tqdm is not installed at all.
+#   pyrefly resolving imports against those files produced false
+#   missing-attribute (PIL.Image.new, plt.figure) and missing-import (tqdm)
+#   errors — the system interpreter has intact Pillow 12.3.0 / matplotlib
+#   3.11.2 / tqdm 4.70.1 at /opt/homebrew/lib/python3.14/site-packages.
+# THEORIES: pointing python-interpreter-path at python3 bypasses .venv
+#   auto-detection (pyrefly Environment Autoconfiguration precedence), so
+#   site-package-path is queried from a working interpreter.
+# APPLICATIONS: this key + search-path above clear the 15 environment-caused
+#   pyrefly errors; the remaining ~54 implicit-any-parameter errors are fixed
+#   by annotating function signatures in generate_outputs.py.
+# CITATIONS: pyrefly configuration docs (python-interpreter-path,
+#   search-path); `pyrefly init --help` flag equivalents.
+# NOTE: path is machine-local (Homebrew python3); update when relocating.
+# [Citation: https://pyrefly.org/en/docs/configuration#python-interpreter-path]
+python-interpreter-path = "/opt/homebrew/bin/python3"

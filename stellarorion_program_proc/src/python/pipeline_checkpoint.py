@@ -5,7 +5,7 @@ Tracks completion status across the 4 pipeline phases:
   Step 1: SPARTA   -- DSMC simulation (Docker/colima)
   Step 2: Kriging  -- Spatial denoising of SPARTA grid output
   Step 3: PINN     -- Physics-informed neural network training
-  Step 4: MoP      -- Metamodel Prognosis (virtual sample generation)
+  Step 4: Bayes Opt -- Bayesian Optimization (GP surrogate + Expected Improvement)
 
 If the pipeline is interrupted (crash, power loss, timeout), the checkpoint
 file allows resume from the last completed step without re-running prior steps.

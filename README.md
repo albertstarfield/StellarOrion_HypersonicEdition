@@ -8,7 +8,7 @@
 
 ---
 
-StellarOrion is a high-fidelity aerothermodynamic simulation and optimization suite for Hypersonic Inflatable Aerodynamic Decelerators (HIAD). It leverages the **SPARTA DSMC** solver for rarefied gas dynamics (Plimpton & Gallis, 2014) and a **PyTorch-based Metamodel Prognosis** for survivability optimization.
+StellarOrion is a high-fidelity aerothermodynamic simulation and optimization suite for Hypersonic Inflatable Aerodynamic Decelerators (HIAD). It leverages the **SPARTA DSMC** solver for rarefied gas dynamics (Plimpton & Gallis, 2014) and a **Bayesian Optimization (GP Matern 5/2 + Expected Improvement)** stage for survivability optimization.
 
 > **Note:** `main.py` is **deprecated** as of 2026-08-21. All functionality has been
 > ported to the Ada/SPARK binary. Use `python3 stellarorion_program_proc/run.py` instead.
@@ -38,7 +38,9 @@ Real-time aerothermodynamic visualization of the IRVE-3 HIAD reentry — featuri
 
 ![Dashboard Frame](stellarorion_program_proc/results/validation_scalloped/plots/dashboard_frame.png)
 
-**Full animation:** [hybrid_dsmc_pinn_animation.mp4](stellarorion_program_proc/results/validation_scalloped/plots/hybrid_dsmc_pinn_animation.mp4) (102s, 30fps, 80 MB)
+**Full animation:** [hybrid_dsmc_pinn_animation.mp4](stellarorion_program_proc/results/validation_scalloped/plots/hybrid_dsmc_pinn_animation.mp4) (111s, 30fps, 87 MB)
+
+The video has four segments: a 2s title card, the main live dashboard (~100s, curves grow frame-by-frame), then three 3s focus segments — **Trajectory** (altitude / velocity / Mach), **Thermal** (Sutton-Graves heat flux / Mach), and **Mechanical** (drag / G-load / Mach). Pass `--validation` when regenerating to overlay the 5-metric IRVE-3 comparison panel (Peak Heat Flux, Total Heat Load, Ballistic Coeff, Peak Decel, Entry Mach), or `--optimized-topology` to overlay the Bayesian-optimization before/after comparison panel (nose radius, torus radius, half-cone angle, C<sub>d</sub> reduction).
 
 **Dashboard panels:**
 - Row 1: Altitude / Velocity / Mach Number
@@ -54,6 +56,17 @@ Real-time aerothermodynamic visualization of the IRVE-3 HIAD reentry — featuri
 # Regenerate animation
 cd stellarorion_program_proc/src/python
 python3 generate_outputs.py --mp4-only
+
+# Cap dashboard frames for fast iteration (e.g. 300 frames ≈ 10s of dashboard)
+python3 generate_outputs.py --mp4-only --max-frames 300
+
+# Include the IRVE-3 validation overlay panel (dedicated bottom strip)
+#   → stellarorion_program_proc/results/validation_scalloped/plots/hybrid_dsmc_pinn_animation_validation.mp4
+python3 generate_outputs.py --mp4-only --validation
+
+# Include the optimized-topology before/after overlay panel (dedicated bottom strip)
+#   → stellarorion_program_proc/results/OptimizedTopology/plots/hybrid_dsmc_pinn_animation_optimized.mp4
+python3 generate_outputs.py --mp4-only --optimized-topology
 ```
 
 ---

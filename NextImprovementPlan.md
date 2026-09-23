@@ -15,7 +15,7 @@
 5. [Step 1: SPARTA DSMC — Feasibility Audit](#5-step-1-sparta-dsmc--feasibility-audit)
 6. [Step 2: Kriging GP — Feasibility Audit](#6-step-2-kriging-gp--feasibility-audit)
 7. [Step 3: PINN NS — Feasibility Audit](#7-step-3-pinn-ns--feasibility-audit)
-8. [Step 4: MoP — Feasibility Audit](#8-step-4-mop--feasibility-audit)
+8. [Step 4: Bayes Opt — Feasibility Audit](#8-step-4-bayes-opt--feasibility-audit)
 9. [Data Flow Analysis](#9-data-flow-analysis)
 10. [High-Fidelity 3-Sample Test Plan](#10-high-fidelity-3-sample-test-plan)
 11. [Dependencies & Requirements](#11-dependencies--requirements)
@@ -31,7 +31,7 @@
 This document audits the feasibility of a 4-step pipeline architecture for HIAD aerothermodynamic optimization:
 
 ```
-SPARTA (DSMC) → Kriging (GP denoising) → PINN (NS surrogate) → MoP (virtual samples) → Optimized Geometry
+SPARTA (DSMC) → Kriging (GP denoising) → PINN (NS surrogate) → Bayes Opt (virtual samples) → Optimized Geometry
 ```
 
 **Key finding:** The pipeline is physically justified. At HIAD re-entry altitudes (50–80 km), the **local shock-layer** Knudsen number Kn ~ 0.01–0.1 places the stagnation zone in the **slip-flow to transition regime** where DSMC is justified. The **freestream** Kn at 52 km is actually ~2.5×10⁻⁵ (deep continuum — see §3, FINDING #31), meaning the bulk flow is well-described by Navier-Stokes. SPARTA solves the Boltzmann Transport Equation (BTE) via Direct Simulation Monte Carlo (DSMC), which is valid across all Kn regimes. The PINN then solves the Navier-Stokes equations as a surrogate model, which is valid in the near-continuum region (Kn < 0.1) that dominates the stagnation zone. This BTE→NS handoff is justified because:
@@ -39,7 +39,7 @@ SPARTA (DSMC) → Kriging (GP denoising) → PINN (NS surrogate) → MoP (virtua
 1. DSMC captures the full rarefied physics (BTE) but is noisy and expensive
 2. Kriging denoises the DSMC output spatially, producing a smooth training dataset
 3. PINN-NS learns the continuum-limit physics from denoised data, enabling fast predictions
-4. MoP generates 1,000+ virtual samples from the trained PINN for optimization
+4. Bayes Opt generates 1,000+ virtual samples from the trained PINN for optimization
 
 ---
 
@@ -60,7 +60,7 @@ SPARTA (DSMC) → Kriging (GP denoising) → PINN (NS surrogate) → MoP (virtua
 │                                                  ▼                   │
 │                                          ┌──────────────┐           │
 │                                          │  Step 4:     │           │
-│                                          │  MoP MLP     │           │
+│                                          │  BayesOpt    │           │
 │                                          │  1,000+      │           │
 │                                          │  virtual     │           │
 │                                          │  samples     │           │
@@ -83,7 +83,7 @@ SPARTA (DSMC) → Kriging (GP denoising) → PINN (NS surrogate) → MoP (virtua
 | `_parse_grid_file()` | `grid.NNNN.out` | Training array | numpy (N, 5) — [x, y, rho, T, u] |
 | **Kriging** | noisy (N, 5) array | denoised (N, 5) array | numpy (N, 5) — same shape, smooth values |
 | PINN | denoised (N, 5) array | Trained DeepXDE model | FNN [2, 64, 64, 64, 3] |
-| MoP | Trained PINN | 1,000+ predictions | numpy (1000+, 5) |
+| Bayes Opt | Trained PINN | 1,000+ predictions | numpy (1000+, 5) |
 
 ---
 
@@ -245,7 +245,7 @@ where $p = \rho R_{gas} T$ (ideal gas law), μ is dynamic viscosity, κ is therm
    - The full NS PDE constraint (once enabled) regularizes the neural network toward physically consistent solutions
    - The PINN can extrapolate to conditions not in the training set (different geometries, velocities)
 
-4. **MoP (Step 4):** Uses the trained PINN as a fast surrogate to generate 1,000+ virtual samples for the GA optimizer. Each sample costs ~milliseconds instead of ~hours of SPARTA.
+4. **Bayes Opt (Step 4):** Uses the trained PINN as a fast surrogate to generate 1,000+ virtual samples for the GA optimizer. Each sample costs ~milliseconds instead of ~hours of SPARTA.
 
 **Key insight:** The pipeline exploits the mathematical relationship between BTE and NS (Theorem 1) to create a physically consistent surrogate model chain. The Kriging step is the critical bridge — it converts noisy BTE output into smooth data that the NS-based PINN can learn from.
 
@@ -536,7 +536,7 @@ If $u_{obs}$ is noisy (raw DSMC), the data loss term fights the PDE loss term �
 
 ---
 
-## 8. Step 4: MoP — Feasibility Audit
+## 8. Step 4: Bayes Opt — Feasibility Audit
 
 ### Current State
 
@@ -549,7 +549,7 @@ If $u_{obs}$ is noisy (raw DSMC), the data loss term fights the PDE loss term �
 | Training samples | From SPARTA runs | Currently limited |
 | Target samples | 1,000+ | Goal of pipeline |
 
-### MoP in Optimization Chain
+### Bayes Opt in Optimization Chain
 
 From `stellarorion_optimization.ads`:
 
@@ -560,20 +560,20 @@ From `stellarorion_optimization.ads`:
 ```
 
 > **⚠️ CRITICAL AUDIT FINDING #5 (Audit Cycle 2):**
-> The document's pipeline diagram implies MoP uses the trained PINN as a surrogate model.
+> The document's pipeline diagram implies Bayes Opt uses the trained PINN as a surrogate model.
 > In reality, the Ada-native `MoP_Fitness` function (line 170 of `stellarorion_optimization.adb`)
 > calls `Calculate_Flight_Metrics`, which uses **Sutton-Graves correlation** — NOT the PINN.
 > The comment at line 213 explicitly states: `Y_Pred = 0.0 (no metamodel surrogate in Ada-native mode)`.
 >
-> The PyTorch-based PINN→MoP pipeline described in this document is a **planned extension**, not
+> The PyTorch-based PINN→Bayes Opt pipeline described in this document is a **planned extension**, not
 > the current implementation. The current GA optimization loop uses Ada-native simplified physics.
-> This document describes the **target architecture** (PINN surrogate → MoP → GA), which requires
-> completing the full pipeline (Kriging GP → PINN training → MoP surrogate).
+> This document describes the **target architecture** (PINN surrogate → Bayes Opt → GA), which requires
+> completing the full pipeline (Kriging GP → PINN training → Bayes Opt surrogate).
 
-The MoP is designed to replace the full SPARTA→PINN chain in the GA loop:
+The Bayes Opt is designed to replace the full SPARTA→PINN chain in the GA loop:
 - GA generates 50 candidate designs per generation × 200 generations = 10,000 fitness evaluations
 - Each evaluation via SPARTA would take ~30 min → 5,000 hours total
-- Each evaluation via MoP takes ~ms → seconds total (once PINN surrogate is available)
+- Each evaluation via Bayes Opt takes ~ms → seconds total (once PINN surrogate is available)
 
 > **AUDIT FINDING #33 (Cycle 12, LOW — GA cost math is an upper bound, not the expected count):**
 > The "10,000 fitness evaluations" and "5,000 hours total" figures are **upper bounds**, not the
@@ -589,16 +589,16 @@ The MoP is designed to replace the full SPARTA→PINN chain in the GA loop:
 
 | Aspect | Assessment | Notes |
 |--------|-----------|-------|
-| **Training data requirement** | 100–500 SPARTA/PINN samples | Each PINN field prediction is ~ms; MoP maps geometry→scalar cost |
+| **Training data requirement** | 100–500 SPARTA/PINN samples | Each PINN field prediction is ~ms; Bayes Opt maps geometry→scalar cost |
 | **Generation time** | 1,000 samples × ~1 ms = ~1 second | Negligible (scalar fitness eval) |
-| **Accuracy** | Depends on surrogate fidelity | Ada-native MoP uses Sutton-Graves; PINN-surrogate MoP is planned |
+| **Accuracy** | Depends on surrogate fidelity | Ada-native Bayes Opt uses Sutton-Graves; PINN-surrogate Bayes Opt is planned |
 | **GA integration** | Already implemented in Ada | `stellarorion_optimization.ads` |
 
-> **Note on MoP output:** The MoP returns a **single scalar `Float` cost** per candidate (the GA fitness),
-> not a flow-field vector. The (ρ, T, u) field prediction is the **PINN's** output; the MoP consumes
+> **Note on Bayes Opt output:** The Bayes Opt returns a **single scalar `Float` cost** per candidate (the GA fitness),
+> not a flow-field vector. The (ρ, T, u) field prediction is the **PINN's** output; the Bayes Opt consumes
 > that field (or a surrogate of it) to produce the scalar survivability cost that drives the GA.
 
-**Feasibility verdict: PASS.** The MoP is the final, fastest step. Once the PINN is trained, generating 1,000+ samples is trivial.
+**Feasibility verdict: PASS.** The Bayes Opt is the final, fastest step. Once the PINN is trained, generating 1,000+ samples is trivial.
 
 ---
 
@@ -627,7 +627,7 @@ PINNAccelerator.train_from_checkpoint() → DeepXDE model
 model.predict(query_points) → numpy (M, 3) [rho, T, u]
     │
     ▼
-MoP training → PyTorch MLP surrogate
+Bayes Opt training → PyTorch MLP surrogate
     │
     ▼
 GA optimization → Optimized geometry parameters
@@ -641,8 +641,8 @@ GA optimization → Optimized geometry parameters
 | grid file → `_parse_grid_file()` | File path | (N, 5) | numpy float64 | [m, m, kg/m³, K, m/s] |
 | `_parse_grid_file()` → Kriging | (N, 5) | (N, 5) | numpy float64 | same |
 | Kriging → PINN | (N, 5) | (N, 5) | numpy float64 | same |
-| PINN → MoP | (M, 3) | (M, 3) | numpy float64 | [kg/m³, K, m/s] |
-| MoP → GA | (K, n_outputs) | fitness score | float64 | scalar |
+| PINN → Bayes Opt | (M, 3) | (M, 3) | numpy float64 | [kg/m³, K, m/s] |
+| Bayes Opt → GA | (K, n_outputs) | fitness score | float64 | scalar |
 
 ### Data Integrity Check
 
@@ -685,7 +685,7 @@ Run 3 high-fidelity SPARTA samples to validate the pipeline end-to-end.
 For each sample, compare:
 1. **Raw DSMC peak** vs **Kriging-smoothed peak** vs **IRVE-3 flight (14.36 W/cm²)**
 2. **PINN prediction** vs **Kriging-smoothed DSMC**
-3. **MoP prediction** vs **PINN prediction**
+3. **Bayes Opt prediction** vs **PINN prediction**
 
 ### Expected Outcomes
 
@@ -723,12 +723,12 @@ For each sample, compare:
 >   (14.36 W/cm², 182.5 W/cm²) are in **W/cm²** (÷10,000 conversion). Both are stored
 >   separately in `Metrics` (`Stag_Heat_Flux_Wm2` and `Stag_Heat_Flux_Wcm2`,
 >   `stellarorion_types.ads` lines 325–326), so no conflation occurs in the Ada side.
-> - **Total heat load:** The MoP `Results.Total_Heat_Load` (`stellarorion_optimization.adb`
+> - **Total heat load:** The Bayes Opt's `Results.Total_Heat_Load` (`stellarorion_optimization.adb`
 >   lines 219–221) is computed in **J/m²** — `H_Flux [W/m²] × dt_char [s]` where
 >   `dt_char = √(2·π·6,371,000·7,000)/V` — matching its type annotation "J/m^2"
 >   (`stellarorion_types.ads` line 316). The **J/cm²** values in this table (165.72, ~180–210,
 >   195.06) are the ÷10,000-converted forms (as done in `stellarorion_test_modes.adb` line 956).
->   **Any downstream consumer must apply the ÷10,000 factor when comparing the MoP's raw
+>   **Any downstream consumer must apply the ÷10,000 factor when comparing the Bayes Opt's raw
 >   J/m² output against flight J/cm² values.**
 
 ### How the Noisy Peak Heat Flux Is Brought Down (per Sample)
@@ -831,7 +831,7 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 | `numpy` | ≥1.24.0 | Array operations throughout |
 | `scipy` | ≥1.10.0 | Optimization, spatial |
 | `deepxde` | ≥1.12.0 | PINN framework |
-| `torch` | ≥2.0.0 | MoP backend, GPU acceleration |
+| `torch` | ≥2.0.0 | Bayes Opt backend, GPU acceleration |
 | `matplotlib` | ≥3.7.0 | Visualization |
 | `pymsis` | ≥0.9.0 | Atmospheric models |
 
@@ -846,7 +846,7 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 | Kriging memory O(N²) with N=19,322 | HIGH | MEDIUM | N=19,322 → ~2.87 GB kernel matrix (fits in 8 GB RAM; Sparse GP fallback if needed) |
 | Kriging over-smoothing physical gradients | MEDIUM | LOW | Cross-validate length scale; use physical bounds |
 | PINN convergence failure on smoothed data | MEDIUM | LOW | Increase iterations to 10,000; adjust learning rate |
-| MoP accuracy degradation for extrapolation | HIGH | MEDIUM | Constrain GA search space to training domain |
+| Bayes Opt accuracy degradation for extrapolation | HIGH | MEDIUM | Constrain GA search space to training domain |
 | SPARTA Docker timeout on 10,000-step runs | LOW | LOW | Already proven at 2,200; increase timeout |
 | New dependency conflicts | LOW | LOW | scikit-learn is well-maintained, compatible with numpy/scipy |
 
@@ -889,10 +889,10 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 3. Compare with IRVE-3 flight data
 4. Generate validation plots
 
-### Phase 4: MoP Training (1–2 days)
+### Phase 4: Bayes Opt Training (1–2 days)
 
-1. Train MoP on 1,000+ PINN predictions
-2. Validate MoP accuracy
+1. Train Bayes Opt on 1,000+ PINN predictions
+2. Validate Bayes Opt accuracy
 3. Integrate with GA optimizer
 
 **Total estimated time: 7–12 days**
@@ -923,11 +923,11 @@ scikit-learn>=1.3.0    # GaussianProcessRegressor, RBF kernel
 - [x] Cycle 3: Check Kriging memory requirements, HF-3 test matrix, end-of-file trail — **COMPLETED** (3 findings corrected)
 - [x] Cycle 4: Verify PINN PDE constraints match NS equations exactly (line-by-line code vs math) — **COMPLETED** (5 findings corrected: #10 continuity r-factor, #11 momentum viscous/pressure terms, #12 simple_pde output, #13 2D Cartesian vs axisymmetric, #14 training domain unit-square)
 - [x] Cycle 5a: Add "How the Noisy Peak Heat Flux Is Brought Down (per Sample)" subsection to §10 per user request — **COMPLETED** (per sample: Kriging-filter 2,200-step output → PINN MPS GPU extrapolate to 300,000,000 steps; repeat for each of 3 samples)
-- [x] Cycle 5: Check MoP input/output dimensions match GA requirements — **COMPLETED** (2 findings corrected: MoP input is full `Geometry_Parameters` record (8 fields) + Flight + TPS + Target_Beta, NOT 6 design vars; MoP output is a single scalar `Float` cost, NOT (ρ,T,u) field predictions — clarified PINN vs MoP roles)
+- [x] Cycle 5: Check Bayes Opt input/output dimensions match GA requirements — **COMPLETED** (2 findings corrected: Bayes Opt input is full `Geometry_Parameters` record (8 fields) + Flight + TPS + Target_Beta, NOT 6 design vars; Bayes Opt output is a single scalar `Float` cost, NOT (ρ,T,u) field predictions — clarified PINN vs Bayes Opt roles)
 - [x] Cycle 6: Verify physical constants are consistent across all files — **COMPLETED** (3 findings: #15 PINN R_GAS=287.05 vs Ada R_AIR=287.058 (0.003%); #16 PINN N_A=6.022e23 vs Ada N_AVOGADRO=6.02214076e23 (0.002%); #17 all remaining constants consistent — GAMMA, V_STREAM, T_INF, RHO_INF, M_AIR, C_SG, R_EARTH, H_scale)
 - [x] Cycle 7: Check boundary condition definitions (9 BCs in `_make_boundary_conditions()`) — **COMPLETED** (3 findings: #18 code returns 9 BCs not 8 — FINDING 4 from Cycle 2 was itself an error, corrected back to 9; #19 the 9 BCs and full NS PDE are DEAD CODE in training — `train_from_checkpoint()` uses only `simple_pde` + `[ic]` PointSetBC, no λ_bc L_BC term; #20 component-index mismatch — BCs reference comps 0–3 assuming `[ρ,u,v,T]` but network outputs 3 comps in `[ρ,T,u]` order, a latent bug that would misassign V_STREAM→T if ever wired in)
 - [x] Cycle 8: Verify coordinate system consistency (axisymmetric) — **COMPLETED** (3 findings: #21 coordinate-convention mismatch — `_make_pde()` is axisymmetric (y=radial, state [ρ,u,v,T]) but the ACTIVE training path (`simple_pde` + data) is effectively 2D Cartesian with y treated as a plain spatial coordinate; #22 radial velocity v unavailable — `_parse_grid_file` collapses vx,vy to a scalar speed magnitude `u=√(vx²+vy²)` (line 325), so the axial/radial split is never recovered and `predict_full_state` hard-codes `v=0` (line 489), making axisymmetric `+ρv/y` and `−v/y²` terms inert; #23 SPARTA/Ada side is consistently axisymmetric — surf files X=axial(Z), Y=radial(R) confirmed in stellarorion_sparta.adb lines 1515/1528/1610 and plot scripts; the inconsistency is confined to the PINN internal representation)
-- [x] Cycle 9: Check units consistency throughout pipeline — **COMPLETED** (findings #24/#25: two unit conventions coexist — heat flux W/m² (SPARTA raw `f_1[3]`, Sutton-Graves `Heat_Flux_Wm2`, physics.ads line 182) vs W/cm² (validation/flight 14.36/182.5, ÷10,000 conversion; both stored in Metrics as `Stag_Heat_Flux_Wm2`/`Stag_Heat_Flux_Wcm2`, types.ads lines 325–326); MoP `Total_Heat_Load` is computed in **J/m²** (optimization.adb lines 219–221: `H_Flux [W/m²] × dt_char [s]`), so J/cm² values in §10 table require the ÷10,000 factor (test_modes.adb line 956) to compare against flight J/cm². Added unit-convention note to §10.)
+- [x] Cycle 9: Check units consistency throughout pipeline — **COMPLETED** (findings #24/#25: two unit conventions coexist — heat flux W/m² (SPARTA raw `f_1[3]`, Sutton-Graves `Heat_Flux_Wm2`, physics.ads line 182) vs W/cm² (validation/flight 14.36/182.5, ÷10,000 conversion; both stored in Metrics as `Stag_Heat_Flux_Wm2`/`Stag_Heat_Flux_Wcm2`, types.ads lines 325–326); Bayes Opt `Total_Heat_Load` is computed in **J/m²** (optimization.adb lines 219–221: `H_Flux [W/m²] × dt_char [s]`), so J/cm² values in §10 table require the ÷10,000 factor (test_modes.adb line 956) to compare against flight J/cm². Added unit-convention note to §10.)
 - [x] Cycle 10: Verify noise statistics assumptions — **COMPLETED** (3 findings: #26 CRITICAL — Ada code reads the INSTANTANEOUS `f_1[3]` (column 4) as heat flux, not the time-averaged `f_surfavg[3]` (column 7), despite a misleading "TIME-AVERAGED" code comment (stellarorion_sparta.adb line 2094 vs 2061–2064); the single most effective fix is to read `f_surfavg[3]` instead; #27 — the "10–50× reduction" claim overstates what the data support, realistic is ~3.5–12.7× (182.5/14.36 ≈ 12.7× or 56.6/16 ≈ 3.5×), corrected in §6 Kriging table; #28 — Kriging operates on the GRID flow field (ρ,T,u), NOT the surf heat-flux stream, so it cannot directly pull the 182.5 W/cm² surf peak down — the heat flux must be recomputed from the denoised flow field; also spatial-denoise vs temporal-extrapolation (2,200→300,000,000 steps) are distinct operations that should not be conflated)
 - [x] Cycle 11: Cross-check the BTE→NS mathematical derivation (§2–§4) against DERIVATION.md and the code's own mean-free-path implementation — **COMPLETED** (3 findings: #29 — Theorem 2 validity-regime table omitted the slip-flow band (0.01<Kn<0.1) and left Kn∈[1.0,10] unclassified; corrected to standard Bird classification: slip flow 0.01–0.1, transition 0.1–10; NS (with slip) valid up to Kn≈0.1 not just Kn<0.01; #30 — Theorem 1 Step 3 used imprecise notation `C(f⁰,f¹)` for the first-order collision term; corrected to the linearized collision operator `L[f¹]` (Frechet derivative of C at f⁰); #31 — §3's "λ~0.1–1.0 m, Kn~0.03–0.3 (transition)" was overstated; using the code's own `Mean_Free_Path` (physics.adb, λ=1/(√2·π·d²·n), MOL_DIAM=3.7e-10) and RHO_INF=1.05e-3 kg/m³, the actual values are λ≈0.075 mm, global Kn≈2.5×10⁻⁵ (continuum, not transition); the claimed numbers correspond to ~100 km altitude. The corrected numbers STRENGTHEN the NS validity for the PINN (deep continuum globally) while DSMC remains justified by the locally high-Kn shock layer. Also flagged: the code's own self-test expected-value comment (`stellarorion_self_test.adb` Test 1, "~5.2e-3 m" for n=1e23) is internally off by 316× (actual 1.6e-5 m))
 - [x] Cycle 12: Verify the HF-1/2/3 high-fidelity test matrix (§10) and GA cost math (§8) — **COMPLETED** (2 findings: #32 — the Expected Outcomes table applies the SAME predicted heat-flux/heat-load values to all three samples, but HF-2 (IRVE-3 + 10% diameter) changes Kn and shock stand-off (should be a delta vs HF-1) and HF-3 (Mars CO2 atmosphere, `--chemistry mars` → mars.vss/mars.react, stellarorion_sparta.adb lines 232–239; different freestream ρ/T than Earth ISA at the same "52 km" label, stellarorion_environment.adb line 415) would NOT land at ~14–17 W/cm² since SG heat flux ∝ √ρ; recommended per-sample expected values — current values valid for HF-1 only; #33 — the "10,000 fitness evals" and "5,000 hours" are UPPER BOUNDS, not expected counts, because the GA uses Elite_Count=2 (elites preserved, not re-evaluated) and Convergence_Gens=20/Convergence_Tol=1e-6 (early stopping), so actual new fitness evals are typically fewer than 10,000)
@@ -973,7 +973,7 @@ The following corrections were identified during Audit Cycle 2 (September 3, 202
 | 2 | **FNN notation ambiguous.** `FNN[2,64³,3]` could mean 64³ (262,144) or 3 layers of 64. Code: `dde.nn.FNN([2] + [64] * 3 + [n_output])` = `[2, 64, 64, 64, 3]`. | MEDIUM | §2, §7 | Changed to explicit `[2, 64, 64, 64, 3]` in all locations. |
 | 3 | **Grid vs Surf data conflated.** Kriging operates on grid cells (19,322 flow field cells), NOT surface elements (76 surf elements). The 182.5 W/cm² peak is from surf dumps, separate from grid files. | HIGH | §6 | Corrected to distinguish grid files (flow field) from surf dumps (heat flux) as separate data streams. |
 | 4 | **BC count wrong.** Document said "9 BCs". Only 8 are returned in the BC list (lines 249-254). `boundary_body()` is defined but NOT included in the return list. | LOW | §7 | Changed to "8 BCs returned" with note about body surface BC. **CORRECTED IN CYCLE 7 (FINDING #18):** This Cycle 2 finding was itself an ERROR — the code actually returns **9 BCs** (self-tests assert `len(bcs) == 9`). The count is corrected back to **9**. **FINAL STATUS (Cycle 17):** 9 BCs is correct. The original Cycle 2 claim was wrong, Cycle 7 corrected it. The Errata documents the correction chain for transparency. |
-| 5 | **MoP uses Sutton-Graves, not PINN.** Ada-native `MoP_Fitness` uses `Calculate_Flight_Metrics` (Sutton-Graves correlation), NOT PINN surrogate. Comment: `Y_Pred = 0.0 (no metamodel surrogate in Ada-native mode)`. The PINN→MoP chain is a planned extension, not current implementation. | HIGH | §8 | Added callout box clarifying current vs. planned architecture. |
+| 5 | **Bayes Opt uses Sutton-Graves, not PINN.** Ada-native `MoP_Fitness` uses `Calculate_Flight_Metrics` (Sutton-Graves correlation), NOT PINN surrogate. Comment: `Y_Pred = 0.0 (no metamodel surrogate in Ada-native mode)`. The PINN→Bayes Opt chain is a planned extension, not current implementation. | HIGH | §8 | Added callout box clarifying current vs. planned architecture. |
 | 6 | **PDE pressure gradient sign.** Lines 122, 125: `+ p[:, 0:1] * alpha_x` but standard NS has `-grad(p)`. Alpha weighting parameters default to 1.0, making sign positive (opposite to standard momentum equation). | MEDIUM | §4, §7 | Added NOTE callout about sign convention discrepancy. **FIXED IN CYCLE 21 (FINDING #56):** The entire pressure gradient implementation was wrong — `p*alpha` is pressure VALUE × coefficient, not a gradient. Fixed by computing `p_x = R_GAS*(rho_x*T + rho*T_x)` via chain rule. Removed unused `alpha_x`/`alpha_y` parameters (FINDING #57). |
 | 7 | **DERIVATION.md Section 5 inconsistent with code.** Section 5 listed 5 network outputs (ρ,u,v,T,p) but code has 4 outputs [rho,u,v,T] with p derived. Showed inviscid Euler momentum instead of viscous axisymmetric NS. Listed "EOS residual" as 4th PDE but code has "energy equation". File path referenced as `source/pinn_accelerator.py` (deprecated). | MEDIUM | §5 | **FIXED IN CYCLE 21:** Rewrote Section 5 to match actual code: 4 outputs, viscous axisymmetric NS with chain-rule pressure gradient, energy equation as 4th PDE, corrected file path. |
 
@@ -1716,7 +1716,7 @@ Full deep-read audit of all 10 Python files in `stellarorion_program_proc/src/py
 **__init__.py (11 lines):** Package init, `__version__ = "2.0.0"`, `__all__` list. CLEAN.
 
 **kriging_denoise.py (~2300 lines):**
-- Step 2 of 4-step pipeline (SPARTA -> Kriging -> PINN -> MoP)
+- Step 2 of 4-step pipeline (SPARTA -> Kriging -> PINN -> Bayes Opt)
 - GP regression (Kriging) spatial denoising of raw DSMC grid files
 - scikit-learn `GaussianProcessRegressor` with Matern 5/2 kernel + WhiteKernel
 - `_MAX_TRAINING_CELLS=1000` — subsamples large grids for GP training
@@ -1812,7 +1812,7 @@ Full deep-read audit of all 10 Python files in `stellarorion_program_proc/src/py
 
 ### No New Actionable Findings
 
-All 10 files in src/python/ are clean. The codebase has been stable across 13 consecutive audit cycles (23-35) with zero new actionable violations. The 4-step pipeline (SPARTA -> Kriging -> PINN -> MoP) is fully implemented in Python with proper citations, self-tests, and Murphy's Law guards.
+All 10 files in src/python/ are clean. The codebase has been stable across 13 consecutive audit cycles (23-35) with zero new actionable violations. The 4-step pipeline (SPARTA -> Kriging -> PINN -> Bayes Opt) is fully implemented in Python with proper citations, self-tests, and Murphy's Law guards.
 
 ---
 
@@ -1863,7 +1863,7 @@ All 10 files in src/python/ are clean. The codebase has been stable across 13 co
 
 ### No New Actionable Findings
 
-All 40 Ada files in src/simulation_engine/ are clean. The codebase has been stable across 14 consecutive audit cycles (23-36) with zero new actionable violations. The 4-step pipeline (SPARTA → Kriging → PINN → MoP) is fully implemented with all logic in Ada/SPARK and Python as library bindings only.
+All 40 Ada files in src/simulation_engine/ are clean. The codebase has been stable across 14 consecutive audit cycles (23-36) with zero new actionable violations. The 4-step pipeline (SPARTA → Kriging → PINN → Bayes Opt) is fully implemented with all logic in Ada/SPARK and Python as library bindings only.
 
 ---
 
@@ -1945,7 +1945,7 @@ All 40 Ada files in src/simulation_engine/ are clean. The codebase has been stab
 
 ### No New Actionable Findings
 
-All 40 Ada files in src/simulation_engine/ are clean. The codebase has been stable across 15 consecutive audit cycles (23-37) with zero new actionable violations after fixing the 4 identified issues. The 4-step pipeline (SPARTA → Kriging → PINN → MoP) is fully implemented with all logic in Ada/SPARK and Python as library bindings only.
+All 40 Ada files in src/simulation_engine/ are clean. The codebase has been stable across 15 consecutive audit cycles (23-37) with zero new actionable violations after fixing the 4 identified issues. The 4-step pipeline (SPARTA → Kriging → PINN → Bayes Opt) is fully implemented with all logic in Ada/SPARK and Python as library bindings only.
 
 ---
 
@@ -2025,7 +2025,7 @@ After 17 consecutive audit cycles (23-39), the codebase is fully stable:
 
 ### No New Actionable Findings
 
-The codebase has been stable across 17 consecutive audit cycles (23-39) with zero new actionable violations. The 4-step pipeline (SPARTA → Kriging → PINN → MoP) is fully implemented with all logic in Ada/SPARK and Python as library bindings only.
+The codebase has been stable across 17 consecutive audit cycles (23-39) with zero new actionable violations. The 4-step pipeline (SPARTA → Kriging → PINN → Bayes Opt) is fully implemented with all logic in Ada/SPARK and Python as library bindings only.
 
 ---
 
@@ -2306,7 +2306,7 @@ After 23 consecutive audit cycles (23-45), the codebase is fully stable:
 | File | Lines | Content | Verdict |
 |:---|:---|:---|:---|
 | `THESIS_TIMESTEP_JUSTIFICATION.md` | 104 | Physical timescale analysis for 1100-step limit (bowshock ~0.1ms, particle transit ~5.2ms, recirculation ~5-20ms). Documents why 1100 steps sufficient for optimization phase, acknowledges unsteady limitation for final validation. | CLEAN |
-| `Arch.md` | ~400 | Exhaustive architecture doc: component interaction map (main.py → SPARTA Docker → PINN → MoP), PINN hyperparameters, MoP architecture, SPARTA integration, optimization pipeline. References deprecated `StellarOrionEngineMach5Up.py`. | CLEAN |
+| `Arch.md` | ~400 | Exhaustive architecture doc: component interaction map (main.py → SPARTA Docker → PINN → Bayes Opt), PINN hyperparameters, Bayes Opt architecture, SPARTA integration, optimization pipeline. References deprecated `StellarOrionEngineMach5Up.py`. | CLEAN |
 | `README.md` | ~300 | Project readme: Quick Start, Architecture, Validation tables (IRVE-3/LOFTID/Models), DSMC noise methodology, code updates, documentation index. Well-structured. | CLEAN |
 | `ORION_Baseline.md` | — | ORION baseline comparison (read via batch) | CLEAN |
 | `HIAD_IRVE3_Baseline.md` | — | IRVE-3 baseline parameters | CLEAN |
@@ -2953,7 +2953,7 @@ Routine maintenance re-verification cycle. All infrastructure checks pass. No co
 - Deliverable 1 (Math Derivation): ✅ DERIVATION.md has BTE→NS Chapman-Enskog expansion, Kriging denoising justification, all references
 - Deliverable 2 (Help Page): ✅ --validation and --validation-base-sim-same-algotest in stellarorion_project.adb Print_Usage
 - Deliverable 3 (Colima Fallback): ✅ _check_colima_status(), _try_start_colima(), _print_container_runtime_error() in run.py
-- Deliverable 4 (Checkpoint): ✅ pipeline_checkpoint.py covers SPARTA→Kriging→PINN→MoP, atomic os.replace(), train_from_checkpoint() in pinn_accelerator.py
+- Deliverable 4 (Checkpoint): ✅ pipeline_checkpoint.py covers SPARTA→Kriging→PINN→Bayes Opt, atomic os.replace(), train_from_checkpoint() in pinn_accelerator.py
 - Deliverable 5 (Sim Window): Current UTC+7 time: 23:07 — IN simulation window (20:00–04:00)
 - Deliverable 6 (Cyclic Audit): Cycle 71 complete, continuing cycles
 

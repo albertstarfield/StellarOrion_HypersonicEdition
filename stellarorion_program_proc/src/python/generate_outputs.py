@@ -20,6 +20,7 @@ import subprocess
 import sys
 import time
 from multiprocessing import Pool, cpu_count
+from typing import Any
 
 import numpy as np
 
@@ -95,12 +96,46 @@ IRVE3_REFERENCE = {
     "total_heat_load_Jcm2": 195.06,  # J/cm² — integrated heat load
     "ballistic_coeff_kgm2": 26.9,    # kg/m² — ballistic coefficient
     "peak_deceleration_g":  19.7,    # g — peak deceleration
+    # Entry-interface Mach (120 km, V ≈ 4300 m/s).
+    # [Citation: NASA TP-2013-4012 — trajectory key points; value mirrored from
+    #  validation_pipeline.py: "Entry interface (EI): 120 km, V ≈ 4300 m/s, Mach ≈ 14.5"]
+    "entry_mach":           14.5,    # Mach — entry interface reference
 }
+
+# ── Optimized topology reference (Bayesian optimization results) ──────
+# AXIOMS: optimizer output is the ground truth for the optimized-variant MP4;
+#   values are STATIC spec parameters (not time-varying trajectory data).
+# THEORIES: GP Matern 5/2 + Expected Improvement over (R_N, r_tor, half-cone)
+#   achieved Cd −9.45%; SG heat rise +16% is a documented trade-off.
+# APPLICATIONS: rendered in the bottom-strip "Optimized Topology" panel when
+#   generate_mp4(..., optimized_topology=True) / --optimized-topology.
+# CITATIONS: stellarorion_program_proc/Optimization_Attempt_1.md;
+#   README.md "Optimized Topology: Before vs After" table.
+OPTIMIZED_TOPOLOGY_SPECS = (
+    # (label, optimized, baseline, unit, value_format)
+    ("Nose Radius R_N",    1.1146, 1.5000, "m",      "{:.4f}"),
+    ("Torus Radius r_tor", 0.0539, 0.1350, "m",      "{:.4f}"),
+    ("Half-Cone Angle",   44.58,   60.00,  "deg",    "{:.2f}"),
+    ("Drag Coefficient C_d", 1.4554, 1.6073, "",      "{:.4f}"),
+    ("Sutton-Graves Heat", 18.72,  16.14,  "W/cm2",  "{:.2f}"),
+)
 RESULTS_DIR      = os.path.join(os.path.dirname(__file__), "..", "..",
                                 "results/validation_scalloped")
+# -- AXIOMS: Optimized-topology artifacts are a distinct deliverable and must
+#    not overwrite/mix with validation_scalloped outputs; the canonical home
+#    for them is results/OptimizedTopology/.
+# -- THEORIES: generate_mp4 derives plots/ and mp4_frames/ from its output_dir
+#    argument, so passing this directory routes the MP4 + frames there without
+#    touching RESULTS_DIR consumers (CSV/VTU/validation pipeline).
+# -- APPLICATIONS: main() selects this dir when --optimized-topology is set.
+# -- CITATIONS: README.md "Optimized Topology: Before vs After"; session
+#    requirement "plot will be produced for the optimized topology on the
+#    results/OptimizedTopology".
+OPTIMIZED_TOPOLOGY_DIR = os.path.join(os.path.dirname(__file__), "..", "..",
+                                      "results/OptimizedTopology")
 
 
-def _compute_frame_data(step):
+def _compute_frame_data(step: int):
     """Pre-compute all trajectory + physics + PINN metrics for one frame step via Ada FFI.
 
     Returns dict with altitude, velocity, mach, heat_flux, drag, g_load,
@@ -163,7 +198,8 @@ def _compute_frame_data(step):
     }
 
 
-def _make_title_card(title, subtitle, out_dir, idx, resolution=(1920, 1080)):
+def _make_title_card(title: str, subtitle: str, out_dir: str, idx: int,
+                     resolution: tuple[int, int] = (1920, 1080)):
     """Render a category title card PNG (for ffmpeg concat).
 
     AXIOM: Title card must match dashboard frame dimensions exactly.
@@ -178,7 +214,7 @@ def _make_title_card(title, subtitle, out_dir, idx, resolution=(1920, 1080)):
     draw = ImageDraw.Draw(img)
 
     _scale = W / 1920.0
-    def _fs(base):
+    def _fs(base: int):
         return max(10, int(base * _scale))
 
     try:
@@ -202,7 +238,7 @@ def _make_title_card(title, subtitle, out_dir, idx, resolution=(1920, 1080)):
     return path
 
 
-def _render_animated_frame(fargs):
+def _render_animated_frame(fargs: Any):
     """Render one animated frame for any layout (dashboard or group).
 
     AXIOM: Resolution is NEVER hardcoded. All positions are percentage-based.
@@ -219,7 +255,7 @@ def _render_animated_frame(fargs):
      show_kn,
      show_peak_hf, show_total_heat, show_ballistic,
      show_stag_press, show_alt_peak_heat, show_peak_dynq,
-     validation) = fargs
+     validation, optimized_topology) = fargs
 
     from PIL import Image, ImageDraw, ImageFont
 
@@ -243,7 +279,7 @@ def _render_animated_frame(fargs):
 
     # Font sizes scale with resolution
     _scale = W / 1920.0
-    def _fs(base):
+    def _fs(base: int):
         return max(10, int(base * _scale))
 
     try:
@@ -265,7 +301,48 @@ def _render_animated_frame(fargs):
     _y_scale = H / _H_orig_for_layout  # Scale factor for y-positions only
     _title_pct = title_h  # Title bar height as %
 
-    def _pct_to_px(xp, yp, wp, hp):
+    # -- AXIOMS: an overlay drawn on top of live charts hides data the
+    #    viewer needs; reserved layout space is the only honest way to
+    #    show both the grid and the overlay at once. The frame is a fixed
+    #    W×H canvas; parameters belong in VERTICAL space (a bottom band)
+    #    so the dashboard keeps FULL WIDTH (charts are width-hungry).
+    # -- THEORIES: when a dash-frame overlay is active, map every panel's
+    #    design region [title_h, design_bot] into [title_h, strip_top]
+    #    with scale k = (strip_top − title_h)/(design_bot − title_h).
+    #    Title bar (drawn outside _pct_to_px) stays full width/height;
+    #    the bottom strip owns strip_top+ … 98.5% and never collides.
+    # -- APPLICATIONS: _pct_to_px applies the y/h compression only in
+    #    that mode; plain renders and traj/therm/mech stay full-size.
+    # -- CITATIONS: none (layout contract with the overlay block below).
+    #
+    # ── SLIM-STRIP DERIVATION (why 82.0 and not 64.5) ──────────────────
+    # AXIOMS:
+    #   A1: H = int(1920 × 102/100) = 1958 px (_content_height_pct=102).
+    #   A2: _scale = W/1920 = 1.0; font_sm = 13 px, font_md = 15 px.
+    #   A3: Each overlay row draws 3 text lines at row_top + {0,14,28}·s
+    #       plus a delta bar → row block height ≈ 28 + 13 = 41 px.
+    #   A4: Overlay rows use row_h = int((panel_h − 30·s)/5), first row
+    #       at y0 + 30·s (see _draw_validation_overlay L~1425).
+    #   A5: Ordering invariant: _strip_top < _sep_y < _st_y0 < _st_y1.
+    # THEORIES:
+    #   T1 (no bottom clipping): y0 + 30 + 4·row_h + 41 ≤ y0 + panel_h
+    #       ⟹ panel_h ≥ 235 px.
+    #   T2 (no row overlap with margin): row_h ≥ 41 + 12 = 53 px
+    #       ⟹ panel_h ≥ 5·53 + 30 = 295 px.
+    #   T3 (chosen): _st_y0 = 83.0% → panel_h = (98.5−83.0)% × 1958
+    #       = 303 px ≥ 295 (T2) → row_h = int(273/5) = 54 px,
+    #       last text bottom = 30 + 4·54 + 41 = 287 ≤ 303 (16 px slack).
+    #   T4: strip = 303 px = 15.5% of H vs old 640 px = 32.7% → 53%
+    #       thinner; charts grow because k rises 0.686 → 0.890.
+    # APPLICATIONS: constants below (82.0 / 82.5 / 83.0) realize T3–T4.
+    _strip_mode = bool(prefix == "dash" and (validation or optimized_topology))
+    _strip_top = 82.0   # % of H — dashboard content must end above this
+    _design_bot = title_h + 86.0  # last dash panel bottom: +78 y, h=8
+    # k ≈ (82.0 − 5.5)/(91.5 − 5.5) = 76.5/86 ≈ 0.890 (was 0.686 at 64.5)
+    _strip_k = ((_strip_top - title_h) / (_design_bot - title_h)
+                if _strip_mode else 1.0)
+
+    def _pct_to_px(xp: float, yp: float, wp: float, hp: float):
         # Convert percentage coordinates to pixels, scaling both positions
         # AND heights proportionally to fit the expanded canvas.
         # !! DO NOT REVERT TO THE OLD BROKEN BEHAVIOR !!
@@ -275,14 +352,26 @@ def _render_animated_frame(fargs):
         # FIXED: Both y and h now use H (expanded height) directly, so
         # everything scales uniformly. If you change this, you MUST verify
         # all 5 rows of 13 panels render without gaps or clipping.
+        if _strip_mode and yp >= title_h:
+            # Compress vertically into the region ABOVE the bottom strip
+            # (x untouched → full width preserved).
+            yp = title_h + (yp - title_h) * _strip_k
+            hp = hp * _strip_k
+            # Safety fallback: never let a panel cross into the strip.
+            if yp + hp > _strip_top:
+                hp = max(1.0, _strip_top - yp)
         y_px = int(yp * H / 100)
         h_px = int(hp * H / 100)
         return (int(xp * W / 100), y_px,
                 int((xp + wp) * W / 100), y_px + h_px)
 
-    def _draw_animated_panel(draw, x0, y0, x1, y1, title, ylabel,
-                             data_x, data_y, color, current_val,
-                             unit="", fmt="{:.1f}", frame_idx=0):
+    def _draw_animated_panel(draw: Any, x0: int, y0: int, x1: int, y1: int,
+                             title: str, ylabel: str,
+                             data_x: list[float] | np.ndarray,
+                             data_y: list[float] | np.ndarray,
+                             color: tuple[int, int, int], current_val: float,
+                             unit: str = "", fmt: str = "{:.1f}",
+                             frame_idx: int = 0):
         """Draw one animated panel — curves grow from step 0 to current frame."""
         draw.rectangle([x0, y0, x1, y1], fill=(30, 30, 55), outline=GRID, width=1)
         draw.text((x0 + int(10 * _scale), y0 + int(5 * _scale)), title,
@@ -311,7 +400,7 @@ def _render_animated_frame(fargs):
         ymax += yrange * 0.1
         ymin -= yrange * 0.1
 
-        def _to_px(vx, vy):
+        def _to_px(vx: float, vy: float):
             px = dx0 + (vx - xmin) / (xmax - xmin) * dw
             py = dy1 - (vy - ymin) / (ymax - ymin) * dh
             return int(px), int(py)
@@ -349,7 +438,9 @@ def _render_animated_frame(fargs):
         draw.text((x0 + int(2 * _scale), dy0 + dh // 2 - int(6 * _scale)),
                   ylabel, fill=(180, 180, 180), font=font_sm)
 
-    def _draw_vehicle_panel(draw, x0, y0, x1, y1, alt, vel, mach, hf, frame_idx=0):
+    def _draw_vehicle_panel(draw: Any, x0: int, y0: int, x1: int, y1: int,
+                            alt: float, vel: float, mach: float, hf: float,
+                            frame_idx: int = 0):
         """Draw IRVE-3 parametric cross-section with heat coloring and DSMC particle flow.
 
         AXIOM: Uses the exact 4-segment flat-skin profile from Rapisarda 2023
@@ -442,7 +533,7 @@ def _render_animated_frame(fargs):
         v_center_x = x0 + mx + avail_w // 2
         v_center_y = y0 + my + int(20 * _scale) + avail_h // 2
 
-        def to_px(vx, vy):
+        def to_px(vx: float, vy: float):
             # vx: from back (negative) to nose (positive), vy: half-width
             px = v_center_x + int(vx * s)
             py = v_center_y - int(vy * s)  # flip y for screen coords
@@ -598,6 +689,23 @@ def _render_animated_frame(fargs):
     # ══════════════════════════════════════════════════════════════════
     # LAYOUT: Percentage-based, adapts to resolution
     # ══════════════════════════════════════════════════════════════════
+
+    def _draw_panel_row(specs: list[tuple[Any, ...]], pw: int, gap: int,
+                        x_start: int = 2) -> None:
+        """Draw a horizontal row of animated panels (shared by traj/therm/mech).
+
+        AXIOMS: panel geometry is percentage-based (y=title_h+1, h=92%).
+        THEORIES: one row renderer prevents copy-paste divergence between
+          the three group-segment branches.
+        APPLICATIONS: specs = [(title, ylabel, data_y, color, unit, fmt, cur), ...];
+          pw/gap are canvas percentages; cur is the live scalar at frame_idx.
+        CITATIONS: none (internal layout contract).
+        """
+        for _i, (_t, _yl, _dy, _c, _u, _fmt, _cur) in enumerate(specs):
+            _p = _pct_to_px(x_start + _i * (pw + gap), title_h + 1, pw, 92)
+            _draw_animated_panel(draw, *_p, _t, _yl,
+                                 show_steps, _dy, _c, _cur, _u,
+                                 fmt=_fmt, frame_idx=frame_idx)
 
     if prefix == "dash":
         # ── MAIN DASHBOARD: 7 panels (percentage layout) ─────────
@@ -893,80 +1001,124 @@ def _render_animated_frame(fargs):
                        fill=(15, 15, 30))
         draw.text((int(20 * _scale), int(15 * _scale)),
                   "StellarOrion — Trajectory Parameters", fill=FG, font=font_title)
-        pw = 30
-        gap = 2
-        for i, (title, ylabel, data_y, color, unit, fmt) in enumerate([
-            ("Altitude Profile", "Alt [km / ft]", show_alt, (100, 150, 255), "km", "{:.1f}"),
-            ("Velocity", "Vel [m/s]", show_vel, (100, 220, 100), "m/s", "{:.0f}"),
-            ("Mach Number", "Mach", show_mach, (220, 100, 220), "", "{:.2f}"),
-        ]):
-            x_start = 2 + i * (pw + gap)
-            p = _pct_to_px(x_start, title_h + 1, pw, 92)
-            _draw_animated_panel(draw, *p, title, ylabel,
-                                 show_steps, data_y, color,
-                                 data_y[-1] if len(data_y) > 0 else 0, unit,
-                                 fmt=fmt, frame_idx=frame_idx)
+        # Live scalars (alt/vel/mach AT frame_idx) — NOT data_y[-1]:
+        # data_y[-1] is the FINAL trajectory value, so the big number would
+        # be wrong while the curve is still growing frame-by-frame.
+        _draw_panel_row([
+            ("Altitude Profile", "Alt [km / ft]", show_alt, (100, 150, 255), "km", "{:.1f}", alt),
+            ("Velocity", "Vel [m/s]", show_vel, (100, 220, 100), "m/s", "{:.0f}", vel),
+            ("Mach Number", "Mach", show_mach, (220, 100, 220), "", "{:.2f}", mach),
+        ], pw=30, gap=2)
 
     elif prefix == "therm":
-        # ── THERMAL GROUP: single wide panel ────────────────────
+        # ── THERMAL GROUP: heat flux + Mach side by side ────────
+        # Geometry: 2×47% panels + 2% gap → x=2 and x=51, fits 100% canvas.
         draw.rectangle([0, 0, W, int(_title_pct * H / 100)],
                        fill=(15, 15, 30))
         draw.text((int(20 * _scale), int(15 * _scale)),
                   "StellarOrion — Thermal & Heating", fill=FG, font=font_title)
-        p = _pct_to_px(2, title_h + 1, 96, 92)
-        _draw_animated_panel(draw, *p, "Sutton-Graves Heat Flux", r"q [W/cm2]",
-                             show_steps, show_hf, (255, 80, 80), hf, r"W/cm2",
-                             frame_idx=frame_idx)
+        _draw_panel_row([
+            ("Sutton-Graves Heat Flux", r"q [W/cm2]", show_hf, (255, 80, 80), r"W/cm2", "{:.1f}", hf),
+            ("Mach Number", "Mach", show_mach, (220, 100, 220), "", "{:.2f}", mach),
+        ], pw=47, gap=2)
 
     elif prefix == "mech":
-        # ── MECHANICAL GROUP: drag + g-load side by side ────────
+        # ── MECHANICAL GROUP: drag + g-load + Mach (3 panels) ───
+        # Geometry mirrors traj/dash Row 1: pw=30, gap=2 → x=2/34/66.
         draw.rectangle([0, 0, W, int(_title_pct * H / 100)],
                        fill=(15, 15, 30))
         draw.text((int(20 * _scale), int(15 * _scale)),
                   "StellarOrion — Mechanical Loads", fill=FG, font=font_title)
-        pw = 47
-        p = _pct_to_px(2, title_h + 1, pw, 92)
-        _draw_animated_panel(draw, *p, "Drag Force", "Drag [N]",
-                             show_steps, show_drag, (255, 180, 50), drag, "N",
-                             fmt="{:.0f}", frame_idx=frame_idx)
-        p = _pct_to_px(51, title_h + 1, pw, 92)
-        _draw_animated_panel(draw, *p, "Deceleration (G-load)", "G [g]",
-                             show_steps, show_g, (80, 220, 220), gload, "g",
-                             frame_idx=frame_idx)
+        _draw_panel_row([
+            ("Drag Force", "Drag [N]", show_drag, (255, 180, 50), "N", "{:.0f}", drag),
+            ("Deceleration (G-load)", "G [g]", show_g, (80, 220, 220), "g", "{:.1f}", gload),
+            ("Mach Number", "Mach", show_mach, (220, 100, 220), "", "{:.2f}", mach),
+        ], pw=30, gap=2)
 
-    # ── Validation overlay (Task 5): only on dash prefix ──
+    # ── Dedicated bottom strip: VALIDATION / Optimized Topology (dash only) ──
+    # The dashboard grid is compressed vertically to end at _strip_top
+    # (see _strip_mode in _pct_to_px) so it keeps FULL WIDTH; these
+    # parameter panels own the reserved bottom band and never cover charts.
     # [Citation: NASA TP-2013-4012 — IRVE-3 flight data]
     # [Citation: Rapisarda (2023) Table 4.10 — validation metrics]
-    if validation and prefix == "dash":
-        peak_hf_val_v = show_peak_hf[frame_idx] if frame_idx < len(show_peak_hf) else 0.0
-        total_heat_val = show_total_heat[frame_idx] if frame_idx < len(show_total_heat) else 0.0
-        ballistic_val = show_ballistic[frame_idx] if frame_idx < len(show_ballistic) else 0.0
-        peak_g_val = show_peak_dynq[frame_idx] if frame_idx < len(show_peak_dynq) else 0.0
-        # Overlay: top-right corner, ~30% width, ~25% height
-        ov_x0 = int(W * 0.68)
-        ov_y0 = int(H * 0.02)
+    # [Citation: Optimization_Attempt_1.md — Bayesian-optimized specs]
+    if prefix == "dash" and (validation or optimized_topology):
+        ov_x0 = int(W * 0.01)
         ov_x1 = int(W * 0.99)
-        ov_y1 = int(H * 0.28)
-        _draw_validation_overlay(draw, ov_x0, ov_y0, ov_x1, ov_y1,
-                                 peak_hf_val_v, total_heat_val,
-                                 ballistic_val, peak_g_val,
-                                 font_sm, font_md, _scale)
+        # Slim-strip geometry (see SLIM-STRIP DERIVATION at _strip_top):
+        # panel = (98.5 − 83.0)% × 1958 = 303 px (was 640 px at 65.8%).
+        # Ordering invariant (A5): 82.0 (content) < 82.5 (sep) < 83.0 (y0).
+        _st_y0 = int(H * 83.0 / 100)   # just below the separator line
+        _st_y1 = int(H * 0.985)
+        # Strip backdrop + horizontal separator — makes the reserved band
+        # read as dedicated space rather than a floating overlay.
+        _sep_y = int(H * 82.5 / 100)
+        draw.rectangle([ov_x0 - int(8 * _scale), _st_y0,
+                        ov_x1 + int(8 * _scale), _st_y1],
+                       fill=(15, 15, 30))
+        draw.line([(ov_x0 - int(8 * _scale), _sep_y),
+                   (ov_x1 + int(8 * _scale), _sep_y)],
+                  fill=(50, 50, 70), width=2)
+        if validation:
+            peak_hf_val_v = show_peak_hf[frame_idx] if frame_idx < len(show_peak_hf) else 0.0
+            total_heat_val = show_total_heat[frame_idx] if frame_idx < len(show_total_heat) else 0.0
+            ballistic_val = show_ballistic[frame_idx] if frame_idx < len(show_ballistic) else 0.0
+            peak_g_val = show_peak_dynq[frame_idx] if frame_idx < len(show_peak_dynq) else 0.0
+            # Entry Mach = running peak of the Mach curve so far. Mach decreases
+            # monotonically during deceleration, so the running peak ≈ entry value
+            # and stays comparable to the NASA EI reference (14.5) all video long.
+            # Using instantaneous Mach instead would show a growing/wrong delta.
+            _mach_slice = show_mach[:frame_idx + 1]
+            peak_mach_val = float(np.max(_mach_slice)) if len(_mach_slice) > 0 else 0.0
+            if optimized_topology:
+                # Both overlays: split the strip into left/right halves
+                # (vertical space is reserved for row height; split x instead).
+                _mid = (ov_x0 + ov_x1) // 2
+                _gap = int(8 * _scale)
+                _draw_validation_overlay(draw, ov_x0, _st_y0,
+                                         _mid - _gap, _st_y1,
+                                         peak_hf_val_v, total_heat_val,
+                                         ballistic_val, peak_g_val, peak_mach_val,
+                                         font_sm, font_md, _scale)
+                _draw_optimized_topology_overlay(draw, _mid + _gap, _st_y0,
+                                                 ov_x1, _st_y1,
+                                                 font_sm, font_md, _scale)
+            else:
+                # Validation only: the whole bottom strip belongs to it.
+                _draw_validation_overlay(draw, ov_x0, _st_y0,
+                                         ov_x1, _st_y1,
+                                         peak_hf_val_v, total_heat_val,
+                                         ballistic_val, peak_g_val, peak_mach_val,
+                                         font_sm, font_md, _scale)
+        else:
+            # Optimized topology only: the whole bottom strip belongs to it.
+            _draw_optimized_topology_overlay(draw, ov_x0, _st_y0,
+                                             ov_x1, _st_y1,
+                                             font_sm, font_md, _scale)
 
     frame_path = os.path.join(out_dir, f"{prefix}_{frame_idx:05d}.png")
     img.save(frame_path, "PNG")
     return frame_path
 
 
-def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_frame=100_000, resolution=(1920, 1080), pixel_scale=1.0, validation=False):
+def generate_mp4(output_dir: str, max_frames: int | None = None,
+                 target_duration: float | None = None,
+                 steps_per_frame: int = 100_000,
+                 resolution: tuple[int, int] = (1920, 1080), pixel_scale: float = 1.0,
+                 validation: bool = False,
+                 optimized_topology: bool = False):
     """Generate pure live-animation MP4 — EVERYTHING is animated, NO static frames.
 
     Structure:
       1. Title card (2s)
-      2. Main dashboard (7-panel, curves grow frame-by-frame)
+      2. Main dashboard (multi-panel, curves grow frame-by-frame)
       3. Trajectory group (altitude/velocity/mach, curves grow)
-      4. Thermal group (heat flux, curve grows)
-      5. Mechanical group (drag/g-load, curves grow)
+      4. Thermal group (heat flux + mach, curves grow)
+      5. Mechanical group (drag/g-load/mach, curves grow)
       6. Encode with ffmpeg
+
+    max_frames=None renders the full trajectory (3001 frames at the default
+    steps_per_frame); pass an int to cap dashboard frames for fast iteration.
 
     Ada FFI computes all physics. PIL renders all frames. Zero matplotlib.
     [Citation: ffmpeg HW accel — https://trac.ffmpeg.org/HWAccelIntro]
@@ -1027,12 +1179,10 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
     print(f"[MP4] Computing {n_anim} trajectory points via Ada FFI ({steps_per_frame:,} steps/frame) ...")
     t0 = time.time()
 
-    frame_data = []
     with Pool(n_workers) as pool:
-        for r in tqdm(pool.imap(_compute_frame_data, all_steps, chunksize=100),
-                       total=len(all_steps), desc="[MP4] Ada FFI",
-                       unit="pts", ncols=80):
-            frame_data.append(r)
+        frame_data = list(tqdm(pool.imap(_compute_frame_data, all_steps, chunksize=100),
+                               total=len(all_steps), desc="[MP4] Ada FFI",
+                               unit="pts", ncols=80))
 
     frame_alt = np.array([d["altitude_km"] for d in frame_data])
     frame_vel = np.array([d["velocity_ms"] for d in frame_data])
@@ -1066,36 +1216,76 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
     # ══════════════════════════════════════════════════════════════════
     # SECTION 2a: Render MAIN DASHBOARD frames (animated)
     # ══════════════════════════════════════════════════════════════════
-    print(f"[MP4] Rendering {n_anim} live dashboard frames ...")
-    dash_args = []
-    for i in range(n_anim):
-        dash_args.append((
+    # Shared fargs builder — one 33-element contract for dash + group segments
+    # so the tuple can never diverge between call sites.
+    def _make_render_args(i: int, prefix: str) -> tuple[Any, ...]:
+        """Build the fargs tuple for _render_animated_frame.
+
+        AXIOMS: element order must match the unpack in _render_animated_frame.
+        THEORIES: single builder ⇒ dash and group segments stay in lockstep.
+        APPLICATIONS: i = DATA index (drives curve slice prefix_{i:05d}.png);
+          prefix selects the layout branch (dash/traj/therm/mech).
+        CITATIONS: none (internal contract).
+        """
+        return (
             i, int(all_frame_steps[i]),
             frame_alt[i], frame_vel[i], frame_mach[i],
             frame_hf[i], frame_drag[i], frame_g[i],
             all_frame_steps, frame_alt, frame_hf,
             frame_vel, frame_mach, frame_drag, frame_g,
-            frames_dir, "dash", _expanded_resolution,
+            frames_dir, prefix, _expanded_resolution,
             frame_pinn_loss, frame_pinn_acc, frame_dsmc_pinn_err,
             frame_density, frame_temp, frame_press,
             frame_kn,
             frame_peak_hf, frame_total_heat, frame_ballistic,
             frame_stag_press, frame_alt_peak_heat, frame_peak_dynq,
-            validation,
-        ))
+            validation, optimized_topology,
+        )
 
-    anim_paths = []
+    print(f"[MP4] Rendering {n_anim} live dashboard frames ...")
+    dash_args = [_make_render_args(i, "dash") for i in range(n_anim)]
+
     t0 = time.time()
     with Pool(n_workers) as pool:
-        for fp in tqdm(pool.imap(_render_animated_frame, dash_args, chunksize=50),
-                       total=n_anim, desc="[MP4] Dashboard",
-                       unit="fr", ncols=80):
-            anim_paths.append(fp)
+        anim_paths = list(tqdm(pool.imap(_render_animated_frame, dash_args, chunksize=50),
+                               total=n_anim, desc="[MP4] Dashboard",
+                               unit="fr", ncols=80))
     for p in anim_paths:
         all_paths.append(("anim", p))
     frame_idx += len(anim_paths)
     elapsed = time.time() - t0
     print(f"[MP4] Dashboard: {elapsed:.1f}s ({n_anim / max(0.01, elapsed):.0f} fr/s)")
+
+    # ══════════════════════════════════════════════════════════════════
+    # SECTION 2a-group: Trajectory / Thermal / Mechanical segments
+    # ══════════════════════════════════════════════════════════════════
+    # AXIOMS: the docstring promises sections 3-5 (traj/therm/mech) and the
+    #   cleanup loop already sweeps those prefixes — they must be RENDERED
+    #   or the MP4 ends after the dashboard (dead branches).
+    # THEORIES: 90 frames @30fps = 3s per segment; stride index
+    #   round(k*(n_anim-1)/89) spans the FULL trajectory so curves grow
+    #   0 → TARGET_STEP; frame_idx MUST be the DATA index i (not local k)
+    #   so _draw_animated_panel's data[:frame_idx+1] slice is correct.
+    # APPLICATIONS: one Pool per segment; only the prefix differs.
+    # CITATIONS: none (rendering only).
+    _GROUP_SEGMENTS = ("traj", "therm", "mech")
+    _GROUP_FRAMES = 90
+    for group_prefix in _GROUP_SEGMENTS:
+        _k_max = max(0, n_anim - 1)
+        # round() with no ndigits already returns int (RUF046 — no int() wrap)
+        _indices = [round(k * _k_max / (_GROUP_FRAMES - 1))
+                    for k in range(_GROUP_FRAMES)]
+        group_args = [_make_render_args(i, group_prefix) for i in _indices]
+        t0 = time.time()
+        with Pool(n_workers) as pool:
+            group_paths = list(tqdm(pool.imap(_render_animated_frame, group_args, chunksize=5),
+                                    total=len(group_args), desc=f"[MP4] {group_prefix}",
+                                    unit="fr", ncols=80))
+        for p in group_paths:
+            all_paths.append(("anim", p))
+        frame_idx += len(group_paths)
+        elapsed = time.time() - t0
+        print(f"[MP4] {group_prefix}: {elapsed:.1f}s ({len(group_paths)} frames)")
 
     # ══════════════════════════════════════════════════════════════════
     # SECTION 2b: Pixel-scale upscale (NEAREST for jagged retro look)
@@ -1109,7 +1299,11 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
         _frame_files = sorted(glob.glob(os.path.join(frames_dir, "*.png")))
         for _fp in tqdm(_frame_files, desc="[MP4] Pixel-scale", unit="fr", ncols=80):
             _img = _PILImage.open(_fp)
-            _img = _img.resize((_upscale_w, _upscale_h), resample=_PILImage.NEAREST)
+            # Pillow 12.3.0: module-level Image.NEAREST still exists at runtime
+            # (= 0) but is absent from type stubs; canonical typed form is
+            # Image.Resampling.NEAREST (identical value 0, no behavior change).
+            # [Citation: Pillow v12.3.0 - https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Resampling.NEAREST]
+            _img = _img.resize((_upscale_w, _upscale_h), resample=_PILImage.Resampling.NEAREST)
             _img.save(_fp, "PNG")
         _up_elapsed = time.time() - _t0_up
         print(f"[MP4] Upscaled {len(_frame_files)} frames to {_upscale_w}x{_upscale_h} "
@@ -1149,7 +1343,16 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
     if _enc_name == "libx264":
         print("[MP4] SW encoder: libx264 (no HW encoder found)")
 
-    mp4_path = os.path.join(plots_dir, "hybrid_dsmc_pinn_animation.mp4")
+    # AXIOMS: the two overlay variants must coexist — a shared output name
+    #   would let the second run silently overwrite the first.
+    # THEORIES: suffix mirrors the CLI flags (--validation → _validation,
+    #   --optimized-topology → _optimized); no flags ⇒ base name unchanged
+    #   so the README "Full animation" link stays valid.
+    # APPLICATIONS: generate_mp4(validation=True) → ..._validation.mp4.
+    # CITATIONS: README.md Live Dashboard Animation link path.
+    _name_suffix = (("_validation" if validation else "")
+                    + ("_optimized" if optimized_topology else ""))
+    mp4_path = os.path.join(plots_dir, f"hybrid_dsmc_pinn_animation{_name_suffix}.mp4")
 
     # Durations: title=2s, all anim frames=1/fps each
     natural_durations = []
@@ -1204,19 +1407,25 @@ def generate_mp4(output_dir, max_frames=300, target_duration=None, steps_per_fra
     return mp4_path
 
 
-def _draw_validation_overlay(draw, x0, y0, x1, y1, peak_hf, total_heat,
-                             ballistic, peak_g, font_sm, font_md, _scale):
+def _draw_validation_overlay(draw: Any, x0: int, y0: int, x1: int, y1: int,
+                             peak_hf: float, total_heat: float,
+                             ballistic: float, peak_g: float,
+                             peak_mach: float,
+                             font_sm: Any, font_md: Any, _scale: float):
     """Draw validation overlay panel comparing simulation vs IRVE-3 flight data.
 
-    Shows 4 metrics with color-coded delta indicators:
+    Shows 5 metrics with color-coded delta indicators:
       green  < 20% delta — within acceptable range
       yellow 20-50% delta — moderate discrepancy
       red    > 50% delta — significant discrepancy
 
+    Header carries the right-aligned "VALIDATION" title badge (right end
+    of the bottom strip) so validation mode is identifiable at a glance.
+
     -- AXIOMS: IRVE-3 flight data is the ground truth for HIAD validation.
     -- THEORIES: Delta percentage quantifies agreement with flight data.
     -- APPLICATIONS: Visual overlay for MP4 dashboard.
-    -- CITATION: NASA TP-2013-4012 — IRVE-3 flight data
+    -- CITATION: NASA TP-2013-4012 — IRVE-3 flight data + EI Mach ≈ 14.5
     -- CITATION: Rapisarda (2023) Table 4.10 — validation metrics
     """
     FG = (220, 220, 220)
@@ -1225,15 +1434,20 @@ def _draw_validation_overlay(draw, x0, y0, x1, y1, peak_hf, total_heat,
     draw.rectangle([x0, y0, x1, y1], fill=(25, 25, 50), outline=GRID, width=1)
     draw.text((x0 + int(10 * _scale), y0 + int(5 * _scale)),
               "IRVE-3 Validation Comparison", fill=(200, 220, 255), font=font_md)
+    # Mode title badge — right-aligned in the panel header (right end of strip)
+    draw.text((x1 - int(10 * _scale), y0 + int(5 * _scale)),
+              "VALIDATION", fill=(255, 200, 50), font=font_md, anchor="rt")
 
     metrics = [
         ("Peak Heat Flux", peak_hf, IRVE3_REFERENCE["peak_heat_flux_Wcm2"], "W/cm2"),
         ("Total Heat Load", total_heat, IRVE3_REFERENCE["total_heat_load_Jcm2"], "J/cm2"),
         ("Ballistic Coeff", ballistic, IRVE3_REFERENCE["ballistic_coeff_kgm2"], "kg/m2"),
         ("Peak Decel", peak_g, IRVE3_REFERENCE["peak_deceleration_g"], "g"),
+        ("Entry Mach", peak_mach, IRVE3_REFERENCE["entry_mach"], "Mach"),
     ]
 
-    row_h = int((y1 - y0 - 30 * _scale) / 4)
+    # /len(metrics) — not hardcoded /4 — so adding a row never overflows the box
+    row_h = int((y1 - y0 - 30 * _scale) / len(metrics))
     for i, (name, sim_val, ref_val, unit) in enumerate(metrics):
         ry = y0 + int(30 * _scale) + i * row_h
         # Compute delta percentage
@@ -1278,6 +1492,73 @@ def _draw_validation_overlay(draw, x0, y0, x1, y1, peak_hf, total_heat,
                        fill=color)
 
 
+def _draw_optimized_topology_overlay(draw: Any, x0: int, y0: int,
+                                     x1: int, y1: int, font_sm: Any,
+                                     font_md: Any, _scale: float) -> None:
+    """Draw Optimized Topology spec panel in the reserved bottom strip.
+
+    Shows the 5 Bayesian-optimized geometry/aero parameters (opt vs baseline)
+    with color-coded delta: green = reduction (improvement), yellow = increase
+    (documented trade-off, e.g. Sutton-Graves heat).
+
+    -- AXIOMS: optimizer output is ground truth for the optimized variant;
+      spec values are STATIC (no frame dependence).
+    -- THEORIES: Δ% = (opt − base)/base × 100; Cd −9.45% is the headline win.
+    -- APPLICATIONS: rendered when generate_mp4(optimized_topology=True).
+    -- CITATION: Optimization_Attempt_1.md — GP Matern 5/2, 70 evals
+    -- CITATION: README.md "Optimized Topology: Before vs After" table
+    """
+    FG = (220, 220, 220)
+    GRID = (50, 50, 70)
+
+    draw.rectangle([x0, y0, x1, y1], fill=(25, 25, 50), outline=GRID, width=1)
+    draw.text((x0 + int(10 * _scale), y0 + int(5 * _scale)),
+              "Optimized Topology", fill=(200, 220, 255), font=font_md)
+    # Mode title badge — right-aligned in the panel header (right end of strip)
+    draw.text((x1 - int(10 * _scale), y0 + int(5 * _scale)),
+              "OPTIMIZED", fill=(80, 220, 200), font=font_md, anchor="rt")
+
+    specs = OPTIMIZED_TOPOLOGY_SPECS
+    # /len(specs) — never hardcoded — so rows can be added without overflow
+    row_h = int((y1 - y0 - 30 * _scale) / len(specs))
+    for i, (name, opt_val, base_val, unit, val_fmt) in enumerate(specs):
+        ry = y0 + int(30 * _scale) + i * row_h
+        if base_val > 0:
+            delta_pct = (opt_val - base_val) / base_val * 100.0
+        else:
+            delta_pct = 0.0
+
+        # green = parameter reduced (optimizer goal), yellow = increased (trade-off)
+        if delta_pct < 0:
+            color = (80, 220, 80)
+        else:
+            color = (255, 200, 50)
+
+        _unit_suffix = f" {unit}" if unit else ""
+        draw.text((x0 + int(10 * _scale), ry),
+                  name, fill=FG, font=font_sm)
+        draw.text((x0 + int(220 * _scale), ry),
+                  f"{delta_pct:+.1f}%", fill=color, font=font_sm)
+        draw.text((x0 + int(10 * _scale), ry + int(14 * _scale)),
+                  f"Opt: {val_fmt.format(opt_val)}{_unit_suffix}",
+                  fill=(180, 180, 180), font=font_sm)
+        draw.text((x0 + int(10 * _scale), ry + int(28 * _scale)),
+                  f"Base: {val_fmt.format(base_val)}{_unit_suffix}",
+                  fill=color, font=font_sm)
+
+        # Delta-magnitude bar (visual indicator, capped at 100%)
+        bar_x0 = x0 + int(340 * _scale)
+        bar_x1 = x1 - int(10 * _scale)
+        bar_y = ry + int(14 * _scale)
+        bar_w = bar_x1 - bar_x0
+        if bar_w > 0:
+            bar_fill = int(bar_w * min(abs(delta_pct), 100) / 100.0)
+            draw.rectangle([bar_x0, bar_y, bar_x1, bar_y + int(6 * _scale)],
+                           fill=(40, 40, 60))
+            draw.rectangle([bar_x0, bar_y, bar_x0 + bar_fill, bar_y + int(6 * _scale)],
+                           fill=color)
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="StellarOrion Output Generator")
@@ -1293,6 +1574,10 @@ def main():
                         help="Pixel scale factor for retro aesthetic (0.5 = half-res render, NEAREST upscale to full)")
     parser.add_argument("--validation", action="store_true",
                         help="Show IRVE-3 validation overlay panel in MP4 dashboard")
+    parser.add_argument("--optimized-topology", action="store_true",
+                        help="Show Optimized Topology spec overlay panel (bottom strip) in MP4")
+    parser.add_argument("--max-frames", type=int, default=None,
+                        help="Cap dashboard frames (default: None = full trajectory)")
     args = parser.parse_args()
 
     # Parse resolution
@@ -1303,6 +1588,15 @@ def main():
         print(f"[WARN] Invalid resolution '{args.resolution}', using 1920x1080")
         resolution = (1920, 1080)
 
+    # -- AXIOM: each output variant owns its directory (validation stays in
+    #    validation_scalloped; optimized topology goes to OptimizedTopology).
+    # -- THEORY: generate_mp4(output_dir) builds output_dir/plots and
+    #    output_dir/mp4_frames from this single argument.
+    # -- APPLICATION: choose the directory by variant before creating it.
+    # -- CITATIONS: README.md "Optimized Topology: Before vs After".
+    _mp4_out_dir = (OPTIMIZED_TOPOLOGY_DIR if args.optimized_topology
+                    else RESULTS_DIR)
+    os.makedirs(_mp4_out_dir, exist_ok=True)
     os.makedirs(RESULTS_DIR, exist_ok=True)
     print("=" * 70)
     print("  StellarOrion Output Generator (Live Dashboard)")
@@ -1319,11 +1613,15 @@ def main():
         print("\n[--mp4-only] Skipping CSV and VTU generation")
 
     n_frames = TARGET_STEP // args.steps_per_frame + 1
+    if args.max_frames is not None and 0 < args.max_frames < n_frames:
+        n_frames = args.max_frames
     print(f"\n[3/3] Generating live dashboard MP4 ({n_frames} frames, "
           f"{args.steps_per_frame:,} steps/frame, {resolution[0]}x{resolution[1]}) ...")
-    mp4_path = generate_mp4(RESULTS_DIR, steps_per_frame=args.steps_per_frame,
+    mp4_path = generate_mp4(_mp4_out_dir, max_frames=args.max_frames,
+                            steps_per_frame=args.steps_per_frame,
                             target_duration=args.duration, resolution=resolution,
-                            pixel_scale=args.pixel_scale, validation=args.validation)
+                            pixel_scale=args.pixel_scale, validation=args.validation,
+                            optimized_topology=args.optimized_topology)
 
     print("\n" + "=" * 70)
     print("  DONE")

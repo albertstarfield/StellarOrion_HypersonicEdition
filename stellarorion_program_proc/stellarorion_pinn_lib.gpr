@@ -21,7 +21,7 @@ project StellarOrion_PINN_Lib is
       "stellarorion_trajectory_output.adb",
       "stellarorion_pipeline_checkpoint.ads",  -- NEW: checkpoint state management for Python FFI
       "stellarorion_pipeline_checkpoint.adb",
-      "stellarorion_optimization.ads",         -- NEW: MoP/CCD/GA optimization for Python FFI
+       "stellarorion_optimization.ads",         -- NEW: MoP_Fitness/CCD/GA optimization for Python FFI
       "stellarorion_optimization.adb",
       "stellarorion_postprocessing.ads",       -- NEW: postprocessing analytics for Python FFI
       "stellarorion_postprocessing.adb",

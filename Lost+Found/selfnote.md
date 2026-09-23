@@ -244,25 +244,25 @@ Depending on the mission profile, different parameters must be prioritized.
 
 ---
 
-## 6. Strategy: DSMC MoP-SBO vs. Continuum CFD (Ansys / OpenFOAM)
-A common question is why this pipeline uses **DSMC + MoP-SBO** instead of a standard **Ansys Fluent** or **OpenFOAM** optimization loop.
+## 6. Strategy: DSMC Bayes Opt-SBO vs. Continuum CFD (Ansys / OpenFOAM)
+A common question is why this pipeline uses **DSMC + Bayes Opt-SBO** instead of a standard **Ansys Fluent** or **OpenFOAM** optimization loop.
 
-| Feature | StellarOrion (DSMC / Fluent / Other + MoP) | Traditional CFD Optimization (Fluent / OpenFOAM) |
+| Feature | StellarOrion (DSMC / Fluent / Other + Bayes Opt) | Traditional CFD Optimization (Fluent / OpenFOAM) |
 | :--- | :--- | :--- |
 | **Solver Flexibility**| **Regime-Agnostic:** Bridges SPARTA (Rarefied), Fluent (High-Mach), and Wake solvers (FUN3D). | **Single-Regime:** Usually limited to Navier-Stokes; fails in transitional regimes. |
-| **Optimization Logic** | **MoP-Accelerated:** Uses a Physics-Informed Metamodel to test 10,000+ candidates in ms. | **Brute-Force:** Requires 100% convergence of the full solver for *every* design candidate. |
+| **Optimization Logic** | **Bayes-Opt-Accelerated:** Uses a GP surrogate (Matérn 5/2 + Expected Improvement) to test 10,000+ candidates in ms. | **Brute-Force:** Requires 100% convergence of the full solver for *every* design candidate. |
 | **Data Fidelity** | **Hybrid Refinement:** Uses DeepXDE (PINN) to refine noisy DSMC or coarse CFD data. | **Raw Output:** Reliant on mesh density; no neural refinement layer. |
 | **Hardware Logic** | **Executor-Bridge:** Docker (Physics) + Local GPU/NPU (Optimization). | **Monolithic:** Primarily CPU-bound; requires high-end HPC licenses. |
-| **Speed (Turnaround)** | **Ultra-Fast:** Near-instant design iteration once the MoP is trained. | **Prohibitive:** Weeks of compute time needed for global optimization. |
+| **Speed (Turnaround)** | **Ultra-Fast:** Near-instant design iteration once the GP surrogate is trained. | **Prohibitive:** Weeks of compute time needed for global optimization. |
 
 ### Rationale for Selection:
 1. **Survival Envelope:** HIADs start decelerating at altitudes where the air is too thin for the continuum assumptions used in Fluent or OpenFOAM. DSMC (SPARTA) captures the true kinetic behavior of the gas.
 2. **Hardware-Agnostic Hybrid Support:** StellarOrion is built for modern cross-platform development. It leverages a **Hybrid CPU+GPU Architecture**:
     *   **Physics (CPU):** SPARTA runs on **Docker Linux** to ensure a high-performance, reproducible environment regardless of the host OS (macOS/Windows/Linux).
-    *   **Optimization (GPU/NPU):** The MoP-SBO loop uses PyTorch with support for a broad range of global hardware platforms, ensuring high-speed optimization on everything from a MacBook Pro to a data center cluster.
+    *   **Optimization (GPU/NPU):** The Bayes Opt-SBO loop uses PyTorch with support for a broad range of global hardware platforms, ensuring high-speed optimization on everything from a MacBook Pro to a data center cluster.
         *   **Supported Platforms:** **Apple Metal (MPS)**, **NVIDIA CUDA**, **AMD ROCm**, **Intel OneAPI**, **Huawei CANN (Ascend)**, **Moore Threads MUSA**, **Biren SUPA**, **Innosilicon Fenghua**, **Denglin GPU+**, and **Snapdragon/ARM OpenCL**.
 3. **SPARTA vs. OpenFOAM (dsmcFoam+):** While OpenFOAM has a DSMC solver, **SPARTA (Sandia National Labs)** is purpose-built for high-performance DSMC. It offers significantly better parallel scaling and a more robust implementation of the VSS/VHS collision models and surface chemistry required for hypersonics.
-4. **MoP/SBO Efficiency:** To find the *optimal* cone angle or nose radius, we need to test thousands of variations. While Fluent and OpenFOAM *can* run in 2D to save time, a full CFD convergence still takes minutes. The **Metamodel of Optimal Prognosis (MoP)** allows us to "learn" the physics and then run 10,000+ virtual "tests" in milliseconds.
+4. **Bayes Opt/SBO Efficiency:** To find the *optimal* cone angle or nose radius, we need to test thousands of variations. While Fluent and OpenFOAM *can* run in 2D to save time, a full CFD convergence still takes minutes. The **Bayesian Optimization surrogate (GP Matérn 5/2 + Expected Improvement)** allows us to "learn" the physics and then run 10,000+ virtual "tests" in milliseconds.
 5. **Axisymmetric Optimization:** Since the HIAD is a body of revolution, 2D axisymmetry is the "gold standard" for early-stage design. The StellarOrion pipeline leverages this to generate the massive datasets needed for high-fidelity surrogate models that would be computationally prohibitive with traditional CFD.
 
 ---
@@ -272,8 +272,8 @@ While the current StellarOrion pipeline is optimized for the rarefied and transi
 
 ### Role of Fluent in the Pipeline:
 1.  **High-Mach Aerothermodynamics (Mach 15+):** Fluent is highly capable in the high-speed regime, handling complex shock-shock interactions and thermal ionization that occur at Mach 15 and beyond. It provides a valuable continuum-based comparison to the particle-based DSMC results in high-energy regimes.
-2.  **High-Fidelity Cross-Validation:** Fluent can be used to perform "Spot Checks" on the MoP-SBO surrogate model. Validating a single optimized design point in Fluent provides a rigorous continuum-regime anchor for the kinetic-regime data.
-3.  **Detailed Structural-Thermal Coupling:** Fluent’s integration with the broader Ansys Workbench (Mechanical/Thermal) allows for high-fidelity modeling of the internal pressure distribution and torus-to-torus heat conduction that goes beyond the current 2D-axisymmetric MoP estimates.
+2.  **High-Fidelity Cross-Validation:** Fluent can be used to perform "Spot Checks" on the Bayes Opt-SBO surrogate model. Validating a single optimized design point in Fluent provides a rigorous continuum-regime anchor for the kinetic-regime data.
+3.  **Detailed Structural-Thermal Coupling:** Fluent’s integration with the broader Ansys Workbench (Mechanical/Thermal) allows for high-fidelity modeling of the internal pressure distribution and torus-to-torus heat conduction that goes beyond the current 2D-axisymmetric Bayes Opt estimates.
 
 ### Comparison Summary for Fluent Integration:
 *   **Strengths:** High-fidelity modeling across **Mach 1 to Mach 15+**; modular integration with **DeepXDE (PINN)** for GPU refinement; industry-standard reliability.
@@ -291,7 +291,7 @@ To ensure maximum scalability and decoupling, the Ansys integration follows an *
 ### Workflow:
 1.  **Job Submission:** StellarOrion (Bridge) pushes a design vector to the Executor.
 2.  **Containerized Isolation:** The Executor spins up a clean session (via SSH or a Dockerized Ansys instance), processes the Journal file, and performs the high-Mach simulation.
-3.  **Data Bridge:** Once complete, the Bridge pulls the high-resolution thermal/pressure maps back into the project's `assets/data` directory for final MoP validation.
+3.  **Data Bridge:** Once complete, the Bridge pulls the high-resolution thermal/pressure maps back into the project's `assets/data` directory for final Bayes Opt validation.
 
 ### Self-Note: Why this "Docker-style" separation?
 *   **Resource Management:** You can scale the number of **Executors** (e.g., a cluster of 5 Windows machines) while maintaining a single **Bridge** (The StellarOrion UI).
@@ -335,7 +335,7 @@ Beyond Ansys Fluent, two research-grade solvers are identified for high-fidelity
 ### Methodology Interplay (Modular Fluent/PINN):
 The pipeline implements a **Modular Solver Architecture** where the physics engine (Fluent) can be swapped or combined with the refinement engine (PINN):
 1.  **Fluent (The Solver):** Generates the initial high-fidelity flow field data (RANS/DDES).
-2.  **DeepXDE (The PINN):** Processes the Fluent data on the **GPU** to refine the solution, perform inverse parameter estimation, and accelerate the generation of the MoP surrogate model.
+2.  **DeepXDE (The PINN):** Processes the Fluent data on the **GPU** to refine the solution, perform inverse parameter estimation, and accelerate the generation of the Bayes Opt (GP) surrogate model.
 
 This dual-path approach allows the user to leverage Fluent's robust physics while utilizing PINN's massive parallelization for optimization.
 
@@ -344,13 +344,13 @@ This dual-path approach allows the user to leverage Fluent's robust physics whil
 ## 6.1. Comparison: StellarOrion vs. FluidX3D (LBM)
 A frequent internal comparison is made between this pipeline and **FluidX3D**, a highly optimized Lattice Boltzmann Method (LBM) solver. While both leverage GPU acceleration, they serve fundamentally different regimes.
 
-| Feature | StellarOrion (DSMC + MoP) | FluidX3D (LBM) |
+| Feature | StellarOrion (DSMC + Bayes Opt) | FluidX3D (LBM) |
 | :--- | :--- | :--- |
 | **Physics Engine** | **Particle-based Kinetic (DSMC):** Solves the Boltzmann equation via stochastic particle collisions. | **Lattice Boltzmann (LBM):** Solves the discrete Boltzmann equation on a regular grid (lattice). |
 | **Mach Regime** | **Hypersonic ($M > 5$):** Purpose-built for strong shocks and thermal non-equilibrium. | **Subsonic/Incompressible ($M < 0.3$):** Standard LBM assumes low-speed, nearly incompressible flow. |
 | **Compressibility** | Fully Compressible (captures shock waves). | Incompressible / Weakly Compressible (shocks cause instability). |
 | **Rarefaction** | Captures $Kn > 0.01$ (High altitude / VLEO). | Continuum only ($Kn \approx 0$). |
-| **Hardware Use** | Hybrid: Docker/CPU (Physics) + GPU/NPU (MoP Inference). | Pure GPU: Optimized for massive throughput on single or multi-GPU nodes. |
+| **Hardware Use** | Hybrid: Docker/CPU (Physics) + GPU/NPU (Bayes Opt Inference). | Pure GPU: Optimized for massive throughput on single or multi-GPU nodes. |
 | **Use Case** | Reentry vehicles, HIAD thermal protection, orbital decay. | Urban wind comfort, automotive aero (low speed), multiphase fluid mixing. |
 
 ### Why FluidX3D is NOT used for Hypersonics:
@@ -360,7 +360,7 @@ A frequent internal comparison is made between this pipeline and **FluidX3D**, a
 
 ---
 
-## 6.2. Software Evolution: The Road to MoP Steering
+## 6.2. Software Evolution: The Road to Bayes Opt Steering
 The StellarOrion pipeline is a multi-generational project. It is important to distinguish between the **First Generation (Subsonic)** and the current **Hypersonic Edition**.
 
 ### Phase 1: StellarOrion G1 (Subsonic Airfoil Optimization)
@@ -370,8 +370,8 @@ The StellarOrion pipeline is a multi-generational project. It is important to di
 *   **The G1 Optimization Pipeline:**
     1.  **Initialization:** Uses **RNG as seed** for the initial Hicks-Henne geometry population.
     2.  **Constraint-Based GA:** A Genetic Algorithm (GA) starts the search based on predefined aerodynamic constraints.
-    3.  **Surrogate Training:** Once the GA identifies **50 high-performing candidates**, they are used to train the **MoP (Metamodel of Optimal Prognosis)**.
-    4.  **Active Steering:** The GA is then **steered** by the MoP model, leveraging GPU/NPU acceleration to evaluate thousands of virtual candidates in milliseconds.
+    3.  **Surrogate Training:** Once the GA identifies **50 high-performing candidates**, they are used to train the **Bayesian Optimization surrogate (GP Matérn 5/2 + Expected Improvement)**.
+    4.  **Active Steering:** The GA is then **steered** by the GP surrogate, leveraging GPU/NPU acceleration to evaluate thousands of virtual candidates in milliseconds.
     5.  **Termination:** The loop continues until a **callback detects stagnation** (no significant fitness improvement), at which point the system "spits out" the final optimized result.
 *   **Context:** This was a dedicated 2D subsonic tool (see `ProgressReport/Week 1/G1_StellarOrion_Subsonic_Evolution`).
 
@@ -380,8 +380,8 @@ The StellarOrion pipeline is a multi-generational project. It is important to di
 *   **Solver Transition:** XFoil (subsonic) replaced by **SPARTA (DSMC)** to handle high-Mach shock waves and rarefied flow.
 *   **Dimensionality:** Moves from 2D airfoils to **3D Axisymmetric HIAD** geometries.
 *   **ML Integration:** DeepXDE PINNs used for even higher fidelity flow-field refinement and parameter estimation.
-*   **Optimization Strategy (Evolutionary MoP Steering):**
-    1.  **Steered Search:** Inherits and expands the **MoP Steering** logic from G1. The GA is steered by the surrogate metamodel to evaluate millions of candidates on the GPU/NPU.
+*   **Optimization Strategy (Evolutionary Bayes Opt Steering):**
+    1.  **Steered Search:** Inherits and expands the **Bayes Opt Steering** logic from G1. The GA is steered by the GP surrogate to evaluate millions of candidates on the GPU/NPU.
     2.  **Stagnation Decision Logic:** Unlike the fixed termination in G1, G2 monitors the **stagnation point of changes** (rate of fitness improvement vs. structural deformation delta).
     3.  **Intelligent Evolution:** At each stagnation checkpoint, the system evaluates the current Pareto front. If the gradient of improvement is below the threshold, it triggers an **Intelligence Decision**:
         *   **Continue Evolving:** If the surrogate model suggests untapped design space, it resets the seed/population and pushes for higher generations.
@@ -389,15 +389,15 @@ The StellarOrion pipeline is a multi-generational project. It is important to di
 
 ---
 
-## 6.1. Methodology of Physics (MoP) & Genetic Algorithm Interplay
-The **Methodology of Physics (MoP)** acts as the "Laws of Nature" within the Genetic Algorithm (GA). While the GA handles the exploration of the design space (evolution), the MoP logic enforces physical survivability constraints during the **Natural Selection** phase.
+## 6.1. Physics Constraint Layer (Bayes Opt) & Genetic Algorithm Interplay
+The **physics constraint layer (Bayes Opt penalty logic)** acts as the "Laws of Nature" within the Genetic Algorithm (GA). While the GA handles the exploration of the design space (evolution), the constraint layer enforces physical survivability constraints during the **Natural Selection** phase.
 
-### The MoP Fitness Function
-The GA evaluates each design using a Weighted Fitness Function ($F$), where MoP introduces heavy **Penalty Weights** ($P$) for physically non-viable designs.
+### The MoP_Fitness Function
+The GA evaluates each design using a Weighted Fitness Function ($F$), where the constraint layer introduces heavy **Penalty Weights** ($P$) for physically non-viable designs.
 
 $$F = (w_1 \cdot C_D) + (w_2 \cdot \frac{1}{\text{Mass}}) - P_{MoP}$$
 
-### MoP Penalty Logic ($P_{MoP}$):
+### Constraint Penalty Logic ($P_{MoP}$):
 The penalty is triggered if the Surrogate-Based Optimization (SBO) predicts a violation of "Hard Constraints":
 
 1.  **Thermal Constraint:** If $T_{backface} > 350K$, then $P_{MoP} \to \infty$.
@@ -406,7 +406,7 @@ The penalty is triggered if the Surrogate-Based Optimization (SBO) predicts a vi
 
 ### Interplay Summary:
 *   **GA (The Parent):** Generates new designs via Crossover and Mutation (e.g., changing `toroids` count or `nose_radius`).
-*   **MoP (The Environment):** Evaluates if the design "survives" the physics of reentry. It adds **weight** to favorable aerodynamic metrics but applies **infinite penalty** to designs that would burn up or collapse.
+*   **Constraint Layer (The Environment):** Evaluates if the design "survives" the physics of reentry. It adds **weight** to favorable aerodynamic metrics but applies **infinite penalty** to designs that would burn up or collapse.
 *   **Natural Selection:** Designs with high $P_{MoP}$ are "killed off" in the current generation, ensuring only physically robust parents produce the next generation.
 
 ---

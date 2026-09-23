@@ -1293,7 +1293,7 @@ LHS \cite{mckay1979lhs} is a stratified sampling technique that ensures uniform 
 
 CCD \cite{Montgomery2017} is a second-order response surface design that consists of three types of points: factorial points ($2^d$ corners of a hypercube), axial points ($2d$ points along each axis at distance $\alpha$ from the center), and center points. For $d = 5$ design variables, a full CCD requires $2^5 + 2 \times 5 + 1 = 43$ samples. CCD is used when a quadratic surrogate model is desired, as it provides sufficient degrees of freedom to estimate all linear, interaction, and quadratic terms.
 
-\subsection{Surrogate Modelling (Metamodel Prognosis)}
+\subsection{Surrogate Modelling (Bayesian Optimization)}
 
 Each SPARTA DSMC simulation requires approximately 30--60 minutes of wall-clock time, making direct optimization via evolutionary algorithms infeasible (requiring $10^3$--$10^4$ function evaluations). A surrogate model, or metamodel, is therefore trained to approximate the expensive simulation:
 
@@ -1400,7 +1400,7 @@ The literature review establishes the theoretical foundations across six pillars
     
     \item \textbf{Parametric HIAD Geometry:} The HIAD OML is parameterized by five design variables ($D$, $\theta_c$, $N_t$, $r_{\text{tor}}$, $R_N$) with two governing equations: the structural integration constraint (Eq.~\ref{eq:structural_integration}) and the toroid radius derivation (Eq.~\ref{eq:toroid_radius}). The Rapisarda MDAO framework provides an optimized adaptation of the original IRVE-3 material configuration (Section 2.14).
     
-    \item \textbf{Optimization Theory:} Multidisciplinary design optimization (MDO) combined with Latin Hypercube sampling, surrogate modelling (MoP), and genetic algorithm search provides the theoretical framework for navigating the coupled aerodynamic--thermal--structural design space (Section 2.15).
+    \item \textbf{Optimization Theory:} Multidisciplinary design optimization (MDO) combined with Latin Hypercube sampling, surrogate modelling (Bayes Opt), and genetic algorithm search provides the theoretical framework for navigating the coupled aerodynamic--thermal--structural design space (Section 2.15).
 \end{enumerate}
 
 \noindent These foundations justify the methodology adopted in Chapter~3: a parametric HIAD geometry engine based on Rapisarda's modified IRVE-3 configuration, DSMC-based simulation (SPARTA) for the primary flow field computation, PINN refinement for continuous field reconstruction, and genetic algorithm optimization for survivability maximization.

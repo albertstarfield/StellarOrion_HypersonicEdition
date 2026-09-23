@@ -1,7 +1,7 @@
 (* SKELETON PROOF - TRANSPARENCY NOTICE
    ==========================================================================
    This is an HONEST PLACEHOLDER, not a completed machine-checked proof.
-   Unit : pipeline_checkpoint (4-step pipeline save/resume: SPARTA→Kriging→PINN→MoP)
+   Unit : pipeline_checkpoint (4-step pipeline save/resume: SPARTA→Kriging→PINN→Bayes Opt)
    Goal : Atomic checkpoint save via os.replace() ensures crash-safe state.
    Status : Completed (trivial lemma proven via exact I; Qed replaces Admitted,
             disclosed here rather than hidden).

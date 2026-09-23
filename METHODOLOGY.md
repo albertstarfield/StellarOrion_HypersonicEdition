@@ -13,7 +13,7 @@ graph TD
     C --> D[4. LHS Sampling & SBO]
     D --> E[5. Simulation: SPARTA DSMC + PINN]
     E --> F[6. Genetic Algorithm Optimization]
-    F --> G[7. MoP Constraint Filtering]
+    F --> G[7. Bayesian Constraint Filtering]
     G --> H[8. Final Parameter Generation]
     H --> I[9. Final Evaluation: SPARTA DSMC Only]
     I --> J[10. Done / Validation]
@@ -95,7 +95,7 @@ The workflow includes a critical **final validation step** (Phase 4, Step 9) whe
 
 ### Phase 3: Global Optimization
 6.  **Genetic Algorithm (GA)**: The "Parent" logic iterates through generations of designs, performing crossover and mutation to maximize the fitness function.
-7.  **Methodology of Physics (MoP)**: A physics-informed constraint layer filters the GA results. It applies infinite penalties to designs that violate "hard" limits (e.g., $T_{backface} > 350K$ or $Peak\_G > 25g$).
+7.  **Bayesian Constraint Filtering**: A physics-informed constraint layer filters the optimizer's candidate designs. It applies infinite penalties to designs that violate "hard" limits (e.g., $T_{backface} > 350K$ or $Peak\_G > 25g$).
 8.  **Final Parameter Generation**: The optimizer converges on the "Global Optimum" configuration that balances drag, mass, and survivability.
 
 ### Phase 4: Validation

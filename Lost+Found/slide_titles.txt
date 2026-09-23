@@ -175,7 +175,7 @@ on the way to fix
 Slide 46
 LHS Population Strategy: Data Observation
 
-© Objective: Train a stable Metamodel (MoP) using Latin Hypercube Sampling.
+© Objective: Train a stable GP surrogate (Bayes Opt) using Latin Hypercube Sampling.
 Slide 47
 Geometry Engine v8
 

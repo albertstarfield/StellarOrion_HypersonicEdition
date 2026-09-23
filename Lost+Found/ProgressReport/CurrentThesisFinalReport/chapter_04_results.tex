@@ -190,7 +190,7 @@ The 5-species air model captures vibrational excitation and dissociation reactio
 \section{Optimization Framework Results}
 \label{sec:optimization_results}
 
-The survivability optimization framework (Sec.~3.4) was executed across multiple runs to explore the HIAD design space using Latin Hypercube Sampling (LHS), Metamodel Prognosis (MoP) surrogate training, and Genetic Algorithm (GA) optimization. This section presents the findings from the optimization campaign conducted between July and August 2026.
+The survivability optimization framework (Sec.~3.4) was executed across multiple runs to explore the HIAD design space using Latin Hypercube Sampling (LHS), Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate training, and Genetic Algorithm (GA) optimization. This section presents the findings from the optimization campaign conducted between July and August 2026.
 
 \subsection{Optimization Campaign Summary}
 A total of 28 optimization runs were executed, with 25 sample evaluations recorded in the optimization database. Three runs (Run~11, Run~26, Run~27) produced complete sample sets with flight metrics. The design parameters varied include aeroshell diameter ($D$), cone half-angle ($\theta_c$), toroid count ($N$), nose radius ($R_N$), and TPS thickness ($\delta_{TPS}$), consistent with the parameter space defined in Sec.~3.4.1.
@@ -246,7 +246,7 @@ The Newtonian method assumes a calorically perfect gas with constant specific he
 \subsection{Optimization Methodology}
 Rapisarda's framework uses a sequential, single-objective approach: the aerodynamic coefficients are computed at each design point, and the trajectory and thermal analysis are performed independently~\cite{rapisarda2023mdao}. The design space exploration relies on manual parametric sweeps with individual Newtonian panel computations.
 
-The present framework implements a Genetic Algorithm (GA) coupled with a PyTorch-based Metamodel Prognosis (MoP) surrogate model for multi-objective optimization. Latin Hypercube Sampling (LHS) generates the initial design population, and the MoP surrogate enables rapid evaluation of thousands of candidate geometries. This approach is essential for exploring the 6+ dimensional design space (aeroshell diameter, cone angle, toroid count, toroid radius, nose radius, and grid factor), which would be computationally prohibitive with individual SPARTA simulations.
+The present framework implements a Genetic Algorithm (GA) coupled with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate model for multi-objective optimization. Latin Hypercube Sampling (LHS) generates the initial design population, and the Bayes Opt (GP) surrogate enables rapid evaluation of thousands of candidate geometries. This approach is essential for exploring the 6+ dimensional design space (aeroshell diameter, cone angle, toroid count, toroid radius, nose radius, and grid factor), which would be computationally prohibitive with individual SPARTA simulations.
 
 \subsection{Physics-Informed Neural Network Refinement}
 A novel contribution of the present work is the application of Physics-Informed Neural Networks (PINNs) as a post-processing layer for DSMC data~\cite{raissi2019pinn}. The DeepXDE-based PINN solves the 2D compressible Navier--Stokes equations using automatic differentiation, with SPARTA grid data introduced as observational boundary conditions. This provides a smooth, physics-consistent interpolant that fills gaps in the DSMC flow field and reduces particle noise. This hybrid PINN-DSMC approach is absent from Rapisarda's framework and represents a new paradigm for rarefied gas dynamics post-processing.
@@ -266,7 +266,7 @@ The present framework is fully open-source, Python-based, and Docker-containeriz
         Flow Regime Validity & Hypersonic continuum only ($Kn < 0.001$) & All regimes ($Kn = 0$ to $\infty$) \\
         Gas Model & Calorically perfect ($\gamma = 1.4$) & 5-species air with VSS collisions \\
         Thermal Analysis & 1D F-TPS with contact conductance & Sutton--Graves + Fay--Riddell correlations + DSMC surface computes \\
-        Optimization & Sequential parametric sweeps & GA + PyTorch MoP surrogate \\
+        Optimization & Sequential parametric sweeps & GA + Bayes Opt (GP) surrogate \\
         Design Space & 3--4 parameters & 6+ parameters with LHS sampling \\
         ML/AI Component & None & PINN refinement (DeepXDE) \\
         Reproducibility & MATLAB, manual config & Python + Docker, fully containerized \\
