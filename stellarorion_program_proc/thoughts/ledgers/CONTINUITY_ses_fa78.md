@@ -17,9 +17,9 @@ Complete all objectives for the StellarOrion HIAD SPARTA aerocapture simulation 
 
 ## Progress
 ### Done
-- [x] **Scalloped sim completed** (2200 steps, ~45 min) — `results_validation_scalloped/validation_timeseries.csv` (23 lines)
-- [x] **Smooth sim completed** (2200 steps, ~45 min) — `results_validation_smooth/validation_timeseries.csv` (23 lines)
-- [x] **Comparison report written** — `results_validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md` (126 lines)
+- [x] **Scalloped sim completed** (2200 steps, ~45 min) — `results/validation_scalloped/validation_timeseries.csv` (23 lines)
+- [x] **Smooth sim completed** (2200 steps, ~45 min) — `results/validation_smooth/validation_timeseries.csv` (23 lines)
+- [x] **Comparison report written** — `results/validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md` (126 lines)
 - [x] **6 Ada fixes applied and verified**:
   1. `stellarorion_geometry.adb` — Sin_Rad/Cos_Rad range reduction (fold X into [-Pi,Pi])
   2. `stellarorion_sparta.adb` Run_SPARTA — surf copy path fix (Results_Dir/HIAD_custom.surf)
@@ -60,9 +60,9 @@ Complete all objectives for the StellarOrion HIAD SPARTA aerocapture simulation 
 
 ## File Operations
 ### Read
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_timeseries.csv`
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_smooth/validation_timeseries.csv`
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md`
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_scalloped/validation_timeseries.csv`
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_smooth/validation_timeseries.csv`
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md`
 - `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_sparta.adb` (~2553 lines)
 - `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/stellarorion_program_proc.gpr`
 - `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_orion.ads`
@@ -72,5 +72,5 @@ Complete all objectives for the StellarOrion HIAD SPARTA aerocapture simulation 
 - `stellarorion_sparta.adb` — Parse_Surf_Geometry fix (exit on "Lines"), Heat_Flux_Avg dimensional fix, CSV header/writer with heatflux_avg/heatflux_sg columns, surf area computation, SG heat flux computation, duplicate column removal
 - `stellarorion_orion.ads` — ORION_GEOMETRY_DEFAULTS missing fields added
 - `stellarorion_program_proc.gpr` — temporary `-gnateT` addition reverted
-- `results_validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md` — full comparison report written
+- `results/validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md` — full comparison report written
 - `run_smooth.sh` — wrapper script for smooth sim launch

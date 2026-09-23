@@ -2321,8 +2321,8 @@ After 23 consecutive audit cycles (23-45), the codebase is fully stable:
 | `stellarorion_program_proc/docs/PYTHON_SIDECAR_EXCEPTIONS.md` | ~100 | C1 Ada-First policy exceptions: PINN (DeepXDE), PyFluent/PyAnsys (vendor SDK), plotting, sabotage_verifier, sidecar launcher. All justified, process-boundary isolated. | CLEAN |
 | `stellarorion_program_proc/docs/PROJECT_DECOMPOSITION_PLAN.md` | — | Project decomposition plan | CLEAN |
 | `stellarorion_program_proc/docs/RAPISARDA_AUDIT.md` | ~500 | Comprehensive Rapisarda 2023 cross-reference: geometry parameters (ALL EXACT MATCH), aerothermal calibration (SG overpredicts +6.26%/+14.81% — conservative by design), Sutton-Graves derivation and applicability limits, visual geometry verification via surf profile. | CLEAN |
-| `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md` | — | Validation report (read via batch) | CLEAN |
-| `stellarorion_program_proc/results_validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md` | ~150 | Scalloped vs Smooth comparison: +9.1% drag, +0.9% peak heat flux, −3.9% mean heat flux (redistribution), 16.83g peak decel. Documents 4 critical Ada fixes (Sin_Rad range reduction, surf copy path, Parse_Surf_Geometry state exit, Heat_Flux_Avg dimensional correction). | CLEAN |
+| `stellarorion_program_proc/results/validation_scalloped/VALIDATION_Sep_2_2026.md` | — | Validation report (read via batch) | CLEAN |
+| `stellarorion_program_proc/results/validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md` | ~150 | Scalloped vs Smooth comparison: +9.1% drag, +0.9% peak heat flux, −3.9% mean heat flux (redistribution), 16.83g peak decel. Documents 4 critical Ada fixes (Sin_Rad range reduction, surf copy path, Parse_Surf_Geometry state exit, Heat_Flux_Avg dimensional correction). | CLEAN |
 | `stellarorion_program_proc/Discussion.md` | — | Discussion document (read via batch) | CLEAN |
 | `stellarorion_program_proc/Sep 2 Discussion.md` | — | Sep 2 discussion (read via batch) | CLEAN |
 

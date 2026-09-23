@@ -50,8 +50,8 @@ Fix the issue where state files (restart files, lock files, surf dumps, etc.) ar
 
 ## Critical Context
 - Base path: `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc`
-- Scalloped results: `results_validation_scalloped/` (incomplete, step 500/2200)
-- Smooth results: `results_validation_smooth/` (complete, 2200 steps)
+- Scalloped results: `results/validation_scalloped/` (incomplete, step 500/2200)
+- Smooth results: `results/validation_smooth/` (complete, 2200 steps)
 - State files observed: `restart.100.sparta` through `restart.500.sparta`, `surf.0.out` through `surf.500.out`, `main.lock`, `trajectory_profile.csv`, `HIAD_custom.surf`, `in.hiad`, `restart.*.sparta`
 - Rapisarda (2023) IRVE-3 reference: peak heat flux ≈ 14.36 W/cm², total heat load ≈ 195.06 J/cm², peak decel ≈ 19.7g
 - Previous fixes applied: (1) `stellarorion_geometry.adb` Sin_Rad/Cos_Rad range reduction for 8-cycle axial scallop ripple; (2) `stellarorion_sparta.adb` surf copy path fix to use `Results_Dir/HIAD_custom.surf`
@@ -66,7 +66,7 @@ Fix the issue where state files (restart files, lock files, surf dumps, etc.) ar
 - `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_sparta.adb` (lines 1–1212+)
 - `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_runtime_guard.adb`
 - `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_test_modes.adb`
-- Listed `results_validation_scalloped/` and `results_validation_smooth/` directories
+- Listed `results/validation_scalloped/` and `results/validation_smooth/` directories
 
 ### Modified
 - (none yet — exploring before implementing)

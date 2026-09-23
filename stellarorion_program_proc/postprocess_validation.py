@@ -455,7 +455,7 @@ def print_table(title, headers, rows, col_width=14):
 
 def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    results_dir = os.path.join(base_dir, "results_validation")
+    results_dir = os.path.join(base_dir, "results/validation")
 
     print("=" * 80)
     print("  StellarOrion Validation Post-Processing")

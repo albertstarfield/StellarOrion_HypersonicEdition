@@ -23,7 +23,7 @@ Conduct a complete inventory of the StellarOrion HypersonicEdition Ada+Python si
 - [x] Read all Python files: `pinn_accelerator.py`, `sidecar_server.py`, `sidecar_launcher.py`, `visualizer.py`, `sidecar_ui.py`, `sabotage_verifier.py`
 - [x] Confirmed NO pyfluent/pyansys/ansys-fluent/fluent-core references exist in `src/python/`
 - [x] Identified all .py files: 10 total including `run.py`, `tests/test_run_pipeline.py`, `src/python/__init__.py`, `tests/__init__.py`
-- [x] Discovered additional dirs: `src/rocq/` (Coq proof files), `src/sidecar_ui/` (JS/CSS/HTML frontend), `src/ui/` (Python sidecar UI server), `config/`, `results_validation/`
+- [x] Discovered additional dirs: `src/rocq/` (Coq proof files), `src/sidecar_ui/` (JS/CSS/HTML frontend), `src/ui/` (Python sidecar UI server), `config/`, `results/validation/`
 - [x] Full read of `stellarorion_project.ads` (root package, declares `procedure Main_Program`)
 - [x] Full read of `stellarorion_project.adb` (main entry, ~1700+ lines, all CLI routing)
 

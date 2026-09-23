@@ -97,7 +97,7 @@ IRVE3_REFERENCE = {
     "peak_deceleration_g":  19.7,    # g — peak deceleration
 }
 RESULTS_DIR      = os.path.join(os.path.dirname(__file__), "..", "..",
-                                "results_validation_scalloped")
+                                "results/validation_scalloped")
 
 
 def _compute_frame_data(step):
