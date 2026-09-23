@@ -4,14 +4,14 @@ updated: 2026-08-29T18:48:23.439Z
 ---
 
 Now rebuild and run `--steps 1` to capture the debug output:
-[Assistant tool call]: bash({"command":"cd /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc && alr build 2>&1 | tail -3 && rm -f results_validation_scalloped/HIAD_custom.surf && timeout 120 bin/main --validate --skin scalloped --steps 1 2>&1 | grep -E 'DBG_AddRaw|Step 3a|surface file' | head -20","timeout":150000})
+[Assistant tool call]: bash({"command":"cd /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc && alr build 2>&1 | tail -3 && rm -f results/validation_scalloped/HIAD_custom.surf && timeout 120 bin/main --validate --skin scalloped --steps 1 2>&1 | grep -E 'DBG_AddRaw|Step 3a|surface file' | head -20","timeout":150000})
 [Tool result:
 [Assistant]: Hmm, no output from the grep. Maybe the debug print went to stdout but got buffered, or the run failed before Step 3a, or the grep didn't match. Let me run again and capture more context. Let me run without grep filter and look for DBG and the overall flow.
 
 Actually, the issue might be that `bin/main` output is buffered and the grep on a pipe with `timeout` killed it. Let me run and save to a file, then read the file.
 
 Let me run with output to a log file.No debug output captured — likely buffering or the run failed early. Let me redirect to a log file and inspect:
-[Assistant tool call]: bash({"command":"cd /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc && rm -f results_validation_scalloped/HIAD_custom.surf /tmp/scallop_dbg.log && (timeout 120 bin/main --validate --skin scalloped --steps 1 > /tmp/scallop_dbg.log 2>&1; echo \"EXIT=$?\") && echo \"=== DBG lines ===\" && grep -c DBG_AddRaw /tmp/scallop_dbg.log && grep DBG_AddRaw /tmp/scallop_dbg.log | head -14 && echo \"=== flow markers ===\" && grep -E 'Step 3a|Step 3b|Step 5|ERROR|surface' /tmp/scallop_dbg.log | head -10","timeout":150000})
+[Assistant tool call]: bash({"command":"cd /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc && rm -f results/validation_scalloped/HIAD_custom.surf /tmp/scallop_dbg.log && (timeout 120 bin/main --validate --skin scalloped --steps 1 > /tmp/scallop_dbg.log 2>&1; echo \"EXIT=$?\") && echo \"=== DBG lines ===\" && grep -c DBG_AddRaw /tmp/scallop_dbg.log && grep DBG_AddRaw /tmp/scallop_dbg.log | head -14 && echo \"=== flow markers ===\" && grep -E 'Step 3a|Step 3b|Step 5|ERROR|surface' /tmp/scallop_dbg.log | head -10","timeout":150000})
 [ToolResult:
 EXIT=0
 [Assistant]: The run exited 0 but NO DBG lines and NO flow markers. That's strange. The binary ran, exited 0, but no debug output and no "Step 3a" text. 
@@ -106,7 +106,7 @@ GOAL: From the most recent active goal (m0075, verbatim user request): "Make sur
 
 So the core objective: Implement Smooth and Scalloped validation variants in separate folders, simulate both, compare in a summary table (Scalloped, Smooth, vs Rapisarda reference), and report storage locations.
 
-Constraints & Preferences: From conversation — gnatprove level=4 blocked (deferred); run sims via bin/main directly (not run.py, to avoid gnatprove); use SPARTA Docker; separate folders results_validation_smooth/ and results_validation_scalloped/.
+Constraints & Preferences: From conversation — gnatprove level=4 blocked (deferred); run sims via bin/main directly (not run.py, to avoid gnatprove); use SPARTA Docker; separate folders results/validation_smooth/ and results/validation_scalloped/.
 
 Progress:
 Done:
@@ -132,7 +132,7 @@ Key Decisions:
 - Run bin/main directly instead of run.py to avoid gnatprove 'Size':'??' JSON bug in scripts/prove.sh.
 - Multiplicative ripple (R *= 1+amp*sin) instead of additive, to keep R positive.
 - Scallop_Points=8, Scallop_Amplitude_M=0.030 (3% fractional ripple) — bumped from 5/0.007.
-- Copy smooth baseline from results_validation/ to results_validation_smooth/ (identical geometry since default Skin=Smooth).
+- Copy smooth baseline from results/validation/ to results/validation_smooth/ (identical geometry since default Skin=Smooth).
 
 Next Steps:
 1. Determine root cause of R=0 in scalloped surf (Add_Raw debug added; need to capture output — binary produced no DBG lines, possibly build/exec issue; verify debug actually compiled/ran, or inspect via other means).
@@ -140,21 +140,21 @@ Next Steps:
 3. Verify surf is corrugated + non-degenerate BEFORE launching long SPARTA run (run --steps 1, inspect surf).
 4. Ensure HIAD_custom.surf is copied to project Cwd for Docker SPARTA (fix "Cannot open file" error).
 5. Launch scalloped sim with --steps 2200 (PTY, ~1.8h).
-6. Copy smooth baseline: results_validation/ → results_validation_smooth/.
+6. Copy smooth baseline: results/validation/ → results/validation_smooth/.
 7. Compare both CSVs + Rapisarda → summary table (Scalloped, Smooth, vs Rapisarda).
 8. Report storage paths.
 
 Critical Context:
 - Vehicle mass m=281.0 kg; decel_g = drag_sum_N / (281.0*9.80665=2755.67).
 - IRVE-3/Rapisarda ref: peak heat flux 14.36 W/cm² (=143600 W/m²), heat load 195.06 J/cm², peak decel 19.7 g, ballistic coeff 26.9 kg/m², stagnation pressure ~12.4 kPa (12400 Pa).
-- Smooth baseline (prior goal, results_validation/): heat flux 12.20 W/cm² (-15.0%), heat load 165.7 J/cm² (-15.0%), decel 11.61 g (-41.1%), beta 22.31 (-17.1%), stag 5079 Pa (-59.0%).
+- Smooth baseline (prior goal, results/validation/): heat flux 12.20 W/cm² (-15.0%), heat load 165.7 J/cm² (-15.0%), decel 11.61 g (-41.1%), beta 22.31 (-17.1%), stag 5079 Pa (-59.0%).
 - CSV columns: step, drag_sum_N, lift_sum_N, heatflux_max_Wm2 (ke flux proxy), heat_sum_Wm2, drag_avg_N, lift_avg_N. heatflux_max_Wm2 = f_1[3] (W/m²).
 - Scalloped sim BUG 1: --steps defaults to 1000; must pass --steps 2200.
-- Scalloped sim BUG 2: CSV identical to smooth first run → SPARTA used stale root surf (results_validation_scalloped/ surf was R=0 degenerate anyway).
+- Scalloped sim BUG 2: CSV identical to smooth first run → SPARTA used stale root surf (results/validation_scalloped/ surf was R=0 degenerate anyway).
 - Get_Float returns Default when flag absent (verified correct) — so Angle_Deg=60 default works; Angle_Deg=0 hypothesis WRONG.
 - Axis_Thresh = 0.0051 (line 1275); doesn't zero large R.
 - Surf write format: col2=Z (axial), col3=R (radial); SPARTA revolves the 2D curve.
-- Smooth surf results_validation/HIAD_custom.surf = 77 points, correct R (0→1.27). Scalloped surf = 59 points, point1 R=0.4566 (≈R_Tang), rest R=0 — degenerate.
+- Smooth surf results/validation/HIAD_custom.surf = 77 points, correct R (0→1.27). Scalloped surf = 59 points, point1 R=0.4566 (≈R_Tang), rest R=0 — degenerate.
 - gnatprove 'Size':'??' JSON bug: 538 entries in 10 files at obj/gnatprove/data_representation/*.json; scripts/prove.sh only works around separate GCC16 dedup bug. Deferred.
 - SPARTA run: 6 MPI, 19321 cells, 219 surface lines (N=219 parser), 1.34M particles, ~1.8h for 2200 steps.
 - Rapisarda = IRVE-3 MDAO flat-skin reference.
@@ -162,10 +162,10 @@ Critical Context:
 File Operations:
 Read (exact paths from prompt):
 - /Users/albertstarfield/.local/share/opencode/tool-output/tool_04e3bf067001tfQ2jxcm0Rjg1A
-- /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation/HIAD_custom.surf
-- /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation/validation_timeseries.csv
-- /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/HIAD_custom.surf
-- /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_timeseries.csv
+- /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation/HIAD_custom.surf
+- /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation/validation_timeseries.csv
+- /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_scalloped/HIAD_custom.surf
+- /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_scalloped/validation_timeseries.csv
 - /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_cli.adb
 - /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_project.adb
 - /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_sparta.adb
@@ -211,7 +211,7 @@ Implement Smooth and Scalloped validation variants in separate output folders, s
 - Do NOT use `run.py` to launch simulations — it triggers `scripts/prove.sh` (gnatprove --level=4) which hits the known `'Size':'??'` JSON bug; run the compiled `bin/main` directly instead.
 - gnatprove --level=4 is BLOCKED (deferred): 538 `'??'` entries across 10 files at `obj/gnatprove/data_representation/*.json`; `scripts/prove.sh` only works around a separate GCC16 dedup bug, not the `'??'` issue.
 - Scalloping implemented as an AXIAL ripple on the axisymmetric SPARTA surface-of-revolution (not true 3D azimuthal lobing) to stay within the existing 2D-curve revolve pipeline.
-- Separate folders: `results_validation_smooth/` and `results_validation_scalloped/` (default `--validate` keeps `results_validation/`).
+- Separate folders: `results/validation_smooth/` and `results/validation_scalloped/` (default `--validate` keeps `results/validation/`).
 - `--steps` defaults to 1000; must pass `--steps 2200` explicitly for full validation.
 
 ## Progress
@@ -228,7 +228,7 @@ Implement Smooth and Scalloped validation variants in separate output folders, s
 - [x] Confirmed surf write format: col2 = Z (axial), col3 = R (radial); SPARTA revolves the 2D curve.
 
 ### In Progress
-- [ ] Fixing scalloped surface generation bug: `Generate_HIAD_Surf` produces a DEGENERATE surf for `Skin=Scalloped` — `results_validation_scalloped/HIAD_custom.surf` has 59 points with point 1 R=0.4566 (≈R_Tang) and points 2–59 R=0.000000, while the axial (Z) profile is correct (0.000086→1.2694). Smooth surf (`results_validation/HIAD_custom.surf`, 77 pts) is correct (R 0→1.27). A temporary `DBG_AddRaw` debug print was added to `Add_Raw` (sparta.adb) and a fresh rebuild (binary 01:38:03) STILL reproduced R=0 — so it is NOT a stale-binary issue; the root cause of `R_Val` becoming 0 for points after the first is still unidentified (mathematically the ripple branch cannot zero R, so hypothesis is now a hidden overwrite, dedup interaction, or Raw/Unique aliasing).
+- [ ] Fixing scalloped surface generation bug: `Generate_HIAD_Surf` produces a DEGENERATE surf for `Skin=Scalloped` — `results/validation_scalloped/HIAD_custom.surf` has 59 points with point 1 R=0.4566 (≈R_Tang) and points 2–59 R=0.000000, while the axial (Z) profile is correct (0.000086→1.2694). Smooth surf (`results/validation/HIAD_custom.surf`, 77 pts) is correct (R 0→1.27). A temporary `DBG_AddRaw` debug print was added to `Add_Raw` (sparta.adb) and a fresh rebuild (binary 01:38:03) STILL reproduced R=0 — so it is NOT a stale-binary issue; the root cause of `R_Val` becoming 0 for points after the first is still unidentified (mathematically the ripple branch cannot zero R, so hypothesis is now a hidden overwrite, dedup interaction, or Raw/Unique aliasing).
 - [ ] Re-running scalloped 2200-step sim (`bin/main --validate --skin scalloped --steps 2200`) — blocked until surf bug fixed and verified.
 
 ### Blocked
@@ -240,26 +240,26 @@ Implement Smooth and Scalloped validation variants in separate output folders, s
 - **Axial scallop ripple (not 3D lobing)**: Keeps within the existing axisymmetric SPARTA surface-of-revolution pipeline (lower risk); documented as a corrugated surface of revolution.
 - **Run `bin/main` directly, not `run.py`**: Avoids the gnatprove `'Size':'??'` JSON failure baked into `scripts/prove.sh` Phase 3.
 - **Multiplicative ripple (`R *= 1+amp·sin`) over additive**: Guarantees R stays strictly positive; amplitude bumped 0.007→0.030 (3% fractional), lobes 5→8.
-- **Copy smooth baseline `results_validation/` → `results_validation_smooth/`**: Geometry/physics identical to new `Skin=Smooth` default, so no re-sim needed for the smooth column.
+- **Copy smooth baseline `results/validation/` → `results/validation_smooth/`**: Geometry/physics identical to new `Skin=Smooth` default, so no re-sim needed for the smooth column.
 - **`Create_Path` guard in `Run_Validate_Full`**: New validation folders otherwise crash with `NAME_ERROR` because `Run_Validate_Full` did not auto-create `Results_Dir` (unlike Test/Sys dirs).
 
 ## Next Steps
 1. Resolve the R=0 scalloped-surf root cause: capture/inspect the `DBG_AddRaw` output (verify the debug print actually compiled/ran — a prior `--steps 1` run exited 0 with no DBG lines, suggesting the debug build may not have executed or stdout was lost; re-run with output to a file and check). Inspect `Raw`/`Unique` arrays and dedup logic if needed.
 2. Fix `Add_Raw`/`Generate_HIAD_Surf` so the scalloped surface keeps its correct radial profile with the axial corrugation (do NOT zero R for points 2–59).
-3. Verify the generated scalloped surf is corrugated + non-degenerate BEFORE the long SPARTA run (run `bin/main --validate --skin scalloped --steps 1`, inspect `results_validation_scalloped/HIAD_custom.surf`).
+3. Verify the generated scalloped surf is corrugated + non-degenerate BEFORE the long SPARTA run (run `bin/main --validate --skin scalloped --steps 1`, inspect `results/validation_scalloped/HIAD_custom.surf`).
 4. Fix the Docker surf-copy so SPARTA can open `HIAD_custom.surf` from Cwd (eliminate "Cannot open file" abort).
-5. Launch full scalloped sim: `bin/main --validate --skin scalloped --steps 2200` (PTY, ~1.8h) → `results_validation_scalloped/`.
-6. Copy smooth baseline: `results_validation/` → `results_validation_smooth/`.
+5. Launch full scalloped sim: `bin/main --validate --skin scalloped --steps 2200` (PTY, ~1.8h) → `results/validation_scalloped/`.
+6. Copy smooth baseline: `results/validation/` → `results/validation_smooth/`.
 7. Read both `validation_timeseries.csv` files; compute peak drag/lift/heat, convert to engineering units (heat W/cm² = W/m²÷1e4; decel_g = drag_sum_N/2755.67 with m=281.0 kg; β=m·q/F_drag); build summary table Scalloped / Smooth / Rapisarda.
 8. Report storage paths to user; remove the temporary `DBG_AddRaw` debug print.
 
 ## Critical Context
 - Vehicle mass m = 281.0 kg → decel_g = drag_sum_N / (281.0 × 9.80665 = 2755.67).
 - IRVE-3 / Rapisarda reference (README): peak heat flux 14.36 W/cm² (=143,600 W/m²), heat load 195.06 J/cm², peak decel 19.7 g, ballistic coeff β = 26.9 kg/m², stagnation pressure ~12,400 Pa (12.4 kPa).
-- Smooth baseline (prior goal, `results_validation/`): heat flux 12.20 W/cm², heat load 165.7 J/cm², decel 11.61 g, β 22.31, stag 5079 Pa.
+- Smooth baseline (prior goal, `results/validation/`): heat flux 12.20 W/cm², heat load 165.7 J/cm², decel 11.61 g, β 22.31, stag 5079 Pa.
 - CSV columns (`validation_timeseries.csv`): `step, drag_sum_N, lift_sum_N, heatflux_max_Wm2, heat_sum_Wm2, drag_avg_N, lift_avg_N`. `heatflux_max_Wm2` = SPARTA `f_1[3]` ke-flux proxy (W/m²). Calibrated metrics (heat flux W/cm², decel g, β) are printed to stdout by `Calculate_Flight_Metrics`, NOT in CSV.
 - SPARTA run profile: 6 MPI tasks, 19,321 grid cells, 219 surface lines (matches N=219 parser), ~1.34M particles, rate climbs ~0.9→3.6 s/step as particles deplete; ~1.8h for 2200 steps (smooth finished at CPU 6413.86s).
-- Surf file facts: smooth `results_validation/HIAD_custom.surf` = 77 points, correct R (0.000→1.269); scalloped `results_validation_scalloped/HIAD_custom.surf` = 59 points, point 1 R=0.4566 (≈R_Tang=0.476 with ripple), points 2–59 R=0.000000 (degenerate).
+- Surf file facts: smooth `results/validation/HIAD_custom.surf` = 77 points, correct R (0.000→1.269); scalloped `results/validation_scalloped/HIAD_custom.surf` = 59 points, point 1 R=0.4566 (≈R_Tang=0.476 with ripple), points 2–59 R=0.000000 (degenerate).
 - `Axis_Thresh = 0.0051` (sparta.adb:1275) — only zeros near-axis R; cannot explain R=0 for large-R points.
 - `Get_Float(Flag, Default)` returns `Default` when flag absent (verified cli.adb:51-57) — so `Angle_Deg=60.0`, `Nose_Radius_M=0.55` etc. default correctly; geometry is NOT zeroed.
 - `Geo` aggregate at project.adb:426-445 is a full named aggregate (all geometry fields specified + `Skin => Skin, Scallop_Points => 8, Scallop_Amplitude_M => 0.030`), so geometry defaults are correct.
@@ -269,10 +269,10 @@ Implement Smooth and Scalloped validation variants in separate output folders, s
 ## File Operations
 ### Read
 - `/Users/albertstarfield/.local/share/opencode/tool-output/tool_04e3bf067001tfQ2jxcm0Rjg1A`
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation/HIAD_custom.surf`
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation/validation_timeseries.csv`
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/HIAD_custom.surf`
-- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results_validation_scalloped/validation_timeseries.csv`
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation/HIAD_custom.surf`
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation/validation_timeseries.csv`
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_scalloped/HIAD_custom.surf`
+- `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_scalloped/validation_timeseries.csv`
 - `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_cli.adb`
 - `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_project.adb`
 - `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/src/simulation_engine/stellarorion_sparta.adb`

@@ -7,7 +7,7 @@ Compares three approaches for generating aerothermodynamic quantities:
   2. Kriging (GP) denoised surface heat flux
   3. PINN surrogate (temporal extrapolation from training subset)
 
-Uses VTU files from results_validation_scalloped/paraview/ as data source.
+Uses VTU files from results/validation_scalloped/paraview/ as data source.
 22 timesteps from 100 to 2200 are available.
 
 AXIOMS:
@@ -481,8 +481,8 @@ def main():  # nosec
 
     # --- Locate VTU files ---
     vtu_dirs = [
-        "results_validation_scalloped/paraview",
-        "results_validation/paraview",
+        "results/validation_scalloped/paraview",
+        "results/validation/paraview",
     ]
 
     vtu_dir = None

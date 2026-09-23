@@ -315,17 +315,21 @@ class CyclicLogMonitor:
           1. Ada binary writes run_output.log in results directories
           2. Errors/warnings in Ada logs indicate simulation issues
           3. Log file modification time indicates if simulation is active
-          4. Searches results_validation_smooth/ and results_validation_scalloped/
+          4. Searches results/validation_smooth/ and results/validation_scalloped/
 
         [Citation: StellarOrion Ada binary — run_output.log convention]
         """
         try:
-            # Search for Ada program logs in common results directories
+            # Search for Ada program logs in common results directories.
+            # output_dir = dirname(csv) = results/<variant>, so cad_dir = results/.
+            # Handle both the nested results/ layout and a proc-root fallback.
             cad_dir = os.path.join(os.path.dirname(self.output_dir) if self.output_dir else os.getcwd())
+            results_root = cad_dir if os.path.basename(os.path.normpath(cad_dir)) == "results" \
+                else os.path.join(cad_dir, "results")
             log_dirs = [
-                os.path.join(cad_dir, "results_validation_smooth"),
-                os.path.join(cad_dir, "results_validation_scalloped"),
-                os.path.join(cad_dir, "results_test_sample"),
+                os.path.join(results_root, "validation_smooth"),
+                os.path.join(results_root, "validation_scalloped"),
+                os.path.join(results_root, "test_sample"),
             ]
 
             found_logs = 0
@@ -4155,10 +4159,12 @@ def _generate_pinn_vtu(results, output_dir, csv_path,
     import xml.etree.ElementTree as ET
 
     # Locate VTU source directory
-    results_base = os.path.dirname(csv_path)  # e.g. results_validation_scalloped/
+    results_base = os.path.dirname(csv_path)  # e.g. results/validation_scalloped/
     vtu_dirs = [
         os.path.join(results_base, "paraview"),
-        os.path.join(results_base, "..", "results_validation_scalloped", "paraview"),
+        # Fallback: sibling variant dir under the shared results/ parent.
+        # results_base = results/<variant>, so ".." lands in results/ itself.
+        os.path.join(results_base, "..", "validation_scalloped", "paraview"),
     ]
     vtu_dir = None
     for d in vtu_dirs:
@@ -4371,9 +4377,9 @@ def main():
     if csv_path is None:
         # Search common locations
         candidates = [
-            os.path.join(_HERE, "..", "..", "results_validation_scalloped", "validation_timeseries.csv"),
-            os.path.join(_HERE, "..", "..", "results_validation_smooth", "validation_timeseries.csv"),
-            os.path.join(_HERE, "..", "..", "results_test_sample", "validation_timeseries.csv"),
+            os.path.join(_HERE, "..", "..", "results/validation_scalloped", "validation_timeseries.csv"),
+            os.path.join(_HERE, "..", "..", "results/validation_smooth", "validation_timeseries.csv"),
+            os.path.join(_HERE, "..", "..", "results/test_sample", "validation_timeseries.csv"),
         ]
         for c in candidates:
             if os.path.exists(c):

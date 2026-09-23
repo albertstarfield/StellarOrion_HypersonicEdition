@@ -583,7 +583,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    end Run_Test_Baseline;
 
    --  Sample test (--test sample): same SPARTA pipeline as baseline but
-   --  writing to results_test_sample for the 11-metric comparison report.
+   --  writing to results/test_sample for the 11-metric comparison report.
    -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
    -- CPU Time: < 1ms typical (ARM Cortex-A78 @ 2.4GHz)
@@ -603,8 +603,8 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
    -- AXIOMS: Sample test runs full SPARTA pipeline for 11-metric comparison report.
-   -- THEORIES: Same pipeline as baseline but writes to results_test_sample for comparison analysis.
-   -- APPLICATIONS: Calls Run_Validate_Full with CLI-provided parameters and results_test_sample output directory.
+   -- THEORIES: Same pipeline as baseline but writes to results/test_sample for comparison analysis.
+   -- APPLICATIONS: Calls Run_Validate_Full with CLI-provided parameters and results/test_sample output directory.
    -- CITATIONS: [SPARTA manual; StellarOrion validation methodology; 11-metric comparison framework]
    begin
       Put_Line ("[TEST:sample] Running sample geometry test (full SPARTA pipeline) ...");
@@ -624,7 +624,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
                          Use_GPU       => Use_GPU,
                          Fnum_Str      => Fnum_Str,
                          Restart_File  => "",
-                         Results_Dir   => "results_test_sample");
+                         Results_Dir   => "results/test_sample");
    exception
       when E : others =>
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
@@ -1204,7 +1204,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    -- CITATIONS: [NASA TP-2013-4012; SPARTA manual; Rapisarda 2023; IRVE-3 MDAO validation methodology]
    begin
       --  Ensure the results directory exists (auto-create for --skin variants
-      --  such as results_validation_scalloped / results_validation_smooth).
+      --  such as results/validation_scalloped / results/validation_smooth).
       if not Exists (Results_Dir) then
          Create_Path (Results_Dir);
       end if;
@@ -1876,7 +1876,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    procedure Test_Run_Test_Sample is -- nosec
    --  @test: Test_Run_Test_Sample unit smoke coverage (STC registry).
    --  Contract covers pre => True (no inputs); post => completes without raising.
-      Results_Root : constant String := "results_test_sample";
+      Results_Root : constant String := "results/test_sample";
    begin
       pragma Assert (Results_Root'Length > 0);
       pragma Assert (Results_Root

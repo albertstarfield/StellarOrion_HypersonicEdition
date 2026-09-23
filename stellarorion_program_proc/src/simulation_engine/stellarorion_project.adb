@@ -258,7 +258,7 @@ package body StellarOrion_Project is
       Put_Line ("  --payload-file <path>     Payload input file");
       New_Line;
       Put_Line ("Output Options:");
-      Put_Line ("  --results-dir <path>      Results directory (default: results_validation_scalloped)");
+      Put_Line ("  --results-dir <path>      Results directory (default: results/validation_scalloped)");
       Put_Line ("  --plots                   Generate all post-simulation plots");
       Put_Line ("  --derived-plots           Generate derived thermal plots (T_surface, T_back, beta)");
       Put_Line ("  --vtu-plots               Generate VTU visualization plots");
@@ -1173,7 +1173,7 @@ package body StellarOrion_Project is
 
       --  Results directory (shared by all plot/trajectory modes)
       declare
-         Results_Dir : constant String := Get_Option ("--results-dir", "results_validation_scalloped");
+         Results_Dir : constant String := Get_Option ("--results-dir", "results/validation_scalloped");
          Script_Dir : constant String := "scripts";
          --  Preallocated aliased strings for Spawn (zero heap allocation)
          -- [Citation: code-quality.md — DYNAMIC_ALLOCATION fix: preallocated aliased strings]
@@ -1334,7 +1334,7 @@ package body StellarOrion_Project is
                            Use_GPU       => Use_GPU,
                            Fnum_Str      => Fnum_Str,
                            Restart_File  => Restart_File,
-                            Results_Dir   => "results_validation" &
+                            Results_Dir   => "results/validation" &
                               (if Skin = Scalloped then "_scalloped"
                                elsif Skin_Type_Str = "smooth" then "_smooth"
                                else ""));
@@ -1354,7 +1354,7 @@ package body StellarOrion_Project is
                            Use_GPU       => Use_GPU,
                            Fnum_Str      => Fnum_Str,
                            Restart_File  => Restart_File,
-                            Results_Dir   => "results_validation_unsteady" &
+                            Results_Dir   => "results/validation_unsteady" &
                               (if Skin = Scalloped then "_scalloped"
                                elsif Skin_Type_Str = "smooth" then "_smooth"
                                else ""));
@@ -1466,7 +1466,7 @@ package body StellarOrion_Project is
                            Use_GPU       => Use_GPU,
                            Fnum_Str      => Fnum_Str,
                            Restart_File  => Restart_File,
-                           Results_Dir   => "results_validation_rapisarda");
+                           Results_Dir   => "results/validation_rapisarda");
          goto Cleanup;
       end if;
 

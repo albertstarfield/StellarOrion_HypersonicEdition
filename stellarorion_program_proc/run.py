@@ -631,7 +631,7 @@ def _phase2_python_analysis(
          "--project-excludes", "build/**",
          "--project-excludes", "scripts/**",
          "--project-excludes", "data/**",
-         "--project-excludes", "results_*/**",
+         "--project-excludes", "results/**",
          "--project-excludes", ".opencode/**",
          "--project-excludes", ".tmp/**",
          "--project-excludes", "Lost+Found/**"],
@@ -767,7 +767,7 @@ def _phase2b_pinn_extrapolate(extra_args: list) -> None:  # noqa: ARG001
     venv_python = os.path.join(script_dir, "venv_validation", "bin", "python3")
     pipeline_script = os.path.join(script_dir, "src", "python", "validation_pipeline.py")
     csv_path = os.path.join(
-        script_dir, "results_validation_scalloped", "validation_timeseries.csv"
+        script_dir, "results/validation_scalloped", "validation_timeseries.csv"
     )
 
     if not os.path.isfile(venv_python):
@@ -1185,7 +1185,7 @@ def _post_optimization_outputs(stdout_text: str) -> None:
              "toroid_count": 6, "toroid_radius_m": 0.135, "mass_kg": 281.0}
 
     # Output directory
-    out_dir = os.path.join(_PROJECT_ROOT, "results_validation_scalloped",
+    out_dir = os.path.join(_PROJECT_ROOT, "results/validation_scalloped",
                            "optimization_output")
     os.makedirs(out_dir, exist_ok=True)
 

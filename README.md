@@ -36,9 +36,9 @@ This project uses a hybrid architecture for running simulations:
 
 Real-time aerothermodynamic visualization of the IRVE-3 HIAD reentry — featuring Sutton-Graves heat flux, PINN training metrics, composite material cross-section with heat propagation, and animated Earth trajectory.
 
-![Dashboard Frame](stellarorion_program_proc/results_validation_scalloped/plots/dashboard_frame.png)
+![Dashboard Frame](stellarorion_program_proc/results/validation_scalloped/plots/dashboard_frame.png)
 
-**Full animation:** [hybrid_dsmc_pinn_animation.mp4](stellarorion_program_proc/results_validation_scalloped/plots/hybrid_dsmc_pinn_animation.mp4) (102s, 30fps, 80 MB)
+**Full animation:** [hybrid_dsmc_pinn_animation.mp4](stellarorion_program_proc/results/validation_scalloped/plots/hybrid_dsmc_pinn_animation.mp4) (102s, 30fps, 80 MB)
 
 **Dashboard panels:**
 - Row 1: Altitude / Velocity / Mach Number
@@ -91,6 +91,30 @@ Users can manually override this via:
 cd stellarorion_program_proc && python3 run.py --grid-factor 1.0 --test sample
 ```
 
+## 🎯 Optimized Topology: Before vs After
+
+Bayesian Optimization (GP Matern 5/2 kernel + Expected Improvement acquisition, 70 evaluations) was applied to the IRVE-3 HIAD geometry. The optimizer searched a 3D parameter space (nose radius R<sub>N</sub>, torus radius r<sub>tor</sub>, half-cone angle) and achieved a **9.45% reduction in drag coefficient C<sub>d</sub>**.
+
+![Optimized HIAD Topology](stellarorion_program_proc/optimization_comparison.png)
+
+**Before/After Parameters:**
+
+| Parameter | Default (IRVE-3 Baseline) | Optimized | Δ |
+| :--- | :--- | :--- | :--- |
+| **Nose Radius (R<sub>N</sub>)** | 1.5000 m | 1.1146 m | −25.7% |
+| **Torus Radius (r<sub>tor</sub>)** | 0.1350 m | 0.0539 m | −60.1% |
+| **Half-Cone Angle** | 60.00° | 44.58° | −25.7% |
+| **Drag Coefficient (C<sub>d</sub>)** | 1.6073 | 1.4554 | −9.45% |
+| **Sutton-Graves Heat Flux** | 16.14 W/cm² | 18.72 W/cm² | +16.0% (trade-off) |
+
+**Optimization method:** CCD 15-point initial sampling → 20-point LHD → 70-point Bayesian Optimization with GP Matern 5/2 surrogate model and Expected Improvement acquisition function. Full details in `stellarorion_program_proc/Optimization_Attempt_1.md`.
+
+```bash
+# Regenerate comparison images
+cd stellarorion_program_proc/scripts
+python3 render_optimization_comparison.py
+```
+
 ## 🛰️ HIAD Validation: Unified Comparison (IRVE-3 vs LOFTID vs Models vs StellarOrion)
 
 StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and **LOFTID flight data** (Deshmukh et al. AIAA 2024-1501, Hollis et al. AIAA 2024-1498), alongside analytical/CFD models (Sutton-Graves, Fay-Riddell). All sources are compared side-by-side below.
@@ -138,7 +162,7 @@ Each source uses different atmosphere models, geometry, and solvers — this dir
 
 **Plots generated:** 51 PNGs total (21 CSV time-series + 6 derived thermal + 24 VTU visualizations).
 
-See `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md` for full results.
+See `stellarorion_program_proc/results/validation_scalloped/VALIDATION_Sep_2_2026.md` for full results.
 
 Users can run the automated calibration suite using:
 ```bash
@@ -173,7 +197,7 @@ Rapisarda (2023, MSc Thesis, Delft University of Technology) used Moss et al. (2
 
 **Contrast with our approach:** Both StellarOrion and Rapisarda use DSMC — it is the standard method for rarefied hypersonic flow (Bird, 1994). The difference is post-processing. We read raw per-element `f_1[3]` (kinetic energy flux, W/m²) from SPARTA surf dumps and apply no smoothing. The max-cell value is a single noisy point-sample. Negative values at later steps (e.g., −10,570 W/m² at step 2200) are DSMC statistical noise — inherent to any raw DSMC output. Rapisarda's 3-layer filtering (polynomial fit + Wilmoth bridging) removes this noise at the cost of introducing model-dependent smoothing. Three code comment blocks in `stellarorion_sparta.adb` (~lines 552, ~2522, ~2668) document this noise context and cite Rapisarda's methodology.
 
-See `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md` Section 9 for full comparison.
+See `stellarorion_program_proc/results/validation_scalloped/VALIDATION_Sep_2_2026.md` Section 9 for full comparison.
 
 ## 📝 Code Updates (Ada/SPARK)
 
@@ -206,7 +230,7 @@ Three comment blocks added to `stellarorion_sparta.adb` documenting:
 | Document | Path | Content |
 | :--- | :--- | :--- |
 | **Discussion** | `stellarorion_program_proc/Discussion.md` | 12 numbered sections (1–10, 12–13) + Appendix: vehicle comparison, IRVE-3/LOFTID data, DSMC results, delta comparison, SG vs FR analysis, physics verification, optimization chain |
-| **Validation** | `stellarorion_program_proc/results_validation_scalloped/VALIDATION_Sep_2_2026.md` | 11 numbered sections (1–11) + References: simulation config, convergence, results, comparison, heat flux investigation, 51 plots, survivability, code fixes, DSMC noise methodology, storage paths, open items |
+| **Validation** | `stellarorion_program_proc/results/validation_scalloped/VALIDATION_Sep_2_2026.md` | 11 numbered sections (1–11) + References: simulation config, convergence, results, comparison, heat flux investigation, 51 plots, survivability, code fixes, DSMC noise methodology, storage paths, open items |
 
 ### Discussion.md Sections (12 + Appendix)
 

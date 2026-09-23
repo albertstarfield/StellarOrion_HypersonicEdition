@@ -1,0 +1,451 @@
+% Week 13 Progress Report — StellarOrion HypersonicEdition (HIAD)
+% Beamer presentation covering: git what's-new, validation, optimization,
+% before/after topology, performance references, optimization performance.
+% Compiled with pdfTeX (TeX Live 2026) — see audit loop in session log.
+\documentclass[aspectratio=169,10pt]{beamer}
+
+% Theme: simple, high-contrast, no external font dependencies.
+\usetheme{default}
+\usecolortheme{seahorse}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\setbeamerfont{frame title}{size=\large,series=\bfseries}
+
+% Core packages only (all ship with TeX Live; no external assets needed).
+% lmodern: scalable Latin Modern Type-1 fonts — replaces EC bitmap
+% fonts (ecss*.pk) that T1/CM would otherwise generate at 600 dpi.
+% [Reference: Latin Modern font docs — https://www.gust.org.pl/projects/e-foundry/]
+% [Citation: beamer v3.71 — https://ctan.org/pkg/beamer]
+% [Citation: booktabs v3.0 — https://ctan.org/pkg/booktabs]
+% [Citation: amsmath (AMS) v2.5.6 — https://ctan.org/pkg/amsmath]
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{verbatim}
+
+% ---- Title metadata -------------------------------------------------------
+\title[Week 13 Progress]{Week 13 Progress Report}
+\subtitle{StellarOrion HypersonicEdition --- HIAD Validation \& Topology Optimization}
+\author{Albert Starfield Wahyu Suryo Sam}
+\institute{StellarOrion HypersonicEdition}
+\date{22 September 2026}
+
+\begin{document}
+
+% ==========================================================================
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% ==========================================================================
+\begin{frame}{Agenda}
+  \tableofcontents
+\end{frame}
+
+% ==========================================================================
+\section{What's New (Git Diff \& Progress)}
+
+% ==========================================================================
+\begin{frame}{What's New --- Latest Commit}
+  \textbf{\texttt{5bcbb77}} \emph{feat(hiad): optimization pipeline with BO,
+  dual-unit display, validation overlay} \hfill 21 Sep 2026\\[2pt]
+  \texttt{17 files changed, +758 / -225} (repo:
+  \texttt{StellarOrion\_HypersonicEdition}, code root
+  \texttt{stellarorion\_program\_proc})\\[4pt]
+  \begin{itemize}
+    \item Replaced MoP with \textbf{Bayesian Optimization}
+          (GP Matern 5/2 + Expected Improvement, 70 evaluations)
+    \item Optimization result: \textbf{Cd 1.607 $\rightarrow$ 1.455
+          ($-9.45\%$)}
+    \item Trajectory model altitude extended \textbf{50\,km $\rightarrow$ 40\,km}
+    \item Added \texttt{KM\_TO\_FT = 3280.84} dual-unit altitude display
+    \item Added \texttt{-{}-validation} CLI flag and
+          \texttt{\_draw\_validation\_overlay()}
+    \item Added \texttt{IRVE3\_REFERENCE} comparison in
+          \texttt{validation\_pipeline.py}
+    \item Ada \texttt{trajectory\_output}: \textbf{10 bug fixes}
+          (Bugs \#20--\#29)
+    \item Added \texttt{Optimization\_Attempt\_1.md} documentation
+  \end{itemize}
+\end{frame}
+
+% ==========================================================================
+\begin{frame}{What's New --- Files Touched in \texttt{\_proc}}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \textbf{Core (commit 5bcbb77)}\\[2pt]
+      \scriptsize
+      \begin{tabular}{@{}lr@{}}
+        \toprule
+        File & $\Delta$ \\
+        \midrule
+        \texttt{ada\_pinn\_wrapper.py} & $\pm 213$ \\
+        \texttt{generate\_outputs.py} & $\pm 220$ \\
+        \texttt{validation\_pipeline.py} & $\pm 97$ \\
+        \texttt{hiad\_optimizer.py} & $\pm 50$ \\
+        \texttt{trajectory\_output.adb} & $\pm 42$ \\
+        \texttt{postprocess\_validation.py} & $\pm 86$ \\
+        \texttt{Optimization\_Attempt\_1.md} & $+187$ \\
+        \texttt{hiad\_optimization\_results.json} & $\pm 28$ \\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \textbf{Working tree now (uncommitted)}\\[2pt]
+      \begin{itemize}\scriptsize
+        \item New: \texttt{optimization\_comparison.png}
+        \item New: \texttt{scripts/}\\
+              \texttt{render\_optimization\_comparison.py}
+        \item Mode-only churn: 14 text files
+              (\texttt{prove.sh} $\times$2, \texttt{run\_smooth.sh},
+              plotting/validation/viewer tools, \texttt{uiassets/main.ts})
+              --- 0-line content diffs
+        \item Regenerated 20 UI plot PNGs (same byte sizes,
+              re-rendered)
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{4pt}
+  \hrule
+  \vspace{4pt}
+  \textbf{Recent history (progress):}
+  \texttt{bb2e059} 7 new Ada FFI wrappers + CLI args $\cdot$
+  \texttt{f3b0051} dashboard Peak Heat Flux panel $\cdot$
+  \texttt{2716ed1} linearized trajectory, uniform VTU/MP4 $\cdot$
+  \texttt{3df86ad} removed stale 0.55\,m nose-radius references.
+\end{frame}
+
+% ==========================================================================
+\section{Validation Progress}
+
+% ==========================================================================
+\begin{frame}{Validation Progress --- Where We Are}
+  \begin{itemize}
+    \item \textbf{29 Aug:} scalloped run truncated at 1000/2200 steps
+          (Colima not started) $\rightarrow$ status \textbf{BLOCKED}
+          (\texttt{Validation Aug29\_ValidationProgress.md})
+    \item \textbf{1 Sep:} full 2200-step SPARTA DSMC completed for
+          scalloped + smooth geometries
+    \item \textbf{2 Sep:} post-processing complete --- unified
+          comparison table + convergence audit generated by
+          \texttt{validation\_pipeline.py}
+    \item DSMC $\rightarrow$ \textbf{PINN hand-off} implemented:
+          step 2200 $\rightarrow$ step $3\times 10^{8}$,
+          trajectory 120\,km $\rightarrow$ 50\,km
+  \end{itemize}
+  \vspace{4pt}
+  \hrule
+  \vspace{4pt}
+  \textbf{Sim conditions (both geometries):} alt 51.82\,km, $V$ 3379\,m/s,
+  Mach 10.29, 2200 steps, $\Delta t = 1\,\mu$s, 6 MPI ranks,
+  $\approx$1{,}387{,}500 particles, 19{,}321 cells, 76 surf elements,
+  $T_{wall}=1000$\,K.
+\end{frame}
+
+% ==========================================================================
+\begin{frame}{Validation Progress --- Scalloped vs Smooth vs IRVE-3}
+  \centering
+  \small
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Metric & Scalloped & Smooth & $\Delta$ (scal.-smooth.) \\
+    \midrule
+    Peak drag [N]        & 62{,}726 & 57{,}468 & $+9.1\%$ \\
+    Avg.\ drag [N]       & 49{,}123 & 45{,}157 & $+8.8\%$ \\
+    Mean $C_d$           & 1.5821   & 1.4544   & $+8.8\%$ \\
+    Peak heat flux [W/cm$^2$] & 428.80 & 424.91 & $+0.9\%$ \\
+    SG stagnation [W/cm$^2$]  & 12.20$^{*}$ & ---      & vs IRVE-3 14.36 \\
+    Mean heat load [J/cm$^2$] & 165.72$^{\dagger}$ & ---      & vs IRVE-3 195.06 \\
+    Peak G-load         & 16.83    & ---      & vs target 19.7 \\
+    \bottomrule
+  \end{tabular}
+  \vspace{6pt}
+
+  {\footnotesize $^{*}$SG at hardcoded Rapisarda baseline
+  ($R_n{=}0.55$\,m, $V{=}2700$\,m/s); at actual sim conditions
+  true SG $\approx 25.1$\,W/cm$^2$.\\
+  $^{\dagger}$Single-point DSMC --- not trajectory-integrated
+  (IRVE-3 195.06 is), so the $-15\%$ is not an
+  apples-to-apples margin.}\\[2pt]
+  \textbf{Takeaway:} scalloping costs $\approx 9\%$ drag at
+  $<1\%$ heat-flux change; peak G-load 16.83 sits
+  \emph{below} the 19.7 flight target.
+\end{frame}
+
+% ==========================================================================
+\begin{frame}{Validation Progress --- Convergence \& DSMC/PINN}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Convergence audit} (\texttt{convergence\_audit.csv})\\[2pt]
+      \scriptsize
+      \begin{tabular}{@{}lr@{}}
+        \toprule
+        Quantity & Value \\
+        \midrule
+        $C_d$ noise $\sigma$ & 0.0501 \\
+        $C_d$ $R^2$ & 0.8485 \\
+        raw / denoised / PINN $C_d$ & 1.4625 / 1.4583 / 1.4632 \\
+        PINN error vs DSMC & 0.46\% \\
+        $\dot{q}_{avg}$ $R^2$ & 0.9387 \\
+        $\dot{q}_{max}$ $R^2$ & 0.7618 \\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{DSMC $\rightarrow$ PINN switch}\\[2pt]
+      \begin{itemize}\scriptsize
+        \item Hand-off at step 2200 $\rightarrow$ $3\times10^{8}$
+        \item DSMC finals: $\dot{q}_{avg}=56.59$\,W/cm$^2$,
+              drag 45{,}410\,N, $C_d=1.4625$, $C_l=-0.556$,
+              G 16.83, heat load 165.72\,J/cm$^2$
+        \item Kriging GP denoise bridges noise before PINN NS
+              regression
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{4pt}
+  \hrule
+  \vspace{2pt}
+  {\footnotesize Pipeline: SPARTA DSMC $\rightarrow$ Kriging GP denoise
+  $\rightarrow$ PINN (Navier--Stokes) $\rightarrow$ BO optimization
+  ($\approx$2200 steps, 19{,}321 cells, 1000+ samples).}
+\end{frame}
+
+% ==========================================================================
+\section{Optimization Progress}
+
+% ==========================================================================
+\begin{frame}{Optimization Progress --- Bayesian Optimization}
+  \textbf{MoP replaced by Bayesian Optimization} (commit \texttt{5bcbb77}),
+  documented in \texttt{Optimization\_Attempt\_1.md} (21 Sep 2026).\\[4pt]
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Configuration}\\[2pt]
+      \scriptsize
+      \begin{tabular}{@{}ll@{}}
+        \toprule
+        Item & Value \\
+        \midrule
+        Algorithm & Bayesian Optimization \\
+        Surrogate & GP (Matern 5/2) \\
+        Acquisition & EI ($\xi=0.01$) \\
+        Initial sampling & Latin Hypercube ($n=20$) \\
+        BO iterations & 50 \\
+        Total evaluations & 70 (20 LHD + 50 BO) \\
+        Cost function & $C_d$ via Ada FFI \\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Design bounds}\\[2pt]
+      \scriptsize
+      \begin{tabular}{@{}lll@{}}
+        \toprule
+        Parameter & Low & High \\
+        \midrule
+        $R_N$ [m] & 0.5 & 3.0 \\
+        $r_{tor}$ [m] & 0.02 & 0.25 \\
+        half-cone [$^\circ$] & 30 & 80 \\
+        \bottomrule
+      \end{tabular}
+      \vspace{6pt}
+      \raggedright {\footnotesize Verified: trajectory simulation runs
+      step 0 $\rightarrow$ $3\times10^{8}$ with optimized geometry.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ==========================================================================
+\section{Before / After Topology}
+
+% ==========================================================================
+\begin{frame}{Before vs After --- Geometry Topology}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{BEFORE --- default (IRVE-3 baseline)}\\[2pt]
+      \scriptsize
+      \begin{tabular}{@{}lr@{}}
+        \toprule
+        Parameter & Value \\
+        \midrule
+        $R_N$ & 1.5000\,m \\
+        $r_{tor}$ & 0.1350\,m \\
+        half-cone & $60.00^\circ$ \\
+        $C_d$ & 1.607278 \\
+        SG heat flux & 16.14\,W/cm$^2$ \\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.04\textwidth}
+      \centering $\rightarrow$
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \textbf{AFTER --- BO-optimized}\\[2pt]
+      \scriptsize
+      \begin{tabular}{@{}lr@{}}
+        \toprule
+        Parameter & Value \\
+        \midrule
+        $R_N$ & 1.1146\,m ($-25.7\%$) \\
+        $r_{tor}$ & 0.0539\,m ($-60.1\%$) \\
+        half-cone & $44.58^\circ$ ($-25.7\%$) \\
+        $C_d$ & 1.455433 ($-9.45\%$) \\
+        SG heat flux & 18.72\,W/cm$^2$ ($+16.0\%$) \\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+  \end{columns}
+  \vspace{6pt}
+  \hrule
+  \vspace{4pt}
+  \textbf{Physics:} smaller nose/torus radius cuts frontal area; narrower
+  half-cone cuts wave drag. \textbf{Trade-off:} sharper nose raises
+  Sutton-Graves stagnation heating by 16\% --- must be priced against
+  heat-shield mass in the next optimization pass.
+\end{frame}
+
+% ==========================================================================
+\begin{frame}{Before vs After --- Software Topology}
+  \textbf{BEFORE (deprecated 2026-08-21):}\\[2pt]
+  {\footnotesize \texttt{main.py} $\rightarrow$
+  \texttt{StellarOrionEngineMach5Up.py} (Python orchestrator)
+  $\rightarrow$ \texttt{HIAD\_GeometryEngine.py} / Docker SPARTA /
+  visualizer / \texttt{torch}}\\[6pt]
+  \textbf{AFTER (current):}\\[2pt]
+  {\footnotesize \texttt{hiad\_optimizer.py} $\rightarrow$
+  \texttt{ada\_pinn\_wrapper.py} (ctypes FFI) $\rightarrow$
+  \textbf{Ada/SPARK binary} \texttt{libstellarorion\_pinn}
+  $\rightarrow$ SPARTA DSMC + PINN NS}\\[6pt]
+  \hrule
+  \vspace{4pt}
+  \textbf{Why:} typed contracts and gnatprove-provable core
+  (\texttt{prove.sh}, \texttt{gnatprove-*} logs, level-4 checks) replace a
+  mutable Python engine; Python retains orchestration, BO, and plotting only.
+\end{frame}
+
+% ==========================================================================
+\section{Performance References}
+
+% ==========================================================================
+\begin{frame}{Performance References --- Flight \& Literature Data}
+  \small
+  \begin{tabular}{@{}lrrrl@{}}
+    \toprule
+    Reference & $D$ [m] & $\dot{q}_{peak}$ & $Q$ [J/cm$^2$] & Notes \\
+    \midrule
+    IRVE-3 flight & 3.0 & 14.36\,W/cm$^2$ & 195.06 & 19.7\,g \\
+    LOFTID flight & 6.0 & 39.27\,W/cm$^2$ & 3520 & 9.66\,g \\
+    Orion (ref.) & 5.02 & $\sim$1000\,W/cm$^2$ & --- & $\beta\approx400$ \\
+    StellarOrion & 3.0 & 56.59\,W/cm$^2$ & 165.72 & DSMC single-point \\
+    \bottomrule
+  \end{tabular}
+  \vspace{6pt}
+
+  \textbf{Rapisarda Table 4.10 vs IRVE-3 flight} (trajectory-integrated,
+  MCD v6.1):
+  \begin{itemize}
+    \item Fay-Riddell 13.8313\,W/cm$^2$ ($-3.69\%$, $R^2=0.9979$)
+    \item Detra-Kemp-Riddell 14.0032 ($-2.49\%$) $\cdot$ Chapman 13.9558
+          ($-2.82\%$) $\cdot$ Van Driest 12.6375 ($-12.0\%$)
+    \item Sutton-Graves 15.2595 ($+6.26\%$, $R^2=0.9603$)
+  \end{itemize}
+  \vspace{2pt}
+  {\footnotesize Caveat: our DSMC value is a \emph{fixed-condition
+  snapshot} (alt 51.8\,km, Mach 10.29, ISA, scalloped) --- not directly
+  comparable to trajectory-integrated flight numbers.}
+\end{frame}
+
+% ==========================================================================
+\begin{frame}{Performance References --- Geometry Fidelity}
+  \begin{itemize}
+    \item \texttt{REFERENCE\_COMPARISON.md}: \textbf{all 18 geometry
+          parameters} (5 primary + 13 derived/auxiliary) match Rapisarda
+          Table 4.1 at \textbf{0.00\%} delta each $\rightarrow$
+          \textbf{PASS}
+    \item IRVE-3 baseline: 3.0\,m, $R_n=0.55$\,m, $60^\circ$
+          sphere-cone, 7 tori (6 in Rapisarda model), 281\,kg, peak heat flux
+          $>12$\,W/cm$^2$
+    \item Stale 0.55\,m nose-radius references purged from Python
+          (commit \texttt{3df86ad})
+    \item Unified comparison (\texttt{unified\_comparison\_table.csv}):
+          peak-G 16.83 vs 19.7 ($-14.6\%$), heat load 165.7 vs 195.1
+          ($-15.0\%$), $C_d$ 1.4632 --- PINN tracks Kriging/DSMC within
+          $<1\%$
+  \end{itemize}
+\end{frame}
+
+% ==========================================================================
+\section{Optimization Performance}
+
+% ==========================================================================
+\begin{frame}{Optimization Performance --- Results}
+  \centering
+  \small
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Metric & Default & Optimized & Change \\
+    \midrule
+    $C_d$ (cost) & 1.607278 & 1.455433 & $\mathbf{-9.45\%}$ \\
+    $R_N$ [m] & 1.5000 & 1.1146 & $-25.7\%$ \\
+    $r_{tor}$ [m] & 0.1350 & 0.0539 & $-60.1\%$ \\
+    half-cone [$^\circ$] & 60.00 & 44.58 & $-25.7\%$ \\
+    SG heat flux [W/cm$^2$] & 16.14 & 18.72 & $+16.0\%$ \\
+    \bottomrule
+  \end{tabular}
+  \vspace{6pt}
+
+  \textbf{Design-space sampling (CCD/LHD phase, 15 probes):}\\[2pt]
+  {\footnotesize best probe \texttt{axial\_r\_tor\_$-$} $C_d=1.542$;
+  worst \texttt{factorial+++} ($R_N{=}1.8$, $r_{tor}{=}0.18$,
+  $65^\circ$) $C_d=38.37$ --- response surface is strongly convex in
+  $r_{tor}$ and half-cone.}\\[4pt]
+  \hrule
+  \vspace{4pt}
+  \textbf{Convergence:} 70 evaluations total (20 LHD space-filling +
+  50 EI-driven BO) $\rightarrow$ optimum at interior bounds, no
+  constraint violation ($R_N\in[0.5,3]$, $r_{tor}\in[0.02,0.25]$,
+  $\theta\in[30,80]$).
+\end{frame}
+
+% ==========================================================================
+\begin{frame}{Optimization Performance --- Artefacts \& Next Steps}
+  \textbf{Artefacts delivered this week}\\[2pt]
+  \begin{itemize}
+    \item \texttt{hiad\_optimization\_results.json} --- default,
+          optimized, improvement, 15 CCD samples, full BO config
+    \item \texttt{optimization\_comparison.png} +
+          \texttt{render\_optimization\_comparison.py} (new, untracked)
+    \item \texttt{hiad\_optimized\_overlay.mp4} --- before/after
+          geometry overlay animation
+    \item \texttt{Optimization\_Attempt\_1.md} --- method, bounds,
+          results, findings
+  \end{itemize}
+  \vspace{4pt}
+  \hrule
+  \vspace{4pt}
+  \textbf{Next steps}\\[2pt]
+  \begin{itemize}
+    \item Multi-objective pass: $C_d$ vs Sutton-Graves heating
+          (currently $-9.45\%$ drag buys $+16\%$ heating)
+    \item Re-run full 2200-step DSMC on optimized geometry for
+          measured (not correlation-based) $C_d$ and $\dot{q}$
+    \item Commit working-tree churn in \texttt{\_proc} and pin the
+          comparison-render script
+  \end{itemize}
+\end{frame}
+
+% ==========================================================================
+\begin{frame}
+  \centering
+  \vspace{1.2cm}
+  {\Large\bfseries Week 13 Summary}\\[1.2em]
+  {Validation pipeline unblocked $\rightarrow$ converged;}\\[0.6em]
+  {first Bayesian optimization $\rightarrow$
+  \textbf{$C_d$ $-9.45\%$}.}
+  \vspace{1.2cm}
+\end{frame}
+
+\end{document}

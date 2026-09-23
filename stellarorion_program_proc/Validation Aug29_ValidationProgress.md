@@ -17,10 +17,10 @@ and record **where the results are stored**.
 
 | # | Requirement | Status | Location |
 |---|---|---|---|
-| 1 | Separate validation folders | ✅ | `results_validation/`, `results_validation_smooth/`, `results_validation_scalloped/` |
-| 2 | Simulate Smooth skin | ✅ (full 2200 steps) | `results_validation_smooth/` |
-| 3 | Simulate Scalloped skin | ⚠️ truncated at 1000/2200 steps (Docker crash) | `results_validation_scalloped/` |
-| 4 | Comparison table (Scalloped / Smooth / Rapisarda) | ✅ | `results_validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md` |
+| 1 | Separate validation folders | ✅ | `results/validation/`, `results/validation_smooth/`, `results/validation_scalloped/` |
+| 2 | Simulate Smooth skin | ✅ (full 2200 steps) | `results/validation_smooth/` |
+| 3 | Simulate Scalloped skin | ⚠️ truncated at 1000/2200 steps (Docker crash) | `results/validation_scalloped/` |
+| 4 | Comparison table (Scalloped / Smooth / Rapisarda) | ✅ | `results/validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md` |
 | 5 | Report storage paths | ✅ | this document, §6 |
 
 ## 3. Bugs Fixed Along the Way
@@ -117,28 +117,28 @@ Sutton-Graves check, not the surface-derived result.
 
 ```
 stellarorion_program_proc/
-├── results_validation_scalloped/
+├── results/validation_scalloped/
 │   ├── HIAD_custom.surf                              # corrugated surf (77 pts, ±3% ripple)
 │   ├── validation_timeseries.csv                    # 10 rows (steps 100–1000, truncated)
 │   ├── in.hiad                                      # SPARTA input
 │   └── COMPARISON_Scalloped_Smooth_Rapisarda.md     # the comparison table
-├── results_validation_smooth/
+├── results/validation_smooth/
 │   ├── HIAD_custom.surf                             # smooth surf (77 pts)
 │   ├── validation_timeseries.csv                   # 22 rows (steps 100–2200, complete)
 │   └── in.hiad
-├── results_validation/                              # default folder (Smooth source)
+├── results/validation/                              # default folder (Smooth source)
 │   └── (surf.*.out dumps 0–2200, restart.*.sparta preserved)
 └── compare_validation.py                            # regenerates the comparison report
 ```
 
 Absolute paths:
 
-- Scalloped surf : `stellarorion_program_proc/results_validation_scalloped/HIAD_custom.surf`
-- Scalloped CSV  : `stellarorion_program_proc/results_validation_scalloped/validation_timeseries.csv`
-- Scalloped report: `stellarorion_program_proc/results_validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md`
-- Smooth surf   : `stellarorion_program_proc/results_validation_smooth/HIAD_custom.surf`
-- Smooth CSV    : `stellarorion_program_proc/results_validation_smooth/validation_timeseries.csv`
-- Smooth `in.hiad`: `stellarorion_program_proc/results_validation_smooth/in.hiad`
+- Scalloped surf : `stellarorion_program_proc/results/validation_scalloped/HIAD_custom.surf`
+- Scalloped CSV  : `stellarorion_program_proc/results/validation_scalloped/validation_timeseries.csv`
+- Scalloped report: `stellarorion_program_proc/results/validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md`
+- Smooth surf   : `stellarorion_program_proc/results/validation_smooth/HIAD_custom.surf`
+- Smooth CSV    : `stellarorion_program_proc/results/validation_smooth/validation_timeseries.csv`
+- Smooth `in.hiad`: `stellarorion_program_proc/results/validation_smooth/in.hiad`
 - Comparison engine: `stellarorion_program_proc/compare_validation.py`
 
 ## 7. "Blocker" — Docker Daemon (read: I was too lazy to restart colima)
@@ -163,8 +163,8 @@ python3 compare_validation.py               # regenerates the comparison table
 ```bash
 cd stellarorion_program_proc
 alr build
-bin/main --validate --skin smooth    --steps 2200   # -> results_validation_smooth/
-bin/main --validate --skin scalloped --steps 2200   # -> results_validation_scalloped/
+bin/main --validate --skin smooth    --steps 2200   # -> results/validation_smooth/
+bin/main --validate --skin scalloped --steps 2200   # -> results/validation_scalloped/
 python3 compare_validation.py
 ```
 > Docker is required for the SPARTA DSMC step.

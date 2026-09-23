@@ -282,7 +282,7 @@ flagMonitor_bgTask.sh
 
 # === Simulation Results (generated, large) ===
 Result/
-results/
+/results/
 results (reference)/
 
 # === OpenCode ===
@@ -305,7 +305,7 @@ stellarorion_program_proc/*.adb.stdout
 stellarorion_program_proc/*.ads.stderr
 stellarorion_program_proc/*.ads.stdout
 stellarorion_program_proc/.src_hashes.json
-stellarorion_program_proc/results_validation/
+stellarorion_program_proc/results/validation/
 stellarorion_program_proc/Dockerfile
 stellarorion_program_proc/HIAD_custom.surf
 stellarorion_program_proc/air.react

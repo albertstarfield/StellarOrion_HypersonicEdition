@@ -3,9 +3,9 @@
 # macOS : double-click (rename to .command) or run:  sh open_paraview.sh
 # Linux : ensure `paraview` is on PATH.
 # Requires a validation run first (--validate), which writes:
-#   results_validation/paraview/validation.pvd
+#   results/validation/paraview/validation.pvd
 HERE="$(cd "$(dirname "$0")" && pwd)"
-PVD="$HERE/results_validation/paraview/validation.pvd"
+PVD="$HERE/results/validation/paraview/validation.pvd"
 if [ ! -f "$PVD" ]; then
   echo "ParaView collection not found: $PVD"
   echo "Run a validation first (--validate) to generate it."

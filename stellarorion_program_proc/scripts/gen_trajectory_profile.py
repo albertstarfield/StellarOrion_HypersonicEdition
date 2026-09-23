@@ -260,7 +260,7 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: gen_trajectory_profile.py <results_dir>")
         print("  Generates trajectory_profile.csv in the specified directory.")
-        print("  Also generates in results_validation_smooth/ and results_validation_scalloped/")
+        print("  Also generates in results/validation_smooth/ and results/validation_scalloped/")
         sys.exit(1)
 
     results_dir = sys.argv[1]
@@ -289,9 +289,11 @@ def main():
     output_path = os.path.join(results_dir, "trajectory_profile.csv")
     write_csv(samples, output_path)
 
-    # Also write to smooth and scalloped dirs if they exist
+    # Also write to smooth and scalloped dirs if they exist.
+    # base = dirname(results_dir); when results_dir = results/<variant>, base = results/,
+    # so the sibling variants are plain names relative to base.
     base = os.path.dirname(os.path.abspath(results_dir))
-    for subdir in ['results_validation_smooth', 'results_validation_scalloped']:
+    for subdir in ['validation_smooth', 'validation_scalloped']:
         target = os.path.join(base, subdir)
         if os.path.isdir(target):
             target_path = os.path.join(target, "trajectory_profile.csv")

@@ -29,4 +29,4 @@ Git chain (newest last): 2b2e728 → 78da696 → dac075a → 525ab7e → eecc2fb
 - After tier commits run `git status --short` (b48c14c repaired a missed-files gap).
 
 ## Untracked leftovers (intentional)
-results_validation/, thoughts/ledgers/*.md, .DS_Store noise, tests/obj/ (gitignored), data/audits/ (gitignored), sparta ptr.
+results/validation/, thoughts/ledgers/*.md, .DS_Store noise, tests/obj/ (gitignored), data/audits/ (gitignored), sparta ptr.

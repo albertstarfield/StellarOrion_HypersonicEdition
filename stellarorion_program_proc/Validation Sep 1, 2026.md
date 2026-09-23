@@ -79,15 +79,15 @@ The 8-cycle axial scallop ripple (R_max ≈ 1.88 m vs 1.50 m smooth) increases f
 
 | Artifact | Path |
 |----------|------|
-| Scalloped CSV | `results_validation_scalloped/validation_timeseries.csv` |
-| Smooth CSV | `results_validation_smooth/validation_timeseries.csv` |
-| Scalloped trajectory | `results_validation_scalloped/trajectory_profile.csv` |
-| Smooth trajectory | `results_validation_smooth/trajectory_profile.csv` |
-| Scalloped surf | `results_validation_scalloped/HIAD_custom.surf` |
-| Smooth surf | `results_validation_smooth/HIAD_custom.surf` |
-| Scalloved paraview | `results_validation_scalloped/paraview/` |
-| Scalloped plots | `results_validation_scalloped/plots/` |
-| Existing comparison | `results_validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md` |
+| Scalloped CSV | `results/validation_scalloped/validation_timeseries.csv` |
+| Smooth CSV | `results/validation_smooth/validation_timeseries.csv` |
+| Scalloped trajectory | `results/validation_scalloped/trajectory_profile.csv` |
+| Smooth trajectory | `results/validation_smooth/trajectory_profile.csv` |
+| Scalloped surf | `results/validation_scalloped/HIAD_custom.surf` |
+| Smooth surf | `results/validation_smooth/HIAD_custom.surf` |
+| Scalloved paraview | `results/validation_scalloped/paraview/` |
+| Scalloped plots | `results/validation_scalloped/plots/` |
+| Existing comparison | `results/validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md` |
 
 ---
 
