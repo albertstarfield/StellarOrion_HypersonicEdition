@@ -42,7 +42,7 @@ graph TD
     end
 
     subgraph Intelligence [ANI Informed Physics]
-        API -- "Surrogate Training" --> MOP[MoP: Metamodel Prognosis]
+        API -- "Surrogate Training" --> MOP[Bayesian Optimization: GP + EI]
         API -- "PINNAccelerator.refine()" --> PINN[PINN: DeepXDE Accelerator]
         MOP -- "Evolutionary Steering" --> GA[Genetic Algorithm]
     end
@@ -81,27 +81,27 @@ The ANI model minimizes the residual $R$ of the following equations:
 
 ---
 
-## 3. Component: MoP SBO Optimization (ANI Steering)
+## 3. Component: Bayesian SBO Optimization (ANI Steering)
 **Module:** `StellarOrionEngineMach5Up.py` (`execute_optimization` subroutine)  
-**Role:** Global optimization using a Metamodel (MoP) and Genetic Algorithm (GA) powered by ANI.
+**Role:** Global optimization using a Gaussian Process surrogate (Bayesian Optimization, GP Matern 5/2 + Expected Improvement) combined with Genetic Algorithm (GA) steering powered by ANI.
 
-### 3.1 Metamodel (MoP) Architecture
-An ANI-based PyTorch neural network that maps geometric parameters $X_{geo}$ to flight metrics $Y_{metrics}$.
+### 3.1 Gaussian Process Surrogate Architecture
+A GP surrogate maps geometric parameters $X_{geo}$ to flight metrics $Y_{metrics}$, replacing the legacy MLP metamodel.
 - **Input ($X_{geo}$):** `[diameter, angle, toroids, nose, ...]`
 - **Output ($Y_{metrics}$):** `[goal_val, beta, stag_heat, heat_load, time_of_peak, g_load, stag_press, backface_temp]`
 
-**Model Hyperparameters (Default):**
-- **Hidden Layers:** `nn.Linear(n_dim, 128) -> ReLU -> nn.Linear(128, 128) -> ReLU -> nn.Linear(128, n_out)`
-- **Optimizer:** `Adam(lr=0.005)`
-- **Training Epochs:** `500` (or until Loss < `1e-6`)
+**Surrogate Hyperparameters (Default):**
+- **Kernel:** Matérn 5/2 ($k(\mathbf{x}, \mathbf{x}')$)
+- **Acquisition:** Expected Improvement (EI)
+- **Evaluations:** 70-point Bayesian Optimization run (9.45% $C_d$ reduction)
 
-### 3.2 Evolutionary GA Steering (ANI MoP Loop)
-The ANI GA "flies" through the metamodel to find the global optimum configuration.
+### 3.2 Evolutionary GA Steering (Bayesian Loop)
+The ANI GA "flies" through the GP surrogate to find the global optimum configuration.
 
 **Logic Flow:**
 1. **Initialize Population:** Generate random configurations in the search space.
-2. **Evaluation:** Use the ANI MoP model to **predict** the performance of $20,000+$ candidates.
-3. **Constraint Layer (Methodology of Physics):**
+2. **Evaluation:** Use the GP surrogate to **predict** the performance of $20,000+$ candidates.
+3. **Constraint Layer (Bayesian Filtering):**
     - **Thermal:** If $T_{backface} > 350.0\text{ K}$, add penalty $10^{15}$.
     - **Structural:** If $Peak\_G > 25.0\text{ g}$, add penalty $10^{15}$.
     - **Aero:** Calculate $\beta$ penalty relative to `target_beta` (Default: `150`).

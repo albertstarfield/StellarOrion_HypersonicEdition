@@ -1232,7 +1232,7 @@ def _post_optimization_outputs(stdout_text: str) -> None:
     interactive = {
         "metadata": {
             "generated_by": "StellarOrion Optimization Pipeline",
-            "mode": "SBO Genetic Algorithm (MoP Fitness)",
+            "mode": "SBO Bayesian Optimization (GP + EI)",
             "references": {
                 "IRVE-3": "NASA TP-2013-4012",
                 "LOFTID": "Deshmukh et al. AIAA 2024-1501",

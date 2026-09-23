@@ -1,0 +1,18 @@
+# ── Ruff project configuration ────────────────────────────────────────
+# AXIOMS:
+#   A1: Ruff with no config derives `linter.src` from the CWD, so
+#       `validation_pipeline` is first_party from src/python/ but
+#       third_party from stellarorion_program_proc/ (isort default_section).
+#   A2: I001 (import block grouping) therefore disagrees between the two
+#       documented run locations unless src roots are pinned here.
+# THEORIES:
+#   T1: Pinning src = ["src/python"] makes first-party detection
+#       cwd-independent → the blank line between matplotlib (third-party)
+#       and validation_pipeline (first-party) is required and correct
+#       from every directory.
+# APPLICATIONS: both `ruff check` from stellarorion_program_proc/ and
+#   `ruff check generate_outputs.py` from src/python/ pass I001.
+# CITATIONS: ruff src setting — https://docs.astral.sh/ruff/settings/#src
+# [Citation: Ruff v0.16.x — https://docs.astral.sh/ruff/settings/]
+
+src = ["src/python"]

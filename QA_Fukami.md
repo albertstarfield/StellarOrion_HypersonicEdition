@@ -7,7 +7,7 @@ But anyway I would say thank you for this material DSC and Machine learning reco
 
 
 1. How well does PINN machine learning would be integrate with DSMC which using lattice boltzman (let's say the engine is SPARTA DSMC)? (can it be paired with other continuum governor equation (derived from navier stokes) for interpolation, but we know DSMC is non continuum or rarefied or is there a better way to do it?) ( I use DeepXDE library for doing this for PINN (is it the same as Physics based loss function)). And how many steps do i need to sample it and rule of thumb of it?
-2. If it does, How can it be used and help to accelerate to Latin Hypercube Sampling (for instance 24 samples) sampling for multiple geometry for instance for sampling variation of for instance an hypersonic variation of shape for optimizing certain reentry ballistic parameters for instance for maturity of safety. then we connect it through Metamodel Optimization Prognosis to know the 
+2. If it does, How can it be used and help to accelerate to Latin Hypercube Sampling (for instance 24 samples) sampling for multiple geometry for instance for sampling variation of for instance an hypersonic variation of shape for optimizing certain reentry ballistic parameters for instance for maturity of safety. then we connect it through Bayesian Optimization (Bayes Opt) to know the 
 3. and as extra is it possible on the future this machine learning to accelerate an realtime in an IFCS as an safety hint/warning aerodynamics limiter on an aircraft? as an assurance level C in realtime? since we today have seen project called FluidX3D LBM then we can mixed this? espescially this autoencoder insights.
 
 

@@ -506,16 +506,16 @@ $$\mathcal{L}_{\text{total}} = \underbrace{\mathcal{L}_{\text{data}}}_{\text{Kri
 3. **Extrapolation:** Can predict 20k-step equivalent from 2.2k-step training data by learning the underlying PDE, not just fitting data
 4. **GPU-accelerated:** Leverages the Python sidecar's CUDA/MPS/ROCm support
 
-### 1.4 Why Gaussian Optimization (MoP) for Step 4?
+### 1.4 Why Bayesian Optimization for Step 4?
 
-The Metamodel-based Optimization (MoP) uses the trained PINN as a surrogate:
+Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) uses the trained PINN as a surrogate:
 1. Generate 1,000+ virtual samples from the PINN surrogate
 2. Each sample is a geometry variant (toroid radii, angles, skin shape)
 3. Evaluate cost function: $J(\mathbf{x}) = w_1 \dot{q}_{\text{peak}} + w_2 Q_{\text{total}} + w_3 n_{\text{max}}$
 4. Use Gaussian Process-based Bayesian Optimization to find optimal $\mathbf{x}^*$
 5. The PINN surrogate makes each evaluation $\sim 10^{-3}$ s vs $\sim 10^{4}$ s for full DSMC
 
-[Ref: MoP implementation in `stellarorion_optimization.adb`, lines 475-618]
+[Ref: MoP_Fitness implementation in `stellarorion_optimization.adb`, lines 475-618]
 
 ---
 
@@ -526,7 +526,7 @@ The Metamodel-based Optimization (MoP) uses the trained PINN as a surrogate:
 | Step 1: SPARTA DSMC | ✅ Complete | `stellarorion_sparta.adb` | 2,200-step validated |
 | Step 2: Kriging Denoise | ⚠️ Needs Integration | `pinn_accelerator.py` (partial) | Grid files (19,322 cells) |
 | Step 3: PINN Prediction | ⚠️ Needs Integration | `pinn_accelerator.py` (partial) | Train on Kriging output |
-| Step 4: MoP Optimization | ✅ Complete | `stellarorion_optimization.adb` | GA + LHS + Bayesian |
+| Step 4: Bayes Opt | ✅ Complete | `stellarorion_optimization.adb` | GA + LHS + Bayesian |
 
 ---
 
