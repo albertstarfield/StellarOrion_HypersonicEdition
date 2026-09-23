@@ -24,7 +24,7 @@ StellarOrion_HypersonicEdition/
 │   ├── subprocess.run ──> CADDesign/HIAD_GeometryEngine.py (CAD Kernel)
 │   ├── subprocess.run ──> [Docker Engine] ──> sparta-hysp (Physics)
 │   ├── from source import visualizer (Post-processing)
-│   └── import torch (Metamodel / MoP Training)
+│   └── import torch (Bayesian Optimization surrogate training)
 │
 ├── source/
 │   └── visualizer.py (Visualization Engine)
@@ -89,25 +89,24 @@ The raw output is parsed and processed to produce high-level engineering metrics
 
 ---
 
-## 5. Optimization & MoP Role (The Intelligence)
+## 5. Optimization & Bayesian Role (The Intelligence)
 The pipeline does not just run one simulation; it uses a **Surrogate-Based Optimization (SBO)** approach.
 
 1.  **Sampling (LHS):** **Latin Hypercube Sampling** (McKay et al., 1979) generates a series of diverse input parameter sets (e.g., 5-20 samples) to explore the search space efficiently.
-2.  **Training the Metamodel (MoP):** 
-    *   **MoP** stands for **Metamodel Prognosis**. 
-    *   A PyTorch-based neural network is trained on the results of the LHS samples.
-    *   **Role:** The MoP learns the complex, non-linear mapping between geometry and physics (e.g., "how does changing the cone angle affect the backface temperature?").
-3.  **Steering (Genetic Algorithm):**
-    *   A Genetic Algorithm (GA) or random search "flies" through the MoP's predicted space.
-    *   It tests 10,000+ virtual configurations per second to find the one that minimizes the cost function (e.g., Lowest Heat while keeping $\beta < 150$).
+2.  **Training the GP Surrogate (Bayesian Optimization):** 
+    *   A Gaussian Process surrogate (Matérn 5/2 kernel) is trained on the results of the LHS samples. 
+    *   **Role:** The GP learns the complex, non-linear mapping between geometry and physics (e.g., "how does changing the cone angle affect the backface temperature?") while quantifying predictive uncertainty.
+3.  **Steering (Expected Improvement):**
+    *   Bayesian optimization selects the next candidate by maximizing the **Expected Improvement (EI)** acquisition function.
+    *   It evaluates thousands of virtual configurations per second (via the GP posterior) to find the one that minimizes the cost function (e.g., Lowest Heat while keeping $\beta < 150$).
 
 ---
 
 ## 6. Back to Input with Adjustment (Closing the Loop)
-Once the MoP and GA identify the **Optimal Configuration**:
+Once the GP surrogate and EI acquisition identify the **Optimal Configuration**:
 
-1.  **Adjustment:** The original input parameters are "adjusted" to the optimal values found by the GA.
-2.  **Validation:** The pipeline automatically triggers a **final SPARTA simulation** using these optimal parameters to verify that the MoP's prediction was accurate.
+1.  **Adjustment:** The original input parameters are "adjusted" to the optimal values found by the Bayesian optimizer.
+2.  **Validation:** The pipeline automatically triggers a **final SPARTA simulation** using these optimal parameters to verify that the GP's prediction was accurate.
 3.  **Result:** The final geometry, 3D upscaled visualizer, and flight metrics are presented to the user.
 
 ```mermaid
@@ -119,8 +118,8 @@ graph TD
     E --> F{Optimization Loop?}
     F -- Yes --> G[LHS Sampling]
     G --> B
-    E --> H[MoP Training - PyTorch]
-    H --> I[GA Steering / Selection]
+    E --> H[GP Surrogate Training (Bayesian Opt)]
+    H --> I[EI Steering / Selection]
     I --> J[Adjusted Best Parameters]
     J --> B
     F -- No --> K[Final Validation Result]
@@ -131,7 +130,7 @@ graph TD
 To further accelerate and refine the simulation results, a **Physics-Informed Neural Network (PINN)** stage is integrated via **DeepXDE** (Lu et al., 2021).
 
 1.  **Checkpoint Exchange:** The final "stable" flow field from SPARTA (DSMC) is used as a sparse point-cloud "anchor" for the PINN.
-2.  **Physical Constraints:** Unlike the pure data-driven MoP, the PINN is constrained by the **2D Compressible Navier-Stokes Equations** (Anderson, 2006):
+2.  **Physical Constraints:** Unlike the pure data-driven GP surrogate, the PINN is constrained by the **2D Compressible Navier-Stokes Equations** (Anderson, 2006):
     *   Continuity ($\nabla \cdot (\rho \mathbf{u}) = 0$)
     *   Momentum ($\rho(\mathbf{u} \cdot \nabla)\mathbf{u} + \nabla p = 0$)
     *   Equation of State ($p = \rho R T$)

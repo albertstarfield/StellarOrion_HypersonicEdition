@@ -151,12 +151,14 @@ $$x_{i,j} = \min(x_j) + \text{range}(x_j) \cdot \frac{i + r}{N}$$
 *Where $i$ is the sample index, $j$ is the parameter dimension, $N$ is total samples, and $r \sim \mathcal{U}(0,1)$.*
 *   **Implementation:** `val = p_info['min'] + (p_info['max'] - p_info['min']) * (i + np.random.random()) / samples_n` (`StellarOrionEngineMach5Up.py:530`)
 
-### Metamodel Training (PyTorch)
-The "Metamodel Prognosis" (MoP) is a Multi-Layer Perceptron (MLP) that maps design parameters to performance metrics.
-*   **Architecture:** 3-layer MLP (`Linear(N, 64) -> ReLU -> Linear(64, 64) -> ReLU -> Linear(64, 1)`).
-*   **Implementation:** `model = nn.Sequential(...)` (`StellarOrionEngineMach5Up.py:613`)
-*   **Loss Function:** Mean Squared Error (MSE).
-*   **Implementation:** `loss = nn.MSELoss()(model(X_tensor), Y_tensor)` (`StellarOrionEngineMach5Up.py:617`)
+### Bayesian Optimization Surrogate (Gaussian Process)
+The active optimizer is **Bayesian Optimization**: a Gaussian Process (GP) surrogate with a Matérn 5/2 kernel and an Expected Improvement (EI) acquisition function maps design parameters to performance metrics.
+*   **Surrogate:** GP with Matérn 5/2 kernel — models predictive mean and uncertainty over the design space.
+*   **Implementation:** `run_bayesian_optimize(...)` (`ada_pinn_wrapper.py:558`; GP + EI, Mockus 1978).
+*   **Acquisition:** Expected Improvement balances exploration (high posterior variance) against exploitation (low posterior mean).
+*   **Reference:** Jones et al. (1998), "Efficient Global Optimization of Expensive Black-Box Functions", J. Global Optimization 13, 455-492.
+
+*Note:* A legacy 3-layer MLP metamodel (`nn.Sequential`, MSE loss) described in earlier revisions was superseded by the GP surrogate; the MLP path is no longer the active Step 4 optimizer.
 
 ### Genetic Algorithm (GA) Cost Function
 The GA steers the search towards configurations that minimize a weighted cost $J$ relative to user-defined targets.
@@ -368,16 +370,16 @@ Krige (1951), "A Statistical Approach to Some Basic Mine Valuation Problems"]*
                     └──────────────┬──────────────────────────┘
                                    │
                     ┌──────────────▼──────────────────────────┐
-  STEP 4 (MoP)      │  1,000+ virtual samples from metamodel  │
-  Optimization      │  Geometry optimization via GA            │
+  STEP 4 (Bayes Opt) │  1,000+ virtual samples via GP surrogate   │
+  Optimization      │  Geometry optimization via EI acquisition  │
   Output:           │  Optimized HIAD configuration            │
                     └─────────────────────────────────────────┘
 ```
 
 **The mathematical chain is sound:**
 - BTE (DSMC) is exact in rarefied regime → Kriging denoises to continuum mean → NS (PINN)
-  is the Chapman-Enskog asymptotic limit of BTE → PINN predicts continuum flow → MoP
-  generates virtual samples for optimization.
+  is the Chapman-Enskog asymptotic limit of BTE → PINN predicts continuum flow → Bayesian
+  optimization (GP surrogate + EI) generates virtual samples for optimization.
 
 **References:**
 - Bird, G.A. (1994). *Molecular Gas Dynamics and the Direct Simulation of Gas Flows*.

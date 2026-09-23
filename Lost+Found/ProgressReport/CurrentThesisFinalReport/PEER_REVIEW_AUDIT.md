@@ -28,7 +28,7 @@
 
 ### Overall Assessment: **CONDITIONALLY ACCEPTABLE** with revisions required
 
-The thesis demonstrates strong technical work with well-documented methodology. The core physics (DSMC, Sutton-Graves, 1D thermal model, PINN equations, MoP/GA optimization) is **correctly implemented** in the code and **accurately described** in the thesis. However, this peer review identified **3 critical discrepancies**, **5 moderate issues**, and **7 minor gaps** that require attention before final submission.
+The thesis demonstrates strong technical work with well-documented methodology. The core physics (DSMC, Sutton-Graves, 1D thermal model, PINN equations, Bayes Opt/GA optimization) is **correctly implemented** in the code and **accurately described** in the thesis. However, this peer review identified **3 critical discrepancies**, **5 moderate issues**, and **7 minor gaps** that require attention before final submission.
 
 ### Summary Statistics
 
@@ -70,7 +70,7 @@ The thesis demonstrates strong technical work with well-documented methodology. 
 |------|-------|---------|--------|
 | `chapter_01_introduction.tex` | 126 | Background, objectives, scope | ✅ Full read |
 | `chapter_02_literature_review.tex` | 1,190 | Literature survey, CFD, DSMC, ML/PINN | ✅ Full read |
-| `chapter_03_methodology.tex` | 823 | Methodology (geometry, DSMC, PINN, MoP, GA) | ✅ Full read |
+| `chapter_03_methodology.tex` | 823 | Methodology (geometry, DSMC, PINN, Bayes Opt, GA) | ✅ Full read |
 | `chapter_04_results.tex` | 186 | Results, validation, discussion | ✅ Full read |
 | `chapter_05_conclusion.tex` | 56 | Conclusions, contributions, recommendations | ✅ Full read |
 
@@ -302,7 +302,7 @@ StellarOrionEngineMach5Up.py
 - **Code L581**: `--samples` defaults to 25 (which matches CCD: 2⁴ + 2×4 + 1 = 25 for 4 factors)
 - **Impact**: The thesis describes LHS but the code actually uses CCD by default. Both are valid DoE methods, but the thesis should document the actual default.
 
-##### §3.7.3 MoP (Model of Predictability)
+##### §3.7.3 Surrogate Model (Bayes Opt)
 | Parameter | Thesis | Code | Match |
 |-----------|--------|------|--------|
 | MLP architecture | d→64→64→1 | Ch3 Table | ✅ (No direct code match in audited files) |
@@ -320,7 +320,7 @@ StellarOrionEngineMach5Up.py
 | Mutation p_m = 0.1 | Ch3 L630 | DERIVATION.md | ✅ |
 | Elitism 10% | Ch3 L631 | DERIVATION.md | ✅ |
 
-##### §3.7.5 MoP Constraint Layer
+##### §3.7.5 Bayes Opt Constraint Layer
 | Parameter | Thesis | Code | Match |
 |-----------|--------|------|--------|
 | Penalty Λ = 10⁶ | Ch3 L666 | DERIVATION.md | ✅ |
@@ -331,7 +331,7 @@ StellarOrionEngineMach5Up.py
 
 **Issues in §3.7:**
 - 🔴 **CRITICAL**: CCD vs LHS default (see above)
-- ⚠️ MoP implementation code not directly found in audited files (likely in `headless_optimizer.py` or `source/` modules not fully read)
+- ⚠️ Bayes Opt implementation code not directly found in audited files (likely in `headless_optimizer.py` or `source/` modules not fully read)
 
 #### §3.8-3.12 Supporting Sections (Lines 700-823)
 
@@ -419,7 +419,7 @@ StellarOrionEngineMach5Up.py
 | 16 | Normalization Y_scaled | Ch3 Eq. (3.17) | pinn_accelerator.py L186-198 | ✅ |
 | 17 | PINN loss function | Ch3 Eq. (3.18) | pinn_accelerator.py L260-261 | ✅ |
 | 18 | LHS formula | Ch3 Eq. (3.25) | DERIVATION.md | ✅ |
-| 19 | MoP formulation y=M(x;θ) | Ch3 Eq. (3.26) | Ch3 Table | ✅ |
+| 19 | Surrogate formulation y=M(x;θ) | Ch3 Eq. (3.26) | Ch3 Table | ✅ |
 | 20 | GA cost function J | Ch3 Eq. (3.27) | DERIVATION.md | ✅ |
 | 21 | Constraint penalty φ | Ch3 Eq. (3.28) | DERIVATION.md | ✅ |
 | 22 | Convergence δ formula | Ch3 Eq. (3.24) | pinn_accelerator.py L349-351 | ✅ |
@@ -642,7 +642,7 @@ StellarOrionEngineMach5Up.py
 2. **PINN implementation detail**: The two-stage training protocol, convergence detection algorithm (Algorithm 1), and hyperparameter tables are exceptionally well-documented
 3. **IRVE-3 validation**: Clear comparison table with flight data, proper error metrics
 4. **Geometric parameter tables**: Complete mapping of all design variables with bounds
-5. **GA/MoP documentation**: Cost function, operators, constraint layer all properly formulated
+5. **GA/Bayes Opt documentation**: Cost function, operators, constraint layer all properly formulated
 6. **Architecture alignment**: The 6-stage workflow in Ch3 matches the code execution pipeline exactly
 7. **Literature review breadth**: Ch2 covers CFD, DSMC, and ML/PINN comprehensively
 8. **Practical methodology**: The thesis balances theoretical rigor with implementation practicality

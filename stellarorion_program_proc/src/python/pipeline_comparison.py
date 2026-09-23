@@ -657,9 +657,9 @@ def main():  # nosec
             print(f"    Pred: {pred_mean}")
             print(f"    True: {test_vals}")
 
-    # --- Step 4: Gaussian Optimization Convergence (mock) ---
+    # --- Step 4: Bayesian Optimization Convergence (mock; GA operators via Ada FFI) ---
     print("\n" + "=" * 72)
-    print("STEP 4: GAUSSIAN/MoP OPTIMIZATION ALGORITHM VERIFICATION")
+    print("STEP 4: BAYESIAN OPTIMIZATION VERIFICATION (GA operators via Ada FFI)")
     print("=" * 72)
 
     # Verify that the GA operators from stellarorion_optimization.adb work
@@ -840,7 +840,7 @@ def main():  # nosec
     print(f"    GA convergence:      {'PASS' if costs[best_idx] < 1e-4 else 'FAIL'}")
 
     print("\n  VERDICT: All algorithms functional")
-    print("  Pipeline: Raw SPARTA → Kriging Denoise → PINN Surrogate → MoP Opt")
+    print("  Pipeline: Raw SPARTA → Kriging Denoise → PINN Surrogate → Bayes Opt")
     print("=" * 72)
 
 

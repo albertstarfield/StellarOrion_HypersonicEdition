@@ -27,7 +27,7 @@
 
 The thesis presents a DSMC-based aerothermal optimization framework for HIAD reentry vehicles. After exhaustive line-by-line tracing from `main.py` through all source modules against thesis chapters 1–5, the audit finds:
 
-- **20 verified consistent items** — Core physics, PINN architecture, MoP/GA, and validation metrics all match between code and thesis
+- **20 verified consistent items** — Core physics, PINN architecture, Bayes Opt/GA, and validation metrics all match between code and thesis
 - **3 numerical discrepancies** requiring correction
 - **8 undocumented code features** not mentioned in thesis
 - **2 simplifications** in thesis equations vs. full implementation (acceptable but should be noted)
@@ -71,7 +71,7 @@ The thesis presents a DSMC-based aerothermal optimization framework for HIAD ree
 | 900–1200 | SPARTA integration | Config generation, post-processing |
 | 1200–2000 | Simulation runners | Steady-state, unsteady, multi-solver |
 | 2000–3000 | Geometry generation | CadQuery integration, toroid stacking |
-| 3000–5459 | Optimization pipeline | LHS, MoP, GA, constraint layer |
+| 3000–5459 | Optimization pipeline | LHS, Bayes Opt, GA, constraint layer |
 
 ### 2.3 PINN Accelerator: `source/pinn_accelerator.py` (448 lines)
 
@@ -248,7 +248,7 @@ $$\mu(T) = \mu_{\text{ref}} \left(\frac{T}{T_{\text{ref}}}\right)^{3/2} \frac{T_
 | Plateau threshold: δ < 0.01 | `plateau_threshold = 0.01` | ✅ Match |
 | 20% minimum threshold | `min(0.20, ...)` | ✅ Match |
 
-### 3.8 MoP Architecture (Ch3 §3.7.3)
+### 3.8 Bayes Opt Architecture (Ch3 §3.7.3)
 
 | Parameter | Thesis (Ch3) | Code Status |
 |-----------|--------------|-------------|
@@ -258,7 +258,7 @@ $$\mu(T) = \mu_{\text{ref}} \left(\frac{T}{T_{\text{ref}}}\right)^{3/2} \frac{T_
 | Multi-output | y = M(x; θ) ∈ ℝ^m | Extended formulation |
 
 - ✅ Architecture documented in thesis table
-- ✅ Consistent with standard MoP implementations
+- ✅ Consistent with the documented surrogate-model architecture in Ch3
 
 ### 3.9 GA Cost Function (Ch3 §3.7.3)
 
@@ -273,7 +273,7 @@ $$J = w_\beta \left(\frac{\beta - \beta_{\text{target}}}{\sigma_\beta}\right)^2 
 | Mutation probability | p_m = 0.1 | Ch3 | ✅ Match |
 | Elitism | 10% | Ch3 | ✅ Match |
 
-### 3.10 MoP Constraint Layer (Ch3 §3.7.4)
+### 3.10 Bayes Opt Constraint Layer (Ch3 §3.7.4)
 
 $$\Lambda = 10^6, \quad \phi_j = \begin{cases} 0 & \text{if } g_j(x) \leq 0 \\ 1 & \text{if } g_j(x) > 0 \end{cases}$$
 

@@ -12,7 +12,7 @@
 2. [Step 1: DSMC via the Boltzmann Transport Equation](#2-step-1-dsmc-via-the-boltzmann-transport-equation)
 3. [Step 2: Kriging Spatial Denoising](#3-step-2-kriging-spatial-denoising)
 4. [Step 3: PINN Navier-Stokes Continuum Prediction](#4-step-3-pinn-navier-stokes-continuum-prediction)
-5. [Step 4: Gaussian Optimization (Metamodel Prognosis)](#5-step-4-gaussian-optimization-metamodel-prognosis)
+5. [Step 4: Bayesian Optimization (GP + EI)](#5-step-4-bayesian-optimization-gp--ei)
 6. [Why the Transition: BTE → NS](#6-why-the-transition-bte--ns)
 7. [Why Kriging Is the Critical Bridge](#7-why-kriging-is-the-critical-bridge)
 8. [References](#8-references)
@@ -24,8 +24,8 @@
 StellarOrion's simulation pipeline proceeds through four sequential stages:
 
 ```
-Step 1: SPARTA DSMC  →  Step 2: Kriging Denoise  →  Step 3: PINN NS  →  Step 4: Gaussian Opt
-  (BTE, noisy)           (spatial smoothing)         (continuum)         (virtual samples)
+Step 1: SPARTA DSMC  →  Step 2: Kriging Denoise  →  Step 3: PINN NS  →  Step 4: Bayesian Opt
+  (BTE, noisy)           (spatial smoothing)         (continuum)         (GP + EI)
   ~2,200 steps           19,322 cells                20k-step equiv      1,000+ samples
   ~140 W/cm² peak        ~16 W/cm² clean             predicted flow      optimized geometry
 ```
@@ -283,7 +283,7 @@ The Kriging residual is spatially correlated and small (typically < 5% of the si
 
 ---
 
-## 5. Step 4: Gaussian Optimization (Metamodel Prognosis)
+## 5. Step 4: Bayesian Optimization (GP + EI)
 
 ### 5.1 The Optimization Problem
 
@@ -346,7 +346,7 @@ This enables the 1,000+ virtual samples required for Step 4 optimization, which 
 
 Raw DSMC noise ($\epsilon_{\text{stat}} \propto 1/\sqrt{N}$) makes direct DSMC → optimization infeasible. The pipeline:
 
-$$\text{Noisy DSMC} \xrightarrow{\text{Kriging}} \text{Clean field} \xrightarrow{\text{PINN}} \text{Smooth metamodel} \xrightarrow{\text{Gauss Opt}} \text{Optimized geometry}$$
+$$\text{Noisy DSMC} \xrightarrow{\text{Kriging}} \text{Clean field} \xrightarrow{\text{PINN}} \text{Smooth metamodel} \xrightarrow{\text{Bayes Opt}} \text{Optimized geometry}$$
 
 removes statistical noise while preserving physical features, enabling gradient-based optimization.
 

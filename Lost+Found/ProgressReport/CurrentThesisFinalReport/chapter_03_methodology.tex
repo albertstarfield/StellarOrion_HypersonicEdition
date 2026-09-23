@@ -73,7 +73,7 @@ The Physics-Informed Neural Network enforces the Navier--Stokes residuals as a s
 where $\mathcal{L}_{\text{data}}$ penalizes deviation from DSMC surface data and $\mathcal{L}_{\text{PDE}}$ penalizes violation of the governing PDEs at collocation points in the flow field.
 
 \paragraph{Step 6: Surrogate-Assisted Optimization.}
-The MoP surrogate model approximates the mapping from design variables to performance metrics. The Genetic Algorithm (GA) queries the MoP surrogate to explore the design space, avoiding the computational cost of repeated DSMC evaluations. The optimization cost function is:
+The Bayes Opt surrogate model approximates the mapping from design variables to performance metrics. The Genetic Algorithm (GA) queries the Bayes Opt surrogate to explore the design space, avoiding the computational cost of repeated DSMC evaluations. The optimization cost function is:
 \begin{equation}
 J = w_\beta \left(\frac{\beta_{\text{calc}} - \beta_{\text{target}}}{10}\right)^2 + \sum_{i} w_i \, \mathbb{1}\!\left[y_i^{(\text{pred})} > y_i^{(\text{limit})}\right] \cdot 10^{15}
 \label{eq:cost_function_optimization}
@@ -91,12 +91,12 @@ Figure~\ref{fig:governing_equations} summarizes the full derivation chain from k
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
-The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\ref{fig:software_pipeline}. The pipeline begins with CadQuery geometry generation and freestream condition specification, then routes through the DSMC solver (SPARTA in Docker), the PINN refinement module (DeepXDE), and the MoP surrogate (PyTorch), before producing ParaView-ready VTK and STL files for visualization.
+The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\ref{fig:software_pipeline}. The pipeline begins with CadQuery geometry generation and freestream condition specification, then routes through the DSMC solver (SPARTA in Docker), the PINN refinement module (DeepXDE), and the Bayes Opt surrogate (PyTorch), before producing ParaView-ready VTK and STL files for visualization.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/software_pipeline.png}
-    \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver $\rightarrow$ PINN refinement $\rightarrow$ MoP surrogate $\rightarrow$ ParaView visualization. The feedback loop from MoP to the core engine enables GA-driven optimization.}
+    \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver $\rightarrow$ PINN refinement $\rightarrow$ Bayes Opt surrogate $\rightarrow$ ParaView visualization. The feedback loop from Bayes Opt to the core engine enables GA-driven optimization.}
     \label{fig:software_pipeline}
 \end{figure}
 
@@ -129,7 +129,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
  & Learning rate (Stage 2) & $5 \times 10^{-4}$ \\
  & Iterations & $\max(2000, \min(4000, \text{steps} \times 2))$ \\
  & PDE collocation points & 2500 (domain) + 500 (boundary) \\ \midrule
-\multirow{4}{*}{\textbf{MoP (PyTorch)}} & Architecture & MLP [n $\to$ 64 $\to$ 64 $\to$ 64 $\to$ 1] \\
+\multirow{4}{*}{\textbf{Bayes Opt (PyTorch)}} & Architecture & MLP [n $\to$ 64 $\to$ 64 $\to$ 64 $\to$ 1] \\
  & Activation & ReLU \\
  & Learning rate & 0.005 \\
  & Epochs & 500 (early stop at loss $< 10^{-6}$) \\ \midrule
@@ -158,7 +158,7 @@ The process is divided into six primary stages:
     \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver with freestream conditions matching the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics.
     \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation within a Docker-containerized Linux environment, tracking millions of simulated particles through advection, molecular collisions, and surface interactions.
     \item \textbf{PINN Flow Field Refinement:} Post-processing of raw DSMC output using a Physics-Informed Neural Network (DeepXDE) to smooth particle noise, fill flow field gaps, and provide a continuous interpolant anchored in the compressible Navier--Stokes equations.
-    \item \textbf{Survivability Optimization:} Genetic Algorithm (GA) coupled with a PyTorch Multi-Layer Perceptron (MoP) surrogate model for automated multi-objective optimization of HIAD geometry.
+    \item \textbf{Survivability Optimization:} Genetic Algorithm (GA) coupled with a PyTorch Multi-Layer Perceptron surrogate (Bayes Opt) for automated multi-objective optimization of HIAD geometry.
     \item \textbf{Validation and Analysis:} Verification of the solution through grid independence studies and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
 \end{enumerate}
 
@@ -661,13 +661,13 @@ The PINN refinement stage rests on the following formal assumptions:
 
 \section{Survivability Optimization}
 
-The survivability optimization framework integrates Latin Hypercube Sampling for design space exploration, a Metamodel Prognosis (MoP) surrogate for rapid performance prediction, and a Genetic Algorithm (GA) for global optimization. The complete pipeline is:
+The survivability optimization framework integrates Latin Hypercube Sampling for design space exploration, a Bayesian Optimization (Bayes Opt) surrogate for rapid performance prediction, and a Genetic Algorithm (GA) for global optimization. The complete pipeline is:
 
 \begin{enumerate}
     \item \textbf{Sampling:} Generate $N$ design points using Stratified LHS across the parameter space $\mathbf{x} \in \mathbb{R}^d$.
     \item \textbf{Simulation:} Evaluate each design using SPARTA DSMC (optionally refined by PINN) to obtain performance metrics $(\beta, \dot{q}, T_{back}, n_G)$.
-    \item \textbf{MoP Training:} Train a surrogate MLP on the $N$ simulation results to predict performance from design parameters.
-    \item \textbf{GA Optimization:} Evolve a population of designs using the MoP as a fast evaluator, minimizing the cost function $J$.
+    \item \textbf{Bayes Opt Training:} Train a surrogate MLP on the $N$ simulation results to predict performance from design parameters.
+    \item \textbf{GA Optimization:} Evolve a population of designs using the Bayes Opt surrogate as a fast evaluator, minimizing the cost function $J$.
     \item \textbf{Constraint Filtering:} Apply physics-based penalty functions to eliminate non-viable designs.
     \item \textbf{Final Validation:} Re-evaluate the optimal design using SPARTA DSMC without PINN refinement.
 \end{enumerate}
@@ -707,10 +707,10 @@ The stratified sampling guarantees that each parameter is sampled at $N$ distinc
 \subsubsection*{Central Composite Design (CCD) as Alternative DoE}
 In addition to LHS, the framework supports the Face-Centered Central Composite Design (CCD)~\cite{Montgomery2017}, which is the default Design of Experiments method in the implementation. For a $d$-dimensional parameter space, the CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point replicated at the origin. For the $d = 4$ design variables (Diameter, Angle, Nose Radius, Toroid Radius), this yields $N = 16 + 8 + 1 = 25$ sample points, which is the minimum required for a second-order response surface model. The user may select either LHS or CCD via the \texttt{--doe} flag, with CCD as the default for the optimized IRVE-3 baseline.
 
-\subsection{Metamodel Prognosis (MoP)}
+\subsection{Bayesian Optimization (Bayes Opt)}
 
 \subsubsection*{Problem Formulation}
-Each SPARTA DSMC simulation requires $O(10^3)$ timesteps and $O(1)$ hours of compute time. For optimization loops requiring $O(10^2)$--$O(10^3)$ design evaluations, direct simulation is prohibitively expensive. The Metamodel Prognosis (MoP) provides a fast surrogate that maps design parameters to performance metrics:
+Each SPARTA DSMC simulation requires $O(10^3)$ timesteps and $O(1)$ hours of compute time. For optimization loops requiring $O(10^2)$--$O(10^3)$ design evaluations, direct simulation is prohibitively expensive. Bayesian Optimization (Bayes Opt) provides a fast surrogate that maps design parameters to performance metrics:
 
 \begin{equation}
     \hat{y} = \mathcal{M}(\mathbf{x}; \boldsymbol{\theta}): \mathbb{R}^d \to \mathbb{R}
@@ -719,11 +719,11 @@ Each SPARTA DSMC simulation requires $O(10^3)$ timesteps and $O(1)$ hours of com
 where $\mathbf{x} = (D, \theta_c, R_n, N_t, \ldots)$ is the design vector and $\hat{y}$ is the predicted performance metric (e.g., drag coefficient $C_d$, peak heat flux $\dot{q}$, or backface temperature $T_{back}$).
 
 \subsubsection*{MLP Architecture}
-The MoP is implemented as a 3-layer Multi-Layer Perceptron (MLP) in PyTorch:
+The Bayes Opt surrogate is implemented as a 3-layer Multi-Layer Perceptron (MLP) in PyTorch:
 
 \begin{table}[H]
     \centering
-    \caption{MoP MLP Architecture.}
+    \caption{Bayes Opt Surrogate MLP Architecture.}
     \label{tab:mop_architecture}
     \begin{tabular}{|l|l|}
         \hline
@@ -744,7 +744,7 @@ The forward pass through the network is:
 where $\mathbf{W}_1 \in \mathbb{R}^{64 \times d}$, $\mathbf{W}_2, \mathbf{W}_3 \in \mathbb{R}^{64 \times 64}$, $\mathbf{W}_4 \in \mathbb{R}^{1 \times 64}$ are weight matrices, $\mathbf{b}_i$ are bias vectors, and $\text{ReLU}(z) = \max(0, z)$ is the rectified linear activation.
 
 \subsubsection*{Training Objective}
-The MoP is trained via supervised learning on the dataset $\{(\mathbf{x}_i, y_i)\}_{i=1}^{N}$ collected from SPARTA simulations. The loss function is the Mean Squared Error (MSE):
+The Bayes Opt surrogate is trained via supervised learning on the dataset $\{(\mathbf{x}_i, y_i)\}_{i=1}^{N}$ collected from SPARTA simulations. The loss function is the Mean Squared Error (MSE):
 
 \begin{equation}
     \mathcal{L}_{MSE}(\boldsymbol{\theta}) = \frac{1}{N} \sum_{i=1}^{N} \big|\hat{y}_i - y_i\big|^2 = \frac{1}{N} \sum_{i=1}^{N} \big|\mathcal{M}(\mathbf{x}_i; \boldsymbol{\theta}) - y_i\big|^2
@@ -753,7 +753,7 @@ The MoP is trained via supervised learning on the dataset $\{(\mathbf{x}_i, y_i)
 where $\boldsymbol{\theta} = \{\mathbf{W}_1, \mathbf{b}_1, \mathbf{W}_2, \mathbf{b}_2, \mathbf{W}_3, \mathbf{b}_3, \mathbf{W}_4, \mathbf{b}_4\}$ are all trainable parameters. The model is optimized using the Adam optimizer with a learning rate of $\eta = 5 \times 10^{-3}$ and trained for $O(10^2)$--$O(10^3)$ epochs until the validation loss plateaus.
 
 \subsubsection*{Multi-Objective Extension}
-When multiple performance metrics must be simultaneously predicted (e.g., $C_d$ and $\dot{q}$), the MoP is extended to a multi-output MLP:
+When multiple performance metrics must be simultaneously predicted (e.g., $C_d$ and $\dot{q}$), the Bayes Opt surrogate is extended to a multi-output MLP:
 
 \begin{equation}
     \begin{bmatrix} \hat{y}_1 \\ \hat{y}_2 \\ \vdots \\ \hat{y}_k \end{bmatrix} = \mathbf{W}_{out} \cdot \text{ReLU}\!\big(\mathbf{W}_3 \cdot \text{ReLU}(\mathbf{W}_2 \cdot \text{ReLU}(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2) + \mathbf{b}_3\big) + \mathbf{b}_{out}
@@ -779,7 +779,7 @@ The Genetic Algorithm (GA) evolves a population of designs toward the global min
 where:
 \begin{itemize}
     \item $\beta_{calc}(\mathbf{x}) = \frac{m \cdot q}{F_{drag}}$ is the ballistic coefficient computed from the design parameters (see Sec.~3.2.4),
-    \item $y_{pred}(\mathbf{x}) = \mathcal{M}(\mathbf{x}; \boldsymbol{\theta})$ is the MoP prediction of the optimization objective (e.g., peak heat flux or drag coefficient),
+    \item $y_{pred}(\mathbf{x}) = \mathcal{M}(\mathbf{x}; \boldsymbol{\theta})$ is the Bayes Opt surrogate prediction of the optimization objective (e.g., peak heat flux or drag coefficient),
     \item $\beta_{target}$ and $y_{target}$ are user-specified target values (e.g., from mission requirements),
     \item $\sigma_{\beta} = 10$\,kg/m$^2$ and $\sigma_{y} = 1$ are normalization constants that ensure both terms contribute equally to the cost,
     \item $w_{\beta}$ and $w_{y}$ are weight coefficients that control the relative importance of ballistic coefficient vs.\ performance metric.
@@ -814,10 +814,10 @@ The GA employs the following operators to evolve the population:
 
 The GA terminates when either: (a) the maximum number of generations $G_{max}$ is reached, or (b) the best cost $J^*$ has not improved by more than $\epsilon = 10^{-4}$ for $G_{pat} = 20$ consecutive generations.
 
-\subsection{Methodology of Physics (MoP Constraint Layer)}
+\subsection{Bayesian Optimization (Bayes Opt Constraint Layer)}
 
 \subsubsection*{Formal Penalty Function}
-The MoP Constraint Layer is a physics-informed post-processing step that filters GA-generated designs against hard physical limits. For a candidate design $\mathbf{x}$ with predicted performance $(\hat{y}_1, \ldots, \hat{y}_k)$, the constraint-augmented cost is:
+The Bayes Opt Constraint Layer is a physics-informed post-processing step that filters GA-generated designs against hard physical limits. For a candidate design $\mathbf{x}$ with predicted performance $(\hat{y}_1, \ldots, \hat{y}_k)$, the constraint-augmented cost is:
 
 \begin{equation}
     J_{constrained}(\mathbf{x}) = J(\mathbf{x}) + \sum_{j=1}^{n_c} \Lambda_j \cdot \phi_j(\mathbf{x})
@@ -837,7 +837,7 @@ The constraint functions $g_j(\mathbf{x})$ encode the following physical limits:
 
 \begin{table}[H]
     \centering
-    \caption{MoP Constraint Functions.}
+    \caption{Bayes Opt Constraint Functions.}
     \label{tab:mop_constraints}
     \begin{tabular}{|l|l|c|}
         \hline
@@ -852,7 +852,7 @@ The constraint functions $g_j(\mathbf{x})$ encode the following physical limits:
 When any constraint is violated ($g_j > 0$), the penalty $\Lambda_j \cdot |g_j|^2$ adds a large cost that effectively removes the design from the GA population. This ensures that only physically viable configurations survive to final high-fidelity validation.
 
 \subsubsection*{Integration with GA}
-The constraint-augmented cost $J_{constrained}$ replaces the unconstrained $J$ in the GA fitness evaluation. The GA operators (selection, crossover, mutation) operate on $J_{constrained}$ as described in Sec.~3.4.3. The constraint layer acts as a ``hard filter'' that shapes the fitness landscape without requiring gradient information from the MoP.
+The constraint-augmented cost $J_{constrained}$ replaces the unconstrained $J$ in the GA fitness evaluation. The GA operators (selection, crossover, mutation) operate on $J_{constrained}$ as described in Sec.~3.4.3. The constraint layer acts as a ``hard filter'' that shapes the fitness landscape without requiring gradient information from the Bayes Opt surrogate.
 
 \section{Multi-Solver Architecture}
 
@@ -994,12 +994,12 @@ The PINN is implemented using the DeepXDE library~\cite{lu2021deepxde} with the 
     \end{tabular}
 \end{table}
 
-\subsubsection*{Metamodel Prognosis (MoP)}
-The MoP surrogate is a 3-layer MLP implemented in PyTorch:
+\subsubsection*{Bayesian Optimization (Bayes Opt)}
+The Bayes Opt surrogate is a 3-layer MLP implemented in PyTorch:
 
 \begin{table}[H]
     \centering
-    \caption{MoP MLP Architecture and Hyperparameters.}
+    \caption{Bayes Opt MLP Architecture and Hyperparameters.}
     \label{tab:mop_hparams}
     \begin{tabular}{|l|l|}
         \hline
@@ -1062,7 +1062,7 @@ To ensure full reproducibility of all ML results, the following standards are en
 All stochastic operations (weight initialization, data splitting, CCD point generation) are seeded with a fixed random seed:
 \begin{itemize}
     \item PINN: \texttt{torch.manual\_seed(42)}, \texttt{numpy.random.seed(42)}
-    \item MoP: \texttt{torch.manual\_seed(123)}, \texttt{numpy.random.seed(123)}
+    \item Bayes Opt: \texttt{torch.manual\_seed(123)}, \texttt{numpy.random.seed(123)}
     \item GA: \texttt{numpy.random.seed(456)}
 \end{itemize}
 
@@ -1101,8 +1101,8 @@ The PINN provides uncertainty estimates through:
     \item \textbf{Residual analysis:} PDE residual $\mathcal{R}(\mathbf{x})$ at test points quantifies physics consistency.
 \end{itemize}
 
-\subsubsection*{MoP Uncertainty}
-The MoP surrogate uncertainty is estimated via:
+\subsubsection*{Bayes Opt Surrogate Uncertainty}
+The Bayes Opt surrogate uncertainty is estimated via:
 \begin{itemize}
     \item \textbf{Ensemble prediction:} $M = 10$ models with different initializations.
     \item \textbf{Leave-one-out cross-validation:} Predictive variance from $N$ models trained on $N-1$ samples.
