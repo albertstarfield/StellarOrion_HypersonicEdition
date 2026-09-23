@@ -45,15 +45,15 @@ KEY SUCCESS VARIABLES (from Sep 2 Discussion.md Section 12):
 
 Usage:
   python3 compare_validation.py
-Writes: results_validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md
+Writes: results/validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md
 """
 import csv
 import os
 
 PROC = os.path.dirname(os.path.abspath(__file__))
-SCALLOPED_CSV = os.path.join(PROC, "results_validation_scalloped", "validation_timeseries.csv")
-SMOOTH_CSV    = os.path.join(PROC, "results_validation_smooth",    "validation_timeseries.csv")
-OUT_MD        = os.path.join(PROC, "results_validation_scalloped", "COMPARISON_Scalloped_Smooth_Rapisarda.md")
+SCALLOPED_CSV = os.path.join(PROC, "results/validation_scalloped", "validation_timeseries.csv")
+SMOOTH_CSV    = os.path.join(PROC, "results/validation_smooth",    "validation_timeseries.csv")
+OUT_MD        = os.path.join(PROC, "results/validation_scalloped", "COMPARISON_Scalloped_Smooth_Rapisarda.md")
 
 # Rapisarda / IRVE-3 reference (Rapisarda 2023 Table 4.10)
 RAP_Q_MAX_WCM2   = 14.36      # W/cm^2  peak heat flux
@@ -288,11 +288,11 @@ def main():
     lines.append("")
     lines.append("## Storage Locations")
     lines.append("")
-    lines.append("- Scalloped surf : `stellarorion_program_proc/results_validation_scalloped/HIAD_custom.surf`")
-    lines.append("- Scalloped CSV  : `stellarorion_program_proc/results_validation_scalloped/validation_timeseries.csv`")
-    lines.append("- Smooth surf   : `stellarorion_program_proc/results_validation_smooth/HIAD_custom.surf`")
-    lines.append("- Smooth CSV    : `stellarorion_program_proc/results_validation_smooth/validation_timeseries.csv`")
-    lines.append("- This report    : `stellarorion_program_proc/results_validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md`")
+    lines.append("- Scalloped surf : `stellarorion_program_proc/results/validation_scalloped/HIAD_custom.surf`")
+    lines.append("- Scalloped CSV  : `stellarorion_program_proc/results/validation_scalloped/validation_timeseries.csv`")
+    lines.append("- Smooth surf   : `stellarorion_program_proc/results/validation_smooth/HIAD_custom.surf`")
+    lines.append("- Smooth CSV    : `stellarorion_program_proc/results/validation_smooth/validation_timeseries.csv`")
+    lines.append("- This report    : `stellarorion_program_proc/results/validation_scalloped/COMPARISON_Scalloped_Smooth_Rapisarda.md`")
     lines.append("")
 
     out = "\n".join(lines)

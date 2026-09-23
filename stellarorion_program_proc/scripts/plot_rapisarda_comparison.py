@@ -216,7 +216,7 @@ def _plot_comparison_bars(
 
 def main(argv: list[str]) -> int:
     # Support multiple result directories for side-by-side comparison
-    result_dirs = argv[1:] if len(argv) > 1 else ["results_validation"]
+    result_dirs = argv[1:] if len(argv) > 1 else ["results/validation"]
 
     all_data = {}
     for rdir in result_dirs:

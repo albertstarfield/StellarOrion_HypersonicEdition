@@ -148,7 +148,7 @@ def main(argv: list[str]) -> int:
     Returns:
         0 on success, 1 if CSV missing or empty.
     """
-    results_dir = argv[1] if len(argv) > 1 else "results_validation"
+    results_dir = argv[1] if len(argv) > 1 else "results/validation"
     csv_path = os.path.join(results_dir, "validation_timeseries.csv")
     plots_dir = os.path.join(results_dir, "plots")
     if not os.path.isfile(csv_path):
