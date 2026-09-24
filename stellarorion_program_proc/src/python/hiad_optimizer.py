@@ -10,12 +10,14 @@ MoP (Method of Projected Gradients) is available via Ada FFI for comparison.
 AXIOMS:
   1. The HIAD geometry is fully parameterized by (R_N, r_tor, half_cone_deg).
   2. All physics and optimization logic lives in Ada/SPARK.
-  3. Python provides only the CLI entry point and JSON output.
+  3. Python provides only the CLI entry point, JSON output, and the
+     post-run diagnostic render (scripts/render_geometry_grid.py).
 
 CITATIONS:
   [1] stellarorion_ffi.ads — C-compatible FFI layer for optimization
   [2] stellarorion_optimization.ads — Core optimization algorithms
   [3] Ada 2012 Reference Manual, Interfaces.C package
+  [4] scripts/render_geometry_grid.py — 87-panel geometry diagnostic
 
 Author: Albert Starfield Wahyu Suryo Samudro
 """
@@ -23,6 +25,7 @@ Author: Albert Starfield Wahyu Suryo Samudro
 import sys
 import os
 import json
+import subprocess
 
 # --- Import FFI wrappers from ada_pinn_wrapper ---
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -64,10 +67,12 @@ def main() -> int:
     """Run the full HIAD geometry optimization pipeline.
 
     All computation is delegated to Ada/SPARK via FFI.
-    This function only handles CLI output and JSON serialization.
+    This function only handles CLI output, JSON serialization, and the
+    step-7 diagnostic render (subprocess -> render_geometry_grid.py).
 
     Returns:
-        0 on success, 1 on error.
+        0 on success (JSON written AND grid rendered), 1 on any failure
+        (never 0 on error -- verbose errors go to stderr).
     """
     print("=" * 72)
     print("  HIAD Geometry Optimizer (Bayesian Optimization)")
@@ -75,7 +80,7 @@ def main() -> int:
     print("=" * 72)
 
     # --- Step 1: Load default geometry from Ada/SPARK ---
-    print("\n[1/6] Loading default HIAD geometry from Ada/SPARK ...")
+    print("\n[1/7] Loading default HIAD geometry from Ada/SPARK ...")
     try:
         hiad_cs = get_hiad_cross_section()
         print(f"  Loaded {hiad_cs['n']} cross-section points from Ada/SPARK")
@@ -85,7 +90,7 @@ def main() -> int:
         print(f"  WARNING: Ada FFI call failed ({exc}).", file=sys.stderr)
 
     # --- Step 2: Compute default parameters and cost via Ada FFI ---
-    print("\n[2/6] Computing default parameters and cost (via Ada FFI) ...")
+    print("\n[2/7] Computing default parameters and cost (via Ada FFI) ...")
     default_cd = estimate_cd(_DEFAULT_R_N, _DEFAULT_R_TOR, _DEFAULT_HALF_CONE_DEG)
     default_cost = hiad_cost_function(_DEFAULT_R_N, _DEFAULT_R_TOR, _DEFAULT_HALF_CONE_DEG)
 
@@ -108,7 +113,7 @@ def main() -> int:
           f"({default_sg_wm2:.2f} W/m^2)")
 
     # --- Step 3: Generate CCD sample points via Ada FFI ---
-    print("\n[3/6] Generating CCD sample points (via Ada FFI) ...")
+    print("\n[3/7] Generating CCD sample points (via Ada FFI) ...")
     ccd_samples = generate_ccd_samples()
     print(f"  Generated {len(ccd_samples)} CCD samples:")
     for i, s in enumerate(ccd_samples):
@@ -117,7 +122,7 @@ def main() -> int:
               f"cone={s['half_cone_deg']:.2f}")
 
     # --- Step 4: Evaluate cost at all CCD points via Ada FFI ---
-    print("\n[4/6] Evaluating cost at CCD sample points (via Ada FFI) ...")
+    print("\n[4/7] Evaluating cost at CCD sample points (via Ada FFI) ...")
     ccd_results = []
     for s in ccd_samples:
         c_i = hiad_cost_function(s["R_N"], s["r_tor"], s["half_cone_deg"])
@@ -135,7 +140,7 @@ def main() -> int:
     print(f"\n  Best CCD point: {best_ccd['label']} (J={best_ccd['cost']:.6f})")
 
     # --- Step 5: Bayesian Optimization via GP surrogate ---
-    print("\n[5/6] Running Bayesian Optimization (GP surrogate + EI) ...")
+    print("\n[5/7] Running Bayesian Optimization (GP surrogate + EI) ...")
     result = run_bayesian_optimize(
         hiad_cost_function, n_initial=20, n_iter=50, xi=0.01, seed=42,
     )
@@ -172,7 +177,7 @@ def main() -> int:
     print(f"  Cd improvement: {cd_improvement_pct:+.4f}%")
 
     # --- Step 6: Save results to JSON ---
-    print("\n[6/6] Saving results to JSON ...")
+    print("\n[6/7] Saving results to JSON ...")
     output = {
         "default": {
             "R_N": _DEFAULT_R_N,
@@ -198,6 +203,14 @@ def main() -> int:
             "cd_pct": cd_improvement_pct,
         },
         "ccd_samples": ccd_results,
+        # AXIOMS: run_bayesian_optimize() contract returns "history" -- the full
+        # evaluation log (20 Latin-Hypercube initial + 50 BO iterations = 70 pts).
+        # THEORIES: persisting it lets render_bo_3d_plot.py rebuild the 3D scatter,
+        # GP surrogate slices, and convergence curve without re-running the optimizer.
+        # APPLICATIONS: direct key access (not .get) so a broken contract raises
+        # loudly instead of silently writing an empty history (no silent failure).
+        # [Citation: ada_pinn_wrapper.py run_bayesian_optimize — returns history]
+        "history": result["history"],
         "config": {
             "source": "Bayesian Optimization (GP surrogate + EI acquisition)",
             "algorithm": "Bayesian Optimization",
@@ -225,6 +238,55 @@ def main() -> int:
     print(f"  Evaluations: {result['n_evals']} (20 initial LHD + 50 BO iterations)")
     print(f"  SG heat flux: {opt_sg_wcm2:.4f} W/cm^2")
     print("=" * 72)
+
+    # --- Step 7: Render the 87-panel geometry grid (diagnostic figure) ---
+    # AXIOMS: the grid is pure post-processing of the JSON just written --
+    # it must never re-run the optimizer (render_geometry_grid A4).
+    # THEORIES: a missing/broken renderer is a broken checkout, not a soft
+    # skip -- fail loudly with full child stderr (no silent degradation).
+    # APPLICATIONS: subprocess with timeout; echo child output; return 1 on
+    # any non-zero child exit or launch failure.
+    # [Citation: scripts/render_geometry_grid.py main() exit-code contract]
+    print("\n[7/7] Rendering 87-panel HIAD geometry grid ...")
+    # Path: src/python/hiad_optimizer.py -> ../../scripts/render_geometry_grid.py
+    grid_script = os.path.abspath(os.path.join(
+        script_dir, os.pardir, os.pardir, "scripts",
+        "render_geometry_grid.py",
+    ))
+    if not os.path.isfile(grid_script):
+        print(
+            f"ERROR: grid renderer not found: {grid_script}\n"
+            f"  Cause: scripts/render_geometry_grid.py missing from checkout.\n"
+            f"  Fix:   restore the file from version control.",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        proc = subprocess.run(
+            [sys.executable, grid_script],
+            capture_output=True, text=True, timeout=600, check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print(
+            f"ERROR: failed to launch grid renderer: {exc!r}\n"
+            f"  Script: {grid_script}",
+            file=sys.stderr,
+        )
+        return 1
+    # Echo child output so the operator sees every renderer message.
+    if proc.stdout:
+        print(proc.stdout, end="")
+    if proc.stderr:
+        print(proc.stderr, end="", file=sys.stderr)
+    if proc.returncode != 0:
+        print(
+            f"ERROR: render_geometry_grid.py exited with code "
+            f"{proc.returncode}\n"
+            f"  JSON results were still saved to: {output_path}",
+            file=sys.stderr,
+        )
+        return 1
+    print("  Geometry grid rendered successfully.")
     return 0
 
 

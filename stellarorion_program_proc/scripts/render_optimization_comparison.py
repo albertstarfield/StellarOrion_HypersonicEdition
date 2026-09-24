@@ -10,6 +10,8 @@ Bayesian-optimized HIAD geometries.
 GEOMETRY SOURCE:
   - Default: Ada FFI get_hiad_cross_section() — single source of truth
   - Optimized: 4-segment Rapisarda profile computed in Python (same math as Ada)
+  - Parameters (both panels): hiad_optimization_results.json loaded at runtime
+    — NEVER hardcoded; re-running hiad_optimizer.py updates this render
 
 Both profiles are revolved around the axis to create 3D surfaces.
 
@@ -27,6 +29,7 @@ CITATIONS:
   [5] stellarorion_sparta.adb Generate_HIAD_Surf (line 1913) — Ada geometry engine
 """
 
+import json
 import math
 import sys
 from pathlib import Path
@@ -52,6 +55,92 @@ def get_ada_default_profile():
     from ada_pinn_wrapper import get_hiad_cross_section
     result = get_hiad_cross_section()
     return result["x"], result["y"], result["n"]
+
+
+# ---------------------------------------------------------------------------
+# Optimizer ground truth: hiad_optimization_results.json (runtime load)
+# ---------------------------------------------------------------------------
+
+def load_optimization_results() -> dict:
+    """Load default + optimized HIAD parameters from hiad_optimization_results.json.
+
+    -- AXIOMS:
+    --   1. hiad_optimization_results.json (written by hiad_optimizer.py) is the
+    --      single source of truth for optimizer outputs; render scripts must
+    --      never embed optimized literals (they drift on every optimizer run).
+    --   2. The file always contains 'default' and 'optimized' blocks, each with
+    --      keys R_N, r_tor, half_cone_deg, Cd (contract of hiad_optimizer.py).
+    --   3. IRVE-3 baseline defaults (R_N=1.5, r_tor=0.135, half_cone=60) match
+    --      the Ada/SPARK axioms but are still read from the JSON 'default'
+    --      block here so the whole render is automatic from one file.
+    -- -- THEORIES:
+    --   Loading at runtime guarantees profile parameters, label strings, and
+    --   displayed Cd always match the latest optimizer output (no stale drift).
+    --   Fail-closed on missing file/keys prevents rendering wrong numbers —
+    --   a silent fallback to literals would violate AXIOM 1.
+    -- -- APPLICATIONS: main() reads ['default'] / ['optimized'] from the
+    --   returned dict and forwards them to compute_rapisarda_profile(),
+    --   render_hiad(), and the text2D annotation labels.
+    -- -- CITATIONS:
+    --   [Citation: hiad_optimization_results.json — default/optimized blocks]
+    --   [Citation: hiad_optimizer.py — writes this JSON at step [6/7]]
+    --   [Citation: docs.python.org/3/library/json.html — json.load]
+    --
+    -- TIMING ANALYSIS
+    -- Estimated Processing Time: O(1) — one file read + small dict parse
+    -- CPU Time: ~1ms typical (local SSD, <25 KB JSON)
+    -- WCET: ~50ms with filesystem contention (50x margin)
+    -- Space Complexity: O(1) — one dict (~752-line JSON resident)
+    -- Derivation: open+read+json.load dominate; key checks are O(k), k=10
+    -- Hardware Assumptions: POSIX system, local filesystem, CPython 3.10+
+    --
+    -- SAFETY FALLBACK: fail-closed — raises FileNotFoundError/KeyError with
+    -- full path context instead of silently substituting stale numbers.
+    -- Normal expectation: returns dict with both blocks; ERROR: missing file,
+    -- malformed JSON, or missing required keys (printed to stderr with path).
+    -- Why input differs from output: file bytes -> parsed dict with validated
+    -- keys (validation transforms raw JSON into a guaranteed-shape dict).
+    """
+    script_dir = Path(__file__).resolve().parent
+    results_path = script_dir.parent / "src" / "python" / "hiad_optimization_results.json"
+
+    # APPLICATION STEP 1 (AXIOM: file exists after hiad_optimizer run)
+    if not results_path.is_file():
+        msg = (f"[FATAL] hiad_optimization_results.json not found at "
+               f"{results_path} — run src/python/hiad_optimizer.py first")
+        print(msg, file=sys.stderr)
+        raise FileNotFoundError(msg)
+
+    # APPLICATION STEP 2 (AXIOM: file is valid JSON)
+    try:
+        with open(results_path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except json.JSONDecodeError as exc:
+        msg = f"[FATAL] Invalid JSON in {results_path}: {exc}"
+        print(msg, file=sys.stderr)
+        raise
+    except OSError as exc:
+        msg = f"[FATAL] Cannot read {results_path}: {exc}"
+        print(msg, file=sys.stderr)
+        raise
+
+    # APPLICATION STEP 3 (AXIOM 2: required blocks/keys present)
+    required_keys = ("R_N", "r_tor", "half_cone_deg", "Cd")
+    for block_name in ("default", "optimized"):
+        block = data.get(block_name)
+        if not isinstance(block, dict):
+            msg = (f"[FATAL] {results_path} missing required object "
+                   f"'{block_name}'")
+            print(msg, file=sys.stderr)
+            raise KeyError(block_name)
+        for key in required_keys:
+            if key not in block:
+                msg = (f"[FATAL] {results_path} block '{block_name}' "
+                       f"missing required key '{key}'")
+                print(msg, file=sys.stderr)
+                raise KeyError(f"{block_name}.{key}")
+
+    return data
 
 
 # ---------------------------------------------------------------------------
@@ -382,11 +471,40 @@ def render_hiad(ax, x_profile, y_profile, color_base, label_color,
 
 
 def main() -> int:
-    """Generate comparison renders using Ada FFI for default geometry."""
+    """Generate comparison renders using Ada FFI for default geometry.
+
+    Optimized AND default parameters are loaded at runtime from
+    hiad_optimization_results.json — no literals are embedded here.
+
+    -- SAFETY FALLBACK: returns exit code 1 if the JSON is missing/malformed
+      or the Ada FFI dylib is absent (verbose diagnostics on stderr).
+    -- TIMING ANALYSIS
+    -- Estimated Processing Time: O(1) JSON load + O(P) profile compute + render
+    -- CPU Time: ~2-5s typical (matplotlib 3D surface, 2 panels)
+    -- WCET: ~30s under GPU/headless contention (10x margin)
+    -- Space Complexity: O(n_az * n_pts) mesh buffers (~60x77 per surface)
+    -- Hardware Assumptions: POSIX, CPython 3.10+, matplotlib Agg backend
+    """
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     from matplotlib.patches import Patch
+
+    # --- Load optimizer ground truth (AXIOM: JSON is single source) ---
+    print("Loading optimization results from hiad_optimization_results.json...")
+    try:
+        results = load_optimization_results()
+    except (FileNotFoundError, KeyError, json.JSONDecodeError, OSError) as exc:
+        # Safety fallback: fail closed — never render stale hardcoded numbers
+        print(f"[FATAL] Cannot load optimization results: {exc}",
+              file=sys.stderr)
+        return 1
+    default = results["default"]
+    opt = results["optimized"]
+    print(f"  default:   R_N={default['R_N']:.4f}  r_tor={default['r_tor']:.4f}  "
+          f"half_cone={default['half_cone_deg']:.4f}  Cd={default['Cd']:.4f}")
+    print(f"  optimized: R_N={opt['R_N']:.4f}  r_tor={opt['r_tor']:.4f}  "
+          f"half_cone={opt['half_cone_deg']:.4f}  Cd={opt['Cd']:.4f}")
 
     # --- Get default profile from Ada FFI ---
     print("Loading default HIAD profile from Ada FFI...")
@@ -394,11 +512,13 @@ def main() -> int:
     print(f"  Ada returned {n_def} points, x=[{min(x_def):.4f}, {max(x_def):.4f}], "
           f"y=[{min(y_def):.4f}, {max(y_def):.4f}]")
 
-    # --- Compute optimized profile (same math as Ada, different params) ---
-    # Optimized params from Bayesian optimization: R_N=1.1146, r_tor=0.0539, half_cone=44.58
+    # --- Compute optimized profile (same math as Ada, params from JSON) ---
+    # [Citation: hiad_optimization_results.json — optimized block]
     print("Computing optimized HIAD profile...")
+    n_tori = 6  # structural constant: IRVE-3 6+1 torus stack (not optimized)
     x_opt, y_opt = compute_rapisarda_profile(
-        rn=1.1146, half_cone_deg=44.58, r_tor=0.0539, n_tori=6
+        rn=opt["R_N"], half_cone_deg=opt["half_cone_deg"],
+        r_tor=opt["r_tor"], n_tori=n_tori
     )
     print(f"  Computed {len(x_opt)} points, x=[{min(x_opt):.4f}, {max(x_opt):.4f}], "
           f"y=[{min(y_opt):.4f}, {max(y_opt):.4f}]")
@@ -406,11 +526,12 @@ def main() -> int:
     # --- Create figure ---
     fig = plt.figure(figsize=(16, 8), facecolor='#0a0a0f')
 
-    # Default (left) — blue tones
+    # Default (left) — blue tones; params loaded from JSON 'default' block
     ax1 = fig.add_subplot(121, projection='3d', facecolor='#0a0a0f')
     render_hiad(ax1, x_def, y_def,
                 color_base=(26, 82, 128), label_color='#8892b0',
-                half_cone_deg=60.0, r_tor=0.135, cd_value=1.6073, rn=1.5)
+                half_cone_deg=default["half_cone_deg"], r_tor=default["r_tor"],
+                cd_value=default["Cd"], rn=default["R_N"])
     ax1.set_title('BEFORE (IRVE-3 Default — Ada FFI)', color='#8892b0', fontsize=12,
                   fontweight='bold', pad=10)
     ax1.set_xlabel('X (axial) [m]', color='#8892b0', fontsize=8)
@@ -419,17 +540,21 @@ def main() -> int:
     ax1.tick_params(colors='#555555', labelsize=6)
     ax1.view_init(elev=25, azim=45)
     ax1.set_box_aspect([1, 1, 0.3])
-    ax1.text2D(0.02, 0.02,
-        'R_N=1.50m  half_cone=60.0\nr_tor=0.135m  6 tori\nCd=1.6073\nSource: Ada FFI',
+    # Label values formatted from JSON — no literals
+    def_label = (f"R_N={default['R_N']:.2f}m  half_cone={default['half_cone_deg']:.1f}\n"
+                 f"r_tor={default['r_tor']:.3f}m  {n_tori} tori\n"
+                 f"Cd={default['Cd']:.4f}\nSource: Ada FFI")
+    ax1.text2D(0.02, 0.02, def_label,
         transform=ax1.transAxes, color='#8892b0', fontsize=8,
         verticalalignment='bottom',
         bbox=dict(boxstyle='round,pad=0.3', facecolor='#1a1a2e', edgecolor='#0f3460'))
 
-    # Optimized (right) — red tones
+    # Optimized (right) — red tones; params loaded from JSON 'optimized' block
     ax2 = fig.add_subplot(122, projection='3d', facecolor='#0a0a0f')
     render_hiad(ax2, x_opt, y_opt,
                 color_base=(192, 57, 43), label_color='#e94560',
-                half_cone_deg=44.58, r_tor=0.054, cd_value=1.4554, rn=1.1146,
+                half_cone_deg=opt["half_cone_deg"], r_tor=opt["r_tor"],
+                cd_value=opt["Cd"], rn=opt["R_N"],
                 is_optimized=True)
     ax2.set_title('AFTER (Optimized — Bayesian)', color='#e94560', fontsize=12,
                   fontweight='bold', pad=10)
@@ -439,8 +564,11 @@ def main() -> int:
     ax2.tick_params(colors='#555555', labelsize=6)
     ax2.view_init(elev=25, azim=45)
     ax2.set_box_aspect([1, 1, 0.3])
-    ax2.text2D(0.02, 0.02,
-        'R_N=1.11m  half_cone=44.6\nr_tor=0.054m  6 tori\nCd=1.4554\nSource: Python profile',
+    # Label values formatted from JSON — no literals
+    opt_label = (f"R_N={opt['R_N']:.2f}m  half_cone={opt['half_cone_deg']:.1f}\n"
+                 f"r_tor={opt['r_tor']:.3f}m  {n_tori} tori\n"
+                 f"Cd={opt['Cd']:.4f}\nSource: Python profile")
+    ax2.text2D(0.02, 0.02, opt_label,
         transform=ax2.transAxes, color='#e94560', fontsize=8,
         verticalalignment='bottom',
         bbox=dict(boxstyle='round,pad=0.3', facecolor='#1a1a2e', edgecolor='#e94560'))

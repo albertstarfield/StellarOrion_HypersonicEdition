@@ -32,6 +32,65 @@ This project uses a hybrid architecture for running simulations:
 
 ---
 
+## 📁 Source Layout (`stellarorion_program_proc/`)
+
+Inventory as of 2026-09-23 (51 Ada units · ~35.4k Ada LOC · ~34.9k Python LOC under `src/`).
+
+```text
+stellarorion_program_proc/
+├── run.py                 # Primary CLI entry (1,492 lines) — replaces deprecated main.py
+├── alire.toml             # Alire crate: executable stellarorion_project
+├── stellarorion_program_proc.gpr   # Main GPR → src/simulation_engine, Main: main.adb
+├── stellarorion_pinn_lib.gpr        # PINN shared-library project
+├── prove.sh / run_smooth.sh         # GNATprove + smooth-geometry runners
+├── compare_validation.py            # Standalone validation comparison
+├── postprocess_validation.py        # Post-process DSMC/validation outputs
+│
+├── src/
+│   ├── simulation_engine/           # Ada/SPARK primary engine (25 packages + main.adb)
+│   │   ├── main.adb                 # GPR main → dispatches into StellarOrion_Project
+│   │   ├── stellarorion_project.*   # Entry + CLI surface (~785 lines after Tier-C2 split)
+│   │   ├── stellarorion_cli.*       # Has_Flag / Get_Option / Get_Float (SPARK On)
+│   │   ├── stellarorion_self_test.* # 15 verification tests
+│   │   ├── stellarorion_test_modes.*# --test sample|baseline|pinn|sparta|…
+│   │   ├── stellarorion_sparta.*    # SPARTA DSMC driver (~4.5k lines body)
+│   │   ├── stellarorion_physics.*   # Aerothermodynamics, Sutton-Graves, …
+│   │   ├── stellarorion_geometry.*  # HIAD geometry / IRVE-3 baseline
+│   │   ├── stellarorion_environment.* # ISA atmosphere, Mach/alt tables
+│   │   ├── stellarorion_pinn_trajectory.* # Linear entry trajectory
+│   │   ├── stellarorion_trajectory_output.* # T1: H(0)=120 km, H(300M)=40 km
+│   │   ├── stellarorion_ffi.*       # C ABI for Python ctypes sidecar
+│   │   ├── stellarorion_optimization.* / stellarorion_optimize.*  # BO/GA hooks
+│   │   └── validation, postprocessing, reports, status_writer, types,
+│   │       history, pipeline_checkpoint, dual_watchdog, runtime_guard, …
+│   │
+│   ├── python/                      # Python sidecar (~22 modules)
+│   │   ├── validation_pipeline.py   # Unified comparison + convergence audit
+│   │   ├── ada_pinn_wrapper.py      # ctypes FFI → libstellarorion_pinn
+│   │   ├── hiad_optimizer.py        # Bayesian optimization driver
+│   │   ├── generate_outputs.py      # Dashboard MP4 / overlay panels
+│   │   └── kriging_denoise, pinn_*, pipeline_*, sidecar_*, …
+│   │
+│   ├── ui/                          # sidecar_ui.py + frontend/ + uiassets/ (TS)
+│   ├── sidecar_ui/                  # Standalone sidecar HTML/JS shell
+│   ├── utils/                       # sabotage_verifier.py, add_exception_handlers.py
+│   ├── proofs/  rocq/               # Coq proof skeletons per unit
+│   └── …
+│
+├── scripts/                         # Plot/report generators + prove.sh + SabotageVerifier.sh
+├── tests/                           # test_main.adb (Ada harness) + test_run_pipeline.py
+├── tools/                           # plot_surf_profile.py
+├── config/                          # Generated config .ads/.gpr/.h
+├── docs/                            # AXIOMS, APPLICATIONS, CITATIONS, PROJECT_DECOMPOSITION_PLAN, …
+├── data/  results/                  # Run status JSON, validation plots/VTU/CSV
+├── alire/  bin/  obj/  lib/         # Alire deps + build artifacts
+└── proofs/                          # GNATprove proof dir
+```
+
+**Entry path:** `python3 run.py` → Alire binary `stellarorion_project` (`main.adb` in `src/simulation_engine/`, per `stellarorion_program_proc.gpr` `Source_Dirs`).
+
+---
+
 ## 🎬 Live Dashboard Animation
 
 Real-time aerothermodynamic visualization of the IRVE-3 HIAD reentry — featuring Sutton-Graves heat flux, PINN training metrics, composite material cross-section with heat propagation, and animated Earth trajectory.
@@ -106,7 +165,7 @@ cd stellarorion_program_proc && python3 run.py --grid-factor 1.0 --test sample
 
 ## 🎯 Optimized Topology: Before vs After
 
-Bayesian Optimization (GP Matern 5/2 kernel + Expected Improvement acquisition, 70 evaluations) was applied to the IRVE-3 HIAD geometry. The optimizer searched a 3D parameter space (nose radius R<sub>N</sub>, torus radius r<sub>tor</sub>, half-cone angle) and achieved a **9.45% reduction in drag coefficient C<sub>d</sub>**.
+Bayesian Optimization (GP Matern 5/2 kernel + Expected Improvement acquisition, 70 evaluations) was applied to the IRVE-3 HIAD geometry. The optimizer searched a 3D parameter space (nose radius R<sub>N</sub>, torus radius r<sub>tor</sub>, half-cone angle) and achieved a **10.11% reduction in drag coefficient C<sub>d</sub>**.
 
 ![Optimized HIAD Topology](stellarorion_program_proc/optimization_comparison.png)
 
@@ -114,11 +173,11 @@ Bayesian Optimization (GP Matern 5/2 kernel + Expected Improvement acquisition, 
 
 | Parameter | Default (IRVE-3 Baseline) | Optimized | Δ |
 | :--- | :--- | :--- | :--- |
-| **Nose Radius (R<sub>N</sub>)** | 1.5000 m | 1.1146 m | −25.7% |
-| **Torus Radius (r<sub>tor</sub>)** | 0.1350 m | 0.0539 m | −60.1% |
-| **Half-Cone Angle** | 60.00° | 44.58° | −25.7% |
-| **Drag Coefficient (C<sub>d</sub>)** | 1.6073 | 1.4554 | −9.45% |
-| **Sutton-Graves Heat Flux** | 16.14 W/cm² | 18.72 W/cm² | +16.0% (trade-off) |
+| **Nose Radius (R<sub>N</sub>)** | 1.5000 m | 1.1559 m | −22.9% |
+| **Torus Radius (r<sub>tor</sub>)** | 0.1350 m | 0.0566 m | −58.1% |
+| **Half-Cone Angle** | 60.00° | 40.51° | −32.5% |
+| **Drag Coefficient (C<sub>d</sub>)** | 1.6073 | 1.4449 | −10.11% |
+| **Sutton-Graves Heat Flux** | 16.14 W/cm² | 18.38 W/cm² | +13.9% (trade-off) |
 
 **Optimization method:** CCD 15-point initial sampling → 20-point LHD → 70-point Bayesian Optimization with GP Matern 5/2 surrogate model and Expected Improvement acquisition function. Full details in `stellarorion_program_proc/Optimization_Attempt_1.md`.
 
@@ -137,7 +196,7 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
 | Parameter | IRVE-3 Flight | LOFTID Flight | Rapisarda Models | StellarOrion DSMC | Source |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Aeroshell Diameter** | 3.0 m | 6.0 m | — | — | NASA TP-2013-4012; Deshmukh AIAA 2024-1501 |
-| **Peak Heat Flux ($\dot{q}$)** | **14.36 W/cm²** | **39.27 W/cm²** | 13.83 W/cm² (FR) / 15.26 W/cm² (SG) | 182.5 W/cm² (single cell, noisy) / **56.6 W/cm²** (per-element avg) | Rapisarda Table 4.10; Deshmukh AIAA 2024-1501; StellarOrion |
+| **Peak Heat Flux ($\dot{q}$)** | **14.36 W/cm²** | **39.27 W/cm²** | 13.83 W/cm² (FR) / 15.26 W/cm² (SG) | **12.2 W/cm² (DSMC+SG)** | Rapisarda Table 4.10; Deshmukh AIAA 2024-1501; StellarOrion |
 | **Total Heat Load ($Q$)** | **195.06 J/cm²** | **3,520 J/cm²** | 195.17 J/cm² (FR) / 223.95 J/cm² (SG) | **165.72 J/cm²** | Rapisarda Table 4.10; Deshmukh AIAA 2024-1501; StellarOrion |
 | **Ballistic Coeff ($\beta$)** | 26.9 kg/m² | ~22.6 kg/m² (est.) | — | **27.70 kg/m²** | NASA TP-2013-4012; Discussion.md; StellarOrion |
 | **Peak Deceleration** | **19.7 g** | **9.66 g** | — | **16.83 g** | NASA TP-2013-4012; Deshmukh AIAA 2024-1501; StellarOrion |
@@ -166,7 +225,7 @@ Each source uses different atmosphere models, geometry, and solvers — this dir
 
 **Why this matters:** The −15% delta in heat load and g-load is expected — StellarOrion runs a single trajectory point while flight data and Rapisarda's models integrate over the full trajectory. The density difference between MCD v6.1 and ISA (56% at 52 km) explains part of the gap between our single-point SG (12.2 W/cm²) and Rapisarda's trajectory-integrated SG (15.26 W/cm²), since $\dot{q}_{SG} \propto \sqrt{\rho}$.
 
-**Notes on DSMC peak heat flux:** The 182.5 W/cm² single-cell value is raw DSMC `f_1[3]` noise (one noisy point-sample). The per-element average (56.6 W/cm²) is the physically meaningful metric — it sits between Sutton-Graves (conservative, 12.2 W/cm² at single-point) and Fay-Riddell (aggressive, 161.6 W/cm²). See DSMC Noise Methodology section below.
+**Notes on peak heat flux (DSMC+SG):** StellarOrion reports $\dot{q}$ as the **processed Sutton-Graves (SG)** correlation value from the DSMC run conditions — **12.2 W/cm²** at the single-point condition — not as a direct DSMC peak. Raw DSMC single-cell samples (182.5 W/cm²) are statistical noise and are not the headline metric; the per-element DSMC average (56.6 W/cm²) is kept only in the validation deep-dive. This is the same processed SG quantity Rapisarda reports as 15.26 W/cm² (trajectory-integrated). See DSMC Noise Methodology section below.
 
 **Delta analysis:**
 - **Heat load:** StellarOrion (165.72 J/cm²) is −15% vs flight (195.06) — single trajectory point vs full integrated trajectory
