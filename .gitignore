@@ -339,3 +339,9 @@ thoughts/
 fix_sabotage*.py
 Thread*.md
 *Thread*.md
+
+# Office lock files (never commit)
+~$*
+
+# PowerPoint decks (Git LFS via .gitattributes)
+*.pptx
