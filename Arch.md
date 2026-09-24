@@ -93,7 +93,7 @@ A GP surrogate maps geometric parameters $X_{geo}$ to flight metrics $Y_{metrics
 **Surrogate Hyperparameters (Default):**
 - **Kernel:** Matérn 5/2 ($k(\mathbf{x}, \mathbf{x}')$)
 - **Acquisition:** Expected Improvement (EI)
-- **Evaluations:** 70-point Bayesian Optimization run (9.45% $C_d$ reduction)
+- **Evaluations:** 70-point Bayesian Optimization run (10.11% $C_d$ reduction)
 
 ### 3.2 Evolutionary GA Steering (Bayesian Loop)
 The ANI GA "flies" through the GP surrogate to find the global optimum configuration.

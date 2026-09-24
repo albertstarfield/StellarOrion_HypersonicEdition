@@ -38,13 +38,13 @@ Execute headless optimize topology pipeline to minimize drag coefficient (Cd) of
 
 | Metric | Default | Optimized | Change |
 |--------|---------|-----------|--------|
-| **Cd** | 1.607278 | 1.455433 | **-9.45%** |
-| **R_N** | 1.5000 m | 1.1146 m | -25.7% |
-| **r_tor** | 0.1350 m | 0.0539 m | -60.1% |
-| **half_cone** | 60.00 deg | 44.58 deg | -25.7% |
-| **SG Heat Flux** | 16.14 W/cm² | 18.72 W/cm² | +16.0% |
+| **Cd** | 1.607278 | 1.444931 | **-10.11%** |
+| **R_N** | 1.5000 m | 1.1559 m | -22.9% |
+| **r_tor** | 0.1350 m | 0.0566 m | -58.1% |
+| **half_cone** | 60.00 deg | 40.51 deg | -32.5% |
+| **SG Heat Flux** | 16.14 W/cm² | 18.38 W/cm² | +13.9% |
 
-**Key Finding:** The optimizer reduced Cd by 9.45% by decreasing all three geometric parameters. The smaller nose radius and torus reduce frontal area, while the narrower half-cone angle reduces wave drag. The trade-off is a 16% increase in Sutton-Graves stagnation heat flux due to the sharper nose.
+**Key Finding:** The optimizer reduced Cd by 10.11% by decreasing all three geometric parameters. The smaller nose radius and torus reduce frontal area, while the narrower half-cone angle reduces wave drag. The trade-off is a 13.9% increase in Sutton-Graves stagnation heat flux due to the sharper nose.
 
 ---
 
@@ -58,10 +58,10 @@ Default (IRVE-3 Baseline):
   Cd         = 1.607278
 
 Optimized:
-  R_N        = 1.1146 m   (-0.3854 m)
-  r_tor      = 0.0539 m   (-0.0811 m)
-  half_cone  = 44.58 deg  (-15.42 deg)
-  Cd         = 1.455433
+  R_N        = 1.1559 m   (-0.3441 m)
+  r_tor      = 0.0566 m   (-0.0784 m)
+  half_cone  = 40.51 deg  (-19.49 deg)
+  Cd         = 1.444931
 ```
 
 ---
@@ -121,7 +121,7 @@ The optimization overlay compares StellarOrion results against IRVE-3 flight dat
 
 | Metric | IRVE-3 Flight | StellarOrion | Delta |
 |--------|---------------|--------------|-------|
-| Peak Heat Flux | 14.36 W/cm² | 18.72 W/cm² | +30.4% |
+| Peak Heat Flux | 14.36 W/cm² | 18.38 W/cm² | +28.0% |
 | Total Heat Load | 195.06 J/cm² | 165.72 J/cm² | -15.0% |
 | Ballistic Coefficient | 26.9 kg/m² | 27.70 kg/m² | +3.0% |
 | Peak Deceleration | 19.7 g | 16.83 g | -14.6% |
@@ -170,9 +170,9 @@ cat hiad_optimization_results.json
 
 ## Conclusions
 
-1. **Bayesian Optimization successfully reduced Cd by 9.45%** (1.607 → 1.455)
-2. **Optimal geometry favors smaller, sharper HIAD:** R_N=1.11m (vs 1.5m default), r_tor=0.054m (vs 0.135m), half_cone=44.6° (vs 60°)
-3. **Trade-off:** Smaller geometry increases stagnation heat flux by 16% (16.1 → 18.7 W/cm²) — thermal protection system must be sized accordingly
+1. **Bayesian Optimization successfully reduced Cd by 10.11%** (1.607 → 1.445)
+2. **Optimal geometry favors smaller, sharper HIAD:** R_N=1.16m (vs 1.5m default), r_tor=0.057m (vs 0.135m), half_cone=40.5° (vs 60°)
+3. **Trade-off:** Smaller geometry increases stagnation heat flux by 13.9% (16.1 → 18.4 W/cm²) — thermal protection system must be sized accordingly
 4. **Parameter sensitivity:** r_tor has the highest sensitivity — large torus values cause catastrophic drag increase (J > 24)
 5. **Trajectory verification** confirms simulation runs correctly from 120 km entry to 40 km final altitude
 
