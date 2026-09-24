@@ -25,8 +25,11 @@ preset = "strict"
 # Local sibling modules (validation_pipeline, _tex_config) live in src/python/,
 # but the heuristic import root is inferred as src/ — add src/python/ so
 # `from validation_pipeline import ...` / `from _tex_config import ...` resolve.
+# scripts/ is added so cross-script imports resolve too:
+#   verify_profile_math.py does `from render_optimization_comparison import ...`
+# and scripts/ inserts itself onto sys.path at runtime.
 # [Citation: pyrefly search-path — https://pyrefly.org/en/docs/configuration]
-search-path = ["src/python"]
+search-path = ["src/python", "scripts"]
 
 # ── Interpreter selection ────────────────────────────────────────────
 # Query the healthy system interpreter instead of the project .venv.

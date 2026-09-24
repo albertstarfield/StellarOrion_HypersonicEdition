@@ -13,13 +13,24 @@ GEOMETRY SOURCE:
   - Parameters (both panels): hiad_optimization_results.json loaded at runtime
     — NEVER hardcoded; re-running hiad_optimizer.py updates this render
 
-Both profiles are revolved around the axis to create 3D surfaces.
+COORDINATE FRAME (AXIOM — all meshes MUST match revolve_profile):
+  - Axial coordinate is X: nose tip at X≈0, flat back at X=z_back>0
+  - Radial coordinates are (Y, Z): surface point = (x, r*cosθ, r*sinθ)
+  - Windward face points toward −X; camera looks from the −X side
+  - Decorative meshes (drum, dome, tori, gores, back) MUST be built about X,
+    never about Z — a prior bug built them about Z while the envelope used X,
+    producing a wrongly oriented HIAD (fixed 2026-09-24).
+
+VERIFICATION:
+  - crosscheck_ada_profile(): Python default profile vs Ada FFI — loud WARNING
+    on drift (math went wrong) or OSError (dylib missing)
+  - scripts/verify_profile_math.py + CrossHair: invariants on profile math
 
 HIAD CONSTRUCTION FEATURES:
-  1. Stacked torus ridges — concentric donut-shaped rings visible on surface
+  1. Stacked torus ridges — concentric rings about the X axis
   2. Flat disc proportions — inflatable portion nearly flat (8-10:1 dia:height)
-  3. Central payload drum — cylindrical section rising from disc center
-  4. Radial gore pattern — spoke-like segments dividing the tori
+  3. Central payload drum — cylinder along X from the mid-body
+  4. Radial gore pattern — spokes dividing the tori
 
 CITATIONS:
   [1] NASA LOFTID mission (2022) — 6m HIAD flight demonstration
@@ -27,27 +38,31 @@ CITATIONS:
   [3] Rapisarda (2023) Sec 3.7 — HIAD flat-skin profile (4-segment)
   [4] do Carmo (1976) — Surface of revolution mathematics
   [5] stellarorion_sparta.adb Generate_HIAD_Surf (line 1913) — Ada geometry engine
+  [6] ada_pinn_wrapper.get_hiad_cross_section — ctypes FFI to Ada/SPARK
 """
 
 import json
 import math
 import sys
 from pathlib import Path
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # FFI: Get default geometry from Ada/SPARK
 # ---------------------------------------------------------------------------
 
-def get_ada_default_profile():
+def get_ada_default_profile() -> tuple[list[float], list[float], int]:
     """Get the default HIAD cross-section from Ada FFI.
 
-    Returns (x_list, y_list) where x=axial, y=radial.
+    Returns (x_list, y_list, n) where x=axial, y=radial.
     All geometry math is in Ada/SPARK; Python is a thin wrapper.
+
+    Safety fallback: OSError if libstellarorion_pinn.dylib is absent —
+    caller must handle and warn (never crash the whole render silently).
 
     [Citation: ada_pinn_wrapper.py get_hiad_cross_section]
     [Citation: stellarorion_pinn_trajectory.ads — Get_HIAD_Cross_Section]
     """
-    # Add parent src/python to path for import
     script_dir = Path(__file__).resolve().parent
     src_python = script_dir.parent / "src" / "python"
     sys.path.insert(0, str(src_python))
@@ -57,11 +72,129 @@ def get_ada_default_profile():
     return result["x"], result["y"], result["n"]
 
 
+def crosscheck_ada_profile(
+    py_x: list[float],
+    py_y: list[float],
+    rtol: float = 5e-3,
+    atol: float = 2e-3,
+) -> bool:
+    """Cross-check Python default profile against Ada FFI via arc-length.
+
+    -- AXIOMS:
+    --   A1: Ada Get_HIAD_Cross_Section and hiad_geometry.generate_cross_section
+    --       implement the same 4-segment math for identical parameters.
+    --   A2: The meridian is a closed polyline (nose tip → flat-back → axis),
+    --       NOT a function y=f(x): segment 4 (flat back) has constant axial
+    --       x with many radial y values. Interpolating y as f(x) on that
+    --       vertical run is ill-defined and must NOT be used.
+    --   A3: Sampling density may differ (Ada n=57 vs Python n_per_segment);
+    --       comparison must resample both curves by cumulative arc length.
+    --   A4: Any true geometric drift beyond rtol/atol OR any FFI failure
+    --       MUST warn loudly — silent drift would let wrong math ship.
+    -- -- THEORIES:
+    --   T1: From A1–A3: after arc-length resampling to a shared parameter
+    --       s ∈ [0,1], max||(x, y)_py(s) − (x, y)_ada(s)|| bounds the
+    --       pointwise geometric disagreement along the meridian.
+    --   T2: From A4: print WARNING to stderr and return False — never raise
+    --       so the render can still proceed for visual inspection.
+    -- -- APPLICATIONS: main() calls this after loading both profiles and
+    --   uses the boolean for figure annotation / process exit status.
+    -- -- CITATIONS:
+    --   [Citation: ada_pinn_wrapper.get_hiad_cross_section]
+    --   [Citation: arclength parameterization — do Carmo (1976)]
+    --
+    -- SAFETY FALLBACK: returns False + stderr WARNING on any failure;
+    -- Normal expectation: True when profiles agree within tolerance;
+    -- ERROR: FFI OSError, empty/non-finite profiles, or max pointwise
+    --   distance > atol + rtol * scale.
+    """
+    try:
+        import numpy as np
+    except ImportError as exc:
+        print(f"[WARNING] crosscheck_ada_profile: numpy missing: {exc}",
+              file=sys.stderr)
+        return False
+
+    try:
+        ada_x, ada_y, n_ada = get_ada_default_profile()
+    except (OSError, AttributeError, RuntimeError) as exc:
+        print(f"[WARNING] Ada FFI cross-check unavailable: {exc} — "
+              f"Python profile used WITHOUT Ada validation",
+              file=sys.stderr)
+        return False
+
+    if n_ada < 2 or len(py_x) < 2:
+        print(f"[WARNING] crosscheck_ada_profile: too few points "
+              f"(ada n={n_ada}, py n={len(py_x)})", file=sys.stderr)
+        return False
+
+    def _resample_arc(
+        xs: list[float],
+        ys: list[float],
+        n_s: int = 200,
+    ) -> Any:
+        """Resample (x, y) polyline onto uniform cumulative arc-length grid.
+
+        Returns (S, X, Y) where S is uniform in [0, 1] by arc length
+        (three numpy arrays), or None on non-finite/too-short input.
+        Non-finite inputs return None (caller warns).
+        """
+        xa = np.asarray(xs, dtype=float)
+        ya = np.asarray(ys, dtype=float)
+        if xa.shape != ya.shape or xa.size < 2:
+            return None
+        if not (np.all(np.isfinite(xa)) and np.all(np.isfinite(ya))):
+            return None
+        seg = np.hypot(np.diff(xa), np.diff(ya))
+        cum = np.concatenate(([0.0], np.cumsum(seg)))
+        total = float(cum[-1])
+        if total <= 0.0:
+            return None
+        s = cum / total
+        # Guard against duplicate s values (zero-length segments)
+        s_u, idx_u = np.unique(s, return_index=True)
+        if s_u.size < 2:
+            return None
+        grid = np.linspace(0.0, 1.0, n_s)
+        xg = np.interp(grid, s_u, xa[idx_u])
+        yg = np.interp(grid, s_u, ya[idx_u])
+        return grid, xg, yg
+
+    ada_rs = _resample_arc(ada_x, ada_y)
+    py_rs = _resample_arc(py_x, py_y)
+    if ada_rs is None or py_rs is None:
+        print("[WARNING] crosscheck_ada_profile: arc-length resample failed "
+              f"(ada={'ok' if ada_rs else 'bad'}, "
+              f"py={'ok' if py_rs else 'bad'})", file=sys.stderr)
+        return False
+
+    _, ax_g, ay_g = ada_rs
+    _, px_g, py_g = py_rs
+    dist = np.hypot(px_g - ax_g, py_g - ay_g)
+    scale = max(
+        float(np.max(np.hypot(ax_g, ay_g))),
+        float(np.max(np.hypot(px_g, py_g))),
+        1.0,
+    )
+    max_abs = float(np.max(dist))
+    tol = atol + rtol * scale
+    ok = max_abs <= tol
+    status = "OK" if ok else "DRIFT"
+    print(f"  [Ada FFI cross-check] {status}: max arc-length pointwise "
+          f"distance = {max_abs:.6f} m (tol {tol:.6f} m) on 200 arc samples, "
+          f"ada n={n_ada}, py n={len(py_x)}")
+    if not ok:
+        print(f"[WARNING] Python profile MATH DRIFT vs Ada FFI — "
+              f"geometry render may be wrong (max distance {max_abs:.6f} m > "
+              f"tol {tol:.6f} m)", file=sys.stderr)
+    return ok
+
+
 # ---------------------------------------------------------------------------
 # Optimizer ground truth: hiad_optimization_results.json (runtime load)
 # ---------------------------------------------------------------------------
 
-def load_optimization_results() -> dict:
+def load_optimization_results() -> dict[str, Any]:
     """Load default + optimized HIAD parameters from hiad_optimization_results.json.
 
     -- AXIOMS:
@@ -144,8 +277,26 @@ def load_optimization_results() -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Python 4-segment Rapisarda profile (same math as Ada Generate_HIAD_Surf)
+# Profile generation — DELEGATED to hiad_geometry (single source of truth)
 # ---------------------------------------------------------------------------
+# AXIOMS:
+#   A1: hiad_geometry.generate_cross_section is an exact Python replica of
+#       Ada Get_HIAD_Cross_Section (documented line-for-line in that module).
+#   A2: Duplicate 4-segment math in this file would diverge (copy-paste bug);
+#       ALL profile math lives in hiad_geometry only.
+# THEORIES:
+#   T1: From A1+A2: importing and calling generate_cross_section guarantees
+#       the same curve the Ada FFI returns for default parameters, and the
+#       same curve the optimizer evaluates for candidate parameters.
+# APPLICATIONS: main() and verify_profile_math.py both call this wrapper;
+#   no second implementation exists in scripts/.
+# CITATIONS:
+#   [Citation: hiad_geometry.generate_cross_section]
+#   [Citation: stellarorion_pinn_trajectory.adb Get_HIAD_Cross_Section]
+#
+# SAFETY FALLBACK: ValueError from hiad_geometry on non-physical inputs
+# propagates (fail-closed). Normal expectation: (x_list, y_list) floats;
+# ERROR: invalid R_N / r_tor / half_cone / n_per_segment.
 
 def compute_rapisarda_profile(
     rn: float = 1.5,
@@ -153,106 +304,61 @@ def compute_rapisarda_profile(
     r_tor: float = 0.135,
     n_tori: int = 6,
     n_seg: int = 20,
-):
-    """Compute the 4-segment HIAD flat-skin cross-section.
+) -> tuple[list[float], list[float]]:
+    """Compute the 4-segment HIAD flat-skin cross-section via hiad_geometry.
 
-    Exact replica of Ada Generate_HIAD_Surf (stellarorion_sparta.adb line 1913).
-    Used for optimized geometry where Ada globals can't be changed via FFI.
+    Thin wrapper around hiad_geometry.generate_cross_section — NO local
+    reimplementation of the 4-segment math (avoids copy-paste divergence).
 
-    AXIOMS (from Ada code lines 1947-1984):
-      Gamma_Rad = (90 - angle) * Pi / 180
-      R_Tang = R_N * Cos(Gamma)
-      Z_Tang = R_N * (1 - Sin(Gamma))
-      S_Last = (2*N - 1) * r_tor
-      R_Target = R_Tang + S_Last * Cos(Gamma)
-      Z_Out = Z_Tang + S_Last * Sin(Gamma)
-      R_C_Out = R_Target - r_tor * Sin(Gamma)
-      Z_C_Out = Z_Out + r_tor * Cos(Gamma)
-      Z_Back = Z_C_Out + r_tor
+    Parameters mirror the former local implementation for call-site
+    compatibility:
+        rn           — nose sphere radius R_N [m]
+        half_cone_deg— half-cone angle [deg]
+        r_tor        — torus minor radius [m]
+        n_tori       — accepted for signature compat; N_TORI is fixed at 6
+                       inside hiad_geometry (IRVE-3 baseline axiom).
+        n_seg        — sample points per segment (>= 2)
 
-    Segments:
-      1. Nose arc: alpha [-Pi/2 -> -Gamma], R = R_N*cos(a), Z = R_N + R_N*sin(a)
-      2. Windward straight: R [R_Tang -> R_Target], Z = Z_Tang + (R - R_Tang)*tan(G)
-      3. Toroid wrap: theta [-Gamma -> Pi/2], R = R_C_Out + r_tor*cos(t), Z = Z_C_Out + r_tor*sin(t)
-      4. Flat back: Z = Z_Back constant, R [R_C_Out+r_tor -> 0]
+    Returns:
+        (x_list, y_list) — x=axial [m], y=radial [m]; Python lists of floats.
 
+    Raises:
+        ValueError — non-physical geometry parameters (fail-closed, from
+        hiad_geometry validation).
+
+    [Citation: hiad_geometry.generate_cross_section]
     [Citation: Rapisarda (2023) Sec 3.7, Appendix C.1]
-    [Citation: stellarorion_sparta.adb Generate_HIAD_Surf lines 1913-2112]
     """
-    # Derived geometric parameters (matching Ada exactly)
-    gamma_rad = (90.0 - half_cone_deg) * math.pi / 180.0
-    sin_g = math.sin(gamma_rad)
-    cos_g = math.cos(gamma_rad)
-    tan_g = sin_g / cos_g
+    del n_tori  # N_TORI is an Ada/geometry constant (6), not a free parameter
+    from hiad_geometry import generate_cross_section
 
-    # Tangency point
-    r_tang = rn * cos_g
-    z_tang = rn * (1.0 - sin_g)
-
-    # Outermost toroid reach
-    s_last = float(2 * n_tori - 1) * r_tor
-    r_target = r_tang + s_last * cos_g
-    z_out = z_tang + s_last * sin_g
-
-    # Center of outermost toroid
-    r_c_out = r_target - r_tor * sin_g
-    z_c_out = z_out + r_tor * cos_g
-    z_back = z_c_out + r_tor
-
-    # Segment 1: Nose arc (20 points)
-    seg1_r, seg1_z = [], []
-    for i in range(n_seg):
-        t = i / (n_seg - 1)
-        alpha = (-math.pi / 2.0) * (1.0 - t) + (-gamma_rad) * t
-        seg1_r.append(rn * math.cos(alpha))
-        seg1_z.append(rn + rn * math.sin(alpha))
-
-    # Segment 2: Windward straight (19 points, skip first duplicate)
-    seg2_r, seg2_z = [], []
-    for i in range(1, n_seg):
-        t = i / (n_seg - 1)
-        r = r_tang + t * (r_target - r_tang)
-        z = z_tang + (r - r_tang) * tan_g
-        seg2_r.append(r)
-        seg2_z.append(z)
-
-    # Segment 3: Toroid wrap (19 points, skip first duplicate)
-    seg3_r, seg3_z = [], []
-    for i in range(1, n_seg):
-        t = i / (n_seg - 1)
-        theta = -gamma_rad + t * (math.pi / 2.0 - (-gamma_rad))
-        seg3_r.append(r_c_out + r_tor * math.cos(theta))
-        seg3_z.append(z_c_out + r_tor * math.sin(theta))
-
-    # Segment 4: Flat back (19 points, skip first duplicate)
-    # [Citation: stellarorion_sparta.adb line 2137: R := R_C_Out * (1.0 - T)]
-    seg4_r, seg4_z = [], []
-    r_start = r_c_out  # Ada uses R_C_Out, NOT R_C_Out + r_tor
-    for i in range(1, n_seg):
-        t = i / (n_seg - 1)
-        seg4_r.append(r_start * (1.0 - t))
-        seg4_z.append(z_back)
-
-    # Concatenate all segments (R, Z) -> (x=Z, y=R) for FFI format
-    r_all = seg1_r + seg2_r + seg3_r + seg4_r
-    z_all = seg1_z + seg2_z + seg3_z + seg4_z
-
-    # Return as (x=axial, y=radial) to match FFI format
-    return z_all, r_all
+    x_arr, y_arr = generate_cross_section(
+        rn, r_tor, half_cone_deg, n_per_segment=n_seg
+    )
+    return [float(v) for v in x_arr], [float(v) for v in y_arr]
 
 
 # ---------------------------------------------------------------------------
-# 3D mesh generation: revolve profile around axis
+# 3D mesh generation: revolve profile around X axis
 # ---------------------------------------------------------------------------
 
-def revolve_profile(x_list, y_list, n_az=60):
+def revolve_profile(
+    x_list: list[float],
+    y_list: list[float],
+    n_az: int = 60,
+) -> tuple[Any, Any, Any]:
     """Revolve a 2D (x, y) profile around the X-axis to create a 3D surface.
 
     The profile is in the (x, y) plane where x=axial, y=radial.
     Revolving around X-axis gives: for each (x_i, y_i),
       surface point at angle theta: (x_i, y_i*cos(theta), y_i*sin(theta))
 
+    AXIOM: ALL decorative meshes in this file MUST use the same frame
+    (axial=X, radial in the YZ plane). A prior bug mixed Z-axial meshes
+    with this X-axial envelope.
+
     [Citation: do Carmo (1976) — Surface of revolution]
+    [Citation: render_geometry_grid.py revolve_profile — reference implementation]
     """
     import numpy as np
     n_pts = len(x_list)
@@ -272,11 +378,19 @@ def revolve_profile(x_list, y_list, n_az=60):
 
 
 # ---------------------------------------------------------------------------
-# HIAD visual features
+# HIAD visual features — ALL about the X (axial) axis
 # ---------------------------------------------------------------------------
 
-def mesh_torus(cx, cy, cz, major_r, minor_r, n_major=60, n_minor=20):
-    """Generate a torus mesh centered at (cx, cy, cz).
+def mesh_torus(
+    cx: float,
+    major_r: float,
+    minor_r: float,
+    n_major: int = 60,
+    n_minor: int = 20,
+) -> tuple[Any, Any, Any]:
+    """Generate a torus mesh whose axis of symmetry is X, centered at x=cx.
+
+    Ring circle lies in the YZ plane; tube extends slightly along ±X.
 
     [Citation: do Carmo (1976) — Torus parametrization]
     """
@@ -291,32 +405,64 @@ def mesh_torus(cx, cy, cz, major_r, minor_r, n_major=60, n_minor=20):
             v = 2 * math.pi * j / n_minor
             cos_v, sin_v = math.cos(v), math.sin(v)
             r = major_r + minor_r * cos_v
-            X[i, j] = cx + r * cos_u
-            Y[i, j] = cy + r * sin_u
-            Z[i, j] = cz + minor_r * sin_v
+            # Axial position from tube's sin(v); ring radius in YZ
+            X[i, j] = cx + minor_r * sin_v
+            Y[i, j] = r * cos_u
+            Z[i, j] = r * sin_u
     return X, Y, Z
 
 
-def mesh_cylinder(cx, cy, z_bottom, z_top, radius, n_az=60, n_z=10):
-    """Generate a cylinder mesh for the central payload drum."""
+def mesh_cylinder(
+    x_bottom: float,
+    x_top: float,
+    radius: float,
+    n_az: int = 60,
+    n_x: int = 10,
+) -> tuple[Any, Any, Any]:
+    """Generate a cylinder mesh for the central payload drum, axis along X.
+
+    Parameters:
+        x_bottom — axial start [m]
+        x_top    — axial end [m]
+        radius   — drum radius in the YZ plane [m]
+    """
     import numpy as np
-    X = np.zeros((n_az, n_z + 1))
-    Y = np.zeros((n_az, n_z + 1))
-    Z = np.zeros((n_az, n_z + 1))
+    X = np.zeros((n_az, n_x + 1))
+    Y = np.zeros((n_az, n_x + 1))
+    Z = np.zeros((n_az, n_x + 1))
     for i in range(n_az):
         theta = 2 * math.pi * i / n_az
         cos_t, sin_t = math.cos(theta), math.sin(theta)
-        for j in range(n_z + 1):
-            t = j / n_z
-            X[i, j] = cx + radius * cos_t
-            Y[i, j] = cy + radius * sin_t
-            Z[i, j] = z_bottom + t * (z_top - z_bottom)
+        for j in range(n_x + 1):
+            t = j / n_x
+            X[i, j] = x_bottom + t * (x_top - x_bottom)
+            Y[i, j] = radius * cos_t
+            Z[i, j] = radius * sin_t
     return X, Y, Z
 
 
-def mesh_dome(cx, cy, cz, radius, height, n_r=40, n_az=60):
-    """Generate a dome (hemisphere-like) mesh for the nose cap."""
+def mesh_dome(
+    x_base: float,
+    radius: float,
+    height: float,
+    direction: int = +1,
+    n_r: int = 40,
+    n_az: int = 60,
+) -> tuple[Any, Any, Any]:
+    """Generate a dome (hemisphere-like) mesh for the nose/payload cap.
+
+    Axis of the dome is X. direction=+1 grows toward +X (aft); direction=-1
+    grows toward −X (toward the windward nose tip).
+
+    Parameters:
+        x_base    — axial position of the dome base [m]
+        radius    — base radius in YZ [m]
+        height    — dome height along X [m]
+        direction — +1 or −X growth direction
+    """
     import numpy as np
+    if direction not in (+1, -1):
+        raise ValueError(f"direction must be +1 or -1, got {direction}")
     X = np.zeros((n_az, n_r + 1))
     Y = np.zeros((n_az, n_r + 1))
     Z = np.zeros((n_az, n_r + 1))
@@ -325,23 +471,34 @@ def mesh_dome(cx, cy, cz, radius, height, n_r=40, n_az=60):
         cos_t, sin_t = math.cos(theta), math.sin(theta)
         for j in range(n_r + 1):
             t = j / n_r
-            z = cz + height * t
-            r = radius * math.sqrt(max(0, 1 - t * t))
-            X[i, j] = cx + r * cos_t
-            Y[i, j] = cy + r * sin_t
-            Z[i, j] = z
+            x = x_base + direction * height * t
+            r = radius * math.sqrt(max(0.0, 1.0 - t * t))
+            X[i, j] = x
+            Y[i, j] = r * cos_t
+            Z[i, j] = r * sin_t
     return X, Y, Z
 
 
-def mesh_gore_spokes(cx, cy, cz, r_inner, r_outer, z_inner, z_outer,
-                     num_spokes=24, spoke_width=0.02, n_pts=20):
-    """Generate radial spoke/gore line meshes for visual effect."""
+def mesh_gore_spokes(
+    x_inner: float,
+    x_outer: float,
+    r_inner: float,
+    r_outer: float,
+    num_spokes: int = 24,
+    spoke_width: float = 0.02,
+    n_pts: int = 20,
+) -> list[tuple[Any, Any, Any]]:
+    """Generate radial spoke/gore line meshes in the YZ plane along X.
+
+    Each spoke is a thin ribbon from (r_inner at x_inner) to
+    (r_outer at x_outer), offset tangentially by spoke_width/2.
+    """
     import numpy as np
     meshes = []
     for k in range(num_spokes):
         theta = 2 * math.pi * k / num_spokes
         cos_t, sin_t = math.cos(theta), math.sin(theta)
-        cos_p, sin_p = math.cos(theta + math.pi/2), math.sin(theta + math.pi/2)
+        cos_p, sin_p = math.cos(theta + math.pi / 2), math.sin(theta + math.pi / 2)
         X = np.zeros((2, n_pts + 1))
         Y = np.zeros((2, n_pts + 1))
         Z = np.zeros((2, n_pts + 1))
@@ -349,17 +506,22 @@ def mesh_gore_spokes(cx, cy, cz, r_inner, r_outer, z_inner, z_outer,
             for i in range(n_pts + 1):
                 t = i / n_pts
                 r = r_inner + t * (r_outer - r_inner)
-                z = z_inner + t * (z_outer - z_inner)
+                x = x_inner + t * (x_outer - x_inner)
                 offset = side * spoke_width / 2
-                X[side_idx, i] = cx + r * cos_t + offset * cos_p
-                Y[side_idx, i] = cy + r * sin_t + offset * sin_p
-                Z[side_idx, i] = z
+                X[side_idx, i] = x
+                Y[side_idx, i] = r * cos_t + offset * cos_p
+                Z[side_idx, i] = r * sin_t + offset * sin_p
         meshes.append((X, Y, Z))
     return meshes
 
 
-def mesh_flat_back(cx, cy, z_back, radius, n_r=20, n_az=60):
-    """Generate a flat circular back plate mesh."""
+def mesh_flat_back(
+    x_back: float,
+    radius: float,
+    n_r: int = 20,
+    n_az: int = 60,
+) -> tuple[Any, Any, Any]:
+    """Generate a flat circular back plate mesh in the YZ plane at x=x_back."""
     import numpy as np
     X = np.zeros((n_az, n_r + 1))
     Y = np.zeros((n_az, n_r + 1))
@@ -370,9 +532,9 @@ def mesh_flat_back(cx, cy, z_back, radius, n_r=20, n_az=60):
         for j in range(n_r + 1):
             t = j / n_r
             r = radius * t
-            X[i, j] = cx + r * cos_t
-            Y[i, j] = cy + r * sin_t
-            Z[i, j] = z_back
+            X[i, j] = x_back
+            Y[i, j] = r * cos_t
+            Z[i, j] = r * sin_t
     return X, Y, Z
 
 
@@ -380,94 +542,188 @@ def mesh_flat_back(cx, cy, z_back, radius, n_r=20, n_az=60):
 # Render functions
 # ---------------------------------------------------------------------------
 
-def render_hiad(ax, x_profile, y_profile, color_base, label_color,
-                half_cone_deg, r_tor, cd_value, rn, is_optimized=False):
-    """Render a HIAD from an Ada-generated profile + visual features.
+def _profile_rim(
+    x_profile: list[float],
+    y_profile: list[float],
+) -> tuple[float, float, float]:
+    """Locate the outer rim and flat-back radius on a HIAD meridian.
+
+    Returns (x_rim, r_max, r_back) where:
+      x_rim  — axial station of maximum radius (rim of the saucer)
+      r_max  — maximum radial extent
+      r_back — radius where the flat-back segment begins (first point at
+               x ≈ x_max); this is the true flat-disc radius, NOT r_max.
+
+    AXIOMS: segment 4 has constant x = x_max with r decreasing to 0; the
+    mesh for the flat back must use r_back, otherwise the disc sticks out
+    past the envelope silhouette (visual bug fixed 2026-09-24).
+    """
+    r_max = max(y_profile)
+    x_max = max(x_profile)
+    i_rim = y_profile.index(r_max)
+    x_rim = x_profile[i_rim]
+    # First index at max axial station = start of flat-back (seg 4)
+    r_back = 0.0
+    for i, x in enumerate(x_profile):
+        if abs(x - x_max) < 1e-9:
+            r_back = y_profile[i]
+            break
+    return x_rim, r_max, r_back
+
+
+def render_hiad(
+    ax: Any,
+    x_profile: list[float],
+    y_profile: list[float],
+    color_base: tuple[int, int, int] | str,
+    label_color: str,
+    half_cone_deg: float,
+    r_tor: float,
+    cd_value: float,
+    rn: float,
+    is_optimized: bool = False,
+) -> None:
+    """Render a HIAD from a profile + visual features (axial=X frame).
 
     Parameters:
       ax            — matplotlib 3D axis
-      x_profile     — axial coordinates from Ada/profile
-      y_profile     — radial coordinates from Ada/profile
-      color_base    — base color for tori gradient
+      x_profile     — axial coordinates from Ada/profile (X)
+      y_profile     — radial coordinates from Ada/profile (YZ radius)
+      color_base    — base color: RGB 0-255 tuple, or a hex color string
+                      (converted to channels for the torus gradient)
       label_color   — color for text labels
       half_cone_deg — half-cone angle (for torus placement and drum_r)
       r_tor         — torus minor radius (for torus ridges)
       cd_value      — drag coefficient value to display
       rn            — nose sphere radius (for computing drum_r)
       is_optimized  — True for optimized variant
-    """
-    import numpy as np
 
-    # 1. Main envelope: revolve the Ada/profile around axis
+    AXIOM: every decorative mesh is built in the axial=X frame and must lie
+    within the envelope silhouette (rim/back radii from _profile_rim).
+    """
+    # 1. Main envelope: revolve the Ada/profile around X axis
     X_env, Y_env, Z_env = revolve_profile(x_profile, y_profile, n_az=60)
-    # Convert int tuple (0-255) to matplotlib hex color
-    if isinstance(color_base, tuple) and len(color_base) == 3:
-        color_hex = '#{:02x}{:02x}{:02x}'.format(*color_base)
-    else:
+    # Narrow the `tuple | str` union ONCE (pyrefly strict): the envelope may
+    # be painted from either form, but the torus-gradient math below needs
+    # numeric channels — derive rgb_base so those lines index a real tuple
+    # (previously `color_base[0] * 0.7` typed as `str.__mul__(float)`).
+    if isinstance(color_base, str):
+        # Deferred import: matplotlib loads only when actually rendering
+        # (same pattern as get_ada_default_profile's deferred FFI import).
+        # to_rgb raises ValueError on malformed colors — loud, never silent.
+        # [Citation: matplotlib.colors.to_rgb —
+        #  https://matplotlib.org/stable/api/colors_api.html#matplotlib.colors.to_rgb]
+        from matplotlib.colors import to_rgb
         color_hex = color_base
+        r_f, g_f, b_f = to_rgb(color_base)
+        rgb_base = (round(r_f * 255), round(g_f * 255), round(b_f * 255))
+    else:
+        rgb_base = color_base
+        color_hex = '#{:02x}{:02x}{:02x}'.format(*rgb_base)
     ax.plot_surface(X_env, Y_env, Z_env,
                     color=color_hex, alpha=0.85, edgecolor='none', shade=True)
 
-    # 2. Extract key dimensions from profile
-    r_max = max(y_profile)
+    # 2. Key dimensions from the actual profile (not guessed from params)
+    x_rim, r_max, r_back = _profile_rim(x_profile, y_profile)
     x_max = max(x_profile)
     # Drum radius = tangent point radius R_Tang = R_N * cos(gamma)
     # [Citation: stellarorion_sparta.adb line 1965: R_Tang := R_N * Cos_G]
     gamma_rad = (90.0 - half_cone_deg) * math.pi / 180.0
     drum_r = rn * math.cos(gamma_rad)
+    # Visual sanity: keep drum inside the envelope (safety fallback)
+    drum_r = min(drum_r, 0.55 * r_max)
 
-    # 3. Central payload drum
-    drum_height = drum_r * 0.35  # Short cylinder per IRVE-3 proportions
-    X_drum, Y_drum, Z_drum = mesh_cylinder(0, 0, 0, drum_height, drum_r)
+    # 3. Central payload drum — axis along X, aft half of the body
+    #    (payload sits behind the heatshield; nose tip is at X≈0)
+    drum_height = drum_r * 0.35
+    x_drum0 = 0.25 * x_max
+    x_drum1 = x_drum0 + drum_height
+    X_drum, Y_drum, Z_drum = mesh_cylinder(x_drum0, x_drum1, drum_r)
     ax.plot_surface(X_drum, Y_drum, Z_drum,
                     color='#555555', alpha=0.9, edgecolor='none', shade=True)
 
-    # 4. Nose cap dome (hemisphere on top of drum)
-    X_nose, Y_nose, Z_nose = mesh_dome(0, 0, drum_height, drum_r * 0.6, drum_r * 0.3)
+    # 4. Cap dome on the drum — grows toward the windward nose (−X)
+    X_nose, Y_nose, Z_nose = mesh_dome(
+        x_drum0, drum_r * 0.6, drum_r * 0.3, direction=-1)
     ax.plot_surface(X_nose, Y_nose, Z_nose,
                     color='#e94560', alpha=0.95, edgecolor='none', shade=True)
 
-    # 5. Stacked torus ridges (visual indicator of inflatable structure)
-    # Place tori at evenly spaced radial positions along the profile
+    # 5. Stacked torus ridges about the X axis, placed along the profile
     n_tori = 6
     for idx in range(n_tori):
         t = (idx + 0.5) / n_tori
-        # Find the profile point closest to this radial position
         target_r = drum_r + t * (r_max - drum_r)
-        # Find corresponding x from profile
-        profile_idx = min(range(len(y_profile)), key=lambda i: abs(y_profile[i] - target_r))
-        z_center = x_profile[profile_idx]
+        # Nearest profile index by radial distance (explicit loop — typed,
+        # no unannotated lambda for pyrefly strict mode)
+        profile_idx = 0
+        best_delta = abs(y_profile[0] - target_r)
+        for i in range(1, len(y_profile)):
+            delta = abs(y_profile[i] - target_r)
+            if delta < best_delta:
+                best_delta = delta
+                profile_idx = i
+        x_center = x_profile[profile_idx]
         r_center = y_profile[profile_idx]
 
         if r_center < drum_r + r_tor:
             continue
 
-        # Color gradient
         frac = idx / max(1, n_tori - 1)
-        r_c = int(color_base[0] * 0.7 + frac * 40)
-        g_c = int(color_base[1] * 0.7 + frac * 20)
-        b_c = int(color_base[2] * 0.7 + frac * 30)
+        r_c = int(rgb_base[0] * 0.7 + frac * 40)
+        g_c = int(rgb_base[1] * 0.7 + frac * 20)
+        b_c = int(rgb_base[2] * 0.7 + frac * 30)
         torus_color = f'#{min(255,r_c):02x}{min(255,g_c):02x}{min(255,b_c):02x}'
 
-        X_t, Y_t, Z_t = mesh_torus(0, 0, z_center, r_center, r_tor * 0.6,
-                                     n_major=60, n_minor=12)
+        X_t, Y_t, Z_t = mesh_torus(x_center, r_center, r_tor * 0.6,
+                                   n_major=60, n_minor=12)
         ax.plot_surface(X_t, Y_t, Z_t,
                         color=torus_color, alpha=0.92, edgecolor='none', shade=True)
 
-    # 6. Gore spokes (radial lines from drum to outer edge)
-    z_outer = x_profile[-1] if x_profile[-1] > x_profile[-2] else x_max
+    # 6. Gore spokes from drum out to the RIM (x_rim, r_max) — not to
+    #    (x_max, r_max), which lies outside the envelope at the flat back.
     gore_meshes = mesh_gore_spokes(
-        0, 0, 0, drum_r * 0.6, r_max, drum_height, z_outer,
+        x_drum0, x_rim, drum_r * 0.6, r_max * 0.98,
         num_spokes=24, spoke_width=0.03
     )
     for X_g, Y_g, Z_g in gore_meshes:
         ax.plot_surface(X_g, Y_g, Z_g,
                         color='#333333', alpha=0.4, edgecolor='none')
 
-    # 7. Flat back plate
-    X_back, Y_back, Z_back = mesh_flat_back(0, 0, z_outer, r_max)
+    # 7. Flat back plate — radius is r_back (seg-4 start), NOT r_max
+    X_back, Y_back, Z_back = mesh_flat_back(x_max, r_back)
     ax.plot_surface(X_back, Y_back, Z_back,
                     color='#222222', alpha=0.7, edgecolor='none', shade=True)
+
+
+def _apply_view(ax: Any, x_max: float, r_max: float) -> None:
+    """Apply shared axis limits, aspect, and camera for fair comparison.
+
+    Parameters:
+      ax    — matplotlib 3D axis, mutated in place
+      x_max — axial extent of the profile (data units)
+      r_max — maximum radial extent of the profile (data units)
+
+    Returns:
+      None (side effects on ax only).
+
+    Frame matches render_geometry_grid: X=axial [0, x_max*1.05],
+    Y/Z radial symmetric ±r_max*1.15.
+
+    Camera: elev=22°, azim=−55° — the repo-standard 3/4 side view used by
+    render_geometry_grid (_ELEV=22, _AZIM=-55) and render_bo_3d_plot.
+    With matplotlib's convention (eye at cos(elev)·(cos azim, sin azim, ·)
+    looking at origin), azim=−55° places the eye on the +X/−Y quadrant so
+    the side silhouette of the cone is visible and the 60° vs 40.5°
+    half-cone difference reads clearly. The earlier azim=−145° looked
+    nearly face-on down the X axis and rendered both HIADs as flat circles,
+    hiding the very geometry difference this figure exists to show.
+    """
+    ax.set_xlim(0.0, x_max * 1.05)
+    ax.set_ylim(-r_max * 1.15, r_max * 1.15)
+    ax.set_zlim(-r_max * 1.15, r_max * 1.15)
+    # Box aspect proportional to data extents (X length vs YZ diameter)
+    ax.set_box_aspect([x_max * 1.05, 2.3 * r_max, 2.3 * r_max])
+    ax.view_init(elev=22, azim=-55)
 
 
 def main() -> int:
@@ -478,6 +734,8 @@ def main() -> int:
 
     -- SAFETY FALLBACK: returns exit code 1 if the JSON is missing/malformed
       or the Ada FFI dylib is absent (verbose diagnostics on stderr).
+      Ada cross-check drift prints WARNING but does not block rendering
+      (visual inspection still valuable); exit code 2 signals drift.
     -- TIMING ANALYSIS
     -- Estimated Processing Time: O(1) JSON load + O(P) profile compute + render
     -- CPU Time: ~2-5s typical (matplotlib 3D surface, 2 panels)
@@ -508,20 +766,39 @@ def main() -> int:
 
     # --- Get default profile from Ada FFI ---
     print("Loading default HIAD profile from Ada FFI...")
-    x_def, y_def, n_def = get_ada_default_profile()
+    try:
+        x_def, y_def, n_def = get_ada_default_profile()
+    except (OSError, AttributeError, RuntimeError) as exc:
+        print(f"[FATAL] Ada FFI unavailable: {exc}", file=sys.stderr)
+        print("  Build libstellarorion_pinn.dylib (alr build) or run from "
+              "an environment where the dylib is on DYLD_LIBRARY_PATH.",
+              file=sys.stderr)
+        return 1
     print(f"  Ada returned {n_def} points, x=[{min(x_def):.4f}, {max(x_def):.4f}], "
           f"y=[{min(y_def):.4f}, {max(y_def):.4f}]")
+
+    # --- Compute default profile in Python for FFI cross-check ---
+    n_tori = 6  # structural constant: IRVE-3 6+1 torus stack (not optimized)
+    x_def_py, y_def_py = compute_rapisarda_profile(
+        rn=default["R_N"], half_cone_deg=default["half_cone_deg"],
+        r_tor=default["r_tor"], n_tori=n_tori
+    )
+    print("Cross-checking Python default profile against Ada FFI...")
+    ada_ok = crosscheck_ada_profile(x_def_py, y_def_py)
 
     # --- Compute optimized profile (same math as Ada, params from JSON) ---
     # [Citation: hiad_optimization_results.json — optimized block]
     print("Computing optimized HIAD profile...")
-    n_tori = 6  # structural constant: IRVE-3 6+1 torus stack (not optimized)
     x_opt, y_opt = compute_rapisarda_profile(
         rn=opt["R_N"], half_cone_deg=opt["half_cone_deg"],
         r_tor=opt["r_tor"], n_tori=n_tori
     )
     print(f"  Computed {len(x_opt)} points, x=[{min(x_opt):.4f}, {max(x_opt):.4f}], "
           f"y=[{min(y_opt):.4f}, {max(y_opt):.4f}]")
+
+    # Shared limits for fair side-by-side comparison
+    x_max_all = max(max(x_def), max(x_opt))
+    r_max_all = max(max(y_def), max(y_opt))
 
     # --- Create figure ---
     fig = plt.figure(figsize=(16, 8), facecolor='#0a0a0f')
@@ -538,16 +815,16 @@ def main() -> int:
     ax1.set_ylabel('Y [m]', color='#8892b0', fontsize=8)
     ax1.set_zlabel('Z [m]', color='#8892b0', fontsize=8)
     ax1.tick_params(colors='#555555', labelsize=6)
-    ax1.view_init(elev=25, azim=45)
-    ax1.set_box_aspect([1, 1, 0.3])
-    # Label values formatted from JSON — no literals
+    _apply_view(ax1, x_max_all, r_max_all)
     def_label = (f"R_N={default['R_N']:.2f}m  half_cone={default['half_cone_deg']:.1f}\n"
                  f"r_tor={default['r_tor']:.3f}m  {n_tori} tori\n"
-                 f"Cd={default['Cd']:.4f}\nSource: Ada FFI")
+                 f"Cd={default['Cd']:.4f}\nSource: Ada FFI"
+                 + ("" if ada_ok else "\n[Ada cross-check DRIFT]"))
     ax1.text2D(0.02, 0.02, def_label,
         transform=ax1.transAxes, color='#8892b0', fontsize=8,
         verticalalignment='bottom',
-        bbox=dict(boxstyle='round,pad=0.3', facecolor='#1a1a2e', edgecolor='#0f3460'))
+        bbox={'boxstyle': 'round,pad=0.3', 'facecolor': '#1a1a2e',
+              'edgecolor': '#0f3460'})
 
     # Optimized (right) — red tones; params loaded from JSON 'optimized' block
     ax2 = fig.add_subplot(122, projection='3d', facecolor='#0a0a0f')
@@ -562,23 +839,15 @@ def main() -> int:
     ax2.set_ylabel('Y [m]', color='#8892b0', fontsize=8)
     ax2.set_zlabel('Z [m]', color='#8892b0', fontsize=8)
     ax2.tick_params(colors='#555555', labelsize=6)
-    ax2.view_init(elev=25, azim=45)
-    ax2.set_box_aspect([1, 1, 0.3])
-    # Label values formatted from JSON — no literals
+    _apply_view(ax2, x_max_all, r_max_all)
     opt_label = (f"R_N={opt['R_N']:.2f}m  half_cone={opt['half_cone_deg']:.1f}\n"
                  f"r_tor={opt['r_tor']:.3f}m  {n_tori} tori\n"
                  f"Cd={opt['Cd']:.4f}\nSource: Python profile")
     ax2.text2D(0.02, 0.02, opt_label,
         transform=ax2.transAxes, color='#e94560', fontsize=8,
         verticalalignment='bottom',
-        bbox=dict(boxstyle='round,pad=0.3', facecolor='#1a1a2e', edgecolor='#e94560'))
-
-    # Same axis limits for fair comparison
-    lim = 1.8
-    for ax in [ax1, ax2]:
-        ax.set_xlim(-lim, lim)
-        ax.set_ylim(-lim, lim)
-        ax.set_zlim(0, 1.5)
+        bbox={'boxstyle': 'round,pad=0.3', 'facecolor': '#1a1a2e',
+              'edgecolor': '#e94560'})
 
     # Legend
     legend_elements = [
@@ -596,10 +865,14 @@ def main() -> int:
                  'Default geometry from Ada FFI | Optimized from Bayesian search',
         color='white', fontsize=14, fontweight='bold', y=0.97)
 
-    plt.tight_layout(rect=[0, 0.05, 1, 0.93])
+    plt.tight_layout(rect=(0, 0.05, 1, 0.93))
     out = Path(__file__).resolve().parent.parent / "optimization_comparison.png"
     plt.savefig(str(out), dpi=150, facecolor='#0a0a0f', bbox_inches='tight')
     print(f"Saved: {out}")
+    if not ada_ok:
+        print("[WARNING] Render written but Ada FFI cross-check FAILED — "
+              "inspect the image and the WARNING above.", file=sys.stderr)
+        return 2
     return 0
 
 

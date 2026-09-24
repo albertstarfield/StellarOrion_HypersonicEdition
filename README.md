@@ -201,7 +201,12 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
 | **Ballistic Coeff ($\beta$)** | 26.9 kg/m² | ~22.6 kg/m² (est.) | — | **27.70 kg/m²** | NASA TP-2013-4012; Discussion.md; StellarOrion |
 | **Peak Deceleration** | **19.7 g** | **9.66 g** | — | **16.83 g** | NASA TP-2013-4012; Deshmukh AIAA 2024-1501; StellarOrion |
 | **C_d** | — | — | — | **1.4625** | StellarOrion (within LOFTID range 1.4–1.7) |
+| **C_l** | — | — | — | **−0.5560** | StellarOrion (VALIDATION_Sep_2_2026.md §3.1; negative = downward lift) |
 | **L/D** | — | — | — | **0.3802** | StellarOrion |
+| **Peak Drag** | — | — | — | **45,410 N** | StellarOrion (VALIDATION_Sep_2_2026.md §3.1, step 2200) |
+| **Peak \|Lift\|** | — | — | — | **17,263 N** | StellarOrion (VALIDATION_Sep_2_2026.md §3.1, step 2200, magnitude) |
+| **Drag_avg** | — | — | — | **597.5 N** | StellarOrion (VALIDATION_Sep_2_2026.md §3.1, per-element average) |
+| **Lift_avg** | — | — | — | **−227.1 N** | StellarOrion (VALIDATION_Sep_2_2026.md §3.1, per-element average) |
 | **Entry Velocity** | ~3.5–4.5 km/s | >8.0 km/s | — | — | Discussion.md (Sutton-Graves V³ scaling) |
 
 **Column key:**
@@ -220,7 +225,7 @@ Each source uses different atmosphere models, geometry, and solvers — this dir
 | **Gas Composition** | Real air | Real air | Earth air (MCD v6.1 for density/temp profiles only) | Five_Species: N₂, O₂, NO, N, O |
 | **Geometry** | IRVE-3 inflatable (3.0 m) | LOFTID inflatable (6.0 m, 70° sphere-cone, 6+1 tori) | Smooth toroid ($r_{torus}$ = 0.135 m) | **Scalloped** (grooved-torus), 3.0 m |
 | **Solver Method** | Flight instrumentation | Flight instrumentation | Fay-Riddell CFD / SG correlation | SPARTA DSMC (VSS, grid 0.7) |
-| **Trajectory** | Full reentry (Black Brant XI, suborbital) | Full reentry (LEO, >8 km/s) | Full trajectory integration | **Single point** (step 2200) |
+| **Trajectory** | Full reentry (Black Brant XI, suborbital) | Full reentry (LEO, >8 km/s) | Full trajectory integration | **Single point** (step 2200): h = 51.82 km, Mach 10.29, V = 3,379 m/s |
 | **Noise Filtering** | Hardware averaging | Hardware averaging | 6th-order polynomial + Wilmoth | Raw per-element `f_1[3]` |
 
 **Why this matters:** The −15% delta in heat load and g-load is expected — StellarOrion runs a single trajectory point while flight data and Rapisarda's models integrate over the full trajectory. The density difference between MCD v6.1 and ISA (56% at 52 km) explains part of the gap between our single-point SG (12.2 W/cm²) and Rapisarda's trajectory-integrated SG (15.26 W/cm²), since $\dot{q}_{SG} \propto \sqrt{\rho}$.
