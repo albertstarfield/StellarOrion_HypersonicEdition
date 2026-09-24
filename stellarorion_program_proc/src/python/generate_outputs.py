@@ -14,6 +14,7 @@ AXIOMS:
 """
 
 import glob
+import json
 import math as _math
 import os
 import subprocess
@@ -104,21 +105,121 @@ IRVE3_REFERENCE = {
 
 # ── Optimized topology reference (Bayesian optimization results) ──────
 # AXIOMS: optimizer output is the ground truth for the optimized-variant MP4;
-#   values are STATIC spec parameters (not time-varying trajectory data).
+#   values are STATIC spec parameters (not time-varying trajectory data) and
+#   are loaded at RUNTIME from hiad_optimization_results.json — NEVER
+#   hardcoded (re-running hiad_optimizer.py must flow through automatically).
 # THEORIES: GP Matern 5/2 + Expected Improvement over (R_N, r_tor, half-cone)
-#   achieved Cd −9.45%; SG heat rise +16% is a documented trade-off.
-# APPLICATIONS: rendered in the bottom-strip "Optimized Topology" panel when
+#   reduces Cd; the Sutton-Graves heat rise is a documented trade-off — both
+#   sides (optimized + baseline) and the Δ% are derived from the JSON blocks.
+# APPLICATIONS: _load_optimized_topology_specs() builds the 5-row table drawn
+#   in the bottom-strip "Optimized Topology" panel when
 #   generate_mp4(..., optimized_topology=True) / --optimized-topology.
-# CITATIONS: stellarorion_program_proc/Optimization_Attempt_1.md;
+# CITATIONS: hiad_optimization_results.json — default/optimized blocks;
+#   stellarorion_program_proc/Optimization_Attempt_1.md;
 #   README.md "Optimized Topology: Before vs After" table.
-OPTIMIZED_TOPOLOGY_SPECS = (
-    # (label, optimized, baseline, unit, value_format)
-    ("Nose Radius R_N",    1.1146, 1.5000, "m",      "{:.4f}"),
-    ("Torus Radius r_tor", 0.0539, 0.1350, "m",      "{:.4f}"),
-    ("Half-Cone Angle",   44.58,   60.00,  "deg",    "{:.2f}"),
-    ("Drag Coefficient C_d", 1.4554, 1.6073, "",      "{:.4f}"),
-    ("Sutton-Graves Heat", 18.72,  16.14,  "W/cm2",  "{:.2f}"),
-)
+# [Citation: hiad_optimization_results.json — optimized/default blocks]
+
+# Process-local cache: one JSON read per process (Pool workers each load once).
+# Assignment of an already-built immutable tuple is atomic under the CPython
+# GIL, so concurrent first-calls cannot observe a partially-built tuple.
+_OPTIMIZED_SPECS_CACHE: tuple | None = None
+
+
+def _load_optimized_topology_specs() -> tuple:
+    """Build the 5-row Optimized Topology spec table from optimizer JSON.
+
+    Returns tuple of (label, optimized, baseline, unit, value_format) rows:
+      Nose Radius R_N, Torus Radius r_tor, Half-Cone Angle,
+      Drag Coefficient C_d, Sutton-Graves Heat.
+
+    -- AXIOMS:
+    --   1. hiad_optimization_results.json (written by hiad_optimizer.py) is
+    --      the single source of truth; specs must never be literal numbers.
+    --   2. The JSON contains 'default' and 'optimized' blocks sharing keys
+    --      R_N, r_tor, half_cone_deg, Cd, sutton_graves_heat_flux_Wcm2.
+    --   3. Delta % shown in the panel is (opt - base) / base * 100, so both
+    --      sides must come from the same JSON snapshot (consistency).
+    -- -- THEORIES: Loading once per process and caching guarantees every
+    --   frame of the MP4 shows identical numbers (no mid-render drift) while
+    --   still tracking the latest optimizer run across invocations.
+    -- -- APPLICATIONS: called by _draw_optimized_topology_overlay() per
+    --   frame; first call reads the file, subsequent calls hit the cache.
+    -- -- CITATIONS:
+    --   [Citation: hiad_optimization_results.json — default/optimized]
+    --   [Citation: docs.python.org/3/library/json.html — json.load]
+    --
+    -- TIMING ANALYSIS
+    -- Estimated Processing Time: O(1) first call; O(1) cached after
+    -- CPU Time: ~1ms first call (file read); ~0.01μs cached hits
+    -- WCET: ~50ms first call under FS contention (50x margin); ~0.1μs cached
+    -- Space Complexity: O(1) — 5-row tuple (~400 bytes) + parsed JSON
+    -- Derivation: k=5 rows x O(1) dict lookups after one json.load
+    -- Hardware Assumptions: POSIX, CPython 3.10+, local filesystem
+    --
+    -- SAFETY FALLBACK: fail-closed — raises FileNotFoundError/KeyError with
+    -- full path context on stderr instead of substituting stale literals.
+    -- Normal expectation: 5-row tuple; ERROR: missing file/bad JSON/missing
+    -- key (printed with exact path). Why input differs from output: raw JSON
+    -- bytes become a validated, typed, display-ready tuple of rows.
+    """
+    global _OPTIMIZED_SPECS_CACHE
+    if _OPTIMIZED_SPECS_CACHE is not None:
+        return _OPTIMIZED_SPECS_CACHE
+
+    # APPLICATION STEP 1 (AXIOM 1: file lives next to this module)
+    results_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "hiad_optimization_results.json")
+    if not os.path.isfile(results_path):
+        msg = (f"[FATAL] hiad_optimization_results.json not found at "
+               f"{results_path} — run src/python/hiad_optimizer.py first")
+        print(msg, file=sys.stderr)
+        raise FileNotFoundError(msg)
+
+    # APPLICATION STEP 2 (AXIOM 1: valid JSON)
+    try:
+        with open(results_path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except json.JSONDecodeError as exc:
+        msg = f"[FATAL] Invalid JSON in {results_path}: {exc}"
+        print(msg, file=sys.stderr)
+        raise
+    except OSError as exc:
+        msg = f"[FATAL] Cannot read {results_path}: {exc}"
+        print(msg, file=sys.stderr)
+        raise
+
+    # APPLICATION STEP 3 (AXIOM 2: required blocks present)
+    for block_name in ("default", "optimized"):
+        if not isinstance(data.get(block_name), dict):
+            msg = (f"[FATAL] {results_path} missing required object "
+                   f"'{block_name}'")
+            print(msg, file=sys.stderr)
+            raise KeyError(block_name)
+
+    dflt = data["default"]
+    opt = data["optimized"]
+
+    # APPLICATION STEP 4 (AXIOM 2/3: shared keys on both sides, build rows)
+    # (label, json_key, unit, value_format) — values pulled live from JSON
+    row_templates = (
+        ("Nose Radius R_N", "R_N", "m", "{:.4f}"),
+        ("Torus Radius r_tor", "r_tor", "m", "{:.4f}"),
+        ("Half-Cone Angle", "half_cone_deg", "deg", "{:.2f}"),
+        ("Drag Coefficient C_d", "Cd", "", "{:.4f}"),
+        ("Sutton-Graves Heat", "sutton_graves_heat_flux_Wcm2", "W/cm2", "{:.2f}"),
+    )
+    specs = []
+    for label, key, unit, val_fmt in row_templates:
+        if key not in opt or key not in dflt:
+            msg = (f"[FATAL] {results_path} missing key '{key}' in "
+                   f"'default' and/or 'optimized' block")
+            print(msg, file=sys.stderr)
+            raise KeyError(key)
+        specs.append((label, float(opt[key]), float(dflt[key]), unit, val_fmt))
+
+    # Single atomic store of the finished immutable tuple (GIL-safe)
+    _OPTIMIZED_SPECS_CACHE = tuple(specs)
+    return _OPTIMIZED_SPECS_CACHE
 RESULTS_DIR      = os.path.join(os.path.dirname(__file__), "..", "..",
                                 "results/validation_scalloped")
 # -- AXIOMS: Optimized-topology artifacts are a distinct deliverable and must
@@ -1502,11 +1603,16 @@ def _draw_optimized_topology_overlay(draw: Any, x0: int, y0: int,
     (documented trade-off, e.g. Sutton-Graves heat).
 
     -- AXIOMS: optimizer output is ground truth for the optimized variant;
-      spec values are STATIC (no frame dependence).
-    -- THEORIES: Δ% = (opt − base)/base × 100; Cd −9.45% is the headline win.
+    --   spec values are STATIC (no frame dependence) and are loaded from
+    --   hiad_optimization_results.json via _load_optimized_topology_specs().
+    -- THEORIES: Δ% = (opt − base)/base × 100 computed live from the JSON
+    --   blocks; the Cd reduction (JSON "improvement" block) is the headline.
     -- APPLICATIONS: rendered when generate_mp4(optimized_topology=True).
+    -- CITATION: hiad_optimization_results.json — default/optimized blocks
     -- CITATION: Optimization_Attempt_1.md — GP Matern 5/2, 70 evals
     -- CITATION: README.md "Optimized Topology: Before vs After" table
+    -- SAFETY FALLBACK: _load_optimized_topology_specs() fails closed with
+    --   full path diagnostics if the JSON is missing/malformed.
     """
     FG = (220, 220, 220)
     GRID = (50, 50, 70)
@@ -1518,7 +1624,9 @@ def _draw_optimized_topology_overlay(draw: Any, x0: int, y0: int,
     draw.text((x1 - int(10 * _scale), y0 + int(5 * _scale)),
               "OPTIMIZED", fill=(80, 220, 200), font=font_md, anchor="rt")
 
-    specs = OPTIMIZED_TOPOLOGY_SPECS
+    # Runtime load from hiad_optimization_results.json (never hardcoded;
+    # loader prints full FATAL context to stderr before re-raising)
+    specs = _load_optimized_topology_specs()
     # /len(specs) — never hardcoded — so rows can be added without overflow
     row_h = int((y1 - y0 - 30 * _scale) / len(specs))
     for i, (name, opt_val, base_val, unit, val_fmt) in enumerate(specs):
