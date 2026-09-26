@@ -3,7 +3,7 @@
 --  Ada 2012 / SPARK 2014
 --  SPARK_Mode => Off : performs I/O, subprocess dispatching, GUI launch.
 --
---  CLI flags (matching the original main.py):
+--  CLI flags (parity with the retired original main.py, removed 2026-08-21):
 --    --self-test               Run built-in unit tests
 --    --gettheirvebbaseline     Get IRVE-3 baseline results
 --    --compareNoses            Compare nose-cone geometries
@@ -308,7 +308,8 @@ package body StellarOrion_Project is
    --  Test Modes
    -- ==================================================================
 
-   --  Run_Self_Test (Tests 1-15, incl. parity/watchdog wiring) extracted
+   --  Run_Self_Test (Tests 1-15 at extraction, incl. parity/watchdog
+   --  wiring; suite now Tests 1-18) extracted
    --  to StellarOrion_Self_Test at Decomposition Stage 3 — see
    --  docs/PROJECT_DECOMPOSITION_PLAN.md.
 
@@ -390,7 +391,8 @@ package body StellarOrion_Project is
       --  (~4M particles at Mach 10 / 52 km conditions for accurate DSMC).
    Fnum_Str : constant String := Get_Option ("--fnum", "3.5e19");
       Restart_File     : constant String := Get_Option ("--restart-file", "");
-      Payload_File_Str : constant String := Get_Option ("--payload-file", "CADDesign/HIAD_custom_full.step");
+      --  Echoed in the [CONFIG] log only (no file is read from this default).
+      Payload_File_Str : constant String := Get_Option ("--payload-file", "Lost+Found/HIAD_custom_full.step");
       SSH_Host         : constant String := Get_Option ("--ssh-host", "");
       SSH_User         : constant String := Get_Option ("--ssh-user", "");
       SSH_Pass         : constant String := Get_Option ("--ssh-pass", "");
@@ -1147,7 +1149,6 @@ package body StellarOrion_Project is
          Put_Line ("[INFO] No arguments provided.");
          Put_Line ("[INFO] To launch the GUI dashboard:");
          Put_Line ("  python3 run.py --gui");
-         Put_Line ("  or: python3 main.py (launches GUI via gui_launcher.py)");
          goto Cleanup;
       end if;
 
@@ -1333,11 +1334,16 @@ package body StellarOrion_Project is
                            Cores         => Cores,
                            Use_GPU       => Use_GPU,
                            Fnum_Str      => Fnum_Str,
-                           Restart_File  => Restart_File,
-                            Results_Dir   => "results/validation" &
+                            Restart_File  => Restart_File,
+                            --  AXIOM: the documented --results-dir flag must be
+                            --  honored so gate/validated runs cannot overwrite
+                            --  the reference data in results/validation*.
+                             Results_Dir   => Get_Option
+                               ("--results-dir",
+                                "results/validation" &
                               (if Skin = Scalloped then "_scalloped"
                                elsif Skin_Type_Str = "smooth" then "_smooth"
-                               else ""));
+                               else "")));
          goto Cleanup;
       end if;
 

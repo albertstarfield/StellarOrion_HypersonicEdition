@@ -12,6 +12,7 @@ use Ada.Numerics.Elementary_Functions;
 with Ada.Calendar;                  use Ada.Calendar;
 with Ada.Text_IO;                   use Ada.Text_IO;
 with StellarOrion_Physics;          use StellarOrion_Physics;
+with StellarOrion_Environment;
 with Ada.Exceptions;
 
 package body StellarOrion_Optimization is
@@ -25,6 +26,34 @@ package body StellarOrion_Optimization is
 
    --  Float'Round is for fixed-point only; use manual rounding for Float.
    --  coverage: used by Run_GA_Optimization gene rounding
+
+   -- ------------------------------------------------------------------
+   --  Dynamic validation base reference for J(x)  (shared package state)
+   -- ------------------------------------------------------------------
+   --  AXIOMS:
+   --    V1: defaults equal results/validation_scalloped/
+   --        validation_pipeline_output/unified_comparison_data.json
+   --        as of 2026-09-16 (Q_target = StellarOrion raw_dsmc total
+   --        heat load; flux ref = IRVE-3 flight peak heat flux;
+   --        tau = Q_flight / q_flight; Cd ref = StellarOrion raw_dsmc Cd).
+   --    V2: the Python driver overwrites these at run time via
+   --        Set_Validation_Refs (FFI HIAD_Set_Refs_C) — J(x) is always
+   --        normalised against the CURRENT validation state.
+   --    V3: single-threaded access only — the BO loop and the self-test
+   --        run sequentially in one process; no task protects this
+   --        variable (documented invariant, see race-condition rules).
+   --  SAFETY FALLBACK: if Set_Validation_Refs is never called, V1
+   --  defaults keep J(x) fully functional (no silent NaN / zero div).
+   --  CITATIONS: unified_comparison_data.json (keys comparison.
+   --  stellarorion.raw_dsmc, comparison.irve3_flight); Nocedal06 Sec 3.1.
+   -- ------------------------------------------------------------------
+   type Validation_Refs is record
+      Q_Target : Float := 165.715973;  --  [J/cm^2] StellarOrion total load
+      Flux_Ref : Float := 14.361;      --  [W/cm^2] IRVE-3 flight peak flux
+      Tau_Sec  : Float := 13.582459;   --  [s] = 195.0577 / 14.361
+      Cd_Ref   : Float := 1.462536;    --  StellarOrion validated Cd
+   end record;
+   Current_Refs : Validation_Refs;
 -- ============================================================================
 -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
 -- Clock Source: Ada.Real_Time (backed by CLOCK_MONOTONIC)
@@ -1638,52 +1667,264 @@ package body StellarOrion_Optimization is
          raise;
    end Estimate_Cd;
 
+   --  coverage: body for Set_Validation_Refs
    -- ============================================================================
+   -- AXIOMS:
+   --   V1-V3: see Current_Refs declaration (dynamic validation base
+   --          reference for J(x); defaults = unified_comparison_data.json).
+   -- THEOREMS:
+   --   T1: after the call, every J(x) normalisation term uses the new
+   --       refs until the next call (state persists across FFI calls).
+   --   T2: a non-positive input (only reachable when assertions are
+   --       disabled, e.g. FFI) raises BEFORE the assignment, so the
+   --       previous (valid) refs remain intact — no corrupt state.
+   -- APPLICATIONS:
+   --   Called once by hiad_optimizer.py at start-up via HIAD_Set_Refs_C,
+   --   and by Test_HIAD_Cost_Function (set + restore) for dynamic-ref
+   --   regression coverage.
+   -- CITATIONS:
+   --   [unified_comparison_data.json] comparison.stellarorion.raw_dsmc
+   --   and comparison.irve3_flight keys; [Nocedal06] Sec 3.1.
+   -- ============================================================================
+   procedure Set_Validation_Refs
+     (Q_Target_Jcm2 : Float;
+      Flux_Ref_Wcm2 : Float;
+      Tau_Sec       : Float;
+      Cd_Ref        : Float) is -- nosec
+   begin
+      --  Defense-in-depth: the spec Pre forbids these, but the FFI
+      --  entry point may run with assertions stripped (T2).
+      if Q_Target_Jcm2 <= 0.0 or Flux_Ref_Wcm2 <= 0.0
+        or Tau_Sec <= 0.0 or Cd_Ref <= 0.0
+      then
+         raise Constraint_Error
+           with "Set_Validation_Refs: all four refs must be > 0.0";
+      end if;
+      Current_Refs :=
+        (Q_Target => Q_Target_Jcm2,
+         Flux_Ref => Flux_Ref_Wcm2,
+         Tau_Sec  => Tau_Sec,
+         Cd_Ref   => Cd_Ref);
+      --  NOTE: no Ada.Text_IO logging on the happy path — when called via
+      --  the FFI (dlopen'd dylib) the GNAT runtime's Standard_Output is
+      --  not open and Put_Line raises STATUS_ERROR, aborting the process
+      --  (observed 2026-09-25; FFI layer uses libc printf instead).
+      --  Visibility is preserved: hiad_optimizer.py prints every loaded
+      --  reference in its [0/7] step, and the exception handler below
+      --  (native contexts such as Test_HIAD_Cost_Function) still logs.
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Set_Validation_Refs");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Q_Target=" & Float'Image(Q_Target_Jcm2) &
+                              " Flux_Ref=" & Float'Image(Flux_Ref_Wcm2) &
+                              " Tau=" & Float'Image(Tau_Sec) &
+                              " Cd_Ref=" & Float'Image(Cd_Ref));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
+   end Set_Validation_Refs;
+
+   -- ====================================================================
    -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    -- Clock Source: Ada.Real_Time (backed by CLOCK_MONOTONIC)
    -- Resolution: 1ns (nanosecond)
-   -- Estimated Processing Time: O(1) — cost function evaluation
-   -- CPU Time: ~500ns for typical input (includes geometry calls)
-   -- WCET: 5μs with 10× safety margin
+   -- Estimated Processing Time: O(1) — one sqrt + arithmetic
+   -- CPU Time: ~100ns for typical input
+   -- WCET: 1μs with 10× safety margin
    -- Space Complexity: O(1) — stack only
    -- ====================================================================
-   --  coverage: body for HIAD_Cost_Function
+   --  coverage: body for Payload_Nose_Radius_Min
    -- ============================================================================
    -- AXIOMS:
-   --   A1: Cost = Cd + lambda_1 * max(0, R_max - 3.0)^2
-   --                  + lambda_2 * max(0, 1.0 - R_N)^2
-   --   A2: Penalty terms enforce structural/thermal constraints via
-   --       quadratic penalty method (Nocedal & Wright 2006, Sec 17.1).
+   --   P1: payload is a cylinder (r_pay = 0.275 m, h_pay = 1.7 m),
+   --       modelled as inscribed in a spherical nose-cap cavity
+   --       [Rapisarda2023 Table 4.1 via Discussion.md lines 46-47].
+   --   P2: smallest sphere enclosing a cylinder of radius r and
+   --       height h has radius sqrt(r^2 + (h/2)^2) — half-diagonal
+   --       of the axial cross-section rectangle.
+   --   P3: the TPS + structure standoff (0.15 m) must be added
+   --       outside the cavity radius.
    -- THEOREMS:
-   --   T1: Cost >= Cd > 0 when all constraints satisfied (penalties = 0).
-   --   T2: Cost grows quadratically with constraint violation.
-   --   T3: Cost is continuous but not differentiable at constraint boundaries.
+   --   T1: with IRVE-3 payload values, R_pay_min = sqrt(0.275^2 +
+   --       0.85^2) + 0.15 = 0.8934 + 0.15 = 1.0434 m.
+   --   T2: T1 > Nose_Radius_Limit (1.0 m) — the payload constraint is
+   --       strictly tighter than the TPS minimum where they overlap.
    -- APPLICATIONS:
-   --   Quadratic penalty with Lambda_1 = Lambda_2 = 100 (from Python source).
+   --   Quadratic penalty term max(0, R_pay_min - R_N)^2 in J(x).
    -- CITATIONS:
-   --   [Nocedal06] Nocedal & Wright (2006), Numerical Optimization, Sec 17.1.
-   --   [Sutton51] Sutton & Graves (1951) — Cd scaling for blunt bodies.
+   --   [Rapisarda2023] MSc Thesis TU Delft, Table 4.1.
+   --   [ElementaryGeometry] half-diagonal of an r x h rectangle.
    -- ============================================================================
-   function HIAD_Cost_Function (X : Param_Vector) return Float is -- nosec
+   function Payload_Nose_Radius_Min return Float is -- nosec
+   begin
+      return Sqrt (Payload_Radius_M ** 2 + (Payload_Height_M / 2.0) ** 2)
+             + Payload_Standoff_M;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Payload_Nose_Radius_Min");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
+   end Payload_Nose_Radius_Min;
+
+   -- ====================================================================
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
+   -- Clock Source: Ada.Real_Time (backed by CLOCK_MONOTONIC)
+   -- Resolution: 1ns (nanosecond)
+   -- Estimated Processing Time: O(1) — geometry + SG + ratios
+   -- CPU Time: ~1μs for typical input (includes SG + Cd evaluation)
+   -- WCET: 10μs with 10× safety margin
+   -- Space Complexity: O(1) — stack only, one record result
+   -- ====================================================================
+   --  coverage: body for HIAD_Cost_Components
+   -- ============================================================================
+   -- AXIOMS (J(x) multi-objective, validation-referenced):
+   --   A1: J(x) = W_Heat_Load*Q(x)/Q_target + W_Flux*q(x)/q_ref
+   --            + W_Beta*(beta(x)/beta_ref - 1)^2 + W_Cd*Cd(x)/Cd_ref
+   --            + Lambda_Pen*(max(0,R_max-3)^2 + max(0,1-R_N)^2
+   --                          + max(0,R_pay_min-R_N)^2)
+   --       [full derivation: stellarorion_optimization.ads, J(x) block]
+   --   A2: Q(x) = q_SG(x) * Tau_Sec — Sutton-Graves heat flux at the
+   --       validated snapshot (h = 51.8 km, V = 3378 m/s) integrated
+   --       over the validation-derived effective heating time.
+   --   A3: beta(x)/beta_ref = (Cd_ref*A_ref)/(Cd(x)*A(x)) — vehicle
+   --       mass cancels (both betas share the same mass), so no mass
+   --       parameter is needed in J(x).
+   --   A4: all four reference values come from Current_Refs, which the
+   --       Python driver loads DYNAMICALLY from
+   --       unified_comparison_data.json (Set_Validation_Refs); package
+   --       defaults mirror that file (V1 fallback).
+   -- THEOREMS:
+   --   T1: every term >= 0 for Pre-satisfying X => Total >= 0
+   --       (Post condition) and Heat_Load_Jcm2 >= 0 (Post).
+   --   T2: at the default geometry with default refs, Total ~= 1.96
+   --       (unit-scale ratio terms, penalties 0).
+   --   T3: doubling Q_target halves only the heat-load term's
+   --       numerator share (exercised by Test_HIAD_Cost_Function).
+   -- APPLICATIONS:
+   --   Single source of truth: HIAD_Cost_Function returns
+   --   HIAD_Cost_Components(X).Total; FFI exposes the breakdown via
+   --   HIAD_Cost_Components_C for hiad_optimizer.py JSON reporting.
+   -- CITATIONS:
+   --   [Nocedal06] Nocedal & Wright (2006) Sec 3.1 (weighted sums),
+   --               Sec 17.1 (quadratic penalties).
+   --   [SuttonGraves] Sutton & Graves (1957), NASA TR R-376.
+   --   [unified_comparison_data.json] dynamic reference values.
+   -- ============================================================================
+   function HIAD_Cost_Components (X : Param_Vector) return Cost_Components is -- nosec
    begin
       declare
+         --  Geometry: max radius, frontal area, reference frontal area
          R_Max : constant Float := Compute_Max_Radius (X(1), X(2), X(3));
-         Cd    : constant Float := Estimate_Cd (X(1), X(2), X(3));
-         --  Penalty: max(0, R_max - 3.0)^2 — IRVE-3 diameter limit
-         Diff_R : constant Float := R_Max - Max_Radius_Limit;
-         Pen_1  : constant Float := Max (0.0, Diff_R) ** 2;
-         --  Penalty: max(0, 1.0 - R_N)^2 — minimum nose radius
-         Diff_N : constant Float := Nose_Radius_Limit - X(1);
-         Pen_2  : constant Float := Max (0.0, Diff_N) ** 2;
+         A     : constant Float := Compute_Frontal_Area (R_Max);
+         A_Ref : constant Float := Compute_Frontal_Area
+                   (Compute_Max_Radius
+                      (Default_R_N_MOP, Default_R_Tor_MOP,
+                       Default_Half_Cone_MOP));
+         --  Snapshot heat flux: ISA density at the validated altitude,
+         --  Sutton-Graves with design nose radius (W/m^2 -> W/cm^2)
+         Rho   : constant Float :=
+           StellarOrion_Environment.Atmosphere_Density (Snapshot_Alt_Km);
+         Qdot  : constant Float :=
+           Sutton_Graves_Heat (Rho, X(1), Snapshot_Vel_Ms) / 10_000.0;
+         --  Drag coefficient for the candidate geometry
+         Cd_X  : constant Float := Estimate_Cd (X(1), X(2), X(3));
+         --  Term 1: Total Heat Load Q(x) = q(x) * tau  [J/cm^2]
+         Q_Load : constant Float := Qdot * Current_Refs.Tau_Sec;
+         HL_R   : constant Float := Q_Load / Current_Refs.Q_Target;
+         --  Term 2: peak heat-flux ratio
+         Flux_R : constant Float := Qdot / Current_Refs.Flux_Ref;
+         --  Term 3: ballistic-coefficient deviation (mass cancels,
+         --  axiom A3)
+         Beta_R : constant Float :=
+           (Current_Refs.Cd_Ref * A_Ref) / (Cd_X * A);
+         Beta_Dv : constant Float := (Beta_R - 1.0) ** 2;
+         --  Term 4: drag-coefficient ratio
+         Cd_R   : constant Float := Cd_X / Current_Refs.Cd_Ref;
+         --  Term 5: quadratic penalties (envelope + TPS + payload)
+         Pen_R  : constant Float := Max (0.0, R_Max - Max_Radius_Limit) ** 2;
+         Pen_N  : constant Float := Max (0.0, Nose_Radius_Limit - X(1)) ** 2;
+         Pen_P  : constant Float :=
+           Max (0.0, Payload_Nose_Radius_Min - X(1)) ** 2;
+         Penalty : constant Float := Lambda_Pen * (Pen_R + Pen_N + Pen_P);
+         --  Weighted sum — W_Heat_Load dominates (stated objective:
+         --  lowest Total Heat Load, ads AXIOM A2)
+         Total   : constant Float :=
+           W_Heat_Load * HL_R
+           + W_Flux * Flux_R
+           + W_Beta * Beta_Dv
+           + W_Cd * Cd_R
+           + Penalty;
       begin
-         return Cd + 100.0 * Pen_1 + 100.0 * Pen_2;
+         --  Murphy's-law guards: contracts are not runtime-enforced
+         --  unless -gnata is active, so check every denominator that
+         --  the spec Post relies on (no silent NaN/Inf propagation).
+         if Cd_X <= 0.0 or A <= 0.0 or A_Ref <= 0.0
+           or Current_Refs.Q_Target <= 0.0
+           or Current_Refs.Flux_Ref <= 0.0
+           or Current_Refs.Cd_Ref <= 0.0
+           or Current_Refs.Tau_Sec <= 0.0
+           or Total < 0.0
+         then
+            raise Constraint_Error
+              with "HIAD_Cost_Components: non-positive denominator or "
+                   & "negative total (corrupt refs or geometry)";
+         end if;
+         return (Heat_Load_Ratio => HL_R,
+                 Flux_Ratio      => Flux_R,
+                 Beta_Dev        => Beta_Dv,
+                 Cd_Ratio        => Cd_R,
+                 Penalty         => Penalty,
+                 Total           => Total,
+                 Heat_Load_Jcm2  => Q_Load);
       end;
    exception
       when E : others =>
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
-         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      HIAD_Cost_Function");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      HIAD_Cost_Components");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] X(1)=" & Float'Image(X(1)) &
+                              " X(2)=" & Float'Image(X(2)) &
+                              " X(3)=" & Float'Image(X(3)));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Q_Target=" & Float'Image(Current_Refs.Q_Target) &
+                              " Flux_Ref=" & Float'Image(Current_Refs.Flux_Ref) &
+                              " Tau=" & Float'Image(Current_Refs.Tau_Sec) &
+                              " Cd_Ref=" & Float'Image(Current_Refs.Cd_Ref));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         raise;
+   end HIAD_Cost_Components;
+
+   -- ====================================================================
+   -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
+   -- Clock Source: Ada.Real_Time (backed by CLOCK_MONOTONIC)
+   -- Resolution: 1ns (nanosecond)
+   -- Estimated Processing Time: O(1) — delegates to Components
+   -- CPU Time: ~1μs for typical input
+   -- WCET: 10μs with 10× safety margin
+   -- Space Complexity: O(1) — stack only
+   -- ====================================================================
+   --  coverage: body for HIAD_Cost_Function
+   -- ============================================================================
+   --  Thin delegate: J(x) = HIAD_Cost_Components(X).Total — one
+   --  implementation, zero divergence risk between the scalar cost
+   --  used by the FFI/BO loop and the breakdown reported in JSON.
+   --  The handler below only adds the J(x)-entry marker; full context
+   --  is already printed by HIAD_Cost_Components' own handler.
+   -- ============================================================================
+   function HIAD_Cost_Function (X : Param_Vector) return Float is -- nosec
+   begin
+      return HIAD_Cost_Components (X).Total;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      HIAD_Cost_Function (J(x) entry)");
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] X(1)=" & Float'Image(X(1)) &
                               " X(2)=" & Float'Image(X(2)) &
                               " X(3)=" & Float'Image(X(3)));
@@ -3013,55 +3254,122 @@ package body StellarOrion_Optimization is
    --  coverage: STC wrapper for HIAD_Cost_Function
    -- ============================================================================
    -- AXIOMS:
-   --   A1: Test exercises HIAD_Cost_Function at center point and verifies
-   --       cost is positive and within expected range.
+   --   A1: Test exercises J(x) = HIAD_Cost_Components(X).Total at the
+   --       center point with DEFAULT validation refs (set explicitly
+   --       for test isolation of the shared Current_Refs state).
+   --   A2: six behavioural checks: scalar/component agreement, unit
+   --       range, non-negative components, payload-constraint penalty
+   --       (R_N = 0.995 < R_pay_min), envelope penalty (R_max > 3),
+   --       and DYNAMIC-REF sensitivity (doubling Q_target lowers J).
    -- THEOREMS:
-   --   T1: At center point (1.5, 0.14, 60.0), cost should be ~1.47 (Cd_Ref).
-   --   T2: Cost function must return >= 0.0 for all feasible inputs.
+   --   T1: J(center) ~= 1.96 with default refs (HIAD_Cost_Components
+   --       T2); window [1.0, 5.0] absorbs FP/model jitter.
+   --   T2: every Cost_Components field is >= 0 by J(x) axiom A1;
+   --       Heat_Load_Jcm2 > 0 requires q_SG > 0 at the snapshot.
+   --   T3: refs are RESTORED to defaults at the end so later tests
+   --       observe package-default behaviour (shared-state hygiene).
    -- APPLICATIONS:
-   --   Deterministic invocation with pragma Assert checks.
+   --   pragma Assert on the All_OK aggregate; each check sets All_OK
+   --   False with a specific comment (no silent skips).
    -- CITATIONS:
-   --   [Nocedal06] Nocedal & Wright (2006), Numerical Optimization, Sec 17.1.
+   --   [Nocedal06] Nocedal & Wright (2006), Numerical Optimization, Sec 3.1.
+   --   [Rapisarda2023] payload dims via Discussion.md lines 46-47.
    -- ============================================================================
    procedure Test_HIAD_Cost_Function is -- nosec
    begin
       declare
+         --  Package-default validation refs (V1 fallback values; the
+         --  test sets them EXPLICITLY so it is independent of what
+         --  previous callers left in the shared Current_Refs state).
+         D_Q : constant Float := 165.715973;
+         D_F : constant Float := 14.361;
+         D_T : constant Float := 13.582459;
+         D_C : constant Float := 1.462536;
          X_Center : constant Param_Vector := (1.5, 0.14, 60.0);
          Cost     : Float;
+         Comp     : Cost_Components;
          All_OK   : Boolean := True;
       begin
-         Cost := HIAD_Cost_Function (X_Center);
+         Set_Validation_Refs (D_Q, D_F, D_T, D_C);
 
-         --  Cost must be positive
-         if Cost <= 0.0 then
+         --  (1) Scalar J and component breakdown agree EXACTLY —
+         --     HIAD_Cost_Function delegates to Components.Total
+         --     (single source of truth, no rounding path difference).
+         Cost := HIAD_Cost_Function (X_Center);
+         Comp := HIAD_Cost_Components (X_Center);
+         if Comp.Total /= Cost then
             All_OK := False;
          end if;
 
-         --  Cost must be >= Cd_Ref (1.47) at center point (no penalties)
-         --  Allow some tolerance for the shape factor
+         --  (2) Unit-scale range: J(center) ~= 1.96 with default refs
+         --     (Components T2); wide window absorbs FP/model jitter.
          if Cost < 1.0 or Cost > 5.0 then
             All_OK := False;
          end if;
 
-         --  Test at boundary: R_N at minimum (should trigger nose penalty)
+         --  (3) Every component non-negative (J axiom A1) and the
+         --     predicted absolute Total Heat Load strictly positive
+         --     (requires q_SG > 0 at the validated snapshot).
+         if Comp.Heat_Load_Ratio < 0.0
+           or Comp.Flux_Ratio < 0.0
+           or Comp.Beta_Dev < 0.0
+           or Comp.Cd_Ratio < 0.0
+           or Comp.Penalty < 0.0
+           or Comp.Heat_Load_Jcm2 <= 0.0
+         then
+            All_OK := False;
+         end if;
+
+         --  (4) PAYLOAD SIZE CONSTRAINT: R_N = 0.995 m (a real CCD
+         --     axial sample: 1.5 - alpha*0.3) lies below
+         --     R_pay_min ~= 1.0434 m, so the quadratic payload
+         --     penalty must push J well above the center value.
          declare
-            X_Bound : constant Param_Vector := (1.0, 0.14, 60.0);
-            Cost_Bound : Float;
+            X_Payload : constant Param_Vector := (0.995, 0.14, 60.0);
+            Cost_Pay  : Float;
          begin
-            Cost_Bound := HIAD_Cost_Function (X_Bound);
-            --  Cost at boundary should be higher than center
-            --  (penalty adds ~100 * max(0, 1.0 - 1.0)^2 = 0, but nose < 1.0 adds)
-            --  R_N=1.0 < Nose_Radius_Limit=1.0, so Diff_N = 1.0-1.0 = 0.0, no penalty
-            --  But R_N=1.0 < R_N_Min_MOP=1.2, still valid for cost function
-            if Cost_Bound <= 0.0 then
+            Cost_Pay := HIAD_Cost_Function (X_Payload);
+            if Cost_Pay <= Cost + 0.1 then
                All_OK := False;
             end if;
          end;
 
-         pragma Assert (All_OK, "HIAD cost function must return valid costs");
+         --  (5) ENVELOPE CONSTRAINT: (1.8, 0.22, 80.0) gives
+         --     R_max ~= 4.38 m > 3.0 m limit, so Penalty must be
+         --     at least Lambda_Pen * (4.38-3.0)^2 > 100.
+         declare
+            X_Big    : constant Param_Vector := (1.8, 0.22, 80.0);
+            Comp_Big : Cost_Components;
+         begin
+            Comp_Big := HIAD_Cost_Components (X_Big);
+            if Comp_Big.Penalty < Lambda_Pen then
+               All_OK := False;
+            end if;
+         end;
 
-         Ada.Text_IO.Put_Line("[PASS] Test_HIAD_Cost_Function: cost=" & Float'Image(Cost) &
-                              " at center point");
+         --  (6) DYNAMIC REFS (Components T3): doubling Q_target halves
+         --     ONLY the heat-load numerator => J must strictly drop.
+         Set_Validation_Refs (2.0 * D_Q, D_F, D_T, D_C);
+         declare
+            Cost_D2 : constant Float := HIAD_Cost_Function (X_Center);
+         begin
+            if Cost_D2 >= Cost then
+               All_OK := False;
+            end if;
+         end;
+
+         --  (T3) restore package defaults for any later callers
+         --  (shared-state hygiene — Current_Refs is package-wide).
+         Set_Validation_Refs (D_Q, D_F, D_T, D_C);
+
+         pragma Assert (All_OK,
+                        "HIAD J(x) checks failed: agreement/range/"
+                        & "components/payload/envelope/dynamic-refs");
+
+         Ada.Text_IO.Put_Line("[PASS] Test_HIAD_Cost_Function: J=" &
+                              Float'Image(Cost) &
+                              " Q(x)=" & Float'Image(Comp.Heat_Load_Jcm2) &
+                              " J/cm^2 penalty=" & Float'Image(Comp.Penalty));
       end;
    exception
       when E : others =>

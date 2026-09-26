@@ -1,1 +1,1 @@
-clang: warning: overriding deployment version from '16.0' to '26.0' [-Woverriding-deployment-version]
+test_main.adb:408:39: error: literal out of range of type Standard.Character

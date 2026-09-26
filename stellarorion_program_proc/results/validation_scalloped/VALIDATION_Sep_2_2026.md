@@ -35,7 +35,7 @@
 | Mach | 10.29 | Trajectory profile |
 | Dynamic Pressure | 4,392.5 Pa | ½ρV² |
 | Air Density | 7.696 × 10⁻⁴ kg/m³ | ISA at 51.82 km |
-| Temperature | 267.85 K | ISA at 51.82 km |
+| Temperature | 268.36 K | ISA at 51.82 km |
 | Ambient Pressure | 59.28 Pa | ISA at 51.82 km |
 | SPARTA vstream | 2,700 m/s | `in.hiad` input |
 
@@ -129,7 +129,7 @@ The simulation ran for 2,200 timesteps with statistics output every 100 steps.
 | `heatflux_sg_Wm2` | Sutton-Graves analytical: C_SG × √(ρ/R_n) × V³ | W/m² | Continuum estimate |
 | `heat_flux_fr_wm2` | Fay-Riddell stagnation heat flux | W/m² | Continuum estimate (V=3379) |
 
-> **Important**: The `heatflux_avg_Wm2` column is the per-element arithmetic mean (divides by element count N=76, NOT by surface area). The SPARTA compute `f_1[3]` reports kinetic energy flux per surface element. The code comment at line 1577 references "Heat_Sum / Surf_Area" but the actual implementation (line 2095) uses `Heat_Sum / Float(N)`.
+> **Important**: The `heatflux_avg_Wm2` column is the per-element arithmetic mean (divides by element count N=76, NOT by surface area). The SPARTA compute `f_1[3]` reports kinetic energy flux per surface element. The declaration comment at line 2319 references "Heat_Sum / Surf_Area" but the actual implementation (line 3127) uses `Heat_Sum / Float(N)`.
 
 ### 3.4 Derived Thermal Variables
 
@@ -279,7 +279,7 @@ All 21 data columns (22 CSV columns minus 'step', used as x-axis) plotted vs ste
 | G-load | `g_load_vs_step.png` | Deceleration (16.83g constant) |
 | Heat load | `heat_load_jcm2_vs_step.png` | Cumulative heat load (165.72 J/cm²) |
 | Drag sum | `drag_sum_N_vs_step.png` | Total drag force (62,470 → 45,410 N) |
-| Drag avg | `drag_avg_N_vs_step.png` | Per-element average drag (793 → 598 N) |
+| Drag avg | `drag_avg_N_vs_step.png` | Per-element average drag (822 → 598 N) |
 | Lift sum | `lift_sum_N_vs_step.png` | Total lift force (−12,928 → −17,263 N) |
 | Lift avg | `lift_avg_N_vs_step.png` | Per-element average lift (−170 → −227 N) |
 | Velocity | `vel_ms_vs_step.png` | Freestream velocity (3,379 m/s constant) |
@@ -287,7 +287,7 @@ All 21 data columns (22 CSV columns minus 'step', used as x-axis) plotted vs ste
 | Altitude | `alt_km_vs_step.png` | Flight altitude (51.82 km constant) |
 | Dynamic pressure | `dyn_press_pa_vs_step.png` | Dynamic pressure (4,393 Pa constant) |
 | Downrange | `downrange_km_vs_step.png` | Downrange distance (0.0 km, single-point) |
-| Time | `time_s_vs_step.png` | Simulation wall-clock time (0 → 15,500 s) |
+| Time | `time_s_vs_step.png` | Simulation wall-clock time (constant 96 s in CSV; see §2 CPU column for 0 → ~15,500 s) |
 | Ambient pressure | `ambient_pressure_pa_vs_step.png` | ISA pressure (59.28 Pa constant) |
 | Ambient temp | `ambient_temp_k_vs_step.png` | ISA temperature (268.36 K constant) |
 
@@ -325,7 +325,7 @@ Surface heat flux distribution from VTU data (6 steps × 4 plot types):
 
 > Negative values at later steps indicate statistical noise in the time-averaged DSMC data (energy flux can momentarily appear negative due to particle statistics).
 
-**Total plots generated**: 51 PNGs (21 CSV + 6 derived + 24 VTU)
+**Total plots generated**: 52 PNGs (21 CSV + 6 derived + 24 VTU + dashboard frame)
 
 ---
 
@@ -345,12 +345,13 @@ Surface heat flux distribution from VTU data (6 steps × 4 plot types):
 
 ## 8. Code Fixes Applied
 
-Four critical Ada fixes were required to make the simulation valid:
+Five critical Ada fixes were required to make the simulation valid:
 
 1. **Sin_Rad/Cos_Rad range reduction** (`stellarorion_geometry.adb`): Fold large arguments into [-π, π] for Taylor series accuracy
 2. **Run_SPARTA surf copy path** (`stellarorion_sparta.adb`): Read surf file from `Results_Dir`, not hardcoded repo root
 3. **Parse_Surf_Geometry state exit** (`stellarorion_sparta.adb`): Exit State=1 when "Lines" keyword detected, preventing Curve corruption
 4. **Heat_Flux_Avg dimensional correction** (`stellarorion_sparta.adb`): Changed from `Heat_Sum / Surf_Area` (W/m⁴) to `Heat_Sum / Float(N)` (W/m²)
+5. **VTU connectivity spacing** (`stellarorion_sparta.adb`): Fixed missing space after N3 in quad connectivity (VTK XML parse error)
 
 ### 8.1 GNATprove Level 4 Validation (2026-09-02)
 
@@ -364,7 +365,7 @@ Full-program GNATprove run at `--level=4` on the entire codebase:
 | Unproved | 54 | 6% |
 | Flow analyzed | 134 | 15% |
 
-**Key finding**: `stellarorion_sparta` has `pragma SPARK_Mode (Off)` in its spec (line 17) because it performs subprocess calls (Docker/SPARTA). GNATprove **skips** this unit entirely — our 3 comment blocks (lines ~388, ~2057, ~2185) do not affect proof.
+**Key finding**: `stellarorion_sparta` has `pragma SPARK_Mode (Off)` in its spec (line 17) because it performs subprocess calls (Docker/SPARTA). GNATprove **skips** this unit entirely — our 3 comment blocks (lines ~772, ~1999, ~3127) do not affect proof.
 
 **Unproved checks** (54 total, all pre-existing in other units):
 - `stellarorion_geometry`: Sin_Rad/Cos_Rad/Sin_Deg/Cos_Deg — Taylor series overflow in trig wrappers (8 unproved)
@@ -425,7 +426,7 @@ Our code reads **raw per-element** f_1[3] values from SPARTA surf dumps:
 3. **Multi-window time averaging**: Run multiple stats_interval windows and average
 4. **Wilmoth bridging**: Fit our DSMC data points to the bridging function for smooth hc(Kn)
 
-**Code references**: Comments added to `stellarorion_sparta.adb` at lines ~388, ~2057, ~2185 documenting this analysis.
+**Code references**: Comments added to `stellarorion_sparta.adb` at lines ~772, ~1999, ~3127 documenting this analysis.
 
 ---
 
@@ -434,15 +435,15 @@ Our code reads **raw per-element** f_1[3] values from SPARTA surf dumps:
 | Artifact | Path |
 |----------|------|
 | Validation CSV | `results/validation_scalloped/validation_timeseries.csv` (22 rows, 22 columns) |
-| Trajectory Profile | `results/validation_scalloped/trajectory_profile.csv` (111 rows) |
+| Trajectory Profile | `results/validation_scalloped/trajectory_profile.csv` (186 rows) |
 | Raw SPARTA Dumps | `results/validation_scalloped/surf.*.out` (cleaned after completion) |
-| VTU Files | `results/validation_scalloped/paraview/surf_*.vtu` (22 files) |
+| VTU Files | `results/validation_scalloped/paraview/surf_*.vtu` (23 files) |
 | CSV Plots | `results/validation_scalloped/plots/*.png` (21) |
 | Derived Plots | `results/validation_scalloped/plots/*.png` (6) |
 | VTU Visualizations | `results/validation_scalloped/plots/vtu_*.png` (24) |
 | Derived Plot Script | `stellarorion_program_proc/scripts/make_derived_plots.py` |
 | VTU Visualization Script | `stellarorion_program_proc/scripts/make_vtu_visualization.py` |
-| Comparison Script | `stellarorion_program_proc/scripts/compare_validation.py` |
+| Comparison Script | `stellarorion_program_proc/compare_validation.py` |
 | Discussion Document | `Sep 2 Discussion.md` |
 
 ---
@@ -455,7 +456,7 @@ Our code reads **raw per-element** f_1[3] values from SPARTA surf dumps:
 4. **Mesh refinement**: 76 elements may be too coarse for reliable peak heat flux
 5. **Internal energy modes**: SPARTA 5-species air includes vibrational modes; verify ke compute captures total enthalpy
 6. **Smooth vs Scalloped comparison**: Update with smooth run data when available
-7. **Code comment mismatch**: STRUCT comment at line 1577 says "Heat_Sum / Surf_Area" but code uses "Heat_Sum / Float(N)"
+7. **Code comment mismatch**: Declaration comment at line 2319 says "Heat_Sum / Surf_Area" but code at line 3127 uses "Heat_Sum / Float(N)"
 
 ---
 

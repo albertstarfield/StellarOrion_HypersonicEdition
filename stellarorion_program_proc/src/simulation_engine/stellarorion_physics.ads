@@ -494,6 +494,115 @@ package StellarOrion_Physics is
           Post => Density_From_Number'Result >= 0.0;
 
    -- -----------------------------------------------------------------
+   --  Viscous-Form Mean Free Path / Reynolds Number / Stagnation Pressure
+   -- -----------------------------------------------------------------
+   --  MIGRATION NOTE (Python -> Ada): these three formulas previously
+   --  lived in src/python (validation_pipeline.py isa_atmosphere and
+   --  generate_aerodynamics_profiles; generate_outputs.py _compute_frame_
+   --  data).  Python now calls them through StellarOrion_FFI with a
+   --  local-formula fallback when the dylib symbol is missing.
+
+   --  Mean free path from dynamic viscosity (viscous form) [m].
+   --  lambda = mu / (rho * sqrt(pi/2 * R_specific * T))
+   --  R_specific = 287.05287 J/(kg K) (dry air, ISO 2533).
+   --
+   --  AXIOMS (physical envelope):
+   --    AXIOM V1: mu in [0, 1e-3] Pa s (Sutherland air ~1.5e-5 ..
+   --      3.5e-5 over 0..120 km; 1e-3 ceiling margin).
+   --    AXIOM V2: rho = 0.0 (vacuum sentinel, returns 0.0) or rho in
+   --      [1e-10, 1e4] kg/m^3.  Floor: denominator bound below; ISA at
+   --      120 km is ~6.9e-6 kg/m^3, so 1e-10 is 4 orders of margin.
+   --    AXIOM V3: T = 0.0 (guard sentinel, returns 0.0) or T in
+   --      [180, 3000] K (coldest ISA point 186.87 K at 11 km;
+   --      3000 K thermosphere/exosphere margin).
+   --  OVERFLOW PROOF: sqrt term >= sqrt(pi/2 * 287.05287 * 180)
+   --    = 285.0; denominator >= 1e-10 * 285 = 2.85e-8;
+   --    lambda <= 1e-3 / 2.85e-8 = 3.5e4 m << Float'Last (3.4e38).
+   --  PARITY: guard (rho > 0 and T > 0) matches the former Python
+   --    expression `mu / (rho * sqrt(pi/2 * R * T)) if (rho > 0 and T > 0)
+   --    else 0.0` bit-for-bit within the Pre envelope.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Test_Mean_Free_Path_Viscous").
+   --  CITATION: [Bird1994] Bird (1994), Molecular Gas Dynamics, Sec 1.5.
+   function Mean_Free_Path_Viscous
+     (Mu          : Float;
+      Density     : Float;
+      Temperature : Float) return Float
+     with Pre  => Mu >= 0.0
+                   and Mu <= 1.0e-3
+                   and (Density = 0.0
+                        or (Density >= 1.0e-10
+                            and Density <= 1.0e4))
+                   and (Temperature = 0.0
+                        or (Temperature >= 180.0
+                            and Temperature <= 3000.0)),
+          Post => Mean_Free_Path_Viscous'Result >= 0.0;
+
+   --  Reynolds number Re = rho * V * L / mu (dimensionless).
+   --
+   --  AXIOMS (physical envelope):
+   --    AXIOM E1: rho in [0, 1e4] kg/m^3 (same envelope as
+   --      Dynamic_Pressure AXIOM Q1).
+   --    AXIOM E2: V in [0, 1e5] m/s (same envelope as AXIOM Q2).
+   --    AXIOM E3: L in [0, 100] m (vehicle characteristic length;
+   --      100 m covers the largestHIAD concepts with margin).
+   --    AXIOM E4: mu = 0.0 (zero-viscosity sentinel, returns 0.0) or
+   --      mu in [1e-9, 1e-3] Pa s.  Floor 1e-9 bounds the quotient
+   --      (codebase convention: division denominators floored, cf.
+   --      Ballistic_Coefficient B3 Drag_Force >= 1e-6).
+   --  OVERFLOW PROOF: numerator <= 1e4 * 1e5 * 100 = 1e11;
+   --    denominator >= 1e-9 => Re <= 1e20 << Float'Last.
+   --  PARITY: guard (mu > 0) matches the former Python expression
+   --    `rho * v * L / mu if mu > 0 else 0.0` within the Pre envelope.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Test_Reynolds_Number").
+   --  CITATION: [White2006] White (2006), Viscous Fluid Flow, Sec 1.2.
+   function Reynolds_Number
+     (Density  : Float;
+      Velocity : Float;
+      Length   : Float;
+      Mu       : Float) return Float
+     with Pre  => Density >= 0.0
+                   and Density <= 1.0e4
+                   and Velocity >= 0.0
+                   and Velocity <= 1.0e5
+                   and Length >= 0.0
+                   and Length <= 100.0
+                   and (Mu = 0.0
+                        or (Mu >= 1.0e-9 and Mu <= 1.0e-3)),
+          Post => Reynolds_Number'Result >= 0.0;
+
+   --  Stagnation pressure P_stag = P_amb + 0.5 * rho * V^2 [Pa].
+   --  (AXIOM F3 in StellarOrion_Trajectory_Output; the arithmetic is
+   --  Dynamic_Pressure, delegated so the proof is reused.)
+   --
+   --  AXIOMS (physical envelope):
+   --    AXIOM S1: P_amb in [0, 1e6] Pa (ISA sea level 101325 Pa;
+   --      1e6 ceiling margin).
+   --    AXIOM S2: rho in [0, 1e4] kg/m^3 (Dynamic_Pressure Q1).
+   --    AXIOM S3: V in [0, 1e5] m/s (Dynamic_Pressure Q2).
+   --  OVERFLOW PROOF: P_amb <= 1e6; q <= 5.0e13 (Dynamic_Pressure
+   --    POST BOUND); sum <= 5.000001e13 << Float'Last.
+   --  PARITY: matches former Python expression
+   --    `p + 0.5 * rho * v ** 2` (generate_outputs.py) via the
+   --    identical Dynamic_Pressure formula.
+   --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   --  self-test registry: Register_Routine ("Test_Stagnation_Pressure").
+   --  CITATION: [Anderson06] Anderson (2006), Fundamentals of
+   --    Aerodynamics, Ch. 9 (isentropic stagnation relations, incompressible limit).
+   function Stagnation_Pressure
+     (P_Amb    : Float;
+      Density  : Float;
+      Velocity : Float) return Float
+     with Pre  => P_Amb >= 0.0
+                   and P_Amb <= 1.0e6
+                   and Density >= 0.0
+                   and Density <= 1.0e4
+                   and Velocity >= 0.0
+                   and Velocity <= 1.0e5,
+          Post => Stagnation_Pressure'Result >= P_Amb;
+
+   -- -----------------------------------------------------------------
    --  Survivability
    -- -----------------------------------------------------------------
 
@@ -650,6 +759,18 @@ package StellarOrion_Physics is
     --  Verify trajectory profile computation for IRVE-3 entry conditions.
     procedure Test_Compute_Trajectory_Profile
       with Pre => True, Post => True;
+    --  Verify viscous mean free path: normal value, rho=0.0 and T=0.0
+    --  fallbacks (Python parity), and non-negativity over the Pre envelope.
+    procedure Test_Mean_Free_Path_Viscous
+      with Pre => True, Post => True;
+    --  Verify Reynolds number: standard sea-level value, mu=0.0
+    --  fallback (Python parity), and non-negativity over the Pre envelope.
+    procedure Test_Reynolds_Number
+      with Pre => True, Post => True;
+    --  Verify stagnation pressure: P_amb + q delegation, Post
+    --  result >= P_amb, and zero-velocity identity P_stag = P_amb.
+    procedure Test_Stagnation_Pressure
+      with Pre => True, Post => True;
     -- Register_Routine: "Test_Ln"
     -- Register_Routine: "Test_Exp"
     -- Register_Routine: "Test_Pow"
@@ -657,6 +778,9 @@ package StellarOrion_Physics is
     -- Register_Routine: "Test_Cosine"
     -- Register_Routine: "Test_Fay_Riddell_Heat"
     -- Register_Routine: "Test_Compute_Trajectory_Profile"
+    -- Register_Routine: "Test_Mean_Free_Path_Viscous"
+    -- Register_Routine: "Test_Reynolds_Number"
+    -- Register_Routine: "Test_Stagnation_Pressure"
 --
 -- References:
 --   - https://learn.adacore.com/courses/intro-to-ada/

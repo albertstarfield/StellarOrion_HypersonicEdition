@@ -717,7 +717,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
    end Run_Test_PINN_Calibration;
 
    -- ==================================================================
-   --  New Test Modes (full parity with main.py)
+   --  New Test Modes (full parity with the retired main.py, removed 2026-08-21)
 
 -- @test: Run_Test_Sparta_Integration procedure verified
    -- ==================================================================

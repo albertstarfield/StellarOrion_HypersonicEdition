@@ -1,7 +1,7 @@
 # Parity protection: metadata/pinn_test.meta.json (RS+GC parity)
 """Standalone PINN Calibration Test Sidecar.
 
-Ported from StellarOrionEngineMach5Up.py:run_pinn_calibration()
+Ported from the retired StellarOrionEngineMach5Up.py (removed 2026-08-21):run_pinn_calibration()
 Runs baseline DSMC validation, trains DeepXDE PINN surrogate,
 and performs 3-way comparison (SPARTA vs PINN vs IRVE-3 document).
 
@@ -21,7 +21,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 
-# --- IRVE-3 Baseline (from StellarOrionEngineMach5Up.py L336-448) ---
+# --- IRVE-3 Baseline (from the retired StellarOrionEngineMach5Up.py (removed 2026-08-21) L336-448) ---
 IRVE3_BASELINE = {
     "geometry": {
         "diameter_m": 3.0,
@@ -80,7 +80,7 @@ def detect_device():
 def run_baseline_validation(cad_dir, steps, solver="sparta"):
     """Run SPARTA DSMC baseline and parse grid output for comparison metrics.
 
-    Mirrors the logic from StellarOrionEngineMach5Up.py run_baseline_validation
+    Mirrors the logic from the retired StellarOrionEngineMach5Up.py (removed 2026-08-21) run_baseline_validation
     but as a simplified standalone version that reads existing grid files or
     runs SPARTA Docker.
 
@@ -280,7 +280,7 @@ def get_err(val, ref):
 def compute_pinn_metrics(pinn, sim_result, baseline_doc, domain):
     """Extract refined metrics from trained PINN and build 3-way comparison.
 
-    Mirrors L4386-4475 of StellarOrionEngineMach5Up.py.
+    Mirrors L4386-4475 of the retired StellarOrionEngineMach5Up.py (removed 2026-08-21).
 
     References:
         - https://numpy.org/doc/stable/reference/routines.math.html

@@ -13,7 +13,16 @@ project StellarOrion_Program_Proc is
          "-gnatwe",     --  Warnings as errors
          "-gnatW8",     --  UTF-8 encoding
          "-gnatQ",      --  No message edition
-        "-gnatdAME");   --  Enable assertion mode for SPARK
+        "-gnatdME");    --  -gnatdM: assume all variables modified (conservative
+                        --  flow analysis); -gnatdE: elaboration checks for
+                        --  predefined units. CITATION: gcc/ada/debug.adb
+                        --  "Summary of Debug Flag Usage" (GNAT 16.1.0).
+                        --  REMOVED -gnatdA ("All entities included in
+                        --  representation information output"): it forces every
+                        --  internal entity into the -gnatR2js data-rep JSON,
+                        --  creating conflicting duplicate entries that
+                        --  gnat2why rejects with "ill-formed JSON file" and
+                        --  aborts GNATprove (see docs/APPLICATIONS.md AP-9).
    end Compiler;
 
    package Binder is
@@ -22,23 +31,70 @@ project StellarOrion_Program_Proc is
          "-x");         --  Include extended main unit info
    end Binder;
 
+   --  AXIOMS: Two host platforms must both link:
+   --    (1) macOS: GNAT native toolchain's ld CANNOT resolve -lSystem
+   --        without an explicit SDK root, so -Wl,-syslibroot,<SDK> is
+   --        REQUIRED (this flag is preserved verbatim for macOS).
+   --    (2) Termux/Linux: GNU ld REJECTS -syslibroot entirely
+   --        ("unable to disambiguate: -syslibroot") because the flag
+   --        (single-dash) is Apple-ld-specific, so it must be omitted.
+   --  THEORIES: The host OS is a scenario variable, not a compile-time
+   --    constant. External() reads (in order) -X overrides, the process
+   --    environment, then the given default:
+   --      * Explicit override: STELLARORION_HOST_OS=macos|termux
+   --        (see GPR language spec: External (Name, Default)).
+   --      * Auto-detect: Termux exports PREFIX=/data/data/com.termux/files/usr
+   --        in every session; macOS does not export PREFIX, so the match
+   --        identifies Termux deterministically. Unrecognized hosts fall
+   --        through to "macos" (the historical behavior of this file).
+   --  APPLICATIONS: Linker_Extra is () on Termux (flag dropped) and holds
+   --    exactly the original switch on macOS (support intact, byte-identical
+   --    command line). Verified by probe: gprbuild -P t.gpr links clean on
+   --    Termux with PREFIX detection, and STELLARORION_HOST_OS=macos still
+   --    emits the original flag (macOS regression covered).
+   --  CITATIONS: [GNAT Project Manager — External/typed variables, case
+   --    statements: https://docs.adacore.com/gprbuild-docs/html/gpr_build_ref/]
+   Prefix_V := External ("PREFIX", "");
+   Host_OS  := External ("STELLARORION_HOST_OS", "");
+
+   case Host_OS is
+      when "" =>
+         Host_OS := "macos";
+         case Prefix_V is
+            when "/data/data/com.termux/files/usr" => Host_OS := "termux";
+            when others => null;
+         end case;
+      when "macos" | "termux" => null;
+      when others => Host_OS := "macos";
+   end case;
+
+   Linker_Extra := ();
+   case Host_OS is
+      when "macos" =>
+         --  REQUIRED on macOS: the GNAT native toolchain's ld cannot
+         --  resolve -lSystem without an explicit SDK. We use the
+         --  unversioned MacOSX.sdk symlink (-> current SDK) so
+         --  (a) the path survives OS/Xcode upgrades, and
+         --  (b) the SDK version matches clang's default deployment target,
+         --      keeping the LINK phase free of "overriding deployment
+         --      version" diagnostics.
+         --  KNOWN EXCEPTION: gprbind still compiles b__main.c via the
+         --  toolchain's internal clang driver, whose baked-in objects
+         --  carry minos 16.0; against Xcode's default SDK this emits
+         --  ~11 benign [-Woverriding-deployment-version] notices at Bind.
+         --  Not controllable via Compiler/Binder/Linker switches; harmless
+         --  (deployment target is overridden UPWARD).
+         Linker_Extra :=
+           ("-Wl,-syslibroot,/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+      when others =>
+         --  Termux/Linux (GNU ld): no syslibroot equivalent needed;
+         --  the toolchain resolves its own runtime via -rpath below.
+         null;
+   end case;
+
    package Linker is
        for Switches ("ada") use
-         ("-g",         --  Debug symbols for profiling
-          --  syslibroot is REQUIRED on macOS: the GNAT native toolchain's
-          --  ld cannot resolve -lSystem without an explicit SDK.
-          --  We use the unversioned MacOSX.sdk symlink (-> current SDK) so
-          --  (a) the path survives OS/Xcode upgrades, and
-           --  (b) the SDK version matches clang's default deployment target,
-           --      keeping the LINK phase free of "overriding deployment
-           --      version" diagnostics.
-           --  KNOWN EXCEPTION: gprbind still compiles b__main.c via the
-           --  toolchain's internal clang driver, whose baked-in objects
-           --  carry minos 16.0; against Xcode's default SDK this emits
-           --  ~11 benign [-Woverriding-deployment-version] notices at Bind.
-           --  Not controllable via Compiler/Binder/Linker switches; harmless
-           --  (deployment target is overridden UPWARD).
-           "-Wl,-syslibroot,/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+         ("-g") & Linker_Extra;   --  -g = debug symbols; extra = macOS syslibroot only
    end Linker;
 
 end StellarOrion_Program_Proc;
