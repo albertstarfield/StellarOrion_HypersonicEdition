@@ -327,6 +327,26 @@ _ada_lib.HIAD_Cost_C.restype = ctypes.c_double
 _ada_lib.HIAD_Cost_C.argtypes = [
     ctypes.c_double, ctypes.c_double, ctypes.c_double]
 
+# Bind Ada HIAD_Set_Refs_C(Q_Target, Flux_Ref, Tau_Sec, Cd_Ref) -> int.
+# Returns 0 = refs updated, 1 = Ada-side failure (previous refs kept).
+# Loads the DYNAMIC validation base reference used by J(x) — values come
+# from unified_comparison_data.json via hiad_optimizer._load_validation_refs.
+# [Citation: stellarorion_ffi.ads — HIAD_Set_Refs_C]
+_ada_lib.HIAD_Set_Refs_C.restype = ctypes.c_int
+_ada_lib.HIAD_Set_Refs_C.argtypes = [
+    ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double]
+
+# Bind Ada HIAD_Cost_Components_C(X1, X2, X3, Out x7) procedure.
+# Seven caller-allocated c_double write-backs (ffi.adb axiom block).
+# [Citation: stellarorion_ffi.ads — HIAD_Cost_Components_C]
+_ada_lib.HIAD_Cost_Components_C.restype = None
+_ada_lib.HIAD_Cost_Components_C.argtypes = [
+    ctypes.c_double, ctypes.c_double, ctypes.c_double,
+    ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
+    ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
+    ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
+    ctypes.POINTER(ctypes.c_double)]
+
 
 def estimate_cd(r_n: float, r_tor: float, half_cone_deg: float) -> float:
     """Estimate drag coefficient via Ada/SPARK FFI.
@@ -350,10 +370,19 @@ def estimate_cd(r_n: float, r_tor: float, half_cone_deg: float) -> float:
 
 
 def hiad_cost_function(x1: float, x2: float, x3: float) -> float:
-    """Compute HIAD cost function via Ada/SPARK FFI.
+    """Compute the multi-objective HIAD cost J(x) via Ada/SPARK FFI.
 
-    J(x) = Cd(x) + lambda_1 * max(0, R_max - 3.0)^2
-                    + lambda_2 * max(0, 1.0 - R_N)^2
+    J(x) = W_Heat_Load * Q(x)/Q_target        (primary: lowest Total Heat Load)
+         + W_Flux      * q(x)/q_ref           (peak heat flux)
+         + W_Beta      * (beta(x)/beta_ref - 1)^2   (ballistic coefficient)
+         + W_Cd        * Cd(x)/Cd_ref         (drag coefficient)
+         + Lambda_Pen  * [envelope + TPS + payload-size penalties]
+
+    Q(x) = q_SG(x) * tau is the Sutton-Graves heat flux at the validated
+    snapshot (h=51.8 km, V=3378 m/s) integrated over the validation-derived
+    heating time.  ALL reference values (Q_target, q_ref, tau, Cd_ref) are
+    loaded DYNAMICALLY from unified_comparison_data.json via
+    set_validation_refs() — call that before the first evaluation.
 
     Parameters:
         x1 -- nose radius R_N [m]
@@ -361,13 +390,143 @@ def hiad_cost_function(x1: float, x2: float, x3: float) -> float:
         x3 -- half-cone angle [degrees]
 
     Returns:
-        Cost value (non-negative float)
+        Cost value J(x) >= 0.0
 
-    [Citation: stellarorion_ffi.ads — HIAD_Cost_C]
-    [Citation: Nocedal & Wright (2006), Numerical Optimization, Sec 17.1]
+    Raises:
+        RuntimeError -- Ada returned the negative sentinel (only possible
+            on an internal fault; J(x) >= 0.0 by contract).  Raised so a
+            poisoned value can never win a minimisation silently.
+
+    [Citation: stellarorion_ffi.ads — HIAD_Cost_C / HIAD_Cost_Function]
+    [Citation: Nocedal & Wright (2006), Sec 3.1 weighted sums, Sec 17.1 penalties]
+    [Citation: unified_comparison_data.json — dynamic reference values]
     """
-    return _ada_lib.HIAD_Cost_C(
-        ctypes.c_double(x1), ctypes.c_double(x2), ctypes.c_double(x3))
+    cost = float(_ada_lib.HIAD_Cost_C(
+        ctypes.c_double(x1), ctypes.c_double(x2), ctypes.c_double(x3)))
+    # Safety guard: the Ada side returns -1.0 sentinel on internal fault
+    # (ffi.adb HIAD_Cost_C).  J(x) >= 0.0 always, so a negative value is
+    # corruption — fail loudly instead of letting BO minimise on it.
+    if cost < 0.0:
+        raise RuntimeError(
+            f"hiad_cost_function: negative sentinel {cost!r} for "
+            f"X=({x1}, {x2}, {x3}) — Ada reported an internal fault "
+            f"(check [VERBOSE_ERROR] output above)"
+        )
+    return cost
+
+
+def set_validation_refs(
+    q_target_jcm2: float,
+    flux_ref_wcm2: float,
+    tau_sec: float,
+    cd_ref: float,
+) -> None:
+    """Load the dynamic validation base reference used by J(x) (FFI).
+
+    Parameters:
+        q_target_jcm2 -- Total Heat Load objective target [J/cm^2]
+        flux_ref_wcm2 -- reference peak heat flux [W/cm^2]
+        tau_sec       -- effective heating duration [s]
+        cd_ref        -- reference drag coefficient
+
+    Raises:
+        ValueError  -- any input <= 0 (mirror of the Ada Pre condition;
+            fails HERE rather than inside Ada so the caller gets a
+            Python-level traceback with the bad value).
+        RuntimeError -- Ada refused the update (previous refs kept; the
+            Ada side logged [VERBOSE_ERROR] with full context).
+
+    All values must come from _load_validation_refs() in hiad_optimizer.py
+    (read from unified_comparison_data.json at run time).
+
+    [Citation: stellarorion_ffi.ads — HIAD_Set_Refs_C]
+    [Citation: stellarorion_optimization.ads — Set_Validation_Refs]
+    """
+    for name, val in (
+        ("q_target_jcm2", q_target_jcm2),
+        ("flux_ref_wcm2", flux_ref_wcm2),
+        ("tau_sec", tau_sec),
+        ("cd_ref", cd_ref),
+    ):
+        # Chained comparison also rejects NaN (all comparisons with NaN
+        # are False -> `not False` fires) and +inf — mirrors the Ada
+        # Pre (must be > 0) plus a finiteness requirement.
+        if not (0.0 < val < float("inf")):
+            raise ValueError(
+                f"set_validation_refs: {name}={val!r} must be a "
+                f"positive finite number (got <= 0, inf, or NaN)"
+            )
+    # Narrowing guard: module loader already raises OSError if the dylib
+    # is missing; this keeps pyrefly's flow analysis happy AND fails loud
+    # if the global were ever reset (Murphy's Law).
+    if _ada_lib is None:
+        raise RuntimeError("ada_pinn_wrapper: _ada_lib is None (library not loaded)")
+    rc = int(_ada_lib.HIAD_Set_Refs_C(
+        ctypes.c_double(q_target_jcm2), ctypes.c_double(flux_ref_wcm2),
+        ctypes.c_double(tau_sec), ctypes.c_double(cd_ref)))
+    # rc != 0: the Ada side refused the update (it logged a literal-only
+    # line; dylib contexts cannot build exception strings — secondary
+    # stack unavailable — so THIS wrapper is where full context lives).
+    if rc != 0:
+        raise RuntimeError(
+            f"set_validation_refs: Ada rejected the update (rc={rc}); "
+            f"previous validation refs kept. Values not applied: "
+            f"q_target={q_target_jcm2!r}, flux_ref={flux_ref_wcm2!r}, "
+            f"tau={tau_sec!r}, cd_ref={cd_ref!r}"
+        )
+
+
+def hiad_cost_components(x1: float, x2: float, x3: float) -> dict[str, float]:
+    """Return the full J(x) term breakdown via Ada/SPARK FFI.
+
+    Parameters:
+        x1, x2, x3 -- [R_N (m), r_tor (m), half_cone_deg]
+
+    Returns:
+        dict with keys (all float):
+            heat_load_ratio -- Q(x)/Q_target (primary term)
+            flux_ratio      -- q(x)/q_ref
+            beta_dev        -- (beta(x)/beta_ref - 1)^2
+            cd_ratio        -- Cd(x)/Cd_ref
+            penalty         -- envelope + TPS + payload penalties
+            total           -- J(x); equals hiad_cost_function(x1,x2,x3)
+            heat_load_jcm2  -- absolute predicted Total Heat Load [J/cm^2]
+
+    Raises:
+        RuntimeError -- Ada returned the negative sentinel (internal fault).
+
+    [Citation: stellarorion_ffi.ads — HIAD_Cost_Components_C]
+    [Citation: stellarorion_optimization.ads — Cost_Components record]
+    """
+    outs = [ctypes.c_double(0.0) for _ in range(7)]
+    # Narrowing guard (same as set_validation_refs): keeps pyrefly's flow
+    # analysis happy and fails loud if the dylib global were ever reset.
+    if _ada_lib is None:
+        raise RuntimeError("ada_pinn_wrapper: _ada_lib is None (library not loaded)")
+    _ada_lib.HIAD_Cost_Components_C(
+        ctypes.c_double(x1), ctypes.c_double(x2), ctypes.c_double(x3),
+        ctypes.byref(outs[0]), ctypes.byref(outs[1]),
+        ctypes.byref(outs[2]), ctypes.byref(outs[3]),
+        ctypes.byref(outs[4]), ctypes.byref(outs[5]),
+        ctypes.byref(outs[6]),
+    )
+    total = float(outs[5].value)
+    # Same sentinel contract as hiad_cost_function (ffi.adb axiom block).
+    if total < 0.0:
+        raise RuntimeError(
+            f"hiad_cost_components: negative sentinel {total!r} for "
+            f"X=({x1}, {x2}, {x3}) — Ada reported an internal fault "
+            f"(check [VERBOSE_ERROR] output above)"
+        )
+    return {
+        "heat_load_ratio": float(outs[0].value),
+        "flux_ratio": float(outs[1].value),
+        "beta_dev": float(outs[2].value),
+        "cd_ratio": float(outs[3].value),
+        "penalty": float(outs[4].value),
+        "total": total,
+        "heat_load_jcm2": float(outs[6].value),
+    }
 
 
 # ---------------------------------------------------------------------------

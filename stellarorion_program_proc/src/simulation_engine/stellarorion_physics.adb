@@ -1263,6 +1263,136 @@ package body StellarOrion_Physics is
    end Density_From_Number;
 
    -- ==================================================================
+   --  Mean_Free_Path_Viscous  [SPARK_Mode On — provable math]
+   -- ==================================================================
+   --  lambda = mu / (rho * sqrt(pi/2 * R_specific * T))
+   --  Migrated from src/python/validation_pipeline.py (isa_atmosphere).
+   --
+   -- AXIOMS: V1 mu in [0,1e-3]; V2 rho = 0.0 or [1e-10,1e4]; V3 T = 0.0 or [180,3000].
+   --         Guards rho = 0.0 / T = 0.0 return 0.0 (Python parity: lam = ...
+   --         if (rho > 0 and T > 0) else 0.0).
+   -- THEORIES: Denominator = rho * Sqrt(...) >= 1e-10 * Sqrt(pi/2*287.05*180) > 0,
+   --           guarded by the explicit Denom <= 0.0 branch, so the division is
+   --           total and non-negative over the Pre envelope (Post >= 0.0).
+   -- APPLICATIONS: Guarded division; Sqrt is the body-local SPARK-proven
+   --           Newton-Raphson sqrt (Post >= 0.0). Spec OVERFLOW PROOF bounds
+   --           the result at 3.5e4 m.
+   -- CITATIONS: [Bird1994] Bird (1994), Molecular Gas Dynamics, Sec 1.5;
+   --            [ISO2533] ISO 2533:1975 (dry-air R_specific = 287.05287).
+   -- Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   -- self-test registry: Register_Routine ("Test_Mean_Free_Path_Viscous").
+   function Mean_Free_Path_Viscous
+     (Mu          : Float;
+      Density     : Float;
+      Temperature : Float) return Float
+   is
+      --  Contract: pre  => V1/V2/V3 envelope (spec);
+      --           post => result >= 0.0 m.
+      R_Specific : constant Float := 287.05287;
+      Pi_Const   : constant Float := 3.141592653589793;
+      Thermal    : Float;
+      Denom      : Float;
+   begin
+   --  Safe_Fallback: rho = 0.0 / T = 0.0 return 0.0 (Sabotage §5.1)
+      if Density = 0.0 or Temperature = 0.0 then
+         return 0.0;
+      end if;
+      Thermal := Sqrt (Pi_Const / 2.0 * R_Specific * Temperature);
+      Denom   := Density * Thermal;
+      if Denom <= 0.0 then
+         return 0.0;
+      end if;
+      return Mu / Denom;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Mean_Free_Path_Viscous");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
+   end Mean_Free_Path_Viscous;
+
+   -- ==================================================================
+   --  Reynolds_Number  [SPARK_Mode On — provable math]
+   -- ==================================================================
+   --  Re = rho * V * L / mu
+   --  Migrated from src/python/validation_pipeline.py (generate_aerodynamics_profiles).
+   --
+   -- AXIOMS: E1 rho in [0,1e4]; E2 V in [0,1e5]; E3 L in [0,100];
+   --         E4 Mu = 0.0 or [1e-9,1e-3] (floor bounds the quotient).
+   -- THEORIES: Mu /= 0 after the guard + Pre => Mu >= 1e-9; numerator <= 1e11
+   --           => Re <= 1e20 (spec OVERFLOW PROOF); zero viscosity returns
+   --           0.0 (Python parity: rho * v * L / mu if mu > 0 else 0.0).
+   -- APPLICATIONS: Guarded division with a single Pre-derived floor; no
+   --           transcendental calls — arithmetic only.
+   -- CITATIONS: [White2006] White (2006), Viscous Fluid Flow, Sec 1.2;
+   --            [Anderson06] Anderson (2006), Fundamentals of Aerodynamics.
+   -- Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   -- self-test registry: Register_Routine ("Test_Reynolds_Number").
+   function Reynolds_Number
+     (Density  : Float;
+      Velocity : Float;
+      Length   : Float;
+      Mu       : Float) return Float
+   is
+      --  Contract: pre  => E1..E4 envelope (spec);
+      --           post => Re >= 0.0 (dimensionless).
+   begin
+   --  Safe_Fallback: Mu = 0.0 returns 0.0 (Sabotage §5.1)
+      if Mu = 0.0 then
+         return 0.0;
+      end if;
+      return Density * Velocity * Length / Mu;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Reynolds_Number");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
+   end Reynolds_Number;
+
+   -- ==================================================================
+   --  Stagnation_Pressure  [SPARK_Mode On — provable math]
+   -- ==================================================================
+   --  P_stag = P_amb + 0.5 * rho * V^2  (AXIOM F3; q via Dynamic_Pressure)
+   --  Migrated from src/python/generate_outputs.py (_compute_frame_data).
+   --
+   -- AXIOMS: S1 P_amb in [0,1e6]; S2 rho in [0,1e4]; S3 V in [0,1e5].
+   -- THEORIES: Dynamic_Pressure Post q >= 0.0 => P_amb + q >= P_amb
+   --           (Post discharged by monotonicity of addition).
+   -- APPLICATIONS: Single delegation to the proven Dynamic_Pressure;
+   --           no new arithmetic beyond one addition.
+   -- CITATIONS: [Anderson06] Anderson (2006), Fundamentals of Aerodynamics,
+   --            Ch. 9; [Rapisarda2023] Rapisarda (2023), Sec 4.
+   -- Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
+   -- self-test registry: Register_Routine ("Test_Stagnation_Pressure").
+   function Stagnation_Pressure
+     (P_Amb    : Float;
+      Density  : Float;
+      Velocity : Float) return Float
+   is
+      --  Contract: pre  => S1..S3 envelope (spec) — matches
+      --           Dynamic_Pressure Pre exactly, so the delegation
+      --           obligation discharges from the caller's Pre alone;
+      --           post => result >= P_amb (q >= 0.0).
+   begin
+   --  Safe_Fallback: N/A (no branch points; delegation only)
+      return P_Amb + Dynamic_Pressure (Density => Density,
+                                       Velocity => Velocity);
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Stagnation_Pressure");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
+   end Stagnation_Pressure;
+
+   -- ==================================================================
    --  Is_Survivable
    -- ==================================================================
    --  True iff every metric is within material survivability limits.
@@ -2190,6 +2320,138 @@ package body StellarOrion_Physics is
       -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Contract: pre => True, post => True (Sabotage §ADA_FUNCTION_COVERAGE)
    --  Safe_Fallback: N/A (Sabotage §5.1)
+
+   --  AXIOMS: All inputs inside the V1/V2/V3 Pre envelope (spec of
+   --    Mean_Free_Path_Viscous); sea-level ISA point (mu=1.5e-5,
+   --    rho=1.225, T=288.15) plus the rho=0.0 / T=0.0 sentinel pair.
+   --  THEORIES: (a) sea-level lambda = 1.5e-5/(1.225*360.5) ~ 3.4e-8 m,
+   --    so 0 < lambda < 1e-5 m bounds the physical result;
+   --    (b)(c) guards return exactly 0.0 (Python parity check).
+   --  APPLICATIONS: explicit runtime checks raise Constraint_Error on
+   --    failure (runtime check, not a disable-able pragma Assert).
+   --  CITATIONS: [Bird1994] Bird (1994), Molecular Gas Dynamics, Sec 1.5;
+   --    [ISO2533] ISO 2533:1975 dry-air sea-level point.
+   -- Register_Routine: "Test_Mean_Free_Path_Viscous"
+   procedure Test_Mean_Free_Path_Viscous is
+      Lam_Sea : constant Float :=
+        Mean_Free_Path_Viscous (Mu          => 1.5e-5,
+                                Density     => 1.225,
+                                Temperature => 288.15);
+      Lam_Vac : constant Float :=
+        Mean_Free_Path_Viscous (Mu          => 1.5e-5,
+                                Density     => 0.0,
+                                Temperature => 288.15);
+      Lam_T0  : constant Float :=
+        Mean_Free_Path_Viscous (Mu          => 1.5e-5,
+                                Density     => 1.225,
+                                Temperature => 0.0);
+   begin
+      if not (Lam_Sea > 0.0 and then Lam_Sea < 1.0e-5) then
+         raise Constraint_Error with
+           "Test_Mean_Free_Path_Viscous: sea-level MFP out of (0, 1e-5) m";
+      end if;
+      if Lam_Vac /= 0.0 then
+         raise Constraint_Error with
+           "Test_Mean_Free_Path_Viscous: rho=0.0 guard did not return 0.0";
+      end if;
+      if Lam_T0 /= 0.0 then
+         raise Constraint_Error with
+           "Test_Mean_Free_Path_Viscous: T=0.0 guard did not return 0.0";
+      end if;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Mean_Free_Path_Viscous");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
+   end Test_Mean_Free_Path_Viscous;
+
+   --  AXIOMS: All inputs inside the E1..E4 Pre envelope (spec of
+   --    Reynolds_Number); sea-level point (rho=1.225, V=50, L=1.0,
+   --    mu=1.8e-5) plus the mu=0.0 sentinel.
+   --  THEORIES: (a) Re = 61.25/1.8e-5 ~ 3.4e6 — turbulent flat-plate
+   --    range, so (1e5, 1e7) brackets the physical result;
+   --    (b) mu=0.0 guard returns exactly 0.0 (Python parity check).
+   --  APPLICATIONS: explicit runtime checks raise Constraint_Error on
+   --    failure (runtime check, not a disable-able pragma Assert).
+   --  CITATIONS: [White2006] White (2006), Viscous Fluid Flow, Sec 1.2;
+   --    [Anderson06] Anderson (2006), Fundamentals of Aerodynamics.
+   -- Register_Routine: "Test_Reynolds_Number"
+   procedure Test_Reynolds_Number is
+      Re_Sea : constant Float :=
+        Reynolds_Number (Density  => 1.225,
+                         Velocity => 50.0,
+                         Length   => 1.0,
+                         Mu       => 1.8e-5);
+      Re_Zero : constant Float :=
+        Reynolds_Number (Density  => 1.225,
+                         Velocity => 50.0,
+                         Length   => 1.0,
+                         Mu       => 0.0);
+   begin
+      if not (Re_Sea > 1.0e5 and then Re_Sea < 1.0e7) then
+         raise Constraint_Error with
+           "Test_Reynolds_Number: sea-level Re out of (1e5, 1e7)";
+      end if;
+      if Re_Zero /= 0.0 then
+         raise Constraint_Error with
+           "Test_Reynolds_Number: mu=0.0 guard did not return 0.0";
+      end if;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Reynolds_Number");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
+   end Test_Reynolds_Number;
+
+   --  AXIOMS: All inputs inside the S1..S3 Pre envelope (spec of
+   --    Stagnation_Pressure); sea-level point (P_amb=101325,
+   --    rho=1.225, V=100) plus the V=0.0 identity case.
+   --  THEORIES: (a) q = 6125 Pa => P_stag = 107450 Pa within float
+   --    round-off of 1.0 Pa (single-precision eps on 1e5 ~ 0.01 Pa);
+   --    (b) q = 0.0 => P_stag = P_amb exactly (IEEE: x + 0.0 = x).
+   --  APPLICATIONS: explicit runtime checks raise Constraint_Error on
+   --    failure (runtime check, not a disable-able pragma Assert).
+   --  CITATIONS: [Anderson06] Anderson (2006), Fundamentals of
+   --    Aerodynamics, Ch. 9; [Rapisarda2023] Rapisarda (2023), Sec 4.
+   -- Register_Routine: "Test_Stagnation_Pressure"
+   procedure Test_Stagnation_Pressure is
+      P_Amb    : constant Float := 101325.0;
+      P_Stag   : constant Float :=
+        Stagnation_Pressure (P_Amb    => P_Amb,
+                             Density  => 1.225,
+                             Velocity => 100.0);
+      P_Static : constant Float :=
+        Stagnation_Pressure (P_Amb    => P_Amb,
+                             Density  => 1.225,
+                             Velocity => 0.0);
+   begin
+      if abs (P_Stag - (P_Amb + 6125.0)) > 1.0 then
+         raise Constraint_Error with
+           "Test_Stagnation_Pressure: P_amb + q mismatch (> 1.0 Pa)";
+      end if;
+      if P_Stag < P_Amb then
+         raise Constraint_Error with
+           "Test_Stagnation_Pressure: Post result >= P_amb violated";
+      end if;
+      if P_Static /= P_Amb then
+         raise Constraint_Error with
+           "Test_Stagnation_Pressure: V=0 identity P_stag = P_amb violated";
+      end if;
+   exception
+   when E : others =>
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Stagnation_Pressure");
+   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+   raise;
+   end Test_Stagnation_Pressure;
 
 end StellarOrion_Physics;
 

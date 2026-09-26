@@ -2367,26 +2367,78 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
                         frames=total_frames, interval=1000 // fps, blit=False)
 
     mp4_path = os.path.join(plots_dir, "hybrid_dsmc_pinn_animation.mp4")
+    # AXIOMS:
+    #   A1: Animation frames contain Unicode glyphs pdflatex rejects in text
+    #       mode (V∞ U+221E, N₂/O₂ U+2082, q̇ combining dot, T_wall⁴ U+2074).
+    #       With global text.usetex=True (set by _tex_config at import),
+    #       frame 0 raises RuntimeError "Unicode character ∞ not set up for
+    #       use with LaTeX". All Text objects in this figure are created
+    #       inside _animate during save, so disabling usetex for the save
+    #       window suffices (Text.set_usetex resolves rcParams at creation —
+    #       matplotlib/text.py set_usetex: mpl._val_or_rc(usetex, 'text.usetex')).
+    #   A2: When writer is a MovieWriter *instance*, matplotlib >= 3.6 forbids
+    #       the fps/codec/bitrate/extra_args/metadata kwargs on Animation.save
+    #       (fps is already bound in FFMpegWriter(fps=fps, ...) above).
+    # THEOREMS:
+    #   T1: With usetex scoped off, every frame text draws via mathtext/DejaVu,
+    #       so no latex subprocess can fail mid-save.
+    #   T2: Without fps= on an instance writer, the RuntimeError branch is
+    #       unreachable and the GIF fallback is not needed for that cause.
+    # APPLICATIONS:
+    #   plt.rc_context scopes A1 locally (restored on exit, incl. exceptions);
+    #   the save calls bind fps only through the writer instance (A2).
+    # CITATIONS:
+    #   [Citation: matplotlib Animation.save — https://matplotlib.org/stable/api/_as_gen/matplotlib.animation.Animation.save.html]
+    #   [Citation: matplotlib rc_context — https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.rc_context.html]
+    #   [Citation: matplotlib Text.set_usetex — https://matplotlib.org/stable/api/text_api.html#matplotlib.text.Text.set_usetex]
     try:
-        if isinstance(writer, str) and writer == "pillow":
-            # GIF fallback
-            gif_path = os.path.join(plots_dir, "hybrid_dsmc_pinn_animation.gif")
-            anim.save(gif_path, writer="pillow", fps=fps // 3)
-            print(f"[pipeline] Generated: plots/hybrid_dsmc_pinn_animation.gif")
-        else:
-            # FFMpegWriter object (HW-accelerated) — extra_args already embedded
-            anim.save(mp4_path, writer=writer, fps=fps, dpi=150)
-            _enc_name = _hw_encoder if _hw_encoder else "ffmpeg"
-            print(f"[pipeline] Generated: plots/hybrid_dsmc_pinn_animation.mp4 "
-                  f"({total_frames} frames, {fps} fps, encoder={_enc_name})")
+        with plt.rc_context({"text.usetex": False}):
+            if isinstance(writer, str) and writer == "pillow":
+                # GIF fallback (no ffmpeg on PATH): write the .gif and return
+                # ITS path — returning the never-written mp4_path would be an
+                # invalid file reference for the caller
+                # [Citation: no_invalid_file_references — all returned paths must exist]
+                gif_path = os.path.join(plots_dir, "hybrid_dsmc_pinn_animation.gif")
+                anim.save(gif_path, writer="pillow", fps=fps // 3)
+                print("[pipeline] Generated: plots/hybrid_dsmc_pinn_animation.gif")
+                mp4_path = gif_path
+            else:
+                # FFMpegWriter instance (HW-accelerated): extra_args AND fps are
+                # already embedded at construction — pass only writer/dpi here
+                # (matplotlib >= 3.6 raises RuntimeError if fps is passed with
+                # an existing MovieWriter instance).
+                anim.save(mp4_path, writer=writer, dpi=150)
+                _enc_name = _hw_encoder if _hw_encoder else "ffmpeg"
+                print(f"[pipeline] Generated: plots/hybrid_dsmc_pinn_animation.mp4 "
+                      f"({total_frames} frames, {fps} fps, encoder={_enc_name})")
     except Exception as exc:
-        print(f"[pipeline] MP4 save failed ({exc}), trying GIF fallback...")
-        gif_path = os.path.join(plots_dir, "hybrid_dsmc_pinn_animation.gif")
-        anim.save(gif_path, writer="pillow", fps=fps // 3)
-        print(f"[pipeline] Generated: plots/hybrid_dsmc_pinn_animation.gif")
-        mp4_path = gif_path
+        # Surface the FULL exception chain: matplotlib's writer.saving()
+        # context runs finish() in a finally, so a mid-draw failure gets its
+        # IndexError from PillowWriter.finish() self._frames[0] prepended and
+        # the real cause (e.g. latex glyph error) ends up in exc.__context__.
+        print("[pipeline] MP4 save failed, trying GIF fallback...")
+        _chain, _cur = [], exc
+        while _cur is not None:
+            _chain.append(f"{type(_cur).__name__}: {_cur}")
+            _cur = _cur.__context__
+        print(f"[pipeline] exception chain (innermost last): {' -> '.join(reversed(_chain))}")
+        try:
+            with plt.rc_context({"text.usetex": False}):
+                gif_path = os.path.join(plots_dir, "hybrid_dsmc_pinn_animation.gif")
+                anim.save(gif_path, writer="pillow", fps=fps // 3)
+            print("[pipeline] Generated: plots/hybrid_dsmc_pinn_animation.gif")
+            mp4_path = gif_path
+        except Exception as gif_exc:
+            _chain, _cur = [], gif_exc
+            while _cur is not None:
+                _chain.append(f"{type(_cur).__name__}: {_cur}")
+                _cur = _cur.__context__
+            print(f"[pipeline] GIF fallback FAILED, full chain (innermost last): "
+                  f"{' -> '.join(reversed(_chain))}")
+            raise
+    finally:
+        plt.close(fig)
 
-    plt.close(fig)
     return mp4_path
 
 
@@ -3102,7 +3154,7 @@ def generate_aerodynamics_profiles(output_dir):
 
     # ─── Plot 4: Flow Regime Map ───────────────────────────────────
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-    fig.suptitle("Flow Regime Map — Knudsen & Reynolds Numbers (Ada/SPARK ISA)",
+    fig.suptitle("Flow Regime Map - Knudsen and Reynolds Numbers (Ada/SPARK ISA)",
                  fontsize=14, fontweight="bold")
 
     axes[0].semilogx(knuds, alt_range, "b-", linewidth=2.0)
@@ -3331,7 +3383,7 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     # Blue = trajectory-integrated (Rapisarda + IRVE-3 flight)
     # Red/Orange/Purple = single-point (StellarOrion) — NOT directly comparable
     ax1.set_title("Table 4.10: q_max (Per-Element Avg)\nRapisarda 2023 vs StellarOrion\n"
-                  "⚠ Blue: trajectory-integrated | Red/Orange/Purple: single-point", fontsize=10, fontweight="bold")
+                  "NOTE Blue: trajectory-integrated | Red/Orange/Purple: single-point", fontsize=10, fontweight="bold")
     ax1.axhline(y=IRVE3_QMAX, color="green", linestyle="--", alpha=0.5, label=f"IRVE-3 Flight = {IRVE3_QMAX:.2f}")
     for bar, val in zip(bars1, qmax_vals_avg):
         ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1,
@@ -3355,7 +3407,7 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     # ⚠ Blue bars = trajectory-integrated (valid comparison)
     # ⚠ Red/Orange/Purple bars = single-point (NOT directly comparable to blue bars)
     fig.suptitle("StellarOrion vs Rapisarda Models vs IRVE-3 Flight (AIAA 2023 / NASA TP-2013-4012)\n"
-                 "⚠ Blue = trajectory-integrated (MCD v6.1) | Red/Orange/Purple = single-point (ISA)",
+                 "NOTE: Blue = trajectory-integrated (MCD v6.1) | Red/Orange/Purple = single-point (ISA)",
                  fontsize=11, fontweight="bold", y=1.02)
     fig.tight_layout()
     fig.savefig(os.path.join(plots_dir, "rapisarda_table4_10.png"), dpi=200, bbox_inches="tight")
