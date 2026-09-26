@@ -1,6 +1,6 @@
 # Theory & Implementation Derivation
 
-This document provides a comprehensive derivation of the mathematical models used in the StellarOrion Hypersonic Simulation Suite and maps them to their specific implementations in `StellarOrionEngineMach5Up.py` and `source/visualizer.py`.
+This document provides a comprehensive derivation of the mathematical models used in the StellarOrion Hypersonic Simulation Suite and maps them to their current implementations in the Ada/SPARK engine (`stellarorion_program_proc/src/simulation_engine/`) and Python sidecar (`stellarorion_program_proc/src/python/`).
 
 ---
 
@@ -9,26 +9,26 @@ This document provides a comprehensive derivation of the mathematical models use
 The simulation results are extracted from SPARTA dump files. The mapping between the raw data columns and the physical metrics is as follows:
 
 ### Surface Data (Force & Heat)
-**Source File:** `results_reference/surf.*.out`  
-**SPARTA Command:** `dump 1 surf all 1000 ... id f_1[*] f_surfavg[*] (StellarOrionEngineMach5Up.py:360)`
+**Source File:** `stellarorion_program_proc/results/validation_scalloped/surf.*.out`  
+**SPARTA Command:** `dump 1 surf all 1000 ... id f_1[*] f_surfavg[*]` (written by `stellarorion_sparta.adb`)
 
 | Column | Implementation Index | Physical Variable | Unit | Implementation Line |
 | :--- | :--- | :--- | :--- | :--- |
 | 1 | `parts[0]` | Particle ID | - | - |
 | 2 | `parts[1]` | `nflux` (Number Flux) | $m^{-2} s^{-1}$ | - |
 | 3 | `parts[2]` | `mflux` (Mass Flux) | $kg \cdot m^{-2} s^{-1}$ | - |
-| 4 | `parts[3]` | `ke` (Kinetic Energy Flux) | $J \cdot m^{-2} s^{-1}$ | `StellarOrionEngineMach5Up.py:140` |
-| 5 | `parts[4]` | `fx` (Axial Force) | $N$ | `StellarOrionEngineMach5Up.py:141` |
+| 4 | `parts[3]` | `ke` (Kinetic Energy Flux) | $J \cdot m^{-2} s^{-1}$ | `stellarorion_sparta.adb` (`Heat(Row) := V(4)`, line 1999) |
+| 5 | `parts[4]` | `fx` (Axial Force) | $N$ | `stellarorion_sparta.adb` (surf force parse) |
 | 6 | `parts[5]` | `fy` (Radial Force) | $N$ | - |
 | 7 | `parts[6]` | `fz` (Azimuthal Force) | $N$ | - |
 
 **Derivation of Global Metrics:**
-*   **Total Drag ($F_{drag}$):** $\sum |f_x|$ across all surface elements (`StellarOrionEngineMach5Up.py:144`).
-*   **Total Heat Load ($Q_{total}$):** $\sum |ke|$ across all surface elements (`StellarOrionEngineMach5Up.py:145`).
+*   **Total Drag ($F_{drag}$):** $\sum |f_x|$ across all surface elements (`stellarorion_sparta.adb` surf force sums).
+*   **Total Heat Load ($Q_{total}$):** $\sum |ke|$ across all surface elements (`stellarorion_sparta.adb` `Heat_Sum`).
 
 ### Grid Data (Field Maps)
-**Source File:** `results_reference/grid.*.out`  
-**SPARTA Command:** `dump 2 grid all 1000 ... id xlo ylo xhi yhi f_2[*] f_3[*] (StellarOrionEngineMach5Up.py:361)`
+**Source File:** `stellarorion_program_proc/results/validation_scalloped/grid.*.out` (historical runs under `results_reference/` are retired)  
+**SPARTA Command:** `dump 2 grid all 1000 ... id xlo ylo xhi yhi f_2[*] f_3[*]` (written by `stellarorion_sparta.adb`)
 
 | Column | Implementation Index | Physical Variable | Unit | Visualizer Index |
 | :--- | :--- | :--- | :--- | :--- |
@@ -49,14 +49,14 @@ The ballistic coefficient is a measure of a vehicle's ability to maintain its sp
 **Implementation Derivation:**
 Since $F_{drag} = C_D A q$, where $q$ is dynamic pressure:
 $$\beta = \frac{m \cdot q}{F_{drag}}$$
-*   **Mass Density ($\rho$):** $\rho = n_{\rho} \cdot \frac{M_{air}}{N_A}$ (`StellarOrionEngineMach5Up.py:163`)
-*   **Dynamic Pressure ($q$):** $q = \frac{1}{2} \rho v_{\infty}^2$ (`StellarOrionEngineMach5Up.py:165`)
-*   **Beta Implementation:** `beta = mass * q / drag_force` (`StellarOrionEngineMach5Up.py:166`)
+*   **Mass Density ($\rho$):** $\rho = n_{\rho} \cdot \frac{M_{air}}{N_A}$ (`stellarorion_environment.adb` ISA tables)
+*   **Dynamic Pressure ($q$):** $q = \frac{1}{2} \rho v_{\infty}^2$ (flight metrics in `stellarorion_physics` / `ada_pinn_wrapper.py`)
+*   **Beta Implementation:** `beta = mass * q / drag_force` (`ada_pinn_wrapper.py`, `beta` helper)
 
 ### Instantaneous g-load ($n$)
 The deceleration load felt by the vehicle in Earth-gravity units ($g_0$):
 $$n = \frac{F_{drag}}{m \cdot g_0}$$
-*   **Implementation:** `g_load = drag_force / (mass * 9.81)` (`StellarOrionEngineMach5Up.py:172`)
+*   **Implementation:** `g_load = drag_force / (mass * 9.81)` (`ada_pinn_wrapper.py` `g_load` via `stellarorion_pinn_trajectory` FFI)
 
 ---
 
@@ -108,7 +108,7 @@ shock layer structure, while Sutton-Graves assumes a spherical nose cap.
 - Velocity range: 3–12 km/s
 
 *   **Implementation:** `stag_heat = C_sg * np.sqrt(rho_inf / nose_radius) * (vstream ** 3)`
-    (`StellarOrionEngineMach5Up.py`, `calculate_flight_metrics`)
+    (`Sutton_Graves_Heat_C` in `stellarorion_ffi` / `postprocess_validation.py`; legacy Python port `calculate_flight_metrics`)
 *   **Reference:** K. Sutton and R. A. Graves Jr., "A general stagnation-point convective heating
     equation for arbitrary gas mixtures," NASA TR R-376, 1971. [Ref: 251]
 
@@ -123,10 +123,10 @@ $$\dot{q}_{stag} = \epsilon \sigma T_{surface}^4 \implies T_{surface} = \left(\f
 
 | Symbol | Description | Value |
 |---|---|---|
-| $\epsilon$ | TPS surface emissivity | 0.75 (Nicalon SiC default) |
-| $\sigma$ | Stefan-Boltzmann constant | $5.67 \times 10^{-8}$ W/m²K⁴ |
+| $\epsilon$ | TPS surface emissivity | 0.85 (code default in `validation_pipeline.py` / VTU plots; test proxy uses 0.75) |
+| $\sigma$ | Stefan-Boltzmann constant | $5.670374419 \times 10^{-8}$ W/m²K⁴ |
 
-**IRVE-3 baseline result:** $T_{surface} \approx 1453$ K, well below the SiC melting point of 2073 K. ✅
+**IRVE-3 baseline result:** $T_{surface} \approx 1261$ K at $\epsilon=0.85$ (≈1302 K at test-proxy $\epsilon=0.75$), below the **1,700 K SIC operational limit** enforced by the survivability check. ✅
 
 *   **Implementation:** `t_surface = (stag_heat / (sigma * epsilon))**0.25`
 
@@ -137,7 +137,7 @@ Assuming the heat pulse $\dot{q}$ lasts for duration $\Delta t$, and a fraction 
 $$E_{total} = \dot{q} \cdot \Delta t \cdot \eta_{lag}$$
 The temperature rise $\Delta T$ is given by:
 $$\Delta T = \frac{E_{total}}{\text{Mass}_{TPS} \cdot C_{p,TPS}} = \frac{\dot{q} \cdot \Delta t \cdot \eta_{lag}}{(\rho_{TPS} \cdot \delta_{TPS}) \cdot C_{p,TPS}}$$
-*   **Implementation:** `t_rise = (heat_load * thermal_lag_factor) / (rho_tps * cp_tps * tps_thickness)` (`StellarOrionEngineMach5Up.py`)
+*   **Implementation:** `t_rise = (heat_load * thermal_lag_factor) / (rho_tps * cp_tps * tps_thickness)` (`backface_temperature` in `ada_pinn_wrapper.py` / `stellarorion_physics.ads` `Backface_Temperature`)
 *   **Final Temperature:** `t_backface = t_initial + t_rise`
 
 ---
@@ -149,7 +149,7 @@ $$\Delta T = \frac{E_{total}}{\text{Mass}_{TPS} \cdot C_{p,TPS}} = \frac{\dot{q}
 To ensure the high-dimensional search space (Diameter, Angle, Mass, etc.) is explored uniformly with minimal samples, StellarOrion implements **Stratified LHS** (McKay et al., 1979):
 $$x_{i,j} = \min(x_j) + \text{range}(x_j) \cdot \frac{i + r}{N}$$
 *Where $i$ is the sample index, $j$ is the parameter dimension, $N$ is total samples, and $r \sim \mathcal{U}(0,1)$.*
-*   **Implementation:** `val = p_info['min'] + (p_info['max'] - p_info['min']) * (i + np.random.random()) / samples_n` (`StellarOrionEngineMach5Up.py:530`)
+*   **Implementation:** `LHS_Sample` in `stellarorion_optimization.ads` / `.adb` (Stratified LHS with Post ⇒ result within bounds)
 
 ### Bayesian Optimization Surrogate (Gaussian Process)
 The active optimizer is **Bayesian Optimization**: a Gaussian Process (GP) surrogate with a Matérn 5/2 kernel and an Expected Improvement (EI) acquisition function maps design parameters to performance metrics.
@@ -160,10 +160,22 @@ The active optimizer is **Bayesian Optimization**: a Gaussian Process (GP) surro
 
 *Note:* A legacy 3-layer MLP metamodel (`nn.Sequential`, MSE loss) described in earlier revisions was superseded by the GP surrogate; the MLP path is no longer the active Step 4 optimizer.
 
+### HIAD Multi-Objective Cost Function J(x)
+The Bayesian Optimiser minimises a **multi-objective, validation-referenced** scalar cost over the design vector $x = (R_N, r_{tor}, \theta_{cone})$. The **primary objective is the lowest Total Heat Load**; the remaining terms keep the design near the validated aerodynamic state and enforce constraints:
+
+$$J(x) = w_Q \frac{Q(x)}{Q_{target}} \;+\; w_{\dot q} \frac{\dot q(x)}{\dot q_{ref}} \;+\; w_{\beta}\left(\frac{\beta(x)}{\beta_{ref}} - 1\right)^2 \;+\; w_{C_d} \frac{C_d(x)}{C_{d,ref}} \;+\; \lambda \sum_{k} \max(0, g_k(x))^2$$
+
+*   **Heat-load term (primary):** $Q(x) = \dot q_{SG}(x)\cdot\tau$ [J/cm²], where $\dot q_{SG}$ is the Sutton–Graves stagnation heat flux (NASA TR R-376) evaluated at the validated single-point snapshot ($h = 51.8$ km, $V = 3378$ m/s, ISA density) and $\tau = Q_{flight}/\dot q_{flight}$ is the effective heating duration **derived from the validation run itself**.
+*   **Dynamic base reference (axiom):** every reference ($Q_{target}$ = StellarOrion validated total heat load, $\dot q_{ref}$ = IRVE-3 flight peak flux, $\tau$, $C_{d,ref}$ = validated $C_d$) is loaded **at run time** from `results/validation_scalloped/validation_pipeline_output/unified_comparison_data.json` via `_load_validation_refs()` → FFI `HIAD_Set_Refs_C` → Ada `Set_Validation_Refs`; re-running validation automatically re-bases J(x) — no hard-coded constants.
+*   **Ballistic-coefficient term:** $\beta = m/(C_d A)$; the mass cancels in the ratio $\beta(x)/\beta_{ref} = C_{d,ref}A_{ref}/(C_d(x)A(x))$, so J(x) needs no mass parameter. Quadratic deviation keeps the vehicle's deceleration behaviour near the validated baseline.
+*   **Constraints (quadratic penalties, $\lambda = 100$):** envelope $R_{max} \le 3.0$ m (IRVE-3 limit), TPS minimum $R_N \ge 1.0$ m, and the **payload-size constraint** $R_N \ge \sqrt{r_{pay}^2 + (h_{pay}/2)^2} + t_{standoff} \approx 1.043$ m — the spherical nose cap must enclose the cylindrical payload ($r_{pay}=0.275$ m, $h_{pay}=1.7$ m, Rapisarda 2023 Table 4.1) behind 0.15 m of TPS/structure.
+*   **Weights:** $w_Q = 1.0$ (dominant — stated objective "lowest Total Heat Load"), $w_{\dot q} = w_{\beta} = 0.5$, $w_{C_d} = 0.25$ (weighted-sum scalarisation, Nocedal & Wright 2006 §3.1; quadratic penalties ibid. §17.1).
+*   **Implementation:** `HIAD_Cost_Components` / `HIAD_Cost_Function` in `stellarorion_optimization.ads` (J(x) contract block) — single source of truth; FFI exports `HIAD_Cost_C` + `HIAD_Cost_Components_C` (term breakdown) to `ada_pinn_wrapper.hiad_cost_function` / `hiad_cost_components`.
+
 ### Genetic Algorithm (GA) Cost Function
 The GA steers the search towards configurations that minimize a weighted cost $J$ relative to user-defined targets.
 $$J = w_{\beta} \left( \frac{\beta_{calc} - \beta_{target}}{10} \right)^2 + w_{metric} \left( \frac{y_{pred} - y_{target}}{1} \right)^2$$
-*   **Implementation:** Lines 642-644 in `StellarOrionEngineMach5Up.py`.
+*   **Implementation:** GA cost function `J` in `stellarorion_optimization.ads` (lines 98–99) / `.adb` (lines 264–265).
 
 ---
 

@@ -71,7 +71,7 @@ writes can never violate a component constraint at runtime.
 Tests 14 (parity roundtrip + single-bit corruption detection + recovery)
 and 15 (watchdog starvation → degradation → failure → cross-recovery →
 emergency latch) exercise T-6/T-7 in the production binary;
-banner counts updated 13→15 tests. Independent harness
+banner counts updated 13→15→18 tests. Independent harness
 (`tests/test_main.adb`, 29 checks) covers deeper cases including boundary
 values sitting exactly on subtype bounds.
 
@@ -82,7 +82,7 @@ values sitting exactly on subtype bounds.
 | Build | `alr clean && alr build` | exit 0, zero Ada warnings (-gnatwa); only benign clang deployment-version notices remain (documented GPR KNOWN EXCEPTION) |
 | Proof | `scripts/prove.sh skip --level=4 --report=all --timeout=180` | "Success: all checks proved", 0 medium/high |
 | Sabotage audit | `scripts/SabotageVerifier.sh` | CRITICAL = 0 |
-| Self-test | `./bin/main --self-test` | All 15 tests PASSED |
+| Self-test | `./bin/main --self-test` | All 18 tests PASSED |
 | Unit harness | `alr exec -- gprbuild -P tests/stellarorion_tests.gpr -j0 && ./bin/test_main` | 29/29 PASS |
 
 Final acceptance order: all gates green → simulation validation exec at
@@ -93,5 +93,13 @@ Final acceptance order: all gates green → simulation validation exec at
 * clang `-Woverriding-deployment-version` (~5–11×): emitted by gprbind's
   internal toolchain clang against the Xcode SDK; not controllable via GPR
   switches; upward override, harmless. Documented in the GPR Linker comment.
-* `-gnatdAME` representation-information listing ("passed by copy"):
-  informational compiler output, not diagnostics.
+* ~~`-gnatdAME` representation-information listing ("passed by copy")~~ —
+  RESOLVED 2026-09-25. Root cause was `-gnatdA` ("All entities included in
+  representation information output"; gcc/ada/debug.adb, GNAT 16.1.0): it
+  produced this informational build listing AND forced conflicting duplicate
+  entries into GNATprove's `-gnatR2js` data-representation JSON, which
+  gnat2why rejects ("ill-formed JSON file") and aborts the whole proof run
+  (595 conflicting locations across 22 units; minimal-reproduction proven).
+  Compiler switch is now `-gnatdME` (-gnatdM conservative flow, -gnatdE
+  predefined-unit elaboration checks); builds are listing-free (verified:
+  `alr build` output contains 0 rep-info lines).

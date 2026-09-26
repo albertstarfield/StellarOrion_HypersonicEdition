@@ -341,7 +341,43 @@ package StellarOrion_Optimization is
     Max_Radius_Limit  : constant Float := 3.0;  --  IRVE-3 diameter limit
     Nose_Radius_Limit : constant Float := 1.0;  --  minimum TPS coverage
 
-    --  -----------------------------------------------------------------
+    -- -----------------------------------------------------------------
+    --  J(x) cost-function weights, payload constraint, snapshot state
+    -- -----------------------------------------------------------------
+    --  Weights for the multi-objective HIAD cost function J(x). The
+    --  primary objective (lowest Total Heat Load) carries the dominant
+    --  weight; flux, ballistic-coefficient, and Cd terms are secondary
+    --  regularisers that keep the design near the validated aero state.
+    --
+    --  AXIOM W1: weights are positive and sum-of-terms >= 0 => J(x) >= 0.
+    --  AXIOM W2: W_Heat_Load > every other weight, so J ordering is
+    --           dominated by the Total Heat Load term (the stated
+    --           optimisation objective: "lowest Total Heat Load").
+    --  [Citation: Nocedal & Wright (2006), Sec 3.1 — weighted-sum
+    --   scalarisation of a multi-objective problem]
+    W_Heat_Load : constant Float := 1.0;
+    W_Flux      : constant Float := 0.5;
+    W_Beta      : constant Float := 0.5;
+    W_Cd        : constant Float := 0.25;
+    Lambda_Pen  : constant Float := 100.0;  --  quadratic penalty weight
+
+    --  Payload size constraint: the cylindrical payload (Rapisarda 2023,
+    --  Table 4.1: r_pay = 0.275 m, h_pay = 1.7 m) must fit inside the
+    --  spherical nose-cap cavity behind the TPS shell.
+    --  Required nose radius = sqrt(r_pay^2 + (h_pay/2)^2) + standoff.
+    --  [Citation: Rapisarda (2023) Table 4.1 via Discussion.md lines 46-47]
+    Payload_Radius_M    : constant Float := 0.275;
+    Payload_Height_M    : constant Float := 1.7;
+    Payload_Standoff_M  : constant Float := 0.15;  --  TPS + structure wall
+
+    --  Snapshot flight condition for the cost-function heat-flux term.
+    --  Same single-point condition as the validated DSMC run (step 2200)
+    --  and hiad_optimizer.py (_ALTITUDE_KM, _VELOCITY_MS).
+    --  [Citation: VALIDATION_Sep_2_2026.md Sec 3.1 — h=51.82 km, V=3379 m/s]
+    Snapshot_Alt_Km : constant Float := 51.8;
+    Snapshot_Vel_Ms : constant Float := 3378.0;
+
+    -- -----------------------------------------------------------------
     --  HIAD Geometry Functions
     -- -----------------------------------------------------------------
 
@@ -385,20 +421,118 @@ package StellarOrion_Optimization is
          Post => Estimate_Cd'Result > 0.0;
 
     --  -----------------------------------------------------------------
-    --  HIAD Cost Function
+    --  HIAD Cost Function J(x) — multi-objective, validation-referenced
     -- -----------------------------------------------------------------
 
-    --  PINN-inspired cost function for HIAD geometry optimization.
-    --  Minimizes Cd while penalizing constraint violations via quadratic
-    --  penalty method.
+    --  Breakdown of one J(x) evaluation (all six terms, plus the
+    --  absolute predicted Total Heat Load for reporting).
+    --  Every field is >= 0.0 by construction (ratios of positive
+    --  quantities, squared deviation, quadratic penalties).
+    type Cost_Components is record
+       Heat_Load_Ratio : Float := 0.0;  --  Q(x)/Q_target  (primary term)
+       Flux_Ratio      : Float := 0.0;  --  q(x)/q_ref     (peak flux term)
+       Beta_Dev        : Float := 0.0;  --  (beta(x)/beta_ref - 1)^2
+       Cd_Ratio        : Float := 0.0;  --  Cd(x)/Cd_ref
+       Penalty         : Float := 0.0;  --  envelope + TPS + payload
+       Total           : Float := 0.0;  --  J(x) = weighted sum
+       Heat_Load_Jcm2  : Float := 0.0;  --  Q(x) absolute [J/cm^2]
+    end record;
+
+    --  Load the dynamic validation base reference used by J(x).
+    --  Called by the Python driver (FFI: HIAD_Set_Refs_C) AFTER reading
+    --  results/validation_scalloped/validation_pipeline_output/
+    --  unified_comparison_data.json at run time — so J(x) always
+    --  normalises against the CURRENT validation state, never a stale
+    --  hard-coded constant.
     --
-    --  J(x) = Cd(x) + lambda_1 * max(0, R_max - 3.0)^2
-    --                  + lambda_2 * max(0, 1.0 - R_N)^2
+    --  Parameters:
+    --    Q_Target_Jcm2 — Total Heat Load objective target [J/cm^2]
+    --                    (StellarOrion validated total heat load)
+    --    Flux_Ref_Wcm2 — reference peak heat flux [W/cm^2]
+    --                    (IRVE-3 flight peak heat flux)
+    --    Tau_Sec       — effective heating duration [s], derived
+    --                    dynamically as Q_flight / q_flight
+    --    Cd_Ref        — reference drag coefficient
+    --                    (StellarOrion validated Cd)
+    --
+    --  Safety fallback: if never called, the built-in defaults equal
+    --  the values of unified_comparison_data.json as of 2026-09-16.
+    procedure Set_Validation_Refs
+      (Q_Target_Jcm2 : Float;
+       Flux_Ref_Wcm2 : Float;
+       Tau_Sec       : Float;
+       Cd_Ref        : Float)
+    with Pre  => Q_Target_Jcm2 > 0.0 and Flux_Ref_Wcm2 > 0.0
+                 and Tau_Sec > 0.0 and Cd_Ref > 0.0,
+         Post => True;
+
+    --  Minimum nose sphere radius that can enclose the cylindrical
+    --  payload (radius r_pay, height h_pay) plus the TPS/structure
+    --  standoff:  R_N >= sqrt(r_pay^2 + (h_pay/2)^2) + standoff.
+    --  With the IRVE-3 payload this evaluates to ~1.043 m.
+    function Payload_Nose_Radius_Min return Float
+    with Post => Payload_Nose_Radius_Min'Result > 0.0;
+
+    --  Full component breakdown of J(x). HIAD_Cost_Function is defined
+    --  as HIAD_Cost_Components(X).Total — single source of truth.
+    function HIAD_Cost_Components (X : Param_Vector) return Cost_Components
+    with Pre  => X(1) > 0.0 and X(2) > 0.0
+                 and X(3) > 0.0 and X(3) < 90.0,
+         Post => HIAD_Cost_Components'Result.Total >= 0.0
+                 and HIAD_Cost_Components'Result.Heat_Load_Jcm2 >= 0.0;
+
+    --  Multi-objective cost function for HIAD geometry optimisation.
+    --
+    --  PRIMARY OBJECTIVE: lowest Total Heat Load. Secondary terms keep
+    --  peak flux, ballistic coefficient, and Cd near their validated
+    --  reference values; quadratic penalties enforce the envelope,
+    --  TPS, and payload-size constraints:
+    --
+    --    J(x) = W_Heat_Load * [Q(x) / Q_target]            (heat load)
+    --         + W_Flux      * [q(x) / q_ref]               (peak flux)
+    --         + W_Beta      * [(beta(x)/beta_ref) - 1]^2    (ballistic)
+    --         + W_Cd        * [Cd(x) / Cd_ref]             (drag)
+    --         + Lambda_Pen  * [ max(0, R_max - 3.0)^2       (envelope)
+    --                          + max(0, 1.0 - R_N)^2        (TPS min)
+    --                          + max(0, R_pay_min - R_N)^2  (payload) ]
+    --
+    --  where (ALL reference values are loaded DYNAMICALLY via
+    --  Set_Validation_Refs from unified_comparison_data.json):
+    --    Q(x)     = q_SG(x) * Tau_Sec   [J/cm^2]  — SG heat flux at the
+    --               validated snapshot condition (h=51.8 km, V=3378 m/s)
+    --               integrated over the validation-derived heating time
+    --    q(x)     = Sutton_Graves_Heat(rho_ISA(h), R_N, V)  [W/cm^2]
+    --    beta(x)  = m / (Cd(x) * A(x));  beta ratio reduces to
+    --               (Cd_ref * A_ref) / (Cd(x) * A(x)) — mass cancels
+    --    Cd(x)    = Estimate_Cd(R_N, r_tor, half_cone)
+    --    A(x)     = pi * R_max(x)^2
     --
     --  Parameters:
     --    X — parameter vector [R_N, r_tor, half_cone_deg]
     --
-    --  Source: Nocedal & Wright (2006), Numerical Optimization, Sec 17.1.
+    --  AXIOMS:
+    --    A1: every term is non-negative for X satisfying the Pre =>
+    --        J(x) >= 0 (matches the Post condition).
+    --    A2: W_Heat_Load dominates => argmin J ≈ argmin Total Heat Load
+    --        subject to flux/beta/Cd staying near validated reference.
+    --    A3: payload constraint R_N >= ~1.043 m rejects geometries
+    --        whose nose cap cannot enclose the 0.275 m x 1.7 m payload.
+    --  THEOREMS:
+    --    T1: at the default IRVE-3 geometry with default refs,
+    --        J ≈ 1.96 (unit-scale: ratio terms O(1), penalties 0).
+    --    T2: halving Q_target doubles only the heat-load term (test).
+    --  APPLICATIONS:
+    --    Consumed by HIAD_Cost_C (Ada FFI) -> hiad_optimizer.py
+    --    Bayesian Optimisation loop (GP Matern 5/2 + EI).
+    --  CITATIONS:
+    --    [Nocedal06] Nocedal & Wright (2006), Numerical Optimization,
+    --                Sec 3.1 (weighted-sum scalarisation), Sec 17.1
+    --                (quadratic penalty method).
+    --    [SuttonGraves] Sutton & Graves (1957), NASA TR R-376 —
+    --                   stagnation-point convective heating.
+    --    [Rapisarda2023] Rapisarda (2023), MSc Thesis TU Delft,
+    --                    Table 4.1 — payload radius/height.
+    --    [IRVE3] NASA TP-2013-4012 — IRVE-3 flight reference data.
     function HIAD_Cost_Function (X : Param_Vector) return Float
     with Pre  => X(1) > 0.0 and X(2) > 0.0
                  and X(3) > 0.0 and X(3) < 90.0,

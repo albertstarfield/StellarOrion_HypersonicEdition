@@ -37,8 +37,56 @@ with StellarOrion_Optimization; use StellarOrion_Optimization;
 with StellarOrion_Physics;     use StellarOrion_Physics;
 with StellarOrion_Postprocessing; use StellarOrion_Postprocessing;
 with StellarOrion_Environment; use StellarOrion_Environment;
+with Interfaces.C.Strings;
 
 package body StellarOrion_FFI is
+
+   -- -----------------------------------------------------------------
+   --  C_PRINTF / C_FFLUSH — dylib-safe logging primitive
+   -- -----------------------------------------------------------------
+   --  AXIOMS: in the dlopen'd libstellarorion_pinn.dylib the GNAT
+   --  runtime's Ada.Text_IO Standard_Output is NOT open, so Put_Line
+   --  raises ADA.IO_EXCEPTIONS.STATUS_ERROR and an exception escaping
+   --  the FFI aborts the host process (observed 2026-09-25 while
+   --  exercising HIAD_Set_Refs_C). libc's printf writes the file
+   --  descriptor directly and has no Ada Text_IO state to corrupt.
+   --  THEOREMS: printf/fflush symbols come from the host libc (already
+   --  loaded by Python) — no extra link dependency for the dylib.
+   --  APPLICATIONS: every FFI-layer log line goes through Log so error
+   --  diagnostics NEVER abort the host (Murphy's Law: logging must not
+   --  be a new crash path). fflush after each line keeps messages
+   --  visible even if the process dies later.
+   --  CITATIONS: [C99] ISO/IEC 9899:1999 stdio.h printf/fflush;
+   --             [Ctypes] https://docs.python.org/3/library/ctypes.html
+   -- -----------------------------------------------------------------
+   function C_Printf
+     (Format : Interfaces.C.Strings.chars_ptr) return Interfaces.C.int;
+   pragma Import (C, C_Printf, "printf");
+
+   procedure C_Flush_Stream
+     (Stream : Interfaces.C.Strings.chars_ptr);
+   pragma Import (C, C_Flush_Stream, "fflush");
+
+   --  Log one line to stdout via libc (dylib-safe; see C_Printf axiom).
+   procedure Log (Msg : String) is
+      NL    : constant String := Msg & Character'Val (10);
+      C_Str : constant Interfaces.C.Strings.chars_ptr :=
+        Interfaces.C.Strings.New_String (NL);
+   begin
+      declare
+         Ignored : Interfaces.C.int := C_Printf (C_Str);
+         pragma Unreferenced (Ignored);
+      begin
+         null;
+      end;
+      --  flush stdout (null pointer = stdout per C99 stdio.h)
+      C_Flush_Stream (Interfaces.C.Strings.Null_Ptr);
+   exception
+      when others =>
+         --  Logging must never raise out of Log itself (last resort:
+         --  swallow only if libc itself failed — nothing else to do).
+         null;
+   end Log;
 
    -- -------------------------------------------------------------------------
    --  Estimate_Cd_C
@@ -107,6 +155,101 @@ package body StellarOrion_FFI is
          --  Safety fallback: return -1.0 sentinel (cost >= 0.0 always)
          return Interfaces.C.Double (-1.0);
    end HIAD_Cost_C;
+
+   -- -------------------------------------------------------------------------
+   --  HIAD_Set_Refs_C
+   -- -------------------------------------------------------------------------
+   --  AXIOMS: four binary64 doubles map 1:1 to the Ada procedure
+   --          parameters (no precision loss, ffi.ads THEOREM 2).
+   --  THEOREMS: on failure the previous Current_Refs state is kept
+   --            (Set_Validation_Refs raises BEFORE assignment) and no
+   --            exception crosses the C boundary (cdecl contract).
+   --  APPLICATIONS: called once per optimization run by
+   --                ada_pinn_wrapper.set_validation_refs.
+   --  CITATIONS: [Ctypes] https://docs.python.org/3/library/ctypes.html
+   -- -------------------------------------------------------------------------
+   function HIAD_Set_Refs_C
+     (Q_Target : Interfaces.C.Double;
+      Flux_Ref : Interfaces.C.Double;
+      Tau_Sec  : Interfaces.C.Double;
+      Cd_Ref   : Interfaces.C.Double)
+      return Interfaces.C.int
+   is
+   begin
+      Set_Validation_Refs
+        (Q_Target_Jcm2 => Standard.Float (Q_Target),
+         Flux_Ref_Wcm2 => Standard.Float (Flux_Ref),
+         Tau_Sec       => Standard.Float (Tau_Sec),
+         Cd_Ref        => Standard.Float (Cd_Ref));
+      return 0;  --  0 = refs updated (contract: value 0 means OK)
+   exception
+      when others =>
+         --  LITERAL-ONLY logging: in the dlopen'd dylib the GNAT
+         --  secondary stack is unavailable for foreign threads, so any
+         --  unconstrained String result ('Image, Exception_Name, concat)
+         --  SEGFAULTS (faulthandler: system__secondary_stack__ss_mark).
+         --  Full context (the four values) is reported by the Python
+         --  wrapper, which validates inputs BEFORE calling this FFI.
+         --  Previous (valid) refs remain loaded on failure.
+         Log("[VERBOSE_ERROR] HIAD_Set_Refs_C: Ada exception - validation refs unchanged");
+         return 1;  --  1 = failed (Python wrapper raises RuntimeError)
+   end HIAD_Set_Refs_C;
+
+   -- -------------------------------------------------------------------------
+   --  HIAD_Cost_Components_C
+   -- -------------------------------------------------------------------------
+   --  AXIOMS: seven caller-allocated binary64 pointers, each written
+   --          exactly once per call (ffi.ads THEOREM 2 / axiom block).
+   --  THEOREMS: outputs equal the Ada Cost_Components record fields;
+   --            on failure all fields are zeroed and Out_Total = -1.0
+   --            (sentinel contract shared with HIAD_Cost_C).
+   --  APPLICATIONS: hiad_optimizer.py hiad_cost_components() reads the
+   --                breakdown for JSON reporting of J(x) terms.
+   --  CITATIONS: [Ctypes] byref(c_double) write-back pattern.
+   -- -------------------------------------------------------------------------
+   procedure HIAD_Cost_Components_C
+     (X1, X2, X3             : Interfaces.C.Double;
+      Out_Heat_Load_Ratio    : access Interfaces.C.Double;
+      Out_Flux_Ratio         : access Interfaces.C.Double;
+      Out_Beta_Dev           : access Interfaces.C.Double;
+      Out_Cd_Ratio           : access Interfaces.C.Double;
+      Out_Penalty            : access Interfaces.C.Double;
+      Out_Total              : access Interfaces.C.Double;
+      Out_Heat_Load_Jcm2     : access Interfaces.C.Double)
+   is
+      X    : Param_Vector;
+      Comp : Cost_Components;
+   begin
+      X (1) := Standard.Float (X1);  -- R_N
+      X (2) := Standard.Float (X2);  -- r_tor
+      X (3) := Standard.Float (X3);  -- half_cone_deg
+
+      Comp := HIAD_Cost_Components (X);
+
+      Out_Heat_Load_Ratio.all := Interfaces.C.Double (Comp.Heat_Load_Ratio);
+      Out_Flux_Ratio.all      := Interfaces.C.Double (Comp.Flux_Ratio);
+      Out_Beta_Dev.all        := Interfaces.C.Double (Comp.Beta_Dev);
+      Out_Cd_Ratio.all        := Interfaces.C.Double (Comp.Cd_Ratio);
+      Out_Penalty.all         := Interfaces.C.Double (Comp.Penalty);
+      Out_Total.all           := Interfaces.C.Double (Comp.Total);
+      Out_Heat_Load_Jcm2.all  := Interfaces.C.Double (Comp.Heat_Load_Jcm2);
+   exception
+      when others =>
+         --  ORDER MATTERS: write the sentinel outputs FIRST so the host
+         --  never sees partially-filled components (J=0 would poison a
+         --  minimiser). Then LITERAL-ONLY logging (secondary stack is
+         --  unavailable in the dlopen'd dylib — see HIAD_Set_Refs_C);
+         --  the Python wrapper raises RuntimeError with the full X
+         --  values on the -1.0 sentinel.
+         Out_Heat_Load_Ratio.all := 0.0;
+         Out_Flux_Ratio.all      := 0.0;
+         Out_Beta_Dev.all        := 0.0;
+         Out_Cd_Ratio.all        := 0.0;
+         Out_Penalty.all         := 0.0;
+         Out_Total.all           := Interfaces.C.Double (-1.0);
+         Out_Heat_Load_Jcm2.all  := 0.0;
+         Log("[VERBOSE_ERROR] HIAD_Cost_Components_C: Ada exception - sentinel Total=-1.0 returned");
+   end HIAD_Cost_Components_C;
 
    -- -------------------------------------------------------------------------
    --  Run_MoP_C

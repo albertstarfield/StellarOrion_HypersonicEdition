@@ -5,7 +5,9 @@
 --
 --  Decomposition Stage 3: Run_Self_Test moved VERBATIM from
 --  stellarorion_project.adb (476 lines, Tests 1-15 incl. parity and
---  watchdog wiring). Banner text and PASS counting unchanged; see
+--  watchdog wiring). Banner text and PASS counting unchanged at that
+--  time; suite extended to Tests 1-18 later (Tests 16-18: viscous
+--  mean free path, Reynolds number, stagnation pressure); see
 --  docs/PROJECT_DECOMPOSITION_PLAN.md.
 --
 --  STATUS_DIR is a local copy of the same constant in
@@ -38,9 +40,11 @@ package body StellarOrion_Self_Test is
 
    STATUS_DIR : constant String := "data/runs";
 
-   --  Built-in verification suite (Tests 1-15): exercises geometry,
+   --  Built-in verification suite (Tests 1-18): exercises geometry,
    --  physics, environment mapping, LHS/CCD sampling, optimisation cost,
-   --  survivability gating, atomic parity, and dual-watchdog wiring,
+   --  survivability gating, atomic parity, dual-watchdog wiring, and the
+   --  three new physics units (viscous mean free path, Reynolds number,
+   --  stagnation pressure),
    --  printing PASS/FAIL per test and a final summary count.
    -- TIMING ANCHOR: Nanosecond Resolution (1ns minimum)
    -- WCET: O(1) for small inputs, O(n) for array-processing procedures
@@ -86,14 +90,16 @@ package body StellarOrion_Self_Test is
    --    reliability quality characteristics. IEEE 829 prescribes structured
    --    test documentation with pass/fail criteria. Each test validates a
    --    specific subsystem contract against known expected values.
-   -- APPLICATIONS: Executes 15 sequential tests: mean free path (Test 1),
+   -- APPLICATIONS: Executes 18 sequential tests: mean free path (Test 1),
    --    Knudsen number (Test 2), Sutton-Graves heat flux (Test 3),
    --    geometry validation (Test 4), full metrics pipeline (Test 5),
    --    LHS sampling (Test 6), CCD sampling (Test 7), ISA environment
    --    model (Test 8), optimization cost function (Test 9), TPS material
    --    presets (Test 10), geometry edge cases (Test 11), survivability
    --    gate (Test 12), nose type enum (Test 13), atomic parity round-trip
-   --    (Test 14), dual watchdog cycle (Test 15). Reports pass/fail counts
+   --    (Test 14), dual watchdog cycle (Test 15), viscous mean free path
+   --    (Test 16), Reynolds number (Test 17), stagnation pressure
+   --    (Test 18). Reports pass/fail counts
    --    and writes status via Status_Writer.
    -- CITATIONS: ISO/IEC 25010:2021 (Software Quality Model);
    --    IEEE 829-2008 (Test Documentation); NASA TP-2013-4012 (IRVE-3);
@@ -101,7 +107,7 @@ package body StellarOrion_Self_Test is
 
    begin
       Write_Status (STATUS_DIR, "self_test", Status_Running, 0.0);
-      Put_Line ("[TEST] Running self-test (15 tests) ...");
+      Put_Line ("[TEST] Running self-test (18 tests) ...");
       New_Line;
 
       --  ==================================================================
@@ -533,6 +539,54 @@ package body StellarOrion_Self_Test is
       New_Line;
 
       --  ==================================================================
+      --  Test 16: Viscous mean free path — sea-level range + rho/T guards
+      --  ==================================================================
+      Put_Line ("[TEST 16] Mean_Free_Path_Viscous: value range + guards");
+      begin
+         Test_Mean_Free_Path_Viscous;
+         Put_Line ("[TEST 16]   PASS");
+         Pass_Count := Pass_Count + 1;
+      exception
+         when E : others =>
+            Put_Line ("[TEST 16]   FAIL (" &
+                      Ada.Exceptions.Exception_Message (E) & ")");
+            Fail_Count := Fail_Count + 1;
+      end;
+      New_Line;
+
+      --  ==================================================================
+      --  Test 17: Reynolds number — sea-level range + mu=0 guard
+      --  ==================================================================
+      Put_Line ("[TEST 17] Reynolds_Number: value range + mu=0 guard");
+      begin
+         Test_Reynolds_Number;
+         Put_Line ("[TEST 17]   PASS");
+         Pass_Count := Pass_Count + 1;
+      exception
+         when E : others =>
+            Put_Line ("[TEST 17]   FAIL (" &
+                      Ada.Exceptions.Exception_Message (E) & ")");
+            Fail_Count := Fail_Count + 1;
+      end;
+      New_Line;
+
+      --  ==================================================================
+      --  Test 18: Stagnation pressure — P_amb + q delegation + V=0 identity
+      --  ==================================================================
+      Put_Line ("[TEST 18] Stagnation_Pressure: P_amb + q + V=0 identity");
+      begin
+         Test_Stagnation_Pressure;
+         Put_Line ("[TEST 18]   PASS");
+         Pass_Count := Pass_Count + 1;
+      exception
+         when E : others =>
+            Put_Line ("[TEST 18]   FAIL (" &
+                      Ada.Exceptions.Exception_Message (E) & ")");
+            Fail_Count := Fail_Count + 1;
+      end;
+      New_Line;
+
+      --  ==================================================================
       --  Summary
       --  ==================================================================
       Put_Line ("========================================");
@@ -542,7 +596,7 @@ package body StellarOrion_Self_Test is
       Put_Line ("========================================");
 
       if Fail_Count = 0 then
-         Put_Line ("[TEST] All 15 self-tests PASSED.");
+         Put_Line ("[TEST] All 18 self-tests PASSED.");
          Write_Status (STATUS_DIR, "self_test", Status_Completed, 1.0);
       else
          Put_Line ("[TEST] SOME TESTS FAILED!");

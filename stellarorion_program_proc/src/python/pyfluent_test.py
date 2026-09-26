@@ -1,7 +1,7 @@
 # Parity protection: metadata/pyfluent_test.meta.json (RS+GC parity)
 """Standalone PyFluent SSH Integration Test Sidecar.
 
-Ported from StellarOrionEngineMach5Up.py:run_integration_test() and
+Ported from the retired StellarOrionEngineMach5Up.py (removed 2026-08-21):run_integration_test() and
 _ssh_connection_check(). Tests SSH connectivity to a remote Windows host,
 verifies Python + Ansys Fluent + PyFluent availability, and reports status.
 
@@ -16,7 +16,7 @@ import os
 def _ssh_connection_check(host, user, password=None, key_path=None):
     """Test SSH connection and verify remote PyFluent environment.
 
-    Mirrors L2570-2667 of StellarOrionEngineMach5Up.py.
+    Mirrors L2570-2667 of the retired StellarOrionEngineMach5Up.py (removed 2026-08-21).
 
     References:
     - https://docs.paramiko.org/en/stable/api/client.html

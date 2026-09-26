@@ -93,6 +93,85 @@ package StellarOrion_FFI is
    pragma Export (C, HIAD_Cost_C, "HIAD_Cost_C");
 
    -- -------------------------------------------------------------------------
+   --  HIAD_Set_Refs_C
+   -- -------------------------------------------------------------------------
+   --  C wrapper for StellarOrion_Optimization.Set_Validation_Refs.
+   --  Loads the DYNAMIC validation base reference used by J(x) after
+   --  the Python driver reads unified_comparison_data.json at run
+   --  time — J(x) normalises against the CURRENT validation state.
+   --
+   --  AXIOMS:
+   --    The four doubles map 1:1 to the Ada procedure parameters
+   --    (Interfaces.C.Double = IEEE binary64, no precision loss).
+   --
+   --  Parameters:
+   --    Q_Target — Total Heat Load target [J/cm^2]
+   --    Flux_Ref — reference peak heat flux [W/cm^2]
+   --    Tau_Sec  — effective heating duration [s]
+   --    Cd_Ref   — reference drag coefficient
+   --
+   --  Returns:
+   --    0 = references updated; 1 = failed (previous refs kept).
+   --    The Python wrapper turns a non-zero status into RuntimeError
+   --    with the full parameter context.
+   --
+   --  Safety fallback: on exception (including non-positive inputs,
+   --  which the Ada Pre forbids), the previously loaded refs remain
+   --  intact, a literal-only line is logged (dylib-safe), and control
+   --  returns normally — exceptions are NEVER raised across the C
+   --  boundary (secondary stack is unavailable for foreign threads,
+   --  so no unconstrained String operations may run here).
+   --
+   --  CITATION:
+   --    [Ctypes] Python ctypes — four c_double passed by value;
+   --             https://docs.python.org/3/library/ctypes.html
+   -- -------------------------------------------------------------------------
+   function HIAD_Set_Refs_C
+     (Q_Target : Interfaces.C.Double;
+      Flux_Ref : Interfaces.C.Double;
+      Tau_Sec  : Interfaces.C.Double;
+      Cd_Ref   : Interfaces.C.Double)
+      return Interfaces.C.int;
+   pragma Export (C, HIAD_Set_Refs_C, "HIAD_Set_Refs_C");
+
+   -- -------------------------------------------------------------------------
+   --  HIAD_Cost_Components_C
+   -- -------------------------------------------------------------------------
+   --  C wrapper for StellarOrion_Optimization.HIAD_Cost_Components.
+   --  Returns the full J(x) breakdown (seven doubles) through output
+   --  pointers so hiad_optimizer.py can report every term of the
+   --  multi-objective cost in its results JSON.
+   --
+   --  AXIOMS:
+   --    Output pointers are pre-allocated by the caller (ctypes
+   --    byref(c_double)); each is written exactly once per call.
+   --
+   --  Parameters:
+   --    X1, X2, X3  — [R_N, r_tor, half_cone_deg]
+   --    Out_*       — write-back pointers for Heat_Load_Ratio,
+   --                  Flux_Ratio, Beta_Dev, Cd_Ratio, Penalty,
+   --                  Total (J(x)), Heat_Load_Jcm2 (absolute Q(x))
+   --
+   --  Safety fallback: on exception every output is zeroed and
+   --  Out_Total is set to -1.0 — the same sentinel contract as
+   --  HIAD_Cost_C (J(x) >= 0.0 always, so < 0 means failure).
+   --
+   --  CITATION:
+   --    [Ctypes] ctypes.POINTER(c_double) + byref pattern;
+   --             https://docs.python.org/3/library/ctypes.html
+   -- -------------------------------------------------------------------------
+   procedure HIAD_Cost_Components_C
+     (X1, X2, X3             : Interfaces.C.Double;
+      Out_Heat_Load_Ratio    : access Interfaces.C.Double;
+      Out_Flux_Ratio         : access Interfaces.C.Double;
+      Out_Beta_Dev           : access Interfaces.C.Double;
+      Out_Cd_Ratio           : access Interfaces.C.Double;
+      Out_Penalty            : access Interfaces.C.Double;
+      Out_Total              : access Interfaces.C.Double;
+      Out_Heat_Load_Jcm2     : access Interfaces.C.Double);
+   pragma Export (C, HIAD_Cost_Components_C, "HIAD_Cost_Components_C");
+
+   -- -------------------------------------------------------------------------
    --  Run_MoP_C
    -- -------------------------------------------------------------------------
    --  C wrapper for StellarOrion_Optimization.Run_MoP_Optimization.

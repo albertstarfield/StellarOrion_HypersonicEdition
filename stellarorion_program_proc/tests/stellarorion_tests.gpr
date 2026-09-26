@@ -3,8 +3,7 @@
 --  Imports the production project so test sources link against the
 --  very objects that ship (same compiler switch set => no object-dir
 --  churn between `alr build` and test builds).  The linker package
---  (including the macOS syslibroot requirement) is inherited from
---  the imported project.
+--  (platform-conditional macOS syslibroot switch) is restated below.
 --
 --  This project is intentionally NOT listed in alire.toml's
 --  project-files: `alr build` keeps building only the production
@@ -30,19 +29,44 @@ project StellarOrion_Tests is
        ("-gnat12",
         "-gnatwa",     --  All warnings
         "-gnatW8",     --  UTF-8 encoding
-        "-gnatQ",      --  No message edition
-        "-gnatdAME");  --  Enable assertion mode for SPARK
+         "-gnatQ",      --  No message edition
+         "-gnatdME");   --  -gnatdM/-gnatdE only; -gnatdA removed because it
+                        --  breaks GNATprove data-rep JSON (see production GPR).
    end Compiler;
 
    --  GPR semantics: at link time only the MAIN project's Linker
    --  package applies (imported projects' Linker packages are NOT
-   --  merged).  Restate the macOS syslibroot requirement here; see
-   --  the production GPR for the full rationale and KNOWN EXCEPTION
-   --  note (benign gprbind clang deployment-version notices).
+   --  merged).  Restate the platform-conditional syslibroot switch
+   --  here (macOS REQUIRED / Termux dropped); full rationale and
+   --  KNOWN EXCEPTION note live in the production GPR.
+   --  [Citation: GNAT Project Manager External()/case —
+   --   https://docs.adacore.com/gprbuild-docs/html/gpr_build_ref/]
+   Prefix_V := External ("PREFIX", "");
+   Host_OS  := External ("STELLARORION_HOST_OS", "");
+
+   case Host_OS is
+      when "" =>
+         Host_OS := "macos";
+         case Prefix_V is
+            when "/data/data/com.termux/files/usr" => Host_OS := "termux";
+            when others => null;
+         end case;
+      when "macos" | "termux" => null;
+      when others => Host_OS := "macos";
+   end case;
+
+   Linker_Extra := ();
+   case Host_OS is
+      when "macos" =>
+         Linker_Extra :=
+           ("-Wl,-syslibroot,/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+      when others =>
+         null;   --  Termux/Linux GNU ld: no syslibroot (flag unsupported)
+   end case;
+
    package Linker is
       for Switches ("ada") use
-        ("-g",
-         "-Wl,-syslibroot,/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+        ("-g") & Linker_Extra;
    end Linker;
 
 end StellarOrion_Tests;

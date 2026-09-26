@@ -36,14 +36,48 @@ project StellarOrion_PINN_Lib is
          "-gnatwe",     --  Warnings as errors  [NEW: warnings-as-errors enforcement]
          "-gnatW8",
          "-gnatQ",
-         "-gnatdAME",
+         "-gnatdME",    --  -gnatdM: conservative flow (assume all vars
+                        --  modified); -gnatdE: elab checks for predefined
+                        --  units. -gnatdA removed: it breaks GNATprove
+                        --  data-rep JSON (conflicting duplicates).
+                        --  CITATION: gcc/ada/debug.adb (GNAT 16.1.0).
          "-fPIC");
    end Compiler;
 
+   --  Platform-conditional linker flags (full rationale + AXIOMS in
+   --  stellarorion_program_proc.gpr): macOS keeps the REQUIRED
+   --  -Wl,-syslibroot switch; Termux/Linux (GNU ld) drops it because
+   --  GNU ld rejects the Apple-specific flag. Detection: Termux exports
+   --  PREFIX=/data/data/com.termux/files/usr; override with
+   --  STELLARORION_HOST_OS=macos|termux.
+   --  [Citation: GNAT Project Manager External()/case —
+   --   https://docs.adacore.com/gprbuild-docs/html/gpr_build_ref/]
+   Prefix_V := External ("PREFIX", "");
+   Host_OS  := External ("STELLARORION_HOST_OS", "");
+
+   case Host_OS is
+      when "" =>
+         Host_OS := "macos";
+         case Prefix_V is
+            when "/data/data/com.termux/files/usr" => Host_OS := "termux";
+            when others => null;
+         end case;
+      when "macos" | "termux" => null;
+      when others => Host_OS := "macos";
+   end case;
+
+   Linker_Extra := ();
+   case Host_OS is
+      when "macos" =>
+         Linker_Extra :=
+           ("-Wl,-syslibroot,/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+      when others =>
+         null;   --  Termux/Linux GNU ld: no syslibroot (flag unsupported)
+   end case;
+
    package Linker is
       for Switches ("ada") use
-        ("-g",
-         "-Wl,-syslibroot,/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+        ("-g") & Linker_Extra;
    end Linker;
 
 end StellarOrion_PINN_Lib;

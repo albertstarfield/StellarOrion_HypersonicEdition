@@ -41,7 +41,8 @@ package body StellarOrion_Reports is
    is
       --  Axiom: IRVE-3 mission baseline from Rapisarda (2023) MDAO framework
       --  and NASA/TP-2013-4012 post-flight reconstruction (Dillman et al. 2013).
-      --  Source: get_irve_baseline_results_static() in StellarOrionEngineMach5Up.py:336
+      --  Source: get_irve_baseline_results_static() in the retired
+      --  StellarOrionEngineMach5Up.py:336 (removed 2026-08-21)
       Flight   : Flight_Parameters;
       Geo      : constant Geometry_Parameters := Geo_In;
       TPS      : constant TPS_Material := TPS_In;

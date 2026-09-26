@@ -640,7 +640,7 @@ Sutton-Graves is a simplified power-law correlation: q = C_SG × √(ρ/R_n) × 
 | Category | Count | Status |
 |----------|-------|--------|
 | Flow analysis | 134 | 0 errors |
-| Prover checks | 666 | 612 proved (92%) |
+| Proved | 666 | 75% of 889 total |
 | Justified | 35 | Hand-written math bounds |
 | Unproved (prover timeout) | 54 | Geometry Sin/Cos + floating-point overflow chains |
 

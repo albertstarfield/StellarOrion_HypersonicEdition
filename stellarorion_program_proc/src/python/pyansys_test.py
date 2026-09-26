@@ -1,7 +1,7 @@
 # Parity protection: metadata/pyansys_test.meta.json (RS+GC parity)
 """Standalone PyAnsys Local Integration Test Sidecar.
 
-Ported from StellarOrionEngineMach5Up.py:run_local_pyfluent_test().
+Ported from the retired StellarOrionEngineMach5Up.py (removed 2026-08-21):run_local_pyfluent_test().
 Tests local Ansys Fluent installation and basic handshake on Windows.
 Requires Ansys Fluent installed locally (Windows only).
 
@@ -19,7 +19,7 @@ import time
 def get_local_fluent_exe():
     """Locate Ansys Fluent executable on Windows.
 
-    Mirrors _get_local_fluent_exe from StellarOrionEngineMach5Up.py.
+    Mirrors _get_local_fluent_exe from the retired StellarOrionEngineMach5Up.py (removed 2026-08-21).
 
     References:
     - https://innovationspace.ansys.com/
@@ -56,7 +56,7 @@ def get_local_fluent_exe():
 def run_local_pyfluent_test(show_gui=True):
     """Verify local PyAnsys installation and basic handshake.
 
-    Mirrors L2518-2555 of StellarOrionEngineMach5Up.py.
+    Mirrors L2518-2555 of the retired StellarOrionEngineMach5Up.py (removed 2026-08-21).
 
     References:
     - https://docs.pyansys.com/version/stable/
