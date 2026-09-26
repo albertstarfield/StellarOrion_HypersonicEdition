@@ -227,7 +227,43 @@ package StellarOrion_PINN_Trajectory is
    subtype Cross_Section_Index is Positive range 1 .. MAX_CROSS_SECTION_PTS;
    type Array_Float_200 is array (Cross_Section_Index) of Float;
 
-   --  Return the 2D axisymmetric cross-section of the HIAD vehicle.
+   --  Return the 2D axisymmetric cross-section for ARBITRARY geometry
+   --  parameters. Single source of truth for the 4-segment flat-skin
+   --  math: the IRVE-3 baseline Get_HIAD_Cross_Section is a thin
+   --  wrapper over this procedure, and Python calls this directly via
+   --  ctypes FFI to draw optimized-geometry profiles (the math runs in
+   --  Ada/SPARK; only the mesh/plot rendering stays in Python).
+   --
+   --  Parameters:
+   --    R_N           -- nose sphere radius [m]
+   --    R_Torus       -- torus minor (tube) radius [m]
+   --    Half_Cone_Deg -- windward cone half-angle [degrees]
+   --
+   --  GIGO contract: physical input only (R_N > 0, R_Torus > 0,
+   --  0 < Half_Cone_Deg < 90). Enforced fail-closed on the Python side
+   --  by hiad_geometry.generate_cross_section BEFORE the FFI call;
+   --  this Ada layer performs no runtime range checks (library build
+   --  has assertions disabled), so non-physical parameters yield an
+   --  undefined profile — same behavior as the historical procedure.
+   --
+   --  [Citation: Rapisarda (2023) Sec 3.7 — HIAD flat-skin profile]
+   --  [Citation: stellarorion_sparta.ads — 4-segment geometry spec]
+   procedure Get_HIAD_Cross_Section_Params
+     (R_N           : Float;
+      R_Torus       : Float;
+      Half_Cone_Deg : Float;
+      X_Arr         : out Array_Float_200;
+      Y_Arr         : out Array_Float_200;
+      N_Pts         : access Integer)
+     with Pre => True, Post => N_Pts.all >= 0
+                  and N_Pts.all <= MAX_CROSS_SECTION_PTS;
+
+   --  Return the 2D axisymmetric cross-section of the HIAD vehicle at
+   --  the IRVE-3 baseline parameters (R_N=1.5 m, R_Torus=0.135 m,
+   --  Half_Cone_Deg=60.0 deg). Thin wrapper over
+   --  Get_HIAD_Cross_Section_Params — identical code path with literal
+   --  constants instead of FFI parameters (byte-identical output to the
+   --  historical implementation).
    --
    --  Generates the exact 4-segment flat-skin profile used by SPARTA:
    --    1. Nose arc        (sphere rN=1.5m, theta -pi/2 to -gamma)
