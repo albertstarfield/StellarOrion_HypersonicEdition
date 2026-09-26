@@ -348,7 +348,7 @@ package body StellarOrion_PINN_Trajectory is
    end Scale_Metric;
 
    -- -----------------------------------------------------------------
-   --  Get_HIAD_Cross_Section
+   --  Get_HIAD_Cross_Section_Params  (+ IRVE-3 baseline wrapper)
    -- -----------------------------------------------------------------
    --  AXIOM G1: The HIAD flat-skin profile is a 4-segment parametric
    --            curve (Rapisarda 2023, Sec 3.7, Appendix C.1):
@@ -359,7 +359,7 @@ package body StellarOrion_PINN_Trajectory is
    --
    --  THEORIES:
    --    gamma = (90 - half_cone_deg) * Pi / 180  [rad]
-   --    rN = IRVE3_NOSE_R_M = 1.5 m  [tangency: Eq 3.4]
+   --    rN = R_N  (IRVE3_NOSE_R_M = 1.5 m at baseline) [tangency: Eq 3.4]
    --    R_Tang = rN * cos(gamma)       [tangent point]
    --    Z_Tang = rN * (1 - sin(gamma))
    --    S_Last = (2*N_Tori - 1) * r_tor  [outermost toroid reach]
@@ -370,24 +370,29 @@ package body StellarOrion_PINN_Trajectory is
    --    Z_Back = Z_C_Out + r_tor  [flat back plane]
    --
    --  APPLICATIONS: Python calls via ctypes to get the exact 4-segment
-   --  profile for vehicle visualization; replaces Python re-implementation.
+   --  profile for vehicle visualization: Get_HIAD_Cross_Section_Params
+   --  takes the optimized geometry parameters (profile of the BO winner
+   --  in render_optimization_comparison.py); the baseline wrapper takes
+   --  none. The math runs in Ada/SPARK — Python only renders the mesh.
    --
    --  CITATIONS:
    --    [Rap23] Rapisarda (2023) Sec 3.7, Appendix C.1 (flat-skin)
    --    [IRVE3] NASA TP-2013-4012 — IRVE-3 geometry parameters
    -- -----------------------------------------------------------------
-   procedure Get_HIAD_Cross_Section
-     (X_Arr  : out Array_Float_200;
-      Y_Arr  : out Array_Float_200;
-      N_Pts  : access Integer)
+   procedure Get_HIAD_Cross_Section_Params
+     (R_N           : Float;
+      R_Torus       : Float;
+      Half_Cone_Deg : Float;
+      X_Arr         : out Array_Float_200;
+      Y_Arr         : out Array_Float_200;
+      N_Pts         : access Integer)
    is
-      --  IRVE-3 geometry constants (from stellarorion_postprocessing.ads)
-      Pi            : constant Float := 3.141592653589793;
-      Half_Cone_Deg : constant Float := 60.0;     -- IRVE3_HALF_CONE_DEG
-      R_N           : constant Float := 1.5;      -- IRVE3_NOSE_R_M
-      R_Torus       : constant Float := 0.1350;   -- IRVE3_R_TORUS_M
-      N_Tori        : constant Natural := 6;       -- IRVE3_N_TORI
-      Seg_Pts       : constant := 15;             -- points per segment
+      --  Structural constants (IRVE-3 / SPARTA profile contract — NOT
+      --  free parameters: 6-torus stack and 15 samples per segment are
+      --  fixed; geometry freedom lives in R_N / R_Torus / Half_Cone_Deg).
+      Pi      : constant Float := 3.141592653589793;
+      N_Tori  : constant Natural := 6;       -- IRVE3_N_TORI
+      Seg_Pts : constant := 15;              -- points per segment
 
       --  Derived angles
       Gamma_Rad : constant Float := (90.0 - Half_Cone_Deg) * Pi / 180.0;
@@ -479,6 +484,32 @@ package body StellarOrion_PINN_Trajectory is
       end loop;
 
       N_Pts.all := Idx;
+   end Get_HIAD_Cross_Section_Params;
+
+   -- -----------------------------------------------------------------
+   --  Get_HIAD_Cross_Section — IRVE-3 baseline wrapper
+   -- -----------------------------------------------------------------
+   --  THEORIES: same code path as Get_HIAD_Cross_Section_Params with
+   --  the baseline literals below (byte-identical output to the
+   --  historical implementation — the constants simply moved from the
+   --  body into this call site).
+   --  APPLICATIONS: default-profile rendering (dashboard, FFI callers
+   --  that want the stock IRVE-3 profile without plumbing parameters).
+   --  [Citation: IRVE3] NASA TP-2013-4012 — IRVE-3 geometry parameters
+   -- -----------------------------------------------------------------
+   procedure Get_HIAD_Cross_Section
+     (X_Arr  : out Array_Float_200;
+      Y_Arr  : out Array_Float_200;
+      N_Pts  : access Integer)
+   is
+   begin
+      Get_HIAD_Cross_Section_Params
+        (R_N           => 1.5,      -- IRVE3_NOSE_R_M
+         R_Torus       => 0.1350,   -- IRVE3_R_TORUS_M
+         Half_Cone_Deg => 60.0,     -- IRVE3_HALF_CONE_DEG
+         X_Arr         => X_Arr,
+         Y_Arr         => Y_Arr,
+         N_Pts         => N_Pts);
    end Get_HIAD_Cross_Section;
 
 end StellarOrion_PINN_Trajectory;

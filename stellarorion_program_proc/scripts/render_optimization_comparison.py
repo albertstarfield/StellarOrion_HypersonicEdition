@@ -9,7 +9,9 @@ Bayesian-optimized HIAD geometries.
 
 GEOMETRY SOURCE:
   - Default: Ada FFI get_hiad_cross_section() — single source of truth
-  - Optimized: 4-segment Rapisarda profile computed in Python (same math as Ada)
+  - Optimized: Ada FFI get_hiad_cross_section_params() — the SAME Ada/SPARK
+    math, parameterized by the BO winner (profile math runs in Ada;
+    Python only renders the mesh — both curves are Ada FFI)
   - Parameters (both panels): hiad_optimization_results.json loaded at runtime
     — NEVER hardcoded; re-running hiad_optimizer.py updates this render
 
@@ -22,8 +24,9 @@ COORDINATE FRAME (AXIOM — all meshes MUST match revolve_profile):
     producing a wrongly oriented HIAD (fixed 2026-09-24).
 
 VERIFICATION:
-  - crosscheck_ada_profile(): Python default profile vs Ada FFI — loud WARNING
-    on drift (math went wrong) or OSError (dylib missing)
+  - crosscheck_ada_profile(): Python replica vs Ada FFI for BOTH the default
+    and the optimized profile — loud WARNING on drift (math went wrong) or
+    OSError (dylib missing); exit code 2 signals drift
   - scripts/verify_profile_math.py + CrossHair: invariants on profile math
 
 HIAD CONSTRUCTION FEATURES:
@@ -72,17 +75,50 @@ def get_ada_default_profile() -> tuple[list[float], list[float], int]:
     return result["x"], result["y"], result["n"]
 
 
+def get_ada_profile_params(
+    r_n: float,
+    r_tor: float,
+    half_cone_deg: float,
+) -> tuple[list[float], list[float], int]:
+    """Get a parameterized HIAD cross-section from Ada FFI (same Ada math).
+
+    Calls Get_HIAD_Cross_Section_Params via ctypes with arbitrary geometry
+    parameters (used for the Bayesian-optimized profile). Returns
+    (x_list, y_list, n) where x=axial, y=radial.
+
+    Raises:
+      OSError      — libstellarorion_pinn.dylib absent/not loadable
+      ValueError   — non-physical parameters (GIGO fail-closed in wrapper)
+      AttributeError/RuntimeError — FFI symbol missing (stale dylib)
+
+    Safety fallback: caller must handle OSError/ValueError/AttributeError/
+    RuntimeError and fail closed (never render a fabricated profile).
+
+    [Citation: ada_pinn_wrapper.py get_hiad_cross_section_params]
+    [Citation: stellarorion_pinn_trajectory.ads — Get_HIAD_Cross_Section_Params]
+    """
+    script_dir = Path(__file__).resolve().parent
+    src_python = script_dir.parent / "src" / "python"
+    sys.path.insert(0, str(src_python))
+
+    from ada_pinn_wrapper import get_hiad_cross_section_params
+    result = get_hiad_cross_section_params(r_n, r_tor, half_cone_deg)
+    return result["x"], result["y"], result["n"]
+
+
 def crosscheck_ada_profile(
     py_x: list[float],
     py_y: list[float],
     rtol: float = 5e-3,
     atol: float = 2e-3,
+    ada_profile: tuple[list[float], list[float], int] | None = None,
 ) -> bool:
-    """Cross-check Python default profile against Ada FFI via arc-length.
+    """Cross-check a Python profile against Ada FFI via arc-length.
 
     -- AXIOMS:
-    --   A1: Ada Get_HIAD_Cross_Section and hiad_geometry.generate_cross_section
-    --       implement the same 4-segment math for identical parameters.
+    --   A1: Ada Get_HIAD_Cross_Section(_Params) and
+    --       hiad_geometry.generate_cross_section implement the same
+    --       4-segment math for identical parameters.
     --   A2: The meridian is a closed polyline (nose tip → flat-back → axis),
     --       NOT a function y=f(x): segment 4 (flat back) has constant axial
     --       x with many radial y values. Interpolating y as f(x) on that
@@ -97,10 +133,12 @@ def crosscheck_ada_profile(
     --       pointwise geometric disagreement along the meridian.
     --   T2: From A4: print WARNING to stderr and return False — never raise
     --       so the render can still proceed for visual inspection.
-    -- -- APPLICATIONS: main() calls this after loading both profiles and
-    --   uses the boolean for figure annotation / process exit status.
+    -- -- APPLICATIONS: main() calls this once per panel (default profile:
+    --   ada_profile=None loads the default Ada FFI profile; optimized
+    --   profile: main passes the tuple returned by get_ada_profile_params)
+    --   and uses the booleans for figure annotation / process exit status.
     -- -- CITATIONS:
-    --   [Citation: ada_pinn_wrapper.get_hiad_cross_section]
+    --   [Citation: ada_pinn_wrapper.get_hiad_cross_section(_params)]
     --   [Citation: arclength parameterization — do Carmo (1976)]
     --
     -- SAFETY FALLBACK: returns False + stderr WARNING on any failure;
@@ -116,7 +154,10 @@ def crosscheck_ada_profile(
         return False
 
     try:
-        ada_x, ada_y, n_ada = get_ada_default_profile()
+        if ada_profile is None:
+            ada_x, ada_y, n_ada = get_ada_default_profile()
+        else:
+            ada_x, ada_y, n_ada = ada_profile
     except (OSError, AttributeError, RuntimeError) as exc:
         print(f"[WARNING] Ada FFI cross-check unavailable: {exc} — "
               f"Python profile used WITHOUT Ada validation",
@@ -786,15 +827,32 @@ def main() -> int:
     print("Cross-checking Python default profile against Ada FFI...")
     ada_ok = crosscheck_ada_profile(x_def_py, y_def_py)
 
-    # --- Compute optimized profile (same math as Ada, params from JSON) ---
+    # --- Get optimized profile from Ada FFI (same Ada math, JSON params) ---
     # [Citation: hiad_optimization_results.json — optimized block]
-    print("Computing optimized HIAD profile...")
-    x_opt, y_opt = compute_rapisarda_profile(
+    print("Loading optimized HIAD profile from Ada FFI...")
+    try:
+        x_opt, y_opt, n_opt = get_ada_profile_params(
+            opt["R_N"], opt["r_tor"], opt["half_cone_deg"])
+    except (OSError, AttributeError, RuntimeError, ValueError) as exc:
+        # Safety fallback: fail closed — never render a fabricated profile
+        print(f"[FATAL] Ada FFI unavailable for optimized profile: {exc}",
+              file=sys.stderr)
+        print("  Build libstellarorion_pinn.dylib (alr build) or run from "
+              "an environment where the dylib is on DYLD_LIBRARY_PATH.",
+              file=sys.stderr)
+        return 1
+    print(f"  Ada returned {n_opt} points, x=[{min(x_opt):.4f}, {max(x_opt):.4f}], "
+          f"y=[{min(y_opt):.4f}, {max(y_opt):.4f}]")
+
+    # --- Python replica of optimized profile for FFI cross-check ---
+    x_opt_py, y_opt_py = compute_rapisarda_profile(
         rn=opt["R_N"], half_cone_deg=opt["half_cone_deg"],
         r_tor=opt["r_tor"], n_tori=n_tori
     )
-    print(f"  Computed {len(x_opt)} points, x=[{min(x_opt):.4f}, {max(x_opt):.4f}], "
-          f"y=[{min(y_opt):.4f}, {max(y_opt):.4f}]")
+    print("Cross-checking Python optimized profile against Ada FFI...")
+    ada_opt_ok = crosscheck_ada_profile(
+        x_opt_py, y_opt_py, ada_profile=(x_opt, y_opt, n_opt),
+    )
 
     # Shared limits for fair side-by-side comparison
     x_max_all = max(max(x_def), max(x_opt))
@@ -833,7 +891,7 @@ def main() -> int:
                 half_cone_deg=opt["half_cone_deg"], r_tor=opt["r_tor"],
                 cd_value=opt["Cd"], rn=opt["R_N"],
                 is_optimized=True)
-    ax2.set_title('AFTER (Optimized — Bayesian)', color='#e94560', fontsize=12,
+    ax2.set_title('AFTER (Optimized — Bayesian — Ada FFI)', color='#e94560', fontsize=12,
                   fontweight='bold', pad=10)
     ax2.set_xlabel('X (axial) [m]', color='#8892b0', fontsize=8)
     ax2.set_ylabel('Y [m]', color='#8892b0', fontsize=8)
@@ -842,7 +900,8 @@ def main() -> int:
     _apply_view(ax2, x_max_all, r_max_all)
     opt_label = (f"R_N={opt['R_N']:.2f}m  half_cone={opt['half_cone_deg']:.1f}\n"
                  f"r_tor={opt['r_tor']:.3f}m  {n_tori} tori\n"
-                 f"Cd={opt['Cd']:.4f}\nSource: Python profile")
+                 f"Cd={opt['Cd']:.4f}\nSource: Ada FFI"
+                 + ("" if ada_opt_ok else "\n[Ada cross-check DRIFT]"))
     ax2.text2D(0.02, 0.02, opt_label,
         transform=ax2.transAxes, color='#e94560', fontsize=8,
         verticalalignment='bottom',
@@ -862,14 +921,14 @@ def main() -> int:
         labelcolor='#8892b0', bbox_to_anchor=(0.5, 0.01))
 
     fig.suptitle('StellarOrion HIAD Topology Optimization — Before vs After\n'
-                 'Default geometry from Ada FFI | Optimized from Bayesian search',
+                 'Both profiles computed in Ada via FFI | Optimized by Bayesian search',
         color='white', fontsize=14, fontweight='bold', y=0.97)
 
     plt.tight_layout(rect=(0, 0.05, 1, 0.93))
     out = Path(__file__).resolve().parent.parent / "optimization_comparison.png"
     plt.savefig(str(out), dpi=150, facecolor='#0a0a0f', bbox_inches='tight')
     print(f"Saved: {out}")
-    if not ada_ok:
+    if not (ada_ok and ada_opt_ok):
         print("[WARNING] Render written but Ada FFI cross-check FAILED — "
               "inspect the image and the WARNING above.", file=sys.stderr)
         return 2

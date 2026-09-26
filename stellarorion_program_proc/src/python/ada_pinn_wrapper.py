@@ -175,6 +175,20 @@ _ada_lib.stellarorion_pinn_trajectory__get_hiad_cross_section.argtypes = [
     ctypes.POINTER(ctypes.c_int),       # N_Pts (access Integer — pointer)
 ]
 
+#  Parameterized variant: same ABI plus three leading geometry params.
+#  Ada Float is 32-bit, so every scalar crosses as c_float (matches the
+#  working trajectory-package binds above — c_double would corrupt args).
+#  [Citation: Ada RM §3.5.7 — Float is a 32-bit floating point type]
+_ada_lib.stellarorion_pinn_trajectory__get_hiad_cross_section_params.restype = None
+_ada_lib.stellarorion_pinn_trajectory__get_hiad_cross_section_params.argtypes = [
+    ctypes.c_float,                     # R_N (nose sphere radius [m])
+    ctypes.c_float,                     # R_Torus (torus minor radius [m])
+    ctypes.c_float,                     # Half_Cone_Deg (cone half-angle [deg])
+    ctypes.POINTER(_Float_Array_200),   # X_Arr (axial coords, by reference)
+    ctypes.POINTER(_Float_Array_200),   # Y_Arr (radial coords, by reference)
+    ctypes.POINTER(ctypes.c_int),       # N_Pts (access Integer — pointer)
+]
+
 
 def get_hiad_cross_section():
     """Return the 4-segment HIAD flat-skin cross-section from Ada/SPARK.
@@ -194,6 +208,57 @@ def get_hiad_cross_section():
     #  Ada out params: X_Arr/Y_Arr passed by reference, N_Pts passed by copy.
     #  We pass all via byref() to ensure correct pointer semantics.
     _ada_lib.stellarorion_pinn_trajectory__get_hiad_cross_section(
+        ctypes.byref(x_arr), ctypes.byref(y_arr), ctypes.byref(n_pts),
+    )
+    n = n_pts.value
+    return {
+        "x": [x_arr[i] for i in range(n)],
+        "y": [y_arr[i] for i in range(n)],
+        "n": n,
+    }
+
+
+def get_hiad_cross_section_params(r_n, r_torus, half_cone_deg):
+    """Return the 4-segment HIAD flat-skin cross-section for ARBITRARY
+    geometry parameters via Ada/SPARK FFI.
+
+    Parameters:
+      r_n           -- nose sphere radius [m]         (must be > 0)
+      r_torus       -- torus minor (tube) radius [m]  (must be > 0)
+      half_cone_deg -- windward cone half-angle [deg] (0 < angle < 90)
+
+    Returns dict with:
+      x : list[float]  — axial coordinates (nose points +X)
+      y : list[float]  — radial coordinates (half-width)
+      n : int          — actual number of valid points
+
+    GIGO contract: this wrapper fail-closes on non-physical inputs before
+    crossing the FFI boundary (the Ada library runs with assertions
+    disabled, so it performs no runtime range checks itself).
+
+    All geometry math is computed in Ada/SPARK (single source of truth);
+    Python is a thin wrapper — used by render_optimization_comparison.py
+    to draw the Bayesian-optimized profile.
+    [Citation: Rapisarda (2023) Sec 3.7, Appendix C.1]
+    [Citation: stellarorion_pinn_trajectory.ads — Get_HIAD_Cross_Section_Params]
+    """
+    if r_n <= 0.0:
+        raise ValueError(f"r_n must be > 0 m, got {r_n!r}")
+    if r_torus <= 0.0:
+        raise ValueError(f"r_torus must be > 0 m, got {r_torus!r}")
+    if not 0.0 < half_cone_deg < 90.0:
+        raise ValueError(
+            f"half_cone_deg must be in (0, 90) deg, got {half_cone_deg!r}",
+        )
+    x_arr = _Float_Array_200()
+    y_arr = _Float_Array_200()
+    n_pts = ctypes.c_int(0)
+    #  Ada out params: X_Arr/Y_Arr passed by reference, N_Pts passed by
+    #  copy of the access value — same pointer semantics as the default
+    #  binding above.
+    _ada_lib.stellarorion_pinn_trajectory__get_hiad_cross_section_params(
+        ctypes.c_float(r_n), ctypes.c_float(r_torus),
+        ctypes.c_float(half_cone_deg),
         ctypes.byref(x_arr), ctypes.byref(y_arr), ctypes.byref(n_pts),
     )
     n = n_pts.value
