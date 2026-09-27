@@ -28,8 +28,10 @@ verified false-positive: `Deg_To_Rad`, `Sin_Deg`, `Frontal_Area`
 SPARK_Mode Off extern units (`project.adb`, `history.adb`, `sparta.adb`)
 whose Off status carries in-file justifications the verifier itself
 recognizes as "legitimate use case detected" (LOW SPARK_MODE_OFF finding).
-**Stronger gate already in place**: gnatprove `--level=4` clean, 339/339
-checks (`scripts/prove.sh skip --level=4 --report=all --timeout=180`).
+**Stronger gate already in place**: gnatprove `--level=4` run to exit 0 via
+`scripts/prove.sh 4 --report=all` — 527 checks, 400 proved, 103 unproved
+(all in the untouched `stellarorion_postprocessing` analytics unit), 24
+flow-analysis checks all proved.
 
 ### 2. SMT_LOGIC_VERIFICATION (~26) + EXTERNAL_CALL_UNHANDLED (8) +
 ### STALE_FLAG (2) + SILENT_FAILURE (1) + RESOURCE_LEAK (1) — Python sidecar
