@@ -2,9 +2,15 @@
 
 > Logical consequences derived from the registered axioms (see
 > `docs/AXIOMS.md`). Each theory is a proof obligation that GNATprove
-> discharges at `--level=4 --report=all --timeout=180` (gate command:
-> `scripts/prove.sh skip --level=4 --report=all --timeout=180`,
-> 383 checks proved, zero findings).
+> discharges at `--level=4 --report=all` (gate command:
+> `scripts/prove.sh 4 --report=all`;
+> 527 checks, 400 proved, 103 unproved, 24 flow-analysis checks, exit 0).
+>
+> Note: `scripts/prove.sh skip …` runs `gnatprove -j0` with no `--level`
+> switch, so it does *not* accept `--level` or `--timeout`; passing either
+> is a usage error. Request a specific level through the script's first
+> argument (`scripts/prove.sh 4 …`) and use `skip` only for a bare,
+> cached-proof regeneration.
 
 ---
 

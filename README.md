@@ -27,7 +27,7 @@ python3 run.py --help             # Show all CLI flags
 
 This project uses a hybrid architecture for running simulations:
 
-- **Ada/SPARK Binary:** Primary simulation engine (`stellarorion_program_proc/`). Compiled with Alire, formally verified with GNATprove (552 checks, 401 proved, 103 unproved in untouched analytics unit, 0 new failures; run 2026-09-25). Handles all 19 CLI modes including validation, optimization, calibration, and integration tests.
+- **Ada/SPARK Binary:** Primary simulation engine (`stellarorion_program_proc/`). Compiled with Alire, formally verified with GNATprove (527 checks, 400 proved, 103 unproved in untouched analytics unit, 0 new failures; run 2026-09-27). Handles all 19 CLI modes including validation, optimization, calibration, and integration tests.
 - **Docker:** Used exclusively for running the SPARTA DSMC simulation in a containerized Linux environment.
 - **Python Sidecar:** Native OS Python environment for PINN refinement (DeepXDE), PyFluent/PyAnsys integration, and GUI launcher. Supports NVIDIA CUDA, AMD ROCm, Apple Metal (MPS), Intel OneAPI/OpenCL, and specialized accelerators.
 
@@ -43,7 +43,7 @@ stellarorion_program_proc/
 ├── alire.toml             # Alire crate (declares executable stellarorion_project; built binary: bin/main)
 ├── stellarorion_program_proc.gpr   # Main GPR → src/simulation_engine, Main: main.adb
 ├── stellarorion_pinn_lib.gpr        # PINN shared-library project
-├── prove.sh / run_smooth.sh         # GNATprove + smooth-geometry runners
+├── prove.sh / run_smooth.sh         # Legacy proof+coverage runner and smooth-geometry runner (proof gate = scripts/prove.sh)
 ├── compare_validation.py            # Standalone validation comparison
 ├── postprocess_validation.py        # Post-process DSMC/validation outputs
 │
@@ -363,11 +363,14 @@ Three comment blocks added to `stellarorion_sparta.adb` documenting:
 
 ### GNATprove Level 4 Validation
 
-- Latest full run (2026-09-25, `alr exec -- gnatprove -P stellarorion_program_proc.gpr --level=4 -j0 --report=all`): **552 checks total — 401 proved by prover (73%), 103 unproved (19%), 48 flow-analysis checks (initialization + termination, all pass)**, exit code 0. Includes the `--results-dir` honoring fix in `stellarorion_project.adb` (its new obligations all proved; unproved count unchanged at 103)
-- All 103 unproved checks are concentrated in `stellarorion_postprocessing` (floating-point overflow / array-index checks in analytics code) — a unit **not modified** in this change-set; its check count grew with that unit's own Sep 13–14 commits
+- Canonical gate (2026-09-27, `cd stellarorion_program_proc && ./scripts/prove.sh 4 --report=all`): **527 checks total — 400 proved by prover (76%), 103 unproved (20%), 24 flow-analysis checks (3 initialization + 21 termination, all proved)**, exit code 0. The script resolves the project file via `PROJ_FILE` (default `stellarorion_program_proc.gpr`) and passes `-P` to every `gprbuild`/`gnatprove` call, so it no longer aborts on a multi-project workspace
+- Per-category breakdown (from `obj/gnatprove/gnatprove.out`): run-time checks `342` total → `250` proved / `92` unproved; assertions `111` → `104` / `7`; functional contracts `50` → `46` / `4`; initialization `3` → `3` / `0`; termination `21` → `21` / `0`
+- All 103 unproved checks are concentrated in `stellarorion_postprocessing` (101 in `stellarorion_postprocessing.adb`, 2 in `stellarorion_postprocessing.ads`; floating-point overflow / array-index checks in analytics code) — a unit **not modified** in this change-set
 - **0 new failures introduced by code changes**: the new physics units are SPARK_Mode Off bodies (package-wide exception-handler convention) contributing 0 analyzed checks; the self-test unit is likewise fully skipped
 - Historical baseline (2026-09-03, before the Sep 9–10 VERBOSE_ERROR handler campaign moved many bodies to SPARK_Mode Off): 889 checks, 666 proved (75%), 35 justified, 54 unproved, 134 flow checks
+- Historical intermediate run (2026-09-25, before the `-gnatdA` removal): 552 checks, 401 proved, 103 unproved, 48 flow checks — superseded by the 2026-09-27 figures above
 - Fixed 2026-09-25: removed the `-gnatdA` debug switch from all three GPRs — it forced conflicting duplicate entries into GNATprove's data-representation JSON, which gnat2why rejected ("ill-formed JSON file") and used to abort every proof run; root cause + minimal repro documented in `stellarorion_program_proc/docs/APPLICATIONS.md` (AP-9)
+- Fixed 2026-09-27: `scripts/prove.sh` was passing no project file, so with two GPRs in the tree (`stellarorion_program_proc.gpr`, `stellarorion_pinn_lib.gpr`) `gprbuild` had no unambiguous default. `-P "$PROJ_FILE"` is now passed to both tools, and phase 2's rep-info deduplicator reports `dropped 0 duplicate-location entries` (the `-gnatdA` JSON corruption no longer recurs)
 
 ## 📄 Documentation
 

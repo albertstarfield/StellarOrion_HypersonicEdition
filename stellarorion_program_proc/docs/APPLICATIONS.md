@@ -80,7 +80,7 @@ values sitting exactly on subtype bounds.
 | Gate | Command | Criterion |
 |------|---------|-----------|
 | Build | `alr clean && alr build` | exit 0, zero Ada warnings (-gnatwa); only benign clang deployment-version notices remain (documented GPR KNOWN EXCEPTION) |
-| Proof | `scripts/prove.sh skip --level=4 --report=all --timeout=180` | "Success: all checks proved", 0 medium/high |
+| Proof | `scripts/prove.sh 4 --report=all` | exit 0; 527 checks, 400 proved, 103 unproved, 24 flow; 0 new failures (103 unproved are the pre-existing `stellarorion_postprocessing` baseline) |
 | Sabotage audit | `scripts/SabotageVerifier.sh` | CRITICAL = 0 |
 | Self-test | `./bin/main --self-test` | All 18 tests PASSED |
 | Unit harness | `alr exec -- gprbuild -P tests/stellarorion_tests.gpr -j0 && ./bin/test_main` | 29/29 PASS |

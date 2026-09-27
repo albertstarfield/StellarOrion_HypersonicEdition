@@ -63,5 +63,5 @@ The verified Ada core and the Python sidecar domain are separated by a
    sanitising readers already in place (see APPLICATIONS.md AP-5) or be
    clamped at the ingestion chokepoint (AP-2).
 3. Promotion of any sidecar computation into the verified core requires a
-   SPARK re-proof run (`scripts/prove.sh skip --level=4 --report=all
-   --timeout=180`) plus parity/watchdog coverage review.
+   SPARK re-proof run (`scripts/prove.sh 4 --report=all`) plus
+   parity/watchdog coverage review.

@@ -39,9 +39,10 @@ executed in this environment. **Documented exception**, not a silent skip.
 
 **Compensating controls already in place**:
 - All physics/environment/geometry entry points carry SPARK envelope
-  contracts proved at level 4 (339+ checks, see THEORIES.md); the input space
-  gnatfuzz would explore is *statically bounded* by those Pres for all
-  SPARK_On callers.
+  contracts, and the current level 4 gate discharges 400 of 527 checks
+  (see THEORIES.md and the canonical command
+  `scripts/prove.sh 4 --report=all`); the input space gnatfuzz would explore
+  is *statically bounded* by those Pres for all SPARK_On callers.
 - Runtime checks remain enabled in the production build (`-gnatwa` gate,
   default check policy): any out-of-envelope input that reached a leaf via a
   future unverified caller raises Constraint_Error at the contract boundary
