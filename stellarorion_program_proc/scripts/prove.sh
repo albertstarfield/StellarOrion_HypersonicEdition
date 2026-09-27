@@ -16,11 +16,24 @@
 # Usage: scripts/prove.sh [LEVEL] [extra gnatprove args...]
 #   e.g.: scripts/prove.sh 0 --report=all
 #         scripts/prove.sh 4 -u stellarorion_geometry.adb
+#         PROJ_FILE=stellarorion_pinn_lib.gpr scripts/prove.sh 4 --report=all
+#
+# All three steps run against $PROJ_FILE (default: the program project).
+# -P is passed explicitly everywhere because this directory holds TWO .gpr
+# files (program + pinn_lib), so gprbuild/gnatprove have no unambiguous
+# default project and fail with "no project file specified" otherwise.
 set -euo pipefail
 
 LEVEL="${1:-4}"; shift || true
 PROJ_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJ_DIR"
+PROJ_FILE="${PROJ_FILE:-stellarorion_program_proc.gpr}"
+# Fail loud + early if the (possibly env-supplied) project path is wrong,
+# instead of letting gprbuild/gnatprove emit a confusing mid-run error.
+test -f "$PROJ_FILE" || {
+    echo "prove.sh: project file not found: $PROJ_FILE (cwd: $PWD)" >&2
+    exit 2
+}
 
 export PATH="$HOME/.alire/libexec/spark/bin:$HOME/.alire/bin:$PATH"
 
@@ -32,7 +45,7 @@ rm -rf obj/gnatprove 2>/dev/null || {
 }
 # Ensure obj/gnatprove does not exist before rebuilding
 test ! -d obj/gnatprove || rm -rf obj/gnatprove || true
-gprbuild --subdirs=gnatprove/data_representation --no-object-check \
+gprbuild -P "$PROJ_FILE" --subdirs=gnatprove/data_representation --no-object-check \
          --restricted-to-languages=ada --target=aarch64-darwin -s -v -j10 -c \
          -cargs:Ada -S -gnatR2js -gnatws -gnatx -gnatis > /dev/null
 
@@ -51,11 +64,12 @@ for f in glob.glob('obj/gnatprove/data_representation/*.json'):
 print(f"dropped {dropped} duplicate-location entries")
 EOF
 
-echo "== [3/3] gnatprove ${LEVEL:+--level=$LEVEL }$* =="
 if [ "$LEVEL" = "skip" ]; then
    #  LEVEL=skip: caller supplies its own effort flags (e.g. --timeout=90),
    #  since --level is mutually exclusive with --timeout/--steps.
-   gnatprove -j0 "$@"
+   echo "== [3/3] gnatprove -j0 $* (skip: caller-supplied flags) =="
+   gnatprove -P "$PROJ_FILE" -j0 "$@"
 else
-   gnatprove --level="$LEVEL" -j0 "$@"
+   echo "== [3/3] gnatprove --level=$LEVEL -j0 $* =="
+   gnatprove -P "$PROJ_FILE" --level="$LEVEL" -j0 "$@"
 fi
