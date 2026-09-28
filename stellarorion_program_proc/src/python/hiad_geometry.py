@@ -40,7 +40,12 @@ import numpy as np
 N_TORI = 6
 
 
-def generate_cross_section(R_N, r_tor, half_cone_deg, n_per_segment=15):
+def generate_cross_section(
+    R_N: float,
+    r_tor: float,
+    half_cone_deg: float,
+    n_per_segment: int = 15,
+) -> tuple[np.ndarray, np.ndarray]:
     """Generate the HIAD meridian cross-section from geometry parameters.
 
     EXACT copy of Ada/SPARK stellarorion_pinn_trajectory.adb

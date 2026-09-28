@@ -16,6 +16,7 @@
 import os
 import re
 import sys
+from typing import TypedDict
 
 VERBOSE_ERROR_TEMPLATE = """            exception
                when E : others =>
@@ -25,7 +26,26 @@ VERBOSE_ERROR_TEMPLATE = """            exception
                   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      {name}");
                   Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");"""
 
-def find_procedures_without_handlers(content):
+# AXIOM: a "gap" row always has exactly these five keys with these value types
+# (see the single append site below). Declaring it as a TypedDict instead of a
+# bare dict[str, object] keeps `proc["end_line_idx"]` an int, so the sort key
+# and the `end_idx` arithmetic below type-check instead of degrading to object.
+# THEORIES: consumers only ever read name/kind/begin_line/end_line/end_line_idx,
+# so this mapping is the complete and exact row contract.
+# [Citation: docs.python.org/3/library/typing.html#typeddict]
+class _HandlerGap(TypedDict):
+    """One Ada procedure/function whose `begin` block has no exception handler."""
+
+    name: str
+    kind: str
+    begin_line: int   # 1-indexed
+    end_line: int     # 1-indexed
+    end_line_idx: int  # 0-indexed
+
+
+def find_procedures_without_handlers(
+    content: str,
+) -> list[_HandlerGap]:
     """Find all procedure/function begin blocks that lack exception handlers.
 
     References:
@@ -34,7 +54,9 @@ def find_procedures_without_handlers(content):
     - https://docs.python.org/3/library/stdtypes.html#str.strip
     """
     lines = content.split('\n')
-    results = []
+    # AXIOM: each appended row is a dict with exactly the keys
+    # name/kind/begin_line/end_line/end_line_idx (see the append below).
+    results: list[_HandlerGap] = []
 
     i = 0
     while i < len(lines):
@@ -112,7 +134,7 @@ def find_procedures_without_handlers(content):
     return results
 
 
-def add_exception_handlers(filepath):
+def add_exception_handlers(filepath: str) -> int:
     """Add exception handlers to all procedures/functions missing them.
 
     References:
