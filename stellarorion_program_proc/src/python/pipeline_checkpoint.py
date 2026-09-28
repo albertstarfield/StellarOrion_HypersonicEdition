@@ -215,6 +215,27 @@ class PipelineCheckpoint:
                 "PipelineCheckpoint not initialized. Call start() first."
             )
 
+    @property
+    def _state(self) -> dict[str, Any]:
+        """Return the initialised checkpoint state.
+
+        _data is None only before start() runs. Every accessor needs a non-None
+        mapping, but a bare _ensure_initialized() call does not narrow the type
+        for a type checker. Routing access through this property both performs
+        the guard and exposes the narrowed dict, so a missing guard call can no
+        longer turn into an AttributeError at runtime.
+
+        Returns the live dict, so mutations through it affect _data.
+
+        References:
+        - https://docs.python.org/3/library/exceptions.html#RuntimeError
+        """
+        self._ensure_initialized()
+        data = self._data
+        if data is None:  # unreachable: _ensure_initialized raises first
+            raise RuntimeError("PipelineCheckpoint not initialized. Call start() first.")
+        return data
+
     # --- step queries ---
 
     def get_next_step(self) -> str | None:
@@ -229,7 +250,7 @@ class PipelineCheckpoint:
         self._ensure_initialized()
         # invariant: step iterates over PIPELINE_STEPS tuple; first non-completed step returned
         for step in PIPELINE_STEPS:
-            status = self._data["steps"][step]["status"]
+            status = self._state["steps"][step]["status"]
             if status != StepStatus.COMPLETED:
                 return step
         return None
@@ -244,7 +265,7 @@ class PipelineCheckpoint:
         - https://docs.python.org/3/library/stdtypes.html#boolean-type
         """
         self._ensure_initialized()
-        return self._data["steps"][step]["status"] == StepStatus.COMPLETED
+        return self._state["steps"][step]["status"] == StepStatus.COMPLETED
 
     def get_step_status(self, step: str) -> str:
         """Return the status string of a step.
@@ -256,7 +277,7 @@ class PipelineCheckpoint:
         - https://docs.python.org/3/library/stdtypes.html#str
         """
         self._ensure_initialized()
-        return self._data["steps"][step]["status"]
+        return self._state["steps"][step]["status"]
 
     def is_all_completed(self) -> bool:
         """Return True if every pipeline step is completed.
@@ -270,7 +291,7 @@ class PipelineCheckpoint:
         self._ensure_initialized()
         try:
             return all(
-                self._data["steps"][s]["status"] == StepStatus.COMPLETED
+                self._state["steps"][s]["status"] == StepStatus.COMPLETED
                 for s in PIPELINE_STEPS
             )
         except (ValueError, TypeError):
@@ -289,7 +310,7 @@ class PipelineCheckpoint:
         - https://docs.python.org/3/library/datetime.html#datetime.timezone
         """
         self._ensure_initialized()
-        self._data["steps"][step]["status"] = StepStatus.RUNNING
+        self._state["steps"][step]["status"] = StepStatus.RUNNING
         self._save()
 
     def mark_step_completed(self, step: str,
@@ -305,10 +326,10 @@ class PipelineCheckpoint:
         - https://docs.python.org/3/library/datetime.html#datetime.timezone
         """
         self._ensure_initialized()
-        self._data["steps"][step]["status"] = StepStatus.COMPLETED
-        self._data["steps"][step]["completed_at"] = datetime.now(timezone.utc).isoformat()
+        self._state["steps"][step]["status"] = StepStatus.COMPLETED
+        self._state["steps"][step]["completed_at"] = datetime.now(timezone.utc).isoformat()
         if output_files:
-            self._data["steps"][step]["output_files"] = output_files
+            self._state["steps"][step]["output_files"] = output_files
         self._save()
 
     def mark_step_failed(self, step: str, error: str | None = None) -> None:
@@ -323,10 +344,10 @@ class PipelineCheckpoint:
         - https://docs.python.org/3/library/datetime.html#datetime.timezone
         """
         self._ensure_initialized()
-        self._data["steps"][step]["status"] = StepStatus.FAILED
+        self._state["steps"][step]["status"] = StepStatus.FAILED
         # -- AXIOM: error may be None per signature; guard per CWE-682
         if error is not None and error:
-            self._data["steps"][step]["error"] = error
+            self._state["steps"][step]["error"] = error
         self._save()
 
     # --- config access ---
@@ -338,7 +359,7 @@ class PipelineCheckpoint:
         - https://docs.python.org/3/library/typing.html#typing.Any
         """
         self._ensure_initialized()
-        return self._data.get("config", {})
+        return self._state.get("config", {})
 
     def update_config(self, config: dict[str, Any]) -> None:
         """Merge key-value pairs into the config dict. Saves immediately. # test: test_update_config()
@@ -347,7 +368,7 @@ class PipelineCheckpoint:
         - https://docs.python.org/3/library/stdtypes.html#dict.update
         """
         self._ensure_initialized()
-        self._data["config"].update(config)
+        self._state["config"].update(config)
         self._save()
 
     def get_output_files(self, step: str) -> list[str]:
@@ -357,7 +378,7 @@ class PipelineCheckpoint:
         - https://docs.python.org/3/library/stdtypes.html#dict.get
         """
         self._ensure_initialized()
-        return self._data["steps"][step].get("output_files", [])
+        return self._state["steps"][step].get("output_files", [])
 
     # --- reset ---
 
@@ -373,7 +394,7 @@ class PipelineCheckpoint:
         self._ensure_initialized()
         # invariant: step iterates over PIPELINE_STEPS; each step reset to PENDING exactly once
         for step in PIPELINE_STEPS:
-            self._data["steps"][step] = {
+            self._state["steps"][step] = {
                 "status": StepStatus.PENDING,
                 "completed_at": None,
                 "output_files": [],
@@ -387,10 +408,10 @@ class PipelineCheckpoint:
         - https://docs.python.org/3/library/stdtypes.html#str.join
         """
         self._ensure_initialized()
-        lines = [f"Pipeline: {self._data.get('pipeline_id', 'unknown')}"]
+        lines = [f"Pipeline: {self._state.get('pipeline_id', 'unknown')}"]
         # invariant: step iterates over PIPELINE_STEPS; each step summarized once
         for step in PIPELINE_STEPS:
-            info = self._data["steps"][step]
+            info = self._state["steps"][step]
             status = info["status"]
             files = info.get("output_files", [])
             icon = {"completed": "\u2713", "running": "\u2192", "failed": "\u2717", "pending": "\u00b7"}.get(status, "?")
