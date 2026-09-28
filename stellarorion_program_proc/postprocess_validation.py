@@ -22,6 +22,7 @@ import glob
 import math
 import os
 import sys
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 
@@ -85,10 +86,15 @@ SIM_CONDITIONS = {
 
 
 # ============================================================================
-# ANALYTICAL MODELS
+# -----------------------------------------------------------------------
+# Row cells are numeric scalars taken from NumPy reductions, so NumPy integer
+# scalars sit alongside plain int/float values.
+_RowValue = float | int | np.integer
+_Row = dict[str, _RowValue]
+# -----------------------------------------------------------------------
 # ============================================================================
 
-def sutton_graves_heat(rho, R_n, V):
+def sutton_graves_heat(rho: float, R_n: float, V: float) -> float:
     """Sutton-Graves stagnation-point convective heat flux [W/m^2].
 
     Delegates to Ada FFI: StellarOrion_Physics.Sutton_Graves_Heat_C.
@@ -97,6 +103,8 @@ def sutton_graves_heat(rho, R_n, V):
     Valid for: continuum, V < 12 km/s, Earth air.
     """
     try:
+        if _ada_lib is None:
+            raise RuntimeError("Ada physics library handle is unavailable")
         return _ada_lib.Sutton_Graves_Heat_C(
             ctypes.c_double(rho), ctypes.c_double(R_n), ctypes.c_double(V)
         )
@@ -105,7 +113,7 @@ def sutton_graves_heat(rho, R_n, V):
         return C_SG * math.sqrt(rho / R_n) * V**3
 
 
-def sutherland_viscosity(T):
+def sutherland_viscosity(T: float) -> float:
     """Sutherland's law for dynamic viscosity of air [Pa*s].
 
     Delegates to Ada FFI: StellarOrion_Physics.Sutherland_Viscosity_C.
@@ -113,13 +121,15 @@ def sutherland_viscosity(T):
     [Citation: Sutherland 1893; Anderson 2006, Sec 15.2]
     """
     try:
+        if _ada_lib is None:
+            raise RuntimeError("Ada physics library handle is unavailable")
         return _ada_lib.Sutherland_Viscosity_C(ctypes.c_double(T))
     except Exception as e:
         print(f"[WARNING] Ada FFI Sutherland_Viscosity_C failed: {e}, using Python fallback")
         return MU_REF * (T / T_REF)**1.5 * (T_REF + SUTHERLAND_S) / (T + SUTHERLAND_S)
 
 
-def fay_riddell_heat(rho, R_n, V, Mach, T_wall):
+def fay_riddell_heat(rho: float, R_n: float, V: float, Mach: float, T_wall: float) -> float:
     """Fay-Riddell stagnation-point convective heat flux [W/m^2].
 
     Delegates to Ada FFI: StellarOrion_Physics.Fay_Riddell_Heat_C.
@@ -128,6 +138,8 @@ def fay_riddell_heat(rho, R_n, V, Mach, T_wall):
     Valid for: continuum, laminar BL, M < 10.
     """
     try:
+        if _ada_lib is None:
+            raise RuntimeError("Ada physics library handle is unavailable")
         return _ada_lib.Fay_Riddell_Heat_C(
             ctypes.c_double(rho), ctypes.c_double(R_n), ctypes.c_double(V),
             ctypes.c_double(Mach), ctypes.c_double(T_wall)
@@ -155,7 +167,7 @@ def fay_riddell_heat(rho, R_n, V, Mach, T_wall):
 # SPARTA OUTPUT PARSERS
 # ============================================================================
 
-def parse_grid_file(filepath):
+def parse_grid_file(filepath: str) -> dict[str, np.ndarray]:
     """Parse SPARTA grid output file.
 
     Columns: id xlo ylo xhi yhi f_2[1] f_2[2] f_2[3] f_2[4] f_3[*] f_4[*]
@@ -168,7 +180,9 @@ def parse_grid_file(filepath):
 
     Returns: dict with arrays for each column.
     """
-    data = {"id": [], "x": [], "y": [], "temp": [], "density": [], "n_particles": []}
+    data: dict[str, list[float]] = {
+        "id": [], "x": [], "y": [], "temp": [], "density": [], "n_particles": []
+    }
     with open(filepath) as f:
         in_cells = False
         for line in f:
@@ -189,12 +203,14 @@ def parse_grid_file(filepath):
                     data["n_particles"].append(float(parts[5]))
                     data["temp"].append(float(parts[6]))
                     data["density"].append(float(parts[10]))
-    for k in data:
-        data[k] = np.array(data[k])
-    return data
+    # A fresh dict is built on the way out: `data` holds lists while the
+    # caller receives arrays, so rewriting the same dict in place made the
+    # two phases indistinguishable to the type checker. Key order is
+    # preserved by dict comprehension.
+    return {k: np.array(v) for k, v in data.items()}
 
 
-def parse_surf_file(filepath):
+def parse_surf_file(filepath: str) -> dict[str, np.ndarray]:
     """Parse SPARTA surf output file.
 
     Columns: id f_1[1] f_1[2] f_1[3] f_surfavg[1] f_surfavg[2] f_surfavg[3]
@@ -207,7 +223,9 @@ def parse_surf_file(filepath):
 
     Returns: dict with arrays.
     """
-    data = {"id": [], "heat_flux": [], "surf_avg_flux": [], "force_x": [], "force_y": []}
+    data: dict[str, list[float]] = {
+        "id": [], "heat_flux": [], "surf_avg_flux": [], "force_x": [], "force_y": []
+    }
     with open(filepath) as f:
         in_surfs = False
         for line in f:
@@ -225,9 +243,11 @@ def parse_surf_file(filepath):
                     data["force_y"].append(float(parts[2]))
                     data["heat_flux"].append(float(parts[3]))
                     data["surf_avg_flux"].append(float(parts[4]))
-    for k in data:
-        data[k] = np.array(data[k])
-    return data
+    # A fresh dict is built on the way out: `data` holds lists while the
+    # caller receives arrays, so rewriting the same dict in place made the
+    # two phases indistinguishable to the type checker. Key order is
+    # preserved by dict comprehension.
+    return {k: np.array(v) for k, v in data.items()}
 
 
 # ============================================================================
@@ -252,7 +272,9 @@ def compute_analytical_at_conditions():
     return q_sg, q_fr, q_sg_Wcm2, q_fr_Wcm2
 
 
-def table1_dsmc_vs_analytical(surf_files):
+def table1_dsmc_vs_analytical(
+    surf_files: list[str],
+) -> tuple[list[_Row], float, float, float, float]:
     """Table 1: DSMC vs Analytical comparison at each timestep."""
     q_sg, q_fr, q_sg_Wcm2, q_fr_Wcm2 = compute_analytical_at_conditions()
 
@@ -294,7 +316,7 @@ def table1_dsmc_vs_analytical(surf_files):
     return rows, q_sg, q_fr, q_sg_Wcm2, q_fr_Wcm2
 
 
-def table2_irve3_validation(rows):
+def table2_irve3_validation(rows: list[_Row]) -> dict[str, list[str | _RowValue]]:
     """Table 2: IRVE-3 flight validation comparison."""
     # Use the final timestep (step 1000) as representative
     final = rows[-1]
@@ -317,7 +339,9 @@ def table2_irve3_validation(rows):
     }
 
 
-def table3_surface_distribution(surf_files):
+def table3_surface_distribution(
+    surf_files: list[str],
+) -> tuple[list[_Row], float, float, float] | list[_Row]:
     """Table 3: Surface heating distribution — peak heating by surface element."""
     final_surf = parse_surf_file(surf_files[-1])
 
@@ -327,6 +351,9 @@ def table3_surface_distribution(surf_files):
     hf = final_surf["heat_flux"][mask]
 
     if len(hf) == 0:
+        # Sentinel: the caller tests `len(result) == 2` before unpacking, so a bare
+        # empty list means "no positive-heat-flux elements" and Table 3 is skipped.
+        # A 4-tuple of zeros would be wrong here, because len() of it is 4.
         return []
 
     # Sort by heat flux descending
@@ -346,7 +373,9 @@ def table3_surface_distribution(surf_files):
     return rows, np.mean(hf), np.std(hf), np.median(hf)
 
 
-def table4_convergence_stats(surf_files):
+def table4_convergence_stats(
+    surf_files: list[str],
+) -> tuple[list[_Row], float]:
     """Table 4: DSMC convergence / noise statistics across timesteps."""
     rows = []
     all_peak_hf = []
@@ -387,7 +416,9 @@ def table4_convergence_stats(surf_files):
     return rows, convergence_cv
 
 
-def table5_integrated_heat_load(surf_files, dt_between_steps=100):
+def table5_integrated_heat_load(
+    surf_files: list[str], dt_between_steps: int = 100
+) -> list[_Row]:
     """Table 5: Integrated heat load over the trajectory.
 
     Heat load Q = integral(q_dot * dt) over trajectory.
@@ -428,7 +459,12 @@ def table5_integrated_heat_load(surf_files, dt_between_steps=100):
     return rows
 
 
-def print_table(title, headers, rows, col_width=14):
+def print_table(
+    title: str,
+    headers: list[str],
+    rows: Sequence[Mapping[str, object] | Sequence[object]],
+    col_width: int = 14,
+) -> None:
     """Pretty-print a table."""
     print(f"\n{'='*80}")
     print(f"  {title}")
