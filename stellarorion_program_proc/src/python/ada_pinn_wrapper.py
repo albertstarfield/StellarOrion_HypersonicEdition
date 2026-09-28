@@ -21,6 +21,11 @@ Author: Albert Starfield Wahyu Suryo Samudro
 
 import ctypes
 import os
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # numpy is imported lazily inside the functions that need it
+    import numpy as np
 
 _LIB_NAME = "libstellarorion_pinn.dylib"
 _LIB_SEARCH = [
@@ -29,7 +34,14 @@ _LIB_SEARCH = [
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib", _LIB_NAME),
 ]
 
-_ada_lib = None
+# ctypes.CDLL resolves every FFI symbol by name at call time, so the symbol set
+# lives in the .dylib rather than in Python and cannot be enumerated statically.
+# PyRefly does not honour Protocol.__getattr__ for this, so the handle is typed
+# Any: that is the truthful model of CDLL attribute access. Every call site
+# still sets restype/argtypes explicitly, so the ctypes contract is enforced at
+# runtime exactly as before.
+# [Citation: ctypes -- https://docs.python.org/3/library/ctypes.html]
+_ada_lib: Any = None
 for _p in _LIB_SEARCH:
     _p = os.path.normpath(_p)
     if os.path.exists(_p):
@@ -82,7 +94,7 @@ _ada_lib.stellarorion_pinn_trajectory__irve3_trajectory.restype = Trajectory_Res
 _ada_lib.stellarorion_pinn_trajectory__irve3_trajectory.argtypes = [ctypes.c_float] * 8
 
 
-def isa_atmosphere(altitude_km):
+def isa_atmosphere(altitude_km: float) -> dict[str, Any]:
     r = _ada_lib.stellarorion_pinn_trajectory__isa_atmosphere(ctypes.c_float(altitude_km))
     return {
         "altitude_km": altitude_km,
@@ -94,7 +106,9 @@ def isa_atmosphere(altitude_km):
     }
 
 
-def sutton_graves_heat_flux(altitude_km, velocity_ms, rn=None):
+def sutton_graves_heat_flux(
+    altitude_km: float, velocity_ms: float, rn: float | None = None
+) -> dict[str, Any]:
     atm = isa_atmosphere(altitude_km)
     if rn is None:
         rn = 1.5
@@ -107,7 +121,7 @@ def sutton_graves_heat_flux(altitude_km, velocity_ms, rn=None):
             "density_kgm3": atm["density_kgm3"], "velocity_ms": velocity_ms}
 
 
-def dynamic_pressure(density_kgm3, velocity_ms):
+def dynamic_pressure(density_kgm3: float, velocity_ms: float) -> float:
     """Compute dynamic pressure via Ada/SPARK FFI: q = 0.5 * rho * V^2.
     [Citation: Anderson (2006), Fundamentals of Aerodynamics]
     [Citation: Ada/SPARK Dynamic_Pressure in stellarorion_pinn_trajectory.ads]
@@ -117,7 +131,9 @@ def dynamic_pressure(density_kgm3, velocity_ms):
     )
 
 
-def drag_force(density_kgm3, velocity_ms, cd, diameter_m):
+def drag_force(
+    density_kgm3: float, velocity_ms: float, cd: float, diameter_m: float
+) -> float:
     """Compute drag force via Ada/SPARK FFI: F = 0.5 * Cd * A * rho * V^2.
     A = pi * (D/2)^2.
     [Citation: Anderson (2006), Hypersonic Gas Dynamics]
@@ -129,7 +145,7 @@ def drag_force(density_kgm3, velocity_ms, cd, diameter_m):
     )
 
 
-def g_load(drag_force_n, mass_kg):
+def g_load(drag_force_n: float, mass_kg: float) -> float:
     """Compute deceleration in Earth g's via Ada/SPARK FFI: n = F_drag / (m * g0).
     [Citation: Anderson (2006), Hypersonic Gas Dynamics]
     [Citation: Ada/SPARK G_Load in stellarorion_pinn_trajectory.ads]
@@ -139,8 +155,16 @@ def g_load(drag_force_n, mass_kg):
     )
 
 
-def irve3_trajectory_model(step, target_step=3.0e8, h_entry=120.0, h_final=40.0,
-                           v_entry=4300.0, v_final=2700.0, h_dsmc=51.8, v_dsmc=3378.0):
+def irve3_trajectory_model(
+    step: int,
+    target_step: float = 3.0e8,
+    h_entry: float = 120.0,
+    h_final: float = 40.0,
+    v_entry: float = 4300.0,
+    v_final: float = 2700.0,
+    h_dsmc: float = 51.8,
+    v_dsmc: float = 3378.0,
+) -> dict[str, Any]:
     r = _ada_lib.stellarorion_pinn_trajectory__irve3_trajectory(
         ctypes.c_float(float(step)), ctypes.c_float(target_step),
         ctypes.c_float(h_entry), ctypes.c_float(h_final),
@@ -218,7 +242,9 @@ def get_hiad_cross_section():
     }
 
 
-def get_hiad_cross_section_params(r_n, r_torus, half_cone_deg):
+def get_hiad_cross_section_params(
+    r_n: float, r_torus: float, half_cone_deg: float
+) -> dict[str, Any]:
     """Return the 4-segment HIAD flat-skin cross-section for ARBITRARY
     geometry parameters via Ada/SPARK FFI.
 
@@ -328,7 +354,7 @@ _ada_lib.stellarorion_trajectory_output__compute_trajectory_point.restype = Traj
 _ada_lib.stellarorion_trajectory_output__compute_trajectory_point.argtypes = [ctypes.c_float]
 
 
-def compute_frame_data(step):
+def compute_frame_data(step: int) -> dict[str, Any]:
     """Compute all trajectory + physics + PINN metrics via Ada/SPARK FFI.
 
     Returns dict with altitude, velocity, mach, heat_flux, drag, g_load,
@@ -361,7 +387,7 @@ def compute_frame_data(step):
     }
 
 
-def compute_trajectory_point(step):
+def compute_trajectory_point(step: int) -> dict[str, Any]:
     """Compute trajectory-only data via Ada/SPARK FFI (lightweight).
 
     Returns dict with altitude, velocity, mach number only.
@@ -647,13 +673,13 @@ except (OSError, AttributeError):
 
 
 def run_mop_optimize(
-    x0: tuple,
+    x0: tuple[float, ...],
     lr: float = 0.01,
     tol: float = 1e-6,
     lambda_1: float = 100.0,
     lambda_2: float = 100.0,
     max_iter: int = 100,
-) -> dict:
+) -> dict[str, Any]:
     """Run Method of Projected Gradients via Ada FFI.
 
     Parameters:
@@ -722,7 +748,9 @@ _BOUNDS = [
 ]
 
 
-def _latin_hypercube_sample(n_samples, bounds, seed=None):
+def _latin_hypercube_sample(
+    n_samples: int, bounds: Sequence[Sequence[float]], seed: int | None = None
+) -> "np.ndarray":
     """Generate Latin Hypercube Design of Experiments.
 
     Parameters:
@@ -751,7 +779,9 @@ def _latin_hypercube_sample(n_samples, bounds, seed=None):
     return samples
 
 
-def _expected_improvement(X_candidate, gp, y_best, xi=0.01):
+def _expected_improvement(
+    X_candidate: "np.ndarray", gp: Any, y_best: float, xi: float = 0.01
+) -> "np.ndarray":
     """Compute Expected Improvement acquisition function.
 
     EI(x) = E[max(0, f_best - f(x) - xi)]
@@ -780,12 +810,12 @@ def _expected_improvement(X_candidate, gp, y_best, xi=0.01):
 
 
 def run_bayesian_optimize(
-    cost_fn,
+    cost_fn: Callable[[float, float, float], float],
     n_initial: int = 20,
     n_iter: int = 50,
     xi: float = 0.01,
     seed: int = 42,
-) -> dict:
+) -> dict[str, Any]:
     """Run Bayesian Optimization for HIAD geometry parameters.
 
     Uses Gaussian Process surrogate with Expected Improvement acquisition
@@ -891,7 +921,7 @@ def run_bayesian_optimize(
     }
 
 
-def generate_ccd_samples() -> list:
+def generate_ccd_samples() -> list[Any]:
     """Generate CCD samples via Ada FFI.
 
     Returns:
@@ -906,7 +936,9 @@ def generate_ccd_samples() -> list:
     out_rn = ccd_double_arr()
     out_rtor = ccd_double_arr()
     out_angles = ccd_double_arr()
-    out_labels = ccd_label_buf()
+    # ctypes buffer element/slice types are not modelled statically; at
+    # runtime the slice below is bytes and .split(b"\x00") works (verified).
+    out_labels: Any = ccd_label_buf()
 
     _ada_lib.Generate_CCD_Samples_C(
         ctypes.byref(out_rn),
