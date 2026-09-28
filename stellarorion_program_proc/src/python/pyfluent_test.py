@@ -11,9 +11,38 @@ Usage:
 import argparse
 import json
 import os
+from typing import TypedDict
 
 
-def _ssh_connection_check(host, user, password=None, key_path=None):
+class _ProbeResult(TypedDict, total=False):
+    """Result payload of the remote PyFluent probe.
+
+    total=False because the probe genuinely has three return shapes: the
+    early error returns carry only status/message, the success and warning
+    returns add the two install flags, and the warning return adds `issues`.
+    `handshake` is written later by run_integration_test(), so it belongs
+    here too rather than in a second, near-identical TypedDict.
+    """
+
+    status: str
+    message: str
+    issues: list[str]
+    ansys_installed: bool
+    pyfluent_installed: bool
+    handshake: bool
+    # Environment detail fields, only present on the success/warning returns.
+    # py_ver and the two Ansys fields are explicitly None when the probe cannot
+    # determine them, so they are nullable rather than absent.
+    os_ver: str
+    arch: str
+    python_ver: str | None
+    ansys_path: str | None
+    ansys_ver: str | None
+
+
+def _ssh_connection_check(
+    host: str, user: str, password: str | None = None, key_path: str | None = None
+) -> _ProbeResult:
     """Test SSH connection and verify remote PyFluent environment.
 
     Mirrors L2570-2667 of the retired StellarOrionEngineMach5Up.py (removed 2026-08-21).
@@ -165,7 +194,9 @@ def _ssh_connection_check(host, user, password=None, key_path=None):
         return {"status": "error", "message": f"SSH connection failed: {exc!s}"}
 
 
-def run_integration_test(host, user, password=None, key_path=None):
+def run_integration_test(
+    host: str, user: str, password: str | None = None, key_path: str | None = None
+) -> _ProbeResult:
     """Run full PyFluent integration test via SSH.
 
     1. Verify SSH connection
@@ -238,7 +269,7 @@ def run_integration_test(host, user, password=None, key_path=None):
     return result
 
 
-def _safe_json_dumps(obj):
+def _safe_json_dumps(obj: object) -> str:
     """Serialize obj to indented JSON; never raises (Murphy's Law fallback).
 
     References:
