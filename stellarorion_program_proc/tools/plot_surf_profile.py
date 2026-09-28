@@ -97,7 +97,7 @@ OUT_DIR = "data/geometry_check"
 
 
 # --- SPARTA surf parser (AXIOM 1) ---
-def parse_surf_points(path: str) -> list:
+def parse_surf_points(path: str) -> list[tuple[float, float]]:
     """Parse the Points block of a SPARTA surf file.
 
     Returns list of (x_axis, y_radius) floats.
@@ -112,7 +112,12 @@ def parse_surf_points(path: str) -> list:
         print(f"[PARSE] Cannot read '{path}': {exc}")
         raise ValueError(f"Cannot read surf file '{path}': {exc}") from exc
 
-    pts, in_points, expected_n = [], False, None
+    # AXIOM: `pts` holds (x_axis, y_radius) float pairs, appended only after a
+    # line validates. Typing the empty seed explicitly stops pyrefly inferring
+    # Any from `[]` and keeps the declared list[tuple[float, float]] honest.
+    # [Citation: docs.python.org/3/library/typing.html#annotating-variables]
+    pts: list[tuple[float, float]] = []
+    in_points, expected_n = False, None
     # Loop invariant: pts accumulates exactly the valid point records seen
     # so far; malformed input aborts via ValueError before any partial use.
     for lineno, raw in enumerate(lines, start=1):
