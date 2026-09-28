@@ -399,9 +399,9 @@ def _clean_build_artifacts() -> None:
 
 
 def _run(
-    cmd,
-    cwd=None,
-    env=None,
+    cmd: list[str],
+    cwd: str | Path | None = None,
+    env: dict[str, str] | None = None,
     capture: bool = True,
     verbose: bool = False,
     timeout: int = 600,
@@ -465,7 +465,7 @@ def _phase0_boot(clean: bool) -> None:
 # Phase 1: Python Venv Bootstrap
 
 
-def _compute_source_hashes() -> dict:
+def _compute_source_hashes() -> dict[str, str]:
     """Compute SHA256 hashes for all .py files under src/."""
     hashes = {}
     if not _SRC_DIR.is_dir():
@@ -730,7 +730,7 @@ def _phase2_python_analysis(
     print()
 
 
-def _macos_sdk_env():
+def _macos_sdk_env() -> dict[str, str]:
     """Return env dict with LIBRARY_PATH set to macOS SDK (needed for -lSystem on Sonoma+)."""
     import platform
     if platform.system() != "Darwin":
@@ -744,7 +744,7 @@ def _macos_sdk_env():
 # Phase 2b: PINN Extrapolation (headless validation pipeline)
 
 
-def _phase2b_pinn_extrapolate(extra_args: list) -> None:  # noqa: ARG001
+def _phase2b_pinn_extrapolate(extra_args: list[str]) -> None:  # noqa: ARG001
     """Phase 2b -- Run headless validation pipeline: kriging denoise → PINN extrapolate → audit.
 
     Uses the fresh Python 3.12 venv at ``venv_validation/`` to avoid conflicts with
@@ -945,7 +945,7 @@ def _phase3_ada_build(verbose: bool) -> None:
 # Phase 4: Launch
 
 
-def _start_sidecar(port: int) -> subprocess.Popen | None:  # nosec: EXTERNAL_CALL_UNHANDLED — type annotation only, no security-sensitive operations
+def _start_sidecar(port: int) -> subprocess.Popen[bytes] | None:  # nosec: EXTERNAL_CALL_UNHANDLED — type annotation only, no security-sensitive operations
     """Start the sidecar HTTP server (sidecar_ui.py) in background.
 
     Returns the Popen handle on success, or None on failure.
@@ -1048,7 +1048,7 @@ def _phase4_launch(
     print()
 
     # Start sidecar server if --gui requested
-    sidecar_proc: subprocess.Popen | None = None  # nosec: EXTERNAL_CALL_UNHANDLED — type annotation only
+    sidecar_proc: subprocess.Popen[bytes] | None = None  # nosec: EXTERNAL_CALL_UNHANDLED — type annotation only
     sidecar_port: int = 0
     if gui:
         sidecar_port = _find_free_port()
@@ -1164,7 +1164,7 @@ def _post_optimization_outputs(stdout_text: str) -> None:
     print("\n[OPTIMIZE] Auto-generating comparison outputs...")
 
     # Parse optimization results from stdout
-    def _parse_float(pattern, text, default=0.0):
+    def _parse_float(pattern: str, text: str, default: float = 0.0) -> float:
         m = re.search(pattern, text)
         return float(m.group(1)) if m else default
 
