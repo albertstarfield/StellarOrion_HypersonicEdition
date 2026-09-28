@@ -156,7 +156,7 @@ def g_load(drag_force_n: float, mass_kg: float) -> float:
 
 
 def irve3_trajectory_model(
-    step: int,
+    step: float,
     target_step: float = 3.0e8,
     h_entry: float = 120.0,
     h_final: float = 40.0,

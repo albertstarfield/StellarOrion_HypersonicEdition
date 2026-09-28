@@ -36,6 +36,7 @@ import threading
 import time
 import traceback
 from datetime import datetime, timezone
+from typing import Any
 
 import numpy as np
 
@@ -114,7 +115,12 @@ class CyclicLogMonitor:
       - PINN training progress (last loss value from training history)
     """
 
-    def __init__(self, interval_s=300, output_dir=None, pinn_results_ref=None):
+    def __init__(
+        self,
+        interval_s: int = 300,
+        output_dir: str | None = None,
+        pinn_results_ref: dict[str, Any] | None = None,
+    ) -> None:
         """Initialise the cyclic log monitor.
 
         Args:
@@ -123,11 +129,13 @@ class CyclicLogMonitor:
             pinn_results_ref: Mutable dict reference to track PINN training state (shared with pipeline)
         """
         self.interval_s = interval_s
-        self.output_dir = output_dir
-        self.pinn_results_ref = pinn_results_ref if pinn_results_ref is not None else {}
+        self.output_dir: str | None = output_dir
+        self.pinn_results_ref: dict[str, Any] = (
+            pinn_results_ref if pinn_results_ref is not None else {}
+        )
         self._stop_event = threading.Event()
         self._thread = threading.Thread(target=self._monitor_loop, daemon=True, name="CyclicLogMonitor")
-        self._start_time = None
+        self._start_time: float | None = None
         self._check_count = 0
 
     def start(self):
@@ -284,9 +292,10 @@ class CyclicLogMonitor:
           3. Monitoring helps detect disk exhaustion during long runs
         """
         try:
-            if os.path.isdir(self.output_dir):
+            out_dir = self.output_dir
+            if out_dir is not None and os.path.isdir(out_dir):
                 result = subprocess.run(
-                    ["du", "-sh", self.output_dir],
+                    ["du", "-sh", out_dir],
                     capture_output=True, text=True, timeout=10
                 )
                 if result.returncode == 0:
@@ -295,7 +304,7 @@ class CyclicLogMonitor:
 
                 # Also check parent filesystem free space
                 result_df = subprocess.run(
-                    ["df", "-h", self.output_dir],
+                    ["df", "-h", out_dir],
                     capture_output=True, text=True, timeout=10
                 )
                 if result_df.returncode == 0:
@@ -450,7 +459,7 @@ _R_AIR = 287.05287
 _GAMMA = 1.4
 
 
-def isa_atmosphere(altitude_km):
+def isa_atmosphere(altitude_km: float) -> dict[str, Any]:
     """Compute ISA properties via Ada/SPARK library (ctypes FFI).
 
     All physics are computed in Ada/SPARK 2014 (SPARK_Mode On).
@@ -526,11 +535,18 @@ def isa_atmosphere(altitude_km):
 #   - Our DSMC: 51.8 km, V = 3378 m/s, Mach = 10.29
 
 
-def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
-                           target_step=300000000,
-                           h_entry=120.0, h_final=40.0,
-                           v_entry=4300.0, v_final=2700.0,
-                           h_dsmc=51.8, v_dsmc=3378.0):
+def irve3_trajectory_model(
+    step: float,
+    dsmc_start_step: int = 100,
+    dsmc_end_step: int = 2200,
+    target_step: float = 300000000,
+    h_entry: float = 120.0,
+    h_final: float = 40.0,
+    v_entry: float = 4300.0,
+    v_final: float = 2700.0,
+    h_dsmc: float = 51.8,
+    v_dsmc: float = 3378.0,
+) -> dict[str, Any]:
     """Compute IRVE-3 trajectory via Ada/SPARK library (ctypes FFI).
 
     All physics are computed in Ada/SPARK 2014.
@@ -598,7 +614,9 @@ def irve3_trajectory_model(step, dsmc_start_step=100, dsmc_end_step=2200,
 # Calibration: Our DSMC at 51.8 km gives SG ≈ 12.2 W/cm² (single-point with ISA).
 # Rapisarda's trajectory-integrated SG = 15.26 W/cm² (with MCD v6.1 atmosphere).
 
-def sutton_graves_heat_flux(altitude_km, velocity_ms, rn=None):
+def sutton_graves_heat_flux(
+    altitude_km: float, velocity_ms: float, rn: float | None = None
+) -> dict[str, Any]:
     """Compute stagnation-point heat flux via Ada/SPARK library (ctypes FFI).
 
     All physics are computed in Ada/SPARK 2014.
@@ -619,7 +637,7 @@ def sutton_graves_heat_flux(altitude_km, velocity_ms, rn=None):
     return _ada_sg(altitude_km, velocity_ms, rn=rn)
 
 
-def _pct_error(value, reference):
+def _pct_error(value: float, reference: float) -> float:
     """Relative percentage error, guarded for zero/negative reference.
 
     AXIOMS:
@@ -631,7 +649,7 @@ def _pct_error(value, reference):
     return abs(value - reference) / abs(reference) * 100 if reference > 0 else 0.0
 
 
-def load_convergence_data(csv_path):
+def load_convergence_data(csv_path: str) -> dict[str, Any]:
     """Load DSMC convergence time series from validation_timeseries.csv.
 
     AXIOMS:
@@ -655,7 +673,7 @@ def load_convergence_data(csv_path):
             "Run Ada binary validation mode first to generate convergence data."
         )
 
-    data = {"steps": [], "cd": [], "cl": [], "drag_sum_N": [],
+    data: dict[str, Any] = {"steps": [], "cd": [], "cl": [], "drag_sum_N": [],
             "heatflux_max_Wm2": [], "heat_sum_Wm2": [], "heatflux_avg_Wm2": [],
             "g_load": [], "heat_load_jcm2": [], "lift_sum_N": []}
 
@@ -695,7 +713,9 @@ def load_convergence_data(csv_path):
     return data
 
 
-def kriging_denoise_convergence(steps, values, kernel=None):
+def kriging_denoise_convergence(
+    steps: np.ndarray, values: np.ndarray, kernel: Any = None
+) -> dict[str, Any]:
     """Apply GP (Kriging) denoising to a 1D convergence series.
 
     AXIOMS:
@@ -771,7 +791,13 @@ def kriging_denoise_convergence(steps, values, kernel=None):
     }
 
 
-def pinn_extrapolate_convergence(steps, values, target_step=20000, iterations=4000, device="auto"):
+def pinn_extrapolate_convergence(
+    steps: np.ndarray,
+    values: np.ndarray,
+    target_step: int = 20000,
+    iterations: int = 4000,
+    device: str = "auto",
+) -> dict[str, Any]:
     """Train DeepXDE PINN to extrapolate convergence trend to target_step.
 
     AXIOMS:
@@ -914,7 +940,7 @@ def pinn_extrapolate_convergence(steps, values, target_step=20000, iterations=40
         ]
     else:
         final_loss = 0.0
-        history_list = []
+        history_list: list[Any] = []
 
     return {
         "extrapolated_value": target_pred,
@@ -925,7 +951,9 @@ def pinn_extrapolate_convergence(steps, values, target_step=20000, iterations=40
     }
 
 
-def _gp_fallback_extrapolation(steps, values, target_step):
+def _gp_fallback_extrapolation(
+    steps: np.ndarray, values: np.ndarray, target_step: int
+) -> dict[str, Any]:
     """Fallback GP extrapolation when DeepXDE is unavailable.
 
     Uses GP posterior extrapolation (less reliable than PINN but functional).
@@ -957,7 +985,9 @@ def _gp_fallback_extrapolation(steps, values, target_step):
     }
 
 
-def compute_convergence_audit(raw_values, denoised_values, steps):
+def compute_convergence_audit(
+    raw_values: np.ndarray, denoised_values: np.ndarray, steps: np.ndarray
+) -> dict[str, Any]:
     """Audit convergence behavior: identify accuracy fall/increase regions.
 
     AXIOMS:
@@ -967,7 +997,7 @@ def compute_convergence_audit(raw_values, denoised_values, steps):
 
     Returns: dict with 'fall_regions', 'increase_regions', 'noise_analysis'
     """
-    audit = {
+    audit: dict[str, Any] = {
         "fall_regions": [],
         "increase_regions": [],
         "noise_analysis": {},
@@ -1046,8 +1076,12 @@ def compute_convergence_audit(raw_values, denoised_values, steps):
 #   3. Each metric is extrapolated independently with its own trained PINN
 #   4. The trajectory model provides altitude/velocity context at each step
 
-def pinn_extrapolate_per_step(pinn_results_dict, data, target_step=300000000,
-                              step_increment=100):
+def pinn_extrapolate_per_step(
+    pinn_results_dict: dict[str, Any],
+    data: dict[str, Any],
+    target_step: int = 300000000,
+    step_increment: int = 100,
+) -> dict[str, Any]:
     """Generate per-100-step PINN extrapolated values from step 2200 to target_step.
 
     Uses the trained PINN model from pinn_extrapolate_convergence() to predict
@@ -1342,8 +1376,13 @@ def pinn_extrapolate_per_step(pinn_results_dict, data, target_step=300000000,
 #   3. Vertical transition line at step 2200
 #   4. Legend identifies DSMC vs PINN portions
 
-def generate_convergence_plot(data, pinn_curve, output_dir, metric="heatflux_avg_Wm2",
-                              metric_label="Heat Flux Avg [W/m²]"):
+def generate_convergence_plot(
+    data: dict[str, Any],
+    pinn_curve: dict[str, Any] | None,
+    output_dir: str,
+    metric: str = "heatflux_avg_Wm2",
+    metric_label: str = "Heat Flux Avg [W/m²]",
+) -> str | None:
     """Generate convergence plot PNG with dual y-axis.
 
     Left axis: metric value (DSMC blue solid + PINN red dashed)
@@ -1423,7 +1462,10 @@ def generate_convergence_plot(data, pinn_curve, output_dir, metric="heatflux_avg
     return plot_path
 
 
-def generate_multi_metric_convergence_plot(data, pinn_curve, output_dir):
+def generate_multi_metric_convergence_plot(
+    data: dict[str, Any], pinn_curve: dict[str, Any] | None,
+    output_dir: str,
+) -> str | None:
     """Generate a 2x2 multi-metric convergence plot with altitude trajectory.
 
     Shows heat_flux_avg (top-left), drag (top-right), g_load (bottom-left),
@@ -1564,7 +1606,9 @@ def generate_multi_metric_convergence_plot(data, pinn_curve, output_dir):
 #  Per-100-Step CSV Export
 # ========================================================================
 
-def generate_per_step_csv(data, pinn_curve, output_dir):
+def generate_per_step_csv(
+    data: dict[str, Any], pinn_curve: dict[str, Any] | None, output_dir: str
+) -> str | None:
     """Generate per-100-step CSV with trajectory conditions and full variable set.
 
     [Citation: Goal audit requirement — cross-check all CSV columns against the full
@@ -1740,7 +1784,12 @@ def generate_per_step_csv(data, pinn_curve, output_dir):
 #  DSMC→PINN In-Place Switch Markdown Section
 # ========================================================================
 
-def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step=300000000):
+def generate_dsmc_pinn_switch_markdown(
+    data: dict[str, Any],
+    pinn_curve: dict[str, Any] | None,
+    output_dir: str,
+    target_step: int = 300000000,
+) -> str | None:
     """Generate markdown section describing the hybrid DSMC→PINN in-place switch.
 
     Produces a markdown section with:
@@ -1964,8 +2013,14 @@ def generate_dsmc_pinn_switch_markdown(data, pinn_curve, output_dir, target_step
 #   4. Altitude counter descending from 120 km to 40 km
 #   5. Heat flux, drag, g-load shown as real-time evolution
 
-def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
-                        steps_per_frame=100, fps=30):
+def generate_hybrid_mp4(
+    data: dict[str, Any],
+    pinn_curve: dict[str, Any] | None,
+    output_dir: str,
+    target_step: int = 300000000,
+    steps_per_frame: int = 100,
+    fps: int = 30,
+) -> str | None:
     """Generate MP4 animation of hybrid DSMC→PINN simulation.
 
     The animation shows:
@@ -2002,7 +2057,7 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
     import shutil, sys, subprocess
     _ffmpeg_writer = None
     _hw_encoder = None
-    _hw_extra_args = []
+    _hw_extra_args: list[str] = []
     if shutil.which("ffmpeg"):
         # Probe available HW encoders by platform
         _probe = subprocess.run(
@@ -2066,7 +2121,7 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
     IRVE3_DIAMETER_M = 3.0
     IRVE3_CD         = 1.4625
 
-    def _compute_trajectory_metrics(step):
+    def _compute_trajectory_metrics(step: int) -> tuple[float, float, float]:
         """Compute g_load, heat flux, drag at a given step using Ada/SPARK 2014 FFI.
         All physics computed in Ada — Python is wrapper only.
         AXIOM: g_load = F_drag / (m * g0), F_drag = 0.5 * Cd * A * rho * V^2
@@ -2129,11 +2184,11 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
     # IRVE-3 boundary condition / particles / thermal illustration (bottom-right)
     ax_veh = fig.add_subplot(gs[1, 1])
 
-    def _init():
+    def _init() -> list[Any]:
         """Initialize animation frames."""
         return []
 
-    def _animate(frame_idx):
+    def _animate(frame_idx: int) -> list[Any] | None:
         """Update function for each animation frame.
 
         Draws 3 panels:
@@ -2417,7 +2472,8 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
         # IndexError from PillowWriter.finish() self._frames[0] prepended and
         # the real cause (e.g. latex glyph error) ends up in exc.__context__.
         print("[pipeline] MP4 save failed, trying GIF fallback...")
-        _chain, _cur = [], exc
+        _chain: list[str] = []
+        _cur: BaseException | None = exc
         while _cur is not None:
             _chain.append(f"{type(_cur).__name__}: {_cur}")
             _cur = _cur.__context__
@@ -2429,7 +2485,8 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
             print("[pipeline] Generated: plots/hybrid_dsmc_pinn_animation.gif")
             mp4_path = gif_path
         except Exception as gif_exc:
-            _chain, _cur = [], gif_exc
+            _chain: list[str] = []
+            _cur: BaseException | None = gif_exc
             while _cur is not None:
                 _chain.append(f"{type(_cur).__name__}: {_cur}")
                 _cur = _cur.__context__
@@ -2442,7 +2499,12 @@ def generate_hybrid_mp4(data, pinn_curve, output_dir, target_step=300000000,
     return mp4_path
 
 
-def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, device="auto", output_dir=None):
+def run_validation_pipeline(
+    csv_path: str,
+    target_step: int = 300000000,
+    iterations: int = 4000,
+    device: str = "auto",
+) -> dict[str, Any]:
     """Execute the full validation pipeline: denoise → extrapolate → audit.
 
     AXIOMS:
@@ -2466,7 +2528,7 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
 
     # ─── Start cyclic log monitor (every 300s) ──────────────────────
     # Shared mutable dict — PINN step populates it, monitor reads it
-    pinn_state_ref = {}
+    pinn_state_ref: dict[str, Any] = {}
     monitor = CyclicLogMonitor(
         interval_s=300,
         output_dir=os.path.dirname(csv_path) if csv_path else None,
@@ -2500,7 +2562,7 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
 
     # ─── Step 3: PINN extrapolation ──────────────────────────────────
     print(f"\n[Step 3/5] Training PINN for extrapolation to step {target_step} ...")
-    pinn_results = {}
+    pinn_results: dict[str, Any] = {}
     for metric in key_metrics:
         try:
             # CONVERGENCE GATE: If metric is already converged (low CV in last 20%),
@@ -2606,7 +2668,7 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
     final_step = int(data["steps"][-1])
 
     # Compute comparison for each key metric
-    comparison = {}
+    comparison: dict[str, dict[str, Any]] = {}
     for metric in key_metrics:
         raw_final = float(data[metric][-1])
         denoised_final = float(denoise_results[metric]["denoised"][-1])
@@ -2745,7 +2807,7 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
     print(f"    Fix: {nc['remediation']}")
 
     # ─── Heat flux comparison explanation ────────────────────────────
-    hfc = root_causes.get("heat_flux_comparison_notes", {})
+    hfc: dict[str, Any] = root_causes.get("heat_flux_comparison_notes", {})
     if hfc:
         print(f"\n  HEAT FLUX COMPARISON NOTES:")
         print(f"    IRVE-3 flight peak:           {hfc.get('irve3_flight', '')}")
@@ -2758,7 +2820,7 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
     print("=" * 90)
 
     # ─── Assemble full results ───────────────────────────────────────
-    results = {
+    results: dict[str, Any] = {
         "status": "success",
         "pipeline": "StellarOrion Validation Pipeline",
         "version": "1.0.0",
@@ -2952,7 +3014,7 @@ def run_validation_pipeline(csv_path, target_step=300000000, iterations=4000, de
 # [Citation: code-quality.md — ALL heat flux uses Sutton-Graves]
 # [Citation: code-quality.md — Ada/SPARK 2014 physics backbone]
 
-def generate_aerodynamics_profiles(output_dir):
+def generate_aerodynamics_profiles(output_dir: str) -> list[str]:
     """Generate ANSYS Fluent-style aerodynamic profile plots along the IRVE-3 trajectory.
 
     Produces:
@@ -3188,7 +3250,7 @@ def generate_aerodynamics_profiles(output_dir):
 # [Citation: VTK file format — https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf]
 # [Citation: code-quality.md — Ada/SPARK 2014 physics backbone]
 
-def generate_paraview_vtu(output_dir, key_steps=None):
+def generate_paraview_vtu(output_dir: str, key_steps: list[int] | None = None) -> list[str]:
     """Generate ParaView-compatible VTU files at key trajectory points.
 
     Each VTU file represents the vehicle at a specific trajectory point with
@@ -3285,7 +3347,9 @@ def generate_paraview_vtu(output_dir, key_steps=None):
     return vtu_files
 
 
-def _generate_rapisarda_outputs(results, output_dir, csv_path):
+def _generate_rapisarda_outputs(
+    results: dict[str, Any], output_dir: str, csv_path: str
+) -> None:
     """Auto-generate Rapisarda-style comparison tables, plots, and interactive data.
 
     Produces:
@@ -3346,7 +3410,7 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
     # [Citation: Rapisarda (2023) Table 4.10 — peak heat flux is area-weighted
     #  stagnation value. Our per-element avg (56.6 W/cm²) is the physically
     #  meaningful metric; single-cell max (182.5 W/cm²) is DSMC noise.]
-    def _val(metric, key):
+    def _val(metric: str, key: str) -> float:
         m = cr.get(metric, {})
         return m.get(key, 0.0)
 
@@ -3981,11 +4045,24 @@ def _generate_rapisarda_outputs(results, output_dir, csv_path):
         print(f"  [WARN] Interactive HTML generation skipped: {exc}")
 
 
-def _generate_interactive_html(results, output_dir, csv_path,
-                                raw_hf_avg, krig_hf_avg, pinn_hf_avg,
-                                raw_hf_max, krig_hf_max, pinn_hf_max,
-                                raw_qload, krig_qload, pinn_qload,
-                                raw_g, pinn_g, raw_cd, pinn_cd):
+def _generate_interactive_html(
+    results: dict[str, Any],
+    output_dir: str,
+    csv_path: str,
+    raw_hf_avg: float,
+    krig_hf_avg: float,
+    pinn_hf_avg: float,
+    raw_hf_max: float,
+    krig_hf_max: float,
+    pinn_hf_max: float,
+    raw_qload: float,
+    krig_qload: float,
+    pinn_qload: float,
+    raw_g: float,
+    pinn_g: float,
+    raw_cd: float,
+    pinn_cd: float,
+) -> str | None:
     """Generate interactive Plotly HTML files for web viewing.
 
     Produces standalone HTML files with interactive charts matching
@@ -4189,8 +4266,16 @@ def _generate_interactive_html(results, output_dir, csv_path,
     print(f"  [HTML] Generated: interactive/delta_waterfall_interactive.html")
 
 
-def _generate_pinn_vtu(results, output_dir, csv_path,
-                       hf_avg, hf_max, qload, g_load, cd):
+def _generate_pinn_vtu(
+    results: dict[str, Any],
+    output_dir: str,
+    csv_path: str,
+    hf_avg: float,
+    hf_max: float,
+    qload: float,
+    g_load: float,
+    cd: float,
+) -> str | None:
     """Generate VTU files for PINN-extrapolated data for ParaView animation.
 
     Reads the last DSMC VTU file for geometry (vertices + connectivity),
@@ -4230,7 +4315,7 @@ def _generate_pinn_vtu(results, output_dir, csv_path,
     # Find last DSMC VTU file (exclude PINN VTU files)
     all_vtu_files = glob.glob(os.path.join(vtu_dir, "surf_*.vtu"))
     # Filter to only numeric step files (exclude surf_pinn_*.vtu)
-    def _step_from_name(f):
+    def _step_from_name(f: str) -> int:
         name = os.path.basename(f).replace("surf_", "").replace(".vtu", "")
         try:
             return int(name)
@@ -4253,7 +4338,11 @@ def _generate_pinn_vtu(results, output_dir, csv_path,
     tree = ET.parse(last_vtu)
     root = tree.getroot()
     grid = root.find(".//UnstructuredGrid")
+    if grid is None:
+        raise ValueError(f"No UnstructuredGrid element in {last_vtu}")
     piece = grid.find("Piece")
+    if piece is None:
+        raise ValueError(f"No Piece element in {last_vtu}")
     n_pts = int(piece.get("NumberOfPoints"))
     n_cells = int(piece.get("NumberOfCells"))
 
