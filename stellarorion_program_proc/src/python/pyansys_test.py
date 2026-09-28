@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 import time
+from typing import Any
 
 
 def get_local_fluent_exe():
@@ -53,7 +54,7 @@ def get_local_fluent_exe():
     return None
 
 
-def run_local_pyfluent_test(show_gui=True):
+def run_local_pyfluent_test(show_gui: bool = True):
     """Verify local PyAnsys installation and basic handshake.
 
     Mirrors L2518-2555 of the retired StellarOrionEngineMach5Up.py (removed 2026-08-21).
@@ -147,7 +148,7 @@ def run_local_pyfluent_test(show_gui=True):
         }
 
 
-def _safe_json_dumps(obj):
+def _safe_json_dumps(obj: Any) -> str:
     """Serialize obj to indented JSON; never raises (Murphy's Law fallback).
 
     References:
