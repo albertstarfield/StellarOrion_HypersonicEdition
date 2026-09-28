@@ -1497,7 +1497,7 @@ def load_parity(source_path: str, parity_dir: str | None = None) -> ParityFile:
     )
 
 
-def verify_and_recover(source_path: str, parity_dir: str | None = None) -> tuple[bool, bytes]:
+def verify_and_recover(source_path: str, parity_dir: str | None = None) -> tuple[bool, bytes | None]:
     """Verify source file integrity and recover if corrupted.
 
     -- AXIOMS --
@@ -1663,7 +1663,9 @@ def parity_protected_read(source_path: str, parity_dir: str | None = None) -> st
         return source.read_text()
 
 
-def parity_protected_audit(target_path: str, extensions: list[str] | None = None) -> list[dict[str, Any]]:
+def parity_protected_audit(
+    target_path: str, extensions: list[str] | None = None
+) -> list[tuple[str, bool, str]]:
     """Audit a directory with parity protection for all source files.
 
     -- AXIOMS --
@@ -2096,7 +2098,7 @@ def parity_init_directory(target_path: str, parity_dir: str | None = None) -> di
 
 
 def _check_split_parity_enforcement(source: str, lines: list[str],
-                                     filepath: str = "") -> list[dict[str, Any]]:
+                                     filepath: str = "") -> "list[Violation]":
     """Audit: check that source file has split parity protection.
 
     This function audits the TARGET source code to verify it has:
@@ -2419,7 +2421,7 @@ def generate_split_parity(source_path: str, block_size: int = 512) -> dict[str, 
     source_hash = hashlib.sha256(source_data).hexdigest()
 
     # Split into blocks
-    blocks = []
+    blocks: list[dict[str, Any]] = []
     for i in range(0, len(source_data), block_size):
         block = source_data[i:i+block_size]
         # Pad last block
@@ -2442,7 +2444,7 @@ def generate_split_parity(source_path: str, block_size: int = 512) -> dict[str, 
     }
 
     # Create GC parity (par2-two) - weighted XOR
-    gc_blocks = []
+    gc_blocks: list[dict[str, Any]] = []
     for i in range(0, len(blocks), 5):
         group = blocks[i:i+5]
         parity = [0] * block_size
@@ -2732,7 +2734,7 @@ def atomic_decode_result(result: AtomicFunctionResult) -> ElectricSeizureResult:
         )
 
 
-def atomic_function_wrapper(func: Callable, *args, **kwargs) -> AtomicFunctionResult:
+def atomic_function_wrapper(func: Callable[..., Any], *args: Any, **kwargs: Any) -> AtomicFunctionResult:
     """Wrap a function call with SECDED TED atomic protection.
 
     -- AXIOMS --
@@ -3836,7 +3838,7 @@ def _log_msg(msg: str) -> None:
         pass  # nosec: logging failure must not break audit
 
 
-def _log_audit_summary(violations: list[dict[str, Any]], target: str, cache_hit: bool) -> None:
+def _log_audit_summary(violations: list[Violation], target: str, cache_hit: bool) -> None:
     """Write the full audit summary to the persistent log.
 
     AXIOMS:
@@ -4083,7 +4085,7 @@ class SabotageVerifier:
             References:
                 - https://docs.python.org/3/ — Python 3 docs
         """
-        violations: list[dict[str, Any]] = []
+        violations: list[Violation] = []
         lines = source.splitlines()
 
         lang_patterns = self.registry.for_language(language)
@@ -4117,6 +4119,15 @@ class SabotageVerifier:
         """
         violations = []
 
+        # [Invariant] verify_file is the only caller and dispatches here through
+        # `elif pattern.regex:`, so regex is non-None on every reachable path.
+        # The dataclass field is optional because 39 of the 59 registered
+        # patterns are function-based and supply check_func with no regex at
+        # all, so the narrowing has to be stated rather than assumed.
+        regex = pattern.regex
+        if regex is None:
+            return violations
+
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
 
@@ -4129,7 +4140,7 @@ class SabotageVerifier:
                 continue
 
             # Check for match
-            if not pattern.regex.search(line):
+            if not regex.search(line):
                 continue
 
             # Check if this line is inside a platform/safety guard
@@ -4150,7 +4161,7 @@ class SabotageVerifier:
 
             # Check custom check_func if provided
             if pattern.check_func:
-                match = pattern.regex.search(line)
+                match = regex.search(line)
                 if match and not pattern.check_func(line, match):
                     continue  # Custom check failed, skip this match
 
@@ -4165,7 +4176,7 @@ class SabotageVerifier:
             # Build message from template
             message = pattern.message_template
             if "{match}" in message:
-                match = pattern.regex.search(line)
+                match = regex.search(line)
                 if match:
                     message = message.replace("{match}", match.group(0)[:60])
             if "{line}" in message:
@@ -13863,7 +13874,7 @@ def _assertion_scan_c(
         References:
             - https://docs.python.org/3/ — Python 3 docs
     """
-    violations: list[dict[str, Any]] = []
+    violations: list[Violation] = []
 
     for i, line in enumerate(lines, 1):
         line.strip()
@@ -14116,7 +14127,7 @@ def _stability_check_c(
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations: list[dict[str, Any]] = []
+    violations: list[Violation] = []
     functions = _parse_c_functions(source)
 
     for func in functions:
@@ -15757,7 +15768,7 @@ def format_static_pattern_summary(violations: list[Violation], registry: Pattern
         if v.filepath:
             category_map[cat]["files"].add(v.filepath)
 
-    lines = []
+    lines: list[str] = []
     sep = "-" * 103
     lines.append(sep)
     lines.append("  Static Pattern Analysis Summary")
@@ -15838,7 +15849,7 @@ def format_metamorphic_summary() -> str:
     if total_funcs == 0 and total_apa7 == 0:
         return ""
 
-    lines = []
+    lines: list[str] = []
     sep = "-" * 103
     lines.append(sep)
     lines.append("  Metamorphic Fuzzing & FFI / SECDED-TED Bit-Flip Resilience Verification")
@@ -15935,7 +15946,7 @@ def format_report(violations: list[Violation], target: str = "") -> str:
             - https://docs.python.org/3/library/json.html — Python json module
     """
     global _check_tracker
-    lines = []
+    lines: list[str] = []
 
     critical = [v for v in violations if v.severity == Severity.CRITICAL]
     high = [v for v in violations if v.severity == Severity.HIGH]
@@ -16419,7 +16430,7 @@ def format_ai_score_report(  # nosec: SMT false positive on function signature
     """
     _verb(f"format_ai_score_report() entry: {len(violations)} violation(s), threshold={threshold}%")
     scores = calculate_category_scores(violations, registry, threshold)
-    lines = []
+    lines: list[str] = []
     sep = "-" * 80
 
     lines.append(sep)
@@ -16486,7 +16497,7 @@ def _build_runtime_silent_failure_patterns() -> list[Pattern]:
             References:
                 - https://docs.python.org/3/ — Python 3 docs
         """
-        violations: list[dict[str, Any]] = []
+        violations: list[Violation] = []
 
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
@@ -16679,7 +16690,7 @@ def format_json(violations: list[Violation]) -> str:
     """
     data = []
     for v in violations:
-        entry = {
+        entry: dict[str, Any] = {
             "filepath": v.filepath,
             "line": v.line,
             "severity": v.severity.value,
@@ -17185,7 +17196,7 @@ def _check_segfault_resurrection(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations: list[dict[str, Any]] = []
+    violations: list[Violation] = []
     resurrect_re = re.compile(r"Resurrect|Resurrection|Segfault_Recover|Signal_Handler.*SIGSEGV|Handle_Segfault", re.IGNORECASE)
 
     found_resurrect = False
@@ -17451,7 +17462,7 @@ def _check_framebuffer_parity(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations: list[dict[str, Any]] = []
+    violations: list[Violation] = []
     fb_parity_re = re.compile(r"parity.*framebuffer|Check_Framebuffer|CRC.*framebuffer|Framebuffer.*CRC", re.IGNORECASE)
 
     found = False
@@ -17504,7 +17515,7 @@ def _check_process_isolation(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations: list[dict[str, Any]] = []
+    violations: list[Violation] = []
     iso_re = re.compile(r"Process_Identification|UI_Subprocess|Separate_Process|Process_Isolation", re.IGNORECASE)
     found = False
     for root, _dirs, files in _walk_src(src_dir):
@@ -17554,7 +17565,7 @@ def _check_shm_communication(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations: list[dict[str, Any]] = []
+    violations: list[Violation] = []
     shm_re = re.compile(r"Shared_Memory|SHM|Audit_SHM|IPC_Shared", re.IGNORECASE)
     found = False
     for root, _dirs, files in _walk_src(src_dir):
@@ -17604,7 +17615,7 @@ def _check_headless_fallback(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations: list[dict[str, Any]] = []
+    violations: list[Violation] = []
     headless_re = re.compile(r"Headless|Run_Headless|Fallback.*display|No.*display", re.IGNORECASE)
     found = False
     for root, _dirs, files in _walk_src(src_dir):
@@ -17656,7 +17667,7 @@ def _check_state_save(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations: list[dict[str, Any]] = []
+    violations: list[Violation] = []
     save_re = re.compile(r"Save_State|Write_State|Create_File.*\.sav|Save_To_File|Persist_State", re.IGNORECASE)
     found = False
     for root, _dirs, files in _walk_src(src_dir):
@@ -17706,7 +17717,7 @@ def _check_state_recovery(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations: list[dict[str, Any]] = []
+    violations: list[Violation] = []
     recovery_re = re.compile(r"Recover_States|Load_State|Resume_From_State|Restore_State", re.IGNORECASE)
     found = False
     for root, _dirs, files in _walk_src(src_dir):
