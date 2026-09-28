@@ -405,7 +405,16 @@ begin
 exception
    when others =>
       -- Safe_Fallback: unexpected runtime exception in test harness
-      Put_Line ("UNEXPECTED EXCEPTION — test harness aborted");
+      -- AXIOM: this unit compiles with -gnatW8 (UTF-8 source, see
+      -- stellarorion_tests.gpr), which decodes a non-ASCII literal such as an
+      -- em-dash (U+2014 = 8212) to a code point outside Standard.Character
+      -- (0..255) and fails the build with "literal out of range of type
+      -- Standard.Character". Put_Line also only accepts a plain String.
+      -- THEORY: the message must therefore stay 7-bit ASCII.
+      -- CITATION: GNAT Reference Manual, "Character and String Types";
+      -- same class of defect as the usetex/rejecting-'W'-glyph fix recorded
+      -- in the Hybrid Validation Gate notes (validation_pipeline.py).
+      Put_Line ("UNEXPECTED EXCEPTION - test harness aborted");
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
 end Test_Main;
