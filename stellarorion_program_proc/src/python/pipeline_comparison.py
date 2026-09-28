@@ -67,7 +67,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 # VTU PARSER
 # ============================================================================
 
-def parse_vtu_surface(vtu_file):  # nosec
+def parse_vtu_surface(vtu_file: str):  # nosec
     """Parse SPARTA VTU surf dump to extract cell centroids and data.
 
     AXIOMS:
@@ -112,7 +112,7 @@ def parse_vtu_surface(vtu_file):  # nosec
     return result
 
 
-def _fix_vtu_connectivity(raw_text, n_pts):
+def _fix_vtu_connectivity(raw_text: str, n_pts: int) -> list[int]:
     """Fix SPARTA VTU connectivity by splitting concatenated numbers.
 
     SPARTA's VTU writer has a bug where adjacent vertex indices get concatenated
@@ -135,7 +135,7 @@ def _fix_vtu_connectivity(raw_text, n_pts):
     max_idx = n_pts - 1
 
     # First pass: split values > max_idx (definitely concatenated)
-    fixed = []
+    fixed: list[int] = []
     for t in tokens:
         v = int(t)
         if v <= max_idx:
@@ -159,7 +159,7 @@ def _fix_vtu_connectivity(raw_text, n_pts):
     return fixed
 
 
-def extract_cell_centroids(vtu_file):  # nosec
+def extract_cell_centroids(vtu_file: str):  # nosec
     """Extract per-cell centroid coordinates from VTU file.
 
     For SPARTA surf VTU files, all cells are VTK_QUAD (type=9).
@@ -252,7 +252,13 @@ _MATERN_52 = Matern(length_scale=1.0, length_scale_bounds=(1e-3, 1e3), nu=2.5)
 _MAX_TRAINING_CELLS = 200
 
 
-def denoise_surface_heatflux(x, y, heatflux, n_restarts=2, random_state=42):  # nosec
+def denoise_surface_heatflux(
+    x: np.ndarray,
+    y: np.ndarray,
+    heatflux: np.ndarray,
+    n_restarts: int = 2,
+    random_state: int = 42,
+):  # nosec
     """Apply GP (Kriging) denoising to per-element surface heat flux.
 
     AXIOMS:
@@ -345,7 +351,11 @@ def denoise_surface_heatflux(x, y, heatflux, n_restarts=2, random_state=42):  # 
 # PINN-LIKE TEMPORAL SURROGATE (scikit-learn MLP as lightweight substitute)
 # ============================================================================
 
-def build_temporal_surrogate(steps, metrics, max_steps=2200):  # nosec
+def build_temporal_surrogate(
+    steps: np.ndarray,
+    metrics: dict[str, np.ndarray],
+    max_steps: int = 2200,
+):  # nosec
     """Build a temporal surrogate model for extrapolation beyond training steps.
 
     Uses a simple Gaussian Process on the time series to extrapolate.
@@ -433,7 +443,7 @@ def build_temporal_surrogate(steps, metrics, max_steps=2200):  # nosec
 # ANALYSIS & COMPARISON
 # ============================================================================
 
-def compare_denoise_raw(raw_hf, denoised_hf):  # nosec
+def compare_denoise_raw(raw_hf: np.ndarray, denoised_hf: np.ndarray):  # nosec
     """Compare raw vs denoised surface heat flux statistics.
 
     AXIOMS:
@@ -667,7 +677,7 @@ def main():  # nosec
 
     rng = np.random.RandomState(42)
 
-    def box_muller_gaussian(n, mu=0.0, sigma=1.0):  # nosec
+    def box_muller_gaussian(n: int, mu: float = 0.0, sigma: float = 1.0) -> np.ndarray:  # nosec
         """Box-Muller transform for Gaussian random numbers.
 
         AXIOMS:
@@ -686,7 +696,9 @@ def main():  # nosec
         z = np.sqrt(-2.0 * np.log(u1)) * np.cos(2.0 * np.pi * u2)
         return mu + sigma * z
 
-    def blx_alpha_crossover(parent1, parent2, alpha=0.5):  # nosec
+    def blx_alpha_crossover(
+        parent1: np.ndarray, parent2: np.ndarray, alpha: float = 0.5
+    ) -> np.ndarray:  # nosec
         """BLX-alpha crossover operator.
 
         AXIOMS:
@@ -707,7 +719,9 @@ def main():  # nosec
         child = lo + rng.uniform(0, 1, len(parent1)) * (hi - lo)
         return child
 
-    def gaussian_mutation(individual, bounds, sigma_frac=0.1):  # nosec
+    def gaussian_mutation(
+        individual: np.ndarray, bounds: np.ndarray, sigma_frac: float = 0.1
+    ) -> np.ndarray:  # nosec
         """Gaussian mutation operator.
 
         AXIOMS:
@@ -758,7 +772,7 @@ def main():  # nosec
     print(f"    Gaussian mutation: all in bounds = {all_in_bounds}")
 
     # 4. GA convergence test: minimize f(x) = (x-0.7)^2 + (y-2.5)^2
-    def test_cost(params):
+    def test_cost(params: np.ndarray) -> float:
         """Simple quadratic test cost function.
 
         References:
