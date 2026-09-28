@@ -32,6 +32,7 @@ try:
     from sklearn.gaussian_process import GaussianProcessRegressor
     from sklearn.gaussian_process.kernels import (
         ConstantKernel,
+        Kernel,
         Matern,
         WhiteKernel,
     )
@@ -42,6 +43,7 @@ except ImportError:
     from sklearn.gaussian_process import GaussianProcessRegressor
     from sklearn.gaussian_process.kernels import (
         ConstantKernel,
+        Kernel,
         Matern,
         WhiteKernel,
     )
@@ -63,7 +65,7 @@ _MAX_TRAINING_CELLS = 1000
 _MATERN_52 = Matern(length_scale=1.0, length_scale_bounds=(1e-3, 1e3), nu=2.5)
 
 
-def _parse_grid_file(grid_file):
+def _parse_grid_file(grid_file: str) -> np.ndarray:
     """Parse SPARTA grid.NNNN.out into training data.
 
     AXIOMS:
@@ -126,7 +128,7 @@ def _parse_grid_file(grid_file):
     return np.array(cells, dtype=np.float64)
 
 
-def _write_grid_file(grid_file, data):
+def _write_grid_file(grid_file: str, data: np.ndarray) -> None:
     """Write denoised data back to SPARTA grid format.
 
     AXIOMS:
@@ -180,7 +182,7 @@ def _write_grid_file(grid_file, data):
         raise OSError(f"Failed to write grid file {grid_file}: {exc}") from exc
 
 
-def _build_kernel(noise_upper_bound=1.0):
+def _build_kernel(noise_upper_bound: float = 1.0) -> Kernel:
     """Build GP kernel for spatial denoising.
 
     AXIOMS:
@@ -329,7 +331,12 @@ def denoise_grid(raw_data: "np.ndarray", n_restarts: int = 5, random_state: int 
     return denoised
 
 
-def denoise_grid_file(input_file: str, output_file: "str | None" = None, n_restarts: int = 5, random_state: int = 42) -> str:
+def denoise_grid_file(
+    input_file: str,
+    output_file: "str | None" = None,
+    n_restarts: int = 5,
+    random_state: int = 42,
+) -> tuple[np.ndarray, str]:
     """High-level API: denoise a SPARTA grid file and optionally write output.
     # test: verified by test_denoise_grid_file() at module level
 

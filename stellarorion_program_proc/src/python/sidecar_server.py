@@ -157,7 +157,7 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     # --- access-log suppression ---
-    def log_message(self, fmt: str, *args: Any) -> None:
+    def log_message(self, format: str, *args: Any) -> None:
         """Suppress BaseHTTPRequestHandler's per-request console logging.
 
         Tested by: test_log_message() (same file).
@@ -319,7 +319,9 @@ def test_log_message() -> None:
     - https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.log_message
     - https://docs.pytest.org/en/stable/getting-started.html
     """
-    assert SidecarHandler.log_message(object(), "GET %s", "/x") is None
+    # __new__ avoids HTTPServer/socket setup: log_message does not touch self.
+    handler = SidecarHandler.__new__(SidecarHandler)
+    assert SidecarHandler.log_message(handler, "GET %s", "/x") is None
 
 
 # Self-test: startup binding sanity on an ephemeral socket.
