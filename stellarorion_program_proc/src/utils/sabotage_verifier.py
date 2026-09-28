@@ -90,6 +90,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -1180,7 +1181,7 @@ class ParityFile:
     source_path: str
     source_hash: str  # SHA-256 of original file
     block_count: int
-    blocks: list  # List[ParityBlock]
+    blocks: list[ParityBlock]
     created_at: str
     version: str = "1.0"
 
@@ -1213,7 +1214,7 @@ def _par2_crc32(data: bytes) -> int:
     return binascii.crc32(data) & 0xFFFFFFFF
 
 
-def _par2_split_blocks(data: bytes, block_size: int = 512) -> list:
+def _par2_split_blocks(data: bytes, block_size: int = 512) -> list[bytes]:
     """Split data into fixed-size blocks for parity encoding.
 
     -- AXIOMS --
@@ -1662,7 +1663,7 @@ def parity_protected_read(source_path: str, parity_dir: str | None = None) -> st
         return source.read_text()
 
 
-def parity_protected_audit(target_path: str, extensions: list | None = None) -> list:
+def parity_protected_audit(target_path: str, extensions: list[str] | None = None) -> list[dict[str, Any]]:
     """Audit a directory with parity protection for all source files.
 
     -- AXIOMS --
@@ -1880,7 +1881,7 @@ def auto_update_parity(source_path: str, parity_dir: str | None = None) -> str:
 
 
 def self_recovery_bootloader(target_path: str, parity_dir: str | None = None,
-                             auto_update: bool = True) -> dict:
+                             auto_update: bool = True) -> dict[str, Any]:
     """Self-recovery bootloader that can recover source from .par2 files.
 
     -- AXIOMS --
@@ -1907,7 +1908,7 @@ def self_recovery_bootloader(target_path: str, parity_dir: str | None = None,
             - https://docs.python.org/3/library/os.html — os module
     """
     target = Path(target_path)
-    report = {
+    report: dict[str, Any] = {
         "target": str(target),
         "files_scanned": 0,
         "files_ok": 0,
@@ -2001,7 +2002,7 @@ def self_recovery_bootloader(target_path: str, parity_dir: str | None = None,
     return report
 
 
-def parity_init_directory(target_path: str, parity_dir: str | None = None) -> dict:
+def parity_init_directory(target_path: str, parity_dir: str | None = None) -> dict[str, Any]:
     """Initialize parity protection for an entire directory.
 
     -- AXIOMS --
@@ -2025,7 +2026,7 @@ def parity_init_directory(target_path: str, parity_dir: str | None = None) -> di
         parity_dir = str(parent_dir / _PARITY_DEDICATED_DIR)
 
     target = Path(target_path)
-    report = {
+    report: dict[str, Any] = {
         "target": str(target),
         "files_processed": 0,
         "parity_generated": 0,
@@ -2095,7 +2096,7 @@ def parity_init_directory(target_path: str, parity_dir: str | None = None) -> di
 
 
 def _check_split_parity_enforcement(source: str, lines: list[str],
-                                     filepath: str = "") -> list:
+                                     filepath: str = "") -> list[dict[str, Any]]:
     """Audit: check that source file has split parity protection.
 
     This function audits the TARGET source code to verify it has:
@@ -2385,7 +2386,7 @@ def _check_split_parity_enforcement(source: str, lines: list[str],
 #     - https://parchive.sourceforge.net/
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def generate_split_parity(source_path: str, block_size: int = 512) -> dict:
+def generate_split_parity(source_path: str, block_size: int = 512) -> dict[str, Any]:
     """Generate split parity for a source file.
 
     Creates RS and GC parity blocks with per-part checksums.
@@ -2477,7 +2478,7 @@ def generate_split_parity(source_path: str, block_size: int = 512) -> dict:
     }
 
 
-def store_split_parity(source_path: str, parity_data: dict) -> dict:
+def store_split_parity(source_path: str, parity_data: dict[str, Any]) -> dict[str, Any]:
     """Store split parity files in metadata/ folder.
 
     Creates .par2-one, .par2-two, and .meta.json files.
@@ -2529,7 +2530,7 @@ def store_split_parity(source_path: str, parity_data: dict) -> dict:
     }
 
 
-def verify_split_parity(source_path: str) -> dict:
+def verify_split_parity(source_path: str) -> dict[str, Any]:
     """Verify split parity integrity.
 
     Checks that parity files exist, checksums match, and source hasn't changed.
@@ -2604,7 +2605,7 @@ def verify_split_parity(source_path: str) -> dict:
     return {"valid": True, "message": "All parity files verified"}
 
 
-def restore_split_parity(source_path: str) -> dict:
+def restore_split_parity(source_path: str) -> dict[str, Any]:
     """Restore source file from parity if corrupted.
 
     Uses RS parity for block-level recovery.
@@ -2655,7 +2656,7 @@ def restore_split_parity(source_path: str) -> dict:
     return {"restored": True, "bytes": len(restored_data)}
 
 
-def regenerate_split_parity(source_path: str) -> dict:
+def regenerate_split_parity(source_path: str) -> dict[str, Any]:
     """Regenerate split parity for a source file.
 
     Generates new parity from current source.
@@ -2907,7 +2908,7 @@ _C_EXTERNAL_CALLS: dict[str, tuple[str, bool, str]] = {
 }
 
 
-def _parse_python_functions_ast(source: str) -> list[dict]:
+def _parse_python_functions_ast(source: str) -> list[dict[str, Any]]:
     """Parse Python source using the ast module for real AST analysis.
 
     Returns list of dicts with:
@@ -3105,7 +3106,7 @@ def _parse_python_functions_ast(source: str) -> list[dict]:
     return functions
 
 
-def _check_exception_robustness(func: dict) -> list[dict]:
+def _check_exception_robustness(func: dict[str, Any]) -> list[dict[str, Any]]:
     """Check if a function handles external call failures.
 
     For each external call that MUST be handled (must_handle=True),
@@ -3145,7 +3146,7 @@ def _check_exception_robustness(func: dict) -> list[dict]:
     return issues
 
 
-def _build_smt_external_placeholders(func: dict) -> list[dict]:
+def _build_smt_external_placeholders(func: dict[str, Any]) -> list[dict[str, Any]]:
     """Build SMT placeholder variables for external calls.
 
     For each external call, create an abstract variable that can take
@@ -3194,7 +3195,7 @@ class Violation:
     message: str
     standard: str = ""
     code_snippet: str = ""
-    solvers: list = None  # Which SMT solvers confirmed this (z3, cvc5, alt-ergo)
+    solvers: list[str] | None = None  # Which SMT solvers confirmed this (z3, cvc5, alt-ergo)
     counterexample: str = ""  # SMT model showing exact input values that trigger the failure
 
     def __repr__(self):
@@ -3242,7 +3243,7 @@ class CheckResult:
     filepath: str          # which file was checked
     line: int              # line number checked
     confirmed: bool        # True = passed/proved, False = violation found
-    solvers: list = None   # which provers confirmed (z3, cvc5, alt-ergo)
+    solvers: list[str] | None = None   # which provers confirmed (z3, cvc5, alt-ergo)
     code_snippet: str = "" # what code was checked
 
 
@@ -3254,7 +3255,7 @@ class CheckTracker:
         self.results: list[CheckResult] = []  # nosec: SMT type annotation, not actual logic
 
     def record(self, category: str, filepath: str, line: int,
-               confirmed: bool, solvers: list | None = None, code_snippet: str = ""):
+               confirmed: bool, solvers: list[str] | None = None, code_snippet: str = ""):
         """Record the outcome of a single verification check.
 
         AXIOMS: Every check has a category, location, and pass/fail status.
@@ -3269,7 +3270,7 @@ class CheckTracker:
             confirmed=confirmed, solvers=solvers or [], code_snippet=code_snippet,
         ))
 
-    def summary(self) -> dict[str, dict]:
+    def summary(self) -> dict[str, dict[str, Any]]:
         """Aggregate results by category.
 
         Returns dict: category -> {
@@ -3281,7 +3282,7 @@ class CheckTracker:
             References:
                 - https://docs.python.org/3/ — Python 3 docs
         """
-        cats: dict[str, dict] = {}
+        cats: dict[str, dict[str, Any]] = {}
         for r in self.results:
             if r.category not in cats:
                 cats[r.category] = {
@@ -3384,7 +3385,7 @@ class _LinkCache:
         -- APPLICATIONS: Called once at audit start.
         """
         self._path = cache_path or _LINK_CACHE_FILE
-        self._cache: dict[str, dict] = {}
+        self._cache: dict[str, dict[str, Any]] = {}
         self._load()
 
     def _load(self):
@@ -3835,7 +3836,7 @@ def _log_msg(msg: str) -> None:
         pass  # nosec: logging failure must not break audit
 
 
-def _log_audit_summary(violations: list, target: str, cache_hit: bool) -> None:
+def _log_audit_summary(violations: list[dict[str, Any]], target: str, cache_hit: bool) -> None:
     """Write the full audit summary to the persistent log.
 
     AXIOMS:
@@ -3899,7 +3900,7 @@ def set_verbose(enabled: bool) -> None:
     _VERBOSE = enabled
 
 
-def _has_nosec(lines: list, line_num: int) -> bool:
+def _has_nosec(lines: list[str], line_num: int) -> bool:
     """Check if a given 1-based line number has a nosec suppression annotation.
 
     -- AXIOMS --
@@ -3948,13 +3949,13 @@ class Pattern:
     languages: list[str] = field(default_factory=lambda: ["python"])
 
     # Regex-based pattern fields
-    regex: re.Pattern | None = None
+    regex: re.Pattern[str] | None = None
     context_lines: int = 5
     guard_patterns: list[str] = field(default_factory=list)
     message_template: str = ""
 
     # Function-based pattern fields
-    check_func: Callable | None = None
+    check_func: Callable[..., Any] | None = None
 
 
 # ── Adaptive Pattern Registry ───────────────────────────────────────────
@@ -4082,7 +4083,7 @@ class SabotageVerifier:
             References:
                 - https://docs.python.org/3/ — Python 3 docs
         """
-        violations = []
+        violations: list[dict[str, Any]] = []
         lines = source.splitlines()
 
         lang_patterns = self.registry.for_language(language)
@@ -4659,7 +4660,7 @@ def _build_python_copy_paste_patterns() -> list[Pattern]:
             violations.extend(_check_copy_paste_text_fallback(lines, filepath))
 
         # ── Pattern 2: Duplicate function definitions ──
-        func_defs = {}
+        func_defs: dict[str, tuple[Any, int]] = {}
         for i, line in enumerate(lines, 1):
             match = re.match(r"def\s+(\w+)\s*\(", line.strip())
             if match:
@@ -5956,7 +5957,7 @@ def _build_python_stale_flag_patterns() -> list[Pattern]:
 
         # ── Pattern 1: Boolean flags set to True/False but never modified ──
         # Track boolean assignments
-        bool_assignments = {}  # var_name -> [(line_no, value), ...]
+        bool_assignments: dict[str, list[tuple[int, Any]]] = {}  # var_name -> [(line_no, value), ...]
 
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
@@ -7944,7 +7945,7 @@ def _check_c_missing_free(source: str, lines: list[str], filepath: str = "") -> 
     # Track function boundaries and allocations
     in_func = False
     func_name = ""
-    alloc_lines = []
+    alloc_lines: list[int] = []
     free_found = False
 
     for i, line in enumerate(lines, 1):
@@ -7956,7 +7957,7 @@ def _check_c_missing_free(source: str, lines: list[str], filepath: str = "") -> 
             if func_match:
                 func_name = func_match.group(1)
                 in_func = True
-                alloc_lines = []
+                alloc_lines: list[int] = []
                 free_found = False
 
         if in_func:
@@ -7983,7 +7984,7 @@ def _check_c_missing_free(source: str, lines: list[str], filepath: str = "") -> 
                     ))
             in_func = False
             func_name = ""
-            alloc_lines = []
+            alloc_lines: list[int] = []
             free_found = False
 
     return violations
@@ -9318,7 +9319,7 @@ def _build_env_and_node_modules_integrity_patterns() -> list[Pattern]:
 # The AST-based _parse_python_functions_ast() defined earlier in this file is used instead.
 
 
-def _parse_c_functions(source: str) -> list[dict]:
+def _parse_c_functions(source: str) -> list[dict[str, Any]]:
     """Parse C source into function metadata for SMT verification.
 
     Returns list of dicts with keys:
@@ -9486,7 +9487,7 @@ def _parse_c_functions(source: str) -> list[dict]:
     return functions
 
 
-def _parse_ada_functions(source: str) -> list[dict]:
+def _parse_ada_functions(source: str) -> list[dict[str, Any]]:
     """Parse Ada source into procedure/function metadata for SMT verification.
 
     Extracts the SAME metadata as the Python parser so the SMT verifier
@@ -9503,7 +9504,7 @@ def _parse_ada_functions(source: str) -> list[dict]:
             - https://github.com/AdaCore/spark2014 — GNATprove documentation
             - https://github.com/AdaCore/ada_language_server — Ada language resources
     """
-    functions = []
+    functions: list[dict[str, Any]] = []
     lines = source.split("\n")
     i = 0
     while i < len(lines):
@@ -10180,7 +10181,7 @@ def _extract_z3_counterexample(solver, description: str = "") -> str:
         return f"[Counterexample] {description}: SAT proven but model extraction failed ({e})"
 
 
-def _verify_python_function_with_z3(func: dict) -> list[dict]:
+def _verify_python_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]]:
     """Triple-validate a Python function using z3 + cvc5 + alt-ergo.
 
     Checks:
@@ -10656,7 +10657,7 @@ def _verify_python_function_with_z3(func: dict) -> list[dict]:
         for im in re.finditer(r"isinstance\s*\(\s*(\w+)\s*,", bl_stripped):
             _isinstance_dispatch_vars.add(im.group(1))
 
-    type_map = {}
+    type_map: dict[str, str] = {}
     for th in func["type_hints"]:
         var = th["var"]
         t = th["type"]
@@ -10783,7 +10784,7 @@ def _verify_python_function_with_z3(func: dict) -> list[dict]:
     return issues
 
 
-def _verify_c_function_with_z3(func: dict) -> list[dict]:
+def _verify_c_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]]:
     """Triple-validate a C function using z3 + cvc5 + alt-ergo.
 
     Checks:
@@ -11096,7 +11097,7 @@ def _verify_c_function_with_z3(func: dict) -> list[dict]:
     return issues
 
 
-def _verify_ada_function_with_z3(func: dict) -> list[dict]:
+def _verify_ada_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]]:
     """Triple-validate an Ada function using z3 + cvc5 + alt-ergo.
 
     SPARK_Mode(Off) does NOT reduce scrutiny — it INCREASES it.
@@ -11969,7 +11970,7 @@ def _verify_ada_function_with_z3(func: dict) -> list[dict]:
 # TypeScript / JavaScript SMT Infrastructure
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _parse_tsjs_functions(source: str) -> list[dict]:
+def _parse_tsjs_functions(source: str) -> list[dict[str, Any]]:
     """Parse TypeScript/JavaScript source into function metadata for SMT verification.
 
     Uses regex-based parsing (no external JS parser dependency) to extract:
@@ -12173,12 +12174,13 @@ def _parse_tsjs_functions(source: str) -> list[dict]:
                 has_exception_handler = True
                 exception_handlers.append({"line": abs_line, "type": "catch_handler"})
 
+        pre_post: list[dict[str, Any]] = []
         functions.append({
             "name": func_name,
             "line": func_line,
             "params": params,
             "return_type": return_type or "any",
-            "pre_post": [],  # TS/JS doesn't have SPARK-style contracts
+            "pre_post": pre_post,  # TS/JS doesn't have SPARK-style contracts
             "body_lines": body_lines,
             "body_text": body_text,
             "divisions": divisions,
@@ -12194,7 +12196,7 @@ def _parse_tsjs_functions(source: str) -> list[dict]:
     return functions
 
 
-def _verify_tsjs_function_with_z3(func: dict) -> list[dict]:
+def _verify_tsjs_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]]:
     """Triple-validate a TypeScript/JavaScript function using z3 + cvc5 + alt-ergo.
 
     Checks (all triple-solver confirmed):
@@ -12466,7 +12468,7 @@ def _verify_tsjs_function_with_z3(func: dict) -> list[dict]:
     # ═══════════════════════════════════════════════════════════════
     # CHECK 4: Type contradiction
     # ═══════════════════════════════════════════════════════════════
-    type_map = {}
+    type_map: dict[str, str] = {}
     for th in func.get("type_info", []):
         var = th["var"]
         t = th["type"]
@@ -12825,7 +12827,7 @@ def _build_metamorphic_fuzzing_patterns() -> list[Pattern]:
         is_c = filepath_lower.endswith((".c", ".h"))
         is_ada = filepath_lower.endswith((".adb", ".ads"))
 
-        funcs = []
+        funcs: list[dict[str, Any]] = []
         if is_python:
             funcs = _parse_python_functions_ast(source)
         elif is_c:
@@ -13303,14 +13305,14 @@ def _build_composition_balance_patterns() -> list[Pattern]:
                 text=True,
                 timeout=10,
             )
-            all_files = result.stdout.strip().split("\n") if result.stdout.strip() else []
+            all_files: list[str] = result.stdout.strip().split("\n") if result.stdout.strip() else []
             # Filter out vendored directories (check all path components)
             tracked_files = [
                 f for f in all_files
                 if not any(part in vendor_dirs for part in Path(f).parts)
             ]
         except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-            tracked_files = []
+            tracked_files: list[str] = []
 
         # Count bytes per language
         lang_bytes: dict[str, int] = {}
@@ -13861,7 +13863,7 @@ def _assertion_scan_c(
         References:
             - https://docs.python.org/3/ — Python 3 docs
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
 
     for i, line in enumerate(lines, 1):
         line.strip()
@@ -14114,7 +14116,7 @@ def _stability_check_c(
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     functions = _parse_c_functions(source)
 
     for func in functions:
@@ -15730,7 +15732,7 @@ def format_static_pattern_summary(violations: list[Violation], registry: Pattern
     if registry is None:
         registry = create_default_registry()
 
-    category_map: dict[str, dict] = {}
+    category_map: dict[str, dict[str, Any]] = {}
 
     # Initialize categories registered in PatternRegistry
     for p in registry.patterns:
@@ -16327,7 +16329,7 @@ def calculate_category_scores(
     violations: list[Violation],
     registry: PatternRegistry | None = None,
     threshold: float = 85.0,
-) -> dict[str, dict]:
+) -> dict[str, dict[str, Any]]:
     """Calculate a score per category (0-100%) and flag categories below threshold.
 
     Scoring logic:
@@ -16356,7 +16358,7 @@ def calculate_category_scores(
     for v in violations:
         cat_violations.setdefault(v.category, []).append(v)
 
-    results: dict[str, dict] = {}
+    results: dict[str, dict[str, Any]] = {}
 
     # Compute scores for all categories that appear in registry OR in violations
     all_cats = set(cat_pattern_count.keys()) | set(cat_violations.keys())
@@ -16484,7 +16486,7 @@ def _build_runtime_silent_failure_patterns() -> list[Pattern]:
             References:
                 - https://docs.python.org/3/ — Python 3 docs
         """
-        violations = []
+        violations: list[dict[str, Any]] = []
 
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
@@ -17183,7 +17185,7 @@ def _check_segfault_resurrection(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     resurrect_re = re.compile(r"Resurrect|Resurrection|Segfault_Recover|Signal_Handler.*SIGSEGV|Handle_Segfault", re.IGNORECASE)
 
     found_resurrect = False
@@ -17449,7 +17451,7 @@ def _check_framebuffer_parity(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     fb_parity_re = re.compile(r"parity.*framebuffer|Check_Framebuffer|CRC.*framebuffer|Framebuffer.*CRC", re.IGNORECASE)
 
     found = False
@@ -17502,7 +17504,7 @@ def _check_process_isolation(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     iso_re = re.compile(r"Process_Identification|UI_Subprocess|Separate_Process|Process_Isolation", re.IGNORECASE)
     found = False
     for root, _dirs, files in _walk_src(src_dir):
@@ -17552,7 +17554,7 @@ def _check_shm_communication(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     shm_re = re.compile(r"Shared_Memory|SHM|Audit_SHM|IPC_Shared", re.IGNORECASE)
     found = False
     for root, _dirs, files in _walk_src(src_dir):
@@ -17602,7 +17604,7 @@ def _check_headless_fallback(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     headless_re = re.compile(r"Headless|Run_Headless|Fallback.*display|No.*display", re.IGNORECASE)
     found = False
     for root, _dirs, files in _walk_src(src_dir):
@@ -17654,7 +17656,7 @@ def _check_state_save(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     save_re = re.compile(r"Save_State|Write_State|Create_File.*\.sav|Save_To_File|Persist_State", re.IGNORECASE)
     found = False
     for root, _dirs, files in _walk_src(src_dir):
@@ -17704,7 +17706,7 @@ def _check_state_recovery(src_dir: str) -> list["Violation"]:
             - https://cwe.mitre.org/data/definitions/704.html — CWE-704
             - https://owasp.org/www-project-top-ten/ — OWASP Top Ten 2021
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     recovery_re = re.compile(r"Recover_States|Load_State|Resume_From_State|Restore_State", re.IGNORECASE)
     found = False
     for root, _dirs, files in _walk_src(src_dir):
