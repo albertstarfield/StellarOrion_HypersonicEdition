@@ -25,6 +25,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
+from matplotlib.artist import Artist
 
 # Single source of truth for the HIAD 4-segment cross-section (pure NumPy,
 # no ctypes/dylib dependency -- see hiad_geometry.py AXIOMS/THEORIES).
@@ -32,7 +33,11 @@ import matplotlib.gridspec as gridspec
 sys.path.insert(0, os.path.dirname(__file__))
 from hiad_geometry import generate_cross_section  # noqa: E402
 
-def create_optimized_overlay_dashboard(output_path='hiad_optimized_overlay.mp4', fps=30, duration=10):
+def create_optimized_overlay_dashboard(
+    output_path: str = 'hiad_optimized_overlay.mp4',
+    fps: int = 30,
+    duration: int = 10,
+):
     """Create MP4 with default vs optimized geometry overlay.
 
     Parameters:
@@ -100,7 +105,7 @@ def create_optimized_overlay_dashboard(output_path='hiad_optimized_overlay.mp4',
 
     improvement_pct = results.get('improvement', {}).get('cost_pct', 0)
 
-    def animate(frame):
+    def animate(frame: int) -> list[Artist]:
         ax_main.clear()
         ax_params1.clear()
         ax_params2.clear()
@@ -250,6 +255,7 @@ def create_optimized_overlay_dashboard(output_path='hiad_optimized_overlay.mp4',
         ax_timeline.text(time_sec/2, 0, f'{phase_text} {progress*100:.0f}%',
                         ha='center', va='center', fontsize=12, fontweight='bold', color='white')
 
+        # matplotlib treats an empty artist list as "nothing to redraw".
         return []
 
     # Create animation

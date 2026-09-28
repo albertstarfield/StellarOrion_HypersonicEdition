@@ -12,12 +12,17 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.patches import FancyArrowPatch
 import matplotlib.gridspec as gridspec
+from matplotlib.artist import Artist
 
 # Add parent directory to path for the wrapper
 sys.path.insert(0, os.path.dirname(__file__))
 from ada_pinn_wrapper import get_hiad_cross_section
 
-def create_geometry_dashboard(output_path='hiad_geometry_dashboard.mp4', fps=30, duration=10):
+def create_geometry_dashboard(
+    output_path: str = 'hiad_geometry_dashboard.mp4',
+    fps: int = 30,
+    duration: int = 10,
+):
     """
     Create an MP4 dashboard showing the HIAD geometry with parameters.
     
@@ -116,7 +121,7 @@ def create_geometry_dashboard(output_path='hiad_geometry_dashboard.mp4', fps=30,
     ax_main.set_facecolor('white')
     
     # Animation function
-    def animate(frame):
+    def animate(frame: int) -> list[Artist]:
         # Clear axes
         ax_main.clear()
         ax_params1.clear()
@@ -269,6 +274,7 @@ def create_geometry_dashboard(output_path='hiad_geometry_dashboard.mp4', fps=30,
         ax_timeline.text(time_sec/2, 0, f'{progress*100:.1f}%', 
                         ha='center', va='center', fontsize=14, fontweight='bold', color='white')
         
+        # matplotlib treats an empty artist list as "nothing to redraw".
         return []
     
     # Create animation

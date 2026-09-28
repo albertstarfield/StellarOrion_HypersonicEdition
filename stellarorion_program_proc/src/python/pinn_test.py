@@ -15,6 +15,9 @@ import os
 import subprocess
 import sys
 import traceback
+from typing import Any, Protocol
+
+import numpy as np
 
 # Ensure we can import from the same directory
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -77,7 +80,23 @@ def detect_device():
     return "cpu", "CPU"
 
 
-def run_baseline_validation(cad_dir, steps, solver="sparta"):
+# AXIOM: `compute_pinn_metrics` consumes exactly two members of the trained
+# accelerator -- predict_gap_fill for inference. Declaring a Protocol instead of
+# importing PINNAccelerator keeps this module importable without the optional
+# DeepXDE/torch stack (it is imported lazily inside run_pinn_training), and
+# documents the real surface used here rather than typing the parameter as a
+# bare `object`.
+# [Citation: docs.python.org/3/library/typing.html#typing.Protocol]
+class _Predictor(Protocol):
+    """The inference surface of pinn_accelerator.PINNAccelerator used by this file."""
+
+    def predict_gap_fill(self, query_points: np.ndarray) -> np.ndarray:
+        """Predict the refined field at the given query points."""
+
+
+def run_baseline_validation(
+    cad_dir: str, steps: int, solver: str = "sparta"
+):
     """Run SPARTA DSMC baseline and parse grid output for comparison metrics.
 
     Mirrors the logic from the retired StellarOrionEngineMach5Up.py (removed 2026-08-21) run_baseline_validation
@@ -125,7 +144,7 @@ def run_baseline_validation(cad_dir, steps, solver="sparta"):
     return _parse_grid_output(grid_file, steps)
 
 
-def _parse_grid_output(grid_file, steps):
+def _parse_grid_output(grid_file: str, steps: int):
     """Parse SPARTA grid.NNNN.out file for physical quantities.
 
     Columns: id xlo ylo xhi yhi f_2[1] f_2[2] f_2[3] f_2[4] f_3[*] f_4[*]
@@ -242,7 +261,13 @@ def _parse_grid_output(grid_file, steps):
     }
 
 
-def run_pinn_training(grid_files, domain, device, iterations, save_path):
+def run_pinn_training(
+    grid_files: list[str],
+    domain: list[float],
+    device: str,
+    iterations: int,
+    save_path: str,
+):
     """Train DeepXDE PINN on SPARTA grid data.
 
     Uses pinn_accelerator.PINNAccelerator for the actual training.
@@ -264,7 +289,7 @@ def run_pinn_training(grid_files, domain, device, iterations, save_path):
     return pinn
 
 
-def get_err(val, ref):
+def get_err(val: float, ref: float):
     """Relative error of val against ref, in percent (0 when ref <= 0).
 
     Pre: val and ref are numeric (int/float); ref == 0 hits the guard.
@@ -277,7 +302,12 @@ def get_err(val, ref):
     return abs(val - ref) / ref * 100 if ref > 0 else 0
 
 
-def compute_pinn_metrics(pinn, sim_result, baseline_doc, domain):
+def compute_pinn_metrics(
+    pinn: _Predictor,
+    sim_result: dict[str, Any],
+    baseline_doc: dict[str, Any],
+    domain: list[float],
+):
     """Extract refined metrics from trained PINN and build 3-way comparison.
 
     Mirrors L4386-4475 of the retired StellarOrionEngineMach5Up.py (removed 2026-08-21).

@@ -559,7 +559,7 @@ class PINNAccelerator:
         print("[+] PINN training complete.")
 
     # --- gap-fill inference ---
-    def predict_gap_fill(self, query_points) -> np.ndarray:
+    def predict_gap_fill(self, query_points: np.ndarray) -> np.ndarray:
         """Predict flow quantities at arbitrary query points.
         Tested by: test_predict_gap_fill_untrained_raises() (same file).
 

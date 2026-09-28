@@ -69,7 +69,7 @@ LOFTID_DECEL_G     = 9.66     # g       peak deceleration
 LOFTID_DIAMETER_M  = 6.0      # m       vehicle diameter
 
 
-def load_csv(path: str) -> list[dict] | None:
+def load_csv(path: str) -> list[dict[str, float]] | None:
     """Load a validation_timeseries.csv and return list of row dicts.
 
     Each row contains: step, drag_sum_N, lift_sum_N, heatflux_max_Wm2,
@@ -103,7 +103,7 @@ def load_csv(path: str) -> list[dict] | None:
     return rows if rows else None
 
 
-def summarize(rows):
+def summarize(rows: list[dict[str, float]] | None) -> dict[str, float] | None:
     """Compute peak aerothermodynamic metrics from validation time-series rows.
 
     Extracts peak drag, lift, heat flux, heat sum, and derives peak
@@ -140,7 +140,7 @@ def summarize(rows):
     }
 
 
-def fmt(x, sci=False):
+def fmt(x: float | None, sci: bool = False) -> str:
     """Format a numeric value for display in the comparison table.
 
     AXIOM: x may be None (missing data) or numeric.
@@ -196,7 +196,7 @@ def main():
     lines.append("| Metric | Scalloped | Smooth | IRVE-3 Ref | LOFTID Ref | Scalloped/Smooth |")
     lines.append("|---|---|---|---|---|---|")
 
-    def ratio(a, b):
+    def ratio(a: float | None, b: float | None) -> str:
         """Compute ratio a/b as string, returning dash if invalid."""
         if a is None or b is None or b == 0:
             return "—"
