@@ -16,6 +16,8 @@ Requires: deepxde, torch (installed via requirements.txt).
 """
 import os
 import sys
+from collections.abc import Callable, Sequence
+from typing import Protocol
 
 import numpy as np
 
@@ -28,7 +30,23 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "deepxde"])
     import deepxde as dde
 
-import torch  # noqa: I001
+import torch
+
+
+class _PipelineCheckpoint(Protocol):
+    """Structural type of the checkpoint tracker run.py passes in.
+
+    Declared as a Protocol rather than importing PipelineCheckpoint so this
+    module keeps working when the tracker is absent; the four methods below are
+    the only ones it calls. Signatures mirror pipeline_checkpoint.py.
+    """
+
+    def is_step_completed(self, step: str) -> bool: ...
+    def mark_step_running(self, step: str) -> None: ...
+    def mark_step_completed(
+        self, step: str, output_files: list[str] | None = None
+    ) -> None: ...
+    def mark_step_failed(self, step: str, error: str | None = None) -> None: ...
 
 
 # ========================================================================
@@ -42,7 +60,25 @@ RHO_INF = 1.05e-3    # Freestream density [kg/m^3]
 T_INF = 270.65       # Freestream temperature [K]
 
 
-def _ensure_dir(path):
+def _const_field(value: float) -> Callable[[np.ndarray], float]:
+    """Build a DeepXDE field callback that ignores its input and returns `value`.
+
+    Replaces the nine `lambda x: CONST` callbacks. Python has no syntax for
+    annotating lambda parameters, so a named closure is used instead; the
+    runtime behaviour is identical (the point array is never read).
+
+    References:
+    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html
+    """
+
+    def _field(_x: np.ndarray) -> float:
+        return value
+
+    return _field
+
+
+
+def _ensure_dir(path: str) -> None:
     """Create directory if it doesn't exist (guarded: report OSError, never crash).
 
     References:
@@ -93,7 +129,7 @@ def _make_pde():
     """
 
     # --- residual assembler (DeepXDE callback) ---
-    def pde(x, Y) -> list:
+    def pde(x: np.ndarray, Y: np.ndarray) -> list[np.ndarray]:
         """Residuals of the axisymmetric compressible Navier-Stokes system.
 
         Pre: Y columns ordered [rho, u, v, T]; radial coordinate x[:, 1]
@@ -162,7 +198,7 @@ def _make_pde():
 #  Boundary condition builders
 # ========================================================================
 
-def _make_boundary_conditions(domain_bounds):
+def _make_boundary_conditions(domain_bounds: Sequence[float] | np.ndarray):
     """Generate DeepXDE boundary conditions for the flow domain.
 
     Args:
@@ -175,7 +211,7 @@ def _make_boundary_conditions(domain_bounds):
     xmin, xmax, ymax = domain_bounds
 
     # --- inlet edge predicate ---
-    def boundary_left(x, on_boundary) -> bool:
+    def boundary_left(x: np.ndarray, on_boundary: np.ndarray) -> np.ndarray:
         """Inlet boundary predicate: points on the left edge (x == xmin).
 
         Reads column 0 only, so it requires 0 < x.shape[1]. DeepXDE passes
@@ -192,7 +228,7 @@ def _make_boundary_conditions(domain_bounds):
         return on_boundary and np.isclose(x[0], xmin)
 
     # --- outlet edge predicate ---
-    def boundary_right(x, on_boundary) -> bool:
+    def boundary_right(x: np.ndarray, on_boundary: np.ndarray) -> np.ndarray:
         """Outlet boundary predicate: points on the right edge (x == xmax).
 
         Reads column 0 only, so it requires 0 < x.shape[1]. DeepXDE passes
@@ -209,7 +245,7 @@ def _make_boundary_conditions(domain_bounds):
         return on_boundary and np.isclose(x[0], xmax)
 
     # --- far-field edge predicate ---
-    def boundary_top(x, on_boundary) -> bool:
+    def boundary_top(x: np.ndarray, on_boundary: np.ndarray) -> np.ndarray:
         """Far-field boundary predicate: points on the top edge (y == ymax).
 
         Reads column 1 only, so it requires 1 < x.shape[1]. DeepXDE passes
@@ -226,7 +262,7 @@ def _make_boundary_conditions(domain_bounds):
         return on_boundary and np.isclose(x[1], ymax)
 
     # --- symmetry-axis edge predicate ---
-    def boundary_bottom(x, on_boundary) -> bool:
+    def boundary_bottom(x: np.ndarray, on_boundary: np.ndarray) -> np.ndarray:
         """Symmetry-axis boundary predicate: points on the bottom edge (y == 0).
 
         Reads column 1 only, so it requires 1 < x.shape[1]. DeepXDE passes
@@ -243,7 +279,7 @@ def _make_boundary_conditions(domain_bounds):
         return on_boundary and np.isclose(x[1], 0.0)
 
     # --- body-surface region predicate ---
-    def boundary_body(x, on_boundary) -> bool:
+    def boundary_body(x: np.ndarray, on_boundary: np.ndarray) -> np.ndarray:
         """Body surface: approximate as a hemispherical nose at x ~ 0.
 
         Reads columns 0 and 1, so it requires 1 < x.shape[1] (which also
@@ -261,37 +297,37 @@ def _make_boundary_conditions(domain_bounds):
 
     # Inlet (left boundary): freestream conditions
     bc_inlet_rho = dde.icbc.DirichletBC(
-        lambda x: RHO_INF, boundary_left, component=0
+        _const_field(RHO_INF), boundary_left, component=0
     )
     bc_inlet_u = dde.icbc.DirichletBC(
-        lambda x: V_STREAM, boundary_left, component=1
+        _const_field(V_STREAM), boundary_left, component=1
     )
     bc_inlet_v = dde.icbc.DirichletBC(
-        lambda x: 0.0, boundary_left, component=2
+        _const_field(0.0), boundary_left, component=2
     )
     bc_inlet_T = dde.icbc.DirichletBC(
-        lambda x: T_INF, boundary_left, component=3
+        _const_field(T_INF), boundary_left, component=3
     )
 
     # Outlet (right boundary): zero-gradient (Neumann)
     bc_outlet = dde.icbc.NeumannBC(
-        lambda x: 0.0, boundary_right, component=1
+        _const_field(0.0), boundary_right, component=1
     )
 
     # Symmetry (bottom, y=0): v = 0, dT/dy = 0
     bc_sym_v = dde.icbc.DirichletBC(
-        lambda x: 0.0, boundary_bottom, component=2
+        _const_field(0.0), boundary_bottom, component=2
     )
     bc_sym_T = dde.icbc.NeumannBC(
-        lambda x: 0.0, boundary_bottom, component=3
+        _const_field(0.0), boundary_bottom, component=3
     )
 
     # Far-field (top): freestream
     bc_far_rho = dde.icbc.DirichletBC(
-        lambda x: RHO_INF, boundary_top, component=0
+        _const_field(RHO_INF), boundary_top, component=0
     )
     bc_far_u = dde.icbc.DirichletBC(
-        lambda x: V_STREAM, boundary_top, component=1
+        _const_field(V_STREAM), boundary_top, component=1
     )
 
     return [
@@ -320,7 +356,7 @@ class PINNAccelerator:
     """
 
     # --- construction ---
-    def __init__(self, device="cpu") -> None:
+    def __init__(self, device: str = "cpu") -> None:
         """Create an untrained accelerator bound to the given torch device.
 
         Model, feature/output scalers, and domain bounds stay None until
@@ -332,12 +368,14 @@ class PINNAccelerator:
         - https://pytorch.org/docs/stable/torch.html
         """
         self.device = device
-        self.model = None
-        self.scaler_x = None  # feature normalizer
-        self.scaler_y = None  # output normalizer
-        self.domain_bounds = None
+        # These stay None until train_from_checkpoint() populates them. A
+        # scaler is the (mean, std) pair that _normalize() returns.
+        self.model: dde.Model | None = None
+        self.scaler_x: tuple[np.ndarray, np.ndarray] | None = None  # feature normalizer
+        self.scaler_y: tuple[np.ndarray, np.ndarray] | None = None  # output normalizer
+        self.domain_bounds: np.ndarray | list[float] | None = None
 
-    def _parse_grid_file(self, grid_file):
+    def _parse_grid_file(self, grid_file: str) -> np.ndarray:
         """Parse SPARTA grid.NNNN.out into training data.
 
         Returns: numpy array of shape (N, 6) — [x, y, rho, T, vx, vy]
@@ -398,7 +436,12 @@ class PINNAccelerator:
 
         return np.array(cells, dtype=np.float64)
 
-    def _normalize(self, data, mean=None, std=None):
+    def _normalize(
+        self,
+        data: np.ndarray,
+        mean: np.ndarray | None = None,
+        std: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Standardize data (z-score normalization).
 
         References:
@@ -413,8 +456,14 @@ class PINNAccelerator:
         return (data - mean) / std, mean, std
 
     # --- training entry point ---
-    def train_from_checkpoint(self, grid_file, domain_bounds, iterations=2000,
-                              save_path=None, pipeline_checkpoint=None) -> None:
+    def train_from_checkpoint(
+        self,
+        grid_file: str,
+        domain_bounds: np.ndarray | list[float],
+        iterations: int = 2000,
+        save_path: str | None = None,
+        pipeline_checkpoint: _PipelineCheckpoint | None = None,
+    ) -> None:
         """Train or restore PINN from a SPARTA grid output file.
         # test: test_train_from_checkpoint_missing_file()
         Tested by: test_train_from_checkpoint_missing_file() (same file).
@@ -476,12 +525,20 @@ class PINNAccelerator:
         xy_norm, self.mean_x, self.std_x = self._normalize(xy)
         _t_norm, self.mean_t, self.std_t = self._normalize(targets)
 
+        def _ic_zero_values(_points: np.ndarray, _values: np.ndarray) -> np.ndarray:
+            """IC callback: prescribe zero for every observation point."""
+            return np.zeros(len(xy_norm))
+
+        def _ic_all_on_boundary(_points: np.ndarray, _on_boundary: np.ndarray) -> bool:
+            """IC callback: every point counts as an interior observation point."""
+            return True
+
         # Build DeepXDE dataset
         _observe_x = dde.bc.PointSet(xy_norm)
         ic = dde.icbc.IC(
             xy_norm,
-            lambda _, np: np.zeros(len(xy_norm)),
-            lambda _, on: True,
+            _ic_zero_values,
+            _ic_all_on_boundary,
         )
 
         # Output layer: 4 variables (rho, vx, vy, T)
@@ -490,7 +547,7 @@ class PINNAccelerator:
         # Define PDE (simplified for stability)
         # [Citation: Bird 1994, "Molecular Gas Dynamics", §2.3]
         # [Reference: 2D compressible continuity equation]
-        def simple_pde(x, Y) -> list:
+        def simple_pde(x: np.ndarray, Y: np.ndarray) -> list[np.ndarray]:
             """Simplified 2D continuity PDE for training stability.
 
             Pre: Y columns ordered [rho, vx, vy, T] on the normalized domain.
@@ -553,7 +610,7 @@ class PINNAccelerator:
 
         # Mark pipeline step as completed
         if pipeline_checkpoint is not None:
-            output_files = [save_path] if save_path else []
+            output_files: list[str] = [save_path] if save_path else []
             pipeline_checkpoint.mark_step_completed("pinn", output_files=output_files)
 
         print("[+] PINN training complete.")
@@ -588,7 +645,7 @@ class PINNAccelerator:
         return pred
 
     # --- full-state inference ---
-    def predict_full_state(self, query_points) -> np.ndarray:
+    def predict_full_state(self, query_points: np.ndarray) -> np.ndarray:
         """Predict full state vector [rho, vx, vy, T, p] at query points.
 
         p is computed from ideal gas law: p = rho * R * T.
