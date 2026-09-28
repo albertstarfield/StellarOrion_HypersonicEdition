@@ -119,13 +119,21 @@ IRVE3_REFERENCE = {
 #   README.md "Optimized Topology: Before vs After" table.
 # [Citation: hiad_optimization_results.json — optimized/default blocks]
 
+# AXIOM: every spec row is exactly (label, optimized, baseline, unit, value_format).
+# Populated at APPLICATION STEP 4 from row_templates, where the numeric pair is
+# coerced with float() so both sides are true floats, never JSON ints.
+# THEORIES: naming the row type once lets the cache and the loader share it, so
+# a future field added to a row is a single-site edit instead of a silent drift.
+# [Citation: docs.python.org/3/library/typing.html#type-aliases]
+_OptimizedSpecRow = tuple[str, float, float, str, str]
+
 # Process-local cache: one JSON read per process (Pool workers each load once).
 # Assignment of an already-built immutable tuple is atomic under the CPython
 # GIL, so concurrent first-calls cannot observe a partially-built tuple.
-_OPTIMIZED_SPECS_CACHE: tuple | None = None
+_OPTIMIZED_SPECS_CACHE: tuple[_OptimizedSpecRow, ...] | None = None
 
 
-def _load_optimized_topology_specs() -> tuple:
+def _load_optimized_topology_specs() -> tuple[_OptimizedSpecRow, ...]:
     """Build the 5-row Optimized Topology spec table from optimizer JSON.
 
     Returns tuple of (label, optimized, baseline, unit, value_format) rows:
