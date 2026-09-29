@@ -54,7 +54,9 @@ Equation~\eqref{eq:crest_bound} is a \emph{bound} and not a prediction: it appli
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/thermal_map_smooth.png}
+    \BeginAccSupp{method=escape,ActualText={SPARTA surface temperature field map over the decelerator, coloured by temperature in kelvin, for the smooth baseline geometry.}}%
+\includegraphics[width=0.75\textwidth]{figures/thermal_map_smooth.png}%
+\EndAccSupp{}%
     \caption{Surface temperature distribution on the scalloped toroid-stack baseline configuration from SPARTA DSMC, rendered at $V_{\infty} = 2700$\,m/s and grid-factor 0.7. The scalloped renders are produced at the solver's default freestream velocity rather than at the $3{,}378$\,m/s trajectory point used for the scalar validation metrics of Table~\ref{tab:validation_full}, and are used here as a qualitative field visualisation only.}
     \label{fig:thermal_map}
 \end{figure}
@@ -64,7 +66,9 @@ The SPARTA surface force computes provide the axial drag force ($f_x$) and trans
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/pressure_map_smooth.png}
+    \BeginAccSupp{method=escape,ActualText={SPARTA surface pressure field map over the decelerator, coloured by pressure in pascals, for the smooth baseline geometry.}}%
+\includegraphics[width=0.75\textwidth]{figures/pressure_map_smooth.png}%
+\EndAccSupp{}%
     \caption{Surface pressure distribution on the scalloped toroid-stack configuration, showing the periodic pressure peaks associated with the toroid stack ($V_{\infty} = 2700$\,m/s, grid-factor 0.7; qualitative field visualisation).}
     \label{fig:pressure_map}
 \end{figure}
@@ -83,7 +87,9 @@ The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock structure 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/mach_map_smooth_M0_A0.png}
+    \BeginAccSupp{method=escape,ActualText={SPARTA surface Mach number field map over the decelerator, coloured by local Mach number, for the smooth baseline geometry at the validation run condition.}}%
+\includegraphics[width=0.75\textwidth]{figures/mach_map_smooth_M0_A0.png}%
+\EndAccSupp{}%
     \caption{Mach number field around the smooth-body reference configuration at $V_{\infty} = 2700$\,m/s and grid-factor 0.7, showing the bow shock structure upstream of the aeroshell and the subsonic region in the near wake. The smooth reference is used for this panel because it isolates the shock-layer structure from the toroid-stack geometry.}
     \label{fig:mach_map}
 \end{figure}
@@ -93,7 +99,9 @@ The velocity vectors (Figure~\ref{fig:velocity_vectors}) show the strong deceler
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/velocity_vectors_smooth.png}
+    \BeginAccSupp{method=escape,ActualText={SPARTA velocity-vector plot over the decelerator surface, showing the flow direction and magnitude in the boundary layer.}}%
+\includegraphics[width=0.75\textwidth]{figures/velocity_vectors_smooth.png}%
+\EndAccSupp{}%
     \caption{Velocity vector field on the scalloped toroid-stack configuration ($V_{\infty} = 2700$\,m/s), showing the decelerated wake region downstream of the toroid stack.}
     \label{fig:velocity_vectors}
 \end{figure}
@@ -110,7 +118,9 @@ This distribution validates the use of DSMC for the majority of the flow field, 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/knudsen_map_smooth_M0_A0.png}
+    \BeginAccSupp{method=escape,ActualText={SPARTA Knudsen-number field map over the decelerator, showing where the flow transitions between continuum and free-molecular regimes for the smooth baseline geometry.}}%
+\includegraphics[width=0.75\textwidth]{figures/knudsen_map_smooth_M0_A0.png}%
+\EndAccSupp{}%
     \caption{Knudsen number distribution showing flow regime transition from free-molecular to near-continuum.}
     \label{fig:knudsen_map}
 \end{figure}
@@ -120,7 +130,9 @@ A grid independence study was performed by varying the grid-factor from 0.3 to 1
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/grid_mesh_map_smooth.png}
+    \BeginAccSupp{method=escape,ActualText={SPARTA computational mesh map showing the axial and radial grid distribution used in the DSMC calculation.}}%
+\includegraphics[width=0.75\textwidth]{figures/grid_mesh_map_smooth.png}%
+\EndAccSupp{}%
     \caption{Computational grid used in the SPARTA DSMC simulation with grid-factor 0.7.}
     \label{fig:grid_mesh}
 \end{figure}
@@ -156,7 +168,9 @@ The temperature distribution within the toroidal pockets shows that the recircul
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/scallop_pocket_temp_smooth_M0_A0.png}
+    \BeginAccSupp{method=escape,ActualText={Line plot of temperature against time measured at the centre of a scallop pocket, showing the thermal response of the valley flow.}}%
+\includegraphics[width=0.75\textwidth]{figures/scallop_pocket_temp_smooth_M0_A0.png}%
+\EndAccSupp{}%
     \caption{Axial temperature trace sampled at the centre of a scallop pocket ($V_{\infty} = 2700$\,m/s, grid-factor 0.7). The trace is flat at ambient temperature upwind of the pocket, rises sharply through the shock at the pocket leading edge to a peak near $3.1 \times 10^3$\,K, and decays through the recirculation region, quantifying the thermal shelter that the pocket provides relative to the heated crests.}
     \label{fig:scallop_pocket}
 \end{figure}
@@ -166,7 +180,9 @@ The DSMC simulation convergence is monitored through residual tracking (Figure~\
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/convergence_residuals_master_smooth.png}
+    \BeginAccSupp{method=escape,ActualText={Plot of the convergence residuals against iteration, showing the residual decreasing as the DSMC solution converges.}}%
+\includegraphics[width=0.75\textwidth]{figures/convergence_residuals_master_smooth.png}%
+\EndAccSupp{}%
     \caption{Convergence history of the SPARTA DSMC simulation showing residual decay.}
     \label{fig:convergence}
 \end{figure}
@@ -176,7 +192,9 @@ The mesh quality metrics (Figure~\ref{fig:mesh_stats}) confirm that the Cartesia
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/mesh_statistics_smooth.png}
+    \BeginAccSupp{method=escape,ActualText={Plot of mesh statistics against cell resolution, summarising the number of cells and their distribution.}}%
+\includegraphics[width=0.75\textwidth]{figures/mesh_statistics_smooth.png}%
+\EndAccSupp{}%
     \caption{Mesh quality statistics for the computational grid.}
     \label{fig:mesh_stats}
 \end{figure}
@@ -267,7 +285,9 @@ The design space is explored in two recorded stages preceded by a separate scree
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/bo_ccd_design.png}
+    \BeginAccSupp{method=escape,ActualText={Scatter plot of the Bayesian optimisation central-composite design samples in the geometry design space.}}%
+\includegraphics[width=0.75\textwidth]{figures/bo_ccd_design.png}%
+\EndAccSupp{}%
     \caption{Central composite screen evaluated in the three-dimensional design space, coloured by the evaluated cost $J(\mathbf{x})$ on a logarithmic scale (official run 2026-09-26). The 15 screen points comprise 8 factorial points, the design centre ($R_N = 1.5$\,m, $r_{tor} = 0.140$\,m, $\theta_c = 60^\circ$), and 6 axial points; the IRVE-3 baseline and the best-screened point of this screen are marked for reference. This is a design layout annotated with measured costs, not a fitted response surface.}
     \label{fig:ccd_surface}
 \end{figure}
@@ -298,7 +318,9 @@ Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline geometry with the r
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/bo_convergence.png}
+    \BeginAccSupp{method=escape,ActualText={Convergence plot of the Bayesian optimisation objective against evaluation number, showing the incumbent best cost decreasing as evaluations are added.}}%
+\includegraphics[width=0.75\textwidth]{figures/bo_convergence.png}%
+\EndAccSupp{}%
     \caption{Convergence history of the optimization campaign (official run 2026-09-26). Blue points are the cost $J(\mathbf{x})$ at each of the 70 designs; the red curve is the running-best incumbent, which is non-increasing by construction.}
     \label{fig:ga_convergence}
 \end{figure}
