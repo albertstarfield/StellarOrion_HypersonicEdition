@@ -101,9 +101,13 @@ The scope of this research is defined to provide aerothermal analysis and surviv
 \section{Methodology Overview}
 This study employs a multi-stage computational framework to analyze the aerothermal performance and optimize the survivability of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD). The framework integrates automated parametric geometry generation, DSMC-based rarefied gas dynamics simulation, Physics-Informed Neural Network refinement, and Genetic Algorithm optimization. The methodology is designed to compare a smooth rigid sphere-cone baseline against the scalloped inflatable architecture under identical hypersonic flight conditions. The workflow is illustrated in Figure~\ref{fig:flowchart_ch1}.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\textwidth]{figures/flowchart.png}
+    % flowchart.png is a tall vertical flowchart (222x843 px, aspect ratio 3.80).
+    % Sizing it by width alone would request 352.86pt x 1340.02pt, which is 2.2x the
+    % available text height and makes the float unplaceable ("Float too large for
+    % page"). Constrain the height instead and let keepaspectratio derive the width.
+    \includegraphics[height=0.85\textheight, keepaspectratio]{figures/flowchart.png}
     \caption{Research Methodology Flowchart.}
     \label{fig:flowchart_ch1}
 \end{figure}
@@ -115,7 +119,7 @@ The initial stage involves a comprehensive literature review of hypersonic aerot
 The 3D CAD models of the HIAD are generated using CadQuery, a Python-based parametric CAD scripting library. The geometric parameters -- including aeroshell diameter, forebody cone angle, toroid count, toroid radius, and nose radius -- are defined as command-line arguments, enabling automated generation of hundreds of design variants. The output is exported as STL files for SPARTA ingestion.
 
 \subsection*{c. DSMC Simulation}
-The SPARTA solver executes the DSMC simulation within a Docker-containerized Linux environment. The simulation domain is initialized with freestream conditions matching the target trajectory point (e.g., $v = 2700$ m/s, $\rho = 6.9674 \times 10^{-4}$ kg/m$^3$ at 52 km altitude from the ISA 1975 model). SPARTA tracks millions of simulated particles, modeling their advection, collisions (VSS model), and surface interactions. Surface computes accumulate force (drag, lift) and energy (heat flux) data, while grid dumps provide field maps of density, temperature, pressure, velocity, and Knudsen number.
+The SPARTA solver executes the DSMC simulation within a Docker-containerized Linux environment. The simulation domain is initialized with freestream conditions matching the target trajectory point ($v = 3378$ m/s, $\rho = 7.851 \times 10^{-4}$ kg/m$^3$, $T = 268.41$ K at 51.8 km altitude, from the atmospheric model built into the solver). SPARTA tracks millions of simulated particles, modeling their advection, collisions (VSS model), and surface interactions. Surface computes accumulate force (drag, lift) and energy (heat flux) data, while grid dumps provide field maps of density, temperature, pressure, velocity, and Knudsen number.
 
 \subsection*{d. PINN Refinement}
 The raw DSMC output is post-processed using a Physics-Informed Neural Network (PINN) implemented in DeepXDE. The PINN solves the 2D compressible Navier--Stokes equations using automatic differentiation, with SPARTA grid data introduced as observational boundary conditions. The total loss function combines PDE residuals with data-matching terms, providing a smooth, physics-consistent interpolant that fills gaps in the DSMC flow field and reduces particle noise.
@@ -124,7 +128,7 @@ The raw DSMC output is post-processed using a Physics-Informed Neural Network (P
 A Genetic Algorithm (GA) coupled with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate performs multi-objective optimization of the HIAD geometry. Latin Hypercube Sampling (LHS) generates the initial design population. The GA evaluates candidates using the GP surrogate for rapid screening, with expensive SPARTA simulations reserved for elite candidates and final validation. The cost function balances ballistic coefficient, peak deceleration, backface temperature, and drag performance against user-defined targets.
 
 \subsection*{f. Validation and Analysis}
-The simulation results are validated against IRVE-3 flight data~\cite{rapisarda2023mdao} using the Sutton-Graves correlation. Key validation metrics include peak heat flux (14.36\,W/cm$^2$ flight vs.~13.83\,W/cm$^2$ model), total heat load (195.06\,J/cm$^2$ flight vs.~195.17\,J/cm$^2$ model), and peak deceleration (19.7$g$ flight vs.~20.2$g$ model). The final optimized design undergoes a high-fidelity SPARTA validation run \textit{without} PINN refinement to eliminate neural network bias.
+The simulation results are validated against IRVE-3 flight data~\cite{rapisarda2023mdao} using the Sutton-Graves correlation. Key validation metrics are peak heat flux (14.36\,W/cm$^2$ flight, 13.83\,W/cm$^2$ from the MDAO Fay--Riddell reference, and 16.14\,W/cm$^2$ from the Sutton-Graves correlation evaluated at the present DSMC run conditions), total heat load (195.06\,J/cm$^2$, 195.17\,J/cm$^2$, and 165.72\,J/cm$^2$ respectively), and peak deceleration (19.7\,$g$ flight against 16.83\,$g$ from this work). The two solver-resolved integrated quantities under-predict the flight values by close to a common $15\%$, which is attributed to the evaluation of a single trajectory point rather than a fully integrated reentry history, whereas the correlation-based stagnation heat flux over-predicts by $+12.4\%$ because the correlation resolves neither the scalloped geometry nor the rarefied-flow departure; both deviations are quantified in Chapter IV. The final optimized design undergoes a high-fidelity SPARTA validation run \textit{without} PINN refinement to eliminate neural network bias.
 
 \section{Thesis Outline}
 The structure of this thesis is arranged as follows. A brief description of each chapter is outlined below:

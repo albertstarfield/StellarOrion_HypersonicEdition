@@ -28,7 +28,7 @@ Specific heat ratio (air) & $\gamma_{\text{air}}$ & $1.4$ & --- \\
 Molecular diameter (air) & $d$ & $3.7 \times 10^{-10}$ & m \\
 Prandtl number (air) & $\text{Pr}$ & $0.71$ & --- \\
 Sutherland constant & $S$ & $110.4$ & K \\
-Sutton--Graves coefficient & $C_{SG}$ & $1.7415 \times 10^{-4}$ & W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ \\
+Sutton--Graves coefficient & $C_{SG}$ & $1.83 \times 10^{-4}$ & W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ \\
 Reference viscosity (air) & $\mu_{\text{ref}}$ & $1.716 \times 10^{-5}$ & Pa\,s \\
 Sutherland reference temperature & $T_{\text{ref}}$ & $273.15$ & K \\
 Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J\,kg$^{-1}$\,K$^{-1}$ \\
@@ -71,7 +71,7 @@ Table~\ref{tab:geometry} presents the default HIAD geometry parameters correspon
 \hline
 Aeroshell diameter & $D$ & 3.0\,m \\
 Cone half-angle & $\theta_c$ & 60\textdegree \\
-Nose radius & $R_N$ & 0.55\,m \\
+Nose radius & $R_N$ & 1.5\,m \\
 Number of toroids & $N_{\text{tor}}$ & 6 \\
 Toroid radius & $r_{\text{tor}}$ & 0.135\,m \\
 Outer toroid radius & $r_{\text{out}}$ & 0.1016\,m \\
@@ -89,21 +89,21 @@ Scallop amplitude & $\delta_{\text{sc}}$ & 0.030\,m \\
 \section{Default Flight Conditions}
 \label{sec:flight_conditions}
 
-Table~\ref{tab:flight} lists the freestream conditions used as the baseline simulation point, corresponding to an altitude of 52\,km during IRVE-3 reentry.
+Table~\ref{tab:flight} lists the freestream conditions used as the baseline simulation point, corresponding to an altitude of 51.8\,km during IRVE-3 reentry.
 
 \begin{table}[H]
 \centering
-\caption{Default freestream flight conditions at 52\,km altitude.}
+\caption{Default freestream flight conditions at 51.8\,km altitude.}
 \label{tab:flight}
 \begin{tabular}{lll}
 \hline
 \textbf{Parameter} & \textbf{Symbol} & \textbf{Value} \\
 \hline
-Mach number & $M_\infty$ & 10 \\
-Altitude & $h$ & 52\,km \\
-Freestream velocity & $V_\infty$ & 2700\,m/s \\
-Freestream density & $\rho_\infty$ & $6.9674 \times 10^{-4}$\,kg/m$^3$ \\
-Freestream temperature & $T_\infty$ & 270.65\,K \\
+Mach number & $M_\infty$ & 10.29 \\
+Altitude & $h$ & 51.8\,km \\
+Freestream velocity & $V_\infty$ & 3378\,m/s \\
+Freestream density & $\rho_\infty$ & $7.851 \times 10^{-4}$\,kg/m$^3$ \\
+Freestream temperature & $T_\infty$ & 268.41\,K \\
 \hline
 \end{tabular}
 \end{table}
@@ -202,25 +202,29 @@ All core physics packages (\texttt{stellarorion\_types}, \texttt{stellarorion\_p
 
 \section{Peak Aerothermal Loads}
 
-Table~\ref{tab:validation_full} provides the complete validation comparison between the StellarOrion framework predictions and the IRVE-3 post-flight reconstruction data.
+Table~\ref{tab:validation_full} provides the complete validation comparison between the IRVE-3 post-flight reconstruction data, the MDAO reference model, and the StellarOrion framework predictions.
 
 \begin{table}[H]
 \centering
 \caption{Complete IRVE-3 validation comparison (peak values).}
 \label{tab:validation_full}
-\begin{tabular}{lccc}
+\small
+\begin{tabular}{|l|c|c|c|c|}
 \hline
-\textbf{Parameter} & \textbf{Flight Data} & \textbf{StellarOrion} & \textbf{Error (\%)} \\
+\textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion (This Work)} & \textbf{SO Error (\%)} \\
 \hline
-Peak heat flux ($\dot{q}$) & 14.36\,W/cm$^2$ & 13.83\,W/cm$^2$ & $-3.7$ \\
-Total heat load ($Q$) & 195.06\,J/cm$^2$ & 195.17\,J/cm$^2$ & $+0.1$ \\
-Peak deceleration & 19.7\,$g$ & 20.2\,$g$ & $+2.5$ \\
-Aeroshell diameter & 3.0\,m & 3.0\,m & 0 \\
-Toroid count & 6 & 6 & 0 \\
-Toroid radius & 0.135\,m & 0.135\,m & 0 \\
+Peak heat flux ($\dot{q}$) & 14.36\,W/cm$^2$ & 13.83\,W/cm$^2$ & 16.14\,W/cm$^2$ & $+12.4$ \\
+Total heat load ($Q$) & 195.06\,J/cm$^2$ & 195.17\,J/cm$^2$ & 165.72\,J/cm$^2$ & $-15.0$ \\
+Peak deceleration & 19.7\,$g$ & -- & 16.83\,$g$ & $-14.6$ \\
+Ballistic coefficient ($\beta$) & 26.9\,kg/m$^2$ & -- & 27.70\,kg/m$^2$ & $+3.0$ \\
+Drag coefficient ($C_d$) & -- & -- & 1.4625 & -- \\
+Aeroshell diameter & 3.0\,m & 3.0\,m & 3.0\,m & 0 \\
+Toroid count & 6 & 6 & 6 & 0 \\
+Toroid radius & 0.135\,m & 0.135\,m & 0.135\,m & 0 \\
 \hline
 \end{tabular}
-\caption*{Source: Flight data from Rapisarda (2023) Table 4.10; StellarOrion values from SPARTA DSMC simulation at grid-factor 0.7.}
+\normalsize
+\caption*{Flight data from NASA TP-2013-4012 and Rapisarda (2023) Table 4.10; MDAO values are the Fay--Riddell reconstruction; StellarOrion values are from the SPARTA DSMC simulation at grid-factor 0.7 (single trajectory point, step 2200). The MDAO column is a reference model, not a result of this work. The StellarOrion heat load and deceleration, being solver-resolved, fall below the trajectory-integrated flight values, whereas the StellarOrion heat flux is a Sutton--Graves correlation value evaluated at the run condition and therefore rises above the flight value.}
 \end{table}
 
 \section{Grid Independence Study Results}
@@ -255,20 +259,20 @@ The Sutton--Graves stagnation-point convective heat flux correlation~\cite{sutto
     \label{eq:sg_derivation}
 \end{equation}
 
-\noindent where $C_{SG} = 1.7415 \times 10^{-4}$\,W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ is the gas-model-dependent coefficient for a 5-species chemically reacting air model. This correlation captures the $V^3$ velocity dependence arising from the combined effects of shock compression and boundary-layer energy transport.
+\noindent where $C_{SG} = 1.83 \times 10^{-4}$\,W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ is the gas-model-dependent coefficient for a 5-species chemically reacting air model. This correlation captures the $V^3$ velocity dependence arising from the combined effects of shock compression and boundary-layer energy transport.
 
 \subsection{Dimensional Verification}
 
-Substituting the IRVE-3 baseline conditions ($\rho_\infty = 6.9674 \times 10^{-4}$\,kg/m$^3$, $R_N = 0.55$\,m, $V_\infty = 2700$\,m/s):
+Substituting the SPARTA DSMC run conditions ($\rho_\infty = 7.851 \times 10^{-4}$\,kg/m$^3$ from ISA at 51.8\,km, $R_N = 1.5$\,m, $V_\infty = 3378$\,m/s):
 \begin{align}
-    \dot{q} &= 1.7415 \times 10^{-4} \times \sqrt{\frac{6.9674 \times 10^{-4}}{0.55}} \times (2700)^3 \nonumber \\
-    &= 1.7415 \times 10^{-4} \times \sqrt{1.2668 \times 10^{-3}} \times 1.9683 \times 10^{10} \nonumber \\
-    &= 1.7415 \times 10^{-4} \times 0.03559 \times 1.9683 \times 10^{10} \nonumber \\
-    &\approx 12.20 \text{ W/cm}^2
+    \dot{q} &= 1.83 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \nonumber \\
+    &= 1.83 \times 10^{-4} \times \sqrt{5.234 \times 10^{-4}} \times 3.8552 \times 10^{10} \nonumber \\
+    &= 1.83 \times 10^{-4} \times 0.022879 \times 3.8552 \times 10^{10} \nonumber \\
+    &\approx 1.614 \times 10^{5} \text{ W/m}^2 = 16.14 \text{ W/cm}^2
     \label{eq:sg_baseline}
 \end{align}
 
-\noindent This single-point value is lower than Rapisarda's trajectory-integrated peak of 15.26\,W/cm$^2$ because the baseline density used here is the steady-state condition at 52\,km, whereas the trajectory-integrated value accounts for the density variation along the full reentry path.
+\noindent This single-point value is $+12.4\%$ relative to the $14.36$\,W/cm$^2$ flight measurement and $+5.8\%$ relative to Rapisarda's trajectory-integrated peak of $15.26$\,W/cm$^2$; the two agree closely because the higher density of Rapisarda's MCD v6.1 trajectory is very nearly offset by the use of a single ISA point rather than a trajectory-integrated peak. An earlier revision of this appendix reported $12.20$\,W/cm$^2$ from the superseded coefficient $C_{SG} = 1.7415 \times 10^{-4}$ and nose radius $R_N = 0.55$\,m evaluated at a hardcoded $V_\infty = 2700$\,m/s; both constants have since been corrected to the values used above.
 
 \section{Mean Free Path and Knudsen Number}
 

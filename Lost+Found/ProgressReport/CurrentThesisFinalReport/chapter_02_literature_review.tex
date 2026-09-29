@@ -67,7 +67,7 @@ For Inflatable Aerodynamic Decelerators (IADs), understanding these fundamentals
 \par
 
 
-\subsection{Mach Number and the Hypersonic Regime (Ma $> 5$)}
+\subsection{Mach Number and the Hypersonic Regime (\texorpdfstring{Ma $> 5$}{Ma > 5})}
 
 The transition from supersonic to hypersonic flow is generally defined by the rule of thumb $Ma > 5$. Unlike the transition from subsonic to supersonic flow ($Ma = 1$), which is marked by a distinct physical discontinuity (the formation of shock waves), the boundary for hypersonic flow is not physically discrete. Instead, $Ma \approx 5$ represents the threshold where certain physical approximations used in linear supersonic theory lose accuracy, and high-temperature gas dynamics become significant \cite{AndersonHypersonic}.
 \par
@@ -562,12 +562,12 @@ The Fay--Riddell equation, while physically complete, requires detailed knowledg
     \label{eq:sutton_graves}
 \end{equation}
 
-\noindent where $C_{SG}$ is a gas-model-dependent coefficient, $\rho_{\infty}$ is the freestream density, $R_n$ is the nose radius, and $V_{\infty}$ is the freestream velocity. For a 5-species chemically reacting air model at hypersonic velocities, $C_{SG} \approx 1.7415 \times 10^{-4}$ in SI units \cite{rapisarda2023mdao}. This correlation captures the $V^{3}$ velocity dependence that arises from the combined effects of shock compression and boundary-layer energy transport, and is used throughout this study for baseline thermal assessment.
+\noindent where $C_{SG}$ is a gas-model-dependent coefficient, $\rho_{\infty}$ is the freestream density, $R_n$ is the nose radius, and $V_{\infty}$ is the freestream velocity. For a 5-species chemically reacting air model at hypersonic velocities, $C_{SG} = 1.83 \times 10^{-4}$ in SI units, the value adopted throughout this study \cite{sutton1971gravesh}. This correlation captures the $V^{3}$ velocity dependence that arises from the combined effects of shock compression and boundary-layer energy transport, and is used throughout this study for baseline thermal assessment.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/sutton_graves_parametric.png}
-    \caption{Parametric evaluation of the Sutton--Graves stagnation heat flux correlation (Eq.~\ref{eq:sutton_graves}). (Left) Variation of $\dot{q}_s$ with freestream velocity $V_{\infty}$ for nose radii $R_n = 0.1$--$3.0$~m, demonstrating the cubic velocity dependence. The IRVE-3 baseline condition ($R_n = 0.55$~m, $V_{\infty} = 2.7$~km/s) is highlighted. (Right) Variation of $\dot{q}_s$ with nose radius at fixed Mach numbers, illustrating the $1/\sqrt{R_n}$ scaling that motivates the blunt-body design philosophy.}
+    \caption{Parametric evaluation of the Sutton--Graves stagnation heat flux correlation (Eq.~\ref{eq:sutton_graves}) at $C_{SG} = 1.83 \times 10^{-4}$ and $h = 51.8$~km. (Left) Variation of $\dot{q}_s$ with freestream velocity $V_{\infty}$ for nose radii $R_n = 0.1$--$3.0$~m, demonstrating the cubic velocity dependence. The IRVE-3 run condition ($R_n = 1.5$~m, $V_{\infty} = 3.378$~km/s) is marked, giving $\dot{q}_s = 16.14$~W/cm$^2$. (Right) Variation of $\dot{q}_s$ with nose radius at three fixed velocities, illustrating the $1/\sqrt{R_n}$ scaling that motivates the blunt-body design philosophy.}
     \label{fig:sutton_graves_parametric}
 \end{figure}
 
@@ -812,7 +812,7 @@ A comparison of these modeling assumptions is presented in Table \ref{tab:gas_mo
     \end{tabularx}
 \end{table}
 
-\subsection{Calorically Perfect vs. Thermally Perfect Gas (Variable $C_p$)}
+\subsection{Calorically Perfect vs. Thermally Perfect Gas (Variable \texorpdfstring{$C_p$}{C-p})}
 
 \par
 The distinction between a calorically perfect and a thermally perfect gas lies in the behavior of the specific heat capacities ($C_p$ and $C_v$) as the temperature of the fluid increases.

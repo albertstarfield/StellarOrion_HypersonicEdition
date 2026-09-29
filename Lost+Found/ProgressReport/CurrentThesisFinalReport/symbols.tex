@@ -4,15 +4,29 @@
 \begin{center}
 {\bfseries \Large LIST OF SYMBOLS}
 \end{center}
-\vspace{3em}
+\vspace{1em}
 
-\begin{center}
-\begin{tabularx}{0.8\textwidth} { 
-   >{\raggedright\arraybackslash}X 
-   >{\raggedright\arraybackslash}X}
-    \hline
+% A tabularx/tabular box cannot break across pages, so this list overflowed
+% the text block (Overfull \vbox) and its tail was clipped. longtable breaks
+% across pages, so the list is now split cleanly instead of truncated.
+\begingroup
+\setlength{\LTleft}{0.5cm}
+\setlength{\LTright}{0.5cm}
+\renewcommand{\arraystretch}{1.05}
+\begin{longtable}{|p{3.4cm}|p{8.2cm}|}
+\hline
     \textbf{Symbol} & \textbf{Definition}            \\
-    \hline
+\hline
+\endfirsthead
+\multicolumn{2}{|c|}{continued from previous page} \\
+\hline
+    \textbf{Symbol} & \textbf{Definition}            \\
+\hline
+\endhead
+\hline \multicolumn{2}{|r|}{{Continued on next page}} \\ \hline
+\endfoot
+\hline
+\endlastfoot
     $A$         & Area                                  \\
     $A_{\text{ref}}$ & Reference (frontal) area         \\
     $C_D$       & Drag coefficient                      \\
@@ -61,6 +75,6 @@
     $\sigma$    & Collision cross-section               \\
     $\phi$      & Azimuthal angle                       \\
     $\omega$    & Viscosity index (VSS model)           \\
-    \hline
-\end{tabularx}
-\end{center}
+\hline
+\end{longtable}
+\endgroup
