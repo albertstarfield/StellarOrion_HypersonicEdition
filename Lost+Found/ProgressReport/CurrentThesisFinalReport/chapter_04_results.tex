@@ -83,7 +83,7 @@ where $A_{ref} = \pi (D/2)^2$ is the reference area based on the aeroshell diame
 \section{Flow Field Analysis}
 
 \subsection{Mach Number Distribution}
-The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock structure upstream of the HIAD and the subsonic recirculation regions behind the toroid crests. The shock standoff distance is consistent with blunt-body theory for hypersonic flow~\cite{anderson2006hypersonic}.
+The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock structure upstream of the reference aeroshell and the subsonic region in the near wake. The shock standoff distance is consistent with blunt-body theory for hypersonic flow~\cite{anderson2006hypersonic}. This panel is a smooth-body reference case rendered at the legacy $V_{\infty}=2700$\,m/s condition (see caption); it is used to isolate shock-layer structure from the toroid-stack geometry and is not part of the $V_{\infty}=3378$\,m/s validation dataset reported in Section~\ref{sec:validation_irve3}.
 
 \begin{figure}[H]
     \centering
@@ -121,7 +121,7 @@ This distribution validates the use of DSMC for the majority of the flow field, 
     \BeginAccSupp{method=escape,ActualText={SPARTA Knudsen-number field map over the decelerator, showing where the flow transitions between continuum and free-molecular regimes for the smooth baseline geometry.}}%
 \includegraphics[width=0.75\textwidth]{figures/knudsen_map_smooth_M0_A0.png}%
 \EndAccSupp{}%
-    \caption{Knudsen number distribution showing flow regime transition from free-molecular to near-continuum.}
+    \caption{Knudsen number distribution on the smooth-body reference configuration at $V_{\infty} = 2700$\,m/s and grid-factor 0.7, showing the flow-regime transition from free-molecular to near-continuum. As with Figure~\ref{fig:mach_map}, this is a legacy-condition reference render and is not part of the $V_{\infty} = 3378$\,m/s validation dataset.}
     \label{fig:knudsen_map}
 \end{figure}
 
@@ -138,6 +138,7 @@ A grid independence study was performed by varying the grid-factor from 0.3 to 1
 \end{figure}
 
 \section{Validation Against IRVE-3 Flight Data}
+\label{sec:validation_irve3}
 The simulation results are validated against the IRVE-3 post-flight aerothermal reconstruction~\cite{lau2013irve3, old2013irve3postflight}. Table~\ref{tab:validation} summarizes the comparison.
 
 \begin{table}[H]
