@@ -10,6 +10,8 @@
 \usepackage{ragged2e}      % \RaggedRight for wrapped table cells
 \usepackage{seqsplit}      % \seqsplit lets long \texttt{} paths break at any char
 \usepackage{url}           % \path{}: breakable monospace with hyphenation
+\usepackage{accsupp}       % \BeginAccSupp{ActualText=...}: screen-reader alt text
+                             % for raster figures (WCAG 1.1.1 non-text content)
 \usepackage{multirow}
 \usepackage{booktabs}
 \usepackage{float}
@@ -156,3 +158,16 @@
 \usepackage{colortbl}       % Optional but helps with more robust table coloring
 \usepackage{pdflscape} % Better for PDFs
 
+
+
+% ── Accessibility: embedded alt text for raster figures (WCAG 1.1.1) ────────
+% Several figures are low-resolution rasters whose in-image labels are too
+% small to read at print size. Embedding the figure's meaning as real PDF text
+% via accsupp makes that information available to screen readers and to anyone
+% copying text out of the document, which a bare \includegraphics cannot do.
+% Usage:  \includegraphicsWithAlt{<alt text>}{<options>}{<file>}
+\newcommand{\includegraphicsWithAlt}[3]{%
+  \BeginAccSupp{method=escape,ActualText={#1}}%
+  \includegraphics[#2]{#3}%
+  \EndAccSupp{}%
+}
