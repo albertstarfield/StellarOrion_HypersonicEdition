@@ -951,13 +951,18 @@ The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012
 
 \begin{table}[H]
     \centering
-    \caption{IRVE-3 validation metrics. The MDAO column is the published Fay--Riddell reference; the StellarOrion column is the result of this work.}
+    % This table reports the same validation comparison as Table 4.1 in the
+    % results chapter, and the heat-flux caveat in the caption below is stated
+    % in identical terms on purpose: a reader who meets either table first must
+    % not be left with the impression that a single-point Sutton-Graves value is
+    % directly comparable to a trajectory-integrated flight peak.
+    \caption{IRVE-3 validation metrics. The MDAO column is the published Fay--Riddell reference; the StellarOrion column is the result of this work. $^{\dagger}$The heat-flux entry is a Sutton--Graves correlation evaluated at $R_N = 1.5$\,m and $V = 3{,}378$\,m/s, not a quantity resolved by the solver. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton--Graves value the code reports, and why they differ.}
     \label{tab:irve3_validation}
     \small
     \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|}
         \hline
         \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion (This Work)} & \textbf{SO Error (\%)} \\ \hline
-        Peak Heat Flux ($\dot{q}$) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & 16.14 W/cm$^2$ & $+12.4$ \\ \hline
+        Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & 16.14 W/cm$^2$ & $+12.4$, \emph{not like-for-like} \\ \hline
         Total Heat Load ($Q$) & 195.06 J/cm$^2$ & 195.17 J/cm$^2$ & 165.72 J/cm$^2$ & $-15.0$ \\ \hline
         Peak Deceleration & 19.7\,$g$ & -- & 16.83\,$g$ & $-14.6$ \\ \hline
         Ballistic Coefficient ($\beta$) & 26.9 kg/m$^2$ & -- & 27.70 kg/m$^2$ & $+3.0$ \\ \hline
