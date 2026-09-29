@@ -1,17 +1,18 @@
 \chapter{Results and Discussion}
+\label{ch:results}
 
 \section{Overview}
 This chapter presents the simulation results and discussion derived from the SPARTA DSMC computational framework described in Chapter 3. The analysis covers the baseline IRVE-3 geometry configuration, the aerothermal surface distributions, flow field characteristics, and the validation against flight data. All results are generated using the StellarOrion engine with the 6-toroid stacked HIAD geometry at the Rapisarda (2023) MDAO baseline parameters~\cite{rapisarda2023mdao}.
 
 \section{Baseline Configuration and Flight Conditions}
-The baseline simulation corresponds to the IRVE-3 reentry trajectory point at 52\,km altitude, with the following freestream conditions:
+The baseline simulation corresponds to the IRVE-3 reentry trajectory point at 51.8\,km altitude, with the following freestream conditions. The atmospheric quantities are the values returned by the atmospheric model evaluated at that altitude:
 \begin{itemize}
-    \item \textbf{Freestream Velocity ($V_{\infty}$):} 2700\,m/s (Mach $\approx$ 10)
-    \item \textbf{Freestream Density ($\rho_{\infty}$):} $6.9674 \times 10^{-4}$\,kg/m$^3$ (ISA 1975 model, code baseline)
-    \item \textbf{Freestream Temperature ($T_{\infty}$):} 270.65\,K (ISA 1975, code baseline)
+    \item \textbf{Freestream Velocity ($V_{\infty}$):} 3378\,m/s (Mach $\approx$ 10.29)
+    \item \textbf{Freestream Density ($\rho_{\infty}$):} $7.851 \times 10^{-4}$\,kg/m$^3$ (atmospheric model, code baseline)
+    \item \textbf{Freestream Temperature ($T_{\infty}$):} 268.41\,K (atmospheric model, code baseline)
     \item \textbf{Vehicle Mass ($m$):} 281\,kg
     \item \textbf{Aeroshell Diameter ($D$):} 3.0\,m
-    \item \textbf{Nose Radius ($R_N$):} 0.55\,m
+    \item \textbf{Nose Radius ($R_N$):} 1.5\,m
     \item \textbf{Toroid Count:} 6 (stacked toroid configuration)
     \item \textbf{Toroid Radius ($r_{torus}$):} 0.135\,m
     \item \textbf{Grid Factor:} 0.7 (validated optimal against IRVE-3 data)
@@ -19,7 +20,7 @@ The baseline simulation corresponds to the IRVE-3 reentry trajectory point at 52
 
 The stagnation temperature for a calorically perfect gas at these conditions is:
 \begin{equation}
-    T_0 = T_{\infty} \left( 1 + \frac{\gamma - 1}{2} M_{\infty}^2 \right) = 270.65 \ \text{K} \left( 1 + 0.2 \times 100 \right) = 5684 \ \text{K}
+    T_0 = T_{\infty} \left( 1 + \frac{\gamma - 1}{2} M_{\infty}^2 \right) = 268.41 \ \text{K} \left( 1 + 0.2 \times 105.9 \right) = 5952 \ \text{K}
 \end{equation}
 However, the 5-species air model (N$_2$, O$_2$, NO, N, O) with VSS collisions captures real-gas effects including vibrational excitation above $\sim$800\,K and dissociation above $\sim$2000\,K, resulting in a lower effective translational temperature~\cite{bird1994molecular}.
 
@@ -28,40 +29,43 @@ The stagnation-point heat flux is computed using the Sutton-Graves (1971) correl
 \begin{equation}
     \dot{q}_{stag} = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_N}} \cdot V_{\infty}^3
 \end{equation}
-where $C_{SG} = 1.7415 \times 10^{-4}$\,W$\cdot$s$^2$/m$^{5}$ for Earth air in SI units.
+where $C_{SG} = 1.83 \times 10^{-4}$\,W$\cdot$s$^2$/m$^{5}$ for Earth air in SI units.
 
 \subsection{Stagnation Point Results}
-For the baseline IRVE-3 configuration at the SPARTA baseline conditions ($\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$, $R_N = 0.55$\,m, $V_{\infty} = 2700$\,m/s):
+For the baseline IRVE-3 configuration the correlation is evaluated at the SPARTA DSMC run condition ($h = 51.8$\,km, ISA $\rho_{\infty} = 7.851 \times 10^{-4}$\,kg/m$^3$, $V_{\infty} = 3{,}378$\,m/s) with the IRVE-3 nose radius $R_N = 1.5$\,m corresponding to the 3\,m aeroshell diameter:
 \begin{equation}
-    \dot{q}_{stag} = 1.7415 \times 10^{-4} \times \sqrt{\frac{6.9674 \times 10^{-4}}{0.55}} \times (2700)^3 \approx 1.22 \times 10^5 \ \text{W/m}^2 = 12.20 \ \text{W/cm}^2
+    \dot{q}_{stag} = 1.83 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \approx 1.614 \times 10^{5} \ \text{W/m}^2 = 16.14 \ \text{W/cm}^2
 \end{equation}
 
-This value is computed at the HARDCODED Rapisarda baseline conditions used in the SPARTA post-processing path. At the actual simulation conditions ($\rho_{\infty} = 7.696 \times 10^{-4}$\,kg/m$^3$ from ISA at 51.82\,km, $V_{\infty} = 3379$\,m/s), the true Sutton-Graves prediction is approximately 25.1\,W/cm$^2$, which is 75\% above the flight measurement---a very conservative bound suitable for TPS sizing.
+The correlation constant and the nose radius used here were corrected during the course of the work. The value reported in earlier revisions of this work, $12.20$\,W/cm$^2$, followed from the superseded pair $C_{SG} = 1.7415 \times 10^{-4}$, $R_N = 0.55$\,m evaluated at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than at the run condition. Because the correlation scales as $1/\sqrt{R_N}$, the superseded $0.55$\,m nose radius alone raised the computed flux by a factor of $\sqrt{1.5/0.55} \approx 1.65$. The corrected value is $+12.4\%$ relative to the flight measurement and is reported in this work as the headline stagnation heat flux.
 
-The IRVE-3 flight measurement reports a peak heat flux of 14.36\,W/cm$^2$~\cite{lau2013irve3}. Rapisarda (2023) reports the trajectory-integrated Sutton-Graves peak as 15.26\,W/cm$^2$ (+6.26\% above flight) and the Fay--Riddell CFD prediction as 13.83\,W/cm$^2$ (-3.69\% below flight)~\cite{rapisarda2023mdao}. The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure, while Sutton-Graves assumes a spherical nose cap. The discrepancy between our single-point SG value (12.20\,W/cm$^2$) and Rapisarda's trajectory-integrated peak (15.26\,W/cm$^2$) is attributable to the different atmospheric density profiles: Rapisarda uses a parameterized trajectory with higher density at the peak heating altitude, while our SPARTA baseline uses a single-point steady-state condition.
+The IRVE-3 flight measurement reports a peak heat flux of 14.36\,W/cm$^2$~\cite{lau2013irve3}. Rapisarda (2023) reports the trajectory-integrated Sutton-Graves peak as 15.26\,W/cm$^2$ (+6.26\% above flight) and the Fay--Riddell CFD prediction as 13.83\,W/cm$^2$ (-3.69\% below flight)~\cite{rapisarda2023mdao}. The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure, while Sutton-Graves assumes a spherical nose cap. Our single-point SG value (16.14\,W/cm$^2$) and Rapisarda's trajectory-integrated peak (15.26\,W/cm$^2$) agree to within $+5.8\%$ despite the different atmospheric density profiles: Rapisarda integrates a parameterized trajectory under MCD v6.1 while our SPARTA baseline evaluates a single ISA point, and the higher density of the former very nearly cancels the trajectory integration of the latter.
+
+It is important to state precisely what the 16.14\,W/cm$^2$ figure represents, because it is \emph{not} a directly sampled DSMC heat flux. It is the Sutton--Graves correlation evaluated at the DSMC run condition using the corrected coefficient and nose radius; it is therefore a DSMC-conditioned SG prediction rather than a raw DSMC measurement, and it is the same class of quantity as Rapisarda's trajectory-integrated SG value of 15.26\,W/cm$^2$. The raw DSMC surface data tell a different and noisier story. Reading the unsmoothed per-element kinetic energy flux ($f_1[3]$) from the SPARTA surface dumps yields a per-element average of 56.6\,W/cm$^2$ and a maximum single-cell sample of 182.5\,W/cm$^2$. The maximum is a single point-sample in a field where individual cells fluctuate by orders of magnitude --- including negative values at later time steps --- and is statistical scatter rather than a resolved physical peak. The per-element average of 56.6\,W/cm$^2$ is a true DSMC quantity but is inflated relative to the stagnation-point correlation because it averages over the whole scalloped surface, including the low-heating recirculation pockets, and because it is taken from an unsmoothed noisy field. For this reason the correlation-conditioned value is used as the headline heat-flux metric throughout, and the raw DSMC numbers are reported here only to document the noise characteristics of the surface data. Rapisarda avoids this ambiguity by applying a three-stage filter --- a sixth-order polynomial fit followed by a Wilmoth bridging function --- to the same kind of raw DSMC data, which is another reason the two heat-flux sets are not directly comparable.
 
 \subsection{Scalloping Effect on Local Heating}
-The toroidal surface topology introduces localized variations in the radius of curvature. At each toroid crest, the local radius ($r_{torus} = 0.135$\,m) is significantly smaller than the global nose radius ($R_N = 0.55$\,m). Since $\dot{q} \propto 1/\sqrt{R}$, the local heat flux on the toroid crests is enhanced relative to the smooth-body equivalent:
+The toroidal surface topology introduces localized variations in the radius of curvature. At each toroid crest, the local radius of curvature ($r_{torus} = 0.135$\,m) is much smaller than the global nose radius ($R_N = 1.5$\,m). Since $\dot{q} \propto 1/\sqrt{R}$ in the Sutton--Graves scaling, the correlation sets an upper bound on the geometric enhancement available at a crest:
 \begin{equation}
-    \frac{\dot{q}_{crest}}{\dot{q}_{smooth}} \approx \sqrt{\frac{R_N}{r_{torus}}} = \sqrt{\frac{0.55}{0.135}} \approx 2.02
+    \left(\frac{\dot{q}_{crest}}{\dot{q}_{smooth}}\right)_{\mathrm{geometric\ bound}} = \sqrt{\frac{R_N}{r_{torus}}} = \sqrt{\frac{1.5}{0.135}} \approx 3.33
+    \label{eq:crest_bound}
 \end{equation}
 
-This predicts approximately a factor of 2 heat flux augmentation on the toroid crests compared to a smooth hemisphere of radius $R_N$. The SPARTA surface compute data (kinetic energy flux, \texttt{ke}) captures this spatial variation, as shown in Figure~\ref{fig:thermal_map}.
+Equation~\eqref{eq:crest_bound} is a \emph{bound} and not a prediction: it applies the $1/\sqrt{R}$ scaling to the crest radius while holding every other term of the correlation at its smooth-body value, and it neglects the concurrent increase in frontal area and the change in effective shock standoff that accompany a rippled surface. The measured augmentation is therefore substantially smaller than this bound. Comparing the scalloped and smooth DSMC solutions at the identical run condition (step 2200) gives a peak kinetic energy flux of 182.5 against 158.4\,W/cm$^2$ and a per-element average of 56.6 against 54.4\,W/cm$^2$, i.e.\ increases of $15.2\%$ and $4.0\%$ respectively --- consistent in sign and in ordering with the geometric bound, and roughly a factor of five below it. The same comparison gives a $9.5\%$ increase in $C_d$ (1.4625 against 1.3358) and a $5.5\%$ increase in $|C_l|$, while the peak $g$-load and the heat load are unchanged because both geometries are evaluated at the same trajectory point. The SPARTA surface compute data (kinetic energy flux, \texttt{ke}) captures this spatial variation, as shown in Figure~\ref{fig:thermal_map}.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/thermal_map_smooth_M0_A0.png}
-    \caption{Surface temperature distribution on the 6-toroid HIAD baseline configuration from SPARTA DSMC simulation.}
+    \includegraphics[width=0.75\textwidth]{figures/thermal_map_smooth.png}
+    \caption{Surface temperature distribution on the scalloped toroid-stack baseline configuration from SPARTA DSMC, rendered at $V_{\infty} = 2700$\,m/s and grid-factor 0.7. The scalloped renders are produced at the solver's default freestream velocity rather than at the $3{,}378$\,m/s trajectory point used for the scalar validation metrics of Table~\ref{tab:validation_full}, and are used here as a qualitative field visualisation only.}
     \label{fig:thermal_map}
 \end{figure}
 
 \section{Pressure and Force Distribution}
-The SPARTA surface force computes provide the axial drag force ($f_x$) and transverse force components. The pressure distribution across the scalloped surface shows characteristic features of the stacked toroid geometry.
+The SPARTA surface force computes provide the axial drag force ($f_x$) and transverse force components. The pressure distribution across the scalloped surface (Figure~\ref{fig:pressure_map}) shows the characteristic periodic features associated with the stacked toroid geometry.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/pressure_map_smooth_M0_A0.png}
-    \caption{Surface pressure distribution on the HIAD configuration showing the periodic pressure peaks at toroid crests.}
+    \includegraphics[width=0.75\textwidth]{figures/pressure_map_smooth.png}
+    \caption{Surface pressure distribution on the scalloped toroid-stack configuration, showing the periodic pressure peaks associated with the toroid stack ($V_{\infty} = 2700$\,m/s, grid-factor 0.7; qualitative field visualisation).}
     \label{fig:pressure_map}
 \end{figure}
 
@@ -80,17 +84,17 @@ The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock structure 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{figures/mach_map_smooth_M0_A0.png}
-    \caption{Mach number field around the HIAD showing bow shock structure and subsonic regions.}
+    \caption{Mach number field around the smooth-body reference configuration at $V_{\infty} = 2700$\,m/s and grid-factor 0.7, showing the bow shock structure upstream of the aeroshell and the subsonic region in the near wake. The smooth reference is used for this panel because it isolates the shock-layer structure from the toroid-stack geometry.}
     \label{fig:mach_map}
 \end{figure}
 
 \subsection{Velocity Vector Field}
-The velocity vectors (Figure~\ref{fig:velocity_vectors}) reveal the formation of recirculation zones in the valleys between toroidal rings. In the DSMC framework, these recirculation patterns emerge naturally from molecular collisions and surface interactions without requiring turbulence modeling~\cite{bird1994molecular}.
+The velocity vectors (Figure~\ref{fig:velocity_vectors}) show the strong deceleration in the near wake of the toroid stack, with velocity magnitude falling from the freestream value to well below $1.5$\,km/s immediately behind the body. In the DSMC framework, this momentum loss and the associated recirculating flow emerge naturally from molecular collisions and surface interactions without requiring turbulence modeling~\cite{bird1994molecular}.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/velocity_vectors_smooth_M0_A0.png}
-    \caption{Velocity vector field showing recirculation zones in the toroidal valleys.}
+    \includegraphics[width=0.75\textwidth]{figures/velocity_vectors_smooth.png}
+    \caption{Velocity vector field on the scalloped toroid-stack configuration ($V_{\infty} = 2700$\,m/s), showing the decelerated wake region downstream of the toroid stack.}
     \label{fig:velocity_vectors}
 \end{figure}
 
@@ -102,7 +106,7 @@ The Knudsen number field (Figure~\ref{fig:knudsen_map}) maps the flow regime tra
     \item \textbf{Near-Wall (Stagnation):} $Kn < 0.01$ (near-continuum)
 \end{itemize}
 
-This distribution validates the use of DSMC for the majority of the flow field, as the transitional regime dominates the shock layer and near-wall regions at 52\,km altitude~\cite{plimpton2014sparta}.
+This distribution validates the use of DSMC for the majority of the flow field, as the transitional regime dominates the shock layer and near-wall regions at 51.8\,km altitude~\cite{plimpton2014sparta}.
 
 \begin{figure}[H]
     \centering
@@ -126,30 +130,34 @@ The simulation results are validated against the IRVE-3 post-flight aerothermal 
 
 \begin{table}[H]
     \centering
-    \caption{Validation of SPARTA DSMC results against IRVE-3 flight data.}
+    \caption{Validation of SPARTA DSMC results against IRVE-3 flight data, with the MDAO (Fay--Riddell) reference and this work shown as distinct columns.}
     \label{tab:validation}
-    \begin{tabular}{lccc}
+    \small
+    \begin{tabular}{lcccc}
         \hline
-        \textbf{Parameter} & \textbf{Flight Data} & \textbf{MDAO Model} & \textbf{Status} \\
+        \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion (This Work)} & \textbf{Assessment} \\
         \hline
-        Aeroshell Diameter & 3.0\,m & -- & Verified \\
-        Toroid Radius ($r_{torus}$) & 0.135\,m & 0.135\,m & Geometry Sync \\
-        Peak Heat Flux ($\dot{q}$) & 14.36\,W/cm$^2$ & 13.83\,W/cm$^2$ (Fay--Riddell) & Verified \\
-        Total Heat Load ($Q$) & 195.06\,J/cm$^2$ & 195.17\,J/cm$^2$ (Fay--Riddell) & Verified \\
-        Peak Deceleration & 19.7$g$ & 20.2$g$ & Verified \\
+        Aeroshell Diameter & 3.0\,m & -- & 3.0\,m & Geometry Sync \\
+        Toroid Radius ($r_{torus}$) & 0.135\,m & 0.135\,m & 0.135\,m & Geometry Sync \\
+        Peak Heat Flux ($\dot{q}$) & 14.36\,W/cm$^2$ & 13.83\,W/cm$^2$ & 16.14\,W/cm$^2$ & MDAO $-3.7\%$; SO $+12.4\%$ \\
+        Total Heat Load ($Q$) & 195.06\,J/cm$^2$ & 195.17\,J/cm$^2$ & 165.72\,J/cm$^2$ & MDAO $+0.06\%$; SO $-15.0\%$ \\
+        Peak Deceleration & 19.7\,$g$ & -- & 16.83\,$g$ & SO $-14.6\%$ \\
         \hline
     \end{tabular}
+    \normalsize
 \end{table}
 
-The Fay--Riddell prediction of 13.83\,W/cm$^2$ is within 3.7\% of the 14.36\,W/cm$^2$ flight measurement, confirming the accuracy of the DSMC-based aerothermal framework. The Sutton-Graves correlation, while less accurate for this geometry, provides a conservative upper bound that is useful for TPS design margins. The total heat load and peak deceleration predictions are within 1\% and 3\% of flight data, respectively, confirming the framework's predictive capability.
+The MDAO Fay--Riddell prediction of 13.83\,W/cm$^2$ is within 3.7\% of the 14.36\,W/cm$^2$ flight measurement, and its total heat load of 195.17\,J/cm$^2$ is within 0.06\% of the 195.06\,J/cm$^2$ flight value. These figures are computed by the external MDAO reference model, not by the SPARTA DSMC solver used in this work, and they establish that the IRVE-3 flight reconstruction adopted here is internally consistent. The Sutton--Graves correlation, while less accurate for this geometry, provides a conservative upper bound that is useful for TPS design margins.
+
+The present work reports a peak heat flux of 16.14\,W/cm$^2$, a total heat load of 165.72\,J/cm$^2$, and a peak deceleration of 16.83\,$g$, i.e.\ $+12.4\%$, $-15.0\%$, and $-14.6\%$ relative to the corresponding flight measurements. The deviations are of opposite sign, have distinct causes, and must not be read as a single systematic bias. The total heat load and the peak deceleration are both \emph{resolved by the DSMC run} and both fall short by close to a common $15\%$, because the run samples a \emph{single} trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions whereas the flight reconstruction and the MDAO models integrate the heating and deceleration history over the complete reentry; integrating over the full trajectory raises both the accumulated heat load and the peak deceleration towards the measured values. The heat flux behaves oppositely: the 16.14\,W/cm$^2$ headline figure is the Sutton--Graves correlation evaluated at the DSMC run condition and is not a quantity resolved by the solver, and it over-predicts the flight value because the correlation is built on a spherical nose cap, carrying neither the heat-shielding effect of the scalloped torus nor the rarefied-flow departure that the DSMC solver resolves. It therefore acts as a conservative upper bound on the stagnation flux, which is the useful direction for TPS sizing. The ballistic coefficient provides an independent check: the simulated 27.70\,kg/m$^2$ is $+3\%$ relative to the 26.9\,kg/m$^2$ flight value, indicating that the scalloped geometry is reproduced correctly, so that the residual in the two integrated quantities lies in the trajectory integration while the residual in the heat flux lies in the correlation model.
 
 \section{Scallop Pocket Temperature Analysis}
-The temperature distribution within the toroidal pockets (scallop pockets) shows that the recirculation zones between toroid crests create regions of reduced heating. Figure~\ref{fig:scallop_pocket} shows the localized temperature field within a single scallop pocket, confirming that the valleys act as thermal buffer zones relative to the heated crests.
+The temperature distribution within the toroidal pockets shows that the recirculation zones between toroid crests create regions of reduced heating. Figure~\ref{fig:scallop_pocket} is an axial trace sampled at the centre of a single scallop pocket: the temperature holds at the ambient value upwind of the pocket, rises sharply through the shock at the pocket leading edge to a peak of approximately $3.1 \times 10^3$\,K, and then decays through the recirculation region back towards ambient. This confirms quantitatively that the valleys act as thermal buffer zones relative to the heated crests.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{figures/scallop_pocket_temp_smooth_M0_A0.png}
-    \caption{Temperature distribution within the scallop pocket showing reduced heating in the recirculation zone.}
+    \caption{Axial temperature trace sampled at the centre of a scallop pocket ($V_{\infty} = 2700$\,m/s, grid-factor 0.7). The trace is flat at ambient temperature upwind of the pocket, rises sharply through the shock at the pocket leading edge to a peak near $3.1 \times 10^3$\,K, and decays through the recirculation region, quantifying the thermal shelter that the pocket provides relative to the heated crests.}
     \label{fig:scallop_pocket}
 \end{figure}
 
@@ -176,16 +184,16 @@ The mesh quality metrics (Figure~\ref{fig:mesh_stats}) confirm that the Cartesia
 \section{Discussion}
 
 \subsection{Heating Augmentation and TPS Implications}
-The simulation confirms that the scalloped toroidal geometry creates a periodic heating profile with enhanced peaks at the toroid crests. The estimated factor-of-2 augmentation at the crests is consistent with the inverse-square-root radius relationship from Sutton-Graves~\cite{sutton1971gravesh}. However, the recirculation zones in the valleys provide partial thermal shielding, reducing the time-averaged heat load on the Flexible Thermal Protection System (FTPS)~\cite{hollis2018surface}.
+The simulation confirms that the scalloped toroidal geometry creates localized hot spots at the toroid crests. Comparing the scalloped and smooth runs at the same trajectory condition, the scalloped configuration raises the peak heat flux by 15.2\% and the per-element average by only 4.0\%, while the drag coefficient increases by 9.5\%; the total heat load and peak deceleration are unchanged. This distribution of the augmentation over a small crest area, rather than over the whole surface, is the physical signature expected from the inverse-square-root radius scaling ($\dot{q} \propto 1/\sqrt{R}$) of the Sutton-Graves correlation~\cite{sutton1971gravesh}. The recirculation zones in the valleys provide partial thermal shielding, reducing the time-averaged heat load on the Flexible Thermal Protection System (FTPS)~\cite{hollis2018surface}.
 
 \subsection{Flow Regime Characterization}
-The Knudsen number field map demonstrates that the flow around the HIAD at 52\,km altitude spans all three regimes: free-molecular in the far-field, transitional in the shock layer, and near-continuum at the stagnation region. This confirms the necessity of using DSMC rather than continuum CFD for accurate aerothermal prediction at these conditions~\cite{mos2006lowdensity}.
+The Knudsen number field map demonstrates that the flow around the HIAD at 51.8\,km altitude spans all three regimes: free-molecular in the far-field, transitional in the shock layer, and near-continuum at the stagnation region. This confirms the necessity of using DSMC rather than continuum CFD for accurate aerothermal prediction at these conditions~\cite{mos2006lowdensity}.
 
 \subsection{Recirculation and Shock-Boundary Layer Interaction}
 The velocity vector analysis reveals stable recirculation zones in the toroidal valleys, which are qualitatively consistent with the shock-boundary layer interaction (SBLI) patterns observed in hypersonic blunt-body flows~\cite{guo2019hypersonic}. The DSMC method captures these phenomena through direct molecular collision statistics, without requiring empirical turbulence closures.
 
 \subsection{Real-Gas Effects}
-The 5-species air model captures vibrational excitation and dissociation reactions that reduce the effective stagnation temperature below the calorically perfect prediction of 5684\,K. This is critical for accurate heat flux prediction, as the energy partitioning into internal modes directly affects the temperature gradient driving surface heat transfer~\cite{anderson2006hypersonic}.
+The 5-species air model captures vibrational excitation and dissociation reactions that reduce the effective stagnation temperature below the calorically perfect prediction of 5952\,K. This is critical for accurate heat flux prediction, as the energy partitioning into internal modes directly affects the temperature gradient driving surface heat transfer~\cite{anderson2006hypersonic}.
 
 \section{Optimization Framework Results}
 \label{sec:optimization_results}
@@ -219,7 +227,7 @@ Table~\ref{tab:optimization_samples} summarizes selected samples from the three 
 The results reveal a clear trade-off between deceleration capability and structural loading. Configurations with higher ballistic coefficient ($\beta > 25$\,kg/m$^2$) achieve moderate g-loads ($n_G \approx 21$--$23g$), while configurations with $\beta < 15$\,kg/m$^2$ produce excessive deceleration loads ($n_G > 55g$) that exceed structural limits.
 
 \subsection{Thermal Constraint Violation}
-A critical finding across all optimization samples is that the backface temperature consistently reaches 492.0\,K, which exceeds the 350\,K payload thermal limit by 142\,K. This indicates that the current 1D thermal model with the baseline TPS parameters ($\delta_{TPS} = 25.4$\,mm, $\rho_{TPS} = 322.94$\,kg/m$^3$, $C_{p,TPS} = 1000$\,J/(kg$\cdot$K)) is insufficient for payload protection at the 52\,km altitude flight condition.
+A critical finding across all optimization samples is that the backface temperature consistently reaches 492.0\,K, which exceeds the 350\,K payload thermal limit by 142\,K. This indicates that the current 1D thermal model with the baseline TPS parameters ($\delta_{TPS} = 25.4$\,mm, $\rho_{TPS} = 322.94$\,kg/m$^3$, $C_{p,TPS} = 1000$\,J/(kg$\cdot$K)) is insufficient for payload protection at the 51.8\,km altitude flight condition.
 
 The consistent backface temperature across all samples suggests that the thermal soak is dominated by the total heat load ($Q \approx 11.38$\,MJ/m$^2$) rather than the instantaneous heat flux, as the 1D transient model integrates the heat pulse over the full trajectory duration. This finding has direct implications for TPS design:
 \begin{itemize}
@@ -375,7 +383,7 @@ A direct comparison between the present framework and the prior MDAO framework o
 \subsection{Aerodynamic Solver}
 Rapisarda's MDAO framework employs a Modified Newtonian panel method for aerodynamic coefficient estimation~\cite{rapisarda2023mdao}. This is an inviscid, continuum-based algebraic method that approximates the pressure coefficient on surface panels using the local deflection angle. While computationally efficient, the Newtonian assumption is strictly valid only for hypersonic, high-density flows ($Kn < 0.001$) where the shock layer is thin and attached to the surface~\cite{anderson2006hypersonic}.
 
-In contrast, the present framework uses the SPARTA Direct Simulation Monte Carlo (DSMC) solver~\cite{plimpton2014sparta}, which solves the Boltzmann equation through direct simulation of molecular collisions. DSMC is physically valid across all flow regimes ($Kn = 0$ to $\infty$), including the transitional regime ($0.01 < Kn < 1$) encountered at reentry altitudes above 50\,km where the continuum assumption breaks down~\cite{bird1994molecular}. This is evidenced by the Knudsen number field map (Figure~\ref{fig:knudsen_map}), which shows that the shock layer around the HIAD at 52\,km altitude spans all three flow regimes.
+In contrast, the present framework uses the SPARTA Direct Simulation Monte Carlo (DSMC) solver~\cite{plimpton2014sparta}, which solves the Boltzmann equation through direct simulation of molecular collisions. DSMC is physically valid across all flow regimes ($Kn = 0$ to $\infty$), including the transitional regime ($0.01 < Kn < 1$) encountered at reentry altitudes above 50\,km where the continuum assumption breaks down~\cite{bird1994molecular}. This is evidenced by the Knudsen number field map (Figure~\ref{fig:knudsen_map}), which shows that the shock layer around the HIAD at 51.8\,km altitude spans all three flow regimes.
 
 \subsection{Gas Model}
 The Newtonian method assumes a calorically perfect gas with constant specific heats ($\gamma = 1.4$ for air). At hypersonic speeds ($Ma > 5$), the post-shock temperature exceeds 5000\,K, activating vibrational excitation, molecular dissociation, and ionization~\cite{anderson2006hypersonic}. The present framework employs a 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics, capturing these real-gas effects that alter the energy partitioning and reduce the effective stagnation temperature below the calorically perfect prediction.

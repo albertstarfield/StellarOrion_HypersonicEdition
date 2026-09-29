@@ -99,6 +99,12 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 # because the verifier is a Python tool, not Ada/GNC code.
 _SELF_ANALYSIS_MODE = False
 
+# Process-global memo for check_composition's "run once per audit" gate.
+# This used to be stashed as a `check_composition._cached` function
+# attribute guarded by hasattr(); a module-level dict says what it is and
+# keeps the same process-global lifetime.
+_COMPOSITION_CACHE: dict[str, Any] = {}
+
 # ── DEFAULT EXCLUDED DIRECTORIES ────────────────────────────────────────
 # Directories excluded from scanning by default. The verifier lives in
 # src/utils/ and should not audit itself or its own test artifacts.
@@ -3297,7 +3303,7 @@ class CheckTracker:
                 c["confirmed"] += 1
             else:
                 c["unproved"] += 1
-            for s in r.solvers:
+            for s in r.solvers or []:
                 c["provers"][s] = c["provers"].get(s, 0) + 1
             c["files"].add(r.filepath)
         return cats
@@ -4768,7 +4774,7 @@ def _check_copy_paste_text_fallback(lines: list[str], filepath: str) -> list[Vio
                     triple_quote_char = "'''"
                 continue
         else:
-            if triple_quote_char in stripped:
+            if triple_quote_char is not None and triple_quote_char in stripped:
                 in_triple_quote = False
                 triple_quote_char = None
             continue
@@ -5385,8 +5391,9 @@ def _build_python_redundant_logic_patterns() -> list[Pattern]:
                 ))
 
             # if x and not x (always false)
-            if re.match(r"if\s+(\w+)\s+and\s+not\s+(\1)\s*:", stripped):
-                var = re.match(r"if\s+(\w+)\s+and\s+not\s+\w+\s*:", stripped).group(1)
+            m_and = re.match(r"if\s+(\w+)\s+and\s+not\s+(\1)\s*:", stripped)
+            if m_and:
+                var = m_and.group(1)
                 violations.append(Violation(
                     filepath=filepath,
                     line=i,
@@ -5401,8 +5408,9 @@ def _build_python_redundant_logic_patterns() -> list[Pattern]:
                 ))
 
             # if x or not x (always true)
-            if re.match(r"if\s+(\w+)\s+or\s+not\s+(\1)\s*:", stripped):
-                var = re.match(r"if\s+(\w+)\s+or\s+not\s+\w+\s*:", stripped).group(1)
+            m_or = re.match(r"if\s+(\w+)\s+or\s+not\s+(\1)\s*:", stripped)
+            if m_or:
+                var = m_or.group(1)
                 violations.append(Violation(
                     filepath=filepath,
                     line=i,
@@ -7938,7 +7946,7 @@ def _build_c_sabotage_patterns() -> list[Pattern]:
             standard="CERT MEM31-C, CWE-401",
             description="malloc/calloc without corresponding free in same function (heuristic)",
             languages=["c"],
-            check_func=lambda src, lines, fp: _check_c_missing_free(src, lines, fp),
+            check_func=_check_c_missing_free,
         ),
     ]
 
@@ -8263,7 +8271,6 @@ def _build_self_verification_patterns() -> list[Pattern]:
         active_pyrefly = venv_pyrefly if pyrefly_in_venv else (self_test_venv_pyrefly if pyrefly_in_self_test else None)
         active_venv_dir = venv_dir if pyrefly_in_venv else (self_test_venv_dir if pyrefly_in_self_test else None)
         if active_pyrefly:
-            import subprocess
 
             verifier_path = os.path.abspath(filepath)
             if os.path.isfile(verifier_path):
@@ -8341,7 +8348,6 @@ def _build_self_verification_patterns() -> list[Pattern]:
         # Use project venv first, fall back to self-test venv
         active_ruff = venv_ruff if ruff_in_venv else (self_test_venv_ruff if ruff_in_self_test else None)
         if active_ruff:
-            import subprocess
 
             verifier_path = os.path.abspath(filepath)
             if os.path.isfile(verifier_path):
@@ -9918,7 +9924,11 @@ def _cross_check_with_cvc5(constraints: list[tuple[str, int, int]], label: str) 
             - https://github.com/pschanely/CrossHair — CrossHair symbolic execution
     """
     try:
-        from cvc5 import Kind, Solver
+    # See _extract_cvc5_counterexample for why `missing-module-attribute` is
+    # suppressed here: cvc5 is an unstubbed compiled extension whose symbols
+    # do exist at runtime, and the ImportError guard degrades safely.
+    # [Citation: pyrefly ignore syntax — https://pyrefly.org/en/docs/suppressing-errors]
+        from cvc5 import Kind, Solver  # pyrefly: ignore[missing-module-attribute]
     except ImportError:
         return "unknown"
 
@@ -9955,7 +9965,17 @@ def _extract_cvc5_counterexample(constraints: list[tuple[str, int, int]], label:
         - https://cvc5.github.io/docs/ — CVC5 SMT solver
     """
     try:
-        from cvc5 import Kind, Solver
+        # cvc5 is a compiled C++ extension (`cvc5_python_base*.so`); its
+        # package ships no `.pyi` stubs and no `py.typed` marker, so a static
+        # checker cannot read `Kind`/`Solver` out of the binary. Both names do
+        # exist at runtime (verified: `cvc5.Kind` -> <enum 'Kind'>,
+        # `cvc5.Solver` -> <class 'cvc5.cvc5_python_base.Solver'>), and the import
+        # is guarded by `except ImportError` with a degraded return, so this is
+        # a checker limitation rather than a code defect. The suppression is
+        # scoped to this one line and only to `missing-module-attribute`; any
+        # other mistake on cvc5 usage still fails the gate.
+        # [Citation: pyrefly ignore syntax — https://pyrefly.org/en/docs/suppressing-errors]
+        from cvc5 import Kind, Solver  # pyrefly: ignore[missing-module-attribute]
     except ImportError:
         return f"[Counterexample] {label}: cvc5 not available"
 
@@ -10005,7 +10025,6 @@ def _prove_with_alt_ergo(assertions: list[str], goal: str) -> str:
             - https://github.com/pschanely/CrossHair — CrossHair symbolic execution
     """
     try:
-        import subprocess
         import tempfile
 
         smtlib = "(set-logic QF_LIA)\n"
@@ -10055,7 +10074,6 @@ def _extract_alt_ergo_counterexample(assertions: list[str], goal: str, label: st
         - https://alt-ergo.ocamlpro.com/ — Alt-Ergo SMT solver
     """
     try:
-        import subprocess
         import tempfile
 
         # Extract variable names from assertions and goal
@@ -10152,7 +10170,7 @@ def _get_active_provers() -> list[str]:
     return provers
 
 
-def _extract_z3_counterexample(solver, description: str = "") -> str:
+def _extract_z3_counterexample(solver: Any, description: str = "") -> str:
     """Extract a human-readable counterexample from a z3 SAT solver result.
 
     When z3 proves a condition is satisfiable (SAT), this function extracts
@@ -11192,6 +11210,12 @@ def _verify_ada_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]]:
                 solver.add(denom_var == Int(f"var_{denominator}"))
             z3_result = solver.check()
 
+            # [Bounds guard] The issue dict appended below reads this
+            # unconditionally, but it was only bound inside
+            # `if z3_result == sat`. On unsat/unknown that read raised
+            # UnboundLocalError.
+            counterexample: str = ""
+
             if z3_result == sat:
                 # Extract counterexample BEFORE solver.pop()
                 counterexample = _extract_z3_counterexample(
@@ -11317,6 +11341,12 @@ def _verify_ada_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]]:
                         pvar = Int(f"param_{p['name']}")
                         solver.add(idx_var == pvar)
                 z3_result = solver.check()
+
+                # [Bounds guard] The issue dict appended at the end of this
+                # block reads `counterexample` unconditionally, but it was only
+                # bound inside `if z3_result == sat`. On unsat/unknown the read
+                # raised UnboundLocalError.
+                counterexample: str = ""
 
                 if z3_result == sat:
                     # Extract counterexample BEFORE solver.pop()
@@ -11559,6 +11589,10 @@ def _verify_ada_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]]:
     # Ada Integer'Last = 2**31 - 1 = 2147483647 on most platforms
     INTEGER_LAST = 2147483647
     for ao in func.get("arithmetic_ops", []):
+        # [Bounds guard] was initialised only under
+        # `if 0 <= line_idx < len(func["body_lines"])` but read below that
+        # guard, so any iteration failing it raised UnboundLocalError.
+        has_guard: bool = False
         if ao["op"] in ("+", "-", "*"):
             # Skip literal constant arithmetic — can't overflow
             if ao["left"].isdigit() and ao["right"].isdigit():
@@ -13239,10 +13273,8 @@ def _build_composition_balance_patterns() -> list[Pattern]:
             return violations
 
         # Only run composition check ONCE per audit (global cache, not per-directory)
-        if not hasattr(check_composition, "_cached"):
-            check_composition._cached = {}
         cache_key = "__global_composition__"
-        if cache_key in check_composition._cached:
+        if cache_key in _COMPOSITION_CACHE:
             return violations
 
         # Find project root (detected dynamically via BASE_DIR)
@@ -13301,7 +13333,6 @@ def _build_composition_balance_patterns() -> list[Pattern]:
 
         # Use git ls-files to get the file list, then exclude vendored dirs
         # GitHub marks vendor/ as vendored (gray) — not counted as project code
-        import subprocess
         # Vendor + generated dirs excluded from LANGUAGE BYTE COUNTING only
         # (SMT checks still scan these files — this is composition analysis, not security)
         # NOTE: tests/, scripts/, python/, eval/ are PROJECT SOURCE — not excluded.
@@ -13344,7 +13375,7 @@ def _build_composition_balance_patterns() -> list[Pattern]:
             except OSError as e:
                 _verb(f"Skipping unreadable path in check_composition: {e}")
 
-        check_composition._cached[cache_key] = lang_bytes
+        _COMPOSITION_CACHE[cache_key] = lang_bytes
 
         total = sum(lang_bytes.values())
         if total == 0:
@@ -13360,7 +13391,10 @@ def _build_composition_balance_patterns() -> list[Pattern]:
         if not non_ada:
             return violations
 
-        max_other_lang = max(non_ada, key=non_ada.get)
+        # key=non_ada.get would type as float | None because dict.get's
+        # one-arg overload is optional; max only ever calls the key on keys
+        # that are present, so subscripting is equivalent and well-typed.
+        max_other_lang = max(non_ada, key=lambda k: non_ada[k])
         max_other_pct = non_ada[max_other_lang]
 
         # Build GitHub-style composition summary (sorted by %)
@@ -15296,6 +15330,7 @@ def _build_python_audit_finding_patterns() -> list[Pattern]:
             if "subprocess.Popen(" in stripped and "timeout" not in stripped and not stripped.startswith("#") and "# nosec" not in stripped:
                 # Check if this is a multi-line call — look ahead for timeout
                 combined = stripped
+                next_line: str = ""
                 for j in range(i, min(i + 5, len(lines) + 1)):
                     if j > i:
                         next_line = lines[j - 1].strip() if j - 1 < len(lines) else ""
@@ -19442,6 +19477,15 @@ def main():  # nosec
     # Cache key = SHA-256 of all scanned source files combined.
     cache_dir = Path(target).parent / ".verifier_cache"
     cache_file = None
+    # cache_key/cache_file are only ever populated inside `if use_cache:`,
+    # but they are read further down in branches that do not re-test
+    # use_cache. Binding them to sentinels here makes every read safe and
+    # lets a single `cache_file is not None` guard stand in for
+    # `use_cache and cache_file is not None`.
+    # [Bounds guard] without this, use_cache=False reached the save block
+    # and raised UnboundLocalError on cache_file.
+    cache_key = ""
+    cache_file: Path | None = None
     cache_hit = False
     cached_violations = None
 
@@ -19537,7 +19581,7 @@ def main():  # nosec
         _verb(f"Auditing file: {target}")
         violations = run_sabotage_audit(target, severity_filter=None)
         # Save to cache for single files too
-        if use_cache and cache_file is not None:
+        if cache_file is not None:
             cache_data = {
                 "cache_key": cache_key,
                 "violations": [
