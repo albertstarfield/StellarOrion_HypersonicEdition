@@ -115,31 +115,36 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \caption{Default optimization and simulation parameters.}
 \label{tab:default_params}
 \small
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.18\textwidth}>{\RaggedRight\arraybackslash}X l@{}}
+% Two cells here are unbreakable by construction and set the column widths:
+% \multirow{4}{*}{\textbf{Bayes Opt (scikit-learn)}} in column 1, and
+% $\max(2000, \min(4000, steps \times 2))$ in column 3. \multirow with a * width
+% never wraps, so column 1 must be wide enough for the longest label; column 3
+% must be wide enough for the longest math atom. Column 2 absorbs the rest.
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.21\textwidth}>{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.30\textwidth}@{}}
 \toprule
 \textbf{Category} & \textbf{Parameter} & \textbf{Default Value} \\ \midrule
-\multirow{5}{*}{\textbf{DSMC (SPARTA)}} & Steps (optimization) & 1100 \\
+\multirow{5}{=}{\textbf{DSMC (SPARTA)}} & Steps (optimization) & 1100 \\
  & Steps (sample) & 500 \\
  & Grid factor & 0.7 \\
  & Particle weighting ($f_{\text{num}}$) & $1.5 \times 10^{20}$ \\
  & Chemistry model & 5-species (N$_2$, O$_2$, NO, N, O) \\ \midrule
-\multirow{3}{*}{\textbf{Flight Conditions}} & $V_\infty$ & 3378\,m/s \\
+\multirow{3}{=}{\textbf{Flight Conditions}} & $V_\infty$ & 3378\,m/s \\
  & $T_\infty$ & 268.41\,K \\
  & $n_\infty$ & $1.63 \times 10^{22}$\,/m$^3$ \\ \midrule
-\multirow{3}{*}{\textbf{DoE (CCD)}} & Method & Face-Centered CCD \\
+\multirow{3}{=}{\textbf{DoE (CCD)}} & Method & Face-Centered CCD \\
  & Samples ($N$) & 25 ($2^4 + 2 \times 4 + 1$) \\
  & Active variables & Diameter, Angle, Toroids, Nose \\ \midrule
-\multirow{6}{*}{\textbf{PINN (DeepXDE)}} & Architecture & FNN [2] + [64] $\times$ 3 + [3] \\
+\multirow{6}{=}{\textbf{PINN (DeepXDE)}} & Architecture & FNN [2] + [64] $\times$ 3 + [3] \\
  & Activation & tanh \\
  & Learning rate (Stage 1) & $1 \times 10^{-3}$ \\
  & Learning rate (Stage 2) & $5 \times 10^{-4}$ \\
- & Iterations & $\max(2000, \min(4000, \text{steps} \times 2))$ \\
+ & Iterations & $\max(2000, \min(4000,$ \text{steps} $\times 2))$ \\
  & PDE collocation points & 2500 (domain) + 500 (boundary) \\ \midrule
-\multirow{4}{*}{\textbf{Bayes Opt (scikit-learn)}} & Surrogate & GP, Mat\'ern 5/2 kernel \\
+\multirow{4}{=}{\textbf{Bayes Opt (scikit-learn)}} & Surrogate & GP, Mat\'ern 5/2 kernel \\
  & Amplitude $c_0$, length scales $\ell_j$ & Initialized at 1, refit in $[10^{-3}, 10^{3}]$ \\
  & Acquisition & Expected Improvement, $\xi = 0.01$ \\
  & Budget & 20 LHS + 50 Bayes Opt ($n_{eval} = 70$), seed 42 \\ \midrule
-\multirow{3}{*}{\textbf{GA Optimization}} & Generations & 20\,000 \\
+\multirow{3}{=}{\textbf{GA Optimization}} & Generations & 20\,000 \\
  & Stagnation stop & 5 windows $\times$ 1000 generations \\
  & Constraint limits & $T_{\text{back}} < 350$\,K, $g < 25g$ \\
 \bottomrule
@@ -910,7 +915,7 @@ SPARTA grid dumps provide field maps of macroscopic quantities accumulated from 
     \centering
     \caption{SPARTA Grid Data Columns and Physical Variables.}
     \label{tab:grid_data}
-    \begin{tabular}{|l|l|l|}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.09\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.07\textwidth}|}
         \hline
         \textbf{Column} & \textbf{Physical Variable} & \textbf{Unit} \\ \hline
         1--4 & Cell bounds ($x_{lo}, y_{lo}, x_{hi}, y_{hi}$) & m \\ \hline
@@ -918,7 +923,7 @@ SPARTA grid dumps provide field maps of macroscopic quantities accumulated from 
         6--8 & Velocity Components ($u, v, w$) & m/s \\ \hline
         9 & Translational Temperature ($T$) & K \\ \hline
         10 & Pressure ($p$) & Pa \\ \hline
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 \subsection{Knudsen Number Field}
