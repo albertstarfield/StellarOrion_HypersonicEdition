@@ -138,7 +138,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \multirow{4}{*}{\textbf{Bayes Opt (scikit-learn)}} & Surrogate & GP, Mat\'ern 5/2 kernel \\
  & Amplitude $c_0$, length scales $\ell_j$ & Initialized at 1, refit in $[10^{-3}, 10^{3}]$ \\
  & Acquisition & Expected Improvement, $\xi = 0.01$ \\
- & Budget & 20 LHS + 50 BO ($n_{eval} = 70$), seed 42 \\ \midrule
+ & Budget & 20 LHS + 50 Bayes Opt ($n_{eval} = 70$), seed 42 \\ \midrule
 \multirow{3}{*}{\textbf{GA Optimization}} & Generations & 20\,000 \\
  & Stagnation stop & 5 windows $\times$ 1000 generations \\
  & Constraint limits & $T_{\text{back}} < 350$\,K, $g < 25g$ \\
@@ -766,7 +766,7 @@ Because the cost $J$ is minimized, the Expected Improvement (EI) acquisition~\ci
 where $\Phi$ and $\phi$ are the standard normal cumulative distribution and density functions. The exploration parameter is fixed at $\xi = 0.01$, which is small relative to the $O(1)$ spread of the cost values recorded in Chapter~\ref{ch:results}; this keeps the search exploitation-dominated while retaining enough stochasticity to escape local minima. The denominator $\sigma(\mathbf{x})$ is floored at $10^{-9}$ so that the ratio defining $Z$ stays finite at points where the posterior variance collapses onto a previously sampled design.
 
 \subsubsection*{Candidate Selection and Loop}
-Expected Improvement does not admit a closed-form maximizer, so each BO iteration draws $N_{cand} = 5000$ candidate designs uniformly at random inside the bounded design space, scores them all with Eq.~\eqref{eq:ei}, and appends the arg-max to the history. Because the candidate pool is resampled from a seeded generator every iteration, the run is exactly reproducible at $\texttt{seed} = 42$. The recorded campaign is configured with $n_{initial} = 20$ Latin Hypercube designs and $n_{iter} = 50$ Bayesian iterations, giving $n_{eval} = 70$ entries in the optimization history reported in Chapter~\ref{ch:results}.
+Expected Improvement does not admit a closed-form maximizer, so each Bayes Opt iteration draws $N_{cand} = 5000$ candidate designs uniformly at random inside the bounded design space, scores them all with Eq.~\eqref{eq:ei}, and appends the arg-max to the history. Because the candidate pool is resampled from a seeded generator every iteration, the run is exactly reproducible at $\texttt{seed} = 42$. The recorded campaign is configured with $n_{initial} = 20$ Latin Hypercube designs and $n_{iter} = 50$ Bayesian iterations, giving $n_{eval} = 70$ entries in the optimization history reported in Chapter~\ref{ch:results}.
 
 \subsubsection*{Single-Objective Scalarization}
 The GP models the scalar cost $J(\mathbf{x})$ directly rather than predicting several physical metrics in parallel. The multi-objective character of the problem is carried entirely by the definition of $J$ in the following subsection, which folds total heat load, peak heat flux, ballistic-coefficient deviation, drag coefficient, and the envelope, nose, and payload constraints into one number. This keeps the acquisition one-dimensional and lets the GP spend its limited $70$-evaluation budget resolving a single well-conditioned response surface instead of $k$ separate ones.
