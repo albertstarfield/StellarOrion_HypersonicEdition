@@ -10,7 +10,13 @@
 \usepackage{ragged2e}      % \RaggedRight for wrapped table cells
 \usepackage{seqsplit}      % \seqsplit lets long \texttt{} paths break at any char
 \usepackage{url}           % \path{}: breakable monospace with hyphenation
-\usepackage{accsupp}       % \BeginAccSupp{ActualText=...}: screen-reader alt text
+\usepackage{accsupp}
+
+% Let TeX stretch inter-word space to avoid overfull lines from unbreakable
+% inline math / typewriter tokens, instead of letting them run past the margin.
+\setlength{\emergencystretch}{3em}
+\tolerance=2000
+\hbadness=1000       % \BeginAccSupp{ActualText=...}: screen-reader alt text
                              % for raster figures (WCAG 1.1.1 non-text content)
 \usepackage{multirow}
 \usepackage{booktabs}

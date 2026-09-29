@@ -115,7 +115,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \caption{Default optimization and simulation parameters.}
 \label{tab:default_params}
 \small
-\begin{tabular}{@{}lll@{}}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.18\textwidth}>{\RaggedRight\arraybackslash}X l@{}}
 \toprule
 \textbf{Category} & \textbf{Parameter} & \textbf{Default Value} \\ \midrule
 \multirow{5}{*}{\textbf{DSMC (SPARTA)}} & Steps (optimization) & 1100 \\
@@ -143,7 +143,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
  & Stagnation stop & 5 windows $\times$ 1000 generations \\
  & Constraint limits & $T_{\text{back}} < 350$\,K, $g < 25g$ \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \section{Research Design and Workflow}
@@ -422,18 +422,18 @@ The framework supports multiple TPS material presets as summarized in Table~\ref
     \centering
     \caption{TPS Material Presets Available in the StellarOrion Framework.}
     \label{tab:tps_materials}
-    \begin{tabular}{|l|c|c|c|c|}
+    \begin{tabularx}{\textwidth}{|l|c|c|c|>{\RaggedRight\arraybackslash}X|}
         \hline
         \textbf{Material} & \textbf{$\rho$ (kg/m$^3$)} & \textbf{$C_p$ (J/kg$\cdot$K)} & \textbf{$\epsilon$} & \textbf{Application} \\ \hline
         Nicalon SiC & 1468 & 1100 & 0.75 & Gen-2 HIAD TPS \\ \hline
         Pyrogel XTE & 200 & 1000 & 0.85 & FTPS blanket insulation \\ \hline
         Kapton & 1420 & 1090 & 0.70 & Polyimide film layers \\ \hline
         Multi-layer (stack) & -- & -- & -- & Combined FTPS stack \\ \hline
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 \subsection{Statistical Convergence Monitoring}
-As a Monte Carlo method, DSMC produces statistical noise that scales as $1/\sqrt{N_{\text{samples}}}$, where $N_{\text{samples}}$ is the number of independent particle-time samples accumulated. Convergence is monitored by tracking the running average of surface force and energy quantities. SPARTA's \texttt{stats\_interval} parameter (default: 100 steps) controls the frequency of convergence diagnostics. The simulation is considered statistically converged when the relative change in drag coefficient ($C_d$) and stagnation heat flux falls below 2\% over consecutive monitoring windows. For the baseline optimization runs, convergence is typically achieved after 500--1100 particle-time steps depending on the geometry complexity.
+As a Monte Carlo method, DSMC produces statistical noise that scales as $1/\sqrt{N_{\text{samples}}}$, where $N_{\text{samples}}$ is the number of independent particle-time samples accumulated. Convergence is monitored by tracking the running average of surface force and energy quantities. SPARTA's \texttt{\seqsplit{stats\_interval}} parameter (default: 100 steps) controls the frequency of convergence diagnostics. The simulation is considered statistically converged when the relative change in drag coefficient ($C_d$) and stagnation heat flux falls below 2\% over consecutive monitoring windows. For the baseline optimization runs, convergence is typically achieved after 500--1100 particle-time steps depending on the geometry complexity.
 
 \section{Physics-Informed Neural Network Refinement}
 
@@ -480,7 +480,7 @@ The total loss function combines PDE residuals with observational data from SPAR
     \mathcal{L}_{total} = \sum_{i=1}^{N_{PDE}} w_i \mathcal{L}_i^{PDE} + \sum_{j=1}^{N_{data}} w_j \mathcal{L}_j^{data}
 \end{equation}
 
-where $\mathcal{L}^{data}$ matches the PINN predictions against SPARTA grid checkpoints via \texttt{dde.icbc.PointSetBC}.
+where $\mathcal{L}^{data}$ matches the PINN predictions against SPARTA grid checkpoints via \texttt{\seqsplit{dde.icbc.PointSetBC}}.
 
 \subsection{Pragmatic Choice of Navier--Stokes for PINN Regularization}
 The use of continuum Navier--Stokes equations in the PINN is an intentional pragmatic choice, not a physical claim about the flow regime. The rationale is:
@@ -544,9 +544,9 @@ where $\mu(T)$ follows Sutherland's law (Eq.~\ref{eq:sutherland}).
 The checkpoint exchange between SPARTA and the PINN proceeds through the following steps:
 
 \begin{enumerate}
-    \item \textbf{SPARTA Grid Dump:} After convergence, SPARTA outputs a grid file (\texttt{grid.\{steps\}.out}) containing cell-centered macroscopic quantities: $(x_{lo},\,\allowbreak y_{lo},\,\allowbreak x_{hi},\,\allowbreak y_{hi},\,\allowbreak n,\,\allowbreak u,\,\allowbreak v,\,\allowbreak w,\,\allowbreak T,\,\allowbreak p)$.
+    \item \textbf{SPARTA Grid Dump:} After convergence, SPARTA outputs a grid file (\texttt{\seqsplit{grid.\{steps\}.out}}) containing cell-centered macroscopic quantities: $(x_{lo}, y_{lo}, x_{hi}, y_{hi}$, $n, u, v, w, T, p)$.
     
-    \item \textbf{Parsing:} The function \texttt{parse\_sparta\_grid()} extracts cell centers $(x_c, y_c) = \big(\frac{x_{lo}+x_{hi}}{2}, \frac{y_{lo}+y_{hi}}{2}\big)$ and converts number density to mass density:
+    \item \textbf{Parsing:} The function \texttt{\seqsplit{parse\_sparta\_grid()}} extracts cell centers $(x_c, y_c) = \big(\frac{x_{lo}+x_{hi}}{2}, \frac{y_{lo}+y_{hi}}{2}\big)$ and converts number density to mass density:
     \begin{equation}
         \rho = n \cdot \frac{M_{air}}{N_A}
     \end{equation}
@@ -694,7 +694,7 @@ The optimization explores a $d$-dimensional design space defined by the HIAD geo
     \centering
     \caption{Optimization Design Variables and Their Bounds (Rapisarda 2023 Envelope).}
     \label{tab:design_variables}
-    \begin{tabular}{|l|c|c|c|}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.25\textwidth}|c|c|X|}
         \hline
         \textbf{Variable} & \textbf{Symbol} & \textbf{Bounds} & \textbf{Unit} \\ \hline
         Aeroshell diameter & $D$ & $[0.5, 15.0]$ & m \\ \hline
@@ -704,7 +704,7 @@ The optimization explores a $d$-dimensional design space defined by the HIAD geo
         Toroid radius & $r_t$ & $[0.05, 0.3]$ & m \\ \hline
         Total mass & $m$ & $[50, 500]$ & kg \\ \hline
         TPS thickness & $\delta_{TPS}$ & $[0.005, 0.05]$ & m \\ \hline
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 \subsection{Latin Hypercube Sampling (LHS)}
@@ -745,7 +745,7 @@ The Bayes Opt surrogate is not a neural network. It is a Gaussian Process (GP) r
 
 where $c_0$ is the signal-amplitude hyperparameter, $\ell_{j}$ is the length scale of design variable $j$, and $\rho$ is the scaled Euclidean distance between two design points. The $\nu = 5/2$ choice yields a covariance that is twice continuously differentiable, which is the minimum smoothness required for the first-order derivative-based acquisition used below; $\nu = 1/2$ and $\nu = 3/2$ are both measurably rougher and give noisier acquisition surfaces at the 20--70 evaluation budgets of this thesis.
 
-The implementation initialises $c_0 = 1$ and $\ell_{j} = 1$ for all $d$ dimensions, and re-fits both by marginal-likelihood maximization under the bounds $c_0, \ell_{j} \in [10^{-3}, 10^{3}]$ with five restarts of the internal L-BFGS optimizer. The regressor is instantiated with $\alpha = 10^{-6}$ as the noise term and with response normalization ($\texttt{normalize\_y=True}$), so the GP models the mean of the normalized cost rather than its raw scale. This gives a posterior over the cost at any untried design:
+The implementation initialises $c_0 = 1$ and $\ell_{j} = 1$ for all $d$ dimensions, and re-fits both by marginal-likelihood maximization under the bounds $c_0, \ell_{j} \in [10^{-3}, 10^{3}]$ with five restarts of the internal L-BFGS optimizer. The regressor is instantiated with $\alpha = 10^{-6}$ as the noise term and with response normalization ($\texttt{\seqsplit{normalize\_y=True}}$), so the GP models the mean of the normalized cost rather than its raw scale. This gives a posterior over the cost at any untried design:
 
 \begin{equation}
     J(\mathbf{x}) \mid \mathcal{D} \sim \mathcal{N}\big(\mu(\mathbf{x}),\, \sigma^{2}(\mathbf{x})\big)
@@ -1013,14 +1013,14 @@ The Bayes Opt surrogate is a Gaussian Process regressor with a Mat\'ern 5/2 kern
     \begin{tabular}{|l|l|}
         \hline
         \textbf{Component} & \textbf{Specification} \\ \hline
-        Framework & scikit-learn \texttt{GaussianProcessRegressor} \\ \hline
+        Framework & scikit-learn \texttt{\seqsplit{GaussianProcessRegressor}} \\ \hline
         Input dimension & $d$ (design variables, $d = 4$--$7$) \\ \hline
         Covariance kernel & Mat\'ern, $\nu = 5/2$ \\ \hline
         Amplitude $c_0$ & Init. 1.0, refit in $[10^{-3}, 10^{3}]$ \\ \hline
         Length scales $\ell_j$ & Init. 1.0 per dimension, refit in $[10^{-3}, 10^{3}]$ \\ \hline
         Hyperparameter optimizer & L-BFGS, $5$ restarts (marginal likelihood) \\ \hline
         Noise term $\alpha$ & $10^{-6}$ \\ \hline
-        Response normalization & Enabled ($\texttt{normalize\_y=True}$) \\ \hline
+        Response normalization & Enabled ($\texttt{\seqsplit{normalize\_y=True}}$) \\ \hline
         Acquisition & Expected Improvement, $\xi = 0.01$ \\ \hline
         Candidates per iteration & $N_{cand} = 5000$ (uniform in bounds) \\ \hline
         Budget & $n_{initial} = 20$ LHS, $n_{iter} = 50$, seed 42 \\ \hline
@@ -1073,9 +1073,9 @@ To ensure full reproducibility of all ML results, the following standards are en
 \subsubsection*{Random Seed Control}
 All stochastic operations (weight initialization, data splitting, CCD point generation) are seeded with a fixed random seed:
 \begin{itemize}
-    \item PINN: \texttt{torch.manual\_seed(42)}, \texttt{numpy.random.seed(42)}
-    \item Bayes Opt: \texttt{torch.manual\_seed(123)}, \texttt{numpy.random.seed(123)}
-    \item GA: \texttt{numpy.random.seed(456)}
+    \item PINN: \texttt{\seqsplit{torch.manual\_seed(42)}}, \texttt{\seqsplit{numpy.random.seed(42)}}
+    \item Bayes Opt: \texttt{\seqsplit{torch.manual\_seed(123)}}, \texttt{\seqsplit{numpy.random.seed(123)}}
+    \item GA: \texttt{\seqsplit{numpy.random.seed(456)}}
 \end{itemize}
 
 \subsubsection*{Environment Specification}
@@ -1097,8 +1097,8 @@ All stochastic operations (weight initialization, data splitting, CCD point gene
 \subsubsection*{Model Checkpointing}
 All trained models are saved with:
 \begin{itemize}
-    \item Full model state dict (\texttt{model\_state\_dict})
-    \item Optimizer state dict (\texttt{optimizer\_state\_dict})
+    \item Full model state dict (\texttt{\seqsplit{model\_state\_dict}})
+    \item Optimizer state dict (\texttt{\seqsplit{optimizer\_state\_dict}})
     \item Training epoch count
     \item Final loss values
     \item Random seed used for initialization
