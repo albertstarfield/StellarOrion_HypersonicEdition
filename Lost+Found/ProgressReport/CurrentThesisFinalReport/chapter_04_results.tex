@@ -324,7 +324,7 @@ Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline geometry with the r
 
 \begin{figure}[H]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Convergence plot of the Bayesian optimisation objective against evaluation number, showing the incumbent best cost decreasing as evaluations are added.}}%
+    \BeginAccSupp{method=escape,ActualText={Bayesian optimization convergence over 70 evaluations, with the subtitle 20 Latin-Hypercube initial points plus 50 GP/Expected-Improvement iterations. Evaluated cost J of x is on a logarithmic vertical axis running from about 1.5 to over 2000, against evaluation index 0 to 69 on the horizontal. Blue circles are the 70 evaluated costs and the solid red line is the running-best incumbent, which falls from 1.7654 at the first evaluation to 1.6051 at index 37 and is then exactly flat. A vertical dashed line at index 20 marks the handover from the Latin-Hypercube design to the Bayesian stage, a horizontal dotted line marks the IRVE-3 baseline cost, and a gold star marks the round-1 optimum. Most early evaluations are expensive, reaching above 2000, and the costs collapse into a narrow band near 2 after about evaluation 30. Source: hiad_optimization_results.json, official run 2026-09-26.}}%
 \includegraphics[width=0.75\textwidth]{figures/bo_convergence.png}%
 \EndAccSupp{}%
     \caption{Convergence history of the optimization campaign (official run 2026-09-26). Blue points are the cost $J(\mathbf{x})$ at each of the 70 designs; the red curve is the running-best incumbent, which is non-increasing by construction.}
