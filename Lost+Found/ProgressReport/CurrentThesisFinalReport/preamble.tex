@@ -89,6 +89,16 @@
 \renewcommand{\cftsecleader}{\dotfill}
 \renewcommand{\cftsubsecleader}{\dotfill}
 
+% Several subsection titles are long enough that the page number cannot share
+% the last line, and the fixed-width \cftparfillskip plus a \texorpdfstring math
+% token left no legal break, so 5 TOC lines overran the text block by ~3.8pt.
+% Ragged-right lets TeX break a long title before the number instead of
+% overrunning; it does not change the visible content of any entry.
+\renewcommand{\cftpartfont}{\raggedright}
+\renewcommand{\cftchapfont}{\raggedright}
+\renewcommand{\cftsecfont}{\raggedright}
+\renewcommand{\cftsubsecfont}{\raggedright}
+
 %tambah "bab" x di daftar isi 
 \renewcommand*\cftchappresnum{\MakeUppercase{chapter}~}
 \renewcommand\chaptername{CHAPTER}
