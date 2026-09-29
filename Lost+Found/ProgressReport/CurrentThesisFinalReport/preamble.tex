@@ -1,6 +1,10 @@
 \usepackage{geometry}
 \geometry{verbose,tmargin=3cm,bmargin=3cm,lmargin=4cm,rmargin=3cm}
-\usepackage[pdftex,bookmarks=true,unicode=true,pdfusetitle,bookmarksnumbered=true,bookmarksopen=true,breaklinks=true,pdfborder={0 0 1},backref=true,colorlinks=false]{hyperref}
+% hidelinks keeps the /Link annotations (so cross-references stay clickable and
+% remain exposed to assistive technology) while suppressing the red border box
+% that pdfborder otherwise paints around every \ref, which is a print and
+% screen-reader visual defect in a submitted thesis.
+\usepackage[pdftex,bookmarks=true,unicode=true,pdfusetitle,bookmarksnumbered=true,bookmarksopen=true,breaklinks=true,hidelinks,backref=true,colorlinks=false]{hyperref}
 
 \usepackage[htt]{hyphenat}
 \usepackage{listing}
