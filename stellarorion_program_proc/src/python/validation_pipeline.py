@@ -611,7 +611,7 @@ def irve3_trajectory_model(
 #   K = sqrt(γ/(R_a)) * (2/(γ+1))^((γ+1)/(4(γ-1))) * (γ+1)/2)^((γ+1)/(2(γ-1)))
 #   For air at standard conditions: K ≈ 1.83e-4 in SI (when q in W/m², ρ in kg/m³, R in m, V in m/s)
 #
-# Calibration: Our DSMC at 51.8 km gives SG ≈ 12.2 W/cm² (single-point with ISA).
+# Calibration: Our DSMC at 51.8 km gives SG ≈ 16.14 W/cm² (single-point with ISA).
 # Rapisarda's trajectory-integrated SG = 15.26 W/cm² (with MCD v6.1 atmosphere).
 
 def sutton_graves_heat_flux(

@@ -4,16 +4,29 @@
 \begin{center}
 {\bfseries \Large LIST OF ABBREVIATIONS}
 \end{center}
-\vspace{3em}
+\vspace{1em}
 
-
-\begin{center}
-\begin{tabularx}{0.8\textwidth} { 
-   >{\raggedright\arraybackslash}X 
-   >{\raggedright\arraybackslash}X}
-    \hline
+% A tabularx/tabular box cannot break across pages, so this list overflowed
+% the text block (Overfull \vbox) and its tail was clipped. longtable breaks
+% across pages, so the list is now split cleanly instead of truncated.
+\begingroup
+\setlength{\LTleft}{0.5cm}
+\setlength{\LTright}{0.5cm}
+\renewcommand{\arraystretch}{1.05}
+\begin{longtable}{|p{4.0cm}|p{8.2cm}|}
+\hline
     \textbf{Abbreviation} & \textbf{Definition}            \\
-    \hline
+\hline
+\endfirsthead
+\multicolumn{2}{|c|}{continued from previous page} \\
+\hline
+    \textbf{Abbreviation} & \textbf{Definition}            \\
+\hline
+\endhead
+\hline \multicolumn{2}{|r|}{{Continued on next page}} \\ \hline
+\endfoot
+\hline
+\endlastfoot
     CFD         & Computational Fluid Dynamics          \\
     CCD         & Central Composite Design              \\
     C$_p$       & Specific Heat at Constant Pressure     \\
@@ -44,6 +57,6 @@
     SST         & Shear Stress Transport                 \\
     TPS         & Thermal Protection System              \\
     VSS         & Variable Soft Sphere                   \\
-    \hline
-\end{tabularx}
-\end{center}
+\hline
+\end{longtable}
+\endgroup
