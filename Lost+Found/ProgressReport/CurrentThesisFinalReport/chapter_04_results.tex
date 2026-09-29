@@ -50,14 +50,14 @@ The toroidal surface topology introduces localized variations in the radius of c
     \label{eq:crest_bound}
 \end{equation}
 
-Equation~\eqref{eq:crest_bound} is a \emph{bound} and not a prediction: it applies the $1/\sqrt{R}$ scaling to the crest radius while holding every other term of the correlation at its smooth-body value, and it neglects the concurrent increase in frontal area and the change in effective shock standoff that accompany a rippled surface. The measured augmentation is therefore substantially smaller than this bound. Comparing the scalloped and smooth DSMC solutions at the identical run condition (step 2200) gives a peak kinetic energy flux of 182.5 against 158.4~W/cm\textsuperscript{2} and a per-element average of 56.6 against 54.4~W/cm\textsuperscript{2}, i.e.\ increases of $15.2\%$ and $4.0\%$ respectively --- consistent in sign and in ordering with the geometric bound, and roughly a factor of five below it. The same comparison gives a $9.5\%$ increase in $C_d$ (1.4625 against 1.3358) and a $5.5\%$ increase in $|C_l|$, while the peak $g$-load and the heat load are unchanged because both geometries are evaluated at the same trajectory point. The SPARTA surface compute data (kinetic energy flux, \texttt{ke}) captures this spatial variation, as shown in Figure~\ref{fig:thermal_map}.
+Equation~\eqref{eq:crest_bound} is a \emph{bound} and not a prediction: it applies the $1/\sqrt{R}$ scaling to the crest radius while holding every other term of the correlation at its smooth-body value, and it neglects the concurrent increase in frontal area and the change in effective shock standoff that accompany a rippled surface. The measured augmentation is therefore substantially smaller than this bound. Comparing the scalloped and smooth DSMC solutions at the identical run condition (step 2200) gives a peak kinetic energy flux of 182.5 against 158.4~W/cm\textsuperscript{2} and a per-element average of 56.6 against 54.4~W/cm\textsuperscript{2}, i.e.\ increases of $15.2\%$ and $4.0\%$ respectively --- consistent in sign and in ordering with the geometric bound, and roughly a factor of five below it. The same comparison gives a $9.5\%$ increase in $C_d$ (1.4625 against 1.3358) and a $5.5\%$ increase in $|C_l|$, while the peak $g$-load and the heat load are unchanged because both geometries are evaluated at the same trajectory point. Those scalar kinetic energy fluxes are read from the SPARTA surface compute data (\texttt{ke}); Figure~\ref{fig:thermal_map} shows the temperature field of the same meridional slice and is a qualitative rendering, not a plot of \texttt{ke}.
 
 \begin{figure}[H]
     \centering
-    \BeginAccSupp{method=escape,ActualText={SPARTA surface temperature field map over the decelerator, coloured by temperature in kelvin, for the smooth baseline geometry. The run-condition box in the image gives a freestream velocity of 2700 m/s and a grid factor of 0.7.}}%
+    \BeginAccSupp{method=escape,ActualText={SPARTA temperature field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by temperature in kelvin on a scale from 0 to about 4200 kelvin. Heating is concentrated on the windward face, and the labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700 m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 1397929.}}%
 \includegraphics[width=0.75\textwidth]{figures/thermal_map_smooth.png}%
 \EndAccSupp{}%
-    \caption{Surface temperature distribution on the scalloped toroid-stack baseline configuration from SPARTA DSMC, rendered at $V_{\infty} = 2700$\,m/s and grid-factor 0.7. The scalloped renders are produced at the solver's default freestream velocity rather than at the $3{,}378$\,m/s trajectory point used for the scalar validation metrics of Table~\ref{tab:validation_full}, and are used here as a qualitative field visualisation only.}
+    \caption{Surface temperature distribution on the smooth-skinned toroid-stack configuration from SPARTA DSMC, shown as an axial--radial meridional slice at $V_{\infty} = 2700$\,m/s and grid-factor 0.7; the run-condition box in the panel reports Mach 10.53 on 40402 cells at build 1397929. The skin is smooth, so the scalloped grooving quantified in the preceding paragraph is \emph{not} present in this render --- the repository contains no scalloped field map. The panel is produced at the solver's default freestream velocity rather than at the $3{,}378$\,m/s trajectory point used for the scalar validation metrics of Table~\ref{tab:validation_full}, and is used as a qualitative field visualisation only.}
     \label{fig:thermal_map}
 \end{figure}
 
@@ -66,10 +66,10 @@ The SPARTA surface force computes provide the axial drag force ($f_x$) and trans
 
 \begin{figure}[H]
     \centering
-    \BeginAccSupp{method=escape,ActualText={SPARTA surface pressure field map over the decelerator, coloured by pressure in pascals, for the smooth baseline geometry. The run-condition box in the image gives a freestream velocity of 2700 m/s and a grid factor of 0.7.}}%
+    \BeginAccSupp{method=escape,ActualText={SPARTA pressure field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by pressure in pascals on a scale from 0 to about 18000 pascals. The elevated-pressure band follows the windward face where the stacked tori sit, and the labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the tori. The run-condition box gives a freestream velocity of 2700 m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 1397929.}}%
 \includegraphics[width=0.75\textwidth]{figures/pressure_map_smooth.png}%
 \EndAccSupp{}%
-    \caption{Surface pressure distribution on the scalloped toroid-stack configuration, showing the periodic pressure peaks associated with the toroid stack ($V_{\infty} = 2700$\,m/s, grid-factor 0.7; qualitative field visualisation).}
+    \caption{Surface pressure distribution on the smooth-skinned toroid-stack configuration, shown as an axial--radial meridional slice in which the elevated-pressure band follows the windward face along the stacked tori ($V_{\infty} = 2700$\,m/s, grid-factor 0.7, build 1397929; qualitative field visualisation). Because the panel is a meridional cut it cannot show the circumferential periodicity of the toroid stack, so no periodic peak structure is claimed here.}
     \label{fig:pressure_map}
 \end{figure}
 
@@ -87,10 +87,10 @@ The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock structure 
 
 \begin{figure}[H]
     \centering
-    \BeginAccSupp{method=escape,ActualText={SPARTA surface Mach number field map over the decelerator, coloured by local Mach number, for the smooth baseline geometry. The run-condition box in the image gives a freestream velocity of 2700 m/s and a grid factor of 0.7.}}%
+    \BeginAccSupp{method=escape,ActualText={SPARTA Mach number field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by local Mach number on a scale from 0 to 16. The freestream away from the body is near Mach 12, a low-Mach region of roughly Mach 4 wraps the forward and aft faces, and the wake behind the body is left as white speckle where no DSMC cells carry data. The labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700 m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 7dcfe87.}}%
 \includegraphics[width=0.75\textwidth]{figures/mach_map_smooth_M0_A0.png}%
 \EndAccSupp{}%
-    \caption{Mach number field around the smooth-body reference configuration at $V_{\infty} = 2700$\,m/s and grid-factor 0.7, showing the bow shock structure upstream of the aeroshell and the subsonic region in the near wake. The smooth reference is used for this panel because it isolates the shock-layer structure from the toroid-stack geometry.}
+    \caption{Mach number field around the smooth-skinned toroid-stack configuration at $V_{\infty} = 2700$\,m/s and grid-factor 0.7 (build 7dcfe87), again a meridional slice of the same toroid-stack geometry as Figure~\ref{fig:thermal_map} rather than a body without tori. The freestream is near Mach 12 and a low-Mach region of order Mach 4 encloses the forward and aft faces; this region is sub-freestream but \emph{not} subsonic. The wake behind the body is unpopulated and renders as white speckle, so no Mach value is claimed for it.}
     \label{fig:mach_map}
 \end{figure}
 
@@ -99,29 +99,31 @@ The velocity vectors (Figure~\ref{fig:velocity_vectors}) show the strong deceler
 
 \begin{figure}[H]
     \centering
-    \BeginAccSupp{method=escape,ActualText={SPARTA velocity-vector plot over the decelerator surface, showing the flow direction and magnitude in the boundary layer. The run-condition box in the image gives a freestream velocity of 2700 m/s and a grid factor of 0.7.}}%
+    \BeginAccSupp{method=escape,ActualText={SPARTA velocity-vector field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, with arrows coloured by velocity magnitude in metres per second on a scale from 0 to 2700. The freestream arrows are uniform across the domain, and a region of shorter green and teal arrows of reduced magnitude forms the decelerated wake behind the body. The labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700 m/s, Mach 10.53, 40403 cells, a grid factor of 1.5 and build 1d94db8.}}%
 \includegraphics[width=0.75\textwidth]{figures/velocity_vectors_smooth.png}%
 \EndAccSupp{}%
-    \caption{Velocity vector field on the scalloped toroid-stack configuration ($V_{\infty} = 2700$\,m/s), showing the decelerated wake region downstream of the toroid stack.}
+    \caption{Velocity vector field on the smooth-skinned toroid-stack configuration ($V_{\infty} = 2700$\,m/s), showing the decelerated wake region downstream of the toroid stack. This panel is a different run from Figures~\ref{fig:thermal_map}, \ref{fig:pressure_map}, \ref{fig:mach_map} and \ref{fig:knudsen_map}: its run-condition box reports grid-factor 1.5 on 40403 cells at build 1d94db8, where the others use grid-factor 0.7. The wake is therefore not directly comparable with the other field panels, and it is used only to show the qualitative existence of the decelerated region.}
     \label{fig:velocity_vectors}
 \end{figure}
 
 \subsection{Knudsen Number Distribution}
 The Knudsen number field (Figure~\ref{fig:knudsen_map}) maps the flow regime transition across the computational domain:
 \begin{itemize}
-    \item \textbf{Freestream:} $Kn > 1$ (free-molecular flow)
-    \item \textbf{Shock Layer:} $0.01 < Kn < 1$ (transitional flow, DSMC regime)
     \item \textbf{Near-Wall (Stagnation):} $Kn < 0.01$ (near-continuum)
+    \item \textbf{Shock Layer:} $0.01 < Kn < 1$ (transitional flow, DSMC regime)
+    \item \textbf{Freestream:} $Kn > 1$ (free-molecular flow)
 \end{itemize}
+
+These thresholds are ordered from the wall outwards, and only the first is exercised by Figure~\ref{fig:knudsen_map}: the freestream $Kn$ at the $2700$\,m/s condition of that panel is well below 1, so the panel shows continuum and near-continuum flow only and must not be cited as evidence of free-molecular flow.
 
 This distribution validates the use of DSMC for the majority of the flow field, as the transitional regime dominates the shock layer and near-wall regions at 51.8\,km altitude~\cite{plimpton2014sparta}.
 
 \begin{figure}[H]
     \centering
-    \BeginAccSupp{method=escape,ActualText={SPARTA Knudsen-number field map over the decelerator, showing where the flow transitions between continuum and free-molecular regimes for the smooth baseline geometry. The run-condition box in the image gives a freestream velocity of 2700 m/s and a grid factor of 0.7.}}%
+    \BeginAccSupp{method=escape,ActualText={SPARTA rarefaction map in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by the local Knudsen number on a logarithmic scale running from 10 to the minus 5 up to about 1.15 times 10 to the minus 2. The body surface and the forward stagnation region are blue, denoting continuum flow, while the wake behind the body is red, denoting kinetic dominance. The labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700 m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 7dcfe87.}}%
 \includegraphics[width=0.75\textwidth]{figures/knudsen_map_smooth_M0_A0.png}%
 \EndAccSupp{}%
-    \caption{Knudsen number distribution on the smooth-body reference configuration at $V_{\infty} = 2700$\,m/s and grid-factor 0.7, showing the flow-regime transition from free-molecular to near-continuum. As with Figure~\ref{fig:mach_map}, this is a legacy-condition reference render and is not part of the $V_{\infty} = 3378$\,m/s validation dataset.}
+    \caption{Knudsen number distribution on the smooth-skinned toroid-stack configuration at $V_{\infty} = 2700$\,m/s and grid-factor 0.7 (build 7dcfe87), shown as a meridional slice of the same toroid-stack geometry as Figure~\ref{fig:thermal_map}. The visible range runs from $10^{-5}$ to about $1.15\times10^{-2}$, so the field spans the continuum and near-continuum regimes and does \emph{not} reach the free-molecular regime at any point in the panel. The panel's own key labels the red wake as kinetic dominance above $Kn = 0.1$, a threshold the plotted range never attains; the key and the colour scale are therefore not mutually consistent, and the red wake should be read as the highest-$Kn$ region present rather than as proof of $Kn > 0.1$. As with Figure~\ref{fig:mach_map}, this is a legacy-condition reference render and is not part of the $V_{\infty} = 3378$\,m/s validation dataset.}
     \label{fig:knudsen_map}
 \end{figure}
 
