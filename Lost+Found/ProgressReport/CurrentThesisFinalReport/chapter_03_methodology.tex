@@ -8,7 +8,9 @@ Before detailing the computational framework, this section establishes the found
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/methodology_derivation.png}
+    \BeginAccSupp{method=escape,ActualText={Flowchart of the methodology derivation chain, linking each research axiom to the equation or solver step that implements it.}}%
+\includegraphics[width=\textwidth]{figures/methodology_derivation.png}%
+\EndAccSupp{}%
     \caption{Methodology derivation from first principles: axioms $\rightarrow$ governing equations $\rightarrow$ numerical methods $\rightarrow$ software implementation. The dashed red arrows indicate data flow between method layers.}
     \label{fig:methodology_derivation}
 \end{figure}
@@ -84,7 +86,9 @@ Figure~\ref{fig:governing_equations} summarizes the full derivation chain from k
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/governing_equations.png}
+    \BeginAccSupp{method=escape,ActualText={Panel of the governing equations used in the study, listing the continuity, momentum and energy equations together with the state and transport relations.}}%
+\includegraphics[width=\textwidth]{figures/governing_equations.png}%
+\EndAccSupp{}%
     \caption{Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier--Stokes continuum limit, Sutton--Graves engineering correlation, PINN neural approximation, to GA-based survivability optimization. Each layer is anchored by the research axioms defined in Table~\ref{tab:research_axioms}.}
     \label{fig:governing_equations}
 \end{figure}
@@ -95,7 +99,9 @@ The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/software_pipeline.png}
+    \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline, showing the Ada and SPARK simulation engine, the Python sidecar for PINN refinement, and the result post-processing stages exchanging data.}}%
+\includegraphics[width=\textwidth]{figures/software_pipeline.png}%
+\EndAccSupp{}%
     \caption{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver $\rightarrow$ PINN refinement $\rightarrow$ Bayes Opt surrogate $\rightarrow$ ParaView visualization. The feedback loop from Bayes Opt to the core engine enables GA-driven optimization.}
     \label{fig:software_pipeline}
 \end{figure}
@@ -147,7 +153,9 @@ To systematically isolate the effects of the ``scalloped'' surface geometry, the
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.273\textwidth]{figures/flowchart.png}
+    \BeginAccSupp{method=escape,ActualText={Vertical flowchart of the study workflow, showing successive analysis stages connected by arrows from the geometry definition down to the final results.}}%
+\includegraphics[width=0.273\textwidth]{figures/flowchart.png}%
+\EndAccSupp{}%
     \caption{Flowchart of the numerical research methodology.}
     \label{fig:flowchart}
 \end{figure}
@@ -172,7 +180,9 @@ The modeling phase targets two specific scales identified in previous NASA resea
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{figures/Hiad_DesignSpec.png}
+    \BeginAccSupp{method=escape,ActualText={Design specification drawing of the HIAD geometry, dimensioning the overall diameter, length and the stacked toroidal sections.}}%
+\includegraphics[width=0.8\textwidth]{figures/Hiad_DesignSpec.png}%
+\EndAccSupp{}%
     \caption{Geometric comparison between the 15\,m Inflatable HIAD and the 3.0\,m Rigid Baseline.}
     \label{fig:hiad_comparison}
 \end{figure}
@@ -182,7 +192,9 @@ The ``scalloped'' outer mold line (OML) is modeled based on the 6-toroid stack c
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.6\textwidth]{figures/Spec0.png}
+    \BeginAccSupp{method=escape,ActualText={Geometric specification view of the HIAD showing the reference torus and the defining dimensions used by the parametric model.}}%
+\includegraphics[width=0.6\textwidth]{figures/Spec0.png}%
+\EndAccSupp{}%
     \caption{Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface.}
     \label{fig:irve3_layout}
 \end{figure}
@@ -210,7 +222,9 @@ The two configurations established for this study -- \textbf{Configuration A (Sc
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.35\textwidth]{figures/Spec1.png}
+    \BeginAccSupp{method=escape,ActualText={Geometric specification view showing the half-cone angle and nose cap dimensions of the HIAD.}}%
+\includegraphics[width=0.35\textwidth]{figures/Spec1.png}%
+\EndAccSupp{}%
     \caption{Launch configuration of the HIAD system, showing the stowed constraint.}
     \label{fig:stowed_deployed}
 \end{figure}
