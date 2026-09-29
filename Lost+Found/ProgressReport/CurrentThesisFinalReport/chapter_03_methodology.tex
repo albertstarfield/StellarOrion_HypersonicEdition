@@ -20,7 +20,7 @@ The following axioms form the logical foundation of this research. Each is state
 \centering
 \caption{Research axioms derived from first principles and their literature basis.}
 \label{tab:research_axioms}
-\begin{tabular}{@{}clll@{}}
+\begin{tabularx}{\textwidth}{@{}c >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.20\textwidth} >{\RaggedRight\arraybackslash}p{0.24\textwidth}@{}}
 \toprule
 \textbf{ID} & \textbf{Axiom} & \textbf{Physical Basis} & \textbf{Literature Basis} \\ \midrule
 A1 & Conservation of mass, momentum, and energy & Continuum mechanics & Batchelor (1967), Anderson (1995) \\
@@ -31,7 +31,7 @@ A5 & Stagnation heating follows $q \propto \sqrt{\rho/R_n} \cdot V^3$ & Blunt bo
 A6 & DSMC converges to Boltzmann equation as $N \to \infty$ & Statistical convergence & Bird (1994), Wagner (1992) \\
 A7 & PINN residuals enforce PDE consistency in interpolation & Scientific machine learning & Raissi et al. (2019), Karniadakis et al. (2021) \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \subsection{Derivation Chain}
@@ -530,7 +530,7 @@ where $\mu(T)$ follows Sutherland's law (Eq.~\ref{eq:sutherland}).
 The checkpoint exchange between SPARTA and the PINN proceeds through the following steps:
 
 \begin{enumerate}
-    \item \textbf{SPARTA Grid Dump:} After convergence, SPARTA outputs a grid file (\texttt{grid.\{steps\}.out}) containing cell-centered macroscopic quantities: $(x_{lo}, y_{lo}, x_{hi}, y_{hi}, n, u, v, w, T, p)$.
+    \item \textbf{SPARTA Grid Dump:} After convergence, SPARTA outputs a grid file (\texttt{grid.\{steps\}.out}) containing cell-centered macroscopic quantities: $(x_{lo},\,\allowbreak y_{lo},\,\allowbreak x_{hi},\,\allowbreak y_{hi},\,\allowbreak n,\,\allowbreak u,\,\allowbreak v,\,\allowbreak w,\,\allowbreak T,\,\allowbreak p)$.
     
     \item \textbf{Parsing:} The function \texttt{parse\_sparta\_grid()} extracts cell centers $(x_c, y_c) = \big(\frac{x_{lo}+x_{hi}}{2}, \frac{y_{lo}+y_{hi}}{2}\big)$ and converts number density to mass density:
     \begin{equation}
@@ -742,13 +742,12 @@ where $\mathcal{D} = \{(\mathbf{x}_i, y_i)\}_{i=1}^{N}$ is the accumulated desig
 \subsubsection*{Acquisition Function: Expected Improvement}
 Because the cost $J$ is minimized, the Expected Improvement (EI) acquisition~\cite{morris1992,kennedy2000multi} measures the expected reduction below the incumbent best $J_{best} = \min_i y_i$, offset by a small exploration parameter $\xi$:
 
-\begin{equation}
-    \mathrm{EI}(\mathbf{x}) = \mathbb{E}\Big[\max\big(0,\, J_{best} - J(\mathbf{x}) - \xi\big)\Big]
-    = \big(J_{best} - \mu(\mathbf{x}) - \xi\big)\Phi(Z) + \sigma(\mathbf{x})\,\phi(Z),
-    \qquad
-    Z = \frac{J_{best} - \mu(\mathbf{x}) - \xi}{\sigma(\mathbf{x})}
+\begin{align}
+    \mathrm{EI}(\mathbf{x}) &= \mathbb{E}\Big[\max\big(0,\, J_{best} - J(\mathbf{x}) - \xi\big)\Big] \nonumber\\
+    &= \big(J_{best} - \mu(\mathbf{x}) - \xi\big)\Phi(Z) + \sigma(\mathbf{x})\,\phi(Z), \nonumber\\
+    Z &= \frac{J_{best} - \mu(\mathbf{x}) - \xi}{\sigma(\mathbf{x})}
     \label{eq:ei}
-\end{equation}
+\end{align}
 
 where $\Phi$ and $\phi$ are the standard normal cumulative distribution and density functions. The exploration parameter is fixed at $\xi = 0.01$, which is small relative to the $O(1)$ spread of the cost values recorded in Chapter~\ref{ch:results}; this keeps the search exploitation-dominated while retaining enough stochasticity to escape local minima. The denominator $\sigma(\mathbf{x})$ is floored at $10^{-9}$ so that the ratio defining $Z$ stays finite at points where the posterior variance collapses onto a previously sampled design.
 
@@ -853,14 +852,14 @@ The computational framework supports multiple solver backends to address differe
     \centering
     \caption{Solver Regimes and Selection Logic.}
     \label{tab:solver_regimes}
-    \begin{tabular}{|l|l|l|}
+    \begin{tabularx}{\textwidth}{|l|>{\RaggedRight\arraybackslash}p{0.22\textwidth}|>{\RaggedRight\arraybackslash}X|}
         \hline
         \textbf{Stage} & \textbf{Solver} & \textbf{Rationale} \\ \hline
         Exploration & SBO / PINN & Ultra-fast estimation of 1000s of design candidates \\ \hline
         Refinement & DSMC + PINN & Bridges noisy particle data and continuous flow fields \\ \hline
         Validation & DSMC Only & Eliminates neural network bias; pure kinetic ground truth \\ \hline
         High-Density (Future) & Fluent + PINN & For low-altitude peak heating ($Kn < 0.01$) \\ \hline
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 \section{Boundary Conditions and Domain Setup}
@@ -925,7 +924,7 @@ The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012
     \caption{IRVE-3 validation metrics. The MDAO column is the published Fay--Riddell reference; the StellarOrion column is the result of this work.}
     \label{tab:irve3_validation}
     \small
-    \begin{tabular}{|l|c|c|c|c|}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|}
         \hline
         \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion (This Work)} & \textbf{SO Error (\%)} \\ \hline
         Peak Heat Flux ($\dot{q}$) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & 16.14 W/cm$^2$ & $+12.4$ \\ \hline
@@ -933,7 +932,7 @@ The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012
         Peak Deceleration & 19.7\,$g$ & -- & 16.83\,$g$ & $-14.6$ \\ \hline
         Ballistic Coefficient ($\beta$) & 26.9 kg/m$^2$ & -- & 27.70 kg/m$^2$ & $+3.0$ \\ \hline
         Drag Coefficient ($C_d$) & -- & -- & 1.4625 & -- \\ \hline
-    \end{tabular}
+    \end{tabularx}
     \normalsize
 \end{table}
 
