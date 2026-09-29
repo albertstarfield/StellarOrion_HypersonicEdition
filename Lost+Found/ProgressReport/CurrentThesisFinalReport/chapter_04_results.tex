@@ -135,7 +135,7 @@ A grid independence study was performed by varying the grid-factor from 0.3 to 1
     \BeginAccSupp{method=escape,ActualText={SPARTA computational mesh map showing the axial and radial grid distribution used in the DSMC calculation.}}%
 \includegraphics[width=0.75\textwidth]{figures/grid_mesh_map_smooth.png}%
 \EndAccSupp{}%
-    \caption{Computational grid used in the SPARTA DSMC simulation with grid-factor 0.7.}
+    \caption{Computational grid used in the SPARTA DSMC simulation with grid-factor 0.7. Figure~\ref{fig:mesh_stats} is a second rendering of the same mesh and carries the same content rather than independent information.}
     \label{fig:grid_mesh}
 \end{figure}
 
@@ -194,14 +194,14 @@ The DSMC simulation convergence is monitored through residual tracking (Figure~\
 \end{figure}
 
 \section{Mesh Quality Statistics}
-The mesh quality metrics (Figure~\ref{fig:mesh_stats}) confirm that the Cartesian grid with grid-factor 0.7 provides adequate resolution for collision pairing and macroscopic property accumulation. The grid cell size is smaller than the local mean free path in the critical shock layer region, satisfying the DSMC resolution requirement~\cite{bird1994molecular}.
+The quantitative evidence for the chosen grid is the grid-independence study of Table~\ref{tab:grid_study} and the residual convergence of Figure~\ref{fig:convergence}, not a statistics panel: both figures in this section (Figures~\ref{fig:grid_mesh} and \ref{fig:mesh_stats}) render the mesh and report no numeric quality metric. Those results confirm that the Cartesian grid with grid-factor 0.7 provides adequate resolution for collision pairing and macroscopic property accumulation.
 
 \begin{figure}[H]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Plot of mesh statistics against cell resolution, summarising the number of cells and their distribution.}}%
+    \BeginAccSupp{method=escape,ActualText={SPARTA DSMC computational mesh grid, headed SPARTA DSMC - Computational Mesh Grid, plotted on axial and radial axes spanning about minus 5 to 9 metres axially and minus 5 to 5 metres radially. The populated cells form a rectangular block covering the outer domain, while a denser, irregular band of cells hugs the decelerator surface at the centre, drawn as a sphere-cone stack labelled T1 to T6 with T2 at S and T7 at S at the shoulder. No numerical mesh quality statistics, cell counts or histograms are plotted in this panel}}%
 \includegraphics[width=0.75\textwidth]{figures/mesh_statistics_smooth.png}%
 \EndAccSupp{}%
-    \caption{Mesh quality statistics for the computational grid.}
+    \caption{Computational mesh of the SPARTA domain for grid-factor 0.7, the second view of the same Cartesian mesh shown in Figure~\ref{fig:grid_mesh}. Despite the source filename, this panel renders the mesh itself and contains no mesh quality statistics, cell counts or histograms; the quantitative mesh evidence for this work is the grid-independence study of Table~\ref{tab:grid_study} and Figure~\ref{fig:convergence}, not this image.}
     \label{fig:mesh_stats}
 \end{figure}
 
