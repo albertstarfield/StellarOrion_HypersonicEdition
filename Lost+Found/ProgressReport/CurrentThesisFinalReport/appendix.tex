@@ -14,7 +14,7 @@ Table~\ref{tab:constants} lists the physical constants as defined in \texttt{ste
 \centering
 \caption{Fundamental physical constants used in StellarOrion (from \texttt{stellarorion\_types.ads}).}
 \label{tab:constants}
-\begin{tabular}{llll}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.26\textwidth} l l >{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Constant} & \textbf{Symbol} & \textbf{Value} & \textbf{Unit} \\
 \hline
@@ -33,7 +33,7 @@ Reference viscosity (air) & $\mu_{\text{ref}}$ & $1.716 \times 10^{-5}$ & Pa\,s 
 Sutherland reference temperature & $T_{\text{ref}}$ & $273.15$ & K \\
 Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J\,kg$^{-1}$\,K$^{-1}$ \\
 \hline
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \section{Material Survivability Limits}
@@ -45,7 +45,7 @@ Table~\ref{tab:survivability} lists the material failure thresholds used by the 
 \centering
 \caption{Material survivability limits enforced by StellarOrion.}
 \label{tab:survivability}
-\begin{tabular}{lll}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.34\textwidth} l >{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Parameter} & \textbf{Value} & \textbf{Source} \\
 \hline
@@ -53,7 +53,7 @@ SiC maximum temperature & 2073\,K & Material datasheet / Rapisarda (2023) Sec.\ 
 Kapton maximum temperature & 773\,K & DuPont Kapton HN datasheet \\
 Maximum g-load & 25\,$g$ & Rapisarda (2023) Sec.\ 5.4 \\
 \hline
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \section{Default Vehicle Geometry (IRVE-3 Baseline)}
@@ -140,7 +140,7 @@ Table~\ref{tab:chemistry} documents the gas-phase chemistry models available in 
 \centering
 \caption{Chemistry modes implemented in StellarOrion.}
 \label{tab:chemistry}
-\begin{tabular}{lll}
+\begin{tabularx}{\textwidth}{@{}l >{\RaggedRight\arraybackslash}p{0.40\textwidth} >{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Mode} & \textbf{Species} & \textbf{Application} \\
 \hline
@@ -148,7 +148,7 @@ Table~\ref{tab:chemistry} documents the gas-phase chemistry models available in 
 11-Species Earth & N$_2$, O$_2$, NO, N, O, N$^+$, O$^+$, NO$^+$, N$_2^+$, O$_2^+$, e$^-$ & High-enthalpy Earth entry with ionization \\
 Mars & CO$_2$, CO, N$_2$, O$_2$, NO, C, O, N, CN, CO$^+$, N$_2^+$ & Mars entry \\
 \hline
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \section{Solver Backends}
@@ -160,7 +160,7 @@ Table~\ref{tab:solvers} lists the computational solver backends supported by the
 \centering
 \caption{Solver backends in StellarOrion.}
 \label{tab:solvers}
-\begin{tabular}{lll}
+\begin{tabularx}{\textwidth}{@{}l l >{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Solver} & \textbf{Type} & \textbf{Description} \\
 \hline
@@ -169,7 +169,7 @@ OpenFOAM & CFD (RANS) & Continuum flow solver for low-altitude conditions \\
 PyFluent & CFD (ANSYS) & Commercial CFD interface for parametric studies \\
 PyANSYS & CFD (Mechanical) & Structural finite element analysis interface \\
 \hline
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \chapter{StellarOrion Code Architecture Overview}
@@ -209,7 +209,7 @@ Table~\ref{tab:validation_full} provides the complete validation comparison betw
 \caption{Complete IRVE-3 validation comparison (peak values).}
 \label{tab:validation_full}
 \small
-\begin{tabular}{|l|c|c|c|c|}
+\begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.15\textwidth}|>{\RaggedRight\arraybackslash}p{0.10\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|}
 \hline
 \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion (This Work)} & \textbf{SO Error (\%)} \\
 \hline
@@ -222,7 +222,7 @@ Aeroshell diameter & 3.0\,m & 3.0\,m & 3.0\,m & 0 \\
 Toroid count & 6 & 6 & 6 & 0 \\
 Toroid radius & 0.135\,m & 0.135\,m & 0.135\,m & 0 \\
 \hline
-\end{tabular}
+\end{tabularx}
 \normalsize
 \caption*{Flight data from NASA TP-2013-4012 and Rapisarda (2023) Table 4.10; MDAO values are the Fay--Riddell reconstruction; StellarOrion values are from the SPARTA DSMC simulation at grid-factor 0.7 (single trajectory point, step 2200). The MDAO column is a reference model, not a result of this work. The StellarOrion heat load and deceleration, being solver-resolved, fall below the trajectory-integrated flight values, whereas the StellarOrion heat flux is a Sutton--Graves correlation value evaluated at the run condition and therefore rises above the flight value.}
 \end{table}

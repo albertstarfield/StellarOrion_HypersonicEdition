@@ -9,7 +9,7 @@
 
 To establish a baseline for the expected aerothermal outcomes, a review of key flight tests and numerical studies was conducted. Table \ref{tab:research_comparison} summarizes the landmarks in HIAD research that support the triangulation of results in this study.
 
-\begin{longtable}{|p{3cm}|p{3.5cm}|p{4.5cm}|p{3cm}|}
+\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.20\textwidth}|>{\RaggedRight\arraybackslash}p{0.23\textwidth}|>{\RaggedRight\arraybackslash}p{0.29\textwidth}|>{\RaggedRight\arraybackslash}p{0.20\textwidth}|}
 \caption{Comparison of Landmark HIAD Aerothermal Research and Flight Tests} \label{tab:research_comparison} \\
 \hline
 \textbf{Research / Project} & \textbf{Key Geometry} & \textbf{Major Aerothermal Findings} & \textbf{Relevance to Outcome} \\ \hline
@@ -892,7 +892,7 @@ The Navier--Stokes equations presented in Section~\ref{sec:cfd_framework} are de
 
 \subsection{The Liouville Theorem and Phase Space}
 
-The state of a gas is described by the $N$-particle distribution function $f_N(\mathbf{r}_1, \mathbf{v}_1, t; \ldots; \mathbf{r}_N, \mathbf{v}_N, t)$, which gives the probability of finding particle 1 at position $\mathbf{r}_1$ with velocity $\mathbf{v}_1$, particle 2 at $(\mathbf{r}_2, \mathbf{v}_2)$, and so on. The time evolution of $f_N$ is governed by Liouville's theorem:
+The state of a gas is described by the $N$-particle distribution function $f_N(\mathbf{r}_1,\allowbreak \mathbf{v}_1,\allowbreak t;\ldots;\allowbreak \mathbf{r}_N,\allowbreak \mathbf{v}_N,\allowbreak t)$, which gives the probability of finding particle 1 at position $\mathbf{r}_1$ with velocity $\mathbf{v}_1$, particle 2 at $(\mathbf{r}_2, \mathbf{v}_2)$, and so on. The time evolution of $f_N$ is governed by Liouville's theorem:
 
 \begin{equation}
     \frac{\partial f_N}{\partial t} + \sum_{i=1}^{N} \left( \mathbf{v}_i \cdot \nabla_{\mathbf{r}_i} f_N + \frac{\mathbf{F}_i}{m} \cdot \nabla_{\mathbf{v}_i} f_N \right) = 0
