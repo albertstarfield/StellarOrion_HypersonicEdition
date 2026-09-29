@@ -3,22 +3,36 @@
 
 
 \begin{doublespace}
-\textbf{\smaller\Large{\uppercase{Investigation of Surface Geometry Effects on the Aerothermodynamics of a HIAD on IRVE-3}}}\\[3cm]
+% \judul already ends the paragraph, so the trailing blank line in identity.tex
+% means a following \\ would be "no line here to end". Terminate explicitly
+% with \par and space with \vspace instead.
+\textbf{\smaller\Large{\judul}}\par\vspace{2.4cm}
 \end{doublespace}
 \textbf{\MakeUppercase{\large THESIS}}\\
 \textbf{A thesis submitted in partial fulfillment of the requirements \\
-for the degree of Magister of Aerospace Engineering\\[2cm]}
+for the degree of Magister of Aerospace Engineering\\[1.6cm]}
 
 \textbf{By:} \\
 $
 \begin{matrix}
-    \text{Albert Starfield Wahyu Suryo Samudro} \\
-    23624003\\
+    \text{\penulis} \\
+    NIM. \nim\\
 \end{matrix}
 $
-\\
+\\[1.4cm]
+% Pembimbing. These were defined in identity.tex but never rendered on the
+% cover, so the title page carried no promotor. Drawn from the same macros the
+% approval sheet uses, so the two pages cannot drift apart.
+\textbf{Supervisor} \\
+\begin{minipage}[t]{0.72\textwidth}
+\centering
+\textbf{\pembimbingsatu}\\
+NIP. \NIPpbbsatu\\[0.5cm]
+\textbf{\pembimbingdua}\\
+NIP. \NIPpbbdua
+\end{minipage}\\[1.2cm]
 %logo itb, the gajah
-\includegraphics[width=0.18\linewidth]{figures/gajah_putih}
+\includegraphics[width=0.16\linewidth]{figures/gajah_putih}
 
 \vfill
 
