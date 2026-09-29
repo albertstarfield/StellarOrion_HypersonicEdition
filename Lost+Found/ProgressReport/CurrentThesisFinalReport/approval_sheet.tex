@@ -29,10 +29,12 @@ Approved on: \\[1cm]
 Signature:\\[3cm]
 
 % Two supervisors side by side
+% The rule width must not exceed the minipage width (0.45\textwidth ~ 6.57cm);
+% a fixed 7cm rule overflowed the right margin. \linewidth always fits.
 \noindent
 \begin{minipage}[t]{0.45\textwidth}
     \centering
-    \rule{7cm}{0.5pt}\\
+    \rule{\linewidth}{0.5pt}\\
     \textbf{\pembimbingsatu}\\
     NIP. \NIPpbbsatu\\
     \vspace{0.5em}
@@ -41,7 +43,7 @@ Signature:\\[3cm]
 \hfill
 \begin{minipage}[t]{0.45\textwidth}
     \centering
-    \rule{7cm}{0.5pt}\\
+    \rule{\linewidth}{0.5pt}\\
     \textbf{\pembimbingdua}\\
     NIP. \NIPpbbdua\\
     \vspace{0.5em}

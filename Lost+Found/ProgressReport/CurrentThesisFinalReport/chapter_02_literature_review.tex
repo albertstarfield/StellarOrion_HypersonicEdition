@@ -9,7 +9,7 @@
 
 To establish a baseline for the expected aerothermal outcomes, a review of key flight tests and numerical studies was conducted. Table \ref{tab:research_comparison} summarizes the landmarks in HIAD research that support the triangulation of results in this study.
 
-\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.20\textwidth}|>{\RaggedRight\arraybackslash}p{0.23\textwidth}|>{\RaggedRight\arraybackslash}p{0.29\textwidth}|>{\RaggedRight\arraybackslash}p{0.20\textwidth}|}
+\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.19\textwidth}|>{\RaggedRight\arraybackslash}p{0.21\textwidth}|>{\RaggedRight\arraybackslash}p{0.28\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|}
 \caption{Comparison of Landmark HIAD Aerothermal Research and Flight Tests} \label{tab:research_comparison} \\
 \hline
 \textbf{Research / Project} & \textbf{Key Geometry} & \textbf{Major Aerothermal Findings} & \textbf{Relevance to Outcome} \\ \hline
@@ -1113,7 +1113,7 @@ Table~\ref{tab:cfd_vs_dsmc} provides a systematic comparison of the continuum (R
     \centering
     \caption{Comparison of continuum CFD and DSMC approaches.}
     \label{tab:cfd_vs_dsmc}
-    \begin{tabular}{|p{3.5cm}|p{5cm}|p{5cm}|}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.22\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}X|}
     \hline
     \textbf{Aspect} & \textbf{Continuum CFD (RANS/NS)} & \textbf{DSMC} \\ \hline
     Governing equations & Navier--Stokes (conservation laws) & Boltzmann transport equation \\ \hline
@@ -1125,7 +1125,7 @@ Table~\ref{tab:cfd_vs_dsmc} provides a systematic comparison of the continuum (R
     Shock handling & Requires artificial dissipation, limiters & Naturally captured by particle dynamics \\ \hline
     Real-gas effects & Requires additional species transport equations & Built-in via molecular collision models (VSS, VHS) \\ \hline
     Code implementation & ANSYS Fluent, OpenFOAM, COMSOL & SPARTA, DAC, SMILE \\ \hline
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 \noindent This study employs \textit{both} paradigms: continuum CFD (SST $k$--$\omega$) is used in the literature review and methodology chapters to establish theoretical foundations, while DSMC (SPARTA) is used for the actual high-fidelity simulation of the HIAD re-entry flow field, as the IRVE-3 flight conditions fall in the transitional regime ($Kn \approx 0.03$).

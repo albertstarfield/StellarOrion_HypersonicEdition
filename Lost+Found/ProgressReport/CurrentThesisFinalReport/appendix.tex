@@ -3,18 +3,18 @@
 \chapter{StellarOrion Physical Constants and Code Reference}
 \label{app:code_constants}
 
-This appendix documents the physical constants and default parameters used in the StellarOrion simulation engine (\texttt{stellarorion\_program\_proc}), providing full traceability between the thesis equations and the Ada/SPARK implementation.
+This appendix documents the physical constants and default parameters used in the StellarOrion simulation engine (\texttt{\seqsplit{stellarorion\_program\_proc}}), providing full traceability between the thesis equations and the Ada/SPARK implementation.
 
 \section{Fundamental Physical Constants}
 \label{sec:fundamental_constants}
 
-Table~\ref{tab:constants} lists the physical constants as defined in \texttt{stellarorion\_types.ads}, which are used throughout the aerothermodynamic calculations presented in this thesis.
+Table~\ref{tab:constants} lists the physical constants as defined in \texttt{\seqsplit{stellarorion\_types.ads}}, which are used throughout the aerothermodynamic calculations presented in this thesis.
 
 \begin{table}[H]
 \centering
 \caption{Fundamental physical constants used in StellarOrion (from \texttt{stellarorion\_types.ads}).}
 \label{tab:constants}
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.26\textwidth} l l >{\RaggedRight\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.24\textwidth} >{\RaggedRight\arraybackslash}p{0.12\textwidth} >{\RaggedRight\arraybackslash}p{0.19\textwidth} >{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Constant} & \textbf{Symbol} & \textbf{Value} & \textbf{Unit} \\
 \hline
@@ -39,7 +39,7 @@ Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J\,kg$^{-1}$\,K$^{-1}
 \section{Material Survivability Limits}
 \label{sec:survivability_limits}
 
-Table~\ref{tab:survivability} lists the material failure thresholds used by the \texttt{Is\_Survivable} predicate in \texttt{stellarorion\_physics.ads} to determine whether a given flight condition exceeds TPS or structural limits.
+Table~\ref{tab:survivability} lists the material failure thresholds used by the \texttt{Is\_Survivable} predicate in \texttt{\seqsplit{stellarorion\_physics.ads}} to determine whether a given flight condition exceeds TPS or structural limits.
 
 \begin{table}[H]
 \centering
@@ -117,7 +117,7 @@ The StellarOrion engine includes several predefined TPS material presets for the
 \centering
 \caption{TPS material presets available in StellarOrion.}
 \label{tab:tps}
-\begin{tabular}{llccccc}
+\begin{tabularx}{\textwidth}{l l c c c c c X}
 \hline
 \textbf{Preset} & \textbf{Material} & $\rho$ (kg/m$^3$) & $c_p$ (J/kg\,K) & $k$ (W/m\,K) & $\varepsilon$ & $\delta$ (m) \\
 \hline
@@ -128,7 +128,7 @@ Kapton & Polyimide film & 1420 & 1090 & 0.12 & 0.70 & 0.005 \\
 Pyrogel & Aerogel insul.\ & 200 & 1000 & 0.02 & 0.85 & 0.025 \\
 Multi & Layer composite & 650 & 1050 & 0.10 & 0.80 & 0.040 \\
 \hline
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \section{Computational Chemistry Modes}
@@ -180,22 +180,22 @@ PyANSYS & CFD (Mechanical) & Structural finite element analysis interface \\
 The StellarOrion simulation engine is implemented in Ada/SPARK and organized into the following key packages:
 
 \begin{itemize}
-    \item \texttt{stellarorion\_types.ads} -- Physical constants, type definitions, vehicle and flight parameter records
-    \item \texttt{stellarorion\_physics.ads/adb} -- Aerothermodynamic calculations (mean free path, Knudsen number, Sutton--Graves heat flux, Fay--Riddell correlation, radiative equilibrium, ballistic coefficient, g-load, trajectory profiling)
-    \item \texttt{stellarorion\_geometry.ads/adb} -- Parametric CadQuery geometry generation (HIAD, Orion capsule)
-    \item \texttt{stellarorion\_simulation.ads/adb} -- SPARTA DSMC simulation driver and Docker integration
-    \item \texttt{stellarorion\_optimization.ads/adb} -- Genetic Algorithm optimizer with LHS/CCD design of experiments
-    \item \texttt{stellarorion\_pinn.ads/adb} -- PINN refinement via DeepXDE Python sidecar
-    \item \texttt{stellarorion\_calibration.ads/adb} -- Automated calibration against IRVE-3 flight data
+    \item \texttt{\seqsplit{stellarorion\_types.ads}} -- Physical constants, type definitions, vehicle and flight parameter records
+    \item \texttt{\seqsplit{stellarorion\_physics.ads/adb}} -- Aerothermodynamic calculations (mean free path, Knudsen number, Sutton--Graves heat flux, Fay--Riddell correlation, radiative equilibrium, ballistic coefficient, g-load, trajectory profiling)
+    \item \texttt{\seqsplit{stellarorion\_geometry.ads/adb}} -- Parametric CadQuery geometry generation (HIAD, Orion capsule)
+    \item \texttt{\seqsplit{stellarorion\_simulation.ads/adb}} -- SPARTA DSMC simulation driver and Docker integration
+    \item \texttt{\seqsplit{stellarorion\_optimization.ads/adb}} -- Genetic Algorithm optimizer with LHS/CCD design of experiments
+    \item \texttt{\seqsplit{stellarorion\_pinn.ads/adb}} -- PINN refinement via DeepXDE Python sidecar
+    \item \texttt{\seqsplit{stellarorion\_calibration.ads/adb}} -- Automated calibration against IRVE-3 flight data
 \end{itemize}
 
 \section{CLI Modes}
 
-The compiled binary supports 21 command-line interface modes including: \texttt{--self-test}, \texttt{--test sample}, \texttt{--compareCalibrate}, \texttt{--optimize}, \texttt{--trajectory}, \texttt{--pinn}, and others. Refer to the StellarOrion README for complete CLI documentation.
+The compiled binary supports 21 command-line interface modes including: \texttt{--self-test}, \texttt{--test sample}, \texttt{\seqsplit{--compareCalibrate}}, \texttt{--optimize}, \texttt{--trajectory}, \texttt{--pinn}, and others. Refer to the StellarOrion README for complete CLI documentation.
 
 \section{GNATprove Verification Status}
 
-All core physics packages (\texttt{stellarorion\_types}, \texttt{stellarorion\_physics}) have been formally verified using GNATprove at proof level 4, ensuring runtime error freedom (overflow, division by zero, index out of bounds) and contract correctness (pre/post-conditions, type invariants).
+All core physics packages (\texttt{\seqsplit{stellarorion\_types}}, \texttt{\seqsplit{stellarorion\_physics}}) have been formally verified using GNATprove at proof level 4, ensuring runtime error freedom (overflow, division by zero, index out of bounds) and contract correctness (pre/post-conditions, type invariants).
 
 \chapter{IRVE-3 Validation Data Summary}
 \label{app:validation_data}

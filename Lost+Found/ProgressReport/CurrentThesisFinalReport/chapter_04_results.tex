@@ -229,7 +229,7 @@ Table~\ref{tab:optimization_samples} summarizes selected samples from the three 
     \centering
     \caption{Selected optimization samples showing flight metric trade-offs across the design space.}
     \label{tab:optimization_samples}
-    \begin{tabular}{cccccc}
+    \begin{tabularx}{\textwidth}{ccccccX}
         \hline
         \textbf{Run} & \textbf{Sample} & \textbf{Diameter (m)} & \textbf{$\beta$ (kg/m$^2$)} & \textbf{$n_G$ ($g$)} & \textbf{$T_{back}$ (K)} \\
         \hline
@@ -240,7 +240,7 @@ Table~\ref{tab:optimization_samples} summarizes selected samples from the three 
         27 & 4 & 3.00 & 11.36 & 55.06 & 492.0 \\
         27 & 8 & 3.00 & 29.27 & 21.37 & 492.0 \\
         \hline
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 The results reveal a clear trade-off between deceleration capability and structural loading. Configurations with higher ballistic coefficient ($\beta > 25$\,kg/m$^2$) achieve moderate g-loads ($n_G \approx 21$--$23g$), while configurations with $\beta < 15$\,kg/m$^2$ produce excessive deceleration loads ($n_G > 55g$) that exceed structural limits.
@@ -302,7 +302,7 @@ Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline geometry with the r
     \centering
     \caption{IRVE-3 baseline versus round-1 Bayesian Optimization winner (official run 2026-09-26, 70 evaluations).}
     \label{tab:bo_before_after}
-    \begin{tabular}{lrrr}
+    \begin{tabularx}{\textwidth}{l r r r X}
         \toprule
         \textbf{Parameter} & \textbf{Baseline} & \textbf{Optimized} & \textbf{$\Delta$} \\
         \midrule
@@ -314,7 +314,7 @@ Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline geometry with the r
         Total heat load $Q(\mathbf{x})$ & 219.10\,J/cm$^2$ & 155.67\,J/cm$^2$ & $-28.95\,\%$ \\
         Cost $J(\mathbf{x})$ & 2.1626 & 1.6051 & $-25.78\,\%$ \\
         \bottomrule
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 \begin{figure}[H]
@@ -341,8 +341,8 @@ An analytic optimum is only meaningful if it survives re-simulation at full fide
 \subsection{Gate Protocol}
 The gate is enforced as a post-optimization stage and executes five legs~\cite{kennedy2000multi}:
 \begin{enumerate}
-    \item \textbf{Preconditions and geometry QA.} The compiled binary, the Docker daemon, the validation virtual environment, the pipeline module, and the reference CSV are all checked, followed by a seconds-fast \texttt{bin/main -{}-validate-only} geometry check. Every failure is reported with a path and a remedy, and the gate exits with status 1.
-    \item \textbf{DSMC leg.} The round-1 winner is re-simulated with \texttt{bin/main -{}-validate -{}-headless -{}-nose 2.971440 -{}-tradius 0.088460 -{}-angle 40.147949 -{}-skin scalloped -{}-steps 2200}, writing to a dedicated results directory. The reference dataset used for the baseline comparison is never overwritten.
+    \item \textbf{Preconditions and geometry QA.} The compiled binary, the Docker daemon, the validation virtual environment, the pipeline module, and the reference CSV are all checked, followed by a seconds-fast \texttt{\seqsplit{bin/main -{}-validate-only}} geometry check. Every failure is reported with a path and a remedy, and the gate exits with status 1.
+    \item \textbf{DSMC leg.} The round-1 winner is re-simulated with \texttt{\seqsplit{bin/main -{}-validate -{}-headless -{}-nose 2.971440 -{}-tradius 0.088460 -{}-angle 40.147949 -{}-skin scalloped -{}-steps 2200}}, writing to a dedicated results directory. The reference dataset used for the baseline comparison is never overwritten.
     \item \textbf{PINN leg.} The PINN refinement pipeline is executed on the freshly written dataset, producing a new unified comparison dataset under the gate directory.
     \item \textbf{Verdict.} The gate passes if and only if $q_{hybrid} \leq Q_{target} = 165.716$\,J/cm$^2$, and it records the prediction error $(q_{hybrid} - q_{analytic})/q_{analytic}$.
     \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q_{hybrid}/\allowbreak q_{analytic},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ is applied to the heat-load term of $J(\mathbf{x})$ and the optimizer is re-run, producing the corrected round-2 design.
@@ -377,7 +377,7 @@ The verified run analyzes 527 checks: 400 are discharged automatically by the pr
     \centering
     \caption{GNATprove level-4 discharge summary for the official run of 2026-09-27.}
     \label{tab:proof_summary}
-    \begin{tabular}{lrrrr}
+    \begin{tabularx}{\textwidth}{l r r r r X}
         \toprule
         \textbf{Check category} & \textbf{Total} & \textbf{Proved by prover} & \textbf{Proved by flow} & \textbf{Unproved} \\
         \midrule
@@ -389,13 +389,13 @@ The verified run analyzes 527 checks: 400 are discharged automatically by the pr
         \midrule
         \textbf{Total} & \textbf{527} & \textbf{400} & \textbf{24} & \textbf{103} \\
         \bottomrule
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 \subsection{Interpretation and Limitations}
-The 103 unproved checks are not distributed across the codebase; they are concentrated entirely in the post-processing analytics unit, with 101 in \texttt{stellarorion\_postprocessing.adb} and 2 in the corresponding specification. These are floating-point overflow and array-index obligations arising from numerical post-processing of DSMC output, and this unit was not modified during the present work. Accordingly, the gate introduces no new proof failures.
+The 103 unproved checks are not distributed across the codebase; they are concentrated entirely in the post-processing analytics unit, with 101 in \texttt{\seqsplit{stellarorion\_postprocessing.adb}} and 2 in the corresponding specification. These are floating-point overflow and array-index obligations arising from numerical post-processing of DSMC output, and this unit was not modified during the present work. Accordingly, the gate introduces no new proof failures.
 
-It is equally important to state what the gate does \emph{not} cover. GNATprove analyses the Ada/SPARK engine; the multi-objective cost function $J(\mathbf{x})$ that generated the 70 evaluations reported in Figures~\ref{fig:ccd_surface} and~\ref{fig:ga_convergence} is implemented in the Python sidecar (\texttt{hiad\_optimizer.py}), and is therefore outside the scope of the proof gate. The verification claim established here is accordingly bounded: the contract and proof obligations on the Ada/SPARK analytical, geometry, and flight-metric path are discharged, while both the post-processing analytics layer and the optimization driver in the Python sidecar remain formally open. What the gate contributes to the results in this chapter is a verified guarantee that the geometry construction, aerothermodynamic correlations, and flight-metric evaluation obey their stated contracts --- not a guarantee that the optimizer's search decisions or the surrogate model are formally proven.
+It is equally important to state what the gate does \emph{not} cover. GNATprove analyses the Ada/SPARK engine; the multi-objective cost function $J(\mathbf{x})$ that generated the 70 evaluations reported in Figures~\ref{fig:ccd_surface} and~\ref{fig:ga_convergence} is implemented in the Python sidecar (\texttt{\seqsplit{hiad\_optimizer.py}}), and is therefore outside the scope of the proof gate. The verification claim established here is accordingly bounded: the contract and proof obligations on the Ada/SPARK analytical, geometry, and flight-metric path are discharged, while both the post-processing analytics layer and the optimization driver in the Python sidecar remain formally open. What the gate contributes to the results in this chapter is a verified guarantee that the geometry construction, aerothermodynamic correlations, and flight-metric evaluation obey their stated contracts --- not a guarantee that the optimizer's search decisions or the surrogate model are formally proven.
 
 This distinction is stated explicitly rather than absorbed into a single headline number, because a verification claim is only meaningful relative to what was actually discharged. Reporting 76\,\% alone would understate the coverage of the physics core; reporting 100\,\% would be false. The defensible statement is the one in Table~\ref{tab:proof_summary}: the contract and proof obligations on the analytical and flight-metric path are discharged, and the residual risk is localized to numerical analytics post-processing.
 
@@ -426,7 +426,7 @@ The present framework is fully open-source, Python-based, and Docker-containeriz
     \centering
     \caption{Comparison of StellarOrion framework versus Rapisarda (2023) MDAO approach.}
     \label{tab:comparison_rapisarda}
-    \begin{tabular}{p{3.5cm} p{5cm} p{5cm}}
+    \begin{tabularx}{\textwidth}{>{\RaggedRight\arraybackslash}p{0.24\textwidth}>{\RaggedRight\arraybackslash}X>{\RaggedRight\arraybackslash}X}
         \hline
         \textbf{Aspect} & \textbf{Rapisarda (2023)} & \textbf{Present Framework} \\
         \hline
@@ -443,5 +443,5 @@ The present framework is fully open-source, Python-based, and Docker-containeriz
         Knudsen Number Mapping & Not performed & Full spatial $Kn$ field mapping \\
         Grid Independence & Not reported & Automated grid-factor optimization \\
         \bottomrule
-    \end{tabular}
+    \end{tabularx}
 \end{table}
