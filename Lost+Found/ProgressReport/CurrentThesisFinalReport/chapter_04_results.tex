@@ -14,7 +14,7 @@ The baseline simulation corresponds to the IRVE-3 reentry trajectory point at 51
     \item \textbf{Aeroshell Diameter ($D$):} 3.0\,m
     \item \textbf{Nose Radius ($R_N$):} 1.5\,m
     \item \textbf{Toroid Count:} 6 (stacked toroid configuration)
-    \item \textbf{Toroid Radius ($r_{torus}$):} 0.135\,m
+    \item \textbf{Toroid Radius ($r_{tor}$):} 0.135\,m
     \item \textbf{Grid Factor:} 0.7 (validated optimal against IRVE-3 data)
 \end{itemize}
 
@@ -44,9 +44,9 @@ The IRVE-3 flight measurement reports a peak heat flux of 14.36\,W/cm$^2$~\cite{
 It is important to state precisely what the 16.14\,W/cm$^2$ figure represents, because it is \emph{not} a directly sampled DSMC heat flux. It is the Sutton--Graves correlation evaluated at the DSMC run condition using the corrected coefficient and nose radius; it is therefore a DSMC-conditioned SG prediction rather than a raw DSMC measurement, and it is the same class of quantity as Rapisarda's trajectory-integrated SG value of 15.26\,W/cm$^2$. The raw DSMC surface data tell a different and noisier story. Reading the unsmoothed per-element kinetic energy flux ($f_1[3]$) from the SPARTA surface dumps yields a per-element average of 56.6\,W/cm$^2$ and a maximum single-cell sample of 182.5\,W/cm$^2$. The maximum is a single point-sample in a field where individual cells fluctuate by orders of magnitude --- including negative values at later time steps --- and is statistical scatter rather than a resolved physical peak. The per-element average of 56.6\,W/cm$^2$ is a true DSMC quantity but is inflated relative to the stagnation-point correlation because it averages over the whole scalloped surface, including the low-heating recirculation pockets, and because it is taken from an unsmoothed noisy field. For this reason the correlation-conditioned value is used as the headline heat-flux metric throughout, and the raw DSMC numbers are reported here only to document the noise characteristics of the surface data. Rapisarda avoids this ambiguity by applying a three-stage filter --- a sixth-order polynomial fit followed by a Wilmoth bridging function --- to the same kind of raw DSMC data, which is another reason the two heat-flux sets are not directly comparable.
 
 \subsection{Scalloping Effect on Local Heating}
-The toroidal surface topology introduces localized variations in the radius of curvature. At each toroid crest, the local radius of curvature ($r_{torus} = 0.135$\,m) is much smaller than the global nose radius ($R_N = 1.5$\,m). Since $\dot{q} \propto 1/\sqrt{R}$ in the Sutton--Graves scaling, the correlation sets an upper bound on the geometric enhancement available at a crest:
+The toroidal surface topology introduces localized variations in the radius of curvature. At each toroid crest, the local radius of curvature ($r_{tor} = 0.135$\,m) is much smaller than the global nose radius ($R_N = 1.5$\,m). Since $\dot{q} \propto 1/\sqrt{R}$ in the Sutton--Graves scaling, the correlation sets an upper bound on the geometric enhancement available at a crest:
 \begin{equation}
-    \left(\frac{\dot{q}_{crest}}{\dot{q}_{smooth}}\right)_{\mathrm{geometric\ bound}} = \sqrt{\frac{R_N}{r_{torus}}} = \sqrt{\frac{1.5}{0.135}} \approx 3.33
+    \left(\frac{\dot{q}_{crest}}{\dot{q}_{smooth}}\right)_{\mathrm{geometric\ bound}} = \sqrt{\frac{R_N}{r_{tor}}} = \sqrt{\frac{1.5}{0.135}} \approx 3.33
     \label{eq:crest_bound}
 \end{equation}
 
@@ -151,7 +151,7 @@ The simulation results are validated against the IRVE-3 post-flight aerothermal 
         \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion (This Work)} & \textbf{Assessment} \\
         \hline
         Aeroshell Diameter & 3.0\,m & -- & 3.0\,m & Geometry Sync \\
-        Toroid Radius ($r_{torus}$) & 0.135\,m & 0.135\,m & 0.135\,m & Geometry Sync \\
+        Toroid Radius ($r_{tor}$) & 0.135\,m & 0.135\,m & 0.135\,m & Geometry Sync \\
         Peak Heat Flux ($\dot{q}$) & 14.36\,W/cm$^2$ & 13.83\,W/cm$^2$ & 16.14\,W/cm$^2$ & MDAO $-3.7\%$; SO $+12.4\%$ \\
         Total Heat Load ($Q$) & 195.06\,J/cm$^2$ & 195.17\,J/cm$^2$ & 165.72\,J/cm$^2$ & MDAO $+0.06\%$; SO $-15.0\%$ \\
         Peak Deceleration & 19.7\,$g$ & -- & 16.83\,$g$ & SO $-14.6\%$ \\
