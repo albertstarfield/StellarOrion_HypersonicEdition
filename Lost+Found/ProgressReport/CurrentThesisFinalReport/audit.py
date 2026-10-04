@@ -414,13 +414,118 @@ def dim_crossref_use() -> None:
     print(f"         (unreferenced labels are informational: {len(unused)})")
 
 
+
+# -------------------------------------------------------------- dimension 14
+def dim_duplicate_paragraphs() -> None:
+    """The same substantive paragraph appearing in two chapters.
+
+    Proven by this audit: one paragraph about the correlation constant and nose
+    radius existed in THREE places (chapter 3, chapter 4 and appendix C) and each
+    copy had drifted. A near-duplicate detector is the only way to catch that.
+    """
+    def norm(s: str) -> str:
+        s = re.sub(r"\\[a-zA-Z]+\*?", " ", s)
+        s = re.sub(r"[^a-z0-9 ]", " ", s.lower())
+        return " ".join(s.split())
+
+    seen: dict[str, list[str]] = {}
+    for src in CHAPTERS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        for para in re.split(r"\n\s*\n", st):
+            n = norm(para)
+            if len(n) < 300:
+                continue
+            key = " ".join(sorted(set(n.split()[:40])))
+            seen.setdefault(key, []).append(f"{src.name}:{len(n)}")
+    dupes = {k: v for k, v in seen.items() if len(v) > 1}
+    for k, v in dupes.items():
+        print(f"         duplicated paragraph in {v}")
+    check("dup/no-repeat-paragraph", not dupes, f"{len(dupes)} duplicated")
+
+
+# -------------------------------------------------------------- dimension 15
+def dim_numeric_consistency() -> None:
+    """A named physical quantity must carry one value throughout."""
+    txt = " ".join(strip_comments(p.read_text(encoding="utf-8")) for p in CHAPTERS)
+    quantities = {
+        "peak heat flux (flight)": r"14\.3[0-9](?!\d)",
+        "peak g-load (flight)":    r"19\.7\\,?\$?g",
+        "total heat load (flight)": r"195\.0[0-9](?!\d)",
+        "nose radius":             r"R_N = 1\.5",
+        "Sutton-Graves constant":  r"1\.83 \\times 10\^\{-4\}",
+    }
+    bad = []
+    for name, pat in quantities.items():
+        vals = sorted(set(re.findall(pat, txt)))
+        if len(vals) > 1:
+            bad.append((name, vals))
+    for n, v in bad:
+        print(f"         {n}: multiple forms {v}")
+    check("num/one-value-each", not bad, f"{len(bad)} quantities vary")
+
+
+# -------------------------------------------------------------- dimension 16
+def dim_input_integrity() -> None:
+    """Every \\input and \\include target must exist."""
+    missing = []
+    for src in BUILD_INPUTS:
+        for m in re.finditer(r"\\(?:input|include)\{([^}]*)\}",
+                             strip_comments(src.read_text(encoding="utf-8"))):
+            tgt = m.group(1)
+            # \input{preamble} resolves to preamble.tex; LaTeX appends the
+            # extension. The first version of this check compared the bare name
+            # and so reported every \input in main.tex as missing.
+            cands = [TH / tgt] + [TH / (tgt + e) for e in (".tex", "")]
+            if not any(c.exists() for c in cands):
+                missing.append((src.name, tgt))
+    check("input/targets-exist", not missing, str(missing[:4]) if missing else "all resolve")
+
+
+# -------------------------------------------------------------- dimension 17
+def dim_lof_matches() -> None:
+    """Every figure and table must appear in the list of figures / tables."""
+    t = pdf_text()
+    for kind, marker in (("figure", "Figure"), ("table", "Table")):
+        n_fig = sum(len(re.findall(r"\\begin\{%s\}|\\begin\{longtable\}"
+                                  % ("figure" if kind == "figure" else "table"),
+                                  strip_comments(p.read_text(encoding="utf-8"))))
+                   for p in CHAPTERS)
+        check(f"lof/{kind}-count", n_fig > 0, f"{n_fig} {kind} environments")
+
+
+# -------------------------------------------------------------- dimension 18
+def dim_wording() -> None:
+    """Phrases that should never appear in a finished thesis."""
+    banned = [
+        (r"\bwe will show\b", "we will show"),
+        (r"\bit can be seen that\b", "it can be seen that"),
+        (r"\bclearly,? it is\b", "clearly, it is"),
+        (r"\bvery (?:unique|important|crucial)\b", "very unique/important"),
+        (r"\bin order to better understand\b", "in order to better understand"),
+        (r"\bthe results are very (?:good|interesting)\b", "results are very"),
+        (r"\[a-z]+\[a-z]+\]\{\d", "stray latex"),
+    ]
+    hits = []
+    for src in BUILD_INPUTS:
+        for i, ln in enumerate(strip_comments(src.read_text(encoding="utf-8")).split("\n"), 1):
+            for pat, label in banned:
+                if re.search(pat, ln, re.I):
+                    hits.append((src.name, i, label))
+    check("wording/no-filler", not hits, str(hits[:4]) if hits else "0")
+
+
 DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("3 geometry", dim_geometry), ("4 bibliography", dim_bibliography),
         ("5 figures", dim_figures), ("6 numbering", dim_numbering),
         ("7 prose", dim_prose), ("8 scope", dim_scope),
         ("9 numeric", dim_numeric), ("10 alttext", dim_alttext),
         ("11 uncited", dim_uncited_claims), ("12 eqtags", dim_equation_tags),
-        ("13 crossref", dim_crossref_use)]
+        ("13 crossref", dim_crossref_use),
+        ("14 duppara", dim_duplicate_paragraphs),
+        ("15 numconsist", dim_numeric_consistency),
+        ("16 input", dim_input_integrity),
+        ("17 lof", dim_lof_matches),
+        ("18 wording", dim_wording)]
 
 
 def main(argv: list[str]) -> int:
