@@ -1126,6 +1126,42 @@ def dim_longtable_headers() -> None:
     check("longtable/header-repeats", not missing, str(missing) if missing else "all repeat")
 
 
+
+# -------------------------------------------------------------- dimension 42
+def dim_frontmatter_numbers() -> None:
+    """Every number the abstract states must appear in the results it summarises.
+
+    This check exists because it would have caught a real error. The abstract was
+    rewritten to carry the quantitative results, which it previously did not, and
+    the rewrite gave both the total heat load and the peak deceleration a deviation
+    of -15.0 per cent. Only the heat load figure is -15.0 per cent; chapter 3
+    states the peak deceleration as -14.6 per cent. Reading the two lines above
+    each other is exactly how the error was introduced, and no other check looked
+    at the abstract at all.
+
+    A number is expected to be cited if it appears in the abstract and nowhere in
+    chapters 3, 4 or the appendices. Numbers that also appear elsewhere are
+    consistent by construction and are not reported.
+    """
+    def decimals(path):
+        s = strip_comments(Path(path).read_text(encoding="utf-8"))
+        s = re.sub(r"\\[a-zA-Z]+\*?(\[[^\]]*\])?(\{[^{}]*\})?", " ", s)
+        s = re.sub(r"\$[^$]*\$", " M ", s)
+        return s, set(re.findall(r"-?\d+\.\d+", s))
+
+    _, abs_nums = decimals(TH / "abstract.tex")
+    body = ""
+    for p in ("chapter_03_methodology.tex", "chapter_04_results.tex", "appendix.tex"):
+        body += strip_comments((TH / p).read_text(encoding="utf-8"))
+    body_nums = set(re.findall(r"-?\d+\.\d+", body))
+    orphan = sorted(abs_nums - body_nums)
+    for n in orphan:
+        print(f"         abstract states {n}, which appears nowhere in ch3, ch4 or the appendices")
+    check("front/abstract-traceable", not orphan,
+          f"{len(orphan)} untraceable" if orphan else
+          f"{len(abs_nums)} decimal numbers, all traceable to the results")
+
+
 DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("3 geometry", dim_geometry), ("4 bibliography", dim_bibliography),
         ("5 figures", dim_figures), ("6 numbering", dim_numbering),
@@ -1160,7 +1196,8 @@ DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("38 citedist", dim_citation_distribution),
         ("39 spelling", dim_spelling),
         ("40 dashrange", dim_numeric_range),
-        ("41 longtable", dim_longtable_headers)]
+        ("41 longtable", dim_longtable_headers),
+        ("42 frontmatter", dim_frontmatter_numbers)]
 
 
 def main(argv: list[str]) -> int:
