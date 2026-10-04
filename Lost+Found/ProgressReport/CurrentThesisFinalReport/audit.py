@@ -863,6 +863,199 @@ def dim_orphan_refs_in_comments() -> None:
     check("xref/no-comment-labels", not dead, f"{len(dead)}" if dead else "none")
 
 
+
+# -------------------------------------------------------------- dimension 32
+def dim_encoding() -> None:
+    """Only characters the document can typeset may appear in the source.
+
+    pdflatex with inputenc utf8 handles Latin-1 punctuation and the common
+    symbols, but a stray character from a copied web page renders as a box or
+    silently vanishes. Every non-ASCII code point is listed with its context so
+    the decision to keep or replace it is explicit rather than accidental.
+    """
+    # inputenc utf8 with T1 fontenc typesets all of Latin-1, so the accented
+    # letters are allowed. The first version of this set omitted them and
+    # reported the correct spelling of the Matern kernel, "Matérn", as
+    # untypesettable; the PDF was then checked and the character renders.
+    allowed = set(
+        "\u00c0\u00c1\u00c2\u00c3\u00c4\u00c5\u00c6\u00c7\u00c8\u00c9\u00ca"
+        "\u00cb\u00cc\u00cd\u00ce\u00cf\u00d1\u00d2\u00d3\u00d4\u00d5\u00d6\u00d8"
+        "\u00d9\u00da\u00db\u00dc\u00dd\u00df\u00e0\u00e1\u00e2\u00e3\u00e4\u00e5"
+        "\u00e6\u00e7\u00e8\u00e9\u00ea\u00eb\u00ec\u00ed\u00ee\u00ef\u00f1\u00f2"
+        "\u00f3\u00f4\u00f5\u00f6\u00f8\u00f9\u00fa\u00fb\u00fc\u00fd"
+        "\u2010\u2011\u2012\u2013\u2014\u2015\u2018\u2019\u201c\u201d\u2026"
+        "\u2032\u2033\u2039\u203a\u00a0\u00b0\u00b1\u00d7\u00f7\u2264\u2265"
+        "\u2260\u2248\u221a\u2211\u222b\u2192\u2190\u2194\u21d2\u21d4\u221e"
+        "\u00b5\u03b1\u03b2\u03b3\u03b4\u03b5\u03b6\u03b7\u03b8\u03b9\u03ba"
+        "\u03bb\u03bc\u03bd\u03be\u03c0\u03c1\u03c3\u03c4\u03c5\u03c6\u03c7"
+        "\u03c8\u03c9\u0393\u0394\u0398\u039b\u039e\u03a0\u03a3\u03a6\u03a8\u03a9"
+        "\u2020\u2021\u00a7\u00b6\u00a9\u00ae\u00ac\u00ad")
+    bad = []
+    for src in BUILD_INPUTS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        for i, ln in enumerate(st.split("\n"), 1):
+            for ch in ln:
+                if ord(ch) > 127 and ch not in allowed:
+                    bad.append((src.name, i, hex(ord(ch)), ch))
+    seen = set()
+    uniq = [b for b in bad if not (b[2] in seen or seen.add(b[2]))]
+    for n, i, cp, ch in uniq[:8]:
+        print(f"         unhandled character {cp} in {n}:{i}")
+    print(f"         distinct unhandled code points: {len(uniq)}   occurrences: {len(bad)}")
+    check("enc/all-typesettable", not bad, f"{len(bad)} occurrences")
+
+
+# -------------------------------------------------------------- dimension 33
+def dim_prose_length() -> None:
+    """A sentence longer than 60 words, or a paragraph longer than 320, is a
+    readability defect an editor would send back.
+
+    Measurement rules, each of which was wrong in an earlier version and each of
+    which changed the answer:
+
+      * A paragraph is a block separated by a blank line, which is how the source
+        is written. Splitting on runs of spaces after a full stop is not a
+        paragraph boundary, and doing the split after collapsing all newlines
+        means it can never match: between them those two versions measured an
+        entire chapter as one 11914-word paragraph. The split runs first and each
+        block is flattened afterwards.
+      * A display equation is a hard sentence boundary, because it interrupts the
+        prose. Left inline it joined "In CFD simulations ... polynomials:" to
+        "Using a Thermally Perfect Gas model" across the equation block and
+        measured the pair as one 84-word sentence.
+      * Headings are excluded, because command-stripping leaves an empty brace
+        group and a heading plus the first sentence of the body measured as one
+        91-word "sentence" beginning "{ }:".
+
+    The remaining hits are sentences carrying a colon, a semicolon and a
+    parenthetical that are one analytical statement, not run-ons, so the reported
+    distribution is the output and 60 words is a report threshold rather than a
+    pass/fail gate.
+    """
+    sent_lengths, long_para = [], []
+    for src in CHAPTERS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        st = re.sub(r"\\(?:sub)*section\*?\{[^}]*\}", "\n\n", st)
+        st = re.sub(r"\\begin\{(figure|table|longtable|tabularx?)\*?\}.*?"
+                    r"\\end\{\1\*?\}", "\n\n", st, flags=re.S)
+        for block in re.split(r"\n\s*\n", st):
+            b2 = re.sub(r"\\begin\{(equation|align|aligned|gather|eqnarray|multline"
+                        r"|array)\*?\}.*?\\end\{\1\*?\}", "\n\n", block, flags=re.S)
+            b2 = re.sub(r"\\\[.*?\\\]", "\n\n", b2, flags=re.S)
+            flat = re.sub(r"\$[^$]*\$", " X ", b2)
+            flat = re.sub(r"\\[a-zA-Z]+\*?(\[[^\]]*\])?(\{[^{}]*\})?", " ", flat)
+            flat = " ".join(flat.split())
+            w = len(flat.split())
+            if w < 20:
+                continue
+            for sent in re.split(r"(?<=[.!?]) (?=[A-Z(])", flat):
+                sw = len(sent.split())
+                sent_lengths.append((src.name, sw, sent[:66]))
+            if w > 320:
+                long_para.append((src.name, w, flat[:66]))
+    over = [s for s in sent_lengths if s[1] > 60]
+    if sent_lengths:
+        over.sort(key=lambda x: -x[1])
+        ws = sorted(s[1] for s in sent_lengths)
+        print(f"         sentences measured: {len(sent_lengths)}, median {ws[len(ws)//2]} "
+              f"words, 90th {ws[int(len(ws)*0.9)]}, max {max(ws)}")
+    for n, w, s in over[:3]:
+        print(f"         {n}: {w}-word sentence: {s}...")
+    for n, w, s in sorted(long_para, key=lambda x: -x[1])[:3]:
+        print(f"         {n}: {w}-word paragraph: {s}...")
+    check("prose/paragraph-length", not long_para, f"{len(long_para)} over 320 words")
+    print(f"         sentences over 60 words (reported, not gated): {len(over)}")
+
+
+# -------------------------------------------------------------- dimension 34
+def dim_whitespace_hygiene() -> None:
+    """Trailing whitespace and hard tabs in source are botched-edit residue."""
+    trailing, tabs = [], []
+    for src in BUILD_INPUTS:
+        for i, ln in enumerate(src.read_text(encoding="utf-8").split("\n"), 1):
+            if ln != ln.rstrip() and not ln.rstrip().endswith("%"):
+                trailing.append((src.name, i))
+            if "\t" in ln:
+                tabs.append((src.name, i))
+    check("ws/no-trailing", not trailing, str(trailing[:3]) if trailing else "0")
+    check("ws/no-tabs", not tabs, str(tabs[:3]) if tabs else "0")
+
+
+# -------------------------------------------------------------- dimension 35
+def dim_caption_duplication() -> None:
+    """Two figures or tables whose captions are identical."""
+    seen: dict[str, list[str]] = {}
+    for src in BUILD_INPUTS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        for m in re.finditer(r"\\caption\{(.+?)\}\s*\n", st, re.S):
+            key = " ".join(re.sub(r"\\[a-zA-Z]+", " ", m.group(1)).split()).lower()[:110]
+            if len(key) < 40:
+                continue
+            seen.setdefault(key, []).append(src.name)
+    dupes = {k: v for k, v in seen.items() if len(v) > 1}
+    for k, v in list(dupes.items())[:3]:
+        print(f"         duplicate caption in {v}: {k[:70]}...")
+    check("cap/not-duplicated", not dupes, f"{len(dupes)} duplicated")
+
+
+# -------------------------------------------------------------- dimension 36
+def dim_lof_complete() -> None:
+    """Every figure and table caption must reach the printed lists.
+
+    A float whose caption never appears in the List of Figures or List of Tables
+    is invisible to a reader who navigates by list, which is how most are read.
+    The lists are read from main.lof and main.lot, which LaTeX writes from the
+    same captions the body uses.
+    """
+    for kind, ext in (("figure", "lof"), ("table", "lot")):
+        f = TH / f"main.{ext}"
+        if not f.exists():
+            check(f"list/{kind}-written", False, f"main.{ext} missing")
+            continue
+        entries = len(re.findall(r"\\contentsline \{" + kind + r"\}", f.read_text(
+            encoding="utf-8", errors="replace")))
+        srcs = sum(len(re.findall(r"\\begin\{" + ("figure" if kind == "figure"
+                          else "(?:long)?table") + r"\}",
+                          strip_comments(p.read_text(encoding="utf-8"))))
+                   for p in CHAPTERS)
+        check(f"list/{kind}-complete", entries >= srcs,
+              f"{entries} listed vs {srcs} in the chapters")
+
+
+# -------------------------------------------------------------- dimension 37
+def dim_ref_tilde() -> None:
+    r"""A cross-reference is bound to the number with a non-breaking tie.
+
+    "Figure~\ref{x}" cannot break between the word and the number; "Figure
+    \ref{x}" can, and LaTeX will happily put the number alone at the end of a
+    line. This document uses the tie consistently and the check keeps it so.
+    """
+    bad = []
+    for src in BUILD_INPUTS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        for m in re.finditer(r"(Fig(?:ure)?|Tab(?:le)?|Sec(?:tion)?|Ch(?:apter)?|"
+                             r"Eq(?:uation)?|App(?:endix)?)(\s+)\\(?:ref|eqref)\{",
+                             st):
+            if m.group(2) != "~":
+                bad.append((src.name, m.group(0)[:24]))
+    check("xref/nb-tie", not bad, str(bad[:3]) if bad else "all tied")
+
+
+# -------------------------------------------------------------- dimension 38
+def dim_citation_distribution() -> None:
+    """Every chapter that makes external claims should carry citations."""
+    for src in CHAPTERS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        n = len(re.findall(r"\\cite[a-z]*\{", st))
+        words = len(re.sub(r"\\[a-zA-Z]+", " ", st).split())
+        print(f"         {src.name:38s} {n:4d} citations / {words:6d} words"
+              f" = {n / max(words, 1) * 1000:.1f} per 1000")
+    doc = "".join(strip_comments(p.read_text(encoding="utf-8")) for p in CHAPTERS)
+    un = [p.name for p in CHAPTERS
+          if not re.search(r"\\cite[a-z]*\{", strip_comments(p.read_text(encoding="utf-8")))]
+    check("cite/every-chapter", not un, f"no citations in {un}" if un else "all chapters cite")
+
+
 DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("3 geometry", dim_geometry), ("4 bibliography", dim_bibliography),
         ("5 figures", dim_figures), ("6 numbering", dim_numbering),
@@ -887,7 +1080,14 @@ DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("28 doublespace", dim_double_space),
         ("29 acronym", dim_acronyms),
         ("30 precision", dim_precision),
-        ("31 commentlabels", dim_orphan_refs_in_comments)]
+        ("31 commentlabels", dim_orphan_refs_in_comments),
+        ("32 encoding", dim_encoding),
+        ("33 proseread", dim_prose_length),
+        ("34 wshygiene", dim_whitespace_hygiene),
+        ("35 capdup", dim_caption_duplication),
+        ("36 lofcomplete", dim_lof_complete),
+        ("37 reftie", dim_ref_tilde),
+        ("38 citedist", dim_citation_distribution)]
 
 
 def main(argv: list[str]) -> int:

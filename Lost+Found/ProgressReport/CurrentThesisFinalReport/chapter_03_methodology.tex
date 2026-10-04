@@ -155,7 +155,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \section{Research Design and Workflow}
 This chapter outlines the computational framework utilized to investigate the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD). The research workflow follows a multi-stage numerical analysis approach, moving from parametric geometry generation to high-fidelity Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement, and Genetic Algorithm (GA) optimization.
 
-To systematically isolate the effects of the ``scalloped'' surface geometry, the methodology is designed to compare a baseline smooth sphere-cone against the proposed inflatable architecture under identical hypersonic flight conditions. The workflow is visualized in Figure \ref{fig:flowchart_ch1} and consists of six primary stages:
+To systematically isolate the effects of the ``scalloped'' surface geometry, the methodology is designed to compare a baseline smooth sphere-cone against the proposed inflatable architecture under identical hypersonic flight conditions. The workflow is visualized in Figure~\ref{fig:flowchart_ch1} and consists of six primary stages:
 
 The full pipeline is shown once, as Figure~\ref{fig:flowchart_ch1}, rather than repeated here; it is reproduced in neither place because the same artwork twice costs a page and invites the reader to compare two copies of one diagram.
 \par
@@ -187,7 +187,7 @@ The modeling phase targets two specific scales identified in previous NASA resea
 \end{figure}
 
 \subsection{Internal Architecture and Scallop Definition}
-The ``scalloped'' outer mold line (OML) is modeled based on the 6-toroid stack configuration utilized in the \cite{rapisarda2023mdao} MDAO baseline. The internal layout, including the stacked toroid arrangement, is illustrated in Figure \ref{fig:irve3_layout}~\cite{rapisarda2023mdao}.
+The ``scalloped'' outer mold line (OML) is modeled based on the 6-toroid stack configuration utilized in the \cite{rapisarda2023mdao} MDAO baseline. The internal layout, including the stacked toroid arrangement, is illustrated in Figure~\ref{fig:irve3_layout}~\cite{rapisarda2023mdao}.
 
 \begin{figure}[!htbp]
     \centering
@@ -205,7 +205,7 @@ The ``scalloped'' outer mold line (OML) is modeled based on the 6-toroid stack c
     \label{fig:irve3_layout}
 \end{figure}
 
-The specific geometric parameters used for the numerical model are summarized in Table \ref{tab:geom_params}:
+The specific geometric parameters used for the numerical model are summarized in Table~\ref{tab:geom_params}:
 
 \begin{table}[!htbp]
     \centering
@@ -236,7 +236,7 @@ The two configurations established for this study, \textbf{Configuration A (Scal
 
 
 \begin{enumerate}
-    \item \textbf{Configuration A (Scalloped):} This model utilizes the 6-toroid profile (T1--T6) shown in Figure \ref{fig:irve3_layout}. The valleys between toroids are the primary focus for analyzing heating augmentation and flow separation in the scalloped troughs.
+    \item \textbf{Configuration A (Scalloped):} This model utilizes the 6-toroid profile (T1--T6) shown in Figure~\ref{fig:irve3_layout}. The valleys between toroids are the primary focus for analyzing heating augmentation and flow separation in the scalloped troughs.
     \item \textbf{Configuration B (Smooth Baseline):} This tangent-cone model represents the ``Equivalent Rigid OML,'' allowing for the isolation of heating augmentation caused specifically by the toroidal troughs.
 \end{enumerate}
 
@@ -624,7 +624,7 @@ The checkpoint exchange between SPARTA and the PINN proceeds through the followi
 
 \begin{enumerate}
     \item \textbf{SPARTA Grid Dump:} After convergence, SPARTA outputs a grid file (\texttt{\seqsplit{grid.\{steps\}.out}}) containing cell-centered macroscopic quantities: $(x_{lo}, y_{lo}, x_{hi}, y_{hi}$, $n, u, v, w, T, p)$.
-    
+
     \item \textbf{Parsing:} The function \texttt{\seqsplit{parse\_sparta\_grid()}} extracts cell centers $(x_c, y_c) = \big(\frac{x_{lo}+x_{hi}}{2}, \frac{y_{lo}+y_{hi}}{2}\big)$ and converts number density to mass density:
     \begin{equation}
         \rho = n \cdot \frac{M_{air}}{N_A}
@@ -634,9 +634,9 @@ The checkpoint exchange between SPARTA and the PINN proceeds through the followi
         p = n \cdot k_B \cdot T
     \end{equation}
     where $k_B = 1.381 \times 10^{-23}$\,J/K.
-    
+
     \item \textbf{Subsampling:} If the number of grid cells exceeds 5000, a priority-based subsampling strategy is applied. Cells in high-gradient regions (where $p > 200$\,Pa or $T > 500$\,K) are preferentially retained (up to 2500 points), with the remaining budget filled by random sampling from low-gradient cells. This ensures the PINN receives sufficient training data in the shock layer and boundary layer where gradients are steepest.
-    
+
     \item \textbf{Anchor Point Creation:} The parsed and subsampled data points serve as \textit{anchor points} $\mathbf{X}_{anchors}$ for the PINN. These are passed to DeepXDE as observation boundary conditions via \texttt{PointSetBC}, which adds a data-matching residual to the loss function:
     \begin{equation}
         \mathcal{L}_{data} = \frac{1}{N_{obs}} \sum_{k=1}^{N_{obs}} \sum_{m=1}^{3} \big|\hat{y}_m(\mathbf{x}_k) - y_m^{obs}(\mathbf{x}_k)\big|^2
@@ -896,23 +896,23 @@ The GA employs the following operators to evolve the population:
 
 \begin{enumerate}
     \item \textbf{Selection:} Tournament selection with tournament size $k_t = 3$. The individual with the lowest $J$ among $k_t$ randomly chosen candidates is selected as a parent.
-    
+
     \item \textbf{Crossover:} Uniform crossover with probability $p_c = 0.8$. For each gene (design variable), a random binary mask determines which parent contributes the value:
     \begin{equation}
-        x_i^{child} = 
+        x_i^{child} =
         \begin{cases}
             x_i^{parent_1} & \text{if } m_i = 1 \\
             x_i^{parent_2} & \text{if } m_i = 0
         \end{cases}
     \end{equation}
     where $m_i \sim \text{Bernoulli}(0.5)$.
-    
+
     \item \textbf{Mutation:} Gaussian mutation with probability $p_m = 0.1$. Each gene is perturbed by:
     \begin{equation}
         x_i^{mutated} = x_i + \mathcal{N}(0, \sigma_m^2)
     \end{equation}
     where $\sigma_m$ is scaled to 10\% of the parameter range $[x_i^{\min}, x_i^{\max}]$. Integer parameters (e.g., $N_t$) are rounded to the nearest integer after mutation.
-    
+
     \item \textbf{Elitism:} The best $\lceil 0.1 \times P \rceil$ individuals (where $P$ is the population size) are preserved unchanged in the next generation.
 \end{enumerate}
 
@@ -930,7 +930,7 @@ The Bayes Opt Constraint Layer is a physics-informed post-processing step that f
 where $\Lambda_j$ is the penalty weight for constraint $j$ (set to $10^{6}$ for hard constraints), and $\phi_j$ is the penalty function:
 
 \begin{equation}
-    \phi_j(\mathbf{x}) = 
+    \phi_j(\mathbf{x}) =
     \begin{cases}
         0 & \text{if } g_j(\mathbf{x}) \leq 0 \quad \text{(feasible)} \\
         \big|g_j(\mathbf{x})\big|^2 & \text{if } g_j(\mathbf{x}) > 0 \quad \text{(infeasible)}
