@@ -2,7 +2,7 @@
 \label{ch:results}
 
 \section{Overview}
-This chapter presents the simulation results and discussion derived from the SPARTA DSMC computational framework described in Chapter 3. The analysis covers the baseline IRVE-3 geometry configuration, the aerothermal surface distributions, flow field characteristics, and the validation against flight data. All results are generated using the StellarOrion engine with the 6-toroid stacked HIAD geometry at the \cite{rapisarda2023mdao} MDAO baseline parameters~\cite{rapisarda2023mdao}.
+This chapter presents the simulation results and discussion derived from the SPARTA DSMC computational framework described in Chapter~\ref{ch:methodology}. The analysis covers the baseline IRVE-3 geometry configuration, the aerothermal surface distributions, flow field characteristics, and the validation against flight data. All results are generated using the StellarOrion engine with the 6-toroid stacked HIAD geometry at the \cite{rapisarda2023mdao} MDAO baseline parameters~\cite{rapisarda2023mdao}.
 
 \section{Baseline Configuration and Flight Conditions}
 The baseline simulation corresponds to the IRVE-3 reentry trajectory point at 51.8\,km altitude, with the following freestream conditions. The atmospheric quantities are the values returned by the atmospheric model evaluated at that altitude:
@@ -67,7 +67,7 @@ This comparison is not, however, a controlled one, and the limitation must be st
 \end{figure}
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={SPARTA temperature field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by temperature in kelvin on a scale from 0 to about 4200 kelvin. Heating is concentrated on the windward face, and the labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700 m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 1397929.}}%
+    \BeginAccSupp{method=escape,ActualText={SPARTA temperature field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by temperature in kelvin on a scale from 0 to about 4200 kelvin. Heating is concentrated on the windward face, and the labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700\,m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 1397929.}}%
 \includegraphics[width=0.75\textwidth]{figures/thermal_map_smooth.png}%
 \EndAccSupp{}%
     \caption{Surface temperature distribution on the smooth-skinned toroid-stack configuration from SPARTA DSMC, shown as an axial--radial meridional slice at $V_{\infty} = 2700$\,m/s and grid-factor 0.7; the run-condition box in the panel reports Mach 10.53 on 40402 cells at build 1397929. The skin is smooth, so the scalloped grooving quantified in the preceding paragraph is \emph{not} present in this render; the repository contains no scalloped field map. The panel is produced at the solver's default freestream velocity rather than at the $3{,}378$\,m/s trajectory point used for the scalar validation metrics of Table~\ref{tab:validation_full}, and is used as a qualitative field visualisation only.}
@@ -79,7 +79,7 @@ The SPARTA surface force computes provide the axial drag force ($f_x$) and trans
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={SPARTA pressure field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by pressure in pascals on a scale from 0 to about 18000 pascals. The elevated-pressure band follows the windward face where the stacked tori sit, and the labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the tori. The run-condition box gives a freestream velocity of 2700 m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 1397929.}}%
+    \BeginAccSupp{method=escape,ActualText={SPARTA pressure field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by pressure in pascals on a scale from 0 to about 18000 pascals. The elevated-pressure band follows the windward face where the stacked tori sit, and the labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the tori. The run-condition box gives a freestream velocity of 2700\,m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 1397929.}}%
 \includegraphics[width=0.75\textwidth]{figures/pressure_map_smooth.png}%
 \EndAccSupp{}%
     \caption{Surface pressure distribution on the smooth-skinned toroid-stack configuration, shown as an axial--radial meridional slice in which the elevated-pressure band follows the windward face along the stacked tori ($V_{\infty} = 2700$\,m/s, grid-factor 0.7, build 1397929; qualitative field visualisation). Because the panel is a meridional cut it cannot show the circumferential periodicity of the toroid stack, so no periodic peak structure is claimed here.}
@@ -100,7 +100,7 @@ The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock structure 
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={SPARTA Mach number field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by local Mach number on a scale from 0 to 16. The freestream away from the body is near Mach 12, a low-Mach region of roughly Mach 4 wraps the forward and aft faces, and the wake behind the body is left as white speckle where no DSMC cells carry data. The labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700 m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 7dcfe87.}}%
+    \BeginAccSupp{method=escape,ActualText={SPARTA Mach number field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by local Mach number on a scale from 0 to 16. The freestream away from the body is near Mach 12, a low-Mach region of roughly Mach 4 wraps the forward and aft faces, and the wake behind the body is left as white speckle where no DSMC cells carry data. The labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700\,m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 7dcfe87.}}%
 \includegraphics[width=0.75\textwidth]{figures/mach_map_smooth_M0_A0.png}%
 \EndAccSupp{}%
     \caption{Mach number field around the smooth-skinned toroid-stack configuration at $V_{\infty} = 2700$\,m/s and grid-factor 0.7 (build 7dcfe87), again a meridional slice of the same toroid-stack geometry as Figure~\ref{fig:thermal_map} rather than a body without tori. The freestream is near Mach 12 and a low-Mach region of order Mach 4 encloses the forward and aft faces; this region is sub-freestream but \emph{not} subsonic. The wake behind the body is unpopulated and renders as white speckle, so no Mach value is claimed for it.}
@@ -112,7 +112,7 @@ The velocity vectors (Figure~\ref{fig:velocity_vectors}) show the strong deceler
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={SPARTA velocity-vector field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, with arrows coloured by velocity magnitude in metres per second on a scale from 0 to 2700. The freestream arrows are uniform across the domain, and a region of shorter green and teal arrows of reduced magnitude forms the decelerated wake behind the body. The labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700 m/s, Mach 10.53, 40403 cells, a grid factor of 1.5 and build 1d94db8.}}%
+    \BeginAccSupp{method=escape,ActualText={SPARTA velocity-vector field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, with arrows coloured by velocity magnitude in metres per second on a scale from 0 to 2700. The freestream arrows are uniform across the domain, and a region of shorter green and teal arrows of reduced magnitude forms the decelerated wake behind the body. The labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700\,m/s, Mach 10.53, 40403 cells, a grid factor of 1.5 and build 1d94db8.}}%
 \includegraphics[width=0.75\textwidth]{figures/velocity_vectors_smooth.png}%
 \EndAccSupp{}%
     \caption{Velocity vector field on the smooth-skinned toroid-stack configuration ($V_{\infty} = 2700$\,m/s), showing the decelerated wake region downstream of the toroid stack. This panel is a different run from Figures~\ref{fig:thermal_map}, \ref{fig:pressure_map}, \ref{fig:mach_map} and \ref{fig:knudsen_map}: its run-condition box reports grid-factor 1.5 on 40403 cells at build 1d94db8, where the others use grid-factor 0.7. The wake is therefore not directly comparable with the other field panels, and it is used only to show the qualitative existence of the decelerated region.}
@@ -132,7 +132,7 @@ The distinction matters because it bounds the DSMC justification precisely. Sinc
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={SPARTA rarefaction map in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by the local Knudsen number on a logarithmic scale running from 10 to the minus 5 up to about 1.15 times 10 to the minus 2. The body surface and the forward stagnation region are blue, denoting continuum flow, while the wake behind the body is red, denoting kinetic dominance. The labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700 m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 7dcfe87.}}%
+    \BeginAccSupp{method=escape,ActualText={SPARTA rarefaction map in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, coloured by the local Knudsen number on a logarithmic scale running from 10 to the minus 5 up to about 1.15 times 10 to the minus 2. The body surface and the forward stagnation region are blue, denoting continuum flow, while the wake behind the body is red, denoting kinetic dominance. The labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700\,m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 7dcfe87.}}%
 \includegraphics[width=0.75\textwidth]{figures/knudsen_map_smooth_M0_A0.png}%
 \EndAccSupp{}%
     \caption{Knudsen number distribution on the smooth-skinned toroid-stack configuration at $V_{\infty} = 2700$\,m/s and grid-factor 0.7 (build 7dcfe87), shown as a meridional slice of the same toroid-stack geometry as Figure~\ref{fig:thermal_map}. The visible range runs from $10^{-5}$ to about $1.15\times10^{-2}$, so the field spans the continuum and near-continuum regimes and does \emph{not} reach the free-molecular regime at any point in the panel. The panel's own key labels the red wake as kinetic dominance above $Kn = 0.1$, a threshold the plotted range never attains; the key and the colour scale are therefore not mutually consistent, and the red wake should be read as the highest-$Kn$ region present rather than as proof of $Kn > 0.1$. As with Figure~\ref{fig:mach_map}, this is a legacy-condition reference render and is not part of the $V_{\infty} = 3378$\,m/s validation dataset.}
@@ -157,18 +157,18 @@ The simulation results are validated against the IRVE-3 post-flight aerothermal 
 
 \begin{table}[!htbp]
     \centering
-    \caption{Validation of SPARTA DSMC results against IRVE-3 flight data, with the MDAO (Fay--Riddell) reference and this work shown as distinct columns. $^{\dagger}$The heat-flux entry is a Sutton--Graves correlation evaluated at $R_N = 1.5$\,m and $V = 3{,}378$\,m/s, not a quantity resolved by the solver; the flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only. See the accompanying text for the second Sutton--Graves value the code reports and why the two differ.}
+    \caption{Validation of SPARTA DSMC results against IRVE-3 flight data, with the MDAO (Fay--Riddell) reference and this work shown as distinct columns. $^{\dagger}$The heat-flux entry is a Sutton--Graves correlation evaluated at $R_N = 1.5$ m and $V = 3{,}378$ m/s, not a quantity resolved by the solver; the flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only. See the accompanying text for the second Sutton--Graves value the code reports and why the two differ.}
     \label{tab:validation}
     \small
     \begin{tabularx}{\textwidth}{l >{\RaggedRight\arraybackslash}p{0.13\textwidth} >{\RaggedRight\arraybackslash}p{0.15\textwidth} >{\RaggedRight\arraybackslash}p{0.15\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X}
         \hline
         \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion\allowbreak{} (This Work)} & \textbf{Assessment} \\
         \hline
-        Aeroshell Diameter & 3.0\,m & n/a & 3.0\,m & Geometry Sync \\
-        Toroid Radius ($r_{tor}$) & 0.135\,m & 0.135\,m & 0.135\,m & Geometry Sync \\
+        Aeroshell Diameter & 3.0 m & n/a & 3.0 m & Geometry Sync \\
+        Toroid Radius ($r_{tor}$) & 0.135 m & 0.135 m & 0.135 m & Geometry Sync \\
         Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm\textsuperscript{2} & 13.83 W/cm\textsuperscript{2} & 16.14 W/cm\textsuperscript{2}$^{\dagger}$ & MDAO $-3.7\%$; SO $+12.4\%$, \emph{not like-for-like} \\
         Total Heat Load ($Q$) & 195.06 J/cm\textsuperscript{2} & 195.17 J/cm\textsuperscript{2} & 165.72 J/cm\textsuperscript{2} & MDAO $+0.06\%$; SO $-15.0\%$ \\
-        Peak Deceleration & 19.7\,g & n/a & 16.83\,g & SO $-14.6\%$ \\
+        Peak Deceleration & 19.7 g & n/a & 16.83 g & SO $-14.6\%$ \\
         \hline
     \end{tabularx}
     \normalsize
@@ -186,7 +186,7 @@ The temperature distribution within the toroidal pockets shows that the recircul
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Line plot of temperature against time measured at the centre of a scallop pocket, showing the thermal response of the valley flow. The run-condition box in the image gives a freestream velocity of 2700 m/s and a grid factor of 0.7.}}%
+    \BeginAccSupp{method=escape,ActualText={Line plot of temperature against time measured at the centre of a scallop pocket, showing the thermal response of the valley flow. The run-condition box in the image gives a freestream velocity of 2700\,m/s and a grid factor of 0.7.}}%
 \includegraphics[width=0.75\textwidth]{figures/scallop_pocket_temp_smooth_M0_A0.png}%
 \EndAccSupp{}%
     \caption{Axial temperature trace sampled at the centre of a scallop pocket ($V_{\infty} = 2700$\,m/s, grid-factor 0.7). The trace is flat at ambient temperature upwind of the pocket, rises sharply through the shock at the pocket leading edge to a peak near $3.1 \times 10^3$\,K, and decays through the recirculation region, quantifying the thermal shelter that the pocket provides relative to the heated crests.}
@@ -265,7 +265,7 @@ Table~\ref{tab:optimization_samples} summarizes selected samples from the three 
     \end{tabularx}
 \end{table}
 
-The results reveal a clear trade-off between deceleration capability and structural loading. Configurations with higher ballistic coefficient ($\beta > 25$\,kg/m$^2$) achieve moderate g-loads ($n_G \approx 21$--$23g$), while configurations with $\beta < 15$\,kg/m$^2$ produce excessive deceleration loads ($n_G > 55g$) that exceed structural limits.
+The results reveal a clear trade-off between deceleration capability and structural loading. Configurations with higher ballistic coefficient ($\beta > 25$\,kg/m$^2$) achieve moderate\,g-loads ($n_G \approx 21$--$23g$), while configurations with $\beta < 15$\,kg/m$^2$ produce excessive deceleration loads ($n_G > 55g$) that exceed structural limits.
 
 \subsection{Thermal Constraint Violation}
 A critical finding is that the vehicle does not survive the thermal constraint. With the active thermal protection system the engine reports a backface temperature of 955.66\,K, which exceeds the Kapton limit of 773\,K by 182.7\,K and the IRVE-3 flexible-TPS structural limit of 523.15\,K by 432.5\,K ~\cite{old2013irve3postflight}. The active system is not a homogeneous slab but the five-ply IRVE-3 flexible TPS: two 0.60\,mm Nextel BF-20 outer fabric plies, two 2.50\,mm Pyrogel 2250 insulation plies, and one 0.15\,mm aluminized Kapton/Kevlar gas barrier~\cite{guidotti2023efesto2materials}, totalling 6.35\,mm with a series thermal resistance of $R = 0.25605$\,m$^2$\,K/W and an outer emissivity of 0.80. This supersedes the 25.4\,mm homogeneous silicon-carbide slab of the LOFTID baseline, which was the LOFTID baseline and was four times too thick for this vehicle. The survivability verdict is set by the four-way predicate implemented in the engine, which requires the surface temperature to stay below 2073\,K, the backface temperature below 773\,K, and both the measured and computed deceleration below 25\,g. The thermal channel is therefore the binding constraint, while the deceleration channel passes with margin.
@@ -296,7 +296,7 @@ The multi-objective cost function $J(\mathbf{x})$ of Sec.~\ref{sec:ga_opt} is ev
         \midrule
         $Q_{target}$ & Total heat load target & 165.716~J/cm\textsuperscript{2} \\
         $\dot{q}_{ref}$  & Peak heat flux reference (IRVE-3) & 14.361~W/cm\textsuperscript{2} \\
-        $\tau$           & Aerodynamic heating timescale & 13.582\,s \\
+        $\tau$           & Aerodynamic heating timescale & 13.582 s \\
         $C_{d,ref}$      & Drag coefficient reference (IRVE-3) & 1.4625 \\
         $Q_{flight}$     & IRVE-3 flight heat load & 195.058~J/cm\textsuperscript{2} \\
         \bottomrule
@@ -336,13 +336,13 @@ Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline geometry with the r
         \toprule
         \textbf{Parameter} & \textbf{Baseline} & \textbf{Optimized} & \textbf{$\Delta$} \\
         \midrule
-        Nose radius $R_N$ & 1.5000\,m & 2.9714\,m & $+98.10\,\%$ \\
-        Torus radius $r_{tor}$ & 0.1350\,m & 0.0885\,m & $-34.47\,\%$ \\
-        Half-cone angle $\theta_c$ & 60.00$^\circ$ & 40.15$^\circ$ & $-33.09\,\%$ \\
-        Drag coefficient $C_d$ & 1.6073 & 1.5597 & $-2.96\,\%$ \\
-        Sutton--Graves heat flux & 16.14~W/cm\textsuperscript{2} & 11.47~W/cm\textsuperscript{2} & $-28.95\,\%$ \\
-        Total heat load $Q(\mathbf{x})$ & 219.10~J/cm\textsuperscript{2} & 155.67~J/cm\textsuperscript{2} & $-28.95\,\%$ \\
-        Cost $J(\mathbf{x})$ & 2.1626 & 1.6051 & $-25.78\,\%$ \\
+        Nose radius $R_N$ & 1.5000 m & 2.9714 m & $+98.10 \%$ \\
+        Torus radius $r_{tor}$ & 0.1350 m & 0.0885 m & $-34.47 \%$ \\
+        Half-cone angle $\theta_c$ & 60.00$^\circ$ & 40.15$^\circ$ & $-33.09 \%$ \\
+        Drag coefficient $C_d$ & 1.6073 & 1.5597 & $-2.96 \%$ \\
+        Sutton--Graves heat flux & 16.14~W/cm\textsuperscript{2} & 11.47~W/cm\textsuperscript{2} & $-28.95 \%$ \\
+        Total heat load $Q(\mathbf{x})$ & 219.10~J/cm\textsuperscript{2} & 155.67~J/cm\textsuperscript{2} & $-28.95 \%$ \\
+        Cost $J(\mathbf{x})$ & 2.1626 & 1.6051 & $-25.78 \%$ \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -430,7 +430,7 @@ The present framework is fully open-source and built on a hybrid Ada and Python 
         \textbf{Aspect} & \textbf{\cite{rapisarda2023mdao}} & \textbf{Present Framework} \\
         \hline
         Aerodynamic Solver & Modified Newtonian panel method & SPARTA DSMC (Boltzmann equation) \\
-        Flow Regime Validity & Hypersonic continuum only ($Kn < 0.001$) & All regimes ($Kn = 0$ to $\infty$); local field reaches slip flow, not free molecular, at 51.8\,km \\
+        Flow Regime Validity & Hypersonic continuum only ($Kn < 0.001$) & All regimes ($Kn = 0$ to $\infty$); local field reaches slip flow, not free molecular, at 51.8 km \\
         Gas Model & Calorically perfect ($\gamma = 1.4$) & 5-species air with VSS collisions \\
         Thermal Analysis & 1D F-TPS with contact conductance & Sutton--Graves + Fay--Riddell correlations + DSMC surface computes \\
         Optimization & Sequential parametric sweeps & GP Mat\'ern 5/2 + Expected Improvement (Bayes Opt), 70 evaluations \\

@@ -1,5 +1,6 @@
 \clearpage
 \chapter{METHODOLOGY}
+\label{ch:methodology}
 
 \section{Research Axioms and First Principles}
 \label{sec:axioms}
@@ -80,7 +81,7 @@ The Bayes Opt surrogate model approximates the mapping from design variables to 
 J = w_\beta \left(\frac{\beta_{\text{calc}} - \beta_{\text{target}}}{10}\right)^2 + \sum_{i} w_i \, \mathbb{1}\!\left[y_i^{(\text{pred})} > y_i^{(\text{limit})}\right] \cdot 10^{15}
 \label{eq:cost_function_optimization}
 \end{equation}
-where hard constraint violations (backface temperature $> 350$\,K, g-load $> 25g$) are penalized with $10^{15}$.
+where hard constraint violations (backface temperature $> 350$\,K,\,g-load $> 25g$) are penalized with $10^{15}$.
 
 Figure~\ref{fig:governing_equations} summarizes the full derivation chain from kinetic theory to optimization, showing the governing equation at each step and the axiom that anchors it.
 
@@ -128,9 +129,9 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
  & Grid factor & 0.7 \\
  & Particle weighting ($f_{\text{num}}$) & $1.5 \times 10^{20}$ \\
  & Chemistry model & 5-species (N$_2$, O$_2$, NO, N, O) \\ \midrule
-\multirow{3}{=}{\textbf{Flight Conditions}} & $V_\infty$ & 3378\,m/s \\
- & $T_\infty$ & 268.41\,K \\
- & $n_\infty$ & $1.63 \times 10^{22}$\,/m$^3$ \\ \midrule
+\multirow{3}{=}{\textbf{Flight Conditions}} & $V_\infty$ & 3378 m/s \\
+ & $T_\infty$ & 268.41 K \\
+ & $n_\infty$ & $1.63 \times 10^{22}$ /m$^3$ \\ \midrule
 \multirow{3}{=}{\textbf{DoE (CCD)}} & Method & Face-Centered CCD \\
  & Samples ($N$) & 25 ($2^4 + 2 \times 4 + 1$) \\
  & Active variables & Diameter, Angle, Toroids, Nose \\ \midrule
@@ -144,9 +145,9 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
  & Amplitude $c_0$, length scales $\ell_j$ & Initialized at 1, refit in $[10^{-3}, 10^{3}]$ \\
  & Acquisition & Expected Improvement, $\xi = 0.01$ \\
  & Budget & 20 LHS + 50 Bayes Opt ($n_{eval} = 70$), seed 42 \\ \midrule
-\multirow{3}{=}{\textbf{GA Optimization}} & Generations & 20\,000 \\
+\multirow{3}{=}{\textbf{GA Optimization}} & Generations & 20 000 \\
  & Stagnation stop & 5 windows $\times$ 1000 generations \\
- & Constraint limits & $T_{\text{back}} < 350$\,K, $g < 25g$ \\
+ & Constraint limits & $T_{\text{back}} < 350$ K, $g < 25g$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -179,7 +180,7 @@ The modeling phase targets two specific scales identified in previous NASA resea
 \begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Two side-by-side shaded three-dimensional renderings comparing inflatable and rigid decelerator concepts. The left panel shows a slender, sharply pointed olive-green inflated sphere-cone labelled '15m Inflatable', drawn at a shallow angle so that it appears as a long thin lens. The right panel shows a stubby, blunt-nosed orange-brown rigid body captioned '4.57m Rigid', viewed nearly end-on. The two panels are separated by a vertical rule. The contrast is between a large-diameter deployable inflatable and a small-diameter rigid aeroshell; the diameters are those printed in the panels themselves and are not to scale relative to each other.}}%
-\includegraphics[width=0.8\textwidth]{figures/Hiad_DesignSpec.png}%
+\includegraphics[width=0.657\textwidth]{figures/Hiad_DesignSpec.png}%
 \EndAccSupp{}%
     \caption{Size scaling between deployable inflatable and rigid HIAD concepts: the 15\,m inflatable aeroshell (left) against the 4.57\,m rigid aeroshell (right). The two diameters are the values printed in the panels; note that the rigid reference in this figure is 4.57\,m and \emph{not} the 3.0\,m IRVE-3 baseline through which the scaling discussion in this section is framed. The rendering compares overall form and scale only, not internal structure.}
     \label{fig:hiad_comparison}
@@ -198,7 +199,7 @@ The ``scalloped'' outer mold line (OML) is modeled based on the 6-toroid stack c
     % the alt text and caption below therefore describe only what is legible,
     % and the caption records the truncation explicitly.
     \BeginAccSupp{method=escape,ActualText={Cutaway cross-section of the deployed HIAD, 3 metres or 118 inches in diameter, showing the vehicle's internal subsystems. A central cylindrical equipment stack sits above the nose; callout arrows from the right label, from top to bottom, the cameras mounted on the upper struts, the attitude control system abbreviated ACS, the telemetry and power system, the centre-of-gravity offset system, and the inflation system. Below the stack a row of seven orange toroidal bladders runs the length of the vehicle, labelled T1 through T6 along the right-hand side with a seventh, smaller shoulder torus T7 at the far right end. The bladders rest against a pink flexible thermal protection layer, and the payload is carried in the central cavity. Two callout labels on the left-hand side are cut off by the edge of the source image and are only partially legible.}}%
-\includegraphics[width=0.6\textwidth]{figures/Spec0.png}%
+\includegraphics[width=0.568\textwidth]{figures/Spec0.png}%
 \EndAccSupp{}%
     \caption{Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface. The six primary bladders T1--T6 are stacked along the vehicle axis with the smaller shoulder torus T7 at the aft end. Note that the source illustration is cropped at both left and right edges, which truncates two of its own callout labels (the flexible TPS callout and the T7 marker); the reproduction is faithful to the available source, which exists in no higher resolution elsewhere in the repository.}
     \label{fig:irve3_layout}
@@ -213,12 +214,12 @@ The specific geometric parameters used for the numerical model are summarized in
     \begin{tabular}{|l|c|r|}
         \hline
         \textbf{Parameter} & \textbf{Value} & \textbf{Source / Reference} \\ \hline
-        Deployed Diameter ($D_{max}$) & 3.0\,m & IRVE-3 Flight Article \\ \hline
+        Deployed Diameter ($D_{max}$) & 3.0 m & IRVE-3 Flight Article \\ \hline
         Forebody Cone Angle ($\theta_c$) & $60^\circ$ & Rapisarda MDAO Baseline \\ \hline
         Toroid Count ($N$) & 6 & Rapisarda MDAO Baseline \\ \hline
-        Toroid Radius ($r_{tor}$) & 0.135\,m & Rapisarda Table 4.1 \\ \hline
-        Nose Radius ($R_N$) & 1.5\,m & IRVE-3 Specification (3\,m diameter) \\ \hline
-        Entry Mass ($m$) & 281\,kg & IRVE-3 Flight Article \\ \hline
+        Toroid Radius ($r_{tor}$) & 0.135 m & Rapisarda Table 4.1 \\ \hline
+        Nose Radius ($R_N$) & 1.5 m & IRVE-3 Specification (3 m diameter) \\ \hline
+        Entry Mass ($m$) & 281 kg & IRVE-3 Flight Article \\ \hline
     \end{tabular}
 \end{table}
 
@@ -228,7 +229,7 @@ The two configurations established for this study, \textbf{Configuration A (Scal
 \begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Cutaway of the HIAD in its stowed launch configuration inside the launch vehicle, headed Stowed with a quoted 18.5 inch diameter. A long tapered stowed pack sits above the vehicle internals, which include a pale green spherical payload and stacked avionics and battery boxes; below them a green upper stage band and a pale blue lower stage are labelled 22 inch diameter, and three orange landing legs extend downward from the lower stage.}}%
-\includegraphics[width=0.35\textwidth]{figures/Spec1.png}%
+%
 \EndAccSupp{}%
     \caption{Launch configuration of the HIAD system, showing the stowed constraint.}
     \label{fig:stowed_deployed}
@@ -303,14 +304,14 @@ SPARTA~\cite{plimpton2014sparta} tracks millions of simulated particles through 
 \subsection{Solver Timestep and Physical Time Window}
 \label{sec:timestep}
 
-The particle timestep is fixed at $\Delta t = 1\times10^{-6}$\,s (1\,\textmu s) and is written directly into the generated solver input, so every run in this study uses the same value and no adaptive stepping is active. The production runs reported in Chapter~\ref{ch:results} carry $2200$ particle-time steps, giving a total simulated time of
+The particle timestep is fixed at $\Delta t = 1\times10^{-6}$\,s (1\,\textmu\,s) and is written directly into the generated solver input, so every run in this study uses the same value and no adaptive stepping is active. The production runs reported in Chapter~\ref{ch:results} carry $2200$ particle-time steps, giving a total simulated time of
 
 \begin{equation}
     t_{sim} = N_{steps}\,\Delta t = 2200 \times 10^{-6}\ \text{s} = 2.2\ \text{ms}
 \label{eq:tsim}
 \end{equation}
 
-A timestep constraint is required for DSMC independently of accuracy: the collision frequency must not exceed the sampling rate, so that no pair of particles passes through one another between collisions. For the VSS model this is the requirement that $\Delta t \ll \tau_{coll}$, where $\tau_{coll}$ is the mean collision time. At the validated condition the local Knudsen number places the shock layer in the slip regime, where the mean free path is of order millimetres and the molecular thermal speed of order several hundred metres per second, giving a mean collision time comfortably in the nanosecond range. The $1$\,\textmu s step is therefore roughly three orders of magnitude longer than $\tau_{coll}$, which is the standard operating regime for DSMC: the constraint that matters in practice is that the timestep remain short compared with the \emph{flow} timescales of interest, not the collision time.
+A timestep constraint is required for DSMC independently of accuracy: the collision frequency must not exceed the sampling rate, so that no pair of particles passes through one another between collisions. For the VSS model this is the requirement that $\Delta t \ll \tau_{coll}$, where $\tau_{coll}$ is the mean collision time. At the validated condition the local Knudsen number places the shock layer in the slip regime, where the mean free path is of order millimetres and the molecular thermal speed of order several hundred metres per second, giving a mean collision time comfortably in the nanosecond range. The $1$\,\textmu\,s step is therefore roughly three orders of magnitude longer than $\tau_{coll}$, which is the standard operating regime for DSMC: the constraint that matters in practice is that the timestep remain short compared with the \emph{flow} timescales of interest, not the collision time.
 
 It is therefore necessary to state plainly what the $2.2$\,ms window of Eq.~\eqref{eq:tsim} does and does not resolve. The relevant timescales at this trajectory point are:
 
@@ -486,13 +487,13 @@ The thermal protection system is not a homogeneous slab. The engine models it as
         \toprule
         \textbf{Ply} & \textbf{Material} & \textbf{Thickness} & \textbf{$k$ (W/(m$\cdot$K))} \\
         \midrule
-        1 & Nextel BF-20 outer fabric   & 0.60\,mm & 0.25 \\
-        2 & Nextel BF-20 outer fabric   & 0.60\,mm & 0.25 \\
-        3 & Pyrogel 2250 insulation    & 2.50\,mm & 0.02 \\
-        4 & Pyrogel 2250 insulation    & 2.50\,mm & 0.02 \\
-        5 & Aluminized Kapton/Kevlar gas barrier & 0.15\,mm & 0.12 \\
+        1 & Nextel BF-20 outer fabric   & 0.60 mm & 0.25 \\
+        2 & Nextel BF-20 outer fabric   & 0.60 mm & 0.25 \\
+        3 & Pyrogel 2250 insulation    & 2.50 mm & 0.02 \\
+        4 & Pyrogel 2250 insulation    & 2.50 mm & 0.02 \\
+        5 & Aluminized Kapton/Kevlar gas barrier & 0.15 mm & 0.12 \\
         \midrule
-        \multicolumn{2}{l}{\textbf{Total thickness}} & \textbf{6.35\,mm} & \textbf{R = 0.25605\,m\textsuperscript{2}K/W} \\
+        \multicolumn{2}{l}{\textbf{Total thickness}} & \textbf{6.35 mm} & \textbf{R = 0.25605 m\textsuperscript{2}K/W} \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -584,7 +585,7 @@ The PINN approximates the flow field mapping $\mathcal{N}: \mathbb{R}^2 \to \mat
         Activation function & $\tanh$ \\ \hline
         Weight initialization & Glorot normal \\ \hline
         Output dimension & 4 $(\rho, v_x, v_y, T)$ \\ \hline
-        Total trainable parameters & $(2 \times 64 + 64) + 2\,(64^{2} + 64) + (4 \times 64 + 4) = 8{,}772$ \\ \hline
+        Total trainable parameters & $(2 \times 64 + 64) + 2 (64^{2} + 64) + (4 \times 64 + 4) = 8{,}772$ \\ \hline
     \end{tabular}
 \end{table}
 
@@ -725,10 +726,10 @@ The PINN refinement stage rests on the following formal assumptions:
         \textbf{Axiom} & \textbf{Statement} & \textbf{Basis} \\ \hline
         A1: Axisymmetric flow & The flow field is symmetric about the vehicle centerline, reducing the problem to 2D $(x, y)$. & Geometric symmetry \\ \hline
         A2: Continuum NS as regularizer & The Navier--Stokes equations provide sufficient physical constraint for smoothing, even at $Kn > 0.01$. & Sec.~\ref{sec:pinn_pragmatic} \\ \hline
-        A3: Sutherland viscosity & Dynamic viscosity follows $\mu(T) = \mu_{ref} (T/T_{ref})^{3/2} (T_{ref}+S)/(T+S)$ with $S = 110.4$\,K. & Kinetic theory (Sutherland, 1893) \\ \hline
+        A3: Sutherland viscosity & Dynamic viscosity follows $\mu(T) = \mu_{ref} (T/T_{ref})^{3/2} (T_{ref}+S)/(T+S)$ with $S = 110.4$ K. & Kinetic theory (Sutherland, 1893) \\ \hline
         A4: Prandtl number & $\Pr = 0.71$ (constant), coupling thermal and velocity boundary layers. & Air at standard conditions \\ \hline
         A5: Ideal gas EOS & $p = \rho R T$ holds throughout the domain. Valid for $Kn \lesssim 10$. & Near-continuum assumption \\ \hline
-        A6: Fully accommodated wall & The vehicle surface is a diffuse reflector at $T_w = 300$\,K with full thermal accommodation. & DSMC boundary condition \\ \hline
+        A6: Fully accommodated wall & The vehicle surface is a diffuse reflector at $T_w = 300$ K with full thermal accommodation. & DSMC boundary condition \\ \hline
         A7: Statistical stationarity & The SPARTA output represents a time-averaged steady state. & Sufficient timesteps for convergence \\ \hline
     \end{tabular}
 \end{table}
@@ -870,7 +871,7 @@ where the design vector is $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$. The four
 
 \begin{itemize}
     \item \textbf{Heat-load term.} The stagnation heat flux is evaluated with the Sutton--Graves correlation of Sec.~\ref{sec:sutton_graves_methodology} at a single frozen trajectory snapshot of $51.8$\,km altitude and $3378$\,m/s, using the candidate design's own nose radius:
-    $\dot{q}(\mathbf{x}) = C_{SG}\sqrt{\rho_{\infty}/R_N(\mathbf{x})}\,V_{snap}^{3}$ in W/cm$^2$.
+    $\dot{q}(\mathbf{x}) = C_{SG}\sqrt{\rho_{\infty}/R_N(\mathbf{x})}\,V_{snap}^{3}$ in\,W/cm$^2$.
     Multiplying by the characteristic exposure time $\tau$ of the validated run gives the total heat load $Q(\mathbf{x}) = \dot{q}(\mathbf{x})\,\tau$, and the ratio $H_L = Q/Q_{target}$ normalises it against the acceptance threshold.
     \item \textbf{Flux term.} $F(\mathbf{x}) = \dot{q}(\mathbf{x})/q_{ref}$ is the peak heat-flux ratio against the measured flight value.
     \item \textbf{Ballistic-coefficient term.} Because the vehicle mass cancels between the candidate and the reference state, the ballistic-coefficient ratio reduces to a purely geometric and aerodynamic quantity,
@@ -945,9 +946,9 @@ The constraint functions $g_j(\mathbf{x})$ encode the following physical limits:
     \begin{tabular}{|l|l|c|}
         \hline
         \textbf{Constraint} & \textbf{Function $g_j(\mathbf{x})$} & \textbf{Limit} \\ \hline
-        Backface temperature & $T_{back}(\mathbf{x}) - T_{back}^{max}$ & 350\,K \\ \hline
+        Backface temperature & $T_{back}(\mathbf{x}) - T_{back}^{max}$ & 350 K \\ \hline
         Peak deceleration & $n_G(\mathbf{x}) - n_G^{max}$ & 25$g$ \\ \hline
-        Structural integrity & $D(\mathbf{x}) - D^{max}$ & 15.0\,m \\ \hline
+        Structural integrity & $D(\mathbf{x}) - D^{max}$ & 15.0 m \\ \hline
         Toroid manufacturability & $N_t(\mathbf{x}) - 12$ & 12 \\ \hline
     \end{tabular}
 \end{table}
@@ -1055,13 +1056,13 @@ Table~\ref{tab:acceptance_limits} collects every limit used in this study togeth
         \toprule
         \textbf{Quantity} & \textbf{Limit} & \textbf{Origin and meaning} \\
         \midrule
-        Peak surface temperature & 2073\,K & Silicon-carbide structural limit \\
-        Backface temperature & 773\,K & Kapton limit of the gas barrier ply \\
-        TPS structural temperature & 523.15\,K & Flexible-TPS limit for this layup \\
-        Deceleration load (both channels) & 25\,g & Vehicle structural limit \\
-        Maximum radius & 3.0\,m & IRVE-3 diameter envelope \\
-        Minimum nose radius & 1.0\,m & Thermal protection coverage \\
-        Payload clearance radius & 1.0434\,m & Cylindrical payload envelope plus wall standoff \\
+        Peak surface temperature & 2073 K & Silicon-carbide structural limit \\
+        Backface temperature & 773 K & Kapton limit of the gas barrier ply \\
+        TPS structural temperature & 523.15 K & Flexible-TPS limit for this layup \\
+        Deceleration load (both channels) & 25 g & Vehicle structural limit \\
+        Maximum radius & 3.0 m & IRVE-3 diameter envelope \\
+        Minimum nose radius & 1.0 m & Thermal protection coverage \\
+        Payload clearance radius & 1.0434 m & Cylindrical payload envelope plus wall standoff \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -1075,7 +1076,7 @@ The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irv
     % in identical terms on purpose: a reader who meets either table first must
     % not be left with the impression that a single-point Sutton-Graves value is
     % directly comparable to a trajectory-integrated flight peak.
-    \caption{IRVE-3 validation metrics. The MDAO column is the published Fay--Riddell reference; the StellarOrion column is the result of this work. The heat-flux entry is a Sutton--Graves correlation evaluated at $R_N = 1.5$\,m and $V = 3{,}378$\,m/s, not a quantity resolved by the solver. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton--Graves value the code reports, and why they differ.}
+    \caption{IRVE-3 validation metrics. The MDAO column is the published Fay--Riddell reference; the StellarOrion column is the result of this work. The heat-flux entry is a Sutton--Graves correlation evaluated at $R_N = 1.5$ m and $V = 3{,}378$ m/s, not a quantity resolved by the solver. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton--Graves value the code reports, and why they differ.}
     \label{tab:irve3_validation}
     \small
     \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.10\textwidth}|}
@@ -1083,7 +1084,7 @@ The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irv
         \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion\allowbreak{} (This Work)} & \textbf{SO Error (\%)} \\ \hline
         Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & 16.14 W/cm$^2$$^{\dagger}$ & $+12.4$, \emph{not like-for-like} \\ \hline
         Total Heat Load ($Q$) & 195.06 J/cm$^2$ & 195.17 J/cm$^2$ & 165.72 J/cm$^2$ & $-15.0$ \\ \hline
-        Peak Deceleration & 19.7\,g & n/a & 16.83\,g & $-14.6$ \\ \hline
+        Peak Deceleration & 19.7 g & n/a & 16.83 g & $-14.6$ \\ \hline
         Ballistic Coefficient ($\beta$) & 26.9 kg/m$^2$ & n/a & 27.70 kg/m$^2$ & $+3.0$ \\ \hline
         Drag Coefficient ($C_d$) & n/a & n/a & 1.4625 & n/a \\ \hline
     \end{tabularx}
@@ -1110,7 +1111,7 @@ The cost function of Sec.~\ref{sec:cost_function} is a closed-form surrogate, so
 Two properties of this design are worth making explicit because they bound what the gate proves. The corrector is a scalar ratio applied to a scalar quantity, so it corrects the magnitude of the heat load and nothing else: it says nothing about where on the surface the load acts, nor about the peak-to-mean ratio, and a design could in principle pass the gate while concentrating heating unfavourably. And the gate is a threshold test, not an optimisation: it accepts or rejects a proposed design but does not search. Both limits are properties of a deliberately cheap gate, chosen so that the DSMC cost is paid once per shortlisted candidate rather than once per candidate in the population.
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Two panels describing the entry trajectory. The left panel plots velocity against altitude and rises to about 7500 metres per second at 122 kilometres before falling as the vehicle descends. The right panel plots deceleration load against altitude as a bell curve peaking near 17.5 g at about 57 kilometres. A square marker on each curve at 52.03 kilometres and 3094 metres per second marks the state used by the scalloped run, and a triangle near 51.8 kilometres and 3379 metres per second marks the smooth run, which does not lie on the computed profile.}}%
+    \BeginAccSupp{method=escape,ActualText={Two panels describing the entry trajectory. The left panel plots velocity against altitude and rises to about 7500 metres per second at 122 kilometres before falling as the vehicle descends. The right panel plots deceleration load against altitude as a bell curve peaking near 17.5\,g at about 57 kilometres. A square marker on each curve at 52.03 kilometres and 3094 metres per second marks the state used by the scalloped run, and a triangle near 51.8 kilometres and 3379 metres per second marks the smooth run, which does not lie on the computed profile.}}%
     \includegraphics[width=0.95\textwidth]{figures/fignew_trajectory.png}%
     \EndAccSupp{}%%
     \caption{The one-degree-of-freedom entry trajectory with the two simulation states marked. The profile is integrated from 122.65~km at 7500~m/s down to 27.29~km, and both peak dynamic pressure and peak deceleration load occur at 57.0~km, where the velocity is 4652~m/s at Mach 14.57 and the load reaches 17.42~g. The scalloped run was driven at a state that lies exactly on this profile, at $t = 97$~s; the smooth run's state does not lie on it, which is the precise reason the two runs cannot be compared as a controlled pair, as discussed in Chapter~\ref{ch:results}.}
@@ -1197,7 +1198,7 @@ Training data is generated through the following pipeline:
     \item \textbf{Design of Experiments:} $N = 15$ sample points generated via Face-Centered CCD (Sec.~\ref{sec:doe_sampling}) across the design space.
     \item \textbf{Simulation:} Each design is evaluated using SPARTA DSMC with $O(10^3)$ timesteps.
     \item \textbf{PINN Refinement:} DSMC outputs are refined using the two-stage PINN protocol (Sec.~\ref{sec:pinn_two_stage}).
-    \item \textbf{Feature Engineering:} Design parameters $\mathbf{x} = (D, \theta_c, R_n, N_t, r_t, m, \delta_{TPS})$ are normalized to $[0, 1]$ using min-max scaling.
+    \item \textbf{Feature Engineering:} Design parameters $\mathbf{x} = (D, \theta_c, R_n, N_t, r_t,\,m, \delta_{TPS})$ are normalized to $[0, 1]$ using min-max scaling.
 \end{enumerate}
 
 \subsubsection*{Train/Test Split}
