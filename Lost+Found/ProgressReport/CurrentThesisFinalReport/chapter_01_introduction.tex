@@ -7,35 +7,35 @@ For generations, rigid TPS have been the standard solution for Earth reentry, su
 
 \par
 To counteract this challenge, deployable entry systems called inflatable aerodynamic decelerators (IADs) have emerged and been tested as non-integrated, flexible TPS~\cite{DiNonnoLOFTID}. IADs, also known as hypersonic inflatable aerodynamic decelerators (HIADs), are lightweight, flexible structures that can be packed into a small volume during launch and then inflated to a much larger size before atmospheric entry. The large surface area of an IAD provides significant aerodynamic drag, allowing for the deceleration of large masses at higher altitudes where the air is less dense and the heating is less severe.
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Rendering of a fully deployed 3.0 m inflatable hypersonic aerodynamic decelerator: a stack of inflated toroidal rings forming a blunt sphere-cone aeroshell.}}%
+    \BeginAccSupp{method=escape,ActualText={Computer-generated 3-D rendering of a single generic satellite in low Earth orbit above the Earth. One smooth pink, lens-shaped disc of uniform thickness with a rounded rim carries a white vertical cylinder on a gold segmented ring at its centre, topped by a small cluster of thin antenna masts. No text, dimension, or scale is printed, and the object is not labelled as a decelerator.}}%
 \includegraphics[width=0.5\textwidth]{figures/HIADsDeployed.png}%
 \EndAccSupp{}%
-    \caption{HIADs when deployed}
+    \caption{Deployed inflatable decelerator concept. The artwork is a generic visualisation of a single-body orbital object rather than a dimensioned decelerator geometry, so it is used illustratively and is not a geometric definition of the vehicle described in the text.}
     \label{fig:Hiaddeployed}
 \end{figure}
 
 \par
 The development of IADs requires an approach that combines aerodynamics, structural mechanics, and materials science. A key component of an IAD is the flexible thermal protection system (FTPS), which is responsible for protecting the inflatable structure from the intense heat of reentry. The FTPS is a multi-layered system that typically consists of an outer fabric, insulation layers, and a gas barrier~\cite{Guo2011Polyimide}. The design and analysis of the FTPS requires accurate modeling of the aerothermal loads and the material response.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Diagram of one inflatable aerodynamic decelerator layer: an inflatable toroidal ring with its gas pressure, fabric restraint layers and load-carrying tapes indicated by callout labels.}}%
+    \BeginAccSupp{method=escape,ActualText={Schematic layer-stack cross-section of a flexible thermal protection system. Five horizontal bands are labelled, from the outermost to the innermost, Kapton or Kevlar film, Pyrogel felt insulation, Pyrogel felt insulation, Nextel fabric, and Nextel fabric. The labels are printed inside the bands; no callouts, dimensions, thicknesses, pressures, or mass figures appear.}}%
 \includegraphics[width=0.5\textwidth]{figures/IADsLayer.png}%
 \EndAccSupp{}%
-    \caption{IADs Layer Example}
+    \caption{Layer stack of the flexible thermal protection system, from the outermost Kapton and Kevlar film through two Pyrogel felt insulation layers to two Nextel fabric layers. The schematic prints the material names only and carries no thicknesses, pressures, or mass figures, so the layer thicknesses it depicts are illustrative.}
     \label{fig:Hiadlayer}
 \end{figure}
 
 \section{Problem Statement}
 The successful design and operation of an IAD depend on the ability to accurately predict and manage the complex aerothermodynamic environment and the fluid-structure interaction (FSI) phenomena that occur during atmospheric reentry. The flexibility of the IAD structure and the FTPS adds a layer of complexity to the analysis that is not present in traditional rigid heat shields. The deformation of the IAD under aerodynamic loads can affect the flow field and the heat transfer to the vehicle, which in turn can affect the structural response.
 
-At hypersonic speeds ($Ma > 5$) and high altitudes ($> 50$ km), the atmospheric density is sufficiently low that the continuum assumption underlying traditional Computational Fluid Dynamics (CFD) begins to break down. The Knudsen number ($Kn$), which characterizes the degree of rarefaction, increases to values where the Navier--Stokes equations are no longer valid. In this transitional regime, particle-based methods such as Direct Simulation Monte Carlo (DSMC) are required to accurately capture the gas dynamics~\cite{bird1994molecular}.
+At hypersonic speeds ($Ma > 5$) and high altitudes ($> 50$ km), the atmospheric density is sufficiently low that the continuum assumption underlying traditional Computational Fluid Dynamics (CFD) becomes only locally valid. The Knudsen number ($Kn$), which characterizes the degree of rarefaction, is a \emph{local} ratio of mean free path to characteristic length, and because the relevant length scale differs by orders of magnitude between the full vehicle and the millimetre-scale shock layer, a single vehicle-wide $Kn$ misrepresents the flow. On the aeroshell scale the freestream remains deeply continuum, while on the shock-layer scale it rises into the slip-flow band, where Navier--Stokes requires wall slip corrections. In that band, particle-based methods such as Direct Simulation Monte Carlo (DSMC) are required to accurately capture the gas dynamics, and they remain valid at every $Kn$~\cite{bird1994molecular}.
 
 Furthermore, the optimization of HIAD geometry for survivability -- balancing drag performance, peak heating, ballistic coefficient, and structural mass -- requires an automated, multi-stage computational framework that can efficiently explore a high-dimensional design space. Existing approaches based on parametric CFD sweeps are computationally prohibitive for the thousands of design evaluations required.
 
-Therefore, there is a critical need for an integrated computational framework that: (1) employs DSMC-based rarefied gas dynamics to accurately predict aerothermal loads in the transitional regime, (2) incorporates automated parametric geometry generation for design space exploration, and (3) leverages physics-informed machine learning and surrogate-based optimization to efficiently identify optimal HIAD configurations.
+Therefore, there is a critical need for an integrated computational framework that: (1) employs DSMC-based rarefied gas dynamics to accurately predict aerothermal loads in the locally non-continuum shock layer, (2) incorporates automated parametric geometry generation for design space exploration, and (3) leverages physics-informed machine learning and surrogate-based optimization to efficiently identify optimal HIAD configurations.
 
 \section{Research Objective}
 In this research, the objective is to develop and validate a computational framework for the aerothermal analysis and survivability optimization of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD), based on the SPARTA DSMC solver and integrated with physics-informed neural network (PINN) refinement and genetic algorithm optimization.
@@ -44,9 +44,9 @@ The specific objectives are:
 \begin{enumerate}
     \item \textbf{Parametric Geometry Generation:} To develop an automated 3D CAD pipeline using CadQuery for generating HIAD profiles based on IRVE-3 specifications, enabling parametric variation of toroid count, cone angle, nose radius, and aeroshell diameter for design space exploration.
 
-    \item \textbf{DSMC Aerothermal Analysis:} To perform high-fidelity rarefied gas dynamics simulations using the SPARTA DSMC solver, capturing the Boltzmann-level molecular collisions and transport phenomena in the transitional flow regime ($0.01 < Kn < 1$) relevant to HIAD reentry at 50--60 km altitude.
+    \item \textbf{DSMC Aerothermal Analysis:} To perform high-fidelity rarefied gas dynamics simulations using the SPARTA DSMC solver, capturing the Boltzmann-level molecular collisions and transport phenomena in the locally non-continuum shock layer relevant to HIAD reentry at 50--60~km altitude.
 
-    \item \textbf{Knudsen Number Field Mapping:} To analyze the spatial distribution of the Knudsen number across the HIAD surface and surrounding flow field, identifying continuum ($Kn < 0.01$), transitional ($0.01 < Kn < 1$), and free-molecular ($Kn > 1$) regions to characterize the flow physics governing aerothermal loads.
+    \item \textbf{Knudsen Number Field Mapping:} To analyze the spatial distribution of the Knudsen number across the HIAD surface and surrounding flow field, resolving the continuum ($Kn \lesssim 0.01$) and slip-flow ($0.01 \lesssim Kn \lesssim 0.1$) bands that bound the continuum-to-kinetic gradient in the shock layer, and thereby characterizing the flow physics governing aerothermal loads.
 
     \item \textbf{Aerothermal Load Prediction:} To determine the surface distributions of heat flux ($\dot{q}$), pressure, and shear stress using the Sutton-Graves stagnation-point correlation and SPARTA surface compute quantities, with validation against IRVE-3 flight data.
 
@@ -73,7 +73,7 @@ The present work makes the following novel contributions to the field of hyperso
 \begin{enumerate}
     \item \textbf{First Integrated DSMC-PINN-Optimization Framework for HIAD:} This study presents the first computational framework that couples automated parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics (SPARTA), Physics-Informed Neural Network refinement (DeepXDE), and surrogate-assisted genetic algorithm optimization in a unified pipeline for HIAD survivability analysis.
 
-    \item \textbf{DSMC-Based Design Space Exploration:} Unlike prior studies limited to continuum CFD (RANS/LES), this framework employs particle-based DSMC to accurately capture the transitional flow regime ($0.01 < Kn < 1$) encountered at reentry altitudes above 50 km, enabling physically correct aerothermal load prediction for inflatable decelerators.
+    \item \textbf{DSMC-Based Design Space Exploration:} Unlike prior studies limited to continuum CFD (RANS/LES), this framework employs particle-based DSMC to accurately capture the locally non-continuum shock layer encountered at reentry altitudes above 50~km, enabling physically correct aerothermal load prediction for inflatable decelerators.
 
     \item \textbf{PINN as DSMC Post-Processor:} The application of Physics-Informed Neural Networks as a smoothing and interpolation layer for noisy DSMC particle data is novel in the context of HIAD aerothermal analysis. The two-stage training protocol (data-only followed by data+PDE) provides a physics-consistent continuous field from discrete particle simulations.
 

@@ -1,36 +1,41 @@
 # Page-Reduction Plan — CurrentThesisFinalReport
 
-Handoff notes for the next agent instance. Written from measured state of
-`main.pdf` at commit `c51a379` (clean tree, pushed to `origin/main`).
+Handoff notes for the next agent instance.
 
 **Objective:** reduce the page count of the thesis **without deleting
-substantive technical content**. Every lever below is formatting- or
-structure-based. Content-level condensation (Lever C) is listed separately
-and is flagged as needing author judgement.
+substantive technical content**. Content-level condensation (Lever C) is
+listed separately and is flagged as needing author judgement.
 
 Page numbers below are **printed** page numbers. Conversion is
-`printed = PDF - 26`. Always re-derive after any change; the offset moves.
+`printed = PDF - 26`. The front matter is still 26 pp, so the offset has
+not moved — but re-derive it after Lever B or D, which change front matter.
+
+> **Status: Lever A is APPLIED and COMMITTED.** The thesis is now
+> **191 pages**, down from 194. Lever A's *actual* yield was **3 pages**,
+> not the 6–8 originally estimated here — §2 has been corrected with the
+> measured numbers. Levers B–E remain open.
 
 ---
 
-## 1. Current state (measured, not estimated)
+## 1. Current state
 
-Total: **194 pages** = 26 front matter (roman) + 168 body (arabic).
+Total: **191 pages** = 26 front matter (roman) + 165 body (arabic).
+(Was 194 / 168 before Lever A.)
 
 | Part | Printed pp | Count | % of body |
 | :--- | :--- | ---: | ---: |
-| Ch1 Introduction | 1–12 | 12 | 7.1% |
-| **Ch2 Literature Review** | **13–73** | **61** | **36.3%** |
-| Ch3 Methodology | 74–116 | 43 | 25.6% |
-| Ch4 Results and Discussion | 117–144 | 28 | 16.7% |
-| Ch5 Conclusion | 145–148 | 4 | 2.4% |
-| References | 149–157 | 9 | — |
-| Appendix A | 158–162 | 5 | — |
-| Appendix B | 163–164 | 2 | — |
-| Appendix C | 165–166 | 2 | — |
-| Appendix D | 167–168 | 2 | — |
+| Ch1 Introduction | 1–12 | 12 | 7.3% |
+| **Ch2 Literature Review** | **13–74** | **62** | **37.6%** |
+| Ch3 Methodology | 75–115 | 41 | 24.8% |
+| Ch4 Results and Discussion | 116–142 | 27 | 16.4% |
+| Ch5 Conclusion | 143–146 | 4 | 2.4% |
+| References | 147–155 | 9 | — |
+| Appendix A | 156–159 | 4 | — |
+| Appendix B | 160–161 | 2 | — |
+| Appendix C | 162–163 | 2 | — |
+| Appendix D | 164–165 | 2 | — |
 
-Front matter map (PDF pages 1–26):
+Front matter map (PDF pages 1–26, **unchanged by Lever A**):
 
 | PDF pp | Part | Count |
 | :--- | :--- | ---: |
@@ -43,53 +48,71 @@ Front matter map (PDF pages 1–26):
 | 23–24 | List of Symbols | 2 |
 | 25–26 | List of Abbreviations | 2 |
 
-**Headline: Ch2 at 61 pp is 36% of the body, and the front matter's three
-generated lists occupy 19 of 26 pages.**
+**Headline: Ch2 is now 62 pp — 37.6% of the body, and it grew by 1 pp as
+float repacking pushed content into it. The front matter's three generated
+lists still occupy 19 of 26 pages.**
 
 ---
 
 ## 2. Levers, ranked by risk
 
-### Lever A — Unpin the `[H]` floats · LOW RISK · est. 6–8 pp
+### Lever A — Unpin the `[H]` floats · APPLIED · **measured 3 pp**
 
-This is the highest-value, lowest-risk change. `[H]` forces a float to sit
-exactly where it was written, which prevents LaTeX from packing floats onto
-shared pages and from moving a float past a page it does not fit. The
-measurable consequence is large vertical dead space.
+**This lever has been applied and committed.** The section is kept for the
+record and to explain why the yield was 3 pp rather than the 6–8 first
+estimated.
 
-`[H]`-pinned floats, doc-wide:
+`[H]` forces a float to sit exactly where it was written, which prevents
+LaTeX from packing floats onto shared pages and from moving a float past a
+page it does not fit. The measurable consequence is vertical dead space.
+
+Floats converted, `[H]` → `[!htbp]`:
 
 ```
-chapter_03_methodology.tex          27
+chapter_03_methodology.tex          26 figure/table  + 1 algorithm
 chapter_02_literature_review.tex    18
 chapter_04_results.tex              17
 appendix.tex                         9
 chapter_01_introduction.tex          2
                                 ------
-TOTAL                               73
+TOTAL                               73   (72 figure/table + 1 algorithm)
 ```
 
-Dead space actually measured (body text ending >170 pt above the bottom
-text edge), 168 body pages sampled:
+**Measured result — before → after:**
 
-```
-pages with >170 pt dead space : 17
-total dead space              : 5,679 pt ≈ 7.9 page-equivalents
-worst offenders               : p142 (602 pt), p38 (566 pt), p190 (533 pt),
-                                p106 (503 pt), p188 (463 pt), p192 (430 pt),
-                                p184 (402 pt), p183 (286 pt), p169 (265 pt)
-```
+| Metric | Before | After |
+| :--- | ---: | ---: |
+| Total pages | 194 | **191** |
+| Body pages | 168 | 165 |
+| Pages with >170 pt dead space | 17 | **8** |
+| Total dead space | 5,679 pt (7.9 pp-equiv) | 3,700 pt (5.1 pp-equiv) |
 
-**Action:** replace `[H]` with `[!htbp]` in all 73 sites. The `!` lets
-LaTeX relax float fractions, which is what actually recovers the space.
-Zero words are deleted, so no claim or citation is affected.
+All guardrails held: 0 LaTeX errors, 0 undefined references/citations, 0
+rerun requests, 0 blank pages, 973 link annots with 0 nonzero borders,
+accsupp still 51/51, overfull/underfull unchanged at 9/69.
 
-**Do not convert on pages that are already legitimate chapter/section ends.**
-p190 and p192 are genuine chapter/section breaks (Appendix B.3 and C.2 end
-their sections) — their whitespace is structural, and the reclaimed space
-will simply be absorbed by later flow. p184 is the Appendix A pinned-table
-gap. Expect the recovered pages to redistribute, not to vanish one-for-one;
-re-measure rather than assuming the full 7.9 pp lands.
+**Why 3 pp and not 6–8.** The dead space did not convert one-for-one into
+saved pages — roughly 2.7 pp-equivalent of whitespace was genuinely
+eliminated, but the rest was absorbed by reflow as floats re-settled. More
+importantly, **the three worst remaining gaps are structural, not
+float-driven.** They are chapter-end pages where `\chapter` forces a break:
+
+| Page | Dead space | Why |
+| :--- | ---: | :--- |
+| p38 | 620 pt | end of Ch1 |
+| p100 | 602 pt | end of Ch2 |
+| p141 | 602 pt | end of Ch3 |
+
+These are not recoverable by any float tuning. Lever A has therefore
+extracted close to all the space that is actually available from float
+placement, and **should not be revisited.**
+
+One accepted side effect: three tables now share a page (Appendix A, PDF
+p184 — A.3, A.4, A.5) with ~2–3 cm gaps between them, where previously each
+occupied its own pinned slot. Verified by rendering: no clipping, no
+overlap, all rows and captions present. The inter-table gaps are slightly
+uneven, which is normal `[!htbp]` behaviour and a large net improvement on
+the ~400 pt of dead space the pinned version left on that page.
 
 ### Lever B — Reduce TOC depth · LOW RISK · est. 5 pp
 

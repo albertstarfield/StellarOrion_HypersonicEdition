@@ -10,11 +10,11 @@ This appendix documents the physical constants and default parameters used in th
 
 Table~\ref{tab:constants} lists the physical constants as defined in \texttt{\seqsplit{stellarorion\_types.ads}}, which are used throughout the aerothermodynamic calculations presented in this thesis.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \caption{Fundamental physical constants used in StellarOrion (from \texttt{stellarorion\_types.ads}).}
 \label{tab:constants}
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.24\textwidth} >{\RaggedRight\arraybackslash}p{0.12\textwidth} >{\RaggedRight\arraybackslash}p{0.19\textwidth} >{\RaggedRight\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.24\textwidth} >{\RaggedRight\arraybackslash}p{0.12\textwidth} >{\RaggedRight\arraybackslash}p{0.19\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Constant} & \textbf{Symbol} & \textbf{Value} & \textbf{Unit} \\
 \hline
@@ -41,11 +41,11 @@ Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J\,kg$^{-1}$\,K$^{-1}
 
 Table~\ref{tab:survivability} lists the material failure thresholds used by the \texttt{Is\_Survivable} predicate in \texttt{\seqsplit{stellarorion\_physics.ads}} to determine whether a given flight condition exceeds TPS or structural limits.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \caption{Material survivability limits enforced by StellarOrion.}
 \label{tab:survivability}
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.34\textwidth} l >{\RaggedRight\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.34\textwidth} l >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Parameter} & \textbf{Value} & \textbf{Source} \\
 \hline
@@ -61,7 +61,7 @@ Maximum g-load & 25\,$g$ & Rapisarda (2023) Sec.\ 5.4 \\
 
 Table~\ref{tab:geometry} presents the default HIAD geometry parameters corresponding to the IRVE-3 flight configuration as implemented in the StellarOrion engine.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \caption{Default HIAD geometry parameters (IRVE-3 MDAO baseline from Rapisarda, 2023).}
 \label{tab:geometry}
@@ -91,7 +91,7 @@ Scallop amplitude & $\delta_{\text{sc}}$ & 0.030\,m \\
 
 Table~\ref{tab:flight} lists the freestream conditions used as the baseline simulation point, corresponding to an altitude of 51.8\,km during IRVE-3 reentry.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \caption{Default freestream flight conditions at 51.8\,km altitude.}
 \label{tab:flight}
@@ -113,11 +113,11 @@ Freestream temperature & $T_\infty$ & 268.41\,K \\
 
 The StellarOrion engine includes several predefined TPS material presets for thermal analysis. Table~\ref{tab:tps} summarizes the available configurations.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \caption{TPS material presets available in StellarOrion.}
 \label{tab:tps}
-\begin{tabularx}{\textwidth}{l l c c c c c X}
+\begin{tabularx}{\textwidth}{l l c c c c c >{\RaggedRight\arraybackslash}X}
 \hline
 \textbf{Preset} & \textbf{Material} & $\rho$ (kg/m$^3$) & $c_p$ (J/kg\,K) & $k$ (W/m\,K) & $\varepsilon$ & $\delta$ (m) \\
 \hline
@@ -136,11 +136,11 @@ Multi & Layer composite & 650 & 1050 & 0.10 & 0.80 & 0.040 \\
 
 Table~\ref{tab:chemistry} documents the gas-phase chemistry models available in the simulation framework.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \caption{Chemistry modes implemented in StellarOrion.}
 \label{tab:chemistry}
-\begin{tabularx}{\textwidth}{@{}l >{\RaggedRight\arraybackslash}p{0.40\textwidth} >{\RaggedRight\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}l >{\RaggedRight\arraybackslash}p{0.40\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Mode} & \textbf{Species} & \textbf{Application} \\
 \hline
@@ -156,11 +156,11 @@ Mars & CO$_2$, CO, N$_2$, O$_2$, NO, C, O, N, CN, CO$^+$, N$_2^+$ & Mars entry \
 
 Table~\ref{tab:solvers} lists the computational solver backends supported by the framework.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \caption{Solver backends in StellarOrion.}
 \label{tab:solvers}
-\begin{tabularx}{\textwidth}{@{}l l >{\RaggedRight\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}l l >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Solver} & \textbf{Type} & \textbf{Description} \\
 \hline
@@ -204,17 +204,17 @@ All core physics packages (\texttt{\seqsplit{stellarorion\_types}}, \texttt{\seq
 
 Table~\ref{tab:validation_full} provides the complete validation comparison between the IRVE-3 post-flight reconstruction data, the MDAO reference model, and the StellarOrion framework predictions.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \caption{Complete IRVE-3 validation comparison (peak values).}
 \label{tab:validation_full}
 \small
-\begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|}
+\begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|}
 \hline
-\textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion (This Work)} & \textbf{SO Error (\%)} \\
+\textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion\allowbreak{} (This Work)} & \textbf{SO Error (\%)} \\
 \hline
-Peak heat flux ($\dot{q}$) & 14.36~W/cm\textsuperscript{2} & 13.83~W/cm\textsuperscript{2} & 16.14~W/cm\textsuperscript{2} & $+12.4$ \\
-Total heat load ($Q$) & 195.06~J/cm\textsuperscript{2} & 195.17~J/cm\textsuperscript{2} & 165.72~J/cm\textsuperscript{2} & $-15.0$ \\
+Peak heat flux ($\dot{q}$) & 14.36 W/cm\textsuperscript{2} & 13.83 W/cm\textsuperscript{2} & 16.14 W/cm\textsuperscript{2} & $+12.4$ \\
+Total heat load ($Q$) & 195.06 J/cm\textsuperscript{2} & 195.17 J/cm\textsuperscript{2} & 165.72 J/cm\textsuperscript{2} & $-15.0$ \\
 Peak deceleration & 19.7\,$g$ & -- & 16.83\,$g$ & $-14.6$ \\
 Ballistic coefficient ($\beta$) & 26.9~kg/m\textsuperscript{2} & -- & 27.70~kg/m\textsuperscript{2} & $+3.0$ \\
 Drag coefficient ($C_d$) & -- & -- & 1.4625 & -- \\
@@ -231,7 +231,7 @@ Toroid radius & 0.135\,m & 0.135\,m & 0.135\,m & 0 \\
 
 Table~\ref{tab:grid_study} summarizes the grid independence study results that established the optimal grid-factor of 0.7.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \caption{Grid independence study: stagnation-point heat flux vs.\ grid-factor.}
 \label{tab:grid_study}

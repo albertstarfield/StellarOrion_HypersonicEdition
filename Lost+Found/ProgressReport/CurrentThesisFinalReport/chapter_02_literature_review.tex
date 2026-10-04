@@ -9,7 +9,7 @@
 
 To establish a baseline for the expected aerothermal outcomes, a review of key flight tests and numerical studies was conducted. Table \ref{tab:research_comparison} summarizes the landmarks in HIAD research that support the triangulation of results in this study.
 
-\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.19\textwidth}|>{\RaggedRight\arraybackslash}p{0.21\textwidth}|>{\RaggedRight\arraybackslash}p{0.28\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|}
+\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.21\textwidth}|>{\RaggedRight\arraybackslash}p{0.21\textwidth}|>{\RaggedRight\arraybackslash}p{0.26\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|}
 \caption{Comparison of Landmark HIAD Aerothermal Research and Flight Tests} \label{tab:research_comparison} \\
 \hline
 \textbf{Research / Project} & \textbf{Key Geometry} & \textbf{Major Aerothermal Findings} & \textbf{Relevance to Outcome} \\ \hline
@@ -41,7 +41,7 @@ Furthermore, the implementation of the \textit{SST $k-\omega$} turbulence model,
 
 This synthesis establishes the theoretical foundation for the numerical methodology described in \textbf{Chapter 3}. Figure~\ref{fig:literature_review_map} provides a visual mapping of each study's coverage of the physical phenomena and methodology adopted in this work.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Coverage matrix headed Literature Review: Coverage of Physical Phenomena and Methodology. Five studies form the rows --- Rapisarda 2022 machine learning for HIAD heating, Rapisarda et al. 2024 HIAD parametric study, Masciarelli and Cassis 2021 LOFTID design, Schwartzentruber 2018 DSMC hypersonic, and This Work, the StellarOrion pipeline, outlined in red. Six capability columns run across the top: HIAD geometry, DSMC aerothermal, Sutton-Graves heating, PINN refinement, survivability optimization and multi-solver pipeline. Each cell is a full circle for full coverage, a half circle for partial coverage, or empty for not covered, per the key at the foot. The StellarOrion row is the only one full across all six columns; Schwartzentruber covers DSMC aerothermal alone and Masciarelli and Cassis cover HIAD geometry and Sutton-Graves heating. Note that the 2022 date in this row differs from the 2023 date of the Rapisarda thesis cited elsewhere in the text.}}%
 \includegraphics[width=0.92\textwidth]{figures/literature_review_map.png}%
@@ -113,12 +113,22 @@ A critical distinction in hypersonic aerodynamics is the behavior of these ratio
 
 For standard air ($\gamma = 1.4$), this limiting density ratio is $\rho_2/\rho_1 \approx 6$. This high compression means the mass flow is squeezed into a much smaller volume behind the shock compared to supersonic flow. This phenomenon is physically responsible for the formation of the Thin Shock Layer, where the shock wave "wraps" very closely around the body surface. This proximity is particularly important for the scalloped geometry of an IAD, as the shock structure may impinge upon the peaks of the toroidal rings, creating localized hotspots.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Plot of hypersonic Mach number against shock-layer relation, showing how the shock regime changes with increasing Mach number.}}%
+    % AXIOM: read from the artwork itself - this is NOT a Mach/shock-layer
+    %        relation plot, and it is NOT a photograph of shock formation.
+    %        The axes are (x) orbital velocity V in km/s and (y) altitude H in
+    %        km, printed 0..10 km/s and 0..~120 km. The hatched corridor is
+    %        bounded by "High lift" and "Low lift" ballistic-coefficient
+    %        limits annotated 50 kg/m^2 and 5000 kg/m^2. The fan of thin
+    %        curves are Mach isolines M = 8, 12, 16, 20, 24, 28.
+    % AXIOM: no turbulence model, solver, or software is named in the image.
+    % THEORY: the caption must state what the axes actually are, and must drop
+    %        the unverifiable "(Anderson, 2006)" attribution.
+    \BeginAccSupp{method=escape,ActualText={A line chart titled "Lifting reentry from orbit" showing entry corridors in velocity-altitude space. The horizontal axis is velocity V in kilometres per second, ticked from 0 to 10, and the vertical axis is altitude H in kilometres, ticked up to about 120. A diagonally hatched corridor fills the upper middle of the chart, bounded above by a curve labelled "High lift" and annotated 50 kilograms per square metre, and bounded below by a curve labelled "Low lift" and annotated 5000 kilograms per square metre; the corridor therefore marks the range of areal densities that a lifting vehicle can fly. Both bounding curves rise monotonically with velocity, so higher entry speed requires higher altitude, and they spread apart at the right-hand end. A fan of thin curves crosses the chart, each labelled at its foot with a Mach number: 8, 12, 16, 20, 24 and 28, so a curved arrow marked M shows the direction of increasing Mach number. The highest Mach numbers bunch together near 8 kilometres per second and about 100 kilometres altitude and become nearly vertical. A leader line points to the upper curve at high speed with the text "Orbiter US-shuttle", and the mass-to-area parameter m over A times c sub L is printed near the top of the high-lift curve. The chart is monochrome line work with small in-plot lettering and shows no vehicle geometry, no temperature, and no heat-flux information.}}%
 \includegraphics[width=0.8\textwidth]{figures/hypersonicMachandShockRelation.png}%
 \EndAccSupp{}%
-    \caption{Figure for Shock Wave Formation and Properties Relation (Anderson, 2006)}
+    \caption{Reentry corridor for a lifting (hypersonic) decelerator, expressed in velocity--altitude space: the ballistic-coefficient envelope between the high-lift limit of $50~\mathrm{kg/m^2}$ and the low-lift limit of $5000~\mathrm{kg/m^2}$, with constant-Mach isolines $M = 8$--$28$ superimposed and the Space Shuttle orbiter trajectory indicated. The envelope constrains the entry conditions over which a decelerator of a given areal density may fly.}
     \label{fig:shock_wave}
 \end{figure}
 
@@ -154,12 +164,12 @@ This energy conversion occurs within the shock layer enveloping the vehicle. As 
 \par
 Consequently, the design of any re-entry system, including Hypersonic Inflatable Aerodynamic Decelerators (HIADs), is governed by the need to manage this heat load. The vehicle must be designed not only to withstand the integrated heat load (total heat soaked) but also the peak heat flux (maximum rate of heating) which occurs deep within the atmosphere where density increases. This creates a critical trade-off between aerodynamic deceleration (drag) and thermal management, dictating that the vehicle geometry must be optimized to maximize drag while minimizing the transfer of energy to the surface.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Diagram of a blunt body at hypersonic speed, annotating the bow shock, the standoff distance and the flow deflection across the shock layer.}}%
+    \BeginAccSupp{method=escape,ActualText={Schematic cross-section of hypersonic blunt-body flow. The printed annotations are a freestream Mach number of 36, a "High-temperature shock layer", the bow shock labelled "Shock", convective and radiative heat-flux arrows q sub C and q sub R, a surface temperature of approximately 11,000 K, a "Radiating fluid element" starburst, and "Partially ionized plasma" beside the hatched vehicle wall. No standoff distance and no flow-deflection angle are marked.}}%
 \includegraphics[width=0.8\textwidth]{figures/aerodynamicHighShockBody.png}%
 \EndAccSupp{}%
-    \caption{Figure for Aerothermodynamics of Re-entry Vehicles.}
+    \caption{Aerothermodynamics of the blunt-body reentry problem. The freestream Mach number, the high-temperature shock layer behind the bow shock, the split between convective and radiative heat flux, the radiating fluid element, and the partially ionized plasma adjacent to a surface held at approximately 11{,}000\,K are the quantities that set the thermal load. No standoff distance and no flow-deflection angle are marked in the schematic.}
     \label{fig:aerothermodynamics}
 \end{figure}
 
@@ -217,12 +227,12 @@ More precise empirical correlations, such as Billig's approximation for a sphere
 
 This relationship has profound implications for IAD design. In hypersonic flow, where real gas effects (dissociation) can increase the density ratio $\rho_2/\rho_{\infty}$ well beyond the ideal gas limit of 6, the stand-off distance shrinks further. A smaller $\Delta$ increases the velocity gradients within the shock layer, which directly intensifies the convective heat transfer to the wall. For scalloped geometries, if the stand-off distance becomes comparable to the depth of the valleys between toroids, it can lead to complex shock-shock interactions or shock impingement on the structural surface.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Plot of bow-shock standoff distance against body radius, showing the standoff growing as the nose radius increases at fixed hypersonic Mach number.}}%
+    \BeginAccSupp{method=escape,ActualText={Qualitative schematic of an entry body in hypersonic flow. The figure has no axes and plots nothing. A detached "Strong bow shock wave" stands off a blunt-nosed cylindrical "Entry body", a stippled "High-temperature shock layer region" fills the gap, a dashed "High-temperature boundary layer" hugs the surface, and a rightward freestream arrow is annotated with M-infinity much greater than 1. The standoff distance is depicted geometrically but is not dimensioned.}}%
 \includegraphics[width=0.8\textwidth]{figures/bowshock_figure1.png}%
 \EndAccSupp{}%
-    \caption{Figure for Bow Shock Stand-off/detachment Distance. (Anderson, 2006)}
+    \caption{Qualitative schematic of bow-shock detachment over an entry body, showing the strong detached bow shock standing off the blunt nose, the high-temperature shock layer between shock and surface, and the high-temperature boundary layer on the surface~\protect\cite{AndersonHypersonic}. The standoff distance is depicted geometrically but is not dimensioned, so this figure supports the qualitative detachment argument rather than a measured standoff value.}
     \label{fig:bow_shock}
 \end{figure}
 
@@ -249,7 +259,7 @@ This relationship proves that increasing the bluntness of the vehicle not only i
 
 Here is example of the effect of the blunt body~\cite{aerospace9120800BluntBodyTheory}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Schematic of the classic blunt-body hypersonic theory, showing the bow shock, the virtual streamline and the resulting surface pressure and temperature distribution.}}%
 \includegraphics[width=0.8\textwidth]{figures/aerospace-09-00800-g001-bluntbodyTheory.png}%
@@ -354,7 +364,7 @@ In this architecture, the primary load-bearing structure itself serves as the th
 
 While effective, these rigid technologies fundamentally constrain the ballistic coefficient ($m/C_d A$) of the vehicle. To land heavier payloads on Mars, the drag area ($A$) must be increased beyond the limits of rigid fairings, necessitating the shift toward flexible, deployable architectures \cite{DiNonnoLOFTID}.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Diagram of a reinforced nose-cap thermal protection system, showing the load-bearing nose structure and the insulating layer fitted over it.}}%
 \includegraphics[width=0.8\textwidth]{figures/ReinforcedNoseStaticTPS.png}%
@@ -383,7 +393,7 @@ LOFTID validated two critical advantages of this technology:
 \end{itemize}
 
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Trajectory plot for the LOFTID inflatable decelerator demonstration, showing altitude decreasing and velocity increasing through the reentry trajectory.}}%
 \includegraphics[width=0.8\textwidth]{figures/LOFTID_mission_trajectory.png}%
@@ -393,7 +403,7 @@ LOFTID validated two critical advantages of this technology:
 \end{figure}
 
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Rendering of a fully deployed 3.0 m inflatable hypersonic aerodynamic decelerator: a stack of inflated toroidal rings forming a blunt sphere-cone aeroshell.}}%
 \includegraphics[width=0.8\textwidth]{figures/HIADsDeployed.png}%
@@ -413,11 +423,11 @@ However, the flexibility of the IAD introduces complexities absent in rigid desi
 
 A comparative summary of the two architectures is presented in Table \ref{tab:tps_comparison}.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Comparison of Conventional Rigid TPS and Hypersonic Inflatable Aerodynamic Decelerators (HIAD).}
     \label{tab:tps_comparison}
-    \begin{tabularx}{\textwidth}{|l|X|X|}
+    \begin{tabularx}{\textwidth}{|l|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}X|}
         \hline
         \rowcolor{gray!20} \textbf{Parameter} & \textbf{Rigid Aeroshell (Capsule)} & \textbf{Flexible/Inflatable (HIAD)} \\ \hline
         \textbf{Launch Constraint} & Diameter limited by launch vehicle fairing (e.g., 4-5 m). & Packable; deployed diameter can exceed fairing size (e.g., $>$ 10 m). \\ \hline
@@ -444,12 +454,24 @@ However, in the hypersonic regime of an IAD, the physics of surface waviness ser
 
 Therefore, the study of the scalloped topology is not focused on drag reduction, but rather on the Aerothermal specifically, how the peaks (crests) and valleys of the toroids modify the shock structure and local heating rates. ~\cite{white2006viscous}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Photograph sequence of a dimpled golf ball striking a surface and rebounding, used to illustrate the drag-reduction effect of surface dimples.}}%
+    % AXIOM: read from the artwork itself - this is NOT a photograph of a golf
+    %        ball. It is a single log-log line plot of drag coefficient
+    %        against Reynolds number, axes printed as "Re = UD/v" and "C_D",
+    %        with the printed annotations "Drag 'crisis' (turbulent boundary
+    %        layer appears)", "L/D -> inf" and "Effect of rough surface or
+    %        turbulent freestream". Two dashed branches fall away from the
+    %        solid curve at high Re to mark the rough-surface/turbulent-
+    %        freestream effect.
+    % AXIOM: no ball, no dimple, no impact/rebound sequence appears anywhere
+    %        in the image; the file name is the only place "golf" occurs.
+    % THEORY: the caption must describe the drag crisis curve, which is the
+    %        quantitative origin of the golf-ball analogy made in the text.
+    \BeginAccSupp{method=escape,ActualText={A log-log line plot of drag coefficient against Reynolds number, the classical sphere drag-crisis curve. The horizontal axis is Re equals U times D over nu, ticked from ten to the minus one, then 1, 10, 10 squared, 10 cubed, 10 to the fourth, 10 to the fifth and 10 to the sixth. The vertical axis is C sub D, dimensionless, ticked from 0.1 up to 800. A solid curve starts high on the left at a drag coefficient of roughly 60 near Re of one tenth, falls almost vertically through about C sub D equals 2 near Re equals 100, and reaches a broad minimum of about C sub D equals 1 between Re of 10 cubed and 10 to the fourth. The annotation Drag "crisis" with the parenthetical "turbulent boundary layer appears" points by a leader arrow at the local rise around Re of 10 to the fourth, after which the curve dips and rises again to a second peak near Re of a few times 10 to the fifth before falling sharply at the right-hand edge. Two dashed curves branch off below the solid curve at high Reynolds number and descend to a drag coefficient of roughly 0.2 to 0.3 by Re of 10 to the sixth; a leader arrow ties them to the text "Effect of rough surface or turbulent freestream", showing that tripping the boundary layer early suppresses the crisis. A separate annotation "L/D to infinity" points to the steep high-drag left branch. The chart is monochrome with thin black gridlines and small in-plot lettering, and shows no vehicle, sphere or dimpled surface drawing.}}%
 \includegraphics[width=0.8\textwidth]{figures/GolfBallImpactReImpact.png}%
 \EndAccSupp{}%
-    \caption{Figure for Impact of Surface Topology on Re Number.}
+    \caption{Drag crisis of a smooth sphere, plotted as drag coefficient against Reynolds number $Re = UD/\nu$ on log--log axes. The smooth-surface curve is driven by the delayed transition of the laminar boundary layer; the dashed branches show that tripping the boundary layer with a rough surface or an already-turbulent freestream suppresses the crisis and lowers $C_d$ to $\approx 0.2$. This is the classical drag reduction exploited by golf-ball dimpling.}
     \label{fig:surface_topology}
 \end{figure}
 
@@ -501,7 +523,7 @@ This localized shock wave penetrates the boundary layer, imposing a strong adver
 
 The intersection of this reattachment shock with the boundary layer is a critical design concern. At the point of reattachment, the boundary layer is extremely thin (high velocity gradient), and the impinging shock further compresses the fluid. This combination results in a localized spike in both pressure and heat flux, which can be significantly higher than the stagnation point heating values predicted for a smooth body \cite{AndersonHypersonic}.\cite{aerospace10080729SWBLISBLI}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Diagram of shock-wave and boundary-layer interaction on a rough surface, showing the shock impinging on the separated boundary layer and the resulting reflected shock.}}%
 \includegraphics[width=0.8\textwidth]{figures/swblishockinteract.png}%
@@ -530,7 +552,7 @@ However, the stability of this zone is dependent on the geometry of the valley, 
 
 This is as for example what is recirculation effect on an structure~\cite{RecirculationCaseWindDrivenCoastal}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Flow-recirculation schematic: streamlines separate behind a bluff body and form recirculating vortices in the wake; a small toroidal-ring inset with width, length and height dimensions shows the HIAD torus this pattern applies to.}}%
 \includegraphics[width=0.8\textwidth]{figures/RecirculationExample.jpeg}%
@@ -575,7 +597,7 @@ This derivation highlights the critical vulnerability of scalloped IAD geometrie
 
 It is demonstrated on the analogue of the localized heating \cite{daub2022experimentsElasticLocalizedHeating}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Diagram of localised heating amplification at the crest of a protruding surface feature, showing the converging flow and the resulting heat-flux concentration.}}%
 \includegraphics[width=0.8\textwidth]{figures/LocalizedHeatinginAmplify.png}%
@@ -775,13 +797,22 @@ While laminar flow is characterized by smooth, ordered fluid motion, turbulent f
 Resolving these fluctuations directly via Direct Numerical Simulation (DNS) requires a grid fine enough to capture the smallest scales of turbulent energy dissipation (the Kolmogorov scales). The computational cost scales with $Re^{9/4}$, making DNS impossible for the high Reynolds number flows ($Re > 10^6$) encountered during re-entry. Therefore, engineering analysis relies on Turbulence Modeling -- mathematical approximations that predict the effect of turbulence on the mean flow without resolving the full spectrum of turbulent fluctuations \cite{versteeg2007cfd}.
 \par
 The standard approach is to solve the Reynolds-Averaged Navier-Stokes (RANS) equations, which decompose the instantaneous flow variables into a time-averaged mean component and a fluctuating turbulent component using the Reynolds Decomposition \cite{versteeg2007cfd}. This introduces the Reynolds Stress Tensor ($-\rho \overline{u'_i u'_j}$), which must be modeled to close the system of equations. The two dominant closures are the $k-\epsilon$ model (robust for free-shear flows but inaccurate near walls) and the $k-\omega$ model (accurate near walls but sensitive to freestream conditions). Menter's Shear Stress Transport (SST) $k-\omega$ model \cite{menter1994SST} blends these formulations using a zonal blending function $F_1$ and a shear stress limiter, making it the industry standard for aerodynamic heating predictions. While the SST $k-\omega$ model is widely used for continuum CFD solvers such as ANSYS Fluent and OpenFOAM \cite{versteeg2007cfd}, it is important to note that this study employs the Direct Simulation Monte Carlo (DSMC) method, which resolves turbulence at the molecular level without requiring a turbulence model.
+\par
+Figure~\ref{fig:k_epsilon_omega} illustrates the kind of separated, recirculating flow that a RANS closure must reproduce, and therefore the capability that distinguishes the two models discussed above. It is a \emph{canonical continuum-CFD reference case}: the turbulence model is held fixed at SST $k-\omega$ in all eight panels, and the single parameter varied is the freestream inflow speed. As the inflow speed rises the boundary layer thickens, the shear layer over the step lifts, and the recirculation eddy behind the step grows to occupy the whole cavity. Note that these are low-speed flows (0.5--10~m/s) at a fixed geometry, so the figure is included to demonstrate \emph{qualitative} separation physics only; it is neither a hypersonic result nor an output of the StellarOrion DSMC solver, and no quantitative value in this thesis is derived from it.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Velocity contours computed with the SST k-omega turbulence model for several freestream velocity values, showing boundary-layer development over the body surface.}}%
+    % AXIOM: the artwork is a backward-facing-step (sudden-expansion) case.
+    % AXIOM: the turbulence model is FIXED at SST k-omega in all 8 panels.
+    % AXIOM: the varied parameter is freestream velocity, NOT the model.
+    % AXIOM: the colourbar is printed without a variable name or units, so
+    %        the plotted scalar is NOT identified by the artwork itself.
+    % THEORY: the caption must therefore describe what is printed, and must
+    %        not assert a k-epsilon vs k-omega comparison that does not exist.
+    \BeginAccSupp{method=escape,ActualText={A grid of eight contour panels in two columns by four rows, each titled SST K-Omega for velocity, followed by a different freestream speed. All eight panels show the same backward-facing-step geometry: flow enters at the upper left and travels rightwards, the lower wall is initially flat and then drops abruptly to a lower level about one third of the way across, and a spiral recirculation eddy forms in the expanded cavity immediately behind the step. A horizontal colour bar under each panel runs from 0 to 10 in unit steps and carries no printed variable name or units, so the colour bar itself does not identify the plotted quantity. Each panel also shows a scale bar running from 0 to 3.000 metres, marked at 0.750, 1.500 and 2.250 metres, and a small red-green-blue axis triad in the lower right corner. The speeds are, reading the panel titles, 0.5, 1, 2, 3, 4, 5, 7.5 and 10 metres per second. Within a panel the colour field follows a rainbow scale from dark blue in the recirculation cavity through blue, cyan, green, yellow and orange to red in the fast freestream above the step, and the red region grows as the panel speed increases, while the cavity stays dark blue. The figure shows only one turbulence model, SST k-omega, at low subsonic speeds; it does not compare turbulence models.}}%
 \includegraphics[width=0.8\textwidth]{figures/elocity-contour-for-different-values-of-velocity-for-SST-K-o-model.jpg.png}%
 \EndAccSupp{}%
-    \caption{Comparison of $k-\epsilon$ vs. $k-\omega$ turbulence model predictions for velocity contours.}
+    \caption{Recirculation and boundary-layer separation over a backward-facing step, computed with the SST $k$-$\omega$ turbulence model at eight freestream inflow velocities (0.5--10~m/s). Canonical continuum-CFD reference case illustrating the separation physics a RANS closure must capture; not a hypersonic result and not an output of the DSMC solver used in this thesis.}
     \label{fig:k_epsilon_omega}
 \end{figure}
 
@@ -833,11 +864,11 @@ In the context of hypersonic re-entry, the term "Real Gas Effects" is often used
 
 A comparison of these modeling assumptions is presented in Table \ref{tab:gas_models}.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Comparison of Gas Models in Hypersonic Aerodynamics.}
     \label{tab:gas_models}
-    \begin{tabularx}{\textwidth}{|l|X|X|}
+    \begin{tabularx}{\textwidth}{|l|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}X|}
         \hline
         \rowcolor{gray!20} \textbf{Feature} & \textbf{Ideal (Perfect) Gas Model} & \textbf{Real Gas (Hypersonic) Model} \\ \hline
         \textbf{Equation of State} & $p = \rho R T$ (Constant $R$) & $p = \rho R_{mix} T$ (Variable $R$ due to chemistry) \\ \hline
@@ -913,12 +944,25 @@ For standard air, the coefficients used in this study are:
 
 Implementing Sutherland's Law is vital for the thermal analysis of an IAD. Since aerodynamic heating is directly proportional to the square root of the viscosity product ($q_w \propto \sqrt{\rho \mu}$), neglecting the temperature dependence of $\mu$ would result in a gross underestimation of the surface heat flux.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Plot of the Sutherland viscosity law, showing how the dynamic viscosity of air varies with temperature.}}%
-\includegraphics[width=0.4\textwidth]{figures/sutherlandfx.png}%
+    % AXIOM: read from the artwork itself - this is NOT a plot of Sutherland's
+    %        law and it does NOT plot viscosity against temperature. No
+    %        viscosity axis, no temperature axis, and no mu0/T0/S constants
+    %        are printed. The axes are u/u_e from 0 to 1 and the compressible
+    %        similarity coordinate (y/x)sqrt(Re_x) from 0 to 80, with six
+    %        family profiles annotated by freestream Mach number
+    %        M_inf = 0, 4, 8, 12, 16, 20. Nothing about a flat plate,
+    %        insulation, or a wall temperature is printed.
+    % THEORY: the file name "sutherlandfx" comes from the fact that the
+    %        Sutherland transport model supplies the viscosity used to compute
+    %        these profiles; it does not mean the law itself is plotted. The
+    %        caption must say so, and the body text must point at the figure
+    %        for the consequence (compressive thickening), not for mu(T).
+    \BeginAccSupp{method=escape,ActualText={A line plot of six laminar boundary-layer velocity profiles at different freestream Mach numbers. The horizontal axis is the normalised streamwise velocity u over u sub e, ticked 0, 0.2, 0.4, 0.6, 0.8 and 1.0. The vertical axis is the compressible similarity coordinate y over x times the square root of Re sub x, ticked 0, 20, 40, 60 and 80. Six thin solid black curves, with no colour coding and no separate legend box, each rise monotonically from the origin region and flatten towards u over u sub e equals one; each curve is annotated in the plot with its freestream Mach number, and reading from the lowest to the highest curve those labels are 0, 4, 8, 12, 16 and 20, with M infinity equals 20 printed beside the topmost curve. The higher-Mach curves extend to much larger values of the similarity coordinate before the velocity has recovered, so the profiles thicken as the Mach number rises. The plot is monochrome with thin gridlines and small in-plot lettering; no plate, wedge, body or surface is drawn, and no viscosity, temperature, heat flux or pressure appears anywhere in the image.}}%
+\includegraphics[width=0.6\textwidth]{figures/sutherlandfx.png}%
 \EndAccSupp{}%
-    \caption{(Sutherland’s Law effect on Laminar Boundary Layer Insulated Flat Plate).}
+    \caption{Effect of the transport model on the laminar boundary-layer velocity profile of an insulated flat plate. Normalised streamwise velocity $u/u_e$ is plotted against the compressible similarity coordinate $(y/x)\sqrt{Re_x}$ for freestream Mach numbers $M_\infty = 0$--$20$. Viscosity is evaluated with Sutherland's law, Eq.~\eqref{eq:sutherland}, and because $\mu$ enters the wall-shear and the compressible similarity scaling directly, the law fixes the profile thickness shown here: the higher-Mach profiles are progressively thicker. The figure resolves the \emph{consequence} of the transport model on the boundary layer; the law itself, Eq.~\eqref{eq:sutherland}, is stated in the text.}
     \label{fig:sutherlands_law}
 \end{figure}
 
@@ -1085,35 +1129,68 @@ The appropriate simulation method depends on the flow regime, characterized by t
 
 \noindent where $\lambda$ is the local mean free path and $L$ is the characteristic length (e.g., the aeroshell diameter). Table~\ref{tab:knudsen_regimes} classifies the flow regimes relevant to hypersonic re-entry.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
-    \caption{Flow regime classification by Knudsen number.}
+    \caption{Flow regime classification by Knudsen number, following the standard
+    classification of Bird~\protect\cite{bird1994molecular} (Ch.~1). Note that the slip-flow band
+    $0.01 < Kn < 0.1$ is separated from the transition band $0.1 < Kn < 10$: continuum
+    Navier--Stokes remains valid up to $Kn \approx 0.1$ when velocity and temperature
+    slip corrections are applied at the wall.}
     \label{tab:knudsen_regimes}
-    \begin{tabular}{|l|c|c|p{4.5cm}|}
+    \begin{tabularx}{\textwidth}{|l|c|c|>{\RaggedRight\arraybackslash}X|}
     \hline
     \textbf{Regime} & \textbf{$Kn$ Range} & \textbf{Method} & \textbf{Physical Description} \\ \hline
-    Continuum & $< 0.001$ & RANS / NS & Molecular collisions dominate; continuum hypothesis valid \\ \hline
-    Slip Flow & $0.001$--$0.01$ & NS + slip BC & Continuum with velocity/temperature slip at walls \\ \hline
-    Transitional & $0.01$--$1$ & DSMC & Molecular structure becomes important; NS equations degrade \\ \hline
-    Free Molecular & $> 1$ & DSMC & Molecule--wall collisions dominate; molecule--molecule collisions rare \\ \hline
-    \end{tabular}
+    Inviscid Continuum & $< 0.001$ & Euler / inviscid NS & Molecular collisions dominate; viscous and conductive effects negligible \\ \hline
+    Continuum & $0.001$--$0.01$ & Navier--Stokes (FVM/FEM) & Continuum hypothesis valid with viscosity and heat conduction retained \\ \hline
+    Slip Flow & $0.01$--$0.1$ & NS + slip BC & NS valid with velocity/\allowbreak{}temperature slip corrections at walls \\ \hline
+    Transitional & $0.1$--$10$ & DSMC / BTE & Neither pure continuum nor free molecular; NS invalid without higher-order corrections \\ \hline
+    Free Molecular & $> 10$ & Free-molecular (collisionless) & Intermolecular collisions cease to occur; molecule--wall collisions dominate \\ \hline
+    \end{tabularx}
 \end{table}
 
-\noindent For the IRVE-3 vehicle at 52~km altitude, the characteristic length is $L = 3.0$~m and the mean free path is approximately $\lambda \approx 0.08$~m, yielding $Kn \approx 0.027$ -- firmly in the \textit{transitional regime} where DSMC is required \cite{bird1994molecular}.
+\noindent A single \emph{global} $Kn$ computed on the full aeroshell diameter therefore
+places the IRVE-3 freestream in the deep-continuum regime, not the transition regime.
+Using the reference length $L = 3.0$~m and evaluating \eqref{eq:mean_free_path} with the
+molecular diameter $d = 3.7\times10^{-10}$~m and the ISA freestream density
+$\rho_\infty = 1.05\times10^{-3}$~kg/m\textsuperscript{3} (number density
+$n = \rho_\infty/(k_B T_\infty)$), the freestream mean free path is
+$\lambda \approx 7.5\times10^{-5}$~m, giving
+\begin{equation}
+    Kn_{\text{global}} = \frac{\lambda_\infty}{L}
+    \approx \frac{7.5\times10^{-5}}{3.0}
+    \approx 2.5\times10^{-5},
+    \label{eq:kn_global_52km}
+\end{equation}
+\noindent which lies deep in the continuum band of Table~\ref{tab:knudsen_regimes}.
+Earlier treatments of this vehicle quoted $\lambda \sim 0.1$--$1.0$~m and
+$Kn \sim 0.03$--$0.3$; those values correspond to altitudes near 100~km rather than
+the 52~km re-entry reference point.
+
+The reason DSMC remains justified at 52~km is that $Kn$ is a \emph{local} ratio: when the
+length scale is the thin bow-shock thickness (of order millimetres) rather than the 3~m
+aeroshell diameter, the local $Kn$ rises by roughly three orders of magnitude into the
+slip-to-transition band, $Kn_{\text{shock}} \sim 0.01$--$0.1$. The freestream bulk flow is
+deeply continuum and therefore well described by Navier--Stokes, while the non-equilibrium
+shock layer that dominates the heat load is locally non-continuum. Both facts are needed:
+SPARTA solves the Boltzmann transport equation and is valid at every $Kn$, so it remains
+the correct solver for the shock layer even though the freestream is continuum
+\cite{bird1994molecular,plimpton2014sparta}. This same near-continuum justification is what
+permits the PINN stage, which solves the Navier--Stokes equations, to serve as a surrogate
+over the stagnation region.
 
 \section{Continuum CFD vs. DSMC: Comparative Framework}
 
 Table~\ref{tab:cfd_vs_dsmc} provides a systematic comparison of the continuum (RANS/NS) and kinetic (DSMC) approaches.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Comparison of continuum CFD and DSMC approaches.}
     \label{tab:cfd_vs_dsmc}
-    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.22\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}X|}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.22\textwidth}|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|}
     \hline
     \textbf{Aspect} & \textbf{Continuum CFD (RANS/NS)} & \textbf{DSMC} \\ \hline
     Governing equations & Navier--Stokes (conservation laws) & Boltzmann transport equation \\ \hline
-    Valid regime & $Kn < 0.01$ (continuum / slip flow) & $Kn > 0.01$ (transitional / free molecular) \\ \hline
+    Valid regime & $Kn \lesssim 0.1$ (continuum / slip flow) & All $Kn$ (continuum through free molecular) \\ \hline
     Physical model & Continuous fluid, stress tensor & Discrete particles, molecular collisions \\ \hline
     Turbulence & RANS (SST $k$--$\omega$), LES, DNS & Resolution of molecular chaos (no turbulence model needed) \\ \hline
     Computational cost & $O(N_{\text{grid}})$ per iteration & $O(N_{\text{particles}})$ per time step \\ \hline
@@ -1124,7 +1201,15 @@ Table~\ref{tab:cfd_vs_dsmc} provides a systematic comparison of the continuum (R
     \end{tabularx}
 \end{table}
 
-\noindent This study employs \textit{both} paradigms: continuum CFD (SST $k$--$\omega$) is used in the literature review and methodology chapters to establish theoretical foundations, while DSMC (SPARTA) is used for the actual high-fidelity simulation of the HIAD re-entry flow field, as the IRVE-3 flight conditions fall in the transitional regime ($Kn \approx 0.03$).
+\noindent This study employs \textit{both} paradigms, each applied where it is physically
+valid. Continuum CFD (SST $k$--$\omega$) establishes theoretical foundations in the
+literature review and methodology chapters, where the flow is deep continuum
+($Kn_{\text{global}} \approx 2.5\times10^{-5}$, Eq.~\eqref{eq:kn_global_52km}). DSMC
+(SPARTA) produces the high-fidelity HIAD re-entry solution because the bow-shock layer
+that dominates the thermal load is locally non-continuum
+($Kn_{\text{shock}} \sim 0.01$--$0.1$). Neither solver is used outside its regime of
+validity; the pairing is a consequence of the length scale each one adopts, not of the
+vehicle as a whole being transitional.
 
 \section{Machine Learning in Computational Fluid Dynamics}
 
@@ -1433,7 +1518,21 @@ The HIAD design problem cannot be solved by engineering intuition alone for thre
     \BeginAccSupp{method=escape,ActualText={Knudsen regime map plotting altitude against Knudsen number for the 3.0 m HIAD, marking the continuum, slip and free-molecular flow regions.}}%
 \includegraphics[width=0.80\textwidth]{figures/knudsen_regime_map.png}%
 \EndAccSupp{}%
-    \caption{Knudsen regime map as a function of altitude for the 3.0~m HIAD. The Knudsen number $Kn = \lambda / L$ determines the appropriate flow solver: continuum Navier--Stokes ($Kn < 0.001$), slip flow ($0.001 < Kn < 0.01$), transitional DSMC ($0.01 < Kn < 1$), or free molecular ($Kn > 1$). At the IRVE-3 re-entry reference altitude of 52~km, the flow is in the transitional regime ($Kn \approx 0.03$), requiring DSMC simulation.}
+    \caption{Knudsen regime map versus altitude for the 3.0~m HIAD reference length. The
+    horizontal axis is altitude from 40 to 120~km and the vertical axis is $Kn = \lambda/L$ on
+    a logarithmic scale spanning $10^{-4}$ to $10^{2}$. The artwork is banded by shading into three
+    labelled regimes --- continuum at $Kn < 0.01$, a transitional band solved by DSMC, and free
+    molecular at $Kn > 10$ --- with a reference-length legend entry $L = 3.0$~m and an
+    ``IRVE-3 Entry, 52~km'' trajectory marker. The bands shown are the regime boundaries drawn in
+    the figure and are coarser than the five-band classification of Table~\ref{tab:knudsen_regimes}:
+    the artwork omits the separate inviscid, continuum, and slip-flow subdivisions and labels the
+    whole $Kn < 0.01$ span as one continuum band. The marker at 52~km denotes the IRVE-3 entry
+    point; the trajectory line itself is schematic, so its exact ordinate should be read from the
+    calculation in Eq.~\eqref{eq:kn_global_52km} rather than from the plotted position. Using
+    $L = 3.0$~m and the ISA 52~km freestream density gives
+    $Kn_{\text{global}} \approx 2.5\times10^{-5}$, deep in the continuum band, while the
+    millimetre-scale shock layer gives $Kn_{\text{shock}} \sim 0.01$--$0.1$, which is the local
+    condition that justifies DSMC.}
     \label{fig:knudsen_regime_map}
 \end{figure}
 
@@ -1444,9 +1543,9 @@ The literature review establishes the theoretical foundations across six pillars
 \begin{enumerate}
     \item \textbf{Hypersonic Aerodynamics:} The flow field around a HIAD at $Ma > 10$ is characterized by strong shock waves, high-temperature real-gas effects, and complex shock--boundary layer interactions driven by the scalloped surface geometry (Sections 2.2--2.5).
     
-    \item \textbf{Continuum CFD:} The Navier--Stokes equations and RANS turbulence modeling (SST $k$--$\omega$) form the classical approach for hypersonic simulation (Sections 2.6--2.7). However, these are valid only in the continuum regime ($Kn < 0.001$).
+    \item \textbf{Continuum CFD:} The Navier--Stokes equations and RANS turbulence modeling (SST $k$--$\omega$) form the classical approach for hypersonic simulation (Sections 2.6--2.7). Their validity extends to $Kn \lesssim 0.1$ once velocity and temperature slip corrections are applied at the wall, which comfortably covers the global freestream value of $Kn_{\text{global}} \approx 2.5\times10^{-5}$ at 52~km.
     
-    \item \textbf{Kinetic Theory and DSMC:} The Boltzmann equation provides the fundamental description of rarefied gas dynamics. The DSMC method, incorporating the Variable Soft Sphere collision model and mean free path formulation, solves the Boltzmann equation stochastically and is the appropriate tool for the transitional regime ($Kn \approx 0.03$) encountered during HIAD re-entry at 52~km altitude (Sections 2.8--2.11).
+    \item \textbf{Kinetic Theory and DSMC:} The Boltzmann equation provides the fundamental description of rarefied gas dynamics. The DSMC method, incorporating the Variable Soft Sphere collision model and mean free path formulation, solves the Boltzmann equation stochastically and is valid across all $Kn$. For HIAD re-entry at 52~km it is the appropriate tool because the millimetre-scale bow-shock layer reaches the locally non-continuum range $Kn_{\text{shock}} \sim 0.01$--$0.1$, even though the 3~m-scale freestream is deep continuum (Sections 2.8--2.11).
     
     \item \textbf{Machine Learning for CFD:} Physics-Informed Neural Networks embed governing PDEs into the loss function, enabling mesh-free solution refinement and gap-filling from sparse DSMC data (Section 2.13).
     

@@ -1,8 +1,13 @@
-\documentclass[12pt,a4,fleqn,american]{extreport}
+\documentclass[12pt,a4paper,fleqn,american]{extreport}
 \input{preamble}
 \input{identity}
 \input{database.hyphenate}
 \begin{document}
+% Front matter is numbered twice (cover = arabic 1, then roman i), so two
+% pages both claim the anchor page.1 and hyperref drops one with a duplicate
+% destination warning. Anchors stay off until the arabic body numbering
+% begins, which is the documented hyperref remedy.
+\hypersetup{pageanchor=false}
   \include{cover}
 \pagenumbering{roman} 
  \include{approval_sheet}
@@ -13,6 +18,7 @@
 \include{symbols}
 \include{abbreviations}
 \pagenumbering{arabic}
+\hypersetup{pageanchor=true}
   \include{chapter_01_introduction}
   \include{chapter_02_literature_review}
   \include{chapter_03_methodology}

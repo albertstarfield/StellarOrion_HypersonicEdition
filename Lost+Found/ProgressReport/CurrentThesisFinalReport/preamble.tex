@@ -1,12 +1,25 @@
 \usepackage{geometry}
-\geometry{verbose,tmargin=3cm,bmargin=3cm,lmargin=4cm,rmargin=3cm}
+% tocloft MUST be loaded before hyperref: hyperref redefines \@starttoc, and
+% tocloft tests for exactly that and bails out half-configured when it finds
+% it ("\@starttoc has already been redefined; tocloft bailing"). Loading it
+% here -- before every other package that could touch \@starttoc -- is the fix.
+\usepackage{tocloft}
+% a4paper is stated EXPLICITLY here: loading geometry after the class
+% resets the paper size to its own default (letter), so the class option
+% a4 alone produced 612x792pt letter pages in a document that declares
+% A4. Margins are unchanged.
+\geometry{a4paper,verbose,tmargin=3cm,bmargin=3cm,lmargin=4cm,rmargin=3cm}
 % hidelinks keeps the /Link annotations (so cross-references stay clickable and
 % remain exposed to assistive technology) while suppressing the red border box
 % that pdfborder otherwise paints around every \ref, which is a print and
 % screen-reader visual defect in a submitted thesis.
-\usepackage[pdftex,bookmarks=true,unicode=true,pdfusetitle,bookmarksnumbered=true,bookmarksopen=true,breaklinks=true,hidelinks,backref=true,colorlinks=false]{hyperref}
+\usepackage[pdftex,bookmarks=true,unicode=true,pdfusetitle,bookmarksnumbered=true,bookmarksopen=true,breaklinks=true,hidelinks,backref=section,colorlinks=false]{hyperref}
 
-\usepackage[htt]{hyphenat}
+% hyphenat: the `htt` option (hyphenation inside \texttt) was removed -- it
+% is what produced all 31 "Font shape T1/cmtt/... undefined" warnings, and the
+% long monospace paths that motivated it are already broken with \seqsplit
+% (loaded below, preamble.tex:15).
+\usepackage{hyphenat}
 \usepackage{listing}
 \usepackage{graphicx}      %menghandle gambar
 \usepackage{tabularx}
@@ -18,7 +31,17 @@
 
 % Let TeX stretch inter-word space to avoid overfull lines from unbreakable
 % inline math / typewriter tokens, instead of letting them run past the margin.
-\setlength{\emergencystretch}{3em}
+% Extra interword stretch before TeX overruns a margin. Raised from 3em
+% to 5em so long unbreakable tokens inside narrow tabularx p-columns
+% (model names, file paths) are absorbed by word spacing rather than
+% pushing text into the margin.
+\setlength{\emergencystretch}{5em}
+
+% A4 is ~4%% narrower than the letter page these tables were laid out on,
+% so the default 6pt inter-column padding now pushes several tabularx
+% alignments past \textwidth. 4pt recovers 4pt per column, which covers
+% every one of those alignments while keeping the cells readable.
+\setlength{\tabcolsep}{4pt}
 \tolerance=2000
 \hbadness=1000       % \BeginAccSupp{ActualText=...}: screen-reader alt text
                              % for raster figures (WCAG 1.1.1 non-text content)
@@ -36,6 +59,14 @@
 \usepackage{indentfirst}
 %\setlength{\parindent}{0.6cm}
 \usepackage{parskip}
+% tocloft MUST be loaded before titletoc (which arrives with the
+% appendix package below): tocloft tests whether \@starttoc has already
+% been redefined and bails out half-configured if it has. The titletoc
+% option tells it to cooperate instead.
+% tocloft MUST be loaded before titletoc (which arrives with the appendix
+% package below): tocloft tests whether \@starttoc has already been
+% redefined and bails out half-configured if it has. This tocloft build
+% has no `titletoc` option, so the load ORDER is the whole fix.
 \usepackage[titletoc]{appendix}
 \usepackage{cite}          % buat cite pake BibTex
 \usepackage{apacite}
@@ -86,7 +117,6 @@
 \titlespacing*{\chapter}{0pt}{-1.5\baselineskip}{1em}
 
 %menambahkan titik titik di daftar isi, gambar, tabel
-\usepackage{tocloft}
 \renewcommand{\cftpartleader}{\dotfill}
 \renewcommand{\cftpartafterpnum}{\cftparfillskip}
 \renewcommand{\cftchapleader}{\dotfill} 

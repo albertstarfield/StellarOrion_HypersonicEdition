@@ -6,7 +6,7 @@
 
 Before detailing the computational framework, this section establishes the foundational axioms from which the entire methodology is derived. Each axiom is grounded in established physical theory and validated against the literature reviewed in Chapter~\ref{chap:literature}. The derivation chain---from fundamental kinetic theory to the implemented software pipeline---is summarized in Figure~\ref{fig:methodology_derivation}.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Flowchart of the methodology derivation chain, linking each research axiom to the equation or solver step that implements it.}}%
 \includegraphics[width=\textwidth]{figures/methodology_derivation.png}%
@@ -18,11 +18,11 @@ Before detailing the computational framework, this section establishes the found
 \subsection{Axiom Set}
 The following axioms form the logical foundation of this research. Each is stated as a proposition, derived from physical theory, and traced to its literature basis.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \caption{Research axioms derived from first principles and their literature basis.}
 \label{tab:research_axioms}
-\begin{tabularx}{\textwidth}{@{}c >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.20\textwidth} >{\RaggedRight\arraybackslash}p{0.24\textwidth}@{}}
+\begin{tabularx}{\textwidth}{@{}c >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.20\textwidth} >{\RaggedRight\arraybackslash}p{0.24\textwidth}@{}}
 \toprule
 \textbf{ID} & \textbf{Axiom} & \textbf{Physical Basis} & \textbf{Literature Basis} \\ \midrule
 A1 & Conservation of mass, momentum, and energy & Continuum mechanics & Batchelor (1967), Anderson (1995) \\
@@ -84,7 +84,7 @@ where hard constraint violations (backface temperature $> 350$\,K, g-load $> 25g
 
 Figure~\ref{fig:governing_equations} summarizes the full derivation chain from kinetic theory to optimization, showing the governing equation at each step and the axiom that anchors it.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Panel of the governing equations used in the study, listing the continuity, momentum and energy equations together with the state and transport relations.}}%
 \includegraphics[width=\textwidth]{figures/governing_equations.png}%
@@ -97,7 +97,7 @@ Figure~\ref{fig:governing_equations} summarizes the full derivation chain from k
 \label{sec:software_pipeline}
 The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\ref{fig:software_pipeline}. The pipeline begins with CadQuery geometry generation and freestream condition specification, then routes through the DSMC solver (SPARTA in Docker), the PINN refinement module (DeepXDE), and the Bayes Opt surrogate (PyTorch), before producing ParaView-ready VTK and STL files for visualization.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline, showing the Ada and SPARK simulation engine, the Python sidecar for PINN refinement, and the result post-processing stages exchanging data.}}%
 \includegraphics[width=\textwidth]{figures/software_pipeline.png}%
@@ -108,9 +108,9 @@ The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\
 
 \subsection{Default Optimization Parameters}
 \label{sec:default_params}
-Table~\ref{tab:default_params} lists the default parameter values used throughout this thesis, as configured in \texttt{main.py} and the engine source files. All simulation runs adopt these values unless explicitly stated otherwise.
+Table~\ref{tab:default_params} lists the default parameter values used throughout this thesis, as configured in the Ada/SPARK engine source and exposed through the \texttt{stellarorion\_program\_proc/run.py} command-line front end. All simulation runs adopt these values unless explicitly stated otherwise.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \caption{Default optimization and simulation parameters.}
 \label{tab:default_params}
@@ -120,7 +120,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 % $\max(2000, \min(4000, steps \times 2))$ in column 3. \multirow with a * width
 % never wraps, so column 1 must be wide enough for the longest label; column 3
 % must be wide enough for the longest math atom. Column 2 absorbs the rest.
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.21\textwidth}>{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.30\textwidth}@{}}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.21\textwidth}>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.30\textwidth}@{}}
 \toprule
 \textbf{Category} & \textbf{Parameter} & \textbf{Default Value} \\ \midrule
 \multirow{5}{=}{\textbf{DSMC (SPARTA)}} & Steps (optimization) & 1100 \\
@@ -156,7 +156,7 @@ This chapter outlines the computational framework utilized to investigate the ae
 
 To systematically isolate the effects of the ``scalloped'' surface geometry, the methodology is designed to compare a baseline smooth sphere-cone against the proposed inflatable architecture under identical hypersonic flight conditions. The workflow is visualized in Figure \ref{fig:flowchart} and consists of six primary stages:
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     % Same artwork as Figure 1.6 (fig:flowchart_ch1), regenerated by
     % figures/make_flowchart.py. Height-constrained with keepaspectratio because
@@ -187,7 +187,7 @@ To ensure geometric consistency and enable automated design space exploration, t
 \subsection{Vehicle Specifications and Scaling}
 The modeling phase targets two specific scales identified in previous NASA research to investigate how vehicle diameter affects the aerothermal environment. As shown in Figure~\ref{fig:hiad_comparison}, the research considers the scaling transition from the 3.0\,m IRVE-3 baseline through intermediate rigid configurations of the kind shown in the figure (4.57\,m) up to inflatable configurations of 15\,m~\cite{dillman2015irve3}. The figure is a concept comparison of form and scale; the quantitative scaling study reported later in this chapter is conducted on the 3.0\,m baseline, which is the only scale for which this work holds a validated reference dataset.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Two side-by-side shaded three-dimensional renderings comparing inflatable and rigid decelerator concepts. The left panel shows a slender, sharply pointed olive-green inflated sphere-cone labelled '15m Inflatable', drawn at a shallow angle so that it appears as a long thin lens. The right panel shows a stubby, blunt-nosed orange-brown rigid body captioned '4.57m Rigid', viewed nearly end-on. The two panels are separated by a vertical rule. The contrast is between a large-diameter deployable inflatable and a small-diameter rigid aeroshell; the diameters are those printed in the panels themselves and are not to scale relative to each other.}}%
 \includegraphics[width=0.8\textwidth]{figures/Hiad_DesignSpec.png}%
@@ -199,7 +199,7 @@ The modeling phase targets two specific scales identified in previous NASA resea
 \subsection{Internal Architecture and Scallop Definition}
 The ``scalloped'' outer mold line (OML) is modeled based on the 6-toroid stack configuration utilized in the Rapisarda (2023) MDAO baseline. The internal layout, including the stacked toroid arrangement, is illustrated in Figure \ref{fig:irve3_layout}~\cite{rapisarda2023mdao}.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     % Spec0.png is a 642x444 px reproduction of a cutaway engineering
     % illustration. The reproduction is cropped at both left and right edges,
@@ -217,7 +217,7 @@ The ``scalloped'' outer mold line (OML) is modeled based on the 6-toroid stack c
 
 The specific geometric parameters used for the numerical model are summarized in Table \ref{tab:geom_params}:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Geometric Parameters based on IRVE-3/Rapisarda MDAO Specifications.}
     \label{tab:geom_params}
@@ -236,7 +236,7 @@ The specific geometric parameters used for the numerical model are summarized in
 \subsection{Configuration Definitions}
 The two configurations established for this study -- \textbf{Configuration A (Scalloped)} and \textbf{Configuration B (Smooth)} -- are constrained by the stowed and deployed envelopes shown in Figure \ref{fig:stowed_deployed}~\cite{dillman2015irve3}.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Cutaway of the HIAD in its stowed launch configuration inside the launch vehicle, headed Stowed with a quoted 18.5 inch diameter. A long tapered stowed pack sits above the vehicle internals, which include a pale green spherical payload and stacked avionics and battery boxes; below them a green upper stage band and a pale blue lower stage are labelled 22 inch diameter, and three orange landing legs extend downward from the lower stage.}}%
 \includegraphics[width=0.35\textwidth]{figures/Spec1.png}%
@@ -272,7 +272,13 @@ The validity of the continuum assumption is governed by the Knudsen number ($Kn$
     \lambda = \frac{1}{\sqrt{2} \pi d^2 n}
 \end{equation}
 
-where $d$ is the molecular diameter and $n$ is the number density. For HIAD reentry at altitudes of 50--60\,km, the flow is in the transitional regime ($0.01 < Kn < 1$), where continuum CFD methods (RANS/LES) are physically inappropriate and DSMC is required~\cite{bird1994molecular}.
+where $d$ is the molecular diameter and $n$ is the number density. Because $Kn$ is a \emph{local} ratio, its value depends on the choice of reference length, and the two physically meaningful choices must be distinguished for HIAD reentry~\cite{bird1994molecular}.
+
+On the \emph{global} reference length --- the full 3\,m aeroshell diameter --- the IRVE-3 freestream at the 51.8\,km reference point is \emph{deeply continuum}. Taking the ISA density $\rho_\infty = 1.05\times10^{-3}$\,kg/m\textsuperscript{3}, the molecular diameter $d = 3.7\times10^{-10}$\,m, and $T_\infty = 220$\,K gives $\lambda_\infty \approx 7.5\times10^{-5}$\,m and hence $Kn_{\text{global}} \approx 2.5\times10^{-5}$, as derived in Equation~\eqref{eq:kn_global_52km}. A continuum description is therefore physically appropriate for the freestream bulk flow, and a global $Kn$ placed in the transition band would misattribute the source of the physics.
+
+On the \emph{local} reference length --- the millimetre-scale bow-shock and stagnation layer --- the same gas enters the non-continuum bands: $Kn_{\text{shock}} \sim 0.01$--$0.1$ in the shock layer and $Kn_{\text{stag}} \sim 0.005$ at the stagnation region. This is the local regime that dominates the convective heat load, and it is why DSMC is the appropriate solver even though the freestream is continuum. SPARTA solves the Boltzmann transport equation and remains valid at every $Kn$, so the continuum freestream and the non-continuum shock layer are resolved within a single solver~\cite{plimpton2014sparta}. This local non-equilibrium justification is also what licenses the continuum Navier--Stokes PINN stage as a surrogate over the near-continuum stagnation region (Sec.~\ref{sec:pinn_pragmatic}).
+
+Table~\ref{tab:knudsen_regimes} in Chapter~2 gives the full five-band classification used throughout this thesis.
 
 \subsection{SPARTA Solver Configuration}
 The simulations are performed using the SPARTA (Sandia Parallel Algorithm for Real-Time Application) DSMC solver~\cite{plimpton2014sparta}. SPARTA is executed within a Docker-containerized Linux environment to ensure reproducibility of the build and execution across platforms.
@@ -316,7 +322,7 @@ The grid resolution must be finer than the local mean free path ($\lambda$) to r
 \subsection{Grid Independence Study}
 To ensure the numerical solution is independent of the grid resolution, a Grid Convergence Index (GCI) study was performed. Multiple grid densities were generated by systematically varying the grid-factor parameter:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Grid Independence Study Parameters.}
     \label{tab:mesh_independence}
@@ -337,7 +343,7 @@ The grid-factor of \textbf{0.7} was selected as the default for all production r
 \subsection{Surface Computes}
 SPARTA accumulates surface force and energy data using the \texttt{dump surf} command. The relevant surface quantities are:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{SPARTA Surface Data Columns and Physical Variables.}
     \label{tab:surface_data}
@@ -434,11 +440,11 @@ where $\eta_{lag} = 0.15$ is the thermal lag factor, $\rho_{TPS} = 1468$\,kg/m$^
 
 The framework supports multiple TPS material presets as summarized in Table~\ref{tab:tps_materials}.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{TPS Material Presets Available in the StellarOrion Framework.}
     \label{tab:tps_materials}
-    \begin{tabularx}{\textwidth}{|l|c|c|c|>{\RaggedRight\arraybackslash}X|}
+    \begin{tabularx}{\textwidth}{|l|c|c|c|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|}
         \hline
         \textbf{Material} & \textbf{$\rho$ (kg/m$^3$)} & \textbf{$C_p$ (J/kg$\cdot$K)} & \textbf{$\epsilon$} & \textbf{Application} \\ \hline
         Nicalon SiC & 1468 & 1100 & 0.75 & Gen-2 HIAD TPS \\ \hline
@@ -499,6 +505,7 @@ The total loss function combines PDE residuals with observational data from SPAR
 where $\mathcal{L}^{data}$ matches the PINN predictions against SPARTA grid checkpoints via \texttt{\seqsplit{dde.icbc.PointSetBC}}.
 
 \subsection{Pragmatic Choice of Navier--Stokes for PINN Regularization}
+\label{sec:pinn_pragmatic}
 The use of continuum Navier--Stokes equations in the PINN is an intentional pragmatic choice, not a physical claim about the flow regime. The rationale is:
 \begin{enumerate}
     \item \textbf{Differentiability:} Neural networks require smooth, differentiable equations for backpropagation. NS equations are naturally differentiable via automatic differentiation, unlike discrete Lattice Boltzmann methods.
@@ -509,7 +516,7 @@ The use of continuum Navier--Stokes equations in the PINN is an intentional prag
 \subsection{Network Architecture}
 The PINN approximates the flow field mapping $\mathcal{N}: \mathbb{R}^2 \to \mathbb{R}^3$ using a fully-connected feedforward neural network (FNN). The architecture is:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{PINN Network Architecture Parameters.}
     \label{tab:pinn_architecture}
@@ -588,7 +595,10 @@ The PINN employs a two-stage training strategy to decouple data fitting from phy
 During the first half of training ($N_{iter}/2$ iterations), only the observational data loss is active. The PDE residuals are suppressed by setting their loss weights to zero:
 
 \begin{equation}
-    \mathcal{L}^{(1)} = \underbrace{0 \cdot \mathcal{L}_{cont} + 0 \cdot \mathcal{L}_{mom,x} + 0 \cdot \mathcal{L}_{mom,y} + 0 \cdot \mathcal{L}_{EOS} + 0 \cdot \mathcal{L}_{energy}}_{\text{PDE terms (disabled)}} + \sum_{m=1}^{3} 1.0 \cdot \mathcal{L}_{data,m}
+    \begin{split}
+        \mathcal{L}^{(1)} = &\underbrace{0 \cdot \mathcal{L}_{cont} + 0 \cdot \mathcal{L}_{mom,x} + 0 \cdot \mathcal{L}_{mom,y} + 0 \cdot \mathcal{L}_{EOS} + 0 \cdot \mathcal{L}_{energy}}_{\text{PDE terms (disabled)}} \\
+        &+ \sum_{m=1}^{3} 1.0 \cdot \mathcal{L}_{data,m}
+    \end{split}
 \end{equation}
 
 This stage trains the network to reproduce the SPARTA observation data without physics constraints, allowing rapid initial convergence. The learning rate is $\eta_1 = 10^{-3}$.
@@ -602,7 +612,7 @@ During the second half of training, the PDE residual weights are activated at $\
 
 The learning rate is reduced to $\eta_2 = 5 \times 10^{-4}$ for fine-tuning. The complete loss weight vector is:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{PINN Loss Weights by Training Stage.}
     \label{tab:pinn_loss_weights}
@@ -625,7 +635,7 @@ The rationale for the small PDE weight ($\lambda_{PDE} = 10^{-4}$) is that the N
 \subsection{Convergence Detection Algorithm}
 The optimal training iteration is determined automatically using a plateau detection algorithm applied to the data-term loss history:
 
-\begin{algorithm}[H]
+\begin{algorithm}[!htbp]
 \caption{PINN Convergence Detection}
 \label{alg:pinn_convergence}
 \begin{algorithmic}[1]
@@ -650,7 +660,7 @@ The 20\% minimum threshold ($N_{min}$) prevents false early-plateau triggers dur
 \subsection{Axioms and Assumptions}
 The PINN refinement stage rests on the following formal assumptions:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{PINN Axioms and Assumptions.}
     \label{tab:pinn_axioms}
@@ -669,7 +679,7 @@ The PINN refinement stage rests on the following formal assumptions:
 
 \subsection{PINN Hyperparameter Summary}
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{PINN Hyperparameter Values.}
     \label{tab:pinn_hyperparams}
@@ -706,11 +716,11 @@ The survivability optimization framework integrates Latin Hypercube Sampling for
 \subsection{Design Space and Parameters}
 The optimization explores a $d$-dimensional design space defined by the HIAD geometric and material parameters:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Optimization Design Variables and Their Bounds (Rapisarda 2023 Envelope).}
     \label{tab:design_variables}
-    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.25\textwidth}|c|c|X|}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.25\textwidth}|c|c|>{\RaggedRight\arraybackslash}X|}
         \hline
         \textbf{Variable} & \textbf{Symbol} & \textbf{Bounds} & \textbf{Unit} \\ \hline
         Aeroshell diameter & $D$ & $[0.5, 15.0]$ & m \\ \hline
@@ -855,7 +865,7 @@ where $\Lambda_j$ is the penalty weight for constraint $j$ (set to $10^{6}$ for 
 
 The constraint functions $g_j(\mathbf{x})$ encode the following physical limits:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Bayes Opt Constraint Functions.}
     \label{tab:mop_constraints}
@@ -878,11 +888,11 @@ The constraint-augmented cost $J_{constrained}$ replaces the unconstrained $J$ i
 
 The computational framework supports multiple solver backends to address different flow regimes:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Solver Regimes and Selection Logic.}
     \label{tab:solver_regimes}
-    \begin{tabularx}{\textwidth}{|l|>{\RaggedRight\arraybackslash}p{0.22\textwidth}|>{\RaggedRight\arraybackslash}X|}
+    \begin{tabularx}{\textwidth}{|l|>{\RaggedRight\arraybackslash}p{0.22\textwidth}|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|}
         \hline
         \textbf{Stage} & \textbf{Solver} & \textbf{Rationale} \\ \hline
         Exploration & SBO / PINN & Ultra-fast estimation of 1000s of design candidates \\ \hline
@@ -922,11 +932,11 @@ The vehicle surface is modeled as a diffuse reflection boundary with fully accom
 \subsection{Field Maps}
 SPARTA grid dumps provide field maps of macroscopic quantities accumulated from particle statistics:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{SPARTA Grid Data Columns and Physical Variables.}
     \label{tab:grid_data}
-    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.09\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.07\textwidth}|}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.07\textwidth}|}
         \hline
         \textbf{Column} & \textbf{Physical Variable} & \textbf{Unit} \\ \hline
         1--4 & Cell bounds ($x_{lo}, y_{lo}, x_{hi}, y_{hi}$) & m \\ \hline
@@ -944,12 +954,14 @@ The local Knudsen number is computed from the SPARTA grid data:
     Kn_{local} = \frac{\lambda_{local}}{L} = \frac{1}{\sqrt{2} \pi d^2 n_{local} L}
 \end{equation}
 
-This enables the identification of continuum ($Kn < 0.01$), transitional ($0.01 < Kn < 1$), and free-molecular ($Kn > 1$) regions within the flow field.
+Evaluated per grid cell, this local $Kn$ field resolves the regime structure of the flow rather than a single vehicle-wide number. Read against the five bands of Table~\ref{tab:knudsen_regimes}, the field at the present trajectory point occupies the continuum and slip-flow bands: the undisturbed freestream and the near-body stagnation region sit in the continuum band ($Kn_{\text{local}} \lesssim 0.01$, with $Kn_{\text{stag}} \sim 0.005$), while the shock layer and wake reach into the slip-flow band ($0.01 \lesssim Kn_{\text{local}} \lesssim 0.1$). Two bands are provably absent: the transitional band ($0.1 \lesssim Kn_{\text{local}} \lesssim 10$) and the free-molecular band ($Kn_{\text{local}} > 10$) are never attained at 51.8\,km, because the freestream density is far too high for intermolecular collisions to become sufficiently rare within the resolved domain. Both would appear only at substantially higher altitudes.
+
+This is the quantitative basis for the field map of Figure~\ref{fig:knudsen_map} in Chapter~4, and it fixes the scope of the DSMC justification precisely. Because the shock layer reaches the slip-flow band, where Navier--Stokes without slip corrections ceases to be valid, DSMC is the appropriate solver for the heat-transfer region; the freestream and stagnation region remain continuum, which is what licenses the continuum Navier--Stokes PINN stage. The claim required by the results is a continuum-to-slip gradient across the shock layer --- not a transition-region or free-molecular claim, which this trajectory point does not support.
 
 \subsection{Validation Against Flight Data}
 The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012} and the Rapisarda (2023) MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:irve3_validation} reports the flight data alongside both the MDAO reference model and the present SPARTA DSMC solution, so that the published reference model is not mistaken for a result of this work.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     % This table reports the same validation comparison as Table 4.1 in the
     % results chapter, and the heat-flux caveat in the caption below is stated
@@ -959,9 +971,9 @@ The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012
     \caption{IRVE-3 validation metrics. The MDAO column is the published Fay--Riddell reference; the StellarOrion column is the result of this work. $^{\dagger}$The heat-flux entry is a Sutton--Graves correlation evaluated at $R_N = 1.5$\,m and $V = 3{,}378$\,m/s, not a quantity resolved by the solver. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton--Graves value the code reports, and why they differ.}
     \label{tab:irve3_validation}
     \small
-    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|>{\RaggedRight\arraybackslash}p{0.12\textwidth}|}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.10\textwidth}|}
         \hline
-        \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion (This Work)} & \textbf{SO Error (\%)} \\ \hline
+        \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion\allowbreak{} (This Work)} & \textbf{SO Error (\%)} \\ \hline
         Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & 16.14 W/cm$^2$ & $+12.4$, \emph{not like-for-like} \\ \hline
         Total Heat Load ($Q$) & 195.06 J/cm$^2$ & 195.17 J/cm$^2$ & 165.72 J/cm$^2$ & $-15.0$ \\ \hline
         Peak Deceleration & 19.7\,$g$ & -- & 16.83\,$g$ & $-14.6$ \\ \hline
@@ -1006,7 +1018,7 @@ This section documents the machine learning components of the framework followin
 \subsubsection*{Physics-Informed Neural Network (PINN)}
 The PINN is implemented using the DeepXDE library~\cite{lu2021deepxde} with the following architecture:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{PINN Architecture and Hyperparameters.}
     \label{tab:pinn_hyperparameters}
@@ -1027,7 +1039,7 @@ The PINN is implemented using the DeepXDE library~\cite{lu2021deepxde} with the 
 \subsubsection*{Bayesian Optimization (Bayes Opt)}
 The Bayes Opt surrogate is a Gaussian Process regressor with a Mat\'ern 5/2 kernel, paired with an analytic Expected Improvement acquisition, as derived in Sec.~\ref{sec:ga_opt}:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Bayes Opt Gaussian Process Surrogate and Acquisition Hyperparameters.}
     \label{tab:mop_hparams}
@@ -1073,7 +1085,7 @@ For robust performance estimation, $k$-fold cross-validation ($k = 5$) is employ
 
 Model performance is evaluated using the following metrics:
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{ML Model Validation Metrics.}
     \label{tab:ml_metrics}
@@ -1100,7 +1112,7 @@ All stochastic operations (weight initialization, data splitting, CCD point gene
 \end{itemize}
 
 \subsubsection*{Environment Specification}
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \caption{Computing Environment for ML Components.}
     \label{tab:env_spec}
