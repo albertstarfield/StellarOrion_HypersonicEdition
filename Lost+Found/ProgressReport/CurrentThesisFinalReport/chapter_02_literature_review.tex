@@ -916,10 +916,10 @@ Using a Thermally Perfect Gas model is essential for the HIAD analysis because t
 
 \begin{figure}[htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Plot of the specific heat capacity of air against temperature, comparing the constant calorically-perfect-gas value with the NASA polynomial fit for a thermally perfect gas; vibrational excitation begins near 800 kelvin.}}%
+    \BeginAccSupp{method=escape,ActualText={Plot of the specific heat capacity of air against temperature. The vertical axis runs from 1.0 to 2.4 kilojoules per kilogram kelvin and the horizontal axis from 0 to 6000 kelvin. A solid curve labelled NASA Polynomial, Thermally Perfect, starts near 1.0, falls slightly and stops at roughly 1300 kelvin, so the region above 1300 kelvin is empty apart from a horizontal dashed line labelled Calorically Perfect at 1004.5 joules per kilogram kelvin and a shaded band between the two. Two vertical dotted markers are drawn: one at about 800 kelvin labelled vibrational excitation onset, and one at about 2000 kelvin labelled HIAD re-entry peak temperature.}}%
 \includegraphics[width=0.85\textwidth]{figures/cp_temperature_nasa.png}%
 \EndAccSupp{}%
-    \caption{Specific heat capacity $C_p(T)$ for air as a function of temperature. The horizontal line represents the calorically perfect gas (CPG) assumption ($C_p = \text{const.}$), while the curve shows the NASA polynomial fit for the thermally perfect gas (TPG) model. The vibrational excitation onset near 800~K marks the transition where the CPG assumption becomes invalid for hypersonic flow calculations.}
+    \caption{Specific heat capacity $C_p(T)$ for air against temperature, contrasting the calorically perfect gas assumption (CPG, $C_p = \text{const.}$) with the NASA polynomial fit for the thermally perfect gas (TPG). Two limitations of the imported artwork are recorded here rather than left for the reader to discover. First, the TPG curve is drawn only over roughly the range 0 to 1300~K, so the plot shows nothing about the high-temperature behaviour for which the thermally perfect model exists; the marked vibrational excitation onset near 800~K is an annotation carried over from the source correlation rather than a feature resolved in this plot, and no change in the curve is visible at that temperature. Second, the vertical marker in the artwork labelled ``HIAD re-entry peak temperature'' sits at about 2000~K, which is not the value used anywhere in this work: the calorically perfect stagnation temperature computed in Chapter~\ref{ch:results} is 5952~K, before any reduction for vibrational excitation and dissociation. The marker belongs to the source of the imported figure and is disregarded here.}
     \label{fig:cp_nasa_polynomial}
 \end{figure}
 
@@ -1346,14 +1346,8 @@ The flexible TPS skin is not a smooth conical surface. Due to the discrete toroi
 
 \noindent where $\xi \in [0, 1]$ is a skin tension factor that depends on internal inflation pressure and skin material stiffness. This scalloped geometry generates localized flow separation and reattachment patterns that significantly amplify the peak stagnation heating at the toroid crests, as discussed in Section~2.5.
 
-\begin{figure}[htbp]
-    \centering
-    \BeginAccSupp{method=escape,ActualText={Schematic of hypersonic flow over a periodic scalloped surface, showing the bow shock forming over each crest and the separated recirculating flow in each valley between crests.}}%
-\includegraphics[width=0.9\textwidth]{figures/scalloped_wall_flow.png}%
-\EndAccSupp{}%
-    \caption{Schematic of hypersonic flow over the scalloped HIAD surface. The periodic toroidal bladder geometry creates alternating favorable ($dp/dx < 0$, flow acceleration at crests) and adverse ($dp/dx > 0$, flow deceleration in valleys) pressure gradients, leading to boundary layer separation, recirculation zones, and localized peak heating amplification at toroid crests.}
-    \label{fig:scalloped_wall_flow_parametric}
-\end{figure}
+% Figure~\ref{fig:scalloped_wall_flow} is not reprinted here. The same artwork, figures/scalloped_wall_flow.png, appeared a second time under this label with a caption that contradicted the first: it claimed boundary layer separation, recirculation zones and localized peak heating amplification, none of which the drawing contains, while the Chapter 2 figure claimed a trapped vortex that the drawing also does not contain. One diagram, one number, one caption.
+The crest-and-valley pressure gradient described in Figure~\ref{fig:scalloped_wall_flow} is created by the periodic toroidal bladder geometry itself. The surface is convex over each toroid crown, so the inviscid flow accelerates there and the static pressure falls ($dp/dx < 0$); the surface is concave in each gap between crowns, so the flow decelerates and the pressure rises ($dp/dx > 0$). It is that adverse gradient acting on a boundary layer already thickened by the heating of the preceding gap which makes separation possible, and it is the crest regions that are treated as secondary stagnation points in Chapter~\ref{ch:results}. This is a statement about the flow physics, not a reading of features in the figure, and the figure is not cited as evidence for the separation itself.
 
 \subsection{IRVE-3 Baseline and Rapisarda Material Configuration}
 
