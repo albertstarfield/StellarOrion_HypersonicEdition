@@ -73,6 +73,8 @@ try:
     from sklearn.gaussian_process.kernels import (
         ConstantKernel,
         Matern,
+        Product,
+        Sum,
         WhiteKernel,
     )
 except ImportError:
@@ -83,6 +85,8 @@ except ImportError:
     from sklearn.gaussian_process.kernels import (
         ConstantKernel,
         Matern,
+        Product,
+        Sum,
         WhiteKernel,
     )
 
@@ -713,6 +717,64 @@ def load_convergence_data(csv_path: str) -> dict[str, Any]:
     return data
 
 
+def kernel_hyperparameters(kernel: object) -> dict[str, float]:
+    """Extract GP kernel hyperparameters by walking the kernel tree.
+
+    Purpose:
+        Read the fitted signal constant, Matérn length scale, and White noise
+        level out of a composed sklearn kernel, without depending on the
+        flattened parameter-name strings.
+
+    Parameters:
+        kernel: A fitted sklearn ``Kernel``. For the pipeline's default it is
+            ``Sum(Product(ConstantKernel, Matern), WhiteKernel)``.
+
+    Returns:
+        dict with keys ``"constant"``, ``"length_scale"``, ``"noise_level"``,
+        each a Python ``float``.
+
+    Raises:
+        KeyError: If any of the three leaf kernels is absent, so a changed or
+            simplified kernel fails loudly instead of silently reporting NaN.
+
+    Why a tree walk and not the flattened names (defect fixed 2026-10-05):
+        ``Kernel.get_params()`` flattens composition into positional strings, so
+        ``Sum(Product(A, B), C)`` yields ``k1__k1__<A>``, ``k1__k2__<B>``, and
+        ``k2__<C>``. The previous code asked for ``k1__constant_value`` and
+        ``k2__length_scale``, which do not exist — on sklearn 1.9.1 the first
+        raised ``KeyError: 'k1__constant_value'`` and crashed the whole PINN
+        leg before any training started. The names are positional, so they are
+        also silently wrong if the composition order or nesting ever changes.
+        Walking the tree by node TYPE is order- and depth-independent and holds
+        for any nesting of Sum/Product.
+        [Reference: sklearn Kernel.get_params
+         https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.kernels.Kernel.html]
+
+    Notes:
+        Validated at runtime against sklearn 1.9.1.
+    """
+    found: dict[str, float] = {}
+    stack: list[object] = [kernel]
+    while stack:
+        node = stack.pop()
+        if isinstance(node, ConstantKernel):
+            found["constant"] = float(node.constant_value)
+        elif isinstance(node, Matern):
+            found["length_scale"] = float(node.length_scale)
+        elif isinstance(node, WhiteKernel):
+            found["noise_level"] = float(node.noise_level)
+        elif isinstance(node, (Sum, Product)):
+            stack.extend([node.k1, node.k2])
+    missing = {"constant", "length_scale", "noise_level"} - set(found)
+    if missing:
+        raise KeyError(
+            "kernel tree is missing leaf kernel(s) "
+            f"{sorted(missing)}; got {sorted(found)}. The kernel composition "
+            "changed and the hyperparameter reader must be updated."
+        )
+    return found
+
+
 def kriging_denoise_convergence(
     steps: np.ndarray, values: np.ndarray, kernel: Any = None
 ) -> dict[str, Any]:
@@ -794,21 +856,17 @@ def kriging_denoise_convergence(
         "noise_variance": noise_std ** 2,
         "r2_score": r2,
         "gp_model": gp,
-        # Read the three hyperparameter values from the FITTED kernel's flat
-        # prefixed parameter dict. Two invariants make this correct:
-        #   A1. `gp.kernel_` is Sum[Product[ConstantKernel, Matern], WhiteKernel],
-        #       so Sum.get_params() flattens to exactly the three names used
-        #       below — verified at runtime on sklearn 1.9.1.
+        # Read the three hyperparameter values from the FITTED kernel tree by
+        # walking it, NOT by indexing a flattened name dict (see
+        # kernel_hyperparameters for why the string names were wrong).
         #   A2. These values MUST come from `gp.kernel_` (post-fit), never from
         #       the pre-fit locals: GaussianProcessRegressor clones the kernel
         #       during fit, so the locals still hold the initial hyperparameters
         #       and would report unoptimized values.
-        # [Reference: sklearn Kernel.get_params
+        # [Reference: sklearn Kernel
         #  https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.kernels.Kernel.html]
         "kernel_params": {
-            "constant": float(gp.kernel_.get_params()["k1__constant_value"]),
-            "length_scale": float(gp.kernel_.get_params()["k2__length_scale"]),
-            "noise_level": float(gp.kernel_.get_params()["k2__noise_level"]),
+            **kernel_hyperparameters(gp.kernel_),
         },
     }
 

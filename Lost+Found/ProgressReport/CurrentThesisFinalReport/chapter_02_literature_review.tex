@@ -30,9 +30,9 @@ To establish a baseline for the expected aerothermal outcomes, a review of key f
 \hline
 \endlastfoot
 
-\textbf{NASA IRVE-3} \cite{NASA2013TP4012} & 3-meter stacked-toroid HIAD. & Confirmed that "scalloping" (surface deflection) increases local heating compared to smooth surfaces. & Primary validation for the scalloped model. \\ \hline
+\textbf{NASA IRVE-3} \cite{dillman2014irve3flight} & 3-meter stacked-toroid HIAD. & Confirmed that "scalloping" (surface deflection) increases local heating compared to smooth surfaces. & Primary validation for the scalloped model. \\ \hline
 
-\textbf{NASA LOFTID} \cite{cassell2022loftid} & 6-meter large-scale HIAD with Gen-2 FTPS. & Demonstrated thermal survival during Earth reentry; identified transition onset on the flank. & Validates FTPS effectiveness at high enthalpy. \\ \hline
+\textbf{NASA LOFTID} \cite{dinonno2026loftid} & 6-meter large-scale HIAD with Gen-2 FTPS. & Demonstrated thermal survival during Earth reentry; identified transition onset on the flank. & Validates FTPS effectiveness at high enthalpy. \\ \hline
 
 \textbf{Deformed OML Study} \cite{lichodziejewski2012oml} & Deformed Outer Mold Line (OML) Analysis. & Proved that surface irregularities between tori significantly augment local heat flux. & Justifies the Config B (Smooth) comparison. \\ \hline
 
@@ -41,7 +41,7 @@ To establish a baseline for the expected aerothermal outcomes, a review of key f
 \textbf{SST $k$-$\omega$ Source} \cite{menter1994SST} & $k$-$\omega$ SST Turbulence Model. & Superior performance in predicting separation in adverse pressure gradients. & Supports model for valley recirculation. \\ \hline
 \end{longtable}
 \subsection{Triangulation of Expected Outcomes}
-By synthesizing the findings of \cite{NASA2013TP4012} and \cite{lichodziejewski2012oml}, it is hypothesized that the scalloped geometry in this study will generate localized heat flux peaks on the toroidal crests. 
+By synthesizing the findings of \cite{dillman2014irve3flight} and \cite{lichodziejewski2012oml}, it is hypothesized that the scalloped geometry in this study will generate localized heat flux peaks on the toroidal crests. 
 
 Furthermore, the implementation of the \textit{SST $k-\omega$} turbulence model, as validated by \cite{menter1994SST}, is expected to resolve the stable recirculation cells within the toroidal valleys. Finally, the use of a \textit{Thermally Perfect Gas} model reflects the high-enthalpy conditions observed in the \textit{LOFTID} mission, ensuring that the predicted shock physics align with real-gas observations rather than simplified ideal-gas assumptions.
 
@@ -1287,7 +1287,7 @@ PINNs have been applied to several areas relevant to this study:
 
 \section{Parametric HIAD Geometry Modelling}
 
-The aerodynamic performance of a HIAD is governed by its inflated outer mold line (OML), which is constructed from a series of stacked toroidal bladders encapsulated by a flexible thermal protection system (TPS) skin. Unlike rigid aeroshells, the HIAD geometry is defined by a small set of continuous design variables, making it amenable to parametric modelling and gradient-free optimization. This section presents the mathematical framework for parametric HIAD geometry generation, following the formulation of Rapisarda \cite{rapisarda2023mdao}, which is itself a modified and optimized adaptation of the original IRVE-3 (Inflatable Reentry Vehicle Experiment 3) material configuration and structural layout \cite{dillman2015irve3, NASA2013TP4012}.
+The aerodynamic performance of a HIAD is governed by its inflated outer mold line (OML), which is constructed from a series of stacked toroidal bladders encapsulated by a flexible thermal protection system (TPS) skin. Unlike rigid aeroshells, the HIAD geometry is defined by a small set of continuous design variables, making it amenable to parametric modelling and gradient-free optimization. This section presents the mathematical framework for parametric HIAD geometry generation, following the formulation of Rapisarda \cite{rapisarda2023mdao}, which is itself a modified and optimized adaptation of the original IRVE-3 (Inflatable Reentry Vehicle Experiment 3) material configuration and structural layout \cite{dillman2015irve3, dillman2014irve3flight}.
 
 \subsection{Design Variables and Constraints}
 
@@ -1351,7 +1351,7 @@ The crest-and-valley pressure gradient described in Figure~\ref{fig:scalloped_wa
 
 \subsection{IRVE-3 Baseline and Rapisarda Material Configuration}
 
-The IRVE-3 flight experiment (2012) demonstrated the first successful deployment of a 3.0~m HIAD at Mach~10+ re-entry conditions, achieving a peak deceleration of 19.7~g and a peak stagnation heat flux of 14.36~W/cm$^2$ \cite{NASA2013TP4012}. The original IRVE-3 TPS stack consisted of separate inner and outer thermal protection layers with distinct material compositions: an inner layer of Pyrogel\texttrademark\ XTE aerogel blanket for thermal insulation, and an outer layer of Kapton\texttrademark\ polyimide film for aerodynamic skin integrity \cite{dillman2015irve3}.
+The IRVE-3 flight experiment (2012) demonstrated the first successful deployment of a 3.0~m HIAD at Mach~10+ re-entry conditions, achieving a peak deceleration of 19.7~g and a peak stagnation heat flux of 14.36~W/cm$^2$ \cite{dillman2014irve3flight}. The original IRVE-3 TPS stack consisted of separate inner and outer thermal protection layers with distinct material compositions: an inner layer of Pyrogel\texttrademark\ XTE aerogel blanket for thermal insulation, and an outer layer of Kapton\texttrademark\ polyimide film for aerodynamic skin integrity \cite{dillman2015irve3}.
 
 Rapisarda \cite{rapisarda2023mdao} subsequently developed a multidisciplinary design analysis and optimization (MDAO) framework that modified and optimized this original IRVE-3 material configuration. The Rapisarda formulation introduces a unified TPS material model with three configurations:
 

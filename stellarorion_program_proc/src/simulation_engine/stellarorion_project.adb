@@ -213,6 +213,11 @@ package body StellarOrion_Project is
       Put_Line ("Flight Options:");
       Put_Line ("  --solver <name>           sparta | openfoam | pyfluent | pyansys");
       Put_Line ("  --steps <N>               SPARTA timesteps (default: 1000)");
+      Put_Line ("  --skip-pinn              Skip the PINN extrapolation leg that");
+      Put_Line ("                           --validate runs by default (DSMC -> PINN:");
+      Put_Line ("                           PINN extrapolates this run's DSMC");
+      Put_Line ("                           convergence series over the 300M-step");
+      Put_Line ("                           IRVE-3 trajectory span).");
       Put_Line ("  --grid-factor <F>         Grid multiplier (default: 0.7)");
       Put_Line ("  --mach <M>                Override freestream Mach number");
       Put_Line ("  --alt <km>                Override altitude in km");
@@ -1359,7 +1364,14 @@ package body StellarOrion_Project is
                                 "results/validation" &
                               (if Skin = Scalloped then "_scalloped"
                                elsif Skin_Type_Str = "smooth" then "_smooth"
-                               else "")));
+                               else "")),
+                            --  AXIOM: the validated chain is DSMC -> PINN.
+                            --  The PINN leg runs in-process as Step 13, after
+                            --  Step 11 writes this run's convergence CSV, so
+                            --  the surrogate is fitted to the run just validated
+                            --  instead of to a previous run's data. --skip-pinn
+                            --  is the documented opt-out.
+                             Run_Pinn      => not Has_Flag ("--skip-pinn"));
          goto Cleanup;
       end if;
 

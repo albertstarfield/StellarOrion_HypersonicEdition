@@ -100,7 +100,20 @@ package StellarOrion_Test_Modes is
       Use_GPU       : Boolean;
       Fnum_Str      : String;
       Restart_File  : String;
-      Results_Dir   : String);
+      Results_Dir   : String;
+      --  Run the PINN extrapolation leg (step 2200 -> 3.0e8) after the DSMC
+      --  leg and the Step 11/12 housekeeping.
+      --
+      --  AXIOM: the validated physics chain is DSMC -> PINN. The PINN leg
+      --  consumes the DSMC convergence series this run just produced, so it
+      --  must follow Step 11 (which writes validation_timeseries.csv) in the
+      --  SAME process, not in an earlier phase over a previous run's data.
+      --  THEORY: default True makes that chain the default behaviour; the
+      --  caller passes False only when the user passes --skip-pinn.
+      --  APPLICATION: --validate supplies `not Has_Flag ("--skip-pinn")`.
+      --  CITATION: NASA TP-2013-4012 (IRVE-3 trajectory, 300M-step span);
+      --              Raissi et al. 2019 (PINN), DeepXDE library.
+      Run_Pinn      : Boolean := True);
 
    --  Format float to "N.DD" (2 decimal places, no scientific notation).
    --  Contract: pre => True (no input constraints); post => returns computed value derived from parameters

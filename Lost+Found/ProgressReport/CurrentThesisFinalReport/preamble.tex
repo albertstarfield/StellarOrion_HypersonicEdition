@@ -241,7 +241,12 @@
       \clubpenalty10000
       \@clubpenalty \clubpenalty
       \widowpenalty10000%
-      \setlength{\itemsep}{2pt plus 1pt minus 1pt}%
+      % \itemsep 2pt was what pushed the final two references onto a page of
+      % their own: measured, page 185 of the previous build carried 4 lines and
+      % 1614 ink pixels against a document median above 30000. An APA reference
+      % list is single-spaced with no inter-entry skip, so 0pt is both the
+      % correct style and the fix.
+      \setlength{\itemsep}{0pt}%
       \setlength{\parsep}{0pt}
       % Hanging indent for wrapped reference entries.
       %

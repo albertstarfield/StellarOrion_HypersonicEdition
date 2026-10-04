@@ -1176,7 +1176,8 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Use_GPU       : Boolean;
       Fnum_Str      : String;
       Restart_File  : String;
-      Results_Dir   : String)
+      Results_Dir   : String;
+      Run_Pinn      : Boolean := True)
    is
    --  Contract: pre => True (no input constraints); post => normal termination; effects limited to documented outputs
       Flight     : Flight_Parameters;
@@ -1666,6 +1667,103 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
                       Exception_Name (E) & " : " & Exception_Message (E));
             Put_Line ("[VALIDATE] Validation result is preserved (Step 12 is non-fatal).");
       end;
+
+      --  Step 13: PINN extrapolation leg -- completes the DSMC -> PINN chain.
+      --
+      --  WHY THIS IS DEFAULT (2026-10-05):
+      --    The validated physics chain is DSMC then PINN, but --validate ran
+      --    DSMC only, and the PINN leg lived in a separate Python phase
+      --    (run.py Phase 2b) that runs BEFORE the DSMC launch. That ordering
+      --    meant the PINN was fitted to a PREVIOUS run's convergence series,
+      --    not to the run being validated. This step runs the identical leg
+      --    in-process, after Step 11 has written THIS run's
+      --    validation_timeseries.csv, so the surrogate is fitted to the data
+      --    that was just validated. Opt out with --skip-pinn.
+      --
+      --  300000000 is the IRVE-3 TRAJECTORY SPAN used to normalise the
+      --  interpolation, not a DSMC timestep budget; the DSMC leg is the
+      --  Steps parameter. [Citation: NASA TP-2013-4012 -- IRVE-3 trajectory;
+      --  stellarorion_trajectory_output.ads TARGET_STEP]
+      --
+      --  Non-fatal, exactly like Steps 11 and 12: the DSMC verdict is already
+      --  printed above and MUST NOT be retracted by a downstream modelling
+      --  failure.
+      if Run_Pinn then
+         begin
+            declare
+               --  Preallocated aliased strings for Spawn (zero heap allocation).
+               --  [Citation: code-quality.md -- DYNAMIC_ALLOCATION fix]
+               Arg_Py   : aliased constant String := "venv_validation/bin/python3";
+               Arg_Scr  : aliased constant String :=
+                 "src/python/validation_pipeline.py";
+               Arg_CsvK : aliased constant String := "--csv";
+               Arg_Csv  : aliased constant String :=
+                 Results_Dir & "/validation_timeseries.csv";
+               Arg_TgtK : aliased constant String := "--target-step";
+               Arg_Tgt  : aliased constant String := "300000000";
+               Arg_ItrK : aliased constant String := "--iterations";
+               Arg_Itr  : aliased constant String := "4000";
+               Arg_DevK : aliased constant String := "--device";
+               Arg_Dev  : aliased constant String := "auto";
+               Arg_Hdl  : aliased constant String := "--headless";
+               Pinn_Args : constant GNAT.OS_Lib.Argument_List (1 .. 10) :=
+                 (StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Scr),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_CsvK),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Csv),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_TgtK),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Tgt),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_ItrK),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Itr),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_DevK),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Dev),
+                  StellarOrion_Safe_Access.To_Chars_Ptr (Arg_Hdl));
+               Spawn_OK : Boolean;
+            begin
+               Put_Line ("[VALIDATE] Step 13: PINN extrapolation leg (DSMC -> PINN) ...");
+               --  Prerequisite checks are REPORTED, never a silent skip: a
+               --  missing venv or a missing CSV is a broken environment, and
+               --  quietly omitting the leg would hide that behind a PASSED
+               --  DSMC verdict.
+               if not Exists (Arg_Py) then
+                  Put_Line (Standard_Error,
+                            "[VALIDATE] Step 13 SKIPPED: " & Arg_Py
+                            & " not found -- create it with run.py Phase 1 "
+                            & "(venv bootstrap), or pass --skip-pinn to "
+                            & "acknowledge the DSMC-only chain.");
+               elsif not Exists (Arg_Csv) then
+                  Put_Line (Standard_Error,
+                            "[VALIDATE] Step 13 SKIPPED: " & Arg_Csv
+                            & " not found -- Step 11 did not write it.");
+               else
+                  Put_Line ("[VALIDATE] Step 13: " & Arg_Py & " " & Arg_Scr
+                            & " --csv " & Arg_Csv & " --target-step " & Arg_Tgt
+                            & " --iterations " & Arg_Itr & " --device " & Arg_Dev
+                            & " " & Arg_Hdl);
+                  Spawn (Arg_Py, Pinn_Args, Spawn_OK);
+                  if Spawn_OK then
+                     Put_Line ("[VALIDATE] Step 13: PINN extrapolation complete.");
+                  else
+                     Put_Line (Standard_Error,
+                               "[VALIDATE] Step 13 FAILED: could not spawn the "
+                               & "PINN sidecar -- check venv_validation/ is built.");
+                  end if;
+               end if;
+            exception
+               when E : others =>
+                  Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+                  Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+                  Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+                  Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Run_Validate_Full_Step_13");
+                  Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+                  Put_Line (Standard_Error,
+                            "[VALIDATE] Step 13 PINN leg failed (non-fatal): "
+                            & Exception_Name (E) & " : " & Exception_Message (E));
+                  Put_Line ("[VALIDATE] Validation result is preserved (Step 13 is non-fatal).");
+            end;   -- end of the declare block (handler host)
+         end;      -- end of the anonymous block that hosts the handler
+      else
+         Put_Line ("[VALIDATE] Step 13: PINN leg skipped (--skip-pinn).");
+      end if;
 
    end Run_Validate_Full;
 

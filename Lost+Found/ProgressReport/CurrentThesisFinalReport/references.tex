@@ -5,6 +5,11 @@
 \begin{center}
 \textbf{\large REFERENCES}\\[1em]
 \end{center}
-\nocite{*}
+% Every printed reference is cited at least once. The previous
+% \nocite{*} forced the whole database into the bibliography,
+% which printed 34 entries that nothing in the
+% thesis cited. Those entries were moved to ref_uncited.bib rather
+% than deleted; move one back to use it.
+
 \bibliography{ref}
 
