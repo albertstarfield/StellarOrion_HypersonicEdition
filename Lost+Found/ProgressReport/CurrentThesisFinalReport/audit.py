@@ -1162,6 +1162,37 @@ def dim_frontmatter_numbers() -> None:
           f"{len(abs_nums)} decimal numbers, all traceable to the results")
 
 
+
+# -------------------------------------------------------------- dimension 43
+def dim_percent_style() -> None:
+    """One convention for signed and unsigned percentages.
+
+    A SIGNED percentage belongs in math mode, because that is where the leading
+    sign is a real minus sign rather than a hyphen. An UNSIGNED percentage
+    belongs in text mode. The document used all four combinations: 27 signed in
+    math, 5 signed in text, 2 unsigned in math and 44 unsigned in text. The two
+    kinds of disagreement are not equally serious and are recorded separately.
+    Putting an unsigned value in math mode renders almost identically, so that was
+    a source-consistency matter. Leaving a signed value in text mode renders a
+    hyphen where a minus belongs, which is a typographic defect.
+    """
+    sm, st, um = [], [], []
+    for src in BUILD_INPUTS:
+        s = src.read_text(encoding="utf-8")
+        s = re.sub(r"\\[a-zA-Z@]+\*?", "\x00", s)   # guard commands
+        sm += [(src.name, m.group(0)) for m in re.finditer(r"\$[+-]\d+\.\d+\\%\$", s)]
+        um += [(src.name, m.group(0)) for m in re.finditer(r"\$\d+\.\d+\\%\$", s)]
+        for m in re.finditer(r"(?<!\$)[+-]\d+\.\d+\\%(?!\$)", s):
+            st.append((src.name, m.group(0)))
+    for n, g in um[:3]:
+        print(f"         unsigned in math: {n} {g!r}")
+    for n, g in st[:3]:
+        print(f"         signed in text, renders a hyphen not a minus: {n} {g!r}")
+    check("pct/signed-in-math", not st, f"{len(st)} signed in text")
+    check("pct/unsigned-in-text", not um, f"{len(um)} unsigned in math")
+    print(f"         signed percentages in math: {len(sm)}")
+
+
 DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("3 geometry", dim_geometry), ("4 bibliography", dim_bibliography),
         ("5 figures", dim_figures), ("6 numbering", dim_numbering),
@@ -1197,7 +1228,8 @@ DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("39 spelling", dim_spelling),
         ("40 dashrange", dim_numeric_range),
         ("41 longtable", dim_longtable_headers),
-        ("42 frontmatter", dim_frontmatter_numbers)]
+        ("42 frontmatter", dim_frontmatter_numbers),
+        ("43 percentstyle", dim_percent_style)]
 
 
 def main(argv: list[str]) -> int:
