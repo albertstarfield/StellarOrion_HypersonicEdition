@@ -66,7 +66,7 @@ DOI = {10.3390/aerospace10080729}
 @misc{dillman2015irve3,
   author       = {Dillman, Robert},
   title        = {Inflatable Reentry Vehicle Experiment-3 ({IRVE}-3): Project Overview \& Instrumentation},
-  institution  = {NASA Langley Research Center (LaRC)},
+  publisher    = {NASA Langley Research Center (LaRC)},
   year         = {2015},
   month        = {August},
   day          = {18},
@@ -113,6 +113,7 @@ doi = {10.2478/heem-2023-0004}
   author      = {Stanley A. Bouslog},
   title       = {Thermal Protection Systems: State of the Industry},
   institution = {NASA Johnson Space Center},
+  address     = {Houston, TX},
   year        = {2023},
   number      = {NASA/TM-20230015883},
   month       = {November},
@@ -379,6 +380,7 @@ doi = {10.2478/heem-2023-0004}
   author      = {Lau, Kai and Cheatwood, Neil and others},
   title       = {Inflatable Re-entry Vehicle Experiment 3 (IRVE-3) Post-Flight Aerothermal Reconstruction},
   institution = {NASA Langley Research Center},
+  address     = {Hampton, VA},
   year        = {2013},
   type        = {Technical Report},
   note        = {AIP-2013-4012}
@@ -523,6 +525,7 @@ doi = {10.2478/heem-2023-0004}
   author      = {Lau, Kai and Cheatwood, Neil and others},
   title       = {Inflatable Re-entry Vehicle Experiment 3 ({IRVE}-3) Post-Flight Aerothermal Reconstruction},
   institution = {NASA Langley Research Center},
+  address     = {Hampton, VA},
   year        = {2013},
   type        = {Technical Report},
   note        = {AIP-2013-4012; IRVE-3 flight data for validation}
@@ -575,17 +578,20 @@ doi = {10.2478/heem-2023-0004}
 
 @inproceedings{old2013irve3postflight,
   title     = {{IRVE}-3 Post-Flight Reconstruction},
-  author    = {Olds, A. and others},
+  author    = {Olds, Aaron and Beck, Roger and Bose, David M. and White, Joseph and Edquist, Karl T. and Hollis, Brian R. and Lindell, Michael and Cheatwood, F. M. and Gsell, Valerie and Bowden, Ernest L.},
   booktitle = {AIAA Aerodynamic Decelerator Systems (ADS) Conference},
+  address   = {Daytona Beach, FL},
+  publisher = {American Institute of Aeronautics and Astronautics},
   year      = {2013},
-  pages     = {1390},
-  doi       = {10.2514/6.2013-1390}
+  doi       = {10.2514/6.2013-1390},
+  note      = {AIAA Paper 2013-1390}
 }
 
 @techreport{hollis2017backface,
   author      = {Hollis, Brian R. and Berry, Sarah A. and Hollingsworth, Kevin E. and Wright, Stephen A.},
   title       = {Experimental Study of Convective Heating on the Back Face and Payload of a Hypersonic Inflatable Aerodynamic Decelerator ({HIAD}) Aeroshell},
   institution = {NASA Langley Research Center},
+  address     = {Hampton, VA},
   year        = {2017},
   type        = {Technical Report}
 }
@@ -682,15 +688,17 @@ doi = {10.2478/heem-2023-0004}
   author      = {Lau, Chinsung and others},
   title       = {{IRVE-3} Post-Flight Data and Reconstruction},
   institution = {NASA Langley Research Center},
+  address     = {Hampton, VA},
   year        = {2013},
   number      = {NASA/TP-2013-4012}
 }
 
-@techreport{Montgomery2017,
+@book{Montgomery2017,
   author      = {Montgomery, Douglas C.},
   title       = {Design and Analysis of Experiments},
   edition     = {9th},
-  publisher   = {Wiley},
+  publisher   = {John Wiley \& Sons},
+  address     = {Hoboken, NJ},
   year        = {2017},
   note        = {Standard reference for CCD and response surface methodology}
 }
@@ -727,15 +735,14 @@ doi = {10.2478/heem-2023-0004}
 
 %% Chapter 3 - ML Research Standards
 
-@article{ml_standards,
-  title   = {Machine Learning Research Documentation Standards for Reproducible Aerothermodynamic Applications},
-  author  = {Mitchell, Margaret and Wu, Saleema and Zaldivar, Andrew and others},
-  journal = {Proceedings of the AAAI Conference on Artificial Intelligence},
-  volume  = {33},
-  number  = {01},
-  pages   = {1--8},
-  year    = {2019},
-  note    = {Model Cards for Model Reporting}
+@inproceedings{ml_standards,
+  title     = {Model Cards for Model Reporting},
+  author    = {Mitchell, Margaret and Wu, Simone and Zaldivar, Andrew and Barnes, Parker and Vasserman, Lucy and Hutchinson, Ben and Spitzer, Elena and Raji, Inioluwa Deborah and Gebru, Timnit},
+  booktitle = {Proceedings of the Conference on Fairness, Accountability, and Transparency},
+  publisher = {Association for Computing Machinery},
+  pages     = {220--229},
+  year      = {2019},
+  doi       = {10.1145/3287560.3287596}
 }
 
 @inproceedings{pmlr117-vinod19a,
@@ -771,16 +778,18 @@ doi = {10.2478/heem-2023-0004}
 
 
 % ---------------------------------------------------------------------------
-% Added for the Bayesian Optimization methodology (Ch. 3) and the SPARK/GNATprove
-% toolchain description. Keys: matern1960, rasmussen2003, sklearn2024gp,
-% morris1992, kennedy2000multi, spark2014language, sparktools2024gnatprove.
+% Added for the Bayesian Optimization methodology (Ch. 3). Keys: matern1960,
+% rasmussen2003, sklearn2024gp, morris1992, kennedy2000multi.
 % ---------------------------------------------------------------------------
 
-@misc{matern1960,
+@article{matern1960,
   author       = {Mat\'ern, Bert},
   title        = {Randomly Representable Function Products in Spatial Distributions},
-  year         = {1960},
-  note         = {Arkiv f{\"o}r Matematik, Band 2, Nr. 1, pp. 1--9}
+  journal      = {Arkiv f{\"o}r Matematik},
+  volume       = {2},
+  number       = {1},
+  pages        = {1--9},
+  year         = {1960}
 }
 
 @book{rasmussen2003,
@@ -820,20 +829,4 @@ doi = {10.2478/heem-2023-0004}
   pages   = {425--464},
   year    = {2000},
   doi     = {10.1111/1467-9868.00179}
-}
-
-@misc{spark2014language,
-  author       = {AdaCore},
-  title        = {SPARK 2014 Language Reference},
-  year         = {2014},
-  note         = {AdaCore, version 4},
-  howpublished = {\url{https://docs.adacore.com/spark2014-docs/html/ug/en/source/languagespecification.html}}
-}
-
-@misc{sparktools2024gnatprove,
-  author       = {AdaCore},
-  title        = {GNATprove User's Guide},
-  year         = {2024},
-  note         = {AdaCore, SPARK 2014 verification toolchain},
-  howpublished = {\url{https://docs.adacore.com/spark2014-docs/html/ug/en/tools/gnatprove.html}}
 }

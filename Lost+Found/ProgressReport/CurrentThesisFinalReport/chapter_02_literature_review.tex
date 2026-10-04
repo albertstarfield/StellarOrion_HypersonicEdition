@@ -15,7 +15,7 @@ To establish a baseline for the expected aerothermal outcomes, a review of key f
 \textbf{Research / Project} & \textbf{Key Geometry} & \textbf{Major Aerothermal Findings} & \textbf{Relevance to Outcome} \\ \hline
 \endfirsthead
 \multicolumn{4}{c}%
-{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
+{{\bfseries \tablename\ \thetable{} (continued from previous page)}} \\
 \hline
 \textbf{Research / Project} & \textbf{Key Geometry} & \textbf{Major Aerothermal Findings} & \textbf{Relevance to Outcome} \\ \hline
 \endhead
@@ -43,7 +43,7 @@ This synthesis establishes the theoretical foundation for the numerical methodol
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Coverage matrix headed Literature Review: Coverage of Physical Phenomena and Methodology. Five studies form the rows --- Rapisarda 2022 machine learning for HIAD heating, Rapisarda et al. 2024 HIAD parametric study, Masciarelli and Cassis 2021 LOFTID design, Schwartzentruber 2018 DSMC hypersonic, and This Work, the StellarOrion pipeline, outlined in red. Six capability columns run across the top: HIAD geometry, DSMC aerothermal, Sutton-Graves heating, PINN refinement, survivability optimization and multi-solver pipeline. Each cell is a full circle for full coverage, a half circle for partial coverage, or empty for not covered, per the key at the foot. The StellarOrion row is the only one full across all six columns; Schwartzentruber covers DSMC aerothermal alone and Masciarelli and Cassis cover HIAD geometry and Sutton-Graves heating. Note that the 2022 date in this row differs from the 2023 date of the Rapisarda thesis cited elsewhere in the text.}}%
+    \BeginAccSupp{method=escape,ActualText={Coverage matrix headed Literature Review: Coverage of Physical Phenomena and Methodology. Five studies form the rows: Rapisarda 2022 machine learning for HIAD heating, Rapisarda et al. 2024 HIAD parametric study, Masciarelli and Cassis 2021 LOFTID design, Schwartzentruber 2018 DSMC hypersonic, and This Work, the StellarOrion pipeline, outlined in red. Six capability columns run across the top: HIAD geometry, DSMC aerothermal, Sutton-Graves heating, PINN refinement, survivability optimization and multi-solver pipeline. Each cell is a full circle for full coverage, a half circle for partial coverage, or empty for not covered, per the key at the foot. The StellarOrion row is the only one full across all six columns; Schwartzentruber covers DSMC aerothermal alone and Masciarelli and Cassis cover HIAD geometry and Sutton-Graves heating. Note that the 2022 date in this row differs from the 2023 date of the Rapisarda thesis cited elsewhere in the text.}}%
 \includegraphics[width=0.92\textwidth]{figures/literature_review_map.png}%
 \EndAccSupp{}%
     \caption{Literature review coverage matrix: mapping of key studies to physical phenomena and methodology components. Filled circles indicate full coverage; half-filled indicate partial coverage. The dashed red outline highlights the comprehensive coverage achieved in this work (StellarOrion pipeline).}
@@ -790,11 +790,11 @@ The terms on the right-hand side represent the specific mechanisms of energy tra
 
 
 \section{Turbulence Modeling for High-Speed Flows}
-Turbulence remains one of the most complex and challenging aspects of fluid dynamics to model accurately. In the context of hypersonic re-entry, the state of the boundary layer -- whether laminar, transitional, or fully turbulent -- has a profound impact on the aerothermal loads.
+Turbulence remains one of the most complex and challenging aspects of fluid dynamics to model accurately. In the context of hypersonic re-entry, the state of the boundary layer, whether laminar, transitional, or fully turbulent, has a profound impact on the aerothermal loads.
 \par
 While laminar flow is characterized by smooth, ordered fluid motion, turbulent flow involves chaotic, three-dimensional, time-dependent fluctuations. For an Inflatable Aerodynamic Decelerator (IAD), the onset of turbulence is a critical design constraint because turbulent boundary layers possess much higher energy gradients at the wall. Consequently, turbulent heating rates are typically 3 to 5 times higher than laminar heating rates for the same flight condition \cite{AndersonHypersonic}.
 \par
-Resolving these fluctuations directly via Direct Numerical Simulation (DNS) requires a grid fine enough to capture the smallest scales of turbulent energy dissipation (the Kolmogorov scales). The computational cost scales with $Re^{9/4}$, making DNS impossible for the high Reynolds number flows ($Re > 10^6$) encountered during re-entry. Therefore, engineering analysis relies on Turbulence Modeling -- mathematical approximations that predict the effect of turbulence on the mean flow without resolving the full spectrum of turbulent fluctuations \cite{versteeg2007cfd}.
+Resolving these fluctuations directly via Direct Numerical Simulation (DNS) requires a grid fine enough to capture the smallest scales of turbulent energy dissipation (the Kolmogorov scales). The computational cost scales with $Re^{9/4}$, making DNS impossible for the high Reynolds number flows ($Re > 10^6$) encountered during re-entry. Therefore, engineering analysis relies on Turbulence Modeling: mathematical approximations that predict the effect of turbulence on the mean flow without resolving the full spectrum of turbulent fluctuations \cite{versteeg2007cfd}.
 \par
 The standard approach is to solve the Reynolds-Averaged Navier-Stokes (RANS) equations, which decompose the instantaneous flow variables into a time-averaged mean component and a fluctuating turbulent component using the Reynolds Decomposition \cite{versteeg2007cfd}. This introduces the Reynolds Stress Tensor ($-\rho \overline{u'_i u'_j}$), which must be modeled to close the system of equations. The two dominant closures are the $k-\epsilon$ model (robust for free-shear flows but inaccurate near walls) and the $k-\omega$ model (accurate near walls but sensitive to freestream conditions). Menter's Shear Stress Transport (SST) $k-\omega$ model \cite{menter1994SST} blends these formulations using a zonal blending function $F_1$ and a shear stress limiter, making it the industry standard for aerodynamic heating predictions. While the SST $k-\omega$ model is widely used for continuum CFD solvers such as ANSYS Fluent and OpenFOAM \cite{versteeg2007cfd}, it is important to note that this study employs the Direct Simulation Monte Carlo (DSMC) method, which resolves turbulence at the molecular level without requiring a turbulence model.
 \par
@@ -987,7 +987,7 @@ The state of a gas is described by the $N$-particle distribution function $f_N(\
 
 \subsection{The Boltzmann Transport Equation}
 
-By integrating the Liouville equation over $N-1$ particle degrees of freedom and introducing the \textit{molecular chaos} assumption (Stosszahlansatz) -- that pre-collision velocities of colliding pairs are uncorrelated -- one obtains the \textit{Boltzmann transport equation} for the single-particle distribution function $f(\mathbf{r}, \mathbf{v}, t)$ \cite{bird1994molecular}:
+By integrating the Liouville equation over $N-1$ particle degrees of freedom and introducing the \textit{molecular chaos} assumption (Stosszahlansatz) that pre-collision velocities of colliding pairs are uncorrelated, one obtains the \textit{Boltzmann transport equation} for the single-particle distribution function $f(\mathbf{r}, \mathbf{v}, t)$ \cite{bird1994molecular}:
 
 \begin{equation}
     \frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla_{\mathbf{r}} f + \frac{\mathbf{F}}{m} \cdot \nabla_{\mathbf{v}} f = \left( \frac{\partial f}{\partial t} \right)_{\text{coll}}
@@ -1109,7 +1109,7 @@ The accuracy of DSMC depends critically on the molecular interaction model used 
 
 \subsection{Mean Free Path}
 
-The mean free path $\lambda$ -- the average distance a molecule travels between successive collisions -- is a fundamental quantity that determines the appropriate simulation method. For a gas of hard spheres with molecular diameter $d$ and number density $n$:
+The mean free path $\lambda$, the average distance a molecule travels between successive collisions, is a fundamental quantity that determines the appropriate simulation method. For a gas of hard spheres with molecular diameter $d$ and number density $n$:
 
 \begin{equation}
     \lambda = \frac{1}{\sqrt{2} \, \pi \, d^2 \, n}
@@ -1521,8 +1521,8 @@ The HIAD design problem cannot be solved by engineering intuition alone for thre
     \caption{Knudsen regime map versus altitude for the 3.0~m HIAD reference length. The
     horizontal axis is altitude from 40 to 120~km and the vertical axis is $Kn = \lambda/L$ on
     a logarithmic scale spanning $10^{-4}$ to $10^{2}$. The artwork is banded by shading into three
-    labelled regimes --- continuum at $Kn < 0.01$, a transitional band solved by DSMC, and free
-    molecular at $Kn > 10$ --- with a reference-length legend entry $L = 3.0$~m and an
+    labelled regimes: continuum at $Kn < 0.01$, a transitional band solved by DSMC, and free
+    molecular at $Kn > 10$, with a reference-length legend entry $L = 3.0$~m and an
     ``IRVE-3 Entry, 52~km'' trajectory marker. The bands shown are the regime boundaries drawn in
     the figure and are coarser than the five-band classification of Table~\ref{tab:knudsen_regimes}:
     the artwork omits the separate inviscid, continuum, and slip-flow subdivisions and labels the
