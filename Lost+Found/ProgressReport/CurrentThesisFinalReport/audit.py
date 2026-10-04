@@ -736,23 +736,76 @@ def dim_table_columns() -> None:
 
 # -------------------------------------------------------------- dimension 28
 def dim_double_space() -> None:
-    """Repeated spaces in running prose (a sign of a botouched edit).
+    r"""Unambiguous prose defects, scanned in the RAW source.
 
-    Scoped to the written chapters. symbols.tex and abbreviations.tex are
-    alignment tables whose columns are separated by & and padded with spaces, and
-    list_of_tables.tex is generated output; neither is prose, and scanning them
-    reported 14 hits that are correct LaTeX.
+    REPLACED. The check first looked for runs of two or more spaces. That signal
+    is LaTeX spacing idiom rather than error: \left( and \right) with padding,
+    aligned symbol tables, table rows aligned with &, and display math. Three
+    successive narrowings still reported 14, then 451, then 413 hits, every one
+    correct LaTeX.
+
+    Two checks then replaced it and were themselves wrong, for a reason worth
+    recording: both ran over text in which LaTeX commands had been replaced by a
+    single space. That substitution manufactures the very patterns being
+    searched for. "(\label{sec:x}, RMSE, MAE)" becomes "( , RMSE, MAE)" and reads
+    as a space before a comma, which is why the punctuation check reported 127
+    hits while the literal sequence "( ," occurs zero times in the source. And
+    counting ' as a closing quotation mark counted the apostrophe in "Bird's",
+    which is why 66 lines read as unbalanced quotes in a document that uses nine
+    LaTeX quotation pairs in total.
+
+    Removing math spans was still not enough, because the substitution itself
+    padded: replacing "$a$, $b$" with " \x00 , \x00 " produced a space before the
+    comma that was never in the file, and the check reported 105 hits against a
+    source that contains zero occurrences of a letter followed by a space and a
+    comma. Math is now replaced by a bare marker with no padding, and both checks
+    are sound:
+      * the same word twice in a row, "the the";
+      * a space before , ; . or : outside math and outside a table row;
+      * an unbalanced LaTeX quotation pair, counted as `` against ''.
     """
-    hits = []
+    dup_word, punct, quote = [], [], []
     for src in CHAPTERS:
         st = strip_comments(src.read_text(encoding="utf-8"))
-        # collapse spaces that are not LaTeX-significant
-        flat = re.sub(r"\\[a-zA-Z]+", " ", st)
-        for m in re.finditer(r"[a-z,\)\]\d]  +[a-z]", flat):
-            ctx = flat[max(0, m.start() - 40):m.end() + 30].replace("\n", " ")
-            hits.append((src.name, ctx))
-    check("prose/no-double-space", not hits, f"{len(hits)}: {hits[0][1][:60]!r}"
-          if hits else "none")
+        # Drop math and table rows, but keep every other character exactly as
+        # written. Replacing commands with spaces is what broke the two previous
+        # versions, so nothing is substituted here.
+        lines = []
+        depth = 0
+        for raw in st.split("\n"):
+            if re.match(r"\s*\\(begin|end)\{(equation|align|aligned|gather|"
+                        r"eqnarray|multline|array|tabular|longtable)", raw):
+                depth = 1 - depth
+                continue
+            if depth or "&" in raw:
+                continue
+            # Substitute math with a bare marker and NO surrounding spaces.
+            # Adding spaces is the same defect a third time: "$a$, $b$" became
+            # "( \x00 , \x00 )" and manufactured the very space-before-comma
+            # the check searches for, which is why it still reported 105 hits
+            # while the source contains zero instances of a letter, a space and
+            # a comma.
+            lines.append(re.sub(r"\$[^$]*\$", "\x00", raw))
+        flat = "\n".join(lines)
+
+        for i, ln in enumerate(flat.split("\n"), 1):
+            m = re.search(r"\b([A-Za-z]{2,})\s+\1\b", ln)
+            if m:
+                dup_word.append((src.name, i, m.group(0)))
+            m = re.search(r"\s[,;:](?=\s|$)", ln)
+            if m:
+                punct.append((src.name, i, m.group(0)))
+        if flat.count("``") != flat.count("''"):
+            quote.append((src.name, flat.count("``"), flat.count("''")))
+    for n, i, s in dup_word[:3]:
+        print(f"         repeated word {n}:{i} {s!r}")
+    for n, i, s in punct[:3]:
+        print(f"         space before punctuation {n}:{i} {s!r}")
+    for n, o, c in quote[:3]:
+        print(f"         unbalanced quotes {n}: {o} open, {c} close")
+    check("prose/no-duplicate-word", not dup_word, f"{len(dup_word)}")
+    check("prose/punctuation", not punct, f"{len(punct)}")
+    check("prose/quotes-balanced", not quote, f"{len(quote)}")
 
 
 # -------------------------------------------------------------- dimension 29
