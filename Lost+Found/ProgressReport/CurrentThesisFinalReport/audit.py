@@ -1056,6 +1056,76 @@ def dim_citation_distribution() -> None:
     check("cite/every-chapter", not un, f"no citations in {un}" if un else "all chapters cite")
 
 
+
+# -------------------------------------------------------------- dimension 39
+def dim_spelling() -> None:
+    """One spelling convention throughout.
+
+    US spelling is the document's majority convention and two independent signals
+    agree with it: the -ize family is already unambiguous at 27 "optimize" against
+    0 "optimise", and "e.g.," is written with its trailing comma in 22 places,
+    which is the US convention and the British one omits. Against that, five pairs
+    were genuinely mixed, with "centre" at 19 against "center" at 14 and "colour"
+    at 13 against "color" at 0 sitting alongside "modeling" at 9 against
+    "modelling" at 2. All 42 British forms were converted.
+
+    Comments are included on purpose: one was in a comment and one was inside
+    ActualText, which a screen reader speaks aloud.
+    """
+    uk_us = [("colour", "color"), ("centre", "center"), ("modelling", "modeling"),
+             ("behaviour", "behavior"), ("normalise", "normalize"),
+             ("fibre", "fiber"), ("analyse", "analyze"),
+             ("optimise", "optimize"), ("utilise", "utilize")]
+    mixed = []
+    for src in BUILD_INPUTS:
+        t = src.read_text(encoding="utf-8")
+        for uk, us in uk_us:
+            a = len(re.findall(r"\b" + uk + r"\w*", t, re.I))
+            b = len(re.findall(r"\b" + us + r"\w*", t, re.I))
+            if a and b:
+                mixed.append((src.name, uk, a, us, b))
+    for n, uk, a, us, b in mixed[:4]:
+        print(f"         mixed in {n}: {uk} {a} vs {us} {b}")
+    check("spell/one-convention", not mixed, f"{len(mixed)} mixed pairs")
+
+
+# -------------------------------------------------------------- dimension 40
+def dim_numeric_range() -> None:
+    """A numeric range takes an en dash, not a hyphen.
+
+    An ISO date is not a range, so a hyphen inside a date is left alone: the
+    official run date 2026-09-26 appears in several captions.
+    """
+    bad = []
+    for src in BUILD_INPUTS:
+        st = src.read_text(encoding="utf-8")
+        for m in re.finditer(r"(?<![-\d])(\d{1,3})-(\d{1,3})(?![-\d])", st):
+            ctx = st[max(0, m.start() - 20):m.end() + 12].replace("\n", " ")
+            if re.search(r"\d{4}-", st[max(0, m.start() - 5):m.start()]):
+                continue
+            bad.append((src.name, m.group(0), ctx))
+    for n, g, c in bad[:4]:
+        print(f"         {n}: {g!r} in {c!r}")
+    check("dash/numeric-range", not bad, f"{len(bad)} hyphenated ranges")
+
+
+# -------------------------------------------------------------- dimension 41
+def dim_longtable_headers() -> None:
+    """A longtable that spans a page must repeat its header.
+
+    Both glossary tables span: the rendered document shows a "continued from
+    previous page" marker on the page after each. Without \\endhead the second
+    page carries data with no column headings.
+    """
+    missing = []
+    for src in BUILD_INPUTS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        for m in re.finditer(r"\\begin\{longtable\}.*?\\end\{longtable\}", st, re.S):
+            if "\\endhead" not in m.group(0):
+                missing.append(src.name)
+    check("longtable/header-repeats", not missing, str(missing) if missing else "all repeat")
+
+
 DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("3 geometry", dim_geometry), ("4 bibliography", dim_bibliography),
         ("5 figures", dim_figures), ("6 numbering", dim_numbering),
@@ -1087,7 +1157,10 @@ DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("35 capdup", dim_caption_duplication),
         ("36 lofcomplete", dim_lof_complete),
         ("37 reftie", dim_ref_tilde),
-        ("38 citedist", dim_citation_distribution)]
+        ("38 citedist", dim_citation_distribution),
+        ("39 spelling", dim_spelling),
+        ("40 dashrange", dim_numeric_range),
+        ("41 longtable", dim_longtable_headers)]
 
 
 def main(argv: list[str]) -> int:

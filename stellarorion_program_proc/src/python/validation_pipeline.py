@@ -1686,7 +1686,8 @@ def generate_multi_metric_convergence_plot(
         ax.plot(dsmc_steps, dsmc_vals, "b-", linewidth=1.5, label="DSMC (Ada SG)", alpha=0.7)
 
         # PINN portion
-        if pinn_curve and key in pinn_curve.get("metrics", {}):
+        _has_pinn = bool(pinn_curve) and key in pinn_curve.get("metrics", {})
+        if _has_pinn:
             pinn_steps = pinn_curve["steps"]
             pinn_vals = pinn_curve["metrics"][key]
             ax.plot(pinn_steps, pinn_vals, "r--", linewidth=2.0, label="PINN Extrapolation", alpha=0.8)
@@ -1694,8 +1695,47 @@ def generate_multi_metric_convergence_plot(
         # Transition line
         ax.axvline(x=transition_step, color="k", linestyle=":", linewidth=1.5, alpha=0.6)
 
+        #  LOG X-AXIS (defect fixed 2026-10-05).
+        #
+        #  AXIOM: the two series live on incomparable numeric ranges. The DSMC
+        #  ground truth spans steps 100..2200; the PINN extrapolation spans
+        #  2300..3.0e8 and is itself LOGARITHMICALLY spaced (pinn_extrapolate_
+        #  per_step uses logspace when the point count would exceed 500).
+        #  THEORY: on a shared LINEAR axis the DSMC window occupies
+        #  log10(2200)/log10(3e8) = 3.34/8.48 = 39% of... no -- it occupies
+        #  (3.34-2.0)/(8.48-2.0) = 21% at best and collapses to a sub-pixel
+        #  sliver in practice, while every PINN sample crowds into the far
+        #  left. The plot therefore showed the extrapolation as a flat streak
+        #  and made the DSMC ground truth invisible: a reader could not see
+        #  where DSMC ends and PINN begins, which is the one thing this plot
+        #  exists to show.
+        #  APPLICATION: log-x makes the DSMC window and the log-spaced PINN
+        #  samples both occupy their natural share of the axis.
+        #  CITATION: NASA TP-2013-4012 -- IRVE-3 trajectory span (120 km ->
+        #  40 km) is the 3.0e8 horizon on the right.
+        ax.set_xscale("log")
+        _xmin = float(np.min(dsmc_steps))
+        if _has_pinn:
+            _xmin = min(_xmin, float(np.min(pinn_curve["steps"])))
+        _xmax = float(np.max(dsmc_steps))
+        if _has_pinn:
+            _xmax = max(_xmax, float(np.max(pinn_curve["steps"])))
+        # Guard: log needs strictly positive limits.
+        _xmin = max(_xmin, 1.0)
+        if _xmax <= _xmin:
+            _xmax = _xmin * 10.0
+        ax.set_xlim(_xmin * 0.9, _xmax * 1.05)
+
+        #  State plainly when a metric has no PINN counterpart, so an absent
+        #  red curve reads as "not fitted" rather than "fitted and invisible".
+        #  lift_sum_N is genuinely absent: the PINN is fitted on the 7 metrics
+        #  reported by the extrapolation stage, and lift is identically zero
+        #  for this axisymmetric vehicle anyway.
+        if not _has_pinn:
+            ax.plot([], [], " ", label="PINN Extrapolation: not fitted for this metric")
+
         ax.set_ylabel(f"{label} [{unit}]", fontsize=11)
-        ax.set_xlabel("Step", fontsize=10)
+        ax.set_xlabel("Step (log scale)", fontsize=10)
         ax.set_title(label, fontsize=12, fontweight="bold")
         ax.legend(fontsize=8, loc="upper right")
         ax.grid(True, alpha=0.3)

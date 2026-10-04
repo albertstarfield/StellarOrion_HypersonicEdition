@@ -198,7 +198,7 @@ The ``scalloped'' outer mold line (OML) is modeled based on the 6-toroid stack c
     % exists anywhere in the repository, so the crop cannot be repaired here;
     % the alt text and caption below therefore describe only what is legible,
     % and the caption records the truncation explicitly.
-    \BeginAccSupp{method=escape,ActualText={Cutaway cross-section of the deployed HIAD, 3 metres or 118 inches in diameter, showing the vehicle's internal subsystems. A central cylindrical equipment stack sits above the nose; callout arrows from the right label, from top to bottom, the cameras mounted on the upper struts, the attitude control system abbreviated ACS, the telemetry and power system, the centre-of-gravity offset system, and the inflation system. Below the stack a row of seven orange toroidal bladders runs the length of the vehicle, labelled T1 through T6 along the right-hand side with a seventh, smaller shoulder torus T7 at the far right end. The bladders rest against a pink flexible thermal protection layer, and the payload is carried in the central cavity. Two callout labels on the left-hand side are cut off by the edge of the source image and are only partially legible.}}%
+    \BeginAccSupp{method=escape,ActualText={Cutaway cross-section of the deployed HIAD, 3 metres or 118 inches in diameter, showing the vehicle's internal subsystems. A central cylindrical equipment stack sits above the nose; callout arrows from the right label, from top to bottom, the cameras mounted on the upper struts, the attitude control system abbreviated ACS, the telemetry and power system, the center-of-gravity offset system, and the inflation system. Below the stack a row of seven orange toroidal bladders runs the length of the vehicle, labelled T1 through T6 along the right-hand side with a seventh, smaller shoulder torus T7 at the far right end. The bladders rest against a pink flexible thermal protection layer, and the payload is carried in the central cavity. Two callout labels on the left-hand side are cut off by the edge of the source image and are only partially legible.}}%
 \includegraphics[width=0.568\textwidth]{figures/Spec0.png}%
 \EndAccSupp{}%
     \caption{Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface. The six primary bladders T1--T6 are stacked along the vehicle axis with the smaller shoulder torus T7 at the aft end. Note that the source illustration is cropped at both left and right edges, which truncates two of its own callout labels (the flexible TPS callout and the T7 marker); the reproduction is faithful to the available source, which exists in no higher resolution elsewhere in the repository.}
@@ -498,7 +498,7 @@ The thermal protection system is not a homogeneous slab. The engine models it as
     \end{tabularx}
 \end{table}
 
-The quoted conductivities are effective through-thickness values rather than the solid constituents, because in a felt ply the conduction path crosses inter-fibre voids. Summing the ply resistances in series gives a total areal resistance of $R = 0.25605$\,m\textsuperscript{2}\,K/W over the $6.35$\,mm stack.
+The quoted conductivities are effective through-thickness values rather than the solid constituents, because in a felt ply the conduction path crosses inter-fiber voids. Summing the ply resistances in series gives a total areal resistance of $R = 0.25605$\,m\textsuperscript{2}\,K/W over the $6.35$\,mm stack.
 
 The steady one-dimensional conduction equation with a radiation boundary condition on the hot face and a pinned cold face is
 
@@ -872,7 +872,7 @@ where the design vector is $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$. The four
 \begin{itemize}
     \item \textbf{Heat-load term.} The stagnation heat flux is evaluated with the Sutton--Graves correlation of Sec.~\ref{sec:sutton_graves_methodology} at a single frozen trajectory snapshot of $51.8$\,km altitude and $3378$\,m/s, using the candidate design's own nose radius:
     $\dot{q}(\mathbf{x}) = C_{SG}\sqrt{\rho_{\infty}/R_N(\mathbf{x})}\,V_{snap}^{3}$ in\,W/cm$^2$.
-    Multiplying by the characteristic exposure time $\tau$ of the validated run gives the total heat load $Q(\mathbf{x}) = \dot{q}(\mathbf{x})\,\tau$, and the ratio $H_L = Q/Q_{target}$ normalises it against the acceptance threshold.
+    Multiplying by the characteristic exposure time $\tau$ of the validated run gives the total heat load $Q(\mathbf{x}) = \dot{q}(\mathbf{x})\,\tau$, and the ratio $H_L = Q/Q_{target}$ normalizes it against the acceptance threshold.
     \item \textbf{Flux term.} $F(\mathbf{x}) = \dot{q}(\mathbf{x})/q_{ref}$ is the peak heat-flux ratio against the measured flight value.
     \item \textbf{Ballistic-coefficient term.} Because the vehicle mass cancels between the candidate and the reference state, the ballistic-coefficient ratio reduces to a purely geometric and aerodynamic quantity,
     $\beta_{ratio} = (C_{d,ref}\,A_{ref})/(C_d(\mathbf{x})\,A(\mathbf{x}))$, and the term penalises its departure from unity as $B = (\beta_{ratio} - 1)^2$.
