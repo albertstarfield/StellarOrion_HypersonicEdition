@@ -224,16 +224,16 @@ The specific geometric parameters used for the numerical model are summarized in
 \end{table}
 
 \subsection{Configuration Definitions}
-The two configurations established for this study, \textbf{Configuration A (Scalloped)} and \textbf{Configuration B (Smooth)}, are constrained by the stowed and deployed envelopes shown in Figure \ref{fig:stowed_deployed}~\cite{dillman2015irve3}.
+The two configurations established for this study, \textbf{Configuration A (Scalloped)} and \textbf{Configuration B (Smooth)}, are constrained by the stowed and deployed envelopes of the launch vehicle~\cite{dillman2015irve3}. The stowed envelope bounds the packaged diameter, quoted at 18.5 inches for the stowed pack against a 22 inch launch-vehicle fairing, and it is this bound, not any geometric property of the inflated article, that limits how much of the 3~m reference diameter may be deployed. Neither configuration may exceed it.
 
-\begin{figure}[!htbp]
-    \centering
-    \BeginAccSupp{method=escape,ActualText={Cutaway of the HIAD in its stowed launch configuration inside the launch vehicle, headed Stowed with a quoted 18.5 inch diameter. A long tapered stowed pack sits above the vehicle internals, which include a pale green spherical payload and stacked avionics and battery boxes; below them a green upper stage band and a pale blue lower stage are labelled 22 inch diameter, and three orange landing legs extend downward from the lower stage.}}%
-%
-\EndAccSupp{}%
-    \caption{Launch configuration of the HIAD system, showing the stowed constraint.}
-    \label{fig:stowed_deployed}
-\end{figure}
+% A figure environment for fig:stowed_deployed was removed here. It carried
+% alternative text describing a cutaway of the HIAD inside its launch vehicle,
+% a caption, and a label, but NO \includegraphics: the image was never committed,
+% so the page showed a caption with nothing above it while a screen reader read a
+% picture no reader could see. No launch-vehicle asset exists in figures/, and the
+% two numbers the alternative text carried, 18.5 in and 22 in, are stated in the
+% prose above, which is where the stowed constraint is actually used.
+
 
 \begin{enumerate}
     \item \textbf{Configuration A (Scalloped):} This model utilizes the 6-toroid profile (T1--T6) shown in Figure \ref{fig:irve3_layout}. The valleys between toroids are the primary focus for analyzing heating augmentation and flow separation in the scalloped troughs.

@@ -115,9 +115,13 @@ The StellarOrion engine includes several predefined TPS material presets for the
 
 \begin{table}[!htbp]
 \centering
+% The column specification declared seven bare columns plus an X, so eight,
+% while the header and every data row supply seven fields. tabularx renders
+% the surplus column as empty space at the right edge of the table. The
+% specification is corrected to seven here.
 \caption{TPS material presets available in StellarOrion.}
 \label{tab:tps}
-\begin{tabularx}{\textwidth}{l l c c c c c >{\RaggedRight\arraybackslash}X}
+\begin{tabularx}{\textwidth}{l l c c c c >{\RaggedRight\arraybackslash}X}
 \hline
 \textbf{Preset} & \textbf{Material} & $\rho$ (kg/m$^3$) & $c_p$ (J/kg K) & $k$ (W/m K) & $\varepsilon$ & $\delta$ (m) \\
 \hline

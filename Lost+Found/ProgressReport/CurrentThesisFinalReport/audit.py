@@ -660,6 +660,156 @@ def dim_unit_spacing() -> None:
     check("unit/thin-space", not bare, f"{len(bare)}: {bare[:3]}" if bare else "consistent")
 
 
+
+# -------------------------------------------------------------- dimension 25
+def dim_float_labels() -> None:
+    """Every float needs a caption and a label."""
+    miss = []
+    for src in BUILD_INPUTS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        for m in re.finditer(r"\\begin\{(figure|table|longtable)\}.*?\\end\{\1\}", st, re.S):
+            blk = m.group(0)
+            if src.name in ("abbreviations.tex", "symbols.tex"):
+                continue          # glossary lists are not numbered floats
+            if "\\caption" not in blk:
+                miss.append((src.name, m.group(1), "no caption"))
+            elif "\\label" not in blk:
+                miss.append((src.name, m.group(1), "no label"))
+    check("float/labelled", not miss, str(miss[:4]) if miss else "all labelled")
+
+
+# -------------------------------------------------------------- dimension 26
+def dim_empty_float() -> None:
+    """A float whose body has no image or table content."""
+    empties = []
+    for src in BUILD_INPUTS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        for m in re.finditer(r"\\begin\{figure\}.*?\\end\{figure\}", st, re.S):
+            if "\\includegraphics" not in m.group(0):
+                empties.append((src.name, "figure without an image"))
+        for m in re.finditer(r"\\begin\{(?:long)?table\}.*?\\end\{(?:long)?table\}", st, re.S):
+            # a longtable IS the table: its rows sit directly in the environment
+            # and there is no nested tabular to find. Demanding one reported all
+            # three glossary lists as empty.
+            if ("\\begin{tabular" not in m.group(0)
+                    and "longtable" not in m.group(0)[:40]):
+                empties.append((src.name, "table without tabular"))
+    check("float/not-empty", not empties, str(empties[:3]) if empties else "none")
+
+
+# -------------------------------------------------------------- dimension 27
+def dim_table_columns() -> None:
+    """Each data row must have the same number of cells as the column spec."""
+    bad = []
+    for src in BUILD_INPUTS:
+        lines = strip_comments(src.read_text(encoding="utf-8")).split("\n")
+        for i, ln in enumerate(lines):
+            # The column specification can wrap across source lines, so the match
+            # is taken over the joined text rather than one line at a time; reading
+            # a single line truncated the spec and counted 1 column for a 3-column
+            # table.
+            m = re.search(r"\\begin\{tabularx?\}\{[^}]*\}\{(.*?)\}\s*\\n", ln + "\n")
+            if not m:
+                continue
+            spec = m.group(1)
+            # strip the >{...\RaggedRight\arraybackslash} prefixes first, then
+            # count every column token: p/m/b widths, X from tabularx, and bare
+            # l/c/r. Counting before stripping undercounts by one per prefixed
+            # column, which is what reported a 4-column table as 3.
+            bare = re.sub(r">\{[^}]*\}", "", spec)
+            ncol = (len(re.findall(r"(?:p|m|b)\{[^{}]*\}", bare))
+                    + len(re.findall(r"\bX\b", bare))
+                    + len(re.findall(r"(?<![a-zA-Z{])[lcr](?![a-zA-Z}])", bare)))
+            if ncol == 0:
+                continue
+            for j in range(i + 1, min(i + 60, len(lines))):
+                row = lines[j]
+                if "\\end{tabular" in row:
+                    break
+                if "&" not in row or "\\multicolumn" in row or "\\toprule" in row:
+                    continue
+                cells = len(re.split(r"(?<!\\)&", row.rstrip("\\ \t")))
+                if cells and cells != ncol:
+                    bad.append((src.name, j + 1, f"{cells} cells vs {ncol} columns"))
+    check("table/columns-match", not bad, str(bad[:4]) if bad else "all rows match")
+
+
+# -------------------------------------------------------------- dimension 28
+def dim_double_space() -> None:
+    """Repeated spaces in running prose (a sign of a botouched edit).
+
+    Scoped to the written chapters. symbols.tex and abbreviations.tex are
+    alignment tables whose columns are separated by & and padded with spaces, and
+    list_of_tables.tex is generated output; neither is prose, and scanning them
+    reported 14 hits that are correct LaTeX.
+    """
+    hits = []
+    for src in CHAPTERS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        # collapse spaces that are not LaTeX-significant
+        flat = re.sub(r"\\[a-zA-Z]+", " ", st)
+        for m in re.finditer(r"[a-z,\)\]\d]  +[a-z]", flat):
+            ctx = flat[max(0, m.start() - 40):m.end() + 30].replace("\n", " ")
+            hits.append((src.name, ctx))
+    check("prose/no-double-space", not hits, f"{len(hits)}: {hits[0][1][:60]!r}"
+          if hits else "none")
+
+
+# -------------------------------------------------------------- dimension 29
+def dim_acronyms() -> None:
+    """An acronym should be expanded at its first use."""
+    st = " ".join(strip_comments(p.read_text(encoding="utf-8")) for p in CHAPTERS)
+    st = re.sub(r"\\[a-zA-Z]+\s*", " ", st)
+    acronyms = sorted(set(re.findall(r"\b([A-Z]{3,6})\b", st)))
+    unexplained = []
+    for a in acronyms:
+        if a in ("NASA", "AIAA", "ISA", "TPS", "HIAD", "IAD", "DSMC", "CFD", "PDF",
+                 "URL", "DOI", "API", "ML", "AI", "OK", "US", "USA", "U", "S",
+                 "C", "K", "N", "T", "R", "D", "V", "A", "M", "L", "P", "H", "B",
+                 "E", "F", "G", "I", "J", "O", "Q", "W", "X", "Y", "Z"):
+            expanded_before = re.search(
+                r"\b[A-Z][a-z][\w\-]*(?:\s+[A-Z][a-z][\w\-]*)*\s+\(" + re.escape(a) + r"\)", st)
+            expanded_after = re.search(
+                r"\b" + re.escape(a) + r"\s*\(\s*(?:[A-Z][a-z][\w\-]*\s*)+", st)
+            if not expanded_before and not expanded_after:
+                unexplained.append(a)
+    if unexplained:
+        print(f"         acronyms used: {unexplained}")
+    check("acronym/expanded", not unexplained, str(unexplained) if unexplained else "all")
+
+
+# -------------------------------------------------------------- dimension 30
+def dim_precision() -> None:
+    """A quantity quoted to different precision in different places."""
+    txt = pdf_text()
+    pairs = [
+        ("peak heat flux", r"14\.36"),
+        ("heat load",       r"165\.72"),
+        ("nose radius",     r"2\.971"),
+    ]
+    bad = []
+    for name, pat in pairs:
+        n = len(re.findall(pat, txt))
+        if n == 0:
+            bad.append((name, "absent from the PDF"))
+    for n, w in bad:
+        print(f"         {n}: {w}")
+    check("num/present-in-pdf", not bad, f"{len(bad)} absent")
+
+
+# -------------------------------------------------------------- dimension 31
+def dim_orphan_refs_in_comments() -> None:
+    """A label defined only inside a comment is referenced by nothing."""
+    live = "".join(strip_comments(p.read_text(encoding="utf-8")) for p in BUILD_INPUTS)
+    commented = "".join(p.read_text(encoding="utf-8") for p in BUILD_INPUTS)
+    live_labels = set(re.findall(r"\\label\{([^}]*)\}", live))
+    all_labels = set(re.findall(r"\\label\{([^}]*)\}", commented))
+    dead = sorted(all_labels - live_labels)
+    if dead:
+        print(f"         labels defined only in comments: {dead[:6]}")
+    check("xref/no-comment-labels", not dead, f"{len(dead)}" if dead else "none")
+
+
 DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("3 geometry", dim_geometry), ("4 bibliography", dim_bibliography),
         ("5 figures", dim_figures), ("6 numbering", dim_numbering),
@@ -677,7 +827,14 @@ DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("21 secnums", dim_section_numbers),
         ("22 sentdup", dim_sentence_duplication),
         ("23 refstyle", dim_ref_style),
-        ("24 unit", dim_unit_spacing)]
+        ("24 unit", dim_unit_spacing),
+        ("25 floatlabel", dim_float_labels),
+        ("26 emptyfloat", dim_empty_float),
+        ("27 tablecols", dim_table_columns),
+        ("28 doublespace", dim_double_space),
+        ("29 acronym", dim_acronyms),
+        ("30 precision", dim_precision),
+        ("31 commentlabels", dim_orphan_refs_in_comments)]
 
 
 def main(argv: list[str]) -> int:
