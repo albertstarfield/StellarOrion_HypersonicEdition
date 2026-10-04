@@ -89,7 +89,7 @@ The scope of this research is defined to provide aerothermal analysis and surviv
 \begin{enumerate}
     \item \textbf{Geometric Representation:} The HIAD structure is modeled using parametric 3D CAD generation via CadQuery (Python scripting). The 6-toroid stack configuration based on the Rapisarda (2023) MDAO baseline is the primary geometry, with the option to vary toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as a rigid, fully-inflated geometry to isolate the impact of surface topology on the flow field.
 
-    \item \textbf{Dimensionality:} The investigation supports both 2D axisymmetric (via \texttt{--slice-angle}) and full 3D simulations. The 2D axisymmetric mode assumes zero angle of attack ($\alpha = 0^\circ$) to maintain rotational symmetry, enabling higher particle resolution within computational memory limits. Full 3D simulations are available for off-axis conditions.
+    \item \textbf{Dimensionality:} The investigation supports both 2D axisymmetric (via \texttt{-{}-slice-angle}) and full 3D simulations. The 2D axisymmetric mode assumes zero angle of attack ($\alpha = 0^\circ$) to maintain rotational symmetry, enabling higher particle resolution within computational memory limits. Full 3D simulations are available for off-axis conditions.
 
     \item \textbf{Numerical Framework:} The gas dynamics are governed by the Boltzmann equation, solved using the Direct Simulation Monte Carlo (DSMC) method as implemented in the SPARTA (Sandia Parallel Algorithm for Real-Time Application) solver~\cite{plimpton2014sparta}. DSMC is valid for rarefied and transitional flows where the continuum assumption fails ($Kn > 0.01$).
 

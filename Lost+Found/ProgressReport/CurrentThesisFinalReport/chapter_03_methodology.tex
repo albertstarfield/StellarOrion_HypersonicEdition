@@ -291,7 +291,7 @@ The freestream conditions are prescribed to match the target trajectory point fo
     \item \textbf{Freestream Velocity ($v_{\infty}$):} 3378\,m/s (corresponding to Mach $\approx$ 10.29 at altitude)
     \item \textbf{Number Density ($n$):} $1.63 \times 10^{22}$\,m$^{-3}$ (derived from atmospheric density $\rho = 7.851 \times 10^{-4}$\,kg/m$^3$ via $n = \rho N_A / M_{air}$)
     \item \textbf{Freestream Temperature ($T_{\infty}$):} 268.41\,K (atmospheric model, code baseline)
-    \item \textbf{Particle Weighting Factor ($f_{num}$):} $1.5 \times 10^{20}$ (configurable via \texttt{--fnum})
+    \item \textbf{Particle Weighting Factor ($f_{num}$):} $1.5 \times 10^{20}$ (configurable via \texttt{-{}-fnum})
 \end{itemize}
 
 \subsubsection*{Gas Model}
@@ -422,7 +422,7 @@ The deceleration load felt by the vehicle in Earth-gravity units ($g_0$):
 The Sutton-Graves (1971) stagnation-point convective heating correlation is used for all absolute thermal calculations~\cite{sutton1971gravesh}. This is the standard reference formula for Earth entry and has been validated against IRVE-3 flight data by Rapisarda (2023)~\cite{rapisarda2023mdao}:
 
 \begin{equation}
-    \boxed{\dot{q}_{stag} = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_N}} \cdot V_{\infty}^3}
+    \dot{q}_{stag} = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_N}} \cdot V_{\infty}^3
 \end{equation}
 
 where:
@@ -437,7 +437,12 @@ where:
 For the IRVE-3 baseline configuration the correlation is evaluated at the SPARTA DSMC run condition ($h = 51.8$\,km under ISA, which yields $\rho_{\infty} = 7.851 \times 10^{-4}$\,kg/m$^3$) using the IRVE-3 sphere--cone nose radius $R_N = 1.5$\,m (a 3\,m aeroshell diameter) and the run velocity $V_{\infty} = 3{,}378$\,m/s:
 
 \begin{equation}
-    \dot{q}_{stag} = 1.83 \times 10^{-4} \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times 3378^3 \approx 1.614 \times 10^{5} \ \text{W/m}^2 = 16.14 \ \text{W/cm}^2
+    \begin{split}
+        \dot{q}_{stag}
+          &= 1.83 \times 10^{-4} \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times 3378^3 \\
+          &\approx 1.614 \times 10^{5} \ \text{W/m}^2 \\
+          &= 16.14 \ \text{W/cm}^2
+    \end{split}
 \end{equation}
 
 Two constants in this evaluation were corrected during the course of the work and are reported here at their current values. The correlation constant is $C_{SG} = 1.83 \times 10^{-4}$, the Sutton \& Graves value for Earth air, replacing the legacy $1.7415 \times 10^{-4}$ placeholder. The nose radius is $R_N = 1.5$\,m, the actual IRVE-3 geometry, replacing the legacy $0.55$\,m placeholder; because the correlation scales as $1/\sqrt{R_N}$, that placeholder alone inflated the computed flux by roughly a factor of 1.65. The value quoted in earlier revisions of this work, $12.20$\,W/cm$^2$, was produced by the superseded constant/nose-radius pair evaluated at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than at the run condition, and is superseded by the $16.14$\,W/cm$^2$ reported above. Rapisarda (2023) reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ (+6.26\% above the 14.36\,W/cm$^2$ flight measurement) and a Fay--Riddell CFD prediction of 13.83\,W/cm$^2$ (-3.69\% below flight)~\cite{rapisarda2023mdao}. The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure.
@@ -589,8 +594,8 @@ The PINN approximates the flow field mapping $\mathcal{N}: \mathbb{R}^2 \to \mat
         Neurons per layer & 64 \\ \hline
         Activation function & $\tanh$ \\ \hline
         Weight initialization & Glorot normal \\ \hline
-        Output dimension & 3 $(\rho, T, u)$ \\ \hline
-        Total trainable parameters & $2 \times 64 + 2 \times 64^2 + 3 \times 64 + 3 \approx 8{,}700$ \\ \hline
+        Output dimension & 4 $(\rho, v_x, v_y, T)$ \\ \hline
+        Total trainable parameters & $(2 \times 64 + 64) + 2\,(64^{2} + 64) + (4 \times 64 + 4) = 8{,}772$ \\ \hline
     \end{tabular}
 \end{table}
 
@@ -726,7 +731,7 @@ The PINN refinement stage rests on the following formal assumptions:
     \centering
     \caption{PINN Axioms and Assumptions.}
     \label{tab:pinn_axioms}
-    \begin{tabular}{|>{\RaggedRight\arraybackslash}p{0.15\textwidth}|>{\RaggedRight\arraybackslash}p{0.55\textwidth}|>{\RaggedRight\arraybackslash}p{0.2\textwidth}|}
+    \begin{tabular}{|>{\RaggedRight\arraybackslash}p{0.21\textwidth}|>{\RaggedRight\arraybackslash}p{0.49\textwidth}|>{\RaggedRight\arraybackslash}p{0.2\textwidth}|}
         \hline
         \textbf{Axiom} & \textbf{Statement} & \textbf{Basis} \\ \hline
         A1: Axisymmetric flow & The flow field is symmetric about the vehicle centerline, reducing the problem to 2D $(x, y)$. & Geometric symmetry \\ \hline
@@ -809,7 +814,7 @@ where $i \in \{0, 1, \ldots, N-1\}$ is the stratum index, $j \in \{1, 2, \ldots,
 The stratified sampling guarantees that each parameter is sampled at $N$ distinct levels, with exactly one sample per level. This eliminates the clustering and gap artifacts that occur with pure random sampling, and ensures space-filling coverage even for small $N$. The total number of SPARTA evaluations required is $N$, compared to $k^d$ for a full factorial design with $k$ levels per dimension.
 
 \subsubsection*{Central Composite Design (CCD) as Alternative DoE}
-In addition to LHS, the framework supports the Face-Centered Central Composite Design (CCD)~\cite{Montgomery2017}, which is the default Design of Experiments method in the implementation. For a $d$-dimensional parameter space, the CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point at the origin. The campaign executed in this work used $d = 3$ design variables (nose radius $R_N$, toroid radius $r_{tor}$, and half-cone angle $\theta_c$), which yields $N = 8 + 6 + 1 = 15$ sample points, the minimum required for a second-order response surface model in three factors. The recorded screen comprises eight factorial corner points, six axial star points, and the single center point, and it is reported separately from the 70-entry Bayesian Optimization history of Sec.~\ref{sec:bo_results}. The user may select either LHS or CCD via the \texttt{--doe} flag, with CCD as the default for the optimized IRVE-3 baseline.
+In addition to LHS, the framework supports the Face-Centered Central Composite Design (CCD)~\cite{Montgomery2017}, which is the default Design of Experiments method in the implementation. For a $d$-dimensional parameter space, the CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point at the origin. The campaign executed in this work used $d = 3$ design variables (nose radius $R_N$, toroid radius $r_{tor}$, and half-cone angle $\theta_c$), which yields $N = 8 + 6 + 1 = 15$ sample points, the minimum required for a second-order response surface model in three factors. The recorded screen comprises eight factorial corner points, six axial star points, and the single center point, and it is reported separately from the 70-entry Bayesian Optimization history of Sec.~\ref{sec:bo_results}. The user may select either LHS or CCD via the \texttt{-{}-doe} flag, with CCD as the default for the optimized IRVE-3 baseline.
 
 \subsection{Bayesian Optimization (Bayes Opt)}
 
@@ -1081,13 +1086,13 @@ The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012
     % in identical terms on purpose: a reader who meets either table first must
     % not be left with the impression that a single-point Sutton-Graves value is
     % directly comparable to a trajectory-integrated flight peak.
-    \caption{IRVE-3 validation metrics. The MDAO column is the published Fay--Riddell reference; the StellarOrion column is the result of this work. $^{\dagger}$The heat-flux entry is a Sutton--Graves correlation evaluated at $R_N = 1.5$\,m and $V = 3{,}378$\,m/s, not a quantity resolved by the solver. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton--Graves value the code reports, and why they differ.}
+    \caption{IRVE-3 validation metrics. The MDAO column is the published Fay--Riddell reference; the StellarOrion column is the result of this work. The heat-flux entry is a Sutton--Graves correlation evaluated at $R_N = 1.5$\,m and $V = 3{,}378$\,m/s, not a quantity resolved by the solver. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton--Graves value the code reports, and why they differ.}
     \label{tab:irve3_validation}
     \small
     \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.10\textwidth}|}
         \hline
         \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion\allowbreak{} (This Work)} & \textbf{SO Error (\%)} \\ \hline
-        Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & 16.14 W/cm$^2$ & $+12.4$, \emph{not like-for-like} \\ \hline
+        Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & 16.14 W/cm$^2$$^{\dagger}$ & $+12.4$, \emph{not like-for-like} \\ \hline
         Total Heat Load ($Q$) & 195.06 J/cm$^2$ & 195.17 J/cm$^2$ & 165.72 J/cm$^2$ & $-15.0$ \\ \hline
         Peak Deceleration & 19.7\,$g$ & n/a & 16.83\,$g$ & $-14.6$ \\ \hline
         Ballistic Coefficient ($\beta$) & 26.9 kg/m$^2$ & n/a & 27.70 kg/m$^2$ & $+3.0$ \\ \hline
