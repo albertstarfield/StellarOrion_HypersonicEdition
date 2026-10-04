@@ -36,9 +36,35 @@ echo "=== PASS 3: pdflatex ==="
 pdflatex -interaction=nonstopmode -file-line-error main.tex > /tmp/thesis_p3.out 2>&1
 echo "exit=$?"
 
-echo "=== PASS 4: pdflatex ==="
-pdflatex -interaction=nonstopmode -file-line-error main.tex > /tmp/thesis_p4.out 2>&1
-echo "exit=$?"
+# Convergence loop, replacing the old fixed PASS 4.
+#
+# WHY: with a fixed pass count a from-scratch build (aux, bbl, toc, lof, lot, brf
+# all deleted) ends on a log that still carries TeX's own rerun requests,
+#     "Label(s) may have changed. Rerun to get cross-references right."
+#     "File `main.brf' has changed."
+# and report_warnings.py counts them as warnings. Measured: four passes left 2
+# such warnings, a fifth pass cleared them and the verdict became CLEAN. Rather
+# than hard-code a fifth pass, keep going until the log stops asking to be rerun,
+# with a bounded number of attempts so a genuinely oscillating document cannot
+# loop forever.
+echo "=== PASSES 4+: pdflatex until the log stops requesting a rerun ==="
+MAX_PASSES=8
+for pass in 4 5 6 7 8 9 10 11; do
+  pdflatex -interaction=nonstopmode -file-line-error main.tex > "/tmp/thesis_p${pass}.out" 2>&1
+  rc=$?
+  echo "  pass ${pass}: exit=${rc}"
+  if [[ $rc -ne 0 ]]; then
+    echo "  pdflatex failed on pass ${pass}; stopping"
+    break
+  fi
+  if ! grep -qE "Rerun to get|Label\(s\) may have changed|has changed\.|may have changed\." main.log; then
+    echo "  converged after pass ${pass}: main.log no longer requests a rerun"
+    break
+  fi
+  if [[ $pass -eq $MAX_PASSES ]]; then
+    echo "  WARNING: still requesting a rerun after ${MAX_PASSES} passes"
+  fi
+done
 
 echo
 echo "########## WARNING / ERROR REPORT ##########"
