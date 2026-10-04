@@ -195,6 +195,97 @@ crisp, on empty canvas, with no geometry crossing them.
 
 ---
 
+## F8 — PINN leg crashed on startup: `KeyError: 'k1__constant_value'`
+
+Found while making DSMC → PINN the default for `--validate`. The leg had never
+actually executed in this session, so the break was latent until it ran.
+
+**Observed** — crash in the GP denoise stage, before any PINN training:
+
+```
+Traceback (most recent call last):
+  File "src/python/validation_pipeline.py", line 2688, in run_validation_pipeline
+    result = kriging_denoise_convergence(data["steps"], data[metric])
+  File "src/python/validation_pipeline.py", line 809, in kriging_denoise_convergence
+    "constant": float(gp.kernel_.get_params()["k1__constant_value"]),
+KeyError: 'k1__constant_value'
+```
+
+**Root cause — positional string names that do not match the real kernel tree.**
+
+The kernel is built as
+
+```python
+ConstantKernel(...) * Matern(...) + WhiteKernel(...)
+# = Sum(Product(ConstantKernel, Matern), WhiteKernel)
+```
+
+`Kernel.get_params()` flattens composition into *positional* names, so the real
+keys are `k1__k1__constant_value`, `k1__k2__length_scale`, and `k2__noise_level`.
+The code asked for `k1__constant_value` and `k2__length_scale` — **two of the three
+were wrong**; `k2__noise_level` was correct only by coincidence. Verified against
+the fitted kernel on sklearn 1.9.1:
+
+```
+k1__k1__constant_value   k1__k2__length_scale   k2__noise_level
+'k1__constant_value' in get_params() -> False
+```
+
+Because the names are positional, they would also have been silently wrong — not
+raising — had the composition order or nesting changed at all.
+
+**Fix.** Stop parsing flattened name strings. Added `kernel_hyperparameters()`,
+which walks the kernel tree and reads each leaf by node *type*, so it is
+independent of composition order and nesting depth. It raises `KeyError` naming
+the missing leaves rather than reporting `NaN` if the composition ever changes.
+
+**Verified** three ways: the fitted pipeline kernel yields all three values; a
+deliberately reordered and differently-nested kernel
+(`WhiteKernel + Product(Matern, ConstantKernel)`) yields the same values, which the
+old name strings would not have; and a kernel missing a leaf raises the clear
+`KeyError`. End to end, the pipeline now gets past Step 2 and trains:
+
+```
+[Step 1/5] Loaded 22 convergence points (step 100 -> 2200)
+[Step 2/5] cd: noise_std=0.06, R^2=0.8485, kernel_length=2226.7   (7 metrics)
+[Step 3/5] Training PINN for extrapolation to step 300000000 ...
+           g_load: extrapolated=14.01 (method=converged_mean, CV=0.0000 < 0.05)
+```
+
+---
+
+## F9 — PINN leg was ordered before the DSMC run it consumes
+
+Not a crash, but the reason the chain produced untrustworthy numbers whenever it
+did run.
+
+`run.py` Phase 2b (the only PINN entry point until now) executes **before** the
+DSMC launch, yet reads `results/validation_scalloped/validation_timeseries.csv` —
+a file produced by a *previous* DSMC run. So the PINN was fitted to stale
+convergence data and then reported as if it validated the current run.
+
+**Fix.** The PINN leg now runs inside `Run_Validate_Full` as **Step 13**, after
+Step 11 has written *this* run's `validation_timeseries.csv`, so the surrogate is
+fitted to the data just validated. `--validate` passes
+`Run_Pinn => not Has_Flag ("--skip-pinn")`, so the chain is the default and
+`--skip-pinn` is the documented opt-out (same flag name `run.py` already used).
+
+Two properties kept deliberately:
+
+* **Non-fatal.** Like Steps 11 and 12, it cannot retract an already-printed DSMC
+  verdict — but every failure is reported to stderr with the reason.
+* **No silent skip.** A missing venv or missing CSV is reported explicitly with
+  the remedy, never quietly omitted behind a `PASSED` verdict.
+
+Missing prerequisites are checked and reported before the spawn:
+
+```
+[VALIDATE] Step 13 SKIPPED: venv_validation/bin/python3 not found
+           -- create it with run.py Phase 1 (venv bootstrap), or pass --skip-pinn
+```
+
+---
+
 ## F7 — Validation run aborted: Docker socket unreachable (infrastructure, retried)
 
 **Observed** — run 3 died 1.2 s after start, before any DSMC work:
@@ -270,6 +361,8 @@ therefore independent of the TPS work.
 | F5 | visual | **fixed** | z-order below geometry + no legend headroom |
 | F6 | informational | none needed | GP hyper-parameter fit stochasticity |
 | F7 | blocking (infra) | **retried, passed** | Docker context pointed at `/var/run/docker.sock`; Colima socket is elsewhere |
+| F8 | blocking (latent) | **fixed** | positional sklearn kernel param names did not match the real `Sum(Product(..), WhiteKernel)` tree |
+| F9 | correctness | **fixed** | PINN leg ran before the DSMC run whose CSV it reads |
 
 ### Final state after fixes
 

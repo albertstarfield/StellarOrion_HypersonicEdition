@@ -12,7 +12,7 @@ Table~\ref{tab:constants} lists the physical constants as defined in \texttt{\se
 
 \begin{table}[!htbp]
 \centering
-\caption{Fundamental physical constants used in StellarOrion (from \texttt{stellarorion\_types.ads}).}
+\caption{Fundamental physical constants used in StellarOrion, as consumed by \texttt{stellarorion\_types.ads} and taken from the 2018 recommended values~\cite{codata2018}.}
 \label{tab:constants}
 \begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.24\textwidth} >{\RaggedRight\arraybackslash}p{0.12\textwidth} >{\RaggedRight\arraybackslash}p{0.19\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
 \hline
@@ -268,7 +268,7 @@ Substituting the SPARTA DSMC run conditions ($\rho_\infty = 7.851 \times 10^{-4}
     \label{eq:sg_baseline}
 \end{align}
 
-\noindent This single-point value is $+12.4\%$ relative to the $14.36$\,W/cm$^2$ flight measurement and $+5.8\%$ relative to Rapisarda's trajectory-integrated peak of $15.26$\,W/cm$^2$; the two agree closely because the higher density of Rapisarda's MCD v6.1 trajectory is very nearly offset by the use of a single ISA point rather than a trajectory-integrated peak. An earlier revision of this appendix reported $12.20$\,W/cm$^2$ from the superseded coefficient $C_{SG} = 1.7415 \times 10^{-4}$ and nose radius $R_N = 0.55$\,m evaluated at a hardcoded $V_\infty = 2700$\,m/s; both constants have since been corrected to the values used above.
+\noindent This single-point value is $+12.4\%$ relative to the $14.36$\,W/cm$^2$ flight measurement~\cite{old2013irve3postflight} and $+5.8\%$ relative to Rapisarda's trajectory-integrated peak of $15.26$\,W/cm$^2$~\cite{rapisarda2023mdao}; the two agree closely because the higher density of Rapisarda's MCD v6.1 trajectory is very nearly offset by the use of a single ISA point rather than a trajectory-integrated peak. A value of $12.20$\,W/cm$^2$ appears in the engine's own comments; it results from the engine default coefficient $C_{SG} = 1.7415 \times 10^{-4}$ and nose radius $R_N = 0.55$\,m evaluated at a hardcoded $V_\infty = 2700$\,m/s rather than at the run condition, and is superseded by the values used here. 7415 \times 10^{-4}$ and nose radius $R_N = 0.55$\,m evaluated at a hardcoded $V_\infty = 2700$\,m/s; both constants have since been corrected to the values used above.
 
 \section{Mean Free Path and Knudsen Number}
 

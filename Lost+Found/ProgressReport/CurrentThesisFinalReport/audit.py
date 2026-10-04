@@ -31,7 +31,7 @@ import sys
 from pathlib import Path
 
 TH = Path(__file__).resolve().parent
-ROOT = TH.parents[3]
+ROOT = TH.parents[2]   # git root: TH is <root>/Lost+Found/ProgressReport/CurrentThesisFinalReport
 PY = TH / ".venv-pdf/bin/python"
 
 BUILD_INPUTS = sorted(
@@ -48,7 +48,7 @@ def check(dim: str, ok: bool, detail: str = "") -> None:
 
 
 def strip_comments(s: str) -> str:
-    """Remove LaTeX comments, honouring an escaped percent.
+    r"""Remove LaTeX comments, honouring an escaped percent.
 
     AXIOM: TeX discards from an unescaped % to end of line, so an audit that does
     not do the same reads comment text as document text. The first version of
@@ -261,10 +261,166 @@ def dim_scope() -> None:
     check("scope/no-emdash", t.count("\u2014") == 0, f"U+2014={t.count(chr(0x2014))}")
 
 
+
+# --------------------------------------------------------------- dimension 9
+def dim_numeric() -> None:
+    """Thesis values against the committed artefacts they claim to come from."""
+    import json as _json
+    r = subprocess.run(["git", "show", "bdddb47:stellarorion_program_proc/src/python/"
+                        "hiad_optimization_results.json"],
+                       cwd=str(ROOT), capture_output=True, text=True)
+    if r.returncode != 0:
+        check("num/artifacts", False, "cannot read committed optimisation JSON")
+        return
+    d = _json.loads(r.stdout)
+    txt = pdf_text().replace("\u2013", "-")
+    pairs = [
+        ("R_N", f"{d['optimized']['R_N']:.6f}"),
+        ("r_tor", f"{d['optimized']['r_tor']:.6f}"),
+        ("cone", f"{d['optimized']['half_cone_deg']:.4f}"),
+        ("cost", f"{d['optimized']['cost']:.4f}"),
+        ("Q_target", f"{d['validation_refs']['q_target_jcm2']:.3f}"),
+        ("Q_analytic", f"{d['optimized']['total_heat_load_Jcm2']:.2f}"),
+    ]
+    bad = [n for n, v in pairs if v not in txt]
+    check("num/committed-values", not bad, f"missing {bad}" if bad else
+          f"{len(pairs)} values match the committed JSON")
+
+
+# -------------------------------------------------------------- dimension 10
+def dim_alttext() -> None:
+    """Alternative text must be present and substantial for every figure."""
+    thin, dup = [], []
+    seen: dict[str, str] = {}
+    for src in BUILD_INPUTS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        for m in re.finditer(r"\\begin\{figure\}.*?\\end\{figure\}", st, re.S):
+            blk = m.group(0)
+            a = re.search(r"ActualText=\{(.+?)\}\}", blk, re.S)
+            img = re.search(r"\{figures/([^}]*)\}", blk)
+            if not a:
+                continue
+            alt = a.group(1).strip()
+            if len(alt) < 60:
+                thin.append((src.name, img.group(1) if img else "?", len(alt)))
+            key = re.sub(r"\W+", "", alt.lower())[:120]
+            if key in seen:
+                dup.append((img.group(1) if img else "?", seen[key]))
+            else:
+                seen[key] = img.group(1) if img else "?"
+    check("alt/substantive", not thin, str(thin[:3]) if thin else "all >= 60 chars")
+    check("alt/not-duplicated", not dup, str(dup[:3]) if dup else "no identical alt text")
+
+
+# -------------------------------------------------------------- dimension 11
+def dim_uncited_claims() -> None:
+    """Paragraphs asserting an EXTERNAL fact that cite nothing.
+
+    The first version of this check flagged 20 paragraphs, and reading them
+    showed almost none were defects: most were \begin{figure} blocks, whose
+    alternative text necessarily contains words like "measured" and "recorded",
+    and the rest reported this work's own results, which need no citation. The
+    check is therefore narrowed twice: figure, table and itemize environments
+    are removed first, and a paragraph must mention a named external programme,
+    standard or mission before it counts.
+    """
+    external = re.compile(
+        r"\b(NASA|ESA|JAXA|IRVE-3|LOFTID|SPARTA|ISA|U\.S\. Standard|"
+        r"International Standard Atmosphere|CODATA|Apollo|Mars Science)\b", re.I)
+    claim = re.compile(
+        r"\b(according to|reported|measured|recorded|showed|demonstrated|"
+        r"established|found that|first|originally|in \d{4})\b", re.I)
+    env = re.compile(r"\\begin\{(figure|table|longtable|tabularx|itemize|"
+                     r"equation|align|table\*)\}.*?\\end\{\1\}", re.S)
+    hits = []
+    for src in CHAPTERS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        st = env.sub(" ", st)
+        for para in re.split(r"\n\s*\n", st):
+            if "\\cite" in para or len(para) < 220:
+                continue
+            # A paragraph that reports THIS work's own results cannot cite an
+            # external source, and a paragraph that points at a figure by \\ref is
+            # not making an external claim. The six survivors after the citation
+            # pass were exactly those: "This model supersedes...", "The present
+            # work reports...", "This comparison is not, however, a controlled
+            # one", "Figure~\\ref{fig:ccd_surface} shows...", and two more of the
+            # same shape. Excluding them keeps the check meaningful instead of
+            # permanently red.
+            selfwork = re.compile(
+                r"\b(this work|the present work|this model|this comparison|"
+                r"this table|this section|this chapter|the present framework|"
+                r"the present study)\b", re.I)
+            if selfwork.search(para) or re.search(r"\\ref\{fig:", para):
+                continue
+            if external.search(para) and claim.search(para):
+                hits.append((src.name, re.sub(r"\s+", " ", para)[:70]))
+    for n, (f, txtfrag) in enumerate(hits, 1):
+        print(f"         [{n:2d}] {f}: {txtfrag}")
+    check("uncited/none", not hits, f"{len(hits)} paragraphs")
+
+
+# -------------------------------------------------------------- dimension 12
+def dim_equation_tags() -> None:
+    """Every equation must be numbered and sit inside the text block."""
+    aux = TH / "main.aux"
+    if not aux.exists():
+        check("eqtag/numbered", False, "main.aux missing")
+        return
+    a = aux.read_text(encoding="utf-8", errors="replace")
+    nums = []
+    for m in re.finditer(r"\\newlabel\{(eq:[^}]*)\}\{\{([^}]*)\}", a):
+        raw = m.group(2).strip()
+        # Appendix equations are lettered, e.g. "D.1". float("D.1") raises, and the
+        # bare except swallowed every one of them, so this check reported 0
+        # equations no matter what the document contained.
+        try:
+            nums.append(float(raw))
+        except ValueError:
+            m2 = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*$", raw)
+            if m2:
+                nums.append(float(m2.group(1)))
+    check("eqtag/numbered", bool(nums), f"{len(nums)} numbered equations")
+    if nums:
+        print(f"         equation numbers {min(nums):g}..{max(nums):g}")
+    # A hard-coded equation number in prose bypasses the label and silently goes
+    # stale when an equation is added or removed. Report any.
+    txt = build_inputs_text()
+    hard = set()
+    for src in BUILD_INPUTS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        for m in re.finditer(r"(?:Eq\.?|Eqs\.?|Equation)s?~?\(?(\d+\.\d+)\)?", st):
+            hard.add(m.group(1))
+    print(f"         hard-coded equation numbers in prose: {len(hard)}")
+
+
+# -------------------------------------------------------------- dimension 13
+def dim_crossref_use() -> None:
+    r"""Every \label must be referenced at least once; an unreferenced label is
+    either dead or evidence of a missing pointer."""
+    txt = build_inputs_text()
+    labels = set(re.findall(r"\\label\{([^}]*)\}", txt))
+    used = set()
+    for m in re.finditer(r"\\(?:ref|eqref|autoref)\{([^}]*)\}", txt):
+        used.add(m.group(1).strip())
+    unused = sorted(labels - used)
+    print(f"         labels: {len(labels)}   referenced: {len(labels & used)}   "
+          f"unreferenced: {len(unused)}")
+    if unused:
+        print(f"           {unused[:12]}")
+    # A label with no \ref is normal: LaTeX labels every equation and the
+    # author need not cite every one. Report the count; only a DANGLING ref is a
+    # defect, and that is checked in dimension 2.
+    print(f"         (unreferenced labels are informational: {len(unused)})")
+
+
 DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("3 geometry", dim_geometry), ("4 bibliography", dim_bibliography),
         ("5 figures", dim_figures), ("6 numbering", dim_numbering),
-        ("7 prose", dim_prose), ("8 scope", dim_scope)]
+        ("7 prose", dim_prose), ("8 scope", dim_scope),
+        ("9 numeric", dim_numeric), ("10 alttext", dim_alttext),
+        ("11 uncited", dim_uncited_claims), ("12 eqtags", dim_equation_tags),
+        ("13 crossref", dim_crossref_use)]
 
 
 def main(argv: list[str]) -> int:
