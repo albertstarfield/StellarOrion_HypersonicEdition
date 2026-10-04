@@ -87,7 +87,7 @@ The present work makes the following novel contributions to the field of hyperso
 The scope of this research is defined to provide aerothermal analysis and survivability optimization of the Flexible Thermal Protection System (FTPS) within the constraints of available computational resources. The boundaries and limitations of this study are as follows:
 
 \begin{enumerate}
-    \item \textbf{Geometric Representation:} The HIAD structure is modeled using parametric 3D CAD generation via CadQuery (Python scripting). The 6-toroid stack configuration based on the Rapisarda (2023) MDAO baseline is the primary geometry, with the option to vary toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as a rigid, fully-inflated geometry to isolate the impact of surface topology on the flow field.
+    \item \textbf{Geometric Representation:} The HIAD structure is modeled using parametric 3D CAD generation via CadQuery (Python scripting). The 6-toroid stack configuration based on the \cite{rapisarda2023mdao} MDAO baseline is the primary geometry, with the option to vary toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as a rigid, fully-inflated geometry to isolate the impact of surface topology on the flow field.
 
     \item \textbf{Dimensionality:} The investigation supports both 2D axisymmetric (via \texttt{-{}-slice-angle}) and full 3D simulations. The 2D axisymmetric mode assumes zero angle of attack ($\alpha = 0^\circ$) to maintain rotational symmetry, enabling higher particle resolution within computational memory limits. Full 3D simulations are available for off-axis conditions.
 

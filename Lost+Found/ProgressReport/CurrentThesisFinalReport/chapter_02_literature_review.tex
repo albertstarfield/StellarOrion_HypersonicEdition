@@ -9,7 +9,13 @@
 
 To establish a baseline for the expected aerothermal outcomes, a review of key flight tests and numerical studies was conducted. Table \ref{tab:research_comparison} summarizes the landmarks in HIAD research that support the triangulation of results in this study.
 
-\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.21\textwidth}|>{\RaggedRight\arraybackslash}p{0.21\textwidth}|>{\RaggedRight\arraybackslash}p{0.26\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|}
+% Column 1 widened from 0.21 to 0.24 and column 3 narrowed from 0.26 to
+% 0.23, total width unchanged at 0.86. Converting the hand-typed citation
+% in the Lichodziejewski row to \cite made the first column contain the
+% unbreakable token "Lichodziejewski", which LaTeX cannot hyphenate, so
+% 0.21 was too narrow: measured overfull hbox of 3.009pt. The required
+% width is 86.6pt = 0.218 of a 397.5pt text block; 0.24 gives margin.
+\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.24\textwidth}|>{\RaggedRight\arraybackslash}p{0.21\textwidth}|>{\RaggedRight\arraybackslash}p{0.23\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|}
 \caption{Comparison of Landmark HIAD Aerothermal Research and Flight Tests} \label{tab:research_comparison} \\
 \hline
 \textbf{Research / Project} & \textbf{Key Geometry} & \textbf{Major Aerothermal Findings} & \textbf{Relevance to Outcome} \\ \hline
@@ -24,20 +30,20 @@ To establish a baseline for the expected aerothermal outcomes, a review of key f
 \hline
 \endlastfoot
 
-\textbf{NASA IRVE-3} (Lau et al., 2013) & 3-meter stacked-toroid HIAD. & Confirmed that "scalloping" (surface deflection) increases local heating compared to smooth surfaces. & Primary validation for the scalloped model. \\ \hline
+\textbf{NASA IRVE-3} \cite{NASA2013TP4012} & 3-meter stacked-toroid HIAD. & Confirmed that "scalloping" (surface deflection) increases local heating compared to smooth surfaces. & Primary validation for the scalloped model. \\ \hline
 
-\textbf{NASA LOFTID} (Cassell et al., 2022) & 6-meter large-scale HIAD with Gen-2 FTPS. & Demonstrated thermal survival during Earth reentry; identified transition onset on the flank. & Validates FTPS effectiveness at high enthalpy. \\ \hline
+\textbf{NASA LOFTID} \cite{cassell2022loftid} & 6-meter large-scale HIAD with Gen-2 FTPS. & Demonstrated thermal survival during Earth reentry; identified transition onset on the flank. & Validates FTPS effectiveness at high enthalpy. \\ \hline
 
-\textbf{Lichodziejewski et al. (2012)} & Deformed Outer Mold Line (OML) Analysis. & Proved that surface irregularities between tori significantly augment local heat flux. & Justifies the Config B (Smooth) comparison. \\ \hline
+\textbf{\cite{lichodziejewski2012oml}} & Deformed Outer Mold Line (OML) Analysis. & Proved that surface irregularities between tori significantly augment local heat flux. & Justifies the Config B (Smooth) comparison. \\ \hline
 
-\textbf{HEART Project} (Cassell et al., 2014) & Optimized Nose-IAD Junction Geometry. & Found that the juncture between the nose and the IAD creates a secondary heat flux peak. & Predicts the location of local hot spots. \\ \hline
+\textbf{HEART Project} \cite{cassell2014heart} & Optimized Nose-IAD Junction Geometry. & Found that the juncture between the nose and the IAD creates a secondary heat flux peak. & Predicts the location of local hot spots. \\ \hline
 
-\textbf{Menter (1994)} & $k$-$\omega$ SST Turbulence Model. & Superior performance in predicting separation in adverse pressure gradients. & Supports model for valley recirculation. \\ \hline
+\textbf{\cite{menter1994SST}} & $k$-$\omega$ SST Turbulence Model. & Superior performance in predicting separation in adverse pressure gradients. & Supports model for valley recirculation. \\ \hline
 \end{longtable}
 \subsection{Triangulation of Expected Outcomes}
-By synthesizing the findings of \textit{Lau et al. (2013)} and \textit{Lichodziejewski et al. (2012)}, it is hypothesized that the scalloped geometry in this study will generate localized heat flux peaks on the toroidal crests. 
+By synthesizing the findings of \cite{NASA2013TP4012} and \cite{lichodziejewski2012oml}, it is hypothesized that the scalloped geometry in this study will generate localized heat flux peaks on the toroidal crests. 
 
-Furthermore, the implementation of the \textit{SST $k-\omega$} turbulence model, as validated by \textit{Menter (1994)}, is expected to resolve the stable recirculation cells within the toroidal valleys. Finally, the use of a \textit{Thermally Perfect Gas} model reflects the high-enthalpy conditions observed in the \textit{LOFTID} mission, ensuring that the predicted shock physics align with real-gas observations rather than simplified ideal-gas assumptions.
+Furthermore, the implementation of the \textit{SST $k-\omega$} turbulence model, as validated by \cite{menter1994SST}, is expected to resolve the stable recirculation cells within the toroidal valleys. Finally, the use of a \textit{Thermally Perfect Gas} model reflects the high-enthalpy conditions observed in the \textit{LOFTID} mission, ensuring that the predicted shock physics align with real-gas observations rather than simplified ideal-gas assumptions.
 
 This synthesis establishes the theoretical foundation for the numerical methodology described in \textbf{Chapter 3}. Figure~\ref{fig:literature_review_map} provides a visual mapping of each study's coverage of the physical phenomena and methodology adopted in this work.
 
@@ -636,7 +642,7 @@ DSMC solvers such as SPARTA report the number density $n_{\rho}$ (particles per 
     \label{eq:mass_density}
 \end{equation}
 
-\noindent where $M_{\text{air}} \approx 28.97$ g/mol is the molar mass of air and $N_A = 6.022 \times 10^{23}$ mol$^{-1}$ is Avogadro's constant \cite{anderson2006hypersonic}.
+\noindent where $M_{\text{air}} \approx 28.97$ g/mol is the molar mass of air and $N_A = 6.022 \times 10^{23}$ mol$^{-1}$ is Avogadro's constant \cite{AndersonHypersonic}.
 
 \subsubsection*{Dynamic Pressure}
 The dynamic pressure quantifies the kinetic energy flux of the freestream and is defined as:
@@ -656,7 +662,7 @@ The ballistic coefficient $\beta$ measures the vehicle's ability to decelerate a
     \label{eq:ballistic_coefficient}
 \end{equation}
 
-\noindent where $m$ is the vehicle mass and $F_{\text{drag}}$ is the total drag force obtained by integrating the surface pressure and shear stress over the vehicle. A lower $\beta$ indicates more effective deceleration, which is the primary objective for HIAD design \cite{anderson2006hypersonic}.
+\noindent where $m$ is the vehicle mass and $F_{\text{drag}}$ is the total drag force obtained by integrating the surface pressure and shear stress over the vehicle. A lower $\beta$ indicates more effective deceleration, which is the primary objective for HIAD design \cite{AndersonHypersonic}.
 
 \subsubsection*{Instantaneous Deceleration (g-load)}
 The deceleration experienced by the vehicle, expressed in multiples of Earth's standard gravity $g_0 = 9.81$ m/s$^{2}$, is:
@@ -672,7 +678,7 @@ The deceleration experienced by the vehicle, expressed in multiples of Earth's s
 The aerothermal loads on the HIAD must be converted into temperature predictions for the Thermal Protection System (TPS). Two complementary models are employed.
 
 \subsubsection*{Radiative Equilibrium Surface Temperature}
-At the outer surface of the TPS, the incoming convective heat flux $\dot{q}$ is balanced by radiative emission to the environment. Under the assumption of radiative equilibrium \cite{anderson2006hypersonic}:
+At the outer surface of the TPS, the incoming convective heat flux $\dot{q}$ is balanced by radiative emission to the environment. Under the assumption of radiative equilibrium \cite{AndersonHypersonic}:
 
 \begin{equation}
     T_{\text{surface}} = \left( \frac{\dot{q}}{\sigma \, \epsilon} \right)^{1/4}
@@ -1217,7 +1223,7 @@ The integration of machine learning (ML) with computational fluid dynamics has e
 
 \subsection{Neural Network Approximation Theory}
 
-The Universal Approximation Theorem (Cybenko, 1989; Hornik et al., 1989) states that a feedforward neural network with a single hidden layer containing a finite number of neurons can approximate any continuous function on a compact subset of $\mathbb{R}^n$ to arbitrary accuracy. For a network with input $\mathbf{x} \in \mathbb{R}^d$ and output $\mathbf{y} \in \mathbb{R}^k$:
+The Universal Approximation Theorem \cite{cybenko1989approximation, hornik1989multilayer} states that a feedforward neural network with a single hidden layer containing a finite number of neurons can approximate any continuous function on a compact subset of $\mathbb{R}^n$ to arbitrary accuracy. For a network with input $\mathbf{x} \in \mathbb{R}^d$ and output $\mathbf{y} \in \mathbb{R}^k$:
 
 \begin{equation}
     \mathbf{y}(\mathbf{x}) = \mathbf{W}_L \sigma(\mathbf{W}_{L-1} \sigma(\cdots \sigma(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) \cdots) + \mathbf{b}_{L-1}) + \mathbf{b}_L
@@ -1228,7 +1234,7 @@ The Universal Approximation Theorem (Cybenko, 1989; Hornik et al., 1989) states 
 
 \subsection{Physics-Informed Neural Networks (PINNs)}
 
-Physics-Informed Neural Networks (PINNs), introduced by Raissi et al. (2019), embed the governing partial differential equations (PDEs) directly into the loss function of the neural network. Instead of solving the PDE on a mesh, the PINN learns a continuous solution $\hat{u}(\mathbf{x}, t)$ that satisfies both the PDE and the boundary/initial conditions.
+Physics-Informed Neural Networks (PINNs), introduced by \cite{raissi2019pinn}, embed the governing partial differential equations (PDEs) directly into the loss function of the neural network. Instead of solving the PDE on a mesh, the PINN learns a continuous solution $\hat{u}(\mathbf{x}, t)$ that satisfies both the PDE and the boundary/initial conditions.
 
 The PINN loss function has two components:
 
@@ -1351,7 +1357,7 @@ The flexible TPS skin is not a smooth conical surface. Due to the discrete toroi
 
 \subsection{IRVE-3 Baseline and Rapisarda Material Configuration}
 
-The IRVE-3 flight experiment (2012) demonstrated the first successful deployment of a 3.0~m HIAD at Mach~10+ re-entry conditions, achieving a peak deceleration of 19.7~g and a peak stagnation heat flux of 14.36~W/cm$^2$ \cite{NASA2013TP4012, Lau2013}. The original IRVE-3 TPS stack consisted of separate inner and outer thermal protection layers with distinct material compositions: an inner layer of Pyrogel\texttrademark\ XTE aerogel blanket for thermal insulation, and an outer layer of Kapton\texttrademark\ polyimide film for aerodynamic skin integrity \cite{dillman2015irve3}.
+The IRVE-3 flight experiment (2012) demonstrated the first successful deployment of a 3.0~m HIAD at Mach~10+ re-entry conditions, achieving a peak deceleration of 19.7~g and a peak stagnation heat flux of 14.36~W/cm$^2$ \cite{NASA2013TP4012}. The original IRVE-3 TPS stack consisted of separate inner and outer thermal protection layers with distinct material compositions: an inner layer of Pyrogel\texttrademark\ XTE aerogel blanket for thermal insulation, and an outer layer of Kapton\texttrademark\ polyimide film for aerodynamic skin integrity \cite{dillman2015irve3}.
 
 Rapisarda \cite{rapisarda2023mdao} subsequently developed a multidisciplinary design analysis and optimization (MDAO) framework that modified and optimized this original IRVE-3 material configuration. The Rapisarda formulation introduces a unified TPS material model with three configurations:
 

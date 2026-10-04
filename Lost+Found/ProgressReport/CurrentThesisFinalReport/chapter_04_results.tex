@@ -2,7 +2,7 @@
 \label{ch:results}
 
 \section{Overview}
-This chapter presents the simulation results and discussion derived from the SPARTA DSMC computational framework described in Chapter 3. The analysis covers the baseline IRVE-3 geometry configuration, the aerothermal surface distributions, flow field characteristics, and the validation against flight data. All results are generated using the StellarOrion engine with the 6-toroid stacked HIAD geometry at the Rapisarda (2023) MDAO baseline parameters~\cite{rapisarda2023mdao}.
+This chapter presents the simulation results and discussion derived from the SPARTA DSMC computational framework described in Chapter 3. The analysis covers the baseline IRVE-3 geometry configuration, the aerothermal surface distributions, flow field characteristics, and the validation against flight data. All results are generated using the StellarOrion engine with the 6-toroid stacked HIAD geometry at the \cite{rapisarda2023mdao} MDAO baseline parameters~\cite{rapisarda2023mdao}.
 
 \section{Baseline Configuration and Flight Conditions}
 The baseline simulation corresponds to the IRVE-3 reentry trajectory point at 51.8\,km altitude, with the following freestream conditions. The atmospheric quantities are the values returned by the atmospheric model evaluated at that altitude:
@@ -42,7 +42,7 @@ For the baseline IRVE-3 configuration the correlation is evaluated at the SPARTA
 
 The correlation constant and the nose radius used here were corrected during the course of the work. The value reported in earlier revisions of this work, $12.20$\,W/cm$^2$, followed from the superseded pair $C_{SG} = 1.7415 \times 10^{-4}$, $R_N = 0.55$\,m evaluated at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than at the run condition. Because the correlation scales as $1/\sqrt{R_N}$, the superseded $0.55$\,m nose radius alone raised the computed flux by a factor of $\sqrt{1.5/0.55} \approx 1.65$. The corrected value is $+12.4\%$ relative to the flight measurement and is reported in this work as the headline stagnation heat flux.
 
-The IRVE-3 flight measurement reports a peak heat flux of 14.36~W/cm\textsuperscript{2}~\cite{lau2013irve3}. Rapisarda (2023) reports the trajectory-integrated Sutton-Graves peak as 15.26~W/cm\textsuperscript{2} (+6.26\% above flight) and the Fay--Riddell CFD prediction as 13.83~W/cm\textsuperscript{2} (-3.69\% below flight)~\cite{rapisarda2023mdao}. The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure, while Sutton-Graves assumes a spherical nose cap. Our single-point SG value (16.14~W/cm\textsuperscript{2}) and Rapisarda's trajectory-integrated peak (15.26~W/cm\textsuperscript{2}) agree to within $+5.8\%$ despite the different atmospheric density profiles: Rapisarda integrates a parameterized trajectory under MCD v6.1 while our SPARTA baseline evaluates a single ISA point, and the higher density of the former very nearly cancels the trajectory integration of the latter.
+The IRVE-3 flight measurement reports a peak heat flux of 14.36~W/cm\textsuperscript{2}~\cite{old2013irve3postflight}. \cite{rapisarda2023mdao} reports the trajectory-integrated Sutton-Graves peak as 15.26~W/cm\textsuperscript{2} (+6.26\% above flight) and the Fay--Riddell CFD prediction as 13.83~W/cm\textsuperscript{2} (-3.69\% below flight)~\cite{rapisarda2023mdao}. The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure, while Sutton-Graves assumes a spherical nose cap. Our single-point SG value (16.14~W/cm\textsuperscript{2}) and Rapisarda's trajectory-integrated peak (15.26~W/cm\textsuperscript{2}) agree to within $+5.8\%$ despite the different atmospheric density profiles: Rapisarda integrates a parameterized trajectory under MCD v6.1 while our SPARTA baseline evaluates a single ISA point, and the higher density of the former very nearly cancels the trajectory integration of the latter.
 
 It is important to state precisely what the 16.14~W/cm\textsuperscript{2} figure represents, because it is \emph{not} a directly sampled DSMC heat flux. It is the Sutton--Graves correlation evaluated at the DSMC run condition using the corrected coefficient and nose radius; it is therefore a DSMC-conditioned SG prediction rather than a raw DSMC measurement, and it is the same class of quantity as Rapisarda's trajectory-integrated SG value of 15.26~W/cm\textsuperscript{2}. The raw DSMC surface data tell a different and noisier story. Reading the unsmoothed per-element kinetic energy flux ($f_1[3]$) from the SPARTA surface dumps yields a per-element average of 56.6~W/cm\textsuperscript{2} and a maximum single-cell sample of 182.5~W/cm\textsuperscript{2}. The maximum is a single point-sample in a field where individual cells fluctuate by orders of magnitude, including negative values at later time steps, and is statistical scatter rather than a resolved physical peak. The per-element average of 56.6~W/cm\textsuperscript{2} is a true DSMC quantity but is inflated relative to the stagnation-point correlation because it averages over the whole scalloped surface, including the low-heating recirculation pockets, and because it is taken from an unsmoothed noisy field. For this reason the correlation-conditioned value is used as the headline heat-flux metric throughout, and the raw DSMC numbers are reported here only to document the noise characteristics of the surface data. Rapisarda avoids this ambiguity by applying a three-stage filter (a sixth-order polynomial fit followed by a Wilmoth bridging function) to the same kind of raw DSMC data, which is another reason the two heat-flux sets are not directly comparable.
 
@@ -91,12 +91,12 @@ The drag coefficient is computed from the total axial force:
 \begin{equation}
     C_d = \frac{f_x}{\frac{1}{2} \rho_{\infty} V_{\infty}^2 A_{ref}}
 \end{equation}
-where $A_{ref} = \pi (D/2)^2$ is the reference area based on the aeroshell diameter. The HIAD's large frontal area produces a high drag coefficient, which is the fundamental mechanism enabling deceleration at high altitudes where atmospheric density is low~\cite{anderson2006hypersonic}.
+where $A_{ref} = \pi (D/2)^2$ is the reference area based on the aeroshell diameter. The HIAD's large frontal area produces a high drag coefficient, which is the fundamental mechanism enabling deceleration at high altitudes where atmospheric density is low~\cite{AndersonHypersonic}.
 
 \section{Flow Field Analysis}
 
 \subsection{Mach Number Distribution}
-The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock structure upstream of the reference aeroshell and the subsonic region in the near wake. The shock standoff distance is consistent with blunt-body theory for hypersonic flow~\cite{anderson2006hypersonic}. This panel is a smooth-body reference case rendered at the legacy $V_{\infty}=2700$\,m/s condition (see caption); it is used to isolate shock-layer structure from the toroid-stack geometry and is not part of the $V_{\infty}=3378$\,m/s validation dataset reported in Section~\ref{sec:validation_irve3}.
+The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock structure upstream of the reference aeroshell and the subsonic region in the near wake. The shock standoff distance is consistent with blunt-body theory for hypersonic flow~\cite{AndersonHypersonic}. This panel is a smooth-body reference case rendered at the legacy $V_{\infty}=2700$\,m/s condition (see caption); it is used to isolate shock-layer structure from the toroid-stack geometry and is not part of the $V_{\infty}=3378$\,m/s validation dataset reported in Section~\ref{sec:validation_irve3}.
 
 \begin{figure}[!htbp]
     \centering
@@ -153,7 +153,7 @@ A grid independence study was performed by varying the grid-factor from 0.3 to 1
 
 \section{Validation Against IRVE-3 Flight Data}
 \label{sec:validation_irve3}
-The simulation results are validated against the IRVE-3 post-flight aerothermal reconstruction~\cite{lau2013irve3, old2013irve3postflight}. Table~\ref{tab:validation} summarizes the comparison.
+The simulation results are validated against the IRVE-3 post-flight aerothermal reconstruction~\cite{old2013irve3postflight}. Table~\ref{tab:validation} summarizes the comparison.
 
 \begin{table}[!htbp]
     \centering
@@ -234,7 +234,7 @@ This local gradient is nonetheless sufficient to justify the DSMC choice, and th
 The velocity vector analysis reveals stable recirculation zones in the toroidal valleys, which are qualitatively consistent with the shock-boundary layer interaction (SBLI) patterns observed in hypersonic blunt-body flows~\cite{guo2019hypersonic}. The DSMC method captures these phenomena through direct molecular collision statistics, without requiring empirical turbulence closures.
 
 \subsection{Real-Gas Effects}
-The 5-species air model captures vibrational excitation and dissociation reactions that reduce the effective stagnation temperature below the calorically perfect prediction of 5952\,K. This is critical for accurate heat flux prediction, as the energy partitioning into internal modes directly affects the temperature gradient driving surface heat transfer~\cite{anderson2006hypersonic}.
+The 5-species air model captures vibrational excitation and dissociation reactions that reduce the effective stagnation temperature below the calorically perfect prediction of 5952\,K. This is critical for accurate heat flux prediction, as the energy partitioning into internal modes directly affects the temperature gradient driving surface heat transfer~\cite{AndersonHypersonic}.
 
 \section{Optimization Framework Results}
 \label{sec:optimization_results}
@@ -278,7 +278,7 @@ The magnitude of the exceedance indicates that the thermal soak is dominated by 
 \end{itemize}
 
 \subsection{Optimal Configuration Identification}
-Despite the thermal constraint violation, the GA identified the GA-optimized configuration (Run~27, Sample~8) as the optimal design point: $D = 3.0$\,m, $\theta_c = 45^\circ$, $N = 6$, $R_N = 0.5$\,m. This configuration achieves $\beta = 29.27$\,kg/m$^2$ and $n_G = 21.37g$, which are within acceptable ranges for cargo reentry. The convergence of the optimizer toward a near-IRVE-3 geometry validates the physical consistency of the framework, as the IRVE-3 design represents a flight-tested configuration optimized through decades of NASA research~\cite{lau2013irve3}.
+Despite the thermal constraint violation, the GA identified the GA-optimized configuration (Run~27, Sample~8) as the optimal design point: $D = 3.0$\,m, $\theta_c = 45^\circ$, $N = 6$, $R_N = 0.5$\,m. This configuration achieves $\beta = 29.27$\,kg/m$^2$ and $n_G = 21.37g$, which are within acceptable ranges for cargo reentry. The convergence of the optimizer toward a near-IRVE-3 geometry validates the physical consistency of the framework, as the IRVE-3 design represents a flight-tested configuration optimized through decades of NASA research~\cite{old2013irve3postflight}.
 
 \section{Bayesian Optimization Results}
 \label{sec:bo_results}
@@ -400,15 +400,15 @@ Re-running the optimizer with the corrected cost function yields a second optimu
 
 \section{Comparative Analysis with Prior Work}
 \label{sec:comparison_rapisarda}
-A direct comparison between the present framework and the prior MDAO framework of Rapisarda (2023)~\cite{rapisarda2023mdao} highlights the methodological advances introduced in this research. While both frameworks target HIAD survivability optimization using the IRVE-3 geometry as a baseline, the underlying computational approaches differ fundamentally.
+A direct comparison between the present framework and the prior MDAO framework of \cite{rapisarda2023mdao}~\cite{rapisarda2023mdao} highlights the methodological advances introduced in this research. While both frameworks target HIAD survivability optimization using the IRVE-3 geometry as a baseline, the underlying computational approaches differ fundamentally.
 
 \subsection{Aerodynamic Solver}
-Rapisarda's MDAO framework employs a Modified Newtonian panel method for aerodynamic coefficient estimation~\cite{rapisarda2023mdao}. This is an inviscid, continuum-based algebraic method that approximates the pressure coefficient on surface panels using the local deflection angle. While computationally efficient, the Newtonian assumption is strictly valid only for hypersonic, high-density flows ($Kn < 0.001$) where the shock layer is thin and attached to the surface~\cite{anderson2006hypersonic}.
+Rapisarda's MDAO framework employs a Modified Newtonian panel method for aerodynamic coefficient estimation~\cite{rapisarda2023mdao}. This is an inviscid, continuum-based algebraic method that approximates the pressure coefficient on surface panels using the local deflection angle. While computationally efficient, the Newtonian assumption is strictly valid only for hypersonic, high-density flows ($Kn < 0.001$) where the shock layer is thin and attached to the surface~\cite{AndersonHypersonic}.
 
 In contrast, the present framework uses the SPARTA Direct Simulation Monte Carlo (DSMC) solver~\cite{plimpton2014sparta}, which solves the Boltzmann equation through direct simulation of molecular collisions. DSMC is physically valid across all flow regimes ($Kn = 0$ to $\infty$), so no regime bound restricts its applicability~\cite{bird1994molecular}. What the local $Kn$ field of Figure~\ref{fig:knudsen_map} establishes is narrower and more specific: at 51.8\,km the shock layer around the HIAD reaches the slip-flow band ($0.01 \lesssim Kn \lesssim 0.1$), where continuum Navier--Stokes requires slip corrections at the wall, while the freestream and stagnation region remain in the continuum band. DSMC is therefore required precisely in the region that carries the convective heat load, rather than uniformly across the vehicle.
 
 \subsection{Gas Model}
-The Newtonian method assumes a calorically perfect gas with constant specific heats ($\gamma = 1.4$ for air). At hypersonic speeds ($Ma > 5$), the post-shock temperature exceeds 5000\,K, activating vibrational excitation, molecular dissociation, and ionization~\cite{anderson2006hypersonic}. The present framework employs a 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics, capturing these real-gas effects that alter the energy partitioning and reduce the effective stagnation temperature below the calorically perfect prediction.
+The Newtonian method assumes a calorically perfect gas with constant specific heats ($\gamma = 1.4$ for air). At hypersonic speeds ($Ma > 5$), the post-shock temperature exceeds 5000\,K, activating vibrational excitation, molecular dissociation, and ionization~\cite{AndersonHypersonic}. The present framework employs a 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics, capturing these real-gas effects that alter the energy partitioning and reduce the effective stagnation temperature below the calorically perfect prediction.
 
 \subsection{Optimization Methodology}
 Rapisarda's framework uses a sequential, single-objective approach: the aerodynamic coefficients are computed at each design point, and the trajectory and thermal analysis are performed independently~\cite{rapisarda2023mdao}. The design space exploration relies on manual parametric sweeps with individual Newtonian panel computations.
@@ -423,11 +423,11 @@ The present framework is fully open-source and built on a hybrid Ada and Python 
 
 \begin{table}[!htbp]
     \centering
-    \caption{Comparison of StellarOrion framework versus Rapisarda (2023) MDAO approach.}
+    \caption{Comparison of StellarOrion framework versus \cite{rapisarda2023mdao} MDAO approach.}
     \label{tab:comparison_rapisarda}
     \begin{tabularx}{\textwidth}{>{\RaggedRight\arraybackslash}p{0.24\textwidth}>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X}
         \hline
-        \textbf{Aspect} & \textbf{Rapisarda (2023)} & \textbf{Present Framework} \\
+        \textbf{Aspect} & \textbf{\cite{rapisarda2023mdao}} & \textbf{Present Framework} \\
         \hline
         Aerodynamic Solver & Modified Newtonian panel method & SPARTA DSMC (Boltzmann equation) \\
         Flow Regime Validity & Hypersonic continuum only ($Kn < 0.001$) & All regimes ($Kn = 0$ to $\infty$); local field reaches slip flow, not free molecular, at 51.8\,km \\

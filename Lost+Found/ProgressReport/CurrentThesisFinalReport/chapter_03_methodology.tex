@@ -26,12 +26,12 @@ The following axioms form the logical foundation of this research. Each is state
 \toprule
 \textbf{ID} & \textbf{Axiom} & \textbf{Physical Basis} & \textbf{Literature Basis} \\ \midrule
 A1 & Conservation of mass, momentum, and energy & Continuum mechanics & Batchelor (1967), Anderson (1995) \\
-A2 & Molecular chaos (Stosszahlansatz) & Statistical mechanics & Boltzmann (1872), Bird (1994) \\
-A3 & Continuum hypothesis valid for $Kn < 0.01$ & Kinetic theory & Cercignani (1988), Bird (1994) \\
+A2 & Molecular chaos (Stosszahlansatz) & Statistical mechanics & Boltzmann (1872), \cite{bird1994molecular} \\
+A3 & Continuum hypothesis valid for $Kn < 0.01$ & Kinetic theory & Cercignani (1988), \cite{bird1994molecular} \\
 A4 & Equilibrium distribution follows Maxwell--Boltzmann & Statistical thermodynamics & Chapman \& Cowling (1970) \\
 A5 & Stagnation heating follows $q \propto \sqrt{\rho/R_n} \cdot V^3$ & Blunt body aerothermodynamics & Sutton \& Graves (1971) \\
-A6 & DSMC converges to Boltzmann equation as $N \to \infty$ & Statistical convergence & Bird (1994), Wagner (1992) \\
-A7 & PINN residuals enforce PDE consistency in interpolation & Scientific machine learning & Raissi et al. (2019), Karniadakis et al. (2021) \\
+A6 & DSMC converges to Boltzmann equation as $N \to \infty$ & Statistical convergence & \cite{bird1994molecular}, Wagner (1992) \\
+A7 & PINN residuals enforce PDE consistency in interpolation & Scientific machine learning & \cite{raissi2019pinn}, Karniadakis et al. (2021) \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -171,7 +171,7 @@ The process is divided into six primary stages:
 \section{Geometric Modeling and Computational Domain}
 
 \subsection{Parametric Geometry Generation}
-To ensure geometric consistency and enable automated design space exploration, the vehicle profiles are generated using CadQuery, a Python-based parametric CAD scripting library. The geometric constraints are derived directly from the \textbf{NASA IRVE-3} and \textbf{LOFTID} flight test specifications, as well as the MDAO framework baseline established by Rapisarda (2023)~\cite{rapisarda2023mdao}. The CadQuery script is invoked via command-line arguments, enabling the generation of hundreds of design variants without manual intervention.
+To ensure geometric consistency and enable automated design space exploration, the vehicle profiles are generated using CadQuery, a Python-based parametric CAD scripting library. The geometric constraints are derived directly from the \textbf{NASA IRVE-3} and \textbf{LOFTID} flight test specifications, as well as the MDAO framework baseline established by \cite{rapisarda2023mdao}~\cite{rapisarda2023mdao}. The CadQuery script is invoked via command-line arguments, enabling the generation of hundreds of design variants without manual intervention.
 
 \subsection{Vehicle Specifications and Scaling}
 The modeling phase targets two specific scales identified in previous NASA research to investigate how vehicle diameter affects the aerothermal environment. As shown in Figure~\ref{fig:hiad_comparison}, the research considers the scaling transition from the 3.0\,m IRVE-3 baseline through intermediate rigid configurations of the kind shown in the figure (4.57\,m) up to inflatable configurations of 15\,m~\cite{dillman2015irve3}. The figure is a concept comparison of form and scale; the quantitative scaling study reported later in this chapter is conducted on the 3.0\,m baseline, which is the only scale for which this work holds a validated reference dataset.
@@ -186,7 +186,7 @@ The modeling phase targets two specific scales identified in previous NASA resea
 \end{figure}
 
 \subsection{Internal Architecture and Scallop Definition}
-The ``scalloped'' outer mold line (OML) is modeled based on the 6-toroid stack configuration utilized in the Rapisarda (2023) MDAO baseline. The internal layout, including the stacked toroid arrangement, is illustrated in Figure \ref{fig:irve3_layout}~\cite{rapisarda2023mdao}.
+The ``scalloped'' outer mold line (OML) is modeled based on the 6-toroid stack configuration utilized in the \cite{rapisarda2023mdao} MDAO baseline. The internal layout, including the stacked toroid arrangement, is illustrated in Figure \ref{fig:irve3_layout}~\cite{rapisarda2023mdao}.
 
 \begin{figure}[!htbp]
     \centering
@@ -373,7 +373,7 @@ SPARTA accumulates surface force and energy data using the \texttt{dump surf} co
 
 \subsection{Ballistic Coefficient (\texorpdfstring{$\beta$}{beta})}
 \label{sec:ballistic_coefficient}
-The ballistic coefficient is a measure of the vehicle's ability to maintain its speed during reentry~\cite{anderson2006hypersonic}:
+The ballistic coefficient is a measure of the vehicle's ability to maintain its speed during reentry~\cite{AndersonHypersonic}:
 
 \begin{equation}
     \beta = \frac{m}{C_D A}
@@ -408,7 +408,7 @@ The deceleration load felt by the vehicle in Earth-gravity units ($g_0$):
 
 \subsection{Stagnation Heat Flux: Sutton-Graves Correlation}
 \label{sec:sutton_graves_methodology}
-The Sutton-Graves (1971) stagnation-point convective heating correlation is used for all absolute thermal calculations~\cite{sutton1971gravesh}. This is the standard reference formula for Earth entry and has been validated against IRVE-3 flight data by Rapisarda (2023)~\cite{rapisarda2023mdao}:
+The Sutton-Graves (1971) stagnation-point convective heating correlation is used for all absolute thermal calculations~\cite{sutton1971gravesh}. This is the standard reference formula for Earth entry and has been validated against IRVE-3 flight data by \cite{rapisarda2023mdao}~\cite{rapisarda2023mdao}:
 
 \begin{equation}
     \dot{q}_{stag} = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_N}} \cdot V_{\infty}^3
@@ -434,7 +434,7 @@ For the IRVE-3 baseline configuration the correlation is evaluated at the SPARTA
     \end{split}
 \end{equation}
 
-Two constants in this evaluation were corrected during the course of the work and are reported here at their current values. The correlation constant is $C_{SG} = 1.83 \times 10^{-4}$, the Sutton \& Graves value for Earth air, replacing the legacy $1.7415 \times 10^{-4}$ placeholder. The nose radius is $R_N = 1.5$\,m, the actual IRVE-3 geometry, replacing the legacy $0.55$\,m placeholder; because the correlation scales as $1/\sqrt{R_N}$, that placeholder alone inflated the computed flux by roughly a factor of 1.65. The value quoted in earlier revisions of this work, $12.20$\,W/cm$^2$, was produced by the superseded constant/nose-radius pair evaluated at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than at the run condition, and is superseded by the $16.14$\,W/cm$^2$ reported above. Rapisarda (2023) reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ (+6.26\% above the 14.36\,W/cm$^2$ flight measurement) and a Fay--Riddell CFD prediction of 13.83\,W/cm$^2$ (-3.69\% below flight)~\cite{rapisarda2023mdao}. The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure.
+Two constants in this evaluation were corrected during the course of the work and are reported here at their current values. The correlation constant is $C_{SG} = 1.83 \times 10^{-4}$, the Sutton \& Graves value for Earth air, replacing the legacy $1.7415 \times 10^{-4}$ placeholder. The nose radius is $R_N = 1.5$\,m, the actual IRVE-3 geometry, replacing the legacy $0.55$\,m placeholder; because the correlation scales as $1/\sqrt{R_N}$, that placeholder alone inflated the computed flux by roughly a factor of 1.65. The value quoted in earlier revisions of this work, $12.20$\,W/cm$^2$, was produced by the superseded constant/nose-radius pair evaluated at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than at the run condition, and is superseded by the $16.14$\,W/cm$^2$ reported above. \cite{rapisarda2023mdao} reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ (+6.26\% above the 14.36\,W/cm$^2$ flight measurement) and a Fay--Riddell CFD prediction of 13.83\,W/cm$^2$ (-3.69\% below flight)~\cite{rapisarda2023mdao}. The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure.
 
 \subsubsection*{Note on SPARTA Surface Energy}
 The raw SPARTA DSMC kinetic energy ($ke$) surface compute cannot be used directly as an absolute heat flux in W/m$^2$. SPARTA's \texttt{fix ave/surf} outputs kinetic energy per simulated particle per timestep per face element, a simulation-internal unit that depends on $f_{num}$, timestep $dt$, and face area in a non-trivially-normalized way. It is retained only as a \textbf{relative shape-ranking signal} for the optimizer (comparing geometries against each other). For all absolute thermal calculations, the Sutton-Graves correlation is used.
@@ -774,7 +774,7 @@ The optimization explores a $d$-dimensional design space defined by the HIAD geo
 
 \begin{table}[!htbp]
     \centering
-    \caption{Optimization Design Variables and Their Bounds (Rapisarda 2023 Envelope).}
+    \caption{Optimization design variables and their bounds, from \cite{rapisarda2023mdao}.}
     \label{tab:design_variables}
     \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.25\textwidth}|c|c|>{\RaggedRight\arraybackslash}X|}
         \hline
@@ -1066,7 +1066,7 @@ Table~\ref{tab:acceptance_limits} collects every limit used in this study togeth
     \end{tabularx}
 \end{table}
 \subsection{Validation Against Flight Data}
-The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012} and the Rapisarda (2023) MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:irve3_validation} reports the flight data alongside both the MDAO reference model and the present SPARTA DSMC solution, so that the published reference model is not mistaken for a result of this work.
+The numerical model is validated against IRVE-3 flight data~\cite{NASA2013TP4012} and the \cite{rapisarda2023mdao} MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:irve3_validation} reports the flight data alongside both the MDAO reference model and the present SPARTA DSMC solution, so that the published reference model is not mistaken for a result of this work.
 
 \begin{table}[!htbp]
     \centering
