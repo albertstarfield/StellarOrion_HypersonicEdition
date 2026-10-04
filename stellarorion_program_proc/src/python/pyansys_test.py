@@ -9,6 +9,7 @@ Usage:
     python3 src/python/pyansys_test.py [--show-gui]
 """
 import argparse
+import importlib
 import json
 import os
 import subprocess
@@ -17,10 +18,17 @@ import time
 from typing import Any
 
 
-def get_local_fluent_exe():
+def get_local_fluent_exe() -> str | None:
     """Locate Ansys Fluent executable on Windows.
 
     Mirrors _get_local_fluent_exe from the retired StellarOrionEngineMach5Up.py (removed 2026-08-21).
+
+    Returns:
+        The fluent.exe path (a str built by os.path.join) when one of the
+        searched locations exists, else None — None on every non-Windows host
+        and None when the AWP_ROOT/Program Files scan finds nothing. Declaring
+        str | None states that contract so callers can narrow with a plain
+        falsy check instead of guessing at the inferred union.
 
     References:
     - https://innovationspace.ansys.com/
@@ -54,19 +62,77 @@ def get_local_fluent_exe():
     return None
 
 
-def run_local_pyfluent_test(show_gui: bool = True):
+def _windows_platform_error() -> str | None:
+    """Report whether this host can run the Windows-only local PyAnsys mode.
+
+    AXIOM: `sys.platform.startswith("win")` is True exactly on Windows hosts;
+           PyFluent's local-launch path (`start "" "<exe>" ...`) is a cmd.exe
+           builtin and cannot execute on POSIX, so a non-Windows host cannot
+           reach the Fluent process at all.
+    THEOREM: on any host where this returns None, every subsequent
+             `sys.platform` read is therefore still "win*", so the caller needs
+             no second platform test.
+    APPLICATION: returns the fail-loud message string when the platform is
+           unsupported, else None. Callers must propagate it verbatim — the
+           message names the actual platform so the failure is diagnosable
+           without reading the source.
+
+    WHY A HELPER RATHER THAN AN INLINE `if`:
+        This guard was originally inline as `if not sys.platform.startswith("win"):
+        return {...}` at the top of run_local_pyfluent_test(). Measured with the
+        project's own pinned Pyrefly (canonical `check .` invocation), that
+        shape makes Pyrefly silently discard the subsequent
+        `if not fluent_exe: return {...}` narrowing, so `fluent_exe` stays
+        `str | None` and every later use of it is reported as a `bad-assignment`
+        against the declared `str` payload type. Isolated probes pin the
+        trigger precisely: the failure appears only when an earlier early-return
+        guard's condition contains an attribute-chain call
+        (`sys.platform.startswith(...)`); the identical structure with a
+        plain-variable condition, with the platform guard extracted to a helper,
+        or with both guards nested, all check clean. Extracting the guard keeps
+        the runtime behaviour and the message byte-for-byte identical while
+        giving Pyrefly the plain `Optional[str]` sentinel it needs to narrow.
+
+    Returns:
+        A human-readable error message naming the current platform when the
+        host is not Windows, else None.
+
+    References:
+    - https://docs.python.org/3/library/sys.html#sys.platform
+    - https://docs.python.org/3/library/sys.html#sys.platform.startswith
+    """
+    if not sys.platform.startswith("win"):
+        return "Local PyAnsys mode requires Windows. Current platform: " + sys.platform
+    return None
+
+
+def run_local_pyfluent_test(show_gui: bool = True) -> dict[str, str]:
     """Verify local PyAnsys installation and basic handshake.
 
     Mirrors L2518-2555 of the retired StellarOrionEngineMach5Up.py (removed 2026-08-21).
+
+    Returns:
+        The RESULT_JSON payload: every return path (non-Windows guard, missing
+        exe, launch timeout, success, ImportError, generic Exception) is a flat
+        mapping whose values are all str. Declaring dict[str, str] states that
+        contract, so callers may use result["status"] and result.get("message")
+        without a None guard: get("message", "") always yields str because the
+        value type is str, never str | None. Note the success path stores the
+        Fluent version string reported by the session (PyFluent's
+        get_fluent_version() -> str).
 
     References:
     - https://docs.pyansys.com/version/stable/
     - https://docs.pyansys.com/version/stable/
     """
-    if not sys.platform.startswith("win"):
+    # WHY A HELPER CALL AND NOT AN INLINE PLATFORM TEST: see
+    # _windows_platform_error's docstring — the inline form defeated Pyrefly's
+    # narrowing of `fluent_exe` below. Behaviour and message are unchanged.
+    platform_error = _windows_platform_error()
+    if platform_error is not None:
         return {
             "status": "error",
-            "message": "Local PyAnsys mode requires Windows. Current platform: " + sys.platform,
+            "message": platform_error,
         }
 
     fluent_exe = get_local_fluent_exe()
@@ -81,7 +147,25 @@ def run_local_pyfluent_test(show_gui: bool = True):
 
     try:
         print("[*] Starting Local PyAnsys Handshake (Manual Launch Mode) ...")
-        import ansys.fluent.core as pyfluent
+        # WHY THIS IS A DYNAMIC IMPORT: `ansys.fluent.core` (PyFluent) is an
+        # OPTIONAL, Windows-only dependency. It is NOT installed in this project's
+        # environments (verified absent from both `venv/` and `venv_validation/`), so
+        # a static `import ansys.fluent.core as pyfluent` is an unresolvable symbol for
+        # any type checker -- and adding a type-ignore here would only hide that.
+        # AXIOM: `importlib.import_module("ansys.fluent.core")` performs the identical
+        # runtime import (same module object, same sys.modules registration) but
+        # resolves the name dynamically, so no missing-module error is produced.
+        # THEOREM: the existing `except ImportError` below still catches the failure.
+        # PROOF: a missing module raises `ModuleNotFoundError`, and
+        #   `issubclass(ModuleNotFoundError, ImportError)` is True (CPython docs:
+        #   ModuleNotFoundError is "a subclass of ImportError"). Therefore the control
+        #   flow -- success -> connect, absence -> structured error return -- is
+        #   byte-for-byte identical to the static-import version.
+        # [Reference: Python `importlib` docs -- import_module()
+        #  https://docs.python.org/3/library/importlib.html#importlib.import_module]
+        # [Reference: ImportError / ModuleNotFoundError hierarchy
+        #  https://docs.python.org/3/library/exceptions.html#ModuleNotFoundError]
+        pyfluent = importlib.import_module("ansys.fluent.core")
 
         # Create scratch directory and server info file
         scratch_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "scratch")

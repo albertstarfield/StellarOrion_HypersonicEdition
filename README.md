@@ -27,7 +27,7 @@ python3 run.py --help             # Show all CLI flags
 
 This project uses a hybrid architecture for running simulations:
 
-- **Ada/SPARK Binary:** Primary simulation engine (`stellarorion_program_proc/`). Compiled with Alire, formally verified with GNATprove (527 checks, 400 proved, 103 unproved in untouched analytics unit, 0 new failures; run 2026-09-27). Handles all 19 CLI modes including validation, optimization, calibration, and integration tests.
+- **Ada/SPARK Binary:** Primary simulation engine (`stellarorion_program_proc/`). Compiled with Alire, formally verified with GNATprove `--level=4` (493 checks, 390 proved, 103 unproved — all 103 in the untouched `stellarorion_postprocessing` analytics unit, **0 new obligations unproved** by the F-TPS work; run 2026-10-04). Handles all 19 CLI modes including validation, optimization, calibration, and integration tests.
 - **Docker:** Used exclusively for running the SPARTA DSMC simulation in a containerized Linux environment.
 - **Python Sidecar:** Native OS Python environment for PINN refinement (DeepXDE), PyFluent/PyAnsys integration, and GUI launcher. Supports NVIDIA CUDA, AMD ROCm, Apple Metal (MPS), Intel OneAPI/OpenCL, and specialized accelerators.
 
@@ -46,6 +46,10 @@ stellarorion_program_proc/
 ├── prove.sh / run_smooth.sh         # Legacy proof+coverage runner and smooth-geometry runner (proof gate = scripts/prove.sh)
 ├── compare_validation.py            # Standalone validation comparison
 ├── postprocess_validation.py        # Post-process DSMC/validation outputs
+├── scripts/
+│   ├── validate_tps_conduction_limits.py   # 5 physics limits + ABI exposure for the F-TPS solver
+│   ├── run_tps_conduction_step2200.py      # Per-element F-TPS solve over the step-2200 SPARTA snapshot
+│   └── prove.sh                           # gnatprove --level=4 wrapper
 │
 ├── src/
 │   ├── simulation_engine/           # Ada/SPARK primary engine (25 packages + main.adb)
@@ -152,6 +156,131 @@ For all mathematical models (DSMC rarefied gas dynamics, aerothermodynamics, Sut
 
 ---
 
+## 🧱 Composite F-TPS Conduction Solver (IRVE-3 Layup)
+
+The vehicle's thermal protection is a **5-ply flexible TPS (F-TPS)**, not a monolithic
+slab. The solver models it as an ordered composite stack and returns the full in-depth
+temperature field, not just two boundary numbers.
+
+### Layup — `TPS_Layup_IRVE3` (`stellarorion_types.ads`)
+
+| # | Ply | Material | Thickness | k [W/(m·K)] |
+|---|-----|----------|-----------|-------------|
+| 1 | outer fabric | Nextel BF-20 | 0.60 mm | 0.25 |
+| 2 | outer fabric | Nextel BF-20 | 0.60 mm | 0.25 |
+| 3 | insulation | Pyrogel 2250 | 2.50 mm | 0.02 |
+| 4 | insulation | Pyrogel 2250 | 2.50 mm | 0.02 |
+| 5 | gas barrier | AKK (aluminized Kapton / Kevlar) | 0.15 mm | 0.12 |
+
+* Total **6.35 mm = 0.25 in**, outer emissivity **0.80**, structure limit **523.15 K (250 °C)**.
+* Series resistance **R = 0.25605 m²·K/W**; the `k` values are *effective through-thickness*
+  ply conductivities (a felt ply conducts far less than its solid constituent because the
+  conduction path crosses inter-fibre voids).
+* **This replaced a wrong-vehicle default.** The previous active TPS was the homogeneous
+  25.4 mm `TPS_SiC` slab — the *LOFTID* baseline, 4× too thick for IRVE-3. `--tps` now
+  defaults to `irve3-ftps`, and its lumped-equivalent properties are **derived from
+  `TPS_Layup_IRVE3` itself** (`TPS_IRVE3_FTPS`, verified at run time by self-test Test 10),
+  so the published ply schedule stays the single source of truth. `--tps sic` still works.
+
+### Model
+
+Steady 1-D composite conduction with a radiation boundary condition on the hot face and a
+**pinned** cold face, `T(L) = T_init`:
+
+```
+q = (T_s − T_init)/R  +  ε·σ·(T_s⁴ − T_inf⁴)
+```
+
+`T_s` is found by bisection in `Long_Float` (binary32 `Float` cannot resolve the 1e-9
+relative bracket tolerance — see the note in `stellarorion_physics.adb`). The profile is
+piecewise linear in **thermal resistance**, which is why it is exactly linear in depth for
+a single homogeneous ply.
+
+### Interfaces
+
+| Layer | Entry point | Role |
+|-------|-------------|------|
+| Ada | `StellarOrion_Physics.TPS_Conduction` / `TPS_Conduction_Profile` | solver + profile |
+| Ada | `StellarOrion_Physics.SG_Scaled_Element_Flux` | `q_i = Q_SG·clamp(Ke_Raw/Ke_Ref, 0, 1)` |
+| C ABI | `TPS_Conduction_C` (`stellarorion_ffi.ads`) | exports `q_SG`, `T_s`, `T_back`, 33-point profile |
+| Python | `ada_pinn_wrapper.tps_conduction()` | thin ctypes wrapper — **no physics in Python** |
+
+### Running it
+
+```bash
+cd stellarorion_program_proc
+
+# 1. The five physics limits (thin-insulator, thick-layer, single-layer
+#    closed form, isothermal, layer-permutation invariance) + ABI exposure.
+python3 scripts/validate_tps_conduction_limits.py
+
+# 2. Per-element solve over the step-2200 SPARTA snapshot.
+python3 scripts/run_tps_conduction_step2200.py
+```
+
+Both exit non-zero on any failure. Measured results (A4, 189 pp, see below):
+
+* **Limits:** 34 checks, 0 failures. The steady surface balance closes to
+  **1.4 × 10⁻⁷** relative on the IRVE-3 layup — inside the binary32-derived bound — and
+  `T_s`, `T_back` and `R_total` are invariant across **all 120** ply orderings.
+* **Per-element:** 3648 elements solved in ~0.25 s. Peak Sutton-Graves flux
+  **266 509 W/m² (26.65 W/cm²)** at h = 51.8 km, V = 3378 m/s, R_n = 0.55 m —
+  **within the Nextel BF-20 30 W/cm² rating**. 624 elements receive `q_i = 0`
+  (192 have genuinely negative raw DSMC flux; 432 read exactly zero), which the
+  `clamp(·, 0, 1)` floors rather than passing through as negative heating.
+
+Outputs land in `stellarorion_program_proc/results/tps_conduction/`:
+per-element CSV, the 33-sample profile CSV (120 384 rows), and a summary JSON.
+
+> ### ⚠️ Known consequence: the `--validate` gate now reports survivability FAIL
+>
+> Switching the active TPS from the 25.4 mm SiC baseline to the real 6.35 mm IRVE-3
+> F-TPS **changed a downstream number**, and the full SPARTA pipeline now reports:
+>
+> ```
+> [VALIDATE] Step 8: Survivability check ...
+>   Survivability: FAILED -- vehicle does not survive.
+>   Backface temp :  9.55662E+02 K      (KAPTON_MAX_TEMP = 673 K)
+> [VALIDATE] RESULT: VALIDATION FAILED
+> ```
+>
+> **Cause — measured, not inferred.** `Is_Survivable` is
+> `Surface_Temp ≤ 1700 ∧ Backface_Temp ≤ 673 ∧ G_Load ≤ 25 ∧ Decel_G ≤ 25`. Of those
+> four terms only the back-face one fails (1296.65 ✓, **955.66 ✗**, 17.73 ✓, 17.73 ✓).
+> The back-face number comes from the legacy single-slab transient estimate
+> `T_init + q·Δt·η_lag /(ρ·c_p·δ)`, i.e. it is governed **entirely by the TPS areal
+> capacitance**:
+>
+> | Active TPS | δ | ρ·c_p·δ [J/(m²·K)] | T_back | vs 673 K |
+> |---|---|---|---|---|
+> | SiC 25.4 mm (previous default) | 25.4 mm | 41 016 | **328.1 K** | PASS |
+> | IRVE-3 F-TPS 6.35 mm (current) | 6.35 mm | 1 760 | **955.7 K** | **FAIL** |
+>
+> 4× thinner ⇒ 23.3× less areal capacitance ⇒ 2.9× hotter back face. The old default
+> passed **because it was the wrong vehicle's slab, 4× too thick** — exactly the defect
+> this change removed. Reproduced analytically to 3 decimals against the solver's own
+> 955.662 K.
+>
+> **This is unresolved and is a modelling decision, not a bug to be patched:**
+> * The legacy estimator is a *homogeneous, transient, 60 s* model.
+> * The new solver is a *composite, steady* model that pins the cold face, so it
+>   returns `T_back = T_init` by construction and cannot represent a 60 s pulse.
+> Comparing a steady composite answer against a transient structure limit — or
+> keeping a 60 s lumped estimate on a 4× thinner layup — is a policy choice about
+> which model owns the survivability verdict. Options are listed in the handover notes;
+> none has been applied unilaterally.
+>
+> **Separately, `Peak decel` fails at 10.02 % against a 10.0 % tolerance** — a 0.02 pp
+> miss. Deceleration is `Drag_Force / Mass_Kg`; this change touches neither drag nor
+> mass, so that failure is independent of the TPS work.
+
+> **Reading `T_back` honestly:** the solver imposes a steady-state Dirichlet cold face,
+> so `T_back = T_init` by construction and its structure-limit flag restates the boundary
+> condition rather than predicting a transient back-face temperature. The informative
+> outer-ply number is `T_s`.
+
+---
+
 ## 📊 Grid Independency & Optimization
 To ensure the simulation accuracy balances computational cost, a **Grid Independency Test** was performed. The `grid-factor` (mesh density multiplier) was evaluated against reference data from the **IRVE-3 MDAO (Multidisciplinary Design Analysis and Optimization)** paper.
 
@@ -166,7 +295,7 @@ cd stellarorion_program_proc && python3 run.py --grid-factor 1.0 --test sample
 
 ## 🎯 Optimized Topology: Before vs After
 
-Bayesian Optimization (GP Matérn 5/2 kernel + Expected Improvement acquisition, 70 evaluations) was applied to the IRVE-3 HIAD geometry under the **multi-objective cost J(x)** — a validation-referenced scalarisation whose **primary objective is the lowest Total Heat Load** (terms: Total Heat Load, peak heat flux, ballistic-coefficient deviation, C<sub>d</sub>; quadratic penalties: 3 m envelope, 1.0 m TPS nose, and the **payload-size constraint** R<sub>N</sub> ≥ √(r²+(h/2)²)+0.15 ≈ 1.043 m for the 0.275 m × 1.7 m payload). All reference values (Q<sub>target</sub>, q<sub>ref</sub>, τ, C<sub>d,ref</sub>) are loaded **dynamically at run time** from `unified_comparison_data.json` (see `DERIVATION.md` §4). Result (official run 2026-09-26, stored in `stellarorion_program_proc/src/python/hiad_optimization_results.json`): **25.78 % lower J and 28.95 % lower Total Heat Load — 155.67 J/cm², 6.06 % below the 165.72 J/cm² validation target**, with zero constraint violations.
+Bayesian Optimization (GP Matérn 5/2 kernel + Expected Improvement acquisition, 70 evaluations) was applied to the IRVE-3 HIAD geometry under the **multi-objective cost J(x)** — a validation-referenced scalarisation whose **primary objective is the lowest Total Heat Load** (terms: Total Heat Load, peak heat flux, ballistic-coefficient deviation, C<sub>d</sub>; quadratic penalties: 3 m envelope, 1.0 m TPS nose, and the **payload-size constraint** R<sub>N</sub> ≥ √(r²+(h/2)²)+0.15 ≈ 1.043 m for the 0.275 m × 1.7 m payload). All reference values (Q<sub>target</sub>, q<sub>ref</sub>, τ, C<sub>d,ref</sub>) are loaded **dynamically at run time** from `unified_comparison_data.json` (see `DERIVATION.md` §4). Result (official run 2026-10-04, stored in `stellarorion_program_proc/src/python/hiad_optimization_results.json`): **25.91 % lower J and 29.18 % lower Total Heat Load — 155.16 J/cm², 6.37 % below the 165.72 J/cm² validation target**, with zero constraint violations. Reproduce with `python3 src/python/hiad_optimizer.py` (self-tests → CCD → GP/EI → 87-panel grid).
 
 ![Optimized HIAD Topology](stellarorion_program_proc/optimization_comparison.png)
 
@@ -174,13 +303,13 @@ Bayesian Optimization (GP Matérn 5/2 kernel + Expected Improvement acquisition,
 
 | Parameter | Default (IRVE-3 Baseline) | Optimized | Δ |
 | :--- | :--- | :--- | :--- |
-| **Nose Radius (R<sub>N</sub>)** | 1.5000 m | 2.9714 m | +98.10% |
-| **Torus Radius (r<sub>tor</sub>)** | 0.1350 m | 0.0885 m | −34.47% |
-| **Half-Cone Angle** | 60.00° | 40.15° | −33.09% |
-| **Drag Coefficient (C<sub>d</sub>)** | 1.6073 | 1.5597 | −2.96% |
-| **Sutton-Graves Heat Flux** | 16.14 W/cm² | 11.47 W/cm² | −28.95% |
-| **Total Heat Load Q(x)** | 219.10 J/cm² | **155.67 J/cm²** (target 165.72) | **−28.95%** |
-| **Cost J(x)** | 2.1626 | 1.6051 | −25.78% |
+| **Nose Radius (R<sub>N</sub>)** | 1.5000 m | 2.9911 m | +99.40% |
+| **Torus Radius (r<sub>tor</sub>)** | 0.1350 m | 0.0749 m | −44.49% |
+| **Half-Cone Angle** | 60.00° | 40.35° | −32.74% |
+| **Drag Coefficient (C<sub>d</sub>)** | 1.6073 | 1.5517 | −3.46% |
+| **Sutton-Graves Heat Flux** | 16.14 W/cm² | 11.43 W/cm² | −29.18% |
+| **Total Heat Load Q(x)** | 219.10 J/cm² | **155.16 J/cm²** (target 165.72) | **−29.18%** |
+| **Cost J(x)** | 2.1626 | 1.6022 | −25.91% |
 
 *The larger nose radius is the heat-load optimum: Sutton–Graves flux scales as 1/√R<sub>N</sub>, and J(x) prices that directly against the drag and ballistic-coefficient terms.*
 
@@ -190,9 +319,9 @@ Bayesian Optimization (GP Matérn 5/2 kernel + Expected Improvement acquisition,
 
 **Generated figures:** `stellarorion_program_proc/optimization_comparison.png` (before/after profiles),
 `stellarorion_program_proc/bo_optimization_3d.png` (3D scatter + GP slices + convergence),
-`stellarorion_program_proc/hiad_geometry_grid.png` (87-panel grid variation: default + 15 CCD + 70 BO history + optimum).
+`stellarorion_program_proc/hiad_geometry_grid.png` (88-panel grid variation: default + 15 CCD + 70 BO history + round-1 optimum + round-2 gate-corrected optimum).
 
-**Grid variation of the design space** — every geometry the optimizer evaluated (top-left default, 15 CCD samples, 70 BO proposals, top-right optimum):
+**Grid variation of the design space** — every geometry the optimizer evaluated (top-left default, 15 CCD samples, 70 BO proposals, and both optima — round 1 and the gate-corrected round 2 with the lowest J = 1.1415):
 
 ![HIAD geometry grid variation](stellarorion_program_proc/hiad_geometry_grid.png)
 

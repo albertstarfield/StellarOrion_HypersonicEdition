@@ -53,7 +53,7 @@
 --    --tps-density <F>         Override TPS density
 --    --tps-cp <F>              Override TPS specific heat
 --    --tps-k <F>               Override TPS thermal conductivity
---    --tps-material <name>     Predefined TPS layup (sic / pyrogel / kapton / multi)
+--    --tps-material <name>     Predefined TPS layup (irve3-ftps / sic / pyrogel / kapton / multi)
 --
 --  Author:  Albert Starfield Wahyu Suryo Samudro
 
@@ -225,8 +225,9 @@ package body StellarOrion_Project is
       Put_Line ("  --no-pinn                 Disable PINN");
       New_Line;
       Put_Line ("TPS Options:");
-      Put_Line ("  --tps <name>              TPS preset: sic | pica-x | loftid | kapton");
-      Put_Line ("  --tps-material <name>     TPS layup: sic | pyrogel | kapton | multi");
+      Put_Line ("  --tps <name>              TPS preset: irve3-ftps (default) | sic | pica-x");
+      Put_Line ("                           | loftid | kapton | pyrogel | multi");
+      Put_Line ("  --tps-material <name>     TPS layup: irve3-ftps | sic | pyrogel | kapton");
       Put_Line ("  --tps-density <F>         Override TPS density [kg/m^3]");
       Put_Line ("  --tps-cp <F>              Override TPS specific heat [J/(kg*K)]");
       Put_Line ("  --tps-k <F>               Override TPS thermal conductivity [W/(m*K)]");
@@ -382,7 +383,12 @@ package body StellarOrion_Project is
       Solver_Str       : constant String := Get_Option ("--solver", "sparta");
       Chem_Str         : constant String := Get_Option ("--chemistry", "5sp");
       Vehicle_Str      : constant String := Get_Option ("--vehicle", "irve3");
-      TPS_Str          : constant String := Get_Option ("--tps", "sic");
+      --  DEFAULT IS THE IRVE-3 VEHICLE'S OWN TPS. The previous default
+      --  ("sic") is the 25.4 mm LOFTID SiC baseline: the wrong vehicle and
+      --  4x too thick for IRVE-3's 6.35 mm F-TPS. The IRVE-3 branch derives
+      --  its lumped-equivalent properties from TPS_Layup_IRVE3 itself, so the
+      --  published ply schedule stays the single source of truth.
+      TPS_Str          : constant String := Get_Option ("--tps", "irve3-ftps");
       TPS_Material_Str : constant String := Get_Option ("--tps-material", "");
       DB_Path          : constant String := Get_Option ("--db", "./stellarorion_db");
        Nose_Type_Str    : constant String := Get_Option ("--nose-type", "smooth");
@@ -578,7 +584,13 @@ package body StellarOrion_Project is
                  Scallop_Amplitude_M => 0.030);
 
       --  TPS material preset (from --tps or --tps-material)
-      if TPS_Material_Str = "sic" or else TPS_Str = "sic" then
+      if TPS_Str = "irve3-ftps" or else TPS_Material_Str = "irve3-ftps" then
+         --  IRVE-3 F-TPS: lumped-equivalent of TPS_Layup_IRVE3 (two Nextel
+         --  BF-20 plies / two Pyrogel 2250 plies / AKK gas barrier, 6.35 mm
+         --  total). Used by the single-slab consumers that cannot express a
+         --  layup; the layup itself is what TPS_Conduction solves.
+         TPS := TPS_IRVE3_FTPS;
+      elsif TPS_Material_Str = "sic" or else TPS_Str = "sic" then
          TPS := TPS_SiC;
       elsif TPS_Material_Str = "pyrogel" or else TPS_Str = "pyrogel" then
          TPS := TPS_Pyrogel;
@@ -591,7 +603,11 @@ package body StellarOrion_Project is
       elsif TPS_Str = "loftid" then
          TPS := TPS_LOFTID;
       else
-         TPS := TPS_SiC;
+         --  Unrecognised --tps value: fall back to the ACTIVE vehicle
+         --  default (IRVE-3 F-TPS), not to SiC. Falling back to a preset
+         --  the caller did not ask for, on a different vehicle, is the one
+         --  outcome worse than an unknown-name error.
+         TPS := TPS_IRVE3_FTPS;
       end if;
 
       --  Apply TPS property overrides (clamped into envelope subtypes;

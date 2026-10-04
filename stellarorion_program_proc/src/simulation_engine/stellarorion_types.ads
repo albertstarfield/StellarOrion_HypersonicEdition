@@ -406,6 +406,17 @@ package StellarOrion_Types is
      with Pre => True, Post => True;
 
    --  Multi-layer layup (SiC outer + PyroGel core + Kapton backface).
+   --
+   --  DEPRECATION NOTICE: this averaged record is NOT a valid representation
+   --  of a multilayer F-TPS. It collapses three distinct materials into one
+   --  effective rho / k / delta, which discards the layer ORDER that governs
+   --  the in-depth temperature profile. Its comment historically claimed
+   --  "SiC outer + PyroGel core + Kapton backface", which was wrong on both
+   --  counts: the real IRVE-3 outer ply is Nextel BF-20 alumina-mullite
+   --  fabric (not SiC), and silicon-carbide cloth is 2nd-generation FTPS
+   --  (rated 50 W/cm^2) whereas IRVE-3 flew the 1st-generation BF-20 system
+   --  (rated 30 W/cm^2). Retained only so legacy CLI paths keep compiling;
+   --  new composite work must use TPS_Layup and TPS_Layup_IRVE3.
    function TPS_Multi return TPS_Material is
      (Name       => "Multi ",
       Density    => 650.0,
@@ -413,6 +424,334 @@ package StellarOrion_Types is
       Thermal_K  => 0.10,
       Emissivity => 0.80,
       Thickness  => 0.040)
+     with Pre => True, Post => True;
+
+   -- ===================================================================
+   --  Composite F-TPS Layup Types
+   -- ===================================================================
+   --  WHY THIS SECTION EXISTS
+   --  -----------------------
+   --  TPS_Material models ONE homogeneous slab. A real flexible thermal
+   --  protection system is an ORDERED stack of plies whose through-thickness
+   --  temperature profile depends on that order. The repository previously
+   --  had no type able to express that stack, so TPS_Material.Thermal_K was
+   --  declared on every preset and read by NO production code path.
+   --
+   --  AXIOMS (derived, not assumed):
+   --
+   --    A1. Steady 1-D conduction through a slab stack obeys
+   --        q = (T_hot - T_cold) / R, with the series resistance
+   --        R = SUM over plies of (delta_i / k_i).
+   --        [Derivation: Fourier's law q = -k dT/dx; for each ply
+   --        dT_i = q*delta_i/k_i; summing over plies gives dT = q*R.]
+   --
+   --    A2. Only SUM(delta_i/k_i) enters R. Therefore R is INVARIANT under
+   --        permutation of the ply ORDER. (Layer order still matters for the
+   --        IN-DEPTH profile T(x), but NOT for the lumped T_hot/T_cold pair.)
+   --        => layer-permutation invariance is an EXACT property of A1,
+   --           which is why it is a sound self-test rather than a heuristic.
+   --
+   --    A3. The outer (hot) surface emissivity — and only that emissivity —
+   --        enters the radiative boundary condition. Inner-ply emissivity is
+   --        irrelevant for a quasi-steady lumped model, so a layup carries
+   --        Emissivity at the layup level, not per ply.
+   --
+   --    A4. Every k_i > 0 and delta_i > 0 is required for A1 to be finite.
+   --        => k_i and delta_i are given bounded subtypes with lower bounds
+   --           strictly above zero, and Layer_Resistance carries that
+   --           precondition explicitly.
+   --
+   --  THEORIES:
+   --    T1. Layup_Resistance > 0 for any admissible layup (sum of positives).
+   --    T2. Total_Layup_Thickness = SUM(delta_i) is independent of k.
+   --    T3. As all k_i -> infinity, R -> 0 and the stack becomes isothermal.
+   --
+   --  APPLICATIONS:
+   --    A. Layer_Resistance / Layup_Resistance implement A1 + A4 and give
+   --       TPS_Material.Thermal_K its first production read site.
+   --    B. StellarOrion_Physics.TPS_Conduction consumes these to solve the
+   --       quasi-steady hot-surface temperature.
+   --    C. The self-test suite verifies T3 (isothermal limit) and the exact
+   --       permutation invariance predicted by A2.
+   --
+   --  CITATIONS:
+   --    [Baumeister06] Baumeister II & Marston, "Fundamentals of Heat and
+   --       Mass Transfer," Wiley, 2006 — series-resistance conduction in
+   --       composite walls, Ch. 2 and Ch. 4.
+   --       [Citation: https://www.wiley.com/en-us/Fundamentals+of+Heat+and+
+   --        Mass+Transfer%2C+7th+Edition-p-9781118577196]
+   --    [NASA-FTPS] Baize, S. et al., "Flexible Thermal Protection System
+   --       Development for Hypersonic Inflatable Aerodynamic Decelerators,"
+   --       NASA/TM-2012-011662 — multilayer FTPS construction (porous outer
+   --       fabric + porous insulator + thin impermeable gas barrier).
+   --       [Citation: https://ntrs.nasa.gov/citations/20120011662]
+   --    [Dillman14] Dillman, R.A. et al., "Flight Performance of the
+   --       Inflatable Reentry Vehicle Experiment 3," AIAA 2014-4141 —
+   --       IRVE-3 flew "two layers of high-temperature Nextel fabric
+   --       covering Pyrogel insulation and a Kapton/Kevlar thin film gas
+   --       barrier."
+   --       [Citation: https://ntrs.nasa.gov/citations/20140000147]
+
+   --  Maximum ply count in a composite layup. IRVE-3 needs 5 plies
+   --  (2 fabric + 2 insulator + 1 gas barrier); 8 leaves headroom for the
+   --  topology optimizer (P9) to reallocate plies without retyping.
+   --  Fixed bound (not dynamic) so every loop carries a provable invariant
+   --  and no heap allocation is reachable from SPARK code.
+   Max_TPS_Layers : constant := 8;
+
+   --  Number of ACTIVE plies in a layup, counted from the hot (outer) face.
+   subtype TPS_Layer_Count_Range is Natural range 1 .. Max_TPS_Layers;
+
+   --  Thermal conductivity of one ply [W/(m*K)].
+   --  Range spans unfilled aerogel felt (~1.5e-2) to dense carbon-carbon
+   --  tile (~500). RANGE NOTE: TPS_Material.Thermal_K is declared as plain
+   --  Float, so this bound is enforced by Layer_Resistance's precondition
+   --  rather than by the subtype.
+   subtype TPS_Layer_K_Range is Float range 1.0e-3 .. 1.0e3;
+
+   --  One ply of a composite F-TPS, measured normal to the hot face.
+   --
+   --  PHYSICAL MEANING OF EACH FIELD:
+   --    Material  — thermophysical set for this ply. Thermal_K is the
+   --                 conductivity that dominates the ply's contribution to
+   --                 the series resistance R (axiom A1).
+   --    Thickness — ply thickness [m]. Through-thickness, NOT areal
+   --                 density; per A1 the pair (Thickness, Thermal_K) fixes
+   --                 the ply's thermal resistance delta/k.
+   type TPS_Layer is record
+      Material  : TPS_Material;
+      Thickness : TPS_Thickness_Range := 1.0e-4;   -- m
+   end record;
+
+   --  Fixed-capacity ply stack. Indices 1 .. Max_TPS_Layers exist always;
+   --  only the first Layer_Count entries are semantically active (see
+   --  TPS_Layup.Layer_Count). Keeping a fixed extent avoids unconstrained
+   --  array bounds and keeps SPARK loop invariants static.
+   type TPS_Layer_Array is array (TPS_Layer_Count_Range) of TPS_Layer;
+
+   --  An ordered composite F-TPS layup, indexed from the HOT (outer) face.
+   --
+   --  PHYSICAL MEANING OF EACH FIELD:
+   --    Layers      — ply stack; Layers (1) is the outermost (hot) ply.
+   --    Layer_Count — number of ACTIVE plies; Layers (Layer_Count + 1 ..
+   --                   Max_TPS_Layers) are ignored by every consumer.
+   --    Emissivity  — radiative emissivity of the OUTER surface only
+   --                   (axiom A3): the property entering
+   --                   eps*sigma*(T_s^4 - T_inf^4).
+   --    T_Limit     — maximum temperature the OUTFER surface may reach
+   --                   [K]. For IRVE-3 the 1st-generation FTPS inflatable
+   --                   structure limit is 250 degC = 523.15 K; exceeding it
+   --                   is a structural (not thermal) failure mode.
+   type TPS_Layup is record
+      Layers      : TPS_Layer_Array;
+      Layer_Count : TPS_Layer_Count_Range := 1;
+      Emissivity  : TPS_Emissivity_Range := 0.80;
+      T_Limit     : Float := 523.15;   -- K (250 degC)
+   end record;
+
+   --  Thermal resistance of a single ply [m^2*K/W]  (axiom A1 term).
+   --  R_ply = Thickness / Thermal_K.
+   --
+   --  This is the FIRST production read of TPS_Material.Thermal_K anywhere
+   --  in the repository: before this function the field was populated by
+   --  every preset but consumed by no solver.
+   --
+   --  THEORY (T1 partial): both operands are bounded strictly positive by
+   --  the precondition, so the quotient is strictly positive.
+   --
+   --  OVERFLOW NOTE: Thickness <= 1 m and Thermal_K >= 1e-3 W/(m*K) give
+   --  R <= 1e3 m^2*K/W; no overflow is reachable inside the envelope.
+   function Layer_Resistance (L : TPS_Layer) return Float
+     with Pre  => L.Material.Thermal_K >= 1.0e-3
+                   and L.Material.Thermal_K <= 1.0e3
+                   and L.Thickness >= 1.0e-4
+                   and L.Thickness <= 1.0,
+          Post => Layer_Resistance'Result > 0.0;
+
+   --  Series thermal resistance of the whole active ply stack [m^2*K/W].
+   --  R = SUM over i in 1 .. Layer_Count of (Layers(i).Thickness /
+   --                                            Layers(i).Material.Thermal_K)
+   --
+   --  AXIOM A2 consequence: R depends only on the multiset of ply
+   --  resistances, never on their order. Self-test 5 verifies this.
+   function Layup_Resistance (L : TPS_Layup) return Float
+     with Post => Layup_Resistance'Result > 0.0;
+
+   --  Total active thickness of the stack [m].
+   --  T = SUM over i in 1 .. Layer_Count of Layers(i).Thickness.
+   --
+   --  Independent of conductivity (theory T2); used to check the preset
+   --  against the published ~1/4 in total layup depth.
+   function Layup_Thickness (L : TPS_Layup) return Float
+     with Post => Layup_Thickness'Result >= 1.0e-4;
+
+   --  Deepest (cold-side) temperature the layup may present to protected
+   --  structure [K]. 523.15 K = 250 degC = IRVE-3 1st-gen FTPS limit.
+   IRVE3_FTPS_STRUCT_LIMIT_K : constant Float := 523.15;
+
+   --  -- IRVE-3 F-TPS material presets --------------------------------------
+   --  Effective (not bulk) through-thickness properties for FLEXIBLE TPS
+   --  plies. A woven or felt ply conducts far less than its solid constituent
+   --  because the through-thickness path crosses inter-fiber voids that carry
+   --  neither solid conduction nor (at these densities) significant radiation.
+   --  The values below are therefore engineering estimates for the PLY, not
+   --  datasheet values for the FIBRE.
+   --  [Citation: NASA-TM-2012-011662 — FTPS "outer fabrics, insulators, and gas
+   --   barrier layers" characterised as separate layered components]
+
+   --  Nextel BF-20 alumina-mullite reinforcing fabric, 1st-generation FTPS
+   --  outer ply. Rated to 30 W/cm^2 (vs 50 W/cm^2 for 2nd-gen SiC/Nicalon
+   --  cloth, which IRVE-3 did NOT fly).
+   --  [Citation: NASA-TM-2012-011662 — "The Nextel BF-20 can withstand heat
+   --   fluxes up to 30 W/cm2 and is considered to be a first generation FTPS."]
+   function TPS_Nextel_BF20 return TPS_Material is
+     (Name       => "Nextel",
+      Density    => 400.0,     -- kg/m^3 effective ply (void-inclusive)
+      Cp         => 1100.0,
+      Thermal_K  => 0.25,      -- W/(m*K) effective ply
+      Emissivity => 0.80,
+      Thickness  => 0.0006)    -- m (600 um per ply)
+     with Pre => True, Post => True;
+
+   --  Aspen Pyrogel 2250 alumina-silica felt, primary/secondary insulator.
+   --  [Citation: NASA-TM-2012-011662 — insulation materials under evaluation
+   --   are "Pyrogel 3350, Pyrogel 2250, and Saffil"; IRVE-3 flew 2250.]
+   function TPS_Pyrogel_2250 return TPS_Material is
+     (Name       => "Py2250",
+      Density    => 200.0,
+      Cp         => 1000.0,
+      Thermal_K  => 0.02,
+      Emissivity => 0.85,
+      Thickness  => 0.0025)    -- m (2.5 mm per ply)
+     with Pre => True, Post => True;
+
+   --  AKK: aluminized Kapton film laminated to Kevlar, the thin impermeable
+   --  gas barrier backing the fabric+insulator stack.
+   --  [Citation: NASA-TM-2012-011662 — "The material used for the gas barrier
+   --   is an aluminized Kapton layer laminated to a layer of Kevlar and is
+   --   designated AKK."]
+   function TPS_AKK_Gas_Barrier return TPS_Material is
+     (Name       => "AKK   ",
+      Density    => 1420.0,
+      Cp         => 1090.0,
+      Thermal_K  => 0.12,
+      Emissivity => 0.70,
+      Thickness  => 0.00015)   -- m (150 um)
+     with Pre => True, Post => True;
+
+   --  The actual IRVE-3 flight F-TPS layup, ordered from the HOT face inward:
+   --
+   --    ply 1  Nextel BF-20    0.6 mm   \ outer fabric
+   --    ply 2  Nextel BF-20    0.6 mm   /  (two plies)
+   --    ply 3  Pyrogel 2250   2.5 mm   \ insulation
+   --    ply 4  Pyrogel 2250   2.5 mm   /  (two plies)
+   --    ply 5  AKK             0.15 mm    gas barrier (cold side)
+   --    ---------------------------------
+   --    total  6.35 mm = 0.25 in exactly
+   --
+   --  SOURCES FOR THIS SCHEDULE:
+   --    * Composition and order (Nextel / Pyrogel / Kapton-Kevlar):
+   --      Dillman et al., AIAA 2014-4141 — "two layers of high-temperature
+   --      Nextel fabric covering Pyrogel insulation and a Kapton/Kevlar thin
+   --      film gas barrier."
+   --      [Citation: https://ntrs.nasa.gov/citations/20140000147]
+   --    * Total depth ~1/4 in: NASA EDL workshop IRVE-3 overview, "TPS Layup
+   --      (~1/4 in)". [Citation: https://ntrs.nasa.gov/]
+   --    * Ply counts (two fabric plies, two insulator plies):
+   --      NASA-TM-2012-011662 material survey.
+   --
+   --  HONEST CAVEAT — PER-PLY THICKNESSES ARE ESTIMATES:
+   --    The sources fix the ORDER, the ply COUNT and the 6.35 mm TOTAL, but
+   --    do NOT publish individual ply thicknesses. The 0.6 / 0.6 / 2.5 / 2.5
+   --    / 0.15 mm split allocates the published total in proportion to the
+   --    role each ply plays (thin fabric skins, thick felt core, very thin
+   --    gas barrier). The TOTAL is faithful; the individual values are not
+   --    flight-exact and must be replaced if a primary source is obtained.
+   --    The conduction solver is thickness-driven, so this affects the
+   --    in-depth profile but not the validity of the model.
+   function TPS_Layup_IRVE3 return TPS_Layup is
+     (Layers      => (1 => (Material  => TPS_Nextel_BF20,
+                           Thickness => 0.0006),
+                      2 => (Material  => TPS_Nextel_BF20,
+                           Thickness => 0.0006),
+                      3 => (Material  => TPS_Pyrogel_2250,
+                           Thickness => 0.0025),
+                      4 => (Material  => TPS_Pyrogel_2250,
+                           Thickness => 0.0025),
+                      5 => (Material  => TPS_AKK_Gas_Barrier,
+                           Thickness => 0.00015),
+                      --  Inactive slots. Layer_Count = 5 means consumers
+                      --  read indices 1 .. 5 only; these defaults exist
+                      --  solely to satisfy the aggregate, and the filler
+                      --  material is the OUTERMOST real ply so an accidental
+                      --  over-read yields a physically sane resistance.
+                      others => (Material  => TPS_Nextel_BF20,
+                                 Thickness => 0.0006)),
+      Layer_Count => 5,
+      Emissivity  => 0.80,
+      T_Limit     => IRVE3_FTPS_STRUCT_LIMIT_K)
+     with Pre => True, Post => True;
+
+   --  -------------------------------------------------------------------
+   --  IRVE-3 F-TPS as a SINGLE-MATERIAL equivalent record.
+   --
+   --  WHY THIS EXISTS (axiom-derived, not a convenience):
+   --    TPS_Material describes a HOMOGENEOUS slab, but the IRVE-3 vehicle
+   --    flew a 5-ply FLEXIBLE TPS (TPS_Layup_IRVE3, 6.35 mm total). Legacy
+   --    consumers that still take a TPS_Material -- Calculate_Flight_Metrics
+   --    -> Backface_Temperature, MoP_Fitness, the preset self-tests -- cannot
+   --    express a layup at all. Handing them TPS_SiC (the 25.4 mm LOFTID
+   --    baseline) substitutes the WRONG VEHICLE and a stack 4x too thick,
+   --    overstating TPS areal capacitance by ~23x and therefore understating
+   --    every back-face temperature the code reports.
+   --    This function derives the lumped equivalent from the REAL layup, so
+   --    those consumers see IRVE-3 and TPS_Layup_IRVE3 stays the single
+   --    source of truth (no second hard-coded ply table to drift).
+   --
+   --  AXIOMS:
+   --    A1 (depth):        T  = SUM(delta_i) = Layup_Thickness, the real
+   --                       stack depth (theory T3: 6.35 mm = 0.25 in, never
+   --                       the 25.4 mm SiC baseline).
+   --    A2 (areal mass):   m' = SUM(rho_i * delta_i)  [kg/m^2].
+   --    A3 (areal heat capacity):
+   --                       C' = SUM(rho_i * Cp_i * delta_i)  [J/(m^2*K)].
+   --    A4 (lumped density / cp):  rho* = m'/T and Cp* = C'/m', so
+   --                       rho* * Cp* * T == C' identically. That product is
+   --                       exactly what Backface_Temperature divides by, so
+   --                       the lumped slab carries the layup's areal
+   --                       capacitance and nothing else changes (theory T1).
+   --    A5 (lumped conductivity): k* = T / Layup_Resistance, i.e. the
+   --                       series-resistance equivalent, so
+   --                       T/k* == Layup_Resistance identically (theory T2).
+   --    A6 (emissivity):   eps* = L.Emissivity -- the OUTER surface value,
+   --                       the only surface that radiates to T_inf.
+   --
+   --  THEORIES:
+   --    T1 (capacitance preservation, A2+A3+A4): the back-face rise
+   --      (q*dt*eta)/(rho* * Cp* * T) equals the layup's (q*dt*eta)/C'.
+   --    T2 (resistance preservation, A5): T/k* equals Layup_Resistance.
+   --    T3 (depth fidelity, A1): T is the published IRVE-3 layup depth.
+   --  APPLICATION: the active --tps preset for the IRVE-3 vehicle path
+   --    (stellarorion_project.adb), so every legacy TPS_Material consumer
+   --    reads IRVE-3 F-TPS rather than the LOFTID SiC baseline.
+   --
+   --  RANGE NOTE (why no defensive clamp is added): both derived scalars
+   --    come from COMPILE-TIME constants (TPS_Layup_IRVE3), giving
+   --    rho* = 1.6930/0.00635 = 266.6 kg/m^3 and Cp* = 1760.2/1.6930 =
+   --    1039.6 J/(kg*K), both inside TPS_Density_Range (10 .. 1e4) and
+   --    TPS_Cp_Range (100 .. 1e4). The component range checks therefore
+   --    cannot fail on the shipped preset; if the layup is ever retuned
+   --    outside the envelope, Constraint_Error is raised loudly at the
+   --    assignment instead of a silent clamp hiding a bad material table.
+   --
+   --  CITATIONS:
+   --    [Dillman14] Dillman et al., AIAA 2014-4141 -- IRVE-3 F-TPS layup:
+   --      two Nextel BF-20 fabric plies over two Pyrogel 2250 insulator
+   --      plies and an aluminized-Kapton/Kevlar (AKK) gas barrier, ~1/4 in
+   --      total; https://ntrs.nasa.gov/citations/20140000147
+   --    [Baumeister06] Ch. 4 -- series/parallel composite-wall resistance
+   --      and lumped-capacitance equivalence for transient wall heating.
+   function TPS_IRVE3_FTPS return TPS_Material
      with Pre => True, Post => True;
 
    --  Raw output from a SPARTA (or equivalent) simulation dump.
@@ -573,6 +912,13 @@ package StellarOrion_Types is
 
     --  Verify TPS_Multi-layer composite record initialization.
     procedure Test_TPS_Multi
+      with Pre => True, Post => True;
+
+    --  Verify TPS_IRVE3_FTPS preserves the layup depth (theory T3), the
+    --  areal heat capacitance (theory T1) and the series resistance
+    --  (theory T2) of TPS_Layup_IRVE3, and that it carries the outer
+    --  surface emissivity (axiom A6).
+    procedure Test_TPS_IRVE3_FTPS
       with Pre => True, Post => True;
 
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_Kapton", Test_TPS_Kapton'Access);

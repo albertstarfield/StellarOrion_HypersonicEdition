@@ -38,6 +38,7 @@ import sys
 import time
 import warnings
 import xml.etree.ElementTree as ET
+from typing import TypedDict, cast
 
 import numpy as np
 
@@ -84,7 +85,12 @@ def parse_vtu_surface(vtu_file: str):  # nosec
     tree = ET.parse(vtu_file)
     root = tree.getroot()
 
-    result = {}
+    # Heterogeneous VTU record: the "x"/"y" coordinate slices and every
+    # CellData entry are NumPy arrays, while "n_cells" is the scalar int read
+    # from the Piece's NumberOfCells attribute. This union is the truthful
+    # type of what this function actually stores -- not a blanket Any -- so a
+    # consumer can narrow the one member it needs.
+    result: dict[str, np.ndarray | int] = {}
 
     for piece in root.iter("Piece"):
         # Parse points (cell centroids for surface elements)
@@ -159,7 +165,7 @@ def _fix_vtu_connectivity(raw_text: str, n_pts: int) -> list[int]:
     return fixed
 
 
-def extract_cell_centroids(vtu_file: str):  # nosec
+def extract_cell_centroids(vtu_file: str) -> tuple[np.ndarray, np.ndarray] | tuple[None, None]:  # nosec
     """Extract per-cell centroid coordinates from VTU file.
 
     For SPARTA surf VTU files, all cells are VTK_QUAD (type=9).
@@ -324,7 +330,17 @@ def denoise_surface_heatflux(
     fit_time = time.time() - t0
 
     t0 = time.time()
-    denoised_norm, std_norm = gp.predict(X_norm, return_std=True)
+    # AXIOM: `GaussianProcessRegressor.predict` is typed as a union of every
+    # shape its optional flags can produce. With `return_std=True` and
+    # `return_cov` left at its default (False) the runtime result is provably a
+    # 2-tuple (mean, std) — verified against sklearn 1.9.1 — so the cast
+    # narrows to exactly that shape and adds no assertion or suppression.
+    # [Reference: sklearn GaussianProcessRegressor.predict
+    #  https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html]
+    denoised_norm, std_norm = cast(
+        "tuple[np.ndarray, np.ndarray]",
+        gp.predict(X_norm, return_std=True),
+    )
     # De-normalize predictions back to original scale
     denoised = denoised_norm * y_std + y_mean
     std_norm * y_std
@@ -351,11 +367,37 @@ def denoise_surface_heatflux(
 # PINN-LIKE TEMPORAL SURROGATE (scikit-learn MLP as lightweight substitute)
 # ============================================================================
 
+class _SurrogateResult(TypedDict):
+    """Per-metric temporal-surrogate bundle produced by build_temporal_surrogate.
+
+    WHY THIS EXISTS: both construction branches inside build_temporal_surrogate
+    (the "no extrapolation needed" branch and the normal branch) emit the SAME
+    six keys. With an un-annotated `results = {}`, Pyrefly widens the dict's
+    value type to the union of every assigned value, so a lookup of the
+    `interpolated` key came back as `GaussianProcessRegressor | ndarray` — the
+    `model` key's type leaking onto an unrelated key. That made the legitimate
+    `len(sdata["interpolated"])` in the reporting loop unprovable, even though
+    `interpolated` is always an ndarray.
+
+    Declaring the shape here fixes each key to its true type. `model` is the
+    fitted estimator (kept so callers can re-predict); every other key is an
+    ndarray, including the empty `np.array([])` sentinels emitted when no
+    extrapolation window exists.
+    """
+
+    model: GaussianProcessRegressor
+    interpolated: np.ndarray
+    interp_std: np.ndarray
+    extrapolated_steps: np.ndarray
+    extrapolated_values: np.ndarray
+    extrap_std: np.ndarray
+
+
 def build_temporal_surrogate(
     steps: np.ndarray,
     metrics: dict[str, np.ndarray],
     max_steps: int = 2200,
-):  # nosec
+) -> dict[str, _SurrogateResult]:  # nosec
     """Build a temporal surrogate model for extrapolation beyond training steps.
 
     Uses a simple Gaussian Process on the time series to extrapolate.
@@ -371,7 +413,12 @@ def build_temporal_surrogate(
       metrics: dict of metric_name → array of values at each step
       max_steps: maximum step for extrapolation
 
-    Returns: dict of metric_name → (extrapolated_values, gp_model, stats)
+    Returns:
+        A dict mapping each metric name that had >= 3 samples AND a successfully
+        fitted GP to a `_SurrogateResult`. Metrics that are too short or whose
+        kernel failed to fit are omitted entirely (no key), which is why the
+        caller iterates `.items()` rather than assuming a fixed key set. See
+        `_SurrogateResult` for the six keys and their types.
 
     References:
       - https://scikit-learn.org/stable/modules/gaussian_process.html - Scikit-learn GP for temporal regression
@@ -386,7 +433,7 @@ def build_temporal_surrogate(
     t_std = max(t_std, 1.0)
     t_norm = (t - t_mean) / t_std
 
-    results = {}
+    results: dict[str, _SurrogateResult] = {}
 
     for mname, mvals in metrics.items():
         if len(mvals) < 3:
@@ -406,7 +453,14 @@ def build_temporal_surrogate(
             continue
 
         # Predict at all known steps
-        pred_mean, pred_std = gp.predict(t_norm, return_std=True)
+        # [Reference: sklearn GaussianProcessRegressor.predict — the
+        #  return_std=True / return_cov=False path yields a 2-tuple
+        #  (mean, std); the same invariant documented in
+        #  denoise_surface_heatflux above]
+        pred_mean, pred_std = cast(
+            "tuple[np.ndarray, np.ndarray]",
+            gp.predict(t_norm, return_std=True),
+        )
 
         # Extrapolate beyond max_steps (e.g. to 50% beyond data range)
         max_t_val = int(np.max(t))
@@ -425,7 +479,12 @@ def build_temporal_surrogate(
             }
         else:
             t_ext_norm = (t_ext - t_mean) / t_std
-            ext_mean, ext_std = gp.predict(t_ext_norm, return_std=True)
+            # [Reference: sklearn GaussianProcessRegressor.predict — same
+            #  2-tuple (mean, std) invariant as documented above]
+            ext_mean, ext_std = cast(
+                "tuple[np.ndarray, np.ndarray]",
+                gp.predict(t_ext_norm, return_std=True),
+            )
 
             results[mname] = {
                 "model": gp,
@@ -530,7 +589,18 @@ def main():  # nosec
         data = parse_vtu_surface(vtu_file)
         cx, cy = extract_cell_centroids(vtu_file)
 
-        if cx is None:
+        # AXIOM: extract_cell_centroids returns its two coordinate arrays from a
+        # single CellCenters read, so they succeed or fail TOGETHER — the only
+        # failing path returns the literal `(None, None)`. Checking `cx` alone
+        # therefore does not narrow `cy` for a reader (or a type checker).
+        # THEOREM: guarding on `cx is None or cy is None` is equivalent to the
+        # single-failure analysis but also discharges the Optional for both.
+        # APPLICATION: when either is missing we fall back to zeros for BOTH axes
+        # and say so, instead of appending a real `cx` next to a `None` `cy` —
+        # which previously produced a None inside all_centroids_y and raised
+        # TypeError at the first arithmetic use in Step 3. Behaviour on the
+        # success path and on the all-or-nothing failure path is unchanged.
+        if cx is None or cy is None:
             print(f"  [WARN] Could not extract centroids from {basename}")
             all_centroids_x.append(np.zeros(data["n_cells"]))
             all_centroids_y.append(np.zeros(data["n_cells"]))
@@ -651,7 +721,14 @@ def main():  # nosec
             t_test = test_steps.astype(float).reshape(-1, 1)
 
             gp.fit(t_train, train_vals)
-            pred_mean, _pred_std = gp.predict(t_test, return_std=True)
+            # [Reference: sklearn GaussianProcessRegressor.predict — the
+            #  return_std=True / return_cov=False path yields a 2-tuple
+            #  (mean, std); the same invariant documented in
+            #  denoise_surface_heatflux above]
+            pred_mean, _pred_std = cast(
+                "tuple[np.ndarray, np.ndarray]",
+                gp.predict(t_test, return_std=True),
+            )
 
             # Error metrics
             mae = np.mean(np.abs(pred_mean - test_vals))

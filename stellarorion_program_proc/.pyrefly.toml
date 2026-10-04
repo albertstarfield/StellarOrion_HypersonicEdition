@@ -28,8 +28,11 @@ preset = "strict"
 # scripts/ is added so cross-script imports resolve too:
 #   verify_profile_math.py does `from render_optimization_comparison import ...`
 # and scripts/ inserts itself onto sys.path at runtime.
+# "." is the project root: tests/test_run_pipeline.py does
+#   sys.path.insert(0, <project root>); import run
+# which pyrefly cannot infer from runtime mutation of sys.path.
 # [Citation: pyrefly search-path — https://pyrefly.org/en/docs/configuration]
-search-path = ["src/python", "scripts"]
+search-path = ["src/python", "scripts", "."]
 
 # ── Interpreter selection ────────────────────────────────────────────
 # Query the healthy system interpreter instead of the project .venv.

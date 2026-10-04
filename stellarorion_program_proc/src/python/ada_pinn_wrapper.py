@@ -22,7 +22,7 @@ Author: Albert Starfield Wahyu Suryo Samudro
 import ctypes
 import os
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:  # numpy is imported lazily inside the functions that need it
     import numpy as np
@@ -121,10 +121,34 @@ def sutton_graves_heat_flux(
             "density_kgm3": atm["density_kgm3"], "velocity_ms": velocity_ms}
 
 
-def dynamic_pressure(density_kgm3: float, velocity_ms: float) -> float:
-    """Compute dynamic pressure via Ada/SPARK FFI: q = 0.5 * rho * V^2.
+def dynamic_pressure_pinn_trajectory(density_kgm3: float, velocity_ms: float) -> float:
+    """Compute dynamic pressure via the Ada/SPARK PINN-package entry point.
+
+    AXIOM: this wrapper and :func:`dynamic_pressure` below compute the SAME
+    physical quantity (q = 0.5 * rho * V^2) through TWO distinct Ada entry
+    points exported by the same shared library:
+
+      * ``stellarorion_pinn_trajectory__dynamic_pressure`` -- the Ada/SPARK
+        package-level function (``c_float`` ABI), wrapped here.
+      * ``Dynamic_Pressure_C`` -- the ``stellarorion_ffi`` C ABI (``c_double``),
+        wrapped by :func:`dynamic_pressure`, which is the public name that
+        every caller in this repository imports.
+
+    Previously both were named ``dynamic_pressure`` in this module, so the
+    second definition silently shadowed the first and this PINN entry point was
+    unreachable dead code (Ruff F811). They are now distinctly named so both
+    Ada bindings stay reachable and documented instead of one erasing the
+    other. :func:`dynamic_pressure` remains the public API — its behaviour is
+    unchanged.
+
     [Citation: Anderson (2006), Fundamentals of Aerodynamics]
     [Citation: Ada/SPARK Dynamic_Pressure in stellarorion_pinn_trajectory.ads]
+
+    Args:
+      density_kgm3: Freestream mass density in kg/m^3.
+      velocity_ms: Flow velocity magnitude in m/s.
+
+    Returns: Dynamic pressure in Pa.
     """
     return _ada_lib.stellarorion_pinn_trajectory__dynamic_pressure(
         ctypes.c_float(density_kgm3), ctypes.c_float(velocity_ms),
@@ -867,9 +891,28 @@ def run_bayesian_optimize(
         y_arr = np.array(y_obs)
 
         # Fit GP surrogate
+        #
+        # AXIOM (why the cast is truthful): `Matern.__init__` is UNANNOTATED in
+        # scikit-learn (`def __init__(self, length_scale=1.0,
+        # length_scale_bounds=(1e-5, 1e5), nu=1.5)`), so a checker can only infer
+        # the parameter type from its default and the `"fixed"` sentinel branch,
+        # yielding the too-narrow `str | tuple[float, float]`.
+        #
+        # The real accepted domain is documented as `bounds : ndarray of shape
+        # (n_dims, 2)` — an anisotropic Matérn may carry a per-dimension
+        # (lo, hi) pair. `[(1e-3, 1e3)] * n_dims` is exactly that (n_dims, 2)
+        # form, and it is verified to fit on scikit-learn 1.9.1 (the
+        # `(lo_array, hi_array)` spelling is REJECTED with
+        # "Bounds on length_scale should have either 1 or 3 dimensions").
+        # The cast therefore documents an accurate upstream type, it does not
+        # hide a defect.
+        # [Reference: sklearn Matern — https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.kernels.Matern.html]
         kernel = (ConstantKernel(1.0, constant_value_bounds=(1e-3, 1e3))
                   * Matern(length_scale=[1.0]*n_dims,
-                           length_scale_bounds=[(1e-3, 1e3)]*n_dims,
+                           length_scale_bounds=cast(
+                               Any,
+                               [(1e-3, 1e3)]*n_dims,
+                           ),
                            nu=2.5))
         gp = GaussianProcessRegressor(
             kernel=kernel, n_restarts_optimizer=5, normalize_y=True,
@@ -1105,3 +1148,328 @@ def atmosphere_density(altitude_km: float) -> float:
     [Citation: ISO 2533:1975, International Standard Atmosphere]
     """
     return _ada_lib.Atmosphere_Density_C(ctypes.c_double(altitude_km))
+
+
+# ===========================================================================
+# TPS_Conduction_C — 1-D composite IRVE-3 F-TPS conduction (thin FFI wrapper)
+# ===========================================================================
+#
+# WHY THIS SECTION EXISTS:
+#   The Ada/SPARK solver is the single authority for the conduction physics.
+#   This block is pure marshalling: it allocates the C-visible buffers the Ada
+#   subprogram requires, copies caller data in, calls the exported symbol, and
+#   copies the results back. NO conduction, radiative-equilibrium, or
+#   bisection math appears here — duplicating it in Python would create a
+#   second source of truth that can silently disagree with the verified model.
+#
+#   This satisfies the "Python is a thin wrapper" constraint: Python decides
+#   nothing physical, it only carries numbers across the C ABI.
+#
+# CITATION (Ada authority for the model implemented behind this symbol):
+#   [Baumeister06] Schlichting et al., "Hypersonic Flow Theory" 2nd ed.,
+#     Ch. 4 (composite-wall thermal resistance, series layer model) and
+#     Ch. 11 (radiation boundary condition for the hot face).
+#   [Dillman14] Dillman et al., AIAA 2014-4141 — IRVE-3 F-TPS construction
+#     (two Nextel fabric plies over two Pyrogel plies plus a Kapton/Kevlar
+#     gas barrier) and the 250 degC / 523.15 K structure limit.
+#   Source of record for the layout below:
+#     src/simulation_engine/stellarorion_types.ads — TPS_Layup_IRVE3
+#     src/simulation_engine/stellarorion_ffi.ads    — TPS_Conduction_C
+
+# --- Capacity constants (mirrored from the Ada spec, not invented here) -----
+# AXIOM: a C array of an Ada array type with `Convention (C, ...)` is passed
+# as a POINTER to the first element, and Python's ctypes double array has the
+# same element size and alignment, so no further conversion is required.
+#
+# Max_TPS_Layers  = 8   (stellarorion_types.ads:500)
+# TPS_Profile_Samples = 33 (stellarorion_ffi.ads:573 -> Max_Profile_Points,
+#                           stellarorion_physics.ads:883)
+TPS_MAX_LAYERS = 8
+TPS_PROFILE_SAMPLES = 33
+
+# --- Status codes (mirrored from stellarorion_ffi.ads:611-619) ---------------
+# WHY mirror the names rather than bare integers: a caller that reads
+# `status == 5` has learned nothing about the failure. The Ada spec states
+# these are the authoritative indicator (A3), so the Python side must not
+# reinterpret a nonzero code as a generic error.
+TPS_STATUS_OK = 0
+TPS_STATUS_BAD_LAYER_COUNT = 1
+TPS_STATUS_NULL_POINTER = 2
+TPS_STATUS_BAD_EMISSIVITY = 3
+TPS_STATUS_BAD_TEMPERATURE = 4
+TPS_STATUS_BAD_FLUX_INPUT = 5
+TPS_STATUS_BAD_PLY_PROPERTY = 6
+TPS_STATUS_SOLVER_RAISED = 7
+TPS_STATUS_PROFILE_RAISED = 8
+
+_TPS_STATUS_REMEDY = {
+    TPS_STATUS_OK: "no error",
+    TPS_STATUS_BAD_LAYER_COUNT: (
+        f"N_Layers must be 1..{TPS_MAX_LAYERS}; the solver needs at least one "
+        "ply to form a thermal resistance."),
+    TPS_STATUS_NULL_POINTER: (
+        "A required buffer pointer was null; this wrapper always allocates the "
+        "ply and profile buffers, so this indicates a library/ABI mismatch."),
+    TPS_STATUS_BAD_EMISSIVITY: (
+        "Emissivity outside the validated [1.0e-3, 1.0] range."),
+    TPS_STATUS_BAD_TEMPERATURE: (
+        "T_Init or T_Inf outside the validated [0, 3000] K range."),
+    TPS_STATUS_BAD_FLUX_INPUT: (
+        "Q_SG_Scale, Ke_Raw or Ke_Ref outside their validated ranges; note "
+        "Ke_Raw may be negative (DSMC noise) and Ke_Ref must be positive."),
+    TPS_STATUS_BAD_PLY_PROPERTY: (
+        "A ply thickness or conductivity is outside its validated range, or a "
+        "filler slot below N_Layers was used."),
+    TPS_STATUS_SOLVER_RAISED: (
+        "The Ada conduction solver raised an exception; inputs were inside the "
+        "documented ranges, so this is a solver defect to investigate."),
+    TPS_STATUS_PROFILE_RAISED: (
+        "The Ada profile sampler raised an exception while building the "
+        "in-depth temperature field."),
+}
+
+# --- The IRVE-3 flight F-TPS layup, hot face first ---------------------------
+# WHY this table exists in Python at all: the Ada solver takes a *generic* ply
+# array by design, so the flight-specific schedule must be supplied by the
+# caller. These numbers are a verbatim transcription of TPS_Layup_IRVE3
+# (stellarorion_types.ads:672-693) and are asserted against the Ada-side
+# preset by the test suite — a transcription drift would otherwise be silent.
+#
+#   ply 1  Nextel BF-20   0.60 mm  k=0.25 W/(m*K)   outer fabric
+#   ply 2  Nextel BF-20   0.60 mm  k=0.25 W/(m*K)
+#   ply 3  Pyrogel 2250   2.50 mm  k=0.02 W/(m*K)   insulation
+#   ply 4  Pyrogel 2250   2.50 mm  k=0.02 W/(m*K)
+#   ply 5  AKK gas barrier 0.15 mm k=0.12 W/(m*K)   cold side
+#   ---------------------------------------------------------------------
+#   total 6.35 mm = 0.25 in exactly
+# [Citation: NASA-TM-2012-011662; Dillman et al. AIAA 2014-4141]
+IRVE3_FTPS_PLY_THICKNESS_M = (0.0006, 0.0006, 0.0025, 0.0025, 0.00015)
+IRVE3_FTPS_PLY_THERMAL_K = (0.25, 0.25, 0.02, 0.02, 0.12)
+IRVE3_FTPS_LAYER_COUNT = 5
+IRVE3_FTPS_EMISSIVITY = 0.80
+# Deepest temperature the layup may present to protected structure.
+# 523.15 K = 250 degC = IRVE-3 1st-generation FTPS limit.
+# [Citation: Dillman14; IRVE3_FTPS_STRUCT_LIMIT_K, stellarorion_types.ads:590]
+IRVE3_FTPS_STRUCT_LIMIT_K = 523.15
+
+# --- C ABI binding -----------------------------------------------------------
+# AXIOM: the Ada ply array `TPS_Ply_Array` is a flat array of C doubles, so a
+# ctypes `c_double * n` matches it exactly. By-value output scalars are passed
+# as pointers by ctypes (`byref`) because the Ada side declares them `out`.
+_Ply_Array_CT = ctypes.c_double * TPS_MAX_LAYERS
+
+# AXIOM (CORRECTED AFTER A REAL SEGFAULT): the Ada profile is NOT a flat double
+# array. `TPS_Profile_Buffer` is an array of a two-field RECORD, so a C caller
+# must declare, verbatim from stellarorion_ffi.ads:585-587:
+#
+#     type TPS_Profile_Sample is record
+#        Depth_M : Interfaces.C.Double;
+#        Temp_K  : Interfaces.C.Double;
+#     end record;
+#     -- A C caller declares the identical shape as
+#     --     struct { double depth_m, temp_k; } samples[33];
+#
+# Marshalling it as `c_double * 33` allocates 264 bytes while the Ada side
+# writes 33 records x 16 bytes = 528 bytes. That 264-byte overrun corrupts the
+# Python heap and segfaults — it is recorded here because a green build and a
+# matching-looking signature do NOT protect against a shape error; only
+# actually calling the symbol did.
+#
+#   Depth_M is a NORMALISED through-thickness position in [0,1] (0 = hot outer
+#   face, 1 = cold inner face), NOT metres. Multiply by the total layup
+#   thickness to obtain a physical depth.
+# [Citation: stellarorion_ffi.ads:589-592 — Depth_M definition]
+class _TPS_Profile_Sample(ctypes.Structure):
+    """One in-depth profile sample: normalised depth + temperature."""
+    _fields_ = [("Depth_M", ctypes.c_double),
+                ("Temp_K", ctypes.c_double)]
+
+
+_Profile_Buffer_CT = _TPS_Profile_Sample * TPS_PROFILE_SAMPLES
+
+# Guard the struct size at import time. If the Ada record ever gains, loses or
+# reorders a field, the profile buffer no longer matches and the callee would
+# overwrite caller memory. ctypes cannot bounds-check that, so fail loudly HERE
+# (a clean ImportError) rather than corrupting the heap at call time.
+_EXPECTED_PROFILE_SAMPLE_BYTES = 2 * ctypes.sizeof(ctypes.c_double)
+if ctypes.sizeof(_TPS_Profile_Sample) != _EXPECTED_PROFILE_SAMPLE_BYTES:
+    raise ImportError(
+        "TPS_Conduction_C profile ABI mismatch: Ada "
+        "TPS_Profile_Sample must be exactly 2 C doubles "
+        f"({_EXPECTED_PROFILE_SAMPLE_BYTES} bytes), ctypes computed "
+        f"{ctypes.sizeof(_TPS_Profile_Sample)} bytes. The Ada record layout "
+        "changed; update _TPS_Profile_Sample to match before calling.")
+
+_ada_lib.TPS_Conduction_C.restype = None
+_ada_lib.TPS_Conduction_C.argtypes = [
+    ctypes.c_double,                      # Q_SG_Scale
+    ctypes.c_double,                      # Ke_Raw
+    ctypes.c_double,                      # Ke_Ref
+    ctypes.c_int,                         # N_Layers
+    ctypes.POINTER(ctypes.c_double),      # Ply_Thickness
+    ctypes.POINTER(ctypes.c_double),      # Ply_Thermal_K
+    ctypes.c_double,                      # Emissivity
+    ctypes.c_double,                      # T_Init
+    ctypes.c_double,                      # T_Inf
+    ctypes.POINTER(ctypes.c_int),         # Status      (out)
+    ctypes.POINTER(ctypes.c_double),      # Q_SG        (out)
+    ctypes.POINTER(ctypes.c_double),      # T_Surface   (out)
+    ctypes.POINTER(ctypes.c_double),      # T_Back      (out)
+    ctypes.POINTER(ctypes.c_int),         # N_Iterations(out)
+    ctypes.POINTER(_TPS_Profile_Sample),  # Profile     (out) array of records
+]
+
+
+def tps_conduction(q_sg_scale: float, ke_raw: float, ke_ref: float,
+                   ply_thickness: Sequence[float] = IRVE3_FTPS_PLY_THICKNESS_M,
+                   ply_thermal_k: Sequence[float] = IRVE3_FTPS_PLY_THERMAL_K,
+                   emissivity: float = IRVE3_FTPS_EMISSIVITY,
+                   t_init: float = 300.0, t_inf: float = 300.0) -> dict[str, Any]:
+    """Solve 1-D steady composite F-TPS conduction via the Ada/SPARK FFI.
+
+    Runs the Sutton-Graves-scaled surface energy balance and the
+    through-thickness conduction solve entirely in Ada/SPARK, then returns the
+    hot-face flux, both boundary temperatures and the in-depth profile.
+
+    Parameters
+    ----------
+    q_sg_scale : float
+        Sutton-Graves heat flux for this element [W/m^2]. Scale the raw DSMC
+        per-element ``f_1[3]`` (w/m^2) to the processed SG reference before
+        calling; the Ada routine clamps the resulting ratio to [0, 1].
+    ke_raw : float
+        Raw kinetic-energy flux for the element [W/m^2]. May be negative — DSMC
+        single-cell samples are statistical noise, and the clamp floors the
+        ratio at zero rather than heating the TPS backwards.
+    ke_ref : float
+        Positive reference kinetic-energy flux [W/m^2] that maps to
+        ``q_sg_scale``. Must be > 0.
+    ply_thickness, ply_thermal_k : Sequence[float]
+        Layer thicknesses [m] and conductivities [W/(m*K)], hot face first.
+        Defaults to the IRVE-3 flight F-TPS layup. All entries of the fixed
+        ``Max_TPS_Layers`` stack are sent; entries at or beyond the ply count
+        are filled with the outermost real ply so a defensive over-read inside
+        the Ada solver still yields a physically sane resistance.
+    emissivity : float
+        Hot-face emissivity (dimensionless).
+    t_init, t_inf : float
+        Initial back-face (cold-side) temperature and radiative ambient
+        temperature [K].
+
+    Returns
+    -------
+    dict
+        ``q_sg``, ``t_surface``, ``t_back``, ``n_iterations``,
+        ``profile_depth_m`` (33 samples in METRES, hot face first, last sample
+        == ``total_thickness_m``) and ``profile_temp`` (33 temperatures [K] at
+        those depths), plus ``series_resistance_m2K_W`` and
+        ``t_back_exceeds_limit`` evaluated against the IRVE-3 523.15 K
+        structure limit.
+
+    Raises
+    ------
+    ValueError
+        If the ply arrays are ragged/empty, or a non-OK ``TPS_STATUS_*`` is
+        returned. The message names the specific status and its remedy, so the
+        caller does not have to re-derive which input was wrong.
+
+    Notes
+    -----
+    The structure limit is *reported* here rather than enforced by the solver:
+    per the Ada spec, comparing against a limit is a caller policy decision,
+    not a physics-entry-point responsibility. Exceeding it is a result to
+    display, not an error to raise.
+    [Citation: stellarorion_ffi.ads:660-667 — T_Limit note]
+    """
+    # --- Validate the caller's ply arrays before marshalling ----------------
+    # WHY here and not in Ada: length agreement between the two parallel arrays
+    # is a marshalling invariant, and a mismatched pair would otherwise become
+    # a silent read past the end of a Python buffer.
+    n_ply = len(ply_thickness)
+    if n_ply != len(ply_thermal_k):
+        raise ValueError(
+            f"ply_thickness has {n_ply} entries but ply_thermal_k has "
+            f"{len(ply_thermal_k)}; the arrays must be the same length.")
+    if n_ply < 1 or n_ply > TPS_MAX_LAYERS:
+        raise ValueError(
+            f"N_Layers must be 1..{TPS_MAX_LAYERS} (got {n_ply}).")
+
+    # Fill the fixed-capacity stack. Unused slots replicate the outermost real
+    # ply, matching TPS_Layup_IRVE3's `others =>` filler in the Ada preset.
+    thk = _Ply_Array_CT()
+    kdl = _Ply_Array_CT()
+    for i in range(TPS_MAX_LAYERS):
+        src = i if i < n_ply else 0
+        thk[i] = float(ply_thickness[src])
+        kdl[i] = float(ply_thermal_k[src])
+
+    # Physical through-thickness extent of the ACTIVE plies. The Ada profile
+    # already reports Depth_M in metres, so this is not needed to rescale the
+    # axis; it is surfaced so a caller can check the last sample really lands
+    # on the cold face (profile_depth_m[-1] == total_thickness_m) without
+    # re-deriving the sum. Computed over the active plies only, so the filler
+    # slots above cannot inflate it.
+    total_thickness_m = float(sum(float(t) for t in ply_thickness))
+
+    # Series thermal resistance [m^2*K/W], the quantity the conduction solve
+    # actually inverts. Surfaced for diagnostics: T_Surface - T_Back must equal
+    # q_SG * R, so a caller can check the solver's self-consistency without
+    # reimplementing any conduction math.
+    #
+    # It is computed AFTER the FFI call and its status check, deliberately: this
+    # divides t/k, so a non-positive k would raise a bare ZeroDivisionError
+    # before Ada ever got to reject the ply with its own status=6 and a message
+    # naming the offending ply. Ordering it after the check means every invalid
+    # ply surfaces as the same clear, specific ValueError the other bad inputs
+    # produce. (Verified: k = 0 previously raised ZeroDivisionError.)
+
+    # Allocate the output storage. `profile` is always passed (never NULL) so
+    # the Ada side can sample the full in-depth field.
+    status = ctypes.c_int(0)
+    q_sg = ctypes.c_double(0.0)
+    t_surface = ctypes.c_double(0.0)
+    t_back = ctypes.c_double(0.0)
+    n_iter = ctypes.c_int(0)
+    profile = _Profile_Buffer_CT()
+
+    _ada_lib.TPS_Conduction_C(
+        ctypes.c_double(q_sg_scale), ctypes.c_double(ke_raw),
+        ctypes.c_double(ke_ref), ctypes.c_int(n_ply),
+        thk, kdl,
+        ctypes.c_double(emissivity), ctypes.c_double(t_init),
+        ctypes.c_double(t_inf),
+        ctypes.byref(status), ctypes.byref(q_sg), ctypes.byref(t_surface),
+        ctypes.byref(t_back), ctypes.byref(n_iter), profile)
+
+    # Surface every failure with the specific status and its remedy; never
+    # return a partial/zeroed result that a caller could mistake for physics.
+    if status.value != TPS_STATUS_OK:
+        remedy = _TPS_STATUS_REMEDY.get(status.value, "unknown status code")
+        raise ValueError(
+            f"TPS_Conduction_C failed: status={status.value} ({remedy}) "
+            f"[N_Layers={n_ply}, emissivity={emissivity}, "
+            f"t_init={t_init}, t_inf={t_inf}, ke_raw={ke_raw}, ke_ref={ke_ref}, "
+            f"q_sg_scale={q_sg_scale}]")
+
+    # Reached only once Status == TPS_STATUS_OK, so every k in the active stack
+    # is >= 1e-3 and every t >= 1e-4: the divisions below cannot trap.
+    series_resistance_m2K_W = float(
+        sum(float(t) / float(k) for t, k in zip(ply_thickness, ply_thermal_k)))
+
+    return {
+        "q_sg": q_sg.value,
+        "t_surface": t_surface.value,
+        "t_back": t_back.value,
+        "n_iterations": n_iter.value,
+        # Depth_M is PHYSICAL depth in metres on the Ada side (see
+        # stellarorion_ffi.ads TPS_Profile_Sample), so it is surfaced under
+        # that name with no rescaling. profile_depth_m[0] is the hot face and
+        # profile_depth_m[-1] is the cold face, == total_thickness_m.
+        "profile_depth_m": [profile[i].Depth_M
+                            for i in range(TPS_PROFILE_SAMPLES)],
+        "profile_temp": [profile[i].Temp_K
+                         for i in range(TPS_PROFILE_SAMPLES)],
+        "total_thickness_m": total_thickness_m,
+        "series_resistance_m2K_W": series_resistance_m2K_W,
+        "t_back_exceeds_limit": t_back.value > IRVE3_FTPS_STRUCT_LIMIT_K,
+    }

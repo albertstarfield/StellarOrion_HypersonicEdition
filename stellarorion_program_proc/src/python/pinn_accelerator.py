@@ -17,7 +17,7 @@ Requires: deepxde, torch (installed via requirements.txt).
 import os
 import sys
 from collections.abc import Callable, Sequence
-from typing import Protocol
+from typing import Protocol, cast
 
 import numpy as np
 
@@ -115,6 +115,52 @@ class AxisymmetricPDE:
     # Placeholder — DeepXDE dynamic PDE is built at train time
 
 
+def _hessian(
+    y: np.ndarray, x: np.ndarray, component: int, i: int, j: int
+) -> np.ndarray:
+    """Typed, fail-loud accessor for ``dde.grad.hessian``.
+
+    AXIOM. DeepXDE 1.15.0 ships ``grad.hessian`` with NO return annotation and a
+    body that only returns on the two recognised autodiff modes, so it has an
+    implicit ``return None`` fall-through. Pyrefly therefore types every call
+    site as ``None``, which made ``u_xx + u_yy`` an unsupported operation.
+
+    THEORY. With ``deepxde.config.autodiff`` set to ``"reverse"`` (the default
+    for the PyTorch backend this module pins) the first branch is taken and a
+    backend tensor is returned; ``"forward"`` is the only other legal value.
+    Neither legal configuration reaches the fall-through.
+
+    APPLICATION. Narrow the fall-through away explicitly and raise a loud
+    RuntimeError if it is ever hit, rather than letting ``None`` propagate into
+    the residual arithmetic as a silent NaN. The cast records the upstream
+    annotation gap; the runtime guard makes the cast unreachable.
+
+    Args:
+        y: Network output tensor, columns [rho, u, v, T].
+        x: Independent-variable tensor.
+        component: Index into the output columns to differentiate.
+        i: Row of the Hessian (input axis).
+        j: Column of the Hessian (input axis).
+
+    Returns:
+        The second partial derivative of shape (batch, 1).
+
+    Raises:
+        RuntimeError: If DeepXDE returns ``None``, which means autodiff is set
+            to an unsupported mode.
+
+    References:
+    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.gradients.html
+    """
+    value = dde.grad.hessian(y, x, component=component, i=i, j=j)
+    if value is None:
+        raise RuntimeError(
+            "deepxde.grad.hessian returned None; unsupported autodiff mode "
+            f"{dde.config.autodiff!r} (expected 'reverse' or 'forward')."
+        )
+    return cast("np.ndarray", value)
+
+
 def _make_pde():
     """Build the axisymmetric compressible Navier-Stokes PDE for DeepXDE.
 
@@ -163,12 +209,12 @@ def _make_pde():
         p_y = R_GAS * (rho_y * T + rho * T_y)
 
         # Laplacians
-        u_xx = dde.grad.hessian(Y, x, component=1, i=0, j=0)
-        u_yy = dde.grad.hessian(Y, x, component=1, i=1, j=1)
-        v_xx = dde.grad.hessian(Y, x, component=2, i=0, j=0)
-        v_yy = dde.grad.hessian(Y, x, component=2, i=1, j=1)
-        T_xx = dde.grad.hessian(Y, x, component=3, i=0, j=0)
-        T_yy = dde.grad.hessian(Y, x, component=3, i=1, j=1)
+        u_xx = _hessian(Y, x, component=1, i=0, j=0)
+        u_yy = _hessian(Y, x, component=1, i=1, j=1)
+        v_xx = _hessian(Y, x, component=2, i=0, j=0)
+        v_yy = _hessian(Y, x, component=2, i=1, j=1)
+        T_xx = _hessian(Y, x, component=3, i=0, j=0)
+        T_yy = _hessian(Y, x, component=3, i=1, j=1)
 
         # Continuity: div(r * rho * u) = 0  (axisymmetric)
         # [Citation: Anderson (2006), "Hypersonic and High-Temperature Gas Dynamics", §3.2]
@@ -198,20 +244,50 @@ def _make_pde():
 #  Boundary condition builders
 # ========================================================================
 
-def _make_boundary_conditions(domain_bounds: Sequence[float] | np.ndarray):
+def _make_boundary_conditions(
+    domain_bounds: Sequence[float] | np.ndarray,
+    geom: dde.geometry.Rectangle | None = None,
+):
     """Generate DeepXDE boundary conditions for the flow domain.
 
+    AXIOM. ``deepxde.icbc.DirichletBC`` and ``deepxde.icbc.NeumannBC`` share
+    the signature ``(geometry, func, on_boundary, ...)``. The geometry
+    argument is mandatory: it is what tells DeepXDE which points lie on the
+    boundary and how ``on_boundary`` is interpreted.
+
+    THEORY. Omitting the geometry cannot yield a usable condition — DeepXDE
+    raises at construction time — so every boundary condition must receive the
+    domain geometry, either supplied by the caller or derived here from
+    ``domain_bounds``.
+
+    APPLICATION. ``geom`` is passed as the first positional argument of all nine
+    constructors. When the caller supplies none, a ``Rectangle`` spanning
+    ``[xmin, xmax]`` x ``[0, ymax]`` is built, matching the axisymmetric
+    convention ``y_min = 0`` that the edge predicates below already assume.
+    Keeping the parameter optional preserves the single-argument self-test
+    calls while letting a future caller reuse the geometry already held by the
+    ``deepxde.data.PDE``.
+
     Args:
-        domain_bounds: [xmin, xmax, ymax] — domain extents (y_min = 0 by axisymmetry)
+        domain_bounds: [xmin, xmax, ymax] — domain extents (y_min = 0 by
+            axisymmetry).
+        geom: Optional explicit domain geometry. When None, a Rectangle is
+            constructed from ``domain_bounds``.
+
+    Returns:
+        Nine boundary conditions, ordered inlet (rho, u, v, T), outlet,
+        symmetry axis (v, T), then far-field (rho, u).
 
     References:
     - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html
-    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html
+    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.geometry.html
     """
     xmin, xmax, ymax = domain_bounds
+    if geom is None:
+        geom = dde.geometry.Rectangle([xmin, 0.0], [xmax, ymax])
 
     # --- inlet edge predicate ---
-    def boundary_left(x: np.ndarray, on_boundary: np.ndarray) -> np.ndarray:
+    def boundary_left(x: np.ndarray, on_boundary: np.ndarray) -> bool | np.ndarray:
         """Inlet boundary predicate: points on the left edge (x == xmin).
 
         Reads column 0 only, so it requires 0 < x.shape[1]. DeepXDE passes
@@ -228,7 +304,7 @@ def _make_boundary_conditions(domain_bounds: Sequence[float] | np.ndarray):
         return on_boundary and np.isclose(x[0], xmin)
 
     # --- outlet edge predicate ---
-    def boundary_right(x: np.ndarray, on_boundary: np.ndarray) -> np.ndarray:
+    def boundary_right(x: np.ndarray, on_boundary: np.ndarray) -> bool | np.ndarray:
         """Outlet boundary predicate: points on the right edge (x == xmax).
 
         Reads column 0 only, so it requires 0 < x.shape[1]. DeepXDE passes
@@ -245,7 +321,7 @@ def _make_boundary_conditions(domain_bounds: Sequence[float] | np.ndarray):
         return on_boundary and np.isclose(x[0], xmax)
 
     # --- far-field edge predicate ---
-    def boundary_top(x: np.ndarray, on_boundary: np.ndarray) -> np.ndarray:
+    def boundary_top(x: np.ndarray, on_boundary: np.ndarray) -> bool | np.ndarray:
         """Far-field boundary predicate: points on the top edge (y == ymax).
 
         Reads column 1 only, so it requires 1 < x.shape[1]. DeepXDE passes
@@ -262,7 +338,7 @@ def _make_boundary_conditions(domain_bounds: Sequence[float] | np.ndarray):
         return on_boundary and np.isclose(x[1], ymax)
 
     # --- symmetry-axis edge predicate ---
-    def boundary_bottom(x: np.ndarray, on_boundary: np.ndarray) -> np.ndarray:
+    def boundary_bottom(x: np.ndarray, on_boundary: np.ndarray) -> bool | np.ndarray:
         """Symmetry-axis boundary predicate: points on the bottom edge (y == 0).
 
         Reads column 1 only, so it requires 1 < x.shape[1]. DeepXDE passes
@@ -279,7 +355,7 @@ def _make_boundary_conditions(domain_bounds: Sequence[float] | np.ndarray):
         return on_boundary and np.isclose(x[1], 0.0)
 
     # --- body-surface region predicate ---
-    def boundary_body(x: np.ndarray, on_boundary: np.ndarray) -> np.ndarray:
+    def boundary_body(x: np.ndarray, on_boundary: np.ndarray) -> bool | np.ndarray:
         """Body surface: approximate as a hemispherical nose at x ~ 0.
 
         Reads columns 0 and 1, so it requires 1 < x.shape[1] (which also
@@ -297,37 +373,37 @@ def _make_boundary_conditions(domain_bounds: Sequence[float] | np.ndarray):
 
     # Inlet (left boundary): freestream conditions
     bc_inlet_rho = dde.icbc.DirichletBC(
-        _const_field(RHO_INF), boundary_left, component=0
+        geom, _const_field(RHO_INF), boundary_left, component=0
     )
     bc_inlet_u = dde.icbc.DirichletBC(
-        _const_field(V_STREAM), boundary_left, component=1
+        geom, _const_field(V_STREAM), boundary_left, component=1
     )
     bc_inlet_v = dde.icbc.DirichletBC(
-        _const_field(0.0), boundary_left, component=2
+        geom, _const_field(0.0), boundary_left, component=2
     )
     bc_inlet_T = dde.icbc.DirichletBC(
-        _const_field(T_INF), boundary_left, component=3
+        geom, _const_field(T_INF), boundary_left, component=3
     )
 
     # Outlet (right boundary): zero-gradient (Neumann)
     bc_outlet = dde.icbc.NeumannBC(
-        _const_field(0.0), boundary_right, component=1
+        geom, _const_field(0.0), boundary_right, component=1
     )
 
     # Symmetry (bottom, y=0): v = 0, dT/dy = 0
     bc_sym_v = dde.icbc.DirichletBC(
-        _const_field(0.0), boundary_bottom, component=2
+        geom, _const_field(0.0), boundary_bottom, component=2
     )
     bc_sym_T = dde.icbc.NeumannBC(
-        _const_field(0.0), boundary_bottom, component=3
+        geom, _const_field(0.0), boundary_bottom, component=3
     )
 
     # Far-field (top): freestream
     bc_far_rho = dde.icbc.DirichletBC(
-        _const_field(RHO_INF), boundary_top, component=0
+        geom, _const_field(RHO_INF), boundary_top, component=0
     )
     bc_far_u = dde.icbc.DirichletBC(
-        _const_field(V_STREAM), boundary_top, component=1
+        geom, _const_field(V_STREAM), boundary_top, component=1
     )
 
     return [
@@ -336,6 +412,46 @@ def _make_boundary_conditions(domain_bounds: Sequence[float] | np.ndarray):
         bc_sym_v, bc_sym_T,
         bc_far_rho, bc_far_u,
     ]
+
+
+def _report_unsupported_checkpoint_restore(save_path: str) -> None:
+    """Report that an existing PINN checkpoint cannot be restored, then retrain.
+
+    AXIOM. DeepXDE exposes no model-restore API: its ``dde.utils`` namespace has
+    no ``ensure_serializable`` member, and the artifact written by
+    ``torch.save(model.state_dict(), save_path)`` is a bare weight dict that
+    cannot be reloaded without the network shape, which depends on the number
+    of columns in the parsed grid file.
+
+    THEORY. Every previous ``dde.utils.ensure_serializable(save_path)`` call
+    therefore raised ``AttributeError`` during attribute lookup — before any
+    filesystem access — and the enclosing ``except Exception`` swallowed it and
+    fell through to retraining. The restore path could never succeed, and the
+    old ``"[!] restore failed"`` notice misreported a non-existent capability
+    as a transient failure.
+
+    APPLICATION. The impossible restore is replaced by this single explicit
+    notice, so the ignored checkpoint is visible and the reason is stated
+    instead of implied. Training still runs afterwards, so observable behaviour
+    is unchanged: the PINN is always trained from the grid file.
+
+    Args:
+        save_path: Filesystem path of the checkpoint that exists but cannot be
+            loaded. Printed verbatim so the user can locate or remove it.
+
+    Returns:
+        None. Emits two lines on stdout: one naming the ignored checkpoint, one
+        stating that training proceeds from the grid file.
+
+    References:
+    - https://deepxde.readthedocs.io/en/latest/modules/deepxde.utils.html
+    - https://pytorch.org/docs/stable/generated/torch.save.html
+    """
+    print(
+        "[!] Checkpoint exists but DeepXDE provides no model-restore API; "
+        f"ignoring {save_path}."
+    )
+    print("[*] Retraining PINN from the grid file.")
 
 
 # ========================================================================
@@ -488,27 +604,16 @@ class PINNAccelerator:
         # Mark pipeline step as running (if checkpoint provided)
         if pipeline_checkpoint is not None:
             if pipeline_checkpoint.is_step_completed("pinn"):
-                print("[checkpoint] PINN step already completed — restoring model.")
+                print("[checkpoint] PINN step already completed.")
                 if save_path and os.path.exists(save_path):
-                    try:
-                        self.model = dde.utils.ensure_serializable(save_path)
-                        print("[+] PINN restored from pipeline checkpoint.")
-                        return
-                    except Exception:  # noqa: BLE001
-                        print("[!] PINN restore from checkpoint failed. Retraining ...")
+                    _report_unsupported_checkpoint_restore(save_path)
             pipeline_checkpoint.mark_step_running("pinn")
 
-        # Check for existing model checkpoint
+        # Check for existing model checkpoint. DeepXDE ships no model-restore
+        # API, so an existing checkpoint is reported and training proceeds
+        # (see _report_unsupported_checkpoint_restore for the derivation).
         if save_path and os.path.exists(save_path):
-            print(f"[*] Restoring PINN from checkpoint: {save_path}")
-            try:
-                self.model = dde.utils.ensure_serializable(save_path)
-                print("[+] PINN restored successfully.")
-                if pipeline_checkpoint is not None:
-                    pipeline_checkpoint.mark_step_completed("pinn", output_files=[save_path])
-                return
-            except Exception:  # noqa: BLE001
-                print("[!] Checkpoint restore failed. Retraining ...")
+            _report_unsupported_checkpoint_restore(save_path)
 
         # Parse grid data
         print(f"[*] Parsing grid file: {grid_file}")
@@ -534,7 +639,10 @@ class PINNAccelerator:
             return True
 
         # Build DeepXDE dataset
-        _observe_x = dde.bc.PointSet(xy_norm)
+        # NOTE: the previous `_observe_x = dde.bc.PointSet(xy_norm)` was removed.
+        # DeepXDE 1.15.0 has no `deepxde.bc` submodule, so the access raised
+        # AttributeError on every call, and `_observe_x` was never read.
+        # Interpolation points are supplied by dde.data.PDE(num_domain=...) below.
         ic = dde.icbc.IC(
             xy_norm,
             _ic_zero_values,
@@ -583,7 +691,15 @@ class PINNAccelerator:
         )
 
         # Network: 2 inputs (x, y) -> 4 outputs (rho, vx, vy, T)
-        net = dde.nn.FNN([2] + [64] * 3 + [n_output], "tanh", "Glorot normal")
+        # deepxde/nn/__init__.py assigns network classes with setattr() after
+        # importlib.import_module (dynamic backend dispatch), so `FNN` is not
+        # statically resolvable. Documented as supported upstream:
+        # "Users can directly import deepxde.nn.<network_name> ... the package
+        #  will dispatch the network name to the actual implementation".
+        # https://deepxde.readthedocs.io/en/latest/modules/deepxde.nn.html
+        net = dde.nn.FNN(  # pyrefly: ignore[missing-attribute]
+            [2] + [64] * 3 + [n_output], "tanh", "Glorot normal"
+        )
 
         model = dde.Model(data, net)
         model.compile("adam", lr=1e-3)

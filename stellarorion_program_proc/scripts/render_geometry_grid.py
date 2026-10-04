@@ -1,41 +1,52 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-SCRIPT: render_geometry_grid.py — 87-Panel 3D HIAD Geometry Grid
+SCRIPT: render_geometry_grid.py — 88-Panel 3D HIAD Geometry Grid
 ================================================================================
 
 Renders hiad_geometry_grid.png — a 10x9 grid of 3D vehicle panels, one per
 geometry evaluated (or referenced) during Bayesian optimization, each colored
 by its cost J on a single shared logarithmic colormap.
 
-Panel composition (87 = 1 + 15 + 70 + 1):
+Panel composition (88 = 1 + 15 + 70 + 1 + 1):
   [1]     IRVE-3 default baseline          (explicit reference)
   [15]    CCD design points                 (ccd_samples in JSON)
   [70]    BO evaluation history             (20 LHD initial + 50 BO)
-  [1]     Optimized optimum                 (explicit, highlighted)
+  [1]     Round-1 optimum                   (optimized, highlighted)
+  [1]     Round-2 optimum                   (optimized_round2, highlighted)
+          = the post-hybrid-gate re-optimization winner. Kennedy & O'Hagan
+            (2000) multi-fidelity correction c = clamp(q_hybrid/q_analytic)
+            was applied to J(x)'s heat-load term and the optimizer re-ran;
+            this is the design the gate actually converged on, so omitting it
+            would misrepresent the current state of the search.
 
+Grid sizing: 10 rows x 9 cols = 90 slots for 88 panels -> 2 trailing blanks.
 AXIOMS:
   A1: A geometry is fully determined by (R_N, r_tor, half_cone_deg).
-  A2: Evaluated costs span >900x (~1.44 basin to ~1367 penalized corner);
+  A2: Evaluated costs span >900x (~1.14 basin to ~1367 penalized corner);
       a linear color norm would crush the basin (same fact as
       render_bo_3d_plot.py cost_norm A1).
   A3: hiad_geometry.generate_cross_section is the single profile source —
       no local re-derivation of the 4-segment math (no copy-paste drift).
   A4: Panel data comes ONLY from hiad_optimization_results.json — the grid
       never re-runs the optimizer (pure post-processing).
+  A5: `optimized_round2` is OPTIONAL in the schema: it only exists after the
+      hybrid validation gate has run with --hybrid-validate. Therefore its
+      absence is a WARN (87 panels, grid still renders) and never a crash —
+      but it is never a SILENT drop (the omission is printed to stderr).
 
 THEORIES:
   T1: From A1+A3: revolving the shared meridian profile 360 deg about the
       axial axis produces the axisymmetric HIAD body; every panel uses the
       same revolution code path, so shapes are geometrically comparable.
-  T2: From A2: ONE LogNorm shared by all 87 panels makes panel colors
+  T2: From A2: ONE LogNorm shared by all 88 panels makes panel colors
       directly comparable; per-panel norms would encode nothing.
   T3: From A4: if the JSON is missing/malformed the script fails loudly
       (FileNotFoundError/ValueError with fix instructions), never invents
       data and never exits 0 on missing input.
 
 APPLICATIONS:
-  load_results -> build_panel_list (87) -> per-panel plot_surface under a
+  load_results -> build_panel_list (88) -> per-panel plot_surface under a
   shared view/norm/limits -> single colorbar -> savefig (Agg backend).
 
 CITATIONS:
@@ -86,11 +97,12 @@ _ACCENT = "#e94560"
 _DIM = "#555555"
 _EDGE = "#0f3460"
 
-# Panel-grid geometry: 10 rows x 9 cols = 90 slots, first 87 filled.
-_EXPECTED_PANELS = 87
+# Panel-grid geometry: 10 rows x 9 cols = 90 slots, first 88 filled.
+# 88 = 1 default + 15 CCD + 70 history + 1 round-1 optimum + 1 round-2 optimum.
+_EXPECTED_PANELS = 88
 _COLS = 9
 _ROWS = 10
-_N_EMPTY_SLOTS = _ROWS * _COLS - _EXPECTED_PANELS  # = 3 trailing blanks
+_N_EMPTY_SLOTS = _ROWS * _COLS - _EXPECTED_PANELS  # = 2 trailing blanks
 
 # Revolution resolution: 48 azimuthal steps x 57 profile pts ≈ 2.7k verts.
 # [Citation: hiad_geometry.generate_cross_section default n_per_segment=15
@@ -215,7 +227,7 @@ def _point_panel(label: str, kind: str, src: dict) -> dict:
 
     Parameters:
         label -- human-readable panel title
-        kind  -- one of: default, ccd, initial, bo, optimum
+        kind  -- one of: default, ccd, initial, bo, optimum, round2
         src   -- dict carrying R_N, r_tor, half_cone_deg, cost
 
     Returns:
@@ -252,33 +264,44 @@ def _point_panel(label: str, kind: str, src: dict) -> dict:
 #
 # AXIOMS:
 #   A4: every field is read from the validated `data` dict (load_results).
-#   Panel order = default, CCD(15), history(70 by iteration), optimum.
+#   Panel order = default, CCD(15), history(70 by iteration),
+#   round-1 optimum, round-2 optimum.
+#   A5: `optimized_round2` is OPTIONAL — it only exists after
+#       `hiad_optimizer.py --hybrid-validate` has run. Its absence is a
+#       WARN on stderr, never a crash and never a silent drop.
 # THEORIES:
 #   T1: fixed order makes the figure reproducible (same JSON -> same grid).
-#   If len != 87 the doc contract drifted — WARN loudly, still render
+#   If len != 88 the doc contract drifted — WARN loudly, still render
 #   (a changed optimizer config is not a reason to withhold diagnostics).
+#   From A5: len == 87 means the gate has not run; that is the one
+#   legitimate shortfall, so it is reported as an explicit warning naming
+#   the missing key and the command that produces it.
 # APPLICATIONS:
-#   list comprehension over ccd + sorted history + two pinned references.
+#   list comprehension over ccd + sorted history + three pinned references.
 # CITATIONS:
-#   [3] ccd_samples / history / default / optimized keys
+#   [3] ccd_samples / history / default / optimized / optimized_round2 keys
 #   [5] history iteration ordering (LHD 0..19, BO 20..69)
+#   [7] Kennedy & O'Hagan (2000) — multi-fidelity correction that produced
+#       the round-2 re-optimization stored under `optimized_round2`
 #
 # TIMING ANALYSIS
 #   Estimated Processing Time: O(H log H) sort, H=70
-#   CPU Time: <1 ms    WCET: 5 ms    Space Complexity: O(P), P=87 panels
+#   CPU Time: <1 ms    WCET: 5 ms    Space Complexity: O(P), P=88 panels
 # ===========================================================================
 def build_panels(data: dict) -> list:
-    """Assemble the ordered panel list (default + CCD + history + optimum).
+    """Assemble the ordered panel list (default + CCD + history + optima).
 
     Parameters:
         data -- validated optimizer JSON (load_results output)
 
     Returns:
-        list of panel dicts (label, kind, R_N, r_tor, half_cone_deg, cost)
+        list of panel dicts (label, kind, R_N, r_tor, half_cone_deg, cost),
+        normally 88 entries; 87 when `optimized_round2` is absent (A5).
 
     Raises:
-        ValueError -- default/optimized/ccd_samples malformed (propagates
-            from _point_panel; safety fallback: no half-built grid)
+        ValueError -- default/optimized/ccd_samples/optimized_round2
+            malformed (propagates from _point_panel; safety fallback: no
+            half-built grid)
     """
     panels: list = [
         _point_panel("default (IRVE-3)", "default", data["default"]),
@@ -291,13 +314,34 @@ def build_panels(data: dict) -> list:
         panels.append(
             _point_panel(f"{phase} #{e['iteration']}", e["type"], e)
         )
-    panels.append(_point_panel("OPTIMUM", "optimum", data["optimized"]))
+    panels.append(_point_panel("OPTIMUM R1", "optimum", data["optimized"]))
+
+    # A5: round-2 is the gate-corrected winner. Absence is expected on a
+    # pre-gate JSON, so degrade to 87 panels — but ALWAYS say so (no silent
+    # truncation: a reader must not mistake 87 panels for the full picture).
+    round2 = data.get("optimized_round2")
+    if round2 is None:
+        print(
+            "WARNING: 'optimized_round2' absent from the optimizer JSON — "
+            f"rendering {_EXPECTED_PANELS - 1} panels instead of "
+            f"{_EXPECTED_PANELS}.\n"
+            "  Cause: the hybrid validation gate has not produced a "
+            "round-2 re-optimization yet.\n"
+            "  Fix:   python3 src/python/hiad_optimizer.py --hybrid-validate",
+            file=sys.stderr,
+        )
+    else:
+        panels.append(
+            _point_panel("OPTIMUM R2 (gate-corrected)", "round2", round2)
+        )
 
     n_ccd = sum(1 for p in panels if p["kind"] == "ccd")
     n_hist = sum(1 for p in panels if p["kind"] in ("initial", "bo"))
     print(
         f"  Panels built: {len(panels)} "
-        f"(1 default + {n_ccd} CCD + {n_hist} history + 1 optimum)"
+        f"(1 default + {n_ccd} CCD + {n_hist} history "
+        f"+ {sum(1 for p in panels if p['kind'] == 'optimum')} R1 optimum "
+        f"+ {sum(1 for p in panels if p['kind'] == 'round2')} R2 optimum)"
     )
     if len(panels) != _EXPECTED_PANELS:
         print(
@@ -322,7 +366,7 @@ def build_panels(data: dict) -> list:
 # CITATIONS: [6] matplotlib LogNorm; [4] render_bo_3d_plot.cost_norm
 #
 # TIMING ANALYSIS
-#   Estimated Processing Time: O(P) min/max scan, P=87
+#   Estimated Processing Time: O(P) min/max scan, P=88
 #   CPU Time: <0.1 ms    WCET: 1 ms    Space Complexity: O(1)
 # ===========================================================================
 def cost_norm(costs: np.ndarray) -> Normalize:
@@ -440,14 +484,19 @@ def draw_panel(ax, panel: dict, norm: Normalize, cmap, x_max: float, r_max: floa
         X, Y, Z, facecolors=None, color=face,
         edgecolor="none", shade=True, linewidth=0, antialiased=False,
     )
-    # Equal limits => shapes comparable across all 87 panels (T1)
+    # Equal limits => shapes comparable across all 88 panels (T1)
     ax.set_xlim(0.0, x_max * 1.05)
     ax.set_ylim(-r_max * 1.15, r_max * 1.15)
     ax.set_zlim(-r_max * 1.15, r_max * 1.15)
     ax.view_init(elev=_ELEV, azim=_AZIM)
     ax.set_axis_off()
-    title_color = _ACCENT if panel["kind"] == "optimum" else _TEXT
-    weight = "bold" if panel["kind"] in ("optimum", "default") else "normal"
+    # Both optima (R1 and the gate-corrected R2) get the accent colour and
+    # bold weight — they are the two headline designs of the figure, and
+    # de-emphasising R2 would hide the current converged result.
+    title_color = _ACCENT if panel["kind"] in ("optimum", "round2") else _TEXT
+    weight = "bold" if panel["kind"] in (
+        "optimum", "round2", "default",
+    ) else "normal"
     ax.set_title(
         f"{panel['label']}\nJ={panel['cost']:.4g}",
         color=title_color, fontsize=5.5, fontweight=weight, pad=1,
@@ -465,7 +514,7 @@ def draw_panel(ax, panel: dict, norm: Normalize, cmap, x_max: float, r_max: floa
 # CITATIONS: [1] profile generator.
 #
 # TIMING ANALYSIS
-#   Estimated Processing Time: O(P*N) scan   CPU Time: <1 ms (P=87, N=57)
+#   Estimated Processing Time: O(P*N) scan   CPU Time: <1 ms (P=88, N=57)
 #   WCET: 5 ms    Space Complexity: O(1)
 # ===========================================================================
 def compute_global_limits(panels: list) -> tuple:
@@ -524,22 +573,22 @@ def compute_global_limits(panels: list) -> tuple:
 #   [4] render_bo_3d_plot.main — structure/exit-code precedent
 #
 # TIMING ANALYSIS
-#   Estimated Processing Time: O(P*N*M) draw dominates; P=87, N=57, M=48
-#   CPU Time: 8-30 s typical (87 Agg 3D surfaces at dpi=100)
+#   Estimated Processing Time: O(P*N*M) draw dominates; P=88, N=57, M=48
+#   CPU Time: 8-30 s typical (88 Agg 3D surfaces at dpi=100)
 #   WCET: 120 s on a cold font cache / slow laptop
 #   Space Complexity: O(P*N*M) ≈ 1 MB surface buffers + figure raster
 #   Hardware Assumptions: macOS arm64, Agg software rendering (no GPU)
-#   Derivation: draw(87) x plot_surface(57*48 verts) + savefig raster
+#   Derivation: draw(88) x plot_surface(57*48 verts) + savefig raster
 # ===========================================================================
 def main() -> int:
-    """Render hiad_geometry_grid.png (87 3D panels + colorbar).
+    """Render hiad_geometry_grid.png (88 3D panels + colorbar).
 
     Returns:
         0 on full success, 1 on any data/panel/save failure (never 0 on
         error).
     """
     print("=" * 72)
-    print("  Rendering 87-panel HIAD 3D geometry grid")
+    print(f"  Rendering {_EXPECTED_PANELS}-panel HIAD 3D geometry grid")
     print("=" * 72)
     panel_errors: list = []
 
@@ -571,7 +620,7 @@ def main() -> int:
             axes_list.append(ax)
             try:
                 draw_panel(ax, panel, norm, cmap, x_max, r_max)
-            except Exception as exc:  # noqa: BLE001 — panel isolation is deliberate: one bad geometry must not kill the other 86
+            except Exception as exc:  # noqa: BLE001 — panel isolation is deliberate: one bad geometry must not kill the other panels
                 panel_errors.append(panel["label"])
                 print(f"ERROR panel '{panel['label']}': {exc}",
                       file=sys.stderr)
@@ -581,14 +630,14 @@ def main() -> int:
             if (i + 1) % 15 == 0:
                 print(f"  ... {i + 1}/{len(panels)} panels drawn")
 
-        # Trailing empty slots (90 - 87 = 3) — blank, no axes clutter
+        # Trailing empty slots (90 - 88 = 2) — blank, no axes clutter
         for slot in range(len(panels), _ROWS * _COLS):
             ax = fig.add_subplot(
                 gs[slot // _COLS, slot % _COLS], projection="3d"
             )
             ax.set_axis_off()
 
-        # --- Shared colorbar (T2) via fixed fig axes (robust w/ 87 axes) ---
+        # --- Shared colorbar (T2) via fixed fig axes (robust w/ 88 axes) ---
         cax = fig.add_axes([0.945, 0.15, 0.012, 0.70])
         sm = ScalarMappable(norm=norm, cmap=cmap)
         sm.set_array([])
@@ -597,12 +646,18 @@ def main() -> int:
         cb.set_label("cost J  (log scale)", color=_TEXT, fontsize=10)
 
         imp = data.get("improvement", {})
-        opt = data["optimized"]
+        # A2/T2: the headline J must be the BEST cost actually RENDERED.
+        # Once the round-2 optimum is in the panel set the global minimum is
+        # the gate-corrected J, not round-1 J(x) — printing
+        # data["optimized"]["cost"] here would understate the very
+        # improvement the shared colormap already shows.
+        best_cost = min(float(p["cost"]) for p in panels)
+        n_optima = sum(1 for p in panels if p["kind"] in ("optimum", "round2"))
         fig.suptitle(
-            "StellarOrion HIAD — 87-Panel Geometry Grid "
+            f"StellarOrion HIAD — {_EXPECTED_PANELS}-Panel Geometry Grid "
             "(color = cost J, log scale)\n"
-            f"1 default + 15 CCD + 70 history (20 LHD + 50 BO) + optimum · "
-            f"best J = {opt['cost']:.4f} · "
+            f"1 default + 15 CCD + 70 history (20 LHD + 50 BO) + "
+            f"{n_optima} optima · best J = {best_cost:.4f} · "
             f"Cd improvement = {imp.get('cd_pct', float('nan')):.2f}% · "
             f"view elev={_ELEV} azim={_AZIM}",
             color="white", fontsize=14, fontweight="bold", y=0.965,

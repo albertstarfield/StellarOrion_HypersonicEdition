@@ -38,6 +38,15 @@ with StellarOrion_Physics;     use StellarOrion_Physics;
 with StellarOrion_Postprocessing; use StellarOrion_Postprocessing;
 with StellarOrion_Environment; use StellarOrion_Environment;
 with Interfaces.C.Strings;
+with Ada.Exceptions;
+
+--  Operator visibility for the C scalar types. Interfaces.C is `with`ed but not
+--  `use`d, so its primitive operators are not directly visible (GNAT 6.3).
+--  A use-type clause is the minimal, scope-local remedy: a blanket
+--  `use Interfaces.C` would import 80+ names and re-create the overloading
+--  clashes that the qualified style below exists to avoid.
+use type Interfaces.C.double;
+use type Interfaces.C.int;
 
 package body StellarOrion_FFI is
 
@@ -612,5 +621,398 @@ package body StellarOrion_FFI is
       when others =>
          return 1.225;
    end Atmosphere_Density_C;
+
+   -- -------------------------------------------------------------------------
+   --  TPS_Conduction_C
+   -- -------------------------------------------------------------------------
+   --  Per-element composite F-TPS conduction across the C ABI.
+   --
+   --  AXIOMS / THEORIES: see stellarorion_ffi.ads, section
+   --  "TPS_Conduction_C — per-element composite F-TPS conduction (C ABI)".
+   --  Restated here only where it shapes the code:
+   --
+   --  A2 (sentinel-first): every out-parameter is assigned BEFORE the first
+   --      validation test. The failure paths below then only need to set
+   --      Status — they cannot leave a caller holding garbage.
+   --  T1 (validation == the subprogram preconditions): each check below is
+   --      written against the EXACT bound appearing in the Pre => of
+   --      SG_Scaled_Element_Flux, TPS_Conduction or TPS_Conduction_Profile.
+   --      If a bound is later tightened in the physics spec, this
+   --      validation becomes the thing that reports it, and the Status code
+   --      names the offending property — which is why the codes are per
+   --      property (BAD_EMISSIVITY, BAD_TEMPERATURE, BAD_PLY_PROPERTY)
+   --      rather than one generic BAD_INPUT.
+   --  T2 (no partial output): Status := TPS_STATUS_OK is the LAST statement,
+   --      after the profile buffer is fully written.
+   --  A4 (nothing escapes): the handler catches everything, logs through
+   --      libc printf, and RETURNS normally. An exception crossing a C frame
+   --      is undefined behaviour.
+   --
+   --  INPUT/OUTPUT DIFFERENCE (explicitly stated, per house style):
+   --      Q_SG_Scale is the stagnation MAGNITUDE for the whole flight
+   --      condition; Q_SG is the reconstructed flux of THIS element. They
+   --      differ because the DSMC per-element reading supplies only the
+   --      distribution SHAPE (axiom Q1/Q2/Q3 in stellarorion_physics.ads),
+   --      never the calibration. A caller reading Q_SG == Q_SG_Scale for every
+   --      element is correctly reporting a spatially UNIFORM distribution.
+   --
+   --  CITATIONS:
+   --    [Baumeister06] Ch. 4 composite-wall resistance; Ch. 11 radiation BC.
+   --    [Dillman14] AIAA 2014-4141, IRVE-3 250 degC FTPS structure limit.
+   --    [Bird94] Bird (1994) Sec. 7, DSMC estimator noise on raw ke.
+   --
+   --  TIMING ANALYSIS
+   --  Estimated Processing Time: O(L) for validation plus O(iterations) for
+   --    the bisection plus O(N_samples * L) for the profile, with
+   --    L <= 8, N_samples = 33, iterations <= 120.
+   --  CPU Time: ~15us typical per element (120 bisection evals + 264
+   --    profile steps + 8 validation steps, at ~50ns per bisection eval).
+   --  WCET: 25us at the iteration cap with a 50% branch-misprediction
+   --    penalty on the two validation loops.
+   --  Space Complexity: O(1) — the layup is a fixed 8-ply record on the
+   --    stack (~120 B) plus the caller's 33-sample buffer; no allocation.
+   --  Derivation:
+   --    - Validation: 8 plies x ~6 ops = ~50 ops
+   --    - SG_Scaled_Element_Flux: ~40ns
+   --    - TPS_Conduction: 120 x ~50ns = 6us (WCET 8us)
+   --    - TPS_Conduction_Profile: 33 x 8 x ~10ns = 2.6us
+   --    - Total WCET ~ 8 + 3 + 1 = 12us, x2 penalty => 25us
+   --  Hardware Assumptions: IEEE-754 binary64 inputs, ARM Cortex-A78
+   --    @ 2.4GHz (or equivalent), layup record in L1.
+   --  Time Anchor: nanosecond (1ns) resolution via Ada.Real_Time, backed by
+   --    CLOCK_MONOTONIC on POSIX.
+   procedure TPS_Conduction_C
+     (Q_SG_Scale    : Interfaces.C.Double;
+      Ke_Raw        : Interfaces.C.Double;
+      Ke_Ref        : Interfaces.C.Double;
+      N_Layers      : Interfaces.C.int;
+      Ply_Thickness : access TPS_Ply_Array;
+      Ply_Thermal_K : access TPS_Ply_Array;
+      Emissivity    : Interfaces.C.Double;
+      T_Init        : Interfaces.C.Double;
+      T_Inf         : Interfaces.C.Double;
+      Status        : out Interfaces.C.int;
+      Q_SG          : out Interfaces.C.Double;
+      T_Surface     : out Interfaces.C.Double;
+      T_Back        : out Interfaces.C.Double;
+      N_Iterations  : out Interfaces.C.int;
+      Profile       : access TPS_Profile_Buffer)
+   is
+      --  THE INTERNAL LAYUP, ASSEMBLED FROM THE C ARRAYS.
+      --
+      --  Only Material.Thermal_K and Thickness are filled from C data; the
+      --  remaining TPS_Material fields (density, Cp, emissivity of the ply)
+      --  take their record defaults because this solver is conduction-only
+      --  and does not use them. That is stated here rather than left
+      --  implicit: if a future transient term needs rho*Cp, the defaults
+      --  would be silently wrong, and this comment is what makes that
+      --  visible.
+      Layup      : StellarOrion_Types.TPS_Layup;
+      Iterations : Natural := 0;
+      Ada_Prof   : StellarOrion_Physics.Profile_Array;
+
+      --  Internal-precision copies of the two solved temperatures. Kept
+      --  separate from the Interfaces.C.Double outputs because the physics
+      --  subprograms speak Float and the boundary speaks C.Double; the
+      --  profile call needs the SAME Float T_Surface the solver produced,
+      --  and a double round-trip would let a value differ in the last bit
+      --  between the reported T_Surface and the profile's hot-face sample.
+      Ada_T_Surface : Float := 0.0;
+      Ada_T_Back    : Float := 0.0;
+
+      --  SENTINELS (axiom A2). Documented so a caller that ignores Status
+      --  can still recognise the failure rather than misread a plausible
+      --  number: T_Surface/T_Back of -1.0 K and Q_SG of -1.0 W/m^2 are
+      --  outside every physical range this entry point can return, so they
+      --  are unambiguous.
+      Sentinel_T : constant Interfaces.C.Double := -1.0;
+      Sentinel_Q : constant Interfaces.C.Double := -1.0;
+
+      --  Restore every out-parameter of TPS_Conduction_C to its STEP-0
+      --  sentinel value. Single owner of that logic: all three failure paths
+      --  (solver-raised, profile-raised, unexpected) call this, so the reset
+      --  can never drift between them.
+      --
+      --  AXIOM A2: Status = TPS_STATUS_OK if and only if every output is
+      --  meaningful. The converse therefore also holds -- a NONZERO Status
+      --  means every output is a sentinel. That converse is what this
+      --  subprogram exists to establish.
+      --
+      --  WHY IT CANNOT RAISE (safety fallback, code-quality mandate): a caller
+      --  can legally pass a dangling/garbage Profile pointer, and dereferencing
+      --  it while clearing would raise. That raise would escape TPS_Conduction_C
+      --  and cross the C ABI, violating A4. So this one subprogram carries its
+      --  own handler. It is the ONLY deliberate exception swallow in this FFI
+      --  entry point, it is not silent (the cause is logged verbatim), and it
+      --  is sound because every caller has already set a NONZERO Status before
+      --  reaching here -- so a caller that checks Status still fails loudly.
+      procedure Reset_Outputs is
+      begin
+         Q_SG         := Sentinel_Q;
+         T_Surface    := Sentinel_T;
+         T_Back       := Sentinel_T;
+         N_Iterations := 0;
+         if Profile /= null then
+            for I in TPS_Profile_Buffer'Range loop
+               Profile (I).Depth_M := Sentinel_T;
+               Profile (I).Temp_K  := Sentinel_T;
+            end loop;
+         end if;
+      exception
+         when E : others =>
+            Log ("[TPS_Conduction_C] FAIL: Reset_Outputs could not clear the "
+                 & "profile buffer (" & Ada.Exceptions.Exception_Name (E)
+                 & ": " & Ada.Exceptions.Exception_Message (E)
+                 & "); Status is nonzero, so the caller must not trust it");
+      end Reset_Outputs;
+   begin
+      -- ------------------------------------------------------------------
+      -- APPLICATION STEP 0 (axiom A2): initialise EVERY out-parameter.
+      -- Done first so that any early return below is safe by construction.
+      -- ------------------------------------------------------------------
+      Status       := TPS_STATUS_OK;
+      Q_SG         := Sentinel_Q;
+      T_Surface    := Sentinel_T;
+      T_Back       := Sentinel_T;
+      N_Iterations := 0;
+      if Profile /= null then
+         for I in TPS_Profile_Buffer'Range loop
+            Profile (I).Depth_M := Sentinel_T;
+            Profile (I).Temp_K  := Sentinel_T;
+         end loop;
+      end if;
+
+      -- ------------------------------------------------------------------
+      -- APPLICATION STEP 1: validate. Each bound below is copied verbatim
+      -- from the Pre => of the physics subprogram it protects (theory T1).
+      -- ------------------------------------------------------------------
+
+      --  1.1 Layer count must name at least one ply and fit the layup.
+      if N_Layers < 1 or N_Layers > Interfaces.C.int (Max_TPS_Layers) then
+         Status := TPS_STATUS_BAD_LAYER_COUNT;
+         Log ("[TPS_Conduction_C] FAIL: N_Layers=" & Standard.Integer'Image (Standard.Integer (N_Layers))
+               & " outside 1 .." & Standard.Integer'Image (Standard.Integer (Max_TPS_Layers))
+               & " (Status=" & Standard.Integer'Image (Standard.Integer (TPS_STATUS_BAD_LAYER_COUNT)) & ")");
+         return;
+      end if;
+
+      --  1.2 Every buffer pointer must be present. A null access from C is
+      --  the classic FFI crash; it is checked before ANY dereference.
+      if Ply_Thickness = null
+        or else Ply_Thermal_K = null
+        or else Profile = null
+      then
+         Status := TPS_STATUS_NULL_POINTER;
+         Log ("[TPS_Conduction_C] FAIL: null buffer pointer ("
+               & "Ply_Thickness=" & (if Ply_Thickness = null then "null" else "ok")
+               & ", Ply_Thermal_K=" & (if Ply_Thermal_K = null then "null" else "ok")
+               & ", Profile=" & (if Profile = null then "null" else "ok")
+               & ") Status=" & Standard.Integer'Image (Standard.Integer (TPS_STATUS_NULL_POINTER)));
+         return;
+      end if;
+
+      --  1.3 Emissivity, against the TPS_Conduction Pre bound.
+      if Emissivity < 1.0e-3 or else Emissivity > 1.0 then
+         Status := TPS_STATUS_BAD_EMISSIVITY;
+         Log ("[TPS_Conduction_C] FAIL: Emissivity=" & Interfaces.C.double'Image (Emissivity)
+               & " outside 1.0e-3 .. 1.0 (Status="
+               & Standard.Integer'Image (Standard.Integer (TPS_STATUS_BAD_EMISSIVITY)) & ")");
+         return;
+      end if;
+
+      --  1.4 Temperatures, against the TPS_Conduction Pre bound.
+      if T_Init < 0.0 or else T_Init > 3000.0
+        or else T_Inf < 0.0 or else T_Inf > 3000.0
+      then
+         Status := TPS_STATUS_BAD_TEMPERATURE;
+         Log ("[TPS_Conduction_C] FAIL: T_Init=" & Interfaces.C.double'Image (T_Init)
+               & " or T_Inf=" & Interfaces.C.double'Image (T_Inf)
+               & " outside 0.0 .. 3000.0 (Status="
+               & Standard.Integer'Image (Standard.Integer (TPS_STATUS_BAD_TEMPERATURE)) & ")");
+         return;
+      end if;
+
+      --  1.5 Flux inputs, against the SG_Scaled_Element_Flux Pre bounds.
+      --      Ke_Raw is deliberately NOT bounded below: a negative reading is
+      --      real DSMC noise (axiom Q3) and is legal input.
+      if Q_SG_Scale < 0.0 or else Q_SG_Scale > 2.0e15
+        or else Ke_Ref < 1.0e-12 or else Ke_Ref > 1.0e15
+      then
+         Status := TPS_STATUS_BAD_FLUX_INPUT;
+         Log ("[TPS_Conduction_C] FAIL: Q_SG_Scale=" & Interfaces.C.double'Image (Q_SG_Scale)
+               & " or Ke_Ref=" & Interfaces.C.double'Image (Ke_Ref)
+               & " outside bounds (Status="
+               & Standard.Integer'Image (Standard.Integer (TPS_STATUS_BAD_FLUX_INPUT)) & ")");
+         return;
+      end if;
+
+      --  1.6 Per-ply conductivity and thickness, against the
+      --      Layer_Resistance / TPS_Conduction Pre bounds. The offending
+      --      INDEX is reported, not just "some ply is bad", because the
+      --      caller must know WHICH ply to fix.
+      for I in 1 .. Integer (N_Layers) loop
+         declare
+            K_V  : constant Float :=
+              Standard.Float (Ply_Thermal_K (TPS_Ply_Array'First + I - 1));
+            D_V  : constant Float :=
+              Standard.Float (Ply_Thickness (TPS_Ply_Array'First + I - 1));
+         begin
+            if K_V < 1.0e-3 or else K_V > 1.0e3 then
+               Status := TPS_STATUS_BAD_PLY_PROPERTY;
+               Log ("[TPS_Conduction_C] FAIL: ply " & Standard.Integer'Image (I)
+                     & " Thermal_K=" & Float'Image (K_V)
+                     & " outside 1.0e-3 .. 1.0e3 W/(m*K) (Status="
+                     & Standard.Integer'Image (Standard.Integer (TPS_STATUS_BAD_PLY_PROPERTY)) & ")");
+               return;
+            end if;
+            if D_V < 1.0e-4 or else D_V > 1.0 then
+               Status := TPS_STATUS_BAD_PLY_PROPERTY;
+               Log ("[TPS_Conduction_C] FAIL: ply " & Standard.Integer'Image (I)
+                     & " Thickness=" & Float'Image (D_V)
+                     & " outside 1.0e-4 .. 1.0 m (Status="
+                     & Standard.Integer'Image (Standard.Integer (TPS_STATUS_BAD_PLY_PROPERTY)) & ")");
+               return;
+            end if;
+         end;
+      end loop;
+
+      -- ------------------------------------------------------------------
+      -- APPLICATION STEP 2: assemble the Ada layup from the C arrays.
+      -- Hot face first, matching the profile's Depth_M = 0 convention.
+      -- ------------------------------------------------------------------
+      Layup.Layer_Count := StellarOrion_Types.TPS_Layer_Count_Range (N_Layers);
+      Layup.Emissivity  := StellarOrion_Types.TPS_Emissivity_Range
+        (Standard.Float (Emissivity));
+      --  T_Limit is a REPORTING field the solver never reads (documented in
+      --  the spec), but it is stored so a caller inspecting the layup sees a
+      --  self-consistent record rather than a default left by accident.
+      Layup.T_Limit     := IRVE3_FTPS_STRUCT_LIMIT_K;
+
+      for I in 1 .. Integer (N_Layers) loop
+         declare
+            Idx : constant StellarOrion_Types.TPS_Layer_Count_Range :=
+              StellarOrion_Types.TPS_Layer_Count_Range (I);
+         begin
+            Layup.Layers (Idx).Material.Thermal_K :=
+              Standard.Float (Ply_Thermal_K (TPS_Ply_Array'First + I - 1));
+            Layup.Layers (Idx).Thickness :=
+              StellarOrion_Types.TPS_Thickness_Range
+                (Standard.Float (Ply_Thickness (TPS_Ply_Array'First + I - 1)));
+         end;
+      end loop;
+
+      -- ------------------------------------------------------------------
+      -- APPLICATION STEP 3: reconstruct the element heat flux (axiom Q1/Q2/Q3)
+      -- and solve the surface balance for T_Surface / T_Back.
+      -- ------------------------------------------------------------------
+      begin
+         declare
+            Flux : constant Float :=
+              StellarOrion_Physics.SG_Scaled_Element_Flux
+                (Q_SG      => Standard.Float (Q_SG_Scale),
+                 Ke_Raw    => Standard.Float (Ke_Raw),
+                 Ke_Ref    => Standard.Float (Ke_Ref));
+         begin
+            Q_SG := Interfaces.C.Double (Flux);
+
+            StellarOrion_Physics.TPS_Conduction
+              (Heat_Flux => Flux,
+               Layup     => Layup,
+               T_Init    => Standard.Float (T_Init),
+               T_Inf     => Standard.Float (T_Inf),
+               T_Back    => Ada_T_Back,
+               T_Surface => Ada_T_Surface,
+               Iterations => Iterations);
+         end;
+      exception
+         when E : others =>
+            --  Solver-stage failure: inputs passed validation, so this is a
+            --  genuine internal fault (e.g. the solver's own postcondition
+            --  audit raising), not a caller error. Status distinguishes the
+            --  two so the fix goes to the right place.
+            Status := TPS_STATUS_SOLVER_RAISED;
+            Log ("[TPS_Conduction_C] FAIL: TPS_Conduction/SG_Scaled raised "
+                  & Ada.Exceptions.Exception_Name (E) & ": "
+                  & Ada.Exceptions.Exception_Message (E)
+                  & " (Status="
+                  & Standard.Integer'Image (Standard.Integer (TPS_STATUS_SOLVER_RAISED)) & ")");
+            --  A2: Q_SG was already written by STEP 3, so the
+            --  sentinels MUST be restored before returning.
+            Reset_Outputs;
+            return;
+      end;
+
+      T_Surface    := Interfaces.C.Double (Ada_T_Surface);
+      T_Back       := Interfaces.C.Double (Ada_T_Back);
+      N_Iterations := Interfaces.C.int (Iterations);
+
+      -- ------------------------------------------------------------------
+      -- APPLICATION STEP 4: fill the in-depth profile and copy it across the
+      -- ABI boundary field by field.
+      -- ------------------------------------------------------------------
+      begin
+         StellarOrion_Physics.TPS_Conduction_Profile
+           (Layup     => Layup,
+            T_Init    => Standard.Float (T_Init),
+            T_Surface => Ada_T_Surface,
+            Profile   => Ada_Prof);
+      exception
+         when E : others =>
+            Status := TPS_STATUS_PROFILE_RAISED;
+            Log ("[TPS_Conduction_C] FAIL: TPS_Conduction_Profile raised "
+                  & Ada.Exceptions.Exception_Name (E) & ": "
+                  & Ada.Exceptions.Exception_Message (E)
+                  & " (Status="
+                  & Standard.Integer'Image (Standard.Integer (TPS_STATUS_PROFILE_RAISED)) & ")");
+            --  A2: STEP 3 already wrote Q_SG, T_Surface, T_Back and
+            --  N_Iterations, and the profile buffer is at best
+            --  partially written. Restore ALL of them, so a nonzero
+            --  Status can never be mistaken for a good result.
+            Reset_Outputs;
+            return;
+      end;
+
+      --  INDEX MAPPING (bug fix): Ada_Prof is 1-based
+      --  (Profile_Array / Profile_Index_Range = 1 .. Max_Profile_Points)
+      --  while the C buffer is 0-based
+      --  (TPS_Profile_Buffer = 0 .. TPS_Profile_Samples - 1). The previous
+      --  expression added two 1-based positions and so addressed
+      --  1 .. TPS_Profile_Samples, raising CONSTRAINT_ERROR on the LAST
+      --  sample (index 33 against a 0 .. 32 buffer) and turning every
+      --  successful solve into TPS_STATUS_SOLVER_RAISED.
+      --  Subtracting Ada_Prof'First maps 1 .. 33 onto 0 .. 32 exactly, which
+      --  is TPS_Profile_Buffer'Range, so both ends are in bounds by
+      --  construction and the run-time index check can no longer fire.
+      for I in Ada_Prof'Range loop
+         Profile (I - Ada_Prof'First).Depth_M :=
+           Interfaces.C.Double (Ada_Prof (I).Depth_M);
+         Profile (I - Ada_Prof'First).Temp_K :=
+           Interfaces.C.Double (Ada_Prof (I).Temp_K);
+      end loop;
+
+      --  APPLICATION STEP 5 (theory T2): success is declared LAST, only once
+      --  every output is populated. Ordering this line first would let a
+      --  caller read Status = 0 with an unfilled profile buffer.
+      Status := TPS_STATUS_OK;
+
+   exception
+      when E : others =>
+         --  AXIOM A4: nothing escapes to the C caller. Report fully, then
+         --  fall back to the sentinels already written in STEP 0 with a
+         --  generic status, so a caller that checks Status still fails loudly.
+         Log ("[TPS_Conduction_C] FAIL: unexpected "
+              & Ada.Exceptions.Exception_Name (E) & ": "
+              & Ada.Exceptions.Exception_Message (E)
+              & " (Status="
+              & Standard.Integer'Image (Standard.Integer (TPS_STATUS_SOLVER_RAISED)) & ")");
+         if Status = TPS_STATUS_OK then
+            Status := TPS_STATUS_SOLVER_RAISED;
+         end if;
+         --  A2: fall back to the STEP-0 sentinels through the single shared
+         --  owner, so this path can never diverge from the two nested ones.
+         --  Reset_Outputs cannot raise (see its own handler), which is what
+         --  keeps A4 -- nothing escapes to the C caller -- true here.
+         Reset_Outputs;
+   end TPS_Conduction_C;
 
 end StellarOrion_FFI;

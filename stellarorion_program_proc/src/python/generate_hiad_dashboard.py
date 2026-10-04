@@ -213,10 +213,18 @@ def create_geometry_dashboard(
         ax_main.set_title('IRVE-3 HIAD Cross-Section Geometry', fontsize=14, fontweight='bold')
         ax_main.grid(True, alpha=0.3, color=colors['grid'])
         ax_main.set_aspect('equal')
-        ax_main.legend(loc='upper left', fontsize=9)
+        # zorder must exceed the geometry's zorder=6 (profile outlines and the
+        # toroid wireframe). matplotlib's default legend zorder is 5, so the
+        # lines were drawn THROUGH the legend frame and struck out the labels;
+        # framealpha alone cannot fix that -- the frame was simply underneath.
+        # (Legend() takes no zorder kwarg in this matplotlib build; set it on the
+        # artist afterwards.)
+        legend = ax_main.legend(loc='upper left', fontsize=9, framealpha=1.0,
+                                facecolor='white', edgecolor='0.7')
+        legend.set_zorder(20)
         
         # Parameters panel 1 - Geometry
-        ax_params1.text(0.05, 0.95, 'GEOMETRY PARAMETERS', fontsize=12, fontweight='bold',
+        ax_params1.text(0.05, 0.97, 'GEOMETRY PARAMETERS', fontsize=12, fontweight='bold',
                        transform=ax_params1.transAxes, verticalalignment='top')
         
         param_text1 = [
@@ -228,8 +236,9 @@ def create_geometry_dashboard(
         ]
         
         for i, text in enumerate(param_text1):
-            ax_params1.text(0.1, 0.85 - i*0.15, text, fontsize=11,
-                           transform=ax_params1.transAxes, fontfamily='monospace')
+            ax_params1.text(0.1, 0.78 - i*0.12, text, fontsize=11,
+                           transform=ax_params1.transAxes, fontfamily='monospace',
+                           verticalalignment='top')
         
         ax_params1.set_xlim(0, 1)
         ax_params1.set_ylim(0, 1)
@@ -237,7 +246,7 @@ def create_geometry_dashboard(
         ax_params1.set_facecolor('white')
         
         # Parameters panel 2 - Derived
-        ax_params2.text(0.05, 0.95, 'DERIVED PARAMETERS', fontsize=12, fontweight='bold',
+        ax_params2.text(0.05, 0.97, 'DERIVED PARAMETERS', fontsize=12, fontweight='bold',
                        transform=ax_params2.transAxes, verticalalignment='top')
         
         param_text2 = [
@@ -250,8 +259,9 @@ def create_geometry_dashboard(
         ]
         
         for i, text in enumerate(param_text2):
-            ax_params2.text(0.1, 0.85 - i*0.12, text, fontsize=10,
-                           transform=ax_params2.transAxes, fontfamily='monospace')
+            ax_params2.text(0.1, 0.78 - i*0.12, text, fontsize=10,
+                           transform=ax_params2.transAxes, fontfamily='monospace',
+                           verticalalignment='top')
         
         ax_params2.set_xlim(0, 1)
         ax_params2.set_ylim(0, 1)

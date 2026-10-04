@@ -181,12 +181,23 @@ def create_optimized_overlay_dashboard(
         max_xlim = max(x_default.max(), x_optimized.max()) + 0.5
         max_ylim = max(y_default.max(), y_optimized.max()) + 0.5
         ax_main.set_xlim(-0.2, max_xlim)
-        ax_main.set_ylim(-max_ylim, max_ylim)
+        # Asymmetric y-limits: reserve a clear band ABOVE the geometry so the
+        # legend has empty canvas to sit in. With symmetric limits the topmost
+        # profile edge reached the axes boundary and the legend had to share
+        # pixels with the red/blue outlines no matter what zorder was used.
+        ax_main.set_ylim(-max_ylim, max_ylim * 1.28)
         ax_main.set_xlabel('Axial Distance Z (m)', fontsize=12, fontweight='bold')
         ax_main.set_ylabel('Radial Distance R (m)', fontsize=12, fontweight='bold')
         ax_main.grid(True, alpha=0.3, color=colors['grid'])
         ax_main.set_aspect('equal')
-        ax_main.legend(loc='upper left', fontsize=10)
+        # Same defect class as the dashboard mp4: the profile outlines use
+        # zorder=4-5, tying matplotlib's default legend zorder of 5, so the
+        # 'Optimized' entry was crossed by the geometry. Draw the legend
+        # above everything (zorder 20) on an opaque frame.
+        legend = ax_main.legend(loc='upper left', fontsize=10,
+                                 framealpha=1.0, facecolor='white',
+                                 edgecolor='0.7')
+        legend.set_zorder(20)
 
         # Parameters panel 1 - Default
         ax_params1.text(0.05, 0.95, 'DEFAULT PARAMETERS', fontsize=11, fontweight='bold',

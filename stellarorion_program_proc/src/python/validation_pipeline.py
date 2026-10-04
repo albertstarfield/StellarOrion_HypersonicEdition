@@ -36,7 +36,7 @@ import threading
 import time
 import traceback
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -767,7 +767,18 @@ def kriging_denoise_convergence(
     gp.fit(X, y)
 
     # Denoised = GP posterior mean at training points
-    denoised, std = gp.predict(X, return_std=True)
+    #
+    # AXIOM: `GaussianProcessRegressor.predict` is typed as a union of every
+    # shape its optional flags can produce. With `return_std=True` and
+    # `return_cov` left at its default (False) the runtime result is provably a
+    # 2-tuple (mean, std) — verified against sklearn 1.9.1 — so the cast
+    # narrows to exactly that shape and adds no assertion or suppression.
+    # [Reference: sklearn GaussianProcessRegressor.predict
+    #  https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html]
+    denoised, std = cast(
+        "tuple[np.ndarray, np.ndarray]",
+        gp.predict(X, return_std=True),
+    )
 
     # R² score (goodness of fit to denoised trend)
     ss_res = np.sum((y - denoised) ** 2)
@@ -783,9 +794,20 @@ def kriging_denoise_convergence(
         "noise_variance": noise_std ** 2,
         "r2_score": r2,
         "gp_model": gp,
+        # Read the three hyperparameter values from the FITTED kernel's flat
+        # prefixed parameter dict. Two invariants make this correct:
+        #   A1. `gp.kernel_` is Sum[Product[ConstantKernel, Matern], WhiteKernel],
+        #       so Sum.get_params() flattens to exactly the three names used
+        #       below — verified at runtime on sklearn 1.9.1.
+        #   A2. These values MUST come from `gp.kernel_` (post-fit), never from
+        #       the pre-fit locals: GaussianProcessRegressor clones the kernel
+        #       during fit, so the locals still hold the initial hyperparameters
+        #       and would report unoptimized values.
+        # [Reference: sklearn Kernel.get_params
+        #  https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.kernels.Kernel.html]
         "kernel_params": {
-            "constant": float(gp.kernel_.k1.get_params()["k1__constant_value"]),
-            "length_scale": float(gp.kernel_.k1.get_params()["k2__length_scale"]),
+            "constant": float(gp.kernel_.get_params()["k1__constant_value"]),
+            "length_scale": float(gp.kernel_.get_params()["k2__length_scale"]),
             "noise_level": float(gp.kernel_.get_params()["k2__noise_level"]),
         },
     }
@@ -894,7 +916,30 @@ def pinn_extrapolate_convergence(
     data = dde.data.DataSet(X_train, y_train, X_test, y_test)
 
     # Network: 4 hidden layers, 128 neurons each (larger network for better fit)
-    net = dde.nn.FNN([1] + [128] * 4 + [1], "tanh", "Glorot normal")
+    #
+    # AXIOM: `deepxde.nn` publishes its network classes through import-time
+    # mutation — `_load_backend()` does `setattr(module, api, obj)` after
+    # importing the active backend's submodule (deepxde/nn/__init__.py L30-L39).
+    # No `from .pytorch import FNN` statement therefore exists for a static
+    # analyzer to resolve, even though the attribute is present at runtime
+    # (verified: hasattr(deepxde.nn, "FNN") is True). Resolving via getattr is
+    # the same lookup the dynamic dispatch performs, and it keeps the code
+    # backend-agnostic instead of hardcoding `deepxde.nn.pytorch`.
+    # [Reference: deepxde/nn/__init__.py
+    #  https://github.com/lululxvi/deepxde/blob/master/deepxde/nn/__init__.py]
+    fnn_cls = getattr(dde.nn, "FNN", None)
+    if fnn_cls is None:
+        # Murphy's Law + safety fallback: fail loudly and name the backend,
+        # because a missing network class would otherwise surface as an
+        # opaque TypeError from deepxde internals much later.
+        raise RuntimeError(
+            "deepxde.nn does not expose FNN for the active backend "
+            f"{getattr(dde, 'backend_name', 'unknown')!r}. The installed "
+            "DeepXDE build provides no feed-forward network for this backend; "
+            "install a backend that DeepXDE supports (pytorch, tensorflow, "
+            "jax, paddle) or pin a DeepXDE release with matching coverage."
+        )
+    net = fnn_cls([1] + [128] * 4 + [1], "tanh", "Glorot normal")
 
     model = dde.Model(data, net)
     # Compile without metrics (y_test=None for DataSet causes l2_relative_error crash)
@@ -973,14 +1018,25 @@ def _gp_fallback_extrapolation(
     gp.fit(X, values)
 
     X_target = np.array([[float(target_step)]])
-    target_pred, target_std = gp.predict(X_target, return_std=True)
+    # Same narrowing rationale as kriging_denoise: with return_std=True and
+    # return_cov left False, predict() yields exactly (mean, std).
+    target_pred, target_std = cast(
+        "tuple[np.ndarray, np.ndarray]",
+        gp.predict(X_target, return_std=True),
+    )
+
+    # With no optional flag set, predict() yields a bare ndarray, so `.tolist()`
+    # is valid; the cast states that invariant for the type checker.
+    # [Reference: sklearn GaussianProcessRegressor.predict
+    #  https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html]
+    train_predictions = cast("np.ndarray", gp.predict(X)).tolist()
 
     return {
         "extrapolated_value": float(target_pred[0]),
         "extrapolation_std": float(target_std[0]),
         "method": "GP_fallback",
         "train_loss": 0.0,
-        "train_predictions": gp.predict(X).tolist(),
+        "train_predictions": train_predictions,
         "convergence_history": [],
     }
 
@@ -1439,8 +1495,14 @@ def generate_convergence_plot(
         ax2.plot(dsmc_steps, dsmc_alt, "gray", linestyle="-", linewidth=1.0, alpha=0.5)
 
         # PINN portion: trajectory at each PINN step
+        #
+        # AXIOM: `pinn_steps` must be sourced from `pinn_curve` itself here, not
+        # from the local bound at the `metric` block above. Those are two
+        # independent guards: a curve can carry "trajectory" while lacking the
+        # requested `metric`, in which case the earlier binding never executes
+        # and referencing it would raise UnboundLocalError mid-plot.
         pinn_alt = pinn_curve["trajectory"]["altitude_km"]
-        ax2.plot(pinn_steps, pinn_alt, "gray", linestyle=":", linewidth=1.5, alpha=0.7)
+        ax2.plot(pinn_curve["steps"], pinn_alt, "gray", linestyle=":", linewidth=1.5, alpha=0.7)
         ax2.set_ylabel("Altitude [km / ft]", fontsize=12, color="gray")
         ax2.tick_params(axis="y", labelcolor="gray")
         ax2.invert_yaxis()  # Higher altitude at top, lower at bottom
@@ -1594,7 +1656,7 @@ def generate_multi_metric_convergence_plot(
             ax2.tick_params(axis="y", labelcolor="gray")
             ax2.invert_yaxis()
 
-    fig.tight_layout(rect=[0, 0, 1, 0.94])
+    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
     plot_path = os.path.join(plots_dir, "convergence_multi_metric_dual_axis.png")
     fig.savefig(plot_path, dpi=200, bbox_inches="tight")
     plt.close(fig)
@@ -2504,6 +2566,7 @@ def run_validation_pipeline(
     target_step: int = 300000000,
     iterations: int = 4000,
     device: str = "auto",
+    output_dir: str | None = None,
 ) -> dict[str, Any]:
     """Execute the full validation pipeline: denoise → extrapolate → audit.
 
@@ -2512,8 +2575,76 @@ def run_validation_pipeline(
       2. All outputs are JSON + human-readable report
       3. Pipeline is idempotent (re-running produces same results)
       4. Cyclic log monitor runs in background, checking every 300s
+      5. Every artifact this function writes lands under exactly one
+         directory, and that directory MUST be either caller-supplied or
+         derived here — never left to an ambient/outer name.
 
-    Returns: dict with complete pipeline results
+    AXIOM 5 RATIONALE (why this parameter exists at all):
+      The CLI entry point `main()` forwards `args.output_dir` (bound to the
+      `--output-dir` flag) into this function, and the persistence block
+      below already contains `if output_dir is None: output_dir = ...`
+      plus `os.makedirs(output_dir, ...)`. Before this parameter existed
+      the body therefore referenced a name that was never bound in this
+      scope, which produced two distinct runtime faults:
+        * Ruff/flake8 F821 (undefined name `output_dir`)
+        * `TypeError: run_validation_pipeline() got an unexpected keyword
+          argument 'output_dir'` whenever `main()` invoked it — i.e. the
+          documented `--output-dir` CLI flag could never work at all.
+      Declaring the parameter makes the existing defaulting logic a
+      parameter default rather than an undefined-name dereference, which
+      is why a single declaration corrects both faults.
+
+    THEORIES:
+      T1 (output placement): Given `output_dir=None`, the persistence block
+          resolves the directory to
+          `<dirname(csv_path)>/validation_pipeline_output`, creating it if
+          absent. Given a non-None value, that exact path is used verbatim.
+          -> artifacts are never written to an undeclared location.
+      T2 (caller compatibility): Because the new argument is trailing and
+          defaulted, all pre-existing positional and keyword call sites that
+          pass at most `(csv_path, target_step, iterations, device)` keep
+          working and keep resolving the directory exactly as T1 specifies.
+      T3 (monotonic termination): Every code path reaching persistence calls
+          `os.makedirs(..., exist_ok=True)` before `open(..., "w")`, so the
+          write cannot fail for a missing directory. (Murphy's Law: an
+          absent parent directory WILL happen.)
+
+    APPLICATIONS:
+      Step 1 — caller supplies `output_dir` (CLI) or omits it (library use).
+      Step 2 — the three stages (denoise → PINN extrapolate → audit) run and
+              populate `results`.
+      Step 3 — the directory is resolved per T1 and `pipeline_results.json`
+              plus `convergence_audit.csv` are written there.
+
+    TIMING ANALYSIS
+      Estimated Processing Time: O(n · iterations) — dominated by the PINN
+          stage, not by this argument handling.
+      Argument-handling overhead: O(1) — one `is None` test, one
+          `os.path.join`, one `makedirs`.
+      WCET (this signature change): O(1) as above; it introduces no loop and
+          no new I/O beyond the `makedirs` that already existed.
+      Space Complexity: O(1) — a single optional string binding.
+
+    Args:
+      csv_path: Path to the DSMC convergence CSV to validate.
+      target_step: Step index treated as the terminal state of the run.
+      iterations: PINN training iteration budget.
+      device: Compute device selector (e.g. ``"auto"``, ``"cpu"``, ``"mps"``).
+      output_dir: Directory that receives `pipeline_results.json` and
+          `convergence_audit.csv`. When ``None``, it defaults to
+          ``<dirname(csv_path)>/validation_pipeline_output``.
+
+    Returns: dict with complete pipeline results.
+
+    Raises:
+      OSError: If the output directory cannot be created or written.
+      Exception: Any failure raised by the denoise / extrapolate / audit
+          stages propagates unchanged so callers see the true cause.
+
+    [Citation: Python 3.12 typing — optional parameters
+     https://docs.python.org/3/library/typing.html]
+    [Reference: PEP 484 — Type Hints
+     https://peps.python.org/pep-0484/]
     """
     print("=" * 90)
     print(f"{'STELLARORION VALIDATION PIPELINE':^90}")
@@ -3208,7 +3339,7 @@ def generate_aerodynamics_profiles(output_dir: str) -> list[str]:
     axes[1,1].set_title("Dynamic Pressure", fontsize=12, fontweight="bold")
     axes[1,1].grid(True, alpha=0.3)
 
-    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.95))
     p3 = os.path.join(plots_dir, "aerodynamic_loads.png")
     fig.savefig(p3, dpi=200, bbox_inches="tight")
     plt.close(fig)
@@ -4266,6 +4397,168 @@ def _generate_interactive_html(
     print(f"  [HTML] Generated: interactive/delta_waterfall_interactive.html")
 
 
+def _require_int_attr(
+    element: Any,
+    attr: str,
+    context: str,
+) -> int:
+    """Read a mandatory integer XML attribute, failing loudly when absent.
+
+    AXIOMS:
+      A1. `element` is a parsed `xml.etree.ElementTree.Element` node.
+      A2. `attr` names an attribute the VTK UnstructuredGrid schema requires
+          for the caller to build a Piece element. Missing or non-integer
+          values mean the source VTU is corrupt or is not a VTU at all.
+      A3. Failure MUST be loud and specific: a silent `0` would produce a
+          VTU claiming zero points/cells, which ParaView renders as an
+          empty scene with no error — a fabricated result.
+
+    THEORIES:
+      T1 (total): For any input, this either returns a valid int or raises
+          `ValueError`. It never returns a placeholder. Therefore no caller
+          can propagate a fabricated count downstream.
+      T2 (diagnosability): The raised message names both the attribute and
+          the source file (`context`), so an operator can locate the corrupt
+          file without re-running with a debugger.
+
+    APPLICATIONS:
+      Step 1 — `element.get(attr)` is fetched (returns `str | None`).
+      Step 2 — `None` raises immediately with the attribute + file named.
+      Step 3 — a non-numeric value is reported verbatim in the message.
+
+    TIMING ANALYSIS
+      Estimated Processing Time: O(1) — one dict lookup, one `int()` cast.
+      Space Complexity: O(1) — no container allocated.
+
+    Args:
+      element: Element node expected to carry the attribute.
+      attr: Attribute name, e.g. ``"NumberOfPoints"``.
+      context: Human-readable source identifier (usually the VTU path).
+
+    Returns: The attribute parsed as an `int`.
+
+    Raises:
+      ValueError: If the attribute is missing or not a valid integer.
+
+    [Reference: xml.etree.ElementTree — Element.get
+     https://docs.python.org/3/library/xml.etree.elementtree.html#Element.get]
+    """
+    raw = element.get(attr)
+    if raw is None:
+        raise ValueError(
+            f"Missing required attribute {attr!r} in {context}: "
+            f"the VTU is corrupt or is not a VTK UnstructuredGrid file"
+        )
+    try:
+        return int(raw)
+    except (TypeError, ValueError) as exc:
+        # Murphy's Law: the attribute exists but holds garbage. Report the
+        # exact offending value instead of letting int() fail opaquely.
+        raise ValueError(
+            f"Attribute {attr!r} in {context} is not an integer: {raw!r}"
+        ) from exc
+
+
+def _require_element_text(
+    element: Any,
+    xpath: str,
+    context: str,
+) -> str:
+    """Fetch a DataArray's ASCII payload, failing loudly when absent.
+
+    AXIOMS:
+      A1. `element` is a parsed ElementTree node to search beneath.
+      A2. `xpath` identifies a DataArray whose text is mandatory for the
+          caller (Points, connectivity, offsets, types).
+      A3. An ElementTree `.text` is `None` both when the element carries no
+          character data (`<DataArray/>`) and when it is empty after
+          stripping. Both cases are unusable geometry, so both must raise.
+
+    THEORIES:
+      T1 (total): Either returns a non-`None` stripped string or raises.
+      T2 (no silent geometry loss): Because `None` can never be returned, the
+          caller cannot accidentally write `""` into a Points block and
+          produce a VTU that parses but contains no geometry.
+
+    APPLICATIONS:
+      Step 1 — `element.find(xpath)` (returns `Element | None`).
+      Step 2 — `None` raises naming the XPath and the source file.
+      Step 3 — `.text` of `None` raises with the same identifying detail.
+
+    TIMING ANALYSIS
+      Estimated Processing Time: O(n) in document size for `find()`,
+          O(1) for the text checks.
+      Space Complexity: O(1) beyond the returned string.
+
+    Args:
+      element: Node to search beneath.
+      xpath: ElementTree path, e.g. ``'Cells/DataArray[@Name="offsets"]'``.
+      context: Human-readable source identifier (usually the VTU path).
+
+    Returns: The stripped ASCII payload of the located element.
+
+    Raises:
+      ValueError: If the element is absent or has no character data.
+
+    [Reference: xml.etree.ElementTree — Element.find / Element.text
+     https://docs.python.org/3/library/xml.etree.elementtree.html]
+    """
+    found = element.find(xpath)
+    if found is None:
+        raise ValueError(
+            f"Missing required element {xpath!r} in {context}: "
+            f"expected a DataArray but the VTU does not contain it"
+        )
+    text = found.text
+    if text is None or not text.strip():
+        raise ValueError(
+            f"Element {xpath!r} in {context} has no character data: "
+            f"the DataArray is empty, so the geometry it should carry is absent"
+        )
+    return text.strip()
+
+
+def _optional_element_text(element: Any, xpath: str) -> str:
+    """Fetch a DataArray's ASCII payload, treating absence as the empty string.
+
+    AXIOMS:
+      A1. `element` is a parsed ElementTree node.
+      A2. `xpath` identifies a DataArray that is genuinely optional, such as
+          the `Drag_N` / `Lift_N` CellData fields. These are absent from VTU
+          files produced before those fields existed, and their absence must
+          NOT abort ParaView generation — only the PINN fields are mandatory.
+      A3. An absent element and an element with `text is None` are
+          equivalent for an optional field: both mean "no value available".
+
+    THEORIES:
+      T1 (total): Always returns a `str`; never raises, never returns `None`.
+          Therefore callers can concatenate it unconditionally.
+      T2 (consistency): Both absence modes collapse to `""`, so the caller
+          sees one uniform representation instead of two special cases.
+
+    APPLICATIONS:
+      Step 1 — locate the element; `None` short-circuits to `""`.
+      Step 2 — `.text` of `None` collapses to `""` by the same path.
+
+    TIMING ANALYSIS
+      Estimated Processing Time: O(n) in document size for `find()`.
+      Space Complexity: O(1) — returns either a borrowed substring or `""`.
+
+    Args:
+      element: Node to search beneath.
+      xpath: ElementTree path for the optional DataArray.
+
+    Returns: Stripped payload, or `""` when the field is unavailable.
+
+    [Reference: xml.etree.ElementTree — Element.find
+     https://docs.python.org/3/library/xml.etree.elementtree.html]
+    """
+    found = element.find(xpath)
+    if found is None:
+        return ""
+    return (found.text or "").strip()
+
+
 def _generate_pinn_vtu(
     results: dict[str, Any],
     output_dir: str,
@@ -4343,37 +4636,46 @@ def _generate_pinn_vtu(
     piece = grid.find("Piece")
     if piece is None:
         raise ValueError(f"No Piece element in {last_vtu}")
-    n_pts = int(piece.get("NumberOfPoints"))
-    n_cells = int(piece.get("NumberOfCells"))
+    # APPLICATION STEP: read the mandatory Piece counts. Each access goes
+    # through _require_int_attr so a corrupt/absent attribute raises with the
+    # attribute name and this file's path instead of fabricating a 0.
+    # [Reference: VTK XML UnstructuredGrid Piece — NumberOfPoints/NumberOfCells
+    #  https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf]
+    n_pts = _require_int_attr(piece, "NumberOfPoints", last_vtu)
+    n_cells = _require_int_attr(piece, "NumberOfCells", last_vtu)
 
-    # Extract points
-    pts_da = piece.find("Points/DataArray")
-    pts_text = pts_da.text.strip()
+    # APPLICATION STEP: read the four mandatory geometry DataArrays. Each goes
+    # through _require_element_text so a missing element or an element with no
+    # character data raises instead of raising AttributeError on None.
+    pts_text = _require_element_text(piece, "Points/DataArray", last_vtu)
     pts_vals = [float(v) for v in pts_text.split()]
 
-    # Extract connectivity
-    cells_da = piece.find('Cells/DataArray[@Name="connectivity"]')
-    conn_text = cells_da.text.strip()
+    conn_text = _require_element_text(
+        piece, 'Cells/DataArray[@Name="connectivity"]', last_vtu
+    )
     conn_vals = [int(v) for v in conn_text.split()]
 
-    # Extract offsets
-    offsets_da = piece.find('Cells/DataArray[@Name="offsets"]')
-    off_text = offsets_da.text.strip()
+    off_text = _require_element_text(
+        piece, 'Cells/DataArray[@Name="offsets"]', last_vtu
+    )
     off_vals = [int(v) for v in off_text.split()]
 
-    # Extract types
-    types_da = piece.find('Cells/DataArray[@Name="types"]')
-    typ_text = types_da.text.strip()
+    typ_text = _require_element_text(
+        piece, 'Cells/DataArray[@Name="types"]', last_vtu
+    )
     typ_vals = [int(v) for v in typ_text.split()]
 
     # Extract Drag_N and Lift_N from last DSMC VTU for ParaView field consistency
     # [Citation: VTK XML UnstructuredGrid — https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf]
     # These fields must exist in both DSMC and PINN VTUs so ParaView can animate
     # across the PVD collection with consistent color mapping.
-    cd_da = piece.find('CellData/DataArray[@Name="Drag_N"]')
-    lift_da = piece.find('CellData/DataArray[@Name="Lift_N"]')
-    drag_n_text = cd_da.text.strip() if cd_da is not None else ""
-    lift_n_text = lift_da.text.strip() if lift_da is not None else ""
+    #
+    # AXIOM: these two are genuinely OPTIONAL — VTU files written before these
+    # fields existed lack them, and ParaView still renders such a file. So
+    # absence collapses to "" via _optional_element_text rather than aborting
+    # the whole generation step.
+    drag_n_text = _optional_element_text(piece, 'CellData/DataArray[@Name="Drag_N"]')
+    lift_n_text = _optional_element_text(piece, 'CellData/DataArray[@Name="Lift_N"]')
 
     # PINN step = target_step (300000000 = 300s equivalent)
     target_step = results.get("inputs", {}).get("target_step", 300000000)

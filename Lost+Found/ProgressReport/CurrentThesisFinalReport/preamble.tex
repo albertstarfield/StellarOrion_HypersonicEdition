@@ -216,43 +216,61 @@
       \@mkboth{\MakeUppercase\refname}{\MakeUppercase\refname}%
       \list{\@biblabel{\@arabic\c@enumiv}}%
            {\settowidth\labelwidth{\@biblabel{#1}}%
-            \leftmargin\labelwidth
-            \advance\leftmargin\labelsep
+            \labelsep\z@
+            \leftmargin\z@
+            \itemindent\z@
+            \advance\leftmargin by 1.5em
+            \itemindent -1.5em
             \@openbib@code
             \usecounter{enumiv}%
             \let\p@enumiv\@empty
             \renewcommand\theenumiv{\@arabic\c@enumiv}}%
       \sloppy
+      % Reference-list spacing and page breaking.
+      %
+      % MEASURED PROBLEM BEING FIXED: with \clubpenalty150 / \widowpenalty150 an
+      % entry is free to split across a page, and the last entry did exactly
+      % that. Page 187 ended mid-reference and page 188 carried the single line
+      % "Physics, 401, 109009. doi: 10.1016/j.jcp.2019.109009" alone -- a
+      % 998-ink-pixel page, the lowest of the whole document.
+      %
+      % A reference entry is also the natural unit to keep whole, so entries are
+      % made unsplittable again and the space is instead recovered by tightening
+      % the inter-entry skip, which is where a reference list can afford to give
+      % ground without any entry becoming ambiguous.
+      \clubpenalty10000
+      \@clubpenalty \clubpenalty
+      \widowpenalty10000%
+      \setlength{\itemsep}{2pt plus 1pt minus 1pt}%
+      \setlength{\parsep}{0pt}
       % Hanging indent for wrapped reference entries.
       %
-      % Measured on the rendered pages before this change: every wrapped entry
-      % began its continuation line at exactly the same x as its own first
-      % line, on all 12 reference pages, so multi-line references were hard to
-      % scan visually.
+      % Why it is built from \leftmargin and \itemindent rather than \bibindent:
+      % this file RENAMES thebibliography itself, and its \list is constructed
+      % from \leftmargin and \itemindent without ever reading \bibindent, so
+      % setting \bibindent is silently ignored here.
       %
-      % NOTE ON \bibindent: setting \bibindent alone does NOTHING here. This
-      % file RENAMES thebibliography itself, and that redefinition builds its
-      % \list from \leftmargin/\itemindent without ever reading \bibindent, so
-      % the length is silently ignored. The hanging indent therefore has to be
-      % built from the \list parameters directly:
-      %     \leftmargin  = where CONTINUATION lines start
-      %     \itemindent  = extra indent applied to the FIRST line only
-      % so \leftmargin is increased by the hang and \itemindent cancels it on
-      % the first line. \bibindent is still set so that any other package
-      % reaching the same list sees a consistent value.
+      % Both lengths MUST appear in the settings argument of \list above, not in
+      % the body of the environment. An earlier revision put them in the body,
+      % which runs AFTER \list has already consumed its settings: \itemindent
+      % still reached the list, but \leftmargin had already been captured, so the
+      % first line of every entry was pulled 1.5em left while the continuation
+      % lines were not. Measured on the rendered pages, entry first lines sat at
+      % x = 141 px where the text margin is x = 157 px, i.e. 16 px = 4.1 mm
+      % outside the text block.
+      %
+      % The construction now used is the textbook one and is self-checking:
+      %     \leftmargin = 1.5em   continuation lines sit at margin + 1.5em
+      %     \itemindent = -1.5em  the first line is pulled back to the margin
+      % so leftmargin + itemindent = 0 exactly and no entry can escape the text
+      % block, whatever \labelwidth and \labelsep happen to be. Both are set to
+      % zero first so the construction does not depend on package state.
       \setlength{\bibindent}{1.5em}%
-      \advance\leftmargin by 1.5em
-      \itemindent -1.5em
       % Page-breaking inside the reference list. The previous values were
-      % \clubpenalty4000 / \widowpenalty4000, which is strict enough that a
-      % short final entry is pushed whole onto a page of its own, leaving that
-      % page ~85% blank. Relaxing to 150/150 lets an entry split instead, which
-      % is the normal behaviour for a reference list and removes the orphan
-      % page. \interlinepenalty is left at its default so entry spacing and the
-      % \sloppy above are unaffected.
-      \clubpenalty150
-      \@clubpenalty \clubpenalty
-      \widowpenalty150%
+      % (An earlier revision set \clubpenalty150 / \widowpenalty150 here,
+      % after the values above, so this block silently overrode them. Removed.
+      % \interlinepenalty is left at its default so the \sloppy above is
+      % unaffected.)
       \sfcode`\.\@m}
      {\def\@noitemerr
        {\@latex@warning{Empty `thebibliography' environment}}%

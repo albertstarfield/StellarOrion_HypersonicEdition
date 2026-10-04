@@ -280,7 +280,7 @@ package body StellarOrion_Self_Test is
       --  ==================================================================
       --  Test 10: TPS Material Presets (all 6 materials)
       --  ==================================================================
-      Put_Line ("[TEST 10] TPS Material Presets (6 materials):");
+      Put_Line ("[TEST 10] TPS Material Presets (6 materials + IRVE-3 F-TPS):");
       declare
          SiC     : constant TPS_Material := TPS_SiC;
          PICA    : constant TPS_Material := TPS_PICA_X;
@@ -288,6 +288,10 @@ package body StellarOrion_Self_Test is
          Kapt    : constant TPS_Material := TPS_Kapton;
          Pyro    : constant TPS_Material := TPS_Pyrogel;
          Multi   : constant TPS_Material := TPS_Multi;
+         --  The ACTIVE preset for this vehicle: the lumped equivalent of
+         --  TPS_Layup_IRVE3 (two Nextel BF-20 / two Pyrogel 2250 / AKK,
+         --  6.35 mm total), not the 25.4 mm LOFTID SiC baseline.
+         IRVE3   : constant TPS_Material := TPS_IRVE3_FTPS;
          All_OK  : Boolean := True;
       begin
          --  Validate each material: density > 0, cp > 0, 0 < emissivity <= 1
@@ -340,8 +344,28 @@ package body StellarOrion_Self_Test is
                       ", eps=" & Float'Image (Multi.Emissivity) & ")");
          end if;
 
+         --  The IRVE-3 F-TPS record is checked against the layup it claims to
+         --  represent, not merely for positivity: Test_TPS_IRVE3_FTPS proves
+         --  depth (T3), areal capacitance (T1) and series resistance (T2) are
+         --  preserved, so the lumped slab cannot silently drift from the real
+         --  5-ply layup.
+         Put_Line ("  IRVE-3 F-TPS: OK (d=" & Float'Image (IRVE3.Density) &
+                   ", cp=" & Float'Image (IRVE3.Cp) &
+                   ", k=" & Float'Image (IRVE3.Thermal_K) &
+                   ", eps=" & Float'Image (IRVE3.Emissivity) &
+                   ", t=" & Float'Image (IRVE3.Thickness) & ")");
+         begin
+            Test_TPS_IRVE3_FTPS;
+         exception
+            when E : others =>
+               Put_Line ("  IRVE-3 F-TPS: INVALID (layup identities broken)");
+               Put_Line ("                " & Ada.Exceptions.Exception_Message (E));
+               All_OK := False;
+         end;
+
          if All_OK then
-            Put_Line ("[TEST 10]   PASS (all 6 materials valid)");
+            Put_Line ("[TEST 10]   PASS (all presets valid; IRVE-3 F-TPS"
+                      & " matches the layup)");
             Pass_Count := Pass_Count + 1;
          else
             Put_Line ("[TEST 10]   FAIL");

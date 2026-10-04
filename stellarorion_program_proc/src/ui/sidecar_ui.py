@@ -36,10 +36,10 @@ import time
 import urllib.parse
 
 logger = logging.getLogger(__name__)
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar, cast, override
 
 # ── Formal verification contracts (CrossHair / deal) ──────────────────
 # CrossHair verifies these postconditions; `deal` is the dev-only contract
@@ -61,7 +61,7 @@ except ImportError:  # pragma: no cover - dev dependency
         References:
             - https://deal.readthedocs.io/
         """
-        def _decorator(func):
+        def _decorator(func: Callable[..., _T]) -> Callable[..., _T]:
             """Identity decorator: returns the wrapped function unchanged.
 
             Pre: func is a callable to be 'decorated' (no-op contract).
@@ -101,6 +101,41 @@ PROJECT_ROOT_SURF = Path(__file__).parent.parent.parent / "HIAD_custom.surf"
 
 
 # ── Simulation State (thread-safe via Lock) ─────────────────────────────
+
+_T = TypeVar("_T")
+
+
+def _default_config_contract(result: object) -> bool:
+    """Postcondition for ``SidecarAPI._default_config``.
+
+    Narrows ``result`` explicitly instead of relying on an unannotated lambda,
+    so the contract is checkable. Uses ``.get`` rather than ``[...]`` indexing
+    so a malformed config yields ``False`` instead of raising inside the
+    verifier. Semantics match the original predicate for every well-formed
+    return value.
+
+    References:
+        - https://deal.readthedocs.io/
+    """
+    if not isinstance(result, dict):
+        return False
+    geometry = result.get("geometry")
+    if not isinstance(geometry, dict):
+        return False
+    return (
+        geometry.get("nose_radius_m") == 0.55
+        and result.get("solver") == "SPARTA"
+    )
+
+
+def _mime_type_contract(result: object) -> bool:
+    """Postcondition for ``SidecarHandler._guess_content_type``.
+
+    Reference:
+        - https://deal.readthedocs.io/
+    """
+    return isinstance(result, str) and "/" in result
+
 
 class SimulationState:
     """Mutable simulation state protected by a threading lock."""
@@ -183,12 +218,7 @@ class SimulationState:
             self.config.update(cfg)
 
     @staticmethod
-    @postcondition(
-        lambda result: isinstance(result, dict)
-        and "geometry" in result
-        and result["geometry"]["nose_radius_m"] == 0.55
-        and result.get("solver") == "SPARTA"
-    )
+    @postcondition(_default_config_contract)
     def _default_config() -> dict[str, Any]:
         """Baseline configuration: IRVE-3 geometry, Mach 10 / 52 km flight,
         SPARTA solver with five-species chemistry and grid factor 0.7.
@@ -424,6 +454,7 @@ class SidecarHandler(SimpleHTTPRequestHandler):
     api: SidecarAPI  # Injected at server creation
 
     # --- GET routing ---
+    @override
     def do_GET(self) -> None:
         """Route /api/status|results|history|config|title GETs to their
         handlers; anything else is served from frontend/ static files.
@@ -605,9 +636,7 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             self._json_response({"error": "Read error"}, 500)
 
     @staticmethod
-    @postcondition(
-        lambda result: isinstance(result, str) and "/" in result
-    )
+    @postcondition(_mime_type_contract)
     def _guess_content_type(ext: str) -> str:
         """Map a file extension to its MIME type; unknown extensions get
         application/octet-stream.
@@ -915,7 +944,8 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     # --- access-log suppression ---
-    def log_message(self, fmt: str, *args: Any) -> None:
+    @override
+    def log_message(self, format: str, *args: Any) -> None:
         """Suppress default access log noise.
         Tested by: test_log_message() (same file).
         References:
@@ -926,13 +956,13 @@ class SidecarHandler(SimpleHTTPRequestHandler):
 # ── Server startup ──────────────────────────────────────────────────────
 
 # --- CLI parsing ---
-def parse_args(argv=None) -> dict:
+def parse_args(argv: Sequence[str] | None = None) -> dict[str, str]:
     """Parse simple --key value CLI arguments into a plain dict.
     Tested by: test_parse_args() (same file).
     References:
         - https://docs.python.org/3/library/sys.html
     """
-    args = {}
+    args: dict[str, str] = {}
     if argv is None:
         argv = sys.argv[1:]
     i = 0
@@ -1007,7 +1037,9 @@ if __name__ == "__main__":
 # ══════════════════════════════════════════════════════════════════════════
 
 # Self-test helper: spin an ephemeral UI server bound to 127.0.0.1:0.
-def _spin_ui_server(db_dir=None):
+def _spin_ui_server(
+    db_dir: str | None = None,
+) -> tuple[HTTPServer, SidecarAPI, str]:
     """Start HTTPServer + SidecarHandler on an ephemeral localhost port.
 
     Pre: none. Post: returns (server, api, base_url); caller must call
@@ -1216,11 +1248,13 @@ def test_stop_monitor() -> None:
     api.stop_monitor()  # no-op when never started
     api.start_monitor()
     first = api._monitor_thread
+    assert first is not None, "start_monitor() must install a thread"
     api.stop_monitor()
     first.join(timeout=5.0)
     assert not first.is_alive()
     api.start_monitor()
     second = api._monitor_thread
+    assert second is not None, "restart must install a fresh thread"
     assert second is not first
     api.stop_monitor()
     second.join(timeout=5.0)
@@ -1345,7 +1379,10 @@ def test_log_message() -> None:
     References:
         - https://docs.python.org/3/library/http.server.html
     """
-    assert SidecarHandler.log_message(object(), "GET %s", "/x") is None
+    # Uninitialised instance: log_message ignores `self`, but the test must
+    # still pass a genuine SidecarHandler to satisfy the override contract.
+    handler = object.__new__(SidecarHandler)
+    assert SidecarHandler.log_message(handler, "GET %s", "/x") is None
 
 
 # Self-test: parse_args maps --key value pairs and ignores stray tokens.
@@ -1402,7 +1439,7 @@ def test_main() -> None:
     orig_serve = HTTPServer.serve_forever
 
     # Nested stub: raises KeyboardInterrupt on the first serve_forever call.
-    def _fake_serve(self) -> None:
+    def _fake_serve(self: HTTPServer, poll_interval: float = 0.5) -> None:
         """Immediate Ctrl-C: prove wiring without blocking the suite.
 
         References:
@@ -1430,7 +1467,10 @@ def test_api_init_guard() -> None:
     References:
         - https://docs.python.org/3/library/pathlib.html
     """
-    api = SidecarAPI(db_dir=12345)  # Path(int) raises TypeError internally
+    # Intentionally violates the `str | None` annotation to exercise the
+    # runtime fallback (Path(int) raises TypeError). `cast` documents that the
+    # static type is knowingly wrong; the runtime value stays the int 12345.
+    api = SidecarAPI(db_dir=cast("str", 12345))
     assert api._db_dir == _DEFAULT_RUNS_DIR
     assert api.state.snapshot()["status"] == "stopped"
 

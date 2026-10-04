@@ -51,7 +51,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from typing import Any
+from typing import Any, TypedDict
 
 # --- Import FFI wrappers from ada_pinn_wrapper ---
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -258,7 +258,54 @@ _GATE_CORR_MIN = 0.5                # A5 lower clamp
 _GATE_CORR_MAX = 2.0                # A5 upper clamp
 _GATE_PIPE_TARGET_STEP = 300000000  # run.py Phase 2b template [Citation 8]
 _GATE_PIPE_ITERATIONS = 4000        # run.py Phase 2b template [Citation 8]
-_GATE_BO_KWARGS = {"n_initial": 20, "n_iter": 50, "xi": 0.01, "seed": 42}
+class _GateBOKwargs(TypedDict):
+    """Keyword arguments for the round-2 Bayesian Optimization call.
+
+    AXIOM: `run_bayesian_optimize` declares exactly four keyword parameters --
+    `n_initial: int`, `n_iter: int`, `xi: float`, `seed: int` -- and accepts no
+    `**kwargs`, so no other keyword may be passed to it.
+    THEOREM: forwarding a mapping with `**` into a function that has no
+    `**kwargs` is only sound when the mapping's key set is KNOWN and equal to
+    that parameter list. A plain dict literal gives the checker no such
+    guarantee: it types the literal as `dict[str, int | float]`, which is open
+    (it admits extra keys of unknown name), and the forwarding is rejected.
+    APPLICATION: this TypedDict pins the four keys and their types one-to-one
+    against the callee signature, making the unpack provably total and
+    key-compatible. The literal values are unchanged from the pre-TypedDict
+    definition, so the round-2 BO budget is still 20 LHS + 50 EI iterations at
+    xi=0.01 with seed 42.
+
+    FORWARDING: the call site does NOT use `**{...}` unpacking. `**` into a
+    callee without `**kwargs` additionally requires the mapping to be *closed*
+    (PEP 728 `TypedDict(closed=True)`), which is not available in this project's
+    CPython 3.14 `typing` module — measured: `typing.TypedDict(..., closed=True)`
+    raises `TypeError: _TypedDictMeta.__new__() got an unexpected keyword
+    argument 'closed'` at import time, breaking the whole module. Passing the
+    four values as explicit keywords is portable to every supported Python
+    (>=3.10), keeps a single source of truth in `_GATE_BO_KWARGS`, and is
+    type-checked field-by-field against the callee signature.
+
+    [Reference: PEP 589 — TypedDict, "total" and key-exactness semantics
+     https://peps.python.org/pep-0589/]
+    [Reference: PEP 728 — TypedDict with typed extra items / `closed=True`
+     https://peps.python.org/pep-0728/]
+    [Reference: PEP 448 — additional unpacking generalizations, the `**`
+     soundness condition this type satisfies
+     https://peps.python.org/pep-0448/]
+    """
+
+    n_initial: int
+    n_iter: int
+    xi: float
+    seed: int
+
+
+_GATE_BO_KWARGS: _GateBOKwargs = {
+    "n_initial": 20,
+    "n_iter": 50,
+    "xi": 0.01,
+    "seed": 42,
+}
 
 
 def _ccd_cost(entry: "dict[str, str | float]") -> float:
@@ -1100,7 +1147,14 @@ def _hybrid_gate(
     print("\n  Stage 3/3: round-2 Bayesian Optimization with corrected J ...")
     try:
         corrected_cost = _make_corrected_cost(correction)
-        result2 = run_bayesian_optimize(corrected_cost, **_GATE_BO_KWARGS)
+        # Explicit keywords, not `**_GATE_BO_KWARGS` -- see _GateBOKwargs.
+        result2 = run_bayesian_optimize(
+            corrected_cost,
+            n_initial=_GATE_BO_KWARGS["n_initial"],
+            n_iter=_GATE_BO_KWARGS["n_iter"],
+            xi=_GATE_BO_KWARGS["xi"],
+            seed=_GATE_BO_KWARGS["seed"],
+        )
     except (OSError, ValueError, RuntimeError, KeyError) as exc:
         return _abort(1, f"round-2 optimization failed: {exc}")
     x2 = result2["x_opt"]

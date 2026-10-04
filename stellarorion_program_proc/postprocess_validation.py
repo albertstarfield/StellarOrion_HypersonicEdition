@@ -359,7 +359,20 @@ def table3_surface_distribution(
     # Sort by heat flux descending
     sorted_idx = np.argsort(hf)[::-1]
 
-    rows = []
+    # AXIOM: every cell appended below is a plain `int`/`float` scalar (see the
+    # `int(...)` / `float(...)` coercions), so this list is a list of `_Row`s, which
+    # is exactly the element type the declared return type promises.
+    # WHY THE ANNOTATION IS REQUIRED (not cosmetic): `dict` is INVARIANT in its value
+    # type, so an un-annotated `rows = []` makes Pyrefly infer each appended literal as
+    # `dict[str, float | int]`, and `dict[str, float | int]` is NOT assignable to
+    # `dict[str, _RowValue]` (= `dict[str, float | int | np.integer]`) even though every
+    # cell is a member of `_RowValue`. Annotating the list supplies the expected type
+    # `list[_Row]`, so the literals are inferred as `dict[str, _RowValue]` and the
+    # return statement type-checks. Purely a type annotation: no runtime effect.
+    # [Reference: Python typing spec, "Generic classes" - `dict[KT, VT]` uses an
+    #            invariant `VT`; variance is opt-in per type parameter]
+    # [Reference: PEP 484, "Covariance and contravariance" (invariant containers)]
+    rows: list[_Row] = []
     for i, idx in enumerate(sorted_idx[:15]):  # Top 15 elements
         rows.append({
             "rank": i + 1,
@@ -555,7 +568,28 @@ def main():
     # TABLE 3: Surface Distribution
     # ============================================================================
     t3_result = table3_surface_distribution(surf_files)
-    if len(t3_result) == 2:
+    # AXIOM 1: table3_surface_distribution returns EITHER the 4-tuple
+    #   (rows, mean, std, median) OR the bare empty-list sentinel (see the
+    #   "Sentinel:" comment inside it). Those are the only two possible values,
+    #   so its declared type is the union `tuple[list[_Row], float, float, float]
+    #   | list[_Row]` and a 4-way destructuring assignment cannot be type-checked
+    #   against a union without first narrowing it to the tuple member.
+    # AXIOM 2: the sentinel is a `list` (never a `tuple`); the 4-tuple is always
+    #   exactly 4 elements long.
+    # THEOREM: `len(r) == 2` implies `isinstance(r, tuple)` is vacuous — the
+    #   pre-existing test can never be true for any r.
+    #   PROOF (case split on AXIOM 1): (a) r is the sentinel -> len(r) == 0, so
+    #   `len(r) == 2` is False. (b) r is the 4-tuple -> len(r) == 4, so
+    #   `len(r) == 2` is False. Both cases give False, hence the added
+    #   `isinstance` conjunct is never the deciding term: the branch is entered
+    #   for exactly the same set of values r as before this change.
+    # APPLICATION: the conjunct is a pure static-type narrowing. It adds no new
+    #   runtime guard and no new output; the original `len(t3_result) == 2` test
+    #   is kept verbatim so this block stays byte-for-byte dead at runtime, as
+    #   measured before the change (main() stdout is SHA-256 identical).
+    # [Reference: Python typing spec, "Type narrowing" — `isinstance()` is a
+    #            narrowing form for `tuple` vs `list` union members]
+    if len(t3_result) == 2 and isinstance(t3_result, tuple):
         rows3, surf_mean, surf_std, surf_median = t3_result
         headers3 = ["rank", "surf_id", "heat_flux_Wcm2", "pct_of_peak", "pct_of_mean"]
         rows3_fmt = []

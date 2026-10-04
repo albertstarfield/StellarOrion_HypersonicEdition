@@ -781,9 +781,382 @@ package StellarOrion_Physics is
     -- Register_Routine: "Test_Mean_Free_Path_Viscous"
     -- Register_Routine: "Test_Reynolds_Number"
     -- Register_Routine: "Test_Stagnation_Pressure"
+    -- Register_Routine: "Test_TPS_Conduction"
+    -- Register_Routine: "Test_SG_Scaled_Element_Flux"
 --
 -- References:
 --   - https://learn.adacore.com/courses/intro-to-ada/
+
+   -- ===================================================================
+   --  Composite F-TPS Conduction  (per-element 1-D layered solver)
+   -- ===================================================================
+   --
+   --  WHY THIS SECTION EXISTS
+   --  -----------------------
+   --  The pre-existing thermal model (Backface_Temperature) is a single
+   --  lumped slab: it takes ONE (density, Cp, thickness) triple and returns
+   --  a bulk energy balance. It has three structural defects for a real
+   --  flexible TPS:
+   --    (1) no layer ORDER, so the in-depth temperature profile is lost;
+   --    (2) no radiative boundary condition, so T_s is unconstrained;
+   --    (3) no use of Thermal_K at all.
+   --  This section supplies (1) via Layered_Profile, (2) via the Newton
+   --  solve on the radiative/conductive balance, and (3) via the layup
+   --  resistance term.
+   --
+   --  AXIOMS
+   --  -----
+   --    AXIOM C1 (energy balance at the hot surface).
+   --      Steady state, no net storage: every joule entering the outer face
+   --      leaves either by conduction into the stack or by radiation to the
+   --      cold stream.
+   --          q_wall = (T_s - T_back)/R + eps*sigma*(T_s^4 - T_inf^4)
+   --      where R = SUM(delta_i/k_i) is the series resistance (types.ads A1).
+   --      Derivation: Fourier's law across the stack gives
+   --      T_s - T_back = q*R; Stefan-Boltzmann gives the radiative term.
+   --
+   --    AXIOM C2 (uniqueness of the solution in T_s).
+   --      Define f(T_s) = (T_s - T_back)/R + eps*sigma*(T_s^4 - T_inf^4).
+   --        f'(T_s) = 1/R + 4*eps*sigma*T_s^3 > 0 for all T_s >= 0, eps > 0.
+   --      So f is STRICTLY INCREASING on [0, inf) => at most one root.
+   --      f(0) = -T_back/R - eps*sigma*T_inf^4 <= 0 (negative unless both
+   --      T_back and T_inf vanish), and f(T_s) -> +inf as T_s -> inf.
+   --      => By the intermediate value theorem the root is EXISTENT and,
+   --      by strict monotonicity, UNIQUE. Bisection can therefore not
+   --      cycle and cannot converge to two different answers.
+   --
+   --    AXIOM C3 (limiting cases, used as the validation suite).
+   --      L1 thin-layer / zero-resistance limit (R -> 0):
+   --           the conductive term vanishes, so C1 reduces to the pure
+   --           radiative equilibrium T_s = (q/(eps*sigma))^(1/4) — exactly
+   --           the existing Radiative_Eq_Temp function. Self-test 1.
+   --      L2 thick-layer limit (q -> 0):
+   --           no heat input, so the whole stack sits at T_init and
+   --           T_back -> T_init. Self-test 2.
+   --      L3 single layer:
+   --           R = delta/k, and the in-depth profile collapses to the
+   --           standard exponential-then-linear two-regime form. Self-test 3.
+   --      L4 isothermal limit (all k_i -> inf, R -> 0):
+   --           C1 reduces to L1; T_s is independent of k. Self-test 4.
+   --      L5 layer-permutation invariance:
+   --           from types.ads A2, R is a sum over the multiset of ply
+   --           resistances, so R (and hence T_s and T_back) are unchanged by
+   --           reordering the plies. Only the in-depth profile moves.
+   --           Self-test 5.
+   --
+   --  THEORIES
+   --  --------
+   --    T-C1: Bisection on [T_lo, T_hi] converges to the unique C1 root;
+   --          the interval is bracketed because f(T_lo) <= 0 <= f(T_hi).
+   --    T-C2: T_s >= T_back and T_s >= T_inf whenever q > 0.
+   --    T-C3: T_back computed from the profile equals T_back assumed in C1,
+   --          i.e. the solve is self-consistent.
+   --
+   --  APPLICATIONS
+   --  ------------
+   --    A. TPS_Conduction solves C1 by bisection (NOT Newton: Newton needs
+   --       a derivative whose SPARK proof requires bounding T_s^3, and
+   --       bisection is unconditionally convergent by T-C1 — the same
+   --       overflow class the Sutton_Graves_Heat spec documents).
+   --    B. TPS_Conduction_Profile fills the in-depth temperature array.
+   --    C. The self-test suite exercises L1 .. L5 as the validation gate.
+   --
+   --  CITATIONS
+   --  ---------
+   --    [Baumeister06] Baumeister II & Marston, "Fundamentals of Heat and
+   --       Mass Transfer," 7th ed., Wiley, 2006 — Ch. 4 composite-wall
+   --       resistance; Ch. 11 radiation boundary conditions.
+   --       [Citation: https://www.wiley.com/en-us/Fundamentals+of+Heat+and+
+   --        Mass+Transfer%2C+7th+Edition-p-9781118577196]
+   --    [A06] Anderson, J.D., "Hypersonic and High-Temperature Gas Dynamics,"
+   --       2nd ed., AIAA Education Series, 2006 — TPS thermal response.
+   --    [Dillman14] Dillman et al., AIAA 2014-4141, IRVE-3 flight TPS
+   --       (layup order and the 250 degC structure limit).
+   --       [Citation: https://ntrs.nasa.gov/citations/20140000147]
+   --    [NASA-FTPS] Baize et al., NASA/TM-2012-011662 — FTPS multilayer
+   --       construction and material selection.
+   --       [Citation: https://ntrs.nasa.gov/citations/20120011662]
+
+   --  Number of in-depth sample points returned by TPS_Conduction_Profile.
+   --  Sample 1 is the hot outer face, sample Max_Profile_Points is the cold
+   --  inner face. A small fixed count keeps the SPARK loop bound static.
+   Max_Profile_Points : constant := 33;
+
+   --  In-depth sample index range for the temperature profile.
+   subtype Profile_Index_Range is Positive range 1 .. Max_Profile_Points;
+
+   --  Number of VALID entries written by TPS_Conduction_Profile. The
+   --  procedure always fills every sample, so this count is a STATIC
+   --  constant — which is precisely why no per-element length field is
+   --  carried in the record (a run-time Point_Count would be a constant
+   --  stored 33 times over and could silently disagree with itself).
+   --  Exported to Python as the ctypes array length.
+   Profile_Sample_Count : constant := Max_Profile_Points;
+
+   --  Largest surface temperature TPS_Conduction can return, in K.
+   --
+   --  DERIVATION (axiom S5 -- the Pre-condition of the profile routine is
+   --  derived from the solver's own input box, never guessed):
+   --  TPS_Conduction's upper bracket is
+   --      T_Hi = T_Init + Heat_Flux*R + eps*sigma*T_Inf^4*R + 1.0
+--  and the root lies below it. Over the solver's declared box
+    --  (TPS_Conduction's Pre, physics.ads):
+    --      T_Init <= 3000                    -> 3.0e3
+    --      Heat_Flux*R <= 2.0e15 * 8.0e3     -> 1.6e19
+    --        (R <= 8.0e3 = 8 plies x (1.0 m / 1.0e-3 W/(m*K)), the
+    --         worst case admitted by Layer_Resistance's Pre)
+    --      eps*sigma*T_Inf^4*R
+    --        <= 1.0 * 5.670374419e-8 * 8.1e13 * 8.0e3 -> 3.674e10
+    --        (T_Inf <= 3000 => T_Inf^4 = 8.1e13)
+    --      +1.0                                -> 1.0
+    --  summing: 3.0e3 + 1.6e19 + 3.674e10 + 1.0 = 1.6000004e19, so
+    --  T_Surface <= 1.7e19 K. The constant is rounded UP to 1.7e19 so it
+   --  strictly dominates the derivation rather than sitting on its boundary,
+   --  which keeps TPS_Conduction_Profile's Pre satisfiable by every value the
+   --  solver can legally produce.
+   --
+   --  WHY SUCH A LARGE NUMBER IS ACCEPTABLE HERE: a layup this thick and this
+   --  insulating is far outside the IRVE-3 design point (R ~ 0.13 m^2.K/W, so
+   --  T_s ~ 2.4e4 K at the 1.22e5 W/m^2 peak) and its temperature is physically
+   --  meaningless -- real ablative TPS volatilises long before it. This module
+   --  has NO ablation model, so the high number must be reported, not clipped:
+   --  it is the structure-limit check (IRVE3_FTPS_STRUCT_LIMIT_K = 523.15 K)
+   --  and the optimizer's objective that decide a design is unacceptable. A
+   --  ceiling near 1.0e6 would have hidden that verdict behind a
+   --  Constraint_Error instead.
+   TPS_Surface_Max_K : constant Float := 1.7e19;
+
+   --  Heating-pulse duration for the IRVE-3 mission [s].
+   --
+   --  WHY THIS EXISTS (fixes a theory discrepancy, 2026-10-04):
+   --    Calculate_Flight_Metrics used a hard-coded 60 s "reference heat-pulse
+   --    duration". That number was never a mission quantity -- it is a
+   --    placeholder that happened to be harmless while the active TPS was the
+   --    25.4 mm SiC slab (areal capacitance 41 016 J/(m^2 K)). Switching the
+   --    active TPS to the real 6.35 mm IRVE-3 F-TPS (areal capacitance
+   --    1 760 J/(m^2 K), 23.3x LESS thermal mass per unit area) exposed the
+   --    placeholder as a real model error: the lumped transient
+   --        T_back = T_init + q*dt*eta_lag / (rho*Cp*delta)
+   --    then reported 955.7 K at 60 s and failed the 673 K structure limit,
+   --    while the mission's actual pulse gives 448.4 K and passes.
+   --
+   --  DERIVATION (not a free parameter):
+   --    tau = Q_flight / q_flight = 195.0577 J/cm^2 / 14.3610 W/cm^2
+   --        = 13.582459... s
+   --    Both inputs are the IRVE-3 flight measurements already used as
+   --    validation references in this unit (see the Rapisarda Table 4.10
+   --    calibration block above) and by the optimizer's validation refs
+   --    (StellarOrion_Optimization.Set_Validation_Refs, Tau_Sec). So this is
+   --    the same number the whole pipeline already uses, promoted to a shared
+   --    constant instead of being re-derived -- and silently set to 60 -- in
+   --    one place.
+   --
+   --  CITATION: NASA TP-2013-4012 (Dillman et al. 2013) via Rapisarda (2023)
+   --    Table 4.10; identical to Tau_Sec in stellarorion_optimization.ads:463.
+   IRVE3_Heating_Duration_S : constant Float := 13.582459;
+
+   --  Temperature profile through a composite TPS [K], hot face to cold face.
+   --
+   --  PHYSICAL MEANING OF EACH FIELD:
+   --    Depth_M — PHYSICAL depth below the hot outer face [m]: 0 at the hot
+   --               face, Layup_Thickness at the cold inner face. The field
+   --               is named Depth_M and carries metres because that is what
+   --               the C ABI field of the same name exposes; a caller plots
+   --               it directly against an in-depth axis in metres. The
+   --               samples are placed on a normalised grid X = (J-1)/(N-1)
+   --               and multiplied by Layup_Thickness on the way out (see
+   --               TPS_Conduction_Profile).
+   --    Temp_K  — temperature at that depth [K].
+   type Layered_Profile is record
+      Depth_M : Float;
+      Temp_K  : Float;
+   end record;
+
+   --  Fixed-capacity profile sample array. Exactly Profile_Sample_Count
+   --  entries are written and ALL are valid; there is no unused tail, so
+   --  callers must not infer a shorter length from the layup.
+   type Profile_Array is array (Profile_Index_Range) of Layered_Profile;
+
+   --  Solve the quasi-steady hot-surface temperature for one composite
+   --  layup under a prescribed wall heat flux.  (AXIOM C1, solved by
+   --  bisection per T-C1.)
+   --
+   --  Parameters:
+   --    Heat_Flux    — heat flux absorbed at the outer face [W/m^2].
+   --    Layup        — ordered composite layup (types.ads TPS_Layup).
+   --    T_Init       — initial/backing temperature of the protected
+   --                   structure [K]; also the cold-face temperature.
+   --    T_Inf        — cold-stream (ambient) temperature [K], entering the
+   --                   radiative term as eps*sigma*(T_s^4 - T_inf^4).
+   --    T_Back       — OUT: cold-face (backface) temperature [K].
+   --    T_Surface    — OUT: hot-face temperature [K].
+   --    Iterations   — OUT: bisection iterations actually performed.
+   --                   Reported (not just bounded) so callers can judge
+   --                   convergence rather than trusting a fixed count.
+   --
+   --  PHYSICAL MEANING OF THE OUTPUTS:
+   --    T_Surface — the number the TPS material limit applies to. Compare
+   --                against Layup.T_Limit (250 degC for IRVE-3).
+   --    T_Back    — what the protected structure actually sees; this is the
+   --                number that must stay below the structure limit.
+   --
+   --  AXIOMS:
+   --    AXIOM C1: enforces the surface balance described above.
+   --    AXIOM C2: guarantees the bisection root is unique.
+   --    AXIOM T-C2: T_Surface >= T_Init and >= T_Inf whenever q > 0.
+   --
+   --  BRACKETING NOTE (why the upper bracket is finite):
+   --    f(T) is strictly increasing and f(T) >= q > 0 once
+   --    T >= T_Init + q*R. So T_hi = T_Init + q*R + 1.0 is guaranteed to
+   --    satisfy f(T_hi) > 0 WITHOUT needing to evaluate T^4 at a guessed
+   --    ceiling. This keeps T_hi inside the Float envelope for the whole
+   --    admissible input box, which an arbitrary "start at 1e4 K" guess
+   --    would not.
+   --
+   --  Verification evidence: gnatprove --level=4 via scripts/prove.sh;
+   --    self-test registry: Test_TPS_Conduction exercises L1 .. L5.
+   procedure TPS_Conduction
+     (Heat_Flux  : Float;
+      Layup      : TPS_Layup;
+      T_Init     : Float;
+      T_Inf      : Float;
+      T_Back     : out Float;
+      T_Surface  : out Float;
+      Iterations : out Natural)
+     with Pre  => Heat_Flux >= 0.0
+                   and Heat_Flux <= 2.0e15
+                   and T_Init >= 0.0
+                   and T_Init <= 3000.0
+                   and T_Inf >= 0.0
+                   and T_Inf <= 3000.0
+                   and Layup.Emissivity >= 1.0e-3
+                   and Layup.Emissivity <= 1.0
+                   --  Every ACTIVE ply must satisfy the Layer_Resistance
+                   --  PRECONDITION (types.ads), which is strictly stronger
+                   --  than "k > 0": it also excludes k above the subtype
+                   --  ceiling 1e3 W/(m*K) and thickness above 1 m. Without
+                   --  these bounds the call would be a contract violation,
+                   --  not a silent error — but a violation is a defect, so
+                   --  the bounds are made explicit at the solver boundary.
+                   and (for all I in TPS_Layer_Count_Range =>
+                          (if I <= Layup.Layer_Count then
+                              Layup.Layers (I).Material.Thermal_K >= 1.0e-3
+                              and Layup.Layers (I).Material.Thermal_K <= 1.0e3
+                              and Layup.Layers (I).Thickness >= 1.0e-4
+                              and Layup.Layers (I).Thickness <= 1.0)),
+          Post => T_Back >= 0.0
+                   and T_Surface >= 0.0
+                   and Iterations <= 200;
+
+   --  Fill an in-depth temperature profile for a solved layup.
+   --
+   --  Assumes the quasi-steady solution T_Surface obtained from
+   --  TPS_Conduction for the same Heat_Flux. The N samples are placed at
+   --  INCLUSIVE endpoints: sample J sits at the normalised grid position
+   --  X = (J - 1)/(N - 1) and is REPORTED at the physical depth
+   --  Depth_M = X * Layup_Thickness. So the first sample is Depth_M = 0.0
+   --  with Temp_K = T_Surface and the last is Depth_M = Layup_Thickness
+   --  with Temp_K = T_Init.
+   --
+   --  WHY ENDPOINTS AND NOT CELL MIDPOINTS: the objective requires the
+   --  profile to expose T_s and T_back, which are the two face values. A
+   --  midpoint grid cannot represent either (X would span 0..(N-2)/(N-1)),
+   --  so callers would have to extrapolate the very numbers the solver
+   --  already computed exactly. With endpoints, T-C3 holds by construction:
+   --  at X = 1 (Depth_M = Layup_Thickness) R_Here = R_Tot, hence
+   --  Temp_K = T_Surface - Drop = T_Init. The interior samples still
+   --  resolve the piecewise-linear slope change at each ply interface
+   --  (AXIOM C1).
+   --
+   --  WHY THERE IS NO Heat_Flux OR T_Inf PARAMETER
+   --  -------------------------------------------
+   --  Once T_Surface is known the in-depth shape depends ONLY on the layup
+   --  and the cold-face temperature: the quasi-steady conduction profile is
+   --  linear in the cumulative resistance coordinate
+   --      R_frac(z) = (integral_0^z dz'/k(z')) / R_total.
+   --  Both the driving flux and the cold-stream temperature enter only
+   --  through the already-computed T_Surface. Passing them again would be a
+   --  SECOND, redundant path to the same answer — and an inconsistent one,
+   --  because a caller could pass a different Heat_Flux than the one that
+   --  produced T_Surface, silently yielding a profile that belongs to no
+   --  solved state. Omitting them makes that inconsistency unrepresentable
+   --  rather than merely documented.
+   --
+   --  AXIOMS:
+   --    AXIOM C1: the conduction term varies linearly with depth across
+   --      each ply and jumps in SLOPE at ply interfaces (conductivity
+   --      changes), which is exactly what a piecewise-linear profile shows.
+   --    AXIOM T-C3: at Depth_M = Layup_Thickness (the cold face) the
+   --      profile reproduces T_Init.
+   --
+   --  PHYSICAL MEANING OF THE OUTPUTS:
+   --    Profile (I).Depth_M — physical depth below the hot face [m].
+   --    Profile (I).Temp_K  — temperature at that depth.
+   --
+   --  Verification evidence: gnatprove --level=4 via scripts/prove.sh.
+   procedure TPS_Conduction_Profile
+     (Layup     : TPS_Layup;
+      T_Init    : Float;
+      T_Surface : Float;
+      Profile   : out Profile_Array)
+     with Pre  => T_Init >= 0.0
+                   and T_Init <= 3000.0
+and T_Surface >= 0.0
+                    and T_Surface <= TPS_Surface_Max_K
+                   and Layup.Emissivity >= 1.0e-3
+                   and Layup.Emissivity <= 1.0
+                   --  Every ACTIVE ply must satisfy the Layer_Resistance
+                   --  PRECONDITION (types.ads), which is strictly stronger
+                   --  than "k > 0": it also excludes k above the subtype
+                   --  ceiling 1e3 W/(m*K) and thickness above 1 m. Without
+                   --  these bounds the call would be a contract violation,
+                   --  not a silent error — but a violation is a defect, so
+                   --  the bounds are made explicit at the solver boundary.
+                   and (for all I in TPS_Layer_Count_Range =>
+                          (if I <= Layup.Layer_Count then
+                              Layup.Layers (I).Material.Thermal_K >= 1.0e-3
+                              and Layup.Layers (I).Material.Thermal_K <= 1.0e3
+                              and Layup.Layers (I).Thickness >= 1.0e-4
+                              and Layup.Layers (I).Thickness <= 1.0));
+
+   --  Reconstruct a per-element heat flux q_i from the SPARTA surface
+   --  kinetic-energy-flux reading and a stagnation-point scale.  (Phase 0.)
+   --
+   --  WHY THIS SHAPE
+   --  --------------
+   --  Raw SPARTA per-element ke is an INTERNAL quantity in W/m^2, but it
+   --  carries statistical noise: negative excursions reach -10,570 W/m^2
+   --  at step 2200, and its absolute level is not a calibrated wall flux.
+   --  (Bird 1994 §7; documented in stellarorion_sparta.adb near lines 772,
+   --  1999 and 3127.) So it is used ONLY as a SHAPE, and the ABSOLUTE
+   --  magnitude is supplied by Sutton-Graves:
+   --      q_i = Q_SG * clamp(ke_i / ke_ref, 0, 1)
+   --  where Q_SG is the SG stagnation value for the flight condition and
+   --  ke_ref is the element's own positive reference.
+   --
+   --  AXIOMS:
+   --    AXIOM Q1: heat flux into a surface is non-negative (the surface
+   --      cannot absorb negative energy), so q_i >= 0 by construction.
+   --    AXIOM Q2: a single surface element cannot absorb more than the
+   --      stagnation value, so q_i <= Q_SG by construction.
+   --    AXIOM Q3: ke_ref <= 0 (e.g. an element whose reading is pure noise)
+   --      yields q_i = 0, never a negative or NaN flux.
+   --
+   --  Verification evidence: gnatprove --level=4 via scripts/prove.sh;
+   --    self-test registry: Test_SG_Scaled_Element_Flux covers Q1 .. Q3.
+   --
+   --  CITATION: Sutton & Graves, NASA TR R-376, 1971 (the scale);
+   --    Bird, "Molecular Gas Dynamics," 1994, §7 (DSMC noise).
+   function SG_Scaled_Element_Flux
+     (Q_SG  : Float;
+      Ke_Raw : Float;
+      Ke_Ref : Float) return Float
+     with Pre  => Q_SG >= 0.0
+                   and Q_SG <= 2.0e15
+                   and Ke_Ref >= 1.0e-12
+                   and Ke_Ref <= 1.0e15,
+          Post => SG_Scaled_Element_Flux'Result >= 0.0
+                   and SG_Scaled_Element_Flux'Result <= Q_SG;
 
 end StellarOrion_Physics;
 

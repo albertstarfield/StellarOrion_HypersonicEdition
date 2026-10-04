@@ -30,6 +30,8 @@
 -- =============================================================================
 
 with Interfaces.C;
+with StellarOrion_Types; use StellarOrion_Types;
+with StellarOrion_Physics;
 
 package StellarOrion_FFI is
    pragma SPARK_Mode (Off);
@@ -510,5 +512,180 @@ package StellarOrion_FFI is
      (Altitude_Km : Interfaces.C.Double)
       return Interfaces.C.Double;
    pragma Export (C, Atmosphere_Density_C, "Atmosphere_Density_C");
+
+   -- =========================================================================
+   --  TPS_Conduction_C — per-element composite F-TPS conduction (C ABI)
+   -- =========================================================================
+   --
+   --  WHY A FLAT-ARRAY LAYUP RATHER THAN A HARD-CODED PRESET
+   --  ------------------------------------------------------
+   --  The IRVE-3 layup (TPS_Layup_IRVE3) is the DEFAULT, but hard-coding it
+   --  here would make the topology/Gaussian optimisation impossible: that
+   --  optimiser's design variables ARE the ply thicknesses and
+   --  conductivities. Passing them as flat C arrays makes the layup a
+   --  parameter, so one entry point serves both the flight case (pass the
+   --  IRVE-3 values) and the search (pass each candidate).
+   --
+   --  AXIOMS:
+   --   A1. Every quantity crossing this boundary is an IEEE 754 binary64
+   --      (Interfaces.C.Double); conversion to the internal Float is
+   --      therefore a representation change, not a rounding surprise, and
+   --      the internal Float is the lower-precision of the two.
+   --   A2. Out-parameters are written ONLY after validation, and EVERY out
+   --      parameter is initialised to a documented sentinel before the first
+   --      validation test. A caller that ignores Status therefore still
+   --      receives defined numbers — never uninitialised memory.
+   --   A3. Status is the single authoritative success indicator. It is
+   --      checked by the Python wrapper, so a failure is visible to Python
+   --      rather than being absorbed into a plausible-looking temperature.
+   --   A4. No Ada exception escapes this procedure: an exception crossing a
+   --      C frame is undefined behaviour, and the repository has already
+   --      observed an FFI exception abort the host process
+   --      (stellarorion_ffi.adb C_PRINTF axiom, 2026-09-25).
+   --   A5. Logging uses libc printf, never Ada.Text_IO, for the reason in A4.
+   --
+   --  THEORIES:
+   --   T1 (range safety). Because every input is validated against the very
+   --      bounds that appear in the Pre => contracts of
+   --      StellarOrion_Physics.TPS_Conduction, SG_Scaled_Element_Flux and
+   --      TPS_Conduction_Profile, those subprograms cannot raise a
+   --      Constraint_Error on data that passed validation here. Validation
+   --      is therefore not defensive decoration — it is what makes the
+   --      Status code exhaustive.
+   --   T2 (no partial output). Status = 0 is set only after ALL four
+   --      outputs are written, so Status = 0 implies a fully populated
+   --      Profile buffer; a non-zero Status implies the sentinels of A2.
+   --
+   --  APPLICATIONS: see stellarorion_ffi.adb, TPS_Conduction_C.
+   --
+   --  CITATIONS:
+   --   [Ada2012] ISO/IEC 8652:2012, RM 13.9.1 (aspect specifications),
+   --            RM B.3 (Interfaces.C interoperability).
+   --   [Ctypes] https://docs.python.org/3/library/ctypes.html
+   --   [Baumeister06] Baumeister II & Marston, Fundamentals of Heat and Mass
+   --            Transfer, 7th ed., Wiley, 2006, Ch. 4 and Ch. 11.
+   --   [Dillman14] Dillman et al., AIAA 2014-4141 (IRVE-3, 250 degC limit).
+   -- =========================================================================
+
+   --  Number of in-depth samples in the profile buffer. Bound to the
+   --  physics-side constant so the two CANNOT drift: a mismatch would
+   --  silently truncate or overrun the caller's buffer.
+   TPS_Profile_Samples : constant := StellarOrion_Physics.Max_Profile_Points;
+
+   --  One in-depth profile sample, field-for-field identical to
+   --  StellarOrion_Physics.Layered_Profile but in C types.
+   --
+   --  PHYSICAL MEANING OF EACH FIELD:
+   --    Depth_M — PHYSICAL depth below the hot outer face [m]: 0 at the
+   --               hot face and the total layup thickness at the cold
+   --               inner face. Carrying metres here (rather than a
+   --               normalised [0..1] fraction) means the C ABI needs no
+   --               companion thickness argument and a caller cannot
+   --               mis-scale the axis. Match field-for-field with
+   --               StellarOrion_Physics.Layered_Profile.Depth_M.
+   --    Temp_K  — temperature at that depth [K].
+   type TPS_Profile_Sample is record
+      Depth_M : Interfaces.C.Double;
+      Temp_K  : Interfaces.C.Double;
+   end record;
+   pragma Convention (C, TPS_Profile_Sample);
+
+   --  Fixed-size C buffer for the in-depth profile (TPS_Profile_Samples
+   --  samples). A C caller declares the identical shape as
+   --      struct { double depth_m, temp_k; } samples[33];
+   type TPS_Profile_Buffer is array (0 .. TPS_Profile_Samples - 1)
+     of TPS_Profile_Sample;
+   pragma Convention (C, TPS_Profile_Buffer);
+
+   --  Fixed-size C buffer for one per-ply scalar (thickness OR thermal
+   --  conductivity), Max_TPS_Layers entries. Entries at index >= N_Layers
+   --  are ignored by the callee — the same active-prefix convention as
+   --  TPS_Layup.Layer_Count, so callers need not zero the tail.
+   type TPS_Ply_Array is array (0 .. Max_TPS_Layers - 1)
+     of Interfaces.C.Double;
+   pragma Convention (C, TPS_Ply_Array);
+
+   --  Status codes returned in the Status out-parameter.
+   --
+   --  WHY AN ENUM-LIKE INTEGER INSTEAD OF A BOOLEAN: a boolean cannot
+   --  distinguish "the caller passed 0 plies" from "the solver blew up",
+   --  and those need different fixes. Each code below names its own
+   --  remedy. Also documented as constants below so neither the Ada nor the
+   --  Python side has to hard-code a bare integer.
+   TPS_STATUS_OK                 : constant Interfaces.C.int := 0;
+   TPS_STATUS_BAD_LAYER_COUNT    : constant Interfaces.C.int := 1;
+   TPS_STATUS_NULL_POINTER       : constant Interfaces.C.int := 2;
+   TPS_STATUS_BAD_EMISSIVITY     : constant Interfaces.C.int := 3;
+   TPS_STATUS_BAD_TEMPERATURE    : constant Interfaces.C.int := 4;
+   TPS_STATUS_BAD_FLUX_INPUT     : constant Interfaces.C.int := 5;
+   TPS_STATUS_BAD_PLY_PROPERTY   : constant Interfaces.C.int := 6;
+   TPS_STATUS_SOLVER_RAISED      : constant Interfaces.C.int := 7;
+   TPS_STATUS_PROFILE_RAISED     : constant Interfaces.C.int := 8;
+
+   --  Reconstruct one surface element's heat flux and solve the composite
+   --  F-TPS conduction through it, returning q_SG, T_s, T_back and the
+   --  in-depth profile.
+   --
+   --  Parameters (inputs):
+   --    Q_SG_Scale    — Sutton-Graves stagnation heat flux for the flight
+   --                    condition [W/m^2]. This is the CALIBRATED magnitude;
+   --                    the per-element distribution comes from Ke_Raw.
+   --    Ke_Raw        — raw SPARTA per-element kinetic-energy flux [W/m^2].
+   --                    May be negative (DSMC noise); that yields q = 0.
+   --    Ke_Ref        — positive reference for Ke_Raw, e.g. the element's
+   --                    own peak reading or the surface mean [W/m^2].
+   --    N_Layers      — number of ACTIVE plies, 1 .. Max_TPS_Layers.
+   --    Ply_Thickness — Max_TPS_Layers entries [m], hot face first.
+   --    Ply_Thermal_K — Max_TPS_Layers entries [W/(m*K)], same order.
+   --    Emissivity    — outer-surface emissivity, 1e-3 .. 1.
+   --    T_Init        — initial/cold-side temperature [K], 0 .. 3000.
+   --    T_Inf         — cold-stream temperature [K], 0 .. 3000.
+   --
+   --  Parameters (outputs):
+   --    Status        — TPS_STATUS_* code (A3: the authoritative indicator).
+   --    Q_SG          — the reconstructed element heat flux actually used by
+   --                    the solver [W/m^2]. Non-negative by axiom Q1.
+   --    T_Surface     — hot-face temperature T_s [K].
+   --    T_Back        — cold-face temperature T_back [K].
+   --    N_Iterations  — bisection iterations performed, so the caller can
+   --                    detect a run that hit the cap instead of converging.
+   --    Profile       — TPS_Profile_Samples in-depth samples, hot face first.
+   --
+   --  PHYSICAL MEANING OF THE OUTPUTS:
+   --    Q_SG is the per-element heat flux the solver consumed — the single
+   --    number the whole chain is calibrated against.
+   --    T_Surface is what the OUTER material limit applies to; compare with
+   --    IRVE3_FTPS_STRUCT_LIMIT_K (523.15 K / 250 degC).
+   --    T_Back is what the PROTECTED STRUCTURE sees; this is the number that
+   --    must stay under the structure limit.
+   --    Profile is the intermediate thermal field, needed to see WHICH ply
+   --    is running hot rather than only the two boundary temperatures.
+   --
+   --  T_Limit NOTE: the caller supplies Emissivity but NOT the structure
+   --  temperature limit, because the solver does not compare against it —
+   --  reporting a limit would require a policy decision (is exceeding it an
+   --  error or a result to display?) that belongs to the caller, not to a
+   --  physics entry point.
+   --
+   --  CITATION:
+   --    [Baumeister06] Ch. 4 (composite-wall resistance), Ch. 11
+   --    (radiation boundary condition); [Dillman14] IRVE-3 FTPS limit.
+   procedure TPS_Conduction_C
+     (Q_SG_Scale    : Interfaces.C.Double;
+      Ke_Raw        : Interfaces.C.Double;
+      Ke_Ref        : Interfaces.C.Double;
+      N_Layers      : Interfaces.C.int;
+      Ply_Thickness : access TPS_Ply_Array;
+      Ply_Thermal_K : access TPS_Ply_Array;
+      Emissivity    : Interfaces.C.Double;
+      T_Init        : Interfaces.C.Double;
+      T_Inf         : Interfaces.C.Double;
+      Status        : out Interfaces.C.int;
+      Q_SG          : out Interfaces.C.Double;
+      T_Surface     : out Interfaces.C.Double;
+      T_Back        : out Interfaces.C.Double;
+      N_Iterations  : out Interfaces.C.int;
+      Profile       : access TPS_Profile_Buffer);
+   pragma Export (C, TPS_Conduction_C, "TPS_Conduction_C");
 
 end StellarOrion_FFI;

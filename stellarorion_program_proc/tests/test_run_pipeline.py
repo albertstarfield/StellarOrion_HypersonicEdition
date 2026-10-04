@@ -13,6 +13,7 @@ excluded from the unit coverage gate by design (documented in
 docs/COVERAGE_FUZZING_STATUS.md).
 """
 
+import argparse
 import hashlib
 import http.server
 import io
@@ -21,8 +22,10 @@ import os
 import sys
 import tempfile
 import threading
+from collections.abc import Sequence
 from contextlib import redirect_stdout
 from pathlib import Path
+from typing import override
 from unittest import TestCase
 from unittest import main as unittest_main
 
@@ -162,8 +165,9 @@ class TestSidecarHealthCheck(TestCase):
                 self.send_response(200)
                 self.end_headers()
 
-            def log_message(self, *args):  # silence request logging
-                pass
+            @override
+            def log_message(self, format: str, *args: object) -> None:
+                pass  # silence request logging
 
         server = http.server.HTTPServer(("127.0.0.1", 0), _Handler)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -179,12 +183,14 @@ class TestSidecarHealthCheck(TestCase):
 class TestLockFile(TestCase):
     """Test PID lockfile lifecycle (uses temp paths only)."""
 
-    def setUp(self):
+    @override
+    def setUp(self) -> None:
         """Create a temporary directory and lock file path for each test."""
         self._tmp = tempfile.TemporaryDirectory()
         self._lock_path = Path(self._tmp.name) / "test.lock"
 
-    def tearDown(self):
+    @override
+    def tearDown(self) -> None:
         """Remove the temporary directory after each test."""
         self._tmp.cleanup()
 
@@ -231,13 +237,15 @@ class TestSourceHashes(TestCase):
     side-effect free with respect to the repository state.
     """
 
-    def setUp(self):
+    @override
+    def setUp(self) -> None:
         """Back up the real .src_hashes.json if present."""
-        self._backup = None
+        self._backup: bytes | None = None
         if run._HASH_FILE.exists():
             self._backup = run._HASH_FILE.read_bytes()
 
-    def tearDown(self):
+    @override
+    def tearDown(self) -> None:
         """Restore the original .src_hashes.json or remove the test copy."""
         if self._backup is not None:
             run._HASH_FILE.write_bytes(self._backup)
@@ -271,7 +279,7 @@ class TestSourceHashes(TestCase):
 class TestParseArgs(TestCase):
     """Test pipeline flag parsing and Ada-arg passthrough."""
 
-    def _parse(self, argv):
+    def _parse(self, argv: Sequence[str]) -> tuple[argparse.Namespace, list[str]]:
         """Parse argv by temporarily replacing sys.argv (run.py API)."""
         original = sys.argv
         sys.argv = ["run.py", *argv]

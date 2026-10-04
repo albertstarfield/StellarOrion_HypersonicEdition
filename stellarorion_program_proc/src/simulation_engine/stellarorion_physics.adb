@@ -1637,11 +1637,15 @@ package body StellarOrion_Physics is
         Radiative_Eq_Temp (Stag_Q, TPS.Emissivity);
 
       --  7. Backface temperature  (1-D transient estimate)
-      --  Using a 60 s pulse as baseline reference trajectory duration
+      --  Pulse duration is the MISSION heating time tau = Q_flight/q_flight
+      --  (IRVE3_Heating_Duration_S), not the old hard-coded 60 s placeholder:
+      --  with a 23.3x lighter F-TPS stack the placeholder inflated T_back from
+      --  448 K to 956 K and failed the structure limit spuriously. See the
+      --  constant's derivation block in the spec.
       Metrics.Backface_Temp_K := Backface_Temperature
         (Init_Temp     => 300.0,   -- ambient initial [K]
          Heat_Flux     => Stag_Q,
-         Duration      => 60.0,    -- reference heat-pulse duration [s]
+         Duration      => IRVE3_Heating_Duration_S,  -- mission pulse [s]
          Thermal_Lag   => 0.15,    -- typical lag efficiency
          TPS_Density   => TPS.Density,
          TPS_Cp        => TPS.Cp,
@@ -2452,6 +2456,688 @@ package body StellarOrion_Physics is
    Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
    raise;
    end Test_Stagnation_Pressure;
+
+   -- ===================================================================
+   --  Composite F-TPS Conduction — implementation (phase P2/P3)
+   -- ===================================================================
+   --
+   --  Bodies for the spec section "Composite F-TPS Conduction". The full
+   --  AXIOM C1 / C2 / C3, theory T-C1 .. T-C3 and the citations live in the
+   --  SPEC (stellarorion_physics.ads, same section) so there is exactly ONE
+   --  derivation, not a copy per file.
+   --
+   --  Package body is pragma SPARK_Mode (Off) — the repository-wide
+   --  convention documented at the top of this file (Ada.Exceptions handler
+   --  with a choice parameter is illegal in SPARK). Consequence: these
+   --  bodies contribute ZERO proof obligations, so the AXIOM comments below
+   --  are the formal record, and the numeric limits are discharged by the
+   --  RUNTIME self-tests Test_TPS_Conduction / Test_SG_Scaled_Element_Flux
+   --  (registered in stellarorion_self_test.adb).
+
+   --  Hard iteration cap for the bisection solve. Also the value the spec
+   --  Post => Iterations <= 200 promises, so the two cannot drift apart.
+   Max_Bisection_Iterations : constant Natural := 120;
+
+   --  Relative interval-width tolerance at which bisection stops.
+   --  1e-9 on a bracket that starts at ~1 K reaches sub-microkelvin
+   --  resolution, i.e. far below any meaningful thermal resolution
+   --  (1e-3 K), while needing only ~30 halvings. Chosen so the solve is
+   --  limited by FLOAT PRECISION rather than by an arbitrary iteration
+   --  budget — but the iteration cap above still guarantees termination
+   --  unconditionally (no_softlock: two independent exits).
+   Bisection_Relative_Tol : constant Float := 1.0e-9;
+
+   -- -------------------------------------------------------------------
+   --  FUNCTION: TPS_Surface_Balance
+   -- -------------------------------------------------------------------
+   --
+   --  THE RESIDUAL OF AXIOM C1, ISOLATED AS ITS OWN FUNCTION.
+   --
+   --  WHY A SEPARATE FUNCTION (not inlined in the bisection loop):
+   --  the bisection loop below and the bracket construction both evaluate
+   --  this exact expression. Writing it twice is precisely the
+   --  copy-paste-divergence defect: if the two copies ever disagree by one
+   --  term, the "bracket" stops bracketing and the solver silently returns
+   --  a wrong T_Surface. One definition cannot diverge from itself.
+   --
+   --  AXIOMS:
+   --    AXIOM C1: q_wall = (T - T_Back)/R + eps*sigma*(T^4 - T_inf^4).
+   --      Returns the LEFT-HAND SIDE MINUS the imposed wall flux, i.e.
+   --      f(T). f(T) = 0 is the steady surface balance.
+   --    AXIOM C2: f'(T) = 1/R + 4*eps*sigma*T^3 > 0 for T >= 0.
+   --      This function is the f of that derivative; monotonicity is a
+   --      property of THIS expression, which is why C2 is stated here and
+   --      not re-derived at the call site.
+   --
+   --  THEORIES:
+   --    T-C1: f(T) = 0 has exactly one root on [0, inf) for eps > 0,
+   --      R > 0. PROOF: strictly increasing (C2) gives at most one; f(0) < 0
+   --      and f(T) -> +inf give at least one (intermediate value theorem).
+   --
+   --  APPLICATIONS:
+   --    APP-1: T_4 is formed as (T*T)*(T*T) rather than T**4 — one
+   --      multiplication chain instead of a library exponentiation call, so
+   --      the rounding sequence is fixed and identical on every platform.
+   --
+   --  CITATIONS:
+   --    [Baumeister06] Ch. 4 (composite-wall resistance) and Ch. 11
+   --      (radiation exchange), Fundamentals of Heat and Mass Transfer,
+   --      7th ed., Wiley, 2006.
+   --
+   --  PARAMETERS:
+   --    T       — trial hot-surface temperature [K]; must be >= 0.
+   --    T_Back  — cold-face (protected structure) temperature [K].
+   --    Q_Wall  — imposed wall heat flux [W/m^2]; must be >= 0.
+   --    R_Tot   — series layup resistance [m^2*K/W]; must be > 0.
+   --    Eps     — outer-surface emissivity [-]; must be > 0.
+   --    T_Inf_4 — PRE-COMPUTED T_inf^4 [K^4], passed in rather than
+   --      re-taken to the fourth power every call: the bisection loop calls
+   --      this function up to 120 times with an UNCHANGED T_inf, so the
+   --      fourth power is loop-invariant and recomputing it would be 120
+--      redundant multiplications.
+     --
+     --  RETURN: residual f(T) in W/m^2.
+     --
+--  WHY Long_Float AND NOT Float (axiom S4 -- OVERFLOW SAFETY):
+     --  the bisection's first trial point is T_Hi/2, and T_Hi is bounded by
+     --  T_Init + Heat_Flux*R + eps*sigma*T_Inf^4*R + 1. Over the DECLARED
+     --  input box (Heat_Flux <= 2.0e15, R <= 8.0e3) that is 1.6e19 K, so the
+     --  fourth power reaches 6.554e76 -- 1.9e38 times LARGER than Float'Last
+     --  (3.403e38 on IEEE binary32). A Float evaluation silently yields +Inf
+     --  there, which is unsound and unprovable: the bisection would read the
+     --  residual sign as "+" and march the bracket the WRONG way.
+     --
+     --  Long_Float on this target is IEEE binary64, verified by measurement
+     --  rather than assumed (GNAT, gnat_native_16.1.0, aarch64-apple-darwin):
+     --  Long_Float'Size = 64, Long_Float'Mantissa = 51, Long_Float'Last =
+     --  1.798e308. That is 231 orders of magnitude above 6.554e76, so the
+     --  whole declared box is representable with enormous margin.
+     --
+     --  Only the SIGN of the residual is used (the bisection tests f < 0), so
+     --  widening the return type costs nothing and hides nothing.
+     --
+     --  CITATIONS:
+     --    IEEE 754-2019, Clause 3.3 (binary32 max 3.4028235e38) and Clause 3.4
+     --    (binary64 max 1.7976931348623157e308).
+     --    The concrete attribute values above were emitted by an Ada probe
+     --    program compiled with the same toolchain rather than copied from a
+     --    standard, because "binary64" and "80-bit extended" are both called
+     --    Long_Float on different GNAT targets and picking the wrong one
+     --    invalidates the whole overflow argument.
+    function TPS_Surface_Balance
+      (T       : Float;
+       T_Back  : Float;
+       Q_Wall  : Float;
+       R_Tot   : Float;
+       Eps     : Float;
+       T_Inf_4 : Float) return Long_Float
+    is
+       --  Widened BEFORE the squaring, not after: widening T**4 afterwards
+       --  would still have overflowed inside the Float multiplication.
+       T_LF : constant Long_Float := Long_Float (T);
+       T_2  : constant Long_Float := T_LF * T_LF;
+       T_4  : constant Long_Float := T_2 * T_2;
+    begin
+       -- APPLICATION: f(T) = (T - T_Back)/R + eps*sigma*(T^4 - T_inf^4) - q
+       -- AXIOM C1 term 1: Fourier conduction into the stack, scaled by R.
+       -- AXIOM C1 term 2: Stefan-Boltzmann net radiative loss to the stream.
+       -- AXIOM C1 term 3: residual against the imposed flux (=> f = 0).
+       return (T_LF - Long_Float (T_Back)) / Long_Float (R_Tot)
+         + Long_Float (Eps) * Long_Float (SIGMA_BOLTZMANN)
+           * (T_4 - Long_Float (T_Inf_4))
+         - Long_Float (Q_Wall);
+    end TPS_Surface_Balance;
+
+   -- -------------------------------------------------------------------
+   --  FUNCTION: SG_Scaled_Element_Flux  (phase P3)
+   -- -------------------------------------------------------------------
+   --
+   --  AXIOMS:
+   --    AXIOM Q1: a surface absorbs non-negative energy  => q_i >= 0.
+   --    AXIOM Q2: one element cannot exceed the stagnation scale
+   --      => q_i <= Q_SG.
+   --    AXIOM Q3: Ke_Ref <= 0 (pure-noise element) => q_i = 0, never a
+   --      negative or NaN flux.
+   --
+   --  THEORIES:
+   --    T-Q1: 0 <= Result <= Q_SG. PROOF: see the three clamps below; each
+   --      can only move the value into [0, Q_SG] and none can move it out.
+   --
+   --  APPLICATIONS:
+   --    APP-1: THE ORDER OF THE CLAMPS IS LOAD-BEARING. The raw ratio is
+   --      clamped to [0, 1] FIRST (which enforces Q1/Q3 on the shape), and
+   --      only then scaled by Q_SG (which enforces Q2). Scaling first and
+   --      clamping after would divide by Ke_Ref before proving it usable.
+   --    APP-2: Ke_Raw is deliberately NOT clamped to >= 0 before the
+   --      division. A negative reading is real DSMC noise (documented at
+   --      -10,570 W/m^2 in stellarorion_sparta.adb) and the correct physical
+   --      response is q_i = 0 for that element, which clamping the RATIO to
+   --      0 already achieves exactly. Pre-clamping would be equivalent here
+   --      but would obscure which axiom is doing the work.
+   --
+   --  CITATIONS:
+   --    Sutton & Graves, NASA TR R-376, 1971 (the stagnation scale).
+   --    Bird, "Molecular Gas Dynamics," 1994, Sec. 7 (DSMC estimator noise).
+   --
+   --  TIMING ANALYSIS
+   --  Estimated Processing Time: O(1) — 1 divide, 1 multiply, 2 compares.
+   --  CPU Time: ~40ns (float divide 10 + float multiply 4 + 2 compares 2,
+   --               plus call/return overhead ~20ns).
+   --  WCET: 60ns with a 50% branch-misprediction penalty.
+   --  Space Complexity: O(1) — one Float local.
+   --  Derivation: no loops; Ke_Ref >= 1e-12 by Precondition so the divide
+   --    is always well defined and cannot raise Constraint_Error.
+   --  Hardware Assumptions: IEEE-754 single precision, L1-resident code,
+   --    predictable branches (both compares guard the same clamp region).
+   --  Time Anchor: nanosecond (1ns) resolution via Ada.Real_Time, backed by
+   --    CLOCK_MONOTONIC on POSIX.
+   function SG_Scaled_Element_Flux
+     (Q_SG   : Float;
+      Ke_Raw : Float;
+      Ke_Ref : Float) return Float
+   is
+      Ratio : Float;
+   begin
+      -- APPLICATION STEP 1: normalise the DSMC reading to a unitless shape.
+      -- AXIOM Q1/Q3: clamp to [0, 1] here, which makes a negative Ke_Raw
+      -- collapse to zero rather than propagate a negative flux.
+      Ratio := Ke_Raw / Ke_Ref;
+      if Ratio < 0.0 then
+         Ratio := 0.0;
+      elsif Ratio > 1.0 then
+         Ratio := 1.0;
+      end if;
+
+      -- APPLICATION STEP 2: apply the absolute Sutton-Graves magnitude.
+      -- AXIOM Q2: with Ratio in [0, 1] and Q_SG >= 0, the product is in
+      -- [0, Q_SG], which is exactly the Post => contract.
+      return Ratio * Q_SG;
+   exception
+      when E : others =>
+         -- SAFETY FALLBACK (Murphy's Law): a bad Ke_Ref must not abort a
+         -- whole DSMC batch, but it must NOT be reported as a valid zero
+         -- either. Print the full context, then re-raise: the caller sees a
+         -- real failure and no fabricated heat flux is returned.
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Exception:      "
+            & Ada.Exceptions.Exception_Name (E));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Message:        "
+            & Ada.Exceptions.Exception_Message (E));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Operation:      SG_Scaled_Element_Flux");
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Q_SG:           " & Float'Image (Q_SG));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Ke_Raw:         " & Float'Image (Ke_Raw));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Ke_Ref:         " & Float'Image (Ke_Ref));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] ========================================");
+         raise;
+   end SG_Scaled_Element_Flux;
+
+   -- -------------------------------------------------------------------
+   --  PROCEDURE: TPS_Conduction
+   -- -------------------------------------------------------------------
+   --
+   --  SOLVES AXIOM C1 FOR THE HOT-SURFACE TEMPERATURE BY BISECTION.
+   --
+   --  AXIOMS:
+   --    AXIOM C1: steady surface energy balance (see TPS_Surface_Balance).
+   --    AXIOM C2: f strictly increasing => the root is UNIQUE (theory
+   --      T-C1), so bisection cannot cycle and cannot land on two answers.
+   --    AXIOM A2 (types.ads): R = sum of ply resistances, hence R depends
+   --      only on the MULTISET of plies, not their order. T_Surface and
+   --      T_Back are therefore functions of the layup's multiset, which is
+   --      exactly why self-test 5 (layer-permutation invariance) must hold
+   --      and why it is a real test rather than a tautology.
+   --
+   --  THEORIES:
+   --    T-C1: bisection on [T_Lo, T_Hi] converges to the unique C1 root.
+   --      PROOF: f(T_Lo) <= 0 <= f(T_Hi) is established analytically in the
+   --      BRACKET DERIVATION below; each step halves the interval while
+   --      preserving the sign change; the interval therefore tends to 0.
+   --    T-C2: T_Surface >= T_Init for Heat_Flux = 0, and T_Surface > T_Init
+   --      for Heat_Flux > 0. PROOF: with Heat_Flux = 0, f(T_Init) =
+   --      -eps*sigma*(T_Init^4 - T_Inf^4) <= 0 whenever T_Init >= T_Inf
+   --      (the physical case), so the root is >= T_Init. Note the honest
+   --      caveat: if T_Init < T_Inf the root can sit BELOW T_Init, because
+   --      a cold stack in a warmer stream radiates IN. The solver does not
+   --      clamp this away; it reports the true root.
+   --
+   --  APPLICATIONS (each step is a line of the above proof):
+   --    APP-1 (BRACKET DERIVATION — why these bounds, not a guessed ceiling):
+   --      Lower bracket T_Lo = 0:
+   --        f(0) = -T_Init/R - eps*sigma*T_Inf^4 - Heat_Flux <= 0
+   --      because T_Init >= 0, eps > 0, T_Inf >= 0 and Heat_Flux >= 0 all
+   --      make every term non-positive. So f(T_Lo) <= 0 for ALL admissible
+   --      inputs, with no case analysis.
+   --      Upper bracket T_Hi = T_Init + Heat_Flux*R + eps*sigma*T_Inf^4*R + 1.0:
+   --        Substituting (T_Hi - T_Init)/R = Heat_Flux + eps*sigma*T_Inf^4
+   --        + 1/R into f gives
+   --          f(T_Hi) = 1/R + eps*sigma*T_Hi^4  >  0
+   --        because R > 0 and T_Hi >= T_Init + 1.0 >= 1.0 > 0. The +1.0
+   --        and the eps*sigma*T_Inf^4*R term are what make this EXACT
+   --        rather than merely usually-true: without the T_Inf^4 term a
+   --        cold stream with small Heat_Flux and a large R would leave
+   --        f(T_Hi) < 0 and the bracket would not bracket.
+   --    APP-2: bisection evaluates f only at the midpoint and discards one
+   --      half, preserving the sign change (theory T-C1).
+   --    APP-3: the returned temperature is the FINAL midpoint, so the error
+   --      is bounded by half the final interval width.
+   --
+   --  PHYSICAL MEANING OF THE OUTPUTS:
+   --    T_Surface — compare against Layup.T_Limit (523.15 K / 250 degC for
+   --      IRVE-3) to judge material survivability.
+   --    T_Back    — the temperature the protected structure actually sees.
+   --      Under the quasi-steady assumption it equals T_Init: this model has
+   --      no thermal-capacity term, so it solves for the STEADY state and
+   --      cannot represent a transient heating ramp. That limitation is
+   --      stated rather than hidden, and it is why T_Back is returned as
+   --      the input T_Init instead of a separately integrated value.
+   --    Iterations — the real iteration count, so a caller can see whether
+   --      the tolerance was reached or the cap was hit. A run that hits
+   --      Max_Bisection_Iterations is a WARNING condition, not a silent
+   --      "converged": that is exactly what reporting it buys.
+   --
+   --  CITATIONS:
+   --    [Baumeister06] Ch. 4 composite-wall resistance, Ch. 11 radiation BC.
+   --    [Dillman14] AIAA 2014-4141, IRVE-3 (250 degC FTPS structure limit).
+   --    [NASA-FTPS] NASA/TM-2012-011662 (FTPS multilayer construction).
+   --    Numerical method: monotone root finding by bisection, standard in
+   --    numerical analysis (e.g. Burden & Faires, 9th ed., Sec. 2.2).
+   --
+   --  TIMING ANALYSIS
+   --  Estimated Processing Time: O(n) in the bisection count — ~30
+   --    iterations for the 1e-9 relative tolerance, hard cap 120.
+   --  CPU Time: ~1.5us typical (~30 iterations x ~50ns: 2 float mults,
+   --    1 divide, 1 subtract, 1 compare, 2 assignments per iteration).
+   --  WCET: 8us at the 120-iteration cap, plus a 50% branch-misprediction
+   --    penalty => 12us.
+   --  Space Complexity: O(1) — 4 Float locals + 1 Natural counter, plus
+   --    the constant-folded R_Tot/Eps/T_Inf_4.
+   --  Derivation:
+   --    - Iteration cost: divide(50) + 4 mults(4x15=60) + subs(20)
+   --      + compare(1) + branch(15) + 2 assigns(2) = ~148 cycles worst case
+   --    - 120 iterations: 120 x 148 = 17,760 cycles
+   --    - At 2.4 GHz: 17,760 / 2.4e9 = 7.4us  => WCET 12us with penalty
+   --    - Loop termination has TWO independent exits (tolerance reached OR
+   --      iteration cap reached), so termination holds unconditionally —
+   --      no softlock path exists.
+   --  Hardware Assumptions: IEEE-754 single precision, ARM Cortex-A78
+   --    @ 2.4GHz (or equivalent), L1-resident code, 50ns float divide.
+   --  Time Anchor: nanosecond (1ns) resolution via Ada.Real_Time, backed by
+   --    CLOCK_MONOTONIC on POSIX.
+   procedure TPS_Conduction
+     (Heat_Flux  : Float;
+      Layup      : TPS_Layup;
+      T_Init     : Float;
+      T_Inf      : Float;
+      T_Back     : out Float;
+      T_Surface  : out Float;
+      Iterations : out Natural)
+   is
+      --  Loop-invariant quantities, hoisted out of the bisection loop.
+      R_Tot    : constant Float := Layup_Resistance (Layup);
+      Eps      : constant Float := Layup.Emissivity;
+      T_Inf_2  : constant Float := T_Inf * T_Inf;
+      T_Inf_4  : constant Float := T_Inf_2 * T_Inf_2;
+      Rad_Inf  : constant Float := Eps * SIGMA_BOLTZMANN * T_Inf_4;
+
+      --  BISECTION PRECISION (bug fix). The bracket is carried in
+      --  Long_Float, not Float. Bisection_Relative_Tol is 1.0E-09, but Float
+      --  is binary32 with a 24-bit significand, so the spacing between
+      --  adjacent representable values near T = 300 K is about 3.6E-05 K —
+      --  roughly one hundred times COARSER than the width the tolerance
+      --  test Width <= 1.0E-09 * T_Hi demands. In Float the width can
+      --  therefore never fall below a single ulp, the tolerance test is
+      --  mathematically unsatisfiable, and every solve ran to the
+      --  120-iteration cap and reported non-convergence. Long_Float
+      --  (binary64, 53-bit significand, ~1.1E-16 relative) resolves about
+      --  nine orders of magnitude finer than the tolerance, so the test is
+      --  now reachable in ~30 halvings and Iterations reports the true count.
+      --  [Citation: IEEE 754-2019 §4.2 (binary32 significand 24 bits,
+      --   binary64 significand 53 bits); Ada 2012 RM 3.5.7 / G.2 for the
+      --   Float and Long_Float representations]
+      T_Lo   : Long_Float := 0.0;
+      T_Hi   : Long_Float;
+      T_Mid  : Long_Float;
+      F_Mid  : Long_Float;
+      Count  : Natural := 0;
+      Width  : Long_Float;
+   begin
+      -- APPLICATION STEP 1 (theory T-C1, bracket derivation APP-1):
+      -- establish f(T_Lo) <= 0 <= f(T_Hi) ANALYTICALLY, not by trial.
+      -- T_Lo is already 0.0 from initialisation (f(0) <= 0 proven above).
+      T_Hi := Long_Float (T_Init)
+        + Long_Float (Heat_Flux) * Long_Float (R_Tot)
+        + Long_Float (Rad_Inf) * Long_Float (R_Tot)
+        + 1.0;
+
+      -- APPLICATION STEP 2 (theory T-C1, bisection): halve the bracket.
+      -- TWO independent exits => unconditional termination.
+      loop
+         -- EXIT 1: hard iteration cap. Guarantees termination regardless
+         -- of floating-point behaviour (no_softlock).
+         exit when Count >= Max_Bisection_Iterations;
+
+         T_Mid := 0.5 * (T_Lo + T_Hi);
+         -- APPLICATION: evaluate the balance at the bracket midpoint.
+         -- T_Mid is Long_Float (full 64-bit bisection state) while
+         -- TPS_Surface_Balance takes Float. Convert EXPLICITLY at this
+         -- boundary: an implicit Long_Float->Float assignment would be
+         -- rejected by the project's -gnatwe (warnings-as-errors) policy
+         -- because it can lose precision. Explicit conversion states the
+         -- single, documented rounding point; the ROUNDED trial value is
+         -- only used to choose which half of the bracket to keep, so a
+         -- 1-ULP error there cannot move the final root by more than one
+         -- bracket width, which the tolerance exit already bounds.
+         F_Mid := TPS_Surface_Balance
+           (Float (T_Mid), T_Init, Heat_Flux, R_Tot, Eps, T_Inf_4);
+
+         -- AXIOM C2 (strict monotonicity) is what licenses this discard:
+         -- f(T_Mid) < 0 => root is strictly above T_Mid; otherwise at or
+         -- below. Without monotonicity this branch could throw away the
+         -- root, which is the whole reason the solve is bisection and not
+         -- secant.
+         if F_Mid < 0.0 then
+            T_Lo := T_Mid;
+         else
+            T_Hi := T_Mid;
+         end if;
+
+         Count := Count + 1;
+
+         -- EXIT 2: relative interval tolerance. Reached after ~30
+         -- halvings from a ~1 K bracket, so Cap is never the binding exit
+         -- for well-scaled inputs; if it ever IS, the reported Iterations
+         -- value tells the caller that it happened.
+         Width := T_Hi - T_Lo;
+         exit when Width <= Long_Float (Bisection_Relative_Tol) * T_Hi;
+      end loop;
+
+      -- APPLICATION STEP 3 (theory T-C1, error bound): the final midpoint
+      -- is within half the final interval width of the unique root.
+      T_Surface := Float (0.5 * (T_Lo + T_Hi));
+
+      -- Quasi-steady model: the protected structure has no thermal-capacity
+      -- term, so its steady temperature is exactly the assumed T_Init.
+      -- See PHYSICAL MEANING above for why this is a stated limitation.
+      T_Back := T_Init;
+
+      Iterations := Count;
+
+      -- POSTCONDITION AUDIT: the spec Post promises T_Surface >= 0 and
+      -- Iterations <= 200. Verify them explicitly so a violated contract
+      -- is reported as a violation rather than shipped as a number.
+      if T_Surface < 0.0 then
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Operation:   TPS_Conduction");
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Failure:     Post T_Surface >= 0.0 violated");
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] T_Surface:   " & Float'Image (T_Surface));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] T_Lo:        " & Long_Float'Image (T_Lo));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] T_Hi:        " & Long_Float'Image (T_Hi));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Heat_Flux:   " & Float'Image (Heat_Flux));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] R_Tot:       " & Float'Image (R_Tot));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Iterations:  " & Natural'Image (Count));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] ========================================");
+         raise Program_Error with "TPS_Conduction produced T_Surface < 0.0";
+      end if;
+
+      if Count > Max_Bisection_Iterations then
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Operation:   TPS_Conduction");
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Failure:     Post Iterations <= 200 violated");
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Iterations:  " & Natural'Image (Count));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Cap:         "
+            & Natural'Image (Max_Bisection_Iterations));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] ========================================");
+         raise Program_Error with "TPS_Conduction exceeded iteration bound";
+      end if;
+
+      -- CONVERGENCE WARNING: the cap was hit, so the result may not have
+      -- reached Bisection_Relative_Tol. Loud on purpose — a caller that
+      -- ignores this line still receives a usable number, but the log makes
+      -- the non-convergence impossible to miss.
+      if Count >= Max_Bisection_Iterations then
+         Ada.Text_IO.Put_Line
+           ("[WARN] TPS_Conduction hit the iteration cap ("
+            & Natural'Image (Count)
+            & "): result may not have reached the relative tolerance "
+            & Float'Image (Bisection_Relative_Tol));
+      end if;
+
+   exception
+      when E : others =>
+         -- SAFETY FALLBACK: report the full context, then propagate. The
+         -- postcondition audits above already raise Program_Error for a bad
+         -- result; this handler adds the inputs that produced it.
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Exception:      "
+            & Ada.Exceptions.Exception_Name (E));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Message:        "
+            & Ada.Exceptions.Exception_Message (E));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Operation:      TPS_Conduction");
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Heat_Flux:     " & Float'Image (Heat_Flux));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] T_Init:        " & Float'Image (T_Init));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] T_Inf:         " & Float'Image (T_Inf));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] R_Tot:         " & Float'Image (R_Tot));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Iterations:    " & Natural'Image (Count));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] ========================================");
+         raise;
+   end TPS_Conduction;
+
+   -- -------------------------------------------------------------------
+   --  PROCEDURE: TPS_Conduction_Profile
+   -- -------------------------------------------------------------------
+   --
+   --  FILLS THE IN-DEPTH TEMPERATURE PROFILE ALONG THE CUMULATIVE
+   --  RESISTANCE COORDINATE.
+   --
+   --  AXIOMS:
+   --    AXIOM C1: steady 1-D conduction. In the absence of volumetric
+   --      generation, d/dz (k dT/dz) = 0, so the heat FLUX is constant
+   --      through the stack while the temperature GRADIENT is proportional
+   --      to 1/k. Hence
+   --          T(z) = T_Surface - (T_Surface - T_Back) * R_frac(z),
+   --          R_frac(z) = (integral_0^z dz'/k(z')) / R_total
+   --      which is exactly linear in the resistance coordinate and only
+   --      piecewise linear in the DEPTH coordinate z. The kinks in the
+   --      returned profile at ply interfaces are therefore physics, not
+   --      interpolation artefacts.
+   --    AXIOM C2: R_frac is monotonically increasing in z (each ply
+   --      contributes R_ply = delta/k > 0), so T is monotonically
+   --      non-increasing in depth: the profile never over-heats the interior.
+   --    AXIOM T-C3: R_frac(0) = 0 and R_frac(L) = 1, so the profile spans
+   --      exactly [T_Back, T_Surface].
+   --
+   --  THEORIES:
+   --    T-P1: sample J carries normalised depth X = (J-1)/(N-1), so the
+   --      first sample is the hot face (X = 0) and the last the cold face
+   --      (X = 1). PROOF: arithmetic progression from 0 to 1 over N samples.
+   --    T-P2: the inner ply walk finds the ply containing depth Z and
+   --      returns R_frac = (resistance of all plies above Z) + (fraction of
+   --      the containing ply's resistance). PROOF: the integral of dz'/k over
+   --      a ply of constant k and thickness delta is delta*Z_in/delta =
+   --      Z_in (fractional), i.e. a LINEAR fraction of that ply's R_ply.
+   --
+   --  APPLICATIONS:
+   --    APP-1: X is computed from the SAMPLE INDEX, not from a physical
+   --      depth, so the sampling is uniform in normalised depth. That is the
+   --      contract callers rely on; a physical-depth (Chebyshev-like) grid
+   --      would need an inverse map and would not be uniform in X.
+   --    APP-2: the ply walk is O(Layer_Count) per sample, i.e. O(N*L).
+   --      With N = 33 and L <= 8 this is at most 264 iterations — cheaper
+   --      than any sort and completely allocation-free.
+   --    APP-3: the `Found` fallback is NOT dead code. For X = 1 the target
+   --      depth is exactly Layup_Thickness, and the running subtraction of
+   --      ply thicknesses leaves a residual of order 1 ulp whose SIGN depends
+   --      on rounding. If the residual is positive and larger than the last
+   --      ply, the walk completes without finding a ply. The fallback
+   --      assigns R_frac = 1 (the physically correct end-of-stack value)
+   --      instead of leaving R_Here at its 0.0 initialisation, which would
+   --      report the BACKFACE temperature at the hottest sample.
+   --
+   --  CITATIONS:
+   --    [Baumeister06] Ch. 3 one-dimensional steady conduction with
+   --      piecewise constant k; Ch. 4 composite-wall resistance.
+   --
+   --  TIMING ANALYSIS
+   --  Estimated Processing Time: O(N*L) — 33 samples x <= 8 plies.
+   --  CPU Time: ~3us typical (264 iterations x ~10ns per inner step:
+   --    compare, branch, 2 Float subs/mults, 1 add).
+   --  WCET: 5us at N = 33, L = 8, with a 50% branch-misprediction penalty.
+   --  Space Complexity: O(N) for the out Profile (33 x 2 reals = 264 B in
+--    Ada Float; the C ABI buffer is 528 B because c_double is 8 bytes),
+   --    O(1) scratch per sample.
+   --  Derivation:
+   --    - Inner step: compare(1) + branch(15) + mul(4) + div(10)
+   --      + sub(3) + add(3) + assign(2) ~ 38 cycles worst case
+   --    - 264 inner steps: 264 x 38 = 10,032 cycles
+   --    - At 2.4 GHz: 10,032 / 2.4e9 = 4.2us => WCET 5us with penalty
+   --    - Outer loop bound is a static subtype range (1 .. 33) and the inner
+   --      loop a static subtype range (1 .. 8) with an `exit when` on
+   --      Layer_Count, so both terminate unconditionally.
+   --  Hardware Assumptions: IEEE-754 single precision, ARM Cortex-A78
+   --    @ 2.4GHz (or equivalent), 264 B profile fits in L1.
+   --  Time Anchor: nanosecond (1ns) resolution via Ada.Real_Time, backed by
+   --    CLOCK_MONOTONIC on POSIX.
+   procedure TPS_Conduction_Profile
+     (Layup     : TPS_Layup;
+      T_Init    : Float;
+      T_Surface : Float;
+      Profile   : out Profile_Array)
+   is
+      --  Loop invariants, hoisted out of the sample loop.
+      R_Tot    : constant Float := Layup_Resistance (Layup);
+      L_Tot    : constant Float := Layup_Thickness (Layup);
+      N_Sample : constant Float := Float (Max_Profile_Points - 1);
+      Drop     : constant Float := T_Surface - T_Init;
+   begin
+      -- APPLICATION: one pass over the N profile samples (theory T-P1).
+      -- Every sample is written, so Profile_Sample_Count is exact and
+      -- there is no "valid prefix" to reason about.
+      for J in Profile_Index_Range loop
+         declare
+            --  NORMALISED depth of this sample: 0.0 at J = first,
+            --  1.0 at J = last (theory T-P1).
+            X        : constant Float :=
+              Float (J - Profile_Index_Range'First) / N_Sample;
+            --  PHYSICAL depth of this sample [m], converted once here so
+            --  the inner walk compares against real ply thicknesses.
+            Z_Target : constant Float := X * L_Tot;
+
+            --  Remaining depth to walk down [m].
+            Z_Rem    : Float := Z_Target;
+            --  Resistance already accumulated in the plies above [m^2*K/W].
+            R_Ahead  : Float := 0.0;
+            --  Cumulative resistance at this sample [m^2*K/W].
+            R_Here   : Float := 0.0;
+            --  Whether the walk located the containing ply.
+            Found    : Boolean := False;
+         begin
+            -- APPLICATION STEP 1 (theory T-P2): walk the plies, accumulating
+            -- resistance, and stop inside the ply that contains Z_Target.
+            -- `exit when I > Layer_Count` enforces AXIOM C1's active prefix:
+            -- plies beyond Layer_Count are array filler and must not be
+            -- read, even though the array index itself is in range.
+            for I in TPS_Layer_Count_Range loop
+               exit when I > Layup.Layer_Count;
+               declare
+                  R_Ply : constant Float := Layer_Resistance (Layup.Layers (I));
+                  D_Ply : constant Float := Layup.Layers (I).Thickness;
+               begin
+                  if Z_Rem <= D_Ply then
+                     -- Inside this ply. The `<=` (not `<`) makes an exact
+                     -- interface hit resolve to the HOT ply, so a sample
+                     -- landing exactly on a boundary reports the
+                     -- continuous temperature there rather than a value
+                     -- one ply to the cold side.
+                     R_Here := R_Ahead + (Z_Rem / D_Ply) * R_Ply;
+                     Found  := True;
+                     exit;
+                  end if;
+
+                  -- Descend past this ply. Division by D_Ply is safe: the
+                  -- spec Pre bounds Thickness >= 1e-4 m.
+                  Z_Rem  := Z_Rem - D_Ply;
+                  R_Ahead := R_Ahead + R_Ply;
+               end;
+            end loop;
+
+            -- APPLICATION STEP 2 (APP-3): end-of-stack round-off fallback.
+            if not Found then
+               R_Here := R_Tot;
+            end if;
+
+            -- APPLICATION STEP 3: map resistance fraction to temperature
+            -- (AXIOM C1). R_Here/R_Tot is in [0, 1], so Temp_K lies in
+            -- [T_Init, T_Surface] — AXIOM T-C3.
+            --  Store the PHYSICAL depth in metres, not the normalised X.
+            --  The C ABI field is named Depth_M, so it must carry metres;
+            --  Z_Target = X * L_Tot is the same sample depth in metres and
+            --  spans 0 .. L_Tot (0 .. 0.00635 for the IRVE-3 F-TPS).
+            Profile (J).Depth_M := Z_Target;
+            Profile (J).Temp_K  := T_Surface - Drop * (R_Here / R_Tot);
+         end;
+      end loop;
+   exception
+      when E : others =>
+         -- SAFETY FALLBACK: report the full context, then propagate.
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] ========================================");
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Exception:      "
+            & Ada.Exceptions.Exception_Name (E));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Message:        "
+            & Ada.Exceptions.Exception_Message (E));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Operation:      TPS_Conduction_Profile");
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Layer_Count:    "
+            & Natural'Image (Layup.Layer_Count));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] T_Init:         " & Float'Image (T_Init));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] T_Surface:      " & Float'Image (T_Surface));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] R_Tot:          " & Float'Image (R_Tot));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] L_Tot:          " & Float'Image (L_Tot));
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] ========================================");
+         raise;
+   end TPS_Conduction_Profile;
 
 end StellarOrion_Physics;
 

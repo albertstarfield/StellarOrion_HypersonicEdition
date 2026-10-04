@@ -12,7 +12,7 @@ import argparse
 import json
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _FRONTEND_DIR = _SCRIPT_DIR.parent / "sidecar_ui"
@@ -37,11 +37,18 @@ class SidecarHandler(SimpleHTTPRequestHandler):
     """
 
     # --- GET routing ---
+    @override
     def do_GET(self) -> None:
         """Serve /api/status as live simulation state; other paths fall
         through to static frontend files.
 
         Tested by: test_do_GET() (same file).
+
+        @override: BaseHTTPRequestHandler.do_GET exists (returns None and takes
+        only self), so this method is a true override. typing.override is a
+        runtime no-op (it only sets __override__ = True on the function and
+        returns it unchanged), so request dispatch is unaffected.
+        Reference: PEP 698 / typing.override — https://peps.python.org/pep-0698/
 
         References:
         - https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.do_GET
@@ -157,10 +164,18 @@ class SidecarHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     # --- access-log suppression ---
+    @override
     def log_message(self, format: str, *args: Any) -> None:
         """Suppress BaseHTTPRequestHandler's per-request console logging.
 
         Tested by: test_log_message() (same file).
+
+        @override: BaseHTTPRequestHandler.log_message(self, format, *args) -> None
+        is the declared base method, so this is a true override with a
+        matching signature. typing.override is a runtime no-op (it only sets
+        __override__ = True on the function and returns it unchanged), so the
+        logging suppression itself is unaffected.
+        Reference: PEP 698 / typing.override — https://peps.python.org/pep-0698/
 
         References:
         - https://docs.python.org/3/library/http.server.html#http.server.BaseHTTPRequestHandler.log_message

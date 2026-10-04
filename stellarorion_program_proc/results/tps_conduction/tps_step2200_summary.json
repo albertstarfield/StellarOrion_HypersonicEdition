@@ -1,0 +1,58 @@
+{
+  "snapshot": "surf_2200.vtu",
+  "elements": 3648,
+  "snapshot_shape": {
+    "axial_segments": 76,
+    "n_theta": 48,
+    "points_per_revolution": 48
+  },
+  "q_sg_Wm2": 266509.28125,
+  "q_peak_Wm2": 266509.28125,
+  "q_peak_Wcm2": 26.650928125,
+  "nextel_bf20_rating_Wcm2": 30.0,
+  "peak_within_nextel_rating": true,
+  "t_surface_K": {
+    "min": 300.0,
+    "max": 1550.2344970703125,
+    "mean": 863.2149597971063
+  },
+  "t_back_K": {
+    "min": 300.0,
+    "max": 300.0,
+    "mean": 300.0
+  },
+  "elements_at_zero_flux": 624,
+  "elements_with_negative_raw_flux": 192,
+  "elements_t_surface_over_struct_limit": 2448,
+  "elements_t_back_over_struct_limit": 0,
+  "struct_limit_K": 523.15,
+  "peak_element": {
+    "element": 0,
+    "q_sg_Wm2": 266509.28125,
+    "t_surface_K": 1550.2344970703125,
+    "t_back_K": 300.0
+  },
+  "layup": {
+    "ply_thickness_m": [
+      0.0006,
+      0.0006,
+      0.0025,
+      0.0025,
+      0.00015
+    ],
+    "ply_thermal_k": [
+      0.25,
+      0.25,
+      0.02,
+      0.02,
+      0.12
+    ],
+    "total_thickness_m": 0.00635,
+    "emissivity": 0.8,
+    "struct_limit_K": 523.15
+  },
+  "caveats": [
+    "T_back is pinned to T_init by the solver's steady-state Dirichlet cold-face condition, so its structure-limit flag restates the boundary condition rather than predicting a transient back-face temperature. The informative outer-ply number is T_surface.",
+    "The zero-flux elements are real: their raw SPARTA per-element flux is negative DSMC noise, which axiom A1 floors at zero."
+  ]
+}
