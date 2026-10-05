@@ -30,6 +30,7 @@ This project uses a hybrid architecture for running simulations:
 - **Ada/SPARK Binary:** Primary simulation engine (`stellarorion_program_proc/`). Compiled with Alire, formally verified with GNATprove `--level=4` (493 checks, 390 proved, 103 unproved — all 103 in the untouched `stellarorion_postprocessing` analytics unit, **0 new obligations unproved** by the F-TPS work; run 2026-10-04). Handles all 19 CLI modes including validation, optimization, calibration, and integration tests.
 - **Docker:** Used exclusively for running the SPARTA DSMC simulation in a containerized Linux environment.
 - **Python Sidecar:** Native OS Python environment for PINN refinement (DeepXDE), PyFluent/PyAnsys integration, and GUI launcher. Supports NVIDIA CUDA, AMD ROCm, Apple Metal (MPS), Intel OneAPI/OpenCL, and specialized accelerators.
+  > ⚠️ **The DeepXDE PINN leg does not currently run.** `PINNAccelerator.train_from_checkpoint` raises `AttributeError` before its first iteration, the DSMC targets it parses are discarded so the PINN is supervised to output zero, its grid parser mis-places 22.80 % of cells across the axis of symmetry, and `compute_pinn_metrics` raises `IndexError`. The Ada layer nevertheless records `pinn_calibration` as `Status_Completed, 1.0`. Verified by execution against `venv_validation` (deepxde 1.15.0). Treat every PINN-derived figure as void until this is fixed — see footnote ⁸ and `FAILURES_AND_FIXES.md` **F24–F33**.
 
 ---
 
@@ -356,6 +357,12 @@ post-optimization gate (plan Parts B/C):
    > **F16** and **F17**.
 3. **PINN leg** runs `validation_pipeline.py` on the fresh CSV and writes a
    new `unified_comparison_data.json` under the gate directory.
+   > ⚠️ **This leg has never produced a PINN.** On the on-disk `validation_optimized` CSV
+   > the Kriging step short-circuits (`CV = 0.0000`, a consequence of **F16**) and the
+   > trainer is never reached; and if it *were* reached it raises `AttributeError` before
+   > the first iteration (**F24**). So the gate's verdict in step 4 is currently produced
+   > by the DSMC leg alone. That does **not** weaken the verdict — `q_hybrid` comes from
+   > the DSMC heat load — but the gate is DSMC+PINN in name only today. See footnote ⁹.
 4. **Verdict**: `PASS ⇔ q_hybrid ≤ Q_target` with the
    prediction error `(q_hybrid − q_analytic)/q_analytic`; stored as
    `hybrid_validation.verdict` in `hiad_optimization_results.json`.
@@ -472,6 +479,93 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
    **−17.468 %**, against Rapisarda (195.0577) **−20.454 %**. Separately, the Ada
    `Validation_Refs` V1 defaults are **5.08 %** (Q) and **20.21 %** (C<sub>d</sub>) stale
    and are silently used by any FFI caller that omits `Set_Validation_Refs`. See **F22**.
+8. **The DeepXDE PINN has never trained, and its only influence on a reported number is
+   a ±2× clip.** Executed against the project's own `venv_validation` (deepxde 1.15.0):
+   * `PINNAccelerator.train_from_checkpoint` raises
+     `AttributeError: 'numpy.ndarray' object has no attribute 'on_initial'` **before the
+     first iteration**, because `dde.icbc.IC` is handed `xy_norm` where the library's
+     signature (`IC.__init__(self, geom, func, on_initial, component=0)`) requires a
+     **geometry**. See **F24**.
+   * Even if it ran, the DSMC state it parses is normalised at
+     `pinn_accelerator.py:631` into `_t_norm` and **never read**; `_ic_zero_values`
+     returns `np.zeros(...)`, so every collocation point is supervised to output
+     **0.0**. The 4-residual axisymmetric Navier–Stokes operator `_make_pde()` and all 9
+     boundary conditions are reachable only from the module's own self-tests. See **F25**.
+   * The SPARTA grid parser averages `xlo` with `ylo` and `xhi` with `yhi` (a `[BUGFIX]`
+     comment certifies the wrong mapping), placing **4 093 of 17 949 cells (22.80 %)** at
+     negative radial coordinate with a max \|coordinate error\| of **4.486 m**; the `T`
+     column is provably unaffected. See **F26** — and note that a **byte-identical copy**
+     of this parser lives at `kriging_denoise.py:103-104`, the module the gate's Kriging
+     step actually runs, so a fix must land in both files (**F32**).
+   * `compute_pinn_metrics` reads `[:, 4]` of a 4-column result →
+     `IndexError: index 4 is out of bounds for axis 1 with size 4`. Where it does not
+     crash, the PINN enters the reported physics only as `clip(ratio, 0.5, 2.0)` applied
+     to two scalars. See **F27**.
+   * `stellarorion_test_modes.adb:718` treats `GNAT.OS_Lib.Spawn`'s `Success` (process
+     *created*) as a successful run, and the `Write_Status(..., Status_Completed, 1.0)`
+     call at line 728 sits **outside** the `if Success` block — so a calibration that
+     provably always exits 1 is recorded as **100 % complete**. See **F28**.
+   * The sidecar's `.gpr` probe checks the repo root, always fails, and then
+     `os.makedirs` **creates a wrong directory** instead of reporting the missing input,
+     so the real grids at `results/validation/grid.*.out` are never found. See **F30**.
+   * Kriging's own write→read round trip replaces **100.00 % (17 949/17 949) of cell
+     densities** with a hardcoded `1e20` default — the writer emits 10 fields, the reader
+     demands `parts[10]`, and the real format has 11. Measured on the real
+     `grid.1000.out`: input `rho` spans `4.05e-05 … 4.63e-02 kg/m³`, output is the constant
+     `4.810694e-06 kg/m³` for every cell (≈144× too small). Any multi-pass run therefore
+     reads a **constant** density field from pass 2 onward. See **F33**.
+   * `PipelineCheckpoint` records `output_files` without checking they exist, and
+     **discards a changed `config` on resume** — measured: resuming with a different
+     `grid_file` still reports `sparta` complete and keeps the previous run's config, so
+     every downstream number would blend two runs. See **F31**.
+   * `pinn_test.py:28-51` carries a **fourth** copy of the mis-provenanced
+     14.361 / 195.06 / 20.2 / 1.47 baseline from footnote ¹. See **F29**.
+   * **The same axis-mixing parser exists a second time** in
+     `kriging_denoise.py:103-104` — byte-for-byte, returning byte-identical output —
+     and *that* copy is the one the gate's Kriging step actually runs, so fixing
+     `pinn_accelerator` alone leaves the live path wrong. See **F32**.
+   * Kriging's own write→read round trip replaces **100.00 % (17 949/17 949)** of cell
+     densities with a hardcoded `1e20` default (writer emits 10 fields, reader wants
+     `parts[10]`, real format has 11), so a multi-pass run reads a **constant** density
+     field from pass 2 onward. See **F33**.
+   * `extract_cell_centroids` announces a "point cloud fallback" it never performs:
+     **7 of 3 648 cells** stay at the `(0, 0)` sentinel. The `[WARN]` fires on **100 %** of
+     files, so it is the normal path rendered as a warning. See **F34**.
+   * `pipeline_comparison.py` is a `GaussianProcessRegressor` with **no PDE residual**
+     yet calls itself a PINN in **nine** places, including an AXIOM asserting
+     `PINN respects governing PDE constraints [Raissi 2019]`. See **F35**.
+   * The **dual watchdog cannot fire**: `Secondary_Watchdog._monitor_loop` writes
+     `self._last_cross_check` at line 303 and reads it back at line 306, so
+     `elapsed > PRIMARY_TIMEOUT_S` (25 s against a 5 s interval) is unreachable — measured
+     **0** resurrect attempts with the primary permanently dead. The correct test
+     (`Mutual_Check()`) exists and is never called. See **F36**.
+   * **`gen_trajectory_profile.atmosphere_density` is 1.48×–3.32× too dense from 5 to
+     84.852 km**, peaking at **+231.5 % at 47–51 km** — the band the DSMC runs are
+     evaluated in. `atmosphere_temperature` is correct; the density function has a
+     per-kilometre lapse rate where per-metre is required, a missing `−1` in three
+     gradient layers, the isothermal form used for 20–32 km, and self-recursion above the
+     mesopause. See **F38**.
+   * **The shipped trajectory profile cannot be regenerated by the committed generator.**
+     Re-running `compute_trajectory()` gives 186 rows and a peak of 19.4773 g; the shipped
+     file has 198 rows and a peak of 17.4213 g with a **constant** `downrange_km`, and is
+     byte-identical in all four run directories. Every run is flown along a trajectory
+     whose producer is not in the repository. See **F43**.
+   * **`postprocess_validation.py` sorts its `surf.*.out` files as strings**, so every
+     "final step" number it reports is from step 900 when the real last step is 1700; it
+     also publishes `pct_of_peak: 100.0` on every row and integrates heat load with a
+     hardcoded `dt = 1e-6 s` (~3 300× low). See **F39**, **F42**.
+   * **The HTTP sidecar has no authentication and no origin check**: `GET /` with nine
+     `../` returns `/etc/passwd` in full, and a CORS-safelisted cross-origin
+     `POST /api/update` can set the displayed state to `VALIDATION COMPLETE` with no
+     server-side log. See **F44**.
+9. **The gate's PINN leg has never contributed to any verdict.** Step 3 above runs its
+   PINN work through `validation_pipeline.py`, whose Kriging step short-circuits on the
+   F16 stale CSV (`CV = 0.0000`), so the trainer is never reached; and were it reached, it
+   would raise per footnote ⁸. **The gate's verdict is unaffected** — `q_hybrid` is a DSMC
+   heat load, so `PASS ⇔ q_hybrid ≤ Q_target` never depended on a PINN output. What *is*
+   affected is the Kennedy & O'Hagan multi-fidelity correction `c = clamp(q_hybrid /
+   q_analytic, 0.5, 2.0)`: both of its terms are DSMC quantities, so it is currently a
+   bounded sanity clamp rather than a fidelity reconciliation.
 
 ### Simulation Environment Conditions
 

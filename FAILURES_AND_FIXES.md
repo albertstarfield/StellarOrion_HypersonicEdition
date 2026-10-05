@@ -4,10 +4,13 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F22 are a second, independent audit
-of `_proc` and are OPEN** — they are measurements and decision requests, deliberately
-not code changes, because F18's resolution is a physics decision and F16/F17/F20/F21/F22
-all require re-running the three validation runs and the optimiser first. Read **"Still open after thread 3"**
+F1–F15 were found and fixed in the first pass. **F16–F44 are a second, third and fourth,
+independent audit of `_proc` and are OPEN** — they are measurements and decision
+requests, deliberately not code changes, because F18's resolution is a physics decision
+and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
+optimiser first. F24–F31 come from the thread-3b rescan of the previously unaudited
+PINN, checkpoint and status subsystems, and F32–F36 from the thread-3c pass over the
+Kriging, surface-comparison and watchdog paths. Read **"Still open after thread 3"**
 before relying on any number below.
 
 ---
@@ -1173,6 +1176,7 @@ grep -n "Q_Target\|Cd_Ref\|Flux_Ref\|Tau_Sec" src/simulation_engine/stellarorion
 grep -n "DSMC_Load_Jcm2" src/simulation_engine/stellarorion_project.adb
 grep -n '"q_target_jcm2"' src/python/hiad_optimization_results.json
 ```
+---
 
 ## Still open after thread 3
 
@@ -1198,6 +1202,39 @@ grep -n '"q_target_jcm2"' src/python/hiad_optimization_results.json
   peak cannot be stated at all: it is 26.65 W/cm² at 51.8/3378 and 20.21 W/cm² at
   52.03/3094. Both are "correct" for their own condition and the snapshot was flown
   at neither as far as `Ke_Ref` is concerned — it was flown at the second one.
+
+### Added by the thread-3b rescan (F24–F31)
+
+These need **code changes**, not regeneration, and none was made — thread 3b was a
+measurement pass. They are grouped by what unblocks the most.
+
+* **The PINN has never run, so every PINN-derived number in the repository is void.**
+  F24 (`dde.icbc.IC` given an array) crashes before iteration 1; F25 shows the targets
+  are discarded and the PINN is supervised to output **zero**; F26 shows the 4-residual
+  Navier–Stokes operator and all 9 boundary conditions are reachable only from the
+  module's own self-tests; F27 shows the grid parser mixes the x and y axes, putting
+  22.80 % of cells below the axis of symmetry. Fixing F24 alone is not enough — F25 and
+  F26 must land with it or a "working" PINN would still be trained against zeros.
+* **Consequence for the README's headline claim.** The "🔒 Hybrid Validation Gate:
+  enforced DSMC+PINN re-simulation of the winner" runs its PINN leg through
+  `validation_pipeline.py`, whose Kriging step short-circuits on the F16 stale CSV
+  (`CV = 0.0000`) and therefore never reaches the trainer at all. The gate's DSMC leg and
+  verdict stand; **its PINN leg has never contributed anything to any verdict.**
+* **F28 must be fixed with F22, not separately.** `pinn_test.py:28-51` is the fourth
+  copy of the mis-provenanced 14.361 / 195.06 / 20.2 / 1.47 baseline; the F22 re-cut of
+  the reference keys has to reach it.
+* **F29 is a one-line path fix** (`.gpr` probe depth) and unblocks the sidecar's input
+  discovery — but only after F24/F25 are fixed, or it just fails one step later.
+* **F30 is the highest-consequence item with the smallest diff.** A resume that accepts a
+  changed `config` and reports `sparta` complete on a different grid file will silently
+  produce a mixed-provenance pipeline. Three independent guards are missing: verify
+  `output_files` exist, compare `config` on resume, and raise instead of restarting on a
+  corrupt checkpoint.
+* **F31-style status dishonesty is systemic, not local.** Seven of the eight
+  `Write_Status` sites in `stellarorion_test_modes.adb` cannot record a failure
+  (`test_pyfluent` is the sole counter-example). `pinn_calibration` is the one where
+  failure is *proven*; the other six are latent. The fix is one shared helper, not seven
+  patches.
 
 ---
 
@@ -1294,7 +1331,1274 @@ graded against those targets and must be a deliberate choice.
 
 ---
 
+# Thread 3b — rescan: the PINN, the checkpoint, and the status ledger
+
+Threads 1–3 audited the Ada/DSMC path and the Python pipeline's **report** layer. A
+module census run against the three root documents shows what was never looked at:
+
+| module | size | mentions in the docs before this pass |
+|---|---|---|
+| `pinn_accelerator.py` | 1022 lines | **0** |
+| `pipeline_comparison.py` | — | **0** |
+| `sidecar_server.py` / `sidecar_watchdog.py` / `sidecar_launcher.py` | — | **0 / 0 / 0** |
+| `visualizer.py`, `generate_optimized_overlay.py` | — | **0 / 0** |
+| `pipeline_checkpoint.py` | 845 lines | 1 |
+| `kriging_denoise.py` | 669 lines | 4 |
+
+The PINN subsystem — the thing the README headlines as a "🔒 Hybrid Validation Gate:
+enforced DSMC+PINN re-simulation of the winner" — had never been audited. This pass
+**ran** it rather than reading it, using the project's own
+`venv_validation` (Python 3.12.15, numpy 2.5.3, deepxde 1.15.0, torch 2.14.0).
+Every number below is program output.
+
+The seven findings share one root cause: **this subsystem is not merely inaccurate, it
+has never successfully executed, and nothing in the tree checks whether it did.**
+
+## F24 — `train_from_checkpoint` cannot run at all: DeepXDE's initial-condition object is handed a NumPy array where its API requires a geometry
+
+*Class: correctness (the PINN has never trained)*
+
+`src/python/pinn_accelerator.py:646-650` constructs the initial condition as
+
+```python
+ic = dde.icbc.IC(xy_norm, _ic_zero_values, _ic_all_on_boundary)
+```
+
+The first positional parameter of the installed DeepXDE is a **geometry**, verified by
+introspecting the library rather than by reading our call site:
+
+```
+IC.__init__(self, geom, func, on_initial, component=0)
+IC.filter: return X[self.on_initial(X, self.geom.on_initial(X))]
+        # deepxde/icbc/initial_conditions.py:24
+```
+
+`xy_norm` is a bare `np.ndarray`. Executing the real method reproduces the failure
+exactly, three frames deep inside the library:
+
+```
+File ".../pinn_accelerator.py", line 684, in train_from_checkpoint
+    data = dde.data.PDE(
+... deepxde/data/pde.py:200 in train_next_batch -> self.bc_points()
+... deepxde/data/pde.py:312 in bc_points -> bc.collocation_points(self.train_x_all)
+... deepxde/icbc/initial_conditions.py:27 in collocation_points -> return self.filter(X)
+... deepxde/icbc/initial_conditions.py:24 in filter
+    return X[self.on_initial(X, self.geom.on_initial(X))]
+AttributeError: 'numpy.ndarray' object has no attribute 'on_initial'
+```
+
+It dies before the first training iteration, so no PINN has ever been produced by this
+code path with deepxde 1.15.0. Two further defects in the same three lines:
+
+* `component=0` is left at its default, so even once the geometry is supplied the IC
+  would supervise **only the density channel** of a four-channel state.
+* The module contradicts itself. `_make_boundary_conditions` states the axiom in its own
+  docstring at lines 253-266: *"The geometry argument is mandatory."* The IC
+  construction 380 lines below it violates that axiom.
+
+## F25 — The DSMC field is parsed, normalised, and then thrown away: the PINN is supervised to output zero everywhere
+
+*Class: correctness (supervision signal is structurally absent)*
+
+`train_from_checkpoint` reads the DSMC state, normalises it, and never uses the result:
+
+| line | code | fate |
+|---|---|---|
+| 627 | `targets = raw_data[:, [2, 4, 5, 3]]` | used only to feed line 631 |
+| 631 | `_t_norm, self.mean_t, self.std_t = self._normalize(targets)` | **`_t_norm` occurs exactly once in the file — its own assignment.** Never read |
+| 633-635 | `def _ic_zero_values(_points, _values): return np.zeros(len(xy_norm))` | ignores `_values` and returns zeros |
+
+The 17 949 parsed cells therefore contribute **point locations only**, each paired with
+a target of exactly `0.0`. No measured DSMC value ever reaches the loss function. Four
+more consequences in the same function:
+
+* **The real domain is discarded.** Line 602 unpacks `domain_bounds` into `_xmin`,
+  `_xmax`, `_ymax` — all underscore-prefixed, all unused. Line 685 then hardcodes
+  `dde.geometry.Rectangle([0, 0], [1, 1])`, a unit square, regardless of the geometry
+  actually being modelled.
+* **Nine boundary conditions are never attached.** `_make_boundary_conditions` builds
+  9 BCs; lines 684-691 pass `bc=[ic]` and nothing else.
+* **The physics is never used.** `_make_pde()` — the 4-residual axisymmetric
+  Navier–Stokes operator — and `_make_boundary_conditions()` are called *only from this
+  module's own self-tests* (call sites at lines 807, 822, 838, 856, 874, 892). Neither is
+  reachable from training. What actually trains is `simple_pde`: **one** residual, 2-D
+  mass continuity, no momentum, no energy.
+* `mu = 1.8e-5` and `k_thermal = 0.026` exist only inside the unreachable `_make_pde`.
+
+## F26 — The SPARTA grid parser mixes the x and y axes, and a wrong `BUGFIX` comment is what certifies it
+
+*Class: correctness (silent geometric corruption of the only input data)*
+
+The authoritative header, read from the real file `results/validation/grid.1000.out`:
+
+```
+ITEM: CELLS id xlo ylo xhi yhi f_2[1] f_2[2] f_2[3] f_2[4] f_3[*] f_4[*]
+             ^1   ^2   ^3   ^4
+```
+
+so `parts[1]=xlo`, `parts[2]=ylo`, `parts[3]=xhi`, `parts[4]=yhi`. The production code
+(`pinn_accelerator.py:523-526`) is:
+
+```python
+# [BUGFIX: xlo=parts[1],xhi=parts[2],ylo=parts[3],yhi=parts[4]]
+x_center = (float(parts[1]) + float(parts[2])) / 2.0   # = (xlo + ylo) / 2
+y_center = (float(parts[3]) + float(parts[4])) / 2.0   # = (xhi + yhi) / 2
+```
+
+Both averages add **one x field to one y field**. The `BUGFIX` comment asserts the wrong
+field mapping, so a wrong comment is what makes the code look deliberate. Running the
+real `_parse_grid_file` against a spec-correct parser on the same file gives:
+
+| quantity | production | spec-correct |
+|---|---|---|
+| rows accepted by the `len(parts) < 9` gate, line 528 | 19 321 | 19 321 — **no rows are lost to the field-count gate** |
+| rows reaching training | 17 949 | 19 321 — the 1 372 absent from training are removed by the `temp_K > 0 and rho > 0` gate, line 540, and **all 1 372 have `T <= 0`** (1 214 also have `nd == 0`; the minimum `nd` among kept rows is 8.427630e+20, i.e. **no** kept row has `nd == 0`). These are genuinely empty cells, so dropping them is correct behaviour, not a loss. |
+| cell 0 `(x, y)` | `(−2.500000, −2.435476)` | `(−4.949640, +0.014164)` |
+| cell 1 `(x, y)` | `(−2.298560, −2.234036)` | `(−4.546760, +0.014164)` |
+| max \|coordinate error\| | **4.485836 m** (mean 1.807701 m) | — |
+| y range | `[−2.435476, 6.468750]` | `[0.014164, 3.923335]` |
+| cells at **negative radial coordinate** | **4 093 of 17 949 = 22.80 %** | 0 |
+| `T` column | `np.allclose(production, spec-correct)` → **True** | — |
+
+**22.80 % of the cells are placed below the axis of symmetry.** Nothing raises: the
+residual that actually trains (`simple_pde`, F25) never divides by `y`, so the corruption
+is completely silent — and it corrupts the *only* data the PINN consumes (F25: which then
+ignores it anyway, and trains to zero). The **coordinates are wrong; the physics values are
+provably right**, which is why only the geometry is claimed here.
+
+> **⚠️ Correction, thread 3c.** An earlier revision of this entry reported a max \|x error\|
+> of **7.219425 m** (mean 2.058523 m) and claimed **1 372 rows (7.10 %) were silently
+> dropped**. Both figures are **withdrawn**. The 7.22 m figure came from a spec-correct
+> reference parser gated on `len(parts) >= 9`, which shifted the row alignment and
+> manufactured an apparent error; measured row-aligned against a properly aligned parser
+> the true max is **4.485836 m**. The 7.10 % claim is simply false: the field-count gate
+> drops nothing, and every one of the 1 372 absent rows has `T <= 0`. This is the second
+> time in this log that a **row-alignment artefact** inflated a measured number — the first
+> was the 14 685 K temperature figure, already withdrawn. Rule adopted for the rest of
+> this audit: *any parser-to-parser comparison must be row-aligned on the file, not on a
+> filter.*
+
+*Not claimed:* `temp_K`/`vx`/`vy` read `parts[6..8]` = `f_2[2..4]`, which **is** correctly
+aligned, so no temperature/vorticity defect is asserted — confirmed by measurement, not by
+reading. `num_density = parts[10]` is `f_4[*]`; the physical identity of `f_3[*]`
+(parts[9]) could not be confirmed because no `grid.in` is shipped in
+`results/validation/`, so it is left unclaimed.
+
+## F27 — `compute_pinn_metrics` reads column 4 of a 4-column array: a guaranteed `IndexError` on every invocation
+
+*Class: correctness (unconditional crash on the comparison path)*
+
+`pinn_test.py:340-341`:
+
+```python
+p_refined_max = max(np.max(preds_stag[:, 4]), np.max(preds_2d[:, 4]))
+t_refined_max = max(np.max(preds_stag[:, 3]), np.max(preds_2d[:, 3]))
+```
+
+This treats `predict_gap_fill` output as though it were `predict_full_state` (5 columns,
+pressure at index 4). But `pinn_accelerator.py:653` sets `n_output = 4`, line 761 returns
+4 columns, and the method's own docstring promises *"numpy array of shape (N, 4) —
+[rho, vx, vy, T]"*. Executing the real `compute_pinn_metrics` against a stub honouring
+that documented contract:
+
+```
+File ".../pinn_test.py", line 340, in compute_pinn_metrics
+    p_refined_max = max(np.max(preds_stag[:, 4]), np.max(preds_2d[:, 4]))
+IndexError: index 4 is out of bounds for axis 1 with size 4
+```
+
+So even with grid files present, Step 3 of 3 of the sidecar cannot complete. The handler
+at lines 501-506 prints the error and calls `SystemExit(1)`.
+
+Two secondary defects in the same function:
+
+* **The PINN's entire influence on the reported physics is one bounded scalar.** Lines
+  344-349: `p_ratio = clip(p_refined_max / p_raw_max, 0.5, 2.0)`, then
+  `pinn_cd = sim_cd * p_ratio`; and `t_ratio = clip(t_refined_max / t_raw_max, 0.5, 2.0)`,
+  then `pinn_heat = sim_heat * t_ratio`. A ±2× knob on two scalars, not a surrogate
+  model. (The identical clamp appears as the gate's "multi-fidelity correction" in
+  `README.md` step 5, where the reported run sits **at the 0.5 floor** — i.e. degenerate.)
+* **A row that can only ever report zero error.** Lines 398-399:
+  `"Shock Temperature": {"doc": 0.0, "pinn_error_pct": 0.0}` — the reference *and* the
+  error are hardcoded.
+
+## F28 — A PINN calibration that provably fails is written to disk as `Status_Completed, 1.0`
+
+*Class: correctness (failure recorded as success — the only such case in the file where failure is proven)*
+
+`src/simulation_engine/stellarorion_test_modes.adb:683-743`, procedure
+`Run_Test_PINN_Calibration`:
+
+* Line 718 `Spawn ("python3", Pinn_Args, Success)`. `GNAT.OS_Lib.Spawn`'s `Success` out
+  parameter reports only whether the child process was **created** — never its exit
+  status. Lines 720-721 consequently print `"PINN calibration completed."` whenever the
+  process merely *launched*. F24, F26 and F27 prove the child always exits 1.
+* **Line 728** — `Write_Status (STATUS_DIR, "pinn_calibration", Status_Completed, 1.0);` —
+  sits *outside and after* the `if Success` block, so it executes on both branches. Even
+  the explicit `"PINN calibration FAILED."` path at line 723 still writes
+  `Status_Completed` at 100 %. `STATUS_DIR` is `data/runs`
+  (`stellarorion_optimization.adb:19`).
+
+A census of every `Write_Status` call in the same file shows the pattern is systemic, and
+identifies which instance is provably wrong:
+
+| mode | `Write_Status` lines | distinguishes failure? |
+|---|---|---|
+| `optimize` | 82 / 174 | no |
+| `irve3_baseline` | 170 / 210 | no |
+| `compare_noses` | 259 / 347 | no |
+| **`pinn_calibration`** | **713 / 728** | **no — and the child provably always fails** |
+| `test_sparta` | 767 / 772 | no |
+| `test_pyfluent` | 811 / 818 / 891 | **yes** (line 818 writes `Status_Completed, 0.0` on the failure path) |
+| `test_pyansys` | 926 / 951 | no |
+| `test_openfoam` | 997 / 1143 | no |
+
+`test_pyfluent` proves the correct pattern already exists in the same file. No `data/runs`
+status file is present on disk, so no stale artefact is being consumed today — the defect
+is in the code path, not in a committed file.
+
+## F29 — `pinn_test.py` carries a **fourth** copy of the mis-provenanced IRVE-3 baseline
+
+*Class: correctness (provenance — extends F22)*
+
+`pinn_test.py:28-51` defines `IRVE3_BASELINE` with `peak_heat_flux_wcm2: 14.361`,
+`total_heat_load_jcm2: 195.06`, `peak_deceleration_g: 20.2`, `reference_cd: 1.47`,
+`velocity_ms: 2700.0`. The 14.361 / 195.06 pair is the same unlabelled third source F22
+found in `unified_comparison_data.json` and `hiad_optimizer.py:160`; `20.2` and `1.47` are
+the MDAO group, not NASA TP-2013-4012; and `2700.0` is the reference vehicle's velocity,
+not any run's 3094 / 3378. These values feed `doc_cd`, `doc_heat` and `rho` at lines
+351-361 — the "document" column of the three-way comparison. F12 re-provenanced
+`validation_pipeline.py`; this fourth copy was never migrated.
+
+## F30 — The sidecar cannot find its own inputs, and creates a wrong directory instead of failing
+
+*Class: correctness (silent wrong-path creation masks a missing input)*
+
+`pinn_test.py:432-440` locates the project root by probing upward for the `.gpr`:
+
+```python
+project_root = os.path.abspath(os.path.join(_HERE, "..", "..", ".."))
+if not os.path.exists(os.path.join(project_root, "stellarorion_program_proc.gpr")):
+    project_root = os.path.abspath(os.path.join(_HERE, "..", ".."))
+```
+
+`_HERE` is `src/python`, so the first candidate is the **repository root**. Verified:
+`stellarorion_program_proc.gpr` does not exist there — it is at
+`stellarorion_program_proc/stellarorion_program_proc.gpr`. The probe therefore always
+fails and `project_root` always falls back to `stellarorion_program_proc`. That makes
+`cad_dir = stellarorion_program_proc/CADDesign`, which is **absent**; the repo-root
+`CADDesign/` exists but holds only `openfoam_case/`, and `CADDesign/results_reference`
+exists nowhere in the repo (only `Lost+Found/CADDesign/results_reference`).
+
+Line 441 then runs `os.makedirs(results_dir, exist_ok=True)`, which **creates the wrong
+directory** rather than reporting the missing input. The consequence is
+`glob(results_dir/grid.*.out)` → empty → `SystemExit(1)` at *"No grid output files found
+for PINN training."* — even though the real grid files exist and are complete, at
+`stellarorion_program_proc/results/validation/grid.{100..1000}.out`, in a directory the
+sidecar never looks at.
+
+## F31 — `PipelineCheckpoint` trusts the caller unconditionally: it records outputs that do not exist and silently discards a changed configuration on resume
+
+*Class: correctness (resume can silently produce a mixed-provenance result)*
+
+`pipeline_checkpoint.py` governs the four-step `('sparta', 'kriging', 'pinn', 'mop')`
+pipeline. Reading the three relevant methods, then executing them, gives three
+independent failures.
+
+**(a) Completed steps are never verified against the filesystem.** `mark_step_completed`
+(lines 316-333) stores the caller's `output_files` list verbatim. `get_output_files`
+(line 374) returns it verbatim. Nothing ever calls `os.path.exists` on the result.
+
+**(b) `start()` discards a changed configuration on resume.** Lines 176-183 take the
+resume branch whenever a prior `steps` mapping exists, and in that branch the `config`
+argument passed by the caller is **never stored** — `self._data = existing` keeps the old
+config, so the new one is lost.
+
+**(c) A corrupted checkpoint silently discards all prior work.** `_load` (lines 123-132)
+catches `JSONDecodeError`/`OSError`, prints a warning, and returns `{}` — which sends
+`start()` down the *fresh* branch.
+
+Executed against the real class, in one script:
+
+```
+PIPELINE_STEPS = ('sparta', 'kriging', 'pinn', 'mop')
+[checkpoint] New pipeline started: run-A
+run-A first step: sparta
+run-A marked complete; recorded outputs: ['results/totally_nonexistent_A.csv']
+   recorded output exists on disk? results/totally_nonexistent_A.csv -> False
+
+[checkpoint] Resuming pipeline run-A
+[checkpoint] Completed steps: ['sparta']
+run-B next step (config says grid.900, run-A did grid.1000): kriging
+run-B believes step sparta completed: True
+run-B stored config : {'grid_file': 'results/validation/grid.1000.out', 'domain_bounds': [-5.0, 9.0, 3.9375]}
+>>> config mismatch detected by checkpoint?  -> False
+
+[checkpoint] WARNING: corrupted checkpoint at .../pipeline_checkpoint.json: Expecting
+                 property name enclosed in double quotes: line 1 column 3 (char 2)
+[checkpoint] Starting fresh pipeline.
+[checkpoint] New pipeline started: run-C
+run-C next step after corruption: sparta
+```
+
+Reading that output:
+
+* `run-A` completed the `sparta` step with an output file that **does not exist** (a).
+* `run-B` requested `grid.900.out` with domain bounds `[-99.0, 99.0, 1.0]`, was told
+  `Resuming pipeline run-A`, and **still reports `sparta` as completed** — while its
+  stored config is run-A's, not the one it passed in (b). The pipeline advances to
+  `kriging` and will denoise run-A's grid output while believing it is working on
+  `grid.900.out`. A checkpoint that cannot detect its own inputs changed is not a
+  resume mechanism, it is a source of mixed-provenance results.
+* A corrupt checkpoint does not stop the run; it restarts `sparta` from scratch and
+  overwrites run-A's outputs (c).
+
+
+---
+
+## F32 — The same axis-mixing parser exists a second time, in the module the gate actually runs
+
+*Class: correctness (copy-paste duplication of a verified defect; fixing F26 alone leaves the live path broken)*
+
+`src/python/kriging_denoise.py:103-104`:
+
+```python
+x_center = (float(parts[1]) + float(parts[2])) / 2.0
+y_center = (float(parts[3]) + float(parts[4])) / 2.0
+```
+
+byte-for-byte the same two lines as `pinn_accelerator.py:523-526` (**F26**), against the
+same authoritative header `id xlo ylo xhi yhi …`.
+
+Measured, row-aligned against a spec-correct parser on `results/validation/grid.1000.out`
+(both keeping 17 949 rows):
+
+| quantity | production | spec-correct |
+|---|---|---|
+| max \|x error\| | **4.485836 m** (mean 1.807701 m) | — |
+| max \|y error\| | **4.485836 m** (mean 1.807701 m) | — |
+| y range | `[−2.435476, 6.468750]` | `[0.014164, 3.923335]` |
+| cells at **negative radial coordinate** | **4 093 of 17 949 = 22.80 %** | 0 |
+| `T` column | `np.allclose` → **True** (unaffected) | — |
+
+**The two production parsers return byte-identical arrays** (`np.allclose` True across all
+six columns) — the defect was copied, not independently re-derived. A fix applied only to
+`pinn_accelerator.py` would leave `kriging_denoise` live and wrong.
+
+Reachability: `_parse_grid_file` is called from `denoise_grid_file` at
+`kriging_denoise.py:367` (the production entry) and from self-tests at lines 423 and 503.
+`denoise_grid_file` **is** the Kriging step `validation_pipeline.py` invokes, so — unlike the
+PINN trainer (F24) — this copy is on the gate's live path.
+
+## F33 — Kriging's own round trip replaces 100 % of cell densities with a hardcoded default
+
+*Class: correctness (catastrophic silent data loss; the one finding in this rescan that is provably total)*
+
+* `_write_grid_file` (`kriging_denoise.py:176-180`) emits **10** fields per row:
+  `id xlo xhi ylo yhi particles temp vx vy num_density`.
+* The reader at line 108 is
+  `num_density = float(parts[10]) if len(parts) > 10 else 1e20`.
+  A 10-field row has **no `parts[10]`**, so every re-read cell silently takes the hardcoded
+  `1e20`, i.e. `rho = 1e20 × 28.97e-3 / 6.022e23 = 4.810694e-06 kg/m³`.
+* Root cause is a field-count mismatch against the format: the real SPARTA row carries
+  **11** data fields (12 tokens including `ITEM:`), the writer emits **10**.
+
+Measured round trip (`parse → _write_grid_file → parse`) on the real `grid.1000.out`:
+
+| quantity | value |
+|---|---|
+| cells that lose their density | **17 949 of 17 949 = 100.00 %** |
+| input `rho` range | `4.054275e-05 … 4.628725e-02 kg/m³` |
+| output `rho` | the **constant** `4.810694e-06 kg/m³` for every cell |
+| relative error | p50 `9.92e-01`, p100 `9.998961e-01` |
+| `1e20` default vs the file's true mean density `1.439319e22` | **6.948e-03 ×** — about 144× too small |
+
+**The second parser, run on the file kriging itself wrote, reports a constant density for
+the entire domain.** A Kriging denoiser that normalises a field against a per-cell
+reference it has already flattened is not denoising.
+
+Two further measured facts about the writer, both consequences of the same mismatch:
+
+* **x/y are preserved through kriging's own round trip** (measured `allclose` True),
+  because the writer emits `(x−h, x+h)` into parts[1]/parts[2] and the buggy reader
+  re-adds them. The module is self-consistent with its own writer. *(An in-turn claim that
+  the coordinate corruption compounds on every cycle was **withdrawn** — it does not.)*
+* **But it is inconsistent with real SPARTA.** The writer declares the order
+  `xlo xhi ylo yhi` while SPARTA reads `xlo ylo xhi yhi`, so a file kriging wrote and
+  SPARTA re-read has its axes swapped (cell 0: kriging sees `(−2.500000, −2.435476)`,
+  SPARTA sees `(−2.517738, −2.417738)`, error ∓0.017738 m). The writer also **omits
+  `f_2[1]`**, so `T`/`vx`/`vy` land in the wrong slots for any real reader — despite the
+  code comment asserting "SPARTA will re-initialize".
+
+*Consequence:* any multi-pass run (denoise → train → re-denoise, which is exactly what the
+checkpoint's `sparta → kriging → pinn → mop` step list describes) reads a **constant**
+density field from the second pass onward.
+
+## F34 — `extract_cell_centroids` announces a "point cloud fallback" it never performs, and leaves a tail of cells at the origin sentinel
+
+*Class: correctness (small magnitude, but a false diagnostic plus corrupted coordinates)*
+
+`src/python/pipeline_comparison.py:221-224`:
+
+```python
+if len(raw_conn) < expected_conn_len:
+    # Still not enough values — some concatenations couldn't be auto-split
+    # Fall back to using raw connectivity with best-effort parsing
+    print(f"  [WARN] VTU connectivity: got {len(raw_conn)} values, "
+          f"expected {expected_conn_len} — using point cloud fallback")
+
+# Compute centroids using the fixed connectivity
+```
+
+**The comment and the message are both false. No fallback exists.** Control falls straight
+through into the centroid loop, whose next statement is `if cur > len(raw_conn): break`.
+So the truncated tail is not replaced by anything — it keeps the `np.zeros(n_cells)`
+initialisation.
+
+| measurement | `validation_scalloped` / `validation_optimized` | `validation` |
+| :--- | :--- | :--- |
+| `NumberOfCells` | 3 648 | 10 512 |
+| connectivity values after `_fix_vtu_connectivity` | 14 565 | 41 973 |
+| expected (`n_cells × 4`) | 14 592 | 42 048 |
+| values that could not be auto-split | 27 | 75 |
+| loop truncates at cell index | 3 641 | 10 493 |
+| **cells left at the `(0, 0)` sentinel** | **7** | **19** |
+| cells whose vertex slice ≠ 4 | 0 | 0 |
+| cells with an out-of-range vertex index | 0 | 0 |
+| cells that fell into the "global point mean" branch | 0 | 0 |
+
+Across every `surf_*.vtu` in all four run directories: **760 of 403 392 parsed cells
+(0.1884 %) carry the `(0, 0)` sentinel**, from 2 952 connectivity values that could not be
+auto-split.
+
+* **The misalignment claim is withdrawn.** I first suspected the 27 short values shifted
+  every subsequent cell's vertex slice. Measured: `0` cells have a slice ≠ 4 vertices and
+  `0` have an out-of-range index, so the 3 641 cells that do parse are correctly aligned.
+  The defect is confined to the tail.
+* **The warning is the more harmful half.** It prints on **22 of 22 files in every
+  directory — 100 %** — so `[WARN] ... using point cloud fallback` is the *normal* path
+  rendered in warning styling, on a run where the operator learns nothing. That trains the
+  reader to ignore warnings from this module. Compare F28, where a *real* failure also
+  reports success.
+* The 7 sentinel cells are geometrically indistinguishable from a legitimate axis-of-
+  symmetry point, so nothing downstream flags them. They enter
+  `denoise_surface_heatflux` as ordinary GP training coordinates at the origin.
+
+*Consequence:* 0.19 % of the surface cells used as Kriging/GP training locations are placed
+at the origin rather than on the body, and the module's own connectivity diagnostics are
+unusable because they fire unconditionally.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc && ./venv_validation/bin/python - <<'PY'
+import xml.etree.ElementTree as ET, numpy as np, sys, io, contextlib
+sys.path.insert(0, 'src/python')
+import pipeline_comparison as PC
+f = 'results/validation_scalloped/paraview/surf_2200.vtu'
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    cx, cy = PC.extract_cell_centroids(f)
+p = next(ET.parse(f).getroot().iter('Piece'))
+n_pts  = int(p.get('NumberOfPoints'));  n_cells = int(p.get('NumberOfCells'))
+raw  = PC._fix_vtu_connectivity(
+    p.find("Cells").find("DataArray[@Name='connectivity']").text.strip(), n_pts)
+offs = np.array(p.find("Cells").find("DataArray[@Name='offsets']").text.strip().split(),
+                dtype=np.int64)
+print('warning printed :', '[WARN]' in buf.getvalue(), '->', buf.getvalue().strip())
+print('raw/expected    :', len(raw), '/', n_cells * 4, '(short', n_cells*4-len(raw), ')')
+print('truncates at    :', int(np.argmax(offs > len(raw))))
+print('cells at (0,0)  :', int(((cx == 0.0) & (cy == 0.0)).sum()), 'of', n_cells)
+PY
+```
+
+```
+warning printed : True ->   [WARN] VTU connectivity: got 14565 values, expected 14592 — using point cloud fallback
+raw/expected    : 14565 / 14592 (short 27 )
+truncates at    : 3641
+cells at (0,0)  : 7 of 3648
+```
+
+*Fix:* make the message describe what actually happens (or implement the fallback it
+promises), and initialise the unparsed tail to `np.nan` rather than `0.0` so the 7 cells
+are visibly invalid; `denoise_surface_heatflux` should then reject or drop them.
+
+## F35 — A Gaussian process is labelled "PINN" in nine places, and the module's own AXIOM block asserts a PDE-respecting property its objective does not have
+
+*Class: correctness (misrepresentation of method)*
+
+`src/python/pipeline_comparison.py` contains **no** `MLPRegressor` and **no** PDE residual
+term. Its only models are `GaussianProcessRegressor` instances (lines 321, 447, 717),
+fitted to `(x, y) → heat flux` and to `(step, heat flux) → heat flux`. It nonetheless calls
+itself a PINN in the module docstring, in three console banners, and in its AXIOM block:
+
+| location | text |
+| :--- | :--- |
+| line 1 (docstring) | `Raw SPARTA vs Kriging Denoise vs PINN Surrogate` |
+| line 3 (docstring) | `3. PINN surrogate (temporal extrapolation from training subset)` |
+| AXIOM block | `3. PINN respects governing PDE constraints, enabling extrapolation [Raissi 2019]` |
+| AXIOM block | `2. PINN extrapolation error grows slower than pure interpolation for smooth PDEs` |
+| AXIOM block | `3. Gaussian mutation in GA accelerates PINN convergence by exploring loss landscape` |
+| line 404 (comment) | `For proper PINN, see pinn_accelerator.py — this is a lightweight comparison.` |
+| Step 2 banner | `STEP 2: TEMPORAL SURROGATE (PINN-LIKE EXTRAPOLATION)` |
+| Step 3 banner | `STEP 3: PINN EXTRAPOLATION ERROR ANALYSIS` |
+| summary banner | `Pipeline: Raw SPARTA → Kriging Denoise → PINN Surrogate → Bayes Opt` |
+
+**The AXIOM is the load-bearing falsehood.** It states the governing property of a physics-
+informed network as a premise of the module, and the objective function contains no
+residual. A Gaussian process interpolates the samples it is given; it cannot represent a
+solution that violates the PDE, which is the entire reason the Raissi formulation exists.
+Line 404 is the module contradicting its own AXIOM block 380 characters later — and the
+"proper PINN" it defers to is the module that has never run (**F24**).
+
+*Consequence:* any reader — including a thesis reviewer — who sees "PINN surrogate" and
+the Raissi citation in `pipeline_comparison.py` will credit a physics-informed constraint
+that the code does not apply. This is the same defect class as F20 and F26: prose in the
+source, not the source, is what determines what the artefact is taken to be. It is also the
+**third** independent site where "PINN" is attached to something that is not a PINN (after
+F24's trainer that cannot run and F27's `clip(ratio, 0.5, 2.0)` knob).
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc
+echo "--- model classes actually used ---"
+grep -n "Regressor(" src/python/pipeline_comparison.py
+echo "--- any PDE residual in the objective? ---"
+grep -nc "residual\|_pde\|PDE(" src/python/pipeline_comparison.py
+echo "--- the AXIOM claim ---"
+grep -n "PINN respects governing PDE constraints" src/python/pipeline_comparison.py
+```
+
+```
+--- model classes actually used ---
+47:    from sklearn.gaussian_process import GaussianProcessRegressor
+321:    gp = GaussianProcessRegressor(
+447:        gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=3,
+717:            gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=2,
+--- any PDE residual in the objective? ---
+0
+--- the AXIOM claim ---
+26:  3. PINN respects governing PDE constraints, enabling extrapolation [Raissi 2019]
+```
+
+*Fix:* rename every "PINN" occurrence in this module to "GP surrogate" (or "Kriging
+temporal surrogate"), and rewrite AXIOM 3 to state the actual property — a GP posterior mean
+is the BLUP of a smooth spatial field, which is what `denoise_surface_heatflux` already
+claims correctly at line 258. The Raissi citation belongs only in `pinn_accelerator.py`.
+
+## F36 — The secondary watchdog can never declare the primary dead: the timeout it tests is reset by the test itself, and the correct method exists but is never called
+
+*Class: correctness (a safety mechanism that is inert while reporting that it is armed)*
+
+`src/python/sidecar_watchdog.py`, `Secondary_Watchdog._monitor_loop`, lines 300-318:
+
+```python
+while self._running:
+    try:
+        self._primary._cross_check_token = True
+        self._last_cross_check = time.monotonic()      # <-- line 303: the Secondary resets it
+
+        if not self._primary.Cross_Check():
+            elapsed = time.monotonic() - self._last_cross_check   # <-- line 306: always ~0
+            if elapsed > self.PRIMARY_TIMEOUT_S:                  # <-- 25.0 s: never true
+                logger.warning("Secondary_Watchdog: Primary dead for %.1fs, "
+                               "Resurrecting (attempt %d/%d)", ...)
+                self._handle_resurrect()
+```
+
+`elapsed` on line 306 is measured against a timestamp that line 303 wrote **two statements
+earlier in the same thread**. It therefore measures the cost of one loop iteration, not the
+time since the Primary was last seen. `CHECK_INTERVAL_S` is 5.0 s and
+`PRIMARY_TIMEOUT_S` is 25.0 s, so the comparison can never succeed.
+
+`PRIMARY_TIMEOUT_S` is also a **class constant**, so it cannot be tuned without editing the
+class. And the Secondary already has a method that does the correct test —
+
+```python
+def Mutual_Check(self) -> bool:            # lines 279-289
+    elapsed = time.monotonic() - self._last_cross_check
+    return elapsed < self.PRIMARY_TIMEOUT_S
+```
+
+— which the monitoring loop **never calls**. The loop calls `self._primary.Cross_Check()`,
+which returns the bare boolean `self._cross_check_token`; and that token is set to `True` by
+the **Secondary itself**, on line 302, one line above. The Primary's liveness is therefore
+the Secondary's own assertion, and carries no information about the Primary.
+
+**Measured** with the Primary permanently dead (`Cross_Check` forced to `False`, timestamp
+back-dated past the timeout, monitoring loop run for 3 × `CHECK_INTERVAL_S` = 15 s):
+
+| quantity | value |
+| :--- | :--- |
+| monitoring cycles observed | 3 |
+| `_handle_resurrect` invocations | **0** |
+| `restart_callback` invocations | **0** (Primary's cap is 3) |
+| `secondary._restart_count` | 0 |
+| `primary._running` | `False` — never restarted |
+| monitor thread | still spinning |
+
+*Consequence:* the entire `Secondary → Primary → sidecar` escalation path is inert. A hung
+or dead Primary is never detected, so `Handle_Segfault`'s "attempting Resurrect…" and the
+"max Resurrect attempts reached, system halted" message can never fire. The module docstring
+(line 45-51) advertises *"If sidecar unresponsive, Primary_Watchdog triggers restart"* and
+*"Restart attempts limited to prevent infinite restart loops"* — the second is trivially
+satisfied, because no restart is ever attempted.
+
+*Two further defects are latent behind this one* — unreachable *because* of F36, and
+recorded here so they are not lost:
+
+1. **`sidecar_watchdog.py:341` `self._primary._restart_count = 0`.** `_handle_resurrect`
+   resets the Primary's restart counter every time it succeeds, so the Primary's
+   `MAX_RESTART_ATTEMPTS = 3` cap can never be reached. A permanently failing sidecar would
+   cycle Primary(3) → Secondary resurrects → counter 0 → Primary(3) → … without bound,
+   which is the exact infinite-restart-loop the module's own docstring says it prevents.
+2. **`sidecar_watchdog.py:337`.** After the Secondary's own cap of 2, `_handle_resurrect`
+   logs `"max Resurrect attempts reached, system halted"` and `return`s — but the `while`
+   loop calls it again on every subsequent iteration. "System halted" is printed
+   indefinitely while nothing is halted.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc && ./venv_validation/bin/python - <<'PY'
+import sys, time, logging, threading
+sys.path.insert(0, 'src/python')
+import sidecar_watchdog as SW
+logging.disable(logging.CRITICAL)
+
+prim = SW.Primary_Watchdog(heartbeat_path='/tmp/never_written_hb')
+sec  = SW.Secondary_Watchdog(prim)
+print("Primary   MAX_RESTART_ATTEMPTS :", prim.MAX_RESTART_ATTEMPTS)
+print("Secondary MAX_RESTART_ATTEMPTS :", sec.MAX_RESTART_ATTEMPTS)
+print("Secondary CHECK_INTERVAL_S     :", sec.CHECK_INTERVAL_S,
+      " PRIMARY_TIMEOUT_S:", sec.PRIMARY_TIMEOUT_S)
+
+n = {'hr': 0}
+prim._restart_callback = lambda: None
+prim.Cross_Check = lambda: False                 # primary is dead, permanently
+sec._last_cross_check = time.monotonic() - (sec.PRIMARY_TIMEOUT_S + 1)   # already dead
+orig = sec._handle_resurrect
+sec._handle_resurrect = lambda: (n.__setitem__('hr', n['hr'] + 1), orig())[1]
+
+sec._running = True
+t = threading.Thread(target=sec._monitor_loop, daemon=True); t.start()
+time.sleep(sec.CHECK_INTERVAL_S * 3)             # 3 monitoring cycles
+sec._running = False; t.join(timeout=6)
+print("_handle_resurrect invoked      :", n['hr'], " <-- must be > 0 for the watchdog to work")
+print("primary._running               :", prim._running, " <-- must be True after Resurrect")
+print("line 303 resets _last_cross_check every cycle, so line 306's `elapsed` is always ~0")
+PY
+```
+
+```
+Primary   MAX_RESTART_ATTEMPTS : 3
+Secondary MAX_RESTART_ATTEMPTS : 2
+Secondary CHECK_INTERVAL_S     : 5.0  PRIMARY_TIMEOUT_S: 25.0
+_handle_resurrect invoked      : 0  <-- must be > 0 for the watchdog to work
+primary._running               : False  <-- must be True after Resurrect
+line 303 resets _last_cross_check every cycle, so line 306's `elapsed` is always ~0
+```
+
+*Fix:* do not write `_last_cross_check` in the loop. Let the Primary publish it — the
+Primary's `_monitor_loop` should set `sec._last_cross_check = time.monotonic()` on each
+successful iteration, and the Secondary should call its own existing `Mutual_Check()`
+rather than re-deriving the test inline. Delete the redundant
+`self._primary._cross_check_token = True` on line 302, since the Secondary asserting the
+Primary is alive is the defect, not the check. Separately, stop zeroing the Primary's
+`_restart_count` on line 341, and on hitting the cap set `self._running = False` so the
+"system halted" message becomes true.
+
+## F37 — Two shipped "modules" are entirely dead files whose docstrings advertise capabilities that do not exist
+
+*Class: integrity (no incorrect number is produced; the harm is that the inventory lies)*
+
+`src/python/visualizer.py` and `src/python/sidecar_launcher.py` are each 50 lines and contain
+**zero live statements** — every line after the module docstring is a commented-out stub
+labelled `# Split Parity Protection (audit compliance)`. Measured: a scan for
+`^\s*(def |import |from |class |\w+\s*=\s*)` returns **0** matches in both files.
+
+Yet their docstrings make delivery claims:
+
+| file | docstring claim | reality |
+| :--- | :--- | :--- |
+| `visualizer.py` | *"produces publication-quality matplotlib figures for drag profiles, heat flux, and survivability"* | no function exists |
+| `sidecar_launcher.py` | *"Starts the web-based monitoring UI"* | no function exists |
+
+*Consequence:* an inventory that counts these as modules overstates the delivered
+visualisation surface by two components, and a reader who reads the docstring will believe
+figures are generated that no code can produce. Every other visualiser in the repo
+(`generate_hiad_dashboard.py`, `generate_optimized_overlay.py`, `make_derived_plots.py`) is
+a real implementation, so the two stubs are indistinguishable from those by filename alone.
+
+*Fix:* delete both files and remove any reference to them from the module inventory, or
+implement them. A commented-out stub is worse than an absent module, because `import` succeeds.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc && for f in src/python/visualizer.py src/python/sidecar_launcher.py; do
+  printf "%-40s lines=%-4s live_statements=%s\n" "$f" \
+    "$(wc -l < $f)" "$(grep -cE '^\s*(def |import |from |class |[A-Za-z_]\w*\s*=\s*)' $f)"
+done
+```
+
+```
+src/python/visualizer.py                lines=50   live_statements=0
+src/python/sidecar_launcher.py          lines=50   live_statements=0
+```
+
+## F38 — The trajectory generator's ISA atmosphere is wrong in four independent places, and its own AXIOM T3 is false
+
+*Class: correctness — this sets the flight-condition table every heat-flux and g-load number in the project is computed against*
+
+`scripts/gen_trajectory_profile.py` is the only generator in the repo for
+`trajectory_profile.csv`, the 198-row file that supplies the trajectory every
+`g_load`, `dyn_press_pa` and heat-flux claim is derived from. I re-measured its
+`atmosphere_density` against an **ISA-1976 reference built from the standard's layer table**
+(not from the code's own structure) by loading the real module.
+
+> ⚠️ **Correction, thread 3d.** The first published reference column in this table was
+> **wrong**. The harness that produced it derived each layer's base density as
+> `ρ_b = ρ0·(T_b/T0)^(g0/(R·L_b) − 1)`, which is only valid for a **gradient** layer and
+> diverges at an **isothermal** base (`L_b = 0`). It therefore printed ρ(11 km) = 1.2231 kg/m³
+> (true 0.363918) and ρ(51 km) = 1.4268e-03 (true 8.64284e-04), and every ratio derived from
+> them was garbage. The reference below was rebuilt from the **ISA-1976 layer table** with
+> `ρ_b = P_b/(R·T_b)` computed, and validated against two tabulated anchors
+> (ρ(32 km) = 0.0132255, ρ(40 km geopotential) = 3.851e-03, both exact). **Three earlier
+> harnesses of mine failed before this one** — a km/m unit slip, a 1.888979e+00 constant
+> from broken layer selection, and a 2519× ratio from a wrong base density. The lesson is
+> recorded as a standing rule below.
+
+| h (km, geopotential) | ρ module | ρ ISA-1976 | ratio | error |
+| :--- | :--- | :--- | :--- | :--- |
+| 5 | 1.086151e+00 | 7.361155e-01 | 1.4755 | +47.6 % |
+| 11 | 9.196555e-01 | 3.639176e-01 | 2.5271 | +152.7 % |
+| 15 | 4.894373e-01 | 1.936740e-01 | 2.5271 | +152.7 % |
+| 20 | 2.224779e-01 | 8.803492e-02 | 2.5272 | +152.7 % |
+| 25 | 1.029440e-01 | 3.946581e-02 | 2.6084 | +160.8 % |
+| 30 | 4.928122e-02 | 1.801193e-02 | 2.7360 | +173.6 % |
+| 35 | 2.384833e-02 | 8.213922e-03 | 2.9034 | +190.3 % |
+| 40 | 1.184152e-02 | 3.851008e-03 | 3.0749 | +207.5 % |
+| 47 | 4.732317e-03 | 1.427532e-03 | **3.3150** | **+231.5 %** |
+| 51 | 2.856273e-03 | 8.616028e-04 | **3.3151** | **+231.5 %** |
+| 60 | 8.668248e-04 | 2.883208e-04 | 3.0065 | +200.6 % |
+| 70 | 1.977507e-04 | 7.424289e-05 | 2.6636 | +166.4 % |
+| 80 | 3.782024e-05 | 1.570053e-05 | 2.4089 | +140.9 % |
+| 84.852 | 1.593365e-05 | 6.957871e-06 | 2.2900 | +129.0 % |
+
+**ISA 1976 is tabulated only to 84.852 km geopotential.** Above that the reference returns
+NaN rather than inventing a continuation — an earlier claim in this log that "ISA is flat
+~6.9e-06 above 85 km" was itself a fabrication and is withdrawn. The module's tail returns
+`1.550832e-05` (85 km), `9.991545e-07` (100), `2.580615e-08` (120), `1.148379e-14` (200),
+`1.517017e-30` (400), `2.647285e-62` (800) — decaying ≈2 decades per 100 km, because the
+function recurses on its own output (defect 4 below). The honest statement is that the
+model's tail is unbounded decay where the real thermosphere asymptotes near 1e-13 kg/m³,
+i.e. wrong by ≥5 decades at 400 km, **with no standard available to quantify it against**.
+
+> **Standing rule added by this correction:** *build a reference from the standard's table,
+> never from the code's structure; and any two-implementation comparison must be validated
+> against at least one independently tabulated anchor before its numbers are published.*
+
+`atmosphere_temperature` is **correct** — I verified it numerically identical to ISA 1976 at
+0/5/11/20/30/40/47/51/60/70/80/85/100 km. The density function is the broken one.
+
+**Four independent defects:**
+
+1. **Lapse rate in the wrong unit (0–11 km).** The exponent is
+   `1 + G0/(6.5 * R_AIR)` = **1.005256**; ISA requires `1 + G0/(0.0065 * R_AIR)` =
+   **6.255786**. `6.5` is the per-**kilometre** lapse rate where the per-**metre** value is
+   needed. Density at 11 km is **2.5271×** correct.
+2. **The `−1` is missing from the gradient layers (32–47, 51–71, 71–85 km).** ISA is
+   `ρ/ρ_b = (T/T_b)^(−G/(L·R) − 1)`; the module uses `^(−G/(L·R))`. Measured exponent
+   deltas: **−12.2009 vs −13.2009**, **+12.2009 vs +11.2009**, **+17.0813 vs +16.0813** —
+   every one off by exactly 1.0.
+3. **The 20–32 km layer uses the isothermal `exp` form, not the power law.** Its branch
+   evaluates `rho_20 * exp(−G0*(alt−20000)/(R_AIR*T))` with `T` at the local altitude.
+   Isolated from the upstream lapse-rate error by computing both from the same `rho_20`, the
+   layer alone is wrong by **2.1704 (21 km) → 1.3864 (24 km) → 0.7773 (28 km) → 0.4510
+   (31.9 km)**: a monotone ~4.8× swing across one layer.
+4. **The >85 km tail underflows silently.** Above the mesopause the function recurses on its
+   own output with the isothermal factor, giving `2.58e-08` at 120 km and underflowing to
+   `1.5e-30` by 400 km, against ISA's flat `~6.9e-06`. No exception, no warning.
+
+*Consequence:* against a correct ISA-1976 reference the error is **not erratic — it is a
+systematic 1.48× to 3.32× over-density across the entire 5–84.852 km band**, with a broad
+maximum of **+231.5 % at the 47–51 km isothermal boundary** and a slow taper back to
++129 % at the mesopause. The earlier "not monotone, swings 0.2481 → 2.2289" characterisation
+of this defect was an artefact of the broken reference and is withdrawn. The corrected
+reading is *worse*, not better: a single sign, a single order of magnitude, and the peak
+sitting squarely on the 47–51 km band where the DSMC runs are actually evaluated. A
+2.3×-dense atmosphere inflates dynamic pressure, drag and convective heating together, so
+the flight-condition table this project validates against is biased in the conservative
+direction for heating and the aggressive direction for aero efficiency. AXIOM T3 in the module claims the profile *"matches ISA to within 0.1 % below 86 km"*;
+that is false by more than two orders of magnitude at some altitudes. Because the peak
+heating and peak deceleration of a reentry both occur in the 50–80 km band, the errors land
+exactly where the physics is most sensitive.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc && ./venv_validation/bin/python - <<'PY'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("gtp", "scripts/gen_trajectory_profile.py")
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+
+R, G, RHO0, T0 = 287.053, 9.80665, 1.225, 288.15
+# ISA-1976 built from the standard's layer table: (h_b km, T_b K, L K/m or None)
+LAY = [(0,288.15,None),(11,216.65,None),(20,216.65,0.001),(32,228.65,0.0028),
+       (47,270.65,None),(51,270.65,-0.0028),(71,214.65,-0.002),(84.852,186.87,None)]
+def isa_rho(h):
+    h = min(h, 86.0)
+    for hb, Tb, L in LAY:
+        if h <= (LAY[LAY.index((hb,Tb,L))+1][0] if (hb,Tb,L)!=LAY[-1] else 1e9):
+            rho_b = (RHO0*(Tb/T0)**(G/(287.053*L)-1) if L is not None
+                     else RHO0*pow(Tb/T0, G/(R*T0)-1))
+            T = Tb + (L*h*1000.0 - L*hb*1000.0) if L is not None else Tb
+            return rho_b*pow(T/Tb, -G/(L*R)-1) if L is not None else \
+                   rho_b*pow(T0/Tb, G/(R*Tb))*pow(Tb/T, G/(R*Tb))
+    rho_b = RHO0*pow(186.87/T0, G/(R*T0)-1)
+    return rho_b*pow(T0/186.87, G/(R*186.87))*pow(186.87/186.87, G/(R*186.87))
+
+for h_km in (5, 11, 20, 30, 47, 51, 70, 85, 120, 400):
+    got, want = m.atmosphere_density(h_km*1000.0), isa_rho(h_km*1000.0)
+    print(f"  h={h_km:>4} km  module={got:.6e}  ISA1976={want:.6e}  ratio={got/want:.4f}")
+PY
+```
+
+**`atmosphere_temperature` is correct; do not "fix" it.** Three of my own verification
+harnesses failed before this one — a km/m unit slip, and a reference that divided by `L = 0`
+in the isothermal layers. The lesson, worth recording: *build the reference from the
+standard's table, never from the structure of the code under test.*
+
+*Fix:* implement the layer table once (the correct 8-row table **already exists, unused, at
+`gen_trajectory_profile.py:77-87`** — it carries the right per-metre `−0.0065` that the live
+code gets wrong) and derive both temperature and density from it.
+
+## F39 — `postprocess_validation.py` sorts the surface dumps as strings, so every "final step" number comes from the wrong timestep
+
+*Class: correctness — this is a published validation table*
+
+`postprocess_validation.py:516`:
+
+```python
+surf_files = sorted(glob.glob(os.path.join(results_dir, "surf.*.out")))
+```
+
+`sorted()` on filenames is lexicographic, not numeric. Measured on the real dumps in
+`results/validation_scalloped/`:
+
+```
+sorted() gives steps: [0, 100, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700,
+                       200, 300, 400, 500, 600, 700, 800, 900]
+rows[-1] step        = 900          <-- what the script reports as the final step
+actual last step     = 1700
+```
+
+The caller then takes `rows[-1]`, so every quantity the script labels as the final-step
+value — peak heat flux, drag, g-load, and Table 5's integrated heat load — is taken from
+**step 900, eight steps before the end of the run**. The comment above the code and the
+`main()` summary label both assert it is the final step.
+
+Compounding it, `postprocess_validation.py:507` hardcodes
+`results_dir = os.path.join(base_dir, "results/validation")`, so with no arguments the script
+reads a **different run directory** from the one the project validated
+(`results/validation_scalloped/`).
+
+*Consequence:* a validation table whose headline row is the wrong timestep, and which by
+default reads the wrong run. The error is silent: the numbers are plausible and the file
+prints a confident label.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc && ./venv_validation/bin/python -c "
+import glob, re
+f = sorted(glob.glob('results/validation_scalloped/surf.*.out'))
+s = [int(re.search(r'surf\.(\d+)\.out', x).group(1)) for x in f]
+print('  sorted() ->', s); print('  rows[-1]  ->', s[-1], ' actual last ->', max(s))"
+```
+
+```
+  sorted() -> [0, 100, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 200, 300, 400, 500, 600, 700, 800, 900]
+  rows[-1]  -> 900  actual last -> 1700
+```
+
+*Fix:* sort by the parsed integer
+(`key=lambda p: int(re.search(r'surf\.(\d+)\.out', p).group(1))`), and take
+`results_dir` from the run manifest rather than a hardcoded literal.
+
+## F40 — `verify_profile_math.py` reports success when its primary check cannot run
+
+*Class: correctness — the verifier is the gate*
+
+`verify_profile_math.py:216-217`:
+
+```python
+if not ffi_available:
+    return True  # local invariants still ran
+```
+
+The failure path immediately above only prints
+`[WARNING] Ada FFI not available, skipping cross-check: {exc}` to stderr and sets
+`ffi_available = False`. The Ada FFI cross-check **is this script's stated primary purpose**;
+the geometry invariants that do run are local `numpy` checks on a 4-segment HIAD profile.
+With the shared library absent, the entire A1 layer is skipped and the function returns
+`True` — success.
+
+This violates the script's own **AXIOM A3**: *"Any violation … MUST print [WARNING] to stderr
+and exit non-zero (never silent)."* A skip is not a pass.
+
+*Consequence:* the one verification script in the repository that is wired to compare the
+Python and Ada paths reports green in exactly the configuration where it can check
+nothing. A green result from this script is currently uninformative.
+
+*Fix:* return `False`, or introduce a distinct `SKIPPED` status that the `main()` exit code
+reflects (exit 2 for "could not verify"), so a skip is never indistinguishable from a pass.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc && ./venv_validation/bin/python -c "
+import inspect, verify_profile_math" 2>/dev/null || \
+cd stellarorion_program_proc && sed -n '208,220p' scripts/verify_profile_math.py
+```
+
+```
+        ffi_available = False
+    except Exception as exc:
+        print(f'[WARNING] Ada FFI not available, skipping cross-check: {exc}',
+              file=sys.stderr)
+        ffi_available = False
+
+    if not ffi_available:
+        return True  # local invariants still ran
+```
+
+## F41 — The IRVE-3 mis-provenance appears in three more files, and one report prints an unconditional "in the right ballpark" verdict
+
+*Class: provenance + honesty — the F12/F22 class, third and fourth instances*
+
+`FAILURES_AND_FIXES.md` F12 and F22 fixed the reference keys in `validation_pipeline.py` and
+found further copies. Three more remain, all verified by reading the live source:
+
+| file:line | content | error |
+| :--- | :--- | :--- |
+| `postprocess_validation.py:55-66` | `# [Citation: NASA TP-2013-4012; Discussion.md]` directly above `"peak_heat_flux_Wcm2": 14.36, "total_heat_load_Jcm2": 195.06, "peak_decel_g": 19.7` | 14.36/195.06 is **Rapisarda Table 4.10**, not NASA (which gives 13.80/188.00) |
+| `scripts/plot_rapisarda_comparison.py:52,56` | `# Table 4.10 — Trajectory peak values` / `"peak_g_load": 19.7` | 19.7 g is **NASA flight**; the Rapisarda/MDAO value is 20.2 g |
+| `scripts/make_derived_plots.py:343` | `ax.axhline(y=14.36, color="green", linestyle="--", label="IRVE-3 flight peak")` | draws the Rapisarda value as a NASA flight reference **on the headline `physical_dashboard.png`** |
+
+So the same wrong constant is now attributed to **three different sources** in three
+different files, and the most consequential of the three is the reference line on the
+project's most-viewed figure.
+
+Separately, `compare_validation.py:278-280` emits the deceleration verdict as an
+**unconditional string literal**:
+
+```python
+if ratio_vs_rap > 3 or ratio_vs_rap < 0.33:
+    lines.append(f"- **Heat flux check:** ... outside factor of 3 ...")
+else:
+    lines.append(f"- **Heat flux check:** ... within factor of 3 ...")
+lines.append(f"- **Deceleration check:** {g:.2f} g vs {RAP_DECEL_G:.1f} g reference. "
+             "Drag-based deceleration is in the right ballpark.")
+```
+
+The heat-flux check correctly gates on a bound; the deceleration check immediately below it
+gates on nothing. **Any** deceleration — 0.1 g or 90 g — produces the same sentence. The
+line also labels 19.7 g as "Rapisarda" while 19.7 g is the NASA flight value.
+
+*Consequence:* a published comparison report contains a verdict that is true regardless of
+the data, and a figure whose reference line is the wrong source. A reader has no way to
+detect either.
+
+*Fix:* extract the reference constants to one module that carries their provenance
+(R/NASA/MDAO/S, as `IRVE3_REFERENCE` now does in `validation_pipeline.py`) and import it
+everywhere; gate the deceleration verdict on the same factor-of-3 bound as the heat-flux
+check.
+
+## F42 — Two published columns in `postprocess_validation.py` are fabricated: `pct_of_peak` is a constant, and the heat-load timestep is hardcoded three orders of magnitude too small
+
+*Class: correctness — two numbers in a validation table are not measurements*
+
+**(a) `pct_of_peak` is hardcoded.** `postprocess_validation.py:382`:
+
+```python
+{"element": ..., "pct_of_peak": 100.0, "pct_of_mean": mean_hf and h / float(np.mean(hf)) * 100, ...}
+```
+
+Every row in the top-15 table is stamped `pct_of_peak: 100.0`. Only rank 1 is the peak; the
+other 14 report 100 % of peak. The adjacent `pct_of_mean` on the next line *is* computed
+properly, which shows the intended construction. This is latent behind a dead guard: the
+condition at line 592, `if len(t3_result) == 2 and isinstance(t3_result, tuple):`, can never
+be satisfied, because `table3_surface_distribution` is declared
+`-> tuple[list[_Row], float, float, float] | list[_Row]` and its only non-tuple return is
+`return []` (line 357) — length 0, never 2.
+
+**(b) The integrated heat load uses a hardcoded timestep and ignores its own parameter.**
+`table5_integrated_heat_load` is declared
+`def table5_integrated_heat_load(surf_files: list[str], dt_between_steps: int = 100)` and
+**never reads `dt_between_steps`**. Instead, at line 457-458:
+
+```python
+# Approximate dt between steps (SPARTA timestep * dump interval)
+# We use a rough estimate: dt ~ 1e-6 s per step (typical DSMC timestep)
+dt = 1e-6  # seconds per step (approximate)
+```
+
+The comment admits it is a guess. Its `cumul_load_Jcm2` then maxes at **0.0590 J/cm²**
+against a 195.06 J/cm² reference — about **3 300× low** — and is printed as a validation
+table row with no warning. It is also accumulated in `sorted()` string order, so it inherits
+F39.
+
+*Consequence:* one column of Table 3 is a constant, and one row of Table 5 is three orders of
+magnitude wrong. Both are presented with the same formatting as the measured columns
+beside them, and neither carries a caveat.
+
+*Fix:* compute `pct_of_peak` as `h / max_hf * 100`; take `dt` from the trajectory profile's
+own `time_s` column (or from the dump interval in the SPARTA log) rather than a literal; and
+delete the unreachable `len == 2` guard, whose only effect is to make the *correct* branch
+unreachable.
+
+## F43 — Every run's `trajectory_profile.csv` was produced by code that is not in the repository
+
+*Class: provenance / reproducibility. This is the strongest form of the F16 class: F16 was
+an artefact nobody re-derived; F43 is an artefact whose producer does not exist in the tree.*
+
+The trajectory profile is the input to every re-entry claim in the project — the Ada
+solver walks it, the Python pipeline reads it, and the reporting scripts plot against it.
+Running the committed generator and diffing it against the shipped file is therefore a
+prerequisite for trusting any q, g-load, Mach or flight-condition number.
+
+I loaded `scripts/gen_trajectory_profile.py` by path (`importlib.util.spec_from_file_location`;
+the module exposes `atmosphere_temperature` :93, `atmosphere_density` :116,
+`compute_trajectory` :160, `write_csv` :244, `main` :258) and ran the real
+`compute_trajectory()` → `write_csv()`, then compared against
+`results/validation_scalloped/trajectory_profile.csv`:
+
+| quantity | **REGENERATED** (committed code) | **SHIPPED** (in every run dir) | match |
+| :--- | --- | --- | :--- |
+| rows | **186** | **198** | ✗ |
+| peak `g_load` | **19.4773** | **17.4213** | ✗ (11.8 % apart) |
+| peak `dyn_press_pa` | **5196.18** | **4538.59** | ✗ (12.7 % apart) |
+| altitude span | 121.90 → 35.40 km | 122.65 → 27.29 km | ✗ |
+| `time_s` span | 1.000 → 186.000 s | 0.000 → 197.000 s | ✗ |
+| **`downrange_km` distinct values** | **186** | **1** (constant) | ✗ |
+
+`REPRODUCIBLE: False` on all three of row count, peak `g_load` and peak `dyn_press_pa`.
+
+The `downrange_km` column is the decisive one. The committed code produces 186 distinct
+downrange values; the shipped file has a **single** repeated value. No setting of a
+step-size or a terminal-altitude flag makes a per-step accumulator constant, so the shipped
+file cannot have come from this generator. It came from **a different version of the
+generator that is not in the repository**.
+
+All four run directories ship a **byte-identical** profile — md5
+`ea07b4449f7049c75114a9b38911f1d5` in `validation_scalloped`, `validation_optimized`,
+`validation_smooth` and `validation`. So every validation run in the project, including the
+Oct 5 run that is currently the single trustworthy one (F16), is flown along a trajectory
+that the committed code cannot regenerate.
+
+*Consequence:* the atmospheric model in the repo (**F38**: 1.48×–3.32× too dense from 5 to
+84.852 km) is **not** the atmospheric model that produced the reported peak g of 17.4213.
+The shipped file is closer to a corrected-ISA re-run than to the committed code, which
+means the numbers in the report and the code in the repository describe two different
+physical models. Until the missing generator is recovered or the shipped file is
+regenerated, no trajectory-dependent claim is reproducible, and the "one correct number"
+that F18 waits on cannot be recomputed.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc && ./venv_validation/bin/python - <<'PY'
+import importlib.util, os, csv, tempfile, hashlib
+spec = importlib.util.spec_from_file_location("gtp", "scripts/gen_trajectory_profile.py")
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+out = os.path.join(tempfile.mkdtemp(), "tp.csv")
+m.write_csv(m.compute_trajectory(), out)
+
+def stats(rows):
+    f = lambda k: [float(r[k]) for r in rows]
+    return (len(rows), max(f("g_load")), max(f("dyn_press_pa")),
+            max(f("alt_km")), min(f("alt_km")), len(set(f("downrange_km"))))
+
+reg = stats(list(csv.DictReader(open(out))))
+shp = stats(list(csv.DictReader(open("results/validation_scalloped/trajectory_profile.csv"))))
+print(f"REGENERATED: rows={reg[0]} peak_g={reg[1]:.4f} peak_q={reg[2]:.2f} "
+      f"alt={reg[3]:.2f}->{reg[4]:.2f} downrange_distinct={reg[5]}")
+print(f"SHIPPED    : rows={shp[0]} peak_g={shp[1]:.4f} peak_q={shp[2]:.2f} "
+      f"alt={shp[3]:.2f}->{shp[4]:.2f} downrange_distinct={shp[5]}")
+print("REPRODUCIBLE:", reg[0] == shp[0] and abs(reg[1] - shp[1]) < 1e-6
+      and abs(reg[2] - shp[2]) < 1e-6)
+for d in ("validation_scalloped", "validation_optimized",
+          "validation_smooth", "validation"):
+    p = f"results/{d}/trajectory_profile.csv"
+    print(f"  {d:22s} {hashlib.md5(open(p,'rb').read()).hexdigest()}")
+PY
+```
+
+```
+REGENERATED: rows=186 peak_g=19.4773 peak_q=5196.18 alt=121.90->35.40 downrange_distinct=186
+SHIPPED    : rows=198 peak_g=17.4213 peak_q=4538.59 alt=122.65->27.29 downrange_distinct=1
+REPRODUCIBLE: False
+  validation_scalloped     ea07b4449f7049c75114a9b38911f1d5
+  validation_optimized     ea07b4449f7049c75114a9b38911f1d5
+  validation_smooth        ea07b4449f7049c75114a9b38911f1d5
+  validation               ea07b4449f7049c75114a9b38911f1d5
+```
+
+*Fix:* recover the generator version that produced the shipped file and commit it beside
+the current one, or regenerate the profile from the committed code and re-run all three
+validation runs — the second option is already required by F16/F17/F20/F21, so it costs
+nothing extra. Add the row count, peak `g_load` and `downrange_km` cardinality to the
+pipeline's own output so a profile that no longer regenerates is caught on sight.
+
+## F44 — The sidecar serves arbitrary files and accepts forged validation state from any web page, with no authentication and no origin check
+
+*Class: security. This is the highest-severity entry in this log.*
+
+`src/python/sidecar_server.py` is the HTTP server behind the validation dashboard. It binds
+`127.0.0.1:8080` by default, so the exposure is loopback — but every finding below is
+exploitable by **any process or any web page the operator visits while the server is
+running**, which requires no network access and no credentials.
+
+### (a) Unauthenticated arbitrary file read
+
+`_serve_static` (:121) resolves the request path against two base directories with **no
+`resolve()`, no containment check and no `..` normalisation**:
+
+```python
+for base in [_FRONTEND_DIR, _UI_DIR / "frontend"]:
+    target = base / path.lstrip("/")
+    if target.is_file():
+        ...
+```
+
+`pathlib` does not normalise `..`; `is_file()` and `read_bytes()` follow it. Measured
+against a live server, sweeping the number of `../` segments for `etc/passwd`:
+
+| levels of `..` | response |
+| :--- | :--- |
+| 0 – 8 | `404 Not Found` (330 bytes) |
+| **9, 10, 11, 12** | **`200 OK`, 9 350 bytes — the complete `/etc/passwd`** |
+
+`_FRONTEND_DIR` is 9 path components deep from `/` (`/Users/<user>/Documents/…/
+StellarOrion_HypersonicEdition/stellarorion_program_proc/src/sidecar_ui`), so 9 is the
+exact minimum. A **single** `..` is enough to read the server's own source:
+`GET /../python/sidecar_server.py` returns `200` with **15 672 bytes** of it. A canary
+file in a `tempfile` directory was also read in full at 12 levels. There is no
+authentication on any endpoint.
+
+*Provenance note:* a first sweep of mine returned 404 at every depth and nearly recorded
+this as refuted. The cause was using 8 levels, which reaches `/Users` but not `/`. The
+finding requires 9.
+
+### (b) Unauthenticated cross-origin validation-state forgery
+
+`do_POST` (:65) routes `/api/update` (:86) to `_sim_state.update(payload)` (:87) with no
+auth, no origin check and no `Content-Type` check. `_json_response` (:113) sends
+`Access-Control-Allow-Origin: *` on **all** JSON responses. Because no `Content-Type` is
+required, a `text/plain` body is a CORS-**safelisted simple request** — the browser sends
+it with **no preflight**, so the wildcard is never even consulted.
+
+Measured, with a foreign origin and a safelisted content type:
+
+```
+POST /api/update   Origin: https://evil.example
+                   Content-Type: text/plain;charset=UTF-8
+                   body: {"status": "VALIDATION COMPLETE", "progress": 1.0}
+
+->  200 OK   ACAO='*'   body=b'{"ok": true}'
+    state now: status='VALIDATION COMPLETE' progress=1.0
+```
+
+Any web page the operator visits can set the dashboard's displayed validation state to
+"complete, 100 %". In a codebase whose deliverable is evidence of a validation run, that
+forges the operator's evidence — and `log_message` (:168-184) is a pure no-op, so the
+server keeps **no record whatsoever** that the state was written.
+
+*Provenance note:* my first attempt posted to `/api/state` and got a 404. The live
+endpoint is `/api/update`.
+
+### (c) Two availability defects on the same handler
+
+* `HTTPServer(...)` at :206 is created with **no `timeout=`** and the module contains
+  **zero** occurrences of `settimeout` (`srv.timeout is None` confirmed at runtime).
+  `HTTPServer` is single-threaded, so one connection that sends nothing holds the entire
+  service. Measured: a single idle TCP connection blocked 6 consecutive client requests
+  over 10.03 s, recovering only when the idle connection was closed.
+* `sidecar_server.py:75-76` does `content_length = int(self.headers.get("Content-Length", 0))`
+  then `self.rfile.read(content_length)` with no bound. `Content-Length: -1` reads to EOF;
+  `Content-Length: 999999999` blocks waiting for bytes that never arrive. With one such
+  connection held, every other client is starved. A malformed header (`abc`) raises
+  `ValueError` outside any `try`, so the client receives **0 bytes** and no status line.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc && ./venv_validation/bin/python - <<'PY'
+import http.client, threading, time, json
+from src.python import sidecar_server as S   # noqa: F401  (import only)
+PY
+# Simpler, from a shell against a running sidecar (default 127.0.0.1:8080):
+for p in "/../python/sidecar_server.py" "/$(printf '../%.0s' {1..9})etc/passwd"; do
+  printf '%-42s -> ' "$p"
+  curl -s -o /dev/null -w '%{http_code} %{size_download} bytes\n' "http://127.0.0.1:8080$p"
+done
+curl -s -X POST http://127.0.0.1:8080/api/update \
+     -H 'Origin: https://evil.example' \
+     -H 'Content-Type: text/plain;charset=UTF-8' \
+     --data '{"status":"VALIDATION COMPLETE","progress":1.0}'
+curl -s http://127.0.0.1:8080/api/status
+```
+
+```
+/../python/sidecar_server.py                -> 200 15672 bytes
+/../../../../../../../../../etc/passwd    -> 200 9350 bytes
+{"ok": true}
+{"status": "VALIDATION COMPLETE", "progress": 1.0, "step": 0, ...}
+```
+
+*Fix:* resolve and contain the served path — `target = (base / path.lstrip("/")).resolve()`
+followed by `if not target.is_relative_to(base.resolve()): send_error(403)`. Require a
+per-launch bearer token on `/api/update` and `/api/reset`, or at minimum reject non-JSON
+`Content-Type` and non-same-origin requests; replace `Access-Control-Allow-Origin: *` with
+the explicit UI origin. Give the server a `timeout=`, bound `Content-Length` to a sane
+maximum and reject negative values, and wrap the header parse in a `try` that returns 400.
+Separately, `sidecar_watchdog.py` is the module intended to supervise this process and is
+**entirely unwired** — see the dead-code note in the "Investigated and NOT a defect" section.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
+
+### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
+
+A repo-wide search of `src`, `tests`, `scripts`, `tools`, `docs` and `metadata` for
+`SidecarWatchdogManager`, `Primary_Watchdog`, `Secondary_Watchdog`, `.heartbeat()`,
+`update_heartbeat` and `install_segfault_handler` returns **50 hits: 48 inside
+`sidecar_watchdog.py` itself, and 2 regex literals inside
+`src/utils/sabotage_verifier.py:17159-17160`.** There are **zero** construction sites and
+**zero** heartbeat calls anywhere in the tree, and `sidecar_server.py` never imports the
+module.
+
+Two consequences worth stating plainly:
+
+* **F36 (the inert Secondary watchdog) and the `SIGSEGV` livelock in the same module
+  cannot occur in a production run**, because `SidecarWatchdogManager.start()` — the only
+  path to `install_segfault_handler()` — is never called. They are reported as correctness
+  defects because the module is a *documented* safety control that does not work, not
+  because it is running.
+* **`sabotage_verifier.py` grades this module by regex over file text.**
+  `src/utils/sabotage_verifier.py:17159-17161` implements checks §5.6/§5.7/§5.8 as literal
+  searches — `Watchdog_A|Watchdog_Primary|Primary_Watchdog`,
+  `Cross_Check|Cross_Monitor|Recover_Watchdog|Mutual_Check`,
+  `Resurrect|Resurrection|Segfault_Recover|Signal_Handler.*SIGSEGV|Handle_Segfault` — and
+  `:17290` exempts any line matching `SIGSEGV.*handler|Handle_Segfault` from §5.9 entirely.
+  The file therefore satisfies those checks on the strength of its **comments and dead
+  code**, and its own header claim at `sidecar_watchdog.py:21` that it *"Satisfies
+  sabotage_verifier.py §5.6/5.7/5.8 requirements"* is self-certifying. This is the
+  mechanism by which every watchdog defect above survived review: the gate that should
+  have caught them is itself satisfied by the presence of the words.
+
 
 Recorded so the negative result is not re-litigated.
 
@@ -1364,9 +2668,30 @@ the measured series.
 | F18 | correctness | **open — needs a decision** | 51.8 km/3378 m/s is the *smooth baseline*'s condition, 52.0326/3094.2 is scalloped+optimized — 8.4 % velocity/Mach confound across the compared geometries; 31 literals + 2 Ada spec constants restate it |
 | F19 | correctness | **open** | F12's re-provenancing never reached the `root_causes` narrative — 14.361 W/cm² still attributed to NASA/TP-2013-4012 (13.8), plus a stale 288 % delta and 12.2 vs measured 12.823 W/cm² |
 | F20 | fabricated measurement | **open — may reverse a pass** | `test_modes.adb:1196`'s `17.7276 g` "MEASURED" figure matches no estimator of the series, yet is the stated justification for widening the decel band 10 %→15 % |
-| F22 | correctness | **open** | Cost function `J(x)` graded against StellarOrion's own DSMC heat load (174.13736) and own measured `Cd` (1.75791) — a regression baseline, not validation; Ada `Validation_Refs` V1 defaults 5.08 % / 20.21 % stale and silently used if `Set_Validation_Refs` is skipped; `comparison.irve3_flight` in the JSON stores 14.361 / 195.0577, matching neither NASA (F) nor any of the file's five `rapisarda_models` entries |
 | F21 | correctness | **open** | TPS `Q_SG` normalisation evaluated at a CLI-default condition (51.8/3378) that is 31.90 % hotter than the snapshot it scales (52.0326/3094.2 → 20.2054 not 26.6509 W/cm²); default snapshot is also the F16 stale artefact, and the limits gate validates a third load (`Rn` 1.5 vs 0.55) |
+| F22 | correctness | **open** | Cost function `J(x)` graded against StellarOrion's own DSMC heat load (174.13736) and own measured `Cd` (1.75791) — a regression baseline, not validation; Ada `Validation_Refs` V1 defaults 5.08 % / 20.21 % stale and silently used if `Set_Validation_Refs` is skipped; `comparison.irve3_flight` in the JSON stores 14.361 / 195.0577, matching neither NASA (F) nor any of the file's five `rapisarda_models` entries |
 | F23 | theory / method | **gate added** | run point Kn=3.78e-05 is continuum, not the claimed 0.01-1.0 transition band; cell ≲ λ violated 249-8800x |
+| F24 | correctness | **open — blocker** | `dde.icbc.IC(xy_norm, …)` passes a NumPy array where deepxde 1.15.0 requires a geometry → `AttributeError: 'numpy.ndarray' object has no attribute 'on_initial'` before iteration 1; the PINN has never trained |
+| F25 | correctness | **open — blocker** | DSMC targets normalised at line 631 and never read; `_ic_zero_values` returns `np.zeros(...)`, so every collocation point is supervised to output **0.0**; real domain discarded for a hardcoded unit `Rectangle([0,0],[1,1])`; the 4-residual PDE and 9 BCs are reachable only from self-tests |
+| F26 | correctness | **open** | SPARTA grid parser averages `xlo` with `ylo` and `xhi` with `yhi` (a `[BUGFIX]` comment certifies the wrong mapping) — max \|coordinate error\| 4.486 m, **4 093 of 17 949 cells (22.80 %) at negative radial coordinate**. The `T` column is provably unaffected. *(The 7.22 m and "1 372 rows (7.10 %) dropped" figures previously listed here were withdrawn in thread 3c — see the correction block in the entry.)* |
+| F27 | correctness | **open** | `compute_pinn_metrics` reads `[:, 4]` of a 4-column `predict_gap_fill` result → guaranteed `IndexError`; the PINN's whole influence on Cd/heat flux is one `clip(ratio, 0.5, 2.0)` scalar, and `"Shock Temperature"` hardcodes both its reference and its error to 0.0 |
+| F28 | correctness | **open — may mask failure** | `GNAT.OS_Lib.Spawn`'s `Success` reports creation, not exit status, and `Write_Status(…, Status_Completed, 1.0)` sits *outside* the `if Success` block — a PINN calibration that provably always fails is recorded as 100 % complete; 7 of 8 `Write_Status` sites in the file share the flaw |
+| F29 | provenance | **open** | `pinn_test.py:28-51` `IRVE3_BASELINE` is the **fourth** copy of the F22 mis-provenanced 14.361 / 195.06 / 20.2 / 1.47 set, and feeds the "document" column of the three-way comparison |
+| F30 | correctness | **open** | Sidecar's `.gpr` probe checks the repo root, always fails, and falls back to a path where `CADDesign/` is absent — then `os.makedirs` creates the wrong directory instead of reporting the missing input, so real grids at `results/validation/grid.*.out` are never found |
+| F31 | correctness | **open** | `PipelineCheckpoint` records `output_files` without an existence check, **discards a changed `config` on resume** (measured: resume with `grid.900.out` still reports `sparta` complete and keeps run-A's config), and silently restarts from scratch on a corrupt checkpoint — a source of mixed-provenance pipelines |
+| F32 | correctness | **open** | The F26 axis-mixing parser is **duplicated byte-for-byte** at `kriging_denoise.py:103-104`, the module the gate's Kriging step actually runs. Both parsers return byte-identical output, so fixing F26 alone leaves the live path wrong |
+| F33 | correctness | **open** | Kriging's own write→read round trip replaces **100.00 % (17 949/17 949) of cell densities** with a hardcoded `1e20` default, because the writer emits 10 fields while the reader demands `parts[10]` (the real format has 11). Any multi-pass run reads a **constant** density field from pass 2 onward. The writer also reorders the axes relative to real SPARTA and omits `f_2[1]` |
+| F34 | correctness | **open** | `extract_cell_centroids` prints `[WARN] ... using point cloud fallback` but **implements no fallback** — the loop `break`s and the tail keeps its `np.zeros` origin. **7 of 3 648 cells** (760 of 403 392 = 0.1884 % across all run dirs) are placed at the origin instead of on the body, and the warning fires on **100 % of files** so it reads as normal |
+| F35 | correctness | **open** | `pipeline_comparison.py` is a `GaussianProcessRegressor` with **no PDE residual** (`grep -c 'residual|_pde|PDE('` = 0) yet calls itself a PINN in **nine** places, including an AXIOM block asserting `PINN respects governing PDE constraints [Raissi 2019]` and a comment deferring to the never-running `pinn_accelerator.py`. Third site where "PINN" labels a non-PINN |
+| F36 | correctness | **open** | `sidecar_watchdog.Secondary_Watchdog._monitor_loop` resets `self._last_cross_check` at line 303 and then tests it at line 306, so the `elapsed > PRIMARY_TIMEOUT_S` (25 s) branch is unreachable — measured **0** `_handle_resurrect` calls with the Primary permanently dead. The correct test, `Mutual_Check()`, exists and is never called. The whole dual-watchdog escalation is inert |
+| F37 | dead code | **open** | `src/python/visualizer.py` and `src/python/sidecar_launcher.py` are 50 lines each with **zero live statements** — only a docstring claiming publication-quality figures and a web UI that do not exist. `docs/PYTHON_SIDECAR_EXCEPTIONS.md:38` describes one of them as a working bridge |
+| F38 | correctness | **open** | `gen_trajectory_profile.atmosphere_temperature` is **correct**, but `atmosphere_density` has four independent ISA errors: a per-km lapse passed where per-metre is needed (0–11 km), a missing `−1` in three gradient layers, the isothermal `exp` form used for 20–32 km, and self-recursion above 84.852 km. The model is **1.48×–3.32× too dense across 5–84.852 km**, peaking at **+231.5 % at 47–51 km** — the band the DSMC runs are evaluated in — against the module's own claim of 0.1 % agreement |
+| F39 | correctness | **open** | `postprocess_validation.py:516` sorts `surf.*.out` as **strings**, so `rows[-1]` is step **900** while the real last step is **1700**. Every "final step" number that script reports is eight timesteps early. It also hardcodes `results/validation`, not the validated `validation_scalloped` |
+| F40 | silent failure | **open** | `verify_profile_math.py:216-217` is `if not ffi_available: return True` — the Ada FFI cross-check that is the script's entire purpose is skipped and it reports **success**, violating its own AXIOM A3. A green run from this verifier is currently uninformative |
+| F41 | provenance | **open** | The 14.36 / 195.06 IRVE-3 mis-provenance appears in **three more files** (`postprocess_validation.py:55`, `plot_rapisarda_comparison.py:52`, `make_derived_plots.py:343` on the headline figure), and `compare_validation.py:278` prints an **unconditional** "in the right ballpark" deceleration verdict that no measurement can change |
+| F42 | fabrication | **open** | `postprocess_validation.py` publishes `pct_of_peak: 100.0` on **every** top-15 row (a hardcoded constant), and its heat-load integration hardcodes `dt = 1e-6 s` while ignoring its own `dt_between_steps` argument, yielding **0.0590 J/cm²** against a 195.06 J/cm² reference — ~3 300× low — with no warning |
+| F43 | provenance | **open** | **The shipped `trajectory_profile.csv` cannot be regenerated by the committed generator.** Re-running `compute_trajectory()` gives 186 rows / peak g 19.4773 / 186 distinct `downrange_km`; the shipped file has 198 rows / peak g 17.4213 / a **constant** `downrange_km`, and is byte-identical (md5 `ea07b444…`) in all four run directories. Every run is flown along a trajectory whose producer is not in the repository |
+| F44 | **security** | **open — highest severity** | The sidecar has **no authentication and no origin check**: `GET /` + `../`×9 returns **`/etc/passwd` in full (9 350 bytes)**, a single `..` returns 15 672 bytes of the server's own source, and a CORS-safelisted `text/plain` `POST /api/update` from `https://evil.example` sets `status='VALIDATION COMPLETE'` with **no server-side log** (`log_message` is a no-op). Its `HTTPServer` also has no `timeout`, so one idle connection wedges the service |
 
 ### Final state after fixes
 
@@ -1457,3 +2782,42 @@ Artifacts regenerated from the final code: 3 optimization plots, 21 validation P
   code, because F18's resolution is a physics decision and F16/F17/F20/F21 all require
   re-running the three validation runs — after which every number in this log must be
   re-measured, not assumed to carry over.
+
+### Thread 3b — what the rescan of the unaudited subsystems changed
+
+The third pass did not look for new numbers. It looked at the modules no earlier pass
+had opened, and it **ran** them.
+
+* **A headline capability had never executed, and nothing noticed.** `README.md` presents
+  a "🔒 Hybrid Validation Gate: enforced DSMC+PINN re-simulation". F24 shows the trainer
+  raises `AttributeError` before the first iteration; F25 shows that even if it ran, the
+  DSMC field it parses is discarded and every collocation point is supervised to output
+  zero; F26 shows the 4-residual Navier–Stokes operator the project wrote for this
+  purpose is called *only from its own unit tests*. A 🔒 on a gate that has never opened
+  is worse than no gate, because it converts an untested claim into an asserted result.
+* **The failure was recorded as a success, in the same run.** F28: `Spawn`'s `Success`
+  means "process created", and the `Write_Status(..., Status_Completed, 1.0)` call sits
+  outside the `if Success` block — so the Ada layer wrote `pinn_calibration: 100 %
+  complete` for a child that provably exits 1 every time. The correct pattern already
+  exists 90 lines away in `test_pyfluent`, which writes `Status_Completed, 0.0` on
+  failure. Six other modes share the flaw; only this one is proven wrong.
+* **A resume mechanism that cannot detect its inputs changing is a defect generator.**
+  F31 measured it end to end: a checkpoint completed `sparta` against a file that does
+  not exist, then resumed under a *different* `grid_file` and still reported the step
+  done, silently keeping the old config. Every downstream number would then be a blend
+  of two runs. This is the generalisation of F16 — an artefact that nobody re-derived —
+  into a mechanism whose entire job is to decide what to re-derive.
+* **A wrong comment is a load-bearing artefact.** F26's parser is wrong because a
+  `[BUGFIX]` line asserts a field mapping the file format contradicts. The comment is
+  what made 22.80 % of cells at negative radius look intentional. The same shape as
+  F20: prose in the source, not the source, is what decided the outcome.
+* **Provenance had a fifth copy.** F29 found `pinn_test.py` still carrying 14.361 /
+  195.06 / 20.2 / 1.47 after F12 re-cut the reference keys in `validation_pipeline.py`.
+  F12 fixed one file; the log recorded the class as fixed. That is the F16 lesson again,
+  one layer up.
+* **No source change was made in thread 3b either.** All eight entries (F24–F31) are
+  measurements, left open. They differ from F16–F22 in one way that matters for
+  sequencing: F16–F22 wait on a physics decision and on multi-hour re-runs, whereas
+  F24–F31 are pure code fixes that can be made and re-tested in minutes. F24, F25, F26
+  and F27 must land **together** — any one of them alone would produce a PINN that runs
+  and is still wrong.

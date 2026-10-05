@@ -13,9 +13,14 @@ pipeline is defined in the source.
 > surrogate (scikit-learn), JSON output, and the post-run render. Every geometry formula,
 > cost term, and penalty is evaluated in Ada.
 
-> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F22 before trusting any number below
+> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F44 before trusting any number below
 >
-> A second, independent audit of `_proc` on 2026-10-05 left seven findings **open**:
+> Independent audits of `_proc` on 2026-10-05 left **twenty-seven findings open**: F16–F22
+> from the DSMC/report-path pass, F24–F31 from a rescan of the PINN, checkpoint and status
+> subsystems, F32–F36 from a pass over the Kriging, comparison and watchdog
+> paths, and F37–F44 from a sweep of the atmosphere generator, the reporting scripts and
+> the HTTP sidecar. F23 is a
+> method finding already actioned.
 >
 > | ID | What it invalidates in this document |
 > | :--- | :--- |
@@ -26,6 +31,29 @@ pipeline is defined in the source.
 > | **F20** | `Decel_G` is reported as a tail mean of the last 15 dumps (17.09 g). The same run's `g_load` **peaks at 22.67 g (+15.07 % vs flight)**. `stellarorion_test_modes.adb:1196`'s `17.7276 g` "MEASURED" figure — the stated reason the decel band was widened 10 %→15 % — matches **no** estimator of the data. |
 > | **F21** | The TPS-conduction leg normalises every element by a Sutton-Graves flux computed at the **CLI default** `51.8 km / 3378 m/s`, while the shape comes from a snapshot flown at `52.0326 km / 3094.2 m/s`. **Peak 26.65 W/cm² is really 20.21 W/cm² — a 31.90 % overstatement.** The default snapshot is the F16 stale artefact, and the limits gate validates a *third* load again (`Rn` 1.5 vs the run's 0.55, so `T_s` is understated by 182 K). |
 > | **F22** | **This document's optimisation section is affected.** `J(x)` is graded against StellarOrion's **own** DSMC heat load (174.13736) and **own** measured `Cd` (1.75791) — a regression baseline, not validation. The Ada `Validation_Refs` V1 defaults are **5.08 % / 20.21 %** stale and are silently used by any FFI caller that omits `Set_Validation_Refs`. `Flux_Ref = 14.361` here is the value the JSON files under `irve3_flight`, which matches neither NASA (F, 13.80) nor the file's own `rapisarda_models.Sutton-Graves` (15.2595). |
+> | **F24** | **The "PINN 5–30 min" leg below has never run.** `PINNAccelerator.train_from_checkpoint` calls `dde.icbc.IC(xy_norm, …)` where deepxde 1.15.0 requires a geometry, and raises `AttributeError: 'numpy.ndarray' object has no attribute 'on_initial'` **before the first iteration**. |
+> | **F25** | Even if F24 were fixed, the PINN would be wrong: the DSMC targets parsed at `pinn_accelerator.py:627` are normalised into `_t_norm` at line 631 and **never read**, and `_ic_zero_values` returns `np.zeros(...)` — so every one of the 17 949 collocation points is supervised to output **0.0**. The 4-residual PDE and 9 boundary conditions exist only in self-tests. |
+> | **F26** | The SPARTA grid parser averages `xlo` with `ylo` and `xhi` with `yhi` (a `[BUGFIX]` comment certifies the wrong field mapping), putting **4 093 of 17 949 cells (22.80 %)** at negative radial coordinate; max \|coordinate error\| **4.486 m**. The `T` column is unaffected. *(The 7.22 m error and "1 372 rows (7.10 %) dropped" figures were withdrawn in thread 3c — row-alignment artefact and empty cells, not losses.)* |
+> | **F27** | `pinn_test.py:compute_pinn_metrics` reads column 4 of a 4-column result → guaranteed `IndexError`. Where it does not crash, the PINN reaches the reported physics only as `clip(ratio, 0.5, 2.0)` on two scalars, and `"Shock Temperature"` hardcodes both its reference and its error to `0.0`. |
+> | **F28** | `stellarorion_test_modes.adb:728` writes `Write_Status(..., Status_Completed, 1.0)` **outside** the `if Success` block, and `GNAT.OS_Lib.Spawn`'s `Success` means "process created", not "exited 0" — so the calibration that provably always fails is recorded as **100 % complete**. 7 of the 8 `Write_Status` sites in that file share the flaw. |
+> | **F29** | `pinn_test.py:28-51` `IRVE3_BASELINE` is a **fourth** copy of the F22 mis-provenanced 14.361 / 195.06 / 20.2 / 1.47 set, and feeds the "document" column of the three-way comparison. |
+> | **F30** | The PINN sidecar's `.gpr` probe checks the repo root, always fails, and then `os.makedirs` **creates a wrong directory** rather than reporting the missing input — so the real grids at `results/validation/grid.*.out` are never found and the sidecar exits 1 on "No grid output files found". |
+> | **F31** | `PipelineCheckpoint` — the mechanism behind the `sparta → kriging → pinn → mop` step sequence below — **discards a changed `config` on resume** and never checks that recorded `output_files` exist. Measured: resuming with a different `grid_file` still reports `sparta` complete and keeps the previous run's config. A corrupt checkpoint silently restarts the whole pipeline. |
+> | **F32** | **The Kriging leg in the diagram above runs `kriging_denoise._parse_grid_file`, which carries the F26 axis-mixing bug byte-for-byte.** Both parsers return identical output, so an F26-only fix leaves the live path wrong. |
+> | **F33** | Kriging's write→read round trip replaces **100 %** of cell densities with a hardcoded `1e20` default. Any second pass over the Kriging output reads a **constant** density field. |
+> | **F34** | The `Surf → (x,y) cell centroid` step leaves **7 of 3 648 cells (0.19 %)** at the `(0,0)` origin sentinel, because the "point cloud fallback" the code announces is never implemented. |
+> | **F35** | The "PINN Surrogate" arrow in the diagram is a `GaussianProcessRegressor` with **no PDE residual**, labelled PINN in nine places. A GP cannot encode the governing equations, so the surrogate is an interpolator, not a physics-informed model. |
+> | **F36** | Any claim of a self-healing sidecar. `Secondary_Watchdog`'s timeout is reset by the very loop that tests it, so the primary is never declared dead and no resurrect ever fires. The watchdog is armed in name only. |
+> | **F37** | Two modules counted in the visualisation inventory (`visualizer.py`, `sidecar_launcher.py`) contain no code at all. |
+> | **F38** | **The atmosphere the trajectory is flown through is 1.48×–3.32× too dense from 5 to 84.852 km**, worst **+231.5 % at 47–51 km** — the exact band the runs are evaluated in. Every q, Mach and g-load in this document inherits it. |
+> | **F39** | `postprocess_validation.py` sorts `surf.*.out` lexicographically, so its "final step" is step 900 when the real last step is 1700. |
+> | **F40** | `verify_profile_math.py` returns **success** when the Ada FFI it exists to cross-check is unavailable. A green verifier run proves nothing. |
+> | **F41** | The 14.36 / 195.06 mis-provenance appears in three more files, and one report prints an unconditional "in the right ballpark" verdict. |
+> | **F42** | `pct_of_peak` is a hardcoded 100.0 on every row, and the heat-load integration hardcodes `dt = 1e-6 s` — ~3 300× below the reference, printed without warning. |
+> | **F43** | **The `trajectory_profile.csv` in every run directory cannot be regenerated by the committed generator** (198 rows / 17.4213 g shipped vs 186 rows / 19.4773 g regenerated; `downrange_km` constant vs 186 distinct). The producer is not in the repository. |
+> | **F44** | **The HTTP sidecar serving the dashboard has no auth and no origin check** — arbitrary file read over loopback and cross-origin forgery of the displayed validation state, with no server-side log. |
+> | **F32** | The F26 axis-mixing parser is **duplicated byte-for-byte** at `kriging_denoise.py:103-104` — the module this document's Kriging stage actually runs. Both parsers return byte-identical output, so fixing F26 alone leaves the live path wrong. |
+> | **F33** | The `kriging` stage's own write→read round trip replaces **100.00 % (17 949/17 949) of cell densities** with a hardcoded `1e20` default (writer emits 10 fields, reader needs `parts[10]`, real format has 11). Input `rho` spans `4.05e-05 … 4.63e-02 kg/m³`; output is the constant `4.810694e-06 kg/m³` (≈144× too small). Any multi-pass run reads a **constant** density field from pass 2 onward. The writer also reorders the axes relative to real SPARTA and omits `f_2[1]`. |
 
 ---
 
@@ -112,6 +140,17 @@ pipeline is defined in the source.
               "optimized_round2"  →  grid becomes 88 panels
               (optional --validate-round2: a 2nd DSMC run on x*_2)
 ```
+
+> ⚠️ **The "PINN" in Stages 1/3 and 2/3 above is aspirational, not descriptive.** The
+> `SPARTA DSMC → PINN` arrow does not currently fire: the trainer raises
+> `AttributeError` before its first iteration (**F24**), the DSMC state it parses is
+> discarded so the collocation points are supervised to output zero (**F25**), and the
+> grid parser mis-places 22.80 % of cells across the axis of symmetry (**F26**). In
+> practice the chain is **SPARTA DSMC → (PINN leg raises) → DSMC heat load**, and the
+> verdict in Stage 2/3 is produced by the DSMC leg alone. That verdict is unaffected,
+> because `q_hybrid` is a DSMC heat load — but the gate is "DSMC+PINN" in name only
+> today, and the `clamp(…, 0.5, 2.0)` multi-fidelity correction has no PINN term to
+> correct. See **F24–F27** and the ⁸/⁹ footnotes in `README.md`.
 
 ---
 
@@ -289,12 +328,21 @@ Constants: `_GATE_STEPS_DEFAULT = 2200` (line 255), `_GATE_SKIN = "scalloped"` (
 | 2/3 | Verdict + correction factor | seconds |
 | 3/3 | Round-2 BO on the corrected objective | ~1 min |
 
+> ⚠️ **Stage 1/3's "→ PINN pipeline" does not currently execute** — the trainer raises
+> before its first iteration (**F24**), the parsed DSMC targets are discarded (**F25**),
+> and the grid parser corrupts 22.80 % of cell positions (**F26**). Stage 2/3 therefore
+> runs on the DSMC heat load alone, which is why the verdict still stands. See the
+> warning after the Phase C diagram above and **F24–F31**.
+
 **Verdict predicate** (`_gate_verdict`, line 705): `PASS ⟺ q_hybrid ≤ q_target`, with the
 boundary counting as PASS (line 740).
 
 **Correction factor:** `c = clamp(q_hybrid / q_analytic, 0.5, 2.0)` — a bounded
 multiplicative fidelity correction. This is Kennedy & O'Hagan (2000), *Biometrika* 87(1)
 1–13; the clamp stops one bad simulation leg from dragging the surrogate somewhere absurd.
+Note that `c` is currently computed from DSMC-only quantities, so it is not yet a
+multi-fidelity correction in the sense Kennedy & O'Hagan intend — the low-fidelity term it
+is meant to reconcile against a PINN surrogate does not exist (**F24–F25**).
 
 Round 2 reruns the identical budget — 20 LHS + 50 EI at `xi = 0.01`, seed 42 — against
 `corrected_cost`, and its result is stored under `"optimized_round2"` in the results JSON.
