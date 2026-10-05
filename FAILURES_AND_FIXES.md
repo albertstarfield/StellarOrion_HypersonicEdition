@@ -4,13 +4,13 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F48 are a second, third, fourth and fifth,
+F1–F15 were found and fixed in the first pass. **F16–F49 are a second, third, fourth, fifth and sixth,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
 optimiser first. F24–F31 come from the thread-3b rescan of the previously unaudited
 PINN, checkpoint and status subsystems, and F32–F36 from the thread-3c pass over the
-Kriging, surface-comparison and watchdog paths, and F37–F48 from the thread-3d/3e passes over
+Kriging, surface-comparison and watchdog paths, and F37–F49 from the thread-3d/3e/3f passes over
 the scripts, the sidecar, and the Ada atmosphere, status and checkpoint units. Read **"Still open after thread 3"**
 before relying on any number below.
 
@@ -2711,6 +2711,26 @@ but because nothing calls them at all:
 | `stellarorion_orion.adb` | **163** | **2** | **none** |
 | **total** | **5 459** | **93** | — |
 
+A second census — over the five remaining packages — found **two more that no production
+unit imports**: `StellarOrion_Atomic_Parity` (622 lines, 12 subprograms) and
+`StellarOrion_Dual_Watchdog` (862 lines, 16 subprograms) are withed by `self_test.adb`
+**only**, for another **1 484 lines and 28 subprograms**. They are a different kind of dead
+than the four above: these two carry **no `SPARK_Mode` pragma in either the spec or the
+body**, so they are outside the SPARK subset entirely, rather than being switched off inside
+a spec that claims to be verified. The combined figure is **6 943 lines and 121
+subprograms** of Ada that no production path reaches.
+
+The same census cleared three of the five, so they are recorded here as **investigated**:
+`StellarOrion_PostProcessing` (1 080 lines, 15 subprograms) is withed by `main.adb` and
+`project.adb` and is the **only** package in the engine with `SPARK_Mode (On)` in *both*
+the spec and the body; `StellarOrion_Safe_Access` (74 lines, 1 subprogram) is withed by
+three units; and `StellarOrion_Runtime_Guard` (900 lines) is withed by `project.adb`.
+`Runtime_Guard` deserves a separate note: it sets `SPARK_Mode (Off)` in **both** the spec
+(`ads:23`) and the body, with the honest justification *"extern: file I/O + GNAT.OS_Lib
+subprocess dispatch; outside SPARK subset"* — so it is **not** an **F47**-style false
+claim, but it does mean 900 lines of live runtime-control code are outside the proof
+boundary entirely.
+
 **`StellarOrion_Pipeline_Checkpoint` is the consequential one.** The project has no Ada-side
 run checkpoint whatsoever: nothing validates that a run's inputs still match the ones its
 results were computed from. That is why **F28** could write
@@ -2928,6 +2948,93 @@ or raise on altitudes it cannot represent rather than returning a 35 km isotherm
 extrapolation. Until then the citation at `.ads:13,22,41` must drop SP-7468 for the
 85–120 km band, because that standard does not cover it.
 
+## F49 — Every `runtime_guard` test asserts on its own hardcoded string literal and never calls the routine it is named after
+
+*Class: false assurance (dead verification) — the test is the fabrication*
+
+`src/simulation_engine/stellarorion_runtime_guard.adb:562-650` contains seven `Test_*`
+wrappers. Each one declares **its own** local constant
+
+```ada
+Lock_Name : constant String := "main.lock";
+```
+
+and then asserts a property **of that literal** — never of the return value, the
+side-effect, or the postcondition of the routine whose name the wrapper borrows. The file
+concedes the design in a comment of its own:
+
+```ada
+--  Side-effectful routine exercised via integration modes (run.py --test ...);
+--  unit wrapper validates declarative surface only.
+```
+
+| wrapper | what it actually asserts | calls of its own subject |
+| :--- | :--- | ---: |
+| `Test_Get_Lock_File_Path` (`:570`) | `pragma Assert (Lock_Name'Length > 0);` — on its own literal | **0** |
+| `Test_Check_And_Acquire_Lock` (`:610`) | `pragma Assert (Lock_Name'Length = 9 and then Lock_Name (Lock_Name'First) /= ' ');` | **0** |
+| `Test_Release_Lock` (`:648`) | `pragma Assert (Lock_Name'Length > 0);` | **0** |
+| `Test_Detect_Nvidia_GPU` | — | **0** |
+| `Test_Detect_P_Cores` | — | **0** |
+| `Test_Ensure_Docker_Running` | — | **0** |
+| `Test_Check_Amaryllis_Idle_Automode` | — | **0** |
+
+`Test_Check_And_Acquire_Lock` is the clearest case. It carries an AXIOMS block asserting
+
+> *"A lock file name has fixed length 9 and does not start with a space"*
+
+— a property of a hardcoded string, dressed as a property of the lock-acquisition logic.
+A deliberately broken `Check_And_Acquire_Lock` — one that never creates the lock file, or
+one that returns success while the lock is held by another process — passes this test
+unchanged.
+
+Three further measurements on the same file:
+
+* **All seven wrappers have 0 call sites outside their own body**, and every
+  `GNATCOLL.Register_Routine` line is **commented out** (`:800`
+  `-- Register_Routine: "Test_Run_To_String"`, `:832`, `:855-860`
+  `--  Registry: GNATCOLL.Register_Routine (Suite, "Test_Check_…"`). So they are not
+  merely unregistered — nothing runs them either.
+* The two asserts at `:429-430` are self-labelled
+  `-- SMT bounds check (Sabotage §SMT_LOGIC_VERIFICATION)` while checking only
+  `Arg_C'Length > 0`. They claim a credit under a named verification category for a
+  vacuous string check.
+* `Test_Detect_P_Cores` carries the tautological contract `with Pre => True, Post => True`
+  (`stellarorion_runtime_guard.ads:85`).
+
+*Consequence:* `stellarorion_runtime_guard` contributes **zero real assertions** across its
+900 lines. The lock mechanism (`Get_Lock_File_Path` / `Check_And_Acquire_Lock` /
+`Release_Lock`), the GPU probe, the P-core detector and the Docker-amaryllis probe are
+**entirely untested**. This matters more than the count suggests: the lock is precisely the
+class of mechanism that F36 predicts is broken — a mutual-exclusion device whose liveness
+test is self-fulfilling. And unlike F47, where the *contracts* are decorative, here it is
+the **verification itself** that is the artefact. The same class as F42's hardcoded
+`"pct_of_peak": 100.0`, except a fabricated data column misleads a reader whereas a
+fabricated test misleads a reviewer into believing the mechanism was checked.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc/src/simulation_engine
+echo "--- does any wrapper call the routine it is named after? ---"
+for f in Get_Lock_File_Path Check_And_Acquire_Lock Release_Lock \
+         Detect_Nvidia_GPU Detect_P_Cores Ensure_Docker_Running Check_Amaryllis_Idle_Automode; do
+  n=$(awk "/^procedure Test_/,/^end Test_/" stellarorion_runtime_guard.adb \
+        | grep -c "$f" || true)
+  printf "  %-32s references inside Test_* bodies: %s\n" "$f" "$n"
+done
+echo "--- are the test procedures registered with the harness? ---"
+grep -n "Register_Routine" stellarorion_runtime_guard.adb
+echo "--- the local literal each wrapper asserts on ---"
+sed -n '570,572p;610,612p' stellarorion_runtime_guard.adb
+```
+
+*Fix:* each wrapper must call its subject and assert on the result — for the lock, acquire
+twice and assert the second attempt is refused, then release and assert the lock file is
+gone; for the probes, assert the returned value is in its declared range rather than that
+a local literal is non-empty. Then uncomment the `GNATCOLL.Register_Routine` calls so the
+suite actually runs. Until then, `runtime_guard` should not be counted as tested code in
+any coverage figure.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -3056,6 +3163,7 @@ the measured series.
 | F46 | dead code | **open** | **5 459 lines and 93 Ada subprograms have no caller**: `stellarorion_history` (3 488/60), `stellarorion_pipeline_checkpoint` (1 392/28), `stellarorion_trajectory_output` (416/3), `stellarorion_orion` (163/2) — zero Ada withers each. `Pipeline_Checkpoint` being unwired means there is **no Ada-side run checkpoint at all**, which is why F28's unconditional `Status_Completed, 1.0` has nothing to contradict it. SPARK obligations discharged over these lines are evidence about dead code, not about the shipped binary |
 | F47 | correctness | **open** | **`SPARK_Mode (Off)` in all five bodies** (Environment, Status_Writer, Validation, PINN_Trajectory, Trajectory_Output) — GNATprove skips them entirely, so every `Pre`/`Post` in those specs is decorative, voiding `.ads:4` and `.ads:73-74`'s `gnatprove --level=4` claims. `pinn_trajectory.adb:18` justifies it with "exception handlers and Ada.Text_IO": measured **0** handlers and the only `Text_IO` mention is the comment itself |
 | F48 | correctness | **open** | A **third** atmosphere. `PINN_Trajectory.ISA_Atmosphere` extends the mesopause's isothermal 186.87 K layer to 120 km (`HB_Next := 120.0`) — a 35.14 km extrapolation with no inversion — and returns **1.12758e-08** at 120 km where the exported `Environment` atmosphere returns **1.61961e-09**: **6.96× apart**. The cited source (NASA SP-7468) is the 1976 standard, which **stops at 86 km**, so no error percentage is claimed |
+| F49 | false assurance | **open** | All seven `stellarorion_runtime_guard` `Test_*` wrappers assert a property of their **own local** `Lock_Name : constant String := "main.lock"` literal and make **0** calls of the routine they are named after; all `GNATCOLL.Register_Routine` lines are commented out. The package contributes **0 real assertions** across 900 lines, so the lock mechanism, GPU probe, P-core detector and Docker-amaryllis probe are entirely untested |
 
 ### Final state after fixes
 

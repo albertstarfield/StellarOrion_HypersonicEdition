@@ -565,6 +565,11 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      gate). `pinn_trajectory.adb:18` justifies the switch with "exception handlers and
      Ada.Text_IO"; measured: **0** exception handlers, and the file's only `Text_IO`
      mention is that comment itself. See **F47**.
+   * **All seven `stellarorion_runtime_guard` "tests" assert on their own hardcoded
+     string literal** and make **zero** calls of the routine they are named after; every
+     `GNATCOLL.Register_Routine` line is commented out. The package contributes **0 real
+     assertions** across 900 lines, so the lock mechanism, GPU probe, P-core detector and
+     Docker-amaryllis probe are entirely untested. See **F49**.
    * **5 459 lines and 93 Ada subprograms have no caller** — `stellarorion_history`,
      `stellarorion_pipeline_checkpoint`, `stellarorion_trajectory_output`,
      `stellarorion_orion`. There is **no Ada-side run checkpoint at all**, which is why F28's
