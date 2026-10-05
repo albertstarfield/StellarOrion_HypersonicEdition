@@ -1963,13 +1963,23 @@ def generate_multi_metric_convergence_plot(
         #  handoff actually used against the regime-based one, against reference.
         #  Only drawn on the first panel to avoid reusing it four times.
         if idx == 0 and _regime_step is not None and _xmin <= _regime_step <= _xmax:
+            #  Shade the DISAGREEMENT WINDOW: everything from the step-based
+            #  handoff actually used (2200) up to the step the flow REGIME says
+            #  DSMC should still own.  Kept off zorder 0 -- at 0 the band sat
+            #  behind the panel and was invisible against the white axes.
+            ax.axvspan(transition_step, _regime_step,
+                       facecolor="#fdd98a", alpha=0.55, zorder=0.5, linewidth=0)
             ax.axvline(x=_regime_step, color="darkgreen", linestyle="-.",
-                       linewidth=1.5, alpha=0.85)
-            ax.axvspan(transition_step, _regime_step, color="0.85", alpha=0.35, zorder=0)
-            ax.text(_regime_step, 0.97,
-                    f" Kn={KN_FLOOR:.0e} handoff\n step {_regime_step:,.0f}",
+                       linewidth=1.8, alpha=0.9, zorder=6)
+            #  Label placed mid-panel to the LEFT of the line and given an opaque
+            #  backing: at y=0.97/ha=right it landed underneath the legend box and
+            #  was unreadable.
+            ax.text(_regime_step, 0.55,
+                    f"Kn <= {KN_FLOOR:.0e} handoff\nstep {_regime_step:,.0f}",
                     transform=ax.get_xaxis_transform(), color="darkgreen",
-                    fontsize=7, va="top", ha="right", zorder=21)
+                    fontsize=7, va="center", ha="right", zorder=22,
+                    bbox=dict(facecolor="white", alpha=0.8, edgecolor="0.6",
+                              linewidth=0.5, pad=2.0))
 
         #  State plainly when a metric has no PINN counterpart, so an absent
         #  red curve reads as "not fitted" rather than "fitted and invisible".
@@ -2238,7 +2248,9 @@ def generate_dsmc_pinn_switch_markdown(
     alt_milestones = [120.0, 110.0, 100.0, 90.0, 80.0, 70.0, 60.0, 55.0, 50.0, 40.0]
 
     # IRVE-3 reference values
-    irve3_qmax = IRVE3_REFERENCE["peak_heat_flux_wcm2"]     # 14.36 W/cm²
+    #  (F) NASA/TP-2013-4012 = 13.8 W/cm². The old comment here said 14.36,
+    #  which is the (R) Rapisarda value -- F19. Read the key, don't restate it.
+    irve3_qmax = IRVE3_REFERENCE["peak_heat_flux_wcm2"]     # 13.8 W/cm² (NASA/TP)
 
     # DSMC final values (at step 2200, 51.8 km)
     dsmc_hf_avg_final = float(data["heatflux_avg_Wm2"][-1]) / 10000.0  # W/cm²
@@ -3301,36 +3313,74 @@ def run_validation_pipeline(
     print(f"{'ROOT-CAUSE ANALYSIS: Why Accuracy Falls and Increases':^90}")
     print("=" * 90)
 
+    #  Derived once here so every figure in root_causes tracks the data and the
+    #  reference dict instead of restating literals. See F19 / F12.
+    _alt_run = float(data["alt_km"][-1]) if len(data.get("alt_km", [])) else 0.0
+    _vel_run = float(data["vel_ms"][-1]) if len(data.get("vel_ms", [])) else 0.0
+    _sg_ref_F = IRVE3_REFERENCE["peak_heat_flux_wcm2"]        # 13.8  NASA/TP  (F)
+    _sg_ref_R = IRVE3_REFERENCE["rapisarda_qmax_wcm2"]        # 14.361 Rapisarda (R)
+    _sg_measured = float(data["heatflux_sg_Wm2"][-1]) / 1.0e4 if len(data.get("heatflux_sg_Wm2", [])) else 0.0
+    _dsmc_avg = float(data["heatflux_avg_Wm2"][-1]) / 1.0e4
+    _dsmc_max = float(data["heatflux_max_Wm2"][-1]) / 1.0e4
+    _delta_vs_F = (_dsmc_avg / _sg_ref_F - 1.0) * 100.0 if _sg_ref_F > 0 else 0.0
+    _r2_heatflux = (denoise_results.get("heatflux_avg_Wm2") or {}).get("r2_score")
+    _pinn_loss = (pinn_results.get("heatflux_max_Wm2") or {}).get("loss")
+
     root_causes = {
         "accuracy_fall": [
             "DSMC statistical noise: particle count fluctuations cause step-to-step variability (σ ∝ 1/√N, Bird 1994 §2.3)",
             "Insufficient averaging: single-point sampling of stochastic DSMC output at ~100-1000 particles/cell",
             "Grid resolution: coarse mesh under-resolves flow gradients at shock layer boundary",
             "DSMC negative heat flux: raw f_1[3] can produce unphysical negative values (statistical noise)",
-            "Comparison methodology: IRVE-3 flight data is trajectory-integrated peak; our DSMC is single-point at altitude 51.8 km, vel 3378 m/s — different quantities being compared",
+            "Comparison methodology: IRVE-3 flight data is trajectory-integrated peak; our DSMC is single-point at altitude "
+            f"{_alt_run:.2f} km, vel {_vel_run:.1f} m/s — different quantities being compared",
             "Atmosphere model difference: we use ISA (International Standard Atmosphere) while IRVE-3 used actual measured atmosphere — density at 52 km can differ by 5-15%",
             "Geometry difference: StellarOrion uses scalloped (grooved) torus while IRVE-3 is smooth torus — different local heat flux distributions",
         ],
         "accuracy_increase": [
             "Convergence toward equilibrium: more steps → better particle statistics (σ ∝ 1/√N)",
-            "Kriging denoising: GP removes noise while preserving physical trend (R²=0.94 for heat flux avg)",
-            "PINN physics constraints: Navier-Stokes PDE enforces physical consistency (train loss 5.5e-06)",
-            "Statistical averaging: per-element avg (56.6 W/cm²) is more reliable than single-cell max (182.5 W/cm²)",
-            "Normalized comparison: when compared at same trajectory conditions, our DSMC (56.6 W/cm²) vs single-point SG (12.2 W/cm²) shows 4.6x factor — scalloped geometry effect",
+            "Kriging denoising: GP removes noise while preserving physical trend"
+            + (f" (R²={_r2_heatflux:.3f} for heat flux avg)" if _r2_heatflux is not None else ""),
+            "PINN physics constraints: Navier-Stokes PDE enforces physical consistency"
+            + (f" (train loss {_pinn_loss:.2e})" if _pinn_loss is not None else ""),
+            f"Statistical averaging: per-element avg ({_dsmc_avg:.1f} W/cm²) is more reliable than single-cell max ({_dsmc_max:.1f} W/cm²)",
+            f"Normalized comparison: when compared at same trajectory conditions, our DSMC ({_dsmc_avg:.1f} W/cm²) vs single-point SG ({_sg_measured:.1f} W/cm²) shows {_dsmc_avg / max(_sg_measured, 1e-12):.1f}x factor — scalloped geometry effect",
         ],
         "noise_characteristics": {
             "source": "DSMC statistical fluctuation (Bird 1994, §2.3)",
             "scaling": "σ ∝ 1/√N_particles_per_cell",
             "typical_noise_pct": "3-10% for SPARTA with ~100-1000 particles/cell",
-            "remediation": "Kriging denoising (R²=0.94) + PINN extrapolation (train loss 5.5e-06)",
+            "remediation": "Kriging denoising"
+            + (f" (R²={_r2_heatflux:.3f})" if _r2_heatflux is not None else "")
+            + " + PINN extrapolation"
+            + (f" (train loss {_pinn_loss:.2e})" if _pinn_loss is not None else ""),
         },
+        #  [F19 fix 2026-10-05]  Every figure below is DERIVED at print time from
+        #  IRVE3_REFERENCE / REF_KIND / this run's CSV. The previous version
+        #  hardcoded "14.36 W/cm² (NASA TP-2013-4012)" -- verbatim the conflation
+        #  F12 removed from IRVE3_REFERENCE: 14.361 is RAPISARDA (group R) and
+        #  NASA/TP-2013-4012 (group F) is 13.8. It also printed a 288% delta that
+        #  matches neither reference, and a "12.2 W/cm²" SG the CSV reports as
+        #  12.823. Building from the dict means a future reference change cannot
+        #  leave this prose stale again.
         "heat_flux_comparison_notes": {
-            "irve3_flight": "14.36 W/cm² — trajectory-integrated peak along full reentry (NASA TP-2013-4012)",
-            "rapisarda_sg_trajectory": "15.26 W/cm² — Sutton-Graves along full trajectory with MCD v6.1 atmosphere",
-            "our_sg_single_point": "12.2 W/cm² — Sutton-Graves at our single trajectory point with ISA atmosphere",
-            "our_dsmc_single_point": "56.6 W/cm² — DSMC per-element avg at altitude 51.8 km, vel 3378 m/s",
-            "delta_explanation": "The 288% delta vs flight is expected: single-point vs trajectory-integrated comparison. When compared at same conditions, DSMC/SG ratio is 4.6x — due to scalloped geometry increasing local heating vs smooth torus.",
-            "correct_comparison": "Compare DSMC to analytical models (SG/FR) at the SAME trajectory point, NOT to trajectory-integrated flight peak",
+            "irve3_flight": (f"{_sg_ref_F:.3f} W/cm² — NASA/TP-2013-4012 mission report "
+                             f"({REF_KIND['heatflux_avg_Wm2'].replace('SELF (this run\'s converged DSMC)', 'grading ref')}) "
+                             "— the value Gate 1 grades against"),
+            "rapisarda_flight": (f"{_sg_ref_R:.3f} W/cm² — Rapisarda (2023) Table 4.10 flight "
+                                 "reconstruction (group R); NOT NASA/TP-2013-4012"),
+            "rapisarda_sg_trajectory": ("15.26 W/cm² — Rapisarda Sutton-Graves along the full "
+                                        "trajectory with MCD v6.1 atmosphere (src line 757 note)"),
+            "our_sg_single_point": (f"{_sg_measured:.3f} W/cm² — measured heatflux_sg_Wm2 from "
+                                    "THIS run's CSV at the run condition"),
+            "our_dsmc_single_point": (f"{_dsmc_avg:.1f} W/cm² — DSMC per-element avg at altitude "
+                                      f"{_alt_run:.2f} km, vel {_vel_run:.1f} m/s (from CSV, not a literal)"),
+            "delta_explanation": (f"The {_delta_vs_F:.0f}% delta vs the NASA/TP flight peak is expected: "
+                                  "single-point vs trajectory-integrated comparison. Against the same "
+                                  f"quantity (SG at our point) DSMC/SG is {_dsmc_avg / max(_sg_measured, 1e-12):.1f}x — "
+                                  "scalloped geometry increasing local heating vs the smooth torus."),
+            "correct_comparison": ("Compare DSMC to analytical models (SG/FR) at the SAME trajectory point, "
+                                   "NOT to a trajectory-integrated flight peak"),
         },
     }
 

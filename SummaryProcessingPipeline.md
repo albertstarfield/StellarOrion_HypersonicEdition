@@ -13,9 +13,9 @@ pipeline is defined in the source.
 > surrogate (scikit-learn), JSON output, and the post-run render. Every geometry formula,
 > cost term, and penalty is evaluated in Ada.
 
-> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F20 before trusting any number below
+> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F22 before trusting any number below
 >
-> A second, independent audit of `_proc` on 2026-10-05 left five findings **open**:
+> A second, independent audit of `_proc` on 2026-10-05 left seven findings **open**:
 >
 > | ID | What it invalidates in this document |
 > | :--- | :--- |
@@ -24,6 +24,8 @@ pipeline is defined in the source.
 > | **F18** | The `51.8 km / 3378 m/s` "fixed flight condition" below is **not** the validated DSMC run's condition (`52.0326 km / 3094.2 m/s`). See the warning at the constants table. |
 > | **F19** | `q_ref = 14.3610 W/cm²` is a **Rapisarda** value presented as IRVE-3 flight in two places below. IRVE-3 flight (NASA TP-2013-4012) is **13.80**. |
 > | **F20** | `Decel_G` is reported as a tail mean of the last 15 dumps (17.09 g). The same run's `g_load` **peaks at 22.67 g (+15.07 % vs flight)**. `stellarorion_test_modes.adb:1196`'s `17.7276 g` "MEASURED" figure — the stated reason the decel band was widened 10 %→15 % — matches **no** estimator of the data. |
+> | **F21** | The TPS-conduction leg normalises every element by a Sutton-Graves flux computed at the **CLI default** `51.8 km / 3378 m/s`, while the shape comes from a snapshot flown at `52.0326 km / 3094.2 m/s`. **Peak 26.65 W/cm² is really 20.21 W/cm² — a 31.90 % overstatement.** The default snapshot is the F16 stale artefact, and the limits gate validates a *third* load again (`Rn` 1.5 vs the run's 0.55, so `T_s` is understated by 182 K). |
+> | **F22** | **This document's optimisation section is affected.** `J(x)` is graded against StellarOrion's **own** DSMC heat load (174.13736) and **own** measured `Cd` (1.75791) — a regression baseline, not validation. The Ada `Validation_Refs` V1 defaults are **5.08 % / 20.21 %** stale and are silently used by any FFI caller that omits `Set_Validation_Refs`. `Flux_Ref = 14.361` here is the value the JSON files under `irve3_flight`, which matches neither NASA (F, 13.80) nor the file's own `rapisarda_models.Sutton-Graves` (15.2595). |
 
 ---
 
@@ -45,11 +47,13 @@ pipeline is defined in the source.
    ╚═══════════════════════════════════════════════════════════════════╝
 
  [0/7] Load validation references            ← dynamic, at run time
-       Q_target 165.7160 J/cm²   (StellarOrion validated)
+       Q_target 174.1374 J/cm²   (StellarOrion's OWN DSMC load — self-referential, see F22)
        q_ref      14.3610 W/cm²   (Rapisarda Tab. 4.10 — NOT IRVE-3 flight, see F19)
        q_flight    13.8000 W/cm²   (IRVE-3 flight, NASA TP-2013-4012)
-       tau        13.5825 s       (= Q_flight / q_flight)
-       Cd_ref      1.462536
+       tau        13.5825 s       (= 195.0577/14.361 — the mis-filed irve3_flight
+                                       pair, NOT 188.00/13.80 = 13.6232; see F22(a))
+       Cd_ref      1.75791         (StellarOrion's OWN measured Cd — self-referential,
+                                       Ada V1 default 1.462536 is 20.21 % stale; F22(b/c))
                               │
  [1/7] Load default HIAD geometry ──────────► Ada FFI  (57 cross-section pts)
        X [0.0002, 1.7444] m · Y [0.0000, 2.6522] m
@@ -132,10 +136,10 @@ Step markers are printed by `hiad_optimizer.py` at lines 1291, 1313, 1325, 1358,
 
 | Symbol | Value | Meaning |
 | :--- | --- | :--- |
-| `Q_target` | 165.7160 J/cm² | StellarOrion validated heat load |
+| `Q_target` | 165.7160 (Ada V1 default) / **174.13736** (dynamic) | **Self-referential** — read from `comparison.stellarorion.raw_dsmc.total_heat_load_Jcm2`, StellarOrion's own DSMC heat load. The Ada default is **5.08 % stale**. See **F22(b)/(c)** |
 | `Flux_Ref` (`q_ref`) | 14.3610 W/cm² | **Rapisarda** Table 4.10 — *not* IRVE-3 flight (which is 13.80). See `FAILURES_AND_FIXES.md` F12/F19 |
-| `Tau_Sec` (`tau`) | 13.5825 s | dynamic heating duration = Q_flight / q_flight |
-| `Cd_Ref` | 1.462536 | StellarOrion validated drag coefficient |
+| `Tau_Sec` (`tau`) | 13.5825 s | Derived as `flight_q / flux_ref` — but both operands come from the mis-filed `irve3_flight` key (**195.0577 / 14.361**), not from the (F) pair. The genuine flight pair would give **188.00 / 13.80 = 13.6232 s**. See **F22(a)** |
+| `Cd_Ref` | 1.462536 (Ada V1 default) / **1.75791** (dynamic) | **Self-referential** — read from `comparison.stellarorion.raw_dsmc.cd`, StellarOrion's own measured `Cd`, not a flight or literature value. The Ada default is **20.21 % stale**. See **F22(b)/(c)** |
 
 **Consequence:** `J(x)` values are comparable only between runs that loaded the same
 references. Changing the JSON changes the objective, and old `J` numbers stop being
@@ -330,7 +334,16 @@ Official run **2026-10-04**, `src/python/hiad_optimization_results.json`:
 | Half-cone angle | 60.00° | 40.35° | −32.74% |
 | Drag coefficient `C_d` | 1.6073 | 1.5517 | −3.46% |
 | Sutton-Graves heat flux | 16.14 W/cm² | 11.43 W/cm² | −29.18% |
-| Total heat load `Q(x)` | 219.10 J/cm² | **155.16 J/cm²** (target 165.72) | **−29.18%** |
+| Total heat load `Q(x)` | 219.10 J/cm² | **155.16 J/cm²** | **−29.18 %** vs the 219.10 baseline |
+
+> ⚠️ **F22(b) — "target" is the wrong word here.** The `Q(x)` objective is normalised by
+> `Q_target = comparison.stellarorion.raw_dsmc.total_heat_load_Jcm2`, i.e. **StellarOrion's
+> own DSMC heat load**, and `C_d` is penalised against StellarOrion's own measured `Cd`.
+> `J(x)` is therefore asked to beat the geometry it was measured from: this is a
+> **regression baseline, not a validation target**. Against the reference the code reads
+> today (174.13736) the 155.16 result is **−10.898 %**, not the −6.37 % computed against
+> the stale 165.715973 recorded in `hiad_optimization_results.json`; against NASA flight
+> (188.00) it is **−17.468 %**, against Rapisarda (195.0577) **−20.454 %**.
 | Cost `J(x)` | 2.1626 | 1.6022 | −25.91% |
 
 70 evaluations, zero constraint violations, no penalty applied. Reproduce with

@@ -225,7 +225,7 @@ Both exit non-zero on any failure. Measured results (A4, 189 pp, see below):
   `T_s`, `T_back` and `R_total` are invariant across **all 120** ply orderings.
 * **Per-element:** 3648 elements solved in ~0.25 s. Peak Sutton-Graves flux
   **266 509 W/m² (26.65 W/cm²)** at h = 51.8 km, V = 3378 m/s, R_n = 0.55 m —
-  **within the Nextel BF-20 30 W/cm² rating**. 624 elements receive `q_i = 0`
+  **within the Nextel BF-20 30 W/cm² rating**. ⁶ 624 elements receive `q_i = 0`
   (192 have genuinely negative raw DSMC flux; 432 read exactly zero), which the
   `clamp(·, 0, 1)` floors rather than passing through as negative heating.
 
@@ -295,7 +295,7 @@ cd stellarorion_program_proc && python3 run.py --grid-factor 1.0 --test sample
 
 ## 🎯 Optimized Topology: Before vs After
 
-Bayesian Optimization (GP Matérn 5/2 kernel + Expected Improvement acquisition, 70 evaluations) was applied to the IRVE-3 HIAD geometry under the **multi-objective cost J(x)** — a validation-referenced scalarisation whose **primary objective is the lowest Total Heat Load** (terms: Total Heat Load, peak heat flux, ballistic-coefficient deviation, C<sub>d</sub>; quadratic penalties: 3 m envelope, 1.0 m TPS nose, and the **payload-size constraint** R<sub>N</sub> ≥ √(r²+(h/2)²)+0.15 ≈ 1.043 m for the 0.275 m × 1.7 m payload). All reference values (Q<sub>target</sub>, q<sub>ref</sub>, τ, C<sub>d,ref</sub>) are loaded **dynamically at run time** from `unified_comparison_data.json` (see `DERIVATION.md` §4). Result (official run 2026-10-04, stored in `stellarorion_program_proc/src/python/hiad_optimization_results.json`): **25.91 % lower J and 29.18 % lower Total Heat Load — 155.16 J/cm², 6.37 % below the 165.72 J/cm² validation target**, with zero constraint violations. Reproduce with `python3 src/python/hiad_optimizer.py` (self-tests → CCD → GP/EI → 87-panel grid).
+Bayesian Optimization (GP Matérn 5/2 kernel + Expected Improvement acquisition, 70 evaluations) was applied to the IRVE-3 HIAD geometry under the **multi-objective cost J(x)** — a validation-referenced scalarisation whose **primary objective is the lowest Total Heat Load** (terms: Total Heat Load, peak heat flux, ballistic-coefficient deviation, C<sub>d</sub>; quadratic penalties: 3 m envelope, 1.0 m TPS nose, and the **payload-size constraint** R<sub>N</sub> ≥ √(r²+(h/2)²)+0.15 ≈ 1.043 m for the 0.275 m × 1.7 m payload). All reference values (Q<sub>target</sub>, q<sub>ref</sub>, τ, C<sub>d,ref</sub>) are loaded **dynamically at run time** from `unified_comparison_data.json` (see `DERIVATION.md` §4). Result (official run 2026-10-04, stored in `stellarorion_program_proc/src/python/hiad_optimization_results.json`): **25.91 % lower J and 29.18 % lower Total Heat Load — 155.16 J/cm²**, with zero constraint violations. ⁷ Reproduce with `python3 src/python/hiad_optimizer.py` (self-tests → CCD → GP/EI → 87-panel grid).
 
 ![Optimized HIAD Topology](stellarorion_program_proc/optimization_comparison.png)
 
@@ -308,7 +308,7 @@ Bayesian Optimization (GP Matérn 5/2 kernel + Expected Improvement acquisition,
 | **Half-Cone Angle** | 60.00° | 40.35° | −32.74% |
 | **Drag Coefficient (C<sub>d</sub>)** | 1.6073 | 1.5517 | −3.46% |
 | **Sutton-Graves Heat Flux** | 16.14 W/cm² | 11.43 W/cm² | −29.18% |
-| **Total Heat Load Q(x)** | 219.10 J/cm² | **155.16 J/cm²** (target 165.72) | **−29.18%** |
+| **Total Heat Load Q(x)** | 219.10 J/cm² | **155.16 J/cm²** | **−29.18%** vs the 219.10 baseline ⁷ |
 | **Cost J(x)** | 2.1626 | 1.6022 | −25.91% |
 
 *The larger nose radius is the heat-load optimum: Sutton–Graves flux scales as 1/√R<sub>N</sub>, and J(x) prices that directly against the drag and ballistic-coefficient terms.*
@@ -356,17 +356,21 @@ post-optimization gate (plan Parts B/C):
    > **F16** and **F17**.
 3. **PINN leg** runs `validation_pipeline.py` on the fresh CSV and writes a
    new `unified_comparison_data.json` under the gate directory.
-4. **Verdict**: `PASS ⇔ q_hybrid ≤ Q_target (165.716 J/cm²)` with the
+4. **Verdict**: `PASS ⇔ q_hybrid ≤ Q_target` with the
    prediction error `(q_hybrid − q_analytic)/q_analytic`; stored as
    `hybrid_validation.verdict` in `hiad_optimization_results.json`.
+   ⚠️ `Q_target` is read from `comparison.stellarorion.raw_dsmc.total_heat_load_Jcm2` —
+   StellarOrion's **own** DSMC heat load (174.13736 today, 165.715973 at the Sep-26 run),
+   so this is a **regression baseline**, not an IRVE-3 validation target. See footnote ⁷
+   / **F22**.
 5. **Multi-fidelity correction** (Kennedy & O'Hagan 2000): bounded factor
    `c = clamp(q_hybrid/q_analytic, 0.5, 2.0)` is applied to J(x)'s heat-load
    term and the optimizer re-runs (**round 2**, stored as `optimized_round2`).
 
 **Official gate result (2026-09-26): PASS** — validated geometry
 R_N = 2.971 m, r_tor = 0.088 m, half_cone = 40.15°: hybrid Q = **77.93 J/cm²**
-≤ target 165.72 (analytic predicted 155.67, error −49.94 %, correction
-c = 0.5006 at the clamp floor); round-2 optimum 2.998 / 0.053 / 42.29°.
+≤ the target in force at that run, 165.715973 ⁷ (analytic predicted 155.67, error
+−49.94 %, correction c = 0.5006 at the clamp floor); round-2 optimum 2.998 / 0.053 / 42.29°.
 Two independent DSMC runs agreed within 0.3 %, so the analytic-vs-hybrid gap
 is reproducible signal — exactly what the correction loop absorbs. The gate
 also proved its fail-loud contract first: an initially missing pipeline
@@ -442,6 +446,32 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
    **public Ada spec constants** `Snapshot_Alt_Km` / `Snapshot_Vel_Ms`
    (`stellarorion_optimization.ads:377-378`) and the default arguments `H_DSMC_Km` /
    `V_DSMC_Ms` (`stellarorion_pinn_trajectory.ads:191-192`). See **F18**.
+6. **The 26.65 W/cm² TPS peak is 31.90 % overstated.** The per-element normalisation
+   `q_i = Q_SG · clamp(Ke_i/Ke_ref, 0, 1)` takes its *shape* from the ParaView snapshot
+   (default `results/validation_optimized/…/surf_2200.vtu`, Sep 26 — the stale F16
+   artefact) but its *magnitude* from a Sutton-Graves call at the CLI default
+   `51.8 km / 3378 m/s`. That snapshot was flown at **52.0326 km / 3094.2 m/s**, where
+   the same call with the same `R_n = 0.55 m` yields **20.21 W/cm²** (ratio **1.319**).
+   The 30 W/cm² rating verdict is unaffected — the margin is 11.2 % as stated and 32.6 %
+   at the true condition — but the headline number is wrong in the conservative
+   direction, and the direction reverses for a higher-altitude / lower-velocity snapshot.
+   The `--validate` limits gate is affected separately: it calls the same function
+   **without** passing `Rn`, so it silently takes the wrapper default `rn = 1.5`
+   (`ada_pinn_wrapper.py:114`) and validates **16.14 W/cm² — a 39.45 % weaker load** than
+   the run it is supposed to check, understating `T_s` by **182 K**. Re-running the gate
+   at the run's own load still gives `34 checks passed, 0 failed`. See **F21**.
+7. **The optimisation objective is graded against StellarOrion's own numbers.** `J(x)`'s
+   primary term normalises by `Q_target = comparison.stellarorion.raw_dsmc.total_heat_load_Jcm2`
+   (174.13736) and its C<sub>d</sub> term is penalised against
+   `comparison.stellarorion.raw_dsmc.cd` (1.75791) — **both are StellarOrion's own
+   measurements**, so "29.18 % lower heat load" is a **regression baseline delta**, not a
+   validation result. The stored run was computed against a *stale* target of
+   165.715973 (`hiad_optimization_results.json:3`, `stellarorion_optimization.adb:51`,
+   `stellarorion_project.adb:698`), giving the −6.37 % previously quoted here; against
+   the reference the code reads today it is **−10.898 %**, against NASA flight (188.00)
+   **−17.468 %**, against Rapisarda (195.0577) **−20.454 %**. Separately, the Ada
+   `Validation_Refs` V1 defaults are **5.08 %** (Q) and **20.21 %** (C<sub>d</sub>) stale
+   and are silently used by any FFI caller that omits `Set_Validation_Refs`. See **F22**.
 
 ### Simulation Environment Conditions
 
@@ -483,7 +513,7 @@ StellarOrion supports a `--chemistry mars` mode using a CO2-dominated atmosphere
 - Our code uses ISA (International Standard Atmosphere) — correct for Earth
 - Rapisarda's MCD v6.1 gives ~56% higher density than ISA at 52 km
 - Since SG ∝ √ρ, this density ratio (1.564) produces a 25% higher SG heat flux
-- This explains part of the gap between our single-point SG (12.2 W/cm²) and Rapisarda's trajectory-integrated SG (15.26 W/cm²)
+- This explains part of the gap between our single-point SG (12.82 W/cm²) and Rapisarda's trajectory-integrated SG (15.26 W/cm²)
 
 **Usage:**
 ```bash

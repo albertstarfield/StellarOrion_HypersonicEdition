@@ -4,10 +4,10 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F20 are a second, independent audit
+F1–F15 were found and fixed in the first pass. **F16–F22 are a second, independent audit
 of `_proc` and are OPEN** — they are measurements and decision requests, deliberately
-not code changes, because F18's resolution is a physics decision and F16/F17/F20 all
-require re-running the three validation runs first. Read **"Still open after thread 3"**
+not code changes, because F18's resolution is a physics decision and F16/F17/F20/F21/F22
+all require re-running the three validation runs and the optimiser first. Read **"Still open after thread 3"**
 before relying on any number below.
 
 ---
@@ -75,6 +75,10 @@ would hide the discrepancy rather than fix its cause.
 
 with `Tolerance_Decel = 0.10`. The measured shortfall is **17.7276 g against the IRVE-3
 flight peak 19.7 g = 10.012 % low** — it missed a 10 % band by 0.012 percentage points.
+
+> ⚠️ **Superseded in part by F20.** The `17.7276 g` figure is **not reproducible** from any
+> estimator of the run's `g_load` series (peak 22.6696, tail-15 mean 17.0932, last row
+> 16.4788), so the "missed by 0.012 pp" margin above is not real. See **F20**.
 Deceleration is `Drag_Force / Mass_Kg`; the TPS change touches neither, so this failure is
 independent of F1 and pre-dates it.
 
@@ -995,9 +999,184 @@ PY
 
 ---
 
+## F21 — The TPS-conduction headline flux is computed at a flight condition 31.90 % hotter than the snapshot it is mapped onto, and the "independent" limits gate validates a third heat load again
+
+**Class:** correctness — a normalisation constant is evaluated at a condition that
+does not belong to the data it is being used to scale, so every element flux is
+inflated by a fixed factor.
+
+`run_tps_conduction_step2200.py` applies `q_i = Q_SG · clamp(Ke_Raw_i / Ke_Ref, 0, 1)`
+(axiom A1) with `Ke_Ref = max(Ke_Raw)` (line 402). The *shape* comes from the snapshot;
+the *magnitude* comes from a separate Sutton-Graves call at CLI-default conditions.
+That equality is only physically meaningful if the snapshot was flown at the same
+condition used for `Q_SG`. It was not.
+
+| `Q_SG` evaluated at | q_SG (W/m²) | q_SG (W/cm²) | ρ (kg/m³) |
+|---|---|---|---|
+| **51.8 km / 3378.0 m/s** — the script default, and what the report prints | 266 509.28 | **26.6509** | 7.851042e-04 |
+| **52.032558 km / 3094.193 m/s** — the snapshot's own condition | 202 054.09 | **20.2054** | 7.640317e-04 |
+
+Ratio = **1.319000** → the reported peak is overstated by **31.90 %**. The reported
+26.6509 W/cm² becomes **20.2054 W/cm²** at the snapshot's own condition. All three
+numbers were produced by the shipped Ada FFI (`ada_pinn_wrapper.sutton_graves_heat_flux`,
+`Rn = 0.55 m`), not estimated.
+
+Four further defects ride on the same block:
+
+| # | defect | evidence |
+|---|---|---|
+| a | **The default snapshot is the F16 stale artefact.** `DEFAULT_VTU` (lines 82-84) is `results/validation_optimized/paraview/surf_2200.vtu`, mtime **Sep 26 03:19** — the same pre-F11 run. The freshly regenerated `validation_scalloped` snapshot (Oct 5 11:52) is never used. | `find . -name surf_2200.vtu` |
+| b | **The provenance guard cannot detect that.** `verify_snapshot_shape` checks `NumberOfCells == 3648`. All four snapshots satisfy it (optimized / scalloped / smooth = 3648 each; `results/validation` = 10512 and is refused only by size). Nothing binds a snapshot to its run. | `NumberOfCells` in each VTU header |
+| c | **The "independent" limits gate uses a different nose radius.** `validate_tps_conduction_limits.py:92-94` calls `W.sutton_graves_heat_flux(51.8, 3378.0)` with no radius, taking the wrapper default **`rn = 1.5`** (`ada_pinn_wrapper.py:114`), while the run passes **`Rn = 0.55`**. Q_SG ∝ 1/√Rn, so the gate validates a **39.45 % weaker** heat source (161 379.38 W/m² = 16.1379 W/cm²). Its reported `T_s = 1344.035 K` understates the hot-face temperature at the run's own flux by **182.449 K** (1526.484 K). | both scripts run side by side |
+| d | **The boundary conditions differ too.** Gate: `T_INIT = 293.15 K`, `T_INF = 100.0 K`. Run: `--t-init-k 300.0 --t-inf-k 300.0`. The gate's own preamble calls the run "imported from the solver, or the limits would validate the code against itself" — it does validate against a different problem. | lines 82-86 vs CLI defaults 360-366 |
+| e | **The summary JSON records no flight condition at all.** `tps_step2200_summary.json` has `snapshot`, `elements`, `q_sg_Wm2`, layup and caveats — no altitude, velocity or Mach. The artefact carrying 26.6509 W/cm² has no provenance for the number that makes it wrong. | `cat tps_step2200_summary.json` |
+
+**What does *not* change — stated so this is not read as a pass reversal.** The limits
+gate was re-run at the run's own `Q_SG` (Rn = 0.55) and still reports
+`TOTAL: 34 checks passed, 0 failed` / `ALL 5 LIMITS PASS`. The *verdict* holds; the
+*headline temperature* it prints does not.
+
+**Consequences.** The Nextel BF-20 headroom is quoted in `README.md` as
+"26.65 W/cm² … within the 30 W/cm² rating", i.e. 11.2 % margin. At the snapshot's own
+condition the margin is **32.6 %**. The error happens to be conservative for the
+rating verdict, which is why it survived — but it is a fixed 31.90 % inflation on
+every one of the 3648 elements, and the direction would reverse for any
+higher-altitude or lower-velocity snapshot.
+
+**Fix.** Read the condition from the snapshot's own run manifest (the same source F15
+already uses for `_ALT_DSMC_END` / `_VEL_DSMC_END`) instead of from a CLI default;
+write the resolved altitude / velocity / Mach into the summary JSON; make
+`verify_snapshot_shape` also verify the run identity, not only the cell count; and
+have `validate_tps_conduction_limits.py` pass the same `Rn` and the same `T_INIT` /
+`T_INF` as the run it checks.
+
+**Reproducer.**
+```
+cd stellarorion_program_proc
+./venv_validation/bin/python - <<'PY'
+import sys, os; sys.path.insert(0, "src/python")
+import ada_pinn_wrapper as W
+f = lambda h, v: float(W.sutton_graves_heat_flux(h, v, 0.55)["heat_flux_Wm2"])
+run    = f(51.8,       3378.0)    # the script default -> 26.6509 W/cm^2
+actual = f(52.032558,  3094.193)  # the snapshot's own  -> 20.2054 W/cm^2
+gate   = f(51.8,       3378.0)    # no Rn -> wrapper default 1.5 m
+gate   = float(W.sutton_graves_heat_flux(51.8, 3378.0)["heat_flux_Wm2"])
+print(f"report      {run/1e4:.4f} W/cm^2")
+print(f"snapshot    {actual/1e4:.4f} W/cm^2   overstatement {(run/actual-1)*100:.2f} %")
+print(f"limits gate {gate/1e4:.4f} W/cm^2   vs run {(gate/run-1)*100:.2f} %")
+PY
+grep -n "DEFAULT_VTU" -A2 scripts/run_tps_conduction_step2200.py
+grep -n "NumberOfCells" results/validation_*/paraview/surf_2200.vtu
+```
+
+---
+
+## F22 — The optimisation objective is graded against StellarOrion's *own* numbers, the Ada fallback references are 5–20 % stale, and the `irve3_flight` JSON key holds a value that is neither IRVE-3 nor the file's own Rapisarda entry
+
+**Class:** correctness (three independent defects; the largest of thread 3)
+
+F12 re-provenanced the *printed* comparison table. It did not touch the
+machine-readable artefact the optimiser actually reads, the Ada fallback constants, or
+the fact that the cost function's two dominant terms are **self-referential**.
+
+### F22(a) — `comparison.irve3_flight` in the JSON stores a value that is neither IRVE-3 nor the file's own Rapisarda entry
+
+| Source | `peak_heat_flux_Wcm2` | `total_heat_load_Jcm2` |
+| :--- | ---: | ---: |
+| `irve3_flight` key in **both** `unified_comparison_data.json` (scalloped Oct 5 13:01, optimized Sep 26) | **14.361** | **195.0577** |
+| `rapisarda_models.Sutton-Graves` **in the same file** | 15.2595 | 223.9542 |
+| `rapisarda_models.Fay-Riddell` in the same file | 13.8313 | 195.1673 |
+| NASA TP-2013-4012 flight — group **(F)** in `IRVE3_REFERENCE` | **13.80** | **188.00** |
+
+The value filed under `irve3_flight` matches **neither** the flight group nor **any** of
+the five `rapisarda_models` entries in its own file. It is a third, unlabelled source.
+`peak_g_load = 19.7` *is* correct (group F). Because `hiad_optimizer.py:160` reads
+`flight_q = irve3["total_heat_load_Jcm2"]`, the optimiser's `tau_sec = 195.0577/14.361 =
+13.5825 s` is derived from this unlabelled pair, and
+`deltas.pinn_vs_irve3.total_heat_load_pct = -10.725 %` in the JSON is computed against
+it while the key says `irve3_flight`.
+
+### F22(b) — the cost function's two dominant terms are StellarOrion's own measurements
+
+`hiad_optimizer.py:155-157` reads:
+
+```python
+so   = data["comparison"]["stellarorion"]["raw_dsmc"]
+q_target = float(so["total_heat_load_Jcm2"])   # 174.13736  <- StellarOrion's OWN DSMC load
+cd_ref   = float(so["cd"])                     #   1.75791  <- StellarOrion's OWN measured Cd
+```
+
+The Ada cost function then evaluates `HL_R = Q_Load / Current_Refs.Q_Target` and a
+`C_d` penalty against `Cd_Ref` (`stellarorion_optimization.adb:1838`). So `J(x)` is
+asked to *beat the geometry it was measured from* — the same defect class as **F13**,
+moved from the comparison table into the optimiser. `README.md` calls this a
+"validation target"; it is a **regression baseline**.
+
+### F22(c) — the Ada fallback references are stale and disagree with the Python dynamic ones
+
+`stellarorion_optimization.adb:48-54` (`Validation_Refs` "V1" defaults) vs what Python
+passes through `Set_Validation_Refs`:
+
+| Ref | Ada V1 default | Python dynamic (current JSON) | Divergence |
+| :--- | ---: | ---: | ---: |
+| `Q_Target` | 165.715973 | 174.13736 | **+5.082 %** |
+| `Cd_Ref` | 1.462536 | 1.75791 | **+20.21 %** |
+| `Flux_Ref` | 14.361 | 14.361 | 0 % |
+| `Tau_Sec` | 13.582459 | 13.5825 | ~0 % |
+
+The Ada defaults are a *stale Sep-2 snapshot* of StellarOrion's own run
+(`stellarorion_project.adb:698 DSMC_Load_Jcm2 := 165.72` carries the same stale figure
+into the project report tables). They are documented as a "SAFETY FALLBACK … so
+J(x) stays fully functional", which is correct as a fail-safe — but the divergence is
+silent: nothing asserts that `Set_Validation_Refs` was called, so any FFI caller that
+omits it silently optimises against 5–20 % wrong references.
+`hiad_optimization_results.json:3` records `"q_target_jcm2": 165.715973`, i.e. **the
+stored optimisation result was produced against the stale target**.
+
+### Consequence
+
+`README.md` reports "155.16 J/cm², **6.37 %** below the 165.72 J/cm² validation target".
+Against the reference the code actually reads today that is **−10.898 %**; against
+NASA flight (188.00) it is **−17.468 %**; against Rapisarda (195.0577) it is
+**−20.454 %**. The published improvement figure is understated, but it is graded
+against a self-referential baseline, so it does not mean what the sentence says.
+
+### Fix
+
+1. Re-key the JSON: give `rapisarda_models` the values currently under `irve3_flight`,
+   add an explicit `irve3_flight` block carrying group **(F)** (13.80 / 188.00 / 19.7),
+   and recompute `deltas` and `tau_sec` from the (F) pair.
+2. Replace the Ada `Validation_Refs` defaults with a `Validation_Refs_Valid` flag plus a
+   hard error in `HIAD_Cost_C` when `Set_Validation_Refs` has not been called — a
+   fail-safe that cannot be silently wrong.
+3. Re-run the optimiser so `hiad_optimization_results.json` records the reference
+   provenance (`q_target_jcm2`, `cd_ref`, their source keys and run dates) rather than
+   bare numbers.
+4. Relabel `q_target` in the documentation as *regression baseline*, not *validation
+   target*, and state that `cd_ref` is likewise self-referential.
+
+### Reproducer
+
+```bash
+cd stellarorion_program_proc
+python3 - <<'PY'
+import json
+d=json.load(open("results/validation_scalloped/validation_pipeline_output/unified_comparison_data.json"))
+i=d["comparison"]["irve3_flight"]; rm=d["comparison"]["rapisarda_models"]
+print("irve3_flight        :", i)
+for k,v in rm.items(): print(f"  rapisarda[{k:22s}]:", v)
+print("matches a rapisarda entry?",
+      any(abs(v["qmax"]-i["peak_heat_flux_Wcm2"])<1e-9 for v in rm.values()))
+print("tau =", i["total_heat_load_Jcm2"]/i["peak_heat_flux_Wcm2"])
+PY
+grep -n "Q_Target\|Cd_Ref\|Flux_Ref\|Tau_Sec" src/simulation_engine/stellarorion_optimization.adb | head -6
+grep -n "DSMC_Load_Jcm2" src/simulation_engine/stellarorion_project.adb
+grep -n '"q_target_jcm2"' src/python/hiad_optimization_results.json
+```
+
 ## Still open after thread 3
 
-* **F16 / F17 / F18 all require regeneration, not edits.** Fixing the code without
+* **F16 / F17 / F18 / F21 all require regeneration, not edits.** Fixing the code without
   re-running `validation_smooth`, `validation_scalloped` and `validation_optimized`
   leaves every artefact in this log describing code that no longer exists.
 * **F18 has no single correct answer yet** — which condition is authoritative (51.8 /
@@ -1009,6 +1188,109 @@ PY
   correct.
 * The 31 hardcoded condition literals in `validation_pipeline.py` listed in F18 were
   enumerated, not removed.
+* **F22 touches the optimiser, which nothing in threads 1–2 examined.** Its cost function
+  is graded against StellarOrion's own DSMC heat load and its own measured `Cd`, the Ada
+  fallback references are 5–20 % stale, and the `irve3_flight` key in the JSON holds a
+  value matching neither IRVE-3 nor the file's own Rapisarda entries. Re-running the
+  optimiser alone is not enough — the reference keys have to be re-cut first (F22 Fix).
+* **F21 makes the condition decision load-bearing for a published number.** Until the
+  authoritative condition is chosen (see the F18 bullet above), the TPS-conduction
+  peak cannot be stated at all: it is 26.65 W/cm² at 51.8/3378 and 20.21 W/cm² at
+  52.03/3094. Both are "correct" for their own condition and the snapshot was flown
+  at neither as far as `Ke_Ref` is concerned — it was flown at the second one.
+
+---
+
+## F23 — The run point is deep continuum, not the rarefied band it was chosen for
+
+Raised by the user: *"Why not make the DSMC be at the high Knudsen number, then
+continue with the PINN DeepXDE continuum one — so it's triggered based on that
+instead."* Measuring it first confirmed the instinct.
+
+**The design rationale claims otherwise.** `stellarorion_types.ads`,
+`Flight_Parameters` justification:
+
+> Mach 10 at 52 km corresponds to the mid-corridor hypersonic regime where
+> **DSMC-continuum transition occurs (Kn ~ 0.01-1.0)**. This is the most
+> physics-rich operating point for validation against analytical models.
+
+**Measured, from the run itself** (`[VALIDATE] Step 7`, run 6):
+
+```
+Altitude    :  5.20000E+01 km
+Knudsen number    :  3.78388E-05
+```
+
+`Kn = 3.78e-05`, i.e. **264× below the bottom of the claimed 0.01–1.0 band** —
+deep continuum, not transition. The Python ISA reports 2.12e-05 at the same
+point (the two λ implementations differ ~1.8×; both are firmly continuum, so the
+conclusion does not depend on which is used).
+
+**Why it matters — the DSMC validity criterion.** DSMC's collision model
+requires the cell to resolve the mean free path (`cell ≲ λ`, Bird 1994 §1.2).
+From the run log the grid is exact:
+
+```
+create_grid 139 139 1   at Grid_Factor 0.7   (NX = Integer(0.7*200)-1 = 139)
+box (-5 0 -0.5) to (9 3.9375 0.5)   ->  cell edges 0.1007 / 0.0283 / 1.0 m
+```
+
+| altitude | λ (m) | cell/λ | verdict |
+|---|---|---|---|
+| 120 km | 3.83 | 0.1 | **satisfied** |
+| 110 km | 0.62 | 0.5 | **satisfied** |
+| 105 km | 0.25 | 1.1 | marginal |
+| 100 km | 0.099 | 2.8 | violated ×3 |
+| **52.03 km (this run)** | **6.4e-5** | **249 – 8800** | **violated** |
+
+Even the *smallest* cell edge (0.0283 m) is **249× λ**; the largest (1.0 m) is
+**8800×**. The run therefore does not resolve the collision physics it is meant
+to integrate — it is paying particle cost in a regime where a continuum solver
+is both valid and required.
+
+**Fix — two gates instead of one.** The user asked for both the Rapisarda point
+*and* the Knudsen trigger to be validated against reference, *"so we know how
+accurate our algorithm already"*. Both are now reported:
+
+**Gate 1 — Rapisarda point (existing, `Step 9`).** Unchanged: heat flux 12.82 vs
+13.80 (7.08 % PASS), heat load 174.14 vs 188.00 (7.37 % PASS), peak decel 17.09
+vs 19.70 (13.23 % PASS).
+
+**Gate 2 — regime gate (new, `Step 9b` in Ada + `GATE 2` in the pipeline).**
+
+```
+Kn at run point       | 3.78388E-05 | 1.0E-02..1.0E+00 | FAIL
+Regime                | continuum   | transition band  | FAIL
+Handoff alt (Kn=0.1E+00) | 106.00 km | within 120->40   | PASS
+Handoff step          | 52500000    | of 300000000     |
+[VALIDATE] Step 9b REGIME GATE: FAIL -- run point Kn = ... is outside the
+  rarefied band; the continuum surrogate is the appropriate method here.
+```
+
+`regime_gate()` sweeps the IRVE-3 span (120 → 40 km, 0.25 km steps) for the
+single altitude where `Kn` crosses 0.1, then inverts `IRVE3_Trajectory`'s linear
+map to express it on the step axis: **106.00 km → step 52,500,000 of
+300,000,000**. Because Kn falls monotonically with altitude, exactly one such
+altitude exists.
+
+The two gates are deliberately **not merged**: Gate 2 grades *method
+selection* and is printed as its own `[VALIDATE] Step 9b REGIME GATE: PASS/FAIL`
+line so it can never be confused with — or silently flip — the survivability
+verdict in Step 10.
+
+**Visualised.** The convergence plot now draws *both* handoffs so they can be
+compared directly against reference: the black dotted line at step 2200 (the
+convergence handoff actually used) and the green dash-dot line at step
+52,500,000 (what the regime prescribes), with the amber band between them
+shading the **disagreement window** — the span over which PINN is currently
+answering a question DSMC should own.
+
+**Still open (needs a decision, not a silent change).** Relocating the DSMC
+operating point to ≳106 km would satisfy the cell criterion, but the flight
+validation targets (13.8 W/cm² peak heat flux, 19.7 g peak decel) are
+continuum-regime quantities measured near 45–52 km, and free-molecular heating at
+106+ km is negligible. Moving the run point therefore changes *what* can be
+graded against those targets and must be a deliberate choice.
 
 ---
 
@@ -1082,6 +1364,9 @@ the measured series.
 | F18 | correctness | **open — needs a decision** | 51.8 km/3378 m/s is the *smooth baseline*'s condition, 52.0326/3094.2 is scalloped+optimized — 8.4 % velocity/Mach confound across the compared geometries; 31 literals + 2 Ada spec constants restate it |
 | F19 | correctness | **open** | F12's re-provenancing never reached the `root_causes` narrative — 14.361 W/cm² still attributed to NASA/TP-2013-4012 (13.8), plus a stale 288 % delta and 12.2 vs measured 12.823 W/cm² |
 | F20 | fabricated measurement | **open — may reverse a pass** | `test_modes.adb:1196`'s `17.7276 g` "MEASURED" figure matches no estimator of the series, yet is the stated justification for widening the decel band 10 %→15 % |
+| F22 | correctness | **open** | Cost function `J(x)` graded against StellarOrion's own DSMC heat load (174.13736) and own measured `Cd` (1.75791) — a regression baseline, not validation; Ada `Validation_Refs` V1 defaults 5.08 % / 20.21 % stale and silently used if `Set_Validation_Refs` is skipped; `comparison.irve3_flight` in the JSON stores 14.361 / 195.0577, matching neither NASA (F) nor any of the file's five `rapisarda_models` entries |
+| F21 | correctness | **open** | TPS `Q_SG` normalisation evaluated at a CLI-default condition (51.8/3378) that is 31.90 % hotter than the snapshot it scales (52.0326/3094.2 → 20.2054 not 26.6509 W/cm²); default snapshot is also the F16 stale artefact, and the limits gate validates a third load (`Rn` 1.5 vs 0.55) |
+| F23 | theory / method | **gate added** | run point Kn=3.78e-05 is continuum, not the claimed 0.01-1.0 transition band; cell ≲ λ violated 249-8800x |
 
 ### Final state after fixes
 
@@ -1154,8 +1439,21 @@ Artifacts regenerated from the final code: 3 optimization plots, 21 validation P
   clearest case for the standing rule already in this log: no tolerance limit may be
   moved to manufacture a pass — and here one was moved citing a figure that does not
   exist in the data.
-* **No source change was made in thread 3.** All five entries (F16–F20) are
+* **The optimiser was never audited at all, and it is where the self-comparison problem
+  actually lives.** F13 found a comparison table graded against itself; **F22** finds the
+  *cost function* graded against itself, plus a fallback reference set 5–20 % stale and
+  a JSON key that mis-files a Rapisarda-era number under `irve3_flight`. The headline
+  "29.18 % lower Total Heat Load" is measured against StellarOrion's own prior DSMC run,
+  so it is a regression delta wearing the units of a validation result.
+* **The TPS leg was never re-checked against its own snapshot.** Every earlier pass
+  validated the conduction code (surface balance, 120-ply permutation invariance, ABI
+  exposure). None of them checked that the Sutton-Graves constant used to scale the
+  snapshot belonged to that snapshot's flight condition. F21 found a 31.90 % inflation,
+  and a limits gate that was validating a 39.45 % weaker load than the run it certifies.
+  The lesson is the same as above in a different place: a gate that re-derives its own
+  constant from defaults is not independent of the code it checks.
+* **No source change was made in thread 3.** All seven entries (F16–F22) are
   measurements and decision requests, deliberately left open rather than "fixed" in
-  code, because F18's resolution is a physics decision and F16/F17/F20 all require
+  code, because F18's resolution is a physics decision and F16/F17/F20/F21 all require
   re-running the three validation runs — after which every number in this log must be
   re-measured, not assumed to carry over.
