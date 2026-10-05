@@ -4,13 +4,14 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F44 are a second, third and fourth,
+F1–F15 were found and fixed in the first pass. **F16–F48 are a second, third, fourth and fifth,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
 optimiser first. F24–F31 come from the thread-3b rescan of the previously unaudited
 PINN, checkpoint and status subsystems, and F32–F36 from the thread-3c pass over the
-Kriging, surface-comparison and watchdog paths. Read **"Still open after thread 3"**
+Kriging, surface-comparison and watchdog paths, and F37–F48 from the thread-3d/3e passes over
+the scripts, the sidecar, and the Ada atmosphere, status and checkpoint units. Read **"Still open after thread 3"**
 before relying on any number below.
 
 ---
@@ -2568,6 +2569,365 @@ maximum and reject negative values, and wrap the header parse in a `try` that re
 Separately, `sidecar_watchdog.py` is the module intended to supervise this process and is
 **entirely unwired** — see the dead-code note in the "Investigated and NOT a defect" section.
 
+## F45 — The project ships two ISA atmospheres that disagree by up to 3.3×, and the one that writes the trajectory profile is the wrong one (a third implementation exists — see F48)
+
+*Class: correctness — the highest-consequence physics finding in this log*
+
+> ⚠️ **Scope note added in thread 3e.** This entry compares **two** implementations. A third,
+> `StellarOrion_PINN_Trajectory.ISA_Atmosphere`, is live and disagrees with the exported Ada
+> atmosphere by **6.96× at 120 km** — see **F48**. Every statement here about "the Ada
+> atmosphere" means specifically `StellarOrion_Environment.Atmosphere_Density`.
+> The *Fix* below is correspondingly narrowed.
+
+The repository contains **two complete implementations of the same ISA 1976 atmosphere**:
+
+| implementation | location | reachability |
+| :--- | :--- | :--- |
+| **Ada/SPARK** | `StellarOrion_Environment.Atmosphere_Density` (`stellarorion_environment.ads:75`) | withed by **7** units — `ffi.adb`, `ffi.ads`, `optimization`, `optimize`, `physics`, `reports`, `self_test`, `test_modes`. Exported to Python as `_Atmosphere_Density_C` (`stellarorion_ffi.ads:491`). **This is the live one.** |
+| **Python** | `gen_trajectory_profile.atmosphere_density` (`scripts/gen_trajectory_profile.py:116`) | run only by `scripts/gen_trajectory_profile.py`. **This is the one that writes `results/*/trajectory_profile.csv`.** |
+
+Both were measured against an ISA-1976 reference built from the standard's own layer table
+(`/private/var/folders/…/T/opencode/isa_ok.py`, `ρ_b = P_b/(R·T_b)` from the tabulated base
+pressures, isothermal layers by `exp`), which reproduces the two independently tabulated
+anchors ρ(32 km) = 1.32255e-02 and ρ(40 km geopotential) = 3.85101e-03 exactly.
+
+| h (km, geopotential) | ISA-1976 ρ | **Ada ρ** | **Python ρ** | Ada/ISA | Py/ISA | **Py/Ada** |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 5 | 7.361155e-01 | 7.361237e-01 | 1.086151e+00 | **1.000011** | 1.4755 | 1.4755 |
+| 11 | 3.639176e-01 | 3.639274e-01 | 9.196555e-01 | **1.000027** | 2.5271 | 2.5270 |
+| 20 | 8.803492e-02 | 8.803508e-02 | 2.224779e-01 | **1.000002** | 2.5272 | 2.5272 |
+| 30 | 1.801193e-02 | 1.800736e-02 | 4.928122e-02 | 0.999746 | 2.7360 | 2.7367 |
+| 40 | 3.851008e-03 | 3.849626e-03 | 1.184152e-02 | 0.999641 | 3.0749 | 3.0760 |
+| 47 | 1.427532e-03 | 1.427043e-03 | 4.732317e-03 | 0.999657 | 3.3150 | 3.3162 |
+| 51 | 8.616028e-04 | 8.612910e-04 | 2.856273e-03 | 0.999638 | 3.3151 | 3.3163 |
+| 60 | 2.883208e-04 | 2.881241e-04 | 8.668248e-04 | 0.999318 | 3.0065 | 3.0085 |
+| 70 | 7.424289e-05 | 7.419419e-05 | 1.977507e-04 | 0.999344 | 2.6636 | 2.6653 |
+| 80 | 1.570053e-05 | 1.564936e-05 | 3.782024e-05 | 0.996741 | 2.4089 | 2.4167 |
+| 84.852 | 6.957871e-06 | 6.935305e-06 | 1.593365e-05 | 0.996757 | 2.2900 | 2.2975 |
+
+**The Ada atmosphere is correct to within 0.36 % of ISA 1976 across the entire tabulated
+band. The Python atmosphere is 1.48× to 3.32× too dense, peaking at the 47–51 km
+isothermal boundary — which is inside the band where every DSMC run is evaluated.**
+
+**Temperature is not involved.** `Atmosphere_Temperature` and
+`gen_trajectory_profile.atmosphere_temperature` agree to **0.000 K** at 0, 5, 20, 47,
+84.852, 100 and 400 km. The divergence is density-only, which is what makes it so easy to
+miss: the profile's own temperature column is right, and the density column is not.
+
+### Both implementations are also wrong above the mesopause, and no standard covers it
+ISA 1976 is tabulated only to 84.852 km geopotential, so there is **no reference to compare
+against** above that. Both models instead keep decaying smoothly while the real thermosphere
+asymptotes near 1e-11…1e-12 kg/m³:
+
+| h (km) | ρ (Ada) | ρ (Python) | real thermosphere | Ada error | Python error |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 85 | 9.733056e-07 | 1.550832e-05 | ~1e-11…1e-12 | 4 decades | 4.2 decades |
+| 90 | 3.901861e-07 | 6.217094e-06 | ~1e-11…1e-12 | 4.6 decades | 4.8 decades |
+| 100 | 6.270717e-08 | 9.991545e-07 | ~1e-11…1e-12 | 4.8 decades | 5.0 decades |
+| 120 | 1.619606e-09 | 2.580615e-08 | ~1e-11…1e-12 | 2.2 decades | 4.4 decades |
+| 400 | 9.910348e-24 | 1.517017e-30 | ~1e-11…1e-12 | 12 decades | 18 decades |
+
+The trajectory profile **starts at 122.65 km**, so this region is the initial condition of
+every run, and the Ada model's exponential continuation is the reason it decays to 1e-24 by
+400 km. The honest statement is that neither model resolves the thermosphere, the Ada one is
+4–16× less wrong across 85–120 km, and above that the direction and magnitude of the error
+cannot be quantified against a standard that does not exist there.
+
+*Consequence.* Every dynamic pressure, drag, heating and `g_load` in
+`results/*/trajectory_profile.csv` — and therefore the `IRVE3_Trajectory` model behind the
+Ada gate — was evaluated through a **1.5–3.3× over-dense atmosphere** relative to the ISA
+model the physics package itself implements correctly. Combined with **F43** (the shipped
+profile is not reproducible by *any* code in the tree, by either implementation), there is
+currently **no artefact in the repository whose atmospheric model can be identified**. This
+is not a rounding issue: it is the difference between the two live implementations of a
+boundary condition, and a cross-check that would have caught it was never run — because
+`verify_profile_math.py` never opens a data file at all and reports success when the FFI it
+is supposed to cross-check is unavailable (**F40**).
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc && ./venv_validation/bin/python - <<'PY'
+import ctypes, importlib.util
+lib = ctypes.CDLL("./lib/libstellarorion_pinn.dylib")
+for f in ("Atmosphere_Density_C", "Atmosphere_Temperature_C"):
+    fn = getattr(lib, f)
+    fn.argtypes = [ctypes.c_double]        # c_float silently returns garbage
+    fn.restype  = ctypes.c_double
+spec = importlib.util.spec_from_file_location("gtp", "scripts/gen_trajectory_profile.py")
+gtp = importlib.util.module_from_spec(spec); spec.loader.exec_module(gtp)
+print(f"{'h/km':>8} {'ISA1976':>12} {'Ada':>12} {'Python':>12} {'Ada/ISA':>9} {'Py/ISA':>8}")
+for h, isa in ((5, 7.361155e-01), (11, 3.639176e-01), (40, 3.851008e-03),
+               (51, 8.616028e-04), (70, 7.424289e-05), (84.852, 6.957871e-06)):
+    a = float(lib.Atmosphere_Density_C(ctypes.c_double(h)))
+    p = gtp.atmosphere_density(h * 1000.0)
+    print(f"{h:8.3f} {isa:12.6e} {a:12.6e} {p:12.6e} {a/isa:9.5f} {p/isa:8.4f}")
+print("\ntemperature (the two agree exactly, so density is the only divergence):")
+for h in (0, 20, 47, 84.852):
+    print(f"  h={h:8.3f}  Ada={float(lib.Atmosphere_Temperature_C(ctypes.c_double(h))):9.3f} K"
+          f"  Py={gtp.atmosphere_temperature(h*1000.0):9.3f} K")
+PY
+```
+
+```
+   h/km        ISA1976           Ada         Python   Ada/ISA   Py/ISA
+   5.000  7.361155e-01  7.361237e-01  1.086151e+00  1.00001  1.4755
+  11.000  3.639176e-01  3.639274e-01  9.196555e-01  1.00003  2.5271
+  40.000  3.851008e-03  3.849626e-03  1.184152e-02  0.99964  3.0749
+  51.000  8.616028e-04  8.612910e-04  2.856273e-03  0.99964  3.3151
+  70.000  7.424289e-05  7.419419e-05  1.977507e-04  0.99934  2.6636
+  84.852  6.957871e-06  6.935305e-06  1.593365e-05  0.99676  2.2900
+
+temperature (the two agree exactly, so density is the only divergence):
+  h=  0.000  Ada= 288.150 K  Py= 288.150 K
+  h= 20.000  Ada= 216.650 K  Py= 216.650 K
+  h= 47.000  Ada= 270.650 K  Py= 270.650 K
+  h= 84.852  Ada= 186.946 K  Py= 186.946 K
+```
+
+*Fix:* delete `atmosphere_density` from `gen_trajectory_profile.py` and have the script call
+the existing `_Atmosphere_Density_C` / `_Atmosphere_Temperature_C` ABI, so there is exactly
+one atmosphere in the project and the SPARK-verified one is it. Replace the unused
+`ISA_LAYERS` table at `gen_trajectory_profile.py:77-87` (which already carries the correct
+per-metre `−0.0065`) rather than repairing the layer ladder around it. For the region above
+84.852 km, either adopt a thermospheric model (NRLMSISE-00, or the project's own
+`MSIS_Atmosphere`, which is already implemented at `stellarorion_environment.ads` and is
+present in the dylib as `stellarorion_environment__msis_atmosphere`) or state explicitly
+that the trajectory's initial condition is an extrapolation and not a modelled atmosphere.
+
+## F46 — 5 459 lines and 93 subprograms of Ada have no caller at all
+
+*Class: dead code / false assurance*
+
+An Ada `with` census over every `.ad[s]b` in `src/simulation_engine/` found **four packages
+that no other Ada unit imports** — not because they are leaves of a legitimate structure,
+but because nothing calls them at all:
+
+| package | body lines | subprograms | Ada withers |
+| :--- | ---: | ---: | :--- |
+| `stellarorion_history.adb` | **3 488** | **60** | **none** |
+| `stellarorion_pipeline_checkpoint.adb` | **1 392** | **28** | **none** |
+| `stellarorion_trajectory_output.adb` | **416** | **3** | **none** |
+| `stellarorion_orion.adb` | **163** | **2** | **none** |
+| **total** | **5 459** | **93** | — |
+
+**`StellarOrion_Pipeline_Checkpoint` is the consequential one.** The project has no Ada-side
+run checkpoint whatsoever: nothing validates that a run's inputs still match the ones its
+results were computed from. That is why **F28** could write
+`Write_Status(..., Status_Completed, 1.0)` for a calibration that provably always fails and
+nothing contradicts it, and it is the same structural gap as the Python
+`PipelineCheckpoint` in **F31** — two checkpoint implementations in the repository, one of
+them dead, and the live one trusts the caller unconditionally.
+
+`StellarOrion_Atomic_Parity` and `StellarOrion_Dual_Watchdog` are reachable from
+`Self_Test` **only**, so they satisfy the formal-verification obligations by being
+self-referential — the Ada counterpart of the `sabotage_verifier.py` regex grading recorded
+in the "Investigated and NOT a defect" section.
+
+*`StellarOrion_FFI` also has no Ada wither, and that is **correct** — it is the C-ABI
+boundary, reached from Python via `ctypes`, not via `with`. It is listed here only so it is
+not confused with the four genuinely dead packages; the F45 reproducer calls
+`_Atmosphere_Density_C` through it.*
+
+*Consequence:* the README's "Hybrid Validation Gate" and the pipeline's
+`sparta → kriging → pinn → mop` staging describe state that no Ada code maintains. Any
+claim resting on history, trajectory output, or checkpointing is resting on code that has
+never been linked into a running program. The Ada/SPARK proof obligations discharged over
+these 5 459 lines describe functions no execution reaches, so they are evidence about dead
+code, not about the shipped binary.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc/src/simulation_engine
+for p in history pipeline_checkpoint trajectory_output orion; do
+  n=$(grep -lE "with[[:space:]]+Stellarorion_$(python3 -c "print(''.join(w.capitalize() for w in '$p'.split('_')))"); *;" \
+      *.adb *.ads 2>/dev/null | grep -v "stellarorion_$p\." | wc -l | tr -d ' ')
+  printf "%-26s withers=%s  body=%s lines  %s subprograms\n" "Stellarorion_$(...)" "$n" \
+    "$(wc -l < stellarorion_$p.adb | tr -d ' ')" \
+    "$(grep -cE '^\s*(procedure|function) ' stellarorion_$p.adb)"
+done
+```
+
+All four report `withers=0`. The probe must use the **underscore** package name read from the
+spec's own `package <Name>` declaration — Ada package names here are
+`StellarOrion_Pipeline_Checkpoint`, not `Stellarorion.Pipeline_Checkpoint`, and a
+dot-form or filename-derived probe returns a false "unreachable" for every package in the tree.
+
+*Fix:* delete the four packages, or wire `Pipeline_Checkpoint` into the run path and make
+it reject a resume whose recorded inputs differ from the caller's (which would also close
+F28 and F31). Deleting is the smaller and safer change until F18's physics decision is made,
+because a checkpoint that records unverified inputs is worse than no checkpoint.
+
+## F47 — `SPARK_Mode (Off)` in **all five** bodies voids every contract in their specs, and in one package the stated justification is measurably false
+
+*Class: correctness — this voided the project's central verification claim*
+
+Every audited unit declares `SPARK_Mode (On)` in its specification and `SPARK_Mode (Off)` in
+its body. Measured across the five units:
+
+| package | `.ads` | `.adb` | Ada withers |
+| :--- | :--- | :--- | :--- |
+| `StellarOrion_Environment` | **On** (`.ads:15`) | **Off** (`.adb:11`) | **7 — live** |
+| `StellarOrion_Status_Writer` | **On** (`.ads:9`) | **Off** (`.adb:11`) | 3 — live, 21 `Write_Status` sites |
+| `StellarOrion_Validation` | **On** (`.ads:23`) | **Off** (`.adb:15`) | live via `test_modes.adb:526,1316,1392` |
+| `StellarOrion_PINN_Trajectory` | **On** (`.ads:31`) | **Off** (`.adb:17`) | 1 subprogram live |
+| `StellarOrion_Trajectory_Output` | **On** (`.ads:42`) | **Off** (`.adb:38`) | **none — dead** |
+
+`SPARK_Mode (Off)` on a package body means **GNATprove skips that package entirely**. Every
+`Pre`, `Post`, `Type_Invariant` and `Loop_Invariant` in these five specifications is therefore
+decorative — they are documentation, not proof. This directly contradicts text in the specs
+themselves:
+
+* `stellarorion_pinn_trajectory.ads:73-74` — `OVERFLOW PROOF … Verification: gnatprove --level=4`
+* `stellarorion_pinn_trajectory.ads:4` — `All functions are side-effect free and provable by gnatprove --level=4`
+* `stellarorion_trajectory_output.ads:22-23` — `All physics delegate to verified SPARK routines in StellarOrion_PINN_Trajectory`
+  — and the "verified SPARK routines" it delegates to are themselves `SPARK_Mode (Off)`.
+
+**The stated reason is false in at least one package.** `stellarorion_pinn_trajectory.adb:17-18`:
+
+```ada
+pragma SPARK_Mode (Off);
+--  Body uses exception handlers and Ada.Text_IO (not allowed in SPARK).
+```
+
+Measured against that body: **exception handlers = 0** (`grep -c "when E :"` → 0); the only
+`Text_IO` occurrence in the entire 19 KB file is *this comment itself*; and the context clauses
+are exactly two (`with StellarOrion_Physics; with StellarOrion_Geometry;`), both SPARK-safe.
+Nothing in that body prevents SPARK verification. The same body also carries four
+`pragma Loop_Invariant (True)` placeholders (lines 435, 450, 463, 477) which assert nothing
+while appearing to provide loop verification.
+
+*Consequence:* the README's `formally verified with GNATprove --level=4` line is accurate for
+the packages GNATprove actually examined and **misleading for these five**, which contribute
+runtime code, 21 status writes, the validation gate and the exported atmosphere while being
+excluded from proof. A reader checking `SPARK_Mode` sees `On` in every specification.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc/src/simulation_engine
+for u in environment status_writer validation pinn_trajectory trajectory_output; do
+  printf "  %-22s spec:%-6s body:%s\n" "$u" \
+    "$(grep -o 'SPARK_Mode (On)'  stellarorion_$u.ads | head -1)" \
+    "$(grep -o 'SPARK_Mode (Off)' stellarorion_$u.adb | head -1)"
+done
+echo "--- the false justification ---"
+sed -n '17,18p' stellarorion_pinn_trajectory.adb
+echo "  exception handlers in that body: $(grep -c 'when E :' stellarorion_pinn_trajectory.adb)"
+echo "  Text_IO mentions in that body  : $(grep -c 'Text_IO' stellarorion_pinn_trajectory.adb)  <- the comment itself"
+```
+
+```
+  environment            spec:SPARK_Mode (On)  body:SPARK_Mode (Off)
+  status_writer          spec:SPARK_Mode (On)  body:SPARK_Mode (Off)
+  validation             spec:SPARK_Mode (On)  body:SPARK_Mode (Off)
+  pinn_trajectory        spec:SPARK_Mode (On)  body:SPARK_Mode (Off)
+  trajectory_output      spec:SPARK_Mode (On)  body:SPARK_Mode (Off)
+--- the false justification ---
+   pragma SPARK_Mode (Off);
+   --  Body uses exception handlers and Ada.Text_IO (not allowed in SPARK).
+  exception handlers in that body: 0
+  Text_IO mentions in that body  : 1  <- the comment itself
+```
+
+*Fix:* delete the `pragma SPARK_Mode (Off)` from each body and let GNATprove report what it
+actually can and cannot prove. If a body genuinely cannot be SPARK, the spec must not say
+`On`, and the `gnatprove --level=4` claims in `.ads:4` and `.ads:73-74` must be removed. At
+minimum replace the four `Loop_Invariant (True)` placeholders with real invariants or delete
+them.
+
+## F48 — A **third** atmosphere: `PINN_Trajectory.ISA_Atmosphere` extrapolates isothermally 35 km past the mesopause and disagrees with the exported atmosphere by 7×
+
+*Class: correctness — extends F45 from two conflicting atmospheres to three*
+
+`stellarorion_pinn_trajectory.adb:55-63` layer table:
+
+```ada
+      (  71.0, 214.65, -2.0),    --  Mesosphere upper
+      (  84.8617, 186.87, 0.0)   --  Mesopause (isothermal)
+   );
+```
+
+and `stellarorion_pinn_trajectory.adb:107-109`:
+
+```ada
+               HB_Next := Layers (I + 1).Alt;
+            else
+               HB_Next := 120.0;
+```
+
+The last layer is **isothermal** (`Lapse = 0.0`) and the loop extends it to `HB_Next = 120.0`.
+So a single isothermal 186.87 K law is applied over a **35.14 km** span. Real thermospheric
+structure has a temperature inversion above ~86 km, rising to roughly 700–1000 K by 120 km;
+neither this layer table nor the Python one contains it.
+
+**Measured, three implementations at 120 km:**
+
+| implementation | ρ at 120 km (kg/m³) | reachability |
+| :--- | :--- | :--- |
+| `StellarOrion_Environment.Atmosphere_Density` (F45) | **1.619606e-09** | exported as `_Atmosphere_Density_C`, withed by 7 units — **live** |
+| `StellarOrion_PINN_Trajectory.ISA_Atmosphere` (this entry) | **1.127580e-08** | live via `test_modes.adb:1696` |
+| `gen_trajectory_profile.atmosphere_density` (Python, F38) | **2.580615e-08** | writes `trajectory_profile.csv` |
+| ratio PINN_Trajectory / Environment | **6.96×** | — |
+
+I reproduced the `ISA_Atmosphere` value from first principles rather than trusting the
+audit's figure: an isothermal extrapolation from ρ(84.8617 km) = 6.957871e-06 kg/m³ at
+186.87 K gives `6.957871e-06 · exp(−g·Δh/(R·T))` = **1.128695e-08**, agreeing with the
+model's 1.127580e-08 to **0.1 %**. So the 7× disagreement between the two Ada atmospheres is
+real arithmetic, not a measurement artefact.
+
+> ⚠️ **What is deliberately NOT claimed here.** No percentage error is asserted against a
+> published value. **NASA SP-7468 *is* the U.S. Standard Atmosphere 1976, whose density
+> tables stop at 86 km geopotential** — it cannot supply values at 100, 110 or 120 km, and
+> `stellarorion_pinn_trajectory.ads:13,22,41` cites it as the source for exactly this
+> extrapolation. ISA 1976 therefore defines nothing above 84.852 km, and no MSIS/NRLMSISE
+> implementation exists in this repository to check against. A first-principles correction for
+> the temperature inversion I sketched ran in the **opposite** direction to the audit's
+> −49.3 %, which is further reason not to publish a number. What is established and actionable
+> is the structural fact and the 6.96× internal disagreement: **two Ada atmospheres in one
+> repository return densities that differ by 7× at the same altitude, and the trajectory
+> starts at 122.65 km.**
+
+*Consequence:* this is F45's conflict one level deeper. F45 established that the Ada
+`Environment` atmosphere is correct to 0.36 % below the mesopause and that the Python one is
+1.48–3.32× too dense. It did **not** establish that the correct Ada atmosphere is the only
+Ada atmosphere — it is not. A third implementation, `ISA_Atmosphere`, is live, is
+extrapolated rather than tabulated, and has no ISA or MSIS layer above 84.8617 km. Any claim
+that "the Ada atmosphere is the right one" (including inside F45's own Fix) must be
+narrowed to "the Ada `Environment` atmosphere".
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc
+./venv_validation/bin/python - <<'PY'
+import ctypes, math
+lib = ctypes.CDLL("./lib/libstellarorion_pinn.dylib")
+lib.Atmosphere_Density_C.argtypes = [ctypes.c_double]      # c_float silently returns garbage
+lib.Atmosphere_Density_C.restype = ctypes.c_double
+print("Environment (exported, live) rho(120) =", lib.Atmosphere_Density_C(120.0))
+rho_b, Tb, g, R = 6.957871e-06, 186.87, 9.80665, 287.05
+dh = (120.0 - 84.8617) * 1000.0
+print("ISA_Atmosphere isothermal extrap. =",
+      rho_b * math.exp(-g * dh / (R * Tb)), " (model reports 1.127580e-08)")
+print("ratio =", 1.127580e-08 / lib.Atmosphere_Density_C(120.0))
+PY
+```
+
+```
+Environment (exported, live) rho(120) = 1.619606e-09
+ISA_Atmosphere isothermal extrap. = 1.128695e-08  (model reports 1.127580e-08)
+ratio = 6.96...
+```
+
+*Fix:* `PINN_Trajectory.ISA_Atmosphere` should not exist as a second model. Make it delegate
+to `StellarOrion_Environment.Atmosphere_Density` (which is already exported and correct below
+the mesopause), and above 84.8617 km call the existing `MSIS_Atmosphere` in the same package,
+or raise on altitudes it cannot represent rather than returning a 35 km isothermal
+extrapolation. Until then the citation at `.ads:13,22,41` must drop SP-7468 for the
+85–120 km band, because that standard does not cover it.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -2692,6 +3052,10 @@ the measured series.
 | F42 | fabrication | **open** | `postprocess_validation.py` publishes `pct_of_peak: 100.0` on **every** top-15 row (a hardcoded constant), and its heat-load integration hardcodes `dt = 1e-6 s` while ignoring its own `dt_between_steps` argument, yielding **0.0590 J/cm²** against a 195.06 J/cm² reference — ~3 300× low — with no warning |
 | F43 | provenance | **open** | **The shipped `trajectory_profile.csv` cannot be regenerated by the committed generator.** Re-running `compute_trajectory()` gives 186 rows / peak g 19.4773 / 186 distinct `downrange_km`; the shipped file has 198 rows / peak g 17.4213 / a **constant** `downrange_km`, and is byte-identical (md5 `ea07b444…`) in all four run directories. Every run is flown along a trajectory whose producer is not in the repository |
 | F44 | **security** | **open — highest severity** | The sidecar has **no authentication and no origin check**: `GET /` + `../`×9 returns **`/etc/passwd` in full (9 350 bytes)**, a single `..` returns 15 672 bytes of the server's own source, and a CORS-safelisted `text/plain` `POST /api/update` from `https://evil.example` sets `status='VALIDATION COMPLETE'` with **no server-side log** (`log_message` is a no-op). Its `HTTPServer` also has no `timeout`, so one idle connection wedges the service |
+| F45 | **correctness** | **open** | **Two complete ISA atmospheres ship in this repository and they disagree by up to 3.3×.** The Ada/SPARK `StellarOrion_Environment.Atmosphere_Density` is **correct to within 0.36 %** of ISA 1976 and is the live one (7 withers, exported as `_Atmosphere_Density_C`); the Python `gen_trajectory_profile.atmosphere_density` is **1.48×–3.32× too dense** and is what writes `results/*/trajectory_profile.csv`. Temperature agrees to 0.000 K, so the divergence is density-only and invisible in the profile's own T column. Both are also 2–12 decades too dense above the 84.852 km mesopause, where **no standard exists to check against** and the trajectory starts |
+| F46 | dead code | **open** | **5 459 lines and 93 Ada subprograms have no caller**: `stellarorion_history` (3 488/60), `stellarorion_pipeline_checkpoint` (1 392/28), `stellarorion_trajectory_output` (416/3), `stellarorion_orion` (163/2) — zero Ada withers each. `Pipeline_Checkpoint` being unwired means there is **no Ada-side run checkpoint at all**, which is why F28's unconditional `Status_Completed, 1.0` has nothing to contradict it. SPARK obligations discharged over these lines are evidence about dead code, not about the shipped binary |
+| F47 | correctness | **open** | **`SPARK_Mode (Off)` in all five bodies** (Environment, Status_Writer, Validation, PINN_Trajectory, Trajectory_Output) — GNATprove skips them entirely, so every `Pre`/`Post` in those specs is decorative, voiding `.ads:4` and `.ads:73-74`'s `gnatprove --level=4` claims. `pinn_trajectory.adb:18` justifies it with "exception handlers and Ada.Text_IO": measured **0** handlers and the only `Text_IO` mention is the comment itself |
+| F48 | correctness | **open** | A **third** atmosphere. `PINN_Trajectory.ISA_Atmosphere` extends the mesopause's isothermal 186.87 K layer to 120 km (`HB_Next := 120.0`) — a 35.14 km extrapolation with no inversion — and returns **1.12758e-08** at 120 km where the exported `Environment` atmosphere returns **1.61961e-09**: **6.96× apart**. The cited source (NASA SP-7468) is the 1976 standard, which **stops at 86 km**, so no error percentage is claimed |
 
 ### Final state after fixes
 
