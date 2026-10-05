@@ -13,6 +13,18 @@ pipeline is defined in the source.
 > surrogate (scikit-learn), JSON output, and the post-run render. Every geometry formula,
 > cost term, and penalty is evaluated in Ada.
 
+> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F20 before trusting any number below
+>
+> A second, independent audit of `_proc` on 2026-10-05 left five findings **open**:
+>
+> | ID | What it invalidates in this document |
+> | :--- | :--- |
+> | **F16** | `results/validation_smooth` (Sep 28) and `results/validation_optimized` (Sep 26) are **pre-F11 artefacts** — their `g_load` column is a single constant. Only `validation_scalloped` (Oct 5) carries the fix. |
+> | **F17** | `cd` is clamped to 3.0 inline in `stellarorion_sparta.adb:3143` with no flag. **9 of 22 rows (41 %) of the optimized Cd series are pinned at `3.000000`**; the raw step-100 value was 4.15411. Any "Cd convergence" read off that series is partly an artefact. |
+> | **F18** | The `51.8 km / 3378 m/s` "fixed flight condition" below is **not** the validated DSMC run's condition (`52.0326 km / 3094.2 m/s`). See the warning at the constants table. |
+> | **F19** | `q_ref = 14.3610 W/cm²` is a **Rapisarda** value presented as IRVE-3 flight in two places below. IRVE-3 flight (NASA TP-2013-4012) is **13.80**. |
+> | **F20** | `Decel_G` is reported as a tail mean of the last 15 dumps (17.09 g). The same run's `g_load` **peaks at 22.67 g (+15.07 % vs flight)**. `stellarorion_test_modes.adb:1196`'s `17.7276 g` "MEASURED" figure — the stated reason the decel band was widened 10 %→15 % — matches **no** estimator of the data. |
+
 ---
 
 ## 1. Pipeline at a glance
@@ -34,7 +46,8 @@ pipeline is defined in the source.
 
  [0/7] Load validation references            ← dynamic, at run time
        Q_target 165.7160 J/cm²   (StellarOrion validated)
-       q_ref      14.3610 W/cm²   (IRVE-3 flight)
+       q_ref      14.3610 W/cm²   (Rapisarda Tab. 4.10 — NOT IRVE-3 flight, see F19)
+       q_flight    13.8000 W/cm²   (IRVE-3 flight, NASA TP-2013-4012)
        tau        13.5825 s       (= Q_flight / q_flight)
        Cd_ref      1.462536
                               │
@@ -120,7 +133,7 @@ Step markers are printed by `hiad_optimizer.py` at lines 1291, 1313, 1325, 1358,
 | Symbol | Value | Meaning |
 | :--- | --- | :--- |
 | `Q_target` | 165.7160 J/cm² | StellarOrion validated heat load |
-| `Flux_Ref` (`q_ref`) | 14.3610 W/cm² | IRVE-3 flight peak heat flux |
+| `Flux_Ref` (`q_ref`) | 14.3610 W/cm² | **Rapisarda** Table 4.10 — *not* IRVE-3 flight (which is 13.80). See `FAILURES_AND_FIXES.md` F12/F19 |
 | `Tau_Sec` (`tau`) | 13.5825 s | dynamic heating duration = Q_flight / q_flight |
 | `Cd_Ref` | 1.462536 | StellarOrion validated drag coefficient |
 
@@ -217,13 +230,25 @@ exported as `HIAD_Cost_Components_C`. Weights are constants at
 | Term | Weight | Constant | Meaning |
 | :--- | ---: | :--- | :--- |
 | `HL_R` | **1.00** | `W_Heat_Load`, line 358 | Heat load ÷ target — the **primary objective** |
-| `Flux_R` | 0.50 | `W_Flux`, line 359 | Peak heat flux ÷ IRVE-3 flight |
+| `Flux_R` | 0.50 | `W_Flux`, line 359 | Peak heat flux ÷ `q_ref` (**Rapisarda** 14.3610 — *not* IRVE-3 flight, F19) |
 | `β_Dv` | 0.50 | `W_Beta`, line 360 | `(β_R − 1)²`, squared ballistic-coefficient deviation |
 | `C_d_R` | 0.25 | `W_Cd`, line 361 | Drag coefficient ÷ reference |
 | `Penalty` | λ = 100 | `Lambda_Pen`, line 362 | Quadratic; zero unless a constraint is violated |
 
 Fixed flight condition: `Snapshot_Alt_Km = 51.8 km`, `Snapshot_Vel_Ms = 3378 m/s`
-(lines 377–378) — the same single-point condition as the validated DSMC run.
+(lines 377–378).
+
+> ⚠️ **This is NOT the condition of the validated DSMC run** (see `FAILURES_AND_FIXES.md`
+> **F18**). Measured from `results/validation_scalloped/validation_timeseries.csv`, all 22
+> rows sit at **h = 52.0326 km, V = 3094.193 m/s, Mach 9.4325**. The `51.8 / 3378` pair is
+> the condition of `validation_smooth`. The two differ by **8.4 % in velocity and Mach**,
+> so the optimizer is being driven at a different flight state than the run it is
+> validated against. The same literal pair is also the default arguments
+> `H_DSMC_Km` / `V_DSMC_Ms` in `stellarorion_pinn_trajectory.ads:191-192`, and appears as
+> 31 hardcoded literals in `validation_pipeline.py` plus `hiad_optimizer.py:80-81` and
+> `ada_pinn_wrapper.py:189-190`. Resolution: make `Flight.Altitude_Km` /
+> `Flight.Velocity_Ms` the single source, delete the duplicates, and re-fly all three
+> runs at one condition.
 
 Penalty constraints:
 

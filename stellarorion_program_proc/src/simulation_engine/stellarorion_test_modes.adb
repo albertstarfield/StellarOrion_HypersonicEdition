@@ -14,6 +14,12 @@ with StellarOrion_Physics;    use StellarOrion_Physics;
 with StellarOrion_Sparta;       use StellarOrion_Sparta;
 with StellarOrion_Validation; use StellarOrion_Validation;
 with StellarOrion_Status_Writer; use StellarOrion_Status_Writer;
+--  Step 9b (regime gate) sweeps the IRVE-3 span through the ISA model.
+--  StellarOrion_Types is NOT repeated here: the spec already withs and uses it,
+--  so its N_AVOGADRO / M_AIR / MOL_DIAM are visible in this body already.
+--  StellarOrion_PINN_Trajectory is referenced fully qualified rather than
+--  `use`d, so none of its ~40 exported names can become ambiguous.
+with StellarOrion_PINN_Trajectory;
 
 --  extern: sidecar interop; outside SPARK subset
 package body StellarOrion_Test_Modes with SPARK_Mode => Off is
@@ -1601,6 +1607,155 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
       Put_Line ("  ---------------------------------------------------------------------");
       Put_Line ("  [NOTE] Flight = IRVE-3 (NASA/TP-2013-4012), MDAO = Rapisarda 2023.");
       New_Line;
+
+      --  ==================================================================
+      --  Step 9b: REGIME GATE -- Knudsen-number trigger, graded vs reference
+      --  ==================================================================
+      --
+      --  WHY A SECOND GATE ALONGSIDE STEP 9 (2026-10-05):
+      --    Step 9 grades the run AT THE RAPISARDA POINT -- the reference flight
+      --    condition. It says nothing about whether DSMC was the right method to
+      --    evaluate there. This gate grades METHOD SELECTION at the same point,
+      --    so the two can be compared against the reference and the combined
+      --    accuracy of the algorithm assessed.
+      --
+      --  AXIOMS:
+      --    R1. DSMC is a rarefied-flow solver. Its collision model requires the
+      --        cell size to resolve the mean free path (cell <= lambda,
+      --        Bird 1994 Sec. 1.2); otherwise it does not integrate the Boltzmann
+      --        equation any better than a continuum solver, at far higher cost.
+      --    R2. The handoff between DSMC and a continuum surrogate is therefore a
+      --        property of the FLOW REGIME (Kn), not of how many solver steps
+      --        happen to have elapsed.
+      --    R3. The operating point was chosen on the stated belief that 52 km
+      --        sits in the "DSMC-continuum transition (Kn ~ 0.01-1.0)" band
+      --        (stellarorion_types.ads, Flight_Parameters justification).
+      --
+      --  THEORIES:
+      --    T1. Kn = lambda / L (Bird 1994 Sec. 1.4); lambda falls with density,
+      --        so Kn decreases monotonically as the vehicle descends.
+      --    T2. Therefore exactly one altitude in the 120 -> 40 km span crosses
+      --        any chosen Kn threshold, and that altitude -- not step 2200 --
+      --        is the physically correct handoff.
+      --
+      --  APPLICATIONS:
+      --    Reports the run-point Kn and regime, grades it against R3, sweeps the
+      --    IRVE-3 span for the threshold crossing, and prints the resulting
+      --    handoff altitude and its trajectory-step equivalent.
+      --
+      --  CITATIONS: [Bird 1994, Molecular Gas Dynamics, Sec. 1.2 & 1.4]
+      --             [NASA/TP-2013-4012 -- IRVE-3 flight span 120 km -> 40 km]
+      --             [Rapisarda 2023, Sec. 3.2]
+      declare
+         --  Reference band the operating point was chosen to satisfy (R3).
+         Ref_Kn_Lo  : constant Float := 1.0e-2;
+         Ref_Kn_Hi  : constant Float := 1.0;
+         --  Below this the flow is continuum/slip and the continuum surrogate is
+         --  the appropriate method (Bird's continuum breakdown, Kn ~ 0.1).
+         Kn_Floor   : constant Float := 1.0e-1;
+         --  IRVE-3 flight span; matches IRVE3_Trajectory's linear endpoints.
+         H_Entry_Km : constant Float := 120.0;
+         H_Final_Km : constant Float := 40.0;
+         Step_Span  : constant Float := 3.0e8;
+
+         Kn_Run  : constant Float := Metrics.Knudsen_Number;
+         MFP_Run : constant Float := Kn_Run * Geo.Diameter_M;
+         In_Band : constant Boolean :=
+           Kn_Run >= Ref_Kn_Lo and then Kn_Run <= Ref_Kn_Hi;
+
+         --  Sweep for the single Kn threshold crossing (T2).
+         Handoff_Alt : Float := 0.0;
+         Found       : Boolean := False;
+         Alt         : Float;
+      begin
+         Put_Line ("[VALIDATE] Step 9b: Regime gate -- Knudsen trigger vs reference");
+         Put_Line ("  ---------------------------------------------------------------------");
+         Put_Line ("  Parameter             | Value       | Reference       | Status");
+         Put_Line ("  ---------------------------------------------------------------------");
+
+         Put_Line ("  Kn at run point       | " & F6 (Kn_Run) & "  | " &
+                   F6 (Ref_Kn_Lo) & ".." & F6 (Ref_Kn_Hi) &
+                   " | " & (if In_Band then "PASS" else "FAIL"));
+         Put_Line ("  Mean free path (m)    | " & F6 (MFP_Run));
+         Put_Line ("  Regime                | " &
+                   (if Kn_Run > 1.0 then "free-molecular"
+                    elsif Kn_Run >= Kn_Floor then "transition"
+                    elsif Kn_Run >= Ref_Kn_Lo then "slip"
+                    else "continuum") &
+                   "        | transition band | " &
+                   (if In_Band then "PASS" else "FAIL"));
+
+         --  Descending sweep: Kn falls monotonically, so the first altitude at
+         --  or below Kn_Floor is the handoff (T2).  0.25 km resolution puts the
+         --  handoff altitude within a quarter of a kilometre.
+         Alt := H_Entry_Km;
+         while Alt >= H_Final_Km loop
+            pragma Loop_Invariant (Alt >= H_Final_Km - 0.25);
+            declare
+               ISA : constant StellarOrion_PINN_Trajectory.ISA_Atmosphere_Result :=
+                 StellarOrion_PINN_Trajectory.ISA_Atmosphere (Alt);
+               N_Den : constant Float :=
+                 ISA.Density_Kgm3 * StellarOrion_Types.N_AVOGADRO
+                 / StellarOrion_Types.M_AIR;
+               MFP_A : Float;
+               Kn_A  : Float;
+            begin
+               --  Same floor guard Calculate_Flight_Metrics applies: below
+               --  5e13 m^-3 the closed form would underflow Mean_Free_Path's
+               --  Pre, and the flow is deep free-molecular anyway.
+               if N_Den >= 5.0e13 then
+                  MFP_A := Mean_Free_Path (N_Den, StellarOrion_Types.MOL_DIAM);
+               else
+                  MFP_A := 1.0e9;
+               end if;
+               Kn_A := Knudsen_Number (MFP_A, Geo.Diameter_M);
+               if not Found and then Kn_A <= Kn_Floor then
+                  Handoff_Alt := Alt;
+                  Found := True;
+               end if;
+            end;
+            Alt := Alt - 0.25;
+         end loop;
+
+         if Found then
+            declare
+               --  Invert IRVE3_Trajectory's linear map (H = 120 - 80*Step/3e8)
+               --  to express the handoff on the same step axis the PINN leg uses.
+               Handoff_Step : constant Float :=
+                 (H_Entry_Km - Handoff_Alt) / (H_Entry_Km - H_Final_Km) * Step_Span;
+               In_Span : constant Boolean :=
+                 Handoff_Alt <= H_Entry_Km and Handoff_Alt >= H_Final_Km;
+            begin
+               Put_Line ("  Handoff alt (Kn=" & F6 (Kn_Floor) & ") | " &
+                         F6 (Handoff_Alt) & " km  | within 120->40  | " &
+                         (if In_Span then "PASS" else "FAIL"));
+               Put_Line ("  Handoff step          | " &
+                         Long_Long_Integer'Image
+                           (Long_Long_Integer (Handoff_Step)) &
+                         "    | of 300000000     |");
+            end;
+         else
+            Put_Line ("  Handoff alt (Kn=" & F6 (Kn_Floor) &
+                      ") | not found  | within 120->40  | FAIL");
+         end if;
+
+         Put_Line ("  ---------------------------------------------------------------------");
+         --  Loud and separate: this grades METHOD SELECTION, not survivability,
+         --  so it must not silently flip (or be confused with) the Step 10
+         --  survivability verdict above.
+         if In_Band then
+            Put_Line ("  [VALIDATE] Step 9b REGIME GATE: PASS -- run point is in the " &
+                      "rarefied band, DSMC is the correct method.");
+         else
+            Put_Line ("  [VALIDATE] Step 9b REGIME GATE: FAIL -- run point Kn = " &
+                      F6 (Kn_Run) & " is outside the rarefied band " &
+                      F6 (Ref_Kn_Lo) & ".." & F6 (Ref_Kn_Hi) &
+                      "; the continuum surrogate is the appropriate method here.");
+            Put_Line ("                (Does not change the survivability verdict " &
+                      "in Step 10.)");
+         end if;
+         New_Line;
+      end;
 
       --  Step 10: Summary
       Put_Line ("[VALIDATE] ====== Validation Summary ======");

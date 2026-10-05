@@ -348,6 +348,12 @@ post-optimization gate (plan Parts B/C):
    streamed to `gate_r1_dsmc.log`). The `--results-dir` flag is honored since
    the 2026-09-25 Ada CLI fix, so reference data in `results/validation_scalloped/`
    is never overwritten (SHA-256 verified before/after).
+   > ⚠️ **On disk this directory is stale.** Its `validation_timeseries.csv` is dated
+   > **Sep 26** and `validation_pipeline_output/` **Sep 27** — nine days before the
+   > F10–F15 fixes. Its `g_load` column is a single constant (`14.005923`, a
+   > trajectory-profile sample) and 9 of its 22 `cd` rows are clamped at `3.000000`.
+   > Re-run this leg before quoting anything from it. See `FAILURES_AND_FIXES.md`
+   > **F16** and **F17**.
 3. **PINN leg** runs `validation_pipeline.py` on the fresh CSV and writes a
    new `unified_comparison_data.json` under the gate directory.
 4. **Verdict**: `PASS ⇔ q_hybrid ≤ Q_target (165.716 J/cm²)` with the
@@ -390,10 +396,10 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
 | Parameter | IRVE-3 Flight | LOFTID Flight | Rapisarda Models | StellarOrion DSMC | Source |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Aeroshell Diameter** | 3.0 m | 6.0 m | — | — | NASA TP-2013-4012; Deshmukh AIAA 2024-1501 |
-| **Peak Heat Flux ($\dot{q}$)** | **14.36 W/cm²** | **39.27 W/cm²** | 13.83 W/cm² (FR) / 15.26 W/cm² (SG) | **12.2 W/cm² (DSMC+SG)** | Rapisarda Table 4.10; Deshmukh AIAA 2024-1501; StellarOrion |
-| **Total Heat Load ($Q$)** | **195.06 J/cm²** | **3,520 J/cm²** | 195.17 J/cm² (FR) / 223.95 J/cm² (SG) | **165.72 J/cm²** | Rapisarda Table 4.10; Deshmukh AIAA 2024-1501; StellarOrion |
+| **Peak Heat Flux ($\dot{q}$)** | **13.80 W/cm²** ¹ | **39.27 W/cm²** | 13.83 W/cm² (FR) / 15.26 W/cm² (SG) | **12.82 W/cm² (DSMC+SG)** ² | NASA TP-2013-4012; Deshmukh AIAA 2024-1501; StellarOrion |
+| **Total Heat Load ($Q$)** | **188.00 J/cm²** ¹ | **3,520 J/cm²** | 195.06 J/cm² (FR) / 223.95 J/cm² (SG) ³ | **174.14 J/cm²** | NASA TP-2013-4012; Deshmukh AIAA 2024-1501; StellarOrion |
 | **Ballistic Coeff ($\beta$)** | 26.9 kg/m² | ~22.6 kg/m² (est.) | — | **27.70 kg/m²** | NASA TP-2013-4012; Discussion.md; StellarOrion |
-| **Peak Deceleration** | **19.7 g** | **9.66 g** | — | **16.83 g** | NASA TP-2013-4012; Deshmukh AIAA 2024-1501; StellarOrion |
+| **Peak Deceleration** | **19.7 g** | **9.66 g** | — | **16.48 g** (tail-15 17.09 g) ⁴ | NASA TP-2013-4012; Deshmukh AIAA 2024-1501; StellarOrion |
 | **C_d** | — | — | — | **1.4625** | StellarOrion (within LOFTID range 1.4–1.7) |
 | **C_l** | — | — | — | **−0.5560** | StellarOrion (VALIDATION_Sep_2_2026.md §3.1; negative = downward lift) |
 | **L/D** | — | — | — | **0.3802** | StellarOrion |
@@ -409,6 +415,34 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
 - **Rapisarda Models** — Rapisarda (2023, MSc Thesis, TU Delft) Table 4.10: Fay-Riddell (FR) CFD and Sutton-Graves (SG) correlation applied to IRVE-3 trajectory
 - **StellarOrion DSMC** — Our SPARTA DSMC simulation (Sep 2, 2026, scalloped geometry, step 2200, 6 MPI ranks)
 
+**Footnotes — reference provenance (see `FAILURES_AND_FIXES.md` F12 and F19):**
+1. **13.80 W/cm² / 188.00 J/cm²** are the NASA TP-2013-4012 flight values, matching
+   group **(F)** of `IRVE3_REFERENCE`. Earlier revisions of this table listed
+   **14.36 W/cm² / 195.06 J/cm²** in the "IRVE-3 Flight" column, but those are **Rapisarda
+   Table 4.10** values (group **R**) — a different document. They now appear only in the
+   Rapisarda column, where they belong.
+2. **12.82 W/cm²** is the measured `heatflux_sg_Wm2` = 128 230.75 W/m² from
+   `results/validation_scalloped/validation_timeseries.csv`. The previously stated
+   **12.2 W/cm²** was a stale literal.
+3. The Rapisarda SG trajectory-integrated value (15.26 W/cm²) is **not** an IRVE-3 flight
+   measurement and is not used as a validation target anywhere in the pipeline.
+4. **16.48 g** is the scalloped run's last-step `g_load`; the Ada gate reports the
+   **tail mean of 15 dumps = 17.09 g**. The previously stated **16.83 g** came from
+   `validation_smooth` and is a **pre-F11 constant** — that run's `g_load` column has only
+   one distinct value while its own drag series varies over 39 kN. See **F16**. The
+   run's `g_load` **peak is 22.67 g (+15.07 % vs flight)**; none of these end-of-run
+   estimators is the peak. See **F20**.
+5. **The validated condition is 52.0326 km / 3094.2 m/s (Mach 9.4325)**, measured from
+   `results/validation_scalloped/validation_timeseries.csv` and identical in all 22 rows.
+   The previously stated **51.82 km / 3379 m/s (Mach 10.29)** is the condition of
+   `validation_smooth` — a **different geometry at a different flight state**. Any
+   smooth→optimized comparison therefore straddles an **8.4 % velocity / Mach change**.
+   The literal `51.8 / 3378.0` is still hardcoded in 31 places in `validation_pipeline.py`,
+   in `hiad_optimizer.py:80-81`, in `ada_pinn_wrapper.py`, in two scripts, and as the
+   **public Ada spec constants** `Snapshot_Alt_Km` / `Snapshot_Vel_Ms`
+   (`stellarorion_optimization.ads:377-378`) and the default arguments `H_DSMC_Km` /
+   `V_DSMC_Ms` (`stellarorion_pinn_trajectory.ads:191-192`). See **F18**.
+
 ### Simulation Environment Conditions
 
 Each source uses different atmosphere models, geometry, and solvers — this directly affects comparability.
@@ -419,16 +453,16 @@ Each source uses different atmosphere models, geometry, and solvers — this dir
 | **Gas Composition** | Real air | Real air | Earth air (MCD v6.1 for density/temp profiles only) | Five_Species: N₂, O₂, NO, N, O |
 | **Geometry** | IRVE-3 inflatable (3.0 m) | LOFTID inflatable (6.0 m, 70° sphere-cone, 6+1 tori) | Smooth toroid ($r_{torus}$ = 0.135 m) | **Scalloped** (grooved-torus), 3.0 m |
 | **Solver Method** | Flight instrumentation | Flight instrumentation | Fay-Riddell CFD / SG correlation | SPARTA DSMC (VSS, grid 0.7) |
-| **Trajectory** | Full reentry (Black Brant XI, suborbital) | Full reentry (LEO, >8 km/s) | Full trajectory integration | **Single point** (step 2200): h = 51.82 km, Mach 10.29, V = 3,379 m/s |
+| **Trajectory** | Full reentry (Black Brant XI, suborbital) | Full reentry (LEO, >8 km/s) | Full trajectory integration | **Single point** (step 2200): h = 52.03 km, Mach 9.43, V = 3,094 m/s ⁵ |
 | **Noise Filtering** | Hardware averaging | Hardware averaging | 6th-order polynomial + Wilmoth | Raw per-element `f_1[3]` |
 
-**Why this matters:** The −15% delta in heat load and g-load is expected — StellarOrion runs a single trajectory point while flight data and Rapisarda's models integrate over the full trajectory. The density difference between MCD v6.1 and ISA (56% at 52 km) explains part of the gap between our single-point SG (12.2 W/cm²) and Rapisarda's trajectory-integrated SG (15.26 W/cm²), since $\dot{q}_{SG} \propto \sqrt{\rho}$.
+**Why this matters:** The −7.4 % delta in heat load is expected — StellarOrion runs a single trajectory point while flight data and Rapisarda's models integrate over the full trajectory. The density difference between MCD v6.1 and ISA (56 % at 52 km) explains part of the gap between our single-point SG (12.82 W/cm²) and Rapisarda's trajectory-integrated SG (15.26 W/cm²), since $\dot{q}_{SG} \propto \sqrt{\rho}$.
 
-**Notes on peak heat flux (DSMC+SG):** StellarOrion reports $\dot{q}$ as the **processed Sutton-Graves (SG)** correlation value from the DSMC run conditions — **12.2 W/cm²** at the single-point condition — not as a direct DSMC peak. Raw DSMC single-cell samples (182.5 W/cm²) are statistical noise and are not the headline metric; the per-element DSMC average (56.6 W/cm²) is kept only in the validation deep-dive. This is the same processed SG quantity Rapisarda reports as 15.26 W/cm² (trajectory-integrated). See DSMC Noise Methodology section below.
+**Notes on peak heat flux (DSMC+SG):** StellarOrion reports $\dot{q}$ as the **processed Sutton-Graves (SG)** correlation value from the DSMC run conditions — **12.82 W/cm²** at the single-point condition — not as a direct DSMC peak. Raw DSMC single-cell samples (182.5 W/cm²) are statistical noise and are not the headline metric; the per-element DSMC average (56.6 W/cm²) is kept only in the validation deep-dive. This is the same processed SG quantity Rapisarda reports as 15.26 W/cm² (trajectory-integrated, **not** an IRVE-3 flight value). See DSMC Noise Methodology section below.
 
 **Delta analysis:**
-- **Heat load:** StellarOrion (165.72 J/cm²) is −15% vs flight (195.06) — single trajectory point vs full integrated trajectory
-- **G-load:** StellarOrion (16.83 g) is −15% vs flight (19.7 g) — same single-point vs trajectory explanation
+- **Heat load:** StellarOrion (174.14 J/cm²) is −7.37 % vs NASA flight (188.00), or −10.72 % vs Rapisarda (195.06) — single trajectory point vs full integrated trajectory
+- **G-load:** StellarOrion last-step 16.48 g is −16.35 % vs flight (19.7 g); the gate's tail-15 mean 17.09 g is −13.25 %; the run's **g_load peak of 22.67 g is +15.07 %** — the sign of the verdict depends entirely on which estimator is chosen, and none of the three is the run peak. See **F20**
 - **Ballistic coeff:** StellarOrion (27.70 kg/m²) is +3% vs flight (26.9) — confirms geometry fidelity of the scalloped model
 
 **Plots generated:** 52 PNGs total (21 CSV time-series + 6 derived thermal + 24 VTU visualizations + dashboard frame).

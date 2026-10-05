@@ -411,27 +411,165 @@ class CyclicLogMonitor:
 # ========================================================================
 # [Citation: NASA TP-2013-4012 — IRVE-3 Flight Reconstruction]
 # [Citation: Rapisarda (2023), MSc Thesis, TU Delft, Table 4.10]
+#  PROVENANCE — three DISTINCT sources, previously conflated (fix 2026-10-05).
+#
+#  Every value below used to be attributed to "NASA TP-2013-4012". They are not
+#  all from that document. The Ada validation gate already carries the audited
+#  breakdown (stellarorion_test_modes.adb, "IRVE-3 reference targets —
+#  PROVENANCE"); this dict now matches it, so the two validation paths grade
+#  against the SAME numbers.
+#
+#  (F) NASA/TP-2013-4012 (Dillman et al. 2013) — MISSION REPORT.
+#      q_max 13.8 W/cm^2, Q 188 J/cm^2, peak decel 19.7 g, beta 26.9 kg/m^2,
+#      p_stag 12.4 kPa.  The gate grades against THIS band: it is the tighter
+#      of the two and therefore the conservative choice.
+#  (R) Rapisarda (2023), MSc Thesis, TU Delft, Table 4.10 — FLIGHT
+#      reconstruction: q_max 14.361 W/cm^2, Q 195.0577 J/cm^2.
+#      (Fay-Riddell MODEL for the same cases: 13.83 / 195.17.)
+#  (M) Rapisarda (2023) / IRVE-3 MDAO paper, Table 4.1 — MDAO BASELINE:
+#      Cd 1.47 (smooth cone), peak decel 20.2 g, dyn q 6.2 kPa.
+#  (S) SELF-CONSISTENCY — drag_sum / heatflux_avg / heatflux_max below are THIS
+#      RUN's own converged DSMC values. There is no flight equivalent for these
+#      (per-element kinetic-energy flux on a scalloped geometry, integrated
+#      surface force). Agreement with them is a regression baseline and is
+#      TAUTOLOGICAL — it must never be read as flight validation.
+#
+# [Citation: NASA/TP-2013-4012, Dillman et al. 2013]
+# [Citation: Rapisarda (2023), MSc Thesis, TU Delft, Tables 4.1 and 4.10]
 IRVE3_REFERENCE = {
-    "peak_heat_flux_wcm2": 14.361,
-    "total_heat_load_jcm2": 195.06,
-    "peak_deceleration_g": 20.2,
-    "ballistic_coeff_kgm2": 26.9,
-    "reference_cd": 1.47,
+    # --- (F) NASA/TP-2013-4012 mission report — the gate's targets ---------
+    "peak_heat_flux_wcm2": 13.8,             # (F) W/cm^2  was 14.361 (R)
+    "total_heat_load_jcm2": 188.0,           # (F) J/cm^2  was 195.06 (R)
+    "peak_deceleration_g": 19.7,             # (F) g       was 20.2 (M)
+    "ballistic_coeff_kgm2": 26.9,            # (F) kg/m^2
+    "stag_pressure_pa": 12400.0,             # (F) Pa (12.4 kPa)
+    # --- (R) Rapisarda Table 4.10 flight reconstruction — kept available ---
+    "rapisarda_qmax_wcm2": 14.361,           # (R) W/cm^2
+    "rapisarda_heat_load_jcm2": 195.0577,    # (R) J/cm^2
+    "rapisarda_qmax_Wm2": 143610.0,          # (R) W/m^2
+    "rapisarda_heat_load_Jm2": 19506.0,      # (R) J/m^2
+    # --- (M) MDAO doc baseline --------------------------------------------
+    "reference_cd": 1.47,                    # (M) smooth cone
+    "mdao_peak_deceleration_g": 20.2,        # (M) g
+    "mdao_dyn_press_pa": 6200.0,             # (M) Pa (6.2 kPa)
+    # --- vehicle constants -------------------------------------------------
     "diameter_m": 3.0,
     "mass_kg": 281.0,
     "velocity_ms": 2700.0,
-    # [Citation: NASA TP-2013-4012 — IRVE-3 Flight Data]
-    # [Citation: Rapisarda (2023), MSc Thesis, TU Delft, Table 4.10]
-    # Heat flux: 14.36 W/cm² = 143,610 W/m² (flight area-weighted stagnation)
-    # Our per-element avg (565,865 W/m²) is different because:
-    #   1. We use per-element f_1[3] (kinetic energy flux), not area-weighted
-    #   2. Scalloped geometry has different surface area than smooth IRVE-3
-    #   3. Single trajectory point vs full trajectory integration
-    "peak_heat_flux_Wm2": 143610.0,      # 14.36 W/cm² in W/m²
-    "total_heat_load_Jm2": 19506.0,       # 195.06 J/cm² in J/m²
-    "drag_sum_reference_N": 45410.0,      # Our DSMC converged value as self-consistency check
-    "heatflux_avg_reference_Wm2": 565865.0,  # Our per-element avg at step 2200
-    "heatflux_max_reference_Wm2": 1824880.0,  # Our per-element max at step 2200
+    # --- (S) THIS RUN's converged DSMC — self-consistency only -------------
+    # Why our per-element numbers differ from any flight figure: we read
+    # per-element f_1[3] (kinetic energy flux), not an area-weighted
+    # stagnation value; the scalloped geometry has a different surface area
+    # than smooth IRVE-3; and this is a single trajectory point rather than a
+    # full-trajectory integration.
+    "drag_sum_reference_N": 45410.0,         # (S) self, NOT flight
+    "heatflux_avg_reference_Wm2": 565865.0,  # (S) self, NOT flight
+    "heatflux_max_reference_Wm2": 1824880.0, # (S) self, NOT flight
+}
+
+#  Which source each comparison-table metric is graded against.  Without this
+#  the table printed a single "IRVE-3" column header over values drawn from
+#  three different documents plus the run's own output, so a 0.0 % error on
+#  heatflux_avg looked like flight agreement when it was self-comparison.
+#  ---------------------------------------------------------------------
+#  Regime gate -- Knudsen-number trigger (mirrors Ada Step 9b)
+# ---------------------------------------------------------------------
+#  AXIOMS:
+#    R1. DSMC is a rarefied-flow solver: its collision model needs cell <= lambda
+#        (Bird 1994 Sec 1.2), so the FLOW REGIME -- not a solver step count --
+#        decides where DSMC hands over to a continuum surrogate.
+#    R2. Kn = lambda / L (Bird 1994 Sec 1.4) falls monotonically as the vehicle
+#        descends, so any threshold is crossed at exactly one altitude.
+#  THEORY: invert the IRVE-3 linear altitude map (120 -> 40 km over target_step)
+#          to express that crossing on the same step axis the PINN leg uses.
+#  CITATION: [Bird 1994, Molecular Gas Dynamics, Sec 1.2 & 1.4]
+#            [NASA/TP-2013-4012 -- IRVE-3 flight span 120 km -> 40 km]
+KN_REF_LO = 1.0e-2      # rarefied band the operating point was chosen to sit in
+KN_REF_HI = 1.0
+KN_FLOOR = 1.0e-1       # below this the continuum surrogate is the right method
+
+
+def regime_gate(
+    data: dict[str, Any],
+    threshold: float = KN_FLOOR,
+    l_char: float = 3.0,
+    h_entry: float = 120.0,
+    h_final: float = 40.0,
+    target_step: float = 3.0e8,
+) -> dict[str, Any]:
+    """Grade the DSMC method selection and locate the Knudsen handoff.
+
+    Purpose:
+        Second validation gate. Step 9 / the comparison table grade the run AT
+        THE RAPISARDA POINT; this grades whether DSMC was the correct METHOD at
+        that point, and where the regime says the handoff to the continuum
+        surrogate should fall.
+
+    Parameters:
+        data: convergence dict from load_convergence_data; needs "alt_km" for
+            the altitude the run was actually executed at.
+        threshold: Kn below which the continuum surrogate takes over.
+        l_char: characteristic length [m] (IRVE-3 3.0 m diameter).
+        h_entry, h_final: IRVE-3 flight span endpoints [km].
+        target_step: trajectory span used by IRVE3_Trajectory.
+
+    Returns:
+        dict with kn_run, lambda_m, regime, in_band, handoff_alt_km,
+        handoff_step, found.
+
+    Raises:
+        KeyError: if "alt_km" is absent -- the run condition is required to
+            grade the method, so a missing column fails loudly rather than
+            defaulting to a flattering altitude.
+
+    CITATION: [Bird 1994 Sec 1.2 & 1.4] [NASA/TP-2013-4012]
+    """
+    alts = data.get("alt_km")
+    if alts is None or len(alts) == 0:
+        raise KeyError(
+            "regime_gate requires data['alt_km']: the DSMC run condition is "
+            "what the method-selection gate grades, and it must not be guessed."
+        )
+    alt_run = float(alts[-1])
+    lam_run = float(isa_atmosphere(alt_run)["mean_free_path_m"])
+    kn_run = lam_run / l_char
+    regime = ("free-molecular" if kn_run > 1.0
+              else "transition" if kn_run >= threshold
+              else "slip" if kn_run >= KN_REF_LO
+              else "continuum")
+
+    # Descending sweep: Kn falls monotonically, so the first altitude at or
+    # below the threshold is the handoff (R2). 0.25 km resolution.
+    handoff_alt = None
+    for h in np.arange(h_entry, h_final - 1e-9, -0.25):
+        if float(isa_atmosphere(float(h))["mean_free_path_m"]) / l_char <= threshold:
+            handoff_alt = float(h)
+            break
+
+    handoff_step = None
+    if handoff_alt is not None:
+        handoff_step = (h_entry - handoff_alt) / (h_entry - h_final) * target_step
+
+    return {
+        "kn_run": kn_run,
+        "lambda_m": lam_run,
+        "regime": regime,
+        "in_band": KN_REF_LO <= kn_run <= KN_REF_HI,
+        "handoff_alt_km": handoff_alt,
+        "handoff_step": handoff_step,
+        "found": handoff_alt is not None,
+        "threshold": threshold,
+        "alt_run_km": alt_run,
+    }
+
+
+REF_KIND = {
+    "cd": "MDAO (Rapisarda 2023 T4.1)",
+    "g_load": "flight (NASA/TP-2013-4012)",
+    "heat_load_jcm2": "flight (NASA/TP-2013-4012)",
+    "drag_sum_N": "SELF (this run's converged DSMC)",
+    "heatflux_avg_Wm2": "SELF (this run's converged DSMC)",
+    "heatflux_max_Wm2": "SELF (this run's converged DSMC)",
 }
 
 
@@ -679,7 +817,11 @@ def load_convergence_data(csv_path: str) -> dict[str, Any]:
 
     data: dict[str, Any] = {"steps": [], "cd": [], "cl": [], "drag_sum_N": [],
             "heatflux_max_Wm2": [], "heat_sum_Wm2": [], "heatflux_avg_Wm2": [],
-            "g_load": [], "heat_load_jcm2": [], "lift_sum_N": []}
+            "g_load": [], "heat_load_jcm2": [], "lift_sum_N": [],
+            # Flight condition the DSMC run was actually executed at. The CSV
+            # carries it (alt_km/vel_ms); see F15 for why irve3_trajectory_model
+            # must NOT be used to recover it from a DSMC solver step.
+            "alt_km": [], "vel_ms": []}
 
     with open(csv_path, "r") as fh:
         reader = csv.DictReader(fh)
@@ -701,6 +843,8 @@ def load_convergence_data(csv_path: str) -> dict[str, Any]:
             data["g_load"].append(float(row.get("g_load", 0.0)))
             data["heat_load_jcm2"].append(float(row.get("heat_load_jcm2", 0.0)))
             data["lift_sum_N"].append(float(row.get("lift_sum_N", 0.0)))
+            data["alt_km"].append(float(row.get("alt_km", 0.0)))
+            data["vel_ms"].append(float(row.get("vel_ms", 0.0)))
 
     # Guard: CSV must have at least 2 data points (np.diff requires >= 2)
     if len(data["steps"]) < 2:
@@ -1241,12 +1385,27 @@ def pinn_extrapolate_per_step(
         pinn_steps = pinn_steps[pinn_steps <= target_step]
 
     # Compute trajectory conditions at each step
-    # AXIOM: irve3_trajectory_model only covers DSMC range (step 100-2200).
-    # For steps > 2200, the Ada model clamps altitude to ~40 km (h_final=40.0).
-    # This is physically wrong — the vehicle continues descending.
     #
-    # FIX: Use IRVE-3 flight-measured trajectory profile (NASA TP-2013-4012)
-    # for the altitude-velocity relationship beyond the DSMC range.
+    # CORRECTED AXIOM (2026-10-05). The comment previously held here said
+    # "irve3_trajectory_model only covers DSMC range (step 100-2200); for steps
+    # > 2200 the Ada model clamps altitude to ~40 km". That is backwards. The
+    # Ada spec (stellarorion_pinn_trajectory.ads, IRVE3_Trajectory) states:
+    #     H = H_Entry + (H_Final - H_Entry) * Step / Target_Step
+    #     "This gives 120 km -> 40 km across steps 0 -> 300M"
+    # and the body declares `pragma Unreferenced (H_DSMC_Km)` /
+    # `pragma Unreferenced (V_DSMC_Ms)`, i.e. the DSMC anchor is deliberately
+    # NOT used. Measured behaviour confirms it:
+    #     step   100 -> 120.000 km, 4300.0 m/s
+    #     step  2200 -> 119.999 km, 4300.0 m/s   (still the ENTRY INTERFACE)
+    #     step 3.0e8 ->  40.000 km, 2700.0 m/s
+    # So passing a DSMC SOLVER step to it returns entry conditions, never the
+    # ~52 km the run was executed at, and never the ~40 km the old comment
+    # claimed. It is a TRAJECTORY-PROGRESS model, not a DSMC-step model.
+    #
+    # Therefore: the DSMC range below anchors to the condition actually recorded
+    # in the CSV, and the post-DSMC range uses the IRVE-3 flight-measured
+    # altitude-velocity profile (NASA TP-2013-4012), piecewise-linear in
+    # altitude — NOT a simple exponential.
     #
     # The IRVE-3 reentry trajectory is well-characterized:
     #   - Peak heating at ~51 km, ~3400 m/s (DSMC captures this)
@@ -1254,10 +1413,7 @@ def pinn_extrapolate_per_step(
     #   - Rapid deceleration below 40 km due to dense atmosphere
     #   - Subsonic by ~15-20 km altitude
     #
-    # The velocity profile is NOT a simple exponential — it follows
-    # the ballistic descent equation with realistic atmospheric density.
-    # We use a piecewise-linear interpolation of the flight-measured
-    # altitude-velocity profile from NASA TP-2013-4012 Fig. 4.
+    # [Citation: NASA TP-2013-4012 Fig. 4 — altitude-velocity profile]
     #
     # [Citation: NASA TP-2013-4012 — IRVE-3 reentry trajectory profile, Fig. 4]
     # [Citation: Anderson (2006), Hypersonic Gas Dynamics — ballistic reentry]
@@ -1277,8 +1433,24 @@ def pinn_extrapolate_per_step(
         3900.0, 3800.0, 3600.0, 3378.0, 3276.0, 2200.0, 1280.0, 675.0, 345.0, 200.0, 130.0, 80.0, 50.0
     ])
     _ALT_MIN_KM = 10.0  # Below this, parachute has deployed, trajectory ends
-    _ALT_DSMC_END = 51.8  # Altitude at step 2200
-    _VEL_DSMC_END = 3378.0  # Velocity at step 2200
+    #  Condition at the LAST DSMC row (step 2200), read from the CSV rather than
+    #  hardcoded, so the anchor cannot drift from what the run actually did.
+    #  The old literals (51.8 km / 3378 m/s) disagreed with the CSV (52.03 km /
+    #  3094.2 m/s); both branches now share whatever the data says, which is also
+    #  what makes them continuous across the DSMC|PINN boundary.
+    #  Guard: fall back to the documented values if the columns are absent.
+    #  MUST use len(), NOT truthiness: load_convergence_data hands back numpy
+    #  arrays, and `if arr` raises "truth value of an array with more than one
+    #  element is ambiguous". That ValueError was caught by the caller's
+    #  broad `except` in Step 6a, which silently replaced the whole PINN curve
+    #  with None -- every plot then lost its extrapolation and the per-step CSV
+    #  wrote DSMC rows only. len() is valid for both list and ndarray.
+    _alt_col = data.get("alt_km")
+    _vel_col = data.get("vel_ms")
+    _ALT_DSMC_END = (float(_alt_col[-1])
+                     if _alt_col is not None and len(_alt_col) > 0 else 51.8)
+    _VEL_DSMC_END = (float(_vel_col[-1])
+                     if _vel_col is not None and len(_vel_col) > 0 else 3378.0)
 
     trajectory = {
         "altitude_km": np.zeros(len(pinn_steps)),
@@ -1287,11 +1459,24 @@ def pinn_extrapolate_per_step(
     }
     for i, s in enumerate(pinn_steps):
         if s <= dsmc_end:
-            # Within DSMC range — use Ada trajectory model directly
-            traj = irve3_trajectory_model(s)
-            trajectory["altitude_km"][i] = traj["altitude_km"]
-            trajectory["velocity_ms"][i] = traj["velocity_ms"]
-            trajectory["mach_number"][i] = traj["mach_number"]
+            # Within DSMC range — hold the condition the run was EXECUTED at.
+            #
+            # This branch previously called irve3_trajectory_model(s), which
+            # normalises s/Target_Step (3.0e8) and therefore returned the ENTRY
+            # INTERFACE (120 km, 4300 m/s) for every DSMC step. The else-branch
+            # immediately below starts from _ALT_DSMC_END (the ~52 km run
+            # condition), so the curve jumped ~120 km -> ~52 km across the
+            # DSMC|PINN boundary it exists to draw. Anchoring here to the same
+            # two constants makes the boundary continuous.
+            # [Citation: FAILURES_AND_FIXES.md F15]
+            trajectory["altitude_km"][i] = _ALT_DSMC_END
+            trajectory["velocity_ms"][i] = _VEL_DSMC_END
+            _isa_d = isa_atmosphere(_ALT_DSMC_END)
+            _gamma_r = 1.4 * 287.05287  # J/(kg*K) for air
+            trajectory["mach_number"][i] = (
+                _VEL_DSMC_END / np.sqrt(_gamma_r * _isa_d["temperature_K"])
+                if _isa_d["temperature_K"] > 0 else 0.0
+            )
         else:
             # Beyond DSMC range — extrapolate using IRVE-3 flight profile
             #
@@ -1376,11 +1561,6 @@ def pinn_extrapolate_per_step(
                     "method": "converged_mean",
                     "extrapolated_value": float(data[metric][-1]),
                 }
-
-    # Reference conditions at DSMC training point (step 2200)
-    dsmc_end_step = int(data["steps"][-1])
-    ref_traj = irve3_trajectory_model(dsmc_end_step)
-    ref_sg = sutton_graves_heat_flux(ref_traj["altitude_km"], ref_traj["velocity_ms"])
 
     for metric in key_metrics:
         if metric not in pinn_results_dict:
@@ -1548,8 +1728,12 @@ def generate_convergence_plot(
     # Right Y-axis: altitude
     ax2 = ax1.twinx()
     if pinn_curve and "trajectory" in pinn_curve:
-        # DSMC portion: trajectory at each DSMC step
-        dsmc_alt = np.array([irve3_trajectory_model(s)["altitude_km"] for s in dsmc_steps])
+        # DSMC portion: the flight condition the run was EXECUTED at, read from
+        # the CSV. Not irve3_trajectory_model(step): that function normalises as
+        # Step/Target_Step (Target_Step = 3.0e8), so a DSMC solver step of
+        # 100..2200 returns the ENTRY INTERFACE (~120 km) instead of the
+        # ~52 km condition recorded in alt_km. See FAILURES_AND_FIXES.md F15.
+        dsmc_alt = np.array(data["alt_km"], dtype=float)
         ax2.plot(dsmc_steps, dsmc_alt, "gray", linestyle="-", linewidth=1.0, alpha=0.5)
 
         # PINN portion: trajectory at each PINN step
@@ -1649,27 +1833,44 @@ def generate_multi_metric_convergence_plot(
     _pi = 3.141592653589793
     _frontal_area = _pi * (IRVE3_DIAMETER_M * 0.5) ** 2
 
+    #  Backbone evaluated at the FLIGHT CONDITION the DSMC run used, read from
+    #  the CSV (alt_km/vel_ms) -- NOT from irve3_trajectory_model(step).
+    #
+    #  WHY (defect fixed 2026-10-05): IRVE3_Trajectory normalises as
+    #  Step/Target_Step with Target_Step = 3.0e8 (see its own spec: "120 km ->
+    #  40 km across steps 0 -> 300M"). A DSMC SOLVER step of 100..2200 is
+    #  therefore a fraction 3e-7..7e-6 of the trajectory, so the model returns
+    #  the ENTRY INTERFACE (120.000 km, 4300 m/s) for every DSMC row. Measured:
+    #      step  100 -> 120.000 km, 4300.0 m/s   drag 1.1 N, g 0.0004
+    #      step 2200 -> 119.999 km, 4300.0 m/s
+    #  The analytic chain was thus evaluated at the wrong altitude entirely,
+    #  producing a backbone pinned near zero (drag 1.1 N against a solver value
+    #  of 45,410 N) -- which is what the old blue "DSMC (Ada SG)" line was.
+    #  [Citation: stellarorion_pinn_trajectory.ads, IRVE3_Trajectory]
+    dsmc_alt = np.array(data["alt_km"], dtype=float)
+    dsmc_vel = np.array(data["vel_ms"], dtype=float)
     dsmc_corrected = {}
     for key in ["heatflux_avg_Wm2", "drag_sum_N", "g_load", "lift_sum_N"]:
         corrected = np.zeros(len(dsmc_steps))
-        for i, s in enumerate(dsmc_steps):
-            traj = irve3_trajectory_model(float(s))
-            isa = isa_atmosphere(traj["altitude_km"])
-            sg = sutton_graves_heat_flux(traj["altitude_km"], traj["velocity_ms"])
+        for i in range(len(dsmc_steps)):
+            alt_i = float(dsmc_alt[i])
+            vel_i = float(dsmc_vel[i])
+            isa = isa_atmosphere(alt_i)
+            sg = sutton_graves_heat_flux(alt_i, vel_i)
             if key == "heatflux_avg_Wm2":
                 corrected[i] = sg["heat_flux_Wcm2"] * 10000.0
             elif key == "drag_sum_N":
                 # Drag computed entirely in Ada/SPARK 2014 via FFI
                 # [Citation: Ada Drag_Force in stellarorion_pinn_trajectory.ads]
                 corrected[i] = _ada_drag(
-                    isa["density_kgm3"], traj["velocity_ms"],
+                    isa["density_kgm3"], vel_i,
                     IRVE3_CD, IRVE3_DIAMETER_M,
                 )
             elif key == "g_load":
                 # G-load computed entirely in Ada/SPARK 2014 via FFI
                 # [Citation: Ada G_Load in stellarorion_pinn_trajectory.ads]
                 _drag_n = _ada_drag(
-                    isa["density_kgm3"], traj["velocity_ms"],
+                    isa["density_kgm3"], vel_i,
                     IRVE3_CD, IRVE3_DIAMETER_M,
                 )
                 corrected[i] = _ada_gload(_drag_n, IRVE3_MASS_KG)
@@ -1677,13 +1878,44 @@ def generate_multi_metric_convergence_plot(
                 corrected[i] = 0.0  # Symmetric vehicle, lift = 0 at each altitude
         dsmc_corrected[key] = corrected
 
+    #  Locate the Knudsen handoff once for the whole figure (see regime_gate).
+    #  Failure here must not take the plot down: it is an annotation, not data.
+    _regime_step = None
+    try:
+        _rg = regime_gate(data)
+        _regime_step = _rg.get("handoff_step")
+    except (KeyError, ValueError) as _rg_exc:
+        print(f"  [WARN] regime marker omitted from convergence plot: {_rg_exc}")
+
     for idx, (key, label, unit, color) in enumerate(metrics):
         row, col = divmod(idx, 2)
         ax = axes[row][col]
 
-        # DSMC portion — use trajectory-corrected values from Ada backbone
-        dsmc_vals = dsmc_corrected.get(key, np.array(data[key], dtype=float))
-        ax.plot(dsmc_steps, dsmc_vals, "b-", linewidth=1.5, label="DSMC (Ada SG)", alpha=0.7)
+        # DSMC portion — plot the SOLVER's own output.
+        #
+        # WHY THIS CHANGED (defect found 2026-10-05 while fixing F11):
+        # the blue line used to be `dsmc_corrected`, i.e. the analytic Ada
+        # trajectory backbone recomputed at each step, and was labelled
+        # "DSMC (Ada SG)". Two consequences:
+        #   (a) it was not DSMC, so a reader inspecting "the DSMC ground truth"
+        #       was reading a Sutton-Graves / analytic-drag curve instead;
+        #   (b) the PINN IS trained on `data[metric]` (see
+        #       kriging_denoise_convergence(data["steps"], data[metric])), so the
+        #       blue and red curves came from DIFFERENT physics chains while the
+        #       comment above claimed they shared one. The handoff the plot
+        #       exists to show was therefore between two unrelated series.
+        # For heatflux_avg the mismatch was large: backbone ~128,231 W/m^2
+        # (stagnation) against solver 565,865 W/m^2 (per-element area average).
+        # APPLICATION: blue = raw solver series, i.e. exactly what the PINN was
+        # fitted on; the analytic backbone is retained underneath as a faint
+        # reference so the two chains can still be compared by eye.
+        raw_dsmc = np.array(data[key], dtype=float)
+        ax.plot(dsmc_steps, raw_dsmc, "b-", linewidth=1.8,
+                label="DSMC (solver output)", alpha=0.85)
+        if key in dsmc_corrected:
+            ax.plot(dsmc_steps, np.asarray(dsmc_corrected[key], dtype=float),
+                    color="0.45", linestyle=":", linewidth=1.2,
+                    label="Ada trajectory backbone (reference)", alpha=0.8)
 
         # PINN portion
         _has_pinn = bool(pinn_curve) and key in pinn_curve.get("metrics", {})
@@ -1692,8 +1924,9 @@ def generate_multi_metric_convergence_plot(
             pinn_vals = pinn_curve["metrics"][key]
             ax.plot(pinn_steps, pinn_vals, "r--", linewidth=2.0, label="PINN Extrapolation", alpha=0.8)
 
-        # Transition line
+        # Transition line -- where the CONVERGENCE handoff currently sits
         ax.axvline(x=transition_step, color="k", linestyle=":", linewidth=1.5, alpha=0.6)
+
 
         #  LOG X-AXIS (defect fixed 2026-10-05).
         #
@@ -1701,14 +1934,14 @@ def generate_multi_metric_convergence_plot(
         #  ground truth spans steps 100..2200; the PINN extrapolation spans
         #  2300..3.0e8 and is itself LOGARITHMICALLY spaced (pinn_extrapolate_
         #  per_step uses logspace when the point count would exceed 500).
-        #  THEORY: on a shared LINEAR axis the DSMC window occupies
-        #  log10(2200)/log10(3e8) = 3.34/8.48 = 39% of... no -- it occupies
-        #  (3.34-2.0)/(8.48-2.0) = 21% at best and collapses to a sub-pixel
-        #  sliver in practice, while every PINN sample crowds into the far
-        #  left. The plot therefore showed the extrapolation as a flat streak
-        #  and made the DSMC ground truth invisible: a reader could not see
-        #  where DSMC ends and PINN begins, which is the one thing this plot
-        #  exists to show.
+        #  THEORY: on a shared LINEAR axis the DSMC window spans only
+        #  log10(100)..log10(2200) = 2.0..3.34 while the axis must reach
+        #  log10(3e8) = 8.48, so DSMC gets at most (3.34-2.0)/(8.48-2.0) = 21%
+        #  of the width and in practice collapses to a sub-pixel sliver, while
+        #  every PINN sample crowds into the far left. The plot therefore showed
+        #  the extrapolation as a flat streak and made the DSMC ground truth
+        #  invisible: a reader could not see where DSMC ends and PINN begins,
+        #  which is the one thing this plot exists to show.
         #  APPLICATION: log-x makes the DSMC window and the log-spaced PINN
         #  samples both occupy their natural share of the axis.
         #  CITATION: NASA TP-2013-4012 -- IRVE-3 trajectory span (120 km ->
@@ -1725,6 +1958,18 @@ def generate_multi_metric_convergence_plot(
         if _xmax <= _xmin:
             _xmax = _xmin * 10.0
         ax.set_xlim(_xmin * 0.9, _xmax * 1.05)
+        #  Second marker: where the FLOW REGIME says the handoff belongs
+        #  (Kn crossing). Both are drawn so the reader can compare the step-based
+        #  handoff actually used against the regime-based one, against reference.
+        #  Only drawn on the first panel to avoid reusing it four times.
+        if idx == 0 and _regime_step is not None and _xmin <= _regime_step <= _xmax:
+            ax.axvline(x=_regime_step, color="darkgreen", linestyle="-.",
+                       linewidth=1.5, alpha=0.85)
+            ax.axvspan(transition_step, _regime_step, color="0.85", alpha=0.35, zorder=0)
+            ax.text(_regime_step, 0.97,
+                    f" Kn={KN_FLOOR:.0e} handoff\n step {_regime_step:,.0f}",
+                    transform=ax.get_xaxis_transform(), color="darkgreen",
+                    fontsize=7, va="top", ha="right", zorder=21)
 
         #  State plainly when a metric has no PINN counterpart, so an absent
         #  red curve reads as "not fitted" rather than "fitted and invisible".
@@ -1744,7 +1989,11 @@ def generate_multi_metric_convergence_plot(
         if idx == 0 and pinn_curve and "trajectory" in pinn_curve:
             ax2 = ax.twinx()
             # DSMC portion: trajectory at each DSMC step
-            dsmc_alt = np.array([irve3_trajectory_model(int(s))["altitude_km"] for s in dsmc_steps])
+            #  Real DSMC flight condition from the CSV. Using
+            #  irve3_trajectory_model(step) here drew a flat line at the ENTRY
+            #  INTERFACE (120 km) because of the Step/Target_Step normalisation
+            #  described in the backbone block above; the run was executed at
+            #  the condition recorded in alt_km instead.
             ax2.plot(dsmc_steps, dsmc_alt, "gray", linestyle="-", linewidth=1.0, alpha=0.5)
             # PINN portion
             pinn_steps = pinn_curve["steps"]
@@ -1809,13 +2058,25 @@ def generate_per_step_csv(
         fh.write(",".join(cols) + "\n")
 
         # DSMC portion (steps 100-2200)
-        # AXIOM: DSMC data was collected at ONE fixed point (~51.8 km, ~3378 m/s)
-        # The trajectory model maps each step to a virtual altitude along the IRVE-3 profile
-        # (120 km at step 100 → 40 km at step 2200). The metrics are real DSMC values.
-        # SG, dynamic pressure, g_load, and atmospheric conditions use the trajectory altitude.
+        # AXIOM: DSMC data was collected at ONE fixed flight condition, recorded
+        #   per row in the CSV as alt_km / vel_ms. Every derived quantity below
+        #   (SG, dynamic pressure, Kn, Re, drag, g_load, atmospheric state) is
+        #   evaluated at THAT condition.
+        #
+        # WHY NOT irve3_trajectory_model(step) (defect fixed 2026-10-05):
+        #   the previous AXIOM here read "The trajectory model maps each step to
+        #   a virtual altitude along the IRVE-3 profile (120 km at step 100 ->
+        #   40 km at step 2200)". That is false. IRVE3_Trajectory computes
+        #   H = H_Entry + (H_Final - H_Entry) * Step / Target_Step with
+        #   Target_Step = 3.0e8, so step 100 -> 120.000 km and step 2200 ->
+        #   119.999 km: the ENTRY INTERFACE for the whole DSMC range, never
+        #   40 km. Every DSMC row's altitude/velocity/SG/Kn/Re was therefore
+        #   written out at entry conditions (120 km, 4300 m/s) instead of the
+        #   ~52 km the solver actually ran at.
+        #   [Citation: stellarorion_pinn_trajectory.ads IRVE3_Trajectory]
+        #   [Citation: FAILURES_AND_FIXES.md F15]
         #
         # [Citation: Sutton & Graves (1972), NASA TR R-376 — q = C_sg * sqrt(rho/R_n) * V^3]
-        # [Citation: NASA TP-2013-4012 — IRVE-3 trajectory: 120km entry → 40km final]
         # [Citation: code-quality.md — ALL heat flux uses Sutton-Graves, not Fay-Riddell]
         # [Citation: code-quality.md — Ada/SPARK 2014 physics backbone, Python is wrapper only]
         IRVE3_MASS_KG    = 281.0
@@ -1823,14 +2084,19 @@ def generate_per_step_csv(
         IRVE3_CD         = 1.4625
         IRVE3_NOSE_R_M   = 1.5
         for i, s in enumerate(data["steps"]):
-            traj = irve3_trajectory_model(int(s))
-            sg = sutton_graves_heat_flux(traj["altitude_km"], traj["velocity_ms"])
-            isa = isa_atmosphere(traj["altitude_km"])
-            dyn_q = _ada_dynq(isa["density_kgm3"], traj["velocity_ms"])
+            alt_i = float(data["alt_km"][i])
+            vel_i = float(data["vel_ms"][i])
+            sg = sutton_graves_heat_flux(alt_i, vel_i)
+            isa = isa_atmosphere(alt_i)
+            dyn_q = _ada_dynq(isa["density_kgm3"], vel_i)
+            # Mach from the same ISA temperature the other columns use
+            _gamma_r = 1.4 * 287.05287  # J/(kg*K) for air
+            mach_i = (vel_i / np.sqrt(_gamma_r * isa["temperature_K"])
+                      if isa["temperature_K"] > 0 else 0.0)
             # Knudsen number: Kn = λ / L_char where λ = mean_free_path from ISA
             kn = isa["mean_free_path_m"] / char_length_m if char_length_m > 0 else 0.0
             # Reynolds number: Re = ρ * V * L / μ
-            re = (isa["density_kgm3"] * traj["velocity_ms"] * char_length_m /
+            re = (isa["density_kgm3"] * vel_i * char_length_m /
                   isa["dynamic_viscosity_Pas"]) if isa["dynamic_viscosity_Pas"] > 0 else 0.0
 
             # Compute trajectory-corrected metrics via Ada/SPARK 2014 FFI
@@ -1839,7 +2105,7 @@ def generate_per_step_csv(
             # [Citation: Anderson (2006), Hypersonic Gas Dynamics]
             # [Citation: Ada Drag_Force, G_Load in stellarorion_pinn_trajectory.ads]
             drag_corrected = _ada_drag(
-                isa["density_kgm3"], traj["velocity_ms"],
+                isa["density_kgm3"], vel_i,
                 IRVE3_CD, IRVE3_DIAMETER_M,
             )
             g_load_corrected = _ada_gload(drag_corrected, IRVE3_MASS_KG)
@@ -1852,15 +2118,15 @@ def generate_per_step_csv(
             hf_wcm2 = sg["heat_flux_Wcm2"]
             # Heat load [J/cm²] ≈ SG [W/cm²] × contact_time [s]
             # Contact time estimated from trajectory velocity and vehicle size
-            contact_time = IRVE3_DIAMETER_M / max(traj["velocity_ms"], 1.0)
+            contact_time = IRVE3_DIAMETER_M / max(vel_i, 1.0)
             heat_load_corrected = hf_wcm2 * contact_time
             heat_sum_corrected = hf_wcm2 * 10000.0 * contact_time  # W/m² * s
 
             vals = [
                 f"{int(s)}",
-                f"{traj['altitude_km']:.4f}",
-                f"{traj['velocity_ms']:.1f}",
-                f"{traj['mach_number']:.4f}",
+                f"{alt_i:.4f}",
+                f"{vel_i:.1f}",
+                f"{mach_i:.4f}",
                 f"{hf_avg_corrected:.2f}",
                 f"{hf_max_corrected:.2f}",
                 f"{drag_corrected:.2f}",
@@ -1973,8 +2239,6 @@ def generate_dsmc_pinn_switch_markdown(
 
     # IRVE-3 reference values
     irve3_qmax = IRVE3_REFERENCE["peak_heat_flux_wcm2"]     # 14.36 W/cm²
-    irve3_qload = IRVE3_REFERENCE["total_heat_load_jcm2"]   # 195.06 J/cm²
-    irve3_g = IRVE3_REFERENCE["peak_deceleration_g"]         # 20.2 g
 
     # DSMC final values (at step 2200, 51.8 km)
     dsmc_hf_avg_final = float(data["heatflux_avg_Wm2"][-1]) / 10000.0  # W/cm²
@@ -2891,7 +3155,7 @@ def run_validation_pipeline(
               f"SNR={snr_str} dB, noise_fraction={audit['noise_analysis']['noise_fraction']:.3f}")
 
     # ─── Step 5: Build comparison table ──────────────────────────────
-    print("\n[Step 5/5] Building comparison table vs IRVE-3 reference ...")
+    print("\n[Step 5/5] Building comparison table vs reference values ...")
 
     # Final DSMC values (step 2200)
     final_step = int(data["steps"][-1])
@@ -2903,22 +3167,24 @@ def run_validation_pipeline(
         denoised_final = float(denoise_results[metric]["denoised"][-1])
         pinn_extrap = float(pinn_results[metric]["extrapolated_value"])
 
-        # Reference values — NASA IRVE-3 flight data + self-consistency references
-        # [Citation: NASA TP-2013-4012; Rapisarda (2023) MSc Thesis Table 4.10]
-        # For drag_sum, heatflux_avg, heatflux_max: use our converged DSMC values
-        # as self-consistency references (no direct NASA flight equivalent for these)
+        # Reference values.  Each metric's SOURCE is recorded in REF_KIND so
+        # the table can say whether an error is measured against flight data,
+        # an MDAO baseline, or this run's own output (see IRVE3_REFERENCE
+        # provenance block).
+        # [Citation: NASA/TP-2013-4012, Dillman et al. 2013]
+        # [Citation: Rapisarda (2023), MSc Thesis, TU Delft, T4.1 / T4.10]
         if metric == "cd":
-            ref = IRVE3_REFERENCE["reference_cd"]            # 1.47 (NASA IRVE-3)
+            ref = IRVE3_REFERENCE["reference_cd"]            # 1.47  (M) MDAO
         elif metric == "g_load":
-            ref = IRVE3_REFERENCE["peak_deceleration_g"]     # 20.2 g (NASA IRVE-3)
+            ref = IRVE3_REFERENCE["peak_deceleration_g"]     # 19.7  (F) NASA/TP — gate's target
         elif metric == "heat_load_jcm2":
-            ref = IRVE3_REFERENCE["total_heat_load_jcm2"]   # 195.06 J/cm² (NASA IRVE-3)
+            ref = IRVE3_REFERENCE["total_heat_load_jcm2"]    # 188.0 (F) NASA/TP — gate's target
         elif metric == "drag_sum_N":
-            ref = IRVE3_REFERENCE["drag_sum_reference_N"]     # 45410 N (converged DSMC self-ref)
+            ref = IRVE3_REFERENCE["drag_sum_reference_N"]     # (S) this run's own converged DSMC
         elif metric == "heatflux_avg_Wm2":
-            ref = IRVE3_REFERENCE["heatflux_avg_reference_Wm2"]  # 565865 W/m² (per-element avg)
+            ref = IRVE3_REFERENCE["heatflux_avg_reference_Wm2"]  # (S) self
         elif metric == "heatflux_max_Wm2":
-            ref = IRVE3_REFERENCE["heatflux_max_reference_Wm2"]  # 1824880 W/m² (per-element max)
+            ref = IRVE3_REFERENCE["heatflux_max_reference_Wm2"]  # (S) self
         else:
             ref = 0.0
 
@@ -2930,6 +3196,9 @@ def run_validation_pipeline(
             "raw_dsmc": raw_final,
             "kriging_denoised": denoised_final,
             f"pinn_extrapolated_{target_step}": pinn_extrap,
+            "reference": ref,
+            "ref_kind": REF_KIND.get(metric, "none"),
+            # kept for callers that still read the old key
             "irve3_reference": ref,
             "raw_error_pct": raw_err,
             "denoised_error_pct": denoised_err,
@@ -2940,9 +3209,9 @@ def run_validation_pipeline(
 
     # Print comparison table
     print("\n" + "=" * 110)
-    print(f"{'VALIDATION COMPARISON: Raw DSMC vs Kriging vs PINN vs IRVE-3':^110}")
+    print(f"{'VALIDATION COMPARISON: Raw DSMC vs Kriging vs PINN vs reference':^110}")
     print("=" * 110)
-    header = f"{'Metric':<22} | {'Raw DSMC':<12} | {'Kriging':<12} | {'PINN ' + str(target_step):<12} | {'IRVE-3':<12} | {'Raw Err%':<9} | {'Krig Err%':<10} | {'PINN Err%':<9}"
+    header = f"{'Metric':<22} | {'Raw DSMC':<12} | {'Kriging':<12} | {'PINN ' + str(target_step):<12} | {'Reference':<12} | {'Raw Err%':<9} | {'Krig Err%':<10} | {'PINN Err%':<9}"
     print(header)
     print("-" * 110)
 
@@ -2955,6 +3224,51 @@ def run_validation_pipeline(
               f"{c[f'pinn_extrapolated_{target_step}']:>10.2f} | {ref_str:>12} | "
               f"{c['raw_error_pct']:>7.1f}% | {c['denoised_error_pct']:>8.1f}% | {c['pinn_error_pct']:>7.1f}%")
 
+    print("=" * 110)
+    #  The single "Reference" column above mixes three sources; without this
+    #  legend a 0.0 % error on the SELF rows reads as flight agreement.
+    print("  Reference provenance (these are NOT interchangeable):")
+    for metric in key_metrics:
+        c = comparison[metric]
+        kind = c["ref_kind"]
+        flag = "  <-- regression baseline, NOT flight validation" if kind.startswith("SELF") else ""
+        val = f"{c['reference']:.4g}" if c["reference"] > 0 else "n/a"
+        print(f"    {metric:<20} {val:>12}   {kind}{flag}")
+    print("=" * 110)
+
+    # ─── Gate 2: regime gate (Knudsen trigger) ─────────────────────────
+    #  Gate 1 above grades the run AT THE RAPISARDA POINT. This grades METHOD
+    #  SELECTION at the same point, so both can be read against the reference
+    #  and the combined accuracy of the algorithm assessed.
+    #  Mirrors [VALIDATE] Step 9b in stellarorion_test_modes.adb.
+    print("\n" + "=" * 110)
+    print(f"{'GATE 2 - REGIME GATE: Knudsen trigger vs reference':^110}")
+    print("=" * 110)
+    try:
+        rg = regime_gate(data)
+        print(f"  Run condition altitude     : {rg['alt_run_km']:.2f} km")
+        print(f"  Mean free path             : {rg['lambda_m']:.4e} m")
+        print(f"  Kn at run point            : {rg['kn_run']:.5e}"
+              f"   reference band {KN_REF_LO:.0e}..{KN_REF_HI:.0e}"
+              f"   -> {'PASS' if rg['in_band'] else 'FAIL'}")
+        print(f"  Regime                     : {rg['regime']}"
+              f"   -> {'PASS' if rg['in_band'] else 'FAIL'}")
+        if rg["found"]:
+            print(f"  DSMC->continuum handoff    : {rg['handoff_alt_km']:.2f} km "
+                  f"(Kn <= {rg['threshold']:.0e}) at step "
+                  f"{int(rg['handoff_step']):,} of {int(target_step):,}")
+            print(f"  Handoff within 120->40 km  : "
+                  f"{'PASS' if 40.0 <= rg['handoff_alt_km'] <= 120.0 else 'FAIL'}")
+        else:
+            print(f"  DSMC->continuum handoff    : NOT FOUND "
+                  f"(Kn never drops to {rg['threshold']:.0e} in 120->40 km)   -> FAIL")
+        if not rg["in_band"]:
+            print("\n  NOTE: the run point is outside the rarefied band, so the")
+            print("        continuum surrogate (DeepXDE PINN) is the appropriate")
+            print("        method there. This gate grades METHOD SELECTION only;")
+            print("        it does not re-grade the survivability verdict above.")
+    except KeyError as exc:
+        print(f"  [FAIL] regime gate could not run: {exc}")
     print("=" * 110)
 
     # ─── Accuracy audit summary ──────────────────────────────────────

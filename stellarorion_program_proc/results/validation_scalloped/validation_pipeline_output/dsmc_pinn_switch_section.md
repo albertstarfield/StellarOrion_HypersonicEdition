@@ -31,7 +31,7 @@ with velocity and Mach number evolving along the Black Brant XI suborbital profi
 | Heat Flux Avg [W/cm²] | 56.5865 |
 | Drag Sum [N] | 45410.15 |
 | Lift Sum [N] | -17262.77 |
-| G-Load [g] | 14.0059 |
+| G-Load [g] | 16.4788 |
 | Drag Coefficient C_d | 1.757910 |
 | Lift Coefficient C_l | -0.668273 |
 | Heat Load [J/cm²] | 174.1374 |
@@ -68,7 +68,7 @@ compared against the Sutton-Graves analytical correlation and IRVE-3 flight data
 | Criterion | Target | Achieved | Status |
 |:---|:---|:---|:---|
 | SG at 40 km matches literature | ~12 W/cm² | 9.20 W/cm² | ✅ |
-| PINN smoothness (max step jump) | <10% of mean | 1.8% | ✅ |
+| PINN smoothness (max step jump) | <10% of mean | 1.9% | ✅ |
 | IRVE-3 altitude profile | 120→40 km | 120→40 km | ✅ |
 | Transition marker at step 2200 | 2200 | 2200 | ✅ |
 

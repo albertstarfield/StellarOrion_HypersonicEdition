@@ -92,11 +92,23 @@ G0               = 9.80665
 # ── IRVE-3 flight reference values (NASA TP-2013-4012) ───────────────
 # [Citation: NASA TP-2013-4012 — IRVE-3 flight data]
 # [Citation: Rapisarda (2023) Table 4.10 — IRVE-3 validation metrics]
+#  PROVENANCE (fix 2026-10-05): this panel previously MIXED two documents
+#  without saying so — Rapisarda (2023) T4.10 flight reconstruction for heat
+#  (14.36 / 195.06) alongside NASA/TP-2013-4012 mission-report values for
+#  decel and beta (19.7 / 26.9).  The Ada gate grades against NASA/TP-2013-4012
+#  ONLY (stellarorion_test_modes.adb, "IRVE-3 reference targets — PROVENANCE"),
+#  so a viewer computing its own % from this panel disagreed with the gate's.
+#  All four now come from that one source.  Rapisarda's flight reconstruction
+#  is kept below as a named alternative, not silently substituted.
+#  [Citation: NASA/TP-2013-4012, Dillman et al. 2013]
+#  [Citation: Rapisarda (2023), MSc Thesis, TU Delft, Table 4.10]
 IRVE3_REFERENCE = {
-    "peak_heat_flux_Wcm2":  14.36,   # W/cm² — stagnation point peak
-    "total_heat_load_Jcm2": 195.06,  # J/cm² — integrated heat load
-    "ballistic_coeff_kgm2": 26.9,    # kg/m² — ballistic coefficient
-    "peak_deceleration_g":  19.7,    # g — peak deceleration
+    "peak_heat_flux_Wcm2":  13.8,    # W/cm² — NASA/TP-2013-4012 (was 14.36 = Rapisarda)
+    "total_heat_load_Jcm2": 188.0,   # J/cm² — NASA/TP-2013-4012 (was 195.06 = Rapisarda)
+    "ballistic_coeff_kgm2": 26.9,    # kg/m² — NASA/TP-2013-4012
+    "peak_deceleration_g":  19.7,    # g — NASA/TP-2013-4012
+    # Rapisarda (2023) T4.10 flight reconstruction, kept available but NOT
+    # used for grading: 14.361 W/cm², 195.0577 J/cm².
     # Entry-interface Mach (120 km, V ≈ 4300 m/s).
     # [Citation: NASA TP-2013-4012 — trajectory key points; value mirrored from
     #  validation_pipeline.py: "Entry interface (EI): 120 km, V ≈ 4300 m/s, Mach ≈ 14.5"]

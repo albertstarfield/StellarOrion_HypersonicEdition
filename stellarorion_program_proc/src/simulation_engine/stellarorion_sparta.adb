@@ -3158,7 +3158,31 @@ package body StellarOrion_Sparta is
                                    Dyn_Press_Pa     => Match_Q,
                                    CD               => Match_CD,
                                    CL               => Match_CL,
-                                   G_Load           => Traj_Profile (Matched_Traj_Idx).G_Load,
+                                   --  AUDIT FIX (g_load): derive g from THIS step's
+                                   --  DSMC drag, the same source Match_CD uses above.
+                                   --
+                                   --  WHY: the old value was Traj_Profile(Matched_
+                                   --  Traj_Idx).G_Load -- an ANALYTIC trajectory figure
+                                   --  evaluated at the peak-HEATING altitude (52 km,
+                                   --  see reports.adb "peak_heating_alt_km").  It was
+                                   --  CONSTANT (14.0059) across all 22 rows, which
+                                   --  caused two distinct failures:
+                                   --    (a) the column was not DSMC at all, yet the
+                                   --        PINN comparison table labels this column
+                                   --        "Raw DSMC" and grades it against a flight
+                                   --        target;
+                                   --    (b) a constant series has nothing to denoise
+                                   --        or extrapolate, so Kriging reported
+                                   --        CV = 0.0000 and short-circuited to
+                                   --        converged_mean -- the PINN never trained
+                                   --        on g_load despite the table implying it did.
+                                   --  The fallback branch further below already used
+                                   --  Results.Drag_Force / (Geo.Mass_Kg * G0); the
+                                   --  matched branch now uses the identical form with
+                                   --  the per-step drag so both branches agree.
+                                   --  [Citation: NASA/TP-2013-4012 (Lau et al. 2013);
+                                   --   Anderson (2006) Sec 1.5 -- n = F_d/(m*g0)]
+                                   G_Load           => Drag_Sum / (Geo.Mass_Kg * G0),
                                    Downrange_Km     => Traj_Profile (Matched_Traj_Idx).Downrange_Km,
                                    --  Total_Heat_Load from SPARTA is in J/m^2;
                                    --  convert to J/cm^2 for Rapisarda comparison (/10000).
