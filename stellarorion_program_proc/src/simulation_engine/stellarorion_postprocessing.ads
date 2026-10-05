@@ -458,7 +458,15 @@ package StellarOrion_PostProcessing is
                   --  maintains Guess >= Float'Min(X, 1.0) > 0 whenever
                   --  X > 0, and each Newton step (Guess + X/Guess)/2 stays
                   --  strictly positive, so this is provable from the loop.
-                  and (X = 0.0 or else Sqrt_Float'Result > 0.0);
+                  and (X = 0.0 or else Sqrt_Float'Result > 0.0)
+                  --  MAGNITUDE FLOOR.  Positivity alone cannot rule out
+                  --  floating-point underflow, so `P_Stag / (R * T_Stag)` was
+                  --  still unprovable: with only `P_Stag > 0` and `T_Stag > 0`
+                  --  the exact quotient may be arbitrarily small and round to
+                  --  zero.  For X >= 1 the body's invariant
+                  --  `Guess >= Float'Min(X, 1.0) = 1.0` gives this floor
+                  --  directly, so it is provable from the existing loop.
+                  and (X <= 1.0 or else Sqrt_Float'Result >= 1.0);
 
    -- ===================================================================
    --  Validation Metrics (Rapisarda Tables 4.9, 4.10)

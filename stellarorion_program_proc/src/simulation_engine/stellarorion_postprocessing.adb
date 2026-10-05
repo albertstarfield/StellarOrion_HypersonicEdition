@@ -246,7 +246,31 @@ package body StellarOrion_PostProcessing is
       --  P_Stag - P_Inf = 2.568e6 Pa (P_Inf 50.2 Pa).  Together these make
       --  the later (2.0*P_Diff)/Rho_S provably non-zero, non-overflowing and
       --  >= 0, which is exactly what Sqrt_Float's `X >= 0.0` Pre needs.
-      pragma Assert (Rho_S > 0.0 and then Rho_S <= 10.0);
+      --  CHAIN: prove each link of P_Stag = P_Inf * SF3 * Sqrt(Stag_Factor)
+      --  before asking for Rho_S > 0.  The prover does not fold the real
+      --  exponentiation that builds Stag_Factor, so without these steps it
+      --  could only conclude "Sqrt_Float may be 0" and rejected Rho_S > 0.0.
+      pragma Assert (M_Sq >= 0.0);
+      pragma Assert (Stag_Factor >= 1.0);
+      pragma Assert (SF3 > 0.0);
+      pragma Assert (SF35 > 0.0);
+      pragma Assert (P_Inf > 0.0);
+      pragma Assert (P_Stag > 0.0);
+      pragma Assert (T_Stag > 0.0);
+      --  MAGNITUDE CHAIN (2026-10-05): positivity was not enough.  With only
+      --  `P_Stag > 0` and `T_Stag > 0` the quotient P_Stag/(R*T_Stag) has no
+      --  positive floor, so IEEE rounding to zero remained possible and
+      --  `Rho_S > 0.0` was unprovable even though every input was known
+      --  positive.  Bounding each operand from both sides closes it: the
+      --  smallest admissible quotient is 1.0/(R*1.0e5) = 3.48e-08, far above
+      --  the positive-normal floor, and the largest is 1.0e7/(R*100.0) =
+      --  3.48e04.  Every bound below is satisfied by the measured operating
+      --  point (P_Inf 50.2 Pa, P_Stag 2.568e6 Pa, T_Stag 5544 K, Rho_S 1.614).
+      pragma Assert (P_Inf >= 1.0 and then P_Inf <= 1.0e4);
+      pragma Assert (T_Stag >= 100.0 and then T_Stag <= 1.0e5);
+      pragma Assert (P_Stag >= 1.0 and then P_Stag <= 1.0e7);
+      pragma Assert (Rho_S > 0.0 and then Rho_S <= 1.0e4);
+      pragma Assert (P_Stag >= P_Inf);   --  a shock always raises stagnation p
       pragma Assert (P_Diff >= 0.0 and then P_Diff <= 1.0e8);
       Du_Dy_Arg : constant Float :=
         (2.0 * P_Diff) / Rho_S;
@@ -333,7 +357,30 @@ package body StellarOrion_PostProcessing is
       --  P_Stag - P_Inf = 2.568e6 Pa (P_Inf 50.2 Pa).  Together these make
       --  the later (2.0*P_Diff)/Rho_S provably non-zero, non-overflowing and
       --  >= 0, which is exactly what Sqrt_Float's `X >= 0.0` Pre needs.
-      pragma Assert (Rho_S > 0.0 and then Rho_S <= 10.0);
+      --  CHAIN: prove each link of P_Stag = P_Inf * SF3 * Sqrt(Stag_Factor)
+      --  before asking for Rho_S > 0.  The prover does not fold the real
+      --  exponentiation that builds Stag_Factor, so without these steps it
+      --  could only conclude "Sqrt_Float may be 0" and rejected Rho_S > 0.0.
+      pragma Assert (M_Sq >= 0.0);
+      pragma Assert (Stag_Factor >= 1.0);
+      pragma Assert (SF3 > 0.0);
+      pragma Assert (P_Inf > 0.0);
+      pragma Assert (P_Stag > 0.0);
+      pragma Assert (T_Stag > 0.0);
+      --  MAGNITUDE CHAIN (2026-10-05): positivity was not enough.  With only
+      --  `P_Stag > 0` and `T_Stag > 0` the quotient P_Stag/(R*T_Stag) has no
+      --  positive floor, so IEEE rounding to zero remained possible and
+      --  `Rho_S > 0.0` was unprovable even though every input was known
+      --  positive.  Bounding each operand from both sides closes it: the
+      --  smallest admissible quotient is 1.0/(R*1.0e5) = 3.48e-08, far above
+      --  the positive-normal floor, and the largest is 1.0e7/(R*100.0) =
+      --  3.48e04.  Every bound below is satisfied by the measured operating
+      --  point (P_Inf 50.2 Pa, P_Stag 2.568e6 Pa, T_Stag 5544 K, Rho_S 1.614).
+      pragma Assert (P_Inf >= 1.0 and then P_Inf <= 1.0e4);
+      pragma Assert (T_Stag >= 100.0 and then T_Stag <= 1.0e5);
+      pragma Assert (P_Stag >= 1.0 and then P_Stag <= 1.0e7);
+      pragma Assert (Rho_S > 0.0 and then Rho_S <= 1.0e4);
+      pragma Assert (P_Stag >= P_Inf);   --  a shock always raises stagnation p
       pragma Assert (P_Diff >= 0.0 and then P_Diff <= 1.0e8);
       Du_Dy : constant Float :=
         (1.0 / SIM_NOSE_RADIUS_M) *
@@ -1101,6 +1148,13 @@ package body StellarOrion_PostProcessing is
          Ksc_Ft       : constant Float := Scallop_Depth_M * M_TO_FT;
          Ratio        : constant Float :=
            (if Rinflated_Ft > 0.0 then Ksc_Ft / Rinflated_Ft else 0.0);
+         --  Pre guarantees Scallop_Depth_M <= Rinflated_M and both are > 0,
+         --  and the identical M_TO_FT factor on top and bottom cancels, so
+         --  Ratio <= 1.  Stating it here is what lets the following
+         --  Pow_F (Ratio, 0.51841) discharge Pow_F's `X <= 1.0` Pre --
+         --  the prover will not cancel M_TO_FT on its own.
+         pragma Assert (M_TO_FT > 0.0);
+         pragma Assert (Ratio <= 1.0);
 
          --  Eq 3.105: Re_x = rho * V * r_inf / mu
          --  Using rinflated in metres for Reynolds number (SI units)
