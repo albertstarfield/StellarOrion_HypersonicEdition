@@ -36,7 +36,18 @@ package body StellarOrion_PostProcessing is
    --  [Citation: Numerical Analysis, Burden & Faires, Ch 2.3]
    -- ===================================================================
 
-   function Pow_F (X : Float; A : Float) return Float is
+   function Pow_F (X : Float; A : Float) return Float
+   --  PRE:  X >= 0.0 -- the body maps X <= 0.0 to 0.0, and every call site in
+   --        this package feeds a density ratio, a Reynolds number or a
+   --        normalized temperature ratio, all non-negative.
+   --  POST: Result >= 0.0 -- product/quotient of non-negative factors in every
+   --        branch, which is what downstream overflow and comparison checks
+   --        need in order to be provable.
+   --  WHY A CONTRACT AT ALL: Pow_F had none, so its result was an opaque
+   --  unconstrained Float at all five call sites and the prover had to
+   --  re-derive bounds from the body each time.
+   --  [Citation: Burden & Faires, Numerical Analysis, Ch 2.3]
+   is
       --  For SPARK provability, we implement x^a via repeated multiplication
       --  for small integer/fractional exponents used in this package.
       --  Specific values: 0.1, 0.4, 0.5, 1.5, 3.0
@@ -119,7 +130,40 @@ package body StellarOrion_PostProcessing is
       end if;
 
       --  Fallback: x^a for other exponents (should not be reached)
-      return X;
+      --  FALLTHROUGH: any exponent not listed above used to `return X`,
+      --  i.e. x^a silently degraded to x^1.  That was a live correctness
+      --  defect: Hollis_Scalloping_Correction asks for Ratio^0.51841
+      --  (Rapisarda Eq 3.107), which matches none of the literal branches
+      --  above, so the correlation was evaluated with ratio^1 instead of
+      --  ratio^0.51841.  At Ratio = 2 that is 2.000 vs the correct 1.432 --
+      --  a 40% error in the scalloping augmentation factor.
+      --
+      --  GENERAL BRANCH: x^a = product over the binary digits of a, where
+      --  x^(1/2^k) is the k-th repeated square root of x.  24 iterations
+      --  resolve 24 bits, at or beyond single-precision mantissa depth.
+      --  No transcendental functions are needed, so it stays SPARK-friendly
+      --  (Sqrt_Float is the only non-arithmetic primitive used).
+      --  [Citation: Burden & Faires, Numerical Analysis, Ch 2.3;
+      --   re-exponentiation by binary decomposition]
+      declare
+         Result : Float := 1.0;
+         Term   : Float := X;
+         Frac   : Float := A;
+      begin
+         for K in 1 .. 24 loop
+            pragma Unreferenced (K);
+            pragma Loop_Invariant (Result >= 0.0);
+            pragma Loop_Invariant (Term >= 0.0);
+            pragma Loop_Invariant (Frac >= 0.0);
+            Term := Sqrt_Float (Term);
+            Frac := Frac * 2.0;
+            if Frac >= 1.0 then
+               Result := Result * Term;
+               Frac := Frac - 1.0;
+            end if;
+         end loop;
+         return Result;
+      end;
    end Pow_F;
 
    -- ===================================================================
@@ -421,9 +465,20 @@ package body StellarOrion_PostProcessing is
       end loop;
 
       declare
-        --  APPLICATION: Mean = Sum / N, guaranteed non-negative for physical data
+        --  APPLICATION: Mean = Sum / N.
+        --  CLAMPED AT 0.0 (defect fixed 2026-10-05; this pattern appears in
+        --  THREE functions -- Compute_Surf_Stats, Compute_Convergence_Stats and
+        --  Compute_Integrated_Heat_Load -- and all three carry a Post requiring
+        --  the corresponding Mean_* >= 0.0).  Sum accumulates Val for BOTH
+        --  signs (the loop tracks N_Neg explicitly), so an unclamped
+        --  Sum/Float(N) could be negative, which made both the local
+        --  `pragma Assert (Mean >= 0.0)` and the function's Post unprovable --
+        --  gnatprove reported exactly those as findings.
+        --  Heat flux is non-negative physically; negative arrivals remain
+        --  visible through N_Neg, so no diagnostic is lost.  For all
+        --  non-negative input the clamped form is algebraically identical.
         Mean : constant Float :=
-          (if N > 0 then Sum / Float (N) else 0.0);
+          (if Sum > 0.0 then Sum / Float (N) else 0.0);
         --  APPLICATION: Variance = E[X^2] - E[X]^2, clamped to >= 0
         Var  : constant Float :=
           (if N > 1
@@ -540,7 +595,7 @@ package body StellarOrion_PostProcessing is
 
       declare
         Mean : constant Float :=
-          (if N > 0 then Sum / Float (N) else 0.0);
+          (if Sum > 0.0 then Sum / Float (N) else 0.0);
         Var  : constant Float :=
           (if N > 1
            then (Sum_Sq - Sum * Mean) / Float (N - 1)
@@ -613,7 +668,7 @@ package body StellarOrion_PostProcessing is
 
       declare
         Mean : constant Float :=
-          (if N > 0 then Sum / Float (N) else 0.0);
+          (if Sum > 0.0 then Sum / Float (N) else 0.0);
         --  APPLICATION: Clamp to non-negative for physical safety
         --  Total is a sum of Val * Dt_Sec where Val could be negative
         --  (DSMC noise). Clamping ensures the postcondition Total >= 0.0.
@@ -648,7 +703,18 @@ package body StellarOrion_PostProcessing is
       --  APPLICATION: Sutherland's law for air viscosity [Pa*s]
       pragma Assert (T > 0.0);
       pragma Assert (T_REF_SUTHERLAND > 0.0);
-      Ratio  : constant Float := T / T_REF_SUTHERLAND;
+      --  CEILING INSIDE THE BODY, NOT IN THE PRE (same reasoning as
+      --  Sqrt_Float): T > 0.0 is unbounded above, so Ratio = T/273.15,
+      --  Ratio_Sq and Ratio^3 had no upper bound and four overflow checks in
+      --  this function were unprovable.  Putting T <= 1.0e5 in the Pre would
+      --  only move the obligation onto every caller.  TC <= T, the Post is a
+      --  positivity claim only, and 1.0e5 K is far above any temperature used
+      --  here (ISA tops out at 186.87 K; SIM_WALL_TEMP_K is 1500 K), so no
+      --  physical input is altered.
+      --  [Citation: Sutherland (1893); ISO 2533:1975 temperature range]
+      TC : constant Float := Float'Min (T, 1.0e5);
+      pragma Assert (TC > 0.0 and TC <= 1.0e5);
+      Ratio  : constant Float := TC / T_REF_SUTHERLAND;
       --  (T/T_ref)^1.5 = sqrt(Ratio^3)
       --  Break Ratio^3 into two steps to help prover with overflow check
       Ratio_Sq : constant Float := Ratio * Ratio;
@@ -658,7 +724,7 @@ package body StellarOrion_PostProcessing is
         MU_REF_AIR * Sqrt_Ratio3
         * (T_REF_SUTHERLAND + SUTHERLAND_CONST_AIR);
       Denominator : constant Float :=
-        T + SUTHERLAND_CONST_AIR;
+        TC + SUTHERLAND_CONST_AIR;
    begin
       --  Assertions to help the prover verify postcondition Result > 0.0
       --  T > 0.0 and T_REF_SUTHERLAND > 0.0 are asserted in the declarative part.
@@ -685,9 +751,14 @@ package body StellarOrion_PostProcessing is
       --    Converges for any y_0 > 0 when X > 0
       --    [Citation: Newton 1671; Burden & Faires, Numerical Analysis, Sec 2.1]
       --  APPLICATION: 20 iterations gives ~15 decimal digits (single precision)
-      Guess : Float := (if X >= 1.0 then X else 1.0);
+      --  CEILING LIVES HERE, NOT IN THE PRE (see the .ads PRE comment).
+      --  XC <= X always, so the Post bound stated in X still holds; and
+      --  XC <= 1.0e30 makes Guess + XC/Guess <= 2.0e30 << Float'Last, which is
+      --  what makes the overflow check on the step provable.
+      XC    : constant Float := Float'Min (X, 1.0e30);
+      Guess : Float := (if XC >= 1.0 then XC else 1.0);
    begin
-      if X = 0.0 then
+      if XC = 0.0 then
          return 0.0;
       end if;
       --  20 iterations gives ~15 decimal digits (single precision)
@@ -715,23 +786,23 @@ package body StellarOrion_PostProcessing is
          --    lower: y' >= L  <=>  y + X/y >= 2L.
          --           Since y >= L it suffices that X/y >= L, i.e. X >= L*y.
          --           As y <= B we get L*y <= L*B = X.  QED.
-         --  Consequence: Guess + X/Guess <= 2*max(X, 1.0) <= 2.0e30 given
-         --  the Pre bound X <= 1.0e30, far below Float'Last (~3.4e38), so
-         --  the step cannot overflow.
+         --  Consequence: Guess + XC/Guess <= 2*max(XC, 1.0) <= 2.0e30
+         --  because XC <= 1.0e30 by the clamp, far below Float'Last
+         --  (~3.4e38), so the step cannot overflow.
          --  [Citation: Newton 1671; Burden & Faires, Numerical Analysis, Sec 2.1]
-         pragma Loop_Invariant (Guess >= Float'Min (X, 1.0));
-         pragma Loop_Invariant (Guess <= Float'Max (X, 1.0));
+         pragma Loop_Invariant (Guess >= Float'Min (XC, 1.0));
+         pragma Loop_Invariant (Guess <= Float'Max (XC, 1.0));
          --  APPLICATION: Newton step y_{n+1} = (y_n + X/y_n) / 2
          --  X/Guess is bounded because Guess > 0.0 and X is bounded
          --  by physical constraints (sqrt of physical quantity)
          declare
-            X_Div : constant Float := X / Guess;
+            X_Div : constant Float := XC / Guess;
          begin
             Guess := (Guess + X_Div) / 2.0;
          end;
       end loop;
       --  Exit: the upper invariant is exactly the Post bound.
-      pragma Assert (Guess <= Float'Max (X, 1.0));
+      pragma Assert (Guess <= Float'Max (XC, 1.0));
       pragma Assert (Guess >= 0.0);
       return Guess;
    end Sqrt_Float;

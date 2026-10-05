@@ -3,16 +3,16 @@
 \chapter{StellarOrion Physical Constants and Code Reference}
 \label{app:code_constants}
 
-This appendix documents the physical constants and default parameters used in the StellarOrion simulation engine (\texttt{\seqsplit{stellarorion\_program\_proc}}), providing full traceability between the thesis equations and the Ada implementation.
+Constants and defaults of \texttt{\seqsplit{stellarorion\_program\_proc}}.
 
 \section{Fundamental Physical Constants}
 \label{sec:fundamental_constants}
 
-Table~\ref{tab:constants} lists the physical constants as defined in \texttt{\seqsplit{stellarorion\_types.ads}}, which are used throughout the aerothermodynamic calculations presented in this thesis.
+Table~\ref{tab:constants} lists constants in \texttt{\seqsplit{stellarorion\_types.ads}}.
 
 \begin{table}[!htbp]
 \centering
-\caption{Fundamental physical constants used in StellarOrion, as consumed by \texttt{stellarorion\_types.ads} and taken from the 2018 recommended values~\protect\cite{codata2018}.}
+\caption{Physical constants from \texttt{stellarorion\_types.ads}, 2018 recommended values~\protect\cite{codata2018}.}
 \label{tab:constants}
 \begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.24\textwidth} >{\RaggedRight\arraybackslash}p{0.12\textwidth} >{\RaggedRight\arraybackslash}p{0.19\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
 \hline
@@ -39,11 +39,11 @@ Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J kg$^{-1}$ K$^{-1}$ 
 \section{Material Survivability Limits}
 \label{sec:survivability_limits}
 
-Table~\ref{tab:survivability} lists the material failure thresholds used by the \texttt{Is\_Survivable} predicate in \texttt{\seqsplit{stellarorion\_physics.ads}} to determine whether a given flight condition exceeds TPS or structural limits.
+Table~\ref{tab:survivability} lists limits for \texttt{Is\_Survivable} in \texttt{\seqsplit{stellarorion\_physics.ads}}.
 
 \begin{table}[!htbp]
 \centering
-\caption{Material survivability limits enforced by StellarOrion.}
+\caption{Material survivability limits.}
 \label{tab:survivability}
 \begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.34\textwidth} l >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
 \hline
@@ -59,11 +59,11 @@ Maximum g-load & 25 $g$ & \cite{rapisarda2023mdao}, Sec.~5.4 \\
 \section{Default Vehicle Geometry (IRVE-3 Baseline)}
 \label{sec:vehicle_geometry}
 
-Table~\ref{tab:geometry} presents the default HIAD geometry parameters corresponding to the IRVE-3 flight configuration as implemented in the StellarOrion engine.
+Table~\ref{tab:geometry} lists the default HIAD geometry.
 
 \begin{table}[!htbp]
 \centering
-\caption{Default HIAD geometry parameters, the {IRVE}-3 MDAO baseline from \protect\cite{rapisarda2023mdao}.}
+\caption{Default HIAD geometry, the {IRVE}-3 MDAO baseline from \protect\cite{rapisarda2023mdao}.}
 \label{tab:geometry}
 \begin{tabular}{lll}
 \hline
@@ -89,11 +89,11 @@ Scallop amplitude & $\delta_{\text{sc}}$ & 0.030 m \\
 \section{Default Flight Conditions}
 \label{sec:flight_conditions}
 
-Table~\ref{tab:flight} lists the freestream conditions used as the baseline simulation point, corresponding to an altitude of 51.8\,km during IRVE-3 reentry.
+Table~\ref{tab:flight} lists the baseline freestream conditions.
 
 \begin{table}[!htbp]
 \centering
-\caption{Default freestream flight conditions at 51.8 km altitude.}
+\caption{Default freestream conditions at 51.8 km.}
 \label{tab:flight}
 \begin{tabular}{lll}
 \hline
@@ -111,15 +111,12 @@ Freestream temperature & $T_\infty$ & 268.41 K \\
 \section{Thermal Protection System (TPS) Presets}
 \label{sec:tps_presets}
 
-The StellarOrion engine includes several predefined TPS material presets for thermal analysis. Table~\ref{tab:tps} summarizes the available configurations.
+Table~\ref{tab:tps} lists TPS presets.
 
 \begin{table}[!htbp]
 \centering
-% The column specification declared seven bare columns plus an X, so eight,
-% while the header and every data row supply seven fields. tabularx renders
-% the surplus column as empty space at the right edge of the table. The
-% specification is corrected to seven here.
-\caption{TPS material presets available in StellarOrion.}
+% Seven fields.
+\caption{TPS material presets.}
 \label{tab:tps}
 \begin{tabularx}{\textwidth}{l l c c c c >{\RaggedRight\arraybackslash}X}
 \hline
@@ -138,11 +135,11 @@ Multi & Layer composite & 650 & 1050 & 0.10 & 0.80 & 0.040 \\
 \section{Computational Chemistry Modes}
 \label{sec:chemistry_modes}
 
-Table~\ref{tab:chemistry} documents the gas-phase chemistry models available in the simulation framework.
+Table~\ref{tab:chemistry} lists gas-phase modes.
 
 \begin{table}[!htbp]
 \centering
-\caption{Chemistry modes implemented in StellarOrion.}
+\caption{Chemistry modes.}
 \label{tab:chemistry}
 \begin{tabularx}{\textwidth}{@{}l >{\RaggedRight\arraybackslash}p{0.40\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
 \hline
@@ -158,11 +155,11 @@ Mars & CO$_2$, CO, N$_2$, O$_2$, NO, C, O, N, CN, CO$^+$, N$_2^+$ & Mars entry \
 \section{Solver Backends}
 \label{sec:solver_backends}
 
-Table~\ref{tab:solvers} lists the computational solver backends supported by the framework.
+Table~\ref{tab:solvers} lists supported solver backends.
 
 \begin{table}[!htbp]
 \centering
-\caption{Solver backends in StellarOrion.}
+\caption{Solver backends.}
 \label{tab:solvers}
 \begin{tabularx}{\textwidth}{@{}l l >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
 \hline
@@ -181,32 +178,32 @@ PyANSYS & CFD (Mechanical) & Structural finite element analysis interface \\
 
 \section{Module Structure}
 
-The StellarOrion simulation engine is implemented in Ada and organized into the following key packages:
+Packages:
 
 \begin{itemize}
-    \item \texttt{\seqsplit{stellarorion\_types.ads}}: physical constants, type definitions, vehicle and flight parameter records
-    \item \texttt{\seqsplit{stellarorion\_physics.ads/adb}}: aerothermodynamic calculations (mean free path, Knudsen number, Sutton-Graves heat flux, Fay-Riddell correlation, radiative equilibrium, ballistic coefficient,\,g-load, trajectory profiling)
-    \item \texttt{\seqsplit{stellarorion\_geometry.ads/adb}}: pure-math aeroshell geometry (frontal area, shield mass, geometry validation)
-    \item \texttt{\seqsplit{stellarorion\_sparta.ads/adb}}: SPARTA DSMC surface generation, solver input scripting, Docker execution and result parsing
-    \item \texttt{\seqsplit{stellarorion\_optimization.ads/adb}}: design of experiments (LHS, CCD) and the Bayesian optimization cost function
-    \item \texttt{\seqsplit{stellarorion\_pinn\_trajectory.ads/adb}}: pure-math trajectory extrapolation used by the DeepXDE PINN sidecar
-    \item \texttt{\seqsplit{stellarorion\_validation.ads/adb}}: geometry validation and survivability assessment against IRVE-3 flight data
+    \item \texttt{\seqsplit{stellarorion\_types.ads}}: constants, types
+    \item \texttt{\seqsplit{stellarorion\_physics.ads/adb}}: aerothermodynamics
+    \item \texttt{\seqsplit{stellarorion\_geometry.ads/adb}}: aeroshell geometry
+    \item \texttt{\seqsplit{stellarorion\_sparta.ads/adb}}: SPARTA DSMC surfaces, Docker
+    \item \texttt{\seqsplit{stellarorion\_optimization.ads/adb}}: cost function
+    \item \texttt{\seqsplit{stellarorion\_pinn\_trajectory.ads/adb}}: trajectory extrapolation
+    \item \texttt{\seqsplit{stellarorion\_validation.ads/adb}}: validation and survivability.
 \end{itemize}
 
 \section{Command-Line Interface (CLI) Modes}
 
-The compiled binary dispatches 39 distinct command-line flags, including \texttt{-{}-self-test}, \texttt{\seqsplit{-{}-compareNoses}}, \texttt{\seqsplit{-{}-compareCalibrate}}, \texttt{-{}-optimize}, \texttt{\seqsplit{-{}-validate}}, \texttt{\seqsplit{-{}-gridIndepTest}}, and \texttt{\seqsplit{-{}-validationPINN}}. Refer to the StellarOrion README for complete CLI documentation.
+The binary dispatches 39 flags, among them \texttt{-{}-self-test}, \texttt{\seqsplit{-{}-compareNoses}}, \texttt{\seqsplit{-{}-compareCalibrate}}, \texttt{-{}-optimize}, \texttt{\seqsplit{-{}-validate}}, \texttt{\seqsplit{-{}-gridIndepTest}} and \texttt{\seqsplit{-{}-validationPINN}}.
 
 \chapter{IRVE-3 Validation Data Summary}
 \label{app:validation_data}
 
 \section{Peak Aerothermal Loads}
 
-Table~\ref{tab:validation_full} provides the complete validation comparison between the IRVE-3 post-flight reconstruction data, the MDAO reference model, and the StellarOrion framework predictions.
+Table~\ref{tab:validation_full} compares flight, MDAO and StellarOrion.
 
 \begin{table}[!htbp]
 \centering
-\caption{Complete IRVE-3 validation comparison (peak values).}
+\caption{IRVE-3 validation comparison (peak values).}
 \label{tab:validation_full}
 \small
 \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|}
@@ -224,16 +221,16 @@ Toroid radius & 0.135 m & 0.135 m & 0.135 m & 0 \\
 \hline
 \end{tabularx}
 \normalsize
-\caption*{Flight data from the IRVE-3 flight reconstruction ~\cite{dillman2014irve3flight,old2013irve3postflight} and \cite{rapisarda2023mdao};  MDAO values are the Fay-Riddell reconstruction; StellarOrion values are from the SPARTA DSMC simulation at grid factor 0.7 (single trajectory point, step 2200). The MDAO column is a reference model, not a result of this work. The StellarOrion heat load and deceleration, being solver-resolved, fall below the trajectory-integrated flight values, whereas the StellarOrion heat flux is a Sutton-Graves correlation value evaluated at the run condition and therefore rises above the flight value.}
+\caption*{Flight data from the IRVE-3 reconstruction ~\cite{dillman2014irve3flight,old2013irve3postflight} and \cite{rapisarda2023mdao}; MDAO values are Fay-Riddell, StellarOrion values SPARTA DSMC at grid factor 0.7 (step 2200), and the MDAO column is a reference model. Solver-resolved heat load and deceleration fall below trajectory-integrated values; Sutton-Graves heat flux exceeds them.}
 \end{table}
 
 \section{Grid Independence Study Results}
 
-Table~\ref{tab:grid_study} summarizes the grid independence study results that established the optimal grid factor of 0.7.
+Table~\ref{tab:grid_study} lists grid independence results.
 
 \begin{table}[!htbp]
 \centering
-\caption{Grid independence study: stagnation-point heat flux vs.\ grid factor.}
+\caption{Grid independence: stagnation-point heat flux vs.\ grid factor.}
 \label{tab:grid_study}
 \begin{tabular}{cc}
 \hline
@@ -245,7 +242,7 @@ Table~\ref{tab:grid_study} summarizes the grid independence study results that e
 1.0 & $\sim$14.1 \\
 \hline
 \end{tabular}
-\caption*{The grid factor of 0.7 provides the minimum error relative to the 14.36~W/cm\textsuperscript{2} flight measurement.}
+\caption*{Grid factor 0.7 minimises error against the 14.36~W/cm\textsuperscript{2} flight value.}
 \end{table}
 
 \chapter{Mathematical Derivation Details}
@@ -253,17 +250,17 @@ Table~\ref{tab:grid_study} summarizes the grid independence study results that e
 
 \section{Sutton-Graves Heat Flux Derivation}
 
-The Sutton-Graves stagnation-point convective heat flux correlation~\cite{sutton1971gravesh} is given by:
+Sutton-Graves stagnation heat flux~\cite{sutton1971gravesh}:
 \begin{equation}
     \dot{q} = C_{SG} \sqrt{\frac{\rho_\infty}{R_N}} \, V_\infty^3
     \label{eq:sg_derivation}
 \end{equation}
 
-\noindent where $C_{SG} = 1.83 \times 10^{-4}$\,W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ is the gas-model-dependent coefficient for a 5-species chemically reacting air model. This correlation captures the $V^3$ velocity dependence arising from the combined effects of shock compression and boundary-layer energy transport.
+\noindent where $C_{SG} = 1.83 \times 10^{-4}$\,W\,m$^{-2}$\,(kg\,m$^{-3}$)$^{-1/2}$\,(m\,s$^{-1}$)$^{-3}$ is the 5-species air coefficient, giving the $V^3$ dependence.
 
 \subsection{Dimensional Verification}
 
-Substituting the SPARTA DSMC run conditions ($\rho_\infty = 7.851 \times 10^{-4}$\,kg/m$^3$ from ISA at 51.8\,km, $R_N = 1.5$\,m, $V_\infty = 3378$\,m/s):
+With $\rho_\infty = 7.851 \times 10^{-4}$\,kg/m$^3$ (ISA at 51.8\,km), $R_N = 1.5$\,m, $V_\infty = 3378$\,m/s:
 \begin{align}
     \dot{q} &= 1.83 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \nonumber \\
     &= 1.83 \times 10^{-4} \times \sqrt{5.234 \times 10^{-4}} \times 3.8552 \times 10^{10} \nonumber \\
@@ -272,30 +269,30 @@ Substituting the SPARTA DSMC run conditions ($\rho_\infty = 7.851 \times 10^{-4}
     \label{eq:sg_baseline}
 \end{align}
 
-\noindent This single-point value is $+12.4\%$ relative to the $14.36$\,W/cm$^2$ flight measurement~\cite{old2013irve3postflight} and $+5.8\%$ relative to Rapisarda's trajectory-integrated peak of $15.26$\,W/cm$^2$~\cite{rapisarda2023mdao}; the two agree closely because the higher density of Rapisarda's MCD v6.1 trajectory is very nearly offset by the use of a single ISA point rather than a trajectory-integrated peak. A value of $12.20$\,W/cm$^2$ appears in the engine's own comments; it results from the engine default coefficient $C_{SG} = 1.7415 \times 10^{-4}$ and nose radius $R_N = 0.55$\,m evaluated at a hardcoded $V_\infty = 2700$\,m/s rather than at the run condition, and is superseded by the values used here; both constants have since been corrected to the values used above.
+\noindent The value is $+12.4\%$ on the $14.36$\,W/cm$^2$ flight measurement~\cite{old2013irve3postflight} and $+5.8\%$ on Rapisarda's $15.26$\,W/cm$^2$ peak~\cite{rapisarda2023mdao}; the denser MCD v6.1 trajectory nearly offsets the single ISA point. The engine comments report $12.20$\,W/cm$^2$ from the defaults $C_{SG} = 1.7415 \times 10^{-4}$, $R_N = 0.55$\,m and $V_\infty = 2700$\,m/s, not the run condition.
 
 \section{Mean Free Path and Knudsen Number}
 
-The mean free path for a gas of hard-sphere molecules is~\cite{bird1994molecular}:
+Hard-sphere mean free path~\cite{bird1994molecular}:
 \begin{equation}
     \lambda = \frac{1}{\sqrt{2} \, \pi \, d^2 \, n}
     \label{eq:mfp_derivation}
 \end{equation}
 
-\noindent where $d = 3.7 \times 10^{-10}$\,m is the molecular diameter and $n$ is the number density. The Knudsen number is then:
+\noindent where $d = 3.7 \times 10^{-10}$\,m is the molecular diameter and $n$ the number density:
 \begin{equation}
     Kn = \frac{\lambda}{L}
     \label{eq:kn_derivation}
 \end{equation}
 
-\noindent where $L$ is the characteristic length (aeroshell diameter, $D = 3.0$\,m).
+\noindent where $L$ is the aeroshell diameter $D = 3.0$\,m.
 
 \section{Fay-Riddell Stagnation-Point Heat Transfer}
 
-The Fay-Riddell equation~\cite{fay1958stagnation} provides the theoretically rigorous stagnation-point heat flux for a reacting, dissociated boundary layer:
+The Fay-Riddell equation~\cite{fay1958stagnation} gives the stagnation heat flux of a reacting, dissociated boundary layer:
 \begin{equation}
     \dot{q}_s = 0.763 \, \text{Pr}^{-0.6} \, (\rho_e \mu_e)^{0.4} \, (\rho_w \mu_w)^{0.1} \, \sqrt{\left(\frac{du_e}{dx}\right)_s} \, (h_s - h_w)
     \label{eq:fay_riddell}
 \end{equation}
 
-\noindent Unlike the Sutton-Graves correlation, the Fay-Riddell formulation accounts for the actual shock layer structure, chemical non-equilibrium, and catalytic wall effects, making it more physically accurate for HIAD geometries.
+\noindent Unlike Sutton-Graves, Fay-Riddell adds shock layer structure, chemical non-equilibrium and catalytic wall effects.

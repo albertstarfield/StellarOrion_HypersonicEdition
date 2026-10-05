@@ -5,7 +5,7 @@
 \section{Research Axioms and First Principles}
 \label{sec:axioms}
 
-This section states the axioms underlying the methodology, each grounded in established physical theory and in the literature reviewed in Chapter~\ref{chap:literature}. Figure~\ref{fig:methodology_derivation} traces the chain from kinetic theory to the implemented software pipeline.
+This section states the axioms underlying the methodology, each grounded in physical theory and in Chapter~\ref{chap:literature}. Figure~\ref{fig:methodology_derivation} traces the chain from kinetic theory to the implemented software pipeline.
 
 \begin{figure}[!htbp]
     \centering
@@ -49,11 +49,11 @@ The Boltzmann transport equation governs the distribution function $f(\mathbf{x}
 where the right-hand side is the collision integral under molecular chaos (Axiom~A2); the equilibrium solution is the Maxwell-Boltzmann distribution (Axiom~A4).
 
 \paragraph{Step 2: DSMC Method (A6).}
-Bird's Direct Simulation Monte Carlo method~\cite{bird1994molecular} solves Equation~\eqref{eq:boltzmann_dsmc} stochastically and converges to the exact Boltzmann solution as $N \to \infty$ (Axiom~A6). The algorithm takes three steps per time step:
+Bird's Direct Simulation Monte Carlo method~\cite{bird1994molecular} solves Equation~\eqref{eq:boltzmann_dsmc} stochastically, converging to the exact Boltzmann solution as $N \to \infty$ (Axiom~A6). It takes three steps per time step:
 \begin{enumerate}
-    \item \textbf{Advection:} Particles are moved ballistically for $\Delta t$.
-    \item \textbf{Collisions:} Pairs are selected within each cell using the VSS collision model.
-    \item \textbf{Sampling:} Macroscopic properties (density, temperature, velocity) are accumulated in each cell.
+    \item \textbf{Advection:} Particles move ballistically for $\Delta t$.
+    \item \textbf{Collisions:} Pairs are selected within each cell with the VSS collision model.
+    \item \textbf{Sampling:} Macroscopic properties (density, temperature, velocity) accumulate in each cell.
 \end{enumerate}
 
 \paragraph{Step 3: Navier-Stokes Limit (A3).}
@@ -68,7 +68,7 @@ The stagnation-point heat flux is approximated by~\cite{sutton1971gravesh}:
 where $k$ is a gas-specific constant, $\rho_\infty$ the freestream density, $R_n$ the nose radius, and $V_\infty$ the flight velocity. The correlation serves both initial thermal loading estimates and validation against DSMC results.
 
 \paragraph{Step 5: PINN Flow Field Refinement (A7).}
-The Physics-Informed Neural Network (PINN) enforces the Navier-Stokes residuals as a soft loss constraint~\cite{raissi2019pinn}:
+The Physics-Informed Neural Network (PINN) enforces Navier-Stokes residuals as a soft loss constraint~\cite{raissi2019pinn}:
 \begin{equation}
 \mathcal{L} = \underbrace{\mathcal{L}_{\text{data}}}_{\text{DSMC samples}} + \lambda_{\text{PDE}} \underbrace{\mathcal{L}_{\text{PDE}}}_{\text{NS residuals}}
 \label{eq:pinn_loss}
@@ -76,12 +76,12 @@ The Physics-Informed Neural Network (PINN) enforces the Navier-Stokes residuals 
 where $\mathcal{L}_{\text{data}}$ penalizes deviation from DSMC surface data and $\mathcal{L}_{\text{PDE}}$ penalizes governing-PDE violations at flow-field collocation points.
 
 \paragraph{Step 6: Surrogate-Assisted Optimization.}
-The Bayes Opt surrogate maps design variables to performance metrics, letting the Genetic Algorithm (GA) explore the design space without repeated DSMC evaluations. The cost function is:
+The Bayes Opt surrogate maps design variables to performance metrics, letting the Genetic Algorithm (GA) explore the space without repeated DSMC evaluations. The cost function is:
 \begin{equation}
 J = w_\beta \left(\frac{\beta_{\text{calc}} - \beta_{\text{target}}}{10}\right)^2 + \sum_{i} w_i \, \mathbb{1}\!\left[y_i^{(\text{pred})} > y_i^{(\text{limit})}\right] \cdot 10^{15}
 \label{eq:cost_function_optimization}
 \end{equation}
-where hard constraint violations (backface temperature $> 350$\,K,\,g-load $> 25g$) are penalized with $10^{15}$.
+where hard constraint violations (backface temperature $> 350$\,K,\,g-load $> 25g$) carry a $10^{15}$ penalty.
 
 Figure~\ref{fig:governing_equations} summarizes this chain.
 
@@ -96,7 +96,7 @@ Figure~\ref{fig:governing_equations} summarizes this chain.
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
-The StellarOrion engine orchestrates the multi-solver pipeline in Figure~\ref{fig:software_pipeline}: CadQuery geometry and freestream conditions feed the SPARTA DSMC solver, the DeepXDE PINN module, and the PyTorch Bayes Opt surrogate, which emit ParaView-ready VTK and STL files.
+The StellarOrion engine orchestrates the multi-solver pipeline in Figure~\ref{fig:software_pipeline}: CadQuery geometry and freestream conditions feed SPARTA DSMC, the DeepXDE PINN module and the PyTorch Bayes Opt surrogate, which emit ParaView-ready VTK and STL files.
 
 \begin{figure}[!htbp]
     \centering
@@ -155,23 +155,23 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \section{Research Design and Workflow}
 This chapter outlines the computational framework for the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD). The workflow is a multi-stage numerical analysis: parametric geometry generation, high-fidelity Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement~\cite{raissi2019pinn}, and Genetic Algorithm (GA) optimization~\cite{Goldberg1989}.
 
-To isolate the effects of the ``scalloped'' surface geometry, the methodology compares a baseline smooth sphere-cone against the proposed inflatable architecture under identical hypersonic flight conditions. Figure~\ref{fig:flowchart_ch1} shows the workflow, which consists of six primary stages:
+To isolate the ``scalloped'' surface geometry, the methodology compares a baseline smooth sphere-cone against the inflatable architecture under identical hypersonic flight conditions. Figure~\ref{fig:flowchart_ch1} shows the workflow, in six primary stages:
 \begin{enumerate}
-    \item \textbf{Parametric Geometry Generation:} Automated 3D CAD generation of the scalloped (inflatable) and smooth (baseline) profiles using CadQuery Python scripting, enabling parametric variation of toroid count, cone angle, nose radius, and aeroshell diameter.
-    \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver~\cite{plimpton2014sparta} with freestream conditions matching the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics~\cite{bird1994molecular}.
+    \item \textbf{Parametric Geometry Generation:} Automated 3D CAD generation of the scalloped (inflatable) and smooth (baseline) profiles with CadQuery scripting, varying toroid count, cone angle, nose radius and aeroshell diameter.
+    \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver~\cite{plimpton2014sparta} at the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics~\cite{bird1994molecular}.
     \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation in a Docker-containerized Linux environment, tracking millions of particles through advection, collisions, and surface interactions.
-    \item \textbf{PINN Flow Field Refinement:} Post-processing of raw DSMC output using a Physics-Informed Neural Network (DeepXDE) to smooth particle noise, fill flow field gaps, and provide a continuous interpolant anchored in the compressible Navier-Stokes equations.
+    \item \textbf{PINN Flow Field Refinement:} Post-processing of DSMC output with a Physics-Informed Neural Network (DeepXDE) to smooth particle noise, fill flow-field gaps and provide a continuous interpolant anchored in the compressible Navier-Stokes equations.
     \item \textbf{Survivability Optimization:} Genetic Algorithm (GA) guided by a Gaussian Process surrogate with Mat\'ern 5/2 kernel and Expected Improvement acquisition (Bayes Opt) for automated multi-objective optimization of HIAD geometry.
-    \item \textbf{Validation and Analysis:} Verification of the solution through grid independence studies and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
+    \item \textbf{Validation and Analysis:} Grid independence studies and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
 \end{enumerate}
 
 \section{Geometric Modeling and Computational Domain}
 
 \subsection{Parametric Geometry Generation}
-Vehicle profiles are generated with CadQuery, a Python-based parametric CAD scripting library, which ensures geometric consistency and enables automated design space exploration. Constraints come from the \textbf{NASA IRVE-3} and \textbf{LOFTID} flight test specifications and the MDAO framework baseline~\cite{rapisarda2023mdao}. Command-line invocation generates hundreds of design variants without manual intervention.
+Vehicle profiles are generated with CadQuery, a Python-based parametric CAD scripting library, ensuring geometric consistency and automated design space exploration. Constraints come from the \textbf{NASA IRVE-3} and \textbf{LOFTID} flight test specifications and the MDAO framework baseline~\cite{rapisarda2023mdao}; command-line invocation generates hundreds of variants without manual intervention.
 
 \subsection{Vehicle Specifications and Scaling}
-The modelling phase targets two scales from NASA research to test how vehicle diameter affects the aerothermal environment. Figure~\ref{fig:hiad_comparison} shows the scaling transition from the 3.0\,m IRVE-3 baseline through intermediate rigid configurations (4.57\,m) to inflatable configurations of 15\,m~\cite{dillman2015irve3}. That figure compares form and scale only; the quantitative scaling study reported later uses the 3.0\,m baseline, the only scale with a validated reference dataset.
+The modelling phase targets two NASA scales to test how vehicle diameter affects the aerothermal environment. Figure~\ref{fig:hiad_comparison} shows the scaling transition from the 3.0\,m IRVE-3 baseline through intermediate rigid configurations (4.57\,m) to inflatable configurations of 15\,m~\cite{dillman2015irve3}. That figure compares form and scale only; the quantitative scaling study reported later uses the 3.0\,m baseline, the only scale with a validated reference dataset.
 
 \begin{figure}[!htbp]
     \centering
@@ -183,7 +183,7 @@ The modelling phase targets two scales from NASA research to test how vehicle di
 \end{figure}
 
 \subsection{Internal Architecture and Scallop Definition}
-The ``scalloped'' outer mold line (OML) follows the 6-toroid stack configuration of the \cite{rapisarda2023mdao} MDAO baseline; the stacked toroid arrangement is illustrated in Figure~\ref{fig:irve3_layout}~\cite{rapisarda2023mdao}.
+The ``scalloped'' outer mold line (OML) follows the 6-toroid stack configuration of the \cite{rapisarda2023mdao} MDAO baseline; the stacked toroid arrangement appears in Figure~\ref{fig:irve3_layout}~\cite{rapisarda2023mdao}.
 
 \begin{figure}[!htbp]
     \centering
@@ -220,7 +220,7 @@ Geometric parameters of the numerical model, in Table~\ref{tab:geom_params}:
 \end{table}
 
 \subsection{Configuration Definitions}
-The two configurations, \textbf{Configuration A (Scalloped)} and \textbf{Configuration B (Smooth)}, are constrained by the stowed and deployed envelopes of the launch vehicle~\cite{dillman2015irve3}. The stowed envelope bounds the packaged diameter, quoted at 18.5 inches for the stowed pack against a 22 inch launch-vehicle fairing; this bound, not any geometric property of the inflated article, limits how much of the 3~m reference diameter may be deployed, and neither configuration may exceed it.
+The two configurations, \textbf{Configuration A (Scalloped)} and \textbf{Configuration B (Smooth)}, are bounded by the stowed and deployed envelopes of the launch vehicle~\cite{dillman2015irve3}. The stowed envelope bounds the packaged diameter, quoted at 18.5 inches against a 22 inch launch-vehicle fairing. This bound, not any geometric property of the inflated article, limits deployment of the 3~m reference diameter, and neither configuration may exceed it.
 
 % A figure environment for fig:stowed_deployed was removed here. It carried
 % alternative text describing a cutaway of the HIAD inside its launch vehicle,
@@ -232,21 +232,21 @@ The two configurations, \textbf{Configuration A (Scalloped)} and \textbf{Configu
 
 
 \begin{enumerate}
-    \item \textbf{Configuration A (Scalloped):} The 6-toroid profile (T1-T6) of Figure~\ref{fig:irve3_layout}, whose valleys are analysed for heating augmentation and flow separation in the scalloped troughs.
-    \item \textbf{Configuration B (Smooth Baseline):} A tangent-cone model representing the ``Equivalent Rigid OML,'' isolating heating augmentation caused specifically by the toroidal troughs.
+    \item \textbf{Configuration A (Scalloped):} The 6-toroid profile (T1-T6) of Figure~\ref{fig:irve3_layout}, whose valleys are analysed for heating augmentation and flow separation.
+    \item \textbf{Configuration B (Smooth Baseline):} A tangent-cone model representing the ``Equivalent Rigid OML,'' isolating heating augmentation caused by the toroidal troughs.
 \end{enumerate}
 
 \section{DSMC Simulation Framework}
 \label{sec:dsmc_framework}
 
 \subsection{Governing Equations: The Boltzmann Equation}
-Unlike continuum CFD, this study uses the Direct Simulation Monte Carlo (DSMC) method, which solves the Boltzmann equation for rarefied gas dynamics~\cite{bird1994molecular}. The equation describes the molecular velocity distribution function $f(\mathbf{r}, \mathbf{v}, t)$:
+Unlike continuum CFD, this study uses the Direct Simulation Monte Carlo (DSMC) method, which solves the Boltzmann equation for rarefied gas dynamics~\cite{bird1994molecular} in terms of the molecular velocity distribution function $f(\mathbf{r}, \mathbf{v}, t)$:
 
 \begin{equation}
     \frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla_{\mathbf{r}} f + \frac{\mathbf{F}}{m} \cdot \nabla_{\mathbf{v}} f = \left(\frac{\partial f}{\partial t}\right)_{coll}
 \end{equation}
 
-where $\mathbf{F}$ is the external force per molecule, $m$ the molecular mass, and the right-hand side the Boltzmann collision integral. DSMC solves this equation stochastically by tracking representative particles through advection and collisions.
+where $\mathbf{F}$ is the external force per molecule, $m$ the molecular mass, and the right-hand side the Boltzmann collision integral. DSMC solves it stochastically by tracking representative particles through advection and collisions.
 
 \subsection{Knudsen Number and Flow Regime}
 The continuum assumption is governed by the Knudsen number ($Kn$), the ratio of molecular mean free path ($\lambda$) to characteristic length ($L$):
@@ -259,11 +259,11 @@ The continuum assumption is governed by the Knudsen number ($Kn$), the ratio of 
     \lambda = \frac{1}{\sqrt{2} \pi d^2 n}
 \end{equation}
 
-where $d$ is the molecular diameter and $n$ the number density. Because $Kn$ is a \emph{local} ratio, its value depends on the reference length, and HIAD reentry admits two physically meaningful choices~\cite{bird1994molecular}.
+where $d$ is the molecular diameter and $n$ the number density. Because $Kn$ is a \emph{local} ratio, its value depends on reference length, and HIAD reentry admits two meaningful choices~\cite{bird1994molecular}.
 
-On the \emph{global} reference length (the full 3\,m aeroshell diameter) the IRVE-3 freestream at the 51.8\,km reference point is \emph{deeply continuum}. The ISA density $\rho_\infty = 1.05\times10^{-3}$\,kg/m\textsuperscript{3}, molecular diameter $d = 3.7\times10^{-10}$\,m and $T_\infty = 220$\,K give $\lambda_\infty \approx 7.5\times10^{-5}$\,m and hence $Kn_{\text{global}} \approx 2.5\times10^{-5}$ (Equation~\eqref{eq:kn_global_52km}), so a continuum description fits the freestream bulk flow; a global $Kn$ in the transition band would misattribute the physics.
+On the \emph{global} reference length (the full 3\,m aeroshell diameter) the IRVE-3 freestream at 51.8\,km is \emph{deeply continuum}. The ISA density $\rho_\infty = 1.05\times10^{-3}$\,kg/m\textsuperscript{3}, molecular diameter $d = 3.7\times10^{-10}$\,m and $T_\infty = 220$\,K give $\lambda_\infty \approx 7.5\times10^{-5}$\,m and hence $Kn_{\text{global}} \approx 2.5\times10^{-5}$ (Equation~\eqref{eq:kn_global_52km}), so a continuum description fits the freestream bulk flow; a global $Kn$ in the transition band would misattribute the physics.
 
-On the \emph{local} reference length (the millimetre-scale bow-shock and stagnation layer) the same gas enters the non-continuum bands: $Kn_{\text{shock}} \sim 0.01$-$0.1$ in the shock layer and $Kn_{\text{stag}} \sim 0.005$ at the stagnation region. This local regime dominates the convective heat load, so DSMC is the appropriate solver despite the continuum freestream. SPARTA solves the Boltzmann transport equation at every $Kn$, resolving continuum freestream and non-continuum shock layer in one solver~\cite{plimpton2014sparta}; it also licenses the continuum Navier-Stokes PINN stage over the near-continuum stagnation region (Sec.~\ref{sec:pinn_pragmatic}).
+On the \emph{local} reference length (millimetre-scale bow-shock and stagnation layer) the same gas enters non-continuum bands: $Kn_{\text{shock}} \sim 0.01$-$0.1$ in the shock layer and $Kn_{\text{stag}} \sim 0.005$ at the stagnation region. This local regime dominates convective heat load, so DSMC suits despite the continuum freestream. SPARTA solves the Boltzmann transport equation at every $Kn$, resolving continuum freestream and non-continuum shock layer in one solver~\cite{plimpton2014sparta}; it also licenses the continuum Navier-Stokes PINN stage over the near-continuum stagnation region (Sec.~\ref{sec:pinn_pragmatic}).
 
 Table~\ref{tab:knudsen_regimes} in Chapter~2 gives the five-band classification used throughout.
 
@@ -271,26 +271,26 @@ Table~\ref{tab:knudsen_regimes} in Chapter~2 gives the five-band classification 
 Simulations use the SPARTA (Sandia Parallel Algorithm for Real-Time Application) DSMC solver~\cite{plimpton2014sparta}, executed in a Docker-containerized Linux environment for reproducible builds across platforms.
 
 \subsubsection*{Freestream Conditions}
-Freestream conditions match the target trajectory point for IRVE-3 reentry at 51.8\,km altitude; all atmospheric values below come from the atmospheric model evaluated in the solver at that altitude, not from a hand calculation:
+Freestream conditions match the IRVE-3 reentry trajectory point at 51.8\,km altitude; atmospheric values below come from the solver's atmospheric model at that altitude, not from a hand calculation:
 
 \begin{itemize}
-    \item \textbf{Freestream Velocity ($v_{\infty}$):} 3378\,m/s (corresponding to Mach $\approx$ 10.29 at altitude)
-    \item \textbf{Number Density ($n$):} $1.63 \times 10^{22}$\,m$^{-3}$ (derived from atmospheric density $\rho = 7.851 \times 10^{-4}$\,kg/m$^3$ via $n = \rho N_A / M_{air}$)
+    \item \textbf{Freestream Velocity ($v_{\infty}$):} 3378\,m/s (Mach $\approx$ 10.29 at altitude)
+    \item \textbf{Number Density ($n$):} $1.63 \times 10^{22}$\,m$^{-3}$ (from atmospheric density $\rho = 7.851 \times 10^{-4}$\,kg/m$^3$ via $n = \rho N_A / M_{air}$)
     \item \textbf{Freestream Temperature ($T_{\infty}$):} 268.41\,K (atmospheric model, code baseline)
     \item \textbf{Particle Weighting Factor ($f_{num}$):} $1.5 \times 10^{20}$ (configurable via \texttt{-{}-fnum})
 \end{itemize}
 
 \subsubsection*{Gas Model}
-The 5-species air model is N$_2$, O$_2$, NO, N and O. Collision physics use the Variable Soft Sphere (VSS) model, where collision cross-section varies with relative velocity:
+The 5-species air model is N$_2$, O$_2$, NO, N and O, with Variable Soft Sphere (VSS) collision physics whose cross-section varies with relative velocity:
 
 \begin{equation}
     \sigma = \pi d_{ref}^2 \left( \frac{g_{ref}}{g} \right)^{2(\omega - 0.5)}
 \end{equation}
 
-where $g$ is the relative velocity of colliding molecules and $\omega$ the viscosity index of each species. The VSS model captures vibrational energy exchange and dissociation reactions relevant to hypersonic entry.
+where $g$ is the relative velocity of colliding molecules and $\omega$ the viscosity index of each species. The VSS model captures vibrational energy exchange and dissociation relevant to hypersonic entry.
 
 \subsubsection*{Particle Tracking}
-SPARTA~\cite{plimpton2014sparta} tracks millions of simulated particles through three fundamental processes:
+SPARTA~\cite{plimpton2014sparta} tracks millions of particles through three processes:
 \begin{enumerate}
     \item \textbf{Advection:} Particles move ballistically through the domain according to their velocity vectors.
     \item \textbf{Collisions:} Molecular collisions use the VSS model within computational cells, with partners selected by the nearest-neighbour pairing scheme.
@@ -300,36 +300,36 @@ SPARTA~\cite{plimpton2014sparta} tracks millions of simulated particles through 
 \subsection{Solver Timestep and Physical Time Window}
 \label{sec:timestep}
 
-The particle timestep is fixed at $\Delta t = 1\times10^{-6}$\,s (1\,\textmu\,s), written directly into the generated solver input, so every run uses the same value with no adaptive stepping. Production runs in Chapter~\ref{ch:results} carry $2200$ particle-time steps, giving a total simulated time of
+The particle timestep is fixed at $\Delta t = 1\times10^{-6}$\,s (1\,\textmu\,s) in the generated solver input, so every run uses the same value with no adaptive stepping. Production runs in Chapter~\ref{ch:results} carry $2200$ particle-time steps, giving a total simulated time of
 
 \begin{equation}
     t_{sim} = N_{steps}\,\Delta t = 2200 \times 10^{-6}\ \text{s} = 2.2\ \text{ms}
 \label{eq:tsim}
 \end{equation}
 
-DSMC needs a timestep constraint independently of accuracy: collision frequency must not exceed the sampling rate, so no particle pair passes through one another between collisions~\cite{bird1994molecular}. For the VSS model this requires $\Delta t \ll \tau_{coll}$, the mean collision time. At the validated condition the local Knudsen number places the shock layer in the slip regime, where the mean free path is of order millimetres and thermal speed of order several hundred metres per second, giving a mean collision time in the nanosecond range. The $1$\,\textmu\,s step is therefore about three orders of magnitude longer than $\tau_{coll}$, the standard operating regime for DSMC~\cite{plimpton2014sparta}: what matters in practice is that the timestep stay short against the \emph{flow} timescales of interest, not the collision time.
+DSMC needs a timestep constraint independently of accuracy: collision frequency must not exceed the sampling rate, so no particle pair passes between collisions~\cite{bird1994molecular}. For the VSS model this requires $\Delta t \ll \tau_{coll}$, the mean collision time. At the validated condition the shock layer sits in the slip regime, where mean free path is of order millimetres and thermal speed of order several hundred metres per second, giving a mean collision time in nanoseconds. The $1$\,\textmu\,s step is about three orders of magnitude longer than $\tau_{coll}$, the standard operating regime for DSMC~\cite{plimpton2014sparta}: what matters in practice is a timestep short against the \emph{flow} timescales of interest, not the collision time.
 
-The $2.2$\,ms window of Eq.~\eqref{eq:tsim} resolves the following timescales at this trajectory point:
+The $2.2$\,ms window of Eq.~\eqref{eq:tsim} resolves these timescales at this trajectory point:
 
 \begin{itemize}
-    \item the bow-shock adjustment, of order $0.1$ to $0.5$\,ms, which is captured;
-    \item a single particle transit across the domain, of order $5$\,ms, which is only about a fifth of one sweep and is therefore marginally resolved;
-    \item toroidal recirculation in the valleys between adjacent tori, of order $5$ to $20$\,ms, which is \emph{not} captured;
-    \item the macroscopic soak time of seconds to minutes, which is \emph{not} captured.
+    \item the bow-shock adjustment, of order $0.1$ to $0.5$\,ms, captured;
+    \item a single particle transit across the domain, of order $5$\,ms, only a fifth of one sweep and marginally resolved;
+    \item toroidal recirculation between adjacent tori, of order $5$ to $20$\,ms, \emph{not} captured;
+    \item the macroscopic soak time of seconds to minutes, \emph{not} captured.
 \end{itemize}
 
-The consequence carries into the results. Quantities that relax on the captured timescales, namely mean surface heat flux, drag coefficient and lift coefficient, converge within the window; the surface coefficients flatten by roughly step 300, well inside the $2200$ used. Quantities that depend on unresolved valley recirculation, in particular local backface temperature peaks in the inter-torus pockets, are not converged here and appear in Chapter~\ref{ch:results} as a lower bound on thermal load rather than a settled value. Establishing that bound properly needs an unsteady production run of $5000$ to $10000$ steps on shortlisted designs, identified as future work and stated as a limitation.
+The consequence carries into the results. Quantities relaxing on the captured timescales, namely mean surface heat flux, drag and lift coefficients, converge within the window; surface coefficients flatten by roughly step 300, well inside the $2200$ used. Quantities depending on unresolved valley recirculation, in particular local backface temperature peaks in the inter-torus pockets, are not converged here and appear in Chapter~\ref{ch:results} as a lower bound on thermal load, not a settled value. Establishing that bound needs an unsteady production run of $5000$ to $10000$ steps on shortlisted designs, identified as future work and stated as a limitation.
 \subsection{Cartesian Grid and Collision Pairing}
 DSMC still needs a Cartesian computational grid for two purposes:
 \begin{enumerate}
-    \item \textbf{Collision Pairing:} Restricting collision partner selection to particles within the same cell ensures $O(N)$ computational complexity rather than $O(N^2)$ for brute-force pairing.
-    \item \textbf{Macroscopic Sampling:} Cells serve as sampling volumes for accumulating density, temperature, pressure, and velocity statistics from the particle data.
+    \item \textbf{Collision Pairing:} Restricting collision partners to the same cell ensures $O(N)$ complexity rather than $O(N^2)$ for brute-force pairing.
+    \item \textbf{Macroscopic Sampling:} Cells are sampling volumes for density, temperature, pressure and velocity statistics.
 \end{enumerate}
 
-Grid resolution must be finer than the local mean free path ($\lambda$) to resolve shock structure and boundary layer gradients; a grid factor parameter (default: 0.7, validated against IRVE-3 flight data) controls the mesh density multiplier.
+Grid resolution must be finer than the local mean free path ($\lambda$) to resolve shock structure and boundary layer gradients; a grid factor (default: 0.7, validated against IRVE-3 flight data) controls mesh density.
 
 \subsection{Grid Independence Study}
-A Grid Convergence Index (GCI) study checked that the solution is independent of grid resolution, using multiple grid densities from systematic variation of the grid factor:
+A Grid Convergence Index (GCI) study checked independence of grid resolution, using multiple grid densities from systematic grid-factor variation:
 
 \begin{table}[!htbp]
     \centering
@@ -350,7 +350,7 @@ The grid factor \textbf{0.7} is the default for all production runs: least error
 \section{Surface Data Extraction and Flight Metrics}
 
 \subsection{Surface Computes}
-SPARTA accumulates surface force and energy data using the \texttt{dump surf} command. The relevant surface quantities are:
+SPARTA accumulates surface force and energy data via \texttt{dump surf}; surface quantities:
 
 \begin{table}[!htbp]
     \centering
@@ -370,32 +370,32 @@ SPARTA accumulates surface force and energy data using the \texttt{dump surf} co
 
 \subsection{Ballistic Coefficient (\texorpdfstring{$\beta$}{beta})}
 \label{sec:ballistic_coefficient}
-The ballistic coefficient is a measure of the vehicle's ability to maintain its speed during reentry~\cite{AndersonHypersonic}:
+The ballistic coefficient measures the vehicle's ability to hold speed during reentry~\cite{AndersonHypersonic}:
 
 \begin{equation}
     \beta = \frac{m}{C_D A}
 \end{equation}
 
-Since $F_{drag} = C_D A q$, where $q$ is dynamic pressure:
+As $F_{drag} = C_D A q$, with $q$ dynamic pressure:
 
 \begin{equation}
     \beta = \frac{m \cdot q}{F_{drag}}
 \end{equation}
 
-The mass density is derived from number density:
+Mass density follows from number density:
 
 \begin{equation}
     \rho = n \cdot \frac{M_{air}}{N_A}
 \end{equation}
 
-where $M_{air} \approx 28.97$\,g/mol and $N_A$ is Avogadro's constant. The dynamic pressure is:
+where $M_{air} \approx 28.97$\,g/mol and $N_A$ Avogadro's constant. Dynamic pressure:
 
 \begin{equation}
     q = \frac{1}{2} \rho v_{\infty}^2
 \end{equation}
 
 \subsection{Instantaneous Deceleration (\texorpdfstring{$n$}{n})}
-The deceleration load felt by the vehicle in Earth-gravity units ($g_0$):
+Deceleration load in Earth-gravity units ($g_0$):
 
 \begin{equation}
     n = \frac{F_{drag}}{m \cdot g_0}
@@ -405,7 +405,7 @@ The deceleration load felt by the vehicle in Earth-gravity units ($g_0$):
 
 \subsection{Stagnation Heat Flux: Sutton-Graves Correlation}
 \label{sec:sutton_graves_methodology}
-The Sutton-Graves (1971) stagnation-point convective heating correlation is used for all absolute thermal calculations~\cite{sutton1971gravesh}. This is the standard reference formula for Earth entry and has been validated against IRVE-3 flight data~\cite{rapisarda2023mdao}:
+The Sutton-Graves (1971) stagnation-point convective heating correlation is used for all absolute thermal calculations~\cite{sutton1971gravesh}; it is the standard Earth-entry formula, validated against IRVE-3 flight data~\cite{rapisarda2023mdao}:
 
 \begin{equation}
     \dot{q}_{stag} = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_N}} \cdot V_{\infty}^3
@@ -420,7 +420,7 @@ where:
 \end{itemize}
 
 \subsubsection*{IRVE-3 Validation}
-For the IRVE-3 baseline configuration the correlation is evaluated at the SPARTA DSMC run condition under ISA~\cite{usstandard1976}: $h = 51.8$\,km, which yields $\rho_{\infty} = 7.851 \times 10^{-4}$\,kg/m$^3$, using the IRVE-3 sphere-cone nose radius $R_N = 1.5$\,m (a 3\,m aeroshell diameter) and the run velocity $V_{\infty} = 3{,}378$\,m/s:
+For the IRVE-3 baseline the correlation is evaluated at the SPARTA DSMC run condition under ISA~\cite{usstandard1976}: $h = 51.8$\,km, giving $\rho_{\infty} = 7.851 \times 10^{-4}$\,kg/m$^3$. Nose radius is the IRVE-3 sphere-cone value $R_N = 1.5$\,m (3\,m aeroshell diameter), and run velocity is $V_{\infty} = 3{,}378$\,m/s:
 
 \begin{equation}
     \begin{split}
@@ -431,13 +431,13 @@ For the IRVE-3 baseline configuration the correlation is evaluated at the SPARTA
     \end{split}
 \end{equation}
 
-Two constants govern this evaluation and are stated here with their provenance, because the engine's own defaults differ from both. The correlation constant is $C_{SG} = 1.83 \times 10^{-4}$, the Sutton \& Graves value for Earth air; the engine default is $1.7415 \times 10^{-4}$. The nose radius is $R_N = 1.5$\,m, the actual IRVE-3 geometry; the engine default of $0.55$\,m is not the flown value, and because the correlation scales as $1/\sqrt{R_N}$ using it would inflate the computed flux by roughly a factor of 1.65. A value of $12.20$\,W/cm$^2$ appears in the engine's own comments; it results from the engine default constant and nose radius evaluated at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than at the run condition, and is superseded by the $16.14$\,W/cm$^2$ reported above. The MDAO reconstruction~\cite{rapisarda2023mdao} reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ ($+6.26\%$ above the 14.36\,W/cm$^2$ flight measurement) and a Fay-Riddell CFD prediction of 13.83\,W/cm$^2$ ($-3.69\%$ below flight). The Fay-Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure.
+Two constants govern this evaluation; engine defaults differ from both. The correlation constant is $C_{SG} = 1.83 \times 10^{-4}$, the Sutton \& Graves value for Earth air; the engine default is $1.7415 \times 10^{-4}$. The nose radius is $R_N = 1.5$\,m, the flown IRVE-3 geometry; the engine default $0.55$\,m is not, and since the correlation scales as $1/\sqrt{R_N}$ it inflates the computed flux by roughly a factor of 1.65. A value of $12.20$\,W/cm$^2$ in the engine comments comes from those defaults at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than the run condition, superseded by the $16.14$\,W/cm$^2$ above. MDAO reconstruction~\cite{rapisarda2023mdao} reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ ($+6.26\%$ above the 14.36\,W/cm$^2$ flight measurement) and a Fay-Riddell CFD prediction of 13.83\,W/cm$^2$ ($-3.69\%$ below flight); Fay-Riddell is more accurate for HIAD geometries, accounting for shock layer structure.
 
 \subsubsection*{Note on SPARTA Surface Energy}
-The raw SPARTA DSMC kinetic energy ($ke$) surface compute cannot be used directly as an absolute heat flux in W/m$^2$. SPARTA's \texttt{fix ave/surf} outputs kinetic energy per simulated particle per timestep per face element, a simulation-internal unit that depends on $f_{num}$, timestep $dt$, and face area in a non-trivially-normalized way. It is retained only as a \textbf{relative shape-ranking signal} for the optimizer (comparing geometries against each other). For all absolute thermal calculations, the Sutton-Graves correlation is used.
+The raw SPARTA DSMC kinetic energy ($ke$) surface compute is not an absolute heat flux in W/m$^2$: SPARTA's \texttt{fix ave/surf} outputs kinetic energy per simulated particle per timestep per face element, a simulation-internal unit depending on $f_{num}$, timestep $dt$ and face area. It serves only as a \textbf{relative shape-ranking signal} for the optimizer; absolute thermal calculations use the Sutton-Graves correlation.
 
 \subsection{Surface Temperature: Radiative Equilibrium}
-At the TPS outer surface, radiative cooling balances the incoming convective heat flux at steady state. Assuming grey-body radiation:
+At the TPS outer surface, radiative cooling balances incoming convective heat flux at steady state; assuming grey-body radiation:
 
 \begin{equation}
     T_{surface} = \left(\frac{\dot{q}_{stag}}{\epsilon \sigma}\right)^{1/4}
@@ -446,7 +446,7 @@ At the TPS outer surface, radiative cooling balances the incoming convective hea
 where $\epsilon = 0.75$ (Nicalon SiC emissivity) and $\sigma = 5.67 \times 10^{-8}$\,W/m$^2$K$^4$ (Stefan-Boltzmann constant).
 
 \subsection{Backface Temperature: 1D Transient Model}
-The 1D transient backface temperature model estimates the thermal penetration through the FTPS insulation stack:
+The 1D transient backface temperature model estimates thermal penetration through the FTPS insulation stack:
 
 \begin{equation}
     T_{back} = T_{init} + \frac{\dot{q} \cdot \Delta t \cdot \eta_{lag}}{\rho_{TPS} \cdot C_{p,TPS} \cdot \delta_{TPS}}
@@ -454,7 +454,7 @@ The 1D transient backface temperature model estimates the thermal penetration th
 
 where $\eta_{lag} = 0.15$ is the thermal lag factor, $\rho_{TPS} = 1468$\,kg/m$^3$ (Nicalon SiC density), $C_{p,TPS} = 1100$\,J/kg$\cdot$K, and $\delta_{TPS}$ is the TPS thickness.
 
-The framework supports multiple TPS material presets as summarized in Table~\ref{tab:tps_materials}.
+Table~\ref{tab:tps_materials} lists the available TPS material presets.
 
 \begin{table}[!htbp]
     \centering
@@ -473,7 +473,7 @@ The framework supports multiple TPS material presets as summarized in Table~\ref
 \subsection{Composite Thermal Protection Conduction Model}
 \label{sec:composite_tps}
 
-The thermal protection system is not a homogeneous slab. The engine models it as an ordered composite stack and returns the full in-depth temperature field, so that the conduction path crosses the actual material sequence rather than an equivalent single layer. The baseline layup used for the IRVE-3 configuration~\mbox{\cite{rapisarda2023mdao}} is five plies, listed in Table~\ref{tab:tps_materials} together with their effective through-thickness conductivities.
+The thermal protection system is modelled as an ordered composite stack returning the full in-depth temperature field, so the conduction path crosses the actual material sequence rather than an equivalent single layer. The baseline IRVE-3 layup~\mbox{\cite{rapisarda2023mdao}} is five plies, listed in Table~\ref{tab:tps_materials} with their effective through-thickness conductivities.
 
 \begin{table}[!htbp]
     \centering
@@ -494,33 +494,33 @@ The thermal protection system is not a homogeneous slab. The engine models it as
     \end{tabularx}
 \end{table}
 
-The quoted conductivities are effective through-thickness values rather than the solid constituents, because in a felt ply the conduction path crosses inter-fiber voids. Summing the ply resistances in series gives a total areal resistance of $R = 0.25605$\,m\textsuperscript{2}\,K/W over the $6.35$\,mm stack.
+The quoted conductivities are effective through-thickness values, since in a felt ply the conduction path crosses inter-fibre voids. Ply resistances in series give a total areal resistance of $R = 0.25605$\,m\textsuperscript{2}\,K/W over the $6.35$\,mm stack.
 
-The steady one-dimensional conduction equation with a radiation boundary condition on the hot face and a pinned cold face is
+The steady one-dimensional conduction equation, with radiation on the hot face and a pinned cold face, is
 
 \begin{equation}
 \label{eq:composite_cond}
     q = \frac{T_s - T_{init}}{R} + \varepsilon\,\sigma_{B}\left( T_s^{4} - T_{\infty}^{4} \right)
 \end{equation}
 
-in which the unknown hot-face temperature $T_s$ appears on both sides, so it is found by bisection rather than in closed form. Two numerical consequences are worth recording. The bisection runs in extended precision because single precision cannot resolve the relative bracket tolerance required to converge $T_s$; and the resulting in-depth profile is piecewise linear in thermal resistance, which is why it is exactly linear in depth within any single homogeneous ply and kinked at each interface. The outer emissivity is $\varepsilon = 0.80$.
+in which the unknown hot-face temperature $T_s$ appears on both sides, so it is found by bisection rather than in closed form. The bisection runs in extended precision because single precision cannot resolve the relative bracket tolerance needed to converge $T_s$; the in-depth profile is piecewise linear in thermal resistance, exactly linear within each homogeneous ply and kinked at each interface. Outer emissivity is $\varepsilon = 0.80$.
 
-This model supersedes an earlier homogeneous 25.4\,mm silicon-carbide slab that had been carried as the default. That slab was the LOFTID baseline~\cite{dinonno2026loftid} and is four times too thick for this vehicle; the current layup is both the physically correct one and a far more demanding thermal test, which is why it changes the survivability verdict reported in Chapter~\ref{ch:results}.
+This model supersedes an earlier homogeneous 25.4\,mm silicon-carbide slab, the LOFTID baseline~\cite{dinonno2026loftid}, four times too thick for this vehicle. The current layup is physically correct and a far more demanding thermal test, so it changes the survivability verdict in Chapter~\ref{ch:results}.
 \subsection{Statistical Convergence Monitoring}
-As a Monte Carlo method, DSMC produces statistical noise that scales as $1/\sqrt{N_{\text{samples}}}$, where $N_{\text{samples}}$ is the number of independent particle-time samples accumulated. Convergence is monitored by tracking the running average of surface force and energy quantities. SPARTA's \texttt{\seqsplit{stats\_interval}} parameter (default: 100 steps) controls the frequency of convergence diagnostics. The simulation is considered statistically converged when the relative change in drag coefficient ($C_d$) and stagnation heat flux falls below 2\% over consecutive monitoring windows. For the baseline optimization runs, convergence is typically achieved after 500-1100 particle-time steps depending on the geometry complexity.
+As a Monte Carlo method, DSMC produces statistical noise scaling as $1/\sqrt{N_{\text{samples}}}$, with $N_{\text{samples}}$ the independent particle-time samples. Convergence is monitored through running averages of surface force and energy quantities; SPARTA's \texttt{\seqsplit{stats\_interval}} parameter (default: 100 steps) sets diagnostic frequency. A run is statistically converged when relative change in drag coefficient ($C_d$) and stagnation heat flux falls below 2\% over consecutive windows, typically after 500-1100 particle-time steps depending on geometry complexity.
 
 \section{Physics-Informed Neural Network Refinement}
 
 \subsection{Motivation}
-DSMC simulations produce inherently noisy data due to the stochastic nature of particle tracking. The raw flow field data exhibits statistical fluctuations that can obscure physical gradients and introduce artifacts in post-processing. A Physics-Informed Neural Network (PINN) is employed as a post-processing step to:
+DSMC simulations are noisy because particle tracking is stochastic. Fluctuations in the raw flow field can obscure physical gradients and introduce post-processing artifacts. A Physics-Informed Neural Network (PINN) is used to:
 \begin{enumerate}
     \item Smooth noisy DSMC particle statistics
-    \item Fill gaps in the flow field where particle sampling is insufficient
+    \item Fill flow-field gaps where particle sampling is insufficient
     \item Provide a continuous, differentiable interpolant anchored in known physics
 \end{enumerate}
 
 \subsection{PINN Governing Equations}
-The PINN, implemented using DeepXDE~\cite{lu2021deepxde}, solves the 2D Compressible Navier-Stokes equations using automatic differentiation. The network $\mathcal{N}(x, y) \to (\rho, T, u)$ is constrained by the following residuals:
+The PINN, implemented in DeepXDE~\cite{lu2021deepxde}, solves the 2D compressible Navier-Stokes equations by automatic differentiation, constraining the network $\mathcal{N}(x, y) \to (\rho, T, u)$ with these residuals:
 
 \subsubsection*{Continuity Equation (Axisymmetric)}
 \begin{equation}
@@ -548,25 +548,25 @@ The PINN, implemented using DeepXDE~\cite{lu2021deepxde}, solves the 2D Compress
 \end{equation}
 
 \subsection{Loss Function}
-The total loss function combines PDE residuals with observational data from SPARTA:
+Total loss combines PDE residuals with observational data from SPARTA:
 
 \begin{equation}
     \mathcal{L}_{total} = \sum_{i=1}^{N_{PDE}} w_i \mathcal{L}_i^{PDE} + \sum_{j=1}^{N_{data}} w_j \mathcal{L}_j^{data}
 \end{equation}
 
-where $\mathcal{L}^{data}$ matches the PINN predictions against SPARTA grid checkpoints via \texttt{\seqsplit{dde.icbc.PointSetBC}}.
+where $\mathcal{L}^{data}$ matches PINN predictions against SPARTA grid checkpoints via \texttt{\seqsplit{dde.icbc.PointSetBC}}.
 
 \subsection{Pragmatic Choice of Navier-Stokes for PINN Regularization}
 \label{sec:pinn_pragmatic}
-The use of continuum Navier-Stokes equations in the PINN is an intentional pragmatic choice, not a physical claim about the flow regime. The rationale is:
+Using continuum Navier-Stokes equations in the PINN is an intentional pragmatic choice, not a claim about the flow regime:
 \begin{enumerate}
-    \item \textbf{Differentiability:} Neural networks require smooth, differentiable equations for backpropagation. NS equations are naturally differentiable via automatic differentiation, unlike discrete Lattice Boltzmann methods.
-    \item \textbf{Physics Regularizer:} The NS equations serve as a ``physics prior'' to prevent the neural network from learning non-physical artifacts during gap-filling.
-    \item \textbf{Two-Stage Architecture:} Stage 1 (SPARTA) provides full kinetic theory via DSMC; Stage 2 (PINN) uses NS as a smoothing constraint, not a standalone solver.
+    \item \textbf{Differentiability:} Backpropagation needs smooth equations; NS equations are differentiable via automatic differentiation, unlike discrete Lattice Boltzmann methods.
+    \item \textbf{Physics regularizer:} NS equations act as a ``physics prior'' that stops the network learning non-physical artifacts during gap-filling.
+    \item \textbf{Two-Stage Architecture:} Stage 1 (SPARTA) provides kinetic theory via DSMC; Stage 2 (PINN) uses NS as a smoothing constraint, not a standalone solver.
 \end{enumerate}
 
 \subsection{Network Architecture}
-The PINN approximates the flow field mapping $\mathcal{N}: \mathbb{R}^2 \to \mathbb{R}^3$ using a fully-connected feedforward neural network (FNN). The architecture is:
+The PINN approximates $\mathcal{N}: \mathbb{R}^2 \to \mathbb{R}^3$ with a fully-connected feedforward neural network (FNN):
 
 \begin{table}[!htbp]
     \centering
@@ -590,10 +590,10 @@ The forward pass computes:
     \hat{\mathbf{y}}(\mathbf{x}) = \mathbf{W}_4 \cdot \tanh\!\Big(\mathbf{W}_3 \cdot \tanh\!\big(\mathbf{W}_2 \cdot \tanh(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2\big) + \mathbf{b}_3\Big) + \mathbf{b}_4
 \end{equation}
 
-where $\mathbf{x} = (x, r)$ is the spatial coordinate and $\hat{\mathbf{y}} = (\hat{\rho}, \hat{T}, \hat{u})$ is the predicted flow field vector (density, temperature, and axial velocity; the radial velocity $v$ and pressure $p$ are derived from the continuity equation and equation of state, respectively). All outputs are in normalized (dimensionless) form; physical units are recovered by multiplication with the scaling factors.
+where $\mathbf{x} = (x, r)$ is the spatial coordinate and $\hat{\mathbf{y}} = (\hat{\rho}, \hat{T}, \hat{u})$ the predicted flow field vector (density, temperature, axial velocity; radial velocity $v$ and pressure $p$ derive from the continuity equation and equation of state). Outputs are normalised; physical units are recovered by multiplication with the scaling factors.
 
 \subsection{Normalization and Scaling}
-Before training, all physical quantities are non-dimensionalized using characteristic scales derived from the SPARTA data:
+Before training, physical quantities are non-dimensionalised using characteristic scales from the SPARTA data:
 
 \begin{equation}
     \bar{\rho} = \frac{\rho}{\rho_{ref}}, \quad \bar{T} = \frac{T}{T_{ref}}, \quad \bar{u} = \frac{u}{u_{ref}}, \quad \bar{\mathbf{x}} = \frac{\mathbf{x}}{L_{ref}}
@@ -601,14 +601,14 @@ Before training, all physical quantities are non-dimensionalized using character
 
 where the reference scales are computed from the SPARTA grid data:
 \begin{itemize}
-    \item $\rho_{ref} = \max(\rho_{SPARTA})$: peak number density converted to mass density via $\rho = n \cdot M_{air} / N_A$
+    \item $\rho_{ref} = \max(\rho_{SPARTA})$: peak number density converted to mass density, $\rho = n \cdot M_{air} / N_A$
     \item $u_{ref} = \max(|u_{SPARTA}|, |v_{SPARTA}|)$: maximum velocity component magnitude
     \item $T_{ref} = \max(T_{SPARTA})$: peak translational temperature
     \item $p_{ref} = \max(p_{SPARTA})$: peak pressure, computed as $p = n \cdot k_B \cdot T$
     \item $L_{ref} = \max(|x_{bound}|)$: maximum domain extent
 \end{itemize}
 
-This normalization ensures all neural network inputs and outputs lie in $[0, 1]$ or $[-1, 1]$, which is critical for tanh activation convergence. The dimensionless Navier-Stokes equations are then expressed in terms of these scaled variables, with the viscous coefficient adjusted accordingly:
+This normalisation puts inputs and outputs in $[0, 1]$ or $[-1, 1]$, critical for tanh convergence. The dimensionless Navier-Stokes equations use these variables, with the viscous coefficient adjusted accordingly:
 \begin{equation}
     \hat{\mu} = \frac{\mu(T)}{\rho_{ref} \, u_{ref} \, L_{ref}}
 \end{equation}
@@ -616,12 +616,12 @@ This normalization ensures all neural network inputs and outputs lie in $[0, 1]$
 where $\mu(T)$ follows Sutherland's law (Eq.~\ref{eq:sutherland}).
 
 \subsection{Data Pipeline: DSMC to PINN}
-The checkpoint exchange between SPARTA and the PINN proceeds through the following steps:
+The SPARTA to PINN checkpoint exchange:
 
 \begin{enumerate}
-    \item \textbf{SPARTA Grid Dump:} After convergence, SPARTA outputs a grid file (\texttt{\seqsplit{grid.\{steps\}.out}}) containing cell-centered macroscopic quantities: $(x_{lo}, y_{lo}, x_{hi}, y_{hi}$, $n, u, v, w, T, p)$.
+    \item \textbf{SPARTA Grid Dump:} SPARTA outputs a grid file (\texttt{\seqsplit{grid.\{steps\}.out}}) of cell-centred macroscopic quantities after convergence: $(x_{lo}, y_{lo}, x_{hi}, y_{hi}$, $n, u, v, w, T, p)$.
 
-    \item \textbf{Parsing:} The function \texttt{\seqsplit{parse\_sparta\_grid()}} extracts cell centers $(x_c, y_c) = \big(\frac{x_{lo}+x_{hi}}{2}, \frac{y_{lo}+y_{hi}}{2}\big)$ and converts number density to mass density:
+    \item \textbf{Parsing:} The function \texttt{\seqsplit{parse\_sparta\_grid()}} extracts cell centres $(x_c, y_c) = \big(\frac{x_{lo}+x_{hi}}{2}, \frac{y_{lo}+y_{hi}}{2}\big)$ and converts number density to mass density:
     \begin{equation}
         \rho = n \cdot \frac{M_{air}}{N_A}
     \end{equation}
@@ -631,21 +631,21 @@ The checkpoint exchange between SPARTA and the PINN proceeds through the followi
     \end{equation}
     where $k_B = 1.381 \times 10^{-23}$\,J/K.
 
-    \item \textbf{Subsampling:} If the number of grid cells exceeds 5000, a priority-based subsampling strategy is applied. Cells in high-gradient regions (where $p > 200$\,Pa or $T > 500$\,K) are preferentially retained (up to 2500 points), with the remaining budget filled by random sampling from low-gradient cells. This ensures the PINN receives sufficient training data in the shock layer and boundary layer where gradients are steepest.
+    \item \textbf{Subsampling:} Above 5000 grid cells, priority subsampling applies: cells in high-gradient regions (where $p > 200$\,Pa or $T > 500$\,K) are retained preferentially (up to 2500 points), with the rest sampled randomly from low-gradient cells. This gives the PINN training data where gradients are steepest: shock layer and boundary layer.
 
-    \item \textbf{Anchor Point Creation:} The parsed and subsampled data points serve as \textit{anchor points} $\mathbf{X}_{anchors}$ for the PINN. These are passed to DeepXDE as observation boundary conditions via \texttt{PointSetBC}, which adds a data-matching residual to the loss function:
+    \item \textbf{Anchor Point Creation:} Parsed, subsampled points serve as \textit{anchor points} $\mathbf{X}_{anchors}$, passed to DeepXDE as observation boundary conditions via \texttt{PointSetBC}, adding a data-matching residual to the loss:
     \begin{equation}
         \mathcal{L}_{data} = \frac{1}{N_{obs}} \sum_{k=1}^{N_{obs}} \sum_{m=1}^{3} \big|\hat{y}_m(\mathbf{x}_k) - y_m^{obs}(\mathbf{x}_k)\big|^2
     \end{equation}
-    where $\hat{y}_m$ is the PINN prediction for component $m$ at observation point $\mathbf{x}_k$, and $y_m^{obs}$ is the corresponding SPARTA value.
+    where $\hat{y}_m$ is the PINN prediction for component $m$ at observation point $\mathbf{x}_k$ and $y_m^{obs}$ the corresponding SPARTA value.
 \end{enumerate}
 
 \subsection{Two-Stage Training Protocol}
 \label{sec:pinn_two_stage}
-The PINN employs a two-stage training strategy to decouple data fitting from physics regularization:
+Training is two-stage, decoupling data fitting from physics regularisation:
 
 \subsubsection*{Stage 1: Data Pre-training}
-During the first half of training ($N_{iter}/2$ iterations), only the observational data loss is active. The PDE residuals are suppressed by setting their loss weights to zero:
+In the first half of training ($N_{iter}/2$ iterations) only the observational data loss is active; PDE residuals are suppressed by setting their weights to zero:
 
 \begin{equation}
     \begin{split}
@@ -654,16 +654,16 @@ During the first half of training ($N_{iter}/2$ iterations), only the observatio
     \end{split}
 \end{equation}
 
-This stage trains the network to reproduce the SPARTA observation data without physics constraints, allowing rapid initial convergence. The learning rate is $\eta_1 = 10^{-3}$.
+This stage fits SPARTA observation data without physics constraints, giving rapid initial convergence at learning rate $\eta_1 = 10^{-3}$.
 
 \subsubsection*{Stage 2: Physics-Regularized Fine-tuning}
-During the second half of training, the PDE residual weights are activated at $\lambda_{PDE} = 10^{-4}$, while data weights remain at $1.0$:
+In the second half, PDE residual weights switch on at $\lambda_{PDE} = 10^{-4}$ while data weights stay at $1.0$:
 
 \begin{equation}
     \mathcal{L}^{(2)} = \sum_{i=1}^{5} \lambda_{PDE} \cdot \mathcal{L}_{PDE,i} + \sum_{m=1}^{3} 1.0 \cdot \mathcal{L}_{data,m}
 \end{equation}
 
-The learning rate is reduced to $\eta_2 = 5 \times 10^{-4}$ for fine-tuning. The complete loss weight vector is:
+Fine-tuning uses $\eta_2 = 5 \times 10^{-4}$; the complete loss weight vector is:
 
 \begin{table}[!htbp]
     \centering
@@ -683,10 +683,10 @@ The learning rate is reduced to $\eta_2 = 5 \times 10^{-4}$ for fine-tuning. The
     \end{tabular}
 \end{table}
 
-The rationale for the small PDE weight ($\lambda_{PDE} = 10^{-4}$) is that the NS equations are used as a \textit{regularizer}, not the primary objective. The data terms dominate to ensure the PINN closely matches the SPARTA ground truth, while the PDE terms penalize gross violations of conservation laws.
+The PDE weight is small ($\lambda_{PDE} = 10^{-4}$) because NS equations act as a \textit{regularizer}, not the primary objective: data terms dominate so the PINN matches SPARTA ground truth, while PDE terms penalise gross conservation-law violations.
 
 \subsection{Convergence Detection Algorithm}
-The optimal training iteration is determined automatically using a plateau detection algorithm applied to the data-term loss history:
+A plateau detection algorithm on the data-term loss history picks the optimal training iteration:
 
 \begin{algorithm}[!htbp]
 \caption{PINN Convergence Detection}
@@ -708,10 +708,10 @@ The optimal training iteration is determined automatically using a plateau detec
 \end{algorithmic}
 \end{algorithm}
 
-The 20\% minimum threshold ($N_{min}$) prevents false early-plateau triggers during Stage 1, where the zero PDE weights cause the total loss to appear artificially stable. The rolling window reduces noise from stochastic mini-batch effects.
+The 20\% minimum ($N_{min}$) prevents false early-plateau triggers in Stage 1, where zero PDE weights make total loss look artificially stable; the rolling window reduces mini-batch noise.
 
 \subsection{Axioms and Assumptions}
-The PINN refinement stage rests on the following formal assumptions:
+The PINN refinement stage rests on these assumptions:
 
 \begin{table}[!htbp]
     \centering
@@ -755,19 +755,19 @@ The PINN refinement stage rests on the following formal assumptions:
 \section{Survivability Optimization}
 \label{sec:ga_opt}
 
-The survivability optimization framework integrates Latin Hypercube Sampling for design space exploration, a Bayesian Optimization (Bayes Opt) surrogate for rapid performance prediction, and a Genetic Algorithm (GA) for global optimization. The complete pipeline is:
+The framework combines Latin Hypercube Sampling for design exploration, a Bayesian Optimization (Bayes Opt) surrogate for rapid prediction, and a Genetic Algorithm (GA) for global optimization:
 
 \begin{enumerate}
-    \item \textbf{Sampling:} Generate $N$ design points using Stratified LHS across the parameter space $\mathbf{x} \in \mathbb{R}^d$.
-    \item \textbf{Simulation:} Evaluate each design using SPARTA DSMC (optionally refined by PINN) to obtain performance metrics $(\beta, \dot{q}, T_{back}, n_G)$.
-    \item \textbf{Bayes Opt Training:} Fit a Gaussian Process surrogate on the $N$ simulation results, giving a posterior mean $\mu(\mathbf{x})$ and standard deviation $\sigma(\mathbf{x})$ over the cost surface.
-    \item \textbf{GA Optimization:} Evolve a population of designs using the Bayes Opt surrogate as a fast evaluator, minimizing the cost function $J$.
+    \item \textbf{Sampling:} Generate $N$ design points by Stratified LHS across $\mathbf{x} \in \mathbb{R}^d$.
+    \item \textbf{Simulation:} Evaluate each design with SPARTA DSMC (optionally PINN-refined) for performance metrics $(\beta, \dot{q}, T_{back}, n_G)$.
+    \item \textbf{Bayes Opt Training:} Fit a Gaussian Process surrogate on the $N$ results, giving posterior mean $\mu(\mathbf{x})$ and standard deviation $\sigma(\mathbf{x})$ over the cost surface.
+    \item \textbf{GA Optimization:} Evolve a population using the Bayes Opt surrogate as fast evaluator, minimising the cost function $J$.
     \item \textbf{Constraint Filtering:} Apply physics-based penalty functions to eliminate non-viable designs.
-    \item \textbf{Final Validation:} Re-evaluate the optimal design using SPARTA DSMC without PINN refinement.
+    \item \textbf{Final Validation:} Re-evaluate the optimal design with SPARTA DSMC, without PINN refinement.
 \end{enumerate}
 
 \subsection{Design Space and Parameters}
-The optimization explores a $d$-dimensional design space defined by the HIAD geometric and material parameters:
+The search explores a $d$-dimensional space of HIAD geometric and material parameters:
 
 \begin{table}[!htbp]
     \centering
@@ -788,7 +788,7 @@ The optimization explores a $d$-dimensional design space defined by the HIAD geo
 
 \subsection{Design of Experiments: LHS and CCD}
 \label{sec:doe_sampling}
-To ensure the high-dimensional search space is explored uniformly with minimal samples, Stratified Latin Hypercube Sampling is employed~\cite{mckay1979lhs}. For a $d$-dimensional parameter space with $N$ samples, the $i$-th sample in dimension $j$ is:
+Stratified Latin Hypercube Sampling explores the high-dimensional space uniformly with few samples~\cite{mckay1979lhs}. For $N$ samples in a $d$-dimensional space, the $i$-th sample in dimension $j$ is:
 
 \begin{equation}
     x_{i,j} = x_{j}^{\min} + \big(x_{j}^{\max} - x_{j}^{\min}\big) \cdot \frac{i + r_{i,j}}{N}
@@ -797,15 +797,15 @@ To ensure the high-dimensional search space is explored uniformly with minimal s
 where $i \in \{0, 1, \ldots, N-1\}$ is the stratum index, $j \in \{1, 2, \ldots, d\}$ is the parameter dimension, $r_{i,j} \sim \mathcal{U}(0,1)$ is a uniform random offset, and $[x_j^{\min}, x_j^{\max}]$ is the feasible range for parameter $j$.
 
 \subsubsection*{Property of LHS}
-The stratified sampling guarantees that each parameter is sampled at $N$ distinct levels, with exactly one sample per level. This eliminates the clustering and gap artifacts that occur with pure random sampling, and ensures space-filling coverage even for small $N$. The total number of SPARTA evaluations required is $N$, compared to $k^d$ for a full factorial design with $k$ levels per dimension.
+Stratified sampling gives each parameter $N$ distinct levels with exactly one sample per level, eliminating the clustering and gaps of pure random sampling and giving space-filling coverage even for small $N$. SPARTA evaluations number $N$, against $k^d$ for a full factorial design with $k$ levels per dimension.
 
 \subsubsection*{Central Composite Design (CCD) as Alternative DoE}
-In addition to LHS, the framework supports the Face-Centered Central Composite Design (CCD), a standard Design of Experiments method~\cite{Montgomery2017}, which is the default Design of Experiments method in the implementation. For a $d$-dimensional parameter space, the CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point at the origin. The campaign executed in this work used $d = 3$ design variables (nose radius $R_N$, toroid radius $r_{tor}$, and half-cone angle $\theta_c$), which yields $N = 8 + 6 + 1 = 15$ sample points, the minimum required for a second-order response surface model in three factors. The recorded screen comprises eight factorial corner points, six axial star points, and the single center point, and it is reported separately from the 70-entry Bayesian Optimization history of Sec.~\ref{sec:bo_results}. The user may select either LHS or CCD via the \texttt{-{}-doe} flag, with CCD as the default for the optimized IRVE-3 baseline.
+The framework also supports the Face-Centered Central Composite Design (CCD), default Design of Experiments method~\cite{Montgomery2017}. For a $d$-dimensional parameter space CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ centre point at the origin. This campaign used $d = 3$ variables (nose radius $R_N$, toroid radius $r_{tor}$, half-cone angle $\theta_c$), giving $N = 8 + 6 + 1 = 15$ points, the minimum for a second-order response surface in three factors. The recorded screen is those eight corner, six star and one centre point, separate from the 70-entry Bayesian Optimization history of Sec.~\ref{sec:bo_results}. LHS or CCD is selectable via \texttt{-{}-doe}, CCD defaulting for the optimized IRVE-3 baseline.
 
 \subsection{Bayesian Optimization (Bayes Opt)}
 
 \subsubsection*{Problem Formulation}
-Each SPARTA DSMC simulation requires $O(10^3)$ timesteps and $O(1)$ hours of compute time. For optimization loops requiring $O(10^2)$-$O(10^3)$ design evaluations, direct simulation is prohibitively expensive. Bayesian Optimization (Bayes Opt) provides a fast surrogate that maps design parameters to performance metrics:
+Each SPARTA DSMC simulation takes $O(10^3)$ timesteps and $O(1)$ hours, so loops needing $O(10^2)$-$O(10^3)$ evaluations cannot run direct simulation. Bayesian Optimization (Bayes Opt) provides a fast surrogate mapping design parameters to performance metrics:
 
 \begin{equation}
     \hat{y} = \mathcal{M}(\mathbf{x}; \boldsymbol{\theta}): \mathbb{R}^d \to \mathbb{R}
@@ -814,7 +814,7 @@ Each SPARTA DSMC simulation requires $O(10^3)$ timesteps and $O(1)$ hours of com
 where $\mathbf{x} = (D, \theta_c, R_n, N_t, \ldots)$ is the design vector and $\hat{y}$ is the predicted performance metric (e.g., drag coefficient $C_d$, peak heat flux $\dot{q}$, or backface temperature $T_{back}$).
 
 \subsubsection*{Surrogate: Gaussian Process with a Mat\'ern 5/2 Kernel}
-The Bayes Opt surrogate is not a neural network. It is a Gaussian Process (GP) regression model fitted with scikit-learn~\cite{sklearn2024gp}, whose covariance is a constant amplitude multiplied by an isotropic Mat\'ern kernel of smoothness $\nu = 5/2$~\cite{matern1960,rasmussen2003}:
+The Bayes Opt surrogate is a Gaussian Process (GP) fitted with scikit-learn~\cite{sklearn2024gp}, with covariance a constant amplitude times an isotropic Mat\'ern kernel of smoothness $\nu = 5/2$~\cite{matern1960,rasmussen2003}:
 
 \begin{equation}
     k(\mathbf{x}, \mathbf{x}') = c_0^{2}\left(1 + \sqrt{5}\,\rho + \frac{5}{3}\rho^{2}\right)\exp\!\left(-\sqrt{5}\,\rho\right),
@@ -823,9 +823,9 @@ The Bayes Opt surrogate is not a neural network. It is a Gaussian Process (GP) r
     \label{eq:matern52}
 \end{equation}
 
-where $c_0$ is the signal-amplitude hyperparameter, $\ell_{j}$ is the length scale of design variable $j$, and $\rho$ is the scaled Euclidean distance between two design points. The $\nu = 5/2$ choice yields a covariance that is twice continuously differentiable, which is the minimum smoothness required for the first-order derivative-based acquisition used below; $\nu = 1/2$ and $\nu = 3/2$ are both measurably rougher and give noisier acquisition surfaces at the 20-70 evaluation budgets of this thesis.
+where $c_0$ is the signal-amplitude hyperparameter, $\ell_{j}$ the length scale of design variable $j$, and $\rho$ the scaled Euclidean distance between two design points. The $\nu = 5/2$ covariance is twice continuously differentiable, the minimum smoothness for the first-order derivative-based acquisition below; $\nu = 1/2$ and $\nu = 3/2$ are measurably rougher and give noisier acquisition surfaces at the 20-70 evaluation budgets of this thesis.
 
-The implementation initialises $c_0 = 1$ and $\ell_{j} = 1$ for all $d$ dimensions, and re-fits both by marginal-likelihood maximization under the bounds $c_0, \ell_{j} \in [10^{-3}, 10^{3}]$ with five restarts of the internal limited-memory Broyden-Fletcher-Goldfarb-Shanno (L-BFGS) optimizer. The regressor is instantiated with $\alpha = 10^{-6}$ as the noise term and with response normalization ($\texttt{\seqsplit{normalize\_y=True}}$), so the GP models the mean of the normalized cost rather than its raw scale. This gives a posterior over the cost at any untried design:
+The GP initialises $c_0 = 1$ and $\ell_{j} = 1$ for all $d$ dimensions, re-fitting both by marginal-likelihood maximisation within $c_0, \ell_{j} \in [10^{-3}, 10^{3}]$ using five restarts of the limited-memory Broyden-Fletcher-Goldfarb-Shanno (L-BFGS) optimizer. The regressor uses $\alpha = 10^{-6}$ as noise and response normalisation ($\texttt{\seqsplit{normalize\_y=True}}$), so it models the mean of the normalised cost. The posterior over the cost at any untried design is:
 
 \begin{equation}
     J(\mathbf{x}) \mid \mathcal{D} \sim \mathcal{N}\big(\mu(\mathbf{x}),\, \sigma^{2}(\mathbf{x})\big)
@@ -834,7 +834,7 @@ The implementation initialises $c_0 = 1$ and $\ell_{j} = 1$ for all $d$ dimensio
 where $\mathcal{D} = \{(\mathbf{x}_i, y_i)\}_{i=1}^{N}$ is the accumulated design-and-cost history, $\mu(\mathbf{x})$ is the posterior mean and $\sigma(\mathbf{x})$ the posterior standard deviation, both returned by the fitted regressor.
 
 \subsubsection*{Acquisition Function: Expected Improvement}
-Because the cost $J$ is minimized, the Expected Improvement (EI) acquisition~\cite{morris1992,kennedy2000multi} measures the expected reduction below the incumbent best $J_{best} = \min_i y_i$, offset by a small exploration parameter $\xi$:
+As $J$ is minimised, Expected Improvement (EI)~\cite{morris1992,kennedy2000multi} measures the expected reduction below the incumbent best $J_{best} = \min_i y_i$, offset by an exploration parameter $\xi$:
 
 \begin{align}
     \mathrm{EI}(\mathbf{x}) &= \mathbb{E}\Big[\max\big(0,\, J_{best} - J(\mathbf{x}) - \xi\big)\Big] \nonumber\\
@@ -843,57 +843,58 @@ Because the cost $J$ is minimized, the Expected Improvement (EI) acquisition~\ci
     \label{eq:ei}
 \end{align}
 
-where $\Phi$ and $\phi$ are the standard normal cumulative distribution and density functions. The exploration parameter is fixed at $\xi = 0.01$, which is small relative to the $O(1)$ spread of the cost values recorded in Chapter~\ref{ch:results}; this keeps the search exploitation-dominated while retaining enough stochasticity to escape local minima. The denominator $\sigma(\mathbf{x})$ is floored at $10^{-9}$ so that the ratio defining $Z$ stays finite at points where the posterior variance collapses onto a previously sampled design.
+where $\Phi$ and $\phi$ are the standard normal cumulative distribution and density functions. The exploration parameter is fixed at $\xi = 0.01$, small against the $O(1)$ spread of cost values in Chapter~\ref{ch:results}; the search stays exploitation-dominated while retaining enough stochasticity to escape local minima. The denominator $\sigma(\mathbf{x})$ is floored at $10^{-9}$ so $Z$ stays finite where posterior variance collapses onto a previously sampled design.
 
 \subsubsection*{Candidate Selection and Loop}
-Expected Improvement does not admit a closed-form maximizer, so each Bayes Opt iteration draws $N_{cand} = 5000$ candidate designs uniformly at random inside the bounded design space, scores them all with Eq.~\eqref{eq:ei}, and appends the arg-max to the history. Because the candidate pool is resampled from a seeded generator every iteration, the run is exactly reproducible at $\texttt{seed} = 42$. The recorded campaign is configured with $n_{initial} = 20$ Latin Hypercube designs and $n_{iter} = 50$ Bayesian iterations, giving $n_{eval} = 70$ entries in the optimization history reported in Chapter~\ref{ch:results}.
+Expected Improvement has no closed-form maximizer, so each Bayes Opt iteration draws $N_{cand} = 5000$ candidates uniformly inside the bounded design space, scores them with Eq.~\eqref{eq:ei} and appends the arg-max to the history. The pool is resampled from a seeded generator each iteration, so runs are reproducible at $\texttt{seed} = 42$. The recorded campaign uses $n_{initial} = 20$ Latin Hypercube designs and $n_{iter} = 50$ Bayesian iterations, giving $n_{eval} = 70$ history entries reported in Chapter~\ref{ch:results}.
 
 \subsubsection*{Single-Objective Scalarization}
-The GP models the scalar cost $J(\mathbf{x})$ directly rather than predicting several physical metrics in parallel. The multi-objective character of the problem is carried entirely by the definition of $J$ in the following subsection, which folds total heat load, peak heat flux, ballistic-coefficient deviation, drag coefficient, and the envelope, nose, and payload constraints into one number. This keeps the acquisition one-dimensional and lets the GP spend its limited $70$-evaluation budget resolving a single well-conditioned response surface instead of $k$ separate ones.
+The GP models the scalar cost $J(\mathbf{x})$ directly rather than several physical metrics in parallel. The multi-objective character rests entirely on the definition of $J$ in the next subsection, which folds total heat load, peak heat flux, ballistic-coefficient deviation, drag coefficient and the envelope, nose and payload constraints into one number. The acquisition stays one-dimensional, so the GP spends its $70$-evaluation budget on one well-conditioned response surface instead of $k$.
 
 \subsection{Genetic Algorithm Optimization}
 \label{sec:ga_operators}
 
 \subsubsection*{Cost Function Derivation}
 \label{sec:cost_function}
-The optimizer minimises a single scalar cost $J: \mathbb{R}^3 \to \mathbb{R}_{\geq 0}$ whose definition is the primary objective of the study: the lowest total heat load, with the remaining terms acting as regularisers that hold the design near the aerodynamically validated state. The implemented form is a weighted sum of five non-negative terms,
+The optimizer minimises a scalar cost $J: \mathbb{R}^3 \to \mathbb{R}_{\geq 0}$ whose definition is the study's primary objective: lowest total heat load, with remaining terms as regularisers holding the design near the aerodynamically validated state. The implemented form is a weighted sum of five non-negative terms,
 
 \begin{equation}
 \label{eq:cost_function_implemented}
     J(\mathbf{x}) = w_{Q}\, H_{L}(\mathbf{x}) + w_{q}\, F(\mathbf{x}) + w_{\beta}\, B(\mathbf{x}) + w_{C_d}\, D(\mathbf{x}) + \lambda_{p}\, \left( P_{R} + P_{N} + P_{p} \right)
 \end{equation}
 
-where the design vector is $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$. The four ratio terms and the three penalties are defined as follows.
+where $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$. Four ratio terms and three penalties follow.
 
 \begin{itemize}
-    \item \textbf{Heat-load term.} The stagnation heat flux is evaluated with the Sutton-Graves correlation of Sec.~\ref{sec:sutton_graves_methodology} at a single frozen trajectory snapshot of $51.8$\,km altitude and $3378$\,m/s, using the candidate design's own nose radius:
+    \item \textbf{Heat-load term.} Stagnation heat flux uses the Sutton-Graves correlation of Sec.~\ref{sec:sutton_graves_methodology} at a frozen trajectory snapshot of $51.8$\,km altitude and $3378$\,m/s, with the candidate design's own nose radius:
     $\dot{q}(\mathbf{x}) = C_{SG}\sqrt{\rho_{\infty}/R_N(\mathbf{x})}\,V_{snap}^{3}$ in\,W/cm$^2$.
-    Multiplying by the characteristic exposure time $\tau$ of the validated run gives the total heat load $Q(\mathbf{x}) = \dot{q}(\mathbf{x})\,\tau$, and the ratio $H_L = Q/Q_{target}$ normalizes it against the acceptance threshold.
+    Multiplying by the exposure time $\tau$ of the validated run gives total heat load $Q(\mathbf{x}) = \dot{q}(\mathbf{x})\,\tau$; the ratio $H_L = Q/Q_{target}$ normalises it against the acceptance threshold.
     \item \textbf{Flux term.} $F(\mathbf{x}) = \dot{q}(\mathbf{x})/q_{ref}$ is the peak heat-flux ratio against the measured flight value.
-    \item \textbf{Ballistic-coefficient term.} Because the vehicle mass cancels between the candidate and the reference state, the ballistic-coefficient ratio reduces to a purely geometric and aerodynamic quantity,
-    $\beta_{ratio} = (C_{d,ref}\,A_{ref})/(C_d(\mathbf{x})\,A(\mathbf{x}))$, and the term penalises its departure from unity as $B = (\beta_{ratio} - 1)^2$.
+    \item \textbf{Ballistic-coefficient term.} Vehicle mass cancels between candidate and reference, so the ballistic-coefficient ratio reduces to a geometric and aerodynamic quantity,
+    $\beta_{ratio} = (C_{d,ref}\,A_{ref})/(C_d(\mathbf{x})\,A(\mathbf{x}))$; the term penalises departure from unity as $B = (\beta_{ratio} - 1)^2$.
     \item \textbf{Drag term.} $D(\mathbf{x}) = C_d(\mathbf{x})/C_{d,ref}$ penalises a drag coefficient above the reference value.
-    \item \textbf{Quadratic penalties.} Three one-sided constraints are enforced by penalty rather than by rejection, each entering only when violated:
-    $P_R = \max(0, R_{max} - 3.0)^2$ caps the maximum radius at the IRVE-3 diameter limit,
+    \item \textbf{Quadratic penalties.} Three one-sided constraints are enforced by penalty, each entering only when violated:
+    $P_R = \max(0, R_{max} - 3.0)^2$ caps the maximum radius at the IRVE-3 diameter limit.
     $P_N = \max(0, 1.0 - R_N)^2$ enforces a minimum nose radius for thermal protection coverage, and
-    $P_p = \max(0, R_{N,min} - R_N)^2$ enforces payload clearance, where the required nose radius follows from the cylindrical payload envelope as
+    $P_p = \max(0, R_{N,min} - R_N)^2$ enforces payload clearance.
+    The required nose radius follows from the cylindrical payload envelope as
     $R_{N,min} = \sqrt{r_{pay}^2 + (h_{pay}/2)^2} + s_{TPS} = \sqrt{0.275^2 + 0.85^2} + 0.15 = 1.043$\,m.
 \end{itemize}
 
-The weights are $w_{Q} = 1.0$, $w_{q} = 0.5$, $w_{\beta} = 0.5$, $w_{C_d} = 0.25$ and the penalty weight $\lambda_{p} = 100$. The heat-load weight is the largest of the four, so the ordering of $J$ is dominated by total heat load, which is the stated design objective; the remaining three terms are deliberately weaker and act only to keep the design inside the aerodynamically validated region.
+The weights are $w_{Q} = 1.0$, $w_{q} = 0.5$, $w_{\beta} = 0.5$, $w_{C_d} = 0.25$ and penalty weight $\lambda_{p} = 100$. The heat-load weight is largest, so $J$ is dominated by total heat load, the stated design objective; the other three terms stay weaker, holding the design inside the aerodynamically validated region.
 
-The reference values are not independent inputs. They are loaded at run time from the IRVE-3 validation run ~\cite{old2013irve3postflight,dillman2014irve3flight} so that the surrogate is anchored to the measured vehicle rather than to a hand-entered idealisation: $Q_{target} = 165.72$\,J/cm$^2$, $q_{ref} = 14.361$\,W/cm$^2$, $\tau = 13.582$\,s and $C_{d,ref} = 1.4625$.
+Reference values are loaded at run time from the IRVE-3 validation run ~\cite{old2013irve3postflight,dillman2014irve3flight}, anchoring the surrogate to the measured vehicle rather than a hand-entered idealisation: $Q_{target} = 165.72$\,J/cm$^2$, $q_{ref} = 14.361$\,W/cm$^2$, $\tau = 13.582$\,s and $C_{d,ref} = 1.4625$.
 
-Two properties of Eq.~\eqref{eq:cost_function_implemented} matter for interpreting Chapter~\ref{ch:results}. First, it is a \emph{single-point} surrogate: the heat load is the product of one correlation value at one frozen trajectory point and a constant exposure time, not a trajectory integration. The trajectory-integrated heat load reported in Chapter~\ref{ch:results} comes from the DSMC post-processing path, not from this cost function, and the two are not interchangeable. Second, the drag coefficient is itself a closed-form estimate,
-$C_d(\mathbf{x}) = 1.47 \left( R_{max}/1.5 \right)^{0.15} \left( 1 + 0.05\,(1.5/R_N - 1) \right)$, with $R_{max} = R_N\cos\Gamma + (2N-1)\,r_{tor}\cos\Gamma + r_{tor}$ and $\Gamma = (90^\circ - \theta_c)$; the optimizer therefore never calls the DSMC solver during the search, which is what makes $70$ evaluations affordable. Each candidate design is subsequently re-evaluated with a full DSMC run by the validation gate of Sec.~\ref{sec:gate_methodology}.
+Two properties of Eq.~\eqref{eq:cost_function_implemented} matter for interpreting Chapter~\ref{ch:results}. First, it is a \emph{single-point} surrogate: one correlation value at one frozen trajectory point times a constant exposure time, not a trajectory integration; the trajectory-integrated heat load reported in Chapter~\ref{ch:results} comes from the DSMC post-processing path, and the two are not interchangeable. Second, the drag coefficient is a closed-form estimate,
+$C_d(\mathbf{x}) = 1.47 \left( R_{max}/1.5 \right)^{0.15} \left( 1 + 0.05\,(1.5/R_N - 1) \right)$, with $R_{max} = R_N\cos\Gamma + (2N-1)\,r_{tor}\cos\Gamma + r_{tor}$ and $\Gamma = (90^\circ - \theta_c)$. The optimizer therefore never calls the DSMC solver during the search, which is what makes $70$ evaluations affordable; each candidate is later re-evaluated with a full DSMC run by the validation gate of Sec.~\ref{sec:gate_methodology}.
 
 \subsubsection*{GA Operators}
-The GA employs the following operators to evolve the population:
+The GA uses these operators:
 
 \begin{enumerate}
-    \item \textbf{Selection:} Tournament selection with tournament size $k_t = 3$. The individual with the lowest $J$ among $k_t$ randomly chosen candidates is selected as a parent.
+    \item \textbf{Selection:} Tournament selection with size $k_t = 3$: the individual with lowest $J$ among $k_t$ random candidates becomes a parent.
 
-    \item \textbf{Crossover:} Uniform crossover with probability $p_c = 0.8$. For each gene (design variable), a random binary mask determines which parent contributes the value:
+    \item \textbf{Crossover:} Uniform crossover with probability $p_c = 0.8$: for each gene (design variable), a random binary mask selects the contributing parent:
     \begin{equation}
         x_i^{child} =
         \begin{cases}
@@ -903,21 +904,21 @@ The GA employs the following operators to evolve the population:
     \end{equation}
     where $m_i \sim \text{Bernoulli}(0.5)$.
 
-    \item \textbf{Mutation:} Gaussian mutation with probability $p_m = 0.1$. Each gene is perturbed by:
+    \item \textbf{Mutation:} Gaussian mutation with probability $p_m = 0.1$; each gene is perturbed by:
     \begin{equation}
         x_i^{mutated} = x_i + \mathcal{N}(0, \sigma_m^2)
     \end{equation}
-    where $\sigma_m$ is scaled to 10\% of the parameter range $[x_i^{\min}, x_i^{\max}]$. Integer parameters (e.g., $N_t$) are rounded to the nearest integer after mutation.
+    where $\sigma_m$ is scaled to 10\% of the parameter range $[x_i^{\min}, x_i^{\max}]$; integer parameters (e.g., $N_t$) round to the nearest integer after mutation.
 
-    \item \textbf{Elitism:} The best $\lceil 0.1 \times P \rceil$ individuals (where $P$ is the population size) are preserved unchanged in the next generation.
+    \item \textbf{Elitism:} The best $\lceil 0.1 \times P \rceil$ individuals ($P$ the population size) survive unchanged into the next generation.
 \end{enumerate}
 
-The GA terminates when either: (a) the maximum number of generations $G_{max}$ is reached, or (b) the best cost $J^*$ has not improved by more than $\epsilon = 10^{-4}$ for $G_{pat} = 20$ consecutive generations.
+The GA stops when (a) generation count reaches $G_{max}$, or (b) best cost $J^*$ improves by less than $\epsilon = 10^{-4}$ over $G_{pat} = 20$ consecutive generations.
 
 \subsection{Bayesian Optimization (Bayes Opt Constraint Layer)}
 
 \subsubsection*{Formal Penalty Function}
-The Bayes Opt Constraint Layer is a physics-informed post-processing step that filters GA-generated designs against hard physical limits. For a candidate design $\mathbf{x}$ with predicted performance $(\hat{y}_1, \ldots, \hat{y}_k)$, the constraint-augmented cost is:
+The Bayes Opt Constraint Layer filters GA-generated designs against hard physical limits. For a candidate $\mathbf{x}$ with predicted performance $(\hat{y}_1, \ldots, \hat{y}_k)$, the constraint-augmented cost is:
 
 \begin{equation}
     J_{constrained}(\mathbf{x}) = J(\mathbf{x}) + \sum_{j=1}^{n_c} \Lambda_j \cdot \phi_j(\mathbf{x})
@@ -933,7 +934,7 @@ where $\Lambda_j$ is the penalty weight for constraint $j$ (set to $10^{6}$ for 
     \end{cases}
 \end{equation}
 
-The constraint functions $g_j(\mathbf{x})$ encode the following physical limits:
+Constraint functions $g_j(\mathbf{x})$ encode the physical limits:
 
 \begin{table}[!htbp]
     \centering
@@ -949,14 +950,14 @@ The constraint functions $g_j(\mathbf{x})$ encode the following physical limits:
     \end{tabular}
 \end{table}
 
-When any constraint is violated ($g_j > 0$), the penalty $\Lambda_j \cdot |g_j|^2$ adds a large cost that effectively removes the design from the GA population. This ensures that only physically viable configurations survive to final high-fidelity validation.
+When a constraint is violated ($g_j > 0$) the penalty $\Lambda_j \cdot |g_j|^2$ adds a large cost that removes the design from the GA population, so only viable configurations reach final validation.
 
 \subsubsection*{Integration with GA}
-The constraint-augmented cost $J_{constrained}$ replaces the unconstrained $J$ in the GA fitness evaluation. The GA operators (selection, crossover, mutation) operate on $J_{constrained}$ as described in Sec.~\ref{sec:ga_operators}. The constraint layer acts as a ``hard filter'' that shapes the fitness landscape without requiring gradient information from the Bayes Opt surrogate.
+The constraint-augmented cost $J_{constrained}$ replaces the unconstrained $J$ in GA fitness; selection, crossover and mutation then operate on $J_{constrained}$ as in Sec.~\ref{sec:ga_operators}. The layer acts as a ``hard filter'' shaping the fitness landscape without gradient information from the Bayes Opt surrogate.
 
 \section{Multi-Solver Architecture}
 
-The computational framework supports multiple solver backends to address different flow regimes:
+Multiple solver backends address different flow regimes:
 
 \begin{table}[!htbp]
     \centering
@@ -975,16 +976,16 @@ The computational framework supports multiple solver backends to address differe
 \section{Boundary Conditions and Domain Setup}
 
 \subsection{Freestream Inlet}
-The simulation domain is initialized with freestream particles injected from the inlet boundary. The particle velocity distribution follows the Maxwell-Boltzmann distribution at the prescribed freestream temperature and velocity:
+The domain starts with freestream particles injected at the inlet, following the Maxwell-Boltzmann distribution at the prescribed freestream temperature and velocity:
 
 \begin{itemize}
     \item \textbf{Velocity:} Directed flow at $v_{\infty} = 3378$\,m/s
     \item \textbf{Temperature:} $T_{\infty} = 268.41$\,K
-    \item \textbf{Species Fractions:} N$_2$ (78\%), O$_2$ (21\%), NO (1\%) at freestream; dissociated species (N, O) generated through collisions in the shock layer
+    \item \textbf{Species Fractions:} N$_2$ (78\%), O$_2$ (21\%), NO (1\%) at freestream; dissociated species (N, O) generated by collisions in the shock layer
 \end{itemize}
 
 \subsection{Vehicle Surface}
-The vehicle surface is modeled as a diffuse reflection boundary with fully accommodate thermal wall conditions:
+The vehicle surface is a diffuse reflection boundary with fully accommodated thermal wall conditions:
 \begin{itemize}
     \item \textbf{Wall Temperature:} $T_{wall} = 300$\,K (isothermal)
     \item \textbf{Reflection Model:} Diffuse (maximally entropic)
@@ -993,14 +994,14 @@ The vehicle surface is modeled as a diffuse reflection boundary with fully accom
 
 \subsection{Symmetry and Outflow}
 \begin{itemize}
-    \item \textbf{Symmetry Plane:} For 2D axisymmetric simulations, the centerline enforces rotational symmetry.
+    \item \textbf{Symmetry Plane:} In 2D axisymmetric runs, the centerline enforces rotational symmetry.
     \item \textbf{Outflow:} Particles leaving the domain are deleted and re-injected at the inlet to maintain steady-state mass flux.
 \end{itemize}
 
 \section{Data Processing and Validation}
 
 \subsection{Field Maps}
-SPARTA grid dumps provide field maps of macroscopic quantities accumulated from particle statistics:
+SPARTA grid dumps give field maps of macroscopic quantities from particle statistics:
 
 \begin{table}[!htbp]
     \centering
@@ -1018,31 +1019,31 @@ SPARTA grid dumps provide field maps of macroscopic quantities accumulated from 
 \end{table}
 
 \subsection{Knudsen Number Field}
-The local Knudsen number is computed from the SPARTA grid data:
+The local Knudsen number comes from the SPARTA grid data:
 
 \begin{equation}
     Kn_{local} = \frac{\lambda_{local}}{L} = \frac{1}{\sqrt{2} \pi d^2 n_{local} L}
 \end{equation}
 
-Evaluated per grid cell, this local $Kn$ field resolves the regime structure of the flow rather than a single vehicle-wide number. Read against the five bands of Table~\ref{tab:knudsen_regimes}, the field at the present trajectory point occupies the continuum and slip-flow bands: the undisturbed freestream and the near-body stagnation region sit in the continuum band ($Kn_{\text{local}} \lesssim 0.01$, with $Kn_{\text{stag}} \sim 0.005$), while the shock layer and wake reach into the slip-flow band ($0.01 \lesssim Kn_{\text{local}} \lesssim 0.1$). Two bands are provably absent: the transitional band ($0.1 \lesssim Kn_{\text{local}} \lesssim 10$) and the free-molecular band ($Kn_{\text{local}} > 10$) are never attained at 51.8\,km, because the freestream density is far too high for intermolecular collisions to become sufficiently rare within the resolved domain. Both would appear only at substantially higher altitudes.
+Evaluated per grid cell, this local $Kn$ field resolves the flow's regime structure rather than one vehicle-wide number. Against the five bands of Table~\ref{tab:knudsen_regimes}, the field at this trajectory point occupies two bands. Undisturbed freestream and near-body stagnation region sit in the continuum band ($Kn_{\text{local}} \lesssim 0.01$, with $Kn_{\text{stag}} \sim 0.005$), while shock layer and wake reach into the slip-flow band ($0.01 \lesssim Kn_{\text{local}} \lesssim 0.1$). Two bands are absent: transitional ($0.1 \lesssim Kn_{\text{local}} \lesssim 10$) and free-molecular ($Kn_{\text{local}} > 10$) never occur at 51.8\,km, since freestream density is too high for collisions to become rare in the resolved domain; both appear only at much higher altitudes.
 
-This is the quantitative basis for the field map of Figure~\ref{fig:knudsen_map} in Chapter~4, and it fixes the scope of the DSMC justification precisely. Because the shock layer reaches the slip-flow band, where Navier-Stokes without slip corrections ceases to be valid, DSMC is the appropriate solver for the heat-transfer region; the freestream and stagnation region remain continuum, which is what licenses the continuum Navier-Stokes PINN stage. The claim required by the results is a continuum-to-slip gradient across the shock layer: not a transition-region or free-molecular claim, which this trajectory point does not support.
+This is the quantitative basis for the field map of Figure~\ref{fig:knudsen_map} in Chapter~4 and fixes the DSMC justification. Because the shock layer reaches the slip-flow band, where Navier-Stokes without slip corrections fails, DSMC suits the heat-transfer region; freestream and stagnation region stay continuum, licensing the continuum Navier-Stokes PINN stage. The claim required by the results is a continuum-to-slip gradient across the shock layer, not a transition-region or free-molecular claim this trajectory point cannot support.
 
 \subsection{Survivability Acceptance Criterion}
 \label{sec:survivability}
 
-The design loop needs a single unambiguous test for whether a candidate survives, and the engine implements exactly one. Survivability is the conjunction of four independent inequalities evaluated on the flight metrics of a candidate:
+The design loop needs one unambiguous survival test, and the engine implements exactly one: survivability is the conjunction of four independent inequalities on a candidate's flight metrics:
 
 \begin{equation}
 \label{eq:is_survivable}
     \mathrm{Surv}(\mathbf{x}) = \left( T_{surf} \leq 2073 \right) \wedge \left( T_{back} \leq 773 \right) \wedge \left( n_{G} \leq 25 \right) \wedge \left( a_{g} \leq 25 \right)
 \end{equation}
 
-where $T_{surf}$ is the peak surface temperature in kelvin, $T_{back}$ the backface temperature in kelvin, $n_{G}$ the measured deceleration load and $a_{g}$ the computed deceleration load. All four must hold simultaneously; satisfying any three is a failure. The two temperature limits are material limits taken from the TPS presets~\cite{TPS-stateofIndustryNASA}, the two load limits are the structural limit, and the fact that the two load channels are separate is deliberate, because one is read from the solver output and the other is evaluated from the flight metrics.
+where $T_{surf}$ is peak surface temperature in kelvin, $T_{back}$ backface temperature in kelvin, $n_{G}$ the measured deceleration load and $a_{g}$ the computed deceleration load. All four must hold simultaneously; three is a failure. Temperature limits are material limits from the TPS presets~\cite{TPS-stateofIndustryNASA}, load limits are structural, and the two load channels stay separate deliberately: one read from solver output, the other evaluated from flight metrics.
 
-For the composite layup of Sec.~\ref{sec:composite_tps} a further structural limit applies in addition to Eq.~\eqref{eq:is_survivable}: the flexible TPS carries a limit of 523.15\,K on its structural temperature, which is tighter than the Kapton limit of the gas barrier ply and therefore binds first for this vehicle.
+For the composite layup of Sec.~\ref{sec:composite_tps} a further limit applies alongside Eq.~\eqref{eq:is_survivable}: the flexible TPS carries a 523.15\,K structural temperature limit, tighter than the gas barrier ply's Kapton limit, so it binds first here.
 
-Table~\ref{tab:acceptance_limits} collects every limit used in this study together with its origin, so that no constraint in the document is stated without a source. The design-space penalty terms of Eq.~\eqref{eq:cost_function_implemented} enforce a subset of these limits during the search, namely the maximum radius, the minimum nose radius for thermal protection coverage and the payload clearance; the temperature and load limits are instead evaluated after the fact, on the DSMC re-simulation performed by the validation gate, because they depend on the flow solution rather than on geometry alone.
+Table~\ref{tab:acceptance_limits} collects every limit with its origin, so no constraint is stated without a source. The design-space penalty terms of Eq.~\eqref{eq:cost_function_implemented} enforce a subset during the search: maximum radius, minimum nose radius for thermal protection coverage and payload clearance. Temperature and load limits are evaluated afterwards, on the DSMC re-simulation of the validation gate, since they depend on the flow solution rather than geometry alone.
 
 \begin{table}[!htbp]
     \centering
@@ -1063,7 +1064,7 @@ Table~\ref{tab:acceptance_limits} collects every limit used in this study togeth
     \end{tabularx}
 \end{table}
 \subsection{Validation Against Flight Data}
-The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irve3flight} and the MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:irve3_validation} reports the flight data alongside both the MDAO reference model and the present SPARTA DSMC solution, so that the published reference model is not mistaken for a result of this work.
+The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irve3flight} and the MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:irve3_validation} reports flight data beside the MDAO reference and the present SPARTA DSMC solution, so the published reference is not mistaken for a result of this work.
 
 \begin{table}[!htbp]
     \centering
@@ -1087,24 +1088,24 @@ The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irv
     \normalsize
 \end{table}
 
-Two distinct tolerance statements apply to this table. First, the MDAO reference model reproduces the flight heat flux and heat load to within $-3.7\%$ and $+0.06\%$ respectively, comfortably inside the $\pm 10\%$ margin normally required of a calibrated reconstruction; this confirms that the IRVE-3 flight data adopted here are internally consistent and suitable as a validation target. Second, the geometry-sensitive quantities computed by this work satisfy that same margin: the ballistic coefficient deviates by $+3.0\%$ and the drag coefficient is 1.4625.
+Two tolerance statements apply. First, the MDAO reference model reproduces flight heat flux and heat load to within $-3.7\%$ and $+0.06\%$, inside the $\pm 10\%$ margin normally required of a calibrated reconstruction, confirming the IRVE-3 flight data are internally consistent and suitable as a validation target. Second, geometry-sensitive quantities from this work meet that margin: ballistic coefficient deviates by $+3.0\%$ and drag coefficient is 1.4625.
 
-The single-trajectory-point evaluation of the DSMC solution does \emph{not} satisfy the $\pm 10\%$ margin, but the deviations fall in opposite directions on the two classes of quantity and have different causes. The two \emph{integrated} quantities are under-predicted: total heat load by $-15.0\%$ and peak deceleration by $-14.6\%$. The flight reconstruction~\cite{old2013irve3postflight} and the MDAO model~\cite{rapisarda2023mdao} integrate the heating and deceleration history across the complete reentry, whereas the DSMC run samples a single trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions~\cite{usstandard1976}; integrating over the full trajectory raises both the accumulated heat load and the peak deceleration towards the measured values, and the close agreement of these two deltas on a common value of approximately $-15\%$ localises their residual in the trajectory integration rather than in the geometry or the flow solver. The \emph{pointwise} stagnation heat flux behaves oppositely, over-predicting by $+12.4\%$, because the Sutton-Graves figure is a continuum correlation built on a spherical nose cap: it carries neither the heat-shielding effect of the scalloped torus nor the rarefied-flow departure that the DSMC solver resolves, and it therefore acts as a conservative upper bound on the stagnation flux at this condition. The ballistic coefficient closes the argument from the other side, agreeing to $+3.0\%$ and confirming that the scalloped geometry is reproduced correctly. The numerical framework is consequently judged sound on the strength of the geometry-sensitive agreement, with the trajectory-integration gap and the correlation-versus-solver gap carried forward separately and explicitly as stated limitations rather than absorbed into a tolerance claim.
+The single-trajectory-point DSMC solution misses the $\pm 10\%$ margin, with deviations in opposite directions and different causes. The two \emph{integrated} quantities are under-predicted: total heat load by $-15.0\%$ and peak deceleration by $-14.6\%$. The flight reconstruction~\cite{old2013irve3postflight} and MDAO model~\cite{rapisarda2023mdao} integrate heating and deceleration over the complete reentry, whereas the DSMC run samples one trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions~\cite{usstandard1976}. Full-trajectory integration raises both towards measured values; the two deltas agreeing near $-15\%$ localise the residual in trajectory integration, not geometry or solver. The \emph{pointwise} stagnation heat flux behaves oppositely, over-predicting by $+12.4\%$, because Sutton-Graves is a continuum correlation on a spherical nose cap. It carries neither the heat-shielding effect of the scalloped torus nor the rarefied-flow departure DSMC resolves, making it a conservative upper bound here. The ballistic coefficient agrees to $+3.0\%$, confirming the scalloped geometry is reproduced correctly. The framework is judged sound on geometry-sensitive agreement, with the trajectory-integration and correlation-versus-solver gaps carried forward separately as limitations, not absorbed into a tolerance claim.
 
 \subsection{Hybrid Validation Gate Methodology}
 \label{sec:gate_methodology}
 
-The cost function of Sec.~\ref{sec:cost_function} is a closed-form surrogate, so a design that minimises it has not thereby been shown to be feasible. The gate described here is the mechanism that closes that loop, and it is the only enforced check on the surrogate anywhere in this work. It has five legs~\cite{kennedy2000multi}, executed in order, with the solver stage of Sec.~\ref{sec:dsmc_framework} supplying the expensive one.
+The cost function of Sec.~\ref{sec:cost_function} is a closed-form surrogate, so a design minimising it is not thereby shown feasible. This gate closes that loop and is the only enforced check on the surrogate. It has five legs~\cite{kennedy2000multi}, executed in order, with the solver stage of Sec.~\ref{sec:dsmc_framework} supplying the expensive one.
 
 \begin{enumerate}
-    \item \textbf{Analytic prediction.} Evaluate Eq.~\eqref{eq:cost_function_implemented} at the candidate design and record the predicted heat load $q_{analytic}$.
-    \item \textbf{DSMC re-simulation.} Run the full DSMC pipeline at the candidate geometry over the same trajectory point as the validation run, and record the surface-integrated heat load $q_{dsmc}$.
-    \item \textbf{Multi-fidelity correction.} Form the ratio $c = q_{dsmc}/q_{analytic}$ and clamp it to $[0.5,\,2.0]$. The clamp is essential and not cosmetic: $c$ is a single ratio of two noisy quantities, so an unclamped value can be driven arbitrarily close to zero or arbitrarily large by statistical fluctuation alone, and would then dominate the corrected result. Clamping bounds the correction to a factor of two in either direction and forces the corrected value to remain on the same order as the prediction.
+    \item \textbf{Analytic prediction.} Evaluate Eq.~\eqref{eq:cost_function_implemented} at the candidate design, recording predicted heat load $q_{analytic}$.
+    \item \textbf{DSMC re-simulation.} Run the full DSMC pipeline at the candidate geometry over the validation run's trajectory point, recording the surface-integrated heat load $q_{dsmc}$.
+    \item \textbf{Multi-fidelity correction.} Form the ratio $c = q_{dsmc}/q_{analytic}$ and clamp it to $[0.5,\,2.0]$. The clamp is essential, not cosmetic: $c$ is one ratio of two noisy quantities, so an unclamped value can be driven near zero or arbitrarily large by statistical fluctuation alone and would then dominate the corrected result. Clamping bounds the correction to a factor of two either way, keeping the corrected value on the same order as the prediction.
     \item \textbf{Corrected load and verdict.} The corrected heat load is $q_{hybrid} = c\,q_{analytic}$, and the design passes when $q_{hybrid} \leq Q_{target}$.
-    \item \textbf{Exit status.} The gate reports pass, constraint violation, or solver failure as distinct exit codes, so that a failure can never be mistaken for a pass by a calling script.
+    \item \textbf{Exit status.} The gate reports pass, constraint violation or solver failure as distinct exit codes, so that failure can never be mistaken for pass by a calling script.
 \end{enumerate}
 
-Two properties of this design are worth making explicit because they bound what the gate proves. The corrector is a scalar ratio applied to a scalar quantity, so it corrects the magnitude of the heat load and nothing else: it says nothing about where on the surface the load acts, nor about the peak-to-mean ratio, and a design could in principle pass the gate while concentrating heating unfavourably. And the gate is a threshold test, not an optimisation: it accepts or rejects a proposed design but does not search. Both limits are properties of a deliberately cheap gate, chosen so that the DSMC cost is paid once per shortlisted candidate rather than once per candidate in the population.
+Two properties bound what the gate proves. The corrector is a scalar ratio on a scalar quantity, correcting the magnitude of the heat load and nothing else. It says nothing about where load acts on the surface or the peak-to-mean ratio, and a design could pass while concentrating heating unfavourably. The gate is also a threshold test, not an optimisation: it accepts or rejects a design but does not search. Both limits are deliberate, so DSMC cost is paid once per shortlisted candidate, not once per population member.
 \begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Two panels describing the entry trajectory. The left panel plots velocity against altitude and rises to about 7500 metres per second at 122 kilometres before falling as the vehicle descends. The right panel plots deceleration load against altitude as a bell curve peaking near 17.5\,g at about 57 kilometres. A square marker on each curve at 52.03 kilometres and 3094 metres per second marks the state used by the scalloped run, and a triangle near 51.8 kilometres and 3379 metres per second marks the smooth run, which does not lie on the computed profile.}}%
@@ -1116,17 +1117,17 @@ Two properties of this design are worth making explicit because they bound what 
 \section{Computational Infrastructure}
 
 \subsection{Docker-Containerized Execution}
-SPARTA simulations are executed within a Docker-containerized Linux environment to ensure:
+SPARTA simulations run in a Docker-containerized Linux environment to ensure:
 \begin{itemize}
     \item Reproducibility of the SPARTA build across platforms
     \item Isolation from host OS dependencies
     \item Consistent library versions and compiler toolchains
 \end{itemize}
 
-The Python optimization environment runs on the native OS to leverage hardware acceleration (NVIDIA CUDA, AMD ROCm, Apple Metal MPS, Intel OneAPI, and specialized accelerators from Huawei CANN, Moore Threads MUSA, and Qualcomm Snapdragon).
+The Python optimization environment runs on the native OS for hardware acceleration (NVIDIA CUDA, AMD ROCm, Apple Metal MPS, Intel OneAPI, Huawei CANN, Moore Threads MUSA, Qualcomm Snapdragon).
 
 \subsection{Hardware Acceleration}
-The framework supports GPU acceleration across multiple vendors:
+GPU acceleration is supported across vendors:
 \begin{itemize}
     \item \textbf{NVIDIA:} CUDA via Kokkos backend
     \item \textbf{AMD:} ROCm
@@ -1137,7 +1138,7 @@ The framework supports GPU acceleration across multiple vendors:
 
 \section{Machine Learning Research Standards Documentation}
 
-This section documents the machine learning components against established reproducibility and transparency standards~\cite{ml_standards}.
+The machine learning components are documented against established reproducibility standards~\cite{ml_standards}.
 
 \subsection{Model Architecture Specifications}
 
@@ -1163,7 +1164,7 @@ The PINN uses the DeepXDE library~\cite{lu2021deepxde}:
 \end{table}
 
 \subsubsection*{Bayesian Optimization (Bayes Opt)}
-Bayes Opt surrogate and acquisition hyperparameters, as derived in Sec.~\ref{sec:ga_opt}:
+Bayes Opt surrogate and acquisition hyperparameters (Sec.~\ref{sec:ga_opt}):
 
 \begin{table}[!htbp]
     \centering
@@ -1191,20 +1192,20 @@ Bayes Opt surrogate and acquisition hyperparameters, as derived in Sec.~\ref{sec
 \subsubsection*{Data Collection Pipeline}
 \begin{enumerate}
     \item \textbf{Design of Experiments:} $N = 15$ Face-Centered CCD points across the design space (Sec.~\ref{sec:doe_sampling}).
-    \item \textbf{Simulation:} Each design is evaluated using SPARTA DSMC with $O(10^3)$ timesteps.
+    \item \textbf{Simulation:} Each design runs in SPARTA DSMC with $O(10^3)$ timesteps.
     \item \textbf{PINN Refinement:} DSMC outputs pass through the two-stage PINN protocol (Sec.~\ref{sec:pinn_two_stage}).
-    \item \textbf{Feature Engineering:} Design parameters $\mathbf{x} = (D, \theta_c, R_n, N_t, r_t,\,m, \delta_{TPS})$ are min-max scaled to $[0, 1]$.
+    \item \textbf{Feature Engineering:} Design parameters $\mathbf{x} = (D, \theta_c, R_n, N_t, r_t,\,m, \delta_{TPS})$, min-max scaled to $[0, 1]$.
 \end{enumerate}
 
 \subsubsection*{Train/Test Split}
-A stratified 80/20 partition is used:
+A stratified 80/20 split:
 \begin{itemize}
-    \item \textbf{Training set:} 20 samples (80\%) used for model fitting.
+    \item \textbf{Training set:} 20 samples (80\%) for fitting.
     \item \textbf{Validation set:} 5 samples (20\%) for early stopping and model selection.
 \end{itemize}
 
 \subsubsection*{Cross-Validation}
-$k$-fold cross-validation ($k = 5$) is used when sample size permits; reported metrics give the mean $\pm$ standard deviation across folds.
+$k$-fold cross-validation ($k = 5$) is used when sample size permits; metrics give mean $\pm$ standard deviation across folds.
 
 \subsection{Validation Metrics}
 
@@ -1225,7 +1226,7 @@ $k$-fold cross-validation ($k = 5$) is used when sample size permits; reported m
 \subsection{Reproducibility Requirements}
 
 \subsubsection*{Random Seed Control}
-Stochastic operations (weight initialisation, data split, CCD generation) use fixed seeds:
+All stochastic operations use fixed seeds:
 \begin{itemize}
     \item PINN: \texttt{\seqsplit{torch.manual\_seed(42)}}, \texttt{\seqsplit{numpy.random.seed(42)}}
     \item Bayes Opt: \texttt{\seqsplit{torch.manual\_seed(123)}}, \texttt{\seqsplit{numpy.random.seed(123)}}
@@ -1262,7 +1263,7 @@ Checkpoints are saved with:
 \subsubsection*{PINN Uncertainty}
 \begin{itemize}
     \item \textbf{Ensemble:} $M = 5$ models with different seeds, giving mean $\hat{y}$ and deviation $\sigma_{pred}$.
-    \item \textbf{Residual analysis:} PDE residual $\mathcal{R}(\mathbf{x})$ at test points quantifies physics consistency.
+    \item \textbf{Residual analysis:} PDE residual $\mathcal{R}(\mathbf{x})$ at test points checks physics consistency.
 \end{itemize}
 
 \subsubsection*{Bayes Opt Surrogate Uncertainty}

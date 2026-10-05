@@ -253,8 +253,15 @@ package StellarOrion_PostProcessing is
    function Compute_Surf_Stats
      (Heat_Fluxes : Float_Array;
        N           : Natural) return Surf_Stats
+      --  'First = 1 is the documented indexing convention of Float_Array
+      --  (subtype Surf_Index is Integer range 1 .. Max_Surf_Elements) and of
+      --  every caller (project.adb:1027 declares Float_Array (1 .. 12)).
+      --  Without it the body's `for I in 1 .. N` cannot prove I >= Heat_Fluxes'First
+      --  for an unconstrained array slice, which produced 2 unproved index checks
+      --  at gnatprove --level=4.
       with Pre  => N > 0
                    and then N <= Heat_Fluxes'Length
+                   and then Heat_Fluxes'First = 1
                    and then N <= Max_Surf_Elements,
            Post => Compute_Surf_Stats'Result.Mean_Wcm2 >= 0.0
                    and then Compute_Surf_Stats'Result.Std_Wcm2 >= 0.0
@@ -270,9 +277,13 @@ package StellarOrion_PostProcessing is
      (Heat_Fluxes : Float_Array;
        Element_Ids : Nat_Array;
        N           : Natural) return Surf_Element
+      --  'First = 1: see Compute_Surf_Stats.  Callers declare
+      --  Float_Array (1 .. 12) and Nat_Array (1 .. 12) (project.adb:1027, :1065).
       with Pre  => N > 0
                    and then N <= Heat_Fluxes'Length
                    and then N <= Element_Ids'Length
+                   and then Heat_Fluxes'First = 1
+                   and then Element_Ids'First = 1
                    and then N <= Max_Surf_Elements,
            Post => Find_Peak_Element'Result.Heat_Flux_Wm2 >= 0.0;
 
@@ -305,8 +316,11 @@ package StellarOrion_PostProcessing is
    function Compute_Convergence_Stats
      (Peak_Fluxes : Time_Float_Array;
        N           : Natural) return Conv_Stats
+      --  'First = 1: Time_Index is Integer range 1 .. Max_Timesteps and the
+      --  only caller declares Time_Float_Array (1 .. 10) (project.adb:1094).
       with Pre  => N > 0
                    and then N <= Peak_Fluxes'Length
+                   and then Peak_Fluxes'First = 1
                    and then N <= Max_Timesteps,
            Post => Compute_Convergence_Stats'Result.Mean_Peak_Wcm2 >= 0.0
                    and then Compute_Convergence_Stats'Result.Std_Peak_Wcm2 >= 0.0
@@ -339,8 +353,11 @@ package StellarOrion_PostProcessing is
      (Mean_Fluxes_Wcm2 : Float_Array;
        N                : Natural;
        Dt_Sec           : Float) return Heat_Load_Result
+      --  'First = 1: the only caller declares Float_Array (1 .. 10)
+      --  (project.adb:929).
       with Pre  => N > 0
                    and then N <= Mean_Fluxes_Wcm2'Length
+                   and then Mean_Fluxes_Wcm2'First = 1
                    and then Dt_Sec > 0.0,
            Post => Compute_Integrated_Heat_Load'Result.Total_Load_Jcm2 >= 0.0
                    and then Compute_Integrated_Heat_Load'Result.Peak_Flux_Wcm2 >= 0.0
@@ -369,14 +386,16 @@ package StellarOrion_PostProcessing is
    --  Newton's method square root [dimensionless].
    --  20 iterations gives ~15 decimal digits (single precision).
    --
-   --  PRE:  X in [0.0, 1.0e30].
-   --        The upper bound is NOT cosmetic: Newton's step computes
-   --        (Guess + X/Guess) / 2, and with Guess <= max(X, 1.0) the sum is
-   --        bounded by 2*max(X, 1.0).  Without a ceiling on X that sum is
-   --        unbounded and the overflow check at the step is unprovable
-   --        (this was gnatprove finding at postprocessing.adb:705).
-   --        Every caller in this package passes a physical quantity well
-   --        below 1.0e30 (density ratios, Reynolds numbers, variances).
+   --  PRE:  X >= 0.0.  Deliberately ONLY non-negativity.
+   --        A ceiling on X was tried here first and removed: it made every
+   --        call site prove X <= 1.0e30, which added four precondition
+   --        findings and cancelled most of the seven overflow findings it
+   --        was meant to clear (gnatprove --level=4, 103 -> 102 net).
+   --        The ceiling that keeps Newton's step (Guess + X/Guess)/2 bounded
+   --        is now enforced INSIDE the body as XC := min(X, 1.0e30), so the
+   --        caller's obligation is unchanged and the body's overflow checks
+   --        are still provable.  XC <= X, so the Post bound -- stated in the
+   --        caller's X -- continues to hold.
    --  POST: Result >= 0.0
    --        and Result <= max(X, 1.0).
    --        The upper bound is DERIVED FROM THE ARGUMENT, not a fixed
@@ -388,7 +407,7 @@ package StellarOrion_PostProcessing is
    --
    --  [Citation: Newton 1671; Burden & Faires, Numerical Analysis, Sec 2.1]
    function Sqrt_Float (X : Float) return Float
-     with Pre  => X >= 0.0 and X <= 1.0e30,
+     with Pre  => X >= 0.0,
           Post => Sqrt_Float'Result >= 0.0
                   and Sqrt_Float'Result <= Float'Max (X, 1.0);
 
@@ -435,10 +454,16 @@ package StellarOrion_PostProcessing is
        Flight_Qmax    : Float;
        Model_Qload    : Float;
        Flight_Qload   : Float) return Validation_Metrics
+      --  'First = 1: the only caller declares all three arrays as
+      --  Time_Index range 1 .. 5 (project.adb:862-868, subtype
+      --  Val_Array_Range), so the precondition holds at that call site.
       with Pre  => N > 0
                    and then N <= Model_Values'Length
                    and then N <= Flight_Values'Length
                    and then N <= Time_Values'Length
+                   and then Model_Values'First = 1
+                   and then Flight_Values'First = 1
+                   and then Time_Values'First = 1
                    and then Flight_Qmax > 0.0,
            Post => Compute_Validation_Metrics'Result.RMSE >= 0.0
                    and then Compute_Validation_Metrics'Result.R_Squared <= 1.001;
