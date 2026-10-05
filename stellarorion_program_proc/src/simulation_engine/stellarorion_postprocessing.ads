@@ -517,17 +517,38 @@ package StellarOrion_PostProcessing is
                    and then Model_Values'First = 1
                    and then Flight_Values'First = 1
                    and then Time_Values'First = 1
-                   and then Flight_Qmax > 0.0
                    and then abs (Model_Qmax) <= 1.0e8
                    and then abs (Flight_Qmax) <= 1.0e8
                    and then abs (Model_Qload) <= 1.0e8
                    and then abs (Flight_Qload) <= 1.0e8
+                   --  ZERO-DENOMINATOR FLOORS (2026-10-05).
+                   --  Every percentage in the body divides by one of these
+                   --  four quantities behind an `if X > 0.0` guard.  The guard
+                   --  excludes an exact division by zero but NOT overflow:
+                   --  X = 1.0e-300 is positive and still yields a quotient far
+                   --  beyond Float'Last (numerator up to 2.0e8, times 100.0).
+                   --  So each guarded denominator must be absent OR safely
+                   --  away from zero -- `X <= 0.0 or else X >= 1.0e-6` is the
+                   --  weakest form that preserves the existing guard semantics
+                   --  exactly (the else-branch already returns 0.0 for X <= 0).
+                   --  The floor costs nothing at the call site: the caller
+                   --  passes 14.361 W/cm^2, 195.0577 J/cm^2, five Rapisarda
+                   --  heat fluxes 12.6..15.3 and five times ~677 s
+                   --  (project.adb:862-894) -- all seven > 1.0e-6 by ~6 orders.
+                   --  1.0e-6 also caps the worst quotient at 2.0e8/1.0e-6*100
+                   --  = 2.0e16, safely under Float'Last (~3.4e38).
+                   and then (Flight_Qmax <= 0.0 or else Flight_Qmax >= 1.0e-6)
+                   and then (Flight_Qload <= 0.0 or else Flight_Qload >= 1.0e-6)
                    and then (for all I in Model_Values'Range =>
                                abs (Model_Values (I)) <= 1.0e8)
                    and then (for all I in Flight_Values'Range =>
-                               abs (Flight_Values (I)) <= 1.0e8)
+                               abs (Flight_Values (I)) <= 1.0e8
+                               and then (Flight_Values (I) <= 0.0
+                                         or else Flight_Values (I) >= 1.0e-6))
                    and then (for all I in Time_Values'Range =>
-                               abs (Time_Values (I)) <= 1.0e8),
+                               abs (Time_Values (I)) <= 1.0e8
+                               and then (Time_Values (I) <= 0.0
+                                         or else Time_Values (I) >= 1.0e-6)),
            Post => Compute_Validation_Metrics'Result.RMSE >= 0.0
                    and then Compute_Validation_Metrics'Result.R_Squared <= 1.001;
 

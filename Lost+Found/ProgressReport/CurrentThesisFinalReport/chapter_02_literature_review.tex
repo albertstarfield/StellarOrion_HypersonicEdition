@@ -62,7 +62,7 @@ Hypersonic flow is taken as $M > 5$, a physical rather than mathematical thresho
 Five phenomena distinguish it from supersonic flow \cite{AndersonHypersonic}:
 \par
 \begin{enumerate}
-    \item \textbf{Thin Shock Layers:} The shock sits close to the surface, giving small stand-off distance and a high-pressure region between shock and vehicle.
+    \item \textbf{Thin Shock Layers:} The shock sits close to the surface, giving a small stand-off distance and a high-pressure region between shock and vehicle.
     \item \textbf{Entropy Layers:} Bow-shock curvature steepens the entropy gradient met by the downstream boundary layer.
     \item \textbf{Viscous Interaction:} Hot boundary-layer gas lowers density and thickens the layer ($\delta \propto M^2/\sqrt{Re}$), displacing the inviscid flow.
     \item \textbf{High-Temperature Effects:} Dissipated kinetic energy triggers excitation, dissociation and ionization, breaking the calorically perfect assumption ($c_p = \text{const.}$).
@@ -92,7 +92,7 @@ For a calorically perfect gas:
     \frac{T_0}{T_{\infty}} = 1 + \frac{\gamma - 1}{2} M_{\infty}^2
 \end{equation}
 \par
-In standard air ($\gamma = 1.4$) temperature rises by a factor of 6 at $Ma = 5$ and 21 at $Ma = 10$, so constant specific heats ($C_p$) fail as vibrational excitation and dissociation set in.
+In standard air ($\gamma = 1.4$), temperature rises by a factor of 6 at $Ma = 5$ and 21 at $Ma = 10$, so constant specific heats ($C_p$) fail as vibrational excitation and dissociation set in.
 
 \subsection{Shock Wave Formation and Properties}
 
@@ -131,7 +131,7 @@ For standard air ($\gamma = 1.4$) the limit is $\rho_2/\rho_1 \approx 6$, so mas
 Lower-speed supersonic analysis decouples the inviscid outer flow from the boundary layer; above $Ma = 5$ the entropy layer and viscous interaction break that decoupling \cite{AndersonHypersonic}.
 
 \subsubsection*{The Entropy Layer}
-For a blunt IAD the bow shock is strongly curved, strongest at the stagnation streamline and weaker at the flanks, so Crocco's theorem gives a strong entropy gradient ($\Delta\,s$) behind it.
+For a blunt Inflatable Aerodynamic Decelerator (IAD) the bow shock is strongly curved, strongest at the stagnation streamline and weaker at the flanks, so Crocco's theorem gives a strong entropy gradient ($\Delta\,s$) behind it.
 \par
 This high-entropy vortical layer wets the surface downstream; where it rivals the boundary layer in thickness the uniform edge-property assumption fails.
 \par
@@ -218,7 +218,7 @@ Billig's empirical fit for a sphere gives:
     \frac{\Delta}{R} = 0.143 \exp\left(\frac{3.24}{M_{\infty}^2}\right)
 \end{equation}
 
-Real gas effects (dissociation) push $\rho_2/\rho_{\infty}$ beyond the ideal gas limit of 6 and shrink $\Delta$, raising velocity gradients in the shock layer and intensifying convective wall heating; if $\Delta$ then becomes comparable to the valley depth between toroids, shock-shock interactions or impingement on the structure can follow.
+Real gas effects (dissociation) push $\rho_2/\rho_{\infty}$ beyond the ideal gas limit of 6 and shrink $\Delta$, raising velocity gradients in the shock layer and intensifying convective wall heating. If $\Delta$ then becomes comparable to the valley depth between toroids, shock-shock interactions or impingement on the structure can follow.
 
 \begin{figure}[!htbp]
     \centering
@@ -249,7 +249,7 @@ Allen showed that stagnation point heat flux ($q_s$) falls as the inverse square
 
 Bluntness therefore raises drag while lowering peak heat flux, the foundation of HIADs: a large effective radius maximizes drag and minimizes localized heating, letting massive payloads enter planetary atmospheres.
 
-Example shown below~\cite{aerospace9120800BluntBodyTheory}.
+See the example below~\cite{aerospace9120800BluntBodyTheory}.
 
 \begin{figure}[!htbp]
     \centering
@@ -343,7 +343,7 @@ Ablative systems manage high-energy planetary entry (Apollo, Mars Science Labora
 Made famous by the Space Shuttle Orbiter, lightweight ceramic tiles or blankets (e.g., LI-900 silica tiles) survive thousands of degrees without ablating, using low conductivity to insulate the aluminum airframe and high emissivity to re-radiate up to 90\% of incident heat.
 \begin{itemize}
     \item \textbf{Example:} HRSI (High-Temperature Reusable Surface Insulation) black tiles.
-    \item \textbf{Limitation:} Fragile and labor-intensive, and unable to withstand high-speed lunar or Martian return heat fluxes.
+    \item \textbf{Limitation:} Fragile and labor-intensive, unable to withstand high-speed lunar or Martian return heat fluxes.
 \end{itemize}
 
 \subsubsection*{3. Hot Structures}
@@ -369,7 +369,7 @@ Launch vehicle fairing diameter constraints led NASA and partners to develop HIA
 
 
 \subsubsection*{Structural Architecture}
-A HIAD's core is a stack of pressurized toroidal tubes (tori) of high-strength braided fibers (e.g., Kevlar or Vectran) strapped into a blunt cone. Unlike a smooth rigid shell this gives a "scalloped" surface of crests and valleys set by each toroid radius, the flow interactions studied here.
+A HIAD's core is a stack of pressurized toroidal tubes (tori) of high-strength braided fibers (e.g., Kevlar or Vectran) strapped into a blunt cone. Unlike a smooth rigid shell this gives a "scalloped" surface of crests and valleys set by each toroid radius; those flow interactions are studied here.
 
 \subsubsection*{The LOFTID Mission}
 The Low-Earth Orbit Flight Test of an Inflatable Decelerator (LOFTID) flew in August 2015 with a 6-meter aeroshell that survived the re-entry heat pulse ($> 1400^\circ$C) and decelerated a payload from orbital velocity \cite{DiNonnoLOFTID}.
@@ -405,7 +405,7 @@ LOFTID validated two critical advantages:
 
 
 
-The distinction is the ballistic coefficient ($\beta$): rigid vehicles are shroud-volume-constrained, whereas HIADs decouple entry from launch diameter and decelerate higher where heat flux is lower.
+The distinction is the ballistic coefficient ($\beta$): rigid vehicles are constrained by the launch shroud, whereas HIADs decouple entry from launch diameter and decelerate higher where heat flux is lower.
 
 The cost is a rough scalloped surface that augments local heating, plus drag-load deformation that alters stability.
 
@@ -451,8 +451,8 @@ The scalloped topology is therefore studied for its aerothermal effect on shock 
 
 \subsection{Flow over Wavy and Scalloped Walls}
 \par
-An IAD surface approximates a periodic wavy wall or cavity steps, so hypersonic flow meets alternating favorable and adverse pressure gradients, unlike a flat plate~\cite{white2006viscous}.
-Over a convex crest the flow area constricts and the flow accelerates, and by Bernoulli's principle the static pressure falls:
+An IAD surface approximates a periodic wavy wall or a series of cavity steps, so hypersonic flow meets alternating favorable and adverse pressure gradients, unlike a flat plate~\cite{white2006viscous}.
+Over a convex crest the flow constricts and accelerates, so by Bernoulli's principle the static pressure falls:
 
 \begin{equation}
     \frac{dp}{dx} < 0 \quad (\text{Favorable Gradient - Crest})
@@ -480,7 +480,7 @@ Descending into a concave valley the flow area expands and the fluid decelerates
 
 
 \subsection{Shock-Boundary Layer Interaction (SBLI) on Rough Surfaces}
-A scalloped IAD surface acts as a rough wall of large-scale asperities, coupling the inviscid shock system with the viscous boundary layer (Shock-Wave/Boundary-Layer Interaction, SBLI), unlike the monotonic boundary layer of a smooth vehicle.
+Unlike the monotonic boundary layer of a smooth vehicle, a scalloped IAD surface acts as a rough wall of large-scale asperities, coupling the inviscid shock system with the viscous boundary layer (Shock-Wave/Boundary-Layer Interaction, SBLI).
 \par
 Compression waves at the windward face of each toroid drive the interaction: as flow exits a valley and turns concave into the next face, supersonic turning generates a compression wave or oblique shock.
 \par
@@ -517,7 +517,7 @@ Stability depends on the valley length-to-depth ratio ($L/D$).
     \item \textbf{Closed Cavity ($L/D > 10$):} If the valley is too wide or shallow the shear layer curves inward and impinges on the floor, a local hot spot that negates the benefit of scalloping.
 \end{itemize}
 
-Example of this recirculation effect~\cite{RecirculationCaseWindDrivenCoastal}
+See an example of this recirculation effect~\cite{RecirculationCaseWindDrivenCoastal}.
 
 \begin{figure}[!htbp]
     \centering
@@ -529,7 +529,7 @@ Example of this recirculation effect~\cite{RecirculationCaseWindDrivenCoastal}
 \end{figure}
 
 \subsection{Localized Peak Heating Effects}
-The crests face the opposite: severe localized heating governed by stagnation point flow, where local geometry is far harsher than the vehicle average.
+The crests show the opposite behavior: severe localized heating governed by stagnation point flow, where local geometry is far harsher than the vehicle average.
 
 \subsubsection*{The Stagnation Temperature (Energy Potential)}
 Heat transfer potential follows the total flow energy: at a stagnation point such as a toroid's windward face the fluid decelerates to zero and its kinetic energy becomes enthalpy, so a calorically perfect gas reaches a stagnation temperature $T_0$ set by $M_{\infty}$ \cite{AndersonHypersonic}:
@@ -561,7 +561,7 @@ Substituting back gives:
 
 Scalloped IAD geometry is therefore vulnerable: the overall radius is large and global heating low, but each toroid tube ($R_{tube}$) has a small local radius, so every crest is a stagnation point with peak heating far above a smooth sphere-cone.
 
-Analogue of this localized heating \cite{daub2022experimentsElasticLocalizedHeating}
+An analogue of this localized heating is shown \cite{daub2022experimentsElasticLocalizedHeating}.
 
 \begin{figure}[!htbp]
     \centering
@@ -806,7 +806,7 @@ where $R$ is the specific gas constant ($R = 287$ J/kg$\cdot$K for air), with in
 
 
 
-Real gas effects cover two types of deviation from standard air behaviour:
+Real gas effects cover two types of deviation from standard air behavior:
 
 \begin{enumerate}
     \item \textbf{Dense Gas Effects (Intermolecular Forces):} At extreme pressures (deep entry on gas giants) intermolecular forces matter and a compressibility factor $Z$ enters ($p = \rho Z R T$); at Earth re-entry altitudes these effects are negligible and $p = \rho R T$ holds.
@@ -852,7 +852,7 @@ The specific heats therefore become functions of temperature:
 \begin{equation}
     C_p = f(T) \quad \text{and} \quad C_v = f(T)
 \end{equation}
-The gas still obeys $p = \rho R T$ (no dissociation), so variable specific heats with that relation give a Thermally Perfect Gas.
+The gas still obeys $p = \rho R T$ (no dissociation), so variable specific heats make it a Thermally Perfect Gas.
 \par
 In CFD for hypersonic re-entry, $C_p(T)$ is modeled by polynomial fits such as the NASA 7- or 9-coefficient polynomials:
 \begin{equation}
@@ -873,7 +873,7 @@ A Thermally Perfect Gas model matters for HIAD analysis: energy absorbed into vi
 
 In low-speed aerodynamics viscosity is often treated as constant, but hypersonic shock layers span thousands of degrees, so gas viscosity changes accordingly: unlike liquids, it \textit{increases} with temperature through molecular agitation and momentum exchange between layers.
 \par
-Coupling dynamic viscosity ($\mu$) to local static temperature ($T$) therefore requires Sutherland’s Law (1893), from kinetic theory with an idealized intermolecular potential \cite{AndersonHypersonic}.
+Coupling dynamic viscosity ($\mu$) to local static temperature ($T$) therefore requires Sutherland’s Law (1893), derived from kinetic theory with an idealized intermolecular potential \cite{AndersonHypersonic}.
 \begin{equation}
     \mu(T) = \mu_{ref} \left( \frac{T}{T_{ref}} \right)^{3/2} \frac{T_{ref} + S}{T + S}
     \label{eq:sutherland}
@@ -1083,11 +1083,12 @@ The simulation method follows the flow regime, set by the \textit{Knudsen number
 \end{table}
 
 \noindent A \emph{global} $Kn$ on the full aeroshell diameter therefore puts the IRVE-3 freestream in the deep-continuum regime~\cite{bird1994molecular}.
-With $L = 3.0$~m, \eqref{eq:mean_free_path}, the molecular diameter $d = 3.7\times10^{-10}$~m~\cite{bird1994molecular}
-and the ISA freestream density~\cite{usstandard1976}
-$\rho_\infty = 1.05\times10^{-3}$~kg/m\textsuperscript{3} (so $n = \rho_\infty/(k_B T_\infty)$),
-the freestream mean free path is
-$\lambda \approx 7.5\times10^{-5}$~m, giving
+Using Eq.~\eqref{eq:mean_free_path} with the molecular diameter $d = 3.7\times10^{-10}$~m~\cite{bird1994molecular}
+and the number density $n = \rho_\infty/(k_B T_\infty)$, the freestream mean free path is
+$\lambda \approx 7.5\,{\times}\,10^{-5}$~m.
+Here $\rho_\infty = 1.05\times10^{-3}$~kg/m\textsuperscript{3} is the International
+Standard Atmosphere (ISA) freestream density~\cite{usstandard1976}.
+With $L = 3.0$~m this gives
 \begin{equation}
     Kn_{\text{global}} = \frac{\lambda_\infty}{L}
     \approx \frac{7.5\times10^{-5}}{3.0}
@@ -1096,7 +1097,7 @@ $\lambda \approx 7.5\times10^{-5}$~m, giving
 \end{equation}
 \noindent which lies deep in the continuum band of Table~\ref{tab:knudsen_regimes}.
 Earlier values quoted for this vehicle ($\lambda \sim 0.1$-$1.0$~m,
-$Kn \sim 0.03$-$0.3$) hold near 100~km, not at the 52~km re-entry
+$Kn \sim 0.03$-$0.3$) apply only near 100~km altitude, not at the 52~km re-entry
 reference point.
 
 DSMC stays justified at 52~km because $Kn$ is a \emph{local} ratio: when the

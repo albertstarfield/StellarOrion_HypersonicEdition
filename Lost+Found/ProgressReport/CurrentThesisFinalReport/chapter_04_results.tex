@@ -108,7 +108,7 @@ The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock upstream o
 \end{figure}
 
 \subsection{Velocity Vector Field}
-The velocity vectors (Figure~\ref{fig:velocity_vectors}) show strong deceleration in the near wake, with velocity magnitude falling below $1.5$\,km/s behind the body. In DSMC this momentum loss and the recirculating flow emerge from molecular collisions and surface interactions without turbulence modelling~\cite{bird1994molecular}.
+The velocity vectors (Figure~\ref{fig:velocity_vectors}) show strong deceleration in the near wake, with velocity magnitude falling below $1.5$\,km/s behind the body. In DSMC this momentum loss and the recirculating flow emerge from molecular collisions and surface interactions without turbulence modeling~\cite{bird1994molecular}.
 
 \begin{figure}[!htbp]
     \centering
@@ -153,7 +153,7 @@ A grid independence study varied the grid factor from 0.3 to 1.0 against the IRV
 
 \section{Validation Against IRVE-3 Flight Data}
 \label{sec:validation_irve3}
-The simulation results are validated against the IRVE-3 post-flight aerothermal reconstruction~\cite{old2013irve3postflight}. Table~\ref{tab:validation} summarises the comparison.
+The simulation results are validated against the IRVE-3 post-flight aerothermal reconstruction~\cite{old2013irve3postflight}. Table~\ref{tab:validation} summarizes the comparison.
 
 \begin{table}[!htbp]
     \centering
@@ -245,7 +245,7 @@ The survivability optimization framework (Sec.~\ref{sec:ga_opt}) explored the HI
 28 optimization runs were executed, recording 25 sample evaluations in the optimization database. Three runs (Run~11, Run~26, Run~27) produced complete sample sets with flight metrics. The varied design parameters are aeroshell diameter ($D$), cone half-angle ($\theta_c$), toroid count ($N$), nose radius ($R_N$), and TPS thickness ($\delta_{TPS}$), as defined in Sec.~\ref{sec:ga_opt}.
 
 \subsection{Design Space Exploration Results}
-Table~\ref{tab:optimization_samples} summarises selected samples from the three active optimization runs, showing the trade-off between ballistic coefficient ($\beta$), deceleration load ($n_G$), and backface temperature ($T_{back}$).
+Table~\ref{tab:optimization_samples} summarizes selected samples from the three active optimization runs, showing the trade-off between ballistic coefficient ($\beta$), deceleration load ($n_G$), and backface temperature ($T_{back}$).
 
 \begin{table}[!htbp]
     \centering
@@ -308,7 +308,7 @@ A 15-point central composite design~\cite{Montgomery2017} runs first as a standa
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Three-dimensional scatter of the 15 central composite screen points in the design space of nose radius R N, torus radius r tor and half-cone angle theta c, each marker colored by its evaluated cost J of x on a logarithmic scale running from about 2 to about 38. The points are the 8 factorial combinations of the low and high levels 1.2 and 1.8 metres in nose radius, 0.10 and 0.18 metres in torus radius and 55 and 65 degrees in half-cone angle; the design center at 1.5 metres, 0.140 metres and 60 degrees; and 6 axial points stepping one factor at a time away from the center. Reference markers named in the key are the screen design center, the IRVE-3 baseline, the best-screened factorial point and the round-1 Bayesian optimisation optimum. The panel is a design layout annotated with measured costs and is not a fitted response surface.}}%
+    \BeginAccSupp{method=escape,ActualText={Three-dimensional scatter of the 15 central composite screen points in the design space of nose radius R N, torus radius r tor and half-cone angle theta c, each marker colored by its evaluated cost J of x on a logarithmic scale running from about 2 to about 38. The points are the 8 factorial combinations of the low and high levels 1.2 and 1.8 metres in nose radius, 0.10 and 0.18 metres in torus radius and 55 and 65 degrees in half-cone angle; the design center at 1.5 metres, 0.140 metres and 60 degrees; and 6 axial points stepping one factor at a time away from the center. Reference markers named in the key are the screen design center, the IRVE-3 baseline, the best-screened factorial point and the round-1 Bayesian optimization optimum. The panel is a design layout annotated with measured costs and is not a fitted response surface.}}%
 \includegraphics[width=0.75\textwidth]{figures/bo_ccd_design.png}%
 \EndAccSupp{}%
     \caption[Central composite screen evaluated in the three-dimensional design space, colored by the evaluated cost $J(\mathbf{x})$ on a logarithmic scale (official run 2026-09-26).]{Central composite screen evaluated in the three-dimensional design space, colored by the evaluated cost $J(\mathbf{x})$ on a logarithmic scale (official run 2026-09-26). The 15 screen points comprise 8 factorial points, the design center ($R_N = 1.5$\,m, $r_{tor} = 0.140$\,m, $\theta_c = 60^\circ$) and 6 axial points; the design center, IRVE-3 baseline, best-screened point and round-1 optimum are marked in the panel key.}
