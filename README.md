@@ -572,6 +572,24 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      **35.14 km** to 120 km and returns a density **6.96×** the exported one. Temperature
      agrees to **0.000 K** everywhere, so the divergence is invisible in the profile's `T`
      column. See **F45** and **F48**.
+   * **The declared test suite is 49 `unittest` methods that pass — but 70 further
+     module-level `pytest`-style self-tests across 9 modules can never run.** `pytest`
+     is not installed (`No module named pytest`) and is declared in no requirements
+     file, and `unittest` discovers zero of them (`Ran 0 tests / NO TESTS RAN`, exit 5).
+     The self-tests documenting `sidecar_ui`, `sidecar_server`, `pyansys_test`,
+     `pyfluent_test` and `validation_pipeline` have never executed. Separately, and
+     *not* a defect: the two sidecars are correctly fail-closed (`SystemExit(1)` on
+     error), unlike the Ada `Write_Status` path in F28. See **F53**.
+   * **The 14.36-as-NASA mis-provenance is on five artefacts, not three.** The two new
+     sites include `scripts/make_vtu_visualization.py:218-219`, which draws it as an
+     `axvline` labelled "IRVE-3 flight peak (14.36 W/cm²)" on a histogram of the run's
+     own cell heat fluxes — a reference line the reader compares against directly. The
+     correct `(F)` value is 13.80. See **F54**.
+   * **The two HIAD render scripts show different vehicles under one name.**
+     `render_optimization_comparison.py:247` states "IRVE-3 baseline defaults
+     (R_N=1.5 …) match the Ada/SPARK axioms"; `plot_hiad_3d.py:210` prints
+     `r_N=0.55m`; the run itself defaults to `--nose-radius-m 0.55`. `Rn` enters
+     Sutton–Graves as `R_n^0.75`. See **F55**.
    * **`SPARK_Mode (Off)` in all five Ada bodies** means GNATprove skips them entirely, so
      every `Pre`/`Post` in those specifications is documentation rather than proof —
      including `Environment` (7 withers, the exported atmosphere) and `Validation` (the

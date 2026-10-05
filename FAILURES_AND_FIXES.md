@@ -4,13 +4,13 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F52 are a second, third, fourth, fifth, sixth and seventh,
+F1–F15 were found and fixed in the first pass. **F16–F55 are a second, third, fourth, fifth, sixth, seventh and eighth,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
 optimiser first. F24–F31 come from the thread-3b rescan of the previously unaudited
 PINN, checkpoint and status subsystems, and F32–F36 from the thread-3c pass over the
-Kriging, surface-comparison and watchdog paths, and F37–F52 from the thread-3d/3e/3f/3g passes over
+Kriging, surface-comparison and watchdog paths, and F37–F55 from the thread-3d/3e/3f/3g/3h passes over
 the scripts, the sidecar, and the Ada atmosphere, status and checkpoint units. Read **"Still open after thread 3"**
 before relying on any number below.
 
@@ -3220,6 +3220,89 @@ ls -d venv venv_validation .venv 2>/dev/null
 ls venv_validation/share/jupyter/labextensions/ 2>/dev/null
 ```
 
+## F53 — The project's entire Python test suite is 70 module-level `pytest`-style functions, and **pytest is not installed and not a declared dependency**, so none of them can run
+
+*Class: false assurance — the tests exist and are syntactically valid, but no runner in the project can collect them*
+
+The repository contains two test files, and **both use `unittest.TestCase` with `(self,)` signatures and are genuinely collected and passing**:
+
+```
+$ ./venv_validation/bin/python -m unittest tests.test_run_pipeline tests.test_validation_pipeline_regressions -v
+...
+Ran 49 tests in 1.120s
+OK
+EXIT=0
+```
+
+That is the *entire* declared suite. Measured composition by AST:
+
+| file | lines | `TestCase` classes | test methods |
+| :--- | ---: | ---: | ---: |
+| `tests/test_run_pipeline.py` | 354 | 11 | 29 |
+| `tests/test_validation_pipeline_regressions.py` | 426 | 7 | 20 |
+
+Neither file references `14.36`, `195.06`, `51.8` or `3378`, so the regression suite does **not** assert the known-bad values — that particular fear is **refuted**, and recorded here so it is not re-litigated.
+
+**The uncovered verification is the other 70 functions.** An AST scan of `src/**/*.py`, `scripts/*.py` and `tools/*.py` for module-level `test_*` functions (i.e. *not* inside a `TestCase`) finds **70 across 9 files**. They are marked `# Self-tests (pytest-style; ...)` in the source. They are real assertions, not vacuous ones — e.g. `pyansys_test.py::test_get_local_fluent_exe` and the `sidecar_ui.py::test_snapshot` block. They are simply **unreachable by the only runner the project has.**
+
+**Measured proof they cannot be collected:**
+
+```
+$ ./venv_validation/bin/python -m pytest --version
+/Users/.../venv_validation/bin/python: No module named pytest
+
+$ ./venv_validation/bin/python -m unittest src.python.pyansys_test -v
+----------------------------------------------------------------------
+Ran 0 tests in 0.000s
+
+NO TESTS RAN
+EXIT=5
+```
+
+`unittest` discovers zero of them, because module-level functions are not `TestCase` methods. And `pytest`, which *would* collect them, is **absent from the environment and declared in no dependency file** — `grep -rn "pytest" requirements*.txt pyproject.toml setup.cfg` returns **no hits**. The 9 affected files include `sidecar_ui.py`, `sidecar_server.py`, `pyansys_test.py`, `pyfluent_test.py`, `validation_pipeline.py`, `generate_outputs.py`, `pipeline_checkpoint.py` and `sidecar_launcher.py`.
+
+**Consequences.**
+1. **The self-tests that document behaviour are decorative.** `sidecar_ui.py:1071-1076` asserts `snapshot()` returns defensive copies; `sidecar_server.py` documents *"Tested by: test_do_GET()"*; `validation_pipeline.py` carries self-tests for its VTU/XPath helpers. **None of them has ever executed.** This is the same class as F49, but at project scale: F49 was 7 Ada wrappers asserting a local literal, this is 70 Python functions no runner can reach.
+2. **The F28 false-pass class is *not* present in the two sidecars** — checked and cleared, so it is not asserted: `pyansys_test.py:249-302` `main()` raises `SystemExit(1)` on a non-Windows platform *before* attempting anything, and `if result["status"] == "error": raise SystemExit(1)` at `:300`; `pyfluent_test.py:328-330` has the identical structure. Both are correctly fail-closed, unlike `stellarorion_test_modes.adb:728` (F28). Recorded as **investigated, not a defect**.
+3. **`pyfluent_test.py:301` takes an SSH password as a command-line argument** (`--ssh-pass`), which is visible to every process on the host via `ps` and lands in shell history. The module documents the alternative `--ssh-key` at the same line, so the safe path exists and is not the default.
+
+**Fix.** Declare `pytest` in the project's requirements file and add one line that runs both the `unittest` suite and the module-level self-tests, or convert the 70 functions into `TestCase` methods. Leaving them as bare functions means the project's stated self-test coverage is zero for nine modules.
+
+## F54 — The 14.36 / 195.06 mis-provenance now appears on **five** artefacts, and the two new sites are the ones a reader is most likely to trust
+
+*Class: provenance — extends F41, which named three sites; two more found by the coverage sweep*
+
+F41 recorded three sites where StellarOrion's own DSMC heat flux is attributed to NASA TP-2013-4012, which reports 13.8 W/cm². The sweep over the previously-uncovered files found two more:
+
+| # | location | how it is presented |
+| :-- | :--- | :--- |
+| 1 | `scripts/make_vtu_visualization.py:218-219` | `ax.axvline(x=14.36, color="purple", linestyle="-.", linewidth=2, label="IRVE-3 flight peak (14.36 W/cm²)")` — a **fourth** `14.36`-as-flight, drawn as a reference line on a histogram of the run's own cell heat fluxes |
+| 2 | `compare_validation.py:23` and `:59` | module docstring `* Peak heat flux q_max = 14.36 W/cm^2  (= 143,600 W/m^2)` and `RAP_Q_MAX_WCM2 = 14.36  # W/cm^2  peak heat flux` (this file was covered by the earlier scripts sweep, but the constant itself was not attributed) |
+
+Site 1 is the more damaging of the five, because it is a **graphical reference line**: the reader's eye compares the run's distribution against it directly, and the correct comparison target (13.80) is 4.1 % lower. The `14.361` value is Rapisarda Table 4.10 — the `(R)` group of `IRVE3_REFERENCE` at `validation_pipeline.py:447`, which the F12 fix created. Every one of these sites bypasses that table.
+
+**Checked and cleared (do not re-litigate):** the `14.36` at `src/ui/sidecar_ui.py:1071` and `:1076` is a **test fixture**, not a claim — it feeds `st.update(results={"heat_flux_wcm2": 14.36})` and asserts the dict round-trips unchanged. It never reaches a comparison or a plot, so it is not a sixth site.
+
+**Fix.** Replace all five literals with the `(F)` group value 13.8 (or read `IRVE3_REFERENCE`), and label the Rapisarda line as Rapisarda.
+
+## F55 — The two render scripts that draw the HIAD geometry contradict each other on the nose radius, and one of them contradicts the run
+
+*Class: correctness — the same `Rn` ambiguity as F21, now visible in the published figures*
+
+F21 measured that the TPS conduction run uses **`Rn = 0.55 m`** while the limits gate silently used the wrapper default **`1.5`**, making the gate validate a 39.45 % weaker load. The coverage sweep found the same disagreement reproduced in prose, in two files that both claim to render "the IRVE-3 baseline":
+
+| file | line | claim |
+| :--- | :--- | :--- |
+| `scripts/render_optimization_comparison.py` | 247 | `--  3. IRVE-3 baseline defaults (R_N=1.5, r_tor=0.135, half_cone=60) match the Ada/SPARK axioms but are still read from the JSON 'default' block here` |
+| `scripts/plot_hiad_3d.py` | 210 | `IRVE-3 Baseline: D=3.0m, θ=60°, r_N=0.55m` (rendered into the HTML subtitle) |
+| **the run itself** | `scripts/run_tps_conduction_step2200.py:356` | `parser.add_argument("--nose-radius-m", type=float, default=0.55, ...)` |
+
+**The Ada/SPARK axioms cited at `render_optimization_comparison.py:247` are on the 1.5 side and the validated run is on the 0.55 side.** So the 3-D comparison figure and the 3-D HIAD model page show **different vehicles under the same name**, and `render_optimization_comparison.py` asserts the wrong one matches the verified axioms while simultaneously conceding it reads the value from JSON rather than from the axioms.
+
+**Consequence.** `Rn` enters Sutton–Graves as `ρ^0.25 · R_n^0.75`, so the 1.5 vs 0.55 discrepancy is a 1.62× factor on the geometry term alone. F21 established it moves the reported peak heat flux from 20.21 to 26.65 W/cm². Whichever figure a reader takes away from these two scripts, they cannot both be the vehicle that produced `results/`.
+
+**Fix.** Resolve `Rn` once (F18's ruling decides it), then have both render scripts read it from the run manifest rather than from prose, and correct whichever prose disagrees with that ruling.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -3352,6 +3435,9 @@ the measured series.
 | F50 | false assurance | **open** | `sabotage_verifier.py` is **917 KB** and `DEFAULT_EXCLUDE_DIRS = {"utils"}` (`:113`) excludes it from every scan, so the gate that judges all other files has **never been run in this audit and cannot judge itself**. Run for the first time here: verdict **TAINTED**, 3 CRITICAL / 1 HIGH / 1 MEDIUM / 3 LOW, of which the 2 real code defects are a dead branch (`STALE_FLAG`, L14924) **inside the SMT proof-obligation generator** and an invariant-less loop (L17088) |
 | F51 | correctness | **open** | The verifier's `cvc5` gate probes `import cvc5` (`:8833`) while the very next check probes `shutil.which('alt-ergo')` for a *binary*. **cvc5 1.0.9 is installed and working on PATH** (`/Users/albertstarfield/.local/bin/cvc5`) yet the gate emits a **CRITICAL** saying formal verification "is unsound without cvc5", and prescribes `pip install cvc5` — which would add a second, redundant solver |
 | F52 | correctness | **open** | The walker at `:8993` prunes `venv` and `.venv` but **not `venv_validation`**, so 2 of the verifier's 3 CRITICALs are about a jupyter `jupyterlab-plotly` extension inside the project's own virtual environment. Environment findings carry the same severity weight as source-rule violations, so "the gate says TAINTED" says nothing about the artefacts under audit |
+| F53 | false assurance | **open** | The declared suite is 49 `unittest` methods that pass, but **70 further module-level `pytest`-style self-tests across 9 modules can never run**: `pytest` is not installed (`No module named pytest`) and declared in no requirements file, and `unittest` discovers 0 of them (`Ran 0 tests / NO TESTS RAN`, exit 5). The self-tests documenting `sidecar_ui`, `sidecar_server`, `pyansys_test`, `pyfluent_test` and `validation_pipeline` have never executed |
+| F54 | provenance | **open** | The 14.36-as-NASA mis-provenance now appears on **five** artefacts, two more found by the coverage sweep: `scripts/make_vtu_visualization.py:218-219` draws it as an `axvline` labelled "IRVE-3 flight peak (14.36 W/cm²)" on a histogram of the run's own fluxes, and `compare_validation.py:23,59` states it as `RAP_Q_MAX_WCM2`. The correct `(F)` value is 13.80 |
+| F55 | correctness | **open** | The two HIAD render scripts contradict each other on the nose radius: `render_optimization_comparison.py:247` states "IRVE-3 baseline defaults (R_N=1.5 …) match the Ada/SPARK axioms" while `plot_hiad_3d.py:210` prints `r_N=0.55m` and the run itself defaults to `--nose-radius-m 0.55`. `Rn` enters Sutton–Graves as `R_n^0.75`, so the two figures show different vehicles under one name |
 
 ### Final state after fixes
 
