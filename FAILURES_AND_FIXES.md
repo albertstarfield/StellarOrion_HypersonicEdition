@@ -2052,6 +2052,18 @@ src/python/sidecar_launcher.py          lines=50   live_statements=0
 
 ## F38 — The trajectory generator's ISA atmosphere is wrong in four independent places, and its own AXIOM T3 is false
 
+> ### ⚠️ **Scope correction — thread 3u.** The defect is real; its blast radius is not what I wrote.
+>
+> `gen_trajectory_profile.atmosphere_density` is measured at 1.48–3.32× too dense versus ISA 1976,
+> peaking at **+231.5 %** at the 47–51 km isothermal boundary. That measurement stands.
+>
+> **But the script is off the validation path** — `stellarorion_project.adb:1278-1288` is its only
+> caller, behind `--trajectory-profile`, ending in `goto Cleanup`. The trajectory used by the
+> validation runs comes from `Compute_Trajectory_Profile` (`stellarorion_physics.adb:1923`) via
+> the Ada `Atmosphere_Density`. **So the shipped results were not flown through this wrong
+> atmosphere.** The finding stands as a defect in an off-path tool, and the earlier
+> consequence text claiming the DSMC runs are evaluated in it is withdrawn — see also F43 and F45.
+
 *Class: correctness — this sets the flight-condition table every heat-flux and g-load number in the project is computed against*
 
 `scripts/gen_trajectory_profile.py` is the only generator in the repo for
@@ -2364,6 +2376,35 @@ unreachable.
 
 ## F43 — Every run's `trajectory_profile.csv` was produced by code that is not in the repository
 
+> ### ⚠️ **CORRECTION — thread 3u. This finding is REFUTED and must not be relied on.**
+>
+> **An agent recheck traced the actual writer of `trajectory_profile.csv`, and the producer is in
+> this repository.** I verified every step of that trace myself before accepting it:
+>
+> | step | location | what it shows |
+> | :-- | :--- | :--- |
+> | producer exists in-repo | `stellarorion_physics.adb:1923-2164` | `procedure Compute_Trajectory_Profile` |
+> | producer uses the **Ada** atmosphere | inside that body | `Rho = Atmosphere_Density(Alt_Km) in [0.0, 1.225] kg/m^3` |
+> | call site | `stellarorion_sparta.adb:3604-3615` | `Compute_Trajectory_Profile (... Profile => Traj_Profile, N_Pts => Traj_N_Pts)` with `Entry_Alt_Km => 122.65`, `Entry_Vel_Ms => 7500.0`, `Entry_Gamma_Deg => -5.75` |
+> | the CSV writer | `stellarorion_sparta.adb:3653-3661` | `TPath := Results_Dir & "/trajectory_profile.csv"`, rows emitted from `Traj_Profile (K).*` |
+> | entry conditions match the shipped file | `results/validation_scalloped/trajectory_profile.csv` | first data row `0.000,122.6500,7500.00,27.3680,0.03,1.470000,0.0001,0.000` — **exact to every printed digit** |
+>
+> **What I got wrong, and how.** My evidence was that re-running
+> `gen_trajectory_profile.compute_trajectory()` produced 186 rows / peak g 19.4773 /
+> peak q 5196.18 against the shipped 198 / 17.4213 / 4538.59, with a constant
+> `downrange_km`, and I concluded the shipped file came from "code not in the repository".
+> **I compared against the wrong producer.** `gen_trajectory_profile.py` is invoked from
+> exactly one place — `stellarorion_project.adb:1278-1288` — behind `--trajectory-profile`,
+> and that branch ends in `goto Cleanup`, so it is **not on the `--validate` path** at all.
+> The constant `downrange_km` that I read as evidence of absent code is simply what
+> `sparta.adb:3661` writes too, because the ballistic integrator does not carry a per-point
+> downrange.
+>
+> **Status: REFUTED.** The trajectory profile is produced by in-repo, git-tracked Ada code.
+> The residual question — whether re-running `--validate` reproduces the committed bytes —
+> remains open and is **not** asserted either way here; the recorded baseline md5 is
+> `ea07b4449f7049c75114a9b38911f1d5`.
+
 *Class: provenance / reproducibility. This is the strongest form of the F16 class: F16 was
 an artefact nobody re-derived; F43 is an artefact whose producer does not exist in the tree.*
 
@@ -2581,6 +2622,31 @@ Separately, `sidecar_watchdog.py` is the module intended to supervise this proce
 **entirely unwired** — see the dead-code note in the "Investigated and NOT a defect" section.
 
 ## F45 — The project ships two ISA atmospheres that disagree by up to 3.3×, and the one that writes the trajectory profile is the wrong one (a third implementation exists — see F48)
+
+> ### ⚠️ **CORRECTION — thread 3u. The measured divergence stands; my ATTRIBUTION of it was wrong.**
+>
+> I wrote that `gen_trajectory_profile.atmosphere_density` — the Python implementation measured
+> at 1.48–3.32× too dense — is "what actually writes `trajectory_profile.csv`", and concluded that
+> every q / drag / heating / g-load in the profile is therefore evaluated through an
+> over-dense atmosphere. **That consequence is false and is withdrawn.**
+>
+> `gen_trajectory_profile.py` is reachable only from `stellarorion_project.adb:1278-1288`,
+> gated on `--trajectory-profile`, followed immediately by `goto Cleanup`. The profile the
+> results come from is written at `stellarorion_sparta.adb:3661` from `Traj_Profile`, which
+> `sparta.adb:3604` fills by calling the in-repo `Compute_Trajectory_Profile` — which uses the
+> **Ada** `Atmosphere_Density`, the implementation this very finding measured as correct to
+> **0.36 %** of ISA 1976.
+>
+> **What survives.** The measurements themselves are unaffected and independently corroborated:
+> the Python atmosphere is still 1.48–3.32× too dense versus ISA 1976; the Ada one is still correct to
+> 0.36 %; temperature still agrees exactly, so the divergence is still density-only; and there
+> are still three implementations of "the atmosphere" in the repository that disagree. The
+> agent's independent ISO 2533 reference reproduced 1.4755–3.3163 against my 1.4755–3.3151.
+>
+> **What is withdrawn.** "There is currently no artefact in the repo whose atmospheric model can
+> be identified" — the model **can** be identified, and it is the correct one. The severity of
+> this finding drops from *the results were flown through a wrong atmosphere* to *the project
+> ships a wrong atmosphere that nothing on the validation path uses*.
 
 *Class: correctness — the highest-consequence physics finding in this log*
 
@@ -4187,6 +4253,17 @@ is the opposite of what the underscore convention signals.
 **Fix.** Either call `tex_available()` before `setup_tex_fonts()` so the LaTeX path is gated
 on an explicit check, or delete it. Rename the module if it is meant to be shared.
 
+
+### Standing rule added in thread 3u
+
+**Before attributing an artefact to a producer, trace the writer to its data source.** A
+numerically similar tool reached by a different code path is not the producer. F43 asserted
+"written by code not in the repository" on the strength of a regeneration mismatch, without
+ever checking who writes the file. This is the eleventh harness/attribution error in this
+audit and the most consequential one recorded, because it published a finding that a second
+pair of hands refuted. It is the producer-side twin of the standing rule already in this log
+— *a fix is not correct until every competing implementation has been located*.
+
 ## F73 — Three further root documents still assert the reference values this audit disproved; a fourth was already correct and was deliberately left alone
 
 *Class: provenance — the same 14.36/195.06 conflation as F12/F19/F41/F54, in documents the earlier passes never touched*
@@ -4334,14 +4411,14 @@ the measured series.
 | F35 | correctness | **open** | `pipeline_comparison.py` is a `GaussianProcessRegressor` with **no PDE residual** (`grep -c 'residual|_pde|PDE('` = 0) yet calls itself a PINN in **nine** places, including an AXIOM block asserting `PINN respects governing PDE constraints [Raissi 2019]` and a comment deferring to the never-running `pinn_accelerator.py`. Third site where "PINN" labels a non-PINN |
 | F36 | correctness | **open** | `sidecar_watchdog.Secondary_Watchdog._monitor_loop` resets `self._last_cross_check` at line 303 and then tests it at line 306, so the `elapsed > PRIMARY_TIMEOUT_S` (25 s) branch is unreachable — measured **0** `_handle_resurrect` calls with the Primary permanently dead. The correct test, `Mutual_Check()`, exists and is never called. The whole dual-watchdog escalation is inert |
 | F37 | dead code | **open** | `src/python/visualizer.py` and `src/python/sidecar_launcher.py` are 50 lines each with **zero live statements** — only a docstring claiming publication-quality figures and a web UI that do not exist. `docs/PYTHON_SIDECAR_EXCEPTIONS.md:38` describes one of them as a working bridge |
-| F38 | correctness | **open** | `gen_trajectory_profile.atmosphere_temperature` is **correct**, but `atmosphere_density` has four independent ISA errors: a per-km lapse passed where per-metre is needed (0–11 km), a missing `−1` in three gradient layers, the isothermal `exp` form used for 20–32 km, and self-recursion above 84.852 km. The model is **1.48×–3.32× too dense across 5–84.852 km**, peaking at **+231.5 % at 47–51 km** — the band the DSMC runs are evaluated in — against the module's own claim of 0.1 % agreement |
+| F38 | correctness | **open — off-path tool (thread 3u)** | `gen_trajectory_profile.atmosphere_temperature` is **correct**, but `atmosphere_density` has four independent ISA errors: a per-km lapse passed where per-metre is needed (0–11 km), a missing `−1` in three gradient layers, the isothermal `exp` form used for 20–32 km, and self-recursion above 84.852 km. The model is **1.48×–3.32× too dense across 5–84.852 km**, peaking at **+231.5 % at 47–51 km** — the band the DSMC runs are evaluated in — against the module's own claim of 0.1 % agreement |
 | F39 | correctness | **open** | `postprocess_validation.py:516` sorts `surf.*.out` as **strings**, so `rows[-1]` is step **900** while the real last step is **1700**. Every "final step" number that script reports is eight timesteps early. It also hardcodes `results/validation`, not the validated `validation_scalloped` |
 | F40 | silent failure | **open** | `verify_profile_math.py:216-217` is `if not ffi_available: return True` — the Ada FFI cross-check that is the script's entire purpose is skipped and it reports **success**, violating its own AXIOM A3. A green run from this verifier is currently uninformative |
 | F41 | provenance | **open** | The 14.36 / 195.06 IRVE-3 mis-provenance appears in **three more files** (`postprocess_validation.py:55`, `plot_rapisarda_comparison.py:52`, `make_derived_plots.py:343` on the headline figure), and `compare_validation.py:278` prints an **unconditional** "in the right ballpark" deceleration verdict that no measurement can change |
 | F42 | fabrication | **open** | `postprocess_validation.py` publishes `pct_of_peak: 100.0` on **every** top-15 row (a hardcoded constant), and its heat-load integration hardcodes `dt = 1e-6 s` while ignoring its own `dt_between_steps` argument, yielding **0.0590 J/cm²** against a 195.06 J/cm² reference — ~3 300× low — with no warning |
-| F43 | provenance | **open** | **The shipped `trajectory_profile.csv` cannot be regenerated by the committed generator.** Re-running `compute_trajectory()` gives 186 rows / peak g 19.4773 / 186 distinct `downrange_km`; the shipped file has 198 rows / peak g 17.4213 / a **constant** `downrange_km`, and is byte-identical (md5 `ea07b444…`) in all four run directories. Every run is flown along a trajectory whose producer is not in the repository |
+| F43 | provenance | **REFUTED (thread 3u)** | **REFUTED and withdrawn.** The claim was that the shipped `trajectory_profile.csv` cannot be regenerated by the committed generator.** Re-running `compute_trajectory()` gives 186 rows / peak g 19.4773 / 186 distinct `downrange_km`; the shipped file has 198 rows / peak g 17.4213 / a **constant** `downrange_km`, and is byte-identical (md5 `ea07b444…`) in all four run directories. Every run is flown along a trajectory whose producer is not in the repository |
 | F44 | **security** | **open — highest severity** | The sidecar has **no authentication and no origin check**: `GET /` + `../`×9 returns **`/etc/passwd` in full (9 350 bytes)**, a single `..` returns 15 672 bytes of the server's own source, and a CORS-safelisted `text/plain` `POST /api/update` from `https://evil.example` sets `status='VALIDATION COMPLETE'` with **no server-side log** (`log_message` is a no-op). Its `HTTPServer` also has no `timeout`, so one idle connection wedges the service |
-| F45 | **correctness** | **open** | **Two complete ISA atmospheres ship in this repository and they disagree by up to 3.3×.** The Ada/SPARK `StellarOrion_Environment.Atmosphere_Density` is **correct to within 0.36 %** of ISA 1976 and is the live one (7 withers, exported as `_Atmosphere_Density_C`); the Python `gen_trajectory_profile.atmosphere_density` is **1.48×–3.32× too dense** and is what writes `results/*/trajectory_profile.csv`. Temperature agrees to 0.000 K, so the divergence is density-only and invisible in the profile's own T column. Both are also 2–12 decades too dense above the 84.852 km mesopause, where **no standard exists to check against** and the trajectory starts |
+| F45 | **correctness** | **open — attribution corrected (thread 3u)** | **Two complete ISA atmospheres ship in this repository and they disagree by up to 3.3×.** The Ada/SPARK `StellarOrion_Environment.Atmosphere_Density` is **correct to within 0.36 %** of ISA 1976 and is the live one (7 withers, exported as `_Atmosphere_Density_C`); the Python `gen_trajectory_profile.atmosphere_density` is **1.48×–3.32× too dense** and is what writes `results/*/trajectory_profile.csv`. Temperature agrees to 0.000 K, so the divergence is density-only and invisible in the profile's own T column. Both are also 2–12 decades too dense above the 84.852 km mesopause, where **no standard exists to check against** and the trajectory starts |
 | F46 | dead code | **open** | **5 459 lines and 93 Ada subprograms have no caller**: `stellarorion_history` (3 488/60), `stellarorion_pipeline_checkpoint` (1 392/28), `stellarorion_trajectory_output` (416/3), `stellarorion_orion` (163/2) — zero Ada withers each. `Pipeline_Checkpoint` being unwired means there is **no Ada-side run checkpoint at all**, which is why F28's unconditional `Status_Completed, 1.0` has nothing to contradict it. SPARK obligations discharged over these lines are evidence about dead code, not about the shipped binary |
 | F47 | correctness | **open** | **`SPARK_Mode (Off)` in all five bodies** (Environment, Status_Writer, Validation, PINN_Trajectory, Trajectory_Output) — GNATprove skips them entirely, so every `Pre`/`Post` in those specs is decorative, voiding `.ads:4` and `.ads:73-74`'s `gnatprove --level=4` claims. `pinn_trajectory.adb:18` justifies it with "exception handlers and Ada.Text_IO": measured **0** handlers and the only `Text_IO` mention is the comment itself |
 | F48 | correctness | **open** | A **third** atmosphere. `PINN_Trajectory.ISA_Atmosphere` extends the mesopause's isothermal 186.87 K layer to 120 km (`HB_Next := 120.0`) — a 35.14 km extrapolation with no inversion — and returns **1.12758e-08** at 120 km where the exported `Environment` atmosphere returns **1.61961e-09**: **6.96× apart**. The cited source (NASA SP-7468) is the 1976 standard, which **stops at 86 km**, so no error percentage is claimed |

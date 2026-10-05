@@ -593,6 +593,14 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      target. Each now carries a correction banner and inline `[REF-CORRECTED]` markers; no
      original sentence was rewritten. `HIAD_IRVE3_Baseline.md` was checked and is already
      correct, so it was left untouched. See **F73**.
+   * **F43 is REFUTED and F45's attribution was wrong — corrected in thread 3u.**
+     The profile is written by `stellarorion_sparta.adb:3661` from `Traj_Profile`, which
+     `sparta.adb:3604` fills by calling the in-repo
+     `stellarorion_physics.adb:1923 Compute_Trajectory_Profile` using the **Ada**
+     `Atmosphere_Density` — the correct one. `gen_trajectory_profile.py` is reached only
+     from `project.adb:1278-1288` behind `--trajectory-profile`, ending in `goto Cleanup`,
+     so it is **not on the validation path** and never produced the shipped file. The
+     1.48–3.32× density error in that script is real but off-path.
    * **`_tex_config.tex_available()` has no caller.** The predicate that answers "is a
      LaTeX toolchain present?" is implemented and never called; the module instead calls
      `setup_tex_fonts` unconditionally and handles failure. See **F72**.
