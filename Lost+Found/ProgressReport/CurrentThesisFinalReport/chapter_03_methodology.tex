@@ -1,5 +1,5 @@
 \clearpage
-\chapter{METHODOLOGY}
+\chapter{Methodology}
 \label{ch:methodology}
 
 \section{Research Axioms and First Principles}
@@ -844,7 +844,7 @@ where $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$. Four ratio terms and three pe
 
 The weights are $w_{Q} = 1.0$, $w_{q} = 0.5$, $w_{\beta} = 0.5$, $w_{C_d} = 0.25$ and penalty weight $\lambda_{p} = 100$. The heat-load weight is largest, so $J$ is dominated by total heat load.
 
-Reference values are loaded at run time from the IRVE-3 validation run~\cite{old2013irve3postflight,dillman2014irve3flight}: $Q_{target} = 165.72$\,J/cm$^2$, $q_{ref} = 14.361$\,W/cm$^2$, $\tau = 13.582$\,s and $C_{d,ref} = 1.4625$.
+Reference values are loaded at run time from the IRVE-3 validation run~\mbox{\cite{old2013irve3postflight,dillman2014irve3flight}}: $Q_{target} = 165.72$\,J/cm$^2$, $q_{ref} = 14.361$\,W/cm$^2$, $\tau = 13.582$\,s and $C_{d,ref} = 1.4625$.
 
 Eq.~\eqref{eq:cost_function_implemented} is a \emph{single-point} surrogate: one correlation value at one frozen trajectory point times a constant exposure time, not a trajectory integration; the trajectory-integrated heat load in Chapter~\ref{ch:results} comes from the DSMC post-processing path.
 The drag coefficient is a closed-form estimate,

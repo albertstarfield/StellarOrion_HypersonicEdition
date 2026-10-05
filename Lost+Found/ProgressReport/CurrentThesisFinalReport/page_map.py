@@ -30,7 +30,7 @@ def body_offset_1based() -> int:
     for i in range(11, len(pdf)):
         t = pdf[i].get_textpage().get_text_range()
         t = re.sub(r"[\uFFFC-\uFFFF\u200B\uFEFF]", "", t)
-        if "CHAPTER 1" in t and "INTRODUCTION" in t:
+        if "CHAPTER 1" in t and ("INTRODUCTION" in t or "Introduction" in t):
             return i  # folio-1 offset equals the 0-based index of that page
     raise RuntimeError("body chapter-1 opener not found; front matter unexpected")
 

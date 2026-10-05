@@ -3,7 +3,7 @@
 \chapter{StellarOrion Physical Constants and Code Reference}
 \label{app:code_constants}
 
-Constants and defaults of \texttt{\seqsplit{stellarorion\_program\_proc}}.
+This appendix lists the constants and defaults used by \mbox{\texttt{stellarorion\_program\_proc}}.
 
 \section{Fundamental Physical Constants}
 \label{sec:fundamental_constants}
@@ -12,15 +12,15 @@ Constants from \texttt{\seqsplit{stellarorion\_types.ads}} (Table~\ref{tab:const
 
 \begin{table}[!htbp]
 \centering
-\caption{Physical constants from \texttt{stellarorion\_types.ads}, 2018 recommended values~\protect\cite{codata2018}.}
+\caption{Physical constants used by \texttt{stellarorion\_types.ads}, with 2018 recommended values~\protect\cite{codata2018}.}
 \label{tab:constants}
-\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.24\textwidth} >{\RaggedRight\arraybackslash}p{0.12\textwidth} >{\RaggedRight\arraybackslash}p{0.19\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.22\textwidth} >{\RaggedRight\arraybackslash}p{0.10\textwidth} >{\RaggedRight\arraybackslash}p{0.25\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
 \hline
 \textbf{Constant} & \textbf{Symbol} & \textbf{Value} & \textbf{Unit} \\
 \hline
-Stefan-Boltzmann & $\sigma_B$ & $5.670374419 \times 10^{-8}$ & W m$^{-2}$ K$^{-4}$ \\
-Boltzmann & $k_B$ & $1.380649 \times 10^{-23}$ & J K$^{-1}$ \\
-Avogadro & $N_A$ & $6.02214076 \times 10^{23}$ & mol$^{-1}$ \\
+Stefan-Boltzmann & $\sigma_B$ & \mbox{$5.670374419 \times 10^{-8}$} & W m$^{-2}$ K$^{-4}$ \\
+Boltzmann & $k_B$ & \mbox{$1.380649 \times 10^{-23}$} & J K$^{-1}$ \\
+Avogadro & $N_A$ & \mbox{$6.02214076 \times 10^{23}$} & mol$^{-1}$ \\
 Standard gravity & $g_0$ & $9.80665$ & m s$^{-2}$ \\
 Molar mass of air & $M_{\text{air}}$ & $28.97 \times 10^{-3}$ & kg mol$^{-1}$ \\
 Specific gas constant (air) & $R_{\text{air}}$ & $287.058$ & J kg$^{-1}$ K$^{-1}$ \\
@@ -28,7 +28,7 @@ Specific heat ratio (air) & $\gamma_{\text{air}}$ & $1.4$ & n/a \\
 Molecular diameter (air) & $d$ & $3.7 \times 10^{-10}$ & m \\
 Prandtl number (air) & $\text{Pr}$ & $0.71$ & n/a \\
 Sutherland constant & $S$ & $110.4$ & K \\
-Sutton-Graves coefficient & $C_{SG}$ & $1.83 \times 10^{-4}$ & W m$^{-2}$ (kg m$^{-3}$)$^{-1/2}$ (m s$^{-1}$)$^{-3}$ \\
+Sutton-Graves coefficient & $C_{SG}$ & $1.83 \times 10^{-4}$ & W m$^{-2}$ (kg~m$^{-3}$)$^{-1/2}$ (m~s$^{-1}$)$^{-3}$ \\
 Reference viscosity (air) & $\mu_{\text{ref}}$ & $1.716 \times 10^{-5}$ & Pa s \\
 Sutherland reference temperature & $T_{\text{ref}}$ & $273.15$ & K \\
 Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J kg$^{-1}$ K$^{-1}$ \\

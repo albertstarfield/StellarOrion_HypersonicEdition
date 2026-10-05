@@ -55,7 +55,7 @@ def detect_body_offset(pdf):
     for i in range(11, len(pdf)):
         t = pdf[i].get_textpage().get_text_range()
         t = re.sub(r"[\uFFFC-\uFFFF\u200B\uFEFF]", "", t)
-        if "CHAPTER 1" in t and "INTRODUCTION" in t:
+        if "CHAPTER 1" in t and ("INTRODUCTION" in t or "Introduction" in t):
             return i
     raise RuntimeError("body chapter-1 opener not found; front matter unexpected")
 
