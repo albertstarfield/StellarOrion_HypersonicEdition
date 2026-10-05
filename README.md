@@ -585,6 +585,19 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      `axvline` labelled "IRVE-3 flight peak (14.36 W/cm²)" on a histogram of the run's
      own cell heat fluxes — a reference line the reader compares against directly. The
      correct `(F)` value is 13.80. See **F54**.
+   * **The SiC survivability limit is wrong in Python and the wrong value prints a
+     verdict.** The Ada truth is `SIC_MAX_TEMP := 2073.0` (`stellarorion_types.ads:97`,
+     graded at `physics.adb:1428`); two Python copies use **1700.0** —
+     `make_vtu_visualization.py:262-263` draws a line labelled "SIC limit (1700K)", and
+     `make_derived_plots.py:80` is a module constant driving `t_surv` at `:432` and a
+     printed **PASS/FAIL** at `:435`. Measured: the exceedance count is overstated on all
+     22 DSMC VTUs, and the verdict flips on exactly one artefact of 24 — the PINN surface
+     `validation_scalloped/…/surf_pinn_300000000.vtu` (T_max 1818.3 K; 3648 cells above
+     1700, **0** above 2073). See **F60**.
+   * **The 6-toroid MDAO count is labelled "IRVE-3" throughout the render path.**
+     `stellarorion_types.ads:284-288` says verbatim that flight used **7** toroids and MDAO
+     used 6, yet `render_optimization_comparison.py:822`, `:693` and `hiad_geometry.py:40`
+     all hard-code 6 as "IRVE-3" and the value 7 appears nowhere. See **F61**.
    * **The source-integrity manifest is stale and does not say so.** Hashing all 23 files
      in `.src_hashes.json`: **5 disagree with the tree** — `validation_pipeline.py`,
      `generate_outputs.py`, `ada_pinn_wrapper.py`, `generate_hiad_dashboard.py`,

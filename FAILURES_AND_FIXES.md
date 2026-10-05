@@ -4,13 +4,13 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F57 are a second through ninth audit passes,
+F1–F15 were found and fixed in the first pass. **F16–F61 are a second through tenth audit passes,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
 optimiser first. F24–F31 come from the thread-3b rescan of the previously unaudited
 PINN, checkpoint and status subsystems, and F32–F36 from the thread-3c pass over the
-Kriging, surface-comparison and watchdog paths, and F37–F57 from the thread-3d/3e/3f/3g/3h/3i/3j passes over
+Kriging, surface-comparison and watchdog paths, and F37–F59 from the thread-3d/3e/3f/3g/3h/3i/3j/3k passes over
 the scripts, the sidecar, and the Ada atmosphere, status and checkpoint units. Read **"Still open after thread 3"**
 before relying on any number below.
 
@@ -3435,6 +3435,204 @@ refresh in the existing pipeline), and make hash disagreement a **reported** con
 rather than a stored value. Extend recovery coverage to the modules that carry the claim, or
 drop the claim from the ones it does not cover.
 
+## F58 — Gate B printed its own headline number as `0.00`
+
+*Class: presentation — introduced with the Step 9b regime gate, found on its first ever execution*
+
+Gate B exists to report the Knudsen number at the run point. On its first run the
+two rows that carry its entire content were:
+
+```
+  Kn at run point       | 0.00  | 0.01..1.00 | FAIL
+  Mean free path (m)    | 0.00
+```
+
+The actual values are **Kn = 3.78388E-05** and **lambda = 6.36290E-05 m**.
+
+**Root cause.** Both rows were formatted with `F6`, which is the project's
+`"N.DD"` two-decimal formatter (see the F3 entry — it exists because Ada's
+real-to-integer conversion rounds rather than truncates). Two decimals is the
+wrong precision for a quantity of order 1e-5: `F6` cannot distinguish 3.78e-05
+from an exact zero, so a reader sees `0.00` and has no way to tell "deep
+continuum, 3.8e-5" from "not computed". The FAIL verdict was right; the number
+behind it was unreadable.
+
+**Fix.** The Kn and lambda rows now use `Float'Image`, which preserves the
+magnitude. The band limits deliberately stay on `F6` — `0.01` and `1.00` are
+correct and more legible at two decimals. Applied at all three sites (the table
+row, the mean-free-path row, and the `REGIME GATE: FAIL` summary line).
+
+**Verified by compiling and running the exact expression with the project's own
+compiler**, rather than assuming the attribute's output shape:
+
+```
+kn row  : Kn at run point       |  3.78388E-05 |  1.00000E-02.. 1.00000E+00
+mfp row : Mean free path (m)    |  6.36290E-05
+(old F6 would have shown: 0.00)
+```
+
+Rebuilt: both GPRs 0 errors, self-test 21 PASS / 0 FAIL. **Not re-observed in a
+full validation run** — that costs ~55 minutes and the gate's verdict (FAIL,
+continuum) does not depend on the formatting.
+
+---
+
+## F59 — Two more mixed-provenance reference blocks, both in a file F12 already fixed
+
+*Class: provenance — extends F12 and F54; F54's list of five sites missed these*
+
+`src/python/validation_pipeline.py` declares the reference values **twice more**,
+locally, bypassing the `IRVE3_REFERENCE` table:
+
+| site | code |
+| :-- | :--- |
+| `:3987-3989` | `IRVE3_QMAX = 14.3610` / `IRVE3_QLOAD = 195.0577` / `IRVE3_G = 19.7` under one `Reference values` banner |
+| `:4686` | a second `IRVE3_QMAX = 14.3610` |
+
+The three constants sit together and are consumed as if interchangeable: the
+`14.3610` is **Rapisarda (2023) Table 4.10**, the `19.7` is **NASA/TP-2013-4012** —
+the exact conflation F12 removed from `IRVE3_REFERENCE`, reintroduced at two more
+points. They feed ~10 computed percentages plus a markdown row
+`| **IRVE-3 Flight** [38] | **14.3610** |`, a bar labelled `IRVE-3 Flight =
+14.36`, a CSV export, and a JSON `irve3_flight` block.
+
+**Not fixed, deliberately, and here is exactly why.** Unlike the earlier sites,
+these are not one value that is simply wrong: the surrounding block is a
+*Rapisarda Table 4.10 comparison* (the plot title reads `Table 4.10: q_max …
+Rapisarda 2023 vs StellarOrion`), where `14.361` is the correct Rapisarda flight
+number. Substituting `13.8` would corrupt that comparison, and leaving `14.361`
+while calling it plain `IRVE-3 Flight` next to a NASA/TP `19.7` repeats the
+conflation. The correct repair is to **split the block into named (F)/(R) groups
+and read `IRVE3_REFERENCE`**, which changes the labels on roughly ten published
+percentages across markdown, CSV and JSON outputs.
+
+That is a change to published numbers rather than a formatting fix, so it needs a
+decision on which reference each table is meant to grade against before it is
+made. Flagged rather than guessed at.
+
+---
+
+## F60 — The silicon-carbide survivability limit is duplicated in Python at the wrong value, and the wrong value prints a PASS/FAIL verdict
+
+*Class: correctness — one Ada truth, two Python copies, and no link between them*
+
+The project's own limit is Ada-side:
+
+```
+src/simulation_engine/stellarorion_types.ads:97    SIC_MAX_TEMP : constant Float := 2073.0;
+src/simulation_engine/stellarorion_physics.adb:1428  Metrics.Surface_Temp_K <= SIC_MAX_TEMP
+```
+
+`stellarorion_physics.adb:1417` documents that `post` as the condition that *is* the
+survivability test. **Two Python files use 1700.0 instead.**
+
+**Site 1** — `scripts/make_vtu_visualization.py:262-263`:
+
+```python
+ax2.axhline(y=1700, color="red", linestyle=":", linewidth=1.5,
+            alpha=0.7, label="SIC limit (1700K)")
+```
+
+**Site 2** — `scripts/make_derived_plots.py:80`, a module-level constant that drives
+**five** uses, the last two of which compute and **print** a verdict:
+
+```python
+SIC_MAX_TEMP = 1700.0      # SIC surface temperature limit [K]
+...
+:399-400  ax.axhline(y=SIC_MAX_TEMP, color="red", linestyle="--", alpha=0.7,
+                     label=f"SIC limit ({SIC_MAX_TEMP:.0f}K)")
+:406      axhspan(KAPTON_MAX_TEMP, SIC_MAX_TEMP, alpha=0.05, color="yellow", ...)
+:408      axhspan(SIC_MAX_TEMP, max(max(t_surface), SIC_MAX_TEMP) * 1.1, ...)
+:432      t_surv = max(t_surface) <= SIC_MAX_TEMP
+:435      print(f"    T_surface < {SIC_MAX_TEMP}K (SIC): {'PASS' if t_surv else 'FAIL'} (max={max(t_surface):.0f}K)")
+```
+
+`grep -rn "SIC_MAX|silicon carbide"` across `*.py` / `*.ads` / `*.adb` finds **no third
+definition**: exactly one Ada truth and two Python copies, with nothing linking them.
+This is the same "a fix is not correct until every competing implementation has been
+located" shape as F45/F48 — the Ada constant is correct and the two Python copies are
+the wrong ones.
+
+### What the wrong value actually does — measured, and narrower than it first looks
+Using radiative equilibrium `T = (q/(σ·ε))^0.25` with σ = 5.670374419e-8, ε = 0.90,
+evaluated through the **real** `make_vtu_visualization._parse_vtu` (whose signature is
+`-> tuple[np.ndarray, np.ndarray]`, `:68`) on every shipped `results/*/paraview/surf_*.vtu`:
+
+| | result |
+| :--- | :--- |
+| the 22 shipped **DSMC** VTUs | **FAIL against both limits.** T_max spans 2360.4 – 3020.7 K. No verdict flips on any of them. |
+| the scalloped time series | all **22 of 22** rows exceed both limits; `t_surv` = FAIL either way |
+| the **PINN** VTU, `validation_scalloped` | T_max **1818.3 K**, n = 3696: **3648** above 1700 K, **0** above 2073 K ⇒ the drawn line reports **FAIL**, the real limit reports **PASS** |
+| the **PINN** VTU, `validation_optimized` | T_max 1641.6 K, 0 above either ⇒ PASS both |
+
+So the honest scope is threefold, and it is **not** that a PASS becomes a blanket FAIL:
+
+1. The **exceedance count is overstated on every artefact** — e.g. `surf_2200` reports
+   1920 cells above the drawn line where 1152 are above the real limit; `surf_100`
+   1968 vs 1920. A reader counting cells between the line and the curve is reading a
+   number this constant invented.
+2. The **verdict flips on exactly one artefact of 24** — and it is the PINN result,
+   `results/validation_scalloped/paraview/surf_pinn_300000000.vtu`, which is precisely
+   the quantity the multi-fidelity correction depends on. The same file in
+   `validation_optimized` passes both, so **the two runs' PINN surfaces disagree with
+   each other** on survivability, and the wrong constant is what makes them disagree.
+3. `make_derived_plots.py:435` prints that verdict into the console output of the
+   script that produces the headline `physical_dashboard.png`.
+
+**Fix.** Delete both Python constants and read the value through the same route the rest
+of the pipeline uses (or import it from a single generated table, as F12's
+`IRVE3_REFERENCE` re-provenancing did for the reference values). Until then, treat any
+`T_surface < 1700K (SIC)` line in the console output or any "cells above the SIC limit"
+count in the figures as unverified.
+
+## F61 — The 6-toroid MDAO count is labelled "IRVE-3" throughout the Python render path, and the flight count of 7 appears nowhere in it
+
+*Class: provenance — the inverse of F41's 19.7/20.2 pair*
+
+The project's own specification is explicit, at `src/simulation_engine/stellarorion_types.ads:284-288`:
+
+```ada
+   Toroid_Count    : Positive := 6;
+   --  FLIGHT IRVE-3 USED 7 TOROIDS (Rapisarda 2023 Table 4.1):
+   --  The MDAO optimization model used 6 toroids, but the actual
+   --  flight vehicle had 7 toroids. Use --toroids 7 to match flight.
+   --  Default 6 matches the MDAO model for direct comparison.
+```
+
+So **6 is the MDAO-comparison value, and 7 is the flight value** — and the Ada default is
+not a bug, it is a documented choice. The defect is on the Python side, which attributes
+6 to IRVE-3 and offers no way to render 7:
+
+| location | what it says |
+| :--- | :--- |
+| `scripts/render_optimization_comparison.py:822` | `n_tori = 6  # structural constant: IRVE-3 6+1 torus stack (not optimized)` |
+| `scripts/render_optimization_comparison.py:693` | `n_tori = 6`, then `for idx in range(n_tori)` at `:694`, `t = (idx + 0.5) / n_tori` at `:695`, `frac = idx / max(1, n_tori - 1)` at `:712` — i.e. this is what is actually meshed |
+| `src/python/hiad_geometry.py:40` | `N_TORI = 6`, consumed at `:96` as `S_max = (2 * N_TORI - 1) * r_tor` |
+| `render_optimization_comparison.py:359` | docstring: `n_tori — accepted for signature compat; N_TORI is fixed at 6` |
+| `render_optimization_comparison.py:373` | `del n_tori  # N_TORI is an Ada/geometry constant (6), not a free parameter` |
+
+A grep for `7` / `six` / `six-plus` near `toroid` across `render_optimization_comparison.py`,
+`plot_hiad_3d.py` and `hiad_geometry.py` returns **nothing** — the flight value does not
+appear in the render path at all.
+
+Two further consequences of the same code shape. The parameter is **accepted and then
+discarded** (`:373`) and separately **hard-coded** (`:693`, `:822`), so passing
+`n_tori=7` to `compute_rapisarda_profile` would be silently ignored — the same
+"accept and discard" pattern as `pinn_trajectory.adb:259-260`
+(`pragma Unreferenced (H_DSMC_Km, V_DSMC_Ms)`) recorded under F18's family. And the
+comment's own phrasing "6+1 torus stack" is self-contradictory: 6+1 reads as 7, while
+the meshed count is 6.
+
+**Consequence.** Every figure the optimisation-comparison and HIAD-3-D scripts render
+depicts the **MDAO** vehicle under the name **IRVE-3**, while the Ada spec — the same
+repository, the same vehicle — states that flight used 7. This is F41's shape inverted:
+there, a NASA flight value (19.7 g) was attributed to Rapisarda; here, an MDAO value
+(6 toroids) is attributed to flight.
+
+**Fix.** Thread `n_tori` through instead of discarding it, default the renderers to 7
+with a `--toroids 6` opt-in for the MDAO comparison, and label each panel with the
+configuration it actually drew.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -3572,6 +3770,10 @@ the measured series.
 | F55 | correctness | **open** | The two HIAD render scripts contradict each other on the nose radius: `render_optimization_comparison.py:247` states "IRVE-3 baseline defaults (R_N=1.5 …) match the Ada/SPARK axioms" while `plot_hiad_3d.py:210` prints `r_N=0.55m` and the run itself defaults to `--nose-radius-m 0.55`. `Rn` enters Sutton–Graves as `R_n^0.75`, so the two figures show different vehicles under one name |
 | F56 | security | **open** | There are **two** sidecar servers and F44 audited the one nothing runs. `run.py:88`/`:949` start `src/ui/sidecar_ui.py` (1 519 lines); `src/python/sidecar_server.py` is referenced by no launcher at all. The live one binds **`0.0.0.0` by hardcoded literal at `:999`** with no `--host` flag, has **no socket timeout** (measured `srv.timeout is None`), repeats the same uncontained `_serve_static` traversal at `:616`, and its `do_POST:490` accepts `/api/start` with an unbounded body read. F44's "loopback by default" caveat therefore describes the **dead** file |
 | F57 | correctness | **open** | The source-integrity manifest `.src_hashes.json` disagrees with the tree for **5 of the 23 files it tracks** (`validation_pipeline.py`, `generate_outputs.py`, `ada_pinn_wrapper.py`, `generate_hiad_dashboard.py`, `generate_optimized_overlay.py`) and nothing reports it. `src/utils/.parity/` holds only 2 recovery blocks, one of them for `sabotage_verifier.py`, which F50 showed is excluded from every scan |
+| F58 | presentation | **fixed** | Gate B printed `Kn at run point = 0.00` / `lambda = 0.00` — real values 3.78e-05 / 6.4e-05, lost to the 2-decimal F6 |
+| F59 | provenance | **flagged** | 2 more mixed (R)/(F) reference blocks at validation_pipeline.py:3987 and :4686, bypassing IRVE3_REFERENCE |
+| F60 | correctness | **open** | The SiC survivability limit exists as one Ada truth (`stellarorion_types.ads:97` `SIC_MAX_TEMP := 2073.0`, graded at `physics.adb:1428`) and two Python copies of **1700.0** — `make_vtu_visualization.py:262-263` (a reference line labelled "SIC limit (1700K)") and `make_derived_plots.py:80`, whose value drives `t_surv = max(t_surface) <= SIC_MAX_TEMP` at `:432` and prints a **PASS/FAIL** at `:435`. Measured: the exceedance count is overstated on all 22 DSMC VTUs (e.g. surf_2200 1920 vs 1152 cells), and the verdict flips on exactly one artefact of 24 — `validation_scalloped/paraview/surf_pinn_300000000.vtu`, T_max 1818.3 K, 3648 cells above 1700 and **0** above 2073, so the drawn line says FAIL and the real limit says PASS; the same file in `validation_optimized` passes both, so the two runs' PINN surfaces disagree on survivability |
+| F61 | provenance | **open** | `stellarorion_types.ads:284-288` states verbatim that flight IRVE-3 used **7** toroids and the MDAO model used **6**, with 6 as the documented default. The Python render path hard-codes 6 in three places and labels it IRVE-3 (`render_optimization_comparison.py:822` `n_tori = 6  # structural constant: IRVE-3 6+1 torus stack`, `:693` which is what is meshed, and `hiad_geometry.py:40` `N_TORI = 6`), accepts and then discards an `n_tori` argument at `:373`, and never contains the value 7 |
 
 ### Final state after fixes
 

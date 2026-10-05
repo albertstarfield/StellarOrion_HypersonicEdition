@@ -13,9 +13,9 @@ pipeline is defined in the source.
 > surrogate (scikit-learn), JSON output, and the post-run render. Every geometry formula,
 > cost term, and penalty is evaluated in Ada.
 
-> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F57 before trusting any number below
+> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F61 before trusting any number below
 >
-> Independent audits of `_proc` on 2026-10-05 left **forty findings open**: F16–F22
+> Independent audits of `_proc` on 2026-10-05 left **forty-two findings open**: F16–F22
 > from the DSMC/report-path pass, F24–F31 from a rescan of the PINN, checkpoint and status
 > subsystems, F32–F36 from a pass over the Kriging, comparison and watchdog
 > paths, and F37–F44 from a sweep of the atmosphere generator, the reporting scripts and
@@ -58,6 +58,8 @@ pipeline is defined in the source.
 > | **F48** | The atmosphere is implemented **three** times and the three disagree. The `alt_km` / `mach` / `dyn_press_pa` columns every stage above consumes are written by the Python model, which is **1.48–3.32× too dense**; the exported Ada model is correct to 0.36 %. |
 > | **F49** | Any claim that the runtime guard — the process lock, the GPU probe, the container probe — is tested. Its seven `Test_*` wrappers assert on a hardcoded local literal and never call the routine they name, so the package contributes **0 real assertions**. |
 > | **F57** | Any claim that the running code is the code in this repository. The integrity manifest disagrees with the tree for 5 of its 23 tracked files, silently, and covers 2 with recovery blocks. |
+> | **F60** | The SiC survivability limit. The Ada constant is 2073.0 K; two Python copies use 1700.0 K, and one of them prints a survivability PASS/FAIL from it. The count of cells over the limit is overstated everywhere and the verdict flips on the PINN surface. |
+> | **F61** | The torus count in every HIAD figure: the renderers use the 6-toroid MDAO configuration and label it IRVE-3, while the Ada spec states flight used 7 and 6 is the MDAO-comparison default. |
 > | **F56** | The sidecar you are reading about is not the sidecar that runs. F44's traversal, state-forgery and loopback caveats were measured on `sidecar_server.py`, which no launcher starts; `run.py:88` starts `src/ui/sidecar_ui.py`, which binds `0.0.0.0` unconditionally and accepts unauthenticated `POST /api/start`. |
 > | **F53** | Any claim that the Python side is self-tested. 70 module-level `pytest`-style self-tests across 9 modules exist and are syntactically valid, but `pytest` is not installed and not declared, so `unittest` collects **0** of them. The 49 that do run are the whole declared suite.
 > | **F54** | The heat-flux reference line in `make_vtu_visualization.py` and the `RAP_Q_MAX_WCM2` constant in `compare_validation.py`: both attribute 14.36 W/cm² to IRVE-3 flight, where the `(F)` group says 13.80. F41 found three such sites; these are two more.
