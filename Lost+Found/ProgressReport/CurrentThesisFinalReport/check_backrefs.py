@@ -33,13 +33,31 @@ from pathlib import Path
 import pypdfium2 as pdfium
 
 # --- T1: folio -> pdf page map for the current front-matter offset ------------
-BODY_OFFSET = 30          # folio 1 == pdf page 31 (verify after front-matter changes)
+BODY_OFFSET = 30          # fallback only; replaced at runtime by detect_body_offset()
 ROMAN = {"i": 1, "ii": 2, "iii": 3, "iv": 4, "v": 5, "vi": 6, "vii": 7,
          "viii": 8, "ix": 9, "x": 10, "xi": 11, "xii": 12, "xiii": 13,
          "xiv": 14, "xv": 15, "xvi": 16, "xvii": 17, "xviii": 18, "xix": 19,
          "xx": 20, "xxi": 21, "xxii": 22, "xxiii": 23, "xxiv": 24, "xxv": 25,
          "xxvi": 26, "xxvii": 27, "xxviii": 28, "xxix": 29, "xxx": 30,
          "xxxi": 31, "xxxii": 32, "xxxiii": 33, "xxxiv": 34}
+
+
+def detect_body_offset(pdf):
+    """Locate the 0-based pdf index of body folio 1 (chapter 1 opener) (T1).
+
+    Front-matter edits (list shortening, added pages) shift this offset, so it
+    is measured from the rendered document instead of hardcoded.
+
+    Parameters: pdf - loaded pypdfium2 document.
+    Returns: int index of the first page at/after index 11 headed 'CHAPTER 1'.
+    Exceptions: RuntimeError when the heading cannot be located.
+    """
+    for i in range(11, len(pdf)):
+        t = pdf[i].get_textpage().get_text_range()
+        t = re.sub(r"[\uFFFC-\uFFFF\u200B\uFEFF]", "", t)
+        if "CHAPTER 1" in t and "INTRODUCTION" in t:
+            return i
+    raise RuntimeError("body chapter-1 opener not found; front matter unexpected")
 
 
 def label_to_pdf(label):
@@ -130,8 +148,10 @@ def main():
         failures.append(f"bbl key with zero backrefs: {k}")
 
     # page text cache
+    global BODY_OFFSET
     pdf = pdfium.PdfDocument("main.pdf")
     npages = len(pdf)
+    BODY_OFFSET = detect_body_offset(pdf)
     cache = {}
 
     def page_text(idx):

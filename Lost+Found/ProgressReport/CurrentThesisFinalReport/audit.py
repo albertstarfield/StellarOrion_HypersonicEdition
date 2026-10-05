@@ -243,7 +243,7 @@ def dim_prose() -> None:
     for src in BUILD_INPUTS:
         st = strip_comments(src.read_text(encoding="utf-8"))
         for m in re.finditer(r"\\includegraphics(?:\[[^\]]*\])?\{figures/([^}]*)\}.*?"
-                             r"\\caption\{(.+?)\}\s*\n\s*\\label", st, re.S):
+                             r"\\caption(?:\[[^\]]*\])?\{(.+?)\}\s*\n\s*\\label", st, re.S):
             plain = re.sub(r"\\[a-zA-Z]+\{?|\}|\$|[0-9~\\.,%]", "", m.group(2))
             if len(plain.strip()) < 45:
                 stub.append((src.name, m.group(1)))
