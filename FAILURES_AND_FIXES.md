@@ -4,13 +4,13 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F56 are a second, third, fourth, fifth, sixth, seventh, eighth and ninth,
+F1–F15 were found and fixed in the first pass. **F16–F57 are a second through ninth audit passes,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
 optimiser first. F24–F31 come from the thread-3b rescan of the previously unaudited
 PINN, checkpoint and status subsystems, and F32–F36 from the thread-3c pass over the
-Kriging, surface-comparison and watchdog paths, and F37–F56 from the thread-3d/3e/3f/3g/3h/3i passes over
+Kriging, surface-comparison and watchdog paths, and F37–F57 from the thread-3d/3e/3f/3g/3h/3i/3j passes over
 the scripts, the sidecar, and the Ada atmosphere, status and checkpoint units. Read **"Still open after thread 3"**
 before relying on any number below.
 
@@ -3385,6 +3385,56 @@ at `:616` and is explicitly *not* claimed as a measured 200.
 
 **Fix.** Delete one of the two servers. Give the survivor a `--host` argument defaulting to `127.0.0.1`; construct it as `HTTPServer((args.host, args.port), Handler, bind_and_activate=True)` with `timeout=` set; replace both `_serve_static` bodies with a single helper that does `file_path.resolve().is_relative_to(FRONTEND_DIR.resolve())` before any read; bound the POST body read; and require a preflighted (non-safelisted) content type on `do_POST` so a bare `text/plain` form cannot reach it. Correct `run.py:957` to name the file it actually checks, and correct `docs/PYTHON_SIDECAR_EXCEPTIONS.md:39`.
 
+## F57 — The source-integrity manifest is stale for 5 of the 23 files it tracks, and it is silent about it
+
+*Class: correctness / false assurance — the mechanism whose job is to detect source drift cannot detect it for the files most likely to have drifted*
+
+Every Ada and Python module in this log carries a header claiming `RS+GC parity`
+protection, and the project ships both a per-module `metadata/<name>.meta.json` and a
+project-level integrity manifest, `.src_hashes.json` (at the `_proc` root — note that
+`src/utils/metadata/.src_hashes.json`, the path the sidecar subagent's report suggested,
+**does not exist**; my first probe looked there and found nothing, which was a path error
+of mine, not an absent file).
+
+**Measured, by hashing every tracked file and comparing:**
+
+```
+.src_hashes.json entries: 23
+match=18  STALE=5  missing=0
+```
+
+| file | status |
+| :--- | :--- |
+| `src/python/validation_pipeline.py` | **STALE** |
+| `src/python/generate_outputs.py` | **STALE** |
+| `src/python/ada_pinn_wrapper.py` | **STALE** |
+| `src/python/generate_hiad_dashboard.py` | **STALE** |
+| `src/python/generate_optimized_overlay.py` | **STALE** |
+
+All five are live, edited modules — and three of them (`validation_pipeline.py`,
+`generate_outputs.py`, `ada_pinn_wrapper.py`) are precisely the files this audit found
+defects in (F10/F13/F14/F15, F12, F19, F22). So the manifest's stored digests no longer
+describe the tree it is supposed to protect, and **nothing reported the discrepancy**.
+
+Supporting evidence that the recovery side exists but is also thin: `src/utils/.parity/`
+contains exactly **2** `.par2` recovery blocks, for `add_exception_handlers.py` and
+`sabotage_verifier.py` — and the second of those is a file **excluded from every scan** by
+F50. `sabotage_verifier.py` itself contains 85 references to `par2` / `ParityRecovery` /
+`recovery_block`, so the recovery machinery is real; it simply covers 2 of the 23 tracked
+modules.
+
+**Consequence.** An integrity system that reports 18/23 while 5 digests disagree provides
+no usable evidence about whether the audited sources are the ones being executed. This is
+the third distinct instance of the same shape in this log: F31's checkpoint that discards a
+changed config, F49's tests that assert a local literal, and now the manifest that does not
+detect that the file changed. In all three the artefact whose purpose is to notice change is
+blind to it, silently.
+
+**Fix.** Regenerate the manifest on commit (a pre-commit hook, or a `--parity-recover`-style
+refresh in the existing pipeline), and make hash disagreement a **reported** condition
+rather than a stored value. Extend recovery coverage to the modules that carry the claim, or
+drop the claim from the ones it does not cover.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -3521,6 +3571,7 @@ the measured series.
 | F54 | provenance | **open** | The 14.36-as-NASA mis-provenance now appears on **five** artefacts, two more found by the coverage sweep: `scripts/make_vtu_visualization.py:218-219` draws it as an `axvline` labelled "IRVE-3 flight peak (14.36 W/cm²)" on a histogram of the run's own fluxes, and `compare_validation.py:23,59` states it as `RAP_Q_MAX_WCM2`. The correct `(F)` value is 13.80 |
 | F55 | correctness | **open** | The two HIAD render scripts contradict each other on the nose radius: `render_optimization_comparison.py:247` states "IRVE-3 baseline defaults (R_N=1.5 …) match the Ada/SPARK axioms" while `plot_hiad_3d.py:210` prints `r_N=0.55m` and the run itself defaults to `--nose-radius-m 0.55`. `Rn` enters Sutton–Graves as `R_n^0.75`, so the two figures show different vehicles under one name |
 | F56 | security | **open** | There are **two** sidecar servers and F44 audited the one nothing runs. `run.py:88`/`:949` start `src/ui/sidecar_ui.py` (1 519 lines); `src/python/sidecar_server.py` is referenced by no launcher at all. The live one binds **`0.0.0.0` by hardcoded literal at `:999`** with no `--host` flag, has **no socket timeout** (measured `srv.timeout is None`), repeats the same uncontained `_serve_static` traversal at `:616`, and its `do_POST:490` accepts `/api/start` with an unbounded body read. F44's "loopback by default" caveat therefore describes the **dead** file |
+| F57 | correctness | **open** | The source-integrity manifest `.src_hashes.json` disagrees with the tree for **5 of the 23 files it tracks** (`validation_pipeline.py`, `generate_outputs.py`, `ada_pinn_wrapper.py`, `generate_hiad_dashboard.py`, `generate_optimized_overlay.py`) and nothing reports it. `src/utils/.parity/` holds only 2 recovery blocks, one of them for `sabotage_verifier.py`, which F50 showed is excluded from every scan |
 
 ### Final state after fixes
 

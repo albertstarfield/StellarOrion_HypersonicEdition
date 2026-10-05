@@ -585,6 +585,13 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      `axvline` labelled "IRVE-3 flight peak (14.36 W/cm²)" on a histogram of the run's
      own cell heat fluxes — a reference line the reader compares against directly. The
      correct `(F)` value is 13.80. See **F54**.
+   * **The source-integrity manifest is stale and does not say so.** Hashing all 23 files
+     in `.src_hashes.json`: **5 disagree with the tree** — `validation_pipeline.py`,
+     `generate_outputs.py`, `ada_pinn_wrapper.py`, `generate_hiad_dashboard.py`,
+     `generate_optimized_overlay.py` — with no error anywhere. `src/utils/.parity/` holds
+     only 2 recovery blocks, one of them for `sabotage_verifier.py`, which is excluded
+     from every scan. So "the source is parity-protected" is not evidence that the
+     executing code is the audited code. See **F57**.
    * **The sidecar is two different servers, and the one that runs is the worse one.**
      `run.py:88` starts `src/ui/sidecar_ui.py` (1 519 lines); `src/python/sidecar_server.py`
      is referenced by no launcher at all, so every security finding made against it
