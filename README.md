@@ -585,6 +585,7 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      `axvline` labelled "IRVE-3 flight peak (14.36 W/cm²)" on a histogram of the run's
      own cell heat fluxes — a reference line the reader compares against directly. The
      correct `(F)` value is 13.80. See **F54**.
+   * **One corrupt CSV cell silently removes half the plots.** `make_validation_plots.py:93-98` appends the step to `steps` *before* parsing the row's values, so a single unparsable field leaves `steps` one longer than every column from that field on. Measured: corrupting one `mach` value drops **10 of 21 plots** and mislabels the survivors by one row. The drop is announced on stderr (so it is not silent) but the script still exits 0. See **F62**.
    * **The SiC survivability limit is wrong in Python and the wrong value prints a
      verdict.** The Ada truth is `SIC_MAX_TEMP := 2073.0` (`stellarorion_types.ads:97`,
      graded at `physics.adb:1428`); two Python copies use **1700.0** —

@@ -4,7 +4,7 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F61 are a second through tenth audit passes,
+F1–F15 were found and fixed in the first pass. **F16–F62 are a second through eleventh audit passes,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
@@ -3633,6 +3633,62 @@ there, a NASA flight value (19.7 g) was attributed to Rapisarda; here, an MDAO v
 with a `--toroids 6` opt-in for the MDAO comparison, and label each panel with the
 configuration it actually drew.
 
+## F62 — One corrupt CSV field silently drops 10 of 21 plots, and the script reports success
+
+*Class: correctness — a real ordering bug whose consequence is narrower than first reported, and one sub-claim is refuted*
+
+`scripts/make_validation_plots.py:93-98` appends the step **before** parsing the row's values:
+
+```python
+try:
+    steps.append(int(float(parts[0])))          # <-- appended first
+    for c in range(1, num_cols):
+        cols[c - 1].append(float(parts[c]))
+except ValueError:
+    continue                                    # <-- steps already grew; cols did not
+```
+
+If any field in the row is unparsable, `steps` has already been extended while the
+remaining columns have not, so **`steps` is permanently one longer than every column
+from the failing field onward**. Every later row is then mislabelled.
+
+**Measured** on a copy of `results/validation_scalloped/validation_timeseries.csv` with a
+single field corrupted (`mach` of the step-900 row set to `NOT_A_NUM`):
+
+```
+[plots] Column 'mach' has 21 values but 22 steps — skipped.
+[plots] Column 'dyn_press_pa' has 21 values but 22 steps — skipped.
+[plots] Column 'cd' has 21 values but 22 steps — skipped.
+        ... (10 columns total) ...
+[plots] Wrote 11 PNGs to <plots_dir>
+```
+
+**One** bad cell costs **10 of the 21 plots** — everything from `mach` onward. Columns
+before the failing field (`drag_sum_N`, `lift_sum_N`, `heatflux_*`, …) survive.
+
+**Two corrections to the subagent's report, both established by measurement:**
+
+1. **The loss is not silent.** `main()` at `:163-169` compares `len(values)` against
+   `len(steps)` per column, prints
+   `[plots] Column '<name>' has N values but M steps — skipped.` to **stderr**, and
+   continues. So a reader watching stderr sees exactly which plots are missing. The
+   defect is the ordering bug, not a hidden failure.
+2. **The exit contract is not "inverted".** Measured: a **missing** CSV returns **1**, a
+   **corrupt** CSV returns **0**. That matches the docstring at `:148-149` ("0 on
+   success, 1 if CSV missing or empty"). The real defect is narrower and worse: a
+   data-integrity failure that removes half the output is classified as **success**.
+
+**Consequences.** Any figure set generated from a CSV with one malformed cell is
+missing half its panels while the run reports success, and the step labels on the
+surviving panels are offset by one row relative to the file. Because the guard compares
+only *lengths*, a desync of exactly one row in a column that happens to regain length
+would not be caught at all.
+
+**Fix.** Append the step **after** the column loop succeeds (or accumulate into a
+temporary list and commit on success), and treat any column that fails the length check
+as an error rather than a skip — or at minimum return a non-zero status when any column
+was skipped, so the exit code matches what the reader actually received.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -3774,6 +3830,7 @@ the measured series.
 | F59 | provenance | **flagged** | 2 more mixed (R)/(F) reference blocks at validation_pipeline.py:3987 and :4686, bypassing IRVE3_REFERENCE |
 | F60 | correctness | **open** | The SiC survivability limit exists as one Ada truth (`stellarorion_types.ads:97` `SIC_MAX_TEMP := 2073.0`, graded at `physics.adb:1428`) and two Python copies of **1700.0** — `make_vtu_visualization.py:262-263` (a reference line labelled "SIC limit (1700K)") and `make_derived_plots.py:80`, whose value drives `t_surv = max(t_surface) <= SIC_MAX_TEMP` at `:432` and prints a **PASS/FAIL** at `:435`. Measured: the exceedance count is overstated on all 22 DSMC VTUs (e.g. surf_2200 1920 vs 1152 cells), and the verdict flips on exactly one artefact of 24 — `validation_scalloped/paraview/surf_pinn_300000000.vtu`, T_max 1818.3 K, 3648 cells above 1700 and **0** above 2073, so the drawn line says FAIL and the real limit says PASS; the same file in `validation_optimized` passes both, so the two runs' PINN surfaces disagree on survivability |
 | F61 | provenance | **open** | `stellarorion_types.ads:284-288` states verbatim that flight IRVE-3 used **7** toroids and the MDAO model used **6**, with 6 as the documented default. The Python render path hard-codes 6 in three places and labels it IRVE-3 (`render_optimization_comparison.py:822` `n_tori = 6  # structural constant: IRVE-3 6+1 torus stack`, `:693` which is what is meshed, and `hiad_geometry.py:40` `N_TORI = 6`), accepts and then discards an `n_tori` argument at `:373`, and never contains the value 7 |
+| F62 | correctness | **open** | `make_validation_plots.py:93-98` appends the step to `steps` **before** parsing the row's values, so one unparsable field leaves `steps` one longer than every column from that field onward. Measured: corrupting a single `mach` value drops **10 of the 21 plots** (`Wrote 11 PNGs`) and mislabels the survivors by one row. The loss is **announced** per column on stderr by the guard at `:163-169`, so the sub-claim that it is silent is refuted; and the exit contract is not inverted (missing → 1, corrupt → 0). The defect is that half the output can vanish while the script reports success |
 
 ### Final state after fixes
 
