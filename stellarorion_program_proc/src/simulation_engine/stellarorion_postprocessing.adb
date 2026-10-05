@@ -148,6 +148,16 @@ package body StellarOrion_PostProcessing is
             pragma Loop_Invariant (Term >= 0.0);
             pragma Loop_Invariant (Frac >= 0.0);
             pragma Loop_Invariant (Frac < 1.0);
+            --  These two are what make the Post `Result <= 1.0` INDUCTIVE.
+            --  Term starts at X <= 1.0 (Pre) and each step replaces it with
+            --  Sqrt_Float (Term), whose Post bounds it by max(Term,1.0) = 1.0,
+            --  so Term <= 1.0 holds on entry and is preserved.  Result starts
+            --  at 1.0 and is only ever multiplied by such a Term, so
+            --  Result * Term <= 1.0.  Without both invariants the Post was
+            --  simply unprovable and Pow_F'Result stayed loose at every one
+            --  of its five call sites.
+            pragma Loop_Invariant (Term <= 1.0);
+            pragma Loop_Invariant (Result <= 1.0);
             Term := Sqrt_Float (Term);
             Frac := Frac * 2.0;
             if Frac >= 1.0 then
@@ -231,6 +241,13 @@ package body StellarOrion_PostProcessing is
       --  du/dy = (1/R_n) * sqrt(2*(p_s - p_inf)/rho_s)
       --  AXIOMS: P_Stag > P_Inf (stagnation pressure exceeds freestream)
       P_Diff : constant Float := P_Stag - P_Inf;
+      --  BOUND: Rho_S = P_Stag/(R_GAS_AIR*T_Stag) = 1.614 kg/m^3 measured
+      --  (P_Stag 2.568e6 Pa, T_Stag 5544 K, R 287.058); P_Diff =
+      --  P_Stag - P_Inf = 2.568e6 Pa (P_Inf 50.2 Pa).  Together these make
+      --  the later (2.0*P_Diff)/Rho_S provably non-zero, non-overflowing and
+      --  >= 0, which is exactly what Sqrt_Float's `X >= 0.0` Pre needs.
+      pragma Assert (Rho_S > 0.0 and then Rho_S <= 10.0);
+      pragma Assert (P_Diff >= 0.0 and then P_Diff <= 1.0e8);
       Du_Dy_Arg : constant Float :=
         (2.0 * P_Diff) / Rho_S;
       Du_Dy : constant Float :=
@@ -242,7 +259,19 @@ package body StellarOrion_PostProcessing is
       --  [Citation: Fay & Riddell 1958; Rapisarda 2023 Eq 3.82]
       --  AXIOMS: All factors are non-negative => product is non-negative
       Rho_W_Mu_W : constant Float := Rho_W * Mu_W;
+      --  BOUND: measured 3.14e-04 -- Pow_F's Pre now requires X <= 1.0.
+      pragma Assert (Rho_W_Mu_W >= 0.0 and then Rho_W_Mu_W <= 1.0);
       Rho_S_Mu_S : constant Float := Rho_S * Mu_S;
+      --  BOUND: measured 1.72e-04 -- Pow_F's Pre now requires X <= 1.0.
+      pragma Assert (Rho_S_Mu_S >= 0.0 and then Rho_S_Mu_S <= 1.0);
+      --  BOUND: the Fay-Riddell / DKR product is
+      --  0.763 * 1.221 * Pow_F(..) * Pow_F(..) * D_H * Sqrt_Float(Du_Dy).
+      --  With both Pow_F results <= 1.0 the product reduces to
+      --  <= 0.93 * D_H * Sqrt(Du_Dy) = 0.93 * 4.06e6 * 34.5 = 1.3e8 W/m^2,
+      --  far below Float'Last.  These two asserts are what let the prover
+      --  carry that bound through the multiplication.
+      pragma Assert (D_H >= 0.0 and then D_H <= 1.0e7);
+      pragma Assert (Du_Dy >= 0.0 and then Du_Dy <= 1.0e10);
 
       --  Pr^(-0.6) via approximation
       --  Pr=0.71, Pr^0.6 ~ 0.819, Pr^-0.6 ~ 1.221
@@ -299,11 +328,30 @@ package body StellarOrion_PostProcessing is
       D_H : constant Float :=
         Cp_Air * (T_Stag - T);
       P_Diff : constant Float := P_Stag - P_Inf;
+      --  BOUND: Rho_S = P_Stag/(R_GAS_AIR*T_Stag) = 1.614 kg/m^3 measured
+      --  (P_Stag 2.568e6 Pa, T_Stag 5544 K, R 287.058); P_Diff =
+      --  P_Stag - P_Inf = 2.568e6 Pa (P_Inf 50.2 Pa).  Together these make
+      --  the later (2.0*P_Diff)/Rho_S provably non-zero, non-overflowing and
+      --  >= 0, which is exactly what Sqrt_Float's `X >= 0.0` Pre needs.
+      pragma Assert (Rho_S > 0.0 and then Rho_S <= 10.0);
+      pragma Assert (P_Diff >= 0.0 and then P_Diff <= 1.0e8);
       Du_Dy : constant Float :=
         (1.0 / SIM_NOSE_RADIUS_M) *
         Sqrt_Float ((2.0 * P_Diff) / Rho_S);
       Rho_W_Mu_W : constant Float := Rho_W * Mu_W;
+      --  BOUND: measured 3.14e-04 -- Pow_F's Pre now requires X <= 1.0.
+      pragma Assert (Rho_W_Mu_W >= 0.0 and then Rho_W_Mu_W <= 1.0);
       Rho_S_Mu_S : constant Float := Rho_S * Mu_S;
+      --  BOUND: measured 1.72e-04 -- Pow_F's Pre now requires X <= 1.0.
+      pragma Assert (Rho_S_Mu_S >= 0.0 and then Rho_S_Mu_S <= 1.0);
+      --  BOUND: the Fay-Riddell / DKR product is
+      --  0.763 * 1.221 * Pow_F(..) * Pow_F(..) * D_H * Sqrt_Float(Du_Dy).
+      --  With both Pow_F results <= 1.0 the product reduces to
+      --  <= 0.93 * D_H * Sqrt(Du_Dy) = 0.93 * 4.06e6 * 34.5 = 1.3e8 W/m^2,
+      --  far below Float'Last.  These two asserts are what let the prover
+      --  carry that bound through the multiplication.
+      pragma Assert (D_H >= 0.0 and then D_H <= 1.0e7);
+      pragma Assert (Du_Dy >= 0.0 and then Du_Dy <= 1.0e10);
       --  DKR prefactor is 0.53 (vs FR 0.763)
       --  [Citation: Detra, Kemp & Riddell 1959]
       Pr_Neg06 : constant Float := 1.221;

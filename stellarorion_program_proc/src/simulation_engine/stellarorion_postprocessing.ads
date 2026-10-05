@@ -449,7 +449,16 @@ package StellarOrion_PostProcessing is
    function Sqrt_Float (X : Float) return Float
      with Pre  => X >= 0.0,
           Post => Sqrt_Float'Result >= 0.0
-                  and Sqrt_Float'Result <= Float'Max (X, 1.0);
+                  and Sqrt_Float'Result <= Float'Max (X, 1.0)
+                  --  STRICT POSITIVITY for X > 0.  The >= 0.0 conjunct alone
+                  --  let the prover model sqrt(positive) as possibly 0.0,
+                  --  which collapsed SF35, P_Stag, Rho_S and P_Diff to
+                  --  "possibly zero" and made every `Rho_S > 0.0` /
+                  --  `P_Diff >= 0.0` assertion below unprovable.  The body
+                  --  maintains Guess >= Float'Min(X, 1.0) > 0 whenever
+                  --  X > 0, and each Newton step (Guess + X/Guess)/2 stays
+                  --  strictly positive, so this is provable from the loop.
+                  and (X = 0.0 or else Sqrt_Float'Result > 0.0);
 
    -- ===================================================================
    --  Validation Metrics (Rapisarda Tables 4.9, 4.10)

@@ -2,15 +2,15 @@
 \label{ch:results}
 
 \section{Overview}
-All results use the StellarOrion engine for the IRVE-3 configuration and the SPARTA DSMC framework of Chapter~\ref{ch:methodology}, on the 6-toroid stacked HIAD geometry at the MDAO baseline parameters~\cite{rapisarda2023mdao}.
+All results use the StellarOrion engine for the IRVE-3 configuration and SPARTA DSMC framework of Chapter~\ref{ch:methodology}, on 6-toroid stacked HIAD geometry at MDAO baseline parameters~\cite{rapisarda2023mdao}.
 
 \section{Baseline Configuration and Flight Conditions}
-The baseline simulation is the IRVE-3 reentry point at 51.8\,km altitude; atmospheric quantities are model values there:
+The baseline is IRVE-3 reentry at 51.8\,km, with model atmospheric quantities:
 \begin{itemize}
-    \item \textbf{Freestream Velocity ($V_{\infty}$):} 3378\,m/s (Mach $\approx$ 10.29).
-    \item \textbf{Freestream Density ($\rho_{\infty}$):} $7.851 \times 10^{-4}$\,kg/m$^3$.
-    \item \textbf{Freestream Temperature ($T_{\infty}$):} 268.41\,K.
-    \item \textbf{Vehicle Mass ($m$):} 281\,kg.
+    \item \textbf{Velocity ($V_{\infty}$):} 3378\,m/s (Mach $\approx$ 10.29).
+    \item \textbf{Density ($\rho_{\infty}$):} $7.851 \times 10^{-4}$\,kg/m$^3$.
+    \item \textbf{Temperature ($T_{\infty}$):} 268.41\,K.
+    \item \textbf{Mass ($m$):} 281\,kg.
     \item \textbf{Aeroshell Diameter ($D$):} 3.0\,m.
     \item \textbf{Nose Radius ($R_N$):} 1.5\,m.
     \item \textbf{Toroid Count:} 6.
@@ -18,11 +18,11 @@ The baseline simulation is the IRVE-3 reentry point at 51.8\,km altitude; atmosp
     \item \textbf{Grid Factor:} 0.7.
 \end{itemize}
 
-Stagnation temperature for a calorically perfect gas at these conditions:
+Stagnation temperature, calorically perfect:
 \begin{equation}
     T_0 = T_{\infty} \left( 1 + \frac{\gamma - 1}{2} M_{\infty}^2 \right) = 268.41 \ \text{K} \left( 1 + 0.2 \times 105.9 \right) = 5952 \ \text{K}
 \end{equation}
-The 5-species air model (N$_2$, O$_2$, NO, N, O) with VSS collisions adds vibrational excitation above $\sim$800\,K and dissociation above $\sim$2000\,K, lowering the effective translational temperature~\cite{bird1994molecular}.
+The 5-species air model (N$_2$, O$_2$, NO, N, O) with VSS collisions adds vibrational excitation above $\sim$800\,K and dissociation above $\sim$2000\,K, lowering effective translational temperature~\cite{bird1994molecular}.
 
 \section{Surface Heat Flux Distribution}
 Stagnation-point heat flux follows the Sutton-Graves (1971) correlation~\cite{sutton1971gravesh}:
@@ -32,7 +32,7 @@ Stagnation-point heat flux follows the Sutton-Graves (1971) correlation~\cite{su
 where $C_{SG} = 1.83 \times 10^{-4}$\,W$\cdot$s$^2$/m$^{5}$ for Earth air in SI units.
 
 \subsection{Stagnation Point Results}
-For the baseline IRVE-3 configuration the correlation is evaluated at the SPARTA DSMC run condition under ISA~\cite{usstandard1976}: $h = 51.8$\,km, $\rho_{\infty} = 7.851 \times 10^{-4}$\,kg/m$^3$, $V_{\infty} = 3{,}378$\,m/s, with $R_N = 1.5$\,m for the 3\,m aeroshell.
+The correlation is evaluated at the baseline IRVE-3 SPARTA DSMC run condition under ISA~\cite{usstandard1976}: $h = 51.8$\,km, $\rho_{\infty} = 7.851 \times 10^{-4}$\,kg/m$^3$, $V_{\infty} = 3{,}378$\,m/s, $R_N = 1.5$\,m for the 3\,m aeroshell.
 \begin{equation}
     \begin{split}
         \dot{q}_{stag} &= 1.83 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \\
@@ -40,11 +40,11 @@ For the baseline IRVE-3 configuration the correlation is evaluated at the SPARTA
     \end{split}
 \end{equation}
 
-Here the correlation constant and nose radius differ from the engine defaults: $C_{SG} = 1.7415 \times 10^{-4}$ and $R_N = 0.55$\,m, evaluated at hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than the run condition, yielding $12.20$\,W/cm$^2$. Because the correlation scales as $1/\sqrt{R_N}$, the default $0.55$\,m nose radius alone raises the flux by $\sqrt{1.5/0.55} \approx 1.65$. At the run condition the value is $+12.4\%$ relative to flight, this work's headline.
+Here the correlation constant and nose radius differ from the engine defaults: $C_{SG} = 1.7415 \times 10^{-4}$ and $R_N = 0.55$\,m, evaluated at hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than the run condition, yielding $12.20$\,W/cm$^2$. Because it scales as $1/\sqrt{R_N}$, the default $0.55$\,m nose radius alone raises flux by $\sqrt{1.5/0.55} \approx 1.65$. At the run condition the value is $+12.4\%$ above flight: this work's headline.
 
-IRVE-3 flight reports a peak of 14.36~W/cm\textsuperscript{2}~\cite{old2013irve3postflight}. The MDAO reconstruction~\cite{rapisarda2023mdao} reports the trajectory-integrated Sutton-Graves peak as 15.26~W/cm\textsuperscript{2} ($+6.26\%$ above flight) and the Fay-Riddell CFD prediction as 13.83~W/cm\textsuperscript{2} ($-3.69\%$ below flight). Our single-point SG value (16.14~W/cm\textsuperscript{2}) and Rapisarda's trajectory-integrated peak (15.26~W/cm\textsuperscript{2}) agree within $+5.8\%$: Rapisarda integrates under MCD v6.1 while this work evaluates one ISA point, the higher density nearly cancelling the integration.
+IRVE-3 flight reports a peak of 14.36~W/cm\textsuperscript{2}~\cite{old2013irve3postflight}. The MDAO reconstruction~\cite{rapisarda2023mdao} reports the trajectory-integrated Sutton-Graves peak as 15.26~W/cm\textsuperscript{2} ($+6.26\%$ above flight) and the Fay-Riddell CFD prediction as 13.83~W/cm\textsuperscript{2} ($-3.69\%$ below flight). Our single-point SG value (16.14~W/cm\textsuperscript{2}) and Rapisarda's trajectory-integrated peak (15.26~W/cm\textsuperscript{2}) agree within $+5.8\%$: Rapisarda integrates under MCD v6.1 while this work evaluates one ISA point, the higher density nearly cancelling it.
 
-The 16.14~W/cm\textsuperscript{2} figure is the Sutton-Graves correlation at the DSMC run condition with corrected coefficient and nose radius, not a sampled DSMC flux, hence of the same class as Rapisarda's trajectory-integrated 15.26~W/cm\textsuperscript{2}~\cite{rapisarda2023mdao}. Raw unsmoothed per-element kinetic energy flux ($f_1[3]$) in the SPARTA surface dumps averages 56.6~W/cm\textsuperscript{2}, maximum 182.5~W/cm\textsuperscript{2}. That maximum is one point-sample in a field fluctuating by orders of magnitude, even negative at later steps: scatter, not a resolved peak. The 56.6~W/cm\textsuperscript{2} average is a true DSMC quantity, inflated by low-heating recirculation pockets over the scalloped surface and the unsmoothed field; the correlation-conditioned value is the headline metric. Rapisarda instead filters raw data with a three-stage scheme (sixth-order polynomial fit and Wilmoth bridging function), so the sets are not directly comparable.
+The 16.14~W/cm\textsuperscript{2} figure is the Sutton-Graves correlation at the DSMC run condition with corrected coefficient and nose radius, not a sampled DSMC flux, hence the same class as Rapisarda's trajectory-integrated 15.26~W/cm\textsuperscript{2}~\cite{rapisarda2023mdao}. Raw unsmoothed per-element kinetic energy flux ($f_1[3]$) in SPARTA surface dumps averages 56.6~W/cm\textsuperscript{2}, maximum 182.5~W/cm\textsuperscript{2}. That maximum is one point-sample in a field fluctuating by orders of magnitude, even negative later: scatter, not a resolved peak. The 56.6~W/cm\textsuperscript{2} average is a true DSMC quantity, inflated by low-heating recirculation pockets over the scalloped surface and unsmoothed field; the correlation-conditioned value remains the headline. Rapisarda instead filters raw data with a three-stage scheme (sixth-order polynomial fit and Wilmoth bridging function), so the sets are not comparable.
 
 \subsection{Scalloping Effect on Local Heating}
 At each toroid crest the local radius of curvature ($r_{tor} = 0.135$\,m) lies far below the global nose radius ($R_N = 1.5$\,m), and since $\dot{q} \propto 1/\sqrt{R}$ in the Sutton-Graves scaling~\cite{sutton1971gravesh} the correlation bounds the crest's geometric enhancement.
@@ -53,9 +53,9 @@ At each toroid crest the local radius of curvature ($r_{tor} = 0.135$\,m) lies f
     \label{eq:crest_bound}
 \end{equation}
 
-Equation~\eqref{eq:crest_bound} is a \emph{bound}, not a prediction: it applies $1/\sqrt{R}$ scaling to the crest radius with all other terms at smooth-body values, and neglects the frontal-area increase and shock-standoff change of a rippled surface, so measured augmentation is smaller. Scalloped peak cell heat flux (182.5~W/cm\textsuperscript{2}) and per-element mean (56.6~W/cm\textsuperscript{2}) coincide with the \texttt{raw\_final} entries of the convergence audit, both from independent exports; the smooth series gives 158.4~W/cm\textsuperscript{2} and 54.4~W/cm\textsuperscript{2}. These are increases of 15.2\% and 4.0\%, consistent in sign and order with the bound of Eq.~\eqref{eq:crest_bound} and roughly a factor of five below it.
+Equation~\eqref{eq:crest_bound} is a \emph{bound}, not a prediction: it applies $1/\sqrt{R}$ scaling to the crest radius with other terms at smooth-body values, neglecting the frontal-area increase and shock-standoff change of a rippled surface, so measured augmentation is smaller. Scalloped peak cell heat flux (182.5~W/cm\textsuperscript{2}) and per-element mean (56.6~W/cm\textsuperscript{2}) coincide with the \texttt{raw\_final} audit entries, both from independent exports; the smooth series gives 158.4~W/cm\textsuperscript{2} and 54.4~W/cm\textsuperscript{2}. These are increases of 15.2\% and 4.0\%, consistent in sign and order with the bound of Eq.~\eqref{eq:crest_bound} and roughly a factor of five below it.
 
-The two time series sit at \emph{different} flight conditions: smooth at 51.82~km and 3378.7~m/s (Mach 10.29), scalloped at 52.03~km and 3094.2~m/s (Mach 9.43), velocity differing by 8.4\% and Mach by 8.3\%. Every quantity below mixes skin geometry with trajectory state, so no difference is scalloping alone. At the common final step of 2200 the series give peak cell heat fluxes of 182.5 against 158.4~W/cm\textsuperscript{2}, per-element means of 56.6 against 54.4~W/cm\textsuperscript{2}, and drag coefficients of 1.7579 against 1.3358. The lift-coefficient magnitude is 0.6683 against 0.5268, the peak $g$-load 14.01 against 16.83\,g, and the integrated heat load 174.14 against 165.72~J/cm\textsuperscript{2}. The drag coefficient lacks such corroboration: the audit records $C_d = 1.4625$ where the time series records 1.75791, so that column holds a fitted or aggregated value. Isolating scalloping requires both skins at one shared state, future work in Sec.~\ref{sec:optimization_results}. Fluxes come from the SPARTA surface compute data (\texttt{ke}); Figure~\ref{fig:thermal_map} is the same meridional slice, a qualitative rendering rather than a \texttt{ke} plot.
+The two time series sit at \emph{different} conditions: smooth at 51.82~km and 3378.7~m/s (Mach 10.29), scalloped at 52.03~km and 3094.2~m/s (Mach 9.43), velocity differing by 8.4\% and Mach by 8.3\%. Every quantity below mixes skin geometry with trajectory state, so isolating scalloping alone needs both skins at one shared state, future work in Sec.~\ref{sec:optimization_results}. At the common final step of 2200 the series give peak cell heat fluxes of 182.5 against 158.4~W/cm\textsuperscript{2}, per-element means of 56.6 against 54.4~W/cm\textsuperscript{2} and drag coefficients of 1.7579 against 1.3358. Lift-coefficient magnitude is 0.6683 against 0.5268, peak $g$-load 14.01 against 16.83\,g, integrated heat load 174.14 against 165.72~J/cm\textsuperscript{2}. The drag coefficient lacks such corroboration: the audit records $C_d = 1.4625$, the series 1.75791, so that column holds a fitted or aggregated value. Fluxes come from SPARTA surface compute data (\texttt{ke}); Figure~\ref{fig:thermal_map} is the same meridional slice, qualitatively rendered rather than a \texttt{ke} plot.
 
 \begin{figure}[!htbp]
     \centering
@@ -75,7 +75,7 @@ The two time series sit at \emph{different} flight conditions: smooth at 51.82~k
 \end{figure}
 
 \section{Pressure and Force Distribution}
-The SPARTA surface force computes give the axial drag force ($f_x$) and transverse components; the pressure distribution (Figure~\ref{fig:pressure_map}) shows the periodic features of the stacked toroid geometry.
+SPARTA surface force computes give axial drag ($f_x$) and transverse components; the pressure distribution (Figure~\ref{fig:pressure_map}) shows the periodic features of the stacked toroid geometry.
 
 \begin{figure}[!htbp]
     \centering
@@ -87,16 +87,16 @@ The SPARTA surface force computes give the axial drag force ($f_x$) and transver
 \end{figure}
 
 \subsection{Drag Coefficient}
-The drag coefficient is computed from the total axial force:
+Drag coefficient from the total axial force:
 \begin{equation}
     C_d = \frac{f_x}{\frac{1}{2} \rho_{\infty} V_{\infty}^2 A_{ref}}
 \end{equation}
-where $A_{ref} = \pi (D/2)^2$ is the reference area. The HIAD's large frontal area gives the high drag coefficient enabling high-altitude deceleration where density is low~\cite{AndersonHypersonic}.
+with $A_{ref} = \pi (D/2)^2$ the reference area. The HIAD's large frontal area gives the high drag coefficient enabling high-altitude deceleration at low density~\cite{AndersonHypersonic}.
 
 \section{Flow Field Analysis}
 
 \subsection{Mach Number Distribution}
-The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock upstream of the reference aeroshell and the near wake, with standoff distance matching blunt-body theory for hypersonic flow~\cite{AndersonHypersonic}. The panel uses the legacy $V_{\infty}=2700$\,m/s condition, isolating shock-layer structure from the toroid-stack geometry; it is outside the $V_{\infty}=3378$\,m/s validation dataset of Section~\ref{sec:validation_irve3}.
+The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock ahead of the reference aeroshell and the near wake, with standoff matching blunt-body theory for hypersonic flow~\cite{AndersonHypersonic}. The panel uses the legacy $V_{\infty}=2700$\,m/s condition, isolating shock-layer structure from the toroid-stack geometry; it lies outside the $V_{\infty}=3378$\,m/s validation dataset of Section~\ref{sec:validation_irve3}.
 
 \begin{figure}[!htbp]
     \centering
@@ -108,7 +108,7 @@ The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock upstream o
 \end{figure}
 
 \subsection{Velocity Vector Field}
-The velocity vectors (Figure~\ref{fig:velocity_vectors}) show strong deceleration in the near wake, with velocity below $1.5$\,km/s behind the body. In DSMC this momentum loss and recirculation emerge from molecular collisions and surface interactions without turbulence modeling~\cite{bird1994molecular}.
+The velocity vectors (Figure~\ref{fig:velocity_vectors}) show strong deceleration in the near wake, velocity below $1.5$\,km/s behind the body. In DSMC this momentum loss and recirculation emerge from molecular collisions and surface interactions without turbulence modeling~\cite{bird1994molecular}.
 
 \begin{figure}[!htbp]
     \centering
@@ -120,15 +120,15 @@ The velocity vectors (Figure~\ref{fig:velocity_vectors}) show strong deceleratio
 \end{figure}
 
 \subsection{Knudsen Number Distribution}
-The Knudsen number field (Figure~\ref{fig:knudsen_map}) resolves the local regime structure, ordered from the wall outwards:
+The Knudsen number field (Figure~\ref{fig:knudsen_map}) resolves the regime structure, ordered from the wall outward:
 \begin{itemize}
-    \item \textbf{Near-Wall (Stagnation):} $Kn \lesssim 0.01$, continuum band, where Navier-Stokes with viscosity and heat conduction applies.
-    \item \textbf{Shock Layer:} $0.01 \lesssim Kn \lesssim 0.1$, slip-flow band, valid only with velocity and temperature slip corrections at the wall, motivating the kinetic solver.
+    \item \textbf{Near-Wall (Stagnation):} $Kn \lesssim 0.01$, continuum band, where Navier-Stokes applies.
+    \item \textbf{Shock Layer:} $0.01 \lesssim Kn \lesssim 0.1$, slip-flow band, needing velocity and temperature slip corrections at the wall.
     \item \textbf{Transitional:} $0.1 \lesssim Kn \lesssim 10$: \emph{not present}; no cell in Figure~\ref{fig:knudsen_map} reaches this band.
-    \item \textbf{Free-Molecular:} $Kn > 10$: \emph{not present}; freestream density at 51.8\,km is too high for intermolecular collisions to cease.
+    \item \textbf{Free-Molecular:} $Kn > 10$: \emph{not present}; freestream density at 51.8\,km is too high for collisions to cease.
 \end{itemize}
 
-The distinction bounds the DSMC justification: the highest-$Kn$ cells coincide with the shock layer and near-wall region, so a kinetic treatment is needed exactly where the convective heat load is computed, not for the continuum freestream~\cite{plimpton2014sparta}. Figure~\ref{fig:knudsen_map} evidences only a continuum-to-slip gradient; at $2700$\,m/s the freestream $Kn$ sits far below the $Kn = 1$ threshold a transitional claim requires.
+The distinction bounds the DSMC case: highest-$Kn$ cells coincide with the shock layer and near-wall region, so a kinetic treatment is needed exactly where convective heat load is computed, not for the continuum freestream~\cite{plimpton2014sparta}. Figure~\ref{fig:knudsen_map} evidences only a continuum-to-slip gradient; at $2700$\,m/s freestream $Kn$ sits far below the $Kn = 1$ threshold a transitional claim requires.
 
 \begin{figure}[!htbp]
     \centering
@@ -140,7 +140,7 @@ The distinction bounds the DSMC justification: the highest-$Kn$ cells coincide w
 \end{figure}
 
 \section{Grid Independence Study}
-A grid independence study varied the grid factor from 0.3 to 1.0 against IRVE-3 flight data and the Rapisarda MDAO reference~\cite{rapisarda2023mdao}; grid factor 0.7 gives the least error at acceptable cost.
+A grid independence study varied grid factor from 0.3 to 1.0 against IRVE-3 flight data and the Rapisarda MDAO reference~\cite{rapisarda2023mdao}; grid factor 0.7 gives the least error at acceptable cost.
 
 \begin{figure}[!htbp]
     \centering
@@ -153,7 +153,7 @@ A grid independence study varied the grid factor from 0.3 to 1.0 against IRVE-3 
 
 \section{Validation Against IRVE-3 Flight Data}
 \label{sec:validation_irve3}
-The simulation results are validated against the IRVE-3 post-flight aerothermal reconstruction~\cite{old2013irve3postflight}. Table~\ref{tab:validation} summarizes the comparison.
+Results are validated against the IRVE-3 post-flight aerothermal reconstruction~\cite{old2013irve3postflight}; Table~\ref{tab:validation} summarizes them.
 
 \begin{table}[!htbp]
     \centering
@@ -174,15 +174,14 @@ The simulation results are validated against the IRVE-3 post-flight aerothermal 
     \normalsize
 \end{table}
 
-The MDAO Fay-Riddell prediction (13.83~W/cm\textsuperscript{2}, 195.17~J/cm\textsuperscript{2}) sits within 3.7\% and 0.06\% of the flight values 14.36~W/cm\textsuperscript{2} and 195.06~J/cm\textsuperscript{2}. Both come from the external MDAO reference model, not the SPARTA DSMC solver, establishing an internally consistent IRVE-3 reconstruction. The Sutton-Graves correlation, though less accurate here, gives a conservative upper bound for TPS design margins.
+The MDAO Fay-Riddell prediction (13.83~W/cm\textsuperscript{2}, 195.17~J/cm\textsuperscript{2}) sits within 3.7\% and 0.06\% of flight values 14.36~W/cm\textsuperscript{2} and 195.06~J/cm\textsuperscript{2}. Both come from the external MDAO reference model, not the SPARTA solver, establishing an internally consistent IRVE-3 reconstruction. Sutton-Graves, though less accurate here, gives a conservative upper bound for TPS margins.
 
-This work reports 16.14~W/cm\textsuperscript{2} peak heat flux, 165.72~J/cm\textsuperscript{2} heat load and 16.83\,g peak deceleration, i.e.\ $+12.4\%$, $-15.0\%$, and $-14.6\%$ against flight. The deviations have opposite signs and distinct causes, not one bias. Heat load and peak deceleration are both \emph{resolved by the DSMC run} and fall short by close to a common $15\%$. The run samples a \emph{single} trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA, whereas flight and MDAO integrate over the complete reentry. The heat flux behaves oppositely: the 16.14~W/cm\textsuperscript{2} headline is the Sutton-Graves correlation at the DSMC run condition, not solver-resolved. It over-predicts flight because it assumes a spherical nose cap, missing the scalloped torus heat shielding and the rarefied-flow departure DSMC resolves. The ballistic coefficient checks independently: the simulated 27.70~kg/m\textsuperscript{2} is $+3\%$ above the 26.9~kg/m\textsuperscript{2} flight value, so the scalloped geometry is reproduced correctly. The residual in the integrated quantities lies in trajectory integration, that in the heat flux in the correlation model.
+This work reports 16.14~W/cm\textsuperscript{2} peak heat flux, 165.72~J/cm\textsuperscript{2} heat load and 16.83\,g peak deceleration, i.e.\ $+12.4\%$, $-15.0\%$ and $-14.6\%$ against flight. The deviations have opposite signs and distinct causes, not one bias. Heat load and peak deceleration, both \emph{resolved by the DSMC run}, fall short by close to a common $15\%$. The run samples a \emph{single} trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA, while flight and MDAO integrate over the complete reentry. The heat flux behaves oppositely: the 16.14~W/cm\textsuperscript{2} headline is a correlation value, not solver-resolved, and over-predicts flight because a spherical nose cap misses the scalloped torus heat shielding and the rarefied-flow departure DSMC resolves. The ballistic coefficient checks independently: the simulated 27.70~kg/m\textsuperscript{2} is $+3\%$ above the 26.9~kg/m\textsuperscript{2} flight value, so the scalloped geometry is reproduced. The integrated-quantity residual lies in trajectory integration, the heat-flux residual in the correlation model.
 
-\paragraph{A second Sutton-Graves value, and why it differs.}
-The validation export \texttt{unified\_comparison\_data.json} reports a \emph{different} Sutton-Graves heat flux for the same run: 12.2~W/cm\textsuperscript{2} rather than Table~\ref{tab:validation}'s 16.14~W/cm\textsuperscript{2}. Sutton-Graves scales as $\sqrt{\rho/R_N}\,V^3$, so each value follows its own $(V, R_N)$ pair. The 16.14~W/cm\textsuperscript{2} above uses the IRVE-3 baseline $R_N = 1.5$\,m and the run's own $V = 3{,}378$\,m/s, the baseline condition of Sec.~\ref{sec:bo_results}. The 12.2~W/cm\textsuperscript{2} export value uses the engine \emph{default} $R_n = 0.55$\,m and a nominal $V = 2{,}700$\,m/s. The repository's validation report lists both as known discrepancies: 12.2~W/cm\textsuperscript{2} reflects two acknowledged-wrong defaults, not the run's velocity or geometry. The $+12.4\%$ in Table~\ref{tab:validation} is therefore a scale comparison, not a validated error bound.
+The export \texttt{unified\_comparison\_data.json} reports a \emph{different} Sutton-Graves heat flux for this run: 12.2~W/cm\textsuperscript{2} rather than Table~\ref{tab:validation}'s 16.14~W/cm\textsuperscript{2}. Sutton-Graves scales as $\sqrt{\rho/R_N}\,V^3$, so each value follows its own $(V, R_N)$ pair. The 16.14~W/cm\textsuperscript{2} above uses the IRVE-3 baseline $R_N = 1.5$\,m and the run's own $V = 3{,}378$\,m/s, the baseline condition of Sec.~\ref{sec:bo_results}. The 12.2~W/cm\textsuperscript{2} export value uses the engine \emph{default} $R_n = 0.55$\,m and nominal $V = 2{,}700$\,m/s. The repository's validation report lists both as known discrepancies: 12.2~W/cm\textsuperscript{2} reflects two acknowledged-wrong defaults, not run velocity or geometry. The $+12.4\%$ in Table~\ref{tab:validation} is therefore a scale comparison, not a validated error bound.
 
 \section{Scallop Pocket Temperature Analysis}
-Recirculation zones between toroid crests reduce heating. Figure~\ref{fig:scallop_pocket} traces one scallop pocket axially: temperature holds at ambient upwind, rises through the shock at the pocket leading edge to a peak near $3.1 \times 10^3$\,K, then decays through the recirculation region back to ambient. The valleys act as thermal buffer zones.
+Recirculation zones between toroid crests reduce heating. Figure~\ref{fig:scallop_pocket} traces one scallop pocket axially: temperature holds at ambient upwind, rises through the shock at its leading edge to a peak near $3.1 \times 10^3$\,K, then decays through the recirculation region back to ambient. The valleys act as thermal buffer zones.
 
 \begin{figure}[!htbp]
     \centering
@@ -194,7 +193,7 @@ Recirculation zones between toroid crests reduce heating. Figure~\ref{fig:scallo
 \end{figure}
 
 \section{Convergence and Residuals}
-Residual tracking (Figure~\ref{fig:convergence}) plots the normalized residual $|x - x_{\mathrm{ref}}|/|x_{\mathrm{ref}}|$ against particle-time step, with $x_{\mathrm{ref}}$ the mean of the final three samples. All three residuals fall by roughly three orders of magnitude between step 100 and step 2200, the statistical steady state of a particle method~\cite{bird1994molecular}. The descent is not monotonic: each estimate is a finite-sample mean, so visible scatter persists, most conspicuously in the heat flux, which fluctuates by a factor of two between adjacent samples late in the run.
+Residual tracking (Figure~\ref{fig:convergence}) plots normalized residual $|x - x_{\mathrm{ref}}|/|x_{\mathrm{ref}}|$ against particle-time step, $x_{\mathrm{ref}}$ the mean of the final three samples. All three residuals fall by roughly three orders of magnitude from step 100 to 2200, the statistical steady state of a particle method~\cite{bird1994molecular}. The descent is not monotonic: each estimate is a finite-sample mean, so scatter persists, most conspicuously in the heat flux, which fluctuates by a factor of two between adjacent samples late in the run.
 
     % Regenerated by figures/make_fignew.py from
     % results/validation_smooth/validation_timeseries.csv; the residuals printed
@@ -209,7 +208,7 @@ Residual tracking (Figure~\ref{fig:convergence}) plots the normalized residual $
 \end{figure}
 
 \section{Mesh Quality Statistics}
-Grid evidence is the study of Table~\ref{tab:grid_study} and the residuals of Figure~\ref{fig:convergence}, not Figures~\ref{fig:grid_mesh} and \ref{fig:mesh_stats}, which only render the mesh. The Cartesian grid at grid factor 0.7 adequately resolves collision pairing and property accumulation.
+Grid evidence is Table~\ref{tab:grid_study} and the residuals of Figure~\ref{fig:convergence}, not Figures~\ref{fig:grid_mesh} and \ref{fig:mesh_stats}, which only render the mesh. The Cartesian grid at grid factor 0.7 adequately resolves collision pairing and property accumulation.
 
 \begin{figure}[!htbp]
     \centering
@@ -223,29 +222,29 @@ Grid evidence is the study of Table~\ref{tab:grid_study} and the residuals of Fi
 \section{Discussion}
 
 \subsection{Heating Augmentation and TPS Implications}
-Scalloped toroidal geometry creates hot spots at the toroid crests. Against the smooth run at the same trajectory condition it raises peak heat flux by 15.2\%, the per-element average by only 4.0\% and drag by 9.5\%, while total heat load and peak deceleration stay unchanged. Concentration over a small crest area rather than the whole surface is the signature of the inverse-square-root radius scaling ($\dot{q} \propto 1/\sqrt{R}$) of the Sutton-Graves correlation~\cite{sutton1971gravesh}. Valley recirculation zones shield partially, reducing the time-averaged heat load on the Flexible Thermal Protection System~\cite{hollis2018surface}.
+Scalloped toroidal geometry creates hot spots at the toroid crests. Against the smooth run at the same trajectory condition it raises peak heat flux by 15.2\%, per-element average by only 4.0\% and drag by 9.5\%, while total heat load and peak deceleration stay unchanged. Concentration over a small crest area rather than the whole surface is the signature of inverse-square-root radius scaling ($\dot{q} \propto 1/\sqrt{R}$) in the Sutton-Graves correlation~\cite{sutton1971gravesh}. Valley recirculation zones shield partially, reducing time-averaged heat load on the Flexible Thermal Protection System~\cite{hollis2018surface}.
 
 \subsection{Flow Regime Characterization}
-Figure~\ref{fig:knudsen_map} shows a systematic \emph{local} regime gradient around the HIAD at 51.8\,km: the body surface and forward stagnation region are near-continuum, while the shock layer and wake rise into the slip-flow band. Against the five bands of Table~\ref{tab:knudsen_regimes}, the visible range of $10^{-5}$ to about $1.15\times10^{-2}$ spans continuum and slip-flow: the transitional ($0.1 \lesssim Kn \lesssim 10$) and free-molecular ($Kn > 10$) bands are \emph{not} attained.
+Figure~\ref{fig:knudsen_map} shows a systematic \emph{local} regime gradient around the HIAD at 51.8\,km: body surface and forward stagnation region are near-continuum, while shock layer and wake rise into the slip-flow band. Against the five bands of Table~\ref{tab:knudsen_regimes}, the visible range $10^{-5}$ to about $1.15\times10^{-2}$ spans continuum and slip-flow; transitional ($0.1 \lesssim Kn \lesssim 10$) and free-molecular ($Kn > 10$) bands are \emph{not} attained.
 
-This local gradient justifies the DSMC choice: the shock layer, dominating convective heating, reaches the slip-flow band, where continuum Navier-Stokes needs wall slip corrections, so a kinetic treatment is required exactly where the heat load is computed~\cite{mos2006lowdensity}. The stagnation region stays continuum, licensing the Navier-Stokes PINN stage. A vehicle-scale $Kn$ on the 3\,m aeroshell diameter would place the whole vehicle in the continuum band and discard this distinction, so the local field is the diagnostic that makes the hybrid DSMC-plus-PINN architecture appropriate.
+This local gradient justifies the DSMC choice: the shock layer, dominating convective heating, reaches the slip-flow band, where continuum Navier-Stokes needs wall slip corrections, so a kinetic treatment is required exactly where heat load is computed~\cite{mos2006lowdensity}. The stagnation region stays continuum, licensing the Navier-Stokes PINN stage. A vehicle-scale $Kn$ on the 3\,m aeroshell diameter would place the vehicle in the continuum band and discard this distinction, so the local field makes the hybrid DSMC-plus-PINN architecture appropriate.
 
 \subsection{Recirculation and Shock-Boundary Layer Interaction}
-Stable recirculation zones in the toroidal valleys match the shock-boundary layer interaction (SBLI) patterns of hypersonic blunt-body flows~\cite{guo2019hypersonic}. DSMC captures them through direct molecular collision statistics, without empirical turbulence closures.
+Stable recirculation zones in the toroidal valleys match shock-boundary layer interaction (SBLI) patterns of hypersonic blunt-body flows~\cite{guo2019hypersonic}. DSMC captures them through direct molecular collision statistics without turbulence closures.
 
 \subsection{Real-Gas Effects}
-The 5-species air model captures vibrational excitation and dissociation, lowering the effective stagnation temperature below the calorically perfect prediction of 5952\,K. Energy partitioning into internal modes affects the temperature gradient driving surface heat transfer~\cite{AndersonHypersonic}.
+The 5-species air model captures vibrational excitation and dissociation, lowering effective stagnation temperature below the calorically perfect prediction of 5952\,K. Energy partitioning into internal modes affects the temperature gradient driving surface heat transfer~\cite{AndersonHypersonic}.
 
 \section{Optimization Framework Results}
 \label{sec:optimization_results}
 
-The survivability optimization framework (Sec.~\ref{sec:ga_opt}) explored the HIAD design space with Latin Hypercube Sampling (LHS), Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate training, and Genetic Algorithm (GA) optimization, across a campaign run in July and August 2026.
+The survivability framework (Sec.~\ref{sec:ga_opt}) explored the HIAD design space with Latin Hypercube Sampling (LHS), Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate training and Genetic Algorithm (GA) optimization across a July and August 2026 campaign.
 
 \subsection{Optimization Campaign Summary}
-28 optimization runs were executed, recording 25 sample evaluations in the optimization database. Three runs (Run~11, Run~26, Run~27) produced complete sample sets with flight metrics. The varied parameters are aeroshell diameter ($D$), cone half-angle ($\theta_c$), toroid count ($N$), nose radius ($R_N$) and TPS thickness ($\delta_{TPS}$), as defined in Sec.~\ref{sec:ga_opt}.
+28 optimization runs executed, recording 25 sample evaluations. Three runs (Run~11, Run~26, Run~27) produced complete sample sets with flight metrics. Varied parameters are aeroshell diameter ($D$), cone half-angle ($\theta_c$), toroid count ($N$), nose radius ($R_N$) and TPS thickness ($\delta_{TPS}$), as in Sec.~\ref{sec:ga_opt}.
 
 \subsection{Design Space Exploration Results}
-Table~\ref{tab:optimization_samples} summarizes selected samples from the three active optimization runs, showing the trade-off between ballistic coefficient ($\beta$), deceleration load ($n_G$), and backface temperature ($T_{back}$).
+Table~\ref{tab:optimization_samples} summarizes selected samples from the three active runs, showing trade-offs between ballistic coefficient ($\beta$), deceleration load ($n_G$) and backface temperature ($T_{back}$).
 
 \begin{table}[!htbp]
     \centering
@@ -265,26 +264,26 @@ Table~\ref{tab:optimization_samples} summarizes selected samples from the three 
     \end{tabularx}
 \end{table}
 
-The results show a trade-off between deceleration capability and structural loading. Higher ballistic coefficients ($\beta > 25$\,kg/m$^2$) give moderate\,g-loads ($n_G \approx 21$-$23g$), while $\beta < 15$\,kg/m$^2$ gives excessive deceleration loads ($n_G > 55g$) beyond structural limits.
+The results trade deceleration capability against structural loading: higher ballistic coefficients ($\beta > 25$\,kg/m$^2$) give moderate\,g-loads ($n_G \approx 21$-$23g$), while $\beta < 15$\,kg/m$^2$ gives excessive deceleration loads ($n_G > 55g$) beyond structural limits.
 
 \subsection{Thermal Constraint Violation}
-The vehicle fails the thermal constraint. The active TPS reports a backface temperature of 955.66\,K, exceeding the Kapton limit of 773\,K by 182.7\,K and the IRVE-3 flexible-TPS structural limit of 523.15\,K by 432.5\,K ~\cite{old2013irve3postflight}. The system is the five-ply IRVE-3 flexible TPS: two 0.60\,mm Nextel BF-20 outer fabric plies, two 2.50\,mm Pyrogel 2250 insulation plies and one 0.15\,mm aluminized Kapton/Kevlar gas barrier~\cite{guidotti2023efesto2materials}, totaling 6.35\,mm with series resistance $R = 0.25605$\,m$^2$\,K/W and outer emissivity 0.80. It supersedes the 25.4\,mm silicon-carbide slab of the LOFTID baseline, four times too thick. The survivability verdict is a four-way predicate: surface temperature below 2073\,K, backface temperature below 773\,K, and both measured and computed deceleration below 25\,g. The thermal channel binds; the deceleration channel passes with margin.
+The vehicle fails the thermal constraint. The active TPS reports backface temperature of 955.66\,K, exceeding the Kapton limit of 773\,K by 182.7\,K and the IRVE-3 flexible-TPS structural limit of 523.15\,K by 432.5\,K~\cite{old2013irve3postflight}. The system is the five-ply IRVE-3 flexible TPS: two 0.60\,mm Nextel BF-20 outer fabric plies, two 2.50\,mm Pyrogel 2250 insulation plies and one 0.15\,mm aluminized Kapton/Kevlar gas barrier~\cite{guidotti2023efesto2materials}, totaling 6.35\,mm with series resistance $R = 0.25605$\,m$^2$\,K/W and outer emissivity 0.80. It supersedes the 25.4\,mm silicon-carbide slab of the LOFTID baseline, four times too thick. The verdict is a four-way predicate: surface temperature below 2073\,K, backface temperature below 773\,K, and both measured and computed deceleration below 25\,g. The thermal channel binds; the deceleration channel passes with margin.
 
-Thermal soak is dominated by integrated heat load, not instantaneous stagnation heat flux. For this trajectory point $Q = 165.72$\,J/cm$^2$, or $1.657$\,MJ/m$^2$; the 1D transient model integrates the heat pulse over the exposure duration, so this accumulated quantity, not the stagnation-point correlation value of Chapter~3, sets the backface temperature. Implications for TPS design:
+Thermal soak is dominated by integrated heat load, not instantaneous heat flux. For this trajectory point $Q = 165.72$\,J/cm$^2$, or $1.657$\,MJ/m$^2$; the 1D transient model integrates the heat pulse over the exposure duration, so this accumulated quantity, not the Chapter~3 stagnation-point correlation value, sets the backface temperature. Implications for TPS design:
 \begin{itemize}
-    \item The active 6.35\,mm layup is already insufficient, so the insulation must gain Pyrogel content. Cutting the backface temperature from 955.66\,K to the 773\,K Kapton limit raises the required series resistance by roughly 2.1, which for this stack means thickening the Pyrogel plies rather than the outer fabric.
-    \item The thermal lag factor ($\eta_{lag} = 0.15$) is a fixed lumped parameter, not a fitted one; recalibrate it against a higher-fidelity transient solution before finalizing the thickness recommendation.
+    \item The active 6.35\,mm layup is insufficient, so insulation must gain Pyrogel content. Cutting backface temperature from 955.66\,K to the 773\,K Kapton limit raises required series resistance by roughly 2.1, which for this stack means thickening Pyrogel plies, not outer fabric.
+    \item The thermal lag factor ($\eta_{lag} = 0.15$) is fixed and lumped, not fitted; recalibrate it against a higher-fidelity transient solution before finalizing thickness.
     \item Multi-layer insulation with contact resistance as in Rapisarda's F-TPS stack~\cite{rapisarda2023mdao} should be incorporated.
 \end{itemize}
 
 \subsection{Optimal Configuration Identification}
-Despite the thermal violation, the GA identifies Run~27, Sample~8 as the optimal design point: $D = 3.0$\,m, $\theta_c = 45^\circ$, $N = 6$, $R_N = 0.5$\,m. It achieves $\beta = 29.27$\,kg/m$^2$ and $n_G = 21.37g$, within acceptable ranges for cargo reentry. Convergence toward a near-IRVE-3 geometry validates the framework's physical consistency, since IRVE-3 is flight-tested~\cite{old2013irve3postflight}.
+Despite the thermal violation, the GA identifies Run~27, Sample~8 as optimal: $D = 3.0$\,m, $\theta_c = 45^\circ$, $N = 6$, $R_N = 0.5$\,m. It achieves $\beta = 29.27$\,kg/m$^2$ and $n_G = 21.37g$, within acceptable ranges for cargo reentry. Convergence toward a near-IRVE-3 geometry validates physical consistency, since IRVE-3 is flight-tested~\cite{old2013irve3postflight}.
 
 \section{Bayesian Optimization Results}
 \label{sec:bo_results}
 
 \subsection{Cost Function and Reference Loading}
-The multi-objective cost function $J(\mathbf{x})$ of Sec.~\ref{sec:ga_opt} is evaluated against reference values loaded at run time rather than hard-coded, so recalibration needs only a new dataset. The active reference set for these runs:
+The multi-objective cost function $J(\mathbf{x})$ of Sec.~\ref{sec:ga_opt} uses reference values loaded at run time rather than hard-coded, so recalibration needs only a new dataset. The active reference set:
 
 \begin{table}[!htbp]
     \centering
@@ -304,7 +303,7 @@ The multi-objective cost function $J(\mathbf{x})$ of Sec.~\ref{sec:ga_opt} is ev
 \end{table}
 
 \subsection{Search Strategy and Convergence}
-A 15-point central composite design~\cite{Montgomery2017} screens first, with best $J = 1.996$ at the factorial-$\pm$ corner. A 20-point Latin Hypercube (LHS) design~\cite{mckay1979lhs} then populates the surrogate training set, followed by 50 Bayesian Optimization iterations~\cite{morris1992}, giving $n_{eval} = 70$ evaluations in the recorded history. The surrogate is a Gaussian Process~\cite{rasmussen2003} with a Mat\'ern 5/2 kernel (Eq.~\ref{eq:matern52}) and Expected Improvement acquisition with $\xi = 0.01$ (Eq.~\ref{eq:ei}), per Sec.~\ref{sec:ga_opt}. The 15 CCD points are absent from the 70-entry history and do not seed the Bayesian stage; datasets are reported separately.
+A 15-point central composite design~\cite{Montgomery2017} screens first, best $J = 1.996$ at the factorial-$\pm$ corner. A 20-point Latin Hypercube (LHS) design~\cite{mckay1979lhs} then populates the training set, followed by 50 Bayesian Optimization iterations~\cite{morris1992}, giving $n_{eval} = 70$ evaluations in the history. The surrogate is a Gaussian Process~\cite{rasmussen2003} with a Mat\'ern 5/2 kernel (Eq.~\ref{eq:matern52}) and Expected Improvement acquisition with $\xi = 0.01$ (Eq.~\ref{eq:ei}), per Sec.~\ref{sec:ga_opt}. The 15 CCD points are absent from the 70-entry history and do not seed the Bayesian stage; datasets are separate.
 
 \begin{figure}[!htbp]
     \centering
@@ -315,7 +314,7 @@ A 15-point central composite design~\cite{Montgomery2017} screens first, with be
     \label{fig:ccd_surface}
 \end{figure}
 
-Figure~\ref{fig:ccd_surface} shows the cost-annotated layout of the 15 screen points; Figure~\ref{fig:ccd_screen} shows the same screen as three pairwise projections keeping every point visible. The lowest screen cost sits at the factorial corner $R_N = 1.80$\,m, $r_{tor} = 0.100$\,m, $\theta_c = 55^\circ$ ($J = 1.9959$), the best design it resolves, and is a scale reference rather than the convergence incumbent below. The center point ($J = 2.1674$) and the IRVE-3 baseline ($J = 2.1626$, $r_{tor} = 0.135$\,m) differ only in torus radius; the screen cannot resolve which is preferable. Nose radius varies most across screened costs, consistent with $1/\sqrt{R_N}$ Sutton-Graves scaling, while half-cone angle enters more weakly.
+Figure~\ref{fig:ccd_surface} shows the cost-annotated 15-point screen layout; Figure~\ref{fig:ccd_screen} gives the same screen as three pairwise projections keeping every point visible. The lowest screen cost sits at the factorial corner $R_N = 1.80$\,m, $r_{tor} = 0.100$\,m, $\theta_c = 55^\circ$ ($J = 1.9959$), the best design it resolves, and is a scale reference, not the convergence incumbent below. The center point ($J = 2.1674$) and the IRVE-3 baseline ($J = 2.1626$, $r_{tor} = 0.135$\,m) differ only in torus radius; the screen cannot resolve which is preferable. Nose radius varies most across screened costs, consistent with $1/\sqrt{R_N}$ Sutton-Graves scaling, while half-cone angle matters less.
 
 \begin{figure}[!htbp]
     \centering
@@ -326,7 +325,7 @@ Figure~\ref{fig:ccd_surface} shows the cost-annotated layout of the 15 screen po
     \label{fig:ccd_screen}
 \end{figure}
 \subsection{Optimized Configuration}
-Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 Bayesian Optimization winner. The optimizer cuts total heat load by 28.95\,\% to 155.67~J/cm\textsuperscript{2} (6.06\,\% \emph{below} the 165.72~J/cm\textsuperscript{2} validation target), drag coefficient by 2.96\,\% and aggregate cost $J$ by 25.78\,\%, with no constraint violated at the optimum (penalty term $= 0$).
+Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 winner. The optimizer cuts total heat load by 28.95\,\% to 155.67~J/cm\textsuperscript{2} (6.06\,\% \emph{below} the 165.72~J/cm\textsuperscript{2} validation target), drag coefficient by 2.96\,\% and aggregate cost $J$ by 25.78\,\%, with no constraint violated at the optimum (penalty $= 0$).
 
 \begin{table}[!htbp]
     \centering
@@ -356,36 +355,36 @@ Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 Ba
     \label{fig:ga_convergence}
 \end{figure}
 
-Figure~\ref{fig:ga_convergence} separates the two series. The evaluated cost $J$ is \emph{not} monotone: proposals are rejected freely, and the log-scale scatter spans more than three decades, with 46 of the 70 evaluations above the IRVE-3 baseline cost. Those expensive proposals are bidirectional: 17 of the 46 sit above the baseline nose radius of $1.5$\,m and 29 below it, so the excess cost is no single geometric excursion.
+Figure~\ref{fig:ga_convergence} separates the two series. The evaluated cost $J$ is \emph{not} monotone: proposals are rejected freely, and log-scale scatter spans more than three decades, with 46 of the 70 evaluations above the IRVE-3 baseline cost. Those proposals are bidirectional: 17 of the 46 sit above the baseline nose radius of $1.5$\,m and 29 below it, so the excess cost is no single excursion.
 
-The initial screen reaches $J = 1.7654$ at the first evaluation, so the incumbent entering the Bayesian stage is $1.7654$, not the CCD screen minimum of $1.9959$. Bayesian iterations improve it to $1.6051$, a 9.08\,\% reduction. The best point is at zero-based index 37 of the 70 evaluations, after which the incumbent is flat: the remaining 32 Expected-Improvement iterations gained nothing. With 50 acquisition steps over a three-dimensional space the search converged early, its tail reflecting a fixed evaluation budget rather than continuing gain.
+The initial screen reaches $J = 1.7654$ at the first evaluation, so the incumbent entering the Bayesian stage is $1.7654$, not the CCD minimum of $1.9959$. Bayesian iterations improve it to $1.6051$, a 9.08\,\% reduction. The best point is at zero-based index 37 of 70 evaluations, after which the incumbent is flat: the remaining 32 Expected-Improvement iterations gained nothing. With 50 acquisition steps over a three-dimensional space the search converged early, its tail reflecting a fixed evaluation budget rather than continuing gain.
 
-Since $\dot{q} \propto 1/\sqrt{R_N}$ in the Sutton-Graves scaling~\cite{sutton1971gravesh}, nearly doubling the nose radius is the cheapest route to a large heat-load reduction; toroid radius and half-cone angle then recover the drag and ballistic-coefficient terms the enlarged nose would penalize. The optimizer thus finds the trade-off a designer would reach analytically.
+Since $\dot{q} \propto 1/\sqrt{R_N}$ in the Sutton-Graves scaling~\cite{sutton1971gravesh}, nearly doubling the nose radius is the cheapest route to heat-load reduction; toroid radius and half-cone angle then recover the drag and ballistic-coefficient terms an enlarged nose would penalize. The optimizer finds the trade-off a designer would reach analytically.
 
 \section{Hybrid Validation Gate}
 \label{sec:hybrid_gate}
 
 \subsection{Motivation}
-An analytic optimum matters only if it survives full-fidelity re-simulation. The surrogate $J(\mathbf{x})$ is cheap, built on closed-form correlations, and cannot represent the particle noise, real-gas chemistry or geometric discretization of the DSMC solution. The hybrid gate closes this loop by re-simulating the winner with the high-fidelity chain before acceptance.
+The surrogate $J(\mathbf{x})$, built on closed-form correlations, cannot represent the particle noise, real-gas chemistry or geometric discretization of the DSMC solution. The hybrid gate closes this gap by re-simulating the winner at high fidelity before acceptance.
 
 \subsection{Gate Protocol}
 The gate is a post-optimization stage executing five legs~\cite{kennedy2000multi}:
 \begin{enumerate}
-    \item \textbf{Preconditions and geometry QA.} The compiled binary, Docker daemon, validation virtual environment, pipeline module and reference CSV are checked, followed by a seconds-fast \texttt{\seqsplit{bin/main -{}-validate-only}} geometry check. Failures are reported with a path and a remedy, and the gate exits with status 1.
-    \item \textbf{DSMC leg.} The round-1 winner is re-simulated with \texttt{\seqsplit{bin/main -{}-validate -{}-headless -{}-nose 2.971440 -{}-tradius 0.088460 -{}-angle 40.147949 -{}-skin scalloped -{}-steps 2200}}, writing to a dedicated results directory that never overwrites the baseline reference dataset.
-    \item \textbf{PINN leg.} The PINN refinement pipeline runs on the freshly written dataset, producing a new unified comparison dataset under the gate directory.
+    \item \textbf{Preconditions and geometry QA.} The compiled binary, Docker daemon, validation virtual environment, pipeline module and reference CSV are checked, then a seconds-fast \texttt{\seqsplit{bin/main -{}-validate-only}} geometry check runs. Failures report path and remedy; the gate exits with status 1.
+    \item \textbf{DSMC leg.} The round-1 winner is re-simulated with \texttt{\seqsplit{bin/main -{}-validate -{}-headless -{}-nose 2.971440 -{}-tradius 0.088460 -{}-angle 40.147949 -{}-skin scalloped -{}-steps 2200}}, writing to a dedicated directory, never overwriting the baseline reference dataset.
+    \item \textbf{PINN leg.} The PINN refinement pipeline runs on the freshly written dataset, producing a unified comparison dataset under the gate directory.
     \item \textbf{Verdict.} The gate passes if and only if $q_{hybrid} \leq Q_{target} = 165.716$\,J/cm$^2$, and records the prediction error $(q_{hybrid} - q_{analytic})/q_{analytic}$.
-    \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q_{hybrid}/\allowbreak q_{analytic},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ is applied to the heat-load term of $J(\mathbf{x})$ and the optimizer re-runs, producing the corrected round-2 design.
+    \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q_{hybrid}/\allowbreak q_{analytic},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ is applied to the heat-load term of $J(\mathbf{x})$; the optimizer re-runs, producing the round-2 design.
 \end{enumerate}
 
 \subsection{Gate Result}
-The official gate execution (2026-09-26) returns \textsc{pass}. The analytic prediction for the round-1 winner was $q_{analytic} = 155.67$\,J/cm$^2$; the high-fidelity DSMC re-simulation returned
+The official gate execution (2026-09-26) returns \textsc{pass}. The round-1 winner's analytic prediction was $q_{analytic} = 155.67$\,J/cm$^2$; the high-fidelity DSMC re-simulation returned
 \begin{equation}
     q_{hybrid} = 77.93\ \text{J/cm}^2 \;\leq\; Q_{target} = 165.72\ \text{J/cm}^2,
 \end{equation}
-with a prediction error of $-49.94\,\%$ and a clamped correction factor $c = 0.5006$, which sits exactly at the lower clamp bound. The hybrid drag coefficient is $C_{d,hybrid} = 2.529$.
+with a prediction error of $-49.94\,\%$ and a clamped correction factor $c = 0.5006$, exactly at the lower clamp bound. The hybrid drag coefficient is $C_{d,hybrid} = 2.529$.
 
-The winner passes with substantial margin, so the round-1 design is genuinely safe. The $-49.94\,\%$ error is not noise: two independent DSMC runs of the same geometry agreed to within 0.3\,\%, so the analytic-to-hybrid gap is reproducible systematic bias in the closed-form surrogate~\cite{kennedy2000multi}, absorbed by the multi-fidelity correction.
+The winner passes with substantial margin, so the round-1 design is safe. The $-49.94\,\%$ error is not noise: two independent DSMC runs of the same geometry agreed to within 0.3\,\%, so the analytic-to-hybrid gap is reproducible systematic bias in the closed-form surrogate~\cite{kennedy2000multi}, absorbed by the multi-fidelity correction.
 
 \begin{figure}[!htbp]
     \centering
@@ -396,30 +395,30 @@ The winner passes with substantial margin, so the round-1 design is genuinely sa
     \label{fig:gate_comparison}
 \end{figure}
 \subsection{Round-2 Corrected Optimum}
-Re-running the optimizer with the corrected cost gives a second optimum at $R_N = 2.9979$\,m, $r_{tor} = 0.0530$\,m, $\theta_c = 42.29^\circ$, with $C_d = 1.5440$, corrected cost $J = 1.1415$ (uncorrected at the same point: $1.6085$) and total heat load 154.99~J/cm\textsuperscript{2}. The correction shifts the design to a larger nose and much tighter torus and lowers the design-space cost, as expected when the surrogate's dominant error is heat-load over-prediction.
+Re-running the optimizer on the corrected cost gives a second optimum at $R_N = 2.9979$\,m, $r_{tor} = 0.0530$\,m, $\theta_c = 42.29^\circ$, $C_d = 1.5440$, corrected cost $J = 1.1415$ (uncorrected there: $1.6085$) and total heat load 154.99~J/cm\textsuperscript{2}. The correction shifts the design to a larger nose and much tighter torus and lowers design-space cost, as expected when the surrogate's dominant error is heat-load over-prediction.
 
 \section{Comparative Analysis with Prior Work}
 \label{sec:comparison_rapisarda}
-The present framework and the prior MDAO framework~\cite{rapisarda2023mdao} both target HIAD survivability optimization on the IRVE-3 geometry, but their computational approaches differ fundamentally.
+This framework and the MDAO framework~\cite{rapisarda2023mdao} both target HIAD survivability optimization on the IRVE-3 geometry, but their computational approaches differ.
 
 \subsection{Aerodynamic Solver}
-Rapisarda's MDAO framework estimates aerodynamic coefficients with a Modified Newtonian panel method~\cite{rapisarda2023mdao}, an inviscid continuum-based algebraic pressure-coefficient approximation from the local deflection angle. The Newtonian assumption is valid only for hypersonic, high-density flows ($Kn < 0.001$) with a thin, attached shock layer~\cite{AndersonHypersonic}.
+Rapisarda's MDAO framework estimates aerodynamic coefficients with a Modified Newtonian panel method~\cite{rapisarda2023mdao}, an inviscid approximation from local deflection angle. The Newtonian assumption holds only for hypersonic, high-density flows ($Kn < 0.001$) with a thin, attached shock layer~\cite{AndersonHypersonic}.
 
-The present framework uses the SPARTA Direct Simulation Monte Carlo (DSMC) solver~\cite{plimpton2014sparta}, solving the Boltzmann equation by direct simulation of molecular collisions. DSMC is valid across all flow regimes ($Kn = 0$ to $\infty$), so no regime bound restricts it~\cite{bird1994molecular}. The local $Kn$ field of Figure~\ref{fig:knudsen_map} narrows this: at 51.8\,km the shock layer around the HIAD reaches the slip-flow band ($0.01 \lesssim Kn \lesssim 0.1$), where continuum Navier-Stokes needs wall slip corrections, while freestream and stagnation stay continuum.
+The present framework uses the SPARTA Direct Simulation Monte Carlo (DSMC) solver~\cite{plimpton2014sparta}, valid across all flow regimes ($Kn = 0$ to $\infty$) with no regime bound~\cite{bird1994molecular}. The local $Kn$ field of Figure~\ref{fig:knudsen_map} narrows this: at 51.8\,km the shock layer reaches the slip-flow band ($0.01 \lesssim Kn \lesssim 0.1$), where Navier-Stokes needs wall slip corrections, freestream and stagnation staying continuum.
 
 \subsection{Gas Model}
-The Newtonian method assumes a calorically perfect gas with constant specific heats ($\gamma = 1.4$ for air). At hypersonic speeds ($Ma > 5$) post-shock temperature exceeds 5000\,K, activating vibrational excitation, dissociation and ionization~\cite{AndersonHypersonic}. This framework uses a 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) physics, altering energy partitioning and lowering the effective stagnation temperature below that prediction.
+Newtonian methods assume calorically perfect gas ($\gamma = 1.4$ for air). At hypersonic speeds ($Ma > 5$) post-shock temperature exceeds 5000\,K, activating vibrational excitation, dissociation and ionization~\cite{AndersonHypersonic}. This framework's 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) physics alters energy partitioning, lowering effective stagnation temperature below that prediction.
 
 \subsection{Optimization Methodology}
-Rapisarda's framework uses a sequential, single-objective approach: aerodynamic coefficients are computed at each design point, with trajectory and thermal analysis performed independently~\cite{rapisarda2023mdao}. Design-space exploration relies on manual parametric sweeps of Newtonian panel computations.
+Rapisarda's framework uses a sequential, single-objective approach: aerodynamic coefficients are computed at each design point, with trajectory and thermal analysis independent~\cite{rapisarda2023mdao}.
 
-This framework couples a Genetic Algorithm (GA) with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate for multi-objective optimization: Latin Hypercube Sampling (LHS) generates the initial population, and the Bayes Opt (GP) surrogate evaluates thousands of candidate geometries rapidly. That is essential for the 6+ dimensional design space (aeroshell diameter, cone angle, toroid count, toroid radius, nose radius and grid factor), beyond individual SPARTA simulations.
+This framework couples a Genetic Algorithm (GA) with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate: Latin Hypercube Sampling (LHS) generates the initial population, and the Bayes Opt (GP) surrogate evaluates thousands of candidate geometries rapidly, essential for the 6+ dimensional design space beyond individual SPARTA simulations.
 
 \subsection{Physics-Informed Neural Network Refinement}
-This work applies Physics-Informed Neural Networks (PINNs) as a post-processing layer for DSMC data~\cite{raissi2019pinn}. The DeepXDE-based PINN solves the 2D compressible Navier-Stokes equations by automatic differentiation, with SPARTA grid data as observational boundary conditions, giving a smooth, physics-consistent interpolant that fills DSMC flow-field gaps and reduces particle noise. This hybrid approach is absent from Rapisarda's framework, a new paradigm for rarefied gas dynamics.
+This work applies Physics-Informed Neural Networks (PINNs) as post-processing for DSMC data~\cite{raissi2019pinn}. The DeepXDE-based PINN solves the 2D compressible Navier-Stokes equations by automatic differentiation, with SPARTA grid data as observational boundary conditions, giving a smooth, physics-consistent interpolant that fills flow-field gaps and reduces particle noise. This hybrid approach is absent from Rapisarda's framework.
 
 \subsection{Reproducibility and Accessibility}
-This framework is open-source with a hybrid Ada and Python architecture. The Ada binary is the primary engine, with range-checked parameter subtypes and run-time assertions exercised by the self-test, running through the \texttt{stellarorion\_program\_proc/run.py} front end. SPARTA runs containerized on Linux; the Python sidecar handles PINN refinement, optimization and the native-OS GUI with hardware acceleration (NVIDIA CUDA, AMD ROCm, Apple Metal MPS). Rapisarda's framework is MATLAB-based and needs manual configuration per run.
+This framework is open-source with a hybrid Ada and Python architecture. The Ada binary is the primary engine, with range-checked subtypes and run-time assertions exercised by the self-test, running through the \texttt{stellarorion\_program\_proc/run.py} front end. SPARTA runs containerized on Linux; the Python sidecar handles PINN refinement, optimization and the native-OS GUI with hardware acceleration (CUDA, ROCm, Metal MPS). Rapisarda's framework is MATLAB-based and needs manual configuration per run.
 
 \begin{table}[!htbp]
     \centering
