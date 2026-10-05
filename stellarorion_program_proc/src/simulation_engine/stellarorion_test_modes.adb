@@ -1673,10 +1673,16 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
          Put_Line ("  Parameter             | Value       | Reference       | Status");
          Put_Line ("  ---------------------------------------------------------------------");
 
-         Put_Line ("  Kn at run point       | " & F6 (Kn_Run) & "  | " &
+         --  FORMAT FIX (2026-10-05): Kn and lambda are O(1e-5), and F6
+         --  rounds to 2 decimals, so the gate printed "Kn at run point | 0.00"
+         --  and "Mean free path | 0.00" -- the two numbers the whole gate
+         --  exists to report, rendered indistinguishable from exactly zero.
+         --  Float'Image preserves the magnitude (3.78388E-05).  The band
+         --  limits stay on F6: 0.01 and 1.00 are correct at 2 decimals.
+         Put_Line ("  Kn at run point       | " & Float'Image (Kn_Run) & " | " &
                    F6 (Ref_Kn_Lo) & ".." & F6 (Ref_Kn_Hi) &
                    " | " & (if In_Band then "PASS" else "FAIL"));
-         Put_Line ("  Mean free path (m)    | " & F6 (MFP_Run));
+         Put_Line ("  Mean free path (m)    | " & Float'Image (MFP_Run));
          Put_Line ("  Regime                | " &
                    (if Kn_Run > 1.0 then "free-molecular"
                     elsif Kn_Run >= Kn_Floor then "transition"
@@ -1748,7 +1754,7 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
                       "rarefied band, DSMC is the correct method.");
          else
             Put_Line ("  [VALIDATE] Step 9b REGIME GATE: FAIL -- run point Kn = " &
-                      F6 (Kn_Run) & " is outside the rarefied band " &
+                      Float'Image (Kn_Run) & " is outside the rarefied band " &
                       F6 (Ref_Kn_Lo) & ".." & F6 (Ref_Kn_Hi) &
                       "; the continuum surrogate is the appropriate method here.");
             Put_Line ("                (Does not change the survivability verdict " &

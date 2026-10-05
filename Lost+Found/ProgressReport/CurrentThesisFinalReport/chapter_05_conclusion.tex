@@ -1,54 +1,52 @@
 \chapter{Conclusion and Recommendations}
 
 \section{Summary of Findings}
-This research developed and validated a computational framework for aerothermal analysis and survivability optimization of Hypersonic Inflatable Aerodynamic Decelerators (HIADs) using the SPARTA Direct Simulation Monte Carlo (DSMC) solver.
+This research developed and validated a framework for aerothermal analysis and survivability optimization of Hypersonic Inflatable Aerodynamic Decelerators (HIADs) using the SPARTA Direct Simulation Monte Carlo (DSMC) solver.
 
 \section{Key Conclusions}
 
 \subsection{DSMC Validation Against IRVE-3 Flight Data}
-The SPARTA DSMC simulation framework was validated against the IRVE-3 post-flight aerothermal reconstruction data~\cite{old2013irve3postflight}. The Fay-Riddell stagnation-point correlation predicts a peak heat flux of 13.83\,W/cm$^2$, which is within 3.7\% of the 14.36\,W/cm$^2$ flight measurement~\cite{rapisarda2023mdao}. The Sutton-Graves correlation~\cite{sutton1971gravesh}, evaluated at the DSMC run condition with the corrected coefficient $C_{SG} = 1.83 \times 10^{-4}$ and the IRVE-3 nose radius $R_N = 1.5$\,m, gives a stagnation-point heat flux of 16.14\,W/cm$^2$. That value is $+12.4\%$ relative to the flight measurement and $+5.8\%$ relative to Rapisarda's trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$, itself $+6.26\%$ above flight~\cite{rapisarda2023mdao}. The quoted value conditions the correlation on the DSMC run rather than a raw sample, and it agrees closely with Rapisarda's trajectory-integrated value.
+The SPARTA DSMC framework was validated against IRVE-3 post-flight aerothermal reconstruction data~\cite{old2013irve3postflight}. The Fay-Riddell stagnation-point correlation predicts 13.83\,W/cm$^2$ peak heat flux, within 3.7\% of the 14.36\,W/cm$^2$ flight measurement~\cite{rapisarda2023mdao}. The Sutton-Graves correlation~\cite{sutton1971gravesh}, evaluated at the DSMC run with corrected coefficient $C_{SG} = 1.83 \times 10^{-4}$ and the IRVE-3 nose radius $R_N = 1.5$\,m, gives 16.14\,W/cm$^2$ stagnation-point heat flux. It is $+12.4\%$ relative to flight and $+5.8\%$ relative to Rapisarda's trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$, itself $+6.26\%$ above flight~\cite{rapisarda2023mdao}.
 
 \subsection{Scalloping-Induced Heating Augmentation}
-The toroidal surface topology creates a periodic heating profile with enhanced peaks at the toroid crests. Against the smooth-body equivalent at the same trajectory condition, the scalloped configuration raises peak heat flux by 15.2\% and the per-element average by 4.0\%, consistent with the inverse-square-root radius relationship ($\dot{q} \propto 1/\sqrt{R}$) of the Sutton-Graves correlation. The recirculation zones in the valleys between toroidal rings provide partial thermal shielding, reducing the time-averaged heat load on the FTPS~\cite{hollis2018surface}.
+The toroidal surface topology creates periodic heating with enhanced peaks at the toroid crests. Against the smooth-body equivalent at the same trajectory condition, the scalloped configuration raises peak heat flux by 15.2\% and the per-element average by 4.0\%, consistent with the Sutton-Graves inverse-square-root radius relationship ($\dot{q} \propto 1/\sqrt{R}$). Recirculation zones between toroidal rings provide partial thermal shielding, reducing time-averaged heat load on the FTPS~\cite{hollis2018surface}.
 
 \subsection{Flow Regime Characterization}
-The Knudsen number field mapping demonstrates a systematic \emph{local} regime gradient around the HIAD at 51.8\,km altitude. The freestream and stagnation region remain in the continuum band ($Kn \lesssim 0.01$, with $Kn_{\text{stag}} \sim 0.005$), while the shock layer and wake rise into the slip-flow band ($0.01 \lesssim Kn \lesssim 0.1$). Neither the transitional band ($0.1 \lesssim Kn \lesssim 10$) nor the free-molecular band ($Kn > 10$) is attained here; both need substantially higher altitudes. This gradient justifies the solver choice: the region dominating convective heating lies where continuum Navier-Stokes requires slip corrections~\cite{bird1994molecular, plimpton2014sparta}. A single vehicle-scale $Kn$ on the 3\,m aeroshell diameter would place the whole vehicle in the continuum band ($Kn \approx 2.5\times10^{-5}$) and conceal this distinction. The local field, not the global ratio, is therefore the meaningful diagnostic, and the continuum PINN stage and the kinetic DSMC stage are complementary rather than redundant.
+The Knudsen number field mapping demonstrates a \emph{local} regime gradient around the HIAD at 51.8\,km. Freestream and stagnation regions remain in the continuum band ($Kn \lesssim 0.01$, with $Kn_{\text{stag}} \sim 0.005$), while the shock layer and wake rise into the slip-flow band ($0.01 \lesssim Kn \lesssim 0.1$). Neither the transitional band ($0.1 \lesssim Kn \lesssim 10$) nor the free-molecular band ($Kn > 10$) is attained; both need higher altitudes. This gradient justifies the solver choice: the region dominating convective heating lies where continuum Navier-Stokes requires slip corrections~\cite{bird1994molecular, plimpton2014sparta}. A vehicle-scale $Kn$ on the 3\,m aeroshell diameter would place the whole vehicle in the continuum band ($Kn \approx 2.5\times10^{-5}$), concealing this distinction. The local field, not the global ratio, is the meaningful diagnostic: the continuum PINN and kinetic DSMC stages are complementary rather than redundant.
 
 \subsection{Grid Independence and Computational Efficiency}
-A grid factor of 0.7 gives the best balance of accuracy and cost, with the least error against validated flight data. The Cartesian grid keeps cell size below the local mean free path in the shock layer, satisfying the DSMC resolution requirement.
+A grid factor of 0.7 best balances accuracy and cost, with the least error against validated flight data. The Cartesian grid keeps cell size below the local mean free path in the shock layer, satisfying DSMC resolution.
 
 \subsection{Real-Gas Effects and 5-Species Air Model}
-A realistic 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics captures vibrational excitation and dissociation, reducing the effective stagnation temperature below the calorically perfect prediction of 5952\,K. Energy partitioning into internal modes affects the temperature gradient driving surface heat transfer~\cite{AndersonHypersonic}, which is critical for accurate heat flux prediction.
+A realistic 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics captures vibrational excitation and dissociation, reducing the effective stagnation temperature below the calorically perfect prediction of 5952\,K. Energy partitioning into internal modes affects the temperature gradient driving surface heat transfer~\cite{AndersonHypersonic}, critical for accurate heat flux prediction.
 
 \section{Contributions}
-This research contributes the following to hypersonic aerothermal analysis:
 \begin{enumerate}
-    \item \textbf{Integrated DSMC-HIAD Framework:} A complete pipeline from parametric geometry generation through DSMC simulation to survivability optimization for inflatable aerodynamic decelerators in the transitional flow regime.
+    \item \textbf{Integrated DSMC-HIAD Framework:} A complete pipeline from parametric geometry through DSMC simulation to survivability optimization for inflatable decelerators in the transitional flow regime.
 
-    \item \textbf{Scalloping Effect Quantification:} First systematic DSMC-based characterization of the heating augmentation and recirculation patterns caused by the stacked toroid surface topology of HIADs.
+    \item \textbf{Scalloping Effect Quantification:} First DSMC-based characterization of heating augmentation and recirculation patterns caused by the stacked toroid surface topology of HIADs.
 
-    \item \textbf{PINN-DSMC Hybrid Approach:} Demonstration of Physics-Informed Neural Networks as a post-processing smoothing layer for DSMC particle data, anchored in the compressible Navier-Stokes equations.
+    \item \textbf{PINN-DSMC Hybrid Approach:} Demonstration of Physics-Informed Neural Networks as a smoothing layer for DSMC particle data, anchored in the compressible Navier-Stokes equations.
 
-    \item \textbf{Multi-Objective Optimization:} Automated GA-based optimization of HIAD geometry using a Gaussian Process surrogate (Mat\'ern 5/2 kernel with Expected Improvement), targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance simultaneously.
+    \item \textbf{Multi-Objective Optimization:} Automated GA-based optimization of HIAD geometry using a Gaussian Process surrogate (Mat\'ern 5/2 kernel with Expected Improvement), targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
 \end{enumerate}
 
 \section{Recommendations for Future Work}
-The study's limitations yield these recommendations:
 
 \subsection{Extended Trajectory Analysis}
-The study covers one trajectory point at 51.8\,km altitude. Extend it to a full reentry trajectory, capturing time-evolution of aerothermal loads across atmospheric conditions and flow regimes.
+The study covers one trajectory point at 51.8\,km. Extend it to a full reentry trajectory, capturing time-evolution of aerothermal loads across conditions and flow regimes.
 
 \subsection{Full 3D Off-Axis Simulations}
-Results come from 2D axisymmetric cases at zero angle of attack. Full 3D runs at non-zero angle of attack would capture asymmetric heating and side forces relevant to vehicle stability.
+Results come from 2D axisymmetric cases at zero angle of attack; full 3D runs at non-zero angle of attack would capture asymmetric heating and side forces relevant to vehicle stability.
 
 \subsection{Structural FSI Coupling}
-The HIAD is treated as rigid and fully inflated. Coupling DSMC aerothermal loads to a structural finite element model would enable fluid-structure interaction (FSI) analysis of deformation and its effect on the flow field.
+The HIAD is treated as rigid and fully inflated. Coupling DSMC aerothermal loads to a structural finite element model would enable fluid-structure interaction (FSI) analysis of deformation and its flow-field effects.
 
 \subsection{Gen-2 and Gen-3 TPS Material Assessment}
-The baseline is the IRVE-3 Gen-1 TPS (Nextel/Pyrogel). Evaluate thermal margins for Gen-2 (SiC/Carbon) and Gen-3 TPS materials under the predicted scalloped heating profiles, especially for Mars entry where atmospheric composition differs from Earth~\cite{guidotti2023efesto2materials}.
+The baseline is the IRVE-3 Gen-1 TPS (Nextel/Pyrogel). Evaluate thermal margins for Gen-2 (SiC/Carbon) and Gen-3 TPS materials under the predicted scalloped heating profiles, especially for Mars entry, where atmospheric composition differs~\cite{guidotti2023efesto2materials}.
 
 \subsection{Mars Entry Extension}
-Extend the framework to Mars entry with a CO$_2$-dominated composition and updated SPARTA gas model. Replace the Sutton-Graves correlation with the West and Brandis (2020) Mars correlation, and the 5-species Earth air model with a CO$_2$/N$_2$/Ar mixture.
+Extend the framework to Mars entry with a CO$_2$-dominated composition and updated SPARTA gas model. Replace the Sutton-Graves correlation with the West and Brandis (2020) Mars correlation and the 5-species air model with a CO$_2$/N$_2$/Ar mixture.
 
 \subsection{PINN Refinement Validation}
-PINN refinement gives smooth, physics-consistent interpolation of noisy DSMC data, but its accuracy across the continuum and slip-flow bands ($Kn \lesssim 0.1$) needs quantification. Compare raw DSMC and PINN-refined outputs across Knudsen numbers to establish reliability bounds.
+PINN refinement gives smooth, physics-consistent interpolation of noisy DSMC data, but its accuracy across the continuum and slip-flow bands ($Kn \lesssim 0.1$) needs quantification. Compare raw and PINN-refined outputs across Knudsen numbers to establish reliability bounds.

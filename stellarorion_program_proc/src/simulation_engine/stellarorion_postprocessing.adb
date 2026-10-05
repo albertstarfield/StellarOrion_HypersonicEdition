@@ -54,19 +54,33 @@ package body StellarOrion_PostProcessing is
    --  overflow check (Q_Fr_Raw, Rho_W_Mu_W, Hollis 0.51841 term) was
    --  unprovable.  This adds the real aspect.
    --
-   --  X <= 1.0e10: every caller feeds a density-viscosity product, a Reynolds
-   --  number or a scallop ratio, all far below this.  With X in [0, 1e10] the
-   --  worst exponent (3.0 branch) gives 1e30, so the Post ceiling 1.0e30 is
-   --  derivable from the Pre and is below Float'Last (~3.4e38), leaving room
-   --  for the multiplications downstream.
-   with Pre  => X >= 0.0 and then X <= 1.0e10
+   --  X <= 1.0 -- MEASURED, not assumed.  All five call sites feed <= 1.0:
+   --    Rho_W_Mu_W = 3.14e-04   (Rho_W 8.1e-04 x Mu_W 3.9e-04 Pa.s)
+   --    Rho_S_Mu_S = 1.72e-04   (Rho_S 1.614  x Mu_S 1.1e-04 Pa.s)
+   --    Hollis Ratio = Scallop_Depth/Rinflated = 0.005/1.5, 0.015/1.5,
+   --                   0.025/1.5 = 0.00333, 0.01000, 0.01667
+   --  (the M_TO_FT 3.28084 factor cancels out of that ratio).
+   --
+   --  WHY THE CEILING MOVED FROM 1.0e30 TO 1.0 -- this was the single
+   --  largest source of unprovable overflow checks in the package.
+   --  A Post of 1.0e30 lets a product of two Pow_F results be 1e60, which is
+   --  ~1e21 x Float'Last (~3.4e38); the prover can never discharge
+   --  Q_Fr_Raw, Q_Raw or the Hollis term against a bound that large, so each
+   --  failed by construction rather than from any real risk.  With X <= 1.0
+   --  the tighter Post `Result <= 1.0` is both TRUE and INDUCTIVE: Result
+   --  starts at 1.0, each Term is X or a square root of it (so Term <= 1.0),
+   --  and Result is only ever multiplied by such a Term, hence Result <= 1.0
+   --  is preserved every iteration.  Downstream products then collapse to
+   --  ~1.0 x D_H x Sqrt(Du_Dy), which is physically bounded and provable.
+   --  The bound rejects no caller -- see the measurements above.
+   --  [Citation: Burden & Faires, Numerical Analysis, Ch 2.3; IEEE 754 binary32]
+   with Pre  => X >= 0.0 and then X <= 1.0
                 and then A >= 0.0 and then A < 1.0,
         Post => Pow_F'Result >= 0.0
-                and then Pow_F'Result <= 1.0e30
+                and then Pow_F'Result <= 1.0
    is
-      --  For SPARK provability, we implement x^a via repeated multiplication
-      --  for small integer/fractional exponents used in this package.
-      --  Specific values: 0.1, 0.4, 0.5, 1.5, 3.0
+      --  x^a for the fractional exponents this package actually uses, which
+      --  after the general-path rewrite are exactly {0.1, 0.4, 0.51841}.
    begin
       if X <= 0.0 then
          return 0.0;

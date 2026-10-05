@@ -119,33 +119,33 @@ The framework couples automated parametric geometry generation, DSMC rarefied ga
 \end{figure}
 
 \subsection*{a. Literature Study}
-The literature review covers hypersonic aerothermodynamics, rarefied gas dynamics, DSMC methodology, and HIAD design, including the Boltzmann equation, the Direct Simulation Monte Carlo method~\cite{bird1994molecular}, the Sutton-Graves correlation, and IRVE-3 and LOFTID flight results.
+The literature review covers hypersonic aerothermodynamics, rarefied gas dynamics, DSMC methodology, and HIAD design: the Boltzmann equation, the Direct Simulation Monte Carlo method~\cite{bird1994molecular}, the Sutton-Graves correlation, and IRVE-3 and LOFTID flight results.
 
 \subsection*{b. Parametric Geometry Generation}
-CadQuery, a Python parametric CAD library, generates the 3D HIAD models. Aeroshell diameter, forebody cone angle, toroid count, toroid radius, and nose radius are command-line arguments, so hundreds of variants export as STL for SPARTA.
+CadQuery, a Python parametric CAD library, generates 3D HIAD models. Aeroshell diameter, forebody cone angle, toroid count, toroid radius, and nose radius are command-line arguments, so hundreds of variants export as STL for SPARTA.
 
 \subsection*{c. DSMC Simulation}
-SPARTA runs the DSMC simulation in a containerised Linux environment at the target trajectory point ($v = 3378$\,m/s, $\rho = 7.851 \times 10^{-4}$ kg/m$^3$, $T = 268.41$\,K at 51.8\,km altitude). Millions of particles are advected, collided (VSS model), and sampled at surfaces, where computes accumulate force and energy data; grid dumps give density, temperature, pressure, velocity, and Knudsen number fields.
+SPARTA runs the DSMC simulation in a containerized Linux environment at the target trajectory point ($v = 3378$\,m/s, $\rho = 7.851 \times 10^{-4}$ kg/m$^3$, $T = 268.41$\,K at 51.8\,km). Millions of particles are advected, collided (VSS model), and sampled at surfaces, where computes accumulate force and energy; grid dumps give density, temperature, pressure, velocity, and Knudsen number fields.
 
 \subsection*{d. PINN Refinement}
-A Physics-Informed Neural Network (PINN) in DeepXDE post-processes raw DSMC output, solving the 2D compressible Navier-Stokes equations by automatic differentiation with SPARTA grid data as constraints. Its loss combines PDE residuals with data-matching terms, giving a smooth, physics-consistent interpolant that fills flow-field gaps and reduces particle noise.
+A Physics-Informed Neural Network (PINN) in DeepXDE post-processes raw DSMC output, solving the 2D compressible Navier-Stokes equations by automatic differentiation with SPARTA grid data as constraints. Its loss combines PDE residuals with data-matching terms, giving a physics-consistent interpolant that fills flow-field gaps and reduces particle noise.
 
 \subsection*{e. Survivability Optimization}
-A Genetic Algorithm (GA) with Bayesian Optimization (GP Matérn 5/2 and Expected Improvement) optimizes HIAD geometry. Latin Hypercube Sampling generates the initial population, the GP surrogate screens candidates, and costly SPARTA runs are reserved for elites and final validation, with the cost function balancing ballistic coefficient, peak deceleration, backface temperature, and drag performance against targets.
+A Genetic Algorithm (GA) with Bayesian Optimization (GP Matérn 5/2 and Expected Improvement) optimizes HIAD geometry. Latin Hypercube Sampling generates the initial population, the GP surrogate screens candidates, and costly SPARTA runs are reserved for elites and validation; the cost function balances ballistic coefficient, peak deceleration, backface temperature, and drag performance against targets.
 
 \subsection*{f. Validation and Analysis}
-Results are validated against IRVE-3 flight data~\cite{rapisarda2023mdao} using the Sutton-Graves correlation. Peak heat flux is 14.36\,W/cm$^2$ in flight, 13.83\,W/cm$^2$ from the MDAO Fay-Riddell reference, and 16.14\,W/cm$^2$ from the Sutton-Graves correlation at the present DSMC run conditions. Total heat load is 195.06, 195.17, and 165.72\,J/cm$^2$ respectively, and peak deceleration is 19.7\,g in flight against 16.83\,g from this work. The solver-resolved quantities under-predict flight by a common $15\%$ because one trajectory point replaces a full reentry history, while the correlation over-predicts by $+12.4\%$ because it resolves neither the scalloped geometry nor the rarefied departure; both deviations appear in Chapter IV.
+Validation against IRVE-3 flight data~\cite{rapisarda2023mdao} uses the Sutton-Graves correlation. Peak heat flux is 14.36\,W/cm$^2$ in flight, 13.83\,W/cm$^2$ from the MDAO Fay-Riddell reference, and 16.14\,W/cm$^2$ from the Sutton-Graves correlation at the present DSMC run. Total heat load is 195.06, 195.17, and 165.72\,J/cm$^2$ respectively; peak deceleration is 19.7\,g in flight against 16.83\,g from this work. Solver-resolved quantities under-predict flight by a common $15\%$ because one trajectory point replaces a full reentry history, while the correlation over-predicts by $+12.4\%$ because it resolves neither the scalloped geometry nor the rarefied departure; both deviations appear in Chapter IV.
 
 \section{Thesis Outline}
-\textbf{CHAPTER I} This chapter presents the research background, problem statement, research objectives, scope, methodology overview, and the thesis outline.
+\textbf{CHAPTER I} Background, problem statement, objectives, scope, methodology, and outline.
 
-\textbf{CHAPTER II} This chapter reviews the theoretical framework: hypersonic aerothermodynamics, the Boltzmann equation and DSMC methodology~\cite{bird1994molecular}, the Sutton-Graves heating correlation~\cite{sutton1971gravesh}, Physics-Informed Neural Networks~\cite{raissi2019pinn}, genetic algorithm optimization~\cite{Goldberg1989}, and previous studies on the IRVE-3 and LOFTID flight experiments~\cite{dillman2014irve3flight,dinonno2026loftid}.
+\textbf{CHAPTER II} Hypersonic aerothermodynamics, the Boltzmann equation and DSMC methodology~\cite{bird1994molecular}, the Sutton-Graves correlation~\cite{sutton1971gravesh}, Physics-Informed Neural Networks~\cite{raissi2019pinn}, genetic algorithm optimization~\cite{Goldberg1989}, and IRVE-3 and LOFTID flight experiments~\cite{dillman2014irve3flight,dinonno2026loftid}.
 
-\textbf{CHAPTER III} This chapter details the methodology: parametric geometry generation with CadQuery, SPARTA DSMC configuration, PINN refinement, Genetic Algorithm optimization, and validation against flight data.
+\textbf{CHAPTER III} Methodology: parametric geometry generation with CadQuery, SPARTA DSMC configuration, PINN refinement, Genetic Algorithm optimization, and validation against flight data.
 
-\textbf{CHAPTER IV} This chapter presents the simulation results: baseline IRVE-3 configuration, aerothermal surface distributions, flow field characteristics, flight-data validation, and comparison with prior Newtonian-panel approaches.
+\textbf{CHAPTER IV} Simulation results: baseline IRVE-3 configuration, aerothermal surface distributions, flow field characteristics, flight-data validation, and comparison with prior Newtonian-panel approaches.
 
-\textbf{CHAPTER V} This chapter summarizes the findings on aerothermal performance and survivability optimization of the scalloped HIAD, and provides recommendations for future researchers and aerospace engineers.
+\textbf{CHAPTER V} Findings on aerothermal performance and survivability optimization of the scalloped HIAD, with recommendations for future researchers and aerospace engineers.
 
 \section*{Chapter Summary}
-This chapter covered the background, problem statement, six objectives, scope, methodology, and thesis outline. Its novelty is the first integrated DSMC-PINN-optimization framework, addressing four research gaps: rarefied regime modeling, automated design space exploration, PINN-DSMC hybrids, and multi-objective survivability optimization.
+This chapter covered the background, problem statement, six objectives, scope, methodology, and outline. Its novelty is the first integrated DSMC-PINN-optimization framework addressing four research gaps.

@@ -1,0 +1,93 @@
+{
+  "cache_key": "dee005c1b7e50474",
+  "violations": [
+    {
+      "severity": "CRITICAL",
+      "category": "NODE_MODULES_FAILING",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/venv_validation/lib/python3.12/site-packages/plotly/labextension/package.json",
+      "line": 1,
+      "message": "CRITICAL: package.json at 'venv_validation/lib/python3.12/site-packages/plotly/labextension/package.json' is missing node_modules at 'venv_validation/lib/python3.12/site-packages/plotly/labextension/node_modules'. Environment is unverified and non-functional. Run 'npm install'.",
+      "standard": "ISO/IEC 25010 Environment Verification",
+      "code_snippet": "Missing directory: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/venv_validation/lib/python3.12/site-packages/plotly/labextension/node_modules",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "NODE_MODULES_FAILING",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/venv_validation/share/jupyter/labextensions/jupyterlab-plotly/package.json",
+      "line": 1,
+      "message": "CRITICAL: package.json at 'venv_validation/share/jupyter/labextensions/jupyterlab-plotly/package.json' is missing node_modules at 'venv_validation/share/jupyter/labextensions/jupyterlab-plotly/node_modules'. Environment is unverified and non-functional. Run 'npm install'.",
+      "standard": "ISO/IEC 25010 Environment Verification",
+      "code_snippet": "Missing directory: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/venv_validation/share/jupyter/labextensions/jupyterlab-plotly/node_modules",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "CRITICAL",
+      "category": "SMT_SOLVER_MISSING",
+      "filepath": "src/utils/sabotage_verifier.py",
+      "line": 1,
+      "message": "cvc5 is NOT installed.  Install it: pip install cvc5.  Formal verification of Python/Ada/C functions is unsound without cvc5.",
+      "standard": "Formal methods completeness, DO-178C \u00a75.2.2",
+      "code_snippet": "import cvc5 \u2192 ImportError",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "HIGH",
+      "category": "STALE_FLAG",
+      "filepath": "src/utils/sabotage_verifier.py",
+      "line": 14924,
+      "message": "Boolean flag 'in_sig' = False is never modified \u2014 condition using it is always False. Either update the flag or remove the dead branch.",
+      "standard": "CWE-561: Dead Code, CWE-835: Loop with Unreachable Exit Condition",
+      "code_snippet": "in_sig = False",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "MEDIUM",
+      "category": "ASSERTION_SCANNER",
+      "filepath": "src/utils/sabotage_verifier.py",
+      "line": 17088,
+      "message": "Loop missing invariant comment or assertion (DO-178C MC/DC)",
+      "standard": "DO-178C MC/DC, SPARK RM 5.5",
+      "code_snippet": "",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "VIRTUAL_ENV_UNBUILT",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/vendor/tts_kokoro_component/venv",
+      "line": 1,
+      "message": "NOTICE: Kokoro TTS venv directory at 'vendor/tts_kokoro_component/venv' does not exist. Orchestrator will construct venv during Stage 0.5 setup.",
+      "standard": "DO-178C Tool Qualification / ISO 25010 Environment",
+      "code_snippet": "Unbuilt venv: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/vendor/tts_kokoro_component/venv",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "VIRTUAL_ENV_UNBUILT",
+      "filepath": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/venv/om",
+      "line": 1,
+      "message": "NOTICE: OPAM Coq env directory at 'venv/om' does not exist. Orchestrator will construct venv during Stage 0.5 setup.",
+      "standard": "DO-178C Tool Qualification / ISO 25010 Environment",
+      "code_snippet": "Unbuilt venv: /Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/venv/om",
+      "solvers": [],
+      "counterexample": ""
+    },
+    {
+      "severity": "LOW",
+      "category": "INTEGRATION_CONTRACT",
+      "filepath": "src/utils/sabotage_verifier.py",
+      "line": 2743,
+      "message": "Function 'atomic_function_wrapper' uses **kwargs \u2014 flexible signatures can hide integration issues.",
+      "standard": "CWE-697: Incorrect Comparison",
+      "code_snippet": "def atomic_function_wrapper(..., **kwargs)",
+      "solvers": [],
+      "counterexample": ""
+    }
+  ]
+}

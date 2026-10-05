@@ -577,6 +577,12 @@ package StellarOrion_PostProcessing is
        V_Inf           : Float;
        Mu_Inf          : Float) return Float
       with Pre  => Scallop_Depth_M >= 0.0
+                   --  Ratio <= 1.0 is REQUIRED to discharge Pow_F's
+                   --  `X <= 1.0` Pre at the `Pow_F (Ratio, 0.51841)` call.
+                   --  Callers pass 0.005/0.015/0.025 m against
+                   --  Rinflated_IRVE3 = 1.5 m (project.adb:962), so it holds
+                   --  with ~60x margin; M_TO_FT cancels in the ratio.
+                   and then Scallop_Depth_M <= Rinflated_M
                    and then Rinflated_M > 0.0
                    and then Rho_Inf > 0.0
                    and then V_Inf > 0.0
