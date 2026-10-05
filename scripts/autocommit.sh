@@ -137,8 +137,11 @@ NUM_DEL=$(printf '%s\n' "$NAME_STATUS" | grep -c '^D' || true)
 # ---------------------------------------------------------------------------
 derive_type() {
   local c="$1"
+  # NOTE: return a BARE type here. Scope is appended separately as
+  # "<type>(<scope>)"; returning a compound like "data(simulation)" produced
+  # malformed subjects such as "data(simulation)(thesis)".
   if printf '%s\n' "$c" | grep -qiE '\.(vtu|vtp|pdb|stl|cas|h5)$|paraview/'; then
-    printf 'data(simulation)'
+    printf 'data'
     return
   fi
   if printf '%s\n' "$c" | grep -qE '\.(adb|ads|py|sh|js|mjs|ts|json|jsonc|toml|ya?ml|gpr)$|Makefile|\.gprbuild$'; then
@@ -150,11 +153,11 @@ derive_type() {
     return
   fi
   if printf '%s\n' "$c" | grep -qiE '\.(csv|json|log)$|results/.*output'; then
-    printf 'chore(results)'
+    printf 'chore'
     return
   fi
   if printf '%s\n' "$c" | grep -qiE '\.(png|jpg|jpeg|svg|mp4|pptx|pdf)$|plots?/|Lost\+Found/'; then
-    printf 'chore(artifacts)'
+    printf 'chore'
     return
   fi
   printf 'chore'
