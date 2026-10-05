@@ -250,10 +250,16 @@ package body StellarOrion_PostProcessing is
       --  before asking for Rho_S > 0.  The prover does not fold the real
       --  exponentiation that builds Stag_Factor, so without these steps it
       --  could only conclude "Sqrt_Float may be 0" and rejected Rho_S > 0.0.
-      pragma Assert (M_Sq >= 0.0);
-      pragma Assert (Stag_Factor >= 1.0);
-      pragma Assert (SF3 > 0.0);
-      pragma Assert (SF35 > 0.0);
+      --  TIGHT CHAIN (2026-10-06): every operand bounded on BOTH sides by the
+      --  constant-folded SIM_* operating point (M_Sq = 10.29**2 = 105.884,
+      --  Stag_Factor 22.1768, SF3 10906.8, SF35 51362.7, P_Inf 50.001,
+      --  T_Stag 5544.2, P_Stag 2.568e6, Rho_S 1.6137).  The previous bounds
+      --  were positivity-only, so SF35/P_Stag were UNBOUNDED above and
+      --  `P_Stag <= 1.0e7` could not be discharged no matter what followed.
+      pragma Assert (M_Sq >= 95.0 and then M_Sq <= 110.0);
+      pragma Assert (Stag_Factor >= 20.0 and then Stag_Factor <= 23.0);
+      pragma Assert (SF3 >= 1.0e4 and then SF3 <= 1.3e4);
+      pragma Assert (SF35 >= 1.0e4 and then SF35 <= 1.0e5);
       pragma Assert (P_Inf > 0.0);
       pragma Assert (P_Stag > 0.0);
       pragma Assert (T_Stag > 0.0);
@@ -266,9 +272,9 @@ package body StellarOrion_PostProcessing is
       --  the positive-normal floor, and the largest is 1.0e7/(R*100.0) =
       --  3.48e04.  Every bound below is satisfied by the measured operating
       --  point (P_Inf 50.2 Pa, P_Stag 2.568e6 Pa, T_Stag 5544 K, Rho_S 1.614).
-      pragma Assert (P_Inf >= 1.0 and then P_Inf <= 1.0e4);
-      pragma Assert (T_Stag >= 100.0 and then T_Stag <= 1.0e5);
-      pragma Assert (P_Stag >= 1.0 and then P_Stag <= 1.0e7);
+      pragma Assert (P_Inf >= 1.0 and then P_Inf <= 100.0);
+      pragma Assert (T_Stag >= 5000.0 and then T_Stag <= 6000.0);
+      pragma Assert (P_Stag >= 1.0e4 and then P_Stag <= 1.0e7);
       pragma Assert (Rho_S > 0.0 and then Rho_S <= 1.0e4);
       pragma Assert (P_Stag >= P_Inf);   --  a shock always raises stagnation p
       pragma Assert (P_Diff >= 0.0 and then P_Diff <= 1.0e8);
@@ -284,6 +290,11 @@ package body StellarOrion_PostProcessing is
       --  AXIOMS: All factors are non-negative => product is non-negative
       Rho_W_Mu_W : constant Float := Rho_W * Mu_W;
       --  BOUND: measured 3.14e-04 -- Pow_F's Pre now requires X <= 1.0.
+      --  Derivation: Rho_W = Rho_S*T_Stag/T <= 1.0e1*6000.0/300.0 = 200.0
+      --  (measured 5.964) and Mu_W <= 1.0e-3 (Sutherland Post), so the
+      --  product is <= 0.2 < 1.0.  Without the explicit Rho_W bound the
+      --  prover had only Rho_S*T_Stag/T with T unbounded below at this point.
+      pragma Assert (Rho_W <= 200.0);
       pragma Assert (Rho_W_Mu_W >= 0.0 and then Rho_W_Mu_W <= 1.0);
       Rho_S_Mu_S : constant Float := Rho_S * Mu_S;
       --  BOUND: measured 1.72e-04 -- Pow_F's Pre now requires X <= 1.0.
@@ -361,9 +372,11 @@ package body StellarOrion_PostProcessing is
       --  before asking for Rho_S > 0.  The prover does not fold the real
       --  exponentiation that builds Stag_Factor, so without these steps it
       --  could only conclude "Sqrt_Float may be 0" and rejected Rho_S > 0.0.
-      pragma Assert (M_Sq >= 0.0);
-      pragma Assert (Stag_Factor >= 1.0);
-      pragma Assert (SF3 > 0.0);
+      --  TIGHT CHAIN (2026-10-06): same constant-folded bounds as the
+      --  Analytical variant; DKR inlines SF35 as SF3 * Sqrt_Float(Stag_Factor).
+      pragma Assert (M_Sq >= 95.0 and then M_Sq <= 110.0);
+      pragma Assert (Stag_Factor >= 20.0 and then Stag_Factor <= 23.0);
+      pragma Assert (SF3 >= 1.0e4 and then SF3 <= 1.3e4);
       pragma Assert (P_Inf > 0.0);
       pragma Assert (P_Stag > 0.0);
       pragma Assert (T_Stag > 0.0);
@@ -376,9 +389,9 @@ package body StellarOrion_PostProcessing is
       --  the positive-normal floor, and the largest is 1.0e7/(R*100.0) =
       --  3.48e04.  Every bound below is satisfied by the measured operating
       --  point (P_Inf 50.2 Pa, P_Stag 2.568e6 Pa, T_Stag 5544 K, Rho_S 1.614).
-      pragma Assert (P_Inf >= 1.0 and then P_Inf <= 1.0e4);
-      pragma Assert (T_Stag >= 100.0 and then T_Stag <= 1.0e5);
-      pragma Assert (P_Stag >= 1.0 and then P_Stag <= 1.0e7);
+      pragma Assert (P_Inf >= 1.0 and then P_Inf <= 100.0);
+      pragma Assert (T_Stag >= 5000.0 and then T_Stag <= 6000.0);
+      pragma Assert (P_Stag >= 1.0e4 and then P_Stag <= 1.0e7);
       pragma Assert (Rho_S > 0.0 and then Rho_S <= 1.0e4);
       pragma Assert (P_Stag >= P_Inf);   --  a shock always raises stagnation p
       pragma Assert (P_Diff >= 0.0 and then P_Diff <= 1.0e8);
@@ -387,6 +400,11 @@ package body StellarOrion_PostProcessing is
         Sqrt_Float ((2.0 * P_Diff) / Rho_S);
       Rho_W_Mu_W : constant Float := Rho_W * Mu_W;
       --  BOUND: measured 3.14e-04 -- Pow_F's Pre now requires X <= 1.0.
+      --  Derivation: Rho_W = Rho_S*T_Stag/T <= 1.0e1*6000.0/300.0 = 200.0
+      --  (measured 5.964) and Mu_W <= 1.0e-3 (Sutherland Post), so the
+      --  product is <= 0.2 < 1.0.  Without the explicit Rho_W bound the
+      --  prover had only Rho_S*T_Stag/T with T unbounded below at this point.
+      pragma Assert (Rho_W <= 200.0);
       pragma Assert (Rho_W_Mu_W >= 0.0 and then Rho_W_Mu_W <= 1.0);
       Rho_S_Mu_S : constant Float := Rho_S * Mu_S;
       --  BOUND: measured 1.72e-04 -- Pow_F's Pre now requires X <= 1.0.

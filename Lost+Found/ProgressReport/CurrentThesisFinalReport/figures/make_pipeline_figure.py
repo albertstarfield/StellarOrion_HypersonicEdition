@@ -82,7 +82,7 @@ PRINT_H_IN = 0.72 * TEXT_H_IN                      # 6.71811
 WIDTH_IN = PRINT_H_IN * (2056 / 3225)              # 4.283
 
 
-def box(ax, x, y, w, h, text, fc, fs=7.4, style="round,pad=0.02,rounding_size=0.02"):
+def box(ax, x, y, w, h, text, fc, fs=8, style="round,pad=0.02,rounding_size=0.02"):
     ax.add_patch(FancyBboxPatch(
         (x, y), w, h, boxstyle=style, linewidth=0.9,
         edgecolor=C_EDGE, facecolor=fc, zorder=2))
@@ -107,10 +107,10 @@ def main() -> int:
     ax.axis("off")
 
     ax.text(0.5, 0.992, "Validation pipeline executed by the engine",
-            ha="center", va="top", fontsize=7.0, weight="bold")
+            ha="center", va="top", fontsize=8, weight="bold")
     ax.text(0.5, 0.966,
             "Stages in execution order, as printed by the full validation run",
-            ha="center", va="top", fontsize=6.2, style="italic")
+            ha="center", va="top", fontsize=8, style="italic")
 
     stages = [
         ("1  Flight parameters", C_INPUT),
@@ -166,13 +166,13 @@ def main() -> int:
     ax.annotate("", xy=(x_right + 0.020, y_top_right), xytext=seg[-1],
                 arrowprops=dict(arrowstyle="-|>", color="black", linewidth=1.6,
                                 mutation_scale=13), zorder=5)
-    ax.text(x_gap, lane_y + 0.012, "continues", fontsize=5.8, ha="center",
+    ax.text(x_gap, lane_y + 0.012, "continues", fontsize=8, ha="center",
             va="bottom", color="black")
 
     # ---- optimisation loop, its own row with room for the feedback path ----
     ax.text(0.5, 0.268,
             "Geometry optimisation loop (driven by the cost function, gated by DSMC re-simulation)",
-            ha="center", va="top", fontsize=7.0, weight="bold")
+            ha="center", va="top", fontsize=8, weight="bold")
     loop = ["Design space\n(LHS or CCD screen)",
             "Bayesian optimisation\n(GP + Expected Improvement)",
             "Cost function\n$J(x)$",
@@ -200,7 +200,7 @@ def main() -> int:
                 arrowprops=dict(arrowstyle="-|>", color=C_CHECK, linewidth=1.4,
                                 mutation_scale=11), zorder=5)
     ax.text((x_first + x_last) / 2, fb_y - 0.004, "reject and resample",
-            fontsize=5.8, ha="center", va="top", color=C_CHECK)
+            fontsize=8, ha="center", va="top", color=C_CHECK)
 
     fig.tight_layout()
 

@@ -211,7 +211,7 @@ def fig_scalloped_vs_smooth() -> None:
     # page: loc="best" chose upper left, which is where these traces are highest,
     # and a pinned upper right still clipped the first markers in the left panel.
     # A legend outside the data region cannot occlude data by construction.
-    fig.legend(handles, labels, fontsize=7, loc="lower center", ncol=2,
+    fig.legend(handles, labels, fontsize=8, loc="lower center", ncol=2,
                frameon=False, bbox_to_anchor=(0.5, -0.055))
 
     # No suptitle and no note below the axes. Both statements belong in the LaTeX
@@ -273,7 +273,7 @@ def fig_trajectory() -> None:
     ax1.plot(51.818481, 3378.671, "^", ms=8, color=CB[2], mec="black", mew=0.7,
              label="smooth run (off this profile)")
     style(ax1, "Velocity against altitude", "Altitude (km)", "Velocity (m/s)")
-    ax1.legend(fontsize=7, loc="best", frameon=True, framealpha=1.0,
+    ax1.legend(fontsize=8, loc="best", frameon=True, framealpha=1.0,
                facecolor="white", edgecolor="0.7")
 
     ax2.plot(alt, g, "-", lw=1.5, color=CB[0], label="deceleration load")
@@ -281,7 +281,7 @@ def fig_trajectory() -> None:
     ax2.plot(51.818481, 16.833399, "^", ms=8, color=CB[2], mec="black", mew=0.7)
     style(ax2, "Deceleration load against altitude", "Altitude (km)",
           "Deceleration load (g)")
-    ax2.legend(fontsize=7, loc="best", frameon=True, framealpha=1.0,
+    ax2.legend(fontsize=8, loc="best", frameon=True, framealpha=1.0,
                facecolor="white", edgecolor="0.7")
 
     fig.suptitle("One-degree-of-freedom entry trajectory and the two run conditions",
@@ -314,7 +314,7 @@ def fig_convergence() -> None:
     # decaying residuals the inside-axes corner chosen by loc="best" sits over the
     # earliest, largest residual values.
     h, lb = ax.get_legend_handles_labels()
-    fig.legend(h, lb, fontsize=7, loc="lower center", ncol=3,
+    fig.legend(h, lb, fontsize=8, loc="lower center", ncol=3,
                frameon=False, bbox_to_anchor=(0.5, -0.055))
     fig.tight_layout()
     save(fig, "fignew_convergence_residuals.png", WIDTH_FULL)
@@ -360,7 +360,7 @@ def fig_ccd_screen() -> None:
         if g not in ax.get_legend_handles_labels()[0]:
             ax.plot([], [], m, ms=8 if m == "*" else 5, ls="none", color=colr, label=g)
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, fontsize=6.5, loc="lower center", ncol=3,
+    fig.legend(handles, labels, fontsize=8, loc="lower center", ncol=3,
                frameon=False, bbox_to_anchor=(0.5, -0.10))
     fig.suptitle("Face-centred CCD screen: $N = 2^3 + 2(3) + 1 = 15$ points",
                  fontsize=10)
@@ -432,10 +432,10 @@ def fig_gate() -> None:
     if q_target:
         ax.axhline(q_target, ls="--", lw=1.4, color=CB[3],
                    label=f"Acceptance threshold $Q_{{target}}$ = {q_target:.2f}")
-        ax.legend(fontsize=7, loc="upper right", frameon=True, framealpha=1.0,
+        ax.legend(fontsize=8, loc="upper right", frameon=True, framealpha=1.0,
                   facecolor="white", edgecolor="0.7")
     ax.set_xticks(xs)
-    ax.set_xticklabels([n for n, _, _ in series], fontsize=6.5)
+    ax.set_xticklabels([n for n, _, _ in series], fontsize=8)
     style(ax, "Hybrid validation gate: heat load comparison",
           "", "Total heat load (J/cm$^2$)")
     top = max(vals + ([q_target] if q_target else []))

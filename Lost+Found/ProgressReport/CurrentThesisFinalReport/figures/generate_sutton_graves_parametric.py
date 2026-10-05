@@ -237,7 +237,11 @@ def main() -> int:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14.0, 5.4))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.0, 2.7))
+    # Printed at 0.9\textwidth = 4.96 in, so saved 7.0 in -> scale 0.71.
+    # Tick labels at 12 pt print at 8.5 pt, at or above the 8 pt floor.
+    plt.rcParams["xtick.labelsize"] = 12
+    plt.rcParams["ytick.labelsize"] = 12
     fig.patch.set_facecolor("white")
 
     velocities = V_SWEEP_KMS
@@ -273,7 +277,7 @@ def main() -> int:
         "IRVE-3 run condition\n%.2f W/cm$^2$" % baseline,
         xy=(v_run_kms, baseline),
         xytext=(v_run_kms - 2.05, baseline * 3.4),
-        fontsize=12,
+        fontsize=13,
         ha="left",
         arrowprops=dict(arrowstyle="->", lw=1.8, color="black"),
         bbox=dict(boxstyle="round,pad=0.35", fc="white", ec="black", lw=1.1),
@@ -283,12 +287,11 @@ def main() -> int:
     ax1.set_xlabel(r"Freestream velocity $V_\infty$ [km/s]", fontsize=13)
     ax1.set_ylabel(r"Stagnation heat flux $\dot{q}_s$ [W/cm$^2$]", fontsize=13)
     ax1.set_title(
-        r"(a) Sutton--Graves: $\dot{q}_s$ vs $V_\infty$ "
-        r"($h$ = 51.8 km, $C_{SG}$ = 1.83$\times$10$^{-4}$)",
+        r"(a) $\dot{q}_s$ vs $V_\infty$ ($h$ = 51.8 km)",
         fontsize=13,
     )
     ax1.grid(True, which="both", alpha=0.3, ls=":")
-    ax1.legend(fontsize=9.5, loc="lower right", framealpha=0.92)
+    ax1.legend(fontsize=12, loc="lower right", framealpha=0.92)
 
     # --- Panel (b): q vs nose radius at several Mach numbers ---------------
     for v_kms in (3.0, 5.0, 7.0):
@@ -313,7 +316,7 @@ def main() -> int:
         "$R_N$ = 1.5 m\n(IRVE-3)",
         xy=(R_N_BASELINE_M, sg_at_radius(R_N_BASELINE_M, 3.0, solver)),
         xytext=(R_N_BASELINE_M * 1.08, sg_at_radius(R_N_BASELINE_M, 3.0, solver) * 0.30),
-        fontsize=12,
+        fontsize=13,
         ha="left",
         arrowprops=dict(arrowstyle="->", lw=1.6, color="black"),
         bbox=dict(boxstyle="round,pad=0.35", fc="white", ec="black", lw=1.1),
@@ -327,11 +330,11 @@ def main() -> int:
     ax2.set_xlabel(r"Nose radius $R_N$ [m]", fontsize=13)
     ax2.set_ylabel(r"Stagnation heat flux $\dot{q}_s$ [W/cm$^2$]", fontsize=13)
     ax2.set_title(
-        r"(b) $\dot{q}_s$ vs $R_N$ (Sutton--Graves: $\dot{q}_s \propto 1/\sqrt{R_N}$)",
+        r"(b) $\dot{q}_s$ vs $R_N$ ($\propto 1/\sqrt{R_N}$)",
         fontsize=13,
     )
     ax2.grid(True, which="both", alpha=0.3, ls=":")
-    ax2.legend(fontsize=10, loc="upper right", framealpha=0.92)
+    ax2.legend(fontsize=12, loc="upper right", framealpha=0.92)
 
     fig.tight_layout()
 

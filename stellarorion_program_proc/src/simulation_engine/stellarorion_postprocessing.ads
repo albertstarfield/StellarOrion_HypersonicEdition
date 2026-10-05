@@ -417,7 +417,7 @@ package StellarOrion_PostProcessing is
    function Sutherland_Viscosity (T : Float) return Float
      with Pre  => T > 0.0,
           Post => Sutherland_Viscosity'Result > 0.0
-                  and then Sutherland_Viscosity'Result <= 1.0e-2;
+                  and then Sutherland_Viscosity'Result <= 1.0e-3;
 
    -- ===================================================================
    --  Utility: SPARK-safe Square Root
