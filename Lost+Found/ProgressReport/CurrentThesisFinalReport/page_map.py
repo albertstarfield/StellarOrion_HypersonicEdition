@@ -2,8 +2,10 @@
 """Map thesis page spans per section from main.toc to locate cut candidates.
 
 Reads main.toc (hyperref contentsline entries), converts body folios to PDF page
-indices using BODY_OFFSET (ch1 = pdf 31 in the 193-page build), and prints each
-section's page range and length so verbose areas are visible at a glance.
+indices using the auto-detected body offset (measured from the rendered PDF), and
+prints each section's page range and length so verbose areas are visible at a
+glance. The final span ends at the real last page of main.pdf, never a stale
+hardcoded count.
 
 Exceptions: none expected; missing/unparsable entries are skipped with a note.
 """
@@ -37,6 +39,7 @@ def main() -> None:
     """Parse main.toc and print section page spans (pdf pages)."""
     toc = Path("main.toc").read_text(encoding="utf-8")
     BODY_OFFSET = body_offset_1based()
+    LAST_PAGE = len(pdfium.PdfDocument("main.pdf"))
     pat = re.compile(
         r"\\contentsline \{(section)\}\{\\numberline \{([^}]*)\}([^}]*)\}\{(\d+|[ivxlcdm]+)\}"
     )
@@ -54,11 +57,11 @@ def main() -> None:
             chapters.append((int(folio) + BODY_OFFSET, num, title.strip()))
     print("CHAPTERS (pdf pages):")
     for i, (p, num, title) in enumerate(chapters):
-        end = chapters[i + 1][0] - 1 if i + 1 < len(chapters) else 193
+        end = chapters[i + 1][0] - 1 if i + 1 < len(chapters) else LAST_PAGE
         print(f"  pdf {p:3d}-{end:3d} ({end - p + 1:3d}pp)  ch{num} {title[:55]}")
     print("SECTIONS (pdf pages):")
     for i, (p, num, title) in enumerate(rows):
-        end = rows[i + 1][0] - 1 if i + 1 < len(rows) else 193
+        end = rows[i + 1][0] - 1 if i + 1 < len(rows) else LAST_PAGE
         span = end - p + 1
         print(f"  pdf {p:3d}-{end:3d} ({span:3d}pp)  {num:>6} {title[:52]}")
 

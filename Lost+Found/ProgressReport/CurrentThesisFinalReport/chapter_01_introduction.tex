@@ -1,12 +1,12 @@
 \chapter{INTRODUCTION}
 \section{Background}
 \label{ch:background}
-Space exploration drives technological innovation, yet safe return remains a challenge: spacecraft and payloads must reach Earth or other bodies with an atmosphere. At hypersonic speed a vehicle experiences extreme aerodynamic heating that can cause catastrophic failure, so a thermal protection system (TPS) is required.
+Space exploration drives technological innovation, yet safe return remains a challenge: payloads must reach Earth or other bodies with an atmosphere. At hypersonic speed, aerodynamic heating can cause catastrophic failure, so a thermal protection system (TPS) is required.
 \par
-For generations, rigid TPS have been the standard solution for Earth reentry, such as Reusable TPS, Structurally Integrated TPS, Hot Structures, and Ablators~\cite{TPS-stateofIndustryNASA}. A rigid heat shield is limited by the launch vehicle's payload fairing, restricting the size and mass of the reentry vehicle, which constrains future missions landing large payloads such as human Mars missions or large assets returned from space.
+Rigid TPS have been the standard solution for Earth reentry: Reusable TPS, Structurally Integrated TPS, Hot Structures, and Ablators~\cite{TPS-stateofIndustryNASA}. A rigid heat shield is limited by the launch vehicle's payload fairing, restricting reentry vehicle size and mass, which constrains missions landing large payloads such as human Mars missions or assets returned from space.
 
 \par
-Deployable entry systems known as inflatable aerodynamic decelerators (IADs), or hypersonic inflatable aerodynamic decelerators (HIADs), have been tested as non-integrated, flexible TPS~\cite{DiNonnoLOFTID}. These lightweight structures pack into a small launch volume, then inflate before atmospheric entry. Their large surface area generates substantial drag, decelerating heavy payloads high in the atmosphere where heating is less severe.
+Deployable entry systems known as inflatable aerodynamic decelerators (IADs), or hypersonic inflatable aerodynamic decelerators (HIADs), have been tested as flexible TPS~\cite{DiNonnoLOFTID}. These structures pack into a small launch volume and inflate before atmospheric entry. Their large surface area generates drag, decelerating heavy payloads high in the atmosphere where heating is less severe.
 \begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Computer-generated 3-D rendering of a single generic satellite in low Earth orbit above the Earth. One smooth pink, lens-shaped disc of uniform thickness with a rounded rim carries a white vertical cylinder on a gold segmented ring at its center, topped by a small cluster of thin antenna masts. No text, dimension, or scale is printed, and the object is not labelled as a decelerator.}}%
@@ -17,7 +17,7 @@ Deployable entry systems known as inflatable aerodynamic decelerators (IADs), or
 \end{figure}
 
 \par
-IAD development combines aerodynamics, structural mechanics, and materials science. Its key component, the flexible thermal protection system (FTPS), shields the inflatable structure from reentry heat. The FTPS stacks an outer fabric, insulation, and a gas barrier~\cite{Guo2011Polyimide}, and its design requires accurate modeling of aerothermal loads and material response.
+IAD development combines aerodynamics, structural mechanics, and materials science. Its key component, the flexible thermal protection system (FTPS), shields the inflatable structure from reentry heat: an outer fabric, insulation, and a gas barrier~\cite{Guo2011Polyimide}. Its design requires accurate modeling of aerothermal loads and material response.
 
 \begin{figure}[!htbp]
     \centering
@@ -29,97 +29,86 @@ IAD development combines aerodynamics, structural mechanics, and materials scien
 \end{figure}
 
 \section{Problem Statement}
-IAD design depends on accurate prediction of the aerothermodynamic environment and the fluid-structure interaction (FSI) phenomena of atmospheric reentry. Flexible IAD and FTPS structures add complexity absent from rigid heat shields: aerodynamic loading deforms the structure, altering the flow field, heat transfer, and structural response.
+IAD design depends on accurate prediction of the aerothermodynamic environment and the fluid-structure interaction (FSI) of atmospheric reentry. Flexible IAD and FTPS structures add complexity absent from rigid heat shields: aerodynamic loading deforms the structure, altering the flow field, heat transfer, and structural response.
 
-At hypersonic speeds ($Ma > 5$) and high altitudes ($> 50$\,km), atmospheric density is low enough that the continuum assumption behind traditional Computational Fluid Dynamics (CFD) is only locally valid. The Knudsen number ($Kn$), which characterizes the degree of rarefaction, is a \emph{local} ratio of mean free path to characteristic length. The relevant length scale differs by orders of magnitude between the full vehicle and the millimetre-scale shock layer, so a vehicle-wide $Kn$ misrepresents the flow. The freestream stays continuum on the aeroshell scale, while the shock layer rises into the slip-flow band where Navier-Stokes requires wall slip corrections. In that band, particle-based methods such as Direct Simulation Monte Carlo (DSMC) capture the gas dynamics and remain valid at every $Kn$~\cite{bird1994molecular}.
+At hypersonic speeds ($Ma > 5$) and high altitudes ($> 50$\,km), atmospheric density is low enough that the continuum assumption behind traditional Computational Fluid Dynamics (CFD) is only locally valid. The Knudsen number ($Kn$) is a \emph{local} ratio of mean free path to characteristic length. The length scale differs by orders of magnitude between the full vehicle and the millimeter-scale shock layer, so a vehicle-wide $Kn$ misrepresents the flow. The freestream stays continuum on the aeroshell scale while the shock layer rises into the slip-flow band, where Navier-Stokes requires wall slip corrections. Particle-based methods such as Direct Simulation Monte Carlo (DSMC) capture the gas dynamics and remain valid at every $Kn$~\cite{bird1994molecular}.
 
-Optimizing HIAD geometry for survivability (balancing drag performance, peak heating, ballistic coefficient, and structural mass) requires an automated, multi-stage framework exploring a high-dimensional design space. Parametric CFD sweeps are prohibitive for thousands of evaluations.
+Optimizing HIAD geometry for survivability (balancing drag performance, peak heating, ballistic coefficient, and structural mass) requires an automated framework over a high-dimensional design space, since parametric CFD sweeps are prohibitive at thousands of evaluations.
 
-An integrated framework is therefore required. It must (1) employ DSMC rarefied gas dynamics to predict aerothermal loads in the locally non-continuum shock layer, (2) automate parametric geometry generation, and (3) use physics-informed machine learning with surrogate-based optimization to identify optimal HIAD configurations.
+An integrated framework is required: (1) DSMC rarefied gas dynamics to predict aerothermal loads in the locally non-continuum shock layer, (2) automated parametric geometry generation, and (3) physics-informed machine learning with surrogate-based optimization to identify optimal HIAD configurations.
 
 \section{Research Objective}
-In this research, the objective is to develop and validate a computational framework for the aerothermal analysis and survivability optimization of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD), based on the SPARTA DSMC solver~\cite{plimpton2014sparta}. It integrates physics-informed neural network (PINN) refinement~\cite{raissi2019pinn} and genetic algorithm optimization~\cite{Goldberg1989}.
+The objective is to develop and validate a computational framework for aerothermal analysis and survivability optimization of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD), based on the SPARTA DSMC solver~\cite{plimpton2014sparta}. It integrates physics-informed neural network (PINN) refinement~\cite{raissi2019pinn} and genetic algorithm optimization~\cite{Goldberg1989}.
 
-The specific objectives are:
+Specific objectives:
 \begin{enumerate}
-    \item \textbf{Parametric Geometry Generation:} To develop an automated 3D CAD pipeline using CadQuery that generates HIAD profiles from IRVE-3 specifications, enabling parametric variation of toroid count, cone angle, nose radius, and aeroshell diameter.
+    \item \textbf{Parametric Geometry Generation:} To develop an automated 3D CAD pipeline using CadQuery that generates HIAD profiles from IRVE-3 specifications, varying toroid count, cone angle, nose radius, and aeroshell diameter.
 
-    \item \textbf{DSMC Aerothermal Analysis:} To perform high-fidelity rarefied gas dynamics simulations using the SPARTA DSMC solver, capturing the Boltzmann-level molecular collisions and transport phenomena in the locally non-continuum shock layer relevant to HIAD reentry at 50-60~km altitude.
+    \item \textbf{DSMC Aerothermal Analysis:} To perform high-fidelity rarefied gas dynamics simulations using the SPARTA DSMC solver, capturing Boltzmann-level molecular collisions and transport phenomena in the locally non-continuum shock layer at HIAD reentry altitudes of 50-60~km.
 
-    \item \textbf{Knudsen Number Field Mapping:} To analyze the spatial distribution of the Knudsen number across the HIAD surface and flow field, resolving the continuum ($Kn \lesssim 0.01$) and slip-flow ($0.01 \lesssim Kn \lesssim 0.1$) bands that bound the continuum-to-kinetic gradient in the shock layer. This characterizes the flow physics governing aerothermal loads.
+    \item \textbf{Knudsen Number Field Mapping:} To analyze the spatial distribution of the Knudsen number across the HIAD surface and flow field, resolving the continuum ($Kn \lesssim 0.01$) and slip-flow ($0.01 \lesssim Kn \lesssim 0.1$) bands that bound the shock-layer gradient, characterizing the flow physics that governs aerothermal loads.
 
-    \item \textbf{Aerothermal Load Prediction:} To determine the surface distributions of heat flux ($\dot{q}$), pressure, and shear stress using the Sutton-Graves stagnation-point correlation~\cite{sutton1971gravesh} and SPARTA surface compute quantities, with validation against IRVE-3 flight data.
+    \item \textbf{Aerothermal Load Prediction:} To determine the surface distributions of heat flux ($\dot{q}$), pressure, and shear stress using the Sutton-Graves stagnation-point correlation~\cite{sutton1971gravesh} and SPARTA surface compute quantities, validated against IRVE-3 flight data.
 
-    \item \textbf{PINN Flow Field Refinement:} To apply Physics-Informed Neural Networks (DeepXDE) as a post-processing step to smooth noisy DSMC data, fill flow-field gaps, and provide a continuous interpolant anchored in the compressible Navier-Stokes equations.
+    \item \textbf{PINN Flow Field Refinement:} To apply Physics-Informed Neural Networks (DeepXDE) post-processing to smooth noisy DSMC data, fill flow-field gaps, and provide a continuous interpolant anchored in the compressible Navier-Stokes equations.
 
-    \item \textbf{Survivability Optimization:} To implement a Genetic Algorithm (GA) coupled with Bayesian Optimization using a GP Matérn 5/2 surrogate and Expected Improvement~\cite{matern1960,morris1992} for automated optimization of HIAD geometry, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
+    \item \textbf{Survivability Optimization:} To implement a Genetic Algorithm (GA) coupled with Bayesian Optimization using a GP Matérn 5/2 surrogate and Expected Improvement~\cite{matern1960,morris1992} to optimize HIAD geometry, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
 \end{enumerate}
 
 \section{Research Gap}
-The literature reveals four gaps in HIAD aerothermal analysis:
+Four gaps remain in HIAD aerothermal analysis:
 \begin{itemize}
-    \item \textbf{Rarefied Regime Limitation:} Existing HIAD aerothermal studies rely on continuum CFD (RANS/LES), inappropriate for the transitional flow regime ($Kn > 0.01$) above 50\,km. Particle-based DSMC methods have not been systematically applied to HIAD geometry optimization.
+    \item \textbf{Rarefied Regime Limitation:} Existing HIAD aerothermal studies rely on continuum CFD (RANS/LES), inappropriate for the transitional flow regime ($Kn > 0.01$) above 50\,km. DSMC methods have not been systematically applied to HIAD geometry optimization.
 
-    \item \textbf{Automated Design Space Exploration:} Manual parametric sweeps with individual CFD runs make high-dimensional design optimization (6+ parameters) computationally infeasible. No framework couples automated geometry generation with DSMC simulation and machine learning-based optimization.
+    \item \textbf{Automated Design Space Exploration:} Manual parametric sweeps with individual CFD runs make high-dimensional design optimization (6+ parameters) infeasible. No framework couples automated geometry generation with DSMC simulation and machine learning-based optimization.
 
     \item \textbf{PINN-DSMC Hybrid Approach:} Physics-Informed Neural Networks have been applied to CFD post-processing, but not as a smoothing layer for noisy DSMC particle data in HIAD applications.
 
-    \item \textbf{Multi-Objective Survivability Optimization:} The simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and structural mass for HIAD configurations using surrogate-assisted genetic algorithms has not been demonstrated.
+    \item \textbf{Multi-Objective Survivability Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and structural mass for HIAD configurations with surrogate-assisted genetic algorithms has not been demonstrated.
 \end{itemize}
 
 \section{Novelty and Contributions}
-This work makes the following novel contributions to hypersonic aerothermodynamic analysis and HIAD design:
+This work makes the following novel contributions:
 
 \begin{enumerate}
-    \item \textbf{First Integrated DSMC-PINN-Optimization Framework for HIAD:} This study presents the first framework coupling automated parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics~\cite{plimpton2014sparta}, Physics-Informed Neural Network refinement~\cite{lu2021deepxde}, and surrogate-assisted genetic algorithm optimization in one pipeline for HIAD survivability analysis.
+    \item \textbf{First Integrated DSMC-PINN-Optimization Framework for HIAD:} This study presents the first framework coupling parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics~\cite{plimpton2014sparta}, Physics-Informed Neural Network refinement~\cite{lu2021deepxde}, and surrogate-assisted genetic algorithm optimization for HIAD survivability analysis.
 
-    \item \textbf{DSMC-Based Design Space Exploration:} Unlike prior continuum CFD (RANS/LES) studies, this framework employs particle-based DSMC to capture the locally non-continuum shock layer above 50~km, enabling physically correct aerothermal load prediction for inflatable decelerators.
+    \item \textbf{DSMC-Based Design Space Exploration:} Unlike prior continuum CFD (RANS/LES) studies, this framework employs particle-based DSMC to capture the locally non-continuum shock layer above 50~km, enabling physically correct aerothermal loads for inflatable decelerators.
 
-    \item \textbf{PINN as DSMC Post-Processor:} Using Physics-Informed Neural Networks as a smoothing and interpolation layer for noisy DSMC particle data is novel in HIAD aerothermal analysis. The two-stage training protocol (data-only, then data+PDE) yields a physics-consistent continuous field from discrete particle simulations.
+    \item \textbf{PINN as DSMC Post-Processor:} Using Physics-Informed Neural Networks as a smoothing and interpolation layer for noisy DSMC particle data is novel in HIAD aerothermal analysis. The two-stage training protocol (data-only, then data+PDE) yields a physics-consistent continuous field from discrete particles.
 
-    \item \textbf{Multi-Objective Surrogate-Assisted Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and drag performance using Bayesian Optimization (GP surrogate) coupled with a genetic algorithm demonstrates a computationally efficient approach that direct simulation alone cannot afford.
+    \item \textbf{Multi-Objective Surrogate-Assisted Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and drag performance with Bayesian Optimization (GP surrogate) coupled to a genetic algorithm demonstrates an efficiency that direct simulation alone cannot afford.
 
-    \item \textbf{Comprehensive ML Documentation Standards:} The framework follows established machine learning standards: explicit architecture documentation, reproducibility requirements (random seeds, environment specifications), validation metrics ($R^2$, RMSE, and MAE), and ensemble uncertainty quantification.
+    \item \textbf{Comprehensive ML Documentation Standards:} The framework follows machine learning standards: explicit architecture documentation, reproducibility requirements (random seeds, environment specifications), validation metrics ($R^2$, RMSE, MAE), and ensemble uncertainty quantification.
 \end{enumerate}
 
 \section{Scope and Limitations}
 
-This research provides aerothermal analysis and survivability optimization of the Flexible Thermal Protection System (FTPS) within available computational resources. The boundaries and limitations are:
+This research provides aerothermal analysis and survivability optimization of the Flexible Thermal Protection System (FTPS) within available computational resources. Its boundaries are:
 
 \begin{enumerate}
-    \item \textbf{Geometric Representation:} The HIAD structure uses parametric 3D CAD generation via CadQuery (Python scripting). The 6-toroid stack based on the MDAO baseline~\cite{rapisarda2023mdao} is the primary geometry, with options to vary toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as rigid and fully inflated to isolate the impact of surface topology on the flow field.
+    \item \textbf{Geometric Representation:} The HIAD structure uses parametric 3D CAD generation via CadQuery. The 6-toroid stack based on the MDAO baseline~\cite{rapisarda2023mdao} is the primary geometry, with variable toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as rigid and fully inflated to isolate surface-topology effects on the flow.
 
-    \item \textbf{Dimensionality:} The investigation supports 2D axisymmetric (via \texttt{-{}-slice-angle}) and full 3D simulations. The 2D mode assumes zero angle of attack ($\alpha = 0^\circ$) to maintain rotational symmetry, enabling higher particle resolution within memory limits. Full 3D simulations cover off-axis conditions.
+    \item \textbf{Dimensionality:} Simulations are 2D axisymmetric (via \texttt{-{}-slice-angle}) or full 3D. The 2D mode assumes zero angle of attack ($\alpha = 0^\circ$) to maintain rotational symmetry and raise particle resolution within memory limits; full 3D covers off-axis conditions.
 
-    \item \textbf{Numerical Framework:} Gas dynamics follow the Boltzmann equation, solved by the Direct Simulation Monte Carlo (DSMC) method in the SPARTA (Sandia Parallel Algorithm for Real-Time Application) solver~\cite{plimpton2014sparta}. DSMC is valid for rarefied and transitional flows where the continuum assumption fails ($Kn > 0.01$).
+    \item \textbf{Numerical Framework:} Gas dynamics follow the Boltzmann equation, solved by the Direct Simulation Monte Carlo (DSMC) method in the SPARTA (Sandia Parallel Algorithm for Real-Time Application) solver~\cite{plimpton2014sparta}, valid for rarefied and transitional flows where the continuum assumption fails ($Kn > 0.01$).
 
-    \item \textbf{Gas Model:} A realistic 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics captures molecular interactions including vibrational energy exchange and dissociation reactions relevant to hypersonic entry conditions.
+    \item \textbf{Gas Model:} A realistic 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics captures molecular interactions including vibrational energy exchange and dissociation reactions relevant to hypersonic entry.
 
-    \item \textbf{Grid and Collision Pairing:} A Cartesian computational grid restricts collision pairing to $O(N)$ complexity within cells and provides sampling volumes for macroscopic property accumulation. Grid resolution must be finer than the local mean free path ($\lambda$); the default grid factor is 0.7, validated against IRVE-3 flight data.
+    \item \textbf{Grid and Collision Pairing:} A Cartesian grid restricts collision pairing to $O(N)$ complexity and provides sampling volumes for macroscopic property accumulation. Grid resolution must be below the local mean free path ($\lambda$); the default grid factor is 0.7, validated against IRVE-3 flight data.
 
-    \item \textbf{Thermal Analysis:} Surface heat flux uses the Sutton-Graves stagnation-point correlation~\cite{sutton1971gravesh}, validated against IRVE-3 flight data. The 1D transient backface model assumes a thermal lag factor ($\eta_{lag} = 0.15$) through the FTPS insulation stack. SPARTA surface kinetic energy quantities are retained as relative shape-ranking signals for the optimizer, not absolute heat flux.
+    \item \textbf{Thermal Analysis:} Surface heat flux uses the Sutton-Graves stagnation-point correlation~\cite{sutton1971gravesh}, validated against IRVE-3 flight data. The 1D transient backface model assumes a thermal lag factor ($\eta_{lag} = 0.15$) through the FTPS insulation stack. SPARTA surface kinetic energy quantities serve as shape-ranking signals for the optimizer, not absolute heat flux.
 
-    \item \textbf{Optimization:} The Genetic Algorithm explores the design space using Latin Hypercube Sampling (LHS) for initial populations, with a Gaussian Process (Matérn 5/2) Bayesian Optimization surrogate as evaluator. PINN refinement using DeepXDE runs during exploration but is bypassed during final validation to eliminate neural network bias.
+    \item \textbf{Optimization:} The Genetic Algorithm explores the design space with Latin Hypercube Sampling (LHS) initial populations and a Gaussian Process (Matérn 5/2) Bayesian Optimization surrogate; PINN refinement using DeepXDE runs during exploration but is bypassed during final validation to eliminate neural network bias.
 \end{enumerate}
 
 \section{Methodology Overview}
-The framework couples automated parametric geometry generation, DSMC rarefied gas dynamics~\cite{plimpton2014sparta}, Physics-Informed Neural Network refinement~\cite{raissi2019pinn}, and Genetic Algorithm optimization~\cite{Goldberg1989} to compare a smooth rigid sphere-cone baseline with the scalloped inflatable architecture under identical flight conditions. The workflow is shown in Figure~\ref{fig:flowchart_ch1}.
+The framework couples automated parametric geometry generation, DSMC rarefied gas dynamics~\cite{plimpton2014sparta}, Physics-Informed Neural Network refinement~\cite{raissi2019pinn}, and Genetic Algorithm optimization~\cite{Goldberg1989} to compare a smooth rigid sphere-cone baseline with the scalloped inflatable architecture under identical flight conditions (Figure~\ref{fig:flowchart_ch1}).
 
-    % Regenerated by figures/make_pipeline_figure.py, which builds the diagram
-    % from the twelve stages the validation pipeline actually executes.
-    %
-    % Sized by HEIGHT with keepaspectratio, because the diagram is far taller than
-    % it is wide: a width-based request at 0.92\textwidth gave a 574.8pt tall box
-    % and LaTeX reported "Float too large for page by 46.5093pt" once the caption
-    % was added to the 673pt text height.
-    %
-    % The 0.72\textheight factor is not arbitrary. figures/make_pipeline_figure.py
-    % builds the saved PNG at exactly 0.72 of the text height, 6.718 in, so that
-    % the effective print scale is 1.000 and a 6.6 pt box label is 6.6 pt on
-    % paper. Measured before this change: the image was saved 10.75 in tall and
-    % printed 5.598 in tall, a scale of 0.516, so every label printed at about
-    % half size. 0.72 also leaves room for the caption: 6.718 in of figure plus
-    % roughly 1.6 in of caption stays inside the 9.331 in text height.
+    % Regenerated by figures/make_pipeline_figure.py from the twelve executed stages.
+    % Sized by HEIGHT with keepaspectratio: the diagram is far taller than wide, and
+    % 0.72\textheight matches the saved PNG so the print scale is 1.000 with room for
+    % the caption.
 \begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Flowchart of the validation pipeline, in twelve numbered stages read down the left column then down the right: 1 flight parameters, 2 geometry quality assurance, 3 generate HIAD surface, 4 write solver input script, 5 build solver container, 6 run DSMC simulation, then 7 parse surface dumps, 8 compute flight metrics, 9 survivability check, 10 sanity checks, 11 compare with IRVE-3 flight data, 12 export fields and plots. A separate row below shows the geometry optimization loop: design space by Latin Hypercube or central composite screening, Bayesian optimization with a Gaussian process and Expected Improvement, the cost function, DSMC re-simulation, and acceptance when the corrected heat load is at or below the target, with a reject-and-resample feedback path.}}%

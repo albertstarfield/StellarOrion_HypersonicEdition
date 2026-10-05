@@ -5,7 +5,7 @@
 \section{Research Axioms and First Principles}
 \label{sec:axioms}
 
-Each axiom is grounded in physical theory and Chapter~\ref{chap:literature}; Figure~\ref{fig:methodology_derivation} traces the chain from kinetic theory to implementation.
+Each axiom is grounded in physical theory and Chapter~\ref{chap:literature}; Figure~\ref{fig:methodology_derivation} traces the derivation chain.
 
 \begin{figure}[!htbp]
     \centering
@@ -46,14 +46,14 @@ The Boltzmann transport equation governs the distribution function $f(\mathbf{x}
 \frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla_{\mathbf{x}} f + \frac{\mathbf{F}}{m} \cdot \nabla_{\mathbf{v}} f = \left(\frac{\delta f}{\delta t}\right)_{\text{coll}}
 \label{eq:boltzmann_dsmc}
 \end{equation}
-where the right-hand side is the collision integral under molecular chaos (Axiom~A2); the equilibrium solution is the Maxwell-Boltzmann distribution (Axiom~A4).
+where the right-hand side is the collision integral (Axiom~A2) and the equilibrium solution is Maxwell-Boltzmann (Axiom~A4).
 
 \paragraph{Step 2: DSMC Method (A6).}
 Bird's Direct Simulation Monte Carlo method~\cite{bird1994molecular} solves Equation~\eqref{eq:boltzmann_dsmc} stochastically, converging to the Boltzmann solution as $N \to \infty$ (Axiom~A6). Three steps per time step:
 \begin{enumerate}
-    \item \textbf{Advection:} Particles move ballistically for $\Delta t$.
-    \item \textbf{Collisions:} Pairs are selected within each cell with the VSS collision model.
-    \item \textbf{Sampling:} Macroscopic properties (density, temperature, velocity) accumulate in each cell.
+    \item \textbf{Advection:} particles move ballistically for $\Delta t$.
+    \item \textbf{Collisions:} VSS-model pairs selected within each cell.
+    \item \textbf{Sampling:} macroscopic properties (density, temperature, velocity) accumulate per cell.
 \end{enumerate}
 
 \paragraph{Step 3: Navier-Stokes Limit (A3).}
@@ -65,7 +65,7 @@ The stagnation-point heat flux is approximated by~\cite{sutton1971gravesh}:
 \dot{q}_s = k \sqrt{\frac{\rho_\infty}{R_n}} \, V_\infty^3
 \label{eq:sutton_graves_methodology}
 \end{equation}
-where $k$ is a gas-specific constant, $\rho_\infty$ the freestream density, $R_n$ the nose radius, and $V_\infty$ the flight velocity. The correlation serves initial thermal estimates and validates DSMC results.
+where $k$ is a gas-specific constant, $\rho_\infty$ the freestream density, $R_n$ the nose radius, and $V_\infty$ the flight velocity.
 
 \paragraph{Step 5: PINN Flow Field Refinement (A7).}
 The Physics-Informed Neural Network (PINN) enforces Navier-Stokes residuals as a soft loss constraint~\cite{raissi2019pinn}:
@@ -73,10 +73,9 @@ The Physics-Informed Neural Network (PINN) enforces Navier-Stokes residuals as a
 \mathcal{L} = \underbrace{\mathcal{L}_{\text{data}}}_{\text{DSMC samples}} + \lambda_{\text{PDE}} \underbrace{\mathcal{L}_{\text{PDE}}}_{\text{NS residuals}}
 \label{eq:pinn_loss}
 \end{equation}
-where $\mathcal{L}_{\text{data}}$ penalises deviation from DSMC surface data and $\mathcal{L}_{\text{PDE}}$ governing-PDE violations at collocation points.
 
 \paragraph{Step 6: Surrogate-Assisted Optimization.}
-The Bayes Opt surrogate maps design variables to performance metrics, so the Genetic Algorithm (GA) explores the space without repeated DSMC evaluations. The cost function is:
+The cost function is:
 \begin{equation}
 J = w_\beta \left(\frac{\beta_{\text{calc}} - \beta_{\text{target}}}{10}\right)^2 + \sum_{i} w_i \, \mathbb{1}\!\left[y_i^{(\text{pred})} > y_i^{(\text{limit})}\right] \cdot 10^{15}
 \label{eq:cost_function_optimization}
@@ -96,7 +95,7 @@ Figure~\ref{fig:governing_equations} summarizes this chain.
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
-The StellarOrion engine orchestrates the pipeline in Figure~\ref{fig:software_pipeline}: CadQuery geometry and freestream conditions feed SPARTA DSMC, the DeepXDE PINN module and the PyTorch Bayes Opt surrogate, emitting VTK and STL files for ParaView.
+The StellarOrion engine orchestrates the pipeline in Figure~\ref{fig:software_pipeline}: CadQuery geometry and freestream conditions feed SPARTA DSMC, the DeepXDE PINN module and the PyTorch Bayes Opt surrogate.
 
 \begin{figure}[!htbp]
     \centering
@@ -109,7 +108,7 @@ The StellarOrion engine orchestrates the pipeline in Figure~\ref{fig:software_pi
 
 \subsection{Default Optimization Parameters}
 \label{sec:default_params}
-Table~\ref{tab:default_params} lists the default parameter values used throughout this thesis, configured in the Ada engine source and exposed through the \texttt{stellarorion\_program\_proc/run.py} command-line front end; all runs adopt them unless stated otherwise. Design-of-experiments and surrogate defaults follow standard practice~\cite{Montgomery2017,matern1960,morris1992}; solver defaults follow the SPARTA configuration~\cite{plimpton2014sparta}.
+Table~\ref{tab:default_params} lists the default parameter values used throughout this thesis, configured in the Ada engine source and exposed through the \texttt{stellarorion\_program\_proc/run.py} command-line front end; all runs adopt them unless stated otherwise. DoE and surrogate defaults follow standard practice~\cite{Montgomery2017,matern1960,morris1992}; solver defaults follow SPARTA~\cite{plimpton2014sparta}.
 
 \begin{table}[!htbp]
 \centering
@@ -149,13 +148,13 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \end{table}
 
 \section{Research Design and Workflow}
-This chapter outlines the computational framework for assessing the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD). The workflow is a multi-stage numerical analysis: parametric geometry generation, Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement~\cite{raissi2019pinn} and Genetic Algorithm (GA) optimization~\cite{Goldberg1989}.
+This chapter outlines the computational framework for assessing the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD): parametric geometry generation, Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement~\cite{raissi2019pinn}, and Genetic Algorithm (GA) optimization~\cite{Goldberg1989}.
 
-To isolate the ``scalloped'' geometry, the methodology compares a baseline smooth sphere-cone against the inflatable architecture under identical hypersonic flight conditions. Figure~\ref{fig:flowchart_ch1} shows the workflow in six stages:
+To isolate the ``scalloped'' geometry, the methodology compares a baseline smooth sphere-cone against the inflatable architecture under identical flight conditions. Figure~\ref{fig:flowchart_ch1} shows six stages:
 \begin{enumerate}
-    \item \textbf{Parametric Geometry Generation:} Automated 3D CAD generation of the scalloped (inflatable) and smooth (baseline) profiles with CadQuery scripting, varying toroid count, cone angle, nose radius and aeroshell diameter.
+    \item \textbf{Parametric Geometry Generation:} Automated 3D CAD generation of the scalloped (inflatable) and smooth (baseline) profiles with CadQuery, varying toroid count, cone angle, nose radius and aeroshell diameter.
     \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver~\cite{plimpton2014sparta} at the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics~\cite{bird1994molecular}.
-    \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation in a Docker-containerized Linux environment, tracking millions of particles through advection, collisions, and surface interactions.
+    \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation in a Docker-containerized Linux environment, tracking millions of particles.
     \item \textbf{PINN Flow Field Refinement:} Post-processing of DSMC output with a Physics-Informed Neural Network (DeepXDE) to smooth particle noise, fill flow-field gaps and provide a continuous interpolant anchored in the compressible Navier-Stokes equations.
     \item \textbf{Survivability Optimization:} Genetic Algorithm (GA) guided by a Gaussian Process surrogate with Mat\'ern 5/2 kernel and Expected Improvement acquisition (Bayes Opt) for automated multi-objective optimization of HIAD geometry.
     \item \textbf{Validation and Analysis:} Grid independence studies and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
@@ -210,7 +209,7 @@ Geometric parameters of the numerical model, in Table~\ref{tab:geom_params}:
 \end{table}
 
 \subsection{Configuration Definitions}
-The two configurations, \textbf{Configuration A (Scalloped)} and \textbf{Configuration B (Smooth)}, are bounded by the stowed and deployed launch-vehicle envelopes~\cite{dillman2015irve3}. The stowed envelope bounds the packaged diameter at 18.5 inches against a 22 inch launch-vehicle fairing. That bound, not any geometric property of the inflated article, limits the 3~m reference diameter, which neither configuration may exceed.
+The two configurations, \textbf{Configuration A (Scalloped)} and \textbf{Configuration B (Smooth)}, are bounded by the stowed and deployed launch-vehicle envelopes~\cite{dillman2015irve3}. The stowed envelope bounds the packaged diameter at 18.5 inches against a 22 inch launch-vehicle fairing. That bound, not the inflated geometry, limits the 3~m reference diameter neither configuration may exceed.
 
 % fig:stowed_deployed was removed: alt text, caption and label but NO \includegraphics, since the image was never committed. Its numbers, 18.5 in and 22 in, appear in the prose above.
 
@@ -224,13 +223,13 @@ The two configurations, \textbf{Configuration A (Scalloped)} and \textbf{Configu
 \label{sec:dsmc_framework}
 
 \subsection{Governing Equations: The Boltzmann Equation}
-Unlike continuum CFD, this study uses the Direct Simulation Monte Carlo (DSMC) method, which solves the Boltzmann equation for rarefied gas dynamics~\cite{bird1994molecular} for the molecular velocity distribution function $f(\mathbf{r}, \mathbf{v}, t)$:
+Unlike continuum CFD, this study uses the Direct Simulation Monte Carlo (DSMC) method, which solves the Boltzmann equation~\cite{bird1994molecular} for the molecular velocity distribution function $f(\mathbf{r}, \mathbf{v}, t)$:
 
 \begin{equation}
     \frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla_{\mathbf{r}} f + \frac{\mathbf{F}}{m} \cdot \nabla_{\mathbf{v}} f = \left(\frac{\partial f}{\partial t}\right)_{coll}
 \end{equation}
 
-where $\mathbf{F}$ is the external force per molecule, $m$ the molecular mass, and the right-hand side the Boltzmann collision integral. DSMC solves it stochastically by tracking representative particles.
+where $\mathbf{F}$ is the external force per molecule, $m$ the molecular mass, and the right-hand side the Boltzmann collision integral.
 
 \subsection{Knudsen Number and Flow Regime}
 The continuum assumption is governed by the Knudsen number ($Kn$), the ratio of molecular mean free path ($\lambda$) to characteristic length ($L$):
@@ -243,11 +242,11 @@ The continuum assumption is governed by the Knudsen number ($Kn$), the ratio of 
     \lambda = \frac{1}{\sqrt{2} \pi d^2 n}
 \end{equation}
 
-where $d$ is the molecular diameter and $n$ the number density. Because $Kn$ is a \emph{local} ratio its value depends on reference length, and HIAD reentry admits two choices~\cite{bird1994molecular}.
+where $d$ is the molecular diameter and $n$ the number density. Because $Kn$ is a \emph{local} ratio, HIAD reentry admits two reference-length choices~\cite{bird1994molecular}.
 
-On the \emph{global} reference length (the full 3\,m aeroshell diameter) the IRVE-3 freestream at 51.8\,km is \emph{deeply continuum}. The ISA density $\rho_\infty = 1.05\times10^{-3}$\,kg/m\textsuperscript{3}, molecular diameter $d = 3.7\times10^{-10}$\,m and $T_\infty = 220$\,K give $\lambda_\infty \approx 7.5\times10^{-5}$\,m and $Kn_{\text{global}} \approx 2.5\times10^{-5}$ (Equation~\eqref{eq:kn_global_52km}). A continuum description therefore fits the freestream bulk flow; a global $Kn$ in the transition band would misattribute the physics.
+On the \emph{global} reference length (the full 3\,m aeroshell diameter) the IRVE-3 freestream at 51.8\,km is \emph{deeply continuum}. The ISA density $\rho_\infty = 1.05\times10^{-3}$\,kg/m\textsuperscript{3}, molecular diameter $d = 3.7\times10^{-10}$\,m and $T_\infty = 220$\,K give $\lambda_\infty \approx 7.5\times10^{-5}$\,m and $Kn_{\text{global}} \approx 2.5\times10^{-5}$ (Equation~\eqref{eq:kn_global_52km}). A continuum description therefore fits the freestream bulk flow.
 
-On the \emph{local} reference length (millimetre-scale bow-shock and stagnation layer) the same gas enters non-continuum bands: $Kn_{\text{shock}} \sim 0.01$-$0.1$ in the shock layer and $Kn_{\text{stag}} \sim 0.005$ at the stagnation region. This local regime dominates convective heat load, so DSMC suits despite the continuum freestream. SPARTA solves the Boltzmann transport equation at every $Kn$, resolving continuum freestream and non-continuum shock layer in one solver~\cite{plimpton2014sparta}, which also licenses the Navier-Stokes PINN stage (Sec.~\ref{sec:pinn_pragmatic}).
+On the \emph{local} reference length (millimetre-scale bow-shock and stagnation layer) the same gas enters non-continuum bands: $Kn_{\text{shock}} \sim 0.01$-$0.1$ in the shock layer and $Kn_{\text{stag}} \sim 0.005$ at the stagnation region. This local regime dominates convective heat load, so DSMC suits despite the continuum freestream. SPARTA resolves continuum freestream and non-continuum shock layer in one solver~\cite{plimpton2014sparta}, licensing the Navier-Stokes PINN stage (Sec.~\ref{sec:pinn_pragmatic}).
 
 Table~\ref{tab:knudsen_regimes} in Chapter~2 gives the five-band classification used throughout.
 
@@ -265,18 +264,18 @@ Freestream conditions match the IRVE-3 reentry trajectory point at 51.8\,km alti
 \end{itemize}
 
 \subsubsection*{Gas Model}
-The 5-species air model is N$_2$, O$_2$, NO, N and O, with Variable Soft Sphere (VSS) collision physics whose cross-section varies with relative velocity:
+The 5-species air model is N$_2$, O$_2$, NO, N and O, with Variable Soft Sphere (VSS) collision physics:
 
 \begin{equation}
     \sigma = \pi d_{ref}^2 \left( \frac{g_{ref}}{g} \right)^{2(\omega - 0.5)}
 \end{equation}
 
-where $g$ is the relative velocity of colliding molecules and $\omega$ the viscosity index of each species. The VSS model captures vibrational energy exchange and dissociation in hypersonic entry.
+where $g$ is the relative velocity of colliding molecules and $\omega$ the viscosity index of each species.
 
 \subsubsection*{Particle Tracking}
 SPARTA~\cite{plimpton2014sparta} tracks millions of particles through three processes:
 \begin{enumerate}
-    \item \textbf{Advection:} Particles move ballistically through the domain according to their velocity vectors.
+    \item \textbf{Advection:} particles move ballistically through the domain.
     \item \textbf{Collisions:} Molecular collisions use the VSS model within computational cells, with partners selected by the nearest-neighbour pairing scheme.
     \item \textbf{Surface Interactions:} Particles hitting the surface reflect according to the gas-surface interaction model (diffuse or specular).
 \end{enumerate}
@@ -284,7 +283,7 @@ SPARTA~\cite{plimpton2014sparta} tracks millions of particles through three proc
 \subsection{Solver Timestep and Physical Time Window}
 \label{sec:timestep}
 
-The particle timestep is fixed at $\Delta t = 1\times10^{-6}$\,s (1\,\textmu\,s) in the generated solver input, so every run uses that value with no adaptive stepping. Production runs in Chapter~\ref{ch:results} carry $2200$ particle-time steps, giving a total simulated time of
+The particle timestep is fixed at $\Delta t = 1\times10^{-6}$\,s (1\,\textmu\,s) in the generated solver input, with no adaptive stepping. Production runs in Chapter~\ref{ch:results} carry $2200$ particle-time steps, giving a total simulated time of
 
 \begin{equation}
     t_{sim} = N_{steps}\,\Delta t = 2200 \times 10^{-6}\ \text{s} = 2.2\ \text{ms}
