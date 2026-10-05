@@ -586,6 +586,13 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      own cell heat fluxes — a reference line the reader compares against directly. The
      correct `(F)` value is 13.80. See **F54**.
    * **One corrupt CSV cell silently removes half the plots.** `make_validation_plots.py:93-98` appends the step to `steps` *before* parsing the row's values, so a single unparsable field leaves `steps` one longer than every column from that field on. Measured: corrupting one `mach` value drops **10 of 21 plots** and mislabels the survivors by one row. The drop is announced on stderr (so it is not silent) but the script still exits 0. See **F62**.
+   * **The published optimum is pinned to its own search bound.**
+     `hiad_optimization_results.json` reports `R_N = 2.994005816519673` against a
+     `[0.5, 3.0]` interval — **0.24 % of the range from the wall** — and the figure draws
+     it as an interior optimum. Four further figure defects: the HIAD page hard-codes
+     `D=3.0m` while printing `Max Radius=1.8802 m` (**+25.35 %** against itself), a
+     non-proportional `aspectratio`, a printed torus count the mesher may not honour, and
+     an output directory created before the input directory is checked. See **F71**.
    * **Two published figures carry impossible annotations.** `make_vtu_visualization.py`
      labels `points[:,2]` "Axial", but column 0 spans **1.2693 m — exactly the axial
      length** — while columns 1 and 2 span the 3.76 m diameter. And

@@ -4,7 +4,7 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F70 are a second through fifteenth audit passes,
+F1–F15 were found and fixed in the first pass. **F16–F71 are a second through sixteenth audit passes,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
@@ -4069,6 +4069,55 @@ not assert a 87-vs-88 mismatch, and the withdrawn figure is not carried into the
 **Fix.** Label the column that is actually axial, and make a missing `cd_pct` an error (or
 omit the clause) rather than formatting `nan` into a title.
 
+## F71 — The published optimum sits on its own search bound, and four published figures carry self-contradicting or absent annotations
+
+*Class: correctness / presentation — each sub-claim measured, and two reported figures refuted*
+
+### The optimum is pinned to the boundary it was bounded by
+`src/python/hiad_optimization_results.json` → `optimized.R_N = 2.994005816519673`, and the
+search interval is `[0.5, 3.0]` (`scripts/render_bo_3d_plot.py:30` records that the figure
+uses the same `_BOUNDS` the optimiser used, from `ada_pinn_wrapper`).
+
+```
+distance from the upper bound = 3.0 - 2.9940058 = 0.005994 m
+                             = 0.2398 % of the 2.5 m interval
+```
+
+So the nose radius that the optimisation "discovered" is **0.24 % of the interval away from
+the wall**, and the figure presents it as an interior optimum with no annotation that it is
+boundary-limited. A parameter driven to its own constraint is a statement about the
+constraint, not a discovery — and this is the parameter F18/F55/F61 already show is the
+one the whole nose-radius ambiguity turns on.
+
+> **Refuted: the reported cost figures belong to a different dataset.** An earlier
+> measurement of this defect quoted `min(cost) = 1.602195382`, `max = 1367.616455`, and
+> implied the stored optimum was better than every evaluated sample. Measured against
+> **this** artefact: `history` has 70 entries with `min(cost) = 1.5129493475` and
+> `max = 1367.4963378906`, and `optimized.cost = 1.5129493474960327` — which **matches the
+> history minimum exactly**, and `optimized.cost < min(history)` is **False**. There is no
+> anomaly here. The other figures come from a different BO run, and **no claim that the
+> documented minimum is wrong is carried into this log.** (Note this also supersedes the
+> "three contradictory basin constants" item from the same source, which was measured
+> against that other dataset.)
+
+### Four figure defects, each confirmed by reading the code
+
+| # | what | evidence |
+| :-- | :--- | :--- |
+| a | **One page contradicts itself by +25.35 %.** `scripts/plot_hiad_3d.py:210` hard-codes the header `IRVE-3 Baseline: D=3.0m, θ=60°, r<sub>N</sub>=0.55m`, while `:218` on **the same page** prints `Max Radius: {max_r:.4f} m`. Measured `max_r = 1.8802 m` ⇒ D = **3.7604 m**. The reader sees both numbers together. | measured |
+| b | **The axial direction is exaggerated 1.2× relative to the other two.** `plot_hiad_3d.py:267` sets `aspectratio: {x:1, y:1, z:1.2}` — the *only* `aspectratio` in the file, and the sibling renderer `render_geometry_grid.py` sets no such override. In a script whose purpose is showing profile shape, that is a non-proportional box. | read |
+| c | **Both panels print a torus count they do not mesh.** `render_optimization_comparison.py:693` sets `n_tori = 6` and loops `for idx in range(n_tori)`, but `:709` guards `if r_center < drum_r + r_tor: continue` — with `drum_r = rn * math.cos(gamma_rad)` and `r_tor = 0.135` — so iterations can be skipped while `:878`/`:902` print "6 tori". **Structure confirmed; I did not independently reproduce the skipped count**, so no figure for it is asserted. | read |
+| d | **The output directory is created before the input directory is checked.** `make_vtu_visualization.py:286` runs `os.makedirs(plots_dir, exist_ok=True)` and only then `:290-293` calls `os.listdir(paraview_dir)`. There is no `os.path.isdir` guard, so a missing `paraview/` produces a raw `FileNotFoundError` traceback *after* creating a stray directory — the same shape as F30. | read |
+
+**Consequence.** (a) and (b) mean the single most-viewed geometry page in the project
+states a diameter it does not have, on a distorted axis. (c) means a figure's annotation
+can disagree with its own geometry. (d) turns a missing-input error into a confusing trace.
+
+**Fix.** Read `R_N` and its bounds from the run manifest and annotate boundary-limited
+results; derive the page header from `max_r` instead of a literal; make the box aspect
+proportional or state the exaggeration; count the tori actually meshed; and check
+`paraview` exists before creating anything.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -4219,6 +4268,7 @@ the measured series.
 | F68 | correctness | **open** | `hiad_geometry.py:128-137`'s meridian profile is C0-discontinuous at the shoulder: the gap `r_tor·√2·|cos γ − sin γ|` is **exactly 0.000000 m at `half_cone_deg` 45°** and **0.069881 m at the 60° Ada baseline**. A rendering defect only — SPARTA consumes the separately generated `HIAD_custom.surf`, so the solver is unaffected — but the dashboard figures show a shoulder step the vehicle lacks, and the same θ range is at `stellarorion_pinn_trajectory.adb:466-467` |
 | F69 | false assurance | **open** | Four of the 49 executable tests in `test_run_pipeline.py` assert nothing: `test_ensure_utf8_locale_idempotent` puts its only assertion inside `if enc:` while `run.py:333-339` sets `LC_ALL` only on a non-UTF-8 host (0 assertions run); `test_hash_determinism` compares `hashlib.sha256(x)` to itself; `test_venv_python_exists_after_bootstrap` asserts a suffix of a path it builds itself and never reads `run._VENV_PYTHON`; and `test_hash_file_format` documents "hash_file" — **a function `run.py` does not have** — while its whole body is inside `if …exists()`. All 49 tests pass regardless |
 | F70 | presentation | **open** | `make_vtu_visualization.py:137-139`/`:178` label `points[:,2]` **"Axial"** and `points[:,0]` "Flow Direction", but measured on `surf_2200.vtu` column 0 spans **1.2693 m — exactly the vehicle's axial length** while columns 1 and 2 span ≈ the 3.76 m diameter, so the axial axis is mislabelled. Separately `render_bo_3d_plot.py:902` and `render_geometry_grid.py:661` format `imp.get('cd_pct', float('nan'))` straight into **published figure titles**, so a missing key prints `Cd improvement = nan%` and still returns 0. A claimed 87-vs-88 panel mismatch was **refuted** — the declared constants are self-consistent |
+| F71 | correctness | **open** | The published optimisation optimum `R_N = 2.994005816519673` sits **0.2398 % of the `[0.5, 3.0]` interval from its own upper bound** and is drawn as an interior optimum with no boundary annotation. Four figure defects confirmed by reading: `plot_hiad_3d.py:210` hard-codes `D=3.0m` while `:218` on the same page prints `Max Radius=1.8802 m` (⇒ D 3.7604 m, **+25.35 %** self-contradiction); `:267` sets a non-proportional `aspectratio {x:1,y:1,z:1.2}`; `render_optimization_comparison.py` prints "6 tori" while its `:709` `continue` guard can skip iterations; and `make_vtu_visualization.py:286` creates `plots/` **before** `:290` lists `paraview/`, with no isdir guard. **Refuted:** the reported cost anomaly does not exist — `optimized.cost` equals `min(history)` exactly |
 
 ### Final state after fixes
 
