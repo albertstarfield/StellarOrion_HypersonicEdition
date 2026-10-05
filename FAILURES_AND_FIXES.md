@@ -4,7 +4,7 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F62 are a second through eleventh audit passes,
+F1–F15 were found and fixed in the first pass. **F16–F63 are a second through twelfth audit passes,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
@@ -3689,6 +3689,75 @@ temporary list and commit on success), and treat any column that fails the lengt
 as an error rather than a skip — or at minimum return a non-zero status when any column
 was skipped, so the exit code matches what the reader actually received.
 
+## F63 — Step 12 of every validation run deletes the SPARTA geometry the result was computed on, and the input deck that records how
+
+*Class: correctness / provenance — found by investigating a real working-tree loss, not by reading a spec*
+
+This finding was located by chasing an unexplained fact: during an earlier measurement
+session, two tracked files were found **deleted from disk** —
+`stellarorion_program_proc/results/validation_scalloped/HIAD_custom.surf` and
+`.../in.hiad`. They were restored from git. **The cause is in the code, and it is not a
+stray process.**
+
+`stellarorion_test_modes.adb:1811-1817` — Step 12 of the validation run:
+
+```ada
+--  Step 12: Clean up ephemeral state (restart files, surf/grid dumps,
+--  generated SPARTA inputs).  Keeps only useful output: CSV data,
+--  comparison reports, VTK, and plot images.
+begin
+   Put_Line ("[VALIDATE] Step 12: cleaning ephemeral state files ...");
+   Cleanup_Ephemeral_State (Results_Dir => Results_Dir);
+```
+
+`stellarorion_sparta.adb:3841-3846` — what that deletes:
+
+```ada
+   Put_Line ("[CLEANUP] Removing ephemeral state from " & Results_Dir & " ...");
+   Delete_Matching ("restart.*.sparta");
+   Delete_Matching ("surf.*.out");
+   Delete_Matching ("grid.*.out");
+   Delete_Matching ("in.hiad");           -- <-- the input deck
+   Delete_Matching ("HIAD_custom.surf");  -- <-- the geometry
+```
+
+**Why deleting the geometry is wrong.** The routine justifies itself at
+`stellarorion_sparta.adb:3826-3828`: *"SPARTA produces restart.*.sparta, surf.*.out,
+grid.*.out, in.hiad, and HIAD_custom.surf as intermediate artefacts; only CSV data,
+comparison reports, VTK, and plot images are retained."* The first three genuinely are
+regenerable intermediates. The last two are **inputs, not intermediates**:
+
+* `HIAD_custom.surf` is the surface mesh the solver consumed. It is written at
+  `stellarorion_test_modes.adb:1326-1327` and described by the project's own verification
+  tool at `tools/plot_surf_profile.py:14` as *"the actual SPARTA surface mesh that the
+  Ada solver consumed"*. That tool is the geometry check — and after Step 12 it has
+  nothing to check.
+* `in.hiad` is the complete input deck, i.e. the only record of what was actually run.
+
+**The project itself disagrees with the routine.** Both files are **tracked in git** for
+`results/validation_scalloped` — `git ls-files` lists them, and `git log -1` for
+`HIAD_custom.surf` is `ff5d2eb` *"feat(thesis): autosave: 18 files changed"*. A tracked
+file is a decision to keep it. Step 12 deletes tracked, deliberately-committed provenance
+as a side effect of running the validation.
+
+**Consequences.**
+1. **A completed validation run cannot be re-verified.** Every downstream check that needs
+   the geometry — `plot_surf_profile.py`, and any Ada-side re-parse of the surf — is
+   dependent on a file the run itself removes.
+2. **The deletion is silent.** `Delete_Matching` prints only
+   `[CLEANUP] Removed N file(s) matching <pattern>` (`:3811-3813`) and swallows individual
+   failures via `when E_Delete : others` (`:3800`). It is also declared `Post => True`
+   (`:3783`), so no contract records what was removed.
+3. **It explains the working-tree damage observed in this audit.** The two deleted files
+   were not lost to an external process; Step 12 removed them, and only `git` restored them.
+
+**Fix.** Drop `"in.hiad"` and `"HIAD_custom.surf"` from the delete list — they are the
+run's inputs, and `git` already tracks them. If disk reclamation is genuinely wanted,
+delete them only for runs whose results directory is not under version control, and
+record the removed filenames in the run log so the action is auditable. This is the sixth
+instance of the log's standing rule: a cleanup is only correct once every *consumer* of
+what it deletes has been located, not just every *producer*.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -3831,6 +3900,7 @@ the measured series.
 | F60 | correctness | **open** | The SiC survivability limit exists as one Ada truth (`stellarorion_types.ads:97` `SIC_MAX_TEMP := 2073.0`, graded at `physics.adb:1428`) and two Python copies of **1700.0** — `make_vtu_visualization.py:262-263` (a reference line labelled "SIC limit (1700K)") and `make_derived_plots.py:80`, whose value drives `t_surv = max(t_surface) <= SIC_MAX_TEMP` at `:432` and prints a **PASS/FAIL** at `:435`. Measured: the exceedance count is overstated on all 22 DSMC VTUs (e.g. surf_2200 1920 vs 1152 cells), and the verdict flips on exactly one artefact of 24 — `validation_scalloped/paraview/surf_pinn_300000000.vtu`, T_max 1818.3 K, 3648 cells above 1700 and **0** above 2073, so the drawn line says FAIL and the real limit says PASS; the same file in `validation_optimized` passes both, so the two runs' PINN surfaces disagree on survivability |
 | F61 | provenance | **open** | `stellarorion_types.ads:284-288` states verbatim that flight IRVE-3 used **7** toroids and the MDAO model used **6**, with 6 as the documented default. The Python render path hard-codes 6 in three places and labels it IRVE-3 (`render_optimization_comparison.py:822` `n_tori = 6  # structural constant: IRVE-3 6+1 torus stack`, `:693` which is what is meshed, and `hiad_geometry.py:40` `N_TORI = 6`), accepts and then discards an `n_tori` argument at `:373`, and never contains the value 7 |
 | F62 | correctness | **open** | `make_validation_plots.py:93-98` appends the step to `steps` **before** parsing the row's values, so one unparsable field leaves `steps` one longer than every column from that field onward. Measured: corrupting a single `mach` value drops **10 of the 21 plots** (`Wrote 11 PNGs`) and mislabels the survivors by one row. The loss is **announced** per column on stderr by the guard at `:163-169`, so the sub-claim that it is silent is refuted; and the exit contract is not inverted (missing → 1, corrupt → 0). The defect is that half the output can vanish while the script reports success |
+| F63 | correctness | **open** | Step 12 of every validation run calls `Cleanup_Ephemeral_State` (`stellarorion_test_modes.adb:1817`), whose `Delete_Matching` list at `stellarorion_sparta.adb:3841-3846` includes **`in.hiad` and `HIAD_custom.surf`** — the SPARTA input deck and the surface mesh the run was flown on. Both are **tracked in git** for `results/validation_scalloped` (last touched by `ff5d2eb`), and `tools/plot_surf_profile.py:14` calls the surf "the actual SPARTA surface mesh that the Ada solver consumed". A completed validation therefore cannot be re-verified, the deletion is silent (`Post => True`, failures swallowed), and this is the confirmed cause of the two files found deleted from the working tree during this audit |
 
 ### Final state after fixes
 
