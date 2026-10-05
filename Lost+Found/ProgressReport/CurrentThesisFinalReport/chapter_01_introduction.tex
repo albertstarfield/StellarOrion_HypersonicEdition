@@ -52,7 +52,7 @@ The specific objectives are:
 
     \item \textbf{PINN Flow Field Refinement:} To apply Physics-Informed Neural Networks (DeepXDE) as a post-processing step to smooth noisy DSMC data, fill gaps in the flow field, and provide a continuous interpolant anchored in the compressible Navier--Stokes equations.
 
-    \item \textbf{Survivability Optimization:} To implement a Genetic Algorithm (GA) coupled with Bayesian Optimization (GP Matérn 5/2 surrogate~\cite{matern1960} + Expected Improvement~\cite{morris1992}) for automated optimization of HIAD geometry, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
+    \item \textbf{Survivability Optimization:} To implement a Genetic Algorithm (GA) coupled with Bayesian Optimization using a GP Matérn 5/2 surrogate and Expected Improvement~\cite{matern1960,morris1992} for automated optimization of HIAD geometry, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
 \end{enumerate}
 
 \section{Research Gap}
@@ -87,7 +87,7 @@ The present work makes the following novel contributions to the field of hyperso
 The scope of this research is defined to provide aerothermal analysis and survivability optimization of the Flexible Thermal Protection System (FTPS) within the constraints of available computational resources. The boundaries and limitations of this study are as follows:
 
 \begin{enumerate}
-    \item \textbf{Geometric Representation:} The HIAD structure is modeled using parametric 3D CAD generation via CadQuery (Python scripting). The 6-toroid stack configuration based on the \cite{rapisarda2023mdao} MDAO baseline is the primary geometry, with the option to vary toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as a rigid, fully-inflated geometry to isolate the impact of surface topology on the flow field.
+    \item \textbf{Geometric Representation:} The HIAD structure is modeled using parametric 3D CAD generation via CadQuery (Python scripting). The 6-toroid stack configuration based on the MDAO baseline~\cite{rapisarda2023mdao} is the primary geometry, with the option to vary toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as a rigid, fully-inflated geometry to isolate the impact of surface topology on the flow field.
 
     \item \textbf{Dimensionality:} The investigation supports both 2D axisymmetric (via \texttt{-{}-slice-angle}) and full 3D simulations. The 2D axisymmetric mode assumes zero angle of attack ($\alpha = 0^\circ$) to maintain rotational symmetry, enabling higher particle resolution within computational memory limits. Full 3D simulations are available for off-axis conditions.
 

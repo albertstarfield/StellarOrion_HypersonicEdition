@@ -172,7 +172,7 @@ The process is divided into six primary stages:
 \section{Geometric Modeling and Computational Domain}
 
 \subsection{Parametric Geometry Generation}
-To ensure geometric consistency and enable automated design space exploration, the vehicle profiles are generated using CadQuery, a Python-based parametric CAD scripting library. The geometric constraints are derived directly from the \textbf{NASA IRVE-3} and \textbf{LOFTID} flight test specifications, as well as the MDAO framework baseline established by \cite{rapisarda2023mdao}~\cite{rapisarda2023mdao}. The CadQuery script is invoked via command-line arguments, enabling the generation of hundreds of design variants without manual intervention.
+To ensure geometric consistency and enable automated design space exploration, the vehicle profiles are generated using CadQuery, a Python-based parametric CAD scripting library. The geometric constraints are derived directly from the \textbf{NASA IRVE-3} and \textbf{LOFTID} flight test specifications, as well as the MDAO framework baseline~\cite{rapisarda2023mdao}. The CadQuery script is invoked via command-line arguments, enabling the generation of hundreds of design variants without manual intervention.
 
 \subsection{Vehicle Specifications and Scaling}
 The modeling phase targets two specific scales identified in previous NASA research to investigate how vehicle diameter affects the aerothermal environment. As shown in Figure~\ref{fig:hiad_comparison}, the research considers the scaling transition from the 3.0\,m IRVE-3 baseline through intermediate rigid configurations of the kind shown in the figure (4.57\,m) up to inflatable configurations of 15\,m~\cite{dillman2015irve3}. The figure is a concept comparison of form and scale; the quantitative scaling study reported later in this chapter is conducted on the 3.0\,m baseline, which is the only scale for which this work holds a validated reference dataset.
@@ -409,7 +409,7 @@ The deceleration load felt by the vehicle in Earth-gravity units ($g_0$):
 
 \subsection{Stagnation Heat Flux: Sutton-Graves Correlation}
 \label{sec:sutton_graves_methodology}
-The Sutton-Graves (1971) stagnation-point convective heating correlation is used for all absolute thermal calculations~\cite{sutton1971gravesh}. This is the standard reference formula for Earth entry and has been validated against IRVE-3 flight data by \cite{rapisarda2023mdao}~\cite{rapisarda2023mdao}:
+The Sutton-Graves (1971) stagnation-point convective heating correlation is used for all absolute thermal calculations~\cite{sutton1971gravesh}. This is the standard reference formula for Earth entry and has been validated against IRVE-3 flight data~\cite{rapisarda2023mdao}:
 
 \begin{equation}
     \dot{q}_{stag} = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_N}} \cdot V_{\infty}^3
@@ -424,7 +424,7 @@ where:
 \end{itemize}
 
 \subsubsection*{IRVE-3 Validation}
-For the IRVE-3 baseline configuration the correlation is evaluated at the SPARTA DSMC run condition ($h = 51.8$\,km under ISA~\cite{usstandard1976}, which yields $\rho_{\infty} = 7.851 \times 10^{-4}$\,kg/m$^3$) using the IRVE-3 sphere--cone nose radius $R_N = 1.5$\,m (a 3\,m aeroshell diameter) and the run velocity $V_{\infty} = 3{,}378$\,m/s:
+For the IRVE-3 baseline configuration the correlation is evaluated at the SPARTA DSMC run condition under ISA~\cite{usstandard1976}: $h = 51.8$\,km, which yields $\rho_{\infty} = 7.851 \times 10^{-4}$\,kg/m$^3$, using the IRVE-3 sphere--cone nose radius $R_N = 1.5$\,m (a 3\,m aeroshell diameter) and the run velocity $V_{\infty} = 3{,}378$\,m/s:
 
 \begin{equation}
     \begin{split}
@@ -435,7 +435,7 @@ For the IRVE-3 baseline configuration the correlation is evaluated at the SPARTA
     \end{split}
 \end{equation}
 
-Two constants govern this evaluation and are stated here with their provenance, because the engine's own defaults differ from both. The correlation constant is $C_{SG} = 1.83 \times 10^{-4}$, the Sutton \& Graves value for Earth air; the engine default is $1.7415 \times 10^{-4}$. The nose radius is $R_N = 1.5$\,m, the actual IRVE-3 geometry; the engine default of $0.55$\,m is not the flown value, and because the correlation scales as $1/\sqrt{R_N}$ using it would inflate the computed flux by roughly a factor of 1.65. A value of $12.20$\,W/cm$^2$ appears in the engine's own comments; it results from the engine default constant and nose radius evaluated at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than at the run condition, and is superseded by the $16.14$\,W/cm$^2$ reported above. \cite{rapisarda2023mdao} reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ ($+6.26\%$ above the 14.36\,W/cm$^2$ flight measurement) and a Fay--Riddell CFD prediction of 13.83\,W/cm$^2$ ($-3.69\%$ below flight)~\cite{rapisarda2023mdao}. The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure.
+Two constants govern this evaluation and are stated here with their provenance, because the engine's own defaults differ from both. The correlation constant is $C_{SG} = 1.83 \times 10^{-4}$, the Sutton \& Graves value for Earth air; the engine default is $1.7415 \times 10^{-4}$. The nose radius is $R_N = 1.5$\,m, the actual IRVE-3 geometry; the engine default of $0.55$\,m is not the flown value, and because the correlation scales as $1/\sqrt{R_N}$ using it would inflate the computed flux by roughly a factor of 1.65. A value of $12.20$\,W/cm$^2$ appears in the engine's own comments; it results from the engine default constant and nose radius evaluated at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than at the run condition, and is superseded by the $16.14$\,W/cm$^2$ reported above. The MDAO reconstruction~\cite{rapisarda2023mdao} reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ ($+6.26\%$ above the 14.36\,W/cm$^2$ flight measurement) and a Fay--Riddell CFD prediction of 13.83\,W/cm$^2$ ($-3.69\%$ below flight). The Fay--Riddell correlation is more physically accurate for HIAD geometries because it accounts for the actual shock layer structure.
 
 \subsubsection*{Note on SPARTA Surface Energy}
 The raw SPARTA DSMC kinetic energy ($ke$) surface compute cannot be used directly as an absolute heat flux in W/m$^2$. SPARTA's \texttt{fix ave/surf} outputs kinetic energy per simulated particle per timestep per face element, a simulation-internal unit that depends on $f_{num}$, timestep $dt$, and face area in a non-trivially-normalized way. It is retained only as a \textbf{relative shape-ranking signal} for the optimizer (comparing geometries against each other). For all absolute thermal calculations, the Sutton-Graves correlation is used.
@@ -804,7 +804,7 @@ where $i \in \{0, 1, \ldots, N-1\}$ is the stratum index, $j \in \{1, 2, \ldots,
 The stratified sampling guarantees that each parameter is sampled at $N$ distinct levels, with exactly one sample per level. This eliminates the clustering and gap artifacts that occur with pure random sampling, and ensures space-filling coverage even for small $N$. The total number of SPARTA evaluations required is $N$, compared to $k^d$ for a full factorial design with $k$ levels per dimension.
 
 \subsubsection*{Central Composite Design (CCD) as Alternative DoE}
-In addition to LHS, the framework supports the Face-Centered Central Composite Design (CCD)~\cite{Montgomery2017}, which is the default Design of Experiments method in the implementation. For a $d$-dimensional parameter space, the CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point at the origin. The campaign executed in this work used $d = 3$ design variables (nose radius $R_N$, toroid radius $r_{tor}$, and half-cone angle $\theta_c$), which yields $N = 8 + 6 + 1 = 15$ sample points, the minimum required for a second-order response surface model in three factors. The recorded screen comprises eight factorial corner points, six axial star points, and the single center point, and it is reported separately from the 70-entry Bayesian Optimization history of Sec.~\ref{sec:bo_results}. The user may select either LHS or CCD via the \texttt{-{}-doe} flag, with CCD as the default for the optimized IRVE-3 baseline.
+In addition to LHS, the framework supports the Face-Centered Central Composite Design (CCD), a standard Design of Experiments method~\cite{Montgomery2017}, which is the default Design of Experiments method in the implementation. For a $d$-dimensional parameter space, the CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point at the origin. The campaign executed in this work used $d = 3$ design variables (nose radius $R_N$, toroid radius $r_{tor}$, and half-cone angle $\theta_c$), which yields $N = 8 + 6 + 1 = 15$ sample points, the minimum required for a second-order response surface model in three factors. The recorded screen comprises eight factorial corner points, six axial star points, and the single center point, and it is reported separately from the 70-entry Bayesian Optimization history of Sec.~\ref{sec:bo_results}. The user may select either LHS or CCD via the \texttt{-{}-doe} flag, with CCD as the default for the optimized IRVE-3 baseline.
 
 \subsection{Bayesian Optimization (Bayes Opt)}
 
@@ -1067,7 +1067,7 @@ Table~\ref{tab:acceptance_limits} collects every limit used in this study togeth
     \end{tabularx}
 \end{table}
 \subsection{Validation Against Flight Data}
-The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irve3flight} and the \cite{rapisarda2023mdao} MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:irve3_validation} reports the flight data alongside both the MDAO reference model and the present SPARTA DSMC solution, so that the published reference model is not mistaken for a result of this work.
+The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irve3flight} and the MDAO reconstruction~\cite{rapisarda2023mdao}. Table~\ref{tab:irve3_validation} reports the flight data alongside both the MDAO reference model and the present SPARTA DSMC solution, so that the published reference model is not mistaken for a result of this work.
 
 \begin{table}[!htbp]
     \centering
