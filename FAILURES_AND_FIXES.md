@@ -3693,6 +3693,15 @@ was skipped, so the exit code matches what the reader actually received.
 
 *Class: correctness / provenance — found by investigating a real working-tree loss, not by reading a spec*
 
+> ⚠️ **Line references corrected after the `90f3adf` autosave touched
+> `stellarorion_test_modes.adb`.** That commit is not mine (pre-existing autosave), but it
+> shifted the code, so three citations in this entry were re-measured against the current
+> files: the `plot_surf_profile.py` "actual SPARTA surface mesh" line is **`:7`**, not `:14`;
+> `Delete_Matching`'s `Post => True` is at `stellarorion_sparta.adb:3785`, not `:3783`; and
+> the "intermediate artefacts ... only CSV data" rationale is at `:3827`. The load-bearing
+> citations — `test_modes.adb:1811-1817` and `sparta.adb:3841-3846` — were re-checked and
+> still resolve exactly.
+
 This finding was located by chasing an unexplained fact: during an earlier measurement
 session, two tracked files were found **deleted from disk** —
 `stellarorion_program_proc/results/validation_scalloped/HIAD_custom.surf` and
@@ -3722,14 +3731,14 @@ begin
 ```
 
 **Why deleting the geometry is wrong.** The routine justifies itself at
-`stellarorion_sparta.adb:3826-3828`: *"SPARTA produces restart.*.sparta, surf.*.out,
+`stellarorion_sparta.adb:3827`: *"SPARTA produces restart.*.sparta, surf.*.out,
 grid.*.out, in.hiad, and HIAD_custom.surf as intermediate artefacts; only CSV data,
 comparison reports, VTK, and plot images are retained."* The first three genuinely are
 regenerable intermediates. The last two are **inputs, not intermediates**:
 
 * `HIAD_custom.surf` is the surface mesh the solver consumed. It is written at
   `stellarorion_test_modes.adb:1326-1327` and described by the project's own verification
-  tool at `tools/plot_surf_profile.py:14` as *"the actual SPARTA surface mesh that the
+  tool at `tools/plot_surf_profile.py:7` as *"the actual SPARTA surface mesh that the
   Ada solver consumed"*. That tool is the geometry check — and after Step 12 it has
   nothing to check.
 * `in.hiad` is the complete input deck, i.e. the only record of what was actually run.
@@ -3747,7 +3756,7 @@ as a side effect of running the validation.
 2. **The deletion is silent.** `Delete_Matching` prints only
    `[CLEANUP] Removed N file(s) matching <pattern>` (`:3811-3813`) and swallows individual
    failures via `when E_Delete : others` (`:3800`). It is also declared `Post => True`
-   (`:3783`), so no contract records what was removed.
+   (`:3785`), so no contract records what was removed.
 3. **It explains the working-tree damage observed in this audit.** The two deleted files
    were not lost to an external process; Step 12 removed them, and only `git` restored them.
 
