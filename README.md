@@ -586,6 +586,17 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      own cell heat fluxes — a reference line the reader compares against directly. The
      correct `(F)` value is 13.80. See **F54**.
    * **One corrupt CSV cell silently removes half the plots.** `make_validation_plots.py:93-98` appends the step to `steps` *before* parsing the row's values, so a single unparsable field leaves `steps` one longer than every column from that field on. Measured: corrupting one `mach` value drops **10 of 21 plots** and mislabels the survivors by one row. The drop is announced on stderr (so it is not silent) but the script still exits 0. See **F62**.
+   * **The "IRVE-3 Default" figure draws the wrong vehicle.** Its panel is radius
+     **2.6522 m (D 5.3044 m)**; the flown `HIAD_custom.surf` is radius **1.8802 m
+     (D 3.7604 m)** — **+41.1 % in radius**, +37.4 % axially. The module's
+     `crosscheck_ada_profile` still reports OK because it compares Python against Ada
+     at the *same* (default, not flown) input, so it cannot detect a wrong-input error.
+     Independent of the open `Rn` ruling. See **F67**.
+   * **The rendered HIAD profile has a C0 step at the shoulder.** The gap
+     `r_tor·√2·|cos γ − sin γ|` is exactly **0** at `half_cone_deg = 45°` and
+     **0.069881 m** at the 60° Ada baseline. Rendering only — SPARTA consumes the
+     separately generated surf — so the dashboard figures show a step the vehicle does
+     not have. See **F68**.
    * **The geometry checker cannot fail.** `tools/plot_surf_profile.py` prints
      `Measured max diameter = 3.7604 m  (design: 3.0 m)` — **+25.35 %** — and exits **0**,
      with no tolerance, warning or non-zero exit anywhere between the measurement and

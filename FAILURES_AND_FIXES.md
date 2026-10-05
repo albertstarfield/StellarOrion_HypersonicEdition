@@ -4,7 +4,7 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F66 are a second through thirteenth audit passes,
+F1–F15 were found and fixed in the first pass. **F16–F68 are a second through fourteenth audit passes,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
@@ -3870,6 +3870,86 @@ hard-fails on count mismatches, which makes the silent truncation here the outli
 move the guides to direct annotations on the axes rather than dropping them from the
 legend.
 
+## F67 — The "IRVE-3 Default" comparison panel draws a body 41.1 % larger in radius than the vehicle the results were computed on, and its cross-check cannot detect this
+
+*Class: correctness — a figure that depicts the wrong vehicle, guarded by a check that cannot fail*
+
+`scripts/render_optimization_comparison.py` renders a two-panel before/after comparison.
+The "before" panel is titled `BEFORE (IRVE-3 Default — Ada FFI)` and is built from
+`get_ada_default_profile()` (`:57-68`, which calls the Ada FFI). **Measured, using the
+real functions:**
+
+| | points | axial `x` | radial `y` | radius | diameter |
+| :--- | ---: | :--- | :--- | ---: | ---: |
+| panel, `get_ada_default_profile()` | 57 | 0.0002 – 1.7444 | 0.0000 – 2.6522 | **2.6522 m** | 5.3044 m |
+| flown vehicle, `results/validation_scalloped/HIAD_custom.surf` | 77 | 0.0001 – 1.2694 | 0.0000 – 1.8802 | **1.8802 m** | 3.7604 m |
+| ratio | | **1.37×** | | **1.4106× = +41.1 %** | |
+
+So the panel draws a **5.30 m** diameter vehicle under the name IRVE-3, while the run that
+produced every number in this repository was flown on a **3.76 m** one. Axially the panel
+is 1.7442 m against the flown 1.2693 m (+37.4 %).
+
+**Why the existing guard does not catch it.** The module cross-checks its Python geometry
+against the Ada FFI (`crosscheck_ada_profile`) and reports `OK` with real margin. But the
+check compares the Python implementation against the Ada implementation **at the same
+inputs** — and both are being asked for the *default* profile, not the *flown* one. The
+discrepancy is a **wrong input**, not a wrong implementation, so a self-consistency check
+between two implementations of the same thing is structurally incapable of detecting it.
+This is the same lesson as F45/F48 and F32, one level up: locating every competing
+implementation is necessary but not sufficient — the implementations must be asked the
+right question.
+
+**Note on scope.** The `Rn` value that drives the two profiles is exactly the F18/F55/F61
+ambiguity (1.5 vs 0.55) and is still open. This finding does **not** assert which is
+correct. What is established, independent of that ruling, is that **the figure and the
+results disagree with each other by 41.1 %** and that the guard in place cannot detect it.
+
+**Fix.** Have the "before" panel read the flown profile from the run's own manifest rather
+than the Ada default, and change the cross-check to compare the Python implementation
+against the **flown** artefact.
+
+## F68 — The rendered HIAD meridian profile has a C0 step at the shoulder for every half-cone angle except 45°
+
+*Class: correctness (rendering) — the figure's outline is discontinuous where the real vehicle is tangent*
+
+`src/python/hiad_geometry.py:128-137` builds the meridian profile in segments. The
+outermost torus is exactly tangent to the conical shell, but the next segment starts at a
+different parameter, so the two do not meet except at one specific angle.
+
+**Measured.** The tangency condition gives the closed-form gap between where the shell
+tangent point lies and where the next segment begins:
+
+```
+gap = r_tor * sqrt(2) * |cos(gamma) - sin(gamma)|      with gamma = 90 - half_cone_deg
+```
+
+Evaluating it at the shipped geometry (`r_tor = 0.135` m):
+
+| `half_cone_deg` | `gamma` | gap | |
+| ---: | ---: | ---: | :--- |
+| **45.0** | 45.0° | **0.000000 m** | **continuous** |
+| **60.0** (the Ada baseline) | 30.0° | **0.069881 m** | **C0-discontinuous** |
+
+The formula returns *exactly* zero at 45°, which is the geometric continuity condition —
+a strong self-consistency check that the expression is the real gap and not a fit.
+
+**Correction to the reported figure.** An earlier measurement of this defect put the 60°
+offset at 0.089175 m. Re-deriving it from the tangency condition gives **0.069881 m**, and
+that is the number recorded here. The earlier figure is withdrawn.
+
+**Scope, stated honestly.** This is a **rendering** defect, not a solver defect.
+`generate_cross_section` is imported only by `scripts/render_geometry_grid.py:90` and,
+via `render_optimization_comparison.py:321`, by the F67 figure. SPARTA consumes
+`HIAD_custom.surf`, which is generated elsewhere, so the simulated vehicle is unaffected.
+What is wrong is that the dashboard figures depict a shoulder step the simulated vehicle
+does not have — on the same figures that F67 shows are already 41.1 % off in radius.
+
+The identical angle range appears in `stellarorion_pinn_trajectory.adb:466-467`, so a fix
+must land in both implementations to avoid the Python and Ada renderings diverging.
+
+**Fix.** Start the next segment at the shell's tangent parameter
+(`theta = gamma - 90°`) rather than at `-gamma`, or sample the union of both ranges.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -4016,6 +4096,8 @@ the measured series.
 | F64 | false assurance | **open** | `tools/plot_surf_profile.py` measures `Measured max diameter = 3.7604 m (design: 3.0 m)` = **+25.35 %** and exits **0**. There is no tolerance, comparison, warning or non-zero exit between `:200` and the end of `main()` — the only `SystemExit(1)` sites (`:83`, `:268`) are parse/IO failures. The geometry checker cannot fail, and F63 showed the run deletes the surf it checks |
 | F65 | correctness | **open** | `pyfluent_test.py:324-326` is the whole exit path: `if result["status"] == "error": raise SystemExit(1)` else `SystemExit(0)`. A failed handshake records `handshake=False` and appends a message but leaves `status` at `"success"`, so the run exits 0 with no Fluent session. A second false pass independent of F28 (which is the Ada `Write_Status` path); `pyansys_test.py` is correct on every failure path |
 | F66 | presentation | **open** | `render_bo_figures.py:474-475` calls `ax.legend(handles[:2], labels[:2])` after `get_legend_handles_labels()` returned every labelled artist, so all annotations past the first two are dropped from the legend with no equivalent elsewhere. The comment's claim that they are "self-describing in the title" is false — the title is a convergence summary naming neither the phase boundary nor the IRVE-3 baseline |
+| F67 | correctness | **open** | The `BEFORE (IRVE-3 Default — Ada FFI)` panel of `render_optimization_comparison.py` renders radius **2.6522 m (D 5.3044 m)** while the flown `HIAD_custom.surf` is radius **1.8802 m (D 3.7604 m)** — **1.4106× = +41.1 % in radius**, +37.4 % axially — measured with `get_ada_default_profile()` and the real `plot_surf_profile.parse_surf_points`. Its `crosscheck_ada_profile` reports OK because it compares Python against Ada **at the same (default, not flown) input**, so it is structurally incapable of detecting a wrong-input error |
+| F68 | correctness | **open** | `hiad_geometry.py:128-137`'s meridian profile is C0-discontinuous at the shoulder: the gap `r_tor·√2·|cos γ − sin γ|` is **exactly 0.000000 m at `half_cone_deg` 45°** and **0.069881 m at the 60° Ada baseline**. A rendering defect only — SPARTA consumes the separately generated `HIAD_custom.surf`, so the solver is unaffected — but the dashboard figures show a shoulder step the vehicle lacks, and the same θ range is at `stellarorion_pinn_trajectory.adb:466-467` |
 
 ### Final state after fixes
 
