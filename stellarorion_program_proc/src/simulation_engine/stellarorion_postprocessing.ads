@@ -385,10 +385,21 @@ package StellarOrion_PostProcessing is
        Dt_Sec           : Float) return Heat_Load_Result
       --  'First = 1: the only caller declares Float_Array (1 .. 10)
       --  (project.adb:929).
+      --  MAGNITUDE BOUNDS (2026-10-06): the body accumulates
+      --  Sum += 0.5*(q_i + q_{i+1})*Dt_Sec.  Previously Dt_Sec was only
+      --  required > 0.0 and the fluxes were entirely unbounded, so the
+      --  accumulator (and hence the Post) could overflow for legal inputs.
+      --  Worst case now: 0.5*(1e8+1e8)*1.0e6 = 1.0e14 per step, x N <= 2000
+      --  = 2.0e17 << Float'Last (~3.4e38).  Sole caller passes Dt_Sec = 1.0
+      --  and mean fluxes ~12..15 W/cm^2 (project.adb:942).
       with Pre  => N > 0
                    and then N <= Mean_Fluxes_Wcm2'Length
                    and then Mean_Fluxes_Wcm2'First = 1
-                   and then Dt_Sec > 0.0,
+                   and then Dt_Sec > 0.0
+                   and then Dt_Sec <= 1.0e6
+                   and then (for all I in Mean_Fluxes_Wcm2'Range =>
+                               Mean_Fluxes_Wcm2 (I) >= -1.0e8
+                               and then Mean_Fluxes_Wcm2 (I) <= 1.0e8),
            Post => Compute_Integrated_Heat_Load'Result.Total_Load_Jcm2 >= 0.0
                    and then Compute_Integrated_Heat_Load'Result.Peak_Flux_Wcm2 >= 0.0
                    and then Compute_Integrated_Heat_Load'Result.Mean_Flux_Wcm2 >= 0.0;
@@ -403,7 +414,7 @@ package StellarOrion_PostProcessing is
    --
    --  PRE: T > 0.0 (absolute temperature).  The body clamps T to 1.0e5 K
    --       internally (TC), so the input side can stay open-ended.
-   --  POST: Result > 0.0 and Result <= 1.0e-2 Pa.s.
+   --  POST: Result > 0.0 and Result <= 1.0e-3 Pa.s.
    --  WHY THE CEILING IS REQUIRED: every consumer multiplies this result
    --       (Rho_W*Mu_W, Rho_S_Mu_S in Compute_Analytical_Predictions and the
    --       DKR/VD/Chapman bodies), so an unbounded Post leaves each of those
@@ -415,7 +426,13 @@ package StellarOrion_PostProcessing is
    --
    --  Source: Sutherland (1893); NASA CEA technical notes
    function Sutherland_Viscosity (T : Float) return Float
-     with Pre  => T > 0.0,
+     --  PRE floor raised from T > 0.0 to T >= 1.0 (2026-10-06): as T -> 0+
+     --  mu = mu_ref*(T/T_ref)^1.5*(T_ref+S)/(T+S) -> 0 and the product
+     --  UNDERFLOWS to exactly 0.0, so `Result > 0.0` in the Post was
+     --  unprovable for the whole allowed domain.  Both callers pass
+     --  >= 300 K (SIM_WALL_TEMP_K 1500, T_Stag ~5544), so no caller is
+     --  affected by the floor.
+     with Pre  => T >= 1.0,
           Post => Sutherland_Viscosity'Result > 0.0
                   and then Sutherland_Viscosity'Result <= 1.0e-3;
 

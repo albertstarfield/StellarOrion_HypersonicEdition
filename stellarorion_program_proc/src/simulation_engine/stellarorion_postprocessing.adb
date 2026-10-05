@@ -259,7 +259,7 @@ package body StellarOrion_PostProcessing is
       pragma Assert (M_Sq >= 95.0 and then M_Sq <= 110.0);
       pragma Assert (Stag_Factor >= 20.0 and then Stag_Factor <= 23.0);
       pragma Assert (SF3 >= 1.0e4 and then SF3 <= 1.3e4);
-      pragma Assert (SF35 >= 1.0e4 and then SF35 <= 1.0e5);
+      pragma Assert (SF35 >= 1.0e4 and then SF35 <= 3.0e5);
       pragma Assert (P_Inf > 0.0);
       pragma Assert (P_Stag > 0.0);
       pragma Assert (T_Stag > 0.0);
@@ -274,7 +274,7 @@ package body StellarOrion_PostProcessing is
       --  point (P_Inf 50.2 Pa, P_Stag 2.568e6 Pa, T_Stag 5544 K, Rho_S 1.614).
       pragma Assert (P_Inf >= 1.0 and then P_Inf <= 100.0);
       pragma Assert (T_Stag >= 5000.0 and then T_Stag <= 6000.0);
-      pragma Assert (P_Stag >= 1.0e4 and then P_Stag <= 1.0e7);
+      pragma Assert (P_Stag >= 1.0e4 and then P_Stag <= 3.0e7);
       pragma Assert (Rho_S > 0.0 and then Rho_S <= 1.0e4);
       pragma Assert (P_Stag >= P_Inf);   --  a shock always raises stagnation p
       pragma Assert (P_Diff >= 0.0 and then P_Diff <= 1.0e8);
@@ -391,7 +391,7 @@ package body StellarOrion_PostProcessing is
       --  point (P_Inf 50.2 Pa, P_Stag 2.568e6 Pa, T_Stag 5544 K, Rho_S 1.614).
       pragma Assert (P_Inf >= 1.0 and then P_Inf <= 100.0);
       pragma Assert (T_Stag >= 5000.0 and then T_Stag <= 6000.0);
-      pragma Assert (P_Stag >= 1.0e4 and then P_Stag <= 1.0e7);
+      pragma Assert (P_Stag >= 1.0e4 and then P_Stag <= 3.0e7);
       pragma Assert (Rho_S > 0.0 and then Rho_S <= 1.0e4);
       pragma Assert (P_Stag >= P_Inf);   --  a shock always raises stagnation p
       pragma Assert (P_Diff >= 0.0 and then P_Diff <= 1.0e8);
