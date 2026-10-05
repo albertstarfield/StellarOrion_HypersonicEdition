@@ -4,13 +4,13 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F55 are a second, third, fourth, fifth, sixth, seventh and eighth,
+F1–F15 were found and fixed in the first pass. **F16–F56 are a second, third, fourth, fifth, sixth, seventh, eighth and ninth,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
 optimiser first. F24–F31 come from the thread-3b rescan of the previously unaudited
 PINN, checkpoint and status subsystems, and F32–F36 from the thread-3c pass over the
-Kriging, surface-comparison and watchdog paths, and F37–F55 from the thread-3d/3e/3f/3g/3h passes over
+Kriging, surface-comparison and watchdog paths, and F37–F56 from the thread-3d/3e/3f/3g/3h/3i passes over
 the scripts, the sidecar, and the Ada atmosphere, status and checkpoint units. Read **"Still open after thread 3"**
 before relying on any number below.
 
@@ -2458,6 +2458,16 @@ pipeline's own output so a profile that no longer regenerates is caught on sight
 
 *Class: security. This is the highest-severity entry in this log.*
 
+> ⚠️ **Scope correction, thread 3i — see F56.** Every measurement in this entry was
+> made against `src/python/sidecar_server.py`, which **is never executed**.
+> `run.py:88`/`run.py:949` start `src/ui/sidecar_ui.py`, a separate 1 519-line
+> server. The live server binds `0.0.0.0` by hardcoded literal with no `--host`
+> flag, so this entry's "loopback-only by default" caveat describes the wrong
+> server and the real exposure is **wider** than reported here. F56 also finds the
+> live server's unauthenticated write can *start* a run, not merely relabel one.
+> The findings below remain valid **for the dead file**; the live equivalents are
+> unmeasured except where F56 states otherwise.
+
 `src/python/sidecar_server.py` is the HTTP server behind the validation dashboard. It binds
 `127.0.0.1:8080` by default, so the exposure is loopback — but every finding below is
 exploitable by **any process or any web page the operator visits while the server is
@@ -3303,6 +3313,78 @@ F21 measured that the TPS conduction run uses **`Rn = 0.55 m`** while the limits
 
 **Fix.** Resolve `Rn` once (F18's ruling decides it), then have both render scripts read it from the run manifest rather than from prose, and correct whichever prose disagrees with that ruling.
 
+## F56 — There are **two** sidecar servers. F44 audited the one nothing runs; the one `run.py` actually starts binds `0.0.0.0` by hardcoded literal and accepts `POST /api/start` from any origin
+
+*Class: security / correctness — this entry corrects the scope of F44, not its findings*
+
+F44 documented, with measurements, a path-traversal arbitrary file read and a
+cross-origin validation-state forgery in `src/python/sidecar_server.py`. Both are real.
+**But `sidecar_server.py` is never executed.** The project ships a second, larger HTTP
+server, and that is the one the runner starts.
+
+### Which server actually runs
+| fact | source |
+| :--- | :--- |
+| `_SIDECAR_SERVER = _SRC_DIR / "ui" / "sidecar_ui.py"` | `run.py:88` |
+| `"""Start the sidecar HTTP server (sidecar_ui.py) in background.` | `run.py:949` |
+| `step_info(f"sidecar_server.py not found at {_SIDECAR_SERVER}")` — **names the wrong file while checking `sidecar_ui.py`'s existence** | `run.py:957` |
+| `sidecar_server.py` is referenced by **nothing that starts it** | repo-wide grep: the only hits are `run.py:957` (the wrong-filename message above), `docs/PYTHON_SIDECAR_EXCEPTIONS.md:39`, `docs/AUDIT_BASELINE.md:39` (a file list) and `sidecar_watchdog.py:20` (a comment) |
+
+`src/ui/sidecar_ui.py` is **1 519 lines with 66 function definitions** and imports
+`HTTPServer, SimpleHTTPRequestHandler` at `:40`. It is a full second server.
+
+The `run.py:957` message is a concrete instance of the stale-reference class this log
+has been recording (F20's fabricated number, F26's `[BUGFIX]` comment, F37's dead
+modules, F49's vacuous tests, F53's unreachable self-tests): **an error message naming a
+file the code does not use**, which is exactly what an operator would grep for.
+
+`docs/PYTHON_SIDECAR_EXCEPTIONS.md:39` is wrong twice over: it says
+`src/python/sidecar_server.py` is *"launched by sidecar_launcher"*, and
+`sidecar_launcher.py` is F37's file with zero live statements.
+
+### The live server is strictly worse on every axis F44 measured
+| property | `sidecar_server.py` (F44, **dead**) | `sidecar_ui.py` (**live**) |
+| :--- | :--- | :--- |
+| bind address | `args.host`, default `127.0.0.1` | **`HTTPServer(("0.0.0.0", port), SidecarHandler)` at `:999`, hardcoded**; the usage line at `:24` documents only `--port` and `--db-dir` and **there is no `--host` flag at all** |
+| socket timeout | none (F44) | none — **measured `srv.timeout is None`**, and the module contains no `timeout=` on any `HTTPServer(...)` |
+| path traversal | `_serve_static:121`, `base / path.lstrip("/")`, no `resolve()` (F44) | **`_serve_static:616` — `file_path = FRONTEND_DIR / path.lstrip("/")`, then `.exists()` on the un-normalised path. No `resolve()`, no `is_relative_to`, no containment check.** `FRONTEND_DIR = Path(__file__).parent / "frontend"` at `:92` |
+| unauthenticated write | `POST /api/update` → `_sim_state.update(payload)` relabels state | **`do_POST:490` routes `/api/start`, `/api/stop`, `/api/config`, `/api/title`**, with the same unbounded `int(self.headers.get("Content-Length", 0))` + `self.rfile.read(content_len)` at `:501-502`. A cross-origin CORS-**safelisted** `text/plain` POST can therefore **start a run**, not merely relabel one |
+
+**The traversal is the identical construct as F44's, on the server that actually
+serves.** `pathlib` does not normalise `..`, and `Path.exists()` resolves the
+traversal, so `GET /<repetitive ../>/var/...` reads any file the process can read.
+The evidence here is the code at `:616`; I did not obtain a live 200 for the live
+server (see the harness note below), and I am not claiming one.
+
+**Measured on the live server directly:** `srv.timeout is None`, and
+`"do_POST" in SidecarHandler.__dict__` is **True**.
+
+### Correction to F44 (read this before relying on F44's caveats)
+F44 stated that the sidecar is *loopback-only by default* and that `--host` defaults to
+`127.0.0.1`. **Both of those are properties of the dead server.** The live server
+listens on every interface unconditionally, with no flag to change it. **The live
+exposure is therefore wider than F44 reported, not narrower** — the traversal and the
+unauthenticated write are both reachable from the network without a command-line
+argument, whereas F44's measurements required only loopback.
+
+**Harness note, recorded so the 404 is not mistaken for a refutation:** my first
+traversal probe against the live class returned **404**. That was my miscount, not a
+refutation — `FRONTEND_DIR` is `.../stellarorion_program_proc/src/ui/frontend`, which is
+**10** path components deep from `/`, and I used 7 levels of `..`, reaching `/Users` and
+no further. This is the same depth-miscount class as the 8-vs-9 slip recorded inside F44
+and is the **sixth** harness artefact of that shape in this thread. A second attempt at
+the correct depth was not run, so the live-server traversal is recorded on the code proof
+at `:616` and is explicitly *not* claimed as a measured 200.
+
+**CORS on the live server was not checked** and is therefore not asserted either way.
+
+### Consequences
+1. **F44's mitigations do not apply to the deployed service.** Anything fixed in `sidecar_server.py` leaves the running server unchanged.
+2. **The unauthenticated write is more serious than F44 found**: F44's dead server could relabel a finished run as running; the live server's `/api/start` can *initiate* one.
+3. **The `0.0.0.0` literal is a default, not a choice** — no argument, config key or environment variable can narrow it, so a reviewer reading the code cannot tell from the call site that the service is network-exposed.
+
+**Fix.** Delete one of the two servers. Give the survivor a `--host` argument defaulting to `127.0.0.1`; construct it as `HTTPServer((args.host, args.port), Handler, bind_and_activate=True)` with `timeout=` set; replace both `_serve_static` bodies with a single helper that does `file_path.resolve().is_relative_to(FRONTEND_DIR.resolve())` before any read; bound the POST body read; and require a preflighted (non-safelisted) content type on `do_POST` so a bare `text/plain` form cannot reach it. Correct `run.py:957` to name the file it actually checks, and correct `docs/PYTHON_SIDECAR_EXCEPTIONS.md:39`.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -3438,6 +3520,7 @@ the measured series.
 | F53 | false assurance | **open** | The declared suite is 49 `unittest` methods that pass, but **70 further module-level `pytest`-style self-tests across 9 modules can never run**: `pytest` is not installed (`No module named pytest`) and declared in no requirements file, and `unittest` discovers 0 of them (`Ran 0 tests / NO TESTS RAN`, exit 5). The self-tests documenting `sidecar_ui`, `sidecar_server`, `pyansys_test`, `pyfluent_test` and `validation_pipeline` have never executed |
 | F54 | provenance | **open** | The 14.36-as-NASA mis-provenance now appears on **five** artefacts, two more found by the coverage sweep: `scripts/make_vtu_visualization.py:218-219` draws it as an `axvline` labelled "IRVE-3 flight peak (14.36 W/cm²)" on a histogram of the run's own fluxes, and `compare_validation.py:23,59` states it as `RAP_Q_MAX_WCM2`. The correct `(F)` value is 13.80 |
 | F55 | correctness | **open** | The two HIAD render scripts contradict each other on the nose radius: `render_optimization_comparison.py:247` states "IRVE-3 baseline defaults (R_N=1.5 …) match the Ada/SPARK axioms" while `plot_hiad_3d.py:210` prints `r_N=0.55m` and the run itself defaults to `--nose-radius-m 0.55`. `Rn` enters Sutton–Graves as `R_n^0.75`, so the two figures show different vehicles under one name |
+| F56 | security | **open** | There are **two** sidecar servers and F44 audited the one nothing runs. `run.py:88`/`:949` start `src/ui/sidecar_ui.py` (1 519 lines); `src/python/sidecar_server.py` is referenced by no launcher at all. The live one binds **`0.0.0.0` by hardcoded literal at `:999`** with no `--host` flag, has **no socket timeout** (measured `srv.timeout is None`), repeats the same uncontained `_serve_static` traversal at `:616`, and its `do_POST:490` accepts `/api/start` with an unbounded body read. F44's "loopback by default" caveat therefore describes the **dead** file |
 
 ### Final state after fixes
 

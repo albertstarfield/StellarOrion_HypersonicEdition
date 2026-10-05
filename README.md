@@ -585,6 +585,14 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      `axvline` labelled "IRVE-3 flight peak (14.36 W/cm²)" on a histogram of the run's
      own cell heat fluxes — a reference line the reader compares against directly. The
      correct `(F)` value is 13.80. See **F54**.
+   * **The sidecar is two different servers, and the one that runs is the worse one.**
+     `run.py:88` starts `src/ui/sidecar_ui.py` (1 519 lines); `src/python/sidecar_server.py`
+     is referenced by no launcher at all, so every security finding made against it
+     (see **F44**) does not apply to the deployed service. The live server binds
+     **`0.0.0.0` by hardcoded literal** with no `--host` flag, has **no socket timeout**,
+     repeats the same uncontained `_serve_static` traversal at `:616`, and its `do_POST`
+     accepts **`/api/start`** — so a page the operator visits can *start* a run, not just
+     relabel one. See **F56**.
    * **The two HIAD render scripts show different vehicles under one name.**
      `render_optimization_comparison.py:247` states "IRVE-3 baseline defaults
      (R_N=1.5 …) match the Ada/SPARK axioms"; `plot_hiad_3d.py:210` prints
