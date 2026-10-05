@@ -4,7 +4,7 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F69 are a second through fourteenth audit passes,
+F1–F15 were found and fixed in the first pass. **F16–F70 are a second through fifteenth audit passes,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
@@ -4007,6 +4007,68 @@ consequence worth keeping is only that **`pytest` cannot run in `.venv`**, so th
 regression suite must be run under `venv_validation` or the system interpreter — the
 point F53 already records.
 
+## F70 — The heat-flux figure labels the radial axis "Axial", and two published titles print `nan%`
+
+*Class: presentation / correctness — figure annotations that contradict the data they annotate*
+
+### The axis label is on the wrong column
+`scripts/make_vtu_visualization.py` labels its axes at `:137-139` (3-D) and `:178` (2-D):
+
+```python
+    ax.set_xlabel("X (m) — Flow Direction", fontsize=10)
+    ax.set_ylabel("Z (m) — Axial", fontsize=10)
+    ax.set_zlabel("Y (m) — Radial", fontsize=10)
+...
+    ax.set_xlabel("X (m) — Flow Direction →", fontsize=11)
+    ax.set_ylabel("Z (m) — Vehicle Axial", fontsize=11)
+```
+
+**Measured on `results/validation_scalloped/paraview/surf_2200.vtu` through the module's own
+`_parse_vtu`:**
+
+| column | min | max | span |
+| :--- | ---: | ---: | ---: |
+| `points[:,0]` (X) | +0.0001 | +1.2694 | **1.2693 m** |
+| `points[:,1]` (Y) | −1.8248 | +1.8696 | 3.6944 m |
+| `points[:,2]` (Z) | −1.8693 | +1.8693 | 3.7386 m |
+
+The vehicle this run flew has an **axial length of 1.2693 m** and a **maximum diameter of
+3.7604 m** — both established independently in F67. The X span is **1.2693 m to four
+decimals**, i.e. exactly the axial length; the Y and Z spans are both ≈ the diameter, i.e.
+the revolved radial directions. **So X is the axial column, and the figure labels Z as
+"Axial" and X as "Flow Direction".**
+
+The Ada source is not the counter-evidence it may look like. `stellarorion_sparta.adb:2241`
+states `Axisymmetric 2D profile (x=Z axial, R radial)`, but that AXIOM describes the
+**surf profile's** own 2-D coordinate convention, not the column order the VTU writer
+emits — and the measurement above settles which is which in the VTU. The figure's reader is
+left with a plot whose "Axial" axis is a diameter.
+
+### Two published titles print `nan%`
+`scripts/render_bo_3d_plot.py:902` and `scripts/render_geometry_grid.py:661`:
+
+```python
+            f"· Cd improvement = {imp.get('cd_pct', float('nan')):.2f}% "
+            f"Cd improvement = {imp.get('cd_pct', float('nan')):.2f}% · "
+```
+
+`float('nan')` formats to the string `nan`, so if the key is absent the **figure title
+itself** reads `Cd improvement = nan%` — and both scripts return 0 regardless. A `nan%`
+in a published title is the most visible possible form of this log's recurring shape:
+a number that cannot be wrong because it is not a number.
+
+### A claim from the same source that I could **not** confirm — recorded as refuted
+The assertion that `render_geometry_grid.py` draws **87** panels while its suptitle says
+"88-Panel" **does not follow from the code.** Measured: `_EXPECTED_PANELS = 88` (`:102`),
+`_COLS = 9` (`:103`), `_ROWS = 10` (`:104`), and `_N_EMPTY_SLOTS = _ROWS * _COLS -
+_EXPECTED_PANELS` (`:105`) = 2 — which is exactly what the file's own header predicts
+(`:23`: *"Grid sizing: 10 rows x 9 cols = 90 slots for 88 panels -> 2 trailing blanks"*).
+The declared constants are **self-consistent**. Without a live run of the renderer I do
+not assert a 87-vs-88 mismatch, and the withdrawn figure is not carried into the log.
+
+**Fix.** Label the column that is actually axial, and make a missing `cd_pct` an error (or
+omit the clause) rather than formatting `nan` into a title.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -4156,6 +4218,7 @@ the measured series.
 | F67 | correctness | **open** | The `BEFORE (IRVE-3 Default — Ada FFI)` panel of `render_optimization_comparison.py` renders radius **2.6522 m (D 5.3044 m)** while the flown `HIAD_custom.surf` is radius **1.8802 m (D 3.7604 m)** — **1.4106× = +41.1 % in radius**, +37.4 % axially — measured with `get_ada_default_profile()` and the real `plot_surf_profile.parse_surf_points`. Its `crosscheck_ada_profile` reports OK because it compares Python against Ada **at the same (default, not flown) input**, so it is structurally incapable of detecting a wrong-input error |
 | F68 | correctness | **open** | `hiad_geometry.py:128-137`'s meridian profile is C0-discontinuous at the shoulder: the gap `r_tor·√2·|cos γ − sin γ|` is **exactly 0.000000 m at `half_cone_deg` 45°** and **0.069881 m at the 60° Ada baseline**. A rendering defect only — SPARTA consumes the separately generated `HIAD_custom.surf`, so the solver is unaffected — but the dashboard figures show a shoulder step the vehicle lacks, and the same θ range is at `stellarorion_pinn_trajectory.adb:466-467` |
 | F69 | false assurance | **open** | Four of the 49 executable tests in `test_run_pipeline.py` assert nothing: `test_ensure_utf8_locale_idempotent` puts its only assertion inside `if enc:` while `run.py:333-339` sets `LC_ALL` only on a non-UTF-8 host (0 assertions run); `test_hash_determinism` compares `hashlib.sha256(x)` to itself; `test_venv_python_exists_after_bootstrap` asserts a suffix of a path it builds itself and never reads `run._VENV_PYTHON`; and `test_hash_file_format` documents "hash_file" — **a function `run.py` does not have** — while its whole body is inside `if …exists()`. All 49 tests pass regardless |
+| F70 | presentation | **open** | `make_vtu_visualization.py:137-139`/`:178` label `points[:,2]` **"Axial"** and `points[:,0]` "Flow Direction", but measured on `surf_2200.vtu` column 0 spans **1.2693 m — exactly the vehicle's axial length** while columns 1 and 2 span ≈ the 3.76 m diameter, so the axial axis is mislabelled. Separately `render_bo_3d_plot.py:902` and `render_geometry_grid.py:661` format `imp.get('cd_pct', float('nan'))` straight into **published figure titles**, so a missing key prints `Cd improvement = nan%` and still returns 0. A claimed 87-vs-88 panel mismatch was **refuted** — the declared constants are self-consistent |
 
 ### Final state after fixes
 
