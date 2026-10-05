@@ -13,9 +13,9 @@ pipeline is defined in the source.
 > surrogate (scikit-learn), JSON output, and the post-run render. Every geometry formula,
 > cost term, and penalty is evaluated in Ada.
 
-> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F49 before trusting any number below
+> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F52 before trusting any number below
 >
-> Independent audits of `_proc` on 2026-10-05 left **thirty-two findings open**: F16–F22
+> Independent audits of `_proc` on 2026-10-05 left **thirty-five findings open**: F16–F22
 > from the DSMC/report-path pass, F24–F31 from a rescan of the PINN, checkpoint and status
 > subsystems, F32–F36 from a pass over the Kriging, comparison and watchdog
 > paths, and F37–F44 from a sweep of the atmosphere generator, the reporting scripts and
@@ -57,6 +57,9 @@ pipeline is defined in the source.
 > | **F47** | The `gnatprove --level=4` claim does not cover the packages that matter most. `SPARK_Mode (Off)` in all five Ada bodies excludes them from proof, so every `Pre`/`Post` in those specs is unverified. |
 > | **F48** | The atmosphere is implemented **three** times and the three disagree. The `alt_km` / `mach` / `dyn_press_pa` columns every stage above consumes are written by the Python model, which is **1.48–3.32× too dense**; the exported Ada model is correct to 0.36 %. |
 > | **F49** | Any claim that the runtime guard — the process lock, the GPU probe, the container probe — is tested. Its seven `Test_*` wrappers assert on a hardcoded local literal and never call the routine they name, so the package contributes **0 real assertions**. |
+> | **F50** | Any claim that the project's own rule set is satisfied. `sabotage_verifier.py` (917 KB) excludes `src/utils/` — itself — from every scan, and had never been run when this audit began. |
+> | **F51** | Any claim that formal verification is "unsound because cvc5 is missing". cvc5 **1.0.9 is installed and working on PATH**; the gate probes the pip module, not the binary, in the same function that uses `shutil.which` for alt-ergo. |
+> | **F52** | Any reading of a `TAINTED` verdict as a statement about the code. 2 of the 3 CRITICALs are a jupyter extension inside `venv_validation/`, which the walker does not prune. |
 > | **F32** | The F26 axis-mixing parser is **duplicated byte-for-byte** at `kriging_denoise.py:103-104` — the module this document's Kriging stage actually runs. Both parsers return byte-identical output, so fixing F26 alone leaves the live path wrong. |
 > | **F33** | The `kriging` stage's own write→read round trip replaces **100.00 % (17 949/17 949) of cell densities** with a hardcoded `1e20` default (writer emits 10 fields, reader needs `parts[10]`, real format has 11). Input `rho` spans `4.05e-05 … 4.63e-02 kg/m³`; output is the constant `4.810694e-06 kg/m³` (≈144× too small). Any multi-pass run reads a **constant** density field from pass 2 onward. The writer also reorders the axes relative to real SPARTA and omits `f_2[1]`. |
 

@@ -4,13 +4,13 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F49 are a second, third, fourth, fifth and sixth,
+F1–F15 were found and fixed in the first pass. **F16–F52 are a second, third, fourth, fifth, sixth and seventh,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
 optimiser first. F24–F31 come from the thread-3b rescan of the previously unaudited
 PINN, checkpoint and status subsystems, and F32–F36 from the thread-3c pass over the
-Kriging, surface-comparison and watchdog paths, and F37–F49 from the thread-3d/3e/3f passes over
+Kriging, surface-comparison and watchdog paths, and F37–F52 from the thread-3d/3e/3f/3g passes over
 the scripts, the sidecar, and the Ada atmosphere, status and checkpoint units. Read **"Still open after thread 3"**
 before relying on any number below.
 
@@ -3035,6 +3035,191 @@ a local literal is non-empty. Then uncomment the `GNATCOLL.Register_Routine` cal
 suite actually runs. Until then, `runtime_guard` should not be counted as tested code in
 any coverage figure.
 
+## F50 — The project's own 917 KB verifier excludes itself from every scan, and has never been run in this audit — so the one file that gates all the others is unaudited
+
+*Class: false assurance / process defect (highest-leverage class in this log — the tool that judges everything else has no judge)*
+
+`stellarorion_program_proc/src/utils/sabotage_verifier.py` is **917 941 bytes**, mtime
+**Sep 29 04:53**, and parses cleanly under `venv_validation/bin/python` (3.12.15). Until
+this pass, **no entry in this log recorded running it**, although `sidecar_watchdog.py:21`
+claims to *"Satisfy sabotage_verifier.py §5.6/5.7/5.8 requirements"* and the Ada/format
+rules it enforces are quoted elsewhere as if they were satisfied.
+
+**`src/utils/` is excluded from the scan by default.**
+
+```python
+# src/utils/ and should not audit itself or its own test artifacts.
+# Users can override via --exclude on the CLI.
+# [Citation: User request 2026-09-10 — exclude src/utils/ by default]
+DEFAULT_EXCLUDE_DIRS = {"utils"}          # sabotage_verifier.py:113
+```
+
+Applied at `:18367` and merged again at `:19323-19330`. So the verifier never scans
+**itself** (917 KB — the largest single file in `_proc`) nor `add_exception_handlers.py`.
+The stated reason is self-verification bias, which is a real concern; the unexamined cost
+is that the largest file in the project is exempt from every one of the ~30 category rules.
+A verifier that cannot check itself must be checked **externally**, and nothing in the
+repository does that.
+
+**The CLI is real and works.** `def main():` at **19188**, `if __name__ == "__main__"` at
+**19627**, target at `sys.argv[1]` (**19273**), args at `sys.argv[2:]` (**19281**),
+length check at **19230/19219**. `main()` opens with
+`# ── ENFORCE DEPENDENCIES BEFORE ANYTHING ELSE ──`, sets `_SELF_ANALYSIS_MODE` via
+`_is_self_test(target_arg)` — which **skips the Coq-proof and Ada-dominance checks** and
+prints `[SELF-ANALYSIS]` — calls `enforce_dependencies(target=target_arg)` and
+**`sys.exit(1)`** on failure, then prints usage for `--verbose`, `--json`, `--exclude DIRS`,
+`--exclude-files`, `--extensions`, `--parity-recover`, `--cache`/`--no-cache`. It
+deliberately **removes `--severity`** with the comment *"Hiding violations by severity is a
+cheat vector… A lazy model would run --severity CRITICAL to hide all HIGH/MEDIUM/LOW
+issues."* That is a genuinely good anti-cheat decision, and the direct ancestor of the
+regex-based §5.6/5.7/5.8 grading recorded in the thread-3b notes.
+
+**Run for the first time** (self-analysis mode — the only mode reachable for a file inside
+the excluded directory):
+
+| severity | count | categories |
+| :--- | ---: | :--- |
+| CRITICAL | **3** | `NODE_MODULES_FAILING` ×2, `SMT_SOLVER_MISSING` |
+| HIGH | 1 | `STALE_FLAG` (L14924) |
+| MEDIUM | 1 | `ASSERTION_SCANNER` (L17088) |
+| LOW | 3 | `INTEGRATION_CONTRACT`, `VIRTUAL_ENV_UNBUILT` ×2 |
+
+Verdict: **`TAINTED — 5 CRITICAL+ violation(s) found. NOT CLEAN.`**
+
+**All three CRITICALs are environment findings, and none concerns the project's source:**
+two `NODE_MODULES_FAILING` on a jupyter `jupyterlab-plotly` extension living *inside the
+project's own `venv_validation/`*, and one `SMT_SOLVER_MISSING` (see **F51**). The two
+`VIRTUAL_ENV_UNBUILT` LOWs name a vendor TTS venv and an OPAM Coq env, both explicitly
+"will be constructed during Stage 0.5".
+
+**The two code defects it found in itself are both genuine, and one is inside the code
+that decides what to prove:**
+* **`STALE_FLAG` at L14924** — `in_sig = False` is never modified, so the condition using
+  it is always false. CWE-561 / CWE-835. This is a **dead branch in the SMT
+  proof-obligation generator** — the code that decides what is handed to z3/cvc5 contains
+  an unreachable path.
+* **`ASSERTION_SCANNER` at L17088** — a loop with no invariant comment, flagged against
+  DO-178C MC/DC / SPARK RM 5.5.
+
+*Consequence:* the gate that every other claim in this log defers to has never been
+observed running, and is structurally unable to observe itself. Its self-exclusion is
+defensible as a design choice but it means a defect in the *judge* is invisible to the
+judge — which is precisely how the `sidecar_watchdog.py` regex pass (recorded in the
+thread-3b notes) survived: the mechanism that let a provably inert watchdog pass
+**F36**'s §5.6/5.7/5.8 gates is a grading method that matches **text**, not behaviour.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc
+wc -c src/utils/sabotage_verifier.py
+grep -n "DEFAULT_EXCLUDE_DIRS" src/utils/sabotage_verifier.py
+./venv_validation/bin/python src/utils/sabotage_verifier.py src/utils/sabotage_verifier.py > out.log 2>&1
+echo "EXIT=$?"            # capture the status BEFORE any pipe
+grep -E '^\s+\[(CRITICAL|HIGH|MEDIUM|LOW)\]' out.log
+grep -E '^ VERDICT' out.log
+```
+
+## F51 — The verifier's `cvc5` gate reports a false CRITICAL on a machine where cvc5 is installed and working, and its own advice would install a second, redundant solver
+
+*Class: correctness (a false positive that blocks a satisfied requirement, plus a wasted install)*
+
+`src/utils/sabotage_verifier.py:8833-8848`:
+
+```python
+# ── Check 2: cvc5 ────────────────────────────────────────────────
+try:
+    import cvc5  # noqa: F401
+except ImportError:
+    violations.append(Violation(..., Severity.CRITICAL, category="SMT_SOLVER_MISSING",
+        message=("cvc5 is NOT installed.  Install it: pip install cvc5.  "
+                 "Formal verification of Python/Ada/C functions is unsound without cvc5."),
+        standard="Formal methods completeness, DO-178C §5.2.2",
+        code_snippet="import cvc5 → ImportError"))
+```
+
+**It probes the Python module, not the solver binary.** Measured on this machine:
+
+| probe | result |
+| :--- | :--- |
+| `venv_validation/bin/python -c "importlib.util.find_spec('cvc5') is not None"` | **`False`** |
+| `command -v cvc5` | **`/Users/albertstarfield/.local/bin/cvc5`** |
+| `cvc5 --version` | **`cvc5 version 1.0.9 [git tag 1.0.9 branch HEAD]`**, compiled with GCC 14.0.0 (clang-1400.0.29.202) on Dec 19 2023 |
+
+cvc5 **1.0.9 is installed, on PATH, and functional**. It was installed as a native binary,
+so there is no importable `cvc5` module. The verifier therefore emits a **CRITICAL**
+asserting that formal verification *"is unsound without cvc5"* on a machine where cvc5 is
+present and working, and its prescribed remediation — `pip install cvc5` — would add a
+second, redundant solver while continuing to ignore the working one.
+
+**The inconsistency is provable inside a single file, so this is an oversight, not a
+policy.** The verifier's own header at `:8771` documents `cvc5 (cvc5, Stanford/UT Austin)
+— pip package` and `:8783` states *"cvc5 must be importable (pip package)"*. But the
+**third check in the same function** is `# ── Check 3: alt-ergo (system binary) ──`, which
+uses `shutil.which('alt-ergo')` — and `:8799` documents the intent as *"Attempts import
+z3, import cvc5, and shutil.which('alt-ergo')"*. So z3 and cvc5 are probed as pip modules
+and alt-ergo as a PATH binary, in one function. A false CRITICAL is the direct result.
+
+**Second, scope-level defect visible in the same run.** `sabotage_verifier.py:8993` prunes
+only:
+
+```python
+dirs[:] = [d for d in dirs if d not in (".git", ".bin", ".cache", "build", "obj",
+                                          "__pycache__", "vendor", "node_modules",
+                                          "venv", ".venv", "alirevenv")]
+```
+
+`venv` and `.venv` are pruned; **`venv_validation` is not**. That is why two of the three
+CRITICALs are about a jupyter plotly extension inside the project's own virtual
+environment — a machine-generated directory consuming CRITICAL budget that belongs to
+project source. A prefix or suffix test (`d == "venv" or d.endswith("_venv")`) would fix
+it.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc
+./venv_validation/bin/python -c "import importlib.util as u; print('module :', u.find_spec('cvc5') is not None)"
+command -v cvc5 && cvc5 --version | head -1
+grep -n "Check 2: cvc5" -A 4 src/utils/sabotage_verifier.py
+grep -n "Check 3: alt-ergo" -A 6 src/utils/sabotage_verifier.py
+grep -n 'node_modules", "venv", ".venv", "alirevenv"' src/utils/sabotage_verifier.py
+```
+
+## F52 — Two of the verifier's three CRITICAL findings are about the project's own virtual environment, and the exclusion list has a `venv_validation` hole
+
+*Class: correctness (environment scope)*
+
+Recorded separately from **F51** because the root cause and the fix differ, and because
+folding it into F51 would hide a third distinct defect in the same run.
+
+| # | finding | subject | root cause |
+| :-- | :--- | :--- | :--- |
+| 1 | `NODE_MODULES_FAILING` ×2 | `venv_validation/share/jupyter/labextensions/jupyterlab-plotly/package.json` | `venv_validation` is not pruned by the walker at `:8993` |
+| 2 | `SMT_SOLVER_MISSING` | the cvc5 **module** | probes pip, not the PATH binary — **F51** |
+| 3 | `VIRTUAL_ENV_UNBUILT` ×2 (LOW) | `vendor/tts_kokoro_component/venv`, `venv/om` | not yet constructed; documented as Stage 0.5 |
+
+Findings 1 and 3 are **not defects in the project** — they are findings *about* the
+project's environment, emitted with the same CRITICAL severity as a source-code violation
+and the same "NOT CLEAN" verdict weight. The distinction matters because the verifier's
+own documented purpose is source audit: the rule set it enforces (`SABOTAGE_*`,
+`DEAD_CODE`, `RESOURCE_LEAK`, `FFI_NO_CONTRACTS`, …) is a source-rule set, and a
+missing `node_modules` directory under a jupyter extension is not a member of it.
+
+**This also explains why the log's own `prove.sh` / `gnatprove` / `ruff` were never run
+against a passing state.** The verifier's verdict is `TAINTED` for reasons that have
+nothing to do with the Ada/SPARK or Python source it is supposed to judge, so "the gate
+says TAINTED" carries no information about the artefacts under audit.
+
+*Reproducer:*
+
+```bash
+cd stellarorion_program_proc
+grep -n 'dirs\[:\] = \[d for d in dirs if d not in' src/utils/sabotage_verifier.py
+ls -d venv venv_validation .venv 2>/dev/null
+ls venv_validation/share/jupyter/labextensions/ 2>/dev/null
+```
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -3164,6 +3349,9 @@ the measured series.
 | F47 | correctness | **open** | **`SPARK_Mode (Off)` in all five bodies** (Environment, Status_Writer, Validation, PINN_Trajectory, Trajectory_Output) — GNATprove skips them entirely, so every `Pre`/`Post` in those specs is decorative, voiding `.ads:4` and `.ads:73-74`'s `gnatprove --level=4` claims. `pinn_trajectory.adb:18` justifies it with "exception handlers and Ada.Text_IO": measured **0** handlers and the only `Text_IO` mention is the comment itself |
 | F48 | correctness | **open** | A **third** atmosphere. `PINN_Trajectory.ISA_Atmosphere` extends the mesopause's isothermal 186.87 K layer to 120 km (`HB_Next := 120.0`) — a 35.14 km extrapolation with no inversion — and returns **1.12758e-08** at 120 km where the exported `Environment` atmosphere returns **1.61961e-09**: **6.96× apart**. The cited source (NASA SP-7468) is the 1976 standard, which **stops at 86 km**, so no error percentage is claimed |
 | F49 | false assurance | **open** | All seven `stellarorion_runtime_guard` `Test_*` wrappers assert a property of their **own local** `Lock_Name : constant String := "main.lock"` literal and make **0** calls of the routine they are named after; all `GNATCOLL.Register_Routine` lines are commented out. The package contributes **0 real assertions** across 900 lines, so the lock mechanism, GPU probe, P-core detector and Docker-amaryllis probe are entirely untested |
+| F50 | false assurance | **open** | `sabotage_verifier.py` is **917 KB** and `DEFAULT_EXCLUDE_DIRS = {"utils"}` (`:113`) excludes it from every scan, so the gate that judges all other files has **never been run in this audit and cannot judge itself**. Run for the first time here: verdict **TAINTED**, 3 CRITICAL / 1 HIGH / 1 MEDIUM / 3 LOW, of which the 2 real code defects are a dead branch (`STALE_FLAG`, L14924) **inside the SMT proof-obligation generator** and an invariant-less loop (L17088) |
+| F51 | correctness | **open** | The verifier's `cvc5` gate probes `import cvc5` (`:8833`) while the very next check probes `shutil.which('alt-ergo')` for a *binary*. **cvc5 1.0.9 is installed and working on PATH** (`/Users/albertstarfield/.local/bin/cvc5`) yet the gate emits a **CRITICAL** saying formal verification "is unsound without cvc5", and prescribes `pip install cvc5` — which would add a second, redundant solver |
+| F52 | correctness | **open** | The walker at `:8993` prunes `venv` and `.venv` but **not `venv_validation`**, so 2 of the verifier's 3 CRITICALs are about a jupyter `jupyterlab-plotly` extension inside the project's own virtual environment. Environment findings carry the same severity weight as source-rule violations, so "the gate says TAINTED" says nothing about the artefacts under audit |
 
 ### Final state after fixes
 

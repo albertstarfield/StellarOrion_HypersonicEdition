@@ -551,6 +551,19 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      peak 17.4213 g and a **constant** `downrange_km` where the code produces 186 distinct
      values. The file is byte-identical across all four run directories, so every run shares
      a trajectory from absent code. See **F43**.
+   * **The project's own 917 KB quality gate has never been run and excludes itself.**
+     `sabotage_verifier.py` sets `DEFAULT_EXCLUDE_DIRS = {"utils"}`, so the largest file
+     in `_proc` is exempt from all ~30 rule categories. Run for the first time during this
+     audit it returns **TAINTED — 5 CRITICAL+ violations**, none of which is a project
+     source defect, and the only two real code findings are inside the verifier itself — a
+     dead branch in the **SMT proof-obligation generator** (L14924) and an invariant-less
+     loop (L17088). See **F50**.
+   * **The same gate reports a false CRITICAL for `cvc5`, which is installed and working**
+     (1.0.9, on PATH). It probes `import cvc5` while the next check in the same function
+     probes `shutil.which` for a binary — and prescribes `pip install cvc5`, which would
+     add a second, redundant solver. Its walker also prunes `venv` and `.venv` but not
+     `venv_validation`, so 2 of its 3 CRITICALs concern a jupyter extension inside the
+     project's own virtual environment. See **F51** and **F52**.
    * **The atmosphere is implemented three times and the three disagree.** The exported
      `Environment.Atmosphere_Density` is correct to **0.36 %** of ISA 1976 below the
      mesopause; the Python `gen_trajectory_profile` is **1.48×–3.32× too dense** and is
