@@ -44,6 +44,20 @@ The optimisation loop is shown separately because it is driven by the cost
 function of Sec. cost_function and gated by Sec. gate_methodology, not by the
 validation pipeline itself.
 
+PRINT-SCALE AXIOMS (goal rev 5: all figure text >= 8 pt printed)
+  AXIOM: printed point size = declared point size x (print box / saved image).
+  THEORIES: the chapter includes this PNG with width<=textwidth and
+    height<=0.72\textheight (keepaspectratio), so the print box is
+    5.51181 in x 6.71811 in. If the saved aspect stays under
+    5.51181/6.71811 = 0.8205 the figure is height-capped and the scale is 1.0,
+    so declared pt == printed pt. Width-inflation of the tight crop (a title
+    wider than the canvas) previously broke that equality and shrank every
+    label; the fit checks below fail the build instead.
+  APPLICATIONS: every label is declared at LABEL_FS = 8.4 pt, titles are
+    asserted to fit the canvas, box labels are asserted to fit their boxes,
+    and the final scale is asserted >= 8/8.4 so nothing prints under 8 pt.
+  ERRORS: SystemExit with the offending string on any fit or scale failure.
+
 CITATION
   Matplotlib, https://matplotlib.org/stable/
 """
@@ -70,47 +84,119 @@ C_EDGE = "#333333"
 # Printed size, derived from the document geometry rather than chosen:
 #     text height = 29.7 cm - 3 cm - 3 cm = 23.7 cm = 9.33071 in
 # The chapter inserts this figure with height = 0.72\textheight, so the printed
-# box is 0.72 * 9.33071 = 6.718 in tall. The image is then built to exactly that
-# height and its width follows from the aspect ratio.
-# AXIOM: a figsize is inches of the SAVED image and the document rescales it, so
-# the effective scale is print_height / saved_height. At the previous
-# figsize of 7.0 x 10.85 in against a printed height of 0.60\textheight = 5.598 in
-# the scale was 0.516 and every label printed at half size. save_to_print_height()
-# below measures and removes that factor.
+# box is 0.72 * 9.33071 = 6.718 in tall and at most \textwidth = 5.51181 in
+# wide. AXIOM: a figsize is inches of the SAVED image and the document rescales
+# it, so the effective scale is min(print_w / saved_w, print_h / saved_h).
+# Aspect 0.78 < 0.8205 keeps the figure height-capped at scale 1.0, which is
+# what makes LABEL_FS print at 8.4 pt.
 TEXT_H_IN = 29.7 / 2.54 - (3.0 + 3.0) / 2.54      # 9.33071
 PRINT_H_IN = 0.72 * TEXT_H_IN                      # 6.71811
-WIDTH_IN = PRINT_H_IN * (2056 / 3225)              # 4.283
+PRINT_W_IN = 5.51181
+WIDTH_IN = PRINT_H_IN * 0.78                       # 5.240
+
+# Declared point size of every label. 8.4 gives headroom above the 8 pt floor.
+LABEL_FS = 8.4
+# A box label must be at least this much narrower than its box (inches).
+FIT_MARGIN_IN = 0.04
 
 
-def box(ax, x, y, w, h, text, fc, fs=8, style="round,pad=0.02,rounding_size=0.02"):
+def box(ax, x, y, w, h, text, fc, fs=LABEL_FS, style="round,pad=0,rounding_size=0.02"):
+    """Draw one rounded stage box with a centred label.
+
+    Parameters:
+        ax: matplotlib Axes in figure fraction coordinates (position 0..1).
+        x, y, w, h: box rectangle in axes fraction coordinates.
+        text: label string (may contain newlines).
+        fc: face colour; white label text when fc is the dark process blue.
+        fs: declared point size (default LABEL_FS = 8.4).
+        boxstyle: FancyBboxPatch style string; pad is 0 so the drawn border
+            sits exactly on (x, y, w, h) and the fit check is exact.
+
+    Returns:
+        (box_width_fraction, text_artist) for the fit-check pass.
+
+    Raises: none; overflow is detected later by check_fits().
+    """
     ax.add_patch(FancyBboxPatch(
         (x, y), w, h, boxstyle=style, linewidth=0.9,
         edgecolor=C_EDGE, facecolor=fc, zorder=2))
-    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center",
-            fontsize=fs, color="white" if fc == C_PROCESS else "black",
-            zorder=3, linespacing=1.35)
+    t = ax.text(x + w / 2, y + h / 2, text, ha="center", va="center",
+                fontsize=fs, color="white" if fc == C_PROCESS else "black",
+                zorder=3, linespacing=1.35)
+    return w, t
 
 
 def arrow(ax, p0, p1, style="-|>", ls="-", color=C_EDGE, lw=1.5, rad=0.0):
-    """zorder 5 so the connector is drawn OVER the boxes. At zorder 1 with
+    """Draw one connector.
+
+    zorder 5 so the connector is drawn OVER the boxes. At zorder 1 with
     mutation_scale 8 the connectors were completely hidden and the diagram read
-    as twelve unconnected boxes."""
+    as twelve unconnected boxes.
+
+    Parameters:
+        ax: matplotlib Axes; p0, p1: endpoints in axes fraction coordinates.
+        style, ls, color, lw, rad: FancyArrowPatch appearance (arc3 curvature).
+
+    Returns: None. Raises: none.
+    """
     ax.add_patch(FancyArrowPatch(
         p0, p1, arrowstyle=style, linestyle=ls, color=color, linewidth=lw,
         mutation_scale=13, connectionstyle=f"arc3,rad={rad}", zorder=5))
 
 
+def check_fits(fig, checks, what):
+    """Assert drawn text extents fit their allowed width.
+
+    Parameters:
+        fig: the Figure (Agg canvas; drawn before calling).
+        checks: list of (Text artist, allowed width in inches, context string).
+        what: label used in the error message ("box" or "canvas").
+
+    Returns: None. Prints one line per label.
+    Raises: SystemExit listing every overflowing label.
+    """
+    fig.canvas.draw()
+    rend = fig.canvas.get_renderer()
+    bad = []
+    for t, allow_in, ctx in checks:
+        tw_in = t.get_window_extent(renderer=rend).width / fig.dpi
+        ok = tw_in <= allow_in - FIT_MARGIN_IN if what == "box" \
+            else tw_in <= allow_in
+        tag = "ok" if ok else "OVERFLOW"
+        print(f"  [{tag}] {ctx}: {t.get_text()!r} text {tw_in:.2f} in"
+              f" / allowed {allow_in:.2f} in")
+        if not ok:
+            bad.append(t.get_text())
+    if bad:
+        raise SystemExit(f"fit check ({what}) failed for: {bad}")
+
+
 def main() -> int:
+    """Build fignew_pipeline.png.
+
+    Returns: 0 on success.
+    Raises: SystemExit when a label overflows its box, a title overflows the
+        canvas, or the final print scale would put labels below 8 pt.
+    """
     fig, ax = plt.subplots(figsize=(WIDTH_IN, PRINT_H_IN))
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
+    # Full-canvas axes: every fraction below is a fraction of the figure, so
+    # box widths map 1:1 onto inches and the fit math stays exact. tight_layout
+    # is deliberately NOT called: it would re-shrink the axes position.
+    ax.set_position([0, 0, 1, 1])
 
-    ax.text(0.5, 0.992, "Validation pipeline executed by the engine",
-            ha="center", va="top", fontsize=8, weight="bold")
-    ax.text(0.5, 0.966,
-            "Stages in execution order, as printed by the full validation run",
-            ha="center", va="top", fontsize=8, style="italic")
+    fits_box = []    # (text artist, box width in inches, context)
+    fits_canvas = []  # (text artist, canvas width in inches, context)
+
+    title = ax.text(0.5, 0.992, "Validation pipeline executed by the engine",
+                    ha="center", va="top", fontsize=LABEL_FS, weight="bold")
+    fits_canvas.append((title, WIDTH_IN, "title"))
+    sub = ax.text(0.5, 0.966,
+                  "Stages in execution order, as printed by the full validation run",
+                  ha="center", va="top", fontsize=LABEL_FS, style="italic")
+    fits_canvas.append((sub, WIDTH_IN, "subtitle"))
 
     stages = [
         ("1  Flight parameters", C_INPUT),
@@ -126,11 +212,11 @@ def main() -> int:
         ("11  Compare with IRVE-3 flight", C_PROCESS),
         ("12  Export fields and plots", C_OUTPUT),
     ]
-    # Two columns spanning the full canvas width. The vertical gap between the
+    # Two columns spanning the full canvas. The vertical gap between the
     # two columns is deliberately kept wide: the 6 -> 7 wrap arrow is routed
     # through it, so it never crosses a box.
-    n_per_col, w, h = 6, 0.40, 0.070
-    x_left, x_right = 0.035, 0.545
+    n_per_col, w, h = 6, 0.46, 0.070
+    x_left, x_right = 0.010, 0.530
     top, gap = 0.905, 0.030
     lane_y = 0.330                      # clear lane below both columns
     assert len(stages) == n_per_col * 2
@@ -140,7 +226,8 @@ def main() -> int:
         col, row = i // n_per_col, i % n_per_col
         x0 = x_left if col == 0 else x_right
         y0 = top - row * (h + gap) - h
-        box(ax, x0, y0, w, h, label, fc, fs=5.9)
+        bw, t = box(ax, x0, y0, w, h, label, fc)
+        fits_box.append((t, bw * WIDTH_IN, f"stage {i + 1}"))
         pos[i] = (x0, y0)
 
     # Intra-column connectors: solid black, drawn over the boxes, long enough to
@@ -166,26 +253,35 @@ def main() -> int:
     ax.annotate("", xy=(x_right + 0.020, y_top_right), xytext=seg[-1],
                 arrowprops=dict(arrowstyle="-|>", color="black", linewidth=1.6,
                                 mutation_scale=13), zorder=5)
-    ax.text(x_gap, lane_y + 0.012, "continues", fontsize=8, ha="center",
-            va="bottom", color="black")
+    # The label sits BELOW the lane line, in the clear band between the column
+    # bottoms (y 0.335) and the loop title, so it crosses neither boxes nor the
+    # wrap connector's vertical run.
+    cont = ax.text(x_gap, lane_y - 0.016, "continues", fontsize=LABEL_FS,
+                   ha="center", va="top", color="black")
+    fits_canvas.append((cont, WIDTH_IN, "continues"))
 
     # ---- optimisation loop, its own row with room for the feedback path ----
-    ax.text(0.5, 0.268,
-            "Geometry optimisation loop (driven by the cost function, gated by DSMC re-simulation)",
-            ha="center", va="top", fontsize=8, weight="bold")
-    loop = ["Design space\n(LHS or CCD screen)",
-            "Bayesian optimisation\n(GP + Expected Improvement)",
+    loop_head = ax.text(0.5, 0.268, "Geometry optimization loop",
+                        ha="center", va="top", fontsize=LABEL_FS, weight="bold")
+    fits_canvas.append((loop_head, WIDTH_IN, "loop heading"))
+    loop_sub = ax.text(0.5, 0.246,
+                       "(driven by the cost function, gated by DSMC re-simulation)",
+                       ha="center", va="top", fontsize=LABEL_FS, style="italic")
+    fits_canvas.append((loop_sub, WIDTH_IN, "loop subheading"))
+    loop = ["Design space\n(LHS or CCD)",
+            "Bayesian\noptimization",
             "Cost function\n$J(x)$",
             "DSMC\nre-simulation",
             "Accept if\n$q \\leq Q_{target}$"]
     # 5*lw_ + 4*lgap must fit inside [0.020, 0.980]:
-    # 5*0.170 + 4*0.026 = 0.954, ending at 0.974.
-    lw_, lh, lgap = 0.170, 0.082, 0.026
+    # 5*0.182 + 4*0.012 = 0.958, ending at 0.978.
+    lw_, lh, lgap = 0.182, 0.082, 0.012
     ly = 0.105                          # high enough that the lane below (0.03) is inside ylim
     for i, label in enumerate(loop):
         x0 = 0.020 + i * (lw_ + lgap)
         fc = C_CHECK if i == 3 else C_PROCESS
-        box(ax, x0, ly, lw_, lh, label, fc, fs=5.9)
+        bw, t = box(ax, x0, ly, lw_, lh, label, fc)
+        fits_box.append((t, bw * WIDTH_IN, f"loop {i + 1}"))
         if i:
             ax.annotate("", xy=(x0, ly + lh / 2), xytext=(x0 - lgap, ly + lh / 2),
                         arrowprops=dict(arrowstyle="-|>", color="black", linewidth=1.4,
@@ -199,10 +295,13 @@ def main() -> int:
     ax.annotate("", xy=(x_first, ly + 0.006), xytext=(x_first, fb_y),
                 arrowprops=dict(arrowstyle="-|>", color=C_CHECK, linewidth=1.4,
                                 mutation_scale=11), zorder=5)
-    ax.text((x_first + x_last) / 2, fb_y - 0.004, "reject and resample",
-            fontsize=8, ha="center", va="top", color=C_CHECK)
+    reject = ax.text((x_first + x_last) / 2, fb_y - 0.004, "reject and resample",
+                     fontsize=LABEL_FS, ha="center", va="top", color=C_CHECK)
+    fits_canvas.append((reject, WIDTH_IN, "feedback label"))
 
-    fig.tight_layout()
+    # Every label must fit where it lives BEFORE anything is saved.
+    check_fits(fig, fits_box, "box")
+    check_fits(fig, fits_canvas, "canvas")
 
     # Fit the SAVED image to the printed height. bbox_inches="tight" crops to the
     # artist extents, so the saved height is not the figsize height; measuring the
@@ -216,12 +315,20 @@ def main() -> int:
         got_px = Image.open(OUT).size[1]
         if abs(got_px - target_px) / target_px <= 0.005:
             break
-        w, h = fig.get_size_inches()
-        fig.set_size_inches(w * target_px / got_px, h * target_px / got_px, forward=True)
+        fw, fh = fig.get_size_inches()
+        fig.set_size_inches(fw * target_px / got_px, fh * target_px / got_px,
+                            forward=True)
     px = Image.open(OUT).size
     scale = PRINT_H_IN / (px[1] / 300)
+    effective_pt = LABEL_FS * scale
     print(f"wrote {OUT.name} {px[0]}x{px[1]}px  print height {PRINT_H_IN:.3f} in  "
-          f"scale {scale:.3f}  effective dpi {300 / scale:.0f}")
+          f"scale {scale:.3f}  effective dpi {300 / scale:.0f}  "
+          f"label {effective_pt:.2f} pt")
+    if effective_pt < 8.0:
+        raise SystemExit(
+            f"effective label size {effective_pt:.2f} pt below 8 pt "
+            f"(scale {scale:.3f}; saved aspect {px[0] / px[1]:.3f} exceeds the "
+            f"height-capped limit {PRINT_W_IN / PRINT_H_IN:.3f})")
     plt.close(fig)
     return 0
 

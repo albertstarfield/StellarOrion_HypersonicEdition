@@ -237,12 +237,27 @@ def main() -> int:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.0, 2.7))
     # Printed at 0.9\textwidth = 4.96 in, so saved 7.0 in -> scale 0.71.
     # Tick labels at 12 pt print at 8.5 pt, at or above the 8 pt floor.
     plt.rcParams["xtick.labelsize"] = 12
     plt.rcParams["ytick.labelsize"] = 12
+
+    # Layout AXIOM (goal rev 5): the panel (a) legend has 10 entries. At the
+    # 8 pt printed floor it is 10 x ~10.5 pt = 1.47 in tall, which can never
+    # fit inside a panel without covering curves, so BOTH legends live in a
+    # dedicated row below their own panel. Panels stay on top; legend cells
+    # (axes switched off) hold the legends.
+    fig = plt.figure(figsize=(7.0, 4.2))
     fig.patch.set_facecolor("white")
+    gs = fig.add_gridspec(
+        2, 2, height_ratios=(2.2, 1.5), hspace=0.45, wspace=0.25,
+        left=0.09, right=0.98, top=0.90, bottom=0.10)
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax2 = fig.add_subplot(gs[0, 1])
+    lg1 = fig.add_subplot(gs[1, 0])
+    lg2 = fig.add_subplot(gs[1, 1])
+    lg1.axis("off")
+    lg2.axis("off")
 
     velocities = V_SWEEP_KMS
     radii = R_SWEEP_M
@@ -276,9 +291,16 @@ def main() -> int:
     ax1.annotate(
         "IRVE-3 run condition\n%.2f W/cm$^2$" % baseline,
         xy=(v_run_kms, baseline),
-        xytext=(v_run_kms - 2.05, baseline * 3.4),
+        # Bottom-right in AXES FRACTION: the curve family fans upward to the
+        # right, so the band below the lowest curve (R_N = 3 m, which reaches
+        # only ~55% height at x > 5.5 km/s) is empty. Anchoring at (0.52, 0.05)
+        # keeps the box entirely inside that band, off the y-tick labels, and
+        # clear of every curve.
+        xytext=(0.52, 0.05),
+        textcoords="axes fraction",
         fontsize=13,
         ha="left",
+        va="bottom",
         arrowprops=dict(arrowstyle="->", lw=1.8, color="black"),
         bbox=dict(boxstyle="round,pad=0.35", fc="white", ec="black", lw=1.1),
     )
@@ -291,7 +313,8 @@ def main() -> int:
         fontsize=13,
     )
     ax1.grid(True, which="both", alpha=0.3, ls=":")
-    ax1.legend(fontsize=12, loc="lower right", framealpha=0.92)
+    _h1, _l1 = ax1.get_legend_handles_labels()
+    lg1.legend(_h1, _l1, fontsize=12, ncol=2, loc="center", frameon=False)
 
     # --- Panel (b): q vs nose radius at several Mach numbers ---------------
     for v_kms in (3.0, 5.0, 7.0):
@@ -313,11 +336,15 @@ def main() -> int:
         zorder=2,
     )
     ax2.annotate(
-        "$R_N$ = 1.5 m\n(IRVE-3)",
+        # One line only: the gap between the V = 3 km/s and V = 5 km/s curves
+        # at x = 0.35 m is ~0.8 decades, which easily holds a single-line box
+        # (the old two-line box at y = 0.30 * q fell below the y axis minimum).
+        "$R_N$ = 1.5 m (IRVE-3)",
         xy=(R_N_BASELINE_M, sg_at_radius(R_N_BASELINE_M, 3.0, solver)),
-        xytext=(R_N_BASELINE_M * 1.08, sg_at_radius(R_N_BASELINE_M, 3.0, solver) * 0.30),
+        xytext=(0.35, 40.0),
         fontsize=13,
         ha="left",
+        va="center",
         arrowprops=dict(arrowstyle="->", lw=1.6, color="black"),
         bbox=dict(boxstyle="round,pad=0.35", fc="white", ec="black", lw=1.1),
     )
@@ -334,9 +361,11 @@ def main() -> int:
         fontsize=13,
     )
     ax2.grid(True, which="both", alpha=0.3, ls=":")
-    ax2.legend(fontsize=12, loc="upper right", framealpha=0.92)
+    _h2, _l2 = ax2.get_legend_handles_labels()
+    lg2.legend(_h2, _l2, fontsize=12, ncol=1, loc="center", frameon=False)
 
-    fig.tight_layout()
+    # No tight_layout: the gridspec margins above already place the rows, and
+    # savefig(bbox_inches="tight") crops to the artist union at save time.
 
     # --- Atomic write: temp file then rename (see module docstring) ---------
     out_dir = os.path.dirname(os.path.abspath(__file__))

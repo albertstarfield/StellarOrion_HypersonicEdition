@@ -1,0 +1,122 @@
+% =====================================================================
+% main.tex — StellarOrion Progress Presentation, Week 16
+% SKELETON BUILD. Frame STRUCTURE, sectioning, navigation and house-style
+% typography are final; the CONTENT of each body frame is intentionally
+% left as a marker for the content thread (GoalThread6).
+%
+% Why beamer and not a port of the Week 14 PowerPoint:
+%   Lost+Found/ProgressReport/Week 14/ProgressReport.pptx carries 63 words
+%   total (docProps/app.xml), 0 speaker notes, and its content is 2 embedded
+%   mp4 (92 MB + 90 MB) plus 9 rasters. There is no bullet list to port, so
+%   this deck is AUTHORED from verified repository state instead.
+%   Evidence and full method: GoalThread5.md.
+%
+% House style inherited from the ITB thesis, not invented:
+%   Lost+Found/ProgressReport/CurrentThesisFinalReport/{preamble,identity,
+%   cover}.tex. The contract (fonts, monochrome discipline, decorative
+%   emblem, uppercase frametitles, punctuation) is specified in GoalThread5.md
+%   section "House style contract". Every item below cites the thesis file it
+%   came from.
+%
+% Build:  pdflatex main.tex   (x2 for the TOC/navigation to settle)
+% Verify: 0 hard errors (^!), 0 Overfull/Underfull, 0 undefined refs, 0 rerun
+%         requests in main.log -- the same bar the 163-page thesis is held to.
+% Citation: Beamer -- https://ctan.org/pkg/beamer
+%           pdfTeX 3.141592653-2.6-1.40.29 (TeX Live 2026)
+% =====================================================================
+\documentclass[aspectratio=169,11pt]{beamer}
+
+\input{preamble}
+
+\begin{document}
+
+% ---------------------------------------------------------------------
+% TITLE FRAME
+% Identity macros are copied verbatim from the thesis identity.tex so the
+% deck and the submitted thesis cannot disagree on the author's name, NIM
+% or supervisors. They are re-declared in preamble.tex.
+% ---------------------------------------------------------------------
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+% ---------------------------------------------------------------------
+% OUTLINE -- auto-generated from \section, so adding a section later cannot
+% leave a stale hand-written agenda behind.
+% ---------------------------------------------------------------------
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+% =====================================================================
+% SECTION 1 — PREVIOUS PROBLEM
+% Two problems drove this week's work:
+%   (a) a sampling issue in the design space, and
+%   (b) optimisation driven by MoP, whose result was too chaotic to trust.
+% =====================================================================
+\section{Previous Problem}
+
+\begin{frame}{Previous Problem: Sampling and MoP}
+  \begin{itemize}
+    \item \textbf{Sampling issue} in the design-space exploration
+      \begin{itemize}
+        \item placeholder
+      \end{itemize}
+    \item \textbf{MoP-driven optimisation was too chaotic}
+      \begin{itemize}
+        \item placeholder
+      \end{itemize}
+    \item \textbf{Consequence} for run-to-run reproducibility
+      \begin{itemize}
+        \item placeholder
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+% =====================================================================
+% SECTION 2 — CURRENT IMPLEMENTATION
+% Six items, each with a real implementation on disk. The frame titles
+% below are the ones grounded in the repository; see GoalThread5.md.
+% =====================================================================
+\section{Current Implementation}
+
+\begin{frame}{1. Bayesian Optimization}
+  \begin{itemize}
+    \item placeholder
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{2. Kriging Denoising}
+  \begin{itemize}
+    \item placeholder
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{3. Validation Run}
+  \begin{itemize}
+    \item \textbf{Performance Reference vs Performance Simulated on StellarOrion}
+      \begin{itemize}
+        \item placeholder
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{4. Redefining Yesterday's Wrong Heat Flux Definition}
+  \begin{itemize}
+    \item placeholder
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{5. Optimisation Result: Topology and Performance}
+  \begin{itemize}
+    \item placeholder
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{6. Bayesian Optimisation Plots}
+  \begin{itemize}
+    \item placeholder
+  \end{itemize}
+\end{frame}
+
+\end{document}
