@@ -586,6 +586,9 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      own cell heat fluxes — a reference line the reader compares against directly. The
      correct `(F)` value is 13.80. See **F54**.
    * **One corrupt CSV cell silently removes half the plots.** `make_validation_plots.py:93-98` appends the step to `steps` *before* parsing the row's values, so a single unparsable field leaves `steps` one longer than every column from that field on. Measured: corrupting one `mach` value drops **10 of 21 plots** and mislabels the survivors by one row. The drop is announced on stderr (so it is not silent) but the script still exits 0. See **F62**.
+   * **`_tex_config.tex_available()` has no caller.** The predicate that answers "is a
+     LaTeX toolchain present?" is implemented and never called; the module instead calls
+     `setup_tex_fonts` unconditionally and handles failure. See **F72**.
    * **The published optimum is pinned to its own search bound.**
      `hiad_optimization_results.json` reports `R_N = 2.994005816519673` against a
      `[0.5, 3.0]` interval — **0.24 % of the range from the wall** — and the figure draws

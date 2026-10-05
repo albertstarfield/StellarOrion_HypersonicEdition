@@ -4,7 +4,7 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F71 are a second through sixteenth audit passes,
+F1–F15 were found and fixed in the first pass. **F16–F72 are a second through seventeenth audit passes,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
@@ -4151,6 +4151,41 @@ proportional or state the exaggeration; count the tori actually meshed; and chec
   this module; `add_exception_handlers.py` remains in the not-a-defect record for having
   zero referrers (F53).
 
+## F72 — `_tex_config.tex_available` is a public function with zero callers in the repository
+
+*Class: dead code — recorded because it is the last file in `_proc` whose coverage had not been stated*
+
+This entry closes the coverage claim, so its own provenance is part of the record. Two earlier
+coverage probes reported this file as **unnamed in the log**, and a first attempt to measure it
+returned "0 importers" — because the probe used the base path `stellarorion_program_proc/` while
+already running inside that directory, so it scanned an empty tree. That is the **ninth** harness
+error of its class in this audit. Re-run from the correct base:
+
+```
+  scanned 44 project .py files from base '.'
+  files whose TEXT mentions '_tex_config' : src/python/validation_pipeline.py,
+                                             src/python/generate_outputs.py
+  setup_tex_fonts  referenced by : validation_pipeline.py, generate_outputs.py
+  tex_available    referenced by : (none)
+```
+
+**So the module is live, not dead** — `_tex_config.setup_tex_fonts` is called by two pipeline
+modules, and its `[tex_config] TeX fonts ENABLED (pdflatex found)` line appears in real
+`unittest` output. The one genuine defect is narrower:
+
+`tex_available()` — the function whose entire purpose is to answer "is a LaTeX toolchain
+present?" — has **no call site anywhere in the repository**. The module instead decides
+unconditionally, by attempting the setup and handling failure. The capability is therefore
+implemented and never used, and a reader is left with a public predicate that suggests a
+guard exists where none does.
+
+A secondary observation, recorded as low severity rather than a finding: `_tex_config` is a
+**leading-underscore private module** imported by two modules outside its own package, which
+is the opposite of what the underscore convention signals.
+
+**Fix.** Either call `tex_available()` before `setup_tex_fonts()` so the LaTeX path is gated
+on an explicit check, or delete it. Rename the module if it is meant to be shared.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -4302,6 +4337,7 @@ the measured series.
 | F69 | false assurance | **open** | Four of the 49 executable tests in `test_run_pipeline.py` assert nothing: `test_ensure_utf8_locale_idempotent` puts its only assertion inside `if enc:` while `run.py:333-339` sets `LC_ALL` only on a non-UTF-8 host (0 assertions run); `test_hash_determinism` compares `hashlib.sha256(x)` to itself; `test_venv_python_exists_after_bootstrap` asserts a suffix of a path it builds itself and never reads `run._VENV_PYTHON`; and `test_hash_file_format` documents "hash_file" — **a function `run.py` does not have** — while its whole body is inside `if …exists()`. All 49 tests pass regardless |
 | F70 | presentation | **open** | `make_vtu_visualization.py:137-139`/`:178` label `points[:,2]` **"Axial"** and `points[:,0]` "Flow Direction", but measured on `surf_2200.vtu` column 0 spans **1.2693 m — exactly the vehicle's axial length** while columns 1 and 2 span ≈ the 3.76 m diameter, so the axial axis is mislabelled. Separately `render_bo_3d_plot.py:902` and `render_geometry_grid.py:661` format `imp.get('cd_pct', float('nan'))` straight into **published figure titles**, so a missing key prints `Cd improvement = nan%` and still returns 0. A claimed 87-vs-88 panel mismatch was **refuted** — the declared constants are self-consistent |
 | F71 | correctness | **open** | The published optimisation optimum `R_N = 2.994005816519673` sits **0.2398 % of the `[0.5, 3.0]` interval from its own upper bound** and is drawn as an interior optimum with no boundary annotation. Four figure defects confirmed by reading: `plot_hiad_3d.py:210` hard-codes `D=3.0m` while `:218` on the same page prints `Max Radius=1.8802 m` (⇒ D 3.7604 m, **+25.35 %** self-contradiction); `:267` sets a non-proportional `aspectratio {x:1,y:1,z:1.2}`; `render_optimization_comparison.py` prints "6 tori" while its `:709` `continue` guard can skip iterations; and `make_vtu_visualization.py:286` creates `plots/` **before** `:290` lists `paraview/`, with no isdir guard. **Refuted:** the reported cost anomaly does not exist — `optimized.cost` equals `min(history)` exactly |
+| F72 | dead code | **open** | `_tex_config.tex_available()` — the predicate that answers "is a LaTeX toolchain present?" — has **no call site anywhere in the repository**, while `setup_tex_fonts` is called by `validation_pipeline.py` and `generate_outputs.py`. The capability is implemented and never used. Also noted: `_tex_config` is a leading-underscore private module imported across module boundaries. This is the last file in `_proc` whose coverage is now stated |
 
 ### Final state after fixes
 
