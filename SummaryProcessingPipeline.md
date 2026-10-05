@@ -13,7 +13,7 @@ pipeline is defined in the source.
 > surrogate (scikit-learn), JSON output, and the post-run render. Every geometry formula,
 > cost term, and penalty is evaluated in Ada.
 
-> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F68 before trusting any number below
+> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F69 before trusting any number below
 >
 > Independent audits of `_proc` on 2026-10-05 left **forty-nine findings open**: F16–F22
 > from the DSMC/report-path pass, F24–F31 from a rescan of the PINN, checkpoint and status
@@ -67,6 +67,7 @@ pipeline is defined in the source.
 > | **F66** | The BO convergence figure's legend: only the first two labelled artists are shown, and the comment claiming the rest are in the title is false. |
 > | **F67** | The before/after geometry figure: the "IRVE-3 Default" panel is 41.1 % larger in radius than the flown vehicle, and its Python-vs-Ada cross-check compares the wrong input, so it reports OK. |
 > | **F68** | The HIAD rendering only: the meridian profile is C0-discontinuous at the shoulder for every half-cone angle except 45° (0.069881 m step at the 60° baseline). The solver is unaffected. |
+> | **F69** | Any claim that the test suite's 49/49 pass means the code is exercised. Four of those tests assert nothing — one executes zero assertions, one compares a hash to itself, one asserts a property of a string it just built, and one documents a `run.py` function that does not exist. |
 > | **F56** | The sidecar you are reading about is not the sidecar that runs. F44's traversal, state-forgery and loopback caveats were measured on `sidecar_server.py`, which no launcher starts; `run.py:88` starts `src/ui/sidecar_ui.py`, which binds `0.0.0.0` unconditionally and accepts unauthenticated `POST /api/start`. |
 > | **F53** | Any claim that the Python side is self-tested. 70 module-level `pytest`-style self-tests across 9 modules exist and are syntactically valid, but `pytest` is not installed and not declared, so `unittest` collects **0** of them. The 49 that do run are the whole declared suite.
 > | **F54** | The heat-flux reference line in `make_vtu_visualization.py` and the `RAP_Q_MAX_WCM2` constant in `compare_validation.py`: both attribute 14.36 W/cm² to IRVE-3 flight, where the `(F)` group says 13.80. F41 found three such sites; these are two more.

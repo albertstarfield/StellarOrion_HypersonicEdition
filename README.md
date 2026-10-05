@@ -586,6 +586,13 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      own cell heat fluxes — a reference line the reader compares against directly. The
      correct `(F)` value is 13.80. See **F54**.
    * **One corrupt CSV cell silently removes half the plots.** `make_validation_plots.py:93-98` appends the step to `steps` *before* parsing the row's values, so a single unparsable field leaves `steps` one longer than every column from that field on. Measured: corrupting one `mach` value drops **10 of 21 plots** and mislabels the survivors by one row. The drop is announced on stderr (so it is not silent) but the script still exits 0. See **F62**.
+   * **Four of the 49 executable tests assert nothing.** All 49 pass, but
+     `test_ensure_utf8_locale_idempotent` puts its only assertion inside `if enc:`
+     while `run.py:333-339` sets `LC_ALL` only on a non-UTF-8 host, so **zero
+     assertions run**; `test_hash_determinism` compares `hashlib.sha256(x)` to itself;
+     `test_venv_python_exists_after_bootstrap` asserts a suffix of a path it builds
+     itself; and `test_hash_file_format` documents `hash_file` — **a function `run.py`
+     does not have** — with its body inside `if …exists()`. See **F69**.
    * **The "IRVE-3 Default" figure draws the wrong vehicle.** Its panel is radius
      **2.6522 m (D 5.3044 m)**; the flown `HIAD_custom.surf` is radius **1.8802 m
      (D 3.7604 m)** — **+41.1 % in radius**, +37.4 % axially. The module's

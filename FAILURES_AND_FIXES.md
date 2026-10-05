@@ -4,7 +4,7 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F68 are a second through fourteenth audit passes,
+F1–F15 were found and fixed in the first pass. **F16–F69 are a second through fourteenth audit passes,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
@@ -3950,6 +3950,63 @@ must land in both implementations to avoid the Python and Ada renderings divergi
 **Fix.** Start the next segment at the shell's tangent parameter
 (`theta = gamma - 90°`) rather than at `-gamma`, or sample the union of both ranges.
 
+## F69 — Four of the project's 49 tests assert nothing, and one of them documents a `run.py` function that does not exist
+
+*Class: false assurance — the declared suite passes 49/49 while a quarter of its cases are tautologies*
+
+`tests/test_run_pipeline.py` is part of the only test suite that can execute (F53
+established the other 70 `pytest`-style self-tests cannot run at all). All 49 of its
+tests pass. **Four of them would pass no matter what the code does.**
+
+| test | what it actually asserts | why it cannot fail |
+| :--- | :--- | :--- |
+| `test_ensure_utf8_locale_idempotent` (`:345-350`) | `run._ensure_utf8_locale()` then `if enc: self.assertIn("UTF", …)` | the assertion is **inside** `if enc:`, and `run.py:333-339` sets `LC_ALL` **only** when `locale.getpreferredencoding(False)` is not already UTF-8. On a UTF-8 host it sets nothing, so `os.environ.get("LC_ALL", "")` is `""` and **zero assertions execute** |
+| `test_hash_determinism` (`:52-57`) | `hashlib.sha256(content).hexdigest() == hashlib.sha256(content).hexdigest()` | the two sides are **the same expression evaluated twice**. It never calls `run.py`; it tests CPython's `hashlib` |
+| `test_venv_python_exists_after_bootstrap` (`:63-67`) | `self.assertTrue(str(venv_python).endswith("bin/python3"))` | the test **builds** `_PROJECT_ROOT / "venv" / "python" / "bin" / "python3"` itself and asserts a suffix of the string it just constructed. It never reads `run._VENV_PYTHON`. Its own comment concedes *"This test only validates path resolution, not existence"* — and the path it names does exist, so the assertion was available and simply not made |
+| `test_hash_file_format` (`:42-50`) | reads `.src_hashes.json` and checks each value is 64 chars | its docstring says *"Verify hash_file returns a 64-character hex SHA-256 digest"*, but **`run.py` has no `hash_file` function** — verified: `grep -n "def hash_file" run.py` returns nothing. The whole body is also inside `if hash_file.exists():`, so if the file is absent the test has **zero assertions** and still passes |
+
+**Consequences.**
+1. **The suite's green result overstates what is checked.** A test that cannot fail is
+   worse than no test, because it consumes a slot in the pass count and creates the
+   impression of coverage. This is the same class as F49 (Ada wrappers asserting a local
+   literal) and F42 (a fabricated `pct_of_peak` column) — but here the fabrication is in
+   the *test*, and it inflates a number the project reports.
+2. **The two tests that touch `_ensure_utf8_locale` and the venv path are the ones most
+   likely to matter on a different machine.** A regression that stopped setting a UTF-8
+   locale, or that broke the venv path, would not be caught here — which is exactly when
+   they would matter.
+3. **`test_hash_file_format` is guarding the wrong thing even when it does run.** It
+   inspects a JSON cache, not a hashing function, so it cannot detect a hashing
+   regression. It is also F57's subject from the other side: the same file both
+   *mutates* the manifest (A7) and asserts on it.
+
+**Fix.** Make each of the four call the function under test and assert on its result:
+read `run._VENV_PYTHON` rather than rebuilding the path, assert a non-zero assertion
+count via a sentinel, and either add a real `hash_file` to `run.py` or retarget the test
+at whatever actually performs the hashing. A cheap guard against recurrence: fail a test
+that executes zero assertions.
+
+### The `.venv` docstring-injection corruption does **not** reach the project sources
+
+*Checked and cleared — recorded so it is not re-litigated.* A separate venv at
+`stellarorion_program_proc/.venv` (gitignored, `.gitignore:195`) has **1 365 of 7 253**
+`.py` files across 30 third-party packages failing to compile, apparently from an
+automated docstring-injection pass. The obvious worry is that the same pass touched
+project code.
+
+**Measured across every `.py` in `src/`, `scripts/` and `tools/`:**
+
+| check | result |
+| :--- | :--- |
+| files carrying the injected-docstring signature | **2** — `src/python/pipeline_comparison.py` (1 instance) and `src/utils/sabotage_verifier.py` (1 instance) |
+| files failing to parse under `ast.parse` | **0** |
+
+So the corruption is confined to the gitignored third-party virtualenv, and neither of
+the two project files carrying a similar docstring pattern fails to parse. The
+consequence worth keeping is only that **`pytest` cannot run in `.venv`**, so the
+regression suite must be run under `venv_validation` or the system interpreter — the
+point F53 already records.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -4098,6 +4155,7 @@ the measured series.
 | F66 | presentation | **open** | `render_bo_figures.py:474-475` calls `ax.legend(handles[:2], labels[:2])` after `get_legend_handles_labels()` returned every labelled artist, so all annotations past the first two are dropped from the legend with no equivalent elsewhere. The comment's claim that they are "self-describing in the title" is false — the title is a convergence summary naming neither the phase boundary nor the IRVE-3 baseline |
 | F67 | correctness | **open** | The `BEFORE (IRVE-3 Default — Ada FFI)` panel of `render_optimization_comparison.py` renders radius **2.6522 m (D 5.3044 m)** while the flown `HIAD_custom.surf` is radius **1.8802 m (D 3.7604 m)** — **1.4106× = +41.1 % in radius**, +37.4 % axially — measured with `get_ada_default_profile()` and the real `plot_surf_profile.parse_surf_points`. Its `crosscheck_ada_profile` reports OK because it compares Python against Ada **at the same (default, not flown) input**, so it is structurally incapable of detecting a wrong-input error |
 | F68 | correctness | **open** | `hiad_geometry.py:128-137`'s meridian profile is C0-discontinuous at the shoulder: the gap `r_tor·√2·|cos γ − sin γ|` is **exactly 0.000000 m at `half_cone_deg` 45°** and **0.069881 m at the 60° Ada baseline**. A rendering defect only — SPARTA consumes the separately generated `HIAD_custom.surf`, so the solver is unaffected — but the dashboard figures show a shoulder step the vehicle lacks, and the same θ range is at `stellarorion_pinn_trajectory.adb:466-467` |
+| F69 | false assurance | **open** | Four of the 49 executable tests in `test_run_pipeline.py` assert nothing: `test_ensure_utf8_locale_idempotent` puts its only assertion inside `if enc:` while `run.py:333-339` sets `LC_ALL` only on a non-UTF-8 host (0 assertions run); `test_hash_determinism` compares `hashlib.sha256(x)` to itself; `test_venv_python_exists_after_bootstrap` asserts a suffix of a path it builds itself and never reads `run._VENV_PYTHON`; and `test_hash_file_format` documents "hash_file" — **a function `run.py` does not have** — while its whole body is inside `if …exists()`. All 49 tests pass regardless |
 
 ### Final state after fixes
 
