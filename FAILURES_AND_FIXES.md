@@ -4118,6 +4118,39 @@ results; derive the page header from `max_r` instead of a literal; make the box 
 proportional or state the exaggeration; count the tori actually meshed; and check
 `paraview` exists before creating anything.
 
+### Two queued claims refuted, and one that could not be verified at all
+
+* **`TestSourceHashes` does mutate the real `.src_hashes.json` — refuted.** Read
+  `tests/test_run_pipeline.py:233-253`: the class has a `setUp` (`:244-245`) that reads
+  `run._HASH_FILE` into `self._backup`, and a `tearDown` (`:250-253`) that writes the
+  backup back or `unlink`s the file. The class docstring states the intent outright:
+  *"Backs up and restores the real .src_hashes.json so tests are side-effect free with
+  respect to the repository state."* The only residual exposure is an interrupt between
+  the two hooks, which is a property of the framework rather than of this file. **Not a
+  defect.**
+* **The Python `hiad_geometry` cone angle is its own complement — refuted as a defect.**
+  `src/python/hiad_geometry.py:85-88` reads
+  ```python
+  # Ada uses Gamma_Rad = (90 - Half_Cone_Deg) * Pi / 180 (the complement
+  # angle). [Citation: stellarorion_pinn_trajectory.adb line 393]
+  gamma = np.radians(90.0 - half_cone_deg)
+  ```
+  The complement is deliberate, documented, and cites the Ada line it matches — so it is
+  **not** a Python/Ada divergence, which is how it was reported. The shipped
+  `HIAD_custom.surf` measures a 30.26° half-angle, consistent with `90 − 60 = 30`. The
+  *naming* is arguably confusing, but nothing disagrees with anything. **Not a defect.**
+* **The `add_exception_handlers` detector's false-positive direction — could NOT be
+  verified, and the failed attempt is recorded rather than the claim.** My first harness
+  called `find_procedures_without_handlers(directory_path)`; its actual signature is
+  `find_procedures_without_handlers(content: str)` — it takes the file **contents** as a
+  string. Passing a path returns `[]` for any input, so **both** of my test cases were
+  meaningless and neither the reported false positive nor the reported suppression is
+  confirmed or refuted here. This is the eighth harness error of its class in this audit
+  (see the standing rules), and the rule it adds is narrow and mechanical: **check a
+  function's signature before using it as a test oracle.** No finding is recorded against
+  this module; `add_exception_handlers.py` remains in the not-a-defect record for having
+  zero referrers (F53).
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
