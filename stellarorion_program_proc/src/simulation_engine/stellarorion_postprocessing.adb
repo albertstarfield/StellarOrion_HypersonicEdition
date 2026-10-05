@@ -698,6 +698,29 @@ package body StellarOrion_PostProcessing is
          --  If Guess > 0.0, then X/Guess > 0.0, so
          --  (Guess + X/Guess) / 2 > 0.0.
          pragma Loop_Invariant (Guess > 0.0);
+         --  Loop invariant: L <= Guess <= B, L = min(X, 1.0),
+         --                                    B = max(X, 1.0).
+         --
+         --  WHY this pair matters beyond sqrt itself: it is what bounds the
+         --  Newton step and the returned value, and therefore what makes the
+         --  downstream overflow checks in this package provable (they all
+         --  consume Sqrt_Float's Post bound).
+         --
+         --  Initial Guess = max(X, 1.0) = B, so both hold on entry.
+         --  Preservation is pure algebra -- no convergence argument needed.
+         --  Let y = Guess, y' = (y + X/y) / 2 and note L * B = X:
+         --    upper: y' <= B  <=>  y + X/y <= 2B.
+         --           Since y <= B it suffices that X/y <= B, i.e. X <= B*y.
+         --           As y >= L we get B*y >= B*L = X.  QED.
+         --    lower: y' >= L  <=>  y + X/y >= 2L.
+         --           Since y >= L it suffices that X/y >= L, i.e. X >= L*y.
+         --           As y <= B we get L*y <= L*B = X.  QED.
+         --  Consequence: Guess + X/Guess <= 2*max(X, 1.0) <= 2.0e30 given
+         --  the Pre bound X <= 1.0e30, far below Float'Last (~3.4e38), so
+         --  the step cannot overflow.
+         --  [Citation: Newton 1671; Burden & Faires, Numerical Analysis, Sec 2.1]
+         pragma Loop_Invariant (Guess >= Float'Min (X, 1.0));
+         pragma Loop_Invariant (Guess <= Float'Max (X, 1.0));
          --  APPLICATION: Newton step y_{n+1} = (y_n + X/y_n) / 2
          --  X/Guess is bounded because Guess > 0.0 and X is bounded
          --  by physical constraints (sqrt of physical quantity)
@@ -707,6 +730,9 @@ package body StellarOrion_PostProcessing is
             Guess := (Guess + X_Div) / 2.0;
          end;
       end loop;
+      --  Exit: the upper invariant is exactly the Post bound.
+      pragma Assert (Guess <= Float'Max (X, 1.0));
+      pragma Assert (Guess >= 0.0);
       return Guess;
    end Sqrt_Float;
 

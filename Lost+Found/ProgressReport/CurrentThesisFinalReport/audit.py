@@ -1112,22 +1112,22 @@ def dim_spelling() -> None:
 
 # -------------------------------------------------------------- dimension 40
 def dim_numeric_range() -> None:
-    """A numeric range takes an en dash, not a hyphen.
+    """A numeric range takes a single hyphen, never a double dash.
 
-    An ISO date is not a range, so a hyphen inside a date is left alone: the
-    official run date 2026-09-26 appears in several captions.
+    Goal revision 6 bans '--' (the LaTeX double dash that renders as an en
+    dash) and any em dash in the source and in the rendered PDF, so ranges
+    such as 5-10 use a plain hyphen. The check flags any surviving
+    double-dash range, which would violate that rule.
     """
     bad = []
     for src in BUILD_INPUTS:
         st = src.read_text(encoding="utf-8")
-        for m in re.finditer(r"(?<![-\d])(\d{1,3})-(\d{1,3})(?![-\d])", st):
+        for m in re.finditer(r"(?<![-\d])(\d{1,3})--(\d{1,3})(?![-\d])", st):
             ctx = st[max(0, m.start() - 20):m.end() + 12].replace("\n", " ")
-            if re.search(r"\d{4}-", st[max(0, m.start() - 5):m.start()]):
-                continue
             bad.append((src.name, m.group(0), ctx))
     for n, g, c in bad[:4]:
         print(f"         {n}: {g!r} in {c!r}")
-    check("dash/numeric-range", not bad, f"{len(bad)} hyphenated ranges")
+    check("dash/numeric-range", not bad, f"{len(bad)} double-dash ranges")
 
 
 # -------------------------------------------------------------- dimension 41

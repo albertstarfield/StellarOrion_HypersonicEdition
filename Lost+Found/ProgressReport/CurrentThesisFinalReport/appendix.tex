@@ -18,7 +18,7 @@ Table~\ref{tab:constants} lists the physical constants as defined in \texttt{\se
 \hline
 \textbf{Constant} & \textbf{Symbol} & \textbf{Value} & \textbf{Unit} \\
 \hline
-Stefan--Boltzmann & $\sigma_B$ & $5.670374419 \times 10^{-8}$ & W m$^{-2}$ K$^{-4}$ \\
+Stefan-Boltzmann & $\sigma_B$ & $5.670374419 \times 10^{-8}$ & W m$^{-2}$ K$^{-4}$ \\
 Boltzmann & $k_B$ & $1.380649 \times 10^{-23}$ & J K$^{-1}$ \\
 Avogadro & $N_A$ & $6.02214076 \times 10^{23}$ & mol$^{-1}$ \\
 Standard gravity & $g_0$ & $9.80665$ & m s$^{-2}$ \\
@@ -28,7 +28,7 @@ Specific heat ratio (air) & $\gamma_{\text{air}}$ & $1.4$ & n/a \\
 Molecular diameter (air) & $d$ & $3.7 \times 10^{-10}$ & m \\
 Prandtl number (air) & $\text{Pr}$ & $0.71$ & n/a \\
 Sutherland constant & $S$ & $110.4$ & K \\
-Sutton--Graves coefficient & $C_{SG}$ & $1.83 \times 10^{-4}$ & W m$^{-2}$ (kg m$^{-3}$)$^{-1/2}$ (m s$^{-1}$)$^{-3}$ \\
+Sutton-Graves coefficient & $C_{SG}$ & $1.83 \times 10^{-4}$ & W m$^{-2}$ (kg m$^{-3}$)$^{-1/2}$ (m s$^{-1}$)$^{-3}$ \\
 Reference viscosity (air) & $\mu_{\text{ref}}$ & $1.716 \times 10^{-5}$ & Pa s \\
 Sutherland reference temperature & $T_{\text{ref}}$ & $273.15$ & K \\
 Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J kg$^{-1}$ K$^{-1}$ \\
@@ -185,7 +185,7 @@ The StellarOrion simulation engine is implemented in Ada and organized into the 
 
 \begin{itemize}
     \item \texttt{\seqsplit{stellarorion\_types.ads}}: physical constants, type definitions, vehicle and flight parameter records
-    \item \texttt{\seqsplit{stellarorion\_physics.ads/adb}}: aerothermodynamic calculations (mean free path, Knudsen number, Sutton--Graves heat flux, Fay--Riddell correlation, radiative equilibrium, ballistic coefficient,\,g-load, trajectory profiling)
+    \item \texttt{\seqsplit{stellarorion\_physics.ads/adb}}: aerothermodynamic calculations (mean free path, Knudsen number, Sutton-Graves heat flux, Fay-Riddell correlation, radiative equilibrium, ballistic coefficient,\,g-load, trajectory profiling)
     \item \texttt{\seqsplit{stellarorion\_geometry.ads/adb}}: pure-math aeroshell geometry (frontal area, shield mass, geometry validation)
     \item \texttt{\seqsplit{stellarorion\_sparta.ads/adb}}: SPARTA DSMC surface generation, solver input scripting, Docker execution and result parsing
     \item \texttt{\seqsplit{stellarorion\_optimization.ads/adb}}: design of experiments (LHS, CCD) and the Bayesian optimization cost function
@@ -211,7 +211,7 @@ Table~\ref{tab:validation_full} provides the complete validation comparison betw
 \small
 \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|}
 \hline
-\textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay--Riddell)} & \textbf{StellarOrion\allowbreak{} (This Work)} & \textbf{SO Error (\%)} \\
+\textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay-Riddell)} & \textbf{StellarOrion\allowbreak{} (This Work)} & \textbf{SO Error (\%)} \\
 \hline
 Peak heat flux ($\dot{q}$) & 14.36 W/cm\textsuperscript{2} & 13.83 W/cm\textsuperscript{2} & 16.14 W/cm\textsuperscript{2} & $+12.4$ \\
 Total heat load ($Q$) & 195.06 J/cm\textsuperscript{2} & 195.17 J/cm\textsuperscript{2} & 165.72 J/cm\textsuperscript{2} & $-15.0$ \\
@@ -224,7 +224,7 @@ Toroid radius & 0.135 m & 0.135 m & 0.135 m & 0 \\
 \hline
 \end{tabularx}
 \normalsize
-\caption*{Flight data from the IRVE-3 flight reconstruction ~\cite{dillman2014irve3flight,old2013irve3postflight} and \cite{rapisarda2023mdao};  MDAO values are the Fay--Riddell reconstruction; StellarOrion values are from the SPARTA DSMC simulation at grid factor 0.7 (single trajectory point, step 2200). The MDAO column is a reference model, not a result of this work. The StellarOrion heat load and deceleration, being solver-resolved, fall below the trajectory-integrated flight values, whereas the StellarOrion heat flux is a Sutton--Graves correlation value evaluated at the run condition and therefore rises above the flight value.}
+\caption*{Flight data from the IRVE-3 flight reconstruction ~\cite{dillman2014irve3flight,old2013irve3postflight} and \cite{rapisarda2023mdao};  MDAO values are the Fay-Riddell reconstruction; StellarOrion values are from the SPARTA DSMC simulation at grid factor 0.7 (single trajectory point, step 2200). The MDAO column is a reference model, not a result of this work. The StellarOrion heat load and deceleration, being solver-resolved, fall below the trajectory-integrated flight values, whereas the StellarOrion heat flux is a Sutton-Graves correlation value evaluated at the run condition and therefore rises above the flight value.}
 \end{table}
 
 \section{Grid Independence Study Results}
@@ -251,9 +251,9 @@ Table~\ref{tab:grid_study} summarizes the grid independence study results that e
 \chapter{Mathematical Derivation Details}
 \label{app:derivations}
 
-\section{Sutton--Graves Heat Flux Derivation}
+\section{Sutton-Graves Heat Flux Derivation}
 
-The Sutton--Graves stagnation-point convective heat flux correlation~\cite{sutton1971gravesh} is given by:
+The Sutton-Graves stagnation-point convective heat flux correlation~\cite{sutton1971gravesh} is given by:
 \begin{equation}
     \dot{q} = C_{SG} \sqrt{\frac{\rho_\infty}{R_N}} \, V_\infty^3
     \label{eq:sg_derivation}
@@ -290,12 +290,12 @@ The mean free path for a gas of hard-sphere molecules is~\cite{bird1994molecular
 
 \noindent where $L$ is the characteristic length (aeroshell diameter, $D = 3.0$\,m).
 
-\section{Fay--Riddell Stagnation-Point Heat Transfer}
+\section{Fay-Riddell Stagnation-Point Heat Transfer}
 
-The Fay--Riddell equation~\cite{fay1958stagnation} provides the theoretically rigorous stagnation-point heat flux for a reacting, dissociated boundary layer:
+The Fay-Riddell equation~\cite{fay1958stagnation} provides the theoretically rigorous stagnation-point heat flux for a reacting, dissociated boundary layer:
 \begin{equation}
     \dot{q}_s = 0.763 \, \text{Pr}^{-0.6} \, (\rho_e \mu_e)^{0.4} \, (\rho_w \mu_w)^{0.1} \, \sqrt{\left(\frac{du_e}{dx}\right)_s} \, (h_s - h_w)
     \label{eq:fay_riddell}
 \end{equation}
 
-\noindent Unlike the Sutton--Graves correlation, the Fay--Riddell formulation accounts for the actual shock layer structure, chemical non-equilibrium, and catalytic wall effects, making it more physically accurate for HIAD geometries.
+\noindent Unlike the Sutton-Graves correlation, the Fay-Riddell formulation accounts for the actual shock layer structure, chemical non-equilibrium, and catalytic wall effects, making it more physically accurate for HIAD geometries.

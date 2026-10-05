@@ -369,13 +369,28 @@ package StellarOrion_PostProcessing is
    --  Newton's method square root [dimensionless].
    --  20 iterations gives ~15 decimal digits (single precision).
    --
-   --  PRE: X >= 0.0.
-   --  POST: Result >= 0.0.
+   --  PRE:  X in [0.0, 1.0e30].
+   --        The upper bound is NOT cosmetic: Newton's step computes
+   --        (Guess + X/Guess) / 2, and with Guess <= max(X, 1.0) the sum is
+   --        bounded by 2*max(X, 1.0).  Without a ceiling on X that sum is
+   --        unbounded and the overflow check at the step is unprovable
+   --        (this was gnatprove finding at postprocessing.adb:705).
+   --        Every caller in this package passes a physical quantity well
+   --        below 1.0e30 (density ratios, Reynolds numbers, variances).
+   --  POST: Result >= 0.0
+   --        and Result <= max(X, 1.0).
+   --        The upper bound is DERIVED FROM THE ARGUMENT, not a fixed
+   --        constant, so it stays tight after constant folding at each call
+   --        site (e.g. X = SIM_DENSITY_KGM3/SIM_NOSE_RADIUS_M < 1.0 proves
+   --        Result <= 1.0, which is what downstream products need).
+   --        It holds because Newton's iteration is monotone once
+   --        Guess >= sqrt(X), which is exactly the loop invariant.
    --
-   --  Source: Standard numerical analysis (Newton 1671)
+   --  [Citation: Newton 1671; Burden & Faires, Numerical Analysis, Sec 2.1]
    function Sqrt_Float (X : Float) return Float
-     with Pre  => X >= 0.0,
-          Post => Sqrt_Float'Result >= 0.0;
+     with Pre  => X >= 0.0 and X <= 1.0e30,
+          Post => Sqrt_Float'Result >= 0.0
+                  and Sqrt_Float'Result <= Float'Max (X, 1.0);
 
    -- ===================================================================
    --  Validation Metrics (Rapisarda Tables 4.9, 4.10)

@@ -2,7 +2,7 @@
 % tocloft MUST be loaded before hyperref: hyperref redefines \@starttoc, and
 % tocloft tests for exactly that and bails out half-configured when it finds
 % it ("\@starttoc has already been redefined; tocloft bailing"). Loading it
-% here -- before every other package that could touch \@starttoc -- is the fix.
+% here, before every other package that could touch \@starttoc, is the fix.
 \usepackage{tocloft}
 % a4paper is stated EXPLICITLY here: loading geometry after the class
 % resets the paper size to its own default (letter), so the class option
@@ -15,7 +15,7 @@
 % screen-reader visual defect in a submitted thesis.
 \usepackage[pdftex,bookmarks=true,unicode=true,pdfusetitle,bookmarksnumbered=true,bookmarksopen=true,breaklinks=true,hidelinks,backref=section,colorlinks=false]{hyperref}
 
-% hyphenat: the `htt` option (hyphenation inside \texttt) was removed -- it
+% hyphenat: the `htt` option (hyphenation inside \texttt) was removed, it
 % is what produced all 31 "Font shape T1/cmtt/... undefined" warnings, and the
 % long monospace paths that motivated it are already broken with \seqsplit
 % (loaded below, preamble.tex:15).
@@ -43,7 +43,7 @@
 % every one of those alignments while keeping the cells readable.
 \setlength{\tabcolsep}{4pt}
 \tolerance=2000
-% ---------------------------------------------------------------------------
+% ===========================================================================
 % Box-warning thresholds. Documented decision, not a blanket suppression.
 %
 % TeX reports an UNDERFULL \hbox when badness > \hbadness. Badness measures how
@@ -74,7 +74,7 @@
 % Raising \hbadness to 10000 is therefore the standard remedy and changes no
 % rendered output: it alters only whether TeX PRINTS a message it has already
 % resolved typographically.
-% ---------------------------------------------------------------------------
+% ===========================================================================
 \hbadness=10000
 % \BeginAccSupp{ActualText=...}: screen-reader alt text
                              % for raster figures (WCAG 1.1.1 non-text content)
@@ -231,7 +231,7 @@
       % MEASURED PROBLEM BEING FIXED: with \clubpenalty150 / \widowpenalty150 an
       % entry is free to split across a page, and the last entry did exactly
       % that. Page 187 ended mid-reference and page 188 carried the single line
-      % "Physics, 401, 109009. doi: 10.1016/j.jcp.2019.109009" alone -- a
+      % "Physics, 401, 109009. doi: 10.1016/j.jcp.2019.109009" alone, a
       % 998-ink-pixel page, the lowest of the whole document.
       %
       % A reference entry is also the natural unit to keep whole, so entries are
