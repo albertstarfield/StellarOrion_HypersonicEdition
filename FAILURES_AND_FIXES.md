@@ -4,14 +4,15 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F72 are a second through seventeenth audit passes,
+F1–F15 were found and fixed in the first pass. **F16–F73 are a second through eighteenth audit passes,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
 optimiser first. F24–F31 come from the thread-3b rescan of the previously unaudited
 PINN, checkpoint and status subsystems, and F32–F36 from the thread-3c pass over the
-Kriging, surface-comparison and watchdog paths, and F37–F59 from the thread-3d/3e/3f/3g/3h/3i/3j/3k passes over
-the scripts, the sidecar, and the Ada atmosphere, status and checkpoint units. Read **"Still open after thread 3"**
+Kriging, surface-comparison and watchdog paths, and F37–F73 from the thread-3d/3e/3f/3g/3h/3i/3j/3k/3l/3m/3n/3o/3p/3q/3r/3s/3t passes over
+the scripts, the sidecar, the Ada atmosphere, status and checkpoint units, the tests, and the
+root documents. Read **"Still open after thread 3"** Read **"Still open after thread 3"**
 before relying on any number below.
 
 ---
@@ -4186,6 +4187,36 @@ is the opposite of what the underscore convention signals.
 **Fix.** Either call `tex_available()` before `setup_tex_fonts()` so the LaTeX path is gated
 on an explicit check, or delete it. Rename the module if it is meant to be shared.
 
+## F73 — Three further root documents still assert the reference values this audit disproved; a fourth was already correct and was deliberately left alone
+
+*Class: provenance — the same 14.36/195.06 conflation as F12/F19/F41/F54, in documents the earlier passes never touched*
+
+Threads 3-3s corrected `FAILURES_AND_FIXES.md`, `README.md` and `SummaryProcessingPipeline.md`.
+A sweep of **every** root `.md` for the literals this audit has disproved shows **three more
+documents carry them un-flagged**, and one that does not.
+
+| root document | lines | stale assertions found |
+| :--- | ---: | :--- |
+| `DERIVATION.md` | 410 | `:97` — *"compared against the IRVE-3 flight measurement of **14.36 W/cm²**"*. It also tabulates `ρ∞ ≈ 6.9674e-4 kg/m³ (code baseline)` and `V∞ = 2700 m/s` — the single-point condition F22 showed is StellarOrion's **own** output presented as the reference |
+| `PEER_REVIEW_AUDIT.md` | 591 | `:156` *"Validated: 12.20 W/cm² (SG at code baseline) vs IRVE-3 14.36 W/cm²"*; `:471-472` a delta table with **14.36** as the flight reference and **12.20** as the model value; `:476` explains the −15 % gap via `ρ=6.9674e-4, V=2700`. **Both** the reference and the model value are stale — F19 measured the model peak as **12.82 W/cm²** and the flight value as **13.80** |
+| `NextImprovementPlan.md` | 5 854 | `:266` *"IRVE-3 flight target \| 14.36 W/cm² \| **NASA TP-2013-4012**"* — the F12/F19 conflation **with the citation attached**; `:304`, `:421`, `:694`, `:723`, `:798` propagate 14.36 through noise-ratio arithmetic (`182.5/14.36 ≈ 12.7×`); `:696`, `:729-730` use 195.06 and **165.72** as the load references; `:1741` carries `IRVE3_BASELINE … peak heat 14.361` (F29's copy); `:2313` records *"6 tori"* as an IRVE-3 property (F61) |
+| `HIAD_IRVE3_Baseline.md` | 79 | **none — and this file is already correct.** `:31-32` separate the two sources explicitly (*"Flight: NASA/TP-2013-4012; Model: Rapisarda Table 4.10"* for 13.8/188 versus 14.36/195.06), and `:48` labels 14.36 *"Rapisarda Table 4.10 (MDAO)"*. **Left untouched deliberately** — it is the counter-example proving this is a provenance error, not a preference |
+
+**What was changed, and what was not.** A correction banner naming the true value and its
+source of truth was inserted into each of the three affected files, and every offending line
+carries an inline `<!-- [REF-CORRECTED] -->` pointer. **No original sentence was rewritten**
+— the stale text stays visible so the audit trail remains readable, the rule this log has
+followed for `README.md` and `FAILURES_AND_FIXES.md` throughout.
+
+**Why this matters more than a documentation nit.** `NextImprovementPlan.md:266` does not
+merely use the wrong number: it attributes it to *the very document F12 established says it
+does not come from*, in the sentence that defines the project's validation target. A reader
+following that plan calibrates against a Rapisarda model value labelled as NASA flight.
+
+**Fix.** Replace the literals with the `IRVE3_REFERENCE` (F)/(R)/(M) values, and stop using
+`ρ=6.9674e-4, V=2700` as a reference — it is the run's own operating point, not a flight
+measurement.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -4338,6 +4369,7 @@ the measured series.
 | F70 | presentation | **open** | `make_vtu_visualization.py:137-139`/`:178` label `points[:,2]` **"Axial"** and `points[:,0]` "Flow Direction", but measured on `surf_2200.vtu` column 0 spans **1.2693 m — exactly the vehicle's axial length** while columns 1 and 2 span ≈ the 3.76 m diameter, so the axial axis is mislabelled. Separately `render_bo_3d_plot.py:902` and `render_geometry_grid.py:661` format `imp.get('cd_pct', float('nan'))` straight into **published figure titles**, so a missing key prints `Cd improvement = nan%` and still returns 0. A claimed 87-vs-88 panel mismatch was **refuted** — the declared constants are self-consistent |
 | F71 | correctness | **open** | The published optimisation optimum `R_N = 2.994005816519673` sits **0.2398 % of the `[0.5, 3.0]` interval from its own upper bound** and is drawn as an interior optimum with no boundary annotation. Four figure defects confirmed by reading: `plot_hiad_3d.py:210` hard-codes `D=3.0m` while `:218` on the same page prints `Max Radius=1.8802 m` (⇒ D 3.7604 m, **+25.35 %** self-contradiction); `:267` sets a non-proportional `aspectratio {x:1,y:1,z:1.2}`; `render_optimization_comparison.py` prints "6 tori" while its `:709` `continue` guard can skip iterations; and `make_vtu_visualization.py:286` creates `plots/` **before** `:290` lists `paraview/`, with no isdir guard. **Refuted:** the reported cost anomaly does not exist — `optimized.cost` equals `min(history)` exactly |
 | F72 | dead code | **open** | `_tex_config.tex_available()` — the predicate that answers "is a LaTeX toolchain present?" — has **no call site anywhere in the repository**, while `setup_tex_fonts` is called by `validation_pipeline.py` and `generate_outputs.py`. The capability is implemented and never used. Also noted: `_tex_config` is a leading-underscore private module imported across module boundaries. This is the last file in `_proc` whose coverage is now stated |
+| F73 | provenance | **open** | Three more root documents assert the disproved references and were never updated by the earlier passes: `DERIVATION.md:97`; `PEER_REVIEW_AUDIT.md:156,471-476` (14.36 as flight **and** 12.20 as the model — both stale; measured 13.80 and 12.82); and `NextImprovementPlan.md:266`, which attributes 14.36 to **NASA TP-2013-4012** in the sentence defining the validation target, plus 195.06/165.72/6-tori/14.361 through its arithmetic. `HIAD_IRVE3_Baseline.md` was checked and is **already correct**, so it was left untouched as the counter-example |
 
 ### Final state after fixes
 

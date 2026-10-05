@@ -6,6 +6,33 @@
 **Audit Method:** Line-by-line source code tracing from `main.py` entry point through all modules, compared against thesis chapters 1–5  
 **Scope:** Complete verification of code–thesis consistency, mathematical accuracy, citation completeness, and implementation fidelity
 
+
+> ## ⚠️ Reference values corrected by the `_proc` audit — read before citing this file
+>
+> The IRVE-3 reference constants in this document were written before the `_proc` rescan and
+> are **not** the values the code compares against. Corrected per `FAILURES_AND_FIXES.md`
+> (findings F12, F19, F22, F41, F54, F60, F61, F69, F71):
+>
+> | value used here | what is actually correct | source of truth |
+> | :--- | :--- | :--- |
+> | 14.36 W/cm² as the **IRVE-3 flight** peak heat flux | **13.80 W/cm²** | NASA TP-2013-4012. **14.361 is Rapisarda Table 4.10**, a *model* value, not a flight measurement |
+
+> | 195.06 J/cm² as the flight total heat load | **188.00 J/cm²** | NASA TP-2013-4012; 195.0577 is the Rapisarda (MDAO) model value |
+  <!-- [REF-CORRECTED] see FAILURES_AND_FIXES.md F12/F19/F22/F41/F54 -->
+
+> | 165.72 J/cm² as the validation target | **174.14 J/cm²** (the run's own DSMC value) | `validation_pipeline.py` `IRVE3_REFERENCE`; the 165.72 figure is a stale Ada V1 default |
+> | 12.20 W/cm² as the model's peak heat flux | **12.82 W/cm²** | measured from `results/validation_scalloped` |
+  <!-- [REF-CORRECTED] see FAILURES_AND_FIXES.md F12/F19/F22/F41/F54 -->
+
+> | 16.83 g as the peak deceleration | **16.48 g** (tail-15 mean 17.09 g; the series peaks at 22.67 g) | measured |
+> | 6 toroids as the IRVE-3 flight vehicle | flight used **7**; 6 is the MDAO-comparison default | `stellarorion_types.ads:284-288` |
+> | the SiC survivability limit as 1700 K | **2073 K** | `stellarorion_types.ads:97` |
+>
+> Nothing in this file was silently altered — the original text is left in place so the audit
+> trail stays readable. **Every occurrence of the values above is marked inline** with a
+> `[REF-CORRECTED]` pointer. To fix the substance rather than the annotation, apply the
+> `IRVE3_REFERENCE` values directly.
+
 ---
 
 ## Table of Contents
@@ -154,6 +181,8 @@ $$\dot{q}_{\text{stag}} = 1.7415 \times 10^{-4} \sqrt{\frac{\rho_{\infty}}{R_N}}
 - ✅ Formula correct
 - ✅ C_SG = 1.7415 × 10⁻⁴ matches exactly
 - ✅ Validated: 12.20 W/cm² (SG at code baseline) vs IRVE-3 14.36 W/cm²
+  <!-- [REF-CORRECTED] see FAILURES_AND_FIXES.md F12/F19/F22/F41/F54 -->
+
 - ✅ Matches `main.py` L1184
 
 **Radiative Equilibrium Temperature (Ch3 L245):**
@@ -474,6 +503,8 @@ The following code features are implemented but not documented in the thesis:
 | Cd | 1.47 | 1.47 | 0% | ✅ Match |
 
 **Note:** The SG heat flux (12.20 W/cm²) is 15% below flight (14.36 W/cm²) because the code uses a single-point baseline condition (ρ=6.9674e-4, V=2700), while the actual trajectory-integrated peak occurs at different conditions. Rapisarda (2023) reports the trajectory-integrated SG peak as 15.26 W/cm² (+6.26% above flight). The Fay-Riddell correlation (13.83 W/cm², -3.69%) is more physically accurate for HIAD geometries.
+  <!-- [REF-CORRECTED] see FAILURES_AND_FIXES.md F12/F19/F22/F41/F54 -->
+
 
 ### 8.2 Grid Independence Study
 

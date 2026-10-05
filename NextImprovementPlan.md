@@ -4,6 +4,33 @@
 **Date:** September 4, 2026
 **Version:** 4.63 (Audit Cycle 316 — cyclic until user says stop)
 
+
+> ## ⚠️ Reference values corrected by the `_proc` audit — read before citing this file
+>
+> The IRVE-3 reference constants in this document were written before the `_proc` rescan and
+> are **not** the values the code compares against. Corrected per `FAILURES_AND_FIXES.md`
+> (findings F12, F19, F22, F41, F54, F60, F61, F69, F71):
+>
+> | value used here | what is actually correct | source of truth |
+> | :--- | :--- | :--- |
+> | 14.36 W/cm² as the **IRVE-3 flight** peak heat flux | **13.80 W/cm²** | NASA TP-2013-4012. **14.361 is Rapisarda Table 4.10**, a *model* value, not a flight measurement |
+
+> | 195.06 J/cm² as the flight total heat load | **188.00 J/cm²** | NASA TP-2013-4012; 195.0577 is the Rapisarda (MDAO) model value |
+  <!-- [REF-CORRECTED] see FAILURES_AND_FIXES.md F12/F19/F22/F41/F54 -->
+
+> | 165.72 J/cm² as the validation target | **174.14 J/cm²** (the run's own DSMC value) | `validation_pipeline.py` `IRVE3_REFERENCE`; the 165.72 figure is a stale Ada V1 default |
+  <!-- [REF-CORRECTED] see FAILURES_AND_FIXES.md F12/F19/F22/F41/F54 -->
+
+> | 12.20 W/cm² as the model's peak heat flux | **12.82 W/cm²** | measured from `results/validation_scalloped` |
+> | 16.83 g as the peak deceleration | **16.48 g** (tail-15 mean 17.09 g; the series peaks at 22.67 g) | measured |
+> | 6 toroids as the IRVE-3 flight vehicle | flight used **7**; 6 is the MDAO-comparison default | `stellarorion_types.ads:284-288` |
+> | the SiC survivability limit as 1700 K | **2073 K** | `stellarorion_types.ads:97` |
+>
+> Nothing in this file was silently altered — the original text is left in place so the audit
+> trail stays readable. **Every occurrence of the values above is marked inline** with a
+> `[REF-CORRECTED]` pointer. To fix the substance rather than the annotation, apply the
+> `IRVE3_REFERENCE` values directly.
+
 ---
 
 ## Table of Contents
@@ -684,6 +711,8 @@ Run 3 high-fidelity SPARTA samples to validate the pipeline end-to-end.
 
 For each sample, compare:
 1. **Raw DSMC peak** vs **Kriging-smoothed peak** vs **IRVE-3 flight (14.36 W/cm²)**
+  <!-- [REF-CORRECTED] see FAILURES_AND_FIXES.md F12/F19/F22/F41/F54 -->
+
 2. **PINN prediction** vs **Kriging-smoothed DSMC**
 3. **Bayes Opt prediction** vs **PINN prediction**
 
@@ -721,6 +750,8 @@ For each sample, compare:
 > - **Heat flux:** SPARTA raw surf dumps `f_1[3]` and the Sutton-Graves `Heat_Flux_Wm2`
 >   (`stellarorion_physics.ads` line 182) are in **W/m²**. The validation/flight values
 >   (14.36 W/cm², 182.5 W/cm²) are in **W/cm²** (÷10,000 conversion). Both are stored
+  <!-- [REF-CORRECTED] see FAILURES_AND_FIXES.md F12/F19/F22/F41/F54 -->
+
 >   separately in `Metrics` (`Stag_Heat_Flux_Wm2` and `Stag_Heat_Flux_Wcm2`,
 >   `stellarorion_types.ads` lines 325–326), so no conflation occurs in the Ada side.
 > - **Total heat load:** The Bayes Opt's `Results.Total_Heat_Load` (`stellarorion_optimization.adb`

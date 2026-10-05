@@ -13,7 +13,7 @@ pipeline is defined in the source.
 > surrogate (scikit-learn), JSON output, and the post-run render. Every geometry formula,
 > cost term, and penalty is evaluated in Ada.
 
-> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F72 before trusting any number below
+> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F73 before trusting any number below
 >
 > Independent audits of `_proc` on 2026-10-05 left **forty-nine findings open**: F16–F22
 > from the DSMC/report-path pass, F24–F31 from a rescan of the PINN, checkpoint and status
@@ -70,7 +70,8 @@ pipeline is defined in the source.
 > | **F69** | Any claim that the test suite's 49/49 pass means the code is exercised. Four of those tests assert nothing — one executes zero assertions, one compares a hash to itself, one asserts a property of a string it just built, and one documents a `run.py` function that does not exist. |
 > | **F70** | The heat-flux figure's axis labels and two published titles: the "Axial" axis is actually a diameter, and a missing `cd_pct` renders as `nan%` in a title. |
 > | **F71** | The nose radius the optimisation reports: it sits 0.24 % of the interval from its own upper bound, so treat it as boundary-limited rather than discovered. |
-> | **F72** | Nothing numeric — but the LaTeX-availability check is never made, so the TeX path is untested by construction. |
+> | **F72** | Nothing numeric — but the LaTeX-availability check is never made, so the TeX path is untested by construction. |> | **F73** | Any reference value quoted from `DERIVATION.md`, `PEER_REVIEW_AUDIT.md` or `NextImprovementPlan.md` — all three still assert 14.36 W/cm² as IRVE-3 flight. `HIAD_IRVE3_Baseline.md` is the one that gets it right. |
+
 > | **F56** | The sidecar you are reading about is not the sidecar that runs. F44's traversal, state-forgery and loopback caveats were measured on `sidecar_server.py`, which no launcher starts; `run.py:88` starts `src/ui/sidecar_ui.py`, which binds `0.0.0.0` unconditionally and accepts unauthenticated `POST /api/start`. |
 > | **F53** | Any claim that the Python side is self-tested. 70 module-level `pytest`-style self-tests across 9 modules exist and are syntactically valid, but `pytest` is not installed and not declared, so `unittest` collects **0** of them. The 49 that do run are the whole declared suite.
 > | **F54** | The heat-flux reference line in `make_vtu_visualization.py` and the `RAP_Q_MAX_WCM2` constant in `compare_validation.py`: both attribute 14.36 W/cm² to IRVE-3 flight, where the `(F)` group says 13.80. F41 found three such sites; these are two more.
