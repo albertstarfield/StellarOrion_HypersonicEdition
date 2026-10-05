@@ -4,7 +4,7 @@ Every failure encountered while running the validation simulation and the optimi
 pipeline on 2026-10-04, with root cause, evidence, the fix applied, and how the fix was
 verified. Nothing here is a theoretical concern: each entry was observed in a real run.
 
-F1–F15 were found and fixed in the first pass. **F16–F63 are a second through twelfth audit passes,
+F1–F15 were found and fixed in the first pass. **F16–F66 are a second through thirteenth audit passes,
 independent audit of `_proc` and are OPEN** — they are measurements and decision
 requests, deliberately not code changes, because F18's resolution is a physics decision
 and F16/F17/F20/F21/F22 all require re-running the three validation runs and the
@@ -3767,6 +3767,109 @@ record the removed filenames in the run log so the action is auditable. This is 
 instance of the log's standing rule: a cleanup is only correct once every *consumer* of
 what it deletes has been located, not just every *producer*.
 
+## F64 — The geometry verification tool reports a 25.35 % oversize and exits 0
+
+*Class: false assurance — a checker that cannot fail*
+
+`tools/plot_surf_profile.py` is the project's visual geometry check. Its own header
+(`:3`, `:8`) says it renders the surf the DSMC solver consumed "overlaid with the
+design-intent" and that the profile "matches the parametric design intent within plotting
+resolution". It measures, prints, and never grades.
+
+**Run directly, this is its complete output of interest:**
+
+```
+[CHECK] Measured max diameter = 3.7604 m  (design: 3.0 m)
+[DONE] Visual verification artifacts generated.
+EXIT=0
+```
+
+**+25.35 %** on the primary dimension, and the run succeeds. Reading the code confirms
+there is nothing else to catch it:
+
+| location | what it does |
+| :--- | :--- |
+| `:200` | `print(f"[CHECK] Measured max diameter = {d_measured:.4f} m  (design: 3.0 m)")` — the only mention of `design`, and it is a *string in a print* |
+| `:83`, `:268` | the only two `raise SystemExit(1)` sites, both parse/IO failures |
+| `:259` | `print("[DONE] Visual verification artifacts generated.")` |
+
+There is no tolerance, no comparison, no warning, no non-zero exit anywhere between the
+measurement and the end of `main()`. The only signal is the `[CHECK]` prefix, which a
+reader scanning for `PASS`/`FAIL` will not catch.
+
+This matters beyond the one figure. F63 established that the validation run's Step 12
+deletes `HIAD_custom.surf`, so this tool is the check on the one file whose retention
+matters — and it cannot fail.
+
+**Fix.** Give `main()` a real threshold (the design tolerance the header already claims)
+and return non-zero on violation, so the tool can gate a pipeline. Until then, a
+`[CHECK]` line showing a material deviation is not a verification.
+
+## F65 — `pyfluent_test.py` exits 0 when the Fluent handshake fails, a second false pass independent of F28
+
+*Class: correctness — a second false pass in the Python half of the CFD test pair*
+
+`src/python/pyfluent_test.py:324-326`, the entire exit path of `main()`:
+
+```python
+    if result["status"] == "error":
+        raise SystemExit(1)
+    raise SystemExit(0)
+```
+
+**Any** status other than the literal string `"error"` exits 0. A failed handshake does
+not set that status — it appends a message to `result["message"]` and records
+`handshake=False` while leaving `status` at `"success"`. So the run reports success with a
+Fluent session it never established.
+
+This is **not** a duplicate of F28. F28 is the *Ada* side
+(`stellarorion_test_modes.adb:728` writing `Status_Completed, 1.0` outside the `if
+Success` block, where `Success` means *created* not *exited 0*). This is a separate defect
+in a separate file, on a separate code path, in the Python half.
+
+The pairing is asymmetric, which is what makes it worth recording: `pyansys_test.py`
+**does not** have this bug — every one of its failure paths returns
+`status="error"`, so it exits 1 correctly (verified live in an earlier pass). The Fluent
+half is the one that cannot fail.
+
+**Fix.** Test the specific condition (`handshake`, `solver_started`) rather than the
+aggregate status string, and return non-zero if any required stage is unconfirmed.
+
+## F66 — The Bayesian-optimisation figure truncates its own legend and the comment justifying it is false
+
+*Class: presentation — silently dropped annotations on a published figure*
+
+`scripts/render_bo_figures.py:472-475`:
+
+```python
+    # Show only the two series in the legend box; the vertical/horizontal guide
+    # lines are self-describing in the title and would crowd a 10-inch frame.
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles[:2], labels[:2], fontsize=8, loc="upper right")
+```
+
+`ax.get_legend_handles_labels()` returns **every** labelled artist on the axes; the code
+then hands `legend()` only the first two. Every subsequent labelled annotation is
+**dropped from the legend** — silently, and with no equivalent text elsewhere in the
+figure.
+
+**The comment's justification does not hold.** It claims the dropped guide lines are
+"self-describing in the title". The title this function sets is a convergence summary
+("70 Evaluations / 20 Latin-Hypercube initial points + 50 GP/EI iterations") — it names
+neither the phase boundary nor the round-1 optimum, and there is no `IRVE-3 baseline`
+reference in it. So the reference line the reader most needs in order to judge the
+optimised result is one of the discarded ones.
+
+**Scope, stated honestly.** I confirmed the truncation by reading the code, which is
+conclusive about the *mechanism*. I did **not** independently re-measure how many
+artists the function actually labels on a real run, so no count of dropped entries is
+asserted here. The same file's `validate_payload` is, by contrast, a real guard: it
+hard-fails on count mismatches, which makes the silent truncation here the outlier.
+
+**Fix.** Pass the full `handles, labels` lists, and if the frame is genuinely crowded
+move the guides to direct annotations on the axes rather than dropping them from the
+legend.
+
 ## Investigated and NOT a defect: `Result.Drag_Force` transient averaging
 
 ### NOT a defect, but the reason F36 and F44 have no production impact: `sidecar_watchdog.py` is entirely unwired
@@ -3910,6 +4013,9 @@ the measured series.
 | F61 | provenance | **open** | `stellarorion_types.ads:284-288` states verbatim that flight IRVE-3 used **7** toroids and the MDAO model used **6**, with 6 as the documented default. The Python render path hard-codes 6 in three places and labels it IRVE-3 (`render_optimization_comparison.py:822` `n_tori = 6  # structural constant: IRVE-3 6+1 torus stack`, `:693` which is what is meshed, and `hiad_geometry.py:40` `N_TORI = 6`), accepts and then discards an `n_tori` argument at `:373`, and never contains the value 7 |
 | F62 | correctness | **open** | `make_validation_plots.py:93-98` appends the step to `steps` **before** parsing the row's values, so one unparsable field leaves `steps` one longer than every column from that field onward. Measured: corrupting a single `mach` value drops **10 of the 21 plots** (`Wrote 11 PNGs`) and mislabels the survivors by one row. The loss is **announced** per column on stderr by the guard at `:163-169`, so the sub-claim that it is silent is refuted; and the exit contract is not inverted (missing → 1, corrupt → 0). The defect is that half the output can vanish while the script reports success |
 | F63 | correctness | **open** | Step 12 of every validation run calls `Cleanup_Ephemeral_State` (`stellarorion_test_modes.adb:1817`), whose `Delete_Matching` list at `stellarorion_sparta.adb:3841-3846` includes **`in.hiad` and `HIAD_custom.surf`** — the SPARTA input deck and the surface mesh the run was flown on. Both are **tracked in git** for `results/validation_scalloped` (last touched by `ff5d2eb`), and `tools/plot_surf_profile.py:14` calls the surf "the actual SPARTA surface mesh that the Ada solver consumed". A completed validation therefore cannot be re-verified, the deletion is silent (`Post => True`, failures swallowed), and this is the confirmed cause of the two files found deleted from the working tree during this audit |
+| F64 | false assurance | **open** | `tools/plot_surf_profile.py` measures `Measured max diameter = 3.7604 m (design: 3.0 m)` = **+25.35 %** and exits **0**. There is no tolerance, comparison, warning or non-zero exit between `:200` and the end of `main()` — the only `SystemExit(1)` sites (`:83`, `:268`) are parse/IO failures. The geometry checker cannot fail, and F63 showed the run deletes the surf it checks |
+| F65 | correctness | **open** | `pyfluent_test.py:324-326` is the whole exit path: `if result["status"] == "error": raise SystemExit(1)` else `SystemExit(0)`. A failed handshake records `handshake=False` and appends a message but leaves `status` at `"success"`, so the run exits 0 with no Fluent session. A second false pass independent of F28 (which is the Ada `Write_Status` path); `pyansys_test.py` is correct on every failure path |
+| F66 | presentation | **open** | `render_bo_figures.py:474-475` calls `ax.legend(handles[:2], labels[:2])` after `get_legend_handles_labels()` returned every labelled artist, so all annotations past the first two are dropped from the legend with no equivalent elsewhere. The comment's claim that they are "self-describing in the title" is false — the title is a convergence summary naming neither the phase boundary nor the IRVE-3 baseline |
 
 ### Final state after fixes
 

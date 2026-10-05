@@ -13,9 +13,9 @@ pipeline is defined in the source.
 > surrogate (scikit-learn), JSON output, and the post-run render. Every geometry formula,
 > cost term, and penalty is evaluated in Ada.
 
-> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F63 before trusting any number below
+> ### ⚠️ Read `FAILURES_AND_FIXES.md` F16–F66 before trusting any number below
 >
-> Independent audits of `_proc` on 2026-10-05 left **forty-four findings open**: F16–F22
+> Independent audits of `_proc` on 2026-10-05 left **forty-seven findings open**: F16–F22
 > from the DSMC/report-path pass, F24–F31 from a rescan of the PINN, checkpoint and status
 > subsystems, F32–F36 from a pass over the Kriging, comparison and watchdog
 > paths, and F37–F44 from a sweep of the atmosphere generator, the reporting scripts and
@@ -62,6 +62,9 @@ pipeline is defined in the source.
 > | **F61** | The torus count in every HIAD figure: the renderers use the 6-toroid MDAO configuration and label it IRVE-3, while the Ada spec states flight used 7 and 6 is the MDAO-comparison default. |
 > | **F62** | Every plot derived from `validation_timeseries.csv`. One malformed cell appends the step before the values, desynchronising `steps` from ten columns and dropping 10 of 21 plots while the script reports success. |
 > | **F63** | Re-verifying any completed run from its results directory. Step 12 deletes `in.hiad` and `HIAD_custom.surf` — the input deck and the surface mesh — so the geometry the numbers were computed on is gone once the run completes. |
+> | **F64** | Any claim that the vehicle geometry was verified. The checker measures 3.7604 m against a 3.0 m design (+25.35 %) and exits 0 with no threshold. |
+> | **F65** | Any claim that the Fluent check ran. It exits 0 on a failed handshake because the exit path tests only the aggregate status string. |
+> | **F66** | The BO convergence figure's legend: only the first two labelled artists are shown, and the comment claiming the rest are in the title is false. |
 > | **F56** | The sidecar you are reading about is not the sidecar that runs. F44's traversal, state-forgery and loopback caveats were measured on `sidecar_server.py`, which no launcher starts; `run.py:88` starts `src/ui/sidecar_ui.py`, which binds `0.0.0.0` unconditionally and accepts unauthenticated `POST /api/start`. |
 > | **F53** | Any claim that the Python side is self-tested. 70 module-level `pytest`-style self-tests across 9 modules exist and are syntactically valid, but `pytest` is not installed and not declared, so `unittest` collects **0** of them. The 49 that do run are the whole declared suite.
 > | **F54** | The heat-flux reference line in `make_vtu_visualization.py` and the `RAP_Q_MAX_WCM2` constant in `compare_validation.py`: both attribute 14.36 W/cm² to IRVE-3 flight, where the `(F)` group says 13.80. F41 found three such sites; these are two more.

@@ -586,6 +586,18 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      own cell heat fluxes — a reference line the reader compares against directly. The
      correct `(F)` value is 13.80. See **F54**.
    * **One corrupt CSV cell silently removes half the plots.** `make_validation_plots.py:93-98` appends the step to `steps` *before* parsing the row's values, so a single unparsable field leaves `steps` one longer than every column from that field on. Measured: corrupting one `mach` value drops **10 of 21 plots** and mislabels the survivors by one row. The drop is announced on stderr (so it is not silent) but the script still exits 0. See **F62**.
+   * **The geometry checker cannot fail.** `tools/plot_surf_profile.py` prints
+     `Measured max diameter = 3.7604 m  (design: 3.0 m)` — **+25.35 %** — and exits **0**,
+     with no tolerance, warning or non-zero exit anywhere between the measurement and
+     `main()`'s end. It is also the check on the one file Step 12 deletes. See **F64**.
+   * **`pyfluent_test.py` exits 0 when the Fluent handshake fails.** Its entire exit path
+     is `if result["status"] == "error": raise SystemExit(1)` else `SystemExit(0)`, and a
+     failed handshake leaves `status` at `"success"`. A second false pass independent of
+     F28; `pyansys_test.py` is correct. See **F65**.
+   * **The Bayesian-optimisation figure drops its own legend entries.**
+     `render_bo_figures.py:474-475` passes `handles[:2], labels[:2]` to `ax.legend` after
+     `get_legend_handles_labels()` returned all of them, and the comment's claim that the
+     rest are "self-describing in the title" is false. See **F66**.
    * **Step 12 of every validation run deletes the geometry the run was flown on.**
      `stellarorion_test_modes.adb:1817` calls `Cleanup_Ephemeral_State`, whose delete
      list (`stellarorion_sparta.adb:3841-3846`) includes `in.hiad` and
