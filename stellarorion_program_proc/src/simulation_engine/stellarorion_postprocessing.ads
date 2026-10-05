@@ -145,7 +145,17 @@ package StellarOrion_PostProcessing is
    --
    --  Source: Detra, Kemp & Riddell (1959); Rapisarda (2023) Eq 3.83
    function Compute_DKR_Heat_Flux (T : Float) return Float
-     with Pre  => T > 0.0,
+     --  Bounded band added 2026-10-05: the body divides by T
+     --  (Rho_W = Rho_S*T_Stag/T) and feeds T into
+     --  Sutherland_Viscosity, so with only T > 0.0 the divisor had no
+     --  lower bound (divide-by-zero) and Rho_W no upper bound
+     --  (overflow) -- ~6 unproved checks per function.  The ONLY caller
+     --  is stellarorion_project.adb:708-710 passing SIM_WALL_TEMP_K =
+     --  1500.0, well inside 300..5000 K, which covers any physical wall
+     --  temperature.  Sutherland_Viscosity keeps Pre => T > 0.0 because
+     --  it is also called with T_Stag ~ 5545 K (see Analytical).
+     --  [Reference: ISO 2533:1975 standard atmosphere]
+     with Pre  => T >= 300.0 and then T <= 5000.0,
           Post => Compute_DKR_Heat_Flux'Result >= 0.0;
 
    --  Compute Van Driest stagnation-point heat flux (non-catalytic wall).
@@ -159,7 +169,17 @@ package StellarOrion_PostProcessing is
    --
    --  Source: Van Driest (1959); Rapisarda (2023) Eq 3.84
    function Compute_VD_Heat_Flux (T : Float) return Float
-     with Pre  => T > 0.0,
+     --  Bounded band added 2026-10-05: the body divides by T
+     --  (Rho_W = Rho_S*T_Stag/T) and feeds T into
+     --  Sutherland_Viscosity, so with only T > 0.0 the divisor had no
+     --  lower bound (divide-by-zero) and Rho_W no upper bound
+     --  (overflow) -- ~6 unproved checks per function.  The ONLY caller
+     --  is stellarorion_project.adb:708-710 passing SIM_WALL_TEMP_K =
+     --  1500.0, well inside 300..5000 K, which covers any physical wall
+     --  temperature.  Sutherland_Viscosity keeps Pre => T > 0.0 because
+     --  it is also called with T_Stag ~ 5545 K (see Analytical).
+     --  [Reference: ISO 2533:1975 standard atmosphere]
+     with Pre  => T >= 300.0 and then T <= 5000.0,
           Post => Compute_VD_Heat_Flux'Result >= 0.0;
 
    --  Compute Chapman stagnation-point heat flux.
@@ -173,7 +193,17 @@ package StellarOrion_PostProcessing is
    --
    --  Source: Chapman (1959); Rapisarda (2023) Eq 3.85
    function Compute_Chapman_Heat_Flux (T : Float) return Float
-     with Pre  => T > 0.0,
+     --  Bounded band added 2026-10-05: the body divides by T
+     --  (Rho_W = Rho_S*T_Stag/T) and feeds T into
+     --  Sutherland_Viscosity, so with only T > 0.0 the divisor had no
+     --  lower bound (divide-by-zero) and Rho_W no upper bound
+     --  (overflow) -- ~6 unproved checks per function.  The ONLY caller
+     --  is stellarorion_project.adb:708-710 passing SIM_WALL_TEMP_K =
+     --  1500.0, well inside 300..5000 K, which covers any physical wall
+     --  temperature.  Sutherland_Viscosity keeps Pre => T > 0.0 because
+     --  it is also called with T_Stag ~ 5545 K (see Analytical).
+     --  [Reference: ISO 2533:1975 standard atmosphere]
+     with Pre  => T >= 300.0 and then T <= 5000.0,
           Post => Compute_Chapman_Heat_Flux'Result >= 0.0;
 
    --  Compute DSMC-to-analytical ratios.
@@ -371,13 +401,23 @@ package StellarOrion_PostProcessing is
    --
    --  mu = mu_ref * (T/T_ref)^1.5 * (T_ref + S) / (T + S)
    --
-   --  PRE: T > 0.0 (absolute temperature).
-   --  POST: Result > 0.0 (viscosity is always positive).
+   --  PRE: T > 0.0 (absolute temperature).  The body clamps T to 1.0e5 K
+   --       internally (TC), so the input side can stay open-ended.
+   --  POST: Result > 0.0 and Result <= 1.0e-2 Pa.s.
+   --  WHY THE CEILING IS REQUIRED: every consumer multiplies this result
+   --       (Rho_W*Mu_W, Rho_S_Mu_S in Compute_Analytical_Predictions and the
+   --       DKR/VD/Chapman bodies), so an unbounded Post leaves each of those
+   --       product overflow checks unprovable. Worst case sits at the clamp:
+   --       T = 1e5 -> MU_REF_AIR*(1e5/273.15)^1.5*(273.15+110.4)/(1e5+110.4)
+   --                  = 1.716e-5 * 6996 * 3.831e-3 = 4.60e-4 Pa.s,
+   --       i.e. under 1e-2 with ~20x margin.  The sole caller passes
+   --       SIM_WALL_TEMP_K = 1500 K -> 6.6e-5 Pa.s.
    --
    --  Source: Sutherland (1893); NASA CEA technical notes
    function Sutherland_Viscosity (T : Float) return Float
      with Pre  => T > 0.0,
-          Post => Sutherland_Viscosity'Result > 0.0;
+          Post => Sutherland_Viscosity'Result > 0.0
+                  and then Sutherland_Viscosity'Result <= 1.0e-2;
 
    -- ===================================================================
    --  Utility: SPARK-safe Square Root
@@ -457,14 +497,37 @@ package StellarOrion_PostProcessing is
       --  'First = 1: the only caller declares all three arrays as
       --  Time_Index range 1 .. 5 (project.adb:862-868, subtype
       --  Val_Array_Range), so the precondition holds at that call site.
+      --  VALUE BOUNDS (added 2026-10-05): the body squares and differences
+      --  these quantities 13 separate times (Sum_Sq_Diff + Diff*Diff,
+      --  Sum_Sq_Tot + Dev*Dev, RMSE/SD, Delta_Qmax, Delta_Qload,
+      --  Delta_Time_Pct, Abs_Err, Sum_APE...).  Without a magnitude bound on
+      --  the four scalars AND the array elements every one of those products
+      --  and quotients was unbounded, which is why this single subprogram
+      --  accounted for 13 of the 88 findings.  1.0e8 covers the physical range
+      --  with ~50x margin: the largest value it ever sees is IRVE-3 peak heat
+      --  flux ~1.9e6 W/m^2, and heat load ~1.95e4 J/m^2.  N <= 1000 keeps
+      --  Float(N) and the N-1 sample-variance divisor away from overflow.
+      --  The caller passes N_Pts = 5 over Time_Index range 1 .. 5, so every
+      --  bound is satisfied at the only call site (project.adb:894).
       with Pre  => N > 0
+                   and then N <= 1000
                    and then N <= Model_Values'Length
                    and then N <= Flight_Values'Length
                    and then N <= Time_Values'Length
                    and then Model_Values'First = 1
                    and then Flight_Values'First = 1
                    and then Time_Values'First = 1
-                   and then Flight_Qmax > 0.0,
+                   and then Flight_Qmax > 0.0
+                   and then abs (Model_Qmax) <= 1.0e8
+                   and then abs (Flight_Qmax) <= 1.0e8
+                   and then abs (Model_Qload) <= 1.0e8
+                   and then abs (Flight_Qload) <= 1.0e8
+                   and then (for all I in Model_Values'Range =>
+                               abs (Model_Values (I)) <= 1.0e8)
+                   and then (for all I in Flight_Values'Range =>
+                               abs (Flight_Values (I)) <= 1.0e8)
+                   and then (for all I in Time_Values'Range =>
+                               abs (Time_Values (I)) <= 1.0e8),
            Post => Compute_Validation_Metrics'Result.RMSE >= 0.0
                    and then Compute_Validation_Metrics'Result.R_Squared <= 1.001;
 

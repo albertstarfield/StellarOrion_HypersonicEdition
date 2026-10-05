@@ -47,6 +47,21 @@ package body StellarOrion_PostProcessing is
    --  unconstrained Float at all five call sites and the prover had to
    --  re-derive bounds from the body each time.
    --  [Citation: Burden & Faires, Numerical Analysis, Ch 2.3]
+   --
+   --  The three lines above were DOCUMENTATION ONLY -- the subprogram carried
+   --  no actual `with Pre/Post` aspect, so Pow_F'Result was an opaque
+   --  unconstrained Float at all five call sites and every downstream product
+   --  overflow check (Q_Fr_Raw, Rho_W_Mu_W, Hollis 0.51841 term) was
+   --  unprovable.  This adds the real aspect.
+   --
+   --  X <= 1.0e10: every caller feeds a density-viscosity product, a Reynolds
+   --  number or a scallop ratio, all far below this.  With X in [0, 1e10] the
+   --  worst exponent (3.0 branch) gives 1e30, so the Post ceiling 1.0e30 is
+   --  derivable from the Pre and is below Float'Last (~3.4e38), leaving room
+   --  for the multiplications downstream.
+   with Pre  => X >= 0.0 and then X <= 1.0e10,
+        Post => Pow_F'Result >= 0.0
+                and then Pow_F'Result <= 1.0e30
    is
       --  For SPARK provability, we implement x^a via repeated multiplication
       --  for small integer/fractional exponents used in this package.
