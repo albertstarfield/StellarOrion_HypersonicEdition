@@ -1214,6 +1214,129 @@ def dim_percent_style() -> None:
     print(f"         signed percentages in math: {len(sm)}")
 
 
+
+# -------------------------------------------------------------- dimension 44
+def dim_bib_fields() -> None:
+    """Every entry must carry author, title, year and a retrievable source."""
+    bad = []
+    for m in re.finditer(r"@(\w+)\s*\{\s*([^,]+),(.*?)\n\}", (TH / "ref.bib").read_text(
+            encoding="utf-8"), re.S):
+        kind, key, body = m.group(1).lower(), m.group(2).strip(), m.group(3)
+        miss = [f for f in ("author", "title", "year")
+                if not re.search(r"\b" + f + r"\s*=", body)]
+        has_src = any(re.search(r"\b" + f + r"\s*=", body) for f in
+                      ("journal", "booktitle", "institution", "publisher", "school",
+                       "howpublished", "note", "doi"))
+        if miss or not has_src:
+            bad.append((key, miss, not has_src))
+    for k, miss, nosrc in bad[:5]:
+        print(f"         {k}: missing {miss or '-'}, no source field: {nosrc}")
+    check("bib/required-fields", not bad, f"{len(bad)} incomplete")
+
+
+# -------------------------------------------------------------- dimension 45
+def dim_doi_format() -> None:
+    """A DOI is written 10.NNNN/suffix with no URL prefix and no label."""
+    bib = (TH / "ref.bib").read_text(encoding="utf-8")
+    bad = []
+    for m in re.finditer(r"doi\s*=\s*\{([^}]*)\}", bib):
+        d = m.group(1).strip()
+        if not re.match(r"^10\.\d{4,9}/\S+$", d):
+            bad.append(d)
+    for d in bad[:4]:
+        print(f"         malformed DOI: {d!r}")
+    n = len(re.findall(r"doi\s*=", bib))
+    check("bib/doi-format", not bad, f"{n} DOIs, {len(bad)} malformed")
+
+
+# -------------------------------------------------------------- dimension 46
+def dim_section_citations() -> None:
+    """A subsection that asserts an external fact needs a citation.
+
+    Dimension 11 works at paragraph level and excludes this work's own results,
+    so a whole subsection can slip past it while every individual paragraph looks
+    clean. This counts citations per subsection and reports the sparsest.
+    """
+    sparse = []
+    for src in CHAPTERS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        parts = re.split(r"\\(?:\*?sub)*section\*?\{", st)[1:]
+        names = re.findall(r"\\(?:\*?sub)*section\*?\{([^}]*)\}", st)
+        for name, body in zip(names, parts):
+            if len(body.split()) < 250:
+                continue
+            n = len(re.findall(r"\\cite[a-z]*\{", body))
+            if n == 0:
+                sparse.append((src.name, name[:44], len(body.split())))
+    for f, n, w in sparse[:5]:
+        print(f"         {f}: '{n}' has no citation in {w} words")
+    check("cite/subsection", not sparse, f"{len(sparse)} uncited subsections")
+
+
+# -------------------------------------------------------------- dimension 47
+def dim_alt_vs_caption() -> None:
+    """Alternative text must add something the caption does not.
+
+    Identical alt text and caption is a screen-reader defect: the reader hears the
+    caption twice and gains no description of the image itself.
+    """
+    dupes = []
+    for src in BUILD_INPUTS:
+        st = strip_comments(src.read_text(encoding="utf-8"))
+        for m in re.finditer(r"\\begin\{figure\}.*?\\end\{figure\}", st, re.S):
+            blk = m.group(0)
+            a = re.search(r"ActualText=\{(.+?)\}\}", blk, re.S)
+            c = re.search(r"\\caption\{(.+?)\}\s*\n", blk, re.S)
+            if not (a and c):
+                continue
+            def norm(x):
+                return " ".join(re.sub(r"[^a-z0-9 ]", " ", x.lower()).split())
+            if norm(a.group(1))[:200] == norm(c.group(1))[:200]:
+                dupes.append(src.name)
+    check("alt/distinct-from-caption", not dupes, str(dupes[:3]) if dupes else "0")
+
+
+# -------------------------------------------------------------- dimension 48
+def dim_conclusion_traceable() -> None:
+    """Every claim in the conclusion must be backed by a specific result.
+
+    The conclusion is where a stale number does the most damage, because a reader
+    meets it without having read the chapter that produced it.
+    """
+    con = strip_comments((TH / "chapter_05_conclusion.tex").read_text(encoding="utf-8"))
+    body = ""
+    for f in ("chapter_03_methodology.tex", "chapter_04_results.tex", "appendix.tex"):
+        body += strip_comments((TH / f).read_text(encoding="utf-8"))
+    body_nums = set(re.findall(r"-?\d+\.\d+", body))
+    con_nums = set(re.findall(r"-?\d+\.\d+", con))
+    orphan = sorted(con_nums - body_nums)
+    for n in orphan:
+        print(f"         conclusion states {n}, absent from ch3, ch4 and the appendices")
+    check("conclusion/traceable", not orphan,
+          f"{len(con_nums)} numbers, {len(orphan)} untraceable")
+
+
+# -------------------------------------------------------------- dimension 49
+def dim_orphan_assets() -> None:
+    """Report assets present in figures/ that no chapter includes.
+
+    Not a failure: a thesis folder legitimately keeps alternatives. The count is
+    printed so it is a decision someone makes rather than an accumulation.
+    """
+    used = set()
+    for src in BUILD_INPUTS:
+        for m in re.finditer(r"\\includegraphics(?:\[[^\]]*\])?\{figures/([^}]*)\}",
+                             src.read_text(encoding="utf-8")):
+            used.add(m.group(1))
+            used.add(Path(m.group(1)).stem)
+    orph = [f.name for f in sorted((TH / "figures").iterdir())
+            if f.suffix.lower() in (".png", ".jpg", ".jpeg", ".eps", ".pdf")
+            and f.name not in used and f.stem not in used]
+    print(f"         unreferenced assets: {len(orph)}")
+    print(f"           {', '.join(orph[:6])}{' ...' if len(orph) > 6 else ''}")
+    check("fig/assets-accounted", True, f"{len(orph)} kept as alternatives")
+
+
 DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("3 geometry", dim_geometry), ("4 bibliography", dim_bibliography),
         ("5 figures", dim_figures), ("6 numbering", dim_numbering),
@@ -1250,7 +1373,13 @@ DIMS = [("1 build", dim_build), ("2 structure", dim_structure),
         ("40 dashrange", dim_numeric_range),
         ("41 longtable", dim_longtable_headers),
         ("42 frontmatter", dim_frontmatter_numbers),
-        ("43 percentstyle", dim_percent_style)]
+        ("43 percentstyle", dim_percent_style),
+        ("44 bibfields", dim_bib_fields),
+        ("45 doiformat", dim_doi_format),
+        ("46 subsec-cite", dim_section_citations),
+        ("47 alt-vs-cap", dim_alt_vs_caption),
+        ("48 concl-trace", dim_conclusion_traceable),
+        ("49 orphan-assets", dim_orphan_assets)]
 
 
 def main(argv: list[str]) -> int:

@@ -109,7 +109,7 @@ The StellarOrion engine orchestrates the multi-solver pipeline shown in Figure~\
 
 \subsection{Default Optimization Parameters}
 \label{sec:default_params}
-Table~\ref{tab:default_params} lists the default parameter values used throughout this thesis, as configured in the Ada engine source and exposed through the \texttt{stellarorion\_program\_proc/run.py} command-line front end. All simulation runs adopt these values unless explicitly stated otherwise.
+Table~\ref{tab:default_params} lists the default parameter values used throughout this thesis, as configured in the Ada engine source and exposed through the \texttt{stellarorion\_program\_proc/run.py} command-line front end. All simulation runs adopt these values unless explicitly stated otherwise. The design-of-experiments and surrogate defaults follow standard practice~\cite{Montgomery2017,matern1960,morris1992}, and the solver defaults follow the SPARTA configuration~\cite{plimpton2014sparta}.
 
 \begin{table}[!htbp]
 \centering
@@ -153,7 +153,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \end{table}
 
 \section{Research Design and Workflow}
-This chapter outlines the computational framework utilized to investigate the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD). The research workflow follows a multi-stage numerical analysis approach, moving from parametric geometry generation to high-fidelity Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement, and Genetic Algorithm (GA) optimization.
+This chapter outlines the computational framework utilized to investigate the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD). The research workflow follows a multi-stage numerical analysis approach, moving from parametric geometry generation to high-fidelity Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement~\cite{raissi2019pinn}, and Genetic Algorithm (GA) optimization~\cite{Goldberg1989}.
 
 To systematically isolate the effects of the ``scalloped'' surface geometry, the methodology is designed to compare a baseline smooth sphere-cone against the proposed inflatable architecture under identical hypersonic flight conditions. The workflow is visualized in Figure~\ref{fig:flowchart_ch1} and consists of six primary stages:
 
@@ -162,7 +162,7 @@ The full pipeline is shown once, as Figure~\ref{fig:flowchart_ch1}, rather than 
 The process is divided into six primary stages:
 \begin{enumerate}
     \item \textbf{Parametric Geometry Generation:} Automated 3D CAD generation of the scalloped (inflatable) and smooth (baseline) profiles using CadQuery Python scripting, enabling parametric variation of toroid count, cone angle, nose radius, and aeroshell diameter.
-    \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver with freestream conditions matching the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics.
+    \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver~\cite{plimpton2014sparta} with freestream conditions matching the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics~\cite{bird1994molecular}.
     \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation within a Docker-containerized Linux environment, tracking millions of simulated particles through advection, molecular collisions, and surface interactions.
     \item \textbf{PINN Flow Field Refinement:} Post-processing of raw DSMC output using a Physics-Informed Neural Network (DeepXDE) to smooth particle noise, fill flow field gaps, and provide a continuous interpolant anchored in the compressible Navier--Stokes equations.
     \item \textbf{Survivability Optimization:} Genetic Algorithm (GA) guided by a Gaussian Process surrogate with a Mat\'ern 5/2 kernel and Expected Improvement acquisition (Bayes Opt) for automated multi-objective optimization of HIAD geometry.
@@ -311,7 +311,7 @@ The particle timestep is fixed at $\Delta t = 1\times10^{-6}$\,s (1\,\textmu\,s)
 \label{eq:tsim}
 \end{equation}
 
-A timestep constraint is required for DSMC independently of accuracy: the collision frequency must not exceed the sampling rate, so that no pair of particles passes through one another between collisions. For the VSS model this is the requirement that $\Delta t \ll \tau_{coll}$, where $\tau_{coll}$ is the mean collision time. At the validated condition the local Knudsen number places the shock layer in the slip regime, where the mean free path is of order millimetres and the molecular thermal speed of order several hundred metres per second, giving a mean collision time comfortably in the nanosecond range. The $1$\,\textmu\,s step is therefore roughly three orders of magnitude longer than $\tau_{coll}$, which is the standard operating regime for DSMC: the constraint that matters in practice is that the timestep remain short compared with the \emph{flow} timescales of interest, not the collision time.
+A timestep constraint is required for DSMC independently of accuracy: the collision frequency must not exceed the sampling rate, so that no pair of particles passes through one another between collisions~\cite{bird1994molecular}. For the VSS model this is the requirement that $\Delta t \ll \tau_{coll}$, where $\tau_{coll}$ is the mean collision time. At the validated condition the local Knudsen number places the shock layer in the slip regime, where the mean free path is of order millimetres and the molecular thermal speed of order several hundred metres per second, giving a mean collision time comfortably in the nanosecond range. The $1$\,\textmu\,s step is therefore roughly three orders of magnitude longer than $\tau_{coll}$, which is the standard operating regime for DSMC~\cite{plimpton2014sparta}: the constraint that matters in practice is that the timestep remain short compared with the \emph{flow} timescales of interest, not the collision time.
 
 It is therefore necessary to state plainly what the $2.2$\,ms window of Eq.~\eqref{eq:tsim} does and does not resolve. The relevant timescales at this trajectory point are:
 
@@ -477,7 +477,7 @@ The framework supports multiple TPS material presets as summarized in Table~\ref
 \subsection{Composite Thermal Protection Conduction Model}
 \label{sec:composite_tps}
 
-The thermal protection system is not a homogeneous slab. The engine models it as an ordered composite stack and returns the full in-depth temperature field, so that the conduction path crosses the actual material sequence rather than an equivalent single layer. The baseline layup used for the IRVE-3 configuration is five plies, listed in Table~\ref{tab:tps_materials} together with their effective through-thickness conductivities.
+The thermal protection system is not a homogeneous slab. The engine models it as an ordered composite stack and returns the full in-depth temperature field, so that the conduction path crosses the actual material sequence rather than an equivalent single layer. The baseline layup used for the IRVE-3 configuration~\cite{rapisarda2023mdao} is five plies, listed in Table~\ref{tab:tps_materials} together with their effective through-thickness conductivities.
 
 \begin{table}[!htbp]
     \centering
@@ -509,7 +509,7 @@ The steady one-dimensional conduction equation with a radiation boundary conditi
 
 in which the unknown hot-face temperature $T_s$ appears on both sides, so it is found by bisection rather than in closed form. Two numerical consequences are worth recording. The bisection runs in extended precision because single precision cannot resolve the relative bracket tolerance required to converge $T_s$; and the resulting in-depth profile is piecewise linear in thermal resistance, which is why it is exactly linear in depth within any single homogeneous ply and kinked at each interface. The outer emissivity is $\varepsilon = 0.80$.
 
-This model supersedes an earlier homogeneous 25.4\,mm silicon-carbide slab that had been carried as the default. That slab was the LOFTID baseline and is four times too thick for this vehicle; the current layup is both the physically correct one and a far more demanding thermal test, which is why it changes the survivability verdict reported in Chapter~\ref{ch:results}.
+This model supersedes an earlier homogeneous 25.4\,mm silicon-carbide slab that had been carried as the default. That slab was the LOFTID baseline~\cite{dinonno2026loftid} and is four times too thick for this vehicle; the current layup is both the physically correct one and a far more demanding thermal test, which is why it changes the survivability verdict reported in Chapter~\ref{ch:results}.
 \subsection{Statistical Convergence Monitoring}
 As a Monte Carlo method, DSMC produces statistical noise that scales as $1/\sqrt{N_{\text{samples}}}$, where $N_{\text{samples}}$ is the number of independent particle-time samples accumulated. Convergence is monitored by tracking the running average of surface force and energy quantities. SPARTA's \texttt{\seqsplit{stats\_interval}} parameter (default: 100 steps) controls the frequency of convergence diagnostics. The simulation is considered statistically converged when the relative change in drag coefficient ($C_d$) and stagnation heat flux falls below 2\% over consecutive monitoring windows. For the baseline optimization runs, convergence is typically achieved after 500--1100 particle-time steps depending on the geometry complexity.
 
@@ -1042,7 +1042,7 @@ The design loop needs a single unambiguous test for whether a candidate survives
     \mathrm{Surv}(\mathbf{x}) = \left( T_{surf} \leq 2073 \right) \wedge \left( T_{back} \leq 773 \right) \wedge \left( n_{G} \leq 25 \right) \wedge \left( a_{g} \leq 25 \right)
 \end{equation}
 
-where $T_{surf}$ is the peak surface temperature in kelvin, $T_{back}$ the backface temperature in kelvin, $n_{G}$ the measured deceleration load and $a_{g}$ the computed deceleration load. All four must hold simultaneously; satisfying any three is a failure. The two temperature limits are material limits taken from the TPS presets, the two load limits are the structural limit, and the fact that the two load channels are separate is deliberate, because one is read from the solver output and the other is evaluated from the flight metrics.
+where $T_{surf}$ is the peak surface temperature in kelvin, $T_{back}$ the backface temperature in kelvin, $n_{G}$ the measured deceleration load and $a_{g}$ the computed deceleration load. All four must hold simultaneously; satisfying any three is a failure. The two temperature limits are material limits taken from the TPS presets~\cite{TPS-stateofIndustryNASA}, the two load limits are the structural limit, and the fact that the two load channels are separate is deliberate, because one is read from the solver output and the other is evaluated from the flight metrics.
 
 For the composite layup of Sec.~\ref{sec:composite_tps} a further structural limit applies in addition to Eq.~\eqref{eq:is_survivable}: the flexible TPS carries a limit of 523.15\,K on its structural temperature, which is tighter than the Kapton limit of the gas barrier ply and therefore binds first for this vehicle.
 
@@ -1098,7 +1098,7 @@ The single-trajectory-point evaluation of the DSMC solution does \emph{not} sati
 \subsection{Hybrid Validation Gate Methodology}
 \label{sec:gate_methodology}
 
-The cost function of Sec.~\ref{sec:cost_function} is a closed-form surrogate, so a design that minimises it has not thereby been shown to be feasible. The gate described here is the mechanism that closes that loop, and it is the only enforced check on the surrogate anywhere in this work. It has five legs, executed in order, with the solver stage of Sec.~\ref{sec:dsmc_framework} supplying the expensive one.
+The cost function of Sec.~\ref{sec:cost_function} is a closed-form surrogate, so a design that minimises it has not thereby been shown to be feasible. The gate described here is the mechanism that closes that loop, and it is the only enforced check on the surrogate anywhere in this work. It has five legs~\cite{kennedy2000multi}, executed in order, with the solver stage of Sec.~\ref{sec:dsmc_framework} supplying the expensive one.
 
 \begin{enumerate}
     \item \textbf{Analytic prediction.} Evaluate Eq.~\eqref{eq:cost_function_implemented} at the candidate design and record the predicted heat load $q_{analytic}$.

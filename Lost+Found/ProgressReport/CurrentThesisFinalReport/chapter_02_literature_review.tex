@@ -486,7 +486,7 @@ Therefore, the study of the scalloped topology is not focused on drag reduction,
 \subsection{Flow over Wavy and Scalloped Walls}
 %\textit{Topology of Aerodynamics Scalloped physics (Sidenote: Can we compare this with a golf ball theorem then we can derived it from there)}
 \par
-The surface of an IAD can be mathematically approximated as a periodic wavy wall or a series of cavity steps. As the hypersonic flow traverses this undulating surface, it encounters alternating regions of favorable and adverse pressure gradients, a phenomenon fundamentally distinct from flow over a flat plate.
+The surface of an IAD can be mathematically approximated as a periodic wavy wall or a series of cavity steps. As the hypersonic flow traverses this undulating surface, it encounters alternating regions of favorable and adverse pressure gradients, a phenomenon fundamentally distinct from flow over a flat plate~\cite{white2006viscous}.
 The physics can be derived by analyzing the momentum equation along the streamline. As the fluid moves over a convex crest (the peak of a toroid), the flow area effectively constricts, causing the flow to accelerate. According to Bernoulli's principle (and its compressible counterpart), this acceleration results in a local decrease in static pressure:
 
 \begin{equation}
@@ -529,7 +529,7 @@ This localized shock wave penetrates the boundary layer, imposing a strong adver
     \item \textbf{Reattachment Shock:} When the separated shear layer reattaches to the crest of the next toroid, the flow is forced to align with the wall again. This re-alignment generates a Reattachment Shock.
 \end{itemize}
 
-The intersection of this reattachment shock with the boundary layer is a critical design concern. At the point of reattachment, the boundary layer is extremely thin (high velocity gradient), and the impinging shock further compresses the fluid. This combination results in a localized spike in both pressure and heat flux, which can be significantly higher than the stagnation point heating values predicted for a smooth body \cite{AndersonHypersonic}.\cite{aerospace10080729SWBLISBLI}
+The intersection of this reattachment shock with the boundary layer is a critical design concern. At the point of reattachment, the boundary layer is extremely thin (high velocity gradient), and the impinging shock further compresses the fluid. This combination results in a localized spike in both pressure and heat flux, which can be significantly higher than the stagnation point heating values predicted for a smooth body \cite{AndersonHypersonic,aerospace10080729SWBLISBLI}.
 
 \begin{figure}[!htbp]
     \centering
@@ -1190,7 +1190,7 @@ over the stagnation region.
 
 \section{Continuum CFD vs. DSMC: Comparative Framework}
 
-Table~\ref{tab:cfd_vs_dsmc} provides a systematic comparison of the continuum (RANS/NS) and kinetic (DSMC) approaches.
+Table~\ref{tab:cfd_vs_dsmc} provides a systematic comparison of the continuum (RANS/NS) and kinetic (DSMC) approaches~\cite{bird1994molecular,versteeg2007cfd}.
 
 \begin{table}[!htbp]
     \centering
@@ -1212,10 +1212,10 @@ Table~\ref{tab:cfd_vs_dsmc} provides a systematic comparison of the continuum (R
 \end{table}
 
 \noindent This study employs \textit{both} paradigms, each applied where it is physically
-valid. Continuum CFD (SST $k$--$\omega$) establishes theoretical foundations in the
+valid. Continuum CFD (SST $k$--$\omega$)~\cite{menter1994SST} establishes theoretical foundations in the
 literature review and methodology chapters, where the flow is deep continuum
 ($Kn_{\text{global}} \approx 2.5\times10^{-5}$, Eq.~\eqref{eq:kn_global_52km}). DSMC
-(SPARTA) produces the high-fidelity HIAD re-entry solution because the bow-shock layer
+(SPARTA)~\cite{plimpton2014sparta} produces the high-fidelity HIAD re-entry solution because the bow-shock layer
 that dominates the thermal load is locally non-continuum
 ($Kn_{\text{shock}} \sim 0.01$--$0.1$). Neither solver is used outside its regime of
 validity; the pairing is a consequence of the length scale each one adopts, not of the
@@ -1548,17 +1548,17 @@ The HIAD design problem cannot be solved by engineering intuition alone for thre
 The literature review establishes the theoretical foundations across six pillars:
 
 \begin{enumerate}
-    \item \textbf{Hypersonic Aerodynamics:} The flow field around a HIAD at $Ma > 10$ is characterized by strong shock waves, high-temperature real-gas effects, and complex shock--boundary layer interactions driven by the scalloped surface geometry (Sections 2.2--2.5).
+    \item \textbf{Hypersonic Aerodynamics:} The flow field around a HIAD at $Ma > 10$ is characterized by strong shock waves, high-temperature real-gas effects, and complex shock--boundary layer interactions driven by the scalloped surface geometry (Sections 2.2--2.5)~\cite{AndersonHypersonic}.
 
-    \item \textbf{Continuum CFD:} The Navier--Stokes equations and RANS turbulence modeling (SST $k$--$\omega$) form the classical approach for hypersonic simulation (Sections 2.6--2.7). Their validity extends to $Kn \lesssim 0.1$ once velocity and temperature slip corrections are applied at the wall, which comfortably covers the global freestream value of $Kn_{\text{global}} \approx 2.5\times10^{-5}$ at 52~km.
+    \item \textbf{Continuum CFD:} The Navier--Stokes equations and RANS turbulence modeling (SST $k$--$\omega$)~\cite{menter1994SST} form the classical approach for hypersonic simulation (Sections 2.6--2.7). Their validity extends to $Kn \lesssim 0.1$ once velocity and temperature slip corrections are applied at the wall~\cite{bird1994molecular}, which comfortably covers the global freestream value of $Kn_{\text{global}} \approx 2.5\times10^{-5}$ at 52~km.
 
-    \item \textbf{Kinetic Theory and DSMC:} The Boltzmann equation provides the fundamental description of rarefied gas dynamics. The DSMC method, incorporating the Variable Soft Sphere collision model and mean free path formulation, solves the Boltzmann equation stochastically and is valid across all $Kn$. For HIAD re-entry at 52~km it is the appropriate tool because the millimetre-scale bow-shock layer reaches the locally non-continuum range $Kn_{\text{shock}} \sim 0.01$--$0.1$, even though the 3~m-scale freestream is deep continuum (Sections 2.8--2.11).
+    \item \textbf{Kinetic Theory and DSMC:} The Boltzmann equation provides the fundamental description of rarefied gas dynamics~\cite{chapman1970kinetic}. The DSMC method, incorporating the Variable Soft Sphere collision model and mean free path formulation, solves the Boltzmann equation stochastically and is valid across all $Kn$~\cite{bird1994molecular}. For HIAD re-entry at 52~km it is the appropriate tool because the millimetre-scale bow-shock layer reaches the locally non-continuum range $Kn_{\text{shock}} \sim 0.01$--$0.1$, even though the 3~m-scale freestream is deep continuum (Sections 2.8--2.11).
 
-    \item \textbf{Machine Learning for CFD:} Physics-Informed Neural Networks embed governing PDEs into the loss function, enabling mesh-free solution refinement and gap-filling from sparse DSMC data (Section~\ref{sec:ml_cfd}).
+    \item \textbf{Machine Learning for CFD:} Physics-Informed Neural Networks embed governing PDEs into the loss function, enabling mesh-free solution refinement and gap-filling from sparse DSMC data (Section~\ref{sec:ml_cfd})~\cite{raissi2019pinn}.
 
-    \item \textbf{Parametric HIAD Geometry:} The HIAD OML is parameterized by five design variables ($D$, $\theta_c$, $N_t$, $r_{\text{tor}}$, $R_N$) with two governing equations: the structural integration constraint (Eq.~\ref{eq:structural_integration}) and the toroid radius derivation (Eq.~\ref{eq:toroid_radius}). The Rapisarda MDAO framework provides an optimized adaptation of the original IRVE-3 material configuration (Section~\ref{sec:parametric}).
+    \item \textbf{Parametric HIAD Geometry:} The HIAD OML is parameterized by five design variables ($D$, $\theta_c$, $N_t$, $r_{\text{tor}}$, $R_N$) with two governing equations: the structural integration constraint (Eq.~\ref{eq:structural_integration}) and the toroid radius derivation (Eq.~\ref{eq:toroid_radius}). The Rapisarda MDAO framework provides an optimized adaptation of the original IRVE-3 material configuration (Section~\ref{sec:parametric})~\cite{rapisarda2023mdao}.
 
-    \item \textbf{Optimization Theory:} Multidisciplinary design optimization (MDO) combined with Latin Hypercube sampling, surrogate modeling (Bayes Opt), and genetic algorithm search provides the theoretical framework for navigating the coupled aerodynamic--thermal--structural design space (Section~\ref{sec:opt_theory}).
+    \item \textbf{Optimization Theory:} Multidisciplinary design optimization (MDO) combined with Latin Hypercube sampling~\cite{mckay1979lhs}, surrogate modeling (Bayes Opt)~\cite{morris1992}, and genetic algorithm search~\cite{Goldberg1989} provides the theoretical framework for navigating the coupled aerodynamic--thermal--structural design space (Section~\ref{sec:opt_theory}).
 \end{enumerate}
 
-\noindent These foundations justify the methodology adopted in Chapter~3: a parametric HIAD geometry engine based on Rapisarda's modified IRVE-3 configuration, DSMC-based simulation (SPARTA) for the primary flow field computation, PINN refinement for continuous field reconstruction, and genetic algorithm optimization for survivability maximization.
+\noindent These foundations justify the methodology adopted in Chapter~3: a parametric HIAD geometry engine based on Rapisarda's modified IRVE-3 configuration~\cite{rapisarda2023mdao}, DSMC-based simulation (SPARTA)~\cite{plimpton2014sparta} for the primary flow field computation, PINN refinement for continuous field reconstruction~\cite{lu2021deepxde}, and genetic algorithm optimization~\cite{Goldberg1989} for survivability maximization.
