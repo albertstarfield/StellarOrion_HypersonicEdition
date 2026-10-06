@@ -397,7 +397,7 @@ Table~\ref{tab:tps_comparison} compares the two architectures.
 \section{Impact of Surface Geometry on Flow Physics}
 Conventional re-entry vehicles use smooth Outer Mold Lines for uniform heating, but a HIAD's stacked toroids give a scalloped surface.
 \par
-A golf ball's dimples trip the boundary layer into turbulence to reduce drag; hypersonic IAD waviness differs in scale (macro valleys, not micro-roughness), objective (drag maximization), and thermal consequence (heat flux rises by a factor of 3 to 5 over laminar flow) \cite{AndersonHypersonic}.
+A golf ball's dimples trip the boundary layer into turbulence to reduce drag; hypersonic IAD waviness differs in scale (macro valleys, not micro-roughness), objective (drag maximization), and thermal consequence (heat flux rises by a factor of 3 to 5 over laminar flow), as documented by~\cite{AndersonHypersonic}.
 
 The scalloped topology is therefore studied for its aerothermal effect on shock structure and local heating.~\cite{white2006viscous}
 
@@ -695,7 +695,7 @@ Figure~\ref{fig:k_epsilon_omega} shows the flow a RANS closure must reproduce.
 \section{Thermodynamic Gas Models}
 
 \par
-Standard analysis models air as a Calorically Perfect Gas, with constant specific heats ($C_p$ and $C_v$) and internal energy linear in temperature ($e = C_v T$), which fails above hypersonic speed ($Ma > 5$) \cite{AndersonHypersonic}.
+Standard analysis models air as a Calorically Perfect Gas, with constant specific heats ($C_p$ and $C_v$) and internal energy linear in temperature ($e = C_v T$), which fails above hypersonic speed, where $Ma > 5$~\cite{AndersonHypersonic}.
 \par
 Shock heating alters the air molecules through successive energy mode excitations:
 \begin{itemize}
@@ -786,7 +786,7 @@ For HIAD analysis, vibrational energy absorption lowers the peak shock layer tem
 
 Hypersonic shock layers span thousands of degrees, and gas viscosity, unlike liquids, \textit{increases} with temperature through molecular agitation and momentum exchange.
 \par
-Coupling dynamic viscosity ($\mu$) to local temperature ($T$) therefore requires Sutherland’s Law (1893) \cite{AndersonHypersonic}.
+Coupling dynamic viscosity ($\mu$) to local temperature ($T$) therefore requires Sutherland’s Law of 1893~\cite{AndersonHypersonic}.
 \begin{equation}
     \mu(T) = \mu_{ref} \left( \frac{T}{T_{ref}} \right)^{3/2} \frac{T_{ref} + S}{T + S}
     \label{eq:sutherland}
@@ -990,7 +990,7 @@ For hard spheres of diameter $d$ and number density $n$ the mean free path $\lam
 \end{equation}
 \noindent deep in the continuum band of Table~\ref{tab:knudsen_regimes}. Earlier values quoted for this vehicle ($\lambda \sim 0.1$-$1.0$~m, $Kn \sim 0.03$-$0.3$) apply only near 100~km altitude, not at the 52~km reference point.
 
-DSMC stays justified at 52~km because $Kn$ is a \emph{local} ratio: on the millimeter bow-shock thickness the value rises three orders of magnitude into the slip-to-transition band, $Kn_{\text{shock}} \sim 0.01$-$0.1$, while the freestream stays continuum, so SPARTA's Boltzmann solver remains correct for the layer that dominates the heat load \cite{bird1994molecular,plimpton2014sparta}.
+DSMC stays justified at 52~km because $Kn$ is a \emph{local} ratio: on the millimeter bow-shock thickness the value rises three orders of magnitude into the slip-to-transition band, $Kn_{\text{shock}} \sim 0.01$-$0.1$, while the freestream stays continuum. The SPARTA Boltzmann solver therefore remains correct for the layer that dominates the heat load \cite{bird1994molecular,plimpton2014sparta}.
 
 \section{Continuum CFD vs. DSMC: Comparative Framework}
 
@@ -1032,7 +1032,7 @@ The Universal Approximation Theorem \cite{cybenko1989approximation, hornik1989mu
 
 \subsection{Physics-Informed Neural Networks (PINNs)}
 
-Physics-Informed Neural Networks (PINNs) \cite{raissi2019pinn} embed the governing PDEs in the loss function, learning a mesh-free solution $\hat{u}(\mathbf{x}, t)$ that satisfies the PDE and its boundary and initial conditions.
+Physics-Informed Neural Networks (PINNs) embed the governing PDEs in the loss function, learning a mesh-free solution $\hat{u}(\mathbf{x}, t)$ that satisfies the PDE and its boundary and initial conditions~\cite{raissi2019pinn}.
 
 The PINN loss is:
 
@@ -1319,13 +1319,13 @@ This review establishes six pillars:
 \begin{enumerate}
     \item \textbf{Hypersonic Aerodynamics:} A HIAD at $Ma > 10$ meets strong shocks, real-gas effects, and shock-boundary layer interaction (Sections 2.2-2.5).
 
-    \item \textbf{Continuum CFD:} Navier-Stokes with RANS and the SST $k$-$\omega$ model~\cite{menter1994SST} holds to $Kn \lesssim 0.1$ with wall slip corrections~\cite{bird1994molecular} (Sections 2.6-2.7).
+    \item \textbf{Continuum CFD:} Navier-Stokes with RANS and the SST $k$-$\omega$ model~\cite{menter1994SST} holds to $Kn \lesssim 0.1$ with wall slip corrections in Sections 2.6-2.7~\cite{bird1994molecular}.
 
-    \item \textbf{Kinetic Theory and DSMC:} The Boltzmann equation describes rarefied gas dynamics~\cite{chapman1970kinetic} and DSMC with the Variable Soft Sphere model solves it at all $Kn$~\cite{bird1994molecular} (Sections 2.8-2.11).
+    \item \textbf{Kinetic Theory and DSMC:} The Boltzmann equation describes rarefied gas dynamics~\cite{chapman1970kinetic} and DSMC with the Variable Soft Sphere model solves it at all $Kn$ in Sections 2.8-2.11~\cite{bird1994molecular}.
 
     \item \textbf{Machine Learning for CFD:} Physics-Informed Neural Networks~\cite{raissi2019pinn} embed governing PDEs in the loss, enabling mesh-free refinement of sparse DSMC data (Section~\ref{sec:ml_cfd}).
 
-    \item \textbf{Parametric HIAD Geometry:} Five design variables ($D$, $\theta_c$, $N_t$, $r_{\text{tor}}$, $R_N$) plus the structural integration constraint (Eq.~\ref{eq:structural_integration}) and toroid radius (Eq.~\ref{eq:toroid_radius}) define the OML, following Rapisarda's MDAO IRVE-3 adaptation~\cite{rapisarda2023mdao} (Section~\ref{sec:parametric}).
+    \item \textbf{Parametric HIAD Geometry:} Five design variables ($D$, $\theta_c$, $N_t$, $r_{\text{tor}}$, $R_N$) plus the structural integration constraint (Eq.~\ref{eq:structural_integration}) and toroid radius (Eq.~\ref{eq:toroid_radius}) define the OML, following Rapisarda's MDAO IRVE-3 adaptation in Section~\ref{sec:parametric}~\cite{rapisarda2023mdao}.
 
     \item \textbf{Optimization Theory:} MDO with Latin Hypercube sampling~\cite{mckay1979lhs}, Bayes Opt surrogates~\cite{morris1992}, and genetic algorithm search~\cite{Goldberg1989} navigates the coupled aerodynamic-thermal-structural design space (Section~\ref{sec:opt_theory}).
 \end{enumerate}

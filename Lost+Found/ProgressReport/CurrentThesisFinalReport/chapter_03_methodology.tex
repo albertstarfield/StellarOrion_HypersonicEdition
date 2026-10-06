@@ -761,7 +761,7 @@ where $i$ is the stratum index, $j$ the parameter dimension, $r_{i,j} \sim \math
 Each parameter gets $N$ distinct levels with one sample per level, giving space-filling coverage for small $N$.
 
 \subsubsection*{Central Composite Design (CCD) as Alternative DoE}
-The default Design of Experiments method is the Face-Centered Central Composite Design (CCD)~\cite{Montgomery2017}. For a $d$-dimensional parameter space CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point at the origin. This campaign used $d = 3$ variables (nose radius $R_N$, toroid radius $r_{tor}$, half-cone angle $\theta_c$), giving $N = 8 + 6 + 1 = 15$ points. That recorded screen is separate from the 70-entry Bayesian Optimization history of Sec.~\ref{sec:bo_results}. LHS or CCD is selectable via \texttt{-{}-doe}, CCD defaulting for the optimized IRVE-3 baseline.
+The default Design of Experiments method is the Face-Centered Central Composite Design (CCD) described in~\cite{Montgomery2017}. For a $d$-dimensional parameter space CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point at the origin. This campaign used $d = 3$ variables (nose radius $R_N$, toroid radius $r_{tor}$, half-cone angle $\theta_c$), giving $N = 8 + 6 + 1 = 15$ points. That recorded screen is separate from the 70-entry Bayesian Optimization history of Sec.~\ref{sec:bo_results}. LHS or CCD is selectable via \texttt{-{}-doe}, CCD defaulting for the optimized IRVE-3 baseline.
 
 \subsection{Bayesian Optimization (Bayes Opt)}
 
@@ -795,7 +795,7 @@ The GP initializes $c_0 = 1$ and $\ell_{j} = 1$ for all $d$ dimensions, re-fitti
 where $\mathcal{D} = \{(\mathbf{x}_i, y_i)\}_{i=1}^{N}$ is the accumulated design-and-cost history.
 
 \subsubsection*{Acquisition Function: Expected Improvement}
-As $J$ is minimized, Expected Improvement (EI)~\cite{morris1992,kennedy2000multi} measures the expected reduction below the incumbent best $J_{best} = \min_i y_i$, offset by an exploration parameter $\xi$:
+As $J$ is minimized, Expected Improvement (EI) described by~\cite{morris1992,kennedy2000multi} measures the expected reduction below the incumbent best $J_{best} = \min_i y_i$, offset by an exploration parameter $\xi$:
 
 \begin{align}
     \mathrm{EI}(\mathbf{x}) &= \mathbb{E}\Big[\max\big(0,\, J_{best} - J(\mathbf{x}) - \xi\big)\Big] \nonumber\\
