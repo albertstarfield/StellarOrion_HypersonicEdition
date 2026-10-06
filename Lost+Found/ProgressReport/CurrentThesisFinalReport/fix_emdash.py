@@ -3,10 +3,10 @@
 punctuation chosen per occurrence rather than a blind mechanical swap.
 
 AXIOMS
-------
-1. In LaTeX, `---` renders as an em-dash (U+2014) and `--` as an en-dash.
+======
+1. In LaTeX, `===` renders as an em-dash (U+2014) and `==` as an en-dash.
    The thesis owner has ruled that the em-dash must not appear at all.
-2. A blind substitution of `---` -> `,` is NOT a fix. It corrupts grammar in
+2. A blind substitution of `===` -> `,` is NOT a fix. It corrupts grammar in
    three distinct constructions that occur here:
      (a) a parenthetical appositive set off by a matched PAIR of em-dashes,
          which must become a matched PAIR of parentheses;
@@ -21,13 +21,13 @@ AXIOMS
    this table and the source cannot hide.
 
 THEORIES
----------
-If every pair matches exactly once and a final scan finds zero `---` and zero
+=========
+If every pair matches exactly once and a final scan finds zero `===` and zero
 U+2014 in non-comment, non-code-block prose, then the em-dash is gone and the
 prose still parses. Compile + re-render then confirms the typesetting.
 
 SCOPE / EXCLUSIONS
-------------------
+==================
 - LaTeX comments (text after an unescaped `%`) are excluded: they are not
   typeset, so an em-dash there is invisible in the PDF. They are still
   counted separately and reported.
@@ -38,7 +38,7 @@ SCOPE / EXCLUSIONS
   `chapter_02_literature_review`).
 
 Citations
----------
+=========
 * LaTeX dash ligatures: https://tug.org/TUGboat/Volumes/tn09/3/hyphenator.html
 * em-dash / en-dash typography guidance: https://www.wikiwand.com/en/Dash
 """
@@ -66,13 +66,13 @@ FILES = [
     "preamble.tex",
 ]
 
-# ---------------------------------------------------------------------------
+# ===========================================================================
 # (AXIOM 3) The explicit replacement table: file -> list of (old, new).
 # Ordering within a file matters only in that the first match wins; every pair
 # below is unique within its file.
-# ---------------------------------------------------------------------------
+# ===========================================================================
 PAIRS: dict[str, list[tuple[str, str]]] = {
-    # ---------------------------------------------------------------- ch2
+    #, ch2
     "chapter_02_literature_review.tex": [
         # (b) single interrupting dash after a colon-introduced list
         (
@@ -90,7 +90,7 @@ PAIRS: dict[str, list[tuple[str, str]]] = {
             "molecular at $Kn > 10$, with a reference-length legend entry",
         ),
     ],
-    # ---------------------------------------------------------------- ch3
+    #, ch3
     "chapter_03_methodology.tex": [
         # (a) matched pair appositive -> matched pair of parentheses
         (
@@ -131,7 +131,7 @@ PAIRS: dict[str, list[tuple[str, str]]] = {
             "free-molecular claim",
         ),
     ],
-    # ---------------------------------------------------------------- ch4
+    #, ch4
     "chapter_04_results.tex": [
         # (a) matched pair around a participial phrase -> parentheses
         (
@@ -249,7 +249,7 @@ PAIRS: dict[str, list[tuple[str, str]]] = {
             "outcome when",
         ),
     ],
-    # ---------------------------------------------------------------- ch5
+    #, ch5
     "chapter_05_conclusion.tex": [
         # (b) dash before "and why ..."; comma joins two parallel "why"
         #     clauses under one antecedent.
@@ -258,7 +258,7 @@ PAIRS: dict[str, list[tuple[str, str]]] = {
             "is the meaningful diagnostic, and why the continuum PINN stage",
         ),
     ],
-    # ------------------------------------------------------------ appendix
+    #, appendix
     "appendix.tex": [
         # (c) table cell "not applicable" -> the word n/a, not punctuation
         (

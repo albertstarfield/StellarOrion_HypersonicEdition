@@ -3,7 +3,7 @@
 it is printed, or record why that is impossible.
 
 THE RULE
-----------------------------------------------------------------------------
+============================================================================
 An image saved at W pixels wide and included at P inches wide prints at
 effective dpi = W / P. So the width fraction that yields a target dpi is
 
@@ -12,7 +12,7 @@ effective dpi = W / P. So the width fraction that yields a target dpi is
 with TEXT_WIDTH_IN = 14 cm = 5.51181 in.
 
 THE FLOOR
-----------------------------------------------------------------------------
+============================================================================
 200 dpi is the point below which line work and small labels visibly break up in
 print. Below the floor the figure is resized, unless the required width falls
 under MIN_FRAC of the text block, at which point the figure would be too small
@@ -20,7 +20,7 @@ to read and the honest action is to disclose the limitation in its caption
 instead. That floor is MIN_FRAC = 0.25.
 
 WHAT THIS FOUND AND CHANGED
-----------------------------------------------------------------------------
+============================================================================
     figure                                     was      now
     IADsLayer.png                            102 dpi   disclosed, 280x201 px
     RecirculationExample.jpeg                 77 dpi   disclosed

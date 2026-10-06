@@ -81,7 +81,7 @@ The optimizer minimises a single scalar cost $J: \mathbb{R}^3 \to \mathbb{R}_{\g
 where the design vector is $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$. The four ratio terms and the three penalties are defined as follows.
 
 \begin{itemize}
-    \item \textbf{Heat-load term.} The stagnation heat flux is evaluated with the Sutton--Graves correlation of Sec.~\ref{sec:sutton_graves_methodology} at a single frozen trajectory snapshot of $51.8$\,km altitude and $3378$\,m/s, using the candidate design's own nose radius:
+    \item \textbf{Heat-load term.} The stagnation heat flux is evaluated with the Sutton-Graves correlation of Sec.~\ref{sec:sutton_graves_methodology} at a single frozen trajectory snapshot of $51.8$\,km altitude and $3378$\,m/s, using the candidate design's own nose radius:
     $\dot{q}(\mathbf{x}) = C_{SG}\sqrt{\rho_{\infty}/R_N(\mathbf{x})}\,V_{snap}^{3}$ in W/cm$^2$.
     Multiplying by the characteristic exposure time $\tau$ of the validated run gives the total heat load $Q(\mathbf{x}) = \dot{q}(\mathbf{x})\,\tau$, and the ratio $H_L = Q/Q_{target}$ normalises it against the acceptance threshold.
     \item \textbf{Flux term.} $F(\mathbf{x}) = \dot{q}(\mathbf{x})/q_{ref}$ is the peak heat-flux ratio against the measured flight value.

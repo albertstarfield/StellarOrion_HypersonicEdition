@@ -4,8 +4,8 @@
 WHAT WAS WRONG, AND THE EVIDENCE FOR EACH MERGE
 =============================================================================
 
-MERGE A -- lau2013irve and lau2013irve3 collapse into old2013irve3postflight
-----------------------------------------------------------------------------
+MERGE A, lau2013irve and lau2013irve3 collapse into old2013irve3postflight
+============================================================================
 The reference database held THREE entries for ONE paper:
 
     lau2013irve          "Inflatable Re-entry Vehicle Experiment 3 (IRVE-3)
@@ -45,8 +45,8 @@ This also removes a genuine citation defect: Chapter 4 line 156 read
     \\cite{lau2013irve3, old2013irve3postflight}
 which cited the SAME work twice inside one citation.
 
-MERGE B -- Lau2013 collapses into NASA2013TP4012
-----------------------------------------------------------------------------
+MERGE B, Lau2013 collapses into NASA2013TP4012
+============================================================================
 Both entries describe NASA/TP-2013-4012 by Lau, Chinsung, 2013:
 
     Lau2013            @article, "journal = {NASA Technical Report}",
@@ -131,7 +131,7 @@ def drop_entry(text: str, key: str) -> tuple[str, bool]:
 def main() -> int:
     rc = 0
 
-    # ---- 1. remove the double citation of one work inside one \cite ---------
+    #, 1. remove the double citation of one work inside one \cite =========
     old = r"\cite{lau2013irve3, old2013irve3postflight}"
     new = r"\cite{old2013irve3postflight}"
     hits = 0
@@ -159,7 +159,7 @@ def main() -> int:
         print("  !! expected double citation not found in chapter 2")
         rc = 1
 
-    # ---- 2. retarget every remaining citation ------------------------------
+    #, 2. retarget every remaining citation ==============================
     for src in sorted(TH.glob("chapter_*.tex")) + sorted(TH.glob("appendix*.tex")):
         if "sync-conflict" in src.name:
             continue
@@ -173,7 +173,7 @@ def main() -> int:
             src.write_text(t, encoding="utf-8")
             print(f"  ok  {src.name}: retargeted citations")
 
-    # ---- 3. delete the merged entries from the database --------------------
+    #, 3. delete the merged entries from the database ====================
     t = BIB.read_text(encoding="utf-8")
     for key in RETARGET:
         t, ok = drop_entry(t, key)
@@ -183,7 +183,7 @@ def main() -> int:
             rc = 1
     BIB.write_text(t, encoding="utf-8")
 
-    # ---- 4. prove no key is now missing from ref.bib -----------------------
+    #, 4. prove no key is now missing from ref.bib =======================
     missing = []
     for src in sorted(TH.glob("chapter_*.tex")) + sorted(TH.glob("appendix*.tex")):
         if "sync-conflict" in src.name:

@@ -9,11 +9,11 @@ sections with no relationship to the sentence citing them. Verified against the
 rendered `main.toc` of this document:
 
   thesis text                          claims        section 3.4.3/3.5.1/3.4/3.3.5
-  -----------------------------------  -----------  --------------------------------
+ , ,  ================================
   "two-stage PINN protocol (Sec 3.4)"  PINN is 3.7  3.4 = DSMC Simulation Framework
   "Face-Centered CCD (Sec 3.5.1)"      CCD is 3.8   3.5.1 = Surface Computes
   "GA operators (Sec 3.4.3)"           GA is 3.8    3.4.3 = SPARTA Solver Config
-  "Pragmatic Choice (Sec 3.3.5)"       --            3.3.5 DOES NOT EXIST (3.3 has 4)
+  "Pragmatic Choice (Sec 3.3.5)"      ,            3.3.5 DOES NOT EXIST (3.3 has 4)
   "ballistic coefficient (Sec 3.2.4)"  beta is 3.5.2 3.2 has no subsections at all
 
 THEORY: Replacing a frozen number with `\\ref` to a `\\label` makes the
@@ -33,7 +33,7 @@ Chapter 4 already reports 15 points, so Chapter 3 contradicted Chapter 4.
 Both sites are corrected to d = 3 and N = 15.
 
 Citations
----------
+=========
 * Face-Centered CCD construction, N = 2^d + 2d + 1: Montgomery, Design and
   Analysis of Experiments, 9th ed., Wiley 2017, Ch. 5
   (doi:10.1002/9781119482086.refs).
@@ -47,7 +47,7 @@ CH3 = Path(__file__).resolve().parent / "chapter_03_methodology.tex"
 
 # (old, new, expected_count)
 EDITS: list[tuple[str, str, int]] = [
-    # ---- add the four labels the corrected references need -----------------
+    #, add the four labels the corrected references need =================
     (
         "\\subsection{Ballistic Coefficient (\\texorpdfstring{$\\beta$}{beta})}",
         "\\subsection{Ballistic Coefficient (\\texorpdfstring{$\\beta$}{beta})}\n"
@@ -72,7 +72,7 @@ EDITS: list[tuple[str, str, int]] = [
         "\\label{sec:ga_operators}",
         1,
     ),
-    # ---- replace the five frozen numbers with live references --------------
+    #, replace the five frozen numbers with live references ==============
     (
         "even at $Kn > 0.01$. & Sec.~3.3.5 (Pragmatic Choice) \\\\",
         "even at $Kn > 0.01$. & Sec.~\\ref{sec:pinn_pragmatic} \\\\",
@@ -103,7 +103,7 @@ EDITS: list[tuple[str, str, int]] = [
         "(Sec.~\\ref{sec:pinn_two_stage}).",
         1,
     ),
-    # ---- correct the DoE sample count to the executed campaign ------------
+    #, correct the DoE sample count to the executed campaign ============
     (
         "For a $d$-dimensional parameter space, the CCD constructs "
         "$N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at "

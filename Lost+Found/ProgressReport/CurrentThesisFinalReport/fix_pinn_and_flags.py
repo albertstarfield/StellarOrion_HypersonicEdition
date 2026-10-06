@@ -30,12 +30,12 @@ not 8700, which the three-output count happened to reproduce closely enough to
 pass unchallenged.
 
 PART 2 - CLI FLAGS RENDERING AS AN EN-DASH
-AXIOM: In LaTeX, `--` is a ligature for U+2013 EN DASH in every font that has
+AXIOM: In LaTeX, `==` is a ligature for U+2013 EN DASH in every font that has
 the ligature, including the T1-encoded typewriter font that \texttt selects. So
-`\texttt{--fnum}` does not print two hyphens; it prints one en-dash followed by
+`\texttt{==fnum}` does not print two hyphens; it prints one en-dash followed by
 "fnum". Verified in the extracted text of the built PDF, which contains
-    "ia \u2013fnum"      (from \texttt{--fnum})
-    "ng\n\u2013self-test" (from \texttt{--self-test})
+    "ia \u2013fnum"      (from \texttt{==fnum})
+    "ng\n\u2013self-test" (from \texttt{==self-test})
 A command-line flag printed as an en-dash cannot be copied and pasted, so every
 flag in the thesis is wrong as rendered. The fix is the standard LaTeX idiom
 `-{}-`, which suppresses the ligature by inserting an empty group between the
@@ -55,7 +55,7 @@ THESIS = Path(__file__).resolve().parent
 
 # (file, old, new) - each must match exactly once.
 EDITS: list[tuple[str, str, str]] = [
-    # ---- Part 1: ch3 architecture table --------------------------------
+    #, Part 1: ch3 architecture table ================================
     (
         "chapter_03_methodology.tex",
         "        Output dimension & 3 $(\\rho, T, u)$ \\\\ \\hline\n"
@@ -66,7 +66,7 @@ EDITS: list[tuple[str, str, str]] = [
         "$(2 \\times 64 + 64) + 2\\,(64^{2} + 64) + (4 \\times 64 + 4) "
         "= 8{,}772$ \\\\ \\hline",
     ),
-    # ---- Part 1: ch2 prose --------------------------------------------
+    #, Part 1: ch2 prose ============================================
     (
         "chapter_02_literature_review.tex",
         "3 hidden layers of 64 neurons each with $\\tanh$ activation, and 3 "
@@ -77,7 +77,7 @@ EDITS: list[tuple[str, str, str]] = [
     ),
 ]
 
-# ---- Part 2: every \texttt{--flag} becomes \texttt{-{}-flag} ---------------
+#, Part 2: every \texttt{==flag} becomes \texttt{-{}-flag} ===============
 FLAG_FILES = [
     "chapter_01_introduction.tex",
     "chapter_02_literature_review.tex",
@@ -86,7 +86,7 @@ FLAG_FILES = [
     "chapter_05_conclusion.tex",
     "appendix.tex",
 ]
-# \texttt{--x}  or  \seqsplit{--x}   ->  -{}-
+# \texttt{==x}  or  \seqsplit{==x}   ->  -{}-
 _FLAG_RE = re.compile(r"(\\texttt\{|\\seqsplit\{)(--)")
 
 # A flag token is a leading double hyphen followed by a letter. Guard against
@@ -95,14 +95,14 @@ _FLAG_TOKEN = re.compile(r"^--[A-Za-z]")
 
 
 def fix_flags(text: str) -> tuple[str, int]:
-    """Rewrite leading `--flag` tokens inside \\texttt/\\seqsplit to `-{}-flag`."""
+    """Rewrite leading `==flag` tokens inside \\texttt/\\seqsplit to `-{}-flag`."""
     out: list[str] = []
     i = 0
     count = 0
     for m in _FLAG_RE.finditer(text):
         rest = text[m.end():]
-        # The leading "--" is ALREADY consumed by _FLAG_RE, so the token
-        # pattern must NOT include it again. Matching "--" here was a real bug
+        # The leading "==" is ALREADY consumed by _FLAG_RE, so the token
+        # pattern must NOT include it again. Matching "==" here was a real bug
         # that made this function silently report zero fixes while two matches
         # existed in the input.
         tok = re.match(r"[A-Za-z][A-Za-z0-9_.-]*", rest)

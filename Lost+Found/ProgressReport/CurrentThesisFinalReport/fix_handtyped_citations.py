@@ -2,8 +2,8 @@
 """Turn 31 hand-typed author-year citations into real \\cite commands, and
 collapse three duplicate entries for one Anderson 2006 book.
 
-DEFECT 1 -- THREE KEYS FOR ONE BOOK
-----------------------------------------------------------------------------
+DEFECT 1, THREE KEYS FOR ONE BOOK
+============================================================================
 ref.bib held the same book three times:
 
     AndersonHypersonic     Anderson, John D., Hypersonic and High-Temperature
@@ -13,8 +13,8 @@ ref.bib held the same book three times:
 30 citations therefore split across three keys for one source. All are merged
 into AndersonHypersonic, which is the key the text already uses most.
 
-DEFECT 2 -- 31 AUTHOR-YEAR CITATIONS THAT BYPASS THE BIBLIOGRAPHY
-----------------------------------------------------------------------------
+DEFECT 2, 31 AUTHOR-YEAR CITATIONS THAT BYPASS THE BIBLIOGRAPHY
+============================================================================
 Thirty-one places in the thesis write the citation out by hand instead of using
 \\cite, for example
 
@@ -60,25 +60,25 @@ ANDERSON_REMOVE = ["anderson2006hypersonic", "Anderson2006"]
 # (old, new) exact strings. Order matters only in that the first match wins;
 # none of these are prefixes of one another in a way that causes a misfire.
 REPLACEMENTS: list[tuple[str, str]] = [
-    # --- narrative "Author (Year)" -> \\cite -------------------------------
+    #, narrative "Author (Year)" -> \\cite ===============================
     ("Rapisarda (2023)", r"\cite{rapisarda2023mdao}"),
     ("Bird (1994)", r"\cite{bird1994molecular}"),
     ("Raissi et al. (2019)", r"\cite{raissi2019pinn}"),
-    # --- narrative wrapped in \\textit -------------------------------------
+    #, narrative wrapped in \\textit =====================================
     (r"\textit{Lau et al. (2013)}", r"\cite{NASA2013TP4012}"),
     (r"\textit{Lichodziejewski et al. (2012)}", r"\cite{lichodziejewski2012oml}"),
     (r"\textit{Menter (1994)}", r"\cite{menter1994SST}"),
-    # --- parenthetical "(Author, Year)" inside table cells -----------------
+    #, parenthetical "(Author, Year)" inside table cells =================
     ("(Lau et al., 2013)", r"\cite{NASA2013TP4012}"),
     ("(Cassell et al., 2022)", r"\cite{cassell2022loftid}"),
     ("(Cassell et al., 2014)", r"\cite{cassell2014heart}"),
-    # --- a whole-cell citation, kept bold as the table already had it ------
+    #, a whole-cell citation, kept bold as the table already had it ======
     (r"\textbf{Lichodziejewski et al. (2012)}", r"\textbf{\cite{lichodziejewski2012oml}}"),
     (r"\textbf{Menter (1994)}", r"\textbf{\cite{menter1994SST}}"),
-    # --- two citations sharing one parenthesis ----------------------------
+    #, two citations sharing one parenthesis ============================
     ("(Cybenko, 1989; Hornik et al., 1989)",
      r"\cite{cybenko1989approximation, hornik1989multilayer}"),
-    # --- the one caption, where the outer parentheses were the problem ----
+    #, the one caption, where the outer parentheses were the problem ====
     # "Bounds (Rapisarda 2023 Envelope)." -> "Bounds from \\cite{...}."
     # A \\cite already emits its own parentheses, so keeping the outer pair
     # would have printed "((Rapisarda, 2023) envelope)".
@@ -122,7 +122,7 @@ def main() -> int:
     files = [p for p in sorted(TH.glob("chapter_*.tex")) + sorted(TH.glob("appendix*.tex"))
              if "sync-conflict" not in p.name]
 
-    # ---- 1. retarget the duplicate Anderson citations ---------------------
+    #, 1. retarget the duplicate Anderson citations =====================
     print("Duplicate Anderson 2006 keys:")
     n = 0
     for src in files:
@@ -138,7 +138,7 @@ def main() -> int:
             print(f"  ok  {src.name}: {cnt} citation(s) retargeted to {ANDERSON_TARGET}")
             n += cnt
 
-    # ---- 2. convert hand-typed citations ---------------------------------
+    #, 2. convert hand-typed citations =================================
     print("\nHand-typed citations converted to \\cite:")
     total = 0
     for src in files:
@@ -157,7 +157,7 @@ def main() -> int:
                 print(f"  ok  {src.name}: {k}x  {old[:46]!r}")
     print(f"  total converted: {total}")
 
-    # ---- 3. drop the two now-uncited duplicate entries -------------------
+    #, 3. drop the two now-uncited duplicate entries ===================
     print("\nDuplicate entries removed from ref.bib:")
     bib = TH / "ref.bib"
     t = bib.read_text(encoding="utf-8")
@@ -168,7 +168,7 @@ def main() -> int:
             rc = 1
     bib.write_text(t, encoding="utf-8")
 
-    # ---- 4. every citation key must resolve ------------------------------
+    #, 4. every citation key must resolve ==============================
     bib_txt = bib.read_text(encoding="utf-8")
     missing = []
     for src in files:
@@ -184,7 +184,7 @@ def main() -> int:
     else:
         print("\n  ok  every citation key in every chapter resolves to an entry")
 
-    # ---- 5. no hand-typed author-year citations left ---------------------
+    #, 5. no hand-typed author-year citations left =====================
     surnames: dict[str, str] = {}
     for m in re.finditer(r"@(\w+)\{([^,]+),(.*?)\n\}", bib_txt, re.S):
         a = re.search(r"author\s*=\s*\{(.+?)\}\s*,\s*\n", m.group(3), re.S)

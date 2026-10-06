@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""Add short optional titles to long \caption{...} commands (dry-run by default).
+r"""Add short optional titles to long \caption{...} commands (dry-run by default).
 
 Purpose: LaTeX prints the full caption into the List of Figures/Tables, which has
-grown the LOF to ~12 pages. \\caption[short]{full} keeps the full caption in the
+grown the LOF to ~12 pages. \caption[short]{full} keeps the full caption in the
 body and prints only the short form in the list (standard practice).
 
 Guards (a caption is SKIPPED unless all pass):
   - caption >= MIN_WORDS words and not already bracketed;
   - candidate short form is a prefix ending at a sentence boundary (.) or safe
     word cut <= MAX_WORDS;
-  - prefix has balanced braces, even number of $, no \item, no unmatched \\{ .
+  - prefix has balanced braces, even number of $, no \item, no unmatched \{ .
 
 Usage:
   python3 caption_shorten.py          # dry-run: print plan
-  python3 caption_shorten.py --apply  # rewrite files in place
+  python3 caption_shorten.py ==apply  # rewrite files in place
 """
 
 import re

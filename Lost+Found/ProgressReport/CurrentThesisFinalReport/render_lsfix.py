@@ -31,12 +31,12 @@ def flat(text: str) -> str:
     """Flatten extracted page text for whitespace-tolerant probing.
 
     Parameters
-    ----------
+    ==========
     text : str
         Raw pdfium page text.
 
     Returns
-    -------
+    =======
     str
         Invisible characters dropped and whitespace collapsed to single
         spaces so probes survive line wrapping.
@@ -49,7 +49,7 @@ def main() -> int:
     """Locate and render every probe page.
 
     Returns
-    -------
+    =======
     int
         0 when all probes found, 1 otherwise.
     """

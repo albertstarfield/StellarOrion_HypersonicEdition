@@ -2,8 +2,8 @@
 """Repair two Chapter 2 figures whose captions assert more than the artwork
 shows, and remove a figure printed twice.
 
-DEFECT 1 -- FIGURE 2.18 (figures/cp_temperature_nasa.png)
-----------------------------------------------------------------------------
+DEFECT 1, FIGURE 2.18 (figures/cp_temperature_nasa.png)
+============================================================================
 The artwork was inspected directly. What it actually contains:
 
   * x-axis "Temperature T [K]", 0 to 6000.
@@ -42,8 +42,8 @@ the 2000 K annotation is not the value used here. The 800 K onset is retained
 as a fact about vibrational excitation, attributed to the source of the
 correlation rather than claimed to be visible in the plot.
 
-DEFECT 2 -- FIGURES 2.11 AND 2.22 ARE THE SAME ARTWORK
-----------------------------------------------------------------------------
+DEFECT 2, FIGURES 2.11 AND 2.22 ARE THE SAME ARTWORK
+============================================================================
 figures/scalloped_wall_flow.png is included twice, at chapter 2 lines 511 and
 1352, under two labels, and the two captions make different and mutually
 inconsistent claims about the same picture:
@@ -63,7 +63,7 @@ no content is lost.
 
 CITATION
   Anderson, J. D., Hypersonic and High-Temperature Gas Dynamics, 2nd ed.,
-  AIAA, 2006 -- already cited as AndersonHypersonic in the same section.
+  AIAA, 2006, already cited as AndersonHypersonic in the same section.
 """
 
 from __future__ import annotations

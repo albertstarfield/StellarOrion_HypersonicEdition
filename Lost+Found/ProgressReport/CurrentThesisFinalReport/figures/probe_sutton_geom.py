@@ -163,11 +163,11 @@ def main() -> int:
         """Return the first recorded box whose string matches, or None.
 
         Parameters
-        ----------
+        ==========
         content : str
             The text content to look for.
         Returns
-        -------
+        =======
         tuple or None
             (owner, text, (x0, x1, y0, y1)) for the first match, else None.
         """

@@ -40,7 +40,7 @@ touches formal verification, which the thesis owner has placed out of scope.
       SOURCE: README.md:336-382.
 
 CITATIONS
----------
+=========
 * Sutton & Graves, NASA TR R-376, 1971 (correlation form used in G2 context).
 * Bird, Molecular Gas Dynamics, 1994 (DSMC timestep criterion cited in G1).
 * Rapisarda, MDAO of an inflatable decelerator, 2023 (reference vehicle data).

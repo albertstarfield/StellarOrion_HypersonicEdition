@@ -39,12 +39,12 @@ def flat(text: str) -> str:
     """Flatten extracted page text for whitespace-tolerant probing.
 
     Parameters
-    ----------
+    ==========
     text : str
         Raw pdfium page text.
 
     Returns
-    -------
+    =======
     str
         Invisible characters dropped, whitespace collapsed to single spaces.
     """

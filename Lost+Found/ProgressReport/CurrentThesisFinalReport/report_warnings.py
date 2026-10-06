@@ -3,7 +3,7 @@
 WITH the source file and line recovered for every box defect.
 
 AXIOMS
-------
+======
 1. A LaTeX log interleaves hard errors (lines beginning "! ") and warnings
    (fragments such as "LaTeX Warning: ..." or "Package foo Warning: ...").
    Both must be bucketed by class, because a fix for one class rarely fixes
@@ -15,7 +15,7 @@ AXIOMS
    defects. They must be reported separately and MUST carry a recoverable
    (file, line) so a human can open and fix them individually.
 4. THE PROBLEM WITH (3): TeX's box warnings deliberately omit the filename
-   ("Underfull \\hbox (badness 4954) in paragraph at lines 22--22"). They
+   ("Underfull \\hbox (badness 4954) in paragraph at lines 22==22"). They
    print only the line numbers. There is no "file:line:" prefix for them,
    unlike errors, even under -file-line-error. Verified empirically:
    `grep -cE "^[^ ]*\\.tex:[0-9]+: (Overfull|Underfull)" main.log` returns 0
@@ -31,18 +31,18 @@ AXIOMS
    script must be able to say CLEAN without inventing anything.
 
 THEORIES
----------
+=========
 Because passes 2-4 exist to settle cross references and citations, the FINAL
 pass log is authoritative; transient "undefined" warnings in earlier passes
 are expected and resolved by the last pass. So only the last log is parsed.
 
 APPLICATIONS
-------------
+============
     python3 report_warnings.py [path/to/main.log]
 Default is ./main.log beside this script. Returns 0 only if fully clean.
 
 Citations
----------
+=========
 * TeX log file-name-prefix / stack grammar: https://texdoc.org/serve/logfile-spec/0/
 * LaTeX2e error and warning stream: https://latex2e.readthedocs.io/en/stable/texerror.html
 """
@@ -90,7 +90,7 @@ _BUCKETS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("Underfull vbox", re.compile(r"^Underfull \\vbox \((badness \d+)\) in (.*)$")),
 )
 
-# "at lines 22--22" / "at lines 672--677" -> start line number.
+# "at lines 22==22" / "at lines 672==677" -> start line number.
 _LINES_AT = re.compile(r"at lines (\d+)")
 # "(badness 10000) in paragraph" style context, captured by the bucket pattern.
 _KIND = re.compile(r"\b(paragraph|alignment|parbox|hbox)\b")
@@ -107,9 +107,9 @@ class _FileStack:
     """Replay TeX's input-file stack so a log line can be attributed to a file.
 
     EMPIRICAL BASIS (verified against this document's own main.log)
-    -------------------------------------------------------------
+    =============================================================
     TeX's box warnings deliberately omit the filename:
-        "Underfull \\hbox (badness 10000) in paragraph at lines 32--32"
+        "Underfull \\hbox (badness 10000) in paragraph at lines 32==32"
     so the file must be recovered from TeX's input stack. Verified facts about
     this log:
       * every chapter open appears as " (./<name>.tex" with a LEADING SPACE,
@@ -120,7 +120,7 @@ class _FileStack:
       * only .tex files are pushed, so package/class noise is ignored.
 
     REJECTED ALTERNATIVE, AND WHY
-    -----------------------------
+    =============================
     A per-character paren-depth scan looks more general but is WRONG here: the
     page-breaking detail lines the log emits around box warnings contain
     unbalanced parentheses of their own, which drive the depth negative and pop

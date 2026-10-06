@@ -61,9 +61,9 @@ THESIS = Path(__file__).resolve().parent
 CH4 = THESIS / "chapter_04_results.tex"
 MK = THESIS / "figures" / "make_fignew.py"
 
-# ---------------------------------------------------------------------------
+# ===========================================================================
 # 1. The Chapter 4 scalloping paragraph.
-# ---------------------------------------------------------------------------
+# ===========================================================================
 OLD_P1 = (
     "This comparison is not, however, a controlled one, and two limitations "
     "must be stated rather than glossed. First, the two recorded time series "

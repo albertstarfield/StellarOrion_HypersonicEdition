@@ -218,3 +218,70 @@ brace imbalance, zero environment mismatch, zero residual em dashes, zero
 banned scope terms and zero duplicate labels across 187 labels,
 `scan_long_sentences.py` finds zero overlong sentences, and
 `check_prose_batch.py` returns PASS with the appendix at 1311 words.
+
+### 7.3 The second sweep: one-shot remediation scripts
+
+The first sweep cleaned the maintained battery. The remaining tracked scripts
+are one-shot remediators written earlier in the audit, and a second pass with
+the same tool reduced them from 313 occurrences to 34. Every one of the 34 is
+functional, in one of four classes:
+
+1. **A tool's own command-line interface.** `fix_uk_to_us.py` and
+   `caption_shorten.py` each accept a flag that switches dry run from apply.
+2. **A regex whose job is to find the sequence.** `fix_pinn_and_flags.py`
+   compiles two patterns, one for a doubled hyphen inside a `\texttt` group and
+   one for a flag token at the start of a string. This is the tool that
+   enforces the eighteen-token carve-out in section 2, so removing its pattern
+   would disarm it.
+3. **A bibliography template.** `fix_last_truncated_refs.py`,
+   `fix_phantom_refs.py` and `add_missing_citations.py` embed NASA report
+   numbers and a page range. The committed bibliography was measured clean, so
+   these templates have never been applied; a page range written as two
+   hyphens is the conventional form and is left as it stands.
+4. **A replacement table.** `fix_emdash.py` (44) and `fix_emdash_pass2.py`
+   (43) exist only to substitute em dashes in the thesis. Their tables
+   necessarily contain the sequences, as both the thing searched for and the
+   proposed replacement. The thesis now measures zero em dashes, so their work
+   is complete and re-running them would undo it.
+
+`build_thesis.sh` contributes two more: a usage line that quotes the two flags
+it accepts, and the test for the first of them.
+
+### 7.4 Five emission defects fixed at the source, and why the tool could not
+
+Four tracked scripts build LaTeX or BibTeX text as Python string literals, and
+five such literals contained a doubled hyphen. Because a string literal is
+program, the token-based cleaner deliberately refused to touch all five, which
+is correct: a cleaner that rewrote them would be rewriting content. They were
+fixed by hand instead.
+
+- `fix_cost_function.py` emitted the heat-load term with the Sutton-Graves
+  correlation written as a doubled hyphen.
+- `integrate_figures.py` emitted the same proper noun with a doubled hyphen.
+- `fix_typed_crossrefs.py` emitted "aerodynamic-thermal-structural design
+  space" twice with doubled hyphens at both joins.
+- `add_missing_citations.py` embedded the Stefan-Boltzmann constant in a
+  bibliography note field with a doubled hyphen.
+
+In LaTeX and in BibTeX a doubled hyphen is not a hyphen: it is an en dash, and
+an en dash is banned by the goal. Each of these would have written a banned
+character into the rendered PDF the moment the script was next run, while every
+existing check stayed green, because the checkers read the committed sources
+and never execute the remediators. The committed thesis was measured clean
+before and after, so the damage had not yet landed.
+
+### 7.5 A guard that reported a pass it had not tested for
+
+The sweep surfaced an unrelated defect class: `caption_shorten.py` declared a
+docstring that was not raw, and its `\caption` raised an invalid escape
+sequence, which Python reports as a warning today and as an error in a future
+release. The docstring is now raw and its doubled backslashes reduced.
+
+The more useful finding is how the sweep for that class first reported a clean
+result that meant nothing. The detector ran the compiler with warnings promoted
+to errors and then searched its output for the word the warning had carried.
+Promotion to an error renames the diagnostic, so the search found nothing while
+the compiler had in fact reported the defect. The detector was corrected to
+search for the condition rather than for the severity, and was then run against
+a control file built to contain the defect. It now reports the control and
+reports none of the thesis scripts, so the zero means something.

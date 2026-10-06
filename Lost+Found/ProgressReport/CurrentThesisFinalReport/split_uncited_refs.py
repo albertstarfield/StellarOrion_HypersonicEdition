@@ -3,7 +3,7 @@
 deleting it.
 
 THE DEFECT, MEASURED
-----------------------------------------------------------------------------
+============================================================================
 references.tex contains \\nocite{*}, which instructs BibTeX to print the ENTIRE
 ref.bib database whether or not anything cites it. Measured on the current
 document:
@@ -39,7 +39,7 @@ bibliography-hygiene defect a reviewer will raise, and it is the direct cause of
 one of the remaining BibTeX warnings.
 
 WHY NOTHING IS DELETED
-----------------------------------------------------------------------------
+============================================================================
 The 32 entries are MOVED to ref_uncited.bib, a second database that is not
 passed to \\bibliography and therefore never enters the printed reference list.
 If the author later wants any of them, the entry is still present and one line
@@ -159,7 +159,7 @@ def main() -> int:
     print(f"  ok  ref.bib           -> {len(entries) - len(uncited)} entries")
     print(f"  ok  ref_uncited.bib   -> {len(uncited)} entries, not passed to \\bibliography")
 
-    # ---- drop \nocite{*} --------------------------------------------------
+    #, drop \nocite{*} ==================================================
     t = REFS.read_text(encoding="utf-8")
     m = re.search(r"[ \t]*\\nocite\{\*\}[^\n]*", t)
     if m:
@@ -176,7 +176,7 @@ def main() -> int:
     else:
         print("  !! no \\nocite{*} found in references.tex")
 
-    # ---- verify -----------------------------------------------------------
+    #, verify ===========================================================
     bib = BIB.read_text(encoding="utf-8")
     remaining = [k for k in split_entries(bib)[0] if k not in cited]
     print(f"  ok  printed entries not cited: {len(remaining)}"

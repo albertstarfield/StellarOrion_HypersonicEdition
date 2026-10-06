@@ -2,8 +2,8 @@
 """Replace two bibliography entries that point at records which cannot exist,
 with entries verified against NASA's own database.
 
-ENTRY 1 -- NASA2013TP4012  (cited 5 times)
-----------------------------------------------------------------------------
+ENTRY 1, NASA2013TP4012  (cited 5 times)
+============================================================================
 The entry claimed:
 
     author      = {Lau, Chinsung and others}
@@ -38,15 +38,15 @@ complete and needs no "and others". This is the paper the NASA HIAD literature
 cites for IRVE-3 flight performance, and it is the correct source for the peak
 deceleration of 19.7 g reported in the thesis.
 
-ENTRY 2 -- cassell2022loftid  (cited once)
-----------------------------------------------------------------------------
+ENTRY 2, cassell2022loftid  (cited once)
+============================================================================
 The entry claimed:
 
     author  = {Cassell, Gregory J. and others}
     title   = {Low-Earth Orbit Flight Test of an Inflatable Decelerator
                (LOFTID) Mission Overview and Status}
     journal = {Journal of Spacecraft and Rockets}
-    year    = {2022}, volume = {59}, number = {1}, pages = {12--25}
+    year    = {2022}, volume = {59}, number = {1}, pages = {12==25}
 
 The LOFTID mission overview in the Journal of Spacecraft and Rockets is not this
 paper. The LOFTID virtual collection was published in JSR volume 63, issue 1
@@ -146,7 +146,7 @@ def drop_entry(lines: list[str], key: str) -> tuple[list[str], bool]:
 def main() -> int:
     rc = 0
 
-    # ---- 1. retarget citations -------------------------------------------
+    #, 1. retarget citations ===========================================
     for src in (SRC, SRC3):
         t = src.read_text(encoding="utf-8")
         orig = t
@@ -158,7 +158,7 @@ def main() -> int:
             src.write_text(t, encoding="utf-8")
             print(f"  ok  {src.name}: citations retargeted")
 
-    # ---- 2. swap the entries ----------------------------------------------
+    #, 2. swap the entries ==============================================
     lines = BIB.read_text(encoding="utf-8").split("\n")
     for old, _new in REPLACEMENTS:
         lines, ok = drop_entry(lines, old)
@@ -172,7 +172,7 @@ def main() -> int:
     BIB.write_text(text, encoding="utf-8")
     print("  ok  ref.bib: added dillman2014irve3flight and dinonno2026loftid")
 
-    # ---- 3. verify --------------------------------------------------------
+    #, 3. verify ========================================================
     bib = BIB.read_text(encoding="utf-8")
     print(f"  entries now: {len(re.findall(r'^@', bib, re.M))}")
     print(f"  'and others' remaining: {bib.count('and others')}")

@@ -3,7 +3,7 @@
 paragraph that narrates its own editing history.
 
 WHAT THE AUDIT FOUND
-----------------------------------------------------------------------------
+============================================================================
 Dimension 11 of audit.py flags paragraphs that assert a fact about a named
 external programme, standard or mission and cite nothing. After figure, table and
 itemize environments were removed, twelve paragraphs remained. Reading each one
@@ -44,7 +44,7 @@ which need no citation. The six omissions and the sources now attached:
   be cited to anything external, or merely point at figures by \ref.
 
 THIRD COPY OF THE SAME META-NARRATION
-----------------------------------------------------------------------------
+============================================================================
 Chapter 3 and Chapter 4 both carried a paragraph explaining the correlation
 constant and nose radius. Appendix C carried a third copy of it, still reading
 "An earlier revision of this appendix reported 12.20 W/cm2 ...". Narrating an
@@ -67,7 +67,7 @@ from pathlib import Path
 TH = Path(__file__).resolve().parent
 
 EDITS = [
-    # ---- chapter 1: the three named external tools -----------------------
+    #, chapter 1: the three named external tools =======================
     ("chapter_01_introduction.tex",
      "high-fidelity DSMC rarefied gas dynamics (SPARTA), Physics-Informed Neural "
      "Network refinement (DeepXDE), and surrogate-assisted genetic algorithm "
@@ -75,26 +75,26 @@ EDITS = [
      "high-fidelity DSMC rarefied gas dynamics~\\cite{plimpton2014sparta}, "
      "Physics-Informed Neural Network refinement~\\cite{lu2021deepxde}, and "
      "surrogate-assisted genetic algorithm optimization"),
-    # ---- chapter 3: SPARTA particle tracking -----------------------------
+    #, chapter 3: SPARTA particle tracking =============================
     ("chapter_03_methodology.tex",
      "SPARTA tracks millions of simulated particles through three fundamental "
      "processes:",
      "SPARTA~\\cite{plimpton2014sparta} tracks millions of simulated particles "
      "through three fundamental processes:"),
-    # ---- chapter 3: the IRVE-3-derived reference values ------------------
+    #, chapter 3: the IRVE-3-derived reference values ==================
     ("chapter_03_methodology.tex",
      "They are loaded at run time from the IRVE-3 validation run so that the "
      "surrogate is anchored to the measured vehicle",
      "They are loaded at run time from the IRVE-3 validation run "
      "~\\cite{old2013irve3postflight,dillman2014irve3flight} so that the surrogate "
      "is anchored to the measured vehicle"),
-    # ---- chapter 4: the 16.14 figure and Rapisarda's 15.26 ---------------
+    #, chapter 4: the 16.14 figure and Rapisarda's 15.26 ===============
     ("chapter_04_results.tex",
      "it is the same class of quantity as Rapisarda's trajectory-integrated SG "
      "value of 15.26~W/cm\\textsuperscript{2}",
      "it is the same class of quantity as Rapisarda's trajectory-integrated SG "
      "value of 15.26~W/cm\\textsuperscript{2}~\\cite{rapisarda2023mdao}"),
-    # ---- chapter 4: the IRVE-3 TPS layup and its limits ------------------
+    #, chapter 4: the IRVE-3 TPS layup and its limits ==================
     ("chapter_04_results.tex",
      "the IRVE-3 flexible-TPS structural limit of 523.15\\,K by 432.5\\,K",
      "the IRVE-3 flexible-TPS structural limit of 523.15\\,K by 432.5\\,K "
@@ -103,7 +103,7 @@ EDITS = [
      "one 0.15\\,mm aluminized Kapton/Kevlar gas barrier, totalling 6.35\\,mm",
      "one 0.15\\,mm aluminized Kapton/Kevlar gas barrier~\\cite{guidotti2023efesto2materials}, "
      "totalling 6.35\\,mm"),
-    # ---- appendix: the two comparison values -----------------------------
+    #, appendix: the two comparison values =============================
     ("appendix.tex",
      "relative to the $14.36$\\,W/cm$^2$ flight measurement and $+5.8\\%$ relative "
      "to Rapisarda's trajectory-integrated peak of $15.26$\\,W/cm$^2$;",
@@ -111,7 +111,7 @@ EDITS = [
      "measurement~\\cite{old2013irve3postflight} and $+5.8\\%$ relative to "
      "Rapisarda's trajectory-integrated peak of $15.26$\\,W/cm$^2$"
      "~\\cite{rapisarda2023mdao};"),
-    # ---- appendix: third copy of the meta-narration ----------------------
+    #, appendix: third copy of the meta-narration ======================
     ("appendix.tex",
      "An earlier revision of this appendix reported $12.20$\\,W/cm$^2$ from the "
      "superseded coefficient $C_{SG} = 1.7415 \\times 10^{-4}$ and nose radius "

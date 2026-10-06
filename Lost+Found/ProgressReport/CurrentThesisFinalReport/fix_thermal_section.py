@@ -10,7 +10,7 @@ and line.
   1. "backface temperature consistently reaches 492.0 K"
      CONTRADICTED. README.md:238-244 records the actual output of the validation
      gate with the ACTIVE thermal protection system:
-         Survivability: FAILED -- vehicle does not survive.
+         Survivability: FAILED, vehicle does not survive.
          Backface temp :  9.55662E+02 K      (KAPTON_MAX_TEMP = 673 K)
      492.0 K does not appear in any results artefact.
 
@@ -34,7 +34,7 @@ and line.
      IRVE-3 flexible TPS, total 6.35 mm, series resistance R = 0.25605
      m^2 K/W, outer emissivity 0.80. README.md:180-183 states the 25.4 mm
      homogeneous SiC slab was "the LOFTID baseline, 4x too thick for IRVE-3",
-     was a "wrong-vehicle default", and that "--tps now defaults to irve3-ftps".
+     was a "wrong-vehicle default", and that "==tps now defaults to irve3-ftps".
      So 25.4 mm is not the baseline; it is a superseded value.
 
   4. "Q ~ 11.38 MJ/m^2"
@@ -51,7 +51,7 @@ subsection was trying to make, and it follows from the real layup instead of a
 superseded one.
 
 Citations
----------
+=========
 * Is_Survivable predicate: stellarorion_physics.adb (function Is_Survivable).
 * Material limits: stellarorion_types.ads:97,101,105,590.
 * F-TPS layup: README.md:159-183; stellarorion_types.ads:672 (TPS_Layup_IRVE3).
@@ -65,7 +65,7 @@ from pathlib import Path
 CH4 = Path(__file__).resolve().parent / "chapter_04_results.tex"
 
 EDITS: list[tuple[str, str]] = [
-    # ---- 1 + 2 + 3: the finding sentence and the baseline it attributes to ----
+    #, 1 + 2 + 3: the finding sentence and the baseline it attributes to ====
     (
         "A critical finding across all optimization samples is that the "
         "backface temperature consistently reaches 492.0\\,K, which exceeds "
@@ -94,7 +94,7 @@ EDITS: list[tuple[str, str]] = [
         "the binding constraint, while the deceleration channel passes with "
         "margin.",
     ),
-    # ---- 4: the heat-load figure, in MJ/m^2 ----
+    #, 4: the heat-load figure, in MJ/m^2 ====
     (
         "The consistent backface temperature across all samples suggests that "
         "the thermal soak is dominated by the total heat load "
@@ -109,7 +109,7 @@ EDITS: list[tuple[str, str]] = [
         "so it is this accumulated quantity, and not the stagnation-point "
         "correlation value of Chapter~3, that sets the backface temperature.",
     ),
-    # ---- recommendation 1: direction and baseline were both wrong ----
+    #, recommendation 1: direction and baseline were both wrong ====
     (
         "    \\item The TPS thickness must be increased beyond 25.4\\,mm to "
         "provide sufficient thermal resistance.",
@@ -122,7 +122,7 @@ EDITS: list[tuple[str, str]] = [
         "stack means increasing the low-conductivity Pyrogel plies rather than "
         "the outer fabric.",
     ),
-    # ---- recommendation 2: eta_lag was asserted with no source ----
+    #, recommendation 2: eta_lag was asserted with no source ====
     (
         "    \\item The thermal lag factor ($\\eta_{lag} = 0.15$) may need "
         "recalibration against higher-fidelity thermal analysis.",

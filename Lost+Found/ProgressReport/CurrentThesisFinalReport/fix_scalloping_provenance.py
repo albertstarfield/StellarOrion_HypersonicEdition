@@ -7,7 +7,7 @@ settle. What IS corrected here are claims that are false against the artefacts
 regardless of which dataset is chosen, because each one is checkable now.
 
 AXIOMS CHECKED AGAINST THE ARTEFACTS
-------------------------------------
+====================================
 A1. "Comparing the scalloped and smooth DSMC solutions at the identical run
     condition (step 2200)"
     FALSE. The two time series in the same results tree are at DIFFERENT flight

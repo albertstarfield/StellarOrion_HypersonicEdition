@@ -2,8 +2,8 @@
 """Replace the last two bibliography entries whose author lists were truncated,
 because the records they claimed do not match the works that exist.
 
-ENTRY 1 -- cassell2014heart  (cited once, Table 2.1 row 4)
-----------------------------------------------------------------------------
+ENTRY 1, cassell2014heart  (cited once, Table 2.1 row 4)
+============================================================================
 The entry claimed:
 
     author    = {Cassell, Gregory J. and others}
@@ -28,8 +28,8 @@ catalytic uncertainty at the nose-IAD juncture falls by at least 93 per cent.
 That is precisely the finding Table 2.1 row 4 reports, so the citation was
 pointing at the right study under the wrong author, venue and year.
 
-ENTRY 2 -- lichodziejewski2012oml  (cited twice)
-----------------------------------------------------------------------------
+ENTRY 2, lichodziejewski2012oml  (cited twice)
+============================================================================
 The entry claimed:
 
     author    = {Lichodziejewski, David and others}
@@ -144,7 +144,7 @@ def drop_entry(lines: list[str], key: str) -> tuple[list[str], bool]:
 def main() -> int:
     rc = 0
 
-    # ---- citations -------------------------------------------------------
+    #, citations =======================================================
     t = CH2.read_text(encoding="utf-8")
     for old, new in RETARGET.items():
         n = t.count(old)
@@ -160,7 +160,7 @@ def main() -> int:
             rc = 1
     CH2.write_text(t, encoding="utf-8")
 
-    # ---- bibliography ----------------------------------------------------
+    #, bibliography ====================================================
     lines = BIB.read_text(encoding="utf-8").split("\n")
     for old in RETARGET:
         lines, ok = drop_entry(lines, old)
@@ -170,7 +170,7 @@ def main() -> int:
                    encoding="utf-8")
     print("  ok  ref.bib: added mazaheri2012heart and guo2017deformation")
 
-    # ---- verify ----------------------------------------------------------
+    #, verify ==========================================================
     bib = BIB.read_text(encoding="utf-8")
     print(f"  entries: {len(re.findall(r'^@', bib, re.M))}   'and others': {bib.count('and others')}")
     if bib.count("and others"):

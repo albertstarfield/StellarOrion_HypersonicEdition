@@ -1,7 +1,7 @@
 """Render the specific pages touched by the current audit cycle.
 
 WHY THIS SCRIPT EXISTS
-----------------------
+======================
 render_readfix.py locates pages by searching for a probe phrase. This cycle
 already located every page of interest, so re-running phrase probes would
 only risk matching a different sentence after a reflow. The page numbers are
@@ -18,7 +18,7 @@ PAGES, zero based, with the edit under audit on each:
     123 the Latin Hypercube paragraph whose citation was split before
 
 CITATIONS
----------
+=========
 - pypdfium2, https://github.com/pypdfium2-team/pypdfium2
 - Pillow 12.3.0, https://pillow.readthedocs.io/en/stable/
 """
@@ -37,7 +37,7 @@ def main() -> int:
     """Render every page in PAGES to read_cycle2_pNN.png; 1 if any is missing.
 
     Returns
-    -------
+    =======
     int
         Zero when all pages rendered, one otherwise.
     """

@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """Pass 2 of the em-dash removal: every dash that functions as an em-dash but
-is not literally spelled `---`.
+is not literally spelled `===`.
 
 WHY A SECOND PASS IS NEEDED
-AXIOM: In LaTeX, `---` renders as an em-dash and `--` as an en-dash. Pass 1
-(`fix_emdash.py`) removed all 40 literal `---` occurrences. However the thesis
-also uses the two-character `--` in the *grammatical role* of an em-dash,
+AXIOM: In LaTeX, `===` renders as an em-dash and `==` as an en-dash. Pass 1
+(`fix_emdash.py`) removed all 40 literal `===` occurrences. However the thesis
+also uses the two-character `==` in the *grammatical role* of an em-dash,
 namely as an interrupting or parenthetical dash. Those render as a dash and
 read as an em-dash even though the source token is shorter, so removing only
-`---` would satisfy the letter of the rule while leaving its spirit unmet.
+`===` would satisfy the letter of the rule while leaving its spirit unmet.
 
 THEORY: A dash in this thesis is acceptable ONLY when it is doing one of three
 legitimate jobs, which are enumerated by construction and preserved verbatim:
-  (i)   a COMPOUND HYPHEN joining proper nouns   -> Navier--Stokes
-  (ii)  a numeric or section RANGE              -> 0.01--0.1
-  (iii) literal DATA inside CLI flags or code   -> --nose, -{}-validate-only
+  (i)   a COMPOUND HYPHEN joining proper nouns   -> Navier==Stokes
+  (ii)  a numeric or section RANGE              -> 0.01==0.1
+  (iii) literal DATA inside CLI flags or code   -> ==nose, -{}-validate-only
 Every other dash is an em-dash in disguise and is removed here.
 
 Consequence for duplicated content (the no_copy_paste_divergence rule):
@@ -23,7 +23,7 @@ validation table. Their placeholder cells are therefore corrected in lockstep
 in one replacement table below, so the two copies cannot drift apart.
 
 Citations
----------
+=========
 * LaTeX dash ligatures: https://tug.org/TUGboat/Volumes/tn09/3/hyphenator.html
 * APA 6th ed. section 6.2 (dash usage): https://apastyle.apa.org/style-grammar-guidelines/bibliography/apa-6th-edition/
 """
@@ -45,7 +45,7 @@ PAIRS: dict[str, list[tuple[str, str]]] = {
             "survivability (balancing drag performance, peak heating, "
             "ballistic coefficient, and structural mass) requires",
         ),
-        # parenthetical list inside a "The X -- ... -- are" frame -> commas
+        # parenthetical list inside a "The X, ..., are" frame -> commas
         (
             "The geometric parameters -- including aeroshell diameter, "
             "forebody cone angle, toroid count, toroid radius, and nose radius "
@@ -61,7 +61,7 @@ PAIRS: dict[str, list[tuple[str, str]]] = {
             "\\tablename\\ \\thetable{} -- continued from previous page",
             "\\tablename\\ \\thetable{} (continued from previous page)",
         ),
-        # "the state of the X -- whether ... -- has" -> commas
+        # "the state of the X, whether ..., has" -> commas
         (
             "the state of the boundary layer -- whether laminar, transitional, "
             "or fully turbulent -- has a profound impact",
@@ -90,7 +90,7 @@ PAIRS: dict[str, list[tuple[str, str]]] = {
         ),
     ],
     "chapter_03_methodology.tex": [
-        # "The two configurations -- A and B -- are" -> commas
+        # "The two configurations, A and B, are" -> commas
         (
             "for this study -- \\textbf{Configuration A (Scalloped)} and "
             "\\textbf{Configuration B (Smooth)} -- are constrained",
@@ -143,7 +143,7 @@ PAIRS: dict[str, list[tuple[str, str]]] = {
             "$L_{ref} = \\max(|x_{bound}|)$ -- maximum domain extent",
             "$L_{ref} = \\max(|x_{bound}|)$: maximum domain extent",
         ),
-        # ---- table placeholder cells -> n/a -------------------------------
+        #, table placeholder cells -> n/a ===============================
         (
             "Multi-layer (stack) & -- & -- & -- & Combined FTPS stack",
             "Multi-layer (stack) & n/a & n/a & n/a & Combined FTPS stack",
@@ -207,18 +207,18 @@ _CODE_ENV = re.compile(r"\\begin\{(verbatim|lstlisting|minted|alltt)\}")
 _CODE_END = re.compile(r"\\end\{(verbatim|lstlisting|minted|alltt)\}")
 
 # Dashes that are legitimate and MUST survive (axioms i-iii above).
-# NOTE: `$--$` is required because most numeric ranges in this thesis wrap each
-# endpoint in its own math group, e.g. $0.001$--$0.01$ and $O(10^2)$--$O(10^3)$.
+# NOTE: `$==$` is required because most numeric ranges in this thesis wrap each
+# endpoint in its own math group, e.g. $0.001$==$0.01$ and $O(10^2)$==$O(10^3)$.
 # Without it the residual audit reports dozens of false positives and stops
 # being trustworthy, which is worse than not running it at all.
 _ALLOWED = [
-    re.compile(r"[A-Za-z]--[A-Za-z]"),           # Navier--Stokes, sphere--cone
-    re.compile(r"\d\s*--\s*\d"),                 # 0.01--0.1, 21--23, 500--1100
-    re.compile(r"\$--\$"),                       # $0.001$--$0.01$, $10$--$15$
-    re.compile(r"\)\s*--\s*\("),                 # panels (a)--(c)
-    re.compile(r"--[a-zA-Z]"),                   # --nose, --validate-only
+    re.compile(r"[A-Za-z]--[A-Za-z]"),           # Navier==Stokes, sphere==cone
+    re.compile(r"\d\s*--\s*\d"),                 # 0.01==0.1, 21==23, 500==1100
+    re.compile(r"\$--\$"),                       # $0.001$==$0.01$, $10$==$15$
+    re.compile(r"\)\s*--\s*\("),                 # panels (a)==(c)
+    re.compile(r"--[a-zA-Z]"),                   # ==nose, ==validate-only
     re.compile(r"[a-zA-Z]--"),                   # -{}-style, tail of a range
-    re.compile(r"\$k\$--\$\\omega\$"),           # k--omega turbulence model
+    re.compile(r"\$k\$--\$\\omega\$"),           # k==omega turbulence model
 ]
 
 

@@ -2,8 +2,8 @@
 """Cite the external facts the thesis states without a source, and remove a
 duplicated paragraph that narrates its own editing history.
 
-ADDED SOURCE 1 -- U.S. Standard Atmosphere, 1976
-----------------------------------------------------------------------------
+ADDED SOURCE 1, U.S. Standard Atmosphere, 1976
+============================================================================
 The thesis evaluates its freestream state "under ISA" in at least four places:
 
     chapter_02: "the ISA freestream density rho_inf = 1.05e-3 kg/m3"
@@ -24,8 +24,8 @@ the repository's own master reference list, names the source as:
 so the repository already records where the model comes from and the thesis
 simply did not cite it. The entry is added and all four statements now cite it.
 
-ADDED SOURCE 2 -- CODATA 2018
-----------------------------------------------------------------------------
+ADDED SOURCE 2, CODATA 2018
+============================================================================
 Appendix Table A.1 lists the physical constants and attributes them to the code:
 
     "Fundamental physical constants used in StellarOrion
@@ -42,8 +42,8 @@ repository document records the true origin:
 The table values are exactly those CODATA values, so the caption now cites
 CODATA 2018 alongside naming the consuming source.
 
-CITED EXISTING SOURCE -- Bird (1994) for the mean free path
-----------------------------------------------------------------------------
+CITED EXISTING SOURCE, Bird (1994) for the mean free path
+============================================================================
 Chapter 2 evaluates Eq. for the mean free path with a hard-sphere molecular
 diameter of 3.7e-10 m. That formula and that constant are Bird's, and
 docs/CITATIONS.md names [Bird94] as the source for "Mean-free-path formula
@@ -51,7 +51,7 @@ lambda = 1/(sqrt(2) pi d^2 n)". Bird is already in the bibliography as
 bird1994molecular and was not cited at this point.
 
 DUPLICATED PARAGRAPH
-----------------------------------------------------------------------------
+============================================================================
 chapter_03:437 and chapter_04:43 were two versions of the same paragraph, and
 the Chapter 4 copy still said the values "were corrected during the course of
 the work" and referred to "earlier revisions of this work". Chapter 3 had
@@ -95,14 +95,14 @@ NEW_CODATA = """@techreport{codata2018,
   year        = {2018},
   type        = {Technical Report},
   note        = {https://physics.nist.gov/cuu/Constants/; supplies the
-                  Stefan--Boltzmann constant, the Avogadro constant and the
+                  Stefan-Boltzmann constant, the Avogadro constant and the
                   molar mass of air quoted in Appendix~A}
 }
 """
 
 # (file, old, new) exact replacements.
 EDITS = [
-    # ---- ISA statements -------------------------------------------------
+    #, ISA statements =================================================
     ("chapter_02_literature_review.tex",
      "places the IRVE-3 freestream in the deep-continuum regime, not the "
      "transition regime.",
@@ -125,14 +125,14 @@ EDITS = [
     ("chapter_04_results.tex",
      "ISA $\\rho_{\\infty} = 7.851 \\times 10^{-4}$",
      "ISA~\\cite{usstandard1976} $\\rho_{\\infty} = 7.851 \\times 10^{-4}$"),
-    # ---- CODATA --------------------------------------------------------
+    #, CODATA ========================================================
     ("appendix.tex",
      "\\caption{Fundamental physical constants used in StellarOrion "
      "(from \\texttt{stellarorion\\_types.ads}).}",
      "\\caption{Fundamental physical constants used in StellarOrion, as "
      "consumed by \\texttt{stellarorion\\_types.ads} and taken from the 2018 "
      "recommended values~\\cite{codata2018}.}"),
-    # ---- Chapter 4 duplicate of the Chapter 3 provenance paragraph -------
+    #, Chapter 4 duplicate of the Chapter 3 provenance paragraph =======
     ("chapter_04_results.tex",
      "The correlation constant and the nose radius used here were corrected "
      "during the course of the work. The value reported in earlier revisions of "
@@ -183,7 +183,7 @@ def main() -> int:
     bib.write_text(t, encoding="utf-8")
     print(f"  ok  ref.bib: added {added}")
 
-    # ---- verify every citation resolves ----------------------------------
+    #, verify every citation resolves ==================================
     txt = "".join((TH / f).read_text(encoding="utf-8")
                   for f in ("chapter_01_introduction.tex",
                             "chapter_02_literature_review.tex",

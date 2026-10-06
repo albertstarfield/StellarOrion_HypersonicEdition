@@ -97,7 +97,7 @@ def figure(name: str, alt: str, caption: str, label: str, width: str = "0.95") -
 def main() -> int:
     ok = True
 
-    # ---- 1. Chapter 1: replace the generic template flowchart --------------
+    #, 1. Chapter 1: replace the generic template flowchart ==============
     t = CH1.read_text(encoding="utf-8")
     m = re.search(r"    \\BeginAccSupp\{method=escape,ActualText=\{Vertical flowchart of the eleven-stage research workflow.*?\\label\{fig:flowchart_ch1\}\n\\end\{figure\}", t, re.S)
     if not m:
@@ -136,7 +136,7 @@ def main() -> int:
         CH1.write_text(t[:m.start()] + block + t[m.end():], encoding="utf-8")
         print("  ok  ch1: generic template flowchart replaced (fig:flowchart_ch1)")
 
-    # ---- 2. Chapter 3: replace the duplicate float with a cross-reference ----
+    #, 2. Chapter 3: replace the duplicate float with a cross-reference ====
     t = CH3.read_text(encoding="utf-8")
     m = re.search(r"\\begin\{figure\}\[!htbp\]\n    \\centering\n    % Same artwork as Figure 1\.6.*?\\label\{fig:flowchart\}\n\\end\{figure\}\n", t, re.S)
     if not m:
@@ -150,7 +150,7 @@ def main() -> int:
         CH3.write_text(t[:m.start()] + repl + t[m.end():], encoding="utf-8")
         print("  ok  ch3: duplicated flowchart float replaced by a cross-reference")
 
-    # ---- 3. Chapter 3: entry trajectory figure -------------------------------
+    #, 3. Chapter 3: entry trajectory figure ===============================
     ok &= insert_before(
         CH3,
         "\\section{Computational Infrastructure}",
@@ -179,7 +179,7 @@ def main() -> int:
         "ch3 entry trajectory figure",
     )
 
-    # ---- 4. Chapter 4: convergence figure replaced + false claim fixed ------
+    #, 4. Chapter 4: convergence figure replaced + false claim fixed ======
     t = CH4.read_text(encoding="utf-8")
     m = re.search(r"    \\BeginAccSupp\{method=escape,ActualText=\{Log-scale plot of normalised convergence residuals.*?\\label\{fig:convergence\}\n\\end\{figure\}", t, re.S)
     if not m:
@@ -204,7 +204,7 @@ def main() -> int:
             "sometimes claimed for this quantity, and the figure is plotted so the "
             "reader can confirm it: the scatter between adjacent samples is the "
             "signature of a finite-sample particle estimator rather than a monotone "
-            "error bound. The processed Sutton--Graves correlation value is "
+            "error bound. The processed Sutton-Graves correlation value is "
             "deliberately not plotted, being a function of the fixed freestream "
             "state and therefore bit-identical at every step.",
             "fig:convergence",
@@ -212,7 +212,7 @@ def main() -> int:
         CH4.write_text(t[:m.start()] + block + t[m.end():], encoding="utf-8")
         print("  ok  ch4: convergence figure replaced, false 'three orders' claim corrected")
 
-    # ---- 5. Chapter 4: scalloped versus smooth, right after the paragraph -----
+    #, 5. Chapter 4: scalloped versus smooth, right after the paragraph =====
     t = CH4.read_text(encoding="utf-8")
     anchor = "\\begin{figure}[!htbp]\n    \\centering\n    \\BeginAccSupp{method=escape,ActualText={SPARTA temperature field in an axial-radial meridional slice through the smooth sphere-cone"
     m = re.search(re.escape(anchor), t)
@@ -243,7 +243,7 @@ def main() -> int:
         CH4.write_text(t[:m.start()] + block + t[m.start():], encoding="utf-8")
         print("  ok  ch4: scalloped-versus-smooth heating figure inserted")
 
-    # ---- 6. Chapter 4: gate comparison, at the end of the Gate Result --------
+    #, 6. Chapter 4: gate comparison, at the end of the Gate Result ========
     ok &= insert_before(
         CH4,
         "\\subsection{Round-2 Corrected Optimum}",
@@ -269,7 +269,7 @@ def main() -> int:
         "ch4 gate comparison figure",
     )
 
-    # ---- 7. Chapter 4: CCD design screen ------------------------------------
+    #, 7. Chapter 4: CCD design screen ====================================
     ok &= insert_before(
         CH4,
         "\\subsection{Bayesian Optimization (Bayes Opt)}",
@@ -293,7 +293,7 @@ def main() -> int:
         "ch4 CCD screen figure",
     )
 
-    # ---- 8. Chapter 2: stub and false captions ------------------------------
+    #, 8. Chapter 2: stub and false captions ==============================
     stubs = [
         (267, "Figure for H. Julian Allen’s Blunt Body Theory.",
          "H. Julian Allen's blunt-body theory, showing the detachment shock that "

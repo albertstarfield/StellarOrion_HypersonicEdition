@@ -31,17 +31,17 @@ def flat(text):
     """Return text with non-printables dropped and whitespace collapsed.
 
     Parameters
-    ----------
+    ==========
     text : str
         Raw pdfium page text.
 
     Returns
-    -------
+    =======
     str
         Printable-only text with runs of whitespace collapsed to one space.
 
     Exceptions
-    ----------
+    ==========
     None; pure string transformation.
     """
     text = "".join(c for c in text if c.isprintable() or c in "\n\r\t")
@@ -52,7 +52,7 @@ def main():
     """Rank non-forbidden pages by text length and render SAMPLE evenly spaced picks.
 
     Returns
-    -------
+    =======
     int
         0 when every selected page rendered, 1 otherwise.
     """

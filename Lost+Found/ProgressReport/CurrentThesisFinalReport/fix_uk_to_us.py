@@ -11,7 +11,7 @@ ref.bib is deliberately excluded: its fields hold published titles that must
 never be altered.
 
 Usage (workdir = thesis dir): python3 fix_uk_to_us.py          # dry run
-                              python3 fix_uk_to_us.py --apply  # edit files
+                              python3 fix_uk_to_us.py ==apply  # edit files
 Exit code 0 = success.
 """
 import re
@@ -80,7 +80,7 @@ def convert(text: str) -> tuple:
 
 
 def main() -> int:
-    """Dry-run by default; --apply rewrites files in place."""
+    """Dry-run by default; ==apply rewrites files in place."""
     apply = "--apply" in sys.argv
     total = 0
     for path in sorted(Path(".").glob("*.tex")):

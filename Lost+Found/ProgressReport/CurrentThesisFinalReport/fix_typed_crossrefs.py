@@ -3,7 +3,7 @@
 need, and remove a reference to a report that does not exist.
 
 TYPED CROSS-REFERENCES GO STALE
-----------------------------------------------------------------------------
+============================================================================
 Seven places in the body write a cross-reference as a literal number:
 
     chapter_02  "described in \\textbf{Chapter 3}"
@@ -15,7 +15,7 @@ None of them can survive an edit. Adding a section before them shifts the number
 and the sentence silently points at the wrong place. Each is now a \\ref.
 
 THE TARGETS HAD NO LABELS
-----------------------------------------------------------------------------
+============================================================================
 Four of the five targets carried no \\label at all, which is why they had been
 typed:
 
@@ -27,7 +27,7 @@ typed:
 All five labels are added.
 
 ONE OF THE SEVEN IS CORRECT AND IS NOT TOUCHED
-----------------------------------------------------------------------------
+============================================================================
     chapter_03: "Rapisarda Table 4.1"
 
 names a table in Rapisarda's own 2023 TU Delft thesis, not a table in this
@@ -36,7 +36,7 @@ check that found these is amended to recognise a reference to an external source
 rather than flagging it forever.
 
 A REPORT THAT DOES NOT EXIST
-----------------------------------------------------------------------------
+============================================================================
 Appendix Table C.1's caption read:
 
     "Flight data from NASA TP-2013-4012 and \\cite{rapisarda2023mdao}
@@ -88,8 +88,8 @@ REFS = [
      "the original IRVE-3 material configuration (Section 2.14).",
      "the original IRVE-3 material configuration (Section~\\ref{sec:parametric})."),
     ("chapter_02_literature_review.tex",
-     "the coupled aerodynamic--thermal--structural design space (Section 2.15).",
-     "the coupled aerodynamic--thermal--structural design space "
+     "the coupled aerodynamic-thermal-structural design space (Section 2.15).",
+     "the coupled aerodynamic-thermal-structural design space "
      "(Section~\\ref{sec:opt_theory})."),
     ("chapter_04_results.tex",
      "described in Chapter 3.",
@@ -133,7 +133,7 @@ def main() -> int:
         p.write_text(t.replace(old, new, 1), encoding="utf-8")
         print(f"  ok  {fname}: {old[:54]!r}")
 
-    # ---- audit: an external-source table reference is legitimate ----------
+    #, audit: an external-source table reference is legitimate ==========
     a = TH / "audit.py"
     at = a.read_text(encoding="utf-8")
     old_check = '''    check("xref/no-typed-numbers", not typed, f"{len(typed)}: {typed[:5]}" if typed
@@ -154,7 +154,7 @@ def main() -> int:
     else:
         print("  --  audit.py: xref check text not matched, left unchanged")
 
-    # ---- verify ----------------------------------------------------------
+    #, verify ==========================================================
     txt = "".join((TH / f).read_text(encoding="utf-8") for f in (
         "chapter_01_introduction.tex", "chapter_02_literature_review.tex",
         "chapter_03_methodology.tex", "chapter_04_results.tex",
