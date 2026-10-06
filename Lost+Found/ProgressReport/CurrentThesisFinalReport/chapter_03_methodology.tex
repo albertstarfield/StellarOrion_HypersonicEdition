@@ -713,7 +713,7 @@ The PINN refinement stage rests on these assumptions:
         Learning rate $\eta$ & $10^{-3}$ & $5 \times 10^{-4}$ \\ \hline
         Optimizer & Adam & Adam \\ \hline
         Training iterations & $N_{iter}/2$ & $N_{iter} - N_{iter}/2$ \\ \hline
-        PDE loss weights & $[0, 0, 0]$ & $[10^{-4}] \times 3$ \\ \hline
+        PDE loss weights & $[0, 0, 0, 0, 0]$ & $[10^{-4}] \times 5$ \\ \hline
         Data loss weights & $[1.0] \times 3$ & $[1.0] \times 3$ \\ \hline
         Collocation points ($N_{dom}$) & 2500 & 2500 \\ \hline
         Boundary points ($N_{bnd}$) & 500 & 500 \\ \hline
@@ -830,7 +830,7 @@ The optimizer minimizes a scalar cost $J: \mathbb{R}^3 \to \mathbb{R}_{\geq 0}$,
 
 \begin{equation}
 \label{eq:cost_function_implemented}
-    J(\mathbf{x}) = w_{Q}\, H_{L}(\mathbf{x}) + w_{q}\, F(\mathbf{x}) + w_{\beta}\, B(\mathbf{x}) + w_{C_d}\, D(\mathbf{x}) + \lambda_{p}\, \left( P_{R} + P_{N} + P_{p} \right)
+    J(\mathbf{x}) = w_{Q}\, H_{L}(\mathbf{x}) + w_{q}\, F(\mathbf{x}) + w_{\beta}\, B(\mathbf{x}) + w_{C_d}\, \tilde{D}(\mathbf{x}) + \lambda_{p}\, \left( P_{R} + P_{N} + P_{p} \right)
 \end{equation}
 
 where $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$. Four ratio terms and three penalties follow.
@@ -842,7 +842,7 @@ where $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$. Four ratio terms and three pe
     \item \textbf{Flux term.} $F(\mathbf{x}) = \dot{q}(\mathbf{x})/q_{ref}$ is the peak heat-flux ratio against the measured flight value.
     \item \textbf{Ballistic-coefficient term.} Vehicle mass cancels between candidate and reference, giving
     $\beta_{ratio} = (C_{d,ref}\,A_{ref})/(C_d(\mathbf{x})\,A(\mathbf{x}))$ with $B = (\beta_{ratio} - 1)^2$.
-    \item \textbf{Drag term.} $D(\mathbf{x}) = C_d(\mathbf{x})/C_{d,ref}$, the drag ratio.
+    \item \textbf{Drag term.} $\tilde{D}(\mathbf{x}) = C_d(\mathbf{x})/C_{d,ref}$, the drag ratio.
     \item \textbf{Quadratic penalties.} Three one-sided constraints enter only when violated:
     $P_R = \max(0, R_{\text{max}} - 3.0)^2$ caps the radius at the IRVE-3 limit.
     $P_N = \max(0, 1.0 - R_N)^2$ enforces a minimum nose radius for thermal protection coverage, and
@@ -1060,7 +1060,7 @@ The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irv
 
 Two tolerance statements apply. First, the MDAO reference model~\cite{rapisarda2023mdao} reproduces flight heat flux and heat load to within $-3.7\%$ and $+0.06\%$, inside the $\pm 10\%$ margin required of a calibrated reconstruction, so the IRVE-3 flight data are internally consistent as a validation target. Second, geometry-sensitive quantities meet that margin (Table~\ref{tab:irve3_validation}).
 
-The two \emph{integrated} quantities are under-predicted (Table~\ref{tab:irve3_validation}). The flight reconstruction~\cite{old2013irve3postflight} and MDAO model~\cite{rapisarda2023mdao} integrate over the complete reentry. The DSMC run, in contrast, samples one trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions~\cite{usstandard1976}. Full-trajectory integration raises both integrated quantities, and the deltas near $-15\%$ place the residual in trajectory integration rather than in geometry or the solver. The \emph{pointwise} stagnation heat flux instead over-predicts by $+12.4\%$: Sutton-Graves, a continuum correlation on a spherical nose cap, carries neither the torus heat-shielding effect nor the rarefied-flow departure DSMC resolves, so it bounds conservatively here. The framework is judged sound on geometry-sensitive agreement; the trajectory-integration and correlation-versus-solver gaps carry forward as limitations.
+The two \emph{integrated} quantities are under-predicted (Table~\ref{tab:irve3_validation}). The flight reconstruction~\cite{old2013irve3postflight} and MDAO model~\cite{rapisarda2023mdao} integrate over the complete reentry. The DSMC run, in contrast, samples one trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions~\cite{usstandard1976}, marked on the entry trajectory of Figure~\ref{fig:trajectory}. Full-trajectory integration raises both integrated quantities, and the deltas near $-15\%$ place the residual in trajectory integration rather than in geometry or the solver. The \emph{pointwise} stagnation heat flux instead over-predicts by $+12.4\%$: Sutton-Graves, a continuum correlation on a spherical nose cap, carries neither the torus heat-shielding effect nor the rarefied-flow departure DSMC resolves, so it bounds conservatively here. The framework is judged sound on geometry-sensitive agreement; the trajectory-integration and correlation-versus-solver gaps carry forward as limitations.
 
 \subsection{Hybrid Validation Gate Methodology}
 \label{sec:gate_methodology}
@@ -1177,6 +1177,7 @@ $k$-fold cross-validation ($k = 5$) applies where sample size permits, reporting
 All stochastic operations use fixed seeds: PINN \texttt{\seqsplit{torch.manual\_seed(42)}}, \texttt{\seqsplit{numpy.random.seed(42)}}; Bayes Opt \texttt{\seqsplit{torch.manual\_seed(123)}}, \texttt{\seqsplit{numpy.random.seed(123)}}; GA \texttt{\seqsplit{numpy.random.seed(456)}}.
 
 \subsubsection*{Environment Specification}
+The software and hardware environment used for the machine learning components is summarized in Table~\ref{tab:env_spec}.
 \begin{table}[!htbp]
     \centering
     \caption{Computing Environment for ML Components.}
