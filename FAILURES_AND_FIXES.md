@@ -4673,6 +4673,131 @@ right number. Both hold:
 * **Every other open finding stands.** A changed file is not evidence about the others.
 * **No source file was modified by this audit.** Thread 3w is measurement and
   documentation only, as every previous thread has been.
+## F76 — `prove.sh` ends by asserting that all verification steps succeeded after steps it had already reported as FAILED, and its Python-coverage target directory does not exist
+
+*Class: correctness — the script's exit status and its summary disagree, and the summary is the one a reader sees*
+
+This audit had never scanned `prove.sh`, and had recorded in earlier threads that
+`prove.sh`/`gnatprove`/`ruff`/`pyrefly` are *correctly not run* because the audit is
+documentation-only. That is true of the audit's own method — but the script itself was
+never read, and reading it turns up three independent defects.
+
+### 1. The Python-coverage step points at a directory that does not exist
+
+`prove.sh:150-151`:
+```bash
+PYTHON_SRC="$SCRIPT_DIR/src/python"
+PYTHON_TESTS="$SCRIPT_DIR/tests/python"
+```
+Measured: **`tests/python` does not exist.** `ls tests/` gives
+`__init__.py`, `__pycache__`, `obj`, `stellarorion_tests.gpr`, `test_main.adb`,
+`test_run_pipeline.py`, `test_validation_pipeline_regressions.py`. The two Python test
+modules live in **`tests/`**, not `tests/python/`, and the count of `test_*.py` files
+anywhere in the tree is 2 — both of them directly in `tests/`.
+
+So `--python-coverage` can never run the project's tests. It cannot succeed for a
+reason that has nothing to do with the tests themselves.
+
+### 2. The runner is also unavailable, and the reason is discarded
+
+`prove.sh:162-166` runs
+`python3 -m coverage run … -m pytest "$PYTHON_TESTS" -v --tb=short 2>/dev/null`.
+Measured: **`venv_validation/bin/python` has no pytest** — importing it raises
+`ModuleNotFoundError`. Both preconditions fail, and `2>/dev/null` throws away the
+diagnostic that would have said so.
+
+On failure the script prints *"Python tests had failures or no tests found."* and then
+runs a **fallback that measures module imports**, not tests:
+```bash
+python3 -m coverage run --source="$PYTHON_SRC" --branch     -c "import os; [__import__('importlib').import_module(...) for f in __import__('glob').glob('$PYTHON_SRC/**/*.py', recursive=True)]" 2>/dev/null || true
+```
+That produces a line-coverage figure for statements executed at import time. It is not
+a test result, and it is not comparable to one.
+
+### 3. Failed steps are non-fatal, and the summary reports them as succeeded
+
+`prove.sh:133-136` — the coverage failure path:
+```bash
+    else
+        echo ""
+        echo "gnatcov coverage: FAILED"
+        echo "Non-fatal — continuing with Python coverage."
+    fi
+```
+No `exit`. The script runs on to the summary at `prove.sh:193-203`:
+```bash
+echo "  GNATprove Level $LEVEL:  PASSED"
+if $RUN_COVERAGE; then
+    echo "  gnatcov coverage:       Report in obj/gcovr/"
+fi
+if $RUN_PYTHON_COVERAGE; then
+    echo "  Python coverage:        Report in obj/python_html/"
+fi
+echo ""
+echo "All verification steps completed successfully."
+```
+The two middle blocks are keyed on **whether the step was requested**, not on whether it
+**succeeded**. So a run that printed *"gnatcov coverage: FAILED"* one screen earlier ends
+by printing a report path for it — a directory that holds no report — and the closing line
+**`All verification steps completed successfully.`** is unconditional.
+
+`prove.sh:56-59` sets both flags when `--all` is passed, so `bash prove.sh --all` is the
+worst case: it can print FAILED twice and still finish by claiming complete success.
+
+### What is *not* wrong here, stated for fairness
+
+`prove.sh:196`'s `echo "  GNATprove Level $LEVEL:  PASSED"` is also a literal, and I
+checked whether that one is a defect too. **It is not.** The proof failure path at
+`prove.sh:84-88` prints `GNATprove: FAILED` and then **`exit 1`**, so the summary line is
+unreachable unless GNATprove actually passed. The literal is guarded; the coverage
+summaries are not. Only the unguarded ones are reported here.
+
+### Consequence
+
+The script's exit status and its own final line can disagree. Anything that greps for
+`All verification steps completed successfully` — a CI step, a README badge, a person
+skimming output — is reading a statement the script makes unconditionally rather than a
+result it computed.
+
+---
+
+## F77 — A `nosec` security suppression is justified by a script that runs no security analyser
+
+*Class: provenance — the cited evidence is a tool that cannot produce it*
+
+`run.py:967`:
+```python
+proc = subprocess.Popen(  # nosec: EXTERNAL_CALL_UNHANDLED — verified safe by prove.sh
+```
+`EXTERNAL_CALL_UNHANDLED` is a **bandit** check identifier. The suppression asserts that
+`prove.sh` verified this line is safe.
+
+**`prove.sh` runs no security analyser.** Measured: zero occurrences of `bandit` in the
+script, and the complete set of tools it invokes is
+`alr`, `gnatprove`, `gnatcov`, `coverage`, `python3`, `pytest`. GNATprove is an Ada/SPARK
+theorem prover and `coverage.py` measures line coverage; neither inspects Python source for
+unhandled external calls. **The evidence the comment cites cannot have been produced.**
+
+Scope, measured rather than assumed: the project carries **344** `nosec` suppressions and
+this is the **only one** that cites `prove.sh`. So it is isolated, not systemic.
+
+**No live defect is being hidden.** I read the suppressed code
+(`run.py:948-989`): `_start_sidecar` catches `(FileNotFoundError, OSError)` around the
+spawn, and on a failed health check it calls `proc.terminate()`, waits 5 s, then
+`proc.kill()` — with `_phase4_launch` doing the same at `:1131-1137`. The suppression is
+**unnecessary rather than load-bearing**.
+
+That is what makes it worth recording. A suppression whose stated justification is a tool
+that cannot produce it teaches every later reader that the citations in `nosec` comments
+are decorative. The correct citation for this line is the handler directly beneath it, and
+that is what the fix should say.
+
+### A minor verified observation in the same files, not raised to a finding
+
+`run.py:417` re-imports `subprocess` inside `_run`, which is already imported at module
+scope (`run.py:31`). The local import is dead. Recorded here rather than as F78 because it
+has no behavioural consequence — the one exception being that it makes the module's own
+dependency list look narrower than it is.
 ## Summary
 
 | ID | Severity | Status | Root cause class |
@@ -4753,6 +4878,8 @@ right number. Both hold:
 | F73 | provenance | **open** | Three more root documents assert the disproved references and were never updated by the earlier passes: `DERIVATION.md:97`; `PEER_REVIEW_AUDIT.md:156,471-476` (14.36 as flight **and** 12.20 as the model — both stale; measured 13.80 and 12.82); and `NextImprovementPlan.md:266`, which attributes 14.36 to **NASA TP-2013-4012** in the sentence defining the validation target, plus 195.06/165.72/6-tori/14.361 through its arithmetic. `HIAD_IRVE3_Baseline.md` was checked and is **already correct**, so it was left untouched as the counter-example |
 | F74 | correctness | **fixed 2026-10-06** | No run-completeness check exists anywhere in the validation pipeline. `test_modes.adb:1780-1782` prints the verdict from `Survivable` **before** Step 11 writes the CSV and never consults the step count; `N_StepList`'s only guard (`sparta.adb:3409`) asks whether at least one step exists; no completion marker is ever written. A run whose series stopped at step **1900** was graded VALIDATION PASSED (the configured step count is unrecoverable — see correction). One truncation is evidenced; its configured step count is unrecoverable because Step 12 deleted the deck. |
 | F75 | correctness | **open** | The three validation directories were produced by different code versions. The per-step `g_load` fix is live only in `validation_scalloped` (19 distinct values, 16.582661–22.669552) while `validation_smooth` (constant 16.833399) and `validation_optimized` (constant 14.005923) retain the pre-fix constant, and `validation_smooth` has 19 columns against the other two's 22. The scalloped-vs-smooth comparison is therefore confounded with the code change. |
+| F76 | correctness | **open** | `prove.sh` can end by printing `All verification steps completed successfully.` after printing `gnatcov coverage: FAILED`: the failure path at `:133-136` is non-fatal, and the summary at `:197-203` keys on whether a step was *requested*, not whether it *succeeded*. Independently, `PYTHON_TESTS` at `:151` points at `tests/python`, which **does not exist** (the two test modules are in `tests/`), and the venv has no pytest, so `--python-coverage` cannot succeed; `2>/dev/null` discards the reason and the fallback measures module *imports*, not tests. |
+| F77 | provenance | **open** | `run.py:967` suppresses bandit check `EXTERNAL_CALL_UNHANDLED` with the justification *"verified safe by prove.sh"*, but `prove.sh` runs **no security analyser** — zero mentions of `bandit`, and its only tools are `alr`/`gnatprove`/`gnatcov`/`coverage`/`python3`/`pytest`. The cited evidence cannot have been produced. The suppression is **unnecessary rather than load-bearing**: the suppressed code properly catches the spawn errors and terminates the child. Isolated — 1 of 344 `nosec` suppressions cites `prove.sh`. |
 
 ### Final state after fixes
 
