@@ -7,6 +7,8 @@ lsfix_*.png
 lscont_*.png
 read_p*.png
 readfix_*.png
+read_cycle*.png
+crop_*.png
 sweep_*.png
 spot_*.png
 r1fix_*.png
@@ -15,5 +17,17 @@ fix_t_*.png
 cut150_*.png
 cap_lof*
 .figcheck_tmp/
+.tmp_figchk/
 find_dsmc_sentence.py
 verify_lsfix_split.py
+figchk_verify.py
+audit_bands.py
+audit_crop.py
+audit_dash.py
+audit_gaps.py
+audit_geometry.py
+audit_lib.py
+audit_margins.py
+audit_slant.py
+audit_slant2.py
+audit_table2.py

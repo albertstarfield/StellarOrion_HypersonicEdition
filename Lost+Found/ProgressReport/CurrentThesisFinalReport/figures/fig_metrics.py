@@ -2,14 +2,14 @@
 """Shared printed-layout measurement helpers for the thesis figure generators.
 
 PURPOSE
--------
+=======
 Two generators (generate_sutton_graves_parametric.py and make_fignew.py) must
 prove, before they ship, that no two printed labels collide and that no printed
 glyph falls below the 8 pt legibility floor. Both need the same arithmetic, so
 it lives here once instead of being copied into each script.
 
 WHY A LIBRARY AND NOT A LOOK AT THE PNG
----------------------------------------
+=======================================
 Reading a rendered PNG cannot attribute a collision to a cause: the measured
 pixel distance mixes three independent factors, namely the tight crop, the save
 dpi, and the LaTeX placement scale. Asking matplotlib for the real text extents
@@ -18,7 +18,7 @@ placement scale, is then one multiplication that this module computes from the
 saved file.
 
 AXIOMS
-------
+======
 A1. Text extents are only defined after a draw, so every function here requires
     a drawn canvas and says so in its contract.
 A2. The printed size of a declared point size is `declared * scale`, where
@@ -28,7 +28,7 @@ A3. A mathtext sub or superscript prints at SHRINK_FACTOR times its parent, so
     a string carrying one cannot be judged by its parent size alone.
 
 THEORIES
---------
+========
 T1. Two adjacent labels collide on the page if and only if their printed
     bounding boxes overlap, so the gap between consecutive boxes, measured in
     printed points, decides the question exactly.
@@ -38,30 +38,30 @@ T2. An arrowhead is a filled patch of known size, so a curve is occluded only if
     pixels.
 
 APPLICATIONS
-------------
+============
 A1/A2 are used by both generators before their save() call. T1 is used to gate
 the gate-figure category labels and the panel (b) radius ticks. T2 is used to
 prove that the panel (b) annotation arrow does not cover the V = 3 curve.
 
 CITATIONS
----------
+=========
 [Citation: Matplotlib v3.11.2 - Artist.get_window_extent and
           FigureCanvasAgg.get_renderer - https://matplotlib.org/stable/api/]
 [Citation: Pillow v12.3.0 - Image.open for the saved pixel width -
           https://pillow.readthedocs.io/en/stable/reference/Image.html]
 
 PARAMETERS
-----------
+==========
 Every function takes only its measurement target and the scale factor; no
 function mutates the figure it measures.
 
 RETURNS
--------
+=======
 Distances and sizes are returned in PRINTED POINTS (pt), never in pixels, so
 that callers compare like with like.
 
 EXCEPTIONS
-----------
+==========
 RuntimeError: if the canvas has not been drawn, or if a requested artist is
     absent, or if the saved PNG cannot be read. Callers must not fall back to a
     default, because a silent default here would hide exactly the defect these

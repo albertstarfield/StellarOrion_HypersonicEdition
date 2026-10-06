@@ -14,7 +14,7 @@ verbatim, its boxes read:
     Literature Study
     Data Retrieval and Familiar Study Collection
     Replicate Axisymmetric Slice Model Design?
-    Simulate the Geometry in Mach 5-6      <-- WRONG PHYSICS
+    Simulate the Geometry in Mach 5-6      [flag] WRONG PHYSICS
     Simulation Result
     Theoretically valid? or within error range?
     Data Analysis Simulation
@@ -28,6 +28,15 @@ Three separate defects:
   3. It never shows the stages that constitute this work: parametric geometry
      generation, the DSMC solver, PINN refinement, or the optimisation loop.
 The same file was also reused in Chapter 3, so the wrong figure appeared twice.
+
+WHY THIS FILE KEEPS ITS OWN FIT LOOP INSTEAD OF CALLING print_fit
+print_fit.save_to_print_width fits the saved width to a target printed WIDTH.
+This figure is included as width=\textwidth together with
+height=0.72\textheight and keepaspectratio, so its printed size is limited by
+the printed HEIGHT and its aspect (0.78) is deliberately smaller than the
+height-to-width ratio of the page area (0.8205). Fitting to width would
+therefore optimise the dimension that does not constrain the result. The loop
+below fits to PRINT_H_IN and the floor check uses the height-limited scale.
 
 The replacement is built from the stages the engine actually executes. The
 eleven numbered stages are those printed by the full validation pipeline
@@ -261,7 +270,7 @@ def main() -> int:
                    ha="center", va="top", color="black")
     fits_canvas.append((cont, WIDTH_IN, "continues"))
 
-    # ---- optimisation loop, its own row with room for the feedback path ----
+    #  optimisation loop, its own row with room for the feedback path 
     loop_head = ax.text(0.5, 0.268, "Geometry optimization loop",
                         ha="center", va="top", fontsize=LABEL_FS, weight="bold")
     fits_canvas.append((loop_head, WIDTH_IN, "loop heading"))

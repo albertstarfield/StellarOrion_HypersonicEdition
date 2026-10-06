@@ -97,3 +97,68 @@ Carve-out evidence:
 - `Spec0.png`: the `T7` label renders about half the size of the
   `T1` to `T6` labels and some left-edge labels are clipped; a
   surgical image fix or redraw decision remains open.
+
+## 5. Dead artwork inventory and removal (evidence from `audit_artifacts.py`)
+
+`figures/audit_artifacts.py` was written to close the dead-artwork class in
+one pass rather than figure by figure. It reads every `\includegraphics` in the
+thesis sources, then reports images on disk that no include names and
+generators whose output is not included. Before the cleanup it reported
+29 unreferenced images and 1 dead generator. Every one of the 29 names was
+checked with a whole-directory `grep -F` over the TeX sources, not only over
+the include commands, so no AccSupp `ActualText` or comment reference was
+missed: all 29 had zero hits.
+
+Two external consumers were checked before removal and neither reads these
+files:
+
+- `stellarorion_program_proc/scripts/render_bo_figures.py` names
+  `ccd_response_surface.png` only inside its own docstring, where it explains
+  why it does not use that stale figure. The script does not read it.
+- `Lost+Found/ProgressReport/Week 16 LaTeX/SOURCES.md` already recorded the
+  same class of artwork as stale and excluded
+  (`figures/ga_convergence.png`, `figures/ccd_response_surface.png`,
+  `Spec1.png`). It is the predecessor decision for this tree and it holds a
+  separate `figures` directory.
+
+The 29 removed images are the `week10_*` series, the superseded
+`*_smooth_M0_A0` variants that were replaced by the `_smooth` names still in
+use, the design studies `Spec1.png`, `machnumberspecirve3.png`,
+`heatratespecirve3.png`, `heatRate_HIAD2015_IRVE3.png`,
+`accelerationgIRVE3.png`, `reentryaerodynamic.png`, `Scheduling.png`,
+`upscaled_3d_mach_smooth_M0_A0.png`, the earlier result figures
+`mop_accuracy.png`, `mop_architecture.png`, `pinn_convergence.png`,
+`ccd_response_surface.png`, `convergence_residuals_master_smooth.png`, the
+placeholder `placeholder.png`, two UI screenshots, and the field panels that
+were never included (`thermal_map_smooth_M0_A0.png`,
+`pressure_map_smooth_M0_A0.png`, `mach_map_smooth.png`,
+`knudsen_map_smooth.png`, `velocity_vectors_smooth_M0_A0.png`,
+`residence_time_map_smooth_M0_A0.png`,
+`shock_stagnation_profile_smooth.png`).
+
+The one dead generator, `make_convergence_residuals.py`, produced
+`convergence_residuals_master_smooth.png`, which no include names. It was
+removed with its output. Its historical finding is preserved where it matters:
+the printed residual figure is now `fignew_convergence_residuals.png`, produced
+by `make_fignew.py` from the verified optimization results, so the empty-plot
+defect it documented cannot recur through the surviving path.
+
+After the removal the tool reports 0 dead images and 0 dead generators, and the
+eight modules it lists as drawing no figure are the shared helpers by design
+(`print_fit.py`, `fig_metrics.py`, `measure_loop_gap.py`, the four probe
+tools, and `strip_dashes.py`).
+
+## 6. `fignew_pipeline.png` measured and kept (no carve-out needed)
+
+This is a distinct figure from the chapter 3 `software_pipeline.png` artwork.
+It is included in chapter 1 at `width=\textwidth` together with
+`height=0.72\textheight` and `keepaspectratio`, so its printed size is limited
+by the printed height, not the printed width. Measured by re-running
+`make_pipeline_figure.py`: the saved image is 1586 by 2017 px, the fitted
+printed height is 6.718 in, which equals `0.72` of the 9.33071 in page text
+height, the achieved print scale is 0.999, and the smallest label prints at
+8.39 pt. The generator already asserts the 8 pt floor against that
+height-limited scale and raises `SystemExit` if it is not met, so the figure
+needs no carve-out and no redraw. Its keep-aspectratio include is the reason it
+keeps its own height-capped fit loop instead of calling
+`print_fit.save_to_print_width`, which fits to width.
