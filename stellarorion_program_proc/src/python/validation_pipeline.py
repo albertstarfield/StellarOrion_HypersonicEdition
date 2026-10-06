@@ -2509,16 +2509,14 @@ def generate_hybrid_mp4(
         )
         _encoders = _probe.stdout if _probe.returncode == 0 else ""
         if sys.platform == "darwin" and "h264_videotoolbox" in _encoders:
-            # CRF 48 adaptive bitrate (quality-based VBR) via libx264.
-            # WHY: the user explicitly requested CRF 48 over the old fixed
-            # 8 Mbps CBR. CRF gives better quality-per-bit for scientific
-            # animation content (flat colour fields, text overlays).
-            # VideoToolbox is available on Apple Silicon but does not support
-            # CRF-based VBR encoding. libx264 is used instead for CRF 48.
-            _hw_encoder = "libx264"
-            _hw_extra_args = ["-vcodec", "libx264", "-crf", "48",
-                              "-preset", "medium", "-pix_fmt", "yuv420p"]
-            print("[pipeline] SW encode: libx264 CRF 48 (adaptive bitrate)")
+            # VideoToolbox hardware encoding with quality 27.
+            # WHY: the user explicitly requested VideoToolbox with quality 27.
+            # VideoToolbox uses -q:v (0-100) for quality; 27 gives a good
+            # balance of quality and file size for scientific animation.
+            _hw_encoder = "h264_videotoolbox"
+            _hw_extra_args = ["-vcodec", "h264_videotoolbox", "-q:v", "27",
+                              "-pix_fmt", "yuv420p"]
+            print("[pipeline] HW encode: VideoToolbox q27 (macOS)")
         elif sys.platform.startswith("linux"):
             if "h264_vaapi" in _encoders:
                 _hw_encoder = "h264_vaapi"

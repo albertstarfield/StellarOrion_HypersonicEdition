@@ -1607,10 +1607,10 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
         _encs = _probe.stdout
         import sys as _sys
         if _sys.platform == "darwin" and "h264_videotoolbox" in _encs:
-            _enc_name = "libx264"
-            _extra = ["-vcodec", "libx264", "-crf", "48", "-preset", "medium",
+            _enc_name = "h264_videotoolbox"
+            _extra = ["-vcodec", "h264_videotoolbox", "-q:v", "27",
                       "-pix_fmt", "yuv420p"]
-            print("[MP4] SW encoder: libx264 CRF 48 (macOS)")
+            print("[MP4] HW encoder: VideoToolbox q27 (macOS)")
         elif _sys.platform.startswith("linux"):
             if "h264_vaapi" in _encs:
                 _enc_name = "h264_vaapi"
