@@ -1328,15 +1328,20 @@ def main(argv: "list[str] | None" = None) -> int:
     default_comp = hiad_cost_components(
         _DEFAULT_R_N, _DEFAULT_R_TOR, _DEFAULT_HALF_CONE_DEG)
 
-    # Compute SG heat flux at default geometry
+    # Compute SG heat flux at default geometry via Ada/SPARK FFI.
+    #  ONE TRUTH, ONE VALUE (2026-10-06): no Python fallback. If the Ada FFI is
+    #  unavailable the run fails loudly with the exact inputs rather than
+    #  reporting a fabricated 0.0 W/cm^2 (silent degradation is forbidden).
     try:
         sg_result = sutton_graves_heat_flux(_ALTITUDE_KM, _VELOCITY_MS, _DEFAULT_R_N)
-        default_sg_wm2 = sg_result["heat_flux_Wm2"]
-        default_sg_wcm2 = sg_result["heat_flux_Wcm2"]
-    except OSError:
-        # Fallback: local SG computation not available via Ada
-        default_sg_wm2 = 0.0
-        default_sg_wcm2 = 0.0
+    except OSError as exc:
+        raise RuntimeError(
+            "hiad_optimizer: Ada FFI sutton_graves_heat_flux failed "
+            f"({exc!r}) for altitude_km={_ALTITUDE_KM!r}, "
+            f"velocity_ms={_VELOCITY_MS!r}, rn={_DEFAULT_R_N!r}"
+        ) from exc
+    default_sg_wm2 = sg_result["heat_flux_Wm2"]
+    default_sg_wcm2 = sg_result["heat_flux_Wcm2"]
 
     print(f"  Default R_N = {_DEFAULT_R_N:.4f} m")
     print(f"  Default r_tor = {_DEFAULT_R_TOR:.4f} m")
@@ -1395,14 +1400,18 @@ def main(argv: "list[str] | None" = None) -> int:
     opt_cd = estimate_cd(opt_r_n, opt_r_tor, opt_cone)
     opt_comp = hiad_cost_components(opt_r_n, opt_r_tor, opt_cone)
 
-    # Compute SG at optimized geometry
+    # Compute SG at optimized geometry via Ada/SPARK FFI.
+    #  ONE TRUTH, ONE VALUE (2026-10-06): no Python fallback -- see block above.
     try:
         sg_opt = sutton_graves_heat_flux(_ALTITUDE_KM, _VELOCITY_MS, opt_r_n)
-        opt_sg_wm2 = sg_opt["heat_flux_Wm2"]
-        opt_sg_wcm2 = sg_opt["heat_flux_Wcm2"]
-    except OSError:
-        opt_sg_wm2 = 0.0
-        opt_sg_wcm2 = 0.0
+    except OSError as exc:
+        raise RuntimeError(
+            "hiad_optimizer: Ada FFI sutton_graves_heat_flux failed "
+            f"({exc!r}) for altitude_km={_ALTITUDE_KM!r}, "
+            f"velocity_ms={_VELOCITY_MS!r}, rn={opt_r_n!r}"
+        ) from exc
+    opt_sg_wm2 = sg_opt["heat_flux_Wm2"]
+    opt_sg_wcm2 = sg_opt["heat_flux_Wcm2"]
 
     print(f"  Best cost: {result['cost']:.6f} (after {result['n_evals']} evaluations)")
     print(f"  Optimized R_N = {opt_r_n:.6f} m")

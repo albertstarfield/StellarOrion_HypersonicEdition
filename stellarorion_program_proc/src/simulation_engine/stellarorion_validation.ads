@@ -8,8 +8,8 @@
 --    Pre-simulation checks enforce valid ranges from Rapisarda Table 5.4.
 --    Post-simulation survivability checks verify TPS limits for the
 --    current geometry, with EARTH REENTRY targets in mind:
---      - Surface temp <= SIC max (1700 K)
---      - Backface temp <= Kapton max (673 K)
+--      - Surface temp <= SIC max (2073 K)
+--      - Backface temp <= Kapton max (773 K)
 --      - Deceleration g-load <= 25 g
 --      - Stagnation pressure reasonable
 --    The validated IRVE-3 baseline (3.0m, 60 deg, 281 kg) is the starting

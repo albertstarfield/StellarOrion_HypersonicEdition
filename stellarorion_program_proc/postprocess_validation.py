@@ -19,7 +19,6 @@ References:
 """
 
 import glob
-import math
 import os
 import sys
 from collections.abc import Mapping, Sequence
@@ -31,26 +30,27 @@ import numpy as np
 # [Citation: ada_pinn_wrapper.py — Ada/SPARK FFI bindings]
 # ============================================================================
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src", "python"))
-from ada_pinn_wrapper import _ada_lib
 import ctypes
+
+from ada_pinn_wrapper import _ada_lib
 
 # ============================================================================
 # PHYSICAL CONSTANTS
 # ============================================================================
-# [Citation: Sutton & Graves 1971, NASA TR R-376, Table 1]
-C_SG = 1.7415e-4  # Sutton-Graves constant [W/m^2 / (kg/m^3)^0.5 / m^1.5 / (m/s)^3]
-# q_sg = C_SG * sqrt(rho / R_n) * V^3
-
-# [Citation: Fay & Riddell 1958; Rapisarda 2023 Eq 3.82]
-PRANDTL = 0.71   # Prandtl number for frozen air
-GAMMA = 1.4      # Ratio of specific heats for air
-R_GAS = 287.058   # Specific gas constant for air [J/(kg*K)]
-MU_REF = 1.716e-5 # Reference viscosity at T_ref [Pa*s]
-T_REF = 273.15    # Reference temperature [K]
-SUTHERLAND_S = 110.56  # Sutherland constant for air [K]
-
-# Stefan-Boltzmann constant [W/(m^2*K^4)]
-SIGMA_SB = 5.670374419e-8
+#  ONE TRUTH, ONE VALUE (2026-10-06).
+#  AXIOM: every physical constant and correlation used below is owned by the
+#  Ada/SPARK library. Python MUST NOT redefine C_SG, the Sutherland constants,
+#  the Prandtl number, or sigma_SB, because a second definition silently
+#  diverges from the verified model the moment either side changes.
+#  THEOREM: the previous Python fallbacks for Sutton-Graves, Sutherland, and
+#  Fay-Riddell were exactly such a second source of truth. They have been
+#  deleted: every caller now goes through the Ada FFI
+#  (Sutton_Graves_Heat_C, Sutherland_Viscosity_C, Fay_Riddell_Heat_C), and a
+#  failure raises with the exact inputs instead of substituting an unverified
+#  number.
+#  [Citation: stellarorion_ffi.ads Sutton_Graves_Heat_C /
+#             Sutherland_Viscosity_C / Fay_Riddell_Heat_C]
+# ============================================================================
 
 # [Citation: NASA TP-2013-4012; Discussion.md]
 # IRVE-3 reference data
@@ -97,70 +97,113 @@ _Row = dict[str, _RowValue]
 def sutton_graves_heat(rho: float, R_n: float, V: float) -> float:
     """Sutton-Graves stagnation-point convective heat flux [W/m^2].
 
-    Delegates to Ada FFI: StellarOrion_Physics.Sutton_Graves_Heat_C.
+    Single source of truth: Ada/SPARK StellarOrion_Physics.Sutton_Graves_Heat_C.
+    Python MUST NOT re-derive this value — a Python re-implementation silently
+    diverges from the verified model (one truth, one value).
 
     [Citation: Sutton & Graves 1971, NASA TR R-376]
     Valid for: continuum, V < 12 km/s, Earth air.
+
+    Args:
+        rho: freestream mass density [kg/m^3]
+        R_n: nose radius [m]
+        V:   freestream velocity [m/s]
+
+    Returns:
+        Stagnation-point convective heat flux [W/m^2].
+
+    Raises:
+        RuntimeError -- the Ada library handle is unavailable, or
+            Sutton_Graves_Heat_C raised across the C ABI. The message carries
+            the exact inputs so the failure is reproducible.
     """
+    if _ada_lib is None:
+        raise RuntimeError(
+            "postprocess_validation.sutton_graves_heat: Ada physics library "
+            f"handle is unavailable (rho={rho!r}, R_n={R_n!r}, V={V!r})"
+        )
     try:
-        if _ada_lib is None:
-            raise RuntimeError("Ada physics library handle is unavailable")
         return _ada_lib.Sutton_Graves_Heat_C(
             ctypes.c_double(rho), ctypes.c_double(R_n), ctypes.c_double(V)
         )
-    except Exception as e:
-        print(f"[WARNING] Ada FFI Sutton_Graves_Heat_C failed: {e}, using Python fallback")
-        return C_SG * math.sqrt(rho / R_n) * V**3
+    except Exception as e:  # re-raised with full context
+        raise RuntimeError(
+            "postprocess_validation.sutton_graves_heat: Ada FFI "
+            f"Sutton_Graves_Heat_C failed ({e!r}) for "
+            f"rho={rho!r}, R_n={R_n!r}, V={V!r}"
+        ) from e
 
 
 def sutherland_viscosity(T: float) -> float:
     """Sutherland's law for dynamic viscosity of air [Pa*s].
 
-    Delegates to Ada FFI: StellarOrion_Physics.Sutherland_Viscosity_C.
+    Single source of truth: Ada/SPARK StellarOrion_Physics.Sutherland_Viscosity_C.
 
     [Citation: Sutherland 1893; Anderson 2006, Sec 15.2]
+
+    Args:
+        T: static temperature [K]
+
+    Returns:
+        Dynamic viscosity [Pa*s].
+
+    Raises:
+        RuntimeError -- the Ada library handle is unavailable, or
+            Sutherland_Viscosity_C raised across the C ABI.
     """
+    if _ada_lib is None:
+        raise RuntimeError(
+            "postprocess_validation.sutherland_viscosity: Ada physics library "
+            f"handle is unavailable (T={T!r})"
+        )
     try:
-        if _ada_lib is None:
-            raise RuntimeError("Ada physics library handle is unavailable")
         return _ada_lib.Sutherland_Viscosity_C(ctypes.c_double(T))
-    except Exception as e:
-        print(f"[WARNING] Ada FFI Sutherland_Viscosity_C failed: {e}, using Python fallback")
-        return MU_REF * (T / T_REF)**1.5 * (T_REF + SUTHERLAND_S) / (T + SUTHERLAND_S)
+    except Exception as e:  # re-raised with full context
+        raise RuntimeError(
+            "postprocess_validation.sutherland_viscosity: Ada FFI "
+            f"Sutherland_Viscosity_C failed ({e!r}) for T={T!r}"
+        ) from e
 
 
 def fay_riddell_heat(rho: float, R_n: float, V: float, Mach: float, T_wall: float) -> float:
     """Fay-Riddell stagnation-point convective heat flux [W/m^2].
 
-    Delegates to Ada FFI: StellarOrion_Physics.Fay_Riddell_Heat_C.
+    Single source of truth: Ada/SPARK StellarOrion_Physics.Fay_Riddell_Heat_C.
 
     [Citation: Fay & Riddell 1958; Rapisarda 2023 Eq 3.82]
     Valid for: continuum, laminar BL, M < 10.
+
+    Args:
+        rho:    freestream mass density [kg/m^3]
+        R_n:    nose radius [m]
+        V:      freestream velocity [m/s]
+        Mach:   freestream Mach number [-]
+        T_wall: wall temperature [K]
+
+    Returns:
+        Stagnation-point convective heat flux [W/m^2].
+
+    Raises:
+        RuntimeError -- the Ada library handle is unavailable, or
+            Fay_Riddell_Heat_C raised across the C ABI.
     """
+    if _ada_lib is None:
+        raise RuntimeError(
+            "postprocess_validation.fay_riddell_heat: Ada physics library "
+            f"handle is unavailable (rho={rho!r}, R_n={R_n!r}, V={V!r}, "
+            f"Mach={Mach!r}, T_wall={T_wall!r})"
+        )
     try:
-        if _ada_lib is None:
-            raise RuntimeError("Ada physics library handle is unavailable")
         return _ada_lib.Fay_Riddell_Heat_C(
             ctypes.c_double(rho), ctypes.c_double(R_n), ctypes.c_double(V),
             ctypes.c_double(Mach), ctypes.c_double(T_wall)
         )
-    except Exception as e:
-        print(f"[WARNING] Ada FFI Fay_Riddell_Heat_C failed: {e}, using Python fallback")
-        Cp = GAMMA * R_GAS / (GAMMA - 1)
-        T_stag = SIM_CONDITIONS["temperature_K"] * (1 + 0.2 * Mach**2)
-        p_inf = rho * R_GAS * SIM_CONDITIONS["temperature_K"]
-        p_stag = p_inf * (1 + 0.2 * Mach**2)**3.5
-        rho_s = p_stag / (R_GAS * T_stag)
-        mu_s = MU_REF * (T_stag / T_REF)**1.5 * (T_REF + SUTHERLAND_S) / (T_stag + SUTHERLAND_S)
-        rho_w = rho * T_stag / T_wall
-        mu_w = MU_REF * (T_wall / T_REF)**1.5 * (T_REF + SUTHERLAND_S) / (T_wall + SUTHERLAND_S)
-        h_s = Cp * T_stag
-        h_w = Cp * T_wall
-        dh = h_s - h_w
-        du_dy = (1.0 / R_n) * math.sqrt(2.0 * (p_stag - p_inf) / rho_s)
-        q = 0.763 * PRANDTL**(-0.6) * (rho_w * mu_w)**0.1 * \
-            (rho_s * mu_s)**0.4 * dh * math.sqrt(du_dy)
-        return max(q, 0.0)
+    except Exception as e:  # re-raised with full context
+        raise RuntimeError(
+            "postprocess_validation.fay_riddell_heat: Ada FFI "
+            f"Fay_Riddell_Heat_C failed ({e!r}) for rho={rho!r}, R_n={R_n!r}, "
+            f"V={V!r}, Mach={Mach!r}, T_wall={T_wall!r}"
+        ) from e
 
 
 # ============================================================================
@@ -517,7 +560,7 @@ def main():
 
     print(f"\n  Grid files: {len(grid_files)}")
     print(f"  Surf files: {len(surf_files)}")
-    print(f"  Simulation conditions:")
+    print("  Simulation conditions:")
     print(f"    Density: {SIM_CONDITIONS['density_kgm3']:.4e} kg/m³ (ISA at ~52 km)")
     print(f"    Velocity: {SIM_CONDITIONS['velocity_ms']:.0f} m/s")
     print(f"    Mach: {SIM_CONDITIONS['mach']:.2f}")
@@ -527,7 +570,7 @@ def main():
     # ============================================================================
     # TABLE 1: DSMC vs Analytical
     # ============================================================================
-    rows1, q_sg, q_fr, q_sg_Wcm2, q_fr_Wcm2 = table1_dsmc_vs_analytical(surf_files)
+    rows1, _q_sg, _q_fr, q_sg_Wcm2, q_fr_Wcm2 = table1_dsmc_vs_analytical(surf_files)
 
     headers1 = ["step", "dsmc_peak_Wcm2", "dsmc_mean_Wcm2", "dsmc_median_Wcm2",
                  "sg_Wcm2", "fr_Wcm2", "dsmc/sg", "dsmc/fr", "n_pos", "n_neg"]
@@ -602,7 +645,7 @@ def main():
                 f"{r['pct_of_mean']:.1f}",
             ])
         print_table("TABLE 3: Surface Heating Distribution (Top 15 Elements)", headers3, rows3_fmt)
-        print(f"  Surface statistics (positive elements only):")
+        print("  Surface statistics (positive elements only):")
         print(f"    Mean:   {surf_mean/1e4:.2f} W/cm²")
         print(f"    Std:    {surf_std/1e4:.2f} W/cm²")
         print(f"    Median: {surf_median/1e4:.2f} W/cm²")
@@ -645,17 +688,17 @@ def main():
     print("=" * 80)
     print("  SUMMARY")
     print("=" * 80)
-    print(f"  Analytical predictions at baseline conditions:")
+    print("  Analytical predictions at baseline conditions:")
     print(f"    Sutton-Graves: {q_sg_Wcm2:.2f} W/cm²")
     print(f"    Fay-Riddell:   {q_fr_Wcm2:.2f} W/cm²")
     print(f"    SG/FR ratio:   {q_sg_Wcm2/q_fr_Wcm2:.2f}")
     print()
-    print(f"  IRVE-3 reference (Rapisarda Table 4.10):")
+    print("  IRVE-3 reference (Rapisarda Table 4.10):")
     print(f"    Flight:        {IRVE3['peak_heat_flux_Wcm2']:.2f} W/cm²")
     print(f"    FR model:      {RAPISARDA['FR_peak_heat_flux_Wcm2']:.2f} W/cm²")
     print(f"    SG model:      {RAPISARDA['SG_peak_heat_flux_Wcm2']:.2f} W/cm²")
     print()
-    print(f"  StellarOrion DSMC (final step):")
+    print("  StellarOrion DSMC (final step):")
     final = rows1[-1]
     print(f"    Peak (raw):    {final['dsmc_peak_Wcm2']:.2f} W/cm²")
     print(f"    Mean:          {final['dsmc_mean_Wcm2']:.2f} W/cm²")

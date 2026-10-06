@@ -62,6 +62,7 @@ try:
     from ada_pinn_wrapper import drag_force as _ada_drag
     from ada_pinn_wrapper import g_load as _ada_gload
     from ada_pinn_wrapper import dynamic_pressure as _ada_dynq
+    from ada_pinn_wrapper import radiative_eq_temp as _ada_radiative_temp
     _ADA_PHYSICS_AVAILABLE = True
     print("[validation_pipeline] Ada/SPARK physics library loaded — all physics via Ada FFI")
 except OSError:
@@ -2511,7 +2512,8 @@ def generate_hybrid_mp4(
             # WHY: the user explicitly requested CRF 48 over the old fixed
             # 8 Mbps CBR. CRF gives better quality-per-bit for scientific
             # animation content (flat colour fields, text overlays).
-            # QSV is NOT available on Apple Silicon (M2 Pro) -- Intel-only.
+            # VideoToolbox is available on Apple Silicon but does not support
+            # CRF-based VBR encoding. libx264 is used instead for CRF 48.
             _hw_encoder = "libx264"
             _hw_extra_args = ["-vcodec", "libx264", "-crf", "48",
                               "-preset", "medium", "-pix_fmt", "yuv420p"]
@@ -4273,14 +4275,15 @@ def _generate_rapisarda_outputs(
     cp_tps = 750.0         # Specific heat [J/(kg*K)]
     thickness_tps = 0.005  # TPS thickness [m] (5mm)
     emissivity = 0.85      # Surface emissivity (SIC)
-    sigma_sb = 5.67e-8     # Stefan-Boltzmann constant [W/(m²*K⁴)]
     T_ambient = 268.36     # Ambient temperature [K] (from CSV)
 
     # Surface temperature from radiative equilibrium: q_conv = epsilon * sigma * T_s^4
     # q_conv = per-element avg heat flux = 565,865 W/m²
+    #  ONE TRUTH, ONE VALUE (2026-10-06): the surface temperature is the
+    #  Ada/SPARK value (Radiative_Eq_Temp_C), not a Python copy of sigma_SB.
     q_conv = so_raw_hf_avg * 10000.0  # Convert W/cm² to W/m²
     if q_conv > 0:
-        T_surface = (q_conv / (emissivity * sigma_sb)) ** 0.25
+        T_surface = _ada_radiative_temp(q_conv, emissivity)
     else:
         T_surface = T_ambient
 
@@ -4322,8 +4325,9 @@ def _generate_rapisarda_outputs(
     # [Citation: PINN extrapolation — Raissi et al. (2019) Physics-informed neural networks]
     # Same SIC TPS properties, but using PINN-extrapolated heat flux (300s equivalent)
     q_conv_pinn = so_pinn_hf_avg * 10000.0  # Convert W/cm² to W/m²
+    #  ONE TRUTH, ONE VALUE (2026-10-06): Ada/SPARK Radiative_Eq_Temp_C.
     if q_conv_pinn > 0:
-        T_surface_pinn = (q_conv_pinn / (emissivity * sigma_sb)) ** 0.25
+        T_surface_pinn = _ada_radiative_temp(q_conv_pinn, emissivity)
     else:
         T_surface_pinn = T_ambient
     T_backwall_pinn = T_surface_pinn - (q_conv_pinn * thickness_tps / k_tps)

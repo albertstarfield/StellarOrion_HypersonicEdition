@@ -121,8 +121,8 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
  & $T_\infty$ & 268.41 K \\
  & $n_\infty$ & $1.63 \times 10^{22}$ /m$^3$ \\ \midrule
 \multirow{3}{=}{\textbf{DoE (CCD)}} & Method & Face-Centered CCD \\
- & Samples ($N$) & 25 ($2^4 + 2 \times 4 + 1$) \\
- & Active variables & Diameter, Angle, Toroids, Nose \\ \midrule
+ & Samples ($N$) & 15 ($2^3 + 2 \times 3 + 1$) \\
+ & Active variables & Nose radius $R_N$, toroid radius $r_{tor}$, half-cone angle $\theta_c$ \\ \midrule
 \multirow{6}{=}{\textbf{PINN (DeepXDE)}} & Architecture & FNN [2] + [64] $\times$ 3 + [3] \\
  & Activation & tanh \\
  & Learning rate (Stage 1) & $1 \times 10^{-3}$ \\

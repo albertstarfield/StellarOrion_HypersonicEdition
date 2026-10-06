@@ -78,6 +78,40 @@ OUTDIR = os.path.join(REPO, "src", "ui", "uiassets", "assets", "plots")
 
 GRID_RE = re.compile(r"^grid\.(\d+)\.out$")
 
+#  Ada/SPARK FFI -- the single source of truth for every physics number used in
+#  the field panels. sys.path is extended once, at import time, so the
+#  radiative-equilibrium temperature below comes from Radiative_Eq_Temp_C and
+#  NOT from a Python copy of sigma_SB.
+sys.path.insert(0, os.path.join(REPO, "src", "python"))
+from ada_pinn_wrapper import radiative_eq_temp  # path set just above
+
+
+def _radiative_eq_temp_array(heat: np.ndarray, emissivity: float) -> np.ndarray:
+    """Radiative-equilibrium temperature [K] for an array of heat fluxes.
+
+    Single source of truth: Ada/SPARK StellarOrion_Physics.Radiative_Eq_Temp via
+    ada_pinn_wrapper.radiative_eq_temp (Radiative_Eq_Temp_C). Python MUST NOT
+    re-derive eps*sigma*T^4 -- a second copy of sigma silently diverges from the
+    verified model (one truth, one value).
+
+    Args:
+        heat: per-point heat flux [W/m^2] (1-D).
+        emissivity: surface emissivity in (0, 1].
+
+    Returns:
+        Surface temperature [K], same shape as ``heat``. Non-positive entries
+        are left at 0.0 and filtered by the caller.
+
+    Raises:
+        RuntimeError -- propagated from radiative_eq_temp when the Ada handle is
+            unavailable or Radiative_Eq_Temp_C fails; the failing flux is named
+            by the wrapper.
+    """
+    t = np.zeros_like(heat, dtype=float)
+    for idx in np.nonzero(heat > 0.0)[0]:
+        t[idx] = radiative_eq_temp(float(heat[idx]), emissivity)
+    return t
+
 
 def log(msg: str) -> None:
     """Write a progress line to stdout (no flush surprises on long runs).
@@ -775,10 +809,10 @@ def render_scallop_pocket(step: int, tree: str, outdir: str) -> str | None:
         warn(f"[field] failed to parse {want}: {exc}")
         return None
     heat = np.asarray(heat, dtype=float)
-    sigma, eps = 5.670374419e-8, 0.90
-    t = np.zeros_like(heat)
-    pos = heat > 0.0
-    t[pos] = (heat[pos] / (sigma * eps)) ** 0.25
+    #  ONE TRUTH, ONE VALUE (2026-10-06): the surface temperature is the Ada/SPARK
+    #  radiative-equilibrium value (Radiative_Eq_Temp_C); Python carries no copy
+    #  of sigma and does not re-derive eps*sigma*T^4.
+    t = _radiative_eq_temp_array(heat, 0.90)
     ok = np.isfinite(t) & (t > 0.0)
     if not ok.any():
         warn(f"[field] {want}: no positive heat flux -- panel reports the gap")
@@ -839,10 +873,10 @@ def render_pinn_surface(outdir: str, tree: str = "validation_scalloped"
         warn(f"[field] PINN artefact unreadable: {exc}")
         return None
     heat = np.asarray(heat, dtype=float)
-    sigma, eps = 5.670374419e-8, 0.90
-    t = np.zeros_like(heat)
-    pos = heat > 0.0
-    t[pos] = (heat[pos] / (sigma * eps)) ** 0.25
+    #  ONE TRUTH, ONE VALUE (2026-10-06): the surface temperature is the Ada/SPARK
+    #  radiative-equilibrium value (Radiative_Eq_Temp_C); Python carries no copy
+    #  of sigma and does not re-derive eps*sigma*T^4.
+    t = _radiative_eq_temp_array(heat, 0.90)
     ok = np.isfinite(t) & (t > 0.0)
     if not ok.any():
         return None

@@ -58,6 +58,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 # Pre-build matplotlib font cache ONCE before any Pool spawns.
 import matplotlib
 
+from ada_pinn_wrapper import fay_riddell_heat_flux, radiative_eq_temp
 from validation_pipeline import (
     _ada_drag,
     _ada_dynq,
@@ -67,7 +68,6 @@ from validation_pipeline import (
     isa_atmosphere,
     sutton_graves_heat_flux,
 )
-from ada_pinn_wrapper import fay_riddell_heat_flux, radiative_eq_temp
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -282,10 +282,14 @@ def _compute_frame_data(step: int):
     # Fay-Riddell continuum upper bound (uses wall temp for viscosity correction)
     fr = fay_riddell_heat_flux(isa["density_kgm3"], 1.5, traj["velocity_ms"],
                                traj["mach_number"], t_surface_k)
-    # Radiative heat flux leaving surface: q_rad = epsilon * sigma * T^4
-    # [Citation: Stefan-Boltzmann law]
-    _sigma = 5.670374419e-8
-    q_rad_wm2 = _emissivity * _sigma * t_surface_k ** 4
+    # Radiative heat flux leaving the surface.
+    #  ONE TRUTH, ONE VALUE (2026-10-06): t_surface_k was produced by
+    #  radiative_eq_temp(sg_flux, eps) -- the Ada/SPARK Radiative_Eq_Temp_C,
+    #  which solves eps*sigma*T^4 = sg_flux. The radiative flux leaving at
+    #  radiative equilibrium is therefore exactly the convective flux that drove
+    #  it, taken straight from the Ada FFI value; Python carries no copy of
+    #  sigma and re-derives nothing.
+    q_rad_wm2 = sg["heat_flux_Wm2"]
     # TPS conduction: 1-D series resistance through composite shield
     # q_cond = (T_surface - T_back) / (R_fabric + R_insulation + R_structure)
     # Simplified: q_cond = q_conv - q_rad (energy balance at surface)
@@ -314,9 +318,12 @@ def _compute_frame_data(step: int):
     A_ref = np.pi * (IRVE3_DIAMETER_M / 2.0) ** 2
     ballistic_coeff = IRVE3_MASS_KG / (IRVE3_CD * A_ref)
 
-    # Stagnation pressure: P_stag = P_amb + 0.5 * rho * V^2
+    # Stagnation pressure: P_stag = P_amb + q_dyn
     # [Citation: Anderson (2006), Fundamentals of Aerodynamics]
-    stagnation_pressure_Pa = isa["pressure_Pa"] + 0.5 * isa["density_kgm3"] * traj["velocity_ms"] ** 2
+    #  ONE TRUTH, ONE VALUE (2026-10-06): the dynamic-pressure term is the
+    #  Ada/SPARK value `dynq` computed above via Dynamic_Pressure_C, not a
+    #  Python re-derivation of 0.5*rho*V^2.
+    stagnation_pressure_Pa = isa["pressure_Pa"] + dynq
 
     return {
         "step": step,
@@ -397,7 +404,6 @@ def _render_animated_frame(fargs: Any):
       show_surface_temp,
      show_vel, show_mach, show_drag, show_g, out_dir, prefix, resolution,
      show_pinn_loss, show_pinn_acc, show_dsmc_pinn_err,
-     show_density, show_temp, show_press,
      show_kn,
      show_peak_hf, show_total_heat, show_ballistic,
      show_stag_press, show_alt_peak_heat, show_peak_dynq,
@@ -922,16 +928,17 @@ def _render_animated_frame(fargs: Any):
         _rows = [show_hf, show_hf_fr, show_hf_rad, show_hf_cond,
                  show_surface_temp]
 
-        # Find global min/max for color scaling
-        _all_vals = []
+        # Per-row min/max for color scaling (each component normalized independently)
+        _row_mins = []
+        _row_maxs = []
         for _row in _rows:
-            _all_vals.extend([float(v) for v in _row if v > 0])
-        if not _all_vals:
-            return
-        _vmin = min(_all_vals)
-        _vmax = max(_all_vals)
-        if _vmax <= _vmin:
-            _vmax = _vmin + 1
+            _vals = [float(v) for v in _row if v > 0]
+            if _vals:
+                _row_mins.append(min(_vals))
+                _row_maxs.append(max(_vals))
+            else:
+                _row_mins.append(0.0)
+                _row_maxs.append(1.0)
 
         # Draw heatmap cells
         _n_cols = len(show_steps)
@@ -939,6 +946,10 @@ def _render_animated_frame(fargs: Any):
             return
         _cell_w = max(1, (_hm_x1 - _hm_x0) // _n_cols)
         for _i, _row_data in enumerate(_rows):
+            _vmin = _row_mins[_i]
+            _vmax = _row_maxs[_i]
+            if _vmax <= _vmin:
+                _vmax = _vmin + 1
             for _j in range(_n_cols):
                 _v = float(_row_data[_j])
                 if _v <= 0:
@@ -1063,10 +1074,6 @@ def _render_animated_frame(fargs: Any):
                              show_steps, show_kn, (200, 100, 255), kn_val, "",
                              fmt="{:.2e}", frame_idx=frame_idx)
 
-        # Row 5 (y=54%, h=11%): atmosphere environment (density, temperature, pressure)
-        dens_val = show_density[frame_idx] if frame_idx < len(show_density) else 0.0
-        temp_val = show_temp[frame_idx] if frame_idx < len(show_temp) else 0.0
-        press_val = show_press[frame_idx] if frame_idx < len(show_press) else 0.0
         # Row 5 (y=54%, h=11%): Composite Heat Flux Heatmap
         p = _pct_to_px(2, title_h + 45, 96, 11)
         _draw_heatmap_panel(draw, *p, frame_idx,
@@ -1475,9 +1482,6 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
     frame_pinn_loss = np.array([d["pinn_loss"] for d in frame_data])
     frame_pinn_acc = np.array([d["pinn_accuracy"] for d in frame_data])
     frame_dsmc_pinn_err = np.array([d["dsmc_pinn_error"] for d in frame_data])
-    frame_density = np.array([d["density_kgm3"] for d in frame_data])
-    frame_temp = np.array([d["temperature_K"] for d in frame_data])
-    frame_press = np.array([d["pressure_Pa"] for d in frame_data])
     frame_kn = np.array([d["knudsen_number"] for d in frame_data])
     frame_ballistic = np.array([d["ballistic_coeff_kgm2"] for d in frame_data])
     frame_stag_press = np.array([d["stagnation_pressure_Pa"] for d in frame_data])
@@ -1519,7 +1523,6 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
             frame_vel, frame_mach, frame_drag, frame_g,
             frames_dir, prefix, _expanded_resolution,
             frame_pinn_loss, frame_pinn_acc, frame_dsmc_pinn_err,
-            frame_density, frame_temp, frame_press,
             frame_kn,
             frame_peak_hf, frame_total_heat, frame_ballistic,
             frame_stag_press, frame_alt_peak_heat, frame_peak_dynq,

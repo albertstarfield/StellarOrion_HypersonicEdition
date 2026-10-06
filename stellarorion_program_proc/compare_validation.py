@@ -34,8 +34,8 @@ LOFTID reference (Deshmukh et al. AIAA-2024-1501, Hollis et al. AIAA-2024-1498):
 
 KEY SUCCESS VARIABLES (from Sep 2 Discussion.md Section 12):
   A HIAD mission is successful iff ALL five checks pass:
-    1. TPS survives heat flux:     T_surface < 1700 K (SIC limit)
-    2. TPS survives heat load:     T_back < 673 K (Kapton limit)
+    1. TPS survives heat flux:     T_surface < 2073 K (SIC limit)
+    2. TPS survives heat load:     T_back < 773 K (Kapton limit)
     3. Structure survives decel:    g_load < 25g (structural limit)
     4. Vehicle decelerates enough:  V_final < para-deploy limit
     5. Landing accuracy:            Within target zone

@@ -116,6 +116,10 @@ if $RUN_COVERAGE; then
     echo "Running gnatcov coverage analysis..."
     echo ""
 
+    # F76: gnatcov outcome is a value, not a side effect.
+    GNATCOV_STATUS="NOT RUN"
+    GNATCOV_FAILED=false
+
     # Create coverage output directory
     mkdir -p obj/gcovr
 
@@ -129,10 +133,12 @@ if $RUN_COVERAGE; then
         echo ""
         echo "gnatcov coverage: PASSED"
         echo "Report: obj/gcovr/"
+        GNATCOV_STATUS="PASSED"
     else
         echo ""
         echo "gnatcov coverage: FAILED"
-        echo "Non-fatal — continuing with Python coverage."
+        GNATCOV_STATUS="FAILED"
+        GNATCOV_FAILED=true
     fi
 
     echo ""
@@ -242,7 +248,7 @@ echo "Verification Summary"
 echo "================================================================"
 echo "  GNATprove Level $LEVEL:  PASSED"
 if $RUN_COVERAGE; then
-    echo "  gnatcov coverage:       Report in obj/gcovr/"
+    printf '  gnatcov coverage:       %s\n' "$GNATCOV_STATUS"
 fi
 # F76(3): the line now states the OUTCOME. Previously it printed whenever the
 # flag was set, advertising a report that the fallback never produced.
@@ -250,7 +256,7 @@ printf '  Python coverage:        %s\n' "$PYTHON_COVERAGE_STATUS"
 echo ""
 
 # F76(3) cont: success is now a conclusion, not a constant.
-if [ "$PYTHON_COVERAGE_FAILED" = "true" ]; then
+if [ "$PYTHON_COVERAGE_FAILED" = "true" ] || [ "$GNATCOV_FAILED" = "true" ]; then
     echo "VERIFICATION FAILED -- the steps above did not all succeed."
     echo "================================================================"
     exit 1

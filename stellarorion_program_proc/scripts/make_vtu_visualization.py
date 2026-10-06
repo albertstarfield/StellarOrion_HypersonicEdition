@@ -61,7 +61,9 @@ from ada_pinn_wrapper import radiative_eq_temp
 # Physical constants for T_surface mapping
 # [Source: stellarorion_physics.ads; Stefan-Boltzmann law]
 # ---------------------------------------------------------------------------
-SIGMA_SB = 5.670374419e-8  # W/(m^2 K^4)
+#  ONE TRUTH, ONE VALUE (2026-10-06): sigma_SB is owned by the Ada/SPARK
+#  library and reached through radiative_eq_temp (Radiative_Eq_Temp_C).
+#  Python MUST NOT carry its own copy -- see _q_to_t_surface below.
 EMISSIVITY = 0.85          # SIC emissivity [Hollis et al. AIAA-2024-1498]
 
 

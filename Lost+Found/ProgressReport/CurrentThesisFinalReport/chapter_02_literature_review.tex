@@ -49,7 +49,7 @@ This synthesis grounds \textbf{Chapter~\ref{ch:methodology}}; Figure~\ref{fig:li
 \section{Fundamentals of Hypersonic Aerodynamics}
 
 \par
-Hypersonic flow is taken as $M > 5$, and five phenomena distinguish it from supersonic flow \cite{AndersonHypersonic}:
+Hypersonic flow is taken as $Ma > 5$, and five phenomena distinguish it from supersonic flow \cite{AndersonHypersonic}:
 \par
 \begin{enumerate}
     \item \textbf{Thin Shock Layers:} The shock sits close to the surface, giving small stand-off distance and a high-pressure region.
@@ -89,7 +89,7 @@ In standard air ($\gamma = 1.4$), temperature rises by a factor of 6 at $Ma = 5$
 
 The vehicle outruns upstream pressure disturbances, which coalesce ahead of it into a strong shock \cite{AndersonHypersonic}.
 \par
-Rankine-Hugoniot conservation fixes downstream (2) to upstream (1) property ratios for a calorically perfect gas in terms of $M_n$:
+Rankine-Hugoniot conservation fixes downstream (2) to upstream (1) property ratios for a calorically perfect gas in terms of $Ma_n$:
 \par
 \begin{equation}
     \frac{p_2}{p_1} = 1 + \frac{2\gamma}{\gamma + 1} (M_n^2 - 1)
@@ -99,7 +99,7 @@ Rankine-Hugoniot conservation fixes downstream (2) to upstream (1) property rati
     \frac{T_2}{T_1} = \left[1 + \frac{2\gamma}{\gamma + 1} (M_n^2 - 1)\right] \left[ \frac{2 + (\gamma - 1)M_n^2}{(\gamma + 1)M_n^2} \right]
 \end{equation}
 
-The density ratio instead approaches a finite limit as $M \to \infty$:
+The density ratio instead approaches a finite limit as $Ma \to \infty$:
 
 \begin{equation}
     \lim_{M \to \infty} \frac{\rho_2}{\rho_1} = \frac{\gamma + 1}{\gamma - 1}
@@ -112,7 +112,7 @@ For standard air ($\gamma = 1.4$) the limit is $\rho_2/\rho_1 \approx 6$.
     \BeginAccSupp{method=escape,ActualText={A line chart titled "Lifting reentry from orbit" showing entry corridors in velocity-altitude space. The horizontal axis is velocity V in kilometres per second, ticked from 0 to 10, and the vertical axis is altitude H in kilometres, ticked up to about 120. A diagonally hatched corridor fills the upper middle of the chart, bounded above by a curve labelled "High lift" and annotated 50 kilograms per square metre, and bounded below by a curve labelled "Low lift" and annotated 5000 kilograms per square metre; the corridor therefore marks the range of areal densities that a lifting vehicle can fly. Both bounding curves rise monotonically with velocity, so higher entry speed requires higher altitude, and they spread apart at the right-hand end. A fan of thin curves crosses the chart, each labelled at its foot with a Mach number: 8, 12, 16, 20, 24 and 28, so a curved arrow marked M shows the direction of increasing Mach number. The highest Mach numbers bunch together near 8 kilometres per second and about 100 kilometres altitude and become nearly vertical. A leader line points to the upper curve at high speed with the text "Orbiter US-shuttle", and the mass-to-area parameter\,m over A times c sub L is printed near the top of the high-lift curve. The chart is monochrome line work with small in-plot lettering and shows no vehicle geometry, no temperature, and no heat-flux information.}}%
 \includegraphics[width=0.8\textwidth]{figures/hypersonicMachandShockRelation.png}%
 \EndAccSupp{}%
-    \caption[Reentry corridor for a lifting (hypersonic) decelerator, expressed in velocity-altitude space: the ballistic-coefficient envelope between the high-lift limit of $50~\mathrm{kg/m^2}$ and the low-lift limit of $5000~\mathrm{kg/m^2}$, with constant-Mach isolines $M = 8$-$28$ superimposed and the Space Shuttle orbiter trajectory indicated.]{Reentry corridor for a lifting (hypersonic) decelerator, expressed in velocity-altitude space: the ballistic-coefficient envelope between the high-lift limit of $50~\mathrm{kg/m^2}$ and the low-lift limit of $5000~\mathrm{kg/m^2}$, with constant-Mach isolines $M = 8$-$28$ superimposed and the Space Shuttle orbiter trajectory indicated. The envelope constrains the entry conditions over which a decelerator of a given areal density may fly.}
+    \caption[Reentry corridor for a lifting (hypersonic) decelerator, expressed in velocity-altitude space: the ballistic-coefficient envelope between the high-lift limit of $50~\mathrm{kg/m^2}$ and the low-lift limit of $5000~\mathrm{kg/m^2}$, with constant-Mach isolines $Ma = 8$-$28$ superimposed and the Space Shuttle orbiter trajectory indicated.]{Reentry corridor for a lifting (hypersonic) decelerator, expressed in velocity-altitude space: the ballistic-coefficient envelope between the high-lift limit of $50~\mathrm{kg/m^2}$ and the low-lift limit of $5000~\mathrm{kg/m^2}$, with constant-Mach isolines $Ma = 8$-$28$ superimposed and the Space Shuttle orbiter trajectory indicated. The envelope constrains the entry conditions over which a decelerator of a given areal density may fly.}
     \label{fig:shock_wave}
 \end{figure}
 
@@ -221,7 +221,7 @@ Sharp, slender noses minimized drag in early supersonic design, but H. Julian Al
 \par
 The lost kinetic energy has two sinks: a weak attached shock gives low wave drag, so skin friction heats a sharp body enough to melt conventional materials, while a strong detached bow shock dumps most kinetic energy into the airflow and its wake.
 
-Allen showed stagnation point heat flux ($q_s$) falls as the inverse square root of nose radius ($R_N$) while drag ($D$) grows with projected area:
+Allen showed stagnation point heat flux ($\dot{q}_s$) falls as the inverse square root of nose radius ($R_N$) while drag ($D$) grows with projected area:
 
 \begin{equation}
     q_s \propto \frac{1}{\sqrt{R_N}} \quad \text{and} \quad D \propto R_N^2
@@ -346,7 +346,7 @@ NASA and partners developed HIADs: a deployable aeroshell with an inflatable bac
 A HIAD's core is a stack of pressurized toroidal tubes (tori) of high-strength braided fibers strapped into a blunt cone, giving a scalloped surface of crests and valleys at each toroid radius.
 
 \subsubsection*{The LOFTID Mission}
-The Low-Earth Orbit Flight Test of an Inflatable Decelerator (LOFTID) flew in August 2015 with a 6-meter aeroshell that survived the re-entry heat pulse ($> 1400^\circ$C) and decelerated a payload from orbital velocity \cite{DiNonnoLOFTID}.
+The Low-Earth Orbit Flight Test of an Inflatable Decelerator (LOFTID) flew in November 2022 with a 6-meter aeroshell that survived the re-entry heat pulse ($> 1400^\circ$C) and decelerated a payload from orbital velocity \cite{DiNonnoLOFTID}.
 
 LOFTID validated two critical advantages:
 \begin{itemize}
@@ -360,7 +360,7 @@ LOFTID validated two critical advantages:
     \BeginAccSupp{method=escape,ActualText={Altitude-against-time profile of the LOFTID flight, from launch at 0 seconds to loss of signal near 1000 seconds, with altitude rising to about 450 kilometres at 450 seconds and then falling to the surface. Four shaded bands divide the flight into Ascent, Deployment, Experiment Phase and Final Descent. The trajectory line is blue where attitude control is off and green where it is on. Flight events marked along the curve are Launch, Rate Damping, Payload Separation, Nosecone Separation, Inflation Start, ACS Reorient, Inflation Complete, CG Translation, ACS Hold Attitude, 25 pascal, Max Heat Rate, Max Dynamic Pressure, Mach 0.7, a second CG Translation and Loss of Signal. The event annotations are densely packed in the lower right of the source artwork and several of them touch or overlap, so the shaded phase bands are the reliable reading and the individual event labels are not.}}%
 \includegraphics[width=0.77\textwidth]{figures/LOFTID_mission_trajectory.png}%
 \EndAccSupp{}%
-    \caption[Altitude against mission elapsed time for the LOFTID flight, divided into the four phases the trajectory passes through: ascent with rate damping and payload and nosecone separation, deployment of the inflatable at an apogee near 450~km, the experiment phase in which the inflated aeroshell is deployed and the center of gravity translated, and final descent through peak heating and peak dynamic pressure to loss of signal.]{Altitude against mission elapsed time for the LOFTID flight, divided into the four phases the trajectory passes through: ascent with rate damping and payload and nosecone separation, deployment of the inflatable at an apogee near 450~km, the experiment phase in which the inflated aeroshell is deployed and the center of gravity translated, and final descent through peak heating and peak dynamic pressure to loss of signal. The trajectory is drawn in blue while attitude control is off and in green once it is on. One caution belongs with this figure: in the source artwork the event annotations are packed tightly enough in the descent that several of them touch or overprint one another, and the trajectory line crosses the legend. The phase bands and the order of the events are therefore readable from this figure but the precise event times are not, and no event time is quoted from it anywhere in this work; the LOFTID flight conditions used in Chapter~\ref{ch:results} are taken from the mission reference rather than measured off this plot.}
+    \caption[Altitude against mission elapsed time for the LOFTID flight, divided into the four phases the trajectory passes through: ascent with rate damping and payload and nosecone separation. The second is deployment of the inflatable at an apogee near 450~km. The third is the experiment phase in which the inflated aeroshell is deployed and the center of gravity translated. The fourth is final descent through peak heating and peak dynamic pressure to loss of signal.]{Altitude against mission elapsed time for the LOFTID flight, divided into the four phases the trajectory passes through: ascent with rate damping and payload and nosecone separation. The second is deployment of the inflatable at an apogee near 450~km. The third is the experiment phase in which the inflated aeroshell is deployed and the center of gravity translated. The fourth is final descent through peak heating and peak dynamic pressure to loss of signal. The trajectory is drawn in blue while attitude control is off and in green once it is on. One caution belongs with this figure: in the source artwork the event annotations are packed tightly enough in the descent that several of them touch or overprint one another, and the trajectory line crosses the legend. The phase bands and the order of the events are therefore readable from this figure but the precise event times are not, and no event time is quoted from it anywhere in this work; the LOFTID flight conditions used in Chapter~\ref{ch:results} are taken from the mission reference rather than measured off this plot.}
     \label{fig:LoftidMission}
 \end{figure}
 
@@ -493,7 +493,7 @@ At a toroid's windward face the fluid decelerates to zero, so a calorically perf
 \end{equation}
 
 \subsubsection*{The Geometric Scaling (Heat Flux Rate)}
-Heat entry rate ($q_s$) follows the wall velocity gradient; Fay-Riddell scales it inversely with the square root of nose radius ($R_N$):
+Heat entry rate ($\dot{q}_s$) follows the wall velocity gradient; Fay-Riddell scales it inversely with the square root of nose radius ($R_N$):
 
 \begin{equation}
     q_s \approx 0.76 \cdot Pr^{-0.6} \cdot (h_{0} - h_w) \cdot \sqrt{\rho_e \mu_e} \cdot \sqrt{\left( \frac{du_e}{dx} \right)_s}
@@ -547,10 +547,10 @@ Fay-Riddell needs post-shock velocity gradients and boundary-layer edge properti
 Force and heat-flux data from DSMC feed the Survivability-Based Optimization objective space of Chapter~3.
 
 \subsubsection*{Mass Density from Number Density}
-DSMC solvers such as SPARTA report number density $n_{\rho}$ (particles per cubic metre), so mass density follows from the mean molecular mass:
+DSMC solvers such as SPARTA report number density $n$ (particles per cubic metre), so mass density follows from the mean molecular mass:
 
 \begin{equation}
-    \rho = n_{\rho} \cdot \frac{M_{\text{air}}}{N_A}
+    \rho = n \cdot \frac{M_{\text{air}}}{N_A}
     \label{eq:mass_density}
 \end{equation}
 
@@ -981,7 +981,7 @@ For hard spheres of diameter $d$ and number density $n$ the mean free path $\lam
     \end{tabularx}
 \end{table}
 
-\noindent A \emph{global} $Kn$ on the full aeroshell diameter puts the IRVE-3 freestream in the deep-continuum regime~\cite{bird1994molecular}. Equation~\eqref{eq:mean_free_path} with $d = 3.7\times10^{-10}$~m~\cite{bird1994molecular}, $n = \rho_\infty/(k_B T_\infty)$ and International Standard Atmosphere (ISA) density $\rho_\infty = 1.05\times10^{-3}$~kg/m\textsuperscript{3}~\cite{usstandard1976} gives $\lambda \approx 7.5\,{\times}\,10^{-5}$~m; with $L = 3.0$~m:
+\noindent A \emph{global} $Kn$ on the full aeroshell diameter puts the IRVE-3 freestream in the deep-continuum regime~\cite{bird1994molecular}. Equation~\eqref{eq:mean_free_path} with $d = 3.7\times10^{-10}$~m~\cite{bird1994molecular}, $n = p_\infty/(k_B T_\infty)$ and International Standard Atmosphere (ISA) pressure $p_\infty = 79.8$~Pa and density $\rho_\infty = 1.05\times10^{-3}$~kg/m\textsuperscript{3}~\cite{usstandard1976} gives $\lambda \approx 7.5\,{\times}\,10^{-5}$~m; with $L = 3.0$~m:
 \begin{equation}
     Kn_{\text{global}} = \frac{\lambda_\infty}{L}
     \approx \frac{7.5\times10^{-5}}{3.0}
@@ -1157,9 +1157,9 @@ The IRVE-3 flight experiment (2012) first deployed a 3.0~m HIAD at Mach~10+ re-e
 Rapisarda \cite{rapisarda2023mdao} then developed a multidisciplinary design analysis and optimization (MDAO) framework with a unified TPS material model:
 
 \begin{itemize}
-    \item \textbf{Stiff TPS:} 50~mm Pyrogel\texttrademark\ XTE ($\rho = 200$ kg/m$^3$, $C_p = 2500$ J/(kg$\cdot$K), $\varepsilon = 0.85$).
-    \item \textbf{Hybrid TPS:} 25~mm Pyrogel\texttrademark\ XTE + 3~mm Kapton\texttrademark\ ($\rho = 380$ kg/m$^3$, $C_p = 1100$ J/(kg$\cdot$K), $\varepsilon = 0.80$).
-    \item \textbf{Flexible TPS:} 15~mm Pyrogel\texttrademark\ XTE + 1.5~mm Kapton\texttrademark\ ($\rho = 300$ kg/m$^3$, $C_p = 1500$ J/(kg$\cdot$K), $\varepsilon = 0.82$).
+    \item \textbf{Stiff TPS:} 50~mm Pyrogel\texttrademark\ XTE ($\rho = 200$ kg/m$^3$, $C_p = 2500$ J/(kg$\cdot$K), $\epsilon = 0.85$).
+    \item \textbf{Hybrid TPS:} 25~mm Pyrogel\texttrademark\ XTE + 3~mm Kapton\texttrademark\ ($\rho = 380$ kg/m$^3$, $C_p = 1100$ J/(kg$\cdot$K), $\epsilon = 0.80$).
+    \item \textbf{Flexible TPS:} 15~mm Pyrogel\texttrademark\ XTE + 1.5~mm Kapton\texttrademark\ ($\rho = 300$ kg/m$^3$, $C_p = 1500$ J/(kg$\cdot$K), $\epsilon = 0.82$).
 \end{itemize}
 
 \noindent The Rapisarda model is the baseline for all simulations in this study.
@@ -1189,7 +1189,7 @@ A HIAD design trades competing objectives: maximize drag, minimize peak heat flu
 
 \subsection{Multidisciplinary Design Optimization (MDO)}
 
-MDO covers systems whose physics interact across separate disciplines \cite{Kroo2005}. The HIAD disciplines are aerodynamics ($C_D$, $\dot{q}_s$), thermal protection ($T_{\text{back}}$), and structural mechanics (mass and reliability from toroid count and skin).
+MDO covers systems whose physics interact across separate disciplines \cite{Kroo2005}. The HIAD disciplines are aerodynamics ($C_d$, $\dot{q}_s$), thermal protection ($T_{\text{back}}$), and structural mechanics (mass and reliability from toroid count and skin).
 
 \noindent The formulation seeks $\mathbf{x}^*$ minimizing a composite cost $J(\mathbf{x})$ under constraints:
 

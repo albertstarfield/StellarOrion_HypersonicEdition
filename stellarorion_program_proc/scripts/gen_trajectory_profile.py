@@ -50,8 +50,6 @@ import sys
 # ============================================================================
 R_EARTH = 6_371_000.0       # WGS-84 mean Earth radius (m)
 G0 = 9.80665                # Standard gravity at sea level (m/s^2)
-R_AIR = 287.058             # Specific gas constant for dry air (J/(kg*K))
-GAMMA_AIR = 1.4             # Ratio of specific heats for air
 
 # Entry conditions
 ALT_0_KM = 122.65           # Initial altitude (km)
@@ -71,127 +69,24 @@ FRONTAL_AREA = math.pi * (DIAMETER_M / 2.0) ** 2  # m^2
 
 
 # ============================================================================
-# ISA 1975 Atmosphere Model (piecewise, matching Ada Atmosphere_Density/Temp)
+# ISA 1975 Atmosphere Model -- Ada/SPARK FFI (single source of truth)
 # ============================================================================
-# Layer base heights (m) and temperatures (K) for ISA 1975
-ISA_LAYERS = [
-    # (base_alt_m, base_temp_K, lapse_rate_K/m)
-    (0.0,        288.15,   -0.0065),     # Troposphere
-    (11000.0,    216.65,    0.0),         # Tropopause
-    (20000.0,    216.65,   +0.001),       # Stratosphere lower
-    (32000.0,    228.65,   +0.0028),      # Stratosphere upper
-    (47000.0,    270.65,    0.0),         # Stratopause
-    (51000.0,    270.65,   -0.0028),      # Mesosphere lower
-    (71000.0,    214.65,   -0.002),       # Mesosphere upper
-    (84852.0,    186.87,    0.0),         # Mesopause
-]
-
-# Reference density at sea level
-RHO_0 = 1.225  # kg/m^3
-
-
-def atmosphere_temperature(alt_m):
-    """ISA 1975 temperature profile (K)."""
-    alt_km = alt_m / 1000.0
-    if alt_km < 0:
-        return 288.15
-    elif alt_km <= 11.0:
-        return 288.15 - 6.5 * alt_km
-    elif alt_km <= 20.0:
-        return 216.65
-    elif alt_km <= 32.0:
-        return 216.65 + 1.0 * (alt_km - 20.0)
-    elif alt_km <= 47.0:
-        return 228.65 + 2.8 * (alt_km - 32.0)
-    elif alt_km <= 51.0:
-        return 270.65
-    elif alt_km <= 71.0:
-        return 270.65 - 2.8 * (alt_km - 51.0)
-    elif alt_km <= 84.852:
-        return 214.65 - 2.0 * (alt_km - 71.0)
-    else:
-        return 186.87  # Exponential falloff above mesopause
-
-
-def atmosphere_density(alt_m):  # nosec: SOFTLOCK_RISK — bounded loop over a fixed 8-layer table, no recursion
-    """ISA 1975 density profile (kg/m^3), derived entirely from ISA_LAYERS.
-
-    WHY THIS WAS REWRITTEN (F45). The previous implementation hard-coded a
-    separate literal for every layer and was wrong in THREE places:
-
-      1. Troposphere exponent used the lapse rate in K/**km** (6.5) where the
-         hydrostatic power law needs K/**m** (0.0065):
-             1 + G0/(6.5*R)    = 1.0052558   (code)
-             G0/(0.0065*R) - 1 = 4.2558     (correct)
-         -> 2.30x too dense at 10 km, 2.53x at 11 km.
-      2. Every linear-lapse layer omitted the trailing "- 1". The density law
-         is rho/rho_base = (T/T_base)**(-G0/(L*R_AIR) - 1); the code used
-         (T/T_base)**(-G0/(L*R_AIR)), which is the PRESSURE law, not the
-         density law. That is an extra factor of T/T_base per layer.
-      3. The 20-32 km stratosphere layer used the isothermal barometric form
-         exp(-G0*dh/(R*T)) instead of the power law, even though that layer
-         has a +1 K/km lapse rate.
-
-    Because the isothermal layers (11-20, 47-51, and above 84.852 km) are
-    dimensionally correct, they PROPAGATE whatever error the layer below them
-    introduced as a constant factor -- which is exactly the measured signature
-    (a multiplicative 1.4755-3.3163x overestimate, saturating at altitude).
-    Temperature was always right (atmosphere_temperature is unchanged), which
-    is why the divergence was density-only.
-
-    AXIOM 1 (hydrostatic balance): dp/dh = -rho*g0.
-    AXIOM 2 (ideal gas):           p = rho*R_AIR*T.
-    AXIOM 3 (constant lapse rate): dT/dh = L within a layer.
-    THEOREM: with L != 0, integrating AXIOM 1 using AXIOM 3 gives
-             p/p_base  = (T/T_base) ** (-G0/(L*R_AIR))
-             rho/rho_base = (p/p_base) * (T_base/T)
-                          = (T/T_base) ** (-G0/(L*R_AIR) - 1)
-             and with L == 0 the isothermal form
-             rho/rho_base = exp(-G0*(h - h_base)/(R_AIR*T_base)).
-
-    Single source of truth: every lapse rate and base temperature now comes
-    from ISA_LAYERS, whose third column is already in K/m. A per-layer literal
-    can no longer drift from the table -- that was the root cause.
-
-    CITATIONS: ISO 2533:1975 / U.S. Standard Atmosphere 1976 (NASA SP-7468)
-    section 2.3 (density vs altitude, all seven layers).
-
-    Args:
-        alt_m: geometric altitude in METRES (may exceed 84.852 km).
-
-    Returns:
-        Density in kg/m^3. Above 84.852 km the last (isothermal, 186.87 K)
-        layer is extrapolated, matching the previous behaviour.
-    """
-    if alt_m < 0.0:
-        return RHO_0
-    rho = RHO_0
-    last = len(ISA_LAYERS) - 1
-    for i, (h_base, t_base, lapse) in enumerate(ISA_LAYERS):
-        h_top = ISA_LAYERS[i + 1][0] if i + 1 <= last else float("inf")
-        # CONTAINMENT FIRST. An isothermal layer is not a catch-all: it only
-        # answers for altitudes inside it. (Returning from the isothermal
-        # branch before this test made the 11-20 km tropopause answer for the
-        # whole atmosphere above 11 km, dropping density 2-4x by 71 km.)
-        inside = alt_m <= h_top or i == last
-        if lapse == 0.0:
-            # Isothermal layer: barometric exponential (AXIOM 3 with L = 0).
-            if inside:
-                return rho * math.exp(-G0 * (alt_m - h_base) / (R_AIR * t_base))
-            rho *= math.exp(-G0 * (h_top - h_base) / (R_AIR * t_base))
-            continue
-        if inside:
-            # alt_m lies inside this layer -- apply the density power law.
-            t = t_base + lapse * (alt_m - h_base)
-            return rho * (t / t_base) ** (-G0 / (lapse * R_AIR) - 1.0)
-        # alt_m is above this layer -- advance rho to the layer top.
-        t_top = t_base + lapse * (h_top - h_base)
-        rho *= (t_top / t_base) ** (-G0 / (lapse * R_AIR) - 1.0)
-    # Unreachable: the final layer is isothermal and always returns above.
-    raise RuntimeError(
-        f"ISA_LAYERS has no isothermal terminal layer; cannot evaluate "
-        f"atmosphere_density({alt_m})"
-    )
+#  ONE TRUTH, ONE VALUE (2026-10-06): the ISA layer table, the per-layer density
+#  power law, and the sqrt(gamma*R*T) speed of sound that used to live here were
+#  a SECOND implementation of the atmosphere model. They were aligned to the
+#  Ada/SPARK value by hand (F45, worst 0.347% vs Ada) and could drift again the
+#  moment either side changed. They have been deleted; density, temperature, and
+#  the speed of sound now come from the Ada/SPARK library through
+#  ada_pinn_wrapper, so this profile is the same model the rest of the pipeline
+#  uses.
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "python"))
+from ada_pinn_wrapper import (  # sys.path set just above
+    dynamic_pressure as _ada_dynamic_pressure,
+)
+from ada_pinn_wrapper import (
+    isa_atmosphere as _ada_isa_atmosphere,
+)
 
 
 # ============================================================================
@@ -217,13 +112,15 @@ def compute_trajectory():
         if vel <= 0.5 * 340.0:  # Mach 0.5 (~170 m/s at sea level)
             break
 
-        # Atmosphere
-        rho = atmosphere_density(alt_m)
-        T = atmosphere_temperature(alt_m)
-        a_sound = math.sqrt(GAMMA_AIR * R_AIR * T) if T > 0 else 340.0
+        # Atmosphere -- one Ada/SPARK call returns density and the speed of
+        # sound (Atmosphere_Density_C / speed_of_sound). No Python ISA table and
+        # no sqrt(gamma*R*T): one truth, one value.
+        atm = _ada_isa_atmosphere(alt_m / 1000.0)
+        rho = atm["density_kgm3"]
+        a_sound = atm["speed_of_sound_ms"]
 
-        # Dynamic pressure
-        q = 0.5 * rho * vel * vel
+        # Dynamic pressure via Ada/SPARK (Dynamic_Pressure_C).
+        q = _ada_dynamic_pressure(rho, vel)
 
         # Drag force
         drag = q * CD * FRONTAL_AREA

@@ -63,7 +63,9 @@ from ada_pinn_wrapper import (
 # Physical constants and material properties
 # [Source: stellarorion_physics.ads, README.md mathematical foundations]
 # ---------------------------------------------------------------------------
-SIGMA_SB = 5.670374419e-8  # Stefan-Boltzmann constant [W/(m^2 K^4)]
+#  ONE TRUTH, ONE VALUE (2026-10-06): sigma_SB is owned by the Ada/SPARK
+#  library and reached through radiative_eq_temp (Radiative_Eq_Temp_C).
+#  Python MUST NOT carry its own copy -- see _compute_t_surface below.
 EMISSIVITY = 0.85          # SIC surface emissivity [dimensionless]
                             # [Source: Hollis et al. AIAA-2024-1498]
 T_INIT = 300.0             # Initial temperature [K]
@@ -87,12 +89,12 @@ A_REF = math.pi * (1.5 ** 2)  # Reference area for 3m diameter [m^2] = 7.0686
 #  drawn on every figure were overstated. Measured 2026-10-06 across the 90
 #  shipped VTUs: exactly one verdict flipped (validation_scalloped/
 #  surf_pinn_300000000.vtu, T_max 1814.4 K -> FAIL at 1700, PASS at 2073).
-#  [Citation: stellarorion_types.ads:97  SIC_MAX_TEMP : constant Float := 2073.0]
-#  [Citation: stellarorion_types.ads:101 KAPTON_MAX_TEMP : constant Float := 773.0]
+#  [Citation: stellarorion_types.ads:120  SIC_MAX_TEMP : constant Float := 2073.0]
+#  [Citation: stellarorion_types.ads:124 KAPTON_MAX_TEMP : constant Float := 773.0]
 #  [Citation: stellarorion_physics.adb:1428 Metrics.Surface_Temp_K <= SIC_MAX_TEMP]
-#  [Reference: stellarorion_types.ads:831-832 combined test (T_s <= SiC_MAX_TEMP and T_back <= KAPTON_MAX_TEMP)]
-SIC_MAX_TEMP = 2073.0     # SIC surface temperature limit [K] -- Ada types.ads:97
-KAPTON_MAX_TEMP = 773.0   # Kapton adhesive limit [K] -- Ada types.ads:101
+#  [Reference: stellarorion_types.ads:854-855 combined test (T_s <= SiC_MAX_TEMP and T_back <= KAPTON_MAX_TEMP)]
+SIC_MAX_TEMP = 2073.0     # SIC surface temperature limit [K] -- Ada types.ads:120
+KAPTON_MAX_TEMP = 773.0   # Kapton adhesive limit [K] -- Ada types.ads:124
 MAX_G_LOAD = 25.0          # Structural limit [g]
 
 

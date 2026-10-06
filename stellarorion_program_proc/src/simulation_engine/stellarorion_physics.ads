@@ -937,7 +937,7 @@ package StellarOrion_Physics is
    --    1 760 J/(m^2 K), 23.3x LESS thermal mass per unit area) exposed the
    --    placeholder as a real model error: the lumped transient
    --        T_back = T_init + q*dt*eta_lag / (rho*Cp*delta)
-   --    then reported 955.7 K at 60 s and failed the 673 K structure limit,
+   --    then reported 955.7 K at 60 s and failed the 773 K structure limit,
    --    while the mission's actual pulse gives 448.4 K and passes.
    --
    --  DERIVATION (not a free parameter):

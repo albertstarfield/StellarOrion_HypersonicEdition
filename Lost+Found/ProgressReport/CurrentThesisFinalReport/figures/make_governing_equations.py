@@ -115,15 +115,16 @@ MARGIN_X = 0.08
 N_BOX = 6
 GAP = 0.074
 BOX_W = (PRINT_W_IN - 2.0 * MARGIN_X - (N_BOX - 1) * GAP) / N_BOX
-EQ_W = BOX_W
+EQ_W = 0.90
 
-TITLE = "Governing Equations: Derivation Chain from Kinetic Theory to Optimization"
+TITLE = ("Governing Equations: Derivation Chain",
+          "from Kinetic Theory to Optimization")
 
 BOX_TITLES = (
     ("Kinetic", "Theory"),
     ("DSMC", "Method"),
-    ("Navier-Stokes", "Equations"),
-    ("Sutton-Graves", "Correlation"),
+    ("Navier-", "Stokes", "Equations"),
+    ("Sutton-", "Graves", "Correlation"),
     ("PINN", "Refinement"),
     ("GA-based", "survivability", "optimization"),
 )
@@ -139,8 +140,9 @@ TRANSITIONS = (
 EQUATIONS = (
     (r"$\partial f/\partial t$",
      r"$+ \mathbf{v}\cdot\nabla f$",
-     r"$= \int (f' f_1' - f f_1)$",
-     r"$g\, \sigma\, d\Omega\, d\mathbf{v}_1$"),
+     r"$= \int (f' f_1' -$",
+     r"$f f_1)\, g\, \sigma\, d\Omega$",
+     r"$d\mathbf{v}_1$"),
     (r"$\Delta x \leq \lambda/3,$",
      r"$\Delta t \leq 1/\nu$"),
     (r"$\partial \rho/\partial t$",
@@ -149,8 +151,10 @@ EQUATIONS = (
      r"$V_\infty^3$"),
     (r"$\mathcal{L} = \lambda_d \mathcal{L}_{data}$",
      r"$+ \lambda_{pde} \mathcal{L}_{PDE}$"),
-    (r"$J^* = \min(\beta - \beta_{target})^2$",
-     r"$+ \lambda \sum \max(0, g_i)$"),
+    (r"$J^* = \min(\beta$",
+     r"$- \beta_{target})^2$",
+     r"$+ \lambda \sum \max(0,$",
+     r"$g_i)$"),
 )
 
 AXIOMS = (
@@ -275,7 +279,7 @@ def draw_equation_boxes(ax: object) -> None:
         x0 = box_left(i)
         y0 = 1.85
         patch = FancyBboxPatch(
-            (x0, y0), EQ_W, 0.64,
+            (x0, y0), EQ_W, 0.80,
             boxstyle="round,pad=0.0,rounding_size=0.03",
             linewidth=1.0, edgecolor=EQ_BORDER, facecolor="white", zorder=2,
         )
@@ -283,7 +287,7 @@ def draw_equation_boxes(ax: object) -> None:
         lines = EQUATIONS[i]
         n = len(lines)
         for k, line in enumerate(lines):
-            y = y0 + 0.64 - 0.12 - k * 0.14
+            y = y0 + 0.80 - 0.12 - k * 0.16
             ax.text(box_center(i), y, line, ha="center", va="center",
                     fontsize=EQ_PT, color=INK, zorder=3)
 
@@ -329,8 +333,13 @@ def build() -> object:
     ax.set_ylim(0.0, H)
     ax.axis("off")
 
-    ax.text(PRINT_W_IN / 2.0, H - 0.25, TITLE, ha="center", va="center",
-            fontsize=TITLE_PT, fontweight="bold", color=INK)
+    if isinstance(TITLE, tuple):
+        for k, line in enumerate(TITLE):
+            ax.text(PRINT_W_IN / 2.0, H - 0.20 - k * 0.22, line, ha="center", va="center",
+                    fontsize=TITLE_PT, fontweight="bold", color=INK)
+    else:
+        ax.text(PRINT_W_IN / 2.0, H - 0.25, TITLE, ha="center", va="center",
+                fontsize=TITLE_PT, fontweight="bold", color=INK)
 
     draw_transition_chips(ax)
     for i in range(N_BOX):
