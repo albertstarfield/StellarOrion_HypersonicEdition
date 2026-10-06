@@ -73,8 +73,14 @@ import matplotlib
 matplotlib.use("Agg")  # headless-safe: render off-screen, only savefig matters
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.colors import LogNorm, Normalize
+
+#  F70: one shared implementation of "is this number measurable?".  The old
+#  inline default float("nan") rendered the caption as "nan%" whenever the
+#  key was missing, so a missing input looked like a measurement.
+#  [Citation: scripts/figure_text.py AXIOMS A1-A3]
+from figure_text import improvement_pct
 from matplotlib.cm import ScalarMappable
+from matplotlib.colors import LogNorm, Normalize
 from matplotlib.ticker import MaxNLocator
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import ConstantKernel, Matern
@@ -895,11 +901,10 @@ def main() -> int:
                 )
 
         # --- Suptitle + save ---
-        imp = data.get("improvement", {})
         fig.suptitle(
             "StellarOrion HIAD — Bayesian Optimization Diagnostics\n"
             f"70 evals (20 LHD + 50 BO) · best J = {optimized['cost']:.4f} "
-            f"· Cd improvement = {imp.get('cd_pct', float('nan')):.2f}% "
+            f"· Cd improvement = {improvement_pct(data)} "
             f"· GP Matern 5/2 + EI (ξ=0.01)",
             color="white", fontsize=13, fontweight="bold", y=0.975,
         )
@@ -914,7 +919,9 @@ def main() -> int:
         size_kb = _OUTPUT_PNG.stat().st_size / 1024.0
         print(f"  Saved: {_OUTPUT_PNG} ({size_kb:.1f} kB)")
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 -- top-level safety net: a figure
+        # that took minutes to render must still report its failure. Narrowing
+        # this catch would crash the run and lose the diagnostic entirely.
         # Top-level safety net: never exit silently (verbose error reporting)
         print(f"\nFATAL: {exc!r}", file=sys.stderr)
         traceback.print_exc()

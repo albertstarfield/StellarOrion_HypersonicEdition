@@ -76,6 +76,55 @@ MACH_RUN: float = 10.29              # A4: quoted Mach number
 V_SWEEP_KMS = [2.0, 2.5, 3.0, 3.378, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
 R_SWEEP_M = [0.1, 0.2, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0]
 
+# --- Layout constants, every one of them derived from measured geometry -----
+# PRINT_W_IN is the width LaTeX uses: chapter_02 includes this figure at
+# width=0.9\textwidth, and the A4 text block is 21.0 cm wide with 4.0 + 3.0 cm
+# margins. The saved figure is 7.0 in, so the placement scale is
+# PRINT_W_IN / 7.0 = 0.7087 and a 12 pt tick prints at 8.5 pt.
+PRINT_W_IN: float = 0.9 * (21.0 / 2.54 - (4.0 + 3.0) / 2.54)
+SAVE_DPI: int = 200
+
+# Panel (b) x ticks are a SUBSET of the sweep. Labelling all ten sweep radii
+# cannot work. The panel is 2.77 in wide and the axis spans log10(3.0/0.1) =
+# 1.477 decades, so the neighbouring pair 2.5 m and 3.0 m sits 0.079 decades
+# apart, which is 29 px at 200 dpi, while the 12 pt label "2.5" is 53 px wide.
+# The measured render showed a single white column between the two labels, so
+# the pair reads as the one number 2.53. The radii dropped from the lettering
+# (0.3, 0.75 and 2.5 m) stay in R_SWEEP_M, so every curve still passes through
+# them with its marker; only the axis text is thinned.
+X_TICKS_M = [0.1, 0.2, 0.5, 1.0, 1.5, 2.0, 3.0]
+
+# Panel (b) y limits. The annotation box needs an empty band under the lowest
+# curve. With autoscaled limits the lowest plotted point is about 8.0 W/cm2
+# (V = 3 km/s at R_N = 3 m) and the axis bottom landed near 6.45 W/cm2, so the
+# band was only a fifth of a decade tall. AX2_Y_MIN opens the band down to
+# 4.0 W/cm2, below every plotted point, and AX2_Y_MAX leaves the top curve
+# (about 557 W/cm2) clear of the frame.
+AX2_Y_MIN: float = 4.0
+AX2_Y_MAX: float = 900.0
+
+# The panel (b) arrow targets the dashed baseline line inside that empty band
+# instead of a marker on a curve. It used to target the V = 3 km/s curve at
+# R_N = 1.5 m, which put the arrowhead on the curve and broke its continuity
+# (58 black px inside the curve band on the measured render). ARROW_TARGET_Q
+# sits below every curve point that the arrow spans, so the tip clears the
+# curve by about 14 printed points. This also settles the earlier disagreement
+# between the artwork and its own spec about which marker the arrow should
+# touch: the label names a nose RADIUS, the dashed line IS that radius, and no
+# marker is claimed, so no colour choice can contradict the text.
+ARROW_TARGET_Q: float = 7.0
+
+# Guard floors, evaluated after the PNG is written to its temporary path and
+# before it replaces the committed file, so a failure leaves the good figure in
+# place. MIN_TICK_GAP_PT is a thin word space at these label sizes, and
+# ARROW_HEAD_PT is the half extent of a matplotlib arrow head at the
+# annotation font size, which is also its default mutation scale.
+MIN_PRINTED_PT: float = 8.0
+MIN_TICK_GAP_PT: float = 2.0
+ARROW_FONTSIZE_PT: float = 12.0
+ARROW_HEAD_PT: float = ARROW_FONTSIZE_PT * 0.45
+MIN_ARROW_CLEAR_PT: float = 1.0
+
 
 def _repo_root() -> str:
     """
@@ -216,9 +265,101 @@ def _c_sg_from_solver(isa: Any) -> float:
     )
 
 
+def verify(parts: dict[str, Any], tmp_path: str) -> None:
+    """Measure the saved PNG and refuse to ship it if a layout rule is broken.
+
+    WHY A MEASUREMENT AND NOT A LOOK: the two defects this guard exists for
+    were invisible in the source. Defect 1 was ten log-axis tick labels
+    squeezed into a 2.77 in panel, so 2.5 and 3.0 collided by one white
+    column and read as the number 2.53. Defect 2 was an annotation
+    arrowhead drawn across a plotted curve, breaking its continuity. Both
+    are distances between rendered objects, so the only honest check is to
+    measure the rendered objects in printed points.
+
+    :param parts: mapping with the keys ``fig``, ``ax2`` and
+        ``baseline_line`` returned by :func:`build_figure`.
+    :param tmp_path: path of the PNG that was just written by ``savefig``.
+    :returns: None.
+    :raises RuntimeError: if any printed tick gap, the smallest printed
+        font size, or the arrowhead clearance is below its floor. The
+        committed PNG is left untouched because the caller verifies before
+        renaming the temporary file over it.
+    """
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import fig_metrics as fm  # local measurement library, see its docstring
+
+    fig = parts["fig"]
+    ax2 = parts["ax2"]
+    baseline_line = parts["baseline_line"]
+
+    scale = fm.effective_scale(tmp_path, PRINT_W_IN, SAVE_DPI)
+    print("[sutton_graves_parametric] print scale %.4f of declared sizes" % scale)
+
+    # Rule 1: no adjacent tick label may touch its neighbour. Every pair is
+    # printed so the reader can see which pair is tightest.
+    fig.canvas.draw()
+    worst = None
+    for left, right, gap in fm.x_tick_label_gaps_pt(ax2, fig, scale):
+        print(
+            "[sutton_graves_parametric] tick gap %s to %s: %.2f pt"
+            % (left, right, gap)
+        )
+        if worst is None or gap < worst[2]:
+            worst = (left, right, gap)
+    if worst is not None and worst[2] < MIN_TICK_GAP_PT:
+        raise RuntimeError(
+            "panel b tick labels %s and %s sit %.2f pt apart, below the "
+            "%.1f pt floor; thin X_TICKS_M further"
+            % (worst[0], worst[1], worst[2], MIN_TICK_GAP_PT)
+        )
+
+    # Rule 2: every declared size must survive the print scale, including
+    # mathtext subscripts, which matplotlib renders at SHRINK_FACTOR of the
+    # parent size.
+    pt, where = fm.smallest_text_pt(fig, scale)
+    print(
+        "[sutton_graves_parametric] smallest printed text %.2f pt (%s)"
+        % (pt, where)
+    )
+    if pt < MIN_PRINTED_PT:
+        raise RuntimeError(
+            "smallest printed text %.2f pt is below the %.1f pt floor (%s); "
+            "raise the declared size or reduce the include width"
+            % (pt, MIN_PRINTED_PT, where)
+        )
+
+    # Rule 3: the arrowhead must not touch a plotted line, or it breaks the
+    # line the way defect 2 broke the V=3 curve. The baseline reference line
+    # is skipped because pointing at it is the whole purpose of the arrow.
+    clear, owner = fm.min_distance_to_lines_pt(
+        ax2,
+        fig,
+        (R_N_BASELINE_M, ARROW_TARGET_Q),
+        scale,
+        skip=(baseline_line,),
+    )
+    print(
+        "[sutton_graves_parametric] arrowhead clearance %.2f pt from %s"
+        % (clear, owner)
+    )
+    if clear < ARROW_HEAD_PT + MIN_ARROW_CLEAR_PT:
+        raise RuntimeError(
+            "arrowhead clearance %.2f pt is below the %.2f pt floor (head "
+            "%.2f pt plus %.2f pt margin) against %s; lower ARROW_TARGET_Q "
+            "or raise AX2_Y_MIN"
+            % (
+                clear,
+                ARROW_HEAD_PT + MIN_ARROW_CLEAR_PT,
+                ARROW_HEAD_PT,
+                MIN_ARROW_CLEAR_PT,
+                owner,
+            )
+        )
+
+
 def main() -> int:
     """
-    Render the two-panel Sutton--Graves figure and save it as a PNG.
+    Render the two-panel Sutton-Graves figure and save it as a PNG.
 
     :returns: process exit status (0 on success).
     :raises Exception: any failure propagates so the build is visibly broken
@@ -226,12 +367,48 @@ def main() -> int:
     """
     solver = _load_solver()
     sg = solver["sg"]
-    isa = solver["isa"]
 
     # --- Baseline value straight from the solver (Theorem T3) --------------
     baseline = sg(H_RUN_KM, V_RUN_MS)["heat_flux_Wcm2"]
     print("[sutton_graves_parametric] solver baseline: %.4f W/cm2" % baseline)
 
+    parts = build_figure(solver, baseline)
+    fig = parts["fig"]
+
+    import matplotlib.pyplot as plt  # backend already forced to Agg in there
+
+    # --- Atomic write: temp file then rename (see module docstring) ---------
+    out_dir = os.path.dirname(os.path.abspath(__file__))
+    out_path = os.path.join(out_dir, "sutton_graves_parametric.png")
+    tmp_path = out_path + ".tmp.png"
+    fig.savefig(tmp_path, dpi=SAVE_DPI, bbox_inches="tight", facecolor="white")
+    verify(parts, tmp_path)
+    plt.close(fig)
+    os.replace(tmp_path, out_path)
+    print("[sutton_graves_parametric] wrote %s" % out_path)
+    return 0
+
+
+def build_figure(solver, baseline):
+    """Build the two-panel figure and return it WITHOUT saving it.
+
+    Split out of main() so that a layout guard can query the real text
+    extents of the unsaved figure. Measuring the returned object is the only
+    trustworthy way to prove that tick labels do not collide: reading the
+    rendered PNG mixes the tight crop, the dpi and the LaTeX placement scale
+    into one number that cannot be attributed to any single cause.
+
+    :param solver: mapping holding the "sg" and "isa" callables of the project.
+    :param baseline: stagnation heat flux in W/cm2 at the run condition.
+    :type solver: dict
+    :type baseline: float
+    :returns: mapping with the keys "fig" (the matplotlib Figure), "ax1" and
+        "ax2" (the two panel axes) and "baseline_line" (the dashed R_N = 1.5 m
+        reference line), so that verify() can measure real extents before the
+        figure is committed.
+    :rtype: dict
+    :raises Exception: any matplotlib failure propagates unchanged.
+    """
     import matplotlib
 
     matplotlib.use("Agg")
@@ -332,31 +509,37 @@ def main() -> int:
             label=r"$V$ = %g km/s" % v_kms,
         )
 
-    ax2.axvline(
+    baseline_line = ax2.axvline(
         R_N_BASELINE_M,
         color="black",
         ls="--",
         lw=1.6,
         zorder=2,
     )
+    # The y limits are set BEFORE the annotation is placed, so the empty band
+    # the label box occupies is part of the axis rather than a margin that
+    # autoscaling is free to eat.
+    ax2.set_ylim(AX2_Y_MIN, AX2_Y_MAX)
     ax2.annotate(
-        # One line, AXES FRACTION, right-anchored at 0.60, 12 pt with a
-        # tight 0.15 pad. Measured pixels on the rendered PNG: the blue
-        # V = 3 curve runs flat at y 370-372 px and only enters the bottom
-        # band at x ~1170 px, so the patch must end left of x 1170 (anchor
-        # 0.60 puts the patch right edge near x 1151, ~19 px short of the
-        # descent) with its top under y ~375 (~4 px below the flat curve).
-        # At 13 pt with pad 0.35 the box measured 63 px tall and cannot fit
-        # the ~60 px band without crossing the curve or the bottom spine
-        # (the 0.35 pad also overshoots the anchor: text inside, patch not).
-        # 12 pt still prints >= 8 pt (12 x 0.71 placement scale = 8.5 pt),
-        # pad 0.15 shrinks the patch to ~320x50 px, and va=bottom at 0.045
-        # leaves ~11 px above the spine and ~13 px inside the left spine.
+        # One line, AXES FRACTION, right-anchored at 0.60, with a tight 0.15
+        # pad. Measured on the rendered PNG: the blue V = 3 curve only descends
+        # into the bottom band from x ~1170 px, so the patch must end left of
+        # that, and anchor 0.60 puts its right edge near x 1151. At 13 pt with
+        # pad 0.35 the patch measured 63 px tall and could not fit the band
+        # without crossing the curve or the bottom spine, because the 0.35 pad
+        # overshoots the anchor (text inside, patch not). 12 pt still prints at
+        # or above the 8 pt floor (12 x 0.7087 = 8.5 pt), pad 0.15 shrinks the
+        # patch to about 320x50 px, and va=bottom at 0.045 leaves about 11 px
+        # above the spine.
+        #
+        # The arrow now ends on the dashed baseline line at ARROW_TARGET_Q,
+        # inside the band that AX2_Y_MIN opens, instead of on a curve. The
+        # measurement behind that change is recorded at ARROW_TARGET_Q.
         "$R_N$ = 1.5 m (IRVE-3)",
-        xy=(R_N_BASELINE_M, sg_at_radius(R_N_BASELINE_M, 3.0, solver)),
+        xy=(R_N_BASELINE_M, ARROW_TARGET_Q),
         xytext=(0.60, 0.045),
         textcoords="axes fraction",
-        fontsize=12,
+        fontsize=ARROW_FONTSIZE_PT,
         ha="right",
         va="bottom",
         arrowprops=dict(arrowstyle="->", lw=1.6, color="black"),
@@ -365,8 +548,10 @@ def main() -> int:
 
     ax2.set_xscale("log")
     ax2.set_yscale("log")
-    ax2.set_xticks(radii)
-    ax2.set_xticklabels([("%g" % r) for r in radii])
+    # Only the thinned subset carries lettering; see X_TICKS_M for the
+    # measurement that forced the subset.
+    ax2.set_xticks(X_TICKS_M)
+    ax2.set_xticklabels([("%g" % r) for r in X_TICKS_M])
     ax2.minorticks_off()
     ax2.set_xlabel(r"Nose radius $R_N$ [m]", fontsize=13)
     ax2.set_ylabel(r"Stagnation heat flux $\dot{q}_s$ [W/cm$^2$]", fontsize=13)
@@ -381,15 +566,14 @@ def main() -> int:
     # No tight_layout: the gridspec margins above already place the rows, and
     # savefig(bbox_inches="tight") crops to the artist union at save time.
 
-    # --- Atomic write: temp file then rename (see module docstring) ---------
-    out_dir = os.path.dirname(os.path.abspath(__file__))
-    out_path = os.path.join(out_dir, "sutton_graves_parametric.png")
-    tmp_path = out_path + ".tmp.png"
-    fig.savefig(tmp_path, dpi=200, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
-    os.replace(tmp_path, out_path)
-    print("[sutton_graves_parametric] wrote %s" % out_path)
-    return 0
+    # The axes and the reference line travel with the figure because verify()
+    # measures them, not because the caller is expected to redraw anything.
+    return {
+        "fig": fig,
+        "ax1": ax1,
+        "ax2": ax2,
+        "baseline_line": baseline_line,
+    }
 
 
 if __name__ == "__main__":

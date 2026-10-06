@@ -485,11 +485,12 @@ Monte Carlo noise scales as $1/\sqrt{N_{\text{samples}}}$, with $N_{\text{sample
 A Physics-Informed Neural Network (PINN) smooths the particle statistics, fills flow-field gaps where sampling is insufficient, and provides a continuous, differentiable interpolant anchored in known physics.
 
 \subsection{PINN Governing Equations}
-The PINN, implemented in DeepXDE~\cite{lu2021deepxde}, solves the 2D compressible Navier-Stokes equations by automatic differentiation, constraining the network $\mathcal{N}(x, y) \to (\rho, T, u)$ with these residuals:
+The PINN, implemented in DeepXDE~\cite{lu2021deepxde}, solves the 2D compressible Navier-Stokes equations by automatic differentiation, constraining the network $\mathcal{N}(x, r) \to (\rho, v_x, v_y, T)$ with these residuals:
 
 \subsubsection*{Continuity Equation (Axisymmetric)}
 \begin{equation}
     \frac{\partial (\rho u)}{\partial x} + \frac{\partial (\rho v)}{\partial y} + \frac{\rho v}{y} = 0
+    \label{eq:pinn_continuity}
 \end{equation}
 
 \subsubsection*{X-Momentum}
@@ -510,7 +511,10 @@ The PINN, implemented in DeepXDE~\cite{lu2021deepxde}, solves the 2D compressibl
 \subsubsection*{Equation of State}
 \begin{equation}
     p - \rho R T = 0
+    \label{eq:pinn_eos}
 \end{equation}
+
+\textbf{Scope of the implemented residual.} The delivered trainer enforces one member of this set, the continuity constraint in its two-dimensional form, \mbox{$\partial(\rho v_x)/\partial x + \partial(\rho v_y)/\partial y = 0$}. That form is Eq.~\ref{eq:pinn_continuity} without the axisymmetric source term $\rho v/y$, and the implementation adopts it for training stability. The velocity components $v_x$ and $v_y$ of the state vector in Table~\ref{tab:pinn_architecture} are the same quantities denoted $u$ and $v$ in the axisymmetric form above. The same module also implements the complete residual set of Eqs.~\ref{eq:pinn_continuity} to \ref{eq:pinn_eos}, and its unit test exercises that complete set.
 
 \subsection{Loss Function}
 Total loss combines PDE residuals with observational data from SPARTA:
@@ -529,7 +533,7 @@ Continuum Navier-Stokes equations in the PINN are a pragmatic choice, not a clai
 \end{enumerate}
 
 \subsection{Network Architecture}
-The PINN approximates $\mathcal{N}: \mathbb{R}^2 \to \mathbb{R}^3$ with a fully-connected feedforward neural network (FNN):
+The PINN approximates $\mathcal{N}: \mathbb{R}^2 \to \mathbb{R}^4$ with a fully-connected feedforward neural network (FNN):
 
 \begin{table}[!htbp]
     \centering
@@ -553,7 +557,7 @@ The forward pass computes:
     \hat{\mathbf{y}}(\mathbf{x}) = \mathbf{W}_4 \cdot \tanh\!\Big(\mathbf{W}_3 \cdot \tanh\!\big(\mathbf{W}_2 \cdot \tanh(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2\big) + \mathbf{b}_3\Big) + \mathbf{b}_4
 \end{equation}
 
-where $\mathbf{x} = (x, r)$ is the spatial coordinate and $\hat{\mathbf{y}} = (\hat{\rho}, \hat{T}, \hat{u})$ the predicted flow field; radial velocity $v$ and pressure $p$ derive from continuity and the equation of state.
+where $\mathbf{x} = (x, r)$ is the spatial coordinate and $\hat{\mathbf{y}} = (\hat{\rho}, \hat{v}_x, \hat{v}_y, \hat{T})$ the predicted flow field, matching the state vector of Table~\ref{tab:pinn_architecture}; pressure $p$ follows from the ideal gas law.
 
 \subsection{Normalization and Scaling}
 Before training, physical quantities are non-dimensionalized:
@@ -682,7 +686,7 @@ The PINN refinement stage rests on these assumptions:
     \begin{tabular}{|>{\RaggedRight\arraybackslash}p{0.21\textwidth}|>{\RaggedRight\arraybackslash}p{0.49\textwidth}|>{\RaggedRight\arraybackslash}p{0.2\textwidth}|}
         \hline
         \textbf{Axiom} & \textbf{Statement} & \textbf{Basis} \\ \hline
-        A1: Axisymmetric flow & The flow field is symmetric about the vehicle centerline, reducing the problem to 2D $(x, y)$. & Geometric symmetry \\ \hline
+        A1: Axisymmetric flow & The flow field is symmetric about the vehicle centerline, reducing the problem to 2D $(x, r)$. & Geometric symmetry \\ \hline
         A2: Continuum NS as regularizer & The Navier-Stokes equations provide sufficient physical constraint for smoothing, even at $Kn > 0.01$. & Sec.~\ref{sec:pinn_pragmatic} \\ \hline
         A3: Sutherland viscosity & Dynamic viscosity follows $\mu(T) = \mu_{ref} (T/T_{ref})^{3/2} (T_{ref}+S)/(T+S)$ with $S = 110.4$ K. & Kinetic theory (Sutherland, 1893) \\ \hline
         A4: Prandtl number & $\Pr = 0.71$ (constant), coupling thermal and velocity boundary layers. & Air at standard conditions \\ \hline
@@ -1103,12 +1107,12 @@ The PINN uses DeepXDE~\cite{lu2021deepxde}:
         \textbf{Component} & \textbf{Specification} \\ \hline
         Framework & DeepXDE (v1.x) + PyTorch backend \\ \hline
         Input dimension & 2 $(x, r)$ (axisymmetric) \\ \hline
-        Output dimension & 3 $(\rho, T, u)$ \\ \hline
+        Output dimension & 4 $(\rho, v_x, v_y, T)$ \\ \hline
         Hidden layers & 3 \\ \hline
         Neurons per layer & 64 \\ \hline
         Activation function & $\tanh$ \\ \hline
         Weight initialization & Glorot normal \\ \hline
-        Total parameters & $\approx 8{,}700$ \\ \hline
+        Total parameters & $8{,}772$ (Table~\ref{tab:pinn_architecture}) \\ \hline
     \end{tabular}
 \end{table}
 

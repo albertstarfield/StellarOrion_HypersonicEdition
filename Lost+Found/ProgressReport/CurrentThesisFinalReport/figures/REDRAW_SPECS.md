@@ -246,8 +246,109 @@ required; keep them identical on redraw.
 
 ---
 
+## 5. literature_review_map.png (1979x1414, aspect 1.400; ch2 L43, 0.92\textwidth)
+
+Text is legible in principle but the smallest cap height is 16 px of
+1979 px width = ratio 0.0081, which prints at about 3.9 pt at the
+current include width, so it fails the 8 pt floor and must be redrawn.
+No dashes present.
+
+Verbatim text to reuse:
+
+- Title: `Literature Review: Coverage of Physical Phenomena and Methodology`
+- Column headers (two lines each): `HIAD` / `Geometry`,
+  `DSMC` / `Aerothermal`, `Sutton-Graves` / `Heating`, `PINN` / `Refinement`,
+  `Survivability` / `Optimization`, `Multi-Solver` / `Pipeline`
+- Row labels (two lines each, right aligned): `Rapisarda (2022)` /
+  `ML for HIAD Heating`, `Rapisarda et al. (2024)` /
+  `HIAD Parametric Study`, `Masciarelli & Cassis (2021)` / `LOFTID Design`,
+  `Schwartzentruber (2018)` / `DSMC Hypersonic`,
+  `This Work` / `StellarOrion Pipeline`
+- Legend labels: `Fully covered`, `Partially covered`, `Not covered`
+
+Layout: six columns by five rows, cells 189 x 150 px, 5 px dark
+separators, cell edges `#2C3E50`. Cell fills: full `#1A5276` navy,
+partial `#85C1E9` light blue, not covered `#F2F4F4` off-white. Marks:
+full = solid white filled circle, partial = circle with navy left half
+filled, not covered = no mark. A dashed red `#E74C3C` 6 px rectangle
+outlines the `This Work` row. Reading order is top to bottom, left to
+right, ending on the fully filled `This Work` row.
+
+Coverage matrix (row by column, F = full, P = partial, empty = not
+covered), transcribed from the artwork:
+
+| row | HIAD Geo | DSMC | Sutton-G. | PINN | Surviv. | Multi-Solver |
+|---|---|---|---|---|---|---|
+| Rapisarda (2022) | F | P | P | F | F | P |
+| Rapisarda et al. (2024) | F | P | F | empty | P | empty |
+| Masciarelli & Cassis (2021) | F | empty | F | empty | empty | empty |
+| Schwartzentruber (2018) | empty | F | empty | empty | empty | empty |
+| This Work | F | F | F | F | F | F |
+
+Redraw requirements:
+
+- matplotlib thesis-side script (`figures/make_lit_review_map.py`
+  pattern), save at print width 0.92 of the text width, all declared
+  fonts >= 9 pt, title >= 13 pt.
+- Keep the dashed red highlight around the `This Work` row (the caption
+  and AccSupp both reference it).
+- Caption and AccSupp need no edit: the caption already matches the
+  artwork. Note that the AccSupp and caption describe the marks as
+  circles with a half circle, which the artwork does use, while the
+  legend swatches at the foot are rectangles; keep the circle marks so
+  caption, AccSupp and artwork all agree.
+- Dash-free text (single ASCII hyphens only).
+
+## 6. pinn_architecture.png (2379x1376, aspect 1.729; ch2 L1065, 0.9\textwidth)
+
+Smallest text is the mathtext subscripts at 14 px of 2379 px = ratio
+0.0059, about 3.0 pt printed, so it fails the 8 pt floor. It also
+contains a literal double hyphen `Navier--Stokes` in the artwork text,
+which violates the no double hyphen rule, so the redraw must fix both.
+
+Verbatim text to reuse, with the corrections the redraw must apply:
+
+- Title: `Physics-Informed Neural Network (PINN) Architecture`
+- Box 1: `PDE Residual` / `(Navier-Stokes)` (single hyphen, corrected)
+- Box 2: math `$\mathcal{L}_{total} = \mathcal{L}_{PDE} + \mathcal{L}_{BC} + \mathcal{L}_{data}$`
+- Box 3: `DSMC Data` / `Anchor Points`
+- Red bold annotation: `Backpropagation` / `(AutoDiff)`
+- Grey italic annotation box: `Stage 1: Pre-train on BC data` /
+  `Stage 2: Fine-tune on PDE + DSMC data`
+- Columns: `Input` / `$(x, r)$`, then `Hidden 1` ... `Hidden 4`, each
+  with `128 neurons` below, then `Output` / `(u, v, T, p, rho)`
+
+ARCHITECTURE CORRECTION (verified against
+`stellarorion_program_proc/src/python/pinn_accelerator.py`): the code
+builds `dde.nn.FNN([2] + [64] * 3 + [n_output], "tanh", "Glorot normal")`
+with `n_output = 4` and the documented state vector `[rho, u, v, T]`
+with pressure derived from the ideal gas law `p = rho * R_gas * T`.
+The artwork claims four hidden layers of 128 neurons and five outputs,
+which contradicts the code and the thesis tables. The redraw must show
+**3 hidden layers of 64 neurons** and **4 outputs `$(rho, u, v, T)$`**.
+(Do not confuse this with the separate `[1] + [128] * 4 + [1]` network
+in `validation_pipeline.py`, which is a different, one input to one
+output network and is not the network this figure depicts.)
+
+Layout: three rounded boxes in one top row joined by thick orange
+`#F59E0B` connectors without arrowheads, then six node columns (input,
+three hidden, output) of filled ellipses, 5 rows each, with thin light
+grey all-to-all links drawn behind the nodes, a red dashed vertical
+arrow pointing up into the hidden column labelled `Backpropagation`,
+and the grey stage box overlapping the third hidden column. Column
+labels sit centered under each column.
+
+Redraw requirements:
+
+- matplotlib thesis-side script (`figures/make_pinn_architecture.py`
+  pattern), save at print width 0.9 of the text width, all declared
+  fonts >= 9 pt, math subscripts >= 9 pt so nothing prints below 8 pt.
+- Draw nodes at the corrected count: input, `Hidden 1..3` each `64
+  neurons`, output.
+- Dash-free text: `Navier-Stokes` with a single hyphen.
+- Caption and AccSupp were already corrected to
+  `$(\rho, v_x, v_y, T)$` in this cycle and now match the redraw.
+
 ## Pending related items
-- Other redraw-queue diagrams: literature_review_map.png + pinn_architecture.png
-  (description pending from ses_ef159875dffeKvC3bYnW6h7GFz); append when landed.
 - Caption/AccSupp content specs for these figures live in the chapter .tex
   (ch3 L13/L83/L96 captions quoted in session history).

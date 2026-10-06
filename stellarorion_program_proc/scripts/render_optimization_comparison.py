@@ -623,7 +623,12 @@ def render_hiad(
     cd_value: float,
     rn: float,
     is_optimized: bool = False,
-) -> None:
+) -> int:
+    # Returns: the number of torus ridges ACTUALLY meshed (<= n_tori).
+    # F71(b)(c): the panel titles used to print the structural constant
+    # n_tori, so a run that skipped a ridge (the `continue` in the loop
+    # below) still claimed all six were drawn. A caller that ignores
+    # this return value reintroduces the same lie.
     """Render a HIAD from a profile + visual features (axial=X frame).
 
     Parameters:
@@ -691,6 +696,7 @@ def render_hiad(
 
     # 5. Stacked torus ridges about the X axis, placed along the profile
     n_tori = 6
+    meshed_tori = 0  # F71(b)(c): COUNTED, never assumed
     for idx in range(n_tori):
         t = (idx + 0.5) / n_tori
         target_r = drum_r + t * (r_max - drum_r)
@@ -719,6 +725,7 @@ def render_hiad(
                                    n_major=60, n_minor=12)
         ax.plot_surface(X_t, Y_t, Z_t,
                         color=torus_color, alpha=0.92, edgecolor='none', shade=True)
+        meshed_tori += 1
 
     # 6. Gore spokes from drum out to the RIM (x_rim, r_max) — not to
     #    (x_max, r_max), which lies outside the envelope at the flat back.
@@ -735,6 +742,8 @@ def render_hiad(
     ax.plot_surface(X_back, Y_back, Z_back,
                     color='#222222', alpha=0.7, edgecolor='none', shade=True)
 
+
+    return meshed_tori
 
 def _apply_view(ax: Any, x_max: float, r_max: float) -> None:
     """Apply shared axis limits, aspect, and camera for fair comparison.
@@ -922,7 +931,7 @@ def main() -> int:
 
     # Default (left) — blue tones; params loaded from JSON 'default' block
     ax1 = fig.add_subplot(121, projection='3d', facecolor='#0a0a0f')
-    render_hiad(ax1, x_def, y_def,
+    n_tori_default_meshed = render_hiad(ax1, x_def, y_def,
                 color_base=(26, 82, 128), label_color='#8892b0',
                 half_cone_deg=default["half_cone_deg"], r_tor=default["r_tor"],
                 cd_value=default["Cd"], rn=default["R_N"])
@@ -945,7 +954,7 @@ def main() -> int:
     ax1.tick_params(colors='#555555', labelsize=6)
     _apply_view(ax1, x_max_all, r_max_all)
     def_label = (f"R_N={default['R_N']:.2f}m  half_cone={default['half_cone_deg']:.1f}\n"
-                 f"r_tor={default['r_tor']:.3f}m  {n_tori} tori\n"
+                 f"r_tor={default['r_tor']:.3f}m  {n_tori_default_meshed}/{n_tori} tori\n"
                  f"Cd={default['Cd']:.4f}\nSource: Ada FFI"
                  + ("" if ada_ok else "\n[Ada cross-check DRIFT]"))
     ax1.text2D(0.02, 0.02, def_label,
@@ -956,7 +965,7 @@ def main() -> int:
 
     # Optimized (right) — red tones; params loaded from JSON 'optimized' block
     ax2 = fig.add_subplot(122, projection='3d', facecolor='#0a0a0f')
-    render_hiad(ax2, x_opt, y_opt,
+    n_tori_opt_meshed = render_hiad(ax2, x_opt, y_opt,
                 color_base=(192, 57, 43), label_color='#e94560',
                 half_cone_deg=opt["half_cone_deg"], r_tor=opt["r_tor"],
                 cd_value=opt["Cd"], rn=opt["R_N"],
@@ -969,7 +978,7 @@ def main() -> int:
     ax2.tick_params(colors='#555555', labelsize=6)
     _apply_view(ax2, x_max_all, r_max_all)
     opt_label = (f"R_N={opt['R_N']:.2f}m  half_cone={opt['half_cone_deg']:.1f}\n"
-                 f"r_tor={opt['r_tor']:.3f}m  {n_tori} tori\n"
+                 f"r_tor={opt['r_tor']:.3f}m  {n_tori_opt_meshed}/{n_tori} tori\n"
                  f"Cd={opt['Cd']:.4f}\nSource: Ada FFI"
                  + ("" if ada_opt_ok else "\n[Ada cross-check DRIFT]"))
     ax2.text2D(0.02, 0.02, opt_label,

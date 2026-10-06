@@ -207,8 +207,8 @@ def generate_html(
     <div class="subtitle">Rapisarda (2023) Flat-Skin Profile — Surface of Revolution</div>
   </div>
   <div class="subtitle" style="text-align:right">
-    IRVE-3 Baseline: D=3.0m, &theta;=60&deg;, r<sub>N</sub>=0.55m<br>
-    6 toroids, r<sub>tor</sub>=0.135m
+    D={2.0 * max_r:.4f}m &middot; axial={max_z - min_z:.4f}m<br>
+    <span style="font-size:0.82em">measured from the {len(profile)}-point meridian profile</span>
   </div>
 </div>
 <div id="plot"></div>
@@ -264,7 +264,7 @@ const layout = {{
     xaxis: {{title: 'X [m]', gridcolor: '#1a1a2e', zerolinecolor: '#0f3460', color: '#8892b0', showbackground: true, backgroundcolor: '#0a0a0f'}},
     yaxis: {{title: 'Y [m]', gridcolor: '#1a1a2e', zerolinecolor: '#0f3460', color: '#8892b0', showbackground: true, backgroundcolor: '#0a0a0f'}},
     zaxis: {{title: 'Z (axial) [m]', gridcolor: '#1a1a2e', zerolinecolor: '#0f3460', color: '#8892b0', showbackground: true, backgroundcolor: '#0a0a0f'}},
-    aspectratio: {{x: 1, y: 1, z: 1.2}},
+    aspectratio: {{x: 1, y: 1, z: 1}},  // unit box: true proportions (F71b)
     camera: {{
       eye: {{x: 1.8, y: 1.2, z: 0.8}},
       up: {{x: 0, y: 0, z: 1}}

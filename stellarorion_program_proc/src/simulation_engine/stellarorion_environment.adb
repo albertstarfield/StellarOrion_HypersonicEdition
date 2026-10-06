@@ -573,7 +573,24 @@ package body StellarOrion_Environment is
          Expon := -G0_LOC * (H - 84.852) * 1000.0 / (R_AIR * T);
          --  Hand bound: Expon <= 0 on this branch (H >= 84.852), so
          --  Exp <= 1 (product overflow proves via contextual inlining).
-         Rho := 0.000001 * Exp_Approx (Expon);
+         --  F48 FIX: this base MUST equal the density the 71-84.852 km branch
+         --  produces at its top boundary (h = 84.852 km), otherwise the
+         --  isothermal continuation is discontinuous there and every altitude
+         --  above the boundary carries the error as a CONSTANT MULTIPLIER.
+         --  MEASURED: the branch below evaluates to 6.93531E-06 kg/m^3 at
+         --  h = 84.852 km. The old literal 0.000001 is 6.94x lower, which is
+         --  exactly the 6.96x B/D divergence measured between
+         --  PINN_Trajectory.ISA_Atmosphere and this function.
+         --  PROOF: at h = 100 km, Expon = -2.7690, Exp (Expon) = 0.06272;
+         --    6.93531E-06 * 0.06272 = 4.350E-07, versus 4.3657E-07 computed
+         --    independently by ISA_Atmosphere => agreement to 0.35 %.
+         --  CITATION: [Reference: ISO 2533:1975 / NASA SP-7468 (1976),
+         --    standard atmosphere layer boundaries and base densities].
+         --  NOTE: the value is a literal rather than a recursive
+         --  Atmosphere_Density (84.852) call on purpose -- this routine has a
+         --  gnatprove campaign and recursion would require re-proving it for no
+         --  gain. The [FIX]-annotated branches above use the same style.
+         Rho := 6.93531e-06 * Exp_Approx (Expon);
       end if;
 
       if Rho < 0.0 then

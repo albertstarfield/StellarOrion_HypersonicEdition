@@ -134,8 +134,20 @@ def plot_3d_surface(points: np.ndarray, heat: np.ndarray, out_path: str,
     sc = ax.scatter(x[idx], z[idx], y[idx], c=q_cm2[idx], cmap="hot",
                     s=2, alpha=0.8, vmin=0, vmax=max(q_cm2.max(), 50))
 
-    ax.set_xlabel("X (m) — Flow Direction", fontsize=10)
-    ax.set_ylabel("Z (m) — Axial", fontsize=10)
+    #  AXIS LABELS: WHICH COLUMN IS WHICH (measured, F70).
+    #  WHY: set_xlabel/set_ylabel/set_zlabel label matplotlib'S POSITIONAL
+    #  scatter arguments, and :134 passes (x, z, y) -- i.e. (col0, col2, col1).
+    #  MEASURED on results/validation_scalloped/paraview/surf_2200.vtu (3696 pts):
+    #      col0 X  min +0.0001  max +1.2694  span 1.2693 m  <- equals the
+    #        1.2693 m axial length established independently in F67 => AXIAL
+    #      col1 Y  min -1.8248  max +1.8696  span 3.6944 m  ~= 3.7604 m DIA
+    #      col2 Z  min -1.8693  max +1.8693  span 3.7386 m  ~= 3.7604 m DIA
+    #  So exactly ONE of the three labels was wrong: Z was titled "Axial" when Z
+    #  is a radial direction. Corrected below; Y was already right.
+    #  [Citation: SPARTA surface file — x is the body axis of revolution]
+    #  [Reference: FAILURES_AND_FIXES.md F70]
+    ax.set_xlabel("X (m) — Vehicle Axial (flow direction)", fontsize=10)
+    ax.set_ylabel("Z (m) — Radial", fontsize=10)
     ax.set_zlabel("Y (m) — Radial", fontsize=10)
     ax.set_title(f"HIAD Surface Heat Flux Distribution — Step {step}\n"
                  f"DSMC (SPARTA) 5-species air, Mach 10, Alt 52 km",
@@ -173,8 +185,10 @@ def plot_2d_cross_section(points: np.ndarray, heat: np.ndarray,
     sc = ax.scatter(x[mask], z[mask], c=q_cm2[mask], cmap="hot", s=8,
                     vmin=0, vmax=max(q_cm2[mask].max(), 50))
 
-    ax.set_xlabel("X (m) — Flow Direction →", fontsize=11)
-    ax.set_ylabel("Z (m) — Vehicle Axial", fontsize=11)
+    #  Same correction for the 2-D slice (:163 uses points[:,0] vs points[:,2],
+    #  so the vertical axis is column Z = radial, not the vehicle axis).
+    ax.set_xlabel("X (m) — Vehicle Axial →", fontsize=11)
+    ax.set_ylabel("Z (m) — Radial", fontsize=11)
     ax.set_title(f"HIAD Cross-Section Heat Flux — Step {step}\n"
                  f"2D Axisymmetric Slice (|Y| < 0.01m)  |  "
                  f"Max: {q_cm2[mask].max():.1f} W/cm²  |  "
@@ -289,6 +303,25 @@ def main(argv: list[str]) -> int:
     results_dir = argv[1] if len(argv) > 1 else "results/validation_scalloped"
     paraview_dir = os.path.join(results_dir, "paraview")
     plots_dir = os.path.join(results_dir, "plots")
+
+    #  CHECK THE INPUT BEFORE CREATING ANY OUTPUT (F71b).
+    #  WHY: os.makedirs(plots_dir) ran BEFORE os.listdir(paraview_dir), so a
+    #  missing paraview/ both left a stray empty directory behind AND surfaced
+    #  as a bare FileNotFoundError traceback from the later listdir -- the one
+    #  failure mode that destroys the diagnostic. The input must be proven to
+    #  exist first; a missing input is a distinct, documented exit code, never a
+    #  silent empty run.
+    #  THEORIES: check-then-act removes the ordering error entirely; ordering
+    #  cannot be fixed later because the side effect already happened.
+    #  CITATIONS: [Python docs -- os.path.isdir / os.makedirs]
+    if not os.path.isdir(paraview_dir):
+        print(
+            f"[VTK] no VTU directory at {paraview_dir!r} -- nothing to plot. "
+            "Nothing was written (plots_dir is deliberately NOT created).",
+            file=sys.stderr,
+        )
+        return 2
+
     os.makedirs(plots_dir, exist_ok=True)
 
     # Find all VTU files — sort numerically by step number, NOT lexicographically

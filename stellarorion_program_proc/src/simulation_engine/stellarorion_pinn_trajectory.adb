@@ -10,6 +10,7 @@
 --    [3] NASA TP-2013-4012 — IRVE-3
 --    [4] Anderson (2006), Hypersonic Gas Dynamics
 
+with Ada.Text_IO;         use Ada.Text_IO;
 with StellarOrion_Physics;  use StellarOrion_Physics;
 with StellarOrion_Geometry; use StellarOrion_Geometry;
 
@@ -88,6 +89,30 @@ package body StellarOrion_PINN_Trajectory is
          H := 0.0;
       end if;
       if H > 120.0 then
+         --  F48 FIX: THE CLAMP IS NOW LOUD. It used to return the 120 km
+         --  state with no diagnostic, so a query at 200 km returned exactly the
+         --  120 km value (measured: 1.12758E-08 kg/m^3 at 120, 130, 140, 150,
+         --  200, 300, 500 and 1000 km -- identical, never decaying). A silent
+         --  clamp makes an out-of-domain request indistinguishable from a real
+         --  measurement, which is the same defect class already fixed for
+         --  verify_profile_math (F40) and the flown-artefact cross-check
+         --  (F67): a value that could not be computed must never read as one
+         --  that was.
+         --  WHY the clamp is KEPT rather than removed: the ISA layer table in
+         --  this unit ends at 84.852 km, and the continuation above it is a
+         --  legitimate isothermal extrapolation to 120 km. Removing the clamp
+         --  would return a value for an altitude the model does not cover,
+         --  which is worse. The clamp is a defined boundary of validity, so it
+         --  is kept -- but it now says so.
+         --  ENVIRONMENT.Atmosphere_Density has NO upper clamp and is the unit to
+         --  prefer for altitudes above 84.852 km.
+         --  CITATION: [Reference: ISO 2533:1975 / NASA SP-7468 (1976) --
+         --    standard atmosphere is defined geometrically to ~86 km].
+         Put_Line (Standard_Error,
+                   "[ISA_Atmosphere] WARNING: altitude " &
+                   Altitude_Km'Image & " km exceeds the model's 120 km" &
+                   " validity limit; returning the 120 km state." &
+                   " Use Environment.Atmosphere_Density above 84.852 km.");
          H := 120.0;
       end if;
 

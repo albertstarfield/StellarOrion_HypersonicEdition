@@ -87,7 +87,13 @@ from matplotlib.colors import LogNorm, Normalize
 # Pure-NumPy geometry module — MUST NOT import ada_pinn_wrapper (A3): the
 # grid has to render even when libstellarorion_pinn.dylib is absent.
 sys.path.insert(0, str(_SRC_PYTHON))
-from hiad_geometry import generate_cross_section  # noqa: E402
+#  F70: shared "measurable or n/a" formatter -- see scripts/figure_text.py.
+#  The old inline float("nan") default printed "nan%" in this title whenever
+#  the key was absent, indistinguishable from a real measurement.
+#  [Citation: scripts/figure_text.py AXIOMS A1-A3]
+from figure_text import improvement_pct
+
+from hiad_geometry import generate_cross_section
 
 # Dark theme — matches render_bo_3d_plot.py [4]
 _BG = "#0a0a0f"
@@ -645,7 +651,6 @@ def main() -> int:
         cb.ax.tick_params(colors=_DIM, labelsize=8)
         cb.set_label("cost J  (log scale)", color=_TEXT, fontsize=10)
 
-        imp = data.get("improvement", {})
         # A2/T2: the headline J must be the BEST cost actually RENDERED.
         # Once the round-2 optimum is in the panel set the global minimum is
         # the gate-corrected J, not round-1 J(x) — printing
@@ -658,7 +663,7 @@ def main() -> int:
             "(color = cost J, log scale)\n"
             f"1 default + 15 CCD + 70 history (20 LHD + 50 BO) + "
             f"{n_optima} optima · best J = {best_cost:.4f} · "
-            f"Cd improvement = {imp.get('cd_pct', float('nan')):.2f}% · "
+            f"Cd improvement = {improvement_pct(data)} · "
             f"view elev={_ELEV} azim={_AZIM}",
             color="white", fontsize=14, fontweight="bold", y=0.965,
         )
@@ -676,7 +681,9 @@ def main() -> int:
         size_kb = _OUTPUT_PNG.stat().st_size / 1024.0
         print(f"  Saved: {_OUTPUT_PNG} ({size_kb:.1f} kB)")
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 -- top-level safety net: a figure
+        # that took minutes to render must still report its failure. Narrowing
+        # this catch would crash the run and lose the diagnostic entirely.
         # Top-level safety net: never exit silently (verbose error reporting)
         print(f"\nFATAL: {exc!r}", file=sys.stderr)
         traceback.print_exc()

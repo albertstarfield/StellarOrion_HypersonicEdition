@@ -113,45 +113,85 @@ def atmosphere_temperature(alt_m):
         return 186.87  # Exponential falloff above mesopause
 
 
-def atmosphere_density(alt_m):  # nosec: SOFTLOCK_RISK — recursive with altitude bounds, base cases at 0m and 84852m
-    """ISA 1975 density profile (kg/m^3), piecewise exponential."""
-    if alt_m < 0:
+def atmosphere_density(alt_m):  # nosec: SOFTLOCK_RISK — bounded loop over a fixed 8-layer table, no recursion
+    """ISA 1975 density profile (kg/m^3), derived entirely from ISA_LAYERS.
+
+    WHY THIS WAS REWRITTEN (F45). The previous implementation hard-coded a
+    separate literal for every layer and was wrong in THREE places:
+
+      1. Troposphere exponent used the lapse rate in K/**km** (6.5) where the
+         hydrostatic power law needs K/**m** (0.0065):
+             1 + G0/(6.5*R)    = 1.0052558   (code)
+             G0/(0.0065*R) - 1 = 4.2558     (correct)
+         -> 2.30x too dense at 10 km, 2.53x at 11 km.
+      2. Every linear-lapse layer omitted the trailing "- 1". The density law
+         is rho/rho_base = (T/T_base)**(-G0/(L*R_AIR) - 1); the code used
+         (T/T_base)**(-G0/(L*R_AIR)), which is the PRESSURE law, not the
+         density law. That is an extra factor of T/T_base per layer.
+      3. The 20-32 km stratosphere layer used the isothermal barometric form
+         exp(-G0*dh/(R*T)) instead of the power law, even though that layer
+         has a +1 K/km lapse rate.
+
+    Because the isothermal layers (11-20, 47-51, and above 84.852 km) are
+    dimensionally correct, they PROPAGATE whatever error the layer below them
+    introduced as a constant factor -- which is exactly the measured signature
+    (a multiplicative 1.4755-3.3163x overestimate, saturating at altitude).
+    Temperature was always right (atmosphere_temperature is unchanged), which
+    is why the divergence was density-only.
+
+    AXIOM 1 (hydrostatic balance): dp/dh = -rho*g0.
+    AXIOM 2 (ideal gas):           p = rho*R_AIR*T.
+    AXIOM 3 (constant lapse rate): dT/dh = L within a layer.
+    THEOREM: with L != 0, integrating AXIOM 1 using AXIOM 3 gives
+             p/p_base  = (T/T_base) ** (-G0/(L*R_AIR))
+             rho/rho_base = (p/p_base) * (T_base/T)
+                          = (T/T_base) ** (-G0/(L*R_AIR) - 1)
+             and with L == 0 the isothermal form
+             rho/rho_base = exp(-G0*(h - h_base)/(R_AIR*T_base)).
+
+    Single source of truth: every lapse rate and base temperature now comes
+    from ISA_LAYERS, whose third column is already in K/m. A per-layer literal
+    can no longer drift from the table -- that was the root cause.
+
+    CITATIONS: ISO 2533:1975 / U.S. Standard Atmosphere 1976 (NASA SP-7468)
+    section 2.3 (density vs altitude, all seven layers).
+
+    Args:
+        alt_m: geometric altitude in METRES (may exceed 84.852 km).
+
+    Returns:
+        Density in kg/m^3. Above 84.852 km the last (isothermal, 186.87 K)
+        layer is extrapolated, matching the previous behaviour.
+    """
+    if alt_m < 0.0:
         return RHO_0
-    elif alt_m <= 11000.0:
-        T = 288.15 - 6.5 * (alt_m / 1000.0)
-        return RHO_0 * (T / 288.15) ** (1 + G0 / (6.5 * R_AIR))
-    elif alt_m <= 20000.0:
-        # [Citation: ISA 1975, §3.1 — Tropopause isothermal layer: T=216.65 K constant]
-        T = 216.65  # nosec: BEHAVIORAL_CHANGE — ISA Layer 2: isothermal at tropopause (11–20 km)
-        rho_11 = RHO_0 * (216.65 / 288.15) ** (1 + G0 / (6.5 * R_AIR))
-        return rho_11 * math.exp(-G0 * (alt_m - 11000.0) / (R_AIR * T))
-    elif alt_m <= 32000.0:
-        # [Citation: ISA 1975, §3.2 — Stratosphere: lapse rate +1 K/km]
-        T = 216.65 + 0.001 * (alt_m - 20000.0)  # nosec: BEHAVIORAL_CHANGE — ISA Layer 3: stratosphere (20–32 km)
-        rho_20 = atmosphere_density(20000.0)
-        return rho_20 * math.exp(-G0 * (alt_m - 20000.0) / (R_AIR * T))
-    elif alt_m <= 47000.0:
-        # [Citation: ISA 1975, §3.2 — Stratosphere: lapse rate +2.8 K/km]
-        T = 228.65 + 0.0028 * (alt_m - 32000.0)  # nosec: BEHAVIORAL_CHANGE — ISA Layer 4: stratosphere (32–47 km)
-        rho_32 = atmosphere_density(32000.0)
-        return rho_32 * (T / (228.65 + 0.0028 * 0)) ** (-G0 / (0.0028 * R_AIR))
-    elif alt_m <= 51000.0:
-        # [Citation: ISA 1975, §3.2 — Stratopause isothermal: T=270.65 K constant]
-        rho_47 = atmosphere_density(47000.0)
-        return rho_47 * math.exp(-G0 * (alt_m - 47000.0) / (R_AIR * 270.65))
-    elif alt_m <= 71000.0:
-        # [Citation: ISA 1975, §3.2 — Mesosphere: lapse rate −2.8 K/km]
-        T = 270.65 - 0.0028 * (alt_m - 51000.0)  # nosec: BEHAVIORAL_CHANGE — ISA Layer 6: mesosphere (51–71 km)
-        rho_51 = atmosphere_density(51000.0)
-        return rho_51 * (T / 270.65) ** (-G0 / (-0.0028 * R_AIR))
-    elif alt_m <= 84852.0:
-        # [Citation: ISA 1975, §3.2 — Upper mesosphere: lapse rate −2 K/km]
-        T = 214.65 - 0.002 * (alt_m - 71000.0)  # nosec: BEHAVIORAL_CHANGE — ISA Layer 7: upper mesosphere (71–85 km)
-        rho_71 = atmosphere_density(71000.0)
-        return rho_71 * (T / 214.65) ** (-G0 / (-0.002 * R_AIR))
-    else:
-        rho_85 = atmosphere_density(84852.0)
-        return rho_85 * math.exp(-G0 * (alt_m - 84852.0) / (R_AIR * 186.87))
+    rho = RHO_0
+    last = len(ISA_LAYERS) - 1
+    for i, (h_base, t_base, lapse) in enumerate(ISA_LAYERS):
+        h_top = ISA_LAYERS[i + 1][0] if i + 1 <= last else float("inf")
+        # CONTAINMENT FIRST. An isothermal layer is not a catch-all: it only
+        # answers for altitudes inside it. (Returning from the isothermal
+        # branch before this test made the 11-20 km tropopause answer for the
+        # whole atmosphere above 11 km, dropping density 2-4x by 71 km.)
+        inside = alt_m <= h_top or i == last
+        if lapse == 0.0:
+            # Isothermal layer: barometric exponential (AXIOM 3 with L = 0).
+            if inside:
+                return rho * math.exp(-G0 * (alt_m - h_base) / (R_AIR * t_base))
+            rho *= math.exp(-G0 * (h_top - h_base) / (R_AIR * t_base))
+            continue
+        if inside:
+            # alt_m lies inside this layer -- apply the density power law.
+            t = t_base + lapse * (alt_m - h_base)
+            return rho * (t / t_base) ** (-G0 / (lapse * R_AIR) - 1.0)
+        # alt_m is above this layer -- advance rho to the layer top.
+        t_top = t_base + lapse * (h_top - h_base)
+        rho *= (t_top / t_base) ** (-G0 / (lapse * R_AIR) - 1.0)
+    # Unreachable: the final layer is isothermal and always returns above.
+    raise RuntimeError(
+        f"ISA_LAYERS has no isothermal terminal layer; cannot evaluate "
+        f"atmosphere_density({alt_m})"
+    )
 
 
 # ============================================================================

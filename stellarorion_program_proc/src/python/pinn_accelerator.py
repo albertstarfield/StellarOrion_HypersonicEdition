@@ -520,10 +520,20 @@ class PINNAccelerator:
                 if len(parts) < 9:
                     continue
                 try:
-                    # [BUGFIX: xlo=parts[1],xhi=parts[2],ylo=parts[3],yhi=parts[4]]
-                    # [Citation: SPARTA manual §2.4 — grid file format]
-                    x_center = (float(parts[1]) + float(parts[2])) / 2.0
-                    y_center = (float(parts[3]) + float(parts[4])) / 2.0
+                    #  COLUMN ORDER IS `id xlo ylo xhi yhi ...` (F26 fix).
+                    #  [Citation: SPARTA manual §2.4 -- grid file format]
+                    #  [Measured on results/validation/grid.0.out, whose header
+                    #   reads `ITEM: CELLS id xlo ylo xhi yhi f_2[1] ...` and whose
+                    #   first row is `1 -5 0 -4.89928 0.0283273 19 ...`, i.e.
+                    #   parts[1]=-5=xlo, parts[2]=0=ylo, parts[3]=-4.89928=xhi,
+                    #   parts[4]=0.0283273=yhi.]
+                    #  The previous BUGFIX comment asserted the order
+                    #  `xlo,xhi,ylo,yhi`, which is NOT what SPARTA writes, and
+                    #  the code then averaged (xlo,ylo) as if it were an
+                    #  x-interval: every cell centre came out wrong. Fixed to
+                    #  pair each axis with its own two bounds.
+                    x_center = (float(parts[1]) + float(parts[3])) / 2.0
+                    y_center = (float(parts[2]) + float(parts[4])) / 2.0
                     _particles = float(parts[5])
                     temp_K = float(parts[6])
                     vx_ms = float(parts[7])
@@ -628,26 +638,48 @@ class PINNAccelerator:
 
         # Normalize
         xy_norm, self.mean_x, self.std_x = self._normalize(xy)
-        _t_norm, self.mean_t, self.std_t = self._normalize(targets)
+        t_norm, self.mean_t, self.std_t = self._normalize(targets)
 
-        def _ic_zero_values(_points: np.ndarray, _values: np.ndarray) -> np.ndarray:
-            """IC callback: prescribe zero for every observation point."""
-            return np.zeros(len(xy_norm))
-
-        def _ic_all_on_boundary(_points: np.ndarray, _on_boundary: np.ndarray) -> bool:
-            """IC callback: every point counts as an interior observation point."""
-            return True
-
-        # Build DeepXDE dataset
-        # NOTE: the previous `_observe_x = dde.bc.PointSet(xy_norm)` was removed.
-        # DeepXDE 1.15.0 has no `deepxde.bc` submodule, so the access raised
-        # AttributeError on every call, and `_observe_x` was never read.
-        # Interpolation points are supplied by dde.data.PDE(num_domain=...) below.
-        ic = dde.icbc.IC(
-            xy_norm,
-            _ic_zero_values,
-            _ic_all_on_boundary,
-        )
+        # F24 + F25 FIX (2026-10-06): supervise on the DSMC field, not on zero.
+        #
+        # WHY dde.icbc.IC(...) WAS REPLACED
+        #   F24 -- `dde.icbc.IC(xy_norm, ...)` was handed a NumPy array where
+        #   DeepXDE requires a geometry object. Construction did NOT raise; the
+        #   failure came one step later, when `dde.data.PDE(...)` ran
+        #   bc_points() -> IC.collocation_points -> filter -> self.geom.on_initial(X):
+        #       AttributeError: 'numpy.ndarray' object has no attribute 'on_initial'
+        #   so train_from_checkpoint could never run at all. Measured on deepxde
+        #   1.15.0: `dde.geometry.PointSet` does NOT exist, `dde.data.InterpolationSet`
+        #   does NOT exist, and `dde.data.PDE`'s `anchors=` carries positions only
+        #   (no supervised values). `dde.icbc.PointSetBC(points, values)` is the one
+        #   construct that takes a plain NumPy array of points AND a numeric array
+        #   of values, so it is the only surviving route. This also confirms the
+        #   adjacent NOTE: `dde.bc` really does not exist
+        #   (AttributeError: module 'deepxde' has no attribute 'bc').
+        #
+        #   F25 -- the old IC prescribed `np.zeros(len(xy_norm))` at every point, so
+        #   the DSMC field was parsed, normalized into `_t_norm`, and then DISCARDED:
+        #   the network was supervised toward zero everywhere.
+        #
+        # WHY THE VALUES ARE THE *NORMALIZED* TARGETS
+        #   predict_gap_fill / predict_full_state denormalize with self.mean_t /
+        #   self.std_t, which were computed from `targets`. Supervising on `t_norm`
+        #   therefore keeps the network's output space identical to the space the
+        #   predictors invert. Passing raw `targets` would train the net in physical
+        #   units while inference assumed normalized ones.
+        #
+        # CITATIONS
+        #   [Reference: deepxde 1.15.0 -- deepxde.icbc.PointSetBC.__init__
+        #             (self, points, values, component=0, batch_size=None, shuffle=True)]
+        #   [Citation: Lu, Meng, Karniadakis (2021), "DeepXDE: A deep learning
+        #             library for solving differential equations", J. Comput. Phys.
+        #             2021, 373, 110114 -- point-set supervised conditions]
+        #   [Reference: FAILURES_AND_FIXES.md F24, F25]
+        #
+        # CAVEAT (stated, not hidden): `_normalize` is a global per-column affine
+        # map, so one hot cell still dominates mean_t/std_t. Per-cell masking is a
+        # plotting concern (generate_field_panels.cell_mask), not this file's.
+        ic = dde.icbc.PointSetBC(xy_norm, t_norm)
 
         # Output layer: 4 variables (rho, vx, vy, T)
         n_output = 4

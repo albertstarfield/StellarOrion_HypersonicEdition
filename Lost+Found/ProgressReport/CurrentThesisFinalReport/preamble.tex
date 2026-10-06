@@ -37,6 +37,27 @@
 % pushing text into the margin.
 \setlength{\emergencystretch}{5em}
 
+% Orphan and widow control, set for the WHOLE document.
+%
+% MEASURED PROBLEM BEING FIXED: these penalties existed only inside the
+% redefined thebibliography environment (below), so body text ran on the
+% LaTeX defaults \clubpenalty150 and \widowpenalty150. A paragraph's first
+% line was therefore cheap to strand. The rendered audit found exactly
+% that on printed page 43: the whole paragraph after Table 2.5 left its
+% single first line at the foot of the page, splitting the noun phrase
+% "SST k-omega model", and the justification glue on that one line was
+% stretched to 18.49 pt against a 4.50 to 5.25 pt nominal.
+%
+% WHY HERE AND NOT ONLY IN THE BIBLIOGRAPHY: a stranded first line is a
+% defect wherever it occurs, and the bibliography setting was never meant
+% to be the only place that guards it. Raising the penalties document wide
+% costs nothing when a paragraph fits on one page, which is the common
+% case, and buys an unbroken first line when it does not. \sloppy stays
+% bibliography local on purpose: it trades spacing for tolerance and
+% body text should not pay that price.
+\clubpenalty10000
+\widowpenalty10000
+
 % A4 is ~4%% narrower than the letter page these tables were laid out on,
 % so the default 6pt inter-column padding now pushes several tabularx
 % alignments past \textwidth. 4pt recovers 4pt per column, which covers

@@ -303,7 +303,7 @@ The multi-objective cost function $J(\mathbf{x})$ of Sec.~\ref{sec:ga_opt} uses 
 \end{table}
 
 \subsection{Search Strategy and Convergence}
-A 15-point central composite design~\cite{Montgomery2017} screens first, best $J = 1.996$ at the factorial-$\pm$ corner. A 20-point Latin Hypercube (LHS) design~\cite{mckay1979lhs} then populates the training set, followed by 50 Bayesian Optimization iterations~\cite{morris1992}, giving $n_{eval} = 70$ evaluations in the history. The surrogate is a Gaussian Process~\cite{rasmussen2003} with a Mat\'ern 5/2 kernel (Eq.~\ref{eq:matern52}) and Expected Improvement acquisition with $\xi = 0.01$ (Eq.~\ref{eq:ei}), per Sec.~\ref{sec:ga_opt}. The 15 CCD points are absent from the 70-entry history and do not seed the Bayesian stage; datasets are separate.
+A 15-point central composite design~\cite{Montgomery2017} screens first, best $J = 1.996$ at the factorial-$\pm$ corner. A 20-point Latin Hypercube (LHS) design~\mbox{\cite{mckay1979lhs}} then populates the training set, followed by 50 Bayesian Optimization iterations~\cite{morris1992}, giving $n_{eval} = 70$ evaluations in the history. The surrogate is a Gaussian Process~\cite{rasmussen2003} with a Mat\'ern 5/2 kernel (Eq.~\ref{eq:matern52}) and Expected Improvement acquisition with $\xi = 0.01$ (Eq.~\ref{eq:ei}), per Sec.~\ref{sec:ga_opt}. The 15 CCD points are absent from the 70-entry history and do not seed the Bayesian stage; datasets are separate.
 
 \begin{figure}[!htbp]
     \centering

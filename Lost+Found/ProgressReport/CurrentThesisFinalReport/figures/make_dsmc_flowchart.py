@@ -1,0 +1,550 @@
+"""Redraw of the Bird (1994) NTC DSMC algorithm flowchart at legible print size.
+
+PURPOSE
+    Regenerate `figures/dsmc_algorithm_flowchart.png` as a thesis-side
+    matplotlib schematic. The imported original has baked text of about
+    3.6 pt when printed (subscript `steps`), which fails the 8 pt floor.
+    This script rebuilds the same seven step schematic at the printed
+    width so every declared point size is also the printed point size.
+
+PARAMETERS
+    None. The script writes exactly one file and takes no input.
+
+RETURN VALUE
+    None. On success the PNG exists at the printed width within 0.5 percent.
+
+EXCEPTIONS
+    RuntimeError: raised when the saved width cannot be fitted to the
+        print width, when a banned dash character reaches a drawn string,
+        when the loop curve would cross a box, or when the smallest drawn
+        text would print below 8 pt.
+
+AXIOMS
+    1. Printed size, not canvas size, governs legibility: a figure built at
+       exactly the printed width has effective scale 1.0, so a declared
+       9 pt font prints as 9 pt.
+    2. Text is drawn in absolute points by the text engine, while the
+       axes is rescaled during the width fit. Fonts therefore keep their
+       point size across fit iterations, and only geometry scales.
+    3. Mathtext subscripts print at roughly 0.7 of the parent point size,
+       so a parent of 12 pt is needed for an 8.4 pt subscript.
+
+THEORIES
+    1. A seven step column plus one loop arrow carries the whole algorithm
+       at this resolution, so no extra decoration is required.
+    2. matplotlib's Arc3 connection style places its control point at
+       (mid_x + rad*dy, mid_y - rad*dx). For a vertical chord (dx = 0) a
+       negative rad therefore bows the curve toward smaller x, and the
+       sampled minimum x equals mid_x + rad*dy/2. The script verifies
+       this numerically instead of trusting the sign convention.
+
+APPLICATIONS
+    1. Draw the seven boxes, six down arrows, the green step label, the
+       red dashed repeat loop, and the title.
+    2. Fit the saved width to 0.9 of the text width, then assert the
+       legibility floor and the dash-free rule.
+
+CITATIONS
+    - matplotlib 3.11.2, https://matplotlib.org/stable/
+    - Bird, G. A. (1994), Molecular Gas Dynamics, Clarendon Press.
+    - Tailwind CSS color palette, https://tailwindcss.com/docs/colors
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.patches import Polygon, Rectangle  # noqa: E402
+import numpy as np  # noqa: E402
+from PIL import Image  # noqa: E402
+
+# The rendered-ink measurement lives in its own module so that the
+# generator's guard and the standalone audit tool are the same code. The
+# clearance floor and the contact bound are imported from it rather than
+# restated, because a second copy of a threshold is a second chance to
+# disagree about the same image.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from measure_loop_gap import (  # noqa: E402
+    MAX_TOUCH_ROWS,
+    MIN_SEP_GAP_PX,
+    measure,
+)
+
+DPI = 300
+ROOT = Path(__file__).resolve().parent.parent
+THESIS = ROOT
+FIGDIR = THESIS / "figures"
+assert FIGDIR.is_dir(), f"missing figure directory: {FIGDIR}"
+
+# Text width from the main document geometry: A4 text width 210 mm minus
+# 40 mm left and 30 mm right margin, converted to inches.
+TEXT_W_IN = 21.0 / 2.54 - (4.0 + 3.0) / 2.54
+INCLUDE_FRACTION = 0.9
+PRINT_W_IN = INCLUDE_FRACTION * TEXT_W_IN
+
+# Design canvas in inches. Data coordinates run 0..W by 0..H.
+W = PRINT_W_IN
+TOP = 0.10
+TITLE_H = 0.30
+BOT = 0.08
+BOX_W = 3.20
+BOX_H = 0.40
+GAP = 0.16
+N_BOX = 7
+H = TOP + TITLE_H + N_BOX * BOX_H + (N_BOX - 1) * GAP + BOT
+BOX_X0 = (W - BOX_W) / 2.0
+BOX_X1 = BOX_X0 + BOX_W
+CX = W / 2.0
+
+BOX_TITLES = [
+    "Initialize Particles",
+    "Move Particles Ballistically",
+    "Index Particles into Cells",
+    "Sample Collisions within Cells",
+    "Accumulate Macroscopic Properties",
+    "Check Convergence",
+    "Output Surface Data",
+]
+BOX_SUBS = [
+    "(Maxwell-Boltzmann Distribution)",
+    "(Free Flight for $\\Delta t$)",
+    "(Grid-Based Spatial Sorting)",
+    "(NTC Method: Pair Selection)",
+    "$\\rho$, T, u, p per Cell",
+    "(Steady State / Time Average)",
+    "(Heat Flux, Pressure, Shear)",
+]
+# Border, fill and text color per box, in reading order.
+PALETTE = [
+    ("#3B82F6", "#DBEAFE"),
+    ("#22C55E", "#DCFCE7"),
+    ("#F59E0B", "#FEF3C7"),
+    ("#EC4899", "#FCE7F3"),
+    ("#6366F1", "#E0E7FF"),
+    ("#A855F7", "#F3E8FF"),
+    ("#EF4444", "#FEE2E2"),
+]
+RED = "#EF4444"
+SLATE = "#475569"
+GREEN = "#22C55E"
+
+TITLE_FS = 13
+BOX_FS = 9
+ARROW_FS = 10
+LOOP_FS = 9
+LOOP_MATH_FS = 12
+TITLE_TEXT = "DSMC Algorithm (Bird, 1994)"
+LOOP_LABEL_1 = "Repeat"
+LOOP_LABEL_2 = "$N_{steps}$"
+STEP_LABEL = "$\\Delta t$"
+# Mathtext shrinks subscripts by this factor. It is read from matplotlib
+# itself instead of being restated, because the legibility floor below is
+# only as trustworthy as this number.
+try:
+    from matplotlib._mathtext import SHRINK_FACTOR as SUBSCRIPT_SCALE
+except ImportError:  # pragma: no cover - private module moved
+    SUBSCRIPT_SCALE = 0.7
+MIN_PRINTED_PT = 8.0
+# save() fits the printed width within this fraction, so a figure can
+# print at most this much smaller than the size it was declared at.
+FIT_TOL = 0.005
+BOX_LW = 1.5
+LOOP_LW = 1.4
+# Loop geometry: a vertical chord to the right of the boxes bowing left, a
+# horizontal tail that starts on the border of the box the loop leaves, and
+# a short entry segment whose arrowhead lands on the box the loop reenters.
+# The bow depth is calibrated against measured ink on the saved PNG, because
+# the connection style is applied in display space and cannot be predicted
+# from the data-space curvature. At this value the measured clearance sits
+# above the eight pixel floor with margin.
+LOOP_X = BOX_X1 + 0.32
+# Bow depth, that is how far the curve's leftmost point sits left of the
+# chord. A quadratic Bezier reaches exactly half of the control point
+# offset, so the apex lands at LOOP_X - LOOP_BOW / 2 and the clearance to
+# the box edge is (LOOP_X - BOX_X1) - LOOP_BOW / 2 = 0.32 - LOOP_BOW / 2.
+# At 0.20 in that is 0.22 in of clearance, which measured 36 px of white
+# space on the rendered PNG against the eight pixel floor.
+LOOP_BOW = 0.20
+# Smallest analytic clearance between the bow apex and the box edge, in
+# inches. Zero point one five is about 0.4 mm, so the curve never runs
+# close enough to the boxes to read as touching them.
+BOW_CLEAR_MIN = 0.15
+LOOP_SAMPLES = 241
+# Arrowhead: length along the column and half width at the base.
+LOOP_HEAD_LEN = 0.13
+HEAD_HALF_RATIO = 0.62
+ENTRY_X = BOX_X1
+# Both connectors stop a hair INSIDE the border rather than exactly on it.
+# WHY: the box border is a 1.5 pt stroke centred on BOX_X1, so a connector
+# that ends at BOX_X1 leaves a sliver of white between its own ink and the
+# border ink, which reads as a gap and is what the measured guard caught on
+# the first run. Overlapping by 0.015 in (4.4 px at the rendered scale,
+# under half a millimetre printed) closes that sliver, so the connectors
+# meet the boxes the way a drawn connector is expected to, and it gives the
+# contact metric in measure_loop_gap the two intended contact bands it needs
+# to tell a real connection from a bow running along the border.
+CONNECTOR_OVERLAP = 0.015
+
+BANNED = (
+    chr(45) + chr(45),
+    chr(0x2013),
+    chr(0x2014),
+)
+
+
+def box_top(i: int) -> float:
+    """Return the top edge y of box i in data inches.
+
+    Parameters
+        i: zero based box index from the top.
+    Returns
+        y coordinate of the top edge.
+    """
+    return H - TOP - TITLE_H - i * (BOX_H + GAP)
+
+
+def box_center(i: int) -> float:
+    """Return the vertical center y of box i in data inches.
+
+    Parameters
+        i: zero based box index from the top.
+    Returns
+        y coordinate of the center line.
+    """
+    return box_top(i) - BOX_H / 2.0
+
+
+def check_text(name: str, value: str) -> None:
+    """Assert that a drawn string carries no banned dash character.
+
+    Parameters
+        name: label used in the error message.
+        value: the string that will be drawn.
+    Returns
+        None.
+    Exceptions
+        RuntimeError: if value contains a double hyphen or an en or em
+            dash.
+    """
+    for bad in BANNED:
+        if bad in value:
+            raise RuntimeError(f"banned dash {bad!r} in {name}")
+
+
+def measured_loop_clearance(path: Path) -> dict[str, int]:
+    """Measure the loop clearance on a saved PNG and enforce both bounds.
+
+    Parameters
+        path: the saved PNG to measure.
+    Returns
+        the measurement dictionary from measure_loop_gap.measure, whose
+        keys are box_right_x, loop_left_x, gap_px, contact_rows and
+        contact_run, all in pixels.
+    Exceptions
+        RuntimeError: if the measured white gap is below the eight pixel
+            floor, which means the loop bow merges with the box border, or
+            if the loop touches the border along more rows than two
+            connectors can account for, which means it is running along
+            the border instead of clearing it.
+        SystemExit: propagated from the measurement when the image does not
+            look like this flowchart at all.
+    """
+    result = measure(path)
+    if result["sep_gap_px"] < MIN_SEP_GAP_PX:
+        raise RuntimeError(
+            f"loop median clearance from the box border is only "
+            f"{result['sep_gap_px']} px, need {MIN_SEP_GAP_PX} px; reduce "
+            f"the bow (LOOP_BOW is {LOOP_BOW})"
+        )
+    if result["touch_rows"] > MAX_TOUCH_ROWS:
+        raise RuntimeError(
+            f"loop runs flush against the box border on {result['touch_rows']} "
+            f"rows, longest run {result['touch_run']} px, bound "
+            f"{MAX_TOUCH_ROWS}; two connectors cannot account for that"
+        )
+    return result
+
+
+def save(fig: plt.Figure, name: str, print_width_in: float) -> float:
+    """Save the figure at the printed width, iterating on figure size.
+
+    Parameters
+        fig: the figure to save.
+        name: file name inside the figure directory.
+        print_width_in: target width in inches.
+    Returns
+        the print magnification, that is the declared width divided by
+        the width the saved image actually occupies at the target dpi.
+    Exceptions
+        RuntimeError: if the saved width cannot be brought within 0.5
+            percent of the target after four attempts.
+    """
+    target_px = print_width_in * DPI
+    ratio = 1.0
+    for _ in range(4):
+        out = FIGDIR / name
+        fig.savefig(out, dpi=DPI, bbox_inches="tight", facecolor="white")
+        with Image.open(out) as probe:
+            width_px = probe.size[0]
+        ratio = target_px / float(width_px)
+        if abs(ratio - 1.0) <= FIT_TOL:
+            break
+        w, h = fig.get_size_inches()
+        fig.set_size_inches(w * ratio, h * ratio)
+    else:
+        raise RuntimeError(f"{name}: width {width_px}px cannot reach target")
+    native_in = width_px / float(DPI)
+    effective = print_width_in / native_in
+    print(
+        f"wrote {name} {width_px}px print {print_width_in:.3f}in "
+        f"scale {effective:.3f}"
+    )
+    return effective
+
+
+def draw() -> None:
+    """Build and save the DSMC flowchart figure.
+
+    Returns
+        None.
+    Exceptions
+        RuntimeError: propagates any check failure from check_text or
+            save.
+    """
+    plt.rcParams["font.family"] = "sans-serif"
+    plt.rcParams["font.sans-serif"] = ["DejaVu Sans"]
+
+    for i in range(N_BOX):
+        check_text(f"box title {i}", BOX_TITLES[i])
+        check_text(f"box subtitle {i}", BOX_SUBS[i])
+    check_text("title", TITLE_TEXT)
+    check_text("loop label 1", LOOP_LABEL_1)
+    check_text("loop label 2", LOOP_LABEL_2)
+
+    fig = plt.figure(figsize=(W, H))
+    ax = fig.add_axes((0.0, 0.0, 1.0, 1.0))
+    ax.set_xlim(0.0, W)
+    ax.set_ylim(0.0, H)
+    ax.axis("off")
+
+    ax.text(
+        CX,
+        H - TOP - TITLE_H / 2.0,
+        TITLE_TEXT,
+        ha="center",
+        va="center",
+        fontsize=TITLE_FS,
+        fontweight="bold",
+        color="#0F172A",
+    )
+
+    for i in range(N_BOX):
+        border, fill = PALETTE[i]
+        top = box_top(i)
+        ax.add_patch(
+            Rectangle(
+                (BOX_X0, top - BOX_H),
+                BOX_W,
+                BOX_H,
+                facecolor=fill,
+                edgecolor=border,
+                linewidth=1.5,
+                zorder=2,
+            )
+        )
+        ax.text(
+            CX,
+            top - BOX_H / 2.0 + 0.05,
+            BOX_TITLES[i],
+            ha="center",
+            va="center",
+            fontsize=BOX_FS,
+            fontweight="bold",
+            color="#0F172A",
+            zorder=3,
+        )
+        ax.text(
+            CX,
+            top - BOX_H / 2.0 - 0.10,
+            BOX_SUBS[i],
+            ha="center",
+            va="center",
+            fontsize=BOX_FS,
+            fontweight="bold",
+            color="#0F172A",
+            zorder=3,
+        )
+
+    for i in range(N_BOX - 1):
+        y_from = box_top(i) - BOX_H
+        y_to = box_top(i + 1) - 0.01
+        ax.annotate(
+            "",
+            xy=(CX, y_to),
+            xytext=(CX, y_from),
+            arrowprops={
+                "arrowstyle": "-|>",
+                "color": SLATE,
+                "linewidth": 1.5,
+                "mutation_scale": 12,
+                "shrinkA": 0.0,
+                "shrinkB": 0.0,
+            },
+            zorder=1,
+        )
+
+    ax.text(
+        BOX_X0 - 0.10,
+        box_center(1),
+        STEP_LABEL,
+        ha="right",
+        va="center",
+        fontsize=ARROW_FS,
+        fontweight="bold",
+        color=GREEN,
+        zorder=3,
+    )
+
+    y_loop_from = box_center(5)
+    y_loop_to = box_center(1)
+    # The loop is drawn as explicit data coordinate geometry: a quadratic
+    # Bezier sampled to a polyline, a straight dashed tail, and a polygon
+    # arrowhead. WHY NOT AN ANNOTATED CURVE: matplotlib applies an arc3
+    # connection style in DISPLAY space, and the rendered result was
+    # measured to depart from the data coordinates in two separate ways.
+    # The drawn bow was far deeper than the data space curvature (rad
+    # -0.21 gave a drawn bow of about 0.31 in against an analytic 0.09 in),
+    # and the arrow endpoint landed about ten pixels to the right of the
+    # data position. Both were measured on the saved PNG, not assumed.
+    # With the curve spelled out here the bow depth is a stated length, the
+    # analytic clearance below is true of the drawn curve, and the pixel
+    # guard in measure_loop_gap still confirms the rendered result.
+    mid_y = 0.5 * (y_loop_from + y_loop_to)
+    control = (LOOP_X - LOOP_BOW, mid_y)
+    ts = np.linspace(0.0, 1.0, LOOP_SAMPLES)
+    bx = (1.0 - ts) ** 2 * LOOP_X + 2.0 * (1.0 - ts) * ts * control[0] + ts**2 * LOOP_X
+    by = (1.0 - ts) ** 2 * y_loop_from + 2.0 * (1.0 - ts) * ts * mid_y + ts**2 * y_loop_to
+    # The apex of a quadratic Bezier is at half of the control point offset,
+    # so the curve's leftmost point is what has to clear the box edge. Testing
+    # the control point instead would demand twice the clearance and reject a
+    # curve that is in fact well clear.
+    apex_x = float(bx.min())
+    if apex_x - BOX_X1 < BOW_CLEAR_MIN:
+        raise RuntimeError(
+            f"loop apex reaches x {apex_x:.4f}, which clears the box edge "
+            f"{BOX_X1:.4f} by only {apex_x - BOX_X1:.4f} in, need "
+            f"{BOW_CLEAR_MIN:.4f} in"
+        )
+    ax.plot(
+        bx,
+        by,
+        color=RED,
+        linewidth=LOOP_LW,
+        linestyle=(0, (6, 2.5)),
+        solid_capstyle="butt",
+        zorder=1,
+    )
+    # The chord stands off the box column, so a horizontal tail carries
+    # the dashed path from the border of the box the loop leaves out to
+    # the chord. Without it the loop appears to start in empty space.
+    ax.plot(
+        [BOX_X1 - CONNECTOR_OVERLAP, LOOP_X],
+        [y_loop_from, y_loop_from],
+        color=RED,
+        linewidth=LOOP_LW,
+        linestyle=(0, (6, 2.5)),
+        solid_capstyle="butt",
+        zorder=1,
+    )
+    # Arrowhead as a data coordinate triangle, pointing up the column, with
+    # its tip a hair inside the border of the box the loop reenters so the
+    # connector meets the box instead of leaving a white sliver beside it.
+    tip_x = ENTRY_X - CONNECTOR_OVERLAP
+    head_len = LOOP_HEAD_LEN
+    head_half = 0.5 * head_len * HEAD_HALF_RATIO
+    ax.add_patch(
+        Polygon(
+            [(tip_x, y_loop_to), (tip_x + head_len, y_loop_to + head_half),
+             (tip_x + head_len, y_loop_to - head_half)],
+            closed=True,
+            facecolor=RED,
+            edgecolor=RED,
+            linewidth=LOOP_LW,
+            zorder=2,
+        )
+    )
+
+    ax.text(
+        LOOP_X + 0.18,
+        2.0,
+        LOOP_LABEL_1,
+        rotation=90,
+        ha="center",
+        va="center",
+        fontsize=LOOP_FS,
+        fontweight="bold",
+        color=RED,
+        zorder=3,
+    )
+    ax.text(
+        LOOP_X + 0.40,
+        2.0,
+        LOOP_LABEL_2,
+        rotation=90,
+        ha="center",
+        va="center",
+        fontsize=LOOP_MATH_FS,
+        color=RED,
+        zorder=3,
+    )
+    if LOOP_MATH_FS * SUBSCRIPT_SCALE < MIN_PRINTED_PT:
+        raise RuntimeError(
+            f"loop subscript prints at {LOOP_MATH_FS * SUBSCRIPT_SCALE:.1f} pt"
+        )
+    if W - (LOOP_X + 0.40 + LOOP_MATH_FS / 72.0 / 2.0) < 0.02:
+        raise RuntimeError("rotated loop labels overflow the canvas")
+
+    # Pre-save floor check uses the worst magnification the fit can
+    # produce, so nothing below 8 pt is ever written. The post-save check
+    # repeats it with the magnification that was actually achieved.
+    floor_pt = LOOP_MATH_FS * SUBSCRIPT_SCALE * (1.0 - FIT_TOL)
+    if floor_pt < MIN_PRINTED_PT:
+        raise RuntimeError(
+            f"loop subscript would print at {floor_pt:.2f} pt at worst "
+            f"case fit, below the {MIN_PRINTED_PT:.1f} pt floor"
+        )
+    print(
+        f"loop subscript declared {LOOP_MATH_FS * SUBSCRIPT_SCALE:.2f} pt, "
+        f"floor {floor_pt:.2f} pt"
+    )
+    achieved = save(fig, "dsmc_algorithm_flowchart.png", PRINT_W_IN)
+    printed_pt = LOOP_MATH_FS * SUBSCRIPT_SCALE * achieved
+    if printed_pt < MIN_PRINTED_PT:
+        raise RuntimeError(
+            f"loop subscript printed at {printed_pt:.2f} pt, below the "
+            f"{MIN_PRINTED_PT:.1f} pt floor"
+        )
+    # Measured guard on the written file. measure_loop_gap is the single
+    # implementation of this measurement, so the generator and the
+    # standalone audit tool can never disagree about the same image.
+    gap = measured_loop_clearance(FIGDIR / "dsmc_algorithm_flowchart.png")
+    print(
+        f"loop measured on the saved PNG: median gap {gap['sep_gap_px']}px "
+        f"floor {MIN_SEP_GAP_PX}px, flush rows {gap['touch_rows']} longest "
+        f"run {gap['touch_run']} bound {MAX_TOUCH_ROWS}"
+    )
+    plt.close(fig)
+
+
+if __name__ == "__main__":
+    try:
+        draw()
+    except RuntimeError as exc:
+        print(f"dsmc flowchart FAILED: {exc}", file=sys.stderr)
+        raise

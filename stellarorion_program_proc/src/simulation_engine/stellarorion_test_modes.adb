@@ -1354,6 +1354,11 @@ package body StellarOrion_Test_Modes with SPARK_Mode => Off is
          Use_GPU    => Use_GPU,
          Num_Cores  => Cores,
          Results_Dir => Results_Dir,
+         --  CADENCE GUARD (2026-10-06): a run that died part-way leaves
+         --  fewer dumps than the deck's cadence demands. Without this the
+         --  only completeness test was `Count > 0`, which graded a
+         --  truncated run as a success (measured on run8).
+         Expected_Dumps => Expected_Dump_Count (Steps),
          Success    => DOK);
       New_Line;
 

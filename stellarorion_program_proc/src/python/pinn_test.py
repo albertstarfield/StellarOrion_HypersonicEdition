@@ -93,6 +93,9 @@ class _Predictor(Protocol):
     def predict_gap_fill(self, query_points: np.ndarray) -> np.ndarray:
         """Predict the refined field at the given query points."""
 
+    def predict_full_state(self, query_points: np.ndarray) -> np.ndarray:
+        """Predict [rho, vx, vy, T, p] at the given query points."""
+
 
 def run_baseline_validation(
     cad_dir: str, steps: int, solver: str = "sparta"
@@ -334,8 +337,13 @@ def compute_pinn_metrics(
     xx_s, yy_s = np.meshgrid(x_scan_arr, y_scan_arr)
     q_pts_2d = np.column_stack([xx_s.ravel(), yy_s.ravel()])
 
-    preds_stag = pinn.predict_gap_fill(q_pts_stag)
-    preds_2d = pinn.predict_gap_fill(q_pts_2d)
+    #  F27 fix: this function reads column 4 (pressure) and column 3 (temperature),
+    #  so it must call predict_full_state -> (N, 5) [rho, vx, vy, T, p].
+    #  predict_gap_fill returns (N, 4) [rho, vx, vy, T], so `[:, 4]` raised
+    #  IndexError on EVERY invocation. [Citation: pinn_accelerator.PINNAccelerator
+    #  .predict_full_state -- 'Predict full state vector [rho, vx, vy, T, p]']
+    preds_stag = pinn.predict_full_state(q_pts_stag)
+    preds_2d = pinn.predict_full_state(q_pts_2d)
 
     p_refined_max = max(np.max(preds_stag[:, 4]), np.max(preds_2d[:, 4]))
     t_refined_max = max(np.max(preds_stag[:, 3]), np.max(preds_2d[:, 3]))

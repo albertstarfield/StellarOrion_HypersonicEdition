@@ -15,8 +15,20 @@
 with StellarOrion_Types; use StellarOrion_Types;
 
 package StellarOrion_Sparta is
+
    pragma SPARK_Mode (Off);
    --  extern: SPARTA Docker script generation with Ada.Directories file I/O
+
+
+   --  DUMP_STATS_INTERVAL is the SINGLE SOURCE OF TRUTH for the dump
+   --  cadence written into the generated SPARTA deck (`stats` and the
+   --  `dump ... every N` command). It lives in the visible part because
+   --  the deck writer and the completeness check must agree; when it was
+   --  a literal inside the deck writer, nothing outside that function
+   --  could know what completeness meant.
+   --  [Citation: Plimpton & Gallis (2014), SPARTA DSMC User Manual,
+   --    `dump ... every N`]
+   DUMP_STATS_INTERVAL : constant Positive := 100;
 
    -- -----------------------------------------------------------------
    --  Geometry Generation (Rapisarda 2023 Flat-Skin Profile)
@@ -120,8 +132,31 @@ package StellarOrion_Sparta is
       Use_GPU    : Boolean;
       Num_Cores  : Positive;
       Results_Dir : String;
+      --  Number of surf dump files a COMPLETE run at this cadence must
+      --  produce. 0 means "do not check" (legacy callers).
+      Expected_Dumps : Natural := 0;
       Success    : out Boolean)
      with Post => True;
+
+   --  EXPECTED_DUMP_COUNT (fix 2026-10-06)
+   --
+   --  WHY: a run that dies part-way leaves FEWER dump files than the
+   --  cadence demands, and the old success test (`Count > 0`) graded such
+   --  a run as a success. Measured on run8: the container died after
+   --  step 1900 of 2200 leaving 20 of the 23 dumps, and the validation
+   --  gate still printed VALIDATION PASSED -- with every graded metric
+   --  averaged over 500-1900 instead of 800-2200.
+   --
+   --  AXIOM: SPARTA's `dump ... every N` writes at steps 0, N, 2N, ...
+   --  up to the last multiple not exceeding Steps, so the file count is
+   --  Steps/N + 1 -- the +1 is the step-0 file, which is real (verified
+   --  against run12, whose dump files are 0, 100, ...). The deck
+   --  generator clamps N to Steps when the run is shorter than the
+   --  cadence, so that clamp is MIRRORED here rather than duplicated --
+   --  a second copy would be free to drift from the first.
+   --  CITATIONS: SPARTA manual `dump ... every N`; Plimpton & Gallis (2014).
+   function Expected_Dump_Count (Steps : Positive) return Natural
+     with Post => Expected_Dump_Count'Result >= 1;
 
    -- -----------------------------------------------------------------
    --  Surf File Parsing

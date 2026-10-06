@@ -1015,7 +1015,7 @@ Table~\ref{tab:cfd_vs_dsmc} compares the continuum (RANS/NS) and kinetic (DSMC) 
     \end{tabularx}
 \end{table}
 
-\noindent This study employs \textit{both} paradigms where each is valid: SST $k$-$\omega$~\cite{menter1994SST} covers the continuum freestream ($Kn_{\text{global}} \approx 2.5\times10^{-5}$, Eq.~\eqref{eq:kn_global_52km}), while SPARTA~\cite{plimpton2014sparta} solves the bow-shock layer dominating the thermal load ($Kn_{\text{shock}} \sim 0.01$-$0.1$) on its own length scale.
+\noindent This study employs \textit{both} paradigms where each is valid. The SST $k$-$\omega$ model~\mbox{\cite{menter1994SST}} covers the continuum freestream, where $Kn_{\text{global}} \approx \mbox{$2.5\times10^{-5}$} (Eq.~\ref{eq:kn_global_52km}). SPARTA~\mbox{\cite{plimpton2014sparta}} instead solves the bow-shock layer that dominates the thermal load ($Kn_{\text{shock}} \sim 0.01$-$0.1$) on its own length scale.
 
 \section{Machine Learning in Computational Fluid Dynamics}
 \label{sec:ml_cfd}
@@ -1050,7 +1050,7 @@ The PINN loss is:
 
 \subsection{Automatic Differentiation for PDE Residuals}
 
-Automatic differentiation (AD) computes exact derivatives of $\hat{u}$ through the computational graph. For a velocity field $\hat{u}(x, y)$:
+Automatic differentiation (AD) computes exact derivatives of $\hat{u}$ through the computational graph. For a velocity field $\hat{u}(x, r)$:
 
 \begin{equation}
     \frac{\partial \hat{u}}{\partial x} = \frac{\partial \hat{u}}{\partial \hat{u}_L} \frac{\partial \hat{u}_L}{\partial \hat{u}_{L-1}} \cdots \frac{\partial \hat{u}_2}{\partial \hat{u}_1} \frac{\partial \hat{u}_1}{\partial x}
@@ -1064,7 +1064,7 @@ Automatic differentiation (AD) computes exact derivatives of $\hat{u}$ through t
     \BeginAccSupp{method=escape,ActualText={Schematic of the physics-informed neural network architecture, showing input coordinates entering a multilayer perceptron whose output is constrained by the governing PDE residuals.}}%
 \includegraphics[width=0.9\textwidth]{figures/pinn_architecture.png}%
 \EndAccSupp{}%
-    \caption[Schematic of the Physics-Informed Neural Network (PINN) architecture.]{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $\mathbf{x} = (x, r)$ to flow variables $(\rho, T, u)$ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring in a two-stage training strategy.}
+    \caption[Schematic of the Physics-Informed Neural Network (PINN) architecture.]{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $\mathbf{x} = (x, r)$ to flow variables $(\rho, v_x, v_y, T)$ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring in a two-stage training strategy.}
     \label{fig:pinn_architecture}
 \end{figure}
 

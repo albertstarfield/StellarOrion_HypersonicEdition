@@ -545,7 +545,7 @@ package body StellarOrion_Sparta is
       Xmin, Xmax, Ymax : Float;
       --  Grid matches Python ORION template: create_grid 139 139 1 at factor 0.7
       NX, NY      : Integer;
-      Stats_Interval : Natural := 100;
+      Stats_Interval : Natural := DUMP_STATS_INTERVAL;
       Avg_Nfreq, Avg_Nrepeat : Natural;
       Is_Restart  : Boolean := False;
       Restart_Bname : Unbounded_String := Null_Unbounded_String;
@@ -931,11 +931,22 @@ package body StellarOrion_Sparta is
 -- WCET: 1μs with 10× safety margin
 -- Space Complexity: O(1) — stack only
 -- ====================================================================
+   function Expected_Dump_Count (Steps : Positive) return Natural is
+      N : constant Positive :=
+        (if DUMP_STATS_INTERVAL < Steps
+         then DUMP_STATS_INTERVAL
+         else Steps);
+   begin
+      --  Steps/N + 1 counts 0, N, 2N, ..., the last multiple <= Steps.
+      return Steps / N + 1;
+   end Expected_Dump_Count;
+
    procedure Run_Sparta_Docker -- nosec
      (Cwd        : String;
        Use_GPU    : Boolean;
        Num_Cores  : Positive;
        Results_Dir : String;
+       Expected_Dumps : Natural := 0;
        Success    : out Boolean)
    is
       --  Contract: pre  => Cwd is an existing directory containing the
@@ -1044,6 +1055,10 @@ package body StellarOrion_Sparta is
          S          : Search_Type;
          E          : Directory_Entry_Type;
          Count      : Natural := 0;
+         --  Completeness verdict. Declared here and ASSIGNED after the
+         --  counting loop: a constant in this block would be elaborated
+         --  before Count is filled in, so it would silently test 0.
+         Have_All  : Boolean;
       begin
          Append (Cmd, "docker run --rm --name hiad-runner --shm-size 2g ");
          Append (Cmd, "-v " & Cwd & ":/app ");
@@ -1081,9 +1096,13 @@ package body StellarOrion_Sparta is
             End_Search (S);
          exception when others => null; end;
 
-         Success := (Exit_Status = 0) and then (Count > 0);
+         --  COMPLETENESS, NOT JUST "SOMETHING EXISTS" (fix 2026-10-06).
+         --  Expected_Dumps = 0 means the caller declined to check (legacy).
+         Have_All := (if Expected_Dumps = 0 then True else Count = Expected_Dumps);
+         Success := (Exit_Status = 0) and then (Count > 0) and then Have_All;
          Put_Line ("[SPARTA] docker exit status = " & Img (Exit_Status) &
-                   ", surf dump files = " & Img (Count));
+                   ", surf dump files = " & Img (Count) &
+                   ", surf dump files required = " & Img (Expected_Dumps));
          if Success then
             Put_Line ("[SPARTA] Complete. Found " & Img (Count) &
                       " surf dump files.");
@@ -1100,6 +1119,13 @@ package body StellarOrion_Sparta is
             if Count = 0 then
                Put_Line (Standard_Error,
                          "[SPARTA]   no surf dump files were produced.");
+            elsif Expected_Dumps > 0 and then Count < Expected_Dumps then
+               Put_Line (Standard_Error,
+                         "[SPARTA]   the run is TRUNCATED: " & Img (Count) &
+                         " of " & Img (Expected_Dumps) &
+                         " surf dumps were produced, so the solver died part-" &
+                         "way through. Averaging the files that do exist would " &
+                         "silently omit the final part of the trajectory.");
             end if;
          end if;
       end;
@@ -3886,8 +3912,9 @@ package body StellarOrion_Sparta is
        raise;
        end Delete_Matching;
         --  AXIOMS: SPARTA produces restart.*.sparta, surf.*.out,
-        --    grid.*.out, in.hiad, and HIAD_custom.surf as
-        --    intermediate artefacts; only CSV data, comparison
+        --    grid.*.out as intermediate artefacts; in.hiad and
+        --    HIAD_custom.surf are TRACKED INPUTS OF RECORD and are
+        --    retained (F63).  Only CSV data, comparison
         --    reports, VTK, and plot images are retained.
         --  THEORIES: A pattern-based search-and-delete loop removes
         --    all regular files matching each ephemeral pattern;
@@ -3902,11 +3929,21 @@ package body StellarOrion_Sparta is
         --    SPARTA Manual (restart, surf dump, grid dump commands).
      begin
         Put_Line ("[CLEANUP] Removing ephemeral state from " & Results_Dir & " ...");
+        --  F63 FIX (2026-10-06): in.hiad and HIAD_custom.surf are NOT
+        --  ephemeral.  They are the INPUTS OF RECORD for the result -- the
+        --  deck the run was actually flown on, and the geometry that deck
+        --  meshes.  Both are TRACKED IN GIT, yet Step 12 deleted them, so
+        --  between runs the artefact a published number depends on simply
+        --  did not exist (results/validation_smooth/in.hiad has in fact
+        --  gone missing that way).  A cleanup step that destroys the
+        --  provenance of its own result is data loss, not housekeeping,
+        --  so these two are deliberately SPARED below.  restart.*.sparta,
+        --  surf.*.out and grid.*.out are regenerable and stay ephemeral.
+        --  [Reference: git index -- both paths are tracked]
+        --  [Citation: Ada.Directories.Delete_File (Ada RM A.16)]
       Delete_Matching ("restart.*.sparta");
       Delete_Matching ("surf.*.out");
       Delete_Matching ("grid.*.out");
-      Delete_Matching ("in.hiad");
-      Delete_Matching ("HIAD_custom.surf");
       Put_Line ("[CLEANUP] Ephemeral state cleanup complete.");
    exception
       when E : others =>
