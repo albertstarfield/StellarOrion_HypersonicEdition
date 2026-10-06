@@ -1,26 +1,40 @@
 % =====================================================================
-% main.tex — StellarOrion Progress Presentation, Week 16
-% SKELETON BUILD. Frame STRUCTURE, sectioning, navigation and house-style
-% typography are final; the CONTENT of each body frame is intentionally
-% left as a marker for the content thread (GoalThread6).
+% main.tex — StellarOrion Progress Report, Week 16
 %
-% Why beamer and not a port of the Week 14 PowerPoint:
-%   Lost+Found/ProgressReport/Week 14/ProgressReport.pptx carries 63 words
-%   total (docProps/app.xml), 0 speaker notes, and its content is 2 embedded
-%   mp4 (92 MB + 90 MB) plus 9 rasters. There is no bullet list to port, so
-%   this deck is AUTHORED from verified repository state instead.
-%   Evidence and full method: GoalThread5.md.
+% SKELETON BUILD. The frame STRUCTURE, sectioning, navigation and
+% house-style typography are final. Body content is left as marked
+% placeholders for the content thread (GoalThread6).
 %
-% House style inherited from the ITB thesis, not invented:
-%   Lost+Found/ProgressReport/CurrentThesisFinalReport/{preamble,identity,
-%   cover}.tex. The contract (fonts, monochrome discipline, decorative
-%   emblem, uppercase frametitles, punctuation) is specified in GoalThread5.md
-%   section "House style contract". Every item below cites the thesis file it
-%   came from.
+% =====================================================================
+% PRESENTATION TEXT BUDGET — READ BEFORE ADDING ANY WORDS
+% ---------------------------------------------------------------------
+% This is a SLIDE DECK, not a document. The governing rule, enforced by
+% \MaxTextLines below:
 %
-% Build:  pdflatex main.tex   (x2 for the TOC/navigation to settle)
-% Verify: 0 hard errors (^!), 0 Overfull/Underfull, 0 undefined refs, 0 rerun
-%         requests in main.log -- the same bar the 163-page thesis is held to.
+%   * MAXIMUM 1-2 LINES of text per frame. Hard cap, not a guideline.
+%   * EACH FRAME IS DOMINATED BY AN IMAGE PLOT. The plot is the content.
+%     Text is the caption, never the payload.
+%   * NO BULLET LISTS. A bullet list on a slide is a paragraph that
+%     happens to be indented, which is the failure this budget exists to
+%     prevent. If a frame needs more than two lines, it needs to be split
+%     into two frames, not given a third bullet.
+%   * NO EM-DASHES (U+2014 / `---`). The thesis completed a measured
+%     em-dash removal with zero residual; slide prose keeps that rule.
+%   * EVERY NUMBER MUST CITE ITS SOURCE FILE. Nothing ships unsourced.
+%
+% These are not preferences inherited from a style guide. They are the
+% reasons the existing PowerPoint decks could not be converted: the Week 14
+% deck carries 63 words total, 0 speaker notes, and its content is 2
+% embedded mp4 plus 9 rasters. There is no text there to port, so this deck
+% is authored from verified repository state and must be built to the
+% budget above rather than padded to fill frames.
+%
+% HOW TO PLACE AN IMAGE PLOT
+%   \PlotFrame{<frametitle>}{<caption, 1-2 lines max>}{<image file>}
+% The macro in preamble.tex reserves the frame's vertical space for the
+% plot and draws the caption beneath it, so a plot is never squeezed by
+% the text above it. Use it rather than hand-rolling figure blocks.
+%
 % Citation: Beamer -- https://ctan.org/pkg/beamer
 %           pdfTeX 3.141592653-2.6-1.40.29 (TeX Live 2026)
 % =====================================================================
@@ -33,90 +47,89 @@
 % ---------------------------------------------------------------------
 % TITLE FRAME
 % Identity macros are copied verbatim from the thesis identity.tex so the
-% deck and the submitted thesis cannot disagree on the author's name, NIM
-% or supervisors. They are re-declared in preamble.tex.
+% deck and the submitted thesis cannot disagree on author, NIM, or
+% supervisors.
 % ---------------------------------------------------------------------
 \begin{frame}[plain]
+  % Turquoise band, painted explicitly on the title frame ONLY.
+  %
+  % AXIOM: \setbeamertemplate{background} is empty in preamble.tex on
+  % purpose, because filling it collides with content frametitles. A
+  % page-anchored tikz fill is therefore the only correct route, and it must
+  % be called on this frame alone.
+  %
+  % THEORY: the overlay is positioned against `current page` corners, so it
+  % covers the full slide regardless of the frame's text margins, and being
+  % an overlay it contributes no height to the frame body.
+  %
+  % APPLICATION: supplies the dark field that the white ITB emblem and the
+  % white title text sit on. The emblem is white artwork (gajah_putih), so on
+  % this band it measures 6.61:1 -- previously it was white-on-white at
+  % 1.00:1 and effectively invisible.
+  % Citation: tikz overlay -- https://ctan.org/pkg/pgf
+  \ITBTitleBackground
+  \ITBEmblem
   \titlepage
 \end{frame}
 
 % ---------------------------------------------------------------------
-% OUTLINE -- auto-generated from \section, so adding a section later cannot
+% OUTLINE. Auto-generated from \section, so adding a section later cannot
 % leave a stale hand-written agenda behind.
 % ---------------------------------------------------------------------
-\begin{frame}{Outline}
+\begin{frame}{OUTLINE}
   \tableofcontents
 \end{frame}
 
 % =====================================================================
 % SECTION 1 — PREVIOUS PROBLEM
 % Two problems drove this week's work:
-%   (a) a sampling issue in the design space, and
-%   (b) optimisation driven by MoP, whose result was too chaotic to trust.
+%   (a) a sampling issue in the design-space exploration, and
+%   (b) optimisation driven by MoP, whose behaviour was too chaotic to
+%       use as a basis for further work.
+% Section headings are typed in CAPS deliberately: see preamble.tex for why
+% \section is never redefined.
 % =====================================================================
-\section{Previous Problem}
+\section{PREVIOUS PROBLEM}
 
-\begin{frame}{Previous Problem: Sampling and MoP}
-  \begin{itemize}
-    \item \textbf{Sampling issue} in the design-space exploration
-      \begin{itemize}
-        \item placeholder
-      \end{itemize}
-    \item \textbf{MoP-driven optimisation was too chaotic}
-      \begin{itemize}
-        \item placeholder
-      \end{itemize}
-    \item \textbf{Consequence} for run-to-run reproducibility
-      \begin{itemize}
-        \item placeholder
-      \end{itemize}
-  \end{itemize}
-\end{frame}
+% The chaos frame carries the evidence as a plot, per the text budget.
+\PlotFrame{PREVIOUS PROBLEM: SAMPLING AND MoP}
+  {MoP-driven optimisation was too chaotic to support further work.}
+  {placeholder_problem}
 
 % =====================================================================
 % SECTION 2 — CURRENT IMPLEMENTATION
-% Six items, each with a real implementation on disk. The frame titles
-% below are the ones grounded in the repository; see GoalThread5.md.
+% Six items, each grounded in a real implementation on disk.
+%
+% Naming note: the second item is KRIGING denoising. A repo-wide search
+% for "Kringing" returns ZERO matches; "Kriging" returns real code
+% (validation_pipeline.py:922 kriging_denoise_convergence, pipeline_checkpoint.py
+% step 2). The frame title uses the correct spelling because the slide
+% names a method that actually exists in this codebase.
 % =====================================================================
-\section{Current Implementation}
+\section{CURRENT IMPLEMENTATION}
 
-\begin{frame}{1. Bayesian Optimization}
-  \begin{itemize}
-    \item placeholder
-  \end{itemize}
-\end{frame}
+\PlotFrame{1. BAYESIAN OPTIMIZATION}
+  {placeholder: one line, 1-2 max}
+  {placeholder_bo}
 
-\begin{frame}{2. Kriging Denoising}
-  \begin{itemize}
-    \item placeholder
-  \end{itemize}
-\end{frame}
+\PlotFrame{2. KRIGING DENOISING}
+  {placeholder: one line, 1-2 max}
+  {placeholder_kriging}
 
-\begin{frame}{3. Validation Run}
-  \begin{itemize}
-    \item \textbf{Performance Reference vs Performance Simulated on StellarOrion}
-      \begin{itemize}
-        \item placeholder
-      \end{itemize}
-  \end{itemize}
-\end{frame}
+\PlotFrame{3. VALIDATION RUN}
+  {Performance reference vs performance simulated on StellarOrion.}
+  {placeholder_validation}
 
-\begin{frame}{4. Redefining Yesterday's Wrong Heat Flux Definition}
-  \begin{itemize}
-    \item placeholder
-  \end{itemize}
-\end{frame}
+\PlotFrame{4. REDEFINING YESTERDAY'S WRONG HEAT FLUX DEFINITION}
+  {placeholder: one line, 1-2 max}
+  {placeholder_heatflux}
 
-\begin{frame}{5. Optimisation Result: Topology and Performance}
-  \begin{itemize}
-    \item placeholder
-  \end{itemize}
-\end{frame}
+\PlotFrame{5. OPTIMIZATION RESULT: TOPOLOGY AND PERFORMANCE}
+  {placeholder: one line, 1-2 max}
+  {placeholder_topology}
 
-\begin{frame}{6. Bayesian Optimisation Plots}
-  \begin{itemize}
-    \item placeholder
-  \end{itemize}
-\end{frame}
+\PlotFrame{6. BAYESIAN PLOT OPTIMIZATION}
+  {placeholder: one line, 1-2 max}
+  {placeholder_plots}
 
 \end{document}

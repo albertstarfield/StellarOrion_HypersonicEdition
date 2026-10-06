@@ -291,15 +291,16 @@ def main() -> int:
     ax1.annotate(
         "IRVE-3 run condition\n%.2f W/cm$^2$" % baseline,
         xy=(v_run_kms, baseline),
-        # Bottom-right in AXES FRACTION: the curve family fans upward to the
+        # Bottom band in AXES FRACTION: the curve family fans upward to the
         # right, so the band below the lowest curve (R_N = 3 m, which reaches
-        # only ~55% height at x > 5.5 km/s) is empty. Anchoring at (0.52, 0.05)
-        # keeps the box entirely inside that band, off the y-tick labels, and
-        # clear of every curve.
-        xytext=(0.52, 0.05),
+        # only ~55% height at x > 5.5 km/s) is empty. The box is RIGHT-
+        # anchored at 0.99 so its edge ends at the axes' right spine: with
+        # left-anchoring it crossed the spine and overlaid panel (b)'s
+        # rotated y-label.
+        xytext=(0.99, 0.04),
         textcoords="axes fraction",
         fontsize=13,
-        ha="left",
+        ha="right",
         va="bottom",
         arrowprops=dict(arrowstyle="->", lw=1.8, color="black"),
         bbox=dict(boxstyle="round,pad=0.35", fc="white", ec="black", lw=1.1),
@@ -336,15 +337,18 @@ def main() -> int:
         zorder=2,
     )
     ax2.annotate(
-        # One line only: the gap between the V = 3 km/s and V = 5 km/s curves
-        # at x = 0.35 m is ~0.8 decades, which easily holds a single-line box
-        # (the old two-line box at y = 0.30 * q fell below the y axis minimum).
+        # One line, AXES FRACTION, right-anchored at 0.70: the dashed
+        # axvline sits at x-frac 0.796 on the log axis (1.5 m within
+        # 0.1-3 m), so a box ending at 0.70 stays fully left of the line,
+        # inside both spines, and the bottom band keeps it off the curves
+        # (which run high on the small-R side and descend to the right).
         "$R_N$ = 1.5 m (IRVE-3)",
         xy=(R_N_BASELINE_M, sg_at_radius(R_N_BASELINE_M, 3.0, solver)),
-        xytext=(0.35, 40.0),
+        xytext=(0.70, 0.03),
+        textcoords="axes fraction",
         fontsize=13,
-        ha="left",
-        va="center",
+        ha="right",
+        va="bottom",
         arrowprops=dict(arrowstyle="->", lw=1.6, color="black"),
         bbox=dict(boxstyle="round,pad=0.35", fc="white", ec="black", lw=1.1),
     )

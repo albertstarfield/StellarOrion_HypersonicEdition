@@ -1,6 +1,0 @@
-/goal Read the previous audit summary compare to rapisarda pdf and add comment reasoning to the code why fay riddell (or perhaps sutton graves selection was wrong? due to wayyy too far away on the validation wise on the August 1st 2026) (and also check the context that we are re-entry on earth Not in MARS, so check the pdf on the context read thoroughly) and why this is? and fix all the issue, and prove it with counter examples and re-audit again, and fix the code, then prove it. (Yes re-audit the simulation basecode again!)
-
-Re-audit again and fix the code Prove it! (gnatprove level=4 -j0) use script/prove.sh, ignore the verifier subsystem of the goal being offline (read code-quality.md)
-until i said stop. DO NOT STOP AS YOU WILL MISSED SOME DETAIL, do audit and fix repeatedly 
-(the program is on folder that have name _program_proc)
-Also find referential and cite it for IRVE-3 LOFTID mission (and what materials are different on us) what are the reference value compare it rapisarda and us. then create table to and coments inside the code)

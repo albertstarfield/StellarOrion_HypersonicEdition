@@ -130,7 +130,7 @@ def style(ax, title: str, xlabel: str, ylabel: str) -> None:
     ax.set_title(title, fontsize=10, pad=8)
     ax.set_xlabel(xlabel, fontsize=9)
     ax.set_ylabel(ylabel, fontsize=9)
-    ax.tick_params(labelsize=8)
+    ax.tick_params(labelsize=9)  # 9pt declared so printed ticks stay >=8pt with margin
     ax.grid(True, which="both", ls=":", lw=0.5, alpha=0.6)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
@@ -273,16 +273,28 @@ def fig_trajectory() -> None:
     ax1.plot(51.818481, 3378.671, "^", ms=8, color=CB[2], mec="black", mew=0.7,
              label="smooth run (off this profile)")
     style(ax1, "Velocity against altitude", "Altitude (km)", "Velocity (m/s)")
-    ax1.legend(fontsize=8, loc="best", frameon=True, framealpha=1.0,
-               facecolor="white", edgecolor="0.7")
 
     ax2.plot(alt, g, "-", lw=1.5, color=CB[0], label="deceleration load")
     ax2.plot(alt[on_idx], g[on_idx], "s", ms=7, color=CB[1], mec="black", mew=0.7)
     ax2.plot(51.818481, 16.833399, "^", ms=8, color=CB[2], mec="black", mew=0.7)
     style(ax2, "Deceleration load against altitude", "Altitude (km)",
           "Deceleration load (g)")
-    ax2.legend(fontsize=8, loc="best", frameon=True, framealpha=1.0,
-               facecolor="white", edgecolor="0.7")
+
+    # ONE legend, drawn BELOW both panels. The previous per-panel loc="best"
+    # legends failed on the rendered page: the left legend covered the y-tick
+    # "4000" (only "40" survived) and a stretch of the velocity curve, and the
+    # right legend sat on the deceleration curve, hiding both limbs of the
+    # peak. A legend outside the data region cannot occlude data or tick
+    # labels by construction (same pattern as fig_heatflux above). FOUR
+    # entries mean TWO legend rows, so the anchor must sit deeper than the
+    # two-entry (one-row) figures: at -0.055 the first legend row rose into
+    # the "Altitude (km)" x-axis labels of both panels on the rendered page.
+    handles, labels = ax1.get_legend_handles_labels()
+    h2, l2 = ax2.get_legend_handles_labels()
+    handles.extend(h2)
+    labels.extend(l2)
+    fig.legend(handles, labels, fontsize=8, loc="lower center", ncol=2,
+               frameon=False, bbox_to_anchor=(0.5, -0.12))
 
     fig.suptitle("One-degree-of-freedom entry trajectory and the two run conditions",
                  fontsize=10)
@@ -356,10 +368,13 @@ def fig_ccd_screen() -> None:
         # the same axial-star point at (R_N 1.5, r_tor 0.21, angle 68 deg) in all
         # three projections, hiding exactly the kind of edge point a design-space
         # screen exists to reveal. One shared legend below the panels replaces
-        # all three and can overlap nothing.
-        if g not in ax.get_legend_handles_labels()[0]:
-            ax.plot([], [], m, ms=8 if m == "*" else 5, ls="none", color=colr, label=g)
+        # all three and can overlap nothing. (A leftover guard that compared a
+        # label string against the HANDLE list used to append a duplicate
+        # "centre (1)" entry to every panel; it is gone.)
     handles, labels = axes[0].get_legend_handles_labels()
+    # Guard: one legend key per CCD group; a duplicate means a stray labelled
+    # artist crept back in and the legend would print the same key twice.
+    assert len(labels) == len(set(labels)) == 3, f"duplicate CCD legend keys: {labels}"
     fig.legend(handles, labels, fontsize=8, loc="lower center", ncol=3,
                frameon=False, bbox_to_anchor=(0.5, -0.10))
     fig.suptitle("Face-centred CCD screen: $N = 2^3 + 2(3) + 1 = 15$ points",
@@ -435,7 +450,7 @@ def fig_gate() -> None:
         ax.legend(fontsize=8, loc="upper right", frameon=True, framealpha=1.0,
                   facecolor="white", edgecolor="0.7")
     ax.set_xticks(xs)
-    ax.set_xticklabels([n for n, _, _ in series], fontsize=8)
+    ax.set_xticklabels([n for n, _, _ in series], fontsize=9)
     style(ax, "Hybrid validation gate: heat load comparison",
           "", "Total heat load (J/cm$^2$)")
     top = max(vals + ([q_target] if q_target else []))

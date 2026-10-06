@@ -987,8 +987,31 @@ package body StellarOrion_Sparta is
        exception when others => null; end;
 
       -- Build and create+start container in one step
+      --  SUCCESS IS NOT "A FILE EXISTS" (fix 2026-10-06).
+      --
+      --  WHY: the previous code did `System (Cmd);` and threw the shell exit
+      --  status away, then set `Success := Count > 0`. So a container that
+      --  DIED mid-run still reported success as long as one dump file existed.
+      --  Measured on run8 (2026-10-06): docker logged
+      --    level=error msg="error waiting for container: unexpected EOF"
+      --  after stats row 1900 of 2200, 20 of 22 surf dumps, zero SPARTA
+      --  completion markers -- and Step 5 still printed
+      --  "SPARTA simulation completed successfully." and graded the run
+      --  VALIDATION PASSED. An aborted run was indistinguishable from a good
+      --  one.
+      --
+      --  AXIOM: a solver run is complete only if (a) the process exited 0 AND
+      --  (b) it produced dump output. Neither alone is sufficient: a clean
+      --  exit with no output means nothing ran, and output with a non-zero
+      --  exit means it was cut off.
+      --  CITATIONS: Plimpton & Gallis (2014), SPARTA DSMC User Manual (dump
+      --    cadence); Docker, Inc. docker run exit status; System_Return above (POSIX system(3) return value).
       declare
-         Cmd : Unbounded_String;
+         Cmd        : Unbounded_String;
+         Exit_Status : Integer := -1;
+         S          : Search_Type;
+         E          : Directory_Entry_Type;
+         Count      : Natural := 0;
       begin
          Append (Cmd, "docker run --rm --name hiad-runner --shm-size 2g ");
          Append (Cmd, "-v " & Cwd & ":/app ");
@@ -1009,17 +1032,10 @@ package body StellarOrion_Sparta is
              Append (Cmd, "spa -in " & Results_Dir & "/in.hiad");
           end if;
          Put_Line ("[SPARTA] Docker Run CMD: " & To_String (Cmd));
-         System (To_String (Cmd));
-      end;
+         Exit_Status := System_Return (To_String (Cmd));
 
-      -- Check for surf files
-      declare
-         S      : Search_Type;
-         E      : Directory_Entry_Type;
-         Count  : Natural := 0;
-      begin
          begin
-             Start_Search (S, Cwd & "/" & Results_Dir, "surf.*.out");
+            Start_Search (S, Cwd & "/" & Results_Dir, "surf.*.out");
             --  Loop invariant: More_Entries drains the completed-search
             --  set one entry per iteration; Count stays within
             --  [0, number of matching files].
@@ -1032,12 +1048,27 @@ package body StellarOrion_Sparta is
             end loop;
             End_Search (S);
          exception when others => null; end;
-         Success := Count > 0;
+
+         Success := (Exit_Status = 0) and then (Count > 0);
+         Put_Line ("[SPARTA] docker exit status = " & Img (Exit_Status) &
+                   ", surf dump files = " & Img (Count));
          if Success then
             Put_Line ("[SPARTA] Complete. Found " & Img (Count) &
                       " surf dump files.");
          else
-            Put_Line ("[SPARTA] No surf dump files found.");
+            Put_Line (Standard_Error,
+                      "[SPARTA] FAILED: docker exit status = " &
+                      Img (Exit_Status) & ", surf dump files = " &
+                      Img (Count) & ".");
+            if Exit_Status /= 0 then
+               Put_Line (Standard_Error,
+                         "[SPARTA]   the container did NOT exit cleanly -- " &
+                         "its output is incomplete and MUST NOT be graded.");
+            end if;
+            if Count = 0 then
+               Put_Line (Standard_Error,
+                         "[SPARTA]   no surf dump files were produced.");
+            end if;
          end if;
       end;
 
