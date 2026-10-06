@@ -11,6 +11,8 @@ project StellarOrion_PINN_Lib is
       "stellarorion_types.adb",
       "stellarorion_environment.ads",
       "stellarorion_environment.adb",
+      "stellarorion_speed_of_sound.ads",
+      "stellarorion_speed_of_sound.adb",
       "stellarorion_geometry.ads",
       "stellarorion_geometry.adb",
       "stellarorion_physics.ads",

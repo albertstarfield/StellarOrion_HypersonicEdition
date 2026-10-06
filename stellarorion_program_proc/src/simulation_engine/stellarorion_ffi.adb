@@ -37,6 +37,7 @@ with StellarOrion_Optimization; use StellarOrion_Optimization;
 with StellarOrion_Physics;     use StellarOrion_Physics;
 with StellarOrion_Postprocessing; use StellarOrion_Postprocessing;
 with StellarOrion_Environment; use StellarOrion_Environment;
+with StellarOrion_Speed_Of_Sound; use StellarOrion_Speed_Of_Sound;
 with Interfaces.C.Strings;
 with Ada.Exceptions;
 
