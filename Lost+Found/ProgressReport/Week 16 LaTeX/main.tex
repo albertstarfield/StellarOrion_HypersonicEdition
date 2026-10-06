@@ -129,18 +129,18 @@
    20 Latin-hypercube seeds, then 50 EI steps.}
   {so_bo_convergence}
 
-% No kriging figure exists. Confirmed twice: a repo-wide search for
-% krig/denois PNG/PDF returns only this deck's own placeholder, and
-%   grep -n "savefig" _proc/src/python/kriging_denoise.py
-% returns nothing -- the module computes but never writes a plot.
-% The placeholder is kept DELIBERATELY rather than borrowing an unrelated
-% convergence figure, which would misattribute what the slide shows.
+% kriging_denoise.png <- _proc/src/ui/uiassets/assets/plots/
+% kriging_denoise_step500.png, drawn by
+% _proc/scripts/render_kriging_panel.py (which calls the real
+% kriging_denoise.denoise_grid and plots ITS output -- never a stand-in).
+% The compute module itself plots nothing by design; rendering is separate.
+% convergence_audit_plot.png remains an unrelated metric-convergence
+% figure and is deliberately NOT used here.
 \PlotFrame{2. KRIGING DENOISING}
   {\MaxTextLines{2}%
-   Denoising runs as pipeline step 2
-   (pipeline\_checkpoint.py, \texttt{grid.2200\_denoised.out}); no figure
-   is produced yet.}
-  {placeholder_kriging}
+   Gaussian-process denoising of the SPARTA cell field, pipeline step 2.
+   Top row raw, bottom row kriged; \rho, T, v and w channels.}
+  {kriging_denoise}
 
 % so_pipeline.png <- fignew_pipeline.png, the end-to-end pipeline diagram
 % drawn by _proc CurrentThesisFinalReport/figures/make_fignew.py
@@ -175,10 +175,11 @@
 % so_topology_before_after.png <- optimization_comparison.png, drawn by
 % _proc/scripts/render_optimization_comparison.py L1007-1008 into
 % _proc/. Two panels: BEFORE (IRVE-3 default) and AFTER (Bayesian optimum).
-\PlotFrame{5. OPTIMIZATION RESULT: TOPOLOGY AND PERFORMANCE}
+\PlotFrame{5. OPTIMIZATION RESULT: TOPOLOGY BEFORE/AFTER}
   {\MaxTextLines{2}%
-   Nose and torus geometry before and after optimisation, both taken from
-   the shipped Ada FFI.}
+   Nose and torus geometry before and after optimisation, both from the
+   shipped Ada FFI: $C_d$ 1.607\textrightarrow1.569, heat load
+   219.1\textrightarrow155.8 J/cm$^2$ ($-28.9\%$).}
   {so_topology_before_after}
 
 % so_bo_3d.png <- bo_optimization_3d.png, drawn by

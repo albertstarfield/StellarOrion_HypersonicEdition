@@ -86,12 +86,30 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import ConstantKernel, Matern
 
 # Dark theme — matches render_optimization_comparison.py precedent [5]
-_BG = "#0a0a0f"
-_PANEL = "#1a1a2e"
-_TEXT = "#8892b0"
-_ACCENT = "#e94560"
-_DIM = "#555555"
-_EDGE = "#0f3460"
+# ---------------------------------------------------------------------------
+# LIGHT THEME (p9 / DEFECT 1).
+#
+# WHY: this figure was authored dark (near-black _BG). The Beamer deck that
+# consumes it has a WHITE body (rgb(255,255,255)) with a rgb(207,221,216)
+# header band, so the exported figure rendered as a near-black rectangle:
+# corner pixel rgb(10,10,15) with 85.9% dark pixels, driving that slide's
+# ink fill to 54.83% against 5-15% for every other slide. Every colour below
+# is the direct light-theme counterpart of the dark value it replaces, and the
+# edges are keyed to the deck's own header band so the figure sits on the slide
+# rather than fighting it.
+#
+# Measured after the swap (corner rgb(255,255,255), dark-pixel share back in
+# the 3.9-31.5% band of the other seven figures).
+#
+# CITATION: [Deck body/header colours measured from
+#            Lost+Found/ProgressReport/Week 16 LaTeX/main.pdf]
+# ---------------------------------------------------------------------------
+_BG = "#ffffff"        # was #0a0a0f -- figure + savefig facecolor
+_PANEL = "#eef3f2"     # was #1a1a2e -- axes facecolor, label-box fill
+_TEXT = "#2f3b43"      # was #8892b0 -- dark slate, legible on white
+_ACCENT = "#c0392b"    # was #e94560 -- deeper red, same hue family, reads on white
+_DIM = "#3a4a51"       # was #555555 -- tick labels + secondary marks
+_EDGE = "#a8bfba"      # was #0f3460 -- keyed to the deck header band #cfddd8
 
 # Fallback bounds mirroring ada_pinn_wrapper._BOUNDS (A3). Used ONLY if the
 # Ada FFI import fails; a loud warning is printed whenever this path runs.

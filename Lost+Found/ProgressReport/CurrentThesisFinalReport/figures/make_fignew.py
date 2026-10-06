@@ -56,6 +56,7 @@ from PIL import Image  # noqa: E402
 # added first so the import also works when a probe imports this file
 # from another directory.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import opt_data  # noqa: E402  sibling module, unique committed-campaign loader
 import print_fit as pf  # noqa: E402
 
 # figures/ -> CurrentThesisFinalReport -> ProgressReport -> Lost+Found -> repo root
@@ -71,12 +72,10 @@ RESULTS = ROOT / "stellarorion_program_proc" / "results"
 # 29 to 50 between two minutes, with cost 1.602195 then 1.608508). The thesis
 # reports the values from the COMMITTED revision, verified against the DSMC
 # validation gate that was actually run with the nose radius override set to
-# 2.971440. So the figure must
-# be generated from that same committed revision, otherwise the figure and the
-# text would contradict each other. `git show <rev>:<path>` is used for exactly
-# this reason, and the revision is asserted below rather than hard-coded twice.
-OPTJSON_REL = "stellarorion_program_proc/src/python/hiad_optimization_results.json"
-OPTJSON_REV = "bdddb47"
+# 2.971440. So the figure must be generated from that same committed revision,
+# otherwise the figure and the text would contradict each other. The path, the
+# revision, the blob fetch and the assertion all now live in opt_data, which is
+# the single owner of that rule, so nothing here repeats the commit id.
 
 # Paul Tol's colourblind-safe qualitative palette.
 CB = ["#004488", "#DDAA33", "#BB5566", "#228833", "#AA4499", "#66CCEE"]
@@ -130,25 +129,27 @@ TICK_PT = 10.0                          # tick labels carry no scripts
 
 
 def load_committed_opt() -> dict:
-    """Return the optimization results as COMMITTED, matching the thesis text."""
-    import subprocess
-    res = subprocess.run(["git", "show", f"{OPTJSON_REV}:{OPTJSON_REL}"],
-                         cwd=ROOT, capture_output=True, text=True)
-    if res.returncode != 0:
-        raise RuntimeError(f"git show {OPTJSON_REV}:{OPTJSON_REL} failed: {res.stderr.strip()}")
-    data = json.loads(res.stdout)
-    hist = data["history"]
-    costs = [float(r["cost"]) for r in hist]
-    argmin = min(range(len(costs)), key=lambda i: costs[i])
-    opt = data["optimized"]
-    print(f"    [committed {OPTJSON_REV}] argmin idx={argmin} cost={costs[argmin]:.6f} "
-          f"R_N={opt['R_N']:.6f} r_tor={opt['r_tor']:.6f} Q={opt['total_heat_load_Jcm2']:.4f}")
-    if abs(costs[argmin] - 1.605054) > 1e-4 or argmin != 37:
-        raise RuntimeError(
-            f"committed JSON does not match the thesis (expected idx 37 cost 1.605054, "
-            f"got idx {argmin} cost {costs[argmin]:.6f}); refusing to plot a figure "
-            f"that would contradict the text")
-    return data
+    """Return the optimization results as COMMITTED, matching the thesis text.
+
+    Parameters:
+        none.
+
+    Returns:
+        the parsed payload of the committed results file.
+
+    Raises:
+        RuntimeError from opt_data.load_committed when the committed revision
+        does not match the thesis, or when git cannot produce the blob.
+
+    WHY THIS IS A DELEGATION AND NOT A COPY
+        The loader asserts that the campaign agrees with the printed text. That
+        assertion is a numeric guard, and a duplicated guard is worse than no
+        guard because the two copies can drift and one figure can then be drawn
+        from data the other would refuse. opt_data is now the single owner of
+        the committed-revision rule and of the sixteen printed claims, so this
+        function only forwards.
+    """
+    return opt_data.load_committed()
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:

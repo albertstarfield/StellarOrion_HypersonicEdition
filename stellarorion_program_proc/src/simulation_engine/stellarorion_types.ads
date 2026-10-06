@@ -33,9 +33,32 @@ package StellarOrion_Types is
    --  Physical Constants
    -- ===================================================================
 
-   --  Sutton-Graves stagnation-point heating coefficient [W/m^2 / (sqrt(kg/m^3)/m * (m/s)^3)]
-   --  Source: NASA TR R-376, Table 1  (Sutton & Graves, 1972)
-   C_SG : constant Float := 1.83e-4;
+   --  Sutton-Graves stagnation-point heating coefficient
+   --  [W/m^2 / (sqrt(kg/m^3) / m * (m/s)^3)].
+   --
+   --  VALUE 1.7415e-4 IS THE EARTH-AIR VALUE.  This constant was 1.83e-4
+   --  while citing this same table, which is a false citation: TR R-376
+   --  gives k = 1.7415e-4 for Earth and k = 1.9027e-4 for Mars, and
+   --  1.83e-4 comes from the *Mars* gas mixture (97% CO2 / 3% N2).
+   --    [Citation: Sutton & Graves, NASA TR R-376, Nov. 1971, Table 1 --
+   --       k = 1.7415e-4 (Earth), k = 1.9027e-4 (Mars)]
+   --    [Citation: NASA TFAWS Aerothermodynamics Course, 2012 --
+   --       "k = 1.7415e-4 (Earth) k = 1.9027e-4 (Mars)"]
+   --    [Citation: NASA NTRS 20060004824, 2005 --
+   --       "k = 1.74153x10-4 (For Earth)"]
+   --    [Citation: NASA NTRS 20200002354, 2018 -- Eq. (2) uses 1.83e-4
+   --       explicitly for a 97% CO2, 3% N2 (Mars) mixture]
+   --
+   --  WHY THIS MATTERS: the 1.83e-4 value is the *Mars* coefficient, and
+   --  this project simulates Earth entry (IRVE-3, 51.8 km, 3378 m/s).
+   --  Because q scales as sqrt(k), using 1.83e-4 over-predicts every
+   --  stagnation heat flux by (1.83/1.7415)^0.5 = 2.44 %.  That error
+   --  propagated into Q_target (174.1374 J/cm^2), the validation gate and
+   --  the whole optimisation objective.
+   --
+   --  Any duplicate of this constant elsewhere in the project MUST be
+   --  changed in lockstep -- see StellarOrion_Pinn_Trajectory.C_SG.
+   C_SG : constant Float := 1.7415e-4;
 
    --  Prandtl number for air (frozen chemistry, T < 1500 K)
    --  Source: Anderson (2006) Table A.1; standard aerodynamics reference

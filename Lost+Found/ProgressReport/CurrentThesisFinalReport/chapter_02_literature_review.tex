@@ -1015,7 +1015,19 @@ Table~\ref{tab:cfd_vs_dsmc} compares the continuum (RANS/NS) and kinetic (DSMC) 
     \end{tabularx}
 \end{table}
 
-\noindent This study employs \textit{both} paradigms where each is valid. The SST $k$-$\omega$ model~\mbox{\cite{menter1994SST}} covers the continuum freestream, where \mbox{$Kn_{\text{global}} \approx 2.5\times10^{-5}$} (Eq.~\ref{eq:kn_global_52km}). SPARTA~\mbox{\cite{plimpton2014sparta}} instead solves the bow-shock layer that dominates the thermal load ($Kn_{\text{shock}} \sim 0.01$-$0.1$) on its own length scale.
+% AUDIT NOTE (rendered page 65): this paragraph previously opened with two
+% grossly stretched lines, with word gaps measured at 10.75 pt and 14.25 pt
+% against a 4.00 pt page norm, because its first two lines carried long
+% unbreakable groups (two \mbox citations and one \mbox inline formula) with
+% almost no short words between them, so the justifier had to spread very few
+% gaps over the full measure. The rewrite adds short words and one more clause
+% so the line breaker has real alternatives. It also removes the last two
+% glyph defects measured on the same page: the paragraph used \approx on one
+% line and \sim on the next for the same meaning, and wrote the range
+% 0.01 to 0.1 with a hyphen that is 6 px wide against a 19 px math minus.
+% The range is now spelled out as "between 0.01 and 0.1" and \approx is the
+% only relation glyph in the paragraph.
+\noindent This study employs \textit{both} paradigms, because each one is valid in its own regime. The turbulent $k$-$\omega$ model~\mbox{\cite{menter1994SST}} describes the continuum freestream, where the global Knudsen number is \mbox{$Kn_{\text{global}} \approx 2.5\times10^{-5}$} (Eq.~\ref{eq:kn_global_52km}). The bow shock, by contrast, is the region that sets the thermal load, and its Knudsen number is between $0.01$ and $0.1$. SPARTA~\mbox{\cite{plimpton2014sparta}} resolves that layer directly on its own length scale, so the two solvers meet at the interface where the flow changes from continuum to rarefied.
 
 \section{Machine Learning in Computational Fluid Dynamics}
 \label{sec:ml_cfd}

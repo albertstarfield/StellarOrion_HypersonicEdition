@@ -141,64 +141,119 @@ fi
 # ─────────────────────────────────────────────────────────────────────
 # Phase 3: Python Sidecar Coverage (optional)
 # ─────────────────────────────────────────────────────────────────────
+# F76: THE OUTCOME IS A VALUE, NOT A SIDE EFFECT.
+# Before: nothing recorded whether the phase ran, passed or failed. The summary
+# printed a report line purely because the flag was REQUESTED -- advertising
+# obj/python_html/ that the fallback path never produced -- and the final
+# "All verification steps completed successfully." was unconditional. So
+# "Python coverage: FAILED" was immediately followed by success: the reported
+# symptom. Now every failure mode sets PYTHON_COVERAGE_STATUS, the single gate
+# PYTHON_COVERAGE_FAILED decides the exit, and the script exits non-zero.
+PYTHON_COVERAGE_STATUS="NOT RUN"
+PYTHON_COVERAGE_FAILED=false
+
 if $RUN_PYTHON_COVERAGE; then
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "================================================================"
     echo "Phase 3: Python Sidecar Coverage (coverage.py)"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "================================================================"
     echo ""
 
     PYTHON_SRC="$SCRIPT_DIR/src/python"
-    PYTHON_TESTS="$SCRIPT_DIR/tests/python"
+    # F76(1): WAS "$SCRIPT_DIR/tests/python" -- a directory that DOES NOT
+    # EXIST. Both test modules live directly in tests/:
+    #   tests/test_run_pipeline.py
+    #   tests/test_validation_pipeline_regressions.py
+    # With the old value discovery could never find a test, so
+    # --python-coverage could never run the project's suite.
+    PYTHON_TESTS="$SCRIPT_DIR/tests"
 
-    if [ -d "$PYTHON_SRC" ]; then
-        echo "Running Python coverage on $PYTHON_SRC..."
+    # F76(2): WAS bare `python3` (the system interpreter, /opt/homebrew/bin),
+    # which is neither this project's venv nor a guarantee that `coverage` is
+    # installed -- and "pip install coverage --quiet 2>/dev/null || true" hid
+    # that too. The project venv mandate says every Python dependency lives in
+    # venv_validation/; this phase now uses exactly that interpreter.
+    PYTHON_BIN="$SCRIPT_DIR/venv_validation/bin/python3"
+
+    if [ ! -d "$PYTHON_SRC" ]; then
+        echo "FATAL: Python source directory not found: $PYTHON_SRC" >&2
+        PYTHON_COVERAGE_STATUS="FAILED (source directory missing)"
+        PYTHON_COVERAGE_FAILED=true
+    elif [ ! -d "$PYTHON_TESTS" ]; then
+        echo "FATAL: Python test directory not found: $PYTHON_TESTS" >&2
+        PYTHON_COVERAGE_STATUS="FAILED (test directory missing)"
+        PYTHON_COVERAGE_FAILED=true
+    elif [ ! -x "$PYTHON_BIN" ]; then
+        echo "FATAL: project venv interpreter not found: $PYTHON_BIN" >&2
+        PYTHON_COVERAGE_STATUS="FAILED (venv interpreter missing)"
+        PYTHON_COVERAGE_FAILED=true
+    else
+        echo "Interpreter : $PYTHON_BIN"
+        echo "Source      : $PYTHON_SRC"
+        echo "Tests       : $PYTHON_TESTS"
         echo ""
 
-        # Ensure coverage is installed
-        pip install coverage --quiet 2>/dev/null || true
-
-        # Run coverage on Python sidecar
-        # [Citation: coverage.py v7.6 — https://coverage.readthedocs.io/en/stable/]
-        if python3 -m coverage run \
-            --source="$PYTHON_SRC" \
-            --branch \
-            --omit="*/tests/*,*/__pycache__/*" \
-            -m pytest "$PYTHON_TESTS" -v --tb=short 2>/dev/null; then
-
-            python3 -m coverage report --show-missing
-            python3 -m coverage html -d obj/python_html
+        # F76(2) cont: THE TESTS ARE unittest-NATIVE, NOT pytest-NATIVE.
+        # Both modules derive from unittest.TestCase, and this venv has NO
+        # pytest ("python3 -m pytest" -> "No module named pytest"). The old
+        # "-m pytest ... 2>/dev/null" therefore ALWAYS failed, and the
+        # 2>/dev/null on the failing side of the if discarded exactly the
+        # diagnostic that would have said so. unittest discover is the runner
+        # these tests are written for; measured to run all 49 green here.
+        # NOTE: the runner's output is deliberately NOT suppressed.
+        # [Citation: coverage.py 7.x -- https://coverage.readthedocs.io/]
+        # [Citation: Python 3.12 stdlib unittest -- test discovery protocol]
+        echo "Running: coverage run --branch -m unittest discover -s tests ..."
+        echo ""
+        if "$PYTHON_BIN" -m coverage run \
+                --source="$PYTHON_SRC" \
+                --branch \
+                --omit="*/tests/*,*/__pycache__/*" \
+                -m unittest discover -s "$PYTHON_TESTS" -t "$SCRIPT_DIR"; then
+            "$PYTHON_BIN" -m coverage report --show-missing || true
+            "$PYTHON_BIN" -m coverage html -d obj/python_html || true
             echo ""
             echo "Python coverage: PASSED"
             echo "HTML report: obj/python_html/index.html"
+            PYTHON_COVERAGE_STATUS="PASSED"
         else
-            echo ""
-            echo "Python tests had failures or no tests found."
-            echo "Attempting standalone coverage analysis..."
-            python3 -m coverage run --source="$PYTHON_SRC" --branch \
-                -c "import os; [__import__('importlib').import_module(os.path.splitext(f)[0].replace('/','.')) for f in __import__('glob').glob('$PYTHON_SRC/**/*.py', recursive=True)]" 2>/dev/null || true
-            python3 -m coverage report 2>/dev/null || echo "No Python coverage data available."
+            # F76(3) cont: the old fallback replaced a failed suite with an
+            # import-only measurement ("-c import ... for every .py") --
+            # measuring IMPORTS, not tests -- and then printed nothing at all.
+            # Publishing a coverage figure for a suite that did not pass is
+            # worse than publishing none, so nothing is published here.
+            echo "" >&2
+            echo "Python coverage: FAILED -- the unittest suite did not pass." >&2
+            echo "  No coverage figure is published for a suite that did not" >&2
+            echo "  pass. The previous behaviour replaced a failing run with" >&2
+            echo "  an import-only measurement and then reported success." >&2
+            PYTHON_COVERAGE_STATUS="FAILED (test suite did not pass)"
+            PYTHON_COVERAGE_FAILED=true
         fi
-    else
-        echo "Python source directory not found: $PYTHON_SRC"
-        echo "Skipping Python coverage."
     fi
 
     echo ""
 fi
 
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 # Summary
-# ─────────────────────────━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+# ---------------------------------------------------------------------
+echo "================================================================"
 echo "Verification Summary"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "================================================================"
 echo "  GNATprove Level $LEVEL:  PASSED"
 if $RUN_COVERAGE; then
     echo "  gnatcov coverage:       Report in obj/gcovr/"
 fi
-if $RUN_PYTHON_COVERAGE; then
-    echo "  Python coverage:        Report in obj/python_html/"
-fi
+# F76(3): the line now states the OUTCOME. Previously it printed whenever the
+# flag was set, advertising a report that the fallback never produced.
+printf '  Python coverage:        %s\n' "$PYTHON_COVERAGE_STATUS"
 echo ""
+
+# F76(3) cont: success is now a conclusion, not a constant.
+if [ "$PYTHON_COVERAGE_FAILED" = "true" ]; then
+    echo "VERIFICATION FAILED -- the steps above did not all succeed."
+    echo "================================================================"
+    exit 1
+fi
 echo "All verification steps completed successfully."
-echo "========================================================================"
+echo "================================================================"

@@ -94,6 +94,25 @@ FILL_PART = "#85C1E9"    # light blue, partial coverage
 FILL_NONE = "#F2F4F4"    # off white, not covered
 HILITE = "#E74C3C"       # dashed red outline around the This Work row
 
+# Highlight inset, in inches. The dashed outline is drawn INSIDE the This Work
+# row by this amount on all four sides. A rendered-page audit of the previous
+# revision measured the outline straddling its row: the top edge put 1008 red
+# pixels inside the Schwartzentruber row above and the bottom edge ran 5 px past
+# the matrix into the legend. An inset outline cannot reach a neighbouring row
+# or the legend whatever the stroke width, so the box can only ever mean this
+# row.
+HL_INSET = 0.020
+
+# Legend placement, in inches.
+# LEGEND_GAP is the clear white gutter between the matrix bottom gridline and
+# the top of the legend band. The previous revision placed the legend centre
+# only 0.07 in below the matrix while the swatch half height is 0.11 in, so the
+# swatch reached back up into the matrix: the audit measured a 0 px gap and 971
+# red pixels of the highlight stroke striking the legend text. A gutter that
+# exceeds the swatch half height cannot collide with anything.
+LEGEND_GAP = 0.26
+LEGEND_BAND = 0.26
+
 # Banned dash checking lives in print_fit so that every generator applies the
 # same rule; see pf.DASHES for the code point construction.
 
@@ -228,8 +247,6 @@ def build() -> plt.Figure:
     margin = 0.05
     title_h = 0.58
     row_h = 0.46
-    legend_h = 0.26
-    line_pitch = 0.095
     title_lines = ("Literature Review: Coverage of Physical",
                    "Phenomena and Methodology")
 
@@ -245,8 +262,10 @@ def build() -> plt.Figure:
             f"padding; widen the canvas or shorten the labels")
 
     matrix_h = row_h * len(ROWS)
-    height = (margin + title_h + 0.06 + header_h + 0.05 + matrix_h + 0.20
-              + legend_h + margin)
+    # The legend gutter is part of the height budget, so the band below the
+    # matrix is exactly LEGEND_GAP plus one legend band.
+    height = (margin + title_h + 0.06 + header_h + 0.05 + matrix_h
+              + LEGEND_GAP + LEGEND_BAND + margin)
 
     print(f"  canvas {PRINT_W_IN:.3f} x {height:.3f} in   label column {label_w:.3f} in"
           f"   header band {header_h:.3f} in   column {col_w:.3f} in")
@@ -272,12 +291,18 @@ def build() -> plt.Figure:
     mx0 = margin + label_w + 0.08
     mark_r = 0.33 * min(col_w, row_h)
 
+    # One Text per header carrying both lines, so each header is laid out as a
+    # single rotated block. Two separate Text objects rotated 90 degrees are
+    # centred on their own anchor boxes, so an offset applied along x lands
+    # partly along the reading direction as well as across it. The audit of the
+    # previous revision measured the two lines diagonally staggered with only a
+    # 1 px clear gap between them, which is legible but is not the two-line
+    # layout the spec asks for.
     for j, (line1, line2) in enumerate(COLUMNS):
         cx = mx0 + (j + 0.5) * col_w
-        for k, line in enumerate((line1, line2)):
-            ax.text(cx + (k - 0.5) * line_pitch, header_mid, line,
-                    rotation=90.0, ha="center", va="center", fontsize=FONT_BODY,
-                    fontweight="bold", color=INK)
+        ax.text(cx, header_mid, line1 + "\n" + line2, rotation=90.0,
+                ha="center", va="center", linespacing=1.30, fontsize=FONT_BODY,
+                fontweight="bold", color=INK)
 
     for i, (line1, line2) in enumerate(ROWS):
         y1 = matrix_top - i * row_h
@@ -294,10 +319,17 @@ def build() -> plt.Figure:
                                    edgecolor=INK, linewidth=0.8, zorder=2))
             draw_mark(ax, state, cx, cy, mark_r)
 
+    # The dashed red highlight is drawn fully INSIDE the This Work row, inset by
+    # HL_INSET on every side. A rendered-page audit of the previous revision
+    # measured the outline straddling the row: 1008 red pixels landed inside the
+    # Schwartzentruber row above and the bottom edge ran 5 px past the matrix
+    # into the legend. An inset outline cannot touch a neighbouring row or the
+    # legend, whatever the stroke width, so the box can only ever mean
+    # "this row".
     last = len(ROWS) - 1
-    hl_y1 = matrix_top - last * row_h + 0.035
-    hl_y0 = matrix_top - (last + 1) * row_h - 0.035
-    ax.add_patch(Rectangle((mx0 - 0.035, hl_y0), matrix_w + 0.07,
+    hl_y1 = matrix_top - last * row_h - HL_INSET
+    hl_y0 = matrix_top - (last + 1) * row_h + HL_INSET
+    ax.add_patch(Rectangle((mx0 + HL_INSET, hl_y0), matrix_w - 2.0 * HL_INSET,
                            hl_y1 - hl_y0, facecolor="none", edgecolor=HILITE,
                            linewidth=1.6, linestyle=(0, (4.0, 2.0)), zorder=6))
 
@@ -309,7 +341,9 @@ def build() -> plt.Figure:
         raise RuntimeError(
             f"legend needs {total:.3f} in but only {PRINT_W_IN - 2.0 * margin:.3f} in "
             f"is available; the key must stay on one line to match the caption")
-    legend_y = matrix_top - matrix_h - 0.20 + legend_h / 2.0
+    # The legend centre sits LEGEND_GAP below the matrix bottom gridline, so
+    # the whole legend band is clear of the matrix and of the highlight box.
+    legend_y = matrix_top - matrix_h - LEGEND_GAP
     x = margin + (PRINT_W_IN - 2.0 * margin - total) / 2.0
     for (text, state), w in zip(LEGEND, widths):
         ax.add_patch(Rectangle((x, legend_y - swatch / 2.0), swatch, swatch,
@@ -320,6 +354,18 @@ def build() -> plt.Figure:
         ax.text(x + swatch + 0.06, legend_y, text, ha="left", va="center",
                 fontsize=FONT_BODY, color="#000000")
         x += w + gap
+    # Measured guarantee, not an assumption. gutter is the clear white space in
+    # inches between the matrix bottom gridline and the top of the legend
+    # swatches, positive when the legend is below the matrix. The rendered-page
+    # audit of the previous revision measured 0 px here and 971 red pixels of
+    # the highlight stroke striking the legend text; a gutter of at least
+    # 0.10 in is 7.2 pt, comfortably above the 6 pt the audit asked for.
+    swatch_top = legend_y + swatch / 2.0
+    gutter = (matrix_top - matrix_h) - swatch_top
+    if gutter < 0.10:
+        raise RuntimeError(
+            f"legend swatches clear the matrix by only {gutter:.3f} in, which is "
+            f"below the 0.100 in minimum; raise LEGEND_GAP")
     pf.assert_inside_canvas(fig)
     return fig
 

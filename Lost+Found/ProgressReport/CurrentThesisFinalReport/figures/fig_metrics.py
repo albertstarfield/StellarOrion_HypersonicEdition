@@ -3,10 +3,11 @@
 
 PURPOSE
 =======
-Two generators (generate_sutton_graves_parametric.py and make_fignew.py) must
-prove, before they ship, that no two printed labels collide and that no printed
-glyph falls below the 8 pt legibility floor. Both need the same arithmetic, so
-it lives here once instead of being copied into each script.
+Every figure generator in this directory must prove, before it ships, that no
+two printed labels collide, that no printed glyph falls below the 8 pt
+legibility floor, and that nothing a reader must read is printed outside the
+space the layout reserved for it. All of those need the same arithmetic, so it
+lives here once instead of being copied into each script.
 
 WHY A LIBRARY AND NOT A LOOK AT THE PNG
 =======================================
@@ -26,6 +27,15 @@ A2. The printed size of a declared point size is `declared * scale`, where
     make_fignew.save() prints, so the two can never disagree.
 A3. A mathtext sub or superscript prints at SHRINK_FACTOR times its parent, so
     a string carrying one cannot be judged by its parent size alone.
+A4. Two printed labels are legible together if and only if their bounding boxes
+    are disjoint, so a positive box overlap is the collision and not a proxy
+    for it. Tick-gap tests cannot see this class at all: they compare a tick to
+    its neighbour, while a legend title over an axis label, or a panel title
+    over its own last word, involves two artists that no gap test pairs.
+A5. An artist placed by an anchor is placed by that anchor, not by its extent,
+    so a label can be anchored well inside a panel and still print outside it.
+    The reserved space is the container rectangle, so the test is against the
+    container and not against the anchor.
 
 THEORIES
 ========
@@ -36,12 +46,20 @@ T2. An arrowhead is a filled patch of known size, so a curve is occluded only if
     a curve passes within one arrowhead of the arrow target. Measuring the
     point-to-polyline distance therefore settles occlusion without inspecting
     pixels.
+T3. By A4, an all-pairs box test over the visible non-empty text of a figure is
+    a complete collision test, and it costs one draw, so there is no reason for
+    a generator to test only the pairs it happens to know about.
+T4. By A5, containment must be tested per container. An annotation frame is
+    contained in its own axes; a legend is contained in the dedicated cell the
+    gridspec gave it. Both are the same arithmetic against a different rectangle.
 
 APPLICATIONS
 ============
-A1/A2 are used by both generators before their save() call. T1 is used to gate
-the gate-figure category labels and the panel (b) radius ticks. T2 is used to
-prove that the panel (b) annotation arrow does not cover the V = 3 curve.
+A1/A2 are used by every generator before its save() call. T1 is used to gate the
+gate-figure category labels and the panel (b) radius ticks. T2 proves that the
+panel (b) annotation arrow does not cover the V = 3 curve. T3 and T4 gate every
+other generator and are the checks whose absence let a legend title overprint an
+axis label and an annotation frame cross a spine on a rendered page.
 
 CITATIONS
 =========
@@ -274,3 +292,155 @@ def min_distance_to_lines_pt(
     if best is None:
         raise RuntimeError("no eligible line to measure a distance against")
     return best * 72.0 / dpi * scale, best_label
+
+
+def text_overlaps_pt(
+    fig: Any, scale: float, min_overlap_pt: float = 3.0
+) -> list[tuple[str, str, float, float]]:
+    """Return every pair of printed text labels whose bounding boxes overlap.
+
+    AXIOM A4: two printed labels are legible together if and only if their
+    bounding boxes are disjoint, so a positive overlap is the collision itself
+    rather than a proxy for it. This is the guard the battery lacked, and its
+    absence let a rendered page carry a legend title struck through an axis
+    label, a panel title overprinted on its own last word, and two neighbouring
+    axis labels separated by a single white column, all while every tick-gap
+    and text-size check passed.
+
+    AXIOM A6 (why the default tolerance is 3 pt): a matplotlib text extent
+    includes the font's full ascent and descent, not the inked glyphs, so two
+    labels on neighbouring rows report a few points of box overlap while their
+    glyphs are plainly separated. At 13 pt Times the descent allowance is about
+    3 pt, so ``min_overlap_pt`` defaults to 3.0 and sub-3 pt overlaps are
+    reported as none. The exact spacing of labels that are meant to be adjacent
+    is measured by x_tick_label_gaps_pt instead, which is exact because those
+    labels share one row. This test is for the pairs no gap test pairs at all,
+    namely a legend title against an axis label and an annotation against a
+    tick label.
+
+    :param fig: the figure to scan; every visible non-empty Text is tested.
+    :param scale: placement scale from effective_scale.
+    :param min_overlap_pt: ignore pairs whose overlap in either direction is
+        below this many printed points.
+    :returns: list of (text_a, text_b, overlap width pt, overlap height pt)
+        sorted by the smaller overlap, largest first.
+    :rtype: list[tuple[str, str, float, float]]
+    """
+    import matplotlib
+
+    rend = renderer_of(fig)
+    per_pt = 72.0 / float(fig.dpi) * scale
+    boxes = []
+    for artist in fig.findobj(matplotlib.text.Text):
+        if not artist.get_visible():
+            continue
+        content = artist.get_text()
+        if not content.strip():
+            continue
+        boxes.append((artist.get_window_extent(renderer=rend), content))
+    out: list[tuple[str, str, float, float]] = []
+    for first in range(len(boxes)):
+        for second in range(first + 1, len(boxes)):
+            box_a, text_a = boxes[first]
+            box_b, text_b = boxes[second]
+            overlap_x = min(box_a.x1, box_b.x1) - max(box_a.x0, box_b.x0)
+            overlap_y = min(box_a.y1, box_b.y1) - max(box_a.y0, box_b.y0)
+            if overlap_x <= 0.0 or overlap_y <= 0.0:
+                continue
+            width_pt = overlap_x * per_pt
+            height_pt = overlap_y * per_pt
+            if min(width_pt, height_pt) < min_overlap_pt:
+                continue
+            out.append((text_a, text_b, width_pt, height_pt))
+    out.sort(key=lambda row: -min(row[2], row[3]))
+    return out
+
+
+def annotation_boxes_inside_axes_pt(
+    ax: Any, fig: Any, scale: float, tol_pt: float = 0.0
+) -> list[tuple[str, dict[str, float]]]:
+    """Return every annotation on ``ax`` whose framed box leaves the axes.
+
+    An annotation positioned in axes fraction is placed by its anchor, not by
+    its width, so a long label anchored well inside the axes can still stick
+    out of the left or right spine. On a rendered page that reads as a label
+    printed across the neighbouring panel. Only artists that actually carry a
+    frame patch are tested, because an unframed annotation has no box to leave.
+
+    :param ax: the axes that owns the annotations.
+    :param fig: the parent figure, needed for its dpi and renderer.
+    :param scale: placement scale from effective_scale.
+    :param tol_pt: how far outside the axes rectangle a box may reach, in
+        printed points.
+    :returns: list of (annotation text, {side: overflow in printed pt}) for
+        every box that exceeds the tolerance.
+    :rtype: list[tuple[str, dict[str, float]]]
+    """
+    rend = renderer_of(fig)
+    per_pt = 72.0 / float(fig.dpi) * scale
+    frame = ax.get_window_extent(render=rend)
+    out: list[tuple[str, dict[str, float]]] = []
+    for artist in ax.texts:
+        if not artist.get_visible():
+            continue
+        patch = artist.get_bbox_patch()
+        if patch is None:
+            continue
+        box = patch.get_window_extent(renderer=rend)
+        over = {}
+        for side, amount in (
+            ("left", frame.x0 - box.x0),
+            ("right", box.x1 - frame.x1),
+            ("bottom", frame.y0 - box.y0),
+            ("top", box.y1 - frame.y1),
+        ):
+            value = amount * per_pt
+            if value > tol_pt:
+                over[side] = value
+        if over:
+            out.append((artist.get_text(), over))
+    return out
+
+
+def legend_boxes_inside_axes_pt(
+    ax: Any, fig: Any, scale: float, tol_pt: float = 0.0
+) -> list[tuple[str, dict[str, float]]]:
+    """Return every legend on ``ax`` whose printed box leaves the axes.
+
+    This is the dedicated-cell case: a legend placed in its own axes with
+    ``axis("off")`` must stay inside that cell, because the cell is the whole
+    space the layout reserved for it. Measured on a rendered page, a legend
+    wider than its cell printed over the axis label of the panel above.
+
+    :param ax: the axes whose legends are measured.
+    :param fig: the parent figure, needed for its dpi and renderer.
+    :param scale: placement scale from effective_scale.
+    :param tol_pt: how far outside the axes rectangle a legend may reach, in
+        printed points.
+    :returns: list of (legend label, {side: overflow in printed pt}).
+    :rtype: list[tuple[str, dict[str, float]]]
+    """
+    import matplotlib
+
+    rend = renderer_of(fig)
+    per_pt = 72.0 / float(fig.dpi) * scale
+    frame = ax.get_window_extent(render=rend)
+    out: list[tuple[str, dict[str, float]]] = []
+    for legend in ax.findobj(matplotlib.legend.Legend):
+        if not legend.get_visible():
+            continue
+        box = legend.get_window_extent(renderer=rend)
+        over = {}
+        for side, amount in (
+            ("left", frame.x0 - box.x0),
+            ("right", box.x1 - frame.x1),
+            ("bottom", frame.y0 - box.y0),
+            ("top", box.y1 - frame.y1),
+        ):
+            value = amount * per_pt
+            if value > tol_pt:
+                over[side] = value
+        if over:
+            entries = " | ".join(t.get_text() for t in legend.get_texts())
+            out.append((entries, over))
+    return out

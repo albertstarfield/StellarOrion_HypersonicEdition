@@ -945,7 +945,7 @@ def _phase3_ada_build(verbose: bool) -> None:
 # Phase 4: Launch
 
 
-def _start_sidecar(port: int) -> subprocess.Popen[bytes] | None:  # nosec: EXTERNAL_CALL_UNHANDLED — type annotation only, no security-sensitive operations
+def _start_sidecar(port: int) -> subprocess.Popen[bytes] | None:  # nosec: EXTERNAL_CALL_UNHANDLED -- spawn failures are caught below and the child is terminated in the caller's finally block
     """Start the sidecar HTTP server (sidecar_ui.py) in background.
 
     Returns the Popen handle on success, or None on failure.
@@ -963,8 +963,34 @@ def _start_sidecar(port: int) -> subprocess.Popen[bytes] | None:  # nosec: EXTER
     cmd = [str(_VENV_PYTHON), str(_SIDECAR_SERVER), "--port", str(port)]
     # CITATIONS: CWE-252 (Unchecked Return Value), CWE-835 (Unreachable Exit),
     #   CWE-755 (Exception Handling), MISRA C:2012 Dir 4.1.
+    # F77 -- HONEST SUPPRESSION, REPLACING A FABRICATED ONE.
+    #
+    # The original comment on the subprocess.Popen() line below read
+    #   # nosec: EXTERNAL_CALL_UNHANDLED -- verified safe by prove.sh
+    # That citation was FABRICATED and has been removed: prove.sh invokes no
+    # security analyser at all (`grep -c bandit prove.sh` -> 0; the only
+    # executables it names are coverage, gnatcov, python3, alr, gnatprove,
+    # pytest and pip), so it cannot have produced that evidence.
+    #
+    # A suppression is nevertheless required here, for the reason actually
+    # measured.  Removing the comment made the verifier report a SECOND issue
+    # on the same line:
+    #     [HIGH] RESOURCE_LEAK -- subprocess.Popen without timeout can hang
+    #     indefinitely, consuming resources and blocking the process.
+    # That half of the message is a FALSE POSITIVE here: this Popen is a
+    # deliberate long-lived background HTTP server, which a timeout would
+    # break, and the child is NOT leaked -- the caller stores the handle in
+    # `sidecar_proc` and shuts it down in a finally block
+    # (terminate() -> wait(timeout=5) -> kill()).  (Corrected: an earlier
+    # review of mine claimed the child was orphaned; that was a wrong-grep
+    # error -- `grep -n "_start_sidecar"` misses the cleanup, which is keyed
+    # on the variable name `sidecar_proc`.)
+    #
+    # NOTE: in this verifier a `nosec` suppresses EVERY issue on its line, not
+    # just the category it names, so the category named here must be the
+    # truthful one -- otherwise it silently hides the next finding here.
     try:
-        proc = subprocess.Popen(  # nosec: EXTERNAL_CALL_UNHANDLED — verified safe by prove.sh
+        proc = subprocess.Popen(  # nosec: RESOURCE_LEAK -- deliberate long-lived background server; child terminated in the caller's finally block
             cmd,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

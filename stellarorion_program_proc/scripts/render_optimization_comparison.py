@@ -686,13 +686,13 @@ def render_hiad(
     x_drum1 = x_drum0 + drum_height
     X_drum, Y_drum, Z_drum = mesh_cylinder(x_drum0, x_drum1, drum_r)
     ax.plot_surface(X_drum, Y_drum, Z_drum,
-                    color='#555555', alpha=0.9, edgecolor='none', shade=True)
+                    color='#3a4a51', alpha=0.9, edgecolor='none', shade=True)
 
     # 4. Cap dome on the drum — grows toward the windward nose (−X)
     X_nose, Y_nose, Z_nose = mesh_dome(
         x_drum0, drum_r * 0.6, drum_r * 0.3, direction=-1)
     ax.plot_surface(X_nose, Y_nose, Z_nose,
-                    color='#e94560', alpha=0.95, edgecolor='none', shade=True)
+                    color='#c0392b', alpha=0.95, edgecolor='none', shade=True)
 
     # 5. Stacked torus ridges about the X axis, placed along the profile
     n_tori = 6
@@ -735,12 +735,12 @@ def render_hiad(
     )
     for X_g, Y_g, Z_g in gore_meshes:
         ax.plot_surface(X_g, Y_g, Z_g,
-                        color='#333333', alpha=0.4, edgecolor='none')
+                        color='#5d6e72', alpha=0.4, edgecolor='none')
 
     # 7. Flat back plate — radius is r_back (seg-4 start), NOT r_max
     X_back, Y_back, Z_back = mesh_flat_back(x_max, r_back)
     ax.plot_surface(X_back, Y_back, Z_back,
-                    color='#222222', alpha=0.7, edgecolor='none', shade=True)
+                    color='#d5e0dd', alpha=0.7, edgecolor='none', shade=True)
 
 
     return meshed_tori
@@ -927,77 +927,108 @@ def main() -> int:
                     ([max(flown_y)] if flown_y else []))
 
     # --- Create figure ---
-    fig = plt.figure(figsize=(16, 8), facecolor='#0a0a0f')
+    # ---------------------------------------------------------------------
+    # LIGHT THEME (p8 / DEFECT 1).
+    #
+    # WHY: the colours above were authored dark. The consuming Beamer deck
+    # has a WHITE body (rgb(255,255,255)) with a rgb(207,221,216) header
+    # band, so this figure exported as a near-black rectangle -- corner
+    # pixel rgb(10,10,15), 80.7% dark pixels, driving that slide's ink fill
+    # to 61.19% against 5-15% for every other slide. Each colour is the
+    # direct light counterpart of the dark value it replaced:
+    #   #0a0a0f -> #ffffff  figure / axes / savefig facecolor
+    #   #1a1a2e -> #eef3f2  label-box + legend fill
+    #   #0f3460 -> #a8bfba  edges, keyed to the deck header band #cfddd8
+    #   #8892b0 -> #2f3b43  all text (was light-on-dark, now dark-on-light)
+    #   #e94560 -> #c0392b  accent / flown-body overlay
+    #   #555555 -> #3a4a51  ticks + torus surface
+    #   #333333 -> #5d6e72  gore spokes
+    #   #222222 -> #d5e0dd  flat back plate
+    #   #1a5276 -> #3d6b8a  envelope legend
+    #
+    # CITATION: [deck body/header colours measured from
+    #            Lost+Found/ProgressReport/Week 16 LaTeX/main.pdf]
+    # ---------------------------------------------------------------------
+    fig = plt.figure(figsize=(16, 8), facecolor='#ffffff')
 
     # Default (left) — blue tones; params loaded from JSON 'default' block
-    ax1 = fig.add_subplot(121, projection='3d', facecolor='#0a0a0f')
+    ax1 = fig.add_subplot(121, projection='3d', facecolor='#ffffff')
     n_tori_default_meshed = render_hiad(ax1, x_def, y_def,
-                color_base=(26, 82, 128), label_color='#8892b0',
+                color_base=(26, 82, 128), label_color='#2f3b43',
                 half_cone_deg=default["half_cone_deg"], r_tor=default["r_tor"],
                 cd_value=default["Cd"], rn=default["R_N"])
     # Overlay the flown body so the 41.1 % disagreement is visible on the
     # figure itself rather than only in the WARNING printed above.
     if flown_x:
         ax1.plot(flown_x, flown_y, [0.0] * len(flown_x),
-                 color='#e94560', linestyle='--', linewidth=2.0,
+                 color='#c0392b', linestyle='--', linewidth=2.0,
                  label='Flown (HIAD_custom.surf)')
         ax1.plot(flown_x, [-v for v in flown_y], [0.0] * len(flown_x),
-                 color='#e94560', linestyle='--', linewidth=2.0)
-        ax1.legend(loc='upper left', fontsize=7, labelcolor='#8892b0',
+                 color='#c0392b', linestyle='--', linewidth=2.0)
+        ax1.legend(loc='upper left', fontsize=7, labelcolor='#2f3b43',
                    framealpha=0.15)
     ax1.set_title('BEFORE (IRVE-3 Default — Ada FFI; flown body dashed)',
-                  color='#8892b0', fontsize=12,
+                  color='#2f3b43', fontsize=12,
                   fontweight='bold', pad=10)
-    ax1.set_xlabel('X (axial) [m]', color='#8892b0', fontsize=8)
-    ax1.set_ylabel('Y [m]', color='#8892b0', fontsize=8)
-    ax1.set_zlabel('Z [m]', color='#8892b0', fontsize=8)
-    ax1.tick_params(colors='#555555', labelsize=6)
+    ax1.set_xlabel('X (axial) [m]', color='#2f3b43', fontsize=8)
+    ax1.set_ylabel('Y [m]', color='#2f3b43', fontsize=8)
+    ax1.set_zlabel('Z [m]', color='#2f3b43', fontsize=8)
+    ax1.tick_params(colors='#3a4a51', labelsize=6)
     _apply_view(ax1, x_max_all, r_max_all)
     def_label = (f"R_N={default['R_N']:.2f}m  half_cone={default['half_cone_deg']:.1f}\n"
                  f"r_tor={default['r_tor']:.3f}m  {n_tori_default_meshed}/{n_tori} tori\n"
                  f"Cd={default['Cd']:.4f}\nSource: Ada FFI"
                  + ("" if ada_ok else "\n[Ada cross-check DRIFT]"))
-    ax1.text2D(0.02, 0.02, def_label,
-        transform=ax1.transAxes, color='#8892b0', fontsize=8,
-        verticalalignment='bottom',
-        bbox={'boxstyle': 'round,pad=0.3', 'facecolor': '#1a1a2e',
-              'edgecolor': '#0f3460'})
+    # FIGURE coordinates, not axes coordinates (DEFECT 6, clipped label box).
+    #
+    # WHY: `Axes3D.text2D` places a 2-D text on the 3-D axes, but that artist
+    # is not reliably included in the 3-D axes' own tight bounding box. The
+    # savefig used `bbox_inches='tight'`, so the crop cut the label box at the
+    # figure's left edge: the first glyph of "R_N=1.50m" rendered as "|=1.50m"
+    # and the box was visibly truncated. Figure-level text IS included in the
+    # tight bounding box, so the crop can no longer cut it. Placement is
+    # therefore expressed in figure coordinates (0..1 across the whole canvas):
+    # left panel at x=0.015, right panel just past the mid-line at x=0.515,
+    # both at y=0.03 with va='bottom'.
+    fig.text(0.015, 0.03, def_label, color='#2f3b43', fontsize=8,
+             verticalalignment='bottom',
+             bbox={'boxstyle': 'round,pad=0.3', 'facecolor': '#eef3f2',
+                   'edgecolor': '#a8bfba'})
 
     # Optimized (right) — red tones; params loaded from JSON 'optimized' block
-    ax2 = fig.add_subplot(122, projection='3d', facecolor='#0a0a0f')
+    ax2 = fig.add_subplot(122, projection='3d', facecolor='#ffffff')
     n_tori_opt_meshed = render_hiad(ax2, x_opt, y_opt,
-                color_base=(192, 57, 43), label_color='#e94560',
+                color_base=(192, 57, 43), label_color='#c0392b',
                 half_cone_deg=opt["half_cone_deg"], r_tor=opt["r_tor"],
                 cd_value=opt["Cd"], rn=opt["R_N"],
                 is_optimized=True)
-    ax2.set_title('AFTER (Optimized — Bayesian — Ada FFI)', color='#e94560', fontsize=12,
+    ax2.set_title('AFTER (Optimized — Bayesian — Ada FFI)', color='#c0392b', fontsize=12,
                   fontweight='bold', pad=10)
-    ax2.set_xlabel('X (axial) [m]', color='#8892b0', fontsize=8)
-    ax2.set_ylabel('Y [m]', color='#8892b0', fontsize=8)
-    ax2.set_zlabel('Z [m]', color='#8892b0', fontsize=8)
-    ax2.tick_params(colors='#555555', labelsize=6)
+    ax2.set_xlabel('X (axial) [m]', color='#2f3b43', fontsize=8)
+    ax2.set_ylabel('Y [m]', color='#2f3b43', fontsize=8)
+    ax2.set_zlabel('Z [m]', color='#2f3b43', fontsize=8)
+    ax2.tick_params(colors='#3a4a51', labelsize=6)
     _apply_view(ax2, x_max_all, r_max_all)
     opt_label = (f"R_N={opt['R_N']:.2f}m  half_cone={opt['half_cone_deg']:.1f}\n"
                  f"r_tor={opt['r_tor']:.3f}m  {n_tori_opt_meshed}/{n_tori} tori\n"
                  f"Cd={opt['Cd']:.4f}\nSource: Ada FFI"
                  + ("" if ada_opt_ok else "\n[Ada cross-check DRIFT]"))
-    ax2.text2D(0.02, 0.02, opt_label,
-        transform=ax2.transAxes, color='#e94560', fontsize=8,
-        verticalalignment='bottom',
-        bbox={'boxstyle': 'round,pad=0.3', 'facecolor': '#1a1a2e',
-              'edgecolor': '#e94560'})
+    fig.text(0.515, 0.03, opt_label, color='#c0392b', fontsize=8,
+             verticalalignment='bottom',
+             bbox={'boxstyle': 'round,pad=0.3', 'facecolor': '#eef3f2',
+                   'edgecolor': '#c0392b'})
 
     # Legend
     legend_elements = [
-        Patch(facecolor='#e94560', label='Nose Cap'),
-        Patch(facecolor='#555555', label='Central Drum'),
-        Patch(facecolor='#1a5276', label='Envelope (Ada FFI)'),
-        Patch(facecolor='#333333', label='Gore Spokes'),
-        Patch(facecolor='#222222', label='Flat Back'),
+        Patch(facecolor='#c0392b', label='Nose Cap'),
+        Patch(facecolor='#3a4a51', label='Central Drum'),
+        Patch(facecolor='#3d6b8a', label='Envelope (Ada FFI)'),
+        Patch(facecolor='#5d6e72', label='Gore Spokes'),
+        Patch(facecolor='#d5e0dd', label='Flat Back'),
     ]
     fig.legend(handles=legend_elements, loc='lower center', ncol=5,
-        fontsize=9, facecolor='#1a1a2e', edgecolor='#0f3460',
-        labelcolor='#8892b0', bbox_to_anchor=(0.5, 0.01))
+        fontsize=9, facecolor='#eef3f2', edgecolor='#a8bfba',
+        labelcolor='#2f3b43', bbox_to_anchor=(0.5, 0.01))
 
     fig.suptitle('StellarOrion HIAD Topology Optimization — Before vs After\n'
                  'Both profiles computed in Ada via FFI | Optimized by Bayesian search',
@@ -1005,7 +1036,7 @@ def main() -> int:
 
     plt.tight_layout(rect=(0, 0.05, 1, 0.93))
     out = Path(__file__).resolve().parent.parent / "optimization_comparison.png"
-    plt.savefig(str(out), dpi=150, facecolor='#0a0a0f', bbox_inches='tight')
+    plt.savefig(str(out), dpi=150, facecolor='#ffffff', bbox_inches='tight')
     print(f"Saved: {out}")
     if not (ada_ok and ada_opt_ok):
         print("[WARNING] Render written but Ada FFI cross-check FAILED — "

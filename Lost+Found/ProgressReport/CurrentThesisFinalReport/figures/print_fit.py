@@ -67,6 +67,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.legend import Legend  # noqa: E402
 from matplotlib.patches import Patch  # noqa: E402
 from matplotlib.text import Text  # noqa: E402
 from PIL import Image  # noqa: E402
@@ -172,11 +173,18 @@ def assert_inside_canvas(fig: plt.Figure, tol_in: float = EDGE_TOL_IN) -> None:
     # nothing of them is drawn, and unused minor tick labels are empty Text,
     # so both are excluded by type, by the visible flag and by empty content.
     skip_types = ("Spine", "Tick", "Axis")
+    # A Legend is neither a Text nor a Patch, so an earlier version of this
+    # function silently skipped it. Its box is a single artist with a single
+    # window extent, so a three-column legend could grow 0.155 in past the
+    # canvas while every individual Text and Patch stayed inside and the fit
+    # loop chased a target it could never reach. The legend is now scanned
+    # with everything else.
+    checked_types = (Text, Patch, Legend)
     offenders = []
     for artist in fig.findobj():
         if type(artist).__name__ in skip_types:
             continue
-        if not isinstance(artist, (Text, Patch)):
+        if not isinstance(artist, checked_types):
             continue
         if not artist.get_visible():
             continue
@@ -198,7 +206,10 @@ def assert_inside_canvas(fig: plt.Figure, tol_in: float = EDGE_TOL_IN) -> None:
         if y1 > h_in + tol_in:
             over.append(f"top by {y1 - h_in:.3f} in")
         if over:
-            label = getattr(artist, "get_text", lambda: "")()
+            if isinstance(artist, Legend):
+                label = " | ".join(t.get_text() for t in artist.get_texts())
+            else:
+                label = getattr(artist, "get_text", lambda: "")()
             detail = ""
             if hasattr(artist, "get_xy"):
                 detail = f" xy={tuple(round(v, 3) for v in artist.get_xy())}"

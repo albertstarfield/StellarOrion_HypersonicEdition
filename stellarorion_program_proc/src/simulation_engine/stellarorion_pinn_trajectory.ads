@@ -45,9 +45,16 @@ package StellarOrion_PINN_Trajectory is
    --  [Citation: Anderson (2006)]
    GAMMA_AIR : constant Float := 1.4;
 
-   --  C_SG: Sutton-Graves correlation constant for Earth air [SI units]
-   --  [Citation: Sutton & Graves (1972), NASA TR R-376, Table 1]
-   C_SG : constant Float := 1.83e-4;
+   --  C_SG: Sutton-Graves correlation constant for Earth air [SI units].
+   --
+   --  MUST EQUAL StellarOrion_Types.C_SG.  This literal was 1.83e-4 --
+   --  the *Mars* (97% CO2 / 3% N2) coefficient -- while citing the Earth
+   --  table, so both the value and the citation were wrong.
+   --    [Citation: Sutton & Graves, NASA TR R-376, Nov. 1971, Table 1 --
+   --       k = 1.7415e-4 (Earth)]
+   --    [Citation: NASA NTRS 20200002354, 2018 -- 1.83e-4 is Eq. (2)'s
+   --       constant for a 97% CO2 / 3% N2 (Mars) mixture]
+   C_SG : constant Float := 1.7415e-4;
 
    --  Vehicle parameters (IRVE-3)
    --  [Citation: NASA TP-2013-4012; Rapisarda (2023) Table 4.1]

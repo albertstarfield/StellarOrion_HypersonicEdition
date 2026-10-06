@@ -313,11 +313,13 @@ package StellarOrion_Optimization is
     --  MoP Constants (from hiad_optimizer.py)
     -- -----------------------------------------------------------------
 
-    --  Sutton-Graves empirical constant for air [W*s^3/(m^3*kg^0.5)].
-    --  Source: NASA TR R-376 (1972), C_SG = 1.7415e-4.
-    --  NOTE: This differs from StellarOrion_Types.C_SG (1.83e-4) which
-    --  is the NASA TR R-376 value for a different gas mixture.
-    C_SG_MOP : constant Float := 1.7415e-4;
+    --  C_SG_MOP REMOVED.  It was the dead half of a duplicated constant:
+    --  its value (1.7415e-4) was correct for Earth air but it had ZERO
+    --  consumers, while StellarOrion_Types.C_SG -- which actually drove
+    --  every heat-flux evaluation -- carried 1.83e-4, the *Mars* value.
+    --  Both copies now hold the correct Earth value; keeping a third,
+    --  unused copy invites exactly this drift again.
+    --    [Reference: StellarOrion_Types.C_SG is the single authority]
 
     --  Default IRVE-3 geometry (Rapisarda 2023, Table 4.1).
     Default_R_N_MOP       : constant Float := 1.5;

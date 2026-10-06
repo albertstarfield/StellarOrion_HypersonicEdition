@@ -81,11 +81,15 @@ RENDER_SCALE = PX_PER_PT
 # Ink threshold on the maximum channel value. Below this a pixel is ink.
 INK_MAX = 250
 
-# Row bands in rendered pixels that contain one line of body text each. The
-# bands are the y extents reported for the five lines of the audited
-# paragraph. Each band is trimmed by this many pixels at each edge so the
-# ascenders and descenders of the neighbouring line cannot enter the band.
+# Each line band is trimmed by this many pixels at each edge so the ascenders
+# and descenders of the neighbouring line cannot enter the band.
 BAND_TRIM_PX = 3
+
+# Row gap, in rendered pixels, that separates one line of body text from the
+# next. Measured on the audited page: consecutive line bands are separated by
+# 14 to 16 empty rows, while a single line never has 7 fully empty rows inside
+# it. The axis therefore picks line boundaries rather than splitting a line.
+LINE_GAP_PX = 7
 
 # Gap classes in printed points, used to classify each measured white run.
 GAP_SPACE_MAX_PT = 12.0
@@ -182,6 +186,48 @@ def classify(gaps: list[int]) -> dict[str, object]:
     }
 
 
+def auto_bands(gray: "np.ndarray") -> list[tuple[int, int]]:
+    """Locate the line bands of the body text block without hand-measured rows.
+
+    A band is a maximal run of rows that carry at least one ink pixel, split
+    wherever LINE_GAP_PX consecutive rows carry none. Hard-coded band extents
+    go stale the moment a paragraph is re-worded, which is exactly when the
+    spacing has to be re-measured, so the rows are found instead.
+
+    Parameters
+        gray: two-dimensional page luminance array in uint8.
+
+    Returns
+        The list of (first_row, last_row) inclusive bands, top of page first.
+
+    Raises
+        RuntimeError: when fewer than two bands are found, because a single
+            band means the gap threshold is wrong for this page.
+    """
+    rows = (gray < INK_MAX).any(axis=1)
+    bands: list[tuple[int, int]] = []
+    start = None
+    empty = 0
+    for index, has_ink in enumerate(rows):
+        if has_ink:
+            if start is None:
+                start = index
+            empty = 0
+        elif start is not None:
+            empty += 1
+            if empty >= LINE_GAP_PX:
+                bands.append((start, index - empty))
+                start = None
+                empty = 0
+    if start is not None:
+        bands.append((start, len(rows) - 1))
+    if len(bands) < 2:
+        raise RuntimeError(
+            f"found {len(bands)} band(s); LINE_GAP_PX={LINE_GAP_PX} does not "
+            "separate the lines of this page")
+    return bands
+
+
 def text_layer(path: Path, page_number: int) -> str:
     """Return the text layer of one one-based page.
 
@@ -213,23 +259,17 @@ def main() -> int:
     Raises
         RuntimeError: propagated from the helpers on any measurement failure.
     """
-    image = render_page(PDF_PATH, PAGE_NUMBER)
+    page = int(sys.argv[1]) if len(sys.argv) > 1 else PAGE_NUMBER
+    image = render_page(PDF_PATH, page)
     gray = np.asarray(image.convert("L"), dtype=np.uint8)
-    print(f"page {PAGE_NUMBER}: {image.width}x{image.height} px, {PX_PER_PT} px per pt")
-    print(f"page {PAGE_NUMBER} bands (y0, y1, gap statistics):")
-    bands = [
-        (177, 199),
-        (213, 237),
-        (245, 271),
-        (284, 307),
-        (321, 338),
-    ]
-    for y0, y1 in bands:
+    print(f"page {page}: {image.width}x{image.height} px, {PX_PER_PT} px per pt")
+    print(f"page {page} bands (y0, y1, gap statistics):")
+    for y0, y1 in auto_bands(gray):
         gaps = band_gaps(gray, y0 + BAND_TRIM_PX, y1 - BAND_TRIM_PX)
         print(f"  band {y0:4d} to {y1:4d}: {classify(gaps)}")
     print()
-    print(f"page {PAGE_NUMBER} text layer:")
-    print(text_layer(PDF_PATH, PAGE_NUMBER))
+    print(f"page {page} text layer:")
+    print(text_layer(PDF_PATH, page))
     return 0
 
 

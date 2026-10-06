@@ -86,7 +86,7 @@ FIGDIR = pf.FIGDIR
 assert FIGDIR.is_dir(), "figures directory not found: %s" % FIGDIR
 
 PRINT_W_IN = 0.9 * pf.TEXT_W_IN
-H = 4.12
+H = 4.40
 
 TITLE_PT = 13.0
 BOX_PT = 10.0
@@ -110,15 +110,15 @@ LOSS_EDGE = "#8B5CF6"
 RED = "#DC2626"
 
 MARGIN = 0.10
-ROW_A_TOP = H - 0.56
+ROW_A_TOP = H - 0.82
 ROW_A_H = 0.52
-ROW_B_TOP = H - 1.24
+ROW_B_TOP = H - 1.50
 ROW_B_H = 0.82
-NODES_TOP = H - 2.28
-ROW_PITCH = 0.24
+NODES_TOP = H - 2.54
+ROW_PITCH = 0.20
 COL_X = [0.75, 1.60, 2.45, 3.30, 4.15]
 NODE_RX = 0.13
-NODE_RY = 0.075
+NODE_RY = 0.070
 BP_X = 4.52
 
 COLUMNS = (
@@ -142,7 +142,10 @@ STAGE_LINES = (
 STRATEGY = "Pre-train on data, then fine-tune with physics residuals"
 MAPPING = r"maps $\mathbf{x} = (x, r)$ to $(\rho, v_x, v_y, T)$"
 BACKPROP = "Backpropagation (AutoDiff)"
-TITLE = "Physics-Informed Neural Network (PINN) Architecture"
+TITLE_LINES = (
+    "Physics-Informed Neural Network (PINN)",
+    "Architecture",
+)
 
 
 def box(ax: object, x0: float, y0: float, w: float, h: float,
@@ -200,8 +203,9 @@ def build() -> object:
     ax.set_ylim(0.0, H)
     ax.axis("off")
 
-    ax.text(PRINT_W_IN / 2.0, H - 0.30, TITLE, ha="center", va="center",
-            fontsize=TITLE_PT, fontweight="bold", color=INK)
+    for k, line in enumerate(TITLE_LINES):
+        ax.text(PRINT_W_IN / 2.0, H - 0.26 - k * 0.30, line, ha="center",
+                va="center", fontsize=TITLE_PT, fontweight="bold", color=INK)
 
     usable = PRINT_W_IN - 2.0 * MARGIN
     src_w = (usable - 0.46) / 2.0
@@ -289,7 +293,7 @@ def main() -> int:
 
     :returns: 0 on success.
     """
-    strings = [TITLE, STRATEGY, MAPPING, BACKPROP, STRATEGY]
+    strings = list(TITLE_LINES) + [STRATEGY, MAPPING, BACKPROP, STRATEGY]
     for head, sub in SOURCES:
         strings.extend([head, sub])
     for name, sub in COLUMNS:
@@ -299,9 +303,9 @@ def main() -> int:
     pf.require_clean(*strings)
 
     fig = build()
+    pf.assert_inside_canvas(fig)
     out, scale = pf.save_to_print_width(fig, "pinn_architecture.png",
                                         PRINT_W_IN, close=False)
-    pf.assert_inside_canvas(fig)
     verify(fig, scale)
     plt.close(fig)
     print("wrote %s at print width %.4f in" % (out.name, PRINT_W_IN))
