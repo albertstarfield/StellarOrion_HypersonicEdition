@@ -3,7 +3,8 @@
 executes.
 
 WHY THIS REPLACEMENT IS NECESSARY
-AXIOM: `figures/flowchart.png` was captioned in the Introduction as "Research
+AXIOM: `figures/flowchart.png` (since removed from the repository as dead
+artwork) was captioned in the Introduction as "Research
 methodology flowchart" and its alt text claimed an "eleven-stage numerical
 research workflow". Inspecting the artwork shows neither is true. Transcribed
 verbatim, its boxes read:

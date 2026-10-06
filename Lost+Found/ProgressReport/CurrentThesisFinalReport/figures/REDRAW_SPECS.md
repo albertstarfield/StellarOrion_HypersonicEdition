@@ -178,9 +178,75 @@ redraw to match the caption - do not leave them mismatched.
 
 ---
 
+## 4. dsmc_algorithm_flowchart.png (1979x1580, aspect 1.253; ch2 L917, 0.9\textwidth)
+
+Print width 0.9 x 5.53 in = 4.98 in. Smallest-text ratio: 10 px / 1979 =
+0.0051 (subscript `steps` in the loop label) => 3.6 pt printed; box labels
+9.4 pt nominal, title 14.5 pt nominal. To clear 8 pt the subscript must
+grow about 2.2x; in the redraw, set every font >= 9 pt declared so the
+smallest element clears 8 pt at 0.9\textwidth.
+Dashes: none. Two single ASCII hyphens only (`Maxwell-Boltzmann`,
+`Grid-Based`), both legitimate.
+Caption match: **YES against the actual caption** (ch2 L919): "Flowchart
+of Bird's No-Time-Counter (NTC) DSMC algorithm. The two-phase alternation
+between particle movement (streamer phase) and collision pairing (collision
+phase) is shown, with macroscopic property sampling accumulating at each
+time step." Bird attribution, NTC, and the sampling step all match the
+figure. NOTE: the describing session quoted a different caption
+("problem definition to flow field visualization") that exists nowhere in
+the repository (grep 0 hits); disregard it. AccSupp ActualText at ch2 L916
+also matches (advection, collision, sampling). No caption or AccSupp edit
+required; keep them identical on redraw.
+
+### Text (verbatim)
+- Title: `DSMC Algorithm (Bird, 1994)`
+- Box 1: `Initialize Particles` / `(Maxwell-Boltzmann Distribution)`
+- Box 2: `Move Particles Ballistically` / `(Free Flight for Δt)`
+- Box 3: `Index Particles into Cells` / `(Grid-Based Spatial Sorting)`
+- Box 4: `Sample Collisions within Cells` / `(NTC Method: Pair Selection)`
+- Box 5: `Accumulate Macroscopic Properties` / `(ρ, T, u, p per Cell)`
+- Box 6: `Check Convergence` / `(Steady State / Time Average)`
+- Box 7: `Output Surface Data` / `(Heat Flux, Pressure, Shear)`
+- Left of box 2: `Δt` (green mathtext)
+- Right of loop, rotated 90° (reads bottom-to-top): `Repeat` / `N_steps`
+- No legend, no footer, no Yes/No branch labels.
+
+### Layout
+- Landscape, single centered column. Title y20-57 centered.
+- 7 identical boxes x502-1477 (w976, h136, pitch 203.5, gap 68),
+  tops at y 153/357/561/764/968/1172/1375.
+- 6 solid down-arrows x981-999 (60 px, 6 px shaft, 18x16 filled head),
+  one per gap, order 1->2->3->4->5->6->7.
+- Dashed red loop from right of box 6 (1606,1237) bulging left to
+  x1485@y796 (8 px clear of box column) ending in up arrowhead at
+  (1604,432) at right of box 2; free-floating, does not touch boxes.
+  Dash 26 px / gap 4 px, stroke 6 px.
+- Green `Δt` at (294,412), 176 px left of box 2. Rotated label at
+  x1739-1790, y787-883, right of the loop.
+
+### Styling
+- White bg, black bold text, square corners, no title bar, no shadow,
+  border ~5-6 px, fill = light tint of border hue. Tailwind palette:
+  1 `#3B82F6`/`#DBEAFE` 2 `#22C55E`/`#DCFCE7` 3 `#F59E0B`/`#FEF3C7`
+  4 `#EC4899`/`#FCE7F3` 5 `#6366F1`/`#E0E7FF` 6 `#A855F7`/`#F3E8FF`
+  7 `#EF4444`/`#FEE2E2`.
+- Box text: 2 centered lines, same size, line spacing ~30 px, block
+  vertically centered. Down-arrows solid slate `#475569`. Loop dashed
+  `#EF4444`. `Δt` green `#22C55E`; `Repeat` bold red.
+- Font: DejaVu Sans Bold for roman text; mathtext italic for `Δt`,
+  `ρ, T, u, p`, `N_steps`.
+
+### Redraw requirements
+- matplotlib thesis-side script (figures/make_dsmc_flowchart.py pattern),
+  save at print width <= 0.9\textwidth, all fonts >= 9 pt declared
+  (subscript `steps` is the binding constraint in the original: 6.5 pt).
+- Dash-free (single ASCII hyphens in compound words are fine).
+- No data invention: labels and structure are schematic, reuse verbatim.
+- Keep caption and AccSupp text unchanged (they match).
+
+---
+
 ## Pending related items
-- dsmc_algorithm_flowchart.png redraw: description from session
-  ses_ef13ec735ffeeW75OsDPe1Slsr still pending; append it below when it lands.
 - Other redraw-queue diagrams: literature_review_map.png + pinn_architecture.png
   (description pending from ses_ef159875dffeKvC3bYnW6h7GFz); append when landed.
 - Caption/AccSupp content specs for these figures live in the chapter .tex

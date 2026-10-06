@@ -2,7 +2,8 @@
 """Integrate the regenerated figures and repair the stub and false captions.
 
 PART 1 - THE GENERIC TEMPLATE FLOWCHART IS REPLACED
-AXIOM: `figures/flowchart.png` was included in Chapter 1 as "Research methodology
+AXIOM: `figures/flowchart.png` (since removed from the repository as dead
+artwork) was included in Chapter 1 as "Research methodology
 flowchart" and in Chapter 3 as "Flowchart of the numerical research methodology".
 Its artwork does not match either caption. Transcribed verbatim it reads Start /
 Various of papers Study / Literature Study / Data Retrieval and Familiar Study
