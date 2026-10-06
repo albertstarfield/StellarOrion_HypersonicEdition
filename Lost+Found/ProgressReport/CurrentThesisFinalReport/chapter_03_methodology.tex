@@ -12,7 +12,7 @@ Each axiom is grounded in physical theory and Chapter~\ref{chap:literature}; Fig
     \BeginAccSupp{method=escape,ActualText={Flowchart of the methodology derivation chain, linking each research axiom to the equation or solver step that implements it.}}%
 \includegraphics[width=\textwidth]{figures/methodology_derivation.png}%
 \EndAccSupp{}%
-    \caption{Methodology derivation from first principles: axioms $\rightarrow$ governing equations $\rightarrow$ numerical methods $\rightarrow$ software implementation. The dashed red arrows indicate data flow between method layers.}
+    \caption{Methodology derivation from first principles: axioms $\rightarrow$ governing equations $\rightarrow$ numerical methods $\rightarrow$ software implementation. The dashed red arrows indicate data flow between methods within the numerical methods layer.}
     \label{fig:methodology_derivation}
 \end{figure}
 
@@ -95,7 +95,7 @@ The StellarOrion engine orchestrates the pipeline in Figure~\ref{fig:software_pi
     \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline, showing the Ada simulation engine, the Python sidecar for PINN refinement, and the result post-processing stages exchanging data.}}%
 \includegraphics[width=\textwidth]{figures/software_pipeline.png}%
 \EndAccSupp{}%
-    \caption[StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver $\rightarrow$ PINN refinement $\rightarrow$ Bayes Opt surrogate $\rightarrow$ ParaView visualization.]{StellarOrion engine software pipeline: input geometry and flight conditions $\rightarrow$ SPARTA DSMC solver $\rightarrow$ PINN refinement $\rightarrow$ Bayes Opt surrogate $\rightarrow$ ParaView visualization. The feedback loop from Bayes Opt to the core engine enables GA-driven optimization.}
+    \caption[StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers $\rightarrow$ PINN refinement and MoP surrogate $\rightarrow$ ParaView visualization.]{StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers $\rightarrow$ PINN refinement and MoP surrogate $\rightarrow$ ParaView visualization. The feedback loop from the MoP surrogate to the core engine enables GA-driven optimization.}
     \label{fig:software_pipeline}
 \end{figure}
 
@@ -443,7 +443,7 @@ Table~\ref{tab:tps_materials} lists the available TPS material presets.
 \subsection{Composite Thermal Protection Conduction Model}
 \label{sec:composite_tps}
 
-The thermal protection system is modeled as an ordered composite stack returning the in-depth temperature field. The baseline IRVE-3 layup~\mbox{\cite{rapisarda2023mdao}} is five plies, listed in Table~\ref{tab:tps_materials}.
+The thermal protection system is modeled as an ordered composite stack, yielding the in-depth temperature field. The baseline IRVE-3 layup~\mbox{\cite{rapisarda2023mdao}} is five plies, listed in Table~\ref{tab:tps_materials}.
 
 \begin{table}[!htbp]
     \centering

@@ -356,9 +356,9 @@ def fig_scalloped_vs_smooth() -> None:
         x1, y1 = col(sm, key)
         x2, y2 = col(sc, key)
         ax.plot(x1, y1, "-o", ms=3, lw=1.3, color=CB[0],
-                label=f"smooth  {sm[0]['alt_km'][:5]} km, {float(sm[0]['vel_ms']):.0f} m/s")
+                label=f"smooth  {float(sm[0]['alt_km']):.2f} km, {float(sm[0]['vel_ms']):.0f} m/s")
         ax.plot(x2, y2, "-s", ms=3, lw=1.3, color=CB[1],
-                label=f"scalloped  {sc[0]['alt_km'][:5]} km, {float(sc[0]['vel_ms']):.0f} m/s")
+                label=f"scalloped  {float(sc[0]['alt_km']):.2f} km, {float(sc[0]['vel_ms']):.0f} m/s")
         ax.set_yscale("log")
         plain_log_ticks(ax, "y")
         style(ax, lbl, "Particle-time step", "Heat flux (W/cm$^2$)")

@@ -67,6 +67,7 @@ from validation_pipeline import (
     isa_atmosphere,
     sutton_graves_heat_flux,
 )
+from ada_pinn_wrapper import fay_riddell_heat_flux, radiative_eq_temp
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -272,6 +273,25 @@ def _compute_frame_data(step: int):
     gload = _ada_gload(drag, IRVE3_MASS_KG)
     dynq = _ada_dynq(isa["density_kgm3"], traj["velocity_ms"])
 
+    # ── Composite heat flux components ──
+    # Radiative equilibrium surface temperature from SG convective heat flux.
+    # epsilon = 0.85 (typical TPS coating emissivity, Rapisarda 2023 Sec 5.5)
+    # [Citation: Stefan-Boltzmann law; Anderson (2006) Sec 17.4]
+    _emissivity = 0.85
+    t_surface_k = radiative_eq_temp(sg["heat_flux_Wm2"], _emissivity)
+    # Fay-Riddell continuum upper bound (uses wall temp for viscosity correction)
+    fr = fay_riddell_heat_flux(isa["density_kgm3"], 1.5, traj["velocity_ms"],
+                               traj["mach_number"], t_surface_k)
+    # Radiative heat flux leaving surface: q_rad = epsilon * sigma * T^4
+    # [Citation: Stefan-Boltzmann law]
+    _sigma = 5.670374419e-8
+    q_rad_wm2 = _emissivity * _sigma * t_surface_k ** 4
+    # TPS conduction: 1-D series resistance through composite shield
+    # q_cond = (T_surface - T_back) / (R_fabric + R_insulation + R_structure)
+    # Simplified: q_cond = q_conv - q_rad (energy balance at surface)
+    # At steady state q_cond = q_conv - q_rad; transient adds storage term.
+    q_cond_wcm2 = max(0.0, sg["heat_flux_Wcm2"] - q_rad_wm2 / 10000.0)
+
     # Knudsen number: Kn = mean_free_path / char_length (vehicle diameter)
     # [Citation: Bird (1994) — Molecular Gas Dynamics, Kn defines flow regime]
     char_length_m = 3.0  # IRVE-3 aeroshell diameter
@@ -316,6 +336,10 @@ def _compute_frame_data(step: int):
         "knudsen_number": kn,
         "ballistic_coeff_kgm2": ballistic_coeff,
         "stagnation_pressure_Pa": stagnation_pressure_Pa,
+        "heat_flux_fr_wcm2": fr["heat_flux_Wcm2"],
+        "heat_flux_rad_wcm2": q_rad_wm2 / 10000.0,
+        "heat_flux_cond_wcm2": q_cond_wcm2,
+        "surface_temp_k": t_surface_k,
     }
 
 
@@ -369,8 +393,9 @@ def _render_animated_frame(fargs: Any):
     [Citation: PIL.Image — https://pillow.readthedocs.io/en/stable/]
     """
     (frame_idx, step, alt, vel, mach, hf, drag, gload,
-     show_steps, show_alt, show_hf, show_vel, show_mach,
-     show_drag, show_g, out_dir, prefix, resolution,
+     show_steps, show_alt, show_hf, show_hf_fr, show_hf_rad, show_hf_cond,
+      show_surface_temp,
+     show_vel, show_mach, show_drag, show_g, out_dir, prefix, resolution,
      show_pinn_loss, show_pinn_acc, show_dsmc_pinn_err,
      show_density, show_temp, show_press,
      show_kn,
@@ -828,6 +853,145 @@ def _render_animated_frame(fargs: Any):
                                  show_steps, _dy, _c, _cur, _u,
                                  fmt=_fmt, frame_idx=frame_idx)
 
+    # ── Composite Heat Flux Heatmap ──────────────────────────────────────
+    # A 2D heatmap showing all heat flux components vs step (0→300M).
+    # Rows = components, columns = steps, color = magnitude.
+    # A vertical white line marks the current frame's step.
+    #
+    # AXIOM: The composite heat flux is the combination of all physical
+    #   models (Sutton-Graves, Fay-Riddell, Radiative, TPS Conduction).
+    # THEORIES: A 2D heatmap reveals correlations between components that
+    #   individual line charts cannot show.
+    # APPLICATIONS: Row 5 of the dashboard, replacing atmospheric panels.
+    # CITATIONS: none (visualization of computed data).
+    def _draw_heatmap_panel(draw: Any, x0: int, y0: int, x1: int, y1: int,
+                            frame_idx: int,
+                            show_steps: np.ndarray, show_hf: np.ndarray,
+                            show_hf_fr: np.ndarray, show_hf_rad: np.ndarray,
+                            show_hf_cond: np.ndarray,
+                            show_surface_temp: np.ndarray) -> None:
+        """Draw a 2D heatmap of composite heat flux components vs step.
+
+        Rows (top to bottom):
+          0: Sutton-Graves (convective) [W/cm²]
+          1: Fay-Riddell (continuum upper bound) [W/cm²]
+          2: Radiative (surface emission) [W/cm²]
+          3: TPS Conduction (through composite) [W/cm²]
+          4: Surface Temperature [K]
+
+        X-axis: step (0 → 300M)
+        Color: magnitude (log scale for heat flux, linear for temperature)
+        """
+        from PIL import ImageFont as _IF
+
+        _scale = (x1 - x0) / 1920.0
+        try:
+            _font_md = _IF.truetype("/System/Library/Fonts/Helvetica.ttc",
+                                    max(10, int(14 * _scale)))
+            _font_sm = _IF.truetype("/System/Library/Fonts/Helvetica.ttc",
+                                    max(8, int(10 * _scale)))
+        except OSError:
+            _font_md = _font_sm = _IF.load_default()
+
+        # Panel background
+        draw.rectangle([x0, y0, x1, y1], fill=(20, 20, 40),
+                       outline=(50, 50, 70), width=1)
+        draw.text((x0 + int(10 * _scale), y0 + int(3 * _scale)),
+                  "Composite Heat Flux — All Components",
+                  fill=(200, 220, 255), font=_font_md)
+
+        # Layout: label column + heatmap area + color bar
+        _label_w = int(120 * _scale)
+        _bar_w = int(25 * _scale)
+        _hm_x0 = x0 + _label_w
+        _hm_y0 = y0 + int(20 * _scale)
+        _hm_x1 = x1 - _bar_w - int(15 * _scale)
+        _hm_y1 = y1 - int(18 * _scale)
+
+        _n_rows = 5
+        _row_h = (_hm_y1 - _hm_y0) // _n_rows
+
+        # Row labels
+        _labels = ["Sutton-Graves", "Fay-Riddell", "Radiative", "TPS Cond.", "Surf. Temp."]
+        for _i, _label in enumerate(_labels):
+            _ly = _hm_y0 + _i * _row_h + _row_h // 2
+            draw.text((x0 + int(5 * _scale), _ly), _label,
+                      fill=(180, 180, 180), font=_font_sm, anchor="lm")
+
+        # Data rows
+        _rows = [show_hf, show_hf_fr, show_hf_rad, show_hf_cond,
+                 show_surface_temp]
+
+        # Find global min/max for color scaling
+        _all_vals = []
+        for _row in _rows:
+            _all_vals.extend([float(v) for v in _row if v > 0])
+        if not _all_vals:
+            return
+        _vmin = min(_all_vals)
+        _vmax = max(_all_vals)
+        if _vmax <= _vmin:
+            _vmax = _vmin + 1
+
+        # Draw heatmap cells
+        _n_cols = len(show_steps)
+        if _n_cols == 0:
+            return
+        _cell_w = max(1, (_hm_x1 - _hm_x0) // _n_cols)
+        for _i, _row_data in enumerate(_rows):
+            for _j in range(_n_cols):
+                _v = float(_row_data[_j])
+                if _v <= 0:
+                    continue
+                # Log scale for heat flux rows (0-3), linear for temperature (row 4)
+                if _i < 4:
+                    _log_min = np.log10(max(_vmin, 1e-10))
+                    _log_max = np.log10(_vmax)
+                    _log_v = np.log10(max(_v, 1e-10))
+                    _frac = ((_log_v - _log_min) / (_log_max - _log_min)
+                             if _log_max > _log_min else 0.5)
+                else:
+                    _frac = ((_v - _vmin) / (_vmax - _vmin)
+                             if _vmax > _vmin else 0.5)
+                _frac = max(0.0, min(1.0, _frac))
+                # Color: blue → cyan → green → yellow → red
+                _r = int(255 * min(1.0, max(0.0, 2 * _frac - 0.5)))
+                _g = int(255 * min(1.0, max(0.0, 1.5 - abs(2 * _frac - 1))))
+                _b = int(255 * min(1.0, max(0.0, 1.5 - 2 * _frac)))
+                _cx0 = _hm_x0 + _j * _cell_w
+                _cx1 = _hm_x0 + (_j + 1) * _cell_w
+                _cy0 = _hm_y0 + _i * _row_h
+                _cy1 = _hm_y0 + (_i + 1) * _row_h
+                draw.rectangle([_cx0, _cy0, _cx1, _cy1], fill=(_r, _g, _b))
+
+        # Current step indicator (vertical white line)
+        if 0 <= frame_idx < _n_cols:
+            _cx = _hm_x0 + frame_idx * _cell_w
+            draw.line([(_cx, _hm_y0), (_cx, _hm_y1)],
+                      fill=(255, 255, 255), width=2)
+
+        # Color bar
+        _bar_x = _hm_x1 + int(5 * _scale)
+        for _k in range(_hm_y1 - _hm_y0):
+            _frac = 1.0 - _k / (_hm_y1 - _hm_y0)
+            _r = int(255 * min(1.0, max(0.0, 2 * _frac - 0.5)))
+            _g = int(255 * min(1.0, max(0.0, 1.5 - abs(2 * _frac - 1))))
+            _b = int(255 * min(1.0, max(0.0, 1.5 - 2 * _frac)))
+            draw.line([(_bar_x, _hm_y0 + _k), (_bar_x + _bar_w, _hm_y0 + _k)],
+                      fill=(_r, _g, _b))
+
+        # Color bar labels
+        draw.text((_bar_x + _bar_w + int(3 * _scale), _hm_y0),
+                  f"{_vmax:.1f}", fill=(180, 180, 180), font=_font_sm)
+        draw.text((_bar_x + _bar_w + int(3 * _scale), _hm_y1),
+                  f"{_vmin:.1f}", fill=(180, 180, 180), font=_font_sm)
+
+        # X-axis labels
+        draw.text((_hm_x0, _hm_y1 + int(2 * _scale)),
+                  "0", fill=(180, 180, 180), font=_font_sm)
+        draw.text((_hm_x1, _hm_y1 + int(2 * _scale)),
+                  "300M", fill=(180, 180, 180), font=_font_sm, anchor="ra")
+
     if prefix == "dash":
         # ── MAIN DASHBOARD: 7 panels (percentage layout) ─────────
         draw.rectangle([0, 0, W, int(_title_pct * H / 100)], fill=(15, 15, 30))
@@ -903,18 +1067,11 @@ def _render_animated_frame(fargs: Any):
         dens_val = show_density[frame_idx] if frame_idx < len(show_density) else 0.0
         temp_val = show_temp[frame_idx] if frame_idx < len(show_temp) else 0.0
         press_val = show_press[frame_idx] if frame_idx < len(show_press) else 0.0
-        p = _pct_to_px(2, title_h + 45, 31, 11)
-        _draw_animated_panel(draw, *p, "Atmospheric Density", r"rho [kg/m3]",
-                             show_steps, show_density, (180, 220, 255), dens_val, r"kg/m3",
-                             fmt="{:.4f}", frame_idx=frame_idx)
-        p = _pct_to_px(34, title_h + 45, 31, 11)
-        _draw_animated_panel(draw, *p, "Atmospheric Temperature", "T [K]",
-                             show_steps, show_temp, (255, 200, 100), temp_val, "K",
-                             fmt="{:.1f}", frame_idx=frame_idx)
-        p = _pct_to_px(66, title_h + 45, 32, 11)
-        _draw_animated_panel(draw, *p, "Atmospheric Pressure", "P [Pa]",
-                             show_steps, show_press, (200, 150, 255), press_val, "Pa",
-                             fmt="{:.0f}", frame_idx=frame_idx)
+        # Row 5 (y=54%, h=11%): Composite Heat Flux Heatmap
+        p = _pct_to_px(2, title_h + 45, 96, 11)
+        _draw_heatmap_panel(draw, *p, frame_idx,
+                            show_steps, show_hf, show_hf_fr, show_hf_rad,
+                            show_hf_cond, show_surface_temp)
 
         # Row 6 (y=66%, h=11%): thermal loads (peak heat flux, total heat load, ballistic coeff)
         peak_hf_val = show_peak_hf[frame_idx] if frame_idx < len(show_peak_hf) else 0.0
@@ -1309,6 +1466,10 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
     frame_vel = np.array([d["velocity_ms"] for d in frame_data])
     frame_mach = np.array([d["mach_number"] for d in frame_data])
     frame_hf = np.array([d["heat_flux_wcm2"] for d in frame_data])
+    frame_hf_fr = np.array([d["heat_flux_fr_wcm2"] for d in frame_data])
+    frame_hf_rad = np.array([d["heat_flux_rad_wcm2"] for d in frame_data])
+    frame_hf_cond = np.array([d["heat_flux_cond_wcm2"] for d in frame_data])
+    frame_surface_temp = np.array([d["surface_temp_k"] for d in frame_data])
     frame_drag = np.array([d["drag_sum_N"] for d in frame_data])
     frame_g = np.array([d["g_load"] for d in frame_data])
     frame_pinn_loss = np.array([d["pinn_loss"] for d in frame_data])
@@ -1353,6 +1514,8 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
             frame_alt[i], frame_vel[i], frame_mach[i],
             frame_hf[i], frame_drag[i], frame_g[i],
             all_frame_steps, frame_alt, frame_hf,
+            frame_hf_fr, frame_hf_rad, frame_hf_cond,
+            frame_surface_temp,
             frame_vel, frame_mach, frame_drag, frame_g,
             frames_dir, prefix, _expanded_resolution,
             frame_pinn_loss, frame_pinn_acc, frame_dsmc_pinn_err,
@@ -1441,9 +1604,10 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
         _encs = _probe.stdout
         import sys as _sys
         if _sys.platform == "darwin" and "h264_videotoolbox" in _encs:
-            _enc_name = "h264_videotoolbox"
-            _extra = ["-vcodec", "h264_videotoolbox", "-b:v", "8M", "-pix_fmt", "yuv420p"]
-            print("[MP4] HW encoder: VideoToolbox (macOS)")
+            _enc_name = "libx264"
+            _extra = ["-vcodec", "libx264", "-crf", "48", "-preset", "medium",
+                      "-pix_fmt", "yuv420p"]
+            print("[MP4] SW encoder: libx264 CRF 48 (macOS)")
         elif _sys.platform.startswith("linux"):
             if "h264_vaapi" in _encs:
                 _enc_name = "h264_vaapi"

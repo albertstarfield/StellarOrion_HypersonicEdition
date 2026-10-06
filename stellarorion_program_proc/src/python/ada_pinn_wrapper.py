@@ -121,6 +121,28 @@ def sutton_graves_heat_flux(
             "density_kgm3": atm["density_kgm3"], "velocity_ms": velocity_ms}
 
 
+def fay_riddell_heat_flux(
+    density_kgm3: float, nose_radius_m: float, velocity_ms: float,
+    mach: float, wall_temp_k: float
+) -> dict[str, Any]:
+    """Compute Fay-Riddell stagnation-point heat flux via Ada/SPARK FFI.
+
+    Fay_Riddell_Heat(Density_Kgm3, Nose_Radius_M, Velocity_Ms, Mach, Wall_Temp_K)
+    returns W/m².  This is the CONTINUUM upper bound for stagnation-point
+    convective heating — it assumes no rarefaction (Kn → 0) and therefore
+    OVERPREDICTS heating in the rarefied regime (Kn > 0.1) where DSMC
+    is the ground truth.
+
+    [Citation: Fay & Riddell (1958); Rapisarda (2023) Eq 3.82; Anderson (2006) Sec 17.4]
+    [Citation: stellarorion_physics.ads Fay_Riddell_Heat]
+    """
+    wm2 = _ada_lib.Fay_Riddell_Heat_C(
+        ctypes.c_double(density_kgm3), ctypes.c_double(nose_radius_m),
+        ctypes.c_double(velocity_ms), ctypes.c_double(mach),
+        ctypes.c_double(wall_temp_k))
+    return {"heat_flux_Wm2": wm2, "heat_flux_Wcm2": wm2 / 10000.0}
+
+
 def dynamic_pressure_pinn_trajectory(density_kgm3: float, velocity_ms: float) -> float:
     """Compute dynamic pressure via the Ada/SPARK PINN-package entry point.
 
