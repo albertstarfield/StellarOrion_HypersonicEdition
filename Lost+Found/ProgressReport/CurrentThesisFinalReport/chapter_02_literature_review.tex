@@ -221,10 +221,10 @@ Sharp, slender noses minimized drag in early supersonic design, but H. Julian Al
 \par
 The lost kinetic energy has two sinks: a weak attached shock gives low wave drag, so skin friction heats a sharp body enough to melt conventional materials, while a strong detached bow shock dumps most kinetic energy into the airflow and its wake.
 
-Allen showed stagnation point heat flux ($q_s$) falls as the inverse square root of nose radius ($R_n$) while drag ($D$) grows with projected area:
+Allen showed stagnation point heat flux ($q_s$) falls as the inverse square root of nose radius ($R_N$) while drag ($D$) grows with projected area:
 
 \begin{equation}
-    q_s \propto \frac{1}{\sqrt{R_n}} \quad \text{and} \quad D \propto R_n^2
+    q_s \propto \frac{1}{\sqrt{R_N}} \quad \text{and} \quad D \propto R_N^2
 \end{equation}
 
 Bluntness therefore raises drag and lowers peak heat flux, the foundation of HIADs.
@@ -493,7 +493,7 @@ At a toroid's windward face the fluid decelerates to zero, so a calorically perf
 \end{equation}
 
 \subsubsection*{The Geometric Scaling (Heat Flux Rate)}
-Heat entry rate ($q_s$) follows the wall velocity gradient; Fay-Riddell scales it inversely with the square root of nose radius ($R_n$):
+Heat entry rate ($q_s$) follows the wall velocity gradient; Fay-Riddell scales it inversely with the square root of nose radius ($R_N$):
 
 \begin{equation}
     q_s \approx 0.76 \cdot Pr^{-0.6} \cdot (h_{0} - h_w) \cdot \sqrt{\rho_e \mu_e} \cdot \sqrt{\left( \frac{du_e}{dx} \right)_s}
@@ -528,18 +528,18 @@ An analogue of this localized heating is shown \cite{daub2022experimentsElasticL
 Fay-Riddell needs post-shock velocity gradients and boundary-layer edge properties, so parametric studies use the \textit{Sutton-Graves} correlation for closed-form stagnation-point heat flux \cite{sutton1971gravesh}:
 
 \begin{equation}
-    \dot{q}_s = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_n}} \, V_{\infty}^{3}
+    \dot{q}_s = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_N}} \, V_{\infty}^{3}
     \label{eq:sutton_graves}
 \end{equation}
 
-\noindent where $C_{SG}$ is a gas-model-dependent coefficient, $\rho_{\infty}$ the freestream density, $R_n$ the nose radius and $V_{\infty}$ the freestream velocity. For a 5-species reacting air model $C_{SG} = 1.83 \times 10^{-4}$ in SI units, the value adopted here \cite{sutton1971gravesh}.
+\noindent where $C_{SG}$ is a gas-model-dependent coefficient, $\rho_{\infty}$ the freestream density, $R_N$ the nose radius and $V_{\infty}$ the freestream velocity. For a 5-species reacting air model $C_{SG} = 1.83 \times 10^{-4}$ in SI units, the value adopted here \cite{sutton1971gravesh}.
 
 \begin{figure}[htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Two-panel Sutton-Graves parametric plot. Panel (a) shows stagnation heat flux against freestream velocity for nose radii from 0.1 to 3 metres, with the run point marked at 3378 metres per second and 16.14 watts per square centimetre for the 1.5 metre baseline nose. Panel (b) shows heat flux against nose radius at three fixed velocities, illustrating the inverse square-root dependence on nose radius.}}%
 \includegraphics[width=0.9\textwidth]{figures/sutton_graves_parametric.png}%
 \EndAccSupp{}%
-    \caption{Parametric evaluation of the Sutton-Graves stagnation heat flux correlation (Eq.~\ref{eq:sutton_graves}) at $C_{SG} = 1.83 \times 10^{-4}$ and $h = 51.8$~km. (Left) Variation of $\dot{q}_s$ with freestream velocity $V_{\infty}$ for nose radii $R_n = 0.1$-$3.0$~m, demonstrating the cubic velocity dependence. The IRVE-3 run condition ($R_n = 1.5$~m, $V_{\infty} = 3.378$~km/s) is marked, giving $\dot{q}_s = 16.14$~W/cm$^2$. (Right) Variation of $\dot{q}_s$ with nose radius at three fixed velocities, illustrating the $1/\sqrt{R_n}$ scaling that motivates the blunt-body design philosophy.}
+    \caption{Parametric evaluation of the Sutton-Graves stagnation heat flux correlation (Eq.~\ref{eq:sutton_graves}) at $C_{SG} = 1.83 \times 10^{-4}$ and $h = 51.8$~km. (Left) Variation of $\dot{q}_s$ with freestream velocity $V_{\infty}$ for nose radii $R_N = 0.1$-$3.0$~m, demonstrating the cubic velocity dependence. The IRVE-3 run condition ($R_N = 1.5$~m, $V_{\infty} = 3.378$~km/s) is marked, giving $\dot{q}_s = 16.14$~W/cm$^2$. (Right) Variation of $\dot{q}_s$ with nose radius at three fixed velocities, illustrating the $1/\sqrt{R_N}$ scaling that motivates the blunt-body design philosophy.}
     \label{fig:sutton_graves_parametric}
 \end{figure}
 
@@ -1084,18 +1084,18 @@ A HIAD's aerodynamic performance follows its inflated outer mold line: toroidal 
 The HIAD OML is parameterized by five primary design variables:
 
 \begin{equation}
-    \mathbf{x} = \left[ D,\; \theta_c,\; N_t,\; r_{\text{tor}},\; R_N \right]
+    \mathbf{x} = \left[ D,\; \theta_c,\; N_t,\; r_{tor},\; R_N \right]
     \label{eq:hiad_design_variables}
 \end{equation}
 
-\noindent where $D$ is the target inflated aeroshell diameter, $\theta_c$ the half-cone angle, $N_t$ the number of toroidal bladders in the stack, $r_{\text{tor}}$ the individual toroid minor radius, and $R_N$ the nose sphere radius. Structural and packaging constraints bound the design space:
+\noindent where $D$ is the target inflated aeroshell diameter, $\theta_c$ the half-cone angle, $N_t$ the number of toroidal bladders in the stack, $r_{tor}$ the individual toroid minor radius, and $R_N$ the nose sphere radius. Structural and packaging constraints bound the design space:
 
 \begin{equation}
     \begin{aligned}
         D &\in [2.0,\; 15.0] \text{\,m} \\
         \theta_c &\in [45^\circ,\; 75^\circ] \\
         N_t &\in [1,\; 12] \\
-        r_{\text{tor}} &\in [50,\; 300] \text{\,mm} \\
+        r_{tor} &\in [50,\; 300] \text{\,mm} \\
         R_N &\geq R_{\text{pay}} / \sin(\theta_c)
     \end{aligned}
     \label{eq:design_bounds}
@@ -1116,10 +1116,10 @@ In the Rapisarda formulation the nose sphere radius is fixed by the payload adap
 
 \subsection{Toroid Radius Derivation (Rapisarda Eq.\ 3.3)}
 
-Given a target inflated diameter $D$ and toroid count $N_t$, the minor radius $r_{\text{tor}}$ must place the outermost toroid centerline on the target radius; Rapisarda \cite{rapisarda2023mdao} derives it from geometric closure along the conical stack:
+Given a target inflated diameter $D$ and toroid count $N_t$, the minor radius $r_{tor}$ must place the outermost toroid centerline on the target radius; Rapisarda \cite{rapisarda2023mdao} derives it from geometric closure along the conical stack:
 
 \begin{equation}
-    r_{\text{tor}} = \frac{r_{\text{target}} - R_{\text{pay}} - r_{\text{sh}} \left( \cos\theta_c - \sin\theta_c + 1 \right)}{2 N_t \cos\theta_c}
+    r_{tor} = \frac{r_{\text{target}} - R_{\text{pay}} - r_{\text{sh}} \left( \cos\theta_c - \sin\theta_c + 1 \right)}{2 N_t \cos\theta_c}
     \label{eq:toroid_radius}
 \end{equation}
 
@@ -1130,7 +1130,7 @@ Given a target inflated diameter $D$ and toroid count $N_t$, the minor radius $r
 The discrete bladder stack deflects the flexible TPS skin inward between toroids, giving a scalloped profile; the local deflection between toroid $i$ and toroid $i+1$ is approximated by:
 
 \begin{equation}
-    \delta_{\text{scallop}} \approx r_{\text{tor}} \left(1 - \cos\theta_c\right) \cdot \xi
+    \delta_{\text{scallop}} \approx r_{tor} \left(1 - \cos\theta_c\right) \cdot \xi
     \label{eq:scallop_deflection}
 \end{equation}
 
@@ -1193,7 +1193,7 @@ MDO covers systems whose physics interact across separate disciplines \cite{Kroo
 
 \noindent where $g_j$ are inequality constraints (e.g., maximum backface temperature), $h_k$ equality constraints (e.g., geometric closure Eq.~\ref{eq:toroid_radius}), and $\mathbf{x}_{\text{lb}}, \mathbf{x}_{\text{ub}}$ the bounds (Eq.~\ref{eq:design_bounds}).
 
-\subsection{Design of Experiments (DOE)}
+\subsection{Design of Experiments (DoE)}
 
 Two strategies sample the design space:
 
@@ -1287,7 +1287,7 @@ The objective is greatest survivability: decelerate the payload to safe landing 
 
 \subsection{Why Optimization is Necessary}
 
-\noindent Engineering intuition alone cannot solve this problem: raising $\theta_c$ reduces stagnation heating but hurts stability, $N_t$ is discrete against continuous $r_{\text{tor}}$ (Eq.~\ref{eq:toroid_radius}), and evaluations near $\mathcal{O}(10^2)$ force surrogate-accelerated GA search for Pareto-optimal configurations.
+\noindent Engineering intuition alone cannot solve this problem: raising $\theta_c$ reduces stagnation heating but hurts stability, $N_t$ is discrete against continuous $r_{tor}$ (Eq.~\ref{eq:toroid_radius}), and evaluations near $\mathcal{O}(10^2)$ force surrogate-accelerated GA search for Pareto-optimal configurations.
 
 \begin{figure}[htbp]
     \centering
@@ -1325,7 +1325,7 @@ This review establishes six pillars:
 
     \item \textbf{Machine Learning for CFD:} Physics-Informed Neural Networks~\cite{raissi2019pinn} embed governing PDEs in the loss, enabling mesh-free refinement of sparse DSMC data (Section~\ref{sec:ml_cfd}).
 
-    \item \textbf{Parametric HIAD Geometry:} Five design variables ($D$, $\theta_c$, $N_t$, $r_{\text{tor}}$, $R_N$) plus the structural integration constraint (Eq.~\ref{eq:structural_integration}) and toroid radius (Eq.~\ref{eq:toroid_radius}) define the OML, following Rapisarda's MDAO IRVE-3 adaptation in Section~\ref{sec:parametric}~\cite{rapisarda2023mdao}.
+    \item \textbf{Parametric HIAD Geometry:} Five design variables ($D$, $\theta_c$, $N_t$, $r_{tor}$, $R_N$) plus the structural integration constraint (Eq.~\ref{eq:structural_integration}) and toroid radius (Eq.~\ref{eq:toroid_radius}) define the OML, following Rapisarda's MDAO IRVE-3 adaptation in Section~\ref{sec:parametric}~\cite{rapisarda2023mdao}.
 
     \item \textbf{Optimization Theory:} MDO with Latin Hypercube sampling~\cite{mckay1979lhs}, Bayes Opt surrogates~\cite{morris1992}, and genetic algorithm search~\cite{Goldberg1989} navigates the coupled aerodynamic-thermal-structural design space (Section~\ref{sec:opt_theory}).
 \end{enumerate}

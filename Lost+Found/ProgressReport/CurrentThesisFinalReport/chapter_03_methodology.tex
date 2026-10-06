@@ -29,7 +29,7 @@ A1 & Conservation of mass, momentum, and energy & Continuum mechanics & Batchelo
 A2 & Molecular chaos (Stosszahlansatz) & Statistical mechanics & Boltzmann (1872), \cite{bird1994molecular} \\
 A3 & Continuum hypothesis valid for $Kn < 0.01$ & Kinetic theory & Cercignani (1988), \cite{bird1994molecular} \\
 A4 & Equilibrium distribution follows Maxwell-Boltzmann & Statistical thermodynamics & Chapman \& Cowling (1970) \\
-A5 & Stagnation heating follows $q \propto \sqrt{\rho/R_n} \cdot V^3$ & Blunt body aerothermodynamics & Sutton \& Graves (1971) \\
+A5 & Stagnation heating follows $q \propto \sqrt{\rho/R_N} \cdot V^3$ & Blunt body aerothermodynamics & Sutton \& Graves (1971) \\
 A6 & DSMC converges to Boltzmann equation as $N \to \infty$ & Statistical convergence & \cite{bird1994molecular}, Wagner (1992) \\
 A7 & PINN residuals enforce PDE consistency in interpolation & Scientific machine learning & \cite{raissi2019pinn}, Karniadakis et al. (2021) \\
 \bottomrule
@@ -55,10 +55,10 @@ As $Kn \to 0$, the Boltzmann equation reduces to the compressible Navier-Stokes 
 \paragraph{Step 4: Sutton-Graves Correlation (A5).}
 The stagnation-point heat flux is approximated by~\cite{sutton1971gravesh}:
 \begin{equation}
-\dot{q}_s = k \sqrt{\frac{\rho_\infty}{R_n}} \, V_\infty^3
+\dot{q}_s = k \sqrt{\frac{\rho_\infty}{R_N}} \, V_\infty^3
 \label{eq:sutton_graves_methodology}
 \end{equation}
-where $k$ is a gas-specific constant, $\rho_\infty$ the freestream density, $R_n$ the nose radius, and $V_\infty$ the flight velocity.
+where $k$ is a gas-specific constant, $\rho_\infty$ the freestream density, $R_N$ the nose radius, and $V_\infty$ the flight velocity.
 
 \paragraph{Step 5: PINN Flow Field Refinement (A7).}
 The Physics-Informed Neural Network (PINN) enforces Navier-Stokes residuals as a soft loss constraint~\cite{raissi2019pinn}:
@@ -294,7 +294,7 @@ The $2.2$\,ms window resolves these timescales at this trajectory point:
     \item macroscopic soak time of seconds to minutes, \emph{not} captured.
 \end{itemize}
 
-Mean surface heat flux, drag and lift coefficients converge within the window and flatten near step 300, well inside the $2200$ used. Quantities depending on unresolved valley recirculation, in particular local backface temperature peaks, are not converged here and appear in Chapter~\ref{ch:results} as a lower bound on thermal load. Establishing that bound needs an unsteady production run of $5000$ to $10000$ steps on shortlisted designs (future work).
+Mean surface heat flux, drag and lift coefficients converge within the sampling window and flatten near step 300, well inside the $2200$ steps used. Quantities depending on unresolved valley recirculation, in particular local backface temperature peaks, are not converged here and appear in Chapter~\ref{ch:results} as a lower bound on thermal load. Establishing that bound needs an unsteady production run of $5000$ to $10000$ steps on shortlisted designs (future work).
 \subsection{Cartesian Grid and Collision Pairing}
 DSMC still needs a Cartesian computational grid for two purposes:
 \begin{enumerate}
@@ -321,7 +321,7 @@ A Grid Convergence Index (GCI) study checked grid-resolution independence using 
     \end{tabular}
 \end{table}
 
-The grid factor \textbf{0.7} is the default for all production runs: least error against validated IRVE-3 flight data at efficient cost.
+The grid factor \textbf{0.7} is the default for all production runs: Table~\ref{tab:mesh_independence} shows under $2\%$ $C_d$ variation there, at lower cost than the ultra-fine \textbf{1.0} grid.
 
 \section{Surface Data Extraction and Flight Metrics}
 
@@ -739,7 +739,7 @@ The optimization loop runs six steps:
         \textbf{Variable} & \textbf{Symbol} & \textbf{Bounds} & \textbf{Unit} \\ \hline
         Aeroshell diameter & $D$ & $[0.5, 15.0]$ & m \\ \hline
         Half-cone angle & $\theta_c$ & $[40, 80]$ & deg \\ \hline
-        Nose-cone radius & $R_n$ & $[0.1, 2.0]$ & m \\ \hline
+        Nose-cone radius & $R_N$ & $[0.1, 2.0]$ & m \\ \hline
         Toroid count & $N_t$ & $[1, 12]$ & n/a \\ \hline
         Toroid radius & $r_t$ & $[0.05, 0.3]$ & m \\ \hline
         Total mass & $m$ & $[50, 500]$ & kg \\ \hline
@@ -755,13 +755,13 @@ Stratified Latin Hypercube Sampling explores the high-dimensional space uniforml
     x_{i,j} = x_{j}^{\min} + \big(x_{j}^{\max} - x_{j}^{\min}\big) \cdot \frac{i + r_{i,j}}{N}
 \end{equation}
 
-where $i$ is the stratum index, $j$ the parameter dimension, $r_{i,j} \sim \mathcal{U}(0,1)$ a uniform random offset, and $[x_j^{\min}, x_j^{\max}]$ the feasible range of parameter $j$.
+where $i$ is the stratum index, $j$ the parameter dimension, $r_{i,j} \sim \mathcal{U}(0,1)$, a uniform random offset, and $[x_j^{\min}, x_j^{\max}]$ the feasible range of parameter $j$.
 
 \subsubsection*{Property of LHS}
 Each parameter gets $N$ distinct levels with one sample per level, giving space-filling coverage for small $N$.
 
 \subsubsection*{Central Composite Design (CCD) as Alternative DoE}
-The default Design of Experiments method is the Face-Centered Central Composite Design (CCD) described in~\cite{Montgomery2017}. For a $d$-dimensional parameter space CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point at the origin. This campaign used $d = 3$ variables (nose radius $R_N$, toroid radius $r_{tor}$, half-cone angle $\theta_c$), giving $N = 8 + 6 + 1 = 15$ points. That recorded screen is separate from the 70-entry Bayesian Optimization history of Sec.~\ref{sec:bo_results}. LHS or CCD is selectable via \texttt{-{}-doe}, CCD defaulting for the optimized IRVE-3 baseline.
+The default Design of Experiments method is the Face-Centered Central Composite Design (CCD) described in~\cite{Montgomery2017}. For a $d$-dimensional parameter space, CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point at the origin. This campaign used $d = 3$ variables (nose radius $R_N$, toroid radius $r_{tor}$, half-cone angle $\theta_c$), giving $N = 8 + 6 + 1 = 15$ points. That 15-point CCD record is separate from the 70-entry Bayesian Optimization history of Sec.~\ref{sec:bo_results}. LHS or CCD is selectable via \texttt{-{}-doe}, with CCD as the default for the optimized IRVE-3 baseline.
 
 \subsection{Bayesian Optimization (Bayes Opt)}
 
@@ -772,7 +772,7 @@ Each SPARTA DSMC simulation takes $O(10^3)$ timesteps and $O(1)$ hours, so loops
     \hat{y} = \mathcal{M}(\mathbf{x}; \boldsymbol{\theta}): \mathbb{R}^d \to \mathbb{R}
 \end{equation}
 
-where $\mathbf{x} = (D, \theta_c, R_n, N_t, \ldots)$ is the design vector and $\hat{y}$ the predicted performance metric (drag coefficient $C_d$, peak heat flux $\dot{q}$, backface temperature $T_{back}$).
+where $\mathbf{x} = (D, \theta_c, R_N, N_t, \ldots)$ is the design vector and $\hat{y}$ the predicted performance metric (drag coefficient $C_d$, peak heat flux $\dot{q}$, backface temperature $T_{back}$).
 
 \subsubsection*{Surrogate: Gaussian Process with a Mat\'ern 5/2 Kernel}
 The Bayes Opt surrogate is a Gaussian Process (GP) fitted with scikit-learn~\cite{sklearn2024gp}, with an isotropic Mat\'ern kernel of smoothness $\nu = 5/2$~\cite{matern1960,rasmussen2003}:
@@ -835,7 +835,7 @@ where $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$. Four ratio terms and three pe
     $\beta_{ratio} = (C_{d,ref}\,A_{ref})/(C_d(\mathbf{x})\,A(\mathbf{x}))$ with $B = (\beta_{ratio} - 1)^2$.
     \item \textbf{Drag term.} $D(\mathbf{x}) = C_d(\mathbf{x})/C_{d,ref}$, the drag ratio.
     \item \textbf{Quadratic penalties.} Three one-sided constraints enter only when violated:
-    $P_R = \max(0, R_{max} - 3.0)^2$ caps the radius at the IRVE-3 limit.
+    $P_R = \max(0, R_{\text{max}} - 3.0)^2$ caps the radius at the IRVE-3 limit.
     $P_N = \max(0, 1.0 - R_N)^2$ enforces a minimum nose radius for thermal protection coverage, and
     $P_p = \max(0, R_{N,min} - R_N)^2$ enforces payload clearance.
     The required nose radius follows from the cylindrical payload envelope as
@@ -848,13 +848,13 @@ Reference values are loaded at run time from the IRVE-3 validation run~\mbox{\ci
 
 Eq.~\eqref{eq:cost_function_implemented} is a \emph{single-point} surrogate: one correlation value at one frozen trajectory point times a constant exposure time, not a trajectory integration; the trajectory-integrated heat load in Chapter~\ref{ch:results} comes from the DSMC post-processing path.
 The drag coefficient is a closed-form estimate,
-$C_d(\mathbf{x}) = 1.47 \left( R_{max}/1.5 \right)^{0.15} \left( 1 + 0.05\,(1.5/R_N - 1) \right)$, with $R_{max} = R_N\cos\Gamma + (2N-1)\,r_{tor}\cos\Gamma + r_{tor}$ and $\Gamma = (90^\circ - \theta_c)$. The optimizer therefore never calls the DSMC solver during the search, which makes $70$ evaluations affordable; each candidate is later re-evaluated with a full DSMC run by the validation gate of Sec.~\ref{sec:gate_methodology}.
+$C_d(\mathbf{x}) = 1.47 \left( R_{\text{max}}/1.5 \right)^{0.15} \left( 1 + 0.05\,(1.5/R_N - 1) \right)$, with $R_{\text{max}} = R_N\cos\Gamma + (2N_t-1)\,r_{tor}\cos\Gamma + r_{tor}$ and $\Gamma = (90^\circ - \theta_c)$. The optimizer therefore never calls the DSMC solver during the search, which makes $70$ evaluations affordable; each candidate is later re-evaluated with a full DSMC run by the validation gate of Sec.~\ref{sec:gate_methodology}.
 
 \subsubsection*{GA Operators}
 The GA uses these operators:
 
 \begin{enumerate}
-    \item \textbf{Selection:} Tournament selection, size $k_t = 3$: lowest $J$ among $k_t$ random candidates becomes a parent.
+    \item \textbf{Selection:} In tournament selection of size $k_t = 3$, the lowest $J$ among $k_t$ random candidates becomes a parent.
 
     \item \textbf{Crossover:} Uniform crossover with probability $p_c = 0.8$: per gene, a random binary mask selects the contributing parent:
     \begin{equation}
@@ -872,7 +872,7 @@ The GA uses these operators:
     \end{equation}
     where $\sigma_m$ is scaled to 10\% of the parameter range $[x_i^{\min}, x_i^{\max}]$; integer parameters (e.g., $N_t$) round to the nearest integer after mutation.
 
-    \item \textbf{Elitism:} The best $\lceil 0.1 \times P \rceil$ individuals ($P$ the population size) survive unchanged into the next generation.
+    \item \textbf{Elitism:} The best $\lceil 0.1 \times P \rceil$ individuals, where $P$ is the population size, survive unchanged into the next generation.
 \end{enumerate}
 
 The GA stops when (a) generation count reaches $G_{max}$, or (b) best cost $J^*$ improves by less than $\epsilon = 10^{-4}$ over $G_{pat} = 20$ consecutive generations.
@@ -1030,10 +1030,14 @@ The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irv
 \begin{table}[!htbp]
     \centering
     % Repeats Table 4.1 of the results chapter; the caption repeats the heat-flux caveat on purpose, since single-point and trajectory-integrated peaks are not comparable.
-    \caption[IRVE-3 validation metrics. The MDAO column is the published Fay-Riddell reference; the StellarOrion column is the result of this work.]{IRVE-3 validation metrics. The MDAO column is the published Fay-Riddell reference; the StellarOrion column is the result of this work. The heat-flux entry is a Sutton-Graves correlation evaluated at $R_N = 1.5$ m and $V = 3{,}378$ m/s, not a quantity resolved by the solver. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton-Graves value the code reports, and why they differ.}
+    \caption[IRVE-3 validation metrics. The MDAO column is the published Fay-Riddell reference; the StellarOrion column is the result of this work.]{IRVE-3 validation metrics. The MDAO column is the published Fay-Riddell reference; the StellarOrion column is the result of this work. The heat-flux entry is a Sutton-Graves (SG) correlation evaluated at $R_N = 1.5$ m and $V = 3{,}378$ m/s, not a quantity resolved by the solver; \textsuperscript{\dag} marks that entry. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton-Graves value the code reports and explains why they differ.}
     \label{tab:irve3_validation}
     \small
-    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.10\textwidth}|}
+    % Column widths mirror the proven appendix.tex tab:validation_full pattern:
+    % one X column absorbs the remaining width so no blank strip opens up, and
+    % the two header columns are widened so "MDAO (Fay-Riddell)" and
+    % "SO Error (%)" no longer hyphenate mid-phrase.
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|}
         \hline
         \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay-Riddell)} & \textbf{StellarOrion\allowbreak{} (This Work)} & \textbf{SO Error (\%)} \\ \hline
         Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & 16.14 W/cm$^2$$^{\dagger}$ & $+12.4$, \emph{not like-for-like} \\ \hline
@@ -1047,12 +1051,12 @@ The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irv
 
 Two tolerance statements apply. First, the MDAO reference model~\cite{rapisarda2023mdao} reproduces flight heat flux and heat load to within $-3.7\%$ and $+0.06\%$, inside the $\pm 10\%$ margin required of a calibrated reconstruction, so the IRVE-3 flight data are internally consistent as a validation target. Second, geometry-sensitive quantities meet that margin (Table~\ref{tab:irve3_validation}).
 
-The two \emph{integrated} quantities are under-predicted (Table~\ref{tab:irve3_validation}). The flight reconstruction~\cite{old2013irve3postflight} and MDAO model~\cite{rapisarda2023mdao} integrate over the complete reentry, whereas the DSMC run samples one trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions~\cite{usstandard1976}. Full-trajectory integration raises both, and the deltas near $-15\%$ localize the residual in trajectory integration, not geometry or solver. The \emph{pointwise} stagnation heat flux instead over-predicts by $+12.4\%$: Sutton-Graves, a continuum correlation on a spherical nose cap, carries neither the torus heat-shielding effect nor the rarefied-flow departure DSMC resolves, so it bounds conservatively here. The framework is judged sound on geometry-sensitive agreement; the trajectory-integration and correlation-versus-solver gaps carry forward as limitations.
+The two \emph{integrated} quantities are under-predicted (Table~\ref{tab:irve3_validation}). The flight reconstruction~\cite{old2013irve3postflight} and MDAO model~\cite{rapisarda2023mdao} integrate over the complete reentry. The DSMC run, in contrast, samples one trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions~\cite{usstandard1976}. Full-trajectory integration raises both integrated quantities, and the deltas near $-15\%$ place the residual in trajectory integration rather than in geometry or the solver. The \emph{pointwise} stagnation heat flux instead over-predicts by $+12.4\%$: Sutton-Graves, a continuum correlation on a spherical nose cap, carries neither the torus heat-shielding effect nor the rarefied-flow departure DSMC resolves, so it bounds conservatively here. The framework is judged sound on geometry-sensitive agreement; the trajectory-integration and correlation-versus-solver gaps carry forward as limitations.
 
 \subsection{Hybrid Validation Gate Methodology}
 \label{sec:gate_methodology}
 
-The cost function of Sec.~\ref{sec:cost_function} is a closed-form surrogate, so a design minimizing it is not thereby feasible; this gate is the only enforced check on the surrogate. It has five legs~\cite{kennedy2000multi} in order, the solver stage of Sec.~\ref{sec:dsmc_framework} supplying the expensive one.
+The cost function of Sec.~\ref{sec:cost_function} is a closed-form surrogate, so a design minimizing it is not thereby feasible; this gate is the only enforced check on the surrogate. It has five legs~\cite{kennedy2000multi} in order, with the solver stage of Sec.~\ref{sec:dsmc_framework} supplying the expensive one.
 
 \begin{enumerate}
     \item \textbf{Analytic prediction.} Evaluate Eq.~\eqref{eq:cost_function_implemented} at the candidate design, recording predicted heat load $q_{analytic}$.
@@ -1134,7 +1138,7 @@ The PINN uses DeepXDE~\cite{lu2021deepxde}:
 \subsection{Training Methodology}
 
 \subsubsection*{Data Collection Pipeline}
-Each design: $N = 15$ Face-Centered CCD points (Sec.~\ref{sec:doe_sampling}), $O(10^3)$ SPARTA DSMC timesteps, two-stage PINN refinement (Sec.~\ref{sec:pinn_two_stage}), features $\mathbf{x} = (D, \theta_c, R_n, N_t, r_t,\,m, \delta_{TPS})$ min-max scaled to $[0, 1]$.
+Each design: $N = 15$ Face-Centered CCD points (Sec.~\ref{sec:doe_sampling}), $O(10^3)$ SPARTA DSMC timesteps, two-stage PINN refinement (Sec.~\ref{sec:pinn_two_stage}), features $\mathbf{x} = (D, \theta_c, R_N, N_t, r_t,\,m, \delta_{TPS})$ min-max scaled to $[0, 1]$.
 
 \subsubsection*{Train/Test Split}
 Stratified 80/20 split: 20 training samples (80\%) and 5 validation samples (20\%) for early stopping and model selection.

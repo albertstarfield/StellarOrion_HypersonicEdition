@@ -87,7 +87,7 @@ This work makes the following novel contributions:
 This research provides aerothermal analysis and survivability optimization of the Flexible Thermal Protection System (FTPS) within available computational resources. Its boundaries are:
 
 \begin{enumerate}
-    \item \textbf{Geometric Representation:} The HIAD structure uses parametric 3D CAD generation via CadQuery. The 6-toroid stack based on the MDAO baseline~\cite{rapisarda2023mdao} is the primary geometry, with variable toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as rigid and fully inflated to isolate surface-topology effects on the flow.
+    \item \textbf{Geometric Representation:} The HIAD structure uses parametric 3D CAD generation via CadQuery. The 6-toroid stack based on the multidisciplinary design analysis and optimization (MDAO) baseline~\cite{rapisarda2023mdao} is the primary geometry, with variable toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as rigid and fully inflated to isolate surface-topology effects on the flow.
 
     \item \textbf{Dimensionality:} Simulations are 2D axisymmetric (via \texttt{-{}-slice-angle}) or full 3D. The 2D mode assumes zero angle of attack ($\alpha = 0^\circ$) to maintain rotational symmetry and raise particle resolution within memory limits; full 3D covers off-axis conditions.
 
@@ -134,7 +134,7 @@ A Physics-Informed Neural Network (PINN) in DeepXDE post-processes raw DSMC outp
 A Genetic Algorithm (GA) with Bayesian Optimization (GP Matérn 5/2 and Expected Improvement) optimizes HIAD geometry. Latin Hypercube Sampling generates the initial population, the GP surrogate screens candidates, and costly SPARTA runs are reserved for elites and validation; the cost function balances ballistic coefficient, peak deceleration, backface temperature, and drag performance against targets.
 
 \subsection*{f. Validation and Analysis}
-Validation against IRVE-3 flight data~\cite{rapisarda2023mdao} uses the Sutton-Graves correlation. Peak heat flux is 14.36\,W/cm$^2$ in flight, 13.83\,W/cm$^2$ from the MDAO Fay-Riddell reference, and 16.14\,W/cm$^2$ from the Sutton-Graves correlation at the present DSMC run. Total heat load is 195.06, 195.17, and 165.72\,J/cm$^2$ respectively; peak deceleration is 19.7\,g in flight against 16.83\,g from this work. Solver-resolved quantities under-predict flight by a common $15\%$ because one trajectory point replaces a full reentry history, while the correlation over-predicts by $+12.4\%$ because it resolves neither the scalloped geometry nor the rarefied departure; both deviations appear in Chapter IV.
+Validation against IRVE-3 flight data~\cite{rapisarda2023mdao} uses the Sutton-Graves correlation. Peak heat flux is 14.36\,W/cm$^2$ in flight, 13.83\,W/cm$^2$ from the MDAO Fay-Riddell reference, and 16.14\,W/cm$^2$ from the Sutton-Graves correlation in the present DSMC run. Total heat load is 195.06, 195.17, and 165.72\,J/cm$^2$, respectively; peak deceleration is 19.7\,g in flight against 16.83\,g from this work. Solver-resolved quantities under-predict flight by a uniform $15\%$ because one trajectory point replaces a full reentry history, while the correlation over-predicts by $+12.4\%$ because it resolves neither the scalloped geometry nor the rarefied departure; both deviations appear in Chapter~\ref{ch:results}.
 
 \section{Thesis Outline}
 \textbf{CHAPTER I} Background, problem statement, objectives, scope, methodology, and outline.
