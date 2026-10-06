@@ -100,9 +100,25 @@ C_EDGE = "#333333"
 # Aspect 0.78 < 0.8205 keeps the figure height-capped at scale 1.0, which is
 # what makes LABEL_FS print at 8.4 pt.
 TEXT_H_IN = 29.7 / 2.54 - (3.0 + 3.0) / 2.54      # 9.33071
-PRINT_H_IN = 0.72 * TEXT_H_IN                      # 6.71811
 PRINT_W_IN = 5.51181
-WIDTH_IN = PRINT_H_IN * 0.78                       # 5.240
+#  DEFECT 7 FIX (2026-10-06): the canvas was authored PORTRAIT (aspect 0.78)
+#  even though the layout below is TWO COLUMNS of six stages.  \PlotFrame
+#  places every figure with
+#      \includegraphics[width=\textwidth,height=\plotheight,keepaspectratio]
+#  (preamble.tex:524, \plotheight = 0.60\textheight), so a beamer 16:9 frame
+#  gives a box about 6.1 in x 1.89 in => box aspect ~3.23.  A figure fills the
+#  box ONLY if its own aspect reaches ~3.23; at aspect 0.786 the printed width
+#  was 0.60\textheight * 0.786 ~ 1.49 in of 6.1 in -- 24 % of the width, the
+#  worst of any deck figure.
+#  AXIOM: box widths/heights below are FRACTIONS of the whole canvas, so the
+#  box pixel height is h * PRINT_H_IN.  Shrinking PRINT_H_IN without shrinking
+#  `h` would squash the labels below the 8 pt floor; instead the width is
+#  pinned to the full text width and the height cut to the fraction the
+#  two-column stack actually needs.
+#  CITATION: matplotlib figure sizing -- inches of the SAVED image; the
+#  document rescales by min(print_w/saved_w, print_h/saved_h).
+PRINT_H_IN = 0.60 * PRINT_W_IN                       # 3.307 (was 6.718)
+WIDTH_IN = PRINT_W_IN                               # 5.512 (was 5.240)
 
 # Declared point size of every label. 8.4 gives headroom above the 8 pt floor.
 LABEL_FS = 8.4

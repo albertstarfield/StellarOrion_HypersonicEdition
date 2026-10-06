@@ -125,10 +125,73 @@ def main() -> int:
             )
         )
 
+    # BOX COORDINATES, because a width alone cannot say WHERE a collision
+    # happens. Several pairs in this figure share an identical string (both
+    # panels carry the same y label), so only the coordinates identify which
+    # artist collides with which, and whether the overlap is a genuine ink
+    # collision or only an overlap of bounding boxes that are far apart in
+    # the axis that matters.
+    # Box coordinates keyed by ARTIST IDENTITY, never by string. Several
+    # artists in this figure share a string (both panels carry the same y
+    # label, and legend entries repeat the axis tick values), so a dictionary
+    # keyed by text content silently overwrites one artist with another and
+    # then reports coordinates that belong to a different object. The owner
+    # axes is printed too, because a label and a tick of the same value are
+    # otherwise indistinguishable.
+    boxes = {}
+    renderer = fig.canvas.get_renderer()
+    for text in fig.findobj(matplotlib.text.Text):
+        if not text.get_visible() or not text.get_text():
+            continue
+        box = text.get_window_extent(renderer)
+        # The owner is reported as an INDEX INTO fig.axes, never as a guess.
+        # An earlier version of this probe mapped only ax1 and ax2 and printed
+        # everything else as "figure", which hid the fact that several reported
+        # collisions belong to axes this probe never named.
+        owner = text.axes
+        owner_name = "figtext"
+        if owner is not None:
+            try:
+                owner_name = "axes[%d]" % fig.axes.index(owner)
+            except ValueError:
+                owner_name = "detached"
+        boxes[id(text)] = (owner_name, text.get_text(), (
+            box.x0 * per_pt, box.x1 * per_pt, box.y0 * per_pt, box.y1 * per_pt,
+        ))
+
+    def locate(content):
+        """Return the first recorded box whose string matches, or None.
+
+        Parameters
+        ----------
+        content : str
+            The text content to look for.
+        Returns
+        -------
+        tuple or None
+            (owner, text, (x0, x1, y0, y1)) for the first match, else None.
+        """
+        for _owner, _text, rect in boxes.values():
+            if _text == content:
+                return (_owner, _text, rect)
+        return None
+
+    print("text box coordinates in printed pt (owner x0 x1 y0 y1):")
+    for owner, content, rect in sorted(boxes.values(), key=lambda row: row[2][0]):
+        print("  %-5s [%7.2f %7.2f %7.2f %7.2f]  %r" % (owner, *rect, content))
+
     overlaps = fm.text_overlaps_pt(fig, 1.0)
     print("colliding text pairs at or above 1.0 pt: %d" % len(overlaps))
     for text_a, text_b, width_pt, height_pt in overlaps:
         print("  %r  <->  %r  %.2f x %.2f pt" % (text_a, text_b, width_pt, height_pt))
+        for tag, content in (("A", text_a), ("B", text_b)):
+            found = locate(content)
+            if found is None:
+                print("      %s  no box recorded" % tag)
+                continue
+            owner, _text, rect = found
+            print("      %s %-5s x[%.2f, %.2f] y[%.2f, %.2f]"
+                  % (tag, owner, *rect))
 
     for name in ("ax1", "ax2"):
         ax = parts[name]

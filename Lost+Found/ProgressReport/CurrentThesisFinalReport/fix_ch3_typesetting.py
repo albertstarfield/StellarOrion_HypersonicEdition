@@ -8,7 +8,7 @@ the defect.
 D1. ORPHANED EQUATION TAG (was page 114, Eq. 3.15)
     The worked Sutton-Graves substitution was a single very long display
     equation:
-        q_stag = 1.83e-4 x sqrt(7.851e-4/1.5) x (3378)^3
+        q_stag = 1.7415e-4 x sqrt(7.851e-4/1.5) x (3378)^3
                  ~ 1.614e5 W/m^2 = 16.14 W/cm^2
     It reached the right text edge with zero slack, so the "(3.15)" tag was
     pushed onto a line of its own below the equation. Splitting the evaluation

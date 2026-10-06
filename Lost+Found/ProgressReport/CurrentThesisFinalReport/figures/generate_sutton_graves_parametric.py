@@ -6,7 +6,8 @@ PURPOSE
 The previously committed figure plotted the Sutton-Graves stagnation correlation
 using superseded constants and geometry, producing an IRVE-3 marker of
 959.7 W/cm^2 at R_N = 0.577 m and V = 10.8 km/s. The current solver evaluates
-the same correlation at C_SG = 1.83e-4 and R_N = 1.5 m, giving 16.14 W/cm^2 at
+the same correlation at C_SG = 1.7415e-4 (Earth air) and R_N = 1.5 m,
+giving 15.75 W/cm^2 at
 the run condition (h = 51.8 km, V = 3378 m/s). This script regenerates the
 figure so that the plotted physics matches the code and the thesis text.
 
@@ -14,8 +15,11 @@ AXIOMS
 ======
 A1. The correlation evaluated here is
         q_dot = C_SG * sqrt(rho / R_N) * V^3            [W/m^2]
-    with C_SG = 1.83e-4 for Earth air, matching
-    `stellarorion_types.ads` (C_SG : constant Float := 1.83e-4).
+    with C_SG = 1.7415e-4 for Earth air, matching
+    `stellarorion_types.ads` (C_SG : constant Float := 1.7415e-4).
+    1.83e-4 is the MARS coefficient and must not be used for Earth air.
+    [Citation: NASA NTRS 20200002354, 2018, Eq. (2)].
+    The value below is READ FROM the Ada source, never hard-coded.
 A2. The freestream density is a function of altitude only, obtained from the
     same atmospheric model the solver uses (`isa_atmosphere` via the Ada FFI),
     not from a hand-rolled exponential fit. This guarantees that the baseline
@@ -102,6 +106,15 @@ SAVE_DPI: int = pf.DPI
 # (0.3, 0.75 and 2.5 m) stay in R_SWEEP_M, so every curve still passes through
 # them with its marker; only the axis text is thinned.
 X_TICKS_M = [0.1, 0.2, 0.5, 1.0, 2.0, 3.0]
+# Panel (a) x ticks in km/s. The sweep V_SWEEP_KMS spans 2 to 10, so the
+# default ticker's 0, 5, 10, 15 lost two of its four labels to the axes clip
+# and left the panel with a single x tick. Measured on the unsaved figure:
+# 120.08 pt panel. The label at the 10 end of the sweep is deliberately NOT
+# ticked, because an autoscale that ends at 10.4 puts that label on the right
+# spine, where half of it sits in the 38.43 pt gutter and measured 4.69 pt of
+# overlap with panel (b)'s y label. Four interior labels give a 40 pt pitch and
+# keep every label clear of both spines and of the gutter.
+A1_X_TICKS_KMS = [2.0, 4.0, 6.0, 8.0]
 
 # Panel (b) y limits. The annotation box needs an empty band under the lowest
 # curve. With autoscaled limits the lowest plotted point is about 8.0 W/cm2
@@ -121,7 +134,7 @@ AX2_Y_MAX: float = 900.0
 # between the artwork and its own spec about which marker the arrow should
 # touch: the label names a nose RADIUS, the dashed line IS that radius, and no
 # marker is claimed, so no colour choice can contradict the text.
-ARROW_TARGET_Q: float = 7.0
+ARROW_TARGET_Q: float = 5.0
 
 # Guard floors, evaluated after the PNG is written to its temporary path and
 # before it replaces the committed file, so a failure leaves the good figure in
@@ -385,6 +398,46 @@ def verify(parts: dict[str, Any], tmp_path: str) -> None:
             )
         )
 
+    # Rule 4: no two printed labels may overlap. The three checks above are
+    # blind to this class: they test tick spacing along one row, one font
+    # size, and one arrowhead. A rendered audit then found four labels that
+    # broke every one of those rules while overlapping anyway, namely the
+    # legend title struck through panel (a)'s x label, the panel (a) title
+    # overprinted on its own last word, an annotation box printed across
+    # panel (b)'s left spine, and a gutter x tick label touching panel (b)'s
+    # y label. The guard lives in fig_metrics so every generator gets it.
+    for left, right, width_pt, height_pt in fm.text_overlaps_pt(fig, scale):
+        raise RuntimeError(
+            "printed labels overlap by %.2f x %.2f pt: %r against %r; "
+            "shorten or reposition one of them"
+            % (width_pt, height_pt, left, right)
+        )
+
+    # Rule 5: a framed annotation placed in axes fraction is positioned by
+    # its anchor, not by its width, so a long label anchored well inside can
+    # still stick out of a spine and print across the neighbouring panel.
+    for axes, name in ((parts["ax1"], "ax1"), (ax2, "ax2")):
+        for text, leaks in fm.annotation_boxes_inside_axes_pt(axes, fig, scale):
+            detail = ", ".join("%s %.2f pt" % (side, amount)
+                               for side, amount in sorted(leaks.items()))
+            raise RuntimeError(
+                "annotation box on %s leaves its axes (%s): %r; move its "
+                "xytext or shorten its text" % (name, detail, text)
+            )
+
+    # Rule 6: nothing, of any kind, may leave the canvas. print_fit scans Text,
+    # Patch and Legend, and the Legend arm exists because a legend is neither a
+    # Text nor a Patch, so both this guard and the overlap guard used to skip
+    # it. The container for a legend placed with bbox_to_anchor is the CANVAS,
+    # not the cell axes it belongs to, which is why the check is the shared
+    # canvas assertion rather than legend_boxes_inside_axes_pt.
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import print_fit as pf  # local print geometry library
+
+    pf.assert_inside_canvas(fig)
+    print("[sutton_graves_parametric] no label overlaps, no box leaves its "
+          "axes, and nothing leaves the canvas")
+
 
 def main() -> int:
     """
@@ -447,7 +500,7 @@ def build_figure(solver, baseline):
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from matplotlib.ticker import FuncFormatter
+    from matplotlib.ticker import FuncFormatter, NullFormatter
 
     # SIZE AXIOM (goal rev 5): the canvas is built at exactly the width it
     # prints at (0.9\textwidth = 4.96 in) and the save loop in main() holds it
@@ -468,15 +521,50 @@ def build_figure(solver, baseline):
     # The height follows the printed width so that the aspect ratio of the
     # committed artwork is preserved: 4.2 in at 7.0 in wide is 0.6, so
     # 0.6 x PRINT_W_IN keeps the same shape at scale 1.0.
-    fig = plt.figure(figsize=(PRINT_W_IN, 0.78 * PRINT_W_IN))
+    #  HEIGHT IS THE CLEARANCE LEVER (2026-10-06).
+    #
+    #  WHY: save_to_print_width pins the PRINTED WIDTH to PRINT_W_IN, so the
+    #  print scale == and therefore every declared font size in points == is
+    #  fixed by the width alone and cannot be traded for clearance. The only
+    #  remaining freedom is the figure HEIGHT, and printed clearance in points
+    #  scales with it at fixed width and fixed gridspec fractions.
+    #
+    #  WHY NOT THE TWO REMEDIES verify() NAMES. Lowering ARROW_TARGET_Q would
+    #  move the arrow tip off the dashed baseline it exists to point at: the tip
+    #  is placed AT the baseline and the baseline is the one line excluded from
+    #  the clearance test (skip=(baseline_line,)). Raising AX2_Y_MIN would
+    #  squeeze the empty band that the annotation box needs == the band below
+    #  the lowest plotted point (about 8.0 W/cm^2) is the deliberate design
+    #  documented at AX2_Y_MIN. Shrinking the data range fixes the arrow by
+    #  cropping the artwork.
+    #
+    #  MEASURED: at 0.78 the arrowhead cleared the V = 3 km/s curve by only
+    #  5.78 pt against a 6.40 pt floor (head 5.40 pt plus 1.00 pt margin) and
+    #  verify() raised. 0.78 -> 0.88 multiplies the vertical scale by 1.128,
+    #  predicting about 6.52 pt of clearance. Everything else is unaffected or
+    #  better: the width-driven print scale and all font sizes are unchanged
+    #  (so the 8.41 pt smallest-text floor still holds), the tick gaps grow,
+    #  and the empty annotation band gains height rather than losing it.
+    #
+    #  CITATION: matplotlib figure sizing is in inches and is independent of
+    #  the raster dpi (https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.html).
+    fig = plt.figure(figsize=(PRINT_W_IN, 0.88 * PRINT_W_IN))
     fig.patch.set_facecolor("white")
     # Margins widened from left 0.09 / right 0.98 / top 0.90 / bottom 0.10
     # because probe_overhang.py measured the panel y-labels and the 10000 tick
     # hanging 0.221 in and 0.057 in off the canvas at the native printed
     # width. Fonts are absolute in points, so shrinking the canvas does not
     # shrink them and the overhang persisted; the margin must absorb it.
+    # The legend row is taller and the row gap larger than the measured
+    # (2.2, 1.5) / hspace 0.62. probe_sutton_geom.py measured panel (a)'s x
+    # label and the panel (a) legend title on the same rows, merging into one
+    # 136 px = 17.00 pt ink band with the two baselines 6.25 pt apart, because
+    # the legend is anchored at loc="center" in a row that sat directly under
+    # a 120 pt wide panel. A taller legend row plus a larger hspace moves the
+    # centred legend text down and away from the panel x labels. Both legends
+    # are still centred, so the change is symmetric across the two columns.
     gs = fig.add_gridspec(
-        2, 2, height_ratios=(2.2, 1.5), hspace=0.62, wspace=0.32,
+        2, 2, height_ratios=(2.2, 1.9), hspace=1.15, wspace=0.32,
         left=0.17, right=0.95, top=0.80, bottom=0.13)
     ax1 = fig.add_subplot(gs[0, 0])
     ax2 = fig.add_subplot(gs[0, 1])
@@ -523,7 +611,12 @@ def build_figure(solver, baseline):
         zorder=6,
     )
     ax1.annotate(
-        "IRVE-3 run condition\n%.2f W/cm$^2$" % baseline,
+        # Three short lines. Measured: the two-line form was 130.33 pt wide
+        # inside a 120.08 pt panel, so its framed box hung 20.80 pt LEFT of
+        # panel (a)'s left spine and reached the y-axis label and the '10' tick.
+        # Splitting the words so the longest line is "16.14 W/cm$^2$" keeps the
+        # patch inside the panel.
+        "IRVE-3 run\ncondition\n%.2f W/cm$^2$" % baseline,
         xy=(v_run_kms, baseline),
         # Bottom band in AXES FRACTION: the curve family fans upward to the
         # right, so the band below the lowest curve (R_N = 3 m, which reaches
@@ -534,7 +627,7 @@ def build_figure(solver, baseline):
         # of panel (b)'s rotated y-label. y = 0.055 (not 0.04) drops the
         # round-pad bottom edge ~6 px clear of the bottom spine; at 0.04 the
         # patch sat flush against the spine on the rendered page.
-        xytext=(0.95, 0.055),
+        xytext=(0.95, 0.075),
         textcoords="axes fraction",
         fontsize=13,
         ha="right",
@@ -547,11 +640,45 @@ def build_figure(solver, baseline):
     # Plain decimal ticks: see _plain_tick for the measured 5.95 pt
     # exponent that the default mathtext log formatter produced.
     ax1.yaxis.set_major_formatter(FuncFormatter(_plain_tick))
-    ax1.yaxis.set_minor_formatter(FuncFormatter(_plain_tick))
-    ax1.set_xlabel(r"Freestream velocity $V_\infty$ [km/s]", fontsize=13)
+    # The minor log ticks KEEP their tick marks but carry NO lettering.
+    # Measured on the rendered page at 8 px per point: labelling every minor
+    # tick put 18 tick centres on a 667 px = 83.38 pt ink band at a pitch down
+    # to 11 px = 1.38 pt, which is a solid black smear rather than numbers.
+    # NullFormatter is used rather than minorticks_off() because minorticks_off()
+    # would also remove the minor tick marks, and ax1.grid(True, which="both")
+    # needs them to keep its minor gridlines. ax2 already does this at the
+    # ax2.minorticks_off() call below.
+    ax1.yaxis.set_minor_formatter(NullFormatter())
+    # Two lines, because probe_sutton_geom.py measured this label 195.84 pt
+    # wide inside a 120.08 pt panel, so it hung 37.9 pt past the LEFT canvas
+    # edge and 37.9 pt into the 38.43 pt gutter between the panels. Each half
+    # of the split measures 60 to 110 pt and fits the panel.
+    ax1.set_xlabel(
+        "Freestream velocity\n$V_\\infty$ [km/s]",
+        fontsize=13,
+    )
+    # Explicit ticks with plain digits. Measured: the sweep runs from 2 to
+    # 10 km/s, so the default ticker chose 0, 5, 10 and 15. The axes clipped
+    # 0 and 15 away and panel (a) was left carrying exactly ONE x tick label,
+    # and that one was drawn as $\mathdefault{10}$, the mathtext form that
+    # prints its digits at the parent's size but is inconsistent with the
+    # plain-digit y ticks beside it. Five labels over the 2 to 10 span give a
+    # 30 pt pitch inside a 120.08 pt panel, and every one is inside the window
+    # so none is clipped.
+    ax1.set_xticks(A1_X_TICKS_KMS)
+    ax1.set_xticklabels(["%g" % v for v in A1_X_TICKS_KMS], fontsize=13)
+    # Rotated, so its box width is the line height (15.84 pt) and its box
+    # height is the string length. At 13 pt the string measures about 200 pt,
+    # which is longer than the 70.28 pt panel, so the box overhangs the panel
+    # vertically. That is harmless here because the overhang runs into the
+    # 55.73 pt of canvas above the panel and the 117.59 pt below it, both of
+    # which are free of other ink; assert_inside_canvas proves it.
     ax1.set_ylabel(r"Stagnation heat flux $\dot{q}_s$ [W/cm$^2$]", fontsize=13)
+    # Two lines, because panel (a) measures 120.08 pt wide and the single line
+    # measured about 140 pt, so its last word overprinted itself at the right
+    # end. Each half of the split measures 60 to 90 pt and fits.
     ax1.set_title(
-        r"(a) $\dot{q}_s$ vs $V_\infty$ ($h$ = 51.8 km)",
+        "(a) $\\dot{q}_s$ vs $V_\\infty$\n($h$ = 51.8 km)",
         fontsize=13,
     )
     ax1.grid(True, which="both", alpha=0.3, ls=":")
@@ -605,21 +732,40 @@ def build_figure(solver, baseline):
         # The arrow now ends on the dashed baseline line at ARROW_TARGET_Q,
         # inside the band that AX2_Y_MIN opens, instead of on a curve. The
         # measurement behind that change is recorded at ARROW_TARGET_Q.
-        "$R_N$ = 1.5 m (IRVE-3)",
+        # Shortened from "$R_N$ = 1.5 m (IRVE-3)". The measured panel (b) is
+        # 120.08 pt wide and the longer label measured about 118 pt, so
+        # right-anchored at 0.60 axes fraction the patch hung 42.38 pt LEFT of
+        # panel (b)'s left spine and reached 3.50 pt inside panel (a). Nothing
+        # is lost by dropping "(IRVE-3)": the caption states "The IRVE-3 run
+        # condition ($R_N$ = 1.5~m, $V_{\infty}$ = 3.378~km/s) is marked", the
+        # panel (a) legend carries the black entry "1.5 (baseline)", and the
+        # dashed line this arrow names IS the baseline radius.
+        "$R_N$ = 1.5 m",
         xy=(R_N_BASELINE_M, ARROW_TARGET_Q),
-        xytext=(0.60, 0.045),
+        # LEFT anchored at 0.05 axes fraction, inside the left spine. The
+        # dashed baseline sits at 0.796 of the log axis, so an arrow running
+        # right from this anchor crosses no curve: the V = 3 curve only
+        # descends into the empty band at the far right of the panel.
+        xytext=(0.05, 0.045),
         textcoords="axes fraction",
         fontsize=ARROW_FONTSIZE_PT,
-        ha="right",
+        ha="left",
         va="bottom",
-        arrowprops=dict(arrowstyle="->", lw=1.6, color="black"),
+        # shrinkB=0 makes the tip land exactly on the dashed line. matplotlib
+        # shrinks a FancyArrowPatch by 2 points at each end by default, which
+        # left the tip 2.38 pt short of the line on the rendered page; the
+        # 1.6 pt stroke of the dashed line then absorbs the tip.
+        arrowprops=dict(
+            arrowstyle="->", lw=1.6, color="black",
+            shrinkA=0, shrinkB=0,
+        ),
         bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="black", lw=1.1),
     )
 
     ax2.set_xscale("log")
     ax2.set_yscale("log")
     ax2.yaxis.set_major_formatter(FuncFormatter(_plain_tick))
-    ax2.yaxis.set_minor_formatter(FuncFormatter(_plain_tick))
+    ax2.yaxis.set_minor_formatter(NullFormatter())
     # Only the thinned subset carries lettering; see X_TICKS_M for the
     # measurement that forced the subset.
     ax2.set_xticks(X_TICKS_M)
@@ -628,7 +774,10 @@ def build_figure(solver, baseline):
     ax2.set_xlabel(r"Nose radius $R_N$ [m]", fontsize=13)
     ax2.set_ylabel(r"Stagnation heat flux $\dot{q}_s$ [W/cm$^2$]", fontsize=13)
     ax2.set_title(
-        r"(b) $\dot{q}_s$ vs $R_N$ ($\propto 1/\sqrt{R_N}$)",
+        # Two lines, because panel (b) measures 120.08 pt wide and the single
+        # line measured about 140 pt, so its tail overprinted itself. Each half
+        # of the split measures 60 to 90 pt and fits.
+        "(b) $\\dot{q}_s$ vs $R_N$\n($\\propto 1/\\sqrt{R_N}$)",
         fontsize=13,
     )
     ax2.grid(True, which="both", alpha=0.3, ls=":")
@@ -644,6 +793,10 @@ def build_figure(solver, baseline):
         "fig": fig,
         "ax1": ax1,
         "ax2": ax2,
+        # The legend cells travel with the figure because verify() measures
+        # their boxes against their own axes.
+        "lg1": lg1,
+        "lg2": lg2,
         "baseline_line": baseline_line,
     }
 

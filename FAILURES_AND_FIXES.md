@@ -5009,3 +5009,60 @@ had opened, and it **ran** them.
   F24–F31 are pure code fixes that can be made and re-tested in minutes. F24, F25, F26
   and F27 must land **together** — any one of them alone would produce a PINN that runs
   and is still wrong.
+
+---
+
+## Correction — the run8 container EOF is reproducible, not fabricated
+
+*(Appended 2026-10-06. Corrects the entry above at `:4514` and `:4519`, which are left in
+place so the correction is auditable.)*
+
+That entry states:
+
+> `grep -rn "unexpected EOF"` over the results tree matches only a bundled minified
+> JavaScript image library ... and **no console log was persisted for run8**.
+> ...
+> So: **the truncation is measured and confirmed** (19 rows, steps 100–1900, mtime
+> 06:58:09). **The container EOF is agent-reported only** and is not asserted here.
+
+**The console log exists and contains the line verbatim.** Measured:
+
+```bash
+$ ls -l /tmp/validate_run8.log
+-rw-r--r--  1 albertstarfield  staff  47282  Oct  6 07:09 /tmp/validate_run8.log
+
+$ grep -n "unexpected EOF" /tmp/validate_run8.log
+426:time="2026-10-06T06:58:09+07:00" level=error msg="error waiting for container: unexpected EOF"
+```
+
+The timestamp in the log line (`06:58:09`) matches the CSV mtime the entry itself cites, so
+the two are the same event. **The check was aimed at the wrong tree** — the `results/` tree
+never held the console log (its only `unexpected EOF` hits are the bundled
+`throw w9("unexpected EOF","EBADDATA")` in the JS image bundle, as correctly observed). The
+console output went to the process's own log file.
+
+**What the original entry got right, and what stands.** Its retraction of the
+`sparta.adb:3002-3011` inference is **correct and is retained**: that warning is a
+per-dump element-count check (`if Row < N`, comparing elements inside one
+`surf.NNN.out` against the expected 76), so it can never fire for "too few dump files".
+Its silence was never evidence. The corrected basis for "no completeness guard existed" is:
+
+1. the only completeness test was `Success := Count > 0` — *at least one dump exists*;
+2. `in.hiad` dumps every 100 steps, so `--steps 2200` requires **23** dump files
+   (`Steps / Stats_Interval + 1`; the `+1` is step 0), and run8 produced **20**;
+3. the measured harm: with 20 dumps (100–1900) the averaging window became **500–1900**
+   instead of **800–2200**, silently omitting the final 300 steps — the hottest, densest
+   part of the trajectory — from every graded metric.
+
+**Honest caveat, which the original entry was right to insist on.** `/tmp` is not committed,
+so this evidence is ephemeral: a future reader re-running the grep will not find it. The
+honest framing is therefore **"reproducible but not persisted"**, never "fabricated" —
+which is precisely the distinction the correction withdraws.
+
+**Independently corroborated.** After the defect was fixed, run12 produced a clean
+`[SPARTA] docker exit status = 0, surf dump files = 23` and `RESULT: VALIDATION PASSED`,
+and three failing runs were each caught with a non-zero status
+(`256` / `32000` / `32000`). The mechanism the log line describes is therefore real,
+reproducible, and now guarded.
+
+---

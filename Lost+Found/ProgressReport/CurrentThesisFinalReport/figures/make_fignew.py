@@ -56,6 +56,7 @@ from PIL import Image  # noqa: E402
 # added first so the import also works when a probe imports this file
 # from another directory.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import fig_metrics as fm  # noqa: E402  sibling module, unique printed-layout guards
 import opt_data  # noqa: E402  sibling module, unique committed-campaign loader
 import print_fit as pf  # noqa: E402
 
@@ -120,6 +121,18 @@ SCRIPT_SAFE_PT = 11.5                   # for any label carrying a mathtext scri
 PLAIN_TEXT_PT = 9.0                     # for any label carrying no scripts
 TITLE_PT = 12.0                         # titles carry no scripts
 TICK_PT = 10.0                          # tick labels carry no scripts
+# WHY A COLLISION FLOOR OF 3.0 PT: a matplotlib text extent includes the full
+# ascent and descent of the line box, not the inked glyphs, so two labels on
+# neighbouring rows report a point or two of box overlap while the glyphs are
+# plainly apart. Measured at 13 pt Times the descent allowance is about 3 pt,
+# so anything below that is reported as no overlap and anything above it is a
+# real overprint a reader can see.
+MIN_OVERLAP_PT = 3.0
+# WHY A ROW GAP FLOOR OF 2.0 PT: two labels on one horizontal band need at
+# least a word space between them, and a word space at these sizes measures
+# 2 to 5 pt. The central composite screen failed this at one white column,
+# which is 0.5 pt and rendered as (m)Toroid on the page.
+MIN_ROW_GAP_PT = 2.0
 
 # WHY PLAIN_TEXT_PT IS NOT 8.0: save() fits the printed width to within 0.5
 # percent, so the achieved scale lands between 0.995 and 1.005 in practice and
@@ -173,25 +186,39 @@ def style(ax, title: str, xlabel: str, ylabel: str) -> None:
         ax.spines[side].set_visible(False)
 
 
-def plain_log_ticks(ax, axis: str = "y") -> None:
-    """Print log-axis decade labels as plain digits, not as mathtext powers.
+def plain_log_ticks(ax, axis: str = "y", target: int = 4) -> None:
+    """Give a log axis plain-digit labels at ticks that lie inside its window.
 
-    WHY: matplotlib's default log formatter writes each decade as a mathtext
-    power, so "100" is drawn as 10 to the 2 and the exponent is rendered at
+    TWO DEFECTS, ONE ROOT CAUSE EACH.
+    First, matplotlib's default log formatter writes each decade as a mathtext
+    power, so "100" is drawn as 10 to the 2 and the exponent renders at
     SHRINK_FACTOR of the tick size. At TICK_PT the exponent printed 7.0 pt and
     _guard_layout rejected the figure. Writing the decade as plain digits
-    removes the script entirely, so the floor cannot regress. This is the same
-    fix the Sutton-Graves generator needed, and it is asserted rather than
-    trusted: the guard below still measures whatever ends up on the PNG.
+    removes the script entirely, so the floor cannot regress.
+    Second, a decade locator offers only 10, 100, 1000, so an axis whose window
+    spans less than one decade has NO decade inside it and prints no number at
+    all. Measured on the heat-flux panels: panel 1 spans 50.6 to 151.7 and gets
+    the single label 100, while panel 2 spans 150.8 to 446.4 and gets nothing
+    at all, while showing tick marks and gridlines. The ticks are therefore
+    chosen by fig_metrics.log_ticks_in_window, which returns values strictly
+    inside the window and spaces them evenly in the exponent, which is what a
+    reader sees as even on a log axis.
 
-    PARAMETERS: ax the axes whose axis is logarithmic; axis "x" or "y".
+    PARAMETERS: ax the axes whose axis is logarithmic; axis "x" or "y"; target
+    the desired number of ticks, reduced automatically until they are far
+    enough apart to print without touching.
     RETURNS: None.
-    RAISES: RuntimeError if axis is neither "x" nor "y".
+    RAISES: RuntimeError if axis is neither "x" nor "y", or if the window holds
+    no positive value so no tick can be placed.
     """
-    from matplotlib.ticker import FuncFormatter, NullFormatter
+    from matplotlib.ticker import FixedLocator, FuncFormatter, NullFormatter
     if axis not in ("x", "y"):
         raise RuntimeError(f"plain_log_ticks: axis must be x or y, got {axis!r}")
     a = getattr(ax, f"{axis}axis")
+    low, high = sorted(a.get_view_interval())
+    ticks = fm.log_ticks_in_window(low, high, target=target)
+    if ticks:
+        a.set_major_locator(FixedLocator(ticks))
     # Minor labels are suppressed because they were never drawn: matplotlib
     # leaves the minor log formatter empty by default, and labelling them here
     # would add text the figure did not previously carry.
@@ -243,11 +270,6 @@ def _guard_layout(fig, out: Path, print_width_in: float, scale: float) -> None:
     :raises RuntimeError: if an adjacent tick pair is closer than
         MIN_TICK_GAP_PT or the smallest printed text is below 8 pt.
     """
-    import sys as _sys
-
-    _sys.path.insert(0, str(FIGDIR))
-    import fig_metrics as fm
-
     fig.canvas.draw()
     for axis in fig.axes:
         try:
@@ -266,6 +288,48 @@ def _guard_layout(fig, out: Path, print_width_in: float, scale: float) -> None:
         raise RuntimeError(
             f"{out.name}: smallest printed text {smallest:.2f} pt ({where}) is "
             f"below the {MIN_PRINTED_PT:.1f} pt floor; raise the declared size")
+    # WHY A COLLISION TEST AND NOT A WIDER TICK GAP: two panels carrying the
+    # same axis label cannot collide with each other, a title can overprint its
+    # own last word, and an axis label can run into a legend key. None of those
+    # pairs share a tick row, so a tick-gap test cannot see them. The all-pairs
+    # box test can, and it costs one draw.
+    pairs = fm.text_overlaps_pt(fig, scale, min_overlap_pt=MIN_OVERLAP_PT)
+    if pairs:
+        first, second, wide, high = pairs[0]
+        raise RuntimeError(
+            f"{out.name}: {len(pairs)} text pair(s) overlap; worst is "
+            f"{first} against {second} at {wide:.2f} x {high:.2f} pt at print "
+            f"width {print_width_in:.3f} in, above the {MIN_OVERLAP_PT:.1f} pt "
+            f"floor; shorten, wrap or move the text")
+    # WHY A ROW GAP FLOOR AS WELL AS AN OVERLAP FLOOR: the central composite
+    # screen measured ONE WHITE COLUMN between the panel 2 and panel 3 x labels,
+    # so the boxes did not intersect and the overlap test stayed silent while
+    # the page rendered (m)Toroid. A gap is not an overlap, so it needs its own
+    # test, and the two labels belong to different axes, so the within-axis tick
+    # gap test could not see them either.
+    tight = fm.same_row_gaps_pt(fig, scale, min_gap_pt=MIN_ROW_GAP_PT)
+    if tight:
+        left, right, gap = tight[0]
+        raise RuntimeError(
+            f"{out.name}: {len(tight)} label pair(s) on one row sit within "
+            f"{MIN_ROW_GAP_PT:.1f} pt; narrowest is {left} against {right} at "
+            f"{gap:.2f} pt at print width {print_width_in:.3f} in; shorten or "
+            f"wrap the labels")
+    # WHY AN EMPTY-AXIS TEST AS WELL AS A SIZE TEST: a label that is never
+    # drawn has no size to measure, no neighbour to collide with, and prints
+    # inside the canvas, so every test above passes it. The heat-flux panel 2
+    # rendered tick marks, gridlines and NO number because its y window spans
+    # 150.8 to 446.4 and contains no decade, so the default log locator offered
+    # only 100 and 1000 and both lie outside. Fix it with
+    # fm.log_ticks_in_window, which returns values inside the window.
+    empty = fm.axes_without_tick_labels(fig)
+    if empty:
+        name, window, locs = empty[0]
+        raise RuntimeError(
+            f"{out.name}: {len(empty)} axis/axes draw no numeric tick label; "
+            f"first is {name} with {window} and locator values "
+            f"{['%.6g' % v for v in locs]}; set explicit ticks inside the "
+            f"window, for example with fig_metrics.log_ticks_in_window")
 
 
 def fig_scalloped_vs_smooth() -> None:
@@ -436,8 +500,13 @@ def fig_convergence() -> None:
     # print width, and an over-wide artist makes the tight crop grow while the
     # canvas shrinks, which diverges instead of converging. Two keys per row
     # means two rows, so the anchor sits deeper than the single-row figures.
+    # LEGEND ANCHOR: a rendered audit measured the x-axis label 0.75 pt from
+    # legend row 1 at anchor -0.10. The legend is anchored in figure
+    # fractions while tight_layout places the axis label from the axes box, so
+    # the two are independent and can collide; the anchor is the lever that
+    # owns the gap, because the label must stay where the axes put it.
     fig.legend(h, lb, fontsize=SCRIPT_SAFE_PT, loc="lower center", ncol=2,
-               frameon=False, bbox_to_anchor=(0.5, -0.10))
+               frameon=False, bbox_to_anchor=(0.5, -0.16))
     fig.tight_layout()
     save(fig, "fignew_convergence_residuals.png", WIDTH_FULL)
 
@@ -461,10 +530,15 @@ def fig_ccd_screen() -> None:
 
     groups = [group(l) for l in label]
     fig, axes = plt.subplots(1, 3, figsize=(WIDTH_FULL, WIDTH_FULL * 0.46))
-    # Each panel is (x quantity, y quantity, x label, y label).
-    panels = [(rn, rt, "Nose radius $R_N$ (m)", "Toroid radius $r_{tor}$ (m)"),
-              (rn, hc, "Nose radius $R_N$ (m)", "Half-cone angle (deg)"),
-              (rt, hc, "Toroid radius $r_{tor}$ (m)", "Half-cone angle (deg)")]
+    # Each panel is (x quantity, y quantity, x label, y label). The x labels wrap
+    # onto two lines because the one-line form did not fit: _guard_layout measured
+    # the second and third panel labels 1.24 pt OVERLAPPING at SCRIPT_SAFE_PT in
+    # panels of WIDTH_FULL/3 = 1.745 in, and a rendered audit found the same pair
+    # separated by a single white column. The quantity name then the symbol and
+    # unit keeps each line short enough for the panel it labels.
+    panels = [(rn, rt, "Nose radius\n$R_N$ (m)", "Toroid radius $r_{tor}$ (m)"),
+              (rn, hc, "Nose radius\n$R_N$ (m)", "Half-cone angle (deg)"),
+              (rt, hc, "Toroid radius\n$r_{tor}$ (m)", "Half-cone angle (deg)")]
     marker_style = {"factorial corner (8)": ("o", CB[0]),
                     "axial star (6)": ("^", CB[1]),
                     "center (1)": ("*", CB[2])}

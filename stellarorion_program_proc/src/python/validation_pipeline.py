@@ -740,7 +740,12 @@ def irve3_trajectory_model(
 #
 # AXIOMS:
 #   1. SG: q = K * sqrt(ρ/R_n) * V^3
-#   2. K is a gas-specific constant (air: K ≈ 1.83e-4 in SI units)
+#   2. K is a gas-specific constant. For EARTH AIR K = 1.7415e-4 in SI
+#      units. Do NOT use 1.83e-4 here: that is the MARS coefficient for a
+#      97% CO2 / 3% N2 mixture (NASA NTRS 20200002354, 2018).
+#      [Citation: NASA TFAWS Aerothermodynamics Course, 2012 --
+#       "k = 1.7415e-4 (Earth), k = 1.9027e-4 (Mars)"]
+#      [Citation: StellarOrion_Types.C_SG, stellarorion_types.ads]
 #   3. R_n is the effective nose radius
 #   4. q ∝ sqrt(ρ) * V³ — depends on density and velocity cubed
 #
@@ -751,7 +756,8 @@ def irve3_trajectory_model(
 #
 # The SG correlation constant K for air:
 #   K = sqrt(γ/(R_a)) * (2/(γ+1))^((γ+1)/(4(γ-1))) * (γ+1)/2)^((γ+1)/(2(γ-1)))
-#   For air at standard conditions: K ≈ 1.83e-4 in SI (when q in W/m², ρ in kg/m³, R in m, V in m/s)
+#   For air at standard conditions: K = 1.7415e-4 in SI (when q in W/m²,
+#   ρ in kg/m³, R in m, V in m/s). See [1] above -- 1.83e-4 is Mars.
 #
 # Calibration: Our DSMC at 51.8 km gives SG ≈ 16.14 W/cm² (single-point with ISA).
 # Rapisarda's trajectory-integrated SG = 15.26 W/cm² (with MCD v6.1 atmosphere).

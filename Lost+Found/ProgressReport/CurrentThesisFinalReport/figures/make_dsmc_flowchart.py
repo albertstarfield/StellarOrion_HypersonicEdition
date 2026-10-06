@@ -59,10 +59,9 @@ import matplotlib
 
 matplotlib.use("Agg")
 
-import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.patches import Polygon, Rectangle  # noqa: E402
-import numpy as np  # noqa: E402
-from PIL import Image  # noqa: E402
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import Polygon, Rectangle
 
 # The rendered-ink measurement lives in its own module so that the
 # generator's guard and the standalone audit tool are the same code. The
@@ -70,16 +69,15 @@ from PIL import Image  # noqa: E402
 # restated, because a second copy of a threshold is a second chance to
 # disagree about the same image.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from measure_loop_gap import (  # noqa: E402
+# The print-fit loop, its tolerance, the achieved print scale and the
+# inside-canvas check live in one sibling module so that no two
+# generators can disagree about what a printed figure looks like.
+import print_fit as pf
+from measure_loop_gap import (
     MAX_TOUCH_ROWS,
     MIN_SEP_GAP_PX,
     measure,
 )
-
-# The print-fit loop, its tolerance, the achieved print scale and the
-# inside-canvas check live in one sibling module so that no two
-# generators can disagree about what a printed figure looks like.
-import print_fit as pf  # noqa: E402
 
 DPI = pf.DPI             # 300, the save resolution
 ROOT = Path(__file__).resolve().parent.parent
@@ -101,9 +99,59 @@ TOP = 0.10
 TITLE_H = 0.30
 BOT = 0.08
 BOX_W = 3.20
-BOX_H = 0.40
-GAP = 0.16
+# BOX H: the DEFECT 7a block below shrinks this figure so a beamer frame
+# receives it at a usable aspect. The shrink went too far once it was
+# measured rather than estimated: two 9 pt lines need more height than the
+# 0.28 in it was given, and probe_box_text_fit.py measured the subtitle
+# crossing the bottom border of all seven boxes by 1.81 pt. A 9 pt DejaVu
+# line measures a half extent of 0.065 in, so two lines at LABEL_PITCH
+# apart span 2*(LABEL_PITCH/2 + 0.065) = 0.26 in, and MIN_BOX_CLEAR_PT of
+# 2 pt on each side adds 0.056 in. 0.34 in clears both conditions with a
+# visible white channel, which is the same floor measure_loop_gap already
+# uses for the loop.
+BOX_H = 0.34
+#  DEFECT 7a == the flowchart used 36% of the available plot width.
+#
+#  MEASURED (preamble.tex:524): \PlotFrame places with
+#      \includegraphics[width=\textwidth, height=\plotheight, keepaspectratio]
+#      and \plotheight = 0.60\textheight, so for a beamer 16:9 frame the
+#      plot box is about 6.1 in x 1.89 in == box aspect ~3.23. A figure is
+#      HEIGHT-limited and its placed width is 0.60*\textheight * figure_aspect,
+#      so width usage is driven entirely by the figure's own aspect ratio.
+#  MEASURED here: W = 0.9 * TEXT_W_IN = 4.96063 in, and with
+#      H = TOP + TITLE_H + 7*BOX_H + 6*GAP + BOT = 4.24 in
+#  the shipped aspect was 1.170 -> placed width ~1.49 in of ~6.1 in = 24%.
+#
+#  WHY A 2-COLUMN SNAKE WAS REJECTED (measured, not assumed):
+#      LOOP_X = BOX_X1 + 0.32 is anchored to the box column's RIGHT edge.
+#      In a 2-column layout BOX_X1 becomes the canvas edge, so the width
+#      guard at the end of draw() == which requires
+#      W - (LOOP_X + 0.40 + math_fs/2) >= 0.02 == fails by -0.75 in for
+#      every column gap tried (0.25 / 0.35 / 0.45). The loop can only live
+#      beside a column that is NOT the rightmost one. Separately,
+#      measure_loop_gap() detects a single box_right_x, so with two boxes
+#      side by side the post-save clearance gate would measure the wrong
+#      border == i.e. the layout fix would require editing the measurement
+#      utility that certifies the figure.
+#
+#  THE FIX APPLIED HERE: keep one column and the loop exactly where they are
+#  (so both the inline bow guard and measured_loop_clearance keep testing
+#  what they tested before), and cut the mandatory vertical stack == the
+#  7 stacked boxes are the only thing making H large. Reducing BOX_H and
+#  GAP leaves BOX_W, BOX_X0, BOX_X1, CX and therefore the whole loop
+#  geometry byte-identical, and removes the two text-offset pairs' only
+#  pressure by widening their separation to match the shorter box.
+#  [Citation: matplotlib == figure height in inches vs data-unit extents]
+#  [Reference: FAILURES_AND_FIXES.md == DEFECT 7]
+
+GAP = 0.10
 N_BOX = 7
+# Vertical distance between the two label lines inside a box. Declared here
+# rather than typed into the two draw calls so that BOX_H and the offsets
+# cannot drift apart, which is exactly what happened when the offsets were
+# literals and BOX_H changed underneath them. The lines are placed
+# symmetrically at plus and minus half of this value about the box centre.
+LABEL_PITCH = 0.15
 H = TOP + TITLE_H + N_BOX * BOX_H + (N_BOX - 1) * GAP + BOT
 BOX_X0 = (W - BOX_W) / 2.0
 BOX_X1 = BOX_X0 + BOX_W
@@ -327,7 +375,7 @@ def draw() -> None:
         )
         ax.text(
             CX,
-            top - BOX_H / 2.0 + 0.05,
+            top - BOX_H / 2.0 + 0.5 * LABEL_PITCH,
             BOX_TITLES[i],
             ha="center",
             va="center",
@@ -338,7 +386,7 @@ def draw() -> None:
         )
         ax.text(
             CX,
-            top - BOX_H / 2.0 - 0.10,
+            top - BOX_H / 2.0 - 0.5 * LABEL_PITCH,
             BOX_SUBS[i],
             ha="center",
             va="center",
@@ -422,10 +470,18 @@ def draw() -> None:
         solid_capstyle="butt",
         zorder=1,
     )
-    # Arrowhead as a data coordinate triangle, pointing up the column, with
-    # its tip a hair inside the border of the box the loop reenters so the
-    # connector meets the box instead of leaving a white sliver beside it.
-    tip_x = ENTRY_X - CONNECTOR_OVERLAP
+    # Arrowhead as a data coordinate triangle whose tip lands on the border
+    # of the box the loop reenters. The tip must sit INSIDE the border STROKE
+    # so the connector meets the box with no white sliver, but it must NOT
+    # reach the box FILL, or a dark triangle overprints the light interior.
+    # The stroke spans BOX_LW/2 about the border centreline, so the window
+    # that satisfies both conditions is that half width; 40 percent of it
+    # lands 0.0042 in inside the centreline and 0.0062 in clear of the fill.
+    # A rendered audit measured 0.015 in of tip inside the box before this
+    # was measured, which is why the overlap is derived from the stroke
+    # width rather than typed as a literal.
+    stroke_half = 0.5 * BOX_LW / 72.0
+    tip_x = ENTRY_X - 0.4 * stroke_half
     head_len = LOOP_HEAD_LEN
     head_half = 0.5 * head_len * HEAD_HALF_RATIO
     ax.add_patch(
