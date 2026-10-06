@@ -1,4 +1,18 @@
-.venv-pdf/
-*.aux
-*.brf
-*.out
+# Verification temp renders and helper scripts.
+# Session policy: these are per-cycle artifacts and are NEVER committed.
+# Background autosave sweeps untracked files, so they must be ignored here.
+citefix_*.png
+figchk_*.png
+lsfix_*.png
+lscont_*.png
+read_p*.png
+sweep_*.png
+spot_*.png
+r1fix_*.png
+r2_v_*.png
+fix_t_*.png
+cut150_*.png
+cap_lof*
+.figcheck_tmp/
+find_dsmc_sentence.py
+verify_lsfix_split.py
