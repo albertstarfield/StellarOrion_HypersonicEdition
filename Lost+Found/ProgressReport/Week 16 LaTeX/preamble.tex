@@ -428,6 +428,9 @@ Institut Teknologi Bandung}
 %   #1 frametitle (string, uppercase by house style)
 %   #2 caption (string, HARD CAPPED at 1-2 lines -- see \MaxTextLines)
 %   #3 image path (string, resolvable by \graphicspath)
+%   #4 OPTIONAL plot-box height (a length). Defaults to \plotheight. Needed for
+%      portrait artwork, which is height-bound on a 16:9 frame and would
+%      otherwise render as a narrow column.
 %
 % RETURNS: nothing; draws into the current frame.
 %
@@ -435,7 +438,12 @@ Institut Teknologi Bandung}
 % A missing plot is a build error, not a cosmetic gap.
 %
 % Citation: Beamer frame body -- https://ctan.org/pkg/beamer
-\newcommand{\plotheight}{0.66\textheight}
+% MEASURED 2026-10-06: at 0.66 the two-line captions left only 15 px of bottom
+% clearance at render scale 2.2 (about 6.8 pt from the paper edge) on slides
+% 3, 4, 6, 7 and 9. TeX reported no overfull box -- the content was inside the
+% frame body -- but 2.7 % of the slide height is too close to the edge for a
+% projected deck. 0.60 restores clearance while keeping the plot dominant.
+\newcommand{\plotheight}{0.60\textheight}
 
 % \PlotFileProbe{<basename>}{<extension>} — set \ifplotfound and \PlotFileFound
 % if figures/<basename>.<extension> exists on disk.
@@ -467,6 +475,14 @@ Institut Teknologi Bandung}
     {}%
 }
 
+% ARITY NOTE, after getting this wrong: \PlotFrame takes exactly THREE mandatory
+% arguments (title, caption, image). An earlier attempt added an optional 4th
+% for the plot height as \newcommand{\PlotFrame}[4][\plotheight]; that declares
+% FOUR mandatory parameters, so #1 became the optional height, the frametitle
+% shifted into the height slot, and all 7 call sites desynchronised at once
+% (every frame rendered "MISSING PLOT" and the PDF collapsed from 1.5 MB to
+% 127 kB). \plotheight is a plain length and is overridden in a group by the
+% one portrait frame instead -- see main.tex, slide 3. VALIDATION RUN.
 \newcommand{\PlotFrame}[3]{%
   \begin{frame}{#1}%
     \centering

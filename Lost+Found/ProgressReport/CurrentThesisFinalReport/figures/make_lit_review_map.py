@@ -70,6 +70,8 @@ import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.patches import Circle, Rectangle, Wedge  # noqa: E402
 from PIL import Image  # noqa: E402
 
+import print_fit as pf  # noqa: E402  sibling module, unique print geometry
+
 # figures/ -> CurrentThesisFinalReport -> ProgressReport -> Lost+Found -> repo root
 ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 THESIS = Path(__file__).resolve().parent.parent
@@ -77,13 +79,14 @@ FIGDIR = THESIS / "figures"
 assert FIGDIR.is_dir() and Path(__file__).resolve().parent == FIGDIR, (
     "FIGDIR must be the directory holding this script")
 
-DPI = 300
-TEXT_W_IN = 21.0 / 2.54 - (4.0 + 3.0) / 2.54      # 5.51181 in, A4 21 cm less 4+3 cm
+DPI = pf.DPI             # 300, the single save resolution used by print_fit
+TEXT_W_IN = pf.TEXT_W_IN                     # 5.51181 in, A4 21 cm less 4+3 cm
 PRINT_W_IN = 0.92 * TEXT_W_IN                     # matches width=0.92\textwidth in ch2
 
 FONT_TITLE = 13.0        # >= 13 pt required by the redraw spec
 FONT_BODY = 9.0          # >= 9 pt declared, prints >= 8 pt at scale 1.0
 MIN_PRINTED_PT = 8.0
+TITLE_LINE_PITCH = 0.235  # in, vertical distance between the two title lines
 
 INK = "#2C3E50"          # cell edges and all text
 FILL_FULL = "#1A5276"    # navy, full coverage
@@ -91,10 +94,8 @@ FILL_PART = "#85C1E9"    # light blue, partial coverage
 FILL_NONE = "#F2F4F4"    # off white, not covered
 HILITE = "#E74C3C"       # dashed red outline around the This Work row
 
-# Banned dash characters are built from code points so that this source file
-# itself never contains a literal double hyphen or an en or em dash.
-DASH2 = chr(45) + chr(45)
-DASHES = (DASH2, chr(0x2013), chr(0x2014))
+# Banned dash checking lives in print_fit so that every generator applies the
+# same rule; see pf.DASHES for the code point construction.
 
 COLUMNS = (
     ("HIAD", "Geometry"),
@@ -130,6 +131,9 @@ _SCRATCH: plt.Figure | None = None
 def check_text(label: str, *strings: str) -> None:
     """Raise if any drawn string contains a double hyphen, en dash or em dash.
 
+    Thin wrapper over the shared checker so this script keeps its element
+    labelled error messages while the rule itself exists only once.
+
     Parameters: label names the element for the error message; strings are the
     exact texts that will be handed to matplotlib.
 
@@ -137,12 +141,11 @@ def check_text(label: str, *strings: str) -> None:
 
     Raises: RuntimeError on the first banned character found.
     """
-    for s in strings:
-        for bad in DASHES:
-            if bad in s:
-                raise RuntimeError(
-                    f"{label}: drawn text {s!r} contains a banned dash "
-                    f"(code point {ord(bad):#06x}); the thesis forbids it")
+    for s in pf.checked_dashes(*strings):
+        found = [f"U+{ord(d):04X}" for d in pf.DASHES if d in s]
+        raise RuntimeError(
+            f"{label}: drawn text {s!r} contains a banned dash {found}; "
+            f"the thesis forbids it")
 
 
 def text_w_in(s: str, size_pt: float, weight: str = "normal",
@@ -151,7 +154,7 @@ def text_w_in(s: str, size_pt: float, weight: str = "normal",
 
     AXIOM: with the Agg canvas at dpi 72, one pixel is exactly one point, so the
     measured window extent in pixels divided by 72 is the width in inches, and it
-    is independent of the canvas size that save() later settles on.
+    is independent of the canvas size that print_fit later settles on.
 
     Parameters: s is the string; size_pt its declared font size; weight and style
     select bold and italic.
@@ -173,45 +176,6 @@ def text_w_in(s: str, size_pt: float, weight: str = "normal",
     t.remove()
     return width / 72.0
 
-
-def save(fig: plt.Figure, name: str, print_width_in: float) -> Path:
-    """Save so the PRINTED width equals print_width_in to within 0.5 percent.
-
-    AXIOM: declaring a figsize is not enough. bbox_inches="tight" crops the saved
-    image to its artist extents, so the saved width is not the canvas width. The
-    crop ratio depends only on the internal proportions of the figure, so it is
-    stable under resizing, and measuring it once and scaling the canvas by the
-    reciprocal therefore converges. The result is asserted, not assumed.
-
-    Parameters: fig is the figure to save; name is the PNG file name inside
-    FIGDIR; print_width_in is the width on paper.
-
-    Returns: the Path of the written PNG.
-
-    Raises: RuntimeError if four attempts do not reach the target width.
-    """
-    out = FIGDIR / name
-    target_px = print_width_in * DPI
-    got_px = 0
-    for _attempt in range(1, 5):
-        fig.savefig(out, dpi=DPI, bbox_inches="tight", facecolor="white")
-        got_px = Image.open(out).size[0]
-        if abs(got_px - target_px) / target_px <= 0.005:
-            break
-        w, h = fig.get_size_inches()
-        ratio = target_px / got_px
-        fig.set_size_inches(w * ratio, h * ratio, forward=True)
-    else:
-        raise RuntimeError(
-            f"{name}: could not fit to {print_width_in:.3f} in "
-            f"(last {got_px / DPI:.3f} in)")
-    final_in = Image.open(out).size[0] / DPI
-    eff = print_width_in / final_in
-    print(f"  wrote {name:44s} {Image.open(out).size[0]}x{Image.open(out).size[1]}px  "
-          f"print {print_width_in:.3f} in  scale {eff:.3f}  "
-          f"effective dpi {DPI / eff:.0f}")
-    plt.close(fig)
-    return out
 
 
 def draw_mark(ax, state: str, cx: float, cy: float, r: float) -> None:
@@ -293,9 +257,14 @@ def build() -> plt.Figure:
     ax.set_ylim(0.0, height)
     ax.axis("off")
 
-    ax.text(PRINT_W_IN / 2.0, height - margin, "Literature Review: Coverage of "
-            "Physical Phenomena and Methodology", ha="center", va="top",
-            fontsize=FONT_TITLE, fontweight="bold", color=INK)
+    # The title is set on two centered lines. At FONT_TITLE it measures about
+    # 8 in on one line, which is wider than the 5.07 in canvas, and a text
+    # artist wider than the canvas makes the tight crop in print_fit grow the
+    # image on every attempt so the fit loop cannot converge.
+    for k, line in enumerate(title_lines):
+        ax.text(PRINT_W_IN / 2.0, height - margin - k * TITLE_LINE_PITCH, line,
+                ha="center", va="top", fontsize=FONT_TITLE, fontweight="bold",
+                color=INK)
 
     header_top = height - margin - title_h - 0.06
     header_mid = header_top - header_h / 2.0
@@ -351,6 +320,7 @@ def build() -> plt.Figure:
         ax.text(x + swatch + 0.06, legend_y, text, ha="left", va="center",
                 fontsize=FONT_BODY, color="#000000")
         x += w + gap
+    pf.assert_inside_canvas(fig)
     return fig
 
 
@@ -359,12 +329,14 @@ def main() -> int:
 
     Returns: 0 on success.
 
-    Raises: nothing directly; build() and save() document their failures.
+    Raises: nothing directly; build() and print_fit document their failures.
     """
     fig = build()
-    out = save(fig, "literature_review_map.png", PRINT_W_IN)
+    # print_fit owns the print geometry: it saves at DPI, fits the printed
+    # width to FIT_TOL, measures the achieved print scale and closes the figure.
+    out, eff = pf.save_to_print_width(fig, "literature_review_map.png",
+                                      PRINT_W_IN)
     w_px, h_px = Image.open(out).size
-    eff = PRINT_W_IN / (w_px / DPI)
     smallest = FONT_BODY * eff
     print(f"  smallest declared label {FONT_BODY:.1f} pt at scale {eff:.3f} "
           f"= {smallest:.2f} pt printed; floor {MIN_PRINTED_PT:.1f} pt")

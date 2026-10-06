@@ -28,12 +28,12 @@ with velocity and Mach number evolving along the Black Brant XI suborbital profi
 
 | Metric | DSMC Value |
 |:---|---:|
-| Heat Flux Avg [W/cm²] | 54.0291 |
-| Drag Sum [N] | 45696.32 |
-| Lift Sum [N] | -17037.65 |
-| G-Load [g] | 16.5827 |
-| Drag Coefficient C_d | 1.768988 |
-| Lift Coefficient C_l | -0.659558 |
+| Heat Flux Avg [W/cm²] | 55.2002 |
+| Drag Sum [N] | 45613.50 |
+| Lift Sum [N] | -17336.25 |
+| G-Load [g] | 16.5526 |
+| Drag Coefficient C_d | 1.765782 |
+| Lift Coefficient C_l | -0.671118 |
 | Heat Load [J/cm²] | 174.1374 |
 
 ---

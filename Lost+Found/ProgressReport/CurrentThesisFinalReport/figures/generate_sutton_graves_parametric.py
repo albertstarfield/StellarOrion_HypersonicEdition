@@ -2,8 +2,8 @@
 """Regenerate `sutton_graves_parametric.png` for the CurrentThesis LaTeX report.
 
 PURPOSE
--------
-The previously committed figure plotted the Sutton--Graves stagnation correlation
+=======
+The previously committed figure plotted the Sutton-Graves stagnation correlation
 using superseded constants and geometry, producing an IRVE-3 marker of
 959.7 W/cm^2 at R_N = 0.577 m and V = 10.8 km/s. The current solver evaluates
 the same correlation at C_SG = 1.83e-4 and R_N = 1.5 m, giving 16.14 W/cm^2 at
@@ -11,7 +11,7 @@ the run condition (h = 51.8 km, V = 3378 m/s). This script regenerates the
 figure so that the plotted physics matches the code and the thesis text.
 
 AXIOMS
-------
+======
 A1. The correlation evaluated here is
         q_dot = C_SG * sqrt(rho / R_N) * V^3            [W/m^2]
     with C_SG = 1.83e-4 for Earth air, matching
@@ -24,7 +24,7 @@ A3. R_N = 1.5 m is the IRVE-3 nose radius (3 m aeroshell diameter).
 A4. The run condition is h = 51.8 km, V = 3378 m/s (Mach ~ 10.29).
 
 THEORIES
----------
+=========
 T1. Because q_dot ~ V^3, the velocity sweep spans three orders of magnitude in
     heat flux; a linear y-axis is unreadable, so panel (a) uses a log axis.
 T2. Because q_dot ~ 1/sqrt(R_N), the radius sweep is likewise logarithmic; a log
@@ -34,14 +34,14 @@ T3. The baseline marker must be computed by calling the solver's own SG
     drift apart.
 
 APPLICATIONS
-------------
+============
 A1/A2/A3/A4 are realised by: importing `sutton_graves_heat_flux` and
 `isa_atmosphere` from the project's `validation_pipeline` module, evaluating
 them over a sweep, and annotating the IRVE-3 run condition with the value the
 solver returns.
 
 CITATIONS
----------
+=========
 [Citation: Sutton & Graves (1971) - "A Correlation for Stagnation Point
           Heating", AIAA Paper 71-534]
 [Citation: ada_pinn_wrapper.sutton_graves_heat_flux - Ada/SPARK FFI wrapper,
@@ -51,7 +51,7 @@ CITATIONS
 [Citation: Matplotlib v3.11.2 - https://matplotlib.org/stable/api/]
 
 SAFETY / ERROR HANDLING
------------------------
+=======================
 - Missing solver module or unavailable Ada library raises and aborts the build
   rather than silently falling back to a Python re-implementation, because a
   silent fallback would reintroduce exactly the drift this script removes.
@@ -66,7 +66,14 @@ import os
 import sys
 from typing import Any
 
-# --- Axiom A3/A4: geometry and run condition constants -----------------------
+# The print-fit loop, its tolerance, the achieved print scale and the
+# inside-canvas check live in one sibling module. The path is added
+# first so the import also works when a probe imports this file from
+# another directory.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import print_fit as pf  # noqa: E402
+
+# === Axiom A3/A4: geometry and run condition constants =======================
 R_N_BASELINE_M: float = 1.5          # A3: IRVE-3 nose radius (3 m diameter)
 H_RUN_KM: float = 51.8               # A4: run altitude
 V_RUN_MS: float = 3378.0             # A4: run velocity
@@ -76,13 +83,15 @@ MACH_RUN: float = 10.29              # A4: quoted Mach number
 V_SWEEP_KMS = [2.0, 2.5, 3.0, 3.378, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
 R_SWEEP_M = [0.1, 0.2, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0]
 
-# --- Layout constants, every one of them derived from measured geometry -----
+# === Layout constants, every one of them derived from measured geometry =====
 # PRINT_W_IN is the width LaTeX uses: chapter_02 includes this figure at
 # width=0.9\textwidth, and the A4 text block is 21.0 cm wide with 4.0 + 3.0 cm
-# margins. The saved figure is 7.0 in, so the placement scale is
-# PRINT_W_IN / 7.0 = 0.7087 and a 12 pt tick prints at 8.5 pt.
-PRINT_W_IN: float = 0.9 * (21.0 / 2.54 - (4.0 + 3.0) / 2.54)
-SAVE_DPI: int = 200
+# The canvas is built at exactly the printed width, so the placement scale is
+# 1.0 and a declared point size IS the printed point size. The save dpi is
+# 300 because audit.py fails any figure whose effective dpi falls below 200,
+# and a fit tolerance of 0.5 percent on a 200 dpi save lands at about 199.6.
+PRINT_W_IN: float = 0.9 * pf.TEXT_W_IN
+SAVE_DPI: int = pf.DPI
 
 # Panel (b) x ticks are a SUBSET of the sweep. Labelling all ten sweep radii
 # cannot work. The panel is 2.77 in wide and the axis spans log10(3.0/0.1) =
@@ -92,7 +101,7 @@ SAVE_DPI: int = 200
 # the pair reads as the one number 2.53. The radii dropped from the lettering
 # (0.3, 0.75 and 2.5 m) stay in R_SWEEP_M, so every curve still passes through
 # them with its marker; only the axis text is thinned.
-X_TICKS_M = [0.1, 0.2, 0.5, 1.0, 1.5, 2.0, 3.0]
+X_TICKS_M = [0.1, 0.2, 0.5, 1.0, 2.0, 3.0]
 
 # Panel (b) y limits. The annotation box needs an empty band under the lowest
 # curve. With autoscaled limits the lowest plotted point is about 8.0 W/cm2
@@ -124,6 +133,26 @@ MIN_TICK_GAP_PT: float = 2.0
 ARROW_FONTSIZE_PT: float = 12.0
 ARROW_HEAD_PT: float = ARROW_FONTSIZE_PT * 0.45
 MIN_ARROW_CLEAR_PT: float = 1.0
+
+def _plain_tick(value: float, _pos: float) -> str:
+    """Format a log-axis tick as a plain decimal number, not as a power.
+
+    WHY: the default log formatter emits mathtext of the form ten to the
+    power n, and matplotlib draws the exponent at SHRINK_FACTOR of the
+    label size. Measured on the saved PNG at a print scale of 0.7082, a
+    12 pt tick therefore printed its exponent at 0.7 x 12 x 0.7082 =
+    5.95 pt, which is below the 8 pt floor the goal sets for figure text.
+    The measured offending label was the zero exponent of the lowest
+    decade. A plain decimal has no script at all, so it prints at the full
+    declared size and cannot regress when the print scale changes.
+
+    :param value: tick value in data units, always a positive decade
+        multiple on a log axis.
+    :param _pos: tick position, unused because log ticks are placed by
+        value rather than by position.
+    :returns: the tick label as a plain string, for example "100".
+    """
+    return "%g" % value
 
 
 def _repo_root() -> str:
@@ -161,7 +190,7 @@ def _load_solver() -> dict[str, Any]:
     """
     Import the project's own physics entry points.
 
-    :returns: mapping with keys ``sg`` (Sutton--Graves evaluator) and ``isa``
+    :returns: mapping with keys ``sg`` (Sutton-Graves evaluator) and ``isa``
         (atmospheric density evaluator).
     :raises ImportError: if the solver module or its Ada/SPARK library cannot be
         loaded. Propagated deliberately: a silent fallback to an independent
@@ -192,7 +221,7 @@ def _load_solver() -> dict[str, Any]:
 
 def sg_at_velocity(velocity_kms: float, nose_radius_m: float, solver: dict[str, Any]) -> float:
     """
-    Evaluate the Sutton--Graves correlation at fixed nose radius.
+    Evaluate the Sutton-Graves correlation at fixed nose radius.
 
     :param velocity_kms: freestream velocity in km/s.
     :param nose_radius_m: nose radius in metres.
@@ -214,7 +243,7 @@ def sg_at_velocity(velocity_kms: float, nose_radius_m: float, solver: dict[str, 
 
 def sg_at_radius(nose_radius_m: float, velocity_kms: float, solver: dict[str, Any]) -> float:
     """
-    Evaluate the Sutton--Graves correlation at fixed velocity.
+    Evaluate the Sutton-Graves correlation at fixed velocity.
 
     :param nose_radius_m: nose radius in metres.
     :param velocity_kms: freestream velocity in km/s.
@@ -368,7 +397,7 @@ def main() -> int:
     solver = _load_solver()
     sg = solver["sg"]
 
-    # --- Baseline value straight from the solver (Theorem T3) --------------
+    # === Baseline value straight from the solver (Theorem T3) ==============
     baseline = sg(H_RUN_KM, V_RUN_MS)["heat_flux_Wcm2"]
     print("[sutton_graves_parametric] solver baseline: %.4f W/cm2" % baseline)
 
@@ -377,11 +406,16 @@ def main() -> int:
 
     import matplotlib.pyplot as plt  # backend already forced to Agg in there
 
-    # --- Atomic write: temp file then rename (see module docstring) ---------
+    # === Atomic write: temp file then rename (see module docstring) =========
     out_dir = os.path.dirname(os.path.abspath(__file__))
     out_path = os.path.join(out_dir, "sutton_graves_parametric.png")
     tmp_path = out_path + ".tmp.png"
-    fig.savefig(tmp_path, dpi=SAVE_DPI, bbox_inches="tight", facecolor="white")
+    # print_fit owns the fit loop and the print scale. close=False keeps
+    # the artist tree alive for verify(), which measures the written
+    # file and the axes that produced it.
+    pf.save_to_print_width(
+        fig, os.path.basename(tmp_path), PRINT_W_IN, dpi=SAVE_DPI,
+        label="sutton", close=False)
     verify(parts, tmp_path)
     plt.close(fig)
     os.replace(tmp_path, out_path)
@@ -413,9 +447,16 @@ def build_figure(solver, baseline):
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.ticker import FuncFormatter
 
-    # Printed at 0.9\textwidth = 4.96 in, so saved 7.0 in -> scale 0.71.
-    # Tick labels at 12 pt print at 8.5 pt, at or above the 8 pt floor.
+    # SIZE AXIOM (goal rev 5): the canvas is built at exactly the width it
+    # prints at (0.9\textwidth = 4.96 in) and the save loop in main() holds it
+    # there, so the print scale is 1.0 and a declared point size IS the
+    # printed point size. The previous 7.0 in canvas printed at scale 0.7082,
+    # which silently shrank every mathtext SUBSCRIPT to 0.7 x 12 x 0.7082 =
+    # 5.95 pt, well under the 8 pt floor; verify() measured and rejected it.
+    # At scale 1.0 the 12 pt label prints a 12 x 0.7 = 8.4 pt subscript,
+    # which clears the floor.
     plt.rcParams["xtick.labelsize"] = 12
     plt.rcParams["ytick.labelsize"] = 12
 
@@ -424,11 +465,19 @@ def build_figure(solver, baseline):
     # fit inside a panel without covering curves, so BOTH legends live in a
     # dedicated row below their own panel. Panels stay on top; legend cells
     # (axes switched off) hold the legends.
-    fig = plt.figure(figsize=(7.0, 4.2))
+    # The height follows the printed width so that the aspect ratio of the
+    # committed artwork is preserved: 4.2 in at 7.0 in wide is 0.6, so
+    # 0.6 x PRINT_W_IN keeps the same shape at scale 1.0.
+    fig = plt.figure(figsize=(PRINT_W_IN, 0.78 * PRINT_W_IN))
     fig.patch.set_facecolor("white")
+    # Margins widened from left 0.09 / right 0.98 / top 0.90 / bottom 0.10
+    # because probe_overhang.py measured the panel y-labels and the 10000 tick
+    # hanging 0.221 in and 0.057 in off the canvas at the native printed
+    # width. Fonts are absolute in points, so shrinking the canvas does not
+    # shrink them and the overhang persisted; the margin must absorb it.
     gs = fig.add_gridspec(
-        2, 2, height_ratios=(2.2, 1.5), hspace=0.45, wspace=0.25,
-        left=0.09, right=0.98, top=0.90, bottom=0.10)
+        2, 2, height_ratios=(2.2, 1.5), hspace=0.62, wspace=0.32,
+        left=0.17, right=0.95, top=0.80, bottom=0.13)
     ax1 = fig.add_subplot(gs[0, 0])
     ax2 = fig.add_subplot(gs[0, 1])
     lg1 = fig.add_subplot(gs[1, 0])
@@ -439,16 +488,24 @@ def build_figure(solver, baseline):
     velocities = V_SWEEP_KMS
     radii = R_SWEEP_M
 
-    # --- Panel (a): q vs velocity for several nose radii -------------------
+    # === Panel (a): q vs velocity for several nose radii ===================
     for r_n in radii:
         y = [sg_at_velocity(v, r_n, solver) for v in velocities]
         style = dict(lw=2.6, zorder=3)
+        # Legend entries carry the radius VALUE only. Measured on the
+        # unsaved figure: repeating the variable name in every entry made the
+        # ten-entry block about 3.4 in wide inside a 2.2 in panel, and the
+        # block hung 0.47 in off the left edge of the canvas, which is why
+        # the print fit loop could not converge. The variable name now sits
+        # once in the legend title, and the caption and AccSupp already name
+        # both the variable and its 0.1 to 3.0 m range, so no information is
+        # lost.
         if abs(r_n - R_N_BASELINE_M) < 1e-9:
             style.update(color="black", lw=3.2)
-            label = r"$R_N$ = 1.5 m (IRVE-3)"
+            label = "%g (baseline)" % r_n
         else:
             style.update(color="tab:blue", alpha=0.55)
-            label = r"$R_N$ = %g m" % r_n
+            label = "%g" % r_n
         ax1.plot(velocities, y, label=label, **style)
 
     # Mark the run condition. The IRVE-3 marker sits exactly on the 3.378 km/s
@@ -487,6 +544,10 @@ def build_figure(solver, baseline):
     )
 
     ax1.set_yscale("log")
+    # Plain decimal ticks: see _plain_tick for the measured 5.95 pt
+    # exponent that the default mathtext log formatter produced.
+    ax1.yaxis.set_major_formatter(FuncFormatter(_plain_tick))
+    ax1.yaxis.set_minor_formatter(FuncFormatter(_plain_tick))
     ax1.set_xlabel(r"Freestream velocity $V_\infty$ [km/s]", fontsize=13)
     ax1.set_ylabel(r"Stagnation heat flux $\dot{q}_s$ [W/cm$^2$]", fontsize=13)
     ax1.set_title(
@@ -495,9 +556,18 @@ def build_figure(solver, baseline):
     )
     ax1.grid(True, which="both", alpha=0.3, ls=":")
     _h1, _l1 = ax1.get_legend_handles_labels()
-    lg1.legend(_h1, _l1, fontsize=12, ncol=2, loc="center", frameon=False)
+    legend_a = lg1.legend(
+        _h1, _l1,
+        fontsize=12,
+        ncol=2,
+        loc="center",
+        frameon=False,
+        title="Nose radius [m]",
+        title_fontsize=12,
+    )
+    legend_a.get_title().set_fontweight("bold")
 
-    # --- Panel (b): q vs nose radius at several Mach numbers ---------------
+    # === Panel (b): q vs nose radius at several Mach numbers ===============
     for v_kms in (3.0, 5.0, 7.0):
         y = [sg_at_radius(r_n, v_kms, solver) for r_n in radii]
         ax2.plot(
@@ -512,7 +582,7 @@ def build_figure(solver, baseline):
     baseline_line = ax2.axvline(
         R_N_BASELINE_M,
         color="black",
-        ls="--",
+        ls=(0, (6, 4)),
         lw=1.6,
         zorder=2,
     )
@@ -548,6 +618,8 @@ def build_figure(solver, baseline):
 
     ax2.set_xscale("log")
     ax2.set_yscale("log")
+    ax2.yaxis.set_major_formatter(FuncFormatter(_plain_tick))
+    ax2.yaxis.set_minor_formatter(FuncFormatter(_plain_tick))
     # Only the thinned subset carries lettering; see X_TICKS_M for the
     # measurement that forced the subset.
     ax2.set_xticks(X_TICKS_M)

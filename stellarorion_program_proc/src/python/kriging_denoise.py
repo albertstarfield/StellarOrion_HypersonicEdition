@@ -70,7 +70,8 @@ def _parse_grid_file(grid_file: str) -> np.ndarray:
 
     AXIOMS:
       1. Grid file format is SPARTA dump with ITEM: CELLS blocks
-      2. Each cell has: id xlo xhi ylo yhi particles temp vx vy [num_density]
+      2. Each cell has: id xlo ylo xhi yhi n u v w temp nrho
+         (11 tokens; see the measured header in _parse_grid_file)
       3. x_center = (xlo + xhi) / 2, y_center = (ylo + yhi) / 2
 
     Returns: numpy array of shape (N, 6) — [x, y, rho, T, vx, vy]
@@ -98,13 +99,24 @@ def _parse_grid_file(grid_file: str) -> np.ndarray:
             if len(parts) < 9:
                 continue
             try:
-                # SPARTA format: id xlo xhi ylo yhi particles temp vx vy [num_density]
+                # SPARTA grid-dump row, MEASURED against a real file
+                # (results/validation/grid.0.out):
+                #   ITEM: CELLS id xlo ylo xhi yhi f_2[1] f_2[2] f_2[3] f_2[4] f_3[*] f_4[*]
+                #   1 -5 0 -4.89928 0.0283273 19 8880.67 49.4097 -107.24 169.664 1.60125e+22
+                # => parts[0]=id  [1]=xlo [2]=ylo [3]=xhi [4]=yhi
+                #    parts[5]=n  [6]=u  [7]=v  [8]=w  [9]=temp  [10]=nrho
+                # because the deck computes `2 grid all air n u v w`,
+                #     `3 thermal/grid all air temp` and `4 grid all air nrho`.
                 # [Citation: SPARTA manual, §2.4 — grid file format]
-                x_center = (float(parts[1]) + float(parts[2])) / 2.0
-                y_center = (float(parts[3]) + float(parts[4])) / 2.0
-                temp_K = float(parts[6])
-                vx_ms = float(parts[7])
-                vy_ms = float(parts[8])
+                # [Citation: stellarorion_sparta.adb — compute 2/3/4 grid + dump 2 grid]
+                x_center = (float(parts[1]) + float(parts[3])) / 2.0
+                y_center = (float(parts[2]) + float(parts[4])) / 2.0
+                vx_ms = float(parts[6])
+                vy_ms = float(parts[7])
+                # Absent (rather than wrong) temperature must read as 0.0 so the
+                # `temp_K > 0` guard below DROPS the cell instead of silently
+                # denoising an unmeasured field.
+                temp_K = float(parts[9]) if len(parts) > 9 else 0.0
                 num_density = float(parts[10]) if len(parts) > 10 else 1e20
 
                 # Convert number density to mass density: ρ = n × M_air / N_A
@@ -133,7 +145,7 @@ def _write_grid_file(grid_file: str, data: np.ndarray) -> None:
 
     AXIOMS:
       1. Output format matches input format (grid.NNNN.out)
-      2. Columns: id xlo xhi ylo yhi particles temp vx vy num_density
+      2. Columns: id xlo ylo xhi yhi n u v w temp nrho (11 tokens, real SPARTA order)
       3. We reconstruct cell bounds from centers (uniform spacing constraint — SPARTA grid is uniform)
 
     data: numpy array of shape (N, 6) — [x, y, rho, T, vx, vy]
@@ -158,7 +170,7 @@ def _write_grid_file(grid_file: str, data: np.ndarray) -> None:
     try:
         with open(grid_file, "w") as fh:
             fh.write("ITEM: CELLS\n")
-            fh.write("id xlo xhi ylo yhi particles temp vx vy num_density\n")
+            fh.write("id xlo ylo xhi yhi n u v w temp nrho\n")
             # invariant: i increments from 0; each row written exactly once
             for i, row in enumerate(data):
                 x, y, rho, temp, vx, vy = row
@@ -174,9 +186,9 @@ def _write_grid_file(grid_file: str, data: np.ndarray) -> None:
                 # Fake particle count (normalized to 1.0 — SPARTA will re-initialize)
                 particles = 1.0
                 fh.write(
-                    f"{i + 1} {x - half_dx:.6e} {x + half_dx:.6e} "
-                    f"{y - half_dy:.6e} {y + half_dy:.6e} "
-                    f"{particles:.6e} {temp:.6e} {vx:.6e} {vy:.6e} {num_density:.6e}\n"
+                    f"{i + 1} {x - half_dx:.6e} {y - half_dy:.6e} "
+                    f"{x + half_dx:.6e} {y + half_dy:.6e} "
+                    f"{particles:.6e} {vx:.6e} {vy:.6e} {0.0:.6e} {temp:.6e} {num_density:.6e}\n"
                 )
     except (ValueError, OSError) as exc:
         raise OSError(f"Failed to write grid file {grid_file}: {exc}") from exc
@@ -409,14 +421,14 @@ def _run_self_tests():
         import tempfile
         with tempfile.NamedTemporaryFile(mode="w", suffix=".out", delete=False) as f:
             f.write("ITEM: CELLS\n")
-            f.write("id xlo xhi ylo yhi particles temp vx vy num_density\n")
+            f.write("id xlo ylo xhi yhi n u v w temp nrho\n")
             # invariant: i iterates 0..9, each iteration writes exactly one grid row
             for i in range(10):
                 x = float(i) * 0.1
                 y = 0.0
                 f.write(
-                    f"{i + 1} {x:.6e} {x + 0.05:.6e} {y:.6e} {y + 0.05:.6e} "
-                    f"1.000000e+02 3.000000e+02 1.000000e+03 0.000000e+00 1.000000e+20\n"
+                    f"{i + 1} {x:.6e} {y:.6e} {x + 0.05:.6e} {y + 0.05:.6e} "
+                    f"1.000000e+02 3.000000e+02 1.000000e+03 0.000000e+00 3.000000e+02 1.000000e+20\n"
                 )
             tmpfile = f.name
 

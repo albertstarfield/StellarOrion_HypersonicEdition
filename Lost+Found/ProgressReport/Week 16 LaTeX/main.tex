@@ -92,9 +92,17 @@
 \section{PREVIOUS PROBLEM}
 
 % The chaos frame carries the evidence as a plot, per the text budget.
+% Figure note: NO MoP/sampling scatter plot exists in the repository. This
+% frame therefore shows the DSMC algorithm flowchart, which is what MoP was
+% sampling over; the chaos evidence itself is numeric (F6), quoted in the
+% caption. Searched with:
+%   find . -iname "*.png" -o -iname "*.pdf" | grep -iE "mop|sampl|chaos"
 \PlotFrame{PREVIOUS PROBLEM: SAMPLING AND MoP}
-  {MoP-driven optimisation was too chaotic to support further work.}
-  {placeholder_problem}
+  {\MaxTextLines{2}%
+   Two MoP runs at the fixed seed 42 returned different optima
+   ($J$ 1.602195 vs 1.608508): the GP hyper-parameter fit varies, not the
+   seed (F6).}
+  {so_dsmc_algorithm}
 
 % =====================================================================
 % SECTION 2 — CURRENT IMPLEMENTATION
@@ -108,28 +116,78 @@
 % =====================================================================
 \section{CURRENT IMPLEMENTATION}
 
-\PlotFrame{1. BAYESIAN OPTIMIZATION}
-  {placeholder: one line, 1-2 max}
-  {placeholder_bo}
+% Figures below are copies of files the _proc pipeline already generated.
+% Source path of each is recorded in SOURCES.md next to main.tex so every
+% slide can be audited back to the script that drew it.
 
+% so_bo_convergence.png <- bo_convergence.png, drawn by
+%   _proc/scripts/render_bo_figures.py L460-486 from
+%   _proc/src/python/hiad_optimization_results.json
+\PlotFrame{1. BAYESIAN OPTIMIZATION}
+  {\MaxTextLines{2}%
+   Mat\'ern 5/2 Gaussian-process surrogate with Expected Improvement:
+   20 Latin-hypercube seeds, then 50 EI steps.}
+  {so_bo_convergence}
+
+% No kriging figure exists. Confirmed twice: a repo-wide search for
+% krig/denois PNG/PDF returns only this deck's own placeholder, and
+%   grep -n "savefig" _proc/src/python/kriging_denoise.py
+% returns nothing -- the module computes but never writes a plot.
+% The placeholder is kept DELIBERATELY rather than borrowing an unrelated
+% convergence figure, which would misattribute what the slide shows.
 \PlotFrame{2. KRIGING DENOISING}
-  {placeholder: one line, 1-2 max}
+  {\MaxTextLines{2}%
+   Denoising runs as pipeline step 2
+   (pipeline\_checkpoint.py, \texttt{grid.2200\_denoised.out}); no figure
+   is produced yet.}
   {placeholder_kriging}
 
+% so_pipeline.png <- fignew_pipeline.png, the end-to-end pipeline diagram
+% drawn by _proc CurrentThesisFinalReport/figures/make_fignew.py
+% (regenerated Oct 6, see SOURCES.md).
+% MEASURED 2026-10-06: fignew_pipeline.png is 1586x2017, aspect 0.786, i.e.
+% portrait. On a 16:9 frame it is height-bound, so at the default 0.60
+% \textheight box it filled only 260 px of a 436 px plot area and read as a
+% narrow column. 0.82 lets the portrait flowchart use the vertical space it
+% actually needs. This is the one frame whose artwork is portrait.
+% 0.62, not 0.82: at 0.82 this frame reported "Overfull \vbox (33.3187pt too
+% high)"; 0.70 still overflowed by 4.18848pt; 0.66 cleared the log but left
+% only 15 px of bottom clearance at render scale 2.2 against 33-34 px on every
+% other content frame. 0.62 is the measured compromise: no overfull box, and
+% bottom clearance in line with the rest of the deck.
+{\renewcommand{\plotheight}{0.62\textheight}%
 \PlotFrame{3. VALIDATION RUN}
-  {Performance reference vs performance simulated on StellarOrion.}
-  {placeholder_validation}
+  {\MaxTextLines{2}%
+   Performance reference against performance simulated on StellarOrion,
+   over the DSMC to PINN pipeline shown.}
+  {so_pipeline}}
 
+% so_sutton_graves.png <- sutton_graves_parametric.png, drawn by
+% _proc CurrentThesisFinalReport/figures/generate_sutton_graves_parametric.py
+% (+177 lines in the current diff). The curve is what makes F21 legible:
+% the same relation evaluated at two conditions.
 \PlotFrame{4. REDEFINING YESTERDAY'S WRONG HEAT FLUX DEFINITION}
-  {placeholder: one line, 1-2 max}
-  {placeholder_heatflux}
+  {\MaxTextLines{2}%
+   Normalisation constant taken at 51.8 km, not the snapshot's own
+   52.03 km: reported peak overstated by 31.90 \% (F21).}
+  {so_sutton_graves}
 
+% so_topology_before_after.png <- optimization_comparison.png, drawn by
+% _proc/scripts/render_optimization_comparison.py L1007-1008 into
+% _proc/. Two panels: BEFORE (IRVE-3 default) and AFTER (Bayesian optimum).
 \PlotFrame{5. OPTIMIZATION RESULT: TOPOLOGY AND PERFORMANCE}
-  {placeholder: one line, 1-2 max}
-  {placeholder_topology}
+  {\MaxTextLines{2}%
+   Nose and torus geometry before and after optimisation, both taken from
+   the shipped Ada FFI.}
+  {so_topology_before_after}
 
+% so_bo_3d.png <- bo_optimization_3d.png, drawn by
+% _proc/scripts/render_bo_3d_plot.py L69 into _proc/.
+% Shows the 70-evaluation budget: LHD initial samples then BO iterations.
 \PlotFrame{6. BAYESIAN PLOT OPTIMIZATION}
-  {placeholder: one line, 1-2 max}
-  {placeholder_plots}
+  {\MaxTextLines{2}%
+   Design-space samples in nose radius against torus radius, with the
+   evaluated cost over the 70-step budget.}
+  {so_bo_3d}
 
 \end{document}

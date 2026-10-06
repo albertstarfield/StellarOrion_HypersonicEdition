@@ -50,6 +50,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from PIL import Image  # noqa: E402
 
+# The print-fit loop, its tolerance, the achieved print scale and the
+# inside-canvas check live in one sibling module, so no two generators
+# can disagree about what a printed figure looks like. The path is
+# added first so the import also works when a probe imports this file
+# from another directory.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import print_fit as pf  # noqa: E402
+
 # figures/ -> CurrentThesisFinalReport -> ProgressReport -> Lost+Found -> repo root
 ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 # this file lives in <thesis>/figures/, so the thesis root is one level up
@@ -62,7 +70,8 @@ RESULTS = ROOT / "stellarorion_program_proc" / "results"
 # background automation overwrites repeatedly (observed argmin moving from index
 # 29 to 50 between two minutes, with cost 1.602195 then 1.608508). The thesis
 # reports the values from the COMMITTED revision, verified against the DSMC
-# validation gate that was actually run at `--nose 2.971440`. So the figure must
+# validation gate that was actually run with the nose radius override set to
+# 2.971440. So the figure must
 # be generated from that same committed revision, otherwise the figure and the
 # text would contradict each other. `git show <rev>:<path>` is used for exactly
 # this reason, and the revision is asserted below rather than hard-coded twice.
@@ -72,7 +81,7 @@ OPTJSON_REV = "bdddb47"
 # Paul Tol's colourblind-safe qualitative palette.
 CB = ["#004488", "#DDAA33", "#BB5566", "#228833", "#AA4499", "#66CCEE"]
 
-DPI = 300
+DPI = pf.DPI             # 300, the save resolution
 
 # Sizing rule, and why these numbers are what they are.
 #
@@ -93,10 +102,31 @@ DPI = 300
 # below are derived from the document geometry rather than typed in:
 #     text width  = 21 cm - 4 cm - 3 cm = 14 cm = 5.51181 in
 #     text height = 29.7 cm - 3 cm - 3 cm = 23.7 cm = 9.33071 in
-TEXT_W_IN = 21.0 / 2.54 - (4.0 + 3.0) / 2.54      # 5.51181
+TEXT_W_IN = pf.TEXT_W_IN                        # 5.51181 in
 TEXT_H_IN = 29.7 / 2.54 - (3.0 + 3.0) / 2.54      # 9.33071
 WIDTH_FULL = 0.95 * TEXT_W_IN                        # 5.23622, width=0.95\textwidth
 WIDTH_NARROW = 0.80 * TEXT_W_IN                     # 4.40945, width=0.80\textwidth
+
+# Legibility floors enforced on every saved figure by _guard_layout. Both are
+# measured on the rendered result, never asserted from the source.
+MIN_PRINTED_PT = 8.0        # smallest printed text, including mathtext scripts
+MIN_TICK_GAP_PT = 2.0       # clearance between adjacent x tick labels
+
+# Font sizes derived from the floors rather than chosen by eye.
+# Matplotlib SHRINK_FACTOR for math scripts is 0.7 (matplotlib/_mathtext.py),
+# so the smallest parent size whose script still prints at or above 8 pt is
+# 8 / 0.7 = 11.43 pt, rounded up to 11.5 pt.
+SCRIPT_SHRINK = 0.7
+SCRIPT_SAFE_PT = 11.5                   # for any label carrying a mathtext script
+PLAIN_TEXT_PT = 9.0                     # for any label carrying no scripts
+TITLE_PT = 12.0                         # titles carry no scripts
+TICK_PT = 10.0                          # tick labels carry no scripts
+
+# WHY PLAIN_TEXT_PT IS NOT 8.0: save() fits the printed width to within 0.5
+# percent, so the achieved scale lands between 0.995 and 1.005 in practice and
+# a declared 8 pt label can print at 7.98 pt, which _guard_layout rejects. The
+# declared size must carry the floor itself: 9.0 x 0.98 = 8.82 pt. Measured on
+# this run: scale 0.978 printed a 9 pt key at 8.80 pt and an 8 pt key at 7.82.
 
 
 def load_committed_opt() -> dict:
@@ -127,51 +157,114 @@ def read_csv(path: Path) -> list[dict[str, str]]:
 
 
 def style(ax, title: str, xlabel: str, ylabel: str) -> None:
-    ax.set_title(title, fontsize=10, pad=8)
-    ax.set_xlabel(xlabel, fontsize=9)
-    ax.set_ylabel(ylabel, fontsize=9)
-    ax.tick_params(labelsize=9)  # 9pt declared so printed ticks stay >=8pt with margin
+    # LABEL PT FLOOR: matplotlib draws a mathtext SUBSCRIPT at SHRINK_FACTOR
+    # 0.7 of its parent, so a 9 pt label carrying $C_d$ printed its script at
+    # 6.3 pt and a 12 pt one printed 8.4 pt. _guard_layout measured both cases
+    # and rejected them. Axis labels therefore sit at SCRIPT_SAFE_PT, the
+    # smallest parent whose script still clears the 8 pt floor, while ticks
+    # and titles carry no scripts and stay smaller.
+    ax.set_title(title, fontsize=TITLE_PT, pad=8)
+    ax.set_xlabel(xlabel, fontsize=SCRIPT_SAFE_PT)
+    ax.set_ylabel(ylabel, fontsize=SCRIPT_SAFE_PT)
+    ax.tick_params(labelsize=TICK_PT)
     ax.grid(True, which="both", ls=":", lw=0.5, alpha=0.6)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
 
 
-def save(fig, name: str, print_width_in: float) -> Path:
-    """Save so that the PRINTED width equals print_width_in to within 0.5%.
+def plain_log_ticks(ax, axis: str = "y") -> None:
+    """Print log-axis decade labels as plain digits, not as mathtext powers.
 
-    AXIOM: this is not achievable by declaring a figsize alone. Every call uses
-    bbox_inches="tight", which CROPS the saved image to its artist extents, so
-    the saved width is not the figsize width. Measured on the first attempt at
-    the corrected sizes: fignew_scalloped_vs_smooth_heatflux.png came out
-    2282 px = 7.607 in against a 5.236 in print width, an effective scale of
-    0.688, which would still have shrunk every label by nearly a third.
+    WHY: matplotlib's default log formatter writes each decade as a mathtext
+    power, so "100" is drawn as 10 to the 2 and the exponent is rendered at
+    SHRINK_FACTOR of the tick size. At TICK_PT the exponent printed 7.0 pt and
+    _guard_layout rejected the figure. Writing the decade as plain digits
+    removes the script entirely, so the floor cannot regress. This is the same
+    fix the Sutton-Graves generator needed, and it is asserted rather than
+    trusted: the guard below still measures whatever ends up on the PNG.
 
-    The crop ratio depends only on the figure's internal proportions, so it is
-    stable under resizing. Measuring the crop once and rescaling the canvas by
-    the reciprocal therefore converges, and the result is asserted rather than
-    assumed.
+    PARAMETERS: ax the axes whose axis is logarithmic; axis "x" or "y".
+    RETURNS: None.
+    RAISES: RuntimeError if axis is neither "x" nor "y".
     """
-    out = FIGDIR / name
-    target_px = print_width_in * DPI
-    for attempt in range(1, 5):
-        fig.savefig(out, dpi=DPI, bbox_inches="tight", facecolor="white")
-        got_px = Image.open(out).size[0]
-        if abs(got_px - target_px) / target_px <= 0.005:
-            break
-        w, h = fig.get_size_inches()
-        ratio = target_px / got_px
-        fig.set_size_inches(w * ratio, h * ratio, forward=True)
-    else:
-        print(f"  !! {name}: could not fit to {print_width_in:.3f} in "
-              f"(last {got_px / DPI:.3f} in)")
-        rc = 1
-    final_in = Image.open(out).size[0] / DPI
-    eff = print_width_in / final_in
-    print(f"  wrote {name:44s} {Image.open(out).size[0]}x{Image.open(out).size[1]}px  "
-          f"print {print_width_in:.3f} in  scale {eff:.3f}  "
-          f"effective dpi {DPI / eff:.0f}")
+    from matplotlib.ticker import FuncFormatter, NullFormatter
+    if axis not in ("x", "y"):
+        raise RuntimeError(f"plain_log_ticks: axis must be x or y, got {axis!r}")
+    a = getattr(ax, f"{axis}axis")
+    # Minor labels are suppressed because they were never drawn: matplotlib
+    # leaves the minor log formatter empty by default, and labelling them here
+    # would add text the figure did not previously carry.
+    a.set_major_formatter(FuncFormatter(lambda value, _pos: f"{value:g}"))
+    a.set_minor_formatter(NullFormatter())
+
+
+def save(fig, name: str, print_width_in: float) -> Path:
+    """Save at the printed width, then reject a figure that cannot be read.
+
+    WHY THIS IS A THIN WRAPPER: the fit loop, its tolerance and the achieved
+    print scale are one numeric guard and must exist once, in print_fit. A
+    second copy can pass a figure that the first copy rejects, which is worse
+    than having no guard at all. This wrapper adds only what is specific to
+    this module, namely the shared layout guard on tick spacing and text size,
+    and it runs before the figure is closed so the artist tree is still
+    measurable.
+
+    AXIOM: declaring a figsize does not set the printed width, because every
+    call uses bbox_inches="tight", which CROPS the saved image to its artist
+    extents. Measured on the first attempt at the corrected sizes,
+    fignew_scalloped_vs_smooth_heatflux.png came out 2282 px = 7.607 in
+    against a 5.236 in print width, an effective scale of 0.688, which would
+    still have shrunk every label by nearly a third.
+    """
+    out, eff = pf.save_to_print_width(fig, name, print_width_in, close=False)
+    _guard_layout(fig, out, print_width_in, eff)
     plt.close(fig)
     return out
+
+
+def _guard_layout(fig, out: Path, print_width_in: float, scale: float) -> None:
+    """Reject the figure if a tick pair touches or the smallest text is under 8 pt.
+
+    WHY: two separate defects in this figure family were invisible in the
+    source and only visible on the printed page. In the gate figure the
+    three category labels touched because the columns were too close for
+    their own text. In the sutton figure every mathtext SUBSCRIPT printed
+    below the 8 pt floor because the canvas printed at 0.71 of its declared
+    size. Both are measured properties of the rendered result, so they are
+    checked here against the shared measurement library rather than being
+    re-derived per figure.
+
+    :param fig: the matplotlib Figure, which must already be drawn.
+    :param out: path of the saved PNG, used for the scale lookup.
+    :param print_width_in: printed width in inches, for the error message.
+    :param scale: achieved print scale, printed size divided by declared size.
+    :returns: None.
+    :raises RuntimeError: if an adjacent tick pair is closer than
+        MIN_TICK_GAP_PT or the smallest printed text is below 8 pt.
+    """
+    import sys as _sys
+
+    _sys.path.insert(0, str(FIGDIR))
+    import fig_metrics as fm
+
+    fig.canvas.draw()
+    for axis in fig.axes:
+        try:
+            pairs = fm.x_tick_label_gaps_pt(axis, fig, scale)
+        except RuntimeError:
+            continue  # an axis with fewer than two visible labels cannot collide
+        for left, right, gap in pairs:
+            if gap < MIN_TICK_GAP_PT:
+                raise RuntimeError(
+                    f"{out.name}: x tick labels {left!r} and {right!r} sit "
+                    f"{gap:.2f} pt apart at print width {print_width_in:.3f} in, "
+                    f"below the {MIN_TICK_GAP_PT:.1f} pt floor; shorten or wrap "
+                    f"the labels")
+    smallest, where = fm.smallest_text_pt(fig, scale)
+    if smallest < MIN_PRINTED_PT:
+        raise RuntimeError(
+            f"{out.name}: smallest printed text {smallest:.2f} pt ({where}) is "
+            f"below the {MIN_PRINTED_PT:.1f} pt floor; raise the declared size")
 
 
 def fig_scalloped_vs_smooth() -> None:
@@ -202,6 +295,7 @@ def fig_scalloped_vs_smooth() -> None:
         ax.plot(x2, y2, "-s", ms=3, lw=1.3, color=CB[1],
                 label=f"scalloped  {sc[0]['alt_km'][:5]} km, {float(sc[0]['vel_ms']):.0f} m/s")
         ax.set_yscale("log")
+        plain_log_ticks(ax, "y")
         style(ax, lbl, "Particle-time step", "Heat flux (W/cm$^2$)")
         if handles is None:
             handles, labels = ax.get_legend_handles_labels()
@@ -211,7 +305,7 @@ def fig_scalloped_vs_smooth() -> None:
     # page: loc="best" chose upper left, which is where these traces are highest,
     # and a pinned upper right still clipped the first markers in the left panel.
     # A legend outside the data region cannot occlude data by construction.
-    fig.legend(handles, labels, fontsize=8, loc="lower center", ncol=2,
+    fig.legend(handles, labels, fontsize=PLAIN_TEXT_PT, loc="lower center", ncol=2,
                frameon=False, bbox_to_anchor=(0.5, -0.055))
 
     # No suptitle and no note below the axes. Both statements belong in the LaTeX
@@ -272,12 +366,17 @@ def fig_trajectory() -> None:
              label=f"scalloped run (t = {t[on_idx]:.0f} s)")
     ax1.plot(51.818481, 3378.671, "^", ms=8, color=CB[2], mec="black", mew=0.7,
              label="smooth run (off this profile)")
-    style(ax1, "Velocity against altitude", "Altitude (km)", "Velocity (m/s)")
+    # PANEL TITLE WIDTH: at TITLE_PT the phrase "Deceleration load against
+    # altitude" measured 2.870 in wide inside a 1.745 in axes, so it crossed
+    # the canvas edge by 0.412 in and the fit loop in save() stalled at 5.353 in
+    # against a 5.236 in target. Wrapping both titles to two lines keeps every
+    # line near 1.55 in, which fits, and says exactly what the single line said.
+    style(ax1, "Velocity against\naltitude", "Altitude (km)", "Velocity (m/s)")
 
     ax2.plot(alt, g, "-", lw=1.5, color=CB[0], label="deceleration load")
     ax2.plot(alt[on_idx], g[on_idx], "s", ms=7, color=CB[1], mec="black", mew=0.7)
     ax2.plot(51.818481, 16.833399, "^", ms=8, color=CB[2], mec="black", mew=0.7)
-    style(ax2, "Deceleration load against altitude", "Altitude (km)",
+    style(ax2, "Deceleration load\nagainst altitude", "Altitude (km)",
           "Deceleration load (g)")
 
     # ONE legend, drawn BELOW both panels. The previous per-panel loc="best"
@@ -293,7 +392,7 @@ def fig_trajectory() -> None:
     h2, l2 = ax2.get_legend_handles_labels()
     handles.extend(h2)
     labels.extend(l2)
-    fig.legend(handles, labels, fontsize=8, loc="lower center", ncol=2,
+    fig.legend(handles, labels, fontsize=PLAIN_TEXT_PT, loc="lower center", ncol=2,
                frameon=False, bbox_to_anchor=(0.5, -0.12))
 
     fig.suptitle("One-degree-of-freedom entry trajectory and the two run conditions",
@@ -322,12 +421,22 @@ def fig_convergence() -> None:
               f"  decades={__import__('math').log10(res[0]/res[-1]) if res[-1] > 0 else float('inf'):.2f}")
     style(ax, "Convergence of the surface coefficients",
           "Particle-time step", "Normalised residual $|x-x_{ref}|/|x_{ref}|$")
+    plain_log_ticks(ax, "y")
     # Outside the axes for the same reason as the scalloped figure: on a set of
     # decaying residuals the inside-axes corner chosen by loc="best" sits over the
     # earliest, largest residual values.
     h, lb = ax.get_legend_handles_labels()
-    fig.legend(h, lb, fontsize=8, loc="lower center", ncol=3,
-               frameon=False, bbox_to_anchor=(0.5, -0.055))
+    # LEGEND PT FLOOR: two of these three keys carry mathtext scripts ($C_d$
+    # and $C_l$), which matplotlib draws at 0.7 of the parent size, so the
+    # previous 8 pt legend printed its scripts at 5.6 pt. _guard_layout measured
+    # that on the saved PNG and raised, which is why this legend sits at
+    # SCRIPT_SAFE_PT. ncol drops from 3 to 2 for the same reason the fit loop in
+    # save() needs a bound canvas: three 11.5 pt keys are wider than the 5.236 in
+    # print width, and an over-wide artist makes the tight crop grow while the
+    # canvas shrinks, which diverges instead of converging. Two keys per row
+    # means two rows, so the anchor sits deeper than the single-row figures.
+    fig.legend(h, lb, fontsize=SCRIPT_SAFE_PT, loc="lower center", ncol=2,
+               frameon=False, bbox_to_anchor=(0.5, -0.10))
     fig.tight_layout()
     save(fig, "fignew_convergence_residuals.png", WIDTH_FULL)
 
@@ -347,7 +456,7 @@ def fig_ccd_screen() -> None:
             return "factorial corner (8)"
         if lbl.startswith("axial"):
             return "axial star (6)"
-        return "centre (1)"
+        return "center (1)"
 
     groups = [group(l) for l in label]
     fig, axes = plt.subplots(1, 3, figsize=(WIDTH_FULL, WIDTH_FULL * 0.46))
@@ -357,7 +466,7 @@ def fig_ccd_screen() -> None:
               (rt, hc, "Toroid radius $r_{tor}$ (m)", "Half-cone angle (deg)")]
     marker_style = {"factorial corner (8)": ("o", CB[0]),
                     "axial star (6)": ("^", CB[1]),
-                    "centre (1)": ("*", CB[2])}
+                    "center (1)": ("*", CB[2])}
     for ax, (xq, yq, xlab, ylab) in zip(axes, panels):
         for g, (m, colr) in marker_style.items():
             xs = [v for v, gg in zip(xq, groups) if gg == g]
@@ -370,23 +479,26 @@ def fig_ccd_screen() -> None:
         # screen exists to reveal. One shared legend below the panels replaces
         # all three and can overlap nothing. (A leftover guard that compared a
         # label string against the HANDLE list used to append a duplicate
-        # "centre (1)" entry to every panel; it is gone.)
+        # "center (1)" entry to every panel; it is gone.)
     handles, labels = axes[0].get_legend_handles_labels()
     # Guard: one legend key per CCD group; a duplicate means a stray labelled
     # artist crept back in and the legend would print the same key twice.
     assert len(labels) == len(set(labels)) == 3, f"duplicate CCD legend keys: {labels}"
-    fig.legend(handles, labels, fontsize=8, loc="lower center", ncol=3,
+    fig.legend(handles, labels, fontsize=PLAIN_TEXT_PT, loc="lower center", ncol=3,
                frameon=False, bbox_to_anchor=(0.5, -0.10))
-    fig.suptitle("Face-centred CCD screen: $N = 2^3 + 2(3) + 1 = 15$ points",
-                 fontsize=10)
+    # The exponent in 2^3 is a mathtext script, so this title carries the same
+    # 0.7 shrink as the axis labels and must sit at SCRIPT_SAFE_PT, not at the
+    # 10 pt it used to print (which rendered the exponent at 7 pt).
+    fig.suptitle("Face-centered CCD screen: $N = 2^3 + 2(3) + 1 = 15$ points",
+                 fontsize=SCRIPT_SAFE_PT)
     # y is the suptitle's default 0.98; the earlier explicit y=1.03 pushed the
     # text outside the saved bounding box and clipped the top of the capitals.
     fig.tight_layout(rect=(0, 0.02, 1, 0.94))
     save(fig, "fignew_ccd_screen.png", WIDTH_FULL)
     print(f"    CCD points={len(ccd)} factors=3 (R_N, r_tor, half_cone_deg)")
     print(f"    factorial={groups.count('factorial corner (8)')} "
-          f"axial={groups.count('axial star (6)')} centre={groups.count('centre (1)')}")
-    print(f"    cost range {min(cost):.4f} to {max(cost):.4f}; centre cost={cost[label.index('center')]:.4f}")
+          f"axial={groups.count('axial star (6)')} center={groups.count('center (1)')}")
+    print(f"    cost range {min(cost):.4f} to {max(cost):.4f}; center cost={cost[label.index('center')]:.4f}")
 
 
 def fig_gate() -> None:
@@ -432,9 +544,14 @@ def fig_gate() -> None:
     # previously a fourth bar, which wrongly implied it was another
     # measurement; it is now a dashed reference line, which is what a threshold
     # is. No legend is needed because every bar carries its own x-axis label.
-    series = [("IRVE-3 flight\n(trajectory-integrated)", q_flight, CB[0]),
-              ("Analytic prediction\nfrom cost function", q_analytic, CB[1]),
-              ("DSMC re-simulation\n(raw, this geometry)", q_raw, CB[2])]
+    # Category labels are wrapped to short lines because the long single line
+    # "trajectory-integrated" measured 19 characters, about 1.30 in at 9 pt
+    # against a 1.45 in column pitch, so adjacent labels touched. Wrapping to
+    # a maximum of about 13 characters per line brings the widest line to
+    # about 0.89 in, which leaves a clear word space between columns.
+    series = [("IRVE-3 flight\n(trajectory\nintegrated)", q_flight, CB[0]),
+              ("Analytic\nprediction\nfrom cost\nfunction", q_analytic, CB[1]),
+              ("DSMC\nre-simulation\n(raw, this\ngeometry)", q_raw, CB[2])]
     series = [(n, v, c) for n, v, c in series if isinstance(v, (int, float))]
 
     fig, ax = plt.subplots(figsize=(WIDTH_NARROW, WIDTH_NARROW * 0.92))
@@ -444,18 +561,27 @@ def fig_gate() -> None:
     xs = [i * 1.15 for i in range(len(series))]
     vals = [v for _, v, _ in series]
     bars = ax.bar(xs, vals, color=[c for _, _, c in series], width=0.6)
-    ax.set_xlim(-0.55, (len(series) - 1) * 1.15 + 0.55)
+    # The x limits are tight (-0.35 rather than -0.55) so the column pitch in
+    # PIXELS grows: with the wider limit the axis span was 3.0 units for a
+    # pitch of 1.15, only 38 percent of the width, and verification measured
+    # the three category labels touching even after the spread change.
+    ax.set_xlim(-0.35, (len(series) - 1) * 1.15 + 0.35)
     for b, (_, v, _) in zip(bars, series):
         # Value labels hang INSIDE the bar top: an above-bar label for the
         # analytic bar landed 1 px under the dashed acceptance-threshold line.
         ax.annotate(f"{v:.2f}", (b.get_x() + b.get_width() / 2, v), ha="center",
                     va="top", textcoords="offset points", xytext=(0, -4),
-                    fontsize=8.5)
+                    fontsize=PLAIN_TEXT_PT)
+    threshold_line = None
     if q_target:
-        ax.axhline(q_target, ls="--", lw=1.4, color=CB[3],
-                   label=f"Acceptance threshold $Q_{{target}}$ = {q_target:.2f}")
-        ax.legend(fontsize=8, loc="upper right", frameon=True, framealpha=1.0,
-                  facecolor="white", edgecolor="0.7")
+        # The dashed linestyle is taken from the active rcParams instead of the
+        # two-character style name, because the goal forbids a literal double
+        # hyphen in any source file. The drawn pattern is identical, so the
+        # rendered PNG is unchanged, and the pattern stays a single definition.
+        dashed = (0, tuple(matplotlib.rcParams["lines.dashed_pattern"]))
+        threshold_line = ax.axhline(
+            q_target, ls=dashed, lw=1.4, color=CB[3],
+            label=f"Acceptance threshold $Q_{{target}}$ = {q_target:.2f}")
     ax.set_xticks(xs)
     ax.set_xticklabels([n for n, _, _ in series], fontsize=9)
     style(ax, "Hybrid validation gate: heat load comparison",
@@ -463,6 +589,18 @@ def fig_gate() -> None:
     top = max(vals + ([q_target] if q_target else []))
     ax.set_ylim(0, top * 1.22)
     fig.tight_layout()
+    if threshold_line is not None:
+        # LEGEND PT FLOOR: this key carries a mathtext subscript, so the
+        # previous 8 pt in-axes legend printed that subscript at 5.6 pt and
+        # _guard_layout rejected the figure. The legend also MOVES OUT of the
+        # axes, for the reason every other legend in this file sits outside the
+        # data region: an in-axes frame can occlude the bars it annotates, and a
+        # single 11.5 pt key plus its frame no longer fits the 3.78 in axes
+        # without overhanging the canvas. The anchor clears the four-line
+        # category labels drawn below the axes.
+        fig.legend([threshold_line], [threshold_line.get_label()],
+                   fontsize=SCRIPT_SAFE_PT, loc="lower center", ncol=1,
+                   frameon=False, bbox_to_anchor=(0.5, -0.30))
     save(fig, "fignew_gate_comparison.png", WIDTH_NARROW)
 
 

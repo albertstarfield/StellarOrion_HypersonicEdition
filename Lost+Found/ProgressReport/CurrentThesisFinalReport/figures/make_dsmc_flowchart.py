@@ -76,15 +76,22 @@ from measure_loop_gap import (  # noqa: E402
     measure,
 )
 
-DPI = 300
+# The print-fit loop, its tolerance, the achieved print scale and the
+# inside-canvas check live in one sibling module so that no two
+# generators can disagree about what a printed figure looks like.
+import print_fit as pf  # noqa: E402
+
+DPI = pf.DPI             # 300, the save resolution
 ROOT = Path(__file__).resolve().parent.parent
 THESIS = ROOT
 FIGDIR = THESIS / "figures"
 assert FIGDIR.is_dir(), f"missing figure directory: {FIGDIR}"
 
 # Text width from the main document geometry: A4 text width 210 mm minus
-# 40 mm left and 30 mm right margin, converted to inches.
-TEXT_W_IN = 21.0 / 2.54 - (4.0 + 3.0) / 2.54
+# 40 mm left and 30 mm right margin, converted to inches. print_fit
+# owns that arithmetic, because a wrong text width silently scales
+# every declared font size.
+TEXT_W_IN = pf.TEXT_W_IN
 INCLUDE_FRACTION = 0.9
 PRINT_W_IN = INCLUDE_FRACTION * TEXT_W_IN
 
@@ -132,17 +139,14 @@ PALETTE = [
 ]
 RED = "#EF4444"
 SLATE = "#475569"
-GREEN = "#22C55E"
 
 TITLE_FS = 13
 BOX_FS = 9
-ARROW_FS = 10
 LOOP_FS = 9
 LOOP_MATH_FS = 12
 TITLE_TEXT = "DSMC Algorithm (Bird, 1994)"
 LOOP_LABEL_1 = "Repeat"
 LOOP_LABEL_2 = "$N_{steps}$"
-STEP_LABEL = "$\\Delta t$"
 # Mathtext shrinks subscripts by this factor. It is read from matplotlib
 # itself instead of being restated, because the legibility floor below is
 # only as trustworthy as this number.
@@ -151,9 +155,9 @@ try:
 except ImportError:  # pragma: no cover - private module moved
     SUBSCRIPT_SCALE = 0.7
 MIN_PRINTED_PT = 8.0
-# save() fits the printed width within this fraction, so a figure can
-# print at most this much smaller than the size it was declared at.
-FIT_TOL = 0.005
+# The fit tolerance is print_fit's, so the pre-save floor check below
+# and the fit loop itself can never use different numbers.
+FIT_TOL = pf.FIT_TOL
 BOX_LW = 1.5
 LOOP_LW = 1.4
 # Loop geometry: a vertical chord to the right of the boxes bowing left, a
@@ -271,43 +275,6 @@ def measured_loop_clearance(path: Path) -> dict[str, int]:
     return result
 
 
-def save(fig: plt.Figure, name: str, print_width_in: float) -> float:
-    """Save the figure at the printed width, iterating on figure size.
-
-    Parameters
-        fig: the figure to save.
-        name: file name inside the figure directory.
-        print_width_in: target width in inches.
-    Returns
-        the print magnification, that is the declared width divided by
-        the width the saved image actually occupies at the target dpi.
-    Exceptions
-        RuntimeError: if the saved width cannot be brought within 0.5
-            percent of the target after four attempts.
-    """
-    target_px = print_width_in * DPI
-    ratio = 1.0
-    for _ in range(4):
-        out = FIGDIR / name
-        fig.savefig(out, dpi=DPI, bbox_inches="tight", facecolor="white")
-        with Image.open(out) as probe:
-            width_px = probe.size[0]
-        ratio = target_px / float(width_px)
-        if abs(ratio - 1.0) <= FIT_TOL:
-            break
-        w, h = fig.get_size_inches()
-        fig.set_size_inches(w * ratio, h * ratio)
-    else:
-        raise RuntimeError(f"{name}: width {width_px}px cannot reach target")
-    native_in = width_px / float(DPI)
-    effective = print_width_in / native_in
-    print(
-        f"wrote {name} {width_px}px print {print_width_in:.3f}in "
-        f"scale {effective:.3f}"
-    )
-    return effective
-
-
 def draw() -> None:
     """Build and save the DSMC flowchart figure.
 
@@ -399,17 +366,10 @@ def draw() -> None:
             zorder=1,
         )
 
-    ax.text(
-        BOX_X0 - 0.10,
-        box_center(1),
-        STEP_LABEL,
-        ha="right",
-        va="center",
-        fontsize=ARROW_FS,
-        fontweight="bold",
-        color=GREEN,
-        zorder=3,
-    )
+    # The green Delta t that used to sit beside box 2 was removed on purpose.
+    # A rendered-page audit found it floating six points clear of the box with
+    # no leader line, and box 2 already names the step length in its own second
+    # line as "Free Flight for Delta t", so the label was pure duplication.
 
     y_loop_from = box_center(5)
     y_loop_to = box_center(1)
@@ -523,7 +483,10 @@ def draw() -> None:
         f"loop subscript declared {LOOP_MATH_FS * SUBSCRIPT_SCALE:.2f} pt, "
         f"floor {floor_pt:.2f} pt"
     )
-    achieved = save(fig, "dsmc_algorithm_flowchart.png", PRINT_W_IN)
+    # print_fit saves, fits, measures the achieved print scale and closes
+    # the figure, so this script never repeats the loop.
+    achieved = pf.save_to_print_width(
+        fig, "dsmc_algorithm_flowchart.png", PRINT_W_IN)[1]
     printed_pt = LOOP_MATH_FS * SUBSCRIPT_SCALE * achieved
     if printed_pt < MIN_PRINTED_PT:
         raise RuntimeError(
@@ -539,7 +502,6 @@ def draw() -> None:
         f"floor {MIN_SEP_GAP_PX}px, flush rows {gap['touch_rows']} longest "
         f"run {gap['touch_run']} bound {MAX_TOUCH_ROWS}"
     )
-    plt.close(fig)
 
 
 if __name__ == "__main__":
