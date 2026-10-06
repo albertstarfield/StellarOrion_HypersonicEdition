@@ -416,7 +416,7 @@ At the TPS outer surface radiative cooling balances incoming convective heat flu
 where $\epsilon = 0.75$ (Nicalon SiC emissivity) and $\sigma = 5.67 \times 10^{-8}$\,W/m$^2$K$^4$ (Stefan-Boltzmann constant).
 
 \subsection{Backface Temperature: 1D Transient Model}
-The 1D transient backface temperature model estimates thermal penetration through the FTPS insulation stack:
+The 1D transient backface temperature model estimates thermal penetration through the Flexible Thermal Protection System (FTPS) insulation stack:
 
 \begin{equation}
     T_{back} = T_{init} + \frac{\dot{q} \cdot \Delta t \cdot \eta_{lag}}{\rho_{TPS} \cdot C_{p,TPS} \cdot \delta_{TPS}}
@@ -428,22 +428,22 @@ Table~\ref{tab:tps_materials} lists the available TPS material presets.
 
 \begin{table}[!htbp]
     \centering
-    \caption{TPS Material Presets Available in the StellarOrion Framework.}
+    \caption{TPS material presets available in the StellarOrion framework.}
     \label{tab:tps_materials}
     \begin{tabularx}{\textwidth}{|l|c|c|c|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|}
         \hline
         \textbf{Material} & \textbf{$\rho$ (kg/m$^3$)} & \textbf{$C_p$ (J/kg$\cdot$K)} & \textbf{$\epsilon$} & \textbf{Application} \\ \hline
         Nicalon SiC & 1468 & 1100 & 0.75 & Gen-2 HIAD TPS \\ \hline
-        Pyrogel XTE & 200 & 1000 & 0.85 & FTPS blanket insulation \\ \hline
+        Pyrogel 2250 & 200 & 1000 & 0.85 & FTPS blanket insulation \\ \hline
         Kapton & 1420 & 1090 & 0.70 & Polyimide film layers \\ \hline
-        Multi-layer (stack) & n/a & n/a & n/a & Combined FTPS stack \\ \hline
+        Multi-layer (stack) & 650 & 1050 & 0.80 & Combined FTPS stack \\ \hline
     \end{tabularx}
 \end{table}
 
 \subsection{Composite Thermal Protection Conduction Model}
 \label{sec:composite_tps}
 
-The thermal protection system is modeled as an ordered composite stack, yielding the in-depth temperature field. The baseline IRVE-3 layup~\mbox{\cite{rapisarda2023mdao}} is five plies, listed in Table~\ref{tab:tps_materials}.
+The thermal protection system is modeled as an ordered composite stack, yielding the in-depth temperature field. The baseline IRVE-3 layup~\mbox{\cite{rapisarda2023mdao}} is five plies, listed in Table~\ref{tab:tps_layup}.
 
 \begin{table}[!htbp]
     \centering
@@ -451,7 +451,7 @@ The thermal protection system is modeled as an ordered composite stack, yielding
     \label{tab:tps_layup}
     \begin{tabularx}{\textwidth}{r >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{3.4cm} >{\RaggedRight\arraybackslash}p{3.0cm}}
         \toprule
-        \textbf{Ply} & \textbf{Material} & \textbf{Thickness} & \textbf{$k$ (W/(m$\cdot$K))} \\
+        \textbf{Ply} & \textbf{Material} & \textbf{Thickness} & \textbf{$k$ (W m$^{-1}$ K$^{-1}$)} \\
         \midrule
         1 & Nextel BF-20 outer fabric   & 0.60 mm & 0.25 \\
         2 & Nextel BF-20 outer fabric   & 0.60 mm & 0.25 \\
@@ -470,14 +470,14 @@ The steady one-dimensional conduction equation, with radiation on the hot face a
 
 \begin{equation}
 \label{eq:composite_cond}
-    q = \frac{T_s - T_{init}}{R} + \varepsilon\,\sigma_{B}\left( T_s^{4} - T_{\infty}^{4} \right)
+    q = \frac{T_s - T_{init}}{R} + \varepsilon\,\sigma\left( T_s^{4} - T_{\infty}^{4} \right)
 \end{equation}
 
 in which $T_s$ appears on both sides, so it is found by bisection rather than in closed form. The bisection runs in extended precision because single precision cannot resolve the relative bracket tolerance needed to converge $T_s$. Outer emissivity is $\varepsilon = 0.80$.
 
-This model supersedes an earlier homogeneous 25.4\,mm silicon-carbide slab, the LOFTID baseline~\cite{dinonno2026loftid}, four times too thick for this vehicle, changing the survivability verdict in Chapter~\ref{ch:results}.
+This model supersedes an earlier homogeneous 25.4\,mm silicon-carbide slab, the LOFTID baseline~\cite{dinonno2026loftid}. The earlier slab is four times too thick for this vehicle, changing the survivability verdict in Chapter~\ref{ch:results}.
 \subsection{Statistical Convergence Monitoring}
-Monte Carlo noise scales as $1/\sqrt{N_{\text{samples}}}$, with $N_{\text{samples}}$ the independent particle-time samples. Convergence is monitored through running averages of surface force and energy quantities; SPARTA's \texttt{\seqsplit{stats\_interval}} parameter (default: 100 steps) sets diagnostic frequency. A run is statistically converged when relative change in drag coefficient ($C_d$) and stagnation heat flux falls below 2\% over consecutive windows, typically after 500-1100 particle-time steps.
+Monte Carlo noise scales as $1/\sqrt{N_{\text{samples}}}$, with $N_{\text{samples}}$ the independent particle-time samples. Convergence is monitored through running averages of surface force and energy quantities; SPARTA's \texttt{\seqsplit{stats\_interval}} parameter (default: 100 steps) sets diagnostic frequency. A run is statistically converged when relative change in drag coefficient ($C_d$) and stagnation heat flux each fall below 2\% over consecutive windows, typically after 500--1100 particle-time steps.
 
 \section{Physics-Informed Neural Network Refinement}
 
