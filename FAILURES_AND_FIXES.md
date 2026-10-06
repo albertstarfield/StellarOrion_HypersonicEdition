@@ -3581,6 +3581,47 @@ made. Flagged rather than guessed at.
 
 ## F60 — The silicon-carbide survivability limit is duplicated in Python at the wrong value, and the wrong value prints a PASS/FAIL verdict
 
+### Update — thread 4a. **All three of the previous thread's findings are fixed and verified.**
+
+Eight commits landed and the three defects recorded in thread 3z were each addressed.
+
+**F78 — fixed.** `make_derived_plots.py` now cites the correct lines:
+
+| cites | for | actual line | correct? |
+| :--- | :--- | ---: | :--- |
+| `:92` | `SIC_MAX_TEMP` | 120 | yes |
+| `:93` | `KAPTON_MAX_TEMP` | 124 | yes |
+| `:95` | combined test | 854-855 | yes |
+
+I re-resolved each against `stellarorion_types.ads` rather than trusting the new numbers:
+`grep -n "SIC_MAX_TEMP : constant"` returns `120`, `KAPTON_MAX_TEMP : constant` returns
+`124`. The 23-line offset is gone on all three.
+
+**F60 — fixed, and now complete.** `stellarorion_physics.ads:940` was the last site
+carrying the old value; it now reads:
+
+> `then reported 955.7 K at 60 s and failed the 773 K structure limit,`
+
+That was the one documentation site F60's update left outstanding. The finding is now
+fully closed: the Ada truth (`SIC_MAX_TEMP = 2073.0`, `KAPTON_MAX_TEMP = 773.0`), both
+Python verdict sites, both documentation sites, and the physics derivation all agree.
+
+**F79 — fixed, and the fix is correct.** `validation_pipeline.py:2511-2518` now reads:
+
+```python
+        if sys.platform == "darwin" and "h264_videotoolbox" in _encoders:
+            # VideoToolbox hardware encoding with quality 27.
+            _hw_encoder = "h264_videotoolbox"
+            _hw_extra_args = ["-vcodec", "h264_videotoolbox", "-q:v", "27",
+                              "-pix_fmt", "yuv420p"]
+            print("[pipeline] HW encode: VideoToolbox q27 (macOS)")
+```
+
+The QSV non-sequitur is gone, the guard and the body now agree, and `libx264` survives
+only as the genuine "no HW encoder found" fallback (`:2546-2548`). I also confirmed the
+encoder this finding was about actually exists on this machine —
+`ffmpeg -encoders` lists `V....D h264_videotoolbox  VideoToolbox H.264 Encoder` — so the
+restored path is usable, not theoretical.
 ### Update — thread 3z. **Both named sites are fixed and the values are correct — but the "all prose references corrected" claim is not accurate.**
 
 Verified: `stellarorion_validation.ads:11-12` now read `SIC max (2073 K)` and
@@ -5054,6 +5095,106 @@ columns are sound as far as this audit can measure: the function is genuinely us
 delegating to `StellarOrion_Physics.Fay_Riddell_Heat`), and its docstring correctly warns
 that Fay–Riddell is the continuum **upper bound** that overpredicts where DSMC is ground
 truth. No dead code.
+## F80 — A SPARK refactor moved the speed-of-sound function to a new unit but left the FFI comment naming the package it was moved *out of*
+
+*Class: provenance — the same stale-reference class as F78, introduced by the same kind of change*
+
+`stellarorion_ffi.adb:654`:
+
+```ada
+   -- -------------------------------------------------------------------------
+   --  Speed_Of_Sound_C
+   -- -------------------------------------------------------------------------
+   --  Delegates to StellarOrion_Environment.Speed_Of_Sound.
+```
+
+**`StellarOrion_Environment` does not define `Speed_Of_Sound`.** Measured:
+`grep -c "Speed_Of_Sound"` returns **0** for both `stellarorion_environment.ads` and
+`stellarorion_environment.adb`. The function the wrapper actually calls at `:669` is
+`StellarOrion_Speed_Of_Sound.Speed_Of_Sound`, brought in by
+`with StellarOrion_Speed_Of_Sound; use StellarOrion_Speed_Of_Sound;` at `:40`.
+
+**The refactor half-updated this file.** Commit `2e5b3d5` ("dedicated SPARK_Mode On
+Speed_Of_Sound unit; export + route") added the new `with` to `stellarorion_ffi.adb` and
+rerouted the call — and left the comment above it untouched. Verified by diffing that
+commit: the only `Speed_Of_Sound` line it changed in this file is
+`+with StellarOrion_Speed_Of_Sound; use StellarOrion_Speed_Of_Sound;`. `git log -S
+"function Speed_Of_Sound"` on `stellarorion_environment.adb` resolves to that same commit,
+which is the change that *removed* the function from that package.
+
+**Why it matters despite being a comment.** The code is correct — both packages are
+`use`d, so the bare name resolves unambiguously, and `Environment` no longer exports a
+competing copy (checked: it does not). But this is the FFI boundary, where a reader goes
+to learn what a C-callable wrapper actually calls. The comment sends them to a package
+that no longer contains the function at all. That is precisely the defect F78 recorded two
+entries earlier, in the same week: a refactor moves a thing and updates the code but not
+the pointer to it.
+
+The correct text is `StellarOrion_Speed_Of_Sound.Speed_Of_Sound`, and the `--  Delegates
+to …` pattern is used for the other wrappers in this file, so the fix is a one-word change.
+## F81 — The new SPARK speed-of-sound unit proves the result is non-negative and cannot overflow, but proves nothing about its accuracy
+
+*Class: verification scope — the properties proved are the ones that are easy, not the one the function exists to deliver*
+
+`StellarOrion_Speed_Of_Sound` is the project's first dedicated `pragma SPARK_Mode (On)`
+physics unit, and its contracts are carefully written. What they establish is worth
+stating precisely, because it is less than the surrounding documentation implies.
+
+**What is proved.** From the spec:
+```ada
+   function Speed_Of_Sound
+     (Temperature : Float) return Float
+     with Pre  => Temperature >= 0.0 and Temperature <= 6000.0,
+          Post => Speed_Of_Sound'Result >= 0.0;
+```
+Plus `THEOREM (T1) [overflow]`, which bounds the intermediate:
+`gamma*R*T <= 1.4*287.058*6000 = 2.4113e6`, hence `a <= 1553 m/s << Float'Last`. I
+checked that arithmetic: `1.4 * 287.058 * 6000 = 2411287.2`, `sqrt = 1552.832 m/s`, both
+matching the comment.
+
+So the proved properties are: the precondition envelope holds, the result is non-negative,
+and no intermediate overflows. **There is no accuracy postcondition.** Neither
+`Speed_Of_Sound` nor the internal `Sqrt_Approx` carries a relative-error bound; the
+strongest statement available about `Sqrt_Approx` is
+`Post => … Result <= Float'Max (X, 1.0)`, an upper bound only. A caller cannot prove from
+the contracts that the returned speed of sound is within any tolerance of `sqrt(gamma·R·T)`
+— yet that is the only reason the function exists, and its output divides velocity to give
+the reported Mach number (`stellarorion_trajectory_output.adb:88,192`).
+
+**Why this is recorded at moderate rather than high severity.** I measured the behaviour,
+and it is fine. Simulating `Sqrt_Approx` with float32 semantics over the operating range
+`gamma*R*T` for `T = 50 … 6000 K`:
+
+| T (K) | approximate | true | relative error |
+| ---: | ---: | ---: | ---: |
+| 50 | 141.753510 | 141.753518 | 6.3e-08 |
+| 186.87 | 274.042969 | 274.042953 | 5.9e-08 |
+| 288.15 | 340.297028 | 340.297029 | 3.4e-09 |
+| 1000 | 633.941040 | 633.941007 | 5.3e-08 |
+| 6000 | 1552.832031 | 1552.831993 | 2.4e-08 |
+
+Worst case is **6.3e-08**, at float32 epsilon (~1.2e-07). **The implementation is
+accurate; the proof does not say so.** The defect is therefore in the verification claim,
+not in the behaviour — and it is worth recording because this unit exists *specifically*
+to be inside the formally verified subset, so "what does the proof actually establish" is
+the question it was created to answer.
+
+**A second, smaller observation in the same unit.** `Sqrt_Approx` replaces Ada's `Sqrt`
+with 25 Newton iterations per call, justified in a comment as a *"denormal-safe Newton
+seed"*. Two things are worth noting without overstating either:
+
+* The accuracy is adequate (measured above), so this is **not** a correctness defect.
+* The stated rationale is thin: Ada's `Sqrt` for `Float` is IEEE-754 correctly rounded and
+  handles subnormals per the standard, so "denormal-safe" does not by itself explain
+  preferring a hand-rolled loop. The `for I in 1 .. 25` counter is itself unused
+  (`pragma Unreferenced (I)`), which is the shape of a loop kept for its iteration count
+  rather than for a convergence test. A convergence-based exit would be both faster and
+  more obviously correct, and would let the postcondition state an actual error bound.
+
+I have not raised the performance point as a separate finding: `Speed_Of_Sound_C` is an
+FFI entry point, I have no measurement of how often it is called per run, and a claim
+about cost without that measurement would be exactly the kind of unmeasured assertion this
+log refuses. It is recorded here as an observation for whoever owns the unit.
 ## Summary
 
 | ID | Severity | Status | Root cause class |
@@ -5118,7 +5259,7 @@ truth. No dead code.
 | F57 | correctness | **open** | The source-integrity manifest `.src_hashes.json` disagrees with the tree for **5 of the 23 files it tracks** (`validation_pipeline.py`, `generate_outputs.py`, `ada_pinn_wrapper.py`, `generate_hiad_dashboard.py`, `generate_optimized_overlay.py`) and nothing reports it. `src/utils/.parity/` holds only 2 recovery blocks, one of them for `sabotage_verifier.py`, which F50 showed is excluded from every scan |
 | F58 | presentation | **fixed** | Gate B printed `Kn at run point = 0.00` / `lambda = 0.00` — real values 3.78e-05 / 6.4e-05, lost to the 2-decimal F6 |
 | F59 | provenance | **flagged** | 2 more mixed (R)/(F) reference blocks at validation_pipeline.py:3987 and :4686, bypassing IRVE3_REFERENCE |
-| F60 | correctness | **partially fixed 2026-10-06** | The SiC survivability limit exists as one Ada truth (`stellarorion_types.ads:97` `SIC_MAX_TEMP := 2073.0`, graded at `physics.adb:1428`) and two Python copies of **1700.0** — `make_vtu_visualization.py:262-263` (a reference line labelled "SIC limit (1700K)") and `make_derived_plots.py:80`, whose value drives `t_surv = max(t_surface) <= SIC_MAX_TEMP` at `:432` and prints a **PASS/FAIL** at `:435`. Measured: the exceedance count is overstated on all 22 DSMC VTUs (e.g. surf_2200 1920 vs 1152 cells), and the verdict flips on exactly one artefact of 24 — `validation_scalloped/paraview/surf_pinn_300000000.vtu`, T_max 1818.3 K, 3648 cells above 1700 and **0** above 2073, so the drawn line says FAIL and the real limit says PASS; the same file in `validation_optimized` passes both, so the two runs' PINN surfaces disagree on survivability |
+| F60 | correctness | **fixed 2026-10-06** | The SiC survivability limit exists as one Ada truth (`stellarorion_types.ads:97` `SIC_MAX_TEMP := 2073.0`, graded at `physics.adb:1428`) and two Python copies of **1700.0** — `make_vtu_visualization.py:262-263` (a reference line labelled "SIC limit (1700K)") and `make_derived_plots.py:80`, whose value drives `t_surv = max(t_surface) <= SIC_MAX_TEMP` at `:432` and prints a **PASS/FAIL** at `:435`. Measured: the exceedance count is overstated on all 22 DSMC VTUs (e.g. surf_2200 1920 vs 1152 cells), and the verdict flips on exactly one artefact of 24 — `validation_scalloped/paraview/surf_pinn_300000000.vtu`, T_max 1818.3 K, 3648 cells above 1700 and **0** above 2073, so the drawn line says FAIL and the real limit says PASS; the same file in `validation_optimized` passes both, so the two runs' PINN surfaces disagree on survivability |
 | F61 | provenance | **open** | `stellarorion_types.ads:284-288` states verbatim that flight IRVE-3 used **7** toroids and the MDAO model used **6**, with 6 as the documented default. The Python render path hard-codes 6 in three places and labels it IRVE-3 (`render_optimization_comparison.py:822` `n_tori = 6  # structural constant: IRVE-3 6+1 torus stack`, `:693` which is what is meshed, and `hiad_geometry.py:40` `N_TORI = 6`), accepts and then discards an `n_tori` argument at `:373`, and never contains the value 7 |
 | F62 | correctness | **open** | `make_validation_plots.py:93-98` appends the step to `steps` **before** parsing the row's values, so one unparsable field leaves `steps` one longer than every column from that field onward. Measured: corrupting a single `mach` value drops **10 of the 21 plots** (`Wrote 11 PNGs`) and mislabels the survivors by one row. The loss is **announced** per column on stderr by the guard at `:163-169`, so the sub-claim that it is silent is refuted; and the exit contract is not inverted (missing → 1, corrupt → 0). The defect is that half the output can vanish while the script reports success |
 | F63 | correctness | **open** | Step 12 of every validation run calls `Cleanup_Ephemeral_State` (`stellarorion_test_modes.adb:1817`), whose `Delete_Matching` list at `stellarorion_sparta.adb:3841-3846` includes **`in.hiad` and `HIAD_custom.surf`** — the SPARTA input deck and the surface mesh the run was flown on. Both are **tracked in git** for `results/validation_scalloped` (last touched by `ff5d2eb`), and `tools/plot_surf_profile.py:14` calls the surf "the actual SPARTA surface mesh that the Ada solver consumed". A completed validation therefore cannot be re-verified, the deletion is silent (`Post => True`, failures swallowed), and this is the confirmed cause of the two files found deleted from the working tree during this audit |
@@ -5136,8 +5277,10 @@ truth. No dead code.
 | F75 | correctness | **open** | The three validation directories were produced by different code versions. The per-step `g_load` fix is live only in `validation_scalloped` (19 distinct values, 16.582661–22.669552) while `validation_smooth` (constant 16.833399) and `validation_optimized` (constant 14.005923) retain the pre-fix constant, and `validation_smooth` has 19 columns against the other two's 22. The scalloped-vs-smooth comparison is therefore confounded with the code change. |
 | F76 | correctness | **fixed 2026-10-06** | `prove.sh` can end by printing `All verification steps completed successfully.` after printing `gnatcov coverage: FAILED`: the failure path at `:133-136` is non-fatal, and the summary at `:197-203` keys on whether a step was *requested*, not whether it *succeeded*. Independently, `PYTHON_TESTS` at `:151` points at `tests/python`, which **does not exist** (the two test modules are in `tests/`), and the venv has no pytest, so `--python-coverage` cannot succeed; `2>/dev/null` discards the reason and the fallback measures module *imports*, not tests. |
 | F77 | provenance | **fixed 2026-10-06** | `run.py:967` suppresses bandit check `EXTERNAL_CALL_UNHANDLED` with the justification *"verified safe by prove.sh"*, but `prove.sh` runs **no security analyser** — zero mentions of `bandit`, and its only tools are `alr`/`gnatprove`/`gnatcov`/`coverage`/`python3`/`pytest`. The cited evidence cannot have been produced. The suppression is **unnecessary rather than load-bearing**: the suppressed code properly catches the spawn errors and terminates the child. Isolated — 1 of 344 `nosec` suppressions cites `prove.sh`. |
-| F78 | provenance | **open** | The F60 fix added three citations to `make_derived_plots.py` naming the Ada lines its corrected limits come from, and all three point at the wrong lines: `types.ads:97` for `SIC_MAX_TEMP` (actual **120**), `:101` for `KAPTON_MAX_TEMP` (actual **124**), and `:831-832` for the combined test (actual **854-855**). A consistent 23-line offset on all three, so the citations were written against an earlier revision and never re-resolved. The values are right; the pointers are not — and the pointer is the evidence for the value. |
-| F79 | correctness | **open** | `validation_pipeline.py:2508-2518` enters a branch **because** `h264_videotoolbox` is present in the encoder list, then selects software `libx264` instead, justified by *"QSV is NOT available on Apple Silicon"* — QSV is Intel's encoder, while the one removed is Apple's VideoToolbox, which is available on Apple Silicon and whose presence is what the guard tests. A working hardware encoder is detected and bypassed for a reason concerning a different encoder. |
+| F78 | provenance | **fixed 2026-10-06** | The F60 fix added three citations to `make_derived_plots.py` naming the Ada lines its corrected limits come from, and all three point at the wrong lines: `types.ads:97` for `SIC_MAX_TEMP` (actual **120**), `:101` for `KAPTON_MAX_TEMP` (actual **124**), and `:831-832` for the combined test (actual **854-855**). A consistent 23-line offset on all three, so the citations were written against an earlier revision and never re-resolved. The values are right; the pointers are not — and the pointer is the evidence for the value. |
+| F79 | correctness | **fixed 2026-10-06** | `validation_pipeline.py:2508-2518` enters a branch **because** `h264_videotoolbox` is present in the encoder list, then selects software `libx264` instead, justified by *"QSV is NOT available on Apple Silicon"* — QSV is Intel's encoder, while the one removed is Apple's VideoToolbox, which is available on Apple Silicon and whose presence is what the guard tests. A working hardware encoder is detected and bypassed for a reason concerning a different encoder. |
+| F80 | provenance | **open** | `stellarorion_ffi.adb:654` states the wrapper *"Delegates to StellarOrion_Environment.Speed_Of_Sound"*, but that package defines `Speed_Of_Sound` **zero** times (`grep -c` = 0 in both its spec and body). The actual callee is `StellarOrion_Speed_Of_Sound.Speed_Of_Sound` (`with` at `:40`, call at `:669`). Commit `2e5b3d5` moved the function out of `Environment` and updated the `with` — but not the comment naming it. The code is correct; the pointer at the FFI boundary is not. Same class as F78. |
+| F81 | verification scope | **open** | The new `pragma SPARK_Mode (On)` unit `StellarOrion_Speed_Of_Sound` proves the result is `>= 0.0`, that its precondition envelope holds, and that no intermediate overflows (THEOREM T1, arithmetic re-checked: `1.4*287.058*6000 = 2411287.2`, `sqrt = 1552.832`). It proves **nothing about accuracy** — no relative-error postcondition on either `Speed_Of_Sound` or `Sqrt_Approx`. Measured behaviour is accurate (worst 6.3e-08 relative error over T = 50…6000 K, at float32 epsilon), so the gap is in the proof, not the behaviour — in a unit created specifically to be inside the verified subset. |
 
 ### Final state after fixes
 
