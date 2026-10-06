@@ -88,7 +88,7 @@ Figure~\ref{fig:governing_equations} summarizes this chain.
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
-The StellarOrion engine orchestrates the pipeline in Figure~\ref{fig:software_pipeline}: CadQuery geometry and freestream conditions feed SPARTA DSMC, the DeepXDE PINN module and the PyTorch Bayes Opt surrogate.
+The StellarOrion engine orchestrates the pipeline in Figure~\ref{fig:software_pipeline}: CadQuery geometry and freestream conditions feed SPARTA DSMC, the DeepXDE PINN module and the PyTorch Bayes Opt surrogate. OpenFOAM (Open Source Field Operation and Manipulation) provides solid-thermal solutions. MoP (Method of Moments) is a surrogate model that enables GA-driven optimization.
 
 \begin{figure}[!htbp]
     \centering
