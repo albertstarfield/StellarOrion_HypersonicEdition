@@ -60,8 +60,9 @@ import numpy as np
 
 # --- physical constants (SI, CODATA / NASA SP-7468) -------------------------
 K_B = 1.380649e-23          # Boltzmann [J/K]
-GAMMA_AIR = 1.4             # ratio of specific heats for diatomic air
-R_SPECIFIC_AIR = 8.314462618 / 0.0289647  # J/(kg K)
+#  GAMMA_AIR / R_SPECIFIC_AIR were removed (2026-10-06): the speed of sound is
+#  now the Ada/SPARK value (Speed_Of_Sound_C), so Python carries no copy of
+#  gamma or R (one truth, one value).
 L_CHAR = 1.0                # reference length [m] for the Knudsen number
 T_FLOOR = 50.0              # K -- below this a cell carries no particles
 T_CEIL = 6000.0             # K -- above this the instantaneous average is noise
@@ -84,6 +85,7 @@ GRID_RE = re.compile(r"^grid\.(\d+)\.out$")
 #  NOT from a Python copy of sigma_SB.
 sys.path.insert(0, os.path.join(REPO, "src", "python"))
 from ada_pinn_wrapper import radiative_eq_temp  # path set just above
+from ada_pinn_wrapper import speed_of_sound as _ada_speed_of_sound
 
 
 def _radiative_eq_temp_array(heat: np.ndarray, emissivity: float) -> np.ndarray:
@@ -280,7 +282,11 @@ def speed_of_sound(temp: np.ndarray) -> np.ndarray:
     t = np.asarray(temp, dtype=float)
     out = np.full(t.shape, np.nan, dtype=float)
     ok = t > 0.0
-    out[ok] = np.sqrt(GAMMA_AIR * R_SPECIFIC_AIR * t[ok])
+    #  ONE TRUTH, ONE VALUE (2026-10-06): the speed of sound is the Ada/SPARK
+    #  value (Speed_Of_Sound_C); Python carries no gamma/R constants and does
+    #  not re-derive sqrt(gamma*R*T).
+    for idx in np.nonzero(ok)[0]:
+        out[idx] = _ada_speed_of_sound(float(t[idx]))
     return out
 
 

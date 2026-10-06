@@ -42,6 +42,22 @@ package StellarOrion_Environment is
                   and Temperature >= 1.0 and Temperature <= 3000.0,
           Post => Mach_To_Velocity'Result >= 0.0;
 
+   --  Speed of sound in air [m/s] at a static temperature.
+   --  a = sqrt(gamma * R * T); gamma = 1.4, R = 287.058 J/(kg*K).
+   --
+   --  AXIOM (E1a) [ISA]: temperature envelope 0 .. 6000 K covers the ISA
+   --    profile (186.87 .. 288.15 K), hot-wall recovery, and the SPARTA
+   --    grid-cell mask (T_FLOOR .. T_CEIL = 50 .. 6000 K) used by the
+   --    field-panel plots.
+   --  OVERFLOW PROOF: gamma*R*T <= 1.4*287.058*6000 = 2.4113e6;
+   --    sqrt <= Max(2.4113e6, 1); a <= 1553 m/s << Float'Last.
+   --  CITATION: [Anderson] Anderson, "Modern Compressible Flow," 3rd Ed.,
+   --    Ch. 2 — speed of sound in an ideal gas.
+   function Speed_Of_Sound
+     (Temperature : Float) return Float
+     with Pre  => Temperature >= 0.0 and Temperature <= 6000.0,
+          Post => Speed_Of_Sound'Result >= 0.0;
+
    -- -----------------------------------------------------------------
    --  ISA Atmosphere Model
    -- -----------------------------------------------------------------

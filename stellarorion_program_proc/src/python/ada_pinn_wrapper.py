@@ -1110,6 +1110,10 @@ _ada_lib.Mean_Free_Path_Viscous_C.restype = ctypes.c_double
 _ada_lib.Mean_Free_Path_Viscous_C.argtypes = [
     ctypes.c_double, ctypes.c_double, ctypes.c_double]
 
+# [Citation: stellarorion_ffi.ads — Speed_Of_Sound_C]
+_ada_lib.Speed_Of_Sound_C.restype = ctypes.c_double
+_ada_lib.Speed_Of_Sound_C.argtypes = [ctypes.c_double]
+
 
 def radiative_eq_temp(heat_flux_wm2: float, emissivity: float) -> float:
     """Radiative equilibrium surface temperature via Ada/SPARK FFI.
@@ -1199,6 +1203,25 @@ def mean_free_path_viscous(
     return _ada_lib.Mean_Free_Path_Viscous_C(
         ctypes.c_double(mu), ctypes.c_double(density_kgm3),
         ctypes.c_double(temperature_k))
+
+
+def speed_of_sound(temperature_k: float) -> float:
+    """Speed of sound in air [m/s] via Ada/SPARK FFI.
+
+    a = sqrt(gamma * R * T)
+    Single source of truth: StellarOrion_Environment.Speed_Of_Sound; Python MUST
+    NOT re-derive it (one truth, one value).
+
+    [Citation: Anderson (2006), Modern Compressible Flow, Ch. 2]
+
+    Args:
+        temperature_k: static temperature [K]
+
+    Returns:
+        Speed of sound [m/s]. The Ada wrapper clamps the input to its [0, 6000]
+        K envelope and returns 0.0 if an exception crosses the C ABI.
+    """
+    return _ada_lib.Speed_Of_Sound_C(ctypes.c_double(temperature_k))
 
 
 # ===========================================================================

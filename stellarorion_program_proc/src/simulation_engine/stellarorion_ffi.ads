@@ -539,6 +539,27 @@ package StellarOrion_FFI is
       return Interfaces.C.Double;
    pragma Export (C, Mean_Free_Path_Viscous_C, "Mean_Free_Path_Viscous_C");
 
+   -- -------------------------------------------------------------------------
+   --  Speed_Of_Sound_C
+   -- -------------------------------------------------------------------------
+   --  C wrapper for StellarOrion_Environment.Speed_Of_Sound.
+   --  Computes a = sqrt(gamma * R * T) so the Python field-panel plots no
+   --  longer re-derive the speed of sound from temperature.
+   --
+   --  Parameters:
+   --    Temperature — static temperature [K]
+   --
+   --  Returns:
+   --    Speed of sound [m/s].
+   --
+   --  CITATION:
+   --    [Anderson] Anderson, "Modern Compressible Flow," 3rd Ed., Ch. 2.
+   -- -------------------------------------------------------------------------
+   function Speed_Of_Sound_C
+     (Temperature : Interfaces.C.Double)
+      return Interfaces.C.Double;
+   pragma Export (C, Speed_Of_Sound_C, "Speed_Of_Sound_C");
+
    -- =========================================================================
    --  TPS_Conduction_C — per-element composite F-TPS conduction (C ABI)
    -- =========================================================================

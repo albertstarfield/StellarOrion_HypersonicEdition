@@ -648,6 +648,30 @@ package body StellarOrion_FFI is
    end Mean_Free_Path_Viscous_C;
 
    -- -------------------------------------------------------------------------
+   --  Speed_Of_Sound_C
+   -- -------------------------------------------------------------------------
+   --  Delegates to StellarOrion_Environment.Speed_Of_Sound.
+   --  The input is clamped to the documented Pre envelope [0, 6000] K so the
+   --  SPARK precondition always holds; safety fallback returns 0.0.
+   -- -------------------------------------------------------------------------
+   function Speed_Of_Sound_C
+     (Temperature : Interfaces.C.Double)
+      return Interfaces.C.Double
+   is
+      T : Standard.Float := Standard.Float (Temperature);
+   begin
+      if T < 0.0 then
+         T := 0.0;
+      elsif T > 6000.0 then
+         T := 6000.0;
+      end if;
+      return Interfaces.C.Double (Speed_Of_Sound (Temperature => T));
+   exception
+      when others =>
+         return 0.0;
+   end Speed_Of_Sound_C;
+
+   -- -------------------------------------------------------------------------
    --  TPS_Conduction_C
    -- -------------------------------------------------------------------------
    --  Per-element composite F-TPS conduction across the C ABI.
