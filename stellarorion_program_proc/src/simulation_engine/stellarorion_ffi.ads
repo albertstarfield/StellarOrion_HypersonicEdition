@@ -513,6 +513,32 @@ package StellarOrion_FFI is
       return Interfaces.C.Double;
    pragma Export (C, Atmosphere_Density_C, "Atmosphere_Density_C");
 
+   -- -------------------------------------------------------------------------
+   --  Mean_Free_Path_Viscous_C
+   -- -------------------------------------------------------------------------
+   --  C wrapper for StellarOrion_Physics.Mean_Free_Path_Viscous.
+   --  Computes the viscous (Bird 1994 Sec 1.5) mean free path
+   --      lambda = mu / (rho * sqrt(pi/2 * R * T))
+   --  so the Python ISA helper no longer re-derives it (one truth, one value).
+   --
+   --  Parameters:
+   --    Mu          — dynamic viscosity [Pa*s]
+   --    Density     — mass density [kg/m^3]
+   --    Temperature — static temperature [K]
+   --
+   --  Returns:
+   --    Mean free path [m].
+   --
+   --  CITATION:
+   --    [Bird1994] Bird (1994), Molecular Gas Dynamics, Sec 1.5.
+   -- -------------------------------------------------------------------------
+   function Mean_Free_Path_Viscous_C
+     (Mu          : Interfaces.C.Double;
+      Density     : Interfaces.C.Double;
+      Temperature : Interfaces.C.Double)
+      return Interfaces.C.Double;
+   pragma Export (C, Mean_Free_Path_Viscous_C, "Mean_Free_Path_Viscous_C");
+
    -- =========================================================================
    --  TPS_Conduction_C — per-element composite F-TPS conduction (C ABI)
    -- =========================================================================

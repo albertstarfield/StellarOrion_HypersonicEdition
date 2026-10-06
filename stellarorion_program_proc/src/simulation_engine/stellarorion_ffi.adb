@@ -623,6 +623,31 @@ package body StellarOrion_FFI is
    end Atmosphere_Density_C;
 
    -- -------------------------------------------------------------------------
+   --  Mean_Free_Path_Viscous_C
+   -- -------------------------------------------------------------------------
+   --  Delegates to StellarOrion_Physics.Mean_Free_Path_Viscous.
+   --  Safety fallback: Returns 0.0 on exception (a zero mean free path is the
+   --  documented degenerate value the former Python helper used for rho<=0 or
+   --  T<=0).
+   -- -------------------------------------------------------------------------
+   function Mean_Free_Path_Viscous_C
+     (Mu          : Interfaces.C.Double;
+      Density     : Interfaces.C.Double;
+      Temperature : Interfaces.C.Double)
+      return Interfaces.C.Double
+   is
+   begin
+      return Interfaces.C.Double (
+        Mean_Free_Path_Viscous (
+          Mu          => Standard.Float (Mu),
+          Density     => Standard.Float (Density),
+          Temperature => Standard.Float (Temperature)));
+   exception
+      when others =>
+         return 0.0;
+   end Mean_Free_Path_Viscous_C;
+
+   -- -------------------------------------------------------------------------
    --  TPS_Conduction_C
    -- -------------------------------------------------------------------------
    --  Per-element composite F-TPS conduction across the C ABI.

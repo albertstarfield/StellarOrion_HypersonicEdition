@@ -62,6 +62,7 @@ try:
     from ada_pinn_wrapper import drag_force as _ada_drag
     from ada_pinn_wrapper import g_load as _ada_gload
     from ada_pinn_wrapper import dynamic_pressure as _ada_dynq
+    from ada_pinn_wrapper import mean_free_path_viscous as _ada_mfp
     from ada_pinn_wrapper import radiative_eq_temp as _ada_radiative_temp
     _ADA_PHYSICS_AVAILABLE = True
     print("[validation_pipeline] Ada/SPARK physics library loaded — all physics via Ada FFI")
@@ -595,11 +596,10 @@ REF_KIND = {
 #   [2] NASA SP-7468 (1976) — U.S. Standard Atmosphere
 #   [3] Vallado (2013), "Fundamentals of Astrodynamics", Appendix D
 
-# Physical constants — declared for reference; actual physics computed in Ada/SPARK.
+#  Physical constants are owned by Ada/SPARK; no Python copies live here
+#  (one truth, one value). The block previously declared here (_G0, _R_AIR,
+#  _GAMMA) was unused — every physics number comes through the FFI below.
 # [Citation: ISO 2533:1975; NASA SP-7468 (1976); Sutton & Graves (1972)]
-_G0 = 9.80665
-_R_AIR = 287.05287
-_GAMMA = 1.4
 
 
 def isa_atmosphere(altitude_km: float) -> dict[str, Any]:
@@ -633,9 +633,10 @@ def isa_atmosphere(altitude_km: float) -> dict[str, Any]:
     mu = r["dynamic_viscosity_pas"]
 
     # Mean free path: lambda = mu / (rho * sqrt(pi/2 * R * T))
+    #  ONE TRUTH, ONE VALUE (2026-10-06): the Ada/SPARK value
+    #  (Mean_Free_Path_Viscous_C), not a Python re-derivation.
     # [Citation: Bird (1994), Sec 1.5]
-    import math
-    lam = mu / (rho * math.sqrt(math.pi / 2 * _R_AIR * T)) if (rho > 0 and T > 0) else 0.0
+    lam = _ada_mfp(mu, rho, T) if (rho > 0 and T > 0) else 0.0
 
     return {
         "altitude_km": altitude_km,
@@ -3665,7 +3666,7 @@ def generate_aerodynamics_profiles(output_dir: str) -> list[str]:
     # Vehicle constants from Ada/SPARK
     IRVE3_MASS_KG = 281.0; IRVE3_DIAMETER_M = 3.0; IRVE3_CD = 1.4625
     G0 = 9.80665; _pi = 3.141592653589793; _area = _pi * (IRVE3_DIAMETER_M * 0.5)**2
-    _L = IRVE3_DIAMETER_M; _R_AIR = 287.05287
+    _L = IRVE3_DIAMETER_M
 
     for i, alt in enumerate(alt_range):
         isa = isa_atmosphere(alt)
@@ -3674,9 +3675,9 @@ def generate_aerodynamics_profiles(output_dir: str) -> list[str]:
         densities[i] = isa["density_kgm3"]
         viscosities[i] = isa.get("dynamic_viscosity_Pas", isa.get("dynamic_viscosity_pas", 0.0))
 
-        # Mean free path
+        # Mean free path (Ada/SPARK Mean_Free_Path_Viscous_C; one truth, one value)
         if densities[i] > 0 and temps[i] > 0:
-            knuds[i] = viscosities[i] / (densities[i] * np.sqrt(np.pi / 2 * _R_AIR * temps[i])) / _L
+            knuds[i] = _ada_mfp(viscosities[i], densities[i], temps[i]) / _L
         else:
             knuds[i] = 0.0
 

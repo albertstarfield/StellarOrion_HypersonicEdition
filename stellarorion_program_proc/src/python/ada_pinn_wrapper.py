@@ -846,8 +846,8 @@ def _expected_improvement(
     [Citation: Jones et al. (1998), Eq. (2)]
     [Citation: https://scikit-learn.org/stable/modules/gaussian_process.html]
     """
-    from scipy.stats import norm
     import numpy as np
+    from scipy.stats import norm
     mu, sigma = gp.predict(X_candidate, return_std=True)
     sigma = np.maximum(sigma, 1e-9)
     Z = (y_best - mu - xi) / sigma
@@ -880,9 +880,9 @@ def run_bayesian_optimize(
     [Citation: Mockus (1978), Bayesian Approach to Global Optimization]
     [Citation: Jones et al. (1998), Efficient Global Optimization]
     """
-    from sklearn.gaussian_process import GaussianProcessRegressor
-    from sklearn.gaussian_process.kernels import Matern, ConstantKernel
     import numpy as np
+    from sklearn.gaussian_process import GaussianProcessRegressor
+    from sklearn.gaussian_process.kernels import ConstantKernel, Matern
 
     bounds = _BOUNDS
     n_dims = len(bounds)
@@ -960,8 +960,7 @@ def run_bayesian_optimize(
         X_obs.append(x_new)
         y_obs.append(y_new)
 
-        if y_new < y_best:
-            y_best = y_new
+        y_best = min(y_best, y_new)
 
         history.append({
             "iteration": n_initial + i,
@@ -1106,6 +1105,11 @@ _ada_lib.Atmosphere_Temperature_C.argtypes = [ctypes.c_double]
 _ada_lib.Atmosphere_Density_C.restype = ctypes.c_double
 _ada_lib.Atmosphere_Density_C.argtypes = [ctypes.c_double]
 
+# [Citation: stellarorion_ffi.ads — Mean_Free_Path_Viscous_C]
+_ada_lib.Mean_Free_Path_Viscous_C.restype = ctypes.c_double
+_ada_lib.Mean_Free_Path_Viscous_C.argtypes = [
+    ctypes.c_double, ctypes.c_double, ctypes.c_double]
+
 
 def radiative_eq_temp(heat_flux_wm2: float, emissivity: float) -> float:
     """Radiative equilibrium surface temperature via Ada/SPARK FFI.
@@ -1170,6 +1174,31 @@ def atmosphere_density(altitude_km: float) -> float:
     [Citation: ISO 2533:1975, International Standard Atmosphere]
     """
     return _ada_lib.Atmosphere_Density_C(ctypes.c_double(altitude_km))
+
+
+def mean_free_path_viscous(
+    mu: float, density_kgm3: float, temperature_k: float
+) -> float:
+    """Viscous mean free path [m] via Ada/SPARK FFI.
+
+    lambda = mu / (rho * sqrt(pi/2 * R * T))
+    Single source of truth: StellarOrion_Physics.Mean_Free_Path_Viscous; Python
+    MUST NOT re-derive it (one truth, one value).
+
+    [Citation: Bird (1994), Molecular Gas Dynamics, Sec 1.5]
+
+    Args:
+        mu: dynamic viscosity [Pa*s]
+        density_kgm3: mass density [kg/m^3]
+        temperature_k: static temperature [K]
+
+    Returns:
+        Mean free path [m]. The Ada wrapper returns 0.0 if the input leaves the
+        documented Pre envelope or an exception crosses the C ABI.
+    """
+    return _ada_lib.Mean_Free_Path_Viscous_C(
+        ctypes.c_double(mu), ctypes.c_double(density_kgm3),
+        ctypes.c_double(temperature_k))
 
 
 # ===========================================================================
