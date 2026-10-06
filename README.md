@@ -593,7 +593,9 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      target. Each now carries a correction banner and inline `[REF-CORRECTED]` markers; no
      original sentence was rewritten. `HIAD_IRVE3_Baseline.md` was checked and is already
      correct, so it was left untouched. See **F73**.
-   * **F74 — a DSMC run that stopped at step 1900 of 2200 was graded VALIDATION PASSED.**
+   * **Thread 3w (2026-10-06) — eight findings re-tested against changed code and now FIXED:** F24, F25, F26, F27 (the DeepXDE PINN leg now runs and trains on the DSMC field), F38 and F45 (all three ISA atmospheres re-measured and now agree — worst error 0.0201 % against an independent ISA-1976 reference, down from 1.4755–3.3163×), F48, and F74 (a `CADENCE GUARD` now rejects a short run before the verdict is printed — verified at `test_modes.adb:1361` vs the verdict at `:1785`).
+     F74 also carries a correction: I had claimed `results/validation/` was a second truncated run. Its deck says `run 1000` and it completed — ten rows is its full series. That was the second producer-attribution error of mine in this audit.
+   * **F74 — a DSMC run that stopped at step 1900 was graded VALIDATION PASSED.**
      Nothing checks that a run finished: `test_modes.adb:1780-1782` prints the verdict
      from `Survivable` before Step 11 writes the CSV, `N_StepList`'s only guard
      (`sparta.adb:3409`) asks whether at least one step exists, and no completion marker
