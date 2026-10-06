@@ -39,18 +39,18 @@ def strip_frozen(text: str) -> str:
     """Remove comments, caption bodies, and AccSupp blocks from source text.
 
     Parameters
-    ----------
+    ==========
     text : str
         Raw .tex file content.
 
     Returns
-    -------
+    =======
     str
         Source with non-prose constructs blanked out (newlines preserved so
         reported line numbers stay accurate).
 
     Exceptions
-    ----------
+    ==========
     None; regex-only transformation.
     """
     text = re.sub(r"(?<!\\)%.*", "", text)
@@ -59,12 +59,12 @@ def strip_frozen(text: str) -> str:
         """Replace a frozen block with a sentence terminator plus padding.
 
         Parameters
-        ----------
+        ==========
         match : re.Match[str]
             The matched caption or AccSupp block.
 
         Returns
-        -------
+        =======
         str
             "." followed by the block's newline count so the preceding
             prose sentence ends at the block boundary while downstream
@@ -136,12 +136,12 @@ def count_words(sentence: str) -> int:
     """Count space-delimited tokens that contain at least one alphanumeric.
 
     Parameters
-    ----------
+    ==========
     sentence : str
         Candidate sentence text.
 
     Returns
-    -------
+    =======
     int
         Word count (math/commands inflate this slightly, which is flagged
         in the report header as a known upper-bound bias).
@@ -153,7 +153,7 @@ def main() -> int:
     """Scan all FILES and print every sentence over LIMIT words.
 
     Returns
-    -------
+    =======
     int
         Always 0 (report-only).
     """

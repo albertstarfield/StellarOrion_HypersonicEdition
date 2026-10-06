@@ -162,3 +162,59 @@ height-limited scale and raises `SystemExit` if it is not met, so the figure
 needs no carve-out and no redraw. Its keep-aspectratio include is the reason it
 keeps its own height-capped fit loop instead of calling
 `print_fit.save_to_print_width`, which fits to width.
+
+## 7. Double hyphens that must remain in source, and why
+
+The goal forbids the two-character sequence formed by U+002D twice from
+appearing in any source file. A small set of occurrences cannot be removed,
+because the file's purpose is to detect that sequence, so removing it would
+leave a checker that reports nothing while appearing to guard everything.
+
+Measured occurrences that remain, by file and line:
+
+- `check_structure.py`: seven regular expressions in `_ALLOWED_DASH`, which
+  whitelist the contexts where a doubled hyphen is legitimate, plus the two
+  membership tests at lines 166 and 171.
+- `check_prose_batch.py`: the search pattern and the message it prints.
+- `audit.py`: the count of the `Warning--Class` string emitted by one
+  LaTeX build, the search for a run of three hyphens, and the label printed
+  for that check.
+
+These 16 occurrences are the whole remainder in the maintained battery.
+Everything else in the thesis tree, including every generator under
+`figures/`, now measures zero.
+
+### 7.1 The tool that cleans this, and the bug it first contained
+
+`strip_dashes.py` at the thesis root does the cleaning. Its default `prose`
+mode rewrites only two kinds of text: comment tokens, and the string tokens
+that Python's own parser reports as docstrings. Located by token type rather
+than by pattern, it cannot reach an expression.
+
+The first version located decorative text by line number, and it destroyed
+seven working regular expressions in `check_structure.py`. The reason is
+that a functional string and a decorative comment share a line, in the form
+`re.compile(r"--[a-zA-Z]")   # CLI flag: --nose`, so rewriting the line
+rewrote the pattern. The rewritten patterns no longer matched what they
+were written to match, which would have made the checker report hundreds of
+false positives about ordinary hyphens while still appearing to pass.
+
+Two changes prevent a repeat. The rewrite operates on token spans, so a
+comment's characters cannot reach the code beside it. And the tool
+snapshots every string token that is not a docstring before the rewrite and
+compares it afterwards, raising if any of them moved, so a blast radius that
+was not measured cannot be written to disk.
+
+`strip_dashes.py` also keeps the earlier whole-line `all` mode for the figure
+generators, whose content has been read line by line and contains no search
+pattern.
+
+### 7.2 Proof that the cleanup changed no behaviour
+
+The battery was re-run after cleaning its own source. Every number is
+identical to the run before: `audit.py` 75 of 75 checks pass,
+`check_backrefs.py` 207 of 207 pairs match, `check_structure.py` reports zero
+brace imbalance, zero environment mismatch, zero residual em dashes, zero
+banned scope terms and zero duplicate labels across 187 labels,
+`scan_long_sentences.py` finds zero overlong sentences, and
+`check_prose_batch.py` returns PASS with the appendix at 1311 words.

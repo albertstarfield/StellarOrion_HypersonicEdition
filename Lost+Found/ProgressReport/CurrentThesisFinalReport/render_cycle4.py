@@ -57,11 +57,20 @@ PX_PER_PT = 2.0
 
 # Zero-based page indices, each paired with the figure it carries, so a
 # verifier reading the output knows which artifact each page is evidence for.
+# Eight pages rather than four: this cycle's rendered audit of the seven
+# regenerated panels found six real geometry collisions and one figure with
+# no numeric tick labels at all, and every one of those fixes can only be
+# judged on the page the figure actually sits on.
 PAGES = {
+    27: "pipeline",
     32: "litmap",
+    48: "sutton",
     92: "pinn",
+    114: "heatflux",
     126: "boccd",
+    127: "ccd",
     128: "boconv",
+    130: "gate",
 }
 
 

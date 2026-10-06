@@ -17,7 +17,7 @@ The third `$` (before `^2`) opened math that was never closed, so `m^2 K/W and
 an outer emissivity of 0.80 ...` to the end of the paragraph was set in math
 italic with no break opportunities. The log showed the prose in math-italic
 font (`\\OML/ztmcm/m/it/12`) which is the diagnostic fingerprint, and the build
-reported `Overfull \\hbox (1033.94652pt too wide)` -- 2.6 line widths -- on a
+reported `Overfull \\hbox (1033.94652pt too wide)`, 2.6 line widths, on a
 paragraph whose longest space-free run was only 19 characters.
 
 CHECKS PERFORMED
@@ -36,7 +36,7 @@ CHECKS PERFORMED
      function was labelled `eq:cost_function`, a name chapter 2 already used.
 
 Citations
----------
+=========
 * TeX math mode ignores spaces: https://texdoc.org/serve/logfile-spec/0/
 * Overfull/underfull box reporting: https://latex2e.readthedocs.io/en/stable/texerror.html
 """
@@ -66,13 +66,13 @@ _BANNED = re.compile(
     re.IGNORECASE,
 )
 _ALLOWED_DASH = [
-    re.compile(r"[A-Za-z]--[A-Za-z]"),   # compound proper noun: Navier--Stokes
-    re.compile(r"\d\s*--\s*\d"),         # bare numeric range: 21--23
-    re.compile(r"\$--\$"),               # math range: $0.001$--$0.01$
-    re.compile(r"\)\s*--\s*\("),         # panels (a)--(c)
-    re.compile(r"--[a-zA-Z]"),           # CLI flag: --nose
+    re.compile(r"[A-Za-z]--[A-Za-z]"),   # compound proper noun, one doubled hyphen
+    re.compile(r"\d\s*--\s*\d"),         # bare numeric range
+    re.compile(r"\$--\$"),               # math range between two inline formulas
+    re.compile(r"\)\s*--\s*\("),         # panel label range
+    re.compile(r"--[a-zA-Z]"),           # command-line flag
     re.compile(r"[a-zA-Z]--"),           # tail of a range or flag
-    re.compile(r"\$k\$--\$\\omega\$"),   # k--omega turbulence model
+    re.compile(r"\$k\$--\$\\omega\$"),   # turbulence model name
 ]
 
 

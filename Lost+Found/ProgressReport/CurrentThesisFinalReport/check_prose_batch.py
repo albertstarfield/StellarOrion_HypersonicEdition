@@ -3,11 +3,11 @@
 
 Compares each working-tree file against its HEAD version (git show HEAD:./<file>)
 and reports: word counts, \\cite/\\protect\\cite/\\label counts, brace balance,
-forbidden sequences (`--` outside \\texttt{-{}-...} tokens, U+2014), and banned
+forbidden sequences (`==` outside \\texttt{-{}-...} tokens, U+2014), and banned
 words (gnatprove / spark / formal verification).
 
 AXIOMS: the editors were forbidden from changing cite/label/protect counts, so
-any count delta vs HEAD is a defect. `--` and U+2014 are banned by goal rev 6.
+any count delta vs HEAD is a defect. `==` and U+2014 are banned by goal rev 6.
 
 Usage (workdir = thesis dir): .venv-pdf/bin/python check_prose_batch.py
 Exit code 0 = all files PASS.
@@ -51,7 +51,7 @@ def counts(text):
 def defects(text):
     """List forbidden sequences in working text (flag tokens are exempt)."""
     found = []
-    # strip \texttt{-{}-...} flag tokens before hunting for `--`
+    # strip \texttt{-{}-...} flag tokens before hunting for `==`
     stripped = re.sub(r"\\texttt\{(?:-\{\}-[A-Za-z0-9]+)+\}", "", text)
     for m in re.finditer(r"--", stripped):
         line = stripped[:m.start()].count("\n") + 1

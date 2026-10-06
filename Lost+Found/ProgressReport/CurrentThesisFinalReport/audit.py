@@ -77,7 +77,7 @@ def pdf_text() -> str:
     return r.stdout if r.returncode == 0 else ""
 
 
-# ---------------------------------------------------------------- dimension 1
+#, dimension 1
 def dim_build() -> None:
     log = (TH / "main.log").read_text(encoding="utf-8", errors="replace")
     hard = len(re.findall(r"^!", log, re.M))
@@ -99,7 +99,7 @@ def dim_build() -> None:
         check("build/bibtex", bw == 0, f"{bw}")
 
 
-# ---------------------------------------------------------------- dimension 2
+#, dimension 2
 def dim_structure() -> None:
     txt = build_inputs_text()
     live = []
@@ -127,7 +127,7 @@ def dim_structure() -> None:
     check("struct/unresolved-cite", not miss, str(miss) if miss else f"{len(cites)} keys")
 
 
-# ---------------------------------------------------------------- dimension 3
+#, dimension 3
 def dim_geometry() -> None:
     r = subprocess.run([str(PY), str(TH / "render_pages.py")],
                        capture_output=True, text=True)
@@ -144,7 +144,7 @@ def dim_geometry() -> None:
         print(f"         pages measured: {m.group(1)}")
 
 
-# ---------------------------------------------------------------- dimension 4
+#, dimension 4
 def dim_bibliography() -> None:
     bib = (TH / "ref.bib").read_text(encoding="utf-8")
     txt = build_inputs_text()
@@ -168,7 +168,7 @@ def dim_bibliography() -> None:
     check("bib/no-nocite-star", not nocite, str(nocite) if nocite else "none")
 
 
-# ---------------------------------------------------------------- dimension 5
+#, dimension 5
 def dim_figures() -> None:
     missing = []
     exts = (".pdf", ".png", ".jpg", ".jpeg", ".eps", ".ps", ".PDF", ".PNG")
@@ -205,7 +205,7 @@ def dim_figures() -> None:
     print(f"         unreferenced figure assets: {len(orphan)}")
 
 
-# ---------------------------------------------------------------- dimension 6
+#, dimension 6
 def dim_numbering() -> None:
     txt = build_inputs_text()
     for kind in ("figure", "table"):
@@ -225,7 +225,7 @@ def dim_numbering() -> None:
         check("num/labels-numbered", all(f >= 0 for f in figs), f"{len(figs)} numbered labels")
 
 
-# ---------------------------------------------------------------- dimension 7
+#, dimension 7
 def dim_prose() -> None:
     txt = build_inputs_text()
     live = []
@@ -250,7 +250,7 @@ def dim_prose() -> None:
     check("prose/no-stub-captions", not stub, str(stub) if stub else "0")
 
 
-# ---------------------------------------------------------------- dimension 8
+#, dimension 8
 def dim_scope() -> None:
     t = pdf_text()
     low = t.lower()
@@ -262,7 +262,7 @@ def dim_scope() -> None:
 
 
 
-# --------------------------------------------------------------- dimension 9
+#, dimension 9
 def dim_numeric() -> None:
     """Thesis values against the committed artefacts they claim to come from."""
     import json as _json
@@ -287,7 +287,7 @@ def dim_numeric() -> None:
           f"{len(pairs)} values match the committed JSON")
 
 
-# -------------------------------------------------------------- dimension 10
+#, dimension 10
 def dim_alttext() -> None:
     """Alternative text must be present and substantial for every figure."""
     thin, dup = [], []
@@ -312,7 +312,7 @@ def dim_alttext() -> None:
     check("alt/not-duplicated", not dup, str(dup[:3]) if dup else "no identical alt text")
 
 
-# -------------------------------------------------------------- dimension 11
+#, dimension 11
 def dim_uncited_claims() -> None:
     """Paragraphs asserting an EXTERNAL fact that cite nothing.
 
@@ -360,7 +360,7 @@ def dim_uncited_claims() -> None:
     check("uncited/none", not hits, f"{len(hits)} paragraphs")
 
 
-# -------------------------------------------------------------- dimension 12
+#, dimension 12
 def dim_equation_tags() -> None:
     r"""Every numbered equation must actually reach a number on the page.
 
@@ -415,7 +415,7 @@ def dim_equation_tags() -> None:
     check("eqtag/no-typed-numbers", not hard, f"{len(hard)} typed")
 
 
-# -------------------------------------------------------------- dimension 13
+#, dimension 13
 def dim_crossref_use() -> None:
     r"""Every \label must be referenced at least once; an unreferenced label is
     either dead or evidence of a missing pointer."""
@@ -436,7 +436,7 @@ def dim_crossref_use() -> None:
 
 
 
-# -------------------------------------------------------------- dimension 14
+#, dimension 14
 def dim_duplicate_paragraphs() -> None:
     """The same substantive paragraph appearing in two chapters.
 
@@ -464,7 +464,7 @@ def dim_duplicate_paragraphs() -> None:
     check("dup/no-repeat-paragraph", not dupes, f"{len(dupes)} duplicated")
 
 
-# -------------------------------------------------------------- dimension 15
+#, dimension 15
 def dim_numeric_consistency() -> None:
     """A named physical quantity must carry one value throughout."""
     txt = " ".join(strip_comments(p.read_text(encoding="utf-8")) for p in CHAPTERS)
@@ -485,7 +485,7 @@ def dim_numeric_consistency() -> None:
     check("num/one-value-each", not bad, f"{len(bad)} quantities vary")
 
 
-# -------------------------------------------------------------- dimension 16
+#, dimension 16
 def dim_input_integrity() -> None:
     """Every \\input and \\include target must exist."""
     missing = []
@@ -502,7 +502,7 @@ def dim_input_integrity() -> None:
     check("input/targets-exist", not missing, str(missing[:4]) if missing else "all resolve")
 
 
-# -------------------------------------------------------------- dimension 17
+#, dimension 17
 def dim_lof_matches() -> None:
     """Every figure and table must appear in the list of figures / tables."""
     t = pdf_text()
@@ -514,7 +514,7 @@ def dim_lof_matches() -> None:
         check(f"lof/{kind}-count", n_fig > 0, f"{n_fig} {kind} environments")
 
 
-# -------------------------------------------------------------- dimension 18
+#, dimension 18
 def dim_wording() -> None:
     """Phrases that should never appear in a finished thesis."""
     banned = [
@@ -536,7 +536,7 @@ def dim_wording() -> None:
 
 
 
-# -------------------------------------------------------------- dimension 19
+#, dimension 19
 def dim_figure_scale() -> None:
     """Every included image must print at a legible effective resolution.
 
@@ -603,7 +603,7 @@ def dim_figure_scale() -> None:
           str(bad[:4]) if bad else f"all >= 200 dpi (softest {min((e for _, e in measured), default=0)})")
 
 
-# -------------------------------------------------------------- dimension 20
+#, dimension 20
 def dim_table_widths() -> None:
     """p{} column fractions in one table must not exceed the text block."""
     over = []
@@ -617,7 +617,7 @@ def dim_table_widths() -> None:
     check("table/width-fits", not over, str(over[:3]) if over else "all within 1.0")
 
 
-# -------------------------------------------------------------- dimension 21
+#, dimension 21
 def dim_section_numbers() -> None:
     """Section numbers printed in the PDF must be strictly increasing per chapter."""
     txt = pdf_text()
@@ -627,7 +627,7 @@ def dim_section_numbers() -> None:
           f"{len(dupes)} repeated (cross-references are expected repeats)")
 
 
-# -------------------------------------------------------------- dimension 22
+#, dimension 22
 def dim_sentence_duplication() -> None:
     """The same long sentence appearing twice in the document."""
     seen: dict[str, list[str]] = {}
@@ -645,7 +645,7 @@ def dim_sentence_duplication() -> None:
     check("sent/no-duplication", not dupes, f"{len(dupes)} repeated sentences")
 
 
-# -------------------------------------------------------------- dimension 23
+#, dimension 23
 def dim_ref_style() -> None:
     """Cross-references use \ref; a bare typed number can go stale."""
     txt = build_inputs_text()
@@ -665,7 +665,7 @@ def dim_ref_style() -> None:
           else "all cross-references use \\ref or name an external source")
 
 
-# -------------------------------------------------------------- dimension 24
+#, dimension 24
 def dim_unit_spacing() -> None:
     """A number followed by a unit uses a thin space, not a bare space."""
     # Table cells are excluded. \, is an UNBREAKABLE thin space, so inside a
@@ -682,7 +682,7 @@ def dim_unit_spacing() -> None:
 
 
 
-# -------------------------------------------------------------- dimension 25
+#, dimension 25
 def dim_float_labels() -> None:
     """Every float needs a caption and a label."""
     miss = []
@@ -699,7 +699,7 @@ def dim_float_labels() -> None:
     check("float/labelled", not miss, str(miss[:4]) if miss else "all labelled")
 
 
-# -------------------------------------------------------------- dimension 26
+#, dimension 26
 def dim_empty_float() -> None:
     """A float whose body has no image or table content."""
     empties = []
@@ -718,7 +718,7 @@ def dim_empty_float() -> None:
     check("float/not-empty", not empties, str(empties[:3]) if empties else "none")
 
 
-# -------------------------------------------------------------- dimension 27
+#, dimension 27
 def dim_table_columns() -> None:
     """Each data row must have the same number of cells as the column spec."""
     bad = []
@@ -755,7 +755,7 @@ def dim_table_columns() -> None:
     check("table/columns-match", not bad, str(bad[:4]) if bad else "all rows match")
 
 
-# -------------------------------------------------------------- dimension 28
+#, dimension 28
 def dim_double_space() -> None:
     r"""Unambiguous prose defects, scanned in the RAW source.
 
@@ -829,7 +829,7 @@ def dim_double_space() -> None:
     check("prose/quotes-balanced", not quote, f"{len(quote)}")
 
 
-# -------------------------------------------------------------- dimension 29
+#, dimension 29
 def dim_acronyms() -> None:
     """An acronym should be expanded at its first use."""
     st = " ".join(strip_comments(p.read_text(encoding="utf-8")) for p in CHAPTERS)
@@ -852,7 +852,7 @@ def dim_acronyms() -> None:
     check("acronym/expanded", not unexplained, str(unexplained) if unexplained else "all")
 
 
-# -------------------------------------------------------------- dimension 30
+#, dimension 30
 def dim_precision() -> None:
     """A quantity quoted to different precision in different places."""
     txt = pdf_text()
@@ -871,7 +871,7 @@ def dim_precision() -> None:
     check("num/present-in-pdf", not bad, f"{len(bad)} absent")
 
 
-# -------------------------------------------------------------- dimension 31
+#, dimension 31
 def dim_orphan_refs_in_comments() -> None:
     """A label defined only inside a comment is referenced by nothing."""
     live = "".join(strip_comments(p.read_text(encoding="utf-8")) for p in BUILD_INPUTS)
@@ -885,7 +885,7 @@ def dim_orphan_refs_in_comments() -> None:
 
 
 
-# -------------------------------------------------------------- dimension 32
+#, dimension 32
 def dim_encoding() -> None:
     """Only characters the document can typeset may appear in the source.
 
@@ -926,7 +926,7 @@ def dim_encoding() -> None:
     check("enc/all-typesettable", not bad, f"{len(bad)} occurrences")
 
 
-# -------------------------------------------------------------- dimension 33
+#, dimension 33
 def dim_prose_length() -> None:
     """A sentence longer than 60 words, or a paragraph longer than 320, is a
     readability defect an editor would send back.
@@ -988,7 +988,7 @@ def dim_prose_length() -> None:
     print(f"         sentences over 60 words (reported, not gated): {len(over)}")
 
 
-# -------------------------------------------------------------- dimension 34
+#, dimension 34
 def dim_whitespace_hygiene() -> None:
     """Trailing whitespace and hard tabs in source are botched-edit residue."""
     trailing, tabs = [], []
@@ -1002,7 +1002,7 @@ def dim_whitespace_hygiene() -> None:
     check("ws/no-tabs", not tabs, str(tabs[:3]) if tabs else "0")
 
 
-# -------------------------------------------------------------- dimension 35
+#, dimension 35
 def dim_caption_duplication() -> None:
     """Two figures or tables whose captions are identical."""
     seen: dict[str, list[str]] = {}
@@ -1019,7 +1019,7 @@ def dim_caption_duplication() -> None:
     check("cap/not-duplicated", not dupes, f"{len(dupes)} duplicated")
 
 
-# -------------------------------------------------------------- dimension 36
+#, dimension 36
 def dim_lof_complete() -> None:
     """Every figure and table caption must reach the printed lists.
 
@@ -1043,7 +1043,7 @@ def dim_lof_complete() -> None:
               f"{entries} listed vs {srcs} in the chapters")
 
 
-# -------------------------------------------------------------- dimension 37
+#, dimension 37
 def dim_ref_tilde() -> None:
     r"""A cross-reference is bound to the number with a non-breaking tie.
 
@@ -1062,7 +1062,7 @@ def dim_ref_tilde() -> None:
     check("xref/nb-tie", not bad, str(bad[:3]) if bad else "all tied")
 
 
-# -------------------------------------------------------------- dimension 38
+#, dimension 38
 def dim_citation_distribution() -> None:
     """Every chapter that makes external claims should carry citations."""
     for src in CHAPTERS:
@@ -1078,7 +1078,7 @@ def dim_citation_distribution() -> None:
 
 
 
-# -------------------------------------------------------------- dimension 39
+#, dimension 39
 def dim_spelling() -> None:
     """One spelling convention throughout.
 
@@ -1110,11 +1110,11 @@ def dim_spelling() -> None:
     check("spell/one-convention", not mixed, f"{len(mixed)} mixed pairs")
 
 
-# -------------------------------------------------------------- dimension 40
+#, dimension 40
 def dim_numeric_range() -> None:
     """A numeric range takes a single hyphen, never a double dash.
 
-    Goal revision 6 bans '--' (the LaTeX double dash that renders as an en
+    Goal revision 6 bans '==' (the LaTeX double dash that renders as an en
     dash) and any em dash in the source and in the rendered PDF, so ranges
     such as 5-10 use a plain hyphen. The check flags any surviving
     double-dash range, which would violate that rule.
@@ -1130,7 +1130,7 @@ def dim_numeric_range() -> None:
     check("dash/numeric-range", not bad, f"{len(bad)} double-dash ranges")
 
 
-# -------------------------------------------------------------- dimension 41
+#, dimension 41
 def dim_longtable_headers() -> None:
     """A longtable that spans a page must repeat its header.
 
@@ -1148,7 +1148,7 @@ def dim_longtable_headers() -> None:
 
 
 
-# -------------------------------------------------------------- dimension 42
+#, dimension 42
 def dim_frontmatter_numbers() -> None:
     """Every number the abstract states must appear in the results it summarises.
 
@@ -1184,7 +1184,7 @@ def dim_frontmatter_numbers() -> None:
 
 
 
-# -------------------------------------------------------------- dimension 43
+#, dimension 43
 def dim_percent_style() -> None:
     """One convention for signed and unsigned percentages.
 
@@ -1215,7 +1215,7 @@ def dim_percent_style() -> None:
 
 
 
-# -------------------------------------------------------------- dimension 44
+#, dimension 44
 def dim_bib_fields() -> None:
     """Every entry must carry author, title, year and a retrievable source."""
     bad = []
@@ -1234,7 +1234,7 @@ def dim_bib_fields() -> None:
     check("bib/required-fields", not bad, f"{len(bad)} incomplete")
 
 
-# -------------------------------------------------------------- dimension 45
+#, dimension 45
 def dim_doi_format() -> None:
     """A DOI is written 10.NNNN/suffix with no URL prefix and no label."""
     bib = (TH / "ref.bib").read_text(encoding="utf-8")
@@ -1249,7 +1249,7 @@ def dim_doi_format() -> None:
     check("bib/doi-format", not bad, f"{n} DOIs, {len(bad)} malformed")
 
 
-# -------------------------------------------------------------- dimension 46
+#, dimension 46
 def dim_section_citations() -> None:
     """A subsection that asserts an external fact needs a citation.
 
@@ -1273,7 +1273,7 @@ def dim_section_citations() -> None:
     check("cite/subsection", not sparse, f"{len(sparse)} uncited subsections")
 
 
-# -------------------------------------------------------------- dimension 47
+#, dimension 47
 def dim_alt_vs_caption() -> None:
     """Alternative text must add something the caption does not.
 
@@ -1296,7 +1296,7 @@ def dim_alt_vs_caption() -> None:
     check("alt/distinct-from-caption", not dupes, str(dupes[:3]) if dupes else "0")
 
 
-# -------------------------------------------------------------- dimension 48
+#, dimension 48
 def dim_conclusion_traceable() -> None:
     """Every claim in the conclusion must be backed by a specific result.
 
@@ -1316,7 +1316,7 @@ def dim_conclusion_traceable() -> None:
           f"{len(con_nums)} numbers, {len(orphan)} untraceable")
 
 
-# -------------------------------------------------------------- dimension 49
+#, dimension 49
 def dim_orphan_assets() -> None:
     """Report assets present in figures/ that no chapter includes.
 
