@@ -54,9 +54,9 @@ matplotlib.use("Agg")  # headless / non-interactive backend
 # ---------------------------------------------------------------------------
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src", "python"))
 from ada_pinn_wrapper import (
-    radiative_eq_temp,
     backface_temperature,
     ballistic_coefficient,
+    radiative_eq_temp,
 )
 
 # ---------------------------------------------------------------------------
@@ -77,8 +77,22 @@ G0 = 9.80665               # Standard gravity [m/s^2]
 A_REF = math.pi * (1.5 ** 2)  # Reference area for 3m diameter [m^2] = 7.0686
 
 # Survivability limits [Source: Sep 2 Discussion.md Section 12.1]
-SIC_MAX_TEMP = 1700.0      # SIC surface temperature limit [K]
-KAPTON_MAX_TEMP = 673.0    # Kapton adhesive limit [K]
+#  ONE TRUTH, ONE VALUE (fix 2026-10-06, F60).
+#  AXIOM: a survivability limit is physics, not presentation. It must have
+#  exactly one definition, and Python must mirror the Ada constant that the
+#  proof obligation is written against -- these values are now the Ada values.
+#  WHY: both were previously lower (1700.0 and 673.0), so every PASS/FAIL
+#  verdict printed here was computed against a stricter limit than
+#  stellarorion_physics.adb:1428 actually tests, and the exceedance counts
+#  drawn on every figure were overstated. Measured 2026-10-06 across the 90
+#  shipped VTUs: exactly one verdict flipped (validation_scalloped/
+#  surf_pinn_300000000.vtu, T_max 1814.4 K -> FAIL at 1700, PASS at 2073).
+#  [Citation: stellarorion_types.ads:97  SIC_MAX_TEMP : constant Float := 2073.0]
+#  [Citation: stellarorion_types.ads:101 KAPTON_MAX_TEMP : constant Float := 773.0]
+#  [Citation: stellarorion_physics.adb:1428 Metrics.Surface_Temp_K <= SIC_MAX_TEMP]
+#  [Reference: stellarorion_types.ads:831-832 combined test (T_s <= SiC_MAX_TEMP and T_back <= KAPTON_MAX_TEMP)]
+SIC_MAX_TEMP = 2073.0     # SIC surface temperature limit [K] -- Ada types.ads:97
+KAPTON_MAX_TEMP = 773.0   # Kapton adhesive limit [K] -- Ada types.ads:101
 MAX_G_LOAD = 25.0          # Structural limit [g]
 
 
@@ -328,7 +342,10 @@ def main(argv: list[str]) -> int:
         steps, t_surface, t_back,
         os.path.join(plots_dir, "T_surface_T_back_combined.png"),
         "Surface & Backface Temperature vs Step\n"
-        "TPS Survivability Check: T_surface < 1700K (SIC), T_back < 673K (Kapton)",
+        #  Derived from the constants so the printed title can never drift
+        #  from the limits the verdict below actually applies (fix 2026-10-06, F60).
+        f"TPS Survivability Check: T_surface < {SIC_MAX_TEMP:.0f}K (SIC), "
+        f"T_back < {KAPTON_MAX_TEMP:.0f}K (Kapton)",
         "T_surface (K)", "T_back (K)",
         "T_surface (SIC)", "T_back (Kapton)",
     )

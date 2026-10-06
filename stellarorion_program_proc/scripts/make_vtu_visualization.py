@@ -259,8 +259,13 @@ def plot_heat_flux_vs_x(points: np.ndarray, heat: np.ndarray,
     ax2 = ax1.twinx()
     ax2.plot(x_sorted, t_sorted, "s--", color=color2, markersize=3,
              linewidth=1.5, label="T_surface")
-    ax2.axhline(y=1700, color="red", linestyle=":", linewidth=1.5,
-                alpha=0.7, label="SIC limit (1700K)")
+    #  The drawn limit MUST equal the limit the survivability verdict tests
+    #  (fix 2026-10-06, F60). Previously 1700 while Ada tests 2073, so a
+    #  reader counting cells above this line read a number the physics never
+    #  produced. Value taken from stellarorion_types.ads:97.
+    #  [Citation: stellarorion_types.ads:97  SIC_MAX_TEMP : constant Float := 2073.0]
+    ax2.axhline(y=2073, color="red", linestyle=":", linewidth=1.5,
+                alpha=0.7, label="SIC limit (2073K)")
     ax2.set_ylabel("T_surface (K)", fontsize=11, color=color2)
     ax2.tick_params(axis="y", labelcolor=color2)
 

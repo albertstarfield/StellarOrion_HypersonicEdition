@@ -293,11 +293,14 @@ def main() -> int:
         xy=(v_run_kms, baseline),
         # Bottom band in AXES FRACTION: the curve family fans upward to the
         # right, so the band below the lowest curve (R_N = 3 m, which reaches
-        # only ~55% height at x > 5.5 km/s) is empty. The box is RIGHT-
-        # anchored at 0.99 so its edge ends at the axes' right spine: with
-        # left-anchoring it crossed the spine and overlaid panel (b)'s
-        # rotated y-label.
-        xytext=(0.99, 0.04),
+        # only ~55% height at x > 5.5 km/s) is empty. RIGHT-anchored at 0.95:
+        # the round-pad box adds ~0.023 axes-frac, so 0.95 + 0.023 = 0.973
+        # keeps the right edge ~15 px INSIDE the right spine (0.99 put it
+        # 7 px past the spine on the rendered page), off the spine, and clear
+        # of panel (b)'s rotated y-label. y = 0.055 (not 0.04) drops the
+        # round-pad bottom edge ~6 px clear of the bottom spine; at 0.04 the
+        # patch sat flush against the spine on the rendered page.
+        xytext=(0.95, 0.055),
         textcoords="axes fraction",
         fontsize=13,
         ha="right",
@@ -337,20 +340,27 @@ def main() -> int:
         zorder=2,
     )
     ax2.annotate(
-        # One line, AXES FRACTION, right-anchored at 0.70: the dashed
-        # axvline sits at x-frac 0.796 on the log axis (1.5 m within
-        # 0.1-3 m), so a box ending at 0.70 stays fully left of the line,
-        # inside both spines, and the bottom band keeps it off the curves
-        # (which run high on the small-R side and descend to the right).
+        # One line, AXES FRACTION, right-anchored at 0.60, 12 pt with a
+        # tight 0.15 pad. Measured pixels on the rendered PNG: the blue
+        # V = 3 curve runs flat at y 370-372 px and only enters the bottom
+        # band at x ~1170 px, so the patch must end left of x 1170 (anchor
+        # 0.60 puts the patch right edge near x 1151, ~19 px short of the
+        # descent) with its top under y ~375 (~4 px below the flat curve).
+        # At 13 pt with pad 0.35 the box measured 63 px tall and cannot fit
+        # the ~60 px band without crossing the curve or the bottom spine
+        # (the 0.35 pad also overshoots the anchor: text inside, patch not).
+        # 12 pt still prints >= 8 pt (12 x 0.71 placement scale = 8.5 pt),
+        # pad 0.15 shrinks the patch to ~320x50 px, and va=bottom at 0.045
+        # leaves ~11 px above the spine and ~13 px inside the left spine.
         "$R_N$ = 1.5 m (IRVE-3)",
         xy=(R_N_BASELINE_M, sg_at_radius(R_N_BASELINE_M, 3.0, solver)),
-        xytext=(0.70, 0.03),
+        xytext=(0.60, 0.045),
         textcoords="axes fraction",
-        fontsize=13,
+        fontsize=12,
         ha="right",
         va="bottom",
         arrowprops=dict(arrowstyle="->", lw=1.6, color="black"),
-        bbox=dict(boxstyle="round,pad=0.35", fc="white", ec="black", lw=1.1),
+        bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="black", lw=1.1),
     )
 
     ax2.set_xscale("log")

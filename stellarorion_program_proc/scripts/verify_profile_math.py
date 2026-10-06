@@ -171,6 +171,15 @@ def check_local_invariants() -> bool:
     return ok
 
 
+# Status of the most recent check_ada_crosscheck() call. One of
+# "NOT-RUN", "PASSED", "FAILED" or "SKIPPED".
+# WHY this exists: check_ada_crosscheck() is declared -> bool, and a skipped
+# check is not a failure and not a pass -- so the third state cannot live in
+# the return value without breaking the signature. main() reads this instead.
+# [Reference: FAILURES_AND_FIXES.md F40 -- a skip must never read as a pass]
+_ADA_CROSSCHECK_STATUS: str = "NOT-RUN"
+
+
 def check_ada_crosscheck() -> bool:
     """Run render_optimization_comparison.crosscheck_ada_profile on defaults.
 
@@ -204,6 +213,10 @@ def check_ada_crosscheck() -> bool:
     )
     # crosscheck_ada_profile warns and returns False on drift;
     # returns False also when FFI OSError — distinguish:
+    global _ADA_CROSSCHECK_STATUS  # module-level 3-state flag; without this
+    #                      the two assignments below would bind a LOCAL name
+    #                      and main() would never observe SKIPPED (a silent
+    #                      logic bug that ruff and py_compile both accept).
     try:
         from render_optimization_comparison import get_ada_default_profile
         get_ada_default_profile()
@@ -214,23 +227,57 @@ def check_ada_crosscheck() -> bool:
         ffi_available = False
 
     if not ffi_available:
-        return True  # local invariants still ran
+        # F40 FIX (2026-10-06): this was `return True  # local invariants
+        # still ran`, so a 100 % skipped cross-check exited 0 and printed
+        # "ALL CHECKS PASSED". A skip was indistinguishable from a pass,
+        # which this file's own AXIOM A3 forbids ("Any violation of A1/A2
+        # MUST print [WARNING] to stderr and exit non-zero (never silent)").
+        # WHY False rather than leaving True: False removes the false pass
+        # even if this status flag is ever ignored by a future caller.
+        # WHY status rather than an exception: nothing failed -- the check
+        # simply could not run, and main() must be able to say exactly that.
+        _ADA_CROSSCHECK_STATUS = "SKIPPED"
+        return False
 
-    return crosscheck_ada_profile(x_py, y_py)
+    _passed = crosscheck_ada_profile(x_py, y_py)
+    _ADA_CROSSCHECK_STATUS = "PASSED" if _passed else "FAILED"
+    return _passed
 
 
 def main() -> int:
     """Entry point: local invariants then Ada FFI cross-check.
 
-    Returns 0 when all checks pass, 1 on any [WARNING] failure.
+    Exit codes (0/1/2), not a bare pass/fail, because "could not verify"
+    is a third outcome that must not be reported as success (F40).
+
+    Returns:
+        0 when every check that ran also passed;
+        1 when a check ran and failed;
+        2 when the Ada FFI cross-check could not run at all.
+
+    Exceptions: none — every failure path maps to a documented exit code.
     """
     print("=== verify_profile_math: local invariants (A2) ===")
     local_ok = check_local_invariants()
     print("=== verify_profile_math: Ada FFI cross-check (A1) ===")
     ada_ok = check_ada_crosscheck()
-    if local_ok and ada_ok:
+
+    if not local_ok:
+        print("=== verify_profile_math: FAILURES DETECTED — see [WARNING] above ===",
+              file=sys.stderr)
+        return 1
+
+    if _ADA_CROSSCHECK_STATUS == "SKIPPED":
+        # F40: say the gap out loud instead of printing a pass.
+        print("=== verify_profile_math: CROSS-CHECK SKIPPED — the Ada FFI was "
+              "unavailable, so axiom A1 was NOT verified. ===",
+              file=sys.stderr)
+        return 2
+
+    if ada_ok:
         print("=== verify_profile_math: ALL CHECKS PASSED ===")
         return 0
+
     print("=== verify_profile_math: FAILURES DETECTED — see [WARNING] above ===",
           file=sys.stderr)
     return 1

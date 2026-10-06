@@ -827,6 +827,62 @@ def main() -> int:
     print("Cross-checking Python default profile against Ada FFI...")
     ada_ok = crosscheck_ada_profile(x_def_py, y_def_py)
 
+    # --- F67 FIX: ask the question the check above structurally cannot ------
+    # WHY: crosscheck_ada_profile(x_def_py, y_def_py) compares the PYTHON
+    #      replica of the DEFAULT against the Ada DEFAULT. Both inputs are the
+    #      same design, so it can only ever prove the two implementations
+    #      agree. It cannot notice that the body drawn on this panel is not
+    #      the body this repository's results were actually computed on --
+    #      "wrong input, not wrong implementation".
+    # MEASURED (2026-10-06): panel (Ada default) R = 2.6522 m vs flown
+    #      results/validation_scalloped/HIAD_custom.surf R = 1.8802 m
+    #      => ratio 1.4106 (+41.1 %); axial 1.7442 vs 1.2693 m (+37.4 %);
+    #      57 points vs 77 points. Aiming crosscheck_ada_profile() at the
+    #      flown profile returns False with
+    #      "DRIFT: max arc-length pointwise distance = 0.966863 m
+    #       (tol 0.017613 m) on 200 arc samples, ada n=57, py n=77",
+    #      so the mechanism was always capable -- only the wiring was wrong.
+    # FIX: keep the original implementation check (still valid), and ADD the
+    #      missing one: panel-vs-flown. The flown body is overlaid on the
+    #      panel and a WARNING is printed when they differ, so a reader sees
+    #      the disagreement instead of inheriting it silently.
+    # SCOPE: F67 deliberately does NOT say which geometry is authoritative --
+    #      the Rn ambiguity (F18/F55/F61, 1.5 vs 0.55) is still open. This
+    #      makes the discrepancy observable; it does not pick a winner.
+    # [Citation: SPARTA manual -- surface file "Points" block format]
+    # [Reference: FAILURES_AND_FIXES.md F67 -- 41.1 % oversized panel]
+    flown_x: list[float] = []
+    flown_y: list[float] = []
+    flown_ok = True
+    flown_path = (Path(__file__).resolve().parent.parent / "results" /
+                  "validation_scalloped" / "HIAD_custom.surf")
+    if flown_path.is_file():
+        # Reuse the existing reader rather than re-parsing the Points block
+        # here: read_surf already handles the blank line after "Points" and
+        # the "Lines" terminator (a naive parser misreads both).
+        from plot_hiad_3d import read_surf
+        flown_pts = read_surf(str(flown_path))
+        flown_x = [pt[0] for pt in flown_pts]
+        flown_y = [pt[1] for pt in flown_pts]
+        print("Cross-checking the drawn default profile against the FLOWN "
+              f"artefact ({flown_path.name}, {len(flown_x)} points)...")
+        # Compare the flown body against the Ada default this panel draws.
+        flown_ok = crosscheck_ada_profile(flown_x, flown_y)
+        if flown_ok:
+            print("  [Flown cross-check] OK: the drawn default profile "
+                  "matches the flown geometry.")
+        else:
+            print("  [WARNING] F67: the body drawn on the BEFORE panel is "
+                  "NOT the flown geometry -- see the DRIFT line above. "
+                  "Figure and results disagree; do not read this panel as "
+                  "the vehicle the run was computed on.", file=sys.stderr)
+    else:
+        # A missing artefact is a skip, never a pass (same rule as A3).
+        print(f"  [WARNING] F67: flown artefact not found at {flown_path}; "
+              "the figure-vs-results cross-check did NOT run.",
+              file=sys.stderr)
+        flown_ok = False
+
     # --- Get optimized profile from Ada FFI (same Ada math, JSON params) ---
     # [Citation: hiad_optimization_results.json — optimized block]
     print("Loading optimized HIAD profile from Ada FFI...")
@@ -855,8 +911,11 @@ def main() -> int:
     )
 
     # Shared limits for fair side-by-side comparison
-    x_max_all = max(max(x_def), max(x_opt))
-    r_max_all = max(max(y_def), max(y_opt))
+    # Include the flown body so the overlay can never be clipped by the axes.
+    x_max_all = max([max(x_def), max(x_opt)] +
+                    ([max(flown_x)] if flown_x else []))
+    r_max_all = max([max(y_def), max(y_opt)] +
+                    ([max(flown_y)] if flown_y else []))
 
     # --- Create figure ---
     fig = plt.figure(figsize=(16, 8), facecolor='#0a0a0f')
@@ -867,7 +926,18 @@ def main() -> int:
                 color_base=(26, 82, 128), label_color='#8892b0',
                 half_cone_deg=default["half_cone_deg"], r_tor=default["r_tor"],
                 cd_value=default["Cd"], rn=default["R_N"])
-    ax1.set_title('BEFORE (IRVE-3 Default — Ada FFI)', color='#8892b0', fontsize=12,
+    # Overlay the flown body so the 41.1 % disagreement is visible on the
+    # figure itself rather than only in the WARNING printed above.
+    if flown_x:
+        ax1.plot(flown_x, flown_y, [0.0] * len(flown_x),
+                 color='#e94560', linestyle='--', linewidth=2.0,
+                 label='Flown (HIAD_custom.surf)')
+        ax1.plot(flown_x, [-v for v in flown_y], [0.0] * len(flown_x),
+                 color='#e94560', linestyle='--', linewidth=2.0)
+        ax1.legend(loc='upper left', fontsize=7, labelcolor='#8892b0',
+                   framealpha=0.15)
+    ax1.set_title('BEFORE (IRVE-3 Default — Ada FFI; flown body dashed)',
+                  color='#8892b0', fontsize=12,
                   fontweight='bold', pad=10)
     ax1.set_xlabel('X (axial) [m]', color='#8892b0', fontsize=8)
     ax1.set_ylabel('Y [m]', color='#8892b0', fontsize=8)

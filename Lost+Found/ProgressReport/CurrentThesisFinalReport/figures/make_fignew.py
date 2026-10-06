@@ -438,12 +438,19 @@ def fig_gate() -> None:
     series = [(n, v, c) for n, v, c in series if isinstance(v, (int, float))]
 
     fig, ax = plt.subplots(figsize=(WIDTH_NARROW, WIDTH_NARROW * 0.92))
-    xs = list(range(len(series)))
+    # Columns sit 1.15 units apart (not the default 1.0) so the two-line
+    # x-tick labels of adjacent categories keep a clear word-space gap on the
+    # printed page: batch-1 verification measured only 2-4 px between columns.
+    xs = [i * 1.15 for i in range(len(series))]
     vals = [v for _, v, _ in series]
     bars = ax.bar(xs, vals, color=[c for _, _, c in series], width=0.6)
+    ax.set_xlim(-0.55, (len(series) - 1) * 1.15 + 0.55)
     for b, (_, v, _) in zip(bars, series):
+        # Value labels hang INSIDE the bar top: an above-bar label for the
+        # analytic bar landed 1 px under the dashed acceptance-threshold line.
         ax.annotate(f"{v:.2f}", (b.get_x() + b.get_width() / 2, v), ha="center",
-                    va="bottom", fontsize=8.5)
+                    va="top", textcoords="offset points", xytext=(0, -4),
+                    fontsize=8.5)
     if q_target:
         ax.axhline(q_target, ls="--", lw=1.4, color=CB[3],
                    label=f"Acceptance threshold $Q_{{target}}$ = {q_target:.2f}")

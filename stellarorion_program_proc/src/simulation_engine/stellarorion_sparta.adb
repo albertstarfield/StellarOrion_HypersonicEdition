@@ -802,11 +802,37 @@ package body StellarOrion_Sparta is
       Put_Line (File, "");
 
       Put_Line (File, "");
-      -- Flow Field Data
-      --  FIX: Removed ALL fix ave/grid and grid dump commands.
-      --  SPARTA's fix ave/grid and dump grid require per-grid vector computes,
-      --  but thermal/grid and grid/nrho produce scalars. Grid dump is not needed
-      --  for validation metrics (drag, lift, heat flux are surface computes).
+      -- Flow Field Data (RESTORED 2026-10-06)
+      --  AXIOM: chapter 4's eight field panels (thermal, pressure, Mach,
+      --  Knudsen, velocity vectors, mesh, scallop pocket, mesh statistics)
+      --  are rendered from SPARTA grid dumps. A deck that never requests
+      --  them makes those panels un-reproducible from this run -- exactly
+      --  the "no generator source / no field data" complaint the shipped
+      --  PNGs could not answer.
+      --  WHY THE OLD COMMENT WAS WRONG: it claimed fix ave/grid and dump
+      --  grid "require per-grid vector computes, but thermal/grid and
+      --  grid/nrho produce scalars", and therefore removed them. That is
+      --  refuted by the reference deck results/validation/in.hiad:44-51,
+      --  which uses precisely these compute/fix pairs and DID produce 11
+      --  working grid.*.out files of 19321 cells each. fix ave/grid accepts
+      --  per-grid quantities; it does not require a per-particle vector.
+      --  THEORIES: the validation metrics (drag, lift, heat flux) are
+      --  SURFACE computes and never read the grid dump, so removing it did
+      --  not break validation -- it silently removed the only source of
+      --  2-D field data. Both consumers are now served.
+      --  APPLICATIONS: emit compute 2/3/4 + fix 2/3/4 exactly as the proven
+      --  reference deck does; dump 2 is emitted alongside dump 1 below.
+      --  CITATIONS: Plimpton & Gallis (2014), SPARTA DSMC User Manual
+      --    (compute .../grid; fix ave/grid; dump grid). Pattern copied from
+      --    results/validation/in.hiad:44-59.
+      Put_Line (File, "compute         2 grid all air n u v w");
+      Put_Line (File, "fix             2 ave/grid all 1 1 1 c_2[*]");
+      Put_Line (File, "");
+      Put_Line (File, "compute         3 thermal/grid all air temp");
+      Put_Line (File, "fix             3 ave/grid all 1 1 1 c_3[*]");
+      Put_Line (File, "");
+      Put_Line (File, "compute         4 grid all air nrho");
+      Put_Line (File, "fix             4 ave/grid all 1 1 1 c_4[*]");
       Put_Line (File, "");
       Put_Line (File, "timestep        1e-6");
       Put_Line (File, "");
@@ -818,6 +844,12 @@ package body StellarOrion_Sparta is
       Put_Line (File, "dump            1 surf all " &
                 Img (Stats_Interval) & " " & Results_Dir &
                 "/surf.*.out id f_1[*] f_surfavg[*]");
+      --  Grid dump: source data for chapter 4's field panels (rationale in
+      --  the Flow Field Data block above). Mirrors results/validation/
+      --  in.hiad:59 so the two decks emit byte-identical grid rows.
+      Put_Line (File, "dump            2 grid all " &
+                Img (Stats_Interval) & " " & Results_Dir &
+                "/grid.*.out id xlo ylo xhi yhi f_2[*] f_3[*] f_4[*]");
       Put_Line (File, "");
       Put_Line (File, "fix             balance_grid balance " &
                 Img (Stats_Interval) & " 1.1 rcb part");
