@@ -3581,6 +3581,34 @@ made. Flagged rather than guessed at.
 
 ## F60 — The silicon-carbide survivability limit is duplicated in Python at the wrong value, and the wrong value prints a PASS/FAIL verdict
 
+### Update — thread 3z. **Both named sites are fixed and the values are correct — but the "all prose references corrected" claim is not accurate.**
+
+Verified: `stellarorion_validation.ads:11-12` now read `SIC max (2073 K)` and
+`Kapton max (773 K)`; `compare_validation.py:37-38` now read `T_surface < 2073 K (SIC
+limit)` and `T_back < 773 K (Kapton limit)`.
+
+**The 773 K value is correct, and I checked rather than assumed.** `773.0` is the Ada
+truth: `stellarorion_types.ads:124 KAPTON_MAX_TEMP : constant Float := 773.0`. This
+matters because F60 originally concerned only the SiC limit — it never established the
+Kapton value — so `773` arrived as an unfamiliar number. It is genuine, not invented.
+
+**What the fix's own claim overstates.** The accompanying statement that *"all prose
+references to the old 1700 K / 673 K limits are corrected to 2073 K / 773 K"* is false.
+One remains:
+
+`stellarorion_physics.ads:940`, inside the TPS transient derivation:
+> `then reported 955.7 K at 60 s and failed the 673 K structure limit,`
+
+I checked whether this one is pre-existing rather than introduced: `git log -S` attributes
+it to `6d140a8`, not to this fix. So the fix did not create it — but it did not correct it
+either, and the completeness claim is what is wrong.
+
+Severity, stated honestly: the sentence's *conclusion* is unaffected. 955.7 K exceeds
+both 673 K and 773 K, so "failed the structure limit" is true under either value. Only the
+quoted limit is stale. Recorded at presentation severity, not inflated.
+
+**So F60 stands at: two verdict-producing sites fixed, two documentation sites fixed,
+one documentation site remaining.**
 ### Update — thread 3y. **Partially fixed.** The two verdict-producing sites are fixed; two documentation sites still carry 1700.
 
 This entry named two Python copies at `1700.0`. Both are corrected, and the fixes record
@@ -4702,6 +4730,26 @@ right number. Both hold:
   documentation only, as every previous thread has been.
 ## F76 — `prove.sh` ends by asserting that all verification steps succeeded after steps it had already reported as FAILED, and its Python-coverage target directory does not exist
 
+### Update — thread 3z. **The gnatcov half is now fixed too. F76 is fully closed.**
+
+The remaining half described above has been repaired, and I verified every claimed line
+rather than the summary:
+
+| claimed | line | verified content |
+| :--- | ---: | :--- |
+| declaration | 120 | `GNATCOV_STATUS="NOT RUN"` |
+| (not claimed, present) | 121 | `GNATCOV_FAILED=false` |
+| success path | 136 | `GNATCOV_STATUS="PASSED"` |
+| failure path | 140 | `GNATCOV_STATUS="FAILED"` |
+| failure flag | 141 | `GNATCOV_FAILED=true` |
+| summary | 251 | `printf '  gnatcov coverage:       %s\n' "$GNATCOV_STATUS"` |
+| exit gate | 259 | `if [ "$PYTHON_COVERAGE_FAILED" = "true" ] \|\| [ "$GNATCOV_FAILED" = "true" ]; then` |
+
+All seven are present exactly as described. The `\|\|` gate is the important one: a
+gnatcov failure now reaches the same `exit 1` as a Python-coverage failure, so the script
+can no longer print `gnatcov coverage: FAILED` and then claim overall success. The
+unconditional `Report in obj/gcovr/` line is replaced by a status that states the
+outcome. **Both unguarded summaries this finding identified are now guarded.**
 ### Update — thread 3y. **Partially fixed.** The Python half is fixed and verified; the gnatcov half is not.
 
 Nine commits landed after the previous pass and `prove.sh` was rewritten to cite this
@@ -4913,6 +4961,99 @@ for Earth at all, so the wrong gas mixture sat in the physics core unremarked.
 This is recorded because a defect log that only ever lists its own hits misrepresents its
 coverage. The audit missed a real one, in the physics core, and it was found by other
 means.
+## F78 — The F60 fix introduced three stale line citations, all pointing at the wrong lines
+
+*Class: provenance — citations added to justify a correction, which do not resolve to the code they cite*
+
+Fixing F60 added citations to `scripts/make_derived_plots.py` naming the exact Ada lines
+the corrected limits come from. **All three point at the wrong line numbers.** The fix
+introduced them in commit `36d7441`, confirmed by diffing that commit.
+
+| cited in `make_derived_plots.py` | claims | actual line in `stellarorion_types.ads` | off by |
+| :--- | :--- | ---: | ---: |
+| `:90` | `stellarorion_types.ads:97  SIC_MAX_TEMP` | **120** | 23 |
+| `:91` | `stellarorion_types.ads:101 KAPTON_MAX_TEMP` | **124** | 23 |
+| `:93` | `stellarorion_types.ads:831-832 combined test` | **854-855** | 23 |
+
+Measured directly: `grep -n "KAPTON_MAX_TEMP : constant"` returns `124`, while the
+citation says `101`. `SIC_MAX_TEMP` is at `120`, not `97`.
+
+**Why this is recorded rather than waved through.** The citation is the *evidence* for the
+corrected number. A reader who follows `:101` to confirm that 773 K is the project's real
+Kapton limit lands 23 lines away from it and cannot verify the claim — which is precisely
+the failure mode that made F60 possible in the first place, where a Python copy carried a
+limit with no working link to the Ada truth. The fix replaced an unlinked wrong value with
+a linked-but-misdirected one.
+
+The numbers themselves are right (verified above); the pointers are not. The offset is a
+consistent 23 lines on all three, which suggests the citations were written against an
+earlier revision of `stellarorion_types.ads` and not re-resolved after it grew — the same
+mechanism F73 documented for the root documents.
+## F79 — The macOS video path detects a working VideoToolbox hardware encoder and then deliberately does not use it, justified by the absence of a *different* encoder
+
+*Class: correctness — a branch guarded by the availability of hardware encoding, which then selects software encoding, for a stated reason that does not apply to the hardware it detected*
+
+`src/python/validation_pipeline.py:2508-2518`:
+
+```python
+        if sys.platform == "darwin" and "h264_videotoolbox" in _encoders:
+            # CRF 48 adaptive bitrate (quality-based VBR) via libx264.
+            # WHY: the user explicitly requested CRF 48 over the old fixed
+            # 8 Mbps CBR. CRF gives better quality-per-bit for scientific
+            # animation content (flat colour fields, text overlays).
+            # QSV is NOT available on Apple Silicon (M2 Pro) -- Intel-only.
+            _hw_encoder = "libx264"
+            _hw_extra_args = ["-vcodec", "libx264", "-crf", "48",
+                              "-preset", "medium", "-pix_fmt", "yuv420p"]
+            print("[pipeline] SW encode: libx264 CRF 48 (adaptive bitrate)")
+```
+
+**The branch is entered because `h264_videotoolbox` is present in the encoder list — and
+then chooses `libx264` instead.** The guard tests for the very capability the body
+declines to use.
+
+**The stated justification addresses a different encoder.** *"QSV is NOT available on
+Apple Silicon (M2 Pro) — Intel-only"* is true of QSV, which is Intel's Quick Sync. The
+encoder removed here is **VideoToolbox**, Apple's own framework. VideoToolbox is
+available on Apple Silicon — and the code itself establishes that, since the guard
+requires `h264_videotoolbox` to be in `_encoders` before this branch can run at all. So
+the reason given cannot support the change: it argues against an encoder that was never
+in use, on a platform where the encoder actually in use is fully supported.
+
+The diff confirms what was removed:
+```diff
+-            _hw_encoder = "h264_videotoolbox"
+-            _hw_extra_args = ["-vcodec", "h264_videotoolbox", "-b:v", "8M", ...]
+-            print("[pipeline] HW encode: VideoToolbox (macOS)")
+```
+
+**Consequence.** On Apple Silicon the pipeline now software-encodes on the CPU
+(`libx264`, `-preset medium`) where it previously used the GPU media engine. For a
+scientific animation this is a material slowdown, and the branch that could have used
+hardware is the one that detects it.
+
+**Two smaller observations in the same change, recorded at their real severity.**
+
+1. The variable `_hw_encoder` now holds a software encoder. I checked whether any logic
+   depends on that name: `_hw_encoder` is read in only two places — `if _hw_encoder is
+   None:` (`:2543`) and `_enc_name = _hw_encoder if _hw_encoder else "ffmpeg"` (`:2913`).
+   Neither branches on hardware-versus-software, so this is a misleading name and a
+   stale comment (*"Probe available HW encoders by platform"*, `:2494`), **not a
+   functional defect**. Recorded as such rather than inflated.
+2. CRF 48 sits at the extreme lossy end of libx264's 0–51 range (18–28 is typical), which
+   sits awkwardly beside *"better quality-per-bit"* — that clause is true of CRF versus
+   CBR in general, not of CRF 48 specifically. The comment attributes the value to an
+   explicit user request. **I cannot verify that request, so the value is not reported as
+   a defect** — only the reasoning offered for removing the hardware encoder is.
+
+### Verified clean in the same scan
+
+`ada_pinn_wrapper.fay_riddell_heat_flux` and `generate_outputs.py`'s new heat-flux
+columns are sound as far as this audit can measure: the function is genuinely used
+(`generate_outputs.py:70,283`), its FFI symbol exists (`stellarorion_ffi.adb:449`,
+delegating to `StellarOrion_Physics.Fay_Riddell_Heat`), and its docstring correctly warns
+that Fay–Riddell is the continuum **upper bound** that overpredicts where DSMC is ground
+truth. No dead code.
 ## Summary
 
 | ID | Severity | Status | Root cause class |
@@ -4993,8 +5134,10 @@ means.
 | F73 | provenance | **open** | Three more root documents assert the disproved references and were never updated by the earlier passes: `DERIVATION.md:97`; `PEER_REVIEW_AUDIT.md:156,471-476` (14.36 as flight **and** 12.20 as the model — both stale; measured 13.80 and 12.82); and `NextImprovementPlan.md:266`, which attributes 14.36 to **NASA TP-2013-4012** in the sentence defining the validation target, plus 195.06/165.72/6-tori/14.361 through its arithmetic. `HIAD_IRVE3_Baseline.md` was checked and is **already correct**, so it was left untouched as the counter-example |
 | F74 | correctness | **fixed 2026-10-06** | No run-completeness check exists anywhere in the validation pipeline. `test_modes.adb:1780-1782` prints the verdict from `Survivable` **before** Step 11 writes the CSV and never consults the step count; `N_StepList`'s only guard (`sparta.adb:3409`) asks whether at least one step exists; no completion marker is ever written. A run whose series stopped at step **1900** was graded VALIDATION PASSED (the configured step count is unrecoverable — see correction). One truncation is evidenced; its configured step count is unrecoverable because Step 12 deleted the deck. |
 | F75 | correctness | **open** | The three validation directories were produced by different code versions. The per-step `g_load` fix is live only in `validation_scalloped` (19 distinct values, 16.582661–22.669552) while `validation_smooth` (constant 16.833399) and `validation_optimized` (constant 14.005923) retain the pre-fix constant, and `validation_smooth` has 19 columns against the other two's 22. The scalloped-vs-smooth comparison is therefore confounded with the code change. |
-| F76 | correctness | **partially fixed 2026-10-06** | `prove.sh` can end by printing `All verification steps completed successfully.` after printing `gnatcov coverage: FAILED`: the failure path at `:133-136` is non-fatal, and the summary at `:197-203` keys on whether a step was *requested*, not whether it *succeeded*. Independently, `PYTHON_TESTS` at `:151` points at `tests/python`, which **does not exist** (the two test modules are in `tests/`), and the venv has no pytest, so `--python-coverage` cannot succeed; `2>/dev/null` discards the reason and the fallback measures module *imports*, not tests. |
+| F76 | correctness | **fixed 2026-10-06** | `prove.sh` can end by printing `All verification steps completed successfully.` after printing `gnatcov coverage: FAILED`: the failure path at `:133-136` is non-fatal, and the summary at `:197-203` keys on whether a step was *requested*, not whether it *succeeded*. Independently, `PYTHON_TESTS` at `:151` points at `tests/python`, which **does not exist** (the two test modules are in `tests/`), and the venv has no pytest, so `--python-coverage` cannot succeed; `2>/dev/null` discards the reason and the fallback measures module *imports*, not tests. |
 | F77 | provenance | **fixed 2026-10-06** | `run.py:967` suppresses bandit check `EXTERNAL_CALL_UNHANDLED` with the justification *"verified safe by prove.sh"*, but `prove.sh` runs **no security analyser** — zero mentions of `bandit`, and its only tools are `alr`/`gnatprove`/`gnatcov`/`coverage`/`python3`/`pytest`. The cited evidence cannot have been produced. The suppression is **unnecessary rather than load-bearing**: the suppressed code properly catches the spawn errors and terminates the child. Isolated — 1 of 344 `nosec` suppressions cites `prove.sh`. |
+| F78 | provenance | **open** | The F60 fix added three citations to `make_derived_plots.py` naming the Ada lines its corrected limits come from, and all three point at the wrong lines: `types.ads:97` for `SIC_MAX_TEMP` (actual **120**), `:101` for `KAPTON_MAX_TEMP` (actual **124**), and `:831-832` for the combined test (actual **854-855**). A consistent 23-line offset on all three, so the citations were written against an earlier revision and never re-resolved. The values are right; the pointers are not — and the pointer is the evidence for the value. |
+| F79 | correctness | **open** | `validation_pipeline.py:2508-2518` enters a branch **because** `h264_videotoolbox` is present in the encoder list, then selects software `libx264` instead, justified by *"QSV is NOT available on Apple Silicon"* — QSV is Intel's encoder, while the one removed is Apple's VideoToolbox, which is available on Apple Silicon and whose presence is what the guard tests. A working hardware encoder is detected and bypassed for a reason concerning a different encoder. |
 
 ### Final state after fixes
 
