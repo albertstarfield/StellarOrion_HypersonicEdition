@@ -477,7 +477,7 @@ in which $T_s$ appears on both sides, so it is found by bisection rather than in
 
 This model supersedes an earlier homogeneous 25.4\,mm silicon-carbide slab, the LOFTID baseline~\cite{dinonno2026loftid}. The earlier slab is four times too thick for this vehicle, changing the survivability verdict in Chapter~\ref{ch:results}.
 \subsection{Statistical Convergence Monitoring}
-Monte Carlo noise scales as $1/\sqrt{N_{\text{samples}}}$, with $N_{\text{samples}}$ the independent particle-time samples. Convergence is monitored through running averages of surface force and energy quantities; SPARTA's \texttt{\seqsplit{stats\_interval}} parameter (default: 100 steps) sets diagnostic frequency. A run is statistically converged when relative change in drag coefficient ($C_d$) and stagnation heat flux each fall below 2\% over consecutive windows, typically after 500--1100 particle-time steps.
+Monte Carlo noise scales as $1/\sqrt{N_{\text{samples}}}$, with $N_{\text{samples}}$ the independent particle-time samples. Convergence is monitored through running averages of surface force and energy quantities; SPARTA's \texttt{\seqsplit{stats\_interval}} parameter (default: 100 steps) sets diagnostic frequency. A run is statistically converged when relative change in drag coefficient ($C_d$) and stagnation heat flux each fall below 2\% over consecutive windows, typically after 500-1100 particle-time steps.
 
 \section{Physics-Informed Neural Network Refinement}
 
