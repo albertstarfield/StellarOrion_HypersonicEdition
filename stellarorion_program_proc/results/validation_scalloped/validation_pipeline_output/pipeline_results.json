@@ -2,7 +2,7 @@
   "status": "success",
   "pipeline": "StellarOrion Validation Pipeline",
   "version": "1.0.0",
-  "timestamp": "2026-10-06T02:47:51.543201+00:00",
+  "timestamp": "2026-10-06T05:35:30.125728+00:00",
   "inputs": {
     "csv_path": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/validation_scalloped/validation_timeseries.csv",
     "target_step": 300000000,
@@ -16,43 +16,43 @@
   },
   "denoise_results": {
     "cd": {
-      "noise_std": 0.05980930406870315,
-      "noise_variance": 0.003577152853182591,
-      "r2_score": 0.8432362870803498,
+      "noise_std": 0.059800309601384015,
+      "noise_variance": 0.003576077028421381,
+      "r2_score": 0.8432356557394969,
       "kernel_params": {
-        "noise_level": 0.18746742714814507,
-        "length_scale": 1970.168107008822,
-        "constant": 5.664884762425609
+        "noise_level": 0.18746737553980114,
+        "length_scale": 1970.1772339034264,
+        "constant": 5.664912164018147
       }
     },
     "drag_sum_N": {
-      "noise_std": 1544.9906642969975,
-      "noise_variance": 2386996.1527648773,
-      "r2_score": 0.8432359211747651,
+      "noise_std": 1544.990583611755,
+      "noise_variance": 2386995.9034489915,
+      "r2_score": 0.8432359375714766,
       "kernel_params": {
-        "noise_level": 0.1874668520496793,
-        "length_scale": 1970.1721074165137,
-        "constant": 5.664859789061974
+        "noise_level": 0.18746729777774546,
+        "length_scale": 1970.1740394573542,
+        "constant": 5.664891091348971
       }
     },
     "g_load": {
-      "noise_std": 0.5606593254420592,
-      "noise_variance": 0.31433887920514486,
-      "r2_score": 0.843235780514416,
+      "noise_std": 0.5606593994756535,
+      "noise_variance": 0.31433896222040036,
+      "r2_score": 0.843235739111718,
       "kernel_params": {
-        "noise_level": 0.18746717547863562,
-        "length_scale": 1970.1711185334786,
-        "constant": 5.664834529919142
+        "noise_level": 0.1874675135628971,
+        "length_scale": 1970.1740899587485,
+        "constant": 5.664846633636718
       }
     },
     "heatflux_max_Wm2": {
-      "noise_std": 248171.06959646297,
-      "noise_variance": 61588879784.652466,
-      "r2_score": 0.7355328823156209,
+      "noise_std": 248171.06988971322,
+      "noise_variance": 61588879930.204926,
+      "r2_score": 0.7355328816491309,
       "kernel_params": {
-        "noise_level": 0.3294561625489216,
-        "length_scale": 1049.9331705363018,
-        "constant": 3.2356464833272645
+        "noise_level": 0.3294561947952887,
+        "length_scale": 1049.9327942573532,
+        "constant": 3.2356444664043083
       }
     },
     "heatflux_avg_Wm2": {
@@ -82,13 +82,13 @@
       "kernel_params": {
         "noise_level": 0.010000000000000005,
         "length_scale": 100000.00000000001,
-        "constant": 0.8950907116020754
+        "constant": 0.8950911640739597
       }
     }
   },
   "pinn_results": {
     "cd": {
-      "extrapolated_value": 1.7689772499999998,
+      "extrapolated_value": 1.768706,
       "method": "converged_mean",
       "train_loss": 0.0
     },
@@ -103,9 +103,9 @@
       "train_loss": 0.0
     },
     "heatflux_max_Wm2": {
-      "extrapolated_value": 285116.88997126557,
+      "extrapolated_value": 731976.8285744893,
       "method": "DeepXDE_PINN",
-      "train_loss": 3.4344629966653883e-05
+      "train_loss": 1.3844152817910071e-05
     },
     "heatflux_avg_Wm2": {
       "extrapolated_value": 559286.59375,
@@ -118,63 +118,63 @@
       "train_loss": 0.0
     },
     "heat_load_jcm2": {
-      "extrapolated_value": 174.13736,
+      "extrapolated_value": 165.715973,
       "method": "converged_mean",
       "train_loss": 0.0
     }
   },
   "comparison": {
     "cd": {
-      "raw_dsmc": 1.765782,
-      "kriging_denoised": 1.7724051583387346,
-      "pinn_extrapolated_300000000": 1.7689772499999998,
+      "raw_dsmc": 1.765511,
+      "kriging_denoised": 1.7721333469599345,
+      "pinn_extrapolated_300000000": 1.768706,
       "reference": 1.47,
       "ref_kind": "MDAO (Rapisarda 2023 T4.1)",
       "irve3_reference": 1.47,
-      "raw_error_pct": 20.12122448979592,
-      "denoised_error_pct": 20.571779478825484,
-      "pinn_error_pct": 20.33858843537414,
-      "denoise_improvement_pct": -0.4505549890295626,
-      "pinn_improvement_pct": -0.2173639455782208
+      "raw_error_pct": 20.102789115646264,
+      "denoised_error_pct": 20.553288908839086,
+      "pinn_error_pct": 20.320136054421763,
+      "denoise_improvement_pct": -0.4504997931928223,
+      "pinn_improvement_pct": -0.21734693877549915
     },
     "drag_sum_N": {
       "raw_dsmc": 45613.5,
-      "kriging_denoised": 45784.590786696754,
+      "kriging_denoised": 45784.59066022212,
       "pinn_extrapolated_300000000": 45696.04101575,
       "reference": 45410.0,
       "ref_kind": "SELF (this run's converged DSMC)",
       "irve3_reference": 45410.0,
       "raw_error_pct": 0.448139176392865,
-      "denoised_error_pct": 0.8249081407107546,
+      "denoised_error_pct": 0.8249078621936183,
       "pinn_error_pct": 0.6299075440431644,
-      "denoise_improvement_pct": -0.3767689643178896,
+      "denoise_improvement_pct": -0.37676868580075334,
       "pinn_improvement_pct": -0.1817683676502994
     },
     "g_load": {
       "raw_dsmc": 16.552607,
-      "kriging_denoised": 16.61469377194899,
+      "kriging_denoised": 16.614693879522203,
       "pinn_extrapolated_300000000": 16.582559749999998,
       "reference": 19.7,
       "ref_kind": "flight (NASA/TP-2013-4012)",
       "irve3_reference": 19.7,
       "raw_error_pct": 15.976614213197976,
-      "denoised_error_pct": 15.661452934269088,
+      "denoised_error_pct": 15.661452388212163,
       "pinn_error_pct": 15.824569796954322,
-      "denoise_improvement_pct": 0.3151612789288887,
+      "denoise_improvement_pct": 0.3151618249858128,
       "pinn_improvement_pct": 0.15204441624365472
     },
     "heatflux_max_Wm2": {
       "raw_dsmc": 1920170.0,
-      "kriging_denoised": 1857382.6858831525,
-      "pinn_extrapolated_300000000": 285116.88997126557,
+      "kriging_denoised": 1857382.6862018534,
+      "pinn_extrapolated_300000000": 731976.8285744893,
       "reference": 1824880.0,
       "ref_kind": "SELF (this run's converged DSMC)",
       "irve3_reference": 1824880.0,
       "raw_error_pct": 5.2217132085397395,
-      "denoised_error_pct": 1.7810862020052018,
-      "pinn_error_pct": 84.3761293909043,
-      "denoise_improvement_pct": 3.4406270065345375,
-      "pinn_improvement_pct": -79.15441618236456
+      "denoised_error_pct": 1.7810862194694144,
+      "pinn_error_pct": 59.88904319327904,
+      "denoise_improvement_pct": 3.440626989070325,
+      "pinn_improvement_pct": -54.667329984739304
     },
     "heatflux_avg_Wm2": {
       "raw_dsmc": 552002.1875,
@@ -203,15 +203,15 @@
       "pinn_improvement_pct": null
     },
     "heat_load_jcm2": {
-      "raw_dsmc": 174.13736,
-      "kriging_denoised": 174.13736,
-      "pinn_extrapolated_300000000": 174.13736,
+      "raw_dsmc": 165.715973,
+      "kriging_denoised": 165.715973,
+      "pinn_extrapolated_300000000": 165.715973,
       "reference": 188.0,
       "ref_kind": "flight (NASA/TP-2013-4012)",
       "irve3_reference": 188.0,
-      "raw_error_pct": 7.373744680851063,
-      "denoised_error_pct": 7.373744680851063,
-      "pinn_error_pct": 7.373744680851063,
+      "raw_error_pct": 11.853205851063835,
+      "denoised_error_pct": 11.853205851063835,
+      "pinn_error_pct": 11.853205851063835,
       "denoise_improvement_pct": 0.0,
       "pinn_improvement_pct": 0.0
     }
@@ -219,35 +219,35 @@
   "audits": {
     "cd": {
       "noise_analysis": {
-        "noise_mean": 0.0003750359739075539,
-        "noise_std": 0.05980930406870315,
-        "noise_range": 0.3545487958248339,
-        "snr_db": 6.978795599326836,
-        "noise_fraction": 0.39592619171498045
+        "noise_mean": 0.0003749775471900595,
+        "noise_std": 0.059800309601384015,
+        "noise_range": 0.3544960117728828,
+        "snr_db": 6.978775032242868,
+        "noise_fraction": 0.39592698906310986
       },
       "convergence_metrics": {
-        "raw_total_change": 0.6578679999999999,
-        "denoised_total_change": 0.4293329027741164,
-        "raw_std": 0.15106175171093178,
-        "convergence_ratio": 0.6526125343900546,
-        "stability_index": 0.9208276909560744
+        "raw_total_change": 0.6577679999999999,
+        "denoised_total_change": 0.4292671130144441,
+        "raw_std": 0.15103873000143464,
+        "convergence_ratio": 0.6526117309057968,
+        "stability_index": 0.9208276176803074
       },
       "n_fall_regions": 6,
       "n_increase_regions": 0
     },
     "drag_sum_N": {
       "noise_analysis": {
-        "noise_mean": 9.687893536930376,
-        "noise_std": 1544.9906642969975,
-        "noise_range": 9158.688862984149,
-        "snr_db": 6.978783495458202,
-        "noise_fraction": 0.39592665380906733
+        "noise_mean": 9.687874885938072,
+        "noise_std": 1544.990583611755,
+        "noise_range": 9158.688481908503,
+        "snr_db": 6.978784340744611,
+        "noise_fraction": 0.3959266331322835
       },
       "convergence_metrics": {
         "raw_total_change": 16993.992187999997,
-        "denoised_total_change": 11090.485158501055,
+        "denoised_total_change": 11090.486116132102,
         "raw_std": 3902.2143354916884,
-        "convergence_ratio": 0.6526121134934029,
+        "convergence_ratio": 0.6526121698445555,
         "stability_index": 0.9208276489890629
       },
       "n_fall_regions": 6,
@@ -255,17 +255,17 @@
     },
     "g_load": {
       "noise_analysis": {
-        "noise_mean": 0.0035156381274099795,
-        "noise_std": 0.5606593254420592,
-        "noise_range": 3.323581825790793,
-        "snr_db": 6.978778001575558,
-        "noise_fraction": 0.3959268313784145
+        "noise_mean": 0.0035156391867135735,
+        "noise_std": 0.5606593994756535,
+        "noise_range": 3.323582077072203,
+        "snr_db": 6.978776288974601,
+        "noise_fraction": 0.39592688365951473
       },
       "convergence_metrics": {
         "raw_total_change": 6.166921000000002,
-        "denoised_total_change": 4.024605750279612,
+        "denoised_total_change": 4.024604912474995,
         "raw_std": 1.416068023200475,
-        "convergence_ratio": 0.6526118544861546,
+        "convergence_ratio": 0.6526117186315495,
         "stability_index": 0.9208276495480174
       },
       "n_fall_regions": 6,
@@ -273,17 +273,17 @@
     },
     "heatflux_max_Wm2": {
       "noise_analysis": {
-        "noise_mean": 3258.9977634535594,
-        "noise_std": 248171.06959646297,
-        "noise_range": 1065618.9729710948,
-        "snr_db": 3.598224807010451,
-        "noise_fraction": 0.514219328612215
+        "noise_mean": 3258.9992494863586,
+        "noise_std": 248171.06988971322,
+        "noise_range": 1065618.9768278645,
+        "snr_db": 3.5982246623449927,
+        "noise_fraction": 0.51421932921984
       },
       "convergence_metrics": {
         "raw_total_change": 1982680.0,
-        "denoised_total_change": 1290552.6363532112,
+        "denoised_total_change": 1290552.62016972,
         "raw_std": 482617.1553415384,
-        "convergence_ratio": 0.6509132267200008,
+        "convergence_ratio": 0.6509132185575685,
         "stability_index": 0.7751031188894878
       },
       "n_fall_regions": 7,
@@ -336,9 +336,9 @@
       "convergence_metrics": {
         "raw_total_change": 0.0,
         "denoised_total_change": 0.0,
-        "raw_std": 5.684341886080802e-14,
+        "raw_std": 2.842170943040401e-14,
         "convergence_ratio": 0.0,
-        "stability_index": 0.9999999999999997
+        "stability_index": 0.9999999999999998
       },
       "n_fall_regions": 0,
       "n_increase_regions": 0
@@ -350,7 +350,7 @@
       "Insufficient averaging: single-point sampling of stochastic DSMC output at ~100-1000 particles/cell",
       "Grid resolution: coarse mesh under-resolves flow gradients at shock layer boundary",
       "DSMC negative heat flux: raw f_1[3] can produce unphysical negative values (statistical noise)",
-      "Comparison methodology: IRVE-3 flight data is trajectory-integrated peak; our DSMC is single-point at altitude 52.03 km, vel 3094.2 m/s \u2014 different quantities being compared",
+      "Comparison methodology: IRVE-3 flight data is trajectory-integrated peak; our DSMC is single-point at altitude 52.07 km, vel 3101.1 m/s \u2014 different quantities being compared",
       "Atmosphere model difference: we use ISA (International Standard Atmosphere) while IRVE-3 used actual measured atmosphere \u2014 density at 52 km can differ by 5-15%",
       "Geometry difference: StellarOrion uses scalloped (grooved) torus while IRVE-3 is smooth torus \u2014 different local heat flux distributions"
     ],
@@ -372,7 +372,7 @@
       "rapisarda_flight": "14.361 W/cm\u00b2 \u2014 Rapisarda (2023) Table 4.10 flight reconstruction (group R); NOT NASA/TP-2013-4012",
       "rapisarda_sg_trajectory": "15.26 W/cm\u00b2 \u2014 Rapisarda Sutton-Graves along the full trajectory with MCD v6.1 atmosphere (src line 757 note)",
       "our_sg_single_point": "0.000 W/cm\u00b2 \u2014 measured heatflux_sg_Wm2 from THIS run's CSV at the run condition",
-      "our_dsmc_single_point": "55.2 W/cm\u00b2 \u2014 DSMC per-element avg at altitude 52.03 km, vel 3094.2 m/s (from CSV, not a literal)",
+      "our_dsmc_single_point": "55.2 W/cm\u00b2 \u2014 DSMC per-element avg at altitude 52.07 km, vel 3101.1 m/s (from CSV, not a literal)",
       "delta_explanation": "The 300% delta vs the NASA/TP flight peak is expected: single-point vs trajectory-integrated comparison. Against the same quantity (SG at our point) DSMC/SG is 55200218750000.0x \u2014 scalloped geometry increasing local heating vs the smooth torus.",
       "correct_comparison": "Compare DSMC to analytical models (SG/FR) at the SAME trajectory point, NOT to a trajectory-integrated flight peak"
     }

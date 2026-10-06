@@ -1,7 +1,7 @@
 {
   "metadata": {
     "generated_by": "StellarOrion Validation Pipeline",
-    "timestamp": "2026-10-06T02:47:51.543201+00:00",
+    "timestamp": "2026-10-06T05:35:30.125728+00:00",
     "references": {
       "IRVE-3": "NASA TP-2013-4012",
       "LOFTID": "Deshmukh et al. AIAA 2024-1501",
@@ -50,35 +50,35 @@
       "raw_dsmc": {
         "peak_heat_flux_avg_Wcm2": 55.20021875,
         "peak_heat_flux_max_Wcm2": 192.017,
-        "total_heat_load_Jcm2": 174.13736,
+        "total_heat_load_Jcm2": 165.715973,
         "peak_g_load": 16.552607,
-        "cd": 1.765782
+        "cd": 1.765511
       },
       "kriging_denoised": {
         "peak_heat_flux_avg_Wcm2": 55.438035157514086,
-        "peak_heat_flux_max_Wcm2": 185.73826858831526,
-        "total_heat_load_Jcm2": 174.13736
+        "peak_heat_flux_max_Wcm2": 185.73826862018535,
+        "total_heat_load_Jcm2": 165.715973
       },
       "pinn_extrapolated_300s": {
         "peak_heat_flux_avg_Wcm2": 55.928659375,
-        "peak_heat_flux_max_Wcm2": 28.51168899712656,
-        "total_heat_load_Jcm2": 174.13736,
+        "peak_heat_flux_max_Wcm2": 73.19768285744894,
+        "total_heat_load_Jcm2": 165.715973,
         "peak_g_load": 16.582559749999998,
-        "cd": 1.7689772499999998
+        "cd": 1.768706
       }
     }
   },
   "deltas": {
     "pinn_vs_irve3": {
       "peak_heat_flux_avg_pct": 289.4482234872223,
-      "peak_heat_flux_max_pct": 98.53554068049966,
-      "total_heat_load_pct": -10.725205926246444,
+      "peak_heat_flux_max_pct": 409.69767326404104,
+      "total_heat_load_pct": -15.042588423835623,
       "peak_g_load_pct": -15.824569796954322
     },
     "pinn_vs_loftid": {
       "peak_heat_flux_avg_pct": 42.4208285586962,
-      "peak_heat_flux_max_pct": -27.395749943655318,
-      "total_heat_load_pct": -95.05291590909091,
+      "peak_heat_flux_max_pct": 86.3959329194014,
+      "total_heat_load_pct": -95.29215985795454,
       "peak_g_load_pct": 71.66210921325049
     }
   },
@@ -87,7 +87,7 @@
     "conditions": "alt=51.8 km, vel=3378 m/s, mach=10.29",
     "atmosphere": "ISA (International Standard Atmosphere)",
     "single_point_analytical": {
-      "sutton_graves_Wcm2": 12.8231,
+      "sutton_graves_Wcm2": 12.2029,
       "fay_riddell_Wcm2": 161.5525
     },
     "single_point_dsmc": {
@@ -95,7 +95,7 @@
       "per_element_max_Wcm2": 192.017,
       "pinn_extrapolated_Wcm2": 55.9287
     },
-    "dsmc_sg_ratio": 4.3,
+    "dsmc_sg_ratio": 4.52,
     "dsmc_sg_ratio_note": "Ratio > 1 means DSMC predicts higher heating than Sutton-Graves \u2014 expected for scalloped geometry (grooved torus) vs smooth torus. Scalloped surfaces create local recirculation zones that enhance convective heating.",
     "dsmc_fr_ratio": 0.3417,
     "dsmc_fr_ratio_note": "Ratio < 1 means DSMC predicts lower heating than Fay-Riddell \u2014 expected because FR assumes continuum flow which overpredicts in rarefied regime (Kn > 0.1)."
@@ -103,35 +103,35 @@
   "audit": {
     "cd": {
       "noise_analysis": {
-        "noise_mean": 0.0003750359739075539,
-        "noise_std": 0.05980930406870315,
-        "noise_range": 0.3545487958248339,
-        "snr_db": 6.978795599326836,
-        "noise_fraction": 0.39592619171498045
+        "noise_mean": 0.0003749775471900595,
+        "noise_std": 0.059800309601384015,
+        "noise_range": 0.3544960117728828,
+        "snr_db": 6.978775032242868,
+        "noise_fraction": 0.39592698906310986
       },
       "convergence_metrics": {
-        "raw_total_change": 0.6578679999999999,
-        "denoised_total_change": 0.4293329027741164,
-        "raw_std": 0.15106175171093178,
-        "convergence_ratio": 0.6526125343900546,
-        "stability_index": 0.9208276909560744
+        "raw_total_change": 0.6577679999999999,
+        "denoised_total_change": 0.4292671130144441,
+        "raw_std": 0.15103873000143464,
+        "convergence_ratio": 0.6526117309057968,
+        "stability_index": 0.9208276176803074
       },
       "n_fall_regions": 6,
       "n_increase_regions": 0
     },
     "drag_sum_N": {
       "noise_analysis": {
-        "noise_mean": 9.687893536930376,
-        "noise_std": 1544.9906642969975,
-        "noise_range": 9158.688862984149,
-        "snr_db": 6.978783495458202,
-        "noise_fraction": 0.39592665380906733
+        "noise_mean": 9.687874885938072,
+        "noise_std": 1544.990583611755,
+        "noise_range": 9158.688481908503,
+        "snr_db": 6.978784340744611,
+        "noise_fraction": 0.3959266331322835
       },
       "convergence_metrics": {
         "raw_total_change": 16993.992187999997,
-        "denoised_total_change": 11090.485158501055,
+        "denoised_total_change": 11090.486116132102,
         "raw_std": 3902.2143354916884,
-        "convergence_ratio": 0.6526121134934029,
+        "convergence_ratio": 0.6526121698445555,
         "stability_index": 0.9208276489890629
       },
       "n_fall_regions": 6,
@@ -139,17 +139,17 @@
     },
     "g_load": {
       "noise_analysis": {
-        "noise_mean": 0.0035156381274099795,
-        "noise_std": 0.5606593254420592,
-        "noise_range": 3.323581825790793,
-        "snr_db": 6.978778001575558,
-        "noise_fraction": 0.3959268313784145
+        "noise_mean": 0.0035156391867135735,
+        "noise_std": 0.5606593994756535,
+        "noise_range": 3.323582077072203,
+        "snr_db": 6.978776288974601,
+        "noise_fraction": 0.39592688365951473
       },
       "convergence_metrics": {
         "raw_total_change": 6.166921000000002,
-        "denoised_total_change": 4.024605750279612,
+        "denoised_total_change": 4.024604912474995,
         "raw_std": 1.416068023200475,
-        "convergence_ratio": 0.6526118544861546,
+        "convergence_ratio": 0.6526117186315495,
         "stability_index": 0.9208276495480174
       },
       "n_fall_regions": 6,
@@ -157,17 +157,17 @@
     },
     "heatflux_max_Wm2": {
       "noise_analysis": {
-        "noise_mean": 3258.9977634535594,
-        "noise_std": 248171.06959646297,
-        "noise_range": 1065618.9729710948,
-        "snr_db": 3.598224807010451,
-        "noise_fraction": 0.514219328612215
+        "noise_mean": 3258.9992494863586,
+        "noise_std": 248171.06988971322,
+        "noise_range": 1065618.9768278645,
+        "snr_db": 3.5982246623449927,
+        "noise_fraction": 0.51421932921984
       },
       "convergence_metrics": {
         "raw_total_change": 1982680.0,
-        "denoised_total_change": 1290552.6363532112,
+        "denoised_total_change": 1290552.62016972,
         "raw_std": 482617.1553415384,
-        "convergence_ratio": 0.6509132267200008,
+        "convergence_ratio": 0.6509132185575685,
         "stability_index": 0.7751031188894878
       },
       "n_fall_regions": 7,
@@ -220,9 +220,9 @@
       "convergence_metrics": {
         "raw_total_change": 0.0,
         "denoised_total_change": 0.0,
-        "raw_std": 5.684341886080802e-14,
+        "raw_std": 2.842170943040401e-14,
         "convergence_ratio": 0.0,
-        "stability_index": 0.9999999999999997
+        "stability_index": 0.9999999999999998
       },
       "n_fall_regions": 0,
       "n_increase_regions": 0
@@ -234,7 +234,7 @@
       "Insufficient averaging: single-point sampling of stochastic DSMC output at ~100-1000 particles/cell",
       "Grid resolution: coarse mesh under-resolves flow gradients at shock layer boundary",
       "DSMC negative heat flux: raw f_1[3] can produce unphysical negative values (statistical noise)",
-      "Comparison methodology: IRVE-3 flight data is trajectory-integrated peak; our DSMC is single-point at altitude 52.03 km, vel 3094.2 m/s \u2014 different quantities being compared",
+      "Comparison methodology: IRVE-3 flight data is trajectory-integrated peak; our DSMC is single-point at altitude 52.07 km, vel 3101.1 m/s \u2014 different quantities being compared",
       "Atmosphere model difference: we use ISA (International Standard Atmosphere) while IRVE-3 used actual measured atmosphere \u2014 density at 52 km can differ by 5-15%",
       "Geometry difference: StellarOrion uses scalloped (grooved) torus while IRVE-3 is smooth torus \u2014 different local heat flux distributions"
     ],
@@ -256,7 +256,7 @@
       "rapisarda_flight": "14.361 W/cm\u00b2 \u2014 Rapisarda (2023) Table 4.10 flight reconstruction (group R); NOT NASA/TP-2013-4012",
       "rapisarda_sg_trajectory": "15.26 W/cm\u00b2 \u2014 Rapisarda Sutton-Graves along the full trajectory with MCD v6.1 atmosphere (src line 757 note)",
       "our_sg_single_point": "0.000 W/cm\u00b2 \u2014 measured heatflux_sg_Wm2 from THIS run's CSV at the run condition",
-      "our_dsmc_single_point": "55.2 W/cm\u00b2 \u2014 DSMC per-element avg at altitude 52.03 km, vel 3094.2 m/s (from CSV, not a literal)",
+      "our_dsmc_single_point": "55.2 W/cm\u00b2 \u2014 DSMC per-element avg at altitude 52.07 km, vel 3101.1 m/s (from CSV, not a literal)",
       "delta_explanation": "The 300% delta vs the NASA/TP flight peak is expected: single-point vs trajectory-integrated comparison. Against the same quantity (SG at our point) DSMC/SG is 55200218750000.0x \u2014 scalloped geometry increasing local heating vs the smooth torus.",
       "correct_comparison": "Compare DSMC to analytical models (SG/FR) at the SAME trajectory point, NOT to a trajectory-integrated flight peak"
     }
