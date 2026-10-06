@@ -4369,6 +4369,213 @@ the measured series.
 
 ---
 
+## F74 — Nothing in the validation pipeline checks that the DSMC run finished; a run that stopped at step 1900 of 2200 was graded VALIDATION PASSED, and three of the four results directories now hold a short series
+
+*Class: correctness — the verdict is computed before the step count is known, and no code path anywhere compares the steps obtained against the steps requested*
+
+A fresh validation run (`run8`, artefacts timestamped **2026-10-06 06:58:09**) stopped
+after **step 1900 of 2200** and was nevertheless reported as
+`[VALIDATE] RESULT: VALIDATION PASSED` / `Survivability: PASSED`. The short series is on
+disk and the pipeline has no mechanism to notice it.
+
+| results directory | data rows | first -> last step | columns | verdict |
+| :--- | ---: | :--- | ---: | :--- |
+| `validation_smooth` | 22 | 100 -> 2200 | 19 | complete |
+| `validation_optimized` | 22 | 100 -> 2200 | 22 | complete |
+| `validation_scalloped` | **19** | 100 -> **1900** | 22 | **truncated — graded PASSED** |
+| `validation` | **10** | 100 -> **1000** | 22 | **truncated — never noticed** |
+
+**Three of the four directories hold a short series, and two of them are truncated.** The
+second one is old: `results/validation/` contains `grid.*.out` dumps from **2026-09-12**
+that stop at `grid.1000.out`, and it is cited by `Validation Aug29_ValidationProgress.md`.
+So this is not a one-off; the same failure has occurred at least twice, in different
+months, and was never detected either time.
+
+### Why nothing catches it
+
+1. **The verdict is printed before the CSV exists, and never consults the step count.**
+   `src/simulation_engine/stellarorion_test_modes.adb:1780-1782`:
+   ```ada
+   if Survivable then
+      Put_Line ("[VALIDATE] RESULT: VALIDATION PASSED");
+   else
+      Put_Line ("[VALIDATE] RESULT: VALIDATION FAILED");
+   end if;
+   ```
+   `Survivable` is settled in Step 9 from the physics metrics (heat flux, peak decel,
+   ballistic coefficient, stagnation pressure). The time-series CSV is written in
+   **Step 11**, i.e. *after* the verdict is on stdout, by
+   `Generate_Validation_Plots_And_VTK`, which parses whatever `surf.*.out` dumps exist.
+
+2. **Steps 11 and 12 are non-fatal by explicit design.** `test_modes.adb:1786` and
+   `:1814` both carry the comment *"Non-fatal: MUST NOT abort VALIDATION PASSED (see
+   defensive wrapper below)."* So the pipeline is *forbidden* by its own contract from
+   letting the visualisation leg influence the verdict — which is correct for a plotting
+   failure, and is exactly why it cannot also catch a truncated run.
+
+3. **`N_StepList` is the only step counter and its only guard is "at least one".**
+   Declared `stellarorion_sparta.adb:2346`, incremented `:3484-3486`. The sole test
+   applied to it is at `:3409`, inside `Write_PVD`:
+   ```ada
+   if N_StepList < 1 or else N < 1 then
+      return;
+   end if;
+   ```
+   That asks whether a `.pvd` file is worth writing. It never compares `Step_List (N_StepList)`
+   against the `Steps` parameter the run was asked for.
+
+4. **No completion marker is ever written.** `grep -niE "COMPLETION|COMPLETED|RUN_FINISH|truncat|incomplete run"`
+   over `src/simulation_engine/*.adb` returns only unrelated hits: watchdog recovery
+   (`stellarorion_dual_watchdog.adb:296`), Taylor-series truncation error
+   (`stellarorion_geometry.adb`, `stellarorion_environment.adb:343`), and a `"completed"`
+   field inside `stellarorion_history.adb`'s own record format. A downstream reader has
+   nothing to key on.
+
+5. **The plotter accepts any length.** `scripts/make_validation_plots.py` plots whatever
+   rows it finds; its only sanity check (`:165-168`) is that each column has the same
+   length as the step vector — not that the step vector is complete. Its docstring at
+   `:33` even assumes *"typical validation runs (<= 100 rows)"*, so 19 rows looks normal
+   to it.
+
+6. **The directory now holds four vintages and nothing reconciles them.**
+   `results/validation_scalloped/`:
+
+   | artefact | mtime | what it asserts |
+   | :--- | :--- | :--- |
+   | `VALIDATION_Sep_2_2026.md` | 2026-09-24 23:14 | **"2,200 steps"** in four places, with rows for steps 2000/2100/2200 |
+   | `plots/`, `vtu/` | 2026-10-05 07:01 | figures from a still earlier run |
+   | `COMPARISON_Scalloped_Smooth_Rapisarda.md` | 2026-10-05 20:41 | a scalloped-vs-smooth comparison |
+   | `validation_timeseries.csv`, `trajectory_profile.csv` | **2026-10-06 06:58:09** | steps 100–1900 only |
+
+   A reader opening that directory sees a report claiming 2,200 steps beside a CSV that
+   stops at 1900, with figures from a third run. Nothing in the pipeline detects it.
+
+### Severity, stated honestly
+
+The missing tail is **not** the physically interesting part, which limits the blast radius
+but does not remove the defect. Peak heat flux occurs early and decays:
+`heatflux_max_Wm2` is **4.583e6 at step 100**, 2.743e6 at 200, and 1.802e6 at 1900. The
+three missing steps (2000, 2100, 2200) sit in the decaying tail, so the PASS is **not
+demonstrably numerically wrong**.
+
+The defect is that **a 19-of-22-completed run is reported identically to a complete one,
+with no disclosure anywhere**, and the directory it lands in advertises 2,200 steps. A
+validation gate whose output cannot distinguish an aborted run from a finished one is not
+evidence of survivability — it is evidence that the survivability metrics happened to
+threshold. That distinction is the whole value of a validation run.
+
+### What the run8 report claimed about the cause, and what I could and could not confirm
+
+The run8 agent reported `level=error msg="error waiting for container: unexpected EOF"`
+at 06:58:09 and attributed the stop to the Docker container dying. **I could not verify
+this, and one obvious check is a trap.** `grep -rn "unexpected EOF"` over the results tree
+matches only a bundled minified JavaScript image library
+(`throw w9("unexpected EOF","EBADDATA")`, the image-size/sharp bundle under
+`validation_pipeline_output`). That directory holds JS bundles and markdown — its newest
+file is `dsmc_pinn_switch_section.md` — and **no console log was persisted for run8**.
+Had the string been trusted at face value it would have become a fabricated finding.
+
+So: **the truncation is measured and confirmed** (19 rows, steps 100–1900, mtime
+06:58:09). **The container EOF is agent-reported only** and is not asserted here.
+
+### A second producer-attribution error, in the same report
+
+The agent also wrote that the truncation warning at `sparta.adb:3002-3011` *"fired zero
+times"* and offered that as evidence no guard exists. Read in full, that warning is about
+something else:
+```ada
+--  AUDIT FIX (M3): warn if dump had fewer data rows than expected
+if Row < N then
+   Put_Line (Standard_Error, "[VTK] step " & Img (Integer (Step)) &
+             ": dump has " & Img (Row) & " rows but expected " &
+             Img (N) & "; trailing elements zero-filled.");
+end if;
+```
+It fires on a **per-dump element-count mismatch** — a geometry/VTK condition inside a
+single dump, where trailing mesh elements would be silently zero-filled. It is not a
+temporal-truncation check and would never fire for a run that stopped early. Its silence
+is therefore **not evidence of anything**.
+
+The *conclusion* (no guard exists) is correct, and item 3 above is the real evidence for
+it. This is the **second producer-attribution error in as many messages**, and it is the
+same class as the F43 error recorded in thread 3u: an artefact was attributed to the
+nearest plausible mechanism without checking what that mechanism actually tests. The
+standing rule added in 3u covers the first case; this is the second instance, which is
+now on the record.
+
+---
+
+## F75 — The three validation results directories were produced by different code versions, so the scalloped-vs-smooth comparison is not like-for-like
+
+*Class: correctness — the g_load fix is live in exactly one of the three series being compared against each other*
+
+Measured from the three shipped time-series CSVs:
+
+| directory | columns | distinct `g_load` values | `g_load` range | has `ambient_pressure_pa` / `ambient_temp_k` / `heat_flux_fr_wm2` |
+| :--- | ---: | ---: | :--- | :--- |
+| `validation_optimized` | 22 | **1** | 14.005923 (constant) | yes |
+| `validation_smooth` | **19** | **1** | 16.833399 (constant) | **no** |
+| `validation_scalloped` | 22 | **19** | 16.582661 – 22.669552 | yes |
+
+Two independent signals show the three series are not the same build:
+
+1. **The `g_load` fix is live only in the scalloped series.** The run8 agent's report of
+   *"19 distinct values, 16.58–22.67 (was the constant 14.0059)"* is exactly right — and
+   the constant it quotes, 14.005923, is `validation_optimized`'s value to six figures.
+   `validation_smooth` is *also* still frozen, at 16.833399. So the per-step `g_load`
+   behaviour that was fixed exists in **one** of the three directories, and the other two
+   retain the pre-fix constant.
+
+2. **The schemas differ.** `validation_smooth` has 19 columns; the other two have 22.
+   The three extra columns — `ambient_pressure_pa`, `ambient_temp_k`, `heat_flux_fr_wm2`
+   — exist only in the optimized and scalloped series, so `validation_smooth` predates the
+   code that added them.
+
+**Consequence.** `COMPARISON_Scalloped_Smooth_Rapisarda.md` (2026-10-05, sitting inside
+the scalloped directory) compares the scalloped run against the smooth run. That
+comparison sets a per-step-varying `g_load` series (19 distinct values) beside a frozen
+constant from earlier code. Any difference attributed to scalloping in that document is
+confounded with the code change. The same applies to any drag/heat comparison involving
+`validation_optimized`.
+
+This is distinct from F74: F74 is about a run that did not finish, this is about runs that
+finished but were produced by different builds and are compared as though they were one.
+
+
+### Confirmations from the run8 recheck (thread 3v)
+
+| finding | verdict | what I measured myself |
+| :--- | :--- | :--- |
+| **F43** | **REFUTED — now with byte-level evidence** | `md5 -q results/validation_scalloped/trajectory_profile.csv` returns `ea07b4449f7049c75114a9b38911f1d5`, **exactly** the baseline recorded in thread 3u. run8 rewrote the file at 06:58:09 and it is byte-identical. This closes the question thread 3u deliberately left open. |
+| **F45** | **CONFIRMED (third independent pass)** | The 1.4755–3.3163× divergence and the 0.31 % Ada/ISO-2533 agreement match my measurements. Attribution already corrected in 3u. |
+| **F45 attribution** | **REFUTED** | `grep -n 'Has_Flag ("--trajectory-profile")'` → `stellarorion_project.adb:1278`. The agent cited `:1282`; that line is `(To_Chars_Ptr (Arg_TrajPrf),` *inside* the same block, so both point at the same construct. Recorded as a harmless line-number discrepancy, not a disagreement. |
+| **F63** | **CONFIRMED** | `git status --short` → ` D` for both `results/validation_scalloped/HIAD_custom.surf` and `results/validation_scalloped/in.hiad`; `git ls-files` lists both (so both are tracked); both are MISSING on disk. `results/test_sample/in.hiad` still EXISTS, so the deletion is specific to the Step 12 directories. |
+| **F58** | **fix confirmed live (agent-reported value)** | The regime gate is present at `test_modes.adb:1612` (Step 9b) with its output at `:1753`/`:1756`. The reported `Kn = 3.78388E-05` agrees with the `3.78e-05` already recorded in the F58 row, so the print fix is confirmed by two sources. The exact value was **not** re-measured here — no persisted run8 log contains it. |
+
+**Not rechecked by the run8 agent, and therefore still open here:** F48 (the third
+atmosphere), F24–F27 (the PINN never trained and cannot), F40/F60 (SiC limit 1700 vs Ada
+2073), F67 (figure 41.1 % oversized), F71 (optimum pinned to its bound). These carry
+forward unchanged.
+
+**Two harness errors of my own while writing this thread, recorded rather than hidden.**
+
+1. **A table-integrity checker of mine produced a false positive, and my first repair made
+   it worse.** The checker counted `|` characters without honouring the GFM `\|` escape, so
+   it flagged the **F26** row as ragged when its pipes were already correctly escaped. The
+   repair was then issued through a shell one-liner, whose escaping turned `\|` into
+   `\ |` — reintroducing a raw pipe *and* corrupting the visible text of all three rows
+   (F26, F35, F68). Both the detection and the repair were wrong. Fixed by rewriting the
+   rows through a script file with no shell interpolation, and by re-testing with a checker
+   that strips `\|` before counting. The lesson is the one the `no_unavailable` and harness
+   rules keep demanding: **a checker that has never been shown a known-good input will
+   manufacture findings, and a fix applied through an escaping layer you do not control
+   will corrupt what it touches.** Final state verified: `malformed F-rows: 0`.
+
+2. **`grep -rn "unexpected EOF"` over the results tree matches a bundled JavaScript image
+   library**, not a container log (`throw w9("unexpected EOF","EBADDATA")`, the
+   image-size/sharp bundle under `validation_pipeline_output`). Taking that hit at face
+   value would have written "the Docker container died" into the log as a measured fact
+   when no such log exists. Recorded here so a later pass does not repeat the inference.
 ## Summary
 
 | ID | Severity | Status | Root cause class |
@@ -4408,7 +4615,7 @@ the measured series.
 | F32 | correctness | **open** | The F26 axis-mixing parser is **duplicated byte-for-byte** at `kriging_denoise.py:103-104`, the module the gate's Kriging step actually runs. Both parsers return byte-identical output, so fixing F26 alone leaves the live path wrong |
 | F33 | correctness | **open** | Kriging's own write→read round trip replaces **100.00 % (17 949/17 949) of cell densities** with a hardcoded `1e20` default, because the writer emits 10 fields while the reader demands `parts[10]` (the real format has 11). Any multi-pass run reads a **constant** density field from pass 2 onward. The writer also reorders the axes relative to real SPARTA and omits `f_2[1]` |
 | F34 | correctness | **open** | `extract_cell_centroids` prints `[WARN] ... using point cloud fallback` but **implements no fallback** — the loop `break`s and the tail keeps its `np.zeros` origin. **7 of 3 648 cells** (760 of 403 392 = 0.1884 % across all run dirs) are placed at the origin instead of on the body, and the warning fires on **100 % of files** so it reads as normal |
-| F35 | correctness | **open** | `pipeline_comparison.py` is a `GaussianProcessRegressor` with **no PDE residual** (`grep -c 'residual|_pde|PDE('` = 0) yet calls itself a PINN in **nine** places, including an AXIOM block asserting `PINN respects governing PDE constraints [Raissi 2019]` and a comment deferring to the never-running `pinn_accelerator.py`. Third site where "PINN" labels a non-PINN |
+| F35 | correctness | **open** | `pipeline_comparison.py` is a `GaussianProcessRegressor` with **no PDE residual** (`grep -c 'residual\|_pde\|PDE('` = 0) yet calls itself a PINN in **nine** places, including an AXIOM block asserting `PINN respects governing PDE constraints [Raissi 2019]` and a comment deferring to the never-running `pinn_accelerator.py`. Third site where "PINN" labels a non-PINN |
 | F36 | correctness | **open** | `sidecar_watchdog.Secondary_Watchdog._monitor_loop` resets `self._last_cross_check` at line 303 and then tests it at line 306, so the `elapsed > PRIMARY_TIMEOUT_S` (25 s) branch is unreachable — measured **0** `_handle_resurrect` calls with the Primary permanently dead. The correct test, `Mutual_Check()`, exists and is never called. The whole dual-watchdog escalation is inert |
 | F37 | dead code | **open** | `src/python/visualizer.py` and `src/python/sidecar_launcher.py` are 50 lines each with **zero live statements** — only a docstring claiming publication-quality figures and a web UI that do not exist. `docs/PYTHON_SIDECAR_EXCEPTIONS.md:38` describes one of them as a working bridge |
 | F38 | correctness | **open — off-path tool (thread 3u)** | `gen_trajectory_profile.atmosphere_temperature` is **correct**, but `atmosphere_density` has four independent ISA errors: a per-km lapse passed where per-metre is needed (0–11 km), a missing `−1` in three gradient layers, the isothermal `exp` form used for 20–32 km, and self-recursion above 84.852 km. The model is **1.48×–3.32× too dense across 5–84.852 km**, peaking at **+231.5 % at 47–51 km** — the band the DSMC runs are evaluated in — against the module's own claim of 0.1 % agreement |
@@ -4441,12 +4648,14 @@ the measured series.
 | F65 | correctness | **open** | `pyfluent_test.py:324-326` is the whole exit path: `if result["status"] == "error": raise SystemExit(1)` else `SystemExit(0)`. A failed handshake records `handshake=False` and appends a message but leaves `status` at `"success"`, so the run exits 0 with no Fluent session. A second false pass independent of F28 (which is the Ada `Write_Status` path); `pyansys_test.py` is correct on every failure path |
 | F66 | presentation | **open** | `render_bo_figures.py:474-475` calls `ax.legend(handles[:2], labels[:2])` after `get_legend_handles_labels()` returned every labelled artist, so all annotations past the first two are dropped from the legend with no equivalent elsewhere. The comment's claim that they are "self-describing in the title" is false — the title is a convergence summary naming neither the phase boundary nor the IRVE-3 baseline |
 | F67 | correctness | **open** | The `BEFORE (IRVE-3 Default — Ada FFI)` panel of `render_optimization_comparison.py` renders radius **2.6522 m (D 5.3044 m)** while the flown `HIAD_custom.surf` is radius **1.8802 m (D 3.7604 m)** — **1.4106× = +41.1 % in radius**, +37.4 % axially — measured with `get_ada_default_profile()` and the real `plot_surf_profile.parse_surf_points`. Its `crosscheck_ada_profile` reports OK because it compares Python against Ada **at the same (default, not flown) input**, so it is structurally incapable of detecting a wrong-input error |
-| F68 | correctness | **open** | `hiad_geometry.py:128-137`'s meridian profile is C0-discontinuous at the shoulder: the gap `r_tor·√2·|cos γ − sin γ|` is **exactly 0.000000 m at `half_cone_deg` 45°** and **0.069881 m at the 60° Ada baseline**. A rendering defect only — SPARTA consumes the separately generated `HIAD_custom.surf`, so the solver is unaffected — but the dashboard figures show a shoulder step the vehicle lacks, and the same θ range is at `stellarorion_pinn_trajectory.adb:466-467` |
+| F68 | correctness | **open** | `hiad_geometry.py:128-137`'s meridian profile is C0-discontinuous at the shoulder: the gap `r_tor·√2· \| cos γ − sin γ \| ` is **exactly 0.000000 m at `half_cone_deg` 45°** and **0.069881 m at the 60° Ada baseline**. A rendering defect only — SPARTA consumes the separately generated `HIAD_custom.surf`, so the solver is unaffected — but the dashboard figures show a shoulder step the vehicle lacks, and the same θ range is at `stellarorion_pinn_trajectory.adb:466-467` |
 | F69 | false assurance | **open** | Four of the 49 executable tests in `test_run_pipeline.py` assert nothing: `test_ensure_utf8_locale_idempotent` puts its only assertion inside `if enc:` while `run.py:333-339` sets `LC_ALL` only on a non-UTF-8 host (0 assertions run); `test_hash_determinism` compares `hashlib.sha256(x)` to itself; `test_venv_python_exists_after_bootstrap` asserts a suffix of a path it builds itself and never reads `run._VENV_PYTHON`; and `test_hash_file_format` documents "hash_file" — **a function `run.py` does not have** — while its whole body is inside `if …exists()`. All 49 tests pass regardless |
 | F70 | presentation | **open** | `make_vtu_visualization.py:137-139`/`:178` label `points[:,2]` **"Axial"** and `points[:,0]` "Flow Direction", but measured on `surf_2200.vtu` column 0 spans **1.2693 m — exactly the vehicle's axial length** while columns 1 and 2 span ≈ the 3.76 m diameter, so the axial axis is mislabelled. Separately `render_bo_3d_plot.py:902` and `render_geometry_grid.py:661` format `imp.get('cd_pct', float('nan'))` straight into **published figure titles**, so a missing key prints `Cd improvement = nan%` and still returns 0. A claimed 87-vs-88 panel mismatch was **refuted** — the declared constants are self-consistent |
 | F71 | correctness | **open** | The published optimisation optimum `R_N = 2.994005816519673` sits **0.2398 % of the `[0.5, 3.0]` interval from its own upper bound** and is drawn as an interior optimum with no boundary annotation. Four figure defects confirmed by reading: `plot_hiad_3d.py:210` hard-codes `D=3.0m` while `:218` on the same page prints `Max Radius=1.8802 m` (⇒ D 3.7604 m, **+25.35 %** self-contradiction); `:267` sets a non-proportional `aspectratio {x:1,y:1,z:1.2}`; `render_optimization_comparison.py` prints "6 tori" while its `:709` `continue` guard can skip iterations; and `make_vtu_visualization.py:286` creates `plots/` **before** `:290` lists `paraview/`, with no isdir guard. **Refuted:** the reported cost anomaly does not exist — `optimized.cost` equals `min(history)` exactly |
 | F72 | dead code | **open** | `_tex_config.tex_available()` — the predicate that answers "is a LaTeX toolchain present?" — has **no call site anywhere in the repository**, while `setup_tex_fonts` is called by `validation_pipeline.py` and `generate_outputs.py`. The capability is implemented and never used. Also noted: `_tex_config` is a leading-underscore private module imported across module boundaries. This is the last file in `_proc` whose coverage is now stated |
 | F73 | provenance | **open** | Three more root documents assert the disproved references and were never updated by the earlier passes: `DERIVATION.md:97`; `PEER_REVIEW_AUDIT.md:156,471-476` (14.36 as flight **and** 12.20 as the model — both stale; measured 13.80 and 12.82); and `NextImprovementPlan.md:266`, which attributes 14.36 to **NASA TP-2013-4012** in the sentence defining the validation target, plus 195.06/165.72/6-tori/14.361 through its arithmetic. `HIAD_IRVE3_Baseline.md` was checked and is **already correct**, so it was left untouched as the counter-example |
+| F74 | correctness | **open** | No run-completeness check exists anywhere in the validation pipeline. `test_modes.adb:1780-1782` prints the verdict from `Survivable` **before** Step 11 writes the CSV and never consults the step count; `N_StepList`'s only guard (`sparta.adb:3409`) asks whether at least one step exists; no completion marker is ever written. A run that stopped at step **1900 of 2200** was graded VALIDATION PASSED. Three of four results directories hold a short series; two are truncated. |
+| F75 | correctness | **open** | The three validation directories were produced by different code versions. The per-step `g_load` fix is live only in `validation_scalloped` (19 distinct values, 16.582661–22.669552) while `validation_smooth` (constant 16.833399) and `validation_optimized` (constant 14.005923) retain the pre-fix constant, and `validation_smooth` has 19 columns against the other two's 22. The scalloped-vs-smooth comparison is therefore confounded with the code change. |
 
 ### Final state after fixes
 

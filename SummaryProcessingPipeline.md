@@ -73,6 +73,8 @@ pipeline is defined in the source.
 > | **F72** | Nothing numeric — but the LaTeX-availability check is never made, so the TeX path is untested by construction. |> | **F38— **REFUTED as an effect, kept as an off-path defect** | The `gen_trajectory_profile` atmosphere is 1.48–3.32× too dense, but that script is only reachable via `--trajectory-profile` and the shipped profile comes from the Ada `Compute_Trajectory_Profile`. |
 > | **F43— **REFUTED** | The claim that the trajectory profile came from code not in the repository. The writer is `sparta.adb:3661`, fed by the in-repo `physics.adb:1923`. Do not cite F43. |
 > | **F45— divergence real, attribution corrected** | Three atmosphere implementations do disagree, but the one that writes the results is the correct Ada one; the Python copy is off-path. |
+> | **F74** | No run-completeness check exists: a run that stopped at step 1900 of 2200 graded `VALIDATION PASSED`. The verdict is printed before the CSV is written and never consults the step count. |
+> | **F75** | The three validation directories are different builds (per-step `g_load` live in one only; 19 vs 22 columns), so the scalloped-vs-smooth comparison is not like-for-like. |
 > | **F73** | Any reference value quoted from `DERIVATION.md`, `PEER_REVIEW_AUDIT.md` or `NextImprovementPlan.md` — all three still assert 14.36 W/cm² as IRVE-3 flight. `HIAD_IRVE3_Baseline.md` is the one that gets it right. |
 
 > | **F56** | The sidecar you are reading about is not the sidecar that runs. F44's traversal, state-forgery and loopback caveats were measured on `sidecar_server.py`, which no launcher starts; `run.py:88` starts `src/ui/sidecar_ui.py`, which binds `0.0.0.0` unconditionally and accepts unauthenticated `POST /api/start`. |

@@ -593,6 +593,15 @@ StellarOrion is validated against **IRVE-3 flight data** (NASA TP-2013-4012) and
      target. Each now carries a correction banner and inline `[REF-CORRECTED]` markers; no
      original sentence was rewritten. `HIAD_IRVE3_Baseline.md` was checked and is already
      correct, so it was left untouched. See **F73**.
+   * **F74 — a DSMC run that stopped at step 1900 of 2200 was graded VALIDATION PASSED.**
+     Nothing checks that a run finished: `test_modes.adb:1780-1782` prints the verdict
+     from `Survivable` before Step 11 writes the CSV, `N_StepList`'s only guard
+     (`sparta.adb:3409`) asks whether at least one step exists, and no completion marker
+     is written. Three of four results directories hold a short series; two are truncated.
+   * **F75 — the three validation directories are from different code versions.** The
+     per-step `g_load` fix is live only in `validation_scalloped`; `validation_smooth`
+     and `validation_optimized` still hold the pre-fix constant, so the
+     scalloped-vs-smooth comparison is confounded with the code change.
    * **F43 is REFUTED and F45's attribution was wrong — corrected in thread 3u.**
      The profile is written by `stellarorion_sparta.adb:3661` from `Traj_Profile`, which
      `sparta.adb:3604` fills by calling the in-repo
