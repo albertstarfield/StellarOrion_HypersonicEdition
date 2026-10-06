@@ -3581,6 +3581,33 @@ made. Flagged rather than guessed at.
 
 ## F60 — The silicon-carbide survivability limit is duplicated in Python at the wrong value, and the wrong value prints a PASS/FAIL verdict
 
+### Update — thread 3y. **Partially fixed.** The two verdict-producing sites are fixed; two documentation sites still carry 1700.
+
+This entry named two Python copies at `1700.0`. Both are corrected, and the fixes record
+the concrete consequence rather than just the number:
+
+* `scripts/make_vtu_visualization.py:277` — *"(fix 2026-10-06, F60). Previously 1700 while
+  Ada tests 2073"*.
+* `scripts/make_derived_plots.py:84-89` — *"both were previously lower (1700.0 and
+  673.0), so every PASS/FAIL …"*, naming the measured case: `surf_pinn_300000000.vtu`,
+  `T_max 1814.4 K → FAIL at 1700, PASS at 2073`. That is the defect this finding
+  described, stated with the number that proves it.
+
+**Two further sites still say 1700**, and this entry did not name them:
+
+| site | context | live or prose? |
+| :--- | :--- | :--- |
+| `compare_validation.py:37` | module docstring, *"TPS survives heat flux: T_surface < 1700 K (SIC limit)"* | **prose** — the only occurrence of 1700 in the file; no comparison uses it |
+| `stellarorion_validation.ads:11` | Ada spec header, *"Surface temp <= SIC max (1700 K)"* | **prose** — inside the `VALIDATION CONTEXT` comment block |
+
+Neither produces a wrong verdict, so the severity is presentation rather than
+correctness — and I have recorded them at that severity rather than inflating them. What
+makes them worth recording is the second one: `stellarorion_validation.ads` is the **spec
+for the validation subsystem**, and its own header documents a limit the code it describes
+does not use (`SIC_MAX_TEMP` is `2073.0` at `stellarorion_types.ads:120`). That is the same
+class as F73 — a document asserting a value this audit has already disproved. A reader who
+trusts the spec's header over the constant gets the wrong limit, which is exactly the
+failure mode F60 was about.
 *Class: correctness — one Ada truth, two Python copies, and no link between them*
 
 The project's own limit is Ada-side:
@@ -4675,6 +4702,46 @@ right number. Both hold:
   documentation only, as every previous thread has been.
 ## F76 — `prove.sh` ends by asserting that all verification steps succeeded after steps it had already reported as FAILED, and its Python-coverage target directory does not exist
 
+### Update — thread 3y. **Partially fixed.** The Python half is fixed and verified; the gnatcov half is not.
+
+Nine commits landed after the previous pass and `prove.sh` was rewritten to cite this
+finding by number. I re-measured rather than accepted.
+
+**Fixed, and verified by reading the mechanism** (the fix is real, not cosmetic):
+
+| sub-finding | before | now | verified how |
+| :--- | :--- | :--- | :--- |
+| 1. test directory | `tests/python` (does not exist) | `tests` | `prove.sh` sets `PYTHON_TESTS="$SCRIPT_DIR/tests"`; both modules are there |
+| 2. interpreter | bare `python3` + `pip install coverage … \|\| true` | `venv_validation/bin/python3` | `PYTHON_BIN` is now the project venv, and the hiding `pip install` is gone |
+| 3. runner | `-m pytest` (no pytest in the venv) | `-m unittest discover` | correct: every test class is a `unittest.TestCase` — I checked `tests/test_run_pipeline.py` and `tests/test_validation_pipeline_regressions.py` |
+| 4. success claim | `All verification steps completed successfully.` unconditional | gated | `PYTHON_COVERAGE_FAILED` is set on each failure mode and `prove.sh:253-256` now `exit 1`s with *"VERIFICATION FAILED — the steps above did not all succeed."* |
+| 5. summary line | printed on the flag being set | states the outcome | `printf '  Python coverage:        %s\n' "$PYTHON_COVERAGE_STATUS"` |
+
+**Still open — the gnatcov half of the same finding.** `prove.sh:133-136` is unchanged:
+
+```bash
+    else
+        echo ""
+        echo "gnatcov coverage: FAILED"
+        echo "Non-fatal — continuing with Python coverage."
+    fi
+```
+
+There is no `GNATCOV_STATUS` or equivalent — `grep -nE "GNATCOV" prove.sh` matches only
+the summary line itself — so gnatcov failure still sets no state, still does not exit, and
+the summary at `prove.sh:245` still prints `gnatcov coverage:       Report in obj/gcovr/`
+purely because `$RUN_COVERAGE` is set. **A run that prints `gnatcov coverage: FAILED` one
+screen earlier still advertises a report directory for it.** The `PYTHON_COVERAGE_FAILED`
+gate does not cover it. The fix closed one of the two unguarded summaries; the other is
+still there.
+
+**One claim in the fix I could not independently reproduce.** The comment states the
+unittest runner is *"measured to run all 49 green here"*. I could not confirm that: my
+invocation hit `FATAL: Another build is running (PID 53866). Lock file: …/test.lock`,
+because another process held the build lock at the time (that PID has since exited). So I
+verified the **mechanism** — status variable, gate, `exit 1`, and the runner matching the
+tests' actual base class — but **not** a green 49-test run. Recorded as unverified rather
+than assumed, which is this log's standing rule.
 *Class: correctness — the script's exit status and its summary disagree, and the summary is the one a reader sees*
 
 This audit had never scanned `prove.sh`, and had recorded in earlier threads that
@@ -4763,6 +4830,21 @@ result it computed.
 
 ## F77 — A `nosec` security suppression is justified by a script that runs no security analyser
 
+### Update — thread 3y. **Fixed, and the replacement citation is the one this finding said it should be.**
+
+`run.py:948` now reads:
+
+```python
+def _start_sidecar(port: int) -> subprocess.Popen[bytes] | None:  # nosec: EXTERNAL_CALL_UNHANDLED -- spawn failures are caught below and the child is terminated in the caller's finally block
+```
+
+The unsupported *"verified safe by prove.sh"* is gone, replaced by the handler that is
+actually beneath it — which is precisely what this entry recommended. The `Popen` itself
+now carries a different, accurate suppression
+(`# nosec: RESOURCE_LEAK -- deliberate long-lived background server; child terminated in
+the caller's finally block`), and the superseded wording is retained at `run.py:969` as
+history rather than deleted. Verified by reading both sites; the claimed handler exists at
+`run.py:981-989` and the caller's cleanup at `:1131-1137`.
 *Class: provenance — the cited evidence is a tool that cannot produce it*
 
 `run.py:967`:
@@ -4798,6 +4880,39 @@ that is what the fix should say.
 scope (`run.py:31`). The local import is dead. Recorded here rather than as F78 because it
 has no behavioural consequence — the one exception being that it makes the module's own
 dependency list look narrower than it is.
+### Thread 3y — a real defect this audit did not record
+
+Re-measuring the changed files turned up a fix that addresses something **this audit never
+found**, and honesty about coverage requires saying so.
+
+`stellarorion_types.ads` changed the Sutton–Graves stagnation-point heating coefficient:
+
+```ada
+-  --  Source: NASA TR R-376, Table 1  (Sutton & Graves, 1972)
+-  C_SG : constant Float := 1.83e-4;
++  --  VALUE 1.7415e-4 IS THE EARTH-AIR VALUE.  This constant was 1.83e-4
++  --  while citing this same table, which is a false citation: TR R-376
++  --  gives k = 1.7415e-4 for Earth and k = 1.9027e-4 for Mars, and
++  --  1.83e-4 comes from the *Mars* gas mixture (97% CO2 / 3% N2).
++  C_SG : constant Float := 1.7415e-4;
+```
+
+The coefficient driving every heat-flux evaluation was the **Mars** gas-mixture value,
+carrying a citation to the Earth column of the same table. The fix also removed
+`C_SG_MOP` from `stellarorion_optimization.ads` — a duplicate constant holding the correct
+`1.7415e-4` with **zero consumers**, while the copy that actually drove the physics held
+the wrong one.
+
+**Why this is a gap rather than a finding.** F21 came close and did not land on it: it
+found that the Sutton–Graves constant used to scale the TPS snapshot was wrong *for that
+snapshot's flight condition* (a 31.90 % inflation) and that the limits gate was validating
+a 39.45 % weaker load than the run it certified. But F21 questioned the **scaling**, never
+the **coefficient**. Nothing in 77 findings asked whether `1.83e-4` was the right number
+for Earth at all, so the wrong gas mixture sat in the physics core unremarked.
+
+This is recorded because a defect log that only ever lists its own hits misrepresents its
+coverage. The audit missed a real one, in the physics core, and it was found by other
+means.
 ## Summary
 
 | ID | Severity | Status | Root cause class |
@@ -4862,7 +4977,7 @@ dependency list look narrower than it is.
 | F57 | correctness | **open** | The source-integrity manifest `.src_hashes.json` disagrees with the tree for **5 of the 23 files it tracks** (`validation_pipeline.py`, `generate_outputs.py`, `ada_pinn_wrapper.py`, `generate_hiad_dashboard.py`, `generate_optimized_overlay.py`) and nothing reports it. `src/utils/.parity/` holds only 2 recovery blocks, one of them for `sabotage_verifier.py`, which F50 showed is excluded from every scan |
 | F58 | presentation | **fixed** | Gate B printed `Kn at run point = 0.00` / `lambda = 0.00` — real values 3.78e-05 / 6.4e-05, lost to the 2-decimal F6 |
 | F59 | provenance | **flagged** | 2 more mixed (R)/(F) reference blocks at validation_pipeline.py:3987 and :4686, bypassing IRVE3_REFERENCE |
-| F60 | correctness | **open** | The SiC survivability limit exists as one Ada truth (`stellarorion_types.ads:97` `SIC_MAX_TEMP := 2073.0`, graded at `physics.adb:1428`) and two Python copies of **1700.0** — `make_vtu_visualization.py:262-263` (a reference line labelled "SIC limit (1700K)") and `make_derived_plots.py:80`, whose value drives `t_surv = max(t_surface) <= SIC_MAX_TEMP` at `:432` and prints a **PASS/FAIL** at `:435`. Measured: the exceedance count is overstated on all 22 DSMC VTUs (e.g. surf_2200 1920 vs 1152 cells), and the verdict flips on exactly one artefact of 24 — `validation_scalloped/paraview/surf_pinn_300000000.vtu`, T_max 1818.3 K, 3648 cells above 1700 and **0** above 2073, so the drawn line says FAIL and the real limit says PASS; the same file in `validation_optimized` passes both, so the two runs' PINN surfaces disagree on survivability |
+| F60 | correctness | **partially fixed 2026-10-06** | The SiC survivability limit exists as one Ada truth (`stellarorion_types.ads:97` `SIC_MAX_TEMP := 2073.0`, graded at `physics.adb:1428`) and two Python copies of **1700.0** — `make_vtu_visualization.py:262-263` (a reference line labelled "SIC limit (1700K)") and `make_derived_plots.py:80`, whose value drives `t_surv = max(t_surface) <= SIC_MAX_TEMP` at `:432` and prints a **PASS/FAIL** at `:435`. Measured: the exceedance count is overstated on all 22 DSMC VTUs (e.g. surf_2200 1920 vs 1152 cells), and the verdict flips on exactly one artefact of 24 — `validation_scalloped/paraview/surf_pinn_300000000.vtu`, T_max 1818.3 K, 3648 cells above 1700 and **0** above 2073, so the drawn line says FAIL and the real limit says PASS; the same file in `validation_optimized` passes both, so the two runs' PINN surfaces disagree on survivability |
 | F61 | provenance | **open** | `stellarorion_types.ads:284-288` states verbatim that flight IRVE-3 used **7** toroids and the MDAO model used **6**, with 6 as the documented default. The Python render path hard-codes 6 in three places and labels it IRVE-3 (`render_optimization_comparison.py:822` `n_tori = 6  # structural constant: IRVE-3 6+1 torus stack`, `:693` which is what is meshed, and `hiad_geometry.py:40` `N_TORI = 6`), accepts and then discards an `n_tori` argument at `:373`, and never contains the value 7 |
 | F62 | correctness | **open** | `make_validation_plots.py:93-98` appends the step to `steps` **before** parsing the row's values, so one unparsable field leaves `steps` one longer than every column from that field onward. Measured: corrupting a single `mach` value drops **10 of the 21 plots** (`Wrote 11 PNGs`) and mislabels the survivors by one row. The loss is **announced** per column on stderr by the guard at `:163-169`, so the sub-claim that it is silent is refuted; and the exit contract is not inverted (missing → 1, corrupt → 0). The defect is that half the output can vanish while the script reports success |
 | F63 | correctness | **open** | Step 12 of every validation run calls `Cleanup_Ephemeral_State` (`stellarorion_test_modes.adb:1817`), whose `Delete_Matching` list at `stellarorion_sparta.adb:3841-3846` includes **`in.hiad` and `HIAD_custom.surf`** — the SPARTA input deck and the surface mesh the run was flown on. Both are **tracked in git** for `results/validation_scalloped` (last touched by `ff5d2eb`), and `tools/plot_surf_profile.py:14` calls the surf "the actual SPARTA surface mesh that the Ada solver consumed". A completed validation therefore cannot be re-verified, the deletion is silent (`Post => True`, failures swallowed), and this is the confirmed cause of the two files found deleted from the working tree during this audit |
@@ -4878,8 +4993,8 @@ dependency list look narrower than it is.
 | F73 | provenance | **open** | Three more root documents assert the disproved references and were never updated by the earlier passes: `DERIVATION.md:97`; `PEER_REVIEW_AUDIT.md:156,471-476` (14.36 as flight **and** 12.20 as the model — both stale; measured 13.80 and 12.82); and `NextImprovementPlan.md:266`, which attributes 14.36 to **NASA TP-2013-4012** in the sentence defining the validation target, plus 195.06/165.72/6-tori/14.361 through its arithmetic. `HIAD_IRVE3_Baseline.md` was checked and is **already correct**, so it was left untouched as the counter-example |
 | F74 | correctness | **fixed 2026-10-06** | No run-completeness check exists anywhere in the validation pipeline. `test_modes.adb:1780-1782` prints the verdict from `Survivable` **before** Step 11 writes the CSV and never consults the step count; `N_StepList`'s only guard (`sparta.adb:3409`) asks whether at least one step exists; no completion marker is ever written. A run whose series stopped at step **1900** was graded VALIDATION PASSED (the configured step count is unrecoverable — see correction). One truncation is evidenced; its configured step count is unrecoverable because Step 12 deleted the deck. |
 | F75 | correctness | **open** | The three validation directories were produced by different code versions. The per-step `g_load` fix is live only in `validation_scalloped` (19 distinct values, 16.582661–22.669552) while `validation_smooth` (constant 16.833399) and `validation_optimized` (constant 14.005923) retain the pre-fix constant, and `validation_smooth` has 19 columns against the other two's 22. The scalloped-vs-smooth comparison is therefore confounded with the code change. |
-| F76 | correctness | **open** | `prove.sh` can end by printing `All verification steps completed successfully.` after printing `gnatcov coverage: FAILED`: the failure path at `:133-136` is non-fatal, and the summary at `:197-203` keys on whether a step was *requested*, not whether it *succeeded*. Independently, `PYTHON_TESTS` at `:151` points at `tests/python`, which **does not exist** (the two test modules are in `tests/`), and the venv has no pytest, so `--python-coverage` cannot succeed; `2>/dev/null` discards the reason and the fallback measures module *imports*, not tests. |
-| F77 | provenance | **open** | `run.py:967` suppresses bandit check `EXTERNAL_CALL_UNHANDLED` with the justification *"verified safe by prove.sh"*, but `prove.sh` runs **no security analyser** — zero mentions of `bandit`, and its only tools are `alr`/`gnatprove`/`gnatcov`/`coverage`/`python3`/`pytest`. The cited evidence cannot have been produced. The suppression is **unnecessary rather than load-bearing**: the suppressed code properly catches the spawn errors and terminates the child. Isolated — 1 of 344 `nosec` suppressions cites `prove.sh`. |
+| F76 | correctness | **partially fixed 2026-10-06** | `prove.sh` can end by printing `All verification steps completed successfully.` after printing `gnatcov coverage: FAILED`: the failure path at `:133-136` is non-fatal, and the summary at `:197-203` keys on whether a step was *requested*, not whether it *succeeded*. Independently, `PYTHON_TESTS` at `:151` points at `tests/python`, which **does not exist** (the two test modules are in `tests/`), and the venv has no pytest, so `--python-coverage` cannot succeed; `2>/dev/null` discards the reason and the fallback measures module *imports*, not tests. |
+| F77 | provenance | **fixed 2026-10-06** | `run.py:967` suppresses bandit check `EXTERNAL_CALL_UNHANDLED` with the justification *"verified safe by prove.sh"*, but `prove.sh` runs **no security analyser** — zero mentions of `bandit`, and its only tools are `alr`/`gnatprove`/`gnatcov`/`coverage`/`python3`/`pytest`. The cited evidence cannot have been produced. The suppression is **unnecessary rather than load-bearing**: the suppressed code properly catches the spawn errors and terminates the child. Isolated — 1 of 344 `nosec` suppressions cites `prove.sh`. |
 
 ### Final state after fixes
 
