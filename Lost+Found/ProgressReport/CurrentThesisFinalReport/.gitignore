@@ -33,3 +33,4 @@ audit_margins.py
 audit_slant.py
 audit_slant2.py
 audit_table2.py
+audit_render.py

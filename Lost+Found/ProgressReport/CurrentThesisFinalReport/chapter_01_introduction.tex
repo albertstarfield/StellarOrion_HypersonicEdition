@@ -3,7 +3,7 @@
 \label{ch:background}
 Space exploration drives technological innovation, yet safe return remains a challenge: payloads must reach Earth or other bodies with an atmosphere. At hypersonic speed, aerodynamic heating can cause catastrophic failure, so a thermal protection system (TPS) is required.
 \par
-Rigid TPS have been the standard solution for Earth reentry: Reusable TPS, Structurally Integrated TPS, Hot Structures, and Ablators~\cite{TPS-stateofIndustryNASA}. A rigid heat shield is limited by the launch vehicle's payload fairing, restricting reentry vehicle size and mass, which constrains missions landing large payloads such as human Mars missions or assets returned from space.
+Rigid TPS designs have been the standard solution for Earth reentry: Reusable TPS, Structurally Integrated TPS, Hot Structures, and Ablators~\cite{TPS-stateofIndustryNASA}. A rigid heat shield is limited by the launch vehicle's payload fairing, restricting reentry vehicle size and mass, which constrains missions landing large payloads such as human Mars missions or assets returned from space.
 
 \par
 Deployable entry systems known as inflatable aerodynamic decelerators (IADs), or hypersonic inflatable aerodynamic decelerators (HIADs), have been tested as flexible TPS~\cite{dinonno2026loftid}. These structures pack into a small launch volume and inflate before atmospheric entry. Their large surface area generates drag, decelerating heavy payloads high in the atmosphere where heating is less severe.
@@ -12,7 +12,7 @@ Deployable entry systems known as inflatable aerodynamic decelerators (IADs), or
     \BeginAccSupp{method=escape,ActualText={Computer-generated 3-D rendering of a single generic satellite in low Earth orbit above the Earth. One smooth pink, lens-shaped disc of uniform thickness with a rounded rim carries a white vertical cylinder on a gold segmented ring at its center, topped by a small cluster of thin antenna masts. No text, dimension, or scale is printed, and the object is not labelled as a decelerator.}}%
 \includegraphics[width=0.5\textwidth]{figures/HIADsDeployed.png}%
 \EndAccSupp{}%
-    \caption[Deployed inflatable decelerator concept. The artwork is a generic visualisation of a single-body orbital object rather than a dimensioned decelerator geometry.]{Deployed inflatable decelerator concept. The artwork is a generic visualisation of a single-body orbital object rather than a dimensioned decelerator geometry, so it is used illustratively and is not a geometric definition of the vehicle described in the text.}
+    \caption[Deployed inflatable decelerator concept. The artwork is a generic visualization of a single-body orbital object rather than a dimensioned decelerator geometry.]{Deployed inflatable decelerator concept. The artwork is a generic visualization of a single-body orbital object rather than a dimensioned decelerator geometry, so it is used illustratively and is not a geometric definition of the vehicle described in the text.}
     \label{fig:Hiaddeployed}
 \end{figure}
 
@@ -42,7 +42,7 @@ The objective is to develop and validate a computational framework for aerotherm
 
 Specific objectives:
 \begin{enumerate}
-    \item \textbf{Parametric Geometry Generation:} To develop an automated 3D CAD pipeline using CadQuery that generates HIAD profiles from IRVE-3 specifications, varying toroid count, cone angle, nose radius, and aeroshell diameter.
+    \item \textbf{Parametric Geometry Generation:} To develop an automated 3D computer-aided design (CAD) pipeline using CadQuery that generates HIAD profiles from IRVE-3 specifications, varying toroid count, cone angle, nose radius, and aeroshell diameter.
 
     \item \textbf{DSMC Aerothermal Analysis:} To perform high-fidelity rarefied gas dynamics simulations using the SPARTA DSMC solver, capturing Boltzmann-level molecular collisions and transport phenomena in the locally non-continuum shock layer at HIAD reentry altitudes of 50-60~km.
 
@@ -52,7 +52,7 @@ Specific objectives:
 
     \item \textbf{PINN Flow Field Refinement:} To apply Physics-Informed Neural Networks (DeepXDE) post-processing to smooth noisy DSMC data, fill flow-field gaps, and provide a continuous interpolant anchored in the compressible Navier-Stokes equations.
 
-    \item \textbf{Survivability Optimization:} To implement a Genetic Algorithm (GA) coupled with Bayesian Optimization using a GP Matérn 5/2 surrogate and Expected Improvement~\cite{matern1960,morris1992} to optimize HIAD geometry, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
+    \item \textbf{Survivability Optimization:} To implement a Genetic Algorithm (GA) coupled with Bayesian Optimization using a Gaussian Process (GP) Matérn 5/2 surrogate and Expected Improvement~\cite{matern1960,morris1992} to optimize HIAD geometry, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
 \end{enumerate}
 
 \section{Research Gap}
@@ -79,7 +79,7 @@ This work makes the following novel contributions:
 
     \item \textbf{Multi-Objective Surrogate-Assisted Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and drag performance with Bayesian Optimization (GP surrogate) coupled to a genetic algorithm demonstrates an efficiency that direct simulation alone cannot afford.
 
-    \item \textbf{Comprehensive ML Documentation Standards:} The framework follows machine learning standards: explicit architecture documentation, reproducibility requirements (random seeds, environment specifications), validation metrics ($R^2$, RMSE, MAE), and ensemble uncertainty quantification.
+    \item \textbf{Comprehensive ML Documentation Standards:} The framework follows machine learning standards: explicit architecture documentation, reproducibility requirements (random seeds, environment specifications), validation metrics ($R^2$, root mean squared error (RMSE), mean absolute error (MAE)), and ensemble uncertainty quantification.
 \end{enumerate}
 
 \section{Scope and Limitations}
