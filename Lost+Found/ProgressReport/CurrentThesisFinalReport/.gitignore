@@ -5,9 +5,11 @@ citefix_*.png
 figchk_*.png
 lsfix_*.png
 lscont_*.png
-read_p*.png
-readfix_*.png
-read_cycle*.png
+# Every per-cycle page render, whatever this cycle happened to call it.
+# One pattern replaces the earlier read_p*/readfix_/read_cycle* trio so a new
+# prefix cannot slip through: an hourly autosave sweeps untracked files, so a
+# render committed once is a render tracked forever.
+read*.png
 crop_*.png
 sweep_*.png
 spot_*.png

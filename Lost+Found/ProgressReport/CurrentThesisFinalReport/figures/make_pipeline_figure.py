@@ -99,26 +99,27 @@ C_EDGE = "#333333"
 # it, so the effective scale is min(print_w / saved_w, print_h / saved_h).
 # Aspect 0.78 < 0.8205 keeps the figure height-capped at scale 1.0, which is
 # what makes LABEL_FS print at 8.4 pt.
+#
+# WHY THE CANVAS IS THIS TALL AND NOT SHORTER.  Every box below is positioned
+# in axes FRACTIONS, so a box's printed height is (its fraction) x PRINT_H_IN
+# while its type stays an absolute point size.  Cutting PRINT_H_IN therefore
+# shrinks the boxes and leaves the labels where they are.  Measured on
+# 2026-10-06 with figures/probe_text_in_boxes.py: at PRINT_H_IN = 3.307 in the
+# five two-line loop labels measured a 22.68 pt layout extent inside a
+# 17.50 pt box interior, an overflow of 2.58 pt above and below, and the
+# generator's own check_fits passed because that check compares WIDTH only.
+# At PRINT_H_IN = 6.718 in the same boxes are 37.4 pt tall and clear.
+#
+# A shorter landscape canvas was tried on 2026-10-06 to suit the 16:9 beamer
+# deck in Week 16 LaTeX, whose \PlotFrame height-caps every figure at
+# 0.60\textheight.  That deck is outside the scope of this thesis, and the
+# resize traded a correct thesis figure for a broken one, so it is reverted
+# here.  Anyone redoing it must re-author the layout fractions AND add the
+# vertical fit check, not just change one constant.
 TEXT_H_IN = 29.7 / 2.54 - (3.0 + 3.0) / 2.54      # 9.33071
+PRINT_H_IN = 0.72 * TEXT_H_IN                      # 6.71811
 PRINT_W_IN = 5.51181
-#  DEFECT 7 FIX (2026-10-06): the canvas was authored PORTRAIT (aspect 0.78)
-#  even though the layout below is TWO COLUMNS of six stages.  \PlotFrame
-#  places every figure with
-#      \includegraphics[width=\textwidth,height=\plotheight,keepaspectratio]
-#  (preamble.tex:524, \plotheight = 0.60\textheight), so a beamer 16:9 frame
-#  gives a box about 6.1 in x 1.89 in => box aspect ~3.23.  A figure fills the
-#  box ONLY if its own aspect reaches ~3.23; at aspect 0.786 the printed width
-#  was 0.60\textheight * 0.786 ~ 1.49 in of 6.1 in -- 24 % of the width, the
-#  worst of any deck figure.
-#  AXIOM: box widths/heights below are FRACTIONS of the whole canvas, so the
-#  box pixel height is h * PRINT_H_IN.  Shrinking PRINT_H_IN without shrinking
-#  `h` would squash the labels below the 8 pt floor; instead the width is
-#  pinned to the full text width and the height cut to the fraction the
-#  two-column stack actually needs.
-#  CITATION: matplotlib figure sizing -- inches of the SAVED image; the
-#  document rescales by min(print_w/saved_w, print_h/saved_h).
-PRINT_H_IN = 0.60 * PRINT_W_IN                       # 3.307 (was 6.718)
-WIDTH_IN = PRINT_W_IN                               # 5.512 (was 5.240)
+WIDTH_IN = PRINT_H_IN * 0.78                       # 5.240
 
 # Declared point size of every label. 8.4 gives headroom above the 8 pt floor.
 LABEL_FS = 8.4

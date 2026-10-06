@@ -46,6 +46,13 @@ AXIOMS
     A4  A label belongs to the box whose rectangle is the SMALLEST one that
         contains the label's centre; the axes patch is excluded because it
         contains every label and would otherwise win every comparison.
+    A5  A generator that closes its figure at the end of the build leaves a
+        FigureCanvasBase, which has no renderer, so every extent read
+        afterwards raises; close is suppressed while the probe observes.
+    A6  get_window_extent returns display PIXELS at the canvas dpi, so every
+        extent is multiplied by 72/dpi before it is compared with a point
+        quantity. At the default dpi of 100 that factor is 1.389, so a probe
+        that omits it understates every overflow by 28 percent.
 
 THEORIES
     T1  If a label's vertical extent lies inside the box inset by half a line
@@ -76,7 +83,6 @@ from matplotlib.text import Text  # noqa: E402
 HERE = Path(__file__).resolve().parent
 PT_PER_IN = 72.0
 TOL_PT = 0.5
-SKIP_TYPES = ("Rectangle",)
 
 
 def load(module_name: str):
@@ -150,16 +156,24 @@ def rectangles(fig):
     """
     fig.canvas.draw()
     out = []
+    renderer = fig.canvas.get_renderer()
+    scale = PT_PER_IN / fig.dpi
+    axes_patches = {id(ax.patch) for ax in fig.axes if ax.patch is not None}
     for patch in fig.findobj(match=Patch):
-        if type(patch).__name__ in SKIP_TYPES and patch in fig.axes[:1]:
+        if id(patch) in axes_patches:
             continue
         try:
-            box = patch.get_window_extent(renderer=fig.canvas.get_renderer())
+            box = patch.get_window_extent(renderer=renderer)
         except (AttributeError, TypeError):
             continue
         if box.width <= 0 or box.height <= 0:
             continue
-        out.append((patch, (box.x0, box.y0, box.x1, box.y1)))
+        out.append(
+            (
+                patch,
+                (box.x0 * scale, box.y0 * scale, box.x1 * scale, box.y1 * scale),
+            )
+        )
     return out
 
 
@@ -173,13 +187,18 @@ def measure(fig):
     """
     renderer = fig.canvas.get_renderer()
     boxes = rectangles(fig)
+    scale = PT_PER_IN / fig.dpi
     rows = []
     for text in fig.findobj(match=Text):
         if not text.get_visible() or not text.get_text():
             continue
         extent = text.get_window_extent(renderer=renderer)
-        cx = 0.5 * (extent.x0 + extent.x1)
-        cy = 0.5 * (extent.y0 + extent.y1)
+        x0t = extent.x0 * scale
+        x1t = extent.x1 * scale
+        y0t = extent.y0 * scale
+        y1t = extent.y1 * scale
+        cx = 0.5 * (x0t + x1t)
+        cy = 0.5 * (y0t + y1t)
         owners = [
             (b, r)
             for b, r in boxes
@@ -194,16 +213,35 @@ def measure(fig):
         rows.append(
             (
                 text.get_text(),
-                (y0 + half) - extent.y0,
-                extent.y1 - (y1 - half),
-                (x0 + half) - extent.x0,
-                (x1 - half) - extent.x1,
+                y0t - (y0 + half),
+                (y1 - half) - y1t,
+                x0t - (x0 + half),
+                (x1 - half) - x1t,
                 (x0, y0, x1, y1),
                 type(_owner_patch(boxes, (x0, y0, x1, y1))).__name__,
+                f"fs={text.get_fontsize()} ls={text.get_linespacing()}"
+                f" label y[{y0t:.2f},{y1t:.2f}] box y[{y0:.2f},{y1:.2f}]"
+                f" lw={_linewidth(boxes, (x0, y0, x1, y1))}",
             )
         )
-    rows.sort(key=lambda r: min(r[1:]))
+    rows.sort(key=lambda r: min(r[1:5]))
     return rows
+
+
+def _font_report(fig, text, extent_pt, scale):
+    """Describe a label's declared size and its extent-to-font ratio.
+
+    Parameters: fig, the Figure; text, the Text artist; extent_pt, the measured
+        extent height in points; scale, the pixel-to-point factor.
+    Returns: a short string naming the declared size, the line spacing, the line
+        count and the ratio of extent height to declared size.
+    Raises: none.
+    """
+    size = text.get_fontsize()
+    spacing = text.get_linespacing()
+    lines = text.get_text().count("\n") + 1
+    ratio = extent_pt / size if size else float("nan")
+    return f"fs={size} ls={spacing} lines={lines} ratio={ratio:.2f}"
 
 
 def _owner_patch(boxes, rect):
@@ -255,19 +293,21 @@ def main() -> int:
             f"{fig.get_figheight() * PT_PER_IN:.1f} pt, "
             f"{len(rows)} label(s) inside a box"
         )
-        for text, below, above, left, right in rows[:14]:
+        for text, below, above, left, right, rect, kind, frep in rows[:14]:
             print(
-                f"  {text[:44]!r:48} below {below:7.2f} above {above:7.2f} "
-                f"left {left:7.2f} right {right:7.2f}"
+                f"  {text[:40]!r:44} below {below:7.2f} above {above:7.2f} "
+                f"left {left:7.2f} right {right:7.2f}  "
+                f"owner {kind} h={rect[3] - rect[1]:.1f} {frep}"
             )
-        bad = [r for r in rows if min(r[1:]) < TOL_PT]
+        bad = [r for r in rows if min(r[1:5]) < TOL_PT]
         total_bad += len(bad)
         if bad:
             print(f"  FAILING {len(bad)} label(s):")
-            for text, below, above, left, right in bad:
+            for text, below, above, left, right, rect, kind, frep in bad:
                 print(
-                    f"    {text[:44]!r:48} below {below:7.2f} above {above:7.2f} "
-                    f"left {left:7.2f} right {right:7.2f}"
+                    f"    {text[:40]!r:44} below {below:7.2f} above {above:7.2f} "
+                    f"left {left:7.2f} right {right:7.2f}  "
+                    f"owner {kind} h={rect[3] - rect[1]:.1f} {frep}"
                 )
     verdict = "PROBE FAIL" if total_bad else "PROBE PASS"
     print(f"{verdict}: {total_bad} label(s) touching or crossing a box border")
