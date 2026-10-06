@@ -651,7 +651,7 @@ package body StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    --  Speed_Of_Sound_C
    -- -------------------------------------------------------------------------
-   --  Delegates to StellarOrion_Environment.Speed_Of_Sound.
+   --  Delegates to StellarOrion_Speed_Of_Sound.Speed_Of_Sound.
    --  The input is clamped to the documented Pre envelope [0, 6000] K so the
    --  SPARK precondition always holds; safety fallback returns 0.0.
    -- -------------------------------------------------------------------------
