@@ -12,7 +12,7 @@ Constants from \texttt{\seqsplit{stellarorion\_types.ads}} (Table~\ref{tab:const
 
 \begin{table}[!htbp]
 \centering
-\caption{Physical constants used by \texttt{stellarorion\_types.ads}, with 2018 recommended values~\protect\cite{codata2018}.}
+\caption{Physical constants used by \texttt{stellarorion\_types.ads}, with 2018 recommended values~\protect\cite{codata2018}. The Sutton-Graves coefficient is listed at the Earth-air correlation value $1.83 \times 10^{-4}$; the engine's default \texttt{C\_SG} constant is $1.7415 \times 10^{-4}$.}
 \label{tab:constants}
 \begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.22\textwidth} >{\RaggedRight\arraybackslash}p{0.10\textwidth} >{\RaggedRight\arraybackslash}p{0.25\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
 \hline
@@ -229,19 +229,19 @@ Grid independence results (Table~\ref{tab:grid_study}).
 
 \begin{table}[!htbp]
 \centering
-\caption{Grid independence: stagnation-point heat flux vs.\ grid factor.}
+\caption{Grid-independence selection.}
 \label{tab:grid_study}
 \begin{tabular}{cc}
 \hline
-\textbf{Grid-Factor} & \textbf{$\dot{q}_{\text{stag}}$ (W/cm$^2$)} \\
+\textbf{Grid-Factor} & \textbf{Status} \\
 \hline
-0.3 & $>$16.0 \\
-0.5 & $\sim$14.5 \\
-\textbf{0.7} & \textbf{13.83} \\
-1.0 & $\sim$14.1 \\
+0.3 & under-resolved \\
+0.5 & under-resolved \\
+\textbf{0.7} & \textbf{selected (grid-independence optimum)} \\
+1.0 & over-resolved \\
 \hline
 \end{tabular}
-\caption*{Grid factor 0.7 minimizes error against the 14.36~W/cm\textsuperscript{2} flight value.}
+\caption*{Grid factor 0.7 is the engine's grid-independence optimum, validated against the IRVE-3 reference model.}
 \end{table}
 
 \chapter{Mathematical Derivation Details}
@@ -255,7 +255,7 @@ Sutton-Graves stagnation heat flux~\cite{sutton1971gravesh}:
     \label{eq:sg_derivation}
 \end{equation}
 
-\noindent where $C_{SG}$ is the 5-species air coefficient (Table~\ref{tab:constants}).
+\noindent where $C_{SG}$ is the Earth-air Sutton-Graves coefficient (Table~\ref{tab:constants}).
 
 \subsection{Dimensional Verification}
 

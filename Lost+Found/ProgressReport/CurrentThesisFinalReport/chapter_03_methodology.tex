@@ -1146,7 +1146,7 @@ The PINN uses DeepXDE~\cite{lu2021deepxde}:
 \subsection{Training Methodology}
 
 \subsubsection*{Data Collection Pipeline}
-Each design: $N = 15$ Rotatable CCD points (Sec.~\ref{sec:doe_sampling}), $O(10^3)$ SPARTA DSMC timesteps, two-stage PINN refinement (Sec.~\ref{sec:pinn_two_stage}), features $\mathbf{x} = (D, \theta_c, R_N, N_t, r_t,\,m, \delta_{TPS})$ min-max scaled to $[0, 1]$.
+Each design: $N = 15$ Rotatable CCD points (Sec.~\ref{sec:doe_sampling}), $O(10^3)$ SPARTA DSMC timesteps, two-stage PINN refinement (Sec.~\ref{sec:pinn_two_stage}), features $\mathbf{x} = (R_N, r_{tor}, \theta_c)$ min-max scaled to $[0, 1]$.
 
 \subsubsection*{Train/Test Split}
 Stratified 80/20 split: 20 training samples (80\%) and 5 validation samples (20\%) for early stopping and model selection.
