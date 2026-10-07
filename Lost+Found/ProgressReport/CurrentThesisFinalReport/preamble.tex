@@ -121,13 +121,13 @@
 \setlength{\dblfloatsep}{8pt plus 2pt minus 2pt}
 % Float packing fractions: LaTeX's defaults (\topfraction 0.7, \textfraction
 % 0.2, \floatpagefraction 0.5) eject a figure + its long caption onto a
-% dedicated FLOAT PAGE whenever the block exceeds 70% of the text height --
+% dedicated FLOAT PAGE whenever the block exceeds 70% of the text height: the
 % text can never share such a page, which is exactly the one-figure-per-page
 % pattern. Allowing floats up to 90% of the page, requiring only 10% prose
 % alongside them, and demanding 90% fill before a dedicated float page makes
 % figures share their page with the surrounding narrative instead.
 % NOTE: these four are MACROS (sizeNN.clo uses \renewcommand), NOT skip
-% registers -- \setlength on them typesets the old value as page-1 garbage
+% registers; \setlength on them typesets the old value as page-1 garbage
 % instead of assigning, so \renewcommand is the only correct interface.
 \renewcommand{\topfraction}{0.9}
 \renewcommand{\bottomfraction}{0.8}

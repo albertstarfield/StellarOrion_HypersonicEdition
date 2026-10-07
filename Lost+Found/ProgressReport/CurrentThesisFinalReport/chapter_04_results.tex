@@ -395,8 +395,8 @@ The surrogate $J(\mathbf{x})$, built on closed-form correlations, cannot represe
 \subsection{Gate Protocol}
 The gate runs post-optimization in five legs~\cite{kennedy2000multi}:
 \begin{enumerate}
-    \item \textbf{Preconditions and geometry QA.} The compiled binary, Docker daemon, validation virtual environment, pipeline module and reference CSV are checked, then a fast \texttt{\seqsplit{bin/main -{}-validate-only}} geometry check (seconds-level runtime) runs. Failures report path and remedy; the gate exits with status 1.
-    \item \textbf{DSMC leg.} The round-1 winner is re-simulated with \texttt{\seqsplit{bin/main -{}-validate -{}-headless -{}-nose 2.989050 -{}-tradius 0.103301 -{}-angle 40.483513 -{}-skin scalloped -{}-steps 2200}}, writing to a dedicated directory, never overwriting the baseline reference dataset.
+    \item \textbf{Preconditions and geometry QA.} The compiled binary, Docker daemon, validation virtual environment, pipeline module and reference CSV are checked, then a fast \texttt{bin/main} validate-only geometry check (seconds-level runtime) runs. Failures report path and remedy; the gate exits with status 1.
+    \item \textbf{DSMC leg.} The round-1 winner is re-simulated with \texttt{bin/main} in headless validate mode (nose radius 2.989050, toroid radius 0.103301, half-cone angle 40.483513, skin scalloped, 2200 steps), writing to a dedicated directory, never overwriting the baseline reference dataset.
     \item \textbf{PINN leg.} The PINN refinement pipeline runs on the fresh dataset, producing a unified comparison dataset under the gate directory.
     \item \textbf{Verdict.} The gate passes if and only if $q_{hybrid} \leq Q_{target} = 165.716$\,J/cm$^2$, and records the prediction error $(q_{hybrid} - q_{analytic})/q_{analytic}$.
     \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q_{hybrid}/\allowbreak q_{analytic},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ applies to the heat-load term of $J(\mathbf{x})$; the optimizer re-runs, producing the round-2 design.

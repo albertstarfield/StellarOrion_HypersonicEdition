@@ -140,7 +140,7 @@ INPUT_TEXTS = (
     "Flight Conditions\n/ V, T∞, ρ∞",
     "Design Variables\n/ R_N, r_tor, θ_c",
 )
-ENGINE_TEXT = "Ada/SPARK Engine\n/ StellarOrion_Orion\n/ driven by run.py"
+ENGINE_TEXT = "Ada Engine\n/ StellarOrion_Orion\n/ driven by run.py"
 SOLVER_TEXTS = (
     "SPARTA\n/ DSMC Solver\n/ Docker",
     "OpenFOAM\n/ laplacianFoam\n/ (solid thermal)",
@@ -158,7 +158,7 @@ ARROW_LABEL_FEEDBACK = "Bayesian optimization\n/ feedback loop"
 
 LEGEND_ROW1 = (
     ("Input (Geometry, Conditions)", INPUT_FILL, INPUT_EDGE),
-    ("Core Engine (Ada/SPARK, run.py)", ENGINE_FILL, ENGINE_EDGE),
+    ("Core Engine (Ada, run.py)", ENGINE_FILL, ENGINE_EDGE),
 )
 LEGEND_ROW2 = (
     ("Physics Solvers (SPARTA, OpenFOAM)", SOLVER_FILL, SOLVER_EDGE),

@@ -89,7 +89,7 @@ This research provides aerothermal analysis and survivability optimization of th
 \begin{enumerate}
     \item \textbf{Geometric Representation:} The HIAD structure uses parametric 3D CAD generation via CadQuery. The 6-toroid stack based on the multidisciplinary design analysis and optimization (MDAO) baseline~\cite{rapisarda2023mdao} is the primary geometry, with variable toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as rigid and fully inflated to isolate surface-topology effects on the flow.
 
-    \item \textbf{Dimensionality:} Simulations are 2D axisymmetric (via \texttt{-{}-slice-angle}) or full 3D. The 2D mode assumes zero angle of attack ($\alpha = 0^\circ$) to maintain rotational symmetry and raise particle resolution within memory limits; full 3D covers off-axis conditions.
+    \item \textbf{Dimensionality:} Simulations are 2D axisymmetric (via the \texttt{slice-angle} option) or full 3D. The 2D mode assumes zero angle of attack ($\alpha = 0^\circ$) to maintain rotational symmetry and raise particle resolution within memory limits; full 3D covers off-axis conditions.
 
     \item \textbf{Numerical Framework:} Gas dynamics follow the Boltzmann equation, solved by the Direct Simulation Monte Carlo (DSMC) method in the SPARTA (Sandia Parallel Algorithm for Real-Time Application) solver~\cite{plimpton2014sparta}, valid for rarefied and transitional flows where the continuum assumption fails ($Kn > 0.01$).
 

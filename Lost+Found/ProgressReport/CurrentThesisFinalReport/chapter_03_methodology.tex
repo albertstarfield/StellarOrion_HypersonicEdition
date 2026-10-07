@@ -88,14 +88,14 @@ Figure~\ref{fig:governing_equations} summarizes this chain.
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
-The StellarOrion engine orchestrates the pipeline in Figure~\ref{fig:software_pipeline}. The Python entry point \texttt{run.py} drives five phases: boot, Python virtual-environment bootstrap, static analysis, Ada/SPARK build of the simulation engine, and launch. The core solver is the Ada/SPARK unit \texttt{StellarOrion\_Orion} in \texttt{src/simulation\_engine/}, which couples the SPARTA DSMC solver and OpenFOAM (Open Source Field Operation and Manipulation) solid-thermal solver, then hands surface fields to the DeepXDE PINN refinement module and to the scikit-learn Bayesian Optimization surrogate (GP Mat\'ern 5/2 with Expected Improvement, Sec.~\ref{sec:ga_opt}). Results are exported as VTK/STL for ParaView rendering and for the validation gate of Chapter~\ref{ch:results}. The recorded campaign of Chapter~\ref{ch:results} applies Bayesian Optimization with a fixed hyper-parameter refit strategy, adopted after the reproducibility finding of Sec.~\ref{sec:surrogate_repro}.
+The StellarOrion engine orchestrates the pipeline in Figure~\ref{fig:software_pipeline}. The Python entry point \texttt{run.py} drives five phases: boot, Python virtual-environment bootstrap, static analysis, Ada build of the simulation engine, and launch. The core solver is the Ada unit \texttt{StellarOrion\_Orion} in \texttt{src/simulation\_engine/}, which couples the SPARTA DSMC solver and OpenFOAM (Open Source Field Operation and Manipulation) solid-thermal solver, then hands surface fields to the DeepXDE PINN refinement module and to the scikit-learn Bayesian Optimization surrogate (GP Mat\'ern 5/2 with Expected Improvement, Sec.~\ref{sec:ga_opt}). Results are exported as VTK/STL for ParaView rendering and for the validation gate of Chapter~\ref{ch:results}. The recorded campaign of Chapter~\ref{ch:results} applies Bayesian Optimization with a fixed hyper-parameter refit strategy, adopted after the reproducibility finding of Sec.~\ref{sec:surrogate_repro}.
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline. Input column: CadQuery geometry with STL export, flight conditions with velocity, temperature and density, and design variables. Orchestration column: run.py with boot, environment bootstrap, static analysis, Ada/SPARK build and launch phases. Core engine column: the Ada/SPARK simulation engine. Solver column: SPARTA DSMC in Docker and OpenFOAM solid thermal. Model column: PINN with DeepXDE and the Bayesian Optimization surrogate, a Gaussian Process with Matern 5/2 kernel and Expected Improvement. Output column: ParaView, VTK, STL rendering. An orange feedback loop returns Bayesian Optimization designs to the engine for re-evaluation.}}%
+    \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline. Input column: CadQuery geometry with STL export, flight conditions with velocity, temperature and density, and design variables. Orchestration column: run.py with boot, environment bootstrap, static analysis, Ada build and launch phases. Core engine column: the Ada simulation engine. Solver column: SPARTA DSMC in Docker and OpenFOAM solid thermal. Model column: PINN with DeepXDE and the Bayesian Optimization surrogate, a Gaussian Process with Matern 5/2 kernel and Expected Improvement. Output column: ParaView, VTK, STL rendering. An orange feedback loop returns Bayesian Optimization designs to the engine for re-evaluation.}}%
 \includegraphics[width=\textwidth]{figures/software_pipeline.png}%
 \EndAccSupp{}%
-    \caption[StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ \texttt{run.py} orchestration phases $\rightarrow$ Ada/SPARK simulation engine $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers with PINN refinement and the Bayesian Optimization surrogate $\rightarrow$ ParaView visualization.]{StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ \texttt{run.py} orchestration phases $\rightarrow$ Ada/SPARK simulation engine $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers with PINN refinement and the Bayesian Optimization surrogate $\rightarrow$ ParaView visualization. The orange feedback loop returns Bayesian Optimization designs from the surrogate to the core engine for re-evaluation.}
+    \caption[StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ \texttt{run.py} orchestration phases $\rightarrow$ Ada simulation engine $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers with PINN refinement and the Bayesian Optimization surrogate $\rightarrow$ ParaView visualization.]{StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ \texttt{run.py} orchestration phases $\rightarrow$ Ada simulation engine $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers with PINN refinement and the Bayesian Optimization surrogate $\rightarrow$ ParaView visualization. The orange feedback loop returns Bayesian Optimization designs from the surrogate to the core engine for re-evaluation.}
     \label{fig:software_pipeline}
 \end{figure}
 
@@ -254,7 +254,7 @@ Freestream conditions match the IRVE-3 reentry trajectory point at 51.8\,km alti
     \item \textbf{Freestream Velocity ($v_{\infty}$):} 3378\,m/s (Mach $\approx$ 10.29 at altitude)
     \item \textbf{Number Density ($n$):} $1.63 \times 10^{22}$\,m$^{-3}$ (from atmospheric density $\rho = 7.851 \times 10^{-4}$\,kg/m$^3$ via $n = \rho N_A / M_{air}$)
     \item \textbf{Freestream Temperature ($T_{\infty}$):} 268.41\,K (atmospheric model, code baseline)
-    \item \textbf{Particle Weighting Factor ($f_{num}$):} $1.5 \times 10^{20}$ (configurable via \texttt{-{}-fnum})
+    \item \textbf{Particle Weighting Factor ($f_{num}$):} $1.5 \times 10^{20}$ (configurable via the \texttt{fnum} option)
 \end{itemize}
 
 \subsubsection*{Gas Model}
@@ -771,7 +771,7 @@ The optimization loop runs six steps:
     \item \textbf{Final Validation:} Re-evaluate the optimal design with SPARTA DSMC, without PINN refinement.
 \end{enumerate}
 
-The engine additionally implements a real-coded Genetic Algorithm (Sec.~\ref{sec:ga_operators}) that evolves a population using the same GP surrogate as fast evaluator. The GA shares steps 1--3, 5 and 6 with the Bayesian loop and replaces step 4 with selection, crossover and mutation.
+The engine additionally implements a real-coded Genetic Algorithm (Sec.~\ref{sec:ga_operators}) that evolves a population using the same GP surrogate as fast evaluator. The GA shares steps 1 to 3, 5 and 6 with the Bayesian loop and replaces step 4 with selection, crossover and mutation.
 
 \subsection{Design Space and Parameters}
 
@@ -805,7 +805,7 @@ where $i$ is the stratum index, $j$ the parameter dimension, $r_{i,j} \sim \math
 Each parameter gets $N$ distinct levels with one sample per level, giving space-filling coverage for small $N$.
 
 \subsubsection*{Central Composite Design (CCD) as Alternative DoE}
-The default Design of Experiments method is the Rotatable Central Composite Design (CCD) described in~\cite{Montgomery2017}, with axial distance $\alpha = (2^d)^{1/4}$ ($\alpha \approx 1.682$ at $d = 3$). For a $d$-dimensional parameter space, CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point at the origin. This campaign used $d = 3$ variables (nose radius $R_N$, toroid radius $r_{tor}$, half-cone angle $\theta_c$), giving $N = 8 + 6 + 1 = 15$ points. That 15-point CCD record is separate from the 70-entry Bayesian Optimization history of Sec.~\ref{sec:bo_results}. LHS or CCD is selectable via \texttt{-{}-doe}, with CCD as the default for the optimized IRVE-3 baseline.
+The default Design of Experiments method is the Rotatable Central Composite Design (CCD) described in~\cite{Montgomery2017}, with axial distance $\alpha = (2^d)^{1/4}$ ($\alpha \approx 1.682$ at $d = 3$). For a $d$-dimensional parameter space, CCD constructs $N = 2^d + 2d + 1$ sample points: $2^d$ factorial (corner) points at $\pm 1$ levels, $2d$ axial (star) points at $\pm \alpha$ along each axis, and $1$ center point at the origin. This campaign used $d = 3$ variables (nose radius $R_N$, toroid radius $r_{tor}$, half-cone angle $\theta_c$), giving $N = 8 + 6 + 1 = 15$ points. That 15-point CCD record is separate from the 70-entry Bayesian Optimization history of Sec.~\ref{sec:bo_results}. LHS or CCD is selectable via the \texttt{doe} option, with CCD as the default for the optimized IRVE-3 baseline.
 
 \subsection{Bayesian Optimization (Bayes Opt)}
 
