@@ -227,7 +227,7 @@ def _parse_grid_output(grid_file: str, steps: int):
     # Heat flux proxy: q = total_particle_energy / area (simplified)
     # Use max temperature as stagnation point indicator
     sigma_sb = 5.67e-8
-    epsilon = 0.85
+    epsilon = 0.80
     heat_flux_wcm2 = sigma_sb * epsilon * max_temp ** 4 / 1e4 if max_temp > 0 else 0.0
 
     # Cd estimation from momentum transfer

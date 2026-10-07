@@ -58,7 +58,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 # Pre-build matplotlib font cache ONCE before any Pool spawns.
 import matplotlib
 
-from ada_pinn_wrapper import fay_riddell_heat_flux, radiative_eq_temp
+from ada_pinn_wrapper import fay_riddell_heat_flux, tps_conduction
 from validation_pipeline import (
     _ada_drag,
     _ada_dynq,
@@ -274,27 +274,27 @@ def _compute_frame_data(step: int):
     dynq = _ada_dynq(isa["density_kgm3"], traj["velocity_ms"])
 
     # ── Composite heat flux components ──
-    # Radiative equilibrium surface temperature from SG convective heat flux.
-    # epsilon = 0.85 (typical TPS coating emissivity, Rapisarda 2023 Sec 5.5)
-    # [Citation: Stefan-Boltzmann law; Anderson (2006) Sec 17.4]
-    _emissivity = 0.85
-    t_surface_k = radiative_eq_temp(sg["heat_flux_Wm2"], _emissivity)
+    # Surface energy balance solved jointly by the Ada/SPARK TPS_Conduction
+    # solver: q_conv = εσT_s⁴ + (T_s − T_back)/R_total.  This closes the
+    # balance that the previous radiative-equilibrium-only model left open
+    # (it set q_rad = q_conv, forcing q_cond ≡ 0).
+    # epsilon = 0.80 (IRVE-3 F-TPS coating, stellarorion_types.ads:714)
+    # [Citation: Stefan-Boltzmann law; Dillman et al. AIAA 2014-4141]
+    _emissivity = 0.80
+    _tps = tps_conduction(
+        q_sg_scale=sg["heat_flux_Wm2"],
+        ke_raw=1.0, ke_ref=1.0,
+        emissivity=_emissivity,
+        t_init=300.0, t_inf=300.0)
+    t_surface_k = _tps["t_surface"]
+    t_back_k = _tps["t_back"]
+    q_cond_wm2 = (t_surface_k - t_back_k) / _tps["series_resistance_m2K_W"]
+    q_cond_wcm2 = q_cond_wm2 / 10000.0
     # Fay-Riddell continuum upper bound (uses wall temp for viscosity correction)
     fr = fay_riddell_heat_flux(isa["density_kgm3"], 1.5, traj["velocity_ms"],
                                traj["mach_number"], t_surface_k)
-    # Radiative heat flux leaving the surface.
-    #  ONE TRUTH, ONE VALUE (2026-10-06): t_surface_k was produced by
-    #  radiative_eq_temp(sg_flux, eps) -- the Ada/SPARK Radiative_Eq_Temp_C,
-    #  which solves eps*sigma*T^4 = sg_flux. The radiative flux leaving at
-    #  radiative equilibrium is therefore exactly the convective flux that drove
-    #  it, taken straight from the Ada FFI value; Python carries no copy of
-    #  sigma and re-derives nothing.
-    q_rad_wm2 = sg["heat_flux_Wm2"]
-    # TPS conduction: 1-D series resistance through composite shield
-    # q_cond = (T_surface - T_back) / (R_fabric + R_insulation + R_structure)
-    # Simplified: q_cond = q_conv - q_rad (energy balance at surface)
-    # At steady state q_cond = q_conv - q_rad; transient adds storage term.
-    q_cond_wcm2 = max(0.0, sg["heat_flux_Wcm2"] - q_rad_wm2 / 10000.0)
+    # Radiative heat flux leaving the surface (from the joint solve).
+    q_rad_wm2 = sg["heat_flux_Wm2"] - q_cond_wm2
 
     # Knudsen number: Kn = mean_free_path / char_length (vehicle diameter)
     # [Citation: Bird (1994) — Molecular Gas Dynamics, Kn defines flow regime]
@@ -347,6 +347,7 @@ def _compute_frame_data(step: int):
         "heat_flux_rad_wcm2": q_rad_wm2 / 10000.0,
         "heat_flux_cond_wcm2": q_cond_wcm2,
         "surface_temp_k": t_surface_k,
+        "back_temp_k": t_back_k,
     }
 
 

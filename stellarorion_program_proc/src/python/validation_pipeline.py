@@ -64,6 +64,7 @@ try:
     from ada_pinn_wrapper import dynamic_pressure as _ada_dynq
     from ada_pinn_wrapper import mean_free_path_viscous as _ada_mfp
     from ada_pinn_wrapper import radiative_eq_temp as _ada_radiative_temp
+    from ada_pinn_wrapper import tps_conduction as _ada_tps_conduction
     _ADA_PHYSICS_AVAILABLE = True
     print("[validation_pipeline] Ada/SPARK physics library loaded — all physics via Ada FFI")
 except OSError:
@@ -4267,34 +4268,29 @@ def _generate_rapisarda_outputs(
 
     # Material Conduction/Convection Analysis
     # [Citation: Incropera & DeWitt (2011) "Fundamentals of Heat and Mass Transfer"]
-    # [Citation: Rapisarda (2023) Sec 4.5 — Thermal analysis of HIAD TPS]
-    # SIC (Silicon Carbide) TPS material properties for IRVE-3
-    k_tps = 120.0          # Thermal conductivity [W/(m*K)] — SIC at 1000K
-    rho_tps = 3210.0       # Density [kg/m³]
-    cp_tps = 750.0         # Specific heat [J/(kg*K)]
-    thickness_tps = 0.005  # TPS thickness [m] (5mm)
-    emissivity = 0.85      # Surface emissivity (SIC)
+    # [Citation: Dillman et al. AIAA 2014-4141 — IRVE-3 F-TPS construction]
+    # IRVE-3 5-ply F-TPS layup (Nextel/Pyrogel/AKK), solved by the Ada/SPARK
+    # TPS_Conduction solver: q_conv = εσT_s⁴ + (T_s − T_back)/R_total.
+    emissivity = 0.80      # Surface emissivity (IRVE-3 F-TPS coating)
     T_ambient = 268.36     # Ambient temperature [K] (from CSV)
 
-    # Surface temperature from radiative equilibrium: q_conv = epsilon * sigma * T_s^4
-    # q_conv = per-element avg heat flux = 565,865 W/m²
-    #  ONE TRUTH, ONE VALUE (2026-10-06): the surface temperature is the
-    #  Ada/SPARK value (Radiative_Eq_Temp_C), not a Python copy of sigma_SB.
     q_conv = so_raw_hf_avg * 10000.0  # Convert W/cm² to W/m²
     if q_conv > 0:
-        T_surface = _ada_radiative_temp(q_conv, emissivity)
+        _tps = _ada_tps_conduction(
+            q_sg_scale=q_conv, ke_raw=1.0, ke_ref=1.0,
+            emissivity=emissivity, t_init=300.0, t_inf=300.0)
+        T_surface = _tps["t_surface"]
+        T_backwall = _tps["t_back"]
+        q_conduction = ((T_surface - T_backwall)
+                        / _tps["series_resistance_m2K_W"])
+        R_total = _tps["series_resistance_m2K_W"]
+        total_thickness = _tps["total_thickness_m"]
     else:
         T_surface = T_ambient
-
-    # Temperature at backwall (1D steady-state conduction)
-    # q = k * (T_surface - T_backwall) / thickness
-    T_backwall = T_surface - (q_conv * thickness_tps / k_tps)
-
-    # Heat flux through material (conduction)
-    q_conduction = k_tps * (T_surface - T_backwall) / thickness_tps
-
-    # Thermal diffusivity
-    alpha = k_tps / (rho_tps * cp_tps)
+        T_backwall = T_ambient
+        q_conduction = 0.0
+        R_total = 0.0
+        total_thickness = 0.0
 
     md_lines.append("")
     md_lines.append("## Material Conduction/Convection Analysis (1D Thermal Model)")
@@ -4308,29 +4304,33 @@ def _generate_rapisarda_outputs(
     md_lines.append(f"| Surface Temperature | {T_surface - 273.15:.0f} | °C | Celsius |")
     md_lines.append(f"| Backwall Temperature | {T_backwall:.0f} | K | 1D steady-state conduction |")
     md_lines.append(f"| Backwall Temperature | {T_backwall - 273.15:.0f} | °C | Celsius |")
-    md_lines.append(f"| ΔT (surface→backwall) | {T_surface - T_backwall:.0f} | K | Through {thickness_tps*1000:.1f}mm SIC |")
-    md_lines.append(f"| Conduction Heat Flux | {q_conduction:.0f} | W/m² | Fourier's law: q = kΔT/L |")
-    md_lines.append(f"| Thermal Conductivity (k) | {k_tps} | W/(m·K) | SIC at ~1000K |")
-    md_lines.append(f"| Thermal Diffusivity (α) | {alpha:.2e} | m²/s | k/(ρ·cp) |")
-    md_lines.append(f"| Emissivity (ε) | {emissivity} | — | SIC surface |")
-    md_lines.append(f"| TPS Thickness | {thickness_tps*1000:.1f} | mm | |")
+    md_lines.append(f"| ΔT (surface→backwall) | {T_surface - T_backwall:.0f} | K | Through {total_thickness*1000:.1f}mm 5-ply F-TPS |")
+    md_lines.append(f"| Conduction Heat Flux | {q_conduction:.0f} | W/m² | Fourier's law: q = ΔT/R_total |")
+    md_lines.append(f"| Series Resistance (R_total) | {R_total:.4f} | m²·K/W | Σ δᵢ/kᵢ (5-ply layup) |")
+    md_lines.append(f"| Emissivity (ε) | {emissivity} | — | IRVE-3 F-TPS coating |")
+    md_lines.append(f"| TPS Thickness | {total_thickness*1000:.1f} | mm | 5-ply layup |")
     md_lines.append("")
-    md_lines.append("**Physics:** Convective heat flux from DSMC → radiative equilibrium at surface →")
-    md_lines.append("1D steady-state conduction through TPS material → backwall temperature.")
+    md_lines.append("**Physics:** Convective heat flux from DSMC → joint radiative+conduction solve →")
+    md_lines.append("surface energy balance q_conv = εσT_s⁴ + (T_s − T_back)/R_total → backwall temperature.")
     md_lines.append("If T_backwall > 300°C, TPS thickness must be increased for thermal protection.")
 
     # ─── PINN-Extrapolated Material Conduction/Convection Analysis ──
     # [Citation: Incropera & DeWitt (2011) "Fundamentals of Heat and Mass Transfer"]
     # [Citation: PINN extrapolation — Raissi et al. (2019) Physics-informed neural networks]
-    # Same SIC TPS properties, but using PINN-extrapolated heat flux (300s equivalent)
+    # Same 5-ply F-TPS layup, but using PINN-extrapolated heat flux (300s equivalent)
     q_conv_pinn = so_pinn_hf_avg * 10000.0  # Convert W/cm² to W/m²
-    #  ONE TRUTH, ONE VALUE (2026-10-06): Ada/SPARK Radiative_Eq_Temp_C.
     if q_conv_pinn > 0:
-        T_surface_pinn = _ada_radiative_temp(q_conv_pinn, emissivity)
+        _tps_pinn = _ada_tps_conduction(
+            q_sg_scale=q_conv_pinn, ke_raw=1.0, ke_ref=1.0,
+            emissivity=emissivity, t_init=300.0, t_inf=300.0)
+        T_surface_pinn = _tps_pinn["t_surface"]
+        T_backwall_pinn = _tps_pinn["t_back"]
+        q_conduction_pinn = ((T_surface_pinn - T_backwall_pinn)
+                             / _tps_pinn["series_resistance_m2K_W"])
     else:
         T_surface_pinn = T_ambient
-    T_backwall_pinn = T_surface_pinn - (q_conv_pinn * thickness_tps / k_tps)
-    q_conduction_pinn = k_tps * (T_surface_pinn - T_backwall_pinn) / thickness_tps
+        T_backwall_pinn = T_ambient
+        q_conduction_pinn = 0.0
 
     md_lines.append("")
     md_lines.append("### PINN-Extrapolated Thermal Response (300s / 300,000,000 steps)")
@@ -4588,8 +4588,8 @@ def _generate_rapisarda_outputs(
         "audit": results.get("audits", {}),
         "root_causes": results.get("root_causes", {}),
         "material_conduction": {
-            "description": "1D thermal model: SIC (Silicon Carbide) TPS",
-            "reference": "Incropera & DeWitt (2011) Fundamentals of Heat and Mass Transfer",
+            "description": "1D thermal model: IRVE-3 5-ply F-TPS (Nextel/Pyrogel/AKK)",
+            "reference": "Incropera & DeWitt (2011); Dillman et al. AIAA 2014-4141",
             "surface_heat_flux_Wm2": round(q_conv, 0),
             "surface_temperature_K": round(T_surface, 0),
             "surface_temperature_C": round(T_surface - 273.15, 0),
@@ -4597,15 +4597,14 @@ def _generate_rapisarda_outputs(
             "backwall_temperature_C": round(T_backwall - 273.15, 0),
             "delta_T_K": round(T_surface - T_backwall, 0),
             "conduction_heat_flux_Wm2": round(q_conduction, 0),
-            "thermal_conductivity_WmK": k_tps,
-            "thermal_diffusivity_m2s": f"{alpha:.2e}",
+            "series_resistance_m2K_W": round(R_total, 4),
             "emissivity": emissivity,
-            "tps_thickness_mm": round(thickness_tps * 1000, 1),
-            "material": "SIC (Silicon Carbide)",
+            "tps_thickness_mm": round(total_thickness * 1000, 1),
+            "material": "IRVE-3 5-ply F-TPS (Nextel BF-20 / Pyrogel 2250 / AKK)",
         },
         "material_conduction_pinn": {
             "description": "1D thermal model using PINN-extrapolated heat flux (300s / 300,000,000 steps)",
-            "reference": "Incropera & DeWitt (2011); Raissi et al. (2019)",
+            "reference": "Incropera & DeWitt (2011); Raissi et al. (2019); Dillman et al. AIAA 2014-4141",
             "surface_heat_flux_Wm2": round(q_conv_pinn, 0),
             "surface_temperature_K": round(T_surface_pinn, 0),
             "surface_temperature_C": round(T_surface_pinn - 273.15, 0),
@@ -4613,11 +4612,10 @@ def _generate_rapisarda_outputs(
             "backwall_temperature_C": round(T_backwall_pinn - 273.15, 0),
             "delta_T_K": round(T_surface_pinn - T_backwall_pinn, 0),
             "conduction_heat_flux_Wm2": round(q_conduction_pinn, 0),
-            "thermal_conductivity_WmK": k_tps,
-            "thermal_diffusivity_m2s": f"{alpha:.2e}",
+            "series_resistance_m2K_W": round(R_total, 4),
             "emissivity": emissivity,
-            "tps_thickness_mm": round(thickness_tps * 1000, 1),
-            "material": "SIC (Silicon Carbide)",
+            "tps_thickness_mm": round(total_thickness * 1000, 1),
+            "material": "IRVE-3 5-ply F-TPS (Nextel BF-20 / Pyrogel 2250 / AKK)",
         },
     }
 

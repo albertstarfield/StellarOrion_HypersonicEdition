@@ -5394,6 +5394,121 @@ The information needed already exists at the call sites — an FFI exception is 
 3. Give each wrapper a `Post` condition stating what it returns on failure, so a caller can
    distinguish "computed" from "could not compute" in the type system rather than by
    convention.
+
+---
+
+## F83 — The published Sutton-Graves figure annotates a value computed with the superseded Mars correlation constant, because the PNG was never re-rendered after the constant was corrected
+
+*Class: provenance — the artefact is a stale render of a live computation, so the number it prints no longer matches the code that produced it*
+
+The heat-flux figure `sutton_graves_parametric.png` annotates the IRVE-3 run condition with
+**`16.14 W/cm²`**. The value the solver now produces is **`15.3575 W/cm²`**.
+
+**The annotation is computed, not hard-coded.** `generate_sutton_graves_parametric.py`
+obtains it from the live solver:
+
+```python
+451:  sg = solver["sg"]
+454:  baseline = sg(H_RUN_KM, V_RUN_MS)["heat_flux_Wcm2"]
+455:  print("[sutton_graves_parametric] solver baseline: %.4f W/cm2" % baseline)
+619:  "IRVE-3 run\ncondition\n%.2f W/cm$^2$" % baseline
+```
+
+and it resolves the correlation constant by **parsing `stellarorion_types.ads`**
+(`_c_sg_from_solver`, L269-307), taking the first float on a line carrying both `C_SG` and
+`:=`, and raising rather than falling back:
+
+> `refusing to hard-code a value so that the figure cannot drift from the solver.`
+
+So the figure is *designed* to track the solver. It simply was not re-rendered when the
+solver changed.
+
+**What changed.** The Ada spec constant was corrected from `1.83e-4` to `1.7415e-4` — the
+Earth-air value from NASA TR R-376 Table 1; `1.83e-4` is the Mars coefficient.
+`stellarorion_types.ads:61` now reads:
+
+```ada
+C_SG : constant Float := 1.7415e-4;
+```
+
+**The arithmetic, both ways**, with `ρ = 7.851042e-04 kg/m³` and `V = 3378 m/s` at 51.8 km
+and `R_N = 1.5 m`:
+
+| constant | `q = C_SG·sqrt(ρ/R_N)·V³` | reported |
+| :--- | ---: | ---: |
+| `1.83e-4` (superseded, Mars) | 161 379.4 W/m² | **16.14 W/cm²** |
+| `1.7415e-4` (correct, Earth) | 153 575.0 W/m² | **15.3575 W/cm²** |
+
+The ratio is **1.05082** (): the published annotation overstates the
+stagnation heat flux by **5.1 %**.
+
+### The artefact was stale, not merely old-dated
+
+The obvious alternative explanation — that the file *was* re-rendered and only its mtime is
+later than the value's origin — is excluded by measurement. The thesis copy and the deck
+copy are **byte-identical**:
+
+```
+thesis  CurrentThesisFinalReport/figures/sutton_graves_parametric.png   2026-10-06 20:41:31
+deck    Week 16 LaTeX/figures/so_sutton_graves.png                      2026-10-06 12:19:46
+        md5 029560f01d545f87f4002e1f6800988d   248565 bytes   (both)
+```
+
+Two files cannot differ in content if their md5s match. The later `20:41:31` mtime therefore
+did **not** represent a re-render with the corrected constant: the content is unchanged from
+the `12:19:46` copy, which was itself made **before** the rebuilt
+`lib/libstellarorion_pinn.dylib` (2026-10-06 16:41:26). A mtime is not evidence of
+provenance; the hash is.
+
+### Why this is an entry rather than a quiet re-run
+
+It is the same class as F78 and F80 — an artefact whose stated provenance no longer matches
+the code — but strictly worse, because the stale thing is the **printed number** rather than
+a line reference. F78's wrong citations mislead a reader who follows them; F83 publishes a
+value that is 5.1 % wrong in the direction of *more* heating, on a thesis figure and a
+presentation slide, with nothing on either surface to indicate it.
+
+The generator's own guard is what makes the finding statable this precisely: it refuses to
+hard-code the constant *precisely so* the figure cannot drift from the solver. The guard
+worked. The render step was skipped.
+
+### Fix
+
+Re-ran the generator. It printed:
+
+```
+[sutton_graves_parametric] solver baseline: 15.3575 W/cm2
+[sutton] wrote sutton_graves_parametric.png.tmp.png  1486x1288px  print 4.961 in  scale 1.001  effective dpi 300
+[sutton_graves_parametric] no label overlaps, no box leaves its axes, and nothing leaves the canvas
+```
+
+| | md5 | bytes |
+| :--- | :--- | ---: |
+| before | `029560f01d545f87f4002e1f6800988d` | 248565 |
+| after | `820b09f5bd0e0c07df38e02d006f23e9` | 249536 |
+
+The new render was copied to the deck; the two now match by md5. Both the thesis figure and
+the deck slide read **`15.36 W/cm²`**. Dimensions are unchanged (1486x1288), so no frame fit
+was affected.
+
+### Follow-on, recorded not resolved
+
+The deck caption on the same slide cites F21's normalisation figures,
+`26.6509 → 20.2054 W/cm²`, which are evaluated at **`R_N = 0.55 m`**, whereas this figure is
+drawn at **`R_N = 1.5 m`**. Since `sqrt(1.5/0.55) = 1.651`, the two are reconcilable in
+condition (`15.36 × 1.651 = 25.36`), and the slide states neither radius. The caption's
+`26.6509` should be re-checked against the corrected constant before the slide is considered
+final; it is not changed here because F21 is a separate entry with its own condition
+analysis.
+
+### Reproducer
+
+```bash
+cd Lost+Found/ProgressReport/CurrentThesisFinalReport/figures
+../.venv-pdf/bin/python generate_sutton_graves_parametric.py   # prints "solver baseline: 15.3575 W/cm2"
+md5 sutton_graves_parametric.png                                # 820b09f5bd0e0c07df38e02d006f23e9
+```
+
 ### Thread 4c — what else moved, and at what severity
 
 **`run.py` — no functional change.** The diff is citation style only: `[Citation: …]`
@@ -5408,6 +5523,50 @@ directory. It is figure-checking scratch that happens to be committed. I have no
 it as a finding: it is not a defect in the program, and a scratch directory being tracked
 is a repository-hygiene preference rather than a correctness issue. Recorded here so a
 later pass does not re-derive it.
+
+---
+
+## F84 — TPS conduction model: degenerate q_cond, wrong material, open energy balance
+
+*Class: theory discrepancy + silent data misreport*
+
+**Evidence.** Three independent code paths computed TPS conduction heat flux, all wrong:
+
+1. **`generate_outputs.py:297`** — `q_cond_wcm2 = max(0.0, sg["heat_flux_Wcm2"] - q_rad_wm2 / 10000.0)` where `q_rad_wm2 = sg["heat_flux_Wm2"]` (L292). Since `q_rad_wm2 / 10000.0 == sg["heat_flux_Wcm2"]`, this is **exactly 0.0 for every element**. Shipped at L348 as `"heat_flux_cond_wcm2"` and consumed at L1478 `frame_hf_cond`. The composite heatmap's "TPS Conduction" row was identically zero.
+
+2. **`validation_pipeline.py:4272-4294`** — SiC lumped model: `k_tps = 120.0`, `thickness_tps = 0.005`, `emissivity = 0.85`. `q_conduction = k_tps * (T_surface - T_backwall) / thickness_tps` where `T_backwall = T_surface - q_conv * thickness_tps / k_tps` — an **algebraic identity** returning `q_conv`, not real conduction. The vehicle flies a 6.35 mm five-ply Nextel/Pyrogel/AKK stack (effective k ≈ 0.025 W/m·K), not SiC.
+
+3. **Energy balance not closed** — `generate_outputs.py` set `T_surface` from `radiative_eq_temp(q_conv, ε)` (⇒ `q_rad = q_conv`, forcing `q_cond = 0`), then the Ada solver pinned `T_back = T_init` (⇒ `q_cond = ΔT/R_total`). Both cannot hold simultaneously.
+
+**Emissivity conflict.** `generate_outputs.py` used `_emissivity = 0.85`; authoritative Ada `TPS_Layup_IRVE3` uses `Emissivity => 0.80` (`stellarorion_types.ads:714`). Thesis `chapter_04_results.tex:273` and `chapter_05_conclusion.tex:24` both state 0.80.
+
+**Root cause.** The radiative-equilibrium-only model (`εσT⁴ = q_conv`) is a valid boundary condition only when conduction is negligible. For a 6.35 mm multi-ply TPS with `R_total = 0.256 m²·K/W`, conduction carries ~2 % of the total heat flux — small but non-zero, and the energy balance must close.
+
+**Fix.** Replaced all three paths with the joint solve from the Ada/SPARK `TPS_Conduction` solver (`ada_pinn_wrapper.tps_conduction`):
+
+- `q_conv = εσT_s⁴ + (T_s − T_back)/R_total` — nonlinear in `T_s`, solved by bisection (consistent with the existing solver).
+- `ε = 0.80` everywhere (IRVE-3 F-TPS coating).
+- `R_total = Σ δᵢ/kᵢ = 0.25605 m²·K/W` from the 5-ply layup.
+- `generate_outputs.py`: replaced L276-297 with `tps_conduction()` call; added `back_temp_k` to return dict.
+- `validation_pipeline.py`: replaced SiC model (L4268-4320) with `tps_conduction()` call; updated PINN section (L4318-4328); updated JSON export (L4590-4621).
+
+**Verified.** Energy balance residual **0.0000 %** at peak element (`q_conv = 266509.28 W/m²`, `q_rad = 261626.54 W/m²`, `q_cond = 4882.77 W/m²`). Both files parse cleanly. `tps_conduction` FFI returns `t_surface = 1550.2345 K`, `t_back = 300.0 K`, `R_total = 0.25605 m²·K/W` — matching the shipped summary.
+
+**Reproducer.**
+```bash
+cd stellarorion_program_proc && PYTHONPATH=src/python venv_validation/bin/python3 -c "
+from ada_pinn_wrapper import tps_conduction
+r = tps_conduction(q_sg_scale=266509.28, ke_raw=1.0, ke_ref=1.0,
+                   emissivity=0.80, t_init=300.0, t_inf=300.0)
+print(f'q_cond = {(r[\"t_surface\"]-r[\"t_back\"])/r[\"series_resistance_m2K_W\"]:.2f} W/m²')
+"
+# Output: q_cond = 4882.77 W/m² (non-zero, energy balance closes)
+```
+
+**What was deliberately NOT done.** Did not change the quasi-steady Dirichlet BC (`T_back = T_init = 300 K`). The thesis `chapter_04_results.tex:273` reports a backface temperature of 955.66 K from a different solve; the shipped JSON pins 300 K. This discrepancy is a separate physics decision (transient vs steady-state) and is not resolved here.
+
+---
+
 ## Summary
 
 | ID | Severity | Status | Root cause class |
@@ -5493,9 +5652,10 @@ later pass does not re-derive it.
 | F78 | provenance | **fixed 2026-10-06** | The F60 fix added three citations to `make_derived_plots.py` naming the Ada lines its corrected limits come from, and all three point at the wrong lines: `types.ads:97` for `SIC_MAX_TEMP` (actual **120**), `:101` for `KAPTON_MAX_TEMP` (actual **124**), and `:831-832` for the combined test (actual **854-855**). A consistent 23-line offset on all three, so the citations were written against an earlier revision and never re-resolved. The values are right; the pointers are not — and the pointer is the evidence for the value. |
 | F79 | correctness | **fixed 2026-10-06** | `validation_pipeline.py:2508-2518` enters a branch **because** `h264_videotoolbox` is present in the encoder list, then selects software `libx264` instead, justified by *"QSV is NOT available on Apple Silicon"* — QSV is Intel's encoder, while the one removed is Apple's VideoToolbox, which is available on Apple Silicon and whose presence is what the guard tests. A working hardware encoder is detected and bypassed for a reason concerning a different encoder. |
 | F80 | provenance | **fixed 2026-10-07** | `stellarorion_ffi.adb:654` states the wrapper *"Delegates to StellarOrion_Environment.Speed_Of_Sound"*, but that package defines `Speed_Of_Sound` **zero** times (`grep -c` = 0 in both its spec and body). The actual callee is `StellarOrion_Speed_Of_Sound.Speed_Of_Sound` (`with` at `:40`, call at `:669`). Commit `2e5b3d5` moved the function out of `Environment` and updated the `with` — but not the comment naming it. The code is correct; the pointer at the FFI boundary is not. Same class as F78. |
-| F81 | verification scope | **open** | The new `pragma SPARK_Mode (On)` unit `StellarOrion_Speed_Of_Sound` proves the result is `>= 0.0`, that its precondition envelope holds, and that no intermediate overflows (THEOREM T1, arithmetic re-checked: `1.4*287.058*6000 = 2411287.2`, `sqrt = 1552.832`). It proves **nothing about accuracy** — no relative-error postcondition on either `Speed_Of_Sound` or `Sqrt_Approx`. Measured behaviour is accurate (worst 6.3e-08 relative error over T = 50…6000 K, at float32 epsilon), so the gap is in the proof, not the behaviour — in a unit created specifically to be inside the verified subset. |
-| F82 | silent failure | **open** | `stellarorion_ffi.adb` has **19** exported wrappers, each wrapped in an exception handler, and **zero** diagnostics across all of them (`grep -c Put_Line` = 1, and that one is inside a comment at `:58`). Eleven return a bare sentinel: `0.0` for `Sutton_Graves_Heat_C`/`Fay_Riddell_Heat_C`/`Dynamic_Pressure_C`/`Deceleration_G_Load_C`/`Ballistic_Coefficient_C`/`Estimate_Cd_C`/`Mean_Free_Path_Viscous_C`/`Speed_Of_Sound_C`, and **`300.0`** for `Radiative_Eq_Temp_C`/`Backface_Temperature_C` — a plausible room temperature, indistinguishable from data. The survivability gate is a set of `<=` comparisons (`physics.adb:1428-1430`), so **every sentinel satisfies it and reads as survivable**. The project states this rule at `pinn_trajectory.adb:99` (*"a value that could not be computed must never read as one that was"*, F67/F48) but does not apply it here. Path is live: 19 `pragma Export` in the `.ads`, built by `stellarorion_pinn_lib.gpr:30-31`, and bound via ctypes at `ada_pinn_wrapper.py:1064-1082`. |
 | F81 | verification scope | **fixed 2026-10-07** | The accuracy gap is closed. The spec now carries THEOREM (T2) and a postcondition bounding `Result*Result` within `1.0 ± 1.0e-6` of `gamma*R*T` — stated on the square, which is the rational form, so the obligation is an interval comparison. **Re-measured**: worst relative error **1.050e-07** over T = 0…6000 K at 2001 points, ~10× inside the claimed bound. The comment cites the 6.3e-8 figure this finding produced. |
+| F82 | silent failure | **open** | `stellarorion_ffi.adb` has **19** exported wrappers, each wrapped in an exception handler, and **zero** diagnostics across all of them (`grep -c Put_Line` = 1, and that one is inside a comment at `:58`). Eleven return a bare sentinel: `0.0` for `Sutton_Graves_Heat_C`/`Fay_Riddell_Heat_C`/`Dynamic_Pressure_C`/`Deceleration_G_Load_C`/`Ballistic_Coefficient_C`/`Estimate_Cd_C`/`Mean_Free_Path_Viscous_C`/`Speed_Of_Sound_C`, and **`300.0`** for `Radiative_Eq_Temp_C`/`Backface_Temperature_C` — a plausible room temperature, indistinguishable from data. The survivability gate is a set of `<=` comparisons (`physics.adb:1428-1430`), so **every sentinel satisfies it and reads as survivable**. The project states this rule at `pinn_trajectory.adb:99` (*"a value that could not be computed must never read as one that was"*, F67/F48) but does not apply it here. Path is live: 19 `pragma Export` in the `.ads`, built by `stellarorion_pinn_lib.gpr:30-31`, and bound via ctypes at `ada_pinn_wrapper.py:1064-1082`. |
+| F83 | provenance | **fixed 2026-10-07** | The Sutton-Graves figure annotated `16.14 W/cm²` — the value the superseded Mars constant `C_SG = 1.83e-4` produces. The corrected Earth-air constant `1.7415e-4` (NASA TR R-376 Table 1; `stellarorion_types.ads:61`) gives `15.3575 W/cm²`, a **5.1 %** overstatement. The annotation is computed live from the solver, so the PNG was never re-rendered after the constant changed; the thesis copy and the deck copy were **byte-identical** (md5 `029560f01d545f87f4002e1f6800988d`, 248565 b), so the later mtime was not a re-render. Re-ran the generator (it printed `solver baseline: 15.3575 W/cm2`); both surfaces now read `15.36` (md5 `820b09f5bd0e0c07df38e02d006f23e9`, 249536 b). |
+| F84 | theory discrepancy | **fixed 2026-10-07** | TPS conduction model: degenerate `q_cond` (generate_outputs.py:297 `max(0, X−X)` ≡ 0), wrong material (validation_pipeline.py:4272 SiC `k=120` vs 5-ply layup `R=0.256`), open energy balance (radiative-eq-only ⇒ `q_cond=0`). Replaced all three paths with joint solve `q_conv = εσT_s⁴ + (T_s−T_back)/R_total` via `tps_conduction` FFI. Residual 0.0000 %. Emissivity unified to 0.80. |
 
 ### Final state after fixes
 
