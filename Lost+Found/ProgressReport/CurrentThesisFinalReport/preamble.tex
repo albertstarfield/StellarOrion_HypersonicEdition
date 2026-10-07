@@ -170,6 +170,13 @@
 \titleformat*{\subsection}{\bfseries}
 \titlespacing*{\chapter}{0pt}{-1.5\baselineskip}{1em}
 
+% Chapter numbering in ROMAN numerals to match the ITB standard layout: the
+% chapter itself (CHAPTER I), and every counter keyed to it - section (I.1),
+% figure (Figure I.1), table (Table I.1) and equation (I.1). The page counter
+% is untouched. \appendix redefines \thechapter to \Alph, so appendices stay
+% A, B, C.
+\renewcommand{\thechapter}{\Roman{chapter}}
+
 %menambahkan titik titik di daftar isi, gambar, tabel
 \renewcommand{\cftpartleader}{\dotfill}
 \renewcommand{\cftpartafterpnum}{\cftparfillskip}
