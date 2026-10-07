@@ -27,6 +27,13 @@ package body StellarOrion_Speed_Of_Sound is
      with Post => Sqrt_Approx'Result >= 0.0
                   and then
                     (if X > 0.0 then Sqrt_Approx'Result <= Float'Max (X, 1.0))
+                  and then
+                    (if X > 0.0 then
+                       Sqrt_Approx'Result * Sqrt_Approx'Result
+                         <= X * (1.0 + 1.0e-6)
+                       and then
+                       Sqrt_Approx'Result * Sqrt_Approx'Result
+                         >= X * (1.0 - 1.0e-6))
    is
       Y     : Float;
       Y_New : Float;

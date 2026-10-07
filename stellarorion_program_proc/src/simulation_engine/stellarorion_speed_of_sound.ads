@@ -29,9 +29,24 @@ package StellarOrion_Speed_Of_Sound is
    --    << Float'Last (~3.4e38). No intermediate can overflow.
    --  CITATION: [Anderson] Anderson, "Modern Compressible Flow," 3rd Ed.,
    --    Ch. 2 — speed of sound in an ideal gas.
+   --  THEOREM (T2) [accuracy]: the result is the square root of
+   --    gamma*R*Temperature to a relative error below 1.0e-6.  Because the
+   --    square root is irrational in general, the accuracy is stated on the
+   --    SQUARE of the result, which is a rational expression in the input:
+   --      Result*Result in [ (gamma*R*T)*(1 - 1e-6), (gamma*R*T)*(1 + 1e-6) ].
+   --    This is the formal counterpart of the measured worst-case relative
+   --    error 6.3e-8 over the 50 .. 6000 K sweep.
+   --  CITATION: [Citation: IEEE 754-2019, Section 9 — square root];
+   --    [Citation: Anderson, "Modern Compressible Flow," 3rd Ed., Ch. 2].
    function Speed_Of_Sound
      (Temperature : Float) return Float
      with Pre  => Temperature >= 0.0 and Temperature <= 6000.0,
-          Post => Speed_Of_Sound'Result >= 0.0;
+          Post => Speed_Of_Sound'Result >= 0.0
+                  and then
+                    Speed_Of_Sound'Result * Speed_Of_Sound'Result
+                      <= 1.4 * 287.058 * Temperature * (1.0 + 1.0e-6)
+                  and then
+                    Speed_Of_Sound'Result * Speed_Of_Sound'Result
+                      >= 1.4 * 287.058 * Temperature * (1.0 - 1.0e-6);
 
 end StellarOrion_Speed_Of_Sound;

@@ -1,0 +1,540 @@
+### FILE: TA s2 Other Albert_ Example.pdf
+### SIZE: 5309956 bytes
+
+### OUTLINE (0 entries)
+
+### EARLY PAGES (1-8) RAW TEXT
+
+### PAGES 9-20 RAW TEXT
+
+----- page 9 -----
+Protocol to Utilize the Thesis 
+
+Unpublished Master’s Thesis is registered and provided in the Library of Institut 
+
+Teknologi Bandung, can be accessed by any person with respect that the ownership 
+
+of the Thesis is belong to the Author by complying the Intellectual Property Rghts 
+
+(HaKI) applied in Institut Teknologi Bandung. For literature reference, the Thesis 
+
+can  be  recorded,  but  to  cite  the  Thesis,  it  is  only  allowed  if  the  Author  gives 
+
+permission and it should follow the scientific code. 
+
+Citation  of  research  result  of  this  Thesis  may  be  written  in  Bahasa  Indonesia  as 
+
+follows, 
+
+Tantono,  A.D.  (2021):  Studi  Parametrik  Performa  Aerodinamis  Sayap  Kepak 
+
+Fleksibel  Dan  Akustik  Modal  Dengan  Variasi  Sifat  Material  Dan 
+
+Morfologi, Tesis Program Magister, Institut Teknologi Bandung. 
+
+In English, it may be written as follows, 
+
+Tantono, A.D. (2021): Parametric Study of Flexible Flapping Wing Aerodynamic 
+
+Performance and Modal Acoustic with Material Properties and Morphology 
+
+Variation, Master’s Thesis, Institut Teknologi Bandung. 
+
+Copying or publishing a part of or complete Thesis should be under the permission 
+
+of The Dean of Graduate School of Institut Teknologi Bandung. 
+
+vii 
+
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 10 -----
+This page is left intentionally blank  
+
+viii 
+
+ 
+      
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 11 -----
+Acknowledgement 
+
+This thesis is all done thanks to the Lord who has lent me the strength to do it. So 
+
+let  me  introduce  myself.  I  have  finished  my  undergraduate  study  at  Institut 
+
+Teknologi  Bandung  in  2019  with  similar  bachelor  thesis  topic,  flapping  wing. 
+
+Through the joy and sorrow memories is passed by until I finally come to the final 
+
+year here in Aerospace engineering postgraduate school at FTMD ITB. 
+
+I would like to express my sincere gratitude to Mr Mochammad Agoes Moelyadi 
+
+as my supervisor who has also inspire me about aerodynamic field. He gave me 
+
+supports to study in the flying bird that actually an interesting yet complex problem. 
+
+Step by step simulation, in all of success and vain, he has teach me the basic about 
+
+how to simulate transient flow in ANSYS. Some of ANSYS help itself also comes 
+
+in handy. I also send my gratitude to Mr Javensius Sembiring as lecturer who has 
+
+already be patient with my weakness in writing this thesis to become unblemished 
+
+according to FTMD ITB template.    
+
+Thanks  to  my  family  who  never  cease  to  support  me,  morally  and  substantially. 
+
+Then  my  Sion  fellow  friends  and  HALE  UAV  ITB  teams,  especially  Yeremia 
+
+Kristianto that accompanying me during my last month on this thesis work. Also, 
+
+my junior mates in Flapping Wing UAV ITB teams who collaborate with me to 
+
+make feasible flapping wing UAV that all we hope is flying soon.      
+
+Well, I personally hope this thesis would help people to understand a little bit about 
+
+dynamic simulation and especially the flexible flapping case. And I hope this thesis 
+
+may help to create a flapping wing MAV in future. Thank you.  
+
+ix 
+
+ 
+ 
+
+
+----- page 12 -----
+This page is left intentionally blank  
+
+x 
+
+ 
+      
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 13 -----
+Contents 
+
+ABSTRACT ............................................................................................................... i 
+
+ABSTRAK ............................................................................................................... iii 
+
+THESIS APPROVAL .............................................................................................. v 
+
+Protocol to Utilize the Thesis ................................................................................ vii 
+
+Acknowledgement .................................................................................................. ix 
+
+Contents .................................................................................................................. xi 
+
+List Of Figures ....................................................................................................... xv 
+
+List Of Table ......................................................................................................... xix 
+
+Nomenclature ........................................................................................................ xxi 
+
+Introduction ........................................................................................ 1 
+
+Background ............................................................................................... 1 
+
+Problem Statement .................................................................................... 2 
+
+  Objectives .................................................................................................. 2 
+
+  Assumptions .............................................................................................. 3 
+
+Research Methodology .............................................................................. 3 
+
+Thesis Outline ........................................................................................... 4 
+
+Flying By Flexible Flapping Wing .................................................... 5 
+
+II.1  Physics of Fly by Flapping ........................................................................ 5 
+
+II.1.1 
+
+Phase of Flight ................................................................................... 7 
+
+II.1.2  Lift and Thrust in Isolated Aerofoil Assumption ............................... 8 
+
+II.1.3 
+
+Physical Phenomena for Unsteady .................................................. 14 
+
+  Dimensionless Parameters in Flapping Wing ......................................... 18 
+
+II.2.1  Reynolds Number ............................................................................ 18 
+
+II.2.2 
+
+Strouhal Number and Reduced Frequency ...................................... 18 
+
+  Configuration and Model ........................................................................ 19 
+
+II.3.1  Wing Configuration ......................................................................... 19 
+
+  Structural Dynamic ................................................................................. 20 
+
+II.4.1  Natural Frequencies ......................................................................... 20 
+
+  Fluid Structure Interaction ...................................................................... 21 
+
+II.5.1  Governing equation of RANS, Dynamic FEM and FSI Coupling .. 21 
+
+II.5.2 
+
+Fluid Structure Phenomenon ........................................................... 23 
+
+  Efficiency of Flapping Wing ................................................................... 24 
+
+  Research Methodology .................................................................... 27 
+
+xi 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 14 -----
+Equation of Motion ............................................................................. 27 
+
+Introduction to CFD, FSI, and Modal Acoustic. ................................. 27 
+
+III.2.1  Computational Fluid Dynamics ....................................................... 27 
+
+III.2.2  Fluid Structure Interaction ............................................................... 29 
+
+III.2.3  Modal Acoustic ................................................................................ 31 
+
+Pre-processing ..................................................................................... 32 
+
+III.3.1  Definition of Geometry, Domain, and Material Properties ............. 32 
+
+III.3.2  Topology and Mesh Generation ...................................................... 36 
+
+III.3.3  Boundary Condition and Setting ..................................................... 38 
+
+Post-processing .................................................................................... 45 
+
+III.4.1  General Post-processing .................................................................. 45 
+
+III.4.2  Colour Coding of Graphs. ................................................................ 47 
+
+Simulation Case and Condition ........................................................... 48 
+
+  Acoustic Model Analysis ................................................................. 53 
+
+Acoustic frequency, Natural frequency, and Resonant Frequency ..... 53 
+
+Acoustic frequency on Young Modulus Variation .............................. 54 
+
+Acoustic frequency on Density Variation ........................................... 55 
+
+  Aerodynamic Performance and Flow Analysis ............................... 57 
+
+  Data Processing and Analysis Introductory ........... Error! Bookmark not 
+
+defined. 
+
+V.1.1  Numerical Constriction .................................................................... 57 
+
+V.1.2  Phase of Flight in Time-Normalized Graphs .. Error! Bookmark not 
+defined. 
+
+  Young Modulus Variation ...................................................................... 60 
+
+V.2.1  Fixed Discrepancy Point and Varying Young Modulus Difference 61 
+
+V.2.2  Varying Discrepancy Point and Fixed Young Modulus Difference 73 
+
+V.2.3  Flow Visualization Analysis ............................................................ 81 
+
+  Density Variation .................................................................................... 83 
+
+V.3.1  Fixed Discrepancy Point and Varying Density Difference ............. 83 
+
+V.3.2  Varying Discrepancy Point and Fixed Density Difference ............. 91 
+
+V.3.3  Flow Visualization Analysis ............................................................ 99 
+
+  Summary And Suggestion ............................................................. 105 
+
+Parametric Study Summary and Design Conclusion ......................... 105 
+
+VI.1.1  Flexible Flapping Wing Modelling ............................................... 105 
+
+VI.1.2  Flapping Parameter Study .............................................................. 105 
+
+xii 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 15 -----
+VI.1.3  Wing Material Selection Outlook for Flapping Wing UAV design.
+
+106 
+
+Future Perspective ............................................................................. 108 
+
+Bibliography ........................................................................................................ 109 
+
+xiii 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 16 -----
+This page is left intentionally blank  
+
+xiv 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 17 -----
+List Of Figures 
+
+Figure I.1 Minimum cost of transport for various object (Thielicke et al., 2014) ... 2 
+Figure II.1 (a) Downstroke of bird's wing (b) Hover wing mode (c) Upstroke of 
+bird's wing (d) Glide wing mode (e) High Aspect ratio wing (f) Low AR wing 
+(Vireo, 2019). ........................................................................................................... 5 
+Figure II.2 Force vector on the take-off and cruising mode (Zhuo, 2013) .............. 7 
+Figure II.3 Vortex couples generating (Shyy, 2008) ............................................... 8 
+Figure II.4 Constant plunge velocity, no pitch, the Knoller-Betz effect (Parslew et 
+al., 2012) .................................................................................................................. 9 
+Figure II.5 Constant velocity and constant pitch angle (Parslew et al., 2012) ...... 10 
+Figure II.6 a) Pitching-plunging wing, b) Aerodynamic forces (Parslew et al., 
+2012) ...................................................................................................................... 10 
+Figure II.7 a) Velocities and forces during downstroke near to the root, b) more 
+toward the tip of wing ............................................................................................ 11 
+Figure II.8 Velocity and force on aerofoil during downstroke a) positive pitch and 
+positive angle of attack b) negative pitch and negative angle of attack c) ) negative 
+pitch and positive angle of attack .......................................................................... 12 
+Figure II.9 Velocity and force on aerofoil during upstroke a) positive pitch and 
+negative angle of attack b) positive pitch and positive angle of attack c) negative 
+pitch and negative angle of attack .......................................................................... 13 
+Figure II.10 Dynamic- stall events of NACA 0012 airfoil from McCroskey and 
+Fisher (1972) (Shyy, 2008) .................................................................................... 15 
+Figure II.11 Rapid pitch up phenomenon (Shyy, 2008) ........................................ 15 
+Figure II.12 Capture phenomenon (Shyy, 2008) ................................................... 16 
+Figure II.13 Clap and Fling Phenomenon (Shyy, 2008) ........................................ 16 
+Figure II.14 Vortex street in wake 2D, a) producing drag, b) changing, c) 
+producing thrust (Shyy, 2008) ............................................................................... 17 
+Figure II.15 Bird’s wing cross section ................................................................... 20 
+Figure II.16 External CFD-CSD Coupled Simulation ........................................... 22 
+Figure II.17 Flowchart of equations used in CFD/CSD Coupling within a timestep
+ ............................................................................................................................... 23 
+Figure III.1 Three element of CFD (Julistina, 2018) ............................................. 29 
+Figure III.2 a. One-way structural fluid coupling, b. Two-way structure fluid 
+coupling ................................................................................................................. 29 
+Figure III.3 Fluid structural simulation coupling approach ................................... 30 
+Figure III.4 Display of fluid structure simulation coupling ................................... 31 
+Figure III.5 Modal Acoustic in Workbench ........................................................... 32 
+Figure III.6 Important Aspects of Design of the Flapping Wing Vehicle ............. 33 
+Figure III.7 Wing Semispan Planform ................................................................... 34 
+Figure III.8 Orthogonal View of Base Wing Geometry for topology variation. ... 35 
+Figure III.9 Fluid Domain Mesh ............................................................................ 37 
+Figure III.10 Solid Domain Mesh .......................................................................... 38 
+Figure III.11 System Coupling General Setup ....................................................... 43 
+Figure III.12 Data Communication Setup. ............................................................. 44 
+Figure III.13 Obtaining result from User Point. .................................................... 46 
+Figure III.14 Modal frequency result from Modal Acoustic Analysis. ................. 46 
+
+xv 
+
+ 
+
+
+----- page 18 -----
+Figure III.15 Force Analyses Graph Example ....................................................... 48 
+Figure III.16 Flapping frequency vs airspeed of Columba Livia. (Pennyquick, 
+2001) ...................................................................................................................... 48 
+Figure III.17 Flapping frequency vs airspeed of Columba Livia (Pennyquick, 
+2001) ...................................................................................................................... 49 
+Figure III.18 Sweep angle of Pigeon (Pennyquick, 2001) ..................................... 49 
+Figure III.19 Equation of Motion of Spar .............................................................. 51 
+Figure IV.1 Several number of standing wave mode in cantilever beam (Ansys 
+Manual) .................................................................................................................. 53 
+Figure IV.2 Acoustic Frequency on varying Modulus .......................................... 54 
+Figure IV.3 Acoustic Frequency on varying density ............................................. 56 
+Figure V.1 Negative volume error ......................................................................... 59 
+Figure V.2 Monitor point of case @25% chord with 75% Young Modulus 
+at1.5m/s .................................................................................................................. 59 
+Figure V.3 Time-normalized graph example ......................................................... 60 
+Figure V.4 Average thrust in Young Modulus variation at some given discrepancy 
+point ....................................................................................................................... 62 
+Figure V.5 Average Lift in Young Modulus variation at some given discrepancy 
+point ....................................................................................................................... 63 
+Figure V.6 Power-to-weight ratio in Young Modulus variation at some given 
+discrepancy point ................................................................................................... 64 
+Figure V.7 Instantaneous Drag vs Time for different discrepancy point at 0m/s .. 66 
+Figure V.8 Instantaneous Lift vs Time for different discrepancy point at 0m/s .... 68 
+Figure V.9 Instantaneous torque vs Time for different discrepancy point at 0m/s 69 
+Figure V.10 Instantaneous Drag vs Time for speed variance @50% discrepancy 
+point ....................................................................................................................... 72 
+Figure V.11 Average thrust in Young Modulus variation at some given 
+discrepancy value. .................................................................................................. 73 
+Figure V.12 Average lift in Young Modulus variation at some given discrepancy 
+value ....................................................................................................................... 75 
+Figure V.13 Power-to-Weight in Young Modulus variation at some given 
+discrepancy value ................................................................................................... 76 
+Figure V.14 Instantaneous thrust in Young Modulus variation at some given 
+modulus discrepancy. ............................................................................................ 78 
+Figure V.15 Instantaneous lift in Young Modulus variation at some given 
+modulus discrepancy. ............................................................................................ 79 
+Figure V.16 Instantaneous torque in Young Modulus variation at some given 
+modulus discrepancy. ............................................................................................ 80 
+Figure V.17 Velocity u during flapping from equibrilium-downstroke-
+equilibrium-upstroke in 5 m/s @25%chord with; 25% Young Modulus (left side), 
+50% Young Modulus (middle), 75% Young Modulus (right side). ...................... 81 
+Figure V.18 Velocity u during flapping from equibrilium-downstroke-
+equilibrium-upstroke in 1 m/s @25%chord with; 25% Young Modulus (left side), 
+50% Young Modulus (middle), 75% Young Modulus (right side). ...................... 82 
+Figure V.19 Average thrust in density variation at some given discrepancy point
+ ............................................................................................................................... 84 
+Figure V.20 Average Lift in density variation at some given discrepancy point .. 85 
+Figure V.21 Power-to-weight ratio in density variation at some given discrepancy 
+
+xvi 
+
+ 
+
+
+----- page 19 -----
+point ....................................................................................................................... 86 
+Figure V.22 Instantaneous drag for density variation at each discrepancy point at 
+0.5m/s ..................................................................................................................... 88 
+Figure V.23 Instantaneous lift for density variation at each discrepancy point at 
+0.5m/s ..................................................................................................................... 89 
+Figure V.24 Instantaneous torque for density variation at each discrepancy point 
+at 0.5m/s ................................................................................................................. 90 
+Figure V.25 Average thrust in density variation at some given discrepancy value.
+ ............................................................................................................................... 92 
+Figure V.26 Average lift in density variation at some given discrepancy value. .. 93 
+Figure V.27 Power-to-weight raio in density variation at some given discrepancy 
+value. ...................................................................................................................... 94 
+Figure V.28 Instantaneous Drag in discrepancy point variation at some given 
+density gap. ............................................................................................................ 96 
+Figure V.29 Instantaneous Lift in discrepancy point variation at some given 
+density gap. ............................................................................................................ 97 
+Figure V.30 Instantaneous Torque in discrepancy point variation at some given 
+density gap. ............................................................................................................ 98 
+Figure V.31 Pressure contour during bottommost position  @25%chord with 25% 
+density  from left to right; at 0 m/s, at 0.5 m/s, at 1 m/s ...................................... 100 
+Figure V.32 Pressure contour during uppermost position  @25%chord with 25% 
+density  from left to right; at 0 m/s, at 0.5 m/s, at 1 m/s ...................................... 101 
+Figure V.33 Velocity u during flapping from equibrilium-downstroke-
+equilibrium-upstroke @25%chord with 25% density; at 2.5 m/s (left side), at 5 
+m/s (right side). .................................................................................................... 102 
+Figure V.34 Velocity v during flapping from equibrilium to downstroke 
+@25%chord with 25% density; at 0.5 m/s (first pair), at 1 m/s (second pair),  at 
+1.5 m/s (third pair). .............................................................................................. 103 
+
+xvii 
+
+ 
+ 
+ 
+
+
+----- page 20 -----
+This page is left intentionally blank 
+
+xviii 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+

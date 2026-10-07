@@ -91,7 +91,11 @@ _DATA_DIR = _PROJECT_ROOT / "data" / "runs"
 
 
 def _find_free_port() -> int:
-    """Pick a random available TCP port on localhost."""
+    """Pick a random available TCP port on localhost.
+
+    References:
+      - https://docs.python.org/3/library/socket.html#socket.socket.bind
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
@@ -103,6 +107,9 @@ def _check_docker() -> bool:
     AXIOMS:
       - Docker daemon is reachable iff 'docker info' exits 0.
       - Timeout of 10 s avoids blocking on hung daemon.
+
+    References:
+      - https://docs.docker.com/engine/reference/commandline/info/
     """
     ok, _, _ = _run(["docker", "info"], timeout=10)
     return ok
@@ -115,7 +122,8 @@ def _check_colima_status() -> str:
       - 'colima status' exits 0 iff the VM is running.
       - If colima binary is absent, returns 'NotFound'.
 
-    [Citation: https://github.com/abiosoft/colima#readme]
+    References:
+      - https://github.com/abiosoft/colima#readme
     """
     import shutil
     if shutil.which("colima") is None:
@@ -133,7 +141,8 @@ def _try_start_colima() -> bool:
       - colima start exits 0 iff VM boots and exposes Docker socket.
       - Timeout of 120 s allows VM boot and QEMU init.
 
-    [Citation: https://github.com/abiosoft/colima#readme]
+    References:
+      - https://github.com/abiosoft/colima#readme
     """
     import shutil
     if shutil.which("colima") is None:
@@ -149,7 +158,8 @@ def _stop_colima_if_requested(stop: bool) -> None:
       - colima stop exits 0 iff VM shuts down cleanly.
       - Non-fatal if colima is absent or already stopped.
 
-    [Citation: https://github.com/abiosoft/colima#readme]
+    References:
+      - https://github.com/abiosoft/colima#readme
     """
     if not stop:
         return
@@ -171,8 +181,9 @@ def _print_container_runtime_error(colima_state: str) -> None:
         for SPARTA/OpenFOAM simulations.
       - Error message must include actionable install instructions.
 
-    [Citation: https://docs.docker.com/desktop/install/mac-install/]
-    [Citation: https://github.com/abiosoft/colima#installation]
+    References:
+      - https://docs.docker.com/desktop/install/mac-install/
+      - https://github.com/abiosoft/colima#installation
     """
     import platform
     system = platform.system()
@@ -215,7 +226,11 @@ def _print_container_runtime_error(colima_state: str) -> None:
 
 
 def _sidecar_health_check(port: int, timeout_s: float = 15.0) -> bool:
-    """Poll the sidecar /api/status endpoint until it responds or timeout."""
+    """Poll the sidecar /api/status endpoint until it responds or timeout.
+
+    References:
+      - https://docs.python.org/3/library/urllib.request.html
+    """
     import urllib.error
     import urllib.request
     url = f"http://127.0.0.1:{port}/api/status"
@@ -242,14 +257,22 @@ _COLOR = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
 
 def _c(code: str, text: str) -> str:
-    """Wrap text in ANSI colour if TTY."""
+    """Wrap text in ANSI colour if TTY.
+
+    References:
+      - https://en.wikipedia.org/wiki/ANSI_escape_code
+    """
     if _COLOR:
         return f"\033[{code}m{text}\033[0m"
     return text
 
 
 def banner() -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — UI output, tested by --self-test
-    """Print the build pipeline banner."""
+    """Print the build pipeline banner.
+
+    References:
+      - https://docs.python.org/3/library/functions.html#print
+    """
     print()
     print("=" * 66)
     print("  StellarOrion HypersonicEdition -- Build Pipeline")
@@ -258,12 +281,20 @@ def banner() -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — UI output, tested b
 
 
 def phase_header(phase_num: int, title: str) -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — UI output
-    """Print a phase header."""
+    """Print a phase header.
+
+    References:
+      - https://docs.python.org/3/library/functions.html#print
+    """
     print(f"[Phase {phase_num}] {title}")
 
 
 def step_start(description: str, verbose: bool = False) -> float:  # nosec: PYTHON_FUNCTION_COVERAGE — UI output
-    """Print a step start line and return start time."""
+    """Print a step start line and return start time.
+
+    References:
+      - https://docs.python.org/3/library/time.html#time.monotonic
+    """
     print(f"  |-- {description} ...", flush=True)
     return time.monotonic()
 
@@ -281,6 +312,9 @@ def step_result(  # nosec: PYTHON_FUNCTION_COVERAGE — multi-line sig, docstrin
     On failure, stdout and stderr are ALWAYS printed in full — no
     truncation, no conditional on verbose.  The user needs the raw
     output to diagnose the problem.
+
+    References:
+      - https://docs.python.org/3/library/functions.html#print
     """
     icon = _c("32", "OK") if ok else _c("31", "XX")
     status = _c("32", "PASS") if ok else _c("31", "FAIL")
@@ -312,17 +346,29 @@ def step_result(  # nosec: PYTHON_FUNCTION_COVERAGE — multi-line sig, docstrin
 
 
 def step_info(message: str) -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — UI output
-    """Print an informational sub-step."""
+    """Print an informational sub-step.
+
+    References:
+      - https://docs.python.org/3/library/functions.html#print
+    """
     print(f"  |   |-- {message}")
 
 
 def step_leaf(message: str) -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — UI output
-    """Print a terminal sub-step (leaf node)."""
+    """Print a terminal sub-step (leaf node).
+
+    References:
+      - https://docs.python.org/3/library/functions.html#print
+    """
     print(f"  '-- {message}")
 
 
 def fatal(message: str, code: int) -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — UI output
-    """Print a fatal error and exit."""
+    """Print a fatal error and exit.
+
+    References:
+      - https://docs.python.org/3/library/sys.html#sys.exit
+    """
     print(f"\n{_c('31', 'FATAL')}: {message}")
     sys.exit(code)  # nosec: SILENT_FAILURE — intentional exit in fatal()
 
@@ -335,6 +381,9 @@ def _ensure_utf8_locale() -> None:
 
     Some build tools and gnatprove emit UTF-8 diagnostics.  If the
     locale is ASCII-only we risk mojibake or truncated output.
+
+    References:
+      - https://docs.python.org/3/library/locale.html
     """
     enc = locale.getpreferredencoding(False)
     if enc and enc.upper().replace("-", "") not in ("UTF8", "UTF8"):
@@ -350,11 +399,19 @@ class _LockFile:
     """Simple PID-based lockfile to prevent concurrent build runs."""
 
     def __init__(self, path: Path) -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — lockfile init
-        """Initialise the PID lockfile with the given filesystem path."""
+        """Initialise the PID lockfile with the given filesystem path.
+
+        References:
+          - https://docs.python.org/3/library/pathlib.html
+        """
         self._path = path
 
     def acquire(self) -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — lockfile lifecycle
-        """Acquire the lock; exit if another process holds it."""
+        """Acquire the lock; exit if another process holds it.
+
+        References:
+          - https://docs.python.org/3/library/os.html#os.kill
+        """
         if self._path.exists():
             try:
                 old_pid = int(self._path.read_text().strip())
@@ -372,7 +429,11 @@ class _LockFile:
         self._path.write_text(str(os.getpid()))
 
     def release(self) -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — lockfile lifecycle
-        """Release the lock file."""
+        """Release the lock file.
+
+        References:
+          - https://docs.python.org/3/library/pathlib.html#pathlib.Path.unlink
+        """
         self._path.unlink(missing_ok=True)
 
 
@@ -380,7 +441,11 @@ class _LockFile:
 
 
 def _clean_build_artifacts() -> None:
-    """Remove previous build artifacts."""
+    """Remove previous build artifacts.
+
+    References:
+      - https://docs.python.org/3/library/shutil.html#shutil.rmtree
+    """
     import shutil
 
     for d in _CLEAN_DIRS:
@@ -410,6 +475,9 @@ def _run(
 
     Uses subprocess.run with capture_output for deterministic
     tool output parsing.  Prints the command on failure for debugging.
+
+    References:
+      - https://docs.python.org/3/library/subprocess.html#subprocess.run
     """
     import subprocess
 
@@ -444,7 +512,11 @@ def _run(
 
 
 def _phase0_boot(clean: bool) -> None:
-    """Phase 0 -- Locale check, lockfile, optional clean."""
+    """Phase 0 -- Locale check, lockfile, optional clean.
+
+    References:
+      - https://docs.python.org/3/library/locale.html
+    """
     phase_header(0, "Boot")
 
     _ensure_utf8_locale()
@@ -795,11 +867,22 @@ def _phase2b_pinn_extrapolate(extra_args: list[str]) -> None:  # noqa: ARG001
     print(f"  Command: {' '.join(cmd)}")
     print()
 
-    result = subprocess.run(  # noqa: S603 — trusted venv, no shell
-        cmd,
-        capture_output=False,
-        text=True,
-    )
+    try:
+        result = subprocess.run(  # noqa: S603 — trusted venv, no shell
+            cmd,
+            capture_output=False,
+            text=True,
+            timeout=7200,  # 2h cap: PINN training + extrapolation can be slow
+        )
+    except subprocess.TimeoutExpired:
+        print("\n[!] PINN extrapolation pipeline timed out after 7200s")
+        raise SystemExit(1)
+    except FileNotFoundError as exc:
+        print(f"\n[!] PINN extrapolation pipeline failed: {exc}")
+        raise SystemExit(1)
+    except OSError as exc:
+        print(f"\n[!] PINN extrapolation pipeline failed: {exc}")
+        raise SystemExit(1)
 
     if result.returncode != 0:
         print(f"\n[!] PINN extrapolation pipeline failed (exit code {result.returncode})")

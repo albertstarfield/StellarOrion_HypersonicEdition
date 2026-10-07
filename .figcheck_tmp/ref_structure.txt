@@ -1,0 +1,285 @@
+### FILE: TA s2 Other Albert_ Example.pdf
+### SIZE: 5309956 bytes
+
+### OUTLINE (0 entries)
+
+### EARLY PAGES (1-8) RAW TEXT
+
+----- page 1 -----
+PARAMETRIC STUDY OF FLEXIBLE FLAPPING WING 
+AERODYNAMIC PERFORMANCE AND MODAL ACOUSTIC 
+WITH MATERIAL PROPERTIES AND MORPHOLOGY 
+VARIATION 
+
+THESIS 
+
+Submitted in Partial Fulfilment of the Requirements for the Degree of 
+Magister Teknik in Institut Teknologi Bandung 
+
+By 
+Albert Duke Tantono  
+23619016 
+(Master’s Program in Aerospace Engineering) 
+
+Supervisor: 
+Dr. -Ing. Mochammad Agoes Moelyadi, S.T.,M.Sc. 
+
+DEPARTMENT OF AEROSPACE ENGINEERING FACULTY 
+OF MECHANICAL AND AEROSPACE ENGINEERING 
+INSTITUT TEKNOLOGI BANDUNG 
+2020 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 2 -----
+This page is left intentionally blank
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 3 -----
+ABSTRACT 
+
+PARAMETRIC STUDY OF FLEXIBLE FLAPPING WING 
+AERODYNAMIC PERFORMANCE AND MODAL ACOUSTIC 
+WITH MATERIAL PROPERTIES AND MORPHOLOGY 
+VARIATION 
+
+By 
+Albert Duke Tantono 
+ID: 23619016 
+(Master’s Program in Aerospace Engineering) 
+
+Mimicking of bird flight to obtain a geometry of flapping wing aerial vehicle which 
+have higher thrust requires the understanding of flapping motion behaviour and 
+how to model the flapping motion. Flapping wing natural morphology, especially 
+on  bird,  has  unique  material  properties  characteristic.  Bird  wing  are  naturally 
+sturdier  and  heavier  in  near  leading  edge  and  gradually  decrease  as  it  goes  to 
+trailing  edge.  This  morphological  feature  are  going  to  be  represented  here  as 
+simpler  feature,  accommodated  via  discrete  discrepancy.  And  due  to  its 
+complicated nature, it is appropriate to decouple between varying parameters.  This 
+discretization however, have a huge drawback because it needs a lot of cases. This 
+study  explores  variation  of  air  speed,    discrepancy  location,  material  Young’s 
+modulus and density, while flapping frequency and geometry are define at first at 
+kept same throughout the variation. Pigeon bird is taken as a reference data for 
+modelling  the  flapping  wing.    Structure  morphologies  with  various  material 
+properties of the flapping wing such as density and Young’s modulus across the 
+wing planform are modelled to mimic the bird wing topology using the material of 
+polystyrenes family. The analysis of the flapping motion model is carried out using 
+two-way Fluid Structure Interaction method based the solution of unsteady Reynold 
+Averaged Navier-Stokes equations and transient Finite Element method to find the 
+flapping  wing  behaviour  during  flapping  cycle. In  addition,  even  though  a 
+resonance between fluid flow and structure is often neglected, when it happened it 
+could  have  catastrophic  effect  on  wing  integrity.  Therefore,  acoustic  model  is 
+carried out to find out if it is safe to implement these case or not, which frequency 
+is varied across the cases. Results and analysis of modelling of flapping shows that 
+heavier and weaker rear part is beneficial within this study cases. 
+
+Keyword:  Unsteady  flow  simulation  ,  Wing  Morphology,  Density  and  Young 
+Modulus Variation, Aerodynamic force and moment, Acoustic Model.   
+
+i 
+
+ 
+ 
+ 
+ 
+ 
+         
+
+
+----- page 4 -----
+This page is left intentionally blank 
+
+ii 
+
+ 
+      
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 5 -----
+ABSTRAK 
+
+STUDI PARAMETRIK PERFORMA AERODINAMIS SAYAP 
+KEPAK FLEKSIBEL DAN AKUSTIK MODAL DENGAN 
+VARIASI SIFAT MATERIAL DAN MORFOLOGI 
+
+Oleh 
+Albert Duke Tantono 
+NIM: 23619016 
+(Program Studi Magister Teknik Dirgantara) 
+
+Untuk  meniru  penerbangan  burung,  perlu  untuk  mendapatkan  geometri  wahana 
+udara  sayap  mengepak  yang  memiliki  daya  dorong  lebih  tinggi,  yang  mana 
+memerlukan  pemahaman 
+tentang  perilaku  gerakan  mengepak  dan  cara 
+memodelkan  gerakan  mengepak.  Morfologi  alami  sayap  kepak,  terutama  pada 
+burung memiliki ciri sifat material yang unik Sayap burung secara alami lebih kuat 
+dan lebih berat di dekat tepi depan dan secara bertahap berkurang saat menuju 
+tepi belakang. Fitur morfologi ini akan direpresentasikan di sini sebagai fitur yang 
+lebih  sederhana,  yaitu  melalui  perbedaan  diskrit.  Dan  karena  korelasinya  yang 
+rumit,  maka  tepat  untuk  memisahkan  antara  berbagai  parameter.  Namun 
+diskritisasi  ini  memiliki  kekurangan  yang  sangat  besar  karena  membutuhkan 
+banyak kasus. Studi ini mengeksplorasi variasi kecepatan udara, lokasi perbedaan, 
+modulus dan densitas material Young, sedangkan frekuensi flapping dan geometri 
+didefinisikan  pada  awalnya  dan  tetap  sama  sepanjang  variasi.  Burung  merpati 
+diambil  sebagai  data  referensi  untuk  pemodelan  sayap  kepak.  Topologi  struktur 
+dengan  variasi  sifat  material  dari  sayap  yang  mengepak  seperti  kepadatan  dan 
+modulus Young di seluruh bidang sayap dimodelkan untuk meniru topologi sayap 
+burung dengan menggunakan bahan dari keluarga polistiren. Analisis model gerak 
+mengepak dilakukan dengan menggunakan metode Interaksi Struktur Fluida dua 
+arah berdasarkan solusi persamaan Reynold Averaged Navier-Stokes unsteady dan 
+metode  Elemen  Hingga  transien  untuk  mengetahui  perilaku  sayap  mengepak 
+selama siklus mengepak. Selain itu, meskipun resonansi antara aliran fluida dan 
+struktur  sering  terabaikan,  namun  jika  terjadi  hal  tersebut  dapat  berdampak 
+bencana  pada  integritas  sayap.  Oleh  karena  itu,  model  akustik  dilakukan  untuk 
+mengetahui apakah aman untuk mengimplementasikan kasus ini atau tidak, yang 
+frekuensinya  bervariasi  antar  kasus.  Hasil  dan  analisis  pemodelan  flapping 
+menunjukan  bahwa  bagian  belakang  sayap  yang  lebih  berat  dan  lentur 
+menguntungkan untuk kasus dalam study ini. 
+
+Kata kunci: Simulasi aliran tidak tunak, Morfology Sayap, Variasi Densitas dan 
+
+Modulus Young, Gaya dan momen aerodinamis, Model Akustik. 
+
+iii 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 6 -----
+This page is left intentionally blank 
+
+iv 
+
+ 
+      
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 7 -----
+THESIS APPROVAL 
+
+PARAMETRIC STUDY OF FLEXIBLE FLAPPING WING 
+AERODYNAMIC PERFORMANCE AND MODAL ACOUSTIC 
+WITH MATERIAL PROPERTIES AND MORPHOLOGY 
+VARIATION 
+
+by : 
+
+Albert Duke Tantono 
+ 23619016 
+
+This thesis has been approved as a requirement for the degree of Master 
+Engineering in Department of Aerospace Engineering, Faculty of Mechanical and 
+Aerospace Engineering, Institut Teknologi Bandung. 
+
+Bandung, January 6th  2021  
+Supervisor 
+
+Dr. -Ing. Mochammad Agoes Moelyadi,S.T.,M.Sc. 
+NIP. 19607091999031002 
+
+v 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+----- page 8 -----
+This page is left intentionally blank 
+
+vi 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
