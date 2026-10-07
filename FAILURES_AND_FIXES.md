@@ -5439,7 +5439,7 @@ and `R_N = 1.5 m`:
 | `1.83e-4` (superseded, Mars) | 161 379.4 W/m² | **16.14 W/cm²** |
 | `1.7415e-4` (correct, Earth) | 153 575.0 W/m² | **15.3575 W/cm²** |
 
-The ratio is **1.05082** (): the published annotation overstates the
+The ratio is **1.05082** (`1.83e-4 / 1.7415e-4`): the published annotation overstates the
 stagnation heat flux by **5.1 %**.
 
 ### The artefact was stale, not merely old-dated

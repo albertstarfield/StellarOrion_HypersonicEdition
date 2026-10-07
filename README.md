@@ -877,5 +877,28 @@ cd Lost+Found/ProgressReport && bash reassemble.sh
 
 Original `.tar.zst` files are excluded from git tracking (see `.gitignore`). Split parts are tracked.
 
+## 🤖 Computer Automation LLM Assisted Development
+
+This project was developed with the assistance of LLM agents using the following models:
+
+- Gemini Flash 3.1
+- Gemini Pro 3.1
+- Gemini Flash 3.5
+- MiMo v2.5
+- MiMo v2.6 Flash
+- MiniMax
+- Ox Alpha
+- LongCat 2.5
+- DeepSeek Flash
+- Qwen 3.5
+- Gemini 3.6 Flash
+- Fledge Alpha
+- Fledge-Alpha
+- Hy3
+- Space Bunny
+- Snowball Enaga
+
+> **Note:** Some models may or may not be available to the public and may be part of private model and/or temporary beta model and/or finetuned model.
+
 ## 📚 References
 For detailed scientific citations and mission parameters (IRVE-3, LOFTID), see [REFERENCES.MD](REFERENCES.MD).
