@@ -112,8 +112,8 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.21\textwidth}>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.30\textwidth}@{}}
 \toprule
 \textbf{Category} & \textbf{Parameter} & \textbf{Default Value} \\ \midrule
-\multirow{5}{=}{\textbf{DSMC (SPARTA)}} & Steps (optimization) & 1100 \\
- & Steps (sample) & 500 \\
+\multirow{5}{=}{\textbf{DSMC (SPARTA)}} & Steps (optimization) & 1000 \\
+ & Steps (sample) & 1000 \\
  & Grid factor & 0.7 \\
  & Particle weighting ($f_{\text{num}}$) & $1.5 \times 10^{20}$ \\
  & Chemistry model & 5-species (N$_2$, O$_2$, NO, N, O) \\ \midrule
@@ -133,9 +133,9 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
  & Amplitude $c_0$, length scales $\ell_j$ & Initialized at 1, refit in $[10^{-3}, 10^{3}]$ \\
  & Acquisition & Expected Improvement, $\xi = 0.01$ \\
  & Budget & 20 LHS + 50 Bayes Opt ($n_{eval} = 70$), seed 42 \\ \midrule
-\multirow{3}{=}{\textbf{GA Optimization}} & Generations & 20 000 \\
- & Stagnation stop & 5 windows $\times$ 1000 generations \\
- & Constraint limits & $T_{\text{back}} < 350$ K, $g < 25g$ \\
+\multirow{3}{=}{\textbf{GA Optimization}} & Generations & 200 \\
+ & Stagnation stop & 20 generations \\
+ & Constraint limits & $T_{\text{back}} < 773$ K, $g < 25g$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -741,18 +741,17 @@ The optimization loop runs six steps:
 
 \begin{table}[!htbp]
     \centering
-    \caption{Optimization design variables and their bounds, from \protect\cite{rapisarda2023mdao}.}
+    \caption{Optimization design variables and their bounds, as implemented in the genetic-algorithm search.}
     \label{tab:design_variables}
     \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.25\textwidth}|c|c|>{\RaggedRight\arraybackslash}X|}
         \hline
         \textbf{Variable} & \textbf{Symbol} & \textbf{Bounds} & \textbf{Unit} \\ \hline
         Aeroshell diameter & $D$ & $[0.5, 15.0]$ & m \\ \hline
         Half-cone angle & $\theta_c$ & $[40, 80]$ & deg \\ \hline
-        Nose-cone radius & $R_N$ & $[0.1, 2.0]$ & m \\ \hline
+        Nose-cone radius & $R_N$ & $[0.01, 1.0]$ & m \\ \hline
         Toroid count & $N_t$ & $[1, 12]$ & n/a \\ \hline
-        Toroid radius & $r_t$ & $[0.05, 0.3]$ & m \\ \hline
-        Total mass & $m$ & $[50, 500]$ & kg \\ \hline
-        TPS thickness & $\delta_{TPS}$ & $[0.005, 0.05]$ & m \\ \hline
+        Toroid radius & $r_t$ & $[0.01, 0.5]$ & m \\ \hline
+        Total mass & $m$ & $[10, 1000]$ & kg \\ \hline
     \end{tabularx}
 \end{table}
 
@@ -914,7 +913,7 @@ Constraint functions $g_j(\mathbf{x})$ encode the physical limits:
     \begin{tabular}{|l|l|c|}
         \hline
         \textbf{Constraint} & \textbf{Function $g_j(\mathbf{x})$} & \textbf{Limit} \\ \hline
-        Backface temperature & $T_{back}(\mathbf{x}) - T_{back}^{max}$ & 350 K \\ \hline
+        Backface temperature & $T_{back}(\mathbf{x}) - T_{back}^{max}$ & 773 K \\ \hline
         Peak deceleration & $n_G(\mathbf{x}) - n_G^{max}$ & 25$g$ \\ \hline
         Structural integrity & $D(\mathbf{x}) - D^{max}$ & 15.0 m \\ \hline
         Toroid manufacturability & $N_t(\mathbf{x}) - 12$ & 12 \\ \hline
