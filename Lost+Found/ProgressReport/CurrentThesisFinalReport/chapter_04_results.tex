@@ -364,6 +364,28 @@ The history opens at $J = 1.6944$ at the first evaluation, so the incumbent ente
 
 Since $\dot{q} \propto 1/\sqrt{R_N}$ in the Sutton-Graves scaling~\cite{sutton1971gravesh}, nearly doubling the nose radius is the cheapest route to heat-load reduction; toroid radius and half-cone angle then recover the drag and ballistic-coefficient terms an enlarged nose would penalize. The optimizer finds the trade-off a designer would reach analytically.
 
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Two-panel comparison of the HIAD geometry before and after optimization. The left panel shows the IRVE-3 default geometry with nose radius 1.5 m, toroid radius 0.135 m, and half-cone angle 60 degrees. The right panel shows the Bayesian optimum with nose radius 2.9891 m, toroid radius 0.1033 m, and half-cone angle 40.48 degrees. The optimized geometry has a larger nose, tighter toroid, and steeper cone angle.}}%
+    \includegraphics[width=\textwidth]{figures/optimization_comparison.png}%
+    \EndAccSupp{}%
+    \caption[Topology before and after optimization.]{Topology before and after optimization. The left panel shows the IRVE-3 default geometry ($R_N = 1.5$\,m, $r_{tor} = 0.135$\,m, $\theta_c = 60^\circ$); the right panel shows the Bayesian optimum ($R_N = 2.9891$\,m, $r_{tor} = 0.1033$\,m, $\theta_c = 40.48^\circ$). The optimized geometry reduces drag coefficient from 1.6073 to 1.5725 and total heat load from 219.10 to 155.21\,J/cm$^2$ ($-29.16\,\%$).}
+    \label{fig:optimization_comparison}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Three-dimensional scatter plot of the design-space samples. The axes are nose radius, toroid radius, and half-cone angle. The color of each point represents the evaluated cost. The plot shows the 70-evaluation budget: 20 Latin-Hypercube initial samples followed by 50 Bayesian optimization iterations.}}%
+    \includegraphics[width=\textwidth]{figures/bo_optimization_3d.png}%
+    \EndAccSupp{}%
+    \caption[Design-space samples in the 70-evaluation optimization campaign.]{Design-space samples in the 70-evaluation optimization campaign. The axes are nose radius $R_N$, toroid radius $r_{tor}$, and half-cone angle $\theta_c$. The color of each point represents the evaluated cost $J(\mathbf{x})$. The plot shows the 20 Latin-Hypercube initial samples followed by 50 Bayesian optimization iterations, with the cost decreasing as the search progresses.}
+    \label{fig:bo_optimization_3d}
+\end{figure}
+
+\subsection{MoP Surrogate Chaos}
+\label{sec:mop_chaos}
+The MoP surrogate, used in earlier optimization rounds, exhibited chaotic behavior: two consecutive runs at the fixed seed 42 returned different optima ($J = 1.602195$ vs $1.608508$). The cause is the GP hyper-parameter fit (scikit-learn \texttt{lbfgs} on the Mat\'ern length scale hitting the 1000.0 upper bound), not the sampling seed. This finding motivated the transition from MoP to Bayesian Optimization with a fixed hyper-parameter refit strategy, as described in Sec.~\ref{sec:bo_results}.
+
 \section{Hybrid Validation Gate}
 \label{sec:hybrid_gate}
 

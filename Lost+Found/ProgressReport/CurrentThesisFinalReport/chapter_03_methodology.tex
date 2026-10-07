@@ -323,6 +323,15 @@ A Grid Convergence Index (GCI) study checked grid-resolution independence using 
 
 The grid factor \textbf{0.7} is the default for all production runs: Table~\ref{tab:mesh_independence} shows under $2\%$ $C_d$ variation there, at lower cost than the ultra-fine \textbf{1.0} grid.
 
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Two-dimensional axisymmetric schematic of the SPARTA computational domain. A dashed rectangular farfield boundary encloses the domain. A horizontal symmetry plane runs along the bottom. The HIAD vehicle, comprising a semicircular nose and a toroidal body, sits on the symmetry plane. A dashed orange curve marks the bow shock in front of the vehicle. A coarse Cartesian mesh overlay covers the domain.}}%
+    \includegraphics[width=\textwidth]{figures/domain_mesh.png}%
+    \EndAccSupp{}%
+    \caption[SPARTA computational domain and Cartesian mesh schematic.]{SPARTA computational domain and Cartesian mesh schematic. The domain is a two-dimensional axisymmetric half-domain with the symmetry plane along the bottom edge. The farfield boundary is shown as a dashed rectangle. The HIAD vehicle sits on the symmetry plane, with the bow shock forming in front of it. The Cartesian mesh overlay illustrates the grid structure used for collision pairing and macroscopic sampling, with a grid factor of 0.7 for production runs.}
+    \label{fig:domain_mesh}
+\end{figure}
+
 \section{Surface Data Extraction and Flight Metrics}
 
 \subsection{Surface Computes}
@@ -343,6 +352,15 @@ SPARTA accumulates surface force and energy data via \texttt{dump surf}; surface
         6 & Azimuthal Force ($f_z$) & N \\ \hline
     \end{tabular}
 \end{table}
+
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Linear pipeline diagram of surface data extraction. SPARTA dump surf feeds raw data to Parse Surface Data, which feeds parsed data to Surface Integration, which feeds integrated data to Flight Metrics q Q Cd.}}%
+    \includegraphics[width=\textwidth]{figures/result_extraction.png}%
+    \EndAccSupp{}%
+    \caption[Surface data extraction and flight metrics pipeline.]{Surface data extraction and flight metrics pipeline. SPARTA \texttt{dump surf} produces raw per-cell surface data, which is parsed into physical variables, integrated over the vehicle surface, and reduced to flight metrics: peak heat flux $\dot{q}$, total heat load $Q$, and drag coefficient $C_d$. These metrics are compared against IRVE-3 flight data for validation.}
+    \label{fig:result_extraction}
+\end{figure}
 
 \subsection{Ballistic Coefficient (\texorpdfstring{$\beta$}{beta})}
 \label{sec:ballistic_coefficient}
@@ -610,6 +628,21 @@ The SPARTA to PINN checkpoint exchange:
         \mathcal{L}_{data} = \frac{1}{N_{obs}} \sum_{k=1}^{N_{obs}} \sum_{m=1}^{3} \big|\hat{y}_m(\mathbf{x}_k) - y_m^{obs}(\mathbf{x}_k)\big|^2
     \end{equation}
 \end{enumerate}
+
+\subsection{Kriging Denoising}
+\label{sec:kriging_denoise}
+The SPARTA grid dump contains cell-centered macroscopic quantities with statistical noise from the finite number of simulated particles. Before the data enters the PINN training pipeline, a kriging denoising step smooths the particle noise while preserving the physical gradients. The kriging denoising uses a Gaussian process with a Mat\'ern 5/2 kernel to interpolate the noisy cell values onto a regular grid, effectively averaging out the statistical fluctuations.
+
+Figure~\ref{fig:kriging_denoise} shows the kriging denoising applied to the SPARTA cell field at pipeline step 500. The top row shows the raw SPARTA output for density $\rho$, temperature $T$, velocity $v$, and pressure $p$. The bottom row shows the kriged output for the same quantities. The kriging denoising reduces cell-to-cell noise while preserving the shock structure and boundary-layer gradients.
+
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Two-row panel showing kriging denoising of the SPARTA cell field. The top row shows raw SPARTA output for density, temperature, velocity, and pressure. The bottom row shows the kriged output for the same quantities. The kriging denoising reduces cell-to-cell noise while preserving shock structure and boundary-layer gradients.}}%
+    \includegraphics[width=\textwidth]{figures/kriging_denoise.png}%
+    \EndAccSupp{}%
+    \caption[Kriging denoising of the SPARTA cell field at pipeline step 500.]{Kriging denoising of the SPARTA cell field at pipeline step 500. The top row shows raw SPARTA output for density $\rho$, temperature $T$, velocity $v$, and pressure $p$. The bottom row shows the kriged output. The kriging denoising reduces cell-to-cell noise while preserving shock structure and boundary-layer gradients.}
+    \label{fig:kriging_denoise}
+\end{figure}
 
 \subsection{Two-Stage Training Protocol}
 \label{sec:pinn_two_stage}
@@ -942,6 +975,15 @@ Multiple solver backends address different flow regimes:
         High-Density (Future) & Fluent + PINN & For low-altitude peak heating ($Kn < 0.01$) \\ \hline
     \end{tabularx}
 \end{table}
+
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Box-and-arrow diagram of the multi-solver coupling. The top row shows SPARTA DSMC Solver feeding surface heat flux to OpenFOAM Solid Thermal, which feeds backface temperature to Survivability Check. The bottom row shows PINN DeepXDE feeding refined field to MoP Surrogate PyTorch, which feeds to GA Optimization. Vertical arrows connect SPARTA to PINN and OpenFOAM to MoP. An orange feedback loop returns from GA Optimization to SPARTA.}}%
+    \includegraphics[width=\textwidth]{figures/solver_coupling.png}%
+    \EndAccSupp{}%
+    \caption[Multi-solver coupling and data exchange diagram.]{Multi-solver coupling and data exchange diagram. The top row shows the gas-phase to solid-phase coupling: SPARTA DSMC provides surface heat flux to OpenFOAM solid thermal, which returns backface temperature to the survivability check. The bottom row shows the machine-learning pipeline: PINN refines the flow field, the MoP surrogate accelerates evaluation, and GA drives optimization. Vertical arrows indicate data exchange between the gas and ML layers. The orange feedback loop returns new designs from GA to SPARTA for re-evaluation.}
+    \label{fig:solver_coupling}
+\end{figure}
 
 \section{Boundary Conditions and Domain Setup}
 
