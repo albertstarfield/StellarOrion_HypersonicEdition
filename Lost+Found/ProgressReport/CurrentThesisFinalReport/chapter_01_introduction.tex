@@ -38,7 +38,7 @@ Optimizing HIAD geometry for survivability (balancing drag performance, peak hea
 An integrated framework is required: (1) DSMC rarefied gas dynamics to predict aerothermal loads in the locally non-continuum shock layer, (2) automated parametric geometry generation, and (3) physics-informed machine learning with surrogate-based optimization to identify optimal HIAD configurations.
 
 \section{Research Objective}
-The objective is to develop and validate a computational framework for aerothermal analysis and survivability optimization of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD), based on the SPARTA DSMC solver~\cite{plimpton2014sparta}. It integrates physics-informed neural network (PINN) refinement~\cite{raissi2019pinn} and genetic algorithm optimization~\cite{Goldberg1989}.
+The objective is to develop and validate a computational framework for aerothermal analysis and survivability optimization of a Hypersonic Inflatable Aerodynamic Decelerator (HIAD), based on the SPARTA DSMC solver~\cite{plimpton2014sparta}. It integrates physics-informed neural network (PINN) refinement~\cite{raissi2019pinn} and surrogate-based Bayesian optimization with a Genetic Algorithm search~\cite{rasmussen2003,Goldberg1989}.
 
 Specific objectives:
 \begin{enumerate}
@@ -64,14 +64,14 @@ Four gaps remain in HIAD aerothermal analysis:
 
     \item \textbf{PINN-DSMC Hybrid Approach:} Physics-Informed Neural Networks have been applied to CFD post-processing, but not as a smoothing layer for noisy DSMC particle data in HIAD applications.
 
-    \item \textbf{Multi-Objective Survivability Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and structural mass for HIAD configurations with surrogate-assisted genetic algorithms has not been demonstrated.
+    \item \textbf{Multi-Objective Survivability Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and structural mass for HIAD configurations with surrogate-assisted optimization has not been demonstrated.
 \end{itemize}
 
 \section{Novelty and Contributions}
 This work makes the following novel contributions:
 
 \begin{enumerate}
-    \item \textbf{First Integrated DSMC-PINN-Optimization Framework for HIAD:} This study presents the first framework coupling parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics~\mbox{\cite{plimpton2014sparta}}, Physics-Informed Neural Network refinement~\cite{lu2021deepxde}, and surrogate-assisted genetic algorithm optimization for HIAD survivability analysis.
+    \item \textbf{First Integrated DSMC-PINN-Optimization Framework for HIAD:} This study presents the first framework coupling parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics~\mbox{\cite{plimpton2014sparta}}, Physics-Informed Neural Network refinement~\cite{lu2021deepxde}, and surrogate-based Bayesian optimization (with a Genetic Algorithm search) for HIAD survivability analysis.
 
     \item \textbf{DSMC-Based Design Space Exploration:} Unlike prior continuum CFD (RANS/LES) studies, this framework employs particle-based DSMC to capture the locally non-continuum shock layer above 50~km, enabling physically correct aerothermal loads for inflatable decelerators.
 
@@ -139,7 +139,7 @@ Validation against IRVE-3 flight data~\cite{rapisarda2023mdao} uses the Sutton-G
 \section{Thesis Outline}
 \textbf{CHAPTER I} Background, problem statement, objectives, scope, methodology, and outline.
 
-\textbf{CHAPTER II} Hypersonic aerothermodynamics, the Boltzmann equation and DSMC methodology~\cite{bird1994molecular}, the Sutton-Graves correlation~\cite{sutton1971gravesh}, Physics-Informed Neural Networks~\cite{raissi2019pinn}, genetic algorithm optimization~\cite{Goldberg1989}, and IRVE-3 and LOFTID flight experiments~\cite{dillman2014irve3flight,dinonno2026loftid}.
+\textbf{CHAPTER II} Hypersonic aerothermodynamics, the Boltzmann equation and DSMC methodology~\cite{bird1994molecular}, the Sutton-Graves correlation~\cite{sutton1971gravesh}, Physics-Informed Neural Networks~\cite{raissi2019pinn}, Bayesian Optimization surrogates and genetic algorithm search~\cite{rasmussen2003,Goldberg1989}, and IRVE-3 and LOFTID flight experiments~\cite{dillman2014irve3flight,dinonno2026loftid}.
 
 \textbf{CHAPTER III} Methodology: parametric geometry generation with CadQuery, SPARTA DSMC configuration, PINN refinement, surrogate-based Bayesian Optimization (with the Genetic Algorithm search), and validation against flight data.
 

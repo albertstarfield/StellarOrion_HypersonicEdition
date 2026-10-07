@@ -1299,7 +1299,7 @@ The objective is greatest survivability: decelerate the payload to safe landing 
 
 \subsection{Why Optimization is Necessary}
 
-\noindent Engineering intuition alone cannot solve this problem: raising $\theta_c$ reduces stagnation heating but hurts stability, $N_t$ is discrete against continuous $r_{tor}$ (Eq.~\ref{eq:toroid_radius}), and evaluations near $\mathcal{O}(10^2)$ force surrogate-accelerated GA search for Pareto-optimal configurations.
+\noindent Engineering intuition alone cannot solve this problem: raising $\theta_c$ reduces stagnation heating but hurts stability, $N_t$ is discrete against continuous $r_{tor}$ (Eq.~\ref{eq:toroid_radius}), and evaluations near $\mathcal{O}(10^2)$ force a surrogate-accelerated search for Pareto-optimal configurations.
 
 \begin{figure}[htbp]
     \centering
@@ -1342,4 +1342,4 @@ This review establishes six pillars:
     \item \textbf{Optimization Theory:} MDO with Latin Hypercube sampling~\cite{mckay1979lhs}, Bayes Opt surrogates~\cite{morris1992}, and genetic algorithm search~\cite{Goldberg1989} navigates the coupled aerodynamic-thermal-structural design space (Section~\ref{sec:opt_theory}).
 \end{enumerate}
 
-\noindent Chapter~3 uses these foundations: the Rapisarda geometry engine~\cite{rapisarda2023mdao}, SPARTA DSMC~\cite{plimpton2014sparta}, PINN reconstruction~\cite{lu2021deepxde} and genetic algorithm optimization~\cite{Goldberg1989}.
+\noindent Chapter~3 uses these foundations: the Rapisarda geometry engine~\cite{rapisarda2023mdao}, SPARTA DSMC~\cite{plimpton2014sparta}, PINN reconstruction~\cite{lu2021deepxde}, Bayesian Optimization surrogates~\cite{rasmussen2003} and genetic algorithm search~\cite{Goldberg1989}.

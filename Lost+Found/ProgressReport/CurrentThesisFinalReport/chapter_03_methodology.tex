@@ -764,7 +764,7 @@ The optimization loop runs six steps:
 
 \begin{enumerate}
     \item \textbf{Sampling:} Generate $N$ design points by Stratified LHS (or a rotatable CCD screen) across $\mathbf{x} \in \mathbb{R}^d$.
-    \item \textbf{Simulation:} Evaluate each design with SPARTA DSMC (optionally PINN-refined) for performance metrics $(\beta, \dot{q}, T_{back}, n_G)$.
+    \item \textbf{Simulation:} Evaluate each design for the performance metrics $(\beta, \dot{q}, T_{back}, n_G)$: the full-fidelity loop runs SPARTA DSMC (optionally PINN-refined), while the recorded campaign of Sec.~\ref{sec:bo_results} scores each design with the closed-form cost of Sec.~\ref{sec:cost_function} and never calls the solver during the search.
     \item \textbf{Bayes Opt Training:} Fit a Gaussian Process surrogate on the $N$ results, giving posterior mean $\mu(\mathbf{x})$ and deviation $\sigma(\mathbf{x})$.
     \item \textbf{Bayesian Acquisition:} Score $N_{cand} = 5000$ candidate designs with Expected Improvement (Eq.~\eqref{eq:ei}) and append the arg-max to the history; this is the recorded campaign of Sec.~\ref{sec:bo_results}.
     \item \textbf{Constraint Filtering:} Apply physics-based penalty functions to eliminate non-viable designs.
@@ -861,14 +861,14 @@ The GP models the scalar cost $J(\mathbf{x})$ directly; the multi-objective char
 
 \subsubsection*{Cost Function Derivation}
 \label{sec:cost_function}
-The optimizer minimizes a scalar cost $J: \mathbb{R}^3 \to \mathbb{R}_{\geq 0}$, lowest total heat load, with remaining terms as regularizers holding the design near the aerodynamically validated state.
+The optimizer minimizes a scalar cost $J \geq 0$, lowest total heat load, with remaining terms as regularizers holding the design near the aerodynamically validated state. The recorded Bayesian campaign of Sec.~\ref{sec:bo_results} minimizes $J$ over the three active variables below, while the GA search of this section operates on the six-variable space of Table~\ref{tab:design_variables} and scores each individual with the same closed form, in which vehicle mass cancels between candidate and reference.
 
 \begin{equation}
 \label{eq:cost_function_implemented}
     J(\mathbf{x}) = w_{Q}\, H_{L}(\mathbf{x}) + w_{q}\, F(\mathbf{x}) + w_{\beta}\, B(\mathbf{x}) + w_{C_d}\, \tilde{D}(\mathbf{x}) + \lambda_{p}\, \left( P_{R} + P_{N} + P_{p} \right)
 \end{equation}
 
-where $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$. Four ratio terms and three penalties follow.
+where $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$ for the recorded campaign. Four ratio terms and three penalties follow.
 
 \begin{itemize}
     \item \textbf{Heat-load term.} Stagnation heat flux uses the Sutton-Graves correlation of Sec.~\ref{sec:sutton_graves_methodology} at the frozen $51.8$\,km, $3378$\,m/s trajectory snapshot, with the candidate's own nose radius:
