@@ -1,0 +1,9 @@
+{
+  "source_file": "hiad_geometry.py",
+  "source_hash": "8e8febdfa5c1cbea93cb93fd6263025af4a88f38450f1e6c7b7dac2c27fba1f2",
+  "rs_checksum": "a60384ae955326a62ea9860cf1f388fa1392ab73aeaee1d705d51d4adf50df89",
+  "gc_checksum": "5045ee602417a3a8baf26e8d5a15445166f71459a7e2cf4ebf145a938e397b1d",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 12
+}

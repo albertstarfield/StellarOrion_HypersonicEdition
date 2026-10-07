@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_pinn_trajectory.ads",
+  "source_hash": "e2c886634480e20daed99ef0830cf6df96177c51250ceb46ed8e8bd21b876515",
+  "rs_checksum": "7e89fa4ed4220522b77f713cf23a83ef7d612ff46426bc4c14a9ebd9cfd37955",
+  "gc_checksum": "65a3ccdba502626765d80ab5140f3d231152e9257882cf66b6ba109bdfc4ebe6",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 25
+}

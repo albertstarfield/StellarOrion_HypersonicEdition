@@ -1,0 +1,9 @@
+{
+  "source_file": "hiad_optimizer.py",
+  "source_hash": "1ef25c5bb2642ebacab1bf800674b167df551abf3101dcb9d692d8930e6a6009",
+  "rs_checksum": "b7899a3071177407186f203a3ce61c623e58ef8f5284e73dc1ca63659d931a4b",
+  "gc_checksum": "625a7f1247767addd837977b307f075adaec80a920b0499fb1efc3b25ffb08cf",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 145
+}

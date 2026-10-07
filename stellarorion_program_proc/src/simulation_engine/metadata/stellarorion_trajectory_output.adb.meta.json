@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_trajectory_output.adb",
+  "source_hash": "0b7371c8ec96ebad37e88f2cb4d850eef2a8f4ecd6fa11a49827dfb1980cf50b",
+  "rs_checksum": "a19b253401a9c05934f2645aa878a828b2dcc3ecb96bae75e4bdcdee3a5a5dc2",
+  "gc_checksum": "a101c6715eaffe0a912080265241cf7bdef159e6e24b666ef186a6976e1620e2",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 33
+}

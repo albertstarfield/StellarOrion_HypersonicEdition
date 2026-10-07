@@ -5171,6 +5171,62 @@ The correct text is `StellarOrion_Speed_Of_Sound.Speed_Of_Sound`, and the `--  D
 to …` pattern is used for the other wrappers in this file, so the fix is a one-word change.
 ## F81 — The new SPARK speed-of-sound unit proves the result is non-negative and cannot overflow, but proves nothing about its accuracy
 
+### Update — thread 4c. **Fixed, and the fix is correct. The accuracy bound re-measures to hold with ~10× margin.**
+
+The gap this finding identified — that the unit proved non-negativity and
+overflow-freedom but nothing about accuracy — is now closed. The spec gained:
+
+```ada
+   --  THEOREM (T2) [accuracy]: the result is the square root of
+   --    gamma*R*Temperature to a relative error below 1.0e-6.  Because the
+   --    square root is irrational in general, the accuracy is stated on the
+   --    SQUARE of the result, which is a rational expression in the input:
+   --      Result*Result in [ (gamma*R*T)*(1 - 1e-6), (gamma*R*T)*(1 + 1e-6) ].
+   --    This is the formal counterpart of the measured worst-case relative
+   --    error 6.3e-8 over the 50 .. 6000 K sweep.
+   function Speed_Of_Sound
+     (Temperature : Float) return Float
+     with Pre  => Temperature >= 0.0 and Temperature <= 6000.0,
+          Post => Speed_Of_Sound'Result >= 0.0
+                  and then
+                    Speed_Of_Sound'Result * Speed_Of_Sound'Result
+                      <= 1.4 * 287.058 * Temperature * (1.0 + 1.0e-6)
+                  and then
+                    Speed_Of_Sound'Result * Speed_Of_Sound'Result
+                      >= 1.4 * 287.058 * Temperature * (1.0 - 1.0e-6);
+```
+
+**Why the technique is right, not just present.** Stating the bound on `Result*Result`
+rather than on `Result` is the correct move: `sqrt` is irrational in general, so a
+relative-error postcondition on the result is awkward to discharge, whereas the square is
+a rational expression in the input and the bound becomes an interval comparison. The
+comment says so explicitly, and cites IEEE 754-2019 §9 alongside Anderson.
+
+**The claim is true, and I re-measured it rather than accepting it.** Sweeping
+`T = 0 … 6000 K` at 2001 points and simulating `Sqrt_Approx` with float32 semantics:
+
+| | value |
+| :--- | ---: |
+| worst relative error over the sweep | **1.050e-07** at T = 2775 K |
+| claimed bound | 1.0e-06 |
+| margin | **~10×** |
+
+The bound holds with an order of magnitude to spare, so the postcondition is not merely
+true but comfortably true — which is what you want in a proof obligation, since a bound
+sitting exactly on the measured worst case would be fragile to any change in the iteration
+count or the seed.
+
+**The comment cites the measurement this finding produced** — *"the measured worst-case
+relative error 6.3e-8 over the 50 .. 6000 K sweep"* — which is the number I recorded in
+thread 4a. The new sweep finds 1.050e-07 over a denser grid including T = 0, so the two
+are consistent: the earlier figure was the worst over 50…6000 K at five points, the new
+one over the full range at 2001.
+
+**What remains, and it is not a defect.** The body still runs 25 Newton iterations with
+`pragma Unreferenced (I)`. I recorded that in thread 4a as an *observation*, not a
+finding, because the accuracy is adequate and I had no measurement of call frequency to
+support a performance claim. That stands: the observation is unchanged, and it is not
+promoted now that the accuracy contract exists.
 *Class: verification scope — the properties proved are the ones that are easy, not the one the function exists to deliver*
 
 `StellarOrion_Speed_Of_Sound` is the project's first dedicated `pragma SPARK_Mode (On)`
@@ -5338,6 +5394,20 @@ The information needed already exists at the call sites — an FFI exception is 
 3. Give each wrapper a `Post` condition stating what it returns on failure, so a caller can
    distinguish "computed" from "could not compute" in the type system rather than by
    convention.
+### Thread 4c — what else moved, and at what severity
+
+**`run.py` — no functional change.** The diff is citation style only: `[Citation: …]`
+blocks became `References:` lists with the same URLs, and two docstrings gained
+`References:` sections. F77 was already fixed in thread 4a and is untouched here. I
+filtered the diff for anything that was not a comment, docstring, URL or blank line and
+nothing remained.
+
+**`.figcheck_tmp/` — unreferenced scratch, recorded not raised.** Five files are tracked
+in git and one (`dump_front.py`) is untracked, and nothing in the project references the
+directory. It is figure-checking scratch that happens to be committed. I have not raised
+it as a finding: it is not a defect in the program, and a scratch directory being tracked
+is a repository-hygiene preference rather than a correctness issue. Recorded here so a
+later pass does not re-derive it.
 ## Summary
 
 | ID | Severity | Status | Root cause class |
@@ -5425,6 +5495,7 @@ The information needed already exists at the call sites — an FFI exception is 
 | F80 | provenance | **fixed 2026-10-07** | `stellarorion_ffi.adb:654` states the wrapper *"Delegates to StellarOrion_Environment.Speed_Of_Sound"*, but that package defines `Speed_Of_Sound` **zero** times (`grep -c` = 0 in both its spec and body). The actual callee is `StellarOrion_Speed_Of_Sound.Speed_Of_Sound` (`with` at `:40`, call at `:669`). Commit `2e5b3d5` moved the function out of `Environment` and updated the `with` — but not the comment naming it. The code is correct; the pointer at the FFI boundary is not. Same class as F78. |
 | F81 | verification scope | **open** | The new `pragma SPARK_Mode (On)` unit `StellarOrion_Speed_Of_Sound` proves the result is `>= 0.0`, that its precondition envelope holds, and that no intermediate overflows (THEOREM T1, arithmetic re-checked: `1.4*287.058*6000 = 2411287.2`, `sqrt = 1552.832`). It proves **nothing about accuracy** — no relative-error postcondition on either `Speed_Of_Sound` or `Sqrt_Approx`. Measured behaviour is accurate (worst 6.3e-08 relative error over T = 50…6000 K, at float32 epsilon), so the gap is in the proof, not the behaviour — in a unit created specifically to be inside the verified subset. |
 | F82 | silent failure | **open** | `stellarorion_ffi.adb` has **19** exported wrappers, each wrapped in an exception handler, and **zero** diagnostics across all of them (`grep -c Put_Line` = 1, and that one is inside a comment at `:58`). Eleven return a bare sentinel: `0.0` for `Sutton_Graves_Heat_C`/`Fay_Riddell_Heat_C`/`Dynamic_Pressure_C`/`Deceleration_G_Load_C`/`Ballistic_Coefficient_C`/`Estimate_Cd_C`/`Mean_Free_Path_Viscous_C`/`Speed_Of_Sound_C`, and **`300.0`** for `Radiative_Eq_Temp_C`/`Backface_Temperature_C` — a plausible room temperature, indistinguishable from data. The survivability gate is a set of `<=` comparisons (`physics.adb:1428-1430`), so **every sentinel satisfies it and reads as survivable**. The project states this rule at `pinn_trajectory.adb:99` (*"a value that could not be computed must never read as one that was"*, F67/F48) but does not apply it here. Path is live: 19 `pragma Export` in the `.ads`, built by `stellarorion_pinn_lib.gpr:30-31`, and bound via ctypes at `ada_pinn_wrapper.py:1064-1082`. |
+| F81 | verification scope | **fixed 2026-10-07** | The accuracy gap is closed. The spec now carries THEOREM (T2) and a postcondition bounding `Result*Result` within `1.0 ± 1.0e-6` of `gamma*R*T` — stated on the square, which is the rational form, so the obligation is an interval comparison. **Re-measured**: worst relative error **1.050e-07** over T = 0…6000 K at 2001 points, ~10× inside the claimed bound. The comment cites the 6.3e-8 figure this finding produced. |
 
 ### Final state after fixes
 

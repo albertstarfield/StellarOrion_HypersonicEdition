@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_program_proc_config.h",
+  "source_hash": "dc0b0e88c629c3e68b124bdcaa01d32ff2b6b182a3dc78f449b4217d53121554",
+  "rs_checksum": "be8c83268811ef91c8cc1bdff198b5a355ff80f77782824a76c3e8fe814f2a5c",
+  "gc_checksum": "4537fa6cc6d88aeb09fe12c52b55c46d1a445d897b3a45aa229811a0eea32e21",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 1
+}

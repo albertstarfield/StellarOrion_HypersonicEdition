@@ -1,0 +1,9 @@
+{
+  "source_file": "plot_hiad_3d.py",
+  "source_hash": "e1787160ecb828214c49de6d156dfc605d78c9e30af006534af6bf51ef14cde3",
+  "rs_checksum": "74273d6b9a947dd165bfdb0f63fbbac2adc5df17702714a3a072d935c8aede56",
+  "gc_checksum": "1b6689a9b1559c0db85fc04afdeb279043bcb02a10054f481f3dedc566b92a65",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 24
+}

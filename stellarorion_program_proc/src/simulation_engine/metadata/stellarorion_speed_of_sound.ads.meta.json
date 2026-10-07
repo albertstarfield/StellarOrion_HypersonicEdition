@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_speed_of_sound.ads",
+  "source_hash": "1065e817902734c57801a38fcb1d0229ef2a32ed2e95459497096a4aa3834a54",
+  "rs_checksum": "dfa7b281e120ce2d881a486d573c084f56653b56ddd2776401cbdaf95336043e",
+  "gc_checksum": "bc9b4909377e0c98d6ff561b6a2e24c60dd0779da946e9cc533105f77606c33a",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 6
+}

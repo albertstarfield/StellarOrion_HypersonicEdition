@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_ffi.ads",
+  "source_hash": "fc532930f67a3f85b69bf062180e62e7b4c11a0d3af11bd501bb5a539bb0aed4",
+  "rs_checksum": "a1082a27ca4398781b23f54c82bb6ac668f8b04f06818575499d68fa221a35ff",
+  "gc_checksum": "40aa65bb7bd65e865383197c7cdc13d0d24165b837293906d2aceefc1f8d9164",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 68
+}

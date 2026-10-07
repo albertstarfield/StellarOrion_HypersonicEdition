@@ -8990,7 +8990,13 @@ def _build_env_and_node_modules_integrity_patterns() -> list[Pattern]:
         # ── 1. AUDIT NODE_MODULES FOR ALL package.json FILES ────────────────
         package_json_files = []
         for root, dirs, files in os.walk(project_root):
-            dirs[:] = [d for d in dirs if d not in (".git", ".bin", ".cache", "build", "obj", "__pycache__", "vendor", "node_modules", "venv", ".venv", "alirevenv")]
+            # [Citation: project convention — `venv_validation` is the Python
+            #  validation venv created by run.py Phase 1. It is a virtual
+            #  environment exactly like `venv`/`.venv`, so it must be excluded
+            #  here too; otherwise the walk descends into third-party
+            #  site-packages where plotly labextensions ship package.json
+            #  without node_modules (expected for prebuilt assets).]
+            dirs[:] = [d for d in dirs if d not in (".git", ".bin", ".cache", "build", "obj", "__pycache__", "vendor", "node_modules", "venv", "venv_validation", ".venv", "alirevenv")]
             for filename in files:
                 if filename == "package.json":
                     package_json_files.append(os.path.join(root, filename))

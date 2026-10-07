@@ -1,0 +1,9 @@
+{
+  "source_file": "compare_validation.py",
+  "source_hash": "a2cb4c11e1f44bd9e7ead8b7fa314b0fc6b1de1b0b28a0da42fcd91232421a9b",
+  "rs_checksum": "ef7fd44903abd6fe715223afc2c4966e25207e48687cf35c8f8b9848c67af490",
+  "gc_checksum": "decc7d98ec8ba88cf86b8af5bdc2cba9d701531f7322babd0f7b068f788a289b",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 30
+}

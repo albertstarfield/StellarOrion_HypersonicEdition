@@ -1,0 +1,9 @@
+{
+  "source_file": "render_bo_3d_plot.py",
+  "source_hash": "fff615464d4736da2df23e1526837bbebfef49d227fd14d4c5b75198d2be2697",
+  "rs_checksum": "0e1ce16c43c7386927bfdc1b044f3828f3fcbda7e3a33f2f5b5d616f344a8d9b",
+  "gc_checksum": "9d8384be428b39d25a2e376022e085c164c2a81f424499e13b7388e53ead59cc",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 80
+}

@@ -1,0 +1,9 @@
+{
+  "source_file": "plot_rapisarda_comparison.py",
+  "source_hash": "13711ca0b671b53b4302a8701d41d58f092257df0f1e670eef0ee7c75544b250",
+  "rs_checksum": "a96ae6197d94da8e3fab7f331bf292200d9297ee9e935686b50e0aa3fa190ef0",
+  "gc_checksum": "257c78e7a2b138ed128b31f0a395fa6df925f28b8c70717fe5d3e89171e60dc5",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 45
+}

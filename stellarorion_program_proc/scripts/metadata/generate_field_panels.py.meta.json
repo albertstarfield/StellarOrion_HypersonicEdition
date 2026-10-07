@@ -1,0 +1,9 @@
+{
+  "source_file": "generate_field_panels.py",
+  "source_hash": "f85e8eec853b0338b2e2fe4711afd7545c28dff377539b872d3e1e317feafd1b",
+  "rs_checksum": "63bf5bbd169f395d2082abdc89dd3fde4f093678d7f9ea14e5c09e0fa1cd3cbb",
+  "gc_checksum": "8cec08028b0d8ad780d4ca8adeaad69f00794c03ba4f9ce75d72bbd034758b0d",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 69
+}

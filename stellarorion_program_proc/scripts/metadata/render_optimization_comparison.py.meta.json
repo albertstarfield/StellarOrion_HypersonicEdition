@@ -1,0 +1,9 @@
+{
+  "source_file": "render_optimization_comparison.py",
+  "source_hash": "50eb2330392f520ee89379e1b03097de32b20f83adf2e0d6c5eabbebc1091b53",
+  "rs_checksum": "86a400b43c88a759b338203bd5cadc65753aa79669e70a4feeee510f318f9f4b",
+  "gc_checksum": "dd8175eccf47475324ce78e24ddcece3fb2ef82bc0c744cc3aa376058021d13a",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 92
+}

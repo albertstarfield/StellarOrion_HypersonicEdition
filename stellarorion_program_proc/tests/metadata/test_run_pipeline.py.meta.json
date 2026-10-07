@@ -1,0 +1,9 @@
+{
+  "source_file": "test_run_pipeline.py",
+  "source_hash": "3703b93840d3bcfe8aff6bc1f2a9c003c944c1df523192cc203ef93276717f4f",
+  "rs_checksum": "408474b323530b4212981b41a9ce1def8c082374f24cd22f97e89877717e8e5e",
+  "gc_checksum": "ca1e0fb8d6534875158d0c18a678b4339ee882e3586740ce0ef677315c9f6a0c",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 27
+}

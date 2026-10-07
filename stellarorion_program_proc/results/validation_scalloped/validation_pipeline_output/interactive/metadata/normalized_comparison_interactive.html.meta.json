@@ -1,0 +1,9 @@
+{
+  "source_file": "normalized_comparison_interactive.html",
+  "source_hash": "f32662e41732d787f4fb386b0a34aca0f0fc3ab29983bc831092ea959768ccb9",
+  "rs_checksum": "c0b75a226ff6e89cc1b4dd19ee086312d5ddeddc7f57e2d390031cae318b73e0",
+  "gc_checksum": "edfa6fedb8b0bb1ddf7f73334fe5bdbbdd85c2b544045e43c234acb6907548a5",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 8402
+}

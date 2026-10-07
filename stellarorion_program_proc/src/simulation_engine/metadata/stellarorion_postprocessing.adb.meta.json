@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_postprocessing.adb",
+  "source_hash": "f0a6d72b62fb87b56c101d893d621d389ed2f1f52b6f06cb2be659e48770b6d0",
+  "rs_checksum": "1cc8539d9f4678681cb07106a89b1701b2969cc8fb475b47bbe8c9e8c7a35de5",
+  "gc_checksum": "dea341b16c8adaf2208527030e567cc4cbf45b05d9b8d1d5de83888bbea56811",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 112
+}

@@ -1,8 +1,9 @@
 {
-  "source_hash": "6638d607766098300ed7fe5a06a855fa0d8a06d66aa7e1bd9e5847e9cdcb0e31",
-  "rs_checksum": "41de3636f6816deb779c42064b8b2b1cb7af8946806c0f8b8b370aa727d0ffd8",
-  "gc_checksum": "dd1f65d2f13e458e41a14d34f23d7b6d82de990fb45dff441eadee56bb82c135",
-  "version": "1.0",
   "source_file": "main.js",
-  "generated_by": "StellarOrion Parity Generator"
+  "source_hash": "6638d607766098300ed7fe5a06a855fa0d8a06d66aa7e1bd9e5847e9cdcb0e31",
+  "rs_checksum": "8726423a67f0b13ca3f3f5c65a13aae633f6b91e6f374a90ea00217699ba4f46",
+  "gc_checksum": "55b260da623ca7fd2d66f200a5e5e2893e637fa84eb688429392f786b83c66fe",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 8
 }

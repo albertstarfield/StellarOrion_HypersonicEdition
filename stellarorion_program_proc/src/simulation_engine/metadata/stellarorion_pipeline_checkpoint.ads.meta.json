@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_pipeline_checkpoint.ads",
+  "source_hash": "435b99f2f410495e6d44df85ab6c930edcf904a6e4270898543127937768e65a",
+  "rs_checksum": "d81623a812f4bb85b57fdc741da9d374747b51df0bec3640a1e5e7f2c5c8f84c",
+  "gc_checksum": "7fab5c0e6e5b424d4454afb05d5d547232cb0f7f39e4b55267c69e1f3952df94",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 33
+}

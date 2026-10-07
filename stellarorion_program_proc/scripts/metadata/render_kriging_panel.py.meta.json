@@ -1,0 +1,9 @@
+{
+  "source_file": "render_kriging_panel.py",
+  "source_hash": "56fdfc2602d42313bfaeaa97e479b9be84e65a3c3ed977b6884a7d2290816d7a",
+  "rs_checksum": "f8a1b615c95101af9d3a0c13c6466e301a7cbf362228317be24f961dfcfcf637",
+  "gc_checksum": "74aa0291aa3fd7a4b1f387458ede7e8d74dd48f42a66308e177b1e37c2146812",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 37
+}

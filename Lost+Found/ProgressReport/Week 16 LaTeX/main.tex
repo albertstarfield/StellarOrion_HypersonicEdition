@@ -81,6 +81,22 @@
 \end{frame}
 
 % =====================================================================
+% SECTION 0 — CONTEXT
+% Where this work sits. The coverage map is _proc-generated and marks the
+% StellarOrion pipeline row with a red dashed outline; it is the only
+% positioning frame in the deck.
+% =====================================================================
+\section{CONTEXT}
+
+% so_literature_map.png <- literature_review_map.png. The outlined row is
+% labelled "This Work StellarOrion Pipeline" in the artwork itself.
+\PlotFrame{WHERE THIS WORK SITS}
+  {\MaxTextLines{2}%
+   Coverage of the phenomena and methods this work draws on; the
+   StellarOrion pipeline is the outlined row.}
+  {so_literature_map}
+
+% =====================================================================
 % SECTION 1 — PREVIOUS PROBLEM
 % Two problems drove this week's work:
 %   (a) a sampling issue in the design-space exploration, and
@@ -106,7 +122,7 @@
 
 % =====================================================================
 % SECTION 2 — CURRENT IMPLEMENTATION
-% Six items, each grounded in a real implementation on disk.
+% The items below, each grounded in a real implementation on disk.
 %
 % Naming note: the second item is KRIGING denoising. A repo-wide search
 % for "Kringing" returns ZERO matches; "Kriging" returns real code
@@ -120,14 +136,26 @@
 % Source path of each is recorded in SOURCES.md next to main.tex so every
 % slide can be audited back to the script that drew it.
 
-% so_bo_convergence.png <- bo_convergence.png, drawn by
-%   _proc/scripts/render_bo_figures.py L460-486 from
-%   _proc/src/python/hiad_optimization_results.json
+% so_bo_convergence.png <- bo_convergence.png, regenerated 2026-10-06,
+% drawn by _proc/scripts/render_bo_figures.py from
+% _proc/src/python/hiad_optimization_results.json. The caption numbers are
+% read off the artwork's own subtitle: 70 evaluations, 20 LHS then 50 EI,
+% incumbent 1.7654 -> 1.6051 (9.08 %).
 \PlotFrame{1. BAYESIAN OPTIMIZATION}
   {\MaxTextLines{2}%
    Mat\'ern 5/2 Gaussian-process surrogate with Expected Improvement:
-   20 Latin-hypercube seeds, then 50 EI steps.}
+   20 Latin-hypercube seeds then 50 EI steps; incumbent 1.7654 to 1.6051,
+   a 9.08 \% reduction.}
   {so_bo_convergence}
+
+% so_ccd_screen.png <- fignew_ccd_screen.png. Companion to the frame above:
+% it is the design of experiments the 20 Latin-hypercube seeds sit alongside,
+% and its own printed title states the count.
+\PlotFrame{1b. DESIGN OF EXPERIMENTS: THE CCD SCREEN}
+  {\MaxTextLines{2}%
+   Face-centred CCD screen of 15 points: 8 factorial corners, 6 axial
+   stars, 1 centre, projected onto each pair of the three design variables.}
+  {so_ccd_screen}
 
 % kriging_denoise.png <- _proc/src/ui/uiassets/assets/plots/
 % kriging_denoise_step500.png, drawn by
@@ -143,24 +171,34 @@
   {kriging_denoise}
 
 % so_pipeline.png <- fignew_pipeline.png, the end-to-end pipeline diagram
-% drawn by _proc CurrentThesisFinalReport/figures/make_fignew.py
-% (regenerated Oct 6, see SOURCES.md).
-% MEASURED 2026-10-06: fignew_pipeline.png is 1586x2017, aspect 0.786, i.e.
-% portrait. On a 16:9 frame it is height-bound, so at the default 0.60
-% \textheight box it filled only 260 px of a 436 px plot area and read as a
-% narrow column. 0.82 lets the portrait flowchart use the vertical space it
-% actually needs. This is the one frame whose artwork is portrait.
-% 0.62, not 0.82: at 0.82 this frame reported "Overfull \vbox (33.3187pt too
-% high)"; 0.70 still overflowed by 4.18848pt; 0.66 cleared the log but left
-% only 15 px of bottom clearance at render scale 2.2 against 33-34 px on every
-% other content frame. 0.62 is the measured compromise: no overfull box, and
-% bottom clearance in line with the rest of the deck.
-{\renewcommand{\plotheight}{0.62\textheight}%
+% drawn by CurrentThesisFinalReport/figures/make_fignew.py.
+%
+% PROVENANCE RE-DERIVED 2026-10-07 from git, per-commit blobs:
+%   commit 29de84b (2026-10-06 12:30) changed BOTH files 226314 -> 203630 in
+%   one commit, i.e. so_pipeline.png was copied from fignew_pipeline.png
+%   while that figure was LANDSCAPE 1619x995 (md5 3a50cf93da). The source was
+%   then regenerated back to PORTRAIT 1586x2017 and so_pipeline.png was never
+%   re-copied, so the two now differ in LAYOUT only. CONTENT is the same in
+%   both: the "Validation pipeline executed by the engine" 12-stage chart and
+%   the "Geometry optimization loop" ending in Bayesian optimization. The
+%   landscape copy is the better 16:9 fit, so it is KEPT deliberately.
+% The previous note here claimed the portrait aspect 0.786 and a 0.62
+% \plotheight override tuned for it. That tuning belonged to artwork this
+% frame no longer holds, so the override is removed and the deck default
+% \plotheight is used.
 \PlotFrame{3. VALIDATION RUN}
   {\MaxTextLines{2}%
    Performance reference against performance simulated on StellarOrion,
    over the DSMC to PINN pipeline shown.}
-  {so_pipeline}}
+  {so_pipeline}
+
+% so_pinn_architecture.png <- pinn_architecture.png. What the PINN stage of
+% the pipeline above actually is: the two-stage loss and the layer sizes.
+\PlotFrame{3b. THE PINN INSIDE THE PIPELINE}
+  {\MaxTextLines{2}%
+   Two-stage loss: Stage 1 data only, Stage 2 adds the PDE residual;
+   2 inputs to 3 hidden layers of 64 to 4 outputs.}
+  {so_pinn_architecture}
 
 % so_sutton_graves.png <- sutton_graves_parametric.png, drawn by
 % _proc CurrentThesisFinalReport/figures/generate_sutton_graves_parametric.py
@@ -171,6 +209,16 @@
    Normalisation constant taken at 51.8 km, not the snapshot's own
    52.03 km: reported peak overstated by 31.90 \% (F21).}
   {so_sutton_graves}
+
+% so_scalloped_vs_smooth.png <- fignew_scalloped_vs_smooth_heatflux.png.
+% The condition caveat is mandatory, not decorative: the two curves are NOT
+% at the same flight condition (the F18 cross-run confound), so the caption
+% names both conditions rather than implying a like-for-like comparison.
+\PlotFrame{4b. SCALLOPED VERSUS SMOOTH GEOMETRY}
+  {\MaxTextLines{2}%
+   Per-element and peak heat flux for the two surfaces, each at its own
+   run condition: smooth 51.82 km / 3379 m/s, scalloped 52.07 km / 3101 m/s.}
+  {so_scalloped_vs_smooth}
 
 % so_topology_before_after.png <- optimization_comparison.png, drawn by
 % _proc/scripts/render_optimization_comparison.py L1007-1008 into

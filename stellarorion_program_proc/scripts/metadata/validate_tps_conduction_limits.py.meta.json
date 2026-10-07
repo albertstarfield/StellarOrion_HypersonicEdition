@@ -1,0 +1,9 @@
+{
+  "source_file": "validate_tps_conduction_limits.py",
+  "source_hash": "3db9b83ca3f063a5f514c36cf3e990f794b339a8393f72d6a7fb8eb1c5cccadb",
+  "rs_checksum": "2c1d89e4dd35ba19c1c803baffa8bde5f5ef82e62cdf05f1aad0f281b2ab0c87",
+  "gc_checksum": "8d453bacb5ca203205c7c8d1f7713bcfa9b3ff34293f6bb9be072427b7145c79",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 55
+}

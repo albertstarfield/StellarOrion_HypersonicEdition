@@ -1356,5 +1356,173 @@
     "error_message": "",
     "timestamp": 1791210185.114911,
     "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/socket.html#socket.socket.bind": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364770.555775,
+    "checked_by": "HEAD"
+  },
+  "https://docs.docker.com/engine/reference/commandline/info/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364771.770423,
+    "checked_by": "HEAD"
+  },
+  "https://github.com/abiosoft/colima#readme": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364772.5063748,
+    "checked_by": "HEAD"
+  },
+  "https://docs.docker.com/desktop/install/mac-install/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364772.992398,
+    "checked_by": "HEAD"
+  },
+  "https://github.com/abiosoft/colima#installation": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364773.203053,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/urllib.request.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364773.719115,
+    "checked_by": "HEAD"
+  },
+  "https://en.wikipedia.org/wiki/ANSI_escape_code": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364773.918815,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/functions.html#print": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364774.3537128,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/time.html#time.monotonic": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364774.800993,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/locale.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364775.428917,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/os.html#os.kill": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364777.2616692,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/pathlib.html#pathlib.Path.unlink": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364777.722951,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/shutil.html#shutil.rmtree": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364778.148694,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/subprocess.html#subprocess.run": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364778.358211,
+    "checked_by": "HEAD"
+  },
+  "https://developer.apple.com/documentation/xcode": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364779.336045,
+    "checked_by": "HEAD"
+  },
+  "https://alire.ada.dev/docs/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364780.135478,
+    "checked_by": "HEAD"
+  },
+  "https://docs.adacore.com/spark2014-docs/": {
+    "verified": false,
+    "status_code": 403,
+    "error_message": "HTTP 403: Forbidden",
+    "timestamp": 1791364781.0118568,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/subprocess.html#subprocess.Popen": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364781.210797,
+    "checked_by": "HEAD"
+  },
+  "https://ntrs.nasa.gov/citations/20130011058": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364782.2535691,
+    "checked_by": "HEAD"
+  },
+  "https://doi.org/10.2514/6.2024-1501": {
+    "verified": false,
+    "status_code": 403,
+    "error_message": "HTTP 403: Forbidden",
+    "timestamp": 1791364782.691781,
+    "checked_by": "HEAD"
+  },
+  "https://repository.tudelft.nl/islandora/object/uuid:9b3e3c3a-7c3a-4c3a-9b3e-3c3a7c3a4c3a": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: NOT FOUND",
+    "timestamp": 1791364787.398098,
+    "checked_by": "HEAD"
+  },
+  "https://www.adacore.com/spark": {
+    "verified": false,
+    "status_code": 404,
+    "error_message": "HTTP 404: Not Found",
+    "timestamp": 1791364905.866295,
+    "checked_by": "HEAD"
+  },
+  "https://www.adacore.com/about-spark": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791364980.186552,
+    "checked_by": "HEAD"
+  },
+  "https://arc.aiaa.org/doi/10.2514/6.2024-1501": {
+    "verified": false,
+    "status_code": 403,
+    "error_message": "HTTP 403: Forbidden",
+    "timestamp": 1791364980.3916779,
+    "checked_by": "HEAD"
   }
 }

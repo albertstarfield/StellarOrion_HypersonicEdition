@@ -1,0 +1,9 @@
+{
+  "source_file": "ada_pinn_wrapper.py",
+  "source_hash": "04eafc54ab6bfabb60ad363fc65af7a677c577534239fe85a56b62ccf184acca",
+  "rs_checksum": "58c20229de37a3d16025c1bd089ad69a913b28bd0ef110eefc2f0e733a6ca342",
+  "gc_checksum": "69149988d21fcaefb2d91db9fca2b85159a8787bf25191e8f3a80466a1361b58",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 130
+}

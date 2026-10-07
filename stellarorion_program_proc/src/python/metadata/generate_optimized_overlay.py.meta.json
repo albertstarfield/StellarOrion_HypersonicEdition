@@ -1,0 +1,9 @@
+{
+  "source_file": "generate_optimized_overlay.py",
+  "source_hash": "3d243a8befe7a920ea4915b2d92b35dbdc99b8fe8b9f003806830179df8d7965",
+  "rs_checksum": "2a10dd8918a3ab320b723930d52427cb8460747fa254478024be353e4879e75e",
+  "gc_checksum": "c11dff26532a828cf6e2256e1d8ceda717653458315e1de872ade8967280fd7a",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 25
+}

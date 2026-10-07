@@ -1,9 +1,9 @@
 {
   "source_file": "stellarorion_self_test.adb",
-  "source_hash": "779e7d4c47959bbad822287960bcf019232489488a34372373f87f1fb2eb111d",
-  "rs_checksum": "8334dda4dc7fe27e03105fe38ab2f3f9a68915af6194c9f6b91f56c91cc7ad1e",
-  "gc_checksum": "77f968d58e90ec2d9cff6e3f1d772539c8e605bfd84bd48dfc7299d1abc587a9",
+  "source_hash": "022ea5d1f846ed899023d74c960329889048816c6ef7c12749ae59b7443b90d9",
+  "rs_checksum": "742799f8b5ac11b9638a7f06e072df727170ce197ffbf14777d4a2418219a290",
+  "gc_checksum": "b22ef37ccb0e5b63c475bb44d0a6825ffd650ed4cdbe4fbaf726abd0a88cd211",
   "version": "2.0",
   "block_size": 512,
-  "total_blocks": 59
+  "total_blocks": 66
 }

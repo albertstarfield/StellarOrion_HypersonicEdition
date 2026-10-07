@@ -1,0 +1,9 @@
+{
+  "source_file": "__init__.py",
+  "source_hash": "c0e589745b0112c6008c5818d7bea952035a97e5c05a5c3ab2af66778a3b57a1",
+  "rs_checksum": "e44a14533e4e283b707d39767331a6a34a511f8db429a720031423aea22e996f",
+  "gc_checksum": "0fc781c39f7639de23f846495058eefa0d36ec8b7c0bd38ace084aab85127765",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 1
+}

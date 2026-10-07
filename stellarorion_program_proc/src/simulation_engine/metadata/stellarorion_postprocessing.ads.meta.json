@@ -1,0 +1,9 @@
+{
+  "source_file": "stellarorion_postprocessing.ads",
+  "source_hash": "d4372490da55a72136a62087b9b28bb7866cd2b1e2b506d5e92ec592cf13b564",
+  "rs_checksum": "b5fde5d23e8180c258e4af030005b3e382d18ff7499e92d13851275edf84efd9",
+  "gc_checksum": "f4f0472c472d2afd2342fc752756fd3104bad2aeb6dd97f18427e826f0409644",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 61
+}

@@ -1,0 +1,9 @@
+{
+  "source_file": "convergence_audit_interactive.html",
+  "source_hash": "018f970de4afabf957bf40f9f15053e278fa6821ad50cc4ebaec613bba90add1",
+  "rs_checksum": "6c4eb518ba9c600c4398d1dc3ae8abaeb626f014b7616d0d290de37fad1c57c5",
+  "gc_checksum": "ecbf73023d8f338978652dc70b320649b9ff3033b2a47d14f8470b5ee66c7c46",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 8404
+}

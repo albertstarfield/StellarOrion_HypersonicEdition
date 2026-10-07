@@ -1,0 +1,9 @@
+{
+  "source_file": "render_bo_figures.py",
+  "source_hash": "eacb2c699429c4ddd19148390a0ab1579fa43e8378cb342967651f0e52fe44bf",
+  "rs_checksum": "06520c8a5bc0de2e19f55b90835a147b904bf9000ad0fe2c3780fb85145809ef",
+  "gc_checksum": "1374003e0f33e8c92fc795dcda14fcdb3e875284d4eea5d75f15949f92a18c87",
+  "version": "2.0",
+  "block_size": 512,
+  "total_blocks": 39
+}

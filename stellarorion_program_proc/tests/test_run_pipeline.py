@@ -350,5 +350,80 @@ class TestOutputHelpers(TestCase):
             self.assertIn("UTF", enc.upper().replace("-", ""))
 
 
+class TestSplitParity(TestCase):
+    """Genuine end-to-end tests for run.py's split-parity wrapper functions.
+
+    Exercises the five public wrappers (generate/store/verify/restore/regenerate)
+    against a real temporary source file so that the
+    ``# nosec: SELF_TEST_COVERAGE`` annotations on those run.py functions are
+    truthful.  Each wrapper delegates to ``sabotage_verifier``'s matching
+    split-parity implementation, which stores the RS/GC parity triplet in a
+    sibling ``metadata/`` directory.
+
+    References:
+      - https://en.wikipedia.org/wiki/Reed%E2%80%93Solomon_error_correction
+    """
+
+    def _make_source(self, content: bytes = b"hello split parity\n" * 8) -> str:
+        """Create a temp directory holding a source file; return its path.
+
+        The file must live in its own temp directory so the sibling
+        ``metadata/`` folder written by ``store_split_parity`` is writable.
+
+        References:
+          - https://docs.python.org/3/library/tempfile.html
+        """
+        tmp = tempfile.mkdtemp(prefix="split_parity_")
+        src = Path(tmp) / "sample_source.py"
+        src.write_bytes(content)
+        return str(src)
+
+    def test_generate_returns_expected_keys(self):
+        """generate_split_parity returns the RS/GC/hash/checksum dict."""
+        src = self._make_source()
+        parity = run.generate_split_parity(src)
+        for key in ("rs_parity", "gc_parity", "source_hash",
+                    "rs_checksum", "gc_checksum"):
+            self.assertIn(key, parity)
+
+    def test_store_writes_parity_triplet(self):
+        """store_split_parity writes .par2-one, .par2-two and .meta.json."""
+        src = self._make_source()
+        parity = run.generate_split_parity(src)
+        result = run.store_split_parity(src, parity)
+        meta_dir = Path(src).parent / "metadata"
+        self.assertTrue((meta_dir / "sample_source.py.par2-one").is_file())
+        self.assertTrue((meta_dir / "sample_source.py.par2-two").is_file())
+        self.assertTrue((meta_dir / "sample_source.py.meta.json").is_file())
+        self.assertIn("rs_path", result)
+
+    def test_verify_intact_file_is_valid(self):
+        """verify_split_parity reports valid for an intact file + parity."""
+        src = self._make_source()
+        run.regenerate_split_parity(src)
+        result = run.verify_split_parity(src)
+        self.assertTrue(result.get("valid"), msg=str(result))
+
+    def test_verify_detects_missing_metadata(self):
+        """verify_split_parity reports invalid when metadata/ is absent."""
+        src = self._make_source()
+        result = run.verify_split_parity(src)
+        self.assertFalse(result.get("valid"))
+
+    def test_restore_returns_dict(self):
+        """restore_split_parity returns a dict describing the restore."""
+        src = self._make_source()
+        run.regenerate_split_parity(src)
+        result = run.restore_split_parity(src)
+        self.assertIn("restored", result)
+
+    def test_regenerate_roundtrip(self):
+        """regenerate_split_parity regenerates and the result verifies."""
+        src = self._make_source()
+        result = run.regenerate_split_parity(src)
+        self.assertTrue(result.get("regenerated"))
+        self.assertTrue(run.verify_split_parity(src).get("valid"))
+
+
 if __name__ == "__main__":
     unittest_main()
