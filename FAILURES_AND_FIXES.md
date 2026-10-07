@@ -5097,6 +5097,43 @@ that Fay–Riddell is the continuum **upper bound** that overpredicts where DSMC
 truth. No dead code.
 ## F80 — A SPARK refactor moved the speed-of-sound function to a new unit but left the FFI comment naming the package it was moved *out of*
 
+### Update — thread 4b. **Fixed, and the sibling claims in the same file all check out.**
+
+`stellarorion_ffi.adb:654` now reads:
+
+```ada
+   --  Delegates to StellarOrion_Speed_Of_Sound.Speed_Of_Sound.
+```
+
+The diff for the commit that fixed it is a single line:
+```diff
+-   --  Delegates to StellarOrion_Environment.Speed_Of_Sound.
++   --  Delegates to StellarOrion_Speed_Of_Sound.Speed_Of_Sound.
+```
+
+**Because one claim in this file was stale, I checked all of them.** The file carries
+**13** `Delegates to Package.Function` comments, and for each I resolved the named package
+to its `.ads`/`.adb` and looked for a declaration or body of the named function:
+
+| line | package | function | verdict |
+| ---: | :--- | :--- | :--- |
+| 104 | `StellarOrion_Optimization` | `Estimate_Cd` | OK |
+| 406 | `StellarOrion_Physics` | `Sutton_Graves_Heat` | OK |
+| 429 | `StellarOrion_Postprocessing` | `Sutherland_Viscosity` | OK |
+| 447 | `StellarOrion_Physics` | `Fay_Riddell_Heat` | OK |
+| 474 | `StellarOrion_Physics` | `Radiative_Eq_Temp` | OK |
+| 495 | `StellarOrion_Physics` | `Backface_Temperature` | OK |
+| 526 | `StellarOrion_Physics` | `Ballistic_Coefficient` | OK |
+| 549 | `StellarOrion_Physics` | `Dynamic_Pressure` | OK |
+| 570 | `StellarOrion_Physics` | `Deceleration_G_Load` | OK |
+| 591 | `StellarOrion_Environment` | `Atmosphere_Temperature` | OK |
+| 610 | `StellarOrion_Environment` | `Atmosphere_Density` | OK |
+| 629 | `StellarOrion_Physics` | `Mean_Free_Path_Viscous` | OK |
+| 654 | `StellarOrion_Speed_Of_Sound` | `Speed_Of_Sound` | OK (the fix) |
+
+**All 13 resolve.** The two that name `StellarOrion_Environment` are correct — that package
+really does define both `Atmosphere_Temperature` and `Atmosphere_Density`. F80 was the only
+stale one, and it is closed.
 *Class: provenance — the same stale-reference class as F78, introduced by the same kind of change*
 
 `stellarorion_ffi.adb:654`:
@@ -5195,6 +5232,112 @@ I have not raised the performance point as a separate finding: `Speed_Of_Sound_C
 FFI entry point, I have no measurement of how often it is called per run, and a claim
 about cost without that measurement would be exactly the kind of unmeasured assertion this
 log refuses. It is recorded here as an observation for whoever owns the unit.
+## F82 — Nineteen FFI exception handlers return silent sentinel values, and every sentinel reads as *survivable*
+
+*Class: silent failure — the failure path emits no diagnostic and produces the optimistic answer*
+
+`stellarorion_ffi.adb` is the C-ABI layer Python calls through `ctypes`. Every one of its
+19 exported wrappers wraps its body in an exception handler, and **not one of them logs
+anything**.
+
+**The logging check is unambiguous.** `grep -c "Put_Line"` over the whole file returns
+**1**, and that single occurrence is inside a comment:
+
+```ada
+58:   --  runtime's Ada.Text_IO Standard_Output is NOT open, so Put_Line
+```
+
+So across 19 exception handlers there are **zero** diagnostics.
+
+**Eleven of them return a bare sentinel:**
+
+| wrapper | sentinel | what the sentinel means physically |
+| :--- | ---: | :--- |
+| `Estimate_Cd_C` | `0.0` | zero drag coefficient |
+| `Sutton_Graves_Heat_C` | `0.0` | **zero stagnation-point heating** |
+| `Fay_Riddell_Heat_C` | `0.0` | **zero continuum heating** |
+| `Ballistic_Coefficient_C` | `0.0` | zero ballistic coefficient |
+| `Dynamic_Pressure_C` | `0.0` | **zero dynamic pressure** |
+| `Deceleration_G_Load_C` | `0.0` | **zero deceleration** |
+| `Mean_Free_Path_Viscous_C` | `0.0` | zero mean free path |
+| `Speed_Of_Sound_C` | `0.0` | zero speed of sound |
+| `Radiative_Eq_Temp_C` | `300.0` | 300 K |
+| `Backface_Temperature_C` | `300.0` | 300 K |
+| `HIAD_Cost_C` | `-1.0` | negative cost (documented as impossible, so distinguishable) |
+
+### Why this is the wrong direction for every value
+
+The survivability gate is a set of `<=` comparisons — `stellarorion_physics.adb:1428-1430`:
+
+```ada
+        Metrics.Surface_Temp_K <= SIC_MAX_TEMP
+        and Metrics.Backface_Temp_K <= KAPTON_MAX_TEMP
+        and G_Load <= ...
+```
+
+Every sentinel **satisfies** those comparisons:
+
+* `Deceleration_G_Load_C → 0.0` gives `0.0 <= limit` → **survivable**.
+* `Backface_Temperature_C → 300.0` gives `300.0 <= 773` → **survivable**.
+* `Sutton_Graves_Heat_C → 0.0` gives zero heat flux, i.e. no heating at all.
+
+An FFI failure therefore cannot produce a FAIL — it produces a **PASS**. That is the same
+shape as F74, where an aborted DSMC run was graded `VALIDATION PASSED`: the failure mode
+and the success mode are indistinguishable at the point where the verdict is formed.
+
+### `300.0` is the worst of them, and the codebase already says why
+
+`Radiative_Eq_Temp_C` and `Backface_Temperature_C` return `300.0` — a perfectly plausible
+room-temperature reading. It is **indistinguishable from a real measurement**, which is
+worse than `0.0`: zero is at least physically extreme, whereas 300 K looks like data.
+
+This project has already articulated the rule and applied it elsewhere. At
+`stellarorion_pinn_trajectory.adb:99`, the F67/F48 fix records:
+
+> `--  (F67): a value that could not be computed must never read as one`
+> `--  that was.`
+
+The same document applies it to the 120 km clamp and to `verify_profile_math` (F40). **It is
+not applied at the FFI boundary** — the one place where every physics value crosses from
+Ada into Python, and therefore the place where it matters most.
+
+### The path is live, not dead code
+
+I checked this rather than assuming it:
+
+* `stellarorion_ffi.ads` carries **19 `pragma Export`** declarations — the wrappers are
+  exported for the C ABI.
+* `stellarorion_pinn_lib.gpr:30-31` lists `stellarorion_ffi.ads` and `.adb` in the build.
+* `src/python/ada_pinn_wrapper.py` binds the sentinel-returning symbols through `ctypes`:
+  `Sutton_Graves_Heat_C` (`:1064`), `Sutherland_Viscosity_C` (`:1068`),
+  `Fay_Riddell_Heat_C` (`:1072`), `Radiative_Eq_Temp_C` (`:1078`),
+  `Backface_Temperature_C` (`:1082`), and others.
+
+For contrast, the module Python *also* calls directly, `stellarorion_pinn_trajectory.adb`,
+has exactly **one** `when others` handler and it does **not** return `0.0`. So the sentinel
+pattern is specific to this `_C` layer rather than being a project-wide convention.
+
+### Severity, stated honestly
+
+**I have not observed an FFI exception firing in a run**, and I am not claiming one has.
+The defect is that the failure path is silent and its output is optimistic: if any of these
+19 handlers ever runs, the caller receives a number that looks like a measurement, no
+diagnostic is emitted anywhere, and for the thermal and load quantities that number reads
+as survivable. That is a latent correctness hazard at a trust boundary, recorded as such.
+
+### What a fix looks like
+
+The information needed already exists at the call sites — an FFI exception is an
+*observable event*, not a value. The options, in the order this log would rank them:
+
+1. Return a sentinel that **cannot** be mistaken for data and is documented in the `.ads`
+   contract (a NaN, or a documented out-of-range value such as `-1.0`, which
+   `HIAD_Cost_C` already does and which is the one wrapper here that is unambiguous).
+2. Emit a diagnostic on the failure path — the file already `with`s `Ada.Text_IO` for the
+   comment at `:58`, so the dependency exists.
+3. Give each wrapper a `Post` condition stating what it returns on failure, so a caller can
+   distinguish "computed" from "could not compute" in the type system rather than by
+   convention.
 ## Summary
 
 | ID | Severity | Status | Root cause class |
@@ -5279,8 +5422,9 @@ log refuses. It is recorded here as an observation for whoever owns the unit.
 | F77 | provenance | **fixed 2026-10-06** | `run.py:967` suppresses bandit check `EXTERNAL_CALL_UNHANDLED` with the justification *"verified safe by prove.sh"*, but `prove.sh` runs **no security analyser** — zero mentions of `bandit`, and its only tools are `alr`/`gnatprove`/`gnatcov`/`coverage`/`python3`/`pytest`. The cited evidence cannot have been produced. The suppression is **unnecessary rather than load-bearing**: the suppressed code properly catches the spawn errors and terminates the child. Isolated — 1 of 344 `nosec` suppressions cites `prove.sh`. |
 | F78 | provenance | **fixed 2026-10-06** | The F60 fix added three citations to `make_derived_plots.py` naming the Ada lines its corrected limits come from, and all three point at the wrong lines: `types.ads:97` for `SIC_MAX_TEMP` (actual **120**), `:101` for `KAPTON_MAX_TEMP` (actual **124**), and `:831-832` for the combined test (actual **854-855**). A consistent 23-line offset on all three, so the citations were written against an earlier revision and never re-resolved. The values are right; the pointers are not — and the pointer is the evidence for the value. |
 | F79 | correctness | **fixed 2026-10-06** | `validation_pipeline.py:2508-2518` enters a branch **because** `h264_videotoolbox` is present in the encoder list, then selects software `libx264` instead, justified by *"QSV is NOT available on Apple Silicon"* — QSV is Intel's encoder, while the one removed is Apple's VideoToolbox, which is available on Apple Silicon and whose presence is what the guard tests. A working hardware encoder is detected and bypassed for a reason concerning a different encoder. |
-| F80 | provenance | **open** | `stellarorion_ffi.adb:654` states the wrapper *"Delegates to StellarOrion_Environment.Speed_Of_Sound"*, but that package defines `Speed_Of_Sound` **zero** times (`grep -c` = 0 in both its spec and body). The actual callee is `StellarOrion_Speed_Of_Sound.Speed_Of_Sound` (`with` at `:40`, call at `:669`). Commit `2e5b3d5` moved the function out of `Environment` and updated the `with` — but not the comment naming it. The code is correct; the pointer at the FFI boundary is not. Same class as F78. |
+| F80 | provenance | **fixed 2026-10-07** | `stellarorion_ffi.adb:654` states the wrapper *"Delegates to StellarOrion_Environment.Speed_Of_Sound"*, but that package defines `Speed_Of_Sound` **zero** times (`grep -c` = 0 in both its spec and body). The actual callee is `StellarOrion_Speed_Of_Sound.Speed_Of_Sound` (`with` at `:40`, call at `:669`). Commit `2e5b3d5` moved the function out of `Environment` and updated the `with` — but not the comment naming it. The code is correct; the pointer at the FFI boundary is not. Same class as F78. |
 | F81 | verification scope | **open** | The new `pragma SPARK_Mode (On)` unit `StellarOrion_Speed_Of_Sound` proves the result is `>= 0.0`, that its precondition envelope holds, and that no intermediate overflows (THEOREM T1, arithmetic re-checked: `1.4*287.058*6000 = 2411287.2`, `sqrt = 1552.832`). It proves **nothing about accuracy** — no relative-error postcondition on either `Speed_Of_Sound` or `Sqrt_Approx`. Measured behaviour is accurate (worst 6.3e-08 relative error over T = 50…6000 K, at float32 epsilon), so the gap is in the proof, not the behaviour — in a unit created specifically to be inside the verified subset. |
+| F82 | silent failure | **open** | `stellarorion_ffi.adb` has **19** exported wrappers, each wrapped in an exception handler, and **zero** diagnostics across all of them (`grep -c Put_Line` = 1, and that one is inside a comment at `:58`). Eleven return a bare sentinel: `0.0` for `Sutton_Graves_Heat_C`/`Fay_Riddell_Heat_C`/`Dynamic_Pressure_C`/`Deceleration_G_Load_C`/`Ballistic_Coefficient_C`/`Estimate_Cd_C`/`Mean_Free_Path_Viscous_C`/`Speed_Of_Sound_C`, and **`300.0`** for `Radiative_Eq_Temp_C`/`Backface_Temperature_C` — a plausible room temperature, indistinguishable from data. The survivability gate is a set of `<=` comparisons (`physics.adb:1428-1430`), so **every sentinel satisfies it and reads as survivable**. The project states this rule at `pinn_trajectory.adb:99` (*"a value that could not be computed must never read as one that was"*, F67/F48) but does not apply it here. Path is live: 19 `pragma Export` in the `.ads`, built by `stellarorion_pinn_lib.gpr:30-31`, and bound via ctypes at `ada_pinn_wrapper.py:1064-1082`. |
 
 ### Final state after fixes
 
