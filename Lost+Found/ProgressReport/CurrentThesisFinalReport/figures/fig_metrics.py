@@ -281,11 +281,12 @@ def smallest_text_pt(fig: Any, scale: float) -> tuple[float, str]:
             continue
         declared = float(artist.get_fontsize()) * scale
         # A mathtext sub/superscript is the only construct that shrinks below
-        # the declared size; detect it by the underscore or caret that
-        # introduces it inside a dollar-delimited span.
+        # the declared size. matplotlib only parses math inside $...$ spans
+        # (cbook.is_math_text), so only odd split indices are inside math;
+        # a bare underscore outside $...$ prints at the full declared size.
         shrinks = False
-        for chunk in content.split("$"):
-            if len(chunk) > 1 and ("_" in chunk or "^" in chunk):
+        for idx, chunk in enumerate(content.split("$")):
+            if idx % 2 == 1 and len(chunk) > 1 and ("_" in chunk or "^" in chunk):
                 shrinks = True
         printed = declared * (SHRINK_FACTOR if shrinks else 1.0)
         why = "%r fontsize %.1f%s" % (

@@ -30,14 +30,18 @@ AXIOMS
 
 THEORIES
     T1. Five columns with three input boxes, one engine box, two solver
-        boxes, two ML boxes and one output box fit the print width at a
+        boxes, two model boxes and one output box fit the print width at a
         readable size when the canvas is about 3.2 in tall.
-    T2. The feedback arrow from MoP to the engine routes below all boxes
-        so it crosses no text and no other arrow.
+    T2. The feedback arrow from the Bayesian Optimization surrogate to the
+        engine routes below all boxes so it crosses no text and no other
+        arrow.
 
 APPLICATIONS
-    A1. The rebuilt figure replaces the artwork in chapter_03 at the full
-        text width, so PRINT_W_IN must stay equal to TEXT_W_IN.
+    A1. The rebuilt figure replaces the artwork in chapter_03, which includes
+        it at width=\textwidth (5.5118 in) while the canvas stays 6.50 in so
+        the column layout keeps its clearances. The page therefore squeezes
+        the drawing by 5.5118/6.50, and verify must check the floor at that
+        squeezed size, not at the canvas size.
 
 CITATIONS
     Matplotlib 3.11.2, https://matplotlib.org/stable/
@@ -71,9 +75,13 @@ H = 3.20
 TITLE_PT = 13.0
 HEADER_PT = 10.0
 BOX_PT = 9.5
-LABEL_PT = 9.0
-LEGEND_PT = 9.0
+LABEL_PT = 9.5
+LEGEND_PT = 9.5
 MIN_PRINTED_PT = 8.0
+# WHY the 9.44 floor on LABEL_PT/LEGEND_PT: chapter 03 places this 6.50 in
+# canvas at \textwidth = 5.5118 in, so the page squeezes every declared size
+# by 5.5118/6.50 = 0.848. 8.0 / 0.848 = 9.44, so a 9.0 pt label would print
+# at 7.6 pt and fail the 8 pt floor (verify checks the squeezed size).
 
 INK = "#212121"
 HEADER_GRAY = "#757575"
@@ -130,32 +138,31 @@ HEADER_CENTERS = [
 INPUT_TEXTS = (
     "CadQuery Geometry\n/ STL export",
     "Flight Conditions\n/ V, T∞, ρ∞",
-    "Design Variables\n/ d, theta, nₜₒᵣ, rₙ",
+    "Design Variables\n/ R_N, r_tor, θ_c",
 )
-ENGINE_TEXT = "StellarOrion Engine\n/ Mach5Up.py\n/ (orchestrator)"
+ENGINE_TEXT = "Ada/SPARK Engine\n/ StellarOrion_Orion\n/ driven by run.py"
 SOLVER_TEXTS = (
     "SPARTA\n/ DSMC Solver\n/ Docker",
     "OpenFOAM\n/ laplacianFoam\n/ (solid thermal)",
 )
 ML_TEXTS = (
     "PINN\n/ DeepXDE\n/ (FNN 5x128)",
-    "MoP Surrogate\n/ PyTorch MLP\n/ (3-layer, 8 out)",
+    "Bayes Opt\n/ GP Matern 5/2\n/ + EI acquisition",
 )
 OUTPUT_TEXT = "ParaView\n/ VTK\n/ STL\n/ Rendering"
 
 ARROW_LABEL_VTK = "VTK data"
 ARROW_LABEL_SURFACE = "surface data"
 ARROW_LABEL_REFINED = "refined"
-ARROW_LABEL_FEEDBACK = "GA optimization\n/ feedback loop"
-SPARTA_INTERNAL = "VTK/STL files"
+ARROW_LABEL_FEEDBACK = "Bayesian optimization\n/ feedback loop"
 
 LEGEND_ROW1 = (
     ("Input (Geometry, Conditions)", INPUT_FILL, INPUT_EDGE),
-    ("Core Engine (Orchestrator)", ENGINE_FILL, ENGINE_EDGE),
+    ("Core Engine (Ada/SPARK, run.py)", ENGINE_FILL, ENGINE_EDGE),
 )
 LEGEND_ROW2 = (
     ("Physics Solvers (SPARTA, OpenFOAM)", SOLVER_FILL, SOLVER_EDGE),
-    ("ML Models (PINN, MoP)", ML_FILL, ML_EDGE),
+    ("Models (PINN, Bayes Opt)", ML_FILL, ML_EDGE),
 )
 LEGEND_ROW3 = (
     ("Visualization (ParaView)", OUTPUT_FILL, OUTPUT_EDGE),
@@ -287,13 +294,13 @@ def build() -> object:
     box(ax, ENGINE_X0, ENGINE_Y, ENGINE_X1 - ENGINE_X0, ENGINE_H,
         ENGINE_TEXT, ENGINE_FILL, ENGINE_EDGE, text_color="white", bold=True)
 
-    sparta_cx = (SOLVER_X0 + SOLVER_X1) / 2
+    # WHY: no separate VTK/STL label sits inside the SPARTA box. The box's
+    # three centred lines already fill 0.59 of the 0.62 in height, so a fourth
+    # label would collide with the top line (the failure that this redraw
+    # fixed), and the OUTPUT box already carries the VTK/STL concept.
     box(ax, SOLVER_X0, SOLVER_Y[0], SOLVER_X1 - SOLVER_X0, SOLVER_H,
         SOLVER_TEXTS[0], SOLVER_FILL, SOLVER_EDGE, text_color="white",
         linespacing=1.1)
-    ax.text(sparta_cx, SOLVER_Y[0] + SOLVER_H - 0.06, SPARTA_INTERNAL,
-            ha="center", va="top", fontsize=LABEL_PT, fontstyle="italic",
-            color="white", zorder=3)
     box(ax, SOLVER_X0, SOLVER_Y[1], SOLVER_X1 - SOLVER_X0, SOLVER_H,
         SOLVER_TEXTS[1], SOLVER_FILL, SOLVER_EDGE, text_color="white")
 
@@ -324,9 +331,9 @@ def build() -> object:
     ])
 
     pinn_yc = ML_Y[0] + ML_H / 2.0
-    mop_yc = ML_Y[1] + ML_H / 2.0
+    bo_yc = ML_Y[1] + ML_H / 2.0
     arrow(ax, (SOLVER_X1 - 0.02, sparta_yc), (ML_X0 + 0.02, pinn_yc))
-    arrow(ax, (SOLVER_X1 - 0.02, SOLVER_Y[0] + 0.06), (ML_X0 + 0.02, mop_yc))
+    arrow(ax, (SOLVER_X1 - 0.02, SOLVER_Y[0] + 0.06), (ML_X0 + 0.02, bo_yc))
     arrow(ax, (pinn_cx, ML_Y[0]), (pinn_cx, ML_Y[1] + ML_H))
 
     routed_arrow(ax, [
@@ -336,8 +343,13 @@ def build() -> object:
         (engine_cx, ENGINE_Y),
     ], color=ORANGE)
 
-    ax.text((ENGINE_X1 + SOLVER_X0) / 2.0, sparta_yc + 0.12, ARROW_LABEL_VTK,
-            ha="center", va="bottom", fontsize=LABEL_PT, fontstyle="italic",
+    # WHY right-anchored at the solver box's left edge minus 0.04: the
+    # engine-solver gap is only 0.12 in wide, so a centred label overran both
+    # box texts (the reported 6.7x9.1 and 11.5x6.4 overlaps). Anchoring the
+    # label's right end just left of the gap keeps it over background: below
+    # the header row (2.76 in) and above the engine box (2.30 in).
+    ax.text(SOLVER_X0 - 0.04, sparta_yc + 0.12, ARROW_LABEL_VTK,
+            ha="right", va="bottom", fontsize=LABEL_PT, fontstyle="italic",
             color=INK)
     ax.text((SOLVER_X1 + ML_X0) / 2.0 + 0.02, (SOLVER_Y[0] + ML_Y[1]) / 2.0 + SOLVER_H / 2.0,
             ARROW_LABEL_SURFACE, ha="center", va="center",
@@ -357,14 +369,21 @@ def build() -> object:
 
 
 def verify(fig: object, scale: float) -> None:
-    """Check the written figure against the readability floor.
+    """Check the written figure against the readability and collision floors.
+
+    The check runs at the size the page will actually print, which is the
+    fit scale times the chapter 03 \\textwidth squeeze described in A1.
 
     :param fig: the figure that was written, still open.
     :param scale: placement scale reported by the print fit.
     :returns: None.
-    :raises RuntimeError: if the smallest printed text is under the floor.
+    :raises RuntimeError: if the smallest printed text is under the floor, or
+        two printed labels overlap by at least 3 pt in both directions
+        (fm.text_overlaps_pt reports the offending pairs so the collision is
+        diagnosable from the failure alone).
     """
-    printed, why = fm.smallest_text_pt(fig, scale)
+    placed = scale * min(1.0, pf.TEXT_W_IN / PRINT_W_IN)
+    printed, why = fm.smallest_text_pt(fig, placed)
     print("smallest printed text %.2f pt (%s); floor %.1f pt"
           % (printed, why, MIN_PRINTED_PT))
     if printed < MIN_PRINTED_PT:
@@ -372,6 +391,13 @@ def verify(fig: object, scale: float) -> None:
             "smallest printed text %.2f pt is under the %.1f pt floor from %s"
             % (printed, MIN_PRINTED_PT, why)
         )
+    overlaps = fm.text_overlaps_pt(fig, placed)
+    if overlaps:
+        detail = "; ".join(
+            "%.1fx%.1f pt %s <> %s" % (ox, oy, a, b)
+            for a, b, ox, oy in overlaps[:8]
+        )
+        raise RuntimeError("printed labels overlap: %s" % detail)
 
 
 def main() -> int:
@@ -386,8 +412,7 @@ def main() -> int:
     strings.extend(ML_TEXTS)
     strings.append(OUTPUT_TEXT)
     strings.extend([ARROW_LABEL_VTK, ARROW_LABEL_SURFACE,
-                    ARROW_LABEL_REFINED, ARROW_LABEL_FEEDBACK,
-                    SPARTA_INTERNAL])
+                    ARROW_LABEL_REFINED, ARROW_LABEL_FEEDBACK])
     for item in LEGEND_ROW1 + LEGEND_ROW2 + LEGEND_ROW3:
         strings.append(item[0])
     pf.require_clean(*strings)

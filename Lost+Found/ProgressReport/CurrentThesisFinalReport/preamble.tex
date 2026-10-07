@@ -109,6 +109,30 @@
 % \usepackage[hang,nooneline,scriptsize,md]{subfigure}
 \usepackage{epsfig}
 \usepackage[font=small,labelfont=bf]{caption}
+% Paper-saving pass: halve the default float separations (LaTeX defaults are
+% \textfloatsep 20pt+2-4, \floatsep/\intextsep 12pt+2-2). The stock values
+% leave 30-40 pt of air around every float, which is what pushes a figure and
+% its caption onto a dedicated page; at roughly half, floats and prose pack
+% tighter with no visible change to type size or margins.
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\dblfloatsep}{8pt plus 2pt minus 2pt}
+% Float packing fractions: LaTeX's defaults (\topfraction 0.7, \textfraction
+% 0.2, \floatpagefraction 0.5) eject a figure + its long caption onto a
+% dedicated FLOAT PAGE whenever the block exceeds 70% of the text height --
+% text can never share such a page, which is exactly the one-figure-per-page
+% pattern. Allowing floats up to 90% of the page, requiring only 10% prose
+% alongside them, and demanding 90% fill before a dedicated float page makes
+% figures share their page with the surrounding narrative instead.
+% NOTE: these four are MACROS (sizeNN.clo uses \renewcommand), NOT skip
+% registers -- \setlength on them typesets the old value as page-1 garbage
+% instead of assigning, so \renewcommand is the only correct interface.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.9}
 \usepackage[onehalfspacing]{setspace}      %buat kombinasi spacing
 \usepackage{indentfirst}
 %\setlength{\parindent}{0.6cm}

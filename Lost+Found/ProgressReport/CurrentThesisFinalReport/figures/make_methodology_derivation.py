@@ -72,6 +72,11 @@ DEVIATIONS FROM THE ORIGINAL ARTWORK
     2. Equations are set as plain Unicode text, not mathtext (AXIOM A2).
     3. Row 3 uses a wider column gap so the red labels clear the box text
        (THEORY T2).
+    4. Row 3 columns 3-4 and row 4 columns 3-4 replace the retired MoP and
+       Python-engine labels with the current pipeline terms (Gaussian
+       Process Surrogate, Bayesian Optimization, scikit-learn GP, Ada/SPARK
+       core driven by run.py), matching chapter_03_methodology.tex sections
+       sec:axioms and sec:software_pipeline.
 """
 
 from __future__ import annotations
@@ -196,8 +201,8 @@ ROWS = (
         "boxes": (
             ("DSMC (Bird", "Algorithm)", "SPARTA"),
             ("PINN (Physics-", "Informed", "Neural", "Network)"),
-            ("Metamodel", "of Physics", "(MoP)", "Surrogate"),
-            ("Genetic", "Algorithm", "Optimization"),
+            ("Gaussian", "Process", "Surrogate"),
+            ("Bayesian", "Optimization", "(Expected", "Improvement)"),
         ),
     },
     {
@@ -206,8 +211,8 @@ ROWS = (
         "boxes": (
             ("SPARTA Docker", "Container", "5-species air"),
             ("DeepXDE", "PINN Library", "Stage 1 +", "Stage 2"),
-            ("PyTorch MoP", "3-layer MLP", "CCD sampling"),
-            ("StellarOrion", "Engine (Python)", "main.py", "orchestrator"),
+            ("scikit-learn", "GP (Matern 5/2)", "LHS + EI"),
+            ("StellarOrion", "Ada/SPARK core", "run.py", "orchestrator"),
         ),
     },
 )

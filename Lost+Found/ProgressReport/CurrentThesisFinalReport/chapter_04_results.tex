@@ -382,9 +382,9 @@ Since $\dot{q} \propto 1/\sqrt{R_N}$ in the Sutton-Graves scaling~\cite{sutton19
     \label{fig:bo_optimization_3d}
 \end{figure}
 
-\subsection{MoP Surrogate Chaos}
-\label{sec:mop_chaos}
-The MoP surrogate, used in earlier optimization rounds, exhibited chaotic behavior: two consecutive runs at the fixed seed 42 returned different optima ($J = 1.602195$ vs $1.608508$). The cause is the GP hyper-parameter fit (scikit-learn \texttt{lbfgs} on the Mat\'ern length scale hitting the 1000.0 upper bound), not the sampling seed. This finding motivated the transition from MoP to Bayesian Optimization with a fixed hyper-parameter refit strategy, as described in Sec.~\ref{sec:bo_results}.
+\subsection{Surrogate Reproducibility Finding}
+\label{sec:surrogate_repro}
+An earlier gradient-based optimizer in the engine, scoring candidate geometries with a Gaussian-Process fitness model, exhibited chaotic behavior: two consecutive runs at the fixed seed 42 returned different optima ($J = 1.602195$ vs $1.608508$). The cause is the GP hyper-parameter fit (scikit-learn \texttt{lbfgs} on the Mat\'ern length scale hitting the 1000.0 upper bound), not the sampling seed. This finding is why the recorded campaign uses Bayesian Optimization with a fixed hyper-parameter refit strategy, as described in Sec.~\ref{sec:bo_results}; the earlier path generates none of the numbers reported in this chapter.
 
 \section{Hybrid Validation Gate}
 \label{sec:hybrid_gate}
@@ -437,7 +437,7 @@ Newtonian methods assume a calorically perfect gas ($\gamma = 1.4$ for air). At 
 \subsection{Optimization Methodology}
 Rapisarda's framework uses a sequential, single-objective approach: aerodynamic coefficients are computed at each design point, with trajectory and thermal analysis independent~\cite{rapisarda2023mdao}.
 
-This framework couples a Genetic Algorithm (GA) with a Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate. Latin Hypercube Sampling (LHS) generates the initial population, and the Bayes Opt (GP) surrogate evaluates thousands of candidate geometries rapidly; this is essential for the 6+ dimensional design space beyond individual SPARTA simulations.
+This framework couples Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) with the Genetic Algorithm search over the same surrogate. Latin Hypercube Sampling (LHS) generates the initial design, and the Bayes Opt (GP) surrogate evaluates thousands of candidate geometries rapidly; this is essential for the 6+ dimensional design space beyond individual SPARTA simulations.
 
 \subsection{Physics-Informed Neural Network Refinement}
 This work applies Physics-Informed Neural Networks (PINNs) as post-processing for DSMC data~\cite{raissi2019pinn}. The DeepXDE-based PINN solves the 2D compressible Navier-Stokes equations by automatic differentiation, with SPARTA grid data as observational boundary conditions, giving a smooth, physics-consistent interpolant filling flow-field gaps and reducing particle noise. This hybrid approach is absent from Rapisarda's framework.

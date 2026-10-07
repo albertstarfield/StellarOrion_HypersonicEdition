@@ -10,7 +10,7 @@ Each axiom is grounded in physical theory and Chapter~\ref{chap:literature}; Fig
 \begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Flowchart of the methodology derivation chain, linking each research axiom to the equation or solver step that implements it.}}%
-\includegraphics[width=\textwidth]{figures/methodology_derivation.png}%
+\includegraphics[width=0.9\textwidth]{figures/methodology_derivation.png}%
 \EndAccSupp{}%
     \caption{Methodology derivation from first principles: axioms $\rightarrow$ governing equations $\rightarrow$ numerical methods $\rightarrow$ software implementation. The dashed red arrows indicate data flow between methods within the numerical methods layer.}
     \label{fig:methodology_derivation}
@@ -82,20 +82,20 @@ Figure~\ref{fig:governing_equations} summarizes this chain.
     \BeginAccSupp{method=escape,ActualText={Panel of the governing equations used in the study, listing the continuity, momentum and energy equations together with the state and transport relations.}}%
 \includegraphics[width=\textwidth]{figures/governing_equations.png}%
 \EndAccSupp{}%
-    \caption[Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier-Stokes continuum limit, Sutton-Graves engineering correlation, PINN neural approximation, to GA-based survivability optimization.]{Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier-Stokes continuum limit, Sutton-Graves engineering correlation, PINN neural approximation, to GA-based survivability optimization. Each layer is anchored by the research axioms defined in Table~\ref{tab:research_axioms}.}
+    \caption[Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier-Stokes continuum limit, Sutton-Graves engineering correlation, PINN neural approximation, to surrogate-based survivability optimization.]{Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier-Stokes continuum limit, Sutton-Graves engineering correlation, PINN neural approximation, to surrogate-based survivability optimization. Each layer is anchored by the research axioms defined in Table~\ref{tab:research_axioms}.}
     \label{fig:governing_equations}
 \end{figure}
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
-The StellarOrion engine orchestrates the pipeline in Figure~\ref{fig:software_pipeline}: CadQuery geometry and freestream conditions feed SPARTA DSMC, the DeepXDE PINN module and the PyTorch Bayes Opt surrogate. OpenFOAM (Open Source Field Operation and Manipulation) provides solid-thermal solutions. MoP (Method of Moments) is a surrogate model that enables GA-driven optimization.
+The StellarOrion engine orchestrates the pipeline in Figure~\ref{fig:software_pipeline}. The Python entry point \texttt{run.py} drives five phases: boot, Python virtual-environment bootstrap, static analysis, Ada/SPARK build of the simulation engine, and launch. The core solver is the Ada/SPARK unit \texttt{StellarOrion\_Orion} in \texttt{src/simulation\_engine/}, which couples the SPARTA DSMC solver and OpenFOAM (Open Source Field Operation and Manipulation) solid-thermal solver, then hands surface fields to the DeepXDE PINN refinement module and to the scikit-learn Bayesian Optimization surrogate (GP Mat\'ern 5/2 with Expected Improvement, Sec.~\ref{sec:ga_opt}). Results are exported as VTK/STL for ParaView rendering and for the validation gate of Chapter~\ref{ch:results}. The recorded campaign of Chapter~\ref{ch:results} applies Bayesian Optimization with a fixed hyper-parameter refit strategy, adopted after the reproducibility finding of Sec.~\ref{sec:surrogate_repro}.
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline, showing the Ada simulation engine, the Python sidecar for PINN refinement, and the result post-processing stages exchanging data.}}%
+    \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline. Input column: CadQuery geometry with STL export, flight conditions with velocity, temperature and density, and design variables. Orchestration column: run.py with boot, environment bootstrap, static analysis, Ada/SPARK build and launch phases. Core engine column: the Ada/SPARK simulation engine. Solver column: SPARTA DSMC in Docker and OpenFOAM solid thermal. Model column: PINN with DeepXDE and the Bayesian Optimization surrogate, a Gaussian Process with Matern 5/2 kernel and Expected Improvement. Output column: ParaView, VTK, STL rendering. An orange feedback loop returns Bayesian Optimization designs to the engine for re-evaluation.}}%
 \includegraphics[width=\textwidth]{figures/software_pipeline.png}%
 \EndAccSupp{}%
-    \caption[StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers $\rightarrow$ PINN refinement and MoP surrogate $\rightarrow$ ParaView visualization.]{StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers $\rightarrow$ PINN refinement and MoP surrogate $\rightarrow$ ParaView visualization. The feedback loop from the MoP surrogate to the core engine enables GA-driven optimization.}
+    \caption[StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ \texttt{run.py} orchestration phases $\rightarrow$ Ada/SPARK simulation engine $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers with PINN refinement and the Bayesian Optimization surrogate $\rightarrow$ ParaView visualization.]{StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ \texttt{run.py} orchestration phases $\rightarrow$ Ada/SPARK simulation engine $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers with PINN refinement and the Bayesian Optimization surrogate $\rightarrow$ ParaView visualization. The orange feedback loop returns Bayesian Optimization designs from the surrogate to the core engine for re-evaluation.}
     \label{fig:software_pipeline}
 \end{figure}
 
@@ -133,15 +133,16 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
  & Amplitude $c_0$, length scales $\ell_j$ & Initialized at 1, refit in $[10^{-3}, 10^{3}]$ \\
  & Acquisition & Expected Improvement, $\xi = 0.01$ \\
  & Budget & 20 LHS + 50 Bayes Opt ($n_{eval} = 70$), seed 42 \\ \midrule
-\multirow{3}{=}{\textbf{GA Optimization}} & Generations & 200 \\
- & Stagnation stop & 20 generations \\
- & Constraint limits & $T_{\text{back}} < 773$ K, $g < 25g$ \\
+\multirow{2}{=}{\textbf{GA Search}} & Generations & 200 \\
+ & Stagnation stop & 20 generations \\ \midrule
+\multirow{2}{=}{\textbf{Constraints}} & Backface temperature & $T_{\text{back}} < 773$ K \\
+ & Load factor & $g < 25g$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \section{Research Design and Workflow}
-This chapter outlines the computational framework for assessing the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD): parametric geometry generation, Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement~\cite{raissi2019pinn}, and Genetic Algorithm (GA) optimization~\cite{Goldberg1989}.
+This chapter outlines the computational framework for assessing the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD): parametric geometry generation, Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement~\cite{raissi2019pinn}, and surrogate-based survivability optimization driven by Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate~\cite{rasmussen2003} and an optional Genetic Algorithm (GA) search~\cite{Goldberg1989} over the same surrogate.
 
 To isolate the ``scalloped'' geometry, the methodology compares a baseline smooth sphere-cone against the inflatable architecture under identical flight conditions. Figure~\ref{fig:flowchart_ch1} shows six stages:
 \begin{enumerate}
@@ -149,7 +150,7 @@ To isolate the ``scalloped'' geometry, the methodology compares a baseline smoot
     \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver~\cite{plimpton2014sparta} at the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics~\cite{bird1994molecular}.
     \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation in a Docker-containerized Linux environment, tracking millions of particles.
     \item \textbf{PINN Flow Field Refinement:} Post-processing of DSMC output with a Physics-Informed Neural Network (DeepXDE) to smooth particle noise, fill flow-field gaps and provide a continuous Navier-Stokes-anchored interpolant.
-    \item \textbf{Survivability Optimization:} Genetic Algorithm (GA) guided by a Gaussian Process surrogate with Mat\'ern 5/2 kernel and Expected Improvement acquisition (Bayes Opt) for automated multi-objective optimization of HIAD geometry.
+    \item \textbf{Survivability Optimization:} Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate, Mat\'ern 5/2 kernel and Expected Improvement acquisition, backed by a Genetic Algorithm (GA) search over the same surrogate, for automated multi-objective optimization of HIAD geometry (Sec.~\ref{sec:ga_opt}).
     \item \textbf{Validation and Analysis:} Grid independence studies and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
 \end{enumerate}
 
@@ -762,19 +763,21 @@ The PINN refinement stage rests on these assumptions:
 The optimization loop runs six steps:
 
 \begin{enumerate}
-    \item \textbf{Sampling:} Generate $N$ design points by Stratified LHS across $\mathbf{x} \in \mathbb{R}^d$.
+    \item \textbf{Sampling:} Generate $N$ design points by Stratified LHS (or a rotatable CCD screen) across $\mathbf{x} \in \mathbb{R}^d$.
     \item \textbf{Simulation:} Evaluate each design with SPARTA DSMC (optionally PINN-refined) for performance metrics $(\beta, \dot{q}, T_{back}, n_G)$.
     \item \textbf{Bayes Opt Training:} Fit a Gaussian Process surrogate on the $N$ results, giving posterior mean $\mu(\mathbf{x})$ and deviation $\sigma(\mathbf{x})$.
-    \item \textbf{GA Optimization:} Evolve a population using the Bayes Opt surrogate as fast evaluator, minimizing the cost function $J$.
+    \item \textbf{Bayesian Acquisition:} Score $N_{cand} = 5000$ candidate designs with Expected Improvement (Eq.~\eqref{eq:ei}) and append the arg-max to the history; this is the recorded campaign of Sec.~\ref{sec:bo_results}.
     \item \textbf{Constraint Filtering:} Apply physics-based penalty functions to eliminate non-viable designs.
     \item \textbf{Final Validation:} Re-evaluate the optimal design with SPARTA DSMC, without PINN refinement.
 \end{enumerate}
+
+The engine additionally implements a real-coded Genetic Algorithm (Sec.~\ref{sec:ga_operators}) that evolves a population using the same GP surrogate as fast evaluator. The GA shares steps 1--3, 5 and 6 with the Bayesian loop and replaces step 4 with selection, crossover and mutation.
 
 \subsection{Design Space and Parameters}
 
 \begin{table}[!htbp]
     \centering
-    \caption{Optimization design variables and their bounds, as implemented in the genetic-algorithm search.}
+    \caption{Optimization design variables and their bounds. The genetic-algorithm search explores all six variables of the engine's GA search space (\texttt{stellarorion\_optimization.ads}); the Bayesian Optimization campaign of Chapter~\ref{ch:results} activates the three active variables of Table~\ref{tab:default_params} ($R_N$, $r_{tor}$, $\theta_c$).}
     \label{tab:design_variables}
     \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.25\textwidth}|c|c|>{\RaggedRight\arraybackslash}X|}
         \hline
@@ -853,7 +856,7 @@ Expected Improvement has no closed-form maximizer, so each Bayes Opt iteration d
 \subsubsection*{Single-Objective Scalarization}
 The GP models the scalar cost $J(\mathbf{x})$ directly; the multi-objective character rests on the definition of $J$ below. The acquisition stays one-dimensional, so the GP spends its $70$-evaluation budget on one response surface instead of $k$.
 
-\subsection{Genetic Algorithm Optimization}
+\subsection{Cost Function and Genetic Algorithm Search}
 \label{sec:ga_operators}
 
 \subsubsection*{Cost Function Derivation}
@@ -918,10 +921,10 @@ The GA uses these operators:
 
 The GA stops when (a) generation count reaches $G_{max}$, or (b) best cost $J^*$ improves by less than $\epsilon = 10^{-4}$ over $G_{pat} = 20$ consecutive generations.
 
-\subsection{Bayesian Optimization (Bayes Opt Constraint Layer)}
+\subsection{Constraint Layer for the Search Drivers}
 
 \subsubsection*{Formal Penalty Function}
-The Bayes Opt Constraint Layer filters GA-generated designs against hard physical limits. For a candidate $\mathbf{x}$ with predicted performance $(\hat{y}_1, \ldots, \hat{y}_k)$, the constraint-augmented cost is:
+The constraint layer filters candidate designs, whether proposed by the Bayesian acquisition or generated by the GA, against hard physical limits. For a candidate $\mathbf{x}$ with predicted performance $(\hat{y}_1, \ldots, \hat{y}_k)$, the constraint-augmented cost is:
 
 \begin{equation}
     J_{constrained}(\mathbf{x}) = J(\mathbf{x}) + \sum_{j=1}^{n_c} \Lambda_j \cdot \phi_j(\mathbf{x})
@@ -942,7 +945,7 @@ Constraint functions $g_j(\mathbf{x})$ encode the physical limits:
 \begin{table}[!htbp]
     \centering
     \caption{Bayes Opt Constraint Functions.}
-    \label{tab:mop_constraints}
+    \label{tab:bo_constraints}
     \begin{tabular}{|l|l|c|}
         \hline
         \textbf{Constraint} & \textbf{Function $g_j(\mathbf{x})$} & \textbf{Limit} \\ \hline
@@ -955,8 +958,8 @@ Constraint functions $g_j(\mathbf{x})$ encode the physical limits:
 
 When a constraint is violated ($g_j > 0$) the penalty $\Lambda_j \cdot |g_j|^2$ adds a large cost, removing the design so only viable configurations reach validation.
 
-\subsubsection*{Integration with GA}
-The constraint-augmented cost $J_{constrained}$ replaces $J$ in GA fitness; selection, crossover and mutation then operate on it as in Sec.~\ref{sec:ga_operators}.
+\subsubsection*{Integration with the Search Drivers}
+The constraint-augmented cost $J_{constrained}$ replaces $J$ both in the Expected Improvement objective of Sec.~\ref{sec:ga_opt} and in GA fitness; selection, crossover and mutation then operate on it as in Sec.~\ref{sec:ga_operators}.
 
 \section{Multi-Solver Architecture}
 
@@ -978,10 +981,10 @@ Multiple solver backends address different flow regimes:
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Box-and-arrow diagram of the multi-solver coupling. The top row shows SPARTA DSMC Solver feeding surface heat flux to OpenFOAM Solid Thermal, which feeds backface temperature to Survivability Check. The bottom row shows PINN DeepXDE feeding refined field to MoP Surrogate PyTorch, which feeds to GA Optimization. Vertical arrows connect SPARTA to PINN and OpenFOAM to MoP. An orange feedback loop returns from GA Optimization to SPARTA.}}%
+    \BeginAccSupp{method=escape,ActualText={Box-and-arrow diagram of the multi-solver coupling. The top row shows SPARTA DSMC Solver feeding surface heat flux to OpenFOAM Solid Thermal, which feeds backface temperature to Survivability Check. The bottom row shows PINN DeepXDE feeding the refined field to the Bayesian Optimization surrogate, a Gaussian Process with Matern 5/2 kernel, which feeds Expected Improvement acquisition and candidate selection. Vertical arrows connect SPARTA to PINN and OpenFOAM to the surrogate. An orange feedback loop returns from candidate selection to SPARTA.}}%
     \includegraphics[width=\textwidth]{figures/solver_coupling.png}%
     \EndAccSupp{}%
-    \caption[Multi-solver coupling and data exchange diagram.]{Multi-solver coupling and data exchange diagram. The top row shows the gas-phase to solid-phase coupling: SPARTA DSMC provides surface heat flux to OpenFOAM solid thermal, which returns backface temperature to the survivability check. The bottom row shows the machine-learning pipeline: PINN refines the flow field, the MoP surrogate accelerates evaluation, and GA drives optimization. Vertical arrows indicate data exchange between the gas and ML layers. The orange feedback loop returns new designs from GA to SPARTA for re-evaluation.}
+    \caption[Multi-solver coupling and data exchange diagram.]{Multi-solver coupling and data exchange diagram. The top row shows the gas-phase to solid-phase coupling: SPARTA DSMC provides surface heat flux to OpenFOAM solid thermal, which returns backface temperature to the survivability check. The bottom row shows the machine-learning pipeline: PINN refines the flow field, the Bayesian Optimization surrogate (GP Mat\'ern 5/2) accelerates evaluation, and Expected Improvement selects the next design. Vertical arrows indicate data exchange between the gas and ML layers. The orange feedback loop returns new designs from the acquisition step to SPARTA for re-evaluation.}
     \label{fig:solver_coupling}
 \end{figure}
 
@@ -1167,7 +1170,7 @@ The PINN uses DeepXDE~\cite{lu2021deepxde}:
 \begin{table}[!htbp]
     \centering
     \caption{Bayes Opt Gaussian Process Surrogate and Acquisition Hyperparameters.}
-    \label{tab:mop_hparams}
+    \label{tab:bo_hparams}
     \begin{tabular}{|l|l|}
         \hline
         \textbf{Component} & \textbf{Specification} \\ \hline

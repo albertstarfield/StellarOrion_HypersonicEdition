@@ -158,7 +158,7 @@ def routed_arrow(ax: object, points: list, color: str = ARROW_COLOR,
 
 def draw_legend_row(ax: object, items: tuple, y: float,
                     patch_w: float = 0.08, patch_h: float = 0.10,
-                    gap: float = 0.10, fs: float = 9.0) -> None:
+                    gap: float = 0.10, fs: float = 9.5) -> None:
     """Draw one row of legend items centered on the canvas.
 
     :param ax: the axes to draw on.
@@ -247,20 +247,20 @@ def build_domain_mesh() -> object:
             linewidth=1.5, zorder=1)
 
     # Labels
-    ax.annotate("Farfield boundary", xy=(0.5, 3.5), xytext=(0.2, 3.7),
-                fontsize=9.0, color=INK, ha="left", va="bottom",
+    ax.annotate("Farfield boundary", xy=(0.5, 3.5), xytext=(0.2, 3.55),
+                fontsize=9.5, color=INK, ha="left", va="bottom",
                 arrowprops=dict(arrowstyle="->", color=INK, lw=1.0))
     ax.annotate("Symmetry plane", xy=(4.0, 0.3), xytext=(4.5, 0.15),
-                fontsize=9.0, color=INK, ha="center", va="bottom",
+                fontsize=9.5, color=INK, ha="center", va="bottom",
                 arrowprops=dict(arrowstyle="->", color=INK, lw=1.0))
     ax.annotate("HIAD surface", xy=(2.0, 0.7), xytext=(1.2, 1.2),
-                fontsize=9.0, color=INK, ha="center", va="bottom",
+                fontsize=9.5, color=INK, ha="center", va="bottom",
                 arrowprops=dict(arrowstyle="->", color=INK, lw=1.0))
     ax.annotate("Bow shock", xy=(1.15, 2.0), xytext=(0.3, 2.5),
-                fontsize=9.0, color=ORANGE, ha="left", va="center",
+                fontsize=9.5, color=ORANGE, ha="left", va="center",
                 arrowprops=dict(arrowstyle="->", color=ORANGE, lw=1.0))
     ax.annotate("Cartesian mesh\n(grid factor 0.7)", xy=(4.0, 2.0),
-                xytext=(3.5, 2.8), fontsize=9.0, color=HEADER_GRAY,
+                xytext=(3.5, 2.8), fontsize=9.5, color=HEADER_GRAY,
                 ha="center", va="bottom",
                 arrowprops=dict(arrowstyle="->", color=HEADER_GRAY, lw=1.0))
 
@@ -288,8 +288,8 @@ def build_solver_coupling() -> object:
     openfoam_x0, openfoam_y0, openfoam_w, openfoam_h = 2.2, 1.8, 1.4, 0.7
     surv_x0, surv_y0, surv_w, surv_h = 4.1, 1.8, 1.4, 0.7
     pinn_x0, pinn_y0, pinn_w, pinn_h = 0.3, 0.5, 1.4, 0.7
-    mop_x0, mop_y0, mop_w, mop_h = 2.2, 0.5, 1.4, 0.7
-    ga_x0, ga_y0, ga_w, ga_h = 4.1, 0.5, 1.4, 0.7
+    sur_x0, sur_y0, sur_w, sur_h = 2.2, 0.5, 1.4, 0.7
+    ei_x0, ei_y0, ei_w, ei_h = 4.1, 0.5, 1.4, 0.7
 
     box(ax, sparta_x0, sparta_y0, sparta_w, sparta_h,
         "SPARTA\nDSMC Solver", SOLVER_FILL, SOLVER_EDGE, text_color="white")
@@ -299,10 +299,12 @@ def build_solver_coupling() -> object:
         "Survivability\nCheck", OUTPUT_FILL, OUTPUT_EDGE, text_color="white")
     box(ax, pinn_x0, pinn_y0, pinn_w, pinn_h,
         "PINN\nDeepXDE", ML_FILL, ML_EDGE, text_color="white")
-    box(ax, mop_x0, mop_y0, mop_w, mop_h,
-        "MoP Surrogate\nPyTorch", ML_FILL, ML_EDGE, text_color="white")
-    box(ax, ga_x0, ga_y0, ga_w, ga_h,
-        "GA\nOptimization", ENGINE_FILL, ENGINE_EDGE, text_color="white")
+    box(ax, sur_x0, sur_y0, sur_w, sur_h,
+        "Bayes Opt Surrogate\nGP Matern 5/2", ML_FILL, ML_EDGE,
+        text_color="white")
+    box(ax, ei_x0, ei_y0, ei_w, ei_h,
+        "EI Acquisition\nNext Design", ENGINE_FILL, ENGINE_EDGE,
+        text_color="white")
 
     # Arrows: top row
     arrow(ax, (sparta_x0 + sparta_w, sparta_y0 + sparta_h / 2),
@@ -312,35 +314,35 @@ def build_solver_coupling() -> object:
 
     # Arrows: bottom row
     arrow(ax, (pinn_x0 + pinn_w, pinn_y0 + pinn_h / 2),
-          (mop_x0, mop_y0 + mop_h / 2))
-    arrow(ax, (mop_x0 + mop_w, mop_y0 + mop_h / 2),
-          (ga_x0, ga_y0 + ga_h / 2))
+          (sur_x0, sur_y0 + sur_h / 2))
+    arrow(ax, (sur_x0 + sur_w, sur_y0 + sur_h / 2),
+          (ei_x0, ei_y0 + ei_h / 2))
 
-    # Vertical arrows: SPARTA to PINN, OpenFOAM to MoP
+    # Vertical arrows: SPARTA to PINN, OpenFOAM to the GP surrogate
     arrow(ax, (sparta_x0 + sparta_w / 2, sparta_y0),
           (pinn_x0 + pinn_w / 2, pinn_y0 + pinn_h))
     arrow(ax, (openfoam_x0 + openfoam_w / 2, openfoam_y0),
-          (mop_x0 + mop_w / 2, mop_y0 + mop_h))
+          (sur_x0 + sur_w / 2, sur_y0 + sur_h))
 
-    # Feedback loop: GA to SPARTA
+    # Feedback loop: acquisition to SPARTA
     routed_arrow(ax, [
-        (ga_x0 + ga_w / 2, ga_y0 + ga_h),
-        (ga_x0 + ga_w / 2, 2.8),
+        (ei_x0 + ei_w / 2, ei_y0 + ei_h),
+        (ei_x0 + ei_w / 2, 2.8),
         (sparta_x0 + sparta_w / 2, 2.8),
         (sparta_x0 + sparta_w / 2, sparta_y0 + sparta_h),
     ], color=ORANGE)
 
     # Arrow labels
     ax.text(1.55, 2.25, "surface heat flux", ha="center", va="bottom",
-            fontsize=8.5, fontstyle="italic", color=INK)
+            fontsize=9.5, fontstyle="italic", color=INK)
     ax.text(3.05, 2.25, "backface temperature", ha="center", va="bottom",
-            fontsize=8.5, fontstyle="italic", color=INK)
+            fontsize=9.5, fontstyle="italic", color=INK)
     ax.text(1.55, 0.95, "grid dump", ha="center", va="bottom",
-            fontsize=8.5, fontstyle="italic", color=INK)
+            fontsize=9.5, fontstyle="italic", color=INK)
     ax.text(3.05, 0.95, "refined field", ha="center", va="bottom",
-            fontsize=8.5, fontstyle="italic", color=INK)
+            fontsize=9.5, fontstyle="italic", color=INK)
     ax.text(5.35, 2.85, "new design", ha="center", va="bottom",
-            fontsize=8.5, fontstyle="italic", color=ORANGE)
+            fontsize=9.5, fontstyle="italic", color=ORANGE)
 
     # Legend
     legend_row1 = (
@@ -398,11 +400,11 @@ def build_result_extraction() -> object:
 
     # Arrow labels
     ax.text(1.55, 1.65, "raw data", ha="center", va="bottom",
-            fontsize=8.5, fontstyle="italic", color=INK)
+            fontsize=9.5, fontstyle="italic", color=INK)
     ax.text(3.05, 1.65, "parsed", ha="center", va="bottom",
-            fontsize=8.5, fontstyle="italic", color=INK)
+            fontsize=9.5, fontstyle="italic", color=INK)
     ax.text(5.35, 0.95, "integrated", ha="center", va="bottom",
-            fontsize=8.5, fontstyle="italic", color=INK)
+            fontsize=9.5, fontstyle="italic", color=INK)
 
     # Legend
     legend_row1 = (
@@ -420,14 +422,20 @@ def build_result_extraction() -> object:
 
 
 def verify(fig: object, scale: float) -> None:
-    """Check the written figure against the readability floor.
+    """Check the written figure against the readability and collision floors.
+
+    The check runs at the size the page will actually print: the fit scale
+    times the chapter 03 \\textwidth squeeze (canvas 6.50 in placed at
+    5.5118 in), because these figures are included with width=\\textwidth.
 
     :param fig: the figure that was written, still open.
     :param scale: placement scale reported by the print fit.
     :returns: None.
-    :raises RuntimeError: if the smallest printed text is under the floor.
+    :raises RuntimeError: if the smallest printed text is under the floor, or
+        two printed labels overlap by at least 3 pt in both directions.
     """
-    printed, why = fm.smallest_text_pt(fig, scale)
+    placed = scale * min(1.0, pf.TEXT_W_IN / PRINT_W_IN)
+    printed, why = fm.smallest_text_pt(fig, placed)
     print("smallest printed text %.2f pt (%s); floor %.1f pt"
           % (printed, why, MIN_PRINTED_PT))
     if printed < MIN_PRINTED_PT:
@@ -435,6 +443,13 @@ def verify(fig: object, scale: float) -> None:
             "smallest printed text %.2f pt is under the %.1f pt floor from %s"
             % (printed, MIN_PRINTED_PT, why)
         )
+    overlaps = fm.text_overlaps_pt(fig, placed)
+    if overlaps:
+        detail = "; ".join(
+            "%.1fx%.1f pt %s <> %s" % (ox, oy, a, b)
+            for a, b, ox, oy in overlaps[:8]
+        )
+        raise RuntimeError("printed labels overlap: %s" % detail)
 
 
 def main() -> int:
@@ -451,7 +466,8 @@ def main() -> int:
          ["Multi-Solver Coupling and Data Exchange",
           "SPARTA", "DSMC Solver", "OpenFOAM", "Solid Thermal",
           "Survivability", "Check", "PINN", "DeepXDE",
-          "MoP Surrogate", "PyTorch", "GA", "Optimization",
+          "Bayes Opt Surrogate", "GP Matern 5/2",
+          "EI Acquisition", "Next Design",
           "surface heat flux", "backface temperature",
           "grid dump", "refined field", "new design",
           "DSMC Solver", "ML Model", "Optimization", "Output"]),

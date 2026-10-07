@@ -44,13 +44,21 @@ THEORIES
         which fits the 5.35 in usable width with 0.074 in gaps, so the chain
         stays horizontal and no font has to shrink below 9 pt.
     T2. The Boltzmann equation at 11.5 pt mathtext measures about 1.9 in, which
-        cannot fit a 0.83 in box on one line. Wrapping it to four lines and
-        giving the equation boxes the full main-box width makes every
-        equation fit without shrinking the mathtext below 11.5 pt.
+        cannot fit a 0.83 in box on one line. The collision term is therefore
+        abbreviated to its standard operator form Q(f,f) inside the cell, and
+        the full integral is printed once as a full-width note under the cell
+        row, where no neighbouring cell constrains its width.
     T3. Five transition chips at 9 pt need about 5.5 in of width for the
         widest single line, which exceeds the 5.35 in usable width. Splitting
         them into two rows of three and two leaves each chip centred on its
         gap with no overlap.
+    T4. Two printed labels collide only when their bounding boxes overlap by
+        at least 3 pt in both axes (fm.text_overlaps_pt). For cells on the
+        same row the x overlap is (w1+w2)/2 minus the 0.904 in pitch, so every
+        same-row pair must sum below 136.2 pt; for rows one step apart the
+        y overlap is (e1+e2)/2 minus the line pitch, so a 0.335 in pitch keeps
+        the worst pair (27.0 pt sqrt extent against 23.3 pt beta extent) at
+        1.03 pt, under the floor.
 
 APPLICATIONS
     A1. The rebuilt figure replaces the artwork in chapter_03_methodology.tex
@@ -60,11 +68,15 @@ APPLICATIONS
 CORRECTIONS APPLIED TO THE OLD ARTWORK
     1. The axiom chips are renumbered A1 through A7 with no duplicate A3 and
        no A7 before A6, matching the research axiom table.
-    2. The sixth main box reads "GA-based survivability optimization" to
-       match the chapter 3 caption, which the old artwork shortened to
-       "GA Optimization".
+    2. The sixth main box reads "Bayesian survivability
+       optimization" to match the chapter 3 caption, which the
+       old artwork shortened to "GA Optimization".
     3. The Boltzmann equation carries proper f' primes, which the old artwork
        rendered without visible primes.
+    4. Every equation is split into short lines whose same-row widths sum
+       below 136.2 pt, and the collision term prints as Q(f,f) with the
+       integral expanded in a full-width note, so no two labels overlap by
+       3 pt or more (verify rejects the drawing otherwise).
 """
 
 from __future__ import annotations
@@ -88,7 +100,7 @@ FIGDIR = pf.FIGDIR
 assert FIGDIR.is_dir(), "figures directory not found: %s" % FIGDIR
 
 PRINT_W_IN = pf.TEXT_W_IN
-H = 4.50
+H = 5.12
 
 TITLE_PT = 13.0
 BOX_TITLE_PT = 9.0
@@ -126,7 +138,7 @@ BOX_TITLES = (
     ("Navier-", "Stokes", "Equations"),
     ("Sutton-", "Graves", "Correlation"),
     ("PINN", "Refinement"),
-    ("GA-based", "survivability", "optimization"),
+    ("Bayesian", "survivability", "optimization"),
 )
 
 TRANSITIONS = (
@@ -140,22 +152,27 @@ TRANSITIONS = (
 EQUATIONS = (
     (r"$\partial f/\partial t$",
      r"$+ \mathbf{v}\cdot\nabla f$",
-     r"$= \int (f' f_1' -$",
-     r"$f f_1)\, g\, \sigma\, d\Omega$",
-     r"$d\mathbf{v}_1$"),
-    (r"$\Delta x \leq \lambda/3,$",
-     r"$\Delta t \leq 1/\nu$"),
+     r"$= Q(f\!,\!f)$"),
+    (r"$\Delta x\leq\lambda/3$",
+     r"$\Delta t\leq1/\nu$"),
     (r"$\partial \rho/\partial t$",
-     r"$+ \nabla\cdot(\rho \mathbf{u}) = 0$"),
-    (r"$\dot{q}_s = k \sqrt{\rho_\infty/R_N}$",
+     r"$+\nabla\cdot(\rho$",
+     r"$\mathbf{u})=0$"),
+    (r"$\dot{q}_s=k$",
+     r"$\sqrt{\rho_\infty/R_N}$",
      r"$V_\infty^3$"),
-    (r"$\mathcal{L} = \lambda_d \mathcal{L}_{data}$",
-     r"$+ \lambda_{pde} \mathcal{L}_{PDE}$"),
-    (r"$J^* = \min(\beta$",
-     r"$- \beta_{target})^2$",
-     r"$+ \lambda \sum \max(0,$",
-     r"$g_i)$"),
+    (r"$\mathcal{L}=\lambda_d$",
+     r"$\mathcal{L}_{data}$",
+     r"$+\lambda_{pde}$",
+     r"$\mathcal{L}_{PDE}$"),
+    (r"$J^*=$",
+     r"$\min(\beta$",
+     r"$-\beta_{target})^2$",
+     r"$+\lambda\sum$",
+     r"$\max(0,g_i)$"),
 )
+
+Q_DEF = r"$Q(f,f) = \int (f' f_1' - f f_1)\, g\, \sigma\, d\Omega\, d\mathbf{v}_1$"
 
 AXIOMS = (
     ("A1:", "Conservation"),
@@ -208,7 +225,7 @@ def draw_main_box(ax: object, i: int) -> None:
     :returns: None.
     """
     x0 = box_left(i)
-    y0 = 2.55
+    y0 = 3.24
     patch = FancyBboxPatch(
         (x0, y0), BOX_W, 0.70,
         boxstyle="round,pad=0.0,rounding_size=0.05",
@@ -230,7 +247,7 @@ def draw_arrows(ax: object) -> None:
     :param ax: the axes to draw on.
     :returns: None.
     """
-    y = 2.55 + 0.35
+    y = 3.24 + 0.35
     for i in range(N_BOX - 1):
         x_from = box_left(i) + BOX_W - 0.01
         x_to = box_left(i + 1) + 0.01
@@ -251,7 +268,7 @@ def draw_transition_chips(ax: object) -> None:
     top_indices = (0, 2, 4)
     bot_indices = (1, 3)
     for row, indices in enumerate((top_indices, bot_indices)):
-        y = 3.70 - row * 0.30
+        y = 4.39 - row * 0.30
         for i in indices:
             cx = gap_center(i)
             patch = FancyBboxPatch(
@@ -277,17 +294,19 @@ def draw_equation_boxes(ax: object) -> None:
     """
     for i in range(N_BOX):
         x0 = box_left(i)
-        y0 = 1.85
+        y0 = 1.50
         patch = FancyBboxPatch(
-            (x0, y0), EQ_W, 0.80,
+            (x0, y0), EQ_W, 1.74,
             boxstyle="round,pad=0.0,rounding_size=0.03",
             linewidth=1.0, edgecolor=EQ_BORDER, facecolor="white", zorder=2,
         )
         ax.add_patch(patch)
         lines = EQUATIONS[i]
-        n = len(lines)
         for k, line in enumerate(lines):
-            y = y0 + 0.80 - 0.12 - k * 0.16
+            # WHY: one shared pad and pitch keep row k at the same y in every
+            # cell, so the guard's same-row x test and adjacent-row y test
+            # both stay under the 3 pt floor (header T4).
+            y = y0 + 1.74 - 0.211 - k * 0.335
             ax.text(box_center(i), y, line, ha="center", va="center",
                     fontsize=EQ_PT, color=INK, zorder=3)
 
@@ -301,7 +320,7 @@ def draw_axiom_chips(ax: object) -> None:
     top_axioms = AXIOMS[:4]
     bot_axioms = AXIOMS[4:]
     for row, group in enumerate((top_axioms, bot_axioms)):
-        y = 1.35 - row * 0.38
+        y = 0.85 - row * 0.38
         n = len(group)
         if n == 4:
             spacing = (PRINT_W_IN - 2.0 * MARGIN_X) / n
@@ -348,18 +367,25 @@ def build() -> object:
     draw_equation_boxes(ax)
     draw_axiom_chips(ax)
 
-    ax.text(PRINT_W_IN / 2.0, 0.45, FOOTER, ha="center", va="center",
+    # Full-width note expanding box 0's Q(f,f): no horizontal neighbours on
+    # this row, so its 232 pt width cannot collide with any cell label.
+    ax.text(PRINT_W_IN / 2.0, 1.25, Q_DEF, ha="center", va="center",
+            fontsize=EQ_PT, color=INK)
+    ax.text(PRINT_W_IN / 2.0, 0.13, FOOTER, ha="center", va="center",
             fontsize=FOOTER_PT, fontstyle="italic", color=FOOTER_TEXT)
     return fig
 
 
 def verify(fig: object, scale: float) -> None:
-    """Check the written figure against the readability floor.
+    """Check the written figure against the readability and collision floors.
 
     :param fig: the figure that was written, still open.
     :param scale: placement scale reported by the print fit.
     :returns: None.
-    :raises RuntimeError: if the smallest printed text is under the floor.
+    :raises RuntimeError: if the smallest printed text is under the floor, or
+        two printed labels overlap by at least 3 pt in both directions
+        (fm.text_overlaps_pt reports the offending pairs so the collision is
+        diagnosable from the failure alone).
     """
     printed, why = fm.smallest_text_pt(fig, scale)
     print("smallest printed text %.2f pt (%s); floor %.1f pt"
@@ -371,6 +397,13 @@ def verify(fig: object, scale: float) -> None:
             "EQ_PT or drop the script."
             % (printed, MIN_PRINTED_PT, why, MIN_PRINTED_PT / fm.SHRINK_FACTOR)
         )
+    overlaps = fm.text_overlaps_pt(fig, scale)
+    if overlaps:
+        detail = "; ".join(
+            "%.1fx%.1f pt %s <> %s" % (ox, oy, a, b)
+            for a, b, ox, oy in overlaps[:8]
+        )
+        raise RuntimeError("printed labels overlap: %s" % detail)
 
 
 def main() -> int:
@@ -378,7 +411,7 @@ def main() -> int:
 
     :returns: 0 on success, 1 on rejection.
     """
-    strings = [TITLE, FOOTER]
+    strings = [TITLE, FOOTER, Q_DEF]
     for lines in BOX_TITLES:
         strings.extend(lines)
     for lines in TRANSITIONS:
@@ -394,7 +427,8 @@ def main() -> int:
     out, scale = pf.save_to_print_width(fig, TMP_NAME, PRINT_W_IN, close=False)
     try:
         verify(fig, scale)
-    except RuntimeError:
+    except RuntimeError as exc:
+        print("%s FAILED: %s" % (FINAL_NAME, exc), file=sys.stderr)
         plt.close(fig)
         os.unlink(out)
         return 1
