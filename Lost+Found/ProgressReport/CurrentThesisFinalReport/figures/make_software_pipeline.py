@@ -65,7 +65,8 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt  # noqa: E402  backend must be forced first
-from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Rectangle  # noqa: E402
+from matplotlib.patches import (  # noqa: E402
+    FancyArrowPatch, FancyBboxPatch, Polygon, Rectangle)
 from matplotlib.path import Path  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -99,7 +100,9 @@ K_SHRINK = 0.85
 H = 3.58
 
 TITLE_PT = 13.0
-HEADER_PT = 10.0
+    # WHY HEADER_PT sits here and not with the other sizes: the 9.5 pt
+    # value is part of the HEADER_Y corridor arithmetic (audit cycle 3);
+    # see the HEADER_Y note for the 31-row corridor and the 8.06 pt floor.
 BOX_PT = 9.5
 LABEL_PT = 9.5
 LEGEND_PT = 9.5
@@ -156,7 +159,31 @@ OUTPUT_Y = 1.40
 # = 0.058 in clearance to the rule, (3.26 - 3.11) * 0.82 - 0.09 = 0.033 in
 # to the Start oval, both positive for every ratio in [0.82, 1.0].
 TITLE_Y = 3.11
-HEADER_Y = 2.82
+# WHY 9.5 pt and 2.842 (audit cycle 3, 2026-10-09): the third image audit
+# measured HEADER_Y 2.854 at 10 pt with the cap ink TOUCHING the ruled
+# connector (ink top y190 against rule AA row y191, 0 px gap where >= 2 px
+# is required), while the original 2.82 sank the INPUT baseline 3 px into
+# the CadQuery stroke (defect N1). With RULE_Y raised to 2.94 the corridor
+# on the written PNG runs from the rule AA (row ~189) to the CadQuery
+# stroke (row 223) = ~34 rows; a 10 pt cap band is 28 rows and sat with
+# only 1 px at the rule side, so the header size drops to 9.5 pt (26.6
+# rows) and 2.842 centres it: rule gap ~3 rows, CadQuery gap ~2 rows
+# (PIL-verified on the written PNG). 9.5 pt still prints at
+# 9.5 * 0.848 = 8.06 pt, above the 8 pt floor (verify() checks it).
+HEADER_Y = 2.842
+HEADER_PT = 9.5
+# WHY a named constant: add_mask_rects() clamps every header mask just
+# below this rule's stroke, and the routed connector is drawn at the same
+# value, so the two can never drift apart.
+# WHY 2.94 (was 2.93, audit cycle 3): the header band is pinned between
+# the rule AA and the CadQuery stroke (31 rows for a 27 px cap band), so
+# no baseline move clears BOTH edges by 2 px. Raising the rule 0.01 in
+# adds 2.5 px of corridor above the headers (rule AA moves from PNG row
+# 191 to ~189, header-rule gap becomes ~3 px) while the title keeps
+# (3.11 - 2.94) * 0.82 - 0.09 = 0.049 in to the rule and the rule keeps
+# 0.20 in to the solver boxes (top 2.74) and 0.22 in to the ML boxes
+# (top 2.72), positive at every fit ratio in [0.82, 1.0].
+RULE_Y = 2.94
 LEGEND_Y1 = 0.45
 LEGEND_Y2 = 0.25
 LEGEND_Y3 = 0.05
@@ -359,24 +386,22 @@ def build() -> object:
     ax.text(PRINT_W_IN / 2.0, TITLE_Y, TITLE_TEXT, ha="center", va="center",
             fontsize=TITLE_PT, fontweight="bold", color=INK)
 
-    # WHY the white bbox on every header: the two routed-arrow verticals run
-    # at engine_cx and output_cx, which sit inside the "CORE ENGINE" and
-    # "OUTPUT" ink spans, and the fit squeeze keeps text at absolute points
-    # while data gaps shrink, so the lines bisected those words (image audit
-    # 2026-10-08). The bbox is text-relative (pad in em), so it scales with
-    # the label at every squeeze ratio and the line reads as passing behind.
-    # WHY zorder=5: the arrow helpers draw at zorder=4, so matplotlib paints
-    # them above any default-zorder text no matter the call order; the first
-    # re-audit after adding the bboxes still showed the verticals cutting the
-    # "E" of ENGINE and the "T" of OUTPUT until the header zorder rose above
-    # the arrows (image audit 2026-10-08, second pass). Zorder, not call
-    # order, is the load-bearing mechanism here.
+    # WHY no bbox here, zorder 6, and add_mask_rects() after the fit pass:
+    # a text bbox carries a pad that is a fraction of the FONT, so at the
+    # fit squeeze (text keeps absolute points, boxes shrink) the padded
+    # white box overpainted the borders of the CadQuery, SPARTA and PINN
+    # boxes lying just beneath the header row (image audits 2026-10-08,
+    # defects N1..N3). The replacement is an explicit white Rectangle in
+    # DATA coordinates, computed by add_mask_rects() only after the save
+    # loop has settled the figure at its final size, measured against the
+    # real renderer extents and CLIPPED so it stops 2 px short of every
+    # box border it approaches. zorder 6 keeps the glyphs above both the
+    # mask (zorder 5) and the arrows (zorder 4) the mask interrupts;
+    # zorder, not call order, is what makes the text paint last.
     for header, cx in zip(HEADERS, HEADER_CENTERS):
         ax.text(cx, HEADER_Y, header, ha="center", va="center",
                 fontsize=HEADER_PT, fontweight="bold", color=HEADER_GRAY,
-                bbox=dict(boxstyle="square,pad=0.15", facecolor="white",
-                          edgecolor="none"),
-                zorder=5)
+                zorder=6)
 
     # ISO 5807 data symbols: the three INPUT boxes carry data (geometry,
     # conditions, variables), so they are parallelograms, not terminators;
@@ -439,15 +464,16 @@ def build() -> object:
     arrow(ax, (ENGINE_X1 - 0.02, sparta_yc - 0.1), (SOLVER_X0 + 0.02, sparta_yc))
     arrow(ax, (ENGINE_X1 - 0.02, openfoam_yc + 0.1), (SOLVER_X0 + 0.02, openfoam_yc))
 
-    # WHY y 2.93: clears the header ink top (2.889) by 0.041 in and the
-    # title ink bottom (3.02 after the TITLE_Y move) by 0.09 in at design
-    # size; at the fit ratio 0.82 those become 0.021 in and 0.058 in, both
-    # positive, while staying above the solver boxes (top 2.74) and ML
-    # boxes (top 2.72) as axiom A3 requires.
+    # WHY RULE_Y (2.94): the rule sits 0.049 in above the title ink bottom
+    # (3.02 after the TITLE_Y move) at the fit ratio 0.82, and stays 0.20 in
+    # above the solver boxes (top 2.74) and 0.22 in above the ML boxes
+    # (top 2.72) as axiom A3 requires. Audit cycle 3 raised it 0.01 in over
+    # the old 2.93 so the rule-to-header corridor reaches ~3 px on the
+    # written PNG.
     routed_arrow(ax, [
         (engine_cx, ENGINE_Y + ENGINE_H),
-        (engine_cx, 2.93),
-        (output_cx, 2.93),
+        (engine_cx, RULE_Y),
+        (output_cx, RULE_Y),
         (output_cx, OUTPUT_Y + OUTPUT_H),
     ])
 
@@ -473,21 +499,16 @@ def build() -> object:
     ax.text(SOLVER_X0 - 0.04, sparta_yc + 0.16, ARROW_LABEL_VTK,
             ha="right", va="bottom", fontsize=LABEL_PT, fontstyle="italic",
             color=INK)
-    # WHY the white bbox: the SPARTA->Bayes diagonal crosses this label's
-    # left half (image audit 2026-10-08); the label sits in the white band
-    # between the solver rows (data y 1.86..2.12), and pad 0.15 em gives the
-    # mask enough room to cover the ~4 px slate arrowhead core on both
-    # entries and exits, while staying inside that band at the fit ratio
-    # 0.82, so no box fill is painted. WHY zorder=5: the arrow helpers draw
-    # at zorder=4 and painted over the first bbox (re-audit 2026-10-08
-    # second pass found the arrow unbroken through the text band); text must
-    # sit above the arrows for the mask to work at all.
+    # WHY no bbox, zorder 6 (same mechanism as the headers): the font-fraction
+    # pad on the old white bbox bit into SPARTA's bottom border and corner
+    # (image audit 2026-10-08, defect N4). add_mask_rects() supplies the
+    # replacement mask, clipped against the solver boxes so it cannot touch
+    # their edges; the arrow the label interrupts is the SPARTA->Bayes
+    # diagonal crossing y406..423 inside this label's ink span.
     ax.text((SOLVER_X1 + ML_X0) / 2.0 + 0.02, (SOLVER_Y[0] + ML_Y[1]) / 2.0 + SOLVER_H / 2.0,
             ARROW_LABEL_SURFACE, ha="center", va="center",
             fontsize=LABEL_PT, fontstyle="italic", color=INK,
-            bbox=dict(boxstyle="square,pad=0.15", facecolor="white",
-                      edgecolor="none"),
-            zorder=5)
+            zorder=6)
     ax.text(pinn_cx + 0.12, (ML_Y[0] + ML_Y[1]) / 2.0 + ML_H / 2.0,
             ARROW_LABEL_REFINED, ha="left", va="center",
             fontsize=LABEL_PT, fontstyle="italic", color=ORANGE)
@@ -540,6 +561,149 @@ def verify(fig: object, scale: float) -> None:
         raise RuntimeError("printed labels overlap: %s" % detail)
 
 
+def add_mask_rects(fig: object) -> int:
+    """Interrupt arrows behind the header row and the surface-data label.
+
+    PURPOSE
+        The two routed-arrow verticals and the SPARTA->Bayes diagonal run
+        straight through three text strings. Before this function existed
+        the mask was a white bbox attached to each string, and because a
+        bbox pad is a fraction of the font size, the fit squeeze (text
+        keeps absolute points, every box shrinks with the canvas) grew the
+        mask relative to the boxes until it painted white over the
+        CadQuery, SPARTA and PINN border strokes (image audits 2026-10-08,
+        defects N1..N4).
+
+    PARAMETERS
+        fig: the figure AFTER save_to_print_width has settled it at its
+            final size, so renderer extents equal the geometry the audit
+            measures. Adding the masks earlier computes them against the
+            design canvas and they come out ~18% short after the squeeze.
+
+    RETURNS
+        The number of mask rectangles added (one per masked string).
+
+    EXCEPTIONS
+        RuntimeError is raised if the canvas exposes no renderer even
+        after the draw-first fallback (Murphy's Law: some backends expose
+        no renderer until a draw; if both paths fail the figure must not
+        be shipped unmasked).
+
+    AXIOMS
+        A1. get_window_extent returns y-UP display coordinates: y0 is the
+            BOTTOM edge, y1 is the TOP edge. Every clamp below is written
+            in that convention; the first version of this function read
+            them y-DOWN, which inverted the clamps, killed the INPUT and
+            SOLVERS bands as degenerate, and dropped the CORE ENGINE mask
+            across the ruled connector (caught on the probe run
+            2026-10-08 before any audit).
+        A2. A mask exists only where a line crosses ink. Rectangles are
+            clipped 2 px short of any box border they approach and
+            clamped below the ruled connector, so they can interrupt an
+            arrow (which shares the text's band) but can never erase a
+            border, a fill, or the rule.
+        A3. Rectangles are placed in DATA coordinates from the settled
+            canvas, so the second save's fit pass carries them with the
+            artwork instead of stranding them in stale pixels.
+    """
+    ax = fig.axes[0]
+    fig.canvas.draw()
+    renderer = (fig.canvas.get_renderer()
+                if hasattr(fig.canvas, "get_renderer") else None)
+    if renderer is None:
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+        if renderer is None:
+            raise RuntimeError("no renderer available for mask measurement")
+
+    # Box borders that must never be painted: rounded process boxes
+    # (FancyBboxPatch) and ISO 5807 data parallelograms (Polygon). Legend
+    # swatches (Rectangle) sit far below every mask band and are skipped
+    # on class, and FancyArrowPatch is deliberately absent because the
+    # arrows are what the masks are FOR.
+    clip_boxes = [p.get_window_extent(renderer) for p in ax.patches
+                  if isinstance(p, (FancyBboxPatch, Polygon))]
+
+    # The ruled connector is a routed arrow too, but its HORIZONTAL leg
+    # must stay whole: every header mask is clamped 1 px below its stroke
+    # (rule centre RULE_Y px, half-width 0.7 pt at the canvas dpi).
+    rule_y_px = ax.transData.transform((0.0, RULE_Y))[1]
+    rule_half_px = 0.7 * fig.dpi / 72.0
+
+    px_per_data = abs(ax.transData.transform((1.0, 0.0))[0]
+                      - ax.transData.transform((0.0, 0.0))[0])
+    pad = 3.0
+    gap_px = 2.0
+
+    targets = [t for t in ax.texts
+               if t.get_text() in HEADERS
+               or t.get_text() == ARROW_LABEL_SURFACE]
+    inv = ax.transData.inverted()
+    added = 0
+    for text in targets:
+        is_header = text.get_text() in HEADERS
+        bb = text.get_window_extent(renderer)
+        lo = bb.y0 - pad                      # y-UP: y0 is the bottom edge
+        hi = bb.y1 + pad                      # y1 is the top edge
+        left, right = bb.x0 - pad, bb.x1 + pad
+        for b in clip_boxes:
+            if b.x1 < left or b.x0 > right:
+                continue                      # no horizontal overlap
+            if b.y1 <= lo - gap_px:
+                # Box lies wholly below the band: keep the mask above it.
+                continue
+            if b.y0 >= hi + gap_px:
+                # Box lies wholly above the band: keep the mask below it.
+                hi = min(hi, b.y0 - gap_px)
+                continue
+            # Box border intrudes into the band (or straddles it). Which
+            # edge bounds the band depends on WHERE the box sits: a box
+            # BELOW the text has its TOP edge (b.y1, y-UP display) under
+            # the band, a box ABOVE has its BOTTOM edge (b.y0) over it.
+            # The first version of this function swapped the two and
+            # produced negative bands for SOLVERS, ML MODELS and surface
+            # data (probe run 2026-10-08). A box containing the text
+            # would kill the band, which is the honest failure (no such
+            # box exists in this layout).
+            box_mid = 0.5 * (b.y0 + b.y1)
+            text_mid = 0.5 * (bb.y0 + bb.y1)
+            if box_mid > text_mid:
+                hi = min(hi, b.y0 - gap_px)   # box above: clip band top
+            else:
+                lo = max(lo, b.y1 + gap_px)   # box below: lift band base
+        if is_header:
+            # Butt the mask against the rule's stroke WITHOUT touching it.
+            # Audit cycle 3: a 1.0 px standoff parked the mask top at PNG
+            # row 195, four rows below the rule AA, so the leg stayed
+            # visible inside the text band and overpainted ~9 px of the
+            # first E of ENGINE. 0.25 px at dpi 100 lands the top ~1 px
+            # under the AA: the leg is masked from the rule down to the
+            # box while the rule keeps every pixel (PIL-verified).
+            hi = min(hi, rule_y_px - rule_half_px - 0.25)
+        if hi - lo < 2.0:
+            print("mask skipped for %r (degenerate band %.1f px)"
+                  % (text.get_text(), hi - lo))
+            continue
+        (dx_left, dy_lo) = inv.transform((left, lo))
+        (dx_right, dy_hi) = inv.transform((right, hi))
+        if dy_hi - dy_lo <= 0.0:
+            raise RuntimeError(
+                "mask for %r inverted in data space (%.4f..%.4f)"
+                % (text.get_text(), dy_lo, dy_hi))
+        ax.add_patch(Rectangle((dx_left, dy_lo),
+                               dx_right - dx_left, dy_hi - dy_lo,
+                               facecolor="white", edgecolor="none",
+                               zorder=5))
+        added += 1
+        print("mask %-14r band %.1f..%.1f px (%.1f px)  data %.3f..%.3f"
+              % (text.get_text(), lo, hi, hi - lo, dy_lo, dy_hi))
+    print("mask rectangles added: %d" % added)
+    if added == 0:
+        raise RuntimeError("no mask rectangles were added; arrows would "
+                           "still cross the header text")
+    return added
+
+
 def main() -> int:
     """Write the figure and verify it.
 
@@ -561,6 +725,17 @@ def main() -> int:
     fig = build()
     pf.assert_inside_canvas(fig)
 
+    # Pass 1: run the fit loop so fig settles at the final squeezed size.
+    # The masks must be measured against THAT geometry (text px are fixed,
+    # box px shrink by ~0.848), so they are added only after this returns.
+    tmp_path, scale = pf.save_to_print_width(
+        fig, "software_pipeline_tmp.png", PRINT_W_IN * K_SHRINK, close=False)
+
+    add_mask_rects(fig)
+
+    # Pass 2: re-save with the masks in place. They live in data
+    # coordinates inside existing text bands, so the tight-crop content
+    # bbox is unchanged and the fit converges on the first attempt.
     tmp_path, scale = pf.save_to_print_width(
         fig, "software_pipeline_tmp.png", PRINT_W_IN * K_SHRINK, close=False)
 
