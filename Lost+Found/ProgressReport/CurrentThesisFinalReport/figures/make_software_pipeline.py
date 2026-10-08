@@ -37,7 +37,7 @@ AXIOMS
 THEORIES
     T1. Five columns with three input boxes, one engine box, two solver
         boxes, two model boxes and one output box fit the print width at a
-        readable size when the canvas is about 3.5 in tall.
+        readable size when the canvas is about 3.6 in tall.
     T2. The feedback arrow from the Bayesian Optimization surrogate to the
         engine routes below all boxes so it crosses no text and no other
         arrow.
@@ -90,7 +90,13 @@ PRINT_W_IN = 6.50
 # (TEXT_W_IN / PRINT_W_IN) stays correct because both the page width and the
 # native canvas shrink together.
 K_SHRINK = 0.85
-H = 3.50
+# WHY H = 3.58 (was 3.50): the fit squeeze (set_size_inches, ratio ~0.82 of
+# design) compresses data-unit gaps while title ink stays 0.09 in half-height
+# in absolute points, which put the title descenders ON the routed rule at
+# y 2.93 (image audit of 2026-10-08, 0 px gap). TITLE_Y moves 3.05 -> 3.11 and
+# Start moves 3.18 -> 3.26, so the canvas must grow to 3.58 to keep the Start
+# top (3.56) inside by 0.02 in at every squeeze ratio in [0.82, 1.0].
+H = 3.58
 
 TITLE_PT = 13.0
 HEADER_PT = 10.0
@@ -145,7 +151,11 @@ SOLVER_Y = [2.12, 1.24]
 ML_Y = [2.20, 1.30]
 OUTPUT_Y = 1.40
 
-TITLE_Y = 3.05
+# WHY 3.11 (was 3.05): at the fit ratio (~0.82) the rule at y 2.93 lands on
+# the title ink bottom (image audit 2026-10-08). (3.11 - 2.93) * 0.82 - 0.09
+# = 0.058 in clearance to the rule, (3.26 - 3.11) * 0.82 - 0.09 = 0.033 in
+# to the Start oval, both positive for every ratio in [0.82, 1.0].
+TITLE_Y = 3.11
 HEADER_Y = 2.82
 LEGEND_Y1 = 0.45
 LEGEND_Y2 = 0.25
@@ -166,13 +176,23 @@ INPUT_TEXTS = (
     "Flight Conditions\n/ V, T∞, ρ∞",
     "Design Variables\n/ R_N, r_tor, θ_c",
 )
-ENGINE_TEXT = "Ada/SPARK Engine\n/ StellarOrion_Orion\n/ driven by run.py\n/ phases 0 to 4"
+# WHY no "/ " prefixes (audit 2026-10-08): "/ StellarOrion_Orion" measured
+# 1.40 in of glyph ink against a 1.40 in box, so at the fit squeeze (text
+# keeps absolute points, the box shrinks) the line painted white glyph
+# pixels over BOTH vertical borders of the engine box. Dropping the leading
+# slashes leaves the longest line at "StellarOrion_Orion" (18 chars, about
+# 1.29 in) which clears each border by about 0.05 in even at squeeze 0.82.
+ENGINE_TEXT = "Ada/SPARK Engine\nStellarOrion_Orion\ndriven by run.py\nphases 0 to 4"
 SOLVER_TEXTS = (
     "SPARTA\n/ DSMC Solver\n/ Docker",
     "OpenFOAM\n/ laplacianFoam\n/ (solid thermal)",
 )
 ML_TEXTS = (
-    "PINN\n/ DeepXDE\n/ (FNN 5x128)",
+    # The flow-field PINN is pinn_accelerator.py's FNN [2] + [64]*3 + [4],
+    # the network tab:pinn_architecture documents. The [1]+[128]*4+[1] net
+    # in validation_pipeline.py fits a 1-D convergence manifold and is a
+    # different model, so it must not label this box.
+    "PINN\n/ DeepXDE\n/ (FNN 3x64)",
     "Bayes Opt\n/ GP Matern 5/2\n/ + EI acquisition",
 )
 OUTPUT_TEXT = "ParaView\n/ VTK\n/ STL\n/ Rendering"
@@ -279,23 +299,50 @@ def draw_legend_row(ax: object, items: tuple, y: float,
     :param y: bottom edge of the legend row in inches.
     :param patch_w: width of each colour patch in inches.
     :param patch_h: height of each colour patch in inches.
-    :param gap: gap between items in inches.
+    :param gap: gap between items in inches (data units at design size).
     :param fs: font size in points.
     :returns: None.
+
+    Label advances come from renderer-measured widths, not a per-character
+    estimate. save_to_print_width shrinks the figure with set_size_inches
+    while matplotlib text keeps its absolute point size, so a 0.55 em
+    character estimate under-measured caps-heavy labels such as
+    "Physics Solvers (SPARTA, OpenFOAM)" and the next colour patch landed
+    on the previous label's tail (image audit of 2026-10-08).
     """
-    char_w = 0.55 * fs / 72.0
-    total_w = 0.0
+    fig = ax.figure
+    renderer = (fig.canvas.get_renderer()
+                if hasattr(fig.canvas, "get_renderer") else None)
+    if renderer is None:
+        # Murphy's Law: some backends expose no renderer until a draw.
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+    advances = []
     for label, _, _ in items:
-        total_w += patch_w + 0.04 + len(label) * char_w + gap
-    total_w -= gap
+        probe = ax.text(-10.0, -10.0, label, fontsize=fs, alpha=0.0)
+        width_in = probe.get_window_extent(renderer).width / fig.dpi
+        probe.remove()
+        # WHY divided by K_SHRINK: the saved canvas is squeezed to
+        # PRINT_W_IN * K_SHRINK of design data inches while the glyphs keep
+        # their absolute point size, so a label width_in wide on paper needs
+        # width_in / K_SHRINK data units of room to clear its neighbour
+        # after the squeeze. (Source: print_fit.save_to_print_width resizes
+        # the figure with fig.set_size_inches, ratio loop.)
+        advances.append(patch_w + 0.04 + width_in / K_SHRINK + gap)
+    total_w = sum(advances) - gap
+    if total_w > PRINT_W_IN:
+        raise RuntimeError(
+            "legend row is %.2f in of data, wider than the %.2f in canvas: %s"
+            % (total_w, PRINT_W_IN, " | ".join(it[0] for it in items))
+        )
     x = (PRINT_W_IN - total_w) / 2.0
-    for label, fill, edge in items:
+    for (label, fill, edge), advance in zip(items, advances):
         ax.add_patch(Rectangle((x, y), patch_w, patch_h,
                                facecolor=fill, edgecolor=edge,
                                linewidth=0.8, zorder=2))
         ax.text(x + patch_w + 0.04, y + patch_h / 2, label,
                 ha="left", va="center", fontsize=fs, color=INK, zorder=3)
-        x += patch_w + 0.04 + len(label) * char_w + gap
+        x += advance
 
 
 def build() -> object:
@@ -312,9 +359,24 @@ def build() -> object:
     ax.text(PRINT_W_IN / 2.0, TITLE_Y, TITLE_TEXT, ha="center", va="center",
             fontsize=TITLE_PT, fontweight="bold", color=INK)
 
+    # WHY the white bbox on every header: the two routed-arrow verticals run
+    # at engine_cx and output_cx, which sit inside the "CORE ENGINE" and
+    # "OUTPUT" ink spans, and the fit squeeze keeps text at absolute points
+    # while data gaps shrink, so the lines bisected those words (image audit
+    # 2026-10-08). The bbox is text-relative (pad in em), so it scales with
+    # the label at every squeeze ratio and the line reads as passing behind.
+    # WHY zorder=5: the arrow helpers draw at zorder=4, so matplotlib paints
+    # them above any default-zorder text no matter the call order; the first
+    # re-audit after adding the bboxes still showed the verticals cutting the
+    # "E" of ENGINE and the "T" of OUTPUT until the header zorder rose above
+    # the arrows (image audit 2026-10-08, second pass). Zorder, not call
+    # order, is the load-bearing mechanism here.
     for header, cx in zip(HEADERS, HEADER_CENTERS):
         ax.text(cx, HEADER_Y, header, ha="center", va="center",
-                fontsize=HEADER_PT, fontweight="bold", color=HEADER_GRAY)
+                fontsize=HEADER_PT, fontweight="bold", color=HEADER_GRAY,
+                bbox=dict(boxstyle="square,pad=0.15", facecolor="white",
+                          edgecolor="none"),
+                zorder=5)
 
     # ISO 5807 data symbols: the three INPUT boxes carry data (geometry,
     # conditions, variables), so they are parallelograms, not terminators;
@@ -356,9 +418,10 @@ def build() -> object:
     # Stop below the OUTPUT column close the flowchart. Start's arrow
     # lands on the first input's top edge (which spans x 0.07 to 1.41);
     # Stop's arrow leaves the output bottom edge at output_cx. The Start
-    # oval bottom (3.18) stays 0.04 in above the title ink (top 3.14).
-    box(ax, 0.10, 3.18, 0.60, 0.30, "Start", "white", INK, rounding=0.15)
-    arrow(ax, (0.40, 3.18), (0.40, 2.78))
+    # oval bottom (3.26) stays 0.06 in above the title ink (top 3.20) at
+    # design size; see the TITLE_Y note for the squeezed-size arithmetic.
+    box(ax, 0.10, 3.26, 0.60, 0.30, "Start", "white", INK, rounding=0.15)
+    arrow(ax, (0.40, 3.26), (0.40, 2.78))
     box(ax, 5.765, 0.75, 0.55, 0.30, "Stop", "white", INK, rounding=0.15)
     arrow(ax, (output_cx, OUTPUT_Y), (output_cx, 1.05))
 
@@ -376,9 +439,11 @@ def build() -> object:
     arrow(ax, (ENGINE_X1 - 0.02, sparta_yc - 0.1), (SOLVER_X0 + 0.02, sparta_yc))
     arrow(ax, (ENGINE_X1 - 0.02, openfoam_yc + 0.1), (SOLVER_X0 + 0.02, openfoam_yc))
 
-    # WHY y 2.93: clears the header ink top (2.889) by 0.031 in and the
-    # title ink bottom (2.96) by 0.020 in, while staying above the solver
-    # boxes (top 2.74) and ML boxes (top 2.72) as axiom A3 requires.
+    # WHY y 2.93: clears the header ink top (2.889) by 0.041 in and the
+    # title ink bottom (3.02 after the TITLE_Y move) by 0.09 in at design
+    # size; at the fit ratio 0.82 those become 0.021 in and 0.058 in, both
+    # positive, while staying above the solver boxes (top 2.74) and ML
+    # boxes (top 2.72) as axiom A3 requires.
     routed_arrow(ax, [
         (engine_cx, ENGINE_Y + ENGINE_H),
         (engine_cx, 2.93),
@@ -408,14 +473,32 @@ def build() -> object:
     ax.text(SOLVER_X0 - 0.04, sparta_yc + 0.16, ARROW_LABEL_VTK,
             ha="right", va="bottom", fontsize=LABEL_PT, fontstyle="italic",
             color=INK)
+    # WHY the white bbox: the SPARTA->Bayes diagonal crosses this label's
+    # left half (image audit 2026-10-08); the label sits in the white band
+    # between the solver rows (data y 1.86..2.12), and pad 0.15 em gives the
+    # mask enough room to cover the ~4 px slate arrowhead core on both
+    # entries and exits, while staying inside that band at the fit ratio
+    # 0.82, so no box fill is painted. WHY zorder=5: the arrow helpers draw
+    # at zorder=4 and painted over the first bbox (re-audit 2026-10-08
+    # second pass found the arrow unbroken through the text band); text must
+    # sit above the arrows for the mask to work at all.
     ax.text((SOLVER_X1 + ML_X0) / 2.0 + 0.02, (SOLVER_Y[0] + ML_Y[1]) / 2.0 + SOLVER_H / 2.0,
             ARROW_LABEL_SURFACE, ha="center", va="center",
-            fontsize=LABEL_PT, fontstyle="italic", color=INK)
+            fontsize=LABEL_PT, fontstyle="italic", color=INK,
+            bbox=dict(boxstyle="square,pad=0.15", facecolor="white",
+                      edgecolor="none"),
+            zorder=5)
     ax.text(pinn_cx + 0.12, (ML_Y[0] + ML_Y[1]) / 2.0 + ML_H / 2.0,
             ARROW_LABEL_REFINED, ha="left", va="center",
             fontsize=LABEL_PT, fontstyle="italic", color=ORANGE)
-    ax.text((pinn_cx + engine_cx) / 2.0, 0.75, ARROW_LABEL_FEEDBACK,
-            ha="center", va="center", fontsize=LABEL_PT, fontstyle="italic",
+    # WHY va=bottom at y 0.70 (was va=center at 0.75): the two-line label
+    # centred at 0.75 straddled the orange horizontal at y 0.65 and the
+    # second line "/ feedback loop" was struck through (image audit
+    # 2026-10-08). Bottom-anchored, the block bottom is 0.05 data above the
+    # line = 0.041 in at the fit ratio 0.82 (12 px), and the block top
+    # clears the engine bottom (1.16) by 0.46 * 0.82 - 0.32 = 0.057 in.
+    ax.text((pinn_cx + engine_cx) / 2.0, 0.70, ARROW_LABEL_FEEDBACK,
+            ha="center", va="bottom", fontsize=LABEL_PT, fontstyle="italic",
             color=ORANGE)
 
     draw_legend_row(ax, LEGEND_ROW1, LEGEND_Y1)

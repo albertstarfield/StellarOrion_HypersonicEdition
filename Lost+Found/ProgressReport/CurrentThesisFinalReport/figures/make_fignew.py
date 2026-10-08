@@ -400,7 +400,7 @@ def fig_trajectory() -> None:
     from 122.65 km at 7500 m/s down to 27.29 km.
 
     WHAT THE TWO RUN CONDITIONS IMPLY, MEASURED
-    The scalloped run's state (52.0326 km, 3094.2 m/s, Mach 9.4325, g 14.0059)
+    The scalloped run's state (52.0692 km, 3101.1 m/s, Mach 9.4553, g 14.0082)
     is an EXACT row of that profile, at t = 97.0 s. The smooth run's state
     (51.8185 km, 3378.7 m/s, Mach 10.2882) does NOT lie on the profile at all.
     Both facts are marked on the figure, because they are the precise reason the
@@ -414,13 +414,31 @@ def fig_trajectory() -> None:
     g = [float(r["g_load"]) for r in rows]
     q = [float(r["dyn_press_pa"]) for r in rows]
 
-    on_idx = min(range(len(rows)), key=lambda i: abs(alt[i] - 52.032558))
+    # WHY the anchor is read from the run CSV instead of a literal: this
+    # function used to search for 52.032558, the condition of an older
+    # scalloped run; after the 2026-10-06 rerun the authoritative condition
+    # is 52.0692 and the literal silently matched only because profile rows
+    # are 0.75 km apart. Reading the run's own first row makes the marker
+    # track whatever the scalloped tree actually says.
+    sc = read_csv(RESULTS / "validation_scalloped" / "validation_timeseries.csv")
+    sc_alt = float(sc[0]["alt_km"])
+    on_idx = min(range(len(rows)), key=lambda i: abs(alt[i] - sc_alt))
+    # EXACTNESS THRESHOLD: the profile stores altitude to 4 decimals
+    # (grid 1e-4 km = 0.1 m) and velocity to 2 decimals (grid 0.01 m/s), so
+    # a run condition written at higher precision is "on the profile" when it
+    # sits within half a storage grid step: measured 2026-10-08, the scalloped
+    # run's 52.069210 km against the profile's 52.0692 differs by 1e-5 km
+    # (1 cm) and 0.001 m/s, i.e. the same row. A 1e-6 test would have called
+    # that mismatch purely because it lies below what the file can store.
+    on_exact = (abs(alt[on_idx] - sc_alt) < 5e-5
+                and abs(vel[on_idx] - float(sc[0]["vel_ms"])) < 5e-3)
     print(f"    trajectory: {len(rows)} samples, {min(alt):.2f}-{max(alt):.2f} km, "
           f"t = 0-{max(t):.0f} s")
     print(f"    peak dynamic pressure {max(q):.1f} Pa and peak g-load {max(g):.3f} both at "
           f"alt={alt[q.index(max(q))]:.2f} km, V={vel[q.index(max(q))]:.1f} m/s, "
           f"Mach={mach[q.index(max(q))]:.3f}")
-    print(f"    scalloped run state matches profile row {on_idx} exactly "
+    print(f"    scalloped run state matches profile row {on_idx} "
+          f"{'exactly' if on_exact else 'ONLY approximately'} "
           f"(t={t[on_idx]:.1f} s); the smooth run state is NOT on this profile")
 
     fig, (ax1, ax2) = plt.subplots(1, 2,
