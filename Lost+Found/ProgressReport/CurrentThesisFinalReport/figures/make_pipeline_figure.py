@@ -253,7 +253,18 @@ def main() -> int:
         col, row = i // n_per_col, i % n_per_col
         x0 = x_left if col == 0 else x_right
         y0 = top - row * (h + gap) - h
-        bw, t = box(ax, x0, y0, w, h, label, fc)
+        # Flowchart convention: stage 1 (Flight parameters) is the START and
+        # stage 12 (Export fields and plots) is the END, so both get oval
+        # terminators — rounding_size = h/2 rounds the short ends fully in the
+        # y fraction and, because the canvas x and y scales differ, draws a
+        # gentle ellipse in x, i.e. a true terminator oval. Process stages
+        # keep the default small corner radius. Every connector attaches at
+        # the horizontal mid line (widest point) or at the flat top/bottom
+        # centre, so no arrow geometry moves.
+        terminator = i in (0, len(stages) - 1)
+        style = (f"round,pad=0,rounding_size={h / 2.0}"
+                 if terminator else "round,pad=0,rounding_size=0.02")
+        bw, t = box(ax, x0, y0, w, h, label, fc, style=style)
         fits_box.append((t, bw * WIDTH_IN, f"stage {i + 1}"))
         pos[i] = (x0, y0)
 

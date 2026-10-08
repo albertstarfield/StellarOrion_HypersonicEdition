@@ -171,7 +171,8 @@ LEGEND_ROW3 = (
 
 def box(ax: object, x0: float, y0: float, w: float, h: float,
         text: str, fill: str, edge: str, text_color: str = INK,
-        fs: float = BOX_PT, bold: bool = False, linespacing: float = 1.3) -> None:
+        fs: float = BOX_PT, bold: bool = False, linespacing: float = 1.3,
+        rounding: float = 0.04) -> None:
     """Draw a rounded rectangle with centered text.
 
     :param ax: the axes to draw on.
@@ -186,11 +187,13 @@ def box(ax: object, x0: float, y0: float, w: float, h: float,
     :param fs: declared font size in points.
     :param bold: use bold weight when True.
     :param linespacing: line spacing multiplier.
+    :param rounding: corner radius in inches; pass h/2 (clamped to w/2) for
+        oval flowchart terminators, keep the default for process boxes.
     :returns: None.
     """
     patch = FancyBboxPatch(
         (x0, y0), w, h,
-        boxstyle="round,pad=0.0,rounding_size=0.04",
+        boxstyle=f"round,pad=0.0,rounding_size={rounding}",
         linewidth=1.2, edgecolor=edge, facecolor=fill, zorder=2,
     )
     ax.add_patch(patch)
@@ -287,9 +290,13 @@ def build() -> object:
         ax.text(cx, HEADER_Y, header, ha="center", va="center",
                 fontsize=HEADER_PT, fontweight="bold", color=HEADER_GRAY)
 
+    # Oval start terminators: the three parallel INPUT sources are where the
+    # pipeline begins, so per the flowchart convention they are drawn with
+    # rounding = h/2 (a stadium). Connectors attach at the vertical mid line,
+    # which is also the box's widest span, so no arrow moves.
     for y0, text in zip(INPUT_Y, INPUT_TEXTS):
         box(ax, INPUT_X0, y0, INPUT_X1 - INPUT_X0, INPUT_H,
-            text, INPUT_FILL, INPUT_EDGE)
+            text, INPUT_FILL, INPUT_EDGE, rounding=INPUT_H / 2.0)
 
     box(ax, ENGINE_X0, ENGINE_Y, ENGINE_X1 - ENGINE_X0, ENGINE_H,
         ENGINE_TEXT, ENGINE_FILL, ENGINE_EDGE, text_color="white", bold=True)
@@ -310,8 +317,12 @@ def build() -> object:
             text, ML_FILL, ML_EDGE, text_color="white")
 
     output_cx = (OUTPUT_X0 + OUTPUT_X1) / 2
+    # Oval end terminator: the OUTPUT box closes the flow, so rounding = h/2
+    # clamped to w/2 (0.45 would exceed the 0.39 half width and make Fancy-
+    # bboxPatch degenerate). The routed feed lands on the flat top centre.
     box(ax, OUTPUT_X0, OUTPUT_Y, OUTPUT_X1 - OUTPUT_X0, OUTPUT_H,
-        OUTPUT_TEXT, OUTPUT_FILL, OUTPUT_EDGE, text_color="white")
+        OUTPUT_TEXT, OUTPUT_FILL, OUTPUT_EDGE, text_color="white",
+        rounding=min(OUTPUT_H / 2.0, (OUTPUT_X1 - OUTPUT_X0) / 2.0))
 
     engine_cx = (ENGINE_X0 + ENGINE_X1) / 2
     for y0 in INPUT_Y:

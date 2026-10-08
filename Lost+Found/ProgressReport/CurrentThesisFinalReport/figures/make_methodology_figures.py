@@ -87,7 +87,8 @@ ORANGE = "#E65100"
 
 def box(ax: object, x0: float, y0: float, w: float, h: float,
         text: str, fill: str, edge: str, text_color: str = INK,
-        fs: float = 9.5, bold: bool = False, linespacing: float = 1.3) -> None:
+        fs: float = 9.5, bold: bool = False, linespacing: float = 1.3,
+        rounding: float = 0.04) -> None:
     """Draw a rounded rectangle with centered text.
 
     :param ax: the axes to draw on.
@@ -102,11 +103,13 @@ def box(ax: object, x0: float, y0: float, w: float, h: float,
     :param fs: declared font size in points.
     :param bold: use bold weight when True.
     :param linespacing: line spacing multiplier.
+    :param rounding: corner radius in inches; pass h/2 for oval flowchart
+        start/end terminators, keep the default for process boxes.
     :returns: None.
     """
     patch = FancyBboxPatch(
         (x0, y0), w, h,
-        boxstyle="round,pad=0.0,rounding_size=0.04",
+        boxstyle=f"round,pad=0.0,rounding_size={rounding}",
         linewidth=1.2, edgecolor=edge, facecolor=fill, zorder=2,
     )
     ax.add_patch(patch)
@@ -291,12 +294,19 @@ def build_solver_coupling() -> object:
     sur_x0, sur_y0, sur_w, sur_h = 2.2, 0.5, 1.4, 0.7
     ei_x0, ei_y0, ei_w, ei_h = 4.1, 0.5, 1.4, 0.7
 
+    # Oval terminators per the flowchart convention: SPARTA is the entry of
+    # the coupling cycle (arrows leave it on all three sides at the flat
+    # centre segments, and the feedback re-enters on the flat top centre) and
+    # Survivability Check is the dead-end output, so both get rounding = h/2;
+    # the four interior process boxes stay rectangles.
     box(ax, sparta_x0, sparta_y0, sparta_w, sparta_h,
-        "SPARTA\nDSMC Solver", SOLVER_FILL, SOLVER_EDGE, text_color="white")
+        "SPARTA\nDSMC Solver", SOLVER_FILL, SOLVER_EDGE, text_color="white",
+        rounding=sparta_h / 2.0)
     box(ax, openfoam_x0, openfoam_y0, openfoam_w, openfoam_h,
         "OpenFOAM\nSolid Thermal", SOLVER_FILL, SOLVER_EDGE, text_color="white")
     box(ax, surv_x0, surv_y0, surv_w, surv_h,
-        "Survivability\nCheck", OUTPUT_FILL, OUTPUT_EDGE, text_color="white")
+        "Survivability\nCheck", OUTPUT_FILL, OUTPUT_EDGE, text_color="white",
+        rounding=surv_h / 2.0)
     box(ax, pinn_x0, pinn_y0, pinn_w, pinn_h,
         "PINN\nDeepXDE", ML_FILL, ML_EDGE, text_color="white")
     box(ax, sur_x0, sur_y0, sur_w, sur_h,
@@ -332,14 +342,25 @@ def build_solver_coupling() -> object:
         (sparta_x0 + sparta_w / 2, sparta_y0 + sparta_h),
     ], color=ORANGE)
 
-    # Arrow labels
-    ax.text(1.55, 2.25, "surface heat flux", ha="center", va="bottom",
+    # Arrow labels. WHY they sit above/below their rows rather than on the
+    # arrow line itself: at y=2.25/0.95 the labels shared the boxes' text rows
+    # (box labels nearly fill their boxes), and fm.text_overlaps_pt flagged
+    # four pre-existing collisions once that guard existed -- 6.2/26/47/54.8 pt
+    # wide x 4.5 pt tall against 'PINN DeepXDE', 'SPARTA DSMC Solver',
+    # 'Bayes Opt Surrogate GP Matern 5/2' and 'OpenFOAM Solid Thermal'
+    # (the committed solver_coupling.png still carries them: HEAD fails the
+    # same verify). Top-row labels now sit just above the top boxes
+    # (y=2.55, under the y=2.8 feedback line by 0.12 in); bottom-row labels
+    # sit in the inter-row gap above the bottom boxes (y=1.22). 'refined
+    # field' also shifts right to x=3.35 so it clears the vertical arrow line
+    # at x=2.9 by 0.12 in. No Text pair overlaps remain at these spots.
+    ax.text(1.55, 2.55, "surface heat flux", ha="center", va="bottom",
             fontsize=9.5, fontstyle="italic", color=INK)
-    ax.text(3.05, 2.25, "backface temperature", ha="center", va="bottom",
+    ax.text(3.05, 2.55, "backface temperature", ha="center", va="bottom",
             fontsize=9.5, fontstyle="italic", color=INK)
-    ax.text(1.55, 0.95, "grid dump", ha="center", va="bottom",
+    ax.text(1.55, 1.22, "grid dump", ha="center", va="bottom",
             fontsize=9.5, fontstyle="italic", color=INK)
-    ax.text(3.05, 0.95, "refined field", ha="center", va="bottom",
+    ax.text(3.35, 1.22, "refined field", ha="center", va="bottom",
             fontsize=9.5, fontstyle="italic", color=INK)
     ax.text(5.35, 2.85, "new design", ha="center", va="bottom",
             fontsize=9.5, fontstyle="italic", color=ORANGE)
@@ -381,14 +402,20 @@ def build_result_extraction() -> object:
     integrate_x0, integrate_y0, integrate_w, integrate_h = 4.1, 1.2, 1.4, 0.7
     metrics_x0, metrics_y0, metrics_w, metrics_h = 4.1, 0.2, 1.4, 0.7
 
+    # Oval terminators: the dump is where this linear flow starts and the
+    # flight metrics are where it ends, so those two boxes get rounding = h/2
+    # (stadium); the two processing steps stay rectangles. Connectors all
+    # attach at mid-height or flat-centre points, unchanged by the corners.
     box(ax, dump_x0, dump_y0, dump_w, dump_h,
-        "SPARTA\ndump surf", SOLVER_FILL, SOLVER_EDGE, text_color="white")
+        "SPARTA\ndump surf", SOLVER_FILL, SOLVER_EDGE, text_color="white",
+        rounding=dump_h / 2.0)
     box(ax, parse_x0, parse_y0, parse_w, parse_h,
         "Parse\nSurface Data", INPUT_FILL, INPUT_EDGE)
     box(ax, integrate_x0, integrate_y0, integrate_w, integrate_h,
         "Surface\nIntegration", ML_FILL, ML_EDGE, text_color="white")
     box(ax, metrics_x0, metrics_y0, metrics_w, metrics_h,
-        "Flight Metrics\nq, Q, Cd", OUTPUT_FILL, OUTPUT_EDGE, text_color="white")
+        "Flight Metrics\nq, Q, Cd", OUTPUT_FILL, OUTPUT_EDGE, text_color="white",
+        rounding=metrics_h / 2.0)
 
     # Arrows
     arrow(ax, (dump_x0 + dump_w, dump_y0 + dump_h / 2),
@@ -398,10 +425,16 @@ def build_result_extraction() -> object:
     arrow(ax, (integrate_x0 + integrate_w / 2, integrate_y0),
           (metrics_x0 + metrics_w / 2, metrics_y0 + metrics_h))
 
-    # Arrow labels
-    ax.text(1.55, 1.65, "raw data", ha="center", va="bottom",
+    # Arrow labels. WHY above the row: box labels nearly fill their boxes, so
+    # labels on the arrow line (y=1.65) collided with 'SPARTA dump surf' and
+    # 'Parse Surface Data' (5.0/26.8 pt wide x 4.5 pt tall per
+    # fm.text_overlaps_pt -- the committed result_extraction.png carries the
+    # same latent collisions). The two horizontal-arrow labels now sit above
+    # the box row (y=1.95, clear of the title); 'integrated' stays beside its
+    # vertical arrow, which never collided.
+    ax.text(1.55, 1.95, "raw data", ha="center", va="bottom",
             fontsize=9.5, fontstyle="italic", color=INK)
-    ax.text(3.05, 1.65, "parsed", ha="center", va="bottom",
+    ax.text(3.05, 1.95, "parsed", ha="center", va="bottom",
             fontsize=9.5, fontstyle="italic", color=INK)
     ax.text(5.35, 0.95, "integrated", ha="center", va="bottom",
             fontsize=9.5, fontstyle="italic", color=INK)

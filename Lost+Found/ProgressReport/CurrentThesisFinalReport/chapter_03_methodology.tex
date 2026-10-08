@@ -144,7 +144,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \section{Research Design and Workflow}
 This chapter outlines the computational framework for assessing the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD): parametric geometry generation, Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement~\cite{raissi2019pinn}, and surrogate-based survivability optimization driven by Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate~\cite{rasmussen2003} and an optional Genetic Algorithm (GA) search~\cite{Goldberg1989} over the same surrogate.
 
-To isolate the ``scalloped'' geometry, the methodology compares a baseline smooth sphere-cone against the inflatable architecture under identical flight conditions. Figure~\ref{fig:flowchart_ch1} shows six stages:
+The methodology runs in six stages, executed end-to-end by the twelve-stage pipeline of Figure~\ref{fig:flowchart_ch1}:
 \begin{enumerate}
     \item \textbf{Parametric Geometry Generation:} Automated 3D CAD generation of the scalloped (inflatable) and smooth (baseline) profiles with CadQuery, varying toroid count, cone angle, nose radius and aeroshell diameter.
     \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver~\cite{plimpton2014sparta} at the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics~\cite{bird1994molecular}.

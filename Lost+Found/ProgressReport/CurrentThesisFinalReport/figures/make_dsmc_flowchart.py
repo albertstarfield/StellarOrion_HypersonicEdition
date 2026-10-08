@@ -61,7 +61,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Polygon, Rectangle
+from matplotlib.patches import FancyBboxPatch, Polygon, Rectangle
 
 # The rendered-ink measurement lives in its own module so that the
 # generator's guard and the standalone audit tool are the same code. The
@@ -362,17 +362,39 @@ def draw() -> None:
     for i in range(N_BOX):
         border, fill = PALETTE[i]
         top = box_top(i)
-        ax.add_patch(
-            Rectangle(
-                (BOX_X0, top - BOX_H),
-                BOX_W,
-                BOX_H,
-                facecolor=fill,
-                edgecolor=border,
-                linewidth=1.5,
-                zorder=2,
+        # Flowchart convention: the START (box 0) and END (box 6) nodes are
+        # oval terminators, the process steps stay rectangles. A FancyBboxPatch
+        # with rounding_size = height/2 is a stadium: at mid height (where
+        # every arrow attaches) it spans exactly BOX_X0..BOX_X1, and the
+        # top/bottom arrow landings on the centre line sit on the flat
+        # segment, so no connector geometry changes. The loop anchors boxes
+        # 1 and 5 (both process rectangles), so measure_loop_gap and the
+        # analytic apex guard keep their inputs.
+        if i in (0, N_BOX - 1):
+            ax.add_patch(
+                FancyBboxPatch(
+                    (BOX_X0, top - BOX_H),
+                    BOX_W,
+                    BOX_H,
+                    boxstyle=f"round,pad=0,rounding_size={BOX_H / 2.0}",
+                    facecolor=fill,
+                    edgecolor=border,
+                    linewidth=1.5,
+                    zorder=2,
+                )
             )
-        )
+        else:
+            ax.add_patch(
+                Rectangle(
+                    (BOX_X0, top - BOX_H),
+                    BOX_W,
+                    BOX_H,
+                    facecolor=fill,
+                    edgecolor=border,
+                    linewidth=1.5,
+                    zorder=2,
+                )
+            )
         ax.text(
             CX,
             top - BOX_H / 2.0 + 0.5 * LABEL_PITCH,
