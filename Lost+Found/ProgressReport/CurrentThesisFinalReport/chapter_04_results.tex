@@ -72,12 +72,6 @@ The two time series sit at \emph{different} conditions: smooth at 51.82~km and 3
 \EndAccSupp{}%
     \caption[Surface temperature distribution on the smooth-skinned toroid-stack configuration from SPARTA DSMC, shown as an axial-radial meridional slice at $V_{\infty} = 2700$\,m/s and grid factor 0.7; the run-condition box in the panel reports Mach 10.53 on 40402 cells at build 1397929.]{Surface temperature distribution on the smooth-skinned toroid-stack configuration from SPARTA DSMC, shown as an axial-radial meridional slice at $V_{\infty} = 2700$\,m/s and grid factor 0.7; the run-condition box in the panel reports Mach 10.53 on 40402 cells at build 1397929. The skin is smooth, so no scalloped grooving is present. The panel uses the solver's default freestream velocity rather than the $3{,}378$\,m/s trajectory point of Table~\ref{tab:validation_full}, so it is a qualitative field visualization only.}
     \label{fig:thermal_map}
-\end{figure}
-
-\section{Pressure and Force Distribution}
-SPARTA surface force computes give axial drag ($f_x$) and transverse components; the pressure distribution (Figure~\ref{fig:pressure_map}) shows the elevated-pressure band following the windward face along the stacked tori.
-
-\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={SPARTA pressure field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, colored by pressure in pascals on a scale from 0 to about 18000 pascals. The elevated-pressure band follows the windward face where the stacked tori sit, and the labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the tori. The run-condition box gives a freestream velocity of 2700\,m/s, Mach 10.53, 40402 cells, a grid factor of 0.7 and build 1397929.}}%
 \includegraphics[width=0.75\textwidth]{figures/pressure_map_smooth.png}%
@@ -85,6 +79,9 @@ SPARTA surface force computes give axial drag ($f_x$) and transverse components;
     \caption[Surface pressure distribution on the smooth-skinned toroid-stack configuration, shown as an axial-radial meridional slice in which the elevated-pressure band follows the windward face along the stacked tori ($V_{\infty} = 2700$\,m/s, grid factor 0.7, build 1397929; qualitative field visualization).]{Surface pressure distribution on the smooth-skinned toroid-stack configuration, shown as an axial-radial meridional slice in which the elevated-pressure band follows the windward face along the stacked tori ($V_{\infty} = 2700$\,m/s, grid factor 0.7, build 1397929; qualitative field visualization). The meridional cut cannot show circumferential periodicity, so no periodic peak structure is claimed.}
     \label{fig:pressure_map}
 \end{figure}
+
+\section{Pressure and Force Distribution}
+SPARTA surface force computes give axial drag ($f_x$) and transverse components; the pressure distribution (Figure~\ref{fig:pressure_map}) shows the elevated-pressure band following the windward face along the stacked tori.
 
 \subsection{Drag Coefficient}
 Drag coefficient from the total axial force:
@@ -105,12 +102,6 @@ The Mach number field (Figure~\ref{fig:mach_map}) shows the bow shock ahead of t
 \EndAccSupp{}%
     \caption[Mach number field around the smooth-skinned toroid-stack configuration at $V_{\infty} = 2700$\,m/s and grid factor 0.7 (build 7dcfe87).]{Mach number field around the smooth-skinned toroid-stack configuration at $V_{\infty} = 2700$\,m/s and grid factor 0.7 (build 7dcfe87), a meridional slice of the toroid-stack geometry of Figure~\ref{fig:thermal_map}, not a body without tori. The freestream is near Mach 10.5 and a low-Mach region of order Mach 4 encloses the forward and aft faces; this region is sub-freestream but \emph{not} subsonic. The wake is unpopulated and renders as white speckle, so no Mach value is claimed.}
     \label{fig:mach_map}
-\end{figure}
-
-\subsection{Velocity Vector Field}
-The velocity vectors (Figure~\ref{fig:velocity_vectors}) show strong deceleration in the near wake, velocity below $1.5$\,km/s behind the body. In DSMC this momentum loss and recirculation emerge from molecular collisions and surface interactions without turbulence modeling~\cite{bird1994molecular}.
-
-\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={SPARTA velocity-vector field in an axial-radial meridional slice through the smooth sphere-cone and its stacked tori, with arrows colored by velocity magnitude in metres per second on a scale from 0 to 2700. The freestream arrows are uniform across the domain, and a region of shorter green and teal arrows of reduced magnitude forms the decelerated wake behind the body. The labels T1 to T6 with T2 at S and T7 at S at the shoulder mark the stacked tori. The run-condition box gives a freestream velocity of 2700\,m/s, Mach 10.53, 40403 cells, a grid factor of 1.5 and build 1d94db8.}}%
 \includegraphics[width=0.75\textwidth]{figures/velocity_vectors_smooth.png}%
@@ -118,6 +109,9 @@ The velocity vectors (Figure~\ref{fig:velocity_vectors}) show strong deceleratio
     \caption[Velocity vector field on the smooth-skinned toroid-stack configuration ($V_{\infty} = 2700$\,m/s), showing the decelerated wake region downstream of the toroid stack.]{Velocity vector field on the smooth-skinned toroid-stack configuration ($V_{\infty} = 2700$\,m/s), showing the decelerated wake region downstream of the toroid stack. This panel is a different run from Figures~\ref{fig:thermal_map}, \ref{fig:pressure_map}, \ref{fig:mach_map} and \ref{fig:knudsen_map}: its run-condition box reports grid factor 1.5 on 40403 cells at build 1d94db8, where the others use grid factor 0.7. The wake is not comparable with the other panels and shows only the qualitative existence of the decelerated region.}
     \label{fig:velocity_vectors}
 \end{figure}
+
+\subsection{Velocity Vector Field}
+The velocity vectors (Figure~\ref{fig:velocity_vectors}) show strong deceleration in the near wake, velocity below $1.5$\,km/s behind the body. In DSMC this momentum loss and recirculation emerge from molecular collisions and surface interactions without turbulence modeling~\cite{bird1994molecular}.
 
 \subsection{Knudsen Number Distribution}
 The Knudsen number field (Figure~\ref{fig:knudsen_map}) resolves the regime structure, ordered from the wall outward:
@@ -137,12 +131,6 @@ The distinction bounds the DSMC case: highest-$Kn$ cells coincide with the shock
 \EndAccSupp{}%
     \caption[Knudsen number distribution on the smooth-skinned toroid-stack configuration at $V_{\infty} = 2700$\,m/s and grid factor 0.7 (build 7dcfe87).]{Knudsen number distribution on the smooth-skinned toroid-stack configuration at $V_{\infty} = 2700$\,m/s and grid factor 0.7 (build 7dcfe87), a meridional slice of the same toroid-stack geometry as Figure~\ref{fig:thermal_map}. The visible range runs from $10^{-5}$ to about $1.15\times10^{-2}$, so the field spans the continuum and near-continuum regimes and does \emph{not} reach the free-molecular regime. The key labels the red wake as kinetic dominance above $Kn = 0.1$, a threshold the plotted range never attains; the wake is the highest-$Kn$ region present, not proof of $Kn > 0.1$. Like Figure~\ref{fig:mach_map}, this legacy-condition render is outside the $V_{\infty} = 3378$\,m/s validation dataset.}
     \label{fig:knudsen_map}
-\end{figure}
-
-\section{Grid Independence Study}
-A grid independence study varied grid factor from 0.3 to 1.0 against IRVE-3 flight data and the Rapisarda MDAO reference~\cite{rapisarda2023mdao}; grid factor 0.7 gives the least error at acceptable cost.
-
-\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={SPARTA computational mesh map showing the axial and radial grid distribution used in the DSMC calculation.}}%
 \includegraphics[width=0.75\textwidth]{figures/grid_mesh_map_smooth.png}%
@@ -150,6 +138,9 @@ A grid independence study varied grid factor from 0.3 to 1.0 against IRVE-3 flig
     \caption[Computational grid used in the SPARTA DSMC simulation with grid factor 0.7.]{Computational grid used in the SPARTA DSMC simulation with grid factor 0.7. Figure~\ref{fig:mesh_stats} is a second rendering of the same mesh.}
     \label{fig:grid_mesh}
 \end{figure}
+
+\section{Grid Independence Study}
+A grid independence study varied grid factor from 0.3 to 1.0 against IRVE-3 flight data and the Rapisarda MDAO reference~\cite{rapisarda2023mdao}; grid factor 0.7 gives the least error at acceptable cost.
 
 \section{Validation Against IRVE-3 Flight Data}
 \label{sec:validation_irve3}
@@ -315,11 +306,6 @@ A 15-point central composite design~\cite{Montgomery2017} screens first, best $J
 \EndAccSupp{}%
     \caption[Central composite screen evaluated in the three-dimensional design space, colored by the evaluated cost $J(\mathbf{x})$ on a logarithmic scale (official run 2026-09-26).]{Central composite screen evaluated in the three-dimensional design space, colored by the evaluated cost $J(\mathbf{x})$ on a logarithmic scale (official run 2026-09-26). The 15 screen points comprise 8 factorial points, the design center ($R_N = 1.5$\,m, $r_{tor} = 0.140$\,m, $\theta_c = 60^\circ$) and 6 axial points; the design center, IRVE-3 baseline, best-screened point and round-1 optimum are marked in the panel.}
     \label{fig:ccd_surface}
-\end{figure}
-
-Figure~\ref{fig:ccd_surface} shows the cost-annotated 15-point screen layout; Figure~\ref{fig:ccd_screen} gives the same screen as three pairwise projections keeping every point visible. The lowest screen cost sits at the factorial corner $R_N = 1.80$\,m, $r_{tor} = 0.100$\,m, $\theta_c = 65^\circ$ ($J = 1.9505$), the best design it resolves, and is a scale reference, not the convergence incumbent below. The center point ($J = 2.1135$) and the IRVE-3 baseline ($J = 2.1162$, $r_{tor} = 0.135$\,m) differ only in torus radius, and the screen cannot resolve which is preferable. Nose radius varies most across screened costs, consistent with $1/\sqrt{R_N}$ Sutton-Graves scaling, while half-cone angle matters less.
-
-\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Three scatter panels showing the fifteen central composite design points as pairwise projections of the three design variables: nose radius against toroid radius, nose radius against half-cone angle, and toroid radius against half-cone angle. Eight factorial corner points appear as circles, six axial star points as triangles, and the single center point as a star.}}%
     \includegraphics[width=0.95\textwidth]{figures/fignew_ccd_screen.png}%
@@ -327,6 +313,9 @@ Figure~\ref{fig:ccd_surface} shows the cost-annotated 15-point screen layout; Fi
     \caption[The central composite screen in the three-dimensional design space, shown as three pairwise projections so that no point is hidden by occlusion.]{The central composite screen in the three-dimensional design space, shown as three pairwise projections so that no point is hidden by occlusion. The eight factorial corner points, six axial star points and single center point are distinguished by marker, which the oblique three-dimensional view of Figure~\ref{fig:ccd_surface} cannot do. The center point carries the cost $J = 2.1135$ and the screen minimum is 1.9505 at a factorial corner.}
     \label{fig:ccd_screen}
 \end{figure}
+
+Figure~\ref{fig:ccd_surface} shows the cost-annotated 15-point screen layout; Figure~\ref{fig:ccd_screen} gives the same screen as three pairwise projections keeping every point visible. The lowest screen cost sits at the factorial corner $R_N = 1.80$\,m, $r_{tor} = 0.100$\,m, $\theta_c = 65^\circ$ ($J = 1.9505$), the best design it resolves, and is a scale reference, not the convergence incumbent below. The center point ($J = 2.1135$) and the IRVE-3 baseline ($J = 2.1162$, $r_{tor} = 0.135$\,m) differ only in torus radius, and the screen cannot resolve which is preferable. Nose radius varies most across screened costs, consistent with $1/\sqrt{R_N}$ Sutton-Graves scaling, while half-cone angle matters less.
+
 \subsection{Optimized Configuration}
 Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 winner. The optimizer cuts total heat load by 29.16\,\% to 155.21~J/cm\textsuperscript{2} (6.34\,\% \emph{below} the 165.72~J/cm\textsuperscript{2} validation target), drag coefficient by 2.16\,\% and aggregate cost $J$ by 26.29\,\%, with no constraint violated at the optimum (penalty $= 0$).
 
@@ -371,9 +360,6 @@ Since $\dot{q} \propto 1/\sqrt{R_N}$ in the Sutton-Graves scaling~\cite{sutton19
     \EndAccSupp{}%
     \caption[Topology before and after optimization.]{Topology before and after optimization. The left panel shows the IRVE-3 default geometry ($R_N = 1.5$\,m, $r_{tor} = 0.135$\,m, $\theta_c = 60^\circ$); the right panel shows the Bayesian optimum ($R_N = 2.9891$\,m, $r_{tor} = 0.1033$\,m, $\theta_c = 40.48^\circ$). The optimized geometry reduces drag coefficient from 1.6073 to 1.5725 and total heat load from 219.10 to 155.21\,J/cm$^2$ ($-29.16\,\%$).}
     \label{fig:optimization_comparison}
-\end{figure}
-
-\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Three-dimensional scatter plot of the design-space samples. The axes are nose radius, toroid radius, and half-cone angle. The color of each point represents the evaluated cost. The plot shows the 70-evaluation budget: 20 Latin-Hypercube initial samples followed by 50 Bayesian optimization iterations.}}%
     \includegraphics[width=\textwidth]{figures/bo_optimization_3d.png}%
