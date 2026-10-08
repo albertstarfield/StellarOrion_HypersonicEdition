@@ -913,7 +913,7 @@ The standard implementation follows Bird's No-Time-Counter (NTC) algorithm:
 
 \begin{figure}[htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Flowchart of the Direct Simulation Monte Carlo algorithm, showing the per-timestep cycle of particle advection, cell collision and macroscopic property sampling.}}%
+    \BeginAccSupp{method=escape,ActualText={Flowchart of the Direct Simulation Monte Carlo algorithm, bracketed by Start and Stop terminators, showing the per-timestep cycle of particle advection, cell collision and macroscopic property sampling, with the convergence check looping back until steady state.}}%
 \includegraphics[width=0.9\textwidth]{figures/dsmc_algorithm_flowchart.png}%
 \EndAccSupp{}%
     \caption[Flowchart of Bird's No-Time-Counter (NTC) DSMC algorithm. The two-phase alternation between particle movement (streamer phase) and collision pairing (collision phase) is shown.]{Flowchart of Bird's No-Time-Counter (NTC) DSMC algorithm. The two-phase alternation between particle movement (streamer phase) and collision pairing (collision phase) is shown, with macroscopic property sampling accumulating at each time step.}

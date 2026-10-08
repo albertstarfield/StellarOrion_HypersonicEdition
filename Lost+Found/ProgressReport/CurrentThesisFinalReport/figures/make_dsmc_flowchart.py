@@ -28,10 +28,19 @@ AXIOMS
        point size across fit iterations, and only geometry scales.
     3. Mathtext subscripts print at roughly 0.7 of the parent point size,
        so a parent of 12 pt is needed for an 8.4 pt subscript.
+    4. ISO 5807 flowchart symbols carry meaning: the rectangle is a
+       process step, the parallelogram is input/output, and the stadium
+       is a terminator. Drawing the first process step as a terminator
+       misstates its role, so Start and Stop are drawn as their own
+       stadium nodes and the seven steps use process/data symbols only.
 
 THEORIES
     1. A seven step column plus one loop arrow carries the whole algorithm
-       at this resolution, so no extra decoration is required.
+       at this resolution, so no extra decoration is required. The Start
+       and Stop terminators bracket the column without disturbing that
+       layout: their heights are added to the canvas, not taken from the
+       inter-box gaps, so the loop anchors on boxes 1 and 5 keep the exact
+       geometry the clearance measurement certifies.
     2. matplotlib's Arc3 connection style places its control point at
        (mid_x + rad*dy, mid_y - rad*dx). For a vertical chord (dx = 0) a
        negative rad therefore bows the curve toward smaller x, and the
@@ -39,8 +48,9 @@ THEORIES
        this numerically instead of trusting the sign convention.
 
 APPLICATIONS
-    1. Draw the seven boxes, six down arrows, the green step label, the
-       red dashed repeat loop, and the title.
+    1. Draw the Start and Stop terminators, the seven steps (six process
+       rectangles, one input/output parallelogram), six down arrows, the
+       green step label, the red dashed repeat loop, and the title.
     2. Fit the saved width to 0.9 of the text width, then assert the
        legibility floor and the dash-free rule.
 
@@ -73,6 +83,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # inside-canvas check live in one sibling module so that no two
 # generators can disagree about what a printed figure looks like.
 import print_fit as pf
+import fig_shapes as fsh
 from measure_loop_gap import (
     MAX_TOUCH_ROWS,
     MIN_SEP_GAP_PX,
@@ -152,7 +163,21 @@ N_BOX = 7
 # literals and BOX_H changed underneath them. The lines are placed
 # symmetrically at plus and minus half of this value about the box centre.
 LABEL_PITCH = 0.15
-H = TOP + TITLE_H + N_BOX * BOX_H + (N_BOX - 1) * GAP + BOT
+# Start and Stop terminators (stadium symbols) sit between the title and
+# the first step, and below the last step. Their slots are part of H, so
+# all seven inter-box relationships, the loop anchors on boxes 1 and 5 and
+# the six down arrows keep exactly the geometry the clearance measurement
+# certifies; only the canvas grows to carry the terminators.
+TERM_W = 1.10
+TERM_H = 0.24
+# Vertical run of the arrow from Start into box 0 and from box 6 into Stop.
+TERM_GAP = 0.12
+# Clearance between the title region and the Start oval.
+TITLE_GAP = 0.10
+START_SLOT = TITLE_GAP + TERM_H + TERM_GAP
+STOP_SLOT = TERM_GAP + TERM_H
+H = (TOP + TITLE_H + START_SLOT + N_BOX * BOX_H + (N_BOX - 1) * GAP
+     + STOP_SLOT + BOT)
 BOX_X0 = (W - BOX_W) / 2.0
 BOX_X1 = BOX_X0 + BOX_W
 CX = W / 2.0
@@ -187,6 +212,12 @@ PALETTE = [
 ]
 RED = "#EF4444"
 SLATE = "#475569"
+# Terminators use the slate greys (Tailwind slate), deliberately outside
+# the six palette border colours and outside the red shared by the loop
+# and box 6, so the border detection and the loop mask in
+# measure_loop_gap never see them.
+TERM_EDGE = SLATE
+TERM_FILL = "#F1F5F9"
 
 TITLE_FS = 13
 BOX_FS = 9
@@ -243,6 +274,18 @@ ENTRY_X = BOX_X1
 # to tell a real connection from a bow running along the border.
 CONNECTOR_OVERLAP = 0.015
 
+# Shared style for every straight down arrow (Start to box 0, the six
+# between-box arrows, and box 6 to Stop) so one literal cannot drift from
+# another between call sites.
+ARROW_STYLE = {
+    "arrowstyle": "-|>",
+    "color": SLATE,
+    "linewidth": 1.5,
+    "mutation_scale": 12,
+    "shrinkA": 0.0,
+    "shrinkB": 0.0,
+}
+
 BANNED = (
     chr(45) + chr(45),
     chr(0x2013),
@@ -258,7 +301,7 @@ def box_top(i: int) -> float:
     Returns
         y coordinate of the top edge.
     """
-    return H - TOP - TITLE_H - i * (BOX_H + GAP)
+    return H - TOP - TITLE_H - START_SLOT - i * (BOX_H + GAP)
 
 
 def box_center(i: int) -> float:
@@ -332,8 +375,13 @@ def draw() -> None:
         RuntimeError: propagates any check failure from check_text or
             save.
     """
-    plt.rcParams["font.family"] = "sans-serif"
-    plt.rcParams["font.sans-serif"] = ["DejaVu Sans"]
+    # Times matches the thesis body text and every other thesis figure;
+    # the BOX_H clearance comment below was measured with DejaVu Sans, and
+    # Times is narrower at the same point size, so that clearance only
+    # grows under this font.
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman", "Times", "DejaVu Serif"]
+    plt.rcParams["mathtext.fontset"] = "stix"
 
     for i in range(N_BOX):
         check_text(f"box title {i}", BOX_TITLES[i])
@@ -341,6 +389,8 @@ def draw() -> None:
     check_text("title", TITLE_TEXT)
     check_text("loop label 1", LOOP_LABEL_1)
     check_text("loop label 2", LOOP_LABEL_2)
+    check_text("start terminator", "Start")
+    check_text("stop terminator", "Stop")
 
     fig = plt.figure(figsize=(W, H))
     ax = fig.add_axes((0.0, 0.0, 1.0, 1.0))
@@ -359,29 +409,65 @@ def draw() -> None:
         color="#0F172A",
     )
 
+    # Start terminator: a slate stadium above box 0 with the arrow that
+    # enters the column. The oval top keeps TITLE_GAP below the title
+    # region; the oval bottom is TERM_GAP above box 0, the same run every
+    # between-box arrow uses.
+    start_top = box_top(0) + TERM_GAP + TERM_H
+    start_bottom = start_top - TERM_H
+    ax.add_patch(
+        FancyBboxPatch(
+            (CX - TERM_W / 2.0, start_bottom),
+            TERM_W,
+            TERM_H,
+            boxstyle=f"round,pad=0,rounding_size={TERM_H / 2.0}",
+            facecolor=TERM_FILL,
+            edgecolor=TERM_EDGE,
+            linewidth=BOX_LW,
+            zorder=2,
+        )
+    )
+    ax.text(
+        CX,
+        start_bottom + TERM_H / 2.0,
+        "Start",
+        ha="center",
+        va="center",
+        fontsize=BOX_FS,
+        fontweight="bold",
+        color="#0F172A",
+        zorder=3,
+    )
+    ax.annotate(
+        "",
+        xy=(CX, box_top(0)),
+        xytext=(CX, start_bottom),
+        arrowprops=dict(ARROW_STYLE),
+        zorder=1,
+    )
+
     for i in range(N_BOX):
         border, fill = PALETTE[i]
         top = box_top(i)
-        # Flowchart convention: the START (box 0) and END (box 6) nodes are
-        # oval terminators, the process steps stay rectangles. A FancyBboxPatch
-        # with rounding_size = height/2 is a stadium: at mid height (where
-        # every arrow attaches) it spans exactly BOX_X0..BOX_X1, and the
-        # top/bottom arrow landings on the centre line sit on the flat
-        # segment, so no connector geometry changes. The loop anchors boxes
-        # 1 and 5 (both process rectangles), so measure_loop_gap and the
-        # analytic apex guard keep their inputs.
-        if i in (0, N_BOX - 1):
-            ax.add_patch(
-                FancyBboxPatch(
-                    (BOX_X0, top - BOX_H),
-                    BOX_W,
-                    BOX_H,
-                    boxstyle=f"round,pad=0,rounding_size={BOX_H / 2.0}",
-                    facecolor=fill,
-                    edgecolor=border,
-                    linewidth=1.5,
-                    zorder=2,
-                )
+        # ISO 5807 symbols: boxes 0 to 5 are process rectangles (box 0 no
+        # longer doubles as a terminator; the Start node owns that role),
+        # and box 6, Output Surface Data, is an input/output parallelogram
+        # from the shared helper. x0 = BOX_X0 - SLANT_IN puts the top edge
+        # flush with the box column so the rightmost red ink still lands
+        # on BOX_X1, inside the column that measure_loop_gap masks out of
+        # the loop, while the visual centre (and both arrow landings at
+        # CX) stay aligned with the rectangular steps.
+        if i == N_BOX - 1:
+            fsh.io_shape(
+                ax,
+                BOX_X0 - fsh.SLANT_IN,
+                top - BOX_H,
+                BOX_W,
+                BOX_H,
+                fill,
+                border,
+                linewidth=BOX_LW,
+                slant_in=fsh.SLANT_IN,
             )
         else:
             ax.add_patch(
@@ -391,7 +477,7 @@ def draw() -> None:
                     BOX_H,
                     facecolor=fill,
                     edgecolor=border,
-                    linewidth=1.5,
+                    linewidth=BOX_LW,
                     zorder=2,
                 )
             )
@@ -425,16 +511,45 @@ def draw() -> None:
             "",
             xy=(CX, y_to),
             xytext=(CX, y_from),
-            arrowprops={
-                "arrowstyle": "-|>",
-                "color": SLATE,
-                "linewidth": 1.5,
-                "mutation_scale": 12,
-                "shrinkA": 0.0,
-                "shrinkB": 0.0,
-            },
+            arrowprops=dict(ARROW_STYLE),
             zorder=1,
         )
+
+    # Stop terminator: mirror of the Start node below box 6. Its bottom
+    # edge lands exactly BOT above the canvas edge by the slot algebra in
+    # H and box_top, so no clearance check has a special case.
+    stop_top = box_top(N_BOX - 1) - BOX_H - TERM_GAP
+    stop_bottom = stop_top - TERM_H
+    ax.add_patch(
+        FancyBboxPatch(
+            (CX - TERM_W / 2.0, stop_bottom),
+            TERM_W,
+            TERM_H,
+            boxstyle=f"round,pad=0,rounding_size={TERM_H / 2.0}",
+            facecolor=TERM_FILL,
+            edgecolor=TERM_EDGE,
+            linewidth=BOX_LW,
+            zorder=2,
+        )
+    )
+    ax.text(
+        CX,
+        stop_bottom + TERM_H / 2.0,
+        "Stop",
+        ha="center",
+        va="center",
+        fontsize=BOX_FS,
+        fontweight="bold",
+        color="#0F172A",
+        zorder=3,
+    )
+    ax.annotate(
+        "",
+        xy=(CX, stop_bottom),
+        xytext=(CX, box_top(N_BOX - 1) - BOX_H),
+        arrowprops=dict(ARROW_STYLE),
+        zorder=1,
+    )
 
     # The green Delta t that used to sit beside box 2 was removed on purpose.
     # A rendered-page audit found it floating six points clear of the box with

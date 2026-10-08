@@ -2,10 +2,12 @@
 """Shared flowchart shape helpers for the thesis figure generators.
 
 PURPOSE
-    Provide the ISO 5807 input/output parallelogram (io_box) once, so
-    make_methodology_figures.py and make_software_pipeline.py draw data
-    symbols from identical geometry instead of maintaining two copies that
-    can silently diverge.
+    Provide the ISO 5807 input/output parallelogram once, so the thesis
+    generators draw data symbols from identical geometry instead of
+    maintaining copies that can silently diverge. io_shape is the bare
+    polygon (for callers that draw their own text, e.g.
+    make_dsmc_flowchart.py) and io_box composes io_shape with a centered
+    label.
 
 PARAMETERS
     None at import time. Only geometry helpers are exported; each caller
@@ -13,11 +15,13 @@ PARAMETERS
 
 RETURNS
     Module namespace. Import errors propagate if matplotlib is missing.
+    io_shape additionally returns the Polygon it added, so callers that
+    need to measure the patch can.
 
 EXCEPTIONS
     ImportError if matplotlib is unavailable; ValueError never raised by
-    io_box (degenerate widths render empty shapes, callers size boxes via
-    their own verify step).
+    io_shape or io_box (degenerate widths render empty shapes, callers
+    size boxes via their own verify step).
 
 AXIOMS
     A1. Duplicate shape code across generator scripts diverges: the same
@@ -39,6 +43,8 @@ APPLICATIONS
         the result-extraction flow with io_box.
     A2. make_software_pipeline.py draws the three INPUT boxes and the
         OUTPUT box of the five-column pipeline with io_box.
+    A3. make_dsmc_flowchart.py draws the Output Surface Data step with
+        io_shape and keeps its own two-line bold label.
 
 CITATIONS
     ISO 5807, Information processing -- Documentation symbols and
@@ -51,11 +57,49 @@ from __future__ import annotations
 
 from matplotlib.patches import Polygon  # noqa: E402  pure geometry, no backend
 
+# Right-leaning offset of the data symbol, in inches. Exported so callers
+# that position the shape relative to their own column (make_dsmc_flowchart
+# aligns the top edge with the box column) never restate the number that
+# io_shape will apply.
+SLANT_IN = 0.05
+
+
+def io_shape(ax: object, x0: float, y0: float, w: float, h: float,
+             fill: str, edge: str, linewidth: float = 1.2,
+             slant_in: float = SLANT_IN) -> Polygon:
+    """Add the ISO 5807 input/output parallelogram and return the patch.
+
+    The top edge is shifted right by slant_in so the quadrilateral reads
+    as input/output by outline alone. The axes in every caller are in
+    inches on both axes, so slant_in is used directly as a data offset
+    (no unit conversion).
+
+    :param ax: the axes to draw on.
+    :param x0: bottom-left corner x in inches (before the slant).
+    :param y0: bottom edge y in inches.
+    :param w: horizontal width of the bottom edge in inches.
+    :param h: height in inches.
+    :param fill: face colour.
+    :param edge: stroke colour.
+    :param linewidth: stroke width in points.
+    :param slant_in: horizontal offset of the top edge in inches.
+    :returns: the Polygon patch that was added to ax.
+    :raises: none; degenerate widths render empty shapes.
+    """
+    s = slant_in
+    patch = Polygon(
+        [(x0, y0), (x0 + w, y0), (x0 + w + s, y0 + h), (x0 + s, y0 + h)],
+        closed=True, linewidth=linewidth, edgecolor=edge, facecolor=fill,
+        zorder=2,
+    )
+    ax.add_patch(patch)
+    return patch
+
 
 def io_box(ax: object, x0: float, y0: float, w: float, h: float,
            text: str, fill: str, edge: str, text_color: str = "#212121",
            fs: float = 9.5, linespacing: float = 1.3,
-           slant_in: float = 0.05) -> None:
+           slant_in: float = SLANT_IN) -> None:
     """Draw a right-leaning input/output parallelogram with centered text.
 
     ISO 5807 data symbol: the top edge is shifted right by slant_in so the
@@ -78,10 +122,6 @@ def io_box(ax: object, x0: float, y0: float, w: float, h: float,
     :returns: None.
     """
     s = slant_in
-    ax.add_patch(Polygon(
-        [(x0, y0), (x0 + w, y0), (x0 + w + s, y0 + h), (x0 + s, y0 + h)],
-        closed=True, linewidth=1.2, edgecolor=edge, facecolor=fill,
-        zorder=2,
-    ))
+    io_shape(ax, x0, y0, w, h, fill, edge, slant_in=s)
     ax.text(x0 + w / 2 + s / 2, y0 + h / 2, text, ha="center", va="center",
             fontsize=fs, color=text_color, zorder=3, linespacing=linespacing)
