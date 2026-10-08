@@ -27,11 +27,17 @@ AXIOMS
         be rejected before the first save. (Source: print_fit axiom A3.)
     A3. The engine to ParaView arrow must route around the solver and ML
         boxes, not over them, so the path is a polyline above the boxes.
+    A4. An arrow that ends beside a box instead of on it reads as a
+        dangling connector. The three input arrows leave their boxes at
+        y 2.54, 1.86 and 1.18, so the engine box must span that whole
+        range (it does: y 1.16 to 2.56); with the old 0.90 in box the
+        top and bottom tips floated 0.24 in and 0.22 in off the box
+        (measured on the written PNG).
 
 THEORIES
     T1. Five columns with three input boxes, one engine box, two solver
         boxes, two model boxes and one output box fit the print width at a
-        readable size when the canvas is about 3.2 in tall.
+        readable size when the canvas is about 3.5 in tall.
     T2. The feedback arrow from the Bayesian Optimization surrogate to the
         engine routes below all boxes so it crosses no text and no other
         arrow.
@@ -64,13 +70,21 @@ from matplotlib.path import Path  # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import fig_metrics as fm  # noqa: E402  sibling module, shared measurement
+import fig_shapes as fsh  # noqa: E402  sibling module, shared flowchart shapes
 import print_fit as pf  # noqa: E402  sibling module, shared print geometry
+
+# WHY serif Times: matches make_methodology_figures so all thesis figures
+# read as one family (Times New Roman is present on this system at
+# /System/Library/Fonts/Supplemental, with DejaVu Serif as the fallback).
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.serif"] = ["Times New Roman", "Times", "DejaVu Serif"]
+plt.rcParams["mathtext.fontset"] = "stix"
 
 FIGDIR = pf.FIGDIR
 assert FIGDIR.is_dir(), "figures directory not found: %s" % FIGDIR
 
 PRINT_W_IN = 6.50
-H = 3.20
+H = 3.50
 
 TITLE_PT = 13.0
 HEADER_PT = 10.0
@@ -99,22 +113,26 @@ ARROW_COLOR = "#37474F"
 ORANGE = "#E65100"
 
 # Column x-ranges (inches)
-INPUT_X0, INPUT_X1 = 0.02, 1.42
+INPUT_X0, INPUT_X1 = 0.02, 1.36
 ENGINE_X0, ENGINE_X1 = 1.54, 2.94
 SOLVER_X0, SOLVER_X1 = 3.06, 4.16
 ML_X0, ML_X1 = 4.28, 5.58
-OUTPUT_X0, OUTPUT_X1 = 5.70, 6.48
+# WHY 5.65/6.43: the OUTPUT parallelogram slants its top edge 0.05 in
+# right, so x1 + slant = 6.48 stays inside the 6.50 in canvas.
+OUTPUT_X0, OUTPUT_X1 = 5.65, 6.43
 
 # Box heights
 INPUT_H = 0.48
-ENGINE_H = 0.90
+# WHY 1.40: the engine must span every input arrow y (2.54, 1.86, 1.18),
+# see axiom A4; y 1.16 to 2.56 covers all three tips with 0.02 in margin.
+ENGINE_H = 1.40
 SOLVER_H = 0.62
 ML_H = 0.52
 OUTPUT_H = 0.90
 
 # Vertical positions (y bottom)
 INPUT_Y = [2.30, 1.62, 0.94]
-ENGINE_Y = 1.40
+ENGINE_Y = 1.16
 SOLVER_Y = [2.12, 1.24]
 ML_Y = [2.20, 1.30]
 OUTPUT_Y = 1.40
@@ -140,7 +158,7 @@ INPUT_TEXTS = (
     "Flight Conditions\n/ V, T∞, ρ∞",
     "Design Variables\n/ R_N, r_tor, θ_c",
 )
-ENGINE_TEXT = "Ada Engine\n/ StellarOrion_Orion\n/ driven by run.py"
+ENGINE_TEXT = "Ada/SPARK Engine\n/ StellarOrion_Orion\n/ driven by run.py\n/ phases 0 to 4"
 SOLVER_TEXTS = (
     "SPARTA\n/ DSMC Solver\n/ Docker",
     "OpenFOAM\n/ laplacianFoam\n/ (solid thermal)",
@@ -158,7 +176,7 @@ ARROW_LABEL_FEEDBACK = "Bayesian optimization\n/ feedback loop"
 
 LEGEND_ROW1 = (
     ("Input (Geometry, Conditions)", INPUT_FILL, INPUT_EDGE),
-    ("Core Engine (Ada, run.py)", ENGINE_FILL, ENGINE_EDGE),
+    ("Core Engine (Ada/SPARK, run.py)", ENGINE_FILL, ENGINE_EDGE),
 )
 LEGEND_ROW2 = (
     ("Physics Solvers (SPARTA, OpenFOAM)", SOLVER_FILL, SOLVER_EDGE),
@@ -290,13 +308,14 @@ def build() -> object:
         ax.text(cx, HEADER_Y, header, ha="center", va="center",
                 fontsize=HEADER_PT, fontweight="bold", color=HEADER_GRAY)
 
-    # Oval start terminators: the three parallel INPUT sources are where the
-    # pipeline begins, so per the flowchart convention they are drawn with
-    # rounding = h/2 (a stadium). Connectors attach at the vertical mid line,
-    # which is also the box's widest span, so no arrow moves.
+    # ISO 5807 data symbols: the three INPUT boxes carry data (geometry,
+    # conditions, variables), so they are parallelograms, not terminators;
+    # the single Start oval above the column owns the start-of-flow role.
+    # The connector leaves the slanted right edge at box mid height, where
+    # the edge sits at INPUT_X1 + slant/2 (see the arrow loop below).
     for y0, text in zip(INPUT_Y, INPUT_TEXTS):
-        box(ax, INPUT_X0, y0, INPUT_X1 - INPUT_X0, INPUT_H,
-            text, INPUT_FILL, INPUT_EDGE, rounding=INPUT_H / 2.0)
+        fsh.io_box(ax, INPUT_X0, y0, INPUT_X1 - INPUT_X0, INPUT_H,
+                   text, INPUT_FILL, INPUT_EDGE)
 
     box(ax, ENGINE_X0, ENGINE_Y, ENGINE_X1 - ENGINE_X0, ENGINE_H,
         ENGINE_TEXT, ENGINE_FILL, ENGINE_EDGE, text_color="white", bold=True)
@@ -317,27 +336,45 @@ def build() -> object:
             text, ML_FILL, ML_EDGE, text_color="white")
 
     output_cx = (OUTPUT_X0 + OUTPUT_X1) / 2
-    # Oval end terminator: the OUTPUT box closes the flow, so rounding = h/2
-    # clamped to w/2 (0.45 would exceed the 0.39 half width and make Fancy-
-    # bboxPatch degenerate). The routed feed lands on the flat top centre.
-    box(ax, OUTPUT_X0, OUTPUT_Y, OUTPUT_X1 - OUTPUT_X0, OUTPUT_H,
-        OUTPUT_TEXT, OUTPUT_FILL, OUTPUT_EDGE, text_color="white",
-        rounding=min(OUTPUT_H / 2.0, (OUTPUT_X1 - OUTPUT_X0) / 2.0))
+    # ISO 5807 data symbol: the OUTPUT box is results (VTK/STL), so it is
+    # a parallelogram like the inputs; x0 sits 0.05 in left so the slant
+    # keeps the top edge inside the canvas (6.43 + 0.05 = 6.48 < 6.50).
+    # The routed feed lands on the top edge and the Stop arrow leaves the
+    # bottom edge, both at output_cx.
+    fsh.io_box(ax, OUTPUT_X0, OUTPUT_Y, OUTPUT_X1 - OUTPUT_X0, OUTPUT_H,
+               OUTPUT_TEXT, OUTPUT_FILL, OUTPUT_EDGE, text_color="white")
+
+    # Start/Stop terminators: one Start above the INPUT column and one
+    # Stop below the OUTPUT column close the flowchart. Start's arrow
+    # lands on the first input's top edge (which spans x 0.07 to 1.41);
+    # Stop's arrow leaves the output bottom edge at output_cx. The Start
+    # oval bottom (3.18) stays 0.04 in above the title ink (top 3.14).
+    box(ax, 0.10, 3.18, 0.60, 0.30, "Start", "white", INK, rounding=0.15)
+    arrow(ax, (0.40, 3.18), (0.40, 2.78))
+    box(ax, 5.765, 0.75, 0.55, 0.30, "Stop", "white", INK, rounding=0.15)
+    arrow(ax, (output_cx, OUTPUT_Y), (output_cx, 1.05))
 
     engine_cx = (ENGINE_X0 + ENGINE_X1) / 2
     for y0 in INPUT_Y:
         yc = y0 + INPUT_H / 2.0
-        arrow(ax, (INPUT_X1 - 0.02, yc), (ENGINE_X0 + 0.02, yc))
+        # Start clear of the parallelogram's slanted right edge (at mid
+        # height the edge sits at INPUT_X1 + 0.025), tip just inside the
+        # engine box; the engine spans y 1.16 to 2.56 so every tip lands
+        # on the box, none floats (axiom A4).
+        arrow(ax, (INPUT_X1 + 0.04, yc), (ENGINE_X0 + 0.02, yc))
 
     sparta_yc = SOLVER_Y[0] + SOLVER_H / 2.0
     openfoam_yc = SOLVER_Y[1] + SOLVER_H / 2.0
     arrow(ax, (ENGINE_X1 - 0.02, sparta_yc - 0.1), (SOLVER_X0 + 0.02, sparta_yc))
     arrow(ax, (ENGINE_X1 - 0.02, openfoam_yc + 0.1), (SOLVER_X0 + 0.02, openfoam_yc))
 
+    # WHY y 2.93: clears the header ink top (2.889) by 0.031 in and the
+    # title ink bottom (2.96) by 0.020 in, while staying above the solver
+    # boxes (top 2.74) and ML boxes (top 2.72) as axiom A3 requires.
     routed_arrow(ax, [
         (engine_cx, ENGINE_Y + ENGINE_H),
-        (engine_cx, 2.90),
-        (output_cx, 2.90),
+        (engine_cx, 2.93),
+        (output_cx, 2.93),
         (output_cx, OUTPUT_Y + OUTPUT_H),
     ])
 
@@ -357,9 +394,10 @@ def build() -> object:
     # WHY right-anchored at the solver box's left edge minus 0.04: the
     # engine-solver gap is only 0.12 in wide, so a centred label overran both
     # box texts (the reported 6.7x9.1 and 11.5x6.4 overlaps). Anchoring the
-    # label's right end just left of the gap keeps it over background: below
-    # the header row (2.76 in) and above the engine box (2.30 in).
-    ax.text(SOLVER_X0 - 0.04, sparta_yc + 0.12, ARROW_LABEL_VTK,
+    # label's right end just left of the gap keeps it over background: the
+    # 0.16 in lift puts the 9.5 pt label at y 2.59 to 2.72, above the grown
+    # engine box (top 2.56) and below the header ink (bottom 2.75).
+    ax.text(SOLVER_X0 - 0.04, sparta_yc + 0.16, ARROW_LABEL_VTK,
             ha="right", va="bottom", fontsize=LABEL_PT, fontstyle="italic",
             color=INK)
     ax.text((SOLVER_X1 + ML_X0) / 2.0 + 0.02, (SOLVER_Y[0] + ML_Y[1]) / 2.0 + SOLVER_H / 2.0,
@@ -426,6 +464,7 @@ def main() -> int:
                     ARROW_LABEL_REFINED, ARROW_LABEL_FEEDBACK])
     for item in LEGEND_ROW1 + LEGEND_ROW2 + LEGEND_ROW3:
         strings.append(item[0])
+    strings.extend(["Start", "Stop"])
     pf.require_clean(*strings)
 
     fig = build()

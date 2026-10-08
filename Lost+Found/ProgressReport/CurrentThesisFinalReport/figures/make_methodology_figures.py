@@ -61,7 +61,20 @@ from matplotlib.path import Path  # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import fig_metrics as fm  # noqa: E402  sibling module, shared measurement
+import fig_shapes as fsh  # noqa: E402  sibling module, shared flowchart shapes
 import print_fit as pf  # noqa: E402  sibling module, shared print geometry
+
+# Typography: the thesis body is set in Times, and matplotlib's default
+# DejaVu Sans reads as generic Arial beside it. These figures inherit Times
+# New Roman (present on this system; resolved via findfont) with STIX
+# mathtext so any inline math matches the same serif. The sibling generator
+# make_pipeline_figure.py sets the identical triple, so every flowchart in
+# the thesis reads as one type family.
+# [Reference: matplotlib font family configuration -
+#  https://matplotlib.org/stable/users/explain/text/font_family.html]
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.serif"] = ["Times New Roman", "Times", "DejaVu Serif"]
+plt.rcParams["mathtext.fontset"] = "stix"
 
 FIGDIR = pf.FIGDIR
 assert FIGDIR.is_dir(), "figures directory not found: %s" % FIGDIR
@@ -294,19 +307,18 @@ def build_solver_coupling() -> object:
     sur_x0, sur_y0, sur_w, sur_h = 2.2, 0.5, 1.4, 0.7
     ei_x0, ei_y0, ei_w, ei_h = 4.1, 0.5, 1.4, 0.7
 
-    # Oval terminators per the flowchart convention: SPARTA is the entry of
-    # the coupling cycle (arrows leave it on all three sides at the flat
-    # centre segments, and the feedback re-enters on the flat top centre) and
-    # Survivability Check is the dead-end output, so both get rounding = h/2;
-    # the four interior process boxes stay rectangles.
+    # Flowchart symbology: SPARTA, OpenFOAM, Survivability Check, PINN,
+    # the GP surrogate and EI are all processing steps, so all six are
+    # rectangles; the oval symbol (rounding = h/2) is reserved for the
+    # dedicated Start/Stop terminators drawn below. The previous revision
+    # rounded SPARTA and Survivability as pseudo-terminals, which
+    # conflated process and terminal under the symbology directive.
     box(ax, sparta_x0, sparta_y0, sparta_w, sparta_h,
-        "SPARTA\nDSMC Solver", SOLVER_FILL, SOLVER_EDGE, text_color="white",
-        rounding=sparta_h / 2.0)
+        "SPARTA\nDSMC Solver", SOLVER_FILL, SOLVER_EDGE, text_color="white")
     box(ax, openfoam_x0, openfoam_y0, openfoam_w, openfoam_h,
         "OpenFOAM\nSolid Thermal", SOLVER_FILL, SOLVER_EDGE, text_color="white")
     box(ax, surv_x0, surv_y0, surv_w, surv_h,
-        "Survivability\nCheck", OUTPUT_FILL, OUTPUT_EDGE, text_color="white",
-        rounding=surv_h / 2.0)
+        "Survivability\nCheck", OUTPUT_FILL, OUTPUT_EDGE, text_color="white")
     box(ax, pinn_x0, pinn_y0, pinn_w, pinn_h,
         "PINN\nDeepXDE", ML_FILL, ML_EDGE, text_color="white")
     box(ax, sur_x0, sur_y0, sur_w, sur_h,
@@ -334,13 +346,37 @@ def build_solver_coupling() -> object:
     arrow(ax, (openfoam_x0 + openfoam_w / 2, openfoam_y0),
           (sur_x0 + sur_w / 2, sur_y0 + sur_h))
 
-    # Feedback loop: acquisition to SPARTA
+    # Feedback loop: EI back to SPARTA, carrying the new design. WHY the
+    # right-margin route: the old path rose from EI's top centre (x=4.8)
+    # straight through the Survivability Check box body, because both
+    # columns share x=4.8 (pixel probe of the committed render found 615
+    # orange #E65100 pixels inside x[4.1,5.5] y[1.8,2.5]). Exiting EI's
+    # right edge, running up the right margin at x=6.4 (clear of the
+    # Survivability right edge 5.5 and of the Stop terminal 6.25) and
+    # entering SPARTA's top at x=1.0 touches no box body. The x=1.0
+    # descent clears the 'surface heat flux' label only because that
+    # label sits at x=1.62 (audit finding: at x=1.55 the shaft clipped
+    # the leading 's', ink starting x~0.99 in).
     routed_arrow(ax, [
-        (ei_x0 + ei_w / 2, ei_y0 + ei_h),
-        (ei_x0 + ei_w / 2, 2.8),
+        (ei_x0 + ei_w, ei_y0 + ei_h / 2),
+        (6.4, ei_y0 + ei_h / 2),
+        (6.4, 2.8),
         (sparta_x0 + sparta_w / 2, 2.8),
         (sparta_x0 + sparta_w / 2, sparta_y0 + sparta_h),
     ], color=ORANGE)
+
+    # Dedicated labeled terminals (ISO 5807 ovals): Start feeds SPARTA,
+    # the coupling cycle's entry, from above at x=0.7 -- 0.3 in left of
+    # the feedback entry at x=1.0, and clear of the y=2.8 feedback run
+    # which starts at x=1.0. Stop follows Survivability Check, the flow's
+    # dead end. This file's axes are inches on both axes (data unit = 1 in
+    # of a (6.5 x H) canvas), so FancyBboxPatch rounding = h/2 draws a
+    # TRUE stadium here; no polygon reconstruction is needed (unlike
+    # make_pipeline_figure.py, whose axes are anisotropic fractions).
+    box(ax, 0.4, 2.9, 0.6, 0.3, "Start", "white", INK, rounding=0.15)
+    arrow(ax, (0.7, 2.9), (0.7, sparta_y0 + sparta_h))
+    box(ax, 5.75, 2.0, 0.5, 0.3, "Stop", "white", INK, rounding=0.15)
+    arrow(ax, (surv_x0 + surv_w, surv_y0 + surv_h / 2), (5.75, 2.15))
 
     # Arrow labels. WHY they sit above/below their rows rather than on the
     # arrow line itself: at y=2.25/0.95 the labels shared the boxes' text rows
@@ -353,8 +389,12 @@ def build_solver_coupling() -> object:
     # (y=2.55, under the y=2.8 feedback line by 0.12 in); bottom-row labels
     # sit in the inter-row gap above the bottom boxes (y=1.22). 'refined
     # field' also shifts right to x=3.35 so it clears the vertical arrow line
-    # at x=2.9 by 0.12 in. No Text pair overlaps remain at these spots.
-    ax.text(1.55, 2.55, "surface heat flux", ha="center", va="bottom",
+    # at x=2.9 by 0.12 in. No Text pair overlaps remain at these spots. The
+    # 'surface heat flux' centre moved 1.55 -> 1.62: the feedback descent at
+    # x=1.0 clipped its leading 's' in the committed render (audit, pixel
+    # probe); at 1.62 the ink starts ~1.15 in, 0.14 in clear of the shaft,
+    # and the gap to 'backface temperature' stays > 0.4 in.
+    ax.text(1.62, 2.55, "surface heat flux", ha="center", va="bottom",
             fontsize=9.5, fontstyle="italic", color=INK)
     ax.text(3.05, 2.55, "backface temperature", ha="center", va="bottom",
             fontsize=9.5, fontstyle="italic", color=INK)
@@ -402,28 +442,42 @@ def build_result_extraction() -> object:
     integrate_x0, integrate_y0, integrate_w, integrate_h = 4.1, 1.2, 1.4, 0.7
     metrics_x0, metrics_y0, metrics_w, metrics_h = 4.1, 0.2, 1.4, 0.7
 
-    # Oval terminators: the dump is where this linear flow starts and the
-    # flight metrics are where it ends, so those two boxes get rounding = h/2
-    # (stadium); the two processing steps stay rectangles. Connectors all
-    # attach at mid-height or flat-centre points, unchanged by the corners.
-    box(ax, dump_x0, dump_y0, dump_w, dump_h,
-        "SPARTA\ndump surf", SOLVER_FILL, SOLVER_EDGE, text_color="white",
-        rounding=dump_h / 2.0)
+    # Flowchart symbology: 'SPARTA dump surf' is the INPUT data entering
+    # this extraction pipeline and 'Flight Metrics q, Q, Cd' is its
+    # OUTPUT, so both are ISO 5807 parallelograms; 'Parse' and 'Surface
+    # Integration' are processing steps and stay rectangles. The oval
+    # symbol is reserved for the dedicated Start/Stop terminals below
+    # (the previous revision rounded dump/metrics as pseudo-terminals).
+    fsh.io_box(ax, dump_x0, dump_y0, dump_w, dump_h,
+           "SPARTA\ndump surf", SOLVER_FILL, SOLVER_EDGE, text_color="white")
     box(ax, parse_x0, parse_y0, parse_w, parse_h,
         "Parse\nSurface Data", INPUT_FILL, INPUT_EDGE)
     box(ax, integrate_x0, integrate_y0, integrate_w, integrate_h,
         "Surface\nIntegration", ML_FILL, ML_EDGE, text_color="white")
-    box(ax, metrics_x0, metrics_y0, metrics_w, metrics_h,
-        "Flight Metrics\nq, Q, Cd", OUTPUT_FILL, OUTPUT_EDGE, text_color="white",
-        rounding=metrics_h / 2.0)
+    fsh.io_box(ax, metrics_x0, metrics_y0, metrics_w, metrics_h,
+           "Flight Metrics\nq, Q, Cd", OUTPUT_FILL, OUTPUT_EDGE,
+           text_color="white")
 
-    # Arrows
-    arrow(ax, (dump_x0 + dump_w, dump_y0 + dump_h / 2),
+    # Arrows. The dump connector starts on the parallelogram's right edge
+    # at mid-height (x0 + w + slant/2), not at the bottom-right corner, so
+    # the shaft meets the outline instead of starting inside the fill.
+    arrow(ax, (dump_x0 + dump_w + 0.025, dump_y0 + dump_h / 2),
           (parse_x0, parse_y0 + parse_h / 2))
     arrow(ax, (parse_x0 + parse_w, parse_y0 + parse_h / 2),
           (integrate_x0, integrate_y0 + integrate_h / 2))
     arrow(ax, (integrate_x0 + integrate_w / 2, integrate_y0),
           (metrics_x0 + metrics_w / 2, metrics_y0 + metrics_h))
+
+    # Dedicated labeled terminals (ISO 5807 ovals): Start feeds the dump
+    # step from above at x=0.85 (clear of the 'raw data' label at
+    # x~1.25-1.85 and of the title, whose centred span starts ~x=1.35);
+    # Stop follows the metrics output. Axes are inches on both axes, so
+    # rounding = h/2 draws a true stadium (see build_solver_coupling).
+    box(ax, 0.55, 2.3, 0.6, 0.3, "Start", "white", INK, rounding=0.15)
+    arrow(ax, (0.85, 2.3), (0.85, dump_y0 + dump_h))
+    box(ax, 5.75, 0.4, 0.5, 0.3, "Stop", "white", INK, rounding=0.15)
+    arrow(ax, (metrics_x0 + metrics_w + 0.025, metrics_y0 + metrics_h / 2),
+          (5.75, 0.55))
 
     # Arrow labels. WHY above the row: box labels nearly fill their boxes, so
     # labels on the arrow line (y=1.65) collided with 'SPARTA dump surf' and
@@ -503,12 +557,14 @@ def main() -> int:
           "EI Acquisition", "Next Design",
           "surface heat flux", "backface temperature",
           "grid dump", "refined field", "new design",
+          "Start", "Stop",
           "DSMC Solver", "ML Model", "Optimization", "Output"]),
         ("result_extraction.png", build_result_extraction,
          ["Surface Data Extraction and Flight Metrics",
           "SPARTA", "dump surf", "Parse", "Surface Data",
           "Surface", "Integration", "Flight Metrics", "q, Q, Cd",
           "raw data", "parsed", "integrated",
+          "Start", "Stop",
           "DSMC Output", "Processing", "Integration", "Metrics"]),
     ]
 

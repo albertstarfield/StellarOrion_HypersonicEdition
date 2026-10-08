@@ -18,7 +18,7 @@ The baseline is IRVE-3 reentry at 51.8\,km, with model atmospheric quantities:
     \item \textbf{Grid Factor:} 0.7.
 \end{itemize}
 
-Stagnation temperature, calorically perfect:
+Stagnation temperature, calorically ideal:
 \begin{equation}
     T_0 = T_{\infty} \left( 1 + \frac{\gamma - 1}{2} M_{\infty}^2 \right) = 268.41 \ \text{K} \left( 1 + 0.2 \times 105.9 \right) = 5952 \ \text{K}
 \end{equation}
@@ -233,7 +233,7 @@ This local gradient justifies the DSMC choice: the shock layer, dominating conve
 Stable recirculation zones in the toroidal valleys match shock-boundary layer interaction (SBLI) patterns of hypersonic blunt-body flows~\cite{guo2019hypersonic}. DSMC captures them through direct molecular collision statistics without turbulence closures.
 
 \subsection{Real-Gas Effects}
-The 5-species air model captures vibrational excitation and dissociation, lowering effective stagnation temperature below the calorically perfect prediction of 5952\,K. Energy partitioning into internal modes affects the temperature gradient driving surface heat transfer~\cite{AndersonHypersonic}.
+The 5-species air model captures vibrational excitation and dissociation, lowering effective stagnation temperature below the calorically ideal prediction of 5952\,K. Energy partitioning into internal modes affects the temperature gradient driving surface heat transfer~\cite{AndersonHypersonic}.
 
 \section{Optimization Framework Results}
 \label{sec:optimization_results}
@@ -432,7 +432,7 @@ Rapisarda's MDAO framework estimates aerodynamic coefficients with a Modified Ne
 The present framework uses the SPARTA Direct Simulation Monte Carlo (DSMC) solver~\cite{plimpton2014sparta}, valid across all flow regimes ($Kn = 0$ to $\infty$) with no regime bound~\cite{bird1994molecular}. The local $Kn$ field of Figure~\ref{fig:knudsen_map} narrows this: at 51.8\,km the shock layer reaches the slip-flow band ($0.01 \lesssim Kn \lesssim 0.1$), where Navier-Stokes needs wall slip corrections, freestream and stagnation staying continuum.
 
 \subsection{Gas Model}
-Newtonian methods assume a calorically perfect gas ($\gamma = 1.4$ for air). At hypersonic speeds ($Ma > 5$) post-shock temperature exceeds 5000\,K, activating vibrational excitation, dissociation and ionization~\cite{AndersonHypersonic}. This framework's 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) physics alters energy partitioning, lowering effective stagnation temperature below that prediction.
+Newtonian methods assume a calorically ideal gas ($\gamma = 1.4$ for air). At hypersonic speeds ($Ma > 5$) post-shock temperature exceeds 5000\,K, activating vibrational excitation, dissociation and ionization~\cite{AndersonHypersonic}. This framework's 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) physics alters energy partitioning, lowering effective stagnation temperature below that prediction.
 
 \subsection{Optimization Methodology}
 Rapisarda's framework uses a sequential, single-objective approach: aerodynamic coefficients are computed at each design point, with trajectory and thermal analysis independent~\cite{rapisarda2023mdao}.
@@ -443,7 +443,7 @@ This framework couples Bayesian Optimization (GP Matérn 5/2 + Expected Improvem
 This work applies Physics-Informed Neural Networks (PINNs) as post-processing for DSMC data~\cite{raissi2019pinn}. The DeepXDE-based PINN solves the 2D compressible Navier-Stokes equations by automatic differentiation, with SPARTA grid data as observational boundary conditions, giving a smooth, physics-consistent interpolant filling flow-field gaps and reducing particle noise. This hybrid approach is absent from Rapisarda's framework.
 
 \subsection{Reproducibility and Accessibility}
-This framework is open-source with a hybrid Ada and Python architecture. The Ada binary is the primary engine, with range-checked subtypes and run-time assertions exercised by the self-test, running through the \texttt{stellarorion\_program\_proc/run.py} front end. SPARTA runs containerized on Linux; the Python sidecar handles PINN refinement, optimization and the native-OS GUI with hardware acceleration (CUDA, ROCm, Metal MPS). Rapisarda's framework is MATLAB-based and needs manual configuration per run.
+This framework is open-source with a hybrid Ada/SPARK and Python architecture. The Ada/SPARK binary is the primary engine, with range-checked subtypes and run-time assertions exercised by the self-test, running through the \texttt{stellarorion\_program\_proc/run.py} front end. SPARTA runs in Docker on Linux; the Python sidecar handles PINN refinement, optimization and the native-OS GUI with hardware acceleration (CUDA, ROCm, Metal MPS). Rapisarda's framework is MATLAB-based and needs manual configuration per run.
 
 \begin{table}[!htbp]
     \centering
@@ -455,13 +455,13 @@ This framework is open-source with a hybrid Ada and Python architecture. The Ada
         \hline
         Aerodynamic Solver & Modified Newtonian panel method & SPARTA DSMC (Boltzmann equation) \\
         Flow Regime Validity & Hypersonic continuum only ($Kn < 0.001$) & All regimes ($Kn = 0$ to $\infty$); local field reaches slip flow, not free molecular, at 51.8 km \\
-        Gas Model & Calorically perfect ($\gamma = 1.4$) & 5-species air with VSS collisions \\
+        Gas Model & Calorically ideal ($\gamma = 1.4$) & 5-species air with VSS collisions \\
         Thermal Analysis & 1D F-TPS with contact conductance & Sutton-Graves + Fay-Riddell correlations + DSMC surface computes \\
         Optimization & Sequential parametric sweeps & GP Mat\'ern 5/2 + Expected Improvement (Bayes Opt), 70 evaluations \\
         Design Space & 3-4 parameters & 6+ parameters with CCD + LHS sampling \\
         Optimum Verification & Not reported & Enforced DSMC re-simulation gate (PINN bypassed) with multi-fidelity correction \\
         ML/AI Component & None & PINN refinement (DeepXDE) \\
-        Reproducibility & MATLAB, manual config & Python + Docker, fully containerized \\
+        Reproducibility & MATLAB, manual config & Ada/SPARK + Python + Docker, fully containerized \\
         Knudsen Number Mapping & Not performed & Full spatial $Kn$ field mapping \\
         Grid Independence & Not reported & Automated grid factor optimization \\
         \bottomrule

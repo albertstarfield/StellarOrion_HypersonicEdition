@@ -80,7 +80,18 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.patches import FancyArrowPatch, FancyBboxPatch  # noqa: E402
+import numpy as np  # noqa: E402  (arc sampling in terminator())
+from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Polygon  # noqa: E402
+
+# Typography: the thesis body is set in Times, and matplotlib's default
+# DejaVu Sans reads as generic Arial beside it. The figure inherits Times
+# New Roman (present on this system; resolved via findfont) with STIX
+# mathtext so inline math (J(x), q <= Q_target) matches the same serif.
+# [Reference: matplotlib font family configuration -
+#  https://matplotlib.org/stable/users/explain/text/font_family.html]
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.serif"] = ["Times New Roman", "Times", "DejaVu Serif"]
+plt.rcParams["mathtext.fontset"] = "stix"
 
 OUT = Path(__file__).resolve().parent / "fignew_pipeline.png"
 
@@ -150,6 +161,81 @@ def box(ax, x, y, w, h, text, fc, fs=LABEL_FS, style="round,pad=0,rounding_size=
     t = ax.text(x + w / 2, y + h / 2, text, ha="center", va="center",
                 fontsize=fs, color="white" if fc == C_PROCESS else "black",
                 zorder=3, linespacing=1.35)
+    return w, t
+
+
+def io_box(ax, x, y, w, h, text, fc, fs=LABEL_FS, slant_in=0.05):
+    """Draw one input/output parallelogram with a centred label.
+
+    ISO 5807 data symbol: a right-leaning parallelogram, distinct from the
+    rectangular process boxes so the diagram reads by shape alone.
+
+    Parameters:
+        ax: matplotlib Axes in figure fraction coordinates (position 0..1).
+        x, y, w, h: box rectangle in axes fraction coordinates (bottom edge).
+        text: label string (may contain newlines).
+        fc: face colour; white label text when fc is the dark process blue.
+        fs: declared point size (default LABEL_FS = 8.4).
+        slant_in: horizontal offset of the top edge in INCHES, converted to
+            axes fraction here because x fractions map to WIDTH_IN inches.
+
+    Returns:
+        (box_width_fraction, text_artist) for the fit-check pass; the text
+        sits on the vertical mid line where the shape is still w wide.
+
+    Raises: none; overflow is detected later by check_fits().
+    """
+    s = slant_in / WIDTH_IN
+    ax.add_patch(Polygon([(x, y), (x + w, y), (x + w + s, y + h), (x + s, y + h)],
+                         closed=True, linewidth=0.9, edgecolor=C_EDGE,
+                         facecolor=fc, zorder=2))
+    t = ax.text(x + w / 2 + s / 2, y + h / 2, text, ha="center", va="center",
+                fontsize=fs, color="white" if fc == C_PROCESS else "black",
+                zorder=3, linespacing=1.35)
+    return w, t
+
+
+def terminator(ax, x, y, w, h, text, fs=LABEL_FS):
+    """Draw one dedicated Start/Stop terminal as an EXACT stadium.
+
+    WHY A POLYGON AND NOT FancyBboxPatch: this figure's axes are fraction
+    coordinates whose x and y scales differ (WIDTH_IN vs PRINT_H_IN inches),
+    so FancyBboxPatch's rounding_size draws anisotropic elliptical corners
+    (measured cap depth 14 px vs the 27 px a stadium requires; audit-1
+    FAIL). Building the outline in PHYSICAL inches -- semicircular caps of
+    radius h/2 at both ends -- and converting back to fractions gives true
+    stadium geometry at any canvas aspect.
+
+    Parameters:
+        ax: matplotlib Axes in figure fraction coordinates (position 0..1).
+        x, y, w, h: terminal rectangle in axes fraction coordinates.
+        text: "Start" or "Stop".
+        fs: declared point size (default LABEL_FS = 8.4).
+
+    Returns:
+        (box_width_fraction, text_artist) for the fit-check pass.
+
+    Raises: none; overflow is detected later by check_fits().
+    """
+    # Physical-inch rectangle and cap radius.
+    xi, yi = x * WIDTH_IN, y * PRINT_H_IN
+    wi, hi = w * WIDTH_IN, h * PRINT_H_IN
+    r = hi / 2.0
+    cx0, cx1 = xi + r, xi + wi - r          # cap centres
+    cyc = yi + r                             # centre line
+    n = 48                                   # points per semicircle
+    pts_in = []
+    for k in range(n + 1):                   # right cap: bottom -> top
+        a = -np.pi / 2 + np.pi * k / n
+        pts_in.append((cx1 + r * np.cos(a), cyc + r * np.sin(a)))
+    for k in range(n + 1):                   # left cap: top -> bottom
+        a = np.pi / 2 + np.pi * k / n
+        pts_in.append((cx0 + r * np.cos(a), cyc + r * np.sin(a)))
+    verts = [(px / WIDTH_IN, py / PRINT_H_IN) for px, py in pts_in]
+    ax.add_patch(Polygon(verts, closed=True, linewidth=0.9,
+                         edgecolor=C_EDGE, facecolor="white", zorder=2))
+    t = ax.text(x + w / 2, y + h / 2, text, ha="center", va="center",
+                fontsize=fs, color="black", zorder=3, linespacing=1.35)
     return w, t
 
 
@@ -241,10 +327,13 @@ def main() -> int:
     ]
     # Two columns spanning the full canvas. The vertical gap between the
     # two columns is deliberately kept wide: the 6 -> 7 wrap arrow is routed
-    # through it, so it never crosses a box.
+    # through it, so it never crosses a box. top/gap were re-solved when the
+    # dedicated Start terminator was added above stage 1: top dropped 0.905 ->
+    # 0.885 and gap 0.030 -> 0.026 so the column BOTTOM stays at 0.335,
+    # preserving the wrap-lane clearance below both columns.
     n_per_col, w, h = 6, 0.46, 0.070
     x_left, x_right = 0.010, 0.530
-    top, gap = 0.905, 0.030
+    top, gap = 0.885, 0.026
     lane_y = 0.330                      # clear lane below both columns
     assert len(stages) == n_per_col * 2
 
@@ -253,20 +342,35 @@ def main() -> int:
         col, row = i // n_per_col, i % n_per_col
         x0 = x_left if col == 0 else x_right
         y0 = top - row * (h + gap) - h
-        # Flowchart convention: stage 1 (Flight parameters) is the START and
-        # stage 12 (Export fields and plots) is the END, so both get oval
-        # terminators — rounding_size = h/2 rounds the short ends fully in the
-        # y fraction and, because the canvas x and y scales differ, draws a
-        # gentle ellipse in x, i.e. a true terminator oval. Process stages
-        # keep the default small corner radius. Every connector attaches at
-        # the horizontal mid line (widest point) or at the flat top/bottom
-        # centre, so no arrow geometry moves.
-        terminator = i in (0, len(stages) - 1)
-        style = (f"round,pad=0,rounding_size={h / 2.0}"
-                 if terminator else "round,pad=0,rounding_size=0.02")
-        bw, t = box(ax, x0, y0, w, h, label, fc, style=style)
+        # ISO 5807 symbol set: stage 1 (Flight parameters) is the data ENTRY
+        # and stage 12 (Export fields and plots) the data EXIT, so those two
+        # are input/output parallelograms; every other stage is a process and
+        # keeps the rectangle. The dedicated labeled Start/Stop terminals are
+        # separate nodes below — the first/last stages are real steps, not
+        # terminators, so rounding them would conflate process and terminal.
+        if i in (0, len(stages) - 1):
+            bw, t = io_box(ax, x0, y0, w, h, label, fc)
+        else:
+            bw, t = box(ax, x0, y0, w, h, label, fc)
         fits_box.append((t, bw * WIDTH_IN, f"stage {i + 1}"))
         pos[i] = (x0, y0)
+
+    # Dedicated terminals: ONE labeled "Start" oval above stage 1 and ONE
+    # labeled "Stop" oval below stage 12 (the flow's true end after the
+    # wrap). Exact stadium geometry via terminator() -- see its docstring.
+    term_w, term_h = 0.12, 0.026
+    sx_c = x_left + w / 2
+    bw, t = terminator(ax, sx_c - term_w / 2, 0.900, term_w, term_h, "Start")
+    fits_box.append((t, bw * WIDTH_IN, "Start terminator"))
+    ax.annotate("", xy=(sx_c, 0.885), xytext=(sx_c, 0.900),
+                arrowprops=dict(arrowstyle="-|>", color="black",
+                                linewidth=1.6, mutation_scale=13), zorder=5)
+    ex_c = x_right + w / 2
+    bw, t = terminator(ax, ex_c - term_w / 2, 0.290, term_w, term_h, "Stop")
+    fits_box.append((t, bw * WIDTH_IN, "Stop terminator"))
+    ax.annotate("", xy=(ex_c, 0.316), xytext=(ex_c, 0.335),
+                arrowprops=dict(arrowstyle="-|>", color="black",
+                                linewidth=1.6, mutation_scale=13), zorder=5)
 
     # Intra-column connectors: solid black, drawn over the boxes, long enough to
     # read at print size.
@@ -318,7 +422,13 @@ def main() -> int:
     for i, label in enumerate(loop):
         x0 = 0.020 + i * (lw_ + lgap)
         fc = C_CHECK if i == 3 else C_PROCESS
-        bw, t = box(ax, x0, ly, lw_, lh, label, fc)
+        # Symbol set: "Design space (LHS or CCD)" is the loop's data entry
+        # (the candidate design set), so it is an input parallelogram; the
+        # remaining loop boxes are processing steps and stay rectangles.
+        if i == 0:
+            bw, t = io_box(ax, x0, ly, lw_, lh, label, fc)
+        else:
+            bw, t = box(ax, x0, ly, lw_, lh, label, fc)
         fits_box.append((t, bw * WIDTH_IN, f"loop {i + 1}"))
         if i:
             ax.annotate("", xy=(x0, ly + lh / 2), xytext=(x0 - lgap, ly + lh / 2),

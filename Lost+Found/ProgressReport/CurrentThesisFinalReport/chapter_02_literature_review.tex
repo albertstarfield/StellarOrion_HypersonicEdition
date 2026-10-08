@@ -33,7 +33,7 @@ Table~\ref{tab:research_comparison} summarizes the landmark HIAD flight tests an
 \textbf{SST $k$-$\omega$ Source} \cite{menter1994SST} & $k$-$\omega$ SST Turbulence Model. & Superior prediction of separation in adverse pressure gradients. & Supports model for valley recirculation. \\ \hline
 \end{longtable}
 \subsection{Triangulation of Expected Outcomes}
-By synthesizing \cite{dillman2014irve3flight} and \cite{guo2017deformation}, the scalloped geometry is hypothesized to generate localized heat flux peaks on the toroidal crests; the \textit{SST $k-\omega$} model \cite{menter1994SST} resolves stable recirculation cells in the valleys, and the \textit{Thermally Perfect Gas} model matches the high-enthalpy \textit{LOFTID} conditions.
+By synthesizing \cite{dillman2014irve3flight} and \cite{guo2017deformation}, the scalloped geometry is hypothesized to generate localized heat flux peaks on the toroidal crests; the \textit{SST $k-\omega$} model \cite{menter1994SST} resolves stable recirculation cells in the valleys, and the \textit{Thermally Ideal Gas} model matches the high-enthalpy \textit{LOFTID} conditions.
 
 This synthesis grounds \textbf{Chapter~\ref{ch:methodology}}; Figure~\ref{fig:literature_review_map} maps coverage.
 
@@ -55,7 +55,7 @@ Hypersonic flow is taken as $Ma > 5$, and five phenomena distinguish it from sup
     \item \textbf{Thin Shock Layers:} The shock sits close to the surface, giving small stand-off distance and a high-pressure region.
     \item \textbf{Entropy Layers:} Bow-shock curvature steepens the entropy gradient met by the downstream boundary layer.
     \item \textbf{Viscous Interaction:} Hot boundary-layer gas lowers density and thickens the layer ($\delta \propto M^2/\sqrt{Re}$), displacing the inviscid flow.
-    \item \textbf{High-Temperature Effects:} Dissipated kinetic energy triggers excitation, dissociation and ionization, breaking the calorically perfect assumption ($c_p = \text{const.}$).
+    \item \textbf{High-Temperature Effects:} Dissipated kinetic energy triggers excitation, dissociation and ionization, breaking the calorically ideal assumption ($c_p = \text{const.}$).
     \item \textbf{Low-Density Effects:} At altitude the mean free path approaches the vehicle's length and the continuum assumption weakens.
 \end{enumerate}
 \par
@@ -76,7 +76,7 @@ Total enthalpy $h_0$ is conserved across the shock:
 
 Here $h$ is static enthalpy and $V$ velocity.
 \par
-For a calorically perfect gas:
+For a calorically ideal gas:
 
 \begin{equation}
     \frac{T_0}{T_{\infty}} = 1 + \frac{\gamma - 1}{2} M_{\infty}^2
@@ -89,7 +89,7 @@ In standard air ($\gamma = 1.4$), temperature rises by a factor of 6 at $Ma = 5$
 
 The vehicle outruns upstream pressure disturbances, which coalesce ahead of it into a strong shock \cite{AndersonHypersonic}.
 \par
-Rankine-Hugoniot conservation fixes downstream (2) to upstream (1) property ratios for a calorically perfect gas in terms of $Ma_n$:
+Rankine-Hugoniot conservation fixes downstream (2) to upstream (1) property ratios for a calorically ideal gas in terms of $Ma_n$:
 \par
 \begin{equation}
     \frac{p_2}{p_1} = 1 + \frac{2\gamma}{\gamma + 1} (M_n^2 - 1)
@@ -486,7 +486,7 @@ See an example of this recirculation effect~\cite{RecirculationCaseWindDrivenCoa
 The crests show the opposite behavior: severe localized heating governed by stagnation point flow.
 
 \subsubsection*{The Stagnation Temperature (Energy Potential)}
-At a toroid's windward face the fluid decelerates to zero, so a calorically perfect gas reaches stagnation temperature $T_0$ \cite{AndersonHypersonic}:
+At a toroid's windward face the fluid decelerates to zero, so a calorically ideal gas reaches stagnation temperature $T_0$ \cite{AndersonHypersonic}:
 
 \begin{equation}
     \frac{T_0}{T_{\infty}} = 1 + \frac{\gamma - 1}{2} M_{\infty}^2
@@ -695,11 +695,11 @@ Figure~\ref{fig:k_epsilon_omega} shows the flow a RANS closure must reproduce.
 \section{Thermodynamic Gas Models}
 
 \par
-Standard analysis models air as a Calorically Perfect Gas, with constant specific heats ($C_p$ and $C_v$) and internal energy linear in temperature ($e = C_v T$), which fails above hypersonic speed, where $Ma > 5$~\cite{AndersonHypersonic}.
+Standard analysis models air as a Calorically Ideal Gas, with constant specific heats ($C_p$ and $C_v$) and internal energy linear in temperature ($e = C_v T$), which fails above hypersonic speed, where $Ma > 5$~\cite{AndersonHypersonic}.
 \par
 Shock heating alters the air molecules through successive energy mode excitations:
 \begin{itemize}
-    \item \textbf{$T > 800$\,K:} Vibrational excitation of $N_2$ and $O_2$ becomes significant; the gas is Thermally Perfect but Calorically Imperfect ($C_p = f(T)$).
+    \item \textbf{$T > 800$\,K:} Vibrational excitation of $N_2$ and $O_2$ becomes significant; the gas is Thermally Ideal but Calorically Non-Ideal ($C_p = f(T)$).
     \item \textbf{$T > 2000$\,K:} Oxygen molecules begin to dissociate ($O_2 \rightarrow 2O$).
     \item \textbf{$T > 4000$\,K:} Nitrogen molecules begin to dissociate ($N_2 \rightarrow 2N$).
     \item \textbf{$T > 9000$\,K:} Atoms begin to ionize ($N \rightarrow N^+ + e^-$).
@@ -743,7 +743,7 @@ Table~\ref{tab:gas_models} compares these modeling assumptions.
     \label{tab:gas_models}
     \begin{tabularx}{\textwidth}{|l|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}X|}
         \hline
-        \rowcolor{gray!20} \textbf{Feature} & \textbf{Ideal (Perfect) Gas Model} & \textbf{Real Gas (Hypersonic) Model} \\ \hline
+        \rowcolor{gray!20} \textbf{Feature} & \textbf{Ideal Gas Model} & \textbf{Real Gas (Hypersonic) Model} \\ \hline
         \textbf{Equation of State} & $p = \rho R T$ (Constant $R$) & $p = \rho R_{mix} T$ (Variable $R$ due to chemistry) \\ \hline
         \textbf{Specific Heats} & Constant ($C_p, C_v = \text{const}$) & Variable ($C_p(T)$) due to vibrational excitation. \\ \hline
         \textbf{Internal Energy} & $e = C_v T$ (Linear) & $e = f(T)$ (Non-linear, includes chemical potential). \\ \hline
@@ -752,33 +752,33 @@ Table~\ref{tab:gas_models} compares these modeling assumptions.
     \end{tabularx}
 \end{table}
 
-\subsection{Calorically Perfect vs. Thermally Perfect Gas (Variable \texorpdfstring{$C_p$}{C-p})}
+\subsection{Calorically Ideal vs. Thermally Ideal Gas (Variable \texorpdfstring{$C_p$}{C-p})}
 
-\subsubsection*{1. Calorically Perfect Gas (CPG)}
+\subsubsection*{1. Calorically Ideal Gas (CIG)}
 Below $800$\,K the vibrational modes of nitrogen and oxygen are frozen, so only translational and rotational energy remain and $C_p$ is constant:
 \begin{equation}
     e = C_v T \quad \text{and} \quad h = C_p T
 \end{equation}
 \par
-\subsubsection*{2. Thermally Perfect Gas (TPG)}
+\subsubsection*{2. Thermally Ideal Gas (TIG)}
 A strong bow shock ($T > 800$\,K) activates the vibrational modes of $N_2$ and $O_2$, so the specific heats become functions of temperature:
 \begin{equation}
     C_p = f(T) \quad \text{and} \quad C_v = f(T)
 \end{equation}
-The gas still obeys $p = \rho R T$ (no dissociation), so variable specific heats make it Thermally Perfect.
+The gas still obeys $p = \rho R T$ (no dissociation), so variable specific heats make it Thermally Ideal.
 \par
 $C_p(T)$ is modeled by polynomial fits such as the NASA 7- or 9-coefficient polynomials:
 \begin{equation}
     \frac{C_p(T)}{R} = a_1 + a_2 T + a_3 T^2 + a_4 T^3 + a_5 T^4
 \end{equation}
-For HIAD analysis, vibrational energy absorption lowers the peak shock layer temperature relative to a Calorically Perfect prediction, giving less conservative density and heat flux \cite{AndersonHypersonic}.
+For HIAD analysis, vibrational energy absorption lowers the peak shock layer temperature relative to a Calorically Ideal prediction, giving less conservative density and heat flux \cite{AndersonHypersonic}.
 
 \begin{figure}[htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Plot of the specific heat capacity of air against temperature. The vertical axis runs from 1.0 to 2.4 kilojoules per kilogram kelvin and the horizontal axis from 0 to 6000 kelvin. A solid curve labelled NASA Polynomial, Thermally Perfect, starts near 1.0, falls slightly and stops at roughly 1300 kelvin, so the region above 1300 kelvin is empty apart from a horizontal dashed line labelled Calorically Perfect at 1004.5 joules per kilogram kelvin and a shaded band between the two. Two vertical dotted markers are drawn: one at about 800 kelvin labelled vibrational excitation onset, and one at about 2000 kelvin labelled HIAD re-entry peak temperature.}}%
 \includegraphics[width=0.85\textwidth]{figures/cp_temperature_nasa.png}%
 \EndAccSupp{}%
-    \caption[Specific heat capacity $C_p(T)$ for air against temperature, contrasting the calorically perfect gas assumption (CPG, $C_p = \text{const.}$) with the NASA polynomial fit for the thermally perfect gas (TPG).]{Specific heat capacity $C_p(T)$ for air against temperature, contrasting the calorically perfect gas assumption (CPG, $C_p = \text{const.}$) with the NASA polynomial fit for the thermally perfect gas (TPG). Two limitations of the imported artwork are recorded here rather than left for the reader to discover. First, the TPG curve is drawn only over roughly the range 0 to 1300~K, so the plot shows nothing about the high-temperature behavior for which the thermally perfect model exists; the marked vibrational excitation onset near 800~K is an annotation carried over from the source correlation rather than a feature resolved in this plot, and no change in the curve is visible at that temperature. Second, the vertical marker in the artwork labelled ``HIAD re-entry peak temperature'' sits at about 2000~K, which is not the value used anywhere in this work: the calorically perfect stagnation temperature computed in Chapter~\ref{ch:results} is 5952~K, before any reduction for vibrational excitation and dissociation. The marker belongs to the source of the imported figure and is disregarded here.}
+    \caption[Specific heat capacity $C_p(T)$ for air against temperature, contrasting the calorically ideal gas assumption (CIG, $C_p = \text{const.}$) with the NASA polynomial fit for the thermally ideal gas (TIG).]{Specific heat capacity $C_p(T)$ for air against temperature, contrasting the calorically ideal gas assumption (CIG, $C_p = \text{const.}$) with the NASA polynomial fit for the thermally ideal gas (TIG). Two limitations of the imported artwork are recorded here rather than left for the reader to discover. First, the TIG curve is drawn only over roughly the range 0 to 1300~K, so the plot shows nothing about the high-temperature behavior for which the thermally ideal model exists; the marked vibrational excitation onset near 800~K is an annotation carried over from the source correlation rather than a feature resolved in this plot, and no change in the curve is visible at that temperature. Second, the vertical marker in the artwork labelled ``HIAD re-entry peak temperature'' sits at about 2000~K, which is not the value used anywhere in this work: the calorically ideal stagnation temperature computed in Chapter~\ref{ch:results} is 5952~K, before any reduction for vibrational excitation and dissociation. The marker belongs to the source of the imported figure and is disregarded here.}
     \label{fig:cp_nasa_polynomial}
 \end{figure}
 
