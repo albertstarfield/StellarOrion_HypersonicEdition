@@ -3,11 +3,12 @@
 
 PURPOSE
     Regenerate the methodology derivation chain diagram (chapter 3, included
-    at textwidth) so every printed label clears the 8 pt floor and no drawn
+    at 0.90\textwidth) so every printed label clears the 8 pt floor and no drawn
     string carries a banned dash. The imported original prints its smallest
     text at about 2.8 pt (the red data-flow labels), which fails the floor,
     so the whole schematic is rebuilt from the thesis sources at the print
-    width with declared fonts of 9 pt or more.
+    width with declared fonts of 9 pt or more (the 0.90 include fraction is
+    the 2026-10-08 floor fix; see PRINT_TARGET_IN below).
 
 PARAMETERS
     None. The script writes exactly one file, FIGDIR/methodology_derivation.png,
@@ -38,11 +39,13 @@ AXIOMS
     A2. A mathtext sub or superscript prints at SHRINK_FACTOR (0.7) of its
         parent, so this redraw uses plain Unicode text at 9 pt instead of
         mathtext: no script shrinks below the declared size, and a declared
-        9 pt line prints at about 9 pt because the figure is built at the
-        print width (scale near 1.0).
+        9 pt line prints at 9 x 0.8967 = 8.07 pt at the include scale the
+        reader sees (see T1).
     A3. "IMPLEMENTATION" at 9 pt bold italic caps is about 1.19 in wide, so a
         dedicated left label column would force the four box columns below
-        the width that "Stosszahlansatz" (0.90 in) and the other verbatim
+        the width that "Stosszahlansatz" (0.90 in at 9 pt; the 10 pt attempt
+        measured 1.331 in against a 1.200 in box and was rejected) and the
+        other verbatim
         strings need. The layer labels are therefore drawn above each row,
         left aligned, which keeps them on the left side of the figure and
         gives the boxes the full text width.
@@ -51,9 +54,13 @@ AXIOMS
         is the safety net that breaks anything still too wide.
 
 THEORIES
-    T1. Building the figure at the print width (5.532 in) makes the
-        placement scale about 1.0, so a declared 9 pt font prints at about
-        9 pt and clears the 8 pt floor with margin.
+    T1. The save scale is about 1.0 because the figure is built at the print
+        width (5.532 in), but the READER's scale is the include width over
+        the native width: 0.90 x 5.5118 / 5.532 = 0.8967. A declared font
+        must therefore clear 8 / 0.8967 = 8.92 pt to satisfy the floor, so
+        the 9.0 pt labels clear it at 8.07 pt with the 0.90 include. At the
+        old 0.85 include the scale was 0.8478 and the true floor was 7.62 pt,
+        a violation the design-scale check could not see.
     T2. Giving row 3 a wider column gap (0.28 in instead of 0.12 in) lets the
         red data-flow labels sit in the gaps without overlapping the box
         text, because a label centred on a gap extends into a box by half
@@ -63,7 +70,10 @@ THEORIES
         derivation arrows stay vertical.
 
 APPLICATIONS
-    A1. The rebuilt figure replaces the artwork in chapter 3 at textwidth.
+    A1. The rebuilt figure replaces the artwork in chapter 3 at
+        0.90\textwidth (floor fix 2026-10-08); verify() is handed
+        scale * INCLUDE_SCALE so its floor and collision checks run at the
+        size the reader sees.
     A2. The same script pattern serves the remaining redraw queue.
 
 DEVIATIONS FROM THE ORIGINAL ARTWORK
@@ -99,15 +109,34 @@ import print_fit as pf  # noqa: E402  sibling module, shared print geometry
 FIGDIR = pf.FIGDIR
 assert FIGDIR.is_dir(), "figures directory not found: %s" % FIGDIR
 
-# The thesis text width in inches. REDRAW_SPECS.md section 1 fixes the
+# The thesis text width in inches. REDRAW_SPECS.md section 1 fixed the
 # conversion at 5.532 in = 398.3 pt for a figure included at textwidth.
 PRINT_W_IN = 5.532
+# Floor fix 2026-10-08. chapter_03 used to include this figure at
+# 0.85\textwidth, which against the 5.532 in design canvas prints every
+# label at 4.685/5.532 = 0.8478 of its declared size, so the 9.0 pt labels
+# really printed at 7.62 pt - below the 8 pt rule, invisible to a check that
+# only measures the design print width. Three fixes were evaluated:
+# (1) shrink the save target to the include width - impossible, print_fit
+# fits with a tight crop and the tight crop cannot go below the longest
+# fixed-point text run, measured at 4.787 in; (2) raise TEXT_PT to 10 -
+# rejected by assert_boxes_fit, "(Stosszahlansatz)" measured 1.331 in
+# against a 1.200 in box inner width; (3) widen the include fraction to
+# 0.90, which gives a reader scale of 0.90 x 5.5118 / 5.532 = 0.8967 and a
+# true floor of 9.0 x 0.8967 = 8.07 pt. Fix (3) is applied. PRINT_TARGET_IN
+# stays at the design width, and main() hands verify() the reader's include
+# scale so every guard judges the size the reader actually sees.
+PRINT_TARGET_IN = PRINT_W_IN
 
 # Declared font sizes. Every drawn string is 9 pt or more (AXIOM A2), the
-# title is 13 pt, so the smallest printed text is about 9 pt at scale 1.0.
+# title is 13 pt, so the smallest printed text is 9 x 0.8967 = 8.07 pt at
+# the include scale (AXIOM A1 / THEORY T1).
 TITLE_PT = 13.0
 TEXT_PT = 9.0
 MIN_PRINTED_PT = 8.0
+# The reader's placement scale: include width (0.90 x text width) over the
+# native width of the saved file (PRINT_TARGET_IN).
+INCLUDE_SCALE = 0.90 * pf.TEXT_W_IN / PRINT_TARGET_IN
 
 # Colours from REDRAW_SPECS.md section 1.
 INK = "#212121"
@@ -510,14 +539,17 @@ def main() -> int:
     try:
         fig = draw()
         pf.assert_inside_canvas(fig)
-        _, scale = pf.save_to_print_width(fig, TMP_NAME, PRINT_W_IN,
+        _, scale = pf.save_to_print_width(fig, TMP_NAME, PRINT_TARGET_IN,
                                           close=False)
-        verify(fig, scale)
+        # The save scale is relative to PRINT_TARGET_IN, but the reader sees
+        # the file at 0.90\textwidth; multiply so verify() judges floor and
+        # collisions at the printed size, not at the design size.
+        verify(fig, scale * INCLUDE_SCALE)
         plt.close(fig)
         fig = None
         final = FIGDIR / FINAL_NAME
         os.replace(tmp, final)
-        print("wrote %s at print width %.4f in" % (final.name, PRINT_W_IN))
+        print("wrote %s at print width %.4f in" % (final.name, PRINT_TARGET_IN))
         return 0
     except RuntimeError as exc:
         print("methodology_derivation FAILED: %s" % exc, file=sys.stderr)

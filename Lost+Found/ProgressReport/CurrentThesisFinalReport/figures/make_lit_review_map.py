@@ -71,6 +71,7 @@ from matplotlib.patches import Circle, Rectangle, Wedge  # noqa: E402
 from PIL import Image  # noqa: E402
 
 import print_fit as pf  # noqa: E402  sibling module, unique print geometry
+import fig_metrics as fm  # noqa: E402  sibling module, collision measurement
 
 # figures/ -> CurrentThesisFinalReport -> ProgressReport -> Lost+Found -> repo root
 ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
@@ -81,7 +82,16 @@ assert FIGDIR.is_dir() and Path(__file__).resolve().parent == FIGDIR, (
 
 DPI = pf.DPI             # 300, the single save resolution used by print_fit
 TEXT_W_IN = pf.TEXT_W_IN                     # 5.51181 in, A4 21 cm less 4+3 cm
-PRINT_W_IN = 0.92 * TEXT_W_IN                     # matches width=0.92\textwidth in ch2
+PRINT_W_IN = 0.92 * TEXT_W_IN                # design width; layout is drawn here
+# Paper pass 2026-10-08: the page includes the figure at 0.845\textwidth,
+# and the save target below equals that include width, so print_fit scales
+# the whole canvas by one uniform ratio: every declared point size still
+# prints at face value while the text-to-box ratio tightens. 0.845 is the
+# measured limit: the longest fixed-point text run resists the tight crop,
+# and targets below it never converged within FIT_ATTEMPTS - 0.78\textwidth
+# stopped at 4.490 in, 0.82 at 4.553 in, 0.83 at 4.603 in, each above its
+# own target. At 0.845 = 4.657 in the fit converged in three attempts.
+PRINT_TARGET_IN = 0.845 * TEXT_W_IN         # matches width=0.845\textwidth in ch2
 
 FONT_TITLE = 13.0        # >= 13 pt required by the redraw spec
 FONT_BODY = 9.0          # >= 9 pt declared, prints >= 8 pt at scale 1.0
@@ -375,21 +385,35 @@ def main() -> int:
 
     Returns: 0 on success.
 
-    Raises: nothing directly; build() and print_fit document their failures.
+    Raises: RuntimeError when the written figure's smallest label prints
+        below MIN_PRINTED_PT or when two printed labels overlap by at least
+        3 pt in both directions; build() and print_fit document their own
+        failures.
     """
     fig = build()
     # print_fit owns the print geometry: it saves at DPI, fits the printed
-    # width to FIT_TOL, measures the achieved print scale and closes the figure.
+    # width to FIT_TOL and measures the achieved print scale. close=False so
+    # the collision guard can measure the artist tree after the write.
     out, eff = pf.save_to_print_width(fig, "literature_review_map.png",
-                                      PRINT_W_IN)
+                                      PRINT_TARGET_IN, close=False)
     w_px, h_px = Image.open(out).size
     smallest = FONT_BODY * eff
     print(f"  smallest declared label {FONT_BODY:.1f} pt at scale {eff:.3f} "
           f"= {smallest:.2f} pt printed; floor {MIN_PRINTED_PT:.1f} pt")
     if smallest < MIN_PRINTED_PT:
+        plt.close(fig)
         raise RuntimeError(
             f"smallest printed label {smallest:.2f} pt is below the "
             f"{MIN_PRINTED_PT:.1f} pt floor")
+    # The paper pass tightens every box-to-label margin by 1/0.848, so a
+    # collision that did not exist at the design size can appear here; the
+    # all-pairs bounding-box test (fig_metrics A4/T3) is the check for it.
+    overlaps = fm.text_overlaps_pt(fig, eff)
+    plt.close(fig)
+    if overlaps:
+        detail = "; ".join("%s vs %s (%.2f pt)" % (a, b, min(w, h))
+                           for a, b, w, h in overlaps[:4])
+        raise RuntimeError(f"printed labels collide: {detail}")
     print(f"  {w_px}x{h_px}px, aspect {w_px / h_px:.3f}, matrix {len(ROWS)} rows "
           f"x {len(COLUMNS)} columns")
     return 0

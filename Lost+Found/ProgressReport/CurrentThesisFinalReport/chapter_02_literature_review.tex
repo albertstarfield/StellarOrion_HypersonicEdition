@@ -40,7 +40,7 @@ This synthesis grounds \textbf{Chapter~\ref{ch:methodology}}; Figure~\ref{fig:li
 \begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Coverage matrix headed Literature Review: Coverage of Physical Phenomena and Methodology. Five studies form the rows: Rapisarda 2022 machine learning for HIAD heating, Rapisarda et al. 2024 HIAD parametric study, Masciarelli and Cassis 2021 LOFTID design, Schwartzentruber 2018 DSMC hypersonic, and This Work, the StellarOrion pipeline, outlined in red. Six capability columns run across the top: HIAD geometry, DSMC aerothermal, Sutton-Graves heating, PINN refinement, survivability optimization and multi-solver pipeline. Each cell is a full circle for full coverage, a half circle for partial coverage, or empty for not covered, per the key at the foot. The StellarOrion row is the only one full across all six columns; Schwartzentruber covers DSMC aerothermal alone and Masciarelli and Cassis cover HIAD geometry and Sutton-Graves heating. Note that the 2022 date in this row differs from the 2023 date of the Rapisarda thesis cited elsewhere in the text.}}%
-\includegraphics[width=0.92\textwidth]{figures/literature_review_map.png}%
+\includegraphics[width=0.845\textwidth]{figures/literature_review_map.png}%
 \EndAccSupp{}%
     \caption[Literature review coverage matrix: mapping of key studies to physical phenomena and methodology components.]{Literature review coverage matrix: mapping of key studies to physical phenomena and methodology components. Filled circles indicate full coverage; half-filled indicate partial coverage. The dashed red outline highlights the comprehensive coverage achieved in this work (StellarOrion pipeline).}
     \label{fig:literature_review_map}
@@ -914,7 +914,7 @@ The standard implementation follows Bird's No-Time-Counter (NTC) algorithm:
 \begin{figure}[htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Flowchart of the Direct Simulation Monte Carlo algorithm, bracketed by Start and Stop terminators, showing the per-timestep cycle of particle advection, cell collision and macroscopic property sampling, with the convergence check looping back until steady state.}}%
-\includegraphics[width=0.9\textwidth]{figures/dsmc_algorithm_flowchart.png}%
+\includegraphics[width=0.765\textwidth]{figures/dsmc_algorithm_flowchart.png}%
 \EndAccSupp{}%
     \caption[Flowchart of Bird's No-Time-Counter (NTC) DSMC algorithm. The two-phase alternation between particle movement (streamer phase) and collision pairing (collision phase) is shown.]{Flowchart of Bird's No-Time-Counter (NTC) DSMC algorithm. The two-phase alternation between particle movement (streamer phase) and collision pairing (collision phase) is shown, with macroscopic property sampling accumulating at each time step.}
     \label{fig:dsmc_flowchart}
@@ -1074,7 +1074,7 @@ Automatic differentiation (AD) computes exact derivatives of $\hat{u}$ through t
 \begin{figure}[htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Schematic of the physics-informed neural network architecture, showing input coordinates entering a multilayer perceptron whose output is constrained by the governing PDE residuals.}}%
-\includegraphics[width=0.9\textwidth]{figures/pinn_architecture.png}%
+\includegraphics[width=0.80\textwidth]{figures/pinn_architecture.png}%
 \EndAccSupp{}%
     \caption[Schematic of the Physics-Informed Neural Network (PINN) architecture.]{Schematic of the Physics-Informed Neural Network (PINN) architecture. The network maps spatial coordinates $\mathbf{x} = (x, r)$ to flow variables $(\rho, v_x, v_y, T)$ through hidden layers. The loss function combines PDE residual enforcement (via automatic differentiation), boundary condition satisfaction, and DSMC data anchoring in a two-stage training strategy.}
     \label{fig:pinn_architecture}

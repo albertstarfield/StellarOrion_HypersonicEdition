@@ -86,6 +86,15 @@ FIGDIR = pf.FIGDIR
 assert FIGDIR.is_dir(), "figures directory not found: %s" % FIGDIR
 
 PRINT_W_IN = 0.9 * pf.TEXT_W_IN
+# Paper pass 2026-10-08: chapter 02 includes the figure at 0.80\textwidth,
+# and the save target below equals that include width, so the achieved scale
+# stays 1.0 and the 11.5 pt stage labels keep printing at face value;
+# verify() checks the tightened text-to-box ratio. 0.80 is the measured
+# limit: the longest fixed-point text run in the design layout is 4.35 in of
+# ink, and a save target below that cannot converge (the tight crop cannot
+# shrink under a glyph run whose printed size never changes); the first
+# attempt at 0.765\textwidth = 4.22 in failed exactly that way.
+PRINT_TARGET_IN = 0.80 * pf.TEXT_W_IN
 H = 4.40
 
 TITLE_PT = 13.0
@@ -269,12 +278,17 @@ def build() -> object:
 
 
 def verify(fig: object, scale: float) -> None:
-    """Check the written figure against the readability floor.
+    """Check the written figure against the readability and collision floors.
 
     :param fig: the figure that was written, still open.
     :param scale: placement scale reported by the print fit.
     :returns: None.
-    :raises RuntimeError: if the smallest printed text is under the floor.
+    :raises RuntimeError: if the smallest printed text is under the floor, or
+        if two printed labels overlap by at least 3 pt in both directions
+        (fm.text_overlaps_pt names the offending pairs, so the collision is
+        diagnosable from the failure alone). The collision check exists
+        because the paper pass tightens every text-to-box margin by 1/0.848
+        and the floor check alone cannot see an overlap.
     """
     printed, why = fm.smallest_text_pt(fig, scale)
     print("smallest printed text %.2f pt (%s); floor %.1f pt"
@@ -286,6 +300,11 @@ def verify(fig: object, scale: float) -> None:
             "MATH_PT or drop the script."
             % (printed, MIN_PRINTED_PT, why, MIN_PRINTED_PT / fm.SHRINK_FACTOR)
         )
+    overlaps = fm.text_overlaps_pt(fig, scale)
+    if overlaps:
+        detail = "; ".join("%s vs %s (%.2f pt)" % (a, b, min(w, h))
+                           for a, b, w, h in overlaps[:4])
+        raise RuntimeError("printed labels collide: %s" % detail)
 
 
 def main() -> int:
@@ -305,10 +324,10 @@ def main() -> int:
     fig = build()
     pf.assert_inside_canvas(fig)
     out, scale = pf.save_to_print_width(fig, "pinn_architecture.png",
-                                        PRINT_W_IN, close=False)
+                                        PRINT_TARGET_IN, close=False)
     verify(fig, scale)
     plt.close(fig)
-    print("wrote %s at print width %.4f in" % (out.name, PRINT_W_IN))
+    print("wrote %s at print width %.4f in" % (out.name, PRINT_TARGET_IN))
     return 0
 
 

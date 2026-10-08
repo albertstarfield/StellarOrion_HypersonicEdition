@@ -62,7 +62,10 @@ THEORIES
 
 APPLICATIONS
     A1. The rebuilt figure replaces the artwork in chapter_03_methodology.tex
-        at width=\textwidth, so PRINT_W_IN must stay equal to the text width.
+        at width=\textwidth, unchanged by the 2026 paper pass: the collision
+        guard rejected shrink attempts at 0.85 and 0.90 (adjacent box titles
+        overlapped by 4.3 to 17.3 pt), so the design width is the tightest
+        size this layout safely prints at and K_SHRINK stays 1.0.
     A2. The same script pattern serves the remaining redraw queue.
 
 CORRECTIONS APPLIED TO THE OLD ARTWORK
@@ -100,6 +103,13 @@ FIGDIR = pf.FIGDIR
 assert FIGDIR.is_dir(), "figures directory not found: %s" % FIGDIR
 
 PRINT_W_IN = pf.TEXT_W_IN
+# Paper pass 2026-10-08: the save target was to be 0.90 of the design width,
+# but the collision guard rejected both 0.85 (overlaps 7.8-17.3 pt) and 0.90
+# (overlaps 4.3-12.2 pt): the row of box titles has almost no gap even at the
+# design size, so K_SHRINK stays 1.0 and the figure ships at its design
+# width. The constant is kept so the next attempt changes one number and the
+# comment records what was measured, not what was hoped.
+K_SHRINK = 1.0
 H = 5.12
 
 TITLE_PT = 13.0
@@ -424,7 +434,8 @@ def main() -> int:
 
     fig = build()
     pf.assert_inside_canvas(fig)
-    out, scale = pf.save_to_print_width(fig, TMP_NAME, PRINT_W_IN, close=False)
+    target_w = PRINT_W_IN * K_SHRINK
+    out, scale = pf.save_to_print_width(fig, TMP_NAME, target_w, close=False)
     try:
         verify(fig, scale)
     except RuntimeError as exc:
@@ -434,7 +445,7 @@ def main() -> int:
         return 1
     plt.close(fig)
     os.rename(out, FIGDIR / FINAL_NAME)
-    print("wrote %s at print width %.4f in" % (FINAL_NAME, PRINT_W_IN))
+    print("wrote %s at print width %.4f in" % (FINAL_NAME, target_w))
     return 0
 
 

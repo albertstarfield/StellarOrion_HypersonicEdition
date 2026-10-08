@@ -44,10 +44,11 @@ THEORIES
 
 APPLICATIONS
     A1. The rebuilt figure replaces the artwork in chapter_03, which includes
-        it at width=\textwidth (5.5118 in) while the canvas stays 6.50 in so
-        the column layout keeps its clearances. The page therefore squeezes
-        the drawing by 5.5118/6.50, and verify must check the floor at that
-        squeezed size, not at the canvas size.
+        it at width=0.85\textwidth (4.685 in) while the design canvas stays
+        6.50 in so the column layout keeps its clearances. The save target is
+        scaled by the same K_SHRINK = 0.85, so the squeeze ratio
+        5.5118/6.50 = 4.685/5.525 = 0.848 is unchanged and verify still
+        checks the floor at that squeezed size, not at the canvas size.
 
 CITATIONS
     Matplotlib 3.11.2, https://matplotlib.org/stable/
@@ -84,6 +85,11 @@ FIGDIR = pf.FIGDIR
 assert FIGDIR.is_dir(), "figures directory not found: %s" % FIGDIR
 
 PRINT_W_IN = 6.50
+# Paper pass 2026-10-08: chapter 03 includes the figure at 0.85\textwidth, so
+# the save target shrinks by the same factor; verify()'s squeeze ratio below
+# (TEXT_W_IN / PRINT_W_IN) stays correct because both the page width and the
+# native canvas shrink together.
+K_SHRINK = 0.85
 H = 3.50
 
 TITLE_PT = 13.0
@@ -92,10 +98,12 @@ BOX_PT = 9.5
 LABEL_PT = 9.5
 LEGEND_PT = 9.5
 MIN_PRINTED_PT = 8.0
-# WHY the 9.44 floor on LABEL_PT/LEGEND_PT: chapter 03 places this 6.50 in
-# canvas at \textwidth = 5.5118 in, so the page squeezes every declared size
-# by 5.5118/6.50 = 0.848. 8.0 / 0.848 = 9.44, so a 9.0 pt label would print
-# at 7.6 pt and fail the 8 pt floor (verify checks the squeezed size).
+# WHY the 9.44 floor on LABEL_PT/LEGEND_PT: chapter 03 places this canvas at
+# 0.85\textwidth = 4.685 in against a save target of 0.85 x 6.50 = 5.525 in,
+# so the page squeezes every declared size by 4.685/5.525 = 0.848 (the same
+# ratio as 5.5118/6.50 before the paper pass). 8.0 / 0.848 = 9.44, so a 9.0
+# pt label would print at 7.6 pt and fail the 8 pt floor (verify checks the
+# squeezed size).
 
 INK = "#212121"
 HEADER_GRAY = "#757575"
@@ -471,13 +479,14 @@ def main() -> int:
     pf.assert_inside_canvas(fig)
 
     tmp_path, scale = pf.save_to_print_width(
-        fig, "software_pipeline_tmp.png", PRINT_W_IN, close=False)
+        fig, "software_pipeline_tmp.png", PRINT_W_IN * K_SHRINK, close=False)
 
     try:
         verify(fig, scale)
         final_path = FIGDIR / "software_pipeline.png"
         tmp_path.rename(final_path)
-        print("wrote %s at print width %.4f in" % (final_path.name, PRINT_W_IN))
+        print("wrote %s at print width %.4f in"
+              % (final_path.name, PRINT_W_IN * K_SHRINK))
         return 0
     except Exception as exc:
         tmp_path.unlink(missing_ok=True)

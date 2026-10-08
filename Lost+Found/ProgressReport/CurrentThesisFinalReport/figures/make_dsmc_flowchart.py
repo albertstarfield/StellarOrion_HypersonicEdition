@@ -101,8 +101,15 @@ assert FIGDIR.is_dir(), f"missing figure directory: {FIGDIR}"
 # owns that arithmetic, because a wrong text width silently scales
 # every declared font size.
 TEXT_W_IN = pf.TEXT_W_IN
+# INCLUDE_FRACTION is the design-time include fraction (width=0.9\textwidth
+# at design). Paper pass 2026-10-08: the page now includes the figure at
+# 0.765\textwidth (= 0.9 x 0.85), and the save target below equals that
+# include width, so the achieved scale stays 1.0 and the 8.40 pt loop
+# subscript keeps printing at 8.40 pt. Every px-based guard (loop gap, flush
+# rows) re-measures the saved file, which is 0.85 of the design raster.
 INCLUDE_FRACTION = 0.9
 PRINT_W_IN = INCLUDE_FRACTION * TEXT_W_IN
+K_SHRINK = 0.85
 
 # Design canvas in inches. Data coordinates run 0..W by 0..H.
 W = PRINT_W_IN
@@ -679,7 +686,7 @@ def draw() -> None:
     # print_fit saves, fits, measures the achieved print scale and closes
     # the figure, so this script never repeats the loop.
     achieved = pf.save_to_print_width(
-        fig, "dsmc_algorithm_flowchart.png", PRINT_W_IN)[1]
+        fig, "dsmc_algorithm_flowchart.png", PRINT_W_IN * K_SHRINK)[1]
     printed_pt = LOOP_MATH_FS * SUBSCRIPT_SCALE * achieved
     if printed_pt < MIN_PRINTED_PT:
         raise RuntimeError(
