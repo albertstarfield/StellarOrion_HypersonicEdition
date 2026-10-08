@@ -29,7 +29,7 @@ AXIOMS
         boxes, not over them, so the path is a polyline above the boxes.
     A4. An arrow that ends beside a box instead of on it reads as a
         dangling connector. The three input arrows leave their boxes at
-        y 2.54, 1.86 and 1.18, so the engine box must span that whole
+        y 2.52, 1.86 and 1.18, so the engine box must span that whole
         range (it does: y 1.16 to 2.56); with the old 0.90 in box the
         top and bottom tips floated 0.24 in and 0.22 in off the box
         (measured on the written PNG).
@@ -140,7 +140,7 @@ OUTPUT_X0, OUTPUT_X1 = 5.65, 6.43
 
 # Box heights
 INPUT_H = 0.48
-# WHY 1.40: the engine must span every input arrow y (2.54, 1.86, 1.18),
+# WHY 1.40: the engine must span every input arrow y (2.52, 1.86, 1.18),
 # see axiom A4; y 1.16 to 2.56 covers all three tips with 0.02 in margin.
 ENGINE_H = 1.40
 SOLVER_H = 0.62
@@ -148,7 +148,14 @@ ML_H = 0.52
 OUTPUT_H = 0.90
 
 # Vertical positions (y bottom)
-INPUT_Y = [2.30, 1.62, 0.94]
+# WHY 2.28 for the first input (was 2.30, image audit cycle 4 2026-10-09):
+# at 2.30 the CadQuery stroke top sat at row 223 while the INPUT header's
+# antialiased ink bottom was row 221, leaving 1 white row where the spec
+# demands >= 2. The header cannot rise (its rule gap is already exactly 2)
+# and cannot shrink (9.5 pt is the 8 pt floor), so the box drops 0.02 in
+# (about 5 rows), giving a 6-row gap. Arrow tip 1 moves to y 2.52, still
+# 0.04 in inside the engine top per axiom A4.
+INPUT_Y = [2.28, 1.62, 0.94]
 ENGINE_Y = 1.16
 SOLVER_Y = [2.12, 1.24]
 ML_Y = [2.20, 1.30]
@@ -446,7 +453,10 @@ def build() -> object:
     # oval bottom (3.26) stays 0.06 in above the title ink (top 3.20) at
     # design size; see the TITLE_Y note for the squeezed-size arithmetic.
     box(ax, 0.10, 3.26, 0.60, 0.30, "Start", "white", INK, rounding=0.15)
-    arrow(ax, (0.40, 3.26), (0.40, 2.78))
+    # WHY computed, not literal (audit cycle 4): the target must follow the
+    # first input's top edge after INPUT_Y[0] moved down, or the arrowhead
+    # would sit 0.02 in inside the border instead of landing on it.
+    arrow(ax, (0.40, 3.26), (0.40, INPUT_Y[0] + INPUT_H))
     box(ax, 5.765, 0.75, 0.55, 0.30, "Stop", "white", INK, rounding=0.15)
     arrow(ax, (output_cx, OUTPUT_Y), (output_cx, 1.05))
 
@@ -635,8 +645,14 @@ def add_mask_rects(fig: object) -> int:
     pad = 3.0
     gap_px = 2.0
 
+    # WHY INPUT is excluded (audit cycle 4, check 10): no routed line ever
+    # spans the INPUT column (the rule starts at engine_cx and the Start
+    # arrow runs left of the glyph ink), so the INPUT mask crossed no
+    # line and its only effect was erasing the right half of the Start
+    # arrowhead at x129-140. A mask exists only where a line crosses ink
+    # (axiom A2); with no crossing, there is nothing to mask.
     targets = [t for t in ax.texts
-               if t.get_text() in HEADERS
+               if (t.get_text() in HEADERS and t.get_text() != "INPUT")
                or t.get_text() == ARROW_LABEL_SURFACE]
     inv = ax.transData.inverted()
     added = 0

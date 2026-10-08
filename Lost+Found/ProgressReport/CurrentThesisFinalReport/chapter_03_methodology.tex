@@ -1039,9 +1039,9 @@ The local Knudsen number comes from the SPARTA grid data:
     Kn_{local} = \frac{\lambda_{local}}{L} = \frac{1}{\sqrt{2} \pi d^2 n_{local} L}
 \end{equation}
 
-Evaluated per grid cell, this local $Kn$ field resolves regime structure rather than one vehicle-wide number; at this trajectory point it occupies two of the five bands in Table~\ref{tab:knudsen_regimes}. Freestream and stagnation sit in the continuum band ($Kn_{\text{local}} \lesssim 0.01$, $Kn_{\text{stag}} \sim 0.005$); shock layer and wake reach the slip-flow band ($0.01 \lesssim Kn_{\text{local}} \lesssim 0.1$). Transitional ($0.1 \lesssim Kn_{\text{local}} \lesssim 10$) and free-molecular ($Kn_{\text{local}} > 10$) bands are absent because freestream density keeps collisions frequent; both appear only at higher altitudes.
+Evaluated per grid cell, this local $Kn$ field resolves regime structure rather than one vehicle-wide number; at this trajectory point every cell occupies the continuum band of Table~\ref{tab:knudsen_regimes}. The low-density far field carries the highest cell-scale values ($Kn_{\text{local}}$ up to $1.95\times10^{-4}$ on the colorbar, $9.75\times10^{-4}$ anywhere in the dump), while compression in the shock layer and near the wall drives $Kn_{\text{local}}$ down to $1.7\times10^{-6}$. Slip-flow ($0.01 \lesssim Kn_{\text{local}} \lesssim 0.1$), transitional ($0.1 \lesssim Kn_{\text{local}} \lesssim 10$) and free-molecular ($Kn_{\text{local}} > 10$) cells are absent at cell scale because freestream density keeps collisions frequent; the slip band is reached only at the millimetre bow-shock thickness scale of Chapter~\ref{chap:literature}, and the higher bands only at higher altitudes.
 
-This fixes the field map of Figure~\ref{fig:knudsen_map} in Chapter~4 and the DSMC justification: the claim is a continuum-to-slip gradient across the shock layer, not a transition-region or free-molecular claim.
+This fixes the field map of Figure~\ref{fig:knudsen_map} in Chapter~4 and the DSMC justification: the plotted claim is a cell-scale continuum-band gradient spanning nearly three decades, not a transition-region or free-molecular claim, and the slip-regime argument for the shock layer rests on its millimetre thickness scale, not on any cell of the map.
 
 \subsection{Survivability Acceptance Criterion}
 \label{sec:survivability}

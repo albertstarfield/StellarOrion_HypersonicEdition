@@ -223,9 +223,15 @@ def fig_tps_backface() -> None:
     fig, ax = plt.subplots(figsize=(mfn.WIDTH_NARROW, mfn.WIDTH_NARROW * 0.62))
     bars = ax.bar((0, 1), temps, width=0.5, color=(mfn.CB[0], mfn.CB[2]),
                   zorder=3)
-    ax.axhline(kapton_limit, color="#212121", ls="--", lw=1.2, zorder=2,
+    # WHY zorder 4 (image audit 2026-10-09): at zorder 2 the lines sat
+    # UNDER the bars (bar patches paint at 3), so both limits vanished
+    # across the red bar's 237 px width and the figure read as if the
+    # limits stopped at the data. A limit line must cross the bars it
+    # judges, so it paints above them; the value labels below are clamped
+    # clear of the 773 K line for the same reason.
+    ax.axhline(kapton_limit, color="#212121", ls="--", lw=1.2, zorder=4,
                label="Kapton adhesive limit, 773 K")
-    ax.axhline(struct_limit, color="#757575", ls=":", lw=1.4, zorder=2,
+    ax.axhline(struct_limit, color="#757575", ls=":", lw=1.4, zorder=4,
                label="IRVE-3 structural limit, 523.15 K")
     # WHY this title length: at 12 pt the previous "…the two candidate
     # stacks" measured 4.256 in of ink against a 4.409 in canvas, so the
@@ -234,12 +240,21 @@ def fig_tps_backface() -> None:
     # 3.38 in, leaving the tight crop inside the print width.
     mfn.style(ax, "Backface temperature of the two stacks",
               "", "Backface temperature (K)")
-    # WHY 1240: the upper zone belongs to the upper-left legend alone
-    # (measured reaching down to ~895 in these units), which is why the
-    # value labels sit inside the bars at temp - 180; and the tight crop
-    # must not grow past the print width (same failure mode as the
-    # performance figure's 4-digit ticks, 2026-10-08).
-    ax.set_ylim(0.0, 1240.0)
+    # WHY 1400 (was 1240, image audit 2026-10-09): at 1240 the red bar
+    # top reached y=214 px while the legend's second row ended at y=230,
+    # so 346 dark glyph pixels of "…523.15 K" sat ON the red fill. The
+    # legend is anchored to the axes box, so only the scale moves: at
+    # 1400 the red top falls to y=253, 23 px below the legend, and the
+    # upper zone still belongs to legend plus value labels alone. The
+    # tight crop must not grow past the print width (same failure mode
+    # as the performance figure's 4-digit ticks, 2026-10-08).
+    ax.set_ylim(0.0, 1400.0)
+    # WHY exactly these five ticks (image audit 2026-10-09, defect: only
+    # 0/500/1000 rendered): the default MultipleLocator(250) inside a
+    # 0..1400 window would also emit 1250 and 1400, whose labels crowd the
+    # legend zone; the spec is five labels at 0/250/500/750/1000, so the
+    # locator is replaced with an explicit list rather than a step.
+    ax.set_yticks([0.0, 250.0, 500.0, 750.0, 1000.0])
     ax.set_xlim(-0.62, 1.62)
     ax.set_xticks((0, 1))
     # WHY SCRIPT_SAFE_PT, not TICK_PT: the third tick line carries mathtext
@@ -251,13 +266,18 @@ def fig_tps_backface() -> None:
     # upper-left legend by 8.70 x 3.13 pt, and at temp - 16 the legend's
     # second row still reached them (22.83 x 5.85 pt; guard failures
     # 2026-10-09). The legend measures down to ~895 in axis units, so the
-    # labels sit at temp - 180 (white bold, PLAIN_TEXT_PT): ~16 pt clear
-    # of the legend, and both bars (328 and 956 of 1240) hold the line.
+    # labels sit at temp - 180 (white bold, PLAIN_TEXT_PT) as long as
+    # that stays below the limit lines. WHY the min() clamp (image audit
+    # 2026-10-09): with the lines raised above the bars the 773 K dashes
+    # (y=314 px) would have struck the top edge of "955.66 K" (its label
+    # top measured on the line itself at temp - 180); capping the top at
+    # kapton_limit - 45 puts the digits ~15 px below the dashes while
+    # leaving the short 328.1 K bar untouched (min selects temp - 180).
     for bar, temp in zip(bars, temps):
         cx = bar.get_x() + bar.get_width() / 2.0
-        ax.text(cx, temp - 180.0, f"{temp:g} K",
+        ax.text(cx, min(temp - 180.0, kapton_limit - 45.0), f"{temp:g} K",
                 ha="center", va="top", fontsize=mfn.PLAIN_TEXT_PT,
-                fontweight="bold", color="white", zorder=4)
+                fontweight="bold", color="white", zorder=5)
 
     # WHY upper left: the tall bar and its two annotation lines occupy the
     # upper right, and the short bar leaves the upper left free; a legend
