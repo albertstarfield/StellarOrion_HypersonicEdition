@@ -819,7 +819,7 @@ Aerodynamic heating scales with the square root of the viscosity product ($q_w \
 
 \section{Kinetic Theory and the Boltzmann Equation}
 
-The Navier-Stokes equations of Section~\ref{sec:cfd_framework} rest on the \textit{continuum hypothesis}, valid while the mean free path $\lambda$ is much smaller than $L$; above $h > 50$~km the gas is too rarefied for it \cite{bird1994molecular}.
+The Navier-Stokes equations of Section~\ref{sec:cfd_framework} rest on the \textit{continuum hypothesis}, valid while the mean free path $\lambda$ is much smaller than $L$; once the local Knudsen number $Kn = \lambda/L$ approaches $0.01$ the hypothesis fails \cite{bird1994molecular}.
 
 \subsection{The Liouville Theorem and Phase Space}
 
@@ -1102,12 +1102,17 @@ The HIAD OML is parameterized by five primary design variables:
 
 \noindent where $D$ is the target inflated aeroshell diameter, $\theta_c$ the half-cone angle, $N_t$ the number of toroidal bladders in the stack, $r_{tor}$ the individual toroid minor radius, and $R_N$ the nose sphere radius. Structural and packaging constraints bound the design space:
 
+% Bounds aligned to the engine search space of tab:design_variables
+% (stellarorion_optimization.ads): the previous [2.0,15.0] m / [45,75] deg /
+% [50,300] mm set excluded the recorded optimisation results (BO round-1
+% theta_c = 40.48 deg). The R_N row stays the structural lower bound only;
+% the numeric R_N bounds of the two campaigns are stated where they run.
 \begin{equation}
     \begin{aligned}
-        D &\in [2.0,\; 15.0] \text{\,m} \\
-        \theta_c &\in [45^\circ,\; 75^\circ] \\
+        D &\in [0.5,\; 15.0] \text{\,m} \\
+        \theta_c &\in [40^\circ,\; 80^\circ] \\
         N_t &\in [1,\; 12] \\
-        r_{tor} &\in [50,\; 300] \text{\,mm} \\
+        r_{tor} &\in [0.01,\; 0.5] \text{\,m} \\
         R_N &\geq R_{\text{pay}} / \sin(\theta_c)
     \end{aligned}
     \label{eq:design_bounds}
@@ -1233,7 +1238,7 @@ Each SPARTA DSMC simulation takes 30-60 minutes, so evolutionary optimization ne
     \label{eq:surrogate}
 \end{equation}
 
-\noindent where $\mathcal{M}$ is a multilayer perceptron (MLP) with parameters $\boldsymbol{\theta} = \{\mathbf{W}_i, \mathbf{b}_i\}$ and $\hat{y}$ the predicted metric. This study uses:
+\noindent where $\mathcal{M}$ is a multilayer perceptron (MLP) with parameters $\boldsymbol{\theta} = \{\mathbf{W}_i, \mathbf{b}_i\}$ and $\hat{y}$ the predicted metric. One common choice is:
 
 \begin{equation}
     \hat{y} = \mathbf{W}_3 \, \text{ReLU}\!\left(\mathbf{W}_2 \, \text{ReLU}\!\left(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1\right) + \mathbf{b}_2\right) + \mathbf{b}_3
@@ -1248,6 +1253,8 @@ Each SPARTA DSMC simulation takes 30-60 minutes, so evolutionary optimization ne
 \end{equation}
 
 \noindent For multi-objective optimization the surrogate outputs a vector $[\hat{y}_1, \ldots, \hat{y}_k]^T$ with a weighted loss.
+
+\noindent This study instantiates the Bayesian-optimization surrogate as a Gaussian process with the Mat\'ern 5/2 kernel and an Expected Improvement acquisition function (Chapter~\ref{ch:methodology}).
 
 \subsection{Genetic Algorithm Optimization}
 
@@ -1288,7 +1295,7 @@ Gaussian mutation perturbs the offspring:
 
 \subsection{Cost Function and Optimization Objective}
 
-The objective is greatest survivability: decelerate the payload to safe landing conditions with backface temperature below the structural limit. The cost function is:
+The objective is greatest survivability: decelerate the payload to safe landing conditions with backface temperature below the structural limit. A representative cost function weights the squared deviations of the three survivability metrics:
 
 \begin{equation}
     J(\mathbf{x}) = w_\beta \left( \frac{\beta_{\text{calc}} - \beta_{\text{target}}}{\sigma_\beta} \right)^2 + w_{\dot{q}} \left( \frac{\dot{q}_{\text{pred}} - \dot{q}_{\text{limit}}}{\sigma_{\dot{q}}} \right)^2 + w_{T} \left( \frac{T_{\text{back}} - T_{\text{limit}}}{\sigma_T} \right)^2
@@ -1296,6 +1303,8 @@ The objective is greatest survivability: decelerate the payload to safe landing 
 \end{equation}
 
 \noindent where $\beta_{\text{calc}}$ is the ballistic coefficient, $\dot{q}_{\text{pred}}$ the predicted peak stagnation heat flux, $T_{\text{back}}$ the predicted backface temperature, and $w_\beta, w_{\dot{q}}, w_T$ the priority weighting factors.
+
+\noindent Chapter~\ref{ch:methodology} states the five-term cost actually optimised by this work.
 
 \subsection{Why Optimization is Necessary}
 

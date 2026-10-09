@@ -284,7 +284,7 @@ The particle timestep is fixed at $\Delta t = 1\times10^{-6}$\,s (1\,\textmu\,s)
 \label{eq:tsim}
 \end{equation}
 
-No particle pair may pass between collisions~\cite{bird1994molecular}, which for the VSS model requires $\Delta t \ll \tau_{coll}$, the mean collision time. At the validated condition the shock layer sits in the slip regime (mean free path of order millimeters, thermal speed of several hundred meters per second), so the collision time is nanoseconds. The $1$\,\textmu\,s step is about three orders of magnitude longer than $\tau_{coll}$, the standard DSMC regime~\cite{plimpton2014sparta}: what matters is a timestep short against the \emph{flow} timescales, not the collision time.
+No particle pair may pass between collisions~\cite{bird1994molecular}, which for the VSS model requires $\Delta t \ll \tau_{coll}$, the mean collision time. At the validated condition the compressed shock layer holds a mean free path of order micrometres and thermal speeds of order kilometres per second, so the collision time is nanoseconds. The $1$\,\textmu\,s step is about three orders of magnitude longer than $\tau_{coll}$, the standard DSMC regime~\cite{plimpton2014sparta}: what matters is a timestep short against the \emph{flow} timescales, not the collision time.
 
 The $2.2$\,ms window resolves these timescales at this trajectory point:
 
@@ -1175,7 +1175,7 @@ The PINN uses DeepXDE~\cite{lu2021deepxde}:
         \hline
         \textbf{Component} & \textbf{Specification} \\ \hline
         Framework & scikit-learn \texttt{\seqsplit{GaussianProcessRegressor}} \\ \hline
-        Input dimension & $d$ (design variables, $d = 4$-$7$) \\ \hline
+        Input dimension & $d$ (design variables) \\ \hline
         Covariance kernel & Mat\'ern, $\nu = 5/2$ \\ \hline
         Amplitude $c_0$ & Init. 1.0, refit in $[10^{-3}, 10^{3}]$ \\ \hline
         Length scales $\ell_j$ & Init. 1.0 per dimension, refit in $[10^{-3}, 10^{3}]$ \\ \hline
@@ -1194,7 +1194,7 @@ The PINN uses DeepXDE~\cite{lu2021deepxde}:
 Each design: $N = 15$ Rotatable CCD points (Sec.~\ref{sec:doe_sampling}), $O(10^3)$ SPARTA DSMC timesteps, two-stage PINN refinement (Sec.~\ref{sec:pinn_two_stage}), features $\mathbf{x} = (R_N, r_{tor}, \theta_c)$ min-max scaled to $[0, 1]$.
 
 \subsubsection*{Train/Test Split}
-Stratified 80/20 split: 20 training samples (80\%) and 5 validation samples (20\%) for early stopping and model selection.
+Stratified 80/20 split of the design set for early stopping and model selection.
 
 \subsubsection*{Cross-Validation}
 $k$-fold cross-validation ($k = 5$) applies where sample size permits, reporting mean $\pm$ standard deviation across folds.
