@@ -582,7 +582,10 @@ def fig_ccd_screen() -> None:
     # The exponent in 2^3 is a mathtext script, so this title carries the same
     # 0.7 shrink as the axis labels and must sit at SCRIPT_SAFE_PT, not at the
     # 10 pt it used to print (which rendered the exponent at 7 pt).
-    fig.suptitle("Face-centered CCD screen: $N = 2^3 + 2(3) + 1 = 15$ points",
+    # Axiom/design: axial stars sit at coded alpha = 2^(3/4) = 1.682 (R_N 0.9955/2.0045
+    # around center 1.5, half-width 0.3) -> this is a ROTATABLE CCD, not face-centered
+    # (alpha = 1 would put stars on the corners). Title must state the true design.
+    fig.suptitle("Rotatable CCD screen: $N = 2^3 + 2(3) + 1 = 15$ points",
                  fontsize=SCRIPT_SAFE_PT)
     # y is the suptitle's default 0.98; the earlier explicit y=1.03 pushed the
     # text outside the saved bounding box and clipped the top of the capitals.
