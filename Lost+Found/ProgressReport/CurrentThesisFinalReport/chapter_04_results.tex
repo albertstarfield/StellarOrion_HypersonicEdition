@@ -157,7 +157,7 @@ Results are validated against the IRVE-3 post-flight aerothermal reconstruction~
 
 \begin{table}[!htbp]
     \centering
-    \caption[Validation of SPARTA DSMC results against IRVE-3 flight data, with the MDAO (Fay-Riddell) reference and this work shown as distinct columns.]{Validation of SPARTA DSMC results against IRVE-3 flight data, with the MDAO (Fay-Riddell) reference and this work shown as distinct columns. $^{\dagger}$The heat-flux entry is a Sutton-Graves correlation at $R_N = 1.5$ m and $V = 3{,}378$ m/s, not a solver-resolved quantity; the flight and MDAO columns are trajectory-integrated peaks, so the stated percentage is a scale comparison only.}
+    \caption[Validation of SPARTA DSMC results against IRVE-3 flight data, with the MDAO (Fay-Riddell) reference and this work shown as distinct columns.]{Validation of SPARTA DSMC results against IRVE-3 flight data, with the MDAO (Fay-Riddell) reference and this work shown as distinct columns. $^{\dagger}$The heat-flux entry is a Sutton-Graves correlation at $R_N = 1.5$ m and $V = 3{,}378$ m/s, not a solver-resolved quantity; the flight and MDAO columns are trajectory-integrated peaks, so the stated percentage is a scale comparison only. $^{\ddagger}$The flight drag coefficient is the IRVE-3 reference loaded at run time (Chapter~\ref{ch:methodology}), not a measurement of this run.}
     \label{tab:validation}
     \small
     \begin{tabularx}{\textwidth}{l >{\RaggedRight\arraybackslash}p{0.13\textwidth} >{\RaggedRight\arraybackslash}p{0.15\textwidth} >{\RaggedRight\arraybackslash}p{0.15\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X}
@@ -169,6 +169,9 @@ Results are validated against the IRVE-3 post-flight aerothermal reconstruction~
         Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm\textsuperscript{2} & 13.83 W/cm\textsuperscript{2} & 16.14 W/cm\textsuperscript{2}$^{\dagger}$ & MDAO $-3.7\%$; SO $+12.4\%$, \emph{not like-for-like} \\
         Total Heat Load ($Q$) & 195.06 J/cm\textsuperscript{2} & 195.17 J/cm\textsuperscript{2} & 165.72 J/cm\textsuperscript{2} & MDAO $+0.06\%$; SO $-15.0\%$ \\
         Peak Deceleration & 19.7 g & n/a & 16.83 g & SO $-14.6\%$ \\
+        Ballistic Coefficient ($\beta$) & 26.9 kg/m\textsuperscript{2} & Not reported & 27.70 kg/m\textsuperscript{2} & SO $+3\%$, geometry check \\
+        Drag Coefficient ($C_d$) & 1.4625\textsuperscript{$\ddagger$} & Not reported & 1.6073 $\rightarrow$ 1.5597 at optimum & $-2.96\%$ baseline to optimum \\
+        Lift Coefficient ($C_l$) & Not reported & Not reported & $-0.5268$ (smooth, final step) & No flight/MDAO counterpart \\
         \hline
     \end{tabularx}
     \normalsize
@@ -448,6 +451,11 @@ This work applies Physics-Informed Neural Networks (PINNs) as post-processing fo
 
 \subsection{Reproducibility and Accessibility}
 This framework is open-source with a hybrid Ada and Python architecture. The Ada binary is the primary engine, with range-checked subtypes and run-time assertions exercised by the self-test, running through the \texttt{stellarorion\_program\_proc/run.py} front end. SPARTA runs in Docker on Linux; the Python sidecar handles PINN refinement, optimization and the native-OS GUI with hardware acceleration (CUDA, ROCm, Metal MPS). Rapisarda's framework is MATLAB-based and needs manual configuration per run.
+
+\subsection{Quantitative Outcomes}
+Thermally, Table~\ref{tab:validation} places the two frameworks against the IRVE-3 flight values: the MDAO reconstruction's Fay-Riddell peak of 13.83\,W/cm\textsuperscript{2} ($-3.7\%$ against flight) and total heat load of 195.17\,J/cm\textsuperscript{2} ($+0.06\%$) sit within a percent of the 14.36\,W/cm\textsuperscript{2} and 195.06\,J/cm\textsuperscript{2} flight references, while this work's single-point Sutton-Graves peak of 16.14\,W/cm\textsuperscript{2} sits $+12.4\%$ above flight and agrees with Rapisarda's trajectory-integrated Sutton-Graves value of 15.26\,W/cm\textsuperscript{2} within $+5.8\%$ (Section~\ref{sec:validation_irve3} covers both). The DSMC-resolved heat load of 165.72\,J/cm\textsuperscript{2} sits $-15.0\%$ against flight, and the optimum cuts total heat load a further $28.95\,\%$ to 155.67\,J/cm\textsuperscript{2} (Table~\ref{tab:bo_before_after}).
+
+Aerodynamically the comparison is one-sided: no drag, lift or ballistic-coefficient values are available for the MDAO framework in Table~\ref{tab:validation}. This work reports a drag coefficient falling from 1.6073 to 1.5597 at the optimum ($-2.96\,\%$), a lift coefficient of $-0.5268$ at the common final step of the smooth-skin series, and a ballistic coefficient of 27.70\,kg/m\textsuperscript{2} within $+3\%$ of the 26.9\,kg/m\textsuperscript{2} flight value; peak deceleration is 16.83\,g against the 19.7\,g flight value (all rows in Table~\ref{tab:validation}).
 
 \begin{table}[!htbp]
     \centering
