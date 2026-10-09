@@ -82,20 +82,20 @@ Figure~\ref{fig:governing_equations} summarizes this chain.
     \BeginAccSupp{method=escape,ActualText={Panel of the governing equations used in the study, listing the continuity, momentum and energy equations together with the state and transport relations.}}%
 \includegraphics[width=0.85\textwidth]{figures/governing_equations.png}%
 \EndAccSupp{}%
-    \caption[Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier-Stokes continuum limit, Sutton-Graves engineering correlation, PINN neural approximation, to surrogate-based survivability optimization.]{Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier-Stokes continuum limit, Sutton-Graves engineering correlation, PINN neural approximation, to surrogate-based survivability optimization. Each layer is anchored by the research axioms defined in Table~\ref{tab:research_axioms}.}
+    \caption[Governing equations derivation chain: from the Boltzmann transport equation to surrogate-based survivability optimization.]{Governing equations derivation chain: from the Boltzmann transport equation through DSMC discretization, Navier-Stokes continuum limit, Sutton-Graves engineering correlation, PINN neural approximation, to surrogate-based survivability optimization. Each layer is anchored by the research axioms defined in Table~\ref{tab:research_axioms}.}
     \label{fig:governing_equations}
 \end{figure}
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
-The StellarOrion engine, an Ada/SPARK and Python stack with SPARTA containerized in Docker, orchestrates the pipeline in Figure~\ref{fig:software_pipeline}. The Python entry point \texttt{run.py} drives five phases: boot, Python virtual-environment bootstrap, static analysis, Ada/SPARK build of the simulation engine, and launch. The core solver is the Ada/SPARK unit \texttt{StellarOrion\_Orion} in \texttt{src/simulation\_engine/}, which couples the SPARTA DSMC solver and OpenFOAM (Open Source Field Operation and Manipulation) solid-thermal solver, then hands surface fields to the DeepXDE PINN refinement module and to the scikit-learn Bayesian Optimization surrogate (GP Mat\'ern 5/2 with Expected Improvement, Sec.~\ref{sec:ga_opt}). Results are exported as VTK/STL for ParaView rendering and for the validation gate of Chapter~\ref{ch:results}. The recorded campaign of Chapter~\ref{ch:results} applies Bayesian Optimization with a fixed hyper-parameter refit strategy, adopted after the reproducibility finding of Sec.~\ref{sec:surrogate_repro}.
+The StellarOrion engine, an Ada and Python stack with SPARTA containerized in Docker, orchestrates the pipeline in Figure~\ref{fig:software_pipeline}. The Python entry point \texttt{run.py} drives five phases: boot, Python virtual-environment bootstrap, static analysis, Ada build of the simulation engine, and launch. The core solver is the Ada unit \texttt{StellarOrion\_Orion} in \texttt{src/simulation\_engine/}, which couples the SPARTA DSMC solver~\cite{plimpton2014sparta} and OpenFOAM (Open Source Field Operation and Manipulation) solid-thermal solver, then hands surface fields to the DeepXDE PINN refinement module and to the scikit-learn Bayesian Optimization surrogate (GP Mat\'ern 5/2 with Expected Improvement, Sec.~\ref{sec:ga_opt}). Results are exported as VTK/STL for ParaView rendering and for the validation gate of Chapter~\ref{ch:results}. The recorded campaign of Chapter~\ref{ch:results} applies Bayesian Optimization with a fixed hyper-parameter refit strategy, adopted after the reproducibility finding of Sec.~\ref{sec:surrogate_repro}.
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline. Input column: CadQuery geometry with STL export, flight conditions with velocity, temperature and density, and design variables. Orchestration column: run.py with boot, environment bootstrap, static analysis, Ada/SPARK build and launch phases. Core engine column: the Ada/SPARK simulation engine. Solver column: SPARTA DSMC in Docker and OpenFOAM solid thermal. Model column: PINN with DeepXDE and the Bayesian Optimization surrogate, a Gaussian Process with Matern 5/2 kernel and Expected Improvement. Output column: ParaView, VTK, STL rendering. An orange feedback loop returns Bayesian Optimization designs to the engine for re-evaluation.}}%
+    \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline. Input column: CadQuery geometry with STL export, flight conditions with velocity, temperature and density, and design variables. Orchestration column: run.py with boot, environment bootstrap, static analysis, Ada build and launch phases. Core engine column: the Ada simulation engine. Solver column: SPARTA DSMC in Docker and OpenFOAM solid thermal. Model column: PINN with DeepXDE and the Bayesian Optimization surrogate, a Gaussian Process with Matern 5/2 kernel and Expected Improvement. Output column: ParaView, VTK, STL rendering. An orange feedback loop returns Bayesian Optimization designs to the engine for re-evaluation.}}%
 \includegraphics[width=0.85\textwidth]{figures/software_pipeline.png}%
 \EndAccSupp{}%
-    \caption[StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ \texttt{run.py} orchestration phases $\rightarrow$ Ada/SPARK simulation engine $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers with PINN refinement and the Bayesian Optimization surrogate $\rightarrow$ ParaView visualization.]{StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ \texttt{run.py} orchestration phases $\rightarrow$ Ada/SPARK simulation engine $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers with PINN refinement and the Bayesian Optimization surrogate $\rightarrow$ ParaView visualization. The orange feedback loop returns Bayesian Optimization designs from the surrogate to the core engine for re-evaluation.}
+    \caption[StellarOrion engine software pipeline: input geometry and design variables through the run.py phases, the Ada engine, the SPARTA and OpenFOAM solvers, PINN refinement and the Bayesian Optimization surrogate.]{StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ \texttt{run.py} orchestration phases $\rightarrow$ Ada simulation engine $\rightarrow$ SPARTA DSMC and OpenFOAM solid-thermal solvers with PINN refinement and the Bayesian Optimization surrogate $\rightarrow$ ParaView visualization. The orange feedback loop returns Bayesian Optimization designs from the surrogate to the core engine for re-evaluation.}
     \label{fig:software_pipeline}
 \end{figure}
 
@@ -763,7 +763,7 @@ The PINN refinement stage rests on these assumptions:
 The optimization loop runs six steps:
 
 \begin{enumerate}
-    \item \textbf{Sampling:} Generate $N$ design points by Stratified LHS (or a rotatable CCD screen) across $\mathbf{x} \in \mathbb{R}^d$.
+    \item \textbf{Sampling:} Generate $N$ design points by Stratified LHS (or a rotatable CCD screen) across $\mathbf{x} \in \mathbb{R}^d$~\cite{mckay1979lhs}.
     \item \textbf{Simulation:} Evaluate each design for the performance metrics $(\beta, \dot{q}, T_{back}, n_G)$: the full-fidelity loop runs SPARTA DSMC (optionally PINN-refined), while the recorded campaign of Sec.~\ref{sec:bo_results} scores each design with the closed-form cost of Sec.~\ref{sec:cost_function} and never calls the solver during the search.
     \item \textbf{Bayes Opt Training:} Fit a Gaussian Process surrogate on the $N$ results, giving posterior mean $\mu(\mathbf{x})$ and deviation $\sigma(\mathbf{x})$.
     \item \textbf{Bayesian Acquisition:} Score $N_{cand} = 5000$ candidate designs with Expected Improvement (Eq.~\eqref{eq:ei}) and append the arg-max to the history; this is the recorded campaign of Sec.~\ref{sec:bo_results}.
@@ -963,7 +963,7 @@ The constraint-augmented cost $J_{constrained}$ replaces $J$ both in the Expecte
 
 \section{Multi-Solver Architecture}
 
-Multiple solver backends address different flow regimes:
+Multiple solver backends address different flow regimes~\cite{plimpton2014sparta,raissi2019pinn}:
 
 \begin{table}[!htbp]
     \centering

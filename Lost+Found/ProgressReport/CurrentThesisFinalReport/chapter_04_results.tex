@@ -59,7 +59,7 @@ The two time series sit at \emph{different} conditions: smooth at 51.82~km and 3
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Four panels comparing the smooth and scalloped skin series against particle-time step from 100 to 2200. Upper left: drag coefficient, falling from 1.85 to 1.34 for the smooth skin and from 2.42 to 1.77 for the scalloped skin. Upper right: lift coefficient, negative, moving from -0.42 to -0.53 for the smooth skin and from -0.50 to -0.67 for the scalloped skin. Lower left: deceleration load, flat at 16.83 g for the smooth skin and falling from 22.7 to 16.6 g for the scalloped skin. Lower right: axial drag force, falling from 57 to 41 kilonewtons for the smooth skin and from 63 to 46 for the scalloped skin. A shared legend below the panels states each run's altitude and velocity.}}%
+    \BeginAccSupp{method=escape,ActualText={Four panels comparing the smooth and scalloped skin series against particle-time step from 100 to 2200. Upper left: drag coefficient, falling from 1.85 to 1.34 for the smooth skin and from 2.42 to 1.77 for the scalloped skin. Upper right: lift coefficient, negative, moving from -0.42 to -0.53 for the smooth skin and from -0.50 to -0.67 for the scalloped skin. Lower left: deceleration load, flat at 16.83\,g for the smooth skin and falling from 22.7 to 16.6\,g for the scalloped skin. Lower right: axial drag force, falling from 57 to 41 kilonewtons for the smooth skin and from 63 to 46 for the scalloped skin. A shared legend below the panels states each run's altitude and velocity.}}%
 \includegraphics[width=0.95\textwidth]{figures/results_performance_comparison.png}%
 \EndAccSupp{}%
     \caption[Drag coefficient, lift coefficient, deceleration load and axial drag force for the smooth and scalloped series against particle-time step.]{Drag coefficient, lift coefficient, deceleration load and axial drag force for the smooth and scalloped series against particle-time step, the four series quantities quoted at the common final step in the text above. The runs sit at different trajectory states (scalloped 52.07~km, 3101~m/s; smooth 51.82~km, 3379~m/s), so each curve carries its own run condition; the flat smooth $g$-load line is that run's recorded constant while the scalloped series converges toward it.}
@@ -222,7 +222,7 @@ Grid evidence is Table~\ref{tab:grid_study} and the residuals of Figure~\ref{fig
 \section{Discussion}
 
 \subsection{Heating Augmentation and TPS Implications}
-Scalloped toroidal geometry creates hot spots at toroid crests. Against the smooth run, which sits at a different trajectory condition, the scalloped series at the common final step raises peak cell heat flux from 158.4 to 192.0~W/cm\textsuperscript{2} ($+21.2\%$), the per-element mean from 54.4 to 55.2~W/cm\textsuperscript{2} ($+1.5\%$) and the drag coefficient from 1.3358 to 1.7655, while the integrated heat load is identical at 165.72~J/cm\textsuperscript{2} and the final-step $g$-load differs by $1.7\%$ (16.55 against 16.83\,g). Concentration over a small crest area rather than the whole surface is the signature of inverse-square-root radius scaling ($\dot{q} \propto 1/\sqrt{R}$) in the Sutton-Graves correlation~\cite{sutton1971gravesh}. Valley recirculation zones shield partially, reducing time-averaged heat load on the Flexible Thermal Protection System~\cite{hollis2018surface}.
+Scalloped toroidal geometry creates hot spots at toroid crests. Against the smooth run, which sits at a different trajectory condition, the scalloped series at the common final step raises peak cell heat flux from 158.4 to 192.0~W/cm\textsuperscript{2} ($+21.2\%$), the per-element mean from 54.4 to 55.2~W/cm\textsuperscript{2} ($+1.5\%$) and the drag coefficient from 1.3358 to 1.7655, while the integrated heat load is identical at 165.72~J/cm\textsuperscript{2} and the final-step $g$-load differs by 1.7\% (16.55 against 16.83\,g). Concentration over a small crest area rather than the whole surface is the signature of inverse-square-root radius scaling ($\dot{q} \propto 1/\sqrt{R}$) in the Sutton-Graves correlation~\cite{sutton1971gravesh}. Valley recirculation zones shield partially, reducing time-averaged heat load on the Flexible Thermal Protection System~\cite{hollis2018surface}.
 
 \subsection{Flow Regime Characterization}
 Figure~\ref{fig:knudsen_map} shows a systematic \emph{local} gradient around the HIAD at 51.8\,km: the low-density far field carries the highest cell-scale $Kn$ values while the compressed shock layer and near-wall cells carry the lowest. Against the five bands of Table~\ref{tab:knudsen_regimes}, the visible range $1.7\times10^{-6}$ to about $1.95\times10^{-4}$ (dump maximum $9.75\times10^{-4}$) lies wholly inside the continuum band; transitional ($0.1 \lesssim Kn \lesssim 10$) and free-molecular ($Kn > 10$) bands are \emph{not} attained, and at cell scale neither is slip flow.
@@ -328,14 +328,14 @@ A 15-point central composite design~\cite{Montgomery2017} screens first, best $J
     \BeginAccSupp{method=escape,ActualText={Three scatter panels showing the fifteen central composite design points as pairwise projections of the three design variables: nose radius against toroid radius, nose radius against half-cone angle, and toroid radius against half-cone angle. Eight factorial corner points appear as circles, six axial star points as triangles, and the single center point as a star.}}%
     \includegraphics[width=0.95\textwidth]{figures/fignew_ccd_screen.png}%
     \EndAccSupp{}%
-    \caption[The central composite screen in the three-dimensional design space, shown as three pairwise projections so that no point is hidden by occlusion.]{The central composite screen in the three-dimensional design space, shown as three pairwise projections so that no point is hidden by occlusion. The eight factorial corner points, six axial star points and single center point are distinguished by marker, which the oblique three-dimensional view of Figure~\ref{fig:ccd_surface} cannot do. The center point carries the cost $J = 2.1135$ and the screen minimum is 1.9505 at a factorial corner.}
+    \caption[The central composite screen in the three-dimensional design space, shown as three pairwise projections so that no point is hidden by occlusion.]{The central composite screen in the three-dimensional design space, shown as three pairwise projections so that no point is hidden by occlusion. The eight factorial corner points, six axial star points and single center point are distinguished by marker, which the oblique three-dimensional view of Figure~\ref{fig:ccd_surface} cannot do. The center point carries the cost $J = 2.1674$ and the screen minimum is 1.9959 at a factorial corner.}
     \label{fig:ccd_screen}
 \end{figure}
 
-Figure~\ref{fig:ccd_surface} shows the cost-annotated 15-point screen layout; Figure~\ref{fig:ccd_screen} gives the same screen as three pairwise projections keeping every point visible. The lowest screen cost sits at the factorial corner $R_N = 1.80$\,m, $r_{tor} = 0.100$\,m, $\theta_c = 65^\circ$ ($J = 1.9505$), the best design it resolves, and is a scale reference, not the convergence incumbent below. The center point ($J = 2.1135$) and the IRVE-3 baseline ($J = 2.1162$, $r_{tor} = 0.135$\,m) differ only in torus radius, and the screen cannot resolve which is preferable. Nose radius varies most across screened costs, consistent with $1/\sqrt{R_N}$ Sutton-Graves scaling, while half-cone angle matters less.
+Figure~\ref{fig:ccd_surface} shows the cost-annotated 15-point screen layout; Figure~\ref{fig:ccd_screen} gives the same screen as three pairwise projections keeping every point visible. The lowest screen cost sits at the factorial corner $R_N = 1.80$\,m, $r_{tor} = 0.100$\,m, $\theta_c = 55^\circ$ ($J = 1.9959$), the best design it resolves, and is a scale reference, not the convergence incumbent below. The center point ($J = 2.1674$) and the IRVE-3 baseline ($J = 2.1626$, $r_{tor} = 0.135$\,m) differ only in torus radius, and the screen cannot resolve which is preferable. Nose radius varies most across screened costs, consistent with $1/\sqrt{R_N}$ Sutton-Graves scaling, while half-cone angle matters less.
 
 \subsection{Optimized Configuration}
-Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 winner. The optimizer cuts total heat load by 29.16\,\% to 155.21~J/cm\textsuperscript{2} (6.34\,\% \emph{below} the 165.72~J/cm\textsuperscript{2} validation target), drag coefficient by 2.16\,\% and aggregate cost $J$ by 26.29\,\%, with no constraint violated at the optimum (penalty $= 0$).
+Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 winner. The optimizer cuts total heat load by 28.95\,\% to 155.67~J/cm\textsuperscript{2} (6.06\,\% \emph{below} the 165.72~J/cm\textsuperscript{2} validation target), drag coefficient by 2.96\,\% and aggregate cost $J$ by 25.78\,\%, with no constraint violated at the optimum (penalty $= 0$).
 
 \begin{table}[!htbp]
     \centering
@@ -345,38 +345,38 @@ Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 wi
         \toprule
         \textbf{Parameter} & \textbf{Baseline} & \textbf{Optimized} & \textbf{$\Delta$} \\
         \midrule
-        Nose radius $R_N$ & 1.5000 m & 2.9891 m & $+99.27 \%$ \\
-        Torus radius $r_{tor}$ & 0.1350 m & 0.1033 m & $-23.48 \%$ \\
-        Half-cone angle $\theta_c$ & 60.00$^\circ$ & 40.48$^\circ$ & $-32.53 \%$ \\
-        Drag coefficient $C_d$ & 1.6073 & 1.5725 & $-2.16 \%$ \\
-        Sutton-Graves heat flux & 16.14~W/cm\textsuperscript{2} & 11.43~W/cm\textsuperscript{2} & $-29.16 \%$ \\
-        Total heat load $Q(\mathbf{x})$ & 219.10~J/cm\textsuperscript{2} & 155.21~J/cm\textsuperscript{2} & $-29.16 \%$ \\
-        Cost $J(\mathbf{x})$ & 2.1162 & 1.5599 & $-26.29 \%$ \\
+        Nose radius $R_N$ & 1.5000 m & 2.9714 m & $+98.10 \%$ \\
+        Torus radius $r_{tor}$ & 0.1350 m & 0.0885 m & $-34.47 \%$ \\
+        Half-cone angle $\theta_c$ & 60.00$^\circ$ & 40.15$^\circ$ & $-33.09 \%$ \\
+        Drag coefficient $C_d$ & 1.6073 & 1.5597 & $-2.96 \%$ \\
+        Sutton-Graves heat flux & 16.14~W/cm\textsuperscript{2} & 11.47~W/cm\textsuperscript{2} & $-28.95 \%$ \\
+        Total heat load $Q(\mathbf{x})$ & 219.10~J/cm\textsuperscript{2} & 155.67~J/cm\textsuperscript{2} & $-28.95 \%$ \\
+        Cost $J(\mathbf{x})$ & 2.1626 & 1.6051 & $-25.78 \%$ \\
         \bottomrule
     \end{tabularx}
 \end{table}
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Bayesian optimization convergence over 70 evaluations, with the subtitle 20 Latin-Hypercube initial points plus 50 GP/Expected-Improvement iterations. Evaluated cost J of x is on a logarithmic vertical axis running from about 1.5 to over 1000, against evaluation index 0 to 69 on the horizontal. Blue circles are the 70 evaluated costs and the solid red line is the running-best incumbent, which falls from 1.6944 at the first evaluation to 1.5653 at index 37 and to 1.5599 at the final evaluation. A vertical dashed line at index 20 marks the handover from the Latin-Hypercube design to the Bayesian stage, a horizontal dotted line marks the IRVE-3 baseline cost, and a gold star marks the round-1 optimum. Most early evaluations are expensive, reaching above 1000, and the costs collapse into a narrow band near 2 after about evaluation 30. Source: hiad_optimization_results.json, official run 2026-09-26.}}%
+    \BeginAccSupp{method=escape,ActualText={Bayesian optimization convergence over 70 evaluations, with the subtitle 20 Latin-Hypercube initial points plus 50 GP/Expected-Improvement iterations. Evaluated cost J of x is on a logarithmic vertical axis running from about 1.5 to over 1000, against evaluation index 0 to 69 on the horizontal. Blue circles are the 70 evaluated costs and the solid red line is the running-best incumbent, which falls from 1.7654 at the first evaluation to 1.6051 at index 37 and then holds that value to the final evaluation. A vertical dashed line at index 20 marks the handover from the Latin-Hypercube design to the Bayesian stage, a horizontal dotted line marks the IRVE-3 baseline cost, and a gold star marks the round-1 optimum. Most early evaluations are expensive, reaching above 1000; the optimum arrives at index 37, and none of the remaining evaluations beats it. Source: hiad_optimization_results.json, official run 2026-09-26.}}%
 \includegraphics[width=\textwidth]{figures/bo_convergence.png}%
 \EndAccSupp{}%
     \caption[Convergence history of the optimization campaign (official run 2026-09-26).]{Convergence history of the optimization campaign (official run 2026-09-26). Blue points are the cost $J(\mathbf{x})$ at each of the 70 designs; the red curve is the running-best incumbent, which is non-increasing by construction.}
     \label{fig:ga_convergence}
 \end{figure}
 
-Figure~\ref{fig:ga_convergence} separates the two series. The evaluated cost $J$ is \emph{not} monotone: proposals are rejected freely, and log-scale scatter spans nearly three decades, with 43 of the 70 evaluations above the IRVE-3 baseline cost. Those proposals are bidirectional: 14 of the 43 sit above the baseline nose radius of $1.5$\,m, 29 below it, so the excess cost is no single excursion.
+Figure~\ref{fig:ga_convergence} separates the two series. The evaluated cost $J$ is \emph{not} monotone: proposals are rejected freely, and log-scale scatter spans nearly three decades, with 46 of the 70 evaluations above the IRVE-3 baseline cost. Those proposals are bidirectional: 17 of the 46 sit above the baseline nose radius of $1.5$\,m, 29 below it, so the excess cost is no single excursion.
 
-The history opens at $J = 1.6944$ at the first evaluation, so the incumbent entering the Bayesian stage is $1.6944$, not the CCD minimum of $1.9505$. Bayesian iterations improve it to $1.5599$, a 7.94\,\% reduction. The incumbent reaches $1.5653$ at zero-based index 37 and its last improvement is at index 68, so the search keeps making small gains to the end rather than going flat.
+The history opens at $J = 1.7654$ at the first evaluation, so the incumbent entering the Bayesian stage is $1.7654$, not the CCD minimum of $1.9959$. Bayesian iterations improve it to $1.6051$, a 9.08\,\% reduction. The incumbent reaches $1.6051$ at zero-based index 37 and holds it to the end: none of the remaining 32 evaluations beats that index, so the search converges rather than drifting.
 
 Since $\dot{q} \propto 1/\sqrt{R_N}$ in the Sutton-Graves scaling~\cite{sutton1971gravesh}, nearly doubling the nose radius is the cheapest route to heat-load reduction; toroid radius and half-cone angle then recover the drag and ballistic-coefficient terms an enlarged nose would penalize. The optimizer finds the trade-off a designer would reach analytically.
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Two-panel comparison of the HIAD geometry before and after optimization. The left panel shows the IRVE-3 default geometry with nose radius 1.5 m, toroid radius 0.135 m, and half-cone angle 60 degrees. The right panel shows the Bayesian optimum with nose radius 2.9891 m, toroid radius 0.1033 m, and half-cone angle 40.48 degrees. The optimized geometry has a larger nose, tighter toroid, and steeper cone angle.}}%
+    \BeginAccSupp{method=escape,ActualText={Two-panel comparison of the HIAD geometry before and after optimization. The left panel shows the IRVE-3 default geometry with nose radius 1.5\,m, toroid radius 0.135\,m, and half-cone angle 60 degrees. The right panel shows the Bayesian optimum with nose radius 2.9714\,m, toroid radius 0.0885\,m, and half-cone angle 40.15 degrees. The optimized geometry has a larger nose, tighter toroid, and steeper cone angle.}}%
     \includegraphics[width=\textwidth]{figures/optimization_comparison.png}%
     \EndAccSupp{}%
-    \caption[Topology before and after optimization.]{Topology before and after optimization. The left panel shows the IRVE-3 default geometry ($R_N = 1.5$\,m, $r_{tor} = 0.135$\,m, $\theta_c = 60^\circ$); the right panel shows the Bayesian optimum ($R_N = 2.9891$\,m, $r_{tor} = 0.1033$\,m, $\theta_c = 40.48^\circ$). The optimized geometry reduces drag coefficient from 1.6073 to 1.5725 and total heat load from 219.10 to 155.21\,J/cm$^2$ ($-29.16\,\%$).}
+    \caption[Topology before and after optimization.]{Topology before and after optimization. The left panel shows the IRVE-3 default geometry ($R_N = 1.5$\,m, $r_{tor} = 0.135$\,m, $\theta_c = 60^\circ$); the right panel shows the Bayesian optimum ($R_N = 2.9714$\,m, $r_{tor} = 0.0885$\,m, $\theta_c = 40.15^\circ$). The optimized geometry reduces drag coefficient from 1.6073 to 1.5597 and total heat load from 219.10 to 155.67\,J/cm$^2$ ($-28.95\,\%$).}
     \label{fig:optimization_comparison}
     \centering
     \BeginAccSupp{method=escape,ActualText={Three-dimensional scatter plot of the design-space samples. The axes are nose radius, toroid radius, and half-cone angle. The color of each point represents the evaluated cost. The plot shows the 70-evaluation budget: 20 Latin-Hypercube initial samples followed by 50 Bayesian optimization iterations.}}%
@@ -400,14 +400,14 @@ The surrogate $J(\mathbf{x})$, built on closed-form correlations, cannot represe
 The gate runs post-optimization in five legs~\cite{kennedy2000multi}:
 \begin{enumerate}
     \item \textbf{Preconditions and geometry QA.} The compiled binary, Docker daemon, validation virtual environment, pipeline module and reference CSV are checked, then a fast \texttt{bin/main} validate-only geometry check (seconds-level runtime) runs. Failures report path and remedy; the gate exits with status 1.
-    \item \textbf{DSMC leg.} The round-1 winner is re-simulated with \texttt{bin/main} in headless validate mode (nose radius 2.989050, toroid radius 0.103301, half-cone angle 40.483513, skin scalloped, 2200 steps), writing to a dedicated directory, never overwriting the baseline reference dataset.
+    \item \textbf{DSMC leg.} The round-1 winner is re-simulated with \texttt{bin/main} in headless validate mode (nose radius 2.971440, toroid radius 0.088460, half-cone angle 40.147949, skin scalloped, 2200 steps), writing to a dedicated directory, never overwriting the baseline reference dataset.
     \item \textbf{PINN leg.} The PINN refinement pipeline runs on the fresh dataset, producing a unified comparison dataset under the gate directory.
     \item \textbf{Verdict.} The gate passes if and only if $q_{hybrid} \leq Q_{target} = 165.716$\,J/cm$^2$, and records the prediction error $(q_{hybrid} - q_{analytic})/q_{analytic}$.
     \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q_{hybrid}/\allowbreak q_{analytic},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ applies to the heat-load term of $J(\mathbf{x})$; the optimizer re-runs, producing the round-2 design.
 \end{enumerate}
 
 \subsection{Gate Result}
-The official gate execution (2026-09-26) returns \textsc{pass}. The round-1 winner's analytic prediction was $q_{analytic} = 155.21$\,J/cm$^2$; the DSMC re-simulation returned
+The official gate execution (2026-09-26) returns \textsc{pass}. The round-1 winner's analytic prediction was $q_{analytic} = 155.67$\,J/cm$^2$; the DSMC re-simulation returned
 \begin{equation}
     q_{hybrid} = 77.93\ \text{J/cm}^2 \;\leq\; Q_{target} = 165.72\ \text{J/cm}^2,
 \end{equation}
@@ -417,10 +417,10 @@ The winner passes with substantial margin, so the round-1 design is safe. The $-
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Bar chart of three measured heat loads against a dashed threshold line. The trajectory-integrated IRVE-3 flight value is 195.06 watt per square centimetre of heat load, the analytic prediction from the cost function is 155.21, and the DSMC re-simulation of the candidate geometry is 77.93. A dashed horizontal line marks the acceptance threshold of 165.72.}}%
+    \BeginAccSupp{method=escape,ActualText={Bar chart of three measured heat loads against a dashed threshold line. The trajectory-integrated IRVE-3 flight value is 195.06 watt per square centimetre of heat load, the analytic prediction from the cost function is 155.67, and the DSMC re-simulation of the candidate geometry is 77.93. A dashed horizontal line marks the acceptance threshold of 165.72.}}%
     \includegraphics[width=0.80\textwidth]{figures/fignew_gate_comparison.png}%
     \EndAccSupp{}%%
-    \caption[The three measured heat loads entering the hybrid validation gate, with the acceptance threshold shown as a reference line.]{The three measured heat loads entering the hybrid validation gate, with the acceptance threshold shown as a reference line. The flight value is largest, the round-1 analytic prediction sits below the threshold, and the DSMC re-simulation of that geometry is roughly half the prediction. The gate compares the DSMC re-simulation against the threshold, giving $c = 0.5006$.}
+    \caption[The three measured heat loads entering the hybrid validation gate.]{The three measured heat loads entering the hybrid validation gate, with the acceptance threshold shown as a reference line. The flight value is largest, the round-1 analytic prediction sits below the threshold, and the DSMC re-simulation of that geometry is roughly half the prediction. The gate compares the DSMC re-simulation against the threshold, giving $c = 0.5006$.}
     \label{fig:gate_comparison}
 \end{figure}
 \subsection{Round-2 Corrected Optimum}
@@ -447,7 +447,7 @@ This framework couples Bayesian Optimization (GP Matérn 5/2 + Expected Improvem
 This work applies Physics-Informed Neural Networks (PINNs) as post-processing for DSMC data~\cite{raissi2019pinn}. The DeepXDE-based PINN solves the 2D compressible Navier-Stokes equations by automatic differentiation, with SPARTA grid data as observational boundary conditions, giving a smooth, physics-consistent interpolant filling flow-field gaps and reducing particle noise. This hybrid approach is absent from Rapisarda's framework.
 
 \subsection{Reproducibility and Accessibility}
-This framework is open-source with a hybrid Ada/SPARK and Python architecture. The Ada/SPARK binary is the primary engine, with range-checked subtypes and run-time assertions exercised by the self-test, running through the \texttt{stellarorion\_program\_proc/run.py} front end. SPARTA runs in Docker on Linux; the Python sidecar handles PINN refinement, optimization and the native-OS GUI with hardware acceleration (CUDA, ROCm, Metal MPS). Rapisarda's framework is MATLAB-based and needs manual configuration per run.
+This framework is open-source with a hybrid Ada and Python architecture. The Ada binary is the primary engine, with range-checked subtypes and run-time assertions exercised by the self-test, running through the \texttt{stellarorion\_program\_proc/run.py} front end. SPARTA runs in Docker on Linux; the Python sidecar handles PINN refinement, optimization and the native-OS GUI with hardware acceleration (CUDA, ROCm, Metal MPS). Rapisarda's framework is MATLAB-based and needs manual configuration per run.
 
 \begin{table}[!htbp]
     \centering
@@ -465,7 +465,7 @@ This framework is open-source with a hybrid Ada/SPARK and Python architecture. T
         Design Space & 3-4 parameters & 6+ parameters with CCD + LHS sampling \\
         Optimum Verification & Not reported & Enforced DSMC re-simulation gate (PINN bypassed) with multi-fidelity correction \\
         ML/AI Component & None & PINN refinement (DeepXDE) \\
-        Reproducibility & MATLAB, manual config & Ada/SPARK + Python + Docker, fully containerized \\
+        Reproducibility & MATLAB, manual config & Ada + Python + Docker, fully containerized \\
         Knudsen Number Mapping & Not performed & Full spatial $Kn$ field mapping \\
         Grid Independence & Not reported & Automated grid factor optimization \\
         \bottomrule

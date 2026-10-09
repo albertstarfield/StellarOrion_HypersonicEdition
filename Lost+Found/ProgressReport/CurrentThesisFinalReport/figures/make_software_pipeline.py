@@ -216,7 +216,10 @@ INPUT_TEXTS = (
 # pixels over BOTH vertical borders of the engine box. Dropping the leading
 # slashes leaves the longest line at "StellarOrion_Orion" (18 chars, about
 # 1.29 in) which clears each border by about 0.05 in even at squeeze 0.82.
-ENGINE_TEXT = "Ada/SPARK Engine\nStellarOrion_Orion\ndriven by run.py\nphases 0 to 4"
+# WHY no banned verification-token here (goal rev 6 / check_prose_batch
+# BANNED list): the drawn text names the language only, never the proof
+# toolchain. Shorter line 1 also widens the right clearance inside the box.
+ENGINE_TEXT = "Ada Engine\nStellarOrion_Orion\ndriven by run.py\nphases 0 to 4"
 SOLVER_TEXTS = (
     "SPARTA\n/ DSMC Solver\n/ Docker",
     "OpenFOAM\n/ laplacianFoam\n/ (solid thermal)",
@@ -238,7 +241,7 @@ ARROW_LABEL_FEEDBACK = "Bayesian optimization\n/ feedback loop"
 
 LEGEND_ROW1 = (
     ("Input (Geometry, Conditions)", INPUT_FILL, INPUT_EDGE),
-    ("Core Engine (Ada/SPARK, run.py)", ENGINE_FILL, ENGINE_EDGE),
+    ("Core Engine (Ada, run.py)", ENGINE_FILL, ENGINE_EDGE),
 )
 LEGEND_ROW2 = (
     ("Physics Solvers (SPARTA, OpenFOAM)", SOLVER_FILL, SOLVER_EDGE),

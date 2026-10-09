@@ -388,13 +388,19 @@ def dim_equation_tags() -> None:
         starred += len(re.findall(r"\\begin\{equation\*\}", s))
         nonumber += len(re.findall(r"\\(?:nonumber|notag)\b", s))
     txt = pdf_text()
+    # METRIC BUG 2, recorded like the first one above: the original pattern was
+    # \((\d+\.\d+)\), arabic chapter numbers only. This thesis keys every
+    # counter to the roman \thechapter (preamble: "chapter itself (CHAPTER I),
+    # and every counter keyed to it - section (I.1)"), so equation tags extract
+    # as (II.54) and (D.1): the old pattern matched ONE parenthesized number in
+    # 247k characters of PDF text and reported a residual of 115 for a document
+    # whose tags are all on the page. Broadened to arabic, roman-chapter and
+    # appendix-letter tags; the source-count-versus-distinct-tags comparison is
+    # unchanged.
     seen = set()
-    for m in re.finditer(r"\((\d+\.\d+)\)", txt):
-        try:
-            seen.add(float(m.group(1)))
-        except ValueError:
-            pass
-    body = {n for n in seen if 1.0 <= n < 100.0}
+    for m in re.finditer(r"\((?:\d+\.|[IVX]+\.|[A-Z]\.)\d+\)", txt):
+        seen.add(m.group(0))
+    body = seen
     expected = numbered - nonumber
     residual = expected - len(body)
     check("eqtag/all-numbered", residual <= 5,

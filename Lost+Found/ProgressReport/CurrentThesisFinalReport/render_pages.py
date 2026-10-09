@@ -77,17 +77,21 @@ def render(pdf_path: Path, out_dir: Path, first: int = 1, last: int | None = Non
     return written
 
 
-def measure(files: list[Path]) -> dict[str, list]:
+def measure(files: list[Path], pdf_path: Path) -> dict[str, list]:
     """Measure every rendered page. Returns per-metric lists of offending pages."""
     from PIL import Image
 
     sparse: list[tuple[int, int]] = []
+    blank_versos: list[int] = []
     overflow: list[tuple[int, int]] = []
     left_over: list[tuple[int, int]] = []
     footer_clash: list[tuple[int, int]] = []
     gaps: list[int] = []
     xmins: list[int] = []
     xmaxs: list[int] = []
+
+    # Opened once for blank-notice detection on sparse pages, closed on return.
+    doc = pdfium.PdfDocument(str(pdf_path))
 
     for f in files:
         pg = int(f.stem.split("-")[1])
@@ -106,7 +110,18 @@ def measure(files: list[Path]) -> dict[str, list]:
                     if x > mx:
                         mx = x
         if ink < 3000:
-            sparse.append((pg, ink))
+            # ITB template verso pages (blank_page.tex) carry only the
+            # department's blank-page notice. They are sparse BY DESIGN, not
+            # rendering failures, so they are excluded from the near-empty
+            # list and reported separately instead.
+            page = doc[pg - 1]
+            txt = page.get_textpage().get_text_range()
+            page.close()
+            notice = " ".join(txt.split()).lower()
+            if notice == "this page is left intentionally blank":
+                blank_versos.append(pg)
+            else:
+                sparse.append((pg, ink))
         if mn < 10**9:
             xmins.append(mn)
             xmaxs.append(mx)
@@ -169,8 +184,10 @@ def measure(files: list[Path]) -> dict[str, list]:
             # has none.
             gaps.append(FOLIO_BAND_TOP - TOP_PX)
 
+    doc.close()
     return {
         "sparse": sparse,
+        "blank_versos": blank_versos,
         "overflow": overflow,
         "footer": footer_clash,
         "left_over": left_over,
@@ -197,13 +214,14 @@ def main(argv: list[str]) -> int:
     if first != 1 or last is not None:
         return 0
 
-    m = measure(files)
+    m = measure(files, pdf)
     print()
     print(f"pages measured                : {m['count']}")
     print(f"declared text block           : x = {LEFT_MARGIN_PX}..{RIGHT_EDGE_PX} "
           f"(A4, margins 4 cm / 3 cm, at {DPI} dpi)")
     print(f"measured ink x range          : {min(m['xmin'])}..{max(m['xmax'])}")
     print(f"near-empty pages (<3000 px)   : {len(m['sparse'])}  {m['sparse']}")
+    print(f"intentional blank versos (excluded): {len(m['blank_versos'])}  {m['blank_versos']}")
     print(f"margin overflows (right, >{OVERFLOW_TOLERANCE_PX}px past edge): "
           f"{len(m['overflow'])}  {m['overflow'][:12]}")
     print(f"left overhangs (>8px past edge): {len(m['left_over'])}  {m['left_over'][:12]}")

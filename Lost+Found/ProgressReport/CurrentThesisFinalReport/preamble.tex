@@ -231,6 +231,11 @@
 \renewcommand*\cftchappresnum{\MakeUppercase{chapter}~}
 \renewcommand\chaptername{CHAPTER}
 \settowidth{\cftchapnumwidth}{\cftchappresnum}
+% The measurement above covers the CHAPTER prefix only, so every TOC entry
+% whose chapter number is wider than nothing (II, III, IV, V) overflowed its
+% fixed-width box by 1.8-6.5 pt in every pass (4 overfull boxes, the boxdefects
+% audit counts). Reserve room for the widest chapter number (IV).
+\setlength{\cftchapnumwidth}{\dimexpr\cftchapnumwidth+2em}
 \renewcommand{\cftchapaftersnumb}{\quad}
 \addtocontents{toc}{
 %\renewcommand\protect*\protect\cftchappresnum{\MakeUppercase{\chaptername}~}}
@@ -247,7 +252,10 @@
 \settowidth{\mylenf}{\cftfigpresnum}
 \setlength{\cftfignumwidth}{\dimexpr\mylenf+2em}
 \settowidth{\mylenf}{\cfttabpresnum}
-\setlength{\cfttabnumwidth}{\dimexpr\mylenf+2em}
+% +2em fit "Table III.9" exactly; the two-digit numbers III.10..III.21 then
+% overflowed by one digit's width (3.98 pt each, 12 overfull boxes). +3em
+% covers every current and near-future table number with margin.
+\setlength{\cfttabnumwidth}{\dimexpr\mylenf+3em}
 \makeatletter
 
 %bikin listoftable tanpa judul, gara2 aneh
