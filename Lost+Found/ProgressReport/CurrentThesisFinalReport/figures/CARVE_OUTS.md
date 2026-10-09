@@ -67,22 +67,41 @@ from each `\includegraphics` fraction of the 5.53 in text width.
 | Figure | Effective pt | Needed width for 8 pt | Decision |
 |---|---|---|---|
 | `Hiad_DesignSpec.png` | 12.09 | 2.40 in | Kept as is |
-| `Spec0.png` | 4.03 | 6.24 in | Pending label-region check |
+| `Spec0.png` | 4.03 | 6.24 in | Carve-out (label check closed 2026-10-09) |
 | `dsmc_algorithm_flowchart.png` | 3.62 | 10.99 in | Redraw, spec queued |
 | `sutherlandfx.png` | 3.52 | 6.33 in | Carve-out |
-| `hiad_design_sensitivity.png` | 2.90 | 14.48 in | Carve-out |
+| `hiad_design_sensitivity.png` | 2.90 | 14.48 in | **Redrawn 2026-10-09** from thesis equations |
 | `RecirculationExample.jpeg` | 2.02 | 6.63 in | Carve-out |
+| `knudsen_regime_map.png` | ~2.5 (est. from page render) | > 5.5 in | Carve-out (added 2026-10-09) |
 
 Carve-out evidence:
 
-- `hiad_design_sensitivity.png`: no generator, no sensitivity data
-  anywhere in the repository (no sensitivity-named artifact outside a
-  virtualenv, `run.py` has no sensitivity feature, the only matches are
-  interactive HTML reports without plottable values). Rewidening cannot
-  help: 14.48 in would be needed against a 5.53 in text width, and the
-  panel titles and axis labels are black on a dark navy background,
-  which is invisible in print regardless of size. Regenerating would
-  require inventing the sensitivity values, which the goal forbids.
+- `hiad_design_sensitivity.png`: originally carved out because no
+  generator and no sensitivity data existed anywhere in the repository,
+  14.48 in would be needed against a 5.53 in text width, and the panel
+  titles were black on dark navy. A 2026-10-09 numeric cross-check then
+  found two content contradictions that made keeping the artwork
+  indefensible: its panel (b) plotted the nose radius as
+  R_pay/cos(theta_c) (60 deg -> about 998 mm) while the thesis states
+  R_N = R_pay/sin(theta_c) (577.4 mm, the cross-section figure's
+  R_N = 577 mm), and its panel (a) curve rose away from the 3.0 m
+  target while the caption claimed convergence, with no formula for
+  that panel anywhere in the text. Decision flipped to REDRAW:
+  `figures/make_hiad_sensitivity.py` reproduces only the two panels
+  whose equations exist in the chapter (Rapisarda Eqs. 3.4 and 3.3),
+  at documented constants (R_pay = 500 mm, r_sh = 0.0508 m from
+  stellarorion_geometry.ads, D = 3.0 m, theta_c = 60 deg, bounds from
+  Eq. design_bounds), with an asserted 8 pt print floor and a
+  "--"-free text check; the unreproducible panel (a) was dropped
+  rather than invented, and its caption claim was removed with it.
+- `knudsen_regime_map.png`: no generator anywhere in the repository
+  (added by the Lost+Found consolidation commit), labels measure about
+  2.5 pt printed at the 0.80 textwidth include (page-render estimate),
+  and widening cannot close a gap of that size. Kept as a carve-out:
+  the long caption and surrounding prose already state every number
+  the plot carries (band edges 10^-2 and 10^1, the 52 km marker, the
+  2.5e-5 global Knudsen number, the 0.01 to 0.1 shock-layer range).
+  This is the same class as the section 1 runtime field panels.
 - `sutherlandfx.png`: a scanned equation image with no source or data
   in the repository; 6.33 in would be needed against 5.53 in, so
   widening cannot reach 8 pt either.
@@ -94,9 +113,14 @@ Carve-out evidence:
   invents no data. Redraw spec tracked in `REDRAW_SPECS.md`.
 - `Hiad_DesignSpec.png`: clears 8 pt with margin at its current
   include width, so no action.
-- `Spec0.png`: the `T7` label renders about half the size of the
-  `T1` to `T6` labels and some left-edge labels are clipped; a
-  surgical image fix or redraw decision remains open.
+- `Spec0.png`: the label-region check of 2026-10-09 confirmed exactly
+  two callout labels are truncated, both on the left (the flexible TPS
+  callout and a two-line material/structure callout); the right edge
+  loses no text and the `T7` marker is fully inside the image. The
+  caption that claimed a clipped `T7` marker was corrected to match.
+  The `T7` label still renders about half the size of `T1` to `T6`,
+  and no higher-resolution copy exists, so the figure stays a
+  carve-out with its caption and alt text carrying the content.
 
 ## 5. Dead artwork inventory and removal (evidence from `audit_artifacts.py`)
 

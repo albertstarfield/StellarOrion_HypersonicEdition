@@ -176,11 +176,11 @@ The ``scalloped'' outer mould line (OML) follows the 6-toroid stack configuratio
 
 \begin{figure}[!htbp]
     \centering
-    % Spec0.png (642x444 px) is cropped at both edges, truncating two callout labels; no better copy exists, so the alt text and caption describe only what is legible.
+    % Spec0.png (642x444 px) is cropped on its left edge, truncating two callout labels there (the right edge loses no text); no better copy exists, so the alt text and caption describe only what is legible.
     \BeginAccSupp{method=escape,ActualText={Cutaway cross-section of the deployed HIAD, 3 metres or 118 inches in diameter, showing the vehicle's internal subsystems. A central cylindrical equipment stack sits above the nose; callout arrows from the right label, from top to bottom, the cameras mounted on the upper struts, the attitude control system abbreviated ACS, the telemetry and power system, the center-of-gravity offset system, and the inflation system. Below the stack a row of seven orange toroidal bladders runs the length of the vehicle, labelled T1 through T6 along the right-hand side with a seventh, smaller shoulder torus T7 at the far right end. The bladders rest against a pink flexible thermal protection layer, and the payload is carried in the central cavity. Two callout labels on the left-hand side are cut off by the edge of the source image and are only partially legible.}}%
 \includegraphics[width=0.568\textwidth]{figures/Spec0.png}%
 \EndAccSupp{}%
-    \caption[Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface.]{Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface. The six primary bladders T1-T6 are stacked along the vehicle axis with the smaller shoulder torus T7 at the aft end. Note that the source illustration is cropped at both left and right edges, which truncates two of its own callout labels (the flexible TPS callout and the T7 marker); the reproduction is faithful to the available source, which exists in no higher resolution elsewhere in the repository.}
+    \caption[Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface.]{Internal structural layout of the HIAD vehicle showing the toroid stack that creates the scalloped surface. The six primary bladders T1-T6 are stacked along the vehicle axis with the smaller shoulder torus T7 at the aft end. Note that the source illustration is cropped on its left edge, which truncates two of its own callout labels there (the flexible TPS callout and a two-line material/structure callout whose text is only partially legible); the reproduction is faithful to the available source, which exists in no higher resolution elsewhere in the repository.}
     \label{fig:irve3_layout}
 \end{figure}
 
@@ -217,7 +217,7 @@ The two configurations, \textbf{Configuration A (Scalloped)} and \textbf{Configu
 \label{sec:dsmc_framework}
 
 \subsection{Governing Equations: The Boltzmann Equation}
-Unlike continuum CFD, this study uses the Direct Simulation Monte Carlo (DSMC) method, which solves the Boltzmann equation~\cite{bird1994molecular} for the molecular velocity distribution function $f(\mathbf{r}, \mathbf{v}, t)$:
+Unlike the continuum regime, the rarefied shock layer of this study is simulated with the Direct Simulation Monte Carlo (DSMC) method, which solves the Boltzmann equation~\cite{bird1994molecular} for the molecular velocity distribution function $f(\mathbf{r}, \mathbf{v}, t)$; the compressible Navier-Stokes equations are not discarded but enter as the $Kn \to 0$ Chapman-Enskog limit of the same equation (derived above) and as the PDE constraint enforced by the PINN surrogate (below):
 
 \begin{equation}
     \frac{\partial f}{\partial t} + \mathbf{v} \cdot \nabla_{\mathbf{r}} f + \frac{\mathbf{F}}{m} \cdot \nabla_{\mathbf{v}} f = \left(\frac{\partial f}{\partial t}\right)_{coll}
@@ -634,14 +634,14 @@ The SPARTA to PINN checkpoint exchange:
 \label{sec:kriging_denoise}
 The SPARTA grid dump contains cell-centered macroscopic quantities with statistical noise from the finite number of simulated particles. Before the data enters the PINN training pipeline, a kriging denoising step smooths the particle noise while preserving the physical gradients. The kriging denoising uses a Gaussian process with a Mat\'ern 5/2 kernel to interpolate the noisy cell values onto a regular grid, effectively averaging out the statistical fluctuations.
 
-Figure~\ref{fig:kriging_denoise} shows the kriging denoising applied to the SPARTA cell field at pipeline step 500. The top row shows the raw SPARTA output for density $\rho$, temperature $T$, velocity $v$, and pressure $p$. The bottom row shows the kriged output for the same quantities. The kriging denoising reduces cell-to-cell noise while preserving the shock structure and boundary-layer gradients.
+Figure~\ref{fig:kriging_denoise} shows the kriging denoising applied to the SPARTA cell field at pipeline step 500~\cite{rasmussen2003}. The figure holds four rows, one per field, with the raw SPARTA output on the left and the kriged output on the right: density $\rho$, temperature $T$, and the velocity components $v_x$ and $v_y$. The two panels of a row share one color bar and one color key taken from the raw panel, so the kriged state is read against the same scale. The kriging denoising reduces cell-to-cell noise while preserving the shock structure and boundary-layer gradients.
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Two-row panel showing kriging denoising of the SPARTA cell field. The top row shows raw SPARTA output for density, temperature, velocity, and pressure. The bottom row shows the kriged output for the same quantities. The kriging denoising reduces cell-to-cell noise while preserving shock structure and boundary-layer gradients.}}%
+    \BeginAccSupp{method=escape,ActualText={Four-row panel showing kriging denoising of the SPARTA cell field. Each row holds one field, with the raw output on the left and the kriged output on the right: density, temperature, and the two velocity components. The two panels of a row share one color bar, and the kriged panel reuses the raw color limits so the two states compare directly. The kriging denoising reduces cell-to-cell noise while preserving shock structure and boundary-layer gradients.}}%
     \includegraphics[width=\textwidth]{figures/kriging_denoise.png}%
     \EndAccSupp{}%
-    \caption[Kriging denoising of the SPARTA cell field at pipeline step 500.]{Kriging denoising of the SPARTA cell field at pipeline step 500. The top row shows raw SPARTA output for density $\rho$, temperature $T$, velocity $v$, and pressure $p$. The bottom row shows the kriged output. The kriging denoising reduces cell-to-cell noise while preserving shock structure and boundary-layer gradients.}
+    \caption[Kriging denoising of the SPARTA cell field at pipeline step 500.]{Kriging denoising of the SPARTA cell field at pipeline step 500. Each row shows one field, raw output on the left and kriged output on the right: density $\rho$, temperature $T$, and the velocity components $v_x$ and $v_y$, with one color bar shared per row and the kriged panel reusing the raw color limits. The kriging denoising reduces cell-to-cell noise while preserving shock structure and boundary-layer gradients.}
     \label{fig:kriging_denoise}
 \end{figure}
 

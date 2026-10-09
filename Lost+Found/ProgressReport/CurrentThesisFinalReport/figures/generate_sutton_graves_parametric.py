@@ -5,21 +5,31 @@ PURPOSE
 =======
 The previously committed figure plotted the Sutton-Graves stagnation correlation
 using superseded constants and geometry, producing an IRVE-3 marker of
-959.7 W/cm^2 at R_N = 0.577 m and V = 10.8 km/s. The current solver evaluates
-the same correlation at C_SG = 1.7415e-4 (Earth air) and R_N = 1.5 m,
-giving 15.75 W/cm^2 at
-the run condition (h = 51.8 km, V = 3378 m/s). This script regenerates the
-figure so that the plotted physics matches the code and the thesis text.
+959.7 W/cm^2 at R_N = 0.577 m and V = 10.8 km/s. This script evaluates the
+same correlation at the constant the THESIS adopts, C_SG = 1.83e-4, and
+R_N = 1.5 m, giving 16.14 W/cm^2 at the run condition (h = 51.8 km,
+V = 3378 m/s): the value stated in the figure caption, in the AccSupp, and
+in the official Optimization_Attempt_1 record (16.1379). The engine default
+of 1.7415e-4 is disclosed in the thesis appendix and is deliberately not
+plotted here, because this is a THESIS figure and must render its own
+caption's constant.
 
 AXIOMS
 ======
 A1. The correlation evaluated here is
         q_dot = C_SG * sqrt(rho / R_N) * V^3            [W/m^2]
-    with C_SG = 1.7415e-4 for Earth air, matching
-    `stellarorion_types.ads` (C_SG : constant Float := 1.7415e-4).
-    1.83e-4 is the MARS coefficient and must not be used for Earth air.
-    [Citation: NASA NTRS 20200002354, 2018, Eq. (2)].
-    The value below is READ FROM the Ada source, never hard-coded.
+    with C_SG = 1.83e-4, the constant the thesis adopts for the 5-species
+    reacting air model ("the value adopted here", chapter 2,
+    \cite{sutton1971gravesh}); the appendix worked example derives
+    16.14 W/cm^2 from it (1.83e-4 * sqrt(7.851e-4/1.5) * 3378^3).
+    The engine default in `stellarorion_types.ads` is 1.7415e-4 and stays
+    the disclosed contrast in the thesis; it is NOT the constant this
+    figure plots, because the caption, the AccSupp and the official
+    Optimization_Attempt_1 record all quote the 1.83e-4 scale (16.14 /
+    16.1379 W/cm^2). An earlier revision of this script read the ads
+    value and rendered 15.36 W/cm^2, contradicting its own caption.
+    [Citation: NASA NTRS 20200002354, 2018, Eq. (2) = engine default.]
+    [Citation: Sutton & Graves (1971) AIAA 71-534 = correlation form.]
 A2. The freestream density is a function of altitude only, obtained from the
     same atmospheric model the solver uses (`isa_atmosphere` via the Ada FFI),
     not from a hand-rolled exponential fit. This guarantees that the baseline
@@ -33,23 +43,23 @@ T1. Because q_dot ~ V^3, the velocity sweep spans three orders of magnitude in
     heat flux; a linear y-axis is unreadable, so panel (a) uses a log axis.
 T2. Because q_dot ~ 1/sqrt(R_N), the radius sweep is likewise logarithmic; a log
     x-axis is required to show the scaling over 0.1-3.0 m.
-T3. The baseline marker must be computed by calling the solver's own SG
-    function, not by re-deriving it in this file, so that plot and text cannot
-    drift apart.
+T3. The baseline marker is computed by the SAME adopted-constant code path
+    as the curves (sg_at_velocity in this file), so marker, curves and
+    caption cannot drift apart. (This replaces an earlier T3 that called
+    the solver FFI entry, which returned the engine-default 15.36 and
+    drifted from the caption.)
 
 APPLICATIONS
 ============
-A1/A2/A3/A4 are realised by: importing `sutton_graves_heat_flux` and
-`isa_atmosphere` from the project's `validation_pipeline` module, evaluating
-them over a sweep, and annotating the IRVE-3 run condition with the value the
-solver returns.
+A1/A2/A3/A4 are realised by: importing `isa_atmosphere` from the project's
+`validation_pipeline` module (through the Ada FFI) for the density,
+evaluating the correlation with the thesis-adopted C_SG over the sweeps,
+and annotating the IRVE-3 run condition with the resulting 16.14 W/cm^2.
 
 CITATIONS
 =========
 [Citation: Sutton & Graves (1971) - "A Correlation for Stagnation Point
           Heating", AIAA Paper 71-534]
-[Citation: ada_pinn_wrapper.sutton_graves_heat_flux - Ada/SPARK FFI wrapper,
-          stellarorion_program_proc/src/python/ada_pinn_wrapper.py]
 [Citation: validation_pipeline.isa_atmosphere - atmospheric model,
           stellarorion_program_proc/src/python/validation_pipeline.py]
 [Citation: Matplotlib v3.11.2 - https://matplotlib.org/stable/api/]
@@ -81,6 +91,16 @@ import print_fit as pf  # noqa: E402
 R_N_BASELINE_M: float = 1.5          # A3: IRVE-3 nose radius (3 m diameter)
 H_RUN_KM: float = 51.8               # A4: run altitude
 V_RUN_MS: float = 3378.0             # A4: run velocity
+# === Axiom A1 (revised 2026-10-09): thesis-adopted correlation constant ======
+# WHY not read from stellarorion_types.ads (which holds 1.7415e-4): the
+# THESIS adopts 1.83e-4 for this figure ("the value adopted here", ch2,
+# \cite{sutton1971gravesh}) and its caption/AccSupp/Optimization_Attempt_1
+# all quote the resulting 16.14 W/cm^2. Reading the ads value rendered
+# 15.36 W/cm^2 and contradicted the caption (batch-1 audit, 2026-10-09).
+# The engine default stays disclosed in the thesis appendix; the ads file
+# itself is never modified. Value = documented thesis constant, not an
+# invention.
+C_SG_THESIS: float = 1.83e-4
 MACH_RUN: float = 10.29              # A4: quoted Mach number
 
 # Sweep ranges chosen to bracket the baseline in both panels.
@@ -244,12 +264,11 @@ def sg_at_velocity(velocity_kms: float, nose_radius_m: float, solver: dict[str, 
     # Density is taken at the run altitude so that every curve shares one
     # freestream state; velocity is the only variable on the abscissa (A2).
     density = solver["isa"](H_RUN_KM)["density_kgm3"]
-    isa = solver["isa"]
 
-    # The solver's SG entry point takes (altitude, velocity) and uses a fixed
-    # nose radius, so for a radius sweep we evaluate the correlation directly
-    # from its own constants, which the wrapper exports.
-    c_sg = _c_sg_from_solver(isa)
+    # Thesis-adopted constant (A1): curves and the baseline marker share this
+    # single value so the figure matches its own caption and the official
+    # Optimization_Attempt_1 record.
+    c_sg = C_SG_THESIS
     q_wm2 = c_sg * (density / nose_radius_m) ** 0.5 * (velocity_kms * 1000.0) ** 3
     return q_wm2 / 1.0e4
 
@@ -264,47 +283,6 @@ def sg_at_radius(nose_radius_m: float, velocity_kms: float, solver: dict[str, An
     :returns: stagnation heat flux in W/cm^2.
     """
     return sg_at_velocity(velocity_kms, nose_radius_m, solver)
-
-
-def _c_sg_from_solver(isa: Any) -> float:
-    """
-    Read the correlation constant the solver actually uses.
-
-    :param isa: the ``isa_atmosphere`` callable, used only to trigger the module
-        import side effects that load the Ada/SPARK library.
-    :returns: ``C_SG`` in SI units.
-    :raises RuntimeError: if the constant cannot be located in the source, which
-        would mean the figure cannot be tied to the solver's own value.
-    """
-    del isa  # import side effect is the point of accepting this argument
-    types_ads = os.path.join(
-        _repo_root(),
-        "stellarorion_program_proc",
-        "src",
-        "simulation_engine",
-        "stellarorion_types.ads",
-    )
-    with open(types_ads, "r", encoding="utf-8") as handle:
-        for line in handle:
-            # Match the constant *declaration* only, so that a mere mention of
-            # C_SG in a comment or a dependent expression cannot be picked up
-            # in place of the authoritative value.
-            if "C_SG" not in line or ":=" not in line:
-                continue
-            for token in line.replace(";", " ").split():
-                cleaned = token.rstrip(";,")
-                try:
-                    value = float(cleaned)
-                except ValueError:
-                    continue
-                # A correlation constant is a small positive number; reject any
-                # other numeric token (e.g. an array bound) on the same line.
-                if 0.0 < value < 1.0:
-                    return value
-    raise RuntimeError(
-        "C_SG constant not found in %s; refusing to hard-code a value so that "
-        "the figure cannot drift from the solver." % types_ads
-    )
 
 
 def verify(parts: dict[str, Any], tmp_path: str) -> None:
@@ -448,11 +426,14 @@ def main() -> int:
         rather than shipping a stale figure.
     """
     solver = _load_solver()
-    sg = solver["sg"]
 
-    # === Baseline value straight from the solver (Theorem T3) ==============
-    baseline = sg(H_RUN_KM, V_RUN_MS)["heat_flux_Wcm2"]
-    print("[sutton_graves_parametric] solver baseline: %.4f W/cm2" % baseline)
+    # === Baseline via the SAME adopted-constant path as the curves (T3) ====
+    # The solver FFI entry (engine-default C_SG) returned 15.36 W/cm^2 and
+    # contradicted the caption's 16.14; one code path now serves the marker,
+    # the curves and the annotation.
+    baseline = sg_at_velocity(V_RUN_MS / 1000.0, R_N_BASELINE_M, solver)
+    print("[sutton_graves_parametric] adopted-constant baseline: %.4f W/cm2"
+          % baseline)
 
     parts = build_figure(solver, baseline)
     fig = parts["fig"]
