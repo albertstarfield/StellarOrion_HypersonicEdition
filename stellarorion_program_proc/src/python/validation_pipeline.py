@@ -45,8 +45,8 @@ import numpy as np
 try:
     from _tex_config import setup_tex_fonts as _setup_tex
     _setup_tex()
-except Exception:
-    pass  # _tex_config not available — use default fonts
+except Exception:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
+    print("[validation_pipeline] _tex_config unavailable; using default fonts")
 
 # Auto-install dependencies if missing (per project constraints: auto-install)
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -56,14 +56,13 @@ if _HERE not in sys.path:
 # Ada/SPARK physics wrapper — all physics calculated in Ada, Python is library wrapper only
 # [Citation: NASA SP-7468 (1976), Sutton & Graves (1972), NASA TP-2013-4012]
 try:
-    from ada_pinn_wrapper import isa_atmosphere as _ada_isa
-    from ada_pinn_wrapper import irve3_trajectory_model as _ada_trajectory
-    from ada_pinn_wrapper import sutton_graves_heat_flux as _ada_sg
     from ada_pinn_wrapper import drag_force as _ada_drag
-    from ada_pinn_wrapper import g_load as _ada_gload
     from ada_pinn_wrapper import dynamic_pressure as _ada_dynq
+    from ada_pinn_wrapper import g_load as _ada_gload
+    from ada_pinn_wrapper import irve3_trajectory_model as _ada_trajectory
+    from ada_pinn_wrapper import isa_atmosphere as _ada_isa
     from ada_pinn_wrapper import mean_free_path_viscous as _ada_mfp
-    from ada_pinn_wrapper import radiative_eq_temp as _ada_radiative_temp
+    from ada_pinn_wrapper import sutton_graves_heat_flux as _ada_sg
     from ada_pinn_wrapper import tps_conduction as _ada_tps_conduction
     _ADA_PHYSICS_AVAILABLE = True
     print("[validation_pipeline] Ada/SPARK physics library loaded — all physics via Ada FFI")
@@ -174,7 +173,7 @@ class CyclicLogMonitor:
             self._check_count += 1
             try:
                 self._do_check()
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
                 print(f"  [Monitor] Check #{self._check_count} failed: {exc}")
 
             # Wait for next interval or stop signal
@@ -230,7 +229,7 @@ class CyclicLogMonitor:
                 # macOS: ps -o rss= gives RSS in KB
                 result = subprocess.run(
                     ["ps", "-o", "rss=", "-p", str(pid)],
-                    capture_output=True, text=True, timeout=5
+                    capture_output=True, text=True, timeout=5, check=False
                 )
                 if result.returncode == 0:
                     rss_kb = int(result.stdout.strip())
@@ -247,7 +246,7 @@ class CyclicLogMonitor:
                             rss_mb = rss_kb / 1024
                             print(f"  [Monitor] Python PID {pid}: RSS = {rss_mb:.1f} MB")
                             break
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
             print(f"  [Monitor] Python memory check failed: {exc}")
 
     def _check_container_status(self):
@@ -264,7 +263,7 @@ class CyclicLogMonitor:
             if shutil.which("docker"):
                 result = subprocess.run(
                     ["docker", "ps", "--format", "table {{.Names}}\t{{.Status}}\t{{.Image}}"],
-                    capture_output=True, text=True, timeout=10
+                    capture_output=True, text=True, timeout=10, check=False
                 )
                 if result.returncode == 0:
                     lines = result.stdout.strip().splitlines()
@@ -283,11 +282,11 @@ class CyclicLogMonitor:
             if shutil.which("colima"):
                 result = subprocess.run(
                     ["colima", "status"],
-                    capture_output=True, text=True, timeout=10
+                    capture_output=True, text=True, timeout=10, check=False
                 )
                 status = result.stdout.strip() if result.returncode == 0 else "unknown"
                 print(f"  [Monitor] Colima: {status}")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
             print(f"  [Monitor] Container check failed: {exc}")
 
     def _check_disk_usage(self):
@@ -303,7 +302,7 @@ class CyclicLogMonitor:
             if out_dir is not None and os.path.isdir(out_dir):
                 result = subprocess.run(
                     ["du", "-sh", out_dir],
-                    capture_output=True, text=True, timeout=10
+                    capture_output=True, text=True, timeout=10, check=False
                 )
                 if result.returncode == 0:
                     size = result.stdout.strip().split()[0]
@@ -312,7 +311,7 @@ class CyclicLogMonitor:
                 # Also check parent filesystem free space
                 result_df = subprocess.run(
                     ["df", "-h", out_dir],
-                    capture_output=True, text=True, timeout=10
+                    capture_output=True, text=True, timeout=10, check=False
                 )
                 if result_df.returncode == 0:
                     lines = result_df.stdout.strip().splitlines()
@@ -321,7 +320,7 @@ class CyclicLogMonitor:
                         # columns: Filesystem, Size, Used, Avail, Use%, Mounted
                         if len(parts) >= 4:
                             print(f"  [Monitor] Disk free: {parts[3]} ({parts[4]} used) on {parts[5]}")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
             print(f"  [Monitor] Disk check failed: {exc}")
 
     def _check_ada_logs(self):
@@ -377,12 +376,12 @@ class CyclicLogMonitor:
                             print(f"    [INFO] {len(warnings)} warning(s) in last 10 lines")
                             for w in warnings[:2]:
                                 print(f"      {w[:120]}")
-                    except Exception:
+                    except Exception:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
                         print(f"  [Monitor] Ada log ({os.path.basename(log_dir)}): {size_kb:.0f} KB (unreadable)")
 
             if found_logs == 0:
                 print("  [Monitor] Ada logs: no run_output.log found (simulation may not have run yet)")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
             print(f"  [Monitor] Ada log check failed: {exc}")
 
     def _check_pinn_state(self):
@@ -405,7 +404,7 @@ class CyclicLogMonitor:
                     print(f"    {metric}: val={val:.2f}, method={method}, loss={loss:.4e}")
             else:
                 print("  [Monitor] PINN training: not yet started")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
             print(f"  [Monitor] PINN state check failed: {exc}")
 
 
@@ -864,8 +863,8 @@ def load_convergence_data(csv_path: str) -> dict[str, Any]:
         )
 
     # Convert to numpy arrays for convenience
-    for k in data:
-        data[k] = np.array(data[k], dtype=np.float64)
+    for k, v in data.items():
+        data[k] = np.array(v, dtype=np.float64)
 
     return data
 
@@ -910,14 +909,20 @@ def kernel_hyperparameters(kernel: object) -> dict[str, float]:
     stack: list[object] = [kernel]
     while stack:
         node = stack.pop()
+        #  sklearn's kernel classes expose constant_value / length_scale /
+        #  noise_level / k1 / k2 at runtime but not in their type stubs, so
+        #  pyrefly rejects direct access and ruff (B009) rejects getattr with a
+        #  constant name.  Casting the node to Any satisfies both gates while
+        #  keeping identical runtime behaviour.
+        node_any = cast(Any, node)
         if isinstance(node, ConstantKernel):
-            found["constant"] = float(node.constant_value)
+            found["constant"] = float(node_any.constant_value)
         elif isinstance(node, Matern):
-            found["length_scale"] = float(node.length_scale)
+            found["length_scale"] = float(node_any.length_scale)
         elif isinstance(node, WhiteKernel):
-            found["noise_level"] = float(node.noise_level)
+            found["noise_level"] = float(node_any.noise_level)
         elif isinstance(node, (Sum, Product)):
-            stack.extend([node.k1, node.k2])
+            stack.extend([node_any.k1, node_any.k2])
     missing = {"constant", "length_scale", "noise_level"} - set(found)
     if missing:
         raise KeyError(
@@ -990,7 +995,7 @@ def kriging_denoise_convergence(
     # narrows to exactly that shape and adds no assertion or suppression.
     # [Reference: sklearn GaussianProcessRegressor.predict
     #  https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html]
-    denoised, std = cast(
+    denoised, _std = cast(
         "tuple[np.ndarray, np.ndarray]",
         gp.predict(X, return_std=True),
     )
@@ -1057,8 +1062,8 @@ def pinn_extrapolate_convergence(
     Returns: dict with 'extrapolated_value', 'train_loss', 'convergence_history'
     """
     try:
-        import deepxde as dde  # noqa: F401
-        import torch  # noqa: F401
+        import deepxde as dde
+        import torch
     except ImportError as exc:
         print(f"[validation_pipeline] DeepXDE/torch import failed: {exc}")
         print("[validation_pipeline] Falling back to GP extrapolation ...")
@@ -1084,14 +1089,14 @@ def pinn_extrapolate_convergence(
         # Set PyTorch default device — DeepXDE will use this automatically
         torch.set_default_device(device)
         if device == "mps":
-            print(f"    [GPU] Auto-detected: Apple Metal (MPS)")
+            print("    [GPU] Auto-detected: Apple Metal (MPS)")
         elif device == "cuda":
             print(f"    [GPU] Auto-detected: NVIDIA CUDA — {torch.cuda.get_device_name(0)}")
         elif device == "xpu":
-            print(f"    [GPU] Auto-detected: Intel OneAPI/XPU")
+            print("    [GPU] Auto-detected: Intel OneAPI/XPU")
     else:
         device = "cpu"
-        print(f"    [CPU] No GPU found — using CPU")
+        print("    [CPU] No GPU found — using CPU")
 
     # Normalize step range for better PINN training
     step_min = float(steps.min())
@@ -1158,7 +1163,7 @@ def pinn_extrapolate_convergence(
     model.compile("adam", lr=1e-3)
 
     # Train
-    loss_history, train_state = model.train(iterations=iterations, display_every=1000)
+    loss_history, _train_state = model.train(iterations=iterations, display_every=1000)
 
     # Predict at target step (normalized)
     # DeepXDE 1.15.0 with PyTorch backend may return tensors — must use .detach().cpu().numpy()
@@ -1284,7 +1289,7 @@ def compute_convergence_audit(
         # Denoised change (physical trend)
         denoised_change = denoised_diffs[i]
         # Noise component at this step
-        noise_component = raw_change - denoised_change
+        raw_change - denoised_change
 
         if raw_change > 0 and denoised_change <= 0:
             # Raw metric increased but denoised trend is flat/decreasing → noise-driven fall
@@ -1618,7 +1623,7 @@ def pinn_extrapolate_per_step(
             now_sg = sutton_graves_heat_flux(traj_alt, traj_vel)
             now_sg_wcm2 = now_sg["heat_flux_Wcm2"]
             # Dynamic pressure via Ada/SPARK 2014 FFI
-            now_dyn_q = _ada_dynq(isa_atmosphere(traj_alt)["density_kgm3"], traj_vel)
+            _ada_dynq(isa_atmosphere(traj_alt)["density_kgm3"], traj_vel)
 
             if metric in ("heatflux_avg_Wm2", "heatflux_max_Wm2"):
                 # Heat flux: always use Sutton-Graves from Ada backbone
@@ -1838,7 +1843,6 @@ def generate_multi_metric_convergence_plot(
     IRVE3_MASS_KG    = 281.0
     IRVE3_DIAMETER_M = 3.0
     IRVE3_CD         = 1.4625
-    G0 = 9.80665
     _pi = 3.141592653589793
     _frontal_area = _pi * (IRVE3_DIAMETER_M * 0.5) ** 2
 
@@ -1928,7 +1932,7 @@ def generate_multi_metric_convergence_plot(
 
         # PINN portion
         _has_pinn = bool(pinn_curve) and key in pinn_curve.get("metrics", {})
-        if _has_pinn:
+        if _has_pinn and pinn_curve is not None:
             pinn_steps = pinn_curve["steps"]
             pinn_vals = pinn_curve["metrics"][key]
             ax.plot(pinn_steps, pinn_vals, "r--", linewidth=2.0, label="PINN Extrapolation", alpha=0.8)
@@ -1957,10 +1961,10 @@ def generate_multi_metric_convergence_plot(
         #  40 km) is the 3.0e8 horizon on the right.
         ax.set_xscale("log")
         _xmin = float(np.min(dsmc_steps))
-        if _has_pinn:
+        if _has_pinn and pinn_curve is not None:
             _xmin = min(_xmin, float(np.min(pinn_curve["steps"])))
         _xmax = float(np.max(dsmc_steps))
-        if _has_pinn:
+        if _has_pinn and pinn_curve is not None:
             _xmax = max(_xmax, float(np.max(pinn_curve["steps"])))
         # Guard: log needs strictly positive limits.
         _xmin = max(_xmin, 1.0)
@@ -1987,8 +1991,8 @@ def generate_multi_metric_convergence_plot(
                     f"Kn <= {KN_FLOOR:.0e} handoff\nstep {_regime_step:,.0f}",
                     transform=ax.get_xaxis_transform(), color="darkgreen",
                     fontsize=7, va="center", ha="right", zorder=22,
-                    bbox=dict(facecolor="white", alpha=0.8, edgecolor="0.6",
-                              linewidth=0.5, pad=2.0))
+                    bbox={"facecolor": "white", "alpha": 0.8, "edgecolor": "0.6",
+                              "linewidth": 0.5, "pad": 2.0})
 
         #  State plainly when a metric has no PINN counterpart, so an absent
         #  red curve reads as "not fitted" rather than "fitted and invisible".
@@ -2026,7 +2030,7 @@ def generate_multi_metric_convergence_plot(
     plot_path = os.path.join(plots_dir, "convergence_multi_metric_dual_axis.png")
     fig.savefig(plot_path, dpi=200, bbox_inches="tight")
     plt.close(fig)
-    print(f"[pipeline] Generated: plots/convergence_multi_metric_dual_axis.png")
+    print("[pipeline] Generated: plots/convergence_multi_metric_dual_axis.png")
     return plot_path
 
 
@@ -2101,7 +2105,6 @@ def generate_per_step_csv(
         IRVE3_MASS_KG    = 281.0
         IRVE3_DIAMETER_M = 3.0
         IRVE3_CD         = 1.4625
-        IRVE3_NOSE_R_M   = 1.5
         for i, s in enumerate(data["steps"]):
             alt_i = float(data["alt_km"][i])
             vel_i = float(data["vel_ms"][i])
@@ -2178,24 +2181,30 @@ def generate_per_step_csv(
                 re = (isa["density_kgm3"] * vel * char_length_m /
                       isa["dynamic_viscosity_Pas"]) if isa["dynamic_viscosity_Pas"] > 0 else 0.0
 
-                # Get PINN metric values
-                hf_avg = pinn_curve["metrics"].get("heatflux_avg_Wm2",
-                        np.zeros(len(pinn_curve["steps"])))[i]
-                hf_max = pinn_curve["metrics"].get("heatflux_max_Wm2",
-                        np.zeros(len(pinn_curve["steps"])))[i]
-                drag = pinn_curve["metrics"].get("drag_sum_N",
-                        np.zeros(len(pinn_curve["steps"])))[i]
-                lift = pinn_curve["metrics"].get("lift_sum_N",
-                        np.zeros(len(pinn_curve["steps"])))[i]
-                gload = pinn_curve["metrics"].get("g_load",
-                        np.zeros(len(pinn_curve["steps"])))[i]
+                #  FIX (2026-10-08): these eight metrics used to be read as
+                #  CONSTANTS from the per-metric extrapolation dict
+                #  (`converged_mean`, or a Kriging fallback), so every metric
+                #  stayed FLAT across 2200 -> 300,000,000 while altitude ran
+                #  ~51 -> 40 km.  A flat heat flux / drag / g-load along a
+                #  descending trajectory is not physical.  Evaluate them from the
+                #  SAME physics the DSMC portion uses, at THIS row's own
+                #  (alt, vel): Sutton-Graves for the flux, the Ada/SPARK drag and
+                #  g-load at this density/velocity, ISA for the ambient state.
+                #  `pinn_extrapolate_per_step` anchors the first row on the CSV's
+                #  DSMC end condition, so the trajectory stays continuous at the
+                #  handoff instead of jumping.
+                drag = _ada_drag(isa["density_kgm3"], vel,
+                                 IRVE3_CD, IRVE3_DIAMETER_M)
+                gload = _ada_gload(drag, IRVE3_MASS_KG)
+                hf_avg = sg["heat_flux_Wcm2"] * 10000.0
+                hf_max = hf_avg  # stagnation point is the maximum
+                contact_time = IRVE3_DIAMETER_M / max(vel, 1.0)
+                hload = sg["heat_flux_Wcm2"] * contact_time
+                hsum = sg["heat_flux_Wcm2"] * 10000.0 * contact_time
+                lift = 0.0  # symmetric vehicle, fixed geometry
                 cd_val = pinn_curve["metrics"].get("cd",
                         np.zeros(len(pinn_curve["steps"])))[i]
                 cl_val = data["cl"][-1] if len(data["cl"]) > 0 else 0.0  # Use final DSMC CL
-                hload = pinn_curve["metrics"].get("heat_load_jcm2",
-                        np.zeros(len(pinn_curve["steps"])))[i]
-                hsum = pinn_curve["metrics"].get("heat_sum_Wm2",
-                        np.zeros(len(pinn_curve["steps"])))[i]
 
                 vals = [
                     f"{int(s)}",
@@ -2259,7 +2268,7 @@ def generate_dsmc_pinn_switch_markdown(
     # IRVE-3 reference values
     #  (F) NASA/TP-2013-4012 = 13.8 W/cm². The old comment here said 14.36,
     #  which is the (R) Rapisarda value -- F19. Read the key, don't restate it.
-    irve3_qmax = IRVE3_REFERENCE["peak_heat_flux_wcm2"]     # 13.8 W/cm² (NASA/TP)
+    IRVE3_REFERENCE["peak_heat_flux_wcm2"]     # 13.8 W/cm² (NASA/TP)
 
     # DSMC final values (at step 2200, 51.8 km)
     dsmc_hf_avg_final = float(data["heatflux_avg_Wm2"][-1]) / 10000.0  # W/cm²
@@ -2275,8 +2284,8 @@ def generate_dsmc_pinn_switch_markdown(
     md_lines.append("")
     md_lines.append("### Overview")
     md_lines.append("")
-    md_lines.append(f"At step 2200, the simulation transitions from **particle-based DSMC** (SPARTA)")
-    md_lines.append(f"to **physics-informed neural network** (PINN) extrapolation, continuing to")
+    md_lines.append("At step 2200, the simulation transitions from **particle-based DSMC** (SPARTA)")
+    md_lines.append("to **physics-informed neural network** (PINN) extrapolation, continuing to")
     md_lines.append(f"step {target_step:,} (equivalent to ~300 seconds of simulated time).")
     md_lines.append("")
     md_lines.append("The virtual simulation follows the **IRVE-3 reentry trajectory** from")
@@ -2287,10 +2296,10 @@ def generate_dsmc_pinn_switch_markdown(
     md_lines.append("")
     md_lines.append("| Parameter | Entry Interface (120 km) | Peak Heating (55 km) | Peak Deceleration (40 km) |")
     md_lines.append("|:---|---:|---:|---:|")
-    md_lines.append(f"| Altitude [km / ft] | 120.0 | 55.0 | 40.0 |")
-    md_lines.append(f"| Velocity [m/s] | 4,300 | ~3,200 | 2,700 |")
-    md_lines.append(f"| Mach Number | ~14.5 | ~10.5 | ~8.5 |")
-    md_lines.append(f"| ISA Density [kg/m³] | 2.22e-02 | 7.40e-04 | 1.03e-03 |")
+    md_lines.append("| Altitude [km / ft] | 120.0 | 55.0 | 40.0 |")
+    md_lines.append("| Velocity [m/s] | 4,300 | ~3,200 | 2,700 |")
+    md_lines.append("| Mach Number | ~14.5 | ~10.5 | ~8.5 |")
+    md_lines.append("| ISA Density [kg/m³] | 2.22e-02 | 7.40e-04 | 1.03e-03 |")
     md_lines.append(f"| Sutton-Graves [W/cm²] | {sutton_graves_heat_flux(120.0, 4300.0)['heat_flux_Wcm2']:.4f} | "
                      f"{sutton_graves_heat_flux(55.0, 3200.0)['heat_flux_Wcm2']:.4f} | "
                      f"{sutton_graves_heat_flux(50.0, 2700.0)['heat_flux_Wcm2']:.4f} |")
@@ -2354,7 +2363,6 @@ def generate_dsmc_pinn_switch_markdown(
         sg_wcm2 = sg["heat_flux_Wcm2"]
 
         # IRVE-3 reference at this altitude
-        irve3_ref = f"{irve3_qmax:.2f} (peak)" if alt_target <= 60.0 else "N/A"
 
         # Delta between SG and PINN
         if sg_wcm2 > 0:
@@ -2407,8 +2415,8 @@ def generate_dsmc_pinn_switch_markdown(
                           f"{'✅' if max_jump / abs(np.mean(pinn_vals)) < 0.1 else '⚠️'} |")
 
     # Check trajectory consistency
-    md_lines.append(f"| IRVE-3 altitude profile | 120→40 km | 120→40 km | ✅ |")
-    md_lines.append(f"| Transition marker at step 2200 | 2200 | 2200 | ✅ |")
+    md_lines.append("| IRVE-3 altitude profile | 120→40 km | 120→40 km | ✅ |")
+    md_lines.append("| Transition marker at step 2200 | 2200 | 2200 | ✅ |")
     md_lines.append("")
     md_lines.append("---")
     md_lines.append("")
@@ -2441,7 +2449,7 @@ def generate_dsmc_pinn_switch_markdown(
     with open(md_path, "w") as fh:
         fh.write("\n".join(md_lines))
 
-    print(f"[pipeline] Generated: dsmc_pinn_switch_section.md")
+    print("[pipeline] Generated: dsmc_pinn_switch_section.md")
     return md_path
 
 
@@ -2499,14 +2507,16 @@ def generate_hybrid_mp4(
     # [Citation: VideoToolbox — Apple VTCompressionSession API]
     # [Citation: VAAPI — https://trac.ffmpeg.org/wiki/HWAccelIntro#VAAPI]
     # [Citation: NVENC — NVIDIA Video Codec SDK]
-    import shutil, sys, subprocess
+    import shutil
+    import subprocess
+    import sys
     _ffmpeg_writer = None
     _hw_encoder = None
     _hw_extra_args: list[str] = []
     if shutil.which("ffmpeg"):
         # Probe available HW encoders by platform
         _probe = subprocess.run(
-            ["ffmpeg", "-encoders"], capture_output=True, text=True, timeout=5
+            ["ffmpeg", "-encoders"], capture_output=True, text=True, timeout=5, check=False
         )
         _encoders = _probe.stdout if _probe.returncode == 0 else ""
         if sys.platform == "darwin" and "h264_videotoolbox" in _encoders:
@@ -2664,8 +2674,8 @@ def generate_hybrid_mp4(
         vel = frame_vel[frame_idx]
         mach = frame_mach[frame_idx]
         hf = frame_hf[frame_idx]
-        drag = frame_drag[frame_idx]
-        gload = frame_g[frame_idx]
+        frame_drag[frame_idx]
+        frame_g[frame_idx]
 
         # Show heat flux time series up to this frame
         show_steps = all_frame_steps[:frame_idx + 1]
@@ -2799,7 +2809,7 @@ def generate_hybrid_mp4(
 
         # Freestream velocity arrow
         ax_veh.annotate("", xy=(-0.5, 0), xytext=(-2.2, 0),
-                       arrowprops=dict(arrowstyle="->", color="dodgerblue", lw=2))
+                       arrowprops={"arrowstyle": "->", "color": "dodgerblue", "lw": 2})
         ax_veh.text(-2.2, 0.3, f"V∞ = {vel:.0f} m/s", fontsize=8, color="dodgerblue",
                    fontweight="bold")
 
@@ -2834,7 +2844,7 @@ def generate_hybrid_mp4(
 
         # --- Labels and annotations ---
         ax_veh.text(2.5, 1.8, f"Alt: {alt:.0f} km", fontsize=9, fontweight="bold",
-                   bbox=dict(boxstyle="round,pad=0.3", facecolor="lightyellow", alpha=0.8))
+                   bbox={"boxstyle": "round,pad=0.3", "facecolor": "lightyellow", "alpha": 0.8})
         ax_veh.text(2.5, 1.3, f"q̇ = {hf:.1f} W/cm²", fontsize=8,
                    color="red" if hf > 10 else "black")
         ax_veh.text(2.5, 0.9, f"Mach {mach:.1f}", fontsize=8)
@@ -2850,7 +2860,7 @@ def generate_hybrid_mp4(
                               "q_conv = ε·σ·T_wall⁴\n"
                               "Diffuse reflection + thermal accommodation",
                    fontsize=7, ha="center", va="top",
-                   bbox=dict(boxstyle="round,pad=0.3", facecolor="lightyellow", alpha=0.8))
+                   bbox={"boxstyle": "round,pad=0.3", "facecolor": "lightyellow", "alpha": 0.8})
 
         ax_veh.legend(fontsize=7, loc="upper left")
         ax_veh.set_xlabel("x [m]", fontsize=8)
@@ -2915,7 +2925,7 @@ def generate_hybrid_mp4(
                 _enc_name = _hw_encoder if _hw_encoder else "ffmpeg"
                 print(f"[pipeline] Generated: plots/hybrid_dsmc_pinn_animation.mp4 "
                       f"({total_frames} frames, {fps} fps, encoder={_enc_name})")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         # Surface the FULL exception chain: matplotlib's writer.saving()
         # context runs finish() in a finally, so a mid-draw failure gets its
         # IndexError from PillowWriter.finish() self._frames[0] prepended and
@@ -3153,7 +3163,7 @@ def run_validation_pipeline(
                 }
                 print(f"  {metric}: extrapolated={result['extrapolated_value']:.2f} "
                       f"(method={result['method']}, loss={result['train_loss']:.4e})")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
             print(f"  {metric}: PINN failed ({exc}), using GP fallback")
             result = _gp_fallback_extrapolation(data["steps"], data[metric], target_step)
             pinn_results[metric] = result
@@ -3243,8 +3253,8 @@ def run_validation_pipeline(
     for metric in key_metrics:
         c = comparison[metric]
         ref_str = f"{c['irve3_reference']:.2f}" if c["irve3_reference"] > 0 else "N/A"
-        improve_d = f"{c['denoise_improvement_pct']:+.1f}%" if c["denoise_improvement_pct"] is not None else "N/A"
-        improve_p = f"{c['pinn_improvement_pct']:+.1f}%" if c["pinn_improvement_pct"] is not None else "N/A"
+        f"{c['denoise_improvement_pct']:+.1f}%" if c["denoise_improvement_pct"] is not None else "N/A"
+        f"{c['pinn_improvement_pct']:+.1f}%" if c["pinn_improvement_pct"] is not None else "N/A"
         print(f"{metric:<22} | {c['raw_dsmc']:>10.2f} | {c['kriging_denoised']:>10.2f} | "
               f"{c[f'pinn_extrapolated_{target_step}']:>10.2f} | {ref_str:>12} | "
               f"{c['raw_error_pct']:>7.1f}% | {c['denoised_error_pct']:>8.1f}% | {c['pinn_error_pct']:>7.1f}%")
@@ -3345,8 +3355,8 @@ def run_validation_pipeline(
             "Insufficient averaging: single-point sampling of stochastic DSMC output at ~100-1000 particles/cell",
             "Grid resolution: coarse mesh under-resolves flow gradients at shock layer boundary",
             "DSMC negative heat flux: raw f_1[3] can produce unphysical negative values (statistical noise)",
-            "Comparison methodology: IRVE-3 flight data is trajectory-integrated peak; our DSMC is single-point at altitude "
-            f"{_alt_run:.2f} km, vel {_vel_run:.1f} m/s — different quantities being compared",
+            ("Comparison methodology: IRVE-3 flight data is trajectory-integrated peak; our DSMC is single-point at altitude "
+            f"{_alt_run:.2f} km, vel {_vel_run:.1f} m/s — different quantities being compared"),
             "Atmosphere model difference: we use ISA (International Standard Atmosphere) while IRVE-3 used actual measured atmosphere — density at 52 km can differ by 5-15%",
             "Geometry difference: StellarOrion uses scalloped (grooved) torus while IRVE-3 is smooth torus — different local heat flux distributions",
         ],
@@ -3406,7 +3416,7 @@ def run_validation_pipeline(
         print(f"    {i}. {cause}")
 
     nc = root_causes["noise_characteristics"]
-    print(f"\n  NOISE CHARACTERISTICS:")
+    print("\n  NOISE CHARACTERISTICS:")
     print(f"    Source: {nc['source']}")
     print(f"    Scaling: {nc['scaling']}")
     print(f"    Typical: {nc['typical_noise_pct']}")
@@ -3415,7 +3425,7 @@ def run_validation_pipeline(
     # ─── Heat flux comparison explanation ────────────────────────────
     hfc: dict[str, Any] = root_causes.get("heat_flux_comparison_notes", {})
     if hfc:
-        print(f"\n  HEAT FLUX COMPARISON NOTES:")
+        print("\n  HEAT FLUX COMPARISON NOTES:")
         print(f"    IRVE-3 flight peak:           {hfc.get('irve3_flight', '')}")
         print(f"    Rapisarda SG (trajectory):     {hfc.get('rapisarda_sg_trajectory', '')}")
         print(f"    Our SG (single point):         {hfc.get('our_sg_single_point', '')}")
@@ -3503,7 +3513,7 @@ def run_validation_pipeline(
     # ─── Generate Rapisarda-style outputs (auto) ─────────────────────
     try:
         _generate_rapisarda_outputs(results, output_dir, csv_path)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"[pipeline] Rapisarda output generation failed (non-fatal): {exc}")
 
     # ─── Generate Aerodynamics Profile Plots (ANSYS Fluent-style) ──
@@ -3515,7 +3525,7 @@ def run_validation_pipeline(
         if aero_plots:
             results["outputs"] = results.get("outputs", {})
             results["outputs"]["aerodynamics_profiles"] = aero_plots
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] Aerodynamics profiles failed ({exc})")
 
     # ─── Generate ParaView VTU Files ────────────────────────────────
@@ -3526,7 +3536,7 @@ def run_validation_pipeline(
         if vtu_files:
             results["outputs"] = results.get("outputs", {})
             results["outputs"]["paraview_vtu"] = vtu_files
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] ParaView VTU generation failed ({exc})")
 
     # ─── Generate Hybrid DSMC→PINN Trajectory Outputs ────────────────
@@ -3541,7 +3551,7 @@ def run_validation_pipeline(
         pinn_curve = pinn_extrapolate_per_step(pinn_results, data, target_step=target_step)
         n_pinn_pts = len(pinn_curve["steps"])
         print(f"  Generated {n_pinn_pts} PINN evaluation points (step {int(pinn_curve['steps'][0])} → {int(pinn_curve['steps'][-1])})")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] Per-100-step PINN curve failed ({exc}), using single-value fallback")
 
     # Step 6b: Convergence plot with dual y-axis
@@ -3553,7 +3563,7 @@ def run_validation_pipeline(
         if plot_path:
             results["outputs"] = results.get("outputs", {})
             results["outputs"]["convergence_plot"] = plot_path
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] Convergence plot failed ({exc})")
 
     # Step 6b2: Multi-metric convergence plot (4 panels: heat_flux, drag, g_load, lift)
@@ -3563,7 +3573,7 @@ def run_validation_pipeline(
         if multi_plot_path:
             results["outputs"] = results.get("outputs", {})
             results["outputs"]["convergence_multi_metric_plot"] = multi_plot_path
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] Multi-metric convergence plot failed ({exc})")
 
     # Step 6c: Per-100-step CSV export
@@ -3572,7 +3582,7 @@ def run_validation_pipeline(
         csv_out = generate_per_step_csv(data, pinn_curve, output_dir)
         results["outputs"] = results.get("outputs", {})
         results["outputs"]["trajectory_csv"] = csv_out
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] Per-step CSV failed ({exc})")
 
     # Step 6d: DSMC→PINN Switch markdown section
@@ -3582,7 +3592,7 @@ def run_validation_pipeline(
                                                       target_step=target_step)
         results["outputs"] = results.get("outputs", {})
         results["outputs"]["dsmc_pinn_switch_md"] = md_path
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] DSMC→PINN Switch markdown failed ({exc})")
 
     # Step 6e: MP4 animation
@@ -3593,7 +3603,7 @@ def run_validation_pipeline(
         if mp4_path:
             results["outputs"] = results.get("outputs", {})
             results["outputs"]["hybrid_animation"] = mp4_path
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] MP4 animation failed ({exc})")
 
     # Update results JSON with new outputs
@@ -3601,8 +3611,8 @@ def run_validation_pipeline(
         json_path = os.path.join(output_dir, "pipeline_results.json")
         with open(json_path, "w") as fh:
             json.dump(results, fh, indent=2, default=str)
-        print(f"\n[+] Updated JSON results with trajectory outputs")
-    except Exception as exc:
+        print("\n[+] Updated JSON results with trajectory outputs")
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] JSON update failed ({exc})")
 
     # ─── Stop cyclic log monitor ────────────────────────────────────
@@ -3664,7 +3674,7 @@ def generate_aerodynamics_profiles(output_dir: str) -> list[str]:
 
     # Vehicle constants from Ada/SPARK
     IRVE3_MASS_KG = 281.0; IRVE3_DIAMETER_M = 3.0; IRVE3_CD = 1.4625
-    G0 = 9.80665; _pi = 3.141592653589793; _area = _pi * (IRVE3_DIAMETER_M * 0.5)**2
+    _pi = 3.141592653589793; _area = _pi * (IRVE3_DIAMETER_M * 0.5)**2
     _L = IRVE3_DIAMETER_M
 
     for i, alt in enumerate(alt_range):
@@ -3788,7 +3798,7 @@ def generate_aerodynamics_profiles(output_dir: str) -> list[str]:
     axes[0,0].annotate(f"Peak: {sgs[peak_idx]:.2f} W/cm² at {alt_range[peak_idx]:.0f} km",
                        xy=(sgs[peak_idx], alt_range[peak_idx]),
                        xytext=(sgs[peak_idx]*0.5, alt_range[peak_idx]+10),
-                       fontsize=9, arrowprops=dict(arrowstyle="->", color="black"))
+                       fontsize=9, arrowprops={"arrowstyle": "->", "color": "black"})
 
     axes[0,1].semilogy(drags, alt_range, "b-", linewidth=2.0)
     axes[0,1].set_xlabel("Drag Force [N]", fontsize=11)
@@ -3806,7 +3816,7 @@ def generate_aerodynamics_profiles(output_dir: str) -> list[str]:
     axes[1,0].annotate(f"Peak: {gloads[peak_g_idx]:.2f}g at {alt_range[peak_g_idx]:.0f} km",
                        xy=(gloads[peak_g_idx], alt_range[peak_g_idx]),
                        xytext=(gloads[peak_g_idx]*0.6, alt_range[peak_g_idx]+10),
-                       fontsize=9, arrowprops=dict(arrowstyle="->", color="black"))
+                       fontsize=9, arrowprops={"arrowstyle": "->", "color": "black"})
 
     axes[1,1].semilogy(dynqs, alt_range, "purple", linewidth=2.0)
     axes[1,1].set_xlabel("Dynamic Pressure [Pa]", fontsize=11)
@@ -4221,9 +4231,9 @@ def _generate_rapisarda_outputs(
     md_lines.append("")
     md_lines.append("| Comparison | Our Value | Reference Value | Why Invalid |")
     md_lines.append("|:---|---:|---:|:---|")
-    dq_vs_irve3 = ((so_raw_hf_avg - IRVE3_QMAX) / IRVE3_QMAX * 100) if IRVE3_QMAX else 0
-    dq_vs_rap_sg = ((so_raw_hf_avg - RAP_MODELS["Sutton-Graves"]["qmax"]) / RAP_MODELS["Sutton-Graves"]["qmax"] * 100) if RAP_MODELS["Sutton-Graves"]["qmax"] else 0
-    dq_vs_rap_fr = ((so_raw_hf_avg - RAP_MODELS["Fay-Riddell"]["qmax"]) / RAP_MODELS["Fay-Riddell"]["qmax"] * 100) if RAP_MODELS["Fay-Riddell"]["qmax"] else 0
+    ((so_raw_hf_avg - IRVE3_QMAX) / IRVE3_QMAX * 100) if IRVE3_QMAX else 0
+    ((so_raw_hf_avg - RAP_MODELS["Sutton-Graves"]["qmax"]) / RAP_MODELS["Sutton-Graves"]["qmax"] * 100) if RAP_MODELS["Sutton-Graves"]["qmax"] else 0
+    ((so_raw_hf_avg - RAP_MODELS["Fay-Riddell"]["qmax"]) / RAP_MODELS["Fay-Riddell"]["qmax"] * 100) if RAP_MODELS["Fay-Riddell"]["qmax"] else 0
     md_lines.append(f"| Our DSMC vs IRVE-3 Flight | {so_raw_hf_avg:.4f} W/cm² | {IRVE3_QMAX:.4f} W/cm² | Single-point vs trajectory-integrated, ISA vs real atmosphere |")
     md_lines.append(f"| Our SG vs Rapisarda's SG | {our_sg_qmax:.2f} W/cm² | {RAP_MODELS['Sutton-Graves']['qmax']:.4f} W/cm² | ISA vs MCD v6.1 (56% density diff), smooth vs scalloped |")
     md_lines.append(f"| Our FR vs Rapisarda's FR | {our_fr_qmax:.2f} W/cm² | {RAP_MODELS['Fay-Riddell']['qmax']:.4f} W/cm² | ISA vs MCD v6.1, single-point vs trajectory-integrated |")
@@ -4275,6 +4285,9 @@ def _generate_rapisarda_outputs(
     T_ambient = 268.36     # Ambient temperature [K] (from CSV)
 
     q_conv = so_raw_hf_avg * 10000.0  # Convert W/cm² to W/m²
+    #  Bind _tps before the conditional so the later `if q_conv > 0:` block
+    #  (per-ply decomposition) can rely on it (pyrefly: may be uninitialized).
+    _tps: dict[str, Any] = {}
     if q_conv > 0:
         _tps = _ada_tps_conduction(
             q_sg_scale=q_conv, ke_raw=1.0, ke_ref=1.0,
@@ -4313,6 +4326,28 @@ def _generate_rapisarda_outputs(
     md_lines.append("**Physics:** Convective heat flux from DSMC → joint radiative+conduction solve →")
     md_lines.append("surface energy balance q_conv = εσT_s⁴ + (T_s − T_back)/R_total → backwall temperature.")
     md_lines.append("If T_backwall > 300°C, TPS thickness must be increased for thermal protection.")
+
+    # Per-ply heat flux decomposition (5-ply layup) — steady 1D conduction
+    _ply_names = ["Nextel BF-20", "Pyrogel 2250", "AKK", "Pyrogel 2250", "Nextel BF-20"]
+    _ply_thk = [0.0006, 0.0006, 0.0025, 0.0025, 0.00015]
+    _ply_k = [0.25, 0.25, 0.02, 0.02, 0.12]
+    _bnd = [0.0, 0.0006, 0.0012, 0.0037, 0.0062, 0.00635]
+    if q_conv > 0:
+        import numpy as _np
+        _prof_d = _np.asarray(_tps["profile_depth_m"], dtype=float)
+        _prof_T = _np.asarray(_tps["profile_temp"], dtype=float)
+        _T_b = _np.interp(_bnd, _prof_d, _prof_T)
+        _q_ply = [(_T_b[i] - _T_b[i+1]) / (_ply_thk[i] / _ply_k[i])
+                  for i in range(5)]  # W/m^2
+        md_lines.append("### Per-Ply Heat Flux Decomposition (DSMC mean)")
+        md_lines.append("")
+        md_lines.append("| Ply | Material | Thickness [m] | k [W/m·K] | ΔT [K] | q_ply [W/m²] |")
+        md_lines.append("|:---|:---|---:|---:|---:|---:|")
+        for i in range(5):
+            md_lines.append(
+                f"| {i+1} | {_ply_names[i]} | {_ply_thk[i]} | {_ply_k[i]} | "
+                f"{_T_b[i]-_T_b[i+1]:.1f} | {_q_ply[i]:.0f} |")
+        md_lines.append("")
 
     # ─── PINN-Extrapolated Material Conduction/Convection Analysis ──
     # [Citation: Incropera & DeWitt (2011) "Fundamentals of Heat and Mass Transfer"]
@@ -4365,7 +4400,7 @@ def _generate_rapisarda_outputs(
     md_lines.append("> Comparing DSMC to analytical models at the SAME conditions (not trajectory-integrated flight)")
     md_lines.append("")
     md_lines.append(f"**Conditions:** altitude = {float(_last.get('alt_km', 51.8)):.1f} km, velocity = {float(_last.get('vel_ms', 3378)):.0f} m/s, Mach = {float(_last.get('mach', 10.29)):.2f}")
-    md_lines.append(f"**Atmosphere:** ISA (International Standard Atmosphere)")
+    md_lines.append("**Atmosphere:** ISA (International Standard Atmosphere)")
     md_lines.append("")
     md_lines.append("| Source | Peak Heat Flux (W/cm²) | Comparison |")
     md_lines.append("|:---|---:|:---|")
@@ -4632,7 +4667,7 @@ def _generate_rapisarda_outputs(
             results, output_dir, csv_path,
             so_pinn_hf_avg, so_pinn_hf_max, so_pinn_qload, so_pinn_g, so_pinn_cd,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] VTU generation skipped: {exc}")
 
     # ─── 8. Interactive Plotly HTML (Rapisarda-style) ─────────────
@@ -4646,7 +4681,7 @@ def _generate_rapisarda_outputs(
             so_raw_qload, so_krig_qload, so_pinn_qload,
             so_raw_g, so_pinn_g, so_raw_cd, so_pinn_cd,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] Interactive HTML generation skipped: {exc}")
 
 
@@ -4691,7 +4726,7 @@ def _generate_interactive_html(
         import plotly.graph_objects as go
         from plotly.subplots import make_subplots
 
-    cr = results.get("comparison", results.get("comparison_results", {}))
+    results.get("comparison", results.get("comparison_results", {}))
     html_dir = os.path.join(output_dir, "interactive")
     os.makedirs(html_dir, exist_ok=True)
 
@@ -4746,7 +4781,7 @@ def _generate_interactive_html(
         template="plotly_white", height=550,
     )
     fig1.write_html(os.path.join(html_dir, "rapisarda_table4_10_interactive.html"))
-    print(f"  [HTML] Generated: interactive/rapisarda_table4_10_interactive.html")
+    print("  [HTML] Generated: interactive/rapisarda_table4_10_interactive.html")
 
     # ─── Fig 2: Multi-Mission Comparison (Interactive) ───────────
     fig2 = make_subplots(
@@ -4779,7 +4814,7 @@ def _generate_interactive_html(
         title_font_size=16, template="plotly_white", height=550,
     )
     fig2.write_html(os.path.join(html_dir, "multi_mission_interactive.html"))
-    print(f"  [HTML] Generated: interactive/multi_mission_interactive.html")
+    print("  [HTML] Generated: interactive/multi_mission_interactive.html")
 
     # ─── Fig 3: Convergence Convergence + Noise Audit (Interactive) ──
     aud = results.get("audits", {})
@@ -4807,7 +4842,7 @@ def _generate_interactive_html(
             title_font_size=16, template="plotly_white", height=450,
         )
         fig3.write_html(os.path.join(html_dir, "convergence_audit_interactive.html"))
-        print(f"  [HTML] Generated: interactive/convergence_audit_interactive.html")
+        print("  [HTML] Generated: interactive/convergence_audit_interactive.html")
 
     # ─── Fig 4: Normalized Comparison (Interactive) ──────────────
     import csv as _csv
@@ -4835,7 +4870,7 @@ def _generate_interactive_html(
         yaxis_title="Heat Flux (W/cm²)",
     )
     fig4.write_html(os.path.join(html_dir, "normalized_comparison_interactive.html"))
-    print(f"  [HTML] Generated: interactive/normalized_comparison_interactive.html")
+    print("  [HTML] Generated: interactive/normalized_comparison_interactive.html")
 
     # ─── Fig 5: Delta Waterfall (Interactive) ────────────────────
     fig5 = go.Figure()
@@ -4868,7 +4903,7 @@ def _generate_interactive_html(
         barmode="group", yaxis_title="Percentage Delta (%)",
     )
     fig5.write_html(os.path.join(html_dir, "delta_waterfall_interactive.html"))
-    print(f"  [HTML] Generated: interactive/delta_waterfall_interactive.html")
+    print("  [HTML] Generated: interactive/delta_waterfall_interactive.html")
 
 
 def _require_int_attr(
@@ -5127,17 +5162,17 @@ def _generate_pinn_vtu(
     conn_text = _require_element_text(
         piece, 'Cells/DataArray[@Name="connectivity"]', last_vtu
     )
-    conn_vals = [int(v) for v in conn_text.split()]
+    [int(v) for v in conn_text.split()]
 
     off_text = _require_element_text(
         piece, 'Cells/DataArray[@Name="offsets"]', last_vtu
     )
-    off_vals = [int(v) for v in off_text.split()]
+    [int(v) for v in off_text.split()]
 
     typ_text = _require_element_text(
         piece, 'Cells/DataArray[@Name="types"]', last_vtu
     )
-    typ_vals = [int(v) for v in typ_text.split()]
+    [int(v) for v in typ_text.split()]
 
     # Extract Drag_N and Lift_N from last DSMC VTU for ParaView field consistency
     # [Citation: VTK XML UnstructuredGrid — https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf]
@@ -5165,7 +5200,7 @@ def _generate_pinn_vtu(
 
     # Point data (geometry — unchanged from DSMC)
     vtu_lines.append('      <Points>')
-    vtu_lines.append(f'        <DataArray type="Float64" NumberOfComponents="3" format="ascii">')
+    vtu_lines.append('        <DataArray type="Float64" NumberOfComponents="3" format="ascii">')
     # Format points in rows of 3
     for i in range(0, len(pts_vals), 3):
         vtu_lines.append(f'          {pts_vals[i]:.6e} {pts_vals[i+1]:.6e} {pts_vals[i+2]:.6e}')
@@ -5175,51 +5210,51 @@ def _generate_pinn_vtu(
     # Cell data — PINN extrapolated values (uniform across all cells)
     vtu_lines.append('      <CellData>')
     # Heat flux (avg — physically meaningful) — matches DSMC field name HeatFlux_Wm2
-    vtu_lines.append(f'        <DataArray type="Float64" Name="HeatFlux_Wm2" format="ascii">')
+    vtu_lines.append('        <DataArray type="Float64" Name="HeatFlux_Wm2" format="ascii">')
     vtu_lines.append(f'          {" ".join([f"{hf_avg * 10000:.4e}"] * n_cells)}')
     vtu_lines.append('        </DataArray>')
     # Heat flux (max — noisy single-cell)
-    vtu_lines.append(f'        <DataArray type="Float64" Name="HeatFlux_Max_Wm2" format="ascii">')
+    vtu_lines.append('        <DataArray type="Float64" Name="HeatFlux_Max_Wm2" format="ascii">')
     vtu_lines.append(f'          {" ".join([f"{hf_max * 10000:.4e}"] * n_cells)}')
     vtu_lines.append('        </DataArray>')
     # Heat load (J/cm²)
-    vtu_lines.append(f'        <DataArray type="Float64" Name="HeatLoad_Jcm2" format="ascii">')
+    vtu_lines.append('        <DataArray type="Float64" Name="HeatLoad_Jcm2" format="ascii">')
     vtu_lines.append(f'          {" ".join([f"{qload:.4e}"] * n_cells)}')
     vtu_lines.append('        </DataArray>')
     # G-load
-    vtu_lines.append(f'        <DataArray type="Float64" Name="G_Load" format="ascii">')
+    vtu_lines.append('        <DataArray type="Float64" Name="G_Load" format="ascii">')
     vtu_lines.append(f'          {" ".join([f"{g_load:.4e}"] * n_cells)}')
     vtu_lines.append('        </DataArray>')
     # Drag coefficient
-    vtu_lines.append(f'        <DataArray type="Float64" Name="drag_coefficient" format="ascii">')
+    vtu_lines.append('        <DataArray type="Float64" Name="drag_coefficient" format="ascii">')
     vtu_lines.append(f'          {" ".join([f"{cd:.6e}"] * n_cells)}')
     vtu_lines.append('        </DataArray>')
     # Drag force (N) — from last DSMC VTU for ParaView field consistency
     # [Citation: VTK XML UnstructuredGrid — https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf]
     if drag_n_text:
-        vtu_lines.append(f'        <DataArray type="Float64" Name="Drag_N" format="ascii">')
+        vtu_lines.append('        <DataArray type="Float64" Name="Drag_N" format="ascii">')
         vtu_lines.append(f'          {drag_n_text}')
         vtu_lines.append('        </DataArray>')
     # Lift force (N) — from last DSMC VTU for ParaView field consistency
     if lift_n_text:
-        vtu_lines.append(f'        <DataArray type="Float64" Name="Lift_N" format="ascii">')
+        vtu_lines.append('        <DataArray type="Float64" Name="Lift_N" format="ascii">')
         vtu_lines.append(f'          {lift_n_text}')
         vtu_lines.append('        </DataArray>')
     # Step metadata
-    vtu_lines.append(f'        <DataArray type="Int64" Name="step" format="ascii">')
+    vtu_lines.append('        <DataArray type="Int64" Name="step" format="ascii">')
     vtu_lines.append(f'          {" ".join([str(target_step)] * n_cells)}')
     vtu_lines.append('        </DataArray>')
     vtu_lines.append('      </CellData>')
 
     # Cell connectivity (unchanged from DSMC)
     vtu_lines.append('      <Cells>')
-    vtu_lines.append(f'        <DataArray type="Int64" Name="connectivity" format="ascii">')
+    vtu_lines.append('        <DataArray type="Int64" Name="connectivity" format="ascii">')
     vtu_lines.append(f'          {conn_text}')
     vtu_lines.append('        </DataArray>')
-    vtu_lines.append(f'        <DataArray type="Int64" Name="offsets" format="ascii">')
+    vtu_lines.append('        <DataArray type="Int64" Name="offsets" format="ascii">')
     vtu_lines.append(f'          {off_text}')
     vtu_lines.append('        </DataArray>')
-    vtu_lines.append(f'        <DataArray type="UInt8" Name="types" format="ascii">')
+    vtu_lines.append('        <DataArray type="UInt8" Name="types" format="ascii">')
     vtu_lines.append(f'          {typ_text}')
     vtu_lines.append('        </DataArray>')
     vtu_lines.append('      </Cells>')
@@ -5311,14 +5346,14 @@ def main():
     print(f"[*] Using CSV: {csv_path}")
 
     try:
-        results = run_validation_pipeline(
+        run_validation_pipeline(
             csv_path=csv_path,
             target_step=args.target_step,
             iterations=args.iterations,
             device=args.device,
             output_dir=args.output_dir,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"\n[-] Pipeline failed: {exc}")
         traceback.print_exc()
         sys.exit(1)

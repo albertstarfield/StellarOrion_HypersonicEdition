@@ -27,6 +27,15 @@ import warnings
 
 import numpy as np
 
+# F32 dedupe: the SPARTA grid parser lives in exactly ONE place now
+# (``sparta_grid.py``) so this module and ``pinn_accelerator.py`` can never
+# drift apart again.  Dual import keeps it working both as a top-level module
+# (``src/python`` on sys.path) and as a package (``src.python.kriging_denoise``).
+try:
+    from sparta_grid import parse_grid_file as _shared_parse_grid_file
+except ImportError:  # pragma: no cover - package-relative fallback
+    from .sparta_grid import parse_grid_file as _shared_parse_grid_file
+
 # Auto-install scikit-learn if missing (library interfacing, per project constraints)
 try:
     from sklearn.gaussian_process import GaussianProcessRegressor
@@ -68,76 +77,28 @@ _MATERN_52 = Matern(length_scale=1.0, length_scale_bounds=(1e-3, 1e3), nu=2.5)
 def _parse_grid_file(grid_file: str) -> np.ndarray:
     """Parse SPARTA grid.NNNN.out into training data.
 
-    AXIOMS:
-      1. Grid file format is SPARTA dump with ITEM: CELLS blocks
-      2. Each cell has: id xlo ylo xhi yhi n u v w temp nrho
-         (11 tokens; see the measured header in _parse_grid_file)
-      3. x_center = (xlo + xhi) / 2, y_center = (ylo + yhi) / 2
+    F32 dedupe: this is a thin wrapper over the single canonical parser in
+    :mod:`sparta_grid`.  It used to hold a byte-for-byte copy of that parser
+    which DIVERGED from the copy in ``pinn_accelerator.py`` (that copy read the
+    axial velocity as the temperature).  One implementation, imported by both
+    consumers, removes the divergence class entirely.
 
-    Returns: numpy array of shape (N, 6) — [x, y, rho, T, vx, vy]
+    Parameters:
+        grid_file: Path to the SPARTA ``grid.NNNN.out`` dump.
+
+    Returns:
+        numpy array of shape (N, 6) — ``[x, y, rho, T, vx, vy]``.
+
+    Raises:
+        ValueError: If no valid cells could be parsed from ``grid_file``.
+        OSError: If ``grid_file`` cannot be opened/read.
 
     References:
     - https://sparta.github.io/
     - https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html
     """
-    cells = []
-    header_seen = False
-
-    with open(grid_file, "r") as fh:
-        # invariant: header_seen toggles on "ITEM: CELLS"; cells grows only with valid rows
-        for line in fh:
-            line = line.strip()
-            if not line or line.startswith("ITEM:"):
-                if "ITEM: CELLS" in line:
-                    header_seen = True
-                else:
-                    header_seen = False
-                continue
-            if not header_seen:
-                continue
-            parts = line.split()
-            if len(parts) < 9:
-                continue
-            try:
-                # SPARTA grid-dump row, MEASURED against a real file
-                # (results/validation/grid.0.out):
-                #   ITEM: CELLS id xlo ylo xhi yhi f_2[1] f_2[2] f_2[3] f_2[4] f_3[*] f_4[*]
-                #   1 -5 0 -4.89928 0.0283273 19 8880.67 49.4097 -107.24 169.664 1.60125e+22
-                # => parts[0]=id  [1]=xlo [2]=ylo [3]=xhi [4]=yhi
-                #    parts[5]=n  [6]=u  [7]=v  [8]=w  [9]=temp  [10]=nrho
-                # because the deck computes `2 grid all air n u v w`,
-                #     `3 thermal/grid all air temp` and `4 grid all air nrho`.
-                # [Citation: SPARTA manual, §2.4 — grid file format]
-                # [Citation: stellarorion_sparta.adb — compute 2/3/4 grid + dump 2 grid]
-                x_center = (float(parts[1]) + float(parts[3])) / 2.0
-                y_center = (float(parts[2]) + float(parts[4])) / 2.0
-                vx_ms = float(parts[6])
-                vy_ms = float(parts[7])
-                # Absent (rather than wrong) temperature must read as 0.0 so the
-                # `temp_K > 0` guard below DROPS the cell instead of silently
-                # denoising an unmeasured field.
-                temp_K = float(parts[9]) if len(parts) > 9 else 0.0
-                num_density = float(parts[10]) if len(parts) > 10 else 1e20
-
-                # Convert number density to mass density: ρ = n × M_air / N_A
-                # [Citation: Bird (1994), §2.3]
-                # -- AXIOM: N_A > 0 by definition of Avogadro constant
-                # -- APPLICATION: Guard division per Murphy's Law (CWE-682)
-                M_air = 28.97e-3   # kg/mol
-                N_A = 6.022e23     # Avogadro constant [1/mol]
-                if N_A == 0.0:
-                    continue  # unreachable: N_A is a physical constant; guard satisfies z3
-                rho = num_density * M_air / N_A
-
-                if temp_K > 0 and rho > 0:
-                    cells.append([x_center, y_center, rho, temp_K, vx_ms, vy_ms])
-            except (ValueError, IndexError):
-                continue
-
-    if not cells:
-        raise ValueError(f"No valid cells parsed from {grid_file}")
-
-    return np.array(cells, dtype=np.float64)
+    # F32 dedupe: delegate to the single canonical implementation.
+    return _shared_parse_grid_file(grid_file)
 
 
 def _write_grid_file(grid_file: str, data: np.ndarray) -> None:

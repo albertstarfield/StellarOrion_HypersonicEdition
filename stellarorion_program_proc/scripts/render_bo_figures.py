@@ -81,16 +81,20 @@ import argparse
 import json
 import sys
 from collections import Counter
+from itertools import pairwise
 from pathlib import Path
 
 # Matplotlib must select a non-interactive backend before pyplot import; the
 # script runs headless in CI and over SSH where no display is attached.
 import matplotlib
-import matplotlib.colors  # noqa: E402  (LogNorm used for the CCD cost colorbar)
+
+# LogNorm used for the CCD cost colorbar
+import matplotlib.colors
 
 matplotlib.use("Agg")
 
-import matplotlib.pyplot as plt  # noqa: E402  (import order fixed by backend)
+# import order fixed by backend
+import matplotlib.pyplot as plt
 
 # AXIOM A3: the screen size is fixed by the optimizer's own assertion
 # (hiad_optimizer.py: assert len(ccd) == 15). Fail loudly if it ever changes.
@@ -399,7 +403,7 @@ def render_convergence(data: dict, out_path: Path) -> None:
     # so the reported index is the actually-violating step rather than the
     # first equal value.
     for position, (previous, current) in enumerate(
-        zip(running_best, running_best[1:]), start=1
+        pairwise(running_best), start=1
     ):
         if current > previous:
             raise ValueError(

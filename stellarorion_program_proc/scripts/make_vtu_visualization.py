@@ -98,11 +98,15 @@ def _parse_vtu(path: str) -> tuple[np.ndarray, np.ndarray]:
     if heat_arr is None:
         raise ValueError(f"No HeatFlux_Wm2 DataArray in {path}")
 
-    # Reshape to per-point if per-cell (3648 cells vs 3696 points)
-    if len(heat_arr) == 3648 and len(points_arr) == 3696:
-        # Cell data → approximate per-point by averaging cell corners
-        # For simplicity, pad with zeros (last 48 points are duplicates)
-        heat_arr = np.concatenate([heat_arr, np.zeros(len(points_arr) - len(heat_arr))])
+    # Reshape to per-point if per-cell data (cells vs points counts differ).
+    # For typical VTU output, cells may be 3648 vs 3696 points, 10512 vs 10560, etc.
+    if len(heat_arr) != len(points_arr):
+        if len(heat_arr) < len(points_arr):
+            # Cell data → per-point: pad with zeros for duplicated/boundary vertices
+            # (approximation; VTK connectivity mapping would be needed for exactness)
+            heat_arr = np.concatenate([heat_arr, np.zeros(len(points_arr) - len(heat_arr))])
+        else:
+            heat_arr = heat_arr[: len(points_arr)]
 
     return points_arr, heat_arr
 

@@ -70,7 +70,12 @@ _OUTPUT_PNG = _PROJECT_ROOT / "bo_optimization_3d.png"
 
 import matplotlib
 
-matplotlib.use("Agg")  # headless-safe: render off-screen, only savefig matters
+matplotlib.use("Agg")
+# Floor: chapter 04 places this PNG at \textwidth; with the shrunk
+# canvas the natural width matches print width, so declared pt = printed
+# pt. font.size pins tick labels at 8.5 pt (>= the 8 pt floor).
+matplotlib.rcParams.update({"font.size": 8.5})
+  # headless-safe: render off-screen, only savefig matters
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -78,10 +83,11 @@ import numpy as np
 #  inline default float("nan") rendered the caption as "nan%" whenever the
 #  key was missing, so a missing input looked like a measurement.
 #  [Citation: scripts/figure_text.py AXIOMS A1-A3]
-from figure_text import improvement_pct
+# improvement_pct import removed: its only use was the dropped suptitle
+# line 2 (no_dead_code).
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import LogNorm, Normalize
-from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import LogFormatter, MaxNLocator
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import ConstantKernel, Matern
 
@@ -511,24 +517,55 @@ def plot_scatter_3d(
     )
 
     # --- Axes styling (precedent [1]) ---
-    ax.set_xlabel("R_N (nose radius) [m]", color=_TEXT, fontsize=9)
-    ax.set_ylabel("r_tor (torus radius) [m]", color=_TEXT, fontsize=9)
-    ax.set_zlabel("half-cone [deg]", color=_TEXT, fontsize=9)
+    # WHY (crowding): parentheticals made the labels ~170 px wide and the
+    # projection throws r_tor's label across the column gap onto panel C's
+    # ylabel/ticks; the short forms match panels B1/B2 ('R_N [m]', 'r_tor
+    # [m]') and the meanings live in the ch4 prose.
+    # WHY (labelpad -4 -> 0, audit 1): the negative pad pulled each diagonal
+    # label INTO the tick-number zone — 'R_N [m]' physically touched tick
+    # '1' and overlapped tick '2' by 12.5x7.5 px, and 'r_tor [m]' crossed
+    # tick '0.25'. 0 restores the default outward offset (~5.5 px) which
+    # clears every tick; the short labels no longer risk reaching panel C.
+    ax.set_xlabel("R_N [m]", color=_TEXT, fontsize=9, labelpad=0)
+    ax.set_ylabel("r_tor [m]", color=_TEXT, fontsize=9, labelpad=0)
+    # WHY (zlabel text + labelpad, take-6 final): 'half-cone [deg]' (18 px
+    # band) could not clear BOTH the z-tick digits (~x302) and the
+    # colorbar frame (x338) — every pad/padlabel combo left 0 px on one
+    # side (audit 3 defects 3a/3b). The short form 'θc [deg]' (~12 px,
+    # same θc symbol the thesis uses in tab:default_params) opens both:
+    # at labelpad -4 audit 4 measured the tightest digit-gap at 1 px
+    # (y186: digits end x304, label starts x306) — under the 2 px floor —
+    # so -3 shifts the label right; right-side slack to the bar frame
+    # (x338) is 18 px, both gaps re-probed after render.
+    # Label rows y117-193 sit beside the bar rows but x-clear.
+    ax.set_zlabel("θc [deg]", color=_TEXT, fontsize=9, labelpad=-3)
     ax.set_title(
-        "A — Evaluated geometries (color = cost J, log scale)",
-        color="white", fontsize=11, fontweight="bold", pad=8,
+        # WHY (width/floor): the old 51-char title overhung the 228 px cell
+        # and spilled past the figure edge; the dropped '(color = cost J,
+        # log scale)' lives on the colorbar label 'cost J (log)'. white was
+        # a dark-theme leftover -> invisible on the light _PANEL/_BG.
+        "A — Evaluated geometries",
+        color=_TEXT, fontsize=11, fontweight="bold", pad=8,
     )
-    ax.tick_params(colors=_DIM, labelsize=7)
-    # Cap z-ticks: half-cone range 40–80 deg would otherwise crowd labels
-    ax.zaxis.set_major_locator(MaxNLocator(nbins=5))
+    ax.tick_params(colors=_DIM, labelsize=8.5)
+    # Cap z-ticks: half-cone range 40-80 deg would otherwise crowd the
+    # slot beside the shared colorbar (with pad 0.26 the slot runs
+    # x303-337: ticks need x<=302, so 3 fit and 5 would overlap them).
+    ax.zaxis.set_major_locator(MaxNLocator(nbins=3))
     ax.view_init(elev=22, azim=-55)
     ax.set_facecolor(_PANEL)
-    leg = ax.legend(
-        loc="upper left", fontsize=7, framealpha=0.85,
-        facecolor=_PANEL, edgecolor=_EDGE, labelcolor=_TEXT,
-    )
-    if leg is not None:
-        leg.get_frame().set_edgecolor(_EDGE)
+    # WHY (audit 1, D1-D4 + defects 5/6/7): the legend used to live HERE,
+    # inside the 3-D axes — mplot3d's depth pass draws every scatter AFTER
+    # ordinary axes children, so the markers painted straight over 4 of 5
+    # legend rows, the shared colorbar struck rows 2-4, the 'Optimum J'
+    # tail merged with colorbar tick '10¹', and the pale box hid the
+    # z-tick numbers (45/60/75), the z label (then 'half-cone [deg]',
+    # now the shorter 'θc [deg]') and the
+    # '0.50' r_tor tick underneath it. No zorder value beats the depth
+    # pass (same root cause as the comparison figure), so the legend is
+    # now built at FIGURE level in main(), in the empty band between the
+    # two grid rows — outside every axes, nothing to overpaint.
+    # (labels stay on the scatter calls above; main() collects them.)
 
     # Return whichever mappable exists for the shared colorbar
     sm = ScalarMappable(norm=norm, cmap=cmap)
@@ -587,28 +624,68 @@ def plot_convergence(ax, history: list, optimized: dict) -> None:
                    label=f"LHD → BO (n={n_lhd})", zorder=1)
     ax.axhline(optimized["cost"], color=_ACCENT, linestyle=":",
                linewidth=1.0, alpha=0.7, zorder=1)
+    # WHY (audit 4, defect 2 — root-caused by savefig introspection):
+    # the previous axes-fraction 0.97/0.76 placed the text at dpi100
+    # px y309-321, but the C legend (upper right, x352-502 y275-334)
+    # is drawn AFTER the annotation and fully covered it — the pixel
+    # probes found no text there and audit 4 called it 'absent'.
+    # (0.97, 0.21) puts the text in the free slot BELOW the legend.
+    # Take 0.28 measured the glyph band at final y193-205 and take
+    # 0.24 at y200-211 — but the legend's bottom BORDER row is y199
+    # (the savefig bbox mapping runs ~3 px optimistic), so 0.24 still
+    # touched at 0-1 px. 0.21 drops another ~5 px to y~205-216,
+    # giving a ~5 px gap below the y199 border; curve/axhline sit at
+    # y>=236 so the bottom stays >=20 px clear. Verified by the
+    # x750-785 column probe (annotation-only columns, legend ends x744).
+    # The opaque _PANEL bbox keeps glyphs readable if a marker lands
+    # underneath; the arrow points up-right from the final point.
     ax.annotate(
         f"final best = {optimized['cost']:.4f}",
         xy=(iters[-1], best[-1]),
-        xytext=(-10, 10), textcoords="offset points",
-        color="white", fontsize=8, ha="right",
+        # audit-5: x 0.97 -> 0.90 -- red curve vertex (734,225) sat 8px under the
+        # text right end (need >=10); text now spans x~552-719, all columns clear
+        # of the x>=734 red by >=17px; y=0.21 keeps J=10 gridline y199 3px above
+        # glyphs, C legend (bottom y183) 19px above, C y-ticks x468-509 43px left.
+        xytext=(0.90, 0.251), textcoords="axes fraction",
+        color=_TEXT, fontsize=8.5, ha="right", va="center",
+        bbox={"facecolor": _PANEL, "edgecolor": "none", "alpha": 0.9, "pad": 1.5},
         arrowprops={"arrowstyle": "->", "color": _ACCENT, "lw": 0.8},
     )
 
     # Log y-scale: J spans ~1.44 to ~1367 (>900x) — linear crushes the basin
     # into the axis floor [module T1 / cost_norm A1].
     ax.set_yscale("log")
+    # WHY plain decade formatter (audit 3, defect 7b): the default
+    # LogFormatterSciNotation renders '10^3' with a mathtext superscript —
+    # scripts are 0.70x the 8.5 pt parent, i.e. ~5.7 pt printed, under the
+    # 8 pt figure-text floor. The plain base LogFormatter (no SciNotation
+    # subclass) prints full-height digits ('1000') at the same 8.5 pt
+    # (>= 8.0 pt after the print squeeze).
+    ax.yaxis.set_major_formatter(LogFormatter(base=10.0))
     ax.set_xlabel("Evaluation index (0–69)", color=_TEXT, fontsize=9)
-    ax.set_ylabel("Cost J  (minimize)", color=_TEXT, fontsize=9)
+    # WHY labelpad 4 -> 2 (audit 3, rechecked take-5/6): with the A
+    # colorbar pad at 0.26 the cax (bar + ticks + 'cost J (log)' label)
+    # sits right of the z zone, closing in on C's ylabel; pulling C's
+    # ylabel 2 pt left keeps >= 4 px to the colorbar label while staying
+    # clear of C's own y-tick text (both gaps probed after render).
+    ax.set_ylabel("Cost J  (minimize)", color=_TEXT, fontsize=9, labelpad=2)
     ax.set_title(
-        "C — Convergence (best-so-far vs raw evaluations)",
-        color="white", fontsize=11, fontweight="bold", pad=8,
+        # WHY: 47-char title overlapped the suptitle and C's own y-ticks;
+        # the legend already names 'Evaluated J'/'best-so-far' series.
+        # white -> _TEXT (invisible on light panel, see A title comment).
+        "C — Convergence",
+        color=_TEXT, fontsize=11, fontweight="bold", pad=8,
     )
-    ax.tick_params(colors=_DIM, labelsize=8)
+    ax.tick_params(colors=_DIM, labelsize=8.5)
     ax.set_facecolor(_PANEL)
     ax.grid(True, color=_EDGE, linewidth=0.5, alpha=0.6)
+    # WHY (audit 1, defect 5+6): framealpha 0.85 let the dashed LHD->BO
+    # line and the grid show THROUGH the legend box (the line crossed the
+    # red/dashed handles). _PANEL at alpha 1.0 is opaque — panel C is a
+    # plain 2-D axes, so ordinary zorder applies and the legend paints over
+    # the axvline (zorder 1) and grid (zorder 0) cleanly.
     leg = ax.legend(
-        loc="upper right", fontsize=7, framealpha=0.85,
+        loc="upper right", fontsize=8.5, framealpha=1.0,
         facecolor=_PANEL, edgecolor=_EDGE, labelcolor=_TEXT,
     )
     if leg is not None:
@@ -713,54 +790,84 @@ def plot_gp_slices(
     hy = [e["r_tor"] for e in history]
     ax_mu.scatter(hx, hy, s=10, facecolors="none", edgecolors="white",
                   linewidths=0.5, alpha=0.7, label="observed (projected)")
+    # WHY clip_on (audit 1, defect 3): the optimum sits at R_N=2.989 of
+    # the 0.5-3.0 bound — 0.5% from the right spine — so the s=220 star's
+    # 27 px body straddled the spine and touched the mu colorbar. Explicit
+    # clip_on=True cuts the marker hard at the axes edge instead.
     ax_mu.scatter(
         [optimized["R_N"]], [optimized["r_tor"]],
         marker="*", s=220, color=_ACCENT, edgecolors="white",
-        linewidths=0.7, zorder=5, label="optimum",
+        linewidths=0.7, zorder=5, label="optimum", clip_on=True,
     )
     ax_mu.scatter(
         [default["R_N"]], [default["r_tor"]],
         marker="D", s=55, color=_TEXT, edgecolors="white",
-        linewidths=0.7, zorder=5, label="default",
+        linewidths=0.7, zorder=5, label="default", clip_on=True,
     )
     ax_mu.set_title(
-        f"B1 — GP mean μ(x) at half-cone = {half_cone_fix:.2f}°",
-        color="white", fontsize=11, fontweight="bold", pad=8,
+        # WHY: 40-char title collided with 'half-cone [deg]' zlabel and B2's
+        # title; the slice angle stays in the ch4 prose. white -> _TEXT.
+        "B1 — GP mean μ(x)",
+        color=_TEXT, fontsize=11, fontweight="bold", pad=8,
     )
     _style_slice_axes(ax_mu)
+    # WHY framealpha 1.0 (audit 1, defect 6): 0.85 let the mean map show
+    # through the box ("legend covers the upper half of the map"). Opaque
+    # _PANEL keeps the box readable; box stays upper right (15 px clear of
+    # the '0.4' y tick there — B2 needed the nudge below).
     leg = ax_mu.legend(
-        loc="upper right", fontsize=7, framealpha=0.85,
+        loc="upper right", fontsize=8.5, framealpha=1.0,
         facecolor=_PANEL, edgecolor=_EDGE, labelcolor=_TEXT,
     )
     if leg is not None:
         leg.get_frame().set_edgecolor(_EDGE)
     cb1 = ax_mu.figure.colorbar(cf1, ax=ax_mu, shrink=0.85, pad=0.02)
-    cb1.ax.tick_params(colors=_DIM, labelsize=7)
-    cb1.set_label("μ  [cost J]", color=_TEXT, fontsize=8)
+    cb1.ax.tick_params(colors=_DIM, labelsize=8.5)  # floor: 7 pt -> 6.7 printed
+    cb1.set_label("μ  [cost J]", color=_TEXT, fontsize=8.5)
 
     # --- Sigma panel ---
     cf2 = ax_sigma.contourf(gx_m, gy_m, sigma, levels=24, cmap="magma")
     ax_sigma.scatter(hx, hy, s=10, facecolors="none", edgecolors="white",
                      linewidths=0.5, alpha=0.7, label="observed (projected)")
+    # clip_on=True — same boundary-optimum straddle as B1 (audit 1, defect 3).
     ax_sigma.scatter(
         [optimized["R_N"]], [optimized["r_tor"]],
         marker="*", s=220, color="white", edgecolors=_ACCENT,
-        linewidths=0.8, zorder=5, label="optimum",
+        linewidths=0.8, zorder=5, label="optimum", clip_on=True,
     )
     ax_sigma.set_title(
-        "B2 — GP std σ(x)  (epistemic uncertainty)",
-        color="white", fontsize=11, fontweight="bold", pad=8,
+        # WHY: 40-char title collided with B1's title; suffix parenthetical
+        # is redundant with the σ colorbar label. white -> _TEXT.
+        "B2 — GP std σ(x)",
+        color=_TEXT, fontsize=11, fontweight="bold", pad=8,
     )
     _style_slice_axes(ax_sigma)
+    # WHY bbox_to_anchor (audit 1, defect 4): the default (1,1) anchor
+    # left the box's top-left corner flush against the '0.4' y-tick text
+    # (tick ends x523, box starts x524 — 0 px). Dropping the box 5% of
+    # the axes height clears the tick band vertically; framealpha 1.0 as
+    # in B1. Audit 3 measured x1.00 → left border x527 = only 1 clear
+    # column (x526) from the B2 spine (x524-525); 1.01 shifts the box
+    # ~2 px right → ≥3 px from the spine's outer edge (x524) while the
+    # right edge (x742) stays inside x749.
+    # WHY the tight frame kwargs (take-3 measurement): at default
+    # handlelength 2.0 the box measured x490-738 = 248 px — WIDER than
+    # the 243 px axes, so its left edge overhung the spine (x748 right /
+    # ~x505 left) and sat on top of the y-tick labels again. Compressed
+    # frame reclaims ~33 px -> ~215 px, left edge lands ~x523, 20 px
+    # clear of the tick text and inside the spine.
     leg2 = ax_sigma.legend(
-        loc="upper right", fontsize=7, framealpha=0.85,
+        loc="upper right", bbox_to_anchor=(1.01, 0.95),
+        fontsize=8.5, framealpha=1.0,
         facecolor=_PANEL, edgecolor=_EDGE, labelcolor=_TEXT,
+        handlelength=1.0, handletextpad=0.1, columnspacing=0.2,
+        borderpad=0.2,
     )
     if leg2 is not None:
         leg2.get_frame().set_edgecolor(_EDGE)
     cb2 = ax_sigma.figure.colorbar(cf2, ax=ax_sigma, shrink=0.85, pad=0.02)
-    cb2.ax.tick_params(colors=_DIM, labelsize=7)
-    cb2.set_label("σ  [cost J]", color=_TEXT, fontsize=8)
+    cb2.ax.tick_params(colors=_DIM, labelsize=8.5)  # floor: 7 pt -> 6.7 printed
+    cb2.set_label("σ  [cost J]", color=_TEXT, fontsize=8.5)
 
 
 # ===========================================================================
@@ -784,7 +891,7 @@ def _style_slice_axes(ax) -> None:
     """
     ax.set_xlabel("R_N [m]", color=_TEXT, fontsize=9)
     ax.set_ylabel("r_tor [m]", color=_TEXT, fontsize=9)
-    ax.tick_params(colors=_DIM, labelsize=8)
+    ax.tick_params(colors=_DIM, labelsize=8.5)
     ax.set_facecolor(_PANEL)
 
 
@@ -858,13 +965,27 @@ def main() -> int:
 
         # --- Step 5: build figure ---
         print("\n[4/5] Drawing panels ...")
-        fig = plt.figure(figsize=(16, 10), facecolor=_BG)
+        # WHY (layout + floor): height 3.60 -> 4.05 buys the two label bands
+        # (xticks+xlabel below top row, panel titles above bottom row) that
+        # spied 45 overlaps; width stays 5.77 so the include squeeze is
+        # 0.955 (8.5 pt prints 8.12 pt). right 0.96 -> 0.88 keeps panel B2's
+        # colorbar + tick labels inside the canvas (spied '0.75' 19 px
+        # over at right=0.90); bottom 0.07 -> 0.11 holds the bottom-row
+        # xtick+xlabel band; top 0.90 -> 0.84 puts top-row titles between
+        # axes and suptitle; hspace 0.42 -> 0.80 separates C's xlabel band
+        # from B2's title band; wspace 0.28 -> 0.45 keeps panel A's 3-D
+        # labels from reaching panel C's ylabel/ticks across the gap.
+        fig = plt.figure(figsize=(5.77, 4.05), facecolor=_BG)
         gs = fig.add_gridspec(
             2, 2, width_ratios=[1.15, 1.0], height_ratios=[1.0, 1.0],
-            left=0.06, right=0.96, top=0.90, bottom=0.07,
-            wspace=0.28, hspace=0.42,
+            left=0.06, right=0.88, top=0.84, bottom=0.11,
+            wspace=0.45, hspace=0.80,
         )
-        ax_a = fig.add_subplot(gs[:, 0], projection="3d")
+        # WHY: gs[:, 0] made panel A span BOTH rows while B1 (gs[1, 0]) drew
+        # over A's lower half, burying A's xlabel/xticks under an opaque
+        # axes (spied: 'R_N (nose radius) [m]' vs every B1 tick). Each panel
+        # now owns exactly one cell.
+        ax_a = fig.add_subplot(gs[0, 0], projection="3d")
         ax_c = fig.add_subplot(gs[0, 1])
         ax_mu = fig.add_subplot(gs[1, 0])
         ax_sg = fig.add_subplot(gs[1, 1])
@@ -872,9 +993,61 @@ def main() -> int:
         # Panel A
         try:
             sm = plot_scatter_3d(ax_a, history, ccd, default, optimized, norm)
-            cb = fig.colorbar(sm, ax=ax_a, shrink=0.68, pad=0.10)
-            cb.ax.tick_params(colors=_DIM, labelsize=7)
-            cb.set_label("cost J (log)", color=_TEXT, fontsize=8)
+            # WHY (pad 0.12 -> 0.175 -> 0.32 -> 0.26, audits 3 defects
+            # 3a/3b + take-5/6 geometry): the colorbar bar sat on top of
+            # the z label — the real defect (tick marks that follow the
+            # bar were mistaken for the label in take-4/5 probes). With
+            # the short 'θc [deg]' label (see plot_scatter_3d) ending at
+            # x319, pad 0.26 puts the bar frame at x338: 18 px clear of
+            # the label and 3+ px from the z-tick digits (x<=302).
+            # pad pitch ~88 px per 1.0 (0.125 A/B test: bar 340->351).
+            # Canvas stays legend-bound (ink 857 + 6 px pad) -> floor
+            # 8.143 pt. C ylabel gap to cb label probed after render.
+            cb = fig.colorbar(sm, ax=ax_a, shrink=0.68, pad=0.26)
+            cb.ax.tick_params(colors=_DIM, labelsize=8.5)
+            # WHY plain decade formatter (audit 3, defect 7b): LogNorm's
+            # default SciNotation ticks '10³/10²/10¹' carry 0.70x mathtext
+            # superscripts (~5.7 pt printed < 8 pt floor); the plain base
+            # LogFormatter prints full-height '1000/100/10' at 8.5 pt so
+            # every glyph stays >= 8 pt.
+            cb.ax.yaxis.set_major_formatter(LogFormatter(base=10.0))
+            cb.set_label("cost J (log)", color=_TEXT, fontsize=8.5)
+            # WHY fig-level legend (audit 1, D1-D4): plot_scatter_3d no
+            # longer draws an in-axes legend — mplot3d's depth pass paints
+            # every scatter AFTER ordinary axes children, so markers,
+            # the colorbar and the legend boxed each other in (defects
+            # 1-3, 5-7). The empty band between the two grid rows (C's
+            # xlabel band bottom ~310 px, B's title band top ~348 px) is
+            # outside every axes: a figure-level legend drawn last can be
+            # overpainted by nothing there. 8.5 pt keeps the printed size
+            # at 8.5 x 0.955 = 8.12 pt (>= 8 pt floor).
+            # WHY the tight spacings (take-1 measurement): the default
+            # handlelength 2.0 / columnspacing 1.0 / handletextpad 0.5
+            # produced a 965 px box — WIDER than the 865 px canvas, so
+            # bbox_inches="tight" grew the figure to 994 px and the print
+            # squeeze fell to 0.832 (8.5 pt -> 7.07 pt, under floor).
+            # take-2 measured still 820 px (x55-875, canvas 890 px ->
+            # 7.90 pt) so the spacings go to their minimums: reclaimed
+            # ~45 px -> ~775 px box, right edge lands inside the canvas.
+            # WHY anchor 0.4875: 0.465 put the box at y332-360, whose
+            # bottom collided with the B-title band (rows start y355).
+            # 0.4875 seats it at y318-343: 6 px under the top-row content
+            # (ends y312) and 4 px above the titles (start y347).
+            # WHY columnspacing 0.45 (audit 3, defect 1): at 0.1 the
+            # Optimum-star handle (white edge x502) overpainted the ')' of
+            # 'BO iteration (50)' (0 px) and 'Default J' sat 1 px from
+            # 'Optimum J=1.560'. +0.35 em ≈ 6 px per boundary → ≥3 px at
+            # both. Width budget: box ~802 px, right frame ~x866 → tight
+            # canvas ≈ 874 px → nat 5.83 in → squeeze 0.946 → 8.04 pt ✓
+            # (0.50 would push the canvas past 879 px = 8.0 pt floor).
+            h_a, l_a = ax_a.get_legend_handles_labels()
+            fig.legend(
+                h_a, l_a, loc="upper center", bbox_to_anchor=(0.5, 0.4875),
+                ncol=5, fontsize=8.5, framealpha=1.0,
+                facecolor=_PANEL, edgecolor=_EDGE, labelcolor=_TEXT,
+                borderpad=0.15, columnspacing=0.45, handletextpad=0.1,
+                handlelength=1.0,
+            )
             print("  panel A (3D scatter): OK")
         except Exception as exc:  # noqa: BLE001 — panel isolation is deliberate (module A2): one panel failing must not kill the figure
             panel_errors.append("A")
@@ -919,16 +1092,25 @@ def main() -> int:
                 )
 
         # --- Suptitle + save ---
+        # WHY (crop + theme): line 2 (~90 chars at 13 pt = 10.3 in) spilled
+        # 1.5 in past BOTH canvas edges and its facts (70 evals/20 LHD/50 BO,
+        # best J, Cd improvement, Matern 5/2 + EI) all appear in the ch4
+        # caption/prose. 1 line at 11 pt = 5.3 in fits the 5.77 in canvas.
+        # white -> _TEXT: dark-theme leftover, invisible on white _BG.
         fig.suptitle(
-            "StellarOrion HIAD — Bayesian Optimization Diagnostics\n"
-            f"70 evals (20 LHD + 50 BO) · best J = {optimized['cost']:.4f} "
-            f"· Cd improvement = {improvement_pct(data)} "
-            f"· GP Matern 5/2 + EI (ξ=0.01)",
-            color="white", fontsize=13, fontweight="bold", y=0.975,
+            "StellarOrion HIAD — Bayesian Optimization Diagnostics",
+            color=_TEXT, fontsize=11, fontweight="bold", y=0.975,
         )
         print(f"\n[5/5] Saving {_OUTPUT_PNG} ...")
+        # WHY (pad_inches 0.04, take-5 floor): tight bbox without explicit
+        # pad rendered an 881 px canvas -> nat 5.873 in -> 8.5 pt prints
+        # 7.977 pt, under the 8.0 pt floor (max canvas 873 px). The default
+        # margin alone cost ~15 px/side; pinning pad to 0.04 in (6 px)
+        # targets ~869 px -> ~8.05 pt while keeping ink >= 6 px off the
+        # canvas edge. 0.00 would clip glyph AA at the border.
         fig.savefig(
             str(_OUTPUT_PNG), dpi=150, facecolor=_BG, bbox_inches="tight",
+            pad_inches=0.04,
         )
         plt.close(fig)
         if not _OUTPUT_PNG.is_file():

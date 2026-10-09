@@ -4,19 +4,18 @@ HIAD Geometry Dashboard Generator
 Generates MP4 visualization of IRVE-3 HIAD cross-section geometry
 with parameter dashboard overlay.
 """
-import sys
 import os
-import ctypes
-import numpy as np
+import sys
+
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from matplotlib.patches import FancyArrowPatch
-import matplotlib.gridspec as gridspec
+import numpy as np
+from matplotlib import animation, gridspec
 from matplotlib.artist import Artist
 
 # Add parent directory to path for the wrapper
 sys.path.insert(0, os.path.dirname(__file__))
 from ada_pinn_wrapper import get_hiad_cross_section
+
 
 def create_geometry_dashboard(
     output_path: str = 'hiad_geometry_dashboard.mp4',
@@ -195,13 +194,13 @@ def create_geometry_dashboard(
         if n_show >= 57:
             # Total length
             ax_main.annotate('', xy=(x.max(), -y.max()-0.2), xytext=(0, -y.max()-0.2),
-                           arrowprops=dict(arrowstyle='<->', color='black', lw=1.5))
+                           arrowprops={'arrowstyle': '<->', 'color': 'black', 'lw': 1.5})
             ax_main.text(x.max()/2, -y.max()-0.35, f'L = {x.max():.3f} m', 
                         ha='center', va='top', fontsize=10, fontweight='bold')
             
             # Max radius
             ax_main.annotate('', xy=(x.max()+0.2, y.max()), xytext=(x.max()+0.2, 0),
-                           arrowprops=dict(arrowstyle='<->', color='black', lw=1.5))
+                           arrowprops={'arrowstyle': '<->', 'color': 'black', 'lw': 1.5})
             ax_main.text(x.max()+0.35, y.max()/2, f'R = {y.max():.3f} m', 
                         ha='left', va='center', fontsize=10, fontweight='bold', rotation=90)
         

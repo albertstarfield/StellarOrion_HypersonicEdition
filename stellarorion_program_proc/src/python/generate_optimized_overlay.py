@@ -18,20 +18,21 @@ CITATIONS:
   [2] hiad_optimization_results.json -- written by hiad_optimizer.py
   [3] stellarorion_pinn_trajectory.adb lines 425-479 -- Ada source of truth
 """
-import sys
-import os
 import json
-import numpy as np
+import os
+import sys
+
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import matplotlib.gridspec as gridspec
+import numpy as np
+from matplotlib import animation, gridspec
 from matplotlib.artist import Artist
 
 # Single source of truth for the HIAD 4-segment cross-section (pure NumPy,
 # no ctypes/dylib dependency -- see hiad_geometry.py AXIOMS/THEORIES).
 # [Citation: hiad_geometry.py; stellarorion_pinn_trajectory.adb lines 425-479]
 sys.path.insert(0, os.path.dirname(__file__))
-from hiad_geometry import generate_cross_section  # noqa: E402
+from hiad_geometry import generate_cross_section
+
 
 def create_optimized_overlay_dashboard(
     output_path: str = 'hiad_optimized_overlay.mp4',
@@ -130,7 +131,7 @@ def create_optimized_overlay_dashboard(
             if n_show >= len(x_default):
                 ax_main.annotate('', xy=(x_default.max(), -y_default.max()-0.3),
                                xytext=(0, -y_default.max()-0.3),
-                               arrowprops=dict(arrowstyle='<->', color=colors['default'], lw=1.5))
+                               arrowprops={'arrowstyle': '<->', 'color': colors['default'], 'lw': 1.5})
                 ax_main.text(x_default.max()/2, -y_default.max()-0.45,
                            f'Default L={x_default.max():.3f}m',
                            ha='center', va='top', fontsize=9, color=colors['default'])
@@ -160,7 +161,7 @@ def create_optimized_overlay_dashboard(
             if n_show_opt >= len(x_optimized):
                 ax_main.annotate('', xy=(x_optimized.max(), -y_optimized.max()-0.3),
                                xytext=(0, -y_optimized.max()-0.3),
-                               arrowprops=dict(arrowstyle='<->', color=colors['optimized'], lw=1.5))
+                               arrowprops={'arrowstyle': '<->', 'color': colors['optimized'], 'lw': 1.5})
                 ax_main.text(x_optimized.max()/2, -y_optimized.max()-0.45,
                            f'Optimized L={x_optimized.max():.3f}m',
                            ha='center', va='top', fontsize=9, color=colors['optimized'])
@@ -169,7 +170,7 @@ def create_optimized_overlay_dashboard(
                 ax_main.text(0.02, 0.98, f'Improvement: {improvement_pct:.2f}%',
                            transform=ax_main.transAxes, fontsize=12, fontweight='bold',
                            color=colors['improvement'], verticalalignment='top',
-                           bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                           bbox={'boxstyle': 'round', 'facecolor': 'white', 'alpha': 0.8})
 
             ax_main.set_title('Phase 2: Default vs Optimized Overlay', fontsize=13, fontweight='bold')
 
@@ -258,10 +259,10 @@ def create_optimized_overlay_dashboard(
         # Phase indicator
         if progress < 0.5:
             phase_text = "DEFAULT"
-            phase_color = colors['default']
+            colors['default']
         else:
             phase_text = "OPTIMIZED"
-            phase_color = colors['optimized']
+            colors['optimized']
 
         ax_timeline.text(time_sec/2, 0, f'{phase_text} {progress*100:.0f}%',
                         ha='center', va='center', fontsize=12, fontweight='bold', color='white')

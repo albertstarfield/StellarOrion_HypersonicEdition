@@ -13,6 +13,7 @@ AXIOMS:
 [Citation: Sutton & Graves (1972), NASA TR R-376]
 """
 
+import csv
 import glob
 import json
 import math as _math
@@ -60,13 +61,8 @@ import matplotlib
 
 from ada_pinn_wrapper import fay_riddell_heat_flux, tps_conduction
 from validation_pipeline import (
-    _ada_drag,
-    _ada_dynq,
-    _ada_gload,
     generate_paraview_vtu,
-    irve3_trajectory_model,
     isa_atmosphere,
-    sutton_graves_heat_flux,
 )
 
 matplotlib.use("Agg")
@@ -257,6 +253,80 @@ OPTIMIZED_TOPOLOGY_DIR = os.path.join(os.path.dirname(__file__), "..", "..",
                                       "results/OptimizedTopology")
 
 
+def _trajectory_csv_path() -> str:
+    """Return the authoritative trajectory CSV path used by the validation pipeline."""
+    return os.path.join(RESULTS_DIR, "pinn_trajectory_per_step.csv")
+
+
+_TRAJ_CSV_CACHE: dict[str, Any] | None = None
+
+def _load_trajectory_csv():
+    """Load the authoritative per-step trajectory/CSV telemetry into memory."""
+    global _TRAJ_CSV_CACHE
+    if _TRAJ_CSV_CACHE is not None:
+        return _TRAJ_CSV_CACHE
+    path = _trajectory_csv_path()
+    if not os.path.exists(path):
+        raise FileNotFoundError(path)
+    with open(path, newline="", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    if not rows:
+        raise ValueError(f"empty trajectory CSV: {path}")
+    _TRAJ_CSV_CACHE = {
+        "path": path,
+        "steps": np.array([float(r["step"]) for r in rows], dtype=np.float64),
+        "rows": rows,
+    }
+    return _TRAJ_CSV_CACHE
+
+
+def _authoritative_trajectory_at(step: int) -> dict[str, Any]:
+    """Return authoritative trajectory telemetry at `step` from the shipped CSV."""
+    cache = _load_trajectory_csv()
+    steps = cache["steps"]
+    rows = cache["rows"]
+    step_f = float(step)
+    if step_f < float(steps[0]) or step_f > float(steps[-1]):
+        raise ValueError(f"step {step} outside authoritative range [{steps[0]}, {steps[-1]}]")
+    idx = int(np.searchsorted(steps, step_f, side="left"))
+    if idx < len(steps) and float(steps[idx]) == step_f:
+        r = rows[idx]
+    else:
+        i0 = max(0, idx - 1)
+        i1 = min(len(rows) - 1, idx)
+        if float(steps[i1]) == float(steps[i0]):
+            r = rows[i0]
+        else:
+            a = (step_f - float(steps[i0])) / (float(steps[i1]) - float(steps[i0]))
+            r = {}
+            for k, v in rows[i0].items():
+                try:
+                    r[k] = float(v) * (1.0 - a) + float(rows[i1][k]) * a
+                except (ValueError, KeyError, TypeError):
+                    r[k] = v if a < 0.5 else rows[i1][k]
+    return {
+        "step": int(float(r["step"])),
+        "altitude_km": float(r["altitude_km"]),
+        "velocity_ms": float(r["velocity_ms"]),
+        "mach_number": float(r["mach_number"]),
+        "heat_flux_avg_Wm2": float(r["heat_flux_avg_Wm2"]),
+        "heat_flux_max_Wm2": float(r["heat_flux_max_Wm2"]),
+        "drag_sum_N": float(r["drag_sum_N"]),
+        "lift_sum_N": float(r["lift_sum_N"]),
+        "g_load": float(r["g_load"]),
+        "cd": float(r["cd"]),
+        "cl": float(r["cl"]),
+        "heat_load_jcm2": float(r["heat_load_jcm2"]),
+        "heat_sum_Wm2": float(r["heat_sum_Wm2"]),
+        "dynamic_pressure_Pa": float(r["dynamic_pressure_Pa"]),
+        "Sutton_Graves_Wcm2": float(r["Sutton_Graves_Wcm2"]),
+        "ambient_pressure_Pa": float(r["ambient_pressure_Pa"]),
+        "ambient_temp_K": float(r["ambient_temp_K"]),
+        "knudsen_number": float(r["knudsen_number"]),
+        "reynolds_number": float(r["reynolds_number"]),
+    }
+
+
 def _compute_frame_data(step: int):
     """Pre-compute all trajectory + physics + PINN metrics for one frame step via Ada FFI.
 
@@ -265,13 +335,15 @@ def _compute_frame_data(step: int):
     All physics in Ada — Python is wrapper only.
     [Citation: Ada Drag_Force, G_Load, Sutton_Graves in stellarorion_pinn_trajectory.ads]
     """
-    traj = irve3_trajectory_model(float(step))
+    traj = _authoritative_trajectory_at(step)
     isa = isa_atmosphere(traj["altitude_km"])
-    sg = sutton_graves_heat_flux(traj["altitude_km"], traj["velocity_ms"])
-    drag = _ada_drag(isa["density_kgm3"], traj["velocity_ms"],
-                     IRVE3_CD, IRVE3_DIAMETER_M)
-    gload = _ada_gload(drag, IRVE3_MASS_KG)
-    dynq = _ada_dynq(isa["density_kgm3"], traj["velocity_ms"])
+    sg = {
+        "heat_flux_Wm2": traj["heat_flux_avg_Wm2"],
+        "heat_flux_Wcm2": traj["Sutton_Graves_Wcm2"],
+    }
+    drag = traj["drag_sum_N"]
+    gload = traj["g_load"]
+    dynq = traj["dynamic_pressure_Pa"]
 
     # ── Composite heat flux components ──
     # Surface energy balance solved jointly by the Ada/SPARK TPS_Conduction
@@ -290,6 +362,37 @@ def _compute_frame_data(step: int):
     t_back_k = _tps["t_back"]
     q_cond_wm2 = (t_surface_k - t_back_k) / _tps["series_resistance_m2K_W"]
     q_cond_wcm2 = q_cond_wm2 / 10000.0
+
+    # -- Per-ply heat-flux decomposition --
+    # [Axiom] Steady 1-D flux is continuous across every ply interface
+    #   THEOREM: q_ply = (T_top_ply - T_bottom_ply)/R_ply is the same for all
+    #           plies (series resistance -> identical current). We report per-ply
+    #           through-flux and per-ply temperature drop.
+    # Citation: IRVE-3 F-TPS layup, stellarorion_types.ads L695-716
+    _ply_thk = (0.0006, 0.0006, 0.0025, 0.0025, 0.00015)
+    _ply_k   = (0.25, 0.25, 0.02, 0.02, 0.12)
+    _ply_bnd = [0.0]
+    for _t in _ply_thk:
+        _ply_bnd.append(_ply_bnd[-1] + _t)
+    _depths = _tps["profile_depth_m"]
+    _temps  = _tps["profile_temp"]
+    _Tb = [float(_temps[0])]
+    for _bnd in _ply_bnd[1:]:
+        for _i in range(len(_depths) - 1):
+            if _depths[_i] <= _bnd <= _depths[_i + 1]:
+                _f = (_bnd - _depths[_i]) / (_depths[_i + 1] - _depths[_i]) if _depths[_i + 1] > _depths[_i] else 0.0
+                _Tb.append(float(_temps[_i] + _f * (_temps[_i + 1] - _temps[_i])))
+                break
+        else:
+            _Tb.append(float(_temps[-1]))
+    _q_ply_wcm2 = []
+    _dT_ply = []
+    for _i in range(len(_ply_thk)):
+        _R_i = _ply_thk[_i] / _ply_k[_i]
+        _dT_i = _Tb[_i] - _Tb[_i + 1]
+        _dT_ply.append(_dT_i)
+        _q_i = _dT_i / _R_i if _R_i > 0 else 0.0
+        _q_ply_wcm2.append(_q_i / 10000.0)
     # Fay-Riddell continuum upper bound (uses wall temp for viscosity correction)
     fr = fay_riddell_heat_flux(isa["density_kgm3"], 1.5, traj["velocity_ms"],
                                traj["mach_number"], t_surface_k)
@@ -348,6 +451,8 @@ def _compute_frame_data(step: int):
         "heat_flux_cond_wcm2": q_cond_wcm2,
         "surface_temp_k": t_surface_k,
         "back_temp_k": t_back_k,
+        "q_ply_wcm2": _q_ply_wcm2,
+        "dT_ply_K": _dT_ply,
     }
 
 
@@ -405,7 +510,7 @@ def _render_animated_frame(fargs: Any):
       show_surface_temp,
      show_vel, show_mach, show_drag, show_g, out_dir, prefix, resolution,
      show_pinn_loss, show_pinn_acc, show_dsmc_pinn_err,
-     show_kn,
+     show_kn, frame_q_ply,
      show_peak_hf, show_total_heat, show_ballistic,
      show_stag_press, show_alt_peak_heat, show_peak_dynq,
      validation, optimized_topology) = fargs
@@ -913,7 +1018,7 @@ def _render_animated_frame(fargs: Any):
         _hm_x0 = x0 + _label_w
         _hm_y0 = y0 + int(20 * _scale)
         _hm_x1 = x1 - _bar_w - int(15 * _scale)
-        _hm_y1 = y1 - int(18 * _scale)
+        _hm_y1 = y1 - int(35 * _scale)
 
         _n_rows = 5
         _row_h = (_hm_y1 - _hm_y0) // _n_rows
@@ -946,6 +1051,11 @@ def _render_animated_frame(fargs: Any):
         if _n_cols == 0:
             return
         _cell_w = max(1, (_hm_x1 - _hm_x0) // _n_cols)
+        #  Bind the colour-bar scale before the loop so the labels below are
+        #  always defined even when _rows is empty (pyrefly: `_vmin`/`_vmax`
+        #  may be uninitialized).  Both are overwritten per row in the loop.
+        _vmin = 0.0
+        _vmax = 1.0
         for _i, _row_data in enumerate(_rows):
             _vmin = _row_mins[_i]
             _vmax = _row_maxs[_i]
@@ -1080,6 +1190,20 @@ def _render_animated_frame(fargs: Any):
         _draw_heatmap_panel(draw, *p, frame_idx,
                             show_steps, show_hf, show_hf_fr, show_hf_rad,
                             show_hf_cond, show_surface_temp)
+
+        # Per-ply heat flux legend (current frame) overlaid beneath the heatmap
+        from PIL import ImageFont as _PLFont
+        try:
+            _pl_font = _PLFont.truetype("/System/Library/Fonts/Helvetica.ttc", 10)
+        except Exception:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
+            _pl_font = _PLFont.load_default()
+        _ply_names = ["Nextel", "Pyrogel", "AKK", "Pyrogel", "Nextel"]
+        _lx = int(p[0] + 12)
+        _ly = int(p[1] + p[3] - 14)
+        draw.text((_lx, _ly),
+                  "Per-ply q (W/cm²): " + ", ".join(
+                      f"{n}={frame_q_ply[frame_idx, i]:.2f}" for i, n in enumerate(_ply_names)),
+                  fill=(180, 220, 255), font=_pl_font)
 
         # Row 6 (y=66%, h=11%): thermal loads (peak heat flux, total heat load, ballistic coeff)
         peak_hf_val = show_peak_hf[frame_idx] if frame_idx < len(show_peak_hf) else 0.0
@@ -1477,6 +1601,8 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
     frame_hf_fr = np.array([d["heat_flux_fr_wcm2"] for d in frame_data])
     frame_hf_rad = np.array([d["heat_flux_rad_wcm2"] for d in frame_data])
     frame_hf_cond = np.array([d["heat_flux_cond_wcm2"] for d in frame_data])
+    frame_q_ply = np.array([d["q_ply_wcm2"] for d in frame_data])
+    np.array([d["dT_ply_K"] for d in frame_data])
     frame_surface_temp = np.array([d["surface_temp_k"] for d in frame_data])
     frame_drag = np.array([d["drag_sum_N"] for d in frame_data])
     frame_g = np.array([d["g_load"] for d in frame_data])
@@ -1524,7 +1650,7 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
             frame_vel, frame_mach, frame_drag, frame_g,
             frames_dir, prefix, _expanded_resolution,
             frame_pinn_loss, frame_pinn_acc, frame_dsmc_pinn_err,
-            frame_kn,
+            frame_kn, frame_q_ply,
             frame_peak_hf, frame_total_heat, frame_ballistic,
             frame_stag_press, frame_alt_peak_heat, frame_peak_dynq,
             validation, optimized_topology,

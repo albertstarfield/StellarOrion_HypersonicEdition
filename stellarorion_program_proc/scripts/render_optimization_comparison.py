@@ -795,6 +795,11 @@ def main() -> int:
     """
     import matplotlib
     matplotlib.use('Agg')
+    # Floor: chapter 04 places this PNG at \textwidth; with the shrunk
+    # canvas the natural width matches print width, so declared pt = printed
+    # pt. font.size pins tick labels at 8.5 pt (>= the 8 pt floor).
+    matplotlib.rcParams.update({"font.size": 8.5})
+
     import matplotlib.pyplot as plt
     from matplotlib.patches import Patch
 
@@ -949,7 +954,11 @@ def main() -> int:
     # CITATION: [deck body/header colours measured from
     #            Lost+Found/ProgressReport/Week 16 LaTeX/main.pdf]
     # ---------------------------------------------------------------------
-    fig = plt.figure(figsize=(16, 8), facecolor='#ffffff')
+    # figsize: width 5.83 in matches the include (squeeze 0.945, 8.5pt->8.03);
+    # height 3.30 in buys vertical bands: suptitle / panel titles / axes /
+    # xtick+xlabel / component legend / parameter footers, each with >=8 px
+    # clearance (old 2.91 in put legend+footers+ticks in one crashing band).
+    fig = plt.figure(figsize=(5.83, 3.30), facecolor='#ffffff')
 
     # Default (left) — blue tones; params loaded from JSON 'default' block
     ax1 = fig.add_subplot(121, projection='3d', facecolor='#ffffff')
@@ -960,20 +969,40 @@ def main() -> int:
     # Overlay the flown body so the 41.1 % disagreement is visible on the
     # figure itself rather than only in the WARNING printed above.
     if flown_x:
-        ax1.plot(flown_x, flown_y, [0.0] * len(flown_x),
-                 color='#c0392b', linestyle='--', linewidth=2.0,
-                 label='Flown (HIAD_custom.surf)')
+        _fln, = ax1.plot(flown_x, flown_y, [0.0] * len(flown_x),
+                         color='#c0392b', linestyle='--', linewidth=2.0)
         ax1.plot(flown_x, [-v for v in flown_y], [0.0] * len(flown_x),
                  color='#c0392b', linestyle='--', linewidth=2.0)
-        ax1.legend(loc='upper left', fontsize=7, labelcolor='#2f3b43',
-                   framealpha=0.15)
-    ax1.set_title('BEFORE (IRVE-3 Default — Ada FFI; flown body dashed)',
-                  color='#2f3b43', fontsize=12,
+        # WHY (pixel audit 2026-10-08, take 2): an IN-AXES legend cannot win
+        # here: at upper-left it covered the left z-tick stack ('2','0' ->
+        # 0 ink) and chopped 'Z [m]' (rows y198-231 frame-covered), and the
+        # 3-D nose disk still painted over its frame/face/handle (mplot3d
+        # depth pass beats set_zorder(6)). The full-width band y84-151
+        # between the component legend (frame ends y83) and the panel titles
+        # (start y152) is measured ink-free, so the entry lives THERE as a
+        # figure legend anchored over panel A (top-left at x~88,y~102:
+        # x88+294 wide < panel A right x464, bottom y136 < y152).
+        # anchor y 0.80 measured frame at canvas y117-150, leaving only 1 px
+        # to the panel-title row (y152); 0.832 lifts it to ~y101-134, i.e. 18 px
+        # clear of the component legend (y83) above and the titles (y152) below.
+        fig.legend(handles=[_fln], labels=['Flown (HIAD_custom.surf)'],
+                   loc='upper left', bbox_to_anchor=(0.10, 0.832),
+                   fontsize=8.5, labelcolor='#2f3b43', framealpha=1.0,
+                   facecolor='white', edgecolor='#a8bfba')
+    # WHY (floor/crop): the old title ran 5.32 in wide at 12 pt and pushed
+    # the tight bbox 1.17 in past the canvas left edge. 'flown body dashed'
+    # stays truthful via the ax1 legend entry 'Flown (HIAD_custom.surf)' and
+    # 'Ada FFI' via the footer 'Source: Ada FFI', so the title keeps only the
+    # panel identity that no other label carries.
+    ax1.set_title('BEFORE (IRVE-3 Default)',
+                  color='#2f3b43', fontsize=11,
                   fontweight='bold', pad=10)
-    ax1.set_xlabel('X (axial) [m]', color='#2f3b43', fontsize=8)
-    ax1.set_ylabel('Y [m]', color='#2f3b43', fontsize=8)
-    ax1.set_zlabel('Z [m]', color='#2f3b43', fontsize=8)
-    ax1.tick_params(colors='#3a4a51', labelsize=6)
+    ax1.set_xlabel('X (axial) [m]', color='#2f3b43', fontsize=8.5)
+    ax1.set_ylabel('Y [m]', color='#2f3b43', fontsize=8.5)
+    ax1.set_zlabel('Z [m]', color='#2f3b43', fontsize=8.5)
+    # WHY (floor): tick labels must print >= 8 pt; the include squeeze is
+    # ~0.95 so 8.5 pt stays legal (8.5 x 0.95 = 8.08). 6 pt printed 5.7 pt.
+    ax1.tick_params(colors='#3a4a51', labelsize=8.5)
     _apply_view(ax1, x_max_all, r_max_all)
     def_label = (f"R_N={default['R_N']:.2f}m  half_cone={default['half_cone_deg']:.1f}\n"
                  f"r_tor={default['r_tor']:.3f}m  {n_tori_default_meshed}/{n_tori} tori\n"
@@ -989,8 +1018,8 @@ def main() -> int:
     # tight bounding box, so the crop can no longer cut it. Placement is
     # therefore expressed in figure coordinates (0..1 across the whole canvas):
     # left panel at x=0.015, right panel just past the mid-line at x=0.515,
-    # both at y=0.03 with va='bottom'.
-    fig.text(0.015, 0.03, def_label, color='#2f3b43', fontsize=8,
+    # both at y=0.02 with va='bottom' (band below the 0.255 legend row).
+    fig.text(0.015, 0.02, def_label, color='#2f3b43', fontsize=8.5,
              verticalalignment='bottom',
              bbox={'boxstyle': 'round,pad=0.3', 'facecolor': '#eef3f2',
                    'edgecolor': '#a8bfba'})
@@ -1002,39 +1031,85 @@ def main() -> int:
                 half_cone_deg=opt["half_cone_deg"], r_tor=opt["r_tor"],
                 cd_value=opt["Cd"], rn=opt["R_N"],
                 is_optimized=True)
-    ax2.set_title('AFTER (Optimized — Bayesian — Ada FFI)', color='#c0392b', fontsize=12,
+    # WHY (floor/crop): old 3.98 in title spilled past the canvas right edge;
+    # 'Bayesian' is the word the thesis needs, 'Ada FFI' rides the footer.
+    ax2.set_title('AFTER (Bayesian Optimized)', color='#c0392b', fontsize=11,
                   fontweight='bold', pad=10)
-    ax2.set_xlabel('X (axial) [m]', color='#2f3b43', fontsize=8)
-    ax2.set_ylabel('Y [m]', color='#2f3b43', fontsize=8)
-    ax2.set_zlabel('Z [m]', color='#2f3b43', fontsize=8)
-    ax2.tick_params(colors='#3a4a51', labelsize=6)
+    ax2.set_xlabel('X (axial) [m]', color='#2f3b43', fontsize=8.5)
+    ax2.set_ylabel('Y [m]', color='#2f3b43', fontsize=8.5)
+    ax2.set_zlabel('Z [m]', color='#2f3b43', fontsize=8.5)
+    ax2.tick_params(colors='#3a4a51', labelsize=8.5)  # floor: 8.5 x 0.95 = 8.08
     _apply_view(ax2, x_max_all, r_max_all)
     opt_label = (f"R_N={opt['R_N']:.2f}m  half_cone={opt['half_cone_deg']:.1f}\n"
                  f"r_tor={opt['r_tor']:.3f}m  {n_tori_opt_meshed}/{n_tori} tori\n"
                  f"Cd={opt['Cd']:.4f}\nSource: Ada FFI"
                  + ("" if ada_opt_ok else "\n[Ada cross-check DRIFT]"))
-    fig.text(0.515, 0.03, opt_label, color='#c0392b', fontsize=8,
+    fig.text(0.515, 0.02, opt_label, color='#c0392b', fontsize=8.5,
              verticalalignment='bottom',
              bbox={'boxstyle': 'round,pad=0.3', 'facecolor': '#eef3f2',
                    'edgecolor': '#c0392b'})
+
+    # WHY (pixel audit 2026-10-08, take 2): azim=-55 foreshortens the axial
+    # direction so hard that 80 % of the x span maps to ~12.5 px of screen
+    # while one '%.1f' label is ~29 px wide: even a 10 %/90 % inset pair
+    # merged ('0.3' x '2.7' shared pixels at x160-173 / x631-644), and the
+    # old nbins=4 cap was a 5-label pile. ONE label at the axis centre is
+    # the only placement that cannot collide; exact numbers live in the
+    # parameter footers, and tick values are presentation-only (no data
+    # change). The y pair (10 %/90 % inset) measured 5 px clear of each
+    # other, and the Z stack measured clear (3-4 px gaps) with nbins=3.
+    from matplotlib.ticker import FixedLocator, FormatStrFormatter, MaxNLocator
+    for _ax in (ax1, ax2):
+        _xl = _ax.get_xlim()
+        _yl = _ax.get_ylim()
+        _ax.xaxis.set_major_locator(
+            FixedLocator([_xl[0] + 0.50 * (_xl[1] - _xl[0])]))
+        _ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        _ax.yaxis.set_major_locator(
+            FixedLocator([_yl[0] + 0.10 * (_yl[1] - _yl[0]),
+                          _yl[0] + 0.90 * (_yl[1] - _yl[0])]))
+        _ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        _ax.zaxis.set_major_locator(MaxNLocator(nbins=3))
 
     # Legend
     legend_elements = [
         Patch(facecolor='#c0392b', label='Nose Cap'),
         Patch(facecolor='#3a4a51', label='Central Drum'),
-        Patch(facecolor='#3d6b8a', label='Envelope (Ada FFI)'),
+        # 'Envelope (Ada FFI)' trimmed to 'Envelope': both footer boxes carry
+        # 'Source: Ada FFI', and the short form is what makes the 5-column
+        # row fit inside the 5.83 in canvas (old row right edge: 6.35 in).
+        Patch(facecolor='#3d6b8a', label='Envelope'),
         Patch(facecolor='#5d6e72', label='Gore Spokes'),
         Patch(facecolor='#d5e0dd', label='Flat Back'),
     ]
-    fig.legend(handles=legend_elements, loc='lower center', ncol=5,
-        fontsize=9, facecolor='#eef3f2', edgecolor='#a8bfba',
-        labelcolor='#2f3b43', bbox_to_anchor=(0.5, 0.01))
+    # fontsize 8.5 x 0.945 squeeze = 8.03 pt printed (floor 8); 9 pt at the
+    # old row width spilled 15 pt past the right edge. The row sits in its
+    # own TOP band (0.935 upper anchor): below the suptitle, above the panel
+    # titles, clear of the xlabel/footers bands that used to collide with it.
+    fig.legend(handles=legend_elements, loc='upper center', ncol=5,
+        fontsize=8.5, facecolor='#eef3f2', edgecolor='#a8bfba',
+        labelcolor='#2f3b43', columnspacing=0.6, borderpad=0.4,
+        bbox_to_anchor=(0.5, 0.935))
 
-    fig.suptitle('StellarOrion HIAD Topology Optimization — Before vs After\n'
-                 'Both profiles computed in Ada via FFI | Optimized by Bayesian search',
-        color='white', fontsize=14, fontweight='bold', y=0.97)
+    # WHY (crop + theme): line 2 measured 7.55 in at 14 pt (drove the tight
+    # crop to 8.04 in nat) and is redundant: the ch4 caption states 'Ada via
+    # FFI' + 'Bayesian optimum' and both footers carry 'Source: Ada FFI'.
+    # 1 line at 10 pt = 4.3 in, inside the 5.83 in canvas. color='white' was
+    # a dark-theme leftover: on the #ffffff facecolor it rendered INVISIBLE,
+    # so it is set to ink #2f3b43.
+    # WHY (crowding): at 12 pt the AFTER title overhung the canvas right
+    # edge (ax2 reaches x=583 px and the title is wider than ax2); 11 pt
+    # fits both panels inside 5.83 in with ~5 px margin.
+    fig.suptitle('StellarOrion HIAD Topology Optimization — Before vs After',
+        color='#2f3b43', fontsize=10, fontweight='bold', y=0.99)
 
-    plt.tight_layout(rect=(0, 0.05, 1, 0.93))
+    # Band layout in fig fractions of the 3.30 in height (spy-verified):
+    # suptitle y0.99, legend row 0.935..0.87, panel titles ~0.85, axes
+    # 0.40..0.76 (mplot3d ignores label space, so rect == axes box), xtick
+    # +xlabels hang 45 px below the axes (0.26..0.40), footers bottom 0.02.
+    # w_pad=6.0 widens the mid gap to ~0.7-0.8 in so ax1/ax2 y-tick labels
+    # stop colliding in the middle.
+    plt.tight_layout(rect=(0, 0.40, 1, 0.76), w_pad=6.0)
     out = Path(__file__).resolve().parent.parent / "optimization_comparison.png"
     plt.savefig(str(out), dpi=150, facecolor='#ffffff', bbox_inches='tight')
     print(f"Saved: {out}")

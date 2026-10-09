@@ -21,6 +21,17 @@ from typing import Protocol, cast
 
 import numpy as np
 
+# F32 dedupe: the SPARTA grid parser lives in exactly ONE place now
+# (``sparta_grid.py``).  This module previously carried its own byte-for-byte
+# copy that had DIVERGED — it read ``temp = parts[6]`` (the axial velocity) and
+# ``vx/vy = parts[7]/[8]`` (the transverse velocities), so the PINN trainer was
+# fed T ~ 8880 K.  Dual import keeps it working both as a top-level module
+# (``src/python`` on sys.path) and as a package (``src.python.pinn_accelerator``).
+try:
+    from sparta_grid import parse_grid_file as _shared_parse_grid_file
+except ImportError:  # pragma: no cover - package-relative fallback
+    from .sparta_grid import parse_grid_file as _shared_parse_grid_file
+
 # Auto-install DeepXDE if missing
 try:
     import deepxde as dde
@@ -494,73 +505,28 @@ class PINNAccelerator:
     def _parse_grid_file(self, grid_file: str) -> np.ndarray:
         """Parse SPARTA grid.NNNN.out into training data.
 
-        Returns: numpy array of shape (N, 6) — [x, y, rho, T, vx, vy]
+        F32 dedupe: this is a thin wrapper over the single canonical parser in
+        :mod:`sparta_grid`.  The local copy it replaced had DIVERGED from the
+        copy in ``kriging_denoise.py`` — it read ``temp = parts[6]`` (the axial
+        velocity) and ``vx/vy = parts[7]/[8]`` (the transverse velocities), so
+        the trainer was fed T ~ 8880 K.  One implementation, imported by both
+        consumers, removes the divergence class entirely.
+
+        Parameters:
+            grid_file: Path to the SPARTA ``grid.NNNN.out`` dump.
+
+        Returns:
+            numpy array of shape (N, 6) — ``[x, y, rho, T, vx, vy]``.
+
+        Raises:
+            ValueError: If no valid cells could be parsed from ``grid_file``.
+            OSError: If ``grid_file`` cannot be opened/read.
 
         References:
         - https://sparta.github.io/
-        - https://sparta.github.io/
+        - https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html
         """
-        cells = []
-        header_seen = False
-
-        with open(grid_file, "r") as fh:
-            # Loop invariant: header_seen is True only inside an "ITEM: CELLS"
-            # block; cells grows exclusively with fully-valid data rows.
-            for line in fh:
-                line = line.strip()
-                if not line or line.startswith("ITEM:"):
-                    if "ITEM: CELLS" in line:
-                        header_seen = True
-                    else:
-                        header_seen = False
-                    continue
-                if not header_seen:
-                    continue
-                parts = line.split()
-                if len(parts) < 9:
-                    continue
-                try:
-                    #  COLUMN ORDER IS `id xlo ylo xhi yhi ...` (F26 fix).
-                    #  [Citation: SPARTA manual §2.4 -- grid file format]
-                    #  [Measured on results/validation/grid.0.out, whose header
-                    #   reads `ITEM: CELLS id xlo ylo xhi yhi f_2[1] ...` and whose
-                    #   first row is `1 -5 0 -4.89928 0.0283273 19 ...`, i.e.
-                    #   parts[1]=-5=xlo, parts[2]=0=ylo, parts[3]=-4.89928=xhi,
-                    #   parts[4]=0.0283273=yhi.]
-                    #  The previous BUGFIX comment asserted the order
-                    #  `xlo,xhi,ylo,yhi`, which is NOT what SPARTA writes, and
-                    #  the code then averaged (xlo,ylo) as if it were an
-                    #  x-interval: every cell centre came out wrong. Fixed to
-                    #  pair each axis with its own two bounds.
-                    x_center = (float(parts[1]) + float(parts[3])) / 2.0
-                    y_center = (float(parts[2]) + float(parts[4])) / 2.0
-                    _particles = float(parts[5])
-                    temp_K = float(parts[6])
-                    vx_ms = float(parts[7])
-                    vy_ms = float(parts[8])
-                    num_density = float(parts[10]) if len(parts) > 10 else 1e20
-
-                    # Convert number density to mass density: rho = n * M_air / N_A
-                    M_air = 28.97e-3  # kg/mol
-                    N_A = 6.022e23  # Avogadro constant [1/mol], nonzero
-                    if N_A == 0:  # defensive: skip row rather than divide by zero
-                        continue
-                    rho = num_density * M_air / N_A
-
-                    if temp_K > 0 and rho > 0:
-                        # [Citation: Bird 1994, "Molecular Gas Dynamics", §2.3]
-                        # Preserve separate vx,vy components for 2D continuity PDE.
-                        # Collapsing to scalar speed loses directional information and
-                        # makes the 2D continuity equation ∂(ρvx)/∂x + ∂(ρvy)/∂y = 0
-                        # physically unsolvable (Finding #22, #52).
-                        cells.append([x_center, y_center, rho, temp_K, vx_ms, vy_ms])
-                except (ValueError, IndexError):
-                    continue
-
-        if not cells:
-            raise ValueError(f"No valid cells parsed from {grid_file}")
-
-        return np.array(cells, dtype=np.float64)
+        return _shared_parse_grid_file(grid_file)
 
     def _normalize(
         self,
@@ -679,7 +645,18 @@ class PINNAccelerator:
         # CAVEAT (stated, not hidden): `_normalize` is a global per-column affine
         # map, so one hot cell still dominates mean_t/std_t. Per-cell masking is a
         # plotting concern (generate_field_panels.cell_mask), not this file's.
-        ic = dde.icbc.PointSetBC(xy_norm, t_norm)
+        #  component MUST be the explicit list [0, 1, 2, 3], not the default 0.
+        #  With component=0 (a numbers.Number) deepxde 1.15.0's PointSetBC.error
+        #  returns outputs[beg:end, 0:1] - values, i.e. a SINGLE output column
+        #  broadcast against the four (N, 4) targets. The network is then asked to
+        #  satisfy four different targets with one column, whose best achievable
+        #  value is the mean of the four columns -- the loss floors at
+        #  mean(t_norm**2) == 1.0 and the net collapses to the mean field.
+        #  Measured on results/validation/grid.1000.out (1500 iters):
+        #    component=0            -> BC loss 9.87e-01 -> 7.98e-01, R2 [0.29, 0.23, -0.10, -2.75]
+        #    component=[0, 1, 2, 3] -> BC loss 1.08e+00 -> 2.09e-01, R2 [0.66, 0.93, 0.76, 0.82]
+        #  [Reference: deepxde 1.15.0 -- deepxde.icbc.PointSetBC.error]
+        ic = dde.icbc.PointSetBC(xy_norm, t_norm, component=[0, 1, 2, 3])
 
         # Output layer: 4 variables (rho, vx, vy, T)
         n_output = 4

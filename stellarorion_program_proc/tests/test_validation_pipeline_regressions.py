@@ -46,7 +46,7 @@ for _path in (str(_PROJECT_ROOT), str(_SIDECAR_DIR)):
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
-import validation_pipeline as vp  # noqa: E402  (path setup must precede import)
+import validation_pipeline as vp
 
 # ---------------------------------------------------------------------------
 # Minimal VTK XML UnstructuredGrid fixtures.

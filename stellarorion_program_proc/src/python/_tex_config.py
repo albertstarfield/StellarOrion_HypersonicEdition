@@ -11,7 +11,6 @@ AXIOMS:
 """
 
 import shutil
-import os
 
 # Module-level state: initialized once
 _tex_available = None
@@ -98,7 +97,7 @@ def setup_tex_fonts():
         _tex_available = True
         return True
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"[tex_config] Failed to configure TeX fonts: {e}")
         print("[tex_config] Falling back to matplotlib defaults")
         _tex_available = False
@@ -110,7 +109,6 @@ def tex_available():
 
     Returns: True if TeX fonts are active, False otherwise.
     """
-    global _tex_available
     if _tex_available is None:
         setup_tex_fonts()
     return _tex_available

@@ -32,7 +32,7 @@ preset = "strict"
 #   sys.path.insert(0, <project root>); import run
 # which pyrefly cannot infer from runtime mutation of sys.path.
 # [Citation: pyrefly search-path — https://pyrefly.org/en/docs/configuration]
-search-path = ["src/python", "scripts", "."]
+search-path = ["src/python", "src/utils", "scripts", "."]
 
 # ── Interpreter selection ────────────────────────────────────────────
 # Query the healthy system interpreter instead of the project .venv.

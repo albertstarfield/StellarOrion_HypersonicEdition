@@ -14,6 +14,18 @@ StellarOrion is a high-fidelity aerothermodynamic simulation and optimization su
 > removed from the repository. All functionality now lives in the Ada/SPARK binary and the
 > Python sidecar — use `python3 stellarorion_program_proc/run.py` instead.
 
+> **Framework Proof of Concept:** This is a framework Proof of Concept about how to optimize
+> a space vessel by first anchoring values to DSMC as validator (and as data feeder/calibrator
+> into the PINN Navier-Stokes), and as a PINN for fast and quick simulation on the trajectory
+> condition of the vessel. Then parameterize the basic IRVE-3 (as this is our basic control
+> model), then use CCD Sampling, then Bayesian Optimization to find one point, then LHS the
+> sample. Then the optimal parametric model is found and simulated on DSMC, compared against
+> validation that has been validated, then do a simulation PINN 0 to 300M to see the performance
+> difference and the survivability of the payload and the vessel.
+>
+> This way, you can run all of these iteratively and fix the flaw in matter of days and weeks,
+> rather than one sample took one day.
+
 ## 🚀 Quick Start
 
 ```bash

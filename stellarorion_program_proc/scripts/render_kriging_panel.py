@@ -114,12 +114,18 @@ def peak_rss_mb() -> float:
         return 0.0
 
 
-def _scatter(ax, x, y, vals, title):
+def _scatter(ax, x, y, vals, title, vmin=None, vmax=None):
     """Scatter a field with percentile colour limits and an explicit label.
 
     AXIOM A4: the percentile used for the colour limits is printed on the panel,
     because the instantaneous `temp` column spans five orders of magnitude and a
     silent clip would hide that.
+
+    WHY vmin/vmax override: a RAW and its KRIGED twin MUST share one colour
+    key, otherwise the kriged panel's narrower distribution silently
+    rescales and the denoising (or lack of it) becomes invisible or
+    misleading. The caller passes the RAW row's limits to both panels and
+    the row colourbar is then valid for the whole row.
     """
     finite = np.isfinite(vals)
     if not finite.any():
@@ -129,12 +135,15 @@ def _scatter(ax, x, y, vals, title):
         ax.set_yticks([])
         ax.set_title(title, fontsize=TITLE_PT)
         return None
-    lo = float(np.percentile(vals[finite], P_LOW))
-    hi = float(np.percentile(vals[finite], P_HIGH))
-    if not np.isfinite(lo) or not np.isfinite(hi) or hi <= lo:
-        lo, hi = float(np.min(vals[finite])), float(np.max(vals[finite]))
-    if hi <= lo:
-        hi = lo + 1.0
+    if vmin is None or vmax is None:
+        lo = float(np.percentile(vals[finite], P_LOW))
+        hi = float(np.percentile(vals[finite], P_HIGH))
+        if not np.isfinite(lo) or not np.isfinite(hi) or hi <= lo:
+            lo, hi = float(np.min(vals[finite])), float(np.max(vals[finite]))
+        if hi <= lo:
+            hi = lo + 1.0
+    else:
+        lo, hi = float(vmin), float(vmax)
     sc = ax.scatter(x[finite], y[finite], c=vals[finite], s=0.7, marker="s",
                     linewidths=0, cmap="inferno", vmin=lo, vmax=hi)
     ax.set_title(title, fontsize=TITLE_PT)
@@ -148,12 +157,29 @@ def _scatter(ax, x, y, vals, title):
 
 
 def _note(ax, text):
-    ax.text(0.5, 1.015, text, transform=ax.transAxes, ha="center", va="bottom",
-            fontsize=FONT_PT - 1, color="0.30")
+    """Print the percentile note INSIDE the map, bottom-left.
+
+    WHY: at y=1.015 (above the axes) this note collided with the subplot
+    title on every KRIGED row and with the figure suptitle on row 0
+    (image-specialist defects D1/D2, 2026-10-09). Inside the axes the
+    note position is deterministic, the bottom-left corner of the DSMC
+    box is the dark low-value region (inferno), and white-on-translucent
+    black keeps the printed-percentile axiom (A4) legible at 8 pt.
+    """
+    ax.text(0.02, 0.02, text, transform=ax.transAxes, ha="left", va="bottom",
+            fontsize=FONT_PT - 1, color="white",
+            bbox={"facecolor": "black", "alpha": 0.45,
+                  "edgecolor": "none", "pad": 1.5})
 
 
 def render_field_figure(raw: np.ndarray, krig: np.ndarray, step: int, path: str) -> str:
-    """2x4 map figure: RAW on top, KRIGED below. Full-width (\\textwidth)."""
+    """4x2 map figure in FIELD-MAJOR layout: rows = rho, T, vx, vy;
+    columns = RAW, KRIGED (left = raw, right = kriged twin).
+    Full-width (\\textwidth).
+
+    WHY: the old "RAW on top, KRIGED below" line predated the velocity
+    rows; the thesis caption is rewritten to this measured layout.
+    """
     #  layout="constrained" keeps the CANVAS exactly WIDTH_FULL_IN.
     #  bbox_inches="tight" was the A2 bug: it measured the bounding box of
     #  the wide y-tick labels and the two-line title, EXPANDED the canvas
@@ -178,35 +204,74 @@ def render_field_figure(raw: np.ndarray, krig: np.ndarray, step: int, path: str)
   #  sizes collapsed to zero" -- 8 colourbar-equipped axes in 2 rows.
     fig.set_size_inches(WIDTH_FULL_IN, 5.20)
     x, y = raw[:, 0], raw[:, 1]
-    #  row -> (state, field index into FIELDS)
-    ROWS = [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (3, 0), (3, 1)]
+    #  ROWS = (state, field): FIELD-MAJOR pairs so every row is
+    #  [RAW field | KRIGED field] of the SAME physical quantity. WHY: only
+    #  then is one shared colourbar per row a correct key for BOTH panels,
+    #  and only then does "same limits as RAW (direct comparison)" hold.
+    #  row0 RAW rho|KRIGED rho, row1 RAW T|KRIGED T, row2 RAW vx|KRIGED vx,
+    #  row3 RAW vy|KRIGED vy (the old state-major mapping put RAW rho next
+    #  to RAW T and keyed the rho panel with T's colourbar — defect D3/D4).
+    ROWS = [(0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2), (0, 3), (1, 3)]
+    #  RAW percentiles per field, computed ONCE: both panels of a row and
+    #  the row colourbar share this key (see _scatter vmin/vmax WHY).
+    limits = {}
+    for _f_i, (_name, _idx, _label) in enumerate(FIELDS):
+        _v = raw[:, _idx]
+        _fin = np.isfinite(_v)
+        if not _fin.any():
+            continue
+        _lo = float(np.percentile(_v[_fin], P_LOW))
+        _hi = float(np.percentile(_v[_fin], P_HIGH))
+        if not np.isfinite(_lo) or not np.isfinite(_hi) or _hi <= _lo:
+            _lo, _hi = float(np.min(_v[_fin])), float(np.max(_v[_fin]))
+        if _hi <= _lo:
+            _hi = _lo + 1.0
+        limits[_f_i] = (_lo, _hi)
     for pos, (state, field_i) in enumerate(ROWS):
         row, col = divmod(pos, 2)
         _name, idx, label = FIELDS[field_i]
         ax = axes[row, col]
+        _lim = limits.get(field_i, (None, None))
         _scatter(ax, x, y, raw[:, idx] if state == 0 else krig[:, idx],
-                 f"{'RAW' if state == 0 else 'KRIGED'} {label}")
+                 f"{'RAW' if state == 0 else 'KRIGED'} {label}",
+                 vmin=_lim[0], vmax=_lim[1])
         _note(ax, f"colour limits p{P_LOW:g}-{P_HIGH:g}" if state == 0
-              else "same limits as RAW (direct comparison)")
+              else "same limits as RAW")
         if col == 0:
             ax.set_ylabel("y [m]", fontsize=FONT_PT)
         if row == 3:
             ax.set_xlabel("x [m]", fontsize=FONT_PT)
+    #  WHY subplots_adjust BEFORE the colourbars (image-specialist defect
+    #  D4, 2026-10-09): the bars used to be created on the DEFAULT axes
+    #  layout and only afterwards did subplots_adjust move the axes, so
+    #  the vertical strips were laid out against stale coordinates and
+    #  crossed the panel frames. Adjust first, then attach the bars.
+    #  WHY subplots_adjust and NOT tight_layout: tight_layout printed
+    #  "Tight layout not applied ... cannot make Axes width small enough"
+    #  on this 2x4 grid of dense scatters, so it silently left the layout
+    #  in its unadjusted state. Fixed margins are deterministic and the
+    #  inches-based A2 contract does not depend on the figure being packed.
+    #  top=0.935 (was 0.945): headroom so the single-line suptitle at
+    #  y=0.99 clears row-0 subplot titles now that notes sit inside axes.
+    #  left=0.093 (was 0.062): the y-axis label "y [m]" was pushed to
+    #  1-3px slivers at the canvas edge (tick labels + gap + label >
+    #  103px); 0.093*1659px = 154px covers ticks (~88px at 8pt) + gap +
+    #  ylabel (~42px) + safety (image-specialist clip finding, 2026-10-09).
+    fig.subplots_adjust(left=0.093, right=0.90, top=0.935, bottom=0.055,
+                        wspace=0.16, hspace=0.42)
     #  One shared colourbar per ROW: all four rows pair RAW with KRIGED of
     #  the SAME field, and the KRIGED panel deliberately reuses the RAW
     #  limits, so a per-row bar is the physically correct single key.
     for row in range(4):
         cb = fig.colorbar(axes[row, 1].collections[0], ax=list(axes[row, :]),
                           orientation="vertical", fraction=0.035, pad=0.015)
-        cb.ax.tick_params(labelsize=FONT_PT - 2)
-    fig.suptitle(f"Kriging (GP) denoising -- DSMC step {step}", fontsize=TITLE_PT + 1)
-    #  WHY subplots_adjust and NOT tight_layout: tight_layout printed
-    #  "Tight layout not applied ... cannot make Axes width small enough"
-    #  on this 2x4 grid of dense scatters, so it silently left the layout
-    #  in its unadjusted state. Fixed margins are deterministic and the
-    #  inches-based A2 contract does not depend on the figure being packed.
-    fig.subplots_adjust(left=0.062, right=0.90, top=0.945, bottom=0.055,
-                        wspace=0.16, hspace=0.42)
+        #  8pt floor (FONT_PT-1): -2 rendered 7pt colourbar ticks, which
+        #  failed the printed >=8pt check (image-specialist, 2026-10-09).
+        cb.ax.tick_params(labelsize=FONT_PT - 1)
+    #  Comma, not "--" (NO-`--` directive, incl. figure pixels); y=0.99
+    #  pins the suptitle clear of row-0 titles (defect D1).
+    fig.suptitle(f"Kriging (GP) denoising, DSMC step {step}",
+                 fontsize=TITLE_PT + 1, y=0.99)
     fig.savefig(path, dpi=DPI)
     _release(fig)   # clear() + close(): deterministic free, see _release docstring
     return path
@@ -289,7 +354,8 @@ def render_ratio_figure(raw: np.ndarray, krig: np.ndarray, step: int, path: str)
     ax.tick_params(labelsize=FONT_PT - 1)
     ax.grid(axis="y", alpha=0.25, linewidth=0.6)
     ax.legend(fontsize=FONT_PT - 2, loc="upper left", framealpha=0.9)
-    ax.set_title(f"Kriging noise reduction -- step {step}\n"
+    #  Comma, not "--" (NO-`--` directive, incl. figure pixels).
+    ax.set_title(f"Kriging noise reduction, step {step}\n"
                  f"{kept[0]} of {raw.shape[0]} cells; GP trained on "
                  f"{TRAIN_CAP_NOTE}",
                  fontsize=TITLE_PT)
