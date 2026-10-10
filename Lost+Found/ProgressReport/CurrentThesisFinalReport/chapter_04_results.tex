@@ -379,8 +379,11 @@ Since $\dot{q} \propto 1/\sqrt{R_N}$ in the Sutton-Graves scaling~\cite{sutton19
     \BeginAccSupp{method=escape,ActualText={Two-panel comparison of the HIAD geometry before and after optimization. The left panel shows the IRVE-3 default geometry with nose radius 1.5\,m, toroid radius 0.135\,m, and half-cone angle 60 degrees. The right panel shows the Bayesian optimum with nose radius 2.9714\,m, toroid radius 0.0885\,m, and half-cone angle 40.15 degrees. The optimized geometry has a larger nose, tighter toroid, and steeper cone angle.}}%
     \includegraphics[width=\textwidth]{figures/optimization_comparison.png}%
     \EndAccSupp{}%
-    \caption[Topology before and after optimization.]{Topology before and after optimization. The left panel shows the IRVE-3 default geometry ($R_N = 1.5$\,m, $r_{tor} = 0.135$\,m, $\theta_c = 60^\circ$); the right panel shows the Bayesian optimum ($R_N = 2.9714$\,m, $r_{tor} = 0.0885$\,m, $\theta_c = 40.15^\circ$). The optimized geometry reduces drag coefficient from 1.6073 to 1.5597 and total heat load from 219.10 to 155.67\,J/cm$^2$ ($-28.95\,\%$).}
+    \caption[Topology before and after optimization.]{Topology before and after optimization. The left panel shows the IRVE-3 default geometry ($R_N = 1.5$\,m, $r_{tor} = 0.135$\,m, $\theta_c = 60^\circ$); the right panel shows the Bayesian optimum ($R_N = 2.9714$\,m, $r_{tor} = 0.0885$\,m, $\theta_c = 40.15^\circ$). The optimized geometry reduces drag coefficient from 1.6073 to 1.5597 and total heat load from 219.10 to 155.67\,J/cm$^2$ ($-28.95\,\%$). The flown scalloped surface is omitted from this preview; see the scalloped-geometry discussion in the prose.}
     \label{fig:optimization_comparison}
+\end{figure}
+
+\begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Three-dimensional scatter plot of the design-space samples. The axes are nose radius, toroid radius, and half-cone angle. The color of each point represents the evaluated cost. The plot shows the 70-evaluation budget: 20 Latin-Hypercube initial samples followed by 50 Bayesian optimization iterations.}}%
     \includegraphics[width=\textwidth]{figures/bo_optimization_3d.png}%

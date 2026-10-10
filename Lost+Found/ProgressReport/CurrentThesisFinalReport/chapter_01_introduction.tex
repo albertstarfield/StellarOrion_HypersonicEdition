@@ -9,10 +9,16 @@ Rigid TPS designs have been the standard solution for Earth reentry: Reusable TP
 Deployable entry systems known as inflatable aerodynamic decelerators (IADs), or hypersonic inflatable aerodynamic decelerators (HIADs), have been tested as flexible TPS~\cite{dinonno2026loftid}. These structures pack into a small launch volume and inflate before atmospheric entry. Their large surface area generates drag, decelerating heavy payloads high in the atmosphere where heating is less severe.
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Computer-generated 3-D rendering of a single generic satellite in low Earth orbit above the Earth. One smooth pink, lens-shaped disc of uniform thickness with a rounded rim carries a white vertical cylinder on a gold segmented ring at its center, topped by a small cluster of thin antenna masts. No text, dimension, or scale is printed, and the object is not labelled as a decelerator.}}%
+    \BeginAccSupp{method=escape,ActualText={Computer-generated 3-D rendering of a fully deployed inflatable hypersonic aerodynamic decelerator above the Earth. One smooth pink, lens-shaped disc of uniform thickness with a rounded rim carries a white vertical cylinder on a gold segmented ring at its center, topped by a small cluster of thin antenna masts. No text, dimension, or scale is printed, and the object is not labelled as a decelerator.}}%
 \includegraphics[width=0.5\textwidth]{figures/HIADsDeployed.png}%
 \EndAccSupp{}%
-    \caption[Deployed inflatable decelerator concept. The artwork is a generic visualization of a single-body orbital object rather than a dimensioned decelerator geometry.]{Deployed inflatable decelerator concept. The artwork is a generic visualization of a single-body orbital object rather than a dimensioned decelerator geometry, so it is used illustratively and is not a geometric definition of the vehicle described in the text.}
+    % Q-defect-1: the previous caption called this artwork a "single-body
+    % orbital object" that is "not labelled as a decelerator", which
+    % contradicted chapter 2's caption for the same file (fig:hiad_loftid,
+    % audited as the deployed 3.0 m stacked-torus HIAD concept render).
+    % Both captions now describe the deployed stacked-torus HIAD concept,
+    % and the source-not-recorded disclosure is carried here as well.
+    \caption[Deployed inflatable decelerator concept: a stack of inflated toroidal rings that inflates to a diameter of about 3~m.]{Deployed inflatable decelerator concept: a stack of inflated toroidal rings that inflates to a diameter of about 3~m on a rigid, stowable carrier. Each ring is a pressure-supported structural member, so the package folds for launch and deploys before atmospheric entry. The artwork is a generic concept rendering rather than a dimensioned geometry, and its source is not recorded in this repository.}
     \label{fig:Hiaddeployed}
 \end{figure}
 
@@ -24,7 +30,7 @@ Inflatable Aerodynamic Decelerator (IAD) development combines aerodynamics, stru
     \BeginAccSupp{method=escape,ActualText={Schematic layer-stack cross-section of a flexible thermal protection system. Five horizontal bands are labelled, from the outermost to the innermost, Kapton or Kevlar film, Pyrogel felt insulation, Pyrogel felt insulation, Nextel fabric, and Nextel fabric. The labels are printed inside the bands; no callouts, dimensions, thicknesses, pressures, or mass figures appear.}}%
 \includegraphics[width=0.5\textwidth]{figures/IADsLayer.png}%
 \EndAccSupp{}%
-    \caption[Layer stack of the flexible thermal protection system, from the outermost Kapton and Kevlar film through two Pyrogel felt insulation layers to two Nextel fabric layers.]{Layer stack of the flexible thermal protection system, from the outermost Kapton and Kevlar film through two Pyrogel felt insulation layers to two Nextel fabric layers. The schematic prints the material names only and carries no thicknesses, pressures, or mass figures, so the layer thicknesses it depicts are illustrative. The source artwork is a 280 by 201 pixel raster, which at the printed size here resolves to about 100 dots per inch, so it is reproduced here as an indicative sketch of the layer order and thicknesses rather than as a resolved diagram; the material properties and thicknesses used in the calculations are tabulated in Appendix~A and are not read off this figure.}
+    \caption[Layer stack of the flexible thermal protection system, from the outermost Kapton and Kevlar film through two Pyrogel felt insulation layers to two Nextel fabric layers.]{Layer stack of the flexible thermal protection system, from the outermost Kapton and Kevlar film through two Pyrogel felt insulation layers to two Nextel fabric layers. The schematic prints the material names only and carries no thicknesses, pressures, or mass figures, so the layer thicknesses it depicts are illustrative. The source artwork is a 280 by 201 pixel raster, which at the printed size here resolves to about 100 dots per inch, so it is reproduced here as an indicative sketch of the layer order and thicknesses rather than as a resolved diagram; the material properties and thicknesses used in the calculations are tabulated in Appendix~A and are not read off this figure. Source: Dillman and Robert~\cite{dillman2015irve3}.}
     \label{fig:Hiadlayer}
 \end{figure}
 

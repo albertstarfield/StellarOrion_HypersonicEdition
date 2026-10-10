@@ -1,15 +1,16 @@
 \clearpage
 \phantomsection
 \addcontentsline{toc}{chapter}{REFERENCES}
-\renewcommand{\refname}{}
-\begin{center}
-\textbf{\large REFERENCES}\\[1em]
-\end{center}
 % Every printed reference is cited at least once. The previous
 % \nocite{*} forced the whole database into the bibliography,
 % which printed 34 entries that nothing in the
 % thesis cited. Those entries were moved to ref_uncited.bib rather
 % than deleted; move one back to use it.
+% The REFERENCES title itself is printed once, by the
+% \renewenvironment{thebibliography} patch in preamble.tex
+% (\section*{REFERENCES} + \small + \@mkboth{REFERENCES}{REFERENCES});
+% the manual centered \textbf{\large REFERENCES} block that used to sit
+% here duplicated that title, so it was removed.
 
 \bibliography{ref}
 

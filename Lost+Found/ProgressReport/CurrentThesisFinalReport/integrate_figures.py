@@ -295,13 +295,25 @@ def main() -> int:
 
     #, 8. Chapter 2: stub and false captions ==============================
     stubs = [
-        (267, "Figure for H. Julian Allen’s Blunt Body Theory.",
-         "H. Julian Allen's blunt-body theory, showing the detachment shock that "
-         "forms ahead of a blunt forebody and the resulting similarity in the "
-         "shock stand-off distance and surface temperature across scaled "
-         "geometries. The theory is the basis of the modified Newtonian panel "
-         "method used for the reference model compared against in "
-         "Chapter~\\ref{ch:results}."),
+        # Q-defect-2 (provenance regression): the earlier stub carried a
+        # discredited blunt-body-theory caption that misattributed the
+        # artwork to the classic blunt-body result. The audited artwork is
+        # the aerospike/aerodisk configuration figure from Hamza et al.
+        # (Aerospace 9(12):800), NOT a classic-theory figure. The rewriter
+        # below writes this tuple field as the replacement \caption, so the
+        # stub must match the corrected caption in
+        # chapter_02_literature_review.tex (fig:blunt_body_theory) or a
+        # re-run would re-introduce the misattribution. Line number
+        # refreshed 267 -> 239 to the figure's current position.
+        (239, "Figure for Blunt Body Theory.",
+         "Blunt-body reentry configurations: an unspiked blunt body with its "
+         "strong detached bow shock beside aerodisk and pointed-aerospike "
+         "variants that recirculate flow ahead of the nose. The unspiked "
+         "case shows the detached-shock structure behind which the modified "
+         "Newtonian panel method approximates surface loading for the "
+         "reference model compared in Chapter~\\ref{ch:results}. "
+         "Source: Hamza, Khan and Maqsood~\\cite{aerospace9120800BluntBodyTheory}, "
+         "Figure~1."),
         (372, "Figure for Conventional Rigid TPS.",
          "Three conventional rigid thermal protection concepts shown in flight: a "
          "reinforced carbon-carbon nose cap on the Space Shuttle orbiter, a "
