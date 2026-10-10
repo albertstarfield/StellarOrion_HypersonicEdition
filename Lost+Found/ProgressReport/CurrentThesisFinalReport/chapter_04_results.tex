@@ -40,7 +40,7 @@ The correlation is evaluated at the baseline IRVE-3 SPARTA DSMC run condition un
     \end{split}
 \end{equation}
 
-Here the correlation constant and nose radius differ from the engine defaults: $C_{SG} = 1.7415 \times 10^{-4}$ and $R_N = 0.55$\,m, evaluated at hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than the run condition, yielding $12.20$\,W/cm$^2$. Because it scales as $1/\sqrt{R_N}$, the default $0.55$\,m nose radius alone raises flux by $\sqrt{1.5/0.55} \approx 1.65$. At the run condition it is $+12.4\%$ above flight: this work's headline.
+Here the correlation constant and nose radius are the engine defaults: $C_{SG} = 1.7415 \times 10^{-4}$ and $R_N = 0.55$\,m, evaluated at hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than the run condition, yielding $12.20$\,W/cm$^2$. The validation tables instead adopt the working set ($C_{SG} = 1.83 \times 10^{-4}$, $R_N = 1.5$\,m, $V_{\infty} = 3{,}378$\,m/s), whose constant is 5.1\% above the engine default ($1.83/1.7415 = 1.051$). Because it scales as $1/\sqrt{R_N}$, the default $0.55$\,m nose radius alone raises flux by $\sqrt{1.5/0.55} \approx 1.65$. At the run condition it is $+12.4\%$ above flight: this work's headline.
 
 IRVE-3 flight reports a peak of 14.36~W/cm\textsuperscript{2}~\cite{old2013irve3postflight}. The MDAO reconstruction~\cite{rapisarda2023mdao} reports the trajectory-integrated Sutton-Graves peak as 15.26~W/cm\textsuperscript{2} ($+6.26\%$ above flight) and the Fay-Riddell CFD prediction as 13.83~W/cm\textsuperscript{2} ($-3.69\%$ below flight). Our single-point SG value (16.14~W/cm\textsuperscript{2}) and Rapisarda's trajectory-integrated peak (15.26~W/cm\textsuperscript{2}) agree within $+5.8\%$: Rapisarda integrates under MCD v6.1 while this work evaluates one ISA point, higher density nearly cancelling it.
 
@@ -168,7 +168,7 @@ Results are validated against the IRVE-3 post-flight aerothermal reconstruction~
         Toroid Radius ($r_{tor}$) & 0.135 m & 0.135 m & 0.135 m & Geometry Sync \\
         Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm\textsuperscript{2} & 13.83 W/cm\textsuperscript{2} & 16.14 W/cm\textsuperscript{2}$^{\dagger}$ & MDAO $-3.7\%$; SO $+12.4\%$, \emph{not like-for-like} \\
         Total Heat Load ($Q$) & 195.06 J/cm\textsuperscript{2} & 195.17 J/cm\textsuperscript{2} & 165.72 J/cm\textsuperscript{2} & MDAO $+0.06\%$; SO $-15.0\%$ \\
-        Peak Deceleration & 19.7 g & n/a & 16.83 g & SO $-14.6\%$ \\
+        Peak Deceleration & 19.7 g & n/a & 16.55 g (raw); 16.58 g (PINN-extrap.) & SO $-16.0\%$ raw, $-15.8\%$ extrap.; trajectory-model load, single point \\
         Ballistic Coefficient ($\beta$) & 26.9 kg/m\textsuperscript{2} & Not reported & 27.70 kg/m\textsuperscript{2} & SO $+3\%$, geometry check \\
         Drag Coefficient ($C_d$) & 1.4625\textsuperscript{$\ddagger$} & Not reported & 1.6073 $\rightarrow$ 1.5597 at optimum & $-2.96\%$ baseline to optimum \\
         Lift Coefficient ($C_l$) & Not reported & Not reported & $-0.5268$ (smooth, final step) & No flight/MDAO counterpart \\
@@ -179,9 +179,9 @@ Results are validated against the IRVE-3 post-flight aerothermal reconstruction~
 
 The MDAO Fay-Riddell prediction (13.83~W/cm\textsuperscript{2}, 195.17~J/cm\textsuperscript{2}) sits within 3.7\% and 0.06\% of the flight values 14.36~W/cm\textsuperscript{2} and 195.06~J/cm\textsuperscript{2}. Both come from the external MDAO reference model, not the SPARTA solver, establishing an internally consistent IRVE-3 reconstruction. Sutton-Graves, though less accurate here, gives a conservative upper bound for TPS margins.
 
-This work reports 16.14~W/cm\textsuperscript{2} peak heat flux, 165.72~J/cm\textsuperscript{2} heat load and 16.83\,g peak deceleration, i.e.\ $+12.4\%$, $-15.0\%$ and $-14.6\%$ against flight. The deviations have opposite signs and distinct causes, not one bias. Heat load and peak deceleration, both \emph{resolved by the DSMC run}, fall short by close to a common $15\%$. The run samples a \emph{single} trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA, while flight and MDAO integrate over the reentry. The heat flux behaves oppositely: the 16.14~W/cm\textsuperscript{2} headline is a correlation value, not solver-resolved, and over-predicts flight because a spherical nose cap misses the scalloped torus heat shielding and the rarefied-flow departure that DSMC resolves. The ballistic coefficient checks independently: the simulated 27.70~kg/m\textsuperscript{2} is $+3\%$ above the 26.9~kg/m\textsuperscript{2} flight value, so the scalloped geometry is reproduced. The integrated-quantity residual lies in trajectory integration, the heat-flux residual in the correlation model.
+This work reports 16.14~W/cm\textsuperscript{2} peak heat flux, 165.72~J/cm\textsuperscript{2} heat load and 16.55\,g raw (16.58\,g PINN-extrapolated) peak deceleration, i.e.\ $+12.4\%$, $-15.0\%$ and $-16.0\%$ ($-15.8\%$ PINN-extrapolated) against flight. The deviations have opposite signs and distinct causes, not one bias. The heat load is DSMC-resolved and the deceleration is the point-mass trajectory-model load ($g = F_{drag}/mg_0$) recorded at the single run point; the two settle near $-15\%$ against flight for distinct reasons. The run samples a \emph{single} trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA, while flight and MDAO integrate over the reentry. The heat flux behaves oppositely: the 16.14~W/cm\textsuperscript{2} headline is a correlation value, not solver-resolved, and over-predicts flight because a spherical nose cap misses the scalloped torus heat shielding and the rarefied-flow departure that DSMC resolves. The ballistic coefficient checks independently: the simulated 27.70~kg/m\textsuperscript{2} is $+3\%$ above the 26.9~kg/m\textsuperscript{2} flight value, so the scalloped geometry is reproduced. The integrated-quantity residual lies in trajectory integration, the heat-flux residual in the correlation model.
 
-The export \texttt{unified\_comparison\_data.json} reports a \emph{different} Sutton-Graves heat flux for this run: 12.2~W/cm\textsuperscript{2} rather than Table~\ref{tab:validation}'s 16.14~W/cm\textsuperscript{2}. Sutton-Graves scales as $\sqrt{\rho/R_N}\,V^3$, so each value follows its own $(V, R_N)$ pair. The 16.14~W/cm\textsuperscript{2} above uses the IRVE-3 baseline $R_N = 1.5$\,m and run $V = 3{,}378$\,m/s, the baseline condition of Sec.~\ref{sec:bo_results}. The 12.2~W/cm\textsuperscript{2} export value uses the engine \emph{default} $R_N = 0.55$\,m and nominal $V = 2{,}700$\,m/s. The repository's validation report lists both as known discrepancies: 12.2~W/cm\textsuperscript{2} reflects two acknowledged-wrong defaults, not run velocity or geometry. The $+12.4\%$ in Table~\ref{tab:validation} is therefore a scale comparison, not a validated error bound.
+The export \texttt{unified\_comparison\_data.json} reports a \emph{different} Sutton-Graves heat flux for this run: 12.2~W/cm\textsuperscript{2} rather than Table~\ref{tab:validation}'s 16.14~W/cm\textsuperscript{2}. Sutton-Graves scales as $\sqrt{\rho/R_N}\,V^3$, so each value follows its own $(V, R_N)$ pair. The 16.14~W/cm\textsuperscript{2} above uses the IRVE-3 baseline $R_N = 1.5$\,m and run $V = 3{,}378$\,m/s, the baseline condition of Sec.~\ref{sec:bo_results}. The 12.2~W/cm\textsuperscript{2} export value uses the engine \emph{default} $R_N = 0.55$\,m and nominal $V = 2{,}700$\,m/s. The repository's validation report lists both as known discrepancies: 12.2~W/cm\textsuperscript{2} reflects two acknowledged-wrong defaults, not run velocity or geometry. The two channels also carry different correlation constants: the adopted working value $C_{SG} = 1.83 \times 10^{-4}$ here against the engine default $1.7415 \times 10^{-4}$ in the export, a disclosed 5.1\% ($1.83/1.7415 = 1.051$). The $+12.4\%$ in Table~\ref{tab:validation} is therefore a scale comparison, not a validated error bound.
 
 \section{Scallop Pocket Temperature Analysis}
 Recirculation between toroid crests reduces heating. Figure~\ref{fig:scallop_pocket} maps the radiative-equilibrium temperature of the surface markers over one scallop pocket at particle-time step 1000. The panel prints $T_{max} = 2433$\,K on a colorbar running 750 to 2250\,K; the hotter markers cluster on the upwind side of the pocket window while the rest of the window samples the cooler colors. The valleys act as thermal buffer zones.
@@ -253,7 +253,7 @@ Table~\ref{tab:optimization_samples} summarizes selected samples from the three 
     \centering
     \caption{Selected optimization samples showing flight metric trade-offs across the design space.}
     \label{tab:optimization_samples}
-    \begin{tabularx}{\textwidth}{cccccc>{\RaggedRight\arraybackslash}X}
+    \begin{tabular}{cccccc}
         \hline
         \textbf{Run} & \textbf{Sample} & \textbf{Diameter (m)} & \textbf{$\beta$ (kg/m$^2$)} & \textbf{$n_G$ ($g$)} & \textbf{$T_{back}$ (K)} \\
         \hline
@@ -264,7 +264,7 @@ Table~\ref{tab:optimization_samples} summarizes selected samples from the three 
         27 & 4 & 3.00 & 11.36 & 55.06 & 492.0 \\
         27 & 8 & 3.00 & 29.27 & 21.37 & 492.0 \\
         \hline
-    \end{tabularx}
+    \end{tabular}
 \end{table}
 
 \vspace{0.3em}

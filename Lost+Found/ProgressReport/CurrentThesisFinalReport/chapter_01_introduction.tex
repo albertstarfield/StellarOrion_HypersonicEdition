@@ -101,7 +101,7 @@ This research provides aerothermal analysis and survivability optimization of th
 
     \item \textbf{Gas Model:} A realistic 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics captures molecular interactions including vibrational energy exchange and dissociation reactions relevant to hypersonic entry.
 
-    \item \textbf{Grid and Collision Pairing:} A Cartesian grid restricts collision pairing to $O(N)$ complexity and provides sampling volumes for macroscopic property accumulation. Grid resolution must be below the local mean free path ($\lambda$); the default grid factor is 0.7, validated against IRVE-3 flight data.
+    \item \textbf{Grid and Collision Pairing:} A Cartesian grid restricts collision pairing to $O(N)$ complexity and provides sampling volumes for macroscopic property accumulation. Grid resolution must resolve the bow-shock thickness and near-wall gradients, with cells of order $10^{-1}$\,m three orders of magnitude above the local mean free path of order $10^{-4}$\,m, as DSMC statistical cell sampling permits; the default grid factor is 0.7, validated against IRVE-3 flight data.
 
     \item \textbf{Thermal Analysis:} Surface heat flux uses the Sutton-Graves stagnation-point correlation~\cite{sutton1971gravesh}, validated against IRVE-3 flight data. The 1D transient backface model assumes a thermal lag factor ($\eta_{lag} = 0.15$) through the FTPS insulation stack. SPARTA surface kinetic energy quantities serve as shape-ranking signals for the optimizer, not absolute heat flux.
 

@@ -209,18 +209,18 @@ Validation comparison (Table~\ref{tab:validation_full}).
 \hline
 \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay-Riddell)} & \textbf{StellarOrion\allowbreak{} (This Work)} & \textbf{SO Error (\%)} \\
 \hline
-Peak heat flux ($\dot{q}$) & 14.36 W/cm\textsuperscript{2} & 13.83 W/cm\textsuperscript{2} & 16.14 W/cm\textsuperscript{2} & $+12.4$ \\
+Peak heat flux ($\dot{q}$) & 14.36 W/cm\textsuperscript{2} & 13.83 W/cm\textsuperscript{2} & 16.14 W/cm\textsuperscript{2}$^{\ddagger}$ & $+12.4$ \\
 Total heat load ($Q$) & 195.06 J/cm\textsuperscript{2} & 195.17 J/cm\textsuperscript{2} & 165.72 J/cm\textsuperscript{2} & $-15.0$ \\
-Peak deceleration & 19.7 g & n/a & 16.83 g & $-14.6$ \\
+Peak deceleration & 19.7 g & n/a & 16.55 g (raw); 16.58 g (PINN-extrap.)$^{\ddagger}$ & $-16.0$ raw, $-15.8$ extrap. \\
 Ballistic coefficient ($\beta$) & 26.9~kg/m\textsuperscript{2} & n/a & 27.70~kg/m\textsuperscript{2} & $+3.0$ \\
-Drag coefficient ($C_d$) & n/a & n/a & 1.4625 & n/a \\
+Drag coefficient ($C_d$)$^{\ddagger}$ & 1.4625 & n/a & 1.6073 $\rightarrow$ 1.5597 at optimum & n/a \\
 Aeroshell diameter & 3.0 m & 3.0 m & 3.0 m & 0 \\
 Toroid count & 6 & 6 & 6 & 0 \\
 Toroid radius & 0.135 m & 0.135 m & 0.135 m & 0 \\
 \hline
 \end{tabularx}
 \normalsize
-\caption*{Flight data from the IRVE-3 reconstruction ~\cite{dillman2014irve3flight,old2013irve3postflight} and \cite{rapisarda2023mdao}; MDAO values are Fay-Riddell, StellarOrion values SPARTA DSMC at grid factor 0.7 (step 2200), and the MDAO column is a reference model. Solver-resolved heat load and deceleration fall below trajectory-integrated values; Sutton-Graves heat flux exceeds them.}
+\caption*{Flight data from the IRVE-3 reconstruction ~\cite{dillman2014irve3flight,old2013irve3postflight} and \cite{rapisarda2023mdao}; MDAO values are Fay-Riddell, StellarOrion values SPARTA DSMC at grid factor 0.7 (step 2200), and the MDAO column is a reference model. Solver-resolved heat load and deceleration fall below trajectory-integrated values; Sutton-Graves heat flux exceeds them.$^{\ddagger}$ The peak-heat-flux entry is the Sutton-Graves correlation evaluated at the run condition rather than a solver-resolved flux, and the flight drag coefficient is the IRVE-3 reference value loaded at runtime rather than a measurement of the run; the deceleration entries are point-mass trajectory-model loads ($g = F_{drag}/mg_0$) at the single run point rather than DSMC surface-pressure integrals; both are scale comparisons only.}
 \end{table}
 
 \section{Grid Independence Study Results}

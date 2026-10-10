@@ -136,19 +136,17 @@ COLUMNS = (
 )
 
 ROWS = (
-    ("Rapisarda (2022)", "ML for HIAD Heating"),
-    ("Rapisarda et al. (2024)", "HIAD Parametric Study"),
-    ("Masciarelli & Cassis (2021)", "LOFTID Design"),
-    ("Schwartzentruber (2018)", "DSMC Hypersonic"),
+    ("Rapisarda (2023)", "MDAO HIAD Baseline"),
     ("This Work", "StellarOrion Pipeline"),
 )
 
-# Coverage transcribed from the artwork. F full, P partial, "." not covered.
+# Coverage derived from the attributions made in Chapters 2 and 4 (the
+# Rapisarda 2023 thesis covers HIAD parametric geometry, trajectory-integrated
+# Sutton-Graves heating, and survivability optimization; it uses panel methods
+# and Fay-Riddell, not DSMC, and runs a single sequential framework).
+# F full, P partial, "." not covered.
 COVERAGE = (
-    "FPPFFP",
-    "FPF.P.",
-    "F.F...",
-    ".F....",
+    "F.F.F.",
     "FFFFFF",
 )
 

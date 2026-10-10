@@ -40,7 +40,7 @@ This synthesis grounds \textbf{Chapter~\ref{ch:methodology}}; Figure~\ref{fig:li
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Coverage matrix headed Literature Review: Coverage of Physical Phenomena and Methodology. Five studies form the rows: Rapisarda 2022 machine learning for HIAD heating, Rapisarda et al. 2024 HIAD parametric study, Masciarelli and Cassis 2021 LOFTID design, Schwartzentruber 2018 DSMC hypersonic, and This Work, the StellarOrion pipeline, outlined in red. Six capability columns run across the top: HIAD geometry, DSMC aerothermal, Sutton-Graves heating, PINN refinement, survivability optimization and multi-solver pipeline. Each cell is a full circle for full coverage, a half circle for partial coverage, or empty for not covered, per the key at the foot. The StellarOrion row is the only one full across all six columns; Schwartzentruber covers DSMC aerothermal alone and Masciarelli and Cassis cover HIAD geometry and Sutton-Graves heating. Note that the 2022 date in this row differs from the 2023 date of the Rapisarda thesis cited elsewhere in the text.}}%
+    \BeginAccSupp{method=escape,ActualText={Coverage matrix headed Literature Review: Coverage of Physical Phenomena and Methodology. Two studies form the rows: Rapisarda 2023, the MDAO HIAD baseline thesis, and This Work, the StellarOrion pipeline, outlined in red. Six capability columns run across the top: HIAD geometry, DSMC aerothermal, Sutton-Graves heating, PINN refinement, survivability optimization and multi-solver pipeline. Each cell is a full circle for full coverage, a half circle for partial coverage, or empty for not covered, per the key at the foot. The StellarOrion row is the only one full across all six columns; the Rapisarda row covers HIAD geometry, Sutton-Graves heating and survivability optimization, uses panel-method and Fay-Riddell aerothermodynamics rather than DSMC, and runs a single sequential framework.}}%
 \includegraphics[width=0.845\textwidth]{figures/literature_review_map.png}%
 \EndAccSupp{}%
     \caption[Literature review coverage matrix: mapping of key studies to physical phenomena and methodology components.]{Literature review coverage matrix: mapping of key studies to physical phenomena and methodology components. Filled circles indicate full coverage; half-filled indicate partial coverage. The dashed red outline highlights the comprehensive coverage achieved in this work (StellarOrion pipeline).}
@@ -557,7 +557,7 @@ DSMC solvers such as SPARTA report number density $n$ (particles per cubic metre
     \label{eq:mass_density}
 \end{equation}
 
-\noindent with $M_{\text{air}} \approx 28.97$\,g/mol the molar mass of air and $N_A = 6.022 \times 10^{23}$ mol$^{-1}$ Avogadro's constant \cite{AndersonHypersonic}.
+\noindent with $M_{\text{air}} \approx 0.02897$\,kg/mol the molar mass of air and $N_A = 6.022 \times 10^{23}$ mol$^{-1}$ Avogadro's constant \cite{AndersonHypersonic}.
 
 \subsubsection*{Dynamic Pressure}
 Dynamic pressure is the freestream kinetic energy flux:
@@ -954,7 +954,7 @@ For hard spheres of diameter $d$ and number density $n$ the mean free path $\lam
     \label{eq:mean_free_path}
 \end{equation}
 
-\noindent The mean free path sets the Knudsen number ($Kn = \lambda / L$) and the DSMC cell size, which must stay below $\lambda$ to resolve gradients \cite{bird1994molecular}; the SPARTA grid keeps enough particles per cell for sampling.
+\noindent The mean free path sets the Knudsen number ($Kn = \lambda / L$); DSMC resolution is carried by the particles-per-cell population and by resolving the gradients of interest, and the SPARTA grid keeps enough particles per cell for sampling \cite{bird1994molecular}. The cells of order $10^{-1}$\,m sit orders of magnitude above the local mean free path at the run condition, as statistical collision sampling permits.
 
 \section{Flow Regime Classification: The Knudsen Number}
 
@@ -984,7 +984,7 @@ For hard spheres of diameter $d$ and number density $n$ the mean free path $\lam
     \end{tabularx}
 \end{table}
 
-\noindent A \emph{global} $Kn$ on the full aeroshell diameter puts the IRVE-3 freestream in the deep-continuum regime~\cite{bird1994molecular}. Equation~\eqref{eq:mean_free_path} with $d = 3.7\times10^{-10}$~m~\cite{bird1994molecular}, $n = p_\infty/(k_B T_\infty)$ and International Standard Atmosphere (ISA) pressure $p_\infty \approx 60.5$~Pa, density $\rho_\infty = 7.851\times10^{-4}$~kg/m\textsuperscript{3} and temperature $T_\infty = 268.41$~K~\cite{usstandard1976} (the same run-condition values carried in Table~\ref{tab:simulation_setup} of Chapter~\ref{ch:methodology}) gives $\lambda \approx 1.0\,{\times}\,10^{-4}$~m; with $L = 3.0$~m:
+\noindent A \emph{global} $Kn$ on the full aeroshell diameter puts the IRVE-3 freestream in the deep-continuum regime~\cite{bird1994molecular}. Equation~\eqref{eq:mean_free_path} with $d = 3.7\times10^{-10}$~m~\cite{bird1994molecular}, $n = p_\infty/(k_B T_\infty)$ and International Standard Atmosphere (ISA) pressure $p_\infty \approx 60.5$~Pa, density $\rho_\infty = 7.851\times10^{-4}$~kg/m\textsuperscript{3} and temperature $T_\infty = 268.41$~K~\cite{usstandard1976} (the same run-condition family: Table~\ref{tab:default_params} of Chapter~\ref{ch:methodology} lists $V_\infty$, $T_\infty$ and $n_\infty$, with the density following from $n_\infty$ through $M/N_A$) gives $\lambda \approx 1.0\,{\times}\,10^{-4}$~m; with $L = 3.0$~m:
 \begin{equation}
     Kn_{\text{global}} = \frac{\lambda_\infty}{L}
     \approx \frac{1.0\times10^{-4}}{3.0}
@@ -1132,7 +1132,7 @@ In the Rapisarda formulation the nose sphere radius is fixed by the payload adap
     \label{eq:structural_integration}
 \end{equation}
 
-\noindent where $R_{\text{pay}}$ is the payload adapter radius; for the IRVE-3 baseline configuration ($R_{\text{pay}} = 500$\,mm, $\theta_c = 60^\circ$) this yields $R_N = 577.4$\,mm.
+\noindent where $R_{\text{pay}}$ is the payload adapter radius; for the parametric HIAD design configuration used in this design-space study ($R_{\text{pay}} = 500$\,mm, $\theta_c = 60^\circ$) this yields $R_N = 577.4$\,mm. This is the parametric closure value only, and it must not be conflated with the two other nose radii in this thesis: the validation and optimization studies of Chapters~\ref{ch:methodology} and~\ref{ch:results} use the flown IRVE-3 reference radius of $1.5$\,m, while the StellarOrion engine default is $R_N = 0.55$\,m (Chapter~\ref{ch:methodology}).
 
 \subsection{Toroid Radius Derivation (Rapisarda Eq.\ 3.3)}
 
