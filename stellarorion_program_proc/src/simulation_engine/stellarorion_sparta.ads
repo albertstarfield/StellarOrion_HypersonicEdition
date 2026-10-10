@@ -155,8 +155,18 @@ package StellarOrion_Sparta is
    --  cadence, so that clamp is MIRRORED here rather than duplicated --
    --  a second copy would be free to drift from the first.
    --  CITATIONS: SPARTA manual `dump ... every N`; Plimpton & Gallis (2014).
+   --  self-test registry: Register_Routine ("Expected_Dump_Count")
+   --  Contract (DO-178C §6.4.4, SPARK RM §6.1.1). SPARTA's
+   --  `dump ... every N` writes at steps 0, N, 2N, ... up to the last
+   --  multiple not exceeding Steps, and the deck generator clamps N to
+   --  Steps when the run is shorter than the cadence.  With
+   --  N = min (DUMP_STATS_INTERVAL, Steps) the file count is therefore
+   --  Steps/N + 1: at least 1 (the step-0 dump is real, see run12) and
+   --  never more than Steps + 1 (at most one dump per step).
    function Expected_Dump_Count (Steps : Positive) return Natural
-     with Post => Expected_Dump_Count'Result >= 1;
+     with Pre  => Steps >= 1,
+          Post => Expected_Dump_Count'Result >= 1
+                  and then Expected_Dump_Count'Result <= Steps + 1;
 
    -- -----------------------------------------------------------------
    --  Surf File Parsing

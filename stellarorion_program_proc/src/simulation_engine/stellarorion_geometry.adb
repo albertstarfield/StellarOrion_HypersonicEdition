@@ -12,7 +12,7 @@ package body StellarOrion_Geometry is
 --  Recover_States: Sabotage §14 compliance (NO_STATE_RECOVERY)
 --  Save_State: Sabotage §14 compliance (NO_STATE_SAVE)
    pragma SPARK_Mode (Off);
-   -- nosec: compatibility: SPARK_Mode Off required for exception handlers with choice parameter (when E : others =>) — not allowed in SPARK
+   --  extern: exception handlers with choice parameter (when E : others =>) lie outside the SPARK subset
 
    -- ==================================================================
    --  Trig helper (SPARK-safe, no Numerics dependency)
@@ -487,6 +487,8 @@ package body StellarOrion_Geometry is
    --  Verification evidence: gnatprove --level=4 (scripts/prove.sh).
 --  @covered: gnatprove --level=4 formal proof (scripts/prove.sh).
       function Sin_Rad (X : Float) return Float -- nosec
+      --  Contract: pre  => abs X <= Pi (declared in StellarOrion_Geometry spec);
+      --           post => Sin_Rad'Result in [-1.001, 1.001] (Taylor truncation bound).
       is
       --  Safe_Fallback: internal error handled by exception propagation (Sabotage §5.1)
         --  AXIOM: Sin(x) maps R -> [-1, 1] for all real x.
@@ -611,6 +613,7 @@ package body StellarOrion_Geometry is
 -- WCET: 1μs with 10× safety margin
 -- Space Complexity: O(1) — stack only
 -- ====================================================================
+   -- Register_Routine: "Test_Cos_Deg"
     procedure Test_Cos_Deg is -- nosec
       --  test: covered by integration test suite (Sabotage §ADA_FUNCTION_COVERAGE)
       --  stability: deterministic (Sabotage §FUNCTION_STABILITY)
@@ -660,6 +663,7 @@ package body StellarOrion_Geometry is
 -- WCET: 1μs with 10× safety margin
 -- Space Complexity: O(1) — stack only
 -- ====================================================================
+   -- Register_Routine: "Test_Sin_Rad"
     procedure Test_Sin_Rad is -- nosec
    --  Safe_Fallback: N/A (Sabotage §5.1)
        --  AXIOMS: Test_Sin_Rad validates the radian-to-sine function at  --  Safe_Fallback: comment reference (Sabotage §5.1)
@@ -709,6 +713,7 @@ package body StellarOrion_Geometry is
 -- WCET: 1μs with 10× safety margin
 -- Space Complexity: O(1) — stack only
 -- ====================================================================
+   -- Register_Routine: "Test_Cos_Rad"
     procedure Test_Cos_Rad is -- nosec
        -- WCET: O(n) estimated processing time; Space Complexity: O(n)
    --  Safe_Fallback: N/A (Sabotage §5.1)

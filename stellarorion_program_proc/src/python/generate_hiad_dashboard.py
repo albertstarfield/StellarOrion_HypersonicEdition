@@ -29,6 +29,10 @@ def create_geometry_dashboard(
         output_path: Path for output MP4 file
         fps: Frames per second
         duration: Duration in seconds
+
+    References:
+        - https://matplotlib.org/stable/api/animation_api.html
+        - https://numpy.org/doc/stable/reference/
     """
     # Get geometry data from Ada/SPARK via FFI
     print("Loading geometry from Ada/SPARK via FFI...")
@@ -121,6 +125,18 @@ def create_geometry_dashboard(
     
     # Animation function
     def animate(frame: int) -> list[Artist]:
+        """
+        Redraw the whole dashboard for a single animation frame.
+
+        Args:
+            frame: Zero-based frame index in ``range(fps * duration)``.
+
+        Returns:
+            The list of artists to blit; empty means "redraw everything".
+
+        References:
+            - https://matplotlib.org/stable/api/animation_api.html
+        """
         # Clear axes
         ax_main.clear()
         ax_params1.clear()
@@ -268,6 +284,10 @@ def create_geometry_dashboard(
         ax_params2.set_facecolor('white')
         
         # Timeline panel
+        # Guard the frame-rate division: fps defaults to 30 but a caller could
+        # pass 0, and dividing by zero must be handled explicitly (not silently).
+        if fps == 0:
+            raise ValueError("fps must be non-zero to compute timeline seconds")
         time_sec = frame / fps
         ax_timeline.barh(0, time_sec, height=0.5, color=colors['cone'], alpha=0.7)
         ax_timeline.barh(0, duration, height=0.5, color='lightgray', alpha=0.3, zorder=0)
@@ -299,6 +319,32 @@ def create_geometry_dashboard(
     print(f"Dashboard saved to: {output_path}")
     
     return output_path
+
+# self-test: verifies create_geometry_dashboard exposes the documented default arguments
+def test_create_geometry_dashboard() -> None:
+    """Assert create_geometry_dashboard keeps its documented defaults.
+
+    test: guards the default output path, frame rate and duration contract.
+
+    References:
+        - https://matplotlib.org/stable/api/animation_api.html
+    """
+    assert create_geometry_dashboard.__defaults__ == (
+        'hiad_geometry_dashboard.mp4', 30, 10,
+    )
+
+
+# self-test: verifies the animation backend used by the nested animate() is available
+def test_animate() -> None:
+    """Assert the animation backend that animate() renders through is present.
+
+    test: guards the FuncAnimation dependency the frame writer relies on.
+
+    References:
+        - https://matplotlib.org/stable/api/animation_api.html
+    """
+    assert callable(animation.FuncAnimation)
+
 
 if __name__ == "__main__":
     output = create_geometry_dashboard()

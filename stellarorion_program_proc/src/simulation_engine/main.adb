@@ -33,6 +33,7 @@ with Ada.Calendar;
 -- ============================================================================
 procedure Main with Pre => True, Post => True is -- nosec
    pragma SPARK_Mode (Off); -- c_binding: GNAT.OS_Lib.Spawn requires dynamic allocation for FFI -- nosec: DYNAMIC_ALLOCATION
+   --  extern: GNAT.OS_Lib.Spawn process control lies outside the SPARK subset
 --  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
 --  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
 --  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)

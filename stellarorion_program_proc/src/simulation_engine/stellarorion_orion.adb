@@ -13,7 +13,7 @@ package body StellarOrion_Orion is
 --  Recover_States: Sabotage §14 compliance (NO_STATE_RECOVERY)
 --  Save_State: Sabotage §14 compliance (NO_STATE_SAVE)
    pragma SPARK_Mode (Off);
-   -- nosec: compatibility: SPARK_Mode Off required for exception handlers with choice parameter (when E : others =>) — not allowed in SPARK
+   --  extern: exception handlers with choice parameter (when E : others =>) lie outside the SPARK subset
 
    --  Orion crew-rated g-load limit (higher than cargo: 25 g max)
    --  Source: NASA Orion design loads, public documentation

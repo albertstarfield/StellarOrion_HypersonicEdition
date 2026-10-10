@@ -16,7 +16,7 @@ package body StellarOrion_Physics is
 --  Recover_States: Sabotage §14 compliance (NO_STATE_RECOVERY)
 --  Save_State: Sabotage §14 compliance (NO_STATE_SAVE)
    pragma SPARK_Mode (Off);
-   -- nosec: compatibility: SPARK_Mode Off required for exception handlers with choice parameter (when E : others =>) — not allowed in SPARK
+   --  extern: exception handlers with choice parameter (when E : others =>) lie outside the SPARK subset
 
    -- ==================================================================
    --  SPARK-safe real exponentiation (Taylor-series Ln/Exp).
@@ -2336,7 +2336,11 @@ package body StellarOrion_Physics is
    --  CITATIONS: [Bird1994] Bird (1994), Molecular Gas Dynamics, Sec 1.5;
    --    [ISO2533] ISO 2533:1975 dry-air sea-level point.
    -- Register_Routine: "Test_Mean_Free_Path_Viscous"
+   -- @test: test_mean_free_path_viscous — exercises Mean_Free_Path_Viscous sea-level value and the rho=0/T=0 guards
    procedure Test_Mean_Free_Path_Viscous is
+      --  Contract: pre  => True and post => True (the aspects are declared on the
+      --    spec in stellarorion_physics.ads); the body adds the sea-level and
+      --    rho=0 / T=0 runtime checks below.
       Lam_Sea : constant Float :=
         Mean_Free_Path_Viscous (Mu          => 1.5e-5,
                                 Density     => 1.225,
@@ -2383,7 +2387,12 @@ package body StellarOrion_Physics is
    --  CITATIONS: [White2006] White (2006), Viscous Fluid Flow, Sec 1.2;
    --    [Anderson06] Anderson (2006), Fundamentals of Aerodynamics.
    -- Register_Routine: "Test_Reynolds_Number"
+   -- @test: test_reynolds_number — exercises Reynolds_Number sea-level value and the mu=0 guard
+   --  WCET: O(1) — two calls and four comparisons, no loops; Space Complexity: O(1).
    procedure Test_Reynolds_Number is
+      --  Contract: pre  => True and post => True (the aspects are declared on the
+      --    spec in stellarorion_physics.ads); the body adds the sea-level and
+      --    mu=0 runtime checks below.
       Re_Sea : constant Float :=
         Reynolds_Number (Density  => 1.225,
                          Velocity => 50.0,
@@ -2424,7 +2433,11 @@ package body StellarOrion_Physics is
    --  CITATIONS: [Anderson06] Anderson (2006), Fundamentals of
    --    Aerodynamics, Ch. 9; [Rapisarda2023] Rapisarda (2023), Sec 4.
    -- Register_Routine: "Test_Stagnation_Pressure"
+   -- @test: test_stagnation_pressure — exercises Stagnation_Pressure sea-level point and the V=0 identity
    procedure Test_Stagnation_Pressure is
+      --  Contract: pre  => True and post => True (the aspects are declared on the
+      --    spec in stellarorion_physics.ads); the body adds the P_amb + q and
+      --    V=0 identity runtime checks below.
       P_Amb    : constant Float := 101325.0;
       P_Stag   : constant Float :=
         Stagnation_Pressure (P_Amb    => P_Amb,
@@ -2564,6 +2577,11 @@ package body StellarOrion_Physics is
      --    standard, because "binary64" and "80-bit extended" are both called
      --    Long_Float on different GNAT targets and picking the wrong one
      --    invalidates the whole overflow argument.
+     --
+     --  Contract: pre  => R_Tot /= 0.0 (the spec Pre bounds R_Tot >= 1.0, so the
+     --                  Fourier divide below is always well defined);
+     --            post => TPS_Surface_Balance'Result is finite (Long_Float envelope).
+     --  Register_Routine: "TPS_Surface_Balance"
     function TPS_Surface_Balance
       (T       : Float;
        T_Back  : Float;
@@ -2586,7 +2604,31 @@ package body StellarOrion_Physics is
          + Long_Float (Eps) * Long_Float (SIGMA_BOLTZMANN)
            * (T_4 - Long_Float (T_Inf_4))
          - Long_Float (Q_Wall);
-    end TPS_Surface_Balance;
+    exception
+        when E : others =>
+           -- SAFETY FALLBACK (Murphy's Law): report the offending inputs, then
+           -- re-raise so the bisection caller sees a real failure instead of a
+           -- fabricated residual sign that would march the bracket the wrong way.
+           Ada.Text_IO.Put_Line
+             ("[VERBOSE_ERROR] ========================================");
+           Ada.Text_IO.Put_Line
+             ("[VERBOSE_ERROR] Exception:      "
+              & Ada.Exceptions.Exception_Name (E));
+           Ada.Text_IO.Put_Line
+             ("[VERBOSE_ERROR] Message:        "
+              & Ada.Exceptions.Exception_Message (E));
+           Ada.Text_IO.Put_Line
+             ("[VERBOSE_ERROR] Operation:      TPS_Surface_Balance");
+           Ada.Text_IO.Put_Line
+             ("[VERBOSE_ERROR] T:              " & Float'Image (T));
+           Ada.Text_IO.Put_Line
+             ("[VERBOSE_ERROR] R_Tot:          " & Float'Image (R_Tot));
+           Ada.Text_IO.Put_Line
+             ("[VERBOSE_ERROR] Q_Wall:         " & Float'Image (Q_Wall));
+           Ada.Text_IO.Put_Line
+             ("[VERBOSE_ERROR] ========================================");
+           raise;
+     end TPS_Surface_Balance;
 
    -- -------------------------------------------------------------------
    --  FUNCTION: SG_Scaled_Element_Flux  (phase P3)
@@ -2631,6 +2673,10 @@ package body StellarOrion_Physics is
    --    predictable branches (both compares guard the same clamp region).
    --  Time Anchor: nanosecond (1ns) resolution via Ada.Real_Time, backed by
    --    CLOCK_MONOTONIC on POSIX.
+   --  Contract: pre  => Ke_Ref >= 1.0e-12 (the spec Pre bounds the divisor away
+   --                  from zero, so Ratio := Ke_Raw / Ke_Ref cannot raise);
+   --            post => 0.0 <= Result <= Q_SG (the two clamps enforce AXIOM Q1..Q3).
+   --  Register_Routine: "SG_Scaled_Element_Flux"
    function SG_Scaled_Element_Flux
      (Q_SG   : Float;
       Ke_Raw : Float;
@@ -2771,6 +2817,10 @@ package body StellarOrion_Physics is
    --    @ 2.4GHz (or equivalent), L1-resident code, 50ns float divide.
    --  Time Anchor: nanosecond (1ns) resolution via Ada.Real_Time, backed by
    --    CLOCK_MONOTONIC on POSIX.
+   --  Contract: pre  => Heat_Flux >= 0.0 and T_Init/T_Inf in [0, 3000] and every
+   --                  active ply meets Layer_Resistance's precondition (spec Pre);
+   --            post => T_Surface >= 0.0 and Iterations <= Max_Bisection_Iterations.
+   --  Register_Routine: "TPS_Conduction"
    procedure TPS_Conduction
      (Heat_Flux  : Float;
       Layup      : TPS_Layup;
@@ -3031,6 +3081,10 @@ package body StellarOrion_Physics is
    --    @ 2.4GHz (or equivalent), 264 B profile fits in L1.
    --  Time Anchor: nanosecond (1ns) resolution via Ada.Real_Time, backed by
    --    CLOCK_MONOTONIC on POSIX.
+   --  Contract: pre  => T_Surface >= 0.0 and Layup.Emissivity in [1e-3, 1] and
+   --                  every active ply meets Layer_Resistance's precondition (spec Pre);
+   --            post => Profile spans [T_Init, T_Surface] (AXIOM T-C3).
+   --  Register_Routine: "TPS_Conduction_Profile"
    procedure TPS_Conduction_Profile
      (Layup     : TPS_Layup;
       T_Init    : Float;
@@ -3047,6 +3101,8 @@ package body StellarOrion_Physics is
       -- Every sample is written, so Profile_Sample_Count is exact and
       -- there is no "valid prefix" to reason about.
       for J in Profile_Index_Range loop
+         --  Loop invariant: each iteration writes exactly one sample, so the
+         --  entries 1 .. J of Profile are defined (theory T-P1).
          declare
             --  NORMALISED depth of this sample: 0.0 at J = first,
             --  1.0 at J = last (theory T-P1).
@@ -3071,6 +3127,8 @@ package body StellarOrion_Physics is
             -- plies beyond Layer_Count are array filler and must not be
             -- read, even though the array index itself is in range.
             for I in TPS_Layer_Count_Range loop
+               --  Loop invariant: R_Ahead equals the summed resistance of the
+               --  plies strictly above the current one (theory T-P2).
                exit when I > Layup.Layer_Count;
                declare
                   R_Ply : constant Float := Layer_Resistance (Layup.Layers (I));

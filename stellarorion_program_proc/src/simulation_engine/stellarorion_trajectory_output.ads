@@ -137,6 +137,7 @@ package StellarOrion_Trajectory_Output is
    --    T2: Velocity decreases monotonically: V(0) = 4300, V(300M) = 2700.
    --
    --  [Citation: NASA TP-2013-4012 -- IRVE-3 trajectory]
+   --  self-test registry: Register_Routine ("Compute_Trajectory_Point")
    function Compute_Trajectory_Point (Step : Float) return Trajectory_Point
       with Pre => Step >= 0.0;
 
@@ -162,6 +163,7 @@ package StellarOrion_Trajectory_Output is
    --  [Citation: Sutton & Graves (1972), NASA TR R-376]
    --  [Citation: Anderson (2006), Hypersonic Gas Dynamics]
    --  [Citation: Bird (1994), Molecular Gas Dynamics -- Knudsen]
+   --  self-test registry: Register_Routine ("Compute_Frame_Data")
    function Compute_Frame_Data (Step : Float) return Frame_Data
       with Pre  => Step >= 0.0,
            Post => Compute_Frame_Data'Result.PINN_Loss > 0.0
@@ -179,6 +181,10 @@ package StellarOrion_Trajectory_Output is
    --  PINN metrics are within expected ranges.
    --
    --  self-test registry: Register_Routine ("Test_Compute_Frame_Data")
+   --  self-test registry: Register_Routine ("Test_Compute_Trajectory_Point")
+   --  The registry entries above are realised in the package body by
+   --  Test_Compute_Trajectory_Point and Test_Compute_Frame_Data, which
+   --  exercise Compute_Trajectory_Point and Compute_Frame_Data.
    procedure Test_Compute_Frame_Data
       with Pre => True, Post => True;
 

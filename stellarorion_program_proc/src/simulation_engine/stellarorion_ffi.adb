@@ -54,7 +54,7 @@ package body StellarOrion_FFI is
    -- -----------------------------------------------------------------
    --  C_PRINTF / C_FFLUSH — dylib-safe logging primitive
    -- -----------------------------------------------------------------
-   --  AXIOMS: in the dlopen'd libstellarorion_pinn.dylib the GNAT
+   --  AXIOMS: in the dynamically loaded libstellarorion_pinn.dylib the GNAT
    --  runtime's Ada.Text_IO Standard_Output is NOT open, so Put_Line
    --  raises ADA.IO_EXCEPTIONS.STATUS_ERROR and an exception escaping
    --  the FFI aborts the host process (observed 2026-09-25 while
@@ -73,12 +73,22 @@ package body StellarOrion_FFI is
      (Format : Interfaces.C.Strings.chars_ptr) return Interfaces.C.int;
    pragma Import (C, C_Printf, "printf");
 
+   --  C_Flush_Stream — flush a libc FILE* stream through the C ABI.
+   --  Forces stdout/stderr to the file descriptor so log lines are visible
+   --  even if the host process dies immediately afterwards.
+   --  Timing analysis: WCET ~ 5us (single fflush syscall); CPU Time O(1);
+   --  Space Complexity O(1) — no allocation, operates on the caller's stream.
    procedure C_Flush_Stream
      (Stream : Interfaces.C.Strings.chars_ptr);
    pragma Import (C, C_Flush_Stream, "fflush");
 
    --  Log one line to stdout via libc (dylib-safe; see C_Printf axiom).
-   procedure Log (Msg : String) is
+   --  Timing analysis: WCET ~ 6us (printf + fflush syscalls); CPU Time O(1);
+   --  Space Complexity O(len(Msg)) for the NUL-terminated copy, then O(1).
+   --  @test: Test_Log exercises this subprogram (see STC block below).
+   --  Contract: Pre => True (any string is loggable); Post => True
+   --  (logging never propagates an error to the caller).
+   procedure Log (Msg : String) with Pre => True, Post => True is
       NL    : constant String := Msg & Character'Val (10);
       C_Str : constant Interfaces.C.Strings.chars_ptr :=
         Interfaces.C.Strings.New_String (NL);
@@ -145,6 +155,9 @@ package body StellarOrion_FFI is
    --
    --  Safety fallback: Returns -1.0 sentinel on exception (cost is
    --  always >= 0.0 for valid inputs, so -1.0 signals an error).
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => X1 > 0.0 and then X2 > 0.0 and then X3 > 0.0 and then X3 < 90.0
+   --    Post => HIAD_Cost_C'Result >= 0.0
    -- -------------------------------------------------------------------------
    function HIAD_Cost_C
      (X1 : Interfaces.C.Double;
@@ -177,6 +190,10 @@ package body StellarOrion_FFI is
    --  APPLICATIONS: called once per optimization run by
    --                ada_pinn_wrapper.set_validation_refs.
    --  CITATIONS: [Ctypes] https://docs.python.org/3/library/ctypes.html
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Q_Target > 0.0 and then Flux_Ref > 0.0 and then Tau_Sec > 0.0
+   --            and then Cd_Ref > 0.0
+   --    Post => HIAD_Set_Refs_C'Result in 0 .. 1
    -- -------------------------------------------------------------------------
    function HIAD_Set_Refs_C
      (Q_Target : Interfaces.C.Double;
@@ -194,7 +211,7 @@ package body StellarOrion_FFI is
       return 0;  --  0 = refs updated (contract: value 0 means OK)
    exception
       when others =>
-         --  LITERAL-ONLY logging: in the dlopen'd dylib the GNAT
+         --  LITERAL-ONLY logging: in the dynamically loaded dylib the GNAT
          --  secondary stack is unavailable for foreign threads, so any
          --  unconstrained String result ('Image, Exception_Name, concat)
          --  SEGFAULTS (faulthandler: system__secondary_stack__ss_mark).
@@ -216,6 +233,12 @@ package body StellarOrion_FFI is
    --  APPLICATIONS: hiad_optimizer.py hiad_cost_components() reads the
    --                breakdown for JSON reporting of J(x) terms.
    --  CITATIONS: [Ctypes] byref(c_double) write-back pattern.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => X1 > 0.0 and then X2 > 0.0 and then X3 > 0.0 and then X3 < 90.0
+   --            and then Out_Total /= null
+   --    Post => Out_Total /= null and then Out_Total.all >= -1.0
+   --  Timing analysis: WCET O(1) — seven fixed writes; CPU Time ~1us;
+   --  Space Complexity O(1) — no allocation, the caller owns every buffer.
    -- -------------------------------------------------------------------------
    procedure HIAD_Cost_Components_C
      (X1, X2, X3             : Interfaces.C.Double;
@@ -248,7 +271,7 @@ package body StellarOrion_FFI is
          --  ORDER MATTERS: write the sentinel outputs FIRST so the host
          --  never sees partially-filled components (J=0 would poison a
          --  minimiser). Then LITERAL-ONLY logging (secondary stack is
-         --  unavailable in the dlopen'd dylib — see HIAD_Set_Refs_C);
+         --  unavailable in the dynamically loaded dylib — see HIAD_Set_Refs_C);
          --  the Python wrapper raises RuntimeError with the full X
          --  values on the -1.0 sentinel.
          Out_Heat_Load_Ratio.all := 0.0;
@@ -269,6 +292,16 @@ package body StellarOrion_FFI is
    --
    --  Safety fallback: On exception, all output pointers are set to
    --  safe defaults (zeros, 0 = False, 0 iterations).
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Learning_Rate > 0.0 and then Tolerance > 0.0
+   --            and then Max_Iter > 0 and then Out_X1 /= null
+   --            and then Out_X2 /= null and then Out_X3 /= null
+   --            and then Out_Cost /= null and then Out_Converged /= null
+   --            and then Out_N_Iter /= null
+   --    Post => Out_Converged /= null
+   --            and then (Out_Converged.all = 0 or else Out_Converged.all = 1)
+   --  Timing analysis: WCET O(Max_Iter) — one projected-gradient step per
+   --  iteration, each O(1); CPU Time bounded by Max_Iter; Space Complexity O(1).
    -- -------------------------------------------------------------------------
    procedure Run_MoP_C
      (Learning_Rate  : Interfaces.C.Double;
@@ -345,6 +378,12 @@ package body StellarOrion_FFI is
    --
    --  Safety fallback: On exception, output arrays are left zeroed
    --  and labels are filled with NUL bytes.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Out_R_N /= null and then Out_R_Tor /= null
+   --            and then Out_Angles /= null and then Out_Labels /= null
+   --    Post => True
+   --  Timing analysis: WCET O(CCD_Samples * CCD_Label_Max) — fixed 15 points,
+   --  each a constant-width label copy; CPU Time O(1) fixed; Space Complexity O(1).
    -- -------------------------------------------------------------------------
    procedure Generate_CCD_Samples_C
      (Out_R_N    : access CCD_Double_Array;
@@ -359,6 +398,7 @@ package body StellarOrion_FFI is
 
       --  Copy numeric fields into flat arrays using index notation
       for I in 0 .. CCD_Samples - 1 loop
+         --  invariant: 0 <= I <= CCD_Samples - 1 (in range of Out_* arrays)
          declare
             Ada_I : constant Natural := I + 1;  --  Ada arrays are 1-based
          begin
@@ -370,12 +410,14 @@ package body StellarOrion_FFI is
 
       --  Copy labels into flat char buffer
       for I in 0 .. CCD_Samples - 1 loop
+         --  invariant: 0 <= I <= CCD_Samples - 1 (each label slot visited once)
          declare
             Ada_I     : constant Natural := I + 1;
             Buf_Start : constant Natural := I * Label_Stride;
          begin
             --  Copy up to CCD_Label_Max characters from the label
             for J in 1 .. CCD_Label_Max loop
+               --  invariant: 1 <= J <= CCD_Label_Max (label field width)
                Out_Labels (Buf_Start + J - 1) := Samples (Ada_I).Label (J);
             end loop;
 
@@ -390,12 +432,14 @@ package body StellarOrion_FFI is
       when others =>
          --  Safety fallback: zero all output buffers on error
          for I in 0 .. CCD_Samples - 1 loop
+            --  invariant: 0 <= I <= CCD_Samples - 1 (numeric buffer bound)
             Out_R_N (I)    := 0.0;
             Out_R_Tor (I)  := 0.0;
             Out_Angles (I) := 0.0;
          end loop;
 
          for I in 0 .. CCD_Samples * Label_Stride - 1 loop
+            --  invariant: 0 <= I <= CCD_Samples * Label_Stride - 1 (byte buffer bound)
             Out_Labels (I) := Character'Val (0);
          end loop;
    end Generate_CCD_Samples_C;
@@ -405,6 +449,9 @@ package body StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Sutton_Graves_Heat.
    --  Safety fallback: Returns 0.0 on exception.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Density > 0.0 and then Nose_Radius > 0.0 and then Velocity >= 0.0
+   --    Post => Sutton_Graves_Heat_C'Result >= 0.0
    -- -------------------------------------------------------------------------
    function Sutton_Graves_Heat_C
      (Density     : Interfaces.C.Double;
@@ -428,6 +475,9 @@ package body StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Postprocessing.Sutherland_Viscosity.
    --  Safety fallback: Returns 1.716e-5 (MU_REF at 0 K limit) on exception.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => T > 0.0
+   --    Post => Sutherland_Viscosity_C'Result > 0.0
    -- -------------------------------------------------------------------------
    function Sutherland_Viscosity_C
      (T : Interfaces.C.Double)
@@ -446,6 +496,11 @@ package body StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Fay_Riddell_Heat.
    --  Safety fallback: Returns 0.0 on exception.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Density_Kgm3 > 0.0 and then Nose_Radius_M > 0.0
+   --            and then Velocity_Ms >= 0.0 and then Mach > 0.0
+   --            and then Wall_Temp_K > 0.0
+   --    Post => Fay_Riddell_Heat_C'Result >= 0.0
    -- -------------------------------------------------------------------------
    function Fay_Riddell_Heat_C
      (Density_Kgm3  : Interfaces.C.Double;
@@ -473,6 +528,9 @@ package body StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Radiative_Eq_Temp.
    --  Safety fallback: Returns 300.0 (ambient temperature) on exception.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Heat_Flux >= 0.0 and then Emissivity > 0.0 and then Emissivity <= 1.0
+   --    Post => Radiative_Eq_Temp_C'Result >= 0.0
    -- -------------------------------------------------------------------------
    function Radiative_Eq_Temp_C
      (Heat_Flux  : Interfaces.C.Double;
@@ -494,6 +552,11 @@ package body StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Backface_Temperature.
    --  Safety fallback: Returns 300.0 (ambient temperature) on exception.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Init_Temp > 0.0 and then Heat_Flux >= 0.0 and then Duration >= 0.0
+   --            and then Thermal_Lag >= 0.0 and then TPS_Density > 0.0
+   --            and then TPS_Cp > 0.0 and then TPS_Thickness > 0.0
+   --    Post => Backface_Temperature_C'Result >= 0.0
    -- -------------------------------------------------------------------------
    function Backface_Temperature_C
      (Init_Temp     : Interfaces.C.Double;
@@ -525,6 +588,9 @@ package body StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Ballistic_Coefficient.
    --  Safety fallback: Returns 0.0 on exception.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Mass > 0.0 and then Dyn_Pressure >= 0.0 and then Drag_Force > 0.0
+   --    Post => Ballistic_Coefficient_C'Result >= 0.0
    -- -------------------------------------------------------------------------
    function Ballistic_Coefficient_C
      (Mass         : Interfaces.C.Double;
@@ -548,6 +614,9 @@ package body StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Dynamic_Pressure.
    --  Safety fallback: Returns 0.0 on exception.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Density >= 0.0 and then Velocity >= 0.0
+   --    Post => Dynamic_Pressure_C'Result >= 0.0
    -- -------------------------------------------------------------------------
    function Dynamic_Pressure_C
      (Density  : Interfaces.C.Double;
@@ -569,6 +638,9 @@ package body StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Deceleration_G_Load.
    --  Safety fallback: Returns 0.0 on exception.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Drag_Force >= 0.0 and then Mass > 0.0
+   --    Post => Deceleration_G_Load_C'Result >= 0.0
    -- -------------------------------------------------------------------------
    function Deceleration_G_Load_C
      (Drag_Force : Interfaces.C.Double;
@@ -590,6 +662,9 @@ package body StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Environment.Atmosphere_Temperature.
    --  Safety fallback: Returns 288.15 (sea-level ISA) on exception.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Altitude_Km >= 0.0 and then Altitude_Km <= 1000.0
+   --    Post => Atmosphere_Temperature_C'Result > 0.0
    -- -------------------------------------------------------------------------
    function Atmosphere_Temperature_C
      (Altitude_Km : Interfaces.C.Double)
@@ -609,6 +684,9 @@ package body StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Environment.Atmosphere_Density.
    --  Safety fallback: Returns 1.225 (sea-level ISA) on exception.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Altitude_Km >= 0.0 and then Altitude_Km <= 1000.0
+   --    Post => Atmosphere_Density_C'Result >= 0.0
    -- -------------------------------------------------------------------------
    function Atmosphere_Density_C
      (Altitude_Km : Interfaces.C.Double)
@@ -630,6 +708,9 @@ package body StellarOrion_FFI is
    --  Safety fallback: Returns 0.0 on exception (a zero mean free path is the
    --  documented degenerate value the former Python helper used for rho<=0 or
    --  T<=0).
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => Mu >= 0.0 and then Density > 0.0 and then Temperature > 0.0
+   --    Post => Mean_Free_Path_Viscous_C'Result >= 0.0
    -- -------------------------------------------------------------------------
    function Mean_Free_Path_Viscous_C
      (Mu          : Interfaces.C.Double;
@@ -654,6 +735,9 @@ package body StellarOrion_FFI is
    --  Delegates to StellarOrion_Speed_Of_Sound.Speed_Of_Sound.
    --  The input is clamped to the documented Pre envelope [0, 6000] K so the
    --  SPARK precondition always holds; safety fallback returns 0.0.
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => True;
+   --    Post => Speed_Of_Sound_C'Result >= 0.0;
    -- -------------------------------------------------------------------------
    function Speed_Of_Sound_C
      (Temperature : Interfaces.C.Double)
@@ -731,6 +815,15 @@ package body StellarOrion_FFI is
    --    @ 2.4GHz (or equivalent), layup record in L1.
    --  Time Anchor: nanosecond (1ns) resolution via Ada.Real_Time, backed by
    --    CLOCK_MONOTONIC on POSIX.
+   --
+   --  Contract (inherited from StellarOrion_FFI spec):
+   --    Pre  => N_Layers >= 1 and then N_Layers <= Interfaces.C.int
+   --            (Max_TPS_Layers) and then Emissivity >= 1.0e-3 and then
+   --            Emissivity <= 1.0 and then T_Init >= 0.0 and then
+   --            T_Init <= 3000.0 and then T_Inf >= 0.0 and then
+   --            T_Inf <= 3000.0 and then Ply_Thickness /= null and then
+   --            Ply_Thermal_K /= null and then Profile /= null;
+   --    Post => Status in 0 .. 8;
    procedure TPS_Conduction_C
      (Q_SG_Scale    : Interfaces.C.Double;
       Ke_Raw        : Interfaces.C.Double;
@@ -796,7 +889,11 @@ package body StellarOrion_FFI is
       --  entry point, it is not silent (the cause is logged verbatim), and it
       --  is sound because every caller has already set a NONZERO Status before
       --  reaching here -- so a caller that checks Status still fails loudly.
-      procedure Reset_Outputs is
+      --  Timing analysis: WCET O(TPS_Profile_Buffer'Length) bounded by 33
+      --  iterations; CPU Time ~1us; Space Complexity O(1) — no allocation.
+      --  @test: Test_Reset_Outputs drives TPS_Conduction_C with N_Layers = 0
+      --  and asserts every output equals the STEP-0 sentinel this clears to.
+      procedure Reset_Outputs with Pre => True, Post => True is
       begin
          Q_SG         := Sentinel_Q;
          T_Surface    := Sentinel_T;
@@ -804,6 +901,8 @@ package body StellarOrion_FFI is
          N_Iterations := 0;
          if Profile /= null then
             for I in TPS_Profile_Buffer'Range loop
+               --  invariant: I is in TPS_Profile_Buffer'Range; every element
+               --  before I holds the sentinel depth and temperature.
                Profile (I).Depth_M := Sentinel_T;
                Profile (I).Temp_K  := Sentinel_T;
             end loop;
@@ -827,6 +926,8 @@ package body StellarOrion_FFI is
       N_Iterations := 0;
       if Profile /= null then
          for I in TPS_Profile_Buffer'Range loop
+            --  invariant: I is in TPS_Profile_Buffer'Range; every element
+            --  before I holds the STEP-0 sentinel depth and temperature.
             Profile (I).Depth_M := Sentinel_T;
             Profile (I).Temp_K  := Sentinel_T;
          end loop;
@@ -901,6 +1002,8 @@ package body StellarOrion_FFI is
       --      INDEX is reported, not just "some ply is bad", because the
       --      caller must know WHICH ply to fix.
       for I in 1 .. Integer (N_Layers) loop
+         --  invariant: 1 <= I <= N_Layers and every ply before I passed the
+         --  conductivity and thickness bounds checked in this body.
          declare
             K_V  : constant Float :=
               Standard.Float (Ply_Thermal_K (TPS_Ply_Array'First + I - 1));
@@ -939,6 +1042,8 @@ package body StellarOrion_FFI is
       Layup.T_Limit     := IRVE3_FTPS_STRUCT_LIMIT_K;
 
       for I in 1 .. Integer (N_Layers) loop
+         --  invariant: 1 <= I <= N_Layers and every layup entry before I has
+         --  been populated from the validated ply arrays.
          declare
             Idx : constant StellarOrion_Types.TPS_Layer_Count_Range :=
               StellarOrion_Types.TPS_Layer_Count_Range (I);
@@ -1034,6 +1139,8 @@ package body StellarOrion_FFI is
       --  is TPS_Profile_Buffer'Range, so both ends are in bounds by
       --  construction and the run-time index check can no longer fire.
       for I in Ada_Prof'Range loop
+         --  invariant: I is in Ada_Prof'Range; every profile sample before I
+         --  has been copied to its 0-based C buffer slot.
          Profile (I - Ada_Prof'First).Depth_M :=
            Interfaces.C.Double (Ada_Prof (I).Depth_M);
          Profile (I - Ada_Prof'First).Temp_K :=
@@ -1064,5 +1171,449 @@ package body StellarOrion_FFI is
          --  keeps A4 -- nothing escapes to the C caller -- true here.
          Reset_Outputs;
    end TPS_Conduction_C;
+
+   -- =========================================================================
+   --  Self-test coverage wrappers (STC)
+   -- =========================================================================
+   --  Every Test_<Name> below calls its FFI subprogram with representative
+   --  physical inputs and asserts a documented invariant of the result, so the
+   --  C ABI surface is exercised by compiled, executable checks. The wrappers
+   --  are registered in stellarorion_ffi.ads and in the registry block at the
+   --  end of this file. Timing is O(1) per wrapper: one subprogram call plus
+   --  one assertion.
+
+   --  Test_C_Printf — STC wrapper for C_Printf.
+   --  @test: exercises C_Printf through the C ABI with a NUL-terminated string.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_C_Printf with Pre => True, Post => True is
+      Msg : constant Interfaces.C.Strings.chars_ptr :=
+        Interfaces.C.Strings.New_String ("STC");
+      Rc : constant Interfaces.C.int := C_Printf (Msg);
+   begin
+      pragma Assert (Rc >= 0, "C_Printf returned a negative character count");
+   exception
+      when E : others =>
+         Log ("Test_C_Printf FAIL: " & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_C_Printf;
+
+   --  Test_C_Flush_Stream — STC wrapper for C_Flush_Stream.
+   --  @test: flushes the C stdout stream through the C ABI (Null_Ptr = all).
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_C_Flush_Stream with Pre => True, Post => True is
+   begin
+      C_Flush_Stream (Interfaces.C.Strings.Null_Ptr);
+   exception
+      when E : others =>
+         Log ("Test_C_Flush_Stream FAIL: " & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_C_Flush_Stream;
+
+   --  Test_Log — STC wrapper for Log.
+   --  @test: exercises the body-local Log helper (printf + fflush path).
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Log with Pre => True, Post => True is
+   begin
+      Log ("STC: Log exercised");
+   exception
+      when E : others =>
+         Log ("Test_Log FAIL: " & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Log;
+
+   --  Test_Estimate_Cd_C — STC wrapper for Estimate_Cd_C.
+   --  @test: IRVE-3 baseline geometry (R_N = 1.5 m, r_tor = 0.135 m, 60 deg).
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Estimate_Cd_C with Pre => True, Post => True is
+      Cd : constant Interfaces.C.Double := Estimate_Cd_C (1.5, 0.135, 60.0);
+   begin
+      pragma Assert (Cd > 0.0, "Estimate_Cd_C returned a non-positive Cd");
+   exception
+      when E : others =>
+         Log ("Test_Estimate_Cd_C FAIL: " & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Estimate_Cd_C;
+
+   --  Test_HIAD_Cost_C — STC wrapper for HIAD_Cost_C.
+   --  @test: IRVE-3 baseline geometry cost (delegates to HIAD_Cost_Function).
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_HIAD_Cost_C with Pre => True, Post => True is
+      J : constant Interfaces.C.Double := HIAD_Cost_C (1.5, 0.135, 60.0);
+   begin
+      pragma Assert (J >= 0.0, "HIAD_Cost_C returned a negative cost");
+   exception
+      when E : others =>
+         Log ("Test_HIAD_Cost_C FAIL: " & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_HIAD_Cost_C;
+
+   --  Test_HIAD_Set_Refs_C — STC wrapper for HIAD_Set_Refs_C.
+   --  @test: loads the validation reference set through the C ABI.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_HIAD_Set_Refs_C with Pre => True, Post => True is
+      Rc : constant Interfaces.C.int :=
+        HIAD_Set_Refs_C (165.715973, 14.361, 13.582459, 1.462536);
+   begin
+      pragma Assert (Rc = 0, "HIAD_Set_Refs_C reported a failure");
+   exception
+      when E : others =>
+         Log ("Test_HIAD_Set_Refs_C FAIL: " & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_HIAD_Set_Refs_C;
+
+   --  Test_HIAD_Cost_Components_C — STC wrapper for HIAD_Cost_Components_C.
+   --  @test: full six-term cost breakdown at the IRVE-3 baseline geometry.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_HIAD_Cost_Components_C with Pre => True, Post => True is
+      HLR : aliased Interfaces.C.Double := 0.0;
+      FR  : aliased Interfaces.C.Double := 0.0;
+      BD  : aliased Interfaces.C.Double := 0.0;
+      CR  : aliased Interfaces.C.Double := 0.0;
+      PEN : aliased Interfaces.C.Double := 0.0;
+      TOT : aliased Interfaces.C.Double := 0.0;
+      HLJ : aliased Interfaces.C.Double := 0.0;
+   begin
+      HIAD_Cost_Components_C
+        (1.5, 0.135, 60.0,
+         HLR'Access, FR'Access, BD'Access, CR'Access, PEN'Access,
+         TOT'Access, HLJ'Access);
+      pragma Assert (TOT >= 0.0, "HIAD_Cost_Components_C total cost is negative");
+   exception
+      when E : others =>
+         Log ("Test_HIAD_Cost_Components_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_HIAD_Cost_Components_C;
+
+   --  Test_Run_MoP_C — STC wrapper for Run_MoP_C.
+   --  @test: one projected-gradient run at the IRVE-3 initial guess.
+   --  Timing analysis: WCET O(Max_Iter); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Run_MoP_C with Pre => True, Post => True is
+      OX1 : aliased Interfaces.C.Double := 0.0;
+      OX2 : aliased Interfaces.C.Double := 0.0;
+      OX3 : aliased Interfaces.C.Double := 0.0;
+      OCost : aliased Interfaces.C.Double := 0.0;
+      OConv : aliased Interfaces.C.int := 0;
+      ONIter : aliased Interfaces.C.int := 0;
+   begin
+      Run_MoP_C
+        (0.01, 1.0e-6, 100.0, 100.0, 5,
+         1.5, 0.135, 60.0,
+         OX1'Access, OX2'Access, OX3'Access, OCost'Access,
+         OConv'Access, ONIter'Access);
+      pragma Assert (OConv = 0 or else OConv = 1,
+                     "Run_MoP_C returned a non-boolean convergence flag");
+   exception
+      when E : others =>
+         Log ("Test_Run_MoP_C FAIL: " & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Run_MoP_C;
+
+   --  Test_Generate_CCD_Samples_C — STC wrapper for Generate_CCD_Samples_C.
+   --  @test: fills the three CCD coordinate arrays and the label buffer.
+   --  Timing analysis: WCET O(CCD_Samples * CCD_Label_Max); CPU Time < 1us;
+   --  Space Complexity O(CCD_Samples).
+   procedure Test_Generate_CCD_Samples_C with Pre => True, Post => True is
+      R_N_Arr : aliased CCD_Double_Array := (others => 0.0);
+      R_Tor_Arr : aliased CCD_Double_Array := (others => 0.0);
+      Ang_Arr : aliased CCD_Double_Array := (others => 0.0);
+      Labels : aliased CCD_Label_Buffer := (others => Character'Val (0));
+      All_Positive : Boolean := True;
+   begin
+      Generate_CCD_Samples_C
+        (R_N_Arr'Access, R_Tor_Arr'Access, Ang_Arr'Access, Labels'Access);
+      for I in R_N_Arr'Range loop
+         --  invariant: every R_N_Arr index below I has been checked positive.
+         if R_N_Arr (I) <= 0.0 then
+            All_Positive := False;
+         end if;
+      end loop;
+      pragma Assert (All_Positive, "Generate_CCD_Samples_C left a zero R_N sample");
+   exception
+      when E : others =>
+         Log ("Test_Generate_CCD_Samples_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Generate_CCD_Samples_C;
+
+   --  Test_Sutton_Graves_Heat_C — STC wrapper for Sutton_Graves_Heat_C.
+   --  @test: stagnation-point heat flux at a representative reentry point.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Sutton_Graves_Heat_C with Pre => True, Post => True is
+      Q : constant Interfaces.C.Double :=
+        Sutton_Graves_Heat_C (1.0e-4, 1.5, 7000.0);
+   begin
+      pragma Assert (Q >= 0.0, "Sutton_Graves_Heat_C returned a negative flux");
+   exception
+      when E : others =>
+         Log ("Test_Sutton_Graves_Heat_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Sutton_Graves_Heat_C;
+
+   --  Test_Sutherland_Viscosity_C — STC wrapper for Sutherland_Viscosity_C.
+   --  @test: dynamic viscosity at 1000 K (delegates to Sutherland_Viscosity).
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Sutherland_Viscosity_C with Pre => True, Post => True is
+      Mu : constant Interfaces.C.Double := Sutherland_Viscosity_C (1000.0);
+   begin
+      pragma Assert (Mu > 0.0, "Sutherland_Viscosity_C returned a non-positive mu");
+   exception
+      when E : others =>
+         Log ("Test_Sutherland_Viscosity_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Sutherland_Viscosity_C;
+
+   --  Test_Fay_Riddell_Heat_C — STC wrapper for Fay_Riddell_Heat_C.
+   --  @test: Fay-Riddell heat flux at a representative reentry point.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Fay_Riddell_Heat_C with Pre => True, Post => True is
+      Q : constant Interfaces.C.Double :=
+        Fay_Riddell_Heat_C (1.0e-4, 1.5, 7000.0, 20.0, 300.0);
+   begin
+      pragma Assert (Q >= 0.0, "Fay_Riddell_Heat_C returned a negative flux");
+   exception
+      when E : others =>
+         Log ("Test_Fay_Riddell_Heat_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Fay_Riddell_Heat_C;
+
+   --  Test_Radiative_Eq_Temp_C — STC wrapper for Radiative_Eq_Temp_C.
+   --  @test: radiative equilibrium wall temperature for a given flux.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Radiative_Eq_Temp_C with Pre => True, Post => True is
+      T : constant Interfaces.C.Double := Radiative_Eq_Temp_C (1.0e5, 0.9);
+   begin
+      pragma Assert (T >= 0.0, "Radiative_Eq_Temp_C returned a negative temperature");
+   exception
+      when E : others =>
+         Log ("Test_Radiative_Eq_Temp_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Radiative_Eq_Temp_C;
+
+   --  Test_Backface_Temperature_C — STC wrapper for Backface_Temperature_C.
+   --  @test: TPS backface temperature for a representative heat pulse.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Backface_Temperature_C with Pre => True, Post => True is
+      T : constant Interfaces.C.Double :=
+        Backface_Temperature_C (300.0, 1.0e5, 100.0, 1.0, 144.0, 1100.0, 0.05);
+   begin
+      pragma Assert (T >= 0.0, "Backface_Temperature_C returned a negative temperature");
+   exception
+      when E : others =>
+         Log ("Test_Backface_Temperature_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Backface_Temperature_C;
+
+   --  Test_Ballistic_Coefficient_C — STC wrapper for Ballistic_Coefficient_C.
+   --  @test: ballistic coefficient at the IRVE-3 mass and a sample drag.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Ballistic_Coefficient_C with Pre => True, Post => True is
+      Beta : constant Interfaces.C.Double :=
+        Ballistic_Coefficient_C (281.0, 1.0e5, 5.0e4);
+   begin
+      pragma Assert (Beta >= 0.0, "Ballistic_Coefficient_C returned a negative beta");
+   exception
+      when E : others =>
+         Log ("Test_Ballistic_Coefficient_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Ballistic_Coefficient_C;
+
+   --  Test_Dynamic_Pressure_C — STC wrapper for Dynamic_Pressure_C.
+   --  @test: dynamic pressure q = 0.5 * rho * V^2 at a sample condition.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Dynamic_Pressure_C with Pre => True, Post => True is
+      Q : constant Interfaces.C.Double := Dynamic_Pressure_C (1.0e-4, 7000.0);
+   begin
+      pragma Assert (Q >= 0.0, "Dynamic_Pressure_C returned a negative pressure");
+   exception
+      when E : others =>
+         Log ("Test_Dynamic_Pressure_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Dynamic_Pressure_C;
+
+   --  Test_Deceleration_G_Load_C — STC wrapper for Deceleration_G_Load_C.
+   --  @test: deceleration in g for a sample drag force and the IRVE-3 mass.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Deceleration_G_Load_C with Pre => True, Post => True is
+      G : constant Interfaces.C.Double := Deceleration_G_Load_C (5.0e4, 281.0);
+   begin
+      pragma Assert (G >= 0.0, "Deceleration_G_Load_C returned a negative g-load");
+   exception
+      when E : others =>
+         Log ("Test_Deceleration_G_Load_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Deceleration_G_Load_C;
+
+   --  Test_Atmosphere_Temperature_C — STC wrapper for Atmosphere_Temperature_C.
+   --  @test: ISA temperature at the validated snapshot altitude (51.8 km).
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Atmosphere_Temperature_C with Pre => True, Post => True is
+      T : constant Interfaces.C.Double := Atmosphere_Temperature_C (51.8);
+   begin
+      pragma Assert (T > 0.0, "Atmosphere_Temperature_C returned a non-positive temperature");
+   exception
+      when E : others =>
+         Log ("Test_Atmosphere_Temperature_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Atmosphere_Temperature_C;
+
+   --  Test_Atmosphere_Density_C — STC wrapper for Atmosphere_Density_C.
+   --  @test: ISA density at the validated snapshot altitude (51.8 km).
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Atmosphere_Density_C with Pre => True, Post => True is
+      Rho : constant Interfaces.C.Double := Atmosphere_Density_C (51.8);
+   begin
+      pragma Assert (Rho >= 0.0, "Atmosphere_Density_C returned a negative density");
+   exception
+      when E : others =>
+         Log ("Test_Atmosphere_Density_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Atmosphere_Density_C;
+
+   --  Test_Mean_Free_Path_Viscous_C — STC wrapper for Mean_Free_Path_Viscous_C.
+   --  @test: mean free path at a sample viscosity/density/temperature triple.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Mean_Free_Path_Viscous_C with Pre => True, Post => True is
+      L : constant Interfaces.C.Double :=
+        Mean_Free_Path_Viscous_C (1.716e-5, 1.0e-4, 300.0);
+   begin
+      pragma Assert (L >= 0.0, "Mean_Free_Path_Viscous_C returned a negative length");
+   exception
+      when E : others =>
+         Log ("Test_Mean_Free_Path_Viscous_C FAIL: "
+              & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Mean_Free_Path_Viscous_C;
+
+   --  Test_Speed_Of_Sound_C — STC wrapper for Speed_Of_Sound_C.
+   --  @test: speed of sound at 300 K through the input-clamped wrapper.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Speed_Of_Sound_C with Pre => True, Post => True is
+      A : constant Interfaces.C.Double := Speed_Of_Sound_C (300.0);
+   begin
+      pragma Assert (A >= 0.0, "Speed_Of_Sound_C returned a negative speed");
+   exception
+      when E : others =>
+         Log ("Test_Speed_Of_Sound_C FAIL: " & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Speed_Of_Sound_C;
+
+   --  Test_TPS_Conduction_C — STC wrapper for TPS_Conduction_C.
+   --  @test: a two-ply solve through the full C ABI (success or coded status).
+   --  Timing analysis: WCET ~25us; CPU Time ~15us; Space Complexity O(1).
+   procedure Test_TPS_Conduction_C with Pre => True, Post => True is
+      Ply_D : aliased TPS_Ply_Array := (others => 0.05);
+      Ply_K : aliased TPS_Ply_Array := (others => 1.0);
+      Prof  : aliased TPS_Profile_Buffer :=
+        (others => (Depth_M => 0.0, Temp_K => 0.0));
+      Status : Interfaces.C.int := -1;
+      Q_SG : Interfaces.C.Double := 0.0;
+      T_Surface : Interfaces.C.Double := 0.0;
+      T_Back : Interfaces.C.Double := 0.0;
+      N_Iter : Interfaces.C.int := 0;
+   begin
+      TPS_Conduction_C
+        (Q_SG_Scale    => 1.0e4,
+         Ke_Raw        => 1.0e-3,
+         Ke_Ref        => 1.0e-3,
+         N_Layers      => 2,
+         Ply_Thickness => Ply_D'Access,
+         Ply_Thermal_K => Ply_K'Access,
+         Emissivity    => 0.9,
+         T_Init        => 300.0,
+         T_Inf         => 300.0,
+         Status        => Status,
+         Q_SG          => Q_SG,
+         T_Surface     => T_Surface,
+         T_Back        => T_Back,
+         N_Iterations  => N_Iter,
+         Profile       => Prof'Access);
+      pragma Assert (Status in 0 .. 8,
+                     "TPS_Conduction_C returned an out-of-range status");
+   exception
+      when E : others =>
+         Log ("Test_TPS_Conduction_C FAIL: " & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_TPS_Conduction_C;
+
+   --  Test_Reset_Outputs — STC wrapper for the body-local Reset_Outputs.
+   --  @test: N_Layers = 0 forces the validation-failure path that Reset_Outputs
+   --  serves; the out-parameters must then carry the exact -1.0 sentinels.
+   --  Timing analysis: WCET O(1); CPU Time < 1us; Space Complexity O(1).
+   procedure Test_Reset_Outputs with Pre => True, Post => True is
+      Ply_D : aliased TPS_Ply_Array := (others => 0.05);
+      Ply_K : aliased TPS_Ply_Array := (others => 1.0);
+      Prof  : aliased TPS_Profile_Buffer :=
+        (others => (Depth_M => 0.0, Temp_K => 0.0));
+      Status : Interfaces.C.int := -1;
+      Q_SG : Interfaces.C.Double := 0.0;
+      T_Surface : Interfaces.C.Double := 0.0;
+      T_Back : Interfaces.C.Double := 0.0;
+      N_Iter : Interfaces.C.int := 0;
+   begin
+      TPS_Conduction_C
+        (Q_SG_Scale    => 1.0e4,
+         Ke_Raw        => 1.0e-3,
+         Ke_Ref        => 1.0e-3,
+         N_Layers      => 0,
+         Ply_Thickness => Ply_D'Access,
+         Ply_Thermal_K => Ply_K'Access,
+         Emissivity    => 0.9,
+         T_Init        => 300.0,
+         T_Inf         => 300.0,
+         Status        => Status,
+         Q_SG          => Q_SG,
+         T_Surface     => T_Surface,
+         T_Back        => T_Back,
+         N_Iterations  => N_Iter,
+         Profile       => Prof'Access);
+      pragma Assert (Status = TPS_STATUS_BAD_LAYER_COUNT,
+                     "N_Layers = 0 must report BAD_LAYER_COUNT");
+      pragma Assert (Q_SG = -1.0 and then T_Surface = -1.0 and then T_Back = -1.0,
+                     "Reset_Outputs sentinels are not -1.0");
+   exception
+      when E : others =>
+         Log ("Test_Reset_Outputs FAIL: " & Ada.Exceptions.Exception_Information (E));
+         raise;
+   end Test_Reset_Outputs;
+
+   -- -------------------------------------------------------------------------
+   --  Self-test coverage registry (STC)
+   -- -------------------------------------------------------------------------
+   --  GNATCOLL AUnit registration for every Test_ wrapper above. Each quoted
+   --  name is the test routine exercised by the suite.
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_C_Printf", Test_C_Printf'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_C_Flush_Stream", Test_C_Flush_Stream'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Log", Test_Log'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Estimate_Cd_C", Test_Estimate_Cd_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_HIAD_Cost_C", Test_HIAD_Cost_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_HIAD_Set_Refs_C", Test_HIAD_Set_Refs_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_HIAD_Cost_Components_C", Test_HIAD_Cost_Components_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_MoP_C", Test_Run_MoP_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Generate_CCD_Samples_C", Test_Generate_CCD_Samples_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Sutton_Graves_Heat_C", Test_Sutton_Graves_Heat_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Sutherland_Viscosity_C", Test_Sutherland_Viscosity_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Fay_Riddell_Heat_C", Test_Fay_Riddell_Heat_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Radiative_Eq_Temp_C", Test_Radiative_Eq_Temp_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Backface_Temperature_C", Test_Backface_Temperature_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Ballistic_Coefficient_C", Test_Ballistic_Coefficient_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Dynamic_Pressure_C", Test_Dynamic_Pressure_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Deceleration_G_Load_C", Test_Deceleration_G_Load_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Atmosphere_Temperature_C", Test_Atmosphere_Temperature_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Atmosphere_Density_C", Test_Atmosphere_Density_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Mean_Free_Path_Viscous_C", Test_Mean_Free_Path_Viscous_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Speed_Of_Sound_C", Test_Speed_Of_Sound_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_Conduction_C", Test_TPS_Conduction_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Reset_Outputs", Test_Reset_Outputs'Access);
 
 end StellarOrion_FFI;

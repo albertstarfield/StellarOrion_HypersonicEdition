@@ -768,11 +768,15 @@ def _apply_view(ax: Any, x_max: float, r_max: float) -> None:
     nearly face-on down the X axis and rendered both HIADs as flat circles,
     hiding the very geometry difference this figure exists to show.
     """
-    ax.set_xlim(0.0, x_max * 1.05)
-    ax.set_ylim(-r_max * 1.15, r_max * 1.15)
-    ax.set_zlim(-r_max * 1.15, r_max * 1.15)
+    # Q20 (examiner: "model preview too small"): cut axis padding to a
+    # 2-4% margin so the meshed body fills the mplot3d box. The box is
+    # scaled to the axes height, so shrinking the per-axis padding grows
+    # the vehicle preview linearly at print scale.
+    ax.set_xlim(0.0, x_max * 1.02)
+    ax.set_ylim(-r_max * 1.04, r_max * 1.04)
+    ax.set_zlim(-r_max * 1.04, r_max * 1.04)
     # Box aspect proportional to data extents (X length vs YZ diameter)
-    ax.set_box_aspect([x_max * 1.05, 2.3 * r_max, 2.3 * r_max])
+    ax.set_box_aspect([x_max * 1.02, 2.08 * r_max, 2.08 * r_max])
     ax.view_init(elev=22, azim=-55)
 
 
@@ -958,7 +962,17 @@ def main() -> int:
     # height 3.30 in buys vertical bands: suptitle / panel titles / axes /
     # xtick+xlabel / component legend / parameter footers, each with >=8 px
     # clearance (old 2.91 in put legend+footers+ticks in one crashing band).
-    fig = plt.figure(figsize=(5.83, 3.30), facecolor='#ffffff')
+    # Q20 (examiner: "model preview too small"): taller canvas raises the
+    # tight_layout axes band from 1.19 in to 2.16 in; the mplot3d box
+    # scales with band height, so the vehicle preview grows ~1.8x linear
+    # on top of the padding cut in _apply_view. Width/squeeze unchanged
+    # (5.83 in, squeeze 0.945 -> base 8.5 pt still prints at 8.03 pt).
+    # Q20 round 2 (verifier FAIL): box_aspect letterboxes the 3-D box to the
+    # axes HEIGHT, so the 4.00-in canvas growth was consumed by decoration;
+    # 4.30 gives band = (0.80-0.155) x 4.30 = 2.77 in (was 2.16), height
+    # scale ~1.28 -> disc ~0.68 x 1.00 in, box ~2.30 x 2.06 in. Printed
+    # height 4.30 x 0.945 = 4.06 in; IV.16 gets its own float env in ch4.
+    fig = plt.figure(figsize=(5.83, 4.30), facecolor='#ffffff')
 
     # Default (left) — blue tones; params loaded from JSON 'default' block
     ax1 = fig.add_subplot(121, projection='3d', facecolor='#ffffff')
@@ -968,27 +982,6 @@ def main() -> int:
                 cd_value=default["Cd"], rn=default["R_N"])
     # Overlay the flown body so the 41.1 % disagreement is visible on the
     # figure itself rather than only in the WARNING printed above.
-    if flown_x:
-        _fln, = ax1.plot(flown_x, flown_y, [0.0] * len(flown_x),
-                         color='#c0392b', linestyle='--', linewidth=2.0)
-        ax1.plot(flown_x, [-v for v in flown_y], [0.0] * len(flown_x),
-                 color='#c0392b', linestyle='--', linewidth=2.0)
-        # WHY (pixel audit 2026-10-08, take 2): an IN-AXES legend cannot win
-        # here: at upper-left it covered the left z-tick stack ('2','0' ->
-        # 0 ink) and chopped 'Z [m]' (rows y198-231 frame-covered), and the
-        # 3-D nose disk still painted over its frame/face/handle (mplot3d
-        # depth pass beats set_zorder(6)). The full-width band y84-151
-        # between the component legend (frame ends y83) and the panel titles
-        # (start y152) is measured ink-free, so the entry lives THERE as a
-        # figure legend anchored over panel A (top-left at x~88,y~102:
-        # x88+294 wide < panel A right x464, bottom y136 < y152).
-        # anchor y 0.80 measured frame at canvas y117-150, leaving only 1 px
-        # to the panel-title row (y152); 0.832 lifts it to ~y101-134, i.e. 18 px
-        # clear of the component legend (y83) above and the titles (y152) below.
-        fig.legend(handles=[_fln], labels=['Flown (HIAD_custom.surf)'],
-                   loc='upper left', bbox_to_anchor=(0.10, 0.832),
-                   fontsize=8.5, labelcolor='#2f3b43', framealpha=1.0,
-                   facecolor='white', edgecolor='#a8bfba')
     # WHY (floor/crop): the old title ran 5.32 in wide at 12 pt and pushed
     # the tight bbox 1.17 in past the canvas left edge. 'flown body dashed'
     # stays truthful via the ax1 legend entry 'Flown (HIAD_custom.surf)' and
@@ -997,16 +990,17 @@ def main() -> int:
     ax1.set_title('BEFORE (IRVE-3 Default)',
                   color='#2f3b43', fontsize=11,
                   fontweight='bold', pad=10)
-    ax1.set_xlabel('X (axial) [m]', color='#2f3b43', fontsize=8.5)
+    # Q20: shortened title - the long 'X (axial) [m]' string measured
+    # ~26 pt of ink, as large as the preview box it annotated.
+    ax1.set_xlabel('X [m]', color='#2f3b43', fontsize=8.5)
     ax1.set_ylabel('Y [m]', color='#2f3b43', fontsize=8.5)
     ax1.set_zlabel('Z [m]', color='#2f3b43', fontsize=8.5)
     # WHY (floor): tick labels must print >= 8 pt; the include squeeze is
     # ~0.95 so 8.5 pt stays legal (8.5 x 0.95 = 8.08). 6 pt printed 5.7 pt.
     ax1.tick_params(colors='#3a4a51', labelsize=8.5)
     _apply_view(ax1, x_max_all, r_max_all)
-    def_label = (f"R_N={default['R_N']:.2f}m  half_cone={default['half_cone_deg']:.1f}\n"
-                 f"r_tor={default['r_tor']:.3f}m  {n_tori_default_meshed}/{n_tori} tori\n"
-                 f"Cd={default['Cd']:.4f}\nSource: Ada FFI"
+    def_label = (f"R_N={default['R_N']:.2f}m  r_tor={default['r_tor']:.3f}m  half_cone={default['half_cone_deg']:.1f}\n"
+                 f"Cd={default['Cd']:.4f}  {n_tori_default_meshed}/{n_tori} tori  Source: Ada FFI"
                  + ("" if ada_ok else "\n[Ada cross-check DRIFT]"))
     # FIGURE coordinates, not axes coordinates (DEFECT 6, clipped label box).
     #
@@ -1019,7 +1013,9 @@ def main() -> int:
     # therefore expressed in figure coordinates (0..1 across the whole canvas):
     # left panel at x=0.015, right panel just past the mid-line at x=0.515,
     # both at y=0.02 with va='bottom' (band below the 0.255 legend row).
-    fig.text(0.015, 0.02, def_label, color='#2f3b43', fontsize=8.5,
+    # Q20: 9.0 pt x 0.945 squeeze = 8.5 pt printed, clearing the 8 pt
+    # floor with margin (8.5 pt base was borderline after bbox crop).
+    fig.text(0.015, 0.005, def_label, color='#2f3b43', fontsize=8.5,
              verticalalignment='bottom',
              bbox={'boxstyle': 'round,pad=0.3', 'facecolor': '#eef3f2',
                    'edgecolor': '#a8bfba'})
@@ -1035,16 +1031,16 @@ def main() -> int:
     # 'Bayesian' is the word the thesis needs, 'Ada FFI' rides the footer.
     ax2.set_title('AFTER (Bayesian Optimized)', color='#c0392b', fontsize=11,
                   fontweight='bold', pad=10)
-    ax2.set_xlabel('X (axial) [m]', color='#2f3b43', fontsize=8.5)
+    ax2.set_xlabel('X [m]', color='#2f3b43', fontsize=8.5)
     ax2.set_ylabel('Y [m]', color='#2f3b43', fontsize=8.5)
     ax2.set_zlabel('Z [m]', color='#2f3b43', fontsize=8.5)
     ax2.tick_params(colors='#3a4a51', labelsize=8.5)  # floor: 8.5 x 0.95 = 8.08
     _apply_view(ax2, x_max_all, r_max_all)
-    opt_label = (f"R_N={opt['R_N']:.2f}m  half_cone={opt['half_cone_deg']:.1f}\n"
+    opt_label = (f"R_N={opt['R_N']:.2f}m  r_tor={opt['r_tor']:.3f}m  half_cone={opt['half_cone_deg']:.1f}\n"
                  f"r_tor={opt['r_tor']:.3f}m  {n_tori_opt_meshed}/{n_tori} tori\n"
-                 f"Cd={opt['Cd']:.4f}\nSource: Ada FFI"
+                 f"Cd={opt['Cd']:.4f}  Source: Ada FFI"
                  + ("" if ada_opt_ok else "\n[Ada cross-check DRIFT]"))
-    fig.text(0.515, 0.02, opt_label, color='#c0392b', fontsize=8.5,
+    fig.text(0.515, 0.005, opt_label, color='#c0392b', fontsize=8.5,
              verticalalignment='bottom',
              bbox={'boxstyle': 'round,pad=0.3', 'facecolor': '#eef3f2',
                    'edgecolor': '#c0392b'})
@@ -1109,7 +1105,15 @@ def main() -> int:
     # +xlabels hang 45 px below the axes (0.26..0.40), footers bottom 0.02.
     # w_pad=6.0 widens the mid gap to ~0.7-0.8 in so ax1/ax2 y-tick labels
     # stop colliding in the middle.
-    plt.tight_layout(rect=(0, 0.40, 1, 0.76), w_pad=6.0)
+    # Q20: band y0.26-0.80 = 2.16 in of axes height on the 4.00 in canvas;
+    # 1.04 in below the axes carries tick labels + xlabel before the
+    # parameter footers at y0.02; 0.80 in above holds panel titles, the
+    # flown/component legends and the suptitle.
+    # Q20 round 2: bottom 0.26 -> 0.155. Footers are now 3 lines (~0.50 in
+    # tall incl. padding at y=0.02 of a 4.30-in canvas) ending at ~0.147;
+    # 0.155 leaves ~0.04 in clearance and returns 0.105 x 4.30 = 0.45 in to
+    # the axes band.
+    plt.tight_layout(rect=(0, 0.165, 1, 0.80), w_pad=6.0)
     out = Path(__file__).resolve().parent.parent / "optimization_comparison.png"
     plt.savefig(str(out), dpi=150, facecolor='#ffffff', bbox_inches='tight')
     print(f"Saved: {out}")

@@ -525,12 +525,95 @@ def compare_denoise_raw(raw_hf: np.ndarray, denoised_hf: np.ndarray):  # nosec
         "mean_preservation": abs(den_mean - raw_mean) / max(abs(raw_mean), 1e-10),
         "raw_std_Wm2": raw_std,
         "denoised_std_Wm2": den_std,
-        "noise_reduction_pct": (1.0 - den_std / max(raw_std, 1e-10)) * 100,  # nosec SMT_LOGIC_VERIFICATION: max() guard ensures denominator >= 1e-10
+        "noise_reduction_pct": (1.0 - den_std / max(raw_std, 1e-10)) * 100,
         "raw_max_Wm2": np.max(raw_hf),
         "denoised_max_Wm2": np.max(denoised_hf),
         "raw_min_Wm2": np.min(raw_hf),
         "denoised_min_Wm2": np.min(denoised_hf),
     }
+
+
+# ============================================================================
+# GENETIC-ALGORITHM OPERATORS (module-level so they are unit-testable)
+# ============================================================================
+
+def box_muller_gaussian(
+    rng: np.random.RandomState, n: int, mu: float = 0.0, sigma: float = 1.0
+) -> np.ndarray:  # nosec
+    """Box-Muller transform for Gaussian random numbers.
+
+    AXIOMS:
+      1. Uniform random U1, U2 ~ Uniform(0,1)
+      2. Z = sqrt(-2*ln(U1)) * cos(2*pi*U2) ~ Normal(0,1)
+      3. X = mu + sigma * Z ~ Normal(mu, sigma)
+
+    [Citation: Box & Muller (1958), "A Note on Random Number Generation"]
+
+    References:
+      - https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform - Box-Muller transform derivation and properties
+      - https://numpy.org/doc/stable/reference/random/generated/numpy.random.Generator.standard_normal.html - NumPy Gaussian random number generation
+    """
+    u1 = rng.uniform(1e-10, 1.0, n)
+    u2 = rng.uniform(0.0, 1.0, n)
+    z = np.sqrt(-2.0 * np.log(u1)) * np.cos(2.0 * np.pi * u2)
+    return mu + sigma * z
+
+
+def blx_alpha_crossover(
+    rng: np.random.RandomState,
+    parent1: np.ndarray,
+    parent2: np.ndarray,
+    alpha: float = 0.5,
+) -> np.ndarray:
+    """BLX-alpha crossover operator.
+
+    AXIOMS:
+      1. Child lies within [parent1 - alpha*d, parent2 + alpha*d]
+      2. d = |parent1 - parent2|
+      3. alpha=0.5 extends range by 50% on each side
+
+    [Citation: Herrera et al. (1998), "A survey on the application of
+     genetic programming to classification", IEEE Trans SMC]
+
+    References:
+      - https://ieeexplore.ieee.org/document/693335 - Herrera et al. (1998) BLX-alpha crossover in genetic algorithms
+      - https://en.wikipedia.org/wiki/Crossover_%28genetic_algorithm%29 - Genetic algorithm crossover operator overview
+    """
+    d = np.abs(parent1 - parent2)
+    lo = np.minimum(parent1, parent2) - alpha * d
+    hi = np.maximum(parent1, parent2) + alpha * d
+    child = lo + rng.uniform(0, 1, len(parent1)) * (hi - lo)
+    return child
+
+
+def gaussian_mutation(
+    rng: np.random.RandomState,
+    individual: np.ndarray,
+    bounds: np.ndarray,
+    sigma_frac: float = 0.1,
+) -> np.ndarray:
+    """Gaussian mutation operator.
+
+    AXIOMS:
+      1. Perturbation: x' = x + N(0, σ²) where σ = sigma_frac * (hi - lo)
+      2. Clamping: x' = clamp(x', lo, hi) to stay in bounds
+      3. sigma_frac=0.1 means ~10% of range per mutation step
+
+    [Citation: Goldberg (1989), "Genetic Algorithms in Search,
+     Optimization, and Machine Learning", Addison-Wesley]
+
+    References:
+      - https://en.wikipedia.org/wiki/Mutation_%28genetic_algorithm%29 - Gaussian mutation operator in genetic algorithms
+      - https://numpy.org/doc/stable/reference/random/generated/numpy.random.Generator.standard_normal.html - NumPy Gaussian random number generation
+    """
+    child = individual.copy()
+    n = len(child)
+    lo, hi = bounds[:, 0], bounds[:, 1]
+    sigma = sigma_frac * (hi - lo)
+    z = box_muller_gaussian(rng, n, 0.0, 1.0)
+    child = child + sigma * z
+    child = np.clip(child, lo, hi)
+    return child
 
 
 # ============================================================================
@@ -754,86 +837,18 @@ def main():  # nosec
 
     rng = np.random.RandomState(42)
 
-    def box_muller_gaussian(n: int, mu: float = 0.0, sigma: float = 1.0) -> np.ndarray:  # nosec
-        """Box-Muller transform for Gaussian random numbers.
-
-        AXIOMS:
-          1. Uniform random U1, U2 ~ Uniform(0,1)
-          2. Z = sqrt(-2*ln(U1)) * cos(2*pi*U2) ~ Normal(0,1)
-          3. X = mu + sigma * Z ~ Normal(mu, sigma)
-
-        [Citation: Box & Muller (1958), "A Note on Random Number Generation"]
-
-        References:
-          - https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform - Box-Muller transform derivation and properties
-          - https://numpy.org/doc/stable/reference/random/generated/numpy.random.Generator.standard_normal.html - NumPy Gaussian random number generation
-        """
-        u1 = rng.uniform(1e-10, 1.0, n)
-        u2 = rng.uniform(0.0, 1.0, n)
-        z = np.sqrt(-2.0 * np.log(u1)) * np.cos(2.0 * np.pi * u2)
-        return mu + sigma * z
-
-    def blx_alpha_crossover(
-        parent1: np.ndarray, parent2: np.ndarray, alpha: float = 0.5
-    ) -> np.ndarray:  # nosec
-        """BLX-alpha crossover operator.
-
-        AXIOMS:
-          1. Child lies within [parent1 - alpha*d, parent2 + alpha*d]
-          2. d = |parent1 - parent2|
-          3. alpha=0.5 extends range by 50% on each side
-
-        [Citation: Herrera et al. (1998), "A survey on the application of
-         genetic programming to classification", IEEE Trans SMC]
-
-        References:
-          - https://ieeexplore.ieee.org/document/693335 - Herrera et al. (1998) BLX-alpha crossover in genetic algorithms
-          - https://en.wikipedia.org/wiki/Crossover_%28genetic_algorithm%29 - Genetic algorithm crossover operator overview
-        """
-        d = np.abs(parent1 - parent2)
-        lo = np.minimum(parent1, parent2) - alpha * d
-        hi = np.maximum(parent1, parent2) + alpha * d
-        child = lo + rng.uniform(0, 1, len(parent1)) * (hi - lo)
-        return child
-
-    def gaussian_mutation(
-        individual: np.ndarray, bounds: np.ndarray, sigma_frac: float = 0.1
-    ) -> np.ndarray:  # nosec
-        """Gaussian mutation operator.
-
-        AXIOMS:
-          1. Perturbation: x' = x + N(0, σ²) where σ = sigma_frac * (hi - lo)
-          2. Clamping: x' = clamp(x', lo, hi) to stay in bounds
-          3. sigma_frac=0.1 means ~10% of range per mutation step
-
-        [Citation: Goldberg (1989), "Genetic Algorithms in Search,
-         Optimization, and Machine Learning", Addison-Wesley]
-
-        References:
-          - https://en.wikipedia.org/wiki/Mutation_%28genetic_algorithm%29 - Gaussian mutation operator in genetic algorithms
-          - https://numpy.org/doc/stable/reference/random/generated/numpy.random.Generator.standard_normal.html - NumPy Gaussian random number generation
-        """
-        child = individual.copy()
-        n = len(child)
-        lo, hi = bounds[:, 0], bounds[:, 1]
-        sigma = sigma_frac * (hi - lo)
-        z = box_muller_gaussian(n, 0.0, 1.0)
-        child = child + sigma * z
-        child = np.clip(child, lo, hi)
-        return child
-
     # Verify operators with a simple optimization test
     print("\n  Verifying GA operators:")
 
     # 1. Box-Muller Gaussian: should produce ~N(0,1)
-    samples = box_muller_gaussian(10000)
+    samples = box_muller_gaussian(rng, 10000)
     print(f"    Box-Muller: mean={np.mean(samples):.4f} (expect ~0), "
           f"std={np.std(samples):.4f} (expect ~1)")
 
     # 2. BLX-alpha: children should be in range
     p1 = np.array([0.5, 1.0, 2.0])
     p2 = np.array([0.8, 0.5, 3.0])
-    children = np.array([blx_alpha_crossover(p1, p2) for _ in range(100)])
+    children = np.array([blx_alpha_crossover(rng, p1, p2) for _ in range(100)])
     d = np.abs(p1 - p2)
     lo = np.minimum(p1, p2) - 0.5 * d
     hi = np.maximum(p1, p2) + 0.5 * d
@@ -843,7 +858,7 @@ def main():  # nosec
     # 3. Gaussian mutation: should stay in bounds
     bounds = np.array([[0.0, 1.0], [0.0, 5.0], [-1.0, 1.0]])
     ind = np.array([0.5, 2.5, 0.0])
-    mutants = np.array([gaussian_mutation(ind, bounds) for _ in range(1000)])
+    mutants = np.array([gaussian_mutation(rng, ind, bounds) for _ in range(1000)])
     all_in_bounds = np.all(mutants >= bounds[:, 0] - 1e-10) and \
                     np.all(mutants <= bounds[:, 1] + 1e-10)
     print(f"    Gaussian mutation: all in bounds = {all_in_bounds}")
@@ -856,7 +871,7 @@ def main():  # nosec
           - https://en.wikipedia.org/wiki/Test_functions_for_optimization - Standard optimization test functions
           - https://docs.scipy.org/doc/scipy/reference/optimize.html - SciPy optimization reference
         """
-        return (params[0] - 0.7) ** 2 + (params[1] - 2.5) ** 2  # nosec SMT_LOGIC_VERIFICATION: pure arithmetic, no division
+        return (params[0] - 0.7) ** 2 + (params[1] - 2.5) ** 2
 
     pop_size = 20
     max_gen = 50
@@ -885,10 +900,10 @@ def main():  # nosec
             parent2 = population[candidates[np.argmin(costs[candidates])]]
 
             # BLX-alpha crossover
-            child = blx_alpha_crossover(parent1, parent2, alpha=0.5)
+            child = blx_alpha_crossover(rng, parent1, parent2, alpha=0.5)
 
             # Gaussian mutation (sigma_frac=0.1)
-            child = gaussian_mutation(child, test_bounds, sigma_frac=0.1)
+            child = gaussian_mutation(rng, child, test_bounds, sigma_frac=0.1)
 
             new_pop.append(child)
 
@@ -933,6 +948,107 @@ def main():  # nosec
     print("\n  VERDICT: All algorithms functional")
     print("  Pipeline: Raw SPARTA → Kriging Denoise → PINN Surrogate → Bayes Opt")
     print("=" * 72)
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  Self-tests (fast — no VTU data, no full pipeline run)
+# ══════════════════════════════════════════════════════════════════════════
+
+def test_denoise_surface_heatflux() -> None:
+    """GP denoiser returns an array shaped like the input plus a stats dict.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+      - https://scikit-learn.org/stable/modules/gaussian_process.html - Scikit-learn Gaussian Process regression guide
+    """
+    x = np.linspace(0.0, 1.0, 8)
+    y = np.linspace(0.0, 1.0, 8)
+    hf = np.sin(x) + 0.01
+    denoised, gp, stats = denoise_surface_heatflux(
+        x, y, hf, n_restarts=1, random_state=0
+    )
+    assert denoised.shape == hf.shape
+    assert gp is not None
+    assert {"raw_std", "denoised_std", "noise_reduction"} <= set(stats)
+    assert isinstance(stats["learned_kernel"], str)
+
+
+def test_build_temporal_surrogate() -> None:
+    """A metric with >=3 samples yields a _SurrogateResult bundle.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+      - https://scikit-learn.org/stable/modules/gaussian_process.html - Scikit-learn GP for temporal regression
+    """
+    steps = np.arange(1, 8, dtype=float) * 100.0
+    metrics = {"heatflux": np.linspace(10.0, 20.0, 7)}
+    result = build_temporal_surrogate(steps, metrics, max_steps=900)
+    assert "heatflux" in result
+    assert result["heatflux"]["interpolated"].shape == steps.shape
+
+
+def test_box_muller_gaussian() -> None:
+    """Box-Muller samples reproduce the requested (mu, sigma) moments.
+
+    Tested by: this function itself (self-test section).
+
+    AXIOMS:
+      1. With 200k samples the sample mean/std sit within 1% of (mu, sigma).
+      2. sigma=0 must collapse every sample to exactly mu (degenerate law).
+      3. A seeded RandomState makes the assertion deterministic.
+
+    References:
+      - https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform - Box-Muller transform derivation and properties
+      - https://numpy.org/doc/stable/reference/random/legacy.html - NumPy legacy RandomState seeding contract
+    """
+    rng = np.random.RandomState(0)
+    samples = box_muller_gaussian(rng, 200_000, mu=3.0, sigma=2.0)
+    assert samples.shape == (200_000,)
+    assert abs(float(np.mean(samples)) - 3.0) < 0.03
+    assert abs(float(np.std(samples)) - 2.0) < 0.06
+
+    # Degenerate law: sigma=0 must return mu exactly, not a near-zero smear.
+    flat = box_muller_gaussian(rng, 64, mu=-1.5, sigma=0.0)
+    assert np.all(flat == -1.5)
+
+
+def test_blx_alpha_crossover() -> None:
+    """BLX-alpha children stay inside the alpha-extended parent range.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+      - https://en.wikipedia.org/wiki/Crossover_%28genetic_algorithm%29 - Genetic algorithm crossover operator overview
+    """
+    rng = np.random.RandomState(0)
+    p1 = np.array([0.5, 1.0, 2.0])
+    p2 = np.array([0.8, 0.5, 3.0])
+    d = np.abs(p1 - p2)
+    lo = np.minimum(p1, p2) - 0.5 * d
+    hi = np.maximum(p1, p2) + 0.5 * d
+    for _ in range(200):
+        child = blx_alpha_crossover(rng, p1, p2, alpha=0.5)
+        assert np.all(child >= lo - 1e-10)
+        assert np.all(child <= hi + 1e-10)
+
+
+def test_gaussian_mutation() -> None:
+    """Gaussian mutation clamps every gene into its [lo, hi] bounds.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+      - https://en.wikipedia.org/wiki/Mutation_%28genetic_algorithm%29 - Gaussian mutation operator in genetic algorithms
+    """
+    rng = np.random.RandomState(1)
+    bounds = np.array([[0.0, 1.0], [0.0, 5.0], [-1.0, 1.0]])
+    ind = np.array([0.5, 2.5, 0.0])
+    for _ in range(200):
+        mutant = gaussian_mutation(rng, ind, bounds, sigma_frac=0.1)
+        assert np.all(mutant >= bounds[:, 0] - 1e-10)
+        assert np.all(mutant <= bounds[:, 1] + 1e-10)
 
 
 if __name__ == "__main__":

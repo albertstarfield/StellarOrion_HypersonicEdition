@@ -70,7 +70,7 @@ Four gaps remain in HIAD aerothermal analysis:
 
     \item \textbf{PINN-DSMC Hybrid Approach:} Physics-Informed Neural Networks have been applied to CFD post-processing, but not as a smoothing layer for noisy DSMC particle data in HIAD applications.
 
-    \item \textbf{Multi-Objective Survivability Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and structural mass for HIAD configurations with surrogate-assisted optimization has not been demonstrated.
+    \item \textbf{Multi-Objective Survivability Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, and backface temperature for HIAD configurations with surrogate-assisted optimization has not been demonstrated.
 \end{itemize}
 
 \section{Novelty and Contributions}
@@ -83,7 +83,7 @@ This work makes the following novel contributions:
 
     \item \textbf{PINN as DSMC Post-Processor:} Using Physics-Informed Neural Networks as a smoothing and interpolation layer for noisy DSMC particle data is novel in HIAD aerothermal analysis. The two-stage training protocol (data-only, then data+PDE) yields a physics-consistent continuous field from discrete particles.
 
-    \item \textbf{Multi-Objective Surrogate-Assisted Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, backface temperature, and drag performance with Bayesian Optimization (GP surrogate) coupled to a genetic algorithm demonstrates an efficiency that direct simulation alone cannot afford.
+    \item \textbf{Constrained Single-Objective Surrogate-Assisted Optimization:} A single aggregate cost that trades heat load against drag, with one-sided backface-temperature and deceleration constraints, minimized by Bayesian Optimization (GP surrogate) over the HIAD design space, demonstrates an efficiency that direct simulation alone cannot afford.
 
     \item \textbf{Comprehensive ML Documentation Standards:} The framework follows machine learning standards: explicit architecture documentation, reproducibility requirements (random seeds, environment specifications), validation metrics ($R^2$, root mean squared error (RMSE), mean absolute error (MAE)), and ensemble uncertainty quantification.
 \end{enumerate}
@@ -97,7 +97,7 @@ This research provides aerothermal analysis and survivability optimization of th
 
     \item \textbf{Dimensionality:} Simulations are 2D axisymmetric (via the \texttt{slice-angle} option) or full 3D. The 2D mode assumes zero angle of attack ($\alpha = 0^\circ$) to maintain rotational symmetry and raise particle resolution within memory limits; full 3D covers off-axis conditions.
 
-    \item \textbf{Numerical Framework:} Gas dynamics follow the Boltzmann equation, solved by the Direct Simulation Monte Carlo (DSMC) method in the SPARTA (Sandia Parallel Algorithm for Real-Time Application) solver~\cite{plimpton2014sparta}, valid for rarefied and transitional flows where the continuum assumption fails ($Kn > 0.01$).
+    \item \textbf{Numerical Framework:} Gas dynamics follow the Boltzmann equation, solved by the Direct Simulation Monte Carlo (DSMC) method in the SPARTA (Stochastic PArallel Rarefied-gas Time-accurate Analyzer, Sandia National Laboratories) solver~\cite{plimpton2014sparta}, valid for rarefied and transitional flows; the continuum assumption fails at the shock-layer scale ($Kn \gtrsim 0.01$) even though the vehicle-scale computed field is continuum, as Chapter~\ref{ch:results} shows.
 
     \item \textbf{Gas Model:} A realistic 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics captures molecular interactions including vibrational energy exchange and dissociation reactions relevant to hypersonic entry.
 

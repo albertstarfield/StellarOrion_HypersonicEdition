@@ -9,6 +9,7 @@ with Ada.Exceptions;
 
 package body StellarOrion_Status_Writer is
    pragma SPARK_Mode (Off); -- c_binding: Ada.Text_IO I/O for status output and file operations
+   --  extern: Ada.Text_IO status output and file operations lie outside the SPARK subset
 --  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
 --  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
 --  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)

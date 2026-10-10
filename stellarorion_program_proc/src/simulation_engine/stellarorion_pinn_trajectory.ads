@@ -87,6 +87,9 @@ package StellarOrion_PINN_Trajectory is
       Dynamic_Viscosity_Pas : Float := 0.0;
    end record;
 
+   --  ISA atmosphere properties at a given altitude.
+   --  Returns temperature, pressure, density, speed of sound, and
+   --  dynamic viscosity at the specified altitude.
    function ISA_Atmosphere (Altitude_Km : Float) return ISA_Atmosphere_Result
       with Pre  => Altitude_Km >= 0.0 and Altitude_Km <= 120.0,
            Post => ISA_Atmosphere'Result.Temperature_K > 0.0
@@ -221,7 +224,8 @@ package StellarOrion_PINN_Trajectory is
                    and Ref_Dynamic_Pressure >= 0.0
                    and Now_Dynamic_Pressure >= 0.0
                    and Ref_SG_Flux_Wcm2 >= 0.0
-                   and Now_SG_Flux_Wcm2 >= 0.0;
+                   and Now_SG_Flux_Wcm2 >= 0.0,
+            Post => Scale_Metric'Result >= 0.0;
 
    -- -----------------------------------------------------------------
    --  Geometry Cross-Section (for dashboard visualization)
@@ -290,5 +294,33 @@ package StellarOrion_PINN_Trajectory is
        N_Pts  : access Integer)
        with Pre => True, Post => N_Pts.all >= 0
                     and N_Pts.all <= MAX_CROSS_SECTION_PTS;
+
+   -- -----------------------------------------------------------------
+   --  Self-test coverage (SELF_TEST_COVERAGE — ISO 26262 §9.4.3,
+   --  DO-178C §6.4.4).  Each smoke test below is declared here and
+   --  defined in the body of this package: it calls the subprogram it is
+   --  named after and reports a FAIL line on Standard_Error when the
+   --  result leaves its documented envelope.  Local_Sqrt and Add_Point
+   --  are body-local helpers with no spec declaration; they are covered
+   --  by the body-local Test_Local_Sqrt and Test_Add_Point.
+   -- -----------------------------------------------------------------
+   procedure Test_ISA_Atmosphere with Pre => True, Post => True;
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_ISA_Atmosphere", Test_ISA_Atmosphere'Access);
+   procedure Test_Sutton_Graves_Heat_Flux with Pre => True, Post => True;
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Sutton_Graves_Heat_Flux", Test_Sutton_Graves_Heat_Flux'Access);
+   procedure Test_Dynamic_Pressure with Pre => True, Post => True;
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Dynamic_Pressure", Test_Dynamic_Pressure'Access);
+   procedure Test_Drag_Force with Pre => True, Post => True;
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Drag_Force", Test_Drag_Force'Access);
+   procedure Test_G_Load with Pre => True, Post => True;
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_G_Load", Test_G_Load'Access);
+   procedure Test_IRVE3_Trajectory with Pre => True, Post => True;
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_IRVE3_Trajectory", Test_IRVE3_Trajectory'Access);
+   procedure Test_Scale_Metric with Pre => True, Post => True;
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Scale_Metric", Test_Scale_Metric'Access);
+   procedure Test_Get_HIAD_Cross_Section_Params with Pre => True, Post => True;
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Get_HIAD_Cross_Section_Params", Test_Get_HIAD_Cross_Section_Params'Access);
+   procedure Test_Get_HIAD_Cross_Section with Pre => True, Post => True;
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Get_HIAD_Cross_Section", Test_Get_HIAD_Cross_Section'Access);
 
 end StellarOrion_PINN_Trajectory;

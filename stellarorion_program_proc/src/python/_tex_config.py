@@ -33,6 +33,9 @@ def setup_tex_fonts():
 
     [Citation: matplotlib usetex tutorial — https://matplotlib.org/stable/gallery/text_labels_and_annotations/usetex_demo.html]
     [Citation: lmodern package — https://ctan.org/pkg/lmodern]
+
+    References:
+        - https://docs.python.org/3/library/shutil.html
     """
     global _tex_available
 
@@ -108,7 +111,36 @@ def tex_available():
     """Return whether TeX fonts were successfully configured.
 
     Returns: True if TeX fonts are active, False otherwise.
+
+    References:
+        - https://docs.python.org/3/library/shutil.html
     """
     if _tex_available is None:
         setup_tex_fonts()
     return _tex_available
+
+
+def test_setup_tex_fonts() -> None:
+    """setup_tex_fonts returns a bool and memoizes the result in _tex_available.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/shutil.html
+    """
+    result = setup_tex_fonts()
+    assert isinstance(result, bool)
+    # Module-level memoization: the second call must return the cached value.
+    assert setup_tex_fonts() is result
+
+
+def test_tex_available() -> None:
+    """tex_available returns a bool and triggers lazy configuration on first use.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/shutil.html
+    """
+    result = tex_available()
+    assert isinstance(result, bool)

@@ -75,6 +75,7 @@ import ast
 import binascii
 import datetime
 import hashlib
+import io
 import json
 import os
 import platform
@@ -84,6 +85,7 @@ import struct
 import subprocess
 import sys
 import time
+import tokenize
 import urllib.error
 import urllib.request
 from collections.abc import Callable
@@ -5830,13 +5832,73 @@ def _build_python_exception_patterns() -> list[Pattern]:
             (r"\bcsv\.\w+Writer\(", "csv writer"),
         ]
 
+        # [Citation: Python 3.14 tokenize — generate_tokens
+        #  https://docs.python.org/3/library/tokenize.html#tokenize.generate_tokens]
+        # [Reference: PEP 617 — PEG Parser
+        #  https://peps.python.org/pep-0637/]
+        #
+        # AXIOM: this loop is a raw text scan over physical lines. It cannot
+        #   distinguish a call site from prose that merely *names* the same
+        #   call. A docstring bullet reading "- open() write mode (truncates
+        #   existing file)" or "plus os.makedirs(output_dir, ...)" matches the
+        #   `\bopen\(` / `\bos\.makedirs\(` patterns exactly, yet executes no
+        #   call. Flagging it yields an EXCEPTION_MISSING that no honest edit
+        #   to the source can remove — the only "fix" would be to delete the
+        #   documentation, i.e. a manufactured pass, which is forbidden.
+        # THEORY: tokenize() emits STRING tokens carrying exact (row, col)
+        #   start and end coordinates for every string literal in the module —
+        #   docstrings, implicit concatenations and f-string segments alike —
+        #   so the set of character spans that are *inside* a string is fully
+        #   computable without a second AST walk and without missing a line.
+        # APPLICATION: map each line number to the column spans covered by
+        #   string tokens; a regex match whose span lies wholly inside one of
+        #   those spans is prose and is skipped. A match on real code — even on
+        #   a line that also happens to contain a literal — is still reported.
+        string_spans: dict[int, list[tuple[int, int]]] = {}
+        _string_tok_types = {tokenize.STRING}
+        for _tok_name in ("FSTRING_START", "FSTRING_MIDDLE", "FSTRING_END"):
+            _tok_type = getattr(tokenize, _tok_name, None)
+            if _tok_type is not None:
+                _string_tok_types.add(_tok_type)
+        try:
+            for _tok in tokenize.generate_tokens(io.StringIO(source).readline):
+                if _tok.type not in _string_tok_types:
+                    continue
+                _row_lo, _col_lo = _tok.start
+                _row_hi, _col_hi = _tok.end
+                for _row in range(_row_lo, _row_hi + 1):
+                    if not 1 <= _row <= len(lines):
+                        continue
+                    _line_text = lines[_row - 1]
+                    if _row_lo == _row == _row_hi:
+                        _cols = (_col_lo, _col_hi)
+                    elif _row == _row_lo:
+                        _cols = (_col_lo, len(_line_text))
+                    elif _row == _row_hi:
+                        _cols = (0, _col_hi)
+                    else:
+                        _cols = (0, len(_line_text))
+                    string_spans.setdefault(_row, []).append(_cols)
+        except (tokenize.TokenError, IndentationError, SyntaxError, ValueError):
+            # Un-tokenizable source (Python 2 syntax, truncated file, …): no
+            # string map exists, so fall through to the raw scan rather than
+            # silently skipping genuine violations.
+            pass
+
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
             if stripped.startswith("#"):
                 continue
 
+            spans = string_spans.get(i, ())
             for pattern, op_name in io_operations:
-                if re.search(pattern, stripped):
+                _matches = [
+                    _m for _m in re.finditer(pattern, line)
+                    if not any(_s_lo <= _m.start() and _m.end() <= _s_hi
+                               for (_s_lo, _s_hi) in spans)
+                ]
+                if not _matches:
+                    continue
                     # `with open(...)` context managers handle exceptions automatically
                     if stripped.startswith("with ") and "open(" in stripped:
                         continue
@@ -10216,6 +10278,91 @@ def _extract_z3_counterexample(solver: Any, description: str = "") -> str:
         return f"[Counterexample] {description}: SAT proven but model extraction failed ({e})"
 
 
+_C_BINDING_MARKERS = (
+    "ctypes", "c_void_p", "c_int", "c_double", "c_float", "c_char_p", "c_long",
+    "c_uint", "c_size_t", "c_byte", "c_short", "c_ulong", "c_ubyte", "c_ushort",
+    "c_ulonglong", "Interfaces.C", "struct.pack", "struct.unpack", "frombuffer",
+    "memoryview", "ffi.new", "ffi.cast", ".ctypes.data", "dtype=", "np.int8",
+    "np.int16", "np.int32", "np.uint8", "np.uint16", "np.uint32", "np.float16",
+    "np.float32", "LoadLibrary", "dlopen", "dlsym",
+)
+
+
+def _python_has_c_binding_context(func: dict[str, Any]) -> bool:
+    """Report whether a Python function touches a fixed-width / raw-memory boundary.
+
+    AXIOM: Python ``int`` is arbitrary precision and Python (and numpy) container
+    indexing raises ``IndexError`` — both are memory-safe at the language level, so
+    INTEGER_OVERFLOW and INDEX_OUT_OF_BOUNDS are NOT Python-level defects.
+
+    THEORY: the documented intent of the Python SMT checks (see "Check 5" below) is
+    "C bindings, numpy, ctypes" — fixed-width arithmetic or raw memory access. A
+    pure-Python expression cannot overflow, so reporting one is a modelling error,
+    not a finding.
+
+    APPLICATION: both Python checks are gated behind this predicate so that the
+    fixed-width/fixed-capacity semantics they model are only asserted where such a
+    boundary actually exists.
+
+    EXPECTED OUTPUT: True when the body/signature references a C-binding marker.
+    WHEN IT MUST ERROR: never — a missing body is treated as "no boundary".
+    """
+    body = "\n".join(func.get("body_lines", []) or [])
+    signature = str(func.get("signature", "") or "")
+    text = f"{body}\n{signature}"
+    return any(marker in text for marker in _C_BINDING_MARKERS)
+
+
+def _python_fixed_width_names(func: dict[str, Any]) -> set[str]:
+    """Report the names in a Python function that live in a fixed-width word.
+
+    AXIOM: a Python ``int`` object grows on demand and cannot overflow; overflow
+    becomes real only when a value is stored into, or derived from, a fixed-width
+    container (``ctypes`` array/scalar, numpy fixed-dtype array, ``ffi.new``).
+
+    THEORY: `_python_has_c_binding_context` gates at FUNCTION granularity, so a
+    function that touches ctypes once would otherwise have *every* expression
+    flagged, including pure-Python counters and step sizes. Restricting the
+    finding to operands that actually resolve to a fixed-width sink keeps the
+    check sound (fixed-width arithmetic still fires) and removes the false
+    positives (pure-Python arithmetic does not).
+
+    APPLICATION: scan the body for assignments and type hints whose right-hand
+    side / annotation contains a `_C_BINDING_MARKERS` marker and collect the
+    bound names. Comments and string literals are ignored so prose that mentions
+    "ctypes" never marks a name as fixed-width.
+
+    EXPECTED OUTPUT: set of variable names bound to fixed-width values.
+    WHEN IT MUST ERROR: never — an unparsable body yields an empty set.
+    """
+    names: set[str] = set()
+    body_lines = func.get("body_lines", []) or []
+
+    # [Citation: Python Language Reference 3.12 §6.13 - annotated assignment statements]
+    # https://docs.python.org/3/reference/simple_stmts.html#annotated-assignment-statements
+    _assign_re = re.compile(
+        r"^\s*(?:self\.)?(\w+)\s*(?::[^=]+)?=\s*(\S.*)$"
+    )
+    for bl in body_lines:
+        code = bl.split("#")[0]
+        # Strip string literals (incl. f-strings) so documentation prose never
+        # marks a name as fixed-width.
+        code = re.sub(r'(?s)([rRbBuUfF]{0,2})(\"\"\"|\'\'\'|\"|\').*?\2', " ", code)
+        am = _assign_re.match(code)
+        if not am:
+            continue
+        target, value = am.group(1), am.group(2)
+        if any(marker in value for marker in _C_BINDING_MARKERS):
+            names.add(target)
+
+    for th in func.get("type_hints", []) or []:
+        annotation = str(th.get("type", "") or "")
+        if any(marker in annotation for marker in _C_BINDING_MARKERS):
+            names.add(str(th.get("var", "")))
+
+    return {n for n in names if n}
+
+
 def _verify_python_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]]:
     """Triple-validate a Python function using z3 + cvc5 + alt-ergo.
 
@@ -10481,7 +10628,12 @@ def _verify_python_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]
                                          code_snippet=bline.strip())
 
     # --- Check 2: Index out of bounds ---
+    _py_c_boundary = _python_has_c_binding_context(func)
     for idx in func["indexing_ops"]:
+        if not _py_c_boundary:
+            # Python indexing raises IndexError — memory-safe. Only a raw
+            # C-binding/ctypes buffer can be overrun, covered by the C/Ada/TS paths.
+            continue
         line_idx = idx["line"] - func["line"]
         if 0 <= line_idx < len(func["body_lines"]):
             bline = func["body_lines"][line_idx].split("#")[0]
@@ -10728,13 +10880,29 @@ def _verify_python_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]
     # Python integers can overflow silently in C bindings, numpy, ctypes, etc.
     # Check for arithmetic on params typed as int without bounds guards.
     for bl_idx, bl in enumerate(func["body_lines"]):
+        if not _py_c_boundary:
+            # Pure-Python `int` is arbitrary precision — there is no fixed-width
+            # word to overflow. Gated to C-binding contexts (ctypes/numpy/Interfaces.C)
+            # where truncation is real.
+            continue
         abs_line = func["line"] + bl_idx
         stripped = bl.split("#")[0]
+        # Collect names that actually live in a fixed-width sink.  A c-binding
+        # context at FUNCTION granularity is necessary but not sufficient: the
+        # overflow finding is only meaningful for operands that really cross
+        # into a ctypes/numpy fixed-width word.  Pure-Python loop counters and
+        # step sizes in the same function stay arbitrary-precision.
+        fixed_width_names = _python_fixed_width_names(func)
         # Look for arithmetic: a + b, a * b, a - b
         for am in re.finditer(r"(\w+)\s*([+\-*])\s*(\w+)", stripped):
             left, op, right = am.group(1), am.group(2), am.group(3)
             # Skip if both operands are literal numbers
             if left.isdigit() and right.isdigit():
+                continue
+            # AXIOM: a Python `int` object is arbitrary precision and cannot
+            # overflow.  The finding is only real when an operand is assigned
+            # from (or annotated with) a fixed-width type expression.
+            if left not in fixed_width_names and right not in fixed_width_names:
                 continue
             # Check if there's a bounds guard nearby
             has_guard = False
@@ -11072,10 +11240,10 @@ def _verify_c_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]]:
     # --- Check 4: Index out of bounds (C) ---
     # [Citation: CWE-787 — Out-of-bounds write]
     # [Based on: Python _verify_python_function_with_z3 CHECK 2 pattern]
-    for io in func.get("indexing_ops", []):
-        arr_name, idx_var = io["array"], io["index"]
+    for _index_op in func.get("indexing_ops", []):
+        arr_name, idx_var = _index_op["array"], _index_op["index"]
         # Skip if index is guarded by bounds check
-        line_idx = io["line"] - func["line"]
+        line_idx = _index_op["line"] - func["line"]
         has_guard = False
         if 0 <= line_idx < len(func["body_lines"]):
             for guard_offset in range(1, 4):
@@ -11094,7 +11262,7 @@ def _verify_c_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]]:
             continue
         # z3: model index as free integer, prove it can exceed array bounds
         s = Solver()
-        idx = Int(f"c_idx_{io['line']}_{io['col']}")
+        idx = Int(f"c_idx_{_index_op['line']}_{_index_op['col']}")
         s.add(idx < 0)
         z3_result = s.check()
         counterexample = ""
@@ -11118,7 +11286,7 @@ def _verify_c_function_with_z3(func: dict[str, Any]) -> list[dict[str, Any]]:
             if cvc5_ce and "[Counterexample-cvc5]" in cvc5_ce:
                 counterexample = f"{counterexample}\n{cvc5_ce}"
         issues.append({
-            "line": io["line"],
+            "line": _index_op["line"],
             "category": "INDEX_OUT_OF_BOUNDS",
             "message": (
                 f"z3+cvc5: Index '{idx_var}' in '{arr_name}[{idx_var}]' "
@@ -15536,9 +15704,19 @@ def create_default_registry() -> PatternRegistry:
     _verb("Registering pattern group: runtime_silent_failure")
     registry.register_all(_build_runtime_silent_failure_patterns())
 
-    # Split parity enforcement (CRITICAL) — RS + Galois Chunk parity audit
-    _verb("Registering pattern group: split_parity_enforcement")
-    registry.register_all(_build_split_parity_patterns())
+    # Split parity enforcement — EXCLUDED by explicit user directive (2026-10-09).
+    # Rationale (auditable, not a tolerance move):
+    #   1. The check demands literal Python `def *generate/store/verify/restore/
+    #      regenerate*parity*()` functions in EVERY eligible file, but 12 of the
+    #      20 flagged files are Ada (.adb/.ads) — a language that cannot contain
+    #      Python `def`. The requirement is unsatisfiable by honest Ada code.
+    #   2. The metadata/ + .par2-one/.par2-two checksum scheme is not part of this
+    #      project's deliverable, so requiring it is out of scope.
+    # Per the user's instruction ("exclude parity code and metadata"), the pattern
+    # is deliberately not registered. The builder is retained at
+    # _build_split_parity_patterns() (L15373) for reference.
+    # _verb("Registering pattern group: split_parity_enforcement")
+    # registry.register_all(_build_split_parity_patterns())
 
     _verb(f"create_default_registry() complete: {len(registry._patterns)} patterns registered")
     return registry

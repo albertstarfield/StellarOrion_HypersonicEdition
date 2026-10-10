@@ -54,7 +54,7 @@ CITATIONS
 Author: Albert Starfield Wahyu Suryo Samudro
 """
 
-from __future__ import annotations
+import os
 
 import numpy as np
 
@@ -144,3 +144,42 @@ def parse_grid_file(grid_file: str) -> np.ndarray:
         raise ValueError(f"No valid cells parsed from {grid_file}")
 
     return np.array(cells, dtype=np.float64)
+
+
+def test_parse_grid_file() -> None:
+    """parse_grid_file returns an (N, 6) array for a valid dump and raises when empty.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html
+    """
+    import tempfile
+
+    # A minimal well-formed SPARTA dump: one ITEM: CELLS block with one row.
+    sample = (
+        "ITEM: CELLS id xlo ylo xhi yhi n u v w temp nrho\n"
+        "1 -5 0 -4.89928 0.0283273 19 8880.67 49.4097 -107.24 169.664 1.60125e+22\n"
+    )
+    with tempfile.NamedTemporaryFile("w", suffix=".out", delete=False) as fh:
+        fh.write(sample)
+        path = fh.name
+    try:
+        data = parse_grid_file(path)
+        assert data.shape == (1, 6)
+    finally:
+        os.unlink(path)
+
+    # An empty dump (no ITEM: CELLS block) must raise ValueError (THEORY T3).
+    with tempfile.NamedTemporaryFile("w", suffix=".out", delete=False) as fh:
+        fh.write("ITEM: PARTICLES\n")
+        empty_path = fh.name
+    try:
+        raised = False
+        try:
+            parse_grid_file(empty_path)
+        except ValueError:
+            raised = True
+        assert raised
+    finally:
+        os.unlink(empty_path)

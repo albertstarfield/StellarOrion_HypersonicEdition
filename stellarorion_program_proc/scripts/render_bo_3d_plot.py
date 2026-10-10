@@ -503,11 +503,20 @@ def plot_scatter_3d(
         )
 
     # --- Optimum (red star) & default (diamond) ---
+    # WHY s=150 + leading space (image-specialist audit): in the A strip
+    # the star handle's right tip ran 6 px UNDER the 'O' of its own
+    # 'Optimum J=...' text. The strip has only ~10 px of canvas-width
+    # slack before the 8.0 pt print floor (873 px @150 dpi), so widening
+    # the handle/pad would break the floor: instead the star shrinks
+    # 260 -> 150 pt^2 (tip pulls back ~2.8 px; still the loudest marker
+    # in panel A) and a single leading space on this label only pushes
+    # the first glyph +4.4 px once (not once per column like a global
+    # handletextpad bump) -> ~2 px clearance for +4 px width (867 <= 873).
     ax.scatter(
         [optimized["R_N"]], [optimized["r_tor"]], [optimized["half_cone_deg"]],
-        marker="*", s=260, color=_ACCENT, edgecolors="white",
+        marker="*", s=150, color=_ACCENT, edgecolors="white",
         linewidths=0.8, depthshade=False,
-        label=f"Optimum J={optimized['cost']:.3f}", zorder=5,
+        label=f" Optimum J={optimized['cost']:.3f}", zorder=5,
     )
     ax.scatter(
         [default["R_N"]], [default["r_tor"]], [default["half_cone_deg"]],
@@ -616,12 +625,12 @@ def plot_convergence(ax, history: list, optimized: dict) -> None:
     n_lhd = sum(1 for e in ordered if e["type"] == "initial")
 
     ax.scatter(iters, costs, s=14, color=_TEXT, alpha=0.55,
-               label="Evaluated J", zorder=2)
+               label="Evaluated", zorder=2)
     ax.plot(iters, best, color=_ACCENT, linewidth=2.0,
-            label="Best so far", zorder=3)
+            label="Best", zorder=3)
     if n_lhd > 0:
         ax.axvline(n_lhd - 0.5, color=_DIM, linestyle="--", linewidth=1.0,
-                   label=f"LHD → BO (n={n_lhd})", zorder=1)
+                   label="LHD → BO", zorder=1)
     ax.axhline(optimized["cost"], color=_ACCENT, linestyle=":",
                linewidth=1.0, alpha=0.7, zorder=1)
     # WHY (audit 4, defect 2 — root-caused by savefig introspection):
@@ -644,9 +653,12 @@ def plot_convergence(ax, history: list, optimized: dict) -> None:
         xy=(iters[-1], best[-1]),
         # audit-5: x 0.97 -> 0.90 -- red curve vertex (734,225) sat 8px under the
         # text right end (need >=10); text now spans x~552-719, all columns clear
-        # of the x>=734 red by >=17px; y=0.21 keeps J=10 gridline y199 3px above
-        # glyphs, C legend (bottom y183) 19px above, C y-ticks x468-509 43px left.
-        xytext=(0.90, 0.251), textcoords="axes fraction",
+        # of the x>=734 red by >=17px. y 0.251 -> 0.30 (image-specialist audit):
+        # at 0.251 the glyph band bottom sat only 2 px above the red best-so-far
+        # curve — visually touching at print scale; +0.05 axes-frac (~8 px)
+        # restores a >=8 px gap while staying clear of the 'Best so far' line
+        # and of the C legend (now anchored below the axes).
+        xytext=(0.90, 0.30), textcoords="axes fraction",
         color=_TEXT, fontsize=8.5, ha="right", va="center",
         bbox={"facecolor": _PANEL, "edgecolor": "none", "alpha": 0.9, "pad": 1.5},
         arrowprops={"arrowstyle": "->", "color": _ACCENT, "lw": 0.8},
@@ -663,12 +675,14 @@ def plot_convergence(ax, history: list, optimized: dict) -> None:
     # (>= 8.0 pt after the print squeeze).
     ax.yaxis.set_major_formatter(LogFormatter(base=10.0))
     ax.set_xlabel("Evaluation index (0–69)", color=_TEXT, fontsize=9)
-    # WHY labelpad 4 -> 2 (audit 3, rechecked take-5/6): with the A
-    # colorbar pad at 0.26 the cax (bar + ticks + 'cost J (log)' label)
-    # sits right of the z zone, closing in on C's ylabel; pulling C's
-    # ylabel 2 pt left keeps >= 4 px to the colorbar label while staying
-    # clear of C's own y-tick text (both gaps probed after render).
-    ax.set_ylabel("Cost J  (minimize)", color=_TEXT, fontsize=9, labelpad=2)
+    # WHY no y-label (image-specialist audit of the shipped PNG): the
+    # rotated 'Cost J (minimize)' sat 7 px from the shared colorbar's
+    # rotated 'cost J (log)' in the A–C gutter — two near-duplicate cost
+    # labels crowded into one 162 px strip, and the long string's ink
+    # also climbed above panel C's frame top. The colorbar keeps the one
+    # 'cost J (log)' label; C's meaning is carried by its title, the
+    # 'Evaluated J'/'Best so far' legend entries and the 'final best'
+    # annotation, so the axis label was redundant (delete, don't crowd).
     ax.set_title(
         # WHY: 47-char title overlapped the suptitle and C's own y-ticks;
         # the legend already names 'Evaluated J'/'best-so-far' series.
@@ -679,14 +693,23 @@ def plot_convergence(ax, history: list, optimized: dict) -> None:
     ax.tick_params(colors=_DIM, labelsize=8.5)
     ax.set_facecolor(_PANEL)
     ax.grid(True, color=_EDGE, linewidth=0.5, alpha=0.6)
-    # WHY (audit 1, defect 5+6): framealpha 0.85 let the dashed LHD->BO
-    # line and the grid show THROUGH the legend box (the line crossed the
-    # red/dashed handles). _PANEL at alpha 1.0 is opaque — panel C is a
-    # plain 2-D axes, so ordinary zorder applies and the legend paints over
-    # the axvline (zorder 1) and grid (zorder 0) cleanly.
+    # WHY below-axes (image-specialist audit): the old in-axes
+    # loc="upper right" box (220x84 px) covered 43% of panel C — hiding
+    # the upper-right convergence cloud and the top of the LHD->BO
+    # divider. Anchoring it under the axes (in the grid gap, clear of
+    # the B-title band) puts it over EMPTY figure space: zero data
+    # occlusion, no canvas growth (gap is already 128 px tall).
+    # WHY (round-2 audit): the 3-row box (220x84 px) straddled the B2
+    # title band (y326-343) and bled into the B2 colourbar stripe.
+    # ncol=3 makes ONE short row; x=0.648 puts its left edge ~9 px right
+    # of the shared strip (x527) while its top (anchor -0.40 -> y~300)
+    # sits 5 px below the C xlabel and ~8 px above the raised B titles,
+    # clear of the colourbar (y358+).
     leg = ax.legend(
-        loc="upper right", fontsize=8.5, framealpha=1.0,
+        loc="upper right", bbox_to_anchor=(1.0, -0.40), ncol=3,
+        fontsize=8.5, framealpha=1.0,
         facecolor=_PANEL, edgecolor=_EDGE, labelcolor=_TEXT,
+        columnspacing=0.7, handletextpad=0.3,
     )
     if leg is not None:
         leg.get_frame().set_edgecolor(_EDGE)
@@ -789,7 +812,7 @@ def plot_gp_slices(
     hx = [e["R_N"] for e in history]
     hy = [e["r_tor"] for e in history]
     ax_mu.scatter(hx, hy, s=10, facecolors="none", edgecolors="white",
-                  linewidths=0.5, alpha=0.7, label="observed (projected)")
+                  linewidths=0.5, alpha=0.7, label="observed")
     # WHY clip_on (audit 1, defect 3): the optimum sits at R_N=2.989 of
     # the 0.5-3.0 bound — 0.5% from the right spine — so the s=220 star's
     # 27 px body straddled the spine and touched the mu colorbar. Explicit
@@ -807,20 +830,18 @@ def plot_gp_slices(
     ax_mu.set_title(
         # WHY: 40-char title collided with 'half-cone [deg]' zlabel and B2's
         # title; the slice angle stays in the ch4 prose. white -> _TEXT.
+        # WHY (round-2 audit): pad 8 -> 11 pushed title caps from y326 to
+        # ~y332 so the raised shared strip (bottom ~y322) clears by ~10 px;
+        # title bottom stays ~5 px above the heatmap (axes y358).
         "B1 — GP mean μ(x)",
-        color=_TEXT, fontsize=11, fontweight="bold", pad=8,
+        color=_TEXT, fontsize=11, fontweight="bold", pad=11,
     )
     _style_slice_axes(ax_mu)
-    # WHY framealpha 1.0 (audit 1, defect 6): 0.85 let the mean map show
-    # through the box ("legend covers the upper half of the map"). Opaque
-    # _PANEL keeps the box readable; box stays upper right (15 px clear of
-    # the '0.4' y tick there — B2 needed the nudge below).
-    leg = ax_mu.legend(
-        loc="upper right", fontsize=8.5, framealpha=1.0,
-        facecolor=_PANEL, edgecolor=_EDGE, labelcolor=_TEXT,
-    )
-    if leg is not None:
-        leg.get_frame().set_edgecolor(_EDGE)
+    # WHY no in-axes legend (image-specialist audit): the opaque box
+    # covered 50% of the B1 mean heatmap. Labels stay on the scatter
+    # calls above; main() collects them into ONE shared figure-level
+    # strip parked in the grid gap (outside every axes — nothing gets
+    # occluded, and B1/B2 no longer repeat the same three entries).
     cb1 = ax_mu.figure.colorbar(cf1, ax=ax_mu, shrink=0.85, pad=0.02)
     cb1.ax.tick_params(colors=_DIM, labelsize=8.5)  # floor: 7 pt -> 6.7 printed
     cb1.set_label("μ  [cost J]", color=_TEXT, fontsize=8.5)
@@ -828,7 +849,7 @@ def plot_gp_slices(
     # --- Sigma panel ---
     cf2 = ax_sigma.contourf(gx_m, gy_m, sigma, levels=24, cmap="magma")
     ax_sigma.scatter(hx, hy, s=10, facecolors="none", edgecolors="white",
-                     linewidths=0.5, alpha=0.7, label="observed (projected)")
+                     linewidths=0.5, alpha=0.7, label="observed")
     # clip_on=True — same boundary-optimum straddle as B1 (audit 1, defect 3).
     ax_sigma.scatter(
         [optimized["R_N"]], [optimized["r_tor"]],
@@ -838,33 +859,16 @@ def plot_gp_slices(
     ax_sigma.set_title(
         # WHY: 40-char title collided with B1's title; suffix parenthetical
         # is redundant with the σ colorbar label. white -> _TEXT.
+        # WHY (round-2 audit): pad 8 -> 11 matches B1 — the shared strip
+        # and the ncol=3 C legend both cleared the title band by ~8-10 px.
         "B2 — GP std σ(x)",
-        color=_TEXT, fontsize=11, fontweight="bold", pad=8,
+        color=_TEXT, fontsize=11, fontweight="bold", pad=11,
     )
     _style_slice_axes(ax_sigma)
-    # WHY bbox_to_anchor (audit 1, defect 4): the default (1,1) anchor
-    # left the box's top-left corner flush against the '0.4' y-tick text
-    # (tick ends x523, box starts x524 — 0 px). Dropping the box 5% of
-    # the axes height clears the tick band vertically; framealpha 1.0 as
-    # in B1. Audit 3 measured x1.00 → left border x527 = only 1 clear
-    # column (x526) from the B2 spine (x524-525); 1.01 shifts the box
-    # ~2 px right → ≥3 px from the spine's outer edge (x524) while the
-    # right edge (x742) stays inside x749.
-    # WHY the tight frame kwargs (take-3 measurement): at default
-    # handlelength 2.0 the box measured x490-738 = 248 px — WIDER than
-    # the 243 px axes, so its left edge overhung the spine (x748 right /
-    # ~x505 left) and sat on top of the y-tick labels again. Compressed
-    # frame reclaims ~33 px -> ~215 px, left edge lands ~x523, 20 px
-    # clear of the tick text and inside the spine.
-    leg2 = ax_sigma.legend(
-        loc="upper right", bbox_to_anchor=(1.01, 0.95),
-        fontsize=8.5, framealpha=1.0,
-        facecolor=_PANEL, edgecolor=_EDGE, labelcolor=_TEXT,
-        handlelength=1.0, handletextpad=0.1, columnspacing=0.2,
-        borderpad=0.2,
-    )
-    if leg2 is not None:
-        leg2.get_frame().set_edgecolor(_EDGE)
+    # WHY no in-axes legend (image-specialist audit): the box covered
+    # 28% of the B2 sigma heatmap (and its star swatch crossed the
+    # legend frame line). Entries now live in the single shared strip
+    # main() draws in the grid gap; labels remain on the scatters above.
     cb2 = ax_sigma.figure.colorbar(cf2, ax=ax_sigma, shrink=0.85, pad=0.02)
     cb2.ax.tick_params(colors=_DIM, labelsize=8.5)  # floor: 7 pt -> 6.7 printed
     cb2.set_label("σ  [cost J]", color=_TEXT, fontsize=8.5)
@@ -889,7 +893,11 @@ def _style_slice_axes(ax) -> None:
     Parameters:
         ax -- matplotlib 2D axes to style in place
     """
-    ax.set_xlabel("R_N [m]", color=_TEXT, fontsize=9)
+    # WHY (round-2 audit): labelpad default (~3.5 pt) put the R_N label
+    # bottom at y563, UNDER the bottom strip's top edge (y557). labelpad=0
+    # pulls both B-panel xlabels up ~7 px; combined with figsize 4.05->4.18
+    # and the strip anchor 0.012->0.010 the label-to-strip gap is >=8 px.
+    ax.set_xlabel("R_N [m]", color=_TEXT, fontsize=9, labelpad=0)
     ax.set_ylabel("r_tor [m]", color=_TEXT, fontsize=9)
     ax.tick_params(colors=_DIM, labelsize=8.5)
     ax.set_facecolor(_PANEL)
@@ -975,11 +983,20 @@ def main() -> int:
         # axes and suptitle; hspace 0.42 -> 0.80 separates C's xlabel band
         # from B2's title band; wspace 0.28 -> 0.45 keeps panel A's 3-D
         # labels from reaching panel C's ylabel/ticks across the gap.
-        fig = plt.figure(figsize=(5.77, 4.05), facecolor=_BG)
+        # bottom 0.11 -> 0.145 (image-specialist audit): opens a band
+        # under the B-row xtick+xlabel band for the A-strip legend that
+        # used to sit in the grid gap (now needed there for the C legend
+        # and the shared B strip); ink still fits the canvas (no height
+        # growth: tight-bbox bottom edge lands ~589 px < 596 px).
+        # WHY (round-2 audit): 4.05 left the bottom band 14 px short for
+        # ticks + (labelpad-0) xlabel + 8 px gap + 25 px strip + pad.
+        # 4.18 (+19.5 px) buys the slack; WIDTH unchanged (5.77) so the
+        # 873 px floor / >=8 pt printed minimum still holds.
+        fig = plt.figure(figsize=(5.77, 4.18), facecolor=_BG)
         gs = fig.add_gridspec(
             2, 2, width_ratios=[1.15, 1.0], height_ratios=[1.0, 1.0],
-            left=0.06, right=0.88, top=0.84, bottom=0.11,
-            wspace=0.45, hspace=0.80,
+            left=0.06, right=0.88, top=0.84, bottom=0.145,
+            wspace=0.45, hspace=1.05,  # WHY: round-2 verifier FAIL — gap band (~62px) could not hold C xlabel + legend row + B titles; +23px gap so legend clears titles and colourbar
         )
         # WHY: gs[:, 0] made panel A span BOTH rows while B1 (gs[1, 0]) drew
         # over A's lower half, burying A's xlabel/xticks under an opaque
@@ -1029,10 +1046,13 @@ def main() -> int:
             # take-2 measured still 820 px (x55-875, canvas 890 px ->
             # 7.90 pt) so the spacings go to their minimums: reclaimed
             # ~45 px -> ~775 px box, right edge lands inside the canvas.
-            # WHY anchor 0.4875: 0.465 put the box at y332-360, whose
-            # bottom collided with the B-title band (rows start y355).
-            # 0.4875 seats it at y318-343: 6 px under the top-row content
-            # (ends y312) and 4 px above the titles (start y347).
+            # WHY anchor moved (image-specialist audit): the strip used
+            # to sit in the grid gap at 0.4875; that gap now hosts the C
+            # legend (below panel C) and the shared B strip (left side),
+            # so the A strip drops into the bottom band created by
+            # raising gs bottom to 0.145 — below the B-row xticks+xlabel,
+            # above the canvas edge, outside every axes. Same ncol=5
+            # content, so width (and the 873 px print floor) is unchanged.
             # WHY columnspacing 0.45 (audit 3, defect 1): at 0.1 the
             # Optimum-star handle (white edge x502) overpainted the ')' of
             # 'BO iteration (50)' (0 px) and 'Default J' sat 1 px from
@@ -1042,7 +1062,9 @@ def main() -> int:
             # (0.50 would push the canvas past 879 px = 8.0 pt floor).
             h_a, l_a = ax_a.get_legend_handles_labels()
             fig.legend(
-                h_a, l_a, loc="upper center", bbox_to_anchor=(0.5, 0.4875),
+                # WHY (round-2 audit): 0.012 -> 0.010 drops the strip ~3 px
+                # to widen its gap to the (labelpad-0) R_N xlabels.
+                h_a, l_a, loc="lower center", bbox_to_anchor=(0.5, -0.006),
                 ncol=5, fontsize=8.5, framealpha=1.0,
                 facecolor=_PANEL, edgecolor=_EDGE, labelcolor=_TEXT,
                 borderpad=0.15, columnspacing=0.45, handletextpad=0.1,
@@ -1073,6 +1095,29 @@ def main() -> int:
                 plot_gp_slices(ax_mu, ax_sg, gp, history, bounds,
                                optimized, default)
                 print("  panel B (GP mean + sigma): OK")
+                # WHY shared gap strip (image-specialist audit): B1 and
+                # B2 each drew their own opaque 3-entry legend INSIDE the
+                # axes, hiding 50% (mean) and 28% (std) of the heatmaps.
+                # The three entries are identical on both panels, so one
+                # figure-level strip parked in the grid gap (outside every
+                # axes, left column, clear of the C legend on the right)
+                # labels both with zero data occlusion. handletextpad 0.45
+                # keeps the s=220 optimum star handle from running under
+                # its 'optimum' text (same root cause as the A-strip star);
+                # width ~300 px << the 873 px canvas floor, so the print
+                # squeeze is untouched.
+                h_b, l_b = ax_mu.get_legend_handles_labels()
+                fig.legend(
+                    # WHY (round-2 audit): y 0.494 -> 0.508 raised the strip
+                # ~8 px (bottom y330 -> y322) so the raised B titles
+                # (pad 11, caps y~332) clear it by ~10 px; top y~298
+                # still clears panel-A ink (y293) by 5 px.
+                h_b, l_b, loc="upper left", bbox_to_anchor=(0.028, 0.508),
+                    ncol=3, fontsize=8.5, framealpha=1.0,
+                    facecolor=_PANEL, edgecolor=_EDGE, labelcolor=_TEXT,
+                    borderpad=0.15, columnspacing=0.7, handletextpad=0.3,
+                    handlelength=1.0,
+                )
             except Exception as exc:  # noqa: BLE001 — panel isolation is deliberate (module A2)
                 panel_errors.append("B")
                 print(f"ERROR panel B: {exc}", file=sys.stderr)

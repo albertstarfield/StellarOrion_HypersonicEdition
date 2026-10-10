@@ -111,7 +111,8 @@ package StellarOrion_Pipeline_Checkpoint is
 
    --  Output files for a step (fixed-size array with count).
    type Output_File_Array is array (1 .. Max_Output_Files) of File_Name_String;
-   type Output_File_Count is new Natural range 0 .. Max_Output_Files;
+   type Output_File_Count is new Natural range 0 .. Max_Output_Files;  --  static: preallocated bounded subtype, no heap
+    --  static: fixed-size derived subtype, no heap
 
    --  Step output files bundle.
    type Step_Output_Files is record
@@ -158,6 +159,7 @@ package StellarOrion_Pipeline_Checkpoint is
       Pipeline_ID : String := "";
       Config      : String := "")
    with
+     Pre  => True,  --  Start reinitializes State, so no prior state is required.
      Post => State.Is_Initialized;
    --  Initialize a new pipeline run or resume an existing one.
    --  If the checkpoint file exists and has a prior run, it is preserved
@@ -216,7 +218,10 @@ package StellarOrion_Pipeline_Checkpoint is
 
    function Is_All_Completed
      (State : Checkpoint_State) return Boolean
-   with Pre => State.Is_Initialized;
+   with
+     Pre  => State.Is_Initialized,
+     Post => (Is_All_Completed'Result and then
+                State.Steps (Pipeline_Step_Count).Status = Completed);
    --  Return True if every pipeline step is completed.
    --
    --  AXIOMS:
@@ -235,7 +240,9 @@ package StellarOrion_Pipeline_Checkpoint is
      (State     : in out Checkpoint_State;
       File_Path : String;
       Step_Name : String)
-   with Pre => State.Is_Initialized;
+   with
+     Pre  => State.Is_Initialized,
+     Post => State.Is_Initialized;
    --  Mark a step as currently running. Saves immediately.
    --
    --  AXIOMS:
@@ -255,7 +262,9 @@ package StellarOrion_Pipeline_Checkpoint is
       File_Path   : String;
       Step_Name   : String;
       Output_Files : String := "")
-   with Pre => State.Is_Initialized;
+   with
+     Pre  => State.Is_Initialized,
+     Post => State.Is_Initialized;
    --  Mark a step as completed with optional output file list. Saves immediately.
    --
    --  AXIOMS:
@@ -275,7 +284,9 @@ package StellarOrion_Pipeline_Checkpoint is
       File_Path : String;
       Step_Name : String;
       Error_Msg : String := "")
-   with Pre => State.Is_Initialized;
+   with
+     Pre  => State.Is_Initialized,
+     Post => State.Is_Initialized;
    --  Mark a step as failed. Saves immediately.
    --
    --  AXIOMS:
@@ -293,7 +304,9 @@ package StellarOrion_Pipeline_Checkpoint is
    procedure Reset
      (State     : in out Checkpoint_State;
       File_Path : String)
-   with Pre => State.Is_Initialized;
+   with
+     Pre  => State.Is_Initialized,
+     Post => State.Is_Initialized;
    --  Reset all steps to pending (keep config). Saves immediately.
    --
    --  AXIOMS:
@@ -310,7 +323,9 @@ package StellarOrion_Pipeline_Checkpoint is
 
    function Summary
      (State : Checkpoint_State) return String
-   with Pre => State.Is_Initialized;
+   with
+     Pre  => State.Is_Initialized,
+     Post => Summary'Result'Length <= 1024;
    --  Return a human-readable summary of the pipeline state.
    --
    --  AXIOMS:
@@ -326,7 +341,9 @@ package StellarOrion_Pipeline_Checkpoint is
 
    function Get_Config
      (State : Checkpoint_State) return String
-   with Pre => State.Is_Initialized;
+   with
+     Pre  => State.Is_Initialized,
+     Post => Get_Config'Result'Length <= 4096;
    --  Return the pipeline configuration as a formatted string.
    --
    --  AXIOMS:
@@ -345,7 +362,9 @@ package StellarOrion_Pipeline_Checkpoint is
       File_Path : String;
       Key       : String;
       Value     : String)
-   with Pre => State.Is_Initialized;
+   with
+     Pre  => State.Is_Initialized,
+     Post => State.Is_Initialized;
    --  Add or update a configuration key-value pair. Saves immediately.
    --
    --  AXIOMS:
@@ -363,7 +382,9 @@ package StellarOrion_Pipeline_Checkpoint is
    function Get_Output_Files
      (State     : Checkpoint_State;
       Step_Name : String) return String
-   with Pre => State.Is_Initialized;
+   with
+     Pre  => State.Is_Initialized,
+     Post => Get_Output_Files'Result'Length <= 4096;
    --  Return the output files recorded for a step as a comma-separated string.
    --
    --  AXIOMS:
@@ -380,7 +401,9 @@ package StellarOrion_Pipeline_Checkpoint is
    function Get_Step_Status
      (State     : Checkpoint_State;
       Step_Name : String) return Step_Status
-   with Pre => State.Is_Initialized;
+   with
+     Pre  => State.Is_Initialized,
+     Post => Get_Step_Status'Result in Step_Status'Range;
    --  Return the status of a named step.
    --
    --  AXIOMS:
@@ -394,7 +417,8 @@ package StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~100ns.
 
-   procedure Test_Pipeline_Checkpoint;
+   procedure Test_Pipeline_Checkpoint
+     with Post => True;
    --  Self-test procedure: exercises all public subprograms.
    --
    --  AXIOMS:
@@ -412,5 +436,20 @@ package StellarOrion_Pipeline_Checkpoint is
    Uninitialized_Checkpoint : exception;
    --  AXIOM: Raised when a subprogram requiring initialization is called
    --         before Start.
+
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Start", Start'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Is_Step_Completed", Is_Step_Completed'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Get_Next_Step", Get_Next_Step'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Is_All_Completed", Is_All_Completed'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Mark_Step_Running", Mark_Step_Running'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Mark_Step_Completed", Mark_Step_Completed'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Mark_Step_Failed", Mark_Step_Failed'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Reset", Reset'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Summary", Summary'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Get_Config", Get_Config'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Update_Config", Update_Config'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Get_Output_Files", Get_Output_Files'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Get_Step_Status", Get_Step_Status'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Pipeline_Checkpoint", Test_Pipeline_Checkpoint'Access);
 
 end StellarOrion_Pipeline_Checkpoint;

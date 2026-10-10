@@ -167,7 +167,7 @@
 \PlotFrame{2. KRIGING DENOISING}
   {\MaxTextLines{2}%
    Gaussian-process denoising of the SPARTA cell field, pipeline step 2.
-   Top row raw, bottom row kriged; \rho, T, v and w channels.}
+   Top row raw, bottom row kriged; $\rho$, T, v and w channels.}
   {kriging_denoise}
 
 % so_pipeline.png <- fignew_pipeline.png, the end-to-end pipeline diagram
@@ -199,6 +199,18 @@
    Two-stage loss: Stage 1 data only, Stage 2 adds the PDE residual;
    2 inputs to 3 hidden layers of 64 to 4 outputs.}
   {so_pinn_architecture}
+
+% heatflux_methodology.png <- figures/heatflux_methodology.png, drawn by this
+% directory's make_heatflux_methodology.py (200 dpi, Ghibli palette so it sits
+% on the deck rather than looking pasted in). Placed BEFORE frame 4 because the
+% "wrong definition" claim is only legible once the reader knows what the
+% methodology actually is. Every box carries the _proc file:line it was read
+% from; the figure's own overflow guard (AXIOM A5) raises rather than clipping.
+\PlotFrame{3c. HEAT FLUX METHODOLOGY: SIMULATED, THEN COUNTED}
+  {\MaxTextLines{2}%
+   SPARTA supplies the shape, Sutton-Graves the scale:
+   $q_i = Q_{SG}\,\mathrm{clamp}(ke_i/ke_{ref},0,1)$ (stellarorion\_physics.adb:2634).}
+  {heatflux_methodology}
 
 % so_sutton_graves.png <- sutton_graves_parametric.png, drawn by
 % _proc CurrentThesisFinalReport/figures/generate_sutton_graves_parametric.py

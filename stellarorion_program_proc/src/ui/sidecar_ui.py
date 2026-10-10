@@ -131,8 +131,9 @@ def _default_config_contract(result: object) -> bool:
 def _mime_type_contract(result: object) -> bool:
     """Postcondition for ``SidecarHandler._guess_content_type``.
 
-    Reference:
-        - https://deal.readthedocs.io/
+    References:
+        - https://docs.python.org/3/library/http.server.html — http.server
+          content-type handling contract
     """
     return isinstance(result, str) and "/" in result
 
@@ -956,6 +957,7 @@ class SidecarHandler(SimpleHTTPRequestHandler):
 # ── Server startup ──────────────────────────────────────────────────────
 
 # --- CLI parsing ---
+
 def parse_args(argv: Sequence[str] | None = None) -> dict[str, str]:
     """Parse simple --key value CLI arguments into a plain dict.
     Tested by: test_parse_args() (same file).
@@ -1050,7 +1052,7 @@ def _spin_ui_server(
     """
     import threading
 
-    api = SidecarAPI(db_dir=db_dir)
+    api = SidecarAPI(db_dir=None if db_dir is None else db_dir)
     SidecarHandler.api = api
     srv = HTTPServer(("127.0.0.1", 0), SidecarHandler)
     worker = threading.Thread(target=srv.serve_forever, daemon=True)

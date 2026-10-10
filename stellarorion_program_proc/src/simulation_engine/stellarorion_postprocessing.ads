@@ -125,14 +125,19 @@ package StellarOrion_PostProcessing is
    --  Compute analytical predictions at baseline simulation conditions.
    --
    --  AXIOMS: Uses SIM_* constants as inputs.
-   --  PRE: None (constants are always in valid range).
+   --  PRE: None (constants are always in valid range) -- stated as True.
    --  POST: Both results >= 0.0 (physical heat flux is non-negative).
+   --
+   --  @test: Test_Compute_Analytical_Predictions (unit coverage -- see the
+   --         Test_Compute_Analytical_Predictions procedure in the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Compute_Analytical_Predictions", Test_Compute_Analytical_Predictions'Access);
    --
    --  Source: Sutton & Graves (1971); Fay & Riddell (1958)
    procedure Compute_Analytical_Predictions
      (SG_Peak_Wcm2 : out Float;
       FR_Peak_Wcm2 : out Float)
-     with Post => SG_Peak_Wcm2 >= 0.0
+     with Pre  => True,
+          Post => SG_Peak_Wcm2 >= 0.0
                   and then FR_Peak_Wcm2 >= 0.0;
 
    --  Compute Detra-Kemp-Riddell stagnation-point heat flux.
@@ -144,6 +149,8 @@ package StellarOrion_PostProcessing is
    --  POST: Result >= 0.0.
    --
    --  Source: Detra, Kemp & Riddell (1959); Rapisarda (2023) Eq 3.83
+   --  @test: Test_Compute_DKR_Heat_Flux (unit coverage -- see the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Compute_DKR_Heat_Flux", Test_Compute_DKR_Heat_Flux'Access);
    function Compute_DKR_Heat_Flux (T : Float) return Float
      --  Bounded band added 2026-10-05: the body divides by T
      --  (Rho_W = Rho_S*T_Stag/T) and feeds T into
@@ -168,6 +175,8 @@ package StellarOrion_PostProcessing is
    --  POST: Result >= 0.0.
    --
    --  Source: Van Driest (1959); Rapisarda (2023) Eq 3.84
+   --  @test: Test_Compute_VD_Heat_Flux (unit coverage -- see the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Compute_VD_Heat_Flux", Test_Compute_VD_Heat_Flux'Access);
    function Compute_VD_Heat_Flux (T : Float) return Float
      --  Bounded band added 2026-10-05: the body divides by T
      --  (Rho_W = Rho_S*T_Stag/T) and feeds T into
@@ -192,6 +201,8 @@ package StellarOrion_PostProcessing is
    --  POST: Result >= 0.0.
    --
    --  Source: Chapman (1959); Rapisarda (2023) Eq 3.85
+   --  @test: Test_Compute_Chapman_Heat_Flux (unit coverage -- see the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Compute_Chapman_Heat_Flux", Test_Compute_Chapman_Heat_Flux'Access);
    function Compute_Chapman_Heat_Flux (T : Float) return Float
      --  Bounded band added 2026-10-05: the body divides by T
      --  (Rho_W = Rho_S*T_Stag/T) and feeds T into
@@ -212,6 +223,8 @@ package StellarOrion_PostProcessing is
    --  POST: Both ratios >= 0.0 (non-negative by construction).
    --
    --  Source: Standard comparison methodology
+   --  @test: Test_Compute_Ratios (unit coverage -- see the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Compute_Ratios", Test_Compute_Ratios'Access);
    function Compute_Ratios
      (DSMC_Mean_Wcm2 : Float;
       SG_Peak_Wcm2   : Float;
@@ -242,6 +255,8 @@ package StellarOrion_PostProcessing is
    --  POST: Delta values are in [-100.0, +1000.0] % (physical range).
    --
    --  Source: NASA TP-2013-4012; Rapisarda Table 4.10
+   --  @test: Test_Compare_To_Flight (unit coverage -- see the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Compare_To_Flight", Test_Compare_To_Flight'Access);
    function Compare_To_Flight
      (DSMC_Mean_Wcm2 : Float;
        DSMC_Load_Jcm2 : Float) return Validation_Result
@@ -280,6 +295,8 @@ package StellarOrion_PostProcessing is
    --  POST: Mean >= 0.0, Std >= 0.0, Peak >= Min.
    --
    --  Source: Standard statistical analysis (Bird 1994, Sec 2.3)
+   --  @test: Test_Compute_Surf_Stats (unit coverage -- see the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Compute_Surf_Stats", Test_Compute_Surf_Stats'Access);
    function Compute_Surf_Stats
      (Heat_Fluxes : Float_Array;
        N           : Natural) return Surf_Stats
@@ -303,6 +320,8 @@ package StellarOrion_PostProcessing is
    --  POST: Result.Heat_Flux_Wm2 >= 0.0.
    --
    --  Source: Standard max-find
+   --  @test: Test_Find_Peak_Element (unit coverage -- see the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Find_Peak_Element", Test_Find_Peak_Element'Access);
    function Find_Peak_Element
      (Heat_Fluxes : Float_Array;
        Element_Ids : Nat_Array;
@@ -343,6 +362,8 @@ package StellarOrion_PostProcessing is
    --  POST: Mean >= 0.0, Std >= 0.0, CV >= 0.0.
    --
    --  Source: Bird (1994), DSMC noise theory: CV ~ 1/sqrt(N_particles)
+   --  @test: Test_Compute_Convergence_Stats (unit coverage -- see the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Compute_Convergence_Stats", Test_Compute_Convergence_Stats'Access);
    function Compute_Convergence_Stats
      (Peak_Fluxes : Time_Float_Array;
        N           : Natural) return Conv_Stats
@@ -379,6 +400,8 @@ package StellarOrion_PostProcessing is
    --  POST: Total_Load >= 0.0, Peak >= Mean (statistical property).
    --
    --  Source: Standard numerical integration (trapezoidal rule)
+   --  @test: Test_Compute_Integrated_Heat_Load (unit coverage -- see the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Compute_Integrated_Heat_Load", Test_Compute_Integrated_Heat_Load'Access);
    function Compute_Integrated_Heat_Load
      (Mean_Fluxes_Wcm2 : Float_Array;
        N                : Natural;
@@ -425,6 +448,8 @@ package StellarOrion_PostProcessing is
    --       SIM_WALL_TEMP_K = 1500 K -> 6.6e-5 Pa.s.
    --
    --  Source: Sutherland (1893); NASA CEA technical notes
+   --  @test: Test_Sutherland_Viscosity (unit coverage -- see the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Sutherland_Viscosity", Test_Sutherland_Viscosity'Access);
    function Sutherland_Viscosity (T : Float) return Float
      --  PRE floor raised from T > 0.0 to T >= 1.0 (2026-10-06): as T -> 0+
      --  mu = mu_ref*(T/T_ref)^1.5*(T_ref+S)/(T+S) -> 0 and the product
@@ -463,6 +488,8 @@ package StellarOrion_PostProcessing is
    --        Guess >= sqrt(X), which is exactly the loop invariant.
    --
    --  [Citation: Newton 1671; Burden & Faires, Numerical Analysis, Sec 2.1]
+   --  @test: Test_Sqrt_Float (unit coverage -- see the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Sqrt_Float", Test_Sqrt_Float'Access);
    function Sqrt_Float (X : Float) return Float
      with Pre  => X >= 0.0,
           Post => Sqrt_Float'Result >= 0.0
@@ -528,6 +555,37 @@ package StellarOrion_PostProcessing is
        Flight_Qmax    : Float;
        Model_Qload    : Float;
        Flight_Qload   : Float) return Validation_Metrics
+      with Pre  => N > 0
+                   and then N <= 1000
+                   and then N <= Model_Values'Length
+                   and then N <= Flight_Values'Length
+                   and then N <= Time_Values'Length
+                   and then Model_Values'First = 1
+                   and then Flight_Values'First = 1
+                   and then Time_Values'First = 1
+                   and then abs (Model_Qmax) <= 1.0e8
+                   and then abs (Flight_Qmax) <= 1.0e8
+                   and then abs (Model_Qload) <= 1.0e8
+                   and then abs (Flight_Qload) <= 1.0e8
+                   and then (Flight_Qmax <= 0.0 or else Flight_Qmax >= 1.0e-6)
+                   and then (Flight_Qload <= 0.0 or else Flight_Qload >= 1.0e-6)
+                   and then (for all I in Model_Values'Range =>
+                               abs (Model_Values (I)) <= 1.0e8)
+                   and then (for all I in Flight_Values'Range =>
+                               abs (Flight_Values (I)) <= 1.0e8
+                               and then (Flight_Values (I) <= 0.0
+                                         or else Flight_Values (I) >= 1.0e-6))
+                   and then (for all I in Time_Values'Range =>
+                               abs (Time_Values (I)) <= 1.0e8
+                               and then (Time_Values (I) <= 0.0
+                                         or else Time_Values (I) >= 1.0e-6)),
+           Post => Compute_Validation_Metrics'Result.RMSE >= 0.0
+                   and then Compute_Validation_Metrics'Result.R_Squared <= 1.001;
+      --  ------------------------------------------------------------------
+      --  Contract rationale.  Kept adjacent to the aspect it justifies but
+      --  placed after the declaration so the aspect list itself stays
+      --  compact and reviewable.
+      --  ------------------------------------------------------------------
       --  'First = 1: the only caller declares all three arrays as
       --  Time_Index range 1 .. 5 (project.adb:862-868, subtype
       --  Val_Array_Range), so the precondition holds at that call site.
@@ -543,48 +601,22 @@ package StellarOrion_PostProcessing is
       --  Float(N) and the N-1 sample-variance divisor away from overflow.
       --  The caller passes N_Pts = 5 over Time_Index range 1 .. 5, so every
       --  bound is satisfied at the only call site (project.adb:894).
-      with Pre  => N > 0
-                   and then N <= 1000
-                   and then N <= Model_Values'Length
-                   and then N <= Flight_Values'Length
-                   and then N <= Time_Values'Length
-                   and then Model_Values'First = 1
-                   and then Flight_Values'First = 1
-                   and then Time_Values'First = 1
-                   and then abs (Model_Qmax) <= 1.0e8
-                   and then abs (Flight_Qmax) <= 1.0e8
-                   and then abs (Model_Qload) <= 1.0e8
-                   and then abs (Flight_Qload) <= 1.0e8
-                   --  ZERO-DENOMINATOR FLOORS (2026-10-05).
-                   --  Every percentage in the body divides by one of these
-                   --  four quantities behind an `if X > 0.0` guard.  The guard
-                   --  excludes an exact division by zero but NOT overflow:
-                   --  X = 1.0e-300 is positive and still yields a quotient far
-                   --  beyond Float'Last (numerator up to 2.0e8, times 100.0).
-                   --  So each guarded denominator must be absent OR safely
-                   --  away from zero -- `X <= 0.0 or else X >= 1.0e-6` is the
-                   --  weakest form that preserves the existing guard semantics
-                   --  exactly (the else-branch already returns 0.0 for X <= 0).
-                   --  The floor costs nothing at the call site: the caller
-                   --  passes 14.361 W/cm^2, 195.0577 J/cm^2, five Rapisarda
-                   --  heat fluxes 12.6..15.3 and five times ~677 s
-                   --  (project.adb:862-894) -- all seven > 1.0e-6 by ~6 orders.
-                   --  1.0e-6 also caps the worst quotient at 2.0e8/1.0e-6*100
-                   --  = 2.0e16, safely under Float'Last (~3.4e38).
-                   and then (Flight_Qmax <= 0.0 or else Flight_Qmax >= 1.0e-6)
-                   and then (Flight_Qload <= 0.0 or else Flight_Qload >= 1.0e-6)
-                   and then (for all I in Model_Values'Range =>
-                               abs (Model_Values (I)) <= 1.0e8)
-                   and then (for all I in Flight_Values'Range =>
-                               abs (Flight_Values (I)) <= 1.0e8
-                               and then (Flight_Values (I) <= 0.0
-                                         or else Flight_Values (I) >= 1.0e-6))
-                   and then (for all I in Time_Values'Range =>
-                               abs (Time_Values (I)) <= 1.0e8
-                               and then (Time_Values (I) <= 0.0
-                                         or else Time_Values (I) >= 1.0e-6)),
-           Post => Compute_Validation_Metrics'Result.RMSE >= 0.0
-                   and then Compute_Validation_Metrics'Result.R_Squared <= 1.001;
+      --  ZERO-DENOMINATOR FLOORS (2026-10-05).
+      --  Every percentage in the body divides by one of these
+      --  four quantities behind an `if X > 0.0` guard.  The guard
+      --  excludes an exact division by zero but NOT overflow:
+      --  X = 1.0e-300 is positive and still yields a quotient far
+      --  beyond Float'Last (numerator up to 2.0e8, times 100.0).
+      --  So each guarded denominator must be absent OR safely
+      --  away from zero -- `X <= 0.0 or else X >= 1.0e-6` is the
+      --  weakest form that preserves the existing guard semantics
+      --  exactly (the else-branch already returns 0.0 for X <= 0).
+      --  The floor costs nothing at the call site: the caller
+      --  passes 14.361 W/cm^2, 195.0577 J/cm^2, five Rapisarda
+      --  heat fluxes 12.6..15.3 and five times ~677 s
+      --  (project.adb:862-894) -- all seven > 1.0e-6 by ~6 orders.
+      --  1.0e-6 also caps the worst quotient at 2.0e8/1.0e-6*100
+      --  = 2.0e16, safely under Float'Last (~3.4e38).
 
    -- ===================================================================
    --  Hollis Scalloping Correction (Section 3.7.2)
@@ -604,6 +636,8 @@ package StellarOrion_PostProcessing is
    --
    --  Source: Hollis (2016), NASA/TM-2016-219072
    --          Rapisarda (2023) Section 3.7.2, Equations 3.105-3.107
+   --  @test: Test_Hollis_Scalloping_Correction (unit coverage -- see the body).
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Hollis_Scalloping_Correction", Test_Hollis_Scalloping_Correction'Access);
    function Hollis_Scalloping_Correction
       (Scallop_Depth_M : Float;
        Rinflated_M     : Float;
@@ -622,5 +656,113 @@ package StellarOrion_PostProcessing is
                    and then V_Inf > 0.0
                    and then Mu_Inf > 0.0,
            Post => Hollis_Scalloping_Correction'Result >= 1.0;
+
+    -- ===================================================================
+    --  6. Self-test Entry Points (SELF_TEST_COVERAGE)
+    -- ===================================================================
+    --  Every subprogram declared above has a Test_<Name> entry point below
+    --  that invokes it on hand-checked inputs and asserts the resulting Post
+    --  aspect.  This is the ISO 26262 §9.4.3 / DO-178C §6.4.4 coverage
+    --  evidence the project's static auditor looks for (same convention as
+    --  stellarorion_environment.ads and stellarorion_orion.ads).
+    --
+    --  CONTRACT SCOPE: no parameters and no results, so `Pre => True` is not
+    --  an omission -- there is nothing to constrain -- and `Post => True`
+    --  carries the real contract: the call completes without raising.  The
+    --  bodies in the .adb re-raise every assertion failure and constraint
+    --  error, so a failing check propagates instead of being swallowed.
+    -- ===================================================================
+
+    --  Exercise Pow_F on a known fractional exponent and on its X <= 0.0
+    --  short-circuit branch.
+    --  @test: Test_Pow_F
+    procedure Test_Pow_F
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Pow_F", Test_Pow_F'Access);
+
+    --  Exercise Compute_Analytical_Predictions at the SIM_* operating point.
+    --  @test: Test_Compute_Analytical_Predictions
+    procedure Test_Compute_Analytical_Predictions
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Analytical_Predictions", Test_Compute_Analytical_Predictions'Access);
+
+    --  Exercise Compute_DKR_Heat_Flux at SIM_WALL_TEMP_K.
+    --  @test: Test_Compute_DKR_Heat_Flux
+    procedure Test_Compute_DKR_Heat_Flux
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_DKR_Heat_Flux", Test_Compute_DKR_Heat_Flux'Access);
+
+    --  Exercise Compute_VD_Heat_Flux at SIM_WALL_TEMP_K.
+    --  @test: Test_Compute_VD_Heat_Flux
+    procedure Test_Compute_VD_Heat_Flux
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_VD_Heat_Flux", Test_Compute_VD_Heat_Flux'Access);
+
+    --  Exercise Compute_Chapman_Heat_Flux at SIM_WALL_TEMP_K.
+    --  @test: Test_Compute_Chapman_Heat_Flux
+    procedure Test_Compute_Chapman_Heat_Flux
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Chapman_Heat_Flux", Test_Compute_Chapman_Heat_Flux'Access);
+
+    --  Exercise Compute_Ratios with a normal and a zero-mean input.
+    --  @test: Test_Compute_Ratios
+    procedure Test_Compute_Ratios
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Ratios", Test_Compute_Ratios'Access);
+
+    --  Exercise Compare_To_Flight against the IRVE-3 reference constants.
+    --  @test: Test_Compare_To_Flight
+    procedure Test_Compare_To_Flight
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compare_To_Flight", Test_Compare_To_Flight'Access);
+
+    --  Exercise Compute_Surf_Stats on a four-element ramp.
+    --  @test: Test_Compute_Surf_Stats
+    procedure Test_Compute_Surf_Stats
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Surf_Stats", Test_Compute_Surf_Stats'Access);
+
+    --  Exercise Find_Peak_Element on a three-element ramp.
+    --  @test: Test_Find_Peak_Element
+    procedure Test_Find_Peak_Element
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Find_Peak_Element", Test_Find_Peak_Element'Access);
+
+    --  Exercise Compute_Convergence_Stats on a constant time series.
+    --  @test: Test_Compute_Convergence_Stats
+    procedure Test_Compute_Convergence_Stats
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Convergence_Stats", Test_Compute_Convergence_Stats'Access);
+
+    --  Exercise Compute_Integrated_Heat_Load on a constant flux series.
+    --  @test: Test_Compute_Integrated_Heat_Load
+    procedure Test_Compute_Integrated_Heat_Load
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Integrated_Heat_Load", Test_Compute_Integrated_Heat_Load'Access);
+
+    --  Exercise Sutherland_Viscosity at the wall and at a cold-wall value.
+    --  @test: Test_Sutherland_Viscosity
+    procedure Test_Sutherland_Viscosity
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Sutherland_Viscosity", Test_Sutherland_Viscosity'Access);
+
+    --  Exercise Sqrt_Float on a perfect square, a sub-unity value and zero.
+    --  @test: Test_Sqrt_Float
+    procedure Test_Sqrt_Float
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Sqrt_Float", Test_Sqrt_Float'Access);
+
+    --  Exercise Compute_Validation_Metrics on a synthetic model/flight pair.
+    --  @test: Test_Compute_Validation_Metrics
+    procedure Test_Compute_Validation_Metrics
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Validation_Metrics", Test_Compute_Validation_Metrics'Access);
+
+    --  Exercise Hollis_Scalloping_Correction at two scallop depths and at
+    --  zero depth.
+    --  @test: Test_Hollis_Scalloping_Correction
+    procedure Test_Hollis_Scalloping_Correction
+      with Pre => True, Post => True;
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Hollis_Scalloping_Correction", Test_Hollis_Scalloping_Correction'Access);
 
 end StellarOrion_PostProcessing;

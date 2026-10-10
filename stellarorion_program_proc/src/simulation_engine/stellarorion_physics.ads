@@ -1015,6 +1015,7 @@ package StellarOrion_Physics is
    --
    --  Verification evidence: gnatprove --level=4 via scripts/prove.sh;
    --    self-test registry: Test_TPS_Conduction exercises L1 .. L5.
+   --  Register_Routine: "TPS_Conduction"
    procedure TPS_Conduction
      (Heat_Flux  : Float;
       Layup      : TPS_Layup;
@@ -1094,6 +1095,9 @@ package StellarOrion_Physics is
    --    Profile (I).Temp_K  — temperature at that depth.
    --
    --  Verification evidence: gnatprove --level=4 via scripts/prove.sh.
+   --  Contract: pre  => T_Init >= 0.0 and T_Surface >= 0.0 and Layup.Emissivity in [1.0e-3, 1.0] (spec Pre);
+   --            post => Profile spans [T_Init, T_Surface] with Temp_K in [0.0, TPS_Surface_Max_K].
+   --  Register_Routine: "TPS_Conduction_Profile"
    procedure TPS_Conduction_Profile
      (Layup     : TPS_Layup;
       T_Init    : Float;
@@ -1144,6 +1148,7 @@ and T_Surface >= 0.0
    --
    --  Verification evidence: gnatprove --level=4 via scripts/prove.sh;
    --    self-test registry: Test_SG_Scaled_Element_Flux covers Q1 .. Q3.
+   --  Register_Routine: "SG_Scaled_Element_Flux"
    --
    --  CITATION: Sutton & Graves, NASA TR R-376, 1971 (the scale);
    --    Bird, "Molecular Gas Dynamics," 1994, §7 (DSMC noise).

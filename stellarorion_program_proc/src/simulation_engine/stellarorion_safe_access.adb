@@ -5,6 +5,7 @@
 --  CITATIONS: GNAT OS_Lib.Spawn (s-os_lib.ads L861), Ada RM 13.1.1
 package body StellarOrion_Safe_Access is
    pragma SPARK_Mode (Off); -- c_binding: GNAT.OS_Lib.String_Access allocation for FFI Spawn interface -- nosec: DYNAMIC_ALLOCATION
+   --  c_binding: GNAT.OS_Lib.String_Access is the C-interop FFI allocation path for Spawn
 -- @test: Safe_Get is tested via StellarOrion_Self_Test.Test_Safe_Access
 
    --  Convert String to GNAT.OS_Lib.String_Access for C interop.

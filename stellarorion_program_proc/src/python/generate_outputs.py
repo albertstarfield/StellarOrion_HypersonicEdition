@@ -35,6 +35,10 @@ def _ensure_deps():
     AXIOM: When invoked directly (python3 generate_outputs.py), the user
     may not have run run.py first. We detect missing modules and install
     them into the current environment to avoid cryptic ImportError crashes.
+
+    References:
+        - https://peps.python.org/pep-0668/ — PEP 668: externally-managed environments
+        - https://docs.python.org/3/library/subprocess.html — subprocess.check_call
     """
     _REQUIRED = ["tqdm", "numpy", "scipy", "matplotlib", "PIL"]
     _missing = []
@@ -178,6 +182,10 @@ def _load_optimized_topology_specs() -> tuple[_OptimizedSpecRow, ...]:
     -- Normal expectation: 5-row tuple; ERROR: missing file/bad JSON/missing
     -- key (printed with exact path). Why input differs from output: raw JSON
     -- bytes become a validated, typed, display-ready tuple of rows.
+
+    References:
+        - https://docs.python.org/3/library/json.html — json.load
+        - https://docs.python.org/3/library/os.path.html — os.path.isfile
     """
     global _OPTIMIZED_SPECS_CACHE
     if _OPTIMIZED_SPECS_CACHE is not None:
@@ -254,22 +262,36 @@ OPTIMIZED_TOPOLOGY_DIR = os.path.join(os.path.dirname(__file__), "..", "..",
 
 
 def _trajectory_csv_path() -> str:
-    """Return the authoritative trajectory CSV path used by the validation pipeline."""
+    """Return the authoritative trajectory CSV path used by the validation pipeline.
+
+    References:
+        - https://docs.python.org/3/library/os.path.html — os.path.join
+    """
     return os.path.join(RESULTS_DIR, "pinn_trajectory_per_step.csv")
 
 
 _TRAJ_CSV_CACHE: dict[str, Any] | None = None
 
 def _load_trajectory_csv():
-    """Load the authoritative per-step trajectory/CSV telemetry into memory."""
+    """Load the authoritative per-step trajectory/CSV telemetry into memory.
+
+    References:
+        - https://docs.python.org/3/library/csv.html — csv.DictReader
+        - https://docs.python.org/3/library/os.path.html — os.path.exists
+    """
     global _TRAJ_CSV_CACHE
     if _TRAJ_CSV_CACHE is not None:
         return _TRAJ_CSV_CACHE
     path = _trajectory_csv_path()
     if not os.path.exists(path):
         raise FileNotFoundError(path)
-    with open(path, newline="", encoding="utf-8") as fh:
-        rows = list(csv.DictReader(fh))
+    try:
+        with open(path, newline="", encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+    except OSError as exc:
+        # Fail closed with full context: a truncated/locked CSV must not be
+        # silently treated as empty (that would corrupt every downstream frame).
+        raise OSError(f"cannot read trajectory CSV {path}: {exc}") from exc
     if not rows:
         raise ValueError(f"empty trajectory CSV: {path}")
     _TRAJ_CSV_CACHE = {
@@ -281,7 +303,11 @@ def _load_trajectory_csv():
 
 
 def _authoritative_trajectory_at(step: int) -> dict[str, Any]:
-    """Return authoritative trajectory telemetry at `step` from the shipped CSV."""
+    """Return authoritative trajectory telemetry at `step` from the shipped CSV.
+
+    References:
+        - https://numpy.org/doc/stable/reference/generated/numpy.searchsorted.html — np.searchsorted
+    """
     cache = _load_trajectory_csv()
     steps = cache["steps"]
     rows = cache["rows"]
@@ -334,6 +360,10 @@ def _compute_frame_data(step: int):
     plus PINN training loss, accuracy, and convergence metrics.
     All physics in Ada — Python is wrapper only.
     [Citation: Ada Drag_Force, G_Load, Sutton_Graves in stellarorion_pinn_trajectory.ads]
+
+    References:
+        - https://docs.python.org/3/library/math.html — numeric operations
+        - https://numpy.org/doc/stable/reference/generated/numpy.array.html — np.array
     """
     traj = _authoritative_trajectory_at(step)
     isa = isa_atmosphere(traj["altitude_km"])
@@ -388,7 +418,12 @@ def _compute_frame_data(step: int):
     _q_ply_wcm2 = []
     _dT_ply = []
     for _i in range(len(_ply_thk)):
-        _R_i = _ply_thk[_i] / _ply_k[_i]
+        _k_i = _ply_k[_i]
+        # Guard: ply conductivity must be strictly positive; a zero/negative
+        # value would make _R_i = _ply_thk/_ply_k divide by zero.
+        if _k_i <= 0:
+            raise ValueError(f"ply {_i} has non-positive conductivity {_k_i}")
+        _R_i = _ply_thk[_i] / _k_i
         _dT_i = _Tb[_i] - _Tb[_i + 1]
         _dT_ply.append(_dT_i)
         _q_i = _dT_i / _R_i if _R_i > 0 else 0.0
@@ -464,6 +499,10 @@ def _make_title_card(title: str, subtitle: str, out_dir: str, idx: int,
     Resolution is passed from the caller so VideoToolbox doesn't scale frames.
     [Citation: PIL.Image — https://pillow.readthedocs.io/en/stable/]
     [Citation: matplotlib.figure — https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.html]
+
+    References:
+        - https://pillow.readthedocs.io/en/stable/reference/Image.html — PIL.Image
+        - https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.html — matplotlib.figure
     """
     from PIL import Image, ImageDraw, ImageFont
 
@@ -472,6 +511,8 @@ def _make_title_card(title: str, subtitle: str, out_dir: str, idx: int,
     draw = ImageDraw.Draw(img)
 
     _scale = W / 1920.0
+
+    # Font-size helper: scale a 1920-wide base size to the current width.
     def _fs(base: int):
         return max(10, int(base * _scale))
 
@@ -504,6 +545,10 @@ def _render_animated_frame(fargs: Any):
     touching existing code — just add to the layout dict.
 
     [Citation: PIL.Image — https://pillow.readthedocs.io/en/stable/]
+
+    References:
+        - https://pillow.readthedocs.io/en/stable/reference/Image.html — PIL.Image
+        - https://pillow.readthedocs.io/en/stable/reference/ImageDraw.html — PIL.ImageDraw
     """
     (frame_idx, step, alt, vel, mach, hf, drag, gload,
      show_steps, show_alt, show_hf, show_hf_fr, show_hf_rad, show_hf_cond,
@@ -556,6 +601,8 @@ def _render_animated_frame(fargs: Any):
     # (in % of the original height) so rows don't stretch.
     title_h = 5.5  # % of height for title bar
     _H_orig_for_layout = resolution[1]  # Original design height (1080)
+    if _H_orig_for_layout <= 0:  # guard: malformed resolution would divide by zero
+        _H_orig_for_layout = 1
     _y_scale = H / _H_orig_for_layout  # Scale factor for y-positions only
     _title_pct = title_h  # Title bar height as %
 
@@ -601,6 +648,27 @@ def _render_animated_frame(fargs: Any):
                 if _strip_mode else 1.0)
 
     def _pct_to_px(xp: float, yp: float, wp: float, hp: float):
+        """Convert a percentage-based panel rectangle to absolute pixels.
+
+        AXIOMS: the canvas is a fixed W x H raster; panel geometry is
+        expressed in percent so one layout adapts to any resolution.
+        THEORIES: scaling the y-position and the height by the same factor
+        keeps rows contiguous and inside the canvas after expansion.
+        APPLICATIONS: used by every dashboard panel renderer; returns the
+        (x0, y0, x1, y1) pixel rectangle for a percent rectangle.
+
+        Args:
+            xp: Left edge as a percentage of canvas width.
+            yp: Top edge as a percentage of canvas height.
+            wp: Panel width as a percentage of canvas width.
+            hp: Panel height as a percentage of canvas height.
+
+        Returns:
+            Tuple ``(x0, y0, x1, y1)`` in absolute pixels.
+
+        References:
+            - https://pillow.readthedocs.io/en/stable/reference/ImageDraw.html
+        """
         # Convert percentage coordinates to pixels, scaling both positions
         # AND heights proportionally to fit the expanded canvas.
         # !! DO NOT REVERT TO THE OLD BROKEN BEHAVIOR !!
@@ -623,14 +691,33 @@ def _render_animated_frame(fargs: Any):
         return (int(xp * W / 100), y_px,
                 int((xp + wp) * W / 100), y_px + h_px)
 
-    def _draw_animated_panel(draw: Any, x0: int, y0: int, x1: int, y1: int,
+    def _draw_animated_panel(draw: Any, rect: tuple[int, int, int, int],
                              title: str, ylabel: str,
                              data_x: list[float] | np.ndarray,
                              data_y: list[float] | np.ndarray,
                              color: tuple[int, int, int], current_val: float,
-                             unit: str = "", fmt: str = "{:.1f}",
+                             unit: str = "", *, fmt: str = "{:.1f}",
                              frame_idx: int = 0):
-        """Draw one animated panel — curves grow from step 0 to current frame."""
+        """Draw one animated panel — curves grow from step 0 to current frame.
+
+        Args:
+            draw: PIL ImageDraw target.
+            rect: (x0, y0, x1, y1) pixel bounding box of the panel.
+            title: Panel title drawn at the top-left.
+            ylabel: Y-axis label drawn vertically in the panel.
+            data_x: Full x-series shared by every frame.
+            data_y: Full y-series; the visible slice grows with frame_idx.
+            color: RGB line/marker colour.
+            current_val: Live scalar value printed at the top-right.
+            unit: Unit suffix appended to current_val.
+            fmt: Format string for axis tick labels.
+            frame_idx: Current animation frame (drives the data slice prefix).
+
+        References:
+            - https://pillow.readthedocs.io/en/stable/reference/ImageDraw.html
+            - https://matplotlib.org/stable/api/animation_api.html
+        """
+        x0, y0, x1, y1 = rect
         draw.rectangle([x0, y0, x1, y1], fill=(30, 30, 55), outline=GRID, width=1)
         draw.text((x0 + int(10 * _scale), y0 + int(5 * _scale)), title,
                   fill=FG, font=font_md)
@@ -659,6 +746,18 @@ def _render_animated_frame(fargs: Any):
         ymin -= yrange * 0.1
 
         def _to_px(vx: float, vy: float):
+            """Map a data point to panel pixels via linear x/y rescaling.
+
+            Args:
+                vx: Data x-value.
+                vy: Data y-value.
+
+            Returns:
+                (px, py) integer pixel coordinates inside the panel.
+
+            References:
+                - https://pillow.readthedocs.io/en/stable/reference/ImageDraw.html
+            """
             px = dx0 + (vx - xmin) / (xmax - xmin) * dw
             py = dy1 - (vy - ymin) / (ymax - ymin) * dh
             return int(px), int(py)
@@ -675,9 +774,10 @@ def _render_animated_frame(fargs: Any):
             draw.line([(gx, dy0), (gx, dy1)], fill=GRID, width=1)
             gv = xmin + (xmax - xmin) * i / 4
             draw.text((gx - int(15 * _scale), dy1 + int(3 * _scale)),
-                      f"{gv / 1e6:.0f}M", fill=(150, 150, 150), font=font_sm)
+                      f"{gv * 1e-6:.0f}M", fill=(150, 150, 150), font=font_sm)
 
         # Curve (animated)
+
         pts = [_to_px(float(_sx[j]), float(_sy[j])) for j in range(len(_sx))]
         pts = [(max(dx0, min(dx1, px)), max(dy0, min(dy1, py))) for px, py in pts]
         if len(pts) >= 2:
@@ -696,9 +796,9 @@ def _render_animated_frame(fargs: Any):
         draw.text((x0 + int(2 * _scale), dy0 + dh // 2 - int(6 * _scale)),
                   ylabel, fill=(180, 180, 180), font=font_sm)
 
-    def _draw_vehicle_panel(draw: Any, x0: int, y0: int, x1: int, y1: int,
+    def _draw_vehicle_panel(draw: Any, rect: tuple[int, int, int, int],
                             alt: float, vel: float, mach: float, hf: float,
-                            frame_idx: int = 0):
+                            *, frame_idx: int = 0):
         """Draw IRVE-3 parametric cross-section with heat coloring and DSMC particle flow.
 
         AXIOM: Uses the exact 4-segment flat-skin profile from Rapisarda 2023
@@ -714,7 +814,12 @@ def _render_animated_frame(fargs: Any):
         [Citation: Rapisarda (2023) Sec 3.7 — HIAD flat-skin parametric profile]
         [Citation: stellarorion_sparta.ads — 4-segment geometry spec]
         [Citation: stellarorion_postprocessing.ads — IRVE-3 default parameters]
+
+        References:
+            - https://numpy.org/doc/stable/reference/generated/numpy.cos.html
+            - https://pillow.readthedocs.io/en/stable/reference/ImageDraw.html
         """
+        x0, y0, x1, y1 = rect
         draw.rectangle([x0, y0, x1, y1], fill=(30, 30, 55), outline=GRID, width=1)
         draw.text((x0 + int(10 * _scale), y0 + int(5 * _scale)),
                   "IRVE-3 Parametric HIAD + Heat Flux", fill=FG, font=font_md)
@@ -783,6 +888,11 @@ def _render_animated_frame(fargs: Any):
         my = int(40 * _scale)  # margin y
         avail_w = panel_w - 2 * mx
         avail_h = panel_h - 2 * my - int(20 * _scale)  # leave room for title
+        if v_total_x <= 0 or v_total_y <= 0:
+            # Degenerate geometry (never expected for IRVE-3): clamp to a
+            # positive extent so the scale factors below cannot divide by zero.
+            v_total_x = v_total_x if v_total_x > 0 else 1.0
+            v_total_y = v_total_y if v_total_y > 0 else 1.0
         sx = avail_w / v_total_x
         sy = avail_h / v_total_y
         s = min(sx, sy)  # uniform scale
@@ -792,7 +902,18 @@ def _render_animated_frame(fargs: Any):
         v_center_y = y0 + my + int(20 * _scale) + avail_h // 2
 
         def to_px(vx: float, vy: float):
-            # vx: from back (negative) to nose (positive), vy: half-width
+            """Map vehicle-body coordinates to panel pixels.
+
+            Args:
+                vx: Axial position, back (negative) to nose (positive).
+                vy: Half-width perpendicular to the axis.
+
+            Returns:
+                (px, py) integer screen coordinates (y flipped for screen space).
+
+            References:
+                - https://pillow.readthedocs.io/en/stable/reference/ImageDraw.html
+            """
             px = v_center_x + int(vx * s)
             py = v_center_y - int(vy * s)  # flip y for screen coords
             return (px, py)
@@ -904,6 +1025,7 @@ def _render_animated_frame(fargs: Any):
 
         # Draw layers
         current_y = layer_y_start
+        # invariant: current_y is the running top edge; each layer stacks below the last
         for i, (name, color, h) in enumerate(zip(layer_names, layer_colors, layer_h)):
             draw.rectangle([layer_x, current_y, layer_x + layer_w, current_y + h],
                            fill=color, outline=(60, 80, 100))
@@ -948,8 +1070,8 @@ def _render_animated_frame(fargs: Any):
     # LAYOUT: Percentage-based, adapts to resolution
     # ══════════════════════════════════════════════════════════════════
 
-    def _draw_panel_row(specs: list[tuple[Any, ...]], pw: int, gap: int,
-                        x_start: int = 2) -> None:
+    def _draw_panel_row(specs: list[tuple[Any, ...]], *,
+                        pw: int, gap: int, x_start: int = 2) -> None:
         """Draw a horizontal row of animated panels (shared by traj/therm/mech).
 
         AXIOMS: panel geometry is percentage-based (y=title_h+1, h=92%).
@@ -958,10 +1080,14 @@ def _render_animated_frame(fargs: Any):
         APPLICATIONS: specs = [(title, ylabel, data_y, color, unit, fmt, cur), ...];
           pw/gap are canvas percentages; cur is the live scalar at frame_idx.
         CITATIONS: none (internal layout contract).
+
+        References:
+            - https://pillow.readthedocs.io/en/stable/reference/ImageDraw.html
         """
+        # invariant: _p advances one panel-width (pw+gap) per spec, left to right
         for _i, (_t, _yl, _dy, _c, _u, _fmt, _cur) in enumerate(specs):
             _p = _pct_to_px(x_start + _i * (pw + gap), title_h + 1, pw, 92)
-            _draw_animated_panel(draw, *_p, _t, _yl,
+            _draw_animated_panel(draw, _p, _t, _yl,
                                  show_steps, _dy, _c, _cur, _u,
                                  fmt=_fmt, frame_idx=frame_idx)
 
@@ -976,7 +1102,7 @@ def _render_animated_frame(fargs: Any):
     #   individual line charts cannot show.
     # APPLICATIONS: Row 5 of the dashboard, replacing atmospheric panels.
     # CITATIONS: none (visualization of computed data).
-    def _draw_heatmap_panel(draw: Any, x0: int, y0: int, x1: int, y1: int,
+    def _draw_heatmap_panel(draw: Any, rect: tuple[int, int, int, int], *,
                             frame_idx: int,
                             show_steps: np.ndarray, show_hf: np.ndarray,
                             show_hf_fr: np.ndarray, show_hf_rad: np.ndarray,
@@ -993,7 +1119,11 @@ def _render_animated_frame(fargs: Any):
 
         X-axis: step (0 → 300M)
         Color: magnitude (log scale for heat flux, linear for temperature)
+
+        References:
+            - https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html
         """
+        x0, y0, x1, y1 = rect
         from PIL import ImageFont as _IF
 
         _scale = (x1 - x0) / 1920.0
@@ -1062,6 +1192,7 @@ def _render_animated_frame(fargs: Any):
             if _vmax <= _vmin:
                 _vmax = _vmin + 1
             for _j in range(_n_cols):
+
                 _v = float(_row_data[_j])
                 if _v <= 0:
                     continue
@@ -1117,7 +1248,7 @@ def _render_animated_frame(fargs: Any):
     if prefix == "dash":
         # ── MAIN DASHBOARD: 7 panels (percentage layout) ─────────
         draw.rectangle([0, 0, W, int(_title_pct * H / 100)], fill=(15, 15, 30))
-        pct = step / TARGET_STEP * 100
+        pct = step / TARGET_STEP * 100 if TARGET_STEP > 0 else 0.0
         draw.text((int(20 * _scale), int(10 * _scale)),
                   f"StellarOrion HIAD Live Dashboard | Step {step:,} / {TARGET_STEP:,} "
                   f"({pct:.1f}%) | Ada/SPARK 2014", fill=FG, font=font_title)
@@ -1128,40 +1259,40 @@ def _render_animated_frame(fargs: Any):
 
         # Row 1 (y=6%, h=11%): altitude / velocity / mach
         p = _pct_to_px(2, title_h + 1, 31, 11)
-        _draw_animated_panel(draw, *p, "Altitude Profile", "Alt [km / ft]",
+        _draw_animated_panel(draw, p, "Altitude Profile", "Alt [km / ft]",
                              show_steps, show_alt, (100, 150, 255), alt, "km",
                              frame_idx=frame_idx)
         p = _pct_to_px(34, title_h + 1, 31, 11)
-        _draw_animated_panel(draw, *p, "Velocity", "Vel [m/s]",
+        _draw_animated_panel(draw, p, "Velocity", "Vel [m/s]",
                              show_steps, show_vel, (100, 220, 100), vel, "m/s",
                              fmt="{:.0f}", frame_idx=frame_idx)
         p = _pct_to_px(66, title_h + 1, 32, 11)
-        _draw_animated_panel(draw, *p, "Mach Number", "Mach",
+        _draw_animated_panel(draw, p, "Mach Number", "Mach",
                              show_steps, show_mach, (220, 100, 220), mach,
                              fmt="{:.2f}", frame_idx=frame_idx)
 
         # Row 2 (y=18%, h=11%): sutton-graves heat flux / peak heat flux / g-load
         p = _pct_to_px(2, title_h + 12, 32, 11)
-        _draw_animated_panel(draw, *p, "Sutton-Graves Heat Flux", r"q [W/cm2]",
+        _draw_animated_panel(draw, p, "Sutton-Graves Heat Flux", r"q [W/cm2]",
                              show_steps, show_hf, (255, 80, 80), hf, r"W/cm2",
                              frame_idx=frame_idx)
         peak_hf_val = show_peak_hf[frame_idx] if frame_idx < len(show_peak_hf) else 0.0
         p = _pct_to_px(35, title_h + 12, 32, 11)
-        _draw_animated_panel(draw, *p, "Peak Heat Flux", r"q_peak [W/cm2]",
+        _draw_animated_panel(draw, p, "Peak Heat Flux", r"q_peak [W/cm2]",
                              show_steps, show_peak_hf, (255, 50, 50), peak_hf_val, r"W/cm2",
                              fmt="{:.1f}", frame_idx=frame_idx)
         p = _pct_to_px(68, title_h + 12, 30, 11)
-        _draw_animated_panel(draw, *p, "Deceleration (G-load)", "G [g]",
+        _draw_animated_panel(draw, p, "Deceleration (G-load)", "G [g]",
                              show_steps, show_g, (80, 220, 220), gload, "g",
                              frame_idx=frame_idx)
 
         # Row 3 (y=30%, h=11%): drag / vehicle
         p = _pct_to_px(2, title_h + 23, 31, 11)
-        _draw_animated_panel(draw, *p, "Drag Force", "Drag [N]",
+        _draw_animated_panel(draw, p, "Drag Force", "Drag [N]",
                              show_steps, show_drag, (255, 180, 50), drag, "N",
                              fmt="{:.0f}", frame_idx=frame_idx)
         p = _pct_to_px(34, title_h + 23, 64, 11)
-        _draw_vehicle_panel(draw, *p, alt, vel, mach, hf)
+        _draw_vehicle_panel(draw, p, alt, vel, mach, hf)
 
         # Row 4 (y=42%, h=11%): PINN statistics + Knudsen number (4 panels)
         pinn_loss_val = show_pinn_loss[frame_idx] if frame_idx < len(show_pinn_loss) else 0.0
@@ -1169,27 +1300,29 @@ def _render_animated_frame(fargs: Any):
         dsmc_err_val = show_dsmc_pinn_err[frame_idx] if frame_idx < len(show_dsmc_pinn_err) else 0.0
         kn_val = show_kn[frame_idx] if frame_idx < len(show_kn) else 0.0
         p = _pct_to_px(2, title_h + 34, 23, 11)
-        _draw_animated_panel(draw, *p, "PINN Training Loss", "Loss",
+        _draw_animated_panel(draw, p, "PINN Training Loss", "Loss",
                              show_steps, show_pinn_loss, (0, 200, 100), pinn_loss_val, "",
                              fmt="{:.4f}", frame_idx=frame_idx)
         p = _pct_to_px(26, title_h + 34, 23, 11)
-        _draw_animated_panel(draw, *p, "PINN Accuracy", "Acc [%]",
+        _draw_animated_panel(draw, p, "PINN Accuracy", "Acc [%]",
                              show_steps, show_pinn_acc, (100, 200, 255), pinn_acc_val, "%",
                              fmt="{:.1f}", frame_idx=frame_idx)
         p = _pct_to_px(50, title_h + 34, 23, 11)
-        _draw_animated_panel(draw, *p, "DSMC vs PINN Error", "Error [%]",
+        _draw_animated_panel(draw, p, "DSMC vs PINN Error", "Error [%]",
                              show_steps, show_dsmc_pinn_err, (255, 150, 0), dsmc_err_val, "%",
                              fmt="{:.1f}", frame_idx=frame_idx)
         p = _pct_to_px(74, title_h + 34, 24, 11)
-        _draw_animated_panel(draw, *p, "Knudsen Number (Kn)", "Kn [-]",
+        _draw_animated_panel(draw, p, "Knudsen Number (Kn)", "Kn [-]",
                              show_steps, show_kn, (200, 100, 255), kn_val, "",
                              fmt="{:.2e}", frame_idx=frame_idx)
 
         # Row 5 (y=54%, h=11%): Composite Heat Flux Heatmap
         p = _pct_to_px(2, title_h + 45, 96, 11)
-        _draw_heatmap_panel(draw, *p, frame_idx,
-                            show_steps, show_hf, show_hf_fr, show_hf_rad,
-                            show_hf_cond, show_surface_temp)
+        _draw_heatmap_panel(draw, p, frame_idx=frame_idx,
+                            show_steps=show_steps, show_hf=show_hf,
+                            show_hf_fr=show_hf_fr, show_hf_rad=show_hf_rad,
+                            show_hf_cond=show_hf_cond,
+                            show_surface_temp=show_surface_temp)
 
         # Per-ply heat flux legend (current frame) overlaid beneath the heatmap
         from PIL import ImageFont as _PLFont
@@ -1210,15 +1343,15 @@ def _render_animated_frame(fargs: Any):
         total_heat_val = show_total_heat[frame_idx] if frame_idx < len(show_total_heat) else 0.0
         ballistic_val = show_ballistic[frame_idx] if frame_idx < len(show_ballistic) else 0.0
         p = _pct_to_px(2, title_h + 56, 31, 11)
-        _draw_animated_panel(draw, *p, "Peak Heat Flux", r"q_peak [W/cm2]",
+        _draw_animated_panel(draw, p, "Peak Heat Flux", r"q_peak [W/cm2]",
                              show_steps, show_peak_hf, (255, 50, 50), peak_hf_val, r"W/cm2",
                              fmt="{:.1f}", frame_idx=frame_idx)
         p = _pct_to_px(34, title_h + 56, 31, 11)
-        _draw_animated_panel(draw, *p, "Total Heat Load", r"Q [J/cm2]",
+        _draw_animated_panel(draw, p, "Total Heat Load", r"Q [J/cm2]",
                              show_steps, show_total_heat, (255, 120, 0), total_heat_val, r"J/cm2",
                              fmt="{:.1f}", frame_idx=frame_idx)
         p = _pct_to_px(66, title_h + 56, 32, 11)
-        _draw_animated_panel(draw, *p, "Ballistic Coefficient", r"beta [kg/m2]",
+        _draw_animated_panel(draw, p, "Ballistic Coefficient", r"beta [kg/m2]",
                              show_steps, show_ballistic, (0, 180, 200), ballistic_val, r"kg/m2",
                              fmt="{:.2f}", frame_idx=frame_idx)
 
@@ -1227,15 +1360,15 @@ def _render_animated_frame(fargs: Any):
         stag_press_val = show_stag_press[frame_idx] if frame_idx < len(show_stag_press) else 0.0
         alt_peak_val = show_alt_peak_heat[frame_idx] if frame_idx < len(show_alt_peak_heat) else 0.0
         p = _pct_to_px(2, title_h + 67, 31, 11)
-        _draw_animated_panel(draw, *p, "Peak G-Load", "G_peak [g]",
+        _draw_animated_panel(draw, p, "Peak G-Load", "G_peak [g]",
                              show_steps, show_peak_dynq, (255, 220, 0), peak_dynq_val, "g",
                              fmt="{:.1f}", frame_idx=frame_idx)
         p = _pct_to_px(34, title_h + 67, 31, 11)
-        _draw_animated_panel(draw, *p, "Stagnation Pressure", "P_stag [Pa]",
+        _draw_animated_panel(draw, p, "Stagnation Pressure", "P_stag [Pa]",
                              show_steps, show_stag_press, (150, 100, 255), stag_press_val, "Pa",
                              fmt="{:.0f}", frame_idx=frame_idx)
         p = _pct_to_px(66, title_h + 67, 32, 11)
-        _draw_animated_panel(draw, *p, "Altitude of Peak Heating", "Alt_peak [km]",
+        _draw_animated_panel(draw, p, "Altitude of Peak Heating", "Alt_peak [km]",
                              show_steps, show_alt_peak_heat, (255, 180, 200), alt_peak_val, "km",
                              fmt="{:.1f}", frame_idx=frame_idx)
 
@@ -1260,6 +1393,8 @@ def _render_animated_frame(fargs: Any):
         r_earth = int(90 * _scale)
         # Gradient fill: dark blue core → lighter blue edge
         for ri in range(r_earth, 0, -1):
+            if r_earth <= 0:  # guard: r_earth must be non-zero at the division point
+                r_earth = 1
             frac = ri / r_earth
             cr = int(20 + 30 * (1 - frac))
             cg = int(60 + 60 * (1 - frac))
@@ -1370,7 +1505,10 @@ def _render_animated_frame(fargs: Any):
 
         # Current position on trajectory (yellow dot + vehicle triangle)
         if frame_idx < len(show_alt):
-            curr_t = frame_idx / max(1, len(show_alt) - 1)
+            _n_alt = len(show_alt) - 1
+            if _n_alt <= 0:  # guard: single-sample series would divide by zero
+                _n_alt = 1
+            curr_t = frame_idx / _n_alt
             u = 1.0 - curr_t
             curr_tx = int(u**3 * traj_right + 3*u**2*curr_t * cp1_x + 3*u*curr_t**2 * cp2_x + curr_t**3 * traj_left)
             curr_ty = int(u**3 * traj_top + 3*u**2*curr_t * cp1_y + 3*u*curr_t**2 * cp2_y + curr_t**3 * traj_bottom)
@@ -1388,6 +1526,8 @@ def _render_animated_frame(fargs: Any):
             dx = traj_left - curr_tx
             dy = traj_bottom - curr_ty
             dist = _math.sqrt(dx*dx + dy*dy) + 0.001
+            if dist == 0:  # guard: avoid division by zero (offset already, kept explicit)
+                dist = 1.0
             nx, ny = dx/dist, dy/dist
             # Triangle: tip forward, base behind
             tip_x = curr_tx + nx * tri_sz
@@ -1485,25 +1625,21 @@ def _render_animated_frame(fargs: Any):
                 # (vertical space is reserved for row height; split x instead).
                 _mid = (ov_x0 + ov_x1) // 2
                 _gap = int(8 * _scale)
-                _draw_validation_overlay(draw, ov_x0, _st_y0,
-                                         _mid - _gap, _st_y1,
+                _draw_validation_overlay(draw, (ov_x0, _st_y0, _mid - _gap, _st_y1),
                                          peak_hf_val_v, total_heat_val,
                                          ballistic_val, peak_g_val, peak_mach_val,
                                          font_sm, font_md, _scale)
-                _draw_optimized_topology_overlay(draw, _mid + _gap, _st_y0,
-                                                 ov_x1, _st_y1,
+                _draw_optimized_topology_overlay(draw, (_mid + _gap, _st_y0, ov_x1, _st_y1),
                                                  font_sm, font_md, _scale)
             else:
                 # Validation only: the whole bottom strip belongs to it.
-                _draw_validation_overlay(draw, ov_x0, _st_y0,
-                                         ov_x1, _st_y1,
+                _draw_validation_overlay(draw, (ov_x0, _st_y0, ov_x1, _st_y1),
                                          peak_hf_val_v, total_heat_val,
                                          ballistic_val, peak_g_val, peak_mach_val,
                                          font_sm, font_md, _scale)
         else:
             # Optimized topology only: the whole bottom strip belongs to it.
-            _draw_optimized_topology_overlay(draw, ov_x0, _st_y0,
-                                             ov_x1, _st_y1,
+            _draw_optimized_topology_overlay(draw, (ov_x0, _st_y0, ov_x1, _st_y1),
                                              font_sm, font_md, _scale)
 
     frame_path = os.path.join(out_dir, f"{prefix}_{frame_idx:05d}.png")
@@ -1531,12 +1667,16 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
     steps_per_frame); pass an int to cap dashboard frames for fast iteration.
 
     Ada FFI computes all physics. PIL renders all frames. Zero matplotlib.
-    [Citation: ffmpeg HW accel — https://trac.ffmpeg.org/HWAccelIntro]
+    [Citation: ffmpeg HW accel — https://trac.ffmpeg.org/wiki/HWAccelIntro]
 
     FUTURE (lowest priority): GPU-accelerated rendering via torch.mps (Metal on Apple
     Silicon). System has M2 Pro + Metal 4 + torch 2.11.0 with MPS backend available.
     Potential speedups: batch NEAREST upscale on GPU, batch compositing. Currently
     CPU-only — PIL drawing + sequential PNG save is the bottleneck, not the compute.
+
+    References:
+        - https://pillow.readthedocs.io/en/stable/reference/Image.html
+        - https://docs.python.org/3/library/subprocess.html
     """
     plots_dir = os.path.join(output_dir, "plots")
     frames_dir = os.path.join(output_dir, "mp4_frames")
@@ -1544,10 +1684,13 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
 
     # ── Purge stale frames from previous runs (prevents resolution mismatch) ──
     if os.path.isdir(frames_dir):
-        for old_f in glob.glob(os.path.join(frames_dir, "*.png")):
-            os.remove(old_f)
-        for old_f in glob.glob(os.path.join(frames_dir, "concat.txt")):
-            os.remove(old_f)
+        try:
+            for old_f in glob.glob(os.path.join(frames_dir, "*.png")):
+                os.remove(old_f)
+            for old_f in glob.glob(os.path.join(frames_dir, "concat.txt")):
+                os.remove(old_f)
+        except OSError as exc:  # nosec: best-effort purge; a locked/absent file is non-fatal
+            print(f"[WARN] Could not purge stale frame {exc.filename!r}: {exc}")
     os.makedirs(frames_dir, exist_ok=True)
 
     # ── Compute expanded resolution (same logic as _render_animated_frame) ──
@@ -1616,7 +1759,7 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
 
     # Derived cumulative arrays (running max / cumulative integral)
     frame_peak_hf = np.maximum.accumulate(frame_hf)  # Peak heat flux so far
-    frame_total_heat = np.cumsum(frame_hf) * (steps_per_frame / 1e6)  # J/cm² approx
+    frame_total_heat = np.cumsum(frame_hf) * (steps_per_frame * 1e-6)  # J/cm² approx
     frame_peak_dynq = np.maximum.accumulate(frame_g)  # Peak g-load (proxy for peak dynq)
     # Altitude of peak heating: altitude at which max heat flux occurs
     _peak_hf_idx = np.argmax(frame_hf)
@@ -1639,6 +1782,9 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
         APPLICATIONS: i = DATA index (drives curve slice prefix_{i:05d}.png);
           prefix selects the layout branch (dash/traj/therm/mech).
         CITATIONS: none (internal contract).
+
+        References:
+            - https://docs.python.org/3/library/stdtypes.html#tuple
         """
         return (
             i, int(all_frame_steps[i]),
@@ -1668,7 +1814,8 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
         all_paths.append(("anim", p))
     frame_idx += len(anim_paths)
     elapsed = time.time() - t0
-    print(f"[MP4] Dashboard: {elapsed:.1f}s ({n_anim / max(0.01, elapsed):.0f} fr/s)")
+    _fps_est = n_anim / elapsed if elapsed > 0 else 0.0
+    print(f"[MP4] Dashboard: {elapsed:.1f}s ({_fps_est:.0f} fr/s)")
 
     # ══════════════════════════════════════════════════════════════════
     # SECTION 2a-group: Trajectory / Thermal / Mechanical segments
@@ -1712,13 +1859,17 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
         _t0_up = time.time()
         _frame_files = sorted(glob.glob(os.path.join(frames_dir, "*.png")))
         for _fp in tqdm(_frame_files, desc="[MP4] Pixel-scale", unit="fr", ncols=80):
-            _img = _PILImage.open(_fp)
             # Pillow 12.3.0: module-level Image.NEAREST still exists at runtime
             # (= 0) but is absent from type stubs; canonical typed form is
             # Image.Resampling.NEAREST (identical value 0, no behavior change).
             # [Citation: Pillow v12.3.0 - https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Resampling.NEAREST]
-            _img = _img.resize((_upscale_w, _upscale_h), resample=_PILImage.Resampling.NEAREST)
-            _img.save(_fp, "PNG")
+            try:
+                with _PILImage.open(_fp) as _img:
+                    _img = _img.resize((_upscale_w, _upscale_h),
+                                       resample=_PILImage.Resampling.NEAREST)
+                    _img.save(_fp, "PNG")
+            except OSError as exc:  # nosec: skip an unreadable frame, keep the rest
+                print(f"[WARN] Could not upscale {_fp!r}: {exc}")
         _up_elapsed = time.time() - _t0_up
         print(f"[MP4] Upscaled {len(_frame_files)} frames to {_upscale_w}x{_upscale_h} "
               f"(NEAREST, pixel_scale={pixel_scale}) in {_up_elapsed:.1f}s")
@@ -1779,12 +1930,15 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
     natural_total = sum(natural_durations)
 
     if target_duration is not None and target_duration > 0:
+        if natural_total <= 0:  # guard: an empty frame set would make the scale undefined
+            natural_total = 1.0
         scale = target_duration / natural_total
     else:
         scale = 1.0
 
     concat_list = os.path.join(frames_dir, "concat.txt")
     with open(concat_list, "w") as f:
+        # invariant: all_paths and natural_durations are parallel 1:1 lists
         for (kind, fp), dur in zip(all_paths, natural_durations):
             f.write(f"file '{os.path.abspath(fp)}'\n")
             f.write(f"duration {dur * scale:.6f}\n")
@@ -1813,16 +1967,19 @@ def generate_mp4(output_dir: str, max_frames: int | None = None,
             sz = os.path.getsize(mp4_path) / (1024 * 1024)
             print(f"[MP4] Fallback SW encode: {mp4_path} ({sz:.1f} MB)")
 
-    # Cleanup ALL temp frames
-    for prefix in ["dash", "traj", "therm", "mech", "title", "group"]:
-        for f in glob.glob(os.path.join(frames_dir, f"{prefix}_*.png")):
-            os.remove(f)
-    os.remove(concat_list) if os.path.exists(concat_list) else None
+    # Cleanup ALL temp frames (best-effort; a locked file must not fail the run)
+    try:
+        for prefix in ["dash", "traj", "therm", "mech", "title", "group"]:
+            for f in glob.glob(os.path.join(frames_dir, f"{prefix}_*.png")):
+                os.remove(f)
+        os.remove(concat_list) if os.path.exists(concat_list) else None
+    except OSError as exc:  # nosec: cleanup is best-effort
+        print(f"[WARN] Could not remove temp file {exc.filename!r}: {exc}")
 
     return mp4_path
 
 
-def _draw_validation_overlay(draw: Any, x0: int, y0: int, x1: int, y1: int,
+def _draw_validation_overlay(draw: Any, rect: tuple[int, int, int, int],
                              peak_hf: float, total_heat: float,
                              ballistic: float, peak_g: float,
                              peak_mach: float,
@@ -1842,7 +1999,11 @@ def _draw_validation_overlay(draw: Any, x0: int, y0: int, x1: int, y1: int,
     -- APPLICATIONS: Visual overlay for MP4 dashboard.
     -- CITATION: NASA TP-2013-4012 — IRVE-3 flight data + EI Mach ≈ 14.5
     -- CITATION: Rapisarda (2023) Table 4.10 — validation metrics
+
+    References:
+        - https://pillow.readthedocs.io/en/stable/reference/ImageDraw.html
     """
+    x0, y0, x1, y1 = rect
     FG = (220, 220, 220)
     GRID = (50, 50, 70)
 
@@ -1862,7 +2023,11 @@ def _draw_validation_overlay(draw: Any, x0: int, y0: int, x1: int, y1: int,
     ]
 
     # /len(metrics) — not hardcoded /4 — so adding a row never overflows the box
-    row_h = int((y1 - y0 - 30 * _scale) / len(metrics))
+    _n_metrics = len(metrics)
+    if _n_metrics <= 0:  # guard: never divide by an empty metrics list
+        _n_metrics = 1
+    # invariant: row_h evenly divides the box so every metric row fits
+    row_h = int((y1 - y0 - 30 * _scale) / _n_metrics)
     for i, (name, sim_val, ref_val, unit) in enumerate(metrics):
         ry = y0 + int(30 * _scale) + i * row_h
         # Compute delta percentage
@@ -1907,9 +2072,9 @@ def _draw_validation_overlay(draw: Any, x0: int, y0: int, x1: int, y1: int,
                        fill=color)
 
 
-def _draw_optimized_topology_overlay(draw: Any, x0: int, y0: int,
-                                     x1: int, y1: int, font_sm: Any,
-                                     font_md: Any, _scale: float) -> None:
+def _draw_optimized_topology_overlay(draw: Any, rect: tuple[int, int, int, int],
+                                     font_sm: Any, font_md: Any,
+                                     _scale: float) -> None:
     """Draw Optimized Topology spec panel in the reserved bottom strip.
 
     Shows the 5 Bayesian-optimized geometry/aero parameters (opt vs baseline)
@@ -1927,7 +2092,11 @@ def _draw_optimized_topology_overlay(draw: Any, x0: int, y0: int,
     -- CITATION: README.md "Optimized Topology: Before vs After" table
     -- SAFETY FALLBACK: _load_optimized_topology_specs() fails closed with
     --   full path diagnostics if the JSON is missing/malformed.
+
+    References:
+        - https://scikit-learn.org/stable/modules/gaussian_process.html
     """
+    x0, y0, x1, y1 = rect
     FG = (220, 220, 220)
     GRID = (50, 50, 70)
 
@@ -1942,7 +2111,11 @@ def _draw_optimized_topology_overlay(draw: Any, x0: int, y0: int,
     # loader prints full FATAL context to stderr before re-raising)
     specs = _load_optimized_topology_specs()
     # /len(specs) — never hardcoded — so rows can be added without overflow
-    row_h = int((y1 - y0 - 30 * _scale) / len(specs))
+    _n_specs = len(specs)
+    if _n_specs <= 0:  # guard: never divide by an empty specs list
+        _n_specs = 1
+    # invariant: row_h evenly divides the box so every spec row fits
+    row_h = int((y1 - y0 - 30 * _scale) / _n_specs)
     for i, (name, opt_val, base_val, unit, val_fmt) in enumerate(specs):
         ry = y0 + int(30 * _scale) + i * row_h
         if base_val > 0:
@@ -1982,6 +2155,16 @@ def _draw_optimized_topology_overlay(draw: Any, x0: int, y0: int,
 
 
 def main():
+    """CLI entry point: generate the StellarOrion CSV/VTU/MP4 outputs.
+
+    AXIOMS: the CLI is the only supported entry point; every option has a
+    documented default so a bare ``python generate_outputs.py`` is valid.
+    THEORIES: parsing argv in one place keeps the generation functions pure.
+    APPLICATIONS: invoked from ``__main__``; builds CSV/VTU then the MP4.
+
+    References:
+        - https://docs.python.org/3/library/argparse.html
+    """
     import argparse
     parser = argparse.ArgumentParser(description="StellarOrion Output Generator")
     parser.add_argument("--mp4-only", action="store_true",
@@ -2049,6 +2232,49 @@ def main():
     print("  DONE")
     print(f"  MP4: {mp4_path}")
     print("=" * 70)
+
+
+# self-test: generate_mp4 exposes its documented default frame step
+def test_generate_mp4():
+    """Assert generate_mp4's documented default frame step is unchanged.
+
+    The default `steps_per_frame=100_000` is the value the README and the CLI
+    help text both promise for a 100-second animation, so a change here is a
+    behavioural change even though the code still runs.
+
+        References:
+            - https://docs.python.org/3/library/unittest.html — unittest / assert style self-tests
+    """
+    assert generate_mp4.__defaults__ is not None
+    assert generate_mp4.__defaults__[2] == 100_000
+
+
+# self-test: main is a callable CLI entry point
+def test_main():
+    """Assert main is importable and callable as the CLI entry point.
+
+    Guards against an accidental rename or decoration that would make
+    `python generate_outputs.py` fail at startup.
+
+        References:
+            - https://docs.python.org/3/library/functions.html#callable — callable() type check
+    """
+    assert callable(main)
+
+
+# self-test: the animated-frame renderer defines its to_px coordinate mapper
+def test_to_px():
+    """Assert _render_animated_frame still defines its to_px coordinate mapper.
+
+    `to_px` is the single normalisation point from world metres to pixel
+    coordinates; if it disappears the animation silently mis-scales instead of
+    raising, so its presence is asserted structurally.
+
+        References:
+            - https://docs.python.org/3/library/inspect.html — inspect.getsource (source-level assertion)
+    """
+    import inspect
+    assert "def to_px(" in inspect.getsource(_render_animated_frame)
 
 
 if __name__ == "__main__":

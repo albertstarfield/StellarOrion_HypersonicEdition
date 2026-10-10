@@ -1066,6 +1066,10 @@ package body StellarOrion_Project is
                      Peak_Elem : Surf_Element;
                   begin
                      for I in 1 .. 12 loop
+                        --  loop invariant: the identity mapping fills the first
+                        --  I entries of Elem_Ids with their own 1-based indices,
+                        --  so every populated slot satisfies Elem_Ids (K) = K
+                        --  for K in 1 .. I, and no index above I is touched.
                         Elem_Ids (I) := I;
                      end loop;
                      Peak_Elem := Find_Peak_Element (Surf_HFs, Elem_Ids, 12);

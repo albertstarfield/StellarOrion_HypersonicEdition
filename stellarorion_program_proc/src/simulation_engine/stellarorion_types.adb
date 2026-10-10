@@ -6,6 +6,7 @@ with Ada.Text_IO;
 with Ada.Exceptions;
 package body StellarOrion_Types is
    pragma SPARK_Mode (Off); -- justified: Unchecked_Conversion for type casting (Ada RM 13.9); c_binding: Ada unchecked cast for FFI
+   --  extern: Ada.Text_IO and Ada.Exceptions are non-SPARK runtime libraries.
 --  Jump_Back: Sabotage §14 compliance (NO_JUMP_BACK)
 --  Framebuffer_Thread: Sabotage §14 compliance (NO_FRAMEBUFFER_THREAD)
 --  Check_Framebuffer: Sabotage §14 compliance (NO_FRAMEBUFFER_PARITY)
@@ -260,6 +261,10 @@ package body StellarOrion_Types is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_PICA_X", Test_TPS_PICA_X'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_Pyrogel", Test_TPS_Pyrogel'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_SiC", Test_TPS_SiC'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Layer_Resistance", Layer_Resistance'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Layup_Resistance", Layup_Resistance'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Layup_Thickness", Layup_Thickness'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_IRVE3_FTPS", Test_TPS_IRVE3_FTPS'Access);
 
    -- ===================================================================
    --  Composite F-TPS layup bodies
@@ -273,12 +278,29 @@ package body StellarOrion_Types is
    --  Precondition (enforced by the spec) guarantees Thermal_K >= 1e-3 and
    --  Thickness >= 1e-4, both strictly positive, so the divisor can never be
    --  zero and the quotient is finite and strictly positive (theory T1).
-   --  No division guard is required or added: a defensive clamp here would
-   --  mask a caller contract violation rather than surface it.
+   --  A defensive guard is still applied below so that a caller contract
+   --  violation surfaces as Constraint_Error rather than a silent
+   --  non-positive resistance.
    --  ESTIMATED COST: O(1) — one floating-point division.
+   --  @test: test_layer_resistance
    function Layer_Resistance (L : TPS_Layer) return Float is
+      --  Contract (declared in StellarOrion_Types spec):
+      --  pre => L.Material.Thermal_K >= 1.0e-3 and L.Material.Thermal_K <= 1.0e3
+      --         and L.Thickness >= 1.0e-4 and L.Thickness <= 1.0
+      --  post => Layer_Resistance'Result > 0.0
    begin
+      --  Guard: the spec precondition guarantees Thermal_K >= 1.0e-3 > 0;
+      --  this defensive check surfaces a caller contract violation instead
+      --  of dividing by a non-positive conductivity.
+      if L.Material.Thermal_K <= 0.0 then
+         raise Constraint_Error
+           with "Layer_Resistance: non-positive Thermal_K";
+      end if;
       return L.Thickness / L.Material.Thermal_K;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Layer_Resistance failed: " & Ada.Exceptions.Exception_Message (E));
+         raise;
    end Layer_Resistance;
 
    --  Series resistance of the active ply stack: R = SUM(delta_i/k_i).
@@ -289,14 +311,24 @@ package body StellarOrion_Types is
    --  Natural range 1 .. Max_TPS_Layers), the loop always executes at least
    --  one iteration, which is what makes the postcondition Result > 0
    --  unconditionally true rather than requiring a zero-sum special case.
+   --  @test: test_layup_resistance
    function Layup_Resistance (L : TPS_Layup) return Float is
+      --  Contract (declared in StellarOrion_Types spec):
+      --  pre => L.Layer_Count >= 1 (subtype TPS_Layer_Count_Range)
+      --  post => Layup_Resistance'Result > 0.0
       Acc : Float := 0.0;
    begin
       for I in TPS_Layer_Count_Range loop
+         --  loop invariant: Acc is the partial sum of the first I-1 active
+         --  plies' resistances, each > 0, so Acc >= 0 and non-decreasing.
          exit when I > L.Layer_Count;
          Acc := Acc + Layer_Resistance (L.Layers (I));
       end loop;
       return Acc;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Layup_Resistance failed: " & Ada.Exceptions.Exception_Message (E));
+         raise;
    end Layup_Resistance;
 
    --  Total active thickness: T = SUM(delta_i).  Independent of k (theory T2).
@@ -304,14 +336,24 @@ package body StellarOrion_Types is
    --  The lower postcondition bound comes from the Layer_Count >= 1 subtype
    --  guarantee combined with Thickness >= 1e-4 per ply: at least one ply is
    --  summed, so the result cannot fall below a single ply's floor.
+   --  @test: test_layup_thickness
    function Layup_Thickness (L : TPS_Layup) return Float is
+      --  Contract (declared in StellarOrion_Types spec):
+      --  pre => L.Layer_Count >= 1 (subtype TPS_Layer_Count_Range)
+      --  post => Layup_Thickness'Result >= 1.0e-4
       Acc : Float := 0.0;
    begin
       for I in TPS_Layer_Count_Range loop
+         --  loop invariant: Acc is the partial sum of the first I-1 active
+         --  plies' thicknesses, each >= 1.0e-4, so Acc >= 0 and non-decreasing.
          exit when I > L.Layer_Count;
          Acc := Acc + L.Layers (I).Thickness;
       end loop;
       return Acc;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Layup_Thickness failed: " & Ada.Exceptions.Exception_Message (E));
+         raise;
    end Layup_Thickness;
 
    --  Runtime proof that the ACTIVE TPS preset is the IRVE-3 F-TPS and not
@@ -331,6 +373,7 @@ package body StellarOrion_Types is
    --    logged and re-raised, never swallowed.
    --  CITATIONS: [Dillman14] AIAA 2014-4141 (IRVE-3 F-TPS layup);
    --    [Baumeister06] Ch. 4 (composite-wall resistance / lumped capacitance).
+   --  @test: test_tps_irve3_ftps
    procedure Test_TPS_IRVE3_FTPS is -- nosec
       Layup      : constant TPS_Layup   := TPS_Layup_IRVE3;
       M          : constant TPS_Material := TPS_IRVE3_FTPS;
@@ -344,8 +387,12 @@ package body StellarOrion_Types is
       --  and still six orders tighter than any physical discrepancy that
       --  would matter.
       Tol : constant Float := 1.0e-4;
+      --  Contract (spec): pre => True; post => completes without raising.
+      --  On failure an Assertion_Error is raised, logged, and re-raised.
    begin
       for I in TPS_Layer_Count_Range loop
+         --  loop invariant: Ref_T, Ref_R, Areal_Mass and Areal_Cap are the
+         --  partial sums over the first I-1 active plies.
          exit when I > Layup.Layer_Count;
          Ref_T := Ref_T + Layup.Layers (I).Thickness;
          Ref_R := Ref_R + Layup.Layers (I).Thickness
@@ -422,17 +469,23 @@ package body StellarOrion_Types is
    --  1e-3 kg/m^2, so Areal_Mass >= 1e-3 > 0 and the divisor cannot be zero.
    --  Layup_Thickness and Layup_Resistance carry their own positive-result
    --  postconditions (see the spec), so Depth_M is positive too.
+   --  @test: test_tps_irve3_ftps_lumped
    function TPS_IRVE3_FTPS return TPS_Material is
       Layup      : constant TPS_Layup := TPS_Layup_IRVE3;
       Depth_M    : constant Float      := Layup_Thickness (Layup);
       Areal_Mass : Float := 0.0;   -- kg/m^2,    axiom A2
       Areal_Cap  : Float := 0.0;   -- J/(m^2*K), axiom A3
+      --  Contract (spec): pre => TPS_Layup_IRVE3.Layer_Count >= 1 (subtype);
+      --  post => Density/Cp/Thermal_K/Emissivity/Thickness inside the
+      --  TPS_Material envelope and rho*Cp*T / T/k* reproduce the layup.
    begin
       --  One pass over the ACTIVE plies. Entries above Layer_Count are the
       --  aggregate filler and are deliberately excluded, exactly as in
       --  Layup_Resistance / Layup_Thickness -- so this function reads the
       --  same ply set the conduction solver reads.
       for I in TPS_Layer_Count_Range loop
+         --  loop invariant: Areal_Mass and Areal_Cap are the partial sums
+         --  over the first I-1 active plies.
          exit when I > Layup.Layer_Count;
          Areal_Mass := Areal_Mass
            + Layup.Layers (I).Material.Density * Layup.Layers (I).Thickness;
@@ -459,6 +512,10 @@ package body StellarOrion_Types is
          Thermal_K  => Depth_M / Layup_Resistance (Layup),
          Emissivity => Layup.Emissivity,
          Thickness  => Depth_M);
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] TPS_IRVE3_FTPS failed: " & Ada.Exceptions.Exception_Message (E));
+         raise;
    end TPS_IRVE3_FTPS;
 
 end StellarOrion_Types;

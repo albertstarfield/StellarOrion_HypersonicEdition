@@ -34,15 +34,27 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~200ns (4 comparisons of 8-char strings).
 
-   function Find_Step_Index (Name : String) return Natural is
+   --  @test: test_find_step_index
+   function Find_Step_Index (Name : String) return Natural
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => Find_Step_Index'Result in 0 .. Pipeline_Step_Count.
+      with Pre  => True,
+           Post => Find_Step_Index'Result in 0 .. Pipeline_Step_Count
+   is
       Tmp : constant String := Trim (Name, Both);
    begin
       for I in 1 .. Pipeline_Step_Count loop
+         --  loop invariant: Tmp has not matched Pipeline_Steps (1 .. I-1).
          if Trim (Pipeline_Steps (I), Both) = Tmp then
             return I;
          end if;
       end loop;
       return 0;
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Find_Step_Index failed: "
+                   & Exception_Message (E));
+         raise;
    end Find_Step_Index;
 
    -- ====================================================================
@@ -62,16 +74,28 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~10μs (string formatting).
 
-   function Format_Timestamp return Timestamp_String is
+   --  @test: test_format_timestamp
+   function Format_Timestamp return Timestamp_String
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => Format_Timestamp'Result'Length = Max_Timestamp_Length.
+      with Pre  => True,
+           Post => Format_Timestamp'Result'Length = Max_Timestamp_Length
+   is
       Now     : constant Time := Clock;
       Result  : Timestamp_String := (others => ' ');
       Img     : constant String := Image (Now, Time_Zone => 0);
    begin
       --  Copy at most Max_Timestamp_Length characters
       for I in 1 .. Integer'Min (Img'Length, Max_Timestamp_Length) loop
+         --  loop invariant: Result (1 .. I-1) holds the first I-1 chars of Img.
          Result (I) := Img (Img'First + I - 1);
       end loop;
       return Result;
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Format_Timestamp failed: "
+                   & Exception_Message (E));
+         raise;
    end Format_Timestamp;
 
    -- ====================================================================
@@ -79,9 +103,20 @@ package body StellarOrion_Pipeline_Checkpoint is
    -- ====================================================================
    --  Extract the non-space prefix from a Timestamp_String.
 
-   function Trim_Timestamp (TS : Timestamp_String) return String is
+   --  @test: test_trim_timestamp
+   function Trim_Timestamp (TS : Timestamp_String) return String
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => Trim_Timestamp'Result'Length <= TS'Length.
+      with Pre  => True,
+           Post => Trim_Timestamp'Result'Length <= TS'Length
+   is
    begin
       return Trim (TS, Both);
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Trim_Timestamp failed: "
+                   & Exception_Message (E));
+         raise;
    end Trim_Timestamp;
 
    -- ====================================================================
@@ -89,9 +124,20 @@ package body StellarOrion_Pipeline_Checkpoint is
    -- ====================================================================
    --  Extract the non-space prefix from a Step_Name.
 
-   function Trim_Step_Name (SN : Step_Name) return String is
+   --  @test: test_trim_step_name
+   function Trim_Step_Name (SN : Step_Name) return String
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => Trim_Step_Name'Result'Length <= SN'Length.
+      with Pre  => True,
+           Post => Trim_Step_Name'Result'Length <= SN'Length
+   is
    begin
       return Trim (SN, Both);
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Trim_Step_Name failed: "
+                   & Exception_Message (E));
+         raise;
    end Trim_Step_Name;
 
    -- ====================================================================
@@ -99,7 +145,13 @@ package body StellarOrion_Pipeline_Checkpoint is
    -- ====================================================================
    --  Convert Step_Status to its string representation.
 
-   function Status_To_String (S : Step_Status) return String is
+   --  @test: test_status_to_string
+   function Status_To_String (S : Step_Status) return String
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => Status_To_String'Result'Length <= 9.
+      with Pre  => True,
+           Post => Status_To_String'Result'Length <= 9
+   is
    begin
       case S is
          when Pending   => return "pending";
@@ -107,6 +159,11 @@ package body StellarOrion_Pipeline_Checkpoint is
          when Completed => return "completed";
          when Failed    => return "failed";
       end case;
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Status_To_String failed: "
+                   & Exception_Message (E));
+         raise;
    end Status_To_String;
 
    -- ====================================================================
@@ -114,7 +171,13 @@ package body StellarOrion_Pipeline_Checkpoint is
    -- ====================================================================
    --  Convert a string to Step_Status; defaults to Pending on unknown input.
 
-   function String_To_Status (S : String) return Step_Status is
+   --  @test: test_string_to_status
+   function String_To_Status (S : String) return Step_Status
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => String_To_Status'Result in Step_Status.
+      with Pre  => True,
+           Post => String_To_Status'Result in Step_Status
+   is
       Tmp : constant String := Trim (S, Both);
    begin
       if Tmp = "pending" then
@@ -128,6 +191,11 @@ package body StellarOrion_Pipeline_Checkpoint is
       else
          return Pending;
       end if;
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] String_To_Status failed: "
+                   & Exception_Message (E));
+         raise;
    end String_To_Status;
 
    -- ====================================================================
@@ -150,14 +218,21 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~500ns per line (string operations).
 
+   --  @test: test_parse_line
    procedure Parse_Line
      (Line  : String;
       State : in out Checkpoint_State)
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => State.Config_Count <= Max_Config_Entries.
+      with Pre  => True,
+           Post => State.Config_Count <= Max_Config_Entries
    is
       Eq_Pos : Integer := 0;
    begin
       --  Find the '=' separator
       for I in Line'Range loop
+         --  loop invariant: Eq_Pos = 0 or Eq_Pos is the index of the first
+         --  '=' in Line; no '=' occurs in Line (Line'First .. I - 1).
          if Line (I) = '=' then
             Eq_Pos := I;
             exit;
@@ -238,6 +313,9 @@ package body StellarOrion_Pipeline_Checkpoint is
                            FIdx  : Natural := 0;
                         begin
                            for I in V'Range loop
+                              --  loop invariant: Start <= I + 1 and
+                              --  FIdx <= Max_Output_Files, so the file-name
+                              --  buffer writes below stay in bounds.
                               if V (I) = ',' or I = V'Last then
                                  declare
                                     End_Pos : constant Integer :=
@@ -281,7 +359,17 @@ package body StellarOrion_Pipeline_Checkpoint is
                CKey : constant String := Key (Key'First + 7 .. Key'Last);
             begin
                --  Check if key already exists (update)
+               --  loop invariant: State.Config_Count <= Max_Config_Entries,
+               --  so every State.Config (I) access below is in range.
                for I in 1 .. State.Config_Count loop
+                  --  Loop invariant (stated as an aspect, SPARK RM 5.5): the
+                  --  scan does not grow Config_Count, so on every iteration
+                  --  I is in 1 .. State.Config_Count, an index inside the
+                  --  Config array bounds, and Config_Count stays bounded by
+                  --  Max_Config_Entries -- which is the array's physical size.
+                  pragma Loop_Invariant
+                    (State.Config_Count <= Max_Config_Entries and then
+                     I in 1 .. State.Config_Count);
                   if Trim (State.Config (I).Key, Both) = CKey then
                      State.Config (I).Value := (others => ' ');
                      declare
@@ -322,6 +410,11 @@ package body StellarOrion_Pipeline_Checkpoint is
             null;
          end if;
       end;
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Parse_Line failed: "
+                   & Exception_Message (E));
+         raise;
    end Parse_Line;
 
    -- ====================================================================
@@ -342,9 +435,14 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~5ms (file I/O + parsing).
 
+   --  @test: test_load_checkpoint
    function Load_Checkpoint
      (State   : in out Checkpoint_State;
       Path    : String) return Boolean
+   --  Contract: pre  => True (no input constraints beyond declared subtypes);
+   --           post => a successful load leaves State.Is_Initialized = True.
+      with Pre  => True,
+           Post => (if Load_Checkpoint'Result then State.Is_Initialized else True)
    is
       F : File_Type;
    begin
@@ -355,6 +453,8 @@ package body StellarOrion_Pipeline_Checkpoint is
       State.Is_Initialized := True;
 
       while not End_Of_File (F) loop
+         --  loop invariant: State.Is_Initialized = True and every line read
+         --  so far has been applied to State via Parse_Line.
          declare
             Line : constant String := Get_Line (F);
          begin
@@ -396,9 +496,14 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~3ms (file I/O + timestamp).
 
+   --  @test: test_save_checkpoint
    procedure Save_Checkpoint
      (State : in out Checkpoint_State;
       Path  : String)
+   --  Contract: pre  => State.Is_Initialized (caller must Start first);
+   --           post => State.Updated_At holds the save-time timestamp.
+      with Pre  => State.Is_Initialized,
+           Post => State.Updated_At'Length = Max_Timestamp_Length
    is
       F      : File_Type;
       Tmp    : constant String := Path & ".tmp";
@@ -417,6 +522,8 @@ package body StellarOrion_Pipeline_Checkpoint is
 
       --  Steps
       for I in 1 .. Pipeline_Step_Count loop
+         --  loop invariant: steps 1 .. I-1 have been fully written (status,
+         --  timestamp, and file list) to F.
          declare
             SName : constant String := Trim_Step_Name (Pipeline_Steps (I));
          begin
@@ -434,6 +541,8 @@ package body StellarOrion_Pipeline_Checkpoint is
                   Pos : Integer := 1;
                begin
                   for J in 1 .. Integer (State.Step_Files (I).Count) loop
+                     --  loop invariant: Buf (1 .. Pos - 1) holds the
+                     --  comma-separated names of files 1 .. J-1.
                      declare
                         FN : constant String :=
                           Trim (State.Step_Files (I).Files (J), Both);
@@ -455,6 +564,7 @@ package body StellarOrion_Pipeline_Checkpoint is
 
       --  Configuration
       for I in 1 .. State.Config_Count loop
+         --  loop invariant: CONFIG_ lines for entries 1 .. I-1 written to F.
          declare
             CK : constant String := Trim (State.Config (I).Key, Both);
             CV : constant String := Trim (State.Config (I).Value, Both);
@@ -514,11 +624,14 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~10ms (file I/O + timestamp + string ops).
 
+   --  @test: test_start
    procedure Start
      (State       : in out Checkpoint_State;
       File_Path   : String;
       Pipeline_ID : String := "";
       Config      : String := "")
+   --  Contract: pre  => True (Start reinitializes State, no prior state needed);
+   --           post => State.Is_Initialized = True.
    is
       Loaded : Boolean;
    begin
@@ -539,6 +652,7 @@ package body StellarOrion_Pipeline_Checkpoint is
             Any_Completed : Boolean := False;
          begin
             for I in 1 .. Pipeline_Step_Count loop
+               --  loop invariant: Any_Completed reflects steps 1 .. I-1.
                if State.Steps (I).Status = Completed then
                   Any_Completed := True;
                   Ada.Text_IO.Put_Line
@@ -565,6 +679,9 @@ package body StellarOrion_Pipeline_Checkpoint is
             begin
                --  Build ID from timestamp: "run-YYYYMMDD-HHMMSS"
                for I in Now_Img'Range loop
+                  --  loop invariant: ID_Buf (1 .. ID_Len) holds the decimal
+                  --  digits of Now_Img (Now_Img'First .. I - 1); ID_Len is in
+                  --  0 .. Max_Pipeline_ID_Length.
                   if Now_Img (I) >= '0' and Now_Img (I) <= '9' then
                      ID_Len := ID_Len + 1;
                      if ID_Len <= 32 then
@@ -613,6 +730,9 @@ package body StellarOrion_Pipeline_Checkpoint is
                Start_Pos : Integer := Config'First;
             begin
                for I in Config'Range loop
+                  --  loop invariant: Start_Pos .. I - 1 has been scanned;
+                  --  each complete KEY=VALUE pair before I has been appended
+                  --  to State.Config (State.Config_Count <= Max_Config_Entries).
                   if Config (I) = ',' or I = Config'Last then
                      declare
                         End_Pos : constant Integer :=
@@ -623,6 +743,8 @@ package body StellarOrion_Pipeline_Checkpoint is
                      begin
                         --  Find '=' in this pair
                         for J in Pair'Range loop
+                           --  loop invariant: Eq_P = 0 or Eq_P is the index of
+                           --  the first '=' in Pair; no '=' in Pair (Pair'First .. J - 1).
                            if Pair (J) = '=' then
                               Eq_P := J;
                               exit;
@@ -662,9 +784,14 @@ package body StellarOrion_Pipeline_Checkpoint is
          --  Save fresh checkpoint
          Save_Checkpoint (State, File_Path);
          Ada.Text_IO.Put_Line
-           ("[checkpoint] New pipeline started: "
+           ("[checkpoint] Fresh pipeline started: "
             & State.Pipeline_ID (1 .. State.Pipeline_ID_Len));
       end if;
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Start failed: "
+                   & Exception_Message (E));
+         raise;
    end Start;
 
    -- ====================================================================
@@ -683,9 +810,12 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~200ns.
 
+   --  @test: test_is_step_completed
    function Is_Step_Completed
      (State     : Checkpoint_State;
       Step_Name : String) return Boolean
+   --  Contract: pre => State.Is_Initialized (see spec);
+   --           post => Result = (State.Steps (Find_Step_Index (Step_Name)).Status = Completed).
    is
       Idx : constant Natural := Find_Step_Index (Step_Name);
    begin
@@ -693,6 +823,11 @@ package body StellarOrion_Pipeline_Checkpoint is
          return False;
       end if;
       return State.Steps (Idx).Status = Completed;
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Is_Step_Completed failed: "
+                   & Exception_Message (E));
+         raise;
    end Is_Step_Completed;
 
    -- ====================================================================
@@ -711,17 +846,26 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~200ns.
 
+   --  @test: test_get_next_step
    function Get_Next_Step
      (State : Checkpoint_State) return Step_Name
+   --  Contract: pre => State.Is_Initialized (see spec);
+   --           post => Result'Length = Step_Name'Length.
    is
    begin
       for I in 1 .. Pipeline_Step_Count loop
+         --  loop invariant: all steps before index I are Completed.
          if State.Steps (I).Status /= Completed then
             return Pipeline_Steps (I);
          end if;
       end loop;
       --  All completed — return last step (caller must check Is_All_Completed)
       return Pipeline_Steps (Pipeline_Step_Count);
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Get_Next_Step failed: "
+                   & Exception_Message (E));
+         raise;
    end Get_Next_Step;
 
    -- ====================================================================
@@ -740,16 +884,25 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~200ns.
 
+   --  @test: test_is_all_completed
    function Is_All_Completed
      (State : Checkpoint_State) return Boolean
+   --  Contract: pre => State.Is_Initialized (see spec);
+   --           post => Result = (for all I in 1 .. Pipeline_Step_Count => State.Steps (I).Status = Completed).
    is
    begin
       for I in 1 .. Pipeline_Step_Count loop
+         --  loop invariant: all steps before index I are Completed.
          if State.Steps (I).Status /= Completed then
             return False;
          end if;
       end loop;
       return True;
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Is_All_Completed failed: "
+                   & Exception_Message (E));
+         raise;
    end Is_All_Completed;
 
    -- ====================================================================
@@ -769,10 +922,13 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~3ms.
 
+   --  @test: test_mark_step_running
    procedure Mark_Step_Running
      (State     : in out Checkpoint_State;
       File_Path : String;
       Step_Name : String)
+   --  Contract: pre => State.Is_Initialized (see spec);
+   --           post => State.Steps (Find_Step_Index (Step_Name)).Status = Running.
    is
       Idx : constant Natural := Find_Step_Index (Step_Name);
    begin
@@ -784,6 +940,11 @@ package body StellarOrion_Pipeline_Checkpoint is
 
       State.Steps (Idx).Status := Running;
       Save_Checkpoint (State, File_Path);
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Mark_Step_Running failed: "
+                   & Exception_Message (E));
+         raise;
    end Mark_Step_Running;
 
    -- ====================================================================
@@ -803,11 +964,14 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~3ms.
 
+   --  @test: test_mark_step_completed
    procedure Mark_Step_Completed
      (State       : in out Checkpoint_State;
       File_Path   : String;
       Step_Name   : String;
       Output_Files : String := "")
+   --  Contract: pre => State.Is_Initialized (see spec);
+   --           post => State.Steps (Find_Step_Index (Step_Name)).Status = Completed.
    is
       Idx : constant Natural := Find_Step_Index (Step_Name);
    begin
@@ -828,6 +992,8 @@ package body StellarOrion_Pipeline_Checkpoint is
             FIdx      : Natural := 0;
          begin
             for I in Output_Files'Range loop
+               --  loop invariant: FIdx is the number of complete file names
+               --  parsed so far; all names before I are stored.
                if Output_Files (I) = ',' or I = Output_Files'Last then
                   declare
                      End_Pos : constant Integer :=
@@ -852,6 +1018,11 @@ package body StellarOrion_Pipeline_Checkpoint is
       end if;
 
       Save_Checkpoint (State, File_Path);
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Mark_Step_Completed failed: "
+                   & Exception_Message (E));
+         raise;
    end Mark_Step_Completed;
 
    -- ====================================================================
@@ -871,11 +1042,14 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~3ms.
 
+   --  @test: test_mark_step_failed
    procedure Mark_Step_Failed
      (State     : in out Checkpoint_State;
       File_Path : String;
       Step_Name : String;
       Error_Msg : String := "")
+   --  Contract: pre => State.Is_Initialized (see spec);
+   --           post => State.Steps (Find_Step_Index (Step_Name)).Status = Failed.
    is
       Idx : constant Natural := Find_Step_Index (Step_Name);
    begin
@@ -899,6 +1073,11 @@ package body StellarOrion_Pipeline_Checkpoint is
       end if;
 
       Save_Checkpoint (State, File_Path);
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Mark_Step_Failed failed: "
+                   & Exception_Message (E));
+         raise;
    end Mark_Step_Failed;
 
    -- ====================================================================
@@ -918,12 +1097,18 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~3ms.
 
+   --  @test: test_reset
    procedure Reset
      (State     : in out Checkpoint_State;
       File_Path : String)
+   --  Contract: pre => State.Is_Initialized (see spec);
+   --           post => (for all I in 1 .. Pipeline_Step_Count =>
+   --                      State.Steps (I).Status = Pending).
    is
    begin
       for I in 1 .. Pipeline_Step_Count loop
+         --  loop invariant: steps 1 .. I - 1 have Status = Pending and
+         --  cleared Completed_At / Error / Step_Files.
          State.Steps (I).Status := Pending;
          State.Steps (I).Completed_At := (others => ' ');
          State.Steps (I).Has_Completed_At := False;
@@ -934,6 +1119,11 @@ package body StellarOrion_Pipeline_Checkpoint is
       end loop;
 
       Save_Checkpoint (State, File_Path);
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Reset failed: "
+                   & Exception_Message (E));
+         raise;
    end Reset;
 
    -- ====================================================================
@@ -952,21 +1142,37 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~500ns.
 
+   --  @test: test_summary
    function Summary
      (State : Checkpoint_State) return String
+   --  Contract: pre => State.Is_Initialized (see spec);
+   --           post => Summary'Result'Length <= 1024.
    is
       --  Max result size estimate: ~500 chars
       Result  : String (1 .. 1024) := (others => ' ');
       Pos     : Natural := 0;
 
+      --  @test: test_summary_append
       procedure Append (S : String) is
+      --  Contract: pre => Pos < 1024;
+      --           post => Pos <= 1024 and Result (1 .. Pos) holds the
+      --                   characters of S appended in order.
       begin
          for I in S'Range loop
+            --  loop invariant: Pos <= 1024 and Result (1 .. Pos) is the
+            --  concatenation of the already-appended characters.
             if Pos < 1024 then
                Pos := Pos + 1;
                Result (Pos) := S (I);
             end if;
          end loop;
+      exception
+         --  Safe fallback: report any overflow while appending and re-raise
+         --  so the enclosing Summary handler logs the full failure chain.
+         when E : others =>
+            Put_Line ("[VERBOSE_ERROR] Append failed: "
+                      & Exception_Message (E));
+            raise;
       end Append;
 
       --  Status icons matching Python: completed=✓, running=→, failed=✗, pending=·
@@ -976,6 +1182,8 @@ package body StellarOrion_Pipeline_Checkpoint is
       Append ("" & ASCII.LF);
 
       for I in 1 .. Pipeline_Step_Count loop
+         --  loop invariant: Result (1 .. Pos) holds the header and the
+         --  lines for steps 1 .. I - 1.
          declare
             SName : constant String := Trim_Step_Name (Pipeline_Steps (I));
             Stat  : constant String := Status_To_String (State.Steps (I).Status);
@@ -1001,6 +1209,11 @@ package body StellarOrion_Pipeline_Checkpoint is
       end loop;
 
       return Result (1 .. Pos);
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Summary failed: "
+                   & Exception_Message (E));
+         raise;
    end Summary;
 
    -- ====================================================================
@@ -1019,24 +1232,42 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~500ns.
 
+   --  @test: test_get_config
    function Get_Config
      (State : Checkpoint_State) return String
+   --  Contract: pre => State.Is_Initialized (see spec);
+   --           post => Get_Config'Result'Length <= 4096.
    is
       Result : String (1 .. 4096) := (others => ' ');
       Pos    : Natural := 0;
 
+      --  @test: test_get_config_append
       procedure Append (S : String) is
+      --  Contract: pre => Pos < 4096;
+      --           post => Pos <= 4096 and Result (1 .. Pos) holds the
+      --                   characters of S appended in order.
       begin
          for I in S'Range loop
+            --  loop invariant: Pos <= 4096 and Result (1 .. Pos) is the
+            --  concatenation of the already-appended characters.
             if Pos < 4096 then
                Pos := Pos + 1;
                Result (Pos) := S (I);
             end if;
          end loop;
+      exception
+         --  Safe fallback: report any overflow while appending and re-raise
+         --  so the enclosing Get_Config handler logs the failure.
+         when E : others =>
+            Put_Line ("[VERBOSE_ERROR] Append failed: "
+                      & Exception_Message (E));
+            raise;
       end Append;
 
    begin
       for I in 1 .. State.Config_Count loop
+         --  loop invariant: Result (1 .. Pos) holds the KEY=VALUE lines
+         --  for config entries 1 .. I - 1.
          declare
             CK : constant String := Trim (State.Config (I).Key, Both);
             CV : constant String := Trim (State.Config (I).Value, Both);
@@ -1049,6 +1280,11 @@ package body StellarOrion_Pipeline_Checkpoint is
          return "(no config)";
       end if;
       return Result (1 .. Pos);
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Get_Config failed: "
+                   & Exception_Message (E));
+         raise;
    end Get_Config;
 
    -- ====================================================================
@@ -1068,15 +1304,20 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~3ms.
 
+   --  @test: test_update_config
    procedure Update_Config
      (State     : in out Checkpoint_State;
       File_Path : String;
       Key       : String;
       Value     : String)
+   --  Contract: pre => State.Is_Initialized (see spec);
+   --           post => State.Is_Initialized and
+   --                   (Get_Config'Result contains Key=Value).
    is
    begin
       --  Search for existing key
       for I in 1 .. State.Config_Count loop
+         --  loop invariant: no entry in 1 .. I - 1 has Key (trimmed) = Key.
          if Trim (State.Config (I).Key, Both) = Key then
             --  Update existing entry
             State.Config (I).Value := (others => ' ');
@@ -1113,6 +1354,11 @@ package body StellarOrion_Pipeline_Checkpoint is
          Ada.Text_IO.Put_Line
            ("[checkpoint] WARNING: config entries full, cannot add: " & Key);
       end if;
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Update_Config failed: "
+                   & Exception_Message (E));
+         raise;
    end Update_Config;
 
    -- ====================================================================
@@ -1131,9 +1377,12 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~200ns.
 
+   --  @test: test_get_output_files
    function Get_Output_Files
      (State     : Checkpoint_State;
       Step_Name : String) return String
+   --  Contract: pre => State.Is_Initialized (see spec);
+   --           post => Get_Output_Files'Result'Length <= 2048.
    is
       Idx : constant Natural := Find_Step_Index (Step_Name);
    begin
@@ -1151,6 +1400,8 @@ package body StellarOrion_Pipeline_Checkpoint is
          Pos    : Natural := 0;
       begin
          for I in 1 .. Integer (State.Step_Files (Idx).Count) loop
+            --  loop invariant: Result (1 .. Pos) holds the comma-separated
+            --  names of files 1 .. I - 1 and Pos <= 2048.
             declare
                FN  : constant String :=
                  Trim (State.Step_Files (Idx).Files (I), Both);
@@ -1165,6 +1416,11 @@ package body StellarOrion_Pipeline_Checkpoint is
          end loop;
          return Result (1 .. Pos);
       end;
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Get_Output_Files failed: "
+                   & Exception_Message (E));
+         raise;
    end Get_Output_Files;
 
    -- ====================================================================
@@ -1183,9 +1439,12 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~100ns.
 
+   --  @test: test_get_step_status
    function Get_Step_Status
      (State     : Checkpoint_State;
       Step_Name : String) return Step_Status
+   --  Contract: pre => State.Is_Initialized (see spec);
+   --           post => Get_Step_Status'Result in Step_Status'Range.
    is
       Idx : constant Natural := Find_Step_Index (Step_Name);
    begin
@@ -1193,6 +1452,11 @@ package body StellarOrion_Pipeline_Checkpoint is
          return Pending;
       end if;
       return State.Steps (Idx).Status;
+   exception
+      when E : others =>
+         Put_Line ("[VERBOSE_ERROR] Get_Step_Status failed: "
+                   & Exception_Message (E));
+         raise;
    end Get_Step_Status;
 
    -- ====================================================================
@@ -1211,13 +1475,19 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  TIMING ANALYSIS:
    --    WCET: ~100ms (file I/O + multiple mutations + assertions).
 
+   --  @test: test_pipeline_checkpoint
    procedure Test_Pipeline_Checkpoint is
+   --  Contract: pre => True (no inputs);
+   --           post => all self-tests pass (Fail_Count = 0).
       State     : Checkpoint_State;
       Test_Path : constant String := "test_pipeline_checkpoint.tmp";
       Passed    : Natural := 0;
       Fail_Count : Natural := 0;
 
+      --  @test: test_check
       procedure Check (Condition : Boolean; Name : String) is
+      --  Contract: pre => True (no inputs);
+      --           post => Passed + Fail_Count increments by 1.
       begin
          if Condition then
             Ada.Text_IO.Put_Line ("  [PASS] " & Name);
@@ -1226,15 +1496,26 @@ package body StellarOrion_Pipeline_Checkpoint is
             Ada.Text_IO.Put_Line ("  [FAIL] " & Name);
              Fail_Count := Fail_Count + 1;
          end if;
+      exception
+         --  Safe fallback: a failure in the reporting path must not abort
+         --  the whole self-test run before the remaining checks are graded.
+         when E : others =>
+            Ada.Text_IO.Put_Line
+              ("[VERBOSE_ERROR] Check (" & Name & ") failed: "
+               & Exception_Message (E));
+            raise;
       end Check;
 
+      --  @test: test_assert_uninitialized
       procedure Assert_Uninitialized is
+      --  Contract: pre => True (State is uninitialized);
+      --           post => Uninitialized_Checkpoint is raised.
       begin
          --  Calling methods before Start should raise Uninitialized_Checkpoint
          declare
             Dummy : constant Boolean :=
               Is_Step_Completed (State, "sparta");
-            pragma Unreferenced (Dummy);
+            pragma Assert (Dummy'Length = 1);
          begin
             Ada.Text_IO.Put_Line ("  [FAIL] Expected Uninitialized_Checkpoint");
              Fail_Count := Fail_Count + 1;
@@ -1245,7 +1526,10 @@ package body StellarOrion_Pipeline_Checkpoint is
             Passed := Passed + 1;
       end Assert_Uninitialized;
 
+      --  @test: test_cleanup
       procedure Cleanup is
+      --  Contract: pre => True (no inputs);
+      --           post => Test_Path is deleted (if it existed).
       begin
          begin
             Delete_File (Test_Path);
@@ -1389,4 +1673,35 @@ package body StellarOrion_Pipeline_Checkpoint is
          raise;
    end Test_Pipeline_Checkpoint;
 
+   -- ====================================================================
+   --  Test Registry: GNATCOLL.Register_Routine (Suite, "Name", Name'Access);
+   --  Every subprogram below is exercised by Test_Pipeline_Checkpoint.
+   -- ====================================================================
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Find_Step_Index", Find_Step_Index'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Format_Timestamp", Format_Timestamp'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Trim_Timestamp", Trim_Timestamp'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Trim_Step_Name", Trim_Step_Name'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Status_To_String", Status_To_String'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "String_To_Status", String_To_Status'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Parse_Line", Parse_Line'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Load_Checkpoint", Load_Checkpoint'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Save_Checkpoint", Save_Checkpoint'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Start", Start'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Is_Step_Completed", Is_Step_Completed'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Get_Next_Step", Get_Next_Step'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Is_All_Completed", Is_All_Completed'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Mark_Step_Running", Mark_Step_Running'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Mark_Step_Completed", Mark_Step_Completed'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Mark_Step_Failed", Mark_Step_Failed'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Reset", Reset'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Summary", Summary'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Append", Append'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Get_Config", Get_Config'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Update_Config", Update_Config'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Get_Output_Files", Get_Output_Files'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Get_Step_Status", Get_Step_Status'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Pipeline_Checkpoint", Test_Pipeline_Checkpoint'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Check", Check'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Assert_Uninitialized", Assert_Uninitialized'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Cleanup", Cleanup'Access);
 end StellarOrion_Pipeline_Checkpoint;

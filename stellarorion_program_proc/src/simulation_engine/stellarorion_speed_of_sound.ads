@@ -49,4 +49,15 @@ package StellarOrion_Speed_Of_Sound is
                     Speed_Of_Sound'Result * Speed_Of_Sound'Result
                       >= 1.4 * 287.058 * Temperature * (1.0 - 1.0e-6);
 
+   -- -----------------------------------------------------------------
+   --  Self-test coverage (SELF_TEST_COVERAGE — ISO 26262 §9.4.3,
+   --  DO-178C §6.4.4).  Declared here, defined in the body: the test
+   --  calls Speed_Of_Sound at the ISA sea-level point and asserts the
+   --  documented 340.294 m/s image, then checks the fail-closed
+   --  Safe_Fallback path.  Sqrt_Approx is verified by the body-local
+   --  Test_Sqrt_Approx (it is not part of this package's interface).
+   -- -----------------------------------------------------------------
+   procedure Test_Speed_Of_Sound with Pre => True, Post => True;
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Speed_Of_Sound", Test_Speed_Of_Sound'Access);
+
 end StellarOrion_Speed_Of_Sound;

@@ -65,6 +65,12 @@ def _ssh_connection_check(
     if not host or not user:
         return {"status": "error", "message": "SSH host and user are required."}
 
+    # Pre-condition guard: the SMT check flags `password`/`key_path` (typed
+    # `str | None`) as potentially dereferenced. Refuse early when BOTH are
+    # absent so the connect path below always has a non-None credential.
+    if password is None and key_path is None:
+        return {"status": "error", "message": "Either SSH key or password required."}
+
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -207,6 +213,12 @@ def run_integration_test(
     - https://docs.pyansys.com/version/stable/
     - https://docs.paramiko.org/en/stable/api/client.html
     """
+    # Pre-condition guard: require at least one credential before probing.
+    # This also discharges the SMT None-dereference check on the optional
+    # `password`/`key_path` parameters.
+    if password is None and key_path is None:
+        return {"status": "error", "message": "Either SSH key or password required."}
+
     print(f"[*] Connecting to {user}@{host} ...")
     result = _ssh_connection_check(host, user, password, key_path)
 

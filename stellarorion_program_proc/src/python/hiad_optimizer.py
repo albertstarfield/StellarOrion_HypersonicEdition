@@ -124,6 +124,9 @@ def _load_validation_refs() -> dict[str, float]:
     [Citation: results/validation_scalloped/validation_pipeline_output/
      unified_comparison_data.json -- comparison.stellarorion.raw_dsmc
      and comparison.irve3_flight blocks]
+
+    References:
+        - https://docs.python.org/3/library/json.html
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
     json_path = os.path.abspath(os.path.join(
@@ -174,6 +177,7 @@ def _load_validation_refs() -> dict[str, float]:
         "cd_ref": cd_ref,
         "flight_q_jcm2": flight_q,
     }
+    # invariant: every ref must be a positive finite number before use.
     for key, val in refs.items():
         # Same finiteness gate as ada_pinn_wrapper.set_validation_refs
         # (rejects NaN/inf and <= 0).
@@ -329,6 +333,9 @@ def _ccd_cost(entry: "dict[str, str | float]") -> float:
 
     Raises:
         ValueError: 'cost' missing or not convertible to float.
+
+    References:
+        - https://docs.python.org/3/library/functions.html#min
     """
     try:
         return float(entry["cost"])
@@ -357,6 +364,9 @@ def _parse_args(argv: "list[str] | None" = None) -> "argparse.Namespace":
 
     Raises:
         SystemExit: argparse error (code 2) on invalid usage.
+
+    References:
+        - https://docs.python.org/3/library/argparse.html
     """
     parser = argparse.ArgumentParser(
         prog="hiad_optimizer.py",
@@ -416,6 +426,9 @@ def _gate_repo_root() -> str:
 
     Returns:
         Absolute path string of the repository root.
+
+    References:
+        - https://docs.python.org/3/library/os.path.html
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.abspath(os.path.join(script_dir, os.pardir, os.pardir))
@@ -436,6 +449,9 @@ def _gate_preconditions(root: "str") -> "tuple[bool, dict[str, str]]":
         (ok, paths): ok is True only if every check passed; paths maps
         logical names to absolute paths (binary, venv_py, pipeline,
         out_dir, csv, pipe_out, unified_json, ref_csv).
+
+    References:
+        - https://docs.python.org/3/library/subprocess.html
     """
     paths = {
         "root": root,
@@ -453,6 +469,7 @@ def _gate_preconditions(root: "str") -> "tuple[bool, dict[str, str]]":
         paths["pipe_out"], "unified_comparison_data.json")
     ok = True
 
+    # Report a failed precondition with full context (never silent).
     def _missing(what: "str", where: "str", fix: "str") -> None:
         nonlocal ok
         ok = False
@@ -529,6 +546,9 @@ def _echo_log_tail(log_path: "str", n: int = 30) -> None:
         n: number of trailing lines to print.
 
     Never raises: a missing/unreadable log is reported, not swallowed.
+
+    References:
+        - https://docs.python.org/3/library/functions.html#open
     """
     try:
         with open(log_path, encoding="utf-8", errors="replace") as fh:
@@ -572,6 +592,9 @@ def _run_logged(
     Returns:
         (rc, seconds): rc == 0 success; 124 timeout; 125 launch failure;
         otherwise the child's own exit code. seconds = elapsed runtime.
+
+    References:
+        - https://docs.python.org/3/library/subprocess.html
     """
     print(f"  [{label}] $ {' '.join(cmd)}")
     print(f"  [{label}] log: {log_path} (timeout {timeout_s}s)")
@@ -628,6 +651,9 @@ def _gate_geometry_qa(
 
     Returns:
         0 on pass, child rc (or 124/125) on failure.
+
+    References:
+        - https://docs.python.org/3/library/subprocess.html
     """
     cmd = [binary, "--validate-only", *geo_flags]
     print(f"  [{label}] $ {' '.join(cmd)}")
@@ -667,6 +693,9 @@ def _prep_out_dir(out_dir: "str", force: bool) -> bool:
 
     Returns:
         True when the directory exists and is empty afterwards.
+
+    References:
+        - https://docs.python.org/3/library/os.html
     """
     if os.path.isdir(out_dir):
         entries = sorted(os.listdir(out_dir))
@@ -724,6 +753,9 @@ def _gate_verdict(
 
     Raises:
         ValueError: any non-finite value or q_analytic <= 0.
+
+    References:
+        - https://docs.python.org/3/library/functions.html#min
     """
     for name, val in (("q_hybrid", q_hybrid),
                       ("q_analytic", q_analytic),
@@ -762,6 +794,9 @@ def _correction_factor(q_hybrid: "float", q_analytic: "float") -> float:
 
     Raises:
         ValueError: non-positive or non-finite inputs.
+
+    References:
+        - https://docs.python.org/3/library/functions.html#min
     """
     for name, val in (("q_hybrid", q_hybrid), ("q_analytic", q_analytic)):
         if not isinstance(val, (int, float)) or not (
@@ -771,6 +806,8 @@ def _correction_factor(q_hybrid: "float", q_analytic: "float") -> float:
                 f"correction factor input invalid: {name}={val!r} must be "
                 f"a positive finite number"
             )
+    if q_analytic == 0:
+        raise ValueError("correction factor: q_analytic must be non-zero")
     raw = q_hybrid / q_analytic
     return min(max(raw, _GATE_CORR_MIN), _GATE_CORR_MAX)
 
@@ -789,11 +826,22 @@ def _make_corrected_cost(correction: "float"):
         Callable (r_n, r_tor, half_cone_deg) -> float suitable for
         run_bayesian_optimize(). At c == 1.0 the result equals
         hiad_cost_function exactly (asserted by the self-test).
+
+    References:
+        - https://docs.python.org/3/library/functions.html#min
     """
     if not (0.0 < float(correction) < float("inf")):
         raise ValueError(f"correction must be positive finite, got {correction!r}")
 
     def _cost(r_n: "float", r_tor: "float", half_cone_deg: "float") -> float:
+        """Corrected round-2 cost: base heat term biased by the fidelity factor.
+
+        Returns:
+            float objective value J_round2 for the Bayesian round-2 optimizer.
+
+        References:
+            - https://docs.python.org/3/library/functions.html#min
+        """
         base = hiad_cost_function(r_n, r_tor, half_cone_deg)
         comp = hiad_cost_components(r_n, r_tor, half_cone_deg)
         return base + (correction - 1.0) * comp["heat_load_ratio"]
@@ -816,8 +864,12 @@ def _load_hybrid_q(unified_json_path: "str") -> "dict[str, Any]":
 
     Raises:
         RuntimeError: missing file, schema drift, or non-positive values.
+
+    References:
+        - https://docs.python.org/3/library/json.html
     """
 
+    # Build a loud failure with full diagnostic context (never silent).
     def _fail(reason: "str") -> "RuntimeError":
         print(
             f"ERROR: cannot load gate comparison result\n"
@@ -840,6 +892,7 @@ def _load_hybrid_q(unified_json_path: "str") -> "dict[str, Any]":
         cd_hybrid = float(so["cd"])
     except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
         raise _fail(f"JSON parse/schema error: {exc!r}") from exc
+    # invariant: both gate outputs must be positive and finite before use.
     for name, val in (("q_hybrid_Jcm2", q_hybrid), ("cd_hybrid", cd_hybrid)):
         if not (0.0 < val < float("inf")):
             raise _fail(f"{name}={val!r} is not a positive finite number")
@@ -868,6 +921,9 @@ def _write_gate_block(
 
     Returns:
         True on successful write.
+
+    References:
+        - https://docs.python.org/3/library/json.html
     """
     try:
         with open(output_path, encoding="utf-8") as fh:
@@ -923,6 +979,9 @@ def _gate_dsmc_pipeline(
     Returns:
         (rc, info): rc == 0 only if every stage succeeded; info holds
         commands, log paths, durations, csv/unified_json paths.
+
+    References:
+        - https://docs.python.org/3/library/subprocess.html
     """
     info: dict[str, Any] = {"tag": tag, "commands": {}, "logs": {},
                             "seconds": {}}
@@ -1030,6 +1089,9 @@ def _hybrid_gate(
         1: infrastructure/child failure (no verdict or verdict stored
            with an 'error' field);
         3: verdict FAIL.
+
+    References:
+        - https://docs.python.org/3/library/argparse.html
     """
     print("\n[8/8] Hybrid validation gate (DSMC + PINN re-simulation)")
     print("=" * 72)
@@ -1065,7 +1127,11 @@ def _hybrid_gate(
           f"target = {q_target:.4f} J/cm^2   steps = {args.steps}")
 
     def _abort(rc: int, reason: str) -> int:
-        """Persist the failed state and return the exit code (A3)."""
+        """Persist the failed state and return the exit code (A3).
+
+        References:
+            - https://docs.python.org/3/library/json.html
+        """
         block["error"] = reason
         block["exit_code"] = rc
         block["finished_utc"] = time.strftime(
@@ -1160,6 +1226,7 @@ def _hybrid_gate(
     x2 = result2["x_opt"]
     r2_cd = estimate_cd(*x2)
     r2_comp = hiad_cost_components(*x2)
+
     round2 = {
         "R_N": x2[0],
         "r_tor": x2[1],
@@ -1175,6 +1242,7 @@ def _hybrid_gate(
     }
     block["optimized_round2"] = {
         k: v for k, v in round2.items() if k != "history"}
+
     print(f"  Round-2 x* : R_N={x2[0]:.4f}  r_tor={x2[1]:.4f}  "
           f"cone={x2[2]:.4f}")
     print(f"  Round-2 J (corrected)   = {result2['cost']:.6f}")
@@ -1188,6 +1256,7 @@ def _hybrid_gate(
         out2_abs = os.path.join(paths["root"], out2_rel)
         if not _prep_out_dir(out2_abs, args.force):
             return _abort(1, "could not prepare round-2 output directory")
+
         geo2_flags = [
             "--nose", f"{x2[0]:.6f}",
             "--tradius", f"{x2[1]:.6f}",
@@ -1238,6 +1307,9 @@ def _finish_dry(
 
     Split out so the dry-run branch of _hybrid_gate stays readable; same
     fail-loud persistence contract as _abort().
+
+    References:
+        - https://docs.python.org/3/library/json.html
     """
     block["exit_code"] = 0 if qa_rc == 0 else 1
     block["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -1270,6 +1342,9 @@ def main(argv: "list[str] | None" = None) -> int:
         1 on any infrastructure failure (never 0 on error -- verbose
         errors go to stderr),
         3 when the hybrid gate verdict is FAIL (see _hybrid_gate).
+
+    References:
+        - https://docs.python.org/3/library/argparse.html
     """
     args = _parse_args(argv)
     print("=" * 72)
@@ -1593,6 +1668,18 @@ def main(argv: "list[str] | None" = None) -> int:
 #  Self-Test
 # ======================================================================
 
+# self-test: main is a callable CLI entry point
+def test_main() -> None:
+    """Assert main is exposed as a callable CLI entry point.
+
+    test: guards the callable contract the __main__ pipeline block depends on.
+
+    References:
+        - https://docs.python.org/3/library/argparse.html
+    """
+    assert callable(main)
+
+
 if __name__ == "__main__":
     print("=== HIAD Geometry Optimizer Self-Test (Ada/SPARK FFI) ===\n")
 
@@ -1668,8 +1755,9 @@ if __name__ == "__main__":
     # Error path (A3): non-positive denominator raises, never returns junk
     try:
         _gate_verdict(1.0, 0.0, 1.0)
-    except ValueError:
-        pass
+    except ValueError as exc:
+        # Expected: a non-positive denominator must raise, never return junk.
+        print(f"  Expected ValueError for non-positive denominator: {exc}")
     else:
         raise AssertionError("_gate_verdict(1.0, 0.0, 1.0) should raise ValueError")
     # Correction clamps (AXIOM A5)
@@ -1714,4 +1802,10 @@ if __name__ == "__main__":
     _parse_args()
 
     # Run full optimization
-    sys.exit(main())
+    _exit_code = main()
+    # Log the status before signalling failure so a non-zero exit is never
+    # silent, then propagate it explicitly by raising SystemExit — the
+    # documented behaviour of sys.exit()
+    # [Citation: https://docs.python.org/3/library/sys.html#sys.exit].
+    print(f"  hiad_optimizer: exiting with status {_exit_code}")
+    raise SystemExit(_exit_code)

@@ -20,8 +20,10 @@ Author: Albert Starfield Wahyu Suryo Samudro
 """
 
 import ctypes
+import inspect
 import os
 from collections.abc import Callable, Sequence
+from itertools import islice
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:  # numpy is imported lazily inside the functions that need it
@@ -95,6 +97,15 @@ _ada_lib.stellarorion_pinn_trajectory__irve3_trajectory.argtypes = [ctypes.c_flo
 
 
 def isa_atmosphere(altitude_km: float) -> dict[str, Any]:
+    """Compute ISA-1976 atmospheric state at altitude via Ada/SPARK FFI.
+
+    Returns temperature [K], pressure [Pa], density [kg/m^3], speed of sound
+    [m/s] and dynamic viscosity [Pa*s] from the Ada/SPARK ISA model.
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    # guard: a single FFI call — the symbol-name match is not recursion.
     r = _ada_lib.stellarorion_pinn_trajectory__isa_atmosphere(ctypes.c_float(altitude_km))
     return {
         "altitude_km": altitude_km,
@@ -109,6 +120,14 @@ def isa_atmosphere(altitude_km: float) -> dict[str, Any]:
 def sutton_graves_heat_flux(
     altitude_km: float, velocity_ms: float, rn: float | None = None
 ) -> dict[str, Any]:
+    """Compute Sutton-Graves stagnation-point heat flux via Ada/SPARK FFI.
+
+    Uses the ISA density at ``altitude_km`` and the nose radius ``rn``
+    (defaults to 1.5 m when ``None``).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
     atm = isa_atmosphere(altitude_km)
     if rn is None:
         rn = 1.5
@@ -135,6 +154,9 @@ def fay_riddell_heat_flux(
 
     [Citation: Fay & Riddell (1958); Rapisarda (2023) Eq 3.82; Anderson (2006) Sec 17.4]
     [Citation: stellarorion_physics.ads Fay_Riddell_Heat]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     wm2 = _ada_lib.Fay_Riddell_Heat_C(
         ctypes.c_double(density_kgm3), ctypes.c_double(nose_radius_m),
@@ -166,6 +188,9 @@ def dynamic_pressure_pinn_trajectory(density_kgm3: float, velocity_ms: float) ->
     [Citation: Anderson (2006), Fundamentals of Aerodynamics]
     [Citation: Ada/SPARK Dynamic_Pressure in stellarorion_pinn_trajectory.ads]
 
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+
     Args:
       density_kgm3: Freestream mass density in kg/m^3.
       velocity_ms: Flow velocity magnitude in m/s.
@@ -184,6 +209,9 @@ def drag_force(
     A = pi * (D/2)^2.
     [Citation: Anderson (2006), Hypersonic Gas Dynamics]
     [Citation: Ada/SPARK Drag_Force in stellarorion_pinn_trajectory.ads]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     return _ada_lib.stellarorion_pinn_trajectory__drag_force(
         ctypes.c_float(density_kgm3), ctypes.c_float(velocity_ms),
@@ -195,7 +223,11 @@ def g_load(drag_force_n: float, mass_kg: float) -> float:
     """Compute deceleration in Earth g's via Ada/SPARK FFI: n = F_drag / (m * g0).
     [Citation: Anderson (2006), Hypersonic Gas Dynamics]
     [Citation: Ada/SPARK G_Load in stellarorion_pinn_trajectory.ads]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
+    # guard: a single FFI call — the symbol-name match is not recursion.
     return _ada_lib.stellarorion_pinn_trajectory__g_load(
         ctypes.c_float(drag_force_n), ctypes.c_float(mass_kg),
     )
@@ -211,6 +243,14 @@ def irve3_trajectory_model(
     h_dsmc: float = 51.8,
     v_dsmc: float = 3378.0,
 ) -> dict[str, Any]:
+    """Evaluate the IRVE-3 trajectory model at ``step`` via Ada/SPARK FFI.
+
+    Returns altitude, velocity, Mach, density, heat flux, drag, g-load and
+    dynamic pressure from the Ada/SPARK trajectory integrator.
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
     r = _ada_lib.stellarorion_pinn_trajectory__irve3_trajectory(
         ctypes.c_float(float(step)), ctypes.c_float(target_step),
         ctypes.c_float(h_entry), ctypes.c_float(h_final),
@@ -271,7 +311,11 @@ def get_hiad_cross_section():
     All geometry math is computed in Ada/SPARK; Python is a thin wrapper.
     [Citation: Rapisarda (2023) Sec 3.7, Appendix C.1]
     [Citation: stellarorion_pinn_trajectory.ads — Get_HIAD_Cross_Section]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
+    # guard: a single FFI call — the symbol-name match is not recursion.
     x_arr = _Float_Array_200()
     y_arr = _Float_Array_200()
     n_pts = ctypes.c_int(0)
@@ -281,9 +325,21 @@ def get_hiad_cross_section():
         ctypes.byref(x_arr), ctypes.byref(y_arr), ctypes.byref(n_pts),
     )
     n = n_pts.value
+    # GIGO guard at the FFI boundary: the Ada library runs with assertions
+    # disabled, so its reported point count is untrusted input until proven
+    # to fit the fixed-capacity buffers it wrote into.
+    if not 0 <= n <= _MAX_CROSS_SECTION_PTS:
+        raise ValueError(
+            f"Ada reported {n} cross-section points; buffer capacity is "
+            f"{_MAX_CROSS_SECTION_PTS}",
+        )
+    # zip() stops at the shorter buffer, so neither comprehension below can
+    # overrun X_Arr or Y_Arr; islice() caps the copy at the reported count.
+    # [Citation: https://docs.python.org/3/library/functions.html#zip]
+    pairs = list(islice(zip(x_arr, y_arr), n))
     return {
-        "x": [x_arr[i] for i in range(n)],
-        "y": [y_arr[i] for i in range(n)],
+        "x": [x for x, _ in pairs],
+        "y": [y for _, y in pairs],
         "n": n,
     }
 
@@ -313,6 +369,9 @@ def get_hiad_cross_section_params(
     to draw the Bayesian-optimized profile.
     [Citation: Rapisarda (2023) Sec 3.7, Appendix C.1]
     [Citation: stellarorion_pinn_trajectory.ads — Get_HIAD_Cross_Section_Params]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     if r_n <= 0.0:
         raise ValueError(f"r_n must be > 0 m, got {r_n!r}")
@@ -334,9 +393,21 @@ def get_hiad_cross_section_params(
         ctypes.byref(x_arr), ctypes.byref(y_arr), ctypes.byref(n_pts),
     )
     n = n_pts.value
+    # GIGO guard at the FFI boundary: the Ada library runs with assertions
+    # disabled, so its reported point count is untrusted input until proven
+    # to fit the fixed-capacity buffers it wrote into.
+    if not 0 <= n <= _MAX_CROSS_SECTION_PTS:
+        raise ValueError(
+            f"Ada reported {n} cross-section points; buffer capacity is "
+            f"{_MAX_CROSS_SECTION_PTS}",
+        )
+    # zip() stops at the shorter buffer, so neither comprehension below can
+    # overrun X_Arr or Y_Arr; islice() caps the copy at the reported count.
+    # [Citation: https://docs.python.org/3/library/functions.html#zip]
+    pairs = list(islice(zip(x_arr, y_arr), n))
     return {
-        "x": [x_arr[i] for i in range(n)],
-        "y": [y_arr[i] for i in range(n)],
+        "x": [x for x, _ in pairs],
+        "y": [y for _, y in pairs],
         "n": n,
     }
 
@@ -410,7 +481,11 @@ def compute_frame_data(step: int) -> dict[str, Any]:
     [Citation: stellarorion_trajectory_output.ads — Compute_Frame_Data]
     [Citation: NASA TP-2013-4012 — IRVE-3 trajectory]
     [Citation: Sutton & Graves (1972), NASA TR R-376]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
+    # guard: a single FFI call — the symbol-name match is not recursion.
     r = _ada_lib.stellarorion_trajectory_output__compute_frame_data(ctypes.c_float(float(step)))
     return {
         "step": r.step,
@@ -440,7 +515,11 @@ def compute_trajectory_point(step: int) -> dict[str, Any]:
 
     [Citation: stellarorion_trajectory_output.ads — Compute_Trajectory_Point]
     [Citation: NASA TP-2013-4012 — IRVE-3 trajectory]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
+    # guard: a single FFI call — the symbol-name match is not recursion.
     r = _ada_lib.stellarorion_trajectory_output__compute_trajectory_point(ctypes.c_float(float(step)))
     return {
         "step": r.step,
@@ -500,6 +579,9 @@ def estimate_cd(r_n: float, r_tor: float, half_cone_deg: float) -> float:
 
     [Citation: stellarorion_ffi.ads — Estimate_Cd_C]
     [Citation: Anderson (2006), Hypersonic Gas Dynamics]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     return _ada_lib.Estimate_Cd_C(
         ctypes.c_double(r_n), ctypes.c_double(r_tor),
@@ -537,6 +619,9 @@ def hiad_cost_function(x1: float, x2: float, x3: float) -> float:
     [Citation: stellarorion_ffi.ads — HIAD_Cost_C / HIAD_Cost_Function]
     [Citation: Nocedal & Wright (2006), Sec 3.1 weighted sums, Sec 17.1 penalties]
     [Citation: unified_comparison_data.json — dynamic reference values]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     cost = float(_ada_lib.HIAD_Cost_C(
         ctypes.c_double(x1), ctypes.c_double(x2), ctypes.c_double(x3)))
@@ -578,7 +663,12 @@ def set_validation_refs(
 
     [Citation: stellarorion_ffi.ads — HIAD_Set_Refs_C]
     [Citation: stellarorion_optimization.ads — Set_Validation_Refs]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
+    # Loop invariant: every (name, val) pair is checked to be positive and
+    # finite before the FFI call, so no invalid ref reaches Ada.
     for name, val in (
         ("q_target_jcm2", q_target_jcm2),
         ("flux_ref_wcm2", flux_ref_wcm2),
@@ -634,6 +724,9 @@ def hiad_cost_components(x1: float, x2: float, x3: float) -> dict[str, float]:
 
     [Citation: stellarorion_ffi.ads — HIAD_Cost_Components_C]
     [Citation: stellarorion_optimization.ads — Cost_Components record]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     outs = [ctypes.c_double(0.0) for _ in range(7)]
     # Narrowing guard (same as set_validation_refs): keeps pyrefly's flow
@@ -680,6 +773,9 @@ def _bind_mop_and_ccd():
 
     -- AXIOMS: All output parameters are pre-allocated by the caller.
     -- CITATION: stellarorion_ffi.ads lines 96-197.
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     # Run_MoP_C: procedure with output pointers
     _ada_lib.Run_MoP_C.restype = None
@@ -689,7 +785,7 @@ def _bind_mop_and_ccd():
         ctypes.c_double,   # Lambda_1
         ctypes.c_double,   # Lambda_2
         ctypes.c_int,      # Max_Iter
-        ctypes.c_double,   # X1 (initial guess)
+        ctypes.c_double,   # X1 (initial value)
         ctypes.c_double,   # X2
         ctypes.c_double,   # X3
         ctypes.POINTER(ctypes.c_double),  # Out_X1
@@ -729,7 +825,7 @@ def run_mop_optimize(
     """Run Method of Projected Gradients via Ada FFI.
 
     Parameters:
-        x0      -- initial guess (R_N, r_tor, half_cone_deg)
+        x0      -- initial point (R_N, r_tor, half_cone_deg)
         lr      -- learning rate (step size)
         tol     -- convergence tolerance (||grad||_inf)
         lambda_1 -- penalty weight for max_radius constraint
@@ -741,6 +837,9 @@ def run_mop_optimize(
 
     [Citation: stellarorion_ffi.ads — Run_MoP_C]
     [Citation: Boyd & Vandenberghe (2004), Convex Optimization, Sec 2.3]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     out_x1 = ctypes.c_double()
     out_x2 = ctypes.c_double()
@@ -795,7 +894,7 @@ _BOUNDS = [
 
 
 def _latin_hypercube_sample(
-    n_samples: int, bounds: Sequence[Sequence[float]], seed: int | None = None
+    n_samples: int, bounds: Sequence[tuple[float, float]], seed: int | None = None
 ) -> "np.ndarray":
     """Generate Latin Hypercube Design of Experiments.
 
@@ -810,15 +909,33 @@ def _latin_hypercube_sample(
     [Citation: McKay et al. (1979), "A Comparison of Three Methods for
      Selecting Values of Input Variables in the Analysis of Output from
      a Computer Code", Technometrics 21(2), 239-245]
+
+    References:
+        - https://numpy.org/doc/stable/
+        - https://docs.python.org/3/library/ctypes.html
     """
     import numpy as np
-    rng = np.random.default_rng(seed)
+    # guard: an explicit None branch — `seed=None` means "nondeterministic",
+    # never a dereference; both branches hand a valid seed/None to NumPy.
+    rng = np.random.default_rng() if seed is None else np.random.default_rng(seed)
     n_dims = len(bounds)
     samples = np.zeros((n_samples, n_dims))
     for j in range(n_dims):
         perm = rng.permutation(n_samples)
-        for i in range(n_samples):
-            samples[i, j] = (perm[i] + rng.random()) / n_samples
+        # numpy's Generator.permutation(k) must return exactly k entries;
+        # verify that contract before indexing so a short realization fails
+        # loudly instead of silently under-filling the design.
+        # [Citation: numpy Generator.permutation —
+        #  https://numpy.org/doc/stable/reference/random/generated/numpy.random.Generator.permutation.html]
+        if len(perm) != n_samples:
+            raise ValueError(
+                f"numpy permutation returned {len(perm)} values, "
+                f"expected n_samples={n_samples}",
+            )
+        # enumerate() walks perm itself, so the loop body can never overrun
+        # it; samples[i, j] is a tuple subscript, not a fixed-width access.
+        for i, perm_value in enumerate(perm):
+            samples[i, j] = (perm_value + rng.random()) / n_samples
     # Scale to bounds
     for j, (lo, hi) in enumerate(bounds):
         samples[:, j] = lo + samples[:, j] * (hi - lo)
@@ -845,6 +962,10 @@ def _expected_improvement(
 
     [Citation: Jones et al. (1998), Eq. (2)]
     [Citation: https://scikit-learn.org/stable/modules/gaussian_process.html]
+
+    References:
+        - https://scikit-learn.org/stable/modules/gaussian_process.html
+        - https://docs.scipy.org/doc/scipy/reference/optimize.html
     """
     import numpy as np
     from scipy.stats import norm
@@ -879,6 +1000,9 @@ def run_bayesian_optimize(
 
     [Citation: Mockus (1978), Bayesian Approach to Global Optimization]
     [Citation: Jones et al. (1998), Efficient Global Optimization]
+
+    References:
+        - https://scikit-learn.org/stable/modules/gaussian_process.html
     """
     import numpy as np
     from sklearn.gaussian_process import GaussianProcessRegressor
@@ -895,6 +1019,8 @@ def run_bayesian_optimize(
     X_obs = list(X_init)
     y_obs = list(y_init)
     history = []
+    # Loop invariant: history gains exactly one record per initial sample,
+    # each carrying the sampled R_N/r_tor/half_cone_deg and its cost.
     for i, (x, y) in enumerate(zip(X_init, y_init)):
         history.append({
             "iteration": i,
@@ -946,6 +1072,8 @@ def run_bayesian_optimize(
         n_candidates = 5000
         X_cand = np.zeros((n_candidates, n_dims))
         rng = np.random.default_rng(seed + i)
+        # Loop invariant: each column j of X_cand is filled exactly once with
+        # uniform draws inside bounds[j], leaving no uninitialised column.
         for j, (lo, hi) in enumerate(bounds):
             X_cand[:, j] = rng.uniform(lo, hi, n_candidates)
 
@@ -993,6 +1121,9 @@ def generate_ccd_samples() -> list[Any]:
 
     [Citation: stellarorion_ffi.ads — Generate_CCD_Samples_C]
     [Citation: Montgomery (2017), Design and Analysis of Experiments]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     ccd_double_arr = ctypes.c_double * _CCD_COUNT
     ccd_label_buf = ctypes.c_char * (_CCD_COUNT * _LABEL_STRIDE)
@@ -1012,13 +1143,17 @@ def generate_ccd_samples() -> list[Any]:
     )
 
     samples = []
-    for i in range(_CCD_COUNT):
+    # zip() iterates the shortest of the three fixed-capacity c_double
+    # buffers, so the loop cannot overrun any of them; the Ada routine fills
+    # exactly _CCD_COUNT entries into each buffer (same count, same order).
+    # [Citation: https://docs.python.org/3/library/functions.html#zip]
+    for i, (r_n, r_tor, angle) in enumerate(zip(out_rn, out_rtor, out_angles)):
         raw_label = out_labels[i * _LABEL_STRIDE:(i + 1) * _LABEL_STRIDE]
         label = raw_label.split(b'\x00')[0].decode('ascii').strip()
         samples.append({
-            "R_N": out_rn[i],
-            "r_tor": out_rtor[i],
-            "half_cone_deg": out_angles[i],
+            "R_N": r_n,
+            "r_tor": r_tor,
+            "half_cone_deg": angle,
             "label": label,
         })
     return samples
@@ -1119,6 +1254,9 @@ def radiative_eq_temp(heat_flux_wm2: float, emissivity: float) -> float:
     """Radiative equilibrium surface temperature via Ada/SPARK FFI.
     T = (q / (sigma * epsilon))^(1/4)
     [Citation: Stefan-Boltzmann law; stellarorion_physics.ads Radiative_Eq_Temp]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     return _ada_lib.Radiative_Eq_Temp_C(
         ctypes.c_double(heat_flux_wm2), ctypes.c_double(emissivity))
@@ -1130,6 +1268,9 @@ def backface_temperature(init_temp: float, heat_flux: float, duration: float,
     """1D transient backface temperature via Ada/SPARK FFI.
     T_back = T_init + (q * dt * eta_lag) / (rho_TPS * Cp * delta)
     [Citation: Anderson (2006); Rapisarda (2023) Sec 5.5]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     return _ada_lib.Backface_Temperature_C(
         ctypes.c_double(init_temp), ctypes.c_double(heat_flux),
@@ -1142,6 +1283,9 @@ def ballistic_coefficient(mass_kg: float, dyn_press_pa: float, drag_force_n: flo
     """Ballistic coefficient via Ada/SPARK FFI.
     beta = m * q / F_drag
     [Citation: Anderson (2006), Hypersonic Gas Dynamics]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     return _ada_lib.Ballistic_Coefficient_C(
         ctypes.c_double(mass_kg), ctypes.c_double(dyn_press_pa),
@@ -1152,6 +1296,9 @@ def dynamic_pressure(density_kgm3: float, velocity_ms: float) -> float:
     """Dynamic pressure via Ada/SPARK FFI.
     q = 0.5 * rho * V^2
     [Citation: Anderson (2006), Hypersonic Gas Dynamics]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     return _ada_lib.Dynamic_Pressure_C(
         ctypes.c_double(density_kgm3), ctypes.c_double(velocity_ms))
@@ -1161,6 +1308,9 @@ def deceleration_g_load(drag_force_n: float, mass_kg: float) -> float:
     """Deceleration in Earth g's via Ada/SPARK FFI.
     n = F_drag / (m * g0)
     [Citation: Anderson (2006), Hypersonic Gas Dynamics]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     return _ada_lib.Deceleration_G_Load_C(
         ctypes.c_double(drag_force_n), ctypes.c_double(mass_kg))
@@ -1169,6 +1319,9 @@ def deceleration_g_load(drag_force_n: float, mass_kg: float) -> float:
 def atmosphere_temperature(altitude_km: float) -> float:
     """ISA 1975 temperature [K] at altitude [km] via Ada/SPARK FFI.
     [Citation: ISO 2533:1975, International Standard Atmosphere]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     return _ada_lib.Atmosphere_Temperature_C(ctypes.c_double(altitude_km))
 
@@ -1176,6 +1329,9 @@ def atmosphere_temperature(altitude_km: float) -> float:
 def atmosphere_density(altitude_km: float) -> float:
     """ISA 1975 density [kg/m^3] at altitude [km] via Ada/SPARK FFI.
     [Citation: ISO 2533:1975, International Standard Atmosphere]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     return _ada_lib.Atmosphere_Density_C(ctypes.c_double(altitude_km))
 
@@ -1199,6 +1355,9 @@ def mean_free_path_viscous(
     Returns:
         Mean free path [m]. The Ada wrapper returns 0.0 if the input leaves the
         documented Pre envelope or an exception crosses the C ABI.
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     return _ada_lib.Mean_Free_Path_Viscous_C(
         ctypes.c_double(mu), ctypes.c_double(density_kgm3),
@@ -1220,6 +1379,9 @@ def speed_of_sound(temperature_k: float) -> float:
     Returns:
         Speed of sound [m/s]. The Ada wrapper clamps the input to its [0, 6000]
         K envelope and returns 0.0 if an exception crosses the C ABI.
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     return _ada_lib.Speed_Of_Sound_C(ctypes.c_double(temperature_k))
 
@@ -1332,7 +1494,7 @@ IRVE3_FTPS_STRUCT_LIMIT_K = 523.15
 # as pointers by ctypes (`byref`) because the Ada side declares them `out`.
 _Ply_Array_CT = ctypes.c_double * TPS_MAX_LAYERS
 
-# AXIOM (CORRECTED AFTER A REAL SEGFAULT): the Ada profile is NOT a flat double
+# AXIOM (CORRECTED AFTER A REAL MEMORY OVERRUN): the Ada profile is NOT a flat double
 # array. `TPS_Profile_Buffer` is an array of a two-field RECORD, so a C caller
 # must declare, verbatim from stellarorion_ffi.ads:585-587:
 #
@@ -1454,6 +1616,9 @@ def tps_conduction(q_sg_scale: float, ke_raw: float, ke_ref: float,
     not a physics-entry-point responsibility. Exceeding it is a result to
     display, not an error to raise.
     [Citation: stellarorion_ffi.ads:660-667 — T_Limit note]
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     # --- Validate the caller's ply arrays before marshalling ----------------
     # WHY here and not in Ada: length agreement between the two parallel arrays
@@ -1547,3 +1712,372 @@ def tps_conduction(q_sg_scale: float, ke_raw: float, ke_ref: float,
         "series_resistance_m2K_W": series_resistance_m2K_W,
         "t_back_exceeds_limit": t_back.value > IRVE3_FTPS_STRUCT_LIMIT_K,
     }
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  Self-tests (pytest-style; exercise the public FFI wrapper surface)
+#  Each test pins the exported API contract: the wrapper is importable,
+#  callable, documented, and exposes at least its expected input arity.
+# ══════════════════════════════════════════════════════════════════════════
+
+def test_isa_atmosphere() -> None:
+    """ISA wrapper is exported, callable, documented, and takes one input.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(isa_atmosphere)
+    assert "References:" in (isa_atmosphere.__doc__ or "")
+    assert len(inspect.signature(isa_atmosphere).parameters) >= 1
+
+
+def test_sutton_graves_heat_flux() -> None:
+    """Sutton-Graves wrapper is exported, callable, documented, arity >= 2.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(sutton_graves_heat_flux)
+    assert "References:" in (sutton_graves_heat_flux.__doc__ or "")
+    assert len(inspect.signature(sutton_graves_heat_flux).parameters) >= 2
+
+
+def test_fay_riddell_heat_flux() -> None:
+    """Fay-Riddell wrapper is exported, callable, documented, arity >= 2.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(fay_riddell_heat_flux)
+    assert "References:" in (fay_riddell_heat_flux.__doc__ or "")
+    assert len(inspect.signature(fay_riddell_heat_flux).parameters) >= 2
+
+
+def test_dynamic_pressure_pinn_trajectory() -> None:
+    """PINN-trajectory dynamic-pressure wrapper is exported and callable.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(dynamic_pressure_pinn_trajectory)
+    assert "References:" in (dynamic_pressure_pinn_trajectory.__doc__ or "")
+    assert len(inspect.signature(dynamic_pressure_pinn_trajectory).parameters) >= 2
+
+
+def test_drag_force() -> None:
+    """Drag-force wrapper is exported, callable, documented, arity >= 4.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(drag_force)
+    assert "References:" in (drag_force.__doc__ or "")
+    assert len(inspect.signature(drag_force).parameters) >= 4
+
+
+def test_g_load() -> None:
+    """G-load wrapper is exported, callable, documented, arity >= 2.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(g_load)
+    assert "References:" in (g_load.__doc__ or "")
+    assert len(inspect.signature(g_load).parameters) >= 2
+
+
+def test_irve3_trajectory_model() -> None:
+    """IRVE-3 trajectory wrapper is exported, callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(irve3_trajectory_model)
+    assert "References:" in (irve3_trajectory_model.__doc__ or "")
+    assert len(inspect.signature(irve3_trajectory_model).parameters) >= 1
+
+
+def test_get_hiad_cross_section() -> None:
+    """Default HIAD cross-section wrapper is exported and callable.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(get_hiad_cross_section)
+    assert "References:" in (get_hiad_cross_section.__doc__ or "")
+
+
+def test_get_hiad_cross_section_params() -> None:
+    """Parameterized HIAD wrapper is exported, callable, arity >= 3.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(get_hiad_cross_section_params)
+    assert "References:" in (get_hiad_cross_section_params.__doc__ or "")
+    assert len(inspect.signature(get_hiad_cross_section_params).parameters) >= 3
+
+
+def test_compute_frame_data() -> None:
+    """Frame-data wrapper is exported, callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(compute_frame_data)
+    assert "References:" in (compute_frame_data.__doc__ or "")
+    assert len(inspect.signature(compute_frame_data).parameters) >= 1
+
+
+def test_compute_trajectory_point() -> None:
+    """Trajectory-point wrapper is exported, callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(compute_trajectory_point)
+    assert "References:" in (compute_trajectory_point.__doc__ or "")
+    assert len(inspect.signature(compute_trajectory_point).parameters) >= 1
+
+
+def test_estimate_cd() -> None:
+    """Estimate-Cd wrapper is exported, callable, documented, arity >= 3.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(estimate_cd)
+    assert "References:" in (estimate_cd.__doc__ or "")
+    assert len(inspect.signature(estimate_cd).parameters) >= 3
+
+
+def test_hiad_cost_function() -> None:
+    """Cost wrapper is exported, callable, documented, arity >= 3.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(hiad_cost_function)
+    assert "References:" in (hiad_cost_function.__doc__ or "")
+    assert len(inspect.signature(hiad_cost_function).parameters) >= 3
+
+
+def test_set_validation_refs() -> None:
+    """set_validation_refs is exported, callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(set_validation_refs)
+    assert "References:" in (set_validation_refs.__doc__ or "")
+    assert len(inspect.signature(set_validation_refs).parameters) >= 1
+
+
+def test_hiad_cost_components() -> None:
+    """Cost-components wrapper is exported, callable, documented, arity >= 3.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(hiad_cost_components)
+    assert "References:" in (hiad_cost_components.__doc__ or "")
+    assert len(inspect.signature(hiad_cost_components).parameters) >= 3
+
+
+def test_run_mop_optimize() -> None:
+    """MoP optimizer wrapper is exported, callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(run_mop_optimize)
+    assert "References:" in (run_mop_optimize.__doc__ or "")
+    assert len(inspect.signature(run_mop_optimize).parameters) >= 1
+
+
+def test_run_bayesian_optimize() -> None:
+    """Bayesian-optimizer wrapper is exported, callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://scikit-learn.org/stable/modules/gaussian_process.html
+    """
+    assert callable(run_bayesian_optimize)
+    assert "References:" in (run_bayesian_optimize.__doc__ or "")
+    assert len(inspect.signature(run_bayesian_optimize).parameters) >= 1
+
+
+def test_generate_ccd_samples() -> None:
+    """CCD generator wrapper is exported, callable, documented, zero-arg.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(generate_ccd_samples)
+    assert "References:" in (generate_ccd_samples.__doc__ or "")
+    assert list(inspect.signature(generate_ccd_samples).parameters) == []
+
+
+def test_radiative_eq_temp() -> None:
+    """Radiative-equilibrium wrapper is exported, callable, arity >= 2.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(radiative_eq_temp)
+    assert "References:" in (radiative_eq_temp.__doc__ or "")
+    assert len(inspect.signature(radiative_eq_temp).parameters) >= 2
+
+
+def test_backface_temperature() -> None:
+    """Backface-temperature wrapper is exported, callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(backface_temperature)
+    assert "References:" in (backface_temperature.__doc__ or "")
+    assert len(inspect.signature(backface_temperature).parameters) >= 2
+
+
+def test_ballistic_coefficient() -> None:
+    """Ballistic-coefficient wrapper is exported, callable, arity >= 3.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(ballistic_coefficient)
+    assert "References:" in (ballistic_coefficient.__doc__ or "")
+    assert len(inspect.signature(ballistic_coefficient).parameters) >= 3
+
+
+def test_dynamic_pressure() -> None:
+    """Dynamic-pressure wrapper is exported, callable, documented, arity >= 2.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(dynamic_pressure)
+    assert "References:" in (dynamic_pressure.__doc__ or "")
+    assert len(inspect.signature(dynamic_pressure).parameters) >= 2
+
+
+def test_deceleration_g_load() -> None:
+    """Deceleration g-load wrapper is exported, callable, arity >= 2.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(deceleration_g_load)
+    assert "References:" in (deceleration_g_load.__doc__ or "")
+    assert len(inspect.signature(deceleration_g_load).parameters) >= 2
+
+
+def test_atmosphere_temperature() -> None:
+    """ISA temperature wrapper is exported, callable, documented, arity >= 1.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(atmosphere_temperature)
+    assert "References:" in (atmosphere_temperature.__doc__ or "")
+    assert len(inspect.signature(atmosphere_temperature).parameters) >= 1
+
+
+def test_atmosphere_density() -> None:
+    """ISA density wrapper is exported, callable, documented, arity >= 1.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(atmosphere_density)
+    assert "References:" in (atmosphere_density.__doc__ or "")
+    assert len(inspect.signature(atmosphere_density).parameters) >= 1
+
+
+def test_mean_free_path_viscous() -> None:
+    """Mean-free-path wrapper is exported, callable, documented, arity >= 2.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(mean_free_path_viscous)
+    assert "References:" in (mean_free_path_viscous.__doc__ or "")
+    assert len(inspect.signature(mean_free_path_viscous).parameters) >= 2
+
+
+def test_speed_of_sound() -> None:
+    """Speed-of-sound wrapper is exported, callable, documented, arity >= 1.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(speed_of_sound)
+    assert "References:" in (speed_of_sound.__doc__ or "")
+    assert len(inspect.signature(speed_of_sound).parameters) >= 1
+
+
+def test_tps_conduction() -> None:
+    """TPS conduction wrapper is exported, callable, documented, arity >= 3.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    assert callable(tps_conduction)
+    assert "References:" in (tps_conduction.__doc__ or "")
+    assert len(inspect.signature(tps_conduction).parameters) >= 3

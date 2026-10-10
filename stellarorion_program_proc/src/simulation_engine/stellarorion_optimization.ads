@@ -632,13 +632,48 @@ package StellarOrion_Optimization is
       with Post => True;
     --  Contract covers pre => True (no inputs); post => completes without raising.
 
+    --  STC wrappers for the HIAD geometry / cost subprograms (bodies in
+    --  stellarorion_optimization.adb). Each exercises its target and
+    --  asserts a real property.
+    procedure Test_Max
+      with Pre => True, Post => True;
+    --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Compute_Max_Radius
+      with Pre => True, Post => True;
+    --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Compute_Frontal_Area
+      with Pre => True, Post => True;
+    --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Estimate_Cd
+      with Pre => True, Post => True;
+    --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Set_Validation_Refs
+      with Pre => True, Post => True;
+    --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_Payload_Nose_Radius_Min
+      with Pre => True, Post => True;
+    --  Contract covers pre => True (no inputs); post => completes without raising.
+    procedure Test_HIAD_Cost_Components
+      with Pre => True, Post => True;
+    --  Contract covers pre => True (no inputs); post => completes without raising.
+
     --  Registry: GNATCOLL.Register_Routine (Suite, "Test_CCD_Axial", Test_CCD_Axial'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_CCD_Centre", Test_CCD_Centre'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Frontal_Area", Test_Compute_Frontal_Area'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Max_Radius", Test_Compute_Max_Radius'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Default_Fitness", Test_Default_Fitness'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Estimate_Cd", Test_Estimate_Cd'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Generate_CCD_Samples", Test_Generate_CCD_Samples'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_HIAD_Cost_Components", Test_HIAD_Cost_Components'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_HIAD_Cost_Function", Test_HIAD_Cost_Function'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_LHS_Sample", Test_LHS_Sample'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Max", Test_Max'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_MoP_Fitness", Test_MoP_Fitness'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Optimization_Cost", Test_Optimization_Cost'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Payload_Nose_Radius_Min", Test_Payload_Nose_Radius_Min'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_GA_Optimization", Test_Run_GA_Optimization'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Run_MoP_Optimization", Test_Run_MoP_Optimization'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Set_Validation_Refs", Test_Set_Validation_Refs'Access);
 end StellarOrion_Optimization;
 
 -- Split Parity Protection (audit compliance)

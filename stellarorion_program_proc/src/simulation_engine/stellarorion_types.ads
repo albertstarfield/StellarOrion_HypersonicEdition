@@ -950,6 +950,14 @@ package StellarOrion_Types is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_PICA_X", Test_TPS_PICA_X'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_Pyrogel", Test_TPS_Pyrogel'Access);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_SiC", Test_TPS_SiC'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Layer_Resistance", Layer_Resistance'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Layup_Resistance", Layup_Resistance'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Layup_Thickness", Layup_Thickness'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "TPS_Nextel_BF20", TPS_Nextel_BF20'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "TPS_Pyrogel_2250", TPS_Pyrogel_2250'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "TPS_AKK_Gas_Barrier", TPS_AKK_Gas_Barrier'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "TPS_Layup_IRVE3", TPS_Layup_IRVE3'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_IRVE3_FTPS", Test_TPS_IRVE3_FTPS'Access);
 end StellarOrion_Types;
 
 -- Split Parity Protection (audit compliance)

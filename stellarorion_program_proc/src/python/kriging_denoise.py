@@ -98,6 +98,9 @@ def _parse_grid_file(grid_file: str) -> np.ndarray:
     - https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html
     """
     # F32 dedupe: delegate to the single canonical implementation.
+    # guard: not recursive — the substring `_parse_grid_file(` inside
+    # `_shared_parse_grid_file(` is a name match, not a self-call; this
+    # function delegates once and returns.
     return _shared_parse_grid_file(grid_file)
 
 

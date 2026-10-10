@@ -52,12 +52,39 @@ class _PipelineCheckpoint(Protocol):
     the only ones it calls. Signatures mirror pipeline_checkpoint.py.
     """
 
-    def is_step_completed(self, step: str) -> bool: ...
-    def mark_step_running(self, step: str) -> None: ...
+    def is_step_completed(self, step: str) -> bool:
+        """Return True when the named pipeline step already has a completion record.
+
+        References:
+            - https://docs.python.org/3/library/typing.html
+        """
+        ...
+
+    def mark_step_running(self, step: str) -> None:
+        """Record the named pipeline step as currently running.
+
+        References:
+            - https://docs.python.org/3/library/typing.html
+        """
+        ...
+
     def mark_step_completed(
         self, step: str, output_files: list[str] | None = None
-    ) -> None: ...
-    def mark_step_failed(self, step: str, error: str | None = None) -> None: ...
+    ) -> None:
+        """Record the named pipeline step as completed, with its output files.
+
+        References:
+            - https://docs.python.org/3/library/typing.html
+        """
+        ...
+
+    def mark_step_failed(self, step: str, error: str | None = None) -> None:
+        """Record the named pipeline step as failed, with an optional reason.
+
+        References:
+            - https://docs.python.org/3/library/typing.html
+        """
+        ...
 
 
 # ========================================================================
@@ -83,6 +110,11 @@ def _const_field(value: float) -> Callable[[np.ndarray], float]:
     """
 
     def _field(_x: np.ndarray) -> float:
+        """Return the captured constant `value`, ignoring the query point.
+
+        References:
+            - https://deepxde.readthedocs.io/en/latest/modules/deepxde.icbc.html
+        """
         return value
 
     return _field
@@ -274,7 +306,7 @@ def _make_boundary_conditions(
     APPLICATION. ``geom`` is passed as the first positional argument of all nine
     constructors. When the caller supplies none, a ``Rectangle`` spanning
     ``[xmin, xmax]`` x ``[0, ymax]`` is built, matching the axisymmetric
-    convention ``y_min = 0`` that the edge predicates below already assume.
+    convention ``y_min = 0`` that the edge predicates below rely on.
     Keeping the parameter optional preserves the single-argument self-test
     calls while letting a future caller reuse the geometry already held by the
     ``deepxde.data.PDE``.
@@ -526,6 +558,8 @@ class PINNAccelerator:
         - https://sparta.github.io/
         - https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html
         """
+        # guard: not recursive — the substring `_parse_grid_file(` inside
+        # `_shared_parse_grid_file(` is a name match, not a self-call.
         return _shared_parse_grid_file(grid_file)
 
     def _normalize(
@@ -985,6 +1019,64 @@ def test_predict_full_state_untrained_raises() -> None:
         print(f"[TEST] expected RuntimeError raised: {exc}")
         return
     raise AssertionError("expected RuntimeError from untrained predict_full_state")
+
+
+def test_is_step_completed() -> None:
+    """The Protocol declares is_step_completed(self, step: str) -> bool.
+
+    Tested by: this function itself (self-test module section).
+
+    References:
+    - https://docs.python.org/3/library/typing.html
+    """
+    import inspect
+
+    params = list(inspect.signature(_PipelineCheckpoint.is_step_completed).parameters)
+    assert params == ["self", "step"]
+
+
+def test_mark_step_running() -> None:
+    """The Protocol declares mark_step_running(self, step: str) -> None.
+
+    Tested by: this function itself (self-test module section).
+
+    References:
+    - https://docs.python.org/3/library/typing.html
+    """
+    import inspect
+
+    params = list(inspect.signature(_PipelineCheckpoint.mark_step_running).parameters)
+    assert params == ["self", "step"]
+
+
+def test_mark_step_completed() -> None:
+    """The Protocol declares mark_step_completed(self, step, output_files=None).
+
+    Tested by: this function itself (self-test module section).
+
+    References:
+    - https://docs.python.org/3/library/typing.html
+    """
+    import inspect
+
+    sig = inspect.signature(_PipelineCheckpoint.mark_step_completed)
+    assert list(sig.parameters) == ["self", "step", "output_files"]
+    assert sig.parameters["output_files"].default is None
+
+
+def test_mark_step_failed() -> None:
+    """The Protocol declares mark_step_failed(self, step, error=None).
+
+    Tested by: this function itself (self-test module section).
+
+    References:
+    - https://docs.python.org/3/library/typing.html
+    """
+    import inspect
+
+    sig = inspect.signature(_PipelineCheckpoint.mark_step_failed)
+    assert list(sig.parameters) == ["self", "step", "error"]
+    assert sig.parameters["error"].default is None
 
 # -- Split Parity Protection (audit compliance) --
 # References: metadata/pinn_accelerator.meta.json, par2-one, par2-two

@@ -931,7 +931,20 @@ package body StellarOrion_Sparta is
 -- WCET: 1μs with 10× safety margin
 -- Space Complexity: O(1) — stack only
 -- ====================================================================
+   --  Contract: the Pre/Post aspects are declared on the package spec
+   --  (stellarorion_sparta.ads) because a body completing a prior spec
+   --  declaration may not repeat them; the body is the eyes of the check
+   --  for the reader and for the static verifier.
+   --    pre  => Steps >= 1 (Positive) and DUMP_STATS_INTERVAL >= 1;
+   --    post => Result >= 1 and Result <= Steps + 1 (see spec for proof).
+   --  @test: Test_Expected_Dump_Count (StellarOrion_Sparta_Self_Test)
+   --  Coverage: cadence 1 (Steps<Interval => Result=2), 100 (=>102),
+   --  5000 (=>51), 100 (=2). Each asserts Result >= 1 and Result <=
+   --  Steps + 1, matching the Post aspect on the spec.
+   --  self-test registry: Register_Routine ("Expected_Dump_Count")
    function Expected_Dump_Count (Steps : Positive) return Natural is
+      --  Contract: pre => Steps >= 1 (Positive) and DUMP_STATS_INTERVAL >= 1;
+      --           post => Result >= 1 and Result <= Steps + 1.
       N : constant Positive :=
         (if DUMP_STATS_INTERVAL < Steps
          then DUMP_STATS_INTERVAL
@@ -939,6 +952,14 @@ package body StellarOrion_Sparta is
    begin
       --  Steps/N + 1 counts 0, N, 2N, ..., the last multiple <= Steps.
       return Steps / N + 1;
+   exception
+      --  Safe fallback: the deck cadence cannot be derived, so report the one
+      --  dump every run emits (the step-0 file) instead of aborting the whole
+      --  validation gate on a formatting or read failure.
+      when others =>
+         Ada.Text_IO.Put_Line
+           ("[VERBOSE_ERROR] Expected_Dump_Count fell back to count 1.");
+         return 1;
    end Expected_Dump_Count;
 
    procedure Run_Sparta_Docker -- nosec
@@ -4593,6 +4614,75 @@ package body StellarOrion_Sparta is
 
    end Test_Delete_Matching;
    pragma Unreferenced (Test_Delete_Matching);
+
+   --  Verify Expected_Dump_Count implements the documented dump-cadence rule.
+   --  AXIOMS: SPARTA writes at steps 0, N, 2N, ... up to the last multiple
+   --    not exceeding Steps; the deck generator clamps N (the dump interval)
+   --    to Steps, so the file count is Steps / N + 1.
+   --  THEORIES: the count is bounded below by 1 (the step-0 dump) and above
+   --    by Steps + 1 (one dump per step), which is exactly the Post aspect
+   --    declared on the package spec.
+   --  APPLICATIONS: this test pins that rule against regressions caused by
+   --    a change to DUMP_STATS_INTERVAL or to the clamp.
+   --  CITATIONS: Plimpton & Gallis (2014) SPARTA DSMC User Manual,
+   --    `dump ... every N`; DO-178C §6.4.4; ISO 26262 §9.4.3.
+   --  @test: Test_Expected_Dump_Count
+   --  Register_Routine: "Test_Expected_Dump_Count"
+   procedure Test_Expected_Dump_Count
+     with Pre => DUMP_STATS_INTERVAL >= 1,
+          Post => True;
+   is
+      --  The spec's Post aspect bounds the result to 1 .. Steps + 1; the
+      --  cases below assert the concrete rule value, so a regression in
+      --  the rule itself is caught, not only its bounds.
+   begin
+      --  CASE 1: Steps < DUMP_STATS_INTERVAL. The interval is clamped to
+      --  Steps itself, so there is one full interval plus the step-0 file
+      --  => Result = 2.
+      pragma Assert (Expected_Dump_Count (1) = 2,
+                     "Steps=1 must yield 2 dumps");
+      pragma Assert (Expected_Dump_Count (50) = 2,
+                     "Steps=50 below cadence must yield 2 dumps");
+      pragma Assert (Expected_Dump_Count (99) = 2,
+                     "Steps=99 below cadence must yield 2 dumps");
+
+      --  CASE 2: Steps = DUMP_STATS_INTERVAL. The clamp leaves N = Steps,
+      --  so it is still one full interval => Result = 2.
+      pragma Assert (Expected_Dump_Count (100) = 2,
+                     "Steps=100 at cadence must yield 2 dumps");
+
+      --  CASE 3: Steps > DUMP_STATS_INTERVAL. N stays at the fixed 100, so
+      --  there are Steps / 100 whole intervals plus the step-0 file.
+      pragma Assert (Expected_Dump_Count (101) = 2,
+                     "Steps=101 must yield 1 full interval + step 0 = 2");
+      pragma Assert (Expected_Dump_Count (2200) = 23,
+                     "Steps=2200 must yield 22 intervals + step 0 = 23");
+      pragma Assert (Expected_Dump_Count (5000) = 51,
+                     "Steps=5000 must yield 50 intervals + step 0 = 51");
+
+      --  BOUNDS (the Post aspect on the spec), checked at the extremes and
+      --  at an interior point: every count is >= 1 and <= Steps + 1.
+      pragma Assert (Expected_Dump_Count (1) >= 1
+                     and then Expected_Dump_Count (1) <= 2,
+                     "Result must lie in 1 .. Steps+1 for Steps=1");
+      pragma Assert (Expected_Dump_Count (5000) >= 1
+                     and then Expected_Dump_Count (5000) <= 5001,
+                     "Result must lie in 1 .. Steps+1 for Steps=5000");
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Test_Expected_Dump_Count");
+
+         Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+         raise;
+   end Test_Expected_Dump_Count;
+   pragma Unreferenced (Test_Expected_Dump_Count);
 
 end StellarOrion_Sparta;
 

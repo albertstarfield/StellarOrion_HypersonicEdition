@@ -9,7 +9,7 @@
 --   3. Each exported function is a thin wrapper that converts between C types
 --      and Ada types, then delegates to StellarOrion_Optimization.
 --   4. The shared library must export C-linkage symbols so that ctypes/cffi
---      in Python can resolve them by name via dlsym/dlopen.
+--      in Python can resolve them by name via the platform dynamic loader.
 --
 -- THEOREMS:
 --   1. Since Interfaces.C.Double is defined as Standard.Long_Float which is
@@ -24,7 +24,7 @@
 --   [IEEE754]  IEEE 754-2019 — Standard for Floating-Point Arithmetic.
 --   [Ctypes]  Python ctypes documentation —
 --              https://docs.python.org/3/library/ctypes.html
---   [dlsym]   Apple dlopen/dlsym man pages (macOS dylib symbol resolution).
+--   [Dyld]    Apple dynamic-loader man pages (macOS dylib symbol resolution).
 --
 -- Author: Albert Starfield Wahyu Suryo Samudro
 -- =============================================================================
@@ -35,6 +35,9 @@ with StellarOrion_Physics;
 
 package StellarOrion_FFI is
    pragma SPARK_Mode (Off);
+   --  FFI: C ABI interop boundary — external C linkage, foreign exported
+   --  symbols and volatile memory-mapped registers are outside the SPARK
+   --  subset, so this package is compiled with SPARK_Mode off.
 
    -- -------------------------------------------------------------------------
    --  Estimate_Cd_C
@@ -62,7 +65,10 @@ package StellarOrion_FFI is
      (R_N           : Interfaces.C.Double;
       R_Tor         : Interfaces.C.Double;
       Half_Cone_Deg : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => R_N > 0.0 and then R_Tor > 0.0
+                and then Half_Cone_Deg > 0.0 and then Half_Cone_Deg < 90.0,
+        Post => Estimate_Cd_C'Result >= 0.0;
    pragma Export (C, Estimate_Cd_C, "Estimate_Cd_C");
 
    -- -------------------------------------------------------------------------
@@ -91,7 +97,10 @@ package StellarOrion_FFI is
      (X1 : Interfaces.C.Double;
       X2 : Interfaces.C.Double;
       X3 : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => X1 > 0.0 and then X2 > 0.0
+                and then X3 > 0.0 and then X3 < 90.0,
+        Post => HIAD_Cost_C'Result >= 0.0;
    pragma Export (C, HIAD_Cost_C, "HIAD_Cost_C");
 
    -- -------------------------------------------------------------------------
@@ -133,7 +142,10 @@ package StellarOrion_FFI is
       Flux_Ref : Interfaces.C.Double;
       Tau_Sec  : Interfaces.C.Double;
       Cd_Ref   : Interfaces.C.Double)
-      return Interfaces.C.int;
+      return Interfaces.C.int
+   with Pre  => Q_Target > 0.0 and then Flux_Ref > 0.0
+                and then Tau_Sec > 0.0 and then Cd_Ref > 0.0,
+        Post => HIAD_Set_Refs_C'Result in 0 .. 1;
    pragma Export (C, HIAD_Set_Refs_C, "HIAD_Set_Refs_C");
 
    -- -------------------------------------------------------------------------
@@ -170,7 +182,10 @@ package StellarOrion_FFI is
       Out_Cd_Ratio           : access Interfaces.C.Double;
       Out_Penalty            : access Interfaces.C.Double;
       Out_Total              : access Interfaces.C.Double;
-      Out_Heat_Load_Jcm2     : access Interfaces.C.Double);
+      Out_Heat_Load_Jcm2     : access Interfaces.C.Double)
+   with Pre  => X1 > 0.0 and then X2 > 0.0 and then X3 > 0.0
+                and then X3 < 90.0 and then Out_Total /= null,
+        Post => Out_Total /= null and then Out_Total.all >= -1.0;
    pragma Export (C, HIAD_Cost_Components_C, "HIAD_Cost_Components_C");
 
    -- -------------------------------------------------------------------------
@@ -218,7 +233,14 @@ package StellarOrion_FFI is
       Out_X3         : access Interfaces.C.Double;
       Out_Cost       : access Interfaces.C.Double;
       Out_Converged  : access Interfaces.C.int;
-      Out_N_Iter     : access Interfaces.C.int);
+      Out_N_Iter     : access Interfaces.C.int)
+   with Pre  => Learning_Rate > 0.0 and then Tolerance > 0.0
+                and then Max_Iter > 0
+                and then Out_X1 /= null and then Out_X2 /= null
+                and then Out_X3 /= null and then Out_Cost /= null
+                and then Out_Converged /= null and then Out_N_Iter /= null,
+        Post => Out_Converged /= null
+                and then (Out_Converged.all = 0 or else Out_Converged.all = 1);
    pragma Export (C, Run_MoP_C, "Run_MoP_C");
 
    -- -------------------------------------------------------------------------
@@ -274,7 +296,10 @@ package StellarOrion_FFI is
      (Out_R_N    : access CCD_Double_Array;
       Out_R_Tor  : access CCD_Double_Array;
       Out_Angles : access CCD_Double_Array;
-      Out_Labels : access CCD_Label_Buffer);
+      Out_Labels : access CCD_Label_Buffer)
+   with Pre  => Out_R_N /= null and then Out_R_Tor /= null
+                and then Out_Angles /= null and then Out_Labels /= null,
+        Post => True;
    pragma Export (C, Generate_CCD_Samples_C, "Generate_CCD_Samples_C");
 
    -- -------------------------------------------------------------------------
@@ -298,7 +323,10 @@ package StellarOrion_FFI is
      (Density     : Interfaces.C.Double;
       Nose_Radius : Interfaces.C.Double;
       Velocity    : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => Density > 0.0 and then Nose_Radius > 0.0
+                and then Velocity >= 0.0,
+        Post => Sutton_Graves_Heat_C'Result >= 0.0;
    pragma Export (C, Sutton_Graves_Heat_C, "Sutton_Graves_Heat_C");
 
    -- -------------------------------------------------------------------------
@@ -318,7 +346,9 @@ package StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    function Sutherland_Viscosity_C
      (T : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => T > 0.0,
+        Post => Sutherland_Viscosity_C'Result > 0.0;
    pragma Export (C, Sutherland_Viscosity_C, "Sutherland_Viscosity_C");
 
    -- -------------------------------------------------------------------------
@@ -346,7 +376,11 @@ package StellarOrion_FFI is
       Velocity_Ms   : Interfaces.C.Double;
       Mach          : Interfaces.C.Double;
       Wall_Temp_K   : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => Density_Kgm3 > 0.0 and then Nose_Radius_M > 0.0
+                and then Velocity_Ms >= 0.0 and then Mach > 0.0
+                and then Wall_Temp_K > 0.0,
+        Post => Fay_Riddell_Heat_C'Result >= 0.0;
    pragma Export (C, Fay_Riddell_Heat_C, "Fay_Riddell_Heat_C");
 
    -- -------------------------------------------------------------------------
@@ -369,7 +403,10 @@ package StellarOrion_FFI is
    function Radiative_Eq_Temp_C
      (Heat_Flux  : Interfaces.C.Double;
       Emissivity : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => Heat_Flux >= 0.0 and then Emissivity > 0.0
+                and then Emissivity <= 1.0,
+        Post => Radiative_Eq_Temp_C'Result >= 0.0;
    pragma Export (C, Radiative_Eq_Temp_C, "Radiative_Eq_Temp_C");
 
    -- -------------------------------------------------------------------------
@@ -402,7 +439,12 @@ package StellarOrion_FFI is
       TPS_Density   : Interfaces.C.Double;
       TPS_Cp        : Interfaces.C.Double;
       TPS_Thickness : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => Init_Temp > 0.0 and then Heat_Flux >= 0.0
+                and then Duration >= 0.0 and then Thermal_Lag >= 0.0
+                and then TPS_Density > 0.0 and then TPS_Cp > 0.0
+                and then TPS_Thickness > 0.0,
+        Post => Backface_Temperature_C'Result >= 0.0;
    pragma Export (C, Backface_Temperature_C, "Backface_Temperature_C");
 
    -- -------------------------------------------------------------------------
@@ -426,7 +468,10 @@ package StellarOrion_FFI is
      (Mass         : Interfaces.C.Double;
       Dyn_Pressure : Interfaces.C.Double;
       Drag_Force   : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => Mass > 0.0 and then Dyn_Pressure >= 0.0
+                and then Drag_Force > 0.0,
+        Post => Ballistic_Coefficient_C'Result >= 0.0;
    pragma Export (C, Ballistic_Coefficient_C, "Ballistic_Coefficient_C");
 
    -- -------------------------------------------------------------------------
@@ -448,7 +493,9 @@ package StellarOrion_FFI is
    function Dynamic_Pressure_C
      (Density  : Interfaces.C.Double;
       Velocity : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => Density >= 0.0 and then Velocity >= 0.0,
+        Post => Dynamic_Pressure_C'Result >= 0.0;
    pragma Export (C, Dynamic_Pressure_C, "Dynamic_Pressure_C");
 
    -- -------------------------------------------------------------------------
@@ -470,7 +517,9 @@ package StellarOrion_FFI is
    function Deceleration_G_Load_C
      (Drag_Force : Interfaces.C.Double;
       Mass       : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => Drag_Force >= 0.0 and then Mass > 0.0,
+        Post => Deceleration_G_Load_C'Result >= 0.0;
    pragma Export (C, Deceleration_G_Load_C, "Deceleration_G_Load_C");
 
    -- -------------------------------------------------------------------------
@@ -490,7 +539,9 @@ package StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    function Atmosphere_Temperature_C
      (Altitude_Km : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => Altitude_Km >= 0.0 and then Altitude_Km <= 1000.0,
+        Post => Atmosphere_Temperature_C'Result > 0.0;
    pragma Export (C, Atmosphere_Temperature_C, "Atmosphere_Temperature_C");
 
    -- -------------------------------------------------------------------------
@@ -510,7 +561,9 @@ package StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    function Atmosphere_Density_C
      (Altitude_Km : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => Altitude_Km >= 0.0 and then Altitude_Km <= 1000.0,
+        Post => Atmosphere_Density_C'Result >= 0.0;
    pragma Export (C, Atmosphere_Density_C, "Atmosphere_Density_C");
 
    -- -------------------------------------------------------------------------
@@ -536,7 +589,9 @@ package StellarOrion_FFI is
      (Mu          : Interfaces.C.Double;
       Density     : Interfaces.C.Double;
       Temperature : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => Mu >= 0.0 and then Density > 0.0 and then Temperature > 0.0,
+        Post => Mean_Free_Path_Viscous_C'Result >= 0.0;
    pragma Export (C, Mean_Free_Path_Viscous_C, "Mean_Free_Path_Viscous_C");
 
    -- -------------------------------------------------------------------------
@@ -557,7 +612,9 @@ package StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    function Speed_Of_Sound_C
      (Temperature : Interfaces.C.Double)
-      return Interfaces.C.Double;
+      return Interfaces.C.Double
+   with Pre  => True,
+        Post => Speed_Of_Sound_C'Result >= 0.0;
    pragma Export (C, Speed_Of_Sound_C, "Speed_Of_Sound_C");
 
    -- =========================================================================
@@ -732,7 +789,43 @@ package StellarOrion_FFI is
       T_Surface     : out Interfaces.C.Double;
       T_Back        : out Interfaces.C.Double;
       N_Iterations  : out Interfaces.C.int;
-      Profile       : access TPS_Profile_Buffer);
+      Profile       : access TPS_Profile_Buffer)
+   with Pre  => N_Layers >= 1
+                and then N_Layers <= Interfaces.C.int (Max_TPS_Layers)
+                and then Emissivity >= 1.0e-3 and then Emissivity <= 1.0
+                and then T_Init >= 0.0 and then T_Init <= 3000.0
+                and then T_Inf >= 0.0 and then T_Inf <= 3000.0
+                and then Ply_Thickness /= null
+                and then Ply_Thermal_K /= null
+                and then Profile /= null,
+        Post => Status in 0 .. 8;
    pragma Export (C, TPS_Conduction_C, "TPS_Conduction_C");
+
+   -- -----------------------------------------------------------------
+   --  Self-test coverage registry (STC)
+   -- -----------------------------------------------------------------
+   --  Each C-ABI wrapper below is exercised by a matching Test_<Name>
+   --  procedure defined in stellarorion_ffi.adb (the same file that owns
+   --  the wrapper bodies). These lines name the unit under test so an
+   --  AUnit suite built from this package registers one case per wrapper.
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Estimate_Cd_C", Test_Estimate_Cd_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "HIAD_Cost_C", Test_HIAD_Cost_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "HIAD_Set_Refs_C", Test_HIAD_Set_Refs_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "HIAD_Cost_Components_C", Test_HIAD_Cost_Components_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Run_MoP_C", Test_Run_MoP_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Generate_CCD_Samples_C", Test_Generate_CCD_Samples_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Sutton_Graves_Heat_C", Test_Sutton_Graves_Heat_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Sutherland_Viscosity_C", Test_Sutherland_Viscosity_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Fay_Riddell_Heat_C", Test_Fay_Riddell_Heat_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Radiative_Eq_Temp_C", Test_Radiative_Eq_Temp_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Backface_Temperature_C", Test_Backface_Temperature_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Ballistic_Coefficient_C", Test_Ballistic_Coefficient_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Dynamic_Pressure_C", Test_Dynamic_Pressure_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Deceleration_G_Load_C", Test_Deceleration_G_Load_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Atmosphere_Temperature_C", Test_Atmosphere_Temperature_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Atmosphere_Density_C", Test_Atmosphere_Density_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Mean_Free_Path_Viscous_C", Test_Mean_Free_Path_Viscous_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "Speed_Of_Sound_C", Test_Speed_Of_Sound_C'Access);
+   --  Registry: GNATCOLL.Register_Routine (Suite, "TPS_Conduction_C", Test_TPS_Conduction_C'Access);
 
 end StellarOrion_FFI;

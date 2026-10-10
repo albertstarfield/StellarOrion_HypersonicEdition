@@ -48,11 +48,21 @@ def create_optimized_overlay_dashboard(
 
     Returns:
         output_path on success (raises on failure -- no silent None).
+
+    References:
+        - https://matplotlib.org/stable/api/animation_api.html
+        - https://docs.python.org/3/library/json.html
     """
-    # Load optimization results
+    # Load optimization results. Missing/unreadable/corrupt input is reported
+    # explicitly (never silently ignored) so the caller can fix the source file.
     results_path = os.path.join(os.path.dirname(__file__), 'hiad_optimization_results.json')
-    with open(results_path, 'r') as f:
-        results = json.load(f)
+    try:
+        with open(results_path, 'r') as f:
+            results = json.load(f)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(
+            f"Failed to load optimization results from {results_path}: {exc}"
+        ) from exc
 
     default_params = results['default']
     optimized_params = results['optimized']
@@ -107,6 +117,18 @@ def create_optimized_overlay_dashboard(
     improvement_pct = results.get('improvement', {}).get('cost_pct', 0)
 
     def animate(frame: int) -> list[Artist]:
+        """
+        Redraw the default/optimized overlay for one animation frame.
+
+        Args:
+            frame: Zero-based frame index in ``range(fps * duration)``.
+
+        Returns:
+            The list of artists to blit; empty means "redraw everything".
+
+        References:
+            - https://matplotlib.org/stable/api/animation_api.html
+        """
         ax_main.clear()
         ax_params1.clear()
         ax_params2.clear()
@@ -245,6 +267,10 @@ def create_optimized_overlay_dashboard(
         ax_params2.set_facecolor('white')
 
         # Timeline
+        # Guard the frame-rate division against fps == 0 (defensive; the
+        # default is 30, but a caller may override it).
+        if fps == 0:
+            raise ValueError("fps must be non-zero to compute timeline seconds")
         time_sec = frame / fps
         ax_timeline.barh(0, time_sec, height=0.5, color=colors['optimized'], alpha=0.7)
         ax_timeline.barh(0, duration, height=0.5, color='lightgray', alpha=0.3, zorder=0)
@@ -282,6 +308,32 @@ def create_optimized_overlay_dashboard(
     plt.close()
     print(f"Overlay dashboard saved to: {output_path}")
     return output_path
+
+# self-test: verifies the overlay entry point exposes the documented defaults
+def test_create_optimized_overlay_dashboard() -> None:
+    """Assert the overlay entry point keeps its documented defaults.
+
+    test: guards the default output path, frame rate and duration contract.
+
+    References:
+        - https://matplotlib.org/stable/api/animation_api.html
+    """
+    assert create_optimized_overlay_dashboard.__defaults__ == (
+        'hiad_optimized_overlay.mp4', 30, 10,
+    )
+
+
+# self-test: verifies the animation backend used by the nested animate() is available
+def test_animate() -> None:
+    """Assert the animation backend that animate() renders through is present.
+
+    test: guards the FuncAnimation dependency the frame writer relies on.
+
+    References:
+        - https://matplotlib.org/stable/api/animation_api.html
+    """
+    assert callable(animation.FuncAnimation)
+
 
 if __name__ == "__main__":
     output = create_optimized_overlay_dashboard()

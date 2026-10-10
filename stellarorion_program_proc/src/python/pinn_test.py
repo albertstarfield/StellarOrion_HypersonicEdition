@@ -91,10 +91,18 @@ class _Predictor(Protocol):
     """The inference surface of pinn_accelerator.PINNAccelerator used by this file."""
 
     def predict_gap_fill(self, query_points: np.ndarray) -> np.ndarray:
-        """Predict the refined field at the given query points."""
+        """Predict the refined field [rho, vx, vy, T] at the given query points.
+
+        References:
+            - https://deepxde.readthedocs.io/en/latest/modules/deepxde.html
+        """
 
     def predict_full_state(self, query_points: np.ndarray) -> np.ndarray:
-        """Predict [rho, vx, vy, T, p] at the given query points."""
+        """Predict [rho, vx, vy, T, p] at the given query points.
+
+        References:
+            - https://deepxde.readthedocs.io/en/latest/modules/deepxde.html
+        """
 
 
 def run_baseline_validation(
@@ -659,6 +667,34 @@ def test_get_err() -> None:
     assert get_err(90.0, 100.0) == 10.0
     assert get_err(5.0, 0.0) == 0
     assert get_err(0.0, -1.0) == 0
+
+
+def test_predict_gap_fill() -> None:
+    """_Predictor declares predict_gap_fill(query_points) -> ndarray.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://deepxde.readthedocs.io/en/latest/modules/deepxde.html
+    """
+    import inspect
+
+    sig = inspect.signature(_Predictor.predict_gap_fill)
+    assert list(sig.parameters) == ["self", "query_points"]
+
+
+def test_predict_full_state() -> None:
+    """_Predictor declares predict_full_state(query_points) -> ndarray.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://deepxde.readthedocs.io/en/latest/modules/deepxde.html
+    """
+    import inspect
+
+    sig = inspect.signature(_Predictor.predict_full_state)
+    assert list(sig.parameters) == ["self", "query_points"]
 
 
 def test_main_help_exits_zero() -> None:

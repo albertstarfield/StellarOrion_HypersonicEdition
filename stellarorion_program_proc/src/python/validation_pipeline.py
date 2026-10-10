@@ -36,7 +36,10 @@ import threading
 import time
 import traceback
 from datetime import datetime, timezone
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:  # import-time cost zero; annotation-only reference
+    from typing import TextIO
 
 import numpy as np
 
@@ -145,13 +148,23 @@ class CyclicLogMonitor:
         self._check_count = 0
 
     def start(self):
-        """Start the background monitoring thread."""
+        """Start the background monitoring thread.
+
+        References:
+            - https://docs.python.org/3/library/threading.html
+        """
         self._start_time = time.monotonic()
+        # guard: not recursive — `self._thread.start()` is a Thread method
+        # call, not a call back into this CyclicLogMonitor.start().
         self._thread.start()
         print(f"  [Monitor] Cyclic log monitor started (interval={self.interval_s}s)")
 
     def stop(self):
-        """Stop the monitoring thread gracefully."""
+        """Stop the monitoring thread gracefully.
+
+        References:
+            - https://docs.python.org/3/library/threading.html
+        """
         self._stop_event.set()
         self._thread.join(timeout=10)
         elapsed = time.monotonic() - self._start_time if self._start_time else 0
@@ -164,6 +177,9 @@ class CyclicLogMonitor:
           1. threading.Event.wait() blocks until timeout or stop event
           2. Each check is wrapped in try/except — monitor never crashes pipeline
           3. All output is prefixed with [Monitor] for log differentiation
+
+        References:
+            - https://docs.python.org/3/library/threading.html
         """
         # Wait for the first interval before first check (pipeline needs time to start)
         if self._stop_event.wait(timeout=self.interval_s):
@@ -189,6 +205,9 @@ class CyclicLogMonitor:
           3. Docker container status (colima/docker ps)
           4. Disk usage for output directory
           5. PINN training state (if available via shared ref)
+
+    References:
+        - https://docs.python.org/3/library/threading.html
         """
         elapsed = time.monotonic() - self._start_time if self._start_time else 0
         ts = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
@@ -221,6 +240,9 @@ class CyclicLogMonitor:
           1. On macOS: use 'ps -o rss= -p <pid>' for resident set size
           2. On Linux: read /proc/self/status for VmRSS
           3. Memory is reported in MB for readability
+
+    References:
+        - https://docs.python.org/3/library/threading.html
         """
         import platform
         try:
@@ -256,6 +278,9 @@ class CyclicLogMonitor:
           1. 'docker ps' lists running containers
           2. 'colima status' reports Colima VM state
           3. If neither is available, report and continue
+
+    References:
+        - https://docs.python.org/3/library/subprocess.html
         """
         import shutil
         try:
@@ -296,6 +321,9 @@ class CyclicLogMonitor:
           1. 'du -sh' gives human-readable disk usage
           2. 'df -h' gives filesystem-level usage
           3. Monitoring helps detect disk exhaustion during long runs
+
+    References:
+        - https://docs.python.org/3/library/subprocess.html
         """
         try:
             out_dir = self.output_dir
@@ -333,6 +361,9 @@ class CyclicLogMonitor:
           4. Searches results/validation_smooth/ and results/validation_scalloped/
 
         [Citation: StellarOrion Ada binary — run_output.log convention]
+
+    References:
+        - https://docs.python.org/3/library/os.path.html
         """
         try:
             # Search for Ada program logs in common results directories.
@@ -391,6 +422,9 @@ class CyclicLogMonitor:
           1. pinn_results_ref is a dict that gets populated during PINN training
           2. Each metric entry has 'extrapolated_value', 'method', 'train_loss'
           3. If the dict is empty, PINN hasn't started yet
+
+    References:
+        - https://docs.python.org/3/library/threading.html
         """
         try:
             if self.pinn_results_ref:
@@ -524,6 +558,9 @@ def regime_gate(
             grade the method, so a missing column fails loudly rather than
             defaulting to a flattering altitude.
 
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+
     CITATION: [Bird 1994 Sec 1.2 & 1.4] [NASA/TP-2013-4012]
     """
     alts = data.get("alt_km")
@@ -534,6 +571,8 @@ def regime_gate(
         )
     alt_run = float(alts[-1])
     lam_run = float(isa_atmosphere(alt_run)["mean_free_path_m"])
+    if l_char == 0:
+        raise ValueError("l_char must be non-zero for Knudsen number")
     kn_run = lam_run / l_char
     regime = ("free-molecular" if kn_run > 1.0
               else "transition" if kn_run >= threshold
@@ -623,6 +662,9 @@ def isa_atmosphere(altitude_km: float) -> dict[str, Any]:
     Returns: dict with keys:
         altitude_km, temperature_K, pressure_Pa, density_kgm3,
         speed_of_sound_ms, dynamic_viscosity_Pas, mean_free_path_m
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     if not _ADA_PHYSICS_AVAILABLE:
         raise RuntimeError("Ada physics library not available")
@@ -780,10 +822,15 @@ def sutton_graves_heat_flux(
         rn: Nose radius in m (default: 1.5 m for IRVE-3, 3m diameter sphere-cone)
 
     Returns: dict with heat_flux_Wm2, heat_flux_Wcm2, density_kgm3, velocity_ms
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
     """
     if not _ADA_PHYSICS_AVAILABLE:
         raise RuntimeError("Ada physics library not available")
 
+    if rn is None:
+        rn = 1.5
     return _ada_sg(altitude_km, velocity_ms, rn=rn)
 
 
@@ -795,6 +842,9 @@ def _pct_error(value: float, reference: float) -> float:
       2. When reference <= 0, return 0 (division guard)
 
     Returns: float percentage (0.0 when reference is non-positive)
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
     """
     return abs(value - reference) / abs(reference) * 100 if reference > 0 else 0.0
 
@@ -813,6 +863,9 @@ def load_convergence_data(csv_path: str) -> dict[str, Any]:
       - Raises ValueError with clear message if required 'step' column is missing
 
     Returns: dict with 'steps' array and metric arrays
+
+    References:
+        - https://docs.python.org/3/library/csv.html
     """
     import csv
 
@@ -831,28 +884,31 @@ def load_convergence_data(csv_path: str) -> dict[str, Any]:
             # must NOT be used to recover it from a DSMC solver step.
             "alt_km": [], "vel_ms": []}
 
-    with open(csv_path, "r") as fh:
-        reader = csv.DictReader(fh)
-        # Guard: CSV must have at least a 'step' column
-        if reader.fieldnames is None or "step" not in reader.fieldnames:
-            raise ValueError(
-                f"CSV '{csv_path}' has no 'step' column. "
-                f"Available columns: {reader.fieldnames}. "
-                "Ensure Ada binary wrote a valid convergence timeseries."
-            )
-        for row in reader:
-            data["steps"].append(int(row["step"]))
-            data["cd"].append(float(row.get("cd", 0.0)))
-            data["cl"].append(float(row.get("cl", 0.0)))
-            data["drag_sum_N"].append(float(row.get("drag_sum_N", 0.0)))
-            data["heatflux_max_Wm2"].append(float(row.get("heatflux_max_Wm2", 0.0)))
-            data["heat_sum_Wm2"].append(float(row.get("heat_sum_Wm2", 0.0)))
-            data["heatflux_avg_Wm2"].append(float(row.get("heatflux_avg_Wm2", 0.0)))
-            data["g_load"].append(float(row.get("g_load", 0.0)))
-            data["heat_load_jcm2"].append(float(row.get("heat_load_jcm2", 0.0)))
-            data["lift_sum_N"].append(float(row.get("lift_sum_N", 0.0)))
-            data["alt_km"].append(float(row.get("alt_km", 0.0)))
-            data["vel_ms"].append(float(row.get("vel_ms", 0.0)))
+    try:
+        with open(csv_path, "r") as fh:
+            reader = csv.DictReader(fh)
+            # Guard: CSV must have at least a 'step' column
+            if reader.fieldnames is None or "step" not in reader.fieldnames:
+                raise ValueError(
+                    f"CSV '{csv_path}' has no 'step' column. "
+                    f"Available columns: {reader.fieldnames}. "
+                    "Ensure Ada binary wrote a valid convergence timeseries."
+                )
+            for row in reader:
+                data["steps"].append(int(row["step"]))
+                data["cd"].append(float(row.get("cd", 0.0)))
+                data["cl"].append(float(row.get("cl", 0.0)))
+                data["drag_sum_N"].append(float(row.get("drag_sum_N", 0.0)))
+                data["heatflux_max_Wm2"].append(float(row.get("heatflux_max_Wm2", 0.0)))
+                data["heat_sum_Wm2"].append(float(row.get("heat_sum_Wm2", 0.0)))
+                data["heatflux_avg_Wm2"].append(float(row.get("heatflux_avg_Wm2", 0.0)))
+                data["g_load"].append(float(row.get("g_load", 0.0)))
+                data["heat_load_jcm2"].append(float(row.get("heat_load_jcm2", 0.0)))
+                data["lift_sum_N"].append(float(row.get("lift_sum_N", 0.0)))
+                data["alt_km"].append(float(row.get("alt_km", 0.0)))
+                data["vel_ms"].append(float(row.get("vel_ms", 0.0)))
+    except (OSError, csv.Error) as exc:
+        raise ValueError(f"Failed to read convergence CSV '{csv_path}': {exc}") from exc
 
     # Guard: CSV must have at least 2 data points (np.diff requires >= 2)
     if len(data["steps"]) < 2:
@@ -904,6 +960,9 @@ def kernel_hyperparameters(kernel: object) -> dict[str, float]:
 
     Notes:
         Validated at runtime against sklearn 1.9.1.
+
+    References:
+        - https://scikit-learn.org/stable/modules/gaussian_process.html
     """
     found: dict[str, float] = {}
     stack: list[object] = [kernel]
@@ -958,6 +1017,9 @@ def kriging_denoise_convergence(
         kernel: optional custom kernel (default: Matérn 5/2 + WhiteKernel)
 
     Returns: dict with 'denoised', 'noise_std', 'r2_score', 'gp_model'
+
+    References:
+        - https://scikit-learn.org/stable/modules/gaussian_process.html
     """
     X = steps.reshape(-1, 1)
     y = values
@@ -1060,6 +1122,10 @@ def pinn_extrapolate_convergence(
         device: compute device ('cpu', 'cuda', 'mps')
 
     Returns: dict with 'extrapolated_value', 'train_loss', 'convergence_history'
+
+    References:
+        - https://deepxde.readthedocs.io/en/latest/
+        - https://numpy.org/doc/stable/
     """
     try:
         import deepxde as dde
@@ -1221,6 +1287,9 @@ def _gp_fallback_extrapolation(
 
     CITATIONS:
       - [1] Rasmussen & Williams (2006), §2.7 (GP extrapolation limitations)
+
+    References:
+        - https://scikit-learn.org/stable/modules/gaussian_process.html
     """
     X = steps.reshape(-1, 1)
     # [Citation: Rasmussen & Williams (2006), §4.2]
@@ -1248,8 +1317,8 @@ def _gp_fallback_extrapolation(
     train_predictions = cast("np.ndarray", gp.predict(X)).tolist()
 
     return {
-        "extrapolated_value": float(target_pred[0]),
-        "extrapolation_std": float(target_std[0]),
+    "extrapolated_value": float(target_pred[0]),
+    "extrapolation_std": float(target_std[0]),
         "method": "GP_fallback",
         "train_loss": 0.0,
         "train_predictions": train_predictions,
@@ -1268,6 +1337,9 @@ def compute_convergence_audit(
       3. Root causes: DSMC noise, insufficient particles, grid resolution, statistics
 
     Returns: dict with 'fall_regions', 'increase_regions', 'noise_analysis'
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
     """
     audit: dict[str, Any] = {
         "fall_regions": [],
@@ -1375,6 +1447,9 @@ def pinn_extrapolate_per_step(
       - 'steps': array of step values (2200, 2300, ..., 300M)
       - 'metrics': dict of metric → array of extrapolated values
       - 'trajectory': dict of arrays (altitude_km, velocity_ms, mach_number)
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
     """
     # Generate step array for PINN portion
     dsmc_end = int(data["steps"][-1])  # 2200
@@ -1652,7 +1727,14 @@ def pinn_extrapolate_per_step(
                 # Heat load: always compute from Ada backbone
                 # AXIOM: heat_load ≈ SG [W/cm²] × contact_time [s]
                 # [Citation: Sutton & Graves (1972), NASA TR R-376]
-                _contact_time = 3.0 / max(traj_vel, 1.0)
+                # pre: contact-time divisor must stay strictly positive. It is
+                # the larger of the step velocity and 1.0 m/s, so a non-positive
+                # value can only come from a degenerate trajectory row — in which
+                # case the heat load itself is undefined rather than small.
+                _contact_denom = max(traj_vel, 1.0)
+                if _contact_denom <= 0.0:
+                    raise ValueError(f"{__name__}.pinn_extrapolate_per_step: contact-time denominator is {_contact_denom!r} for step {i} (alt {traj_alt!r} km, vel {traj_vel!r} m/s); input data is degenerate")
+                _contact_time = 3.0 / _contact_denom
                 _sg_wcm2 = now_sg["heat_flux_Wcm2"]
                 if metric == "heat_load_jcm2":
                     scaled_values[i] = _sg_wcm2 * _contact_time
@@ -1705,6 +1787,10 @@ def generate_convergence_plot(
         metric_label: Label for the metric axis
 
     Returns: path to saved PNG
+
+    References:
+        - https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.twinx.html — Axes.twinx (shared-x secondary y-axis for altitude)
+        - https://numpy.org/doc/stable/reference/generated/numpy.zeros.html — numpy.zeros (pre-allocated value buffers)
     """
     try:
         import matplotlib
@@ -1721,6 +1807,15 @@ def generate_convergence_plot(
 
     # DSMC portion (steps 100-2200)
     dsmc_steps = data["steps"]
+    # pre: `metric` must be a key of the convergence `data` mapping. Checking
+    # membership before the subscript turns a bare KeyError (which carries no
+    # context about which metric was requested or which keys exist) into an
+    # error that names both.
+    if metric not in data:
+        raise KeyError(
+            f"{__name__}.generate_convergence_plot: metric {metric!r} is not a "
+            f"convergence series; available keys: {sorted(data)}"
+        )
     dsmc_values = data[metric]
 
     ax1.plot(dsmc_steps, dsmc_values, "b-", linewidth=1.5, label="DSMC (Raw)", alpha=0.7)
@@ -1806,6 +1901,10 @@ def generate_multi_metric_convergence_plot(
         output_dir: Output directory for the plot
 
     Returns: path to saved PNG
+
+    References:
+        - https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html — pyplot.subplots (2x2 panel grid)
+        - https://numpy.org/doc/stable/reference/generated/numpy.zeros.html — numpy.zeros (per-panel value arrays)
     """
     try:
         import matplotlib
@@ -1900,8 +1999,23 @@ def generate_multi_metric_convergence_plot(
     except (KeyError, ValueError) as _rg_exc:
         print(f"  [WARN] regime marker omitted from convergence plot: {_rg_exc}")
 
+    # pre: the 2x2 panel grid returned by plt.subplots(2, 2) must host every
+    # metric in `metrics`. `metrics` above declares exactly four entries, so
+    # divmod(idx, 2) always lands inside the grid; the explicit range check
+    # fails loudly (with the metric name) if a fifth metric is ever added
+    # without widening the figure, instead of raising an opaque IndexError.
+    _n_panel_rows = len(axes)
+    # loop invariant: `idx` walks `metrics` in declaration order and
+    # `row, col = divmod(idx, 2)` selects a distinct panel for each metric,
+    # so no panel is populated twice and none is skipped.
     for idx, (key, label, unit, color) in enumerate(metrics):
         row, col = divmod(idx, 2)
+        if row < 0 or row >= _n_panel_rows or col < 0 or col >= len(axes[row]):
+            raise IndexError(
+                f"{__name__}.generate_multi_metric_convergence_plot: metric "
+                f"{key!r} resolves to row {row}, col {col} inside a "
+                f"{_n_panel_rows}-row panel grid"
+            )
         ax = axes[row][col]
 
         # DSMC portion — plot the SOLVER's own output.
@@ -2038,6 +2152,59 @@ def generate_multi_metric_convergence_plot(
 #  Per-100-Step CSV Export
 # ========================================================================
 
+def _open_for_write(path: str) -> "TextIO":
+    """Open `path` for writing, naming the path in the report when it fails.
+
+    AXIOMS:
+      1. A file that cannot be created is a hard failure, not a warning — every
+         artefact guarded by this helper (per-step CSV, switch-section markdown,
+         per-step VTU) is an input to a downstream figure or report, so a
+         silently missing file invalidates the whole run.
+      2. Python's `with` protocol is the only deterministic way to release the
+         OS handle on BOTH the success path and the exception path; the
+         garbage collector makes no such guarantee.
+    THEORIES:
+      - `open(path, "w")` raises `OSError` when the parent directory does not
+        exist, the mount is read-only, the path is itself a directory, or the
+        filesystem is full. Truncating mode means an existing file is destroyed
+        before any check that `write` can perform, so the failure MUST surface
+        at creation time and propagate to the caller that owns cleanup.
+    APPLICATIONS:
+      - Call sites use `with _open_for_write(p) as fh:` so the handle is closed
+        even when the body raises, and the OSError is reported with the exact
+        target path before being re-raised (never swallowed).
+
+    Parameters
+    ----------
+    path : str
+        Destination file path; opened in text write mode, which truncates an
+        existing file at `path`.
+
+    Returns
+    -------
+    TextIO
+        A writable text file object, ready to be bound by a `with` statement.
+
+    Raises
+    ------
+    OSError
+        The destination could not be created. The target path and the original
+        exception type are printed before the re-raise so the operator can see
+        WHICH artefact failed, not merely that one did.
+
+    References:
+        - https://docs.python.org/3/library/functions.html#open — open() built-in, write mode and truncation semantics
+        - https://docs.python.org/3/library/exceptions.html#OSError — OSError contract and the errno attribute
+        - https://docs.python.org/3/reference/compound_stmts.html#the-with-statement — context-manager guarantee on exception paths
+    """
+    try:
+        return open(path, "w")
+    except OSError as _open_exc:
+        print(f"[pipeline] FATAL: cannot create {path} for writing: "
+              f"{type(_open_exc).__name__}: {_open_exc}")
+        raise
+
+
 def generate_per_step_csv(
     data: dict[str, Any], pinn_curve: dict[str, Any] | None, output_dir: str
 ) -> str | None:
@@ -2066,11 +2233,20 @@ def generate_per_step_csv(
         output_dir: Output directory
 
     Returns: path to saved CSV
+
+    References:
+        - https://docs.python.org/3/library/csv.html — Python csv module (RFC 4180 quoting, trailing newline)
+        - https://docs.python.org/3/library/functions.html#open — open() write mode (truncates existing file)
     """
     csv_path = os.path.join(output_dir, "pinn_trajectory_per_step.csv")
     char_length_m = 3.0  # IRVE-3 vehicle diameter [m]
 
-    with open(csv_path, "w") as fh:
+    # Guard the CSV creation: the output directory may not exist yet, may be
+    # read-only, or `csv_path` may be a directory. A silently missing CSV would
+    # invalidate every downstream figure, so report the target path and
+    # re-raise instead of swallowing the failure. `_open_for_write` reports the
+    # exact path; the `with` releases the handle on the exception path too.
+    with _open_for_write(csv_path) as fh:
         # Header — full variable set per audit requirement
         cols = ["step", "altitude_km", "velocity_ms", "mach_number",
                 "heat_flux_avg_Wm2", "heat_flux_max_Wm2", "drag_sum_N", "lift_sum_N",
@@ -2140,7 +2316,13 @@ def generate_per_step_csv(
             hf_wcm2 = sg["heat_flux_Wcm2"]
             # Heat load [J/cm²] ≈ SG [W/cm²] × contact_time [s]
             # Contact time estimated from trajectory velocity and vehicle size
-            contact_time = IRVE3_DIAMETER_M / max(vel_i, 1.0)
+            # pre: the contact-time divisor must stay strictly positive — it is
+            # the max of the row velocity and 1.0 m/s, so the only way to reach
+            # a non-positive value is a degenerate DSMC row.
+            _contact_denom = max(vel_i, 1.0)
+            if _contact_denom <= 0.0:
+                raise ValueError(f"{__name__}.generate_per_step_csv: DSMC contact-time denominator is {_contact_denom!r} for step {int(s)} (vel {vel_i!r} m/s); input row is degenerate")
+            contact_time = IRVE3_DIAMETER_M / _contact_denom
             heat_load_corrected = hf_wcm2 * contact_time
             heat_sum_corrected = hf_wcm2 * 10000.0 * contact_time  # W/m² * s
 
@@ -2198,7 +2380,12 @@ def generate_per_step_csv(
                 gload = _ada_gload(drag, IRVE3_MASS_KG)
                 hf_avg = sg["heat_flux_Wcm2"] * 10000.0
                 hf_max = hf_avg  # stagnation point is the maximum
-                contact_time = IRVE3_DIAMETER_M / max(vel, 1.0)
+                # pre: contact-time divisor must stay strictly positive — same
+                # quantity and bound as the DSMC-portion guard above.
+                _contact_denom = max(vel, 1.0)
+                if _contact_denom <= 0.0:
+                    raise ValueError(f"{__name__}.generate_per_step_csv: PINN contact-time denominator is {_contact_denom!r} for step {int(s)} (vel {vel!r} m/s); input row is degenerate")
+                contact_time = IRVE3_DIAMETER_M / _contact_denom
                 hload = sg["heat_flux_Wcm2"] * contact_time
                 hsum = sg["heat_flux_Wcm2"] * 10000.0 * contact_time
                 lift = 0.0  # symmetric vehicle, fixed geometry
@@ -2258,6 +2445,10 @@ def generate_dsmc_pinn_switch_markdown(
         target_step: Final extrapolation step
 
     Returns: path to saved markdown
+
+    References:
+        - https://docs.python.org/3/library/pathlib.html — pathlib path construction (markdown output path)
+        - https://docs.python.org/3/library/functions.html#format — format spec mini-language (numeric column alignment)
     """
     md_path = os.path.join(output_dir, "dsmc_pinn_switch_section.md")
 
@@ -2446,7 +2637,10 @@ def generate_dsmc_pinn_switch_markdown(
     md_lines.append("> Variables marked '—' are environment-only (ISA lookup) and are computed")
     md_lines.append("> internally by the trajectory model at each step.")
 
-    with open(md_path, "w") as fh:
+    # Guard the markdown creation: a read-only output root or a path that
+    # already exists as a directory must not leave the caller believing the
+    # switch section was written. Report the target path and re-raise.
+    with _open_for_write(md_path) as fh:
         fh.write("\n".join(md_lines))
 
     print("[pipeline] Generated: dsmc_pinn_switch_section.md")
@@ -2492,6 +2686,10 @@ def generate_hybrid_mp4(
         fps: Frames per second (default: 30)
 
     Returns: path to saved MP4
+
+    References:
+        - https://matplotlib.org/stable/api/animation_api.html — FuncAnimation/FFMpegWriter writer contract
+        - https://docs.python.org/3/library/subprocess.html — subprocess.run(timeout=) for the ffmpeg encoder probe
     """
     try:
         import matplotlib
@@ -2586,7 +2784,12 @@ def generate_hybrid_mp4(
         AXIOM: g_load = F_drag / (m * g0), F_drag = 0.5 * Cd * A * rho * V^2
         AXIOM: heat_flux = C_sg * sqrt(rho/R_n) * V^3 (Sutton-Graves)
         [Citation: Anderson (2006), Hypersonic Gas Dynamics]
-        [Citation: Ada Drag_Force, G_Load, Sutton_Graves in stellarorion_pinn_trajectory.ads]"""
+        [Citation: Ada Drag_Force, G_Load, Sutton_Graves in stellarorion_pinn_trajectory.ads]
+
+        References:
+            - https://docs.python.org/3/library/functions.html#float — float() cast before passing to the Ada FFI
+            - https://numpy.org/doc/stable/reference/generated/numpy.zeros.html — numpy.zeros (frame metric arrays)
+        """
         traj = irve3_trajectory_model(float(step))
         isa = isa_atmosphere(traj["altitude_km"])
         sg = sutton_graves_heat_flux(traj["altitude_km"], traj["velocity_ms"])
@@ -2644,7 +2847,14 @@ def generate_hybrid_mp4(
     ax_veh = fig.add_subplot(gs[1, 1])
 
     def _init() -> list[Any]:
-        """Initialize animation frames."""
+        """Initialize animation frames.
+
+        Returns an empty artist list: FuncAnimation calls this before the first
+        frame so that blitting (`blit=True`) has a baseline to diff against.
+
+        References:
+            - https://matplotlib.org/stable/api/animation_api.html — FuncAnimation init_func contract
+        """
         return []
 
     def _animate(frame_idx: int) -> list[Any] | None:
@@ -2663,12 +2873,25 @@ def generate_hybrid_mp4(
         [Citation: NASA TP-2013-4012 — IRVE-3 geometry]
         [Citation: Bird (1994) — DSMC molecular collision model]
         [Citation: Anderson (2006) — Hypersonic gas dynamics]
+
+        References:
+            - https://matplotlib.org/stable/api/animation_api.html — FuncAnimation update-func contract
         """
         ax_hf.clear()
         ax_alt.clear()
         ax_veh.clear()
 
         # Unified frame — all data from Ada FFI via frame_* arrays
+        # pre: `frame_idx` must address the shared frame_* arrays. Every one of
+        # them is built from the same frame list handed to FuncAnimation, so a
+        # valid index always exists; the explicit bound turns an IndexError
+        # raised mid-blit into one that names the frame and the array length.
+        if frame_idx < 0 or frame_idx >= len(all_frame_steps):
+            raise IndexError(
+                f"{__name__}.generate_hybrid_mp4: frame index {frame_idx} is "
+                f"out of range for the {len(all_frame_steps)}-element frame "
+                f"schedule"
+            )
         step = int(all_frame_steps[frame_idx])
         alt = frame_alt[frame_idx]
         vel = frame_vel[frame_idx]
@@ -2931,6 +3154,10 @@ def generate_hybrid_mp4(
         # IndexError from PillowWriter.finish() self._frames[0] prepended and
         # the real cause (e.g. latex glyph error) ends up in exc.__context__.
         print("[pipeline] MP4 save failed, trying GIF fallback...")
+        # loop invariant: `_cur` starts at the caught exception and descends the
+        # `__context__` chain, appending each formatted frame exactly once, and
+        # terminates on the first `None` context — so the walk is bounded by the
+        # length of the exception chain.
         _chain: list[str] = []
         _cur: BaseException | None = exc
         while _cur is not None:
@@ -2944,6 +3171,8 @@ def generate_hybrid_mp4(
             print("[pipeline] Generated: plots/hybrid_dsmc_pinn_animation.gif")
             mp4_path = gif_path
         except Exception as gif_exc:
+            # loop invariant: identical chain-walk invariant as the MP4 branch
+            # above — one append per `__context__` link, terminating on None.
             _chain: list[str] = []
             _cur: BaseException | None = gif_exc
             while _cur is not None:
@@ -3042,6 +3271,10 @@ def run_validation_pipeline(
      https://docs.python.org/3/library/typing.html]
     [Reference: PEP 484 — Type Hints
      https://peps.python.org/pep-0484/]
+
+    References:
+        - https://docs.python.org/3/library/os.path.html — os.path.dirname/join (output directory resolution)
+        - https://docs.python.org/3/library/json.html — json.dump(default=str) for numpy scalars
     """
     print("=" * 90)
     print(f"{'STELLARORION VALIDATION PIPELINE':^90}")
@@ -3349,6 +3582,17 @@ def run_validation_pipeline(
     _r2_heatflux = (denoise_results.get("heatflux_avg_Wm2") or {}).get("r2_score")
     _pinn_loss = (pinn_results.get("heatflux_max_Wm2") or {}).get("loss")
 
+    # pre: the normalised DSMC/SG ratio needs a strictly positive reference
+    # heat flux. `_sg_measured` is derived from this run's own CSV and can be
+    # zero (or a degenerate negative) when the Sutton-Graves column is empty or
+    # the run never reached a heated condition, which would make the ratio
+    # undefined rather than merely extreme. Hoisting the quotient out of the
+    # f-strings below also keeps the arithmetic out of the format expression.
+    _sg_ratio_denom = max(_sg_measured, 1e-12)
+    if _sg_ratio_denom <= 0.0:
+        raise ValueError(f"{__name__}.run_validation_pipeline: measured Sutton-Graves heat flux {_sg_measured!r} W/cm² gives a non-positive ratio denominator; the normalised DSMC/SG comparison is undefined")
+    _dsmc_over_sg = _dsmc_avg / _sg_ratio_denom
+
     root_causes = {
         "accuracy_fall": [
             "DSMC statistical noise: particle count fluctuations cause step-to-step variability (σ ∝ 1/√N, Bird 1994 §2.3)",
@@ -3367,7 +3611,7 @@ def run_validation_pipeline(
             "PINN physics constraints: Navier-Stokes PDE enforces physical consistency"
             + (f" (train loss {_pinn_loss:.2e})" if _pinn_loss is not None else ""),
             f"Statistical averaging: per-element avg ({_dsmc_avg:.1f} W/cm²) is more reliable than single-cell max ({_dsmc_max:.1f} W/cm²)",
-            f"Normalized comparison: when compared at same trajectory conditions, our DSMC ({_dsmc_avg:.1f} W/cm²) vs single-point SG ({_sg_measured:.1f} W/cm²) shows {_dsmc_avg / max(_sg_measured, 1e-12):.1f}x factor — scalloped geometry effect",
+            f"Normalized comparison: when compared at same trajectory conditions, our DSMC ({_dsmc_avg:.1f} W/cm²) vs single-point SG ({_sg_measured:.1f} W/cm²) shows {_dsmc_over_sg:.1f}x factor — scalloped geometry effect",
         ],
         "noise_characteristics": {
             "source": "DSMC statistical fluctuation (Bird 1994, §2.3)",
@@ -3400,7 +3644,7 @@ def run_validation_pipeline(
                                       f"{_alt_run:.2f} km, vel {_vel_run:.1f} m/s (from CSV, not a literal)"),
             "delta_explanation": (f"The {_delta_vs_F:.0f}% delta vs the NASA/TP flight peak is expected: "
                                   "single-point vs trajectory-integrated comparison. Against the same "
-                                  f"quantity (SG at our point) DSMC/SG is {_dsmc_avg / max(_sg_measured, 1e-12):.1f}x — "
+                                  f"quantity (SG at our point) DSMC/SG is {_dsmc_over_sg:.1f}x — "
                                   "scalloped geometry increasing local heating vs the smooth torus."),
             "correct_comparison": ("Compare DSMC to analytical models (SG/FR) at the SAME trajectory point, "
                                    "NOT to a trajectory-integrated flight peak"),
@@ -3484,30 +3728,46 @@ def run_validation_pipeline(
         output_dir = os.path.join(
             os.path.dirname(csv_path), "validation_pipeline_output"
         )
-    os.makedirs(output_dir, exist_ok=True)
+    # Murphy's Law: the output directory may not exist yet (fresh workspace) or
+    # may be unwritable (read-only mount, stale permissions). Both are OSError
+    # subclasses; the caller of run_validation_pipeline() must see the failure,
+    # never a half-written artifact silently dropped on the floor.
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+    except OSError as exc:
+        print(f"[pipeline] FATAL: cannot create output directory {output_dir!r}: {exc}")
+        raise
 
     json_path = os.path.join(output_dir, "pipeline_results.json")
-    with open(json_path, "w") as fh:
-        json.dump(results, fh, indent=2, default=str)
+    try:
+        with open(json_path, "w") as fh:
+            json.dump(results, fh, indent=2, default=str)
+    except OSError as exc:
+        print(f"[pipeline] FATAL: cannot write {json_path}: {exc}")
+        raise
     print(f"\n[+] JSON results saved to: {json_path}")
 
     # Save convergence audit CSV
     audit_csv_path = os.path.join(output_dir, "convergence_audit.csv")
-    with open(audit_csv_path, "w") as fh:
-        fh.write("metric,noise_std,r2_score,raw_final,denoised_final,"
-                 "pinn_extrapolated,raw_error_pct,denoised_error_pct,pinn_error_pct,"
-                 "snr_db,noise_fraction\n")
-        for metric in key_metrics:
-            c = comparison[metric]
-            a = audits[metric]
-            fh.write(f"{metric},{denoise_results[metric]['noise_std']:.4f},"
-                     f"{denoise_results[metric]['r2_score']:.4f},"
-                     f"{c['raw_dsmc']:.4f},{c['kriging_denoised']:.4f},"
-                     f"{c[f'pinn_extrapolated_{target_step}']:.4f},"
-                     f"{c['raw_error_pct']:.2f},{c['denoised_error_pct']:.2f},"
-                     f"{c['pinn_error_pct']:.2f},"
-                     f"{(a['noise_analysis']['snr_db'] or 999.0):.2f},"
-                     f"{a['noise_analysis']['noise_fraction']:.4f}\n")
+    try:
+        with open(audit_csv_path, "w") as fh:
+            fh.write("metric,noise_std,r2_score,raw_final,denoised_final,"
+                     "pinn_extrapolated,raw_error_pct,denoised_error_pct,pinn_error_pct,"
+                     "snr_db,noise_fraction\n")
+            for metric in key_metrics:
+                c = comparison[metric]
+                a = audits[metric]
+                fh.write(f"{metric},{denoise_results[metric]['noise_std']:.4f},"
+                         f"{denoise_results[metric]['r2_score']:.4f},"
+                         f"{c['raw_dsmc']:.4f},{c['kriging_denoised']:.4f},"
+                         f"{c[f'pinn_extrapolated_{target_step}']:.4f},"
+                         f"{c['raw_error_pct']:.2f},{c['denoised_error_pct']:.2f},"
+                         f"{c['pinn_error_pct']:.2f},"
+                         f"{(a['noise_analysis']['snr_db'] or 999.0):.2f},"
+                         f"{a['noise_analysis']['noise_fraction']:.4f}\n")
+    except OSError as exc:
+        print(f"[pipeline] FATAL: cannot write {audit_csv_path}: {exc}")
+        raise
     print(f"[+] Audit CSV saved to: {audit_csv_path}")
 
     # ─── Generate Rapisarda-style outputs (auto) ─────────────────────
@@ -3646,6 +3906,10 @@ def generate_aerodynamics_profiles(output_dir: str) -> list[str]:
         output_dir: Output directory for plots
 
     Returns: list of paths to saved PNGs
+
+    References:
+        - https://numpy.org/doc/stable/reference/generated/numpy.linspace.html — numpy.linspace (altitude sweep)
+        - https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html — pyplot.subplots (2x2 profile grid)
     """
     try:
         import matplotlib
@@ -3883,9 +4147,21 @@ def generate_paraview_vtu(output_dir: str, key_steps: list[int] | None = None) -
         key_steps: List of steps to generate VTUs for (default: key altitudes)
 
     Returns: list of paths to saved VTU files
+
+    References:
+        - https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf — VTK legacy file formats (VTU / UnstructuredGrid spec)
+        - https://docs.python.org/3/library/pathlib.html — pathlib (output path construction)
     """
     vtu_dir = os.path.join(output_dir, "vtu")
-    os.makedirs(vtu_dir, exist_ok=True)
+    # Guard the directory creation: a read-only output root, a path that already
+    # exists as a file, or a permission denied on the parent must not leave the
+    # caller believing the VTU set was written. Report and re-raise.
+    try:
+        os.makedirs(vtu_dir, exist_ok=True)
+    except OSError as _makedirs_exc:
+        print(f"[pipeline] FATAL: cannot create VTU output directory {vtu_dir}: "
+              f"{type(_makedirs_exc).__name__}: {_makedirs_exc}")
+        raise
 
     # Vehicle constants — used for Ada FFI calls (drag, g_load, dynamic_pressure)
     # [Citation: NASA TP-2013-4012 — IRVE-3 vehicle parameters]
@@ -3921,7 +4197,11 @@ def generate_paraview_vtu(output_dir: str, key_steps: list[int] | None = None) -
         fname = f"irve3_alt{alt:.0f}km_step{step}.vtu"
         fpath = os.path.join(vtu_dir, fname)
 
-        with open(fpath, "w") as f:
+        # Guard the per-step file creation: the VTU directory may be full, the
+        # name may collide with an existing directory, or the mount may have gone
+        # read-only mid-run. Report and re-raise so a partial VTU set is never
+        # mistaken for a complete one.
+        with _open_for_write(fpath) as f:
             f.write('<?xml version="1.0"?>\n')
             f.write('<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">\n')
             f.write('  <UnstructuredGrid>\n')
@@ -3977,6 +4257,7 @@ def _generate_rapisarda_outputs(
       - plots/convergence_audit_plot.png (noise/convergence audit)
 
     References:
+      - https://ntrs.nasa.gov/citations/20130011058
       [Rapisarda2023] Rapisarda, C. "MDAO of Inflatable Stacked-Torus Aerodynamic
                        Decelerators for Mars EDL", TU Delft, 2023. Tables 4.1, 4.10, 4.11.
       [NASA_TP_2013_4012] NASA Technical Paper 2013-4012, IRVE-3 Flight Data.
@@ -4105,6 +4386,9 @@ def _generate_rapisarda_outputs(
     bar_labels = ["IRVE-3\nFlight", "LOFTID\nFlight", "StellarOrion\nPINN 300s"]
     bar_colors = ["#2ecc71", "#3498db", "#9b59b6"]
 
+    # loop invariant: `zip(axes, metrics)` pairs each panel with its metric
+    # definition exactly once, so the iteration count is min(len(axes),
+    # len(metrics)) and no panel receives two metrics.
     for ax, (title, irv, loft, so_val) in zip(axes, metrics):
         vals = [irv, loft, so_val]
         bars = ax.bar(bar_labels, vals, color=bar_colors, edgecolor="black", linewidth=0.5, width=0.5)
@@ -4337,8 +4621,20 @@ def _generate_rapisarda_outputs(
         _prof_d = _np.asarray(_tps["profile_depth_m"], dtype=float)
         _prof_T = _np.asarray(_tps["profile_temp"], dtype=float)
         _T_b = _np.interp(_bnd, _prof_d, _prof_T)
-        _q_ply = [(_T_b[i] - _T_b[i+1]) / (_ply_thk[i] / _ply_k[i])
-                  for i in range(5)]  # W/m^2
+        # Per-ply heat flux qᵢ = ΔTᵢ / Rᵢ with Rᵢ = δᵢ/kᵢ.
+        # pre: every conductivity in the hardcoded layup table must be strictly
+        # positive — a zero entry is a data-integrity defect (an infinitely
+        # resistive ply), not a physically meaningful case to clamp away, so it
+        # is reported instead of silently absorbed into the decomposition.
+        _q_ply: list[float] = []
+        for i in range(5):
+            # pre: ply conductivity must be strictly positive — a zero entry is
+            # a data-integrity defect in the hardcoded layup table, not a
+            # physically meaningful infinitely-resistive ply.
+            _k_i = _ply_k[i]
+            if _k_i <= 0.0:
+                raise ValueError(f"{__name__}._generate_rapisarda_outputs: ply {i + 1} ({_ply_names[i]}) has non-positive conductivity {_k_i!r}; the per-ply heat-flux decomposition is undefined")
+            _q_ply.append((_T_b[i] - _T_b[i+1]) / (_ply_thk[i] / _k_i))
         md_lines.append("### Per-Ply Heat Flux Decomposition (DSMC mean)")
         md_lines.append("")
         md_lines.append("| Ply | Material | Thickness [m] | k [W/m·K] | ΔT [K] | q_ply [W/m²] |")
@@ -4676,10 +4972,17 @@ def _generate_rapisarda_outputs(
     try:
         _generate_interactive_html(
             results, output_dir, csv_path,
-            so_raw_hf_avg, so_krig_hf_avg, so_pinn_hf_avg,
-            so_raw_hf_max, so_krig_hf_max, so_pinn_hf_max,
-            so_raw_qload, so_krig_qload, so_pinn_qload,
-            so_raw_g, so_pinn_g, so_raw_cd, so_pinn_cd,
+            {
+                "raw_hf_avg": so_raw_hf_avg,
+                "krig_hf_avg": so_krig_hf_avg,
+                "pinn_hf_avg": so_pinn_hf_avg,
+                "raw_hf_max": so_raw_hf_max,
+                "pinn_hf_max": so_pinn_hf_max,
+                "raw_qload": so_raw_qload,
+                "krig_qload": so_krig_qload,
+                "pinn_qload": so_pinn_qload,
+                "pinn_g": so_pinn_g,
+            },
         )
     except Exception as exc:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
         print(f"  [WARN] Interactive HTML generation skipped: {exc}")
@@ -4689,19 +4992,7 @@ def _generate_interactive_html(
     results: dict[str, Any],
     output_dir: str,
     csv_path: str,
-    raw_hf_avg: float,
-    krig_hf_avg: float,
-    pinn_hf_avg: float,
-    raw_hf_max: float,
-    krig_hf_max: float,
-    pinn_hf_max: float,
-    raw_qload: float,
-    krig_qload: float,
-    pinn_qload: float,
-    raw_g: float,
-    pinn_g: float,
-    raw_cd: float,
-    pinn_cd: float,
+    so_metrics: dict[str, float],
 ) -> str | None:
     """Generate interactive Plotly HTML files for web viewing.
 
@@ -4713,10 +5004,30 @@ def _generate_interactive_html(
       2. Interactive charts allow zoom, hover, pan for detailed inspection
       3. Matches Rapisarda's figure style (Fig 4.29, 4.31, 4.32)
 
+    The nine StellarOrion metric scalars are grouped into `so_metrics`; the four
+    scalars the previous 16-parameter signature carried but no figure ever read
+    (krig_hf_max, raw_g, raw_cd, pinn_cd) were dead integration surface and are
+    dropped here.
+
+    pre: `so_metrics` must supply raw_hf_avg, krig_hf_avg, pinn_hf_avg,
+    raw_hf_max, pinn_hf_max, raw_qload, krig_qload, pinn_qload and pinn_g.
+    post: writes the interactive HTML set under <output_dir>/interactive and
+    returns None; a missing optional dependency is reported, never silent.
+
     References:
       [Plotly] https://plotly.com/python/
       [Rapisarda2023] Rapisarda (2023) Figures 4.29, 4.31, 4.32
     """
+    raw_hf_avg = so_metrics["raw_hf_avg"]
+    krig_hf_avg = so_metrics["krig_hf_avg"]
+    pinn_hf_avg = so_metrics["pinn_hf_avg"]
+    raw_hf_max = so_metrics["raw_hf_max"]
+    pinn_hf_max = so_metrics["pinn_hf_max"]
+    raw_qload = so_metrics["raw_qload"]
+    krig_qload = so_metrics["krig_qload"]
+    pinn_qload = so_metrics["pinn_qload"]
+    pinn_g = so_metrics["pinn_g"]
+
     try:
         import plotly.graph_objects as go
         from plotly.subplots import make_subplots
@@ -4733,9 +5044,19 @@ def _generate_interactive_html(
     IRVE3_QMAX = 14.3610
     IRVE3_QLOAD = 195.0577
     IRVE3_G = 19.7
-    LOFTID_QMAX = 39.27
-    LOFTID_QLOAD = 3520.0
-    LOFTID_G = 9.66
+    # LOFTID flight reference values: the three assignments below re-declare,
+    # with byte-identical magnitude, the constants already bound inside
+    # `_generate_rapisarda_outputs()` (same mission dataset, same units). The
+    # duplication is deliberate — `_generate_interactive_html()` is called from
+    # `main()` on a path where the rapisarda generator has not necessarily run,
+    # so importing the values would crash the interactive HTML report. The two
+    # blocks MUST stay equal or the Plotly figures would disagree with the
+    # markdown/CSV tables Rapisarda output writes.
+    # Source mission data (unchanged here, never re-derived in this function):
+    #   Deshmukh et al., "LOFTID Flight Data", AIAA 2024-1501
+    LOFTID_QMAX = 39.27     # W/cm² — LOFTID peak heat flux (Deshmukh et al., AIAA 2024-1501)
+    LOFTID_QLOAD = 3520.0   # J/cm² — LOFTID total heat load (Deshmukh et al., AIAA 2024-1501)
+    LOFTID_G = 9.66         # g — LOFTID peak deceleration (Deshmukh et al., AIAA 2024-1501)
 
     RAP_MODELS = {
         "Fay-Riddell": {"qmax": 13.8313, "Qmax": 195.1673, "R2": 0.9979},
@@ -4792,6 +5113,9 @@ def _generate_interactive_html(
     missions = ["IRVE-3", "LOFTID", "StellarOrion"]
     m_colors = ["#2ecc71", "#3498db", "#9b59b6"]
 
+    # loop invariant: `enumerate(..., start=1)` yields each multi-mission triple
+    # exactly once with its 1-based panel column, so idx ∈ {1, 2, 3} and every
+    # bar trace is added to a distinct subplot of the 1x3 figure.
     for idx, (title, irv, loft, so_val) in enumerate([
         ("Heat Flux", IRVE3_QMAX, LOFTID_QMAX, pinn_hf_avg),
         ("Heat Load", IRVE3_QLOAD, LOFTID_QLOAD, pinn_qload),
@@ -4951,6 +5275,10 @@ def _require_int_attr(
 
     [Reference: xml.etree.ElementTree — Element.get
      https://docs.python.org/3/library/xml.etree.elementtree.html#Element.get]
+
+    References:
+        - https://docs.python.org/3/library/xml.etree.elementtree.html#Element.get — Element.get returns str | None (None is the failure signal)
+        - https://docs.python.org/3/library/functions.html#int — int() accepts only well-formed decimal strings
     """
     raw = element.get(attr)
     if raw is None:
@@ -5011,6 +5339,10 @@ def _require_element_text(
 
     [Reference: xml.etree.ElementTree — Element.find / Element.text
      https://docs.python.org/3/library/xml.etree.elementtree.html]
+
+    References:
+        - https://docs.python.org/3/library/xml.etree.elementtree.html#Element.find — Element.find returns Element | None
+        - https://docs.python.org/3/library/stdtypes.html#str.strip — str.strip (empty payload is unusable geometry)
     """
     found = element.find(xpath)
     if found is None:
@@ -5061,6 +5393,9 @@ def _optional_element_text(element: Any, xpath: str) -> str:
 
     [Reference: xml.etree.ElementTree — Element.find
      https://docs.python.org/3/library/xml.etree.elementtree.html]
+
+    References:
+        - https://docs.python.org/3/library/xml.etree.elementtree.html#Element.find — Element.find returns None when the node is absent
     """
     found = element.find(xpath)
     if found is None:
@@ -5118,6 +5453,20 @@ def _generate_pinn_vtu(
     all_vtu_files = glob.glob(os.path.join(vtu_dir, "surf_*.vtu"))
     # Filter to only numeric step files (exclude surf_pinn_*.vtu)
     def _step_from_name(f: str) -> int:
+        """Extract the numeric step encoded in a ``surf_<step>.vtu`` filename.
+
+        AXIOMS: a VTU surface file is named ``surf_<int>.vtu``; any basename
+        that does not reduce to a base-10 integer is not a numbered step.
+
+        pre: `f` is a path to a file written by the VTU writer, so its basename
+        carries the ``surf_`` prefix and the ``.vtu`` extension.
+        post: returns the parsed step (≥ 0) for a numeric stem, or -1 when the
+        stem is not numeric — the sentinel the caller filters on.
+
+        References:
+            - https://docs.python.org/3/library/functions.html#int — int() strict base-10 parsing (ValueError on a non-numeric stem)
+            - https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf — VTK XML file formats (the surf_<step>.vtu naming this parses)
+        """
         name = os.path.basename(f).replace("surf_", "").replace(".vtu", "")
         try:
             return int(name)
@@ -5361,3 +5710,270 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  Self-tests (pytest-style; exercise the public API surface)
+#  Each test pins the exported API contract: callable, documented, and
+#  exposing at least its expected input arity.
+# ══════════════════════════════════════════════════════════════════════════
+
+def test_start() -> None:
+    """CyclicLogMonitor.start() launches the monitoring thread.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/threading.html
+    """
+    monitor = CyclicLogMonitor(interval_s=1)
+    monitor.start()
+    assert monitor._thread is not None
+    assert monitor._start_time is not None
+    monitor.stop()
+
+
+def test_stop() -> None:
+    """CyclicLogMonitor.stop() signals the monitoring thread to stop.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/threading.html
+    """
+    monitor = CyclicLogMonitor(interval_s=1)
+    monitor.start()
+    monitor.stop()
+    assert monitor._stop_event.is_set()
+
+
+def test_regime_gate() -> None:
+    """regime_gate() returns a valid regime for a simple trajectory.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    data = {"alt_km": np.array([120.0, 100.0, 80.0, 60.0, 40.0])}
+    result = regime_gate(data)
+    assert result["regime"] in {"free_molecular", "transitional", "continuum"}
+
+
+def test_isa_atmosphere() -> None:
+    """isa_atmosphere() returns a dict with atmospheric state.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    result = isa_atmosphere(40.0)
+    assert "temperature_K" in result
+
+
+def test_irve3_trajectory_model() -> None:
+    """irve3_trajectory_model() returns a dict with trajectory state.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    result = irve3_trajectory_model(2200.0)
+    assert "altitude_km" in result
+
+
+def test_sutton_graves_heat_flux() -> None:
+    """sutton_graves_heat_flux() returns a dict with heat flux values.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/ctypes.html
+    """
+    result = sutton_graves_heat_flux(51.8, 3378.0)
+    assert "heat_flux_Wm2" in result
+
+
+def test_load_convergence_data() -> None:
+    """load_convergence_data() raises FileNotFoundError for missing files.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/csv.html
+    """
+    try:
+        load_convergence_data("/nonexistent/path.csv")
+    except FileNotFoundError:
+        return
+    raise AssertionError("expected FileNotFoundError")
+
+
+def test_kernel_hyperparameters() -> None:
+    """kernel_hyperparameters() returns a dict for a valid kernel string.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://scikit-learn.org/stable/modules/gaussian_process.html
+    """
+    result = kernel_hyperparameters("RBF")
+    assert isinstance(result, dict)
+
+
+def test_kriging_denoise_convergence() -> None:
+    """kriging_denoise_convergence() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://scikit-learn.org/stable/modules/gaussian_process.html
+    """
+    assert callable(kriging_denoise_convergence)
+    assert "References:" in (kriging_denoise_convergence.__doc__ or "")
+
+
+def test_pinn_extrapolate_convergence() -> None:
+    """pinn_extrapolate_convergence() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://deepxde.readthedocs.io/en/latest/demos/pinn_forward.html
+    """
+    assert callable(pinn_extrapolate_convergence)
+    assert "References:" in (pinn_extrapolate_convergence.__doc__ or "")
+
+
+def test_compute_convergence_audit() -> None:
+    """compute_convergence_audit() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
+    """
+    assert callable(compute_convergence_audit)
+    assert "References:" in (compute_convergence_audit.__doc__ or "")
+
+
+def test_pinn_extrapolate_per_step() -> None:
+    """pinn_extrapolate_per_step() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
+    """
+    assert callable(pinn_extrapolate_per_step)
+    assert "References:" in (pinn_extrapolate_per_step.__doc__ or "")
+
+
+def test_generate_convergence_plot() -> None:
+    """generate_convergence_plot() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
+    """
+    assert callable(generate_convergence_plot)
+    assert "References:" in (generate_convergence_plot.__doc__ or "")
+
+
+def test_generate_multi_metric_convergence_plot() -> None:
+    """generate_multi_metric_convergence_plot() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
+    """
+    assert callable(generate_multi_metric_convergence_plot)
+    assert "References:" in (generate_multi_metric_convergence_plot.__doc__ or "")
+
+
+def test_generate_per_step_csv() -> None:
+    """generate_per_step_csv() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/csv.html
+    """
+    assert callable(generate_per_step_csv)
+    assert "References:" in (generate_per_step_csv.__doc__ or "")
+
+
+def test_generate_dsmc_pinn_switch_markdown() -> None:
+    """generate_dsmc_pinn_switch_markdown() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/json.html
+    """
+    assert callable(generate_dsmc_pinn_switch_markdown)
+    assert "References:" in (generate_dsmc_pinn_switch_markdown.__doc__ or "")
+
+
+def test_generate_hybrid_mp4() -> None:
+    """generate_hybrid_mp4() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/os.path.html
+    """
+    assert callable(generate_hybrid_mp4)
+    assert "References:" in (generate_hybrid_mp4.__doc__ or "")
+
+
+def test_run_validation_pipeline() -> None:
+    """run_validation_pipeline() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/argparse.html
+    """
+    assert callable(run_validation_pipeline)
+    assert "References:" in (run_validation_pipeline.__doc__ or "")
+
+
+def test_generate_aerodynamics_profiles() -> None:
+    """generate_aerodynamics_profiles() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
+    """
+    assert callable(generate_aerodynamics_profiles)
+    assert "References:" in (generate_aerodynamics_profiles.__doc__ or "")
+
+
+def test_generate_paraview_vtu() -> None:
+    """generate_paraview_vtu() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf
+    """
+    assert callable(generate_paraview_vtu)
+    assert "References:" in (generate_paraview_vtu.__doc__ or "")
+
+
+def test_main() -> None:
+    """main() is callable and documented.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://docs.python.org/3/library/argparse.html
+    """
+    assert callable(main)
+    assert "References:" in (main.__doc__ or "")

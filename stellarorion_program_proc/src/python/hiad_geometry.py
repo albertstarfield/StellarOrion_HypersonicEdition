@@ -67,6 +67,9 @@ def generate_cross_section(
     Safety fallback:
         Non-physical inputs raise loudly instead of emitting a silently
         degenerate profile (Murphy: bad bounds WILL occur in BO corners).
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
     """
     if n_per_segment < 2:
         raise ValueError(
@@ -147,3 +150,27 @@ def generate_cross_section(
         y_pts.append(r)
 
     return np.array(x_pts), np.array(y_pts)
+
+
+def test_generate_cross_section() -> None:
+    """generate_cross_section returns equal-length x/y arrays and validates input.
+
+    Tested by: this function itself (self-test section).
+
+    References:
+        - https://numpy.org/doc/stable/reference/routines.math.html
+    """
+    x_pts, y_pts = generate_cross_section(1.5, 0.135, 60.0)
+    assert len(x_pts) == len(y_pts)
+    # Segment 1 contributes n_per_segment points; segments 2-4 contribute the
+    # remaining n_per_segment - 1 each => 4 * n_per_segment - 3 total points.
+    assert len(x_pts) == 4 * 15 - 3
+    assert all(v >= 0.0 for v in y_pts)
+
+    # n_per_segment < 2 must raise (guarded input contract).
+    raised = False
+    try:
+        generate_cross_section(1.5, 0.135, 60.0, n_per_segment=1)
+    except ValueError:
+        raised = True
+    assert raised
