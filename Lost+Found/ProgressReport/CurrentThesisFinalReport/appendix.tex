@@ -12,7 +12,7 @@ Constants from \texttt{\seqsplit{stellarorion\_types.ads}} (Table~\ref{tab:const
 
 \begin{table}[!htbp]
 \centering
-\caption{Physical constants used by \texttt{stellarorion\_types.ads}, with 2018 recommended values~\protect\cite{codata2018}. The Sutton-Graves coefficient is listed at the Earth-air correlation value $1.83 \times 10^{-4}$; the engine's default \texttt{C\_SG} constant is $1.7415 \times 10^{-4}$.}
+\caption{Physical constants used by \texttt{stellarorion\_types.ads}, with 2018 recommended values~\protect\cite{codata2018}. The Sutton-Graves coefficient is listed at the Earth-air correlation value $1.7415 \times 10^{-4}$ (tabulated for Earth air in TR R-376), the same value the engine carries; $1.83 \times 10^{-4}$ belongs to a Mars-mixture evaluation and is not used.}
 \label{tab:constants}
 \begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.22\textwidth} >{\RaggedRight\arraybackslash}p{0.10\textwidth} >{\RaggedRight\arraybackslash}p{0.25\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
 \hline
@@ -28,7 +28,7 @@ Specific heat ratio (air) & $\gamma_{\text{air}}$ & $1.4$ & n/a \\
 Molecular diameter (air) & $d$ & $3.7 \times 10^{-10}$ & m \\
 Prandtl number (air) & $\text{Pr}$ & $0.71$ & n/a \\
 Sutherland constant & $S$ & $110.4$ & K \\
-Sutton-Graves coefficient & $C_{SG}$ & $1.83 \times 10^{-4}$ & W m$^{-2}$ (kg~m$^{-3}$)$^{-1/2}$ (m~s$^{-1}$)$^{-3}$ \\
+Sutton-Graves coefficient & $C_{SG}$ & $1.7415 \times 10^{-4}$ & W m$^{-2}$ (kg~m$^{-3}$)$^{-1/2}$ (m~s$^{-1}$)$^{-3}$ \\
 Reference viscosity (air) & $\mu_{\text{ref}}$ & $1.716 \times 10^{-5}$ & Pa s \\
 Sutherland reference temperature & $T_{\text{ref}}$ & $273.15$ & K \\
 Specific heat (air, const.\ pressure) & $c_p$ & $1004.0$ & J kg$^{-1}$ K$^{-1}$ \\
@@ -209,8 +209,8 @@ Validation comparison (Table~\ref{tab:validation_full}).
 \hline
 \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay-Riddell)} & \textbf{StellarOrion\allowbreak{} (This Work)} & \textbf{SO Error (\%)} \\
 \hline
-Peak heat flux ($\dot{q}$) & 14.36 W/cm\textsuperscript{2} & 13.83 W/cm\textsuperscript{2} & 16.14 W/cm\textsuperscript{2}$^{\ddagger}$ & $+12.4$ \\
-Total heat load ($Q$) & 195.06 J/cm\textsuperscript{2} & 195.17 J/cm\textsuperscript{2} & 165.72 J/cm\textsuperscript{2} & $-15.0$ \\
+Peak heat flux ($\dot{q}$) & 13.80 W/cm\textsuperscript{2} & 13.83 W/cm\textsuperscript{2} & 15.36 W/cm\textsuperscript{2}$^{\ddagger}$ & $+11.3$ \\
+Total heat load ($Q$) & 188.00 J/cm\textsuperscript{2} & 195.17 J/cm\textsuperscript{2} & 165.72 J/cm\textsuperscript{2} & $-11.9$ \\
 Peak deceleration & 19.7 g & n/a & 16.55 g (raw); 16.58 g (PINN-extrap.)$^{\ddagger}$ & $-16.0$ raw, $-15.8$ extrap. \\
 Ballistic coefficient ($\beta$) & 26.9~kg/m\textsuperscript{2} & n/a & 27.70~kg/m\textsuperscript{2} & $+3.0$ \\
 Drag coefficient ($C_d$)$^{\ddagger}$ & 1.4625 & n/a & 1.6073 $\rightarrow$ 1.5597 at optimum & n/a \\
@@ -261,14 +261,14 @@ Sutton-Graves stagnation heat flux~\cite{sutton1971gravesh}:
 
 With $\rho_\infty = 7.851 \times 10^{-4}$\,kg/m$^3$ (ISA), $R_N = 1.5$\,m, $V_\infty = 3378$\,m/s:
 \begin{align}
-    \dot{q} &= 1.83 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \nonumber \\
-    &= 1.83 \times 10^{-4} \times \sqrt{5.234 \times 10^{-4}} \times 3.8552 \times 10^{10} \nonumber \\
-    &= 1.83 \times 10^{-4} \times 0.022879 \times 3.8552 \times 10^{10} \nonumber \\
-    &\approx 1.614 \times 10^{5} \text{ W/m}^2 = 16.14 \text{\,W/cm}^2
+    \dot{q} &= 1.7415 \times 10^{-4} \times \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times (3378)^3 \nonumber \\
+    &= 1.7415 \times 10^{-4} \times \sqrt{5.234 \times 10^{-4}} \times 3.8552 \times 10^{10} \nonumber \\
+    &= 1.7415 \times 10^{-4} \times 0.022879 \times 3.8552 \times 10^{10} \nonumber \\
+    &\approx 1.536 \times 10^{5} \text{ W/m}^2 = 15.36 \text{\,W/cm}^2
     \label{eq:sg_baseline}
 \end{align}
 
-\noindent The value is $+12.4\%$ on the $14.36$\,W/cm$^2$ flight measurement~\cite{old2013irve3postflight} and $+5.8\%$ on Rapisarda's $15.26$\,W/cm$^2$ peak~\cite{rapisarda2023mdao}. The engine comments report $12.20$\,W/cm$^2$ from the defaults $C_{SG} = 1.7415 \times 10^{-4}$, $R_N = 0.55$\,m and $V_\infty = 2700$\,m/s.
+\noindent The value is $+11.3\%$ on the NASA flight reconstruction value of $13.80$\,W/cm$^2$~\cite{old2013irve3postflight,dillman2014irve3flight} and $+0.6\%$ on Rapisarda's $15.26$\,W/cm$^2$ peak~\cite{rapisarda2023mdao}; the $14.36$\,W/cm$^2$ figure formerly labelled flight is the recorded group-R reference value reported by Rapisarda~\cite{rapisarda2023mdao}. The engine comments report $12.20$\,W/cm$^2$ from the engine-default run state ($R_N = 0.55$\,m, $V_\infty = 2700$\,m/s) at the same coefficient.
 
 \section{Mean Free Path and Knudsen Number}
 

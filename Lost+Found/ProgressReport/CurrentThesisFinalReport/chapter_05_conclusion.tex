@@ -6,7 +6,7 @@ This research developed and validated a framework for aerothermal analysis and s
 \section{Key Conclusions}
 
 \subsection{DSMC Validation Against IRVE-3 Flight Data}
-The SPARTA DSMC framework was validated against IRVE-3 post-flight aerothermal reconstruction data~\cite{old2013irve3postflight}. The Fay-Riddell stagnation-point correlation predicts 13.83\,W/cm$^2$ peak heat flux, within 3.7\% of the 14.36\,W/cm$^2$ flight measurement~\cite{rapisarda2023mdao}. The Sutton-Graves correlation~\cite{sutton1971gravesh}, evaluated at the DSMC run with corrected coefficient $C_{SG} = 1.83 \times 10^{-4}$ and the IRVE-3 nose radius $R_N = 1.5$\,m, gives 16.14\,W/cm$^2$ stagnation-point heat flux. It is $+12.4\%$ relative to flight and $+5.8\%$ relative to the trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$~\cite{rapisarda2023mdao}.
+The SPARTA DSMC framework was validated against IRVE-3 post-flight aerothermal reconstruction data~\cite{old2013irve3postflight,dillman2014irve3flight}. The Fay-Riddell stagnation-point correlation predicts 13.83\,W/cm$^2$ peak heat flux, $+0.2\%$ from the $13.80$\,W/cm$^2$ flight value. The Sutton-Graves correlation~\cite{sutton1971gravesh}, evaluated at the DSMC run with the Earth-air coefficient $C_{SG} = 1.7415 \times 10^{-4}$ and the IRVE-3 nose radius $R_N = 1.5$\,m, gives 15.36\,W/cm$^2$ stagnation-point heat flux. It is $+11.3\%$ relative to flight and $+0.6\%$ relative to the trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$~\cite{rapisarda2023mdao}; the 14.36\,W/cm$^2$ figure of earlier revisions is the recorded group-R reference set reported by Rapisarda~\cite{rapisarda2023mdao}, the campaign reference, not flight.
 
 \subsection{Scalloping-Induced Heating Augmentation}
 The toroidal surface topology creates periodic heating with enhanced peaks at the toroid crests. Against the smooth-body run, which sits at a different trajectory condition, the scalloped configuration at the common final step raises peak cell heat flux by 21.2\% and the per-element average by 1.5\%, consistent with the Sutton-Graves $1/\sqrt{R}$ radius scaling. Recirculation zones between toroidal rings provide partial thermal shielding, reducing time-averaged heat load on the FTPS~\cite{hollis2018surface}.
@@ -48,7 +48,7 @@ Results come from 2D axisymmetric cases at zero angle of attack; full 3D runs at
 The HIAD is treated as rigid and fully inflated. Coupling DSMC aerothermal loads to a structural finite element model would enable fluid-structure interaction (FSI) analysis of deformation and its flow-field effects.
 
 \subsection{Gen-2 and Gen-3 TPS Material Assessment}
-The baseline is the IRVE-3 Gen-1 TPS (Nextel/Pyrogel). Evaluate thermal margins for Gen-2 (SiC/Carbon) and Gen-3 TPS materials under the predicted scalloped heating profiles, especially for Mars entry, where atmospheric composition differs~\cite{guidotti2023efesto2materials}.
+The baseline is the IRVE-3 Gen-1 TPS (Nextel/Pyrogel). Evaluate thermal margins for Gen-2 (SiC/Carbon) and Gen-3 TPS materials under the predicted scalloped heating profiles, especially for Mars entry, where atmospheric composition differs~\cite{Guidotti2023EFESTO2}.
 
 \subsection{Mars Entry Extension}
 Extend the framework to Mars entry with a CO$_2$-dominated composition and updated SPARTA gas model. Replace the Sutton-Graves correlation with the West and Brandis (2020) Mars correlation and the 5-species air model with a CO$_2$/N$_2$/Ar mixture.

@@ -70,7 +70,7 @@ The Physics-Informed Neural Network (PINN) enforces Navier-Stokes residuals as a
 \paragraph{Step 6: Surrogate-Assisted Optimization.}
 The cost function is:
 \begin{equation}
-J = w_\beta \left(\frac{\beta_{\text{calc}} - \beta_{\text{target}}}{10}\right)^2 + \sum_{i} w_i \, \mathbb{1}\!\left[y_i^{(\text{pred})} > y_i^{(\text{limit})}\right] \cdot 10^{15}
+J = w_\beta \left(\frac{\beta_{\text{calc}}}{\beta_{ref}} - 1\right)^2 + \sum_{i} w_i \, \mathbb{1}\!\left[y_i^{(\text{pred})} > y_i^{(\text{limit})}\right] \cdot 10^{15}
 \label{eq:cost_function_optimization}
 \end{equation}
 where hard constraint violations carry a $10^{15}$ penalty.
@@ -101,7 +101,7 @@ The StellarOrion engine, an Ada and Python stack with SPARTA containerized in Do
 
 \subsection{Default Optimization Parameters}
 \label{sec:default_params}
-Table~\ref{tab:default_params} lists the default parameter values used throughout this thesis, configured in the Ada engine source and exposed through \texttt{stellarorion\_program\_proc/run.py}; all runs adopt them unless stated otherwise. DoE and surrogate defaults follow standard practice~\cite{Montgomery2017,matern1960,morris1992}; solver defaults follow SPARTA~\cite{plimpton2014sparta}.
+Table~\ref{tab:default_params} lists the default parameter values used throughout this thesis, configured in the Ada engine source and exposed through \texttt{stellarorion\_program\_proc/run.py}; all runs adopt them unless stated otherwise. DoE and surrogate defaults follow standard practice~\cite{Montgomery2017,matern1960}; solver defaults follow SPARTA~\cite{plimpton2014sparta}.
 
 \begin{table}[!htbp]
 \centering
@@ -117,7 +117,7 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
  & Grid factor & 0.7 \\
  & Particle weighting ($f_{\text{num}}$) & $1.5 \times 10^{20}$ \\
  & Chemistry model & 5-species (N$_2$, O$_2$, NO, N, O) \\ \midrule
-\multirow{3}{=}{\textbf{Flight Conditions}} & $V_\infty$ & 3378 m/s \\
+\multirow{3}{=}{\textbf{Flight Conditions (engine baseline)}} & $V_\infty$ & 3378 m/s \\
  & $T_\infty$ & 268.41 K \\
  & $n_\infty$ & $1.63 \times 10^{22}$ /m$^3$ \\ \midrule
 \multirow{3}{=}{\textbf{DoE (CCD)}} & Method & Rotatable CCD \\
@@ -196,7 +196,7 @@ Geometric parameters of the numerical model, in Table~\ref{tab:geom_params}:
         Deployed Diameter ($D_{max}$) & 3.0 m & IRVE-3 Flight Article \\ \hline
         Forebody Cone Angle ($\theta_c$) & $60^\circ$ & Rapisarda MDAO Baseline \\ \hline
         Toroid Count ($N$) & 6 & Rapisarda MDAO Baseline \\ \hline
-        Toroid Radius ($r_{tor}$) & 0.135 m & Rapisarda Table 4.1 \\ \hline
+        Toroid Radius ($r_{tor}$) & 0.135 m & Rapisarda (2023)~\cite{rapisarda2023mdao} \\ \hline
         Nose Radius ($R_N$) & 1.5 m & IRVE-3 Specification (3 m diameter) \\ \hline
         Entry Mass ($m$) & 281 kg & IRVE-3 Flight Article \\ \hline
     \end{tabular}
@@ -248,14 +248,16 @@ Table~\ref{tab:knudsen_regimes} in Chapter~2 gives the five-band classification 
 Simulations use the SPARTA (Stochastic PArallel Rarefied-gas Time-accurate Analyzer, Sandia National Laboratories) DSMC solver~\cite{plimpton2014sparta}.
 
 \subsubsection*{Freestream Conditions}
-Freestream conditions match the IRVE-3 reentry trajectory point at 51.8\,km altitude:
+Freestream conditions differ by run; the engine baseline/snapshot condition and the production-deck condition are listed separately, with the recorded time series stated for reference:
 
 \begin{itemize}
-    \item \textbf{Freestream Velocity ($v_{\infty}$):} 3378\,m/s (Mach $\approx$ 10.29 at altitude)
-    \item \textbf{Number Density ($n$):} $1.63 \times 10^{22}$\,m$^{-3}$ (from atmospheric density $\rho = 7.851 \times 10^{-4}$\,kg/m$^3$ via $n = \rho N_A / M_{air}$)
-    \item \textbf{Freestream Temperature ($T_{\infty}$):} 268.41\,K (atmospheric model, code baseline)
-    \item \textbf{Particle Weighting Factor ($f_{num}$):} $1.5 \times 10^{20}$ (configurable via the \texttt{fnum} option)
+    \item \textbf{Freestream Velocity ($v_{\infty}$, engine baseline):} 3378\,m/s (Mach $\approx$ 10.29 at the 51.8\,km snapshot altitude)
+    \item \textbf{Number Density ($n$):} $1.63 \times 10^{22}$\,m$^{-3}$ (engine baseline; from atmospheric density $\rho = 7.851 \times 10^{-4}$\,kg/m$^3$ via $n = \rho N_A / M_{air}$)
+    \item \textbf{Freestream Temperature ($T_{\infty}$):} 268.41\,K (engine baseline)
+    \item \textbf{Particle Weighting Factor ($f_{num}$):} $1.5 \times 10^{20}$ (engine baseline; the scalloped production deck prescribes $3.5 \times 10^{19}$, configurable via the \texttt{fnum} option)
 \end{itemize}
+
+\noindent Deck truth: the scalloped production deck (\texttt{results/validation\_scalloped/in.hiad}) prescribes vstream 2700.0\,m/s, Mach 7.5343, $T_{\infty} = 267.85$\,K, $n_{\infty} = 1.44835 \times 10^{22}$\,/m$^3$ and $f_{num} = 3.5 \times 10^{19}$; the smooth validation deck (\texttt{results/validation/in.hiad}) prescribes vstream 8831.98\,m/s at Mach 24.6453; the recorded scalloped time series at the recorded step reports altitude 52.069\,km, velocity 3101.079\,m/s and Mach 9.455.
 
 \subsubsection*{Gas Model}
 The 5-species air model is N$_2$, O$_2$, NO, N and O, with Variable Soft Sphere (VSS) collision physics:
@@ -406,7 +408,7 @@ The Sutton-Graves (1971) stagnation-point convective heating correlation is used
     \dot{q}_{stag} = C_{SG} \sqrt{\frac{\rho_{\infty}}{R_N}} \cdot V_{\infty}^3
 \end{equation}
 
-where $C_{SG} = 1.83 \times 10^{-4}$ is the Sutton-Graves constant for Earth air.
+where $C_{SG} = 1.7415 \times 10^{-4}$ is the Sutton-Graves constant for Earth air \cite{sutton1971gravesh}, matching the engine constant.
 
 \subsubsection*{IRVE-3 Validation}
 For the IRVE-3 baseline the correlation is evaluated at the SPARTA DSMC run condition under ISA~\cite{usstandard1976}: $h = 51.8$\,km, $\rho_{\infty} = 7.851 \times 10^{-4}$\,kg/m$^3$, nose radius $R_N = 1.5$\,m and velocity $V_{\infty} = 3{,}378$\,m/s:
@@ -414,13 +416,13 @@ For the IRVE-3 baseline the correlation is evaluated at the SPARTA DSMC run cond
 \begin{equation}
     \begin{split}
         \dot{q}_{stag}
-          &= 1.83 \times 10^{-4} \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times 3378^3 \\
-          &\approx 1.614 \times 10^{5} \ \text{W/m}^2 \\
-          &= 16.14 \ \text{W/cm}^2
+          &= 1.7415 \times 10^{-4} \sqrt{\frac{7.851 \times 10^{-4}}{1.5}} \times 3378^3 \\
+          &\approx 1.536 \times 10^{5} \ \text{W/m}^2 \\
+          &= 15.36 \ \text{W/cm}^2
     \end{split}
 \end{equation}
 
-Engine defaults differ from both constants: $C_{SG} = 1.7415 \times 10^{-4}$ rather than $1.83 \times 10^{-4}$, and $R_N = 0.55$\,m rather than the flown 1.5\,m, inflating the flux by roughly a factor of 1.65 through the $1/\sqrt{R_N}$ scaling. That default gives $12.20$\,W/cm$^2$ at a hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$, not the run condition, so the $16.14$\,W/cm$^2$ above supersedes it. MDAO reconstruction~\cite{rapisarda2023mdao} reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ ($+6.26\%$ above the 14.36\,W/cm$^2$ flight measurement) and a Fay-Riddell CFD prediction of 13.83\,W/cm$^2$ ($-3.69\%$ below flight). The validation values adopted in this chapter use the working set $C_{SG} = 1.83 \times 10^{-4}$ with the flown $R_N = 1.5$\,m; the adopted working constant sits 5.1\% above the engine default ($1.83/1.7415 = 1.051$), and the resulting $+12.4\%$ over-prediction against flight is carried openly as a calibration limitation rather than tuned away.
+The engine carries the same Earth coefficient $C_{SG} = 1.7415 \times 10^{-4}$ adopted here, evaluated at its documented default state: $R_N = 0.55$\,m rather than the flown 1.5\,m (inflating the flux by roughly a factor of 1.65 through the $1/\sqrt{R_N}$ scaling) with hardcoded $V_{\infty} = 2700$\,m/s and $\rho_{\infty} = 6.9674 \times 10^{-4}$\,kg/m$^3$ rather than the trajectory point, giving $12.20$\,W/cm$^2$, superseded by the $15.36$\,W/cm$^2$ above. MDAO reconstruction~\cite{rapisarda2023mdao} reports a trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$ ($+10.6\%$ above the 13.80\,W/cm$^2$ flight measurement~\cite{old2013irve3postflight,dillman2014irve3flight}) and a Fay-Riddell CFD prediction of 13.83\,W/cm$^2$ ($+0.2\%$ above flight). The adopted evaluation over-predicts the NASA flight measurement by $+11.3\%$ and sits $+0.6\%$ above the Rapisarda peak, carried openly as a calibration limitation rather than tuned away.
 
 \subsubsection*{Note on SPARTA Surface Energy}
 The raw SPARTA DSMC kinetic energy ($ke$) surface compute is a normalized incident kinetic-energy flux rather than an absolute heat flux: \texttt{fix ave/surf} reports $ke = E_{flux} = -\sum e_{\delta}/(A\,\Delta t/f_{num})$, in W/m\textsuperscript{2} of the simulated flux crossing the surface. It excludes re-radiation and conduction, so it is only a \textbf{relative shape-ranking signal} for the optimizer; absolute wall heat flux values come from the Sutton-Graves correlation.
@@ -734,7 +736,7 @@ The PINN refinement stage rests on these assumptions:
         A3: Sutherland viscosity & Dynamic viscosity follows $\mu(T) = \mu_{ref} (T/T_{ref})^{3/2} (T_{ref}+S)/(T+S)$ with $S = 110.4$ K. & Kinetic theory (Sutherland, 1893) \\ \hline
         A4: Prandtl number & $\Pr = 0.71$ (constant), coupling thermal and velocity boundary layers. & Air at standard conditions \\ \hline
         A5: Ideal gas EOS & $p = \rho R T$ holds throughout the domain. Valid for $Kn \lesssim 10$. & Near-continuum assumption \\ \hline
-        A6: Fully accommodated wall & The vehicle surface is a diffuse reflector at $T_w = 300$ K with full thermal accommodation. & DSMC boundary condition \\ \hline
+        A6: Fully accommodated wall & The vehicle surface is a diffuse reflector at $T_w = 1000$ K with full thermal accommodation. & DSMC boundary condition \\ \hline
         A7: Statistical stationarity & The SPARTA output represents a time-averaged steady state. & Sufficient timesteps for convergence \\ \hline
     \end{tabular}
 \end{table}
@@ -846,7 +848,7 @@ The GP initializes $c_0 = 1$ and $\ell_{j} = 1$ for all $d$ dimensions, re-fitti
 where $\mathcal{D} = \{(\mathbf{x}_i, y_i)\}_{i=1}^{N}$ is the accumulated design-and-cost history.
 
 \subsubsection*{Acquisition Function: Expected Improvement}
-As $J$ is minimized, Expected Improvement (EI) described by~\cite{morris1992,kennedy2000multi} measures the expected reduction below the incumbent best $J_{best} = \min_i y_i$, offset by an exploration parameter $\xi$:
+As $J$ is minimized, Expected Improvement (EI) described by~\cite{jones1998efficient,kennedy2000multi} measures the expected reduction below the incumbent best $J_{best} = \min_i y_i$, offset by an exploration parameter $\xi$:
 
 \begin{align}
     \mathrm{EI}(\mathbf{x}) &= \mathbb{E}\Big[\max\big(0,\, J_{best} - J(\mathbf{x}) - \xi\big)\Big] \nonumber\\
@@ -881,8 +883,8 @@ where $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$ for the recorded campaign. Fou
     \item \textbf{Heat-load term.} Stagnation heat flux uses the Sutton-Graves correlation of Sec.~\ref{sec:sutton_graves_methodology} at the frozen $51.8$\,km, $3378$\,m/s trajectory snapshot, with the candidate's own nose radius:
     $\dot{q}(\mathbf{x}) = C_{SG}\sqrt{\rho_{\infty}/R_N(\mathbf{x})}\,V_{snap}^{3}$ in\,W/cm$^2$.
     Over the validated exposure time $\tau$, $Q(\mathbf{x}) = \dot{q}(\mathbf{x})\,\tau$ and $H_L = Q/Q_{target}$.
-    \item \textbf{Flux term.} $F(\mathbf{x}) = \dot{q}(\mathbf{x})/q_{ref}$ is the peak heat-flux ratio against the measured flight value.
-    \item \textbf{Ballistic-coefficient term.} $\beta(\mathbf{x}) = m\,/\,(C_d(\mathbf{x})\,A(\mathbf{x}))$ is compared directly with the target value, giving $B = \big((\beta(\mathbf{x}) - \beta_{target})/10\big)^2$; mass enters through $\beta$ for every candidate, so it does not cancel between candidate and reference.
+    \item \textbf{Flux term.} $F(\mathbf{x}) = \dot{q}(\mathbf{x})/q_{ref}$ is the peak heat-flux ratio against the recorded campaign reference value $q_{ref}$ (the recorded group-R reference value reported by Rapisarda~\cite{rapisarda2023mdao}, loaded at run time, not the NASA flight value).
+    \item \textbf{Ballistic-coefficient term.} The engine forms the dimensionless ratio $\beta_R = \beta(\mathbf{x})/\beta_{ref} = (C_{d,ref}\,A_{ref})/(C_d(\mathbf{x})\,A(\mathbf{x}))$ with $\beta(\mathbf{x}) = m\,/\,(C_d(\mathbf{x})\,A(\mathbf{x}))$, giving $B = (\beta_R - 1)^2$; vehicle mass appears in both $\beta(\mathbf{x})$ and $\beta_{ref}$ at the same mass, so it cancels and the term is scale-free.
     \item \textbf{Drag term.} $\tilde{D}(\mathbf{x}) = C_d(\mathbf{x})/C_{d,ref}$, the drag ratio.
     \item \textbf{Quadratic penalties.} Three one-sided constraints enter only when violated:
     $P_R = \max(0, R_{\text{max}} - 3.0)^2$ caps the radius at the IRVE-3 limit.
@@ -894,7 +896,7 @@ where $\mathbf{x} = (R_N,\, r_{tor},\, \theta_c)$ for the recorded campaign. Fou
 
 The weights are $w_{Q} = 1.0$, $w_{q} = 0.5$, $w_{\beta} = 0.5$, $w_{C_d} = 0.25$ and penalty weight $\lambda_{p} = 100$. The heat-load weight is largest, so $J$ is dominated by total heat load.
 
-Reference values are loaded at run time from the IRVE-3 validation run~\mbox{\cite{old2013irve3postflight,dillman2014irve3flight}}: $Q_{target} = 165.72$\,J/cm$^2$, $q_{ref} = 14.361$\,W/cm$^2$, $\tau = 13.582$\,s and $C_{d,ref} = 1.4625$.
+Reference values are loaded at run time from the recorded campaign reference set (the recorded group-R reference values, not the NASA flight values)~\mbox{\cite{rapisarda2023mdao}}: $Q_{target} = 165.72$\,J/cm$^2$, $q_{ref} = 14.361$\,W/cm$^2$, $\tau = 13.582$\,s and $C_{d,ref} = 1.4625$.
 
 Eq.~\eqref{eq:cost_function_implemented} is a \emph{single-point} surrogate: one correlation value at one frozen trajectory point times a constant exposure time, not a trajectory integration; the trajectory-integrated heat load in Chapter~\ref{ch:results} comes from the DSMC post-processing path.
 The drag coefficient is a closed-form estimate,
@@ -998,12 +1000,12 @@ Freestream particles are injected at the inlet following the Maxwell-Boltzmann d
 \begin{itemize}
     \item \textbf{Velocity:} Directed flow at $v_{\infty} = 3378$\,m/s
     \item \textbf{Temperature:} $T_{\infty} = 268.41$\,K
-    \item \textbf{Species Fractions:} N$_2$ (78\%), O$_2$ (21\%), NO (1\%) at freestream; dissociated species (N, O) generated by collisions in the shock layer
+    \item \textbf{Species Fractions:} N$_2$ (79\%), O$_2$ (21\%) at freestream; NO, N and O carry zero initial fraction and are generated by collisions in the shock layer
 \end{itemize}
 
 \subsection{Vehicle Surface}
 \begin{itemize}
-    \item \textbf{Wall Temperature:} $T_{wall} = 300$\,K (isothermal)
+    \item \textbf{Wall Temperature:} $T_{wall} = 1000$\,K (isothermal)
     \item \textbf{Reflection Model:} Diffuse (maximally entropic)
     \item \textbf{Catalytic Efficiency:} Fully catalytic (recombination of dissociated species at the wall)
 \end{itemize}
@@ -1084,8 +1086,8 @@ The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irv
 
 \begin{table}[!htbp]
     \centering
-    % Repeats Table 4.1 of the results chapter; the caption repeats the heat-flux caveat on purpose, since single-point and trajectory-integrated peaks are not comparable.
-    \caption[IRVE-3 validation metrics. The MDAO column is the published Fay-Riddell reference; the StellarOrion column is the result of this work.]{IRVE-3 validation metrics. The MDAO column is the published Fay-Riddell reference; the StellarOrion column is the result of this work. The heat-flux entry is a Sutton-Graves (SG) correlation evaluated at $R_N = 1.5$ m and $V = 3{,}378$ m/s, not a quantity resolved by the solver; \textsuperscript{\dag} marks that entry. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; $^{\ddagger}$marks the flight drag coefficient, which is the IRVE-3 reference value loaded at run time (Chapter~\ref{ch:methodology}) rather than a measurement of this run, and marks the deceleration entries, which are point-mass trajectory-model loads ($g = F_{drag}/mg_0$) at the single run point rather than DSMC surface-pressure integrals; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton-Graves value the code reports and explains why they differ.}
+    % Repeats the results-chapter validation table; the caption repeats the heat-flux caveat on purpose, since single-point and trajectory-integrated peaks are not comparable.
+    \caption[IRVE-3 validation metrics. The MDAO column is the published Fay-Riddell reference; the StellarOrion column is the result of this work.]{IRVE-3 validation metrics. The MDAO column is the published Fay-Riddell reference; the StellarOrion column is the result of this work. The flight column carries the NASA flight reconstruction values~\cite{old2013irve3postflight,dillman2014irve3flight}; the values $14.36$\,W/cm$^2$ and $195.06$\,J/cm$^2$ of earlier revisions are the recorded group-R reference values reported by Rapisarda~\cite{rapisarda2023mdao}, the reference set the recorded campaigns were fitted against ($q_{ref} = 14.361$\,W/cm$^2$, $Q_{flight} = 195.058$\,J/cm$^2$). The heat-flux entry is a Sutton-Graves (SG) correlation evaluated at $R_N = 1.5$ m and $V = 3{,}378$ m/s, not a quantity resolved by the solver; \textsuperscript{\dag} marks that entry. The flight and MDAO columns are trajectory-integrated peaks, so the two are not like-for-like and the stated percentage is a scale comparison only; $^{\ddagger}$marks the flight drag coefficient, which is the IRVE-3 reference value loaded at run time (Chapter~\ref{ch:methodology}) rather than a measurement of this run, and marks the deceleration entries, which are point-mass trajectory-model loads ($g = F_{drag}/mg_0$) at the single run point rather than DSMC surface-pressure integrals; Sec.~\ref{sec:validation_irve3} states both this value and the second Sutton-Graves value the code reports and explains why they differ.}
     \label{tab:irve3_validation}
     \small
     % Column widths mirror the proven appendix.tex tab:validation_full pattern:
@@ -1095,8 +1097,8 @@ The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irv
     \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.16\textwidth}|>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.14\textwidth}|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|}
         \hline
         \textbf{Parameter} & \textbf{IRVE-3 Flight} & \textbf{MDAO (Fay-Riddell)} & \textbf{StellarOrion\allowbreak{} (This Work)} & \textbf{SO Error (\%)} \\ \hline
-        Peak Heat Flux ($\dot{q}$, SG) & 14.36 W/cm$^2$ & 13.83 W/cm$^2$ & 16.14 W/cm$^2$$^{\dagger}$ & $+12.4$, \emph{not like-for-like} \\ \hline
-        Total Heat Load ($Q$) & 195.06 J/cm$^2$ & 195.17 J/cm$^2$ & 165.72 J/cm$^2$ & $-15.0$ \\ \hline
+        Peak Heat Flux ($\dot{q}$, SG) & 13.80 W/cm$^2$ & 13.83 W/cm$^2$ & 15.36 W/cm$^2$$^{\dagger}$ & $+11.3$, \emph{not like-for-like} \\ \hline
+        Total Heat Load ($Q$) & 188.00 J/cm$^2$ & 195.17 J/cm$^2$ & 165.72 J/cm$^2$ & $-11.9$ \\ \hline
         Peak Deceleration & 19.7 g & n/a & 16.55 g (raw); 16.58 g (PINN-extrap.) & $-16.0$ raw, $-15.8$ extrap.; trajectory-model load, single point \\ \hline
         Ballistic Coefficient ($\beta$) & 26.9 kg/m$^2$ & n/a & 27.70 kg/m$^2$ & $+3.0$ \\ \hline
         Drag Coefficient ($C_d$)$^{\ddagger}$ & 1.4625 & n/a & 1.6073 $\rightarrow$ 1.5597 at optimum & $-2.96\%$ baseline to optimum \\ \hline
@@ -1104,9 +1106,9 @@ The numerical model is validated against IRVE-3 flight data~\cite{dillman2014irv
     \normalsize
 \end{table}
 
-Two tolerance statements apply. First, the MDAO reference model~\cite{rapisarda2023mdao} reproduces flight heat flux and heat load to within $-3.7\%$ and $+0.06\%$, inside the $\pm 10\%$ margin required of a calibrated reconstruction, so the IRVE-3 flight data are internally consistent as a validation target. Second, geometry-sensitive quantities meet that margin (Table~\ref{tab:irve3_validation}).
+Two tolerance statements apply. First, the MDAO reference model~\cite{rapisarda2023mdao} reproduces flight heat flux and heat load to within $+0.2\%$ and $+3.8\%$ of the NASA flight reconstruction values, inside the $\pm 10\%$ margin required of a calibrated reconstruction, so the IRVE-3 flight data are internally consistent as a validation target. Second, geometry-sensitive quantities meet that margin (Table~\ref{tab:irve3_validation}).
 
-The heat load is DSMC-resolved and under-predicted (Table~\ref{tab:irve3_validation}). The flight reconstruction~\cite{old2013irve3postflight} and MDAO model~\cite{rapisarda2023mdao} integrate over the complete reentry. The DSMC run, in contrast, samples one trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions~\cite{usstandard1976}, marked on the entry trajectory of Figure~\ref{fig:trajectory}. Full-trajectory integration raises the integrated quantity, and the delta near $-15\%$ places the residual in trajectory integration rather than in geometry or the solver. The peak deceleration entries are not DSMC outputs at all: they are point-mass trajectory-model loads ($g = F_{drag}/mg_0$) at that single point, recorded as 16.55\,g raw and 16.58\,g PINN-extrapolated, under-predicted by $-16.0\%$ and $-15.8\%$ against flight. The \emph{pointwise} stagnation heat flux instead over-predicts by $+12.4\%$: Sutton-Graves, a continuum correlation on a spherical nose cap, carries neither the torus heat-shielding effect nor the rarefied-flow departure DSMC resolves, so it bounds conservatively here. The framework is judged sound on geometry-sensitive agreement; the trajectory-integration and correlation-versus-solver gaps carry forward as limitations.
+The heat load is DSMC-resolved and under-predicted (Table~\ref{tab:irve3_validation}). The flight reconstruction~\cite{old2013irve3postflight} and MDAO model~\cite{rapisarda2023mdao} integrate over the complete reentry. The DSMC run, in contrast, samples one trajectory point ($h = 51.8$\,km, Mach 10.29, $V = 3{,}378$\,m/s) under ISA conditions~\cite{usstandard1976}, marked on the entry trajectory of Figure~\ref{fig:trajectory}. Full-trajectory integration raises the integrated quantity, and the delta near $-11.9\%$ against the NASA flight reconstruction places the residual in trajectory integration rather than in geometry or the solver (against the MDAO heat load of 195.17\,J/cm$^2$ the same quantity is $-15.1\%$). The peak deceleration entries are not DSMC outputs at all: they are point-mass trajectory-model loads ($g = F_{drag}/mg_0$) at that single point, recorded as 16.55\,g raw and 16.58\,g PINN-extrapolated, under-predicted by $-16.0\%$ and $-15.8\%$ against flight. The \emph{pointwise} stagnation heat flux instead over-predicts by $+11.3\%$ against the NASA flight reconstruction and by $+0.6\%$ against Rapisarda's trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$~\cite{rapisarda2023mdao}: Sutton-Graves, a continuum correlation on a spherical nose cap, carries neither the torus heat-shielding effect nor the rarefied-flow departure DSMC resolves, so it bounds conservatively here. The framework is judged sound on geometry-sensitive agreement; the trajectory-integration and correlation-versus-solver gaps carry forward as limitations.
 
 \subsection{Hybrid Validation Gate Methodology}
 \label{sec:gate_methodology}

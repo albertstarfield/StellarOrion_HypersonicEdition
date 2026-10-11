@@ -6,28 +6,30 @@ PURPOSE
 The previously committed figure plotted the Sutton-Graves stagnation correlation
 using superseded constants and geometry, producing an IRVE-3 marker of
 959.7 W/cm^2 at R_N = 0.577 m and V = 10.8 km/s. This script evaluates the
-same correlation at the constant the THESIS adopts, C_SG = 1.83e-4, and
-R_N = 1.5 m, giving 16.14 W/cm^2 at the run condition (h = 51.8 km,
-V = 3378 m/s): the value stated in the figure caption, in the AccSupp, and
-in the official Optimization_Attempt_1 record (16.1379). The engine default
-of 1.7415e-4 is disclosed in the thesis appendix and is deliberately not
-plotted here, because this is a THESIS figure and must render its own
-caption's constant.
+same correlation at the Earth-air constant C_SG = 1.7415e-4 (round-2
+correction 2026-10-11: the thesis now adopts the value the engine
+carries; 1.83e-4 was the Mars-mixture coefficient) and R_N = 1.5 m,
+giving 15.36 W/cm^2 at the run condition (h = 51.8 km, V = 3378 m/s),
+the value stated in the figure caption and in the AccSupp. The official
+Optimization_Attempt_1 record quotes 16.1379 W/cm^2 on the superseded
+1.83e-4 scale, which the thesis discloses as the group-R campaign
+reference.
 
 AXIOMS
 ======
 A1. The correlation evaluated here is
         q_dot = C_SG * sqrt(rho / R_N) * V^3            [W/m^2]
-    with C_SG = 1.83e-4, the constant the thesis adopts for the 5-species
+    with C_SG = 1.7415e-4, the constant the thesis adopts for the 5-species
     reacting air model ("the value adopted here", chapter 2,
     \cite{sutton1971gravesh}); the appendix worked example derives
-    16.14 W/cm^2 from it (1.83e-4 * sqrt(7.851e-4/1.5) * 3378^3).
+    15.36 W/cm^2 from it (1.7415e-4 * sqrt(7.851e-4/1.5) * 3378^3).
     The engine default in `stellarorion_types.ads` is 1.7415e-4 and stays
     the disclosed contrast in the thesis; it is NOT the constant this
     figure plots, because the caption, the AccSupp and the official
     Optimization_Attempt_1 record all quote the 1.83e-4 scale (16.14 /
-    16.1379 W/cm^2). An earlier revision of this script read the ads
-    value and rendered 15.36 W/cm^2, contradicting its own caption.
+    16.1379 W/cm^2). Round-2 (2026-10-11) aligned the thesis caption and
+    AccSupp with the ads value, so this script now renders 15.36 W/cm^2
+    with no contradiction.
     [Citation: NASA NTRS 20200002354, 2018, Eq. (2) = engine default.]
     [Citation: Sutton & Graves (1971) AIAA 71-534 = correlation form.]
 A2. The freestream density is a function of altitude only, obtained from the
@@ -54,7 +56,7 @@ APPLICATIONS
 A1/A2/A3/A4 are realised by: importing `isa_atmosphere` from the project's
 `validation_pipeline` module (through the Ada FFI) for the density,
 evaluating the correlation with the thesis-adopted C_SG over the sweeps,
-and annotating the IRVE-3 run condition with the resulting 16.14 W/cm^2.
+and annotating the IRVE-3 run condition with the resulting 15.36 W/cm^2.
 
 CITATIONS
 =========
@@ -92,15 +94,14 @@ R_N_BASELINE_M: float = 1.5          # A3: IRVE-3 nose radius (3 m diameter)
 H_RUN_KM: float = 51.8               # A4: run altitude
 V_RUN_MS: float = 3378.0             # A4: run velocity
 # === Axiom A1 (revised 2026-10-09): thesis-adopted correlation constant ======
-# WHY not read from stellarorion_types.ads (which holds 1.7415e-4): the
-# THESIS adopts 1.83e-4 for this figure ("the value adopted here", ch2,
-# \cite{sutton1971gravesh}) and its caption/AccSupp/Optimization_Attempt_1
-# all quote the resulting 16.14 W/cm^2. Reading the ads value rendered
-# 15.36 W/cm^2 and contradicted the caption (batch-1 audit, 2026-10-09).
-# The engine default stays disclosed in the thesis appendix; the ads file
-# itself is never modified. Value = documented thesis constant, not an
-# invention.
-C_SG_THESIS: float = 1.83e-4
+# Round-2 correction (2026-10-11): the thesis now adopts the Earth-air
+# value 1.7415e-4, the same value stellarorion_types.ads carries; 1.83e-4
+# was the Mars-mixture coefficient (validation_pipeline.py L788/L804
+# prohibit it for Earth). The caption and AccSupp quote 15.36 W/cm^2 at
+# the run condition; the Optimization_Attempt_1 record quotes 16.1379
+# W/cm^2 on the superseded scale, disclosed as the group-R campaign
+# reference. Value = documented thesis constant, not an invention.
+C_SG_THESIS: float = 1.7415e-4
 MACH_RUN: float = 10.29              # A4: quoted Mach number
 
 # Sweep ranges chosen to bracket the baseline in both panels.
@@ -429,7 +430,7 @@ def main() -> int:
 
     # === Baseline via the SAME adopted-constant path as the curves (T3) ====
     # The solver FFI entry (engine-default C_SG) returned 15.36 W/cm^2 and
-    # contradicted the caption's 16.14; one code path now serves the marker,
+    # contradicted the caption's 15.36; one code path now serves the marker,
     # the curves and the annotation.
     baseline = sg_at_velocity(V_RUN_MS / 1000.0, R_N_BASELINE_M, solver)
     print("[sutton_graves_parametric] adopted-constant baseline: %.4f W/cm2"
@@ -595,7 +596,7 @@ def build_figure(solver, baseline):
         # Three short lines. Measured: the two-line form was 130.33 pt wide
         # inside a 120.08 pt panel, so its framed box hung 20.80 pt LEFT of
         # panel (a)'s left spine and reached the y-axis label and the '10' tick.
-        # Splitting the words so the longest line is "16.14 W/cm$^2$" keeps the
+        # Splitting the words so the longest line is "15.36 W/cm$^2$" keeps the
         # patch inside the panel.
         "IRVE-3 run\ncondition\n%.2f W/cm$^2$" % baseline,
         xy=(v_run_kms, baseline),

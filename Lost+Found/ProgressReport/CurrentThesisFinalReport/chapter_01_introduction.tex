@@ -18,7 +18,7 @@ Deployable entry systems known as inflatable aerodynamic decelerators (IADs), or
     % audited as the deployed 3.0 m stacked-torus HIAD concept render).
     % Both captions now describe the deployed stacked-torus HIAD concept,
     % and the source-not-recorded disclosure is carried here as well.
-    \caption[Deployed inflatable decelerator concept: a stack of inflated toroidal rings that inflates to a diameter of about 3~m.]{Deployed inflatable decelerator concept: a stack of inflated toroidal rings that inflates to a diameter of about 3~m on a rigid, stowable carrier. Each ring is a pressure-supported structural member, so the package folds for launch and deploys before atmospheric entry. The artwork is a generic concept rendering rather than a dimensioned geometry, and its source is not recorded in this repository.}
+    \caption[Deployed inflatable decelerator concept: a stack of inflated toroidal rings at the 3~m design-class scale of IRVE-3 and LOFTID.]{Deployed inflatable decelerator concept: a stack of inflated toroidal rings that inflates to a diameter of about 3~m on a rigid, stowable carrier. Each ring is a pressure-supported structural member, so the package folds for launch and deploys before atmospheric entry. The artwork is a generic concept rendering rather than a dimensioned geometry, and its source is not recorded in this repository.}
     \label{fig:Hiaddeployed}
 \end{figure}
 
@@ -48,7 +48,7 @@ The objective is to develop and validate a computational framework for aerotherm
 
 Specific objectives:
 \begin{enumerate}
-    \item \textbf{Parametric Geometry Generation:} To develop an automated 3D computer-aided design (CAD) pipeline using CadQuery that generates HIAD profiles from IRVE-3 specifications, varying toroid count, cone angle, nose radius, and aeroshell diameter.
+    \item \textbf{Parametric Geometry Generation:} To develop an automated parametric geometry pipeline that generates HIAD profiles from IRVE-3 specifications, varying toroid count, cone angle, nose radius, and aeroshell diameter; the engine emits the geometry parametrically and writes the solver input deck directly, with no external CAD model and no STL handoff.
 
     \item \textbf{DSMC Aerothermal Analysis:} To perform high-fidelity rarefied gas dynamics simulations using the SPARTA DSMC solver, capturing Boltzmann-level molecular collisions and transport phenomena in the locally non-continuum shock layer at HIAD reentry altitudes of 50-60~km.
 
@@ -58,7 +58,7 @@ Specific objectives:
 
     \item \textbf{PINN Flow Field Refinement:} To apply Physics-Informed Neural Networks (DeepXDE) post-processing to smooth noisy DSMC data, fill flow-field gaps, and provide a continuous interpolant anchored in the compressible Navier-Stokes equations.
 
-    \item \textbf{Survivability Optimization:} To implement surrogate-based survivability optimization with Bayesian Optimization: a Gaussian Process (GP) Matérn 5/2 surrogate~\cite{rasmussen2003} with Expected Improvement~\cite{matern1960,morris1992} drives the search, optionally accelerated by a Genetic Algorithm (GA)~\cite{Goldberg1989}, to optimize HIAD geometry, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
+    \item \textbf{Survivability Optimization:} To implement surrogate-based survivability optimization with Bayesian Optimization: a Gaussian Process (GP) Matérn 5/2 surrogate~\cite{rasmussen2003} with Expected Improvement~\cite{matern1960,jones1998efficient} drives the search, optionally accelerated by a Genetic Algorithm (GA)~\cite{Goldberg1989}, to optimize HIAD geometry, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
 \end{enumerate}
 
 \section{Research Gap}
@@ -77,7 +77,7 @@ Four gaps remain in HIAD aerothermal analysis:
 This work makes the following novel contributions:
 
 \begin{enumerate}
-    \item \textbf{First Integrated DSMC-PINN-Optimization Framework for HIAD:} This study presents the first framework coupling parametric geometry generation (CadQuery), high-fidelity DSMC rarefied gas dynamics~\mbox{\cite{plimpton2014sparta}}, Physics-Informed Neural Network refinement~\cite{lu2021deepxde}, and surrogate-based Bayesian optimization (with a Genetic Algorithm search) for HIAD survivability analysis.
+    \item \textbf{First Integrated DSMC-PINN-Optimization Framework for HIAD:} This study presents the first framework coupling engine-emitted parametric geometry, high-fidelity DSMC rarefied gas dynamics~\mbox{\cite{plimpton2014sparta}}, Physics-Informed Neural Network refinement~\cite{lu2021deepxde}, and surrogate-based Bayesian optimization (with a Genetic Algorithm search) for HIAD survivability analysis.
 
     \item \textbf{DSMC-Based Design Space Exploration:} Unlike prior continuum CFD (RANS/LES) studies, this framework employs particle-based DSMC to capture the locally non-continuum shock layer above 50~km, enabling physically correct aerothermal loads for inflatable decelerators.
 
@@ -128,7 +128,7 @@ The framework couples automated parametric geometry generation, DSMC rarefied ga
 The literature review covers hypersonic aerothermodynamics, rarefied gas dynamics, DSMC methodology, and HIAD design: the Boltzmann equation, the Direct Simulation Monte Carlo method~\cite{bird1994molecular}, the Sutton-Graves correlation, and IRVE-3 and LOFTID flight results.
 
 \subsection*{b. Parametric Geometry Generation}
-CadQuery, a Python parametric CAD library, generates 3D HIAD models. Aeroshell diameter, forebody cone angle, toroid count, toroid radius, and nose radius are command-line arguments, so hundreds of variants export as STL for SPARTA.
+The engine generates the HIAD geometry parametrically in Ada. Aeroshell diameter, forebody cone angle, toroid count, toroid radius, and nose radius are command-line arguments, so hundreds of variants are written directly as SPARTA input decks, with no CAD model and no STL handoff.
 
 \subsection*{c. DSMC Simulation}
 SPARTA runs the DSMC simulation in a containerized Linux environment at the target trajectory point ($v = 3378$\,m/s, $\rho = 7.851 \times 10^{-4}$ kg/m$^3$, $T = 268.41$\,K at 51.8\,km). Millions of particles are advected, collided (VSS model), and sampled at surfaces, where computes accumulate force and energy; grid dumps give density, temperature, pressure, velocity, and Knudsen number fields.
@@ -140,7 +140,7 @@ A Physics-Informed Neural Network (PINN) in DeepXDE post-processes raw DSMC outp
 Bayesian Optimization (GP Matérn 5/2 and Expected Improvement), with the Genetic Algorithm (GA) search over the same surrogate, optimizes HIAD geometry. Latin Hypercube Sampling generates the initial design, the GP surrogate screens candidates; the cost function balances ballistic coefficient, peak deceleration, backface temperature, and drag performance against targets.
 
 \subsection*{f. Validation and Analysis}
-Validation against IRVE-3 flight data~\cite{rapisarda2023mdao} uses the Sutton-Graves correlation. Peak heat flux is 14.36\,W/cm$^2$ in flight, 13.83\,W/cm$^2$ from the MDAO Fay-Riddell reference, and 16.14\,W/cm$^2$ from the Sutton-Graves correlation in the present DSMC run. Total heat load is 195.06, 195.17, and 165.72\,J/cm$^2$, respectively; peak deceleration is 19.7\,g in flight against 16.83\,g from this work. Solver-resolved quantities under-predict flight by a uniform $15\%$ because one trajectory point replaces a full reentry history, while the correlation over-predicts by $+12.4\%$ because it resolves neither the scalloped geometry nor the rarefied departure; both deviations appear in Chapter~\ref{ch:results}.
+Validation against IRVE-3 flight data uses the Sutton-Graves correlation. Peak heat flux is 13.80\,W/cm$^2$ in the NASA flight reconstruction~\cite{old2013irve3postflight,dillman2014irve3flight}, 13.83\,W/cm$^2$ from the MDAO Fay-Riddell reference, and 15.36\,W/cm$^2$ from the Sutton-Graves correlation with the Earth-air coefficient in the present DSMC run; the values 14.36\,W/cm$^2$ and 195.06\,J/cm$^2$ that earlier revisions carried in the flight column are the recorded group-R reference values reported by Rapisarda~\cite{rapisarda2023mdao}, the reference set the recorded campaigns were fitted against. Total heat load is 188.00, 195.17, and 165.72\,J/cm$^2$, respectively; peak deceleration is 19.7\,g in flight against 16.55\,g raw (16.58\,g PINN-extrapolated) from this work. Flight-integrated quantities under-predict by $-11.9\%$ (heat load) and $-16.0\%$ (deceleration) because one trajectory point replaces a full reentry history, while the correlation over-predicts by $+11.3\%$ because it resolves neither the scalloped geometry nor the rarefied departure, and sits only $+0.6\%$ above Rapisarda's trajectory-integrated Sutton-Graves peak of 15.26\,W/cm$^2$; both deviations appear in Chapter~\ref{ch:results}.
 
 \section{Thesis Outline}
 \textbf{CHAPTER I} Background, problem statement, objectives, scope, methodology, and outline.

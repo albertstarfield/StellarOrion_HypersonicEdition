@@ -31,10 +31,10 @@ Table~\ref{tab:research_comparison} summarizes the landmark HIAD flight tests an
 
 \textbf{HEART Project} \cite{mazaheri2012heart} & Optimized nose-shape and two-piece TPS at the nose-IAD juncture. & The nose-IAD juncture creates a secondary heat flux peak. & Predicts local hot spots. \\ \hline
 
-\textbf{SST $k$-$\omega$ Source} \cite{menter1994SST} & $k$-$\omega$ SST Turbulence Model. & Superior prediction of separation in adverse pressure gradients. & Supports model for valley recirculation. \\ \hline
+\textbf{SST $k$-$\omega$ Source} \cite{menter1994SST} & $k$-$\omega$ SST Turbulence Model. & Superior prediction of separation in adverse pressure gradients. & Basis of future work only; not executed here. \\ \hline
 \end{longtable}
 \subsection{Triangulation of Expected Outcomes}
-By synthesizing \cite{dillman2014irve3flight} and \cite{guo2017deformation}, the scalloped geometry is hypothesized to generate localized heat flux peaks on the toroidal crests; the \textit{SST $k-\omega$} model \cite{menter1994SST} resolves stable recirculation cells in the valleys, and the \textit{Thermally Ideal Gas} model matches the high-enthalpy \textit{LOFTID} conditions.
+By synthesizing \cite{dillman2014irve3flight} and \cite{guo2017deformation}, the scalloped geometry is hypothesized to generate localized heat flux peaks on the toroidal crests; the present DSMC runs resolve the near-surface recirculation in the toroid valleys directly, and the \textit{Thermally Ideal Gas} model matches the high-enthalpy \textit{LOFTID} conditions.
 
 This synthesis grounds \textbf{Chapter~\ref{ch:methodology}}; Figure~\ref{fig:literature_review_map} maps coverage.
 
@@ -535,14 +535,14 @@ Fay-Riddell needs post-shock velocity gradients and boundary-layer edge properti
     \label{eq:sutton_graves}
 \end{equation}
 
-\noindent where $C_{SG}$ is a gas-model-dependent coefficient, $\rho_{\infty}$ the freestream density, $R_N$ the nose radius and $V_{\infty}$ the freestream velocity. For a 5-species reacting air model $C_{SG} = 1.83 \times 10^{-4}$ in SI units, the value adopted here \cite{sutton1971gravesh}.
+\noindent where $C_{SG}$ is a gas-model-dependent coefficient, $\rho_{\infty}$ the freestream density, $R_N$ the nose radius and $V_{\infty}$ the freestream velocity. For a 5-species reacting air model of Earth air $C_{SG} = 1.7415 \times 10^{-4}$ in SI units, the value adopted here \cite{sutton1971gravesh} and the value the StellarOrion engine carries.
 
 \begin{figure}[htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Two-panel Sutton-Graves parametric plot. Panel (a) shows stagnation heat flux against freestream velocity for nose radii from 0.1 to 3 metres, with the run point marked at 3378 metres per second and 16.14 watts per square centimetre for the 1.5 metre baseline nose. Panel (b) shows heat flux against nose radius at three fixed velocities, illustrating the inverse square-root dependence on nose radius.}}%
+    \BeginAccSupp{method=escape,ActualText={Two-panel Sutton-Graves parametric plot. Panel (a) shows stagnation heat flux against freestream velocity for nose radii from 0.1 to 3 metres, with the run point marked at 3378 metres per second and 15.36 watts per square centimetre for the 1.5 metre baseline nose. Panel (b) shows heat flux against nose radius at three fixed velocities, illustrating the inverse square-root dependence on nose radius.}}%
 \includegraphics[width=0.9\textwidth]{figures/sutton_graves_parametric.png}%
 \EndAccSupp{}%
-    \caption{Parametric evaluation of the Sutton-Graves stagnation heat flux correlation (Eq.~\ref{eq:sutton_graves}) at $C_{SG} = 1.83 \times 10^{-4}$ and $h = 51.8$~km. (Left) Variation of $\dot{q}_s$ with freestream velocity $V_{\infty}$ for nose radii $R_N = 0.1$-$3.0$~m, demonstrating the cubic velocity dependence. The IRVE-3 run condition ($R_N = 1.5$~m, $V_{\infty} = 3.378$~km/s) is marked, giving $\dot{q}_s = 16.14$~W/cm$^2$. (Right) Variation of $\dot{q}_s$ with nose radius at three fixed velocities, illustrating the $1/\sqrt{R_N}$ scaling that motivates the blunt-body design philosophy.}
+    \caption{Parametric evaluation of the Sutton-Graves stagnation heat flux correlation (Eq.~\ref{eq:sutton_graves}) at $C_{SG} = 1.7415 \times 10^{-4}$ and $h = 51.8$~km. (Left) Variation of $\dot{q}_s$ with freestream velocity $V_{\infty}$ for nose radii $R_N = 0.1$-$3.0$~m, demonstrating the cubic velocity dependence. The IRVE-3 run condition ($R_N = 1.5$~m, $V_{\infty} = 3.378$~km/s) is marked, giving $\dot{q}_s = 15.36$~W/cm$^2$. (Right) Variation of $\dot{q}_s$ with nose radius at three fixed velocities, illustrating the $1/\sqrt{R_N}$ scaling that motivates the blunt-body design philosophy.}
     \label{fig:sutton_graves_parametric}
 \end{figure}
 
@@ -896,14 +896,14 @@ Above $Kn = 0.01$ Navier-Stokes loses accuracy, and the Direct Simulation Monte 
 
 \subsection{Physical Basis}
 
-DSMC models the gas as simulation particles, each standing for $10^{10}$-$10^{15}$ real molecules. In steps $\Delta t$ particles stream ballistically, $\mathbf{r}_{i}^{n+1} = \mathbf{r}_{i}^{n} + \mathbf{v}_{i}^{n} \Delta t$, with boundary crossings applied, then collide per cell with probability proportional to $g\,\sigma$, conserving momentum and energy.
+DSMC models the gas as simulation particles, each standing for of order $10^{19}$ to $10^{20}$ real molecules. In steps $\Delta t$ particles stream ballistically, $\mathbf{r}_{i}^{n+1} = \mathbf{r}_{i}^{n} + \mathbf{v}_{i}^{n} \Delta t$, with boundary crossings applied, then collide per cell with probability proportional to $g\,\sigma$, conserving momentum and energy.
 
 \subsection{The Bird Algorithm}
 
 The standard implementation follows Bird's No-Time-Counter (NTC) algorithm:
 
 \begin{enumerate}
-    \item \textbf{Grid construction:} cells of size $\Delta x$ stay below the local mean free path $\lambda$.
+    \item \textbf{Grid construction:} in the NTC 2003 Hu et al. formulation cells of size $\Delta x$ stay below the local mean free path $\lambda$; the SPARTA decks used in this thesis instead place cells of order $10^{-1}$ m, three orders of magnitude above the local mean free path of order $10^{-4}$ m at the run condition, as statistical cell sampling permits.
     \item \textbf{Particle movement:} Each particle moves by $\mathbf{v} \Delta t$ under specular, diffuse or periodic boundaries.
     \item \textbf{Collision pairing:} random pairs per cell give collisions per time step:
     \begin{equation}
@@ -1030,7 +1030,7 @@ Table~\ref{tab:cfd_vs_dsmc} compares the continuum (RANS/NS) and kinetic (DSMC) 
 % 0.01 to 0.1 with a hyphen that is 6 px wide against a 19 px math minus.
 % The range is now spelled out as "between 0.01 and 0.1" and \approx is the
 % only relation glyph in the paragraph.
-\noindent This study employs \textit{both} paradigms, because each one is valid in its own regime. The turbulent $k$-$\omega$ model~\mbox{\cite{menter1994SST}} describes the continuum freestream, where the global Knudsen number is \mbox{$Kn_{\text{global}} \approx 2.5\times10^{-5}$} (Eq.~\ref{eq:kn_global_52km}). The bow shock, by contrast, is the region that sets the thermal load, and its Knudsen number is between $0.01$ and $0.1$. SPARTA~\mbox{\cite{plimpton2014sparta}} resolves that layer directly on its own length scale, so the two solvers meet at the interface where the flow changes from continuum to rarefied.
+\noindent This study treats the aerothermal problem with one solver paradigm, particle-based DSMC, because the load-setting region is the shock layer itself. The global Knudsen number is \mbox{$Kn_{\text{global}} \approx 3.4\times10^{-5}$} (Eq.~\ref{eq:kn_global_52km}), so the freestream is a continuum limit, but the bow shock that sets the thermal load has a Knudsen number between $0.01$ and $0.1$ and must be resolved on molecular scales; SPARTA~\mbox{\cite{plimpton2014sparta}} resolves that layer directly on its own length scale. No continuum Reynolds-averaged solver is executed in this thesis.
 
 \section{Machine Learning in Computational Fluid Dynamics}
 \label{sec:ml_cfd}
@@ -1330,7 +1330,7 @@ The objective is greatest survivability: decelerate the payload to safe landing 
     point; the trajectory line itself is schematic, so its exact ordinate should be read from the
     calculation in Eq.~\eqref{eq:kn_global_52km} rather than from the plotted position. Using
     $L = 3.0$~m and the ISA 52~km freestream density~\protect\cite{usstandard1976} gives
-    $Kn_{\text{global}} \approx 2.5\times10^{-5}$, deep in the continuum band, while the
+    $Kn_{\text{global}} \approx 3.4\times10^{-5}$, deep in the continuum band, while the
     millimetre-scale shock layer gives $Kn_{\text{shock}} \sim 0.01$-$0.1$, which is the local
     condition that justifies DSMC.}
     \label{fig:knudsen_regime_map}
@@ -1351,7 +1351,7 @@ This review establishes six pillars:
 
     \item \textbf{Parametric HIAD Geometry:} Five design variables ($D$, $\theta_c$, $N_t$, $r_{tor}$, $R_N$) plus the structural integration constraint (Eq.~\ref{eq:structural_integration}) and toroid radius (Eq.~\ref{eq:toroid_radius}) define the OML, following Rapisarda's MDAO IRVE-3 adaptation in Section~\ref{sec:parametric}~\cite{rapisarda2023mdao}.
 
-    \item \textbf{Optimization Theory:} MDO with Latin Hypercube sampling~\cite{mckay1979lhs}, Bayes Opt surrogates~\cite{morris1992}, and genetic algorithm search~\cite{Goldberg1989} navigates the coupled aerodynamic-thermal-structural design space (Section~\ref{sec:opt_theory}).
+    \item \textbf{Optimization Theory:} MDO with Latin Hypercube sampling~\cite{mckay1979lhs}, Bayes Opt surrogates~\cite{jones1998efficient}, and genetic algorithm search~\cite{Goldberg1989} navigates the coupled aerodynamic-thermal-structural design space (Section~\ref{sec:opt_theory}).
 \end{enumerate}
 
 \noindent Chapter~3 uses these foundations: the Rapisarda geometry engine~\cite{rapisarda2023mdao}, SPARTA DSMC~\cite{plimpton2014sparta}, PINN reconstruction~\cite{lu2021deepxde}, Bayesian Optimization surrogates~\cite{rasmussen2003} and genetic algorithm search~\cite{Goldberg1989}.
