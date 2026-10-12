@@ -70,7 +70,7 @@ Four gaps remain in HIAD aerothermal analysis:
 
     \item \textbf{PINN-DSMC Hybrid Approach:} Physics-Informed Neural Networks have been applied to CFD post-processing, but not as a smoothing layer for noisy DSMC particle data in HIAD applications.
 
-    \item \textbf{Multi-Objective Survivability Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, and backface temperature for HIAD configurations with surrogate-assisted optimization has not been demonstrated.
+    \item \textbf{Survivability Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, and backface temperature for HIAD configurations with surrogate-assisted optimization has not been demonstrated; this study delivers a constrained single-objective treatment of that problem, so the multi-objective generalization remains open.
 \end{itemize}
 
 \section{Novelty and Contributions}
@@ -93,7 +93,7 @@ This work makes the following novel contributions:
 This research provides aerothermal analysis and survivability optimization of the Flexible Thermal Protection System (FTPS) within available computational resources. Its boundaries are:
 
 \begin{enumerate}
-    \item \textbf{Geometric Representation:} The HIAD structure uses parametric 3D CAD generation via CadQuery. The 6-toroid stack based on the multidisciplinary design analysis and optimization (MDAO) baseline~\cite{rapisarda2023mdao} is the primary geometry, with variable toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as rigid and fully inflated to isolate surface-topology effects on the flow.
+    \item \textbf{Geometric Representation:} The HIAD structure is generated parametrically by the engine itself, which writes the solver input deck directly, with no external CAD model and no STL handoff. The 6-toroid stack based on the multidisciplinary design analysis and optimization (MDAO) baseline~\cite{rapisarda2023mdao} is the primary geometry, with variable toroid count, cone angle, and nose radius. The ``scalloped'' toroidal surface is treated as rigid and fully inflated to isolate surface-topology effects on the flow.
 
     \item \textbf{Dimensionality:} Simulations are 2D axisymmetric (via the \texttt{slice-angle} option) or full 3D. The 2D mode assumes zero angle of attack ($\alpha = 0^\circ$) to maintain rotational symmetry and raise particle resolution within memory limits; full 3D covers off-axis conditions.
 

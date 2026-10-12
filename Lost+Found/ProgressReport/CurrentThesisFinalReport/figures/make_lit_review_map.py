@@ -53,7 +53,7 @@ printed label would fall below 8 pt.
 
 CITATIONS
   Matplotlib 3.11.2, https://matplotlib.org/stable/
-  Bird, G. A. (1994), Molecular Gas Dynamics, Clarendon Press (the NTC and
+  Bird, G. A. (1994), Molecular Gas Dynamics, Oxford University Press (the NTC and
   Streeter terms this thesis inherits are unrelated to this figure and are cited
   only to keep the chain of the surrounding chapter complete)
 """

@@ -73,7 +73,7 @@ The cost function is:
 J = w_\beta \left(\frac{\beta_{\text{calc}}}{\beta_{ref}} - 1\right)^2 + \sum_{i} w_i \, \mathbb{1}\!\left[y_i^{(\text{pred})} > y_i^{(\text{limit})}\right] \cdot 10^{15}
 \label{eq:cost_function_optimization}
 \end{equation}
-where hard constraint violations carry a $10^{15}$ penalty.
+where hard constraint violations carry a $10^{15}$ penalty; the executed campaign uses the five-term decomposition of Eq.~\eqref{eq:cost_function_implemented}.
 
 Figure~\ref{fig:governing_equations} summarizes this chain.
 
@@ -88,7 +88,7 @@ Figure~\ref{fig:governing_equations} summarizes this chain.
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
-The StellarOrion engine, an Ada and Python stack with SPARTA containerized in Docker, orchestrates the pipeline in Figure~\ref{fig:software_pipeline}. The Python entry point \texttt{run.py} drives five phases: boot, Python virtual-environment bootstrap, static analysis, Ada build of the simulation engine, and launch. The core solver is the Ada unit \texttt{StellarOrion\_Orion} in \texttt{src/simulation\_engine/}, which wraps the SPARTA DSMC solver~\cite{plimpton2014sparta} as the gas-phase engine and post-processes its surface heat flux through the built-in one-dimensional composite conduction model of this chapter, then hands surface fields to the DeepXDE PINN refinement module and to the scikit-learn Bayesian Optimization surrogate (GP Mat\'ern 5/2 with Expected Improvement, Sec.~\ref{sec:ga_opt}). Results are exported as VTK/STL for ParaView rendering and for the validation gate of Chapter~\ref{ch:results}. The recorded campaign of Chapter~\ref{ch:results} applies Bayesian Optimization with a fixed hyper-parameter refit strategy, adopted after the reproducibility finding of Sec.~\ref{sec:surrogate_repro}.
+The StellarOrion engine, an Ada and Python stack with SPARTA containerized in Docker, orchestrates the pipeline in Figure~\ref{fig:software_pipeline}. The Python entry point \texttt{run.py} drives five phases: boot, Python virtual-environment bootstrap, static analysis, Ada build of the simulation engine, and launch. The core solver is the Ada unit \texttt{StellarOrion\_Orion} in \texttt{src/simulation\_engine/}, which wraps the SPARTA DSMC solver~\cite{plimpton2014sparta} as the gas-phase engine and post-processes its surface heat flux through the built-in one-dimensional composite conduction model of this chapter, Surface-field handoff: the engine then hands surface fields to the DeepXDE PINN refinement module and to the scikit-learn Bayesian Optimization surrogate. (GP Mat\'ern 5/2 with Expected Improvement, Sec.~\ref{sec:ga_opt}). Results are exported as VTK/STL for ParaView rendering and for the validation gate of Chapter~\ref{ch:results}. The recorded campaign of Chapter~\ref{ch:results} applies Bayesian Optimization with a fixed hyper-parameter refit strategy, adopted after the reproducibility finding of Sec.~\ref{sec:surrogate_repro}.
 
 \begin{figure}[!htbp]
     \centering
@@ -308,7 +308,7 @@ DSMC still needs a Cartesian computational grid for two purposes:
 Grid resolution must resolve the bow-shock thickness and the near-wall boundary-layer gradients; a grid factor controls mesh density. At the validated condition the mean free path is of order $10^{-4}$\,m, so the uniform cells of order $10^{-1}$\,m sit three orders of magnitude above it and are deliberately coarser than molecular scales: DSMC samples collision partners statistically per cell, so the mesh is sized to the shock thickness and the near-wall gradients with sufficient particles per cell, not to the local mean free path.
 
 \subsection{Grid Independence Study}
-A Grid Convergence Index (GCI) study checked grid-resolution independence using systematic grid-factor variation:
+A grid-factor sensitivity study checked resolution independence using systematic grid-factor variation:
 
 \begin{table}[!htbp]
     \centering
@@ -731,13 +731,13 @@ The PINN refinement stage rests on these assumptions:
     \begin{tabular}{|>{\RaggedRight\arraybackslash}p{0.21\textwidth}|>{\RaggedRight\arraybackslash}p{0.49\textwidth}|>{\RaggedRight\arraybackslash}p{0.2\textwidth}|}
         \hline
         \textbf{Axiom} & \textbf{Statement} & \textbf{Basis} \\ \hline
-        A1: Axisymmetric flow & The flow field is symmetric about the vehicle centerline, reducing the problem to 2D $(x, r)$. & Geometric symmetry \\ \hline
-        A2: Continuum NS as regularizer & The Navier-Stokes equations provide sufficient physical constraint for smoothing, even at $Kn > 0.01$. & Sec.~\ref{sec:pinn_pragmatic} \\ \hline
-        A3: Sutherland viscosity & Dynamic viscosity follows $\mu(T) = \mu_{ref} (T/T_{ref})^{3/2} (T_{ref}+S)/(T+S)$ with $S = 110.4$ K. & Kinetic theory (Sutherland, 1893) \\ \hline
-        A4: Prandtl number & $\Pr = 0.71$ (constant), coupling thermal and velocity boundary layers. & Air at standard conditions \\ \hline
-        A5: Ideal gas EOS & $p = \rho R T$ holds throughout the domain. Valid for $Kn \lesssim 10$. & Near-continuum assumption \\ \hline
-        A6: Fully accommodated wall & The vehicle surface is a diffuse reflector at $T_w = 1000$ K with full thermal accommodation. & DSMC boundary condition \\ \hline
-        A7: Statistical stationarity & The SPARTA output represents a time-averaged steady state. & Sufficient timesteps for convergence \\ \hline
+        P1: Axisymmetric flow & The flow field is symmetric about the vehicle centerline, reducing the problem to 2D $(x, r)$. & Geometric symmetry \\ \hline
+        P2: Continuum NS as regularizer & The Navier-Stokes equations provide sufficient physical constraint for smoothing, even at $Kn > 0.01$. & Sec.~\ref{sec:pinn_pragmatic} \\ \hline
+        P3: Sutherland viscosity & Dynamic viscosity follows $\mu(T) = \mu_{ref} (T/T_{ref})^{3/2} (T_{ref}+S)/(T+S)$ with $S = 110.4$ K. & Kinetic theory (Sutherland, 1893) \\ \hline
+        P4: Prandtl number & $\Pr = 0.71$ (constant), coupling thermal and velocity boundary layers. & Air at standard conditions \\ \hline
+        P5: Ideal gas EOS & $p = \rho R T$ holds throughout the domain. Valid for $Kn \lesssim 10$. & Near-continuum assumption \\ \hline
+        P6: Fully accommodated wall & The vehicle surface is a diffuse reflector at $T_w = 1000$ K with full thermal accommodation. & DSMC boundary condition \\ \hline
+        P7: Statistical stationarity & The SPARTA output represents a time-averaged steady state. & Sufficient timesteps for convergence \\ \hline
     \end{tabular}
 \end{table}
 
@@ -1025,14 +1025,15 @@ SPARTA grid dumps give field maps of macroscopic quantities from particle statis
     \centering
     \caption{SPARTA Grid Data Columns and Physical Variables.}
     \label{tab:grid_data}
-    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.11\textwidth}|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.07\textwidth}|}
+    \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.15\textwidth}|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|>{\RaggedRight\arraybackslash}p{0.09\textwidth}|}
         \hline
         \textbf{Column} & \textbf{Physical Variable} & \textbf{Unit} \\ \hline
-        1-4 & Cell bounds ($x_{lo}, y_{lo}, x_{hi}, y_{hi}$) & m \\ \hline
-        5 & Number Density ($n$) & m$^{-3}$ \\ \hline
-        6-8 & Velocity Components ($u, v, w$) & m/s \\ \hline
-        9 & Translational Temperature ($T$) & K \\ \hline
-        10 & Pressure ($p$) & Pa \\ \hline
+        1 & Cell ID (\texttt{id}) & integer index \\ \hline
+        2-5 & Cell bounds ($x_{lo}, y_{lo}, x_{hi}, y_{hi}$) & m \\ \hline
+        6 & Number Density ($n$) & m$^{-3}$ \\ \hline
+        7-9 & Velocity Components ($u, v, w$) & m/s \\ \hline
+        10 & Translational Temperature ($T$) & K \\ \hline
+        11 & Mass Density ($n\rho$) & kg/m$^3$ \\ \hline
     \end{tabularx}
 \end{table}
 
@@ -1222,7 +1223,7 @@ $k$-fold cross-validation ($k = 5$) applies where sample size permits, reporting
 \subsection{Reproducibility Requirements}
 
 \subsubsection*{Random Seed Control}
-The Bayesian-Optimization campaign driver fixes its campaign seed at $42$: the Latin Hypercube initialisation draws from \texttt{\seqsplit{numpy.random.default\_rng(42)}} and the per-iteration Expected-Improvement candidate sampling from \texttt{\seqsplit{numpy.random.default\_rng(seed+i)}} for iteration $i$. The Kriging post-processor holds \texttt{\seqsplit{random\_state=42}} throughout. Two components are deliberately left unseeded: the in-engine Genetic Algorithm resets its \texttt{\seqsplit{Float\_Random.Generator}} with a time-based seed, so its population sequence is not bit-reproducible across runs, and the PINN weight initialisation takes the PyTorch default. Repeatability of the delivered campaign therefore rests on the recorded campaign seed, the fixed evaluation budget and the fixed design variables rather than on global process seeding.
+The Bayesian-Optimization campaign driver fixes its campaign seed at $42$: the Latin Hypercube initialization draws from \texttt{\seqsplit{numpy.random.default\_rng(42)}} and the per-iteration Expected-Improvement candidate sampling from \texttt{\seqsplit{numpy.random.default\_rng(seed+i)}} for iteration $i$. The Kriging post-processor holds \texttt{\seqsplit{random\_state=42}} throughout. Two components are deliberately left unseeded: the in-engine Genetic Algorithm resets its \texttt{\seqsplit{Float\_Random.Generator}} with a time-based seed, so its population sequence is not bit-reproducible across runs, and the PINN weight initialization takes the PyTorch default. Repeatability of the delivered campaign therefore rests on the recorded campaign seed, the fixed evaluation budget and the fixed design variables rather than on global process seeding.
 
 \subsubsection*{Environment Specification}
 The software and hardware environment used for the machine learning components is summarized in Table~\ref{tab:env_spec}.
@@ -1247,7 +1248,7 @@ Full state dict (\texttt{\seqsplit{model\_state\_dict}}), optimizer state dict (
 \subsection{Uncertainty Quantification}
 
 \subsubsection*{PINN Uncertainty}
-As designed, an ensemble of $M = 5$ differently seeded models would give a mean $\hat{y}$ and spread $\sigma_{pred}$. As implemented, the delivered trainer fits a single model with unseeded weight initialisation, so no ensemble spread is computed; the physics check instead evaluates the continuity residual on the 500-point test set carried in the DeepXDE data object.
+As designed, an ensemble of $M = 5$ differently seeded models would give a mean $\hat{y}$ and spread $\sigma_{pred}$. As implemented, the delivered trainer fits a single model with unseeded weight initialization, so no ensemble spread is computed; the physics check instead evaluates the continuity residual on the 500-point test set carried in the DeepXDE data object.
 
 \subsubsection*{Bayes Opt Surrogate Uncertainty}
 As designed, a committee of $M = 10$ initializations with leave-one-out predictive variance. As implemented, uncertainty is the posterior predictive standard deviation of the single fitted Gaussian-process surrogate (\texttt{\seqsplit{gp.predict(...,return\_std=True)}}), with kernel hyperparameters re-fitted from $5$ random restarts (\texttt{\seqsplit{n\_restarts\_optimizer=5}}); no committee is trained.
