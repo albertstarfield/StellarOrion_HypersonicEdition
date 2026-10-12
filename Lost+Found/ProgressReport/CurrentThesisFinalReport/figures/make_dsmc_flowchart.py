@@ -128,6 +128,13 @@ BOX_W = 3.20
 # visible white channel, which is the same floor measure_loop_gap already
 # uses for the loop.
 BOX_H = 0.34
+#  ISO 5807 gives the decision block its own taller slot: the diamond
+#  must CONTAIN its two text lines at the ink corners (|dy| = 0.1375 in
+#  for lines at +/-0.5*LABEL_PITCH), and a 0.17 in half-height cuts
+#  every glyph off. DECISION_H is the slot height for box 5 only; box 6
+#  and the Stop chain carry the delta in box_top, and H grows by the
+#  same amount so the bottom clearance stays BOT.
+DECISION_H = 0.90
 #  DEFECT 7a == the flowchart used 36% of the available plot width.
 #
 #  MEASURED (preamble.tex:524): \PlotFrame places with
@@ -137,8 +144,10 @@ BOX_H = 0.34
 #      HEIGHT-limited and its placed width is 0.60*\textheight * figure_aspect,
 #      so width usage is driven entirely by the figure's own aspect ratio.
 #  MEASURED here: W = 0.9 * TEXT_W_IN = 4.96063 in, and with
-#      H = TOP + TITLE_H + 7*BOX_H + 6*GAP + BOT = 4.24 in
-#  the shipped aspect was 1.170 -> placed width ~1.49 in of ~6.1 in = 24%.
+#      H = TOP + TITLE_H + START_SLOT + 6*BOX_H + DECISION_H + 6*GAP
+#          + STOP_SLOT + BOT = 4.84 in
+#  the shipped aspect is 1.025, so a height-limited 6.1 x 1.89 in frame
+#  places it 1.89 * 1.025 = 1.94 in wide == 32% of the box.
 #
 #  WHY A 2-COLUMN SNAKE WAS REJECTED (measured, not assumed):
 #      LOOP_X = BOX_X1 + 0.32 is anchored to the box column's RIGHT edge.
@@ -183,8 +192,8 @@ TERM_GAP = 0.12
 TITLE_GAP = 0.10
 START_SLOT = TITLE_GAP + TERM_H + TERM_GAP
 STOP_SLOT = TERM_GAP + TERM_H
-H = (TOP + TITLE_H + START_SLOT + N_BOX * BOX_H + (N_BOX - 1) * GAP
-     + STOP_SLOT + BOT)
+H = (TOP + TITLE_H + START_SLOT + (N_BOX - 1) * BOX_H + DECISION_H
+     + (N_BOX - 1) * GAP + STOP_SLOT + BOT)
 BOX_X0 = (W - BOX_W) / 2.0
 BOX_X1 = BOX_X0 + BOX_W
 CX = W / 2.0
@@ -228,11 +237,20 @@ TERM_FILL = "#F1F5F9"
 
 TITLE_FS = 13
 BOX_FS = 9
+# Box 5's subtitle only: '(Steady State / Time Average)' measures
+# 2.2155 in at 9 pt in the DejaVu worst case and would cut both
+# diamond edges, so it declares 8.1 to stay above the 8.0 pt printed
+# floor under the fit tolerance (printed = declared * achieved).
+DECISION_SUB_FS = 8.1
 LOOP_FS = 9
 LOOP_MATH_FS = 12
 TITLE_TEXT = "DSMC Algorithm (Bird, 1994)"
 LOOP_LABEL_1 = "Repeat"
 LOOP_LABEL_2 = "$N_{steps}$"
+# Branch labels for the box 5 decision diamond: No goes back around the
+# red Repeat loop, Yes continues down to the output parallelogram.
+DECISION_YES = "Yes"
+DECISION_NO = "No"
 # Mathtext shrinks subscripts by this factor. It is read from matplotlib
 # itself instead of being restated, because the legibility floor below is
 # only as trustworthy as this number.
@@ -308,7 +326,14 @@ def box_top(i: int) -> float:
     Returns
         y coordinate of the top edge.
     """
-    return H - TOP - TITLE_H - START_SLOT - i * (BOX_H + GAP)
+    top = H - TOP - TITLE_H - START_SLOT - i * (BOX_H + GAP)
+    if i == N_BOX - 1:
+        # Box 6 hangs below the decision diamond's taller slot: the
+        # delta DECISION_H - BOX_H was added above it in H, so subtract
+        # it here to keep box 6, Stop and the bottom clearance exactly
+        # on their old lines.
+        top -= DECISION_H - BOX_H
+    return top
 
 
 def box_center(i: int) -> float:
@@ -319,7 +344,8 @@ def box_center(i: int) -> float:
     Returns
         y coordinate of the center line.
     """
-    return box_top(i) - BOX_H / 2.0
+    slot = DECISION_H if i == 5 else BOX_H
+    return box_top(i) - slot / 2.0
 
 
 def check_text(name: str, value: str) -> None:
@@ -398,6 +424,8 @@ def draw() -> None:
     check_text("loop label 2", LOOP_LABEL_2)
     check_text("start terminator", "Start")
     check_text("stop terminator", "Stop")
+    check_text("decision branch yes", DECISION_YES)
+    check_text("decision branch no", DECISION_NO)
 
     fig = plt.figure(figsize=(W, H))
     ax = fig.add_axes((0.0, 0.0, 1.0, 1.0))
@@ -476,6 +504,26 @@ def draw() -> None:
                 linewidth=BOX_LW,
                 slant_in=fsh.SLANT_IN,
             )
+        elif i == 5:
+            # ISO 5807 decision diamond for Check Convergence: four
+            # points at the slot's top/right/bottom/left, so the column
+            # arrow lands on the top vertex and the Repeat loop leaves
+            # the right vertex exactly where the old rectangle edge sat
+            # (BOX_X1), keeping the loop mask and clearance checks.
+            ax.add_patch(
+                Polygon(
+                    [
+                        (CX, top),
+                        (BOX_X1, top - DECISION_H / 2.0),
+                        (CX, top - DECISION_H),
+                        (BOX_X0, top - DECISION_H / 2.0),
+                    ],
+                    facecolor=fill,
+                    edgecolor=border,
+                    linewidth=BOX_LW,
+                    zorder=2,
+                )
+            )
         else:
             ax.add_patch(
                 Rectangle(
@@ -488,9 +536,10 @@ def draw() -> None:
                     zorder=2,
                 )
             )
+        cy = box_center(i)
         ax.text(
             CX,
-            top - BOX_H / 2.0 + 0.5 * LABEL_PITCH,
+            cy + 0.5 * LABEL_PITCH,
             BOX_TITLES[i],
             ha="center",
             va="center",
@@ -501,18 +550,20 @@ def draw() -> None:
         )
         ax.text(
             CX,
-            top - BOX_H / 2.0 - 0.5 * LABEL_PITCH,
+            cy - 0.5 * LABEL_PITCH,
             BOX_SUBS[i],
             ha="center",
             va="center",
-            fontsize=BOX_FS,
+            fontsize=DECISION_SUB_FS if i == 5 else BOX_FS,
             fontweight="bold",
             color="#0F172A",
             zorder=3,
         )
 
     for i in range(N_BOX - 1):
-        y_from = box_top(i) - BOX_H
+        # Box 5 exits from the diamond's bottom vertex, not BOX_H down.
+        slot = DECISION_H if i == 5 else BOX_H
+        y_from = box_top(i) - slot
         y_to = box_top(i + 1) - 0.01
         ax.annotate(
             "",
@@ -562,6 +613,34 @@ def draw() -> None:
     # A rendered-page audit found it floating six points clear of the box with
     # no leader line, and box 2 already names the step length in its own second
     # line as "Free Flight for Delta t", so the label was pure duplication.
+
+    # Branch labels: No sits above the loop tail between the diamond's
+    # right edge and the bezier (edge x = 3.724 at this y, bezier x ~=
+    # 4.38, ink 3.995..4.245); Yes sits beside the column arrow in the
+    # gap between box 6's top line and the diamond's lower-right edge
+    # (ink 0.7925..0.9175 vs box6 0.78 and edge 0.931 at x = 2.66).
+    ax.text(
+        LOOP_X - 0.28,
+        box_center(5) + 0.10,
+        DECISION_NO,
+        ha="center",
+        va="center",
+        fontsize=BOX_FS,
+        fontweight="bold",
+        color=RED,
+        zorder=3,
+    )
+    ax.text(
+        CX + 0.18,
+        box_top(N_BOX - 1) + 0.075,
+        DECISION_YES,
+        ha="left",
+        va="center",
+        fontsize=BOX_FS,
+        fontweight="bold",
+        color="#0F172A",
+        zorder=3,
+    )
 
     y_loop_from = box_center(5)
     y_loop_to = box_center(1)
