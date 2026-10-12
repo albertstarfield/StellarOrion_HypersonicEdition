@@ -307,12 +307,12 @@ DSMC still needs a Cartesian computational grid for two purposes:
 
 Grid resolution must resolve the bow-shock thickness and the near-wall boundary-layer gradients; a grid factor controls mesh density. At the validated condition the mean free path is of order $10^{-4}$\,m, so the uniform cells of order $10^{-1}$\,m sit three orders of magnitude above it and are deliberately coarser than molecular scales: DSMC samples collision partners statistically per cell, so the mesh is sized to the shock thickness and the near-wall gradients with sufficient particles per cell, not to the local mean free path.
 
-\subsection{Grid Independence Study}
-A grid-factor sensitivity study checked resolution independence using systematic grid-factor variation:
+\subsection{Grid-Factor Sensitivity Study}
+A grid-factor sensitivity study checked resolution independence using systematic grid-factor variation with SPARTA~\cite{plimpton2014sparta}:
 
 \begin{table}[!htbp]
     \centering
-    \caption{Grid Independence Study Parameters.}
+    \caption[Grid-factor sensitivity study parameters]{Grid-factor sensitivity study parameters. Variation is the $C_d$ change from the baseline mesh.}
     \label{tab:mesh_independence}
     \begin{tabular}{|l|c|c|}
         \hline
@@ -370,10 +370,10 @@ SPARTA accumulates surface force and energy data via \texttt{dump surf}; surface
 The ballistic coefficient measures the vehicle's ability to hold speed during reentry~\cite{AndersonHypersonic}:
 
 \begin{equation}
-    \beta = \frac{m}{C_D A}
+    \beta = \frac{m}{C_d A}
 \end{equation}
 
-As $F_{drag} = C_D A q$, with $q$ dynamic pressure:
+As $F_{drag} = C_d A q$, with $q$ dynamic pressure:
 
 \begin{equation}
     \beta = \frac{m \cdot q}{F_{drag}}
