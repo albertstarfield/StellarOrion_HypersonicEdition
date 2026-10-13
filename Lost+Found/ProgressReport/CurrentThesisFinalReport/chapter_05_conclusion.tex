@@ -3,6 +3,8 @@
 \section{Summary of Findings}
 This research developed and validated a framework for aerothermal analysis and survivability optimization of Hypersonic Inflatable Aerodynamic Decelerators (HIADs) using the SPARTA Direct Simulation Monte Carlo (DSMC) solver. The framework couples parametric CadQuery geometry generation, a 5-species air DSMC simulation, PINN refinement and surrogate-based optimization, and it is validated against IRVE-3 flight data. The study quantified the heating augmentation caused by scalloped surface topology, resolved the local continuum-band structure of the Knudsen field, and delivered a round-1 geometry that passed the hybrid validation gate while exposing the backface-temperature violation of the thermal constraint as the open design issue.
 
+The validation runs in two stages: DSMC validates the initial IRVE-3 baseline configuration against flight data, and the same DSMC pipeline re-simulates the optimized design selected by the Bayesian optimization loop. For the overall survivability assessment, the DSMC particle fields of both designs are processed with the PINN refinement stage; bounded by the spectral-bias limitation of Chapter~II, the refined fields support only the survivability comparison (whether the optimized design survives longer than the baseline), while the gate verdict itself rests on the DSMC-resolved surface quantities.
+
 \section{Key Conclusions}
 
 \subsection{DSMC Validation Against IRVE-3 Flight Data}

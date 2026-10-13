@@ -1089,6 +1089,8 @@ PINNs fill spatial gaps in sparse DSMC data, close turbulence, estimate unknown 
 
 \noindent This study's PINN uses the DeepXDE library \cite{lu2021deepxde} as a fully connected feedforward network with 2 input features (axial and radial coordinates), 3 hidden layers of 64 $\tanh$ neurons, and 4 outputs (density, axial and radial velocity, temperature). Training pre-trains on synthetic boundary condition data, then fine-tunes on sampled DSMC field data to suppress statistical noise; Chapter~3 gives the validation.
 
+\noindent \textbf{Limitation.} A fully connected $\tanh$ network shares the spectral bias documented for PINNs~\cite{raissi2019pinn}: it reproduces smooth, low-wavenumber content well but attenuates sharp gradients such as the bow shock. This study therefore does not use the PINN output for detailed analysis, where the DSMC particle statistics remain the reference; the network is used only for the overall survivability assessment, that is, to judge whether a design survives the reentry heat pulse longer than the baseline.
+
 \section{Parametric HIAD Geometry modeling}
 \label{sec:parametric}
 
