@@ -202,7 +202,31 @@ package StellarOrion_PINN_Trajectory is
       V_DSMC_Ms      : Float := 3378.0) return Trajectory_Result
       with Pre  => Target_Step > 0.0
                     and H_Entry_Km > H_Final_Km
-                    and V_Entry_Ms > V_Final_Ms;
+                    and V_Entry_Ms > V_Final_Ms,
+           --  AXIOM: the altitude/velocity model is clamped at both ends
+           --   (Step <= 0 yields entry conditions, Step >= Target_Step yields
+           --   final conditions) and linearly interpolates between them, so on
+           --   the model path H >= H_Final_Km > 0 and V >= V_Final_Ms >= 0.
+           --  THEORY: every derived quantity is non-negative on that path
+           --   because each callee's own Postcontract says so --
+           --   ISA_Atmosphere (Density_Kgm3 >= 0.0), Sutton_Graves_Heat_Flux,
+           --   Drag_Force, Dynamic_Pressure and G_Load each carry
+           --   `Result >= 0.0`, and Mach_Number is computed as `V / speed`
+           --   only when `speed > 0` and is set to 0.0 otherwise.
+           --  APPLICATION: the `when others` handler returns an all-zero
+           --   record, which satisfies the same bound, so the Postcontract
+           --   covers BOTH the model path and the fail-closed path.
+           --  NOT CLAIMED (honest boundary): the interpolation bounds
+           --   themselves are not asserted here, because the fail-closed path
+           --   legitimately returns 0.0 and would violate them.
+           Post => IRVE3_Trajectory'Result.Altitude_Km >= 0.0
+                   and IRVE3_Trajectory'Result.Velocity_Ms >= 0.0
+                   and IRVE3_Trajectory'Result.Mach_Number >= 0.0
+                   and IRVE3_Trajectory'Result.Density_Kgm3 >= 0.0
+                   and IRVE3_Trajectory'Result.Heat_Flux_Wm2 >= 0.0
+                   and IRVE3_Trajectory'Result.Drag_Force_N >= 0.0
+                   and IRVE3_Trajectory'Result.G_Load_Value >= 0.0
+                   and IRVE3_Trajectory'Result.Dynamic_Pressure_Pa >= 0.0;
 
    -- -----------------------------------------------------------------
    --  Metric Scaling (PINN extrapolation)

@@ -57,7 +57,13 @@ package StellarOrion_Speed_Of_Sound is
    --  Safe_Fallback path.  Sqrt_Approx is verified by the body-local
    --  Test_Sqrt_Approx (it is not part of this package's interface).
    -- -----------------------------------------------------------------
-   procedure Test_Speed_Of_Sound with Pre => True, Post => True;
+   --  The aspect pair below is the unit's test ENTRY POINT: the checks
+   --  themselves are the Assert calls inside the body, so no stronger
+   --  contract can be stated at the interface (same convention as the
+   --  Test_* declarations in StellarOrion_Postprocessing).
+   procedure Test_Speed_Of_Sound
+     with Pre => True,
+          Post => True;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Speed_Of_Sound", Test_Speed_Of_Sound'Access);
 
 end StellarOrion_Speed_Of_Sound;
