@@ -201,6 +201,49 @@ def draw_legend_row(ax: object, items: tuple, y: float,
         x += patch_w + 0.04 + len(label) * char_w + gap
 
 
+def _blunt_body_contour(ctrl_points, samples_per_segment=30):
+    """Smooth C1 interpolating curve (Catmull-Rom) through control points.
+
+    AXIOMS
+        A1. The HIAD cross-section is one closed contour resting on the
+            symmetry plane; a single interpolant through the surface control
+            points cannot introduce the interior notch that a piecewise
+            nose-arc-plus-body assembly produced.
+    THEORIES
+        T1. A Catmull-Rom spline passes through every control point and is C1
+            continuous, so the silhouette has no corner where segments join.
+    APPLICATIONS
+        Draws the HIAD vehicle and the bow shock in build_domain_mesh.
+    CITATIONS
+        Catmull, E. & Rom, R. (1974). A class of local interpolating splines.
+
+    :param ctrl_points: sequence of (x, y) control points, at least two.
+    :param samples_per_segment: samples drawn per control-point segment.
+    :returns: (xs, ys) as two 1-D numpy arrays spanning the whole curve.
+    :raises ValueError: fewer than two control points, or a non-positive
+        samples_per_segment.
+    """
+    import numpy as np
+    pts = np.asarray(ctrl_points, dtype=float)
+    if len(pts) < 2:
+        raise ValueError("need >= 2 control points, got %d" % len(pts))
+    if samples_per_segment < 1:
+        raise ValueError("samples_per_segment must be >= 1")
+    ext = np.vstack([pts[0], pts, pts[-1]])
+    chunks = []
+    for i in range(len(ext) - 3):
+        p0, p1, p2, p3 = ext[i], ext[i + 1], ext[i + 2], ext[i + 3]
+        s = np.linspace(0.0, 1.0, samples_per_segment, endpoint=False)[:, None]
+        chunks.append(
+            0.5 * (2.0 * p1
+                   + (-p0 + p2) * s
+                   + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * s ** 2
+                   + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * s ** 3)
+        )
+    curve = np.vstack(chunks + [pts[-1][None, :]])
+    return curve[:, 0], curve[:, 1]
+
+
 def build_domain_mesh() -> object:
     """Build the computational domain and mesh schematic.
 
@@ -235,55 +278,42 @@ def build_domain_mesh() -> object:
     for y in [0.8, 1.3, 1.8, 2.3, 2.8, 3.3]:
         ax.plot([0.5, 6.0], [y, y], color="#B0B0B0", linewidth=0.5, zorder=0)
 
-    # HIAD vehicle: smooth body-of-revolution cross-section (nose + toroidal body)
+    # HIAD vehicle: one smooth, blunt body-of-revolution cross-section.
+    # WHY one closed interpolated contour: a previous revision pasted a nose arc
+    # onto a separate body wedge, which left a notch at the junction and read as
+    # a dome plus a ramp rather than a blunt aeroshell.  A single Catmull-Rom
+    # contour through the surface control points removes the notch.
     import numpy as np
     from matplotlib.path import Path
-
-    # Silhouette: tangent-ogive nose blending into a toroidal (inflatable) body.
-    # Built as one closed path so the surface reads as a single aeroshell.
-    nose_cx, nose_cy = 2.0, 0.3
-    nose_r = 0.4
-
-    # Nose: upper half of a circle (sitting on the symmetry plane)
-    theta = np.linspace(0, np.pi, 40)
-    nose_x = nose_cx + nose_r * np.cos(theta)      # 2.4 -> 1.6
-    nose_y = nose_cy + nose_r * np.sin(theta)      # 0.3 -> 0.7
-
-    # Body: torus-like cross-section extending aft (tangent to the nose top)
-    body_x0 = nose_cx + nose_r                       # 2.4
-    body_top = 0.75
-    body_bot = 0.3
-    body_x1 = 4.2
-
-    # Upper contour of the body (smooth step from nose top to body top)
-    tb = np.linspace(0, 1, 40)
-    upper_x = body_x0 + (body_x1 - body_x0) * tb
-    # Smoothstep blending the nose top (0.7) into the body top (0.75)
-    blend = 3 * tb**2 - 2 * tb**3
-    upper_y = nose_y[-1] + (body_top - nose_y[-1]) * blend
-
-    # Lower contour (sits on the symmetry plane)
-    lower_x = np.linspace(body_x1, body_x0, 40)
-    lower_y = np.full_like(lower_x, body_bot)
-
-    # Assemble the closed silhouette: nose (right-to-left) + upper body + lower body (left-to-right)
-    sil_x = np.concatenate([nose_x, upper_x, lower_x])
-    sil_y = np.concatenate([nose_y, upper_y, lower_y])
-
-    verts = list(zip(sil_x, sil_y)) + [(sil_x[0], sil_y[0])]
-    codes = [Path.MOVETO] + [Path.LINETO] * (len(verts) - 2) + [Path.CLOSEPOLY]
-    path = Path(verts, codes)
     from matplotlib.patches import PathPatch
-    ax.add_patch(PathPatch(path, facecolor=SOLVER_FILL,
+
+    vx, vy = _blunt_body_contour(
+        [(1.55, 0.30),   # nose tip, on the symmetry plane (front)
+         (1.70, 0.95),   # blunt nose
+         (2.12, 1.28),   # forebody
+         (2.72, 1.36),   # toroidal body crest
+         (3.15, 1.18),   # aft shoulder
+         (3.42, 0.72),   # aft taper
+         (3.52, 0.30)],  # aft base, on the symmetry plane
+        samples_per_segment=30)
+    # Close the silhouette along the symmetry plane (nose base to aft base).
+    verts = list(zip(vx, vy)) + [(vx[0], vy[0])]
+    codes = [Path.MOVETO] + [Path.LINETO] * (len(vx) - 1) + [Path.CLOSEPOLY]
+    ax.add_patch(PathPatch(Path(verts, codes), facecolor=SOLVER_FILL,
                            edgecolor=SOLVER_EDGE, linewidth=1.2, zorder=2))
 
-    # Bow shock: convex upstream (left), detached ahead of the nose
-    t = np.linspace(0, 1, 60)
-    shock_y = 0.5 + 2.8 * t
-    # Hyperbola-like curve: closest at the centreline (bottom), curving upstream
-    shock_x = 1.0 - 0.35 * (1.0 - (1.0 - t)**2)     # 1.0 (bottom) -> 0.65 (top)
-    ax.plot(shock_x, shock_y, linestyle="--", color=ORANGE,
-            linewidth=1.5, zorder=1)
+    # Bow shock: one smooth curve, convex upstream, detached ahead of the nose
+    # and wrapping aft over the shoulder.
+    sx, sy = _blunt_body_contour(
+        [(1.30, 0.30),   # vertex on the symmetry plane, upstream of the nose
+         (1.36, 0.80),   # near-normal stand-off (convex upstream)
+         (1.55, 1.22),   #
+         (1.95, 1.55),   # curving over the shoulder
+         (2.50, 1.72),   #
+         (3.10, 1.72),   # trailing aft
+         (3.60, 1.55)],
+        samples_per_segment=30)
+    ax.plot(sx, sy, linestyle="--", color=ORANGE, linewidth=1.5, zorder=1)
 
     # Labels
     ax.annotate("Farfield boundary", xy=(0.5, 3.5), xytext=(0.2, 3.55),
@@ -292,10 +322,10 @@ def build_domain_mesh() -> object:
     ax.annotate("Symmetry plane", xy=(4.0, 0.3), xytext=(4.5, 0.15),
                 fontsize=9.5, color=INK, ha="center", va="bottom",
                 arrowprops=dict(arrowstyle="->", color=INK, lw=1.0))
-    ax.annotate("HIAD surface", xy=(2.0, 0.7), xytext=(1.2, 1.2),
-                fontsize=9.5, color=INK, ha="center", va="bottom",
+    ax.annotate("HIAD surface", xy=(3.12, 1.18), xytext=(4.25, 1.20),
+                fontsize=9.5, color=INK, ha="center", va="center",
                 arrowprops=dict(arrowstyle="->", color=INK, lw=1.0))
-    ax.annotate("Bow shock", xy=(1.15, 2.0), xytext=(0.3, 2.5),
+    ax.annotate("Bow shock", xy=(1.45, 0.95), xytext=(0.3, 2.05),
                 fontsize=9.5, color=ORANGE, ha="left", va="center",
                 arrowprops=dict(arrowstyle="->", color=ORANGE, lw=1.0))
     ax.annotate("Cartesian mesh\n(grid factor 0.7)", xy=(4.0, 2.0),
