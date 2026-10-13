@@ -431,7 +431,7 @@ T 0.717, vx 0.896, vy 0.975 — the shock structure and boundary-layer gradients
 survive noise removal, which is what the Ch3 figure paragraph already promises.
 Fresh render (T and vy rows now structurally intact, shared colour keys kept,
 no fit warnings) installed as figures/kriging_denoise.png, 372114 B, shasum256
-4aaee7587ab62917. The companion kriging_noise_reduction figure is not included by
+53b014987c772d2c. The companion kriging_noise_reduction figure is not included by
 the thesis, so it was not installed.
 
 ### A17. `figures/make_lit_review_map.py` → `literature_review_map.png`
