@@ -141,16 +141,28 @@ Proof.
   unfold n_show.
   destruct (Rle_dec 1 (INR n_pts * progress)) as [H | H].
   - rewrite Rmax_right by exact H.
-    rewrite Rmax_right.
-    + apply Rmult_le_compat_l; [exact Hlen | exact Hp2].
-    + lra.
-  - rewrite Rmax_left by exact H.
+    assert (Hle : INR n_pts * progress <= INR n_pts).
+    { assert (Hg : INR n_pts * progress <= INR n_pts * 1).
+      { apply Rmult_le_compat_l; [exact Hlen | exact Hp2]. }
+      rewrite Rmult_1_r in Hg.
+      exact Hg. }
+    apply Rle_trans with (r2 := INR n_pts).
+    + exact Hle.
+    + apply Rmax_r.
+  - apply Rnot_le_lt in H.
+    apply Rlt_le in H.
+    rewrite Rmax_left by exact H.
     apply Rmax_l.
 Qed.
 
 (* ---------------------------------------------------------------------------
    THEOREM D5 -- the mirrored frame has exactly twice the revealed points.
    --------------------------------------------------------------------------- *)
+(* THEOREM D5 lives on nat values; the file-level R_scope must not leak
+   into these lemmas, so they sit in a nat-scoped Section (fact 3). *)
+Section NatPart.
+Local Open Scope nat_scope.
+
 Definition mirrored_total (revealed : nat) : nat := 2 * revealed.
 
 Lemma mirrored_total_nonzero : forall revealed, 1 <= revealed -> 2 <= mirrored_total revealed.
@@ -161,3 +173,5 @@ Proof.
   assert (Hkey : 2 * 1 <= 2 * revealed) by (apply Nat.mul_le_mono_l; assumption).
   lia.
 Qed.
+
+End NatPart.

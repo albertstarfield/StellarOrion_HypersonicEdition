@@ -43,6 +43,8 @@
 
 Require Import Coq.Reals.Reals.
 Require Import Coq.micromega.Lra.
+(* Lia supplies the nat-oriented arithmetic used by the token-index lemmas below. *)
+Require Import Coq.micromega.Lia.
 
 (* R_scope opened at file level: every Definition, Lemma and proof below
    quantifies over R; numerals and / then elaborate in the real field rather
@@ -196,13 +198,20 @@ Proof.
   apply (Rmult_le_reg_l N_AVOGADRO); [exact Hna | ].
   rewrite (cancel_mul (n1 * M_AIR) N_AVOGADRO Hne).
   rewrite (cancel_mul (n2 * M_AIR) N_AVOGADRO Hne).
-  apply (Rmult_le_compat_l M_AIR n1 n2); [lra | exact H2].
+  apply (Rmult_le_compat_r M_AIR n1 n2); [lra | exact H2].
 Qed.
 
 (* ---------------------------------------------------------------------------
    THEOREM SP6a -- a column index inside the token list is a legal Python
    sequence index (CPython language reference, sequence indexing).
+
+   The four THEOREM SP6 lemmas below are pure nat facts; the file opens
+   R_scope at the top for the real-number lemmas, so they are wrapped in a
+   nat-scoped section (a bare 0 <= i under R_scope would be false in R).
    --------------------------------------------------------------------------- *)
+Section NatPart.
+Local Open Scope nat_scope.
+
 Lemma column_index_in_range : forall n i, i < n -> 0 <= i /\ i < n.
 Proof.
   intros n i Hi.
@@ -239,3 +248,5 @@ Proof.
   intros n H.
   lia.
 Qed.
+
+End NatPart.

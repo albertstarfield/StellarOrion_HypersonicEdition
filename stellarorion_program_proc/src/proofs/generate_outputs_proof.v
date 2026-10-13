@@ -31,6 +31,8 @@
 Require Import Coq.Reals.Reals.
 Require Import Coq.micromega.Lia.
 Require Import Coq.micromega.Lra.
+(* PeanoNat supplies Nat.div_le_upper_bound for the frame-index lemma below. *)
+Require Import Coq.Arith.PeanoNat.
 
 Local Open Scope R_scope.
 
@@ -128,24 +130,22 @@ Proof.
   intros a v0 v1 Ha Ha1 Hv.
   unfold lerp_value.
   split.
-  - assert (Hw1 : 0 <= 1 - a) by lra.
-    assert (Hw2 : 0 <= a) by lra.
-    assert (H1 : v0 * (1 - a) >= v0 * (1 - a)) by lra.
-    assert (H2 : v0 * (1 - a) + v1 * a >= v0 * (1 - a)) by lra.
-    assert (H3 : v0 * (1 - a) >= v0 - v0 * a) by lra.
-    assert (H4 : v1 * a >= v1 * 0) by (apply Rmult_le_compat_r; lra).
-    rewrite Rmult_0_r in H4.
-    assert (H5 : v0 * 1 = v0) by (apply Rmult_1_r).
+  - assert (H1 : v0 * a <= v1 * a) by (apply Rmult_le_compat_r; [exact Ha | exact Hv]).
+    assert (H2 : v0 <= v0 * (1 - a) + v0 * a).
+    { assert (Hsum : (1 - a) + a = 1) by lra.
+      rewrite <- Rmult_plus_distr_l.
+      rewrite Hsum.
+      rewrite Rmult_1_r.
+      lra. }
     lra.
-  - assert (Hw1 : 0 <= 1 - a) by lra.
-    assert (Hw2 : 0 <= a) by lra.
-    assert (H1 : v1 * a >= 0) by lra.
-    assert (H2 : v1 * a >= v1 * 0) by (apply Rmult_le_compat_r; lra).
-    rewrite Rmult_0_r in H2.
-    assert (H3 : v0 * (1 - a) >= v0 * 0) by (apply Rmult_le_compat_r; lra).
-    rewrite Rmult_0_r in H3.
-    assert (H4 : v0 * (1 - a) <= v1 * (1 - a)).
-    { apply Rmult_le_compat_r; lra. }
+  - assert (H1 : v0 * (1 - a) <= v1 * (1 - a)).
+    { apply Rmult_le_compat_r; [lra | exact Hv]. }
+    assert (H2 : v1 * (1 - a) + v1 * a = v1).
+    { assert (Hsum : (1 - a) + a = 1) by lra.
+      rewrite <- Rmult_plus_distr_l.
+      rewrite Hsum.
+      rewrite Rmult_1_r.
+      reflexivity. }
     lra.
 Qed.
 
@@ -155,7 +155,7 @@ Qed.
    --------------------------------------------------------------------------- *)
 Definition lerp_tie (v0 v1 : R) : R := v0.
 
-Lemma lerp_tie_endpoints : forall v0 v1, lerp_tie v0 v1 = v0 /\ lerp_tie v1 v0 = v0.
+Lemma lerp_tie_endpoints : forall v0 v1, lerp_tie v0 v1 = v0 /\ lerp_tie v1 v0 = v1.
 Proof.
   intros v0 v1.
   split.
@@ -171,19 +171,30 @@ Qed.
 Definition frame_count (target_step steps_per_frame : nat) : nat :=
   target_step / steps_per_frame + 1.
 
+Section Frame_Index_Nat.
+Local Open Scope nat_scope.
+
 Lemma frame_index_in_range : forall target_step steps_per_frame i,
    0 < target_step -> 0 < steps_per_frame -> steps_per_frame <= target_step ->
    0 <= i < frame_count target_step steps_per_frame ->
    i < target_step + 1 /\ 0 <= i.
 Proof.
   intros target_step steps_per_frame i Ht Hs Hle Hi.
+  unfold frame_count in Hi.
   assert (Hshow : 0 <= i < target_step / steps_per_frame + 1) by lia.
-  assert (Hmono : target_step / steps_per_frame <= target_step) by lia.
+  assert (Hmono : target_step / steps_per_frame <= target_step).
+  { apply Nat.div_le_upper_bound.
+    - intro H0. lia.
+    - assert (Hge1 : 1 <= steps_per_frame) by lia.
+      assert (Hmul := Nat.mul_le_mono_r 1 steps_per_frame target_step Hge1).
+      rewrite Nat.mul_1_l in Hmul. exact Hmul. }
   assert (Hsum : target_step / steps_per_frame + 1 <= target_step + 1) by lia.
   split.
   - lia.
   - lia.
 Qed.
+
+End Frame_Index_Nat.
 
 (* ---------------------------------------------------------------------------
    THEOREM G5 -- endpoint exactness of the interpolation weight.
@@ -192,10 +203,9 @@ Lemma lerp_weight_left : forall x0 x1, x0 < x1 -> lerp_weight x0 x0 x1 = 0.
 Proof.
   intros x0 x1 Hd.
   unfold lerp_weight.
-  assert (Hne : x1 - x0 <> 0) by lra.
-  assert (E : (x1 - x0) * 0 = 0) by (rewrite Rmult_0_r; reflexivity).
-  rewrite <- E.
-  rewrite (cancel_mul 0 (x1 - x0) Hne).
+  rewrite Rminus_diag.
+  unfold Rdiv.
+  rewrite Rmult_0_l.
   reflexivity.
 Qed.
 
@@ -204,11 +214,9 @@ Proof.
   intros x0 x1 Hd.
   unfold lerp_weight.
   assert (Hne : x1 - x0 <> 0) by lra.
-  apply (Rmult_eq_reg_r (x1 - x0)).
-  - exact Hne.
-  - rewrite (cancel_mul 1 (x1 - x0) Hne).
-    rewrite Rmult_1_r.
-    reflexivity.
+  unfold Rdiv.
+  apply Rinv_r.
+  exact Hne.
 Qed.
 
 (* ---------------------------------------------------------------------------
@@ -223,14 +231,13 @@ Proof.
   - unfold lerp_value.
     rewrite Rminus_0_r.
     rewrite Rmult_1_r.
-    rewrite Rmult_1_l.
     rewrite Rmult_0_r.
     rewrite Rplus_0_r.
     reflexivity.
   - unfold lerp_value.
     replace (1 - 1) with 0 by lra.
     rewrite Rmult_0_r.
-    rewrite Rplus_0_r.
-    rewrite Rmult_1_l.
+    rewrite Rplus_0_l.
+    rewrite Rmult_1_r.
     reflexivity.
 Qed.

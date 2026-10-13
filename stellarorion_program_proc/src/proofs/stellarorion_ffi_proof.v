@@ -41,6 +41,7 @@
 
 Require Import Coq.Reals.Reals.
 Require Import Coq.micromega.Lia.
+Require Import Coq.micromega.Lra.
 
 (* ---------------------------------------------------------------------------
    AXIOM X1 -- the FFI array geometry, exactly as declared in the .ads.
@@ -124,8 +125,8 @@ Lemma c_bool_cases : forall b : bool, c_bool b = 0 \/ c_bool b = 1.
 Proof.
   intros n.
   destruct n.
-  - left. reflexivity.
   - right. reflexivity.
+  - left. reflexivity.
 Qed.
 
 (* ---------------------------------------------------------------------------
@@ -183,8 +184,13 @@ Qed.
 
 (* ---------------------------------------------------------------------------
    THEOREM G4 -- the convergence test is decidable for a positive tolerance.
+   These are real-number statements, so they carry their own R_scope section
+   (the file itself stays nat-scoped for the CCD lemmas above).
    --------------------------------------------------------------------------- *)
-Lemma mop_gate_decidable : forall grad_norm tol, 0 < tol ->
+Section MoP_Gate.
+Local Open Scope R_scope.
+
+Lemma mop_gate_decidable : forall grad_norm tol : R, 0 < tol ->
    mop_converged grad_norm tol = true \/ mop_converged grad_norm tol = false.
 Proof.
   intros grad_norm tol Htol.
@@ -199,7 +205,7 @@ Qed.
    norm, which is what lets the MoP loop terminate on a perfect linear model
    instead of spinning forever.
    --------------------------------------------------------------------------- *)
-Lemma mop_zero_grad_converges : forall tol, 0 < tol -> mop_converged 0 tol = true.
+Lemma mop_zero_grad_converges : forall tol : R, 0 < tol -> mop_converged 0 tol = true.
 Proof.
   intros tol Htol.
   unfold mop_converged.
@@ -209,3 +215,5 @@ Proof.
     assert (Hn : ~ (0 < tol)) by exact H.
     lra.
 Qed.
+
+End MoP_Gate.

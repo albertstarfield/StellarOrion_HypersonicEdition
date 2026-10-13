@@ -43,6 +43,8 @@
 
 Require Import Coq.Init.Datatypes.
 Require Import Coq.Init.Nat.
+(* PeanoNat supplies Nat.ltb_lt and the Nat.* library lemmas used below. *)
+Require Import Coq.Arith.PeanoNat.
 Require Import Coq.micromega.Lia.
 
 (* ---------------------------------------------------------------------------

@@ -111,9 +111,15 @@ Lemma correction_factor_lower : forall q_hybrid q_analytic,
 Proof.
   intros q_hybrid q_analytic Hh Ha.
   unfold correction_factor.
-  apply Rle_trans with (Rmax GATE_CORR_MIN (q_hybrid / q_analytic)).
-  - apply Rmax_l.
-  - apply Rmin_l.
+  destruct (Rle_dec GATE_CORR_MAX (Rmax GATE_CORR_MIN (q_hybrid / q_analytic)))
+    as [H | H].
+  - rewrite Rmin_left by exact H.
+    unfold GATE_CORR_MIN, GATE_CORR_MAX.
+    lra.
+  - apply Rnot_le_lt in H.
+    apply Rlt_le in H.
+    rewrite Rmin_right by exact H.
+    apply Rmax_l.
 Qed.
 
 Lemma correction_factor_upper : forall q_hybrid q_analytic,
@@ -125,15 +131,11 @@ Proof.
   destruct (Rle_dec GATE_CORR_MAX (Rmax GATE_CORR_MIN (q_hybrid / q_analytic)))
     as [H | H].
   - rewrite Rmin_left by exact H.
+    apply Rle_refl.
+  - apply Rnot_le_lt in H.
+    apply Rlt_le in H.
+    rewrite Rmin_right by exact H.
     exact H.
-  - rewrite Rmin_right by lra.
-    apply Rmax_lub.
-    + assert (Hshow : 0 <= 0) by lra.
-      lra.
-    + assert (Hnn : 0 <= q_hybrid / q_analytic) by lra.
-      apply Rle_trans with q_hybrid / q_analytic.
-      * apply Rmax_r.
-      * lra.
 Qed.
 
 Lemma correction_factor_band : forall q_hybrid q_analytic,
@@ -170,20 +172,17 @@ Lemma correction_factor_neutral : forall q_analytic,
 Proof.
   intros q_analytic Ha.
   assert (Hne : q_analytic <> 0) by lra.
-  assert (E : q_analytic * (q_analytic / q_analytic) = q_analytic)
-    by (apply cancel_mul; exact Hne).
+  assert (E1 : q_analytic / q_analytic = 1).
+  { unfold Rdiv. apply Rinv_r. exact Hne. }
   unfold correction_factor.
-  rewrite (Rinv_l q_analytic Hne).
-  rewrite Rmult_1_r.
-  rewrite Rmin_right.
-  - rewrite Rmax_right.
-    + reflexivity.
-    + unfold GATE_CORR_MIN, GATE_CORR_MAX.
-      assert (Hshow : 1 / 2 <= 1) by lra.
-      lra.
-  - unfold GATE_CORR_MIN, GATE_CORR_MAX.
-    assert (Hshow : 1 <= 2) by lra.
-    lra.
+  rewrite E1.
+  assert (Hrmax : GATE_CORR_MIN <= 1).
+  { unfold GATE_CORR_MIN. lra. }
+  rewrite Rmax_right by exact Hrmax.
+  assert (Hmin1 : 1 <= GATE_CORR_MAX).
+  { unfold GATE_CORR_MAX. lra. }
+  rewrite Rmin_right by exact Hmin1.
+  reflexivity.
 Qed.
 
 (* ---------------------------------------------------------------------------
@@ -254,20 +253,16 @@ Lemma prediction_error_nonpos : forall q_hybrid q_analytic,
    prediction_error_pct q_hybrid q_analytic <= 0.
 Proof.
   intros q_hybrid q_analytic Hle Ha.
+  assert (Hne : q_analytic <> 0) by lra.
+  assert (Hx : q_hybrid - q_analytic <= 0) by lra.
+  assert (Hd : (q_hybrid - q_analytic) / q_analytic <= 0).
+  { apply (Rmult_le_reg_l q_analytic); [exact Ha | ].
+    rewrite (cancel_mul (q_hybrid - q_analytic) q_analytic Hne).
+    rewrite Rmult_0_r.
+    exact Hx. }
   unfold prediction_error_pct.
-  assert (Hnn : q_hybrid - q_analytic <= 0) by lra.
-  assert (Hinv : 0 < / q_analytic) by (apply Rinv_0_lt_compat; exact Ha).
-  assert (H100 : 0 <= 100) by lra.
-  assert (Hneg : q_hybrid - q_analytic * 100 <= 0) by lra.
-  assert (E : (q_hybrid - q_analytic) * / q_analytic * 100 =
-              (q_hybrid - q_analytic * 100) * / q_analytic) by lra.
-  rewrite E.
-  apply Rmult_le_reg_l with (r := q_analytic).
-  - exact Ha.
-  - assert (Hne : q_analytic <> 0) by lra.
-    assert (Ec : q_analytic * ((q_hybrid - q_analytic * 100) * / q_analytic)
-                   = q_hybrid - q_analytic * 100)
-      by (apply cancel_mul; exact Hne).
-    rewrite Ec.
-    exact Hneg.
+  apply Rle_trans with (0 * 100).
+  - apply Rmult_le_compat_r; [lra | exact Hd].
+  - rewrite Rmult_0_l.
+    apply Rle_refl.
 Qed.

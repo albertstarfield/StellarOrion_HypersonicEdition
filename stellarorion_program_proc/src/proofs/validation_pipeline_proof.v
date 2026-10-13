@@ -231,7 +231,7 @@ Proof.
      APPLICATION: canonicalise the numerator first, then the Rdiv mass cancels. *)
   rewrite Rminus_diag.
   unfold Rdiv.
-  rewrite Rmult_0_l.
+  rewrite !Rmult_0_l.
   reflexivity.
 Qed.
 
@@ -245,7 +245,7 @@ Proof.
   { apply (Rmult_eq_reg_r (h_final - h_entry)); [ | exact Hd].
     unfold Rdiv.
     rewrite Rmult_assoc.
-    rewrite (Rinv_r (h_final - h_entry) Hd).
+    rewrite (Rinv_l (h_final - h_entry) Hd).
     rewrite Rmult_1_r.
     rewrite Rmult_1_l.
     reflexivity. }

@@ -67,7 +67,12 @@ Qed.
 
 (* ---------------------------------------------------------------------------
    Model of segment 2:  r = R_tang + t * (R_target - R_tang),  t in [0,1].
-   --------------------------------------------------------------------------- *)
+   Every remainder of this file quantifies over the reals; reopening R_scope
+   here (and not at the top) keeps the nat lemmas above in nat_scope while the
+   comparisons below elaborate in R.  [Citation: Coq 8.18 stdlib,
+   Coq.Reals.Reals -- Local Open Scope R_scope] *)
+Local Open Scope R_scope.
+
 Definition segment2_radius (r_tang r_target t : R) : R :=
    r_tang + t * (r_target - r_tang).
 
@@ -103,7 +108,7 @@ Proof.
   unfold segment4_radius.
   assert (Hnn : 0 <= r_c_out * (1 - t)) by (apply Rmult_le_pos; lra).
   assert (H1 : r_c_out * (1 - t) <= r_c_out * 1).
-  { apply Rmult_le_compat_r; lra. }
+  { apply Rmult_le_compat; [exact Hr | lra | apply Rle_refl | lra]. }
   rewrite Rmult_1_r in H1.
   split; [exact Hnn | exact H1].
 Qed.

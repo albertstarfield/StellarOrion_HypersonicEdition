@@ -40,6 +40,24 @@ Require Import Coq.micromega.Lra.
 Local Open Scope R_scope.
 
 (* ---------------------------------------------------------------------------
+   A reusable helper: l * (x / l) = x for l <> 0.  Written out in full
+   below because the proof file does not import other Coq proof files.
+   [Citation: Coq 8.18 stdlib, Coq.Reals.Rbasic_fun / RIneq — Rinv_l,
+   Rmult_assoc, Rmult_comm] *)
+Lemma cancel_mul : forall x l : R, l <> 0 -> l * (x / l) = x.
+Proof.
+  intros x l Hne.
+  unfold Rdiv.
+  rewrite <- Rmult_assoc.
+  rewrite (Rmult_comm l x).
+  rewrite Rmult_assoc.
+  rewrite (Rmult_comm l (/ l)).
+  rewrite (Rinv_l l Hne).
+  rewrite Rmult_1_r.
+  reflexivity.
+Qed.
+
+(* ---------------------------------------------------------------------------
    TARGET_STEP : constant Float := 3.0e8  (the .ads normalization divisor).
    --------------------------------------------------------------------------- *)
 Definition TARGET_STEP : R := 300000000.
@@ -95,7 +113,7 @@ Proof.
   - apply Rmult_lt_0_compat; [lra | exact Hi].
   - apply (Rmult_le_reg_l (1 + 100 * p)); [exact Hd | ].
     rewrite Rmult_1_r.
-    rewrite Rinv_r by exact Hne.
+    rewrite (cancel_mul 1 (1 + 100 * p) Hne).
     lra.
 Qed.
 
@@ -176,7 +194,6 @@ Lemma altitude_decreasing : forall p1 p2, p1 <= p2 -> p2 <= 1 ->
 Proof.
   intros p1 p2 H12 Hp2.
   unfold altitude.
-  assert (Hstep : forall q, 0 <= 80 * q -> 0 <= 80 * q) by lra.
   lra.
 Qed.
 
@@ -185,6 +202,5 @@ Lemma velocity_decreasing : forall p1 p2, p1 <= p2 -> p2 <= 1 ->
 Proof.
   intros p1 p2 H12 Hp2.
   unfold velocity.
-  assert (Hstep : forall q, 0 <= 1600 * q -> 0 <= 1600 * q) by lra.
   lra.
 Qed.

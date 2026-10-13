@@ -146,7 +146,14 @@ Qed.
    --------------------------------------------------------------------------- *)
 Definition stratum_of (perm : nat -> nat) (i : nat) : nat := perm i.
 
-Lemma stratum_of_in_range : forall N perm i,
+(* The lemmas below are purely nat-valued.  The file opens R_scope at the top
+   for the lhs_affine_* lemmas; a Section with an explicit nat_scope re-opening
+   coexists with that file-level R_scope (verified fact 3) and makes the
+   untyped binders elaborate as nat rather than R. *)
+Section NatPart.
+Local Open Scope nat_scope.
+
+Lemma stratum_of_in_range : forall (N : nat) (perm : nat -> nat) (i : nat),
    1 <= N -> i < N -> (forall i, i < N -> perm i < N) ->
    stratum_of perm i < N.
 Proof.
@@ -187,3 +194,5 @@ Proof.
   - unfold stratum_of.
     exact Heq.
 Qed.
+
+End NatPart.
