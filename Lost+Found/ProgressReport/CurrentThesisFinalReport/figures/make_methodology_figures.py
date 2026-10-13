@@ -225,8 +225,9 @@ def build_domain_mesh() -> object:
     ax.plot([6.0, 6.0], [0.3, 3.5], linestyle="--", color=HEADER_GRAY,
             linewidth=1.0, zorder=1)
 
-    # Symmetry plane
-    ax.plot([0.5, 6.0], [0.3, 0.3], color=INK, linewidth=1.5, zorder=1)
+    # Symmetry plane (centerline style: alternating long and short dashes)
+    ax.plot([0.5, 6.0], [0.3, 0.3], color=INK, linewidth=1.0,
+            linestyle=(0, (8, 2, 2, 2)), zorder=1)
 
     # Cartesian mesh (coarse grid)
     for x in [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5]:
@@ -234,31 +235,53 @@ def build_domain_mesh() -> object:
     for y in [0.8, 1.3, 1.8, 2.3, 2.8, 3.3]:
         ax.plot([0.5, 6.0], [y, y], color="#B0B0B0", linewidth=0.5, zorder=0)
 
-    # HIAD vehicle: nose (semicircle) + toroidal body
+    # HIAD vehicle: smooth body-of-revolution cross-section (nose + toroidal body)
     import numpy as np
-    theta = np.linspace(0, np.pi, 50)
-    nose_r = 0.4
+    from matplotlib.path import Path
+
+    # Silhouette: tangent-ogive nose blending into a toroidal (inflatable) body.
+    # Built as one closed path so the surface reads as a single aeroshell.
     nose_cx, nose_cy = 2.0, 0.3
-    ax.fill(nose_cx + nose_r * np.cos(theta),
-            nose_cy + nose_r * np.sin(theta),
-            color=SOLVER_FILL, edgecolor=SOLVER_EDGE, linewidth=1.2, zorder=2)
+    nose_r = 0.4
 
-    # Toroidal body (simplified as a rectangle with rounded top)
-    body_x0, body_y0 = 2.4, 0.3
-    body_w, body_h = 2.0, 0.6
-    ax.add_patch(FancyBboxPatch(
-        (body_x0, body_y0), body_w, body_h,
-        boxstyle="round,pad=0.0,rounding_size=0.08",
-        linewidth=1.2, edgecolor=SOLVER_EDGE, facecolor=SOLVER_FILL, zorder=2,
-    ))
+    # Nose: upper half of a circle (sitting on the symmetry plane)
+    theta = np.linspace(0, np.pi, 40)
+    nose_x = nose_cx + nose_r * np.cos(theta)      # 2.4 -> 1.6
+    nose_y = nose_cy + nose_r * np.sin(theta)      # 0.3 -> 0.7
 
-    # Bow shock (dashed curve)
-    shock_x = np.linspace(1.0, 1.0, 2)
-    shock_y = np.linspace(0.5, 3.3, 2)
-    # Draw a curved bow shock using a parabola
-    t = np.linspace(0, 1, 50)
-    shock_x = 1.0 + 0.3 * np.sin(np.pi * t)
+    # Body: torus-like cross-section extending aft (tangent to the nose top)
+    body_x0 = nose_cx + nose_r                       # 2.4
+    body_top = 0.75
+    body_bot = 0.3
+    body_x1 = 4.2
+
+    # Upper contour of the body (smooth step from nose top to body top)
+    tb = np.linspace(0, 1, 40)
+    upper_x = body_x0 + (body_x1 - body_x0) * tb
+    # Smoothstep blending the nose top (0.7) into the body top (0.75)
+    blend = 3 * tb**2 - 2 * tb**3
+    upper_y = nose_y[-1] + (body_top - nose_y[-1]) * blend
+
+    # Lower contour (sits on the symmetry plane)
+    lower_x = np.linspace(body_x1, body_x0, 40)
+    lower_y = np.full_like(lower_x, body_bot)
+
+    # Assemble the closed silhouette: nose (right-to-left) + upper body + lower body (left-to-right)
+    sil_x = np.concatenate([nose_x, upper_x, lower_x])
+    sil_y = np.concatenate([nose_y, upper_y, lower_y])
+
+    verts = list(zip(sil_x, sil_y)) + [(sil_x[0], sil_y[0])]
+    codes = [Path.MOVETO] + [Path.LINETO] * (len(verts) - 2) + [Path.CLOSEPOLY]
+    path = Path(verts, codes)
+    from matplotlib.patches import PathPatch
+    ax.add_patch(PathPatch(path, facecolor=SOLVER_FILL,
+                           edgecolor=SOLVER_EDGE, linewidth=1.2, zorder=2))
+
+    # Bow shock: convex upstream (left), detached ahead of the nose
+    t = np.linspace(0, 1, 60)
     shock_y = 0.5 + 2.8 * t
+    # Hyperbola-like curve: closest at the centreline (bottom), curving upstream
+    shock_x = 1.0 - 0.35 * (1.0 - (1.0 - t)**2)     # 1.0 (bottom) -> 0.65 (top)
     ax.plot(shock_x, shock_y, linestyle="--", color=ORANGE,
             linewidth=1.5, zorder=1)
 
