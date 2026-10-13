@@ -8,7 +8,8 @@ Phases:
   0. Boot -- locale check, PID lockfile, optional clean
   1. Python Venv Bootstrap -- create venv, install deps, hash-gated reinstall
   2. Python Static Analysis -- pyrefly, ruff, crosshair
-  3. Ada/SPARK Build -- alr with, alr build, gnatcov, sabotage_verifier, gnatprove
+  3. Ada/SPARK Build -- alr with, alr build, gnatcov, sabotage_verifier, gnatprove,
+     coqc proof gate (every .v under proofs/, src/proofs/, src/rocq/)
   4. Launch -- run the compiled binary (or test/validate modes)
 
 Exit Codes:
@@ -89,6 +90,39 @@ _BINARY_NAME = "main"
 _SIDECAR_SERVER = _SRC_DIR / "ui" / "sidecar_ui.py"
 _SIDECAR_FRONTEND = _SRC_DIR / "ui" / "frontend"
 _DATA_DIR = _PROJECT_ROOT / "data" / "runs"
+
+# Coq/Rocq proof compilation gate
+#
+# WHY: the 80 Coq proof files under proofs/, src/proofs/ and src/rocq/
+# were never compiled by the pipeline -- nothing reported their status and
+# no document could cite it.  This gate closes that hole: every .v file is
+# compiled with `coqc -q` and any non-zero exit kills the build.
+#
+# AXIOMS:
+#   1. every .v file in those three directories MUST compile with zero errors
+#   2. a missing/broken coqc is a HARD failure (an installation task),
+#      never a silent skip
+#
+# THEORIES:
+#   1. a .v file that does not elaborate carries no theorem, so compiling
+#      all of them is the precondition for citing a proof anywhere else
+#      (reports, docs, audits)
+#   2. reporting the verdict once, as JSON, keeps the human gate
+#      (_phase3_coq_proof_gate) and the documentation generator consistent
+#      with a single source of truth
+#
+# APPLICATIONS:
+#   - _phase3_ada_build calls _phase3_coq_proof_gate() immediately after
+#     the gnatprove --level=4 step (see that function for why there)
+#   - results/coq_proof_status.json is the machine-readable artifact
+#
+# CITATIONS:
+#   - Coq 8.18.0 reference manual -- https://coq.inria.fr/doc/V8.18.0/refman/
+#   - installing the prover with opam -- https://coq.inria.fr/opam-using.html
+#   - code-quality.md VALIDATION PIPELINE ORDER (gnatprove before the audit)
+
+_COQ_PROOF_GATE_MODULE = _UTILS_DIR / "coq_proof_gate.py"
+_COQ_STATUS_FILE = _PROJECT_ROOT / "results" / "coq_proof_status.json"
 
 # Media/plot output routing
 #
@@ -1082,6 +1116,74 @@ def _sync_media_into_canonical_tree() -> None:
         "survivability_assessment.png",
     }
 
+    # Sync tally -- the media phase must be able to report what it did
+    # instead of dying silently on the first artefact it cannot place.
+    tally = {"copied": 0, "already_same_file": 0, "skipped": 0}
+
+    def _copy_media(src: Path, dst: Path) -> str:
+        """Copy one media artefact into the canonical tree, never raising.
+
+        AXIOM: a media sync must be failure-isolated -- one artefact that
+        cannot be placed must not abort Phase 2c and hide every artefact
+        behind it.  THEORY: the legacy and canonical trees are NOT
+        guaranteed disjoint.  An earlier pass, or any link-preserving copy
+        (`cp -al`, `rsync -l`), leaves ONE inode reachable from both names,
+        and `shutil.copy2` then raises SameFileError because its source and
+        destination are the same file.  Measured 2026-10-13: inode
+        682769011 (link count 2) shared between
+        `results/validation/plots/<name>` and
+        `results/plots/validation/short_window/<name>` -- 21 of the 51
+        legacy PNGs are in that state.  When both names already denote one
+        inode the content is in place by construction, so the correct
+        action is to skip, not to copy.  APPLICATION: skip the same-file
+        case, copy otherwise, and convert every other failure into a
+        reported skip.
+
+        Parameters
+        ----------
+        src : Path
+            Source artefact (expected to be a regular file).
+        dst : Path
+            Destination path inside results/plots/.
+
+        Returns
+        -------
+        str
+            "copied", "already_same_file" or "skipped".  The dict `tally`
+            of the enclosing function is updated in place.
+
+        Raises
+        ------
+        None
+            Every failure mode is caught and reported.
+
+        Citations
+        ---------
+        - shutil.copy2 -- metadata-preserving copy; raises SameFileError
+          when src and dst are the same file:
+          https://docs.python.org/3/library/shutil.html#shutil.copy2
+        """
+        try:
+            if dst.exists() and os.path.samefile(src, dst):
+                tally["already_same_file"] += 1
+                return "already_same_file"
+        except OSError:
+            # A destination that cannot even be stat'ed is not a same-file
+            # case; fall through and let copy2 report its own failure.
+            pass
+        try:
+            shutil.copy2(src, dst)
+            tally["copied"] += 1
+            return "copied"
+        except shutil.SameFileError:
+            # Racing or dangling destination: there is nothing to place.
+            tally["already_same_file"] += 1
+            return "already_same_file"
+        except OSError as exc:
+            tally["skipped"] += 1
+            print(f"  [Phase 2c] WARNING: sync skipped {src.name}: {exc}")
+            return "skipped"
+
     for tree in _VALIDATION_TREES:
         plots_src = Path(script_dir) / "results" / tree / "plots"
         if plots_src.is_dir():
@@ -1099,21 +1201,21 @@ def _sync_media_into_canonical_tree() -> None:
                 else:
                     dest_dir = Path(media_out) / tree / "short_window"
                 dest_dir.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(p, dest_dir / p.name)
+                _copy_media(p, dest_dir / p.name)
         rap_src = Path(script_dir) / "results" / tree / "plots_rapisarda"
         if rap_src.is_dir():
             dest_dir = Path(media_out) / tree / "rapisarda"
             dest_dir.mkdir(parents=True, exist_ok=True)
             for p in rap_src.iterdir():
                 if p.suffix.lower() == ".png":
-                    shutil.copy2(p, dest_dir / p.name)
+                    _copy_media(p, dest_dir / p.name)
         pipeline_src = Path(script_dir) / "results" / tree / "validation_pipeline_output" / "plots"
         if pipeline_src.is_dir():
             dest_dir = Path(media_out) / tree / "validation_pipeline"
             dest_dir.mkdir(parents=True, exist_ok=True)
             for p in pipeline_src.iterdir():
                 if p.suffix.lower() in {".png", ".mp4"}:
-                    shutil.copy2(p, dest_dir / p.name)
+                    _copy_media(p, dest_dir / p.name)
 
     # OptimizedTopology canonical tree
     opt_src = Path(script_dir) / "results" / "OptimizedTopology" / "plots"
@@ -1127,7 +1229,7 @@ def _sync_media_into_canonical_tree() -> None:
             sub = "mp4" if p.suffix.lower() == ".mp4" else "plots"
             target = Path(media_out) / "optimized_topology" / sub
             target.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(p, target / p.name)
+            _copy_media(p, target / p.name)
 
     # Root-level geometry/optimizer PNGs
     root_pngs = [
@@ -1143,9 +1245,13 @@ def _sync_media_into_canonical_tree() -> None:
         if p.is_file():
             dest_dir = Path(media_out) / "geometry"
             dest_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(p, dest_dir / p.name)
+            _copy_media(p, dest_dir / p.name)
 
-    print("\n  [Phase 2c] Media regeneration and sync completed.")
+    print(
+        "\n  [Phase 2c] Media regeneration and sync completed "
+        f"({tally['copied']} copied, {tally['already_same_file']} already "
+        f"in place, {tally['skipped']} skipped)."
+    )
 
 
 def _write_results_readme() -> None:
@@ -1332,8 +1438,112 @@ show a marker at step 2200 separating them.
 # Phase 3: Ada/SPARK Build
 
 
+def _phase3_coq_proof_gate(verbose: bool) -> None:
+    """Coq proof gate -- compile every .v file; any failure is fatal.
+
+    WHERE THIS SITS IN THE PIPELINE (and exactly why)
+    =================================================
+    The mandated validation order (code-quality.md, VALIDATION PIPELINE
+    ORDER) is:
+
+        1. alr build                            -> zero errors, zero warnings
+        2. gnatprove --level=4 -j0              -> all checks proved
+        3. gnatcov --no-subprojects             -> coverage meets threshold
+        4. sabotage_verifier.py                 -> sabotage audit
+        5. gprbuild -largs -static              -> static binary
+
+    The Coq gate is a formal-verification step, so it belongs with
+    gnatprove: AFTER the SPARK obligation is discharged, BEFORE the
+    sabotage audit.
+
+    THIS REPO'S ACTUAL ORDER DEVIATES FROM THE MANDATE, so the gate is
+    wired at the CLOSEST CORRECT POINT instead of the literal one.  In
+    ``_phase3_ada_build`` the sabotage_verifier invocation is an explicit
+    PRE-audit: it runs BEFORE gnatprove and is deliberately NON-FATAL
+    (debt F87 in FAILURES_AND_FIXES.md -- it reports ~56k violations on
+    the legacy codebase and against itself, so its signal is too poor to
+    gate on), and gnatprove is the LAST step of Phase 3.  Running the
+    gate immediately after the gnatprove block therefore places it:
+
+      * AFTER the Ada/SPARK proof gate (satisfies "after gnatprove"),
+      * AFTER the noisy non-fatal pre-audit,
+      * BEFORE Phase 4's launch and static-binary steps.
+
+    A literal "before sabotage_verifier" position does not exist in this
+    pipeline without moving that pre-audit or the entire gnatprove block,
+    which is out of scope for this change -- documented here rather than
+    silently shrugged at.
+
+    ZERO TOLERANCE: any non-zero coqc exit is fatal, and so is a missing
+    or broken toolchain.  Nothing is caught and continued past.
+
+    References:
+      - https://coq.inria.fr/doc/V8.18.0/refman/
+      - https://docs.python.org/3/library/subprocess.html#subprocess.run
+    """
+    if not _COQ_PROOF_GATE_MODULE.is_file():
+        fatal(
+            "Coq proof gate module not found: "
+            f"{_COQ_PROOF_GATE_MODULE.relative_to(_PROJECT_ROOT)}",
+            2,
+        )
+
+    t = step_start("coqc proof compilation gate")
+
+    # Same sys.path bootstrap the split-parity helpers below use, so the
+    # gate module resolves whether run.py was started from the project
+    # root or from one directory level above it.
+    utils_dir = str(_UTILS_DIR)
+    if utils_dir not in sys.path:
+        sys.path.insert(0, utils_dir)
+    from coq_proof_gate import (
+        CoqToolchainError,
+        format_failure_report,
+        run_coq_proof_gate,
+    )
+
+    try:
+        report = run_coq_proof_gate(_PROJECT_ROOT, _COQ_STATUS_FILE)
+    except CoqToolchainError as exc:
+        # NARROW, DELIBERATE catch: it routes an unusable toolchain into
+        # the project's own fatal path (print + sys.exit).  The pipeline
+        # NEVER continues past this point.  Every OTHER exception type is
+        # not caught at all and crashes the run, as the standard demands.
+        step_result(
+            False,
+            "Coq toolchain unusable",
+            time.monotonic() - t,
+            verbose,
+            "",
+            str(exc),
+        )
+        fatal(f"Coq proof gate: toolchain unusable\n{exc}", 2)
+    else:
+        # else (not except): `report` is bound here by construction, and an
+        # unexpected exception raised by the gate itself stays uncaught.
+        elapsed = time.monotonic() - t
+        ok = report["status"] == "pass"
+        step_result(
+            ok,
+            report["summary"],
+            elapsed,
+            verbose,
+            "",
+            "" if ok else format_failure_report(report),
+        )
+        if not ok:
+            # step_result above already dumped the full failure block; the
+            # fatal() text repeats it so a non-TTY log captures it too.
+            fatal(
+                f"Coq proof gate FAILED -- {report['summary']}\n"
+                f"{format_failure_report(report)}",
+                2,
+            )
+        step_info(f"proof status written to {_COQ_STATUS_FILE.relative_to(_PROJECT_ROOT)}")
+
+
 def _phase3_ada_build(verbose: bool) -> None:
-    """Phase 3 -- Alire dependency resolution, build, sabotage verify, gnatprove.
+    """Phase 3 -- Alire dependency resolution, build, sabotage verify, gnatprove, coqc gate.
 
     References:
       - https://alire.ada.dev/docs/
@@ -1473,6 +1683,18 @@ def _phase3_ada_build(verbose: bool) -> None:
                 break
         step_result(False, detail, elapsed, verbose, stdout, stderr)
         fatal("GNATprove verification failed", 2)
+
+    # -- Coq/Rocq proof compilation gate (zero tolerance)
+    #  ORDER: the mandated validation order puts gnatprove --level=4 before
+    #  the sabotage audit, so the Coq gate runs here, immediately after the
+    #  SPARK proof obligation is discharged.  This repo's sabotage_verifier
+    #  step above is a NON-FATAL *pre*-audit that deliberately runs BEFORE
+    #  gnatprove (FAILURES_AND_FIXES.md F87), so the literal mandated
+    #  position does not exist here -- _phase3_coq_proof_gate() documents
+    #  the full rationale.
+    #  [Citation: code-quality.md VALIDATION PIPELINE ORDER --
+    #   https://coq.inria.fr/doc/V8.18.0/refman/]
+    _phase3_coq_proof_gate(verbose=verbose)
 
     print()
 

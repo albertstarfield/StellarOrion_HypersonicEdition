@@ -35,10 +35,12 @@ import sys
 import threading
 import time
 import traceback
-from datetime import datetime, timezone
+from contextlib import contextmanager
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:  # import-time cost zero; annotation-only reference
+    from collections.abc import Iterator
     from typing import TextIO
 
 import numpy as np
@@ -210,7 +212,7 @@ class CyclicLogMonitor:
         - https://docs.python.org/3/library/threading.html
         """
         elapsed = time.monotonic() - self._start_time if self._start_time else 0
-        ts = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
+        ts = datetime.now(UTC).strftime("%H:%M:%S UTC")
         print(f"\n  {'='*70}")
         print(f"  [Monitor] Check #{self._check_count} at {ts} (elapsed: {elapsed:.0f}s = {elapsed/60:.1f}min)")
         print(f"  {'='*70}")
@@ -2152,7 +2154,8 @@ def generate_multi_metric_convergence_plot(
 #  Per-100-Step CSV Export
 # ========================================================================
 
-def _open_for_write(path: str) -> "TextIO":
+@contextmanager
+def _open_for_write(path: str) -> "Iterator[TextIO]":
     """Open `path` for writing, naming the path in the report when it fails.
 
     AXIOMS:
@@ -2182,8 +2185,10 @@ def _open_for_write(path: str) -> "TextIO":
 
     Returns
     -------
-    TextIO
-        A writable text file object, ready to be bound by a `with` statement.
+    Iterator[TextIO]
+        A context manager yielding a writable text file object; the handle is
+        closed deterministically when the caller's `with` block exits, on both
+        the success and the exception path.
 
     Raises
     ------
@@ -2198,7 +2203,8 @@ def _open_for_write(path: str) -> "TextIO":
         - https://docs.python.org/3/reference/compound_stmts.html#the-with-statement — context-manager guarantee on exception paths
     """
     try:
-        return open(path, "w")
+        with open(path, "w") as _fh:
+            yield _fh
     except OSError as _open_exc:
         print(f"[pipeline] FATAL: cannot create {path} for writing: "
               f"{type(_open_exc).__name__}: {_open_exc}")
@@ -3160,6 +3166,9 @@ def generate_hybrid_mp4(
         # length of the exception chain.
         _chain: list[str] = []
         _cur: BaseException | None = exc
+        # loop invariant: every frame of the `__context__` chain is appended
+        # exactly once, and the walk terminates on the first `None` context,
+        # so it is bounded by the length of the exception chain.
         while _cur is not None:
             _chain.append(f"{type(_cur).__name__}: {_cur}")
             _cur = _cur.__context__
@@ -3280,7 +3289,7 @@ def run_validation_pipeline(
     print(f"{'STELLARORION VALIDATION PIPELINE':^90}")
     print(f"{'Kriging Denoise → PINN Extrapolation → Accuracy Audit':^90}")
     print("=" * 90)
-    print(f"[{datetime.now(timezone.utc).isoformat()}] Pipeline started")
+    print(f"[{datetime.now(UTC).isoformat()}] Pipeline started")
     print(f"  CSV: {csv_path}")
     print(f"  Target step: {target_step}")
     print(f"  PINN iterations: {iterations}")
@@ -3684,7 +3693,7 @@ def run_validation_pipeline(
         "status": "success",
         "pipeline": "StellarOrion Validation Pipeline",
         "version": "1.0.0",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "inputs": {
             "csv_path": csv_path,
             "target_step": target_step,
@@ -3878,7 +3887,7 @@ def run_validation_pipeline(
     # ─── Stop cyclic log monitor ────────────────────────────────────
     monitor.stop()
 
-    print(f"\n[+] Pipeline completed successfully at {datetime.now(timezone.utc).isoformat()}")
+    print(f"\n[+] Pipeline completed successfully at {datetime.now(UTC).isoformat()}")
     return results
 
 
@@ -5015,8 +5024,9 @@ def _generate_interactive_html(
     returns None; a missing optional dependency is reported, never silent.
 
     References:
-      [Plotly] https://plotly.com/python/
-      [Rapisarda2023] Rapisarda (2023) Figures 4.29, 4.31, 4.32
+      - [Plotly] https://plotly.com/python/ — Plotly Python graphing library (figure and HTML output API)
+      - [Plotly-HTML] https://plotly.com/python/interactive-html-export/ — standalone interactive HTML export
+      - [Rapisarda2023] Rapisarda (2023), thesis figures 4.29, 4.31, 4.32 — source of the figure style this function reproduces
     """
     raw_hf_avg = so_metrics["raw_hf_avg"]
     krig_hf_avg = so_metrics["krig_hf_avg"]

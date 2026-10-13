@@ -519,13 +519,25 @@ def compare_denoise_raw(raw_hf: np.ndarray, denoised_hf: np.ndarray):  # nosec
     raw_std = np.std(raw_hf)
     den_std = np.std(denoised_hf)
 
+    # WHY: the two relative-error ratios below divide by a magnitude that is
+    # legitimately zero for a perfectly flat signal. Both denominators are
+    # floored at `denom_eps` (> 0) so the divisions can never see a zero, and
+    # each division site additionally carries its own `if` guard so the
+    # protection is visible exactly where the division happens (CWE-369,
+    # CWE-682) rather than being hidden inside a max() call.
+    denom_eps = 1e-10
+    mean_denom = max(denom_eps, abs(raw_mean))
+    std_denom = max(denom_eps, abs(raw_std))
+
     return {
         "raw_mean_Wm2": raw_mean,
         "denoised_mean_Wm2": den_mean,
-        "mean_preservation": abs(den_mean - raw_mean) / max(abs(raw_mean), 1e-10),
+        "mean_preservation": (abs(den_mean - raw_mean) / mean_denom
+                              if mean_denom > 0.0 else 0.0),
         "raw_std_Wm2": raw_std,
         "denoised_std_Wm2": den_std,
-        "noise_reduction_pct": (1.0 - den_std / max(raw_std, 1e-10)) * 100,
+        "noise_reduction_pct": (1.0 - den_std / std_denom) * 100
+                               if std_denom > 0.0 else 0.0,
         "raw_max_Wm2": np.max(raw_hf),
         "denoised_max_Wm2": np.max(denoised_hf),
         "raw_min_Wm2": np.min(raw_hf),

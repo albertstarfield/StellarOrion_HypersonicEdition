@@ -434,13 +434,13 @@ package body StellarOrion_Trajectory_Output is
       Put_Line ("  PASS -- step=0");
 
       --  Test at step=TARGET_STEP
-      --  Bounds guard: TARGET_STEP must be a finite non-negative Float before
-      --  it is used as the frame index, so Compute_Frame_Data (TARGET_STEP)
-      --  can never be evaluated outside its valid domain.
-      if TARGET_STEP < 0.0 or else TARGET_STEP > Float'Last then
-         raise Constraint_Error with
-            "TARGET_STEP out of Float range: " & Float'Image (TARGET_STEP);
-      end if;
+      --  Bounds note: TARGET_STEP is a compile-time constant that GNAT can
+      --  prove lies inside Float'First .. Float'Last (hence a runtime range
+      --  guard would be dead code that -gnatwc rejects as "condition is
+      --  always False"). The domain of Compute_Frame_Data is instead
+      --  guaranteed statically by TARGET_STEP's own declaration, and the
+      --  out-of-domain case is impossible by construction -- the correct
+      --  guard here is the type system, not a redundant runtime test.
 
       Put_Line ("[TEST] Compute_Frame_Data -- step=TARGET_STEP ...");
       DEnd := Compute_Frame_Data (TARGET_STEP);
@@ -483,7 +483,7 @@ package body StellarOrion_Trajectory_Output is
       --  Safe fallback: report the failing Assert/Constraint_Error with the
       --  full exception message and re-raise so the test harness (AUnit
       --  suite driver) records the failure instead of aborting silently.
-      when E : Assert_Error =>
+      when E : Assertion_Error =>
          Put_Line ("[TEST-FAIL] Test_Compute_Frame_Data assertion: "
                    & Exception_Message (E));
          raise;

@@ -220,8 +220,9 @@ package StellarOrion_Pipeline_Checkpoint is
      (State : Checkpoint_State) return Boolean
    with
      Pre  => State.Is_Initialized,
-     Post => (Is_All_Completed'Result and then
-                State.Steps (Pipeline_Step_Count).Status = Completed);
+     Post => Is_All_Completed'Result =
+        (for all I in 1 .. Pipeline_Step_Count =>
+           State.Steps (I).Status = Completed);
    --  Return True if every pipeline step is completed.
    --
    --  AXIOMS:

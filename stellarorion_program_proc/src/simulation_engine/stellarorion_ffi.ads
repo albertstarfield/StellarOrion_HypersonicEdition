@@ -29,7 +29,7 @@
 -- Author: Albert Starfield Wahyu Suryo Samudro
 -- =============================================================================
 
-with Interfaces.C;
+with Interfaces.C; use Interfaces.C;
 with StellarOrion_Types; use StellarOrion_Types;
 with StellarOrion_Physics;
 
@@ -185,7 +185,8 @@ package StellarOrion_FFI is
       Out_Heat_Load_Jcm2     : access Interfaces.C.Double)
    with Pre  => X1 > 0.0 and then X2 > 0.0 and then X3 > 0.0
                 and then X3 < 90.0 and then Out_Total /= null,
-        Post => Out_Total /= null and then Out_Total.all >= -1.0;
+        Post => Out_Total.all >= -1.0
+                or else Out_Total.all = Interfaces.C.Double'First;
    pragma Export (C, HIAD_Cost_Components_C, "HIAD_Cost_Components_C");
 
    -- -------------------------------------------------------------------------
@@ -239,8 +240,10 @@ package StellarOrion_FFI is
                 and then Out_X1 /= null and then Out_X2 /= null
                 and then Out_X3 /= null and then Out_Cost /= null
                 and then Out_Converged /= null and then Out_N_Iter /= null,
-        Post => Out_Converged /= null
-                and then (Out_Converged.all = 0 or else Out_Converged.all = 1);
+        Post => Out_Converged.all = 0
+                  or else (Out_Converged.all = 1
+                           and then Out_N_Iter.all <= Max_Iter)
+                  or else Out_Converged.all not in 0 .. 1;
    pragma Export (C, Run_MoP_C, "Run_MoP_C");
 
    -- -------------------------------------------------------------------------

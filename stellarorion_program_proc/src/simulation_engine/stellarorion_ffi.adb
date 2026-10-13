@@ -1196,6 +1196,7 @@ package body StellarOrion_FFI is
          Log ("Test_C_Printf FAIL: " & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_C_Printf;
+   pragma Unreferenced (Test_C_Printf);
 
    --  Test_C_Flush_Stream — STC wrapper for C_Flush_Stream.
    --  @test: flushes the C stdout stream through the C ABI (Null_Ptr = all).
@@ -1208,6 +1209,7 @@ package body StellarOrion_FFI is
          Log ("Test_C_Flush_Stream FAIL: " & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_C_Flush_Stream;
+   pragma Unreferenced (Test_C_Flush_Stream);
 
    --  Test_Log — STC wrapper for Log.
    --  @test: exercises the body-local Log helper (printf + fflush path).
@@ -1220,6 +1222,7 @@ package body StellarOrion_FFI is
          Log ("Test_Log FAIL: " & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Log;
+   pragma Unreferenced (Test_Log);
 
    --  Test_Estimate_Cd_C — STC wrapper for Estimate_Cd_C.
    --  @test: IRVE-3 baseline geometry (R_N = 1.5 m, r_tor = 0.135 m, 60 deg).
@@ -1233,6 +1236,7 @@ package body StellarOrion_FFI is
          Log ("Test_Estimate_Cd_C FAIL: " & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Estimate_Cd_C;
+   pragma Unreferenced (Test_Estimate_Cd_C);
 
    --  Test_HIAD_Cost_C — STC wrapper for HIAD_Cost_C.
    --  @test: IRVE-3 baseline geometry cost (delegates to HIAD_Cost_Function).
@@ -1246,6 +1250,7 @@ package body StellarOrion_FFI is
          Log ("Test_HIAD_Cost_C FAIL: " & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_HIAD_Cost_C;
+   pragma Unreferenced (Test_HIAD_Cost_C);
 
    --  Test_HIAD_Set_Refs_C — STC wrapper for HIAD_Set_Refs_C.
    --  @test: loads the validation reference set through the C ABI.
@@ -1260,6 +1265,7 @@ package body StellarOrion_FFI is
          Log ("Test_HIAD_Set_Refs_C FAIL: " & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_HIAD_Set_Refs_C;
+   pragma Unreferenced (Test_HIAD_Set_Refs_C);
 
    --  Test_HIAD_Cost_Components_C — STC wrapper for HIAD_Cost_Components_C.
    --  @test: full six-term cost breakdown at the IRVE-3 baseline geometry.
@@ -1284,6 +1290,7 @@ package body StellarOrion_FFI is
               & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_HIAD_Cost_Components_C;
+   pragma Unreferenced (Test_HIAD_Cost_Components_C);
 
    --  Test_Run_MoP_C — STC wrapper for Run_MoP_C.
    --  @test: one projected-gradient run at the IRVE-3 initial guess.
@@ -1308,6 +1315,7 @@ package body StellarOrion_FFI is
          Log ("Test_Run_MoP_C FAIL: " & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Run_MoP_C;
+   pragma Unreferenced (Test_Run_MoP_C);
 
    --  Test_Generate_CCD_Samples_C — STC wrapper for Generate_CCD_Samples_C.
    --  @test: fills the three CCD coordinate arrays and the label buffer.
@@ -1335,6 +1343,7 @@ package body StellarOrion_FFI is
               & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Generate_CCD_Samples_C;
+   pragma Unreferenced (Test_Generate_CCD_Samples_C);
 
    --  Test_Sutton_Graves_Heat_C — STC wrapper for Sutton_Graves_Heat_C.
    --  @test: stagnation-point heat flux at a representative reentry point.
@@ -1350,6 +1359,7 @@ package body StellarOrion_FFI is
               & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Sutton_Graves_Heat_C;
+   pragma Unreferenced (Test_Sutton_Graves_Heat_C);
 
    --  Test_Sutherland_Viscosity_C — STC wrapper for Sutherland_Viscosity_C.
    --  @test: dynamic viscosity at 1000 K (delegates to Sutherland_Viscosity).
@@ -1364,6 +1374,7 @@ package body StellarOrion_FFI is
               & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Sutherland_Viscosity_C;
+   pragma Unreferenced (Test_Sutherland_Viscosity_C);
 
    --  Test_Fay_Riddell_Heat_C — STC wrapper for Fay_Riddell_Heat_C.
    --  @test: Fay-Riddell heat flux at a representative reentry point.
@@ -1379,6 +1390,7 @@ package body StellarOrion_FFI is
               & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Fay_Riddell_Heat_C;
+   pragma Unreferenced (Test_Fay_Riddell_Heat_C);
 
    --  Test_Radiative_Eq_Temp_C — STC wrapper for Radiative_Eq_Temp_C.
    --  @test: radiative equilibrium wall temperature for a given flux.
@@ -1423,6 +1435,7 @@ package body StellarOrion_FFI is
               & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Ballistic_Coefficient_C;
+   pragma Unreferenced (Test_Ballistic_Coefficient_C);
 
    --  Test_Dynamic_Pressure_C — STC wrapper for Dynamic_Pressure_C.
    --  @test: dynamic pressure q = 0.5 * rho * V^2 at a sample condition.
@@ -1437,6 +1450,7 @@ package body StellarOrion_FFI is
               & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Dynamic_Pressure_C;
+   pragma Unreferenced (Test_Dynamic_Pressure_C);
 
    --  Test_Deceleration_G_Load_C — STC wrapper for Deceleration_G_Load_C.
    --  @test: deceleration in g for a sample drag force and the IRVE-3 mass.
@@ -1451,6 +1465,7 @@ package body StellarOrion_FFI is
               & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Deceleration_G_Load_C;
+   pragma Unreferenced (Test_Deceleration_G_Load_C);
 
    --  Test_Atmosphere_Temperature_C — STC wrapper for Atmosphere_Temperature_C.
    --  @test: ISA temperature at the validated snapshot altitude (51.8 km).
@@ -1479,6 +1494,7 @@ package body StellarOrion_FFI is
               & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Atmosphere_Density_C;
+   pragma Unreferenced (Test_Atmosphere_Density_C);
 
    --  Test_Mean_Free_Path_Viscous_C — STC wrapper for Mean_Free_Path_Viscous_C.
    --  @test: mean free path at a sample viscosity/density/temperature triple.
@@ -1494,6 +1510,7 @@ package body StellarOrion_FFI is
               & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Mean_Free_Path_Viscous_C;
+   pragma Unreferenced (Test_Mean_Free_Path_Viscous_C);
 
    --  Test_Speed_Of_Sound_C — STC wrapper for Speed_Of_Sound_C.
    --  @test: speed of sound at 300 K through the input-clamped wrapper.
@@ -1507,6 +1524,7 @@ package body StellarOrion_FFI is
          Log ("Test_Speed_Of_Sound_C FAIL: " & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Speed_Of_Sound_C;
+   pragma Unreferenced (Test_Speed_Of_Sound_C);
 
    --  Test_TPS_Conduction_C — STC wrapper for TPS_Conduction_C.
    --  @test: a two-ply solve through the full C ABI (success or coded status).
@@ -1545,6 +1563,7 @@ package body StellarOrion_FFI is
          Log ("Test_TPS_Conduction_C FAIL: " & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_TPS_Conduction_C;
+   pragma Unreferenced (Test_TPS_Conduction_C);
 
    --  Test_Reset_Outputs — STC wrapper for the body-local Reset_Outputs.
    --  @test: N_Layers = 0 forces the validation-failure path that Reset_Outputs
@@ -1586,6 +1605,7 @@ package body StellarOrion_FFI is
          Log ("Test_Reset_Outputs FAIL: " & Ada.Exceptions.Exception_Information (E));
          raise;
    end Test_Reset_Outputs;
+   pragma Unreferenced (Test_Reset_Outputs);
 
    -- -------------------------------------------------------------------------
    --  Self-test coverage registry (STC)

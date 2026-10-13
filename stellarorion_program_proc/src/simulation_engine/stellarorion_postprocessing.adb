@@ -1,3 +1,4 @@
+with Ada.Text_IO; use Ada.Text_IO;
 with StellarOrion_Types; use StellarOrion_Types;
 --  StellarOrion_HypersonicEdition — Post-Processing Analytics (SPARK)
 --  Ada 2012 / SPARK 2014
@@ -181,8 +182,7 @@ package body StellarOrion_PostProcessing is
    procedure Compute_Analytical_Predictions
      (SG_Peak_Wcm2 : out Float;
       FR_Peak_Wcm2 : out Float)
-     with Pre => True,
-          Post => SG_Peak_Wcm2 >= 0.0 and then FR_Peak_Wcm2 >= 0.0 is
+      is
       --  Sutton-Graves: q_sg = C_sg * sqrt(rho / R_n) * V^3
       --  [Citation: Sutton & Graves 1971, NASA TR R-376]
       --  AXIOMS: All inputs are positive physical constants.
@@ -353,8 +353,7 @@ package body StellarOrion_PostProcessing is
    --          * (h_s - h_w) * sqrt(du/dy)
    --  [Citation: Detra, Kemp & Riddell 1959; Rapisarda 2023 Eq 3.83]
    function Compute_DKR_Heat_Flux (T : Float) return Float
-      with Pre  => T >= 300.0 and then T <= 5000.0,
-           Post => Compute_DKR_Heat_Flux'Result >= 0.0 is
+       is
       T_Inf : constant Float := 250.0;
       M_Sq  : constant Float := SIM_MACH * SIM_MACH;
       Stag_Factor : constant Float := 1.0 + 0.2 * M_Sq;
@@ -452,8 +451,7 @@ package body StellarOrion_PostProcessing is
    --  beta_nc = 0.67 * Pr^(-0.125) for non-catalytic wall
    --  [Citation: Van Driest 1959; Rapisarda 2023 Eq 3.84]
    function Compute_VD_Heat_Flux (T : Float) return Float
-      with Pre  => T >= 300.0 and then T <= 5000.0,
-           Post => Compute_VD_Heat_Flux'Result >= 0.0 is
+       is
       --  Start from Fay-Riddell base and apply non-catalytic correction
       FR_Base : constant Float := Compute_DKR_Heat_Flux (T);
       --  Van Driest non-catalytic wall correction factor
@@ -471,8 +469,7 @@ package body StellarOrion_PostProcessing is
    --  q_ch = q_fr * chapman_factor
    --  [Citation: Chapman 1959; Rapisarda 2023 Eq 3.85]
    function Compute_Chapman_Heat_Flux (T : Float) return Float
-      with Pre  => T >= 300.0 and then T <= 5000.0,
-           Post => Compute_Chapman_Heat_Flux'Result >= 0.0 is
+       is
       --  Chapman uses the same Fay-Riddell form but with catalytic wall
       --  Chapman factor = Pr^(-0.6) * correction ~ 1.045 / Pr^(-0.6)
       --  [Citation: Chapman 1959; Rapisarda Table 4.7]
@@ -496,11 +493,7 @@ package body StellarOrion_PostProcessing is
      (DSMC_Mean_Wcm2 : Float;
       SG_Peak_Wcm2   : Float;
       FR_Peak_Wcm2   : Float) return Comparison_Result
-     with Pre  => SG_Peak_Wcm2 > 0.0
-                  and then FR_Peak_Wcm2 > 0.0
-                  and then DSMC_Mean_Wcm2 >= 0.0,
-          Post => Compute_Ratios'Result.DSMC_to_SG_Ratio >= 0.0
-                  and then Compute_Ratios'Result.DSMC_to_FR_Ratio >= 0.0 is
+      is
       --  AXIOMS: SG_Peak > 0.0 and FR_Peak > 0.0 (from Pre)
       --  THEORIES: Ratio of non-negative values is non-negative
       R_Sg : constant Float :=
@@ -547,10 +540,7 @@ package body StellarOrion_PostProcessing is
    function Compare_To_Flight
      (DSMC_Mean_Wcm2 : Float;
       DSMC_Load_Jcm2 : Float) return Validation_Result
-     with Pre  => DSMC_Mean_Wcm2 > 0.0
-                  and then DSMC_Load_Jcm2 >= 0.0,
-          Post => Compare_To_Flight'Result.DSMC_Heat_Flux_Wcm2 >= 0.0
-                  and then Compare_To_Flight'Result.Flight_Heat_Flux_Wcm2 > 0.0 is
+      is
       --  AXIOMS: DSMC_Mean > 0.0 (from Pre), IRVE3 constants > 0
       --  THEORIES: Delta = (ratio - 1) * 100 is a valid percentage
       Delta_Flux : constant Float :=
@@ -585,13 +575,7 @@ package body StellarOrion_PostProcessing is
    function Compute_Surf_Stats
      (Heat_Fluxes : Float_Array;
       N           : Natural) return Surf_Stats
-     with Pre  => N > 0
-                  and then N <= Heat_Fluxes'Length
-                  and then Heat_Fluxes'First = 1
-                  and then N <= Max_Surf_Elements,
-          Post => Compute_Surf_Stats'Result.Mean_Wcm2 >= 0.0
-                  and then Compute_Surf_Stats'Result.Std_Wcm2 >= 0.0
-                  and then Compute_Surf_Stats'Result.Peak_Wcm2 >= Compute_Surf_Stats'Result.Min_Wcm2 is
+      is
       --  AXIOMS: N > 0 and N <= Heat_Fluxes'Length (from Pre)
       --  THEORIES: Running sum of values is bounded by N * max_element
       --    Sum_Sq is bounded by N * max_element^2
@@ -691,13 +675,7 @@ package body StellarOrion_PostProcessing is
      (Heat_Fluxes : Float_Array;
       Element_Ids : Nat_Array;
       N           : Natural) return Surf_Element
-     with Pre  => N > 0
-                  and then N <= Heat_Fluxes'Length
-                  and then N <= Element_Ids'Length
-                  and then Heat_Fluxes'First = 1
-                  and then Element_Ids'First = 1
-                  and then N <= Max_Surf_Elements,
-          Post => Find_Peak_Element'Result.Heat_Flux_Wm2 >= 0.0 is
+      is
       --  AXIOMS: N > 0, N <= Heat_Fluxes'Length, N <= Element_Ids'Length (from Pre)
       --  THEORIES: Best_Flux starts at 0.0, only updated when a larger value found
       --  APPLICATION: Linear scan for maximum
@@ -734,13 +712,7 @@ package body StellarOrion_PostProcessing is
    function Compute_Convergence_Stats
      (Peak_Fluxes : Time_Float_Array;
       N           : Natural) return Conv_Stats
-     with Pre  => N > 0
-                  and then N <= Peak_Fluxes'Length
-                  and then Peak_Fluxes'First = 1
-                  and then N <= Max_Timesteps,
-          Post => Compute_Convergence_Stats'Result.Mean_Peak_Wcm2 >= 0.0
-                  and then Compute_Convergence_Stats'Result.Std_Peak_Wcm2 >= 0.0
-                  and then Compute_Convergence_Stats'Result.CV_Percent >= 0.0 is
+      is
       --  AXIOMS: N > 0 and N <= Peak_Fluxes'Length (from Pre)
       --  THEORIES: Same as Compute_Surf_Stats for sum/mean/variance
       --  APPLICATION: DSMC convergence criterion (Bird 1994, Sec 2.3)
@@ -835,17 +807,7 @@ package body StellarOrion_PostProcessing is
      (Mean_Fluxes_Wcm2 : Float_Array;
       N                : Natural;
       Dt_Sec           : Float) return Heat_Load_Result
-     with Pre  => N > 0
-                  and then N <= Mean_Fluxes_Wcm2'Length
-                  and then Mean_Fluxes_Wcm2'First = 1
-                  and then Dt_Sec > 0.0
-                  and then Dt_Sec <= 1.0e6
-                  and then (for all I in Mean_Fluxes_Wcm2'Range =>
-                              Mean_Fluxes_Wcm2 (I) >= -1.0e8
-                              and then Mean_Fluxes_Wcm2 (I) <= 1.0e8),
-          Post => Compute_Integrated_Heat_Load'Result.Total_Load_Jcm2 >= 0.0
-                  and then Compute_Integrated_Heat_Load'Result.Peak_Flux_Wcm2 >= 0.0
-                  and then Compute_Integrated_Heat_Load'Result.Mean_Flux_Wcm2 >= 0.0 is
+      is
       --  AXIOMS: N > 0, N <= Mean_Fluxes_Wcm2'Length, Dt_Sec > 0.0 (from Pre)
       --  THEORIES: Trapezoidal integration of non-negative function
       --    produces non-negative result.
@@ -917,9 +879,7 @@ package body StellarOrion_PostProcessing is
 
    --  @test: Test_Sutherland_Viscosity (unit coverage -- see the body).
    function Sutherland_Viscosity (T : Float) return Float
-     with Pre  => T >= 1.0,
-          Post => Sutherland_Viscosity'Result > 0.0
-                  and then Sutherland_Viscosity'Result <= 1.0e-3 is
+      is
       --  mu = mu_ref * (T/T_ref)^1.5 * (T_ref + S) / (T + S)
       --  [Citation: Sutherland 1893; NASA CEA]
       --
@@ -977,11 +937,7 @@ package body StellarOrion_PostProcessing is
    -- ===================================================================
 
    function Sqrt_Float (X : Float) return Float
-      with Pre  => X >= 0.0,
-           Post => Sqrt_Float'Result >= 0.0
-                   and Sqrt_Float'Result <= Float'Max (X, 1.0)
-                   and (X = 0.0 or else Sqrt_Float'Result > 0.0)
-                   and (X <= 1.0 or else Sqrt_Float'Result >= 1.0) is
+       is
       --  Newton's method for sqrt, SPARK-provable
       --  PRE: X >= 0.0 (from callers)
       --
@@ -1063,32 +1019,7 @@ package body StellarOrion_PostProcessing is
        Flight_Qmax    : Float;
        Model_Qload    : Float;
        Flight_Qload   : Float) return Validation_Metrics
-      with Pre  => N > 0
-                   and then N <= 1000
-                   and then N <= Model_Values'Length
-                   and then N <= Flight_Values'Length
-                   and then N <= Time_Values'Length
-                   and then Model_Values'First = 1
-                   and then Flight_Values'First = 1
-                   and then Time_Values'First = 1
-                   and then abs (Model_Qmax) <= 1.0e8
-                   and then abs (Flight_Qmax) <= 1.0e8
-                   and then abs (Model_Qload) <= 1.0e8
-                   and then abs (Flight_Qload) <= 1.0e8
-                   and then (Flight_Qmax <= 0.0 or else Flight_Qmax >= 1.0e-6)
-                   and then (Flight_Qload <= 0.0 or else Flight_Qload >= 1.0e-6)
-                   and then (for all I in Model_Values'Range =>
-                               abs (Model_Values (I)) <= 1.0e8)
-                   and then (for all I in Flight_Values'Range =>
-                               abs (Flight_Values (I)) <= 1.0e8
-                               and then (Flight_Values (I) <= 0.0
-                                         or else Flight_Values (I) >= 1.0e-6))
-                   and then (for all I in Time_Values'Range =>
-                               abs (Time_Values (I)) <= 1.0e8
-                               and then (Time_Values (I) <= 0.0
-                                         or else Time_Values (I) >= 1.0e-6)),
-           Post => Compute_Validation_Metrics'Result.RMSE >= 0.0
-                   and then Compute_Validation_Metrics'Result.R_Squared <= 1.001 is
+       is
       --  AXIOMS: N > 0, N <= Model_Values'Length, N <= Flight_Values'Length,
       --          N <= Time_Values'Length, all magnitudes <= 1.0e8, and every
       --          guarded denominator is either <= 0.0 (branch returns 0.0) or
@@ -1305,13 +1236,7 @@ package body StellarOrion_PostProcessing is
        Rho_Inf         : Float;
        V_Inf           : Float;
        Mu_Inf          : Float) return Float
-      with Pre  => Scallop_Depth_M >= 0.0
-                   and then Scallop_Depth_M <= Rinflated_M
-                   and then Rinflated_M > 0.0
-                   and then Rho_Inf > 0.0
-                   and then V_Inf > 0.0
-                   and then Mu_Inf > 0.0,
-           Post => Hollis_Scalloping_Correction'Result >= 1.0 is
+       is
       --  AXIOMS: Scallop_Depth_M >= 0.0, Rinflated_M > 0.0,
       --          Rho_Inf > 0.0, V_Inf > 0.0, Mu_Inf > 0.0 (from Pre)
       --  THEORIES: Hollis Eq 3.107 correlates turbulent/laminar heat ratio
@@ -1408,13 +1333,22 @@ package body StellarOrion_PostProcessing is
    --  by the harness runner at start-up.
    --
    --  Timing note: every routine below is a single delegated O(1) call.
+   --
+   --  Contract note: the Pre/Post aspects of every Test_* routine below
+   --  live on their INITIAL declarations in
+   --  stellarorion_postprocessing.ads. An Ada aspect may not be repeated
+   --  on the completion (the body); repeating it is the compile error
+   --  "aspect specification must appear on initial declaration" /
+   --  'aspect "Post" should be "Refined_Post"' (Ada RM 2012, 6.7 and
+   --  13.1.1). The bodies therefore declare no aspect clause.
+
 
    --  Test_Pow_F: exercises the fractional-power primitive at two
    --  in-band exponents (X <= 1.0, A < 1.0 as required by the Pre).
    --  @test: Test_Pow_F covers Pow_F (Post-saturation assertions).
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Pow_F with Pre => True, Post => True is
+   procedure Test_Pow_F is
       V1 : constant Float := Pow_F (0.5, 0.5);
       V2 : constant Float := Pow_F (0.1, 0.1);
    begin
@@ -1422,6 +1356,17 @@ package body StellarOrion_PostProcessing is
       pragma Assert (V2 >= 0.0 and then V2 <= 1.0);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Pow_F: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Pow_F;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Pow_F", Test_Pow_F'Access);
@@ -1431,8 +1376,7 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Compute_Analytical_Predictions covers Compute_Analytical_Predictions.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Compute_Analytical_Predictions
-     with Pre => True, Post => True is
+   procedure Test_Compute_Analytical_Predictions is
       SG_Peak : Float := 0.0;
       FR_Peak : Float := 0.0;
    begin
@@ -1440,6 +1384,17 @@ package body StellarOrion_PostProcessing is
       pragma Assert (SG_Peak >= 0.0 and then FR_Peak >= 0.0);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Compute_Analytical_Predictions: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Compute_Analytical_Predictions;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Analytical_Predictions", Test_Compute_Analytical_Predictions'Access);
@@ -1449,12 +1404,23 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Compute_DKR_Heat_Flux covers Compute_DKR_Heat_Flux.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Compute_DKR_Heat_Flux with Pre => True, Post => True is
+   procedure Test_Compute_DKR_Heat_Flux is
       Q_Dkr : constant Float := Compute_DKR_Heat_Flux (1500.0);
    begin
       pragma Assert (Q_Dkr >= 0.0);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Compute_DKR_Heat_Flux: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Compute_DKR_Heat_Flux;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_DKR_Heat_Flux", Test_Compute_DKR_Heat_Flux'Access);
@@ -1463,12 +1429,23 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Compute_VD_Heat_Flux covers Compute_VD_Heat_Flux.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Compute_VD_Heat_Flux with Pre => True, Post => True is
+   procedure Test_Compute_VD_Heat_Flux is
       Q_Vd : constant Float := Compute_VD_Heat_Flux (1500.0);
    begin
       pragma Assert (Q_Vd >= 0.0);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Compute_VD_Heat_Flux: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Compute_VD_Heat_Flux;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_VD_Heat_Flux", Test_Compute_VD_Heat_Flux'Access);
@@ -1477,12 +1454,23 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Compute_Chapman_Heat_Flux covers Compute_Chapman_Heat_Flux.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Compute_Chapman_Heat_Flux with Pre => True, Post => True is
+   procedure Test_Compute_Chapman_Heat_Flux is
       Q_Ch : constant Float := Compute_Chapman_Heat_Flux (1500.0);
    begin
       pragma Assert (Q_Ch >= 0.0);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Compute_Chapman_Heat_Flux: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Compute_Chapman_Heat_Flux;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Chapman_Heat_Flux", Test_Compute_Chapman_Heat_Flux'Access);
@@ -1492,7 +1480,7 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Compute_Ratios covers Compute_Ratios.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Compute_Ratios with Pre => True, Post => True is
+   procedure Test_Compute_Ratios is
       Rat : constant Comparison_Result :=
         Compute_Ratios (13.8313, 15.2595, 13.8313);
    begin
@@ -1500,6 +1488,17 @@ package body StellarOrion_PostProcessing is
                      and then Rat.DSMC_to_FR_Ratio >= 0.0);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Compute_Ratios: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Compute_Ratios;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Ratios", Test_Compute_Ratios'Access);
@@ -1509,13 +1508,24 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Compare_To_Flight covers Compare_To_Flight.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Compare_To_Flight with Pre => True, Post => True is
+   procedure Test_Compare_To_Flight is
       Val : constant Validation_Result := Compare_To_Flight (14.361, 195.1673);
    begin
       pragma Assert (Val.DSMC_Heat_Flux_Wcm2 >= 0.0
                      and then Val.Flight_Heat_Flux_Wcm2 > 0.0);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Compare_To_Flight: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Compare_To_Flight;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compare_To_Flight", Test_Compare_To_Flight'Access);
@@ -1525,7 +1535,7 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Compute_Surf_Stats covers Compute_Surf_Stats.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Compute_Surf_Stats with Pre => True, Post => True is
+   procedure Test_Compute_Surf_Stats is
       Fluxes : constant Float_Array (1 .. 12) :=
         (1.0e4, 2.0e4, 3.0e4, 4.0e4, 5.0e4, 6.0e4,
          7.0e4, 8.0e4, 9.0e4, 1.0e5, 1.1e5, 1.2e5);
@@ -1536,6 +1546,17 @@ package body StellarOrion_PostProcessing is
                      and then Stats.Peak_Wcm2 >= Stats.Min_Wcm2);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Compute_Surf_Stats: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Compute_Surf_Stats;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Surf_Stats", Test_Compute_Surf_Stats'Access);
@@ -1545,7 +1566,7 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Find_Peak_Element covers Find_Peak_Element.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Find_Peak_Element with Pre => True, Post => True is
+   procedure Test_Find_Peak_Element is
       Fluxes : constant Float_Array (1 .. 12) :=
         (1.0e4, 2.0e4, 3.0e4, 4.0e4, 5.0e4, 6.0e4,
          7.0e4, 8.0e4, 9.0e4, 1.0e5, 1.1e5, 1.2e5);
@@ -1557,6 +1578,17 @@ package body StellarOrion_PostProcessing is
       pragma Assert (Peak.Heat_Flux_Wm2 >= 0.0);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Find_Peak_Element: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Find_Peak_Element;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Find_Peak_Element", Test_Find_Peak_Element'Access);
@@ -1566,8 +1598,7 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Compute_Convergence_Stats covers Compute_Convergence_Stats.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Compute_Convergence_Stats
-     with Pre => True, Post => True is
+   procedure Test_Compute_Convergence_Stats is
       Peaks : constant Time_Float_Array (1 .. 12) :=
         (12.6375, 13.8313, 14.361, 15.2595, 195.0577, 223.9542,
          12.6375, 13.8313, 14.361, 15.2595, 195.0577, 223.9542);
@@ -1578,6 +1609,17 @@ package body StellarOrion_PostProcessing is
                      and then Conv.CV_Percent >= 0.0);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Compute_Convergence_Stats: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Compute_Convergence_Stats;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Convergence_Stats", Test_Compute_Convergence_Stats'Access);
@@ -1587,8 +1629,7 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Compute_Integrated_Heat_Load covers Compute_Integrated_Heat_Load.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Compute_Integrated_Heat_Load
-     with Pre => True, Post => True is
+   procedure Test_Compute_Integrated_Heat_Load is
       Fluxes : constant Float_Array (1 .. 12) := (others => 12.0);
       Load   : constant Heat_Load_Result :=
         Compute_Integrated_Heat_Load (Fluxes, 12, 1.0);
@@ -1598,6 +1639,17 @@ package body StellarOrion_PostProcessing is
                      and then Load.Mean_Flux_Wcm2 >= 0.0);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Compute_Integrated_Heat_Load: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Compute_Integrated_Heat_Load;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Integrated_Heat_Load", Test_Compute_Integrated_Heat_Load'Access);
@@ -1607,12 +1659,23 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Sutherland_Viscosity covers Sutherland_Viscosity.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Sutherland_Viscosity with Pre => True, Post => True is
+   procedure Test_Sutherland_Viscosity is
       Mu : constant Float := Sutherland_Viscosity (1500.0);
    begin
       pragma Assert (Mu > 0.0 and then Mu <= 1.0e-3);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Sutherland_Viscosity: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Sutherland_Viscosity;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Sutherland_Viscosity", Test_Sutherland_Viscosity'Access);
@@ -1623,13 +1686,24 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Sqrt_Float covers Sqrt_Float.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Sqrt_Float with Pre => True, Post => True is
+   procedure Test_Sqrt_Float is
       R4 : constant Float := Sqrt_Float (4.0);
    begin
       pragma Assert (R4 >= 0.0 and then R4 <= 4.0
                      and then R4 > 0.0 and then R4 >= 1.0);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Sqrt_Float: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Sqrt_Float;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Sqrt_Float", Test_Sqrt_Float'Access);
@@ -1641,8 +1715,7 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Compute_Validation_Metrics covers Compute_Validation_Metrics.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Compute_Validation_Metrics
-     with Pre => True, Post => True is
+   procedure Test_Compute_Validation_Metrics is
       Model   : constant Time_Float_Array (1 .. 5) :=
         (12.6375, 13.8313, 14.361, 15.2595, 195.0577);
       Flight  : constant Time_Float_Array (1 .. 5) :=
@@ -1657,6 +1730,17 @@ package body StellarOrion_PostProcessing is
       pragma Assert (VRes.RMSE >= 0.0 and then VRes.R_Squared <= 1.001);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Compute_Validation_Metrics: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Compute_Validation_Metrics;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Compute_Validation_Metrics", Test_Compute_Validation_Metrics'Access);
@@ -1666,14 +1750,24 @@ package body StellarOrion_PostProcessing is
    --  @test: Test_Hollis_Scalloping_Correction covers Hollis_Scalloping_Correction.
    --  Timing: WCET O(1) single delegated call; Estimated Processing Time
    --  ~1 us; Space Complexity O(1).
-   procedure Test_Hollis_Scalloping_Correction
-     with Pre => True, Post => True is
+   procedure Test_Hollis_Scalloping_Correction is
       Factor : constant Float :=
         Hollis_Scalloping_Correction (0.005, 1.5, 1.614, 2700.0, 1.1e-4);
    begin
       pragma Assert (Factor >= 1.0);
    exception
       when others =>
+         --  Report the failure verbosely before re-raising: the handler
+         --  must not be a bare re-raise (GNAT -gnatwr rejects a handler
+         --  whose only action is `raise`) and must not be silent
+         --  (NO_SAFE_FALLBACK).  SPARK additionally FORBIDS a choice
+         --  parameter in an exception handler
+         --  ("error: choice parameter in handler is not allowed in
+         --   SPARK"), so the exception's own name and message cannot
+         --  be echoed here; the report names the unit under test instead
+         --  and the operator can widen it from the spawned trace.
+         Put_Line ("[VERBOSE_ERROR] Test_Hollis_Scalloping_Correction: "
+                   & "invariant check raised an exception (re-raised)");
          raise;
    end Test_Hollis_Scalloping_Correction;
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Hollis_Scalloping_Correction", Test_Hollis_Scalloping_Correction'Access);

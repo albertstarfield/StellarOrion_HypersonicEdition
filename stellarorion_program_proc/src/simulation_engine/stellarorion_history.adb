@@ -1046,20 +1046,6 @@ package body StellarOrion_History is
       --  Fields 18-25: Flight_Metrics
       Rec.Metrics.Ballistic_Coeff     := F (18);
       Rec.Metrics.Knudsen_Number      := F (19);
-      exception
-         when E : others =>
-            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
-
-            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
-
-            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
-
-            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Populate_Run_Record");
-
-            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
-
-            raise;
-
       Rec.Metrics.Stag_Heat_Flux_Wm2  := F (20);
       Rec.Metrics.Stag_Heat_Flux_Wcm2 := F (21);
       Rec.Metrics.Surface_Temp_K      := F (22);
@@ -1084,6 +1070,19 @@ package body StellarOrion_History is
       else
          Rec.Progress := 1.0;
       end if;
+      exception
+         when E : others =>
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Exception:      " & Ada.Exceptions.Exception_Name(E));
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Populate_Run_Record");
+
+            Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
+
+            raise;
    end Populate_Run_Record;
 
    -- ==================================================================
@@ -1410,7 +1409,8 @@ package body StellarOrion_History is
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Message:        " & Ada.Exceptions.Exception_Message(E));
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] Operation:      Delete_Run");
          Ada.Text_IO.Put_Line("[VERBOSE_ERROR] ========================================");
-         raise;         raise;   end Delete_Run;
+         raise;
+   end Delete_Run;
 
    -- ==================================================================
    --  Get_All_Runs — Read all rows into a Run_Set.
@@ -2147,6 +2147,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_Parse_CSV_Line;
+   pragma Unreferenced (Test_Parse_CSV_Line);
 
    --  coverage: STC wrapper for CSV_Unescape
 -- ============================================================================
@@ -2189,6 +2190,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_CSV_Unescape;
+   pragma Unreferenced (Test_CSV_Unescape);
 
    --  coverage: STC wrapper for CSV_Escape
 -- ============================================================================
@@ -2230,6 +2232,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_CSV_Escape;
+   pragma Unreferenced (Test_CSV_Escape);
 
    --  coverage: STC wrapper for S2F
 -- ============================================================================
@@ -2273,6 +2276,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_S2F;
+   pragma Unreferenced (Test_S2F);
 
    --  coverage: STC wrapper for S2I
 -- ============================================================================
@@ -2314,6 +2318,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_S2I;
+   pragma Unreferenced (Test_S2I);
 
    --  coverage: STC wrapper for S2B
 -- ============================================================================
@@ -2358,6 +2363,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_S2B;
+   pragma Unreferenced (Test_S2B);
 
    --  coverage: STC wrapper for F2S
 -- ============================================================================
@@ -2399,6 +2405,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_F2S;
+   pragma Unreferenced (Test_F2S);
 
    --  coverage: STC wrapper for B2S
 -- ============================================================================
@@ -2442,6 +2449,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_B2S;
+   pragma Unreferenced (Test_B2S);
 
    --  coverage: STC wrapper for Solver_To_Str
 -- ============================================================================
@@ -2490,6 +2498,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_Solver_To_Str;
+   pragma Unreferenced (Test_Solver_To_Str);
 
    --  coverage: STC wrapper for Str_To_Solver
 -- ============================================================================
@@ -2534,6 +2543,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_Str_To_Solver;
+   pragma Unreferenced (Test_Str_To_Solver);
 
    --  coverage: STC wrapper for Chem_To_Str
 -- ============================================================================
@@ -2580,6 +2590,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_Chem_To_Str;
+   pragma Unreferenced (Test_Chem_To_Str);
 
    --  coverage: STC wrapper for Str_To_Chem
 -- ============================================================================
@@ -2625,6 +2636,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_Str_To_Chem;
+   pragma Unreferenced (Test_Str_To_Chem);
 
    --  Side-effectful routine exercised via integration modes (run.py --test ...);
    --  unit wrapper validates declarative surface only.
@@ -2669,6 +2681,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_Acquire_Lock;
+   pragma Unreferenced (Test_Acquire_Lock);
 
    --  Side-effectful routine exercised via integration modes (run.py --test ...);
    --  unit wrapper validates declarative surface only.
@@ -2712,6 +2725,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_Release_Lock;
+   pragma Unreferenced (Test_Release_Lock);
 
    --  Side-effectful routine exercised via integration modes (run.py --test ...);
    --  unit wrapper validates declarative surface only.
@@ -2814,6 +2828,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_Populate_Run_Record;
+   pragma Unreferenced (Test_Populate_Run_Record);
 
    --  F/I/B/S are nested accessors of Populate_Run_Record (body-level
    --  scope) and are exercised transitively by Test_Populate_Run_Record.
@@ -2857,6 +2872,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_F;
+   pragma Unreferenced (Test_F);
 
    --  STC coverage wrapper.
 -- ============================================================================
@@ -2897,6 +2913,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_I;
+   pragma Unreferenced (Test_I);
 
    --  STC coverage wrapper.
 -- ============================================================================
@@ -2937,6 +2954,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_B;
+   pragma Unreferenced (Test_B);
 
    --  STC coverage wrapper.
 -- ============================================================================
@@ -2977,6 +2995,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_S;
+   pragma Unreferenced (Test_S);
 
    --  Side-effectful routine exercised via integration modes (run.py --test ...);
    --  unit wrapper validates declarative surface only.
@@ -3286,6 +3305,7 @@ package body StellarOrion_History is
          raise;
 
    end Test_Build_Draft_Line;
+   pragma Unreferenced (Test_Build_Draft_Line);
 
    --  Side-effectful routine exercised via integration modes (run.py --test ...);
    --  unit wrapper validates declarative surface only.

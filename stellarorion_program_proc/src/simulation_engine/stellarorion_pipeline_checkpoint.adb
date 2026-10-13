@@ -77,9 +77,14 @@ package body StellarOrion_Pipeline_Checkpoint is
    --  @test: test_format_timestamp
    function Format_Timestamp return Timestamp_String
    --  Contract: pre  => True (no input constraints beyond declared subtypes);
-   --           post => Format_Timestamp'Result'Length = Max_Timestamp_Length.
-      with Pre  => True,
-           Post => Format_Timestamp'Result'Length = Max_Timestamp_Length
+   --           post => the result is Timestamp_String, so its length is
+   --                    Max_Timestamp_Length BY SUBTYPE; stating that as a
+   --                    Post aspect is tautological and GNAT (-gnatw.t)
+   --                    correctly reports it as not checking anything, so no
+   --                    Post aspect is declared here. The body asserts the
+   --                    meaningful guarantee (the copied prefix is non-blank)
+   --                    with pragma Assert instead.
+      with Pre => True
    is
       Now     : constant Time := Clock;
       Result  : Timestamp_String := (others => ' ');
@@ -501,9 +506,13 @@ package body StellarOrion_Pipeline_Checkpoint is
      (State : in out Checkpoint_State;
       Path  : String)
    --  Contract: pre  => State.Is_Initialized (caller must Start first);
-   --           post => State.Updated_At holds the save-time timestamp.
-      with Pre  => State.Is_Initialized,
-           Post => State.Updated_At'Length = Max_Timestamp_Length
+   --           post => State.Updated_At is refreshed with the save-time
+   --                    timestamp. Its length is Max_Timestamp_Length BY
+   --                    SUBTYPE (Updated_At : Timestamp_String), so that
+   --                    half of the old postcondition was tautological and is
+   --                    not restated as an aspect; the refresh itself is the
+   --                    property the body asserts.
+      with Pre  => State.Is_Initialized
    is
       F      : File_Type;
       Tmp    : constant String := Path & ".tmp";
@@ -1515,7 +1524,16 @@ package body StellarOrion_Pipeline_Checkpoint is
          declare
             Dummy : constant Boolean :=
               Is_Step_Completed (State, "sparta");
-            pragma Assert (Dummy'Length = 1);
+            --  If the call RETURNS instead of raising, the uninitialized-state
+            --  guard is gone. The call site then yields False (the step is not
+            --  completed on an uninitialised checkpoint), so asserting the
+            --  True outcome turns that regression into a test failure instead
+            --  of silently passing.
+            --  boolean directly: `Dummy = True` is a redundant comparison
+            --  under -gnatwr, and the plain form keeps the same semantics
+            --  (the assert fails exactly when the call returns without
+            --  raising, i.e. when the uninitialised-state guard is gone).
+            pragma Assert (Dummy);
          begin
             Ada.Text_IO.Put_Line ("  [FAIL] Expected Uninitialized_Checkpoint");
              Fail_Count := Fail_Count + 1;
@@ -1527,6 +1545,10 @@ package body StellarOrion_Pipeline_Checkpoint is
       end Assert_Uninitialized;
 
       --  @test: test_cleanup
+      --  WCET: O(1) -- one Delete_File syscall on a single fixed path; there
+      --    is no loop and no unbounded wait. CPU Time: one directory unlink.
+      --    Space Complexity: O(1) -- no allocation; Test_Path is a
+      --    fixed-length string captured at initialisation.
       procedure Cleanup is
       --  Contract: pre => True (no inputs);
       --           post => Test_Path is deleted (if it existed).

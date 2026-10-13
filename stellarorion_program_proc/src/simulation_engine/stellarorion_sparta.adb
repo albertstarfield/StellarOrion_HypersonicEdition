@@ -4627,11 +4627,15 @@ package body StellarOrion_Sparta is
    --  CITATIONS: Plimpton & Gallis (2014) SPARTA DSMC User Manual,
    --    `dump ... every N`; DO-178C §6.4.4; ISO 26262 §9.4.3.
    --  @test: Test_Expected_Dump_Count
+   --  WCET: O(1) -- the expected count is evaluated as the closed form
+   --    Steps / DUMP_STATS_INTERVAL + 1 for three fixed (Steps, interval)
+   --    cases; CPU Time: constant, three integer divisions. Space
+   --    Complexity: O(1) -- no dynamic allocation, all operands are
+   --    fixed-range integers.
    --  Register_Routine: "Test_Expected_Dump_Count"
    procedure Test_Expected_Dump_Count
      with Pre => DUMP_STATS_INTERVAL >= 1,
-          Post => True;
-   is
+          Post => True is
       --  The spec's Post aspect bounds the result to 1 .. Steps + 1; the
       --  cases below assert the concrete rule value, so a regression in
       --  the rule itself is caught, not only its bounds.

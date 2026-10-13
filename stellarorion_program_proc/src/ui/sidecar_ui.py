@@ -894,7 +894,7 @@ class SidecarHandler(SimpleHTTPRequestHandler):
             return
         run = payload.get("run_name") or getattr(self.api.state, "run_name", "manual")
         safe_run = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in str(run))
-        stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        stamp = datetime.datetime.now(datetime.UTC).strftime("%Y%m%dT%H%M%SZ")
         dest = GEOMETRY_DIR / f"HIAD_{stamp}_{safe_run}.surf"
         try:
             dest.write_bytes(src.read_bytes())

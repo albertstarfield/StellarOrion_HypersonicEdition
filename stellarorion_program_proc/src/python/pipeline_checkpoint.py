@@ -35,7 +35,7 @@ Author: Albert Starfield Wahyu Suryo Samudro
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -146,7 +146,7 @@ class PipelineCheckpoint:
         """
         if self._data is None:
             return
-        self._data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        self._data["updated_at"] = datetime.now(UTC).isoformat()
         tmp_path = self.checkpoint_path + ".tmp"
         try:
             with open(tmp_path, "w", encoding="utf-8") as fh:
@@ -184,8 +184,8 @@ class PipelineCheckpoint:
         else:
             # Fresh start
             if pipeline_id is None:
-                pipeline_id = f"run-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
-            now = datetime.now(timezone.utc).isoformat()
+                pipeline_id = f"run-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}"
+            now = datetime.now(UTC).isoformat()
             self._data = {
                 "version": 1,
                 "pipeline_id": pipeline_id,
@@ -327,7 +327,7 @@ class PipelineCheckpoint:
         """
         self._ensure_initialized()
         self._state["steps"][step]["status"] = StepStatus.COMPLETED
-        self._state["steps"][step]["completed_at"] = datetime.now(timezone.utc).isoformat()
+        self._state["steps"][step]["completed_at"] = datetime.now(UTC).isoformat()
         if output_files:
             self._state["steps"][step]["output_files"] = output_files
         self._save()

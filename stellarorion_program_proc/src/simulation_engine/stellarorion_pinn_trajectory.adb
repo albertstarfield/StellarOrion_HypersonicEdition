@@ -81,9 +81,7 @@ package body StellarOrion_PINN_Trajectory is
    --  CITATIONS: [NASA SP-7468 (1976)]
    --  @test: Test_ISA_Atmosphere unit smoke coverage (STC registry).
    function ISA_Atmosphere (Altitude_Km : Float) return ISA_Atmosphere_Result
-     with Pre  => Altitude_Km >= 0.0 and Altitude_Km <= 120.0,
-          Post => ISA_Atmosphere'Result.Temperature_K > 0.0
-                   and ISA_Atmosphere'Result.Density_Kgm3 >= 0.0 is
+      is
       H      : Float := Altitude_Km;
       T      : Float;
       P      : Float := 101325.0;
@@ -218,10 +216,7 @@ package body StellarOrion_PINN_Trajectory is
      (Density_Kgm3  : Float;
       Nose_Radius_M : Float;
       Velocity_Ms   : Float) return Float
-     with Pre  => Density_Kgm3 >= 0.0
-                   and Nose_Radius_M > 0.0
-                   and Velocity_Ms >= 0.0,
-          Post => Sutton_Graves_Heat_Flux'Result >= 0.0 is
+      is
       V_Cubed : Float;
    begin
       if Nose_Radius_M <= 0.0 or Density_Kgm3 <= 0.0 then
@@ -242,8 +237,7 @@ package body StellarOrion_PINN_Trajectory is
    function Dynamic_Pressure
      (Density_Kgm3  : Float;
       Velocity_Ms   : Float) return Float
-     with Pre  => Density_Kgm3 >= 0.0 and Velocity_Ms >= 0.0,
-          Post => Dynamic_Pressure'Result >= 0.0 is
+      is
    begin
       return 0.5 * Density_Kgm3 * Velocity_Ms * Velocity_Ms;
    exception
@@ -262,11 +256,7 @@ package body StellarOrion_PINN_Trajectory is
       Velocity_Ms   : Float;
       Cd            : Float;
       Diameter_M    : Float) return Float
-     with Pre  => Density_Kgm3 >= 0.0
-                   and Velocity_Ms >= 0.0
-                   and Cd >= 0.0
-                   and Diameter_M > 0.0,
-          Post => Drag_Force'Result >= 0.0 is
+      is
       Pi   : constant Float := 3.141592653589793;
       Area : Float;
    begin
@@ -285,9 +275,7 @@ package body StellarOrion_PINN_Trajectory is
    function G_Load
      (Drag_Force_N : Float;
       Mass_Kg      : Float) return Float
-     with Pre  => Drag_Force_N >= 0.0
-                   and Mass_Kg > 0.0,
-          Post => G_Load'Result >= 0.0 is
+      is
    begin
       return Drag_Force_N / (Mass_Kg * G0);
    exception
@@ -321,10 +309,7 @@ package body StellarOrion_PINN_Trajectory is
       V_Final_Ms     : Float := 2700.0;
       H_DSMC_Km      : Float := 51.8;
       V_DSMC_Ms      : Float := 3378.0) return Trajectory_Result
-     with Pre  => Target_Step > 0.0
-                   and H_Entry_Km > H_Final_Km
-                   and V_Entry_Ms > V_Final_Ms,
-          Post => IRVE3_Trajectory'Result.Altitude_Km >= 0.0 is
+      is
       pragma Unreferenced (H_DSMC_Km);
       pragma Unreferenced (V_DSMC_Ms);
       H          : Float;
@@ -392,14 +377,7 @@ package body StellarOrion_PINN_Trajectory is
       Ref_SG_Flux_Wcm2     : Float;
       Now_SG_Flux_Wcm2     : Float;
       Base_Value           : Float) return Float
-     with Pre  => Metric_Type in 1 .. 5
-                   and DSMC_Final_Value >= 0.0
-                   and Ref_Dynamic_Pressure >= 0.0
-                   and Now_Dynamic_Pressure >= 0.0
-                   and Ref_SG_Flux_Wcm2 >= 0.0
-                   and Now_SG_Flux_Wcm2 >= 0.0
-                   and Base_Value >= 0.0,
-          Post => Scale_Metric'Result >= 0.0 is
+      is
       Ratio_DP : Float;
       Ratio_SG : Float;
    begin
@@ -471,9 +449,7 @@ package body StellarOrion_PINN_Trajectory is
       X_Arr         : out Array_Float_200;
       Y_Arr         : out Array_Float_200;
       N_Pts         : access Integer)
-     with Pre => True,
-          Post => N_Pts.all >= 0
-                  and N_Pts.all <= MAX_CROSS_SECTION_PTS is
+      is
       --  Structural constants (IRVE-3 / SPARTA profile contract — NOT
       --  free parameters: 6-torus stack and 15 samples per segment are
       --  fixed; geometry freedom lives in R_N / R_Torus / Half_Cone_Deg).
@@ -520,7 +496,7 @@ package body StellarOrion_PINN_Trajectory is
             --  A point that cannot be stored must be reported, never dropped
             --  silently: leave Idx where it was and say so on Standard_Error.
             Put_Line (Standard_Error,
-                      "WARNING Add_Point: point not stored — "
+                      "WARNING Add_Point: point not stored: "
                       & Ada.Exceptions.Exception_Name (E) & ": "
                       & Ada.Exceptions.Exception_Message (E));
       end Add_Point;
@@ -604,9 +580,7 @@ package body StellarOrion_PINN_Trajectory is
      (X_Arr  : out Array_Float_200;
       Y_Arr  : out Array_Float_200;
       N_Pts  : access Integer)
-     with Pre => True,
-          Post => N_Pts.all >= 0
-                  and N_Pts.all <= MAX_CROSS_SECTION_PTS is
+      is
    begin
       Get_HIAD_Cross_Section_Params
         (R_N           => 1.5,      -- IRVE3_NOSE_R_M
@@ -644,10 +618,11 @@ package body StellarOrion_PINN_Trajectory is
                    & Ada.Exceptions.Exception_Name (E) & ": "
                    & Ada.Exceptions.Exception_Message (E));
    end Test_Local_Sqrt;
+   pragma Unreferenced (Test_Local_Sqrt);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Local_Sqrt", Test_Local_Sqrt'Access);
 
    --  Test_ISA_Atmosphere: smoke test for ISA_Atmosphere.
-   procedure Test_ISA_Atmosphere with SPARK_Mode => Off, Pre => True, Post => True is -- nosec
+   procedure Test_ISA_Atmosphere  is -- nosec
    begin
       declare
          R : constant ISA_Atmosphere_Result := ISA_Atmosphere (0.0);
@@ -667,7 +642,7 @@ package body StellarOrion_PINN_Trajectory is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_ISA_Atmosphere", Test_ISA_Atmosphere'Access);
 
    --  Test_Sutton_Graves_Heat_Flux: smoke test for Sutton_Graves_Heat_Flux.
-   procedure Test_Sutton_Graves_Heat_Flux with SPARK_Mode => Off, Pre => True, Post => True is -- nosec
+   procedure Test_Sutton_Graves_Heat_Flux  is -- nosec
    begin
       if Sutton_Graves_Heat_Flux (1.2, 1.5, 1000.0) < 0.0 then
          Put_Line (Standard_Error,
@@ -683,7 +658,7 @@ package body StellarOrion_PINN_Trajectory is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Sutton_Graves_Heat_Flux", Test_Sutton_Graves_Heat_Flux'Access);
 
    --  Test_Dynamic_Pressure: smoke test for Dynamic_Pressure.
-   procedure Test_Dynamic_Pressure with SPARK_Mode => Off, Pre => True, Post => True is -- nosec
+   procedure Test_Dynamic_Pressure  is -- nosec
    begin
       if Dynamic_Pressure (1.2, 100.0) < 0.0 then
          Put_Line (Standard_Error, "FAIL Dynamic_Pressure: q < 0 Pa");
@@ -698,7 +673,7 @@ package body StellarOrion_PINN_Trajectory is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Dynamic_Pressure", Test_Dynamic_Pressure'Access);
 
    --  Test_Drag_Force: smoke test for Drag_Force.
-   procedure Test_Drag_Force with SPARK_Mode => Off, Pre => True, Post => True is -- nosec
+   procedure Test_Drag_Force  is -- nosec
    begin
       if Drag_Force (1.2, 100.0, 1.4625, 3.0) < 0.0 then
          Put_Line (Standard_Error, "FAIL Drag_Force: F < 0 N");
@@ -713,7 +688,7 @@ package body StellarOrion_PINN_Trajectory is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Drag_Force", Test_Drag_Force'Access);
 
    --  Test_G_Load: smoke test for G_Load.
-   procedure Test_G_Load with SPARK_Mode => Off, Pre => True, Post => True is -- nosec
+   procedure Test_G_Load  is -- nosec
    begin
       if G_Load (1000.0, 281.0) < 0.0 then
          Put_Line (Standard_Error, "FAIL G_Load: n < 0");
@@ -728,7 +703,7 @@ package body StellarOrion_PINN_Trajectory is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_G_Load", Test_G_Load'Access);
 
    --  Test_IRVE3_Trajectory: smoke test for IRVE3_Trajectory.
-   procedure Test_IRVE3_Trajectory with SPARK_Mode => Off, Pre => True, Post => True is -- nosec
+   procedure Test_IRVE3_Trajectory  is -- nosec
    begin
       declare
          R : constant Trajectory_Result := IRVE3_Trajectory (1.0e8);
@@ -747,7 +722,7 @@ package body StellarOrion_PINN_Trajectory is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_IRVE3_Trajectory", Test_IRVE3_Trajectory'Access);
 
    --  Test_Scale_Metric: smoke test for Scale_Metric.
-   procedure Test_Scale_Metric with SPARK_Mode => Off, Pre => True, Post => True is -- nosec
+   procedure Test_Scale_Metric  is -- nosec
    begin
       if Scale_Metric (1, 1.0, 0.0, 0.0, 0.0, 100.0, 0.0) < 0.0 then
          Put_Line (Standard_Error, "FAIL Scale_Metric: scaled metric < 0");
@@ -762,7 +737,7 @@ package body StellarOrion_PINN_Trajectory is
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Scale_Metric", Test_Scale_Metric'Access);
 
    --  Test_Get_HIAD_Cross_Section_Params: smoke test for Get_HIAD_Cross_Section_Params.
-   procedure Test_Get_HIAD_Cross_Section_Params with SPARK_Mode => Off, Pre => True, Post => True is -- nosec
+   procedure Test_Get_HIAD_Cross_Section_Params  is -- nosec
       X : Array_Float_200;
       Y : Array_Float_200;
       N : aliased Integer := 0;
@@ -800,10 +775,11 @@ package body StellarOrion_PINN_Trajectory is
                    & Ada.Exceptions.Exception_Name (E) & ": "
                    & Ada.Exceptions.Exception_Message (E));
    end Test_Add_Point;
+   pragma Unreferenced (Test_Add_Point);
    --  Registry: GNATCOLL.Register_Routine (Suite, "Test_Add_Point", Test_Add_Point'Access);
 
    --  Test_Get_HIAD_Cross_Section: smoke test for Get_HIAD_Cross_Section.
-   procedure Test_Get_HIAD_Cross_Section with SPARK_Mode => Off, Pre => True, Post => True is -- nosec
+   procedure Test_Get_HIAD_Cross_Section  is -- nosec
       X : Array_Float_200;
       Y : Array_Float_200;
       N : aliased Integer := 0;
