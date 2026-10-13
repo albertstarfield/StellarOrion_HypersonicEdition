@@ -360,6 +360,49 @@ visually verified.
 - **LOW** — "half_cone=40.5" runs flush to the box's right edge (possible
   truncation) and line 2 repeats "r_tor=0.103m". *Fix:* pad the box, dedupe.
 
+*Disposition (2026-10-13):* A14 + A15 CLOSED jointly.
+
+**HIGH (wrong-run content, both figures) — ROOT CAUSE + FIX:** the shipped
+figures were rendered from a stale working-tree
+`stellarorion_program_proc/src/python/hiad_optimization_results.json`
+(optimized: R_N 2.9891, r_tor 0.1033, half_cone 40.48, Cd 1.5725, cost
+1.5599). Restored the pinned official run with
+`git checkout bdddb47 -- .../hiad_optimization_results.json`
+(optimized: R_N 2.9714403, r_tor 0.0884604, half_cone 40.14795, Cd
+1.5597378, cost 1.6050545; n_evaluations 70; hybrid_validation: scalloped,
+2200 steps, q_analytic 155.6727, q_target 165.7160, correction 0.5006281)
+and regenerated both producers from it. Shipped thesis figures now carry the
+official values (verified natively): bo_optimization_3d.png panel C 'final
+best = 1.6051', legend 'Optimum J=1.605 Default J=2.163'; and
+optimization_comparison.png BEFORE R_N=1.50m r_tor=0.135m half_cone=60.0
+Cd=1.6073 5/6 tori / AFTER R_N=2.97m r_tor=0.088m half_cone=40.1 Cd=1.5597
+6/6 tori, Source: Ada FFI (Ada FFI cross-check OK: max arc distance
+0.003763 m < tol 0.016918 m on 200 arc samples).
+
+**A14 (MED colourbar tick interleaving, LOW small 3D/legend text):** resolved
+by the regen above — the shipped PNG was an older producer generation; the
+current committed producer already places the cost ticks (plain decades
+1000/100/10 via LogFormatter, SciNotation superscripts would print < 8 pt)
+with label 'cost J (log)' beside their strip, caps z-ticks at
+MaxNLocator(nbins=3) to clear the pad-0.26 colourbar slot, and carries the
+legend at figure level (fontsize 8.5 = 8.12 pt printed) because the mplot3d
+depth pass overpaints in-axes artists. Fresh render confirms separated tick
+zones, all text above the floor. No producer change needed.
+
+**A15 fixes in render_optimization_comparison.py:** (MED) 'X [m]' was
+clipped to 'X [m,' where the rounded top of the figure-level parameter box
+met the mplot3d x-label, which hangs about 0.047 of the canvas below the
+pane spine and is invisible to tight_layout's measurement. Raised the
+tight_layout band from 0.165 to 0.220 (a subplots_adjust attempt first
+proved dead code — tight_layout runs after it at L1124 and overrides it);
+both labels now print in full clear of both boxes. (LOW) the opt footer's
+second line repeated r_tor ('r_tor=0.088m 6/6 tori') already shown on line
+1 — replaced with the tori count only. Shipped: optimization_comparison.png
+156414 B shasum256 b2bf436a9b03c19d; bo_optimization_3d.png 178373 B
+shasum256 ef0eee643fb169fc; commit 28271db0 (figures + JSON restore +
+producer) + this notes commit; main.pdf/main.brf from the 11:48
+intermediate build (171 pages, 0 errors) committed alongside.
+
 ### A16. `stellarorion_program_proc/scripts/render_kriging_panel.py` → `kriging_denoise.png`
 - **MED** — "KRIGED T" panel is nearly featureless black: the bow-shock structure
   clearly visible in "RAW T" is absent despite the caption promising "same limits
