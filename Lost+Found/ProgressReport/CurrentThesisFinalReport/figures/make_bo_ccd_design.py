@@ -156,7 +156,13 @@ def build(data: dict):
     # axis labels hung 0.234 in and 0.208 in below the canvas, because labelpad
     # pushes those labels outward from the cube rather than from the axes box.
     # Raising the axes floor to 0.09 clears both with margin.
-    ax = fig.add_axes([0.00, 0.09, 0.86, 0.79], projection="3d")
+    # A11 MED: the rect changes from [0, 0.09, 0.86, 0.79] reserve the band
+    # above the cube for the two-row legend. Floor 0.09 -> 0.12 and height
+    # 0.79 -> 0.64 keep the axes top at 0.76 for that band while lifting the
+    # cube 0.12 in clear of the bottom: at the 0.67-height cube the projected
+    # y-axis label reached 0.035 in below the canvas (measured by
+    # assert_inside_canvas), and 0.12 clears it with margin.
+    ax = fig.add_axes([0.00, 0.12, 0.86, 0.64], projection="3d")
     cax = fig.add_axes([0.885, 0.28, 0.018, 0.44])
 
     norm = LogNorm(vmin=float(costs.min()), vmax=float(costs.max()))
@@ -174,21 +180,31 @@ def build(data: dict):
     best_row = samples[best_index]
 
     ring_kwargs = dict(facecolors="none", linewidths=1.6, s=150)
-    ax.scatter([float(center_row["R_N"])], [float(center_row["r_tor"])],
-               [float(center_row["half_cone_deg"])], edgecolors=CB[0], **ring_kwargs)
-    ax.scatter([float(default_row["R_N"])], [float(default_row["r_tor"])],
-               [float(default_row["half_cone_deg"])],
-               marker="s", edgecolors=CB[1], linewidths=1.6, s=44, depthshade=False)
-    ax.scatter([float(best_row["R_N"])], [float(best_row["r_tor"])],
-               [float(best_row["half_cone_deg"])],
-               marker="*", edgecolors=CB[3], linewidths=1.4, s=190, depthshade=False)
-    ax.scatter([float(optimum_row["R_N"])], [float(optimum_row["r_tor"])],
-               [float(optimum_row["half_cone_deg"])],
-               marker="D", edgecolors=CB[4], linewidths=1.6, s=64, depthshade=False)
+    ring_sc = ax.scatter([float(center_row["R_N"])], [float(center_row["r_tor"])],
+                         [float(center_row["half_cone_deg"])], edgecolors=CB[0],
+                         **ring_kwargs)
+    base_sc = ax.scatter([float(default_row["R_N"])], [float(default_row["r_tor"])],
+                         [float(default_row["half_cone_deg"])],
+                         marker="s", edgecolors=CB[1], linewidths=1.6, s=44,
+                         depthshade=False)
+    best_sc = ax.scatter([float(best_row["R_N"])], [float(best_row["r_tor"])],
+                         [float(best_row["half_cone_deg"])],
+                         marker="*", edgecolors=CB[3], linewidths=1.4, s=190,
+                         depthshade=False)
+    opt_sc = ax.scatter([float(optimum_row["R_N"])], [float(optimum_row["r_tor"])],
+                        [float(optimum_row["half_cone_deg"])],
+                        marker="D", edgecolors=CB[4], linewidths=1.6, s=64,
+                        depthshade=False)
 
     ax.set_xlim(*X_LIM)
     ax.set_ylim(*Y_LIM)
     ax.set_zlim(*Z_LIM)
+    # A11 LOW: at the default 3D view (elev 30, azim -60) the best-screened
+    # star rested on the centre ring and the two top factorial points merged
+    # into a single blob, so only about 14 of the 15 screened points were
+    # individually readable. A 6 deg azimuth change separates both pairs at
+    # print size while every axis face stays equally legible.
+    ax.view_init(elev=30, azim=-36)
     ax.set_xticks(X_TICKS)
     ax.set_xticklabels([f"{value:g}" for value in X_TICKS], fontsize=TICK_PT)
     ax.set_yticks(Y_TICKS)
@@ -224,12 +240,41 @@ def build(data: dict):
     bar.set_label("Evaluated cost $J$", fontsize=MATH_PT, labelpad=2)
     bar.outline.set_linewidth(0.8)
 
+    # A11 MED: the four reference markers were unlabeled after the marker
+    # refresh, and the shipped panel still carried the old in-axes legend
+    # whose translucent frame sat over the cube with a data point inside it
+    # and the grid showing through. The legend now lives OUTSIDE the axes as
+    # one opaque row in the band reserved above the cube: framealpha 1.0
+    # with a white face means neither grid lines nor data points can show
+    # through, and because the row sits above the cube it covers no point.
+    legend = ax.legend(
+        handles=[ring_sc, base_sc, best_sc, opt_sc],
+        labels=[
+            "CCD design centre",
+            "IRVE-3 baseline",
+            "best screened point",
+            "round-1 BO optimum",
+        ],
+        loc="lower left",
+        bbox_to_anchor=(0.0, 1.005),
+        ncol=2,
+        fontsize=TICK_PT,
+        frameon=True,
+        framealpha=1.0,
+        facecolor="white",
+        edgecolor=GRID,
+        borderpad=0.4,
+        columnspacing=1.2,
+        handletextpad=0.5,
+    )
+    legend.set_zorder(10)
+
     # The note carries the two screen extremes the surrounding text discusses.
     note = (f"cheapest screened point $J = {costs.min():.4f}$, "
             f"dearest $J = {costs.max():.2f}$")
     fig.text(0.005, 0.005, note, fontsize=NOTE_PT, color=INK, ha="left", va="bottom")
     for index, line in enumerate(TITLE_LINES):
-        fig.text(0.5, 0.985 - index * 0.040, line, fontsize=TITLE_PT,
+        fig.text(0.5, 0.985 - index * 0.032, line, fontsize=TITLE_PT,
                  fontweight="bold" if index == 0 else "normal",
                  color=INK, ha="center", va="top")
     return fig, ax
@@ -272,6 +317,8 @@ def main() -> int:
     strings = list(TITLE_LINES) + [
         "Nose radius $R_N$ (m)", "Torus radius $r_{tor}$ (m)",
         "Half-cone angle $\\theta_c$ (deg)", "Evaluated cost $J$",
+        "CCD design centre", "IRVE-3 baseline",
+        "best screened point", "round-1 BO optimum",
     ]
     pf.require_clean(*strings)
     fig, _ = build(data)

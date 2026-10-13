@@ -229,6 +229,28 @@ matching swatches, callout clear of the fan, panel (b) unchanged).
 - **LOW** — Only ≈14/15 design circles individually distinguishable (3D occlusion
   under the markers). *Fix:* minor camera angle or marker size adjustment.
 
+*Disposition (2026-10-13):* FIXED in `make_bo_ccd_design.py` (the
+shipped PNG predated the marker refresh: it still carried the old
+star/plus/triangle scheme with an in-axes translucent legend, so the panel
+was regenerated from the current script first). MED (translucent legend over
+the cube): the four reference markers were unlabeled after the refresh, so a
+legend was added as a 2x2 OPAQUE row (framealpha 1.0, white face) OUTSIDE
+the axes, in a band reserved above the cube (axes rect
+[0, 0.09, 0.86, 0.79] -> [0, 0.12, 0.86, 0.64]: the floor rose 0.09 -> 0.12
+because at the shorter cube the projected y-axis label overhung the canvas by
+0.035 in, and the title line pitch 0.040 -> 0.032 keeps the subtitle clear of
+the legend band); no data point is covered and no grid line shows through.
+LOW (centre star and baseline cross overlap): the shipped star/plus scheme no
+longer exists; the baseline square is nested inside the centre ring and the
+best-screened star is a separate marker, which the camera change below
+separates in projection. LOW (about 14/15 circles distinguishable): camera
+azim -60 -> -36 (elev unchanged at 30) now renders all 15 points
+individually distinguishable (4 left-column, 6 centre-cluster, 2 teal,
+2 yellow-family, 1 diamond, verified on the render). Regen: RC=0, 1656x1207
+px, print 5.512 in, scale 0.9985, smallest printed text 8.04 pt (>= 8 pt
+floor), data loaded from the official bdddb47 campaign (16 claims verified),
+guard reports no artist overhang; PNG 259176 B, shasum256 see commit.
+
 ### A12. `figures/make_results_figs.py` → `LOFTID_mission_trajectory.png`
 - **MED** — Annotation collisions: "CG Translation"/"ACS Hold" lines touch;
   bottom-right stack ("Max Heat Rate", "Max Dynamic Pressure", "CG Translations",
