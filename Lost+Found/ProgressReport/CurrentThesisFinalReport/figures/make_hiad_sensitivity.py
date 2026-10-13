@@ -252,15 +252,24 @@ def build_figure() -> matplotlib.figure.Figure:
     ax2.set_ylabel("toroid radius $r_{tor}$ (mm)", fontsize=FONT_BODY)
     ax2.set_title("(b) closure $r_{tor}(N_t)$", fontsize=FONT_BODY + 0.5)
     ax2.set_xticks(n_t)
+    #  A6 MED: 12 integer ticks at FONT_TICK make the double-digit labels
+    #  10/11/12 merge into "101112" (each slot ~0.2 in < label width);
+    #  rotating 45 deg keeps EVERY tick value (no data hiding) while
+    #  giving each label the diagonal room it needs.
+    ax2.tick_params(axis="x", labelrotation=45)
     ax2.grid(True, alpha=0.30)
     ax2.tick_params(labelsize=FONT_TICK)
 
     fig.suptitle("Design-variable sensitivity from the closure constraints",
                  fontsize=FONT_BODY + 1.5)
-    fig.tight_layout(rect=(0, 0, 1, 0.94))
-    fig.text(0.99, 0.01,
+    #  A6 LOW: the source credit was 0.35 gray at y=0.01, i.e. light ink
+    #  0.034 in from the canvas edge; reserve a 0.055 bottom band for the
+    #  rotated ticks and xlabel, darken to 0.20 and lift the credit so it
+    #  clears both the edge and the label band.
+    fig.tight_layout(rect=(0, 0.055, 1, 0.94))
+    fig.text(0.99, 0.025,
              "Source: Rapisarda (2023) Eqs. 3.4 and 3.3",
-             ha="right", va="bottom", fontsize=FONT_TICK, color="0.35")
+             ha="right", va="bottom", fontsize=FONT_TICK, color="0.20")
     return fig
 
 
