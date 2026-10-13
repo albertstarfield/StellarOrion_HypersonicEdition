@@ -173,7 +173,12 @@ cat hiad_optimization_results.json
 1. **Bayesian Optimization successfully reduced Cd by 10.11%** (1.607 → 1.445)
 2. **Optimal geometry favors smaller, sharper HIAD:** R_N=1.16m (vs 1.5m default), r_tor=0.057m (vs 0.135m), half_cone=40.5° (vs 60°)
 3. **Trade-off:** Smaller geometry increases stagnation heat flux by 13.9% (16.1 → 18.4 W/cm²) — thermal protection system must be sized accordingly
-4. **Parameter sensitivity:** r_tor has the highest sensitivity — large torus values cause catastrophic drag increase (J > 24)
+4. **Parameter sensitivity (measured on the CCD screen):** ranking **r_tor > R_N > half_cone_deg** on both design-native estimators, with r_tor first in both.
+   - **Design.** Rotatable central composite design, 15 points = 2^3 = 8 factorial corners (coded -1/+1) + 1 centre + 6 axial points at coded -alpha/+alpha, with alpha = 2^(3/4) = 1.681793. Factors: nose radius R_N (centre 1.5 m, half-step 0.3), torus minor radius r_tor (0.14 m, 0.04), half-cone angle (60 deg, 5).
+   - **Axial contrast** - y(+alpha) minus y(-alpha) of the cost J at the centre: R_N = 3.520005, r_tor = 23.041132, half_cone_deg = 0.034212. So r_tor is 6.54x R_N, and R_N is 102.9x the half-cone angle.
+   - **Factorial corner mean effects** - mean y over the 4 corners at coded +1 minus mean y over the 4 corners at coded -1, per factor: R_N = 10.5453, r_tor = 11.1575, half_cone_deg = 7.3370. Same ranking, but the three are nearly tied (r_tor only 1.06x R_N).
+   - **Why the two estimators disagree in strength (6.54x vs 1.06x).** The factorial corners are confounded with interactions - the R_N x r_tor interaction dominates, so no single factor does much at a corner while the combination is catastrophic (R_N and r_tor together move J from 2.67 to 9.71; all three together to 38.83). The axial contrast is the rotatable, orthogonal, variance-optimal estimate; the corner means are confounded. Both are reported so the disagreement is visible rather than hidden.
+   - **Scope and provenance.** These numbers are for the closed-form cost J, at the recorded flight condition, and they inherit its uncertainty. The ranking is invariant to the open flight-condition question: measured across all six combinations of {3378, 2741.14, 2700 m/s} x {tau = 14.565899 s, tau = 13.582459 s}, the ranking is identical every time, and r_tor's swing is literally unchanged at 22.9880 - it is driven by the radius-limit penalty, which has no velocity or tau dependence.
 5. **Trajectory verification** confirms simulation runs correctly from 120 km entry to 40 km final altitude
 
 ---

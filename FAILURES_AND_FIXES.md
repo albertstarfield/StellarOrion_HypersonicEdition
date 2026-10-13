@@ -5952,6 +5952,11 @@ that is a materially stronger claim than what the log said. Both entries now rec
 | F104 | vacuous theorem | **documented 2026-10-13** | `src/rocq/stellarorion_physics_proof.v`'s `kn_regime_transition : forall mfp L, kn mfp L < 0.01 -> True` is true only because its conclusion is `True`; it is discharged by `exact I` and carries an in-file comment stating that **no continuum-regime content is claimed**. Recorded here so the presence of a `Qed` on that name cannot later be read as a verified transition criterion. |
 | F105 | dangling reference | **fixed 2026-10-13** | Phase 2b's GATE 2 prints *"This gate grades METHOD SELECTION only; it does not re-grade the survivability verdict above"* — and **no survivability verdict is printed above it anywhere in the run**. Verified by grepping the full 608-line Phase 2b output for `surviv|verdict|PASS|FAIL`: the only matches are the venv-install lines and the regime gate's own two FAILs plus the handoff PASS. The note points at a verdict the reader cannot see, in a phase whose Step 1/5 only loads a CSV and whose Step 5/5 only prints a comparison table. Either the verdict is computed elsewhere and never surfaced, or the sentence was carried over from a different report — either way a reader is told their question was already answered when it was not. |
 | F106 | contract violation | **fixed 2026-10-13** | `run.py`'s `_sync_media_into_canonical_tree` docstring promised *"Raises: never -- sync failures are reported and skipped so one bad file cannot hide the rest of the generated media"*, and **all five of its `shutil.copy2` call sites were unguarded**. The pipeline crashed with an unhandled `shutil.SameFileError` in Phase 2c: `results/validation/plots/heat_load_jcm2_vs_step.png` and `results/plots/validation/short_window/heat_load_jcm2_vs_step.png` are **hard links to one inode** (682769011, link count 2 — not symlinks), because a link-preserving pass (`cp -al`/`rsync -l` or an earlier sync) made the canonical tree from the legacy one. 21 of the 51 legacy PNGs are in that state, and hardlinks pervade `results/` (595 + 586 + 300 in the vtu dirs; 70 + 51 + 48 + 30 in plot dirs). Fixed with a nested `_copy_media(src, dst)` that (a) skips when `os.path.samefile` shows source and destination are already one file — the content is in place by construction, and a plotting script writing in place through matplotlib's `savefig` keeps both names current; (b) converts every other `OSError`/`SameFileError` into a reported-and-counted skip; (c) tallies `copied / already in place / skipped` and prints it. Verified end-to-end by calling the real function against the real tree: **35 copied, 260 already in place, 0 skipped**, exit 0. Lesson: a docstring's exception contract is a promise the code must keep — "never raises" plus zero try blocks is a defect the first unusual file finds. |
+| F115 | verification scope (project-wide) | **fixed locally 2026-10-13; open project-wide** | `-gnatA` (capital) in `stellarorion_program_proc.gpr` `for Switches ("ada")` is NOT `-gnata` - it enables assertion WARNINGS, not runtime `pragma Assert` checking. A unit compiled under the exact switch set (`-gnatA -gnat12 -gnatwa -gnatwe -gnatQ -gnatdME`) runs `pragma Assert (False)` to completion and exits 0; adding `-gnata` raises `ADA.ASSERTIONS.ASSERTION_ERROR`, exit 1. Every `pragma Assert` in the tree is DECORATIVE at runtime (still a valid GNATprove obligation). Fixed locally with `pragma Assertion_Policy (Check);` in the new unit's body declarative part - control-proved by injecting `E (J) := (Plus - Minus) / 8.0;` for the correct `Plus / 4.0 - Minus / 4.0;` -> `ASSERTION_ERROR`, exit 1. Project-wide conversion (~30 files) deliberately NOT done: owner asked, not yet answered. |
+| F116 | self-inflicted | **fixed 2026-10-13** | My Python reference for the classic 2^k main effect divided the summed contrast by 8 (`num/8`) instead of `Plus/4 - Minus/4`, so the Ada returned exactly 2x on all three factors (1.999991 / 2.000001 / 1.999999). The self-test could not see it: all 8 corners at 0.0 make `Corner_Mean_Effect` return 0.0 under ANY scaling. Added a second response design (`Resp_B`, expected `CornB = (4.0, 0.0, 0.0)`, which reads 2.0 under the halved convention) plus `Swing_B = Swing` / `MeanE_B = MeanE` separation asserts. Conclusion unchanged (r_tor/R_N = 1.058); only the values double. Lesson: a test whose inputs make the estimator return zero cannot detect a scaling error - always include an input with a nonzero expected answer. |
+| F117 | correctness / condition mismatch | **open - needs a decision** | `Snapshot_Vel_Ms = 3378.0` is a mid-trajectory value: the run's own per-step CSV gives 3378.00 m/s at 79.66 km and 2741.14 m/s at the recorded 51.8 km, and `16.1379 x (2741.14/3378)^3 = 8.6231` reproduces the CSV's own `Sutton_Graves_Wcm2` at 51.8 km exactly - so the error is purely the velocity. Since q ~ V^3, (2700/3378)^3 = 0.510637 and velocity alone explains 98.0 % of the apparent 2x DSMC discrepancy (0.500610 measured correction factor, 2.0 % residual); Sutton-Graves' 6-10 % margin over Fay-Riddell may be correct after all. Three DSMC decks carry three more different velocities (3280.91 / 2700.00 / 8831.98 m/s). Owner must pick the authoritative condition; the sensitivity ranking is invariant across all six {3378, 2741.14, 2700} x {14.565899, 13.582459} combinations. |
+| F118 | provenance / reproducibility | **open** | `hiad_optimization_results.json`'s `ccd_samples` were computed with tau = 14.565899 s while its own `validation_refs` states 13.582459438757747; the Ada cost reproduces all 15 recorded costs exactly (max residual 0.000e+00) only at 14.565899. Isolated via the 1/sqrt(R_N) Sutton-Graves offset: implied scale S = W_H*tau/Q + W_F/F back-solves to 0.12271329 vs recorded 0.11677880, difference 0.00593449 -> tau_used/Q = 0.0878955 -> tau = 14.565899. Likely cause NOT confirmed: the last regeneration rewrote `validation_refs` without recomputing the CCD block. Ranking unchanged under both tau. |
+| F119 | physics limitation | **open - recorded as a limitation** | The DSMC deck declares 5 species, `react tce air.react` and 19 reactions, but `gate_r1_dsmc.log` reports `Gas-reactions/particle/step: 0` and `Surf reactions = 0` across 13.9 BILLION collisions. Physically consistent: at 2700 m/s the specific kinetic energy 1/2 m v^2 ~ 105 kJ/mol is below the O2 (498) and N2 (945 kJ/mol) dissociation energies. Sutton-Graves is freestream-only and structurally cannot model dissociation; the code's Fay-Riddell is frozen at `Le = 1, perfect gas` and drops the real (h_D - h_w) term; the PINN inherits the DSMC. Limitation, not a bug. |
 
 
 ### Final state after fixes
@@ -6370,3 +6375,197 @@ at a line that really holds a `procedure`/`function` declaration.
 
 **Lesson recorded.** "Count the newlines" is not a line map when the joining step drops
 newlines. An explicit offset table is exact regardless.
+
+---
+
+## F115 - `-gnatA` does not enable `pragma Assert` runtime checking (project-wide; every assert in the tree was decorative)
+
+**Symptom.** A deliberately FALSE `pragma Assert` in a unit compiled with the project's exact
+switch set runs to completion and exits 0. Discovered while trying to prove the new sensitivity
+unit's self-test actually bites: the self-test printed `SELF_TEST: OK` even with a deliberate
+factor-of-two bug injected into the estimator (that bug is F116).
+
+**Root cause - a switch-case error in the project file, not in any code.** `-gnatA` (capital) and
+`-gnata` (lower case) are DIFFERENT GNAT switches. `stellarorion_program_proc.gpr` uses `-gnatA`
+in `for Switches ("ada")`, which enables assertion-related WARNINGS and the `Assertion_Policy`
+analysis support - NOT runtime assertion checking. Only `-gnata` turns `pragma Assert` into a
+runtime check. A minimal probe under the full switch set
+(`-gnatA -gnat12 -gnatwa -gnatwe -gnatQ -gnatdME`) with `pragma Assert (False)` exits 0 silently;
+adding `-gnata` raises `ADA.ASSERTIONS.ASSERTION_ERROR` and exits 1.
+
+**Consequence.** Every `pragma Assert` in the codebase is DECORATIVE at runtime. They remain valid
+GNATprove proof obligations, but no runtime guard fires anywhere.
+
+**Fix (scoped, deliberately conservative).** `pragma Assertion_Policy (Check);` as the first
+declaration in the package body's declarative part. Verified it MUST sit in a declarative part:
+at file level before a `procedure` it is rejected with
+`pragma "Assertion_Policy" is not in declarative part or package spec`.
+
+**Result.** Control test proving the check still goes loud (this discipline is mandatory in this
+project): inject `E (J) := (Plus - Minus) / 8.0;` in place of the correct
+`E (J) := Plus / 4.0 - Minus / 4.0;` -> `[VERBOSE_ERROR] Exception: ADA.ASSERTIONS.ASSERTION_ERROR`,
+exit 1. Revert -> `SELF_TEST: OK`, exit 0. A check that has been made to fire and then to stop
+firing is evidence, not assumption.
+
+**Open - unresolved.** Whether to apply `Assertion_Policy (Check)` project-wide. It is the honest
+fix, but it converts ~30 files of decorative asserts into live ones and may surface latent
+failures. The owner has been asked and has not yet answered; the pragma is therefore local to
+`stellarorion_sensitivity.adb` until they decide. Recorded here so the remaining asserts are not
+mistaken for runtime guards in the meantime.
+
+---
+
+## F116 - My reference computation was halved, and my self-test was too weak to catch it (self-inflicted)
+
+**Symptom.** The Ada unit's `Corner_Mean_Effect` returned exactly 2x my Python reference on all
+three factors (measured ratios 1.999991, 2.000001, 1.999999).
+
+**Root cause - mine, in the reference, not the Ada.** The correct classic 2^k main effect is
+y_bar_plus - y_bar_minus = `Plus/4 - Minus/4`, which is what the Ada implements. My Python had
+divided the summed contrast by 8 (`num/8`), i.e. half. Corrected values: R_N 10.5453,
+r_tor 11.1575, half_cone 7.3370. The conclusion is unchanged (nearly tied, ratio
+r_tor/R_N = 1.058) - only the values double.
+
+**Why it survived - the worse part.** The self-test set all 8 factorial corners to 0.0, so
+`Corner_Mean_Effect` returns 0.0 regardless of ANY scaling error, including a factor of two.
+A test whose inputs make the estimator return zero cannot detect a scaling error. The Ada was
+right and the check was blind: both facts had to be recorded.
+
+**Fix.** Added a SECOND response design to the self-test (`Resp_B`: corners at factor 1's + level
+= 4.0, at its - level = 0.0) whose expected answer is exactly `CornB = (4.0, 0.0, 0.0)` - a value
+that would come out 2.0 under the halved convention - plus separation-of-concerns asserts
+`Swing_B = Swing` and `MeanE_B = MeanE` (the second design changes only points 1..8, so the axial
+estimators must be bit-for-bit identical). A comment in the code records why the second design
+exists.
+
+**Result.** The failing control is now in place: under the halved convention the second design
+reads 2.0 and the self-test stops saying OK; under the corrected convention it reads 4.0.
+
+**Lesson recorded (verbatim).** A test whose inputs make the estimator return zero cannot detect a
+scaling error. Always include an input with a nonzero expected answer.
+
+---
+
+## F117 - `Snapshot_Vel_Ms = 3378.0` does not match `Snapshot_Alt_Km = 51.8` - and velocity alone explains 98.0 % of the apparent 2x DSMC discrepancy
+
+**Symptom.** The spec's snapshot pair is not a point on the trajectory it is taken from.
+From `results/validation_scalloped/pinn_trajectory_per_step.csv` (300,001 rows):
+120.0 km -> 4300.00 m/s; 90 km -> 3614.29; 79.66 km -> 3378.00 (so 3378 is a MID-trajectory value,
+not an entry value); 60 km -> 2928.57; 51.8 km -> 2741.14; 50 km -> 2700.00.
+
+**Proof it is purely a velocity error.** `16.1379 x (2741.14/3378)^3 = 8.6231`, which equals the
+trajectory's own `Sutton_Graves_Wcm2` column at 51.8 km = 8.62313 exactly. Match the velocity,
+keep the altitude, and the trajectory's own flux is reproduced to 5 decimals.
+
+**Consequence.** q ~ V^3, so (2700/3378)^3 = 0.510637; the predicted DSMC flux is
+155.67 x 0.5106 = 79.49 vs the measured 77.93, and the measured `_correction_factor` is 0.500610 -
+i.e. velocity alone explains 98.0 % of the apparent 2x discrepancy, leaving a 2.0 % residual.
+Sutton-Graves' documented 6-10 % margin over Fay-Riddell may therefore be CORRECT and the
+correction factor may be absorbing a condition mismatch rather than a physics error.
+
+**Also.** Three DSMC decks carry three different velocities - `results/test_sample/in.hiad`
+3280.91 m/s (M 9.155), `results/validation_scalloped/in.hiad` 2700.00 m/s (M 7.534),
+`results/validation/in.hiad` 8831.98 m/s (M 24.645) - none of which equals 3378.
+
+**Status. OPEN.** The owner must choose the authoritative flight condition before any absolute
+thesis number is restated. Note for the record: the sensitivity RANKING is invariant to this
+choice - measured across all six combinations of {3378, 2741.14, 2700 m/s} x
+{tau 14.565899, 13.582459 s} the ranking is identical, and r_tor's swing is literally unchanged
+because it is driven by the radius-limit penalty which has no velocity or tau dependence.
+
+---
+
+## F118 - The recorded CCD costs are not reproducible from the reference data recorded beside them
+
+**Symptom.** `src/python/hiad_optimization_results.json` holds `ccd_samples` computed with
+tau = 14.565899 s, while its own `validation_refs` block states
+`tau_sec = 13.582459438757747`. With tau = 14.565899 the Ada cost reproduces all 15 recorded
+costs EXACTLY (max residual 0.000e+00); with the recorded 13.582459 it does not. The artefact
+contradicts itself and one of the two numbers is wrong.
+
+**Diagnostic path (how it was isolated).** The cost offset scales as 1/sqrt(R_N) through the
+Sutton-Graves dependence, so the implied scale S = W_H*tau/Q + W_F/F back-solves to 0.12271329
+against a recorded 0.11677880, a difference of 0.00593449, which yields tau_used/Q = 0.0878955
+and hence tau = 14.565899.
+
+**Likely cause (NOT confirmed - say so).** The artifact's last regeneration rewrote
+`validation_refs` without recomputing the CCD block.
+
+**Status. OPEN.** The ranking is unchanged under both tau values.
+
+---
+
+## F119 - The DSMC chemistry is inert despite being declared (limitation, not a bug)
+
+**Symptom.** The DSMC deck declares `species air.species N2 O2 NO N O` (5 species),
+`react tce air.react` and 19 registered reactions. But the gate log
+`results/validation_optimized/gate_r1_dsmc.log` reports `Gas-reactions/particle/step: 0` and
+`Surf reactions = 0` across 13.9 BILLION collisions - the chemistry never fires.
+
+**Physics consistency check (recorded so this is not filed as a deck error).** At 2700 m/s
+freestream the specific kinetic energy 1/2 m v^2 ~ 105 kJ/mol, below both the O2 (498 kJ/mol) and
+N2 (945 kJ/mol) dissociation energies, so zero reactions is physically consistent rather than a
+deck error. Sutton-Graves structurally cannot model dissociation (freestream-only); the code's own
+Fay-Riddell implementation is explicitly frozen at `Le = 1, perfect gas` and drops the real
+(h_D - h_w) term; and the PINN inherits the DSMC.
+
+**Status. OPEN, recorded as a limitation rather than a bug.**
+
+---
+
+## F120 - `_parse_ada_functions` read only the `.adb`, so spec-only expression functions looked like array indexes (F111 recurring)
+
+**Symptom.** Adding the new unit `src/simulation_engine/stellarorion_sensitivity.ads/.adb` took the `src` verdict from 1 CRITICAL to 2 CRITICAL. Both new CRITICALs were `SMT_LOGIC_VERIFICATION`, both with the message "Index 'Design' in `CCD_Layout_Conforms(Design)` has no bounds check", reported at `stellarorion_sensitivity.adb:179` and `stellarorion_sensitivity.ads:34`. z3 and cvc5 "confirmed" the finding.
+
+**Root cause.** This is the F111 class recurring with a different trigger. F111 fixed the array-index/call ambiguity by resolving the callee against a `declared_subprograms` set built with `re.finditer(r"(?im)^\s*(?:overriding\s+|not\s+overriding\s+)?(?:procedure|function)\s+(\w+)", source)`. That scan reads only the **`.adb`**. `Only_Factor_Nonzero` and `CCD_Layout_Conforms` are *expression functions* declared and completed in the `.ads`, with no `.adb` body at all, so they never entered the set. The checker then matched `CCD_Layout_Conforms (Design)` against the indexing pattern `r"(\w+)\s*\((\w+)\)"` and reported a one-argument array index.
+
+**Fix.** Three edits, all verified:
+1. New module-level `_read_sibling_ada_spec(filepath) -> str` in `src/utils/sabotage_verifier.py`, immediately before `_parse_ada_functions`. Returns the sibling `.ads` text for an `.adb` path and `""` otherwise; never raises (`except (OSError, TypeError, ValueError): return ""`; ruff BLE001 forced the narrowing from an initial blind `except Exception`). Guarded by `p.name.endswith(".adb")` and `spec.is_file()`.
+2. `_parse_ada_functions(source: str, spec_source: str = "")` now unions the callee sets from the body and the spec, with an F120 comment block explaining why.
+3. Both call sites wired to pass the spec text.
+
+**Controls (the F113 discipline — a change that silences a check must be proven to still go loud).** CONTROL 1: a body containing a genuine `Arr (I) := 1.0;` is still flagged. CONTROL 2: `CCD_Layout_Conforms (D)` with the spec supplied is no longer flagged. CONTROL 3: the same body *without* the spec is still flagged — proving the spec, not a broken regex, is what silenced it. Note for future harnesses: `indexing_ops` entry keys are `"line"`, `"col"`, `"array"`, `"index"` (not `name`/`index_expr`).
+
+**Result.** Both false CRITICALs cleared. `src` verdict went 2 CRITICAL -> 1 CRITICAL (the sanctioned `ADA_NOT_DOMINANT`). `py_compile` OK; `ruff check` passes on both `venv_validation` (0.16.10) and `venv/python` (0.17.0).
+
+**Lesson.** Any checker that resolves an Ada callee must resolve it against *both* the spec and the body, because Ada allows a subprogram to be fully declared and completed in the `.ads` alone.
+
+---
+
+## F121 - `stellarorion_sensitivity` contract hardening deferred by documented exclusion (owner-authorised)
+
+**Symptom.** The new Ada unit `src/simulation_engine/stellarorion_sensitivity.ads/.adb` produced 26 verifier findings on `src` that could not be cleared by the per-line exclusion the rest of the project uses.
+
+**Root cause.** The unit was written to a standard looser than the gate demands. Six estimator functions lacked `Post` aspects; `Rank_Factors` lacked both `Pre` and `Post`; two expression functions lacked `Post`; five loops lacked `Loop_Invariant`; no subprogram carried a `Test_<name>` registry entry. Separately, two of the verifier's sub-checks (`ASSERTION_SCANNER`, `SELF_TEST_COVERAGE`) do not consult the `-- nosec` exemption line at all, while the other three (`NO_SAFE_FALLBACK`, `FUNCTION_NO_DOCUMENTATION`, `ADA_FUNCTION_COVERAGE`) demonstrably do.
+
+**Fix applied (owner instruction @965@: "just exclude those error for now").**
+1. Three sub-checks were cleared by the documented `-- nosec:` marker with the reason written on the line (the house idiom from `stellarorion_atomic_parity.adb`): `NO_SAFE_FALLBACK` x7 HIGH, `FUNCTION_NO_DOCUMENTATION` x3, `ADA_FUNCTION_COVERAGE` x4. Reason text: "F121 deferred -- CCD sensitivity unit contract hardening (Pre/Post, Loop_Invariant, safe-fallback wrapper, Test_<Name> registry) is outstanding work; the estimators are arithmetically correct and gnatprove-clean".
+2. Two TRUE annotations added, which are statements of fact and not exclusions: `--  @test: Test_CCD_Sensitivity exercises this subprogram directly.` after all 8 `.ads` declarations, and body-header doc comments on `Axial_Gradient`/`Axial_Mean_Effect`/`Dominant_Factor` (the `FUNCTION_NO_DOCUMENTATION` checker reads the `.adb` body header, not the spec). `SELF_TEST_COVERAGE` 13 -> 16 (the annotation did not satisfy that check).
+3. Remaining 26 findings recorded as deferred: 10 `ASSERTION_SCANNER` + 16 `SELF_TEST_COVERAGE`.
+
+**Result.** `src` verdict: 46 CRITICAL+ -> **27 CRITICAL+** = 1 sanctioned `ADA_NOT_DOMINANT` + 26 in this unit. The unit still compiles `EXIT=0` under `-gnatA -gnat12 -gnatwa` and GNATprove reported **zero unproved obligations** for it. Its arithmetic was independently verified against the recorded CCD costs: axial swing R_N 3.520005 / r_tor 23.041132 / half_cone 0.034212, matching a scratch Ada driver run on the real `ccd_samples`.
+
+**Outstanding (recorded so it is not forgotten).** The 26 remaining findings need either real contracts (cheap, ~26 small edits) or an extension of the two sub-checks to honour `-- nosec` like the other three already do — the latter requires an F113/F120-style control fixture proving each still fires on a unit that genuinely lacks the contract.
+
+---
+
+## F122 - gnatcov coverage gate silently did nothing: malformed command + no action subcommand
+
+**Symptom.** The overnight run (`run.py --validate --optimize`, log `overnight_run.log`) reported `RUN_EXIT=0` and `BUILD SUCCEEDED`, while the coverage gate had produced no measurement at all. Line 1120 of the log:
+```
+gnatcov: Bad command: --level=stmt. Try option --help
+ERROR: Command ["gnatcov", "--level=stmt", "stellarorion_program.gpr"] exited with code 1
+```
+
+**Root cause.** Two defects stacked. (1) The invoked command names no **ACTION**. The installed gnatcov is FSF **26.2.1** (`/users/albertstarfield/.local/share/alire/releases/gnatcov_26.2.1_9d524b55/bin/gnatcov`, version string "GNATcoverage FSF 26.2"), whose CLI is `gnatcov ACTION [OPTIONS...]` with actions `run`, `convert`, `coverage`, `extract-base64-trace`. The historical `gnatcov --level=stmt <project>.gpr` form is rejected outright, so the command failed to PARSE rather than to measure. (2) The failure was non-fatal and un-reported: the step printed `step_result(False, "coverage analysis complete")` and the run continued, so a check that could not fire was indistinguishable from a check that passed. This is the F115 defect class (a check that cannot fire).
+
+**Fix.** Rewrote the gnatcov block in `run.py` (was ~L1646-1673) to:
+- run the valid two-step sequence — `gnatcov run -P <gpr> -o <trace> bin/main -eargs --help`, then `gnatcov coverage --level=stmt -P <gpr> <trace>` — invoked through `alr exec --` so the Ada toolchain resolves;
+- report three distinguishable states: **measured**, **not-installed**, and **COULD-NOT-MEASURE**. The last prints the failing step name and the exact first error line, states that statement coverage is NOT claimed by this run, and is never worded as a pass. Reason in-code comment cites this record.
+- reuses the existing `_GPR_FILE` constant rather than introducing a new one.
+
+**Result.** `py_compile` OK; `ruff check run.py` passes on BOTH venvs (0.16.10 and 0.17.0 — the F90 lesson); `pyrefly check run.py --python-interpreter-path <abs venv/python>` INFO 0 errors. Two self-caught defects before those gates: an undefined `_GPR_NAME` (F821, replaced with `_GPR_FILE.name`) and a `RUF015` single-element slice (replaced with `next(...)`).
+
+**HONEST LIMITATION OF THE FIX — the gate still does not measure.** Verified empirically that `gnatcov run` through `alr exec` now resolves the toolchain (the previous "can't find a toolchain for aarch64-darwin" message is gone) but still fails with `unknown binary format for bin/main`, because `bin/main` is not gnatcov-instrumented. Making the gate actually measure requires a coverage-instrumented build (a `gnatcov instrument` pass or a coverage GPR), which was NOT done. **Therefore the pipeline's coverage gate remains unsatisfied on this host** — but it now says so loudly and exactly, which is the defect that was fixed. No coverage percentage is claimed anywhere.
+
+**Lesson.** A malformed command and a gate that cannot fire look identical from the outside: both print a line and move on. Any optional gate must report a distinct COULD-NOT-MEASURE state quoting the tool's own error, or it is a silent pass.

@@ -952,8 +952,58 @@ def _phase2b_pinn_extrapolate(extra_args: list[str]) -> None:
         "--device", "auto",
         "--headless",
     ]
-    # Forward extra CLI flags (e.g. --iterations 8000, --target-step 50000)
-    cmd.extend(extra_args)
+    # Forward only the flags that validation_pipeline.py actually accepts.
+    #
+    # AXIOMS: run.py parses with parse_known_args (see _parse_args), so
+    #   extra_args holds every flag run.py itself does not declare.  That set
+    #   mixes TWO disjoint consumers: the pipeline's own overrides
+    #   (--iterations, --target-step, --device, --csv, --output-dir) and the
+    #   Ada binary's simulation flags (--validate, --optimize, --steps, ...).
+    # THEORIES: forwarding the Ada flags to this argparse-based script makes
+    #   it abort with "unrecognized arguments" and exit 2 before it performs
+    #   any of the nine documented steps above -- the run dies at startup and
+    #   every downstream artefact (PNG, VTU, MP4, comparison table) is left
+    #   untouched.  An allowlist is the correct filter because it is closed
+    #   under extension of the Ada flag set and open under extension of the
+    #   pipeline flag set, which is the direction the documented intent at
+    #   this line ("e.g. --iterations 8000, --target-step 50000") lives in.
+    # APPLICATIONS: the pipeline still honours its own override flags; the
+    #   Ada simulation flags are held for the Ada binary, which is the
+    #   consumer run.py already forwards them to at L1868 and L1894.
+    pipeline_flags = frozenset(
+        {"--csv", "--target-step", "--iterations", "--device", "--output-dir"}
+    )
+    forwarded = []
+    i = 0
+    while i < len(extra_args):
+        token = extra_args[i]
+        # Accept both "--flag value" and "--flag=value".
+        flag_part = token.split("=", 1)[0]
+        if flag_part in pipeline_flags:
+            if "=" in token:
+                forwarded.append(token)
+                i += 1
+            else:
+                forwarded.append(token)
+                if i + 1 < len(extra_args) and not extra_args[i + 1].startswith("-"):
+                    forwarded.append(extra_args[i + 1])
+                    i += 2
+                else:
+                    i += 1
+        else:
+            i += 1
+
+    cmd.extend(forwarded)
+
+    if forwarded != extra_args:
+        held = [t for t in extra_args if t not in pipeline_flags]
+        print(
+            f"  [forwarding] pipeline flags: {' '.join(forwarded) or '(none)'}"
+        )
+        print(
+            f"  [forwarding] held for the Ada binary: "
+            f"{' '.join(held) or '(none)'}"
+        )
 
     print(f"  Command: {' '.join(cmd)}")
     print()
@@ -1593,10 +1643,31 @@ def _phase3_ada_build(verbose: bool) -> None:
     if not ok:
         fatal("FFI shared library build failed -- check stellarorion_pinn_lib.gpr", 2)
 
-    # -- gnatcov (coverage instrumentation check, optional)
+    # -- gnatcov (coverage instrumentation check)
     #  [Citation: GNAT Pro gnatcov — https://docs.adacore.com/gnatcov-docs/]
     #  gnatcov provides statement/decision/branch coverage for Ada/SPARK.
-    #  It is optional: the pipeline continues even if gnatcov is not installed.
+    #
+    #  AXIOMS: modern gnatcov (26.x) is an ACTION-based CLI.  The historical
+    #  invocation `gnatcov --level=stmt <project>.gpr` is REJECTED outright with
+    #  "Bad command: --level=stmt", because it names no action at all.  The valid
+    #  sequence is `gnatcov run` (execute the instrumented binary and record a
+    #  trace) followed by `gnatcov coverage` (turn that trace into a report).
+    #
+    #  THEORIES: a malformed command and a gate that cannot fire look identical
+    #  from the outside — both print a line and move on.  That is the F115
+    #  defect class (a check that cannot fire), recorded here as F122: the
+    #  previous command failed to PARSE, was non-fatal, and the run reported
+    #  "BUILD SUCCEEDED" while the coverage gate had silently done nothing.
+    #
+    #  APPLICATIONS: run the valid two-step sequence; then report the outcome in
+    #  three distinguishable states -- measured, not-installed, and COULD-NOT-
+    #  MEASURE.  The last one states the exact reason and is never worded as a
+    #  pass, so an unmeasured gate can never masquerade as a satisfied one.
+    #
+    #  WHAT THIS DOES NOT DO: it does not lower the threshold and it does not
+    #  claim coverage that was not measured.  If gnatcov cannot produce a report
+    #  on this host, the honest output is that the gate is UNSATISFIED, with the
+    #  exact tool error quoted.
     t = step_start("gnatcov coverage check")
     ok, stdout, stderr = _run(
         ["alr", "exec", "--", "gnatcov", "--version"],
@@ -1605,22 +1676,49 @@ def _phase3_ada_build(verbose: bool) -> None:
         timeout=30,
     )
     elapsed = time.monotonic() - t
-    if ok:
-        # gnatcov is available — run statement-level coverage on the project
+    if not ok:
+        step_result(True, "gnatcov not installed (optional, skipping)",
+                    elapsed, verbose, stdout, stderr)
+    else:
         step_result(True, "gnatcov available", elapsed, verbose, stdout, stderr)
-        t2 = step_start("gnatcov coverage analysis")
-        ok2, stdout2, stderr2 = _run(
-            ["alr", "exec", "--", "gnatcov", "--level=stmt",
-             "stellarorion_program.gpr"],
+        trace_path = os.path.join(_PROJECT_ROOT, "obj", "gnatcov.trace")
+        t2 = step_start("gnatcov run (record trace)")
+        ok_run, out_run, err_run = _run(
+            ["alr", "exec", "--", "gnatcov", "run",
+             "-P", _GPR_FILE.name,
+             "-o", trace_path,
+             str(_PROJECT_ROOT / "bin" / "main"),
+             "-eargs", "--help"],
             cwd=_PROJECT_ROOT,
             verbose=verbose,
             timeout=600,
         )
         elapsed2 = time.monotonic() - t2
-        step_result(ok2, "coverage analysis complete", elapsed2, verbose, stdout2, stderr2)
-        # Non-fatal: coverage failure does not block the build
-    else:
-        step_result(True, "gnatcov not installed (optional, skipping)", elapsed, verbose, stdout, stderr)
+        step_result(ok_run, "statement trace recorded", elapsed2,
+                    verbose, out_run, err_run)
+        t3 = step_start("gnatcov coverage analysis")
+        ok_cov, out_cov, err_cov = _run(
+            ["alr", "exec", "--", "gnatcov", "coverage",
+             "--level=stmt", "-P", _GPR_FILE.name, trace_path],
+            cwd=_PROJECT_ROOT,
+            verbose=verbose,
+            timeout=600,
+        )
+        elapsed3 = time.monotonic() - t3
+        if ok_run and ok_cov:
+            step_result(True, "coverage measured (statement level)",
+                        elapsed3, verbose, out_cov, err_cov)
+        else:
+            #  Non-fatal, but NEVER silent and never worded as a pass.
+            steps_run = [("run", ok_run), ("coverage", ok_cov)]
+            failed = next((n for n, ok_n in steps_run if not ok_n), "unknown")
+            detail = (err_run + "\n" + err_cov).strip().splitlines()
+            first_error = next((l for l in detail if "error" in l.lower()), "")
+            print("  [!] gnatcov COULD NOT MEASURE coverage "
+                  f"(step '{failed}' failed) -- the coverage gate is UNSATISFIED.")
+            print(f"  [!] reason: {first_error or '(no error line captured)'}")
+            print("  [!] statement coverage is NOT claimed by this run. "
+                  "Optional + non-fatal, but reported honestly (F122).")
 
     # -- sabotage_verifier (pre-gnatprove audit)
     t = step_start("sabotage_verifier pre-audit")

@@ -4,7 +4,7 @@
 SCRIPT: render_bo_figures.py — Source-grounded figures for the BO results chapter
 ================================================================================
 
-Generates two figures from the official 2026-09-26 optimizer artifact:
+Generates three figures from the official 2026-09-26 optimizer artifact:
 
   1. bo_ccd_design.png    3D layout of the 15-point central composite screen
                           (8 factorial + 1 center + 6 axial) over the three
@@ -15,6 +15,15 @@ Generates two figures from the official 2026-09-26 optimizer artifact:
                           raw evaluated cost per point on a log axis, plus the
                           running-best (incumbent) curve, the LHS -> BO phase
                           boundary, and the round-1 optimum.
+
+  3. bo_ccd_sensitivity.png
+                           Per-factor sensitivity contrasts computed directly
+                           from the 15 recorded CCD costs: axial swings
+                           y(+alpha) - y(-alpha) and factorial corner mean
+                           effects ybar(+) - ybar(-) over the 4+4 corners,
+                           drawn side by side on a log axis. No response
+                           surface is fitted; both estimators are reported
+                           because they legitimately disagree (THEORY T3).
 
 DATA SOURCE (single source of truth):
   src/python/hiad_optimization_results.json  — written by hiad_optimizer.py.
@@ -47,19 +56,38 @@ AXIOMS:
   A5: Cost is plotted on a log axis because the evaluated range spans
       1.6 to 2238 across the 70 points; a linear axis would flatten the
       converged region into an unreadable band at the bottom of the frame.
+  A6: The Figure-3 estimators are design-native contrasts computed at render
+      time from the recorded CCD costs: the axial swing y(+alpha) - y(-alpha)
+      along each factor axis, and the factorial corner mean effect
+      ybar(+) - ybar(-) over the 4 '+' and 4 '-' corners of the 2^3 screen.
+      Both are resolved BY LABEL from "ccd_samples", and no response surface
+      is fitted -- a surrogate would smooth over the estimator disagreement
+      recorded in THEORY T3.
 
 THEORIES (consequences the figure must not contradict):
   T1: The raw per-evaluation cost is NOT monotone. Only the running-best
       curve is. Any caption claiming monotone decrease of J(x) is false.
   T2: The running-best curve is non-increasing by construction, and its final
       value equals min(history) = the round-1 optimum cost.
+  T3: The two estimators of A6 legitimately disagree on this screen. The
+      axial swing isolates one factor at a time at the design centre, so it
+      ranks r_tor above R_N by roughly 6.5x (23.04 vs 3.52). The corner mean
+      effect averages 4 corners per factor, and the large R_N x r_tor
+      interaction (the +++ corner costs 38.83 against 2.0 to 9.7 elsewhere)
+      inflates both factors' '+' means, leaving r_tor and R_N nearly tied
+      (11.16 vs 10.55, about 1.06x). The disagreement is structure in the
+      design, not error: Figure 3 must show both estimators, and prose that
+      quotes one of these rankings as "the" ranking is false.
 
 APPLICATIONS:
-  Figure 1 renders the screen as a design layout in factor space. It makes no
-  claim about a fitted response surface, because no surrogate fit over the CCD
-  alone is recorded in the artifact.
+  Figure 1 renders the screen as a design layout in factor space.
   Figure 2 renders both the raw and incumbent curves, so the distinction in T1
   is visible rather than asserted.
+  Figure 3 reports the design-native per-factor contrasts (axial swings and
+  factorial corner mean effects, AXIOM A6) computed directly from the recorded
+  CCD block. No response surface is fitted anywhere in this script, and the
+  estimator disagreement of THEORY T3 is drawn and captioned, not smoothed
+  over.
 
 CITATIONS:
   - Cost function and bounds: stellarorion_program_proc/DERIVATION.md
@@ -71,7 +99,8 @@ CITATIONS:
 
 USAGE:
   python3 scripts/render_bo_figures.py [--outdir DIR]
-  Default --outdir is the thesis figures/ directory that consumes both files.
+  Default --outdir is the thesis figures/ directory that consumes all three
+  files.
 ================================================================================
 """
 
@@ -79,9 +108,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from collections import Counter
-from itertools import pairwise
+from itertools import pairwise, product
 from pathlib import Path
 
 # Matplotlib must select a non-interactive backend before pyplot import; the
@@ -111,6 +141,48 @@ EXPECTED_BO_POINTS = 50
 # ccd_samples["center"].r_tor = 0.14 while default.r_tor = 0.135, so marking
 # the default and calling it "design centre" would mislabel a plotted point.
 CCD_CENTER_LABEL = "center"
+
+# AXIOM A6: the CCD block is exactly the 2^3 factorial corners plus the centre
+# plus the 6 axial points already asserted above, and every Figure-3 estimator
+# resolves its inputs BY LABEL: corners are "factorial---" .. "factorial+++"
+# (the three suffix characters are the R_N, r_tor, half_cone_deg signs in that
+# order) and axial points are "axial_<stem>_+/-". A relabelled, reordered or
+# incomplete artifact therefore fails loudly instead of silently averaging the
+# wrong points into a contrast.
+CCD_FACTORIAL_PREFIX = "factorial"
+
+# Factor order is the optimizer's own: the first suffix character of a corner
+# label is R_N (most significant), then r_tor, then half_cone_deg.
+CCD_FACTORS = ("R_N", "r_tor", "half_cone_deg")
+
+# Factor key -> axial-label stem. The CCD labels shorten "half_cone_deg" to
+# "half_cone" (axial_half_cone_+/-), so the mapping is explicit rather than
+# assumed to equal the key. A rename in the artifact fails loudly with the
+# observed labels printed.
+CCD_FACTOR_AXIAL_STEM = {
+    "R_N": "R_N",
+    "r_tor": "r_tor",
+    "half_cone_deg": "half_cone",
+}
+
+# Short mathtext symbols and axis descriptions for the Figure-3 tick labels.
+CCD_FACTOR_SYMBOL = {
+    "R_N": "$R_N$",
+    "r_tor": "$r_{tor}$",
+    "half_cone_deg": "$\\theta_c$",
+}
+CCD_FACTOR_AXIS_LABEL = {
+    "R_N": "nose radius (m)",
+    "r_tor": "torus radius (m)",
+    "half_cone_deg": "half-cone angle (deg)",
+}
+
+EXPECTED_FACTORIAL_CORNERS = 8
+EXPECTED_AXIAL_POINTS = 6
+
+# Log-scale bars cannot start at zero (log(0) is undefined), so Figure 3 draws
+# every bar from this positive floor, far below the smallest recorded effect.
+EFFECT_BAR_FLOOR = 1e-3
 
 # Relative location of the official artifact with respect to this script's
 # repository package root. scripts/ -> stellarorion_program_proc/
@@ -177,6 +249,27 @@ def validate_payload(data: dict) -> None:
         raise ValueError(
             f"AXIOM A3 violated: no CCD sample labelled {CCD_CENTER_LABEL!r}; "
             f"got {labels}. The design-centre marker cannot be placed."
+        )
+
+    # AXIOM A6: Figure 3 resolves every estimator input BY LABEL, so the full
+    # labelled block -- 8 factorial corners plus 6 axial points -- must exist
+    # before any figure is written. Checked here so a relabelled artifact
+    # aborts the run up front instead of failing midway through rendering.
+    expected_corners = {
+        CCD_FACTORIAL_PREFIX + "".join(signs)
+        for signs in product("+-", repeat=len(CCD_FACTORS))
+    }
+    expected_axial = {
+        f"axial_{CCD_FACTOR_AXIAL_STEM[factor]}_{sign}"
+        for factor in CCD_FACTORS
+        for sign in "+-"
+    }
+    missing = sorted((expected_corners | expected_axial) - set(labels))
+    if missing:
+        raise ValueError(
+            f"AXIOM A6 violated: CCD block is missing the labelled point(s) "
+            f"{missing}; the sensitivity contrasts cannot be computed. Got "
+            f"labels {sorted(map(str, labels))}."
         )
 
     # AXIOM A2: the evaluation log must be exactly the two recorded phases, and
@@ -492,8 +585,358 @@ def render_convergence(data: dict, out_path: Path) -> None:
     print(f"  wrote {out_path}")
 
 
+def _rn_r_tor_interaction(corner_signs: dict, costs: dict) -> float:
+    """Collapse the 8 corners onto the R_N x r_tor plane for the interaction.
+
+    THEORY T3: the disagreement between the two sensitivity estimators is
+    inflated by the R_N x r_tor interaction. This contrast is the quantitative
+    evidence for that claim -- m(++) - m(+-) - m(-+) + m(--), where each m is
+    the mean over the two half-cone levels -- so the caption can quote it from
+    data instead of asserting it.
+
+    Args:
+        corner_signs: Map of corner label -> 3-character sign string.
+        costs: Map of CCD label -> evaluated cost.
+
+    Returns:
+        The R_N x r_tor two-factor interaction contrast.
+
+    Raises:
+        ValueError: If any of the four cells does not carry exactly 2 corners.
+    """
+    cells: dict[str, list[float]] = {"++": [], "+-": [], "-+": [], "--": []}
+    for label, suffix in corner_signs.items():
+        cells[suffix[0] + suffix[1]].append(costs[label])
+    means: dict[str, float] = {}
+    for key, values in cells.items():
+        if len(values) != 2:
+            raise ValueError(
+                f"R_N x r_tor cell {key!r} carries {len(values)} corners, "
+                "expected 2; the interaction contrast cannot be computed."
+            )
+        means[key] = math.fsum(values) / 2.0
+    return means["++"] - means["+-"] - means["-+"] + means["--"]
+
+
+def ccd_sensitivity_estimates(samples: list | None) -> dict:
+    """Compute the design-native sensitivity contrasts of the CCD block.
+
+    AXIOM A6: two estimators are derived from the recorded costs with NO
+    fitted response surface:
+      * axial swing        y(+alpha) - y(-alpha)   per factor axis;
+      * corner mean effect ybar(+) - ybar(-)       per factor, the mean over
+        the 4 corners at the '+' level minus the mean over the 4 corners at
+        the '-' level.
+    The R_N x r_tor interaction contrast is also returned because it is the
+    documented cause of the estimator disagreement (THEORY T3).
+
+    Every input is resolved BY LABEL and every intermediate count is checked,
+    so a missing, empty, relabelled, reordered or duplicated CCD block raises
+    instead of producing a quietly wrong contrast.
+
+    Args:
+        samples: The "ccd_samples" list from the artifact.
+
+    Returns:
+        Dict with keys "factors" (factor-name tuple), "axial_swing" and
+        "corner_effect" (factor -> float), "axial_ranking" and
+        "corner_ranking" (factor names, descending effect), and
+        "interaction_contrast" (float, R_N x r_tor over the 8 corners).
+
+    Raises:
+        ValueError: If the block is empty or not a list, an entry is not an
+            object, a label is missing/duplicated/not a string, an axial pair
+            is incomplete, the corner set is not the full 2^3 factorial, a
+            corner label is malformed, or any recorded cost is not a finite
+            number.
+    """
+    if not samples:
+        raise ValueError(
+            "ccd_samples block is missing or empty; the Figure-3 contrasts "
+            "cannot be computed. Refusing to render an empty sensitivity plot."
+        )
+    #  A type guard raises TypeError (ruff TRY004): the failure is that the
+    #  payload has the wrong TYPE, not that a value is out of range.  The
+    #  isinstance checks below are structural guards on the artifact, so the
+    #  exception they raise must say so.
+    if not isinstance(samples, list):
+        raise TypeError(
+            f"ccd_samples must be a list, got {type(samples).__name__}"
+        )
+
+    # Resolve every sample by label first; a duplicate label would make the
+    # lookup silently overwrite one of the two points.
+    by_label: dict = {}
+    for entry in samples:
+        if not isinstance(entry, dict):
+            raise TypeError(f"ccd_samples entry is not an object: {entry!r}")
+        label = entry.get("label")
+        if label is None:
+            raise ValueError(f"ccd_samples entry without a label: {entry!r}")
+        if not isinstance(label, str):
+            raise TypeError(f"CCD sample label is not a string: {label!r}")
+        if label in by_label:
+            raise ValueError(
+                f"duplicate CCD sample label {label!r}; labels must be unique "
+                "for the contrasts to be well defined."
+            )
+        by_label[label] = entry
+
+    costs: dict = {}
+    for label, entry in by_label.items():
+        try:
+            value = float(entry["cost"])
+        except KeyError as exc:
+            raise ValueError(f"CCD sample {label!r} has no 'cost' field") from exc
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"CCD sample {label!r} has a non-numeric cost "
+                f"{entry.get('cost')!r}"
+            ) from exc
+        if not math.isfinite(value):
+            raise ValueError(
+                f"CCD sample {label!r} has a non-finite cost {value!r}"
+            )
+        costs[label] = value
+
+    axial_swing: dict = {}
+    resolved_axial = 0
+    for factor in CCD_FACTORS:
+        pair: dict = {}
+        for sign_char in ("+", "-"):
+            label = f"axial_{CCD_FACTOR_AXIAL_STEM[factor]}_{sign_char}"
+            if label not in costs:
+                raise ValueError(
+                    f"AXIOM A6 violated: axial point {label!r} not found in "
+                    f"ccd_samples (labels: {sorted(costs)}); the axial swing "
+                    f"for {factor} cannot be computed."
+                )
+            pair[sign_char] = costs[label]
+            resolved_axial += 1
+        axial_swing[factor] = pair["+"] - pair["-"]
+    if resolved_axial != EXPECTED_AXIAL_POINTS:
+        raise ValueError(
+            f"AXIOM A6 violated: resolved {resolved_axial} axial points, "
+            f"expected {EXPECTED_AXIAL_POINTS}."
+        )
+
+    corner_signs: dict = {}
+    for label in costs:
+        if not label.startswith(CCD_FACTORIAL_PREFIX):
+            continue
+        suffix = label[len(CCD_FACTORIAL_PREFIX):]
+        if len(suffix) != len(CCD_FACTORS) or any(c not in "+-" for c in suffix):
+            raise ValueError(
+                f"malformed factorial corner label {label!r}; expected "
+                f"{CCD_FACTORIAL_PREFIX!r} followed by {len(CCD_FACTORS)} sign "
+                "characters."
+            )
+        corner_signs[label] = suffix
+    if len(corner_signs) != EXPECTED_FACTORIAL_CORNERS:
+        raise ValueError(
+            f"AXIOM A6 violated: found {len(corner_signs)} factorial corner "
+            f"labels, expected {EXPECTED_FACTORIAL_CORNERS} "
+            f"(2^{len(CCD_FACTORS)}); got {sorted(corner_signs)}."
+        )
+
+    corner_effect: dict = {}
+    for index, factor in enumerate(CCD_FACTORS):
+        plus = [costs[l] for l, s in corner_signs.items() if s[index] == "+"]
+        minus = [costs[l] for l, s in corner_signs.items() if s[index] == "-"]
+        half = EXPECTED_FACTORIAL_CORNERS // 2
+        if len(plus) != half or len(minus) != half:
+            raise ValueError(
+                f"AXIOM A6 violated: factor {factor} sees {len(plus)} '+' and "
+                f"{len(minus)} '-' corners, expected {half} and {half}."
+            )
+        corner_effect[factor] = (
+            math.fsum(plus) / len(plus) - math.fsum(minus) / len(minus)
+        )
+
+    return {
+        "factors": CCD_FACTORS,
+        "axial_swing": axial_swing,
+        "corner_effect": corner_effect,
+        "axial_ranking": sorted(axial_swing, key=axial_swing.get, reverse=True),
+        "corner_ranking": sorted(corner_effect, key=corner_effect.get, reverse=True),
+        "interaction_contrast": _rn_r_tor_interaction(corner_signs, costs),
+    }
+
+
+def _sensitivity_caption(estimates: dict) -> str:
+    """Build the multi-line caption reporting both estimators and their
+    documented disagreement.
+
+    Every number is interpolated from the computed estimates, so the caption
+    can never drift from the bars drawn above it (THEORY T3: the disagreement
+    is real and must be stated, not smoothed away).
+
+    Args:
+        estimates: The dict returned by ccd_sensitivity_estimates.
+
+    Returns:
+        The caption string, lines joined by newlines.
+    """
+    axial = estimates["axial_swing"]
+    corner = estimates["corner_effect"]
+
+    def dominance(series: dict) -> tuple:
+        """Return (top symbol, runner-up symbol, ratio text) for a series."""
+        order = sorted(series, key=series.get, reverse=True)
+        top, second = order[0], order[1]
+        denominator = series[second]
+        if denominator > 0.0:
+            ratio = f"{series[top] / denominator:.2f}x"
+        else:
+            ratio = "not comparable"
+        return CCD_FACTOR_SYMBOL[top], CCD_FACTOR_SYMBOL[second], ratio
+
+    a_top, a_second, a_ratio = dominance(axial)
+    c_top, c_second, c_ratio = dominance(corner)
+    largest_corner = max(corner.values())
+    #  Each implicitly concatenated group is explicitly parenthesised: ruff's
+    #  ISC004 rejects an unparenthesised implicit concatenation inside a
+    #  collection literal, and the collection here is a list of caption lines.
+    return "\n".join(
+        [
+            (
+                "Design-native contrasts computed directly from the 15 recorded "
+                "CCD costs; no response surface is fitted."
+            ),
+            (
+                "The axial swing isolates each factor at the design centre; the "
+                "corner mean effect averages the 4 '+' and 4 '-' corners."
+            ),
+            (
+                f"Estimators disagree by design: axially {a_top} ranks {a_ratio} "
+                f"above {a_second}, while the corner means leave {c_top} and "
+                f"{c_second} near-tied ({c_ratio}), inflated by"
+            ),
+            (
+                f"the R_N x r_tor interaction (contrast "
+                f"{estimates['interaction_contrast']:.2f} exceeds the largest "
+                f"corner main effect {largest_corner:.2f})."
+            ),
+            (
+                "Positive contrast = evaluated cost rises as the factor "
+                "increases (J is minimized)."
+            ),
+            "Source: hiad_optimization_results.json, official run 2026-09-26",
+        ]
+    )
+
+
+def render_ccd_sensitivity(data: dict, out_path: Path) -> None:
+    """Render the per-factor CCD sensitivity contrasts as a grouped bar chart.
+
+    AXIOM A6 / THEORY T3: both estimators are computed at render time from the
+    recorded costs and both are drawn side by side per factor, because on this
+    screen they legitimately disagree -- the axial swing isolates each factor
+    at the design centre while the corner mean effect averages 4 corners per
+    side and is inflated by the R_N x r_tor interaction. No response surface
+    is fitted: a surrogate would smooth exactly the disagreement the caption
+    reports. The y axis is logarithmic because the effects span nearly three
+    decades (AXIOM A5 applied to effects).
+
+    Args:
+        data: The parsed optimizer artifact.
+        out_path: Destination PNG path.
+
+    Raises:
+        ValueError: Propagated from ccd_sensitivity_estimates if the CCD
+            block cannot yield both estimators, or if any effect is
+            non-positive so the log axis could not represent it honestly.
+        OSError: If the figure cannot be written.
+    """
+    estimates = ccd_sensitivity_estimates(data.get("ccd_samples"))
+    factors = list(estimates["factors"])
+    axial = estimates["axial_swing"]
+    corner = estimates["corner_effect"]
+    axial_values = [axial[factor] for factor in factors]
+    corner_values = [corner[factor] for factor in factors]
+
+    # A log axis can only represent strictly positive effects; a zero or
+    # negative contrast must fail loudly rather than vanish from the frame.
+    for name, series in (("axial swing", axial), ("corner mean effect", corner)):
+        for factor, value in series.items():
+            if value <= 0.0:
+                raise ValueError(
+                    f"{name} for {factor} is {value!r}; the log-scale effect "
+                    "plot requires strictly positive contrasts."
+                )
+
+    positions = list(range(len(factors)))
+    width = 0.38
+
+    fig, ax = plt.subplots(figsize=(10.0, 7.0))
+    # subplots_adjust instead of tight_layout: the caption below the axes is
+    # part of this figure's message, and tight_layout does not reserve room
+    # for fig.text artists.
+    fig.subplots_adjust(bottom=0.26, top=0.86, left=0.09, right=0.97)
+
+    axial_bars = ax.bar(
+        [p - width / 2 for p in positions],
+        axial_values,
+        width,
+        bottom=EFFECT_BAR_FLOOR,
+        color="tab:blue",
+        label="axial swing  $y(+\\alpha) - y(-\\alpha)$",
+        zorder=3,
+    )
+    corner_bars = ax.bar(
+        [p + width / 2 for p in positions],
+        corner_values,
+        width,
+        bottom=EFFECT_BAR_FLOOR,
+        color="tab:orange",
+        label="corner mean effect  $\\bar{y}_{+} - \\bar{y}_{-}$",
+        zorder=3,
+    )
+    for bars, values in ((axial_bars, axial_values), (corner_bars, corner_values)):
+        for rect, value in zip(bars, values):
+            ax.annotate(
+                f"{value:.3f}",
+                (rect.get_x() + rect.get_width() / 2.0, value * 1.12),
+                ha="center",
+                fontsize=8,
+                zorder=4,
+            )
+
+    ax.set_yscale("log")
+    ax.set_ylim(2e-2, 5e2)
+    ax.set_xticks(positions)
+    ax.set_xticklabels(
+        [
+            f"{CCD_FACTOR_SYMBOL[factor]}\n{CCD_FACTOR_AXIS_LABEL[factor]}"
+            for factor in factors
+        ]
+    )
+    ax.set_ylabel("contrast effect on cost $J(\\mathbf{x})$  (log scale)")
+    ax.set_title(
+        "CCD Sensitivity — Per-Factor Design-Native Contrasts\n"
+        "axial swings and factorial corner mean effects from the 15 recorded "
+        "CCD costs (no response surface fitted)",
+        fontsize=11,
+    )
+    ax.grid(True, which="both", linewidth=0.3, alpha=0.5)
+    ax.legend(fontsize=8, loc="upper left")
+
+    fig.text(
+        0.5,
+        0.015,
+        _sensitivity_caption(estimates),
+        ha="center",
+        va="bottom",
+        fontsize=7.8,
+        linespacing=1.4,
+    )
+    fig.savefig(out_path, dpi=160, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  wrote {out_path}")
+
+
 def main(argv: list[str] | None = None) -> int:
-    """Generate both thesis figures from the official optimizer artifact.
+    """Generate the three thesis figures from the official optimizer artifact.
 
     Args:
         argv: Command-line arguments; None uses sys.argv.
@@ -515,12 +958,13 @@ def main(argv: list[str] | None = None) -> int:
         validate_payload(data)
         args.outdir.mkdir(parents=True, exist_ok=True)
         render_ccd_design(data, args.outdir / "bo_ccd_design.png")
+        render_ccd_sensitivity(data, args.outdir / "bo_ccd_sensitivity.png")
         render_convergence(data, args.outdir / "bo_convergence.png")
     except (FileNotFoundError, KeyError, ValueError, OSError) as exc:
         print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
 
-    print("both figures generated from the official artifact")
+    print("all three figures generated from the official artifact")
     return 0
 
 

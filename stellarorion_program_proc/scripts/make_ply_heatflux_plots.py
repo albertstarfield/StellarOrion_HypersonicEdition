@@ -286,6 +286,193 @@ def plot_flux_distribution(all_flux: list[list[float]], out_path: str) -> None:
     plt.close(fig)
 
 
+def render_ply_heating_mp4(
+    by_element: dict[int, list[dict]],
+    back: dict[int, float],
+    out_path: str,
+    max_frames: int = 240,
+    fps: int = 8,
+) -> bool:
+    """Animate the per-ply heating of the TPS stack as the vehicle heats up.
+
+    AXIOMS:
+    A1. Every element carries the same 5-ply stack, so the ONLY thing that
+        varies across elements is how hard each ply is being driven.
+    A2. Ordering the elements by their worst per-ply flux turns the frame
+        index into a heating axis: frame 0 is the mildest element, the last
+        frame is the peak.  Watching the bars grow IS the heating history.
+    A3. A ply's flux is (T_top - T_bottom) / R_ply, the through-flux, and the
+        temperature profile is the node curve T(depth).  Both are recorded
+        per element in the layers CSV.
+
+    THEORIES:
+    T1. The stack is in quasi-steady conduction, so the per-ply flux must
+        agree across plies.  Where it does NOT (ply 5 has R = 0.00125
+        m^2 K/W, so its per-ply value is large), the animation shows the
+        per-ply value and the caption states that the series value is the
+        self-consistent one -- see stack_flux.
+    T2. Because the per-ply flux of the peak element is an order of magnitude
+        above the mild elements' on some plies, a LINEAR y-axis hides the
+        mild frames.  The y-limit is taken from the data, not hardcoded.
+
+    APPLICATIONS:
+    Writes results/plots/tps_per_ply/ply_heating_animation.mp4, one frame
+    per (subsampled) element in ascending heating order.  Returns True when
+    the file is written, False when the animation stack is unavailable --
+    the caller reports that loudly rather than writing a silent stub.
+
+    Args:
+        by_element: {element: [ply_row, ...]} from load_layers.
+        back: {element: cold-face temperature K} from load_back_temp.
+        out_path: destination .mp4 path.
+        max_frames: cap on frames (the full 3648 elements is too many).
+        fps: animation frame rate.
+
+    Returns:
+        True on success, False when matplotlib/ffmpeg is unavailable.
+
+    Raises:
+        ValueError: no element produced a per-ply flux.
+
+    References:
+        - https://matplotlib.org/stable/api/_as_gen/matplotlib.animation.FuncAnimation.html
+        - https://matplotlib.org/stable/api/animation_api.html
+    """
+    ordered: list[tuple[int, list[float], list[dict], float]] = []
+    skipped_flat = 0
+    for element, rows in sorted(by_element.items()):
+        if len(rows) < 2:
+            continue
+        back_temp = back.get(element, rows[-1]["temp_K"])
+        try:
+            fluxes = per_ply_flux(rows, back_temp)
+        except ValueError:
+            continue
+        #  An element whose node temperatures are all equal carries NO
+        #  through-flux -- it sits outside the heated region.  Keeping such
+        #  elements would sort them to the front (their max flux is 0) and
+        #  open the animation with a third of its frames blank, which reads
+        #  as a broken figure rather than as "unheated".
+        if max(fluxes) <= 0.0:
+            skipped_flat += 1
+            continue
+        ordered.append((element, fluxes, rows, back_temp))
+
+    if skipped_flat:
+        print(f"[ply] skipped {skipped_flat} element(s) with no through-flux",
+              file=sys.stderr)
+
+    if not ordered:
+        raise ValueError("no element produced a per-ply flux")
+
+    #  A2: ascending heating order -- the animation heats up over time.
+    ordered.sort(key=lambda item: max(item[1]))
+
+    if len(ordered) > max_frames:
+        step = len(ordered) / float(max_frames)
+        ordered = [ordered[int(i * step)] for i in range(max_frames)]
+        #  Always keep the peak element as the final frame so the animation
+        #  ends on the worst case even if the stride skipped it.  Guarded:
+        #  a malformed element must not abort the whole animation.
+        peak_element = None
+        peak_key = None
+        for cand, cand_rows in by_element.items():
+            if len(cand_rows) < 2:
+                continue
+            try:
+                key = max(per_ply_flux(
+                    cand_rows,
+                    back.get(cand, cand_rows[-1]["temp_K"]),
+                ))
+            except ValueError:
+                continue
+            if peak_key is None or key > peak_key:
+                peak_key, peak_element = key, cand
+        if peak_element is not None:
+            ordered[-1] = (
+                peak_element,
+                per_ply_flux(
+                    by_element[peak_element],
+                    back.get(peak_element, by_element[peak_element][-1]["temp_K"]),
+                ),
+                by_element[peak_element],
+                back.get(peak_element, by_element[peak_element][-1]["temp_K"]),
+            )
+
+    try:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        from matplotlib.animation import FFMpegWriter, FuncAnimation
+    #  Narrowed deliberately: a missing matplotlib, a missing animation
+    #  module, or a backend that refuses Agg.  Anything else is a real
+    #  bug and must propagate rather than silently skip the animation.
+    except (ImportError, RuntimeError) as exc:
+        print(f"[ply] animation stack unavailable: {exc}", file=sys.stderr)
+        return False
+
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+
+    fig, (ax_q, ax_t) = plt.subplots(1, 2, figsize=(12.0, 5.2))
+    ply_labels = [f"ply {r['ply']}\n{r['ply_name']}" for r in ordered[0][2]]
+    x_pos = list(range(len(ply_labels)))
+    #  T2: the per-ply flux spans orders of magnitude between the mildest and
+    #  the peak element, so a LINEAR axis leaves the first frames blank and a
+    #  caption cannot describe what it does not show.  Log axis, floored, so
+    #  every frame is readable and the growth is the visible quantity.
+    positive = [v for _, fl, _, _ in ordered for v in fl if v > 0.0]
+    if not positive:
+        raise ValueError("no positive per-ply flux to plot")
+    y_lo = min(positive) * 0.01
+    y_hi = max(positive) * 2.0
+    ax_q.set_yscale("log")
+    ax_q.set_ylim(y_lo, y_hi)
+    ax_q.set_xticks(x_pos)
+    ax_q.set_xticklabels(ply_labels, fontsize=8)
+    ax_q.set_ylabel("per-ply heat flux [W/m^2]  (log)")
+    ax_q.set_title("per-ply heat flux")
+    #  bottom must be a POSITIVE number on a log axis, hence the floor.
+    bar_floor = y_lo
+    #  bottom = y_lo so a bar at the floor is still a visible column rather
+    #  than an invisible hairline at the bottom edge of a log axis.
+    bars_q = ax_q.bar(x_pos, [0.0] * len(x_pos), bottom=bar_floor,
+                      color="#d62728", alpha=0.85)
+
+    ax_t.set_xlabel("depth from hot face [mm]")
+    ax_t.set_ylabel("temperature [K]")
+    ax_t.set_title("temperature through the stack")
+    (line_t,) = ax_t.plot([], [], color="#1f77b4", marker="o", markersize=3)
+
+    n_frames = len(ordered)
+
+    def _update(frame: int) -> None:
+        element, fluxes, rows, back_temp = ordered[frame]
+        for bar, value in zip(bars_q, fluxes):
+            bar.set_height(max(0.0, value - bar_floor))
+        depths = [r["depth_m"] * 1000.0 for r in rows] + [
+            rows[-1]["depth_m"] * 1000.0
+            + rows[-1]["thickness_m"] * 1000.0
+        ]
+        temps = [r["temp_K"] for r in rows] + [back_temp]
+        line_t.set_data(depths, temps)
+        ax_t.set_xlim(min(depths) * 0.98, max(depths) * 1.02)
+        ax_t.set_ylim(min(temps) * 0.98, max(temps) * 1.02)
+        fig.suptitle(
+            f"TPS per-ply heating  --  element {element} of "
+            f"{len(by_element)}  (heating {100.0 * (frame + 1) / n_frames:4.1f}%)",
+            fontsize=11,
+        )
+
+    anim = FuncAnimation(
+        fig, _update, frames=n_frames, blit=False
+    )
+    writer = FFMpegWriter(fps=fps, bitrate=2400)
+    anim.save(out_path, writer=writer, dpi=110)
+    plt.close(fig)
+    return True
+
+
 def main() -> int:
     """Entry point: build the three per-ply figures.
 
@@ -301,6 +488,10 @@ def main() -> int:
     ap.add_argument("--layers-csv", default=os.path.join(default_dir, "tps_step2200_layers.csv"))
     ap.add_argument("--elements-csv", default=os.path.join(default_dir, "tps_step2200_elements.csv"))
     ap.add_argument("--outdir", default=os.path.join(project_root, "results", "plots", "tps_per_ply"))
+    ap.add_argument("--no-mp4", action="store_true",
+                    help="skip the per-ply heating MP4 (PNGs are still written)")
+    ap.add_argument("--mp4-frames", type=int, default=240,
+                    help="cap on animation frames (default 240)")
     args = ap.parse_args()
 
     try:
@@ -337,7 +528,24 @@ def main() -> int:
 
     print(f"[ply] peak element {peak_element}: " + ", ".join(f"q{i + 1}={q:,.1f}" for i, q in enumerate(peak_flux)) + " W/m^2")
     print(f"[ply] elements processed: {len(all_flux)}")
+
+    mp4_path = os.path.join(args.outdir, "ply_heating_animation.mp4")
+    wrote_mp4 = False
+    if not args.no_mp4:
+        try:
+            wrote_mp4 = render_ply_heating_mp4(
+                by_element, back, mp4_path, max_frames=args.mp4_frames
+            )
+        except ValueError as exc:
+            print(f"[ply] ERROR: {exc}", file=sys.stderr)
+            return 1
+
     print(f"[ply] wrote 3 figures to {args.outdir}")
+    if wrote_mp4:
+        print(f"[ply] wrote animation to {mp4_path}")
+    elif not args.no_mp4:
+        print("[ply] WARNING: MP4 not written (animation stack unavailable)",
+              file=sys.stderr)
     return 0
 
 

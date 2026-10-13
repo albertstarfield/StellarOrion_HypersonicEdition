@@ -9574,7 +9574,44 @@ def _parse_c_functions(source: str) -> list[dict[str, Any]]:
     return functions
 
 
-def _parse_ada_functions(source: str) -> list[dict[str, Any]]:
+def _read_sibling_ada_spec(filepath: Any) -> str:
+    """Return the sibling .ads spec text for an Ada body, or "".
+
+    AXIOM: an Ada expression function is DECLARED and DEFINIED in the package
+    spec (.ads) and has no body in the .adb at all, so a body-local scan for
+    "procedure|function <name>" cannot see it.
+    THEORY: deciding whether Name (Arg) is a call or an array index needs the
+    complete set of subprograms visible in the compilation unit, and that set
+    spans BOTH files.  Omitting the spec turns every single-argument
+    expression-function call into a phantom array index -- which is how
+    "pragma Assert (Dummy)" and "Compute_Frame_Data (TARGET_STEP)" became
+    false CRITICAL findings before the F111 fix, and how
+    "CCD_Layout_Conforms (Design)" became one after it.
+    APPLICATION: called at every _parse_ada_functions site for .adb inputs;
+    the spec text is merged into the callee set, so a genuine array access is
+    still reported unchanged.
+
+    Never raises: an unreadable or missing spec yields "", degrading to the
+    previous body-only behaviour rather than aborting the audit.
+    """
+    try:
+        p = Path(str(filepath))
+    except (TypeError, ValueError, OSError):
+        return ""
+    if not p.name.endswith(".adb"):
+        return ""
+    try:
+        spec = p.with_suffix(".ads")
+        if not spec.is_file():
+            return ""
+        return spec.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+
+
+def _parse_ada_functions(
+    source: str, spec_source: str = ""
+) -> list[dict[str, Any]]:
     """Parse Ada source into procedure/function metadata for SMT verification.
 
     Extracts the SAME metadata as the Python parser so the SMT verifier
@@ -9792,12 +9829,28 @@ def _parse_ada_functions(source: str) -> list[dict[str, Any]]:
         #   `pragma Assert (Dummy)` and `Compute_Frame_Data (TARGET_STEP)`.
         # APPLICATION: resolve first, then report.  Genuine array accesses
         #   still go through the bounds-check analysis below unchanged.
+        # F120: the callee set is built from the BODY and the sibling SPEC.
+        # Ada expression functions are declared and defined in the .ads with
+        # no body in the .adb, so a body-only set reported them as array
+        # indexes -- two false CRITICALs on stellarorion_sensitivity.adb,
+        # whose CCD_Layout_Conforms and Only_Factor_Nonzero are spec-side
+        # expression functions.  This is strictly MORE accurate than F111's
+        # body-only version: a name that is a subprogram in EITHER file is a
+        # call; a name in NEITHER is still treated as an array index exactly
+        # as before, so genuine array accesses are still reported.
         declared_subprograms: set[str] = {
             m.group(1)
             for m in re.finditer(
                 r"(?im)^\s*(?:overriding\s+|not\s+overriding\s+)?"
                 r"(?:procedure|function)\s+(\w+)",
                 source,
+            )
+        } | {
+            m.group(1)
+            for m in re.finditer(
+                r"(?im)^\s*(?:overriding\s+|not\s+overriding\s+)?"
+                r"(?:procedure|function)\s+(\w+)",
+                spec_source,
             )
         }
         indexing_ops = []
@@ -12961,7 +13014,7 @@ def _build_smt_logic_verification_patterns() -> list[Pattern]:
                     ))
 
         elif is_ada:
-            functions = _parse_ada_functions(source)
+            functions = _parse_ada_functions(source, _read_sibling_ada_spec(filepath))
             for func in functions:
                 func["filepath"] = filepath  # inject filepath for tracker
                 issues = _verify_ada_function_with_z3(func)
@@ -13082,7 +13135,7 @@ def _build_metamorphic_fuzzing_patterns() -> list[Pattern]:
         elif is_c:
             funcs = _parse_c_functions(source)
         elif is_ada:
-            funcs = _parse_ada_functions(source)
+            funcs = _parse_ada_functions(source, _read_sibling_ada_spec(filepath))
 
         for func in funcs:
             func_name = func.get("name", "anonymous")
