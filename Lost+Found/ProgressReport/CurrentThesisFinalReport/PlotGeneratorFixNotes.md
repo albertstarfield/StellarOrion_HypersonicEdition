@@ -413,6 +413,27 @@ intermediate build (171 pages, 0 errors) committed alongside.
 - **LOW** — "KRIGED vx" shows blotchy orange mottling in the freestream not
   present in RAW. *Fix:* same investigation as above.
 
+*Disposition (2026-10-13):* INVESTIGATED FIRST as the note required — the defect was
+NOT in the plot. `render_kriging_panel.py` honestly renders the real output of
+`stellarorion_program_proc/src/python/kriging_denoise.py::denoise_grid` with shared
+colour limits (mechanism verified in code and figure). The measured std ratios
+std_kriged/std_raw on the shipped pipeline output were rho 0.689, T 0.093,
+vx 1.031, vy 0.196, with sklearn ConvergenceWarnings showing k1__k1__constant_value
+pinned at its 1e3 upper bound, k1__k2__length_scale collapsed to the 0.001 m lower
+bound and k2__noise_level pinned at its upper bound: the KG regressor was fit in
+RAW field units, so for T (std ~3529 K, variance ~1.24e7) the signal amplitude had
+no representable value inside the kernel bounds and the optimizer fell back to a
+delta kernel that mean-reverts every unsampled cell. FIXED in the algorithm source
+(`GaussianProcessRegressor(..., normalize_y=True)` plus a dimensionless
+`noise_ub = 0.5` search ceiling in the standardized target space; Rasmussen & Williams
+(2006) §9.1 + sklearn GPR docs cited in code). Ratios after the fix: rho 0.596,
+T 0.717, vx 0.896, vy 0.975 — the shock structure and boundary-layer gradients
+survive noise removal, which is what the Ch3 figure paragraph already promises.
+Fresh render (T and vy rows now structurally intact, shared colour keys kept,
+no fit warnings) installed as figures/kriging_denoise.png, 372114 B, shasum256
+4aaee7587ab62917. The companion kriging_noise_reduction figure is not included by
+the thesis, so it was not installed.
+
 ### A17. `figures/make_lit_review_map.py` → `literature_review_map.png`
 - **LOW** — The "Partially covered" legend swatch is not used by any matrix cell.
   *Fix:* drop the unused legend entry.

@@ -265,18 +265,39 @@ def denoise_grid(raw_data: "np.ndarray", n_restarts: int = 5, random_state: int 
         if np.std(y_train) < 1e-15:
             continue
 
-        # Build kernel with appropriate noise bound
-        # Heuristic: noise bound = 0.5 × std(y) (DSMC noise is typically 3-10%)
-        noise_ub = max(0.5 * np.std(y_train), 1e-10)
+        # Build kernel with appropriate noise bound. The bound lives in the
+        # standardised target space, because the regressor below now normalises
+        # y: 0.5 of the unit variance is a generous search CEILING, not a claim
+        # that the DSMC noise is 50 percent of the signal. The earlier
+        # field-unit heuristic (0.5 x std(y)) put the ceiling four orders
+        # above the noise for temperature, which let the optimizer overfit
+        # the WhiteKernel instead of the shock structure.
+        # [Citation: Rasmussen & Williams (2006), §9.1 target standardization]
+        noise_ub = 0.5
         kernel = _build_kernel(noise_upper_bound=noise_ub)
 
         # Fit GP regressor
         # [Citation: Lophaven et al. (2002), DACE §3.2]
+        # normalize_y=True fixes a measured scale degeneracy: the kernel
+        # amplitude bounds (1e-3, 1e3) are ABSOLUTE, so a field whose variance
+        # exceeds the ceiling has no representable signal amplitude. Temperature
+        # (std ~3529 K, variance ~1.2e7 K^2) forced k1__k1__constant_value onto
+        # its upper bound and collapsed k1__k2__length_scale onto the 0.001 m
+        # lower bound: a delta kernel that reverts every unsampled cell to the
+        # mean. Measured std_kriged/std_raw before this change: T 0.093,
+        # vy 0.196, rho 0.689, vx 1.031. Standardising the target puts the signal
+        # variance near 1 inside the bounds so the physical length scale is
+        # reachable; sklearn carries the scaling through fit, predict and
+        # return_std, so this routine still writes denoised values in field
+        # units. [Citation: scikit-learn GaussianProcessRegressor normalize_y
+        # parameter docs, https://scikit-learn.org/stable/modules/generated/
+        # sklearn.gaussian_process.GaussianProcessRegressor.html]
         gp = GaussianProcessRegressor(
             kernel=kernel,
             n_restarts_optimizer=n_restarts,
             random_state=random_state,
             alpha=1e-10,  # numerical stability
+            normalize_y=True,
         )
 
         try:
