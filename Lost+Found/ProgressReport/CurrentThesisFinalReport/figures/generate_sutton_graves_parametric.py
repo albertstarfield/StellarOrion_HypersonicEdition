@@ -559,6 +559,16 @@ def build_figure(solver, baseline):
     radii = R_SWEEP_M
 
     # === Panel (a): q vs velocity for several nose radii ===================
+    # A10 LOW: the nine non-baseline curves were all tab:blue at alpha 0.55,
+    # so every legend swatch was the same light blue and no entry could be
+    # matched to a curve. The family is ordered by nose radius, so an
+    # ordered colour-vision-safe map is the honest encoding: plasma rises
+    # monotonically in luminance, so neighbouring curves stay distinguishable
+    # under deuteranopia and every sample stays well clear of the white
+    # canvas. Sampling on [0.08, 0.88] avoids both dark endpoints.
+    family_idx = 0
+    family_n = sum(1 for r in radii if abs(r - R_N_BASELINE_M) >= 1e-9)
+    family_cmap = matplotlib.colormaps["plasma"]
     for r_n in radii:
         y = [sg_at_velocity(v, r_n, solver) for v in velocities]
         style = dict(lw=2.6, zorder=3)
@@ -574,7 +584,9 @@ def build_figure(solver, baseline):
             style.update(color="black", lw=3.2)
             label = "%g (baseline)" % r_n
         else:
-            style.update(color="tab:blue", alpha=0.55)
+            frac = family_idx / (family_n - 1) if family_n > 1 else 1.0
+            style.update(color=family_cmap(0.08 + 0.80 * frac))
+            family_idx += 1
             label = "%g" % r_n
         ax1.plot(velocities, y, label=label, **style)
 
@@ -592,29 +604,26 @@ def build_figure(solver, baseline):
         ls="none",
         zorder=6,
     )
-    ax1.annotate(
-        # Three short lines. Measured: the two-line form was 130.33 pt wide
-        # inside a 120.08 pt panel, so its framed box hung 20.80 pt LEFT of
-        # panel (a)'s left spine and reached the y-axis label and the '10' tick.
-        # Splitting the words so the longest line is "15.36 W/cm$^2$" keeps the
-        # patch inside the panel.
-        "IRVE-3 run\ncondition\n%.2f W/cm$^2$" % baseline,
-        xy=(v_run_kms, baseline),
-        # Bottom band in AXES FRACTION: the curve family fans upward to the
-        # right, so the band below the lowest curve (R_N = 3 m, which reaches
-        # only ~55% height at x > 5.5 km/s) is empty. RIGHT-anchored at 0.95:
-        # the round-pad box adds ~0.023 axes-frac, so 0.95 + 0.023 = 0.973
-        # keeps the right edge ~15 px INSIDE the right spine (0.99 put it
-        # 7 px past the spine on the rendered page), off the spine, and clear
-        # of panel (b)'s rotated y-label. y = 0.055 (not 0.04) drops the
-        # round-pad bottom edge ~6 px clear of the bottom spine; at 0.04 the
-        # patch sat flush against the spine on the rendered page.
-        xytext=(0.95, 0.075),
-        textcoords="axes fraction",
-        fontsize=13,
-        ha="right",
-        va="bottom",
-        arrowprops=dict(arrowstyle="->", lw=1.8, color="black"),
+    # A10 MED: the callout used to sit at axes fraction (0.95, 0.075) under
+    # the curve family, but the family fans UPWARD as V^3, so the lowest
+    # member (R_N = 3 m) climbs through q ~ 30 to 55 W/cm2 across exactly
+    # that x band and cut the opaque box, leaving 84% of its interior blank.
+    # The genuinely empty region of panel (a) is the top-left triangle above
+    # the fan: at x <= 5.4 km/s every curve stays below 236 W/cm2 (the
+    # R_N = 0.1 m top member is the worst case), so a two-line box anchored
+    # left-top at data (2.15, 1000) clears the fan by more than 25% at its
+    # bottom-right corner while its top edge stays 9% below the panel's
+    # auto-scaled ceiling (~1600 W/cm2). Any leader from there to the ring
+    # marker at (3.378, 15.36) would cross all nine curves, so the arrow is
+    # dropped; the ring marker, this text and the caption name the same
+    # condition, so no information is lost.
+    ax1.text(
+        2.15,
+        1000.0,
+        "IRVE-3 run\n%.2f W/cm$^2$" % baseline,
+        ha="left",
+        va="top",
+        fontsize=ARROW_FONTSIZE_PT,
         bbox=dict(boxstyle="round,pad=0.35", fc="white", ec="black", lw=1.1),
     )
 

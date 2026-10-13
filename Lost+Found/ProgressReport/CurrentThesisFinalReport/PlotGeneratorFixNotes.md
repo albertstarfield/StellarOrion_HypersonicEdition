@@ -197,6 +197,28 @@ the tick labels with no dead band, callouts clear of curves and markers.
 - **LOW** — Panel (b): "R_N = 1.5 m" box is grazed (<10 px) by the blue V=3 curve.
   *Fix:* nudge the box.
 
+*Disposition (2026-10-13):* FIXED in `generate_sutton_graves_parametric.py`.
+LOW (identical swatches): the nine non-baseline curves were all tab:blue at
+alpha 0.55, so every legend swatch was the same light blue; the family is
+now sampled from the ordered, monotone-luminance plasma map on [0.08, 0.88]
+(`family_cmap`, `family_idx`), keeping neighbouring curves distinguishable
+under deuteranopia and each well clear of the white canvas; legend swatches
+inherit the curve colours automatically. MED (occluding callout): the
+IRVE-3 callout moved from axes fraction (0.95, 0.075) to data (2.15, 1000),
+left-top anchored, in the genuinely empty top-left triangle above the fan
+(the lowest member, R_N = 3 m, had climbed through q ~ 30 to 55 W/cm2 across
+the old x band and cut the box, leaving 84% of its interior blank); the
+arrow is dropped because any leader to the ring marker at (3.378, 15.36)
+would cross all nine curves, so the marker, the text and the caption carry
+the identification. LOW (panel b graze): verified CLEAR in the shipped
+render (the V = 3 km/s curve sits at q ~ 22 at x = 0.38 and only descends to
+q ~ 8 near x = 3, while the box occupies q ~ 6 to 9 at x ~ 0.12 to 0.38), so
+the prior ARROW_TARGET_Q repair already resolved it: no action. Regen:
+RC=0, guard reports no label overlaps, no box leaves its axes, nothing
+leaves the canvas, smallest printed text 8.41 pt (>= 8 pt floor); PNG
+232192 B, shasum256 0ff94dc1aa16c220, visual PASS (9 distinct curves with
+matching swatches, callout clear of the fan, panel (b) unchanged).
+
 ### A11. `figures/make_bo_ccd_design.py` → `bo_ccd_design.png`
 - **MED** — Translucent legend frame overlaps the 3D plot: a data point sits
   inside the legend box and grid lines show through the legend.
