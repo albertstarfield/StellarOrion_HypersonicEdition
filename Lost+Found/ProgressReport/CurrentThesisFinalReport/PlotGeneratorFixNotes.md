@@ -167,6 +167,25 @@ now part of the debug loop for any future dark-panel figure.
 - **LOW** — Run-condition markers touch at ≈51 km (data-correct, crowded).
   *Fix:* marker offset/leader.
 
+*Disposition (2026-10-13):* BOTH FIXED in `make_fignew.py` (commit 0f18fbe8).
+A8: added `label_ink_for()` (sRGB-linearised Rec.709 luminance, white ink below
+0.25) so value labels follow bar luminance: "195.06" white on the navy IRVE-3
+bar (was ~2.2:1 black), "155.67" black on gold, "77.93" white on rose. The
+legend no longer dangles outside the canvas (old bbox (0.5, -0.30) made
+bbox_inches="tight" grow the image and left a measured 324 px dead band):
+tight_layout(rect=(0, 0.10, 1, 1)) reserves the band and the legend anchors at
+(0.5, 0.005) inside the canvas. Gate PNG 1328x1200 px (was 1328x1572),
+scale 0.996, RC=0. A9: the deceleration trace now draws the shared rcParams
+dashed pattern (no literal double hyphen in source), so the legend keys are
+distinct; the two run markers (data-correct 1 px crowding) carry callouts as
+ax.text plus Line2D leaders placed in bands measured empty against each curve
+((85, 1800)/(85, 4200) velocity, (85, 7)/(85, 13) g). LESSON: an Annotation
+box contains its arrow, so annotate-with-arrow callouts that converge on one
+marker pair always trip the shared text-overlap guard; plain text leaders keep
+the guard measuring the label. Trajectory PNG 1566x1134 px, scale 1.003,
+RC=0. Visual PASS on both (native read): labels readable, legend sits under
+the tick labels with no dead band, callouts clear of curves and markers.
+
 ### A10. `figures/generate_sutton_graves_parametric.py` → `sutton_graves_parametric.png`
 - **MED** — Opaque annotation box "IRVE-3 run condition 15.36 W/cm²" occludes the
   low-q segments of the nose-radius curve family (curves cut at the box edge;
