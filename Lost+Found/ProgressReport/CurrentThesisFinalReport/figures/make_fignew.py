@@ -170,6 +170,43 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(fh))
 
 
+def label_ink_for(bg_hex: str) -> str:
+    """Return the readable ink colour for a label drawn on a bar of bg_hex.
+
+    AXIOM: contrast is a property of the rendered pair, so it is computed
+    from the bar colour instead of being assumed. The relative luminance
+    uses the sRGB linearisation with the Rec. 709 coefficients, and a bar
+    lighter than a quarter luminance carries black text while a darker bar
+    carries white; every palette entry this module draws sits far from that
+    threshold, so the choice is never borderline.
+
+    Parameters
+    ----------
+    bg_hex : str
+        Bar fill as a '#rrggbb' string.
+
+    Returns
+    -------
+    str
+        'white' or 'black'.
+
+    Raises
+    ------
+    ValueError
+        If bg_hex is not a '#rrggbb' colour.
+    """
+
+    def channel(hexpair: str) -> float:
+        u = int(hexpair, 16) / 255.0
+        return u / 12.92 if u <= 0.04045 else ((u + 0.055) / 1.055) ** 2.4
+
+    if len(bg_hex) != 7 or bg_hex[0] != "#":
+        raise ValueError(f"expected a #rrggbb colour, got {bg_hex!r}")
+    lum = (0.2126 * channel(bg_hex[1:3]) + 0.7152 * channel(bg_hex[3:5])
+           + 0.0722 * channel(bg_hex[5:7]))
+    return "white" if lum < 0.25 else "black"
+
+
 def style(ax, title: str, xlabel: str, ylabel: str) -> None:
     # LABEL PT FLOOR: matplotlib draws a mathtext SUBSCRIPT at SHRINK_FACTOR
     # 0.7 of its parent, so a 9 pt label carrying $C_d$ printed its script at
@@ -456,11 +493,57 @@ def fig_trajectory() -> None:
     # line near 1.55 in, which fits, and says exactly what the single line said.
     style(ax1, "Velocity against\naltitude", "Altitude (km)", "Velocity (m/s)")
 
-    ax2.plot(alt, g, "-", lw=1.5, color=CB[0], label="deceleration load")
+    # A9: both panels drew the profile as the same solid CB[0] line, so the
+    # legend showed two identical solid-blue keys. The deceleration trace
+    # takes the shared dashed pattern (read from rcParams, as everywhere in
+    # this file, to keep the source free of a literal double hyphen); the
+    # drawn values are unchanged.
+    dashed = (0, tuple(matplotlib.rcParams["lines.dashed_pattern"]))
+    ax2.plot(alt, g, linestyle=dashed, lw=1.5, color=CB[0],
+             label="deceleration load")
     ax2.plot(alt[on_idx], g[on_idx], "s", ms=7, color=CB[1], mec="black", mew=0.7)
     ax2.plot(51.818481, 16.833399, "^", ms=8, color=CB[2], mec="black", mew=0.7)
     style(ax2, "Deceleration load\nagainst altitude", "Altitude (km)",
           "Deceleration load (g)")
+
+    # A9: the two run-condition markers sit about 1 px apart horizontally
+    # (data-correct crowding: the runs sampled near the same altitude), so
+    # the legend keys alone could not tell the reader which mark is which.
+    # Each marker gets a callout with a leader line, placed in a band
+    # measured empty against the profile curve, so every glyph clears the
+    # curve, the marker pair and the other callout.
+
+    def run_callout(x_ax, tag: str, marker, zx: float, zy: float,
+                    ink: str) -> None:
+        """Draw one run-condition callout with a leader to its marker.
+
+        WHY A LINE AND NOT annotate ARROWS: an Annotation box contains its
+        arrow, and two arrows converging on the same crowded marker pair
+        read as an overlap however far apart the labels sit. A plain
+        Line2D leader keeps the shared text guard measuring the label
+        alone, which is the pair it is actually able to judge.
+
+        Parameters
+        ----------
+        x_ax : matplotlib Axes, the panel receiving the callout.
+        tag : str, the two-line label text.
+        marker : tuple, (altitude, value) data point the leader ends at.
+        zx, zy : float, label position in the panel's data coordinates.
+        ink : str, leader colour, matching the marker edge colour.
+        """
+        x_ax.plot([marker[0], zx], [marker[1], zy], "-", lw=0.8, color=ink,
+                  zorder=2, solid_capstyle="round")
+        x_ax.text(zx, zy, tag, ha="center", va="center",
+                  fontsize=PLAIN_TEXT_PT, zorder=3)
+
+    run_callout(ax1, "scalloped\nrun", (alt[on_idx], vel[on_idx]),
+                85.0, 1800.0, CB[1])
+    run_callout(ax1, "smooth\nrun", (51.818481, 3378.671),
+                85.0, 4200.0, CB[2])
+    run_callout(ax2, "scalloped\nrun", (alt[on_idx], g[on_idx]),
+                85.0, 7.0, CB[1])
+    run_callout(ax2, "smooth\nrun", (51.818481, 16.833399),
+                85.0, 13.0, CB[2])
 
     # ONE legend, drawn BELOW both panels. The previous per-panel loc="best"
     # legends failed on the rendered page: the left legend covered the y-tick
@@ -662,12 +745,15 @@ def fig_gate() -> None:
     # pitch of 1.15, only 38 percent of the width, and verification measured
     # the three category labels touching even after the spread change.
     ax.set_xlim(-0.35, (len(series) - 1) * 1.15 + 0.35)
-    for b, (_, v, _) in zip(bars, series):
+    for b, (_, v, c) in zip(bars, series):
         # Value labels hang INSIDE the bar top: an above-bar label for the
         # analytic bar landed 1 px under the dashed acceptance-threshold line.
+        # A8: the ink follows the bar luminance, because "195.06" printed
+        # pure black on the navy IRVE-3 bar at about 2.2:1; the gold bar
+        # keeps black, which reads far better than white on it.
         ax.annotate(f"{v:.2f}", (b.get_x() + b.get_width() / 2, v), ha="center",
                     va="top", textcoords="offset points", xytext=(0, -4),
-                    fontsize=PLAIN_TEXT_PT)
+                    fontsize=PLAIN_TEXT_PT, color=label_ink_for(c))
     threshold_line = None
     if q_target:
         # The dashed linestyle is taken from the active rcParams instead of the
@@ -684,7 +770,14 @@ def fig_gate() -> None:
           "", "Total heat load (J/cm$^2$)")
     top = max(vals + ([q_target] if q_target else []))
     ax.set_ylim(0, top * 1.22)
-    fig.tight_layout()
+    # A8: the legend used to hang at bbox (0.5, -0.30), outside the canvas,
+    # and bbox_inches="tight" then grew the saved image to reach it, which
+    # measured a 324 px (1.08 in) empty band between the four x-tick label
+    # lines and the legend. Reserve the band inside the figure instead:
+    # tight_layout keeps the axes and its four-line tick labels above 10% of
+    # the height, and the legend anchor sits fully inside the canvas, so the
+    # tight crop no longer inflates the figure.
+    fig.tight_layout(rect=(0, 0.10, 1, 1))
     if threshold_line is not None:
         # LEGEND PT FLOOR: this key carries a mathtext subscript, so the
         # previous 8 pt in-axes legend printed that subscript at 5.6 pt and
@@ -696,7 +789,7 @@ def fig_gate() -> None:
         # category labels drawn below the axes.
         fig.legend([threshold_line], [threshold_line.get_label()],
                    fontsize=SCRIPT_SAFE_PT, loc="lower center", ncol=1,
-                   frameon=False, bbox_to_anchor=(0.5, -0.30))
+                   frameon=False, bbox_to_anchor=(0.5, 0.005))
     save(fig, "fignew_gate_comparison.png", WIDTH_NARROW)
 
 
