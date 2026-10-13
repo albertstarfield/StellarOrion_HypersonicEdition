@@ -4,6 +4,23 @@
 \section{Overview}
 All results use the StellarOrion engine for the IRVE-3 configuration and SPARTA DSMC framework of Chapter~\ref{ch:methodology}, on 6-toroid stacked HIAD geometry at MDAO baseline parameters~\cite{rapisarda2023mdao}.
 
+\section{Simulation Restriction}
+\label{sec:sim_restriction}
+
+The results of this chapter were produced under a hard resource restriction, and that restriction shaped the modeling choices of Chapter~\ref{ch:methodology} as much as any physical consideration. A single SPARTA DSMC simulation of the scalloped geometry advances $O(10^3)$ particle-time steps and costs $O(1)$ wall-clock hour~\cite{plimpton2014sparta} before geometry generation and post-processing, and a direct optimization loop over the design space needs $O(10^2)$ to $O(10^3)$ such runs. Over the months available to the project that total is not affordable, so the campaign was confined to two workstations: an Apple A2779 (ARM, APL1113/T6020, 6 performance plus 4 efficiency cores, 16\,GB unified memory) and an AMD Ryzen~5~5700 (8 cores, 16 threads, 32\,GB RAM). The solver is therefore kept out of the optimization loop and the full transient is never resolved.
+
+\subsection{Numerical Constriction}
+The constriction is one of computational cost, not of method. The DSMC timestep is fixed at $\Delta t = 1\times10^{-6}$\,s by the mean collision time of the rarefied freestream (Sec.~\ref{sec:timestep}), so the number of particle-time steps, not their size, sets the runtime, and every step costs wall-clock time on a few-core machine~\cite{bird1994molecular}. Three levers move that cost: the CPU clock speed, which shortens every step most directly; the core count, across which SPARTA partitions the domain; and the memory and disk footprint, which set the finest surface grid that can be held and written at each step. With a few cores and 16\,GB to 32\,GB of memory the reduction axes are fixed, namely the governing equations, the domain dimensionality, the transient length, and the number of expensive solver calls.
+
+\subsection{Reductions Applied}
+One reduction is applied on each axis:
+\begin{enumerate}
+    \item \textbf{Analytic surrogate inside the loop.} The optimizer scores each candidate with the closed-form cost function of Sec.~\ref{sec:cost_function}, following Rapisarda's MDAO reconstruction~\cite{rapisarda2023mdao}, instead of a DSMC call, so the 70-evaluation search of Sec.~\ref{sec:bo_results} costs seconds; the solver is invoked only at the final validation gate (Sec.~\ref{sec:gate_methodology}).
+    \item \textbf{Three dimensions reduced to a halved two-dimensional slice.} Each run resolves the meridional half-plane $(x, r)$ under axisymmetry instead of the full three-dimensional body (Sec.~\ref{sec:dsmc_framework}).
+    \item \textbf{Bounded step count.} Production runs are capped at $2200$ particle-time steps (Sec.~\ref{sec:timestep}); the surface quantities converge near step 300 inside that window, so the cap records the converged state of the resolved quantities without paying for the unresolved recirculation transient, which is carried forward as future work.
+    \item \textbf{PINN Navier-Stokes survivability field.} The physics-informed neural network solves the two-dimensional compressible Navier-Stokes equations (Sec.~\ref{sec:pinn_two_stage}) and refines the sparse DSMC surface data into a continuous field, so the backface survivability assessment needs no further full DSMC sweep.
+\end{enumerate}
+
 \section{Baseline Configuration and Flight Conditions}
 The baseline is IRVE-3 reentry at 51.8\,km, with model atmospheric quantities:
 \begin{itemize}
