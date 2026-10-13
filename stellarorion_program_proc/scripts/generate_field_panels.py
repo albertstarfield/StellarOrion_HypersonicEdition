@@ -67,6 +67,9 @@ L_CHAR = 1.0                # reference length [m] for the Knudsen number
 T_FLOOR = 50.0              # K -- below this a cell carries no particles
 T_CEIL = 6000.0             # K -- above this the instantaneous average is noise
 MIN_PARTICLES = 10          # -- cells with fewer are masked for colour panels
+# A13 MED: light neutral fill for cells below the particle mask, so
+# filtered regions (the wake) read as unsampled instead of blank white.
+VOID_FILL = "#EBEBEB"
 
 DISPLAY_WIDTH_IN = 4.1475   # 0.75 * 5.53 in, per A4 thesis \textwidth
 FONT_PT = 9.0               # axis / colourbar text
@@ -547,6 +550,21 @@ def _imshow_panel(ax, d, values, title, cbar_label, cmap="viridis",
         np.stack([d["xhi"], d["yhi"]], axis=1),
         np.stack([d["xlo"], d["yhi"]], axis=1),
     ], axis=1)
+    # A13 MED: cells failing the particle mask used to stay UNDRAWN, which
+    # rendered as a large white void (the wake, ~45% of the axes) and read as
+    # missing data. They are now filled with a light neutral shade first so
+    # the panel states "not sampled here" without claiming any field value;
+    # the data collection is drawn on top and the colourbar still describes
+    # only the sampled cells.
+    masked = ~finite
+    if masked.any():
+        # No set_array here on purpose: attaching a scalar array makes the
+        # collection re-map it through the default image colormap and the
+        # flat facecolors are then ignored. Facecolors alone paints the
+        # neutral shade.
+        neutral = PolyCollection(
+            verts[masked], facecolors=VOID_FILL, edgecolors="none")
+        ax.add_collection(neutral)
     colors = np.where(finite, values, np.nan)
     pc = PolyCollection(verts, array=colors, cmap=cmap, norm=norm,
                         edgecolors="none")
@@ -595,7 +613,10 @@ def _stats_note(ax, d: dict[str, np.ndarray], mask: np.ndarray,
     """
     note = (f"step {step}  |  {d['xlo'].size} cells  |  "
             f"{int(mask.sum())} above n>={MIN_PARTICLES}")
-    ax.text(0.5, 1.005, note, transform=ax.transAxes, ha="center", va="bottom",
+    # A13 LOW: centred above the axes, the note could ride over the
+    # colourbar's tick labels on narrow canvases. Anchored at the left
+    # spine it stays within the axes width and clear of the colourbar.
+    ax.text(0.0, 1.005, note, transform=ax.transAxes, ha="left", va="bottom",
             fontsize=FONT_PT - 1.0, color="0.30")
 
 
@@ -697,12 +718,36 @@ def render_grid_panels(step: int, d: dict[str, np.ndarray], outdir: str
     # 5 -- velocity vectors --------------------------------------------------
     fig, ax = plt.subplots()
     if int(mask.sum()) >= 4:
-        stride = max(1, math.ceil(mask.sum() / 700.0))
-        sel = np.where(mask)[0][::stride]
+        # A13 MED: the old selection took every k-th cell in MESH order,
+        # but the mesh packs small cells on the windward (left) side, so the
+        # left ~55% of the panel became an unreadable thicket while the right
+        # half stayed empty. Selecting one cell per spatial bin spreads the
+        # arrows uniformly over the domain. A13 MED: the quiver carries
+        # temperature with no colourbar, so its magnitude was uninterpretable;
+        # the colourbar below restores it inline with the scalar panels.
+        x_lo, x_hi = float(d["xlo"].min()), float(d["xhi"].max())
+        y_lo, y_hi = float(d["ylo"].min()), float(d["yhi"].max())
+        ccx = (d["xlo"][mask] + d["xhi"][mask]) / 2.0
+        ccy = (d["ylo"][mask] + d["yhi"][mask]) / 2.0
+        # 26 bins/axis still left hundreds of short arrows inside the
+        # small-cell windward band, which read as a dark thicket. 14 bins
+        # keeps one arrow per roughly 0.7 m of domain so the left mesh
+        # reads as arrows, not hatching, and the wake arrows stay sparse.
+        bins = 14
+        bx = np.clip(((ccx - x_lo) / max(x_hi - x_lo, 1e-12) * bins).astype(int),
+                     0, bins - 1)
+        by = np.clip(((ccy - y_lo) / max(y_hi - y_lo, 1e-12) * bins).astype(int),
+                     0, bins - 1)
+        keys = bx * bins + by
+        _, first = np.unique(keys, return_index=True)
+        sel = np.where(mask)[0][first]
         cx = (d["xlo"][sel] + d["xhi"][sel]) / 2.0
         cy = (d["ylo"][sel] + d["yhi"][sel]) / 2.0
-        ax.quiver(cx, cy, d["u"][sel], d["v"][sel], d["temp"][sel],
-                  cmap="inferno", scale=None, width=0.0035)
+        quiver = ax.quiver(cx, cy, d["u"][sel], d["v"][sel], d["temp"][sel],
+                           cmap="inferno", scale=None, width=0.0035)
+        cb = ax.figure.colorbar(quiver, ax=ax, pad=0.02)
+        cb.set_label("gas temperature [K]", fontsize=FONT_PT)
+        cb.ax.tick_params(labelsize=FONT_PT)
         ax.set_xlim(d["xlo"].min(), d["xhi"].max())
         ax.set_ylim(d["ylo"].min(), d["yhi"].max())
         ax.set_aspect("equal")
@@ -743,8 +788,17 @@ def render_grid_panels(step: int, d: dict[str, np.ndarray], outdir: str
     fig, ax = plt.subplots()
     positive = d["n"][d["n"] > 0]
     if positive.size:
-        ax.hist(positive, bins=min(60, max(10, int(positive.max()))),
-                color="steelblue", edgecolor="white", linewidth=0.3)
+        # A13 MED: linear bins over [1, ~1174] packed every ordinary cell
+        # into the first few bins and left ~73% of the x-axis blank with the
+        # tail (the cells the title quotes) invisible. Equal-width LOG bins
+        # show the whole distribution including the maximum the title states.
+        p_min = max(float(positive.min()), 1.0)
+        p_max = float(positive.max())
+        bins = np.logspace(np.log10(p_min), np.log10(max(p_max, p_min * 1.001)),
+                           40)
+        ax.hist(positive, bins=bins, color="steelblue", edgecolor="white",
+                linewidth=0.3)
+        ax.set_xscale("log")
         ax.set_xlabel("DSMC particles per cell", fontsize=FONT_PT)
         ax.set_ylabel("cell count", fontsize=FONT_PT)
         ax.set_title(

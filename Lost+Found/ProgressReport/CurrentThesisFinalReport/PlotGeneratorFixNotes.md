@@ -304,6 +304,37 @@ external decision point like Section~C.
     in the crowded region.
   - **LOW** — White void centre-right; subtitle truncate (same as above).
 
+*Disposition (2026-10-13):* FIXED in `stellarorion_program_proc/scripts/
+generate_field_panels.py` and the seven shipped panels regenerated from the
+`validation` tree at particle-time step 1000 (the grid source: 19321 cells,
+9764 pass the particle mask, exactly the counts the shipped subtitle states;
+`validation_smooth` no longer carries grid dumps, and the shipped figures
+were rendered from this same data under the bare `_smooth` names). (1) White
+void: cells below the particle mask are now drawn as a light neutral
+`#EBEBEB` PolyCollection (`VOID_FILL`) beneath the data collection, so the
+wake reads as unsampled instead of blank; the colourbar still describes only
+sampled cells. (2) Velocity panel: a `gas temperature [K]` colourbar was
+added to the quiver. (3) Velocity overplot: the mesh-order stride was
+replaced by one arrow per spatial bin (14 bins/axis), spreading arrows
+uniformly instead of a windward thicket. (4) Subtitle: left-anchored at the
+left spine so it clears the colourbar zone. (5) Mesh statistics: equal-width
+logarithmic particle-axis bins replace the linear bins, so the tail up to
+the quoted max n=399 is drawn (~73% of the axis previously blank).
+(6) Speckle: NOT a defect of this producer -- 'smooth' is the results tree
+name, the speckle is raw DSMC statistics and the subtitle discloses the
+mask, so no smoothing filter was added (smoothing unstructured cells without
+a validated adjacency would fabricate data). The scallop_pocket panel is a
+portrait figure from an older generation with no listed defect, so it was
+left untouched; all other panels are replaced. Caption/AccSupp truth sweep
+in `chapter_04_results.tex` (10 edits): 'render white' -> 'renders in a
+neutral grey' for thermal/pressure/mach/knudsen AccSupp and captions
+(9557 of 19321 cells uncolored), velocity claims a printed colourbar now,
+and the mesh-statistics caption describes the logarithmic tail to 399.
+Panel shasums (thesis figures/): thermal 5e2e0ea07fdb, pressure
+e77c31058993, mach 3bda45beef61, knudsen 3bf1263f7642, velocity
+bb313ba56490, grid_mesh 9ae5cd21d300, mesh_statistics 3eb86f8e9a0d; all
+visually verified.
+
 ### A14. `stellarorion_program_proc/scripts/render_bo_3d_plot.py` → `bo_optimization_3d.png`
 - **HIGH (content, wrong run)** — Panel C annotation reads "final best = 1.5599"
   = the October-9 re-run value; the thesis documents the official bdddb47 run
