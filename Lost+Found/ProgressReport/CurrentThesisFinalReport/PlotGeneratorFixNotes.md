@@ -260,6 +260,25 @@ guard reports no artist overhang; PNG 259176 B, shasum256 see commit.
 - **MED** — Phase-band labels ("Deployment", "Final Descent") are green-on-green
   (low contrast). *Fix:* darken/add stroke to label text.
 
+*Disposition (2026-10-13):* NO LOCAL PRODUCER — external source figure.
+`make_results_figs.py` writes only `results_performance_comparison.png` and
+`results_tps_backface.png`; a repo-wide search (grep, `git log -S`, deleted-
+files sweep) finds no plotter for `LOFTID_mission_trajectory.png`. It is a
+Chapter~II literature figure reproducing Olds et
+al.~\cite{old2013irve3postflight} Figure~1 (it arrived through the template
+`gambar/` folder in a8272029 and was only upscaled by
+`fix_figure_resolution.py`). Native inspection of the shipped PNG confirmed
+all three reported defects inside the SOURCE ARTWORK: event annotations
+packed and touching near t ~ 150 to 200 s and in the descent cluster, the
+descent line crossing the legend box, and the green attitude-control-on
+segment running over the pale-green Experiment Phase band (green on green).
+All three are already disclosed in the AccSupp alt-text and in the long
+caption (annotation packing, legend crossing, and the no-event-time-quoted
+statement), and no numeric claim in this work depends on the figure.
+Routing per the notes' own alternative: external re-export from a cleaner
+source is an author decision; no producer change possible. Treat as an
+external decision point like Section~C.
+
 ### A13. `stellarorion_program_proc/scripts/generate_field_panels.py` → field-map family
 - `mesh_statistics_smooth.png`:
   - **MED** — ~73% of the plot is blank: bars end at n≈472 while the axes run to
