@@ -95,6 +95,20 @@ Producer locations:
 - **LOW** — Source credit is light gray on white and tight to the bottom edge.
   *Fix:* darken the credit and add margin.
 
+*Disposition (2026-10-13):* FIXED in `make_hiad_sensitivity.py`:
+`ax2.tick_params(axis="x", labelrotation=45)` after `ax2.set_xticks(n_t)`
+(keeps every tick value 1..12; double-digit labels get diagonal room) and
+bottom band `tight_layout(rect=(0, 0.055, 1, 0.94))` + credit lifted to
+`fig.text(0.99, 0.025, ..., color="0.20")`. Regen: RC=0, `scale 0.845, floor
+8.0 pt` (FONT_TICK 10 -> 8.45 pt printed), PNG 174078 B, shasum256
+216744d5af80c66d. Visual verification (vision service unavailable, see_image
+failed x3 -> OCR-free pixel probe on the PNG): 12 distinct rotated tick
+labels, 10/11/12 separated (clusters x 5.477-5.640 / 5.657-5.833 /
+5.840-6.017 in, gaps 0.017 and 0.007 in = separated but tight at 11|12;
+was fully merged pre-patch); credit darkest px 51 (=0.20 gray, was 0.35),
+0.077 in right and 0.087 in bottom clearance, xlabels clear
+(toroid count N_t at x 4.38-5.50, half-cone at x 1.12-2.72); no new overlaps.
+
 ### A7. `figures/make_hiad_sensitivity.py` → `hiad_parametric_cross_section.png`
 - **HIGH** — The orange "Scalloped Skin" curve contains spurious self-intersecting
   triangular loops reaching r ≈ ±1500 mm (nowhere near the vehicle profile);
