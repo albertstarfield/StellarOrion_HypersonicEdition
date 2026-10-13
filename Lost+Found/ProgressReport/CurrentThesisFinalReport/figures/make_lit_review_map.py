@@ -150,7 +150,11 @@ COVERAGE = (
     "FFFFFF",
 )
 
-LEGEND = (("Fully covered", "F"), ("Partially covered", "P"), ("Not covered", "."))
+# A17 LOW: the "Partially covered" swatch was dropped because COVERAGE uses
+# only the F and "." states (verified against the matrix: every cell is F or
+# "."), so the swatch advertised a state no cell can show. The P state stays
+# valid in the draw path and the documentation for future matrices.
+LEGEND = (("Fully covered", "F"), ("Not covered", "."))
 
 _SCRATCH: plt.Figure | None = None
 
@@ -272,7 +276,12 @@ def build() -> plt.Figure:
     matrix_h = row_h * len(ROWS)
     # The legend gutter is part of the height budget, so the band below the
     # matrix is exactly LEGEND_GAP plus one legend band.
-    height = (margin + title_h + 0.06 + header_h + 0.05 + matrix_h
+    # A17 LOW: the clearance under the header band was 0.05 in, but the measured
+    # rotated two-line headers exceeded the text_w_in single-line band estimate
+    # by about 0.19 in, so the widest header's ink landed 2 px above the matrix
+    # top gridline on the shipped render. The clearance is widened to 0.15 in,
+    # which the offset measurement says leaves about 0.11 in of true gap.
+    height = (margin + title_h + 0.06 + header_h + 0.15 + matrix_h
               + LEGEND_GAP + LEGEND_BAND + margin)
 
     print(f"  canvas {PRINT_W_IN:.3f} x {height:.3f} in   label column {label_w:.3f} in"
@@ -295,7 +304,7 @@ def build() -> plt.Figure:
 
     header_top = height - margin - title_h - 0.06
     header_mid = header_top - header_h / 2.0
-    matrix_top = header_top - header_h - 0.05
+    matrix_top = header_top - header_h - 0.15
     mx0 = margin + label_w + 0.08
     mark_r = 0.33 * min(col_w, row_h)
 

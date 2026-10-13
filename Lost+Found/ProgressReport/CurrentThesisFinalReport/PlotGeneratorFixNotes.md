@@ -443,6 +443,23 @@ the thesis, so it was not installed.
 
 ---
 
+*Disposition (2026-10-13):* BOTH FIXED in `make_lit_review_map.py`.
+Legend: `LEGEND` loses the ("Partially covered", "P") entry because COVERAGE =
+("F.F.F.", "FFFFFF") uses only the F and "." states, so the swatch advertised a
+state no cell can show; the P state stays valid in the draw path and the
+documentation for future matrices (the draw-path branch and the state-set
+assertion are unchanged). Header clearance: the chain cleared the header band
+by 0.05 in (`header_h + 0.05` in the height budget and the same 0.05 in
+`matrix_top`), but the widest rotated two-line header's true extent exceeds
+the single-line `text_w_in` band estimate by about 0.19 in, and the pixel
+probe on the shipped render measured the header ink bottom at y = 493 against
+the matrix top gridline at y = 495, a 2 px touch. Both constants move
+0.05 to 0.15, leaving about 0.11 in of true clearance. Regen: RC=0, 1401x935
+px, print 4.657 in, scale 0.997 (smallest declared 9.0 pt = 8.98 pt printed,
+floor 8.0 pt), PNG 128734 B, shasum256 5c9dcf92c6861a1b. Visual PASS: two-entry
+legend (filled Fully covered, hollow Not covered), all six rotated headers
+clear of the matrix strip with visible margin, This Work highlight box intact.
+
 ## B. Regenerate-from-official-run items
 
 After the Section A content fixes (A14, A15) are applied, regenerate both figures
