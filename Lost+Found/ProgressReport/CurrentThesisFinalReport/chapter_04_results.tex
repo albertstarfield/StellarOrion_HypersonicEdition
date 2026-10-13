@@ -241,7 +241,8 @@ The 5-species air model captures vibrational excitation and dissociation, loweri
 \section{Optimization Framework Results}
 \label{sec:optimization_results}
 
-The survivability framework (Sec.~\ref{sec:ga_opt}) explored the HIAD design space with Latin Hypercube Sampling (LHS), Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate training and Genetic Algorithm (GA) optimization across a July and August 2026 campaign.
+% GA de-documented (Genetic Algorithm not used in the recorded run); original: The survivability framework (Sec.~\ref{sec:ga_opt}) explored the HIAD design space with Latin Hypercube Sampling (LHS), Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate training and Genetic Algorithm (GA) optimization across a July and August 2026 campaign.
+The survivability framework (Sec.~\ref{sec:ga_opt}) explored the HIAD design space with Latin Hypercube Sampling (LHS), Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) surrogate training across a July and August 2026 campaign.
 
 \subsection{Optimization Campaign Summary}
 28 optimization runs executed, recording 25 sample evaluations. Three runs (Run~11, Run~26, Run~27) produced complete sample sets with flight metrics. Varied parameters are aeroshell diameter ($D$), cone half-angle ($\theta_c$), toroid count ($N$), nose radius ($R_N$) and toroid radius ($r_t$): five of the six design variables of Sec.~\ref{sec:ga_opt}.
@@ -292,7 +293,8 @@ Thermal soak is dominated by integrated heat load, not instantaneous heat flux. 
 \end{itemize}
 
 \subsection{Optimal Configuration Identification}
-Despite the thermal violation, the GA identifies Run~27, Sample~8 as optimal: $D = 3.0$\,m, $\theta_c = 45^\circ$, $N = 6$, $R_N = 0.5$\,m. It achieves $\beta = 29.27$\,kg/m$^2$ and $n_G = 21.37g$, within acceptable ranges for cargo reentry. Convergence toward a near-IRVE-3 geometry validates physical consistency, since IRVE-3 is flight-tested~\cite{old2013irve3postflight}. The next section re-opens this design space with surrogate-based Bayesian Optimization over the three active variables of Table~\ref{tab:default_params}.
+% GA de-documented (Genetic Algorithm not used in the recorded run); original: Despite the thermal violation, the GA identifies Run~27, Sample~8 as optimal: $D = 3.0$\,m, $\theta_c = 45^\circ$, $N = 6$, $R_N = 0.5$\,m. It achieves $\beta = 29.27$\,kg/m$^2$ and $n_G = 21.37g$, within acceptable ranges for cargo reentry. Convergence toward a near-IRVE-3 geometry validates physical consistency, since IRVE-3 is flight-tested~\cite{old2013irve3postflight}. The next section re-opens this design space with surrogate-based Bayesian Optimization over the three active variables of Table~\ref{tab:default_params}.
+Despite the thermal violation, the exploration identifies Run~27, Sample~8 as optimal: $D = 3.0$\,m, $\theta_c = 45^\circ$, $N = 6$, $R_N = 0.5$\,m. It achieves $\beta = 29.27$\,kg/m$^2$ and $n_G = 21.37g$, within acceptable ranges for cargo reentry. Convergence toward a near-IRVE-3 geometry validates physical consistency, since IRVE-3 is flight-tested~\cite{old2013irve3postflight}. The next section re-opens this design space with surrogate-based Bayesian Optimization over the three active variables of Table~\ref{tab:default_params}.
 
 \section{Bayesian Optimization Results}
 \label{sec:bo_results}
@@ -484,7 +486,8 @@ Newtonian methods assume a calorically ideal gas ($\gamma = 1.4$ for air). At hy
 \subsection{Optimization Methodology}
 Rapisarda's framework uses a sequential, single-objective approach: aerodynamic coefficients are computed at each design point, with trajectory and thermal analysis independent~\cite{rapisarda2023mdao}.
 
-This framework couples Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) with the Genetic Algorithm search over the same surrogate. Latin Hypercube Sampling (LHS) generates the initial design, and the Bayes Opt (GP) surrogate evaluates thousands of candidate geometries rapidly; this is essential for the 6+ dimensional design space beyond individual SPARTA simulations.
+% GA de-documented (Genetic Algorithm not used in the recorded run); original: This framework couples Bayesian Optimization (GP Matérn 5/2 + Expected Improvement) with the Genetic Algorithm search over the same surrogate. Latin Hypercube Sampling (LHS) generates the initial design, and the Bayes Opt (GP) surrogate evaluates thousands of candidate geometries rapidly; this is essential for the 6+ dimensional design space beyond individual SPARTA simulations.
+This framework uses Bayesian Optimization (GP Matérn 5/2 + Expected Improvement). Latin Hypercube Sampling (LHS) generates the initial design, and the Bayes Opt (GP) surrogate evaluates thousands of candidate geometries rapidly; this is essential for the 6+ dimensional design space beyond individual SPARTA simulations.
 
 \subsection{Physics-Informed Neural Network Refinement}
 This work applies Physics-Informed Neural Networks (PINNs) as post-processing for DSMC data~\cite{raissi2019pinn}. The DeepXDE-based PINN solves the 2D compressible Navier-Stokes equations by automatic differentiation, with SPARTA grid data as observational boundary conditions, giving a smooth, physics-consistent interpolant filling flow-field gaps and reducing particle noise. This hybrid approach is absent from Rapisarda's framework.

@@ -133,8 +133,8 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
  & Amplitude $c_0$, length scales $\ell_j$ & Initialized at 1, refit in $[10^{-3}, 10^{3}]$ \\
  & Acquisition & Expected Improvement, $\xi = 0.01$ \\
  & Budget & 20 LHS + 50 Bayes Opt ($n_{eval} = 70$), seed 42 \\ \midrule
-\multirow{2}{=}{\textbf{GA Search}} & Generations & 200 \\
- & Stagnation stop & 20 generations \\ \midrule
+%\multirow{2}{=}{\textbf{GA Search}} & Generations & 200 \\
+% & Stagnation stop & 20 generations \\ \midrule
 \multirow{2}{=}{\textbf{Constraints}} & Backface temperature & $T_{\text{back}} < 773$ K \\
  & Load factor & $g < 25g$ \\
 \bottomrule
@@ -142,7 +142,8 @@ Table~\ref{tab:default_params} lists the default parameter values used throughou
 \end{table}
 
 \section{Research Design and Workflow}
-This chapter outlines the computational framework for assessing the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD): parametric geometry generation, Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement~\cite{raissi2019pinn}, and surrogate-based survivability optimization driven by Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate~\cite{rasmussen2003} and an optional Genetic Algorithm (GA) search~\cite{Goldberg1989} over the same surrogate.
+% GA de-documented (Genetic Algorithm not used in the recorded run); original: This chapter outlines the computational framework for assessing the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD): parametric geometry generation, Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement~\cite{raissi2019pinn}, and surrogate-based survivability optimization driven by Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate~\cite{rasmussen2003} and an optional Genetic Algorithm (GA) search~\cite{Goldberg1989} over the same surrogate.
+This chapter outlines the computational framework for assessing the aerothermal effects of surface topology on a Hypersonic Inflatable Aerodynamic Decelerator (HIAD): parametric geometry generation, Direct Simulation Monte Carlo (DSMC) simulation, Physics-Informed Neural Network (PINN) refinement~\cite{raissi2019pinn}, and surrogate-based survivability optimization driven by Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate~\cite{rasmussen2003} over the same surrogate.
 
 The methodology runs in six stages, executed end-to-end by the twelve-stage pipeline of Figure~\ref{fig:flowchart_ch1}:
 \begin{enumerate}
@@ -150,7 +151,8 @@ The methodology runs in six stages, executed end-to-end by the twelve-stage pipe
     \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver~\cite{plimpton2014sparta} at the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics~\cite{bird1994molecular}.
     \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation in a Docker-containerized Linux environment, tracking millions of particles.
     \item \textbf{PINN Flow Field Refinement:} Post-processing of DSMC output with a Physics-Informed Neural Network (DeepXDE) to smooth particle noise, fill flow-field gaps and provide a continuous Navier-Stokes-anchored interpolant.
-    \item \textbf{Survivability Optimization:} Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate, Mat\'ern 5/2 kernel and Expected Improvement acquisition, backed by a Genetic Algorithm (GA) search over the same surrogate, for constrained single-objective optimization of HIAD geometry (Sec.~\ref{sec:ga_opt}).
+% GA de-documented (Genetic Algorithm not used in the recorded run); original:     \item \textbf{Survivability Optimization:} Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate, Mat\'ern 5/2 kernel and Expected Improvement acquisition, backed by a Genetic Algorithm (GA) search over the same surrogate, for constrained single-objective optimization of HIAD geometry (Sec.~\ref{sec:ga_opt}).
+    \item \textbf{Survivability Optimization:} Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate, Mat\'ern 5/2 kernel and Expected Improvement acquisition for constrained single-objective optimization of HIAD geometry (Sec.~\ref{sec:ga_opt}).
     \item \textbf{Validation and Analysis:} Grid independence studies and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
 \end{enumerate}
 
@@ -777,13 +779,13 @@ The optimization loop runs six steps:
     \item \textbf{Final Validation:} Re-evaluate the optimal design with SPARTA DSMC, without PINN refinement.
 \end{enumerate}
 
-The engine additionally implements a real-coded Genetic Algorithm (Sec.~\ref{sec:ga_operators}) that evolves a population with its own random generator and evaluates each individual with the engine's closed-form cost function; the Gaussian Process surrogate belongs to the separate Python Bayesian-Optimization campaign driver of Chapter~\ref{ch:results}. The GA shares steps 1 to 3, 5 and 6 with the Bayesian loop and replaces step 4 with selection, crossover and mutation.
+%The engine additionally implements a real-coded Genetic Algorithm (Sec.~\ref{sec:ga_operators}) that evolves a population with its own random generator and evaluates each individual with the engine's closed-form cost function; the Gaussian Process surrogate belongs to the separate Python Bayesian-Optimization campaign driver of Chapter~\ref{ch:results}. The GA shares steps 1 to 3, 5 and 6 with the Bayesian loop and replaces step 4 with selection, crossover and mutation.
 
 \subsection{Design Space and Parameters}
 
 \begin{table}[!htbp]
     \centering
-    \caption{Optimization design variables and their bounds. The genetic-algorithm search explores all six variables of the engine's GA search space (\texttt{stellarorion\_optimization.ads}); the Bayesian Optimization campaign of Chapter~\ref{ch:results} activates the three active variables of Table~\ref{tab:default_params} ($R_N$, $r_{tor}$, $\theta_c$).}
+    \caption{Optimization design variables and their bounds. The engine's generic search space (\texttt{stellarorion\_optimization.ads}); the Bayesian Optimization campaign of Chapter~\ref{ch:results} activates the three active variables of Table~\ref{tab:default_params} ($R_N$, $r_{tor}$, $\theta_c$).}
     \label{tab:design_variables}
     \begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{0.25\textwidth}|c|c|>{\RaggedRight\arraybackslash}X|}
         \hline
@@ -798,7 +800,7 @@ The engine additionally implements a real-coded Genetic Algorithm (Sec.~\ref{sec
 \end{table}
 
 \vspace{0.3em}
-\noindent\textbf{Note:} The bounds in Table~\ref{tab:design_variables} are the engine's generic GA search space declared in \texttt{stellarorion\_optimization.ads}. The recorded Bayesian Optimization campaign of Chapter~\ref{ch:results} activated the three variables $R_N$, $r_{tor}$ and $\theta_c$ over the campaign ranges $R_N \in [0.5, 3.0]$\,m, $r_{tor} \in [0.05, 0.5]$\,m and $\theta_c \in [40, 80]$\,deg implemented by the campaign driver; candidates below the Table~\ref{tab:acceptance_limits} nose-radius floors (1.0\,m thermal coverage, 1.0434\,m payload clearance) are rejected by one-sided penalties rather than clipped, and the validated baseline $R_N = 1.5$\,m satisfies every limit.
+\noindent\textbf{Note:} The bounds in Table~\ref{tab:design_variables} are the engine's generic search space declared in \texttt{stellarorion\_optimization.ads}. % GA de-documented (was "generic GA search space") The recorded Bayesian Optimization campaign of Chapter~\ref{ch:results} activated the three variables $R_N$, $r_{tor}$ and $\theta_c$ over the campaign ranges $R_N \in [0.5, 3.0]$\,m, $r_{tor} \in [0.05, 0.5]$\,m and $\theta_c \in [40, 80]$\,deg implemented by the campaign driver; candidates below the Table~\ref{tab:acceptance_limits} nose-radius floors (1.0\,m thermal coverage, 1.0434\,m payload clearance) are rejected by one-sided penalties rather than clipped, and the validated baseline $R_N = 1.5$\,m satisfies every limit.
 
 \subsection{Design of Experiments: LHS and CCD}
 \label{sec:doe_sampling}
@@ -865,12 +867,13 @@ Expected Improvement has no closed-form maximizer, so each Bayes Opt iteration d
 \subsubsection*{Single-Objective Scalarization}
 The GP models the aggregate cost $J(\mathbf{x})$ directly as a scalar; the constrained single-objective construction rests on the definition of $J$ below. The acquisition stays one-dimensional, so the GP spends its $70$-evaluation budget on one response surface instead of $k$.
 
-\subsection{Cost Function and Genetic Algorithm Search}
+\subsection{Cost Function and Search} % GA de-documented (title was "Cost Function and Genetic Algorithm Search")
 \label{sec:ga_operators}
 
 \subsubsection*{Cost Function Derivation}
 \label{sec:cost_function}
-The optimizer minimizes a scalar cost $J \geq 0$, lowest total heat load, with remaining terms as regularizers holding the design near the aerodynamically validated state. The recorded Bayesian campaign of Sec.~\ref{sec:bo_results} minimizes $J$ over the three active variables below, while the GA search of this section operates on the six-variable space of Table~\ref{tab:design_variables} and scores each individual with the same closed form, in which vehicle mass cancels between candidate and reference.
+% GA de-documented (Genetic Algorithm not used in the recorded run); original: The optimizer minimizes a scalar cost $J \geq 0$, lowest total heat load, with remaining terms as regularizers holding the design near the aerodynamically validated state. The recorded Bayesian campaign of Sec.~\ref{sec:bo_results} minimizes $J$ over the three active variables below, while the GA search of this section operates on the six-variable space of Table~\ref{tab:design_variables} and scores each individual with the same closed form, in which vehicle mass cancels between candidate and reference.
+The optimizer minimizes a scalar cost $J \geq 0$, lowest total heat load, with remaining terms as regularizers holding the design near the aerodynamically validated state. The recorded Bayesian campaign of Sec.~\ref{sec:bo_results} minimizes $J$ over the three active variables of Table~\ref{tab:design_variables}, scoring each design with the same closed form, in which vehicle mass cancels between candidate and reference.
 
 \begin{equation}
 \label{eq:cost_function_implemented}
@@ -902,33 +905,34 @@ Eq.~\eqref{eq:cost_function_implemented} is a \emph{single-point} surrogate: one
 The drag coefficient is a closed-form estimate,
 $C_d(\mathbf{x}) = 1.47 \left( R_{\text{max}}/1.5 \right)^{0.15} \left( 1 + 0.05\,(1.5/R_N - 1) \right)$, with $R_{\text{max}} = R_N\cos\Gamma + (2N_t-1)\,r_{tor}\cos\Gamma + r_{tor}$ and $\Gamma = (90^\circ - \theta_c)$. The optimizer therefore never calls the DSMC solver during the search, which makes $70$ evaluations affordable; each candidate is later re-evaluated with a full DSMC run by the validation gate of Sec.~\ref{sec:gate_methodology}.
 
-\subsubsection*{GA Operators}
-The GA uses these operators:
-
-\begin{enumerate}
-    \item \textbf{Selection:} In tournament selection of size $k_t = 3$, the lowest $J$ among $k_t$ random candidates becomes a parent.
-
-    \item \textbf{Crossover:} Blend crossover (BLX-$\alpha$)~\cite{eshelman1993real} with probability $p_c = 0.7$ and expansion factor $\alpha = 0.5$: each gene takes a sampled point inside the parents' interval extended by $\alpha$ times the interval width on each side,
-    \begin{equation}
-        x_i^{child} = x_i^{parent_1} + \beta\,\big(x_i^{parent_2} - x_i^{parent_1}\big) + \alpha\,w\,\big(x_i^{parent_2} - x_i^{parent_1}\big),
-    \end{equation}
-    where $\beta \sim \mathcal{U}(0,1)$, $w \sim \mathcal{U}(-1,1)$ and $\alpha = 0.5$; the gene is clamped back to $[x_i^{\min}, x_i^{\max}]$ after blending. With probability $1 - p_c$ the parents are copied unchanged.
-
-    \item \textbf{Mutation:} Gaussian mutation with probability $p_m = 0.1$; each gene is perturbed by:
-    \begin{equation}
-        x_i^{mutated} = x_i + \mathcal{N}(0, \sigma_m^2)
-    \end{equation}
-    where $\sigma_m$ is scaled to 10\% of the parameter range $[x_i^{\min}, x_i^{\max}]$; integer parameters (e.g., $N_t$) round to the nearest integer after mutation.
-
-    \item \textbf{Elitism:} The best $E = 2$ individuals survive unchanged into the next generation.
-\end{enumerate}
-
-The default population is $P = 50$. The GA stops when (a) generation count reaches $G_{max} = 200$, or (b) best cost $J^*$ improves by less than $\epsilon = 10^{-6}$ over $G_{pat} = 20$ consecutive generations.
+%\subsubsection*{GA Operators}
+%The GA uses these operators:
+%
+%\begin{enumerate}
+%    \item \textbf{Selection:} In tournament selection of size $k_t = 3$, the lowest $J$ among $k_t$ random candidates becomes a parent.
+%
+%    \item \textbf{Crossover:} Blend crossover (BLX-$\alpha$)~\cite{eshelman1993real} with probability $p_c = 0.7$ and expansion factor $\alpha = 0.5$: each gene takes a sampled point inside the parents' interval extended by $\alpha$ times the interval width on each side,
+%    \begin{equation}
+%        x_i^{child} = x_i^{parent_1} + \beta\,\big(x_i^{parent_2} - x_i^{parent_1}\big) + \alpha\,w\,\big(x_i^{parent_2} - x_i^{parent_1}\big),
+%    \end{equation}
+%    where $\beta \sim \mathcal{U}(0,1)$, $w \sim \mathcal{U}(-1,1)$ and $\alpha = 0.5$; the gene is clamped back to $[x_i^{\min}, x_i^{\max}]$ after blending. With probability $1 - p_c$ the parents are copied unchanged.
+%
+%    \item \textbf{Mutation:} Gaussian mutation with probability $p_m = 0.1$; each gene is perturbed by:
+%    \begin{equation}
+%        x_i^{mutated} = x_i + \mathcal{N}(0, \sigma_m^2)
+%    \end{equation}
+%    where $\sigma_m$ is scaled to 10\% of the parameter range $[x_i^{\min}, x_i^{\max}]$; integer parameters (e.g., $N_t$) round to the nearest integer after mutation.
+%
+%    \item \textbf{Elitism:} The best $E = 2$ individuals survive unchanged into the next generation.
+%\end{enumerate}
+%
+%The default population is $P = 50$. The GA stops when (a) generation count reaches $G_{max} = 200$, or (b) best cost $J^*$ improves by less than $\epsilon = 10^{-6}$ over $G_{pat} = 20$ consecutive generations.
 
 \subsection{Constraint Layer for the Search Drivers}
 
 \subsubsection*{Formal Penalty Function}
-The constraint layer filters candidate designs, whether proposed by the Bayesian acquisition or generated by the GA, against hard physical limits. For a candidate $\mathbf{x}$ with predicted performance $(\hat{y}_1, \ldots, \hat{y}_k)$, the constraint-augmented cost is:
+% GA de-documented (Genetic Algorithm not used in the recorded run); original: The constraint layer filters candidate designs, whether proposed by the Bayesian acquisition or generated by the GA, against hard physical limits. For a candidate $\mathbf{x}$ with predicted performance $(\hat{y}_1, \ldots, \hat{y}_k)$, the constraint-augmented cost is:
+The constraint layer filters candidate designs proposed by the Bayesian acquisition against hard physical limits. For a candidate $\mathbf{x}$ with predicted performance $(\hat{y}_1, \ldots, \hat{y}_k)$, the constraint-augmented cost is:
 
 \begin{equation}
     J_{constrained}(\mathbf{x}) = J(\mathbf{x}) + \sum_{j=1}^{n_c} \Lambda_j \cdot \phi_j(\mathbf{x})
@@ -963,7 +967,8 @@ Constraint functions $g_j(\mathbf{x})$ encode the physical limits:
 When a constraint is violated ($g_j > 0$) the penalty $\Lambda_j \cdot |g_j|^2$ adds a large cost, removing the design so only viable configurations reach validation.
 
 \subsubsection*{Integration with the Search Drivers}
-The constraint-augmented cost $J_{constrained}$ replaces $J$ both in the Expected Improvement objective of Sec.~\ref{sec:ga_opt} and in GA fitness; selection, crossover and mutation then operate on it as in Sec.~\ref{sec:ga_operators}.
+% GA de-documented (Genetic Algorithm not used in the recorded run); original: The constraint-augmented cost $J_{constrained}$ replaces $J$ both in the Expected Improvement objective of Sec.~\ref{sec:ga_opt} and in GA fitness; selection, crossover and mutation then operate on it as in Sec.~\ref{sec:ga_operators}.
+The constraint-augmented cost $J_{constrained}$ replaces $J$ in the Expected Improvement objective of Sec.~\ref{sec:ga_opt}.
 
 \section{Multi-Solver Architecture}
 
@@ -1223,7 +1228,8 @@ $k$-fold cross-validation ($k = 5$) applies where sample size permits, reporting
 \subsection{Reproducibility Requirements}
 
 \subsubsection*{Random Seed Control}
-The Bayesian-Optimization campaign driver fixes its campaign seed at $42$: the Latin Hypercube initialization draws from \texttt{\seqsplit{numpy.random.default\_rng(42)}} and the per-iteration Expected-Improvement candidate sampling from \texttt{\seqsplit{numpy.random.default\_rng(seed+i)}} for iteration $i$. The Kriging post-processor holds \texttt{\seqsplit{random\_state=42}} throughout. Two components are deliberately left unseeded: the in-engine Genetic Algorithm resets its \texttt{\seqsplit{Float\_Random.Generator}} with a time-based seed, so its population sequence is not bit-reproducible across runs, and the PINN weight initialization takes the PyTorch default. Repeatability of the delivered campaign therefore rests on the recorded campaign seed, the fixed evaluation budget and the fixed design variables rather than on global process seeding.
+% GA de-documented (Genetic Algorithm not used in the recorded run); original: The Bayesian-Optimization campaign driver fixes its campaign seed at $42$: the Latin Hypercube initialization draws from \texttt{\seqsplit{numpy.random.default\_rng(42)}} and the per-iteration Expected-Improvement candidate sampling from \texttt{\seqsplit{numpy.random.default\_rng(seed+i)}} for iteration $i$. The Kriging post-processor holds \texttt{\seqsplit{random\_state=42}} throughout. Two components are deliberately left unseeded: the in-engine Genetic Algorithm resets its \texttt{\seqsplit{Float\_Random.Generator}} with a time-based seed, so its population sequence is not bit-reproducible across runs, and the PINN weight initialization takes the PyTorch default. Repeatability of the delivered campaign therefore rests on the recorded campaign seed, the fixed evaluation budget and the fixed design variables rather than on global process seeding.
+The Bayesian-Optimization campaign driver fixes its campaign seed at $42$: the Latin Hypercube initialization draws from \texttt{\seqsplit{numpy.random.default\_rng(42)}} and the per-iteration Expected-Improvement candidate sampling from \texttt{\seqsplit{numpy.random.default\_rng(seed+i)}} for iteration $i$. The Kriging post-processor holds \texttt{\seqsplit{random\_state=42}} throughout. One component is deliberately left unseeded: the PINN weight initialization takes the PyTorch default. Repeatability of the delivered campaign therefore rests on the recorded campaign seed, the fixed evaluation budget and the fixed design variables rather than on global process seeding.
 
 \subsubsection*{Environment Specification}
 The software and hardware environment used for the machine learning components is summarized in Table~\ref{tab:env_spec}.

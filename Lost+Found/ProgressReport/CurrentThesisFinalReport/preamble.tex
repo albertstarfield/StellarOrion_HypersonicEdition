@@ -281,7 +281,15 @@
       % list one size down (small = 10/12) shortens every entry's leading
       % and wraps fewer lines, so the final entry pulls onto the previous
       % page. 10/12 remains full reading size for a reference list.
+      %
+      % GA de-documentation (2026-10): removing the Genetic Algorithm text and
+      % the Goldberg1989 / eshelman1993real entries shortened the chapters above
+      % by ~70 source lines, shifting where this mid-page list begins. The final
+      % entry (White 2006) again spilled alone onto its own page (audit
+      % geom/near-empty < 3000 px). Reclaiming one line of leading per entry
+      % (10/12 -> 10/11) shortens the whole list and pulls that entry back up.
       \small%
+      \setlength{\baselineskip}{11pt}%
       \@mkboth{REFERENCES}{REFERENCES}%
       \list{\@biblabel{\@arabic\c@enumiv}}%
            {\settowidth\labelwidth{\@biblabel{#1}}%
