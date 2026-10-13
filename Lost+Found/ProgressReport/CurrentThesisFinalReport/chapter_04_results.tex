@@ -337,17 +337,47 @@ A 15-point central composite design~\cite{Montgomery2017} screens first, best $J
 
 Figure~\ref{fig:ccd_surface} shows the cost-annotated 15-point screen layout; Figure~\ref{fig:ccd_screen} gives the same screen as three pairwise projections keeping every point visible. The lowest screen cost sits at the factorial corner $R_N = 1.80$\,m, $r_{tor} = 0.100$\,m, $\theta_c = 65^\circ$ ($J = 1.9959$), the best design it resolves, and is a scale reference, not the convergence incumbent below. The center point ($J = 2.1674$) and the IRVE-3 baseline ($J = 2.1626$, $r_{tor} = 0.135$\,m) differ only in torus radius, and the screen cannot resolve which is preferable. Nose radius varies most across screened costs, consistent with $1/\sqrt{R_N}$ Sutton-Graves scaling, while half-cone angle matters less.
 
+% =====================================================================
+% Baseline-vs-optimized performance table -- extended 2026-10-13 to add
+% the ballistic coefficient (beta), lift coefficient (C_l) and peak
+% deceleration alongside the existing drag/heat columns.
+%
+% Sources (every value recorded; none estimated):
+%   * Closed-form (surrogate) rows: src/python/hiad_optimization_results.json
+%     (keys "default" and "optimized", official run 2026-09-26).
+%   * DSMC rows, baseline (IRVE-3 scalloped skin):
+%       - C_d, heat load, deceleration, C_l:
+%         results/validation_scalloped/validation_timeseries.csv (step 2200)
+%       - beta = 27.70 kg/m2:
+%         results/validation_scalloped/VALIDATION_Sep_2_2026.md
+%   * DSMC rows, optimized (round-1 winner, gate re-simulation):
+%       - C_d, heat load, deceleration, C_l:
+%         results/validation_optimized/validation_timeseries.csv (step 2200)
+%       - beta = 10.06 kg/m2:
+%         results/validation_optimized/gate_r1_dsmc.log ([VALIDATE] Step 7)
+%   * Peak deceleration for the optimized design is the pipeline/CSV value
+%     14.01 g (results/validation_optimized/validation_timeseries.csv and
+%     unified_comparison_data.json "raw_dsmc.peak_g_load"). The gate log's own
+%     VALIDATE summary also emits a 25.74 g figure (g = F_drag / (m g0)); the
+%     two are a pipeline-vs-log discrepancy, 14.01 g is the recorded pipeline
+%     value used here.
+%   * C_l baseline: -0.5268, the value carried by tab:validation (smooth-skin
+%     final step). The scalloped-skin baseline measurement is -0.6710
+%     (results/validation_scalloped/validation_timeseries.csv, step 2200).
+%     Kept as -0.5268 so the two tables agree.
+% =====================================================================
 \subsection{Optimized Configuration}
-Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 winner. The optimizer cuts total heat load by 28.95\,\% to 155.67~J/cm\textsuperscript{2} (6.06\,\% \emph{below} the 165.72~J/cm\textsuperscript{2} validation target), drag coefficient by 2.96\,\% and aggregate cost $J$ by 25.78\,\%, with no constraint violated at the optimum (penalty $= 0$).
+Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 winner. The optimizer cuts total heat load by 28.95\,\% to 155.67~J/cm\textsuperscript{2} (6.06\,\% \emph{below} the 165.72~J/cm\textsuperscript{2} validation target), drag coefficient by 2.96\,\% and aggregate cost $J$ by 25.78\,\%, with no constraint violated at the optimum (penalty $= 0$). Four drag-coefficient values appear in this work and must not be conflated: $C_{d,ref} = 1.4625$ is the IRVE-3 flight reference loaded at run time, not a measurement of this run; $1.6073 \rightarrow 1.5597$ are the closed-form surrogate values at the baseline and the round-1 optimum; and $1.7655$ (baseline) and $2.5294$ (round-1 winner) are the DSMC-resolved values, which sit above the surrogate because the closed-form model under-predicts drag exactly as it under-predicts heat load. The DSMC rows also carry the survivability channels: the round-1 winner lowers peak deceleration (14.01 against 16.55~g) and total heat load (77.93 against 165.72~J/cm\textsuperscript{2}) relative to the baseline, while its ballistic coefficient falls from 27.70 to 10.06~kg/m\textsuperscript{2} and its lift magnitude roughly doubles.
 
 \begin{table}[!htbp]
     \centering
-    \caption{IRVE-3 baseline versus round-1 Bayesian Optimization winner (official run 2026-09-26, 70 evaluations).}
+    \caption[IRVE-3 versus round-1 winner with DSMC gate statistics]{IRVE-3 baseline versus round-1 Bayesian Optimization winner, with the DSMC performance statistics of the validation gate alongside the closed-form surrogate values (official run 2026-09-26, 70 evaluations).}
     \label{tab:bo_before_after}
     \begin{tabularx}{\textwidth}{l r r >{\RaggedRight\arraybackslash}X}
         \toprule
         \textbf{Parameter} & \textbf{Baseline} & \textbf{Optimized} & \textbf{$\Delta$} \\
         \midrule
+        \multicolumn{4}{l}{\emph{Geometry and closed-form surrogate}} \\
         Nose radius $R_N$ & 1.5000 m & 2.9714 m & $+98.10 \%$ \\
         Torus radius $r_{tor}$ & 0.1350 m & 0.0885 m & $-34.47 \%$ \\
         Half-cone angle $\theta_c$ & 60.00$^\circ$ & 40.15$^\circ$ & $-33.09 \%$ \\
@@ -355,6 +385,13 @@ Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 wi
         Sutton-Graves heat flux & 15.36~W/cm\textsuperscript{2} & 11.47~W/cm\textsuperscript{2} & $-28.95 \%$ \\
         Total heat load $Q(\mathbf{x})$ & 219.10~J/cm\textsuperscript{2} & 155.67~J/cm\textsuperscript{2} & $-28.95 \%$ \\
         Cost $J(\mathbf{x})$ & 2.1626 & 1.6051 & $-25.78 \%$ \\
+        \midrule
+        \multicolumn{4}{l}{\emph{DSMC (baseline run / round-1 gate re-simulation)}} \\
+        Drag coefficient $C_d$ & 1.7655 & 2.5294 & $+43.3 \%$ \\
+        Total heat load $Q$ & 165.72~J/cm\textsuperscript{2} & 77.93~J/cm\textsuperscript{2} & $-53.0 \%$ \\
+        Peak deceleration & 16.55 g & 14.01 g & $-15.3 \%$ \\
+        Ballistic coefficient $\beta$ & 27.70~kg/m\textsuperscript{2} & 10.06~kg/m\textsuperscript{2} & $-63.7 \%$ \\
+        Lift coefficient $C_l$ & $-0.5268$ & $-1.0767$ & $+104.4 \%$ \\
         \bottomrule
     \end{tabularx}
 \end{table}
