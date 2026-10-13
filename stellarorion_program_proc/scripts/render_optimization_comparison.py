@@ -1037,14 +1037,13 @@ def main() -> int:
     ax2.tick_params(colors='#3a4a51', labelsize=8.5)  # floor: 8.5 x 0.95 = 8.08
     _apply_view(ax2, x_max_all, r_max_all)
     opt_label = (f"R_N={opt['R_N']:.2f}m  r_tor={opt['r_tor']:.3f}m  half_cone={opt['half_cone_deg']:.1f}\n"
-                 f"r_tor={opt['r_tor']:.3f}m  {n_tori_opt_meshed}/{n_tori} tori\n"
+                 f"{n_tori_opt_meshed}/{n_tori} tori\n"
                  f"Cd={opt['Cd']:.4f}  Source: Ada FFI"
                  + ("" if ada_opt_ok else "\n[Ada cross-check DRIFT]"))
     fig.text(0.515, 0.005, opt_label, color='#c0392b', fontsize=8.5,
              verticalalignment='bottom',
              bbox={'boxstyle': 'round,pad=0.3', 'facecolor': '#eef3f2',
                    'edgecolor': '#c0392b'})
-
     # WHY (pixel audit 2026-10-08, take 2): azim=-55 foreshortens the axial
     # direction so hard that 80 % of the x span maps to ~12.5 px of screen
     # while one '%.1f' label is ~29 px wide: even a 10 %/90 % inset pair
@@ -1113,7 +1112,14 @@ def main() -> int:
     # tall incl. padding at y=0.02 of a 4.30-in canvas) ending at ~0.147;
     # 0.155 leaves ~0.04 in clearance and returns 0.105 x 4.30 = 0.45 in to
     # the axes band.
-    plt.tight_layout(rect=(0, 0.165, 1, 0.80), w_pad=6.0)
+    # A15 MED: the mplot3d x-axis labels hang about 0.047 of the canvas
+    # BELOW the pane's bottom spine and tight_layout cannot measure them
+    # (mplot3d does not report label extents), so the old 0.165 band left
+    # the left 'X [m]' only 3 px above the rounded top of its parameter box
+    # (measured on the rendered page; it printed as a clipped 'X [m,').
+    # Raising the band to 0.220 lifts every hanging label clear of both
+    # figure-level boxes with margin, at the cost of 0.055 of pane height.
+    plt.tight_layout(rect=(0, 0.220, 1, 0.80), w_pad=6.0)
     out = Path(__file__).resolve().parent.parent / "optimization_comparison.png"
     plt.savefig(str(out), dpi=150, facecolor='#ffffff', bbox_inches='tight')
     print(f"Saved: {out}")
