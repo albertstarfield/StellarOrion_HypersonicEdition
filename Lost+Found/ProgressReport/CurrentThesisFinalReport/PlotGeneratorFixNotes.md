@@ -124,6 +124,34 @@ was fully merged pre-patch); credit darkest px 51 (=0.20 gray, was 0.35),
   *Fix:* reroute the dimension arrow, mirror or drop T7, raise label contrast,
   trim `xlim`.
 
+A7 *Disposition (2026-10-13):* FIXED. The shipped PNG had NO producer anywhere
+(git -S / find / savefig sweeps all negative; it was an ad-hoc script that was
+never committed; the two 'scallop' scripts found are text fixers). Wrote a new
+producer `figures/make_hiad_parametric_cross_section.py` that reconstructs the
+shipped drawing from measurements taken on the shipped PNG (1149x1180 px, axes
+frame x 198.5-950.5 / y 102.5-1072.5 px; torus centres upper
+(734,397)(873,474)(1010,549)(1148,623)(1288,698)(1422,767), lower mirrored;
+centre-line fit r = 0.538 z + 3 mm through the origin; skin row
+r = 0.538 z + 80 mm sampled z = 996..1534; nose arc r = 2.00 z^0.917) and
+repairs every defect: (HIGH) the skin is rebuilt as ONE z-monotone polyline per
+side (nose power arc -> quadratic-Bezier shoulder ease -> straight row -> aft
+tip) with an in-script assert that raises if z ever fails to increase, so the
+shipped shoulder zigzag (r = 652..939 mm over z = 740..940 mm) cannot return;
+(MED) theta_c moved to the measured clear wedge at (z = 1160, r = 300) mm,
+clear of skin, discs and cone lines (the shipped label band crossed the skin);
+(LOW) the D arrow now spans exactly +/-1500 mm at z = 1750 mm, aft of every
+marker (the shipped arrow spanned only +/-1220 mm at z = 1455 mm and cut the
+T6/T7 region); T7 kept at the lower-stack end per the thesis alt-text with a
+bright #F5F3FF label (was low-contrast purple); xlim trimmed 2500 -> 2050 mm
+with the legend relocated to the measured clear upper-left zone. Also caught
+and fixed an unlisted defect: the shipped D arrow spanned 2.44 m against its
+own 3.0 m callout. Regen: RC=0, `scale 0.996, min text 8.97 pt`, 1485x833 px,
+PNG 145845 B, shasum256 06be23f2cfccd7e0; visual PASS (native image read).
+Fit-loop lesson: print_fit can only resize the canvas, never absolute label
+point sizes, so the figure is born at the print width (4.83 in canvas +
+0.1 in tight pad) with a figure-centred 10 pt title; assert_inside_canvas is
+now part of the debug loop for any future dark-panel figure.
+
 ### A8. `figures/make_fignew.py` → `fignew_gate_comparison.png`
 - **MED** — Value label "195.06" is pure black on the dark navy bar
   (≈2.2:1 contrast, hard to read). *Fix:* use white (or outlined) label on dark bars.
