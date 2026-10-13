@@ -4621,7 +4621,7 @@ def _generate_rapisarda_outputs(
     md_lines.append("If T_backwall > 300°C, TPS thickness must be increased for thermal protection.")
 
     # Per-ply heat flux decomposition (5-ply layup) — steady 1D conduction
-    _ply_names = ["Nextel BF-20", "Pyrogel 2250", "AKK", "Pyrogel 2250", "Nextel BF-20"]
+    _ply_names = ["Nextel BF-20", "Nextel BF-20", "Pyrogel 2250", "Pyrogel 2250", "AKK"]
     _ply_thk = [0.0006, 0.0006, 0.0025, 0.0025, 0.00015]
     _ply_k = [0.25, 0.25, 0.02, 0.02, 0.12]
     _bnd = [0.0, 0.0006, 0.0012, 0.0037, 0.0062, 0.00635]

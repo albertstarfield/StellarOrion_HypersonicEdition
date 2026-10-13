@@ -64,7 +64,7 @@ _TEXT = "#8892b0"
 _ACCENT = "#e94560"
 _DIM = "#555555"
 
-_PLY_NAMES = ("Nextel BF-20", "Pyrogel 2250", "AKK", "Pyrogel 2250", "Nextel BF-20")
+_PLY_NAMES = ("Nextel BF-20", "Nextel BF-20", "Pyrogel 2250", "Pyrogel 2250", "AKK")
 
 
 def load_layers(csv_path: str) -> dict[int, list[dict]]:

@@ -1330,7 +1330,7 @@ def _render_animated_frame(fargs: Any):
             _pl_font = _PLFont.truetype("/System/Library/Fonts/Helvetica.ttc", 10)
         except Exception:  # noqa: BLE001  # intentional catch-all: report + continue (non-fatal)
             _pl_font = _PLFont.load_default()
-        _ply_names = ["Nextel", "Pyrogel", "AKK", "Pyrogel", "Nextel"]
+        _ply_names = ["Nextel", "Nextel", "Pyrogel", "Pyrogel", "AKK"]
         _lx = int(p[0] + 12)
         _ly = int(p[1] + p[3] - 14)
         draw.text((_lx, _ly),
