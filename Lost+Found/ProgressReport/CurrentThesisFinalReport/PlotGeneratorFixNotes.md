@@ -475,6 +475,9 @@ half-cone 40.15°):
 
 ---
 
+*Disposition (2026-10-13):* DONE. `git checkout bdddb47 -- stellarorion_program_proc/src/python/hiad_optimization_results.json` restored the official run in the working tree (verified by direct JSON read: cost 1.605054497718811, R_N 2.971440307492924), and both producers were re-run: `bo_optimization_3d.png` shows final best = 1.6051 (Panel C + legend Optimum J=1.605 Default J=2.163); `optimization_comparison.png` shows the AFTER panel R_N=2.97 m, r_tor=0.088 m, half_cone=40.1 deg, Cd=1.5597, 6/6 tori, Source: Ada FFI. Shipped files: bo_optimization_3d.png 178373 B shasum256 ef0eee643fb169fc, optimization_comparison.png 156414 B shasum256 b2bf436a9b03c19d; committed with the A15 fixes in 28271db0. The wrong-run values 1.5599/0.103/40.5 no longer appear in any figure.
+
+---
 ## C. Third-party / external-source figures — decision points (no local producer)
 
 These figures have **no generator script in this repository** (verified by
