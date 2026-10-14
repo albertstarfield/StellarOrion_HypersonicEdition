@@ -258,6 +258,16 @@
   (CCD count F17; seed reproducibility F6), instead of pay-as-you-go.
 \end{frame}
 
+% so_ccd_screen.png moved here from Current Implementation.
+% Design of experiments that answers the Redemption 3 sampling-order issue.
+% (source unchanged; stats unchanged).
+\PlotFrame{REDEMPTION 3b: DESIGN OF EXPERIMENTS -- THE CCD SCREEN}
+  {\MaxTextLines{2}%
+   Face-centred CCD screen of 15 points: 8 factorial corners, 6 axial
+   stars, 1 centre, projected onto each pair of the three design variables.}
+  {so_ccd_screen}
+
+
 \section{UPDATE}
 \begin{frame}{STATUS UPDATE}
   \begin{tabular}{@{}p{7.2cm}r@{}}
@@ -288,15 +298,6 @@
    20 Latin-hypercube seeds then 50 EI steps; incumbent 1.7654 to 1.6051,
    a 9.08 \% reduction.}
   {so_bo_convergence}
-
-% so_ccd_screen.png <- fignew_ccd_screen.png. Companion to the frame above:
-% it is the design of experiments the 20 Latin-hypercube seeds sit alongside,
-% and its own printed title states the count.
-\PlotFrame{1b. DESIGN OF EXPERIMENTS: THE CCD SCREEN}
-  {\MaxTextLines{2}%
-   Face-centred CCD screen of 15 points: 8 factorial corners, 6 axial
-   stars, 1 centre, projected onto each pair of the three design variables.}
-  {so_ccd_screen}
 
 % kriging_denoise.png <- _proc/src/ui/uiassets/assets/plots/
 % kriging_denoise_step500.png, drawn by
