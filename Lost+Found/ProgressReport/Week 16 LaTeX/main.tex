@@ -224,6 +224,8 @@
   $y_i^{(limit)}$ its failure limit; hard-constraint penalty uses $\Lambda_j=10^6$:\
   $J_c(\mathbf{x}) = J(\mathbf{x}) + \sum_j \Lambda_j\,\phi_j(\mathbf{x})$.\
   \vspace{0.1cm}
+  \textbf{Error-allowed gap:} no soft tolerance term is implemented; a violated
+  metric injects $10^{15}$ to bias the score so infeasible designs rank last.\
   \textbf{Design Space (full bounds); BO campaign (3 active)}\
   \begin{tabular}{@{}ll@{}}
   \hline
