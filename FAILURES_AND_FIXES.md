@@ -6665,3 +6665,32 @@ All three now read `ada_pinn_wrapper.IRVE3_FTPS_PLY_*`, and the boundaries are d
 **Verification.** Frame extraction with `-fps_mode passthrough` (ffmpeg 9 rejects `-vsync`): h264 1584x704, 240 frames, 8 fps, 30 s, 1,129,139 B. Per-frame pixel statistics on frames 0/60/120/200/239: corner `(10,9,14)` = `_BG`, **0 white pixels on every frame** (the F124 defect-4 regression stays fixed), `_BG` 50.1-54.1 %, `_PANEL` 35.2-39.0 %, accent 56,890 -> 100,522 px monotone non-decreasing, both gap crops 100 % background. An exact artist audit of the stack panel (16 checks x 2 frames) confirms 33 segment rectangles covering the 33 depth intervals with no gaps, tiling 0.0000-7.1310 mm, **every segment colour equal to `cmap(norm(T_node))` exactly (0 mismatches)**, temperature non-increasing with depth, ylim inverted with depth 0 at the top edge, and all five ply-boundary rules at the true 0.506 / 1.012 / 4.059 / 7.106 / 7.131 mm -- note the 33 profile nodes do NOT fall on the ply boundaries, which is why the boundaries are drawn explicitly. The figure audit finds 4 axes, 33 stack rectangles, 36 table cells, **0 text overlaps > 25 %**, all 15 layup constants present in the table, and the stage annotation plus velocity caveat present. A detector false negative was corrected on the way: a colour check reported the constants table "NOT rendering" because 6 pt anti-aliased `_TEXT` on `_PANEL` is mostly mid-tones rather than `#8892b0`; an A/B pixel diff proves it renders -- 92,025 of 921,600 pixels (9.985 %) differ, entirely inside the table bounding box. `ruff check` is clean on BOTH venvs (`venv_validation` 0.16.10, `venv` 0.17.0 -- the second lives at `stellarorion_program_proc/venv/python/bin/ruff`, NOT `venv/bin/`, which does not exist).
 
 **Status. FIXED.** The heatmap re-render is pixel-identical to the committed version (0 of 2,132,800 pixels differ), which is the proof that the `draw_stack_column` extraction did not change the static figure.
+
+## F126 - The per-ply figures' flux came from a FAILED optimization-gate run, and the stage annotation claimed a 300,000,000-step lineage that does not exist (FIXED)
+
+**The question that found it.** "this heat flux and other plot you put it outside validation or optimized. is this validation or optimized?"
+
+**The answer, traced end to end.** `scripts/run_tps_conduction_step2200.py` reads its aerothermal input from `results/validation_optimized/paraview/surf_2200.vtu`, written **2026-09-26 03:19** by the hybrid optimization gate's **round-1 DSMC** re-simulation. So the per-ply heat flux and temperatures are from the **OPTIMIZED** run, on the optimizer's own geometry (`hiad_optimization_results.json /hybrid_validation/geometry`: R_N = 2.97144 m, r_tor = 0.08846 m, half_cone = 40.148 deg) -- not the baseline IRVE-3 shape and not the validated reference in `results/validation_scalloped/`.
+
+**And that run's own verdict is VALIDATION FAILED.** `results/validation_optimized/gate_r1_dsmc.log`:
+- `[VALIDATE] RESULT: VALIDATION FAILED`
+- `Survivability: FAILED -- vehicle does not survive.`
+- Heat flux: IRVE-3 6.00 vs ours 14.00 W/cm2 -> **58.42 % error, FAIL**
+- Heat load: 78.00 vs 188.01 J/cm2 -> **59.00 % error, FAIL**
+- Peak decel: 26.00 vs 20.00 g -> **31.00 % error, FAIL**
+
+The per-ply arithmetic on top of that input is correct; the input is a run the pipeline itself rejects. So no absolute temperature or flux in these figures is a flight prediction, and the figures did not say so.
+
+**Defect 1 -- the stage annotation invented a run length.** It read "DSMC step 2200 of 300,000,000". Two things are wrong:
+- The DSMC run **terminated at step 2200**. `results/validation_optimized/paraview/` holds exactly 22 dumps, `surf_100` .. `surf_2200`, all 2026-09-26 03:19. There is no `surf_pinn_300000000.vtu` in that directory and there never was.
+- The 300,000,000 figure is a **PINN/Kriging extrapolation target**, not a simulated step count. `gate_r1_pipeline.log` is explicit: `[VTU] Using geometry from: surf_2200.vtu (step 2200)` then `[VTU] Generated: surf_pinn_300000000.vtu (step 300000000)` -- the step-2200 geometry was extrapolated forward, and that artifact landed in `validation_pipeline_output/vtu/irve3_alt40km_step300000000.vtu`, not beside the DSMC dumps. The extrapolation was itself partly unphysical and needed rescuing: `heatflux_max_Wm2: PINN=-303648.27 < 0 (unphysical), using Kriging-denoised=1420178.63`.
+
+So "step 2200 of 300,000,000" asserted a lineage to a 300M-step run that does not exist.
+
+**Defect 2 -- the annotation was drawn three times per MP4 frame.** `_annotate_stage(fig, ...)` sat **inside** the `for _ax in (...)` theming loop in `render_ply_heating_mp4`, so it ran once per axes -- 3x with the stack panel, 2x without. Three identical text blocks at identical coordinates: invisible on screen, but it tripled the text artists the extent audit walks, and it stops being invisible the moment the annotation's lines differ in length. Caught by counting distinct Text objects per frame (constant 3 per line, not accumulating).
+
+**Defect 3 -- the corrected annotation did not fit.** Widening the annotation to carry the provenance made a 7-line block that overflowed every figure's reserved band; the drop-warning path fired on 4 of 6 figures. Rather than ship no annotation, `_annotate_stage` was rewritten to derive its own point size from the figure's height AND width (DejaVu Sans mean advance 0.55 em, 1.55 leading), shrinking until the block fits both, and reporting loudly if it still cannot. The reserved bands were widened to 0.145-0.16 to match.
+
+**Verification.** `ruff check` clean. Artist audit of the MP4 frame: 82 text artists, **0 out-of-canvas, 0 overlaps > 25 %**, all three provenance facts present. Text count fell 92 -> 82, which is exactly the 10 artists removed by the dedup. Frame extraction (`-fps_mode passthrough`) on frames 0/60/120/200/239: h264 1584x704, 240 frames, 8 fps, 30 s; corner `(10,9,14)`, **0 white pixels on every frame**, `_BG` ~47 %, accent 58,130 -> 112,120 then flat (the heating saturates), table ink 6.93 % on every frame proving the constants row renders.
+
+**Status. FIXED** for the annotation. NOT fixed and NOT attempted here: the underlying physics. The gate run is a failed run, the per-element flux still comes from it, and the flight-condition decision (3378 vs 2741.14 vs 2700 m/s) is still open. Those are inputs, not annotations.

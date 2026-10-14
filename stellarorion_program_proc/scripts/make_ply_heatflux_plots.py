@@ -406,8 +406,8 @@ def plot_peak_element(rows: list[dict], fluxes: list[float], back_temp_K: float,
     ax.set_xlabel("ply (surface to back), R = thickness / k", color=_TEXT, fontsize=8)
     ax.set_title("Per-ply heat flux -- peak element", color=_TEXT, fontsize=9)
     _style(ax)
-    fig.tight_layout(rect=(0, 0.09, 1, 1))
-    _annotate_stage(fig, y=0.022)
+    fig.tight_layout(rect=(0, 0.145, 1, 1))
+    _annotate_stage(fig, reserved_frac=0.145)
     fig.savefig(out_path, facecolor=_BG)
     plt.close(fig)
 
@@ -428,8 +428,8 @@ def plot_temperature_profile(rows: list[dict], back_temp_K: float, out_path: str
     ax.set_ylabel("temperature [K]", color=_TEXT, fontsize=8)
     ax.set_title("Through-thickness temperature -- peak element", color=_TEXT, fontsize=9)
     _style(ax)
-    fig.tight_layout(rect=(0, 0.09, 1, 1))
-    _annotate_stage(fig, y=0.022)
+    fig.tight_layout(rect=(0, 0.145, 1, 1))
+    _annotate_stage(fig, reserved_frac=0.145)
     fig.savefig(out_path, facecolor=_BG)
     plt.close(fig)
 
@@ -462,8 +462,8 @@ def plot_flux_distribution(all_flux: list[list[float]], out_path: str) -> None:
     ax.set_xlabel("ply (surface to back)", color=_TEXT, fontsize=8)
     ax.set_title("Per-ply heat-flux distribution -- all elements", color=_TEXT, fontsize=9)
     _style(ax)
-    fig.tight_layout(rect=(0, 0.10, 1, 1))
-    _annotate_stage(fig, y=0.024)
+    fig.tight_layout(rect=(0, 0.145, 1, 1))
+    _annotate_stage(fig, reserved_frac=0.145)
     fig.savefig(out_path, facecolor=_BG)
     plt.close(fig)
 
@@ -476,25 +476,62 @@ def plot_flux_distribution(all_flux: list[list[float]], out_path: str) -> None:
 # every figure or a reader will take one velocity as settled.  Defining it once
 # means it cannot be softened in one place and left exact in another.
 #
-# WHAT IS SETTLED: the data is DSMC step 2200 of a 300,000,000-step run.
-# WHAT IS NOT: the velocity.  The code states Snapshot_Vel_Ms = 3378 m/s at
-# Snapshot_Alt_Km = 51.8 km; the trajectory's own 51.8 km value is 2741.14 m/s
-# and the scalloped DSMC deck uses 2700 m/s (M 7.534).  Velocity alone accounts
-# for 98.0 % of the apparent 2x DSMC discrepancy, so the SENSITIVITY RANKING is
-# invariant to this choice but the absolute numbers are not.
+# WHAT IS SETTLED, AND WHAT THE ORIGINAL WORDING GOT WRONG (corrected
+# 2026-10-14 after the provenance was traced):
+#
+#   The data is DSMC step 2200, and that run TERMINATED there.
+#   `results/validation_optimized/paraview/` holds exactly 22 dumps,
+#   `surf_100` .. `surf_2200`, all written 2026-09-26 03:19 by the hybrid
+#   optimization gate's ROUND-1 DSMC re-simulation.  There is no
+#   `surf_pinn_300000000.vtu` in that directory, and there never was: the run
+#   stopped at step 2200.
+#
+#   The 300,000,000 figure is a PINN/Kriging EXTRAPOLATION TARGET, not a run
+#   length.  The pipeline log is explicit:
+#       [VTU] Using geometry from: surf_2200.vtu (step 2200)
+#       [VTU] Generated: surf_pinn_300000000.vtu (step 300000000)
+#   i.e. the step-2200 geometry was extrapolated forward, and that artifact
+#   landed in `validation_pipeline_output/vtu/`, not beside the DSMC dumps.
+#   The extrapolation was itself partly unphysical and had to be rescued:
+#       heatflux_max_Wm2: PINN=-303648.27 < 0 (unphysical),
+#                         using Kriging-denoised=1420178.63
+#   So "step 2200 of 300,000,000" asserted a lineage to a 300M-step run that
+#   does not exist.  Corrected here rather than left standing.
+#
+#   The flux therefore comes from the OPTIMIZED geometry, not the baseline
+#   IRVE-3 shape and not the validated reference:
+#       R_N = 2.97144 m, r_tor = 0.08846 m, half_cone = 40.148 deg
+#       (hiad_optimization_results.json /hybrid_validation/geometry)
+#   and that gate run's own verdict is VALIDATION FAILED with
+#   "vehicle does not survive" (heat flux 58.42 % error, heat load 59.00 %,
+#   peak decel 31.00 %).  The per-ply numbers are then ARITHMETICALLY correct
+#   for that input, but the input is a run the pipeline itself rejects, so no
+#   absolute temperature or flux here is a flight prediction.
+#
+# WHAT IS NOT SETTLED: the velocity.  The code states Snapshot_Vel_Ms = 3378
+# m/s at Snapshot_Alt_Km = 51.8 km; the trajectory's own 51.8 km value is
+# 2741.14 m/s and the scalloped DSMC deck uses 2700 m/s (M 7.534).  Velocity
+# alone accounts for 98.0 % of the apparent 2x DSMC discrepancy, so the
+# SENSITIVITY RANKING is invariant to this choice but the absolute numbers
+# are not.
 STAGE_TEXT = (
-    "DSMC step 2200 of 300,000,000  |  snapshot condition stated in code: "
-    "\u2009h = 51.8 km, V = 3378 m/s"
+    "DSMC step 2200 \u2014 run TERMINATED there; the 300,000,000 figure is a "
+    "PINN/Kriging extrapolation, NOT a run length\n"
+    "source: results/validation_optimized gate r1 on an OPTIMIZED geometry "
+    "(R_N 2.971 m, r_tor 0.0885 m, half-cone 40.15 deg)"
 )
 STAGE_CAVEAT = (
-    "\u26a0 flight condition OPEN: the code states V = 3378 m/s at 51.8 km, the "
-    "trajectory's own 51.8 km value is 2741.14 m/s and the scalloped DSMC deck "
-    "uses 2700 m/s (M 7.534). Velocity alone explains 98.0% of the apparent "
-    "2\u00d7 discrepancy; the ranking is invariant, the absolute values are not."
+    "\u26a0 OPEN (1) flight condition: code states V = 3378 m/s at 51.8 km; "
+    "trajectory's own 51.8 km value is 2741.14 m/s;\n"
+    "scalloped deck 2700 m/s \u2014 velocity alone explains 98.0% of the "
+    "apparent 2\u00d7 gap; ranking invariant, absolute values not.\n"
+    "(2) that gate run's own verdict is VALIDATION FAILED / \"vehicle does "
+    "not survive\" (heat flux 58.4%, heat load 59.0%)."
 )
 
 
-def _annotate_stage(fig, y: float = 0.012, fontsize: int = 6) -> None:
+def _annotate_stage(fig, reserved_frac: float, fontsize: int = 6,
+                    min_fontsize: float = 3.0) -> float:
     """Stamp every figure with the trajectory stage it belongs to.
 
     AXIOMS:
@@ -503,21 +540,84 @@ def _annotate_stage(fig, y: float = 0.012, fontsize: int = 6) -> None:
         A2. The velocity behind these numbers is an OPEN decision, so the
             annotation must state the step, the condition the code asserts and
             the discrepancy -- never present one velocity as fact.
+        A3. The provenance of the input (which run, which geometry, and that
+            run's own verdict) is part of the stage.  A figure that hides that
+            its numbers come from a run the pipeline itself rejected is lying
+            by omission, however correct the arithmetic on top of it is.
 
     THEORIES: putting the text in figure coordinates (not axes coordinates)
-    keeps it outside the data box, so it cannot overlap a trace.
+    keeps it outside the data box, so it cannot overlap a trace.  Each explicit
+    line is placed at its own ascending y so the block height is a function of
+    the caller's figure height, never of matplotlib's `wrap` heuristic (which
+    wraps against the DRAWABLE width in pixels and silently re-wraps when dpi
+    changes between the PNG and the MP4 render of the same figure).
+
+    The font size is then SHRUNK until the whole block fits BOTH the reserved
+    height and the drawable width.  Deriving it beats hard-coding two sizes,
+    because the same text has to fit a 6.0 x 3.6 in PNG and a 14.4 x 6.4 in MP4
+    panel row; a fixed point size overflows the former and is unreadably small
+    on neither.  Width and height are BOTH checked because a block that is
+    short enough can still be too wide -- and a too-wide centred line is
+    clipped at the frame, which is the one failure a text-extent audit reports
+    as OUT_OF_CANVAS rather than as a soft "too small to read".
 
     APPLICATIONS: called once per figure, immediately before savefig.
 
     Parameters:
         fig: the Figure to annotate.
-        y: vertical position in figure coordinates (0 = bottom).
-        fontsize: point size of the annotation text.
+        reserved_frac: fraction of the figure height reserved for this block,
+            i.e. the ``bottom`` of the layout that the axes sit above.
+        fontsize: starting point size; reduced only if the block will not fit.
+        min_fontsize: floor, below which the block is DROPPED rather than
+            rendered illegibly.  Losing the annotation is preferable to shipping
+            text nobody can read -- but it is reported, never silent.
+
+    Returns:
+        The point size actually used.
+
+    WHEN IT MUST ERROR: never; it only draws text.
     """
-    fig.text(0.5, y, STAGE_TEXT, ha="center", va="bottom",
-             color=_TEXT, fontsize=fontsize)
-    fig.text(0.5, y - 0.014, STAGE_CAVEAT, ha="center", va="bottom",
-             color=_ACCENT, fontsize=fontsize - 0.5, wrap=True)
+    lines = [sub for text in (STAGE_TEXT, STAGE_CAVEAT)
+             for sub in text.split("\n")]
+    n_lines = len(lines)
+    height_in = fig.get_figheight()
+    width_in = fig.get_figwidth()
+
+    avail_in = max(reserved_frac - 0.010, 0.02) * height_in
+    drawable_in = 0.96 * width_in
+    longest = max(len(t) for t in lines)
+
+    # DejaVu Sans mean advance width is 0.55 em for mixed prose; 0.96 of the
+    # figure width keeps a 2 % gutter either side of the centred block.
+    def _fits(candidate: float) -> bool:
+        height_ok = n_lines * (candidate * 1.55 / 72.0) <= avail_in
+        width_ok = longest * (0.55 * candidate / 72.0) <= drawable_in
+        return height_ok and width_ok
+
+    size = float(fontsize)
+    while not _fits(size) and size > min_fontsize:
+        size -= 0.1
+    if not _fits(size):
+        print(f"[ply] WARNING: stage annotation dropped -- {n_lines} lines at "
+              f"{min_fontsize} pt need "
+              f"{n_lines * (min_fontsize * 1.55 / 72.0):.3f} in tall and "
+              f"{max(len(t) for t in lines) * (0.55 * min_fontsize / 72.0):.3f} in "
+              f"wide, but only {avail_in:.3f} in of height and "
+              f"{0.96 * width_in:.3f} in of width are available "
+              f"(reserved_frac={reserved_frac}, "
+              f"figsize={width_in}x{height_in}).", file=sys.stderr)
+        return min_fontsize
+
+    # Single-spaced leading of DejaVu Sans at this point size, in inches.
+    pitch = (size * 1.55 / 72.0) / height_in
+    line = 0.010  # bottom line sits just above the figure frame
+    for text, colour, size_here in ((STAGE_TEXT, _TEXT, size),
+                                    (STAGE_CAVEAT, _ACCENT, size - 0.5)):
+        for sub in text.split("\n"):
+            fig.text(0.5, line, sub, ha="center", va="bottom",
+                     color=colour, fontsize=size_here)
+            line += pitch
+    return size
 
 
 def load_profiles(csv_path: str) -> dict[int, list[tuple[float, float]]]:
@@ -916,7 +1016,7 @@ def plot_ply_stack_heatmap(peak_rows: list[dict],
     fig.suptitle(
         "TPS literal 5-ply stack -- through-thickness temperature heatmap",
         color=_TEXT, fontsize=10, y=0.975)
-    _annotate_stage(fig, y=0.028)
+    _annotate_stage(fig, reserved_frac=0.16)
     fig.savefig(out_path, facecolor=_BG)
     plt.close(fig)
 
@@ -1032,8 +1132,8 @@ def plot_ply_temperature_by_element(rows_by_element: dict[int, list[dict]],
 
     fig.suptitle("Per-ply temperature across the whole TPS surface",
                  color=_TEXT, fontsize=9.5, y=0.985)
-    fig.tight_layout(rect=(0, 0.07, 1, 0.95))
-    _annotate_stage(fig, y=0.026)
+    fig.tight_layout(rect=(0, 0.15, 1, 0.95))
+    _annotate_stage(fig, reserved_frac=0.15)
     fig.savefig(out_path, facecolor=_BG)
     plt.close(fig)
 
@@ -1403,9 +1503,14 @@ def render_ply_heating_mp4(
         for _spine in _ax.spines.values():
             _spine.set_color(_DIM)
         _ax.grid(True, color=_DIM, linewidth=0.3, alpha=0.45)
-    #  Stage annotation per frame: a frame without its trajectory position is
-    #  uninterpretable, exactly as for the PNGs.
-    _annotate_stage(fig, y=0.018, fontsize=7)
+    #  Stage annotation: a frame without its trajectory position is
+    #  uninterpretable, exactly as for the PNGs.  ONE call, after the loop --
+    #  indenting it inside the loop called it once per axes (3x here), which
+    #  stacked three identical text blocks at the same coordinates.  Invisible
+    #  on screen, but it tripled the text artists the extent audit had to walk
+    #  and it is the kind of thing that stops being invisible the moment the
+    #  annotation becomes two lines of different length.
+    _annotate_stage(fig, reserved_frac=0.16)
     if ax_const is not None:
         pass  # gridspec already positioned every row
     else:
