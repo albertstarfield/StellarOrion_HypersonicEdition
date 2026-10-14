@@ -444,7 +444,7 @@ At the TPS outer surface radiative cooling balances incoming convective heat flu
     T_{surface} = \left(\frac{\dot{q}_{stag}}{\epsilon \sigma}\right)^{1/4}
 \end{equation}
 
-where $\epsilon = 0.75$ (Nicalon SiC emissivity) and $\sigma = 5.67 \times 10^{-8}$\,W/m$^2$K$^4$ (Stefan-Boltzmann constant).
+where $\sigma = 5.67 \times 10^{-8}$\,W/m$^2$K$^4$ is the Stefan-Boltzmann constant and $\epsilon$ is the emissivity. Two emissivity values appear in this work and must not be conflated: $0.75$, the published Nicalon SiC outer-fabric value used in this per-surface estimate, and $0.80$, the stack-level outer emissivity applied to the whole shield by the composite conduction model of Sec.~\ref{sec:composite_tps} and recorded in Table~\ref{tab:tps_spec}. The stack value is the one carried into the survivability calculation of Chapter~\ref{ch:results}.
 
 \subsection{Backface Temperature: 1D Transient Model}
 The 1D transient backface temperature model estimates thermal penetration through the Flexible Thermal Protection System (FTPS) insulation stack:
@@ -516,7 +516,7 @@ The thermal protection system is modeled as an ordered composite stack, yielding
 
     \vspace{0.3em}
 
-    \raggedright\footnotesize\textsuperscript{1}\,Stack-level emissivity (Pyrogel grades carry no published $\varepsilon$).
+    \raggedright\footnotesize\textsuperscript{1}\,Stack-level emissivity ($\varepsilon = 0.80$), the outer-face value applied to the whole shield. The per-ply column carries each material's own published value where one exists (Nicalon SiC $0.75$, Kapton $0.12$); the Pyrogel 3350 rows repeat the stack value because Pyrogel grades carry no published $\varepsilon$.
 \end{table}
 
 \begin{table}[!htbp]
