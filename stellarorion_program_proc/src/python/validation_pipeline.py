@@ -4572,7 +4572,8 @@ def _generate_rapisarda_outputs(
     # Material Conduction/Convection Analysis
     # [Citation: Incropera & DeWitt (2011) "Fundamentals of Heat and Mass Transfer"]
     # [Citation: Dillman et al. AIAA 2014-4141 — IRVE-3 F-TPS construction]
-    # IRVE-3 5-ply F-TPS layup (Nextel/Pyrogel/AKK), solved by the Ada/SPARK
+    # 5-ply F-TPS layup (Nicalon SiC x2 / Pyrogel 3350 x2 / Kapton), solved by
+    # the Ada/SPARK
     # TPS_Conduction solver: q_conv = εσT_s⁴ + (T_s − T_back)/R_total.
     emissivity = 0.80      # Surface emissivity (IRVE-3 F-TPS coating)
     T_ambient = 268.36     # Ambient temperature [K] (from CSV)
@@ -4621,12 +4622,30 @@ def _generate_rapisarda_outputs(
     md_lines.append("If T_backwall > 300°C, TPS thickness must be increased for thermal protection.")
 
     # Per-ply heat flux decomposition (5-ply layup) — steady 1D conduction
-    _ply_names = ["Nextel BF-20", "Nextel BF-20", "Pyrogel 2250", "Pyrogel 2250", "AKK"]
-    _ply_thk = [0.0006, 0.0006, 0.0025, 0.0025, 0.00015]
-    _ply_k = [0.25, 0.25, 0.02, 0.02, 0.12]
-    _bnd = [0.0, 0.0006, 0.0012, 0.0037, 0.0062, 0.00635]
+    # SINGLE-SOURCED from the Ada preset. This block hard-coded
+    # `_ply_k = [0.25, 0.25, 0.02, 0.02, 0.12]` with the Nextel/AKK schedule,
+    # so the per-ply decomposition below described a stack the solver had
+    # already stopped solving -- the same defect class as the writer-less
+    # `tps_step2200_layers.csv` that carried the identical stale k.
+    # A text literal in a report generator is as authoritative as a column in
+    # an orphan CSV: not at all. The preset is the single source; the CSV is
+    # measured data only.
+    # [Citation: Rapisarda 2023 Table 4.17 == NASA/TM-20110012051 Table 5]
     if q_conv > 0:
         import numpy as _np
+
+        # Imported BEFORE first use, not after: ruff F821 caught the original
+        # ordering, which was a live NameError waiting for a non-zero q_conv.
+        import ada_pinn_wrapper as _W_preset
+
+        _ply_names = list(_W_preset.IRVE3_FTPS_PLY_NAMES)
+        _ply_thk = list(_W_preset.IRVE3_FTPS_PLY_THICKNESS_M)
+        _ply_k = list(_W_preset.IRVE3_FTPS_PLY_THERMAL_K)
+        # Cumulative ply boundaries, derived from the preset thicknesses rather
+        # than transcribed -- a hand-typed `_bnd` cannot drift from `_ply_thk`.
+        _bnd = [0.0]
+        for _t in _ply_thk:
+            _bnd.append(_bnd[-1] + _t)
         _prof_d = _np.asarray(_tps["profile_depth_m"], dtype=float)
         _prof_T = _np.asarray(_tps["profile_temp"], dtype=float)
         _T_b = _np.interp(_bnd, _prof_d, _prof_T)
@@ -4928,7 +4947,7 @@ def _generate_rapisarda_outputs(
         "audit": results.get("audits", {}),
         "root_causes": results.get("root_causes", {}),
         "material_conduction": {
-            "description": "1D thermal model: IRVE-3 5-ply F-TPS (Nextel/Pyrogel/AKK)",
+            "description": "1D thermal model: IRVE-3 5-ply F-TPS (Nicalon SiC x2 / Pyrogel 3350 x2 / Kapton, Rapisarda 2023 Table 4.17)",
             "reference": "Incropera & DeWitt (2011); Dillman et al. AIAA 2014-4141",
             "surface_heat_flux_Wm2": round(q_conv, 0),
             "surface_temperature_K": round(T_surface, 0),
@@ -4940,7 +4959,7 @@ def _generate_rapisarda_outputs(
             "series_resistance_m2K_W": round(R_total, 4),
             "emissivity": emissivity,
             "tps_thickness_mm": round(total_thickness * 1000, 1),
-            "material": "IRVE-3 5-ply F-TPS (Nextel BF-20 / Pyrogel 2250 / AKK)",
+            "material": "IRVE-3 5-ply F-TPS (Nicalon SiC / Pyrogel 3350 / Kapton)",
         },
         "material_conduction_pinn": {
             "description": "1D thermal model using PINN-extrapolated heat flux (300s / 300,000,000 steps)",
@@ -4955,7 +4974,7 @@ def _generate_rapisarda_outputs(
             "series_resistance_m2K_W": round(R_total, 4),
             "emissivity": emissivity,
             "tps_thickness_mm": round(total_thickness * 1000, 1),
-            "material": "IRVE-3 5-ply F-TPS (Nextel BF-20 / Pyrogel 2250 / AKK)",
+            "material": "IRVE-3 5-ply F-TPS (Nicalon SiC / Pyrogel 3350 / Kapton)",
         },
     }
 

@@ -51,7 +51,8 @@ package StellarOrion_Orion is
       Cp         => 1200.0,   -- J/(kg*K)
       Thermal_K  => 0.5,      -- W/(m*K)
       Emissivity => 0.85,
-      Thickness  => 0.050);   -- m  (50 mm)
+      Thickness  => 0.050,    -- m  (50 mm)
+      T_Max      => 3273.0);  -- K, carbon ablator use limit
 
    -- ==================================================================
    --  Survivability Check

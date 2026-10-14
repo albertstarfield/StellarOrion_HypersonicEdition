@@ -199,7 +199,18 @@ package StellarOrion_Types is
    subtype TPS_Emissivity_Range is Float range 1.0e-3 .. 1.0;
 
    --  TPS layer thickness [m] (T3).
-   subtype TPS_Thickness_Range is Float range 1.0e-4 .. 1.0;
+   --  RANGE NOTE (lowered 1.0e-4 -> 1.0e-5 on 2026-10-14): the gas-barrier
+   --  ply in the Rapisarda 2023 F-TPS schedule is a 25 um Kapton film
+   --  (2.5e-5 m), which the old 1e-4 m floor rejected outright -- a valid
+   --  published layup could not even be expressed. 1e-5 m (10 um) still
+   --  covers every real F-TPS film (Kapton, Upilex, metallised foil) while
+   --  excluding sub-micron coatings a 1-D conduction solve cannot resolve.
+   --  EVERY consumer of this floor was moved in the same change so the
+   --  contract set stays consistent: Layer_Resistance' precondition and
+   --  Layup_Thickness' postcondition below, the two layup-solver
+   --  precondition loops in stellarorion_physics.ads, and the FFI
+   --  ply-property validation in stellarorion_ffi.adb.
+   subtype TPS_Thickness_Range is Float range 1.0e-5 .. 1.0;
 
    -- ===================================================================
    --  Record Types
@@ -352,6 +363,13 @@ package StellarOrion_Types is
    --                  Enters thermal capacitance and 1-D backface temperature.
    --                  Thicker = more protection but more mass.
    --                  Typical: 1-50 mm for tiles/blankets.
+   --    T_Max      : Maximum CONTINUOUS USE temperature of this material [K].
+   --                  This is a MATERIAL capability -- the ply's own limit --
+   --                  and is NOT the same quantity as TPS_Layup.T_Limit,
+   --                  which is the temperature the PROTECTED STRUCTURE may
+   --                  reach. Per-ply T_Max values come from Rapisarda 2023
+   --                  Table B.17; the structure limit is a separate,
+   --                  layup-level failure mode.
    --
    --  THERMAL MODEL:
    --    Surface temperature (radiative equilibrium, 0-D):
@@ -371,6 +389,7 @@ package StellarOrion_Types is
       Thermal_K  : Float := 0.2;      -- W/(m*K)
       Emissivity : TPS_Emissivity_Range := 0.75;     -- dimensionless
       Thickness  : TPS_Thickness_Range  := 0.0254;   -- m  (1 inch)
+      T_Max      : Float := 2073.0;    -- K (1800 degC, SiC fabric)
    end record;
 
    -- ===================================================================
@@ -385,7 +404,8 @@ package StellarOrion_Types is
       Cp         => 1100.0,
       Thermal_K  => 0.2,
       Emissivity => 0.75,
-      Thickness  => 0.0254)
+      Thickness  => 0.0254,
+      T_Max      => 2073.0)    -- K, SiC fabric / tile
      with Pre => True, Post => True;
 
    --  PICA-X (Phenolic Impregnated Carbon Ablator) — SpaceX variant.
@@ -395,7 +415,8 @@ package StellarOrion_Types is
       Cp         => 1500.0,
       Thermal_K  => 0.5,
       Emissivity => 0.85,
-      Thickness  => 0.040)
+      Thickness  => 0.040,
+      T_Max      => 3273.0)    -- K, carbon ablator
      with Pre => True, Post => True;
 
    --  LOFTID Flexible TPS (F-TPS) — ultra-lightweight inflatable.
@@ -405,7 +426,8 @@ package StellarOrion_Types is
       Cp         => 1200.0,
       Thermal_K  => 0.15,
       Emissivity => 0.80,
-      Thickness  => 0.050)
+      Thickness  => 0.050,
+      T_Max      => 2073.0)    -- K
      with Pre => True, Post => True;
 
    --  Kapton polyimide film (backface insulation layer).
@@ -415,7 +437,8 @@ package StellarOrion_Types is
       Cp         => 1090.0,
       Thermal_K  => 0.12,
       Emissivity => 0.70,
-      Thickness  => 0.005)
+      Thickness  => 0.005,
+      T_Max      => 773.0)     -- K, Kapton polyimide
      with Pre => True, Post => True;
 
    --  PyroGel (aerogel blanket insulation — lightweight multi-layer TPS).
@@ -425,7 +448,8 @@ package StellarOrion_Types is
       Cp         => 1000.0,
       Thermal_K  => 0.02,
       Emissivity => 0.85,
-      Thickness  => 0.025)
+      Thickness  => 0.025,
+      T_Max      => 1373.0)    -- K, Pyrogel aerogel blanket
      with Pre => True, Post => True;
 
    --  Multi-layer layup (SiC outer + PyroGel core + Kapton backface).
@@ -446,7 +470,8 @@ package StellarOrion_Types is
       Cp         => 1050.0,
       Thermal_K  => 0.10,
       Emissivity => 0.80,
-      Thickness  => 0.040)
+      Thickness  => 0.040,
+      T_Max      => 1373.0)    -- K, weakest ply in the collapsed layup
      with Pre => True, Post => True;
 
    -- ===================================================================
@@ -587,7 +612,7 @@ package StellarOrion_Types is
    function Layer_Resistance (L : TPS_Layer) return Float
      with Pre  => L.Material.Thermal_K >= 1.0e-3
                    and L.Material.Thermal_K <= 1.0e3
-                   and L.Thickness >= 1.0e-4
+                   and L.Thickness >= 1.0e-5
                    and L.Thickness <= 1.0,
           Post => Layer_Resistance'Result > 0.0;
 
@@ -606,110 +631,288 @@ package StellarOrion_Types is
    --  Independent of conductivity (theory T2); used to check the preset
    --  against the published ~1/4 in total layup depth.
    function Layup_Thickness (L : TPS_Layup) return Float
-     with Post => Layup_Thickness'Result >= 1.0e-4;
+     with Post => Layup_Thickness'Result >= 1.0e-5;
+
+   --  Maximum temperature the material of ply `Ply` may continuously reach
+   --  [K] -- the ply's OWN capability, not the structure limit.
+   --
+   --  WHY THIS ACCESSOR EXISTS: a composite layup is not safe at the minimum
+   --  of its ply limits. Rapisarda 2023 Table B.17 spans a factor of 2.7
+   --  (Kapton 773 K .. Nicalon SiC 2073 K), so a solve that held every ply
+   --  under the SMALLEST limit would silently discard 1300 K of legitimate
+   --  SiC capability, and one that held them under the LARGEST would let the
+   --  Kapton gas barrier pyrolyse. The limit must be read per ply, which a
+   --  single scalar field on the layup cannot express.
+   --
+   --  INACTIVE PLIES: returns 0.0 for Ply > Layer_Count, so a caller that
+   --  over-reads the fixed-capacity array cannot pass a limit check by
+   --  accident (0 K is below any physical temperature).
+   function Ply_Temperature_Limit (L : TPS_Layup; Ply : TPS_Layer_Count_Range)
+      return Float
+     with Post => Ply_Temperature_Limit'Result >= 0.0;
+
+   --  Smallest per-ply limit among the ACTIVE plies [K] -- the limit a
+   --  HOMOGENISED equivalent of the layup must be held to.
+   --
+   --  WHY min AND NOT max: a lumped record can only be as durable as its
+   --  least durable material, so a consumer that reads a single T_Max from
+   --  TPS_IRVE3_FTPS must be constrained by the weakest ACTIVE ply, not the
+   --  strongest. For the Rapisarda schedule that is ply 5 (Kapton, 773 K).
+   --  This is the lumped surrogate ONLY; a layup-aware consumer must call
+   --  Ply_Temperature_Limit per ply instead of using this number.
+   --
+   --  INACTIVE PLIES contribute nothing: Layer_Count >= 1 by subtype, so
+   --  the initialisation is taken from a real ply and cannot be a filler.
+   function Layup_Min_Ply_Limit (L : TPS_Layup) return Float
+     with Post => Layup_Min_Ply_Limit'Result >= 0.0;
 
    --  Deepest (cold-side) temperature the layup may present to protected
    --  structure [K]. 523.15 K = 250 degC = IRVE-3 1st-gen FTPS limit.
    IRVE3_FTPS_STRUCT_LIMIT_K : constant Float := 523.15;
 
-   --  -- IRVE-3 F-TPS material presets --------------------------------------
-   --  Effective (not bulk) through-thickness properties for FLEXIBLE TPS
-   --  plies. A woven or felt ply conducts far less than its solid constituent
-   --  because the through-thickness path crosses inter-fiber voids that carry
-   --  neither solid conduction nor (at these densities) significant radiation.
-   --  The values below are therefore engineering estimates for the PLY, not
-   --  datasheet values for the FIBRE.
-   --  [Citation: NASA-TM-2012-011662 — FTPS "outer fabrics, insulators, and gas
-   --   barrier layers" characterised as separate layered components]
+   --  ---------------------------------------------------------------------
+   --  F-TPS MATERIAL PRESETS -- RAPISARDA 2023 SCHEDULE.
+   --
+   --  This is the SECOND-GENERATION F-TPS schedule the project runs by
+   --  explicit owner decision (2026-10-14), taken from Rapisarda's thesis
+   --  rather than from IRVE-3's flown hardware. IRVE-3 flew Nextel BF-20 x2,
+   --  Pyrogel 3350 x2 and an AKK barrier; Rapisarda recommends Nicalon SiC
+   --  x2, Pyrogel 3350 x2 and plain Kapton instead, and the project follows
+   --  the recommendation.
+   --
+   --  AXIOM (design authority): every design property below is read from
+   --  Rapisarda 2023 Tables B.17 and 4.17, which in turn are NASA-TM-
+   --  20110012051 Table 5. NO value here is an estimate. (Contrast the old
+   --  IRVE-3 schedule, whose per-ply thicknesses were an allocation of a
+   --  published total and were honest caveats in-source.)
+   --
+   --  THEORY (chain of custody): Table 4.17 -> Table 5 -> the solver.
+   --    Thickness, areal weight and T_max are NASA measurements of the
+   --    physical cloth specimens. Density and emissivity are Rapisarda's
+   --    material-card values (Table B.17). Conductivity is the one property
+   --    Rapisarda does NOT publish; see the Nicalon provenance block.
+   --
+   --  CITATIONS:
+   --    [Rapisarda23] C. Rapisarda, "Aerodynamic Shape Optimisation of a
+   --       Hypersonic Deployable Entry Vehicle," MSc thesis, 2023 --
+   --       Table B.17 (material properties), Table 4.17 (layup geometry).
+   --    [NASA-FTPS-2G] B. R. Johnson et al., "Advanced High-Temperature
+   --       Flexible TPS for Inflatable Aerodynamic Decelerators,"
+   --       NASA/TM-20110012051, 2011 -- Table 5 "Flexible TPS Material
+   --       Thicknesses, Areal Weight, and Maximum Use Temperatures".
+   --       [Citation: https://ntrs.nasa.gov/api/citations/20110012051/downloads/20110012051.pdf]
+   ---------------------------------------------------------------------
 
-   --  Nextel BF-20 alumina-mullite reinforcing fabric, 1st-generation FTPS
-   --  outer ply. Rated to 30 W/cm^2 (vs 50 W/cm^2 for 2nd-gen SiC/Nicalon
-   --  cloth, which IRVE-3 did NOT fly).
-   --  [Citation: NASA-TM-2012-011662 — "The Nextel BF-20 can withstand heat
-   --   fluxes up to 30 W/cm2 and is considered to be a first generation FTPS."]
-   function TPS_Nextel_BF20 return TPS_Material is
-     (Name       => "Nextel",
-      Density    => 400.0,     -- kg/m^3 effective ply (void-inclusive)
-      Cp         => 1100.0,
-      Thermal_K  => 0.25,      -- W/(m*K) effective ply
-      Emissivity => 0.80,
-      Thickness  => 0.0006)    -- m (600 um per ply)
+   --  Nicalon SiC 5-harness-satin cloth (26x26), 2nd-generation F-TPS outer
+   --  ply. Rated to 50 W/cm^2 against Nextel BF-20's 30 W/cm^2, which is the
+   --  whole reason the second-generation schedule exists.
+   --  [Citation: NASA-TM-2012-011662 -- "The Nicalon SiC material can
+   --   withstand heat fluxes up to 50W/cm2 and is considered to be a second
+   --   generation FTPS."]
+   --
+   --  PROVENANCE OF Thermal_K => 1.5 -- READ BEFORE CITING IT.
+   --
+   --  RAPISARDA PUBLISHES NO SCALAR k. Verified by grep over the full thesis:
+   --  the only conductivity table in it is Table B.18 "Virtual layer thermal
+   --  conductivity" (0.1 / 0.03 / 0.2 / 1 W/(m*K)), and those are VIRTUAL
+   --  1-mm INTERFACE conductivities derived from k = L * h_c -- thermal
+   --  contact conductance for a fictitious interlayer between plies, NOT
+   --  bulk ply conductivity. Reusing them as ply k would be a category
+   --  error, so they are NOT used. Bulk conductivity exists in the thesis
+   --  only as the plotted Figure B.10 curves k = f(T), which text
+   --  extraction cannot read.
+   --
+   --  WHAT 1.5 IS: the measured conductivity of cg-Nicalon SiC FIBRE at
+   --  20 degC, from the DOE/UCLA thermophysical report's comparison table
+   --  of commercial SiC fibres and bulk SiC ("Thermal conductivity at 20 C
+   --  (W/m-K): cg-Nicalon 1.5, Hi-Nicalon 4, Hi-Nicalon type S 18, Sylramic
+   --  40-45, Bulk SiC 100-350").
+   --  [Citation: D. J. Senor et al., "Thermophysical and Mechanical
+   --   Properties of SiC/SiC Composites", UCLA/PNNL draft, 1998 -- Table 1]
+   --
+   --  OWNER AUTHORISATION (verbatim): "k = 1.5 (cg-Nicalon fibre, cited)".
+   --
+   --  HONEST CAVEAT -- THIS IS A FIBRE VALUE USED FOR A WOVEN PLY. The
+   --  5-harness-satin cloth is ~58 % porous by volume (areal weight
+   --  0.0425 g/cm2 over 0.506 mm gives an effective density of 840 kg/m3
+   --  against a fibre density of 2500-2650 kg/m3), so its through-thickness
+   --  conductivity is normally LOWER than the fibre value, not equal to it.
+   --  Taking the fibre value is therefore the direction that ADMITS MORE
+   --  heat through and leaves a HOTTER backface -- conservative for the
+   --  523.15 K structure limit the survivability gate judges, and NOT
+   --  conservative for the surface temperature, which the Sutton-Graves
+   --  boundary condition sets and which barely moves. Both statements are
+   --  recorded so 1.5 cannot later be read as unqualified.
+   --  Two published numbers bracket it from above: a dense 2-D 0/90
+   --  cg-Nicalon / CVI-SiC laminate measures 9 W/(m*K) through-thickness at
+   --  20 degC, and 3 W/(m*K) at 1000 degC -- but that is a 40 vol% fibre
+   --  composite with a CVI matrix, materially denser than a cloth.
+   --  See FAILURES_AND_FIXES.md F124.
+   --
+   --  CONSEQUENCE, DERIVED NOT GUESSED (all four numbers recomputed from the
+   --  two schedules above, not asserted):
+   --    per-ply R         3.3733e-4 m^2*K/W each, i.e. 0.2208 % of the
+   --                        stack's 0.305583 -- versus 2.3324 % for the
+   --                        0.20 W/(m*K) Nextel plies they replace.
+   --    direction          the SiC outer face is 8.89x LESS resistive than
+   --                        the Nextel face it replaces, so it is the LESS
+   --                        protective of the two outer plies.
+   --    net stack R        0.257250 -> 0.305583 m^2*K/W, i.e. UP 18.8 %, so
+   --                        the backface runs COOLER overall. The rise is NOT
+   --                        caused by the SiC: it comes from the insulator,
+   --                        which the Rapisarda schedule makes 21.9 % thicker
+   --                        (2.5 -> 3.047 mm per Pyrogel ply).
+   --    lumped k*          0.024684 -> 0.023336 W/(m*K) (-5.4 %), the series
+   --                        equivalent T/R that Backface_Temperature uses.
+   --  So the two effects OPPOSE each other: a weaker outer face (hotter
+   --  backface) offset by a thicker insulator (cooler backface), and the
+   --  insulator wins because it holds 99.71 % of the resistance.
+   function TPS_Nicalon_SiC return TPS_Material is
+     (Name       => "Nicaln",
+      Density    => 1468.0,    -- kg/m^3 (Rapisarda B.17)
+      Cp         => 1100.0,    -- J/(kg*K) (carried over; Rapisarda gives none)
+      Thermal_K  => 1.5,       -- W/(m*K) cg-Nicalon fibre, 20 C (cited above)
+      Emissivity => 0.75,      -- Rapisarda B.17
+      Thickness  => 0.000506,  -- m (506 um = 0.0506 cm, NASA Table 5)
+      T_Max      => 2073.0)    -- K (1800 degC, NASA Table 5 / Rapisarda B.17)
      with Pre => True, Post => True;
 
-   --  Aspen Pyrogel 2250 alumina-silica felt, primary/secondary insulator.
-   --  [Citation: NASA-TM-2012-011662 — insulation materials under evaluation
-   --   are "Pyrogel 3350, Pyrogel 2250, and Saffil"; IRVE-3 flew 2250.]
-   function TPS_Pyrogel_2250 return TPS_Material is
-     (Name       => "Py2250",
-      Density    => 200.0,
+   --  Aspen Pyrogel 3350 alumina-silica aerogel blanket, primary and
+   --  secondary insulator. Thickness and T_max come from the NASA/Rapisarda
+   --  schedule; conductivity is the ONLY property not sourced from it.
+   --  [Citation: Aspen Aerogels Pyrogel XT datasheet -- k = 0.14 .. 0.62
+   --   BTU-in/(hr-ft2-F) over 200..1400 degF, ASTM C177, i.e. 0.020 .. 0.089
+   --   W/(m*K); the 0.02 W/(m*K) used here is the low-temperature end. That
+   --   datasheet is Pyrogel XT, not 3350 -- a product-family proxy.]
+   --
+   --  RANGE / PROVENANCE NOTE: NASA Table 5 gives 1100 degC (1373 K) as the
+   --  maximum use temperature and Rapisarda's B.17 carries the same 1373 K,
+   --  so the limit is measured rather than assumed. NASA also warns that
+   --  Pyrogel "is an active material that chars and outgasses at
+   --  temperatures above approximately 350 degC" -- a 1-D conduction model
+   --  does not capture that, and the caveat is retained here.
+   --  EMISSIVITY: Rapisarda's B.17 leaves Pyrogel blank, so the stack-level
+   --  value 0.80 (TPS_Layup.Emissivity / IRVE3_FTPS_EMISSIVITY) is recorded
+   --  by explicit owner decision rather than invented per-ply.
+   function TPS_Pyrogel_3350 return TPS_Material is
+     (Name       => "Py3350",
+      Density    => 110.0,     -- kg/m^3 (Rapisarda B.17; was 200.0)
       Cp         => 1000.0,
-      Thermal_K  => 0.02,
-      Emissivity => 0.85,
-      Thickness  => 0.0025)    -- m (2.5 mm per ply)
+      Thermal_K  => 0.02,      -- W/(m*K) (Aspen Pyrogel XT, ASTM C177)
+      Emissivity => 0.80,      -- stack-level value (owner decision)
+      Thickness  => 0.003047,  -- m (3047 um = 0.3047 cm, NASA Table 5)
+      T_Max      => 1373.0)    -- K (1100 degC, NASA Table 5 / Rapisarda B.17)
      with Pre => True, Post => True;
 
-   --  AKK: aluminized Kapton film laminated to Kevlar, the thin impermeable
-   --  gas barrier backing the fabric+insulator stack.
-   --  [Citation: NASA-TM-2012-011662 — "The material used for the gas barrier
-   --   is an aluminized Kapton layer laminated to a layer of Kevlar and is
-   --   designated AKK."]
-   function TPS_AKK_Gas_Barrier return TPS_Material is
-     (Name       => "AKK   ",
-      Density    => 1420.0,
+   --  Kapton HN polyimide film, the thin impermeable gas barrier on the cold
+   --  face. Replaces the AKK (aluminised Kapton + Kevlar) barrier of the
+   --  flown IRVE-3 hardware, because Rapisarda's ply 5 is plain Kapton.
+   --  [Citation: Rapisarda 2023 Table 4.17 -- Kapton L = 0.0025 cm,
+   --   m/A = 0.0037 g/cm2 = NASA/TM-20110012051 Table 5 Kapton row]
+   --
+   --  DENSITY CONFLICT, RESOLVED IN RAPISARDA'S FAVOUR: the Duke mu2e
+   --  physical-properties page gives Kapton rho = 1420 kg/m3 alongside the
+   --  k = 0.12 W/(m*K) used here, whereas Rapisarda's B.17 gives 3100. They
+   --  disagree, so the k transfers between sources but the density does not
+   --  and B.17's 3100 is used -- the layup is specified from Rapisarda.
+   --
+   --  LIMIT CONFLICT, ALSO RESOLVED IN RAPISARDA'S FAVOUR: NASA Table 5
+   --  lists Kapton's maximum use temperature as 350 degC (623 K), but
+   --  Rapisarda's B.17 carries 773 K (500 degC). 773 K is used because the
+   --  layup is specified from Rapisarda; the discrepancy is recorded rather
+   --  than hidden, and 773 K is the MORE PERMISSIVE of the two.
+   --
+   --  THICKNESS NOTE: 25 um is below the old TPS_Thickness_Range floor of
+   --  1.0e-4 m, which is why that floor was lowered to 1.0e-5 m. It is also
+   --  HALF NASA's own 2x Kapton baseline (NASA 20110012051 uses two Kapton
+   --  plies in its gas barrier), so this is a single-ply barrier.
+   function TPS_Kapton_Gas_Barrier return TPS_Material is
+     (Name       => "Kaptn ",
+      Density    => 3100.0,    -- kg/m^3 (Rapisarda B.17; Duke page says 1420)
       Cp         => 1090.0,
-      Thermal_K  => 0.12,
-      Emissivity => 0.70,
-      Thickness  => 0.00015)   -- m (150 um)
+      Thermal_K  => 0.12,      -- W/(m*K) (Duke mu2e properties page)
+      Emissivity => 0.12,      -- Rapisarda B.17 (was 0.70 for AKK)
+      Thickness  => 0.000025,  -- m (25 um = 0.0025 cm, NASA Table 5)
+      T_Max      => 773.0)     -- K (Rapisarda B.17; NASA says 623 K)
      with Pre => True, Post => True;
 
-   --  The actual IRVE-3 flight F-TPS layup, ordered from the HOT face inward:
+   --  THE F-TPS SCHEDULE THIS PROJECT RUNS -- RAPISARDA 2023, 2nd-GENERATION
+   --  FLEXIBLE TPS, ordered from the HOT face inward.
    --
-   --    ply 1  Nextel BF-20    0.6 mm   \ outer fabric
-   --    ply 2  Nextel BF-20    0.6 mm   /  (two plies)
-   --    ply 3  Pyrogel 2250   2.5 mm   \ insulation
-   --    ply 4  Pyrogel 2250   2.5 mm   /  (two plies)
-   --    ply 5  AKK             0.15 mm    gas barrier (cold side)
+   --    ply 1  Nicalon SiC    0.506 mm  \ outer fabric   T_max 2073 K
+   --    ply 2  Nicalon SiC    0.506 mm  /  (two plies)   T_max 2073 K
+   --    ply 3  Pyrogel 3350   3.047 mm  \ insulation    T_max 1373 K
+   --    ply 4  Pyrogel 3350   3.047 mm  /  (two plies)  T_max 1373 K
+   --    ply 5  Kapton         0.025 mm     gas barrier   T_max  773 K
    --    ---------------------------------
-   --    total  6.35 mm = 0.25 in exactly
+   --    total  7.131 mm
    --
-   --  SOURCES FOR THIS SCHEDULE:
-   --    * Composition and order (Nextel / Pyrogel / Kapton-Kevlar):
-   --      Dillman et al., AIAA 2014-4141 — "two layers of high-temperature
-   --      Nextel fabric covering Pyrogel insulation and a Kapton/Kevlar thin
-   --      film gas barrier."
-   --      [Citation: https://ntrs.nasa.gov/citations/20140000147]
-   --    * Total depth ~1/4 in: NASA EDL workshop IRVE-3 overview, "TPS Layup
-   --      (~1/4 in)". [Citation: https://ntrs.nasa.gov/]
-   --    * Ply counts (two fabric plies, two insulator plies):
-   --      NASA-TM-2012-011662 material survey.
+   --  ⚠ NAME VS CONTENT -- READ BEFORE CITING THIS AS "WHAT IRVE-3 FLEW".
+   --  The function keeps the IRVE-3 name because it still models the IRVE-3
+   --  VEHICLE, but the SCHEDULE is no longer IRVE-3's flown hardware. IRVE-3
+   --  flew two layers of Nextel BF-20, two of Pyrogel 3350 and one AKK, for
+   --  a 6.35 mm total; this is Rapisarda's recommended second-generation
+   --  upgrade in which "Nicalon SiC material is employed to replace Nextel
+   --  for the outer layers". The two are the flown vehicle and its
+   --  successor design, not two readings of one truth.
+   --  [Citation: NASA-TM-2012-011662 -- "The IRVE-3 vehicle heat shield is
+   --   made up of two layers of Nextel BF-20, two layers of Pyrogel 3350, and
+   --   one layer of AKK."]
+   --  [Citation: Rapisarda 2023 Sec 4.5 -- "More recent advances by NASA
+   --   developed the second generation of F-TPS, in which Nicalon SiC
+   --   material is employed to replace Nextel for the outer layers."]
    --
-   --  HONEST CAVEAT — PER-PLY THICKNESSES ARE ESTIMATES:
-   --    The sources fix the ORDER, the ply COUNT and the 6.35 mm TOTAL, but
-   --    do NOT publish individual ply thicknesses. The 0.6 / 0.6 / 2.5 / 2.5
-   --    / 0.15 mm split allocates the published total in proportion to the
-   --    role each ply plays (thin fabric skins, thick felt core, very thin
-   --    gas barrier). The TOTAL is faithful; the individual values are not
-   --    flight-exact and must be replaced if a primary source is obtained.
-   --    The conduction solver is thickness-driven, so this affects the
-   --    in-depth profile but not the validity of the model.
+   --  SOURCES FOR THIS SCHEDULE -- EVERY PLY THICKNESS IS MEASURED:
+   --    * Thickness, areal weight and maximum use temperature for all three
+   --      materials: NASA/TM-20110012051 Table 5, reproduced verbatim as
+   --      Rapisarda 2023 Table 4.17.
+   --      [Citation: https://ntrs.nasa.gov/api/citations/20110012051/downloads/20110012051.pdf]
+   --      Rows actually used: "5 Harness Satin (26x26)" 0.0506 cm / 0.0425
+   --      g/cm2 / 1800 degC (= the first two plies); "Pyrogel 3350" 0.3047 cm
+   --      / 0.0518 g/cm2 / 1100 degC; "Kapton" 0.0025 cm / 0.0037 g/cm2 /
+   --      350 degC.
+   --    * Density and emissivity: Rapisarda 2023 Table B.17 (Nicalon SiC
+   --      rho 1468, eps 0.75; Pyrogel eps not given; Kapton rho 3100,
+   --      eps 0.12).
+   --    * Ply ORDER: Rapisarda 2023 Sec 4.5.1 thermocouple description --
+   --      "TC1 is measured at the interface between the second layer of SiC
+   --      and the first layer of Pyrogel ... TC2 is located between the two
+   --      Pyrogel layers and, finally, TC3 between the second Pyrogel layer
+   --      and the first Kapton layer."
+   --
+   --  KNOWN INTERNAL INCONSISTENCY IN THE SOURCE, RECORDED NOT RESOLVED:
+   --    Rapisarda's Table 4.17 areal weights do NOT equal rho x L with his
+   --    own B.17 densities -- SiC 1468 x 0.000506 = 0.0743 g/cm2 against a
+   --    tabulated 0.0425 (ratio 0.57); Pyrogel 110 x 0.003047 = 0.0335
+   --    against 0.0518 (1.54); Kapton 3100 x 2.5e-5 = 0.00775 against 0.0037
+   --    (0.48). B.17's rho is a bulk material value while 4.17's m/A is the
+   --    measured woven specimen, so the two are not additive. Density is
+   --    taken from B.17 (the material card); areal weight is not used as an
+   --    input anywhere in the solver.
+   --
+   --  T_Limit IS THE STRUCTURE LIMIT, NOT A PLY LIMIT. It stays at
+   --  523.15 K (250 degC) because that is the temperature the PROTECTED
+   --  STRUCTURE may reach -- a different failure mode from any ply
+   --  overheating. Per-ply capability lives in TPS_Material.T_Max and is
+   --  read with Ply_Temperature_Limit.
    function TPS_Layup_IRVE3 return TPS_Layup is
-     (Layers      => (1 => (Material  => TPS_Nextel_BF20,
-                           Thickness => 0.0006),
-                      2 => (Material  => TPS_Nextel_BF20,
-                           Thickness => 0.0006),
-                      3 => (Material  => TPS_Pyrogel_2250,
-                           Thickness => 0.0025),
-                      4 => (Material  => TPS_Pyrogel_2250,
-                           Thickness => 0.0025),
-                      5 => (Material  => TPS_AKK_Gas_Barrier,
-                           Thickness => 0.00015),
+     (Layers      => (1 => (Material  => TPS_Nicalon_SiC,
+                           Thickness => 0.000506),
+                      2 => (Material  => TPS_Nicalon_SiC,
+                           Thickness => 0.000506),
+                      3 => (Material  => TPS_Pyrogel_3350,
+                           Thickness => 0.003047),
+                      4 => (Material  => TPS_Pyrogel_3350,
+                           Thickness => 0.003047),
+                      5 => (Material  => TPS_Kapton_Gas_Barrier,
+                           Thickness => 0.000025),
                       --  Inactive slots. Layer_Count = 5 means consumers
                       --  read indices 1 .. 5 only; these defaults exist
                       --  solely to satisfy the aggregate, and the filler
                       --  material is the OUTERMOST real ply so an accidental
                       --  over-read yields a physically sane resistance.
-                      others => (Material  => TPS_Nextel_BF20,
-                                 Thickness => 0.0006)),
+                      others => (Material  => TPS_Nicalon_SiC,
+                                 Thickness => 0.000506)),
       Layer_Count => 5,
       Emissivity  => 0.80,
       T_Limit     => IRVE3_FTPS_STRUCT_LIMIT_K)
@@ -720,7 +923,9 @@ package StellarOrion_Types is
    --
    --  WHY THIS EXISTS (axiom-derived, not a convenience):
    --    TPS_Material describes a HOMOGENEOUS slab, but the IRVE-3 vehicle
-   --    flew a 5-ply FLEXIBLE TPS (TPS_Layup_IRVE3, 6.35 mm total). Legacy
+   --    flies a 5-ply FLEXIBLE TPS (TPS_Layup_IRVE3, 7.131 mm total under
+   --    the Rapisarda schedule; 6.35 mm for the Nextel hardware IRVE-3
+   --    actually flew). Legacy
    --    consumers that still take a TPS_Material -- Calculate_Flight_Metrics
    --    -> Backface_Temperature, MoP_Fitness, the preset self-tests -- cannot
    --    express a layup at all. Handing them TPS_SiC (the 25.4 mm LOFTID
@@ -733,7 +938,7 @@ package StellarOrion_Types is
    --
    --  AXIOMS:
    --    A1 (depth):        T  = SUM(delta_i) = Layup_Thickness, the real
-   --                       stack depth (theory T3: 6.35 mm = 0.25 in, never
+   --                       stack depth (theory T3: 7.131 mm, never
    --                       the 25.4 mm SiC baseline).
    --    A2 (areal mass):   m' = SUM(rho_i * delta_i)  [kg/m^2].
    --    A3 (areal heat capacity):
@@ -753,15 +958,17 @@ package StellarOrion_Types is
    --    T1 (capacitance preservation, A2+A3+A4): the back-face rise
    --      (q*dt*eta)/(rho* * Cp* * T) equals the layup's (q*dt*eta)/C'.
    --    T2 (resistance preservation, A5): T/k* equals Layup_Resistance.
-   --    T3 (depth fidelity, A1): T is the published IRVE-3 layup depth.
+   --    T3 (depth fidelity, A1): T is the published layup depth -- 7.131
+   --                       mm for the Rapisarda schedule this project
+   --                       runs, never the 25.4 mm SiC baseline.
    --  APPLICATION: the active --tps preset for the IRVE-3 vehicle path
    --    (stellarorion_project.adb), so every legacy TPS_Material consumer
    --    reads IRVE-3 F-TPS rather than the LOFTID SiC baseline.
    --
    --  RANGE NOTE (why no defensive clamp is added): both derived scalars
    --    come from COMPILE-TIME constants (TPS_Layup_IRVE3), giving
-   --    rho* = 1.6930/0.00635 = 266.6 kg/m^3 and Cp* = 1760.2/1.6930 =
-   --    1039.6 J/(kg*K), both inside TPS_Density_Range (10 .. 1e4) and
+   --    rho* = 2.2335/0.007131 = 313.2 kg/m^3 and Cp* = 2489.3/2.2335 =
+   --    1114.5 J/(kg*K), both inside TPS_Density_Range (10 .. 1e4) and
    --    TPS_Cp_Range (100 .. 1e4). The component range checks therefore
    --    cannot fail on the shipped preset; if the layup is ever retuned
    --    outside the envelope, Constraint_Error is raised loudly at the
@@ -769,7 +976,7 @@ package StellarOrion_Types is
    --
    --  CITATIONS:
    --    [Dillman14] Dillman et al., AIAA 2014-4141 -- IRVE-3 F-TPS layup:
-   --      two Nextel BF-20 fabric plies over two Pyrogel 2250 insulator
+   --      two Nextel BF-20 fabric plies over two Pyrogel 3350 insulator
    --      plies and an aluminized-Kapton/Kevlar (AKK) gas barrier, ~1/4 in
    --      total; https://ntrs.nasa.gov/citations/20140000147
    --    [Baumeister06] Ch. 4 -- series/parallel composite-wall resistance
@@ -954,7 +1161,7 @@ package StellarOrion_Types is
     --  Registry: GNATCOLL.Register_Routine (Suite, "Layup_Resistance", Layup_Resistance'Access);
     --  Registry: GNATCOLL.Register_Routine (Suite, "Layup_Thickness", Layup_Thickness'Access);
     --  Registry: GNATCOLL.Register_Routine (Suite, "TPS_Nextel_BF20", TPS_Nextel_BF20'Access);
-    --  Registry: GNATCOLL.Register_Routine (Suite, "TPS_Pyrogel_2250", TPS_Pyrogel_2250'Access);
+    --  Registry: GNATCOLL.Register_Routine (Suite, "TPS_Pyrogel_3350", TPS_Pyrogel_3350'Access);
     --  Registry: GNATCOLL.Register_Routine (Suite, "TPS_AKK_Gas_Barrier", TPS_AKK_Gas_Barrier'Access);
     --  Registry: GNATCOLL.Register_Routine (Suite, "TPS_Layup_IRVE3", TPS_Layup_IRVE3'Access);
     --  Registry: GNATCOLL.Register_Routine (Suite, "Test_TPS_IRVE3_FTPS", Test_TPS_IRVE3_FTPS'Access);

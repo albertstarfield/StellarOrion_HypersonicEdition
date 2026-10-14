@@ -6,15 +6,15 @@
     "n_theta": 48,
     "points_per_revolution": 48
   },
-  "q_sg_Wm2": 266509.28125,
-  "q_peak_Wm2": 266509.28125,
-  "q_peak_Wcm2": 26.650928125,
+  "q_sg_Wm2": 253620.703125,
+  "q_peak_Wm2": 253620.703125,
+  "q_peak_Wcm2": 25.3620703125,
   "nextel_bf20_rating_Wcm2": 30.0,
   "peak_within_nextel_rating": true,
   "t_surface_K": {
     "min": 300.0,
-    "max": 1550.2344970703125,
-    "mean": 863.2149597971063
+    "max": 1532.112060546875,
+    "mean": 855.3439166420385
   },
   "t_back_K": {
     "min": 300.0,
@@ -28,26 +28,26 @@
   "struct_limit_K": 523.15,
   "peak_element": {
     "element": 0,
-    "q_sg_Wm2": 266509.28125,
-    "t_surface_K": 1550.2344970703125,
+    "q_sg_Wm2": 253620.703125,
+    "t_surface_K": 1532.112060546875,
     "t_back_K": 300.0
   },
   "layup": {
     "ply_thickness_m": [
-      0.0006,
-      0.0006,
-      0.0025,
-      0.0025,
-      0.00015
+      0.000506,
+      0.000506,
+      0.003047,
+      0.003047,
+      2.5e-05
     ],
     "ply_thermal_k": [
-      0.25,
-      0.25,
+      1.5,
+      1.5,
       0.02,
       0.02,
       0.12
     ],
-    "total_thickness_m": 0.00635,
+    "total_thickness_m": 0.007130999999999999,
     "emissivity": 0.8,
     "struct_limit_K": 523.15
   },

@@ -1471,16 +1471,57 @@ _TPS_STATUS_REMEDY = {
 # (stellarorion_types.ads:672-693) and are asserted against the Ada-side
 # preset by the test suite — a transcription drift would otherwise be silent.
 #
-#   ply 1  Nextel BF-20   0.60 mm  k=0.25 W/(m*K)   outer fabric
-#   ply 2  Nextel BF-20   0.60 mm  k=0.25 W/(m*K)
-#   ply 3  Pyrogel 2250   2.50 mm  k=0.02 W/(m*K)   insulation
-#   ply 4  Pyrogel 2250   2.50 mm  k=0.02 W/(m*K)
-#   ply 5  AKK gas barrier 0.15 mm k=0.12 W/(m*K)   cold side
+#   ply 1  Nicalon SiC    0.506 mm  k=1.5  W/(m*K)  outer fabric
+#   ply 2  Nicalon SiC    0.506 mm  k=1.5  W/(m*K)
+#   ply 3  Pyrogel 3350   3.047 mm  k=0.02 W/(m*K)  insulation
+#   ply 4  Pyrogel 3350   3.047 mm  k=0.02 W/(m*K)
+#   ply 5  Kapton         0.025 mm  k=0.12 W/(m*K)  gas barrier (cold side)
 #   ---------------------------------------------------------------------
-#   total 6.35 mm = 0.25 in exactly
-# [Citation: NASA-TM-2012-011662; Dillman et al. AIAA 2014-4141]
-IRVE3_FTPS_PLY_THICKNESS_M = (0.0006, 0.0006, 0.0025, 0.0025, 0.00015)
-IRVE3_FTPS_PLY_THERMAL_K = (0.25, 0.25, 0.02, 0.02, 0.12)
+#   total 7.131 mm
+#   R_total = 0.305583 m^2*K/W   (SiC 0.2208 %, Pyrogel 99.711 %, Kapton
+#                                   0.068 % of the series resistance)
+# [Citation: Rapisarda 2023 Table 4.17 == NASA/TM-20110012051 Table 5 --
+#   "5 Harness Satin (26x26)" 0.0506 cm / 0.0425 g/cm2 / 1800 degC;
+#   "Pyrogel 3350" 0.3047 cm / 0.0518 g/cm2 / 1100 degC;
+#   "Kapton" 0.0025 cm / 0.0037 g/cm2 / 350 degC]
+# [Citation: Rapisarda 2023 Table B.17 -- Nicalon SiC rho 1468, eps 0.75;
+#   Kapton rho 3100, eps 0.12; Pyrogel eps not given -> stack-level 0.80]
+# WHY THIS IS NOT IRVE-3's FLOWN HARDWARE: IRVE-3 flew two layers of Nextel
+# BF-20, two of Pyrogel 3350 and one AKK for a 6.35 mm total. This is the
+# second-generation schedule Rapisarda recommends ("Nicalon SiC material is
+# employed to replace Nextel for the outer layers") and the project runs by
+# explicit owner decision (2026-10-14). The two are the flown vehicle and its
+# successor design, not two readings of one truth.
+IRVE3_FTPS_PLY_THICKNESS_M = (0.000506, 0.000506, 0.003047, 0.003047,
+                             0.000025)
+IRVE3_FTPS_PLY_THERMAL_K = (1.5, 1.5, 0.02, 0.02, 0.12)
+# Per-ply material GRADES, same order and same authority as the two tuples
+# above. WHY IT EXISTS: `scripts/make_ply_heatflux_plots.py` used to take the
+# ply name, thickness and conductivity from `results/tps_conduction/
+# tps_step2200_layers.csv`, which has NO writer anywhere in this repository
+# (verified: `grep -rn "layers.csv"` finds only readers) and therefore carried
+# stale values -- it still recorded k = 0.25 and the superseded grade
+# "Pyrogel 2250" after both had changed. A CSV column is never authoritative
+# for a design property.  The plot script now reads these constants instead
+# and reports (rather than silently trusts) any disagreement with the CSV.
+# [Citation: NASA/TM-20110012051 Table 5, rows cited above]
+IRVE3_FTPS_PLY_NAMES = ("Nicalon SiC", "Nicalon SiC", "Pyrogel 3350",
+                        "Pyrogel 3350", "Kapton")
+# Per-ply maximum CONTINUOUS USE temperature [K] -- the ply's OWN material
+# capability, which is NOT the structure limit below. Rapisarda Table B.17
+# (== NASA/TM-20110012051 Table 5 in degC: 1800 / 1800 / 1100 / 1100 / 350).
+# NOTE on ply 5: NASA lists Kapton at 350 degC (623 K) but Rapisarda's B.17
+# carries 773 K (500 degC); 773 K is used because the layup is specified from
+# Rapisarda. 773 K is the MORE PERMISSIVE of the two -- recorded, not hidden.
+IRVE3_FTPS_PLY_TMAX_K = (2073.0, 2073.0, 1373.0, 1373.0, 773.0)
+# Per-ply density [kg/m^3], Rapisarda Table B.17. WARNING: these do NOT
+# reproduce Rapisarda's own Table 4.17 areal weights -- 1468*0.000506 =
+# 0.0743 g/cm2 against a tabulated 0.0425, 110*0.003047 = 0.0335 against
+# 0.0518, 3100*2.5e-5 = 0.00775 against 0.0037. B.17's rho is a bulk material
+# value while 4.17's m/A is the measured woven specimen, so the two are not
+# additive. Density is taken from B.17 (the material card); areal weight is
+# not an input to any solver.
+IRVE3_FTPS_PLY_DENSITY_KGM3 = (1468.0, 1468.0, 110.0, 110.0, 3100.0)
 IRVE3_FTPS_LAYER_COUNT = 5
 IRVE3_FTPS_EMISSIVITY = 0.80
 # Deepest temperature the layup may present to protected structure.

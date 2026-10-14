@@ -418,7 +418,11 @@ package StellarOrion_Physics is
    --      Radiative_Eq_Temp R1); dt in [0, 1e4] s (2.8 h pulse);
    --      eta_lag in (0, 1].
    --    AXIOM T3: rho_TPS in [10, 1e4] kg/m^3 (aerogel ~10; C-C ~1600);
-   --      Cp in [100, 1e4] J/(kg K); thickness in [1e-4, 1] m.
+   --      Cp in [100, 1e4] J/(kg K); thickness in [1e-5, 1] m.
+   --      T3 RANGE NOTE: the homogeneous-slab floor stays at 1e-4
+   --      m because no legacy caller ever passes a single-material
+   --      slab thinner than a film; only the LAYUP path had to be
+   --      lowered, for the 25 um Kapton ply.
    --  OVERFLOW PROOF: capacitance in [0.1, 1e8]; numerator <= 2e19;
    --    ratio <= 2e20; T_back <= 3000 + 2e20 << Float'Last.
    --  Verification evidence: gnatprove --level=4 clean (scripts/prove.sh);
@@ -1043,7 +1047,7 @@ package StellarOrion_Physics is
                           (if I <= Layup.Layer_Count then
                               Layup.Layers (I).Material.Thermal_K >= 1.0e-3
                               and Layup.Layers (I).Material.Thermal_K <= 1.0e3
-                              and Layup.Layers (I).Thickness >= 1.0e-4
+                              and Layup.Layers (I).Thickness >= 1.0e-5
                               and Layup.Layers (I).Thickness <= 1.0)),
           Post => T_Back >= 0.0
                    and T_Surface >= 0.0
@@ -1120,7 +1124,7 @@ and T_Surface >= 0.0
                           (if I <= Layup.Layer_Count then
                               Layup.Layers (I).Material.Thermal_K >= 1.0e-3
                               and Layup.Layers (I).Material.Thermal_K <= 1.0e3
-                              and Layup.Layers (I).Thickness >= 1.0e-4
+                              and Layup.Layers (I).Thickness >= 1.0e-5
                               and Layup.Layers (I).Thickness <= 1.0));
 
    --  Reconstruct a per-element heat flux q_i from the SPARTA surface

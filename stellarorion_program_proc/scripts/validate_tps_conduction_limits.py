@@ -49,8 +49,11 @@ CITATIONS
         mixtures" -- the Q_SG magnitude driving every case below.
     [2] Baumeister, P.K. (2006), Ch. 4 (composite-wall series resistance)
         and Ch. 11 (radiation boundary condition) -- A1, A3, T3.
-    [3] Dillman et al., AIAA 2014-4141 -- IRVE-3 F-TPS layup (two Nextel
-        BF-20 plies / two Pyrogel 2250 plies / aluminized-Kapton-Kevlar gas
+    [3] Rapisarda 2023 Table 4.17 == NASA/TM-20110012051 Table 5 -- the F-TPS
+        layup this file validates (two Nicalon SiC plies / two Pyrogel 3350
+        plies / Kapton gas barrier, 7.131 mm total). Dillman et al., AIAA
+        2014-4141 documents the OLD IRVE-3 flown layup this replaces (two
+        Nextel BF-20 plies / two Pyrogel 3350 plies / aluminized-Kapton-Kevlar
         barrier, ~1/4 in total); https://ntrs.nasa.gov/citations/20140000147
     [4] IEEE 754-2019 -- T_Surface/T_Back cross the C ABI as Ada Float
         (binary32, 24-bit significand), so exactness assertions use a
@@ -94,9 +97,22 @@ STEP2200_VEL_MS = 3378.0
 Q_SG = float(W.sutton_graves_heat_flux(
     STEP2200_ALT_KM, STEP2200_VEL_MS)["heat_flux_Wm2"])
 
-# The real IRVE-3 F-TPS layup, hot face first [3].
-IRVE3_THICKNESS = (0.0006, 0.0006, 0.0025, 0.0025, 0.00015)
-IRVE3_K = (0.25, 0.25, 0.02, 0.02, 0.12)
+# The F-TPS layup, hot face first [3].
+#
+# SINGLE-SOURCED from the Ada preset via the Python wrapper. This file used to
+# hard-code `IRVE3_K = (0.25, 0.25, ...)`, i.e. the same stale Nextel k and the
+# same superseded grade that the orphan `tps_step2200_layers.csv` carried: a
+# layup change could be fully applied in the solver and still leave this
+# validator checking a stack that no longer exists. A text literal in a
+# validation script is exactly as authoritative as a column in a writer-less
+# CSV -- which is to say, not at all.
+# [3] Rapisarda 2023 Table 4.17 == NASA/TM-20110012051 Table 5;
+#     stellarorion_types.ads TPS_Layup_IRVE3.
+IRVE3_THICKNESS = tuple(W.IRVE3_FTPS_PLY_THICKNESS_M)
+IRVE3_K = tuple(W.IRVE3_FTPS_PLY_THERMAL_K)
+# Per-ply maximum continuous-use temperature [K] -- ply capability, NOT the
+# 523.15 K structure limit. Rapisarda 2023 Table B.17.
+IRVE3_PLY_TMAX_K = tuple(W.IRVE3_FTPS_PLY_TMAX_K)
 
 # binary32 round-trip tolerance for values crossing the C ABI as Ada Float [4].
 RTOL_F32 = 1.2e-7
@@ -539,7 +555,8 @@ def main() -> int:
     print("Composite F-TPS conduction solver -- limit validation")
     print("  solver   : StellarOrion_Physics.TPS_Conduction_C (Ada/SPARK)")
     print("  wrapper  : src/python/ada_pinn_wrapper.py::tps_conduction")
-    print("  layup    : IRVE-3 F-TPS (Nextel BF-20 x2 / Pyrogel 2250 x2 / AKK)")
+    print("  layup    : F-TPS (Nicalon SiC x2 / Pyrogel 3350 x2 / Kapton), "
+          "Rapisarda 2023 Table 4.17 == NASA/TM-20110012051 Table 5")
     print(f"  library  : {W._LIB_NAME}")
     print("=" * 78)
     print(f"Stefan-Boltzmann used for the analytic references: "

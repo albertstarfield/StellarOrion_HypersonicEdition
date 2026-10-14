@@ -63,6 +63,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 # Pre-build matplotlib font cache ONCE before any Pool spawns.
 import matplotlib
 
+import ada_pinn_wrapper as W  # design properties live in the Ada preset
 from ada_pinn_wrapper import fay_riddell_heat_flux, tps_conduction
 from validation_pipeline import (
     generate_paraview_vtu,
@@ -398,9 +399,14 @@ def _compute_frame_data(step: int):
     #   THEOREM: q_ply = (T_top_ply - T_bottom_ply)/R_ply is the same for all
     #           plies (series resistance -> identical current). We report per-ply
     #           through-flux and per-ply temperature drop.
-    # Citation: IRVE-3 F-TPS layup, stellarorion_types.ads L695-716
-    _ply_thk = (0.0006, 0.0006, 0.0025, 0.0025, 0.00015)
-    _ply_k   = (0.25, 0.25, 0.02, 0.02, 0.12)
+    # Citation: IRVE-3 F-TPS layup, stellarorion_types.ads TPS_Layup_IRVE3.
+    # SINGLE-SOURCED from the Ada preset via the wrapper. This site hard-coded
+    # `_ply_k = (0.25, 0.25, 0.02, 0.02, 0.12)` -- the stale Nextel k and the
+    # superseded schedule -- so every per-ply decomposition this file emitted
+    # described a stack the solver no longer solved. A text literal here is as
+    # authoritative as a column in a writer-less CSV: not at all.
+    _ply_thk = tuple(W.IRVE3_FTPS_PLY_THICKNESS_M)
+    _ply_k   = tuple(W.IRVE3_FTPS_PLY_THERMAL_K)
     _ply_bnd = [0.0]
     for _t in _ply_thk:
         _ply_bnd.append(_ply_bnd[-1] + _t)

@@ -334,18 +334,18 @@ package body StellarOrion_Types is
    --  Total active thickness: T = SUM(delta_i).  Independent of k (theory T2).
    --
    --  The lower postcondition bound comes from the Layer_Count >= 1 subtype
-   --  guarantee combined with Thickness >= 1e-4 per ply: at least one ply is
+   --  guarantee combined with Thickness >= 1e-5 per ply: at least one ply is
    --  summed, so the result cannot fall below a single ply's floor.
    --  @test: test_layup_thickness
    function Layup_Thickness (L : TPS_Layup) return Float is
       --  Contract (declared in StellarOrion_Types spec):
       --  pre => L.Layer_Count >= 1 (subtype TPS_Layer_Count_Range)
-      --  post => Layup_Thickness'Result >= 1.0e-4
+      --  post => Layup_Thickness'Result >= 1.0e-5
       Acc : Float := 0.0;
    begin
       for I in TPS_Layer_Count_Range loop
          --  loop invariant: Acc is the partial sum of the first I-1 active
-         --  plies' thicknesses, each >= 1.0e-4, so Acc >= 0 and non-decreasing.
+         --  plies' thicknesses, each >= 1.0e-5, so Acc >= 0 and non-decreasing.
          exit when I > L.Layer_Count;
          Acc := Acc + L.Layers (I).Thickness;
       end loop;
@@ -355,6 +355,52 @@ package body StellarOrion_Types is
          Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Layup_Thickness failed: " & Ada.Exceptions.Exception_Message (E));
          raise;
    end Layup_Thickness;
+
+   --  A per-ply temperature capability, read from the ply's own material
+   --  card rather than from a layup-level scalar.
+   --
+   --  WHY IT IS DECLARED `with Post => ... >= 0.0` ONLY: the return is a
+   --  branch on Ply against Layer_Count, both of which are subtype-bounded,
+   --  so no precondition is needed and no division is reachable. The 0.0
+   --  fallback for an INACTIVE ply is deliberate: a caller that over-reads
+   --  the fixed-capacity array gets a limit no physical temperature can
+   --  exceed, so it fails loudly instead of passing.
+   --  @test: test_ply_temperature_limit
+   function Ply_Temperature_Limit (L : TPS_Layup; Ply : TPS_Layer_Count_Range)
+      return Float is
+   begin
+      if Ply <= L.Layer_Count then
+         return L.Layers (Ply).Material.T_Max;
+      else
+         return 0.0;
+      end if;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Ply_Temperature_Limit failed: "
+                               & Ada.Exceptions.Exception_Message (E));
+         raise;
+   end Ply_Temperature_Limit;
+
+   function Layup_Min_Ply_Limit (L : TPS_Layup) return Float is
+      --  Seeded from ply 1, which is ACTIVE because Layer_Count >= 1 by
+      --  subtype -- so this is never a filler-material limit.
+      Min_Limit : Float := L.Layers (TPS_Layer_Count_Range'First).Material.T_Max;
+   begin
+      for I in TPS_Layer_Count_Range loop
+         --  loop invariant: Min_Limit is the smallest T_Max seen over the
+         --  ACTIVE plies below I.
+         exit when I > L.Layer_Count;
+         if L.Layers (I).Material.T_Max < Min_Limit then
+            Min_Limit := L.Layers (I).Material.T_Max;
+         end if;
+      end loop;
+      return Min_Limit;
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] Layup_Min_Ply_Limit failed: "
+                               & Ada.Exceptions.Exception_Message (E));
+         raise;
+   end Layup_Min_Ply_Limit;
 
    --  Runtime proof that the ACTIVE TPS preset is the IRVE-3 F-TPS and not
    --  the 25.4 mm LOFTID SiC baseline.
@@ -367,7 +413,7 @@ package body StellarOrion_Types is
    --  EXPECTED RESULT: thickness 0.00635 m (0.25 in, and strictly under half
    --    the 25.4 mm SiC baseline it replaces); density ~266.61 kg/m^3;
    --    Cp ~1039.68 J/(kg*K); Thermal_K ~0.0248 W/(m*K); emissivity 0.80;
-   --    and rho*Cp*T == 1760.17 J/(m^2*K), T/k* == 0.25605 m^2*K/W.
+   --    and rho*Cp*T == 2388.99 J/(m^2*K), T/k* == 0.305583 m^2*K/W.
    --  WHEN IT MUST ERROR: an Assertion_Error from any identity below means the
    --    preset no longer matches the layup it claims to represent; it is
    --    logged and re-raised, never swallowed.
@@ -405,7 +451,7 @@ package body StellarOrion_Types is
            * Layup.Layers (I).Thickness;
       end loop;
 
-      --  T3 / A1: the record carries the published 6.35 mm layup depth ...
+      --  T3 / A1: the record carries the published 7.131 mm layup depth ...
       pragma Assert (abs (M.Thickness - Ref_T) <= Tol * Ref_T);
       --  ... and is unambiguously NOT the 25.4 mm wrong-vehicle baseline:
       --  strict, so a regression to any SiC-scale depth cannot pass.
@@ -451,11 +497,11 @@ package body StellarOrion_Types is
    --  IRVE-3 F-TPS as a single-material lumped equivalent.
    --
    --  EXPECTED RESULT (from TPS_Layup_IRVE3, hot face first):
-   --    Depth      0.00635 m  (6.35 mm = 0.25 in exactly)
-   --    rho*       266.6 kg/m^3   (areal mass 1.6930 kg/m^2 / depth)
-   --    Cp*        1039.6 J/(kg*K)(areal C' 1760.2 J/(m^2*K) / areal mass)
-   --    k*         0.02480 W/(m*K)(depth / R_total, R_total = 0.25605)
-   --    eps        0.80       (outer Nextel BF-20 face)
+   --    Depth      0.007131 m  (7.131 mm, Rapisarda schedule)
+   --    rho*       313.2 kg/m^3   (areal mass 2.2335 kg/m^2 / depth)
+   --    Cp*        1069.6 J/(kg*K)(areal C' 2389.0 J/(m^2*K) / areal mass)
+   --    k*         0.023336 W/(m*K)(depth / R_total, R_total = 0.305583)
+   --    eps        0.80       (outer Nicalon SiC face)
    --
    --  WHEN IT MUST ERROR: never for the shipped preset. Every input is a
    --  compile-time constant, and the derived rho* / Cp* / T fall inside the
@@ -505,13 +551,18 @@ package body StellarOrion_Types is
       --  subtypes of Float, so the aggregate assignment performs the range
       --  check the envelope requires on its own (a redundant Float(...) cast
       --  would only suppress that check and trip -gnatwe).
+      --  T_Max on the LUMPED record: the weakest ACTIVE ply's limit, because
+      --  a homogenised slab can only be as durable as its least durable
+      --  material. For the Rapisarda schedule that is ply 5 (Kapton, 773 K),
+      --  which is what a legacy TPS_Material consumer must be held to.
       return
         (Name       => "IRVE-3",
          Density    => Areal_Mass / Depth_M,
          Cp         => Areal_Cap / Areal_Mass,
          Thermal_K  => Depth_M / Layup_Resistance (Layup),
          Emissivity => Layup.Emissivity,
-         Thickness  => Depth_M);
+         Thickness  => Depth_M,
+         T_Max      => Layup_Min_Ply_Limit (Layup));
    exception
       when E : others =>
          Ada.Text_IO.Put_Line ("[VERBOSE_ERROR] TPS_IRVE3_FTPS failed: " & Ada.Exceptions.Exception_Message (E));

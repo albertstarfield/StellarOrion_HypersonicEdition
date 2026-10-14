@@ -1018,11 +1018,11 @@ package body StellarOrion_FFI is
                      & Standard.Integer'Image (Standard.Integer (TPS_STATUS_BAD_PLY_PROPERTY)) & ")");
                return;
             end if;
-            if D_V < 1.0e-4 or else D_V > 1.0 then
+            if D_V < 1.0e-5 or else D_V > 1.0 then
                Status := TPS_STATUS_BAD_PLY_PROPERTY;
                Log ("[TPS_Conduction_C] FAIL: ply " & Standard.Integer'Image (I)
                      & " Thickness=" & Float'Image (D_V)
-                     & " outside 1.0e-4 .. 1.0 m (Status="
+                     & " outside 1.0e-5 .. 1.0 m (Status="
                      & Standard.Integer'Image (Standard.Integer (TPS_STATUS_BAD_PLY_PROPERTY)) & ")");
                return;
             end if;

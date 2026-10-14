@@ -24,9 +24,17 @@ AXIOMS (all enforced in Ada; restated here as the driver's contract)
         (DSMC single-cell noise; the snapshot contains real negative values)
         floors the ratio at 0 and yields q_i = 0 rather than heating the TPS
         backwards.
-    A2  The layup is the IRVE-3 F-TPS: two Nextel BF-20 plies, two Pyrogel 2250
-        plies, one aluminized-Kapton/Kevlar (AKK) gas barrier; 6.35 mm total
-        = 0.25 in; outer emissivity 0.80; structure limit 523.15 K / 250 degC.
+    A2  The layup is the F-TPS schedule the project runs (Rapisarda 2023
+        Table 4.17 == NASA/TM-20110012051 Table 5), single-sourced from the
+        Ada preset through the wrapper: two Nicalon SiC plies (0.506 mm),
+        two Pyrogel 3350 plies (3.047 mm), one Kapton gas barrier (0.025 mm);
+        total 7.131 mm; outer emissivity 0.80; structure limit
+        523.15 K / 250 degC.
+        NOT IRVE-3's flown hardware: IRVE-3 flew two Nextel BF-20 plies, two
+        Pyrogel 3350 plies and an AKK barrier for a 6.35 mm total. This is the
+        second-generation schedule Rapisarda recommends ("Nicalon SiC material
+        is employed to replace Nextel for the outer layers") and the project
+        runs by explicit owner decision (2026-10-14).
     A3  Only the step-2200 snapshot is admissible. Any other step is refused
         before a single solve runs.
     A4  Ke_Ref must be strictly positive: it is the divisor that maps the
@@ -51,8 +59,13 @@ READING OF T_back (stated up front, because it is a model property)
 
 CITATIONS
     [1] Sutton, K. & Graves, A.G. (1972), NASA TR R-376 -- Q_SG magnitude.
-    [2] NASA-TM-2012-011662 -- Nextel BF-20 rated to 30 W/cm^2, the reference
-        the computed peak flux is compared against.
+    [2] NASA-TM-2012-011662 -- Nextel BF-20 rated to 30 W/cm^2 and Nicalon SiC
+        to 50 W/cm^2; the 30 W/cm^2 1st-generation figure is still the reference
+        the computed peak flux is compared against, so the comparison is
+        deliberately conservative against the 2nd-generation cloth actually
+        installed. Nicalon SiC conductivity 1.5 W/(m*K): cg-Nicalon fibre,
+        UCLA/PNNL "Thermophysical and Mechanical Properties of SiC/SiC
+        Composites" Table 1.
     [3] Dillman et al., AIAA 2014-4141 -- IRVE-3 F-TPS layup composition;
         https://ntrs.nasa.gov/citations/20140000147
     [4] VTK File Format Specification (XML DataArray / Piece attributes).
@@ -449,7 +462,8 @@ def main(argv: list[str] | None = None) -> int:
     print("-" * 78)
     print(f"elements solved            : {summary['elements']}")
     print(f"peak q_SG                  : {summary['q_peak_Wm2']:.1f} W/m^2 "
-          f"({summary['q_peak_Wcm2']:.3f} W/cm^2) vs Nextel BF-20 rating "
+          f"({summary['q_peak_Wcm2']:.3f} W/cm^2) vs 30 W/cm^2 1st-gen "
+          f"rating "
           f"{NEXTEL_BF20_RATING_WCM2:.0f} W/cm^2 -> "
           f"{'WITHIN' if summary['peak_within_nextel_rating'] else 'OVER'}")
     print(f"peak element               : #{summary['peak_element']['element']} "
