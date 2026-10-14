@@ -64,15 +64,15 @@ Specific objectives:
 \end{enumerate}
 
 \section{Research Gap}
-Four gaps remain in HIAD aerothermal analysis:
+Four gaps remain in HIAD aerothermal analysis. Each is stated with what the present work demonstrates and what it leaves open.
 \begin{itemize}
-    \item \textbf{Rarefied Regime Limitation:} Existing HIAD aerothermal studies rely on continuum CFD (RANS/LES), which is inappropriate once the local Knudsen number reaches the slip band ($Kn > 0.01$). DSMC methods have not been systematically applied to HIAD geometry optimization.
+    \item \textbf{Rarefied Regime Limitation:} Existing HIAD aerothermal studies rely on continuum CFD (RANS/LES), which is inappropriate once the local Knudsen number reaches the slip band ($Kn > 0.01$). DSMC methods have not been systematically applied to HIAD geometry optimization. \emph{Demonstrated here:} a DSMC framework applied to engine-parametric HIAD geometry, with the local Knudsen field mapped and the aerothermal loads validated against IRVE-3 flight data at altitudes where the shock layer is non-continuum. \emph{Left open:} an independent, cross-validated continuum-CFD comparison at the same conditions.
 
-    \item \textbf{Automated Design Space Exploration:} Manual parametric sweeps with individual CFD runs make high-dimensional design optimization (6+ parameters) infeasible. No framework couples automated geometry generation with DSMC simulation and machine learning-based optimization.
+    \item \textbf{Automated Design Space Exploration:} Manual parametric sweeps with individual CFD runs make high-dimensional design optimization (6+ parameters) infeasible. No framework couples automated geometry generation with DSMC simulation and machine learning-based optimization. \emph{Demonstrated here:} an end-to-end pipeline (engine-emitted geometry, DSMC, and surrogate-based Bayesian optimization) that sizes a space of six or more parameters within a single campaign. \emph{Left open:} the recorded search scores a closed-form cost and calls the solver only at the validation gate, so a solver-in-the-loop search is not yet exercised.
 
-    \item \textbf{PINN-DSMC Hybrid Approach:} Physics-Informed Neural Networks have been applied to CFD post-processing, but not as a smoothing layer for noisy DSMC particle data in HIAD applications.
+    \item \textbf{PINN-DSMC Hybrid Approach:} Physics-Informed Neural Networks have been applied to CFD post-processing, but not as a smoothing layer for noisy DSMC particle data in HIAD applications. \emph{Demonstrated here:} a physics-informed neural network with Navier-Stokes residuals trained on SPARTA surface fields, yielding a continuous, physics-consistent field from discrete particles. \emph{Left open:} the refinement is bypassed at final validation to eliminate neural network bias, and the delivered trainer enforces the continuity residual alone, so the accuracy gain of the full residual set is not yet quantified.
 
-    \item \textbf{Survivability Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, and backface temperature for HIAD configurations with surrogate-assisted optimization has not been demonstrated; this study delivers a constrained single-objective treatment of that problem, so the multi-objective generalization remains open.
+    \item \textbf{Survivability Optimization:} Simultaneous optimization of ballistic coefficient, peak heating, and backface temperature for HIAD configurations with surrogate-assisted optimization has not been demonstrated; this study delivers a constrained single-objective treatment of that problem. \emph{Demonstrated here:} one aggregate cost that trades heat load against drag, with one-sided backface-temperature and deceleration constraints, minimized by Bayesian Optimization. \emph{Left open:} the multi-objective generalization, a Pareto front over the same objectives.
 \end{itemize}
 
 \section{Novelty and Contributions}
