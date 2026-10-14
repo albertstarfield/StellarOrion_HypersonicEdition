@@ -219,9 +219,10 @@
   \textbf{Cost (implemented, F84)}\
   $J = w_\beta\,(\beta_{\mathrm{calc}}/\beta_{ref}-1)^2 +
   \sum_i w_i\cdot\{10^{15}\text{ if }y_i^{(\mathrm{pred})} > y_i^{(\mathrm{limit})}\}$\
-  Constrained form:
-  $J_c(\mathbf{x}) = J(\mathbf{x}) + \sum_j \Lambda_j\,\phi_j(\mathbf{x}),\;
-  \Lambda_j=10^6$ for hard constraints.\
+  $\beta_{calc}$ is the design ballistic coefficient ($\beta_{ref}=23.288$, Coq-backed);
+  $w_\beta,w_i$ weights; $y_i^{(pred)}$ a predicted metric;
+  $y_i^{(limit)}$ its failure limit; hard-constraint penalty uses $\Lambda_j=10^6$:\
+  $J_c(\mathbf{x}) = J(\mathbf{x}) + \sum_j \Lambda_j\,\phi_j(\mathbf{x})$.\
   \vspace{0.1cm}
   \textbf{Design Space (full bounds); BO campaign (3 active)}\
   \begin{tabular}{@{}ll@{}}
