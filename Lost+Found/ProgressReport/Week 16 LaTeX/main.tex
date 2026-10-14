@@ -144,6 +144,12 @@
    plotted at peak conditions (ada-pinn wrapper, Result plots).}
   {so_ply_stack_temperature}
 
+\PlotFrame{REDEMPTION 1f: OVERALL HEAT FLUX PICTURE}
+  {\MaxTextLines{2}%
+   Convection (Sutton-Graves) = reradiation + conduction through the TPS:
+   266509.3 = 261626.5 + 4882.8 W/m$^2$, residual 0.0000\% (F84).}
+  {heatflux_methodology}
+
 \PlotFrame{REDEMPTION 1b: CONVECTION TERM (Sutton--Graves)}
   {Recomputed with the corrected C\_SG = 1.7415e-4; the peak-element
    annotation updates on each re-run. (F21, F83).}
@@ -272,11 +278,6 @@
 % caption whose own arithmetic fails on screen is worse than no caption. One
 % decimal makes it exact: 261626.5 + 4882.8 = 266509.3. That is why the
 % caption carries .3 / .5 / .8 rather than integers.
-\PlotFrame{3c. HEAT FLUX: CONVECTION, CONDUCTION, RERADIATION}
-  {\MaxTextLines{2}%
-   Convection (Sutton-Graves) = reradiation + conduction through the TPS:
-   266509.3 = 261626.5 + 4882.8 W/m$^2$, residual 0.0000 \% (F84).}
-  {heatflux_methodology}
 
 % so_sutton_graves.png <- sutton_graves_parametric.png, drawn by
 % _proc CurrentThesisFinalReport/figures/generate_sutton_graves_parametric.py
