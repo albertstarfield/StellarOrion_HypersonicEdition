@@ -892,7 +892,14 @@ Original `.tar.zst` files are excluded from git tracking (see `.gitignore`). Spl
 
 ## 🤖 Computer Automation LLM Assisted Development
 
-This project was developed with the assistance of LLM agents using the following models:
+This project was developed with the assistance of LLM agents using the following models and agentic programs:
+
+**Agentic Programs:**
+- Antigravity
+- Project-Zephyrine
+- Opencode
+
+**Models:**
 
 - Gemini Flash 3.1
 - Gemini Pro 3.1
@@ -911,6 +918,8 @@ This project was developed with the assistance of LLM agents using the following
 - Space Bunny
 - Snowball Enaga
 - Step 5 Preview
+- Deepseek V4.1 Flash
+- Cat Jam
 
 > **Note:** Some models may or may not be available to the public and may be part of private model and/or temporary beta model and/or finetuned model.
 
