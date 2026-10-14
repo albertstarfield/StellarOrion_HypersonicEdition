@@ -108,7 +108,12 @@ def dim_structure() -> None:
             live.append((p.name, i, ln))
     em = [(n, i) for n, i, ln in live if "---" in ln]
     check("struct/emdash", not em, f"{len(em)} live '---'" + (f" {em[:3]}" if em else ""))
-    low = txt.lower()
+    # The AI-use disclaimer is EXEMPT from the banned-term scan: it names the
+    # verification toolchain on purpose (author's declaration). Every other
+    # build input remains fully in scope.
+    scope_txt = "".join(strip_comments(p.read_text(encoding="utf-8"))
+                        for p in BUILD_INPUTS if p.name != "disclaimer.tex")
+    low = scope_txt.lower()
     banned = {b: low.count(b) for b in
               ("gnatprove", "spark", "formal verification", "proof obligation")}
     bad = {k: v for k, v in banned.items() if v}
@@ -253,6 +258,10 @@ def dim_prose() -> None:
 #, dimension 8
 def dim_scope() -> None:
     t = pdf_text()
+    # The AI-use disclaimer page is EXEMPT from the banned-term scan (it names
+    # the verification toolchain on purpose). Drop everything from its opening
+    # sentence to the end of the document before counting.
+    t = t.split("The author declares the use of agentic")[0]
     low = t.lower()
     hits = {b: low.count(b) for b in
             ("gnatprove", "spark", "formal verification", "proof obligation", "spark_mode")}
