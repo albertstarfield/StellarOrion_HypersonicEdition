@@ -1,10 +1,11 @@
 # SOURCES.md — figure provenance for the Week 16 progress deck
 
-> **⚠️ Read `README.md` first.** It lists which PNGs are live and which are stale. One
-> figure currently on a shipped slide (`figures/so_sutton_graves.png`, page 11) is an
-> out-of-date copy that disagrees with the thesis it came from, and the folder also holds
-> 12 render-scratch PNGs that no slide uses. This file tells you *where a figure came
-> from*; `README.md` tells you *whether you should still be using it*.
+> **⚠️ Read `README.md` first.** It lists which PNGs are live, which are scratch, and which
+> have gone stale. `figures/so_sutton_graves.png` (page 11) shipped a stale annotation from
+> 2026-10-06 until 2026-10-14 — see README §"was stale, refreshed 2026-10-14" for the
+> mechanism and the check. The folder also holds 12 render-scratch PNGs that no slide uses.
+> This file tells you *where a figure came from*; `README.md` tells you *whether you should
+> still be using it*.
 
 Every figure on a slide is a **copy** of a file that the `_proc` pipeline or the thesis
 figure scripts already generated. Nothing on these slides was drawn for the presentation.
@@ -29,7 +30,7 @@ Line numbers refer to `main.tex` in the deck directory.
 | 7 | 2. KRIGING DENOISING | `kriging_denoise.png` | `stellarorion_program_proc/src/ui/uiassets/assets/plots/kriging_denoise_step500.png` | `stellarorion_program_proc/scripts/render_kriging_panel.py` |
 | 8 | 3. VALIDATION RUN | `so_pipeline.png` | `.../CurrentThesisFinalReport/figures/fignew_pipeline.png` (see provenance note) | `.../CurrentThesisFinalReport/figures/make_fignew.py` and `make_pipeline_figure.py` |
 | 9 | 3b. THE PINN INSIDE THE PIPELINE | `so_pinn_architecture.png` | `.../CurrentThesisFinalReport/figures/pinn_architecture.png` | `.../CurrentThesisFinalReport/figures/make_pinn_architecture.py` |
-| 10 | 3c. HEAT FLUX METHODOLOGY: SIMULATED, THEN COUNTED | `heatflux_methodology.png` | (drawn for this deck, not copied) | `Week 16 LaTeX/make_heatflux_methodology.py` |
+| 10 | 3c. HEAT FLUX: CONVECTION, CONDUCTION, RERADIATION | `heatflux_methodology.png` | (drawn for this deck, not copied) | `Week 16 LaTeX/make_heatflux_methodology.py` |
 | 11 | 4. REDEFINING YESTERDAY'S WRONG HEAT FLUX DEFINITION | `so_sutton_graves.png` | `.../CurrentThesisFinalReport/figures/sutton_graves_parametric.png` | `.../CurrentThesisFinalReport/figures/generate_sutton_graves_parametric.py` |
 | 12 | 4b. SCALLOPED VERSUS SMOOTH GEOMETRY | `so_scalloped_vs_smooth.png` | `.../CurrentThesisFinalReport/figures/fignew_scalloped_vs_smooth_heatflux.png` | `.../CurrentThesisFinalReport/figures/make_fignew.py` |
 | 13 | 5. OPTIMIZATION RESULT: TOPOLOGY BEFORE/AFTER | `so_topology_before_after.png` | `stellarorion_program_proc/optimization_comparison.png` | `stellarorion_program_proc/scripts/render_optimization_comparison.py` L1007-1008 |
@@ -62,6 +63,13 @@ it was read from:
 * Fay-Riddell cross-check, −3.69 % vs flight (accurate, not conservative) —
   `stellarorion_physics.ads:289-335`.
 * Trapezoidal heat-load integration — `stellarorion_postprocessing.ads:363-405`.
+* **Surface energy balance** `q_conv = εσT_s⁴ + (T_s − T_back)/R_total`, the term this
+  frame is named after. Resolved at the peak element to
+  `266509.3 = 261626.5 + 4882.8 W/m²`, residual `0.0000 %`, `T_s = 1550.2345 K`,
+  `T_back = 300 K`, `R_total = 0.25605 m²K/W`, `ε = 0.80` — `FAILURES_AND_FIXES.md`
+  entry **F84**, solver `stellarorion_program_proc/src/python/ada_pinn_wrapper.py`
+  (`tps_conduction`). The box carries one decimal, not integers, because the rounded
+  integers do not add up on screen (`261627 + 4883 = 266510` against a true `266509`).
 
 Rejection record: `methodology_derivation.png` and `software_pipeline.png` were both
 considered and **rejected** — they carry rasterised text-overlap defects and depict
@@ -115,23 +123,39 @@ installed figure carries neither; its subtitle is
 `incumbent falls from 1.7654 to 1.6051, a 9.08% reduction`, which are the literal strings
 in `make_bo_convergence.py` L99-100. **Generator: `make_bo_convergence.py`.**
 
-## `so_sutton_graves.png` — regenerated 2026-10-07 (FAILURES_AND_FIXES.md F83)
+## `so_sutton_graves.png` — F83 landed in the thesis but never in the deck (until 2026-10-14)
 
 The figure's annotation is computed live from the solver, not hard-coded
 (`generate_sutton_graves_parametric.py` L454 computes it and L619 formats it), but the
 shipped PNG was a stale render made with the superseded Mars constant `C_SG = 1.83e-4`.
 With the corrected Earth-air constant `C_SG = 1.7415e-4` (NASA TR R-376 Table 1;
 `stellarorion_types.ads:61`) the value at 51.8 km / 3378 m/s, `R_N` = 1.5 m is
-**15.3575 W/cm2**, not the 16.14 the old PNG printed (5.1 % overstatement). The thesis
-copy and the deck copy were byte-identical, so the later mtime was not a re-render.
+**15.3575 W/cm2**, not the 16.14 the old PNG printed (5.1 % overstatement). Full write-up:
+F83 in `FAILURES_AND_FIXES.md`.
 
-| | md5 | bytes | reads |
-| :-- | :-- | --: | :-- |
-| before | `029560f01d545f87f4002e1f6800988d` | 248565 | 16.14 W/cm2 |
-| after (regenerated 2026-10-07) | `820b09f5bd0e0c07df38e02d006f23e9` | 249536 | 15.36 W/cm2 |
+`FAILURES_AND_FIXES.md` records F83 as **fixed 2026-10-07**. That is true of the *thesis*
+copy and false of the *deck* copy. Git proves it — the deck file has only ever had two
+blobs, both dated 2026-10-06:
 
-Both the thesis source and the deck copy were updated from one re-run. Full write-up: F83 in
-`FAILURES_AND_FIXES.md`.
+| where | commit | date | md5 | bytes | reads |
+| :-- | :-- | :-- | :-- | --: | :-- |
+| thesis, pre-F83 | `a8404fb4` | 2026-10-06 | `029560f01d545f87f4002e1f6800988d` | 248565 | 16.14 W/cm2 |
+| thesis, F83 re-run | `0b9dc377` | 2026-10-07 | `820b09f5bd0e0c07df38e02d006f23e9` | 249536 | 15.36 W/cm2 |
+| thesis, audit fix | `c75f8fe3` | 2026-10-09 | `60bdef1bfa1680c1d9496825f8e92a38` | 247861 | 15.36 W/cm2 |
+| thesis, back to F83 bytes | `a477e4ab` | 2026-10-11 | `820b09f5bd0e0c07df38e02d006f23e9` | 249536 | 15.36 W/cm2 |
+| thesis, current | `2ae5afe2` | 2026-10-13 | `3912e7759176e40868fdc0c0caede41f` | 232192 | 15.36 W/cm2 |
+| **deck, before** | `a8404fb4` | 2026-10-06 | `029560f01d545f87f4002e1f6800988d` | 248565 | ~~16.14 W/cm2~~ |
+| **deck, now** | *uncommitted → see README* | 2026-10-14 | `3912e7759176e40868fdc0c0caede41f` | 232192 | 15.36 W/cm2 |
+
+An earlier revision of this file asserted "both the thesis source and the deck copy were
+updated from one re-run". **That was wrong and is withdrawn.** The deck copy's entire git
+history is `efa64f3c` (255120 B) → `a8404fb4` (248565 B), both 2026-10-06; `820b09f5` was
+never a deck blob. It went unnoticed because the deck and thesis copies *were*
+byte-identical, so the later mtime on the thesis side looked like a paired re-render when
+only one side had moved.
+
+`README.md` §"was stale, refreshed 2026-10-14" records the detection, the fix, and the
+pixel-level proof that swapping it did not disturb the frame layout.
 
 ## The kriging figure — REFUTATION of an earlier claim
 

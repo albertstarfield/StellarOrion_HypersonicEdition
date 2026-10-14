@@ -1,8 +1,9 @@
 # Week 16 progress deck — what is live, what is stale
 
 Read this before copying any PNG out of this folder. Several files here look like deck
-assets and are not; one file that *is* a deck asset is stale and currently disagrees with
-the thesis it was copied from.
+assets and are not. One file that *is* a deck asset **was** stale — it shipped a corrected
+value wrong for a week — and §"was stale, refreshed 2026-10-14" below records what happened
+and how to check it has not happened again.
 
 ---
 
@@ -53,34 +54,26 @@ lift one of these.
 
 ---
 
-## ⚠️ `figures/so_sutton_graves.png` is stale and on a shipped slide
+## `figures/so_sutton_graves.png` (page 11) — was stale, refreshed 2026-10-14
 
-This is the one that matters, because unlike the scratch files it is **referenced by the
-deck** — it is the figure on page 11, *"4. REDEFINING YESTERDAY'S WRONG HEAT FLUX DEFINITION"*.
+This was the one that mattered: unlike the scratch files it **is referenced by the deck** —
+it is the figure on page 11, *"4. REDEFINING YESTERDAY'S WRONG HEAT FLUX DEFINITION"*.
 
-Measured, 2026-10-14:
+**What was wrong.** The deck copy was byte-identical to the pre-F83 artefact
+(`029560f01d545f87f4002e1f6800988d`, 248565 B), annotating **16.14 W/cm²**.
+`FAILURES_AND_FIXES.md` entry **F83** established that value came from the superseded Mars
+correlation constant `C_SG = 1.83e-4`; the corrected Earth-air value `C_SG = 1.7415e-4`
+(NASA TR R-376 Table 1, now at `stellarorion_types.ads:61`) gives **15.3575 W/cm²**, a
+**5.1 % overstatement**. F83 was filed as fixed on 2026-10-07 by regenerating the figure.
 
-| File | md5 | Bytes | Annotation reads |
-| :-- | :-- | --: | :-- |
-| `figures/so_sutton_graves.png` (deck, **stale**) | `029560f01d545f87f4002e1f6800988d` | 248565 | **16.14 W/cm²** |
-| `../CurrentThesisFinalReport/figures/sutton_graves_parametric.png` (newest) | `3912e7759176e40868fdc0c0caede41f` | 232192 | **15.36 W/cm²** |
+**Why it came back.** Git history for the deck copy stopped at `a8404fb4` (2026-10-06), one
+day before F83. The 2026-10-07 regeneration was never committed for this file, so the
+working tree reverted to the older blob and page 11 shipped the exact number F83 exists to
+correct. Note the slide *caption* was never affected: "reported peak overstated by 31.90 %
+(F21)" describes the normalisation-constant condition mismatch at `R_N = 0.55 m`, a
+different quantity. The stale part was the annotation **inside the artwork**.
 
-The deck copy is byte-identical to the **pre-F83** artefact. `FAILURES_AND_FIXES.md` entry
-**F83** established that 16.14 W/cm² was computed with the superseded Mars correlation
-constant `C_SG = 1.83e-4`; the corrected Earth-air value `C_SG = 1.7415e-4` (NASA TR R-376
-Table 1, now at `stellarorion_types.ads:61`) gives **15.3575 W/cm²**, a **5.1 %
-overstatement**. F83 was filed as fixed on 2026-10-07 by regenerating the figure.
-
-**The fix did not survive into the deck.** Git history for the deck copy stops at
-`a8404fb4` (2026-10-06), which predates F83. The 2026-10-07 regeneration was never
-committed for this file, and the working tree reverted to the older blob.
-
-Net effect: page 11 currently ships the number that entry F83 exists to correct. The slide
-caption — "reported peak overstated by 31.90 % (F21)" — is about a *different* quantity
-(the normalisation-constant condition mismatch at `R_N = 0.55 m`) and is unaffected; the
-**annotation inside the artwork** is the stale part.
-
-**Remedy:** copy the newer thesis figure over the deck copy and rebuild.
+**Fix applied 2026-10-14.** Copied the thesis source over the deck copy and rebuilt:
 
 ```
 cd "Lost+Found/ProgressReport/Week 16 LaTeX"
@@ -88,9 +81,30 @@ cp ../CurrentThesisFinalReport/figures/sutton_graves_parametric.png figures/so_s
 for i in 1 2 3; do pdflatex -interaction=nonstopmode -file-line-error main.tex; done
 ```
 
-Then check page 11 reads 15.36 W/cm². Note the newer figure is a restyle as well as a
-number fix (viridis ramp, larger canvas), so the page will *look* different, not just
-*differ* by one number.
+| File | md5 | Bytes | Annotation |
+| :-- | :-- | --: | :-- |
+| `figures/so_sutton_graves.png` (deck, **now**) | `3912e7759176e40868fdc0c0caede41f` | 232192 | **15.36 W/cm²** |
+| `../CurrentThesisFinalReport/figures/sutton_graves_parametric.png` | `3912e7759176e40868fdc0c0caede41f` | 232192 | **15.36 W/cm²** |
+| *(previous deck copy)* | `029560f01d545f87f4002e1f6800988d` | 248565 | ~~16.14 W/cm²~~ |
+
+**Verified, not assumed.** 3 pdflatex passes, `main.log` scored against all 11 patterns
+(bare `!`, `^\./main\.tex:[0-9]+:`, `Missing $ inserted`, `Extra \}`, `Undefined control
+sequence`, `Overfull`, `Underfull`, `LaTeX Warning`, `Package Warning`, `Rerun to get`,
+`Fatal`) — all 0, verdict **CLEAN**; 14 pages; 0 `MISSING PLOT`. Page 11 rendered to PNG
+and read back by eye: annotation reads 15.36, counter `11 / 14`, caption 2 lines, no
+clipping or overlap.
+
+**No layout change, measured rather than assumed.** Both figures are the *same canvas*,
+1486×1288, identical aspect 1.1537 — so the earlier guess that this was a "restyle with a
+larger canvas" was wrong. Pixel-diffing old vs. new page 11 at scale 3.0: identical
+dimensions (1361×766), and rows bands outside the plot area are byte-for-byte equal in ink
+count (title, rule, legend, caption, page counter all unchanged). Only **1.002 %** of page
+pixels differ, all inside the plot box — as expected, since rescaling `C_SG` shifts the
+curves, not the frame.
+
+**If it regresses again:** that same `cp` + 3 passes is the remedy. Worth re-checking after
+any autosave touching `figures/`, since the loss mechanism was an uncommitted regeneration,
+not a deliberate revert.
 
 ---
 
@@ -145,7 +159,8 @@ landed.
 
 14 pages: title · OUTLINE · **CONTEXT** · **PREVIOUS PROBLEM** · then twelve frames under
 **CURRENT IMPLEMENTATION** — `1. BAYESIAN OPTIMIZATION`, `1b. CCD SCREEN`, `2. KRIGING
-DENOISING`, `3. VALIDATION RUN`, `3b. PINN`, `3c. HEAT FLUX METHODOLOGY`, `4. REDEFINING…`,
+DENOISING`, `3. VALIDATION RUN`, `3b. PINN`, `3c. HEAT FLUX: CONVECTION, CONDUCTION, RERADIATION`,
+`4. REDEFINING…`,
 `4b. SCALLOPED VS SMOOTH`, `5. TOPOLOGY BEFORE/AFTER`, `6. BAYESIAN PLOT`.
 
 Constraints enforced by the preamble, not by convention: `\MaxTextLines{2}` raises

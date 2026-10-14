@@ -206,10 +206,31 @@
 % "wrong definition" claim is only legible once the reader knows what the
 % methodology actually is. Every box carries the _proc file:line it was read
 % from; the figure's own overflow guard (AXIOM A5) raises rather than clipping.
-\PlotFrame{3c. HEAT FLUX METHODOLOGY: SIMULATED, THEN COUNTED}
+%
+% WHAT THIS FRAME NOW CLAIMS. It defines heat flux instead of only describing
+% how it is counted. Sutton-Graves returns the convective input to the
+% surface; the surface energy balance then splits that input three ways:
+%     q_conv = eps*sigma*T_s^4  +  (T_s - T_back)/R_total
+%     (reradiation back out)      (conduction into the 5-ply stack)
+% So the three terms the deck names are CONVECTION (Sutton-Graves),
+% CONDUCTION (through the materials) and RERADIATION (back to the flow).
+%
+% NUMBERS, all from the F84 joint solve with a measured residual of
+% 0.0000 % at the peak element:
+%     q_conv = 266509.28, q_rad = 261626.54, q_cond = 4882.77 W/m^2
+%     T_s = 1550.2345 K, T_back = 300 K, R_total = 0.25605 m^2.K/W, eps = 0.80
+% Source: FAILURES_AND_FIXES.md entry F84; solver ada_pinn_wrapper.py
+% tps_conduction.
+%
+% ROUNDING IS LOAD-BEARING HERE. Rounded to whole numbers the three terms do
+% NOT add up in print (261627 + 4883 = 266510 against a true 266509), and a
+% caption whose own arithmetic fails on screen is worse than no caption. One
+% decimal makes it exact: 261626.5 + 4882.8 = 266509.3. That is why the
+% caption carries .3 / .5 / .8 rather than integers.
+\PlotFrame{3c. HEAT FLUX: CONVECTION, CONDUCTION, RERADIATION}
   {\MaxTextLines{2}%
-   SPARTA supplies the shape, Sutton-Graves the scale:
-   $q_i = Q_{SG}\,\mathrm{clamp}(ke_i/ke_{ref},0,1)$ (stellarorion\_physics.adb:2634).}
+   Convection (Sutton-Graves) = reradiation + conduction through the TPS:
+   266509.3 = 261626.5 + 4882.8 W/m$^2$, residual 0.0000 \% (F84).}
   {heatflux_methodology}
 
 % so_sutton_graves.png <- sutton_graves_parametric.png, drawn by

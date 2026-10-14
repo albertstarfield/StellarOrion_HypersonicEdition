@@ -175,7 +175,7 @@ def main():
     # Header band
     ax.add_patch(mpatches.Rectangle((0, 0.930), 1, 0.070, facecolor=BAND,
                                     edgecolor="none", zorder=1))
-    ax.text(0.014, 0.965, "HEAT-FLUX METHODOLOGY: SIMULATED, THEN COUNTED",
+    ax.text(0.014, 0.965, "WHAT HEAT FLUX IS: CONVECTION + CONDUCTION + RERADIATION",
             ha="left", va="center", fontsize=13.0, fontweight="bold",
             color="white", zorder=3)
     ax.text(0.986, 0.965, "StellarOrion _proc", ha="right", va="center",
@@ -224,8 +224,17 @@ def main():
         (0.375, 0.330, "Integrate over trajectory",
          ["Q = integral(q dt),", "trapezoidal rule.", "(postprocessing.ads:363)"],
          "white", ACC),
-        (0.725, 0.275, "Delivered outputs",
-         ["per-element q_i, peak flux,", "total heat load [J/cm2]"],
+        # Repurposed from "Delivered outputs". The terminal box is where the
+        # reader expects to be told what the number IS, so it carries the
+        # F84 surface energy balance -- the three terms this frame names.
+        # Decimal places are deliberate: integers do not add up on screen
+        # (261627 + 4883 = 266510 vs a true 266509), one decimal does.
+        # Body is capped at 3 lines because AXIOM A5's overflow guard refuses
+        # a 4th: measured raise at h=0.145, "bottom box overflow".
+        (0.725, 0.275, "Surface energy balance (F84)",
+         ["q_conv = q_rad + q_cond",
+          "266509.3 = 261626.5 + 4882.8 W/m2",
+          "residual 0.0000 %, T_s 1550.23 K."],
          MIST, BAND),
     ]
     for x, w, title, lines, fc, ec in bottoms:
@@ -269,8 +278,9 @@ def main():
     # which reads as a strike-through across the footer. bbox_inches="tight"
     # expands the canvas for text outside the axes, so a negative y is safe.
     ax.text(0.014, -0.006,
-            "Every box cites the _proc source it was read from. "
-            "Sutton & Graves, NASA TR R-376 (1971); Bird (1994) Sec 7.",
+            "Every box cites the source it was read from. Sutton & Graves, "
+            "NASA TR R-376 (1971); Bird (1994) Sec 7; balance: "
+            "FAILURES_AND_FIXES.md F84.",
             ha="left", va="bottom", fontsize=6.6, color="#5A5A5A", zorder=3)
 
     fig.savefig(OUTPATH, bbox_inches="tight", facecolor="white")
