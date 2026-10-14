@@ -429,6 +429,14 @@ The engine carries the same Earth coefficient $C_{SG} = 1.7415 \times 10^{-4}$ a
 \subsubsection*{Note on SPARTA Surface Energy}
 The raw SPARTA DSMC kinetic energy ($ke$) surface compute is a normalized incident kinetic-energy flux rather than an absolute heat flux: \texttt{fix ave/surf} reports $ke = E_{flux} = -\sum e_{\delta}/(A\,\Delta t/f_{num})$, in W/m\textsuperscript{2} of the simulated flux crossing the surface. It excludes re-radiation and conduction, so it is only a \textbf{relative shape-ranking signal} for the optimizer; absolute wall heat flux values come from the Sutton-Graves correlation.
 
+\subsubsection*{Sutton-Graves Flux versus Material Heat Flux}
+Two heat fluxes must be kept apart. The \textbf{Sutton-Graves flux} is the \emph{convective} gas-side heat flux: the Sutton-Graves value $Q_{SG}$~\cite{sutton1971gravesh} is a single scalar that fixes the \emph{magnitude} of stagnation heating delivered by the boundary layer, but carries no information about where on the body the heat lands. The \textbf{material heat flux} is the \emph{conductive} heat flux into the shield: the per-element flux actually absorbed at the outer face and passed to the composite solid conduction solve. It is the convective magnitude shaped by the DSMC field,
+\begin{equation}
+\label{eq:sg_scaled_flux}
+    q_i = Q_{SG} \, \mathrm{clamp}\!\left(\frac{ke_i}{ke_{ref}},\, 0,\, 1\right),
+\end{equation}
+with $ke_{ref}$ the element's own positive reference. By construction $0 \le q_i \le Q_{SG}$: no element can absorb more than the stagnation value, and a negative $ke$ (single-cell noise~\cite{bird1994molecular}) floors to zero rather than heating backwards. This conductive $q_i$ is the input to the composite conduction solve of Sec.~\ref{sec:composite_tps}, which splits it into a re-radiated part $\varepsilon\sigma T_s^4$ and a conducted part $(T_s - T_{init})/R$. The same solver is provably additive over heating intervals: the backface temperature is affine in $q$, so $T_{back}(q_1+q_2) = T_{back}(q_1) + T_{back}(q_2) - T_{init}$ (verified in the accompanying thermal proof). Superposition therefore applies to the lumped backface response, not to the flux field.
+
 \subsection{Surface Temperature: Radiative Equilibrium}
 At the TPS outer surface radiative cooling balances incoming convective heat flux at steady state, assuming grey-body radiation:
 
