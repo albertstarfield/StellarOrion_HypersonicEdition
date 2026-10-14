@@ -608,6 +608,130 @@ def load_elements(csv_path: str) -> dict[int, dict[str, float]]:
     return by_element
 
 
+_STRIP_W = 0.46
+
+
+def draw_stack_column(ax, rows: list[dict], profile: list[tuple[float, float]],
+                      back: float, cmap, norm, title: str,
+                      strip_w: float = _STRIP_W,
+                      show_node_temps: bool = True,
+                      title_fs: float = 8, ylabel_fs: float = 7,
+                      tick_fs: float = 6.5, label_fs: float = 5.6,
+                      num_fs: float = 5.4, node_fs: float = 4.8,
+                      show_yticks: bool = True) -> float:
+    """Draw ONE literal TPS stack section into ``ax`` and return its depth span.
+
+    AXIOMS:
+        A1. ``rows`` are the plies in hot-face-first order, each carrying a
+            preset-authoritative ``thickness_m``, so the band positions are the
+            real section of the stack, not an even split.
+        A2. ``profile`` is the solver's own 33-sample through-thickness curve,
+            so a ply with a steep internal gradient shows it; ``back`` is the
+            pinned cold-face Dirichlet value appended as the final sample.
+        A3. Colour comes from ``cmap``/``norm`` over the WHOLE temperature
+            range, so two columns drawn with the same objects are directly
+            comparable and a video frame matches the static figure.
+
+    THEORIES:
+        T1. Drawing explicit rectangles instead of a ``pcolormesh`` removes
+            shading-rule ambiguity: every depth segment's colour is exactly the
+            recorded node temperature, with nothing interpolated across a ply
+            interface.
+        T2. A band thinner than 10 % of the stack cannot hold its own label --
+            the 0.506 mm SiC ply is 7.10 % -- so it carries only the ply number
+            and the full data lives once in the caller's legend.  This is what
+            the machine-read text-extent check forced; see F124 defect 5.
+
+    APPLICATIONS:
+    Called by ``plot_ply_stack_heatmap`` (two columns) and once per frame by
+    ``render_ply_heating_mp4`` (the animated middle panel).  Extracting it kept
+    the video and the static figure on ONE drawing path, so they cannot drift.
+
+    Parameters:
+        ax: target axes, already dark-themed by the caller.
+        rows: ply rows with ``thickness_m``, ``ply_name``, ``k_WmK``.
+        profile: (depth_m, temp_K) samples, ascending depth (hot face first).
+        back: cold-face temperature [K].
+        cmap, norm: matplotlib colormap and normaliser shared by all columns.
+        title: axes title.
+        strip_w: heat-strip width in axes-x units (rest holds node temps).
+        show_node_temps: annotate every sample temperature beside the strip.
+        title_fs, ylabel_fs, tick_fs, label_fs, num_fs, node_fs: font
+            sizes [pt].  The DEFAULTS are the static heatmap PNG's values
+            (dpi=200, ~1720 px wide); render_ply_heating_mp4 passes smaller
+            ones because its frames render at dpi=110, ~1230 px wide, where
+            the same point size would be proportionally larger.
+        show_yticks: keep the depth-axis [mm] tick labels.
+
+    Returns:
+        Total stack depth [mm] (== the axes' y-span), so the caller can build a
+        labelled zoom of the thin plies.
+
+    Raises:
+        ValueError: fewer than 2 profile samples or fewer than 1 ply row.
+    """
+    if len(profile) < 2:
+        raise ValueError("need >= 2 profile samples to draw a stack section")
+    if not rows:
+        raise ValueError("need >= 1 ply row to draw a stack section")
+
+    depths = [d for d, _ in profile]
+    temps = [t for _, t in profile] + [float(back)]
+    bounds = [0.0]
+    for r in rows:
+        bounds.append(bounds[-1] + r["thickness_m"])
+    total_mm = bounds[-1] * 1000.0
+    y_span_mm = bounds[-1] * 1000.0
+
+    # The through-thickness heat strip: one column, y = depth, hot face up.
+    seg_depths = [d * 1000.0 for d in depths] + [total_mm]
+    for i in range(len(temps) - 1):
+        ax.add_patch(plt.Rectangle(
+            (0.0, seg_depths[i]), strip_w, seg_depths[i + 1] - seg_depths[i],
+            facecolor=cmap(norm(temps[i])), edgecolor="none", linewidth=0))
+    # True-proportion ply boundaries and labels.
+    for i, r in enumerate(rows):
+        top_mm = bounds[i] * 1000.0
+        bot_mm = bounds[i + 1] * 1000.0
+        ax.axhline(bot_mm, color=_BG, linewidth=1.4)
+        band_mm = bot_mm - top_mm
+        if band_mm / y_span_mm >= 0.10:
+            lab = (f"{i + 1}. {r['ply_name']}\n"
+                   f"{r['thickness_m'] * 1000.0:.3f} mm "
+                   f"({band_mm / y_span_mm * 100.0:.2f}%)\n"
+                   f"R={r['thickness_m'] / r['k_WmK']:.5f}")
+            ax.annotate(lab, (strip_w / 2.0, (top_mm + bot_mm) / 2.0),
+                        ha="center", va="center", color=_TEXT, fontsize=label_fs,
+                        bbox={"boxstyle": "round,pad=0.20",
+                              "facecolor": _BG, "edgecolor": _DIM,
+                              "alpha": 0.85})
+        else:
+            ax.annotate(str(i + 1), (0.015, (top_mm + bot_mm) / 2.0),
+                        ha="left", va="center", color=_TEXT, fontsize=num_fs)
+            ax.annotate("", xy=(0.04, (top_mm + bot_mm) / 2.0),
+                        xytext=(0.005, (top_mm + bot_mm) / 2.0),
+                        arrowprops={"arrowstyle": "-", "color": _DIM,
+                                    "linewidth": 0.4})
+    # Node temperatures at true depth, measured not derived.
+    if show_node_temps:
+        for d, t in zip(depths, temps):
+            ax.annotate(f"{t:,.1f} K", (strip_w + 0.03, d * 1000.0),
+                        ha="left", va="center", color=_TEXT, fontsize=node_fs)
+    ax.set_ylim(total_mm, 0.0)  # depth 0 (hot face) at the TOP
+    ax.set_xlim(0.0, 1.0)
+    ax.set_xticks([])
+    # The depth [mm] scale is real information, so it stays on the static
+    # figure; the MP4 switches it off because 8 fps ticks read as flicker.
+    if not show_yticks:
+        ax.set_yticks([])
+    ax.set_ylabel("depth from hot face [mm]", color=_TEXT, fontsize=ylabel_fs)
+    ax.set_title(title, color=_TEXT, fontsize=title_fs)
+    ax.tick_params(colors=_TEXT, labelsize=tick_fs)
+    for spine in ax.spines.values():
+        spine.set_color(_DIM)
+    return total_mm
+
+
 def plot_ply_stack_heatmap(peak_rows: list[dict],
                            low_rows: list[dict],
                            peak_back: float,
@@ -687,73 +811,13 @@ def plot_ply_stack_heatmap(peak_rows: list[dict],
     norm = matplotlib.colors.Normalize(vmin=t_lo, vmax=t_hi)
     # The heat strip occupies the left 46 % of each axes; the rest holds the
     # node temperatures.  Drawn to a constant so the two columns line up.
-    global _STRIP_W
-    _STRIP_W = 0.46
-
     for ax, rows, profile, back, element, title in (
         (ax_peak, peak_rows, peak_profile, peak_back, peak_element,
          f"PEAK heating \u2014 element {peak_element}"),
         (ax_low, low_rows, low_profile, low_back, low_element,
          f"LOW heating \u2014 element {low_element}"),
     ):
-        depths = [d for d, _ in profile]
-        temps = [t for _, t in profile] + [float(back)]
-        bounds = [0.0]
-        for r in rows:
-            bounds.append(bounds[-1] + r["thickness_m"])
-        total_mm = bounds[-1] * 1000.0
-
-        # The through-thickness heat strip: one column, y = depth, hot face up.
-        # Built from explicit rectangles rather than pcolormesh so the colour of
-        # every depth segment is exactly the recorded node temperature, with no
-        # shading-rule ambiguity and no interpolation across the Ply interfaces.
-        seg_depths = [d * 1000.0 for d in depths] + [total_mm]
-        for i in range(len(temps) - 1):
-            ax.add_patch(plt.Rectangle(
-                (0.0, seg_depths[i]), _STRIP_W, seg_depths[i + 1] - seg_depths[i],
-                facecolor=cmap(norm(temps[i])), edgecolor="none", linewidth=0))
-        # True-proportion ply boundaries and labels.
-        # The 0.506 mm SiC plies are only 7.10 % of the stack each, so a
-        # three-line box centred in the band overflows into its neighbour --
-        # which the machine-read check caught as a 44 % overlap.  A band that
-        # cannot hold its own label gets ONLY the ply number inside, and every
-        # ply's full data appears once in the right-hand legend column plus
-        # the table below.  No information is dropped; the duplication is.
-        y_span_mm = (bounds[-1]) * 1000.0
-        for i, r in enumerate(rows):
-            top_mm = bounds[i] * 1000.0
-            bot_mm = bounds[i + 1] * 1000.0
-            ax.axhline(bot_mm, color=_BG, linewidth=1.4)
-            band_mm = bot_mm - top_mm
-            if band_mm / y_span_mm >= 0.10:
-                lab = (f"{i + 1}. {r['ply_name']}\n"
-                       f"{r['thickness_m'] * 1000.0:.3f} mm "
-                       f"({band_mm / y_span_mm * 100.0:.2f}%)\n"
-                       f"R={r['thickness_m'] / r['k_WmK']:.5f}")
-                ax.annotate(lab, (_STRIP_W / 2.0, (top_mm + bot_mm) / 2.0),
-                            ha="center", va="center", color=_TEXT, fontsize=5.6,
-                            bbox={"boxstyle": "round,pad=0.20",
-                                  "facecolor": _BG, "edgecolor": _DIM,
-                                  "alpha": 0.85})
-            else:
-                ax.annotate(str(i + 1), (0.015, (top_mm + bot_mm) / 2.0),
-                            ha="left", va="center", color=_TEXT, fontsize=5.4)
-                ax.annotate("", xy=(0.04, (top_mm + bot_mm) / 2.0),
-                            xytext=(0.005, (top_mm + bot_mm) / 2.0),
-                            arrowprops={"arrowstyle": "-", "color": _DIM,
-                                         "linewidth": 0.4})
-        # Node temperatures at true depth, measured not derived.
-        for d, t in zip(depths, temps):
-            ax.annotate(f"{t:,.1f} K", (_STRIP_W + 0.03, d * 1000.0),
-                        ha="left", va="center", color=_TEXT, fontsize=4.8)
-        ax.set_ylim(total_mm, 0.0)  # depth 0 (hot face) at the TOP
-        ax.set_xlim(0.0, 1.0)
-        ax.set_xticks([])
-        ax.set_ylabel("depth from hot face [mm]", color=_TEXT, fontsize=7)
-        ax.set_title(title, color=_TEXT, fontsize=8)
-        ax.tick_params(colors=_TEXT, labelsize=6.5)
-        for spine in ax.spines.values():
-            spine.set_color(_DIM)
+        draw_stack_column(ax, rows, profile, back, cmap, norm, title)
 
     # Thin-ply zoom.  The 25 um Kapton ply is 0.35% of the stack and would be
     # sub-pixel at true scale, so it is repeated here at a stated 20x.
@@ -978,6 +1042,8 @@ def render_ply_heating_mp4(
     by_element: dict[int, list[dict]],
     back: dict[int, float],
     out_path: str,
+    profiles: dict[int, list[tuple[float, float]]] | None = None,
+    preset_tmax: tuple[float, ...] | None = None,
     max_frames: int = 240,
     fps: int = 8,
 ) -> bool:
@@ -988,20 +1054,31 @@ def render_ply_heating_mp4(
         varies across elements is how hard each ply is being driven.
     A2. Ordering the elements by their worst per-ply flux turns the frame
         index into a heating axis: frame 0 is the mildest element, the last
-        frame is the peak.  Watching the bars grow IS the heating history.
+        frame is the peak.  Watching the stack heat up IS the heating history.
     A3. A ply's flux is (T_top - T_bottom) / R_ply, the through-flux, and the
         temperature profile is the node curve T(depth).  Both are recorded
-        per element in the layers CSV.
+        per element in the layers CSV; the profile additionally exists as a
+        33-sample curve in the profiles CSV.
+    A4. The literal-stack panel draws the SAME plies at the SAME true
+        proportions and with the SAME cmap/norm as the static heatmap PNG,
+        via the shared draw_stack_column, so a video frame is not a different
+        drawing from the published figure.
 
     THEORIES:
     T1. The stack is in quasi-steady conduction, so the per-ply flux must
-        agree across plies.  Where it does NOT (ply 5 has R = 0.00125
+        agree across plies.  Where it does NOT (ply 5 has R = 2.08e-4
         m^2 K/W, so its per-ply value is large), the animation shows the
         per-ply value and the caption states that the series value is the
         self-consistent one -- see stack_flux.
     T2. Because the per-ply flux of the peak element is an order of magnitude
         above the mild elements' on some plies, a LINEAR y-axis hides the
         mild frames.  The y-limit is taken from the data, not hardcoded.
+    T3. Adding the literal stack turns three independent readings of one
+        element into ONE consistent picture: how hard it is driven (bars),
+        what the physical section looks like (stack), and where in depth the
+        temperature actually falls (line).  Without the middle panel the
+        animation never showed the plies as physical layers, which is the
+        thing the static heatmap was requested for.
 
     APPLICATIONS:
     Writes results/plots/tps_per_ply/ply_heating_animation.mp4, one frame
@@ -1013,6 +1090,11 @@ def render_ply_heating_mp4(
         by_element: {element: [ply_row, ...]} from load_layers.
         back: {element: cold-face temperature K} from load_back_temp.
         out_path: destination .mp4 path.
+        profiles: {element: [(depth_m, temp_K), ...]} from load_profiles.
+            When absent the stack panel is skipped and the animation is the
+            original two-panel form, so a missing profiles CSV degrades the
+            deliverable loudly instead of failing the whole render.
+        preset_tmax: per-ply maximum continuous-use temperature [K].
         max_frames: cap on frames (the full 3648 elements is too many).
         fps: animation frame rate.
 
@@ -1020,12 +1102,14 @@ def render_ply_heating_mp4(
         True on success, False when matplotlib/ffmpeg is unavailable.
 
     Raises:
-        ValueError: no element produced a per-ply flux.
+        ValueError: no element produced a per-ply flux, or no positive flux
+            exists to scale a log axis from.
 
     References:
         - https://matplotlib.org/stable/api/_as_gen/matplotlib.animation.FuncAnimation.html
         - https://matplotlib.org/stable/api/animation_api.html
     """
+    profiles = profiles or {}
     ordered: list[tuple[int, list[float], list[dict], float]] = []
     skipped_flat = 0
     for element, rows in sorted(by_element.items()):
@@ -1055,6 +1139,19 @@ def render_ply_heating_mp4(
 
     #  A2: ascending heating order -- the animation heats up over time.
     ordered.sort(key=lambda item: max(item[1]))
+
+    #  The stack panel needs a 33-sample profile for every frame.  An element
+    #  that has none cannot be drawn there; rather than drop it from the
+    #  heating axis (which would misrepresent the frame index as a history),
+    #  the panel is switched off for the WHOLE animation and the caller is
+    #  told, so the deliverable degrades to the two-panel form loudly.
+    stack_available = bool(profiles) and all(
+        len(profiles.get(element, [])) >= 2 for element, _, _, _ in ordered
+    )
+    if profiles and not stack_available:
+        print("[ply] warn: profiles CSV has no samples for every animated "
+              "element; the literal-stack panel is OMITTED from the MP4 "
+              "rather than drawn from invented data", file=sys.stderr)
 
     if len(ordered) > max_frames:
         step = len(ordered) / float(max_frames)
@@ -1109,8 +1206,49 @@ def render_ply_heating_mp4(
     #  tableau colours (#d62728 / #1f77b4) instead of the project's _ACCENT.
     #  Found by extracting real frames and counting pixels, not by reading the
     #  renderer's exit code.
-    fig, (ax_q, ax_t) = plt.subplots(1, 2, figsize=(12.0, 5.2), facecolor=_BG)
-    ply_labels = [f"ply {r['ply']}\n{r['ply_name']}" for r in ordered[0][2]]
+    if stack_available:
+        #  Three panels plus a constants row.  The figure is taller than the
+        #  old 12.0x5.2 because a third panel AND a table row were added; the
+        #  stack needs a readable depth axis and the thin plies need room.
+        fig = plt.figure(figsize=(14.4, 6.4), facecolor=_BG)
+        grid = fig.add_gridspec(
+            2, 3, height_ratios=[0.80, 0.20],
+            width_ratios=[1.05, 0.72, 1.05],
+            hspace=0.42, wspace=0.30, left=0.055, right=0.985,
+            top=0.905, bottom=0.135)
+        ax_q = fig.add_subplot(grid[0, 0])
+        ax_s = fig.add_subplot(grid[0, 1])
+        ax_t = fig.add_subplot(grid[0, 2])
+        ax_const = fig.add_subplot(grid[1, :])
+        ax_const.set_facecolor(_PANEL)
+        ax_const.axis("off")
+    else:
+        fig, (ax_q, ax_t) = plt.subplots(1, 2, figsize=(12.0, 5.2), facecolor=_BG)
+        ax_const = None
+
+    #  The per-ply tick label carries ONLY the ply number and a shortened
+    #  material name.  The full CONSTANTS (thickness, k, R and each ply's own
+    #  T_max) live in the dedicated table row below, built from tabular cells
+    #  that cannot overlap.  This is the same lesson as the static heatmap:
+    #  a five-line label on a narrow band collides -- the machine-read
+    #  text-extent check measured a 40 % overlap between adjacent labels --
+    #  and a table row states the same numbers with room to breathe.
+    def _short_name(name: str) -> str:
+        """Shorten a ply grade for the tick label.
+
+        Parameters:
+            name: full material grade, e.g. ``"Nicalon SiC"``.
+
+        Returns:
+            The token that distinguishes the grade inside a narrow tick
+            label; the full grade is still printed in the table row.
+        """
+        table = {"Nicalon SiC": "SiC", "Pyrogel 3350": "Pyrogel",
+                 "Kapton": "Kapton"}
+        return table.get(name, name)
+
+    ply_labels = [f"ply {r['ply']}\n{_short_name(r['ply_name'])}"
+                  for r in ordered[0][2]]
     x_pos = list(range(len(ply_labels)))
     #  T2: the per-ply flux spans orders of magnitude between the mildest and
     #  the peak element, so a LINEAR axis leaves the first frames blank and a
@@ -1124,9 +1262,41 @@ def render_ply_heating_mp4(
     ax_q.set_yscale("log")
     ax_q.set_ylim(y_lo, y_hi)
     ax_q.set_xticks(x_pos)
-    ax_q.set_xticklabels(ply_labels, fontsize=8)
+    ax_q.set_xticklabels(ply_labels, fontsize=6.4)
     ax_q.set_ylabel("per-ply heat flux [W/m^2]  (log)", color=_TEXT, fontsize=9)
-    ax_q.set_title("per-ply heat flux", color=_TEXT, fontsize=10)
+    ax_q.set_title("per-ply heat flux", color=_TEXT, fontsize=9)
+
+    #  The layup constants, once for the whole animation.  They are INVARIANT
+    #  per frame -- only the temperature field moves -- so drawing them once
+    #  is both correct and cheaper than redrawing 240 times.
+    if ax_const is not None:
+        ax_const.set_title(
+            "layup constants -- identical in every frame (from the Ada preset "
+            "via ada_pinn_wrapper.IRVE3_FTPS_PLY_*)",
+            color=_TEXT, fontsize=7, pad=5)
+        c_headers = ["ply", "material", "t [mm]", "k [W/(m\u00b7K)]",
+                     "R [m\u00b2K/W]", "T_max [K]"]
+        c_cells: list[list[str]] = []
+        for i, r in enumerate(ordered[0][2]):
+            lim = (f"{preset_tmax[i]:,.0f}" if preset_tmax is not None
+                   and i < len(preset_tmax) else "n/a")
+            c_cells.append([
+                str(r["ply"]), r["ply_name"],
+                f"{r['thickness_m'] * 1000.0:.3f}",
+                f"{r['k_WmK']:.2f}",
+                f"{r['thickness_m'] / r['k_WmK']:.5f}",
+                lim,
+            ])
+        c_table = ax_const.table(cellText=c_cells, colLabels=c_headers,
+                                 cellLoc="center", loc="upper center",
+                                 bbox=[0.0, 0.0, 1.0, 0.82])
+        c_table.auto_set_font_size(False)
+        c_table.set_fontsize(6.0)
+        for cell in c_table.get_celld().values():
+            cell.set_edgecolor(_DIM)
+            cell.set_linewidth(0.4)
+            cell.set_facecolor(_PANEL)
+            cell.set_text_props(color=_TEXT)
     #  bottom must be a POSITIVE number on a log axis, hence the floor.
     bar_floor = y_lo
     #  bottom = y_lo so a bar at the floor is still a visible column rather
@@ -1136,16 +1306,51 @@ def render_ply_heating_mp4(
 
     ax_t.set_xlabel("depth from hot face [mm]", color=_TEXT, fontsize=9)
     ax_t.set_ylabel("temperature [K]", color=_TEXT, fontsize=9)
-    ax_t.set_title("temperature through the stack", color=_TEXT, fontsize=10)
+    ax_t.set_title("temperature through the stack", color=_TEXT, fontsize=9)
     #  Same ply boundaries as the literal-stack figure, same dim style.
     for r in ordered[0][2]:
         ax_t.axvline(r["depth_m"] * 1000.0, color=_DIM, linestyle=":",
                      linewidth=0.7)
     #  Distinct from _ACCENT so the two panels read as different quantities;
     #  _TEXT is the shared theme's own secondary colour, not a matplotlib
-     #  default.
+    #  default.
     (line_t,) = ax_t.plot([], [], color=_TEXT, marker="o", markersize=3,
                           markerfacecolor=_ACCENT)
+
+    #  --- literal-stack panel -------------------------------------------
+    #  One cmap/norm over the WHOLE temperature range, so frame 1 and the last
+    #  frame are directly comparable and both match the static heatmap PNG.
+    stack_cmap = None
+    stack_norm = None
+    if stack_available:
+        import matplotlib
+
+        stack_cmap = plt.get_cmap("inferno")
+        #  A4: one norm over the WHOLE animated range, so the first frame and
+        #  the last are directly comparable and both match the static PNG.
+        flat = [t for element, _, _, _ in ordered
+                for _, t in profiles[element]]
+        t_lo_s, t_hi_s = min(flat), max(flat)
+        if not (t_hi_s > t_lo_s):
+            print("[ply] warn: degenerate profile temperature range "
+                  f"{t_lo_s}..{t_hi_s}; literal-stack panel omitted",
+                  file=sys.stderr)
+            stack_available = False
+        else:
+            stack_norm = matplotlib.colors.Normalize(vmin=t_lo_s, vmax=t_hi_s)
+            ax_s.set_facecolor(_PANEL)
+            ax_s.set_title("literal 5-ply stack (true proportions)",
+                           color=_TEXT, fontsize=9)
+            ax_s.tick_params(colors=_TEXT, labelsize=6.5)
+            for spine in ax_s.spines.values():
+                spine.set_color(_DIM)
+            draw_stack_column(ax_s, ordered[0][2], profiles[ordered[0][0]],
+                              ordered[0][3], stack_cmap, stack_norm,
+                              "hot face at top \u2014 depth 0",
+                              strip_w=0.46, show_node_temps=True,
+                              title_fs=7, ylabel_fs=6, tick_fs=6,
+                              label_fs=4.8, num_fs=4.6, node_fs=4.0,
+                              show_yticks=False)
 
     n_frames = len(ordered)
 
@@ -1160,7 +1365,30 @@ def render_ply_heating_mp4(
         temps = [r["temp_K"] for r in rows] + [back_temp]
         line_t.set_data(depths, temps)
         ax_t.set_xlim(min(depths) * 0.98, max(depths) * 1.02)
+        #  PIN THE DEPTH TICKS to whole millimetres inside the 0 .. 7.131 mm
+        #  stack.  Left to the auto-locator, the axis also creates tick LABELS
+        #  for -1 and 8 -- both outside the axis box -- and those two glyphs
+        #  rasterise in the wspace gaps to the left of the panel: the
+        #  machine-read text-extent audit caught "-1" overlapping a "200"
+        #  temperature label by 35 %, and a with/without A/B render proved the
+        #  glyphs were really drawn (254 of 240 000 pixels changed).  The depth
+        #  range is fixed by the layup, so the ticks are fixed too.
+        ax_t.set_xticks([mm for mm in (0, 1, 2, 3, 4, 5, 6, 7)
+                         if min(depths) * 0.98 <= mm <= max(depths) * 1.02])
         ax_t.set_ylim(min(temps) * 0.98, max(temps) * 1.02)
+        #  A4: erase and redraw the literal stack for this element.  Clearing
+        #  the axes is safe because nothing else lives on it -- the title,
+        #  facecolour and spines are set once below and are not data artists.
+        if stack_available:
+            ax_s.clear()
+            ax_s.set_facecolor(_PANEL)
+            draw_stack_column(ax_s, rows, profiles[element], back_temp,
+                              stack_cmap, stack_norm,
+                              "hot face at top \u2014 depth 0",
+                              strip_w=0.46, show_node_temps=True,
+                              title_fs=7, ylabel_fs=6, tick_fs=6,
+                              label_fs=4.8, num_fs=4.6, node_fs=4.0,
+                              show_yticks=False)
         fig.suptitle(
             f"TPS per-ply heating  --  element {element} of "
             f"{len(by_element)}  (heating {100.0 * (frame + 1) / n_frames:4.1f}%)",
@@ -1168,7 +1396,8 @@ def render_ply_heating_mp4(
         )
 
     #  Shared dark theme on both panels: facecolour, tick/label colour, spines.
-    for _ax in (ax_q, ax_t):
+    for _ax in ((ax_q, ax_t) if not stack_available
+                 else (ax_q, ax_s, ax_t)):
         _ax.set_facecolor(_PANEL)
         _ax.tick_params(colors=_TEXT, labelsize=8)
         for _spine in _ax.spines.values():
@@ -1177,7 +1406,10 @@ def render_ply_heating_mp4(
     #  Stage annotation per frame: a frame without its trajectory position is
     #  uninterpretable, exactly as for the PNGs.
     _annotate_stage(fig, y=0.018, fontsize=7)
-    fig.subplots_adjust(bottom=0.20)
+    if ax_const is not None:
+        pass  # gridspec already positioned every row
+    else:
+        fig.subplots_adjust(bottom=0.20, left=0.06, right=0.985)
 
     anim = FuncAnimation(
         fig, _update, frames=n_frames, blit=False
@@ -1186,7 +1418,6 @@ def render_ply_heating_mp4(
     anim.save(out_path, writer=writer, dpi=110)
     plt.close(fig)
     return True
-
 
 def main() -> int:
     """Entry point: build the three per-ply figures.
@@ -1294,7 +1525,8 @@ def main() -> int:
     if not args.no_mp4:
         try:
             wrote_mp4 = render_ply_heating_mp4(
-                by_element, back, mp4_path, max_frames=args.mp4_frames
+                by_element, back, mp4_path, profiles=profiles,
+                preset_tmax=preset_tmax, max_frames=args.mp4_frames
             )
         except ValueError as exc:
             print(f"[ply] ERROR: {exc}", file=sys.stderr)
