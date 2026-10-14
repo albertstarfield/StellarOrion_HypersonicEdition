@@ -6694,3 +6694,44 @@ So "step 2200 of 300,000,000" asserted a lineage to a 300M-step run that does no
 **Verification.** `ruff check` clean. Artist audit of the MP4 frame: 82 text artists, **0 out-of-canvas, 0 overlaps > 25 %**, all three provenance facts present. Text count fell 92 -> 82, which is exactly the 10 artists removed by the dedup. Frame extraction (`-fps_mode passthrough`) on frames 0/60/120/200/239: h264 1584x704, 240 frames, 8 fps, 30 s; corner `(10,9,14)`, **0 white pixels on every frame**, `_BG` ~47 %, accent 58,130 -> 112,120 then flat (the heating saturates), table ink 6.93 % on every frame proving the constants row renders.
 
 **Status. FIXED** for the annotation. NOT fixed and NOT attempted here: the underlying physics. The gate run is a failed run, the per-element flux still comes from it, and the flight-condition decision (3378 vs 2741.14 vs 2700 m/s) is still open. Those are inputs, not annotations.
+
+## F127 - Per-ply figures were built on a FAILED optimization-gate run; moved to the validated reference, and the per-ply flux reconstruction replaced with the exact series solution (FIXED)
+
+**The owner instruction.** "Go ahead fix it" -- authorising the fix offered at the end of F126: rebuild the per-ply figures on the designated validated reference instead of the failed round-1 optimization-gate run.
+
+### THE SWITCH
+- `scripts/run_tps_conduction_step2200.py` `DEFAULT_VTU` -> `results/validation_scalloped/paraview/surf_2200.vtu`. That directory is the **axiom-A2 reference** (`hiad_optimizer.py` A2: "The reference data in results/validation_scalloped/ is the source of every J(x) reference"). Its step-2200 dump is 2026-10-06 12:35 against the gate run's 2026-09-26 03:19, and its pipeline `status` is `success`.
+- Shape compatibility was verified **before** switching: both snapshots are 3696 points / 3648 cells / 3648 heat-flux values.
+- New constants `REF_STEP2200_ALT_KM = 52.069210` and `REF_STEP2200_VEL_MS = 3101.079`, read verbatim from the reference's own `validation_timeseries.csv` row step=2200. The `--altitude-km` / `--velocity-ms` defaults now use them. **3378 m/s is deliberately not used** and the help text says so: it is the Ada `Snapshot_Vel_Ms` constant, which belonged to a different run than the snapshot being read. Three velocities now circulate for the same altitude (3378 / 3101.079 / 2700 m/s) and none is settled.
+- The docstring `FLIGHT CONDITION` block and the figure `STAGE_TEXT` were rewritten to state all three, that the condition is READ from the reference rather than asserted, and that the reference carries its own T_surface caveat ("1,830-2,345 K against a 1,700 K SIC limit, FAIL if W/m2"; IRVE-3's flight peak of 14.36 W/cm2 would give ~1,313 K). That caveat is the reference's and is quoted, not retired.
+
+### RESULT OF THE SWITCH (peak element #144, was #0)
+`q_SG = 193,154.2 W/m2 = 19.315 W/cm2` -- **WITHIN** the 30 W/cm2 1st-gen rating, where the failed run's 25.362 W/cm2 was 84 % of it. `T_s = 1430.2 K` (was 1532.1), `T_back = 300.0 K` (pinned Dirichlet). Whole-surface T_s min/mean/max 300.0 / 801.3 / 1430.2 K (was 300.0 / 855.3 / 1532.1 -- **lower across the board**). 912 elements at zero flux (288 negative raw). 2064/3648 over the 523.15 K structure limit. Peak T_s is below both the reference doc's 1,700 K SiC figure and Rapisarda's 2073 K Nicalon T_max.
+
+### 🔴 THE ORPHAN STRIKES AGAIN -- the figures silently kept the OLD numbers
+After re-running the solve, `make_ply_heatflux_plots.py` still peak-picked element 0 with the old temperatures. Cause: `tps_step2200_layers.csv` has **no writer**, so the new solve wrote elements.csv / profiles.csv / summary.json but left the Oct-13 layers.csv in place and `load_layers()` kept reading it. **FIX: `write_layers_csv(path, rows, ply_thickness, ply_thermal_k, ply_names)` added to the driver and wired into `main()`** -- the table is now emitted from the same layup the Ada FFI call used, and the console reports "written from the solved layup -- no longer an orphan". The preset-override tripwire is now quiet because the file agrees with the preset, which is the intended steady state.
+
+### 🔴 A SECOND BUG I INTRODUCED -- cold-face vs hot-face `depth_m`
+My first writer emitted cumulative **cold-face** depths. `per_ply_flux` forms `(T_i - T_{i+1}) / R_i` and `plot_temperature_profile` closes the axis with `depths[-1] + thickness[-1]`; both assume **hot-face** depths (ply 1 at 0.0). The cold-face convention shifted every gradient by one ply and produced a nonsensical `q2 = 1,645,099.7 W/m2`. Fixed, and the A2 docstring now states the contract and the failure it prevents.
+
+### 🔴 THE THIRD AND LAST BUG -- interpolating across a material interface
+The solver's 33 samples are **uniformly spaced** (`total_depth / 32` = 2.22844e-4 m), so they do not land on ply hot faces: 0.001012 m falls between samples at 0.000891 and 0.001114. But the profile is only **piecewise** linear -- `dT/dx = -q/k` jumps at every interface -- so a straight line between two samples that straddle an interface lies across a kink. **Measured cost: 10.1 K at the ply-3 face and 3.4 K at the ply-5 face**, which became per-ply fluxes of `3,698.7 / 33,627.7 / 3,632.4 / 3,676.2 / 20,117.5 W/m2` where steady-state series conduction requires **one** number.
+
+**THE FIX (replaces the interpolating helper).** In steady 1-D series conduction the flux is constant, so with `R_total = SUM(t_i/k_i)`:
+
+    q    = (T_surface - T_back) / R_total
+    T(x) = T_surface - q * R(x)
+    R(x) = SUM_{plies fully above x} t_i/k_i  +  (x - x_i)/k_i
+
+Evaluated from the layup and the two boundary temperatures the solver returns, so it is independent of the sample grid. `_series_node_temp()` and `series_flux()` implement it; `_interp_at()` was deleted.
+
+**VERIFIED, not assumed.** Across **all 3,648 elements** the reconstruction reproduces the solver's own 33 profile samples to **max 0.000117 K / mean 0.000061 K** (element 960 is the worst). The 18,240 written node temperatures agree with the exact series solution to max 4.7e-6 K -- 3.3x the `%.9g` text quantum of 1.43e-6 K, i.e. text round-trip and accumulated float, one part in 3x10^8. The **max per-ply flux spread across all elements is 2.96e-2 W/m2 out of ~3,700**, i.e. the five per-ply fluxes are now one number, as they must be.
+
+**A note on my own process, recorded because it nearly caused a wrong fix:** my first verification script reported a 1,103 K disagreement and I nearly rewrote the solver on that basis. The bug was in the verification script -- it accumulated **depth** where it needed **resistance**. The solver was right all along.
+
+### STATUS OF THE FIVE-FLUX REPORTING
+The five per-ply fluxes are now numerically identical, which is honest but redundant: a series stack carries one flux. The per-ply quantities that ARE independent, and which the figures now lead with, are the node temperature at each face and the ply's share of the total series resistance. This is stated in the figure and here rather than left for a reader to notice.
+
+**Verification.** `ruff check` clean on BOTH venvs. Artist audit on 2 rendered frames: 84 text artists, **0 out-of-canvas, 0 overlaps > 25 %**, and all five provenance checks pass 2/2 (reference named / 3101 m/s condition / does not name the gate run / 300M described as an extrapolation / the reference's own 1,700 K caveat quoted). The "VALIDATION FAILED" string is now correctly **absent** -- the figures no longer come from the failed run. Frame extraction on 0/60/120/200/239: h264 1584x704, 240 frames, 8 fps, 30 s; corner `(10,9,14)`, **0 white pixels on every frame**, accent 41,966 -> 120,563 then flat, table ink 7.09 % on every frame.
+
+**Status. FIXED.** Still open: the flight-condition decision is now explicitly three-way (3378 / 3101.079 / 2700 m/s); items 1/2/3 of the 9-item sensitivity list; the 26 F121-deferred contract findings; `TPS_PLY_MATERIALS_CITATIONS.md`; the missing paperRef copies of NASA/TM-20110012051 and the DOE/UCLA SiC report.

@@ -6,30 +6,30 @@
     "n_theta": 48,
     "points_per_revolution": 48
   },
-  "q_sg_Wm2": 253620.703125,
-  "q_peak_Wm2": 253620.703125,
-  "q_peak_Wcm2": 25.3620703125,
+  "q_sg_Wm2": 193154.21875,
+  "q_peak_Wm2": 193154.21875,
+  "q_peak_Wcm2": 19.315421875,
   "nextel_bf20_rating_Wcm2": 30.0,
   "peak_within_nextel_rating": true,
   "t_surface_K": {
     "min": 300.0,
-    "max": 1532.112060546875,
-    "mean": 855.3439166420385
+    "max": 1430.2493896484375,
+    "mean": 801.3188259727076
   },
   "t_back_K": {
     "min": 300.0,
     "max": 300.0,
     "mean": 300.0
   },
-  "elements_at_zero_flux": 624,
-  "elements_with_negative_raw_flux": 192,
-  "elements_t_surface_over_struct_limit": 2448,
+  "elements_at_zero_flux": 912,
+  "elements_with_negative_raw_flux": 288,
+  "elements_t_surface_over_struct_limit": 2064,
   "elements_t_back_over_struct_limit": 0,
   "struct_limit_K": 523.15,
   "peak_element": {
-    "element": 0,
-    "q_sg_Wm2": 253620.703125,
-    "t_surface_K": 1532.112060546875,
+    "element": 144,
+    "q_sg_Wm2": 193154.21875,
+    "t_surface_K": 1430.2493896484375,
     "t_back_K": 300.0
   },
   "layup": {

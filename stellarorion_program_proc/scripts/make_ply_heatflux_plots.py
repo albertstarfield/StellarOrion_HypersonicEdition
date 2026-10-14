@@ -476,57 +476,56 @@ def plot_flux_distribution(all_flux: list[list[float]], out_path: str) -> None:
 # every figure or a reader will take one velocity as settled.  Defining it once
 # means it cannot be softened in one place and left exact in another.
 #
-# WHAT IS SETTLED, AND WHAT THE ORIGINAL WORDING GOT WRONG (corrected
-# 2026-10-14 after the provenance was traced):
+# PROVENANCE, TRACED 2026-10-14 (this is what the annotation must state):
 #
-#   The data is DSMC step 2200, and that run TERMINATED there.
-#   `results/validation_optimized/paraview/` holds exactly 22 dumps,
-#   `surf_100` .. `surf_2200`, all written 2026-09-26 03:19 by the hybrid
-#   optimization gate's ROUND-1 DSMC re-simulation.  There is no
-#   `surf_pinn_300000000.vtu` in that directory, and there never was: the run
-#   stopped at step 2200.
+#   The aerothermal input is `results/validation_scalloped/paraview/
+#   surf_2200.vtu` -- the DESIGNATED VALIDATED REFERENCE, i.e. the dataset
+#   `hiad_optimizer.py` axiom A2 names as the source of every objective
+#   reference.  Its pipeline reports status "success" (2026-10-13) and its
+#   step-2200 dump is 2026-10-06, against 2026-09-26 for the gate run.
 #
-#   The 300,000,000 figure is a PINN/Kriging EXTRAPOLATION TARGET, not a run
-#   length.  The pipeline log is explicit:
-#       [VTU] Using geometry from: surf_2200.vtu (step 2200)
-#       [VTU] Generated: surf_pinn_300000000.vtu (step 300000000)
-#   i.e. the step-2200 geometry was extrapolated forward, and that artifact
-#   landed in `validation_pipeline_output/vtu/`, not beside the DSMC dumps.
-#   The extrapolation was itself partly unphysical and had to be rescued:
-#       heatflux_max_Wm2: PINN=-303648.27 < 0 (unphysical),
-#                         using Kriging-denoised=1420178.63
-#   So "step 2200 of 300,000,000" asserted a lineage to a 300M-step run that
-#   does not exist.  Corrected here rather than left standing.
+#   It REPLACES `results/validation_optimized/`, which was a round-1 hybrid
+#   optimization gate whose own log reads "[VALIDATE] RESULT: VALIDATION
+#   FAILED / Survivability: FAILED -- vehicle does not survive" (heat flux
+#   58.42 % error, heat load 59.00 %, peak decel 31.00 %).  See F126.
 #
-#   The flux therefore comes from the OPTIMIZED geometry, not the baseline
-#   IRVE-3 shape and not the validated reference:
-#       R_N = 2.97144 m, r_tor = 0.08846 m, half_cone = 40.148 deg
-#       (hiad_optimization_results.json /hybrid_validation/geometry)
-#   and that gate run's own verdict is VALIDATION FAILED with
-#   "vehicle does not survive" (heat flux 58.42 % error, heat load 59.00 %,
-#   peak decel 31.00 %).  The per-ply numbers are then ARITHMETICALLY correct
-#   for that input, but the input is a run the pipeline itself rejects, so no
-#   absolute temperature or flux here is a flight prediction.
+#   The condition below is READ from that reference's own
+#   `validation_timeseries.csv` row step=2200 (alt 52.069210 km, V 3101.079
+#   m/s, M 9.455298), not asserted.  It differs from the pair the Ada
+#   constants declare (`Snapshot_Alt_Km`/`Snapshot_Vel_Ms` = 51.8 km /
+#   3378 m/s), which belongs to a different run, and from the scalloped DSMC
+#   deck's 2700 m/s.  Three velocities circulate for 51.8-52 km; none is
+#   settled, so the annotation names all three rather than one.
 #
-# WHAT IS NOT SETTLED: the velocity.  The code states Snapshot_Vel_Ms = 3378
-# m/s at Snapshot_Alt_Km = 51.8 km; the trajectory's own 51.8 km value is
-# 2741.14 m/s and the scalloped DSMC deck uses 2700 m/s (M 7.534).  Velocity
-# alone accounts for 98.0 % of the apparent 2x DSMC discrepancy, so the
-# SENSITIVITY RANKING is invariant to this choice but the absolute numbers
-# are not.
+#   WHAT IS SETTLED ABOUT THE RUN ITSELF: it TERMINATED at step 2200 -- that
+#   directory holds exactly 22 dumps, `surf_100` .. `surf_2200`, and no
+#   `surf_pinn_300000000.vtu` at all.  The 300,000,000 figure is a PINN/Kriging
+#   EXTRAPOLATION target (the pipeline log: "Using geometry from: surf_2200.vtu
+#   (step 2200)" then "Generated: surf_pinn_300000000.vtu"), which also had to
+#   be rescued from a negative heat flux.  There is no 300M-step run to be
+#   "step 2200 of".
+#
+#   STILL NOT SETTLED, AND RECORDED: the reference's own V&V document carries a
+#   T_surface survivability caveat -- 1,830-2,345 K against a 1,700 K SiC limit,
+#   marked "if W/m2", with the note that IRVE-3's flight peak of 14.36 W/cm2
+#   would give ~1,313 K.  This solve's own peak is 1,430.2 K, below both that
+#   1,700 K figure and Rapisarda's 2,073 K Nicalon T_max, but the caveat is the
+#   reference's, not mine to retire.
 STAGE_TEXT = (
-    "DSMC step 2200 \u2014 run TERMINATED there; the 300,000,000 figure is a "
-    "PINN/Kriging extrapolation, NOT a run length\n"
-    "source: results/validation_optimized gate r1 on an OPTIMIZED geometry "
-    "(R_N 2.971 m, r_tor 0.0885 m, half-cone 40.15 deg)"
+    "DSMC step 2200 \u2014 DESIGNATED VALIDATED REFERENCE "
+    "results/validation_scalloped/ (optimizer A2 reference dataset)\n"
+    "condition read from that run: h = 52.069210 km, V = 3101.079 m/s, "
+    "M = 9.455; peak q_SG = 193,154 W/m2 (19.3 W/cm2)"
 )
 STAGE_CAVEAT = (
-    "\u26a0 OPEN (1) flight condition: code states V = 3378 m/s at 51.8 km; "
-    "trajectory's own 51.8 km value is 2741.14 m/s;\n"
-    "scalloped deck 2700 m/s \u2014 velocity alone explains 98.0% of the "
-    "apparent 2\u00d7 gap; ranking invariant, absolute values not.\n"
-    "(2) that gate run's own verdict is VALIDATION FAILED / \"vehicle does "
-    "not survive\" (heat flux 58.4%, heat load 59.0%)."
+    "\u26a0 run TERMINATED at step 2200 (22 dumps, surf_100..surf_2200); the "
+    "300,000,000 figure is a PINN/Kriging\n"
+    "extrapolation target, NOT a run length. OPEN (1) velocity: 3378 m/s in "
+    "the Ada Snapshot_Vel_Ms constant,\n"
+    "3101.079 m/s in the reference run used here, 2700 m/s in the scalloped "
+    "deck \u2014 none settled. (2) the\n"
+    "reference's own V&V doc flags a T_surface caveat (1,830-2,345 K vs "
+    "1,700 K SIC, \"if W/m2\")."
 )
 
 

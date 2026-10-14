@@ -42,12 +42,29 @@ AXIOMS (all enforced in Ada; restated here as the driver's contract)
         the driver refuses rather than letting the FFI guess.
 
 FLIGHT CONDITION
-    The snapshot is the validated DSMC single-point case: h = 51.8 km,
-    V = 3378 m/s, nose bluntness radius 0.55 m (the IRVE-3 Geometry_Parameters
-    default, stellarorion_types.ads:284). The same pair appears as
-    Snapshot_Alt_Km / Snapshot_Vel_Ms in stellarorion_optimization.ads:404-405
-    and in VALIDATION_Sep_2_2026.md Sec 3.1; both are CLI-overridable here so a
-    change to those Ada constants is a visible flag change, not a silent drift.
+    The snapshot is the DESIGNATED VALIDATED REFERENCE, not the optimization
+    gate's output.  `results/validation_scalloped/` is the reference dataset
+    every objective is measured against (hiad_optimizer.py axiom A2: "The
+    reference data in results/validation_scalloped/ is the source of every J(x)
+    reference"), and `validation_timeseries.csv` records its own step-2200
+    state directly:
+
+        step 2200 : alt = 52.069210 km, V = 3101.079 m/s, M = 9.455298,
+                    q_max = 1,920,170 W/m^2, q_avg = 552,002 W/m^2,
+                    q_SG = 122,029 W/m^2, heat load = 165.716 J/cm^2
+
+    Those two numbers are the CLI defaults below, taken FROM that file rather
+    than asserted.  Corrected on 2026-10-14: the defaults previously read
+    h = 51.8 km / V = 3378 m/s, which is the pair
+    `Snapshot_Alt_Km`/`Snapshot_Vel_Ms` declare in
+    stellarorion_optimization.ads:404-405 -- and which the reference DSMC run
+    does NOT use.  Three different velocities have circulated for 51.8-52 km:
+    3378 m/s (the Ada constants), 3101.079 m/s (the reference run's own
+    step-2200 value, used here) and 2700 m/s (the scalloped DSMC deck).  The
+    flight-condition question is OPEN; this driver now follows the reference
+    dataset it actually reads, and says so, rather than quoting a constant
+    from a different run.  Both remain CLI-overridable, so a change is a
+    visible flag change and never a silent drift.
 
 READING OF T_back (stated up front, because it is a model property)
     The solver imposes a steady-state Dirichlet condition on the cold face
@@ -81,6 +98,7 @@ import os
 import re
 import statistics
 import sys
+from collections.abc import Sequence
 from typing import Any
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -91,9 +109,27 @@ if _SRC_PY not in sys.path:
 import ada_pinn_wrapper as W  # imported after the sys.path insert above
 
 REQUIRED_STEP = 2200
+#  The DESIGNATED VALIDATED REFERENCE snapshot, not the optimization gate's.
+#  Corrected 2026-10-14: this previously pointed at
+#  `results/validation_optimized/`, whose gate run's own log reads
+#  "[VALIDATE] RESULT: VALIDATION FAILED / Survivability: FAILED -- vehicle
+#  does not survive" (heat flux 58.42 % error, heat load 59.00 %, peak decel
+#  31.00 %).  Every per-ply figure built on it inherited that provenance
+#  without saying so.  `results/validation_scalloped/` is the reference dataset
+#  the optimizer measures every objective against (hiad_optimizer.py A2) and is
+#  also fresh: step-2200 dump 2026-10-06 12:35 against 2026-09-26 for the gate
+#  run.  Shape-compatible (3696 points / 3648 cells / 3648 heat-flux values),
+#  verified before the switch.
 DEFAULT_VTU = os.path.join(
-    _HERE, "..", "results", "validation_optimized", "paraview",
+    _HERE, "..", "results", "validation_scalloped", "paraview",
     f"surf_{REQUIRED_STEP}.vtu")
+
+#: Step-2200 state of the reference run, read verbatim from
+#: `results/validation_scalloped/validation_timeseries.csv` row step=2200.
+#: Kept as named constants so the CLI defaults, the summary JSON and the
+#: docstring above cannot disagree with each other.
+REF_STEP2200_ALT_KM = 52.069210
+REF_STEP2200_VEL_MS = 3101.079
 
 #: Nextel BF-20 outer-fabric heat-flux rating [W/cm^2] [2]. Used only for
 #: reporting context, never to alter a solve.
@@ -292,6 +328,215 @@ def write_profile_csv(path: str, rows: list[dict[str, Any]]) -> int:
     return written
 
 
+def _series_node_temp(t_surface_K: float, t_back_K: float,
+                      ply_thickness: Sequence[float],
+                      ply_thermal_k: Sequence[float],
+                      target_depth_m: float) -> float:
+    """Exact node temperature at ``target_depth_m`` from the series solution [K].
+
+    WHY NOT INTERPOLATE THE PROFILE (this replaces an interpolating version):
+    the solver's 33 profile samples are UNIFORMLY spaced (0 .. total_depth/32,
+    i.e. 2.22844e-4 m), so they do not land on ply hot faces.  A boundary at
+    0.001012 m falls between samples at 0.000891 and 0.001114.  But the
+    profile is only PIECEWISE linear -- dT/dx = -q/k changes at every
+    interface -- so a straight line between two samples that straddle an
+    interface lies across a kink and mis-states the boundary temperature.
+    Measured on the peak element, that error was 10.1 K at the ply-3 face and
+    3.4 K at the ply-5 face, and it turned into per-ply fluxes of
+    3 698.7 / 33 627.7 / 3 632.4 / 3 676.2 / 20 117.5 W/m2 where steady-state
+    series conduction requires ONE value.
+
+    THE EXACT ROUTE. In steady 1-D series conduction the through-flux is
+    constant, so with R_total = SUM(t_i/k_i):
+
+        q     = (T_surface - T_back) / R_total          [W/m2]
+        T(x)  = T_surface - q * R(x)                    [K]
+        R(x)  = SUM_{plies fully above x} t_i/k_i
+                + (x - x_i)/k_i                         [m2K/W]
+
+    This is evaluated directly from the layup and the two boundary
+    temperatures the solver returns, so it is exact to floating-point
+    summation and does not depend on the sample grid at all.  Verified: it
+    reproduces the solver's own 33 samples to 3e-4 K (mean) / 1e-3 K (max)
+    on the peak element, and it puts the node at the ply-3 face at 1427.75 K
+    where interpolation gave 1417.66 K.
+
+    Parameters:
+        t_surface_K: hot-face temperature the solver returned [K].
+        t_back_K: cold-face temperature the solver returned [K].
+        ply_thickness, ply_thermal_k: the layup actually solved, hot face first.
+        target_depth_m: depth from the hot face at which to evaluate [m].
+
+    Returns:
+        The node temperature [K].
+
+    Raises:
+        ValueError: the layup is empty, or a thickness or conductivity is not
+            strictly positive (R would be undefined), or the depth is outside
+            the stack.  All three are caller bugs, not data noise, so they are
+            raised rather than clamped.
+    """
+    n_ply = len(ply_thickness)
+    if n_ply == 0:
+        raise ValueError("layup is empty")
+    if len(ply_thickness) != len(ply_thermal_k):
+        raise ValueError("ply_thickness and ply_thermal_k differ in length")
+    total = 0.0
+    r_total = 0.0
+    for thickness, k in zip(ply_thickness, ply_thermal_k):
+        t_i = float(thickness)
+        k_i = float(k)
+        if t_i <= 0.0 or k_i <= 0.0:
+            raise ValueError(
+                f"non-positive ply property: thickness={t_i} k={k_i}")
+        total += t_i
+        r_total += t_i / k_i
+    if r_total <= 0.0:
+        raise ValueError(f"total series resistance is non-positive: {r_total}")
+    if not 0.0 <= target_depth_m <= total + 1.0e-15:
+        raise ValueError(
+            f"target depth {target_depth_m} m outside the stack "
+            f"0 .. {total} m")
+
+    flux = (float(t_surface_K) - float(t_back_K)) / r_total
+    acc_depth = 0.0
+    acc_resistance = 0.0
+    for thickness, k in zip(ply_thickness, ply_thermal_k):
+        t_i = float(thickness)
+        k_i = float(k)
+        if acc_depth + t_i >= target_depth_m - 1.0e-15:
+            return (float(t_surface_K)
+                    - flux * (acc_resistance + (target_depth_m - acc_depth) / k_i))
+        acc_depth += t_i
+        acc_resistance += t_i / k_i
+    # target_depth_m == total (the cold face), within the epsilon above.
+    return float(t_surface_K) - flux * acc_resistance
+
+
+def series_flux(t_surface_K: float, t_back_K: float,
+                ply_thickness: Sequence[float],
+                ply_thermal_k: Sequence[float]) -> float:
+    """The ONE through-flux of a series stack [W/m2].
+
+    Steady 1-D series conduction carries a single flux, so reporting five
+    per-ply fluxes is reporting five estimates of one number.  This returns
+    the exact value; the per-ply quantities that ARE independent are the node
+    temperature at each face and the ply's share of the total resistance.
+
+    Raises:
+        ValueError: empty layup, non-positive property, or non-positive total
+            resistance -- the same guards as ``_series_node_temp``.
+    """
+    n_ply = len(ply_thickness)
+    if n_ply == 0:
+        raise ValueError("layup is empty")
+    if len(ply_thickness) != len(ply_thermal_k):
+        raise ValueError("ply_thickness and ply_thermal_k differ in length")
+    r_total = 0.0
+    for thickness, k in zip(ply_thickness, ply_thermal_k):
+        t_i = float(thickness)
+        k_i = float(k)
+        if t_i <= 0.0 or k_i <= 0.0:
+            raise ValueError(
+                f"non-positive ply property: thickness={t_i} k={k_i}")
+        r_total += t_i / k_i
+    if r_total <= 0.0:
+        raise ValueError(f"total series resistance is non-positive: {r_total}")
+    return (float(t_surface_K) - float(t_back_K)) / r_total
+
+
+def write_layers_csv(path: str, rows: list[dict[str, Any]],
+                     ply_thickness: Sequence[float],
+                     ply_thermal_k: Sequence[float],
+                     ply_names: Sequence[str]) -> int:
+    """Per-element x per-ply table, written by THIS driver.
+
+    WHY THIS WRITER EXISTS (F123/F124 -- read before deleting it):
+    `tps_step2200_layers.csv` had NO writer anywhere in the repository, so it
+    went stale silently.  It still recorded `k = 0.25` and the superseded grade
+    "Pyrogel 2250" after both had changed, and `make_ply_heatflux_plots.py`
+    read the ply name, thickness and conductivity from it -- meaning a layup
+    change could be fully applied in the solver and absent from every per-ply
+    figure.  The plot script was moved onto the authoritative preset, and the
+    preset-override warning remains as a tripwire, but a table that no program
+    writes is a table that will drift again.  This closes the hole at the
+    source: the values come from the Ada solver's own layup, so the file is
+    regenerated whenever the solve is.
+
+    AXIOMS:
+        A1. Ply geometry and material are the solver's, never a re-derivation:
+            the same tuples that parameterise the Ada FFI call are written out.
+        A2. ``depth_m`` is the ply's HOT-FACE depth (ply 1 at 0.0), so the
+            column is what ``per_ply_flux`` and
+            ``plot_temperature_profile`` assume.  It is NOT the cold face:
+            an earlier revision wrote cumulative cold-face depths
+            (0.000506, 0.001012, ...), which shifted every gradient by one
+            ply and produced a nonsensical q2 = 1.645e6 W/m^2 on the peak
+            element.  ``per_ply_flux`` forms ``(T_i - T_{i+1}) / R_i`` and
+            ``plot_temperature_profile`` closes the axis with
+            ``depths[-1] + thickness[-1]``; both read hot face first.
+        A3. ``temp_K`` is the EXACT node temperature from the series
+            solution, not an interpolation of the uniform sample grid --
+            see ``_series_node_temp`` for why interpolation is wrong at a
+            material interface (measured: 10.1 K at the ply-3 face).
+
+    Parameters:
+        rows: per-element results, carrying ``t_surface_K`` and
+            ``t_back_K`` from the Ada solver.  ``profile_depth_m`` /
+            ``profile_temp_K`` are NOT used: the node temperatures come from
+            the layup and the two boundary temperatures, so they do not
+            depend on the 33-point sample grid.
+        ply_thickness, ply_thermal_k, ply_names: the layup actually solved,
+            hot face first, same length.
+
+    Returns:
+        The number of data rows written (elements x plies).
+
+    Raises:
+        ValueError: propagated from ``_series_node_temp`` if the layup is
+            malformed.  A malformed layup is a caller bug and must abort the
+            write rather than emit a table of wrong depths.
+    """
+    n_ply = len(ply_thickness)
+    if n_ply == 0:
+        raise ValueError("layup is empty")
+    if len(ply_thickness) != len(ply_thermal_k):
+        raise ValueError("ply_thickness and ply_thermal_k differ in length")
+    #  HOT-FACE depth of each ply [m] = the cumulative thickness of every ply
+    #  ABOVE it, so ply 1 sits at 0.0.  This is the convention the table has
+    #  always used and every reader depends on -- see axiom A2 above.
+    hot_face: list[float] = []
+    acc = 0.0
+    for thickness in ply_thickness:
+        hot_face.append(acc)
+        acc += float(thickness)
+
+    written = 0
+    with open(path, "w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["element", "ply", "ply_name", "depth_m", "temp_K",
+                         "ply_thickness_m", "ply_k_WmK"])
+        for row in rows:
+            element = row["element"]
+            t_surface = float(row["t_surface_K"])
+            t_back = float(row["t_back_K"])
+            for ply in range(n_ply):
+                name = ply_names[ply] if ply < len(ply_names) else f"ply{ply + 1}"
+                thickness = float(ply_thickness[ply])
+                k = float(ply_thermal_k[ply]) if ply < len(ply_thermal_k) else float("nan")
+                node = _series_node_temp(t_surface, t_back,
+                                         ply_thickness, ply_thermal_k,
+                                         hot_face[ply])
+                writer.writerow([
+                    element, ply + 1, name,
+                    f"{hot_face[ply]:.9g}",
+                    f"{node:.9g}",
+                    f"{thickness:.9g}", f"{k:.9g}",
+                ])
+                written += 1
+    return written
+
+
 def _flux_of(row: dict[str, Any]) -> float:
     """Sort key: the Sutton-Graves flux this element received [W/m^2]."""
     return float(row["q_sg_Wm2"])
@@ -361,11 +606,17 @@ def main(argv: list[str] | None = None) -> int:
                         help="snapshot VTU (must be the step-2200 file)")
     parser.add_argument("--step", type=int, default=REQUIRED_STEP,
                         help="snapshot step; only 2200 is accepted")
-    parser.add_argument("--altitude-km", type=float, default=51.8,
+    parser.add_argument("--altitude-km", type=float,
+                        default=REF_STEP2200_ALT_KM,
                         help="flight altitude for Q_SG [km] "
-                             "(DSMC step-2200 condition)")
-    parser.add_argument("--velocity-ms", type=float, default=3378.0,
-                        help="flight velocity for Q_SG [m/s]")
+                             "(reference run step-2200 condition, read from "
+                             "validation_scalloped/validation_timeseries.csv)")
+    parser.add_argument("--velocity-ms", type=float,
+                        default=REF_STEP2200_VEL_MS,
+                        help="flight velocity for Q_SG [m/s] "
+                             "(reference run step-2200 condition; the Ada "
+                             "Snapshot_Vel_Ms constant 3378.0 is a DIFFERENT "
+                             "run's value and is deliberately NOT used)")
     parser.add_argument("--nose-radius-m", type=float, default=0.55,
                         help="nose bluntness radius for Q_SG [m] "
                              "(IRVE-3 Geometry_Parameters default)")
@@ -452,6 +703,19 @@ def main(argv: list[str] | None = None) -> int:
         written = write_profile_csv(profile_csv, rows)
         print(f"[OUT] {profile_csv} ({written} rows = "
               f"{len(rows)} elements x {written // max(1, len(rows))} samples)")
+
+    #  F123/F124: this table had no writer, so it drifted silently.  Emit it
+    #  from the same layup the solve used, so it cannot disagree with the
+    #  solver, and delete the orphan's authority for good.
+    layers_csv = os.path.join(out_dir, f"tps_step{args.step}_layers.csv")
+    layers_written = write_layers_csv(
+        layers_csv, rows,
+        W.IRVE3_FTPS_PLY_THICKNESS_M,
+        W.IRVE3_FTPS_PLY_THERMAL_K,
+        W.IRVE3_FTPS_PLY_NAMES)
+    print(f"[OUT] {layers_csv} ({layers_written} rows = "
+          f"{len(rows)} elements x {layers_written // max(1, len(rows))} plies, "
+          f"written from the solved layup -- no longer an orphan)")
 
     json_path = args.json or os.path.join(out_dir, f"tps_step{args.step}_summary.json")
     os.makedirs(os.path.dirname(os.path.normpath(json_path)), exist_ok=True)
