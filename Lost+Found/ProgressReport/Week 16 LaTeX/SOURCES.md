@@ -15,7 +15,7 @@ Paths are relative to the repository root:
 `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition`
 
 Deck directory: `Lost+Found/ProgressReport/Week 16 LaTeX/`.
-The deck is **14 pages** (title, outline, and 12 figure frames).
+The deck is **16 pages** (title, outline, and 14 figure frames, including the new 3 PREVIOUS PROBLEM frames and the moved CONTEXT frame at the end).
 
 ## Slide to figure map
 
