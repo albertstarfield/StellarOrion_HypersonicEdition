@@ -9,7 +9,7 @@
 
 \begin{itemize}
     \item \textbf{Coding:} implementation, refactoring and debugging of the numerical framework described in Chapter~\ref{ch:methodology}, in Ada, Python and \LaTeX.
-    \item \textbf{Theorem provers:} mechanized verification of the thermal and heat-flux properties the framework relies on, using the Rocq/Coq proof assistant for the thermal response lemmas (\texttt{stellarorion\_thermal\_proof.v}) and GNATprove at SPARK level~4 (\texttt{gnatprove --level=4}) for the Ada/SPARK contracts.
+    \item \textbf{Theorem provers:} mechanized verification of the thermal and heat-flux properties the framework relies on, used as an independent check that the implemented code is not a hallucination and to confirm its correctness, reducing the residual error factor to the author's own fundamental knowledge. The Rocq/Coq proof assistant verifies the thermal response lemmas (\texttt{stellarorion\_thermal\_proof.v}) and GNATprove at SPARK level~4 (\texttt{gnatprove --level=4}) discharges the Ada/SPARK contracts. Further automated provers such as \texttt{Sabotage\_verifier} from Project-Zephyrine act as a gate: where the assistant writes something that carries no citation or does not make sense, the gate blocks the program from running and flags it as a fraud or a red flag, and it demands the citations or comments that record the why and the reasoning behind each decision.
     \item \textbf{Writing correction:} language and presentation editing of the manuscript.
 \end{itemize}
 
