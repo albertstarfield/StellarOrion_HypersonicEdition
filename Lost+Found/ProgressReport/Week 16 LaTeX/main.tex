@@ -105,18 +105,17 @@
   \end{center}
 \end{frame}
 
-\begin{frame}{REDEMPTION 1d: GOVERNING EQUATIONS BY CHANNEL}
+\begin{frame}{REDEMPTION 1d: GOVERNING EQUATIONS BY CHANNEL (F84, F83, F21)}
   \small
-  \textbf{Convection:} $q_{\mathrm{SG}} = C_{\mathrm{SG}}\,\sqrt{\rho/R_N}\,V^3$,
-  $C_{\mathrm{SG}}=1.7415\mathrm{e}{-}4$, evaluated at $51.8$ km / $3378$ m/s,
-  clamped to $[0,1]$. (F21, F83)\\
-  \textbf{Conduction:} $q_{\mathrm{cond}} = (T_s - T_{\mathrm{back}})/R_{\mathrm{tot}}$
-  with $R_{\mathrm{tot}} = \sum (\Delta x_i/k_i) = 0.25605$ m$^2$K/W
-  (IRVE-3 5-ply). (F84)\\
-  \textbf{Reradiation:} $q_{\mathrm{rad}} = \varepsilon\,\sigma\,T_s^4$,
-  $\varepsilon=0.80$, $T_s=1550.2345$ K. (F84)\\
-  \textbf{Balance:} $q_{\mathrm{conv}} = q_{\mathrm{rad}} + q_{\mathrm{cond}}$
-  ($266509.3 = 261626.5 + 4882.8$ W/m$^2$). (F84)
+  \textbf{Convection (Sutton--Graves).}
+  Symbol: $q_{SG}$ [W/m$^2$], Sutton-Graves convective flux term (F21, F83).\\
+  \textbf{Conduction (through the stack).}
+  Symbol: $q_{cond}$ [W/m$^2$], per ply (delta x over k); $R_{tot}=0.25605$ (F84).\\
+  \textbf{Reradiation.}
+  Symbol: $q_{rad}$ [W/m$^2$], radiated out of the hot face (F84).\\
+  \textbf{Balance (hot face):}
+  $q_{conv} = q_{rad} + q_{cond}$, evaluated as
+  $266509.3 = 261626.5 + 4882.8$ W/m$^2$. (F84)
 \end{frame}
 
 \begin{frame}{REDEMPTION 1e: 5-PLY IRVE-3 FTPS SPECIFICATION}
