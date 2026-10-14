@@ -81,47 +81,44 @@
 \end{frame}
 
 % =====================================================================
-% SECTION 0 — CONTEXT
-% Where this work sits. The coverage map is _proc-generated and marks the
-% StellarOrion pipeline row with a red dashed outline; it is the only
-% positioning frame in the deck.
-% =====================================================================
-\section{CONTEXT}
-
-% so_literature_map.png <- literature_review_map.png. The outlined row is
-% labelled "This Work StellarOrion Pipeline" in the artwork itself.
-\PlotFrame{WHERE THIS WORK SITS}
-  {\MaxTextLines{2}%
-   Coverage of the phenomena and methods this work draws on; the
-   StellarOrion pipeline is the outlined row.}
-  {so_literature_map}
-
-% =====================================================================
-% SECTION 1 — PREVIOUS PROBLEM
-% Two problems drove this week's work:
-%   (a) a sampling issue in the design-space exploration, and
-%   (b) optimisation driven by MoP, whose behaviour was too chaotic to
-%       use as a basis for further work.
+% SECTION 0 — PREVIOUS PROBLEM
+% Three things this work was built on top of that each needed re-thinking
+% before the CURRENT IMPLEMENTATION could be trusted:
+%   (a) heat flux was never defined (convection vs conduction vs rerad),
+%   (b) the cost function was incomplete (attempt-1), and
+%   (c) sampling was ordered wrong (pay-as-you-go).
 % Section headings are typed in CAPS deliberately: see preamble.tex for why
 % \section is never redefined.
 % =====================================================================
 \section{PREVIOUS PROBLEM}
 
-% The chaos frame carries the evidence as a plot, per the text budget.
-% Figure note: NO MoP/sampling scatter plot exists in the repository. This
-% frame therefore shows the DSMC algorithm flowchart, which is what MoP was
-% sampling over; the chaos evidence itself is numeric (F6), quoted in the
-% caption. Searched with:
-%   find . -iname "*.png" -o -iname "*.pdf" | grep -iE "mop|sampl|chaos"
-\PlotFrame{WHAT MoP WAS SAMPLING: THE DSMC ALGORITHM}
+% so_sutton_graves.png <- generate_sutton_graves_parametric.py. The flaw
+% being flagged here is the AMBIGUITY ("which channel?"), not the value,
+% which is F83's correction. Figure reused to foreshadow slide 3b.
+\PlotFrame{1. HEAT FLUX WAS NEVER DEFINED}
   {\MaxTextLines{2}%
-   Two MoP runs at the fixed seed 42 returned different optima
-   ($J$ 1.602195 vs 1.608508): the GP hyper-parameter fit varies, not the
-   seed (F6). The figure is the algorithm MoP was sampling over.}
-  {so_dsmc_algorithm}
+   Convection vs. reradiation vs. through-TPS conduction: we never stated
+   which, so readers assumed a single channel. Now defined exactly (F84).}
+  {so_sutton_graves}
+
+% so_topology_before_after.png <- optimization_comparison.py L1007-1008.
+% Attempt-1 is the earlier optimization result this frame flagges.
+\PlotFrame{2. COST FUNCTION INCOMPLETE (ATTEMPT-1)}
+  {\MaxTextLines{2}%
+   Attempt-1 "optimized" shape performed worse on aerothermal dynamics
+   (ref: attempt-1); cost function/objective now redefined; performs
+   better.}
+  {so_topology_before_after}
+
+% so_ccd_screen.png <- fignew_ccd_screen.png (make_fignew.py).
+\PlotFrame{3. SAMPLING ORDERED WRONG (CCD FIRST)}
+  {\MaxTextLines{2}%
+   Pay-as-you-go sampling ate too much time: run the 15-point CCD first,
+   then score the rest analytically (CCD-count F17, seed 42 is F6).}
+  {so_ccd_screen}
 
 % =====================================================================
-% SECTION 2 — CURRENT IMPLEMENTATION
+% SECTION 1 — CURRENT IMPLEMENTATION
 % The items below, each grounded in a real implementation on disk.
 %
 % Naming note: the second item is KRIGING denoising. A repo-wide search
@@ -271,5 +268,19 @@
    Design-space samples in nose radius against torus radius, with the
    evaluated cost over the 70-step budget.}
   {so_bo_3d}
+
+% =====================================================================
+% SECTION LAST -- CONTEXT (moved here so the positioning map is seen after
+% the implementation, deliberately, at the end of the deck).
+% =====================================================================
+\section{CONTEXT}
+
+% so_literature_map.png <- literature_review_map.png. The outlined row is
+% labelled "This Work StellarOrion Pipeline" in the artwork itself.
+\PlotFrame{WHERE THIS WORK SITS}
+  {\MaxTextLines{2}%
+   Coverage of the phenomena and methods this work draws on; the
+   StellarOrion pipeline is the outlined row.}
+  {so_literature_map}
 
 \end{document}

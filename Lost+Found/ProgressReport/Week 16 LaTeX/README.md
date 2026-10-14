@@ -157,14 +157,73 @@ landed.
 
 ## Deck shape
 
-14 pages: title · OUTLINE · **CONTEXT** · **PREVIOUS PROBLEM** · then twelve frames under
-**CURRENT IMPLEMENTATION** — `1. BAYESIAN OPTIMIZATION`, `1b. CCD SCREEN`, `2. KRIGING
-DENOISING`, `3. VALIDATION RUN`, `3b. PINN`, `3c. HEAT FLUX: CONVECTION, CONDUCTION, RERADIATION`,
-`4. REDEFINING…`,
-`4b. SCALLOPED VS SMOOTH`, `5. TOPOLOGY BEFORE/AFTER`, `6. BAYESIAN PLOT`.
+16 pages: title · OUTLINE · **PREVIOUS PROBLEM** (3 frames) · **CURRENT IMPLEMENTATION** (10 frames) · **CONTEXT** (moved to end).
+
+PREVIOUS PROBLEM: `1. HEAT FLUX WAS NEVER DEFINED`, `2. COST FUNCTION INCOMPLETE (ATTEMPT-1)`,
+`3. SAMPLING ORDERED WRONG (CCD FIRST)`.
+
+CURRENT IMPLEMENTATION: `1. BAYESIAN OPTIMIZATION`, `1b. CCD SCREEN`, `2. KRIGING DENOISING`,
+`3. VALIDATION RUN`, `3b. PINN`, `3c. HEAT FLUX: CONVECTION, CONDUCTION, RERADIATION`,
+`4. REDEFINING YESTERDAY'S WRONG HEAT FLUX DEFINITION`, `4b. SCALLOPED VS SMOOTH`,
+`5. OPTIMIZATION RESULT: TOPOLOGY BEFORE/AFTER`, `6. BAYESIAN PLOT OPTIMIZATION`.
+
+CONTEXT is intentionally seen as the LAST frame (positioning map is read after the evidence).
 
 Constraints enforced by the preamble, not by convention: `\MaxTextLines{2}` raises
 `\PackageError{Week16Deck}` if a caption exceeds two lines, and every number in a caption
 must cite the file it came from. `\setbeamertemplate{background}{}` must stay empty —
 painting the gajah on every frame collided with frametitles, a bug found only by reading a
 rendered page back.
+
+---
+
+## Known open defect — page 4 attributes Bayesian numbers to MoP
+
+**Status: RESOLVED 2026-10-14 (frame removed).** The MoP frame no longer ships in the
+build; nothing in the deck attributes Bayesian numbers to MoP. The section `PREVIOUS PROBLEM`
+now carries three framing slides (heat flux definition, cost function, sampling order), and
+MoP is mentioned nowhere in the deck. The rejected solution (delete the frame and leave an
+empty section) was superseded by user direction "that replaces the previous problem" — the
+frame was deleted and the three framing slides took its place.
+
+The record below is kept as history of the defect; the open-to-fix decision (how to handle
+the empty section) no longer applies.
+
+Page 4 *was* `WHAT MoP WAS SAMPLING: THE DSMC ALGORITHM`, caption reading:
+
+> Two MoP runs at the fixed seed 42 returned different optima ($J$ 1.602195 vs 1.608508):
+> the GP hyper-parameter fit varies, not the seed (F6).
+
+That attribution is wrong. MoP is **Method of Projected Gradients**, an Ada/SPARK optimizer
+reached through FFI, and `hiad_optimizer.py:8` describes it as "available via Ada FFI
+**for comparison**". The current optimizer is Bayesian Optimization — the GP surrogate +
+Matérn 5/2 + Expected Improvement path — which is what pages 5 and 14 show.
+
+Three findings, all measured:
+
+| # | Claim | Evidence |
+| :-- | :-- | :-- |
+| 1 | MoP cannot produce the quoted spread | `run_mop_optimize(x0, lr, tol, lambda_1, lambda_2, max_iter)` at `ada_pinn_wrapper.py:817` **has no seed parameter**, and no GP. It is projected gradient descent, deterministic given `x0` (`stellarorion_ffi.ads` → `Run_MoP_C`; Boyd & Vandenberghe 2004 §2.3). It has no Matérn length scale and never calls `lbfgs`. |
+| 2 | The quoted numbers are Bayesian | The `seed=42` lives at `hiad_optimizer.py:1472`, inside `run_bayesian_optimize(hiad_cost_function, n_initial=20, n_iter=50, xi=0.01, seed=42)`. F6 itself attributes the spread to "the GP hyper-parameter fit (scikit-learn's `lbfgs` on the Matérn length scale)", at `FAILURES_AND_FIXES.md:212`. |
+| 3 | No MoP failure justifies abandoning it | The `PREVIOUS PROBLEM` section comment asserts MoP was "too chaotic to use as a basis for further work". `FAILURES_AND_FIXES.md` contains exactly **one** MoP mention — **F98**, an FFI spec defect (missing `use Interfaces.C`, vacuous postcondition on `Run_MoP_C`), fixed 2026-10-13. **No chaos failure is recorded**, and F6 is itself labelled "not a failure; recorded for reproducibility". |
+
+So the deck uses Bayesian Optimization's own benign run-to-run variation as the stated
+reason for having replaced MoP. That is circular, and a judge who opens F6 will see it.
+
+**The figure is not at fault.** `so_dsmc_algorithm.png` is the DSMC flowchart, and it
+genuinely is what the cost function scores whichever optimizer drives it. Only the
+attribution and the narrative are wrong.
+
+**The constraint on any fix:** page 4 is the *only* frame under `PREVIOUS PROBLEM`.
+Deleting it empties the section, and an empty `\section` still prints in the
+auto-generated outline. So the frame cannot simply be deleted — either the section goes
+with it, or something else has to move under it. That choice is what is on hold.
+
+**Resolution (2026-10-14).** The constraint held, and was satisfied by repopulating rather
+than deleting: three PREVIOUS PROBLEM frames (heat flux definition, cost function /
+attempt-1, sampling order) were added where page 4 used to be, and `CONTEXT: WHERE THIS
+WORK SITS` was moved to the last page, so `PREVIOUS PROBLEM` is no longer empty and the
+MoP frame is gone. Build went back to 14 -> 16 pages, log still CLEAN on all 11 patterns,
+0 `MISSING PLOT`. The figure (`so_dsmc_algorithm.png`) is still on disk and unreferenced,
+so it now counts with the placeholder set under "Other files in here that are not on any
+slide" above. Lead-in to this whole operation was the user's wording, not a spec change.
