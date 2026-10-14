@@ -51,7 +51,16 @@
 % reviewable; the remaining pages come AFTER you approve what's here.
 % =====================================================================
 {\setbeamercolor{background canvas}{bg=SOGhibliBand}
-\begin{frame}\titlepage\end{frame}   % slide 1
+\begin{frame}[plain]
+  \ITBTitleBackground   % full teal canvas, once
+  \ITBTitleStars        % 30 small 8-point white stars over the teal
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[opacity=0.69, anchor=north east]
+      at ([xshift=-0.6cm, yshift=-0.6cm] current page.north east)
+      {\includegraphics[width=2.2cm]{figures/gajah_putih}};
+  \end{tikzpicture}%
+  \titlepage
+\end{frame}   % slide 1
 }
 \setbeamercolor{background canvas}{bg=white}
 

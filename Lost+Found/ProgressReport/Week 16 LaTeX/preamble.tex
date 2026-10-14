@@ -370,6 +370,32 @@ Institut Teknologi Bandung}
     \fill[SOGhibliBand]
       (current page.south west) rectangle (current page.north east);
   \end{tikzpicture}%
+}% Decorative star-field on the title page [request: stars cross stars].
+% "Cross" suggests eight arms: a plus (0/90 deg) layered with a narrow
+% X (45 deg), both rotated to stagger across the background canvas.
+\newcommand{\ITBTitleStars}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \foreach \c in {0,1,...,7}{%
+      \foreach \r in {0,1,...,5}{%
+        \pgfmathtruncatemacro{\hash}{\c*11+\r*7}
+        \ifodd\hash\else
+          \pgfmathsetmacro{\xpos}{\c*1.6+0.55}
+          \pgfmathsetmacro{\ypos}{-\r*1.15-0.65}
+          \pgfmathtruncatemacro{\alpha}{mod(\hash,46)+25}%
+          \begin{scope}[shift={(current page.north west)}, xshift=\xpos cm, yshift=-\ypos cm, opacity=\alpha/100]
+            % a crisp 4-point star in white: one thicker horizontal bar +
+            % one vertical + two diagonal bars. Always compiles.
+            \draw[white, line width=1.2pt, line cap=round]
+               (0,0.12cm)--(0,-0.12cm);
+            \draw[white, line width=1.2pt, line cap=round]
+               (0.12cm,0)--(-0.12cm,0);
+            \draw[white, line width=0.6pt, line cap=round]
+               (0,0.06cm)--( 0.06cm,0) -- ( 0,-0.06cm) -- (-0.06cm,0) -- cycle;
+          \end{scope}
+        \fi
+      }%
+    }%
+  \end{tikzpicture}%
 }
 
 % The background template is emptied ON PURPOSE and must stay empty.
