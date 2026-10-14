@@ -247,19 +247,19 @@ def _load_optimized_topology_specs() -> tuple[_OptimizedSpecRow, ...]:
     _OPTIMIZED_SPECS_CACHE = tuple(specs)
     return _OPTIMIZED_SPECS_CACHE
 RESULTS_DIR      = os.path.join(os.path.dirname(__file__), "..", "..",
-                                "results/validation_scalloped")
+                                "results/00_reference")
 # -- AXIOMS: Optimized-topology artifacts are a distinct deliverable and must
-#    not overwrite/mix with validation_scalloped outputs; the canonical home
-#    for them is results/OptimizedTopology/.
+#    not overwrite/mix with 00_reference outputs; the canonical home
+#    for them is results/03_opt_geometry/.
 # -- THEORIES: generate_mp4 derives plots/ and mp4_frames/ from its output_dir
 #    argument, so passing this directory routes the MP4 + frames there without
 #    touching RESULTS_DIR consumers (CSV/VTU/validation pipeline).
 # -- APPLICATIONS: main() selects this dir when --optimized-topology is set.
 # -- CITATIONS: README.md "Optimized Topology: Before vs After"; session
 #    requirement "plot will be produced for the optimized topology on the
-#    results/OptimizedTopology".
+#    results/03_opt_geometry".
 OPTIMIZED_TOPOLOGY_DIR = os.path.join(os.path.dirname(__file__), "..", "..",
-                                      "results/OptimizedTopology")
+                                      "results/03_opt_geometry")
 
 
 def _trajectory_csv_path() -> str:
@@ -2200,7 +2200,7 @@ def main():
         resolution = (1920, 1080)
 
     # -- AXIOM: each output variant owns its directory (validation stays in
-    #    validation_scalloped; optimized topology goes to OptimizedTopology).
+    #    00_reference; optimized topology goes to 03_opt_geometry).
     # -- THEORY: generate_mp4(output_dir) builds output_dir/plots and
     #    output_dir/mp4_frames from this single argument.
     # -- APPLICATION: choose the directory by variant before creating it.

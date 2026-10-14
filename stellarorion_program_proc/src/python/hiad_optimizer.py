@@ -93,7 +93,7 @@ _NOSE_RADIUS_LIMIT = 1.0      # m -- minimum thermal protection
 def _load_validation_refs() -> dict[str, float]:
     """Load the dynamic validation base reference used by J(x).
 
-    Reads results/validation_scalloped/validation_pipeline_output/
+    Reads results/00_reference/validation_pipeline_output/
     unified_comparison_data.json and extracts every reference the Ada
     cost function normalises against:
 
@@ -121,7 +121,7 @@ def _load_validation_refs() -> dict[str, float]:
         RuntimeError -- file missing, JSON invalid, key missing, or any
             extracted value not strictly positive / not finite.
 
-    [Citation: results/validation_scalloped/validation_pipeline_output/
+    [Citation: results/00_reference/validation_pipeline_output/
      unified_comparison_data.json -- comparison.stellarorion.raw_dsmc
      and comparison.irve3_flight blocks]
 
@@ -131,7 +131,7 @@ def _load_validation_refs() -> dict[str, float]:
     script_dir = os.path.dirname(os.path.abspath(__file__))
     json_path = os.path.abspath(os.path.join(
         script_dir, os.pardir, os.pardir,
-        "results", "validation_scalloped", "validation_pipeline_output",
+        "results", "00_reference", "validation_pipeline_output",
         "unified_comparison_data.json",
     ))
 
@@ -202,7 +202,7 @@ def _load_validation_refs() -> dict[str, float]:
 #  AXIOMS:
 #    A1: An analytic optimum is only trustworthy if the high-fidelity
 #        chain reproduces it -- the gate is ENFORCED, not advisory.
-#    A2: The reference data in results/validation_scalloped/ is the
+#    A2: The reference data in results/00_reference/ is the
 #        source of every J(x) reference; the gate MUST write into a
 #        separate results/validation_optimized*/ directory and NEVER
 #        touch the reference (via bin/main --results-dir, plan Part A).
@@ -461,7 +461,7 @@ def _gate_preconditions(root: "str") -> "tuple[bool, dict[str, str]]":
         "out_dir_rel": os.path.join("results", "validation_optimized"),
         "out_dir": os.path.join(root, "results", "validation_optimized"),
         "ref_csv": os.path.join(
-            root, "results", "validation_scalloped", "validation_timeseries.csv"),
+            root, "results", "00_reference", "validation_timeseries.csv"),
     }
     paths["csv"] = os.path.join(paths["out_dir"], "validation_timeseries.csv")
     paths["pipe_out"] = os.path.join(paths["out_dir"], "validation_pipeline_output")
@@ -534,7 +534,7 @@ def _gate_preconditions(root: "str") -> "tuple[bool, dict[str, str]]":
     #    gate also asserts the gate never overwrites it -- A2).
     if not os.path.isfile(paths["ref_csv"]):
         _missing("reference validation CSV", paths["ref_csv"],
-                 "restore results/validation_scalloped/ from version control")
+                 "restore results/00_reference/ from version control")
     return ok, paths
 
 

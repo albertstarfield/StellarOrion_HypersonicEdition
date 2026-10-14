@@ -143,7 +143,7 @@ def plot_3d_surface(points: np.ndarray, heat: np.ndarray, out_path: str,
     #  AXIS LABELS: WHICH COLUMN IS WHICH (measured, F70).
     #  WHY: set_xlabel/set_ylabel/set_zlabel label matplotlib'S POSITIONAL
     #  scatter arguments, and :134 passes (x, z, y) -- i.e. (col0, col2, col1).
-    #  MEASURED on results/validation_scalloped/paraview/surf_2200.vtu (3696 pts):
+    #  MEASURED on results/00_reference/paraview/surf_2200.vtu (3696 pts):
     #      col0 X  min +0.0001  max +1.2694  span 1.2693 m  <- equals the
     #        1.2693 m axial length established independently in F67 => AXIAL
     #      col1 Y  min -1.8248  max +1.8696  span 3.6944 m  ~= 3.7604 m DIA
@@ -306,7 +306,7 @@ def plot_heat_flux_vs_x(points: np.ndarray, heat: np.ndarray,
 
 def main(argv: list[str]) -> int:
     """Entry point: parse args, find VTU files, generate PNG plots."""
-    results_dir = argv[1] if len(argv) > 1 else "results/validation_scalloped"
+    results_dir = argv[1] if len(argv) > 1 else "results/00_reference"
     paraview_dir = os.path.join(results_dir, "paraview")
     plots_dir = os.path.join(results_dir, "plots")
 

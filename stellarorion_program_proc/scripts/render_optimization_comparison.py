@@ -862,7 +862,7 @@ def main() -> int:
     #      the body this repository's results were actually computed on --
     #      "wrong input, not wrong implementation".
     # MEASURED (2026-10-06): panel (Ada default) R = 2.6522 m vs flown
-    #      results/validation_scalloped/HIAD_custom.surf R = 1.8802 m
+    #      results/00_reference/HIAD_custom.surf R = 1.8802 m
     #      => ratio 1.4106 (+41.1 %); axial 1.7442 vs 1.2693 m (+37.4 %);
     #      57 points vs 77 points. Aiming crosscheck_ada_profile() at the
     #      flown profile returns False with
@@ -882,7 +882,7 @@ def main() -> int:
     flown_y: list[float] = []
     flown_ok = True
     flown_path = (Path(__file__).resolve().parent.parent / "results" /
-                  "validation_scalloped" / "HIAD_custom.surf")
+                  "00_reference" / "HIAD_custom.surf")
     if flown_path.is_file():
         # Reuse the existing reader rather than re-parsing the Points block
         # here: read_surf already handles the blank line after "Points" and

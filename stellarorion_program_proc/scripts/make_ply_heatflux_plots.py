@@ -13,7 +13,7 @@ The original IRVE-3 layup header follows for historical context only.
 
 PURPOSE
     Turn the per-element, per-ply temperature breakdown written by the Ada/SPARK
-    ``tps_conduction`` solver (``results/tps_conduction/tps_step2200_layers.csv``)
+    ``tps_conduction`` solver (``results/99_shared/tps_conduction/tps_step2200_layers.csv``)
     into publication figures: the through-thickness heat flux of every ply and the
     temperature profile through the stack.
 
@@ -478,7 +478,7 @@ def plot_flux_distribution(all_flux: list[list[float]], out_path: str) -> None:
 #
 # PROVENANCE, TRACED 2026-10-14 (this is what the annotation must state):
 #
-#   The aerothermal input is `results/validation_scalloped/paraview/
+#   The aerothermal input is `results/00_reference/paraview/
 #   surf_2200.vtu` -- the DESIGNATED VALIDATED REFERENCE, i.e. the dataset
 #   `hiad_optimizer.py` axiom A2 names as the source of every objective
 #   reference.  Its pipeline reports status "success" (2026-10-13) and its
@@ -514,25 +514,14 @@ def plot_flux_distribution(all_flux: list[list[float]], out_path: str) -> None:
 STAGE_TEXT = ""               # configured by --tree via _configure_stage_strings
 STAGE_CAVEAT = ""              # default "" => _annotate_stage emits the block empty
 STAGE_TEXT_INFO = {
-    "validation_scalloped": {
-        "role": "VALIDATED REFERENCE (results/validation_scalloped/)",
+    "00_reference": {
+        "role": "VALIDATED REFERENCE (results/00_reference/)",
         "verdict": (
             "Designer reference dataset per hiad_optimizer.py A2; freshest "
             "step-2200 dump (2026-10-06). Not a flight prediction either, but "
             "obtained on a run the pipeline accepts."
         ),
         "alt_km": 52.069210, "vel_ms": 3101.079, "mach": 9.455298,
-    },
-    "validation_optimized": {
-        "role": "OPTIMIZED-DESIGN RESULT (results/validation_optimized/)",
-        "verdict": (
-            "CAUTION \u2014 round-1 hybrid GATE run. Its own log ends \"\u26a0 "
-            "VALIDATION FAILED / vehicle does not survive\"\n(heat flux 58.42 % "
-            "error, heat load 59.00 %, peak decel 31.00 %). These numbers are "
-            "what the gate run produced;\nno absolute value here is a flight "
-            "prediction."
-        ),
-        "alt_km": 52.032558, "vel_ms": 3094.193, "mach": 9.432495,
     },
 }
 
@@ -561,7 +550,7 @@ def _configure_stage_strings(tree: str, peak_qsg_wm2: float) -> None:
         "\u26a0 run TERMINATED at step 2200 (22 dumps); the 300,000,000 "
         "figure is a PINN/Kriging extrapolation target, NOT a run length.\n"
         "VELOCITIES (none settled): 3378 m/s = "
-        "validation_smooth own value; 3101.079 = reference; "
+        "01_smooth own value; 3101.079 = reference; "
         "3094.193 = optimized gate; 2700 = scalloped DSMC deck.\n"
         "THIS RUN: alt = " + f"{alt:.6f}" + " km, V = " + f"{vel:.3f}" + " m/s. " +
         info["verdict"]
@@ -1576,14 +1565,14 @@ def main() -> int:
     ap.add_argument("--layers-csv", default=os.path.join(default_dir, "tps_step2200_layers.csv"))
     ap.add_argument("--elements-csv", default=os.path.join(default_dir, "tps_step2200_elements.csv"))
     ap.add_argument("--profiles-csv", default=os.path.join(default_dir, "tps_step2200_profiles.csv"))
-    ap.add_argument("--tree", default="validation_scalloped",
-                    choices=["validation_scalloped", "validation_optimized"],
-                    help="results tree this solve came from (writes "
-                         "'results/plots/<tree>/tps_per_ply/' and selects "
-                         "the matching stage annotation + provenance)")
+    ap.add_argument("--tree", default="00_reference",
+                    choices=["00_reference"],
+                    help="results tree this solve came from (only the validated "
+                         "reference available): writes 'results/plots/<tree>/"
+                         "tps_per_ply/' and selects matching provenance")
     ap.add_argument("--solve-out-dir", default=None,
                     help="directory holding tps_step2200_*.csv for this tree "
-                         "(default 'results/tps_conduction', or the "
+                         "(default 'results/99_shared/tps_conduction', or the "
                          "--tree-named subdir when that exists)")
     ap.add_argument("--outdir", default=None,
                     help="destination directory for the produced figures")

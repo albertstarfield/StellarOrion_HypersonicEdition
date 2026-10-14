@@ -43,9 +43,9 @@ AXIOMS (all enforced in Ada; restated here as the driver's contract)
 
 FLIGHT CONDITION
     The snapshot is the DESIGNATED VALIDATED REFERENCE, not the optimization
-    gate's output.  `results/validation_scalloped/` is the reference dataset
+    gate's output.  `results/00_reference/` is the reference dataset
     every objective is measured against (hiad_optimizer.py axiom A2: "The
-    reference data in results/validation_scalloped/ is the source of every J(x)
+    reference data in results/00_reference/ is the source of every J(x)
     reference"), and `validation_timeseries.csv` records its own step-2200
     state directly:
 
@@ -115,17 +115,17 @@ REQUIRED_STEP = 2200
 #  "[VALIDATE] RESULT: VALIDATION FAILED / Survivability: FAILED -- vehicle
 #  does not survive" (heat flux 58.42 % error, heat load 59.00 %, peak decel
 #  31.00 %).  Every per-ply figure built on it inherited that provenance
-#  without saying so.  `results/validation_scalloped/` is the reference dataset
+#  without saying so.  `results/00_reference/` is the reference dataset
 #  the optimizer measures every objective against (hiad_optimizer.py A2) and is
 #  also fresh: step-2200 dump 2026-10-06 12:35 against 2026-09-26 for the gate
 #  run.  Shape-compatible (3696 points / 3648 cells / 3648 heat-flux values),
 #  verified before the switch.
 DEFAULT_VTU = os.path.join(
-    _HERE, "..", "results", "validation_scalloped", "paraview",
+    _HERE, "..", "results", "00_reference", "paraview",
     f"surf_{REQUIRED_STEP}.vtu")
 
 #: Step-2200 state of the reference run, read verbatim from
-#: `results/validation_scalloped/validation_timeseries.csv` row step=2200.
+#: `results/00_reference/validation_timeseries.csv` row step=2200.
 #: Kept as named constants so the CLI defaults, the summary JSON and the
 #: docstring above cannot disagree with each other.
 REF_STEP2200_ALT_KM = 52.069210
@@ -141,15 +141,18 @@ REF_STEP2200_VEL_MS = 3101.079
 #: `validation_timeseries.csv`.  They are deliberately NOT shared: measured
 #: 2026-10-14, the four trees span 51.818 .. 52.069 km and 3094 .. 3379 m/s,
 #: and the Ada `Snapshot_Vel_Ms = 3378` constant matches
-#: `validation_smooth` (3378.671) rather than the reference tree it was once
+#: `01_smooth` (3378.671) rather than the reference tree it was once
 #: applied to.  A per-ply set built on one tree's snapshot and another tree's
 #: altitude/velocity is a fabricated condition.
 #:
 #: `validation` is deliberately ABSENT: its DSMC window is 0..1000, so it has
 #: no step-2200 row and no step-2200 surface dump to solve against.  It is not
 #: silently skipped -- run.py states the reason when it builds the others.
+#  Only the validated reference dataset is permitted to drive a per-ply
+#  set.  The round-1 \"optimized\" gate run (heat flux 58.42 %% / heat load
+#  59.00 %% / peak decel 31.00 %% error) is no longer kept on disk.
 PER_PLY_TREES: dict[str, dict[str, object]] = {
-    "validation_scalloped": {
+    "00_reference": {
         "alt_km": REF_STEP2200_ALT_KM,
         "vel_ms": REF_STEP2200_VEL_MS,
         "role": "validation reference",
@@ -157,19 +160,6 @@ PER_PLY_TREES: dict[str, dict[str, object]] = {
             "Validated reference: this is the dataset hiad_optimizer.py "
             "measures every objective against (A2) and the freshest "
             "step-2200 dump on disk (2026-10-06 12:35)."
-        ),
-    },
-    "validation_optimized": {
-        "alt_km": 52.032558,
-        "vel_ms": 3094.193,
-        "role": "optimized-design result",
-        "verdict": (
-            "CAUTION -- the round-1 hybrid GATE run. Its own log ends "
-            "VALIDATION FAILED / \"vehicle does not survive\" (heat flux "
-            "58.42 % error, heat load 59.00 %, peak decel 31.00 %). These "
-            "figures show what that gate run produced, NOT a passing "
-            "optimized design; no absolute number here is a flight "
-            "prediction."
         ),
     },
 }
@@ -678,7 +668,7 @@ def main(argv: list[str] | None = None) -> int:
                         default=REF_STEP2200_ALT_KM,
                         help="flight altitude for Q_SG [km] "
                              "(reference run step-2200 condition, read from "
-                             "validation_scalloped/validation_timeseries.csv)")
+                             "00_reference/validation_timeseries.csv)")
     parser.add_argument("--velocity-ms", type=float,
                         default=REF_STEP2200_VEL_MS,
                         help="flight velocity for Q_SG [m/s] "

@@ -143,7 +143,7 @@ _COQ_STATUS_FILE = _PROJECT_ROOT / "results" / "coq_proof_status.json"
 #   - StellarOrion_program_proc/scripts/*.py docstrings (media generators)
 #   - StellarOrion_program_proc/src/python/generate_outputs.py MP4 generator
 
-_VALIDATION_TREES = ("validation", "validation_scalloped", "validation_smooth", "validation_optimized")
+_VALIDATION_TREES = ("validation", "00_reference", "01_smooth")
 _MEDIA_OUT_BASE = _PROJECT_ROOT / "results" / "plots"
 _MEDIA_SUBDIRS = (
     "short_window",
@@ -930,7 +930,7 @@ def _phase2b_pinn_extrapolate(extra_args: list[str]) -> None:
     venv_python = os.path.join(script_dir, "venv_validation", "bin", "python3")
     pipeline_script = os.path.join(script_dir, "src", "python", "validation_pipeline.py")
     csv_path = os.path.join(
-        script_dir, "results/validation_scalloped", "validation_timeseries.csv"
+        script_dir, "results/00_reference", "validation_timeseries.csv"
     )
 
     if not os.path.isfile(venv_python):
@@ -1125,16 +1125,15 @@ def _phase2c_generate_media_and_sync() -> None:
     _run_media([os.path.join("tools", "plot_surf_profile.py")])
     #  Per-ply TPS heat-flux figures.  Reads the tps_conduction layer
     #  breakdown written by the Ada/SPARK FFI
-    #  (results/tps_conduction/tps_step2200_layers.csv) and writes straight
+    #  (results/99_shared/tps_conduction/tps_step2200_layers.csv) and writes straight
     #  into the canonical results/plots/ tree; --outdir pins the destination
     #  explicitly so it can never land in a legacy directory.
     # Per-ply TPS sets -- one per tree, each solved on its own snapshot
     # and flight condition, then plotted into its own folder.  No tree borrows
     # another's altitude/velocity or stage annotation.
-    per_ply_trees = ("validation_scalloped", "validation_optimized",)
+    per_ply_trees = ("00_reference",)
     _per_ply_args = {
-        "validation_scalloped": (52.069210, 3101.079),
-        "validation_optimized": (52.032558, 3094.193),
+        "00_reference": (52.069210, 3101.079),
     }
     for _tree in per_ply_trees:
         _vtu = os.path.join(script_dir, "results", _tree, "paraview",
@@ -1153,7 +1152,7 @@ def _phase2c_generate_media_and_sync() -> None:
         _run_media([os.path.join("scripts", "make_ply_heatflux_plots.py"),
                     "--tree", _tree,
                     "--solve-out-dir", _solve_out,
-                    "--outdir", os.path.join(media_out, _tree, "tps_per_ply")])
+                    "--outdir", os.path.join(script_dir, "results", _tree, "plots", "tps_per_ply")])
 
     # MP4s
     _run_media([os.path.join("src", "python", "generate_outputs.py"), "--mp4-only", "--validation"])
@@ -1169,7 +1168,7 @@ def _sync_media_into_canonical_tree() -> None:
     """Sync every generated PNG/MP4 from its legacy output dir into results/plots/.
 
     WHY: the individual plot scripts write next to their source data
-    (results/<tree>/plots, results/<tree>/plots_rapisarda, OptimizedTopology,
+    (results/<tree>/plots, results/<tree>/plots_rapisarda, 03_opt_geometry,
     repo root).  This single pass re-homes every artefact into the canonical
     results/plots/ tree so a terminal `run.py` always leaves the same,
     confusion-free layout behind -- no manual moving.
@@ -1181,6 +1180,8 @@ def _sync_media_into_canonical_tree() -> None:
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     media_out = os.path.join(script_dir, "results", "plots")
+    return  # source-owned layout; no root results/plots/ tree created.
+
     derived_names = {
         "T_surface_vs_step.png",
         "T_back_vs_step.png",
@@ -1205,7 +1206,7 @@ def _sync_media_into_canonical_tree() -> None:
         and `shutil.copy2` then raises SameFileError because its source and
         destination are the same file.  Measured 2026-10-13: inode
         682769011 (link count 2) shared between
-        `results/validation/plots/<name>` and
+        `results/02_early_window/plots/<name>` and
         `results/plots/validation/short_window/<name>` -- 21 of the 51
         legacy PNGs are in that state.  When both names already denote one
         inode the content is in place by construction, so the correct
@@ -1291,10 +1292,10 @@ def _sync_media_into_canonical_tree() -> None:
                 if p.suffix.lower() in {".png", ".mp4"}:
                     _copy_media(p, dest_dir / p.name)
 
-    # OptimizedTopology canonical tree. We deliberately create ONLY the
+    # 03_opt_geometry canonical tree. We deliberately create ONLY the
     # subfolders that will actually hold something (mp4 / plots), so an MP4-
     # only source directory cannot leave behind a littered empty sibling.
-    opt_src = Path(script_dir) / "results" / "OptimizedTopology" / "plots"
+    opt_src = Path(script_dir) / "results" / "03_opt_geometry" / "plots"
     # Collect the source artefacts once so we never mkdir an empty folder.
     opt_sources = ([p for p in opt_src.iterdir()
                    if p.suffix.lower() in {".png", ".mp4"}]
@@ -1334,222 +1335,62 @@ def _sync_media_into_canonical_tree() -> None:
 
 
 def _write_results_readme() -> None:
-    """Generate results/README.md as a report-writing guide for the artefacts.
+    """Generate results/README.md from the per-run source-owned tree.
 
-    AXIOM: a results tree nobody can navigate is not evidence -- every report
-    claim must trace to exactly one artefact folder.  THEOREM: the guide is
-    generated from the filesystem at run time, so file counts and folder
-    lists can never drift from what Phase 2c actually produced.  APPLICATION:
-    the report author opens results/README.md, finds the report section they
-    are writing, and pulls the artefact named in the mapping table.
+    AXIOM: the report guide must not duplicate a canonical root results/plots/
+    folder that no longer exists; instead it lists each *run*\'s own plots,
+    in RUNS.md order, so the guide cannot drift from the per-run trees.
 
-    Returns
-    -------
-    None
-        Writes results/README.md (overwrites any hand edits -- the file is
-        generated by run.py Phase 2c, not authored).
-
-    Raises
-    ------
-    OSError -- only when results/ itself is unwritable; logged and skipped
-        so a read-only disk cannot abort the media phase.
+    Each run folder contains a `plots/` directory (source-owned).  We count
+    PNG/MP4 artefacts per subfolder and emit one section per run.
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
     results_dir = Path(script_dir) / "results"
-    plots_dir = results_dir / "plots"
+    # Order follows RUNNING: newest / most trusted first.
+    run_folders = ["00_reference", "01_smooth", "02_early_window",
+                   "03_opt_geometry", "validation", "validation_scalloped",
+                   "validation_smooth", "validation_optimized",
+                   "OptimizedTopology"]
+    run_names = [r for r in run_folders
+                  if (results_dir / r).is_dir()]
+    if not run_names:
+        # fall back: any descendant of results/ that has a plots/ dir
+        run_names = sorted([p.name for p in results_dir.iterdir()
+                            if p.is_dir() and (p / "plots").is_dir()])
 
-    def _count(d: Path) -> int:
-        """Count PNG/MP4 artefacts under d (0 when d is absent)."""
-        if not d.is_dir():
-            return 0
-        return sum(1 for p in d.rglob("*")
-                   if p.suffix.lower() in {".png", ".mp4"})
-
-    # (folder under results/plots/, what it contains, where the report uses it)
-    categories: list[tuple[str, str, str]] = [
-        ("cfd_fields",
-         ("CFD field maps (Mach, pressure, thermal, velocity, Knudsen), mesh "
-          "statistics, scallop-pocket temperature, surface heat-flux maps for "
-          "every surf_*.vtu step (100..2200) plus the PINN 300000000 endpoint, "
-          "and the full 0..300M field-map coverage timeline"),
-         ("Methods (numerical setup, grid quality); Results (flow-field "
-          "structure, heat-flux fields) -- the Week-16 field-map requirement")),
-        ("geometry",
-         ("HIAD geometry grid, 4-angle 3-D turntables of the full body "
-          "(IRVE-3 validation baseline and optimized topology), "
-          "surface-profile checks, before/after optimization comparison"),
-         "Design description; optimization before/after figures"),
-        ("kriging",
-         "Kriging denoise / noise-reduction panels per step",
-         "Data-processing methodology"),
-        ("bo_figures",
-         "Bayesian-optimization convergence and design panels",
-         "Optimized-design results section"),
-    ]
-    for tree in _VALIDATION_TREES:
-        categories.append((
-            tree,
-            "short_window (SPARTA DSMC timeseries), derived (T_surface/"
-            "T_back/beta/dashboard/survivability), vtu_snapshots (3-D / "
-            "cross-section / histogram / heat-flux vs x), rapisarda "
-            "(correlation comparisons)"
-            + (" plus full_300M_dsmc_pinn (full 0..300M DSMC+PINN line plots "
-               "incl. CD/CL and DSMC-jitter detail), mp4/ (validation "
-               "animation) and tps_per_ply/ (Ada/SPARK per-ply F-TPS solve"
-               " on the VALIDATED REFERENCE flight condition: heating anim "
-               "+ literal-stack heatmap + per-ply T / flux / profile)"
-               if tree == "validation_scalloped" else
-               (" plus tps_per_ply/ (same Ada/SPARK solve on the "
-                "OPTIMISED gate run, with its VALIDATION-FAILED provenance "
-                "on every figure)"
-                if tree == "validation_optimized" else "")),
-            "DSMC validation results; thermal/survivability assessment"
-            + ("; full-trajectory figures and the animated summary and the "
-               "per-ply F-TPS survivability set (engineering values at peak "
-               "heating, 19.3 W/cm\u00b2)"
-               if tree == "validation_scalloped" else
-               "; per-ply F-TPS set from the gate run, read with its "
-               "VALIDATION FAILED verdict"
-               if tree == "validation_optimized" else ""),
-        ))
-
-    rows = []
-    for name, contains, use_for in categories:
-        n = _count(plots_dir / name)
-        exists = (plots_dir / name).is_dir()
-        if n == 0 and not exists:
+    lines = []
+    lines.append("# StellarOrion Results -- Report Guide")
+    lines.append("")
+    lines.append("<!-- AUTO-GENERATED by run.py Phase 2c -- do not edit. -->")
+    lines.append("Regenerate with: ./venv_validation/bin/python3 run.py")
+    lines.append("")
+    lines.append("Each RUN OWNS its plots (there is no `results/plots/` root "
+                  "anymore; per RUNS.md, `00_reference` is the only number to "
+                  "quote in a report).")
+    lines.append("")
+    for run in run_names:
+        plots = results_dir / run / "plots"
+        if not plots.is_dir():
+            plots = results_dir / run / "plots_report"
+        if not plots.is_dir():
+            lines.append(f"## {run}: (no plots directory)")
+            lines.append("")
             continue
-        count_cell = str(n) if n else ("0 -- none exists" if not exists else "0")
-        rows.append(f"| `plots/{name}/` | {count_cell} | {contains} | {use_for} |")
-
-    content = f"""# StellarOrion Results -- Report Guide
-
-<!-- AUTO-GENERATED by run.py Phase 2c -- do not edit: edits are overwritten
-     on the next run.  Regenerate with: ./venv_validation/bin/python3 run.py -->
-
-This file says **which artefact to pull for each part of the report**, what
-every folder contains, and what each plot family means.  File counts below
-were counted from disk when this file was generated.
-
-## 1. The two trajectory legs (read first)
-
-| Leg | Steps | Authoritative source | Artefacts it produces |
-|---|---|---|---|
-| SPARTA DSMC (real particle simulation) | 0..2200 (`validation` tree: 0..1000) | `validation_timeseries.csv`, `grid.*.out`, `surf_*.vtu` | short_window, derived, vtu_snapshots, grid field maps |
-| PINN extrapolation | 2200 -> 300,000,000 | `validation_scalloped/pinn_trajectory_per_step.csv` (300,001 rows) | full_300M_dsmc_pinn, MP4 animation, `surf_pinn_300000000.vtu` |
-
-Never mix the two in one figure axis unless the figure says which segment is
-which.  Line plots named `*_full_0_300M_dsmc_pinn.png` span BOTH legs and
-show a marker at step 2200 separating them.
-
-## 2. Folder map (count = PNG+MP4 present now)
-
-| Folder | Count | What it contains | Use it for |
-|---|---|---|---|
-{chr(10).join(rows)}
-
-## 3. Key data files (cite these numbers, not screenshots)
-
-| File | Meaning |
-|---|---|
-| `results/validation_scalloped/pinn_trajectory_per_step.csv` | Full 0..300M trajectory truth (altitude, velocity, Mach, heat flux, drag, g-load, ...). Source for MP4 telemetry and full-span plots. |
-| `results/validation*/validation_timeseries.csv` | SPARTA DSMC window only (max step 1000 or 2200). |
-| `results/validation*/trajectory_profile.csv` | 198-point reference trajectory (~197 s). |
-| `results/validation*/paraview/surf_*.vtu` | Surface heat-flux dumps, steps 100..2200. |
-| `results/validation_scalloped/paraview/surf_pinn_300000000.vtu` | PINN-leg surface heat-flux endpoint artefact. |
-| `results/validation/grid.*.out` | SPARTA volume grid dumps (only tree that has them). |
-| `results/tps_conduction/tps_step2200_layers.csv` | Per-ply TPS conduction breakdown at step 2200 (node T, thickness, k, ply name). Written by the solve itself -- no longer a writer-less orphan. |
-| `results/tps_conduction/tps_step2200_profiles.csv` | 33-point through-thickness temperature profile per element at step 2200. |
-| `results/tps_conduction/tps_step2200_summary.json` | Step-2200 solve summary: peak element, q_SG, T_surface/T_back ranges, the layup actually used, and the model caveats. |
-
-## 4. Report section -> artefact mapping
-
-| Report section | Pull from |
-|---|---|
-| Numerical setup / grid quality | `plots/cfd_fields/` (mesh statistics, grid mesh, coverage timeline) |
-| DSMC validation (quantities vs step) | `<tree>/short_window/`, `<tree>/derived/` |
-| Flow-field / heat-flux field maps | `plots/cfd_fields/` (Mach, pressure, thermal, velocity, Knudsen, surface heat flux) |
-| Full trajectory 0..300M (DSMC + PINN) | `validation_scalloped/full_300M_dsmc_pinn/`, `validation_scalloped/mp4/` |
-| 3-D surface / cross-section views | `<tree>/vtu_snapshots/` |
-| Correlation cross-check (Rapisarda) | `<tree>/rapisarda/` |
-| TPS thermal survivability | `<tree>/derived/` (T_surface, T_back, beta, survivability_assessment), `plots/<tree>/tps_per_ply/` (Ada/SPARK per-ply solve on THIS tree's own flight condition and its own provenance) |
-| Design optimization | `plots/optimized_topology/`, `plots/geometry/`, `plots/bo_figures/` |
-| Animation for presentation | `validation_scalloped/mp4/` (validation), `optimized_topology/mp4/` (optimized) |
-
-## 5. Plot-family definitions
-
-- **short_window** -- one column of `validation_timeseries.csv` plotted against
-  the SPARTA step; covers the DSMC window only, NOT 300M.
-- **derived** -- physically named quantities (T_surface, T_back, areal density
-  beta, combined thermal chart, dashboard, survivability verdict).
-- **vtu_snapshots** -- four views per surface/VTU dump step: 3-D surface,
-  cross-section, histogram, heat-flux vs x.
-- **rapisarda** -- validation timeseries compared against Rapisarda-type
-  correlations (12 panels per tree).
-- **full_300M_dsmc_pinn** -- full 0..300M step span with explicit DSMC/PINN
-  separation; includes CD/CL and DSMC-jitter detail panels.
-- **cfd_fields** -- scalar/vector field maps from `grid.*.out` plus surface
-  heat-flux maps and the coverage timeline.
-- **mp4** -- 0..300M animation; telemetry comes from the authoritative
-  trajectory CSV (never from ad-hoc re-derivation).
-- **tps_per_ply/** -- (nested inside BOTH `plots/<tree>/` folders that
-  have a step-2200 snapshot, i.e. `validation_scalloped` and
-  `validation_optimized`; `validation` has no step-2200 row and is
-  deliberately absent) per-ply TPS figures from the Ada/SPARK
-  `tps_conduction` solve on the Rapisarda layup.  Per tree: a three-panel
-  animation (per-ply heat flux, the literal 5-ply stack drawn to true
-  proportion at the hot face up, temperature through the stack, plus a
-  per-ply constants table carrying t / k / R / T_max), the
-  literal-stack heatmap (which adds a median-heating contrast column and a
-  per-ply T_top / T_bot / dT / margin table), and
-  `ply_temperature_by_element.png` (every ply's node temperature across all
-  3,648 elements with each ply's own limit line).
-
-  SOLVE IS PER-TREE: `run.py` runs `run_tps_conduction_step2200.py` ONCE per
-  tree, against that tree's own `paraview/surf_2200.vtu` at its own flight
-  condition read back from its own `validation_timeseries.csv`
-  (validation_scalloped = 52.069210 km / 3101.079 m/s; optimized = 52.032558
-  km / 3094.193 m/s).  No tree borrows another's altitude, velocity, or
-  annotation.  The optimized set carries a "VALIDATION FAILED / vehicle
-  does not survive" provenance header on every figure (heat flux 58.42 %,
-  heat load 59.00 %, peak decel 31.00 %) so its numbers are NEVER read as a
-  passing optimised-design result.
-
-  On the five per-ply through-fluxes: **they are one number, not five.** A
-  series stack carries a single flux, so the five values are identical by
-  construction (3,698.7 W/m^2 at the peak element), not independent
-  measurements.  The quantities that genuinely differ ply to ply -- and which
-  the figures lead with -- are boundary node temperatures and each ply's
-  share of the total series resistance (R_total = 0.305583 m^2*K/W).  Node
-  temperatures are reconstructed from the layup's resistances, NOT
-  interpolated from the 33 solver samples (uniformly spaced, so they miss the
-  ply faces), and the profile is only piecewise linear with a slope jump at
-  every k change.
-
-## 6. Definitions and provenance rules
-
-- **step** -- SPARTA iteration index; DSMC stops at 2200, PINN extrapolates
-  to 300,000,000.
-- **heat flux** -- W/m^2 in VTU/CSV sources; MP4 HUD shows W/cm^2 (divide by
-  10^4).  Surface temperature shown for panels is the Ada/SPARK radiative
-  equilibrium value.
-- **Single physics truth** -- conduction/radiation coupling comes from the
-  Ada/SPARK `tps_conduction` model via the Python FFI (`ada_pinn_wrapper`);
-  Python scripts only RENDER authoritative CSV/VTU/FFI outputs and never
-  re-derive physics.
-- **Field-map gaps are data** -- only `results/validation` has `grid.*.out`;
-  other trees lack SPARTA dump cards.  Absence is reported, never faked.
-"""
-    try:
-        results_dir.mkdir(parents=True, exist_ok=True)
-        out = results_dir / "README.md"
-        out.write_text(content, encoding="utf-8")
-        print(f"  [Phase 2c] Report guide written: {out}")
-    except OSError as exc:
-        print(f"  [Phase 2c] WARNING: could not write results/README.md: {exc}")
-
-
-# Phase 3: Ada/SPARK Build
+        lines.append(f"## {run}/")
+        children = sorted([c.name for c in plots.iterdir() if c.is_dir()])
+        total = 0
+        for c in children:
+            n = sum(1 for p in (plots / c).rglob("*")
+                     if p.suffix.lower() in {".png", ".mp4"})
+            total += n
+            lines.append(f"- `{c}/`: {n} artefacts "
+                         f"(under results/{run}/plots/{c}/)")
+        lines.append(f"- Total under {run}: **{total}**")
+        lines.append("")
+    content = "\n".join(lines) + "\n"
+    out = results_dir / "README.md"
+    out.write_text(content, encoding="utf-8")
+    print(f"  [Phase 2c] Report guide written: {out}")
 
 
 def _phase3_coq_proof_gate(verbose: bool) -> None:
@@ -2138,7 +1979,7 @@ def _post_optimization_outputs(stdout_text: str) -> None:
              "toroid_count": 6, "toroid_radius_m": 0.135, "mass_kg": 281.0}
 
     # Output directory
-    out_dir = os.path.join(_PROJECT_ROOT, "results/validation_scalloped",
+    out_dir = os.path.join(_PROJECT_ROOT, "results/00_reference",
                            "optimization_output")
     os.makedirs(out_dir, exist_ok=True)
 
@@ -2408,18 +2249,17 @@ def _run_per_ply_trees(trees: list[str]) -> None:
     mirrors what the full Phase 2c does for those trees, but nothing else.
 
     Inputs:
-      trees : tree names (validation_scalloped / validation_optimized).
+      trees : tree names (00_reference currently).
 
     Returns:
-      None. Side effects: writes CSV/JSON to results/tps_conduction/<tree>/ and
+      None. Side effects: writes CSV/JSON to results/99_shared/tps_conduction/<tree>/ and
       the six artefacts under results/plots/<tree>/tps_per_ply/.
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
     venv_python = os.path.join(script_dir, "venv_validation", "bin", "python3")
     media_out = os.path.join(script_dir, "results", "plots")
 
-    per_ply_args = {"validation_scalloped": (52.069210, 3101.079),
-                    "validation_optimized": (52.032558, 3094.193)}
+    per_ply_args = {"00_reference": (52.069210, 3101.079)}
 
     for tree in trees:
         vtu = os.path.join(script_dir, "results", tree, "paraview",
@@ -2454,8 +2294,7 @@ def _print_plot_status() -> None:
     """Print which trees have surface and plot artefacts (inspection only)."""
     import os as _os
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    trees = ["validation_scalloped", "validation_optimized", "validation_smooth",
-             "validation", "optimized_topology"]
+    trees = ["00_reference", "01_smooth", "validation", "03_opt_geometry"]
     print("=" * 78)
     print("StellarOrion plot / surface snapshot status")
     print("=" * 78)
@@ -2464,7 +2303,7 @@ def _print_plot_status() -> None:
         vtu = os.path.join(base, "paraview", "surf_2200.vtu")
         ts = os.path.join(base, "validation_timeseries.csv")
         solvedir = os.path.join(script_dir, "results", "tps_conduction", tree)
-        if tree == "validation_scalloped":
+        if tree == "00_reference":
             solvedir = os.path.join(script_dir, "results", "tps_conduction")  # ref tree top-level
         solved = _os.path.isfile(_os.path.join(solvedir, "tps_step2200_summary.json"))
         perply = os.path.join(script_dir, "results", "plots", tree, "tps_per_ply")
@@ -2515,15 +2354,11 @@ def main() -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — CLI entry point
         # Target specific trees / per-ply only: call the solve+plot loop that
         # run.py already uses, limited to the requested trees.
         trees = []
-        if args.regenerate_plots in ("validation", "tps-validation"):
-            trees = ["validation_scalloped"]
-        elif args.regenerate_plots in ("optimized", "tps-optimized"):
-            trees = ["validation_optimized"]
-        elif args.regenerate_plots in ("tps-per-ply", "tps-validation",
+        if args.regenerate_plots in ("validation", "tps-validation") or args.regenerate_plots in ("tps-per-ply", "tps-validation",
                                            "tps-optimized", "all"):
-            trees = ["validation_scalloped", "validation_optimized"]
+            trees = ["00_reference"]
         if not trees:
-            trees = ["validation_scalloped", "validation_optimized"]
+            trees = ["00_reference"]
         _run_per_ply_trees(trees)
         print("\n[regenerate-plots] complete; see results/plots/<tree>/tps_per_ply/.\n")
         return

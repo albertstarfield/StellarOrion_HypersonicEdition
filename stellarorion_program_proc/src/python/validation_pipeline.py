@@ -360,7 +360,7 @@ class CyclicLogMonitor:
           1. Ada binary writes run_output.log in results directories
           2. Errors/warnings in Ada logs indicate simulation issues
           3. Log file modification time indicates if simulation is active
-          4. Searches results/validation_smooth/ and results/validation_scalloped/
+          4. Searches results/01_smooth/ and results/00_reference/
 
         [Citation: StellarOrion Ada binary — run_output.log convention]
 
@@ -375,8 +375,8 @@ class CyclicLogMonitor:
             results_root = cad_dir if os.path.basename(os.path.normpath(cad_dir)) == "results" \
                 else os.path.join(cad_dir, "results")
             log_dirs = [
-                os.path.join(results_root, "validation_smooth"),
-                os.path.join(results_root, "validation_scalloped"),
+                os.path.join(results_root, "01_smooth"),
+                os.path.join(results_root, "00_reference"),
                 os.path.join(results_root, "test_sample"),
             ]
 
@@ -5462,12 +5462,12 @@ def _generate_pinn_vtu(
     import xml.etree.ElementTree as ET
 
     # Locate VTU source directory
-    results_base = os.path.dirname(csv_path)  # e.g. results/validation_scalloped/
+    results_base = os.path.dirname(csv_path)  # e.g. results/00_reference/
     vtu_dirs = [
         os.path.join(results_base, "paraview"),
         # Fallback: sibling variant dir under the shared results/ parent.
         # results_base = results/<variant>, so ".." lands in results/ itself.
-        os.path.join(results_base, "..", "validation_scalloped", "paraview"),
+        os.path.join(results_base, "..", "00_reference", "paraview"),
     ]
     vtu_dir = None
     for d in vtu_dirs:
@@ -5707,8 +5707,8 @@ def main():
     if csv_path is None:
         # Search common locations
         candidates = [
-            os.path.join(_HERE, "..", "..", "results/validation_scalloped", "validation_timeseries.csv"),
-            os.path.join(_HERE, "..", "..", "results/validation_smooth", "validation_timeseries.csv"),
+            os.path.join(_HERE, "..", "..", "results/00_reference", "validation_timeseries.csv"),
+            os.path.join(_HERE, "..", "..", "results/01_smooth", "validation_timeseries.csv"),
             os.path.join(_HERE, "..", "..", "results/test_sample", "validation_timeseries.csv"),
         ]
         for c in candidates:

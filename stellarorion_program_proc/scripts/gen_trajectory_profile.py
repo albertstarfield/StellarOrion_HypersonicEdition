@@ -197,7 +197,7 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: gen_trajectory_profile.py <results_dir>")
         print("  Generates trajectory_profile.csv in the specified directory.")
-        print("  Also generates in results/validation_smooth/ and results/validation_scalloped/")
+        print("  Also generates in results/01_smooth/ and results/00_reference/")
         sys.exit(1)
 
     results_dir = sys.argv[1]
@@ -230,7 +230,7 @@ def main():
     # base = dirname(results_dir); when results_dir = results/<variant>, base = results/,
     # so the sibling variants are plain names relative to base.
     base = os.path.dirname(os.path.abspath(results_dir))
-    for subdir in ['validation_smooth', 'validation_scalloped']:
+    for subdir in ['01_smooth', '00_reference']:
         target = os.path.join(base, subdir)
         if os.path.isdir(target):
             target_path = os.path.join(target, "trajectory_profile.csv")

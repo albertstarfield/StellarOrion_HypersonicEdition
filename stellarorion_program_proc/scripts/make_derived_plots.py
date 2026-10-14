@@ -87,7 +87,7 @@ A_REF = math.pi * (1.5 ** 2)  # Reference area for 3m diameter [m^2] = 7.0686
 #  verdict printed here was computed against a stricter limit than
 #  stellarorion_physics.adb:1428 actually tests, and the exceedance counts
 #  drawn on every figure were overstated. Measured 2026-10-06 across the 90
-#  shipped VTUs: exactly one verdict flipped (validation_scalloped/
+#  shipped VTUs: exactly one verdict flipped (00_reference/
 #  surf_pinn_300000000.vtu, T_max 1814.4 K -> FAIL at 1700, PASS at 2073).
 #  [Citation: stellarorion_types.ads:120  SIC_MAX_TEMP : constant Float := 2073.0]
 #  [Citation: stellarorion_types.ads:124 KAPTON_MAX_TEMP : constant Float := 773.0]
@@ -243,7 +243,7 @@ def main(argv: list[str]) -> int:
     Returns:
         0 on success, 1 if CSV missing or empty.
     """
-    results_dir = argv[1] if len(argv) > 1 else "results/validation_scalloped"
+    results_dir = argv[1] if len(argv) > 1 else "results/00_reference"
     csv_path = os.path.join(results_dir, "validation_timeseries.csv")
     plots_dir = os.path.join(results_dir, "plots")
     if not os.path.isfile(csv_path):

@@ -42,8 +42,8 @@ APPLICATIONS
 
 CITATIONS
   [Citation: SPARTA user manual, s2.4 -- dump grid/surf command syntax]
-  [Citation: results/validation/in.hiad:44-51 -- compute/fix declarations]
-  [Citation: results/validation/in.hiad:58-59 -- dump declarations]
+  [Citation: results/02_early_window/in.hiad:44-51 -- compute/fix declarations]
+  [Citation: results/02_early_window/in.hiad:58-59 -- dump declarations]
   [Reference: NASA SP-7468 (1976) -- U.S. Standard Atmosphere]
   [Based on: Bird (1994), Molecular Gas Dynamics, Sec. 1.5 -- mean free path]
 """
@@ -897,7 +897,7 @@ def render_scallop_pocket(step: int, tree: str, outdir: str) -> str | None:
     return path
 
 
-def render_pinn_surface(outdir: str, tree: str = "validation_scalloped"
+def render_pinn_surface(outdir: str, tree: str = "00_reference"
                         ) -> str | None:
     """Render the PINN leg (pseudo-step 300000000) from its real artefact.
 
