@@ -142,6 +142,7 @@ package body StellarOrion_FFI is
 
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Estimate_Cd_C: Ada exception - safety fallback applied");
          --  Safety fallback: return 0.0 sentinel on any error
          --  [Citation: Ada2012 RM 11.4 — Exception Handling]
          return 0.0;
@@ -175,6 +176,7 @@ package body StellarOrion_FFI is
 
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] HIAD_Cost_C: Ada exception - safety fallback applied");
          --  Safety fallback: return -1.0 sentinel (cost >= 0.0 always)
          return Interfaces.C.Double (-1.0);
    end HIAD_Cost_C;
@@ -360,6 +362,7 @@ package body StellarOrion_FFI is
 
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Run_MoP_C: Ada exception - safety fallback applied");
          --  Safety fallback: zero all outputs on error
          Out_X1.all        := 0.0;
          Out_X2.all        := 0.0;
@@ -430,6 +433,7 @@ package body StellarOrion_FFI is
 
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Generate_CCD_Samples_C: Ada exception - safety fallback applied");
          --  Safety fallback: zero all output buffers on error
          for I in 0 .. CCD_Samples - 1 loop
             --  invariant: 0 <= I <= CCD_Samples - 1 (numeric buffer bound)
@@ -467,6 +471,7 @@ package body StellarOrion_FFI is
           Velocity    => Standard.Float (Velocity)));
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Sutton_Graves_Heat_C: Ada exception - safety fallback applied");
          return 0.0;
    end Sutton_Graves_Heat_C;
 
@@ -488,6 +493,7 @@ package body StellarOrion_FFI is
         Sutherland_Viscosity (T => Standard.Float (T)));
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Sutherland_Viscosity_C: Ada exception - safety fallback applied");
          return 1.716e-5;
    end Sutherland_Viscosity_C;
 
@@ -520,6 +526,7 @@ package body StellarOrion_FFI is
           Wall_Temp_K   => Standard.Float (Wall_Temp_K)));
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Fay_Riddell_Heat_C: Ada exception - safety fallback applied");
          return 0.0;
    end Fay_Riddell_Heat_C;
 
@@ -544,6 +551,7 @@ package body StellarOrion_FFI is
           Emissivity => Standard.Float (Emissivity)));
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Radiative_Eq_Temp_C: Ada exception - safety fallback applied");
          return 300.0;
    end Radiative_Eq_Temp_C;
 
@@ -580,6 +588,7 @@ package body StellarOrion_FFI is
           TPS_Thickness => Standard.Float (TPS_Thickness)));
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Backface_Temperature_C: Ada exception - safety fallback applied");
          return 300.0;
    end Backface_Temperature_C;
 
@@ -606,6 +615,7 @@ package body StellarOrion_FFI is
           Drag_Force   => Standard.Float (Drag_Force)));
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Ballistic_Coefficient_C: Ada exception - safety fallback applied");
          return 0.0;
    end Ballistic_Coefficient_C;
 
@@ -630,6 +640,7 @@ package body StellarOrion_FFI is
           Velocity => Standard.Float (Velocity)));
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Dynamic_Pressure_C: Ada exception - safety fallback applied");
          return 0.0;
    end Dynamic_Pressure_C;
 
@@ -654,6 +665,7 @@ package body StellarOrion_FFI is
           Mass       => Standard.Float (Mass)));
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Deceleration_G_Load_C: Ada exception - safety fallback applied");
          return 0.0;
    end Deceleration_G_Load_C;
 
@@ -676,6 +688,7 @@ package body StellarOrion_FFI is
           Altitude_Km => Standard.Float (Altitude_Km)));
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Atmosphere_Temperature_C: Ada exception - safety fallback applied");
          return 288.15;
    end Atmosphere_Temperature_C;
 
@@ -698,6 +711,7 @@ package body StellarOrion_FFI is
           Altitude_Km => Standard.Float (Altitude_Km)));
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Atmosphere_Density_C: Ada exception - safety fallback applied");
          return 1.225;
    end Atmosphere_Density_C;
 
@@ -726,6 +740,7 @@ package body StellarOrion_FFI is
           Temperature => Standard.Float (Temperature)));
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Mean_Free_Path_Viscous_C: Ada exception - safety fallback applied");
          return 0.0;
    end Mean_Free_Path_Viscous_C;
 
@@ -753,6 +768,7 @@ package body StellarOrion_FFI is
       return Interfaces.C.Double (Speed_Of_Sound (Temperature => T));
    exception
       when others =>
+         Log ("[VERBOSE_ERROR] Speed_Of_Sound_C: Ada exception - safety fallback applied");
          return 0.0;
    end Speed_Of_Sound_C;
 
