@@ -1357,9 +1357,13 @@ def _write_results_readme() -> None:
          "Bayesian-optimization convergence and design panels",
          "Optimization methodology and convergence"),
         ("tps_per_ply",
-         ("Per-ply TPS heat-flux figures: peak-element per-ply bar chart, "
-          "through-thickness temperature profile, and per-ply flux "
-          "distribution across all elements (IRVE-3 5-ply layup)"),
+         ("Six artefacts from the Ada/SPARK `tps_conduction` solve on the "
+          "Rapisarda 5-ply layup (2x Nicalon SiC + 2x Pyrogel 3350 + "
+          "Kapton): a three-panel per-ply heating animation with the "
+          "literal stack and a per-ply constants table, the literal-stack "
+          "temperature heatmap, per-ply temperature across all elements, "
+          "the peak-element bar chart, the through-thickness temperature "
+          "profile, and the per-ply flux distribution"),
          "Thermal protection system; materials and survivability"),
         ("optimized_topology",
          "Plots + the optimized-topology MP4 animation",
@@ -1424,7 +1428,9 @@ show a marker at step 2200 separating them.
 | `results/validation*/paraview/surf_*.vtu` | Surface heat-flux dumps, steps 100..2200. |
 | `results/validation_scalloped/paraview/surf_pinn_300000000.vtu` | PINN-leg surface heat-flux endpoint artefact. |
 | `results/validation/grid.*.out` | SPARTA volume grid dumps (only tree that has them). |
-| `results/tps_conduction/tps_step2200_layers.csv` | Per-ply TPS conduction breakdown at step 2200. |
+| `results/tps_conduction/tps_step2200_layers.csv` | Per-ply TPS conduction breakdown at step 2200 (node T, thickness, k, ply name). Written by the solve itself -- no longer a writer-less orphan. |
+| `results/tps_conduction/tps_step2200_profiles.csv` | 33-point through-thickness temperature profile per element at step 2200. |
+| `results/tps_conduction/tps_step2200_summary.json` | Step-2200 solve summary: peak element, q_SG, T_surface/T_back ranges, the layup actually used, and the model caveats. |
 
 ## 4. Report section -> artefact mapping
 
@@ -1436,7 +1442,7 @@ show a marker at step 2200 separating them.
 | Full trajectory 0..300M (DSMC + PINN) | `validation_scalloped/full_300M_dsmc_pinn/`, `validation_scalloped/mp4/` |
 | 3-D surface / cross-section views | `<tree>/vtu_snapshots/` |
 | Correlation cross-check (Rapisarda) | `<tree>/rapisarda/` |
-| TPS thermal survivability | `<tree>/derived/` (T_surface, T_back, beta, survivability_assessment), `plots/tps_per_ply/` (per-ply through-flux) |
+| TPS thermal survivability | `<tree>/derived/` (T_surface, T_back, beta, survivability_assessment), `plots/tps_per_ply/` (literal-stack heatmap, per-ply constants table, per-ply temperatures) |
 | Design optimization | `plots/optimized_topology/`, `plots/geometry/`, `plots/bo_figures/` |
 | Animation for presentation | `validation_scalloped/mp4/` (validation), `optimized_topology/mp4/` (optimized) |
 
@@ -1456,11 +1462,33 @@ show a marker at step 2200 separating them.
   heat-flux maps and the coverage timeline.
 - **mp4** -- 0..300M animation; telemetry comes from the authoritative
   trajectory CSV (never from ad-hoc re-derivation).
-- **tps_per_ply** -- per-ply TPS heat-flux figures from the Ada/SPARK
-  `tps_conduction` layer breakdown: peak-element per-ply bar chart,
-  through-thickness temperature profile, and per-ply flux distribution
-  across all elements (IRVE-3 5-ply layup).  The five per-ply through-fluxes
-  are reported as measured; they are NOT forced equal.
+- **tps_per_ply** -- per-ply TPS figures from the Ada/SPARK `tps_conduction`
+  solve on the Rapisarda layup.  Two forms: the three-panel animation
+  (per-ply heat flux, the literal 5-ply stack drawn to true proportion at
+  the hot face up, temperature through the stack, plus a per-ply constants
+  table carrying t / k / R / T_max), and the static heatmap that adds a
+  median-heating contrast column and a per-ply T_top / T_bot / dT /
+  margin table.  `ply_temperature_by_element.png` carries every ply's node
+  temperature across all 3,648 elements with each ply's own limit line.
+
+  Input provenance: the aerothermal snapshot is
+  `results/validation_scalloped/paraview/surf_2200.vtu` -- the VALIDATED
+  reference tree -- and the flight condition (52.069210 km, 3101.079 m/s)
+  is READ from that tree's own `validation_timeseries.csv`, not asserted.
+  Two other velocities circulate in the project (3378 m/s, the Ada
+  `Snapshot_Vel_Ms` constant, and 2700 m/s from the scalloped DSMC deck);
+  none is settled, and every figure names all three.
+
+  On the five per-ply through-fluxes: **they are one number, not five.**
+  A series stack carries a single flux, so the five values are identical by
+  construction (3,698.7 W/m^2 at the peak element) rather than independent
+  measurements.  The quantities that genuinely differ ply to ply -- and
+  which the figures lead with -- are the boundary node temperatures and
+  each ply's share of the total series resistance (R_total = 0.305583
+  m^2*K/W).  The node temperatures are reconstructed from the layup's
+  resistances, NOT interpolated from the 33 solver samples, because those
+  samples are uniformly spaced and so miss the ply faces, and the profile
+  is only piecewise linear with a slope jump at every k change.
 
 ## 6. Definitions and provenance rules
 
