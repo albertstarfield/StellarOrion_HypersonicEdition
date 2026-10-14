@@ -375,20 +375,19 @@ Institut Teknologi Bandung}
     % Full-page sky gradient (single soft vertical backdrop)
     \shade[top color=skytop,bottom color=skybottom] (current page.south west) rectangle (current page.north east);
     % Atmospheric haze halo around earth (just a radial soft fill)
-    \shade[inner color=white!35,outer color=white!0] ($(current page.south west)+(3.8cm,3.0cm)$) circle (3.6cm);
-    % Earth sphere body (radial shading -> ball effect). Ball color gives
-    % lit appearance like a real sphere without raster textures.
-    \shade[ball color=earthsea] ($(current page.south west)+(3.6cm,2.75cm)$) circle (2.55cm);
-    % Latitude/longitude arcs: thin white stroked ellipses to convey globe.
-    \begin{scope}[shift={($(current page.south west)+(3.6cm,2.75cm)$)}, opacity=0.35]
-      \draw[contourwhite,very thin] (0,0) ellipse (2.55cm and 0.85cm);
-      \draw[contourwhite,very thin] (0,0) ellipse (2.55cm and 0.4cm);
-      \draw[contourwhite,very thin] (0,0) ellipse (0.18cm and 2.55cm);
-      \draw[contourwhite,very thin] (1.0cm,0) ellipse (0.18cm and 2.55cm);
-      \draw[contourwhite,very thin] (-1.0cm,0) ellipse (0.18cm and 2.55cm);
+    \shade[inner color=white!35,outer color=white!0] ($(current page.south west)+(2.5cm,2.5cm)$) circle (2.4cm);
+    % Earth sphere body. Placed LOWER-LEFT (bondary edge ~4.2cm from left) so
+    % its entire disc stays free of the centered title text column (~7-14cm).
+    \shade[ball color=earthsea] ($(current page.south west)+(2.15cm,1.8cm)$) circle (1.85cm);
+    \begin{scope}[shift={($(current page.south west)+(2.15cm,1.8cm)$)}, opacity=0.35]
+      \draw[contourwhite,very thin] (0,0) ellipse (1.85cm and 0.62cm);
+      \draw[contourwhite,very thin] (0,0) ellipse (1.85cm and 0.28cm);
+      \draw[contourwhite,very thin] (0,0) ellipse (0.14cm and 1.85cm);
+      \draw[contourwhite,very thin] (0.75cm,0) ellipse (0.14cm and 1.85cm);
+      \draw[contourwhite,very thin] (-0.75cm,0) ellipse (0.14cm and 1.85cm);
     \end{scope}
-    % Stylized north-pole ice cap: a small white ellipse near top
-    \fill[contourwhite!85] ($(current page.south west)+(3.6cm,4.80cm)$) ellipse (0.85cm and 0.35cm);
+    % Ice cap on the pole closest to upper-left
+    \fill[contourwhite!85] ($(current page.south west)+(2.15cm,3.16cm)$) ellipse (0.62cm and 0.26cm);
     % Sparkling cross stars across the dodger/blue resting of upper sky:
     \foreach \c in {0,1,...,12}{%
       \foreach \r in {0,1,...,6}{%
