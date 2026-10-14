@@ -5287,6 +5287,41 @@ The correct text is `StellarOrion_Speed_Of_Sound.Speed_Of_Sound`, and the `--  D
 to …` pattern is used for the other wrappers in this file, so the fix is a one-word change.
 ## F81 — The new SPARK speed-of-sound unit proves the result is non-negative and cannot overflow, but proves nothing about its accuracy
 
+### Update — thread 4e. **The accuracy contract survives, but this entry's stated scope was wider than the fact.**
+
+I re-checked this finding against the current source and the body now reads:
+
+```ada
+package body StellarOrion_Speed_Of_Sound is
+   --  SPARK_Mode (Off) for the whole body, exactly as in
+   --  stellarorion_physics.adb: the self-tests at the end of this body
+   --  report on Standard_Error and carry exception handlers, and GNAT
+   --  rejects any attempt to toggle SPARK_Mode back mid-region once
+   --  subprogram bodies have appeared [...]
+   pragma SPARK_Mode (Off);
+```
+
+`grep -c "pragma SPARK_Mode (On)"` on the **body** now returns **0**. So the
+heading of this finding — *"the new `pragma SPARK_Mode (On)` unit"* — no longer
+describes the code, and I am correcting the record rather than letting the
+heading overstate it.
+
+**What has *not* changed is the thing F81 was actually about.** The `THEOREM (T2)`
+accuracy contract is intact in the spec (`Post => Speed_Of_Sound'Result * Speed_Of_Sound'Result
+<= 1.4 * 287.058 * Temperature * (1.0 + 1.0e-6)`, lower bound likewise), and the
+pragma's own comment states that *"the speed-of-sound arithmetic itself remains
+exception-free (no allocators, tasks, or I/O on the physics path) and is annotated
+for proof per subprogram"*. The comment carries an explicit reason — GNAT rejects
+toggling `SPARK_Mode` back mid-region once subprogram bodies have appeared — and
+attributes the same convention to `stellarorion_validation.adb` and
+`stellarorion_types.adb`.
+
+**So the finding stands, narrowed.** The accuracy gap is closed and remains closed:
+the postcondition is present, the arithmetic is exception-free by construction, and
+the fail-closed `Safe_Fallback` constant is the documented out-of-domain path. What
+F81 should not be cited for any more is the claim that this unit is a
+`SPARK_Mode (On)` unit in its entirety. A reader who needs that claim should read
+the pragma at `stellarorion_speed_of_sound.adb:30`, not this entry's heading.
 ### Update — thread 4c. **Fixed, and the fix is correct. The accuracy bound re-measures to hold with ~10× margin.**
 
 The gap this finding identified — that the unit proved non-negativity and
@@ -5841,6 +5876,56 @@ carrying findings from this log. All five were re-measured:
 **Only one genuine change was needed to the record:** F38 and F45 were already marked
 fixed, but the fix had gone from *numerical alignment* to *structural elimination*, and
 that is a materially stronger claim than what the log said. Both entries now record it.
+## F90 — The project's SPARK posture has narrowed to 20 of 28 Ada bodies declaring `SPARK_Mode (Off)`, and the verification surface the README describes no longer matches the tree
+
+*Class: documentation/provenance — the measured verification posture differs from the posture the project states, in the direction that matters*
+
+Eighty-two commits landed between thread 4d and this one and 94 source files moved,
+including the Ada core. Several units this log has never audited appeared, and one
+structural property changed enough to be worth recording.
+
+**Measured directly from the tree:**
+
+```bash
+$ grep -c "pragma SPARK_Mode (Off)" src/simulation_engine/*.adb | grep -v ':0'
+```
+
+**20 of 28** `.adb` files declare `SPARK_Mode (Off)`. Several of them have a spec
+that declares `SPARK_Mode (On)` — the spec is inside the formal subset while its
+body is not, which means the analyzable surface is the *contract*, not the
+implementation. Twelve spec/body pairs are `Off` in the spec itself.
+
+**This is recorded as a measurement, not as a code defect.** I checked the
+justifications rather than pattern-matching on the pragma, and the ones I read are
+legitimate and specific:
+
+* `stellarorion_types.adb:8` — `Unchecked_Conversion` for type casting (Ada RM
+  13.9) and the FFI cast, which the subset forbids.
+* `stellarorion_speed_of_sound.adb:30` — the self-tests report on
+  `Standard_Error` and carry exception handlers, and GNAT rejects toggling
+  `SPARK_Mode` mid-region once subprogram bodies have appeared. The physics itself
+  stays exception-free.
+* `stellarorion_ffi.ads` — the whole FFI boundary is Off, which follows: it exists to
+  cross out of the subset.
+
+Every one of those carries the `extern:` / `-- justified:` convention so the
+composition tooling can read the reason. That is the discipline this log asks for,
+and it is present.
+
+**Why it is recorded anyway.** `prove.sh:17` still states, as an axiom:
+
+> `# AXIOMS: StellarOrion uses Ada 2012/SPARK 2014 for core logic.`
+
+That sentence describes a posture the tree no longer has in full: the core *logic*
+is still Ada and still SPARK-annotated, but a majority of Ada bodies are outside
+the formal subset, and a reader who takes the axiom at face value will over-estimate
+what `gnatprove` actually covers. The F81 heading above was one concrete instance of
+exactly that over-estimation, which is what prompted this measurement.
+
+**Severity, stated honestly.** No wrong behaviour follows from this; the pragmas are
+justified where I checked, and the fix (narrow the F81 heading) is a documentation
+change. This is recorded so that a later pass does not cite "SPARK_Mode On" as a
+property of the project without reading the pragma for the specific unit it means.
 ## Summary
 
 | ID | Severity | Status | Root cause class |
@@ -5935,6 +6020,7 @@ that is a materially stronger claim than what the log said. Both entries now rec
 | F87 | process/gate | **fixed 2026-10-09** | The sabotage verifier gate aborted the build on ~56k pre-existing violations (7,541 CRITICAL + 7,933 HIGH + 30,471 MEDIUM + 10,033 LOW; 58 patterns) and the verifier audited ITSELF 5,096 times (three checks call `os.walk(project_root)` directly, bypassing the `_walk_src` exclusion). The campaign was PAUSED for this reason. Gate made NON-FATAL (precedent: gnatcov at `run.py:1411`); the audit still runs and reports. Debt tracked here. |
 | F88 | verifier defect | **fixed 2026-10-10** | `SMT_LOGIC_VERIFICATION` reported 157 CRITICAL findings - 74 `INTEGER_OVERFLOW` + 42 `INDEX_OUT_OF_BOUNDS` were pure-Python false positives caused by `_verify_python_function_with_z3` cross-checking Python `int` with cvc5 against hardcoded 32-bit bounds `[-2147483648, 2147483647]` (L10786-10787) and modelling Python containers as fixed-capacity buffers. Python `int` is arbitrary precision and indexing raises `IndexError` (memory-safe); the check's own L10728 comment scopes it to "C bindings, numpy, ctypes". Fixed by adding `_python_has_c_binding_context()` + `_C_BINDING_MARKERS` above `_verify_python_function_with_z3` and gating Check 2 (index) and Check 5 (overflow) behind it. `SMT_LOGIC_VERIFICATION` 157 -> 11 (all genuine). The 31 agent-added `# nosec` SMT suppressions across 10 files were stripped (grep-verified zero remain in `src/`). Verdict-counting total **1097 -> 167**. |
 | F89 | self-inflicted | **fixed 2026-10-10** | My `nosec`-strip script called `.strip()` on any line whose `nosec` it removed, so 18 lines where the comment *trailed real code* lost their leading indentation (`pipeline_comparison.py:876`, `generate_outputs.py:517` IndentationError). Fixed by re-indenting to the enclosing block (+4 after a block opener) and correcting the two nested `_fs()` bodies to 8 spaces. Verified `py_compile` + `ruff check` clean on all 8 touched files. Lesson: a bulk text transform on source must preserve indentation - `strip()` on a source line is almost always wrong. |
+| F90 | documentation/provenance | **open** | 20 of 28 `.adb` bodies now declare `pragma SPARK_Mode (Off)`, including units whose spec declares On (e.g. `stellarorion_types`, `stellarorion_speed_of_sound`). The pragmas I checked carry specific, documented justifications — `Unchecked_Conversion` for FFI cast, self-tests reporting on `Standard_Error` — so this is not a code defect. Recorded because `prove.sh:17` still states as an axiom that the project *"uses Ada 2012/SPARK 2014 for core logic"*, which over-states the analyzable surface to a reader who takes it at face value. F81's heading was one concrete instance of that over-statement and has been narrowed. |
 | F90 | verification scope | **fixed 2026-10-13** | The Phase-2 ruff gate reported `All checks passed` from a **different ruff than the one that enforces the gate**. `run.py` Phase 2 runs `venv/python/bin/ruff` (Python **3.14.8**, ruff **0.17.0**), while every earlier "ruff passed" baseline in this campaign ran `venv_validation/bin/ruff` (ruff **0.16.10**). `requirements.txt:34` pins `ruff>=0.1.0` — unpinned — so the pipeline's venv resolves to whatever is newest, and 0.17 enables **UP017** (`datetime.now(timezone.utc)` → `datetime.now(UTC)`) in the default rule set. 13 real findings across 5 files (`pipeline_checkpoint.py` ×4, `validation_pipeline.py` ×4, `sidecar_ui.py` ×1, `coq_proof_gate.py` ×1, `sabotage_verifier.py` ×3). Two corrections to the earlier baseline: (a) suppressing UP017 in `ruff.toml` was **rejected** — that is the "ignoring the warning" the axiom bans; (b) `datetime.UTC` exists since Python 3.11 and the gate's interpreter is 3.14.8, so the conversion is semantics-preserving. Fixed with `venv/python/bin/ruff check . --fix` (UP017 first, then the I001/F401 follow-ons it introduced: `UTC, datetime` import ordering and two now-unused `timezone` imports). Final: ruff **All checks passed**; pyrefly **0 errors** under the pipeline's own invocation (`--project-excludes venv/** scripts/** results/** …` — a bare `pyrefly check .` scans the venvs and prints a meaningless `429,232 errors`). Lesson: a lint baseline is only evidence about the exact binary that produced it. |
 | F91 | agent artefact never compiled | **fixed 2026-10-13** | The v3_ADA subagent wave wrote 47 Ada bodies that could not compile, and the `alr exec -- gprbuild` wrapper hides the evidence (it prints only "compilation phase failed", swallowing every diagnostic). Two families. **(a) Aspect-on-completion duplicated between spec and body** — the `.ads` declares `Test_*` with `with Pre/Post` and the `.adb` body repeats them: 29 errors in `stellarorion_postprocessing.adb` (15 `Test_*` + 14 functions), 18 in `stellarorion_pinn_trajectory.adb`. Fixed by a **generalized, paren-balanced `.ads` scanner** (`/tmp/opencode/strip_aspects.py`) — the naive `find(";")` stopped inside parameter lists `(A : out Float; B : out Float)` and silently missed 9 of the names. **(b) Body grammar**: `procedure Test_Expected_Dump_Count ... Post => True;` + `is` — a body's aspect clause may not carry a semicolon before `is`. Merged to `Post => True is`. Header comments added citing Ada RM 6.7/13.1.1. |
 | F92 | vacuous contract | **fixed 2026-10-13** | Four contracts in `stellarorion_pipeline_checkpoint.adb` / `.ads` were fatal under `-gnatwe`/`-gnatw.t` or carried no information: `pragma Assert (Dummy'Length = 1)` on a **Boolean** (the wave's nonsense) → `pragma Assert (Dummy)`; `Post => Format_Timestamp'Result'Length = Max_Timestamp_Length` **vacuous** because the return subtype `Timestamp_String` already fixes the length, so GNAT warns "does not check the outcome" — same for `Save_Checkpoint`'s `Post` on `State.Updated_At'Length`; and `.ads:223` `Is_All_Completed`'s postconjunct `Result and then (…)` is vacuously true whenever `Result` is False. Rewritten as the exact equivalence `Result = (for all I in 1 .. Pipeline_Step_Count => State.Steps (I).Status = Completed)`. Lesson: a postcondition the subtype already guarantees is not a check, and a conjunct under `and then` is not a claim. |
@@ -5950,7 +6036,7 @@ that is a materially stronger claim than what the log said. Both entries now rec
 | F102 | false proof | **fixed 2026-10-13** | `src/proofs/hiad_optimizer_proof.v`'s `correction_factor_lower` carried a proof plan that **cannot be discharged for the reason it was believed**. The intermediate claimed `Rmax GATE_CORR_MIN raw <= Rmin GATE_CORR_MAX (Rmax GATE_CORR_MIN raw)`; the counterexample `raw = 5` gives `m = 5` and `Rmin 2 5 = 2`, so `5 <= 2` is false. The surrounding lemma `GATE_CORR_MIN <= correction_factor q_h q_a` is true for the real definition `Rmin GATE_CORR_MAX (Rmax GATE_CORR_MIN (q_h/q_a))`, so only the plan was wrong: replaced with `destruct (Rle_dec GATE_CORR_MAX (Rmax GATE_CORR_MIN (…)))` casing, `Rmin_left` on the yes-branch and `Rmin_right` + `Rmax_l` on the no-branch. `correction_factor_upper` and `prediction_error_nonpos` were rewritten in the same pass (a non-derivable `Rmax_lub` claim on `raw <= 2`, and a nonlinear `lra` assert). |
 | F103 | false statement | **fixed 2026-10-13** | `src/proofs/generate_outputs_proof.v`'s `lerp_tie_endpoints` asserted `lerp_tie v1 v0 = v0`. `Definition lerp_tie (v0 v1 : R) : R := v0` returns its **first** argument, so the true statement is `lerp_tie v1 v0 = v1`; `reflexivity` failed with `Unable to unify "v0" with "lerp_tie v1 v0"`. The proof body was right and the theorem was wrong — the reverse of the usual failure, and the reason the endpoint lemma could never close. |
 | F104 | vacuous theorem | **documented 2026-10-13** | `src/rocq/stellarorion_physics_proof.v`'s `kn_regime_transition : forall mfp L, kn mfp L < 0.01 -> True` is true only because its conclusion is `True`; it is discharged by `exact I` and carries an in-file comment stating that **no continuum-regime content is claimed**. Recorded here so the presence of a `Qed` on that name cannot later be read as a verified transition criterion. |
-| F105 | dangling reference | **fixed 2026-10-13** | Phase 2b's GATE 2 prints *"This gate grades METHOD SELECTION only; it does not re-grade the survivability verdict above"* — and **no survivability verdict is printed above it anywhere in the run**. Verified by grepping the full 608-line Phase 2b output for `surviv|verdict|PASS|FAIL`: the only matches are the venv-install lines and the regime gate's own two FAILs plus the handoff PASS. The note points at a verdict the reader cannot see, in a phase whose Step 1/5 only loads a CSV and whose Step 5/5 only prints a comparison table. Either the verdict is computed elsewhere and never surfaced, or the sentence was carried over from a different report — either way a reader is told their question was already answered when it was not. |
+| F105 | dangling reference | **fixed 2026-10-13** | Phase 2b's GATE 2 prints *"This gate grades METHOD SELECTION only; it does not re-grade the survivability verdict above"* — and **no survivability verdict is printed above it anywhere in the run**. Verified by grepping the full 608-line Phase 2b output for `surviv\|verdict\|PASS\|FAIL`: the only matches are the venv-install lines and the regime gate's own two FAILs plus the handoff PASS. The note points at a verdict the reader cannot see, in a phase whose Step 1/5 only loads a CSV and whose Step 5/5 only prints a comparison table. Either the verdict is computed elsewhere and never surfaced, or the sentence was carried over from a different report — either way a reader is told their question was already answered when it was not. |
 | F106 | contract violation | **fixed 2026-10-13** | `run.py`'s `_sync_media_into_canonical_tree` docstring promised *"Raises: never -- sync failures are reported and skipped so one bad file cannot hide the rest of the generated media"*, and **all five of its `shutil.copy2` call sites were unguarded**. The pipeline crashed with an unhandled `shutil.SameFileError` in Phase 2c: `results/validation/plots/heat_load_jcm2_vs_step.png` and `results/plots/validation/short_window/heat_load_jcm2_vs_step.png` are **hard links to one inode** (682769011, link count 2 — not symlinks), because a link-preserving pass (`cp -al`/`rsync -l` or an earlier sync) made the canonical tree from the legacy one. 21 of the 51 legacy PNGs are in that state, and hardlinks pervade `results/` (595 + 586 + 300 in the vtu dirs; 70 + 51 + 48 + 30 in plot dirs). Fixed with a nested `_copy_media(src, dst)` that (a) skips when `os.path.samefile` shows source and destination are already one file — the content is in place by construction, and a plotting script writing in place through matplotlib's `savefig` keeps both names current; (b) converts every other `OSError`/`SameFileError` into a reported-and-counted skip; (c) tallies `copied / already in place / skipped` and prints it. Verified end-to-end by calling the real function against the real tree: **35 copied, 260 already in place, 0 skipped**, exit 0. Lesson: a docstring's exception contract is a promise the code must keep — "never raises" plus zero try blocks is a defect the first unusual file finds. |
 | F115 | verification scope (project-wide) | **fixed locally 2026-10-13; open project-wide** | `-gnatA` (capital) in `stellarorion_program_proc.gpr` `for Switches ("ada")` is NOT `-gnata` - it enables assertion WARNINGS, not runtime `pragma Assert` checking. A unit compiled under the exact switch set (`-gnatA -gnat12 -gnatwa -gnatwe -gnatQ -gnatdME`) runs `pragma Assert (False)` to completion and exits 0; adding `-gnata` raises `ADA.ASSERTIONS.ASSERTION_ERROR`, exit 1. Every `pragma Assert` in the tree is DECORATIVE at runtime (still a valid GNATprove obligation). Fixed locally with `pragma Assertion_Policy (Check);` in the new unit's body declarative part - control-proved by injecting `E (J) := (Plus - Minus) / 8.0;` for the correct `Plus / 4.0 - Minus / 4.0;` -> `ASSERTION_ERROR`, exit 1. Project-wide conversion (~30 files) deliberately NOT done: owner asked, not yet answered. |
 | F116 | self-inflicted | **fixed 2026-10-13** | My Python reference for the classic 2^k main effect divided the summed contrast by 8 (`num/8`) instead of `Plus/4 - Minus/4`, so the Ada returned exactly 2x on all three factors (1.999991 / 2.000001 / 1.999999). The self-test could not see it: all 8 corners at 0.0 make `Corner_Mean_Effect` return 0.0 under ANY scaling. Added a second response design (`Resp_B`, expected `CornB = (4.0, 0.0, 0.0)`, which reads 2.0 under the halved convention) plus `Swing_B = Swing` / `MeanE_B = MeanE` separation asserts. Conclusion unchanged (r_tor/R_N = 1.058); only the values double. Lesson: a test whose inputs make the estimator return zero cannot detect a scaling error - always include an input with a nonzero expected answer. |
