@@ -2370,8 +2370,117 @@ def _parse_args() -> tuple[argparse.Namespace, list[str]]:  # nosec: SMT false p
         action="store_true",
         help="Skip Phase 2c PNG/MP4 regeneration and syncing into results/plots/.",
     )
+    parser.add_argument(
+        "--regenerate-plots",
+        nargs="?",
+        const="plots",
+        choices=["plots", "validation", "optimized", "tps-per-ply",
+                 "tps-validation", "tps-optimized", "all"],
+        metavar="TARGET",
+        help=(
+            "Regenerate plots/media only, then exit (skips build/launch). "
+            "TARGET: plots (default, whole media phase), validation, "
+            "optimized, tps-per-ply, tps-validation, tps-optimized, all."
+        ),
+    )
+    parser.add_argument(
+        "--status",
+        action="store_true",
+        help=(
+            "Print which validation / optimization runs have surf snapshots, "
+            "solve outputs, and per-ply artefacts, then exit (inspection only). "
+        ),
+    )
     args, unknown = parser.parse_known_args()
     return args, unknown
+
+
+
+def _run_per_ply_trees(trees: list[str]) -> None:
+    """Run the Ada/SPARK solve + per-ply plotting for exactly the requested trees.
+
+    This is the smaller building block behind ``--regenerate-plots ...``.  It
+    mirrors what the full Phase 2c does for those trees, but nothing else.
+
+    Inputs:
+      trees : tree names (validation_scalloped / validation_optimized).
+
+    Returns:
+      None. Side effects: writes CSV/JSON to results/tps_conduction/<tree>/ and
+      the six artefacts under results/plots/<tree>/tps_per_ply/.
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    venv_python = os.path.join(script_dir, "venv_validation", "bin", "python3")
+    media_out = os.path.join(script_dir, "results", "plots")
+
+    per_ply_args = {"validation_scalloped": (52.069210, 3101.079),
+                    "validation_optimized": (52.032558, 3094.193)}
+
+    for tree in trees:
+        vtu = os.path.join(script_dir, "results", tree, "paraview",
+                            "surf_2200.vtu")
+        if tree not in per_ply_args:
+            print(f"[regenerate-per-ply] SKIP {tree} (no step-2200 tree config)")
+            continue
+        if not os.path.isfile(vtu):
+            print(f"[regenerate-per-ply] SKIP {tree}: no surf_2200.vtu.")
+            continue
+        alt, vel = per_ply_args[tree]
+        solve_out = os.path.join(script_dir, "results", "tps_conduction", tree)
+        os.makedirs(solve_out, exist_ok=True)
+        solve_cmd = [venv_python, os.path.join(script_dir, "scripts",
+                    "run_tps_conduction_step2200.py"),
+                     "--vtu", vtu, "--step", "2200", "--tree", tree,
+                     "--altitude-km", str(alt), "--velocity-ms", str(vel),
+                     "--out-dir", solve_out]
+        print("[run_per_ply]", " ".join(solve_cmd))
+        subprocess.run(solve_cmd, cwd=script_dir, check=True)
+        out_dir = os.path.join(media_out, tree, "tps_per_ply")
+        os.makedirs(out_dir, exist_ok=True)
+        plot_cmd = [venv_python, os.path.join(script_dir, "scripts",
+                     "make_ply_heatflux_plots.py"),
+                    "--tree", tree, "--solve-out-dir", solve_out, "--outdir", out_dir]
+        print("[run_per_ply]", " ".join(plot_cmd))
+        subprocess.run(plot_cmd, cwd=script_dir, check=True)
+    print("[regenerate-per-ply] complete.")
+
+
+def _print_plot_status() -> None:
+    """Print which trees have surface and plot artefacts (inspection only)."""
+    import os as _os
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    trees = ["validation_scalloped", "validation_optimized", "validation_smooth",
+             "validation", "optimized_topology"]
+    print("=" * 78)
+    print("StellarOrion plot / surface snapshot status")
+    print("=" * 78)
+    for tree in trees:
+        base = os.path.join(script_dir, "results", tree)
+        vtu = os.path.join(base, "paraview", "surf_2200.vtu")
+        ts = os.path.join(base, "validation_timeseries.csv")
+        solvedir = os.path.join(script_dir, "results", "tps_conduction", tree)
+        if tree == "validation_scalloped":
+            solvedir = os.path.join(script_dir, "results", "tps_conduction")  # ref tree top-level
+        solved = _os.path.isfile(_os.path.join(solvedir, "tps_step2200_summary.json"))
+        perply = os.path.join(script_dir, "results", "plots", tree, "tps_per_ply")
+        files = 0
+        if _os.path.isdir(perply):
+            files = sum(len(fs) for _, _, fs in _os.walk(perply))
+        print(f"{tree:26} step2200_vtu={'Y' if os.path.isfile(vtu) else 'n'}  "
+              f"timeseries={'Y' if os.path.isfile(ts) else 'n'}  "
+              f"solve={'Y' if solved else 'n'}  "
+              f"per_ply={'Y' if files else 'n'} ({files} files)")
+    print("=" * 78)
+    print("Scan missing:")
+    for tree in trees:
+        vtu = os.path.join(script_dir, "results", tree, "paraview", "surf_2200.vtu")
+        if not os.path.isfile(vtu):
+            print(f"  - {tree}: NO surf_2200.vtu (cannot run solve)")
+        else:
+            print(f"  - {tree}: OK")
+
+    print("Use --regenerate-plots validation | optimized | tps-per-ply | all")
+
 
 
 # Main Entry Point
@@ -2385,6 +2494,34 @@ def main() -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — CLI entry point
     """
     args, extra_args = _parse_args()
     lock = _LockFile(_LOCK_FILE)
+
+    if args.status:
+        _print_plot_status()
+        return
+
+    # --regenerate-plots scope (if passed): only regenerate the per-ply
+    # sets instead of every media script, as ' TARGET validation / optimized.
+    if args.regenerate_plots is not None:
+        print("[regenerate-plots] TARGET =", args.regenerate_plots)
+        if args.regenerate_plots in ("all", "plots"):
+            _phase2c_generate_media_and_sync()
+            print("\n[regenerate-plots] all media complete; see results/plots/.\n")
+            return
+        # Target specific trees / per-ply only: call the solve+plot loop that
+        # run.py already uses, limited to the requested trees.
+        trees = []
+        if args.regenerate_plots in ("validation", "tps-validation"):
+            trees = ["validation_scalloped"]
+        elif args.regenerate_plots in ("optimized", "tps-optimized"):
+            trees = ["validation_optimized"]
+        elif args.regenerate_plots in ("tps-per-ply", "tps-validation",
+                                           "tps-optimized", "all"):
+            trees = ["validation_scalloped", "validation_optimized"]
+        if not trees:
+            trees = ["validation_scalloped", "validation_optimized"]
+        _run_per_ply_trees(trees)
+        print("\n[regenerate-plots] complete; see results/plots/<tree>/tps_per_ply/.\n")
+        return
 
     # --test-build-integrity-only implies no launch
     # Phase 2b runs by default unless --skip-pinn is passed
