@@ -85,12 +85,39 @@
 % =====================================================================
 \section{REDEMPTION}
 
-\begin{frame}{REDEMPTION 1: HEAT FLUX PROPERLY DEFINED}
-  \MaxTextLines{2}%
-  Heat flux is now split into its three channels: convection, through-TPS conduction,
-  and reradiation; the active term is stated explicitly (F84). \\
-  \par{\scriptsize (Detail: surface energy balance, see F84.)}
+\begin{frame}{REDEMPTION 1: HEAT FLUX PROPERLY DEFINED (F84)}
+  \small
+  \textbf{Hot-face energy balance (F84)}
+  \[
+  q_{\mathrm{conv}} \;=\; \varepsilon\sigma T_s^{4}
+  \;+\; \frac{T_s - T_{\mathrm{back}}}{R_{\mathrm{tot}}}
+  \]
+  Evaluated at the peak (one decimal, by design):\\
+  $266509.3 = 261626.5 + 4882.8$ W/m$^2$, with\\
+  $T_s=1550.2345$ K, $T_{\mathrm{back}}=300$ K,
+  $R_{\mathrm{tot}}=0.25605$ m$^2$K/W, $\varepsilon=0.80$.\\
+  Three channels are now labelled explicitly:
+  \textbf{convection} (Sutton--Graves), \textbf{conduction}
+  (5-ply IRVE-3 FTPS), \textbf{reradiation}
+  ($\varepsilon\sigma T_s^4$).
+
+  \begin{center}
+  \begin{tabular}{@{}lrr@{}}
+  \textbf{Ply} & \textbf{m} & \textbf{k (W/mK)}\\
+  Nicalon SiC & $5.06\mathrm{e}\text{-}4$ & 1.50\\
+  Nicalon SiC & $5.06\mathrm{e}\text{-}4$ & 1.50\\
+  Pyrogel 3350 & $3.047\mathrm{e}\text{-}3$ & 0.02\\
+  Pyrogel 3350 & $3.047\mathrm{e}\text{-}3$ & 0.02\\
+  Kapton & $2.5\mathrm{e}\text{-}5$ & 0.12\\
+  \end{tabular}
+  \end{center}
 \end{frame}
+
+\PlotFrame{REDEMPTION 1b: CONVECTION TERM (Sutton--Graves)}
+  {Recomputed with the corrected C\_SG = 1.7415e-4; the peak-element
+   annotation updates on each re-run. (F21, F83).}
+  {so_sutton_graves}
+
 
 \begin{frame}{REDEMPTION 2: COST FUNCTION COMPLETE}
   \MaxTextLines{2}%
