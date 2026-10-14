@@ -123,7 +123,7 @@ package body StellarOrion_FFI is
    --
    --  Safety fallback: If the underlying Estimate_Cd raises an exception
    --  (e.g., precondition violation from invalid geometry), the function
-   --  returns 0.0 as a sentinel.  The Python caller must check for 0.0.
+   --  returns -1.0 as a sentinel.  The Python caller must check for -1.0.
    -- -------------------------------------------------------------------------
    function Estimate_Cd_C
      (R_N           : Interfaces.C.Double;
@@ -150,7 +150,7 @@ package body StellarOrion_FFI is
    exception
       when others =>
          Log ("[VERBOSE_ERROR] Estimate_Cd_C: Ada exception - safety fallback applied");
-         --  Safety fallback: return 0.0 sentinel on any error
+         --  Safety fallback: return -1.0 sentinel on any error (invalid, never survivable)
          --  [Citation: Ada2012 RM 11.4 — Exception Handling]
          return -1.0;
    end Estimate_Cd_C;
@@ -459,7 +459,7 @@ package body StellarOrion_FFI is
    --  Sutton_Graves_Heat_C
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Sutton_Graves_Heat.
-   --  Safety fallback: Returns 0.0 on exception.
+   --  Safety fallback: Returns -1.0 (invalid, never survivable) on exception.
    --  Contract (inherited from StellarOrion_FFI spec):
    --    Pre  => Density > 0.0 and then Nose_Radius > 0.0 and then Velocity >= 0.0
    --    Post => Sutton_Graves_Heat_C'Result >= 0.0
@@ -508,7 +508,7 @@ package body StellarOrion_FFI is
    --  Fay_Riddell_Heat_C
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Fay_Riddell_Heat.
-   --  Safety fallback: Returns 0.0 on exception.
+   --  Safety fallback: Returns -1.0 (invalid, never survivable) on exception.
    --  Contract (inherited from StellarOrion_FFI spec):
    --    Pre  => Density_Kgm3 > 0.0 and then Nose_Radius_M > 0.0
    --            and then Velocity_Ms >= 0.0 and then Mach > 0.0
@@ -541,7 +541,7 @@ package body StellarOrion_FFI is
    --  Radiative_Eq_Temp_C
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Radiative_Eq_Temp.
-   --  Safety fallback: Returns 300.0 (ambient temperature) on exception.
+   --  Safety fallback: Returns -1.0 (invalid, never survivable) on exception.
    --  Contract (inherited from StellarOrion_FFI spec):
    --    Pre  => Heat_Flux >= 0.0 and then Emissivity > 0.0 and then Emissivity <= 1.0
    --    Post => Radiative_Eq_Temp_C'Result >= 0.0
@@ -566,7 +566,7 @@ package body StellarOrion_FFI is
    --  Backface_Temperature_C
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Backface_Temperature.
-   --  Safety fallback: Returns 300.0 (ambient temperature) on exception.
+   --  Safety fallback: Returns -1.0 (invalid, never survivable) on exception.
    --  Contract (inherited from StellarOrion_FFI spec):
    --    Pre  => Init_Temp > 0.0 and then Heat_Flux >= 0.0 and then Duration >= 0.0
    --            and then Thermal_Lag >= 0.0 and then TPS_Density > 0.0
@@ -603,7 +603,7 @@ package body StellarOrion_FFI is
    --  Ballistic_Coefficient_C
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Ballistic_Coefficient.
-   --  Safety fallback: Returns 0.0 on exception.
+   --  Safety fallback: Returns -1.0 (invalid, never survivable) on exception.
    --  Contract (inherited from StellarOrion_FFI spec):
    --    Pre  => Mass > 0.0 and then Dyn_Pressure >= 0.0 and then Drag_Force > 0.0
    --    Post => Ballistic_Coefficient_C'Result >= 0.0
@@ -630,7 +630,7 @@ package body StellarOrion_FFI is
    --  Dynamic_Pressure_C
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Dynamic_Pressure.
-   --  Safety fallback: Returns 0.0 on exception.
+   --  Safety fallback: Returns -1.0 (invalid, never survivable) on exception.
    --  Contract (inherited from StellarOrion_FFI spec):
    --    Pre  => Density >= 0.0 and then Velocity >= 0.0
    --    Post => Dynamic_Pressure_C'Result >= 0.0
@@ -655,7 +655,7 @@ package body StellarOrion_FFI is
    --  Deceleration_G_Load_C
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Deceleration_G_Load.
-   --  Safety fallback: Returns 0.0 on exception.
+   --  Safety fallback: Returns -1.0 (invalid, never survivable) on exception.
    --  Contract (inherited from StellarOrion_FFI spec):
    --    Pre  => Drag_Force >= 0.0 and then Mass > 0.0
    --    Post => Deceleration_G_Load_C'Result >= 0.0
@@ -726,7 +726,8 @@ package body StellarOrion_FFI is
    --  Mean_Free_Path_Viscous_C
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Physics.Mean_Free_Path_Viscous.
-   --  Safety fallback: Returns 0.0 on exception (a zero mean free path is the
+   --  Safety fallback: Returns -1.0 (invalid, never survivable) on exception. (Previously
+--  a zero mean free path was the documented degenerate value for rho<=0 or T<=0.)
    --  documented degenerate value the former Python helper used for rho<=0 or
    --  T<=0).
    --  Contract (inherited from StellarOrion_FFI spec):
@@ -756,7 +757,7 @@ package body StellarOrion_FFI is
    -- -------------------------------------------------------------------------
    --  Delegates to StellarOrion_Speed_Of_Sound.Speed_Of_Sound.
    --  The input is clamped to the documented Pre envelope [0, 6000] K so the
-   --  SPARK precondition always holds; safety fallback returns 0.0.
+   --  SPARK precondition always holds; safety fallback returns -1.0.
    --  Contract (inherited from StellarOrion_FFI spec):
    --    Pre  => True;
    --    Post => Speed_Of_Sound_C'Result >= 0.0;
