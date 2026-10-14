@@ -864,7 +864,7 @@ def plot_ply_stack_heatmap(peak_rows: list[dict],
             limit cannot express a layup whose plies span 773 .. 2073 K.
 
     APPLICATIONS:
-    Writes ``results/plots/tps_per_ply/ply_stack_temperature_heatmap.png`` and
+    Writes ``results/plots/tps_per_ply_validation/ply_stack_temperature_heatmap.png`` and
     returns None.  Never raises for a missing profile: it refuses to draw
     (returns after printing) rather than inventing a temperature field.
 
@@ -1043,7 +1043,7 @@ def plot_ply_temperature_by_element(rows_by_element: dict[int, list[dict]],
             while the extremes -- which are what matter -- are never dropped.
 
     APPLICATIONS:
-    Writes ``results/plots/tps_per_ply/ply_temperature_by_element.png``.
+    Writes ``results/plots/tps_per_ply_validation/ply_temperature_by_element.png``.
 
     Parameters:
         rows_by_element: ``{element: [ply_row, ...]}`` from ``load_layers``.
@@ -1180,7 +1180,7 @@ def render_ply_heating_mp4(
         thing the static heatmap was requested for.
 
     APPLICATIONS:
-    Writes results/plots/tps_per_ply/ply_heating_animation.mp4, one frame
+    Writes results/plots/tps_per_ply_validation/ply_heating_animation.mp4, one frame
     per (subsampled) element in ascending heating order.  Returns True when
     the file is written, False when the animation stack is unavailable --
     the caller reports that loudly rather than writing a silent stub.
@@ -1538,7 +1538,7 @@ def main() -> int:
     ap.add_argument("--layers-csv", default=os.path.join(default_dir, "tps_step2200_layers.csv"))
     ap.add_argument("--elements-csv", default=os.path.join(default_dir, "tps_step2200_elements.csv"))
     ap.add_argument("--profiles-csv", default=os.path.join(default_dir, "tps_step2200_profiles.csv"))
-    ap.add_argument("--outdir", default=os.path.join(project_root, "results", "plots", "tps_per_ply"))
+    ap.add_argument("--outdir", default=os.path.join(project_root, "results", "plots", "tps_per_ply_validation"))
     ap.add_argument("--no-mp4", action="store_true",
                     help="skip the per-ply heating MP4 (PNGs are still written)")
     ap.add_argument("--mp4-frames", type=int, default=240,

@@ -26,7 +26,8 @@ show a marker at step 2200 separating them.
 | `plots/geometry/` | 7 | HIAD geometry grid, 4-angle 3-D turntables of the full body (IRVE-3 validation baseline and optimized topology), surface-profile checks, before/after optimization comparison | Design description; optimization before/after figures |
 | `plots/kriging/` | 8 | Kriging denoise / noise-reduction panels per step | Data-processing methodology |
 | `plots/bo_figures/` | 3 | Bayesian-optimization convergence and design panels | Optimization methodology and convergence |
-| `plots/tps_per_ply/` | 6 | Six artefacts from the Ada/SPARK `tps_conduction` solve on the Rapisarda 5-ply layup (2x Nicalon SiC + 2x Pyrogel 3350 + Kapton): a three-panel per-ply heating animation with the literal stack and a per-ply constants table, the literal-stack temperature heatmap, per-ply temperature across all elements, the peak-element bar chart, the through-thickness temperature profile, and the per-ply flux distribution | Thermal protection system; materials and survivability |
+| `plots/tps_per_ply_validation/` | 6 | Six artefacts from the Ada/SPARK `tps_conduction` solve on the Rapisarda 5-ply layup (2x Nicalon SiC + 2x Pyrogel 3350 + Kapton), built on the VALIDATED reference tree (`results/validation_scalloped/`): a three-panel per-ply heating animation with the literal stack and a per-ply constants table, the literal-stack temperature heatmap, per-ply temperature across all elements, the peak-element bar chart, the through-thickness temperature profile, and the per-ply flux distribution | Thermal protection system; materials and survivability |
+| `plots/tps_per_ply_optimized/` | 0 -- none exists | NO SUCH SET EXISTS.  There is no per-ply TPS figure built on the optimized tree: the earlier set was sourced from `results/validation_optimized/` and that run's own gate log records VALIDATION FAILED / 'vehicle does not survive', so its input was replaced by the validated reference rather than kept. This row is listed so the absence is stated, not inferred. | Same use -- but pull the _validation set; none exists for the optimized run |
 | `plots/optimized_topology/` | 1 | Plots + the optimized-topology MP4 animation | Optimized-design results section |
 | `plots/validation/` | 63 | short_window (SPARTA DSMC timeseries), derived (T_surface/T_back/beta/dashboard/survivability), vtu_snapshots (3-D / cross-section / histogram / heat-flux vs x), rapisarda (correlation comparisons) | DSMC validation results; thermal/survivability assessment |
 | `plots/validation_scalloped/` | 92 | short_window (SPARTA DSMC timeseries), derived (T_surface/T_back/beta/dashboard/survivability), vtu_snapshots (3-D / cross-section / histogram / heat-flux vs x), rapisarda (correlation comparisons) plus full_300M_dsmc_pinn (full 0..300M DSMC+PINN line plots incl. CD/CL and DSMC-jitter detail) and mp4/ (validation animation) | DSMC validation results; thermal/survivability assessment; full-trajectory figures and the animated summary |
@@ -57,7 +58,7 @@ show a marker at step 2200 separating them.
 | Full trajectory 0..300M (DSMC + PINN) | `validation_scalloped/full_300M_dsmc_pinn/`, `validation_scalloped/mp4/` |
 | 3-D surface / cross-section views | `<tree>/vtu_snapshots/` |
 | Correlation cross-check (Rapisarda) | `<tree>/rapisarda/` |
-| TPS thermal survivability | `<tree>/derived/` (T_surface, T_back, beta, survivability_assessment), `plots/tps_per_ply/` (literal-stack heatmap, per-ply constants table, per-ply temperatures) |
+| TPS thermal survivability | `<tree>/derived/` (T_surface, T_back, beta, survivability_assessment), `plots/tps_per_ply_validation/` (literal-stack heatmap, per-ply constants table, per-ply temperatures) -- the per-ply set is validation-sourced only |
 | Design optimization | `plots/optimized_topology/`, `plots/geometry/`, `plots/bo_figures/` |
 | Animation for presentation | `validation_scalloped/mp4/` (validation), `optimized_topology/mp4/` (optimized) |
 
@@ -77,7 +78,8 @@ show a marker at step 2200 separating them.
   heat-flux maps and the coverage timeline.
 - **mp4** -- 0..300M animation; telemetry comes from the authoritative
   trajectory CSV (never from ad-hoc re-derivation).
-- **tps_per_ply** -- per-ply TPS figures from the Ada/SPARK `tps_conduction`
+- **tps_per_ply_validation** / **tps_per_ply_optimized** -- per-ply TPS figures
+  from the Ada/SPARK `tps_conduction`
   solve on the Rapisarda layup.  Two forms: the three-panel animation
   (per-ply heat flux, the literal 5-ply stack drawn to true proportion at
   the hot face up, temperature through the stack, plus a per-ply constants
@@ -104,6 +106,17 @@ show a marker at step 2200 separating them.
   resistances, NOT interpolated from the 33 solver samples, because those
   samples are uniformly spaced and so miss the ply faces, and the profile
   is only piecewise linear with a slope jump at every k change.
+
+  WHICH TREE: validation ONLY.  The set lives in
+  `plots/tps_per_ply_validation/` because every figure in it is solved
+  from the validated reference.  There is deliberately no
+  `tps_per_ply_optimized/` set: the earlier one was solved from
+  `results/validation_optimized/`, whose round-1 hybrid gate log ends
+  `VALIDATION FAILED` / "vehicle does not survive" (heat flux 58.42 %
+  error, heat load 59.00 %, peak decel 31.00 %), so its input was
+  replaced rather than kept beside the validated one.  If an optimized
+  per-ply set is ever built, it belongs in its own folder with that
+  verdict on the figure -- not merged into this one.
 
 ## 6. Definitions and provenance rules
 
