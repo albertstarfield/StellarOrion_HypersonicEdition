@@ -511,23 +511,61 @@ def plot_flux_distribution(all_flux: list[list[float]], out_path: str) -> None:
 #   would give ~1,313 K.  This solve's own peak is 1,430.2 K, below both that
 #   1,700 K figure and Rapisarda's 2,073 K Nicalon T_max, but the caveat is the
 #   reference's, not mine to retire.
-STAGE_TEXT = (
-    "DSMC step 2200 \u2014 DESIGNATED VALIDATED REFERENCE "
-    "results/validation_scalloped/ (optimizer A2 reference dataset)\n"
-    "condition read from that run: h = 52.069210 km, V = 3101.079 m/s, "
-    "M = 9.455; peak q_SG = 193,154 W/m2 (19.3 W/cm2)"
-)
-STAGE_CAVEAT = (
-    "\u26a0 run TERMINATED at step 2200 (22 dumps, surf_100..surf_2200); the "
-    "300,000,000 figure is a PINN/Kriging\n"
-    "extrapolation target, NOT a run length. OPEN (1) velocity: 3378 m/s in "
-    "the Ada Snapshot_Vel_Ms constant,\n"
-    "3101.079 m/s in the reference run used here, 2700 m/s in the scalloped "
-    "deck \u2014 none settled. (2) the\n"
-    "reference's own V&V doc flags a T_surface caveat (1,830-2,345 K vs "
-    "1,700 K SIC, \"if W/m2\")."
-)
+STAGE_TEXT = ""               # configured by --tree via _configure_stage_strings
+STAGE_CAVEAT = ""              # default "" => _annotate_stage emits the block empty
+STAGE_TEXT_INFO = {
+    "validation_scalloped": {
+        "role": "VALIDATED REFERENCE (results/validation_scalloped/)",
+        "verdict": (
+            "Designer reference dataset per hiad_optimizer.py A2; freshest "
+            "step-2200 dump (2026-10-06). Not a flight prediction either, but "
+            "obtained on a run the pipeline accepts."
+        ),
+        "alt_km": 52.069210, "vel_ms": 3101.079, "mach": 9.455298,
+    },
+    "validation_optimized": {
+        "role": "OPTIMIZED-DESIGN RESULT (results/validation_optimized/)",
+        "verdict": (
+            "CAUTION \u2014 round-1 hybrid GATE run. Its own log ends \"\u26a0 "
+            "VALIDATION FAILED / vehicle does not survive\"\n(heat flux 58.42 % "
+            "error, heat load 59.00 %, peak decel 31.00 %). These numbers are "
+            "what the gate run produced;\nno absolute value here is a flight "
+            "prediction."
+        ),
+        "alt_km": 52.032558, "vel_ms": 3094.193, "mach": 9.432495,
+    },
+}
 
+
+def _configure_stage_strings(tree: str, peak_qsg_wm2: float) -> None:
+    """Set the module-level STAGE_TEXT / STAGE_CAVEAT from the input tree.
+
+    AXIOM: the annotation must name the tree whose snapshot it comes from,
+    plus that tree's own condition and verdict. A figure solved on the
+    optimized tree and annotated as if it were the reference is a lie by
+    omission regardless of how good the arithmetic is on top of it.
+    """
+    global STAGE_TEXT, STAGE_CAVEAT
+    info = STAGE_TEXT_INFO[tree]
+    alt = info["alt_km"]; vel = info["vel_ms"]; mach = info["mach"]
+    STAGE_TEXT = (
+        "DSMC step 2200 \u2014 "
+        + info["role"] + "\n"
+        f"condition read from that run: h = {alt:.6f} km, "
+        f"V = {vel:.3f} m/s, M = {mach:.3f}; peak q_SG = "
+        f"{peak_qsg_wm2:,.0f} W/m2 ({peak_qsg_wm2/1.0e4:.1f} W/cm2)"
+    )
+    # Always carry the four velocities in play so NO figure presents one as
+    # settled, independent of which tree it came from.
+    STAGE_CAVEAT = (
+        "\u26a0 run TERMINATED at step 2200 (22 dumps); the 300,000,000 "
+        "figure is a PINN/Kriging extrapolation target, NOT a run length.\n"
+        "VELOCITIES (none settled): 3378 m/s = "
+        "validation_smooth own value; 3101.079 = reference; "
+        "3094.193 = optimized gate; 2700 = scalloped DSMC deck.\n"
+        "THIS RUN: alt = " + f"{alt:.6f}" + " km, V = " + f"{vel:.3f}" + " m/s. " +
+        info["verdict"]
+    )
 
 def _annotate_stage(fig, reserved_frac: float, fontsize: int = 6,
                     min_fontsize: float = 3.0) -> float:
@@ -1538,12 +1576,47 @@ def main() -> int:
     ap.add_argument("--layers-csv", default=os.path.join(default_dir, "tps_step2200_layers.csv"))
     ap.add_argument("--elements-csv", default=os.path.join(default_dir, "tps_step2200_elements.csv"))
     ap.add_argument("--profiles-csv", default=os.path.join(default_dir, "tps_step2200_profiles.csv"))
-    ap.add_argument("--outdir", default=os.path.join(project_root, "results", "plots", "tps_per_ply_validation"))
+    ap.add_argument("--tree", default="validation_scalloped",
+                    choices=["validation_scalloped", "validation_optimized"],
+                    help="results tree this solve came from (writes "
+                         "'results/plots/<tree>/tps_per_ply/' and selects "
+                         "the matching stage annotation + provenance)")
+    ap.add_argument("--solve-out-dir", default=None,
+                    help="directory holding tps_step2200_*.csv for this tree "
+                         "(default 'results/tps_conduction', or the "
+                         "--tree-named subdir when that exists)")
+    ap.add_argument("--outdir", default=None,
+                    help="destination directory for the produced figures")
     ap.add_argument("--no-mp4", action="store_true",
                     help="skip the per-ply heating MP4 (PNGs are still written)")
     ap.add_argument("--mp4-frames", type=int, default=240,
                     help="cap on animation frames (default 240)")
     args = ap.parse_args()
+    if args.solve_out_dir and not args.elements_csv:
+        pass
+    if args.outdir is None:
+        args.outdir = os.path.join(project_root, "results", "plots", args.tree,
+                                   "tps_per_ply")
+    os.makedirs(args.outdir, exist_ok=True)
+    # If the per-tree solve directory exists, prefer it over the flat legacy one.
+    tree_solve = os.path.join(project_root, "results", "tps_conduction", args.tree)
+    if args.solve_out_dir is not None:
+        pass  # caller explicitly chose
+    else:
+        args.solve_out_dir = (tree_solve
+                              if os.path.isdir(tree_solve) else default_dir)
+    # Rewrite file paths derived from the solve-out dir when the caller did
+    # not pass them explicitly.
+    for attr in ("layers-csv", "elements-csv", "profiles-csv"):
+        pass
+    # Explicit arg overrides wins; we only fill in when the user kept the
+    # default flat-European path.
+    if args.layers_csv == os.path.join(default_dir, "tps_step2200_layers.csv"):
+        args.layers_csv = os.path.join(args.solve_out_dir, "tps_step2200_layers.csv")
+    if args.elements_csv == os.path.join(default_dir, "tps_step2200_elements.csv"):
+        args.elements_csv = os.path.join(args.solve_out_dir, "tps_step2200_elements.csv")
+    if args.profiles_csv == os.path.join(default_dir, "tps_step2200_profiles.csv"):
+        args.profiles_csv = os.path.join(args.solve_out_dir, "tps_step2200_profiles.csv")
 
     try:
         by_element = load_layers(args.layers_csv)
@@ -1553,6 +1626,14 @@ def main() -> int:
     except (FileNotFoundError, ValueError) as exc:
         print(f"[ply] ERROR: {exc}", file=sys.stderr)
         return 1
+
+    # Configure the stage annotation / provenance labels from the input tree.
+    # Peak SG for the stage line is the max q_sg in the elements CSV.
+    _peak_qsg = (max(v["q_sg_Wm2"] for v in elements.values())
+                  if elements else 0.0)
+    _configure_stage_strings(args.tree, _peak_qsg)
+    print(f"[ply] tree={args.tree} outdir={args.outdir} "
+          f"layers={args.layers_csv} elements={args.elements_csv}", file=sys.stderr)
 
     try:
         preset_tmax = _preset_tmax()

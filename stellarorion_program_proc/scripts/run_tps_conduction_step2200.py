@@ -131,6 +131,49 @@ DEFAULT_VTU = os.path.join(
 REF_STEP2200_ALT_KM = 52.069210
 REF_STEP2200_VEL_MS = 3101.079
 
+#: The trees run.py Phase 2c emits a per-ply set for, and what each snapshot's
+#: provenance IS.  This is the single table that makes the per-ply sets
+#: automatable and non-interchangeable at the same time: the loop in run.py
+#: reads it, so a tree cannot be added without also writing down what its
+#: numbers mean.
+#:
+#: `alt_km` / `vel_ms` are each tree's OWN step-2200 values read from its own
+#: `validation_timeseries.csv`.  They are deliberately NOT shared: measured
+#: 2026-10-14, the four trees span 51.818 .. 52.069 km and 3094 .. 3379 m/s,
+#: and the Ada `Snapshot_Vel_Ms = 3378` constant matches
+#: `validation_smooth` (3378.671) rather than the reference tree it was once
+#: applied to.  A per-ply set built on one tree's snapshot and another tree's
+#: altitude/velocity is a fabricated condition.
+#:
+#: `validation` is deliberately ABSENT: its DSMC window is 0..1000, so it has
+#: no step-2200 row and no step-2200 surface dump to solve against.  It is not
+#: silently skipped -- run.py states the reason when it builds the others.
+PER_PLY_TREES: dict[str, dict[str, object]] = {
+    "validation_scalloped": {
+        "alt_km": REF_STEP2200_ALT_KM,
+        "vel_ms": REF_STEP2200_VEL_MS,
+        "role": "validation reference",
+        "verdict": (
+            "Validated reference: this is the dataset hiad_optimizer.py "
+            "measures every objective against (A2) and the freshest "
+            "step-2200 dump on disk (2026-10-06 12:35)."
+        ),
+    },
+    "validation_optimized": {
+        "alt_km": 52.032558,
+        "vel_ms": 3094.193,
+        "role": "optimized-design result",
+        "verdict": (
+            "CAUTION -- the round-1 hybrid GATE run. Its own log ends "
+            "VALIDATION FAILED / \"vehicle does not survive\" (heat flux "
+            "58.42 % error, heat load 59.00 %, peak decel 31.00 %). These "
+            "figures show what that gate run produced, NOT a passing "
+            "optimized design; no absolute number here is a flight "
+            "prediction."
+        ),
+    },
+}
+
 #: Nextel BF-20 outer-fabric heat-flux rating [W/cm^2] [2]. Used only for
 #: reporting context, never to alter a solve.
 NEXTEL_BF20_RATING_WCM2 = 30.0
@@ -543,8 +586,13 @@ def _flux_of(row: dict[str, Any]) -> float:
 
 
 def summarise(rows: list[dict[str, Any]], q_sg: float, shape: dict[str, int],
-              snapshot: str) -> dict[str, Any]:
+              snapshot: str, *,
+              tree: str | None = None,
+              altitude_km: float | None = None,
+              velocity_ms: float | None = None) -> dict[str, Any]:
     """Aggregate statistics plus the two caveats a reader must not miss."""
+    _spec = PER_PLY_TREES.get(tree, {}) if tree else {}
+    _known = tree if tree else "unnamed"
     q_values = [r["q_sg_Wm2"] for r in rows]
     t_s = [r["t_surface_K"] for r in rows]
     t_b = [r["t_back_K"] for r in rows]
@@ -553,8 +601,24 @@ def summarise(rows: list[dict[str, Any]], q_sg: float, shape: dict[str, int],
     negative_raw = sum(1 for r in rows if r["ke_raw_Wm2"] < 0.0)
     return {
         "snapshot": os.path.basename(snapshot),
-        "elements": len(rows),
-        "snapshot_shape": shape,
+        "provenance": {
+            "tree": _known,
+            "role": _spec.get("role", "not stated by the caller"),
+            "verdict": _spec.get(
+                "verdict",
+                "No --tree was given, so no role or verdict is claimed. "
+                "The snapshot path is the only provenance this run carries."),
+            "altitude_km_used": altitude_km,
+            "velocity_ms_used": velocity_ms,
+            "tree_step2200_alt_km": _spec.get("alt_km"),
+            "tree_step2200_vel_ms": _spec.get("vel_ms"),
+            "condition_matches_tree": (
+                None if not _spec or altitude_km is None or velocity_ms is None
+                else (abs(float(_spec["alt_km"]) - altitude_km) < 1.0e-9
+                      and abs(float(_spec["vel_ms"]) - velocity_ms) < 1.0e-9)
+            ),
+        },
+        "elements": len(rows),        "snapshot_shape": shape,
         "q_sg_Wm2": q_sg,
         "q_peak_Wm2": max(q_values),
         "q_peak_Wcm2": max(q_values) / 1.0e4,
@@ -606,6 +670,10 @@ def main(argv: list[str] | None = None) -> int:
                         help="snapshot VTU (must be the step-2200 file)")
     parser.add_argument("--step", type=int, default=REQUIRED_STEP,
                         help="snapshot step; only 2200 is accepted")
+    parser.add_argument("--tree", default=None, choices=sorted(PER_PLY_TREES),
+                        help="name the results tree this snapshot came from; "
+                             "its role and verdict are recorded in the "
+                             "summary JSON so the provenance cannot be lost")
     parser.add_argument("--altitude-km", type=float,
                         default=REF_STEP2200_ALT_KM,
                         help="flight altitude for Q_SG [km] "
@@ -690,7 +758,12 @@ def main(argv: list[str] | None = None) -> int:
     rows = solve_all_elements(ke_raw, q_sg, ke_ref,
                               write_profiles=not args.no_profiles,
                               t_init=args.t_init_k, t_inf=args.t_inf_k)
-    summary = summarise(rows, q_sg, shape, snapshot)
+    summary = summarise(
+        rows, q_sg, shape, snapshot,
+        tree=args.tree,
+        altitude_km=args.altitude_km,
+        velocity_ms=args.velocity_ms,
+    )
 
     out_dir = args.out_dir or os.path.join(_HERE, "..", "results", "tps_conduction")
     out_dir = os.path.normpath(out_dir)

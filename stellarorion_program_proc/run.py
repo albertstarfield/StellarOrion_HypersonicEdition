@@ -1128,8 +1128,32 @@ def _phase2c_generate_media_and_sync() -> None:
     #  (results/tps_conduction/tps_step2200_layers.csv) and writes straight
     #  into the canonical results/plots/ tree; --outdir pins the destination
     #  explicitly so it can never land in a legacy directory.
-    _run_media([os.path.join("scripts", "make_ply_heatflux_plots.py"),
-                "--outdir", os.path.join(media_out, "tps_per_ply_validation")])
+    # Per-ply TPS sets -- one per tree, each solved on its own snapshot
+    # and flight condition, then plotted into its own folder.  No tree borrows
+    # another's altitude/velocity or stage annotation.
+    per_ply_trees = ("validation_scalloped", "validation_optimized",)
+    _per_ply_args = {
+        "validation_scalloped": (52.069210, 3101.079),
+        "validation_optimized": (52.032558, 3094.193),
+    }
+    for _tree in per_ply_trees:
+        _vtu = os.path.join(script_dir, "results", _tree, "paraview",
+                             "surf_2200.vtu")
+        if not os.path.isfile(_vtu):
+            print(f"  [Phase 2c] WARNING: {_tree} has no surf_2200.vtu; " +
+                  "skipping its per-ply set.")
+            continue
+        _alt, _vel = _per_ply_args[_tree]
+        _solve_out = os.path.join(script_dir, "results", "tps_conduction", _tree)
+        os.makedirs(_solve_out, exist_ok=True)
+        _run_media([os.path.join("scripts", "run_tps_conduction_step2200.py"),
+                    "--vtu", _vtu, "--step", "2200", "--tree", _tree,
+                    "--altitude-km", str(_alt), "--velocity-ms", str(_vel),
+                    "--out-dir", _solve_out])
+        _run_media([os.path.join("scripts", "make_ply_heatflux_plots.py"),
+                    "--tree", _tree,
+                    "--solve-out-dir", _solve_out,
+                    "--outdir", os.path.join(media_out, _tree, "tps_per_ply")])
 
     # MP4s
     _run_media([os.path.join("src", "python", "generate_outputs.py"), "--mp4-only", "--validation"])
@@ -1355,28 +1379,6 @@ def _write_results_readme() -> None:
          "Data-processing methodology"),
         ("bo_figures",
          "Bayesian-optimization convergence and design panels",
-         "Optimization methodology and convergence"),
-        ("tps_per_ply_validation",
-         ("Six artefacts from the Ada/SPARK `tps_conduction` solve on the "
-          "Rapisarda 5-ply layup (2x Nicalon SiC + 2x Pyrogel 3350 + "
-          "Kapton), built on the VALIDATED reference tree "
-          "(`results/validation_scalloped/`): a three-panel per-ply "
-          "heating animation with the literal stack and a per-ply "
-          "constants table, the literal-stack temperature heatmap, "
-          "per-ply temperature across all elements, the peak-element bar "
-          "chart, the through-thickness temperature profile, and the "
-          "per-ply flux distribution"),
-         "Thermal protection system; materials and survivability"),
-        ("tps_per_ply_optimized",
-         ("NO SUCH SET EXISTS.  There is no per-ply TPS figure built on the "
-          "optimized tree: the earlier set was sourced from "
-          "`results/validation_optimized/` and that run's own gate log "
-          "records VALIDATION FAILED / 'vehicle does not survive', so its "
-          "input was replaced by the validated reference rather than kept. "
-          "This row is listed so the absence is stated, not inferred."),
-         "Same use -- but pull the _validation set; none exists for the optimized run"),
-        ("optimized_topology",
-         "Plots + the optimized-topology MP4 animation",
          "Optimized-design results section"),
     ]
     for tree in _VALIDATION_TREES:
@@ -1387,25 +1389,30 @@ def _write_results_readme() -> None:
             "cross-section / histogram / heat-flux vs x), rapisarda "
             "(correlation comparisons)"
             + (" plus full_300M_dsmc_pinn (full 0..300M DSMC+PINN line plots "
-               "incl. CD/CL and DSMC-jitter detail) and mp4/ (validation "
-               "animation)"
-               if tree == "validation_scalloped" else ""),
+               "incl. CD/CL and DSMC-jitter detail), mp4/ (validation "
+               "animation) and tps_per_ply/ (Ada/SPARK per-ply F-TPS solve"
+               " on the VALIDATED REFERENCE flight condition: heating anim "
+               "+ literal-stack heatmap + per-ply T / flux / profile)"
+               if tree == "validation_scalloped" else
+               (" plus tps_per_ply/ (same Ada/SPARK solve on the "
+                "OPTIMISED gate run, with its VALIDATION-FAILED provenance "
+                "on every figure)"
+                if tree == "validation_optimized" else "")),
             "DSMC validation results; thermal/survivability assessment"
-            + ("; full-trajectory figures and the animated summary"
-               if tree == "validation_scalloped" else ""),
+            + ("; full-trajectory figures and the animated summary and the "
+               "per-ply F-TPS survivability set (engineering values at peak "
+               "heating, 19.3 W/cm\u00b2)"
+               if tree == "validation_scalloped" else
+               "; per-ply F-TPS set from the gate run, read with its "
+               "VALIDATION FAILED verdict"
+               if tree == "validation_optimized" else ""),
         ))
-
-    #  Folders that must be listed even when they hold nothing, so their
-    #  ABSENCE reads as a stated fact instead of a silent omission.  A reader
-    #  who sees no optimized per-ply row cannot otherwise tell "not built"
-    #  from "not mentioned".
-    always_listed = {"tps_per_ply_optimized"}
 
     rows = []
     for name, contains, use_for in categories:
         n = _count(plots_dir / name)
         exists = (plots_dir / name).is_dir()
-        if n == 0 and not exists and name not in always_listed:
+        if n == 0 and not exists:
             continue
         count_cell = str(n) if n else ("0 -- none exists" if not exists else "0")
         rows.append(f"| `plots/{name}/` | {count_cell} | {contains} | {use_for} |")
@@ -1460,7 +1467,7 @@ show a marker at step 2200 separating them.
 | Full trajectory 0..300M (DSMC + PINN) | `validation_scalloped/full_300M_dsmc_pinn/`, `validation_scalloped/mp4/` |
 | 3-D surface / cross-section views | `<tree>/vtu_snapshots/` |
 | Correlation cross-check (Rapisarda) | `<tree>/rapisarda/` |
-| TPS thermal survivability | `<tree>/derived/` (T_surface, T_back, beta, survivability_assessment), `plots/tps_per_ply_validation/` (literal-stack heatmap, per-ply constants table, per-ply temperatures) -- the per-ply set is validation-sourced only |
+| TPS thermal survivability | `<tree>/derived/` (T_surface, T_back, beta, survivability_assessment), `plots/<tree>/tps_per_ply/` (Ada/SPARK per-ply solve on THIS tree's own flight condition and its own provenance) |
 | Design optimization | `plots/optimized_topology/`, `plots/geometry/`, `plots/bo_figures/` |
 | Animation for presentation | `validation_scalloped/mp4/` (validation), `optimized_topology/mp4/` (optimized) |
 
@@ -1480,45 +1487,39 @@ show a marker at step 2200 separating them.
   heat-flux maps and the coverage timeline.
 - **mp4** -- 0..300M animation; telemetry comes from the authoritative
   trajectory CSV (never from ad-hoc re-derivation).
-- **tps_per_ply_validation** / **tps_per_ply_optimized** -- per-ply TPS figures
-  from the Ada/SPARK `tps_conduction`
-  solve on the Rapisarda layup.  Two forms: the three-panel animation
-  (per-ply heat flux, the literal 5-ply stack drawn to true proportion at
-  the hot face up, temperature through the stack, plus a per-ply constants
-  table carrying t / k / R / T_max), and the static heatmap that adds a
-  median-heating contrast column and a per-ply T_top / T_bot / dT /
-  margin table.  `ply_temperature_by_element.png` carries every ply's node
-  temperature across all 3,648 elements with each ply's own limit line.
+- **tps_per_ply/** -- (nested inside BOTH `plots/<tree>/` folders that
+  have a step-2200 snapshot, i.e. `validation_scalloped` and
+  `validation_optimized`; `validation` has no step-2200 row and is
+  deliberately absent) per-ply TPS figures from the Ada/SPARK
+  `tps_conduction` solve on the Rapisarda layup.  Per tree: a three-panel
+  animation (per-ply heat flux, the literal 5-ply stack drawn to true
+  proportion at the hot face up, temperature through the stack, plus a
+  per-ply constants table carrying t / k / R / T_max), the
+  literal-stack heatmap (which adds a median-heating contrast column and a
+  per-ply T_top / T_bot / dT / margin table), and
+  `ply_temperature_by_element.png` (every ply's node temperature across all
+  3,648 elements with each ply's own limit line).
 
-  Input provenance: the aerothermal snapshot is
-  `results/validation_scalloped/paraview/surf_2200.vtu` -- the VALIDATED
-  reference tree -- and the flight condition (52.069210 km, 3101.079 m/s)
-  is READ from that tree's own `validation_timeseries.csv`, not asserted.
-  Two other velocities circulate in the project (3378 m/s, the Ada
-  `Snapshot_Vel_Ms` constant, and 2700 m/s from the scalloped DSMC deck);
-  none is settled, and every figure names all three.
+  SOLVE IS PER-TREE: `run.py` runs `run_tps_conduction_step2200.py` ONCE per
+  tree, against that tree's own `paraview/surf_2200.vtu` at its own flight
+  condition read back from its own `validation_timeseries.csv`
+  (validation_scalloped = 52.069210 km / 3101.079 m/s; optimized = 52.032558
+  km / 3094.193 m/s).  No tree borrows another's altitude, velocity, or
+  annotation.  The optimized set carries a "VALIDATION FAILED / vehicle
+  does not survive" provenance header on every figure (heat flux 58.42 %,
+  heat load 59.00 %, peak decel 31.00 %) so its numbers are NEVER read as a
+  passing optimised-design result.
 
-  On the five per-ply through-fluxes: **they are one number, not five.**
-  A series stack carries a single flux, so the five values are identical by
-  construction (3,698.7 W/m^2 at the peak element) rather than independent
-  measurements.  The quantities that genuinely differ ply to ply -- and
-  which the figures lead with -- are the boundary node temperatures and
-  each ply's share of the total series resistance (R_total = 0.305583
-  m^2*K/W).  The node temperatures are reconstructed from the layup's
-  resistances, NOT interpolated from the 33 solver samples, because those
-  samples are uniformly spaced and so miss the ply faces, and the profile
-  is only piecewise linear with a slope jump at every k change.
-
-  WHICH TREE: validation ONLY.  The set lives in
-  `plots/tps_per_ply_validation/` because every figure in it is solved
-  from the validated reference.  There is deliberately no
-  `tps_per_ply_optimized/` set: the earlier one was solved from
-  `results/validation_optimized/`, whose round-1 hybrid gate log ends
-  `VALIDATION FAILED` / "vehicle does not survive" (heat flux 58.42 %
-  error, heat load 59.00 %, peak decel 31.00 %), so its input was
-  replaced rather than kept beside the validated one.  If an optimized
-  per-ply set is ever built, it belongs in its own folder with that
-  verdict on the figure -- not merged into this one.
+  On the five per-ply through-fluxes: **they are one number, not five.** A
+  series stack carries a single flux, so the five values are identical by
+  construction (3,698.7 W/m^2 at the peak element), not independent
+  measurements.  The quantities that genuinely differ ply to ply -- and which
+  the figures lead with -- are boundary node temperatures and each ply's
+  share of the total series resistance (R_total = 0.305583 m^2*K/W).  Node
+  temperatures are reconstructed from the layup's resistances, NOT
+  interpolated from the 33 solver samples (uniformly spaced, so they miss the
+  ply faces), and the profile is only piecewise linear with a slope jump at
+  every k change.
 
 ## 6. Definitions and provenance rules
 
