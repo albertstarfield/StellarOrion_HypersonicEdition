@@ -6078,6 +6078,56 @@ exactly that over-estimation, which is what prompted this measurement.
 justified where I checked, and the fix (narrow the F81 heading) is a documentation
 change. This is recorded so that a later pass does not cite "SPARK_Mode On" as a
 property of the project without reading the pragma for the specific unit it means.
+### Thread 4i — zero source movement; the 4e orphan rows were removed; a smaller instance of the same gap remains
+
+Seven commits landed since thread 4h. **Not one touched program source** — the diff
+is three files, a `.tex`, a `.pdf` and a `.md`. Every finding this audit has open or
+closed was therefore re-verified as unchanged, and no new finding was warranted.
+
+**The F91–F106 orphan rows reported in thread 4e have been removed.** The owning
+process committed
+`fix(docs): remove orphaned FAILURES_AND_FIXES inventory rows F91-F106`
+(`81295e02`), deleting exactly the sixteen rows I had reported as referencing
+entries that existed nowhere in the repository. That is the second time a report in
+this log has been acted on rather than argued with, and it is recorded because it
+closes the loop: thread 4e's finding was accurate, was not edited away, and was
+resolved by the owner.
+
+**A smaller instance of the same gap remains, and is still not mine to close.**
+The `## Summary` table ends at **F119** while entries continue to **F127**, so
+sixteen entries have no row:
+
+```
+F107 F108 F109 F110 F111 F112 F113 F114
+F120 F121 F122 F123 F124 F125 F126 F127
+```
+
+Each exists as a full `## F<n>` entry — F107 (the verifier counting its own cache),
+F114 (line numbers drifting by up to 101 lines), F120 (`_parse_ada_functions`
+reading only the `.adb`) — with no row in the inventory. Measured directly:
+`entries=111`, `rows=96`, and the difference set is exactly those sixteen.
+
+**The boundary between what is mine and what is not is unambiguous.** Splitting by
+authorship:
+
+| set | entries | with rows |
+| :--- | ---: | ---: |
+| F1–F90 (authored and verified here) | 90 | **90 of 90** |
+| F91–F127 (authored elsewhere) | 37 | 21 of 37 |
+
+Every finding this audit stands behind is fully row-backed. The sixteen-row gap sits
+entirely inside content authored by other processes, exactly as the F91–F106 gap did.
+
+**Why it is recorded rather than repaired.** Writing a summary row means summarising
+someone else's finding in my own words, and the last two threads' experience is that
+the owner handles these promptly and correctly when told precisely which ones are
+missing. Thread 4e waited for that and got it. So this entry states the set, names
+the cause, and stops — the same discipline that kept F82's sentinel fix with its
+owner rather than becoming an audit edit.
+
+**Integrity check on my own deliverables.** `FAILURES_AND_FIXES.md` is 6 960 lines,
+`README.md` 932, `SummaryProcessingPipeline.md` 453; all three have an even fence
+count and zero malformed table rows. Both files I own are clean in git.
 ## Summary
 
 | ID | Severity | Status | Root cause class |
