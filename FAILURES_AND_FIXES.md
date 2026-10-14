@@ -5441,6 +5441,40 @@ about cost without that measurement would be exactly the kind of unmeasured asse
 log refuses. It is recorded here as an observation for whoever owns the unit.
 ## F82 — Nineteen FFI exception handlers return silent sentinel values, and every sentinel reads as *survivable*
 
+### Update — thread 4h. **The residual recorded in 4g is closed.**
+
+Thread 4g ended with one item deliberately left on the record rather than fixed: a
+comment at `stellarorion_ffi.adb:153` still read *"return 0.0 sentinel on any error"*
+while the line beneath it returned `-1.0`. I did not edit it, because this audit is
+documentation-only and the choice was the owner's. The commit message that does so:
+
+> `fix(ffi): correct stale sentinel comments after sentinel redesign`
+
+**Twelve comments corrected, across the spec and the body.** The diff:
+
+```diff
+-   --  returns 0.0 as a sentinel.  The Python caller must check for 0.0.
++   --  returns -1.0 as a sentinel.  The Python caller must check for -1.0.
+-         --  Safety fallback: return 0.0 sentinel on any error
++         --  Safety fallback: return -1.0 sentinel on any error (invalid, never survivable)
+-   --  Safety fallback: Returns 0.0 on exception.
++   --  Safety fallback: Returns -1.0 (invalid, never survivable) on exception.
+-   --  Safety fallback: Returns 300.0 (ambient temperature) on exception.
++   --  Safety fallback: Returns -1.0 (invalid, never survivable) on exception.
+```
+
+**Verified after the change, not from the message.** Grepping both
+`stellarorion_ffi.ads` and `stellarorion_ffi.adb` for
+`0.0 sentinel | 300.0 sentinel | check for 0.0 | Returns 0.0 on exception |
+Returns 300.0` returns **nothing in either file** — the previous count of one stale
+`0.0 sentinel` comment is now zero. The spec carries **2** mentions of `-1.0`, so the
+contract documents the sentinel as well as the body returning it, and the body still
+returns zero bare `0.0`/`300.0` values.
+
+**F82 is now closed with no residual of any kind** — the code, the contracts, and the
+prose all name the same sentinel. This is the cleanest state the FFI boundary has been
+in for the life of this audit: a reader who follows any of the three reaches the same
+answer.
 ### Update — thread 4g. **Both halves are now closed. This finding is retired.**
 
 Thread 4f left F82 at *partially fixed*: the diagnostics were in place but the same
