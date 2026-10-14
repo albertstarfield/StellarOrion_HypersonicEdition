@@ -105,6 +105,36 @@
   \end{center}
 \end{frame}
 
+\begin{frame}{REDEMPTION 1d: GOVERNING EQUATIONS BY CHANNEL}
+  \small
+  \textbf{Convection:} $q_{\mathrm{SG}} = C_{\mathrm{SG}}\,\sqrt{\rho/R_N}\,V^3$,
+  $C_{\mathrm{SG}}=1.7415\mathrm{e}{-}4$, evaluated at $51.8$ km / $3378$ m/s,
+  clamped to $[0,1]$. (F21, F83)\\
+  \textbf{Conduction:} $q_{\mathrm{cond}} = (T_s - T_{\mathrm{back}})/R_{\mathrm{tot}}$
+  with $R_{\mathrm{tot}} = \sum (\Delta x_i/k_i) = 0.25605$ m$^2$K/W
+  (IRVE-3 5-ply). (F84)\\
+  \textbf{Reradiation:} $q_{\mathrm{rad}} = \varepsilon\,\sigma\,T_s^4$,
+  $\varepsilon=0.80$, $T_s=1550.2345$ K. (F84)\\
+  \textbf{Balance:} $q_{\mathrm{conv}} = q_{\mathrm{rad}} + q_{\mathrm{cond}}$
+  ($266509.3 = 261626.5 + 4882.8$ W/m$^2$). (F84)
+\end{frame}
+
+\begin{frame}{REDEMPTION 1e: 5-PLY IRVE-3 FTPS SPECIFICATION}
+  \small
+  \begin{tabular}{@{}llrrr@{}}
+  \textbf{Ply} & \textbf{Material} & \textbf{m} & \textbf{k W/mK} & \textbf{T max K}\\
+  \hline
+  1 & Nicalon SiC & $5.06\mathrm{e}{-}4$ & 1.50 & 2073\\
+  2 & Nicalon SiC & $5.06\mathrm{e}{-}4$ & 1.50 & 2073\\
+  3 & Pyrogel 3350 & $3.047\mathrm{e}{-}3$ & 0.02 & 1373\\
+  4 & Pyrogel 3350 & $3.047\mathrm{e}{-}3$ & 0.02 & 1373\\
+  5 & Kapton & $2.5\mathrm{e}{-}5$ & 0.12 & 773\\
+  \end{tabular}
+  \vspace{0.3cm}
+  \par{\scriptsize $R_{tot}=0.25605$ m$^2$K/W, emissivity 0.80 (F84,
+  ada-pinn wrapper constants).}
+\end{frame}
+
 \PlotFrame{REDEMPTION 1a: HEAT FLUX THROUGH THE COMPOSITE PLY}
   {Hot-face conduction through the 5-ply IRVE-3 layup (F84, ada-pinn wrapper).}
   {so_ply_heatflux_explainer}
