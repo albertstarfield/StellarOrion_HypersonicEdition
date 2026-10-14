@@ -70,14 +70,46 @@
     \textbf{\#} & \textbf{Issue} & \textbf{Detail} \\
     \hline
     1 & Heat flux was improperly defined &
-    Convection, through-TPS conduction, or reradiation -- we never stated which; readers assumed a single channel (F84). \\ \hline
+    Convection, through-TPS conduction, or reradiation -- we never stated which; one channel assumed (F84). \\ \hline
     2 & Cost function incomplete (attempt--1) &
     The so-called ``optimized'' shape performed worse on aerothermal dynamics (ref: attempt--1); cost function and objective redefined; performs better. \\ \hline
     3 & Sampling ordered wrong (CCD first) &
     Pay-as-you-go sampling ate too much time; should have run the 15-point CCD first, then score analytically (F6, F17). \\
   \end{tabular}
   \vspace{0.4cm}
-  \par{\scriptsize (Each item expands on a later slide once the rest of the deck is approved.)}
+\end{frame}
+
+% =====================================================================
+% SECTION 2 — REDEMPTION
+% Each frame replies directly to one row of slide 3's framing table.
+% =====================================================================
+\section{REDEMPTION}
+
+\begin{frame}{REDEMPTION 1: HEAT FLUX PROPERLY DEFINED}
+  \MaxTextLines{2}%
+  Heat flux is now split into its three channels: convection, through-TPS conduction,
+  and reradiation; the active term is stated explicitly (F84). \\
+  \par{\scriptsize (Detail: surface energy balance, see F84.)}
+\end{frame}
+
+\begin{frame}{REDEMPTION 2: COST FUNCTION COMPLETE}
+  \MaxTextLines{2}%
+  The incomplete attempt-1 cost function was redefined with a stated objective;
+  the redefined version outperforms the attempt-1 run on aerothermal dynamics.
+\end{frame}
+
+\begin{frame}{REDEMPTION 3: CORRECT SAMPLING ORDER}
+  \MaxTextLines{2}%
+  Sampling reordered: run the 15-point CCD first, then score the remainder analytically
+  (CCD count F17; seed reproducibility F6), instead of pay-as-you-go.
+\end{frame}
+
+\section{UPDATE}
+\begin{frame}{STATUS UPDATE}
+  \MaxTextLines{2}%
+  Week-16 progress --- framing problems identified (slide 3) and redemption steps taken
+  (this section); next comes current-implementation evidence under
+  \texttt{CURRENT IMPLEMENTATION}.
 \end{frame}
 
 \end{document}
