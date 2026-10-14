@@ -42,245 +42,36 @@
 
 \input{preamble}
 
+
 \begin{document}
 
-% ---------------------------------------------------------------------
-% TITLE FRAME
-% Identity macros are copied verbatim from the thesis identity.tex so the
-% deck and the submitted thesis cannot disagree on author, NIM, or
-% supervisors.
-% ---------------------------------------------------------------------
-\begin{frame}[plain]
-  % Turquoise band, painted explicitly on the title frame ONLY.
-  %
-  % AXIOM: \setbeamertemplate{background} is empty in preamble.tex on
-  % purpose, because filling it collides with content frametitles. A
-  % page-anchored tikz fill is therefore the only correct route, and it must
-  % be called on this frame alone.
-  %
-  % THEORY: the overlay is positioned against `current page` corners, so it
-  % covers the full slide regardless of the frame's text margins, and being
-  % an overlay it contributes no height to the frame body.
-  %
-  % APPLICATION: supplies the dark field that the white ITB emblem and the
-  % white title text sit on. The emblem is white artwork (gajah_putih), so on
-  % this band it measures 6.61:1 -- previously it was white-on-white at
-  % 1.00:1 and effectively invisible.
-  % Citation: tikz overlay -- https://ctan.org/pkg/pgf
-  \ITBTitleBackground
-  \ITBEmblem
-  \titlepage
-\end{frame}
-
-% ---------------------------------------------------------------------
-% OUTLINE. Auto-generated from \section, so adding a section later cannot
-% leave a stale hand-written agenda behind.
-% ---------------------------------------------------------------------
-\begin{frame}{OUTLINE}
-  \tableofcontents
-\end{frame}
-
 % =====================================================================
-% SECTION 0 — PREVIOUS PROBLEM
-% Three things this work was built on top of that each needed re-thinking
-% before the CURRENT IMPLEMENTATION could be trusted:
-%   (a) heat flux was never defined (convection vs conduction vs rerad),
-%   (b) the cost function was incomplete (attempt-1), and
-%   (c) sampling was ordered wrong (pay-as-you-go).
-% Section headings are typed in CAPS deliberately: see preamble.tex for why
-% \section is never redefined.
+% STAGE 1 OF REVIEW: title · outline · summary table of the 3 issues.
+% Only 3 pages are built so far, per your direction. Content is minimal and
+% reviewable; the remaining pages come AFTER you approve what's here.
 % =====================================================================
+\begin{frame}\titlepage\end{frame}   % slide 1
+
 \section{PREVIOUS PROBLEM}
 
-% so_sutton_graves.png <- generate_sutton_graves_parametric.py. The flaw
-% being flagged here is the AMBIGUITY ("which channel?"), not the value,
-% which is F83's correction. Figure reused to foreshadow slide 3b.
-\PlotFrame{1. HEAT FLUX WAS NEVER DEFINED}
-  {\MaxTextLines{2}%
-   Convection vs. reradiation vs. through-TPS conduction: we never stated
-   which, so readers assumed a single channel. Now defined exactly (F84).}
-  {so_sutton_graves}
+\begin{frame}{OUTLINE}              % slide 2
+  \tableofcontents[hideallsubsections]
+\end{frame}
 
-% so_topology_before_after.png <- optimization_comparison.py L1007-1008.
-% Attempt-1 is the earlier optimization result this frame flagges.
-\PlotFrame{2. COST FUNCTION INCOMPLETE (ATTEMPT-1)}
-  {\MaxTextLines{2}%
-   Attempt-1 "optimized" shape performed worse on aerothermal dynamics
-   (ref: attempt-1); cost function/objective now redefined; performs
-   better.}
-  {so_topology_before_after}
-
-% so_ccd_screen.png <- fignew_ccd_screen.png (make_fignew.py).
-\PlotFrame{3. SAMPLING ORDERED WRONG (CCD FIRST)}
-  {\MaxTextLines{2}%
-   Pay-as-you-go sampling ate too much time: run the 15-point CCD first,
-   then score the rest analytically (CCD-count F17, seed 42 is F6).}
-  {so_ccd_screen}
-
-% =====================================================================
-% SECTION 1 — CURRENT IMPLEMENTATION
-% The items below, each grounded in a real implementation on disk.
-%
-% Naming note: the second item is KRIGING denoising. A repo-wide search
-% for "Kringing" returns ZERO matches; "Kriging" returns real code
-% (validation_pipeline.py:922 kriging_denoise_convergence, pipeline_checkpoint.py
-% step 2). The frame title uses the correct spelling because the slide
-% names a method that actually exists in this codebase.
-% =====================================================================
-\section{CURRENT IMPLEMENTATION}
-
-% Figures below are copies of files the _proc pipeline already generated.
-% Source path of each is recorded in SOURCES.md next to main.tex so every
-% slide can be audited back to the script that drew it.
-
-% so_bo_convergence.png <- bo_convergence.png, regenerated 2026-10-06,
-% drawn by _proc/scripts/render_bo_figures.py from
-% _proc/src/python/hiad_optimization_results.json. The caption numbers are
-% read off the artwork's own subtitle: 70 evaluations, 20 LHS then 50 EI,
-% incumbent 1.7654 -> 1.6051 (9.08 %).
-\PlotFrame{1. BAYESIAN OPTIMIZATION}
-  {\MaxTextLines{2}%
-   Mat\'ern 5/2 Gaussian-process surrogate with Expected Improvement:
-   20 Latin-hypercube seeds then 50 EI steps; incumbent 1.7654 to 1.6051,
-   a 9.08 \% reduction.}
-  {so_bo_convergence}
-
-% so_ccd_screen.png <- fignew_ccd_screen.png. Companion to the frame above:
-% it is the design of experiments the 20 Latin-hypercube seeds sit alongside,
-% and its own printed title states the count.
-\PlotFrame{1b. DESIGN OF EXPERIMENTS: THE CCD SCREEN}
-  {\MaxTextLines{2}%
-   Face-centred CCD screen of 15 points: 8 factorial corners, 6 axial
-   stars, 1 centre, projected onto each pair of the three design variables.}
-  {so_ccd_screen}
-
-% kriging_denoise.png <- _proc/src/ui/uiassets/assets/plots/
-% kriging_denoise_step500.png, drawn by
-% _proc/scripts/render_kriging_panel.py (which calls the real
-% kriging_denoise.denoise_grid and plots ITS output -- never a stand-in).
-% The compute module itself plots nothing by design; rendering is separate.
-% convergence_audit_plot.png remains an unrelated metric-convergence
-% figure and is deliberately NOT used here.
-\PlotFrame{2. KRIGING DENOISING}
-  {\MaxTextLines{2}%
-   Gaussian-process denoising of the SPARTA cell field, pipeline step 2.
-   Top row raw, bottom row kriged; $\rho$, T, v and w channels.}
-  {kriging_denoise}
-
-% so_pipeline.png <- fignew_pipeline.png, the end-to-end pipeline diagram
-% drawn by CurrentThesisFinalReport/figures/make_fignew.py.
-%
-% PROVENANCE RE-DERIVED 2026-10-07 from git, per-commit blobs:
-%   commit 29de84b (2026-10-06 12:30) changed BOTH files 226314 -> 203630 in
-%   one commit, i.e. so_pipeline.png was copied from fignew_pipeline.png
-%   while that figure was LANDSCAPE 1619x995 (md5 3a50cf93da). The source was
-%   then regenerated back to PORTRAIT 1586x2017 and so_pipeline.png was never
-%   re-copied, so the two now differ in LAYOUT only. CONTENT is the same in
-%   both: the "Validation pipeline executed by the engine" 12-stage chart and
-%   the "Geometry optimization loop" ending in Bayesian optimization. The
-%   landscape copy is the better 16:9 fit, so it is KEPT deliberately.
-% The previous note here claimed the portrait aspect 0.786 and a 0.62
-% \plotheight override tuned for it. That tuning belonged to artwork this
-% frame no longer holds, so the override is removed and the deck default
-% \plotheight is used.
-\PlotFrame{3. VALIDATION RUN}
-  {\MaxTextLines{2}%
-   Performance reference against performance simulated on StellarOrion,
-   over the DSMC to PINN pipeline shown.}
-  {so_pipeline}
-
-% so_pinn_architecture.png <- pinn_architecture.png. What the PINN stage of
-% the pipeline above actually is: the two-stage loss and the layer sizes.
-\PlotFrame{3b. THE PINN INSIDE THE PIPELINE}
-  {\MaxTextLines{2}%
-   Two-stage loss: Stage 1 data only, Stage 2 adds the PDE residual;
-   2 inputs to 3 hidden layers of 64 to 4 outputs.}
-  {so_pinn_architecture}
-
-% heatflux_methodology.png <- figures/heatflux_methodology.png, drawn by this
-% directory's make_heatflux_methodology.py (200 dpi, Ghibli palette so it sits
-% on the deck rather than looking pasted in). Placed BEFORE frame 4 because the
-% "wrong definition" claim is only legible once the reader knows what the
-% methodology actually is. Every box carries the _proc file:line it was read
-% from; the figure's own overflow guard (AXIOM A5) raises rather than clipping.
-%
-% WHAT THIS FRAME NOW CLAIMS. It defines heat flux instead of only describing
-% how it is counted. Sutton-Graves returns the convective input to the
-% surface; the surface energy balance then splits that input three ways:
-%     q_conv = eps*sigma*T_s^4  +  (T_s - T_back)/R_total
-%     (reradiation back out)      (conduction into the 5-ply stack)
-% So the three terms the deck names are CONVECTION (Sutton-Graves),
-% CONDUCTION (through the materials) and RERADIATION (back to the flow).
-%
-% NUMBERS, all from the F84 joint solve with a measured residual of
-% 0.0000 % at the peak element:
-%     q_conv = 266509.28, q_rad = 261626.54, q_cond = 4882.77 W/m^2
-%     T_s = 1550.2345 K, T_back = 300 K, R_total = 0.25605 m^2.K/W, eps = 0.80
-% Source: FAILURES_AND_FIXES.md entry F84; solver ada_pinn_wrapper.py
-% tps_conduction.
-%
-% ROUNDING IS LOAD-BEARING HERE. Rounded to whole numbers the three terms do
-% NOT add up in print (261627 + 4883 = 266510 against a true 266509), and a
-% caption whose own arithmetic fails on screen is worse than no caption. One
-% decimal makes it exact: 261626.5 + 4882.8 = 266509.3. That is why the
-% caption carries .3 / .5 / .8 rather than integers.
-\PlotFrame{3c. HEAT FLUX: CONVECTION, CONDUCTION, RERADIATION}
-  {\MaxTextLines{2}%
-   Convection (Sutton-Graves) = reradiation + conduction through the TPS:
-   266509.3 = 261626.5 + 4882.8 W/m$^2$, residual 0.0000 \% (F84).}
-  {heatflux_methodology}
-
-% so_sutton_graves.png <- sutton_graves_parametric.png, drawn by
-% _proc CurrentThesisFinalReport/figures/generate_sutton_graves_parametric.py
-% (+177 lines in the current diff). The curve is what makes F21 legible:
-% the same relation evaluated at two conditions.
-\PlotFrame{4. REDEFINING YESTERDAY'S WRONG HEAT FLUX DEFINITION}
-  {\MaxTextLines{2}%
-   Normalisation constant taken at 51.8 km, not the snapshot's own
-   52.03 km: reported peak overstated by 31.90 \% (F21).}
-  {so_sutton_graves}
-
-% so_scalloped_vs_smooth.png <- fignew_scalloped_vs_smooth_heatflux.png.
-% The condition caveat is mandatory, not decorative: the two curves are NOT
-% at the same flight condition (the F18 cross-run confound), so the caption
-% names both conditions rather than implying a like-for-like comparison.
-\PlotFrame{4b. SCALLOPED VERSUS SMOOTH GEOMETRY}
-  {\MaxTextLines{2}%
-   Per-element and peak heat flux for the two surfaces, each at its own
-   run condition: smooth 51.82 km / 3379 m/s, scalloped 52.07 km / 3101 m/s.}
-  {so_scalloped_vs_smooth}
-
-% so_topology_before_after.png <- optimization_comparison.png, drawn by
-% _proc/scripts/render_optimization_comparison.py L1007-1008 into
-% _proc/. Two panels: BEFORE (IRVE-3 default) and AFTER (Bayesian optimum).
-\PlotFrame{5. OPTIMIZATION RESULT: TOPOLOGY BEFORE/AFTER}
-  {\MaxTextLines{2}%
-   Nose and torus geometry before and after optimisation, both from the
-   shipped Ada FFI: $C_d$ 1.607\textrightarrow1.573, heat load
-   219.1\textrightarrow155.2 J/cm$^2$ ($-29.2\%$).}
-  {so_topology_before_after}
-
-% so_bo_3d.png <- bo_optimization_3d.png, drawn by
-% _proc/scripts/render_bo_3d_plot.py L69 into _proc/.
-% Shows the 70-evaluation budget: LHD initial samples then BO iterations.
-\PlotFrame{6. BAYESIAN PLOT OPTIMIZATION}
-  {\MaxTextLines{2}%
-   Design-space samples in nose radius against torus radius, with the
-   evaluated cost over the 70-step budget.}
-  {so_bo_3d}
-
-% =====================================================================
-% SECTION LAST -- CONTEXT (moved here so the positioning map is seen after
-% the implementation, deliberately, at the end of the deck).
-% =====================================================================
-\section{CONTEXT}
-
-% so_literature_map.png <- literature_review_map.png. The outlined row is
-% labelled "This Work StellarOrion Pipeline" in the artwork itself.
-\PlotFrame{WHERE THIS WORK SITS}
-  {\MaxTextLines{2}%
-   Coverage of the phenomena and methods this work draws on; the
-   StellarOrion pipeline is the outlined row.}
-  {so_literature_map}
+\begin{frame}{PREVIOUS PROBLEM: SUMMARY OF THE THREE ITEMS}   % slide 3
+  \small
+  \begin{tabular}{@{}c@{\,~}p{5.5cm}@{\,~}p{5.5cm}@{}}
+    \textbf{\#} & \textbf{Issue} & \textbf{Detail} \\
+    \hline
+    1 & Heat flux was never defined &
+    Convection, through-TPS conduction, or reradiation --- we never stated which; readers assumed a single channel (F84). \\ \hline
+    2 & Cost function incomplete (attempt--1) &
+    The so-called ``optimized'' shape performed worse on aerothermal dynamics (ref: attempt--1); cost function and objective redefined; performs better. \\ \hline
+    3 & Sampling ordered wrong (CCD first) &
+    Pay-as-you-go sampling ate too much time; should have run the 15-point CCD first, then score analytically (F6, F17). \\
+  \end{tabular}
+  \vspace{0.4cm}
+  \par{\scriptsize (Each item expands on a later slide once the rest of the deck is approved.)}
+\end{frame}
 
 \end{document}
