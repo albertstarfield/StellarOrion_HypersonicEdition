@@ -82,7 +82,14 @@ package body StellarOrion_FFI is
      (Stream : Interfaces.C.Strings.chars_ptr);
    pragma Import (C, C_Flush_Stream, "fflush");
 
-   --  Log one line to stdout via libc (dylib-safe; see C_Printf axiom).
+   --  C_Write_Fd — direct write to a file descriptor (libc write).
+   function C_Write_Fd
+     (FD     : Interfaces.C.int;
+      Buffer : Interfaces.C.Strings.chars_ptr;
+      Count  : Interfaces.C.size_t) return Interfaces.C.int;
+   pragma Import (C, C_Write_Fd, "write");
+
+   --  Log one line to stderr via libc write(2) (dylib-safe; stdout is not used).
    --  Timing analysis: WCET ~ 6us (printf + fflush syscalls); CPU Time O(1);
    --  Space Complexity O(len(Msg)) for the NUL-terminated copy, then O(1).
    --  @test: Test_Log exercises this subprogram (see STC block below).
@@ -94,12 +101,12 @@ package body StellarOrion_FFI is
         Interfaces.C.Strings.New_String (NL);
    begin
       declare
-         Ignored : Interfaces.C.int := C_Printf (C_Str);
+         Ignored : Interfaces.C.int := C_Write_Fd (FD => 2, Buffer => C_Str, Count => Interfaces.C.size_t (NL'Length));
          pragma Unreferenced (Ignored);
       begin
          null;
       end;
-      --  flush stdout (null pointer = stdout per C99 stdio.h)
+      --  flush all streams; stderr writes above are direct FD writes
       C_Flush_Stream (Interfaces.C.Strings.Null_Ptr);
    exception
       when others =>
@@ -145,7 +152,7 @@ package body StellarOrion_FFI is
          Log ("[VERBOSE_ERROR] Estimate_Cd_C: Ada exception - safety fallback applied");
          --  Safety fallback: return 0.0 sentinel on any error
          --  [Citation: Ada2012 RM 11.4 — Exception Handling]
-         return 0.0;
+         return -1.0;
    end Estimate_Cd_C;
 
    -- -------------------------------------------------------------------------
@@ -472,7 +479,7 @@ package body StellarOrion_FFI is
    exception
       when others =>
          Log ("[VERBOSE_ERROR] Sutton_Graves_Heat_C: Ada exception - safety fallback applied");
-         return 0.0;
+         return -1.0;
    end Sutton_Graves_Heat_C;
 
    -- -------------------------------------------------------------------------
@@ -527,7 +534,7 @@ package body StellarOrion_FFI is
    exception
       when others =>
          Log ("[VERBOSE_ERROR] Fay_Riddell_Heat_C: Ada exception - safety fallback applied");
-         return 0.0;
+         return -1.0;
    end Fay_Riddell_Heat_C;
 
    -- -------------------------------------------------------------------------
@@ -552,7 +559,7 @@ package body StellarOrion_FFI is
    exception
       when others =>
          Log ("[VERBOSE_ERROR] Radiative_Eq_Temp_C: Ada exception - safety fallback applied");
-         return 300.0;
+         return -1.0;
    end Radiative_Eq_Temp_C;
 
    -- -------------------------------------------------------------------------
@@ -589,7 +596,7 @@ package body StellarOrion_FFI is
    exception
       when others =>
          Log ("[VERBOSE_ERROR] Backface_Temperature_C: Ada exception - safety fallback applied");
-         return 300.0;
+         return -1.0;
    end Backface_Temperature_C;
 
    -- -------------------------------------------------------------------------
@@ -616,7 +623,7 @@ package body StellarOrion_FFI is
    exception
       when others =>
          Log ("[VERBOSE_ERROR] Ballistic_Coefficient_C: Ada exception - safety fallback applied");
-         return 0.0;
+         return -1.0;
    end Ballistic_Coefficient_C;
 
    -- -------------------------------------------------------------------------
@@ -641,7 +648,7 @@ package body StellarOrion_FFI is
    exception
       when others =>
          Log ("[VERBOSE_ERROR] Dynamic_Pressure_C: Ada exception - safety fallback applied");
-         return 0.0;
+         return -1.0;
    end Dynamic_Pressure_C;
 
    -- -------------------------------------------------------------------------
@@ -666,7 +673,7 @@ package body StellarOrion_FFI is
    exception
       when others =>
          Log ("[VERBOSE_ERROR] Deceleration_G_Load_C: Ada exception - safety fallback applied");
-         return 0.0;
+         return -1.0;
    end Deceleration_G_Load_C;
 
    -- -------------------------------------------------------------------------
@@ -741,7 +748,7 @@ package body StellarOrion_FFI is
    exception
       when others =>
          Log ("[VERBOSE_ERROR] Mean_Free_Path_Viscous_C: Ada exception - safety fallback applied");
-         return 0.0;
+         return -1.0;
    end Mean_Free_Path_Viscous_C;
 
    -- -------------------------------------------------------------------------
@@ -769,7 +776,7 @@ package body StellarOrion_FFI is
    exception
       when others =>
          Log ("[VERBOSE_ERROR] Speed_Of_Sound_C: Ada exception - safety fallback applied");
-         return 0.0;
+         return -1.0;
    end Speed_Of_Sound_C;
 
    -- -------------------------------------------------------------------------
