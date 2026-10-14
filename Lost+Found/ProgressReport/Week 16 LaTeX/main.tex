@@ -105,18 +105,51 @@
   \end{center}
 \end{frame}
 
+
 \begin{frame}{REDEMPTION 1d: GOVERNING EQUATIONS BY CHANNEL (F84, F83, F21)}
   \small
   \textbf{Convection (Sutton--Graves).}
-  Symbol: $q_{SG}$ [W/m$^2$], Sutton-Graves convective flux term (F21, F83).\\
-  \textbf{Conduction (through the stack).}
-  Symbol: $q_{cond}$ [W/m$^2$], per ply (delta x over k); $R_{tot}=0.25605$ (F84).\\
-  \textbf{Reradiation.}
-  Symbol: $q_{rad}$ [W/m$^2$], radiated out of the hot face (F84).\\
-  \textbf{Balance (hot face):}
-  $q_{conv} = q_{rad} + q_{cond}$, evaluated as
-  $266509.3 = 261626.5 + 4882.8$ W/m$^2$. (F84)
+  \[
+    q_{SG}=C_{SG}\,\sqrt{\rho/R_N}\,V^3.
+  \]
+  Symbols: $q_{SG}$ [W/m$^2$] is the hot-face convective heat flux.
+  Variables: $C_{SG}=1.7415\times 10^{-4}$ (Earth air; NASA TR R-376 Table T1),
+  $\rho$ [kg/m$^3$] freestream density, $R_N=0.55$ [m] nose radius,
+  $V$ [m/s] velocity ($3378$ at $51.8$ km). The per-element field is normalised
+  $k_{\mathrm{e}}/k_{\mathrm{e,ref}}$ and clamped to $[0,1]$. (F21, F83) \\
+
+  \textbf{Conduction (through 5-ply IRVE-3 FTPS).}
+  \[
+    q_{cond}=(T_s-T_{back})/R_{tot},\qquad
+    R_{tot}=\sum_i \Delta x_i/k_i.
+  \]
+  Symbols: $q_{cond}$ [W/m$^2$] through the TPS; $T_s=1550.2345$ K hot face,
+  $T_{back}=300$ K cold face; $\Delta x_i$ [m] ply thickness; $k_i$ [W/mK]
+  ply conductivity (Nicalon SiC, Pyrogel, Kapton); total
+  $R_{tot}=0.25605$ [m$^2$K/W]. (F84)
 \end{frame}
+
+\begin{frame}{REDEMPTION 1d2: RERADIATION, BALANCE, AND CHANNEL MAP}
+  \small
+  \textbf{Reradiation.}
+  \[
+    q_{rad}=\varepsilon\,\sigma_{SB}\,T_s^4.
+  \]
+  Symbols: $q_{rad}$ [W/m$^2$] radiated outward; $\varepsilon=0.80$ emissivity;
+  $\sigma_{SB}=5.670374\times10^{-8}$ [W/m$^2$K$^4$]; $T_s$ hot-face
+  temperature. (F84) \\
+
+  \textbf{Hot-face energy balance.} $q_{conv}=q_{rad}+q_{cond}$:
+  \[
+    266509.3=261626.5+4882.8\ \text{W/m}^2,\quad
+    \text{residual }0.0000\%.
+  \]
+  (F84) \\
+
+  Channel map: convection is the plasma/flow input; conduction is the
+  through-TPS 5-ply stack; reradiation is outward hot-face radiation.
+\end{frame}
+
 
 \begin{frame}{REDEMPTION 1e: 5-PLY IRVE-3 FTPS SPECIFICATION}
   \small
