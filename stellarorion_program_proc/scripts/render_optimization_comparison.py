@@ -403,11 +403,15 @@ def revolve_profile(
     """
     import numpy as np
     n_pts = len(x_list)
-    X = np.zeros((n_az, n_pts))
-    Y = np.zeros((n_az, n_pts))
-    Z = np.zeros((n_az, n_pts))
+    # n_az + 1 rows: the extra row repeats theta = 2*pi (== 0) so the LAST
+    # quad closes the ring. Without it the shell is an OPEN surface missing a
+    # 2*pi/n_az wedge (the reported 'broken / not airtight' surface): the
+    # azimuth ran 0 .. 2*pi*(n_az-1)/n_az and never joined back to 0.
+    X = np.zeros((n_az + 1, n_pts))
+    Y = np.zeros((n_az + 1, n_pts))
+    Z = np.zeros((n_az + 1, n_pts))
 
-    for i in range(n_az):
+    for i in range(n_az + 1):
         theta = 2.0 * math.pi * i / n_az
         cos_t, sin_t = math.cos(theta), math.sin(theta)
         for j in range(n_pts):
@@ -436,10 +440,10 @@ def mesh_torus(
     [Citation: do Carmo (1976) — Torus parametrization]
     """
     import numpy as np
-    X = np.zeros((n_major, n_minor + 1))
-    Y = np.zeros((n_major, n_minor + 1))
-    Z = np.zeros((n_major, n_minor + 1))
-    for i in range(n_major):
+    X = np.zeros((n_major + 1, n_minor + 1))
+    Y = np.zeros((n_major + 1, n_minor + 1))
+    Z = np.zeros((n_major + 1, n_minor + 1))
+    for i in range(n_major + 1):
         u = 2 * math.pi * i / n_major
         cos_u, sin_u = math.cos(u), math.sin(u)
         for j in range(n_minor + 1):
@@ -468,10 +472,10 @@ def mesh_cylinder(
         radius   — drum radius in the YZ plane [m]
     """
     import numpy as np
-    X = np.zeros((n_az, n_x + 1))
-    Y = np.zeros((n_az, n_x + 1))
-    Z = np.zeros((n_az, n_x + 1))
-    for i in range(n_az):
+    X = np.zeros((n_az + 1, n_x + 1))
+    Y = np.zeros((n_az + 1, n_x + 1))
+    Z = np.zeros((n_az + 1, n_x + 1))
+    for i in range(n_az + 1):
         theta = 2 * math.pi * i / n_az
         cos_t, sin_t = math.cos(theta), math.sin(theta)
         for j in range(n_x + 1):
@@ -504,10 +508,10 @@ def mesh_dome(
     import numpy as np
     if direction not in (+1, -1):
         raise ValueError(f"direction must be +1 or -1, got {direction}")
-    X = np.zeros((n_az, n_r + 1))
-    Y = np.zeros((n_az, n_r + 1))
-    Z = np.zeros((n_az, n_r + 1))
-    for i in range(n_az):
+    X = np.zeros((n_az + 1, n_r + 1))
+    Y = np.zeros((n_az + 1, n_r + 1))
+    Z = np.zeros((n_az + 1, n_r + 1))
+    for i in range(n_az + 1):
         theta = 2 * math.pi * i / n_az
         cos_t, sin_t = math.cos(theta), math.sin(theta)
         for j in range(n_r + 1):
@@ -564,10 +568,10 @@ def mesh_flat_back(
 ) -> tuple[Any, Any, Any]:
     """Generate a flat circular back plate mesh in the YZ plane at x=x_back."""
     import numpy as np
-    X = np.zeros((n_az, n_r + 1))
-    Y = np.zeros((n_az, n_r + 1))
-    Z = np.zeros((n_az, n_r + 1))
-    for i in range(n_az):
+    X = np.zeros((n_az + 1, n_r + 1))
+    Y = np.zeros((n_az + 1, n_r + 1))
+    Z = np.zeros((n_az + 1, n_r + 1))
+    for i in range(n_az + 1):
         theta = 2 * math.pi * i / n_az
         cos_t, sin_t = math.cos(theta), math.sin(theta)
         for j in range(n_r + 1):
