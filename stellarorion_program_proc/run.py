@@ -1067,7 +1067,7 @@ def _phase2c_generate_media_and_sync() -> None:
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     venv_python = os.path.join(script_dir, "venv_validation", "bin", "python3")
-    media_out = os.path.join(script_dir, "results", "plots")
+    media_out = os.path.join(script_dir, "results", "99_shared")
 
     if not os.path.isfile(venv_python):
         print(f"[!] venv_validation Python not found at {venv_python}")
@@ -1125,7 +1125,7 @@ def _phase2c_generate_media_and_sync() -> None:
     _run_media([os.path.join("tools", "plot_surf_profile.py")])
     #  Per-ply TPS heat-flux figures.  Reads the tps_conduction layer
     #  breakdown written by the Ada/SPARK FFI
-    #  (results/99_shared/tps_conduction/tps_step2200_layers.csv) and writes straight
+    #  (results/tps_conduction/tps_step2200_layers.csv) and writes straight
     #  into the canonical results/plots/ tree; --outdir pins the destination
     #  explicitly so it can never land in a legacy directory.
     # Per-ply TPS sets -- one per tree, each solved on its own snapshot
@@ -1179,7 +1179,7 @@ def _sync_media_into_canonical_tree() -> None:
     import shutil
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    media_out = os.path.join(script_dir, "results", "plots")
+    media_out = os.path.join(script_dir, "results", "99_shared")
     return  # source-owned layout; no root results/plots/ tree created.
 
     derived_names = {
@@ -2252,12 +2252,12 @@ def _run_per_ply_trees(trees: list[str]) -> None:
       trees : tree names (00_reference currently).
 
     Returns:
-      None. Side effects: writes CSV/JSON to results/99_shared/tps_conduction/<tree>/ and
+      None. Side effects: writes CSV/JSON to results/tps_conduction/<tree>/ and
       the six artefacts under results/plots/<tree>/tps_per_ply/.
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
     venv_python = os.path.join(script_dir, "venv_validation", "bin", "python3")
-    media_out = os.path.join(script_dir, "results", "plots")
+    media_out = os.path.join(script_dir, "results", "99_shared")
 
     per_ply_args = {"00_reference": (52.069210, 3101.079)}
 
@@ -2304,9 +2304,9 @@ def _print_plot_status() -> None:
         ts = os.path.join(base, "validation_timeseries.csv")
         solvedir = os.path.join(script_dir, "results", "tps_conduction", tree)
         if tree == "00_reference":
-            solvedir = os.path.join(script_dir, "results", "tps_conduction")  # ref tree top-level
+            solvedir = os.path.join(script_dir, "results", "tps_conduction", "00_reference")
         solved = _os.path.isfile(_os.path.join(solvedir, "tps_step2200_summary.json"))
-        perply = os.path.join(script_dir, "results", "plots", tree, "tps_per_ply")
+        perply = os.path.join(script_dir, "results", tree, "plots", "tps_per_ply")
         files = 0
         if _os.path.isdir(perply):
             files = sum(len(fs) for _, _, fs in _os.walk(perply))
