@@ -159,8 +159,47 @@
 
 \begin{frame}{REDEMPTION 2: COST FUNCTION COMPLETE}
   \MaxTextLines{2}%
-  The incomplete attempt-1 cost function was redefined with a stated objective;
-  the redefined version outperforms the attempt-1 run on aerothermal dynamics.
+  Attempt-1 cost used 400 initial samples inefficiently and mis-stated
+  the objective. The redefined cost function matches the aerothermal
+  dynamics and converges. All details follow.
+\end{frame}
+
+\begin{frame}{REDEMPTION 2a: OBJECTIVE AND VARIABLES}
+  \small
+  \textbf{Cost (implemented, F84)}\
+  $J = w_\beta\,(\beta_{\mathrm{calc}}/\beta_{ref}-1)^2 +
+  \sum_i w_i\cdot\{10^{15}\text{ if }y_i^{(\mathrm{pred})} > y_i^{(\mathrm{limit})}\}$\
+  Constrained form:
+  $J_c(\mathbf{x}) = J(\mathbf{x}) + \sum_j \Lambda_j\,\phi_j(\mathbf{x}),\;
+  \Lambda_j=10^6$ for hard constraints.\
+  \vspace{0.1cm}
+  \textbf{Design Space (generic engine), \; BO campaign (3 active)}\
+  \begin{tabular}{@{}ll@{}}
+  \hline
+  $D$ nose & $[0.5,15.0]$ m\\
+  $\theta_c$ half cone & $[40,80]$ deg\\
+  $R_N$ nose radius & $[0.01,1.0]$ m (campaign $[0.5,3.0]$)\\
+  $r_t$ toroid radius & $[0.01,0.5]$ m (campaign $[0.05,0.5]$)\\
+  $N_t$ toroid count & $[1,12]$\\
+  mass & $[10,1000]$ kg\\
+  \hline
+  \end{tabular}
+\end{frame}
+
+\begin{frame}{REDEMPTION 2b: CONSTRAINTS AND OBJECTIVE LOOP}
+  \small
+  \textbf{Constraints (BO)}\
+  \begin{tabular}{@{}p{3.3cm}p{4.8cm}@{}}
+  backface $T$ & $T_{back}(\mathbf{x})-773\le 0$ K, penalty $10^6 |g|^2$\\
+  peak deceleration & $n_G-25g$ (penalty form)\\
+  structural $D$ & $D-15.0\le 0$\\
+  manufacturability & $N_t-12\le 0$\\
+  \end{tabular}
+  \vspace{0.2cm}
+  \textbf{Objective loop:} BO (LHS 20 + EI 50 steps, incumbent $1.7654\to1.6051$,
+  $-9.08\%$) \; DoE (LHS/CCD-15), Kriging denoising, DSMC + PINN as the
+  expensive oracle. Hard gate: DSMC direct simulation (no surrogate) on the
+  optimum-shape candidate.
 \end{frame}
 
 \begin{frame}{REDEMPTION 3: CORRECT SAMPLING ORDER}
