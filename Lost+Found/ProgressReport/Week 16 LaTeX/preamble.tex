@@ -36,7 +36,7 @@
 % not that it is loaded -- availability and loading are different facts.
 % Citation: tikz -- https://ctan.org/pkg/pgf
 \usepackage{tikz}
-\usetikzlibrary{calc}
+\usetikzlibrary{calc,shadings}
 
 % accsupp is REQUIRED, not decorative: the ITB emblem is an image that adds
 % no information a screen reader needs (the institution is already named in
@@ -368,50 +368,48 @@ Institut Teknologi Bandung}
 % =====================================================================
 \newcommand{\ITBTitleBackground}{%
   \begin{tikzpicture}[remember picture,overlay]
-    % Earth + atmosphere (flat vector bands) for robustness: no gradient
-    % keys that fail silently in beamer's tikz option parser.
-    \definecolor{band0}{HTML}{120d08}
-    \definecolor{band1}{HTML}{362416}
-    \definecolor{band2}{HTML}{5a4126}
-    \definecolor{band3}{HTML}{a8824a}
-    \definecolor{band4}{HTML}{dcc088}
-    \definecolor{band5}{HTML}{90b8c8}
-    \definecolor{band6}{HTML}{162840}
-    % 0 - thin base (earth)
-    \fill[band0] (current page.south west) rectangle ($(current page.south east)+(0,0.35cm)$);
-    % 1 - earth rise
-    \fill[band1] ($(current page.south west)+(0,0.35cm)$) rectangle ($(current page.south east)+(0,1.30cm)$);
-    % 2 - horizon glow
-    \fill[band2] ($(current page.south west)+(0,1.30cm)$) rectangle ($(current page.south east)+(0,2.60cm)$);
-    % 3 - lower atmosphere haze
-    \fill[band3] ($(current page.south west)+(0,2.60cm)$) rectangle ($(current page.south east)+(0,3.90cm)$);
-    % 4 - upper haze
-    \fill[band4] ($(current page.south west)+(0,3.90cm)$) rectangle ($(current page.south east)+(0,5.20cm)$);
-    % 5 - mid sky
-    \fill[band5] ($(current page.south west)+(0,5.20cm)$) rectangle ($(current page.south east)+(0,6.80cm)$);
-    % 6 - deep sky
-    \fill[band6] ($(current page.south west)+(0,6.80cm)$) rectangle (current page.north east);
-    % Cross-star sparkles ("sparkling cross stars") across upper sky:
-    \foreach \c in {0,1,...,11}{%
-      \foreach \r in {0,1,...,5}{%
-        \pgfmathtruncatemacro{\hash}{\c*13+\r*7}%
+    \definecolor{earthsea}{RGB}{28,86,140}
+    \definecolor{contourwhite}{RGB}{230,240,250}
+    \definecolor{skytop}{RGB}{5,12,38}
+    \definecolor{skybottom}{RGB}{120,190,230}
+    % Full-page sky gradient (single soft vertical backdrop)
+    \shade[top color=skytop,bottom color=skybottom] (current page.south west) rectangle (current page.north east);
+    % Atmospheric haze halo around earth (just a radial soft fill)
+    \shade[inner color=white!35,outer color=white!0] ($(current page.south west)+(3.8cm,3.0cm)$) circle (3.6cm);
+    % Earth sphere body (radial shading -> ball effect). Ball color gives
+    % lit appearance like a real sphere without raster textures.
+    \shade[ball color=earthsea] ($(current page.south west)+(3.6cm,2.75cm)$) circle (2.55cm);
+    % Latitude/longitude arcs: thin white stroked ellipses to convey globe.
+    \begin{scope}[shift={($(current page.south west)+(3.6cm,2.75cm)$)}, opacity=0.35]
+      \draw[contourwhite,very thin] (0,0) ellipse (2.55cm and 0.85cm);
+      \draw[contourwhite,very thin] (0,0) ellipse (2.55cm and 0.4cm);
+      \draw[contourwhite,very thin] (0,0) ellipse (0.18cm and 2.55cm);
+      \draw[contourwhite,very thin] (1.0cm,0) ellipse (0.18cm and 2.55cm);
+      \draw[contourwhite,very thin] (-1.0cm,0) ellipse (0.18cm and 2.55cm);
+    \end{scope}
+    % Stylized north-pole ice cap: a small white ellipse near top
+    \fill[contourwhite!85] ($(current page.south west)+(3.6cm,4.80cm)$) ellipse (0.85cm and 0.35cm);
+    % Sparkling cross stars across the dodger/blue resting of upper sky:
+    \foreach \c in {0,1,...,12}{%
+      \foreach \r in {0,1,...,6}{%
+        \pgfmathtruncatemacro{\hash}{\c*17+\r*11}%
         \ifodd\hash\else
-          \pgfmathsetmacro{\xpos}{\c*1.45+0.55}%
-          \pgfmathsetmacro{\ypos}{-\r*0.85-0.55}%
-          \pgfmathtruncatemacro{\alpha}{mod(\hash,56)+25}%
+          \pgfmathsetmacro{\xpos}{\c*1.3+0.35}%
+          \pgfmathsetmacro{\ypos}{-\r*0.75-0.45}%
+          \pgfmathtruncatemacro{\alpha}{mod(\hash,56)+30}%
           \begin{scope}[shift={(current page.north west)}, xshift=\xpos cm, yshift=\ypos cm, opacity=\alpha/100]
             \draw[white, line width=0.7pt, line cap=round] (0,0.08cm)--(0,-0.08cm);
             \draw[white, line width=0.7pt, line cap=round] (0.08cm,0)--(-0.08cm,0);
-            \draw[white, line width=0.4pt, line cap=round] (0.06cm,0.06cm)--(-0.06cm,-0.06cm);
-            \draw[white, line width=0.4pt, line cap=round] (-0.06cm,0.06cm)--(0.06cm,-0.06cm);
+            \draw[white, line width=0.4pt, line cap=round] ( 0.062cm,0.062cm)--(-0.062cm,-0.062cm);
+            \draw[white, line width=0.4pt, line cap=round] (-0.062cm,0.062cm)--( 0.062cm,-0.062cm);
           \end{scope}
         \fi
       }%
     }%
-    % ITB gajah monogram at top-right at 69% opacity, smaller (1.4 cm).
-    \node[opacity=0.69, anchor=north east, xshift=-0.6cm, yshift=-0.6cm, inner sep=0pt]
+    % ITB gajah monogram at top-right, 69% opacity:
+    \node[opacity=0.69, anchor=north east, xshift=-0.7cm, yshift=-0.7cm, inner sep=0pt]
       at (current page.north east)
-      {\includegraphics[width=1.4cm]{figures/gajah_putih}};
+      {\includegraphics[width=0.72cm]{figures/gajah_putih}};
   \end{tikzpicture}%
 }
 
