@@ -5441,6 +5441,69 @@ about cost without that measurement would be exactly the kind of unmeasured asse
 log refuses. It is recorded here as an observation for whoever owns the unit.
 ## F82 — Nineteen FFI exception handlers return silent sentinel values, and every sentinel reads as *survivable*
 
+### Update — thread 4f. **Half closed by measurement; the other half is a design change and is still open.**
+
+Commit `b6f3ab57` (*"fix(ffi): add diagnostic logging to FFI exception handlers before
+sentinel return"*) added **16 log statements** to this unit. I verified the claim
+rather than the commit message, and it holds:
+
+**Every exception path now logs.** `grep -cE "Log *\("` returns **54** across the file,
+and every one of the **19** `when others` handlers has a `Log` call inside it. I
+counted them by function name rather than trusting the total, and the only entry
+points without a `[VERBOSE_ERROR]` log are the `Test_*` self-test procedures, which
+report through their own harness.
+
+**The ten previously-silent sentinel returns are each preceded by a log:**
+
+| function | log line |
+| :--- | ---: |
+| `Estimate_Cd_C` | 148 |
+| `Sutton_Graves_Heat_C` | 475 |
+| `Fay_Riddell_Heat_C` | 530 |
+| `Radiative_Eq_Temp_C` | 555 |
+| `Backface_Temperature_C` | 592 |
+| `Ballistic_Coefficient_C` | 619 |
+| `Dynamic_Pressure_C` | 644 |
+| `Deceleration_G_Load_C` | 669 |
+| `Mean_Free_Path_Viscous_C` | 744 |
+| `Speed_Of_Sound_C` | 772 |
+
+**`Log` is real, not decorative.** It writes through `C_Printf` to stdout and then
+`C_Flush_Stream`, so the message leaves the process — it is not buffered into a
+handler that discards it.
+
+**The new `TPS_Conduction_C` entry point does better than the minimum.** It logs
+**11** separate failure causes with the actual arguments (`N_Layers`, `Emissivity`,
+`T_Init`, `Q_SG_Scale`, the failing ply index), and its sentinels are `-1.0 K` /
+`-1.0 W/m²` — values *outside every physical range* this entry point can return, so
+they cannot be mistaken for a measurement. Its `Reset_Outputs` helper is documented
+as *"the ONLY deliberate exception swallow in this FFI entry point, it is not silent
+(the cause is logged verbatim)"*. That is the pattern this finding asked for, applied
+to the one place it was not yet.
+
+### What is still open, and it is the other half of F82
+
+The finding had two claims. The first — *"zero diagnostics across 19 handlers"* — is
+**now false and is closed**. The second — *"every sentinel reads as survivable"* — is
+**still true**, and closing it is a design change rather than a logging change:
+
+* the same ten functions still `return 0.0` (heat flux, g-load, dynamic pressure,
+  ballistic coefficient, drag coefficient, mean free path, speed of sound) or
+  `return 300.0` (radiative and backface temperature, a plausible room temperature);
+* a caller that reads the return value and ignores stdout still receives the
+  optimistic answer. The log tells a *human* what happened; it does not tell the
+  *caller*.
+
+`TPS_Conduction_C` shows the way: an unambiguous sentinel (`-1.0`, outside every
+physical range the function can produce) plus a status code, so the failure is
+visible in the type system rather than only on a stream. The ten functions above would
+each need the same treatment. Until then this finding stays **partially fixed**, and
+the residual risk is exactly what the entry originally described.
+
+**One honest caveat on my own measurement.** `Log` writes to **stdout**, not stderr. A
+caller that captures stderr, or redirects the two separately, will still not see the
+diagnostic. Nothing in the file documents which stream a host should watch, so I record
+that as an open question rather than a defect.
 *Class: silent failure — the failure path emits no diagnostic and produces the optimistic answer*
 
 `stellarorion_ffi.adb` is the C-ABI layer Python calls through `ctypes`. Every one of its
@@ -6012,7 +6075,7 @@ property of the project without reading the pragma for the specific unit it mean
 | F79 | correctness | **fixed 2026-10-06** | `validation_pipeline.py:2508-2518` enters a branch **because** `h264_videotoolbox` is present in the encoder list, then selects software `libx264` instead, justified by *"QSV is NOT available on Apple Silicon"* — QSV is Intel's encoder, while the one removed is Apple's VideoToolbox, which is available on Apple Silicon and whose presence is what the guard tests. A working hardware encoder is detected and bypassed for a reason concerning a different encoder. |
 | F80 | provenance | **fixed 2026-10-07** | `stellarorion_ffi.adb:654` states the wrapper *"Delegates to StellarOrion_Environment.Speed_Of_Sound"*, but that package defines `Speed_Of_Sound` **zero** times (`grep -c` = 0 in both its spec and body). The actual callee is `StellarOrion_Speed_Of_Sound.Speed_Of_Sound` (`with` at `:40`, call at `:669`). Commit `2e5b3d5` moved the function out of `Environment` and updated the `with` — but not the comment naming it. The code is correct; the pointer at the FFI boundary is not. Same class as F78. |
 | F81 | verification scope | **fixed 2026-10-07** | The accuracy gap is closed. The spec now carries THEOREM (T2) and a postcondition bounding `Result*Result` within `1.0 ± 1.0e-6` of `gamma*R*T` — stated on the square, which is the rational form, so the obligation is an interval comparison. **Re-measured**: worst relative error **1.050e-07** over T = 0…6000 K at 2001 points, ~10× inside the claimed bound. The comment cites the 6.3e-8 figure this finding produced. |
-| F82 | silent failure | **open** | `stellarorion_ffi.adb` has **19** exported wrappers, each wrapped in an exception handler, and **zero** diagnostics across all of them (`grep -c Put_Line` = 1, and that one is inside a comment at `:58`). Eleven return a bare sentinel: `0.0` for `Sutton_Graves_Heat_C`/`Fay_Riddell_Heat_C`/`Dynamic_Pressure_C`/`Deceleration_G_Load_C`/`Ballistic_Coefficient_C`/`Estimate_Cd_C`/`Mean_Free_Path_Viscous_C`/`Speed_Of_Sound_C`, and **`300.0`** for `Radiative_Eq_Temp_C`/`Backface_Temperature_C` — a plausible room temperature, indistinguishable from data. The survivability gate is a set of `<=` comparisons (`physics.adb:1428-1430`), so **every sentinel satisfies it and reads as survivable**. The project states this rule at `pinn_trajectory.adb:99` (*"a value that could not be computed must never read as one that was"*, F67/F48) but does not apply it here. Path is live: 19 `pragma Export` in the `.ads`, built by `stellarorion_pinn_lib.gpr:30-31`, and bound via ctypes at `ada_pinn_wrapper.py:1064-1082`. |
+| F82 | silent failure | **partially fixed 2026-10-14** | `stellarorion_ffi.adb` has **19** exported wrappers, each wrapped in an exception handler, and **zero** diagnostics across all of them (`grep -c Put_Line` = 1, and that one is inside a comment at `:58`). Eleven return a bare sentinel: `0.0` for `Sutton_Graves_Heat_C`/`Fay_Riddell_Heat_C`/`Dynamic_Pressure_C`/`Deceleration_G_Load_C`/`Ballistic_Coefficient_C`/`Estimate_Cd_C`/`Mean_Free_Path_Viscous_C`/`Speed_Of_Sound_C`, and **`300.0`** for `Radiative_Eq_Temp_C`/`Backface_Temperature_C` — a plausible room temperature, indistinguishable from data. The survivability gate is a set of `<=` comparisons (`physics.adb:1428-1430`), so **every sentinel satisfies it and reads as survivable**. The project states this rule at `pinn_trajectory.adb:99` (*"a value that could not be computed must never read as one that was"*, F67/F48) but does not apply it here. Path is live: 19 `pragma Export` in the `.ads`, built by `stellarorion_pinn_lib.gpr:30-31`, and bound via ctypes at `ada_pinn_wrapper.py:1064-1082`. |
 | F83 | provenance | **fixed 2026-10-07** | The Sutton-Graves figure annotated `16.14 W/cm²` — the value the superseded Mars constant `C_SG = 1.83e-4` produces. The corrected Earth-air constant `1.7415e-4` (NASA TR R-376 Table 1; `stellarorion_types.ads:61`) gives `15.3575 W/cm²`, a **5.1 %** overstatement. The annotation is computed live from the solver, so the PNG was never re-rendered after the constant changed; the thesis copy and the deck copy were **byte-identical** (md5 `029560f01d545f87f4002e1f6800988d`, 248565 b), so the later mtime was not a re-render. Re-ran the generator (it printed `solver baseline: 15.3575 W/cm2`); both surfaces now read `15.36` (md5 `820b09f5bd0e0c07df38e02d006f23e9`, 249536 b). |
 | F84 | theory discrepancy | **fixed 2026-10-07** | TPS conduction model: degenerate `q_cond` (generate_outputs.py:297 `max(0, X−X)` ≡ 0), wrong material (validation_pipeline.py:4272 SiC `k=120` vs 5-ply layup `R=0.256`), open energy balance (radiative-eq-only ⇒ `q_cond=0`). Replaced all three paths with joint solve `q_conv = εσT_s⁴ + (T_s−T_back)/R_total` via `tps_conduction` FFI. Residual 0.0000 %. Emissivity unified to 0.80. |
 | F85 | correctness | **fixed 2026-10-08** | `pinn_accelerator.py`'s grid parser read the temperature from `parts[6]` — the **axial velocity** column — so the DeepXDE field trainer was supervised on `T ≈ 8880.67 K` instead of `169.664 K` (**52×** too high), while `vx`/`vy` were taken from `parts[7]`/`parts[8]` (v/w) and the axial velocity was lost. The `len(parts) < 9` guard also admitted rows carrying no temperature token. Fixed by deduplicating onto the canonical `src/python/sparta_grid.py::parse_grid_file` (**F32**); verified `np.array_equal` on `results/validation/grid.0.out`, row 0 `T 169.664` / `vx 8880.67` / `vy 49.4097`, temperature range `21.4036–524.159 K`. |
