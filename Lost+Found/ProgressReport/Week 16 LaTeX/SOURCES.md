@@ -1,5 +1,11 @@
 # SOURCES.md — figure provenance for the Week 16 progress deck
 
+> **⚠️ Read `README.md` first.** It lists which PNGs are live and which are stale. One
+> figure currently on a shipped slide (`figures/so_sutton_graves.png`, page 11) is an
+> out-of-date copy that disagrees with the thesis it came from, and the folder also holds
+> 12 render-scratch PNGs that no slide uses. This file tells you *where a figure came
+> from*; `README.md` tells you *whether you should still be using it*.
+
 Every figure on a slide is a **copy** of a file that the `_proc` pipeline or the thesis
 figure scripts already generated. Nothing on these slides was drawn for the presentation.
 This file exists so each slide can be audited back to the script that produced it.
@@ -8,7 +14,7 @@ Paths are relative to the repository root:
 `/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition`
 
 Deck directory: `Lost+Found/ProgressReport/Week 16 LaTeX/`.
-The deck is **13 pages** (title, outline, and 11 figure frames).
+The deck is **14 pages** (title, outline, and 12 figure frames).
 
 ## Slide to figure map
 
