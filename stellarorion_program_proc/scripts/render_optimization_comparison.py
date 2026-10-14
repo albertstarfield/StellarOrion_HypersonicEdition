@@ -745,7 +745,8 @@ def render_hiad(
 
     return meshed_tori
 
-def _apply_view(ax: Any, x_max: float, r_max: float) -> None:
+def _apply_view(ax: Any, x_max: float, r_max: float,
+                elev: float = 22.0, azim: float = -55.0) -> None:
     """Apply shared axis limits, aspect, and camera for fair comparison.
 
     Parameters:
@@ -777,7 +778,11 @@ def _apply_view(ax: Any, x_max: float, r_max: float) -> None:
     ax.set_zlim(-r_max * 1.04, r_max * 1.04)
     # Box aspect proportional to data extents (X length vs YZ diameter)
     ax.set_box_aspect([x_max * 1.02, 2.08 * r_max, 2.08 * r_max])
-    ax.view_init(elev=22, azim=-55)
+    # Camera override: side row uses the repo-standard 3/4 view (elev=22,
+    # azim=-55); the front row passes azim=180 (eye on the -X windward axis,
+    # nose-on) so the reader sees the face the run actually impinges, per the
+    # F67 request to expose the topology difference from the front.
+    ax.view_init(elev=elev, azim=azim)
 
 
 def main() -> int:
@@ -972,10 +977,13 @@ def main() -> int:
     # 4.30 gives band = (0.80-0.155) x 4.30 = 2.77 in (was 2.16), height
     # scale ~1.28 -> disc ~0.68 x 1.00 in, box ~2.30 x 2.06 in. Printed
     # height 4.30 x 0.945 = 4.06 in; IV.16 gets its own float env in ch4.
-    fig = plt.figure(figsize=(5.83, 4.30), facecolor='#ffffff')
+    # F67 2x2: height doubled (4.30 -> 8.60 in) so the same 5.83 in width
+    # carries TWO rows (rear = 3/4 side, front = nose-on) at the unchanged
+    # print scale (5.83 in ~ \textwidth -> declared pt == printed pt).
+    fig = plt.figure(figsize=(5.83, 8.60), facecolor='#ffffff')
 
     # Default (left) — blue tones; params loaded from JSON 'default' block
-    ax1 = fig.add_subplot(121, projection='3d', facecolor='#ffffff')
+    ax1 = fig.add_subplot(221, projection='3d', facecolor='#ffffff')
     n_tori_default_meshed = render_hiad(ax1, x_def, y_def,
                 color_base=(26, 82, 128), label_color='#2f3b43',
                 half_cone_deg=default["half_cone_deg"], r_tor=default["r_tor"],
@@ -1021,7 +1029,7 @@ def main() -> int:
                    'edgecolor': '#a8bfba'})
 
     # Optimized (right) — red tones; params loaded from JSON 'optimized' block
-    ax2 = fig.add_subplot(122, projection='3d', facecolor='#ffffff')
+    ax2 = fig.add_subplot(222, projection='3d', facecolor='#ffffff')
     n_tori_opt_meshed = render_hiad(ax2, x_opt, y_opt,
                 color_base=(192, 57, 43), label_color='#c0392b',
                 half_cone_deg=opt["half_cone_deg"], r_tor=opt["r_tor"],
@@ -1044,6 +1052,36 @@ def main() -> int:
              verticalalignment='bottom',
              bbox={'boxstyle': 'round,pad=0.3', 'facecolor': '#eef3f2',
                    'edgecolor': '#c0392b'})
+    # ------------------------------------------------------------------
+    # FRONT row (F67 request): the SAME two bodies viewed nose-on, so the
+    # topology difference is legible from the front as well as the 3/4 side.
+    # Camera azim=180 places the eye on the -X windward axis (the run face);
+    # elev stays 22 so the two rows share a shading convention. A front view
+    # of an axisymmetric body shows concentric rings (the silhouette is
+    # azimuth-invariant, per render_geometry_4views A5) — that IS the point:
+    # the disc diameter and torus spacing read directly against each other.
+    # No parameter footers repeat here; the numbers sit once, under the rear.
+    # ------------------------------------------------------------------
+    ax3 = fig.add_subplot(223, projection='3d', facecolor='#ffffff')
+    render_hiad(ax3, x_def, y_def,
+                color_base=(26, 82, 128), label_color='#2f3b43',
+                half_cone_deg=default["half_cone_deg"], r_tor=default["r_tor"],
+                cd_value=default["Cd"], rn=default["R_N"])
+    ax3.set_title('BEFORE (IRVE-3 Default) — front',
+                  color='#2f3b43', fontsize=11, fontweight='bold', pad=8)
+    ax3.tick_params(colors='#3a4a51', labelsize=8.5)
+    _apply_view(ax3, x_max_all, r_max_all, elev=22.0, azim=180.0)
+
+    ax4 = fig.add_subplot(224, projection='3d', facecolor='#ffffff')
+    render_hiad(ax4, x_opt, y_opt,
+                color_base=(192, 57, 43), label_color='#c0392b',
+                half_cone_deg=opt["half_cone_deg"], r_tor=opt["r_tor"],
+                cd_value=opt["Cd"], rn=opt["R_N"], is_optimized=True)
+    ax4.set_title('AFTER (Bayesian Optimized) — front',
+                  color='#c0392b', fontsize=11, fontweight='bold', pad=8)
+    ax4.tick_params(colors='#3a4a51', labelsize=8.5)
+    _apply_view(ax4, x_max_all, r_max_all, elev=22.0, azim=180.0)
+
     # WHY (pixel audit 2026-10-08, take 2): azim=-55 foreshortens the axial
     # direction so hard that 80 % of the x span maps to ~12.5 px of screen
     # while one '%.1f' label is ~29 px wide: even a 10 %/90 % inset pair
@@ -1054,7 +1092,7 @@ def main() -> int:
     # change). The y pair (10 %/90 % inset) measured 5 px clear of each
     # other, and the Z stack measured clear (3-4 px gaps) with nbins=3.
     from matplotlib.ticker import FixedLocator, FormatStrFormatter, MaxNLocator
-    for _ax in (ax1, ax2):
+    for _ax in (ax1, ax2, ax3, ax4):
         _xl = _ax.get_xlim()
         _yl = _ax.get_ylim()
         _ax.xaxis.set_major_locator(
@@ -1119,7 +1157,11 @@ def main() -> int:
     # (measured on the rendered page; it printed as a clipped 'X [m,').
     # Raising the band to 0.220 lifts every hanging label clear of both
     # figure-level boxes with margin, at the cost of 0.055 of pane height.
-    plt.tight_layout(rect=(0, 0.220, 1, 0.80), w_pad=6.0)
+    # F67 2x2: rect widened vertically for two rows on the 8.60 in canvas
+    # (rear + front); footers/labels keep the bottom band, suptitle/legend
+    # the top band. h_pad clears the rear row's hanging x-axis labels from
+    # the front row's titles.
+    plt.tight_layout(rect=(0, 0.075, 1, 0.930), w_pad=6.0, h_pad=2.2)
     out = Path(__file__).resolve().parent.parent / "optimization_comparison.png"
     plt.savefig(str(out), dpi=150, facecolor='#ffffff', bbox_inches='tight')
     print(f"Saved: {out}")
