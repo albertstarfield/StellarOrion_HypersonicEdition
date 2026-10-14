@@ -33,7 +33,7 @@ The thermal constraint is violated: the active TPS reports a backface temperatur
 
     \item \textbf{Scalloping Effect Quantification:} DSMC-based characterization of heating augmentation and recirculation patterns caused by the stacked toroid surface topology of HIADs.
 
-    \item \textbf{PINN-DSMC Hybrid Approach:} Physics-Informed Neural Networks as a smoothing layer for DSMC particle data, anchored in the compressible Navier-Stokes equations.
+    \item \textbf{PINN-DSMC Hybrid Approach:} Physics-Informed Neural Networks providing a fast, physics-consistent overview of the flow field for a new topology, anchored in the compressible Navier-Stokes equations.
 
 % GA de-documented (Genetic Algorithm not used in the recorded run); original:     \item \textbf{Constrained Single-Objective Optimization:} Automated surrogate-based optimization of HIAD geometry with Bayesian Optimization (Gaussian Process surrogate, Mat\'ern 5/2 kernel, Expected Improvement) and the engine's Genetic Algorithm search, targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
     \item \textbf{Constrained Single-Objective Optimization:} Automated surrogate-based optimization of HIAD geometry with Bayesian Optimization (Gaussian Process surrogate, Mat\'ern 5/2 kernel, Expected Improvement), targeting ballistic coefficient, peak deceleration, backface temperature, and drag performance.
@@ -57,4 +57,4 @@ The baseline is the second-generation flexible TPS (Nicalon SiC / Pyrogel 3350 /
 Extend the framework to Mars entry with a CO$_2$-dominated composition and updated SPARTA gas model. Replace the Sutton-Graves correlation with the West and Brandis~\cite{west2020mars} (2020) Mars correlation and the 5-species air model with a CO$_2$/N$_2$/Ar mixture.
 
 \subsection{PINN Refinement Validation}
-PINN refinement gives smooth, physics-consistent interpolation of noisy DSMC data, but its accuracy across the continuum and slip-flow bands ($Kn \lesssim 0.1$) needs quantification. Compare raw and PINN-refined outputs across Knudsen numbers to establish reliability bounds.
+PINN refinement gives a fast, smooth, physics-consistent overview of noisy DSMC data; it is not an accuracy step, and the DSMC run remains the ground truth at any design point. The open item is to compare raw and PINN-refined outputs across Knudsen numbers to establish where that fast overview is representative across the continuum and slip-flow bands ($Kn \lesssim 0.1$).

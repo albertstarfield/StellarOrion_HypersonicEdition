@@ -1087,7 +1087,7 @@ Automatic differentiation (AD) computes exact derivatives of $\hat{u}$ through t
 
 PINNs fill spatial gaps in sparse DSMC data, close turbulence, estimate unknown parameters, and fuse low-fidelity RANS with high-fidelity DSMC.
 
-\noindent This study's PINN uses the DeepXDE library \cite{lu2021deepxde} as a fully connected feedforward network with 2 input features (axial and radial coordinates), 3 hidden layers of 64 $\tanh$ neurons, and 4 outputs (density, axial and radial velocity, temperature). Training pre-trains on synthetic boundary condition data, then fine-tunes on sampled DSMC field data to suppress statistical noise; Chapter~3 gives the validation.
+\noindent This study's PINN uses the DeepXDE library \cite{lu2021deepxde} as a fully connected feedforward network with 2 input features (axial and radial coordinates), 3 hidden layers of 64 $\tanh$ neurons, and 4 outputs (density, axial and radial velocity, temperature). Training pre-trains on synthetic boundary condition data, then fine-tunes on sampled DSMC field data; Chapter~3 gives the validation.
 
 \noindent \textbf{Why physics replaces data.} A PINN needs no large labelled dataset because the governing equations themselves provide the supervision: the network's loss combines the PDE residual evaluated at collocation points with the boundary and initial conditions, so every interior point trains the network toward the equations rather than toward stored samples~\cite{raissi2019pinn}. Data then only sharpens a solution the equations already constrain, which is why this study's two-stage strategy (pre-train on synthetic boundary data, then fine-tune on sampled DSMC fields) works on a grid far too sparse to train a purely data-driven network.
 

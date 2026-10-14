@@ -150,7 +150,7 @@ The methodology runs in six stages, executed end-to-end by the twelve-stage pipe
     \item \textbf{Parametric Geometry Generation:} Automated 3D CAD generation of the scalloped (inflatable) and smooth (baseline) profiles with CadQuery, varying toroid count, cone angle, nose radius and aeroshell diameter.
     \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver~\cite{plimpton2014sparta} at the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics~\cite{bird1994molecular}.
     \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation in a Docker-containerized Linux environment, tracking millions of particles.
-    \item \textbf{PINN Flow Field Refinement:} Post-processing of DSMC output with a Physics-Informed Neural Network (DeepXDE) to smooth particle noise, fill flow-field gaps and provide a continuous Navier-Stokes-anchored interpolant.
+    \item \textbf{PINN Flow Field Refinement:} Post-processing of DSMC output with a Physics-Informed Neural Network (DeepXDE) to fill flow-field gaps and provide a continuous Navier-Stokes-anchored interpolant.
 % GA de-documented (Genetic Algorithm not used in the recorded run); original:     \item \textbf{Survivability Optimization:} Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate, Mat\'ern 5/2 kernel and Expected Improvement acquisition, backed by a Genetic Algorithm (GA) search over the same surrogate, for constrained single-objective optimization of HIAD geometry (Sec.~\ref{sec:ga_opt}).
     \item \textbf{Survivability Optimization:} Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate, Mat\'ern 5/2 kernel and Expected Improvement acquisition for constrained single-objective optimization of HIAD geometry (Sec.~\ref{sec:ga_opt}).
     \item \textbf{Validation and Analysis:} Grid independence studies and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
@@ -561,7 +561,7 @@ Monte Carlo noise scales as $1/\sqrt{N_{\text{samples}}}$, with $N_{\text{sample
 \section{Physics-Informed Neural Network Refinement}
 
 \subsection{Motivation}
-A Physics-Informed Neural Network (PINN) smooths the particle statistics, fills flow-field gaps where sampling is insufficient, and provides a continuous, differentiable interpolant anchored in known physics.
+A Physics-Informed Neural Network (PINN) provides a fast overview of heating and survivability for a new topology: it fills flow-field gaps where sampling is insufficient and provides a continuous, differentiable interpolant anchored in known physics. The statistical noise in the input is already smoothed upstream by the kriging denoiser (Sec.~\ref{sec:kriging_denoise}), so noise suppression is not the PINN's role. It is not an accuracy step; the DSMC run at the same design point remains the comparison and the ground truth.
 
 \subsection{PINN Governing Equations}
 The PINN, implemented in DeepXDE~\cite{lu2021deepxde}, solves the 2D compressible Navier-Stokes equations by automatic differentiation, constraining the network $\mathcal{N}(x, r) \to (\rho, v_x, v_y, T)$ with these residuals:
