@@ -779,9 +779,9 @@ def _apply_view(ax: Any, x_max: float, r_max: float,
     # Box aspect proportional to data extents (X length vs YZ diameter)
     ax.set_box_aspect([x_max * 1.02, 2.08 * r_max, 2.08 * r_max])
     # Camera override: side row uses the repo-standard 3/4 view (elev=22,
-    # azim=-55); the front row passes azim=200 (eye on the -X windward side,
-    # offset 20 deg toward -Y so a little of the right flank shows), per the
-    # F67 request to expose the topology difference from the front.
+    # azim=-55); the front row passes azim=225 (front-quarter, eye on the -X
+    # windward side offset 45 deg toward -Y) so the scalloped torus ridges are
+    # visible, per the F67 request to expose the topology from the front.
     ax.view_init(elev=elev, azim=azim)
 
 
@@ -1055,11 +1055,12 @@ def main() -> int:
     # ------------------------------------------------------------------
     # FRONT row (F67 request): the SAME two bodies viewed nose-on, so the
     # topology difference is legible from the front as well as the 3/4 side.
-    # Camera azim=200 places the eye on the -X (windward) side, offset 20 deg
-    # toward -Y so a little of the body's right flank shows and the panel is
-    # not a flat nose-on disc; elev stays 22 so the two rows share a shading
-    # convention. The rear row's 3/4 view (azim=-55) also sits on the -Y side,
-    # so front and rear show the same flank.
+    # Camera azim=225 places the eye on the -X (windward) side, offset 45 deg
+    # toward -Y: a true front-quarter view, not a flat nose-on disc, so the
+    # stacked torus ridges (the scallops) on the cone flank are visible. elev
+    # stays 22 so the two rows share a shading convention. The rear row's 3/4
+    # view (azim=-55) also sits on the -Y side, so front and rear show the
+    # same flank.
     # No parameter footers repeat here; the numbers sit once, under the rear.
     # ------------------------------------------------------------------
     ax3 = fig.add_subplot(223, projection='3d', facecolor='#ffffff')
@@ -1070,7 +1071,7 @@ def main() -> int:
     ax3.set_title('BEFORE (IRVE-3 Default) — front',
                   color='#2f3b43', fontsize=11, fontweight='bold', pad=8)
     ax3.tick_params(colors='#3a4a51', labelsize=8.5)
-    _apply_view(ax3, x_max_all, r_max_all, elev=22.0, azim=200.0)
+    _apply_view(ax3, x_max_all, r_max_all, elev=22.0, azim=225.0)
 
     ax4 = fig.add_subplot(224, projection='3d', facecolor='#ffffff')
     render_hiad(ax4, x_opt, y_opt,
@@ -1080,7 +1081,7 @@ def main() -> int:
     ax4.set_title('AFTER (Bayesian Optimized) — front',
                   color='#c0392b', fontsize=11, fontweight='bold', pad=8)
     ax4.tick_params(colors='#3a4a51', labelsize=8.5)
-    _apply_view(ax4, x_max_all, r_max_all, elev=22.0, azim=200.0)
+    _apply_view(ax4, x_max_all, r_max_all, elev=22.0, azim=225.0)
 
     # WHY (pixel audit 2026-10-08, take 2): azim=-55 foreshortens the axial
     # direction so hard that 80 % of the x span maps to ~12.5 px of screen
