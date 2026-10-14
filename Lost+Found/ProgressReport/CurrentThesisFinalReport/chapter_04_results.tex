@@ -479,7 +479,7 @@ The gate runs post-optimization in five legs~\cite{kennedy2000multi}:
 \begin{enumerate}
     \item \textbf{Preconditions and geometry QA.} The compiled binary, Docker daemon, validation virtual environment, pipeline module and reference CSV are checked, then a fast \texttt{bin/main} validate-only geometry check (seconds-level runtime) runs. Failures report path and remedy; the gate exits with status 1.
     \item \textbf{DSMC leg.} The round-1 winner is re-simulated with \texttt{bin/main} in headless validate mode (nose radius 2.971440, toroid radius 0.088460, half-cone angle 40.147949, skin scalloped, 2200 steps), writing to a dedicated directory, never overwriting the baseline reference dataset.
-    \item \textbf{PINN leg.} The PINN refinement pipeline runs on the fresh dataset, producing a unified comparison dataset under the gate directory.
+    \item \textbf{PINN leg.} The PINN Overview Pipeline pipeline runs on the fresh dataset, producing a unified comparison dataset under the gate directory.
     \item \textbf{Verdict.} The gate passes if and only if $q_{hybrid} \leq Q_{target} = 165.716$\,J/cm$^2$, and records the prediction error $(q_{hybrid} - q_{analytic})/q_{analytic}$.
     \item \textbf{Multi-fidelity correction.} A bounded correction factor $c = \operatorname{clamp}\bigl(q_{hybrid}/\allowbreak q_{analytic},\,\allowbreak 0.5,\,\allowbreak 2.0\bigr)$ applies to the heat-load term of $J(\mathbf{x})$; the optimizer re-runs, producing the round-2 design.
 \end{enumerate}
@@ -526,7 +526,7 @@ This framework uses Bayesian Optimization (GP Matérn 5/2 + Expected Improvement
 This work applies Physics-Informed Neural Networks (PINNs) as post-processing for DSMC data~\cite{raissi2019pinn}. The DeepXDE-based PINN solves the 2D compressible Navier-Stokes equations by automatic differentiation, with SPARTA grid data as observational boundary conditions, giving a smooth, physics-consistent interpolant filling flow-field gaps. This hybrid approach is absent from Rapisarda's framework.
 
 \subsection{Reproducibility and Accessibility}
-This framework is open-source with a hybrid Ada and Python architecture; the complete implementation, the Ada engine, the Python sidecar and the run configuration are publicly accessible at \url{https://github.com/albertstarfield/StellarOrion_HypersonicEdition}. The Ada binary is the primary engine, with range-checked subtypes and run-time assertions exercised by the self-test, running through the \texttt{stellarorion\_program\_proc/run.py} front end. SPARTA runs in Docker on Linux; the Python sidecar handles PINN refinement, optimization and the native-OS GUI with hardware acceleration (CUDA, ROCm, Metal MPS). Rapisarda's framework is MATLAB-based and needs manual configuration per run.
+This framework is open-source with a hybrid Ada and Python architecture; the complete implementation, the Ada engine, the Python sidecar and the run configuration are publicly accessible at \url{https://github.com/albertstarfield/StellarOrion_HypersonicEdition}. The Ada binary is the primary engine, with range-checked subtypes and run-time assertions exercised by the self-test, running through the \texttt{stellarorion\_program\_proc/run.py} front end. SPARTA runs in Docker on Linux; the Python sidecar handles PINN Overview Pipeline, optimization and the native-OS GUI with hardware acceleration (CUDA, ROCm, Metal MPS). Rapisarda's framework is MATLAB-based and needs manual configuration per run.
 
 \subsection{Quantitative Outcomes}
 Thermally, Table~\ref{tab:validation} places the two frameworks against the NASA flight values: the MDAO reconstruction's Fay-Riddell peak of 13.83\,W/cm\textsuperscript{2} ($+0.2\%$ against flight) and total heat load of 195.17\,J/cm\textsuperscript{2} ($+3.8\%$) sit within a percent of the 13.80\,W/cm\textsuperscript{2} and 188.00\,J/cm\textsuperscript{2} flight reconstruction values~\cite{old2013irve3postflight,dillman2014irve3flight}, while this work's single-point Sutton-Graves peak of 15.36\,W/cm\textsuperscript{2} sits $+11.3\%$ above flight and agrees with Rapisarda's trajectory-integrated Sutton-Graves value of 15.26\,W/cm\textsuperscript{2} within $+0.6\%$ (Section~\ref{sec:validation_irve3} covers both). The DSMC-resolved heat load of 165.72\,J/cm\textsuperscript{2} sits $-15.0\%$ against flight, and the optimum cuts total heat load a further $28.95\,\%$ to 155.67\,J/cm\textsuperscript{2} (Table~\ref{tab:bo_before_after}).
@@ -548,7 +548,7 @@ Aerodynamically the comparison is one-sided: no drag, lift or ballistic-coeffici
         Optimization & Sequential parametric sweeps & GP Mat\'ern 5/2 + Expected Improvement (Bayes Opt), 70 evaluations \\
         Design Space & 3-4 parameters & 6+ parameters with CCD + LHS sampling \\
         Optimum Verification & Not reported & Enforced DSMC re-simulation gate (PINN bypassed) with multi-fidelity correction \\
-        ML/AI Component & None & PINN refinement (DeepXDE) \\
+        ML/AI Component & None & PINN Overview Pipeline (DeepXDE) \\
         Reproducibility & MATLAB, manual config & Ada + Python + Docker, fully containerized \\
         Knudsen Number Mapping & Not performed & Full spatial $Kn$ field mapping \\
         Grid Independence & Not reported & Automated grid factor optimization \\

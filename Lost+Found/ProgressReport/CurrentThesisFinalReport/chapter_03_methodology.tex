@@ -60,7 +60,7 @@ The stagnation-point heat flux is approximated by~\cite{sutton1971gravesh}:
 \end{equation}
 where $k$ is a gas-specific constant, $\rho_\infty$ the freestream density, $R_N$ the nose radius, and $V_\infty$ the flight velocity.
 
-\paragraph{Step 5: PINN Flow Field Refinement (A7).}
+\paragraph{Step 5: PINN Overview Pipeline (A7).}
 The Physics-Informed Neural Network (PINN) enforces Navier-Stokes residuals as a soft loss constraint~\cite{raissi2019pinn}:
 \begin{equation}
 \mathcal{L} = \underbrace{\mathcal{L}_{\text{data}}}_{\text{DSMC samples}} + \lambda_{\text{PDE}} \underbrace{\mathcal{L}_{\text{PDE}}}_{\text{NS residuals}}
@@ -88,14 +88,14 @@ Figure~\ref{fig:governing_equations} summarizes this chain.
 
 \subsection{Software Pipeline}
 \label{sec:software_pipeline}
-The StellarOrion engine, an Ada and Python stack with SPARTA containerized in Docker, orchestrates the pipeline in Figure~\ref{fig:software_pipeline}. The Python entry point \texttt{run.py} drives five phases: boot, Python virtual-environment bootstrap, static analysis, Ada build of the simulation engine, and launch. The core solver is the Ada unit \texttt{StellarOrion\_Orion} in \texttt{src/simulation\_engine/}, which wraps the SPARTA DSMC solver~\cite{plimpton2014sparta} as the gas-phase engine and post-processes its surface heat flux through the built-in one-dimensional composite conduction model of this chapter, Surface-field handoff: the engine then hands surface fields to the DeepXDE PINN refinement module and to the scikit-learn Bayesian Optimization surrogate. (GP Mat\'ern 5/2 with Expected Improvement, Sec.~\ref{sec:ga_opt}). Results are exported as VTK/STL for ParaView rendering and for the validation gate of Chapter~\ref{ch:results}. The recorded campaign of Chapter~\ref{ch:results} applies Bayesian Optimization with a fixed hyper-parameter refit strategy, adopted after the reproducibility finding of Sec.~\ref{sec:surrogate_repro}.
+The StellarOrion engine, an Ada and Python stack with SPARTA containerized in Docker, orchestrates the pipeline in Figure~\ref{fig:software_pipeline}. The Python entry point \texttt{run.py} drives five phases: boot, Python virtual-environment bootstrap, static analysis, Ada build of the simulation engine, and launch. The core solver is the Ada unit \texttt{StellarOrion\_Orion} in \texttt{src/simulation\_engine/}, which wraps the SPARTA DSMC solver~\cite{plimpton2014sparta} as the gas-phase engine and post-processes its surface heat flux through the built-in one-dimensional composite conduction model of this chapter, Surface-field handoff: the engine then hands surface fields to the DeepXDE PINN Overview Pipeline module and to the scikit-learn Bayesian Optimization surrogate. (GP Mat\'ern 5/2 with Expected Improvement, Sec.~\ref{sec:ga_opt}). Results are exported as VTK/STL for ParaView rendering and for the validation gate of Chapter~\ref{ch:results}. The recorded campaign of Chapter~\ref{ch:results} applies Bayesian Optimization with a fixed hyper-parameter refit strategy, adopted after the reproducibility finding of Sec.~\ref{sec:surrogate_repro}.
 
 \begin{figure}[!htbp]
     \centering
     \BeginAccSupp{method=escape,ActualText={Architecture diagram of the software pipeline. Input column: CadQuery geometry with STL export, flight conditions with velocity, temperature and density, and design variables. Orchestration column: run.py with boot, environment bootstrap, static analysis, Ada build and launch phases. Core engine column: the Ada simulation engine. Solver column: SPARTA DSMC in Docker plus the built-in one-dimensional composite conduction model for the solid thermal response. Model column: PINN with DeepXDE and the Bayesian Optimization surrogate, a Gaussian Process with Matern 5/2 kernel and Expected Improvement. Output column: ParaView, VTK, STL rendering. An orange feedback loop returns Bayesian Optimization designs to the engine for re-evaluation.}}%
 \includegraphics[width=0.85\textwidth]{figures/software_pipeline.png}%
 \EndAccSupp{}%
-    \caption[StellarOrion engine software pipeline: input geometry and design variables through the run.py phases, the Ada engine, the SPARTA DSMC and built-in solid-thermal conduction stages, PINN refinement and the Bayesian Optimization surrogate.]{StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ \texttt{run.py} orchestration phases $\rightarrow$ Ada simulation engine $\rightarrow$ SPARTA DSMC gas-phase solver and the built-in one-dimensional composite conduction thermal post-processing, with PINN refinement and the Bayesian Optimization surrogate $\rightarrow$ ParaView visualization. The orange feedback loop returns Bayesian Optimization designs from the surrogate to the core engine for re-evaluation.}
+    \caption[StellarOrion engine software pipeline: input geometry and design variables through the run.py phases, the Ada engine, the SPARTA DSMC and built-in solid-thermal conduction stages, PINN Overview Pipeline and the Bayesian Optimization surrogate.]{StellarOrion engine software pipeline: input geometry, flight conditions and design variables $\rightarrow$ \texttt{run.py} orchestration phases $\rightarrow$ Ada simulation engine $\rightarrow$ SPARTA DSMC gas-phase solver and the built-in one-dimensional composite conduction thermal post-processing, with PINN Overview Pipeline and the Bayesian Optimization surrogate $\rightarrow$ ParaView visualization. The orange feedback loop returns Bayesian Optimization designs from the surrogate to the core engine for re-evaluation.}
     \label{fig:software_pipeline}
 \end{figure}
 
@@ -150,7 +150,7 @@ The methodology runs in six stages, executed end-to-end by the twelve-stage pipe
     \item \textbf{Parametric Geometry Generation:} Automated 3D CAD generation of the scalloped (inflatable) and smooth (baseline) profiles with CadQuery, varying toroid count, cone angle, nose radius and aeroshell diameter.
     \item \textbf{DSMC Simulation Setup:} Configuration of the SPARTA solver~\cite{plimpton2014sparta} at the target trajectory point, including the 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphere (VSS) collision physics~\cite{bird1994molecular}.
     \item \textbf{Particle-Based Simulation:} Execution of the DSMC simulation in a Docker-containerized Linux environment, tracking millions of particles.
-    \item \textbf{PINN Flow Field Refinement:} Post-processing of DSMC output with a Physics-Informed Neural Network (DeepXDE) to fill flow-field gaps and provide a continuous Navier-Stokes-anchored interpolant.
+    \item \textbf{PINN Overview Pipeline:} Post-processing of DSMC output with a Physics-Informed Neural Network (DeepXDE) to fill flow-field gaps and provide a continuous Navier-Stokes-anchored interpolant.
 % GA de-documented (Genetic Algorithm not used in the recorded run); original:     \item \textbf{Survivability Optimization:} Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate, Mat\'ern 5/2 kernel and Expected Improvement acquisition, backed by a Genetic Algorithm (GA) search over the same surrogate, for constrained single-objective optimization of HIAD geometry (Sec.~\ref{sec:ga_opt}).
     \item \textbf{Survivability Optimization:} Bayesian Optimization (Bayes Opt) with a Gaussian Process surrogate, Mat\'ern 5/2 kernel and Expected Improvement acquisition for constrained single-objective optimization of HIAD geometry (Sec.~\ref{sec:ga_opt}).
     \item \textbf{Validation and Analysis:} Grid independence studies and validation of thermal results against the Sutton-Graves stagnation-point correlation and IRVE-3 flight data.
@@ -780,7 +780,7 @@ As designed, a plateau detection algorithm on the data-term loss history picks t
 The 20\% minimum ($N_{min}$) prevents false early-plateau triggers in Stage 1; the rolling window reduces mini-batch noise.
 
 \subsection{Axioms and Assumptions}
-The PINN refinement stage rests on these assumptions:
+The PINN Overview Pipeline stage rests on these assumptions:
 
 \begin{table}[!htbp]
     \centering
@@ -832,7 +832,7 @@ The optimization loop runs six steps:
     \item \textbf{Bayes Opt Training:} Fit a Gaussian Process surrogate on the $N$ results, giving posterior mean $\mu(\mathbf{x})$ and deviation $\sigma(\mathbf{x})$.
     \item \textbf{Bayesian Acquisition:} Score $N_{cand} = 5000$ candidate designs with Expected Improvement (Eq.~\eqref{eq:ei}) and append the arg-max to the history; this is the recorded campaign of Sec.~\ref{sec:bo_results}.
     \item \textbf{Constraint Filtering:} Apply physics-based penalty functions to eliminate non-viable designs.
-    \item \textbf{Final Validation:} Re-evaluate the optimal design with SPARTA DSMC, without PINN refinement.
+    \item \textbf{Final Validation:} Re-evaluate the optimal design with SPARTA DSMC, without PINN Overview Pipeline.
 \end{enumerate}
 
 %The engine additionally implements a real-coded Genetic Algorithm (Sec.~\ref{sec:ga_operators}) that evolves a population with its own random generator and evaluates each individual with the engine's closed-form cost function; the Gaussian Process surrogate belongs to the separate Python Bayesian-Optimization campaign driver of Chapter~\ref{ch:results}. The GA shares steps 1 to 3, 5 and 6 with the Bayesian loop and replaces step 4 with selection, crossover and mutation.
@@ -1038,7 +1038,7 @@ Multiple solver backends address different flow regimes~\cite{plimpton2014sparta
         \hline
         \textbf{Stage} & \textbf{Solver} & \textbf{Rationale} \\ \hline
         Exploration & SBO / PINN & Ultra-fast estimation of 1000s of design candidates \\ \hline
-        Refinement & DSMC + PINN & Bridges noisy particle data and continuous flow fields \\ \hline
+        PINN Overview Pipeline & DSMC + PINN & Links DSMC particle data and continuous flow fields \\ \hline
         Validation & DSMC Only & Eliminates neural network bias; pure kinetic ground truth \\ \hline
         High-Density (Future) & Fluent + PINN & For low-altitude peak heating ($Kn < 0.01$) \\ \hline
     \end{tabularx}
@@ -1257,7 +1257,7 @@ The PINN uses DeepXDE~\cite{lu2021deepxde}:
 \subsection{Training Methodology}
 
 \subsubsection*{Data Collection Pipeline}
-Each design: $N = 15$ Rotatable CCD points (Sec.~\ref{sec:doe_sampling}), $O(10^3)$ SPARTA DSMC timesteps, two-stage PINN refinement (Sec.~\ref{sec:pinn_two_stage}), features $\mathbf{x} = (R_N, r_{tor}, \theta_c)$ min-max scaled to $[0, 1]$.
+Each design: $N = 15$ Rotatable CCD points (Sec.~\ref{sec:doe_sampling}), $O(10^3)$ SPARTA DSMC timesteps, two-stage PINN Overview Pipeline (Sec.~\ref{sec:pinn_two_stage}), features $\mathbf{x} = (R_N, r_{tor}, \theta_c)$ min-max scaled to $[0, 1]$.
 
 \subsubsection*{Train/Test Split}
 Stratified 80/20 split of the design set for early stopping and model selection.
