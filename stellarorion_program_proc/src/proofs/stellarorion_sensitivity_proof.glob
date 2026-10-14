@@ -1,0 +1,649 @@
+DIGEST d2ec27fbd485d132bdc549b6c973e19f
+Fstellarorion_sensitivity_proof
+R4628:4642 Coq.Reals.Reals <> <> lib
+R4660:4676 Coq.micromega.Lra <> <> lib
+R4694:4707 Coq.Lists.List <> <> lib
+R4717:4729 Coq.Lists.List ListNotations <> mod
+def 4768:4771 <> csum
+R4781:4784 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4778:4780 Coq.Init.Datatypes <> nat ind
+R4785:4785 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4774:4774 <> y:1
+R4793:4796 Coq.Init.Datatypes <> list ind
+R4798:4800 Coq.Init.Datatypes <> nat ind
+binder 4789:4789 <> l:2
+R4805:4805 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4818:4818 stellarorion_sensitivity_proof <> l:2 var
+R4825:4827 Coq.Init.Datatypes <> nil constr
+R4837:4840 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R4850:4852 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R4847:4847 stellarorion_sensitivity_proof <> y:1 var
+R4853:4856 stellarorion_sensitivity_proof <> csum:3 def
+R4858:4858 stellarorion_sensitivity_proof <> y:1 var
+def 4880:4892 <> corner_effect
+R4902:4905 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4899:4901 Coq.Init.Datatypes <> nat ind
+R4906:4906 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4895:4895 <> y:5
+R4923:4926 Coq.Init.Datatypes <> list ind
+R4928:4930 Coq.Init.Datatypes <> nat ind
+binder 4910:4913 <> plus:6
+binder 4915:4919 <> minus:7
+R4935:4935 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4957:4959 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R4953:4955 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4942:4945 stellarorion_sensitivity_proof <> csum def
+R4947:4947 stellarorion_sensitivity_proof <> y:5 var
+R4949:4952 stellarorion_sensitivity_proof <> plus:6 var
+R4972:4974 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4960:4963 stellarorion_sensitivity_proof <> csum def
+R4965:4965 stellarorion_sensitivity_proof <> y:5 var
+R4967:4971 stellarorion_sensitivity_proof <> minus:7 var
+def 4989:4999 <> axial_swing
+R5009:5012 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5006:5008 Coq.Init.Datatypes <> nat ind
+R5013:5013 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5002:5002 <> y:8
+R5023:5025 Coq.Init.Datatypes <> nat ind
+binder 5017:5017 <> p:9
+binder 5019:5019 <> q:10
+R5030:5030 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R5038:5040 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5035:5035 stellarorion_sensitivity_proof <> y:8 var
+R5037:5037 stellarorion_sensitivity_proof <> p:9 var
+R5041:5041 stellarorion_sensitivity_proof <> y:8 var
+R5043:5043 stellarorion_sensitivity_proof <> q:10 var
+def 5057:5066 <> axial_grad
+R5076:5079 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5073:5075 Coq.Init.Datatypes <> nat ind
+R5080:5080 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5069:5069 <> y:11
+R5090:5092 Coq.Init.Datatypes <> nat ind
+binder 5084:5084 <> p:12
+binder 5086:5086 <> q:13
+R5102:5102 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5096:5096 <> a:14
+binder 5098:5098 <> h:15
+R5107:5107 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R5114:5114 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5124:5128 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5138:5138 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5118:5120 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5115:5115 stellarorion_sensitivity_proof <> y:11 var
+R5117:5117 stellarorion_sensitivity_proof <> p:12 var
+R5121:5121 stellarorion_sensitivity_proof <> y:11 var
+R5123:5123 stellarorion_sensitivity_proof <> q:13 var
+R5134:5136 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5130:5132 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5133:5133 stellarorion_sensitivity_proof <> a:14 var
+R5137:5137 stellarorion_sensitivity_proof <> h:15 var
+def 5153:5159 <> pickset
+R5166:5169 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R5171:5174 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R5176:5179 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R5181:5184 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R5185:5187 Coq.Init.Datatypes <> nil constr
+def 5206:5211 <> minset
+R5219:5222 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R5224:5227 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R5229:5232 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R5234:5237 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R5238:5240 Coq.Init.Datatypes <> nil constr
+prf 5255:5262 <> csum_app
+binder 5273:5273 <> y:16
+binder 5275:5275 <> a:17
+binder 5277:5277 <> b:18
+R5295:5297 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5280:5283 stellarorion_sensitivity_proof <> csum def
+R5285:5285 stellarorion_sensitivity_proof <> y:16 var
+R5289:5292 Coq.Init.Datatypes <> ::list_scope:x_'++'_x not
+R5288:5288 stellarorion_sensitivity_proof <> a:17 var
+R5293:5293 stellarorion_sensitivity_proof <> b:18 var
+R5306:5308 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5298:5301 stellarorion_sensitivity_proof <> csum def
+R5303:5303 stellarorion_sensitivity_proof <> y:16 var
+R5305:5305 stellarorion_sensitivity_proof <> a:17 var
+R5309:5312 stellarorion_sensitivity_proof <> csum def
+R5314:5314 stellarorion_sensitivity_proof <> y:16 var
+R5316:5316 stellarorion_sensitivity_proof <> b:18 var
+prf 5404:5411 <> csum_add
+binder 5422:5423 <> y1:19
+binder 5425:5426 <> y2:20
+binder 5428:5428 <> l:21
+R5462:5464 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5433:5436 stellarorion_sensitivity_proof <> csum def
+binder 5443:5443 <> n:22
+R5452:5454 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5448:5449 stellarorion_sensitivity_proof <> y1:19 var
+R5451:5451 stellarorion_sensitivity_proof <> n:22 var
+R5455:5456 stellarorion_sensitivity_proof <> y2:20 var
+R5458:5458 stellarorion_sensitivity_proof <> n:22 var
+R5461:5461 stellarorion_sensitivity_proof <> l:21 var
+R5474:5476 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5465:5468 stellarorion_sensitivity_proof <> csum def
+R5470:5471 stellarorion_sensitivity_proof <> y1:19 var
+R5473:5473 stellarorion_sensitivity_proof <> l:21 var
+R5477:5480 stellarorion_sensitivity_proof <> csum def
+R5482:5483 stellarorion_sensitivity_proof <> y2:20 var
+R5485:5485 stellarorion_sensitivity_proof <> l:21 var
+prf 5566:5579 <> swing_additive
+binder 5590:5591 <> y1:23
+binder 5593:5594 <> y2:24
+binder 5596:5596 <> p:25
+binder 5598:5598 <> q:26
+R5641:5645 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5603:5613 stellarorion_sensitivity_proof <> axial_swing def
+binder 5620:5620 <> n:27
+R5629:5631 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5625:5626 stellarorion_sensitivity_proof <> y1:23 var
+R5628:5628 stellarorion_sensitivity_proof <> n:27 var
+R5632:5633 stellarorion_sensitivity_proof <> y2:24 var
+R5635:5635 stellarorion_sensitivity_proof <> n:27 var
+R5638:5638 stellarorion_sensitivity_proof <> p:25 var
+R5640:5640 stellarorion_sensitivity_proof <> q:26 var
+R5664:5666 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5646:5656 stellarorion_sensitivity_proof <> axial_swing def
+R5658:5659 stellarorion_sensitivity_proof <> y1:23 var
+R5661:5661 stellarorion_sensitivity_proof <> p:25 var
+R5663:5663 stellarorion_sensitivity_proof <> q:26 var
+R5667:5677 stellarorion_sensitivity_proof <> axial_swing def
+R5679:5680 stellarorion_sensitivity_proof <> y2:24 var
+R5682:5682 stellarorion_sensitivity_proof <> p:25 var
+R5684:5684 stellarorion_sensitivity_proof <> q:26 var
+R5709:5719 stellarorion_sensitivity_proof <> axial_swing def
+prf 5739:5751 <> swing_antisym
+binder 5762:5762 <> y:28
+binder 5764:5764 <> p:29
+binder 5766:5766 <> q:30
+R5786:5788 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5769:5779 stellarorion_sensitivity_proof <> axial_swing def
+R5781:5781 stellarorion_sensitivity_proof <> y:28 var
+R5783:5783 stellarorion_sensitivity_proof <> q:30 var
+R5785:5785 stellarorion_sensitivity_proof <> p:29 var
+R5789:5790 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R5791:5801 stellarorion_sensitivity_proof <> axial_swing def
+R5803:5803 stellarorion_sensitivity_proof <> y:28 var
+R5805:5805 stellarorion_sensitivity_proof <> p:29 var
+R5807:5807 stellarorion_sensitivity_proof <> q:30 var
+R5832:5842 stellarorion_sensitivity_proof <> axial_swing def
+prf 5862:5876 <> corner_additive
+binder 5887:5888 <> y1:31
+binder 5890:5891 <> y2:32
+binder 5893:5896 <> plus:33
+binder 5898:5902 <> minus:34
+R5954:5958 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5907:5919 stellarorion_sensitivity_proof <> corner_effect def
+binder 5926:5926 <> n:35
+R5935:5937 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5931:5932 stellarorion_sensitivity_proof <> y1:31 var
+R5934:5934 stellarorion_sensitivity_proof <> n:35 var
+R5938:5939 stellarorion_sensitivity_proof <> y2:32 var
+R5941:5941 stellarorion_sensitivity_proof <> n:35 var
+R5944:5947 stellarorion_sensitivity_proof <> plus:33 var
+R5949:5953 stellarorion_sensitivity_proof <> minus:34 var
+R5986:5988 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5959:5971 stellarorion_sensitivity_proof <> corner_effect def
+R5973:5974 stellarorion_sensitivity_proof <> y1:31 var
+R5976:5979 stellarorion_sensitivity_proof <> plus:33 var
+R5981:5985 stellarorion_sensitivity_proof <> minus:34 var
+R5989:6001 stellarorion_sensitivity_proof <> corner_effect def
+R6003:6004 stellarorion_sensitivity_proof <> y2:32 var
+R6006:6009 stellarorion_sensitivity_proof <> plus:33 var
+R6011:6015 stellarorion_sensitivity_proof <> minus:34 var
+R6042:6054 stellarorion_sensitivity_proof <> corner_effect def
+R6068:6075 stellarorion_sensitivity_proof <> csum_add thm
+R6091:6098 stellarorion_sensitivity_proof <> csum_add thm
+R6068:6075 stellarorion_sensitivity_proof <> csum_add thm
+R6068:6075 stellarorion_sensitivity_proof <> csum_add thm
+R6091:6098 stellarorion_sensitivity_proof <> csum_add thm
+R6091:6098 stellarorion_sensitivity_proof <> csum_add thm
+prf 6131:6141 <> corner_comm
+binder 6152:6152 <> y:36
+binder 6154:6154 <> a:37
+binder 6156:6156 <> b:38
+R6220:6222 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6189:6191 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6161:6173 stellarorion_sensitivity_proof <> corner_effect def
+R6175:6175 stellarorion_sensitivity_proof <> y:36 var
+R6179:6182 Coq.Init.Datatypes <> ::list_scope:x_'++'_x not
+R6178:6178 stellarorion_sensitivity_proof <> a:37 var
+R6183:6183 stellarorion_sensitivity_proof <> b:38 var
+R6186:6188 Coq.Init.Datatypes <> nil constr
+R6192:6204 stellarorion_sensitivity_proof <> corner_effect def
+R6206:6206 stellarorion_sensitivity_proof <> y:36 var
+R6210:6213 Coq.Init.Datatypes <> ::list_scope:x_'++'_x not
+R6209:6209 stellarorion_sensitivity_proof <> b:38 var
+R6214:6214 stellarorion_sensitivity_proof <> a:37 var
+R6217:6219 Coq.Init.Datatypes <> nil constr
+R6250:6262 stellarorion_sensitivity_proof <> corner_effect def
+R6283:6290 stellarorion_sensitivity_proof <> csum_app thm
+R6283:6290 stellarorion_sensitivity_proof <> csum_app thm
+R6283:6290 stellarorion_sensitivity_proof <> csum_app thm
+R6283:6290 stellarorion_sensitivity_proof <> csum_app thm
+R6283:6290 stellarorion_sensitivity_proof <> csum_app thm
+prf 6310:6324 <> corner_constant
+binder 6335:6335 <> c:39
+R6381:6383 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6340:6352 stellarorion_sensitivity_proof <> corner_effect def
+R6364:6364 stellarorion_sensitivity_proof <> c:39 var
+R6367:6373 stellarorion_sensitivity_proof <> pickset def
+R6375:6380 stellarorion_sensitivity_proof <> minset def
+R6409:6421 stellarorion_sensitivity_proof <> corner_effect def
+R6424:6427 stellarorion_sensitivity_proof <> csum def
+prf 6454:6469 <> corner_magnitude
+R6608:6610 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6475:6487 stellarorion_sensitivity_proof <> corner_effect def
+binder 6494:6494 <> n:40
+R6505:6505 stellarorion_sensitivity_proof <> n:40 var
+R6594:6600 stellarorion_sensitivity_proof <> pickset def
+R6602:6607 stellarorion_sensitivity_proof <> minset def
+R6636:6648 stellarorion_sensitivity_proof <> corner_effect def
+R6651:6654 stellarorion_sensitivity_proof <> csum def
+prf 6681:6692 <> gradient_pos
+binder 6703:6703 <> y:42
+binder 6705:6705 <> p:43
+binder 6707:6707 <> q:44
+binder 6709:6709 <> a:45
+binder 6711:6711 <> h:46
+R6721:6724 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6717:6719 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6720:6720 stellarorion_sensitivity_proof <> a:45 var
+R6730:6733 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6726:6728 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6729:6729 stellarorion_sensitivity_proof <> h:46 var
+R6755:6760 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6735:6737 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6738:6748 stellarorion_sensitivity_proof <> axial_swing def
+R6750:6750 stellarorion_sensitivity_proof <> y:42 var
+R6752:6752 stellarorion_sensitivity_proof <> p:43 var
+R6754:6754 stellarorion_sensitivity_proof <> q:44 var
+R6762:6764 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6765:6774 stellarorion_sensitivity_proof <> axial_grad def
+R6776:6776 stellarorion_sensitivity_proof <> y:42 var
+R6778:6778 stellarorion_sensitivity_proof <> p:43 var
+R6780:6780 stellarorion_sensitivity_proof <> q:44 var
+R6782:6782 stellarorion_sensitivity_proof <> a:45 var
+R6784:6784 stellarorion_sensitivity_proof <> h:46 var
+R6830:6839 stellarorion_sensitivity_proof <> axial_grad def
+R6842:6852 stellarorion_sensitivity_proof <> axial_swing def
+R6878:6880 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6886:6888 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6882:6884 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6878:6880 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6886:6888 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6882:6884 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6903:6919 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R6903:6919 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R6937:6952 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R6937:6952 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+def 7077:7081 <> pick3
+R7088:7090 Coq.Init.Datatypes <> nat ind
+binder 7084:7084 <> i:47
+R7102:7102 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7094:7094 <> a:48
+binder 7096:7096 <> b:49
+binder 7098:7098 <> c:50
+R7107:7107 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R7120:7120 stellarorion_sensitivity_proof <> i:47 var
+R7132:7132 stellarorion_sensitivity_proof <> a:48 var
+R7141:7141 stellarorion_sensitivity_proof <> b:49 var
+R7150:7150 stellarorion_sensitivity_proof <> c:50 var
+def 7243:7246 <> dom3
+R7257:7257 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7249:7249 <> a:52
+binder 7251:7251 <> b:53
+binder 7253:7253 <> c:54
+R7262:7264 Coq.Init.Datatypes <> nat ind
+R7274:7280 Coq.Reals.RIneq <> Rlt_dec thm
+R7282:7282 stellarorion_sensitivity_proof <> a:52 var
+R7284:7284 stellarorion_sensitivity_proof <> b:53 var
+R7332:7338 Coq.Reals.RIneq <> Rlt_dec thm
+R7340:7340 stellarorion_sensitivity_proof <> a:52 var
+R7342:7342 stellarorion_sensitivity_proof <> c:54 var
+R7295:7301 Coq.Reals.RIneq <> Rlt_dec thm
+R7303:7303 stellarorion_sensitivity_proof <> b:53 var
+R7305:7305 stellarorion_sensitivity_proof <> c:54 var
+def 7371:7377 <> abspick
+R7384:7386 Coq.Init.Datatypes <> nat ind
+binder 7380:7380 <> i:55
+R7401:7401 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7390:7391 <> e1:56
+binder 7393:7394 <> e2:57
+binder 7396:7397 <> e3:58
+R7406:7406 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R7413:7416 Coq.Reals.Rbasic_fun <> Rabs def
+R7419:7423 stellarorion_sensitivity_proof <> pick3 def
+R7425:7425 stellarorion_sensitivity_proof <> i:55 var
+R7428:7431 Coq.Reals.Rbasic_fun <> Rabs def
+R7433:7434 stellarorion_sensitivity_proof <> e1:56 var
+R7438:7441 Coq.Reals.Rbasic_fun <> Rabs def
+R7443:7444 stellarorion_sensitivity_proof <> e2:57 var
+R7448:7451 Coq.Reals.Rbasic_fun <> Rabs def
+R7453:7454 stellarorion_sensitivity_proof <> e3:58 var
+prf 7466:7473 <> covers_1
+R7495:7495 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7484:7485 <> e1:59
+binder 7487:7488 <> e2:60
+binder 7490:7491 <> e3:61
+R7507:7510 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7500:7503 Coq.Reals.Rbasic_fun <> Rabs def
+R7505:7506 stellarorion_sensitivity_proof <> e1:59 var
+R7511:7517 stellarorion_sensitivity_proof <> abspick def
+R7520:7523 stellarorion_sensitivity_proof <> dom3 def
+R7526:7529 Coq.Reals.Rbasic_fun <> Rabs def
+R7531:7532 stellarorion_sensitivity_proof <> e1:59 var
+R7536:7539 Coq.Reals.Rbasic_fun <> Rabs def
+R7541:7542 stellarorion_sensitivity_proof <> e2:60 var
+R7546:7549 Coq.Reals.Rbasic_fun <> Rabs def
+R7551:7552 stellarorion_sensitivity_proof <> e3:61 var
+R7556:7557 stellarorion_sensitivity_proof <> e1:59 var
+R7559:7560 stellarorion_sensitivity_proof <> e2:60 var
+R7562:7563 stellarorion_sensitivity_proof <> e3:61 var
+R7608:7611 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7612:7615 Coq.Reals.Rbasic_fun <> Rabs def
+R7630:7637 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R7608:7611 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7612:7615 Coq.Reals.Rbasic_fun <> Rabs def
+R7630:7637 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R7656:7659 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7660:7663 Coq.Reals.Rbasic_fun <> Rabs def
+R7678:7685 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R7656:7659 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7660:7663 Coq.Reals.Rbasic_fun <> Rabs def
+R7678:7685 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R7704:7707 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7708:7711 Coq.Reals.Rbasic_fun <> Rabs def
+R7726:7733 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R7704:7707 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7708:7711 Coq.Reals.Rbasic_fun <> Rabs def
+R7726:7733 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R7745:7751 stellarorion_sensitivity_proof <> abspick def
+R7754:7757 stellarorion_sensitivity_proof <> dom3 def
+R7760:7764 stellarorion_sensitivity_proof <> pick3 def
+R7779:7785 Coq.Reals.RIneq <> Rlt_dec thm
+R7788:7791 Coq.Reals.Rbasic_fun <> Rabs def
+R7798:7801 Coq.Reals.Rbasic_fun <> Rabs def
+R7779:7785 Coq.Reals.RIneq <> Rlt_dec thm
+R7788:7791 Coq.Reals.Rbasic_fun <> Rabs def
+R7798:7801 Coq.Reals.Rbasic_fun <> Rabs def
+R7836:7842 Coq.Reals.RIneq <> Rlt_dec thm
+R7845:7848 Coq.Reals.Rbasic_fun <> Rabs def
+R7855:7858 Coq.Reals.Rbasic_fun <> Rabs def
+R7836:7842 Coq.Reals.RIneq <> Rlt_dec thm
+R7845:7848 Coq.Reals.Rbasic_fun <> Rabs def
+R7855:7858 Coq.Reals.Rbasic_fun <> Rabs def
+R7894:7904 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R7907:7910 Coq.Reals.Rbasic_fun <> Rabs def
+R7894:7904 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R7907:7910 Coq.Reals.Rbasic_fun <> Rabs def
+R7894:7904 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R7907:7910 Coq.Reals.Rbasic_fun <> Rabs def
+R7941:7951 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R7954:7957 Coq.Reals.Rbasic_fun <> Rabs def
+R7941:7951 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R7954:7957 Coq.Reals.Rbasic_fun <> Rabs def
+R7941:7951 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R7954:7957 Coq.Reals.Rbasic_fun <> Rabs def
+R7987:7993 Coq.Reals.RIneq <> Rlt_dec thm
+R7996:7999 Coq.Reals.Rbasic_fun <> Rabs def
+R8006:8009 Coq.Reals.Rbasic_fun <> Rabs def
+R7987:7993 Coq.Reals.RIneq <> Rlt_dec thm
+R7996:7999 Coq.Reals.Rbasic_fun <> Rabs def
+R8006:8009 Coq.Reals.Rbasic_fun <> Rabs def
+R8045:8055 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8058:8061 Coq.Reals.Rbasic_fun <> Rabs def
+R8045:8055 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8058:8061 Coq.Reals.Rbasic_fun <> Rabs def
+R8045:8055 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8058:8061 Coq.Reals.Rbasic_fun <> Rabs def
+R8092:8102 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8105:8108 Coq.Reals.Rbasic_fun <> Rabs def
+R8092:8102 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8105:8108 Coq.Reals.Rbasic_fun <> Rabs def
+R8092:8102 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8105:8108 Coq.Reals.Rbasic_fun <> Rabs def
+R8125:8132 Coq.Reals.RIneq <> Rle_refl thm
+R8125:8132 Coq.Reals.RIneq <> Rle_refl thm
+prf 8147:8154 <> covers_2
+R8176:8176 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 8165:8166 <> e1:62
+binder 8168:8169 <> e2:63
+binder 8171:8172 <> e3:64
+R8188:8191 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8181:8184 Coq.Reals.Rbasic_fun <> Rabs def
+R8186:8187 stellarorion_sensitivity_proof <> e2:63 var
+R8192:8198 stellarorion_sensitivity_proof <> abspick def
+R8201:8204 stellarorion_sensitivity_proof <> dom3 def
+R8207:8210 Coq.Reals.Rbasic_fun <> Rabs def
+R8212:8213 stellarorion_sensitivity_proof <> e1:62 var
+R8217:8220 Coq.Reals.Rbasic_fun <> Rabs def
+R8222:8223 stellarorion_sensitivity_proof <> e2:63 var
+R8227:8230 Coq.Reals.Rbasic_fun <> Rabs def
+R8232:8233 stellarorion_sensitivity_proof <> e3:64 var
+R8237:8238 stellarorion_sensitivity_proof <> e1:62 var
+R8240:8241 stellarorion_sensitivity_proof <> e2:63 var
+R8243:8244 stellarorion_sensitivity_proof <> e3:64 var
+R8289:8292 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8293:8296 Coq.Reals.Rbasic_fun <> Rabs def
+R8311:8318 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R8289:8292 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8293:8296 Coq.Reals.Rbasic_fun <> Rabs def
+R8311:8318 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R8337:8340 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8341:8344 Coq.Reals.Rbasic_fun <> Rabs def
+R8359:8366 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R8337:8340 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8341:8344 Coq.Reals.Rbasic_fun <> Rabs def
+R8359:8366 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R8385:8388 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8389:8392 Coq.Reals.Rbasic_fun <> Rabs def
+R8407:8414 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R8385:8388 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8389:8392 Coq.Reals.Rbasic_fun <> Rabs def
+R8407:8414 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R8426:8432 stellarorion_sensitivity_proof <> abspick def
+R8435:8438 stellarorion_sensitivity_proof <> dom3 def
+R8441:8445 stellarorion_sensitivity_proof <> pick3 def
+R8460:8466 Coq.Reals.RIneq <> Rlt_dec thm
+R8469:8472 Coq.Reals.Rbasic_fun <> Rabs def
+R8479:8482 Coq.Reals.Rbasic_fun <> Rabs def
+R8460:8466 Coq.Reals.RIneq <> Rlt_dec thm
+R8469:8472 Coq.Reals.Rbasic_fun <> Rabs def
+R8479:8482 Coq.Reals.Rbasic_fun <> Rabs def
+R8517:8523 Coq.Reals.RIneq <> Rlt_dec thm
+R8526:8529 Coq.Reals.Rbasic_fun <> Rabs def
+R8536:8539 Coq.Reals.Rbasic_fun <> Rabs def
+R8517:8523 Coq.Reals.RIneq <> Rlt_dec thm
+R8526:8529 Coq.Reals.Rbasic_fun <> Rabs def
+R8536:8539 Coq.Reals.Rbasic_fun <> Rabs def
+R8575:8585 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8588:8591 Coq.Reals.Rbasic_fun <> Rabs def
+R8575:8585 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8588:8591 Coq.Reals.Rbasic_fun <> Rabs def
+R8575:8585 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8588:8591 Coq.Reals.Rbasic_fun <> Rabs def
+R8622:8632 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8635:8638 Coq.Reals.Rbasic_fun <> Rabs def
+R8622:8632 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8635:8638 Coq.Reals.Rbasic_fun <> Rabs def
+R8622:8632 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8635:8638 Coq.Reals.Rbasic_fun <> Rabs def
+R8655:8662 Coq.Reals.RIneq <> Rle_refl thm
+R8655:8662 Coq.Reals.RIneq <> Rle_refl thm
+R8679:8685 Coq.Reals.RIneq <> Rlt_dec thm
+R8688:8691 Coq.Reals.Rbasic_fun <> Rabs def
+R8698:8701 Coq.Reals.Rbasic_fun <> Rabs def
+R8679:8685 Coq.Reals.RIneq <> Rlt_dec thm
+R8688:8691 Coq.Reals.Rbasic_fun <> Rabs def
+R8698:8701 Coq.Reals.Rbasic_fun <> Rabs def
+R8737:8747 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8750:8753 Coq.Reals.Rbasic_fun <> Rabs def
+R8737:8747 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8750:8753 Coq.Reals.Rbasic_fun <> Rabs def
+R8737:8747 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8750:8753 Coq.Reals.Rbasic_fun <> Rabs def
+R8795:8798 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8788:8791 Coq.Reals.Rbasic_fun <> Rabs def
+R8799:8802 Coq.Reals.Rbasic_fun <> Rabs def
+R8795:8798 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8788:8791 Coq.Reals.Rbasic_fun <> Rabs def
+R8799:8802 Coq.Reals.Rbasic_fun <> Rabs def
+R8831:8841 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8844:8847 Coq.Reals.Rbasic_fun <> Rabs def
+R8831:8841 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8844:8847 Coq.Reals.Rbasic_fun <> Rabs def
+R8831:8841 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R8844:8847 Coq.Reals.Rbasic_fun <> Rabs def
+prf 8880:8887 <> covers_3
+R8909:8909 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 8898:8899 <> e1:65
+binder 8901:8902 <> e2:66
+binder 8904:8905 <> e3:67
+R8921:8924 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8914:8917 Coq.Reals.Rbasic_fun <> Rabs def
+R8919:8920 stellarorion_sensitivity_proof <> e3:67 var
+R8925:8931 stellarorion_sensitivity_proof <> abspick def
+R8934:8937 stellarorion_sensitivity_proof <> dom3 def
+R8940:8943 Coq.Reals.Rbasic_fun <> Rabs def
+R8945:8946 stellarorion_sensitivity_proof <> e1:65 var
+R8950:8953 Coq.Reals.Rbasic_fun <> Rabs def
+R8955:8956 stellarorion_sensitivity_proof <> e2:66 var
+R8960:8963 Coq.Reals.Rbasic_fun <> Rabs def
+R8965:8966 stellarorion_sensitivity_proof <> e3:67 var
+R8970:8971 stellarorion_sensitivity_proof <> e1:65 var
+R8973:8974 stellarorion_sensitivity_proof <> e2:66 var
+R8976:8977 stellarorion_sensitivity_proof <> e3:67 var
+R9022:9025 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9026:9029 Coq.Reals.Rbasic_fun <> Rabs def
+R9044:9051 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R9022:9025 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9026:9029 Coq.Reals.Rbasic_fun <> Rabs def
+R9044:9051 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R9070:9073 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9074:9077 Coq.Reals.Rbasic_fun <> Rabs def
+R9092:9099 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R9070:9073 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9074:9077 Coq.Reals.Rbasic_fun <> Rabs def
+R9092:9099 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R9118:9121 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9122:9125 Coq.Reals.Rbasic_fun <> Rabs def
+R9140:9147 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R9118:9121 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9122:9125 Coq.Reals.Rbasic_fun <> Rabs def
+R9140:9147 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R9159:9165 stellarorion_sensitivity_proof <> abspick def
+R9168:9171 stellarorion_sensitivity_proof <> dom3 def
+R9174:9178 stellarorion_sensitivity_proof <> pick3 def
+R9193:9199 Coq.Reals.RIneq <> Rlt_dec thm
+R9202:9205 Coq.Reals.Rbasic_fun <> Rabs def
+R9212:9215 Coq.Reals.Rbasic_fun <> Rabs def
+R9193:9199 Coq.Reals.RIneq <> Rlt_dec thm
+R9202:9205 Coq.Reals.Rbasic_fun <> Rabs def
+R9212:9215 Coq.Reals.Rbasic_fun <> Rabs def
+R9250:9256 Coq.Reals.RIneq <> Rlt_dec thm
+R9259:9262 Coq.Reals.Rbasic_fun <> Rabs def
+R9269:9272 Coq.Reals.Rbasic_fun <> Rabs def
+R9250:9256 Coq.Reals.RIneq <> Rlt_dec thm
+R9259:9262 Coq.Reals.Rbasic_fun <> Rabs def
+R9269:9272 Coq.Reals.Rbasic_fun <> Rabs def
+R9308:9318 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R9321:9324 Coq.Reals.Rbasic_fun <> Rabs def
+R9308:9318 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R9321:9324 Coq.Reals.Rbasic_fun <> Rabs def
+R9308:9318 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R9321:9324 Coq.Reals.Rbasic_fun <> Rabs def
+R9341:9348 Coq.Reals.RIneq <> Rle_refl thm
+R9341:9348 Coq.Reals.RIneq <> Rle_refl thm
+R9377:9380 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9370:9373 Coq.Reals.Rbasic_fun <> Rabs def
+R9381:9384 Coq.Reals.Rbasic_fun <> Rabs def
+R9377:9380 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9370:9373 Coq.Reals.Rbasic_fun <> Rabs def
+R9381:9384 Coq.Reals.Rbasic_fun <> Rabs def
+R9413:9423 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R9426:9429 Coq.Reals.Rbasic_fun <> Rabs def
+R9413:9423 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R9426:9429 Coq.Reals.Rbasic_fun <> Rabs def
+R9413:9423 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R9426:9429 Coq.Reals.Rbasic_fun <> Rabs def
+R9464:9470 Coq.Reals.RIneq <> Rlt_dec thm
+R9473:9476 Coq.Reals.Rbasic_fun <> Rabs def
+R9483:9486 Coq.Reals.Rbasic_fun <> Rabs def
+R9464:9470 Coq.Reals.RIneq <> Rlt_dec thm
+R9473:9476 Coq.Reals.Rbasic_fun <> Rabs def
+R9483:9486 Coq.Reals.Rbasic_fun <> Rabs def
+R9522:9532 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R9535:9538 Coq.Reals.Rbasic_fun <> Rabs def
+R9522:9532 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R9535:9538 Coq.Reals.Rbasic_fun <> Rabs def
+R9522:9532 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R9535:9538 Coq.Reals.Rbasic_fun <> Rabs def
+R9555:9562 Coq.Reals.RIneq <> Rle_refl thm
+R9555:9562 Coq.Reals.RIneq <> Rle_refl thm
+R9591:9594 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9584:9587 Coq.Reals.Rbasic_fun <> Rabs def
+R9595:9598 Coq.Reals.Rbasic_fun <> Rabs def
+R9591:9594 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9584:9587 Coq.Reals.Rbasic_fun <> Rabs def
+R9595:9598 Coq.Reals.Rbasic_fun <> Rabs def
+R9627:9637 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R9640:9643 Coq.Reals.Rbasic_fun <> Rabs def
+R9627:9637 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R9640:9643 Coq.Reals.Rbasic_fun <> Rabs def
+R9627:9637 Coq.Reals.Rbasic_fun <> Rabs_pos_eq thm
+R9640:9643 Coq.Reals.Rbasic_fun <> Rabs def
+prf 9676:9685 <> dom_covers
+R9707:9707 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 9696:9697 <> e1:68
+binder 9699:9700 <> e2:69
+binder 9702:9703 <> e3:70
+R9780:9785 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R9719:9726 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9712:9715 Coq.Reals.Rbasic_fun <> Rabs def
+R9717:9718 stellarorion_sensitivity_proof <> e1:68 var
+R9727:9733 stellarorion_sensitivity_proof <> abspick def
+R9736:9739 stellarorion_sensitivity_proof <> dom3 def
+R9742:9745 Coq.Reals.Rbasic_fun <> Rabs def
+R9747:9748 stellarorion_sensitivity_proof <> e1:68 var
+R9752:9755 Coq.Reals.Rbasic_fun <> Rabs def
+R9757:9758 stellarorion_sensitivity_proof <> e2:69 var
+R9762:9765 Coq.Reals.Rbasic_fun <> Rabs def
+R9767:9768 stellarorion_sensitivity_proof <> e3:70 var
+R9772:9773 stellarorion_sensitivity_proof <> e1:68 var
+R9775:9776 stellarorion_sensitivity_proof <> e2:69 var
+R9778:9779 stellarorion_sensitivity_proof <> e3:70 var
+R9854:9859 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R9793:9800 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9786:9789 Coq.Reals.Rbasic_fun <> Rabs def
+R9791:9792 stellarorion_sensitivity_proof <> e2:69 var
+R9801:9807 stellarorion_sensitivity_proof <> abspick def
+R9810:9813 stellarorion_sensitivity_proof <> dom3 def
+R9816:9819 Coq.Reals.Rbasic_fun <> Rabs def
+R9821:9822 stellarorion_sensitivity_proof <> e1:68 var
+R9826:9829 Coq.Reals.Rbasic_fun <> Rabs def
+R9831:9832 stellarorion_sensitivity_proof <> e2:69 var
+R9836:9839 Coq.Reals.Rbasic_fun <> Rabs def
+R9841:9842 stellarorion_sensitivity_proof <> e3:70 var
+R9846:9847 stellarorion_sensitivity_proof <> e1:68 var
+R9849:9850 stellarorion_sensitivity_proof <> e2:69 var
+R9852:9853 stellarorion_sensitivity_proof <> e3:70 var
+R9867:9874 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9860:9863 Coq.Reals.Rbasic_fun <> Rabs def
+R9865:9866 stellarorion_sensitivity_proof <> e3:70 var
+R9875:9881 stellarorion_sensitivity_proof <> abspick def
+R9884:9887 stellarorion_sensitivity_proof <> dom3 def
+R9890:9893 Coq.Reals.Rbasic_fun <> Rabs def
+R9895:9896 stellarorion_sensitivity_proof <> e1:68 var
+R9900:9903 Coq.Reals.Rbasic_fun <> Rabs def
+R9905:9906 stellarorion_sensitivity_proof <> e2:69 var
+R9910:9913 Coq.Reals.Rbasic_fun <> Rabs def
+R9915:9916 stellarorion_sensitivity_proof <> e3:70 var
+R9920:9921 stellarorion_sensitivity_proof <> e1:68 var
+R9923:9924 stellarorion_sensitivity_proof <> e2:69 var
+R9926:9927 stellarorion_sensitivity_proof <> e3:70 var
+R9973:9980 stellarorion_sensitivity_proof <> covers_1 thm
+R9973:9980 stellarorion_sensitivity_proof <> covers_1 thm
+R10013:10020 stellarorion_sensitivity_proof <> covers_2 thm
+R10041:10048 stellarorion_sensitivity_proof <> covers_3 thm
+R10013:10020 stellarorion_sensitivity_proof <> covers_2 thm
+R10041:10048 stellarorion_sensitivity_proof <> covers_3 thm

@@ -1,0 +1,90 @@
+DIGEST febdb7a471764fea073f9580334c9924
+Fplot_surf_profile_proof
+R2796:2810 Coq.Reals.Reals <> <> lib
+R2828:2845 Coq.Arith.PeanoNat <> <> lib
+R2863:2879 Coq.micromega.Lia <> <> lib
+R2897:2913 Coq.micromega.Lra <> <> lib
+def 3019:3035 <> measured_diameter
+R3047:3047 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3038:3043 <> radius:1
+R3052:3052 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3058:3060 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3061:3066 plot_surf_profile_proof <> radius:1 var
+def 3150:3162 <> design_radius
+R3166:3166 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 3250:3264 <> design_diameter
+R3268:3268 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+prf 3428:3451 <> design_radius_consistent
+R3486:3488 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3455:3471 plot_surf_profile_proof <> measured_diameter def
+R3473:3485 plot_surf_profile_proof <> design_radius def
+R3489:3503 plot_surf_profile_proof <> design_diameter def
+R3522:3538 plot_surf_profile_proof <> measured_diameter def
+R3541:3553 plot_surf_profile_proof <> design_radius def
+R3556:3570 plot_surf_profile_proof <> design_diameter def
+prf 3750:3775 <> measured_diameter_monotone
+binder 3786:3787 <> r1:2
+binder 3789:3790 <> r2:3
+R3803:3806 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3797:3800 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3795:3796 plot_surf_profile_proof <> r1:2 var
+R3801:3802 plot_surf_profile_proof <> r2:3 var
+R3827:3830 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3807:3823 plot_surf_profile_proof <> measured_diameter def
+R3825:3826 plot_surf_profile_proof <> r1:2 var
+R3831:3847 plot_surf_profile_proof <> measured_diameter def
+R3849:3850 plot_surf_profile_proof <> r2:3 var
+R3888:3904 plot_surf_profile_proof <> measured_diameter def
+R3930:3933 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3925:3927 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3935:3937 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3930:3933 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3925:3927 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3935:3937 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3953:3969 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+R3953:3969 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+prf 4160:4180 <> design_diameter_check
+binder 4191:4194 <> rmax:4
+R4220:4223 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4203:4206 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4199:4202 plot_surf_profile_proof <> rmax:4 var
+R4207:4219 plot_surf_profile_proof <> design_radius def
+R4246:4249 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4224:4240 plot_surf_profile_proof <> measured_diameter def
+R4242:4245 plot_surf_profile_proof <> rmax:4 var
+R4250:4264 plot_surf_profile_proof <> design_diameter def
+R4301:4317 plot_surf_profile_proof <> measured_diameter def
+R4320:4332 plot_surf_profile_proof <> design_radius def
+R4335:4349 plot_surf_profile_proof <> design_diameter def
+R4382:4385 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4375:4377 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4387:4389 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4382:4385 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4375:4377 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4387:4389 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4406:4422 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+R4406:4422 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+prf 4674:4695 <> point_diameter_bounded
+binder 4706:4706 <> r:5
+binder 4708:4711 <> rmax:6
+R4722:4725 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4717:4720 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4721:4721 plot_surf_profile_proof <> r:5 var
+R4735:4740 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4727:4730 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4726:4726 plot_surf_profile_proof <> r:5 var
+R4731:4734 plot_surf_profile_proof <> rmax:6 var
+R4760:4763 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4741:4757 plot_surf_profile_proof <> measured_diameter def
+R4759:4759 plot_surf_profile_proof <> r:5 var
+R4764:4780 plot_surf_profile_proof <> measured_diameter def
+R4782:4785 plot_surf_profile_proof <> rmax:6 var
+R4829:4845 plot_surf_profile_proof <> measured_diameter def
+R4870:4873 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4866:4868 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4875:4877 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4870:4873 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4866:4868 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4875:4877 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4895:4911 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+R4895:4911 Coq.Reals.RIneq <> Rmult_le_compat_l thm

@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "generated_by": "StellarOrion Optimization Pipeline",
+    "mode": "SBO Bayesian Optimization (GP + EI)",
+    "references": {
+      "IRVE-3": "NASA TP-2013-4012",
+      "LOFTID": "Deshmukh et al. AIAA 2024-1501",
+      "Rapisarda": "Rapisarda (2023) TU Delft MSc Thesis, Tables 4.1, 4.10"
+    }
+  },
+  "optimized_geometry": {
+    "diameter_m": 0.0,
+    "angle_deg": 0.0,
+    "nose_radius_m": 0.0,
+    "toroid_count": 0,
+    "toroid_radius_m": 0.0,
+    "mass_kg": 0.0,
+    "cost": 0.0,
+    "generations": 0,
+    "converged": false
+  },
+  "irve3_reference": {
+    "diameter_m": 3.0,
+    "angle_deg": 60.0,
+    "nose_radius_m": 0.55,
+    "toroid_count": 6,
+    "toroid_radius_m": 0.135,
+    "mass_kg": 281.0
+  },
+  "deltas": {
+    "diameter_m": -100.0,
+    "angle_deg": -100.0,
+    "nose_radius_m": -100.0,
+    "toroid_count": -100.0,
+    "toroid_radius_m": -100.0,
+    "mass_kg": -100.0
+  }
+}

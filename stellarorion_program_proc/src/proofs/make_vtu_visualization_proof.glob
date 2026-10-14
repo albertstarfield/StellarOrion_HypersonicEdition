@@ -1,0 +1,130 @@
+DIGEST ca90fd78457be9778f574ac3522093e1
+Fmake_vtu_visualization_proof
+R3250:3264 Coq.Reals.Reals <> <> lib
+R3282:3299 Coq.Arith.PeanoNat <> <> lib
+R3317:3333 Coq.micromega.Lia <> <> lib
+R3351:3367 Coq.micromega.Lra <> <> lib
+prf 3478:3489 <> rdiv_le_mono
+binder 3500:3500 <> a:1
+binder 3502:3502 <> b:2
+binder 3504:3504 <> c:3
+R3512:3515 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3508:3510 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3511:3511 make_vtu_visualization_proof <> c:3 var
+R3522:3525 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3517:3520 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3516:3516 make_vtu_visualization_proof <> a:1 var
+R3521:3521 make_vtu_visualization_proof <> b:2 var
+R3531:3534 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3527:3529 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3526:3526 make_vtu_visualization_proof <> a:1 var
+R3530:3530 make_vtu_visualization_proof <> c:3 var
+R3536:3538 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3535:3535 make_vtu_visualization_proof <> b:2 var
+R3539:3539 make_vtu_visualization_proof <> c:3 var
+R3590:3593 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3594:3595 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3609:3614 Coq.Reals.RIneq <> Rlt_le thm
+R3623:3638 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R3590:3593 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3594:3595 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3609:3614 Coq.Reals.RIneq <> Rlt_le thm
+R3623:3638 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R3661:3664 Coq.Reals.Rdefinitions <> Rdiv def
+R3675:3691 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R3675:3691 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+def 3816:3826 <> wm2_to_wcm2
+R3833:3833 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3829:3829 <> q:4
+R3838:3838 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3844:3846 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3843:3843 make_vtu_visualization_proof <> q:4 var
+prf 4002:4021 <> wm2_to_wcm2_positive
+binder 4032:4032 <> q:5
+R4040:4043 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4036:4038 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4039:4039 make_vtu_visualization_proof <> q:5 var
+R4045:4047 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4048:4058 make_vtu_visualization_proof <> wm2_to_wcm2 def
+R4060:4060 make_vtu_visualization_proof <> q:5 var
+R4101:4103 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4101:4103 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4128:4138 make_vtu_visualization_proof <> wm2_to_wcm2 def
+R4149:4164 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R4149:4164 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+prf 4283:4302 <> wm2_to_wcm2_monotone
+binder 4313:4313 <> a:6
+binder 4315:4315 <> b:7
+R4324:4327 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4319:4322 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4318:4318 make_vtu_visualization_proof <> a:6 var
+R4323:4323 make_vtu_visualization_proof <> b:7 var
+R4341:4344 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4328:4338 make_vtu_visualization_proof <> wm2_to_wcm2 def
+R4340:4340 make_vtu_visualization_proof <> a:6 var
+R4345:4355 make_vtu_visualization_proof <> wm2_to_wcm2 def
+R4357:4357 make_vtu_visualization_proof <> b:7 var
+R4401:4403 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4401:4403 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4428:4438 make_vtu_visualization_proof <> wm2_to_wcm2 def
+R4449:4460 make_vtu_visualization_proof <> rdiv_le_mono thm
+R4449:4460 make_vtu_visualization_proof <> rdiv_le_mono thm
+def 4585:4594 <> color_vmax
+R4607:4607 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4597:4597 <> q:8
+binder 4599:4603 <> floor:9
+R4612:4612 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4617:4620 Coq.Reals.Rbasic_fun <> Rmax def
+R4622:4622 make_vtu_visualization_proof <> q:8 var
+R4624:4628 make_vtu_visualization_proof <> floor:9 var
+prf 4719:4737 <> color_vmax_ge_floor
+binder 4748:4748 <> q:10
+binder 4750:4754 <> floor:11
+R4762:4765 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4757:4761 make_vtu_visualization_proof <> floor:11 var
+R4766:4775 make_vtu_visualization_proof <> color_vmax def
+R4777:4777 make_vtu_visualization_proof <> q:10 var
+R4779:4783 make_vtu_visualization_proof <> floor:11 var
+R4820:4829 make_vtu_visualization_proof <> color_vmax def
+R4855:4858 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4859:4862 Coq.Reals.Rbasic_fun <> Rmax def
+R4882:4887 Coq.Reals.Rbasic_fun <> Rmax_r thm
+R4855:4858 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4859:4862 Coq.Reals.Rbasic_fun <> Rmax def
+R4882:4887 Coq.Reals.Rbasic_fun <> Rmax_r thm
+prf 4999:5016 <> color_vmax_ge_data
+binder 5027:5027 <> q:12
+binder 5029:5033 <> floor:13
+R5037:5040 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5036:5036 make_vtu_visualization_proof <> q:12 var
+R5041:5050 make_vtu_visualization_proof <> color_vmax def
+R5052:5052 make_vtu_visualization_proof <> q:12 var
+R5054:5058 make_vtu_visualization_proof <> floor:13 var
+R5095:5104 make_vtu_visualization_proof <> color_vmax def
+R5126:5129 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5130:5133 Coq.Reals.Rbasic_fun <> Rmax def
+R5153:5158 Coq.Reals.Rbasic_fun <> Rmax_l thm
+R5126:5129 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5130:5133 Coq.Reals.Rbasic_fun <> Rmax def
+R5153:5158 Coq.Reals.Rbasic_fun <> Rmax_l thm
+def 5353:5366 <> q_to_t_surface
+R5385:5385 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5369:5369 <> q:14
+binder 5371:5381 <> radiative_t:15
+R5390:5390 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R5400:5406 Coq.Reals.RIneq <> Rle_dec thm
+R5408:5408 make_vtu_visualization_proof <> q:14 var
+R5426:5436 make_vtu_visualization_proof <> radiative_t:15 var
+prf 5526:5537 <> q_to_t_floor
+binder 5548:5548 <> q:16
+binder 5550:5560 <> radiative_t:17
+R5569:5572 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5564:5567 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5563:5563 make_vtu_visualization_proof <> q:16 var
+R5601:5603 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5573:5586 make_vtu_visualization_proof <> q_to_t_surface def
+R5588:5588 make_vtu_visualization_proof <> q:16 var
+R5590:5600 make_vtu_visualization_proof <> radiative_t:17 var
+R5652:5665 make_vtu_visualization_proof <> q_to_t_surface def
+R5680:5686 Coq.Reals.RIneq <> Rle_dec thm
+R5680:5686 Coq.Reals.RIneq <> Rle_dec thm

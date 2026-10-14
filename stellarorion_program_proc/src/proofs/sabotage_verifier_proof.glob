@@ -1,0 +1,80 @@
+DIGEST e0d1f418482f66ff6c6410252df0141b
+Fsabotage_verifier_proof
+R2402:2416 Coq.Reals.Reals <> <> lib
+R2434:2450 Coq.micromega.Lia <> <> lib
+ind 2569:2576 <> Severity
+constr 2581:2588 <> Critical
+constr 2592:2595 <> High
+constr 2599:2604 <> Medium
+constr 2608:2610 <> Low
+scheme 2569:2576 <> Severity_rect
+scheme 2569:2576 <> Severity_ind
+scheme 2569:2576 <> Severity_rec
+scheme 2569:2576 <> Severity_sind
+def 2625:2637 <> severity_rank
+R2644:2651 sabotage_verifier_proof <> Severity ind
+binder 2640:2640 <> s:3
+R2656:2658 Coq.Init.Datatypes <> nat ind
+R2672:2672 sabotage_verifier_proof <> s:3 var
+R2684:2691 sabotage_verifier_proof <> Critical constr
+R2703:2706 sabotage_verifier_proof <> High constr
+R2722:2727 sabotage_verifier_proof <> Medium constr
+R2741:2743 sabotage_verifier_proof <> Low constr
+prf 2834:2854 <> severity_rank_bounded
+R2869:2876 sabotage_verifier_proof <> Severity ind
+binder 2865:2865 <> s:5
+R2894:2896 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R2879:2891 sabotage_verifier_proof <> severity_rank def
+R2893:2893 sabotage_verifier_proof <> s:5 var
+R2955:2967 sabotage_verifier_proof <> severity_rank def
+def 3113:3121 <> exit_code
+R3141:3143 Coq.Init.Datatypes <> nat ind
+binder 3124:3137 <> critical_count:6
+R3148:3150 Coq.Init.Datatypes <> nat ind
+R3164:3177 sabotage_verifier_proof <> critical_count:6 var
+R3204:3204 Coq.Init.Datatypes <> S constr
+prf 3307:3321 <> exit_code_sound
+R3349:3351 Coq.Init.Datatypes <> nat ind
+binder 3332:3345 <> critical_count:8
+R3385:3388 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3381:3383 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3357:3365 sabotage_verifier_proof <> exit_code def
+R3367:3380 sabotage_verifier_proof <> critical_count:8 var
+R3390:3392 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R3393:3406 sabotage_verifier_proof <> critical_count:8 var
+prf 3594:3608 <> exit_code_clean
+R3636:3638 Coq.Init.Datatypes <> nat ind
+binder 3619:3632 <> critical_count:9
+R3662:3665 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3658:3660 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3644:3657 sabotage_verifier_proof <> critical_count:9 var
+R3690:3692 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3666:3674 sabotage_verifier_proof <> exit_code def
+R3676:3689 sabotage_verifier_proof <> critical_count:9 var
+def 3899:3908 <> count_crit
+R3924:3927 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3921:3923 Coq.Init.Datatypes <> nat ind
+R3928:3931 Coq.Init.Datatypes <> bool ind
+binder 3911:3917 <> flagged:10
+R3939:3941 Coq.Init.Datatypes <> nat ind
+binder 3935:3935 <> n:11
+R3946:3948 Coq.Init.Datatypes <> nat ind
+R3962:3962 sabotage_verifier_proof <> n:11 var
+R3989:3989 Coq.Init.Datatypes <> S constr
+R3997:3997 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R4024:4027 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R4001:4007 sabotage_verifier_proof <> flagged:10 var
+R4028:4037 sabotage_verifier_proof <> count_crit:12 def
+R4039:4045 sabotage_verifier_proof <> flagged:10 var
+prf 4139:4160 <> critical_count_bounded
+R4185:4188 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4182:4184 Coq.Init.Datatypes <> nat ind
+R4189:4192 Coq.Init.Datatypes <> bool ind
+binder 4172:4178 <> flagged:14
+R4200:4202 Coq.Init.Datatypes <> nat ind
+binder 4196:4196 <> n:15
+R4229:4232 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4209:4218 sabotage_verifier_proof <> count_crit def
+R4220:4226 sabotage_verifier_proof <> flagged:14 var
+R4228:4228 sabotage_verifier_proof <> n:15 var
+R4233:4233 sabotage_verifier_proof <> n:15 var

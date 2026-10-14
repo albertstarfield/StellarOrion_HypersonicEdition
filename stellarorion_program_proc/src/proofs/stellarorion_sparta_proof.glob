@@ -1,0 +1,130 @@
+DIGEST a00f15e206946cfc6dd2922f854fe008
+Fstellarorion_sparta_proof
+R2542:2559 Coq.Arith.PeanoNat <> <> lib
+R2577:2593 Coq.micromega.Lia <> <> lib
+def 2712:2730 <> dump_stats_interval
+R2734:2736 Coq.Init.Datatypes <> nat ind
+def 2926:2937 <> dump_cadence
+R2948:2950 Coq.Init.Datatypes <> nat ind
+binder 2940:2944 <> steps:1
+R2955:2957 Coq.Init.Datatypes <> nat ind
+R2986:2989 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R2967:2985 stellarorion_sparta_proof <> dump_stats_interval def
+R2990:2994 stellarorion_sparta_proof <> steps:1 var
+R3026:3030 stellarorion_sparta_proof <> steps:1 var
+R3001:3019 stellarorion_sparta_proof <> dump_stats_interval def
+def 3178:3196 <> expected_dump_count
+R3207:3209 Coq.Init.Datatypes <> nat ind
+binder 3199:3203 <> steps:2
+R3214:3216 Coq.Init.Datatypes <> nat ind
+R3249:3251 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R3228:3230 Coq.Arith.PeanoNat <> ::nat_scope:x_'/'_x not
+R3223:3227 stellarorion_sparta_proof <> steps:2 var
+R3231:3242 stellarorion_sparta_proof <> dump_cadence def
+R3244:3248 stellarorion_sparta_proof <> steps:2 var
+prf 3343:3370 <> dump_stats_interval_positive
+R3375:3378 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3379:3397 stellarorion_sparta_proof <> dump_stats_interval def
+R3414:3432 stellarorion_sparta_proof <> dump_stats_interval def
+prf 3604:3624 <> dump_cadence_positive
+binder 3635:3639 <> steps:3
+R3654:3657 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3645:3648 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3649:3653 stellarorion_sparta_proof <> steps:3 var
+R3659:3662 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3663:3674 stellarorion_sparta_proof <> dump_cadence def
+R3676:3680 stellarorion_sparta_proof <> steps:3 var
+R3718:3729 stellarorion_sparta_proof <> dump_cadence def
+R3732:3750 stellarorion_sparta_proof <> dump_stats_interval def
+R3768:3771 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R3768:3771 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R3796:3805 Coq.Arith.PeanoNat Nat ltb_lt thm
+R3796:3805 Coq.Arith.PeanoNat Nat ltb_lt thm
+R3835:3844 Coq.Arith.PeanoNat Nat ltb_ge thm
+R3835:3844 Coq.Arith.PeanoNat Nat ltb_ge thm
+prf 3945:3964 <> dump_cadence_clamped
+binder 3975:3979 <> steps:4
+R4002:4005 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3984:3995 stellarorion_sparta_proof <> dump_cadence def
+R3997:4001 stellarorion_sparta_proof <> steps:4 var
+R4006:4024 stellarorion_sparta_proof <> dump_stats_interval def
+R4059:4070 stellarorion_sparta_proof <> dump_cadence def
+R4073:4091 stellarorion_sparta_proof <> dump_stats_interval def
+R4109:4112 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R4109:4112 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R4137:4146 Coq.Arith.PeanoNat Nat ltb_lt thm
+R4137:4146 Coq.Arith.PeanoNat Nat ltb_lt thm
+R4176:4185 Coq.Arith.PeanoNat Nat ltb_ge thm
+R4176:4185 Coq.Arith.PeanoNat Nat ltb_ge thm
+prf 4617:4642 <> expected_dump_count_bounds
+binder 4653:4657 <> steps:5
+R4670:4675 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4661:4664 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4665:4669 stellarorion_sparta_proof <> steps:5 var
+R4706:4709 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R4677:4680 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4681:4699 stellarorion_sparta_proof <> expected_dump_count def
+R4701:4705 stellarorion_sparta_proof <> steps:5 var
+R4735:4738 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4710:4728 stellarorion_sparta_proof <> expected_dump_count def
+R4730:4734 stellarorion_sparta_proof <> steps:5 var
+R4744:4746 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R4739:4743 stellarorion_sparta_proof <> steps:5 var
+R4792:4795 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4796:4807 stellarorion_sparta_proof <> dump_cadence def
+R4826:4846 stellarorion_sparta_proof <> dump_cadence_positive thm
+R4792:4795 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4796:4807 stellarorion_sparta_proof <> dump_cadence def
+R4826:4846 stellarorion_sparta_proof <> dump_cadence_positive thm
+R4903:4906 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4882:4884 Coq.Arith.PeanoNat <> ::nat_scope:x_'/'_x not
+R4885:4896 stellarorion_sparta_proof <> dump_cadence def
+R4903:4906 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4882:4884 Coq.Arith.PeanoNat <> ::nat_scope:x_'/'_x not
+R4885:4896 stellarorion_sparta_proof <> dump_cadence def
+R4925:4946 Coq.Arith.PeanoNat Nat div_le_upper_bound abbrev
+R4925:4946 Coq.Arith.PeanoNat Nat div_le_upper_bound abbrev
+R4998:5001 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4990:4992 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R5020:5022 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R5002:5013 stellarorion_sparta_proof <> dump_cadence def
+R4998:5001 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4990:4992 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R5020:5022 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R5002:5013 stellarorion_sparta_proof <> dump_cadence def
+R5045:5061 Coq.Arith.PeanoNat Nat mul_le_mono_r thm
+R5045:5061 Coq.Arith.PeanoNat Nat mul_le_mono_r thm
+R5090:5100 Coq.Arith.PeanoNat Nat mul_1_l thm
+R5090:5100 Coq.Arith.PeanoNat Nat mul_1_l thm
+R5090:5100 Coq.Arith.PeanoNat Nat mul_1_l thm
+R5130:5148 stellarorion_sparta_proof <> expected_dump_count def
+prf 5324:5347 <> dump_count_below_cadence
+binder 5358:5362 <> steps:6
+R5377:5380 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5368:5371 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5372:5376 stellarorion_sparta_proof <> steps:6 var
+R5409:5414 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5386:5389 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5381:5385 stellarorion_sparta_proof <> steps:6 var
+R5390:5408 stellarorion_sparta_proof <> dump_stats_interval def
+R5440:5442 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5415:5433 stellarorion_sparta_proof <> expected_dump_count def
+R5435:5439 stellarorion_sparta_proof <> steps:6 var
+R5485:5503 stellarorion_sparta_proof <> dump_stats_interval def
+R5546:5548 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5528:5539 stellarorion_sparta_proof <> dump_cadence def
+R5546:5548 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5528:5539 stellarorion_sparta_proof <> dump_cadence def
+R5568:5579 stellarorion_sparta_proof <> dump_cadence def
+R5582:5600 stellarorion_sparta_proof <> dump_stats_interval def
+R5620:5623 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R5620:5623 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R5650:5659 Coq.Arith.PeanoNat Nat ltb_lt thm
+R5650:5659 Coq.Arith.PeanoNat Nat ltb_lt thm
+R5721:5724 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R5721:5724 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R5757:5775 stellarorion_sparta_proof <> expected_dump_count def
+R5801:5812 Coq.Arith.PeanoNat Nat div_same def
+R5801:5812 Coq.Arith.PeanoNat Nat div_same def
+R5801:5812 Coq.Arith.PeanoNat Nat div_same def
+R5835:5853 stellarorion_sparta_proof <> dump_stats_interval def

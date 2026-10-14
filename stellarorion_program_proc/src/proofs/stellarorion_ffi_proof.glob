@@ -1,0 +1,229 @@
+DIGEST 861e1dfb9585785007dda7ed22e72f8e
+Fstellarorion_ffi_proof
+R2434:2448 Coq.Reals.Reals <> <> lib
+R2466:2482 Coq.micromega.Lia <> <> lib
+R2500:2516 Coq.micromega.Lra <> <> lib
+def 3023:3033 <> CCD_Samples
+R3037:3039 Coq.Init.Datatypes <> nat ind
+def 3059:3070 <> Label_Stride
+R3074:3076 Coq.Init.Datatypes <> nat ind
+def 3096:3115 <> CCD_Label_Buffer_Len
+R3119:3121 Coq.Init.Datatypes <> nat ind
+prf 3138:3160 <> CCD_Label_Buffer_Len_eq
+R3184:3186 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3164:3183 stellarorion_ffi_proof <> CCD_Label_Buffer_Len def
+R3198:3200 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R3187:3197 stellarorion_ffi_proof <> CCD_Samples def
+R3201:3212 stellarorion_ffi_proof <> Label_Stride def
+R3231:3250 stellarorion_ffi_proof <> CCD_Label_Buffer_Len def
+R3253:3263 stellarorion_ffi_proof <> CCD_Samples def
+R3266:3277 stellarorion_ffi_proof <> Label_Stride def
+def 3528:3539 <> label_offset
+R3546:3548 Coq.Init.Datatypes <> nat ind
+binder 3542:3542 <> k:1
+R3553:3555 Coq.Init.Datatypes <> nat ind
+R3561:3563 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R3560:3560 stellarorion_ffi_proof <> k:1 var
+R3564:3575 stellarorion_ffi_proof <> Label_Stride def
+prf 3815:3834 <> label_slot_in_buffer
+binder 3845:3845 <> k:2
+R3863:3869 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3849:3851 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R3848:3848 stellarorion_ffi_proof <> k:2 var
+R3852:3862 stellarorion_ffi_proof <> CCD_Samples def
+R3899:3902 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3884:3886 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R3870:3881 stellarorion_ffi_proof <> label_offset def
+R3883:3883 stellarorion_ffi_proof <> k:2 var
+R3887:3898 stellarorion_ffi_proof <> Label_Stride def
+R3903:3922 stellarorion_ffi_proof <> CCD_Label_Buffer_Len def
+R3956:3966 stellarorion_ffi_proof <> CCD_Samples def
+R3984:3995 stellarorion_ffi_proof <> label_offset def
+R3998:4009 stellarorion_ffi_proof <> Label_Stride def
+R4012:4031 stellarorion_ffi_proof <> CCD_Label_Buffer_Len def
+R4052:4055 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4052:4055 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4097:4099 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4092:4094 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R4087:4089 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R4102:4104 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R4097:4099 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4092:4094 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R4087:4089 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R4102:4104 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+prf 4447:4471 <> label_last_byte_in_buffer
+binder 4482:4482 <> k:3
+R4500:4506 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4486:4488 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R4485:4485 stellarorion_ffi_proof <> k:3 var
+R4489:4499 stellarorion_ffi_proof <> CCD_Samples def
+R4540:4542 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R4536:4538 Coq.Init.Peano <> ::nat_scope:x_'-'_x not
+R4521:4523 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R4507:4518 stellarorion_ffi_proof <> label_offset def
+R4520:4520 stellarorion_ffi_proof <> k:3 var
+R4524:4535 stellarorion_ffi_proof <> Label_Stride def
+R4543:4562 stellarorion_ffi_proof <> CCD_Label_Buffer_Len def
+R4596:4606 stellarorion_ffi_proof <> CCD_Samples def
+R4624:4635 stellarorion_ffi_proof <> label_offset def
+R4638:4649 stellarorion_ffi_proof <> Label_Stride def
+R4652:4671 stellarorion_ffi_proof <> CCD_Label_Buffer_Len def
+R4692:4695 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4692:4695 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+prf 5106:5126 <> label_last_slot_exact
+binder 5137:5137 <> k:4
+R5159:5165 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5141:5143 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5140:5140 stellarorion_ffi_proof <> k:4 var
+R5155:5157 Coq.Init.Peano <> ::nat_scope:x_'-'_x not
+R5144:5154 stellarorion_ffi_proof <> CCD_Samples def
+R5195:5197 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5180:5182 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R5166:5177 stellarorion_ffi_proof <> label_offset def
+R5179:5179 stellarorion_ffi_proof <> k:4 var
+R5183:5194 stellarorion_ffi_proof <> Label_Stride def
+R5198:5217 stellarorion_ffi_proof <> CCD_Label_Buffer_Len def
+R5251:5261 stellarorion_ffi_proof <> CCD_Samples def
+R5288:5290 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5288:5290 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5317:5328 stellarorion_ffi_proof <> label_offset def
+R5331:5342 stellarorion_ffi_proof <> Label_Stride def
+R5345:5364 stellarorion_ffi_proof <> CCD_Label_Buffer_Len def
+def 5620:5625 <> c_bool
+R5632:5635 Coq.Init.Datatypes <> bool ind
+binder 5628:5628 <> b:5
+R5640:5642 Coq.Init.Datatypes <> nat ind
+R5650:5650 stellarorion_ffi_proof <> b:5 var
+prf 5674:5685 <> c_bool_total
+R5700:5703 Coq.Init.Datatypes <> bool ind
+binder 5696:5696 <> b:6
+R5718:5721 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R5714:5716 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5706:5711 stellarorion_ffi_proof <> c_bool def
+R5713:5713 stellarorion_ffi_proof <> b:6 var
+R5730:5732 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5722:5727 stellarorion_ffi_proof <> c_bool def
+R5729:5729 stellarorion_ffi_proof <> b:6 var
+prf 5828:5839 <> c_bool_cases
+R5854:5857 Coq.Init.Datatypes <> bool ind
+binder 5850:5850 <> b:7
+R5872:5875 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R5868:5870 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5860:5865 stellarorion_ffi_proof <> c_bool def
+R5867:5867 stellarorion_ffi_proof <> b:7 var
+R5884:5886 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5876:5881 stellarorion_ffi_proof <> c_bool def
+R5883:5883 stellarorion_ffi_proof <> b:7 var
+prf 6284:6298 <> c_bool_distinct
+R6313:6316 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R6302:6307 stellarorion_ffi_proof <> c_bool def
+R6309:6312 Coq.Init.Datatypes <> true constr
+R6317:6322 stellarorion_ffi_proof <> c_bool def
+R6324:6328 Coq.Init.Datatypes <> false constr
+R6347:6352 stellarorion_ffi_proof <> c_bool def
+def 6640:6652 <> mop_converged
+R6671:6671 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 6655:6663 <> grad_norm:8
+binder 6665:6667 <> tol:9
+R6676:6679 Coq.Init.Datatypes <> bool ind
+R6690:6696 Coq.Reals.RIneq <> Rlt_dec thm
+R6698:6706 stellarorion_ffi_proof <> grad_norm:8 var
+R6708:6710 stellarorion_ffi_proof <> tol:9 var
+R6727:6731 Coq.Init.Datatypes <> false constr
+R6717:6720 Coq.Init.Datatypes <> true constr
+prf 7152:7168 <> ccd_stratum_count
+binder 7179:7179 <> k:10
+R7197:7200 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7183:7185 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R7182:7182 stellarorion_ffi_proof <> k:10 var
+R7186:7196 stellarorion_ffi_proof <> CCD_Samples def
+R7202:7205 Coq.Init.Peano <> ::nat_scope:x_'<='_x_'<='_x not
+R7211:7214 Coq.Init.Peano <> ::nat_scope:x_'<='_x_'<='_x not
+R7207:7209 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R7206:7206 stellarorion_ffi_proof <> k:10 var
+R7207:7209 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R7206:7206 stellarorion_ffi_proof <> k:10 var
+R7215:7225 stellarorion_ffi_proof <> CCD_Samples def
+R7259:7269 stellarorion_ffi_proof <> CCD_Samples def
+R7299:7302 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R7295:7297 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R7299:7302 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R7295:7297 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+prf 7360:7381 <> ccd_design_point_count
+R7406:7408 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7398:7400 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R7394:7396 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R7390:7392 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R7386:7388 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R7402:7404 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R7409:7419 stellarorion_ffi_proof <> CCD_Samples def
+R7438:7448 stellarorion_ffi_proof <> CCD_Samples def
+prf 7478:7499 <> ccd_stratum_surjective
+binder 7510:7510 <> k:11
+R7528:7534 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7514:7516 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R7513:7513 stellarorion_ffi_proof <> k:11 var
+R7517:7527 stellarorion_ffi_proof <> CCD_Samples def
+R7535:7541 Coq.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R7543:7544 Coq.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 7542:7542 <> j:12
+R7551:7554 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7546:7549 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R7550:7550 stellarorion_ffi_proof <> j:12 var
+R7571:7574 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7556:7559 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R7555:7555 stellarorion_ffi_proof <> j:12 var
+R7560:7570 stellarorion_ffi_proof <> CCD_Samples def
+R7576:7578 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7575:7575 stellarorion_ffi_proof <> j:12 var
+R7580:7582 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R7579:7579 stellarorion_ffi_proof <> k:11 var
+R7617:7627 stellarorion_ffi_proof <> CCD_Samples def
+R7657:7660 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R7653:7655 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R7657:7660 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R7653:7655 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R7684:7686 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R7684:7686 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+sec 8149:8156 <> MoP_Gate
+prf 8192:8209 <> mop_gate_decidable
+R8236:8236 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 8220:8228 <> grad_norm:13
+binder 8230:8232 <> tol:14
+R8246:8252 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8240:8242 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R8243:8245 stellarorion_ffi_proof <> tol:14 var
+R8287:8290 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R8280:8282 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8253:8265 stellarorion_ffi_proof <> mop_converged def
+R8267:8275 stellarorion_ffi_proof <> grad_norm:13 var
+R8277:8279 stellarorion_ffi_proof <> tol:14 var
+R8283:8286 Coq.Init.Datatypes <> true constr
+R8318:8320 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8291:8303 stellarorion_ffi_proof <> mop_converged def
+R8305:8313 stellarorion_ffi_proof <> grad_norm:13 var
+R8315:8317 stellarorion_ffi_proof <> tol:14 var
+R8321:8325 Coq.Init.Datatypes <> false constr
+R8373:8385 stellarorion_ffi_proof <> mop_converged def
+R8400:8406 Coq.Reals.RIneq <> Rlt_dec thm
+R8400:8406 Coq.Reals.RIneq <> Rlt_dec thm
+prf 8843:8865 <> mop_zero_grad_converges
+R8882:8882 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 8876:8878 <> tol:15
+R8892:8895 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8886:8888 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R8889:8891 stellarorion_ffi_proof <> tol:15 var
+R8915:8917 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8896:8908 stellarorion_ffi_proof <> mop_converged def
+R8912:8914 stellarorion_ffi_proof <> tol:15 var
+R8918:8921 Coq.Init.Datatypes <> true constr
+R8959:8971 stellarorion_ffi_proof <> mop_converged def
+R8986:8992 Coq.Reals.RIneq <> Rlt_dec thm
+R8986:8992 Coq.Reals.RIneq <> Rlt_dec thm
+R9060:9062 Coq.Init.Logic <> ::type_scope:'~'_x not
+R9070:9070 Coq.Init.Logic <> ::type_scope:'~'_x not
+R9064:9066 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R9060:9062 Coq.Init.Logic <> ::type_scope:'~'_x not
+R9070:9070 Coq.Init.Logic <> ::type_scope:'~'_x not
+R9064:9066 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R9104:9111 stellarorion_ffi_proof MoP_Gate <> sec

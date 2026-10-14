@@ -1,7 +1,7 @@
 {
   "metadata": {
     "generated_by": "StellarOrion Validation Pipeline",
-    "timestamp": "2026-10-06T05:35:30.125728+00:00",
+    "timestamp": "2026-10-13T16:11:00.066131+00:00",
     "references": {
       "IRVE-3": "NASA TP-2013-4012",
       "LOFTID": "Deshmukh et al. AIAA 2024-1501",
@@ -56,12 +56,12 @@
       },
       "kriging_denoised": {
         "peak_heat_flux_avg_Wcm2": 55.438035157514086,
-        "peak_heat_flux_max_Wcm2": 185.73826862018535,
+        "peak_heat_flux_max_Wcm2": 185.73826753624172,
         "total_heat_load_Jcm2": 165.715973
       },
       "pinn_extrapolated_300s": {
         "peak_heat_flux_avg_Wcm2": 55.928659375,
-        "peak_heat_flux_max_Wcm2": 73.19768285744894,
+        "peak_heat_flux_max_Wcm2": 16.479939464151418,
         "total_heat_load_Jcm2": 165.715973,
         "peak_g_load": 16.582559749999998,
         "cd": 1.768706
@@ -71,13 +71,13 @@
   "deltas": {
     "pinn_vs_irve3": {
       "peak_heat_flux_avg_pct": 289.4482234872223,
-      "peak_heat_flux_max_pct": 409.69767326404104,
+      "peak_heat_flux_max_pct": 14.7548183563221,
       "total_heat_load_pct": -15.042588423835623,
       "peak_g_load_pct": -15.824569796954322
     },
     "pinn_vs_loftid": {
       "peak_heat_flux_avg_pct": 42.4208285586962,
-      "peak_heat_flux_max_pct": 86.3959329194014,
+      "peak_heat_flux_max_pct": -58.034276892917205,
       "total_heat_load_pct": -95.29215985795454,
       "peak_g_load_pct": 71.66210921325049
     }
@@ -103,17 +103,17 @@
   "audit": {
     "cd": {
       "noise_analysis": {
-        "noise_mean": 0.0003749775471900595,
-        "noise_std": 0.059800309601384015,
-        "noise_range": 0.3544960117728828,
-        "snr_db": 6.978775032242868,
-        "noise_fraction": 0.39592698906310986
+        "noise_mean": 0.00037497988100184976,
+        "noise_std": 0.05980031260683627,
+        "noise_range": 0.3544960360116667,
+        "snr_db": 6.978773812242618,
+        "noise_fraction": 0.3959270089616634
       },
       "convergence_metrics": {
         "raw_total_change": 0.6577679999999999,
-        "denoised_total_change": 0.4292671130144441,
+        "denoised_total_change": 0.42926707317014223,
         "raw_std": 0.15103873000143464,
-        "convergence_ratio": 0.6526117309057968,
+        "convergence_ratio": 0.6526116703307888,
         "stability_index": 0.9208276176803074
       },
       "n_fall_regions": 6,
@@ -121,17 +121,17 @@
     },
     "drag_sum_N": {
       "noise_analysis": {
-        "noise_mean": 9.687874885938072,
-        "noise_std": 1544.990583611755,
-        "noise_range": 9158.688481908503,
-        "snr_db": 6.978784340744611,
-        "noise_fraction": 0.3959266331322835
+        "noise_mean": 9.687915776300956,
+        "noise_std": 1544.9908152256833,
+        "noise_range": 9158.689498307569,
+        "snr_db": 6.978782035706116,
+        "noise_fraction": 0.39592669248677
       },
       "convergence_metrics": {
         "raw_total_change": 16993.992187999997,
-        "denoised_total_change": 11090.486116132102,
+        "denoised_total_change": 11090.483399377343,
         "raw_std": 3902.2143354916884,
-        "convergence_ratio": 0.6526121698445555,
+        "convergence_ratio": 0.6526120099789553,
         "stability_index": 0.9208276489890629
       },
       "n_fall_regions": 6,
@@ -139,17 +139,17 @@
     },
     "g_load": {
       "noise_analysis": {
-        "noise_mean": 0.0035156391867135735,
-        "noise_std": 0.5606593994756535,
-        "noise_range": 3.323582077072203,
-        "snr_db": 6.978776288974601,
-        "noise_fraction": 0.39592688365951473
+        "noise_mean": 0.003515618540292274,
+        "noise_std": 0.5606593378385556,
+        "noise_range": 3.32358174675171,
+        "snr_db": 6.978778237665808,
+        "noise_fraction": 0.3959268401325818
       },
       "convergence_metrics": {
         "raw_total_change": 6.166921000000002,
-        "denoised_total_change": 4.024604912474995,
+        "denoised_total_change": 4.024605660321246,
         "raw_std": 1.416068023200475,
-        "convergence_ratio": 0.6526117186315495,
+        "convergence_ratio": 0.652611839898913,
         "stability_index": 0.9208276495480174
       },
       "n_fall_regions": 6,
@@ -157,17 +157,17 @@
     },
     "heatflux_max_Wm2": {
       "noise_analysis": {
-        "noise_mean": 3258.9992494863586,
-        "noise_std": 248171.06988971322,
-        "noise_range": 1065618.9768278645,
-        "snr_db": 3.5982246623449927,
-        "noise_fraction": 0.51421932921984
+        "noise_mean": 3259.002417371587,
+        "noise_std": 248171.0632425871,
+        "noise_range": 1065618.9157737694,
+        "snr_db": 3.5982247876238684,
+        "noise_fraction": 0.514219315446757
       },
       "convergence_metrics": {
         "raw_total_change": 1982680.0,
-        "denoised_total_change": 1290552.62016972,
+        "denoised_total_change": 1290552.6516288056,
         "raw_std": 482617.1553415384,
-        "convergence_ratio": 0.6509132185575685,
+        "convergence_ratio": 0.6509132344245191,
         "stability_index": 0.7751031188894878
       },
       "n_fall_regions": 7,
@@ -262,35 +262,33 @@
     }
   },
   "material_conduction": {
-    "description": "1D thermal model: SIC (Silicon Carbide) TPS",
-    "reference": "Incropera & DeWitt (2011) Fundamentals of Heat and Mass Transfer",
+    "description": "1D thermal model: IRVE-3 5-ply F-TPS (Nextel/Pyrogel/AKK)",
+    "reference": "Incropera & DeWitt (2011); Dillman et al. AIAA 2014-4141",
     "surface_heat_flux_Wm2": 552002.0,
-    "surface_temperature_K": 1840.0,
-    "surface_temperature_C": 1566.0,
-    "backwall_temperature_K": 1817.0,
-    "backwall_temperature_C": 1543.0,
-    "delta_T_K": 23.0,
-    "conduction_heat_flux_Wm2": 552002.0,
-    "thermal_conductivity_WmK": 120.0,
-    "thermal_diffusivity_m2s": "4.98e-05",
-    "emissivity": 0.85,
-    "tps_thickness_mm": 5.0,
-    "material": "SIC (Silicon Carbide)"
+    "surface_temperature_K": 1863.0,
+    "surface_temperature_C": 1590.0,
+    "backwall_temperature_K": 300.0,
+    "backwall_temperature_C": 27.0,
+    "delta_T_K": 1563.0,
+    "conduction_heat_flux_Wm2": 6104.0,
+    "series_resistance_m2K_W": 0.256,
+    "emissivity": 0.8,
+    "tps_thickness_mm": 6.3,
+    "material": "IRVE-3 5-ply F-TPS (Nextel BF-20 / Pyrogel 2250 / AKK)"
   },
   "material_conduction_pinn": {
     "description": "1D thermal model using PINN-extrapolated heat flux (300s / 300,000,000 steps)",
-    "reference": "Incropera & DeWitt (2011); Raissi et al. (2019)",
+    "reference": "Incropera & DeWitt (2011); Raissi et al. (2019); Dillman et al. AIAA 2014-4141",
     "surface_heat_flux_Wm2": 559287.0,
-    "surface_temperature_K": 1846.0,
-    "surface_temperature_C": 1573.0,
-    "backwall_temperature_K": 1822.0,
-    "backwall_temperature_C": 1549.0,
-    "delta_T_K": 23.0,
-    "conduction_heat_flux_Wm2": 559287.0,
-    "thermal_conductivity_WmK": 120.0,
-    "thermal_diffusivity_m2s": "4.98e-05",
-    "emissivity": 0.85,
-    "tps_thickness_mm": 5.0,
-    "material": "SIC (Silicon Carbide)"
+    "surface_temperature_K": 1869.0,
+    "surface_temperature_C": 1596.0,
+    "backwall_temperature_K": 300.0,
+    "backwall_temperature_C": 27.0,
+    "delta_T_K": 1569.0,
+    "conduction_heat_flux_Wm2": 6128.0,
+    "series_resistance_m2K_W": 0.256,
+    "emissivity": 0.8,
+    "tps_thickness_mm": 6.3,
+    "material": "IRVE-3 5-ply F-TPS (Nextel BF-20 / Pyrogel 2250 / AKK)"
   }
 }

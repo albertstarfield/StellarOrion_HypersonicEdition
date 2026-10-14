@@ -1,0 +1,240 @@
+DIGEST de59cbde8f3eaf081992fdb7b513e201
+Fplot_hiad_3d_proof
+R3262:3276 Coq.Reals.Reals <> <> lib
+R3294:3311 Coq.Arith.PeanoNat <> <> lib
+R3329:3345 Coq.micromega.Lia <> <> lib
+R3363:3379 Coq.micromega.Lra <> <> lib
+sec 3701:3717 <> Cancel_Mul_Helper
+prf 3864:3873 <> cancel_mul
+R3890:3890 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3884:3884 <> x:1
+binder 3886:3886 <> l:2
+R3899:3902 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3894:3897 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R3893:3893 plot_hiad_3d_proof <> l:2 var
+R3914:3916 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3904:3907 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3913:3913 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3903:3903 plot_hiad_3d_proof <> l:2 var
+R3909:3911 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3908:3908 plot_hiad_3d_proof <> x:1 var
+R3912:3912 plot_hiad_3d_proof <> l:2 var
+R3917:3917 plot_hiad_3d_proof <> x:1 var
+R3960:3963 Coq.Reals.Rdefinitions <> Rdiv def
+R3981:3991 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3981:3991 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3981:3991 Coq.Reals.Raxioms <> Rmult_assoc thm
+R4007:4016 Coq.Reals.Raxioms <> Rmult_comm thm
+R4007:4016 Coq.Reals.Raxioms <> Rmult_comm thm
+R4007:4016 Coq.Reals.Raxioms <> Rmult_comm thm
+R4036:4046 Coq.Reals.Raxioms <> Rmult_assoc thm
+R4036:4046 Coq.Reals.Raxioms <> Rmult_assoc thm
+R4036:4046 Coq.Reals.Raxioms <> Rmult_assoc thm
+R4062:4071 Coq.Reals.Raxioms <> Rmult_comm thm
+R4076:4077 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4062:4071 Coq.Reals.Raxioms <> Rmult_comm thm
+R4076:4077 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4062:4071 Coq.Reals.Raxioms <> Rmult_comm thm
+R4076:4077 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4096:4101 Coq.Reals.Raxioms <> Rinv_l thm
+R4096:4101 Coq.Reals.Raxioms <> Rinv_l thm
+R4096:4101 Coq.Reals.Raxioms <> Rinv_l thm
+R4123:4131 Coq.Reals.RIneq <> Rmult_1_r thm
+R4123:4131 Coq.Reals.RIneq <> Rmult_1_r thm
+R4123:4131 Coq.Reals.RIneq <> Rmult_1_r thm
+R4162:4178 plot_hiad_3d_proof Cancel_Mul_Helper <> sec
+prf 4268:4278 <> rdiv_nonneg
+binder 4289:4289 <> a:3
+binder 4291:4291 <> b:4
+R4300:4303 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4295:4298 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4299:4299 plot_hiad_3d_proof <> a:3 var
+R4309:4312 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4305:4307 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4308:4308 plot_hiad_3d_proof <> b:4 var
+R4314:4317 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4319:4321 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4318:4318 plot_hiad_3d_proof <> a:3 var
+R4322:4322 plot_hiad_3d_proof <> b:4 var
+R4370:4372 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4373:4374 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4388:4403 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4370:4372 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4373:4374 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4388:4403 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4425:4430 Coq.Reals.RIneq <> Rlt_le thm
+R4425:4430 Coq.Reals.RIneq <> Rlt_le thm
+R4450:4453 Coq.Reals.Rdefinitions <> Rdiv def
+R4464:4475 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4464:4475 Coq.Reals.RIneq <> Rmult_le_pos thm
+prf 4590:4598 <> rdiv_lt_1
+binder 4609:4609 <> a:5
+binder 4611:4611 <> b:6
+R4619:4622 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4615:4617 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4618:4618 plot_hiad_3d_proof <> b:6 var
+R4628:4631 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4624:4626 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4623:4623 plot_hiad_3d_proof <> a:5 var
+R4627:4627 plot_hiad_3d_proof <> b:6 var
+R4637:4639 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4633:4635 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4632:4632 plot_hiad_3d_proof <> a:5 var
+R4636:4636 plot_hiad_3d_proof <> b:6 var
+R4688:4691 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R4688:4691 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R4728:4730 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4718:4721 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4727:4727 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4723:4725 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4744:4753 plot_hiad_3d_proof <> cancel_mul thm
+R4728:4730 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4718:4721 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4727:4727 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4723:4725 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4744:4753 plot_hiad_3d_proof <> cancel_mul thm
+R4777:4790 Coq.Reals.RIneq <> Rmult_lt_reg_l thm
+R4777:4790 Coq.Reals.RIneq <> Rmult_lt_reg_l thm
+R4833:4841 Coq.Reals.RIneq <> Rmult_1_r thm
+R4833:4841 Coq.Reals.RIneq <> Rmult_1_r thm
+R4833:4841 Coq.Reals.RIneq <> Rmult_1_r thm
+prf 5022:5029 <> mul_lt_l
+binder 5040:5040 <> c:7
+binder 5042:5042 <> x:8
+binder 5044:5044 <> y:9
+R5052:5055 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5048:5050 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5051:5051 plot_hiad_3d_proof <> c:7 var
+R5061:5064 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5057:5059 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5056:5056 plot_hiad_3d_proof <> x:8 var
+R5060:5060 plot_hiad_3d_proof <> y:9 var
+R5070:5072 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5066:5068 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5065:5065 plot_hiad_3d_proof <> c:7 var
+R5069:5069 plot_hiad_3d_proof <> x:8 var
+R5074:5076 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5073:5073 plot_hiad_3d_proof <> c:7 var
+R5077:5077 plot_hiad_3d_proof <> y:9 var
+R5126:5128 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5130:5133 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5139:5139 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5135:5137 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5152:5168 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5126:5128 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5130:5133 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5139:5139 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5135:5137 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5152:5168 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5206:5208 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5198:5200 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5194:5196 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5202:5204 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5210:5213 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5219:5219 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5215:5217 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5206:5208 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5198:5200 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5194:5196 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5202:5204 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5210:5213 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5219:5219 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5215:5217 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+sec 5583:5590 <> Mesh_Nat
+def 5633:5648 <> surface_elements
+R5668:5670 Coq.Init.Datatypes <> nat ind
+binder 5651:5654 <> n_az:10
+binder 5656:5664 <> n_profile:11
+R5675:5677 Coq.Init.Datatypes <> nat ind
+R5686:5688 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R5682:5685 plot_hiad_3d_proof <> n_az:10 var
+R5689:5697 plot_hiad_3d_proof <> n_profile:11 var
+prf 5707:5731 <> surface_elements_positive
+binder 5742:5750 <> n_profile:12
+R5769:5772 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5756:5759 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5760:5768 plot_hiad_3d_proof <> n_profile:12 var
+R5774:5776 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R5777:5792 plot_hiad_3d_proof <> surface_elements def
+R5798:5806 plot_hiad_3d_proof <> n_profile:12 var
+R5848:5863 plot_hiad_3d_proof <> surface_elements def
+R5890:5893 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5886:5888 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R5897:5899 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R5925:5941 Coq.Arith.PeanoNat Nat mul_le_mono_l thm
+R5890:5893 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5886:5888 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R5897:5899 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R5925:5941 Coq.Arith.PeanoNat Nat mul_le_mono_l thm
+R5972:5979 plot_hiad_3d_proof Mesh_Nat <> sec
+def 6304:6315 <> azimuth_step
+R6334:6334 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 6318:6323 <> two_pi:13
+binder 6325:6328 <> n_az:14
+binder 6330:6330 <> j:15
+R6339:6339 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R6350:6353 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6362:6362 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6344:6349 plot_hiad_3d_proof <> two_pi:13 var
+R6355:6357 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6354:6354 plot_hiad_3d_proof <> j:15 var
+R6358:6361 plot_hiad_3d_proof <> n_az:14 var
+prf 6372:6387 <> azimuthal_window
+binder 6398:6403 <> two_pi:16
+binder 6405:6408 <> n_az:17
+binder 6410:6410 <> j:18
+R6425:6428 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6416:6418 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6419:6424 plot_hiad_3d_proof <> two_pi:16 var
+R6437:6440 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6430:6432 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6433:6436 plot_hiad_3d_proof <> n_az:17 var
+R6447:6450 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6442:6445 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6446:6446 plot_hiad_3d_proof <> j:18 var
+R6459:6464 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6452:6454 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6451:6451 plot_hiad_3d_proof <> j:18 var
+R6455:6458 plot_hiad_3d_proof <> n_az:17 var
+R6496:6499 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R6466:6469 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6470:6481 plot_hiad_3d_proof <> azimuth_step def
+R6483:6488 plot_hiad_3d_proof <> two_pi:16 var
+R6490:6493 plot_hiad_3d_proof <> n_az:17 var
+R6495:6495 plot_hiad_3d_proof <> j:18 var
+R6526:6528 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6500:6511 plot_hiad_3d_proof <> azimuth_step def
+R6513:6518 plot_hiad_3d_proof <> two_pi:16 var
+R6520:6523 plot_hiad_3d_proof <> n_az:17 var
+R6525:6525 plot_hiad_3d_proof <> j:18 var
+R6529:6534 plot_hiad_3d_proof <> two_pi:16 var
+R6608:6611 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6613:6615 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6632:6642 plot_hiad_3d_proof <> rdiv_nonneg thm
+R6608:6611 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6613:6615 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6632:6642 plot_hiad_3d_proof <> rdiv_nonneg thm
+R6700:6702 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6693:6695 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6716:6724 plot_hiad_3d_proof <> rdiv_lt_1 thm
+R6700:6702 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6693:6695 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6716:6724 plot_hiad_3d_proof <> rdiv_lt_1 thm
+R6762:6773 plot_hiad_3d_proof <> azimuth_step def
+R6795:6806 Coq.Reals.RIneq <> Rmult_le_pos thm
+R6795:6806 Coq.Reals.RIneq <> Rmult_le_pos thm
+R6874:6876 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6861:6864 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6873:6873 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6866:6868 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6883:6885 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6874:6876 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6861:6864 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6873:6873 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6866:6868 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6883:6885 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6902:6909 plot_hiad_3d_proof <> mul_lt_l thm
+R6902:6909 plot_hiad_3d_proof <> mul_lt_l thm
+R6956:6964 Coq.Reals.RIneq <> Rmult_1_r thm
+R6956:6964 Coq.Reals.RIneq <> Rmult_1_r thm
+R6956:6964 Coq.Reals.RIneq <> Rmult_1_r thm

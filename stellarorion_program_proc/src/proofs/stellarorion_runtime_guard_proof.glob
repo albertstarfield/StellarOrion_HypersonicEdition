@@ -1,0 +1,71 @@
+DIGEST 6ec6efcdfd10b2f0497d28ffe4ff2030
+Fstellarorion_runtime_guard_proof
+R2581:2598 Coq.Arith.PeanoNat <> <> lib
+R2616:2632 Coq.micromega.Lia <> <> lib
+ind 2719:2728 <> lock_state
+constr 2733:2741 <> Lock_Free
+constr 2758:2766 <> Lock_Held
+R2745:2754 stellarorion_runtime_guard_proof <> lock_state:1 ind
+R2770:2779 stellarorion_runtime_guard_proof <> lock_state:1 ind
+scheme 2719:2728 <> lock_state_rect
+scheme 2719:2728 <> lock_state_ind
+scheme 2719:2728 <> lock_state_rec
+scheme 2719:2728 <> lock_state_sind
+def 2920:2931 <> release_lock
+R2938:2947 stellarorion_runtime_guard_proof <> lock_state ind
+binder 2934:2934 <> s:3
+R2952:2961 stellarorion_runtime_guard_proof <> lock_state ind
+R2966:2974 stellarorion_runtime_guard_proof <> Lock_Free constr
+def 3138:3149 <> acquire_lock
+R3170:3173 Coq.Init.Datatypes <> bool ind
+binder 3152:3166 <> stale_removable:4
+R3178:3187 stellarorion_runtime_guard_proof <> lock_state ind
+R3197:3211 stellarorion_runtime_guard_proof <> stale_removable:4 var
+R3233:3241 stellarorion_runtime_guard_proof <> Lock_Free constr
+R3218:3226 stellarorion_runtime_guard_proof <> Lock_Held constr
+prf 3329:3351 <> release_lock_idempotent
+binder 3362:3362 <> s:5
+R3396:3398 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3367:3378 stellarorion_runtime_guard_proof <> release_lock def
+R3381:3392 stellarorion_runtime_guard_proof <> release_lock def
+R3394:3394 stellarorion_runtime_guard_proof <> s:5 var
+R3399:3410 stellarorion_runtime_guard_proof <> release_lock def
+R3412:3412 stellarorion_runtime_guard_proof <> s:5 var
+R3455:3466 stellarorion_runtime_guard_proof <> release_lock def
+prf 3643:3662 <> acquire_fails_closed
+binder 3673:3673 <> b:6
+R3687:3690 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3679:3681 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3678:3678 stellarorion_runtime_guard_proof <> b:6 var
+R3682:3686 Coq.Init.Datatypes <> false constr
+R3705:3707 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3691:3702 stellarorion_runtime_guard_proof <> acquire_lock def
+R3704:3704 stellarorion_runtime_guard_proof <> b:6 var
+R3708:3716 stellarorion_runtime_guard_proof <> Lock_Free constr
+R3750:3761 stellarorion_runtime_guard_proof <> acquire_lock def
+prf 3882:3912 <> acquire_succeeds_when_removable
+binder 3923:3923 <> b:7
+R3936:3939 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3929:3931 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3928:3928 stellarorion_runtime_guard_proof <> b:7 var
+R3932:3935 Coq.Init.Datatypes <> true constr
+R3954:3956 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3940:3951 stellarorion_runtime_guard_proof <> acquire_lock def
+R3953:3953 stellarorion_runtime_guard_proof <> b:7 var
+R3957:3965 stellarorion_runtime_guard_proof <> Lock_Held constr
+R3999:4010 stellarorion_runtime_guard_proof <> acquire_lock def
+prf 4166:4194 <> release_after_acquire_is_free
+binder 4205:4205 <> b:8
+R4239:4241 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4210:4221 stellarorion_runtime_guard_proof <> release_lock def
+R4224:4235 stellarorion_runtime_guard_proof <> acquire_lock def
+R4237:4237 stellarorion_runtime_guard_proof <> b:8 var
+R4242:4250 stellarorion_runtime_guard_proof <> Lock_Free constr
+R4293:4304 stellarorion_runtime_guard_proof <> release_lock def
+R4307:4318 stellarorion_runtime_guard_proof <> acquire_lock def
+def 4436:4449 <> p_core_default
+R4453:4455 Coq.Init.Datatypes <> nat ind
+prf 4579:4601 <> p_core_default_positive
+R4606:4608 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R4609:4622 stellarorion_runtime_guard_proof <> p_core_default def
+R4641:4654 stellarorion_runtime_guard_proof <> p_core_default def

@@ -1524,5 +1524,243 @@
     "error_message": "HTTP 403: Forbidden",
     "timestamp": 1791364980.3916779,
     "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/ctypes.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860943.962425,
+    "checked_by": "HEAD"
+  },
+  "https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.twinx.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860944.498723,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.zeros.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860945.06162,
+    "checked_by": "HEAD"
+  },
+  "https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860945.605119,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/exceptions.html#OSError": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860946.292137,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/reference/compound_stmts.html#the-with-statement": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860946.813739,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/functions.html#format": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860947.368702,
+    "checked_by": "HEAD"
+  },
+  "https://matplotlib.org/stable/api/animation_api.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860947.862514,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/functions.html#float": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860948.4720058,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.linspace.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860948.704427,
+    "checked_by": "HEAD"
+  },
+  "https://plotly.com/python/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860949.2994041,
+    "checked_by": "HEAD"
+  },
+  "https://plotly.com/python/interactive-html-export/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860949.804008,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/xml.etree.elementtree.html#Element.get": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860950.301555,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/functions.html#int": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860950.783123,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/xml.etree.elementtree.html#Element.find": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860951.040491,
+    "checked_by": "HEAD"
+  },
+  "https://peps.python.org/pep-0668/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860952.064009,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.searchsorted.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860952.586675,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/math.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860952.803308,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.array.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860953.269242,
+    "checked_by": "HEAD"
+  },
+  "https://pillow.readthedocs.io/en/stable/reference/Image.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860953.721687,
+    "checked_by": "HEAD"
+  },
+  "https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860954.189436,
+    "checked_by": "HEAD"
+  },
+  "https://pillow.readthedocs.io/en/stable/reference/ImageDraw.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860954.681018,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.cos.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860954.91469,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860955.38428,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/functions.html#callable": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860955.815606,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/inspect.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860956.256547,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/sys.html#sys.platform.startswith": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860956.549824,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860957.414631,
+    "checked_by": "HEAD"
+  },
+  "https://numpy.org/doc/stable/reference/random/legacy.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860957.8281941,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/functions.html#min": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860958.770379,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.gradients.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860959.437193,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.geometry.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860959.954986,
+    "checked_by": "HEAD"
+  },
+  "https://deepxde.readthedocs.io/en/latest/modules/deepxde.utils.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860960.4451258,
+    "checked_by": "HEAD"
+  },
+  "https://docs.python.org/3/library/shutil.html": {
+    "verified": true,
+    "status_code": 200,
+    "error_message": "",
+    "timestamp": 1791860960.970933,
+    "checked_by": "HEAD"
   }
 }

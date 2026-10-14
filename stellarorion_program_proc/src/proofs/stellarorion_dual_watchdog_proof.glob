@@ -1,0 +1,172 @@
+DIGEST 2d5e777aebc48593b3dc1b8232ca92eb
+Fstellarorion_dual_watchdog_proof
+R2714:2731 Coq.Arith.PeanoNat <> <> lib
+R2749:2765 Coq.micromega.Lia <> <> lib
+def 2880:2900 <> max_recovery_attempts
+R2904:2906 Coq.Init.Datatypes <> nat ind
+def 2983:2997 <> default_timeout
+R3001:3003 Coq.Init.Datatypes <> nat ind
+def 3230:3244 <> max_audit_count
+R3248:3250 Coq.Init.Datatypes <> nat ind
+R3259:3261 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+prf 3275:3304 <> max_recovery_attempts_positive
+R3309:3311 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R3312:3332 stellarorion_dual_watchdog_proof <> max_recovery_attempts def
+R3349:3369 stellarorion_dual_watchdog_proof <> max_recovery_attempts def
+prf 3389:3412 <> default_timeout_positive
+R3417:3419 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R3420:3434 stellarorion_dual_watchdog_proof <> default_timeout def
+R3451:3465 stellarorion_dual_watchdog_proof <> default_timeout def
+prf 3485:3508 <> max_audit_count_positive
+R3513:3515 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R3516:3530 stellarorion_dual_watchdog_proof <> max_audit_count def
+R3547:3561 stellarorion_dual_watchdog_proof <> max_audit_count def
+def 3699:3707 <> inc_audit
+R3714:3716 Coq.Init.Datatypes <> nat ind
+binder 3710:3710 <> c:1
+R3721:3723 Coq.Init.Datatypes <> nat ind
+R3748:3751 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R3733:3747 stellarorion_dual_watchdog_proof <> max_audit_count def
+R3752:3752 Coq.Init.Datatypes <> S constr
+R3754:3754 stellarorion_dual_watchdog_proof <> c:1 var
+R3782:3782 Coq.Init.Datatypes <> S constr
+R3784:3784 stellarorion_dual_watchdog_proof <> c:1 var
+R3761:3775 stellarorion_dual_watchdog_proof <> max_audit_count def
+prf 3885:3901 <> inc_audit_bounded
+binder 3912:3912 <> c:2
+R3926:3929 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3915:3923 stellarorion_dual_watchdog_proof <> inc_audit def
+R3925:3925 stellarorion_dual_watchdog_proof <> c:2 var
+R3930:3944 stellarorion_dual_watchdog_proof <> max_audit_count def
+R3975:3983 stellarorion_dual_watchdog_proof <> inc_audit def
+R4013:4016 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R3998:4012 stellarorion_dual_watchdog_proof <> max_audit_count def
+R4017:4017 Coq.Init.Datatypes <> S constr
+R4013:4016 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R3998:4012 stellarorion_dual_watchdog_proof <> max_audit_count def
+R4017:4017 Coq.Init.Datatypes <> S constr
+R4039:4048 Coq.Arith.PeanoNat Nat ltb_lt thm
+R4039:4048 Coq.Arith.PeanoNat Nat ltb_lt thm
+R4071:4080 Coq.Arith.PeanoNat Nat ltb_ge thm
+R4071:4080 Coq.Arith.PeanoNat Nat ltb_ge thm
+prf 4207:4224 <> inc_audit_monotone
+binder 4235:4235 <> c:3
+R4260:4263 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4241:4244 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4240:4240 stellarorion_dual_watchdog_proof <> c:3 var
+R4245:4259 stellarorion_dual_watchdog_proof <> max_audit_count def
+R4265:4268 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4264:4264 stellarorion_dual_watchdog_proof <> c:3 var
+R4269:4277 stellarorion_dual_watchdog_proof <> inc_audit def
+R4279:4279 stellarorion_dual_watchdog_proof <> c:3 var
+R4313:4321 stellarorion_dual_watchdog_proof <> inc_audit def
+R4351:4354 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R4336:4350 stellarorion_dual_watchdog_proof <> max_audit_count def
+R4355:4355 Coq.Init.Datatypes <> S constr
+R4351:4354 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R4336:4350 stellarorion_dual_watchdog_proof <> max_audit_count def
+R4355:4355 Coq.Init.Datatypes <> S constr
+R4377:4386 Coq.Arith.PeanoNat Nat ltb_lt thm
+R4377:4386 Coq.Arith.PeanoNat Nat ltb_lt thm
+R4409:4418 Coq.Arith.PeanoNat Nat ltb_ge thm
+R4409:4418 Coq.Arith.PeanoNat Nat ltb_ge thm
+prf 4500:4530 <> inc_audit_idempotent_at_ceiling
+binder 4541:4541 <> c:4
+R4565:4568 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4547:4549 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4546:4546 stellarorion_dual_watchdog_proof <> c:4 var
+R4550:4564 stellarorion_dual_watchdog_proof <> max_audit_count def
+R4580:4582 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4569:4577 stellarorion_dual_watchdog_proof <> inc_audit def
+R4579:4579 stellarorion_dual_watchdog_proof <> c:4 var
+R4583:4597 stellarorion_dual_watchdog_proof <> max_audit_count def
+R4631:4639 stellarorion_dual_watchdog_proof <> inc_audit def
+R4669:4672 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R4654:4668 stellarorion_dual_watchdog_proof <> max_audit_count def
+R4673:4673 Coq.Init.Datatypes <> S constr
+R4669:4672 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R4654:4668 stellarorion_dual_watchdog_proof <> max_audit_count def
+R4673:4673 Coq.Init.Datatypes <> S constr
+R4712:4721 Coq.Arith.PeanoNat Nat ltb_ge thm
+R4712:4721 Coq.Arith.PeanoNat Nat ltb_ge thm
+ind 4835:4840 <> health
+constr 4845:4851 <> Healthy
+constr 4864:4871 <> Degraded
+constr 4902:4907 <> Failed
+constr 4920:4929 <> Recovering
+constr 4942:4945 <> Dead
+R4855:4860 stellarorion_dual_watchdog_proof <> health:5 ind
+R4875:4880 stellarorion_dual_watchdog_proof <> health:5 ind
+R4911:4916 stellarorion_dual_watchdog_proof <> health:5 ind
+R4933:4938 stellarorion_dual_watchdog_proof <> health:5 ind
+R4949:4954 stellarorion_dual_watchdog_proof <> health:5 ind
+scheme 4835:4840 <> health_rect
+scheme 4835:4840 <> health_ind
+scheme 4835:4840 <> health_rec
+scheme 4835:4840 <> health_sind
+def 5168:5178 <> health_rank
+R5185:5190 stellarorion_dual_watchdog_proof <> health ind
+binder 5181:5181 <> h:7
+R5195:5197 Coq.Init.Datatypes <> nat ind
+R5210:5210 stellarorion_dual_watchdog_proof <> h:7 var
+R5221:5227 stellarorion_dual_watchdog_proof <> Healthy constr
+R5238:5245 stellarorion_dual_watchdog_proof <> Degraded constr
+R5256:5261 stellarorion_dual_watchdog_proof <> Failed constr
+R5272:5281 stellarorion_dual_watchdog_proof <> Recovering constr
+R5292:5295 stellarorion_dual_watchdog_proof <> Dead constr
+prf 5379:5397 <> health_rank_bounded
+binder 5408:5408 <> h:9
+R5424:5427 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5411:5421 stellarorion_dual_watchdog_proof <> health_rank def
+R5423:5423 stellarorion_dual_watchdog_proof <> h:9 var
+prf 5601:5624 <> dead_is_the_maximum_rank
+binder 5635:5635 <> h:10
+R5653:5656 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5640:5650 stellarorion_dual_watchdog_proof <> health_rank def
+R5652:5652 stellarorion_dual_watchdog_proof <> h:10 var
+R5657:5667 stellarorion_dual_watchdog_proof <> health_rank def
+R5669:5672 stellarorion_dual_watchdog_proof <> Dead constr
+def 5854:5869 <> accept_heartbeat
+R5876:5881 stellarorion_dual_watchdog_proof <> health ind
+binder 5872:5872 <> h:11
+R5886:5889 Coq.Init.Datatypes <> bool ind
+R5902:5902 stellarorion_dual_watchdog_proof <> h:11 var
+R5909:5915 stellarorion_dual_watchdog_proof <> Healthy constr
+R5919:5926 stellarorion_dual_watchdog_proof <> Degraded constr
+R5931:5934 Coq.Init.Datatypes <> true constr
+R5931:5934 Coq.Init.Datatypes <> true constr
+R5943:5947 Coq.Init.Datatypes <> false constr
+prf 6010:6031 <> dead_rejects_heartbeat
+R6056:6058 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6035:6050 stellarorion_dual_watchdog_proof <> accept_heartbeat def
+R6052:6055 stellarorion_dual_watchdog_proof <> Dead constr
+R6059:6063 Coq.Init.Datatypes <> false constr
+R6082:6097 stellarorion_dual_watchdog_proof <> accept_heartbeat def
+prf 6276:6301 <> only_live_watchdogs_accept
+binder 6312:6312 <> h:13
+R6342:6345 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6335:6337 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6317:6332 stellarorion_dual_watchdog_proof <> accept_heartbeat def
+R6334:6334 stellarorion_dual_watchdog_proof <> h:13 var
+R6338:6341 Coq.Init.Datatypes <> true constr
+R6357:6360 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R6347:6349 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6346:6346 stellarorion_dual_watchdog_proof <> h:13 var
+R6350:6356 stellarorion_dual_watchdog_proof <> Healthy constr
+R6362:6364 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6361:6361 stellarorion_dual_watchdog_proof <> h:13 var
+R6365:6372 stellarorion_dual_watchdog_proof <> Degraded constr
+def 6690:6704 <> emergency_latch
+R6717:6720 Coq.Init.Datatypes <> bool ind
+binder 6707:6713 <> latched:14
+R6725:6728 Coq.Init.Datatypes <> bool ind
+R6733:6736 Coq.Init.Datatypes <> true constr
+prf 6789:6810 <> emergency_latch_sticky
+binder 6821:6821 <> b:15
+R6861:6863 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6826:6840 stellarorion_dual_watchdog_proof <> emergency_latch def
+R6843:6857 stellarorion_dual_watchdog_proof <> emergency_latch def
+R6859:6859 stellarorion_dual_watchdog_proof <> b:15 var
+R6864:6878 stellarorion_dual_watchdog_proof <> emergency_latch def
+R6880:6880 stellarorion_dual_watchdog_proof <> b:15 var
+R6923:6937 stellarorion_dual_watchdog_proof <> emergency_latch def

@@ -1,0 +1,278 @@
+DIGEST 62fa5ce3f98d64e8e9a47780069650e2
+Fstellarorion_reports_proof
+R4726:4740 Coq.Reals.Reals <> <> lib
+R4758:4774 Coq.micromega.Lra <> <> lib
+def 5303:5313 <> grade_index
+R5334:5334 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5316:5320 <> error:1
+binder 5322:5330 <> tolerance:2
+R5339:5339 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R5349:5355 Coq.Reals.RIneq <> Rle_dec thm
+R5357:5361 stellarorion_reports_proof <> error:1 var
+R5363:5371 stellarorion_reports_proof <> tolerance:2 var
+R5390:5396 Coq.Reals.RIneq <> Rle_dec thm
+R5398:5402 stellarorion_reports_proof <> error:1 var
+R5408:5410 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5411:5419 stellarorion_reports_proof <> tolerance:2 var
+def 5612:5620 <> error_pct
+R5636:5636 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5623:5625 <> sim:3
+binder 5627:5632 <> target:4
+R5641:5641 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R5676:5678 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5667:5669 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5648:5651 Coq.Reals.Rbasic_fun <> Rabs def
+R5657:5659 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R5654:5656 stellarorion_reports_proof <> sim:3 var
+R5660:5665 stellarorion_reports_proof <> target:4 var
+R5670:5675 stellarorion_reports_proof <> target:4 var
+def 5770:5786 <> grid_sweep_factor
+R5793:5793 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5789:5789 <> f:5
+R5815:5818 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R5809:5811 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5808:5808 stellarorion_reports_proof <> f:5 var
+R5826:5829 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R5820:5822 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5819:5819 stellarorion_reports_proof <> f:5 var
+R5837:5840 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R5831:5833 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5830:5830 stellarorion_reports_proof <> f:5 var
+R5848:5851 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R5842:5844 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5841:5841 stellarorion_reports_proof <> f:5 var
+R5859:5862 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R5853:5855 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5852:5852 stellarorion_reports_proof <> f:5 var
+R5864:5866 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5863:5863 stellarorion_reports_proof <> f:5 var
+prf 6100:6115 <> error_pct_nonneg
+binder 6126:6128 <> sim:6
+binder 6130:6135 <> target:7
+R6152:6155 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6143:6145 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6146:6151 stellarorion_reports_proof <> target:7 var
+R6157:6160 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6161:6169 stellarorion_reports_proof <> error_pct def
+R6171:6173 stellarorion_reports_proof <> sim:6 var
+R6175:6180 stellarorion_reports_proof <> target:7 var
+R6223:6231 stellarorion_reports_proof <> error_pct def
+R6252:6255 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6256:6259 Coq.Reals.Rbasic_fun <> Rabs def
+R6265:6267 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6287:6294 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R6252:6255 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6256:6259 Coq.Reals.Rbasic_fun <> Rabs def
+R6265:6267 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6287:6294 Coq.Reals.Rbasic_fun <> Rabs_pos thm
+R6316:6318 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6319:6319 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R6338:6353 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R6316:6318 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6319:6319 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R6338:6353 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R6385:6388 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6408:6410 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6389:6392 Coq.Reals.Rbasic_fun <> Rabs def
+R6398:6400 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6411:6411 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R6434:6445 Coq.Reals.RIneq <> Rmult_le_pos thm
+R6469:6474 Coq.Reals.RIneq <> Rlt_le thm
+R6385:6388 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6408:6410 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6389:6392 Coq.Reals.Rbasic_fun <> Rabs def
+R6398:6400 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6411:6411 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R6434:6445 Coq.Reals.RIneq <> Rmult_le_pos thm
+R6469:6474 Coq.Reals.RIneq <> Rlt_le thm
+R6501:6504 Coq.Reals.Rdefinitions <> Rdiv def
+R6515:6526 Coq.Reals.RIneq <> Rmult_le_pos thm
+R6515:6526 Coq.Reals.RIneq <> Rmult_le_pos thm
+prf 6714:6724 <> rabs_pos_lt
+binder 6735:6735 <> x:8
+R6744:6747 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6739:6742 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R6738:6738 stellarorion_reports_proof <> x:8 var
+R6749:6751 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6752:6755 Coq.Reals.Rbasic_fun <> Rabs def
+R6757:6757 stellarorion_reports_proof <> x:8 var
+R6794:6803 Coq.Reals.RIneq <> Rle_lt_dec thm
+R6794:6803 Coq.Reals.RIneq <> Rle_lt_dec thm
+R6833:6836 Coq.Reals.Rbasic_fun <> Rabs def
+R6853:6861 Coq.Reals.Rbasic_fun <> Rcase_abs thm
+R6853:6861 Coq.Reals.Rbasic_fun <> Rcase_abs thm
+R6912:6921 Coq.Reals.RIneq <> Rle_lt_dec thm
+R6912:6921 Coq.Reals.RIneq <> Rle_lt_dec thm
+R6989:6992 Coq.Reals.Rbasic_fun <> Rabs def
+R7009:7017 Coq.Reals.Rbasic_fun <> Rcase_abs thm
+R7009:7017 Coq.Reals.Rbasic_fun <> Rcase_abs thm
+prf 7085:7097 <> error_pct_pos
+binder 7108:7110 <> sim:9
+binder 7112:7117 <> target:10
+R7134:7137 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7125:7127 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7128:7133 stellarorion_reports_proof <> target:10 var
+R7151:7154 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7141:7144 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R7138:7140 stellarorion_reports_proof <> sim:9 var
+R7145:7150 stellarorion_reports_proof <> target:10 var
+R7156:7158 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7159:7167 stellarorion_reports_proof <> error_pct def
+R7169:7171 stellarorion_reports_proof <> sim:9 var
+R7173:7178 stellarorion_reports_proof <> target:10 var
+R7245:7248 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R7236:7238 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7245:7248 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R7236:7238 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7278:7280 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7281:7284 Coq.Reals.Rbasic_fun <> Rabs def
+R7290:7292 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7312:7322 stellarorion_reports_proof <> rabs_pos_lt thm
+R7278:7280 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7281:7284 Coq.Reals.Rbasic_fun <> Rabs def
+R7290:7292 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7312:7322 stellarorion_reports_proof <> rabs_pos_lt thm
+R7356:7358 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7359:7359 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R7378:7393 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R7356:7358 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7359:7359 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R7378:7393 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R7425:7427 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7447:7449 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7428:7431 Coq.Reals.Rbasic_fun <> Rabs def
+R7437:7439 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7450:7450 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R7473:7489 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R7425:7427 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7447:7449 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7428:7431 Coq.Reals.Rbasic_fun <> Rabs def
+R7437:7439 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7450:7450 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R7473:7489 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R7531:7539 stellarorion_reports_proof <> error_pct def
+R7551:7554 Coq.Reals.Rdefinitions <> Rdiv def
+R7565:7581 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R7565:7581 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+prf 7821:7848 <> tolerance_constants_positive
+R7864:7867 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7857:7859 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7869:7871 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+prf 7911:7933 <> grade_pass_is_also_warn
+binder 7944:7944 <> e:11
+binder 7946:7946 <> t:12
+R7959:7962 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7954:7957 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7958:7958 stellarorion_reports_proof <> t:12 var
+R7969:7972 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7964:7967 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7963:7963 stellarorion_reports_proof <> e:11 var
+R7968:7968 stellarorion_reports_proof <> t:12 var
+R7974:7977 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7973:7973 stellarorion_reports_proof <> e:11 var
+R7981:7983 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7984:7984 stellarorion_reports_proof <> t:12 var
+prf 8485:8504 <> grade_index_monotone
+binder 8515:8516 <> e1:13
+binder 8518:8519 <> e2:14
+binder 8521:8521 <> t:15
+R8534:8537 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8529:8532 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8533:8533 stellarorion_reports_proof <> t:15 var
+R8546:8549 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8540:8543 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8538:8539 stellarorion_reports_proof <> e1:13 var
+R8544:8545 stellarorion_reports_proof <> e2:14 var
+R8566:8569 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8550:8560 stellarorion_reports_proof <> grade_index def
+R8562:8563 stellarorion_reports_proof <> e1:13 var
+R8565:8565 stellarorion_reports_proof <> t:15 var
+R8570:8580 stellarorion_reports_proof <> grade_index def
+R8582:8583 stellarorion_reports_proof <> e2:14 var
+R8585:8585 stellarorion_reports_proof <> t:15 var
+R8629:8639 stellarorion_reports_proof <> grade_index def
+R8654:8660 Coq.Reals.RIneq <> Rle_dec thm
+R8694:8700 Coq.Reals.RIneq <> Rle_dec thm
+R8709:8711 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8742:8748 Coq.Reals.RIneq <> Rle_dec thm
+R8782:8788 Coq.Reals.RIneq <> Rle_dec thm
+R8797:8799 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8654:8660 Coq.Reals.RIneq <> Rle_dec thm
+R8694:8700 Coq.Reals.RIneq <> Rle_dec thm
+R8709:8711 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8694:8700 Coq.Reals.RIneq <> Rle_dec thm
+R8709:8711 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8742:8748 Coq.Reals.RIneq <> Rle_dec thm
+R8742:8748 Coq.Reals.RIneq <> Rle_dec thm
+R8742:8748 Coq.Reals.RIneq <> Rle_dec thm
+R8742:8748 Coq.Reals.RIneq <> Rle_dec thm
+R8782:8788 Coq.Reals.RIneq <> Rle_dec thm
+R8797:8799 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8782:8788 Coq.Reals.RIneq <> Rle_dec thm
+R8797:8799 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8782:8788 Coq.Reals.RIneq <> Rle_dec thm
+R8797:8799 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8782:8788 Coq.Reals.RIneq <> Rle_dec thm
+R8797:8799 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8782:8788 Coq.Reals.RIneq <> Rle_dec thm
+R8797:8799 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8782:8788 Coq.Reals.RIneq <> Rle_dec thm
+R8797:8799 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8782:8788 Coq.Reals.RIneq <> Rle_dec thm
+R8797:8799 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8782:8788 Coq.Reals.RIneq <> Rle_dec thm
+R8797:8799 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+prf 8992:9015 <> grade_fail_band_nonempty
+binder 9026:9026 <> e:16
+binder 9028:9028 <> t:17
+R9041:9044 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9036:9039 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9040:9040 stellarorion_reports_proof <> t:17 var
+R9056:9059 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9052:9054 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R9048:9050 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R9051:9051 stellarorion_reports_proof <> t:17 var
+R9055:9055 stellarorion_reports_proof <> e:16 var
+R9075:9077 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R9060:9070 stellarorion_reports_proof <> grade_index def
+R9072:9072 stellarorion_reports_proof <> e:16 var
+R9074:9074 stellarorion_reports_proof <> t:17 var
+R9117:9127 stellarorion_reports_proof <> grade_index def
+R9142:9148 Coq.Reals.RIneq <> Rle_dec thm
+R9142:9148 Coq.Reals.RIneq <> Rle_dec thm
+R9190:9196 Coq.Reals.RIneq <> Rle_dec thm
+R9204:9206 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R9190:9196 Coq.Reals.RIneq <> Rle_dec thm
+R9204:9206 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+prf 9340:9363 <> grade_pass_band_nonempty
+binder 9374:9374 <> e:18
+binder 9376:9376 <> t:19
+R9389:9392 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9384:9387 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9388:9388 stellarorion_reports_proof <> t:19 var
+R9399:9402 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9394:9397 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9393:9393 stellarorion_reports_proof <> e:18 var
+R9398:9398 stellarorion_reports_proof <> t:19 var
+R9418:9420 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R9403:9413 stellarorion_reports_proof <> grade_index def
+R9415:9415 stellarorion_reports_proof <> e:18 var
+R9417:9417 stellarorion_reports_proof <> t:19 var
+R9460:9470 stellarorion_reports_proof <> grade_index def
+R9485:9491 Coq.Reals.RIneq <> Rle_dec thm
+R9485:9491 Coq.Reals.RIneq <> Rle_dec thm
+prf 9770:9793 <> grid_sweep_band_nonempty
+R9800:9803 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+prf 9835:9871 <> grid_sweep_contains_production_factor
+R9879:9895 stellarorion_reports_proof <> grid_sweep_factor def
+R9918:9934 stellarorion_reports_proof <> grid_sweep_factor def
+prf 9984:10013 <> grid_sweep_factors_inside_band
+binder 10024:10024 <> f:20
+R10050:10053 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R10031:10047 stellarorion_reports_proof <> grid_sweep_factor def
+R10049:10049 stellarorion_reports_proof <> f:20 var
+R10062:10065 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R10057:10060 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R10061:10061 stellarorion_reports_proof <> f:20 var
+R10067:10070 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R10066:10066 stellarorion_reports_proof <> f:20 var

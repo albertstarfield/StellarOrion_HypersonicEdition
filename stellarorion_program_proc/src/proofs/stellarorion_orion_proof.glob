@@ -1,0 +1,67 @@
+DIGEST c42dd205652792fad3060906e224c434
+Fstellarorion_orion_proof
+R3082:3096 Coq.Reals.Reals <> <> lib
+R3114:3130 Coq.micromega.Lra <> <> lib
+def 3310:3330 <> ballistic_coefficient
+R3364:3364 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3333:3336 <> Mass:1
+binder 3338:3349 <> Dyn_Pressure:2
+binder 3351:3360 <> Drag_Force:3
+R3369:3369 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3377:3377 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3397:3400 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3382:3384 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3378:3381 stellarorion_orion_proof <> Mass:1 var
+R3385:3396 stellarorion_orion_proof <> Dyn_Pressure:2 var
+R3401:3410 stellarorion_orion_proof <> Drag_Force:3 var
+prf 3493:3517 <> ballistic_coefficient_pos
+binder 3528:3531 <> Mass:4
+binder 3533:3544 <> Dyn_Pressure:5
+binder 3546:3555 <> Drag_Force:6
+R3569:3572 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3565:3567 Coq.Reals.Rdefinitions <> ::R_scope:x_'>'_x not
+R3561:3564 stellarorion_orion_proof <> Mass:4 var
+R3589:3592 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3585:3587 Coq.Reals.Rdefinitions <> ::R_scope:x_'>'_x not
+R3573:3584 stellarorion_orion_proof <> Dyn_Pressure:5 var
+R3607:3613 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3603:3605 Coq.Reals.Rdefinitions <> ::R_scope:x_'>'_x not
+R3593:3602 stellarorion_orion_proof <> Drag_Force:6 var
+R3615:3617 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3618:3638 stellarorion_orion_proof <> ballistic_coefficient def
+R3640:3643 stellarorion_orion_proof <> Mass:4 var
+R3645:3656 stellarorion_orion_proof <> Dyn_Pressure:5 var
+R3658:3667 stellarorion_orion_proof <> Drag_Force:6 var
+R3736:3756 stellarorion_orion_proof <> ballistic_coefficient def
+R3768:3783 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R3768:3783 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R3797:3813 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R3797:3813 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+prf 3991:4018 <> ballistic_coefficient_nonneg
+binder 4029:4032 <> Mass:7
+binder 4034:4045 <> Dyn_Pressure:8
+binder 4047:4056 <> Drag_Force:9
+R4071:4074 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4063:4066 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4067:4070 stellarorion_orion_proof <> Mass:7 var
+R4092:4095 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4076:4079 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4080:4091 stellarorion_orion_proof <> Dyn_Pressure:8 var
+R4110:4116 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4097:4099 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4100:4109 stellarorion_orion_proof <> Drag_Force:9 var
+R4118:4121 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4122:4142 stellarorion_orion_proof <> ballistic_coefficient def
+R4144:4147 stellarorion_orion_proof <> Mass:7 var
+R4149:4160 stellarorion_orion_proof <> Dyn_Pressure:8 var
+R4162:4171 stellarorion_orion_proof <> Drag_Force:9 var
+R4240:4260 stellarorion_orion_proof <> ballistic_coefficient def
+R4273:4276 Coq.Reals.Rdefinitions <> Rdiv def
+R4288:4299 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4288:4299 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4313:4324 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4313:4324 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4350:4355 Coq.Reals.RIneq <> Rlt_le thm
+R4364:4379 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4350:4355 Coq.Reals.RIneq <> Rlt_le thm
+R4364:4379 Coq.Reals.RIneq <> Rinv_0_lt_compat thm

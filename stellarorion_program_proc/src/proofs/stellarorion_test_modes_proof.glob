@@ -1,0 +1,78 @@
+DIGEST 236ed7f24c8f0623a11d003d9fde58d5
+Fstellarorion_test_modes_proof
+R2372:2386 Coq.Reals.Reals <> <> lib
+R2404:2420 Coq.micromega.Lia <> <> lib
+R2438:2454 Coq.micromega.Lra <> <> lib
+def 2629:2638 <> grade_rank
+R2653:2653 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 2641:2645 <> error:1
+binder 2647:2649 <> tol:2
+R2658:2660 Coq.Init.Datatypes <> nat ind
+R2671:2680 Coq.Reals.RIneq <> Rle_lt_dec thm
+R2682:2686 stellarorion_test_modes_proof <> error:1 var
+R2688:2690 stellarorion_test_modes_proof <> tol:2 var
+R2710:2719 Coq.Reals.RIneq <> Rle_lt_dec thm
+R2721:2725 stellarorion_test_modes_proof <> error:1 var
+R2729:2731 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2732:2734 stellarorion_test_modes_proof <> tol:2 var
+prf 2819:2836 <> grade_rank_bounded
+binder 2847:2851 <> error:3
+binder 2853:2855 <> tol:4
+R2879:2882 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R2859:2868 stellarorion_test_modes_proof <> grade_rank def
+R2870:2874 stellarorion_test_modes_proof <> error:3 var
+R2876:2878 stellarorion_test_modes_proof <> tol:4 var
+R2929:2938 stellarorion_test_modes_proof <> grade_rank def
+R2954:2963 Coq.Reals.RIneq <> Rle_lt_dec thm
+R2954:2963 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3022:3031 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3041:3043 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3022:3031 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3041:3043 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+prf 3359:3374 <> grade_pass_sound
+binder 3385:3389 <> error:5
+binder 3391:3393 <> tol:6
+R3426:3430 Coq.Init.Logic <> ::type_scope:x_'<->'_x not
+R3417:3419 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3397:3406 stellarorion_test_modes_proof <> grade_rank def
+R3408:3412 stellarorion_test_modes_proof <> error:5 var
+R3414:3416 stellarorion_test_modes_proof <> tol:6 var
+R3436:3439 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3431:3435 stellarorion_test_modes_proof <> error:5 var
+R3440:3442 stellarorion_test_modes_proof <> tol:6 var
+R3483:3492 stellarorion_test_modes_proof <> grade_rank def
+R3508:3517 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3508:3517 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3666:3675 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3685:3687 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3666:3675 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3685:3687 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+def 3860:3867 <> clamp_dp
+R3876:3876 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3870:3872 <> raw:7
+R3881:3881 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3892:3901 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3905:3907 stellarorion_test_modes_proof <> raw:7 var
+R3918:3927 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3929:3931 stellarorion_test_modes_proof <> raw:7 var
+R3941:3943 stellarorion_test_modes_proof <> raw:7 var
+prf 4025:4038 <> clamp_dp_lower
+binder 4049:4051 <> raw:8
+R4055:4058 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4059:4066 stellarorion_test_modes_proof <> clamp_dp def
+R4068:4070 stellarorion_test_modes_proof <> raw:8 var
+R4105:4112 stellarorion_test_modes_proof <> clamp_dp def
+R4128:4137 Coq.Reals.RIneq <> Rle_lt_dec thm
+R4128:4137 Coq.Reals.RIneq <> Rle_lt_dec thm
+R4173:4182 Coq.Reals.RIneq <> Rle_lt_dec thm
+R4173:4182 Coq.Reals.RIneq <> Rle_lt_dec thm
+prf 4307:4320 <> clamp_dp_upper
+binder 4331:4333 <> raw:9
+R4348:4351 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4336:4343 stellarorion_test_modes_proof <> clamp_dp def
+R4345:4347 stellarorion_test_modes_proof <> raw:9 var
+R4388:4395 stellarorion_test_modes_proof <> clamp_dp def
+R4411:4420 Coq.Reals.RIneq <> Rle_lt_dec thm
+R4411:4420 Coq.Reals.RIneq <> Rle_lt_dec thm
+R4456:4465 Coq.Reals.RIneq <> Rle_lt_dec thm
+R4456:4465 Coq.Reals.RIneq <> Rle_lt_dec thm

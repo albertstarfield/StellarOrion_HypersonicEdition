@@ -1,0 +1,142 @@
+DIGEST e6342258d00badbddd5fc962f2a66c63
+F_tex_config_proof
+R1554:1568 Coq.Reals.Reals <> <> lib
+R1586:1598 Coq.Bool.Bool <> <> lib
+R1616:1632 Coq.micromega.Lia <> <> lib
+R1650:1666 Coq.micromega.Lra <> <> lib
+ind 2007:2015 <> tex_state
+constr 2027:2037 <> Unavailable
+constr 2041:2049 <> Available
+scheme 2007:2015 <> tex_state_rect
+scheme 2007:2015 <> tex_state_ind
+scheme 2007:2015 <> tex_state_rec
+scheme 2007:2015 <> tex_state_sind
+def 2064:2079 <> tex_available_of
+R2086:2094 _tex_config_proof <> tex_state ind
+binder 2082:2082 <> s:3
+R2099:2102 Coq.Init.Datatypes <> bool ind
+R2115:2115 _tex_config_proof <> s:3 var
+R2126:2136 _tex_config_proof <> Unavailable constr
+R2141:2145 Coq.Init.Datatypes <> false constr
+R2151:2159 _tex_config_proof <> Available constr
+R2164:2167 Coq.Init.Datatypes <> true constr
+def 2425:2435 <> memo_update
+R2442:2450 _tex_config_proof <> tex_state ind
+binder 2438:2438 <> s:5
+R2455:2463 _tex_config_proof <> tex_state ind
+R2468:2468 _tex_config_proof <> s:5 var
+prf 2702:2723 <> memo_update_idempotent
+binder 2734:2734 <> s:6
+R2764:2766 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R2737:2747 _tex_config_proof <> memo_update def
+R2750:2760 _tex_config_proof <> memo_update def
+R2762:2762 _tex_config_proof <> s:6 var
+R2767:2777 _tex_config_proof <> memo_update def
+R2779:2779 _tex_config_proof <> s:6 var
+R2958:2968 _tex_config_proof <> memo_update def
+prf 2998:3029 <> memo_update_idempotent_available
+R3071:3073 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3036:3046 _tex_config_proof <> memo_update def
+R3049:3059 _tex_config_proof <> memo_update def
+R3061:3069 _tex_config_proof <> Available constr
+R3074:3082 _tex_config_proof <> Available constr
+R3145:3147 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3110:3120 _tex_config_proof <> memo_update def
+R3123:3133 _tex_config_proof <> memo_update def
+R3135:3143 _tex_config_proof <> Available constr
+R3148:3158 _tex_config_proof <> memo_update def
+R3160:3168 _tex_config_proof <> Available constr
+R3185:3206 _tex_config_proof <> memo_update_idempotent thm
+R3145:3147 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3110:3120 _tex_config_proof <> memo_update def
+R3123:3133 _tex_config_proof <> memo_update def
+R3135:3143 _tex_config_proof <> Available constr
+R3148:3158 _tex_config_proof <> memo_update def
+R3160:3168 _tex_config_proof <> Available constr
+R3185:3206 _tex_config_proof <> memo_update_idempotent thm
+prf 3237:3270 <> memo_update_idempotent_unavailable
+R3314:3316 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3277:3287 _tex_config_proof <> memo_update def
+R3290:3300 _tex_config_proof <> memo_update def
+R3302:3312 _tex_config_proof <> Unavailable constr
+R3317:3327 _tex_config_proof <> Unavailable constr
+R3392:3394 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3355:3365 _tex_config_proof <> memo_update def
+R3368:3378 _tex_config_proof <> memo_update def
+R3380:3390 _tex_config_proof <> Unavailable constr
+R3395:3405 _tex_config_proof <> memo_update def
+R3407:3417 _tex_config_proof <> Unavailable constr
+R3434:3455 _tex_config_proof <> memo_update_idempotent thm
+R3392:3394 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3355:3365 _tex_config_proof <> memo_update def
+R3368:3378 _tex_config_proof <> memo_update def
+R3380:3390 _tex_config_proof <> Unavailable constr
+R3395:3405 _tex_config_proof <> memo_update def
+R3407:3417 _tex_config_proof <> Unavailable constr
+R3434:3455 _tex_config_proof <> memo_update_idempotent thm
+prf 3745:3763 <> tex_available_total
+binder 3774:3774 <> s:7
+R3802:3805 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R3795:3797 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3777:3792 _tex_config_proof <> tex_available_of def
+R3794:3794 _tex_config_proof <> s:7 var
+R3798:3801 Coq.Init.Datatypes <> true constr
+R3824:3826 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3806:3821 _tex_config_proof <> tex_available_of def
+R3823:3823 _tex_config_proof <> s:7 var
+R3827:3831 Coq.Init.Datatypes <> false constr
+R3862:3877 _tex_config_proof <> tex_available_of def
+prf 3970:3989 <> tex_available_stable
+binder 4000:4000 <> s:8
+R4038:4040 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4006:4021 _tex_config_proof <> tex_available_of def
+R4024:4034 _tex_config_proof <> memo_update def
+R4036:4036 _tex_config_proof <> s:8 var
+R4041:4056 _tex_config_proof <> tex_available_of def
+R4058:4058 _tex_config_proof <> s:8 var
+R4089:4099 _tex_config_proof <> memo_update def
+binder 4127:4127 <> t:9
+R4148:4150 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4130:4145 _tex_config_proof <> tex_available_of def
+R4147:4147 _tex_config_proof <> t:9 var
+R4151:4166 _tex_config_proof <> tex_available_of def
+R4168:4168 _tex_config_proof <> t:9 var
+binder 4127:4127 <> t:10
+R4148:4150 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4130:4145 _tex_config_proof <> tex_available_of def
+R4147:4147 _tex_config_proof <> t:10 var
+R4151:4166 _tex_config_proof <> tex_available_of def
+R4168:4168 _tex_config_proof <> t:10 var
+prf 4540:4561 <> tex_available_not_none
+binder 4572:4572 <> s:11
+R4603:4606 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R4596:4598 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4578:4593 _tex_config_proof <> tex_available_of def
+R4595:4595 _tex_config_proof <> s:11 var
+R4599:4602 Coq.Init.Datatypes <> true constr
+R4625:4627 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4607:4622 _tex_config_proof <> tex_available_of def
+R4624:4624 _tex_config_proof <> s:11 var
+R4628:4632 Coq.Init.Datatypes <> false constr
+R4669:4687 _tex_config_proof <> tex_available_total thm
+R4669:4687 _tex_config_proof <> tex_available_total thm
+prf 5073:5089 <> tex_available_orb
+binder 5100:5100 <> s:12
+R5133:5135 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5124:5127 Coq.Init.Datatypes <> ::bool_scope:x_'||'_x not
+R5106:5121 _tex_config_proof <> tex_available_of def
+R5123:5123 _tex_config_proof <> s:12 var
+R5128:5132 Coq.Init.Datatypes <> false constr
+R5136:5151 _tex_config_proof <> tex_available_of def
+R5153:5153 _tex_config_proof <> s:12 var
+R5184:5199 _tex_config_proof <> tex_available_of def
+prf 5271:5288 <> tex_available_andb
+binder 5299:5299 <> s:13
+R5331:5333 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5323:5326 Coq.Init.Datatypes <> ::bool_scope:x_'&&'_x not
+R5305:5320 _tex_config_proof <> tex_available_of def
+R5322:5322 _tex_config_proof <> s:13 var
+R5327:5330 Coq.Init.Datatypes <> true constr
+R5334:5349 _tex_config_proof <> tex_available_of def
+R5351:5351 _tex_config_proof <> s:13 var
+R5382:5397 _tex_config_proof <> tex_available_of def

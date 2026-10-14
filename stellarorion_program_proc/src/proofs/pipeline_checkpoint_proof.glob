@@ -1,0 +1,55 @@
+DIGEST 10ecbdb3d29f80a6eaf7a737c7047657
+Fpipeline_checkpoint_proof
+R2713:2727 Coq.Reals.Reals <> <> lib
+R2745:2761 Coq.micromega.Lia <> <> lib
+def 2857:2875 <> Pipeline_Step_Count
+R2879:2881 Coq.Init.Datatypes <> nat ind
+prf 3046:3065 <> is_all_completed_iff
+R3102:3104 Coq.Init.Datatypes <> nat ind
+binder 3076:3084 <> completed:1
+binder 3086:3098 <> not_completed:2
+R3157:3164 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3218:3218 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3135:3137 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3119:3121 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R3110:3118 pipeline_checkpoint_proof <> completed:1 var
+R3122:3134 pipeline_checkpoint_proof <> not_completed:2 var
+R3138:3156 pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R3182:3186 Coq.Init.Logic <> ::type_scope:x_'<->'_x not
+R3178:3180 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3165:3177 pipeline_checkpoint_proof <> not_completed:2 var
+R3196:3198 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3187:3195 pipeline_checkpoint_proof <> completed:1 var
+R3199:3217 pipeline_checkpoint_proof <> Pipeline_Step_Count def
+prf 3372:3394 <> completed_count_bounded
+R3431:3433 Coq.Init.Datatypes <> nat ind
+binder 3405:3413 <> completed:3
+binder 3415:3427 <> not_completed:4
+R3486:3492 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3464:3466 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3448:3450 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R3439:3447 pipeline_checkpoint_proof <> completed:3 var
+R3451:3463 pipeline_checkpoint_proof <> not_completed:4 var
+R3467:3485 pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R3502:3505 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3493:3501 pipeline_checkpoint_proof <> completed:3 var
+R3506:3524 pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R3597:3600 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3610:3612 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R3597:3600 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3610:3612 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+prf 3805:3825 <> resume_index_in_range
+R3848:3850 Coq.Init.Datatypes <> nat ind
+binder 3836:3844 <> completed:5
+R3887:3893 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3865:3867 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R3856:3864 pipeline_checkpoint_proof <> completed:5 var
+R3868:3886 pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R3907:3910 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3903:3905 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R3894:3902 pipeline_checkpoint_proof <> completed:5 var
+R3911:3929 pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R3982:3985 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3986:4004 pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R3982:3985 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3986:4004 pipeline_checkpoint_proof <> Pipeline_Step_Count def

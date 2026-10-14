@@ -1,0 +1,593 @@
+DIGEST f691e91acd93a70ffc933f1dba2a33ef
+Fvalidation_pipeline_proof
+R2412:2426 Coq.Reals.Reals <> <> lib
+R2444:2460 Coq.micromega.Lra <> <> lib
+sec 2928:2944 <> Cancel_Mul_Helper
+prf 2955:2964 <> cancel_mul
+R2981:2981 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 2975:2975 <> x:1
+binder 2977:2977 <> l:2
+R2990:2993 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2985:2988 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R2984:2984 validation_pipeline_proof <> l:2 var
+R3005:3007 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R2995:2998 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3004:3004 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2994:2994 validation_pipeline_proof <> l:2 var
+R3000:3002 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R2999:2999 validation_pipeline_proof <> x:1 var
+R3003:3003 validation_pipeline_proof <> l:2 var
+R3008:3008 validation_pipeline_proof <> x:1 var
+R3047:3050 Coq.Reals.Rdefinitions <> Rdiv def
+R3066:3076 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3066:3076 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3066:3076 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3090:3099 Coq.Reals.Raxioms <> Rmult_comm thm
+R3090:3099 Coq.Reals.Raxioms <> Rmult_comm thm
+R3090:3099 Coq.Reals.Raxioms <> Rmult_comm thm
+R3117:3127 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3117:3127 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3117:3127 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3141:3150 Coq.Reals.Raxioms <> Rmult_comm thm
+R3155:3156 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3141:3150 Coq.Reals.Raxioms <> Rmult_comm thm
+R3155:3156 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3141:3150 Coq.Reals.Raxioms <> Rmult_comm thm
+R3155:3156 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3173:3178 Coq.Reals.Raxioms <> Rinv_l thm
+R3173:3178 Coq.Reals.Raxioms <> Rinv_l thm
+R3173:3178 Coq.Reals.Raxioms <> Rinv_l thm
+R3198:3206 Coq.Reals.RIneq <> Rmult_1_r thm
+R3198:3206 Coq.Reals.RIneq <> Rmult_1_r thm
+R3198:3206 Coq.Reals.RIneq <> Rmult_1_r thm
+prf 3237:3248 <> rdiv_le_mono
+binder 3259:3259 <> a:3
+binder 3261:3261 <> b:4
+binder 3263:3263 <> c:5
+R3271:3274 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3267:3269 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3270:3270 validation_pipeline_proof <> c:5 var
+R3281:3284 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3276:3279 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3275:3275 validation_pipeline_proof <> a:3 var
+R3280:3280 validation_pipeline_proof <> b:4 var
+R3290:3293 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3286:3288 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3285:3285 validation_pipeline_proof <> a:3 var
+R3289:3289 validation_pipeline_proof <> c:5 var
+R3295:3297 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3294:3294 validation_pipeline_proof <> b:4 var
+R3298:3298 validation_pipeline_proof <> c:5 var
+R3348:3351 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R3348:3351 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R3389:3391 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3379:3382 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3388:3388 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3384:3386 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3405:3414 validation_pipeline_proof <> cancel_mul thm
+R3389:3391 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3379:3382 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3388:3388 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3384:3386 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3405:3414 validation_pipeline_proof <> cancel_mul thm
+R3455:3457 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3445:3448 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3454:3454 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3450:3452 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3471:3480 validation_pipeline_proof <> cancel_mul thm
+R3455:3457 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3445:3448 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3454:3454 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3450:3452 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3471:3480 validation_pipeline_proof <> cancel_mul thm
+R3504:3517 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R3504:3517 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+prf 3586:3598 <> rdiv_neg_flip
+binder 3609:3609 <> x:6
+binder 3611:3611 <> y:7
+R3619:3622 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3615:3617 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3614:3614 validation_pipeline_proof <> y:7 var
+R3628:3630 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3624:3626 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3623:3623 validation_pipeline_proof <> x:6 var
+R3627:3627 validation_pipeline_proof <> y:7 var
+R3631:3633 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3643:3643 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3635:3638 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3642:3642 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3634:3634 validation_pipeline_proof <> x:6 var
+R3639:3640 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3641:3641 validation_pipeline_proof <> y:7 var
+R3689:3692 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R3686:3687 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3689:3692 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R3686:3687 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3722:3724 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3719:3720 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3725:3727 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3735:3735 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3728:3730 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3734:3734 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3731:3732 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3722:3724 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3719:3720 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3725:3727 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3735:3735 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3728:3730 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3734:3734 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3731:3732 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3755:3769 Coq.Reals.RIneq <> Ropp_involutive thm
+R3772:3773 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3755:3769 Coq.Reals.RIneq <> Ropp_involutive thm
+R3772:3773 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3755:3769 Coq.Reals.RIneq <> Ropp_involutive thm
+R3772:3773 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3787:3794 Coq.Reals.RIneq <> Rinv_opp thm
+R3787:3794 Coq.Reals.RIneq <> Rinv_opp thm
+R3787:3794 Coq.Reals.RIneq <> Rinv_opp thm
+R3821:3824 Coq.Reals.Rdefinitions <> Rdiv def
+R3849:3873 Coq.Reals.RIneq <> Ropp_mult_distr_r_reverse thm
+R3849:3873 Coq.Reals.RIneq <> Ropp_mult_distr_r_reverse thm
+R3849:3873 Coq.Reals.RIneq <> Ropp_mult_distr_r_reverse thm
+prf 3900:3915 <> rdiv_le_mono_neg
+binder 3926:3926 <> a:8
+binder 3928:3928 <> b:9
+binder 3930:3930 <> c:10
+R3938:3941 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3934:3936 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3933:3933 validation_pipeline_proof <> c:10 var
+R3948:3951 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3943:3946 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3942:3942 validation_pipeline_proof <> a:8 var
+R3947:3947 validation_pipeline_proof <> b:9 var
+R3957:3960 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3953:3955 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3952:3952 validation_pipeline_proof <> b:9 var
+R3956:3956 validation_pipeline_proof <> c:10 var
+R3962:3964 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3961:3961 validation_pipeline_proof <> a:8 var
+R3965:3965 validation_pipeline_proof <> c:10 var
+R4014:4016 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4017:4018 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R4014:4016 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4017:4018 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R4041:4053 validation_pipeline_proof <> rdiv_neg_flip thm
+R4041:4053 validation_pipeline_proof <> rdiv_neg_flip thm
+R4041:4053 validation_pipeline_proof <> rdiv_neg_flip thm
+R4075:4087 validation_pipeline_proof <> rdiv_neg_flip thm
+R4075:4087 validation_pipeline_proof <> rdiv_neg_flip thm
+R4075:4087 validation_pipeline_proof <> rdiv_neg_flip thm
+R4106:4122 Coq.Reals.RIneq <> Ropp_le_contravar thm
+R4106:4122 Coq.Reals.RIneq <> Ropp_le_contravar thm
+R4133:4144 validation_pipeline_proof <> rdiv_le_mono thm
+R4133:4144 validation_pipeline_proof <> rdiv_le_mono thm
+R4180:4196 validation_pipeline_proof Cancel_Mul_Helper <> sec
+prf 4206:4214 <> rdiv_le_1
+binder 4225:4225 <> a:11
+binder 4227:4227 <> b:12
+R4235:4238 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4231:4233 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4234:4234 validation_pipeline_proof <> b:12 var
+R4245:4248 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4240:4243 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4239:4239 validation_pipeline_proof <> a:11 var
+R4244:4244 validation_pipeline_proof <> b:12 var
+R4254:4257 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4250:4252 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4249:4249 validation_pipeline_proof <> a:11 var
+R4253:4253 validation_pipeline_proof <> b:12 var
+R4306:4309 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R4306:4309 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R4346:4348 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4336:4339 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4345:4345 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4341:4343 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4362:4371 validation_pipeline_proof <> cancel_mul thm
+R4346:4348 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4336:4339 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4345:4345 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4341:4343 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4362:4371 validation_pipeline_proof <> cancel_mul thm
+R4395:4408 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R4395:4408 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R4451:4459 Coq.Reals.RIneq <> Rmult_1_r thm
+R4451:4459 Coq.Reals.RIneq <> Rmult_1_r thm
+R4451:4459 Coq.Reals.RIneq <> Rmult_1_r thm
+prf 4485:4493 <> rdiv_lt_1
+binder 4504:4504 <> a:13
+binder 4506:4506 <> b:14
+R4514:4517 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4510:4512 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4513:4513 validation_pipeline_proof <> b:14 var
+R4523:4526 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4519:4521 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4518:4518 validation_pipeline_proof <> a:13 var
+R4522:4522 validation_pipeline_proof <> b:14 var
+R4532:4534 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4528:4530 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4527:4527 validation_pipeline_proof <> a:13 var
+R4531:4531 validation_pipeline_proof <> b:14 var
+R4578:4584 Coq.Reals.RIneq <> Req_dec thm
+R4588:4590 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4578:4584 Coq.Reals.RIneq <> Req_dec thm
+R4588:4590 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4646:4649 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R4646:4649 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R4688:4690 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4678:4681 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4687:4687 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4683:4685 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4704:4713 validation_pipeline_proof <> cancel_mul thm
+R4688:4690 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4678:4681 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4687:4687 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4683:4685 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4704:4713 validation_pipeline_proof <> cancel_mul thm
+R4762:4770 Coq.Reals.RIneq <> Rmult_1_r thm
+R4762:4770 Coq.Reals.RIneq <> Rmult_1_r thm
+R4762:4770 Coq.Reals.RIneq <> Rmult_1_r thm
+R4810:4813 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4806:4808 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4827:4835 validation_pipeline_proof <> rdiv_le_1 thm
+R4810:4813 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4806:4808 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4827:4835 validation_pipeline_proof <> rdiv_le_1 thm
+prf 4865:4875 <> rdiv_nonneg
+binder 4886:4886 <> a:15
+binder 4888:4888 <> b:16
+R4897:4900 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4892:4895 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4896:4896 validation_pipeline_proof <> a:15 var
+R4906:4909 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4902:4904 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4905:4905 validation_pipeline_proof <> b:16 var
+R4911:4914 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4916:4918 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4915:4915 validation_pipeline_proof <> a:15 var
+R4919:4919 validation_pipeline_proof <> b:16 var
+R4967:4969 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4970:4971 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4985:5000 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4967:4969 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4970:4971 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4985:5000 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R5022:5027 Coq.Reals.RIneq <> Rlt_le thm
+R5022:5027 Coq.Reals.RIneq <> Rlt_le thm
+R5047:5050 Coq.Reals.Rdefinitions <> Rdiv def
+R5061:5072 Coq.Reals.RIneq <> Rmult_le_pos thm
+R5061:5072 Coq.Reals.RIneq <> Rmult_le_pos thm
+prf 5112:5119 <> rdiv_pos
+binder 5130:5130 <> a:17
+binder 5132:5132 <> b:18
+R5140:5143 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5136:5138 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5139:5139 validation_pipeline_proof <> a:17 var
+R5149:5152 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5145:5147 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5148:5148 validation_pipeline_proof <> b:18 var
+R5154:5156 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5158:5160 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5157:5157 validation_pipeline_proof <> a:17 var
+R5161:5161 validation_pipeline_proof <> b:18 var
+R5199:5214 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R5199:5214 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+prf 5252:5263 <> rdiv_lt_mono
+binder 5274:5274 <> a:19
+binder 5276:5276 <> b:20
+binder 5278:5278 <> c:21
+R5286:5289 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5282:5284 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5285:5285 validation_pipeline_proof <> c:21 var
+R5295:5298 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5291:5293 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5290:5290 validation_pipeline_proof <> a:19 var
+R5294:5294 validation_pipeline_proof <> b:20 var
+R5304:5306 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5300:5302 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5299:5299 validation_pipeline_proof <> a:19 var
+R5303:5303 validation_pipeline_proof <> c:21 var
+R5308:5310 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5307:5307 validation_pipeline_proof <> b:20 var
+R5311:5311 validation_pipeline_proof <> c:21 var
+R5361:5364 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R5361:5364 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R5402:5404 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5392:5395 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5401:5401 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5397:5399 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5418:5427 validation_pipeline_proof <> cancel_mul thm
+R5402:5404 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5392:5395 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5401:5401 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5397:5399 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5418:5427 validation_pipeline_proof <> cancel_mul thm
+R5468:5470 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5458:5461 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5467:5467 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5463:5465 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5484:5493 validation_pipeline_proof <> cancel_mul thm
+R5468:5470 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5458:5461 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5467:5467 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5463:5465 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5484:5493 validation_pipeline_proof <> cancel_mul thm
+R5517:5530 Coq.Reals.RIneq <> Rmult_lt_reg_l thm
+R5517:5530 Coq.Reals.RIneq <> Rmult_lt_reg_l thm
+def 5934:5940 <> knudsen
+R5956:5956 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5943:5945 <> lam:22
+binder 5947:5952 <> l_char:23
+R5961:5961 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R5969:5971 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5966:5968 validation_pipeline_proof <> lam:22 var
+R5972:5977 validation_pipeline_proof <> l_char:23 var
+def 5992:6003 <> handoff_step
+R6046:6046 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 6006:6012 <> h_entry:24
+binder 6014:6020 <> h_final:25
+binder 6022:6030 <> h_handoff:26
+binder 6032:6042 <> target_step:27
+R6051:6051 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R6059:6059 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6103:6106 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6060:6060 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6080:6084 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6102:6102 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6068:6070 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6061:6067 validation_pipeline_proof <> h_entry:24 var
+R6071:6079 validation_pipeline_proof <> h_handoff:26 var
+R6092:6094 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6085:6091 validation_pipeline_proof <> h_entry:24 var
+R6095:6101 validation_pipeline_proof <> h_final:25 var
+R6107:6117 validation_pipeline_proof <> target_step:27 var
+def 6132:6147 <> step_of_altitude
+R6182:6182 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 6150:6156 <> h_entry:28
+binder 6158:6164 <> h_final:29
+binder 6166:6166 <> h:30
+binder 6168:6178 <> target_step:31
+R6187:6187 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R6195:6195 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6231:6234 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6196:6196 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6208:6212 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6230:6230 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6198:6200 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6197:6197 validation_pipeline_proof <> h:30 var
+R6201:6207 validation_pipeline_proof <> h_entry:28 var
+R6220:6222 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6213:6219 validation_pipeline_proof <> h_final:29 var
+R6223:6229 validation_pipeline_proof <> h_entry:28 var
+R6235:6245 validation_pipeline_proof <> target_step:31 var
+prf 6541:6549 <> kn_nonneg
+binder 6560:6562 <> lam:32
+binder 6564:6569 <> l_char:33
+R6580:6583 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6573:6576 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6577:6579 validation_pipeline_proof <> lam:32 var
+R6594:6597 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6585:6587 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6588:6593 validation_pipeline_proof <> l_char:33 var
+R6599:6602 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6603:6609 validation_pipeline_proof <> knudsen def
+R6611:6613 validation_pipeline_proof <> lam:32 var
+R6615:6620 validation_pipeline_proof <> l_char:33 var
+R6668:6674 validation_pipeline_proof <> knudsen def
+R6685:6695 validation_pipeline_proof <> rdiv_nonneg thm
+R6685:6695 validation_pipeline_proof <> rdiv_nonneg thm
+prf 6735:6755 <> kn_monotone_in_lambda
+binder 6766:6769 <> lam1:34
+binder 6771:6774 <> lam2:35
+binder 6776:6781 <> l_char:36
+R6797:6800 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6788:6790 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6791:6796 validation_pipeline_proof <> l_char:36 var
+R6813:6819 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6805:6808 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6801:6804 validation_pipeline_proof <> lam1:34 var
+R6809:6812 validation_pipeline_proof <> lam2:35 var
+R6839:6842 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6820:6826 validation_pipeline_proof <> knudsen def
+R6828:6831 validation_pipeline_proof <> lam1:34 var
+R6833:6838 validation_pipeline_proof <> l_char:36 var
+R6843:6849 validation_pipeline_proof <> knudsen def
+R6851:6854 validation_pipeline_proof <> lam2:35 var
+R6856:6861 validation_pipeline_proof <> l_char:36 var
+R6914:6920 validation_pipeline_proof <> knudsen def
+R6931:6942 validation_pipeline_proof <> rdiv_le_mono thm
+R6931:6942 validation_pipeline_proof <> rdiv_le_mono thm
+prf 7243:7262 <> handoff_step_in_span
+binder 7273:7279 <> h_entry:37
+binder 7281:7287 <> h_final:38
+binder 7289:7297 <> h_handoff:39
+binder 7299:7309 <> target_step:40
+R7332:7335 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7322:7324 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7315:7321 validation_pipeline_proof <> h_final:38 var
+R7325:7331 validation_pipeline_proof <> h_entry:37 var
+R7356:7359 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7343:7346 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7336:7342 validation_pipeline_proof <> h_final:38 var
+R7347:7355 validation_pipeline_proof <> h_handoff:39 var
+R7380:7386 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7369:7372 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7360:7368 validation_pipeline_proof <> h_handoff:39 var
+R7373:7379 validation_pipeline_proof <> h_entry:37 var
+R7402:7408 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7388:7390 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7391:7401 validation_pipeline_proof <> target_step:40 var
+R7464:7470 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7410:7413 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7414:7425 validation_pipeline_proof <> handoff_step def
+R7427:7433 validation_pipeline_proof <> h_entry:37 var
+R7435:7441 validation_pipeline_proof <> h_final:38 var
+R7443:7451 validation_pipeline_proof <> h_handoff:39 var
+R7453:7463 validation_pipeline_proof <> target_step:40 var
+R7521:7524 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7471:7482 validation_pipeline_proof <> handoff_step def
+R7484:7490 validation_pipeline_proof <> h_entry:37 var
+R7492:7498 validation_pipeline_proof <> h_final:38 var
+R7500:7508 validation_pipeline_proof <> h_handoff:39 var
+R7510:7520 validation_pipeline_proof <> target_step:40 var
+R7525:7535 validation_pipeline_proof <> target_step:40 var
+R7631:7633 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7641:7643 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7631:7633 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7641:7643 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7719:7722 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7676:7676 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7696:7700 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7718:7718 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7684:7686 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7708:7710 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7740:7748 validation_pipeline_proof <> rdiv_le_1 thm
+R7719:7722 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7676:7676 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7696:7700 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7718:7718 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7684:7686 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7708:7710 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7740:7748 validation_pipeline_proof <> rdiv_le_1 thm
+R7766:7777 validation_pipeline_proof <> handoff_step def
+R7799:7810 Coq.Reals.RIneq <> Rmult_le_pos thm
+R7799:7810 Coq.Reals.RIneq <> Rmult_le_pos thm
+R7825:7835 validation_pipeline_proof <> rdiv_nonneg thm
+R7825:7835 validation_pipeline_proof <> rdiv_nonneg thm
+R7928:7947 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7914:7916 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7871:7871 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7891:7895 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7913:7913 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7879:7881 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7903:7905 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7949:7951 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7928:7947 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7914:7916 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7871:7871 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7891:7895 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7913:7913 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7879:7881 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7903:7905 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7949:7951 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7978:7994 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R7978:7994 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R8029:8037 Coq.Reals.Raxioms <> Rmult_1_l thm
+R8029:8037 Coq.Reals.Raxioms <> Rmult_1_l thm
+R8029:8037 Coq.Reals.Raxioms <> Rmult_1_l thm
+prf 8386:8401 <> step_of_monotone
+binder 8412:8413 <> h1:41
+binder 8415:8416 <> h2:42
+binder 8418:8424 <> h_entry:43
+binder 8426:8432 <> h_final:44
+binder 8434:8444 <> target_step:45
+R8467:8470 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8457:8459 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R8450:8456 validation_pipeline_proof <> h_final:44 var
+R8460:8466 validation_pipeline_proof <> h_entry:43 var
+R8479:8482 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8473:8476 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8471:8472 validation_pipeline_proof <> h1:41 var
+R8477:8478 validation_pipeline_proof <> h2:42 var
+R8496:8499 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8485:8488 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8483:8484 validation_pipeline_proof <> h2:42 var
+R8489:8495 validation_pipeline_proof <> h_entry:43 var
+R8515:8521 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8501:8503 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R8504:8514 validation_pipeline_proof <> target_step:45 var
+R8569:8575 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8522:8537 validation_pipeline_proof <> step_of_altitude def
+R8539:8545 validation_pipeline_proof <> h_entry:43 var
+R8547:8553 validation_pipeline_proof <> h_final:44 var
+R8555:8556 validation_pipeline_proof <> h2:42 var
+R8558:8568 validation_pipeline_proof <> target_step:45 var
+R8576:8591 validation_pipeline_proof <> step_of_altitude def
+R8593:8599 validation_pipeline_proof <> h_entry:43 var
+R8601:8607 validation_pipeline_proof <> h_final:44 var
+R8609:8610 validation_pipeline_proof <> h1:41 var
+R8612:8622 validation_pipeline_proof <> target_step:45 var
+R8713:8715 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R8723:8725 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R8713:8715 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R8723:8725 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R8752:8767 validation_pipeline_proof <> step_of_altitude def
+R8778:8794 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R8778:8794 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R8815:8830 validation_pipeline_proof <> rdiv_le_mono_neg thm
+R8815:8830 validation_pipeline_proof <> rdiv_le_mono_neg thm
+prf 9318:9333 <> step_of_at_entry
+binder 9344:9350 <> h_entry:46
+binder 9352:9358 <> h_final:47
+binder 9360:9370 <> target_step:48
+R9428:9430 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R9376:9391 validation_pipeline_proof <> step_of_altitude def
+R9393:9399 validation_pipeline_proof <> h_entry:46 var
+R9401:9407 validation_pipeline_proof <> h_final:47 var
+R9409:9415 validation_pipeline_proof <> h_entry:46 var
+R9417:9427 validation_pipeline_proof <> target_step:48 var
+R9488:9503 validation_pipeline_proof <> step_of_altitude def
+R9750:9760 Coq.Reals.RIneq <> Rminus_diag thm
+R9750:9760 Coq.Reals.RIneq <> Rminus_diag thm
+R9750:9760 Coq.Reals.RIneq <> Rminus_diag thm
+R9772:9775 Coq.Reals.Rdefinitions <> Rdiv def
+R9789:9797 Coq.Reals.RIneq <> Rmult_0_l thm
+R9789:9797 Coq.Reals.RIneq <> Rmult_0_l thm
+R9789:9797 Coq.Reals.RIneq <> Rmult_0_l thm
+R9789:9797 Coq.Reals.RIneq <> Rmult_0_l thm
+R9789:9797 Coq.Reals.RIneq <> Rmult_0_l thm
+prf 9827:9842 <> step_of_at_final
+binder 9853:9859 <> h_entry:49
+binder 9861:9867 <> h_final:50
+binder 9869:9879 <> target_step:51
+R9903:9909 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9892:9895 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R9885:9891 validation_pipeline_proof <> h_entry:49 var
+R9896:9902 validation_pipeline_proof <> h_final:50 var
+R9962:9964 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R9910:9925 validation_pipeline_proof <> step_of_altitude def
+R9927:9933 validation_pipeline_proof <> h_entry:49 var
+R9935:9941 validation_pipeline_proof <> h_final:50 var
+R9943:9949 validation_pipeline_proof <> h_final:50 var
+R9951:9961 validation_pipeline_proof <> target_step:51 var
+R9965:9975 validation_pipeline_proof <> target_step:51 var
+R10059:10062 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R10049:10051 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R10059:10062 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R10049:10051 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R10132:10134 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R10091:10091 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R10109:10113 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R10131:10131 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R10099:10101 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R10121:10123 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R10132:10134 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R10091:10091 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R10109:10113 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R10131:10131 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R10099:10101 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R10121:10123 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R10150:10163 Coq.Reals.RIneq <> Rmult_eq_reg_r thm
+R10173:10175 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R10150:10163 Coq.Reals.RIneq <> Rmult_eq_reg_r thm
+R10173:10175 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R10213:10216 Coq.Reals.Rdefinitions <> Rdiv def
+R10231:10241 Coq.Reals.Raxioms <> Rmult_assoc thm
+R10231:10241 Coq.Reals.Raxioms <> Rmult_assoc thm
+R10231:10241 Coq.Reals.Raxioms <> Rmult_assoc thm
+R10257:10262 Coq.Reals.Raxioms <> Rinv_l thm
+R10272:10274 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R10257:10262 Coq.Reals.Raxioms <> Rinv_l thm
+R10272:10274 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R10257:10262 Coq.Reals.Raxioms <> Rinv_l thm
+R10272:10274 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R10301:10309 Coq.Reals.RIneq <> Rmult_1_r thm
+R10301:10309 Coq.Reals.RIneq <> Rmult_1_r thm
+R10301:10309 Coq.Reals.RIneq <> Rmult_1_r thm
+R10324:10332 Coq.Reals.Raxioms <> Rmult_1_l thm
+R10324:10332 Coq.Reals.Raxioms <> Rmult_1_l thm
+R10324:10332 Coq.Reals.Raxioms <> Rmult_1_l thm
+R10363:10378 validation_pipeline_proof <> step_of_altitude def
+R10407:10415 Coq.Reals.Raxioms <> Rmult_1_l thm
+R10407:10415 Coq.Reals.Raxioms <> Rmult_1_l thm
+R10407:10415 Coq.Reals.Raxioms <> Rmult_1_l thm

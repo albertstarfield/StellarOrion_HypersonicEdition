@@ -1,0 +1,429 @@
+DIGEST a9278d29122705fb8aaa67f175318145
+Fhiad_optimizer_proof
+R1916:1930 Coq.Reals.Reals <> <> lib
+R1948:1964 Coq.micromega.Lra <> <> lib
+def 2375:2387 <> GATE_CORR_MIN
+R2391:2391 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 2412:2424 <> GATE_CORR_MAX
+R2428:2428 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+prf 2445:2456 <> corr_min_pos
+R2461:2463 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2464:2476 hiad_optimizer_proof <> GATE_CORR_MIN def
+R2495:2507 hiad_optimizer_proof <> GATE_CORR_MIN def
+R2529:2531 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2529:2531 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2564:2566 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2568:2570 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R2564:2566 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2568:2570 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+prf 2601:2612 <> corr_max_pos
+R2617:2619 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2620:2632 hiad_optimizer_proof <> GATE_CORR_MAX def
+R2651:2663 hiad_optimizer_proof <> GATE_CORR_MAX def
+R2685:2687 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2685:2687 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2720:2722 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2720:2722 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+prf 2753:2763 <> corr_max_gt
+R2768:2770 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2784:2786 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R2771:2783 hiad_optimizer_proof <> GATE_CORR_MAX def
+R2787:2799 hiad_optimizer_proof <> GATE_CORR_MIN def
+R2818:2830 hiad_optimizer_proof <> GATE_CORR_MIN def
+R2833:2845 hiad_optimizer_proof <> GATE_CORR_MAX def
+R2867:2869 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2871:2873 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R2875:2877 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R2867:2869 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2871:2873 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R2875:2877 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+prf 3209:3218 <> cancel_mul
+R3235:3235 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3229:3229 <> x:1
+binder 3231:3231 <> l:2
+R3244:3247 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3239:3242 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R3238:3238 hiad_optimizer_proof <> l:2 var
+R3259:3261 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3249:3252 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3258:3258 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3248:3248 hiad_optimizer_proof <> l:2 var
+R3254:3256 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3253:3253 hiad_optimizer_proof <> x:1 var
+R3257:3257 hiad_optimizer_proof <> l:2 var
+R3262:3262 hiad_optimizer_proof <> x:1 var
+R3299:3302 Coq.Reals.Rdefinitions <> Rdiv def
+R3318:3328 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3318:3328 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3318:3328 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3342:3351 Coq.Reals.Raxioms <> Rmult_comm thm
+R3342:3351 Coq.Reals.Raxioms <> Rmult_comm thm
+R3342:3351 Coq.Reals.Raxioms <> Rmult_comm thm
+R3369:3379 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3369:3379 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3369:3379 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3393:3402 Coq.Reals.Raxioms <> Rmult_comm thm
+R3407:3408 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3393:3402 Coq.Reals.Raxioms <> Rmult_comm thm
+R3407:3408 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3393:3402 Coq.Reals.Raxioms <> Rmult_comm thm
+R3407:3408 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3425:3430 Coq.Reals.Raxioms <> Rinv_l thm
+R3425:3430 Coq.Reals.Raxioms <> Rinv_l thm
+R3425:3430 Coq.Reals.Raxioms <> Rinv_l thm
+R3450:3458 Coq.Reals.RIneq <> Rmult_1_r thm
+R3450:3458 Coq.Reals.RIneq <> Rmult_1_r thm
+R3450:3458 Coq.Reals.RIneq <> Rmult_1_r thm
+prf 3488:3496 <> rdiv_le_1
+binder 3507:3507 <> a:3
+binder 3509:3509 <> b:4
+R3517:3520 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3513:3515 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3516:3516 hiad_optimizer_proof <> b:4 var
+R3527:3530 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3522:3525 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3521:3521 hiad_optimizer_proof <> a:3 var
+R3526:3526 hiad_optimizer_proof <> b:4 var
+R3536:3539 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3532:3534 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3531:3531 hiad_optimizer_proof <> a:3 var
+R3535:3535 hiad_optimizer_proof <> b:4 var
+R3588:3591 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R3588:3591 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R3628:3630 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3618:3621 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3627:3627 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3623:3625 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3644:3653 hiad_optimizer_proof <> cancel_mul thm
+R3628:3630 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3618:3621 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3627:3627 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3623:3625 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3644:3653 hiad_optimizer_proof <> cancel_mul thm
+R3677:3690 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R3677:3690 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R3737:3745 Coq.Reals.RIneq <> Rmult_1_r thm
+R3737:3745 Coq.Reals.RIneq <> Rmult_1_r thm
+R3737:3745 Coq.Reals.RIneq <> Rmult_1_r thm
+def 3995:4011 <> correction_factor
+R4036:4036 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4014:4021 <> q_hybrid:5
+binder 4023:4032 <> q_analytic:6
+R4041:4041 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4048:4051 Coq.Reals.Rbasic_fun <> Rmin def
+R4053:4065 hiad_optimizer_proof <> GATE_CORR_MAX def
+R4068:4071 Coq.Reals.Rbasic_fun <> Rmax def
+R4073:4085 hiad_optimizer_proof <> GATE_CORR_MIN def
+R4096:4098 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4088:4095 hiad_optimizer_proof <> q_hybrid:5 var
+R4099:4108 hiad_optimizer_proof <> q_analytic:6 var
+prf 4345:4367 <> correction_factor_lower
+binder 4378:4385 <> q_hybrid:7
+binder 4387:4396 <> q_analytic:8
+R4414:4417 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4403:4405 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4406:4413 hiad_optimizer_proof <> q_hybrid:7 var
+R4432:4438 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4419:4421 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4422:4431 hiad_optimizer_proof <> q_analytic:8 var
+R4452:4455 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4439:4451 hiad_optimizer_proof <> GATE_CORR_MIN def
+R4456:4472 hiad_optimizer_proof <> correction_factor def
+R4474:4481 hiad_optimizer_proof <> q_hybrid:7 var
+R4483:4492 hiad_optimizer_proof <> q_analytic:8 var
+R4547:4563 hiad_optimizer_proof <> correction_factor def
+R4578:4584 Coq.Reals.RIneq <> Rle_dec thm
+R4586:4598 hiad_optimizer_proof <> GATE_CORR_MAX def
+R4601:4604 Coq.Reals.Rbasic_fun <> Rmax def
+R4606:4618 hiad_optimizer_proof <> GATE_CORR_MIN def
+R4629:4631 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4578:4584 Coq.Reals.RIneq <> Rle_dec thm
+R4586:4598 hiad_optimizer_proof <> GATE_CORR_MAX def
+R4601:4604 Coq.Reals.Rbasic_fun <> Rmax def
+R4606:4618 hiad_optimizer_proof <> GATE_CORR_MIN def
+R4629:4631 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4674:4682 Coq.Reals.Rbasic_fun <> Rmin_left thm
+R4674:4682 Coq.Reals.Rbasic_fun <> Rmin_left thm
+R4674:4682 Coq.Reals.Rbasic_fun <> Rmin_left thm
+R4707:4719 hiad_optimizer_proof <> GATE_CORR_MIN def
+R4722:4734 hiad_optimizer_proof <> GATE_CORR_MAX def
+R4756:4765 Coq.Reals.RIneq <> Rnot_le_lt thm
+R4756:4765 Coq.Reals.RIneq <> Rnot_le_lt thm
+R4783:4788 Coq.Reals.RIneq <> Rlt_le thm
+R4783:4788 Coq.Reals.RIneq <> Rlt_le thm
+R4808:4817 Coq.Reals.Rbasic_fun <> Rmin_right thm
+R4808:4817 Coq.Reals.Rbasic_fun <> Rmin_right thm
+R4808:4817 Coq.Reals.Rbasic_fun <> Rmin_right thm
+R4841:4846 Coq.Reals.Rbasic_fun <> Rmax_l thm
+R4841:4846 Coq.Reals.Rbasic_fun <> Rmax_l thm
+prf 4861:4883 <> correction_factor_upper
+binder 4894:4901 <> q_hybrid:9
+binder 4903:4912 <> q_analytic:10
+R4930:4933 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4919:4921 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4922:4929 hiad_optimizer_proof <> q_hybrid:9 var
+R4948:4954 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4935:4937 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4938:4947 hiad_optimizer_proof <> q_analytic:10 var
+R4992:4995 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4955:4971 hiad_optimizer_proof <> correction_factor def
+R4973:4980 hiad_optimizer_proof <> q_hybrid:9 var
+R4982:4991 hiad_optimizer_proof <> q_analytic:10 var
+R4996:5008 hiad_optimizer_proof <> GATE_CORR_MAX def
+R5063:5079 hiad_optimizer_proof <> correction_factor def
+R5094:5100 Coq.Reals.RIneq <> Rle_dec thm
+R5102:5114 hiad_optimizer_proof <> GATE_CORR_MAX def
+R5117:5120 Coq.Reals.Rbasic_fun <> Rmax def
+R5122:5134 hiad_optimizer_proof <> GATE_CORR_MIN def
+R5145:5147 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5094:5100 Coq.Reals.RIneq <> Rle_dec thm
+R5102:5114 hiad_optimizer_proof <> GATE_CORR_MAX def
+R5117:5120 Coq.Reals.Rbasic_fun <> Rmax def
+R5122:5134 hiad_optimizer_proof <> GATE_CORR_MIN def
+R5145:5147 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5190:5198 Coq.Reals.Rbasic_fun <> Rmin_left thm
+R5190:5198 Coq.Reals.Rbasic_fun <> Rmin_left thm
+R5190:5198 Coq.Reals.Rbasic_fun <> Rmin_left thm
+R5222:5229 Coq.Reals.RIneq <> Rle_refl thm
+R5222:5229 Coq.Reals.RIneq <> Rle_refl thm
+R5242:5251 Coq.Reals.RIneq <> Rnot_le_lt thm
+R5242:5251 Coq.Reals.RIneq <> Rnot_le_lt thm
+R5269:5274 Coq.Reals.RIneq <> Rlt_le thm
+R5269:5274 Coq.Reals.RIneq <> Rlt_le thm
+R5294:5303 Coq.Reals.Rbasic_fun <> Rmin_right thm
+R5294:5303 Coq.Reals.Rbasic_fun <> Rmin_right thm
+R5294:5303 Coq.Reals.Rbasic_fun <> Rmin_right thm
+prf 5342:5363 <> correction_factor_band
+binder 5374:5381 <> q_hybrid:11
+binder 5383:5392 <> q_analytic:12
+R5410:5413 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5399:5401 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5402:5409 hiad_optimizer_proof <> q_hybrid:11 var
+R5428:5434 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5415:5417 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5418:5427 hiad_optimizer_proof <> q_analytic:12 var
+R5489:5495 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R5448:5451 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5435:5447 hiad_optimizer_proof <> GATE_CORR_MIN def
+R5452:5468 hiad_optimizer_proof <> correction_factor def
+R5470:5477 hiad_optimizer_proof <> q_hybrid:11 var
+R5479:5488 hiad_optimizer_proof <> q_analytic:12 var
+R5533:5536 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5496:5512 hiad_optimizer_proof <> correction_factor def
+R5514:5521 hiad_optimizer_proof <> q_hybrid:11 var
+R5523:5532 hiad_optimizer_proof <> q_analytic:12 var
+R5537:5549 hiad_optimizer_proof <> GATE_CORR_MAX def
+R5614:5636 hiad_optimizer_proof <> correction_factor_lower thm
+R5614:5636 hiad_optimizer_proof <> correction_factor_lower thm
+R5661:5683 hiad_optimizer_proof <> correction_factor_upper thm
+R5661:5683 hiad_optimizer_proof <> correction_factor_upper thm
+prf 5982:6005 <> correction_offset_bounds
+binder 6016:6023 <> q_hybrid:13
+binder 6025:6034 <> q_analytic:14
+R6052:6055 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6041:6043 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6044:6051 hiad_optimizer_proof <> q_hybrid:13 var
+R6070:6076 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6057:6059 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6060:6069 hiad_optimizer_proof <> q_analytic:14 var
+R6139:6145 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R6094:6097 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6090:6092 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6077:6089 hiad_optimizer_proof <> GATE_CORR_MIN def
+R6135:6137 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6098:6114 hiad_optimizer_proof <> correction_factor def
+R6116:6123 hiad_optimizer_proof <> q_hybrid:13 var
+R6125:6134 hiad_optimizer_proof <> q_analytic:14 var
+R6187:6190 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6183:6185 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6146:6162 hiad_optimizer_proof <> correction_factor def
+R6164:6171 hiad_optimizer_proof <> q_hybrid:13 var
+R6173:6182 hiad_optimizer_proof <> q_analytic:14 var
+R6204:6206 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6191:6203 hiad_optimizer_proof <> GATE_CORR_MAX def
+R6268:6289 hiad_optimizer_proof <> correction_factor_band thm
+R6268:6289 hiad_optimizer_proof <> correction_factor_band thm
+prf 6658:6682 <> correction_factor_neutral
+binder 6693:6702 <> q_analytic:15
+R6722:6725 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6709:6711 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6712:6721 hiad_optimizer_proof <> q_analytic:15 var
+R6765:6767 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6726:6742 hiad_optimizer_proof <> correction_factor def
+R6744:6753 hiad_optimizer_proof <> q_analytic:15 var
+R6755:6764 hiad_optimizer_proof <> q_analytic:15 var
+R6828:6831 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R6828:6831 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R6881:6883 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6868:6870 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6881:6883 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6868:6870 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6899:6902 Coq.Reals.Rdefinitions <> Rdiv def
+R6911:6916 Coq.Reals.RIneq <> Rinv_r thm
+R6911:6916 Coq.Reals.RIneq <> Rinv_r thm
+R6941:6957 hiad_optimizer_proof <> correction_factor def
+R7005:7008 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6992:7004 hiad_optimizer_proof <> GATE_CORR_MIN def
+R7005:7008 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6992:7004 hiad_optimizer_proof <> GATE_CORR_MIN def
+R7024:7036 hiad_optimizer_proof <> GATE_CORR_MIN def
+R7056:7065 Coq.Reals.Rbasic_fun <> Rmax_right thm
+R7056:7065 Coq.Reals.Rbasic_fun <> Rmax_right thm
+R7056:7065 Coq.Reals.Rbasic_fun <> Rmax_right thm
+R7102:7105 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7106:7118 hiad_optimizer_proof <> GATE_CORR_MAX def
+R7102:7105 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7106:7118 hiad_optimizer_proof <> GATE_CORR_MAX def
+R7133:7145 hiad_optimizer_proof <> GATE_CORR_MAX def
+R7165:7174 Coq.Reals.Rbasic_fun <> Rmin_right thm
+R7165:7174 Coq.Reals.Rbasic_fun <> Rmin_right thm
+R7165:7174 Coq.Reals.Rbasic_fun <> Rmin_right thm
+def 7514:7525 <> gate_verdict
+R7548:7548 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7528:7535 <> q_hybrid:16
+binder 7537:7544 <> q_target:17
+R7553:7556 Coq.Init.Datatypes <> bool ind
+R7566:7572 Coq.Reals.RIneq <> Rle_dec thm
+R7574:7581 hiad_optimizer_proof <> q_hybrid:16 var
+R7583:7590 hiad_optimizer_proof <> q_target:17 var
+R7607:7611 Coq.Init.Datatypes <> false constr
+R7597:7600 Coq.Init.Datatypes <> true constr
+prf 7621:7637 <> gate_verdict_true
+binder 7648:7655 <> q_hybrid:18
+binder 7657:7664 <> q_target:19
+R7690:7693 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7678:7681 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7670:7677 hiad_optimizer_proof <> q_hybrid:18 var
+R7682:7689 hiad_optimizer_proof <> q_target:19 var
+R7724:7726 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7694:7705 hiad_optimizer_proof <> gate_verdict def
+R7707:7714 hiad_optimizer_proof <> q_hybrid:18 var
+R7716:7723 hiad_optimizer_proof <> q_target:19 var
+R7727:7730 Coq.Init.Datatypes <> true constr
+R7781:7792 hiad_optimizer_proof <> gate_verdict def
+R7807:7813 Coq.Reals.RIneq <> Rle_dec thm
+R7807:7813 Coq.Reals.RIneq <> Rle_dec thm
+R7904:7907 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7904:7907 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+prf 7957:7974 <> gate_verdict_false
+binder 7985:7992 <> q_hybrid:20
+binder 7994:8001 <> q_target:21
+R8026:8029 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8015:8017 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R8007:8014 hiad_optimizer_proof <> q_target:21 var
+R8018:8025 hiad_optimizer_proof <> q_hybrid:20 var
+R8060:8062 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8030:8041 hiad_optimizer_proof <> gate_verdict def
+R8043:8050 hiad_optimizer_proof <> q_hybrid:20 var
+R8052:8059 hiad_optimizer_proof <> q_target:21 var
+R8063:8067 Coq.Init.Datatypes <> false constr
+R8118:8129 hiad_optimizer_proof <> gate_verdict def
+R8144:8150 Coq.Reals.RIneq <> Rle_dec thm
+R8144:8150 Coq.Reals.RIneq <> Rle_dec thm
+R8224:8227 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8224:8227 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+prf 8284:8301 <> gate_verdict_total
+binder 8312:8319 <> q_hybrid:22
+binder 8321:8328 <> q_target:23
+R8371:8374 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R8364:8366 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8334:8345 hiad_optimizer_proof <> gate_verdict def
+R8347:8354 hiad_optimizer_proof <> q_hybrid:22 var
+R8356:8363 hiad_optimizer_proof <> q_target:23 var
+R8367:8370 Coq.Init.Datatypes <> true constr
+R8405:8407 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8375:8386 hiad_optimizer_proof <> gate_verdict def
+R8388:8395 hiad_optimizer_proof <> q_hybrid:22 var
+R8397:8404 hiad_optimizer_proof <> q_target:23 var
+R8408:8412 Coq.Init.Datatypes <> false constr
+R8459:8470 hiad_optimizer_proof <> gate_verdict def
+R8485:8491 Coq.Reals.RIneq <> Rle_dec thm
+R8485:8491 Coq.Reals.RIneq <> Rle_dec thm
+def 8883:8902 <> prediction_error_pct
+R8927:8927 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 8905:8912 <> q_hybrid:24
+binder 8914:8923 <> q_analytic:25
+R8932:8932 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R8975:8977 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8939:8939 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R8961:8964 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R8948:8950 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R8940:8947 hiad_optimizer_proof <> q_hybrid:24 var
+R8951:8960 hiad_optimizer_proof <> q_analytic:25 var
+R8965:8974 hiad_optimizer_proof <> q_analytic:25 var
+prf 8990:9009 <> prediction_error_pos
+binder 9020:9027 <> q_hybrid:26
+binder 9029:9038 <> q_analytic:27
+R9065:9068 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9054:9056 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R9044:9053 hiad_optimizer_proof <> q_analytic:27 var
+R9057:9064 hiad_optimizer_proof <> q_hybrid:26 var
+R9083:9089 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9070:9072 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R9073:9082 hiad_optimizer_proof <> q_analytic:27 var
+R9091:9093 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R9094:9113 hiad_optimizer_proof <> prediction_error_pct def
+R9115:9122 hiad_optimizer_proof <> q_hybrid:26 var
+R9124:9133 hiad_optimizer_proof <> q_analytic:27 var
+R9189:9208 hiad_optimizer_proof <> prediction_error_pct def
+R9227:9229 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R9238:9240 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R9227:9229 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R9238:9240 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R9269:9285 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R9269:9285 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R9298:9313 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R9298:9313 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R9342:9344 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R9342:9344 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+prf 9379:9401 <> prediction_error_nonpos
+binder 9412:9419 <> q_hybrid:28
+binder 9421:9430 <> q_analytic:29
+R9458:9461 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9444:9447 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9436:9443 hiad_optimizer_proof <> q_hybrid:28 var
+R9448:9457 hiad_optimizer_proof <> q_analytic:29 var
+R9476:9482 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9463:9465 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R9466:9475 hiad_optimizer_proof <> q_analytic:29 var
+R9523:9526 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9483:9502 hiad_optimizer_proof <> prediction_error_pct def
+R9504:9511 hiad_optimizer_proof <> q_hybrid:28 var
+R9513:9522 hiad_optimizer_proof <> q_analytic:29 var
+R9600:9603 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R9600:9603 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R9651:9654 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9638:9640 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R9651:9654 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9638:9640 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R9717:9720 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9681:9681 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R9703:9706 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R9690:9692 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R9717:9720 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9681:9681 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R9703:9706 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R9690:9692 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R9736:9749 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R9736:9749 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R9792:9801 hiad_optimizer_proof <> cancel_mul thm
+R9812:9814 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R9792:9801 hiad_optimizer_proof <> cancel_mul thm
+R9812:9814 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R9792:9801 hiad_optimizer_proof <> cancel_mul thm
+R9812:9814 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R9856:9864 Coq.Reals.RIneq <> Rmult_0_r thm
+R9856:9864 Coq.Reals.RIneq <> Rmult_0_r thm
+R9856:9864 Coq.Reals.RIneq <> Rmult_0_r thm
+R9892:9911 hiad_optimizer_proof <> prediction_error_pct def
+R9939:9941 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R9922:9930 Coq.Reals.RIneq <> Rle_trans thm
+R9939:9941 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R9922:9930 Coq.Reals.RIneq <> Rle_trans thm
+R9958:9974 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R9958:9974 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R10007:10015 Coq.Reals.RIneq <> Rmult_0_l thm
+R10007:10015 Coq.Reals.RIneq <> Rmult_0_l thm
+R10007:10015 Coq.Reals.RIneq <> Rmult_0_l thm
+R10028:10035 Coq.Reals.RIneq <> Rle_refl thm
+R10028:10035 Coq.Reals.RIneq <> Rle_refl thm

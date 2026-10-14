@@ -1,0 +1,322 @@
+{
+  "fig1": [
+    {
+      "name": "surface heat flux",
+      "data": [
+        1.55,
+        2.55
+      ],
+      "bbox": [
+        315,
+        267,
+        649,
+        295
+      ],
+      "glyphs_area5": 16,
+      "groups_dil12": 1,
+      "gap_border": 23.0,
+      "gap_fill": 28.0,
+      "gap_box_text": 36.0,
+      "gap_arrow_visible": 1.0,
+      "gap_arrow_core": 2.0,
+      "overlap_arrow_px": 0,
+      "gaps_other_labels": {
+        "backface temperature": 49.8,
+        "grid dump": 359.0,
+        "refined field": 441.3
+      },
+      "min_letter_body": 21,
+      "min_any_comp": 3,
+      "tittles": [
+        [
+          324,
+          284,
+          328,
+          291
+        ],
+        [
+          315,
+          276,
+          317,
+          284
+        ],
+        [
+          324,
+          274,
+          330,
+          276
+        ]
+      ],
+      "ocr": {
+        "psm7": "Surface heat flux",
+        "psm13": "surface heat flux",
+        "psm6": "Surface heat flux",
+        "psm8": "surface heat flux"
+      },
+      "expected_cx": 481.0,
+      "observed_cx": 482.0,
+      "expected_baseline": 305.5,
+      "ink_bottom": 295
+    },
+    {
+      "name": "backface temperature",
+      "data": [
+        3.05,
+        2.55
+      ],
+      "bbox": [
+        696,
+        267,
+        1138,
+        303
+      ],
+      "glyphs_area5": 19,
+      "groups_dil12": 1,
+      "gap_border": 15.0,
+      "gap_fill": 20.0,
+      "gap_box_text": 76.2,
+      "gap_arrow_visible": 32.0,
+      "gap_arrow_core": 33.0,
+      "overlap_arrow_px": 0,
+      "gaps_other_labels": {
+        "surface heat flux": 49.8,
+        "grid dump": 384.9,
+        "refined field": 351.6
+      },
+      "min_letter_body": 21,
+      "min_any_comp": 21,
+      "tittles": [],
+      "ocr": {
+        "psm7": "backface temperature",
+        "psm13": "backface temperature",
+        "psm6": "backface temperature",
+        "psm8": "backface temperature"
+      },
+      "expected_cx": 917.4,
+      "observed_cx": 917.0,
+      "expected_baseline": 305.5,
+      "ink_bottom": 303
+    },
+    {
+      "name": "grid dump",
+      "data": [
+        1.55,
+        1.22
+      ],
+      "bbox": [
+        381,
+        654,
+        580,
+        690
+      ],
+      "glyphs_area5": 9,
+      "groups_dil12": 1,
+      "gap_border": 7.0,
+      "gap_fill": 11.0,
+      "gap_box_text": 73.2,
+      "gap_arrow_visible": 49.6,
+      "gap_arrow_core": 7.0,
+      "overlap_arrow_px": 0,
+      "gaps_other_labels": {
+        "surface heat flux": 359.0,
+        "backface temperature": 384.9,
+        "refined field": 306.1
+      },
+      "min_letter_body": 21,
+      "min_any_comp": 4,
+      "tittles": [
+        [
+          427,
+          654,
+          429,
+          657
+        ]
+      ],
+      "ocr": {
+        "psm7": "grid dump",
+        "psm13": "grid dump",
+        "psm6": "grid dump",
+        "psm8": "grid dump"
+      },
+      "expected_cx": 481.0,
+      "observed_cx": 480.5,
+      "expected_baseline": 693.6,
+      "ink_bottom": 690
+    },
+    {
+      "name": "refined field",
+      "data": [
+        3.35,
+        1.22
+      ],
+      "bbox": [
+        886,
+        654,
+        1125,
+        682
+      ],
+      "glyphs_area5": 12,
+      "groups_dil12": 1,
+      "gap_border": 15.0,
+      "gap_fill": 19.0,
+      "gap_box_text": 74.3,
+      "gap_arrow_visible": 4.0,
+      "gap_arrow_core": 4.0,
+      "overlap_arrow_px": 0,
+      "gaps_other_labels": {
+        "surface heat flux": 441.3,
+        "backface temperature": 351.6,
+        "grid dump": 306.1
+      },
+      "min_letter_body": 22,
+      "min_any_comp": 4,
+      "tittles": [
+        [
+          947,
+          654,
+          949,
+          657
+        ],
+        [
+          1061,
+          654,
+          1063,
+          657
+        ]
+      ],
+      "ocr": {
+        "psm7": "refined field",
+        "psm13": "refined field",
+        "psm6": "refined field",
+        "psm8": "refined field"
+      },
+      "expected_cx": 1004.7,
+      "observed_cx": 1005.5,
+      "expected_baseline": 693.6,
+      "ink_bottom": 682
+    }
+  ],
+  "fig2": [
+    {
+      "name": "raw data",
+      "data": [
+        1.55,
+        1.95
+      ],
+      "bbox": [
+        394,
+        296,
+        566,
+        325
+      ],
+      "glyphs_area5": 7,
+      "groups_dil12": 1,
+      "gap_border": 23.0,
+      "gap_fill": 28.0,
+      "gap_box_text": 36.0,
+      "gap_arrow_visible": 124.0,
+      "gap_arrow_core": 124.0,
+      "overlap_arrow_px": 0,
+      "gaps_other_labels": {
+        "parsed": 284.5,
+        "integrated": 963.3
+      },
+      "min_letter_body": 22,
+      "min_any_comp": 22,
+      "tittles": [],
+      "ocr": {
+        "psm7": "raw data",
+        "psm13": "raw data",
+        "psm6": "raw data",
+        "psm8": "raw data"
+      },
+      "expected_cx": 481.9,
+      "observed_cx": 480.0,
+      "expected_baseline": 334.5,
+      "ink_bottom": 325
+    },
+    {
+      "name": "parsed",
+      "data": [
+        3.05,
+        1.95
+      ],
+      "bbox": [
+        850,
+        296,
+        985,
+        333
+      ],
+      "glyphs_area5": 6,
+      "groups_dil12": 1,
+      "gap_border": 15.0,
+      "gap_fill": 20.0,
+      "gap_box_text": 80.4,
+      "gap_arrow_visible": 162.6,
+      "gap_arrow_core": 162.6,
+      "overlap_arrow_px": 0,
+      "gaps_other_labels": {
+        "raw data": 284.5,
+        "integrated": 573.4
+      },
+      "min_letter_body": 23,
+      "min_any_comp": 23,
+      "tittles": [],
+      "ocr": {
+        "psm7": "parsed",
+        "psm13": "parsed",
+        "psm6": "parsed",
+        "psm8": "parsed"
+      },
+      "expected_cx": 917.9,
+      "observed_cx": 917.5,
+      "expected_baseline": 334.5,
+      "ink_bottom": 333
+    },
+    {
+      "name": "integrated",
+      "data": [
+        5.35,
+        0.95
+      ],
+      "bbox": [
+        1484,
+        587,
+        1691,
+        624
+      ],
+      "glyphs_area5": 11,
+      "groups_dil12": 1,
+      "gap_border": 18.2,
+      "gap_fill": 20.0,
+      "gap_box_text": 35.0,
+      "gap_arrow_visible": 47.4,
+      "gap_arrow_core": 47.4,
+      "overlap_arrow_px": 0,
+      "gaps_other_labels": {
+        "raw data": 963.3,
+        "parsed": 573.4
+      },
+      "min_letter_body": 22,
+      "min_any_comp": 5,
+      "tittles": [
+        [
+          1489,
+          587,
+          1492,
+          591
+        ]
+      ],
+      "ocr": {
+        "psm7": "integrated",
+        "psm13": "integrated",
+        "psm6": "integrated",
+        "psm8": "integrated"
+      },
+      "expected_cx": 1586.4,
+      "observed_cx": 1587.5,
+      "expected_baseline": 625.7,
+      "ink_bottom": 624
+    }
+  ]
+}

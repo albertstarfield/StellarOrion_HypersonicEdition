@@ -1,0 +1,180 @@
+DIGEST b3598afd5af635433885512a3a8e87f3
+Fstellarorion_project_proof
+R5549:5563 Coq.Reals.Reals <> <> lib
+R5581:5597 Coq.micromega.Lra <> <> lib
+R5615:5631 Coq.micromega.Lia <> <> lib
+def 6005:6008 <> fmax
+R6018:6018 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 6011:6011 <> v:1
+binder 6013:6014 <> lo:2
+R6023:6023 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R6031:6037 Coq.Reals.RIneq <> Rle_dec thm
+R6039:6039 stellarorion_project_proof <> v:1 var
+R6041:6042 stellarorion_project_proof <> lo:2 var
+R6057:6057 stellarorion_project_proof <> v:1 var
+R6049:6050 stellarorion_project_proof <> lo:2 var
+def 6071:6074 <> fmin
+R6084:6084 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 6077:6077 <> x:3
+binder 6079:6080 <> hi:4
+R6089:6089 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R6097:6103 Coq.Reals.RIneq <> Rle_dec thm
+R6105:6106 stellarorion_project_proof <> hi:4 var
+R6108:6108 stellarorion_project_proof <> x:3 var
+R6123:6123 stellarorion_project_proof <> x:3 var
+R6115:6116 stellarorion_project_proof <> hi:4 var
+def 6137:6147 <> clamp_float
+R6160:6160 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 6150:6150 <> v:5
+binder 6152:6153 <> lo:6
+binder 6155:6156 <> hi:7
+R6165:6165 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R6170:6173 stellarorion_project_proof <> fmin def
+R6176:6179 stellarorion_project_proof <> fmax def
+R6181:6181 stellarorion_project_proof <> v:5 var
+R6183:6184 stellarorion_project_proof <> lo:6 var
+R6187:6188 stellarorion_project_proof <> hi:7 var
+prf 6257:6279 <> clamp_float_in_interval
+binder 6290:6290 <> v:8
+binder 6292:6293 <> lo:9
+binder 6295:6296 <> hi:10
+R6311:6314 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6305:6308 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6303:6304 stellarorion_project_proof <> lo:9 var
+R6309:6310 stellarorion_project_proof <> hi:10 var
+R6340:6343 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R6317:6320 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6315:6316 stellarorion_project_proof <> lo:9 var
+R6321:6331 stellarorion_project_proof <> clamp_float def
+R6333:6333 stellarorion_project_proof <> v:8 var
+R6335:6336 stellarorion_project_proof <> lo:9 var
+R6338:6339 stellarorion_project_proof <> hi:10 var
+R6363:6366 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6344:6354 stellarorion_project_proof <> clamp_float def
+R6356:6356 stellarorion_project_proof <> v:8 var
+R6358:6359 stellarorion_project_proof <> lo:9 var
+R6361:6362 stellarorion_project_proof <> hi:10 var
+R6367:6368 stellarorion_project_proof <> hi:10 var
+R6407:6417 stellarorion_project_proof <> clamp_float def
+R6420:6423 stellarorion_project_proof <> fmin def
+R6426:6429 stellarorion_project_proof <> fmax def
+R6444:6450 Coq.Reals.RIneq <> Rle_dec thm
+R6444:6450 Coq.Reals.RIneq <> Rle_dec thm
+R6486:6492 Coq.Reals.RIneq <> Rle_dec thm
+R6486:6492 Coq.Reals.RIneq <> Rle_dec thm
+R6534:6540 Coq.Reals.RIneq <> Rle_dec thm
+R6534:6540 Coq.Reals.RIneq <> Rle_dec thm
+prf 6985:7016 <> mach_override_inside_e1_envelope
+binder 7027:7027 <> m:11
+R7063:7066 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7037:7040 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7041:7051 stellarorion_project_proof <> clamp_float def
+R7053:7053 stellarorion_project_proof <> m:11 var
+R7089:7092 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7067:7077 stellarorion_project_proof <> clamp_float def
+R7079:7079 stellarorion_project_proof <> m:11 var
+R7139:7161 stellarorion_project_proof <> clamp_float_in_interval thm
+R7139:7161 stellarorion_project_proof <> clamp_float_in_interval thm
+R7199:7202 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7199:7202 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+prf 7567:7597 <> alt_override_inside_e2_envelope
+binder 7608:7608 <> a:12
+R7645:7648 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7618:7621 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7622:7632 stellarorion_project_proof <> clamp_float def
+R7634:7634 stellarorion_project_proof <> a:12 var
+R7672:7675 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7649:7659 stellarorion_project_proof <> clamp_float def
+R7661:7661 stellarorion_project_proof <> a:12 var
+R7723:7745 stellarorion_project_proof <> clamp_float_in_interval thm
+R7723:7745 stellarorion_project_proof <> clamp_float_in_interval thm
+R7784:7787 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7784:7787 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+prf 8086:8122 <> default_flight_point_inside_envelopes
+R8141:8144 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R8133:8136 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8157:8160 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R8149:8152 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8172:8175 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R8164:8167 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8180:8183 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+prf 8694:8724 <> clamped_diameter_inside_subtype
+binder 8735:8735 <> d:13
+R8771:8774 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R8745:8748 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8749:8759 stellarorion_project_proof <> clamp_float def
+R8761:8761 stellarorion_project_proof <> d:13 var
+R8797:8800 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8775:8785 stellarorion_project_proof <> clamp_float def
+R8787:8787 stellarorion_project_proof <> d:13 var
+R8847:8869 stellarorion_project_proof <> clamp_float_in_interval thm
+R8847:8869 stellarorion_project_proof <> clamp_float_in_interval thm
+R8907:8910 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8907:8910 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+prf 9209:9242 <> clamped_nose_radius_inside_subtype
+binder 9253:9253 <> r:14
+R9296:9303 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R9266:9269 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9270:9280 stellarorion_project_proof <> clamp_float def
+R9282:9282 stellarorion_project_proof <> r:14 var
+R9330:9333 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9304:9314 stellarorion_project_proof <> clamp_float def
+R9316:9316 stellarorion_project_proof <> r:14 var
+R9381:9403 stellarorion_project_proof <> clamp_float_in_interval thm
+R9381:9403 stellarorion_project_proof <> clamp_float_in_interval thm
+R9448:9451 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9448:9451 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+prf 9738:9764 <> clamped_mass_inside_subtype
+binder 9775:9775 <> m:15
+R9818:9825 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R9788:9791 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9792:9802 stellarorion_project_proof <> clamp_float def
+R9804:9804 stellarorion_project_proof <> m:15 var
+R9852:9855 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9826:9836 stellarorion_project_proof <> clamp_float def
+R9838:9838 stellarorion_project_proof <> m:15 var
+R9903:9925 stellarorion_project_proof <> clamp_float_in_interval thm
+R9903:9925 stellarorion_project_proof <> clamp_float_in_interval thm
+R9970:9973 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9970:9973 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+prf 10350:10382 <> clamped_emissivity_inside_subtype
+binder 10393:10393 <> e:16
+R10434:10441 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R10406:10409 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R10410:10420 stellarorion_project_proof <> clamp_float def
+R10422:10422 stellarorion_project_proof <> e:16 var
+R10466:10469 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R10442:10452 stellarorion_project_proof <> clamp_float def
+R10454:10454 stellarorion_project_proof <> e:16 var
+R10515:10537 stellarorion_project_proof <> clamp_float_in_interval thm
+R10515:10537 stellarorion_project_proof <> clamp_float_in_interval thm
+R10580:10583 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R10580:10583 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+prf 10914:10953 <> clamped_geometry_passes_validation_gates
+binder 10964:10964 <> d:17
+binder 10966:10966 <> r:18
+R11001:11004 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R10976:10978 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R10979:10989 stellarorion_project_proof <> clamp_float def
+R10991:10991 stellarorion_project_proof <> d:17 var
+R11008:11010 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R11011:11021 stellarorion_project_proof <> clamp_float def
+R11023:11023 stellarorion_project_proof <> r:18 var
+R11076:11106 stellarorion_project_proof <> clamped_diameter_inside_subtype thm
+R11076:11106 stellarorion_project_proof <> clamped_diameter_inside_subtype thm
+R11128:11161 stellarorion_project_proof <> clamped_nose_radius_inside_subtype thm
+R11128:11161 stellarorion_project_proof <> clamped_nose_radius_inside_subtype thm
+prf 11800:11821 <> documented_step_counts
+R11848:11851 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R11831:11834 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R11837:11839 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R11872:11875 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R11854:11857 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R11860:11862 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R11885:11888 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R11879:11881 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R11891:11893 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+prf 12173:12209 <> grid_factor_default_inside_sweep_band
+R12227:12230 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R12220:12223 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R12234:12237 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not

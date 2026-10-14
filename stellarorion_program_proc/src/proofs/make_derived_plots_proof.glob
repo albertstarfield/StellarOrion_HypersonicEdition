@@ -1,0 +1,167 @@
+DIGEST 1670ae4532a93a584cd9acb21d7a41fe
+Fmake_derived_plots_proof
+R2899:2913 Coq.Reals.Reals <> <> lib
+R2931:2948 Coq.Arith.PeanoNat <> <> lib
+R2966:2982 Coq.micromega.Lia <> <> lib
+R3000:3016 Coq.micromega.Lra <> <> lib
+def 3198:3216 <> thermal_capacitance
+R3234:3234 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3219:3221 <> rho:1
+binder 3223:3224 <> cp:2
+binder 3226:3230 <> delta:3
+R3239:3239 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3252:3254 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3247:3249 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3244:3246 make_derived_plots_proof <> rho:1 var
+R3250:3251 make_derived_plots_proof <> cp:2 var
+R3255:3259 make_derived_plots_proof <> delta:3 var
+prf 3463:3490 <> thermal_capacitance_positive
+binder 3501:3503 <> rho:4
+binder 3505:3506 <> cp:5
+binder 3508:3512 <> delta:6
+R3524:3527 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3518:3520 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3521:3523 make_derived_plots_proof <> rho:4 var
+R3534:3537 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3529:3531 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3532:3533 make_derived_plots_proof <> cp:5 var
+R3547:3552 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3539:3541 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3542:3546 make_derived_plots_proof <> delta:6 var
+R3554:3556 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3557:3575 make_derived_plots_proof <> thermal_capacitance def
+R3577:3579 make_derived_plots_proof <> rho:4 var
+R3581:3582 make_derived_plots_proof <> cp:5 var
+R3584:3588 make_derived_plots_proof <> delta:6 var
+R3646:3664 make_derived_plots_proof <> thermal_capacitance def
+R3675:3691 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R3675:3691 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R3721:3737 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R3721:3737 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+prf 3918:3940 <> capacitance_equals_8800
+R3978:3980 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3944:3962 make_derived_plots_proof <> thermal_capacitance def
+R4003:4021 make_derived_plots_proof <> thermal_capacitance def
+R4060:4062 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4052:4054 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4046:4048 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4060:4062 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4052:4054 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4046:4048 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+def 4193:4212 <> backface_temperature
+R4238:4238 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4215:4220 <> T_init:7
+binder 4222:4228 <> Q_total:8
+binder 4230:4232 <> eta:9
+binder 4234:4234 <> C:10
+R4243:4243 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4256:4258 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R4250:4255 make_derived_plots_proof <> T_init:7 var
+R4259:4259 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4273:4276 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4267:4269 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4260:4266 make_derived_plots_proof <> Q_total:8 var
+R4270:4272 make_derived_plots_proof <> eta:9 var
+R4277:4277 make_derived_plots_proof <> C:10 var
+prf 4480:4498 <> backface_ge_initial
+binder 4509:4514 <> T_init:11
+binder 4516:4522 <> Q_total:12
+binder 4524:4526 <> eta:13
+binder 4528:4528 <> C:14
+R4545:4548 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4534:4537 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4538:4544 make_derived_plots_proof <> Q_total:12 var
+R4557:4560 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4550:4553 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4554:4556 make_derived_plots_proof <> eta:13 var
+R4566:4571 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4562:4564 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4565:4565 make_derived_plots_proof <> C:14 var
+R4578:4581 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4572:4577 make_derived_plots_proof <> T_init:11 var
+R4582:4601 make_derived_plots_proof <> backface_temperature def
+R4603:4608 make_derived_plots_proof <> T_init:11 var
+R4610:4616 make_derived_plots_proof <> Q_total:12 var
+R4618:4620 make_derived_plots_proof <> eta:13 var
+R4622:4622 make_derived_plots_proof <> C:14 var
+R4683:4702 make_derived_plots_proof <> backface_temperature def
+R4723:4726 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4734:4736 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4752:4763 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4723:4726 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4734:4736 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4752:4763 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4810:4812 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4813:4814 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4828:4843 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4810:4812 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4813:4814 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4828:4843 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4876:4879 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4880:4880 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4894:4897 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4888:4890 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4876:4879 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4880:4880 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4894:4897 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4888:4890 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4913:4916 Coq.Reals.Rdefinitions <> Rdiv def
+R4929:4940 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4963:4968 Coq.Reals.RIneq <> Rlt_le thm
+R4929:4940 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4963:4968 Coq.Reals.RIneq <> Rlt_le thm
+prf 5114:5132 <> backface_gt_initial
+binder 5143:5148 <> T_init:15
+binder 5150:5156 <> Q_total:16
+binder 5158:5160 <> eta:17
+binder 5162:5162 <> C:18
+R5178:5181 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5168:5170 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5171:5177 make_derived_plots_proof <> Q_total:16 var
+R5189:5192 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5183:5185 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5186:5188 make_derived_plots_proof <> eta:17 var
+R5198:5203 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5194:5196 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5197:5197 make_derived_plots_proof <> C:18 var
+R5210:5212 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5204:5209 make_derived_plots_proof <> T_init:15 var
+R5213:5232 make_derived_plots_proof <> backface_temperature def
+R5234:5239 make_derived_plots_proof <> T_init:15 var
+R5241:5247 make_derived_plots_proof <> Q_total:16 var
+R5249:5251 make_derived_plots_proof <> eta:17 var
+R5253:5253 make_derived_plots_proof <> C:18 var
+R5314:5333 make_derived_plots_proof <> backface_temperature def
+R5354:5356 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5364:5366 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5382:5398 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5354:5356 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5364:5366 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5382:5398 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5446:5448 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5449:5449 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5463:5466 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5457:5459 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5484:5499 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R5446:5448 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5449:5449 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5463:5466 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5457:5459 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5484:5499 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+def 5632:5642 <> jcm2_to_jm2
+R5649:5649 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5645:5645 <> q:19
+R5654:5654 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R5660:5662 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5659:5659 make_derived_plots_proof <> q:19 var
+prf 5811:5828 <> jcm2_to_jm2_nonneg
+binder 5839:5839 <> q:20
+R5848:5851 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5843:5846 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5847:5847 make_derived_plots_proof <> q:20 var
+R5853:5856 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5857:5867 make_derived_plots_proof <> jcm2_to_jm2 def
+R5869:5869 make_derived_plots_proof <> q:20 var
+R5903:5913 make_derived_plots_proof <> jcm2_to_jm2 def
+R5924:5935 Coq.Reals.RIneq <> Rmult_le_pos thm
+R5924:5935 Coq.Reals.RIneq <> Rmult_le_pos thm

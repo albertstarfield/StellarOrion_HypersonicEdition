@@ -1,0 +1,94 @@
+DIGEST bca9d10e13a5eec2b512b894767f0333
+Fplot_rapisarda_comparison_proof
+R2890:2904 Coq.Reals.Reals <> <> lib
+R2922:2939 Coq.Arith.PeanoNat <> <> lib
+R2957:2973 Coq.micromega.Lia <> <> lib
+R2991:3007 Coq.micromega.Lra <> <> lib
+prf 3246:3257 <> rdiv_le_mono
+binder 3268:3268 <> a:1
+binder 3270:3270 <> b:2
+binder 3272:3272 <> c:3
+R3280:3283 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3276:3278 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3279:3279 plot_rapisarda_comparison_proof <> c:3 var
+R3290:3293 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3285:3288 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3284:3284 plot_rapisarda_comparison_proof <> a:1 var
+R3289:3289 plot_rapisarda_comparison_proof <> b:2 var
+R3299:3302 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3295:3297 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3294:3294 plot_rapisarda_comparison_proof <> a:1 var
+R3298:3298 plot_rapisarda_comparison_proof <> c:3 var
+R3304:3306 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3303:3303 plot_rapisarda_comparison_proof <> b:2 var
+R3307:3307 plot_rapisarda_comparison_proof <> c:3 var
+R3358:3361 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3362:3363 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3377:3382 Coq.Reals.RIneq <> Rlt_le thm
+R3391:3406 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R3358:3361 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3362:3363 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3377:3382 Coq.Reals.RIneq <> Rlt_le thm
+R3391:3406 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R3429:3432 Coq.Reals.Rdefinitions <> Rdiv def
+R3443:3459 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R3443:3459 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+def 3580:3586 <> to_wcm2
+R3593:3593 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3589:3589 <> q:4
+R3598:3598 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3604:3606 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3603:3603 plot_rapisarda_comparison_proof <> q:4 var
+def 3689:3694 <> to_kpa
+R3701:3701 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3697:3697 <> q:5
+R3706:3706 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3712:3714 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3711:3711 plot_rapisarda_comparison_proof <> q:5 var
+prf 3874:3889 <> to_wcm2_positive
+binder 3900:3900 <> q:6
+R3908:3911 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3904:3906 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3907:3907 plot_rapisarda_comparison_proof <> q:6 var
+R3913:3915 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3916:3922 plot_rapisarda_comparison_proof <> to_wcm2 def
+R3924:3924 plot_rapisarda_comparison_proof <> q:6 var
+R3965:3967 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3965:3967 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3992:3998 plot_rapisarda_comparison_proof <> to_wcm2 def
+R4009:4024 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R4009:4024 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+prf 4180:4195 <> to_wcm2_monotone
+binder 4206:4206 <> a:7
+binder 4208:4208 <> b:8
+R4217:4220 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4212:4215 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4211:4211 plot_rapisarda_comparison_proof <> a:7 var
+R4216:4216 plot_rapisarda_comparison_proof <> b:8 var
+R4230:4233 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4221:4227 plot_rapisarda_comparison_proof <> to_wcm2 def
+R4229:4229 plot_rapisarda_comparison_proof <> a:7 var
+R4234:4240 plot_rapisarda_comparison_proof <> to_wcm2 def
+R4242:4242 plot_rapisarda_comparison_proof <> b:8 var
+R4286:4288 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4286:4288 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4313:4319 plot_rapisarda_comparison_proof <> to_wcm2 def
+R4330:4341 plot_rapisarda_comparison_proof <> rdiv_le_mono thm
+R4330:4341 plot_rapisarda_comparison_proof <> rdiv_le_mono thm
+prf 4463:4477 <> to_kpa_monotone
+binder 4488:4488 <> a:9
+binder 4490:4490 <> b:10
+R4499:4502 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4494:4497 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4493:4493 plot_rapisarda_comparison_proof <> a:9 var
+R4498:4498 plot_rapisarda_comparison_proof <> b:10 var
+R4511:4514 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4503:4508 plot_rapisarda_comparison_proof <> to_kpa def
+R4510:4510 plot_rapisarda_comparison_proof <> a:9 var
+R4515:4520 plot_rapisarda_comparison_proof <> to_kpa def
+R4522:4522 plot_rapisarda_comparison_proof <> b:10 var
+R4566:4568 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4566:4568 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4592:4597 plot_rapisarda_comparison_proof <> to_kpa def
+R4608:4619 plot_rapisarda_comparison_proof <> rdiv_le_mono thm
+R4608:4619 plot_rapisarda_comparison_proof <> rdiv_le_mono thm

@@ -1,0 +1,287 @@
+DIGEST ed385dca22f5ea08c20ae8bb7e530432
+Fgen_trajectory_profile_proof
+R3124:3138 Coq.Reals.Reals <> <> lib
+R3156:3173 Coq.Arith.PeanoNat <> <> lib
+R3191:3207 Coq.micromega.Lia <> <> lib
+R3225:3241 Coq.micromega.Lra <> <> lib
+sec 3489:3505 <> Cancel_Mul_Helper
+prf 3559:3568 <> cancel_mul
+R3585:3585 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3579:3579 <> x:1
+binder 3581:3581 <> l:2
+R3594:3597 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3589:3592 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R3588:3588 gen_trajectory_profile_proof <> l:2 var
+R3609:3611 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3599:3602 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3608:3608 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3598:3598 gen_trajectory_profile_proof <> l:2 var
+R3604:3606 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3603:3603 gen_trajectory_profile_proof <> x:1 var
+R3607:3607 gen_trajectory_profile_proof <> l:2 var
+R3612:3612 gen_trajectory_profile_proof <> x:1 var
+R3655:3658 Coq.Reals.Rdefinitions <> Rdiv def
+R3676:3686 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3676:3686 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3676:3686 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3702:3711 Coq.Reals.Raxioms <> Rmult_comm thm
+R3702:3711 Coq.Reals.Raxioms <> Rmult_comm thm
+R3702:3711 Coq.Reals.Raxioms <> Rmult_comm thm
+R3731:3741 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3731:3741 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3731:3741 Coq.Reals.Raxioms <> Rmult_assoc thm
+R3757:3766 Coq.Reals.Raxioms <> Rmult_comm thm
+R3771:3772 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3757:3766 Coq.Reals.Raxioms <> Rmult_comm thm
+R3771:3772 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3757:3766 Coq.Reals.Raxioms <> Rmult_comm thm
+R3771:3772 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R3791:3796 Coq.Reals.Raxioms <> Rinv_l thm
+R3791:3796 Coq.Reals.Raxioms <> Rinv_l thm
+R3791:3796 Coq.Reals.Raxioms <> Rinv_l thm
+R3818:3826 Coq.Reals.RIneq <> Rmult_1_r thm
+R3818:3826 Coq.Reals.RIneq <> Rmult_1_r thm
+R3818:3826 Coq.Reals.RIneq <> Rmult_1_r thm
+R3857:3873 gen_trajectory_profile_proof Cancel_Mul_Helper <> sec
+prf 3945:3953 <> rdiv_le_1
+binder 3964:3964 <> a:3
+binder 3966:3966 <> b:4
+R3974:3977 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3970:3972 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3973:3973 gen_trajectory_profile_proof <> b:4 var
+R3984:3987 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3979:3982 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3978:3978 gen_trajectory_profile_proof <> a:3 var
+R3983:3983 gen_trajectory_profile_proof <> b:4 var
+R3993:3996 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3989:3991 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3988:3988 gen_trajectory_profile_proof <> a:3 var
+R3992:3992 gen_trajectory_profile_proof <> b:4 var
+R4045:4048 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R4045:4048 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R4085:4087 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4075:4078 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4084:4084 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4080:4082 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4101:4110 gen_trajectory_profile_proof <> cancel_mul thm
+R4085:4087 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4075:4078 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4084:4084 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4080:4082 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4101:4110 gen_trajectory_profile_proof <> cancel_mul thm
+R4134:4147 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R4134:4147 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R4190:4198 Coq.Reals.RIneq <> Rmult_1_r thm
+R4190:4198 Coq.Reals.RIneq <> Rmult_1_r thm
+R4190:4198 Coq.Reals.RIneq <> Rmult_1_r thm
+prf 4304:4314 <> rdiv_nonneg
+binder 4325:4325 <> a:5
+binder 4327:4327 <> b:6
+R4336:4339 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4331:4334 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4335:4335 gen_trajectory_profile_proof <> a:5 var
+R4345:4348 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4341:4343 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4344:4344 gen_trajectory_profile_proof <> b:6 var
+R4350:4353 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4355:4357 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4354:4354 gen_trajectory_profile_proof <> a:5 var
+R4358:4358 gen_trajectory_profile_proof <> b:6 var
+R4406:4408 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4409:4410 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4424:4439 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4406:4408 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4409:4410 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4424:4439 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4461:4466 Coq.Reals.RIneq <> Rlt_le thm
+R4461:4466 Coq.Reals.RIneq <> Rlt_le thm
+R4486:4489 Coq.Reals.Rdefinitions <> Rdiv def
+R4500:4511 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4500:4511 Coq.Reals.RIneq <> Rmult_le_pos thm
+prf 4628:4634 <> sq_le_1
+binder 4645:4645 <> x:7
+R4654:4657 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4649:4652 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4653:4653 gen_trajectory_profile_proof <> x:7 var
+R4664:4667 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4659:4662 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4658:4658 gen_trajectory_profile_proof <> x:7 var
+R4673:4676 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4669:4671 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4668:4668 gen_trajectory_profile_proof <> x:7 var
+R4672:4672 gen_trajectory_profile_proof <> x:7 var
+R4727:4730 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4723:4725 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4732:4734 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4748:4764 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+R4727:4730 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4723:4725 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4732:4734 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4748:4764 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+R4802:4810 Coq.Reals.RIneq <> Rmult_1_r thm
+R4802:4810 Coq.Reals.RIneq <> Rmult_1_r thm
+R4802:4810 Coq.Reals.RIneq <> Rmult_1_r thm
+R4828:4836 Coq.Reals.RIneq <> Rle_trans thm
+R4828:4836 Coq.Reals.RIneq <> Rle_trans thm
+def 5003:5004 <> sq
+R5011:5011 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5007:5007 <> x:8
+R5016:5016 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R5022:5024 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5021:5021 gen_trajectory_profile_proof <> x:8 var
+R5025:5025 gen_trajectory_profile_proof <> x:8 var
+def 5163:5175 <> gravity_ratio
+R5196:5196 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5178:5183 <> radius:9
+binder 5185:5192 <> altitude:10
+R5201:5201 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R5212:5215 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5233:5233 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5206:5211 gen_trajectory_profile_proof <> radius:9 var
+R5222:5224 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5216:5221 gen_trajectory_profile_proof <> radius:9 var
+R5225:5232 gen_trajectory_profile_proof <> altitude:10 var
+def 5247:5259 <> gravity_accel
+R5283:5283 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5262:5263 <> g0:11
+binder 5265:5270 <> radius:12
+binder 5272:5279 <> altitude:13
+R5288:5288 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R5297:5299 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5295:5296 gen_trajectory_profile_proof <> g0:11 var
+R5300:5301 gen_trajectory_profile_proof <> sq def
+R5304:5316 gen_trajectory_profile_proof <> gravity_ratio def
+R5318:5323 gen_trajectory_profile_proof <> radius:12 var
+R5325:5332 gen_trajectory_profile_proof <> altitude:13 var
+prf 5486:5499 <> gravity_bounds
+binder 5510:5511 <> g0:14
+binder 5513:5518 <> radius:15
+binder 5520:5527 <> altitude:16
+R5538:5541 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5533:5535 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5536:5537 gen_trajectory_profile_proof <> g0:14 var
+R5552:5555 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5543:5545 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5546:5551 gen_trajectory_profile_proof <> radius:15 var
+R5569:5574 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5557:5560 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5561:5568 gen_trajectory_profile_proof <> altitude:16 var
+R5611:5614 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R5576:5578 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5579:5591 gen_trajectory_profile_proof <> gravity_accel def
+R5593:5594 gen_trajectory_profile_proof <> g0:14 var
+R5596:5601 gen_trajectory_profile_proof <> radius:15 var
+R5603:5610 gen_trajectory_profile_proof <> altitude:16 var
+R5647:5650 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5615:5627 gen_trajectory_profile_proof <> gravity_accel def
+R5629:5630 gen_trajectory_profile_proof <> g0:14 var
+R5632:5637 gen_trajectory_profile_proof <> radius:15 var
+R5639:5646 gen_trajectory_profile_proof <> altitude:16 var
+R5651:5652 gen_trajectory_profile_proof <> g0:14 var
+R5718:5720 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5727:5729 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5718:5720 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5727:5729 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5770:5773 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5780:5782 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5770:5773 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5780:5782 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5847:5850 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5818:5830 gen_trajectory_profile_proof <> gravity_ratio def
+R5847:5850 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5818:5830 gen_trajectory_profile_proof <> gravity_ratio def
+R5866:5878 gen_trajectory_profile_proof <> gravity_ratio def
+R5887:5895 gen_trajectory_profile_proof <> rdiv_le_1 thm
+R5887:5895 gen_trajectory_profile_proof <> rdiv_le_1 thm
+R5944:5946 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5947:5959 gen_trajectory_profile_proof <> gravity_ratio def
+R5944:5946 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5947:5959 gen_trajectory_profile_proof <> gravity_ratio def
+R5990:6002 gen_trajectory_profile_proof <> gravity_ratio def
+R6011:6026 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R6011:6026 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R6074:6077 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6078:6090 gen_trajectory_profile_proof <> gravity_ratio def
+R6119:6124 Coq.Reals.RIneq <> Rlt_le thm
+R6074:6077 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6078:6090 gen_trajectory_profile_proof <> gravity_ratio def
+R6119:6124 Coq.Reals.RIneq <> Rlt_le thm
+R6158:6160 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6161:6162 gen_trajectory_profile_proof <> sq def
+R6165:6177 gen_trajectory_profile_proof <> gravity_ratio def
+R6158:6160 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6161:6162 gen_trajectory_profile_proof <> sq def
+R6165:6177 gen_trajectory_profile_proof <> gravity_ratio def
+R6209:6210 gen_trajectory_profile_proof <> sq def
+R6219:6235 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R6219:6235 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R6318:6321 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6284:6285 gen_trajectory_profile_proof <> sq def
+R6288:6300 gen_trajectory_profile_proof <> gravity_ratio def
+R6318:6321 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6284:6285 gen_trajectory_profile_proof <> sq def
+R6288:6300 gen_trajectory_profile_proof <> gravity_ratio def
+R6337:6338 gen_trajectory_profile_proof <> sq def
+R6347:6353 gen_trajectory_profile_proof <> sq_le_1 thm
+R6347:6353 gen_trajectory_profile_proof <> sq_le_1 thm
+R6394:6406 gen_trajectory_profile_proof <> gravity_accel def
+R6428:6444 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R6428:6444 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R6506:6508 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6482:6490 Coq.Reals.RIneq <> Rle_trans thm
+R6506:6508 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6482:6490 Coq.Reals.RIneq <> Rle_trans thm
+R6525:6541 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+R6525:6541 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+R6578:6586 Coq.Reals.RIneq <> Rmult_1_r thm
+R6578:6586 Coq.Reals.RIneq <> Rmult_1_r thm
+R6578:6586 Coq.Reals.RIneq <> Rmult_1_r thm
+R6595:6602 Coq.Reals.RIneq <> Rle_refl thm
+R6595:6602 Coq.Reals.RIneq <> Rle_refl thm
+def 6698:6711 <> altitude_clamp
+R6725:6725 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 6714:6721 <> altitude:17
+R6730:6730 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R6735:6738 Coq.Reals.Rbasic_fun <> Rmax def
+R6740:6747 gen_trajectory_profile_proof <> altitude:17 var
+prf 6891:6911 <> altitude_clamp_nonneg
+binder 6922:6929 <> altitude:18
+R6933:6936 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6937:6950 gen_trajectory_profile_proof <> altitude_clamp def
+R6952:6959 gen_trajectory_profile_proof <> altitude:18 var
+R6997:7010 gen_trajectory_profile_proof <> altitude_clamp def
+R7021:7026 Coq.Reals.Rbasic_fun <> Rmax_r thm
+R7021:7026 Coq.Reals.Rbasic_fun <> Rmax_r thm
+prf 7102:7124 <> altitude_clamp_ge_input
+binder 7135:7142 <> altitude:19
+R7153:7156 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7145:7152 gen_trajectory_profile_proof <> altitude:19 var
+R7157:7170 gen_trajectory_profile_proof <> altitude_clamp def
+R7172:7179 gen_trajectory_profile_proof <> altitude:19 var
+R7217:7230 gen_trajectory_profile_proof <> altitude_clamp def
+R7241:7246 Coq.Reals.Rbasic_fun <> Rmax_l thm
+R7241:7246 Coq.Reals.Rbasic_fun <> Rmax_l thm
+def 7333:7342 <> mach_ratio
+R7371:7371 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7345:7352 <> velocity:20
+binder 7354:7367 <> speed_of_sound:21
+R7376:7376 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R7389:7391 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7381:7388 gen_trajectory_profile_proof <> velocity:20 var
+R7392:7405 gen_trajectory_profile_proof <> speed_of_sound:21 var
+prf 7568:7584 <> mach_ratio_nonneg
+binder 7595:7602 <> velocity:22
+binder 7604:7617 <> speed_of_sound:23
+R7635:7638 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7623:7626 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7627:7634 gen_trajectory_profile_proof <> velocity:22 var
+R7657:7662 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7640:7642 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7643:7656 gen_trajectory_profile_proof <> speed_of_sound:23 var
+R7664:7667 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7668:7677 gen_trajectory_profile_proof <> mach_ratio def
+R7679:7686 gen_trajectory_profile_proof <> velocity:22 var
+R7688:7701 gen_trajectory_profile_proof <> speed_of_sound:23 var
+R7760:7769 gen_trajectory_profile_proof <> mach_ratio def
+R7780:7790 gen_trajectory_profile_proof <> rdiv_nonneg thm
+R7780:7790 gen_trajectory_profile_proof <> rdiv_nonneg thm

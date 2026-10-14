@@ -1,0 +1,10 @@
+\documentclass[12pt,a4paper]{extreport}
+\begin{document}
+\ifdim\topfraction>0.8pt \typeout{PROBE: topfraction IS >0.8pt}\else \typeout{PROBE: topfraction <=0.8pt}\fi
+\ifdim\floatpagefraction>0.8pt \typeout{PROBE: floatpagefraction IS >0.8pt}\else \typeout{PROBE: floatpagefraction <=0.8pt}\fi
+\setlength{\topfraction}{0.9}
+\setlength{\floatpagefraction}{0.9}
+\ifdim\topfraction>0.8pt \typeout{PROBE2: topfraction NOW >0.8pt}\else \typeout{PROBE2: topfraction STILL <=0.8pt}\fi
+\ifdim\floatpagefraction>0.8pt \typeout{PROBE2: floatpagefraction NOW >0.8pt}\else \typeout{PROBE2: floatpagefraction STILL <=0.8pt}\fi
+x
+\end{document}

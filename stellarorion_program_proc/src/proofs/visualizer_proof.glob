@@ -1,0 +1,80 @@
+DIGEST b53f7bcbe9e4f285d7a73154601802f3
+Fvisualizer_proof
+R4216:4230 Coq.Reals.Reals <> <> lib
+R4248:4264 Coq.micromega.Lra <> <> lib
+def 4378:4401 <> CM_SQUARED_PER_M_SQUARED
+R4405:4405 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4512:4530 <> PLOTTED_SIC_LIMIT_K
+R4534:4534 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4558:4579 <> PLOTTED_KAPTON_LIMIT_K
+R4583:4583 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4685:4702 <> ADA_SIC_MAX_TEMP_K
+R4706:4706 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4730:4750 <> ADA_KAPTON_MAX_TEMP_K
+R4754:4754 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4845:4855 <> wm2_to_wcm2
+R4866:4866 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4858:4862 <> q_wm2:1
+R4871:4871 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4881:4883 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4876:4880 visualizer_proof <> q_wm2:1 var
+R4884:4907 visualizer_proof <> CM_SQUARED_PER_M_SQUARED def
+prf 4979:4998 <> cm2_divisor_positive
+R5003:5005 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5006:5029 visualizer_proof <> CM_SQUARED_PER_M_SQUARED def
+R5048:5071 visualizer_proof <> CM_SQUARED_PER_M_SQUARED def
+prf 5175:5206 <> wm2_to_wcm2_preserves_positivity
+binder 5217:5217 <> q:2
+R5225:5228 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5221:5223 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5224:5224 visualizer_proof <> q:2 var
+R5230:5232 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5233:5243 visualizer_proof <> wm2_to_wcm2 def
+R5245:5245 visualizer_proof <> q:2 var
+R5279:5289 visualizer_proof <> wm2_to_wcm2 def
+R5301:5324 visualizer_proof <> CM_SQUARED_PER_M_SQUARED def
+R5340:5355 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R5340:5355 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+prf 5461:5480 <> wm2_to_wcm2_monotone
+binder 5491:5492 <> q1:3
+binder 5494:5495 <> q2:4
+R5506:5509 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5500:5503 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5498:5499 visualizer_proof <> q1:3 var
+R5504:5505 visualizer_proof <> q2:4 var
+R5524:5527 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5510:5520 visualizer_proof <> wm2_to_wcm2 def
+R5522:5523 visualizer_proof <> q1:3 var
+R5528:5538 visualizer_proof <> wm2_to_wcm2 def
+R5540:5541 visualizer_proof <> q2:4 var
+R5579:5589 visualizer_proof <> wm2_to_wcm2 def
+R5601:5624 visualizer_proof <> CM_SQUARED_PER_M_SQUARED def
+R5641:5644 Coq.Reals.Rdefinitions <> Rdiv def
+R5655:5671 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R5655:5671 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R5684:5689 Coq.Reals.RIneq <> Rlt_le thm
+R5684:5689 Coq.Reals.RIneq <> Rlt_le thm
+R5702:5717 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R5702:5717 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+prf 5835:5857 <> plotted_sic_matches_ada
+R5880:5882 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5861:5879 visualizer_proof <> PLOTTED_SIC_LIMIT_K def
+R5883:5900 visualizer_proof <> ADA_SIC_MAX_TEMP_K def
+R5919:5937 visualizer_proof <> PLOTTED_SIC_LIMIT_K def
+R5940:5957 visualizer_proof <> ADA_SIC_MAX_TEMP_K def
+prf 6054:6079 <> plotted_kapton_matches_ada
+R6105:6107 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6083:6104 visualizer_proof <> PLOTTED_KAPTON_LIMIT_K def
+R6108:6128 visualizer_proof <> ADA_KAPTON_MAX_TEMP_K def
+R6147:6168 visualizer_proof <> PLOTTED_KAPTON_LIMIT_K def
+R6171:6191 visualizer_proof <> ADA_KAPTON_MAX_TEMP_K def
+prf 6278:6295 <> sic_limit_positive
+R6300:6302 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6303:6321 visualizer_proof <> PLOTTED_SIC_LIMIT_K def
+R6340:6358 visualizer_proof <> PLOTTED_SIC_LIMIT_K def
+prf 6457:6478 <> kapton_limit_below_sic
+R6504:6507 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6482:6503 visualizer_proof <> PLOTTED_KAPTON_LIMIT_K def
+R6508:6526 visualizer_proof <> PLOTTED_SIC_LIMIT_K def
+R6545:6566 visualizer_proof <> PLOTTED_KAPTON_LIMIT_K def
+R6569:6587 visualizer_proof <> PLOTTED_SIC_LIMIT_K def

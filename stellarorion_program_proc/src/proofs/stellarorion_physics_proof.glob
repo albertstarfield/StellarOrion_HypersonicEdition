@@ -1,0 +1,312 @@
+DIGEST 2286f48d652e7823560c6501af377c6e
+Fstellarorion_physics_proof
+R2925:2939 Coq.Reals.Reals <> <> lib
+R2957:2973 Coq.micromega.Lra <> <> lib
+def 3146:3168 <> sutton_graves_heat_flux
+R3187:3187 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3171:3174 <> C_sg:1
+binder 3176:3178 <> rho:2
+binder 3180:3181 <> Rn:3
+binder 3183:3183 <> V:4
+R3192:3192 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3229:3231 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3225:3227 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3221:3223 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3203:3205 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3199:3202 stellarorion_physics_proof <> C_sg:1 var
+R3206:3209 Coq.Reals.R_sqrt <> sqrt def
+R3215:3217 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3212:3214 stellarorion_physics_proof <> rho:2 var
+R3218:3219 stellarorion_physics_proof <> Rn:3 var
+R3224:3224 stellarorion_physics_proof <> V:4 var
+R3228:3228 stellarorion_physics_proof <> V:4 var
+R3232:3232 stellarorion_physics_proof <> V:4 var
+def 3455:3473 <> tps_conduction_flux
+R3499:3499 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3476:3480 <> T_hot:5
+binder 3482:3487 <> T_cold:6
+binder 3489:3493 <> delta:7
+binder 3495:3495 <> k:8
+R3504:3504 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3511:3511 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3526:3530 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3540:3540 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3517:3519 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R3512:3516 stellarorion_physics_proof <> T_hot:5 var
+R3520:3525 stellarorion_physics_proof <> T_cold:6 var
+R3536:3538 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3531:3535 stellarorion_physics_proof <> delta:7 var
+R3539:3539 stellarorion_physics_proof <> k:8 var
+prf 3600:3619 <> sutton_graves_nonneg
+binder 3630:3633 <> C_sg:9
+binder 3635:3637 <> rho:10
+binder 3639:3640 <> Rn:11
+binder 3642:3642 <> V:12
+R3657:3660 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3653:3655 Coq.Reals.Rdefinitions <> ::R_scope:x_'>'_x not
+R3649:3652 stellarorion_physics_proof <> C_sg:9 var
+R3669:3672 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3662:3665 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3666:3668 stellarorion_physics_proof <> rho:10 var
+R3679:3682 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3675:3677 Coq.Reals.Rdefinitions <> ::R_scope:x_'>'_x not
+R3673:3674 stellarorion_physics_proof <> Rn:11 var
+R3689:3696 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3684:3687 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3688:3688 stellarorion_physics_proof <> V:12 var
+R3698:3701 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3702:3724 stellarorion_physics_proof <> sutton_graves_heat_flux def
+R3726:3729 stellarorion_physics_proof <> C_sg:9 var
+R3731:3733 stellarorion_physics_proof <> rho:10 var
+R3735:3736 stellarorion_physics_proof <> Rn:11 var
+R3738:3738 stellarorion_physics_proof <> V:12 var
+R3796:3818 stellarorion_physics_proof <> sutton_graves_heat_flux def
+R3913:3916 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3920:3922 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3913:3916 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3920:3922 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3939:3942 Coq.Reals.Rdefinitions <> Rdiv def
+R3955:3966 Coq.Reals.RIneq <> Rmult_le_pos thm
+R3989:3994 Coq.Reals.RIneq <> Rlt_le thm
+R4003:4018 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R3955:3966 Coq.Reals.RIneq <> Rmult_le_pos thm
+R3989:3994 Coq.Reals.RIneq <> Rlt_le thm
+R4003:4018 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4109:4112 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4113:4116 Coq.Reals.R_sqrt <> sqrt def
+R4122:4124 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4144:4158 Coq.Reals.R_sqrt <> sqrt_positivity thm
+R4109:4112 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4113:4116 Coq.Reals.R_sqrt <> sqrt def
+R4122:4124 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4144:4158 Coq.Reals.R_sqrt <> sqrt_positivity thm
+R4292:4303 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4292:4303 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4329:4340 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4329:4340 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4366:4377 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4366:4377 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4403:4414 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4424:4429 Coq.Reals.RIneq <> Rlt_le thm
+R4403:4414 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4424:4429 Coq.Reals.RIneq <> Rlt_le thm
+prf 4658:4668 <> sqrt_pos_lt
+binder 4679:4679 <> x:13
+R4687:4690 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4683:4685 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4686:4686 stellarorion_physics_proof <> x:13 var
+R4692:4694 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4695:4698 Coq.Reals.R_sqrt <> sqrt def
+R4700:4700 stellarorion_physics_proof <> x:13 var
+R4742:4745 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4746:4749 Coq.Reals.R_sqrt <> sqrt def
+R4764:4778 Coq.Reals.R_sqrt <> sqrt_positivity thm
+R4742:4745 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4746:4749 Coq.Reals.R_sqrt <> sqrt def
+R4764:4778 Coq.Reals.R_sqrt <> sqrt_positivity thm
+R4799:4808 Coq.Reals.RIneq <> Rle_lt_dec thm
+R4811:4814 Coq.Reals.R_sqrt <> sqrt def
+R4799:4808 Coq.Reals.RIneq <> Rle_lt_dec thm
+R4811:4814 Coq.Reals.R_sqrt <> sqrt def
+R4880:4882 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4874:4877 Coq.Reals.R_sqrt <> sqrt def
+R4880:4882 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4874:4877 Coq.Reals.R_sqrt <> sqrt def
+R4923:4925 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4914:4916 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4908:4911 Coq.Reals.R_sqrt <> sqrt def
+R4917:4920 Coq.Reals.R_sqrt <> sqrt def
+R4939:4947 Coq.Reals.R_sqrt <> Rsqr_sqrt thm
+R4923:4925 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4914:4916 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4908:4911 Coq.Reals.R_sqrt <> sqrt def
+R4917:4920 Coq.Reals.R_sqrt <> sqrt def
+R4939:4947 Coq.Reals.R_sqrt <> Rsqr_sqrt thm
+prf 5298:5314 <> sutton_graves_pos
+binder 5325:5328 <> C_sg:14
+binder 5330:5332 <> rho:15
+binder 5334:5335 <> Rn:16
+binder 5337:5337 <> V:17
+R5352:5355 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5348:5350 Coq.Reals.Rdefinitions <> ::R_scope:x_'>'_x not
+R5344:5347 stellarorion_physics_proof <> C_sg:14 var
+R5363:5366 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5357:5359 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5360:5362 stellarorion_physics_proof <> rho:15 var
+R5373:5376 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5369:5371 Coq.Reals.Rdefinitions <> ::R_scope:x_'>'_x not
+R5367:5368 stellarorion_physics_proof <> Rn:16 var
+R5382:5389 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5378:5380 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5381:5381 stellarorion_physics_proof <> V:17 var
+R5391:5393 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5394:5416 stellarorion_physics_proof <> sutton_graves_heat_flux def
+R5418:5421 stellarorion_physics_proof <> C_sg:14 var
+R5423:5425 stellarorion_physics_proof <> rho:15 var
+R5427:5428 stellarorion_physics_proof <> Rn:16 var
+R5430:5430 stellarorion_physics_proof <> V:17 var
+R5488:5510 stellarorion_physics_proof <> sutton_graves_heat_flux def
+R5531:5533 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5537:5539 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5558:5573 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R5531:5533 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5537:5539 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5558:5573 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R5622:5624 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5625:5628 Coq.Reals.R_sqrt <> sqrt def
+R5634:5636 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5656:5666 stellarorion_physics_proof <> sqrt_pos_lt thm
+R5622:5624 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5625:5628 Coq.Reals.R_sqrt <> sqrt def
+R5634:5636 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R5656:5666 stellarorion_physics_proof <> sqrt_pos_lt thm
+R5690:5706 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5690:5706 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5732:5748 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5732:5748 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5774:5790 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5774:5790 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5816:5832 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5816:5832 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+prf 5913:5940 <> sutton_graves_velocity_cubic
+binder 5951:5954 <> C_sg:18
+binder 5956:5958 <> rho:19
+binder 5960:5961 <> Rn:20
+binder 5963:5963 <> V:21
+binder 5965:5965 <> k:22
+R5978:5981 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5973:5976 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5977:5977 stellarorion_physics_proof <> V:21 var
+R5987:5994 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5983:5985 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5986:5986 stellarorion_physics_proof <> k:22 var
+R6038:6044 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5995:6017 stellarorion_physics_proof <> sutton_graves_heat_flux def
+R6019:6022 stellarorion_physics_proof <> C_sg:18 var
+R6024:6026 stellarorion_physics_proof <> rho:19 var
+R6028:6029 stellarorion_physics_proof <> Rn:20 var
+R6033:6035 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6032:6032 stellarorion_physics_proof <> k:22 var
+R6036:6036 stellarorion_physics_proof <> V:21 var
+R6054:6056 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6050:6052 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6046:6048 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6045:6045 stellarorion_physics_proof <> k:22 var
+R6049:6049 stellarorion_physics_proof <> k:22 var
+R6053:6053 stellarorion_physics_proof <> k:22 var
+R6057:6079 stellarorion_physics_proof <> sutton_graves_heat_flux def
+R6081:6084 stellarorion_physics_proof <> C_sg:18 var
+R6086:6088 stellarorion_physics_proof <> rho:19 var
+R6090:6091 stellarorion_physics_proof <> Rn:20 var
+R6093:6093 stellarorion_physics_proof <> V:21 var
+R6144:6166 stellarorion_physics_proof <> sutton_graves_heat_flux def
+prf 6560:6574 <> tps_flux_nonneg
+binder 6585:6589 <> T_hot:23
+binder 6591:6596 <> T_cold:24
+binder 6598:6602 <> delta:25
+binder 6604:6604 <> k:26
+R6626:6629 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6617:6620 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6611:6616 stellarorion_physics_proof <> T_cold:24 var
+R6621:6625 stellarorion_physics_proof <> T_hot:23 var
+R6639:6642 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6631:6633 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6634:6638 stellarorion_physics_proof <> delta:25 var
+R6648:6655 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6644:6646 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6647:6647 stellarorion_physics_proof <> k:26 var
+R6657:6660 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6661:6679 stellarorion_physics_proof <> tps_conduction_flux def
+R6681:6685 stellarorion_physics_proof <> T_hot:23 var
+R6687:6692 stellarorion_physics_proof <> T_cold:24 var
+R6694:6698 stellarorion_physics_proof <> delta:25 var
+R6700:6700 stellarorion_physics_proof <> k:26 var
+R6759:6777 stellarorion_physics_proof <> tps_conduction_flux def
+R6799:6801 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6807:6809 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6827:6842 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R6799:6801 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6807:6809 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R6827:6842 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R6887:6890 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6896:6898 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6887:6890 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6896:6898 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6924:6927 Coq.Reals.Rdefinitions <> Rdiv def
+R6938:6949 Coq.Reals.RIneq <> Rmult_le_pos thm
+R6972:6977 Coq.Reals.RIneq <> Rlt_le thm
+R6986:7001 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R6938:6949 Coq.Reals.RIneq <> Rmult_le_pos thm
+R6972:6977 Coq.Reals.RIneq <> Rlt_le thm
+R6986:7001 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+prf 7104:7115 <> tps_flux_pos
+binder 7126:7130 <> T_hot:27
+binder 7132:7137 <> T_cold:28
+binder 7139:7143 <> delta:29
+binder 7145:7145 <> k:30
+R7166:7169 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7158:7160 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7152:7157 stellarorion_physics_proof <> T_cold:28 var
+R7161:7165 stellarorion_physics_proof <> T_hot:27 var
+R7179:7182 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7171:7173 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7174:7178 stellarorion_physics_proof <> delta:29 var
+R7188:7195 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7184:7186 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7187:7187 stellarorion_physics_proof <> k:30 var
+R7197:7199 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7200:7218 stellarorion_physics_proof <> tps_conduction_flux def
+R7220:7224 stellarorion_physics_proof <> T_hot:27 var
+R7226:7231 stellarorion_physics_proof <> T_cold:28 var
+R7233:7237 stellarorion_physics_proof <> delta:29 var
+R7239:7239 stellarorion_physics_proof <> k:30 var
+R7298:7316 stellarorion_physics_proof <> tps_conduction_flux def
+R7338:7340 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7346:7348 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7366:7381 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R7338:7340 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7346:7348 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7366:7381 Coq.Reals.RIneq <> Rdiv_lt_0_compat thm
+R7426:7428 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7434:7436 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7426:7428 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7434:7436 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7462:7465 Coq.Reals.Rdefinitions <> Rdiv def
+R7476:7492 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R7515:7530 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R7476:7492 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R7515:7530 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+prf 7756:7786 <> tps_flux_antitone_in_resistance
+binder 7797:7801 <> T_hot:31
+binder 7803:7808 <> T_cold:32
+binder 7810:7811 <> R1:33
+binder 7813:7814 <> R2:34
+R7839:7842 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7822:7824 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7830:7832 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7825:7829 stellarorion_physics_proof <> T_hot:31 var
+R7833:7838 stellarorion_physics_proof <> T_cold:32 var
+R7849:7852 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7844:7846 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7847:7848 stellarorion_physics_proof <> R1:33 var
+R7861:7868 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7855:7858 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7853:7854 stellarorion_physics_proof <> R1:33 var
+R7859:7860 stellarorion_physics_proof <> R2:34 var
+R7890:7893 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7869:7869 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7884:7887 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7875:7877 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7870:7874 stellarorion_physics_proof <> T_hot:31 var
+R7878:7883 stellarorion_physics_proof <> T_cold:32 var
+R7888:7889 stellarorion_physics_proof <> R2:34 var
+R7894:7894 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7909:7912 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R7900:7902 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7895:7899 stellarorion_physics_proof <> T_hot:31 var
+R7903:7908 stellarorion_physics_proof <> T_cold:32 var
+R7913:7914 stellarorion_physics_proof <> R1:33 var
+R8243:8259 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+R8243:8259 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+R8281:8297 Coq.Reals.RIneq <> Rinv_le_contravar thm
+R8281:8297 Coq.Reals.RIneq <> Rinv_le_contravar thm

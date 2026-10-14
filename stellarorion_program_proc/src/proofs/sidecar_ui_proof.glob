@@ -1,0 +1,81 @@
+DIGEST 02eb536948e3bcd600e7a44e7304f156
+Fsidecar_ui_proof
+R3086:3100 Coq.Reals.Reals <> <> lib
+R3118:3134 Coq.micromega.Lia <> <> lib
+R3152:3168 Coq.micromega.Lra <> <> lib
+def 3666:3676 <> surf_stored
+R3699:3701 Coq.Init.Datatypes <> nat ind
+binder 3679:3686 <> accepted:1
+binder 3688:3695 <> declared:2
+R3706:3708 Coq.Init.Datatypes <> nat ind
+R3721:3728 sidecar_ui_proof <> declared:2 var
+R3744:3751 sidecar_ui_proof <> accepted:1 var
+R3757:3757 Coq.Init.Datatypes <> S constr
+R3772:3775 Coq.Init.Peano <> ::nat_scope:x_'-'_x not
+R3795:3795 Coq.Init.Peano <> ::nat_scope:x_'-'_x not
+R3764:3771 sidecar_ui_proof <> accepted:1 var
+R3784:3786 Coq.Init.Peano <> ::nat_scope:x_'-'_x not
+R3776:3783 sidecar_ui_proof <> accepted:1 var
+R3787:3794 sidecar_ui_proof <> declared:2 var
+sec 3813:3836 <> Port_And_Interval_Bounds
+def 4732:4746 <> DEFAULT_UI_PORT
+R4750:4750 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4774:4785 <> TCP_PORT_MIN
+R4789:4789 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4890:4909 <> TCP_UNPRIVILEGED_MIN
+R4913:4913 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4995:5006 <> TCP_PORT_MAX
+R5010:5010 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 5116:5133 <> UI_POLL_INTERVAL_S
+R5137:5137 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+prf 5212:5235 <> default_ui_port_bindable
+R5251:5254 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<='_x not
+R5270:5273 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<='_x not
+R5239:5250 sidecar_ui_proof <> TCP_PORT_MIN def
+R5255:5269 sidecar_ui_proof <> DEFAULT_UI_PORT def
+R5255:5269 sidecar_ui_proof <> DEFAULT_UI_PORT def
+R5274:5285 sidecar_ui_proof <> TCP_PORT_MAX def
+R5308:5319 sidecar_ui_proof <> TCP_PORT_MIN def
+R5322:5336 sidecar_ui_proof <> DEFAULT_UI_PORT def
+R5339:5350 sidecar_ui_proof <> TCP_PORT_MAX def
+prf 5453:5480 <> default_ui_port_unprivileged
+R5504:5507 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5484:5503 sidecar_ui_proof <> TCP_UNPRIVILEGED_MIN def
+R5508:5522 sidecar_ui_proof <> DEFAULT_UI_PORT def
+R5545:5564 sidecar_ui_proof <> TCP_UNPRIVILEGED_MIN def
+R5567:5581 sidecar_ui_proof <> DEFAULT_UI_PORT def
+prf 5667:5691 <> ui_poll_interval_positive
+R5696:5698 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5699:5716 sidecar_ui_proof <> UI_POLL_INTERVAL_S def
+R5739:5756 sidecar_ui_proof <> UI_POLL_INTERVAL_S def
+R5779:5802 sidecar_ui_proof Port_And_Interval_Bounds <> sec
+prf 5883:5909 <> surf_points_within_declared
+binder 5920:5927 <> accepted:4
+binder 5929:5936 <> declared:5
+R5954:5957 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5942:5945 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5946:5953 sidecar_ui_proof <> declared:5 var
+R5987:5990 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5958:5968 sidecar_ui_proof <> surf_stored def
+R5970:5977 sidecar_ui_proof <> accepted:4 var
+R5979:5986 sidecar_ui_proof <> declared:5 var
+R5991:5998 sidecar_ui_proof <> declared:5 var
+R6083:6093 sidecar_ui_proof <> surf_stored def
+R6112:6122 sidecar_ui_proof <> surf_stored def
+prf 6204:6226 <> surf_points_within_read
+binder 6237:6244 <> accepted:6
+binder 6246:6253 <> declared:7
+R6287:6290 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R6258:6268 sidecar_ui_proof <> surf_stored def
+R6270:6277 sidecar_ui_proof <> accepted:6 var
+R6279:6286 sidecar_ui_proof <> declared:7 var
+R6291:6298 sidecar_ui_proof <> accepted:6 var
+R6377:6387 sidecar_ui_proof <> surf_stored def
+R6406:6416 sidecar_ui_proof <> surf_stored def
+prf 6516:6554 <> surf_points_uncapped_when_declared_zero
+binder 6565:6572 <> accepted:8
+R6599:6601 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6577:6587 sidecar_ui_proof <> surf_stored def
+R6589:6596 sidecar_ui_proof <> accepted:8 var
+R6602:6609 sidecar_ui_proof <> accepted:8 var
+R6709:6719 sidecar_ui_proof <> surf_stored def

@@ -1,0 +1,93 @@
+DIGEST 089a52f2010fdaa59d06b9c85755108c
+Fpinn_test_proof
+R3051:3065 Coq.Reals.Reals <> <> lib
+R3083:3099 Coq.micromega.Lra <> <> lib
+def 3195:3207 <> clip_to_range
+R3220:3220 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3210:3211 <> lo:1
+binder 3213:3214 <> hi:2
+binder 3216:3216 <> x:3
+R3225:3225 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3235:3244 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3246:3246 pinn_test_proof <> x:3 var
+R3248:3249 pinn_test_proof <> lo:1 var
+R3269:3278 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3280:3281 pinn_test_proof <> hi:2 var
+R3283:3283 pinn_test_proof <> x:3 var
+R3300:3300 pinn_test_proof <> x:3 var
+R3290:3291 pinn_test_proof <> hi:2 var
+R3256:3257 pinn_test_proof <> lo:1 var
+def 3467:3473 <> rel_err
+R3486:3486 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3476:3478 <> val:4
+binder 3480:3482 <> ref:5
+R3491:3491 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3501:3510 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3512:3514 pinn_test_proof <> ref:5 var
+R3547:3549 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3530:3530 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3540:3543 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3534:3536 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R3531:3533 pinn_test_proof <> val:4 var
+R3537:3539 pinn_test_proof <> ref:5 var
+R3544:3546 pinn_test_proof <> ref:5 var
+prf 3641:3660 <> clip_to_range_bounds
+binder 3671:3672 <> lo:6
+binder 3674:3675 <> hi:7
+binder 3677:3677 <> x:8
+R3690:3693 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3684:3687 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3682:3683 pinn_test_proof <> lo:6 var
+R3688:3689 pinn_test_proof <> hi:7 var
+R3696:3699 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<='_x not
+R3721:3724 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<='_x not
+R3694:3695 pinn_test_proof <> lo:6 var
+R3700:3712 pinn_test_proof <> clip_to_range def
+R3714:3715 pinn_test_proof <> lo:6 var
+R3717:3718 pinn_test_proof <> hi:7 var
+R3720:3720 pinn_test_proof <> x:8 var
+R3700:3712 pinn_test_proof <> clip_to_range def
+R3714:3715 pinn_test_proof <> lo:6 var
+R3717:3718 pinn_test_proof <> hi:7 var
+R3720:3720 pinn_test_proof <> x:8 var
+R3725:3726 pinn_test_proof <> hi:7 var
+R3767:3779 pinn_test_proof <> clip_to_range def
+R3794:3803 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3794:3803 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3853:3862 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3853:3862 Coq.Reals.RIneq <> Rle_lt_dec thm
+prf 4001:4018 <> pinn_ratio_clamped
+binder 4029:4029 <> r:9
+R4035:4038 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<='_x not
+R4062:4065 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<='_x not
+R4039:4051 pinn_test_proof <> clip_to_range def
+R4061:4061 pinn_test_proof <> r:9 var
+R4039:4051 pinn_test_proof <> clip_to_range def
+R4061:4061 pinn_test_proof <> r:9 var
+R4098:4117 pinn_test_proof <> clip_to_range_bounds thm
+R4098:4117 pinn_test_proof <> clip_to_range_bounds thm
+prf 4216:4234 <> pinn_iters_budgeted
+binder 4245:4249 <> steps:10
+R4260:4263 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<='_x not
+R4305:4308 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<='_x not
+R4264:4276 pinn_test_proof <> clip_to_range def
+R4296:4298 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4299:4303 pinn_test_proof <> steps:10 var
+R4264:4276 pinn_test_proof <> clip_to_range def
+R4296:4298 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4299:4303 pinn_test_proof <> steps:10 var
+R4348:4367 pinn_test_proof <> clip_to_range_bounds thm
+R4348:4367 pinn_test_proof <> clip_to_range_bounds thm
+prf 4476:4493 <> rel_err_zero_guard
+binder 4504:4506 <> val:11
+binder 4508:4510 <> ref:12
+R4521:4524 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4516:4519 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4513:4515 pinn_test_proof <> ref:12 var
+R4540:4542 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4525:4531 pinn_test_proof <> rel_err def
+R4533:4535 pinn_test_proof <> val:11 var
+R4537:4539 pinn_test_proof <> ref:12 var
+R4585:4591 pinn_test_proof <> rel_err def
+R4606:4615 Coq.Reals.RIneq <> Rle_lt_dec thm
+R4606:4615 Coq.Reals.RIneq <> Rle_lt_dec thm

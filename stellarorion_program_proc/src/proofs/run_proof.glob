@@ -1,0 +1,238 @@
+DIGEST 61d3a22b56f828bc6f0e27105250ef2a
+Frun_proof
+R3189:3203 Coq.Reals.Reals <> <> lib
+R3221:3237 Coq.micromega.Lra <> <> lib
+def 3350:3371 <> HEALTH_CHECK_TIMEOUT_S
+R3375:3375 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 3519:3541 <> HEALTH_CHECK_POLL_TICKS
+R3545:3545 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 3564:3588 <> HEALTH_CHECK_BUDGET_TICKS
+R3592:3592 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3598:3600 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3601:3622 run_proof <> HEALTH_CHECK_TIMEOUT_S def
+def 3700:3729 <> HEALTH_CHECK_REQUEST_TIMEOUT_S
+R3733:3733 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 3827:3847 <> health_check_deadline
+R3866:3866 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3850:3852 <> now:1
+binder 3854:3862 <> timeout_s:2
+R3871:3871 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3879:3881 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R3876:3878 run_proof <> now:1 var
+R3882:3890 run_proof <> timeout_s:2 var
+def 3962:3977 <> remaining_window
+R3995:3995 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3980:3982 <> now:3
+binder 3984:3991 <> deadline:4
+R4000:4000 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4013:4015 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R4005:4012 run_proof <> deadline:4 var
+R4016:4018 run_proof <> now:3 var
+def 4101:4117 <> SHA256_HEX_DIGITS
+R4121:4121 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4141:4152 <> SHA256_BYTES
+R4156:4156 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4176:4186 <> SHA256_BITS
+R4190:4190 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4290:4301 <> media_copied
+R4308:4308 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4304:4304 <> c:5
+R4313:4313 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4318:4318 run_proof <> c:5 var
+def 4332:4354 <> media_already_same_file
+R4361:4361 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4357:4357 <> a:6
+R4366:4366 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4371:4371 run_proof <> a:6 var
+def 4385:4397 <> media_skipped
+R4404:4404 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4400:4400 <> s:7
+R4409:4409 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4414:4414 run_proof <> s:7 var
+prf 4488:4522 <> health_check_budget_is_thirty_ticks
+R4551:4553 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4526:4550 run_proof <> HEALTH_CHECK_BUDGET_TICKS def
+R4574:4598 run_proof <> HEALTH_CHECK_BUDGET_TICKS def
+R4601:4622 run_proof <> HEALTH_CHECK_TIMEOUT_S def
+prf 4753:4783 <> health_check_poll_count_bounded
+R4798:4798 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4794:4794 <> k:8
+R4859:4866 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4830:4833 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4826:4828 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4803:4825 run_proof <> HEALTH_CHECK_POLL_TICKS def
+R4829:4829 run_proof <> k:8 var
+R4834:4858 run_proof <> HEALTH_CHECK_BUDGET_TICKS def
+R4868:4871 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4867:4867 run_proof <> k:8 var
+R4872:4896 run_proof <> HEALTH_CHECK_BUDGET_TICKS def
+R4930:4952 run_proof <> HEALTH_CHECK_POLL_TICKS def
+R4955:4979 run_proof <> HEALTH_CHECK_BUDGET_TICKS def
+prf 5229:5270 <> health_check_request_timeout_inside_budget
+R5306:5308 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5276:5305 run_proof <> HEALTH_CHECK_REQUEST_TIMEOUT_S def
+R5309:5330 run_proof <> HEALTH_CHECK_TIMEOUT_S def
+R5349:5378 run_proof <> HEALTH_CHECK_REQUEST_TIMEOUT_S def
+R5381:5402 run_proof <> HEALTH_CHECK_TIMEOUT_S def
+prf 5624:5660 <> health_check_deadline_residual_nonneg
+R5677:5677 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 5671:5673 <> now:9
+R5709:5716 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5683:5686 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5687:5708 run_proof <> HEALTH_CHECK_TIMEOUT_S def
+R5772:5781 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5720:5723 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5717:5719 run_proof <> now:9 var
+R5724:5744 run_proof <> health_check_deadline def
+R5746:5748 run_proof <> now:9 var
+R5750:5771 run_proof <> HEALTH_CHECK_TIMEOUT_S def
+R5783:5786 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5787:5802 run_proof <> remaining_window def
+R5804:5806 run_proof <> now:9 var
+R5809:5829 run_proof <> health_check_deadline def
+R5831:5833 run_proof <> now:9 var
+R5835:5856 run_proof <> HEALTH_CHECK_TIMEOUT_S def
+R5897:5912 run_proof <> remaining_window def
+R5915:5935 run_proof <> health_check_deadline def
+prf 6186:6221 <> health_check_remaining_budget_nonneg
+R6236:6236 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 6232:6232 <> k:10
+R6247:6254 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6242:6245 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6246:6246 run_proof <> k:10 var
+R6311:6320 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6282:6285 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6278:6280 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6255:6277 run_proof <> HEALTH_CHECK_POLL_TICKS def
+R6281:6281 run_proof <> k:10 var
+R6286:6310 run_proof <> HEALTH_CHECK_BUDGET_TICKS def
+R6322:6325 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6351:6353 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R6326:6350 run_proof <> HEALTH_CHECK_BUDGET_TICKS def
+R6377:6379 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6354:6376 run_proof <> HEALTH_CHECK_POLL_TICKS def
+R6380:6380 run_proof <> k:10 var
+R6420:6442 run_proof <> HEALTH_CHECK_POLL_TICKS def
+R6445:6469 run_proof <> HEALTH_CHECK_BUDGET_TICKS def
+prf 6705:6734 <> sha256_hex_digits_are_32_bytes
+R6754:6756 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6739:6741 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6742:6753 run_proof <> SHA256_BYTES def
+R6757:6773 run_proof <> SHA256_HEX_DIGITS def
+R6792:6803 run_proof <> SHA256_BYTES def
+R6806:6822 run_proof <> SHA256_HEX_DIGITS def
+prf 6966:6990 <> sha256_bytes_are_256_bits
+R7010:7012 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6995:6997 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6998:7009 run_proof <> SHA256_BYTES def
+R7013:7023 run_proof <> SHA256_BITS def
+R7042:7053 run_proof <> SHA256_BYTES def
+R7056:7066 run_proof <> SHA256_BITS def
+prf 7202:7238 <> sha256_bits_are_four_times_hex_digits
+R7265:7267 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7245:7247 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7248:7264 run_proof <> SHA256_HEX_DIGITS def
+R7268:7278 run_proof <> SHA256_BITS def
+R7297:7313 run_proof <> SHA256_HEX_DIGITS def
+R7316:7326 run_proof <> SHA256_BITS def
+prf 7554:7580 <> media_sync_tally_partitions
+R7601:7601 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7591:7591 <> c:11
+binder 7593:7593 <> a:12
+binder 7595:7595 <> s:13
+binder 7597:7597 <> n:14
+R7901:7904 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7883:7886 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7887:7898 run_proof <> media_copied def
+R7900:7900 run_proof <> c:11 var
+R7935:7938 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7906:7909 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7910:7932 run_proof <> media_already_same_file def
+R7934:7934 run_proof <> a:12 var
+R7959:7964 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7940:7943 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7944:7956 run_proof <> media_skipped def
+R7958:7958 run_proof <> s:13 var
+R8029:8036 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8025:8027 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8007:8009 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R7979:7981 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R7965:7976 run_proof <> media_copied def
+R7978:7978 run_proof <> c:11 var
+R7982:8004 run_proof <> media_already_same_file def
+R8006:8006 run_proof <> a:12 var
+R8010:8022 run_proof <> media_skipped def
+R8024:8024 run_proof <> s:13 var
+R8028:8028 run_proof <> n:14 var
+R8085:8092 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R8080:8083 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8062:8064 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8037:8059 run_proof <> media_already_same_file def
+R8061:8061 run_proof <> a:12 var
+R8065:8077 run_proof <> media_skipped def
+R8079:8079 run_proof <> s:13 var
+R8084:8084 run_proof <> n:14 var
+R8140:8147 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R8135:8138 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8107:8109 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8093:8104 run_proof <> media_copied def
+R8106:8106 run_proof <> c:11 var
+R8110:8132 run_proof <> media_already_same_file def
+R8134:8134 run_proof <> a:12 var
+R8139:8139 run_proof <> n:14 var
+R8180:8183 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8162:8164 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8148:8159 run_proof <> media_copied def
+R8161:8161 run_proof <> c:11 var
+R8165:8177 run_proof <> media_skipped def
+R8179:8179 run_proof <> s:13 var
+R8184:8184 run_proof <> n:14 var
+R8510:8513 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8492:8494 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8467:8489 run_proof <> media_already_same_file def
+R8495:8507 run_proof <> media_skipped def
+R8510:8513 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8492:8494 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8467:8489 run_proof <> media_already_same_file def
+R8495:8507 run_proof <> media_skipped def
+R8583:8586 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8555:8557 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8541:8552 run_proof <> media_copied def
+R8558:8580 run_proof <> media_already_same_file def
+R8583:8586 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8555:8557 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8541:8552 run_proof <> media_copied def
+R8558:8580 run_proof <> media_already_same_file def
+R8646:8649 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8628:8630 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8614:8625 run_proof <> media_copied def
+R8631:8643 run_proof <> media_skipped def
+R8646:8649 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8628:8630 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8614:8625 run_proof <> media_copied def
+R8631:8643 run_proof <> media_skipped def
+prf 8849:8878 <> media_sync_tally_reports_total
+R8897:8897 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 8889:8889 <> c:15
+binder 8891:8891 <> a:16
+binder 8893:8893 <> s:17
+R8962:8968 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8944:8946 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8916:8918 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8902:8913 run_proof <> media_copied def
+R8915:8915 run_proof <> c:15 var
+R8919:8941 run_proof <> media_already_same_file def
+R8943:8943 run_proof <> a:16 var
+R8947:8959 run_proof <> media_skipped def
+R8961:8961 run_proof <> s:17 var
+R9001:9003 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8984:8986 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R8969:8981 run_proof <> media_skipped def
+R8983:8983 run_proof <> s:17 var
+R8987:8998 run_proof <> media_copied def
+R9000:9000 run_proof <> c:15 var
+R9004:9026 run_proof <> media_already_same_file def
+R9028:9028 run_proof <> a:16 var
+R9063:9074 run_proof <> media_copied def
+R9077:9099 run_proof <> media_already_same_file def
+R9102:9114 run_proof <> media_skipped def

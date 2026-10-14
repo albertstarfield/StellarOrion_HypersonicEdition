@@ -1,0 +1,311 @@
+DIGEST 7a53de65bd235db7e40517f1145819af
+Fstellarorion_trajectory_output_proof
+R1945:1959 Coq.Reals.Reals <> <> lib
+R1977:1993 Coq.micromega.Lra <> <> lib
+prf 2595:2604 <> cancel_mul
+R2621:2621 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 2615:2615 <> x:1
+binder 2617:2617 <> l:2
+R2630:2633 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2625:2628 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R2624:2624 stellarorion_trajectory_output_proof <> l:2 var
+R2645:2647 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R2635:2638 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2644:2644 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2634:2634 stellarorion_trajectory_output_proof <> l:2 var
+R2640:2642 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R2639:2639 stellarorion_trajectory_output_proof <> x:1 var
+R2643:2643 stellarorion_trajectory_output_proof <> l:2 var
+R2648:2648 stellarorion_trajectory_output_proof <> x:1 var
+R2685:2688 Coq.Reals.Rdefinitions <> Rdiv def
+R2704:2714 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2704:2714 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2704:2714 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2728:2737 Coq.Reals.Raxioms <> Rmult_comm thm
+R2728:2737 Coq.Reals.Raxioms <> Rmult_comm thm
+R2728:2737 Coq.Reals.Raxioms <> Rmult_comm thm
+R2755:2765 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2755:2765 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2755:2765 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2779:2788 Coq.Reals.Raxioms <> Rmult_comm thm
+R2793:2794 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2779:2788 Coq.Reals.Raxioms <> Rmult_comm thm
+R2793:2794 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2779:2788 Coq.Reals.Raxioms <> Rmult_comm thm
+R2793:2794 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2811:2816 Coq.Reals.Raxioms <> Rinv_l thm
+R2811:2816 Coq.Reals.Raxioms <> Rinv_l thm
+R2811:2816 Coq.Reals.Raxioms <> Rinv_l thm
+R2836:2844 Coq.Reals.RIneq <> Rmult_1_r thm
+R2836:2844 Coq.Reals.RIneq <> Rmult_1_r thm
+R2836:2844 Coq.Reals.RIneq <> Rmult_1_r thm
+def 3116:3126 <> TARGET_STEP
+R3130:3130 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 3775:3783 <> pinn_loss
+R3790:3790 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3786:3786 <> p:3
+R3795:3795 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3801:3804 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3816:3816 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3806:3808 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R3812:3814 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3815:3815 stellarorion_trajectory_output_proof <> p:3 var
+def 3831:3843 <> pinn_accuracy
+R3850:3850 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3846:3846 <> p:4
+R3855:3855 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3860:3863 Coq.Reals.Rbasic_fun <> Rmin def
+R3873:3875 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R3880:3882 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3883:3883 stellarorion_trajectory_output_proof <> p:4 var
+def 3899:3913 <> dsmc_pinn_error
+R3920:3920 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3916:3916 <> p:5
+R3925:3925 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3930:3933 Coq.Reals.Rbasic_fun <> Rmax def
+R3942:3945 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3951:3951 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3947:3949 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R3950:3950 stellarorion_trajectory_output_proof <> p:5 var
+prf 4202:4215 <> progress_range
+R4233:4233 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4226:4229 <> step:6
+R4245:4248 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4237:4240 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4241:4244 stellarorion_trajectory_output_proof <> step:6 var
+R4268:4274 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4253:4256 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4249:4252 stellarorion_trajectory_output_proof <> step:6 var
+R4257:4267 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4276:4279 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<='_x not
+R4298:4301 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<='_x not
+R4284:4286 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4280:4283 stellarorion_trajectory_output_proof <> step:6 var
+R4287:4297 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4284:4286 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R4280:4283 stellarorion_trajectory_output_proof <> step:6 var
+R4287:4297 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4349:4351 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4352:4362 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4376:4386 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4349:4351 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4352:4362 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4422:4425 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R4411:4421 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4440:4450 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4422:4425 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R4411:4421 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4475:4477 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4478:4479 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4480:4490 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4503:4518 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4475:4477 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4478:4479 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4480:4490 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4503:4518 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4541:4544 Coq.Reals.Rdefinitions <> Rdiv def
+R4566:4577 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4566:4577 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4609:4622 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R4624:4634 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4609:4622 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R4624:4634 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4666:4675 Coq.Reals.Raxioms <> Rmult_comm thm
+R4683:4684 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4685:4695 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4666:4675 Coq.Reals.Raxioms <> Rmult_comm thm
+R4683:4684 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4685:4695 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4666:4675 Coq.Reals.Raxioms <> Rmult_comm thm
+R4683:4684 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4685:4695 stellarorion_trajectory_output_proof <> TARGET_STEP def
+R4715:4725 Coq.Reals.Raxioms <> Rmult_assoc thm
+R4715:4725 Coq.Reals.Raxioms <> Rmult_assoc thm
+R4715:4725 Coq.Reals.Raxioms <> Rmult_assoc thm
+R4740:4745 Coq.Reals.RIneq <> Rinv_r thm
+R4740:4745 Coq.Reals.RIneq <> Rinv_r thm
+R4740:4745 Coq.Reals.RIneq <> Rinv_r thm
+R4773:4781 Coq.Reals.Raxioms <> Rmult_1_l thm
+R4773:4781 Coq.Reals.Raxioms <> Rmult_1_l thm
+R4773:4781 Coq.Reals.Raxioms <> Rmult_1_l thm
+prf 5034:5047 <> pinn_loss_band
+binder 5058:5058 <> p:7
+R5067:5070 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5062:5065 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5066:5066 stellarorion_trajectory_output_proof <> p:7 var
+R5086:5089 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R5072:5074 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5075:5083 stellarorion_trajectory_output_proof <> pinn_loss def
+R5085:5085 stellarorion_trajectory_output_proof <> p:7 var
+R5101:5104 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5090:5098 stellarorion_trajectory_output_proof <> pinn_loss def
+R5100:5100 stellarorion_trajectory_output_proof <> p:7 var
+R5139:5147 stellarorion_trajectory_output_proof <> pinn_loss def
+R5166:5168 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5170:5172 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5176:5178 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5166:5168 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5170:5172 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5176:5178 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5217:5220 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R5207:5209 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5213:5215 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5217:5220 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R5207:5209 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5213:5215 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5248:5250 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5251:5253 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R5265:5265 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R5255:5257 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5261:5263 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5278:5293 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R5248:5250 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5251:5253 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R5265:5265 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R5255:5257 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5261:5263 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5278:5293 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R5326:5342 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5326:5342 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R5374:5387 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R5391:5393 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5397:5399 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5374:5387 Coq.Reals.RIneq <> Rmult_le_reg_l thm
+R5391:5393 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5397:5399 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5432:5440 Coq.Reals.RIneq <> Rmult_1_r thm
+R5432:5440 Coq.Reals.RIneq <> Rmult_1_r thm
+R5432:5440 Coq.Reals.RIneq <> Rmult_1_r thm
+R5456:5465 stellarorion_trajectory_output_proof <> cancel_mul thm
+R5471:5473 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5477:5479 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5456:5465 stellarorion_trajectory_output_proof <> cancel_mul thm
+R5471:5473 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5477:5479 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5456:5465 stellarorion_trajectory_output_proof <> cancel_mul thm
+R5471:5473 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R5477:5479 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+prf 6093:6110 <> pinn_accuracy_band
+binder 6121:6121 <> p:8
+R6130:6133 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6125:6128 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6129:6129 stellarorion_trajectory_output_proof <> p:8 var
+R6140:6146 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6135:6138 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6134:6134 stellarorion_trajectory_output_proof <> p:8 var
+R6168:6171 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R6149:6152 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6153:6165 stellarorion_trajectory_output_proof <> pinn_accuracy def
+R6167:6167 stellarorion_trajectory_output_proof <> p:8 var
+R6187:6190 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6172:6184 stellarorion_trajectory_output_proof <> pinn_accuracy def
+R6186:6186 stellarorion_trajectory_output_proof <> p:8 var
+R6232:6244 stellarorion_trajectory_output_proof <> pinn_accuracy def
+R6259:6265 Coq.Reals.RIneq <> Rle_dec thm
+R6270:6272 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R6277:6279 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6259:6265 Coq.Reals.RIneq <> Rle_dec thm
+R6270:6272 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R6277:6279 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6326:6335 Coq.Reals.Rbasic_fun <> Rmin_right thm
+R6326:6335 Coq.Reals.Rbasic_fun <> Rmin_right thm
+R6326:6335 Coq.Reals.Rbasic_fun <> Rmin_right thm
+R6372:6377 Coq.Reals.Rbasic_fun <> Rmin_l thm
+R6372:6377 Coq.Reals.Rbasic_fun <> Rmin_l thm
+R6405:6413 Coq.Reals.Rbasic_fun <> Rmin_left thm
+R6405:6413 Coq.Reals.Rbasic_fun <> Rmin_left thm
+R6405:6413 Coq.Reals.Rbasic_fun <> Rmin_left thm
+R6446:6451 Coq.Reals.Rbasic_fun <> Rmin_l thm
+R6446:6451 Coq.Reals.Rbasic_fun <> Rmin_l thm
+prf 6879:6893 <> dsmc_error_band
+binder 6904:6904 <> p:9
+R6913:6916 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6908:6911 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6912:6912 stellarorion_trajectory_output_proof <> p:9 var
+R6923:6929 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6918:6921 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6917:6917 stellarorion_trajectory_output_proof <> p:9 var
+R6954:6957 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R6933:6936 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6937:6951 stellarorion_trajectory_output_proof <> dsmc_pinn_error def
+R6953:6953 stellarorion_trajectory_output_proof <> p:9 var
+R6975:6978 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6958:6972 stellarorion_trajectory_output_proof <> dsmc_pinn_error def
+R6974:6974 stellarorion_trajectory_output_proof <> p:9 var
+R7018:7032 stellarorion_trajectory_output_proof <> dsmc_pinn_error def
+R7054:7059 Coq.Reals.Rbasic_fun <> Rmax_l thm
+R7054:7059 Coq.Reals.Rbasic_fun <> Rmax_l thm
+R7076:7082 Coq.Reals.RIneq <> Rle_dec thm
+R7091:7094 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7100:7100 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7096:7098 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7076:7082 Coq.Reals.RIneq <> Rle_dec thm
+R7091:7094 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7100:7100 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7096:7098 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7130:7139 Coq.Reals.Rbasic_fun <> Rmax_right thm
+R7130:7139 Coq.Reals.Rbasic_fun <> Rmax_right thm
+R7130:7139 Coq.Reals.Rbasic_fun <> Rmax_right thm
+R7178:7186 Coq.Reals.Rbasic_fun <> Rmax_left thm
+R7178:7186 Coq.Reals.Rbasic_fun <> Rmax_left thm
+R7178:7186 Coq.Reals.Rbasic_fun <> Rmax_left thm
+def 7428:7435 <> altitude
+R7442:7442 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7438:7438 <> p:10
+R7447:7447 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R7455:7457 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7460:7462 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7463:7463 stellarorion_trajectory_output_proof <> p:10 var
+def 7477:7484 <> velocity
+R7491:7491 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7487:7487 <> p:11
+R7496:7496 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R7505:7507 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R7512:7514 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R7515:7515 stellarorion_trajectory_output_proof <> p:11 var
+prf 7828:7845 <> altitude_endpoints
+R7865:7868 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7859:7861 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7849:7856 stellarorion_trajectory_output_proof <> altitude def
+R7879:7881 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7869:7876 stellarorion_trajectory_output_proof <> altitude def
+R7902:7909 stellarorion_trajectory_output_proof <> altitude def
+prf 7951:7968 <> velocity_endpoints
+R7989:7992 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7982:7984 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7972:7979 stellarorion_trajectory_output_proof <> velocity def
+R8003:8005 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7993:8000 stellarorion_trajectory_output_proof <> velocity def
+R8028:8035 stellarorion_trajectory_output_proof <> velocity def
+prf 8077:8095 <> altitude_decreasing
+binder 8106:8107 <> p1:12
+binder 8109:8110 <> p2:13
+R8121:8124 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8115:8118 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8113:8114 stellarorion_trajectory_output_proof <> p1:12 var
+R8119:8120 stellarorion_trajectory_output_proof <> p2:13 var
+R8132:8138 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8127:8130 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8125:8126 stellarorion_trajectory_output_proof <> p2:13 var
+R8150:8153 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8139:8146 stellarorion_trajectory_output_proof <> altitude def
+R8148:8149 stellarorion_trajectory_output_proof <> p2:13 var
+R8154:8161 stellarorion_trajectory_output_proof <> altitude def
+R8163:8164 stellarorion_trajectory_output_proof <> p1:12 var
+R8207:8214 stellarorion_trajectory_output_proof <> altitude def
+prf 8236:8254 <> velocity_decreasing
+binder 8265:8266 <> p1:14
+binder 8268:8269 <> p2:15
+R8280:8283 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8274:8277 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8272:8273 stellarorion_trajectory_output_proof <> p1:14 var
+R8278:8279 stellarorion_trajectory_output_proof <> p2:15 var
+R8291:8297 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8286:8289 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8284:8285 stellarorion_trajectory_output_proof <> p2:15 var
+R8309:8312 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8298:8305 stellarorion_trajectory_output_proof <> velocity def
+R8307:8308 stellarorion_trajectory_output_proof <> p2:15 var
+R8313:8320 stellarorion_trajectory_output_proof <> velocity def
+R8322:8323 stellarorion_trajectory_output_proof <> p1:14 var
+R8366:8373 stellarorion_trajectory_output_proof <> velocity def

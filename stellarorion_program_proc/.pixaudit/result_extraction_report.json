@@ -1,0 +1,178 @@
+{
+  "figure": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/Lost+Found/ProgressReport/CurrentThesisFinalReport/figures/result_extraction.png",
+  "size": [
+    1951,
+    933
+  ],
+  "fit": {
+    "s_x": 290.645,
+    "bx": 31.403,
+    "s_y": 291.154,
+    "cy": 902.29
+  },
+  "labels": {
+    "raw data": {
+      "data": [
+        1.55,
+        1.95
+      ],
+      "annotates": "dump->parse horizontal arrow",
+      "bbox": [
+        394,
+        296,
+        566,
+        325
+      ],
+      "glyphs": 7,
+      "groups_dil12": 1,
+      "gap_border": 23.0,
+      "gap_fill": 28.0,
+      "gap_box_text": 36.0,
+      "gap_arrow": 124.0,
+      "gap_annotated_arrow": 115.0,
+      "arrow_bbox": [
+        531,
+        440,
+        657,
+        462
+      ],
+      "gaps_others": {
+        "parsed": 284.50834785643815,
+        "integrated": 963.3135522767236
+      },
+      "ocr": {
+        "psm7": "raw data",
+        "psm13": "raw data",
+        "psm6": "raw data",
+        "psm8": "raw data"
+      },
+      "heights": [
+        22,
+        23,
+        23,
+        23,
+        23,
+        28,
+        30
+      ],
+      "min_height": 22,
+      "min_letter_body": 22,
+      "tittle_boxes": [],
+      "check_a": true,
+      "check_c": true,
+      "check_e": true
+    },
+    "parsed": {
+      "data": [
+        3.05,
+        1.95
+      ],
+      "annotates": "parse->integrate horizontal arrow",
+      "bbox": [
+        850,
+        296,
+        985,
+        333
+      ],
+      "glyphs": 6,
+      "groups_dil12": 1,
+      "gap_border": 15.0,
+      "gap_fill": 20.0,
+      "gap_box_text": 80.4114419718985,
+      "gap_arrow": 162.60688792299052,
+      "gap_annotated_arrow": 155.05160431288675,
+      "arrow_bbox": [
+        1084,
+        440,
+        1210,
+        462
+      ],
+      "gaps_others": {
+        "raw data": 284.50834785643815,
+        "integrated": 573.3620147864698
+      },
+      "ocr": {
+        "psm7": "parsed",
+        "psm13": "parsed",
+        "psm6": "parsed",
+        "psm8": "parsed"
+      },
+      "heights": [
+        23,
+        23,
+        23,
+        23,
+        30,
+        31
+      ],
+      "min_height": 23,
+      "min_letter_body": 23,
+      "tittle_boxes": [],
+      "check_a": true,
+      "check_c": true,
+      "check_e": true
+    },
+    "integrated": {
+      "data": [
+        5.35,
+        0.95
+      ],
+      "annotates": "integrate->metrics vertical arrow",
+      "bbox": [
+        1484,
+        587,
+        1691,
+        624
+      ],
+      "glyphs": 11,
+      "groups_dil12": 1,
+      "gap_border": 18.24828759089466,
+      "gap_fill": 20.0,
+      "gap_box_text": 34.9857113690718,
+      "gap_arrow": 47.38143096192854,
+      "gap_annotated_arrow": 47.0,
+      "arrow_bbox": [
+        1416,
+        560,
+        1437,
+        628
+      ],
+      "gaps_others": {
+        "raw data": 963.3135522767236,
+        "parsed": 573.3620147864698
+      },
+      "ocr": {
+        "psm7": "Integra ted",
+        "psm13": "integrated",
+        "psm6": "integrated",
+        "psm8": "integrated"
+      },
+      "heights": [
+        5,
+        22,
+        23,
+        23,
+        23,
+        23,
+        23,
+        28,
+        28,
+        30,
+        31
+      ],
+      "min_height": 5,
+      "min_letter_body": 22,
+      "tittle_boxes": [
+        [
+          1489,
+          587,
+          1492,
+          591
+        ]
+      ],
+      "check_a": true,
+      "check_c": true,
+      "check_e": false
+    }
+  }
+}

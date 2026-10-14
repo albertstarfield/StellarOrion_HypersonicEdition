@@ -1,0 +1,92 @@
+DIGEST 3a075469765fee5987d12b1f5937aab5
+Fsidecar_launcher_proof
+R3358:3372 Coq.Reals.Reals <> <> lib
+R3390:3406 Coq.micromega.Lra <> <> lib
+def 3496:3513 <> READINESS_BUDGET_S
+R3517:3517 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 3613:3630 <> PER_POLL_TIMEOUT_S
+R3634:3634 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 3655:3667 <> POLL_PERIOD_S
+R3671:3671 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 3773:3788 <> SHUTDOWN_GRACE_S
+R3792:3792 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 3814:3827 <> remaining_time
+R3851:3851 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3830:3837 <> budget_s:1
+binder 3839:3847 <> elapsed_s:2
+R3856:3856 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3869:3871 Coq.Reals.Rdefinitions <> ::R_scope:x_'-'_x not
+R3861:3868 sidecar_launcher_proof <> budget_s:1 var
+R3872:3880 sidecar_launcher_proof <> elapsed_s:2 var
+def 3894:3913 <> readiness_poll_slots
+R3936:3936 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3916:3923 <> budget_s:3
+binder 3925:3932 <> period_s:4
+R3941:3941 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3954:3956 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3946:3953 sidecar_launcher_proof <> budget_s:3 var
+R3957:3964 sidecar_launcher_proof <> period_s:4 var
+prf 4029:4053 <> readiness_budget_positive
+R4058:4060 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4061:4078 sidecar_launcher_proof <> READINESS_BUDGET_S def
+R4097:4114 sidecar_launcher_proof <> READINESS_BUDGET_S def
+prf 4185:4209 <> readiness_poll_slot_count
+R4268:4270 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4215:4234 sidecar_launcher_proof <> readiness_poll_slots def
+R4236:4253 sidecar_launcher_proof <> READINESS_BUDGET_S def
+R4255:4267 sidecar_launcher_proof <> POLL_PERIOD_S def
+R4293:4312 sidecar_launcher_proof <> readiness_poll_slots def
+R4315:4332 sidecar_launcher_proof <> READINESS_BUDGET_S def
+R4335:4347 sidecar_launcher_proof <> POLL_PERIOD_S def
+prf 4446:4475 <> per_poll_timeout_within_budget
+R4497:4500 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4479:4496 sidecar_launcher_proof <> PER_POLL_TIMEOUT_S def
+R4501:4518 sidecar_launcher_proof <> READINESS_BUDGET_S def
+R4537:4554 sidecar_launcher_proof <> PER_POLL_TIMEOUT_S def
+R4557:4574 sidecar_launcher_proof <> READINESS_BUDGET_S def
+prf 4679:4704 <> readiness_remaining_nonneg
+binder 4715:4723 <> elapsed_s:5
+R4742:4745 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4729:4732 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4733:4741 sidecar_launcher_proof <> elapsed_s:5 var
+R4777:4782 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4755:4758 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4746:4754 sidecar_launcher_proof <> elapsed_s:5 var
+R4759:4776 sidecar_launcher_proof <> READINESS_BUDGET_S def
+R4784:4787 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4788:4801 sidecar_launcher_proof <> remaining_time def
+R4803:4820 sidecar_launcher_proof <> READINESS_BUDGET_S def
+R4822:4830 sidecar_launcher_proof <> elapsed_s:5 var
+R4877:4890 sidecar_launcher_proof <> remaining_time def
+R4893:4910 sidecar_launcher_proof <> READINESS_BUDGET_S def
+prf 5015:5045 <> readiness_loop_still_has_budget
+binder 5056:5064 <> elapsed_s:6
+R5099:5104 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5078:5080 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5069:5077 sidecar_launcher_proof <> elapsed_s:6 var
+R5081:5098 sidecar_launcher_proof <> READINESS_BUDGET_S def
+R5106:5108 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5109:5122 sidecar_launcher_proof <> remaining_time def
+R5124:5141 sidecar_launcher_proof <> READINESS_BUDGET_S def
+R5143:5151 sidecar_launcher_proof <> elapsed_s:6 var
+R5194:5207 sidecar_launcher_proof <> remaining_time def
+R5210:5227 sidecar_launcher_proof <> READINESS_BUDGET_S def
+prf 5323:5345 <> shutdown_grace_positive
+R5350:5352 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R5353:5368 sidecar_launcher_proof <> SHUTDOWN_GRACE_S def
+R5387:5402 sidecar_launcher_proof <> SHUTDOWN_GRACE_S def
+prf 5512:5536 <> shutdown_remaining_nonneg
+binder 5547:5555 <> elapsed_s:7
+R5574:5577 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5561:5564 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5565:5573 sidecar_launcher_proof <> elapsed_s:7 var
+R5607:5612 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5587:5590 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5578:5586 sidecar_launcher_proof <> elapsed_s:7 var
+R5591:5606 sidecar_launcher_proof <> SHUTDOWN_GRACE_S def
+R5614:5617 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5618:5631 sidecar_launcher_proof <> remaining_time def
+R5633:5648 sidecar_launcher_proof <> SHUTDOWN_GRACE_S def
+R5650:5658 sidecar_launcher_proof <> elapsed_s:7 var
+R5705:5718 sidecar_launcher_proof <> remaining_time def
+R5721:5736 sidecar_launcher_proof <> SHUTDOWN_GRACE_S def

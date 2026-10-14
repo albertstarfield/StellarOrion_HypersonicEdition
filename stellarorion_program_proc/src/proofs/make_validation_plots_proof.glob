@@ -1,0 +1,63 @@
+DIGEST f01b42d78c2ee9a493ca87b967dcd731
+Fmake_validation_plots_proof
+R2903:2917 Coq.Reals.Reals <> <> lib
+R2935:2952 Coq.Arith.PeanoNat <> <> lib
+R2970:2986 Coq.micromega.Lia <> <> lib
+R3004:3020 Coq.micromega.Lra <> <> lib
+sec 3209:3225 <> MakeValidationNat
+def 3390:3405 <> subsample_stride
+R3412:3414 Coq.Init.Datatypes <> nat ind
+binder 3408:3408 <> m:1
+R3419:3421 Coq.Init.Datatypes <> nat ind
+R3426:3432 Coq.Arith.PeanoNat Nat max def
+R3436:3436 make_validation_plots_proof <> m:1 var
+prf 3580:3608 <> subsample_stride_at_least_one
+binder 3619:3619 <> m:2
+R3623:3626 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3627:3642 make_validation_plots_proof <> subsample_stride def
+R3644:3644 make_validation_plots_proof <> m:2 var
+R3675:3690 make_validation_plots_proof <> subsample_stride def
+R3722:3724 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3711:3717 Coq.Arith.PeanoNat Nat max def
+R3725:3731 Coq.Arith.PeanoNat Nat max def
+R3722:3724 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3711:3717 Coq.Arith.PeanoNat Nat max def
+R3725:3731 Coq.Arith.PeanoNat Nat max def
+def 3931:3940 <> head_index
+R3944:3946 Coq.Init.Datatypes <> nat ind
+prf 3961:3979 <> head_index_in_range
+binder 3990:3990 <> n:3
+R3999:4002 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3994:3997 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3998:3998 make_validation_plots_proof <> n:3 var
+R4013:4015 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R4003:4012 make_validation_plots_proof <> head_index def
+R4016:4016 make_validation_plots_proof <> n:3 var
+R4050:4059 make_validation_plots_proof <> head_index def
+def 4205:4218 <> metric_columns
+R4232:4234 Coq.Init.Datatypes <> nat ind
+binder 4221:4228 <> num_cols:4
+R4239:4241 Coq.Init.Datatypes <> nat ind
+R4254:4256 Coq.Init.Peano <> ::nat_scope:x_'-'_x not
+R4246:4253 make_validation_plots_proof <> num_cols:4 var
+prf 4430:4448 <> data_index_in_range
+binder 4459:4466 <> num_cols:5
+binder 4468:4468 <> c:6
+R4479:4482 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4474:4477 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4478:4478 make_validation_plots_proof <> c:6 var
+R4495:4500 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4484:4486 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R4483:4483 make_validation_plots_proof <> c:6 var
+R4487:4494 make_validation_plots_proof <> num_cols:5 var
+R4511:4514 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R4502:4505 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R4507:4509 Coq.Init.Peano <> ::nat_scope:x_'-'_x not
+R4506:4506 make_validation_plots_proof <> c:6 var
+R4520:4522 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R4516:4518 Coq.Init.Peano <> ::nat_scope:x_'-'_x not
+R4515:4515 make_validation_plots_proof <> c:6 var
+R4523:4536 make_validation_plots_proof <> metric_columns def
+R4538:4545 make_validation_plots_proof <> num_cols:5 var
+R4591:4604 make_validation_plots_proof <> metric_columns def
+R4644:4660 make_validation_plots_proof MakeValidationNat <> sec

@@ -1,0 +1,98 @@
+DIGEST 051538e36049b54663fefb77229ec7f8
+Fstellarorion_history_proof
+R2253:2267 Coq.Reals.Reals <> <> lib
+R2285:2301 Coq.micromega.Lra <> <> lib
+R2319:2336 Coq.Arith.PeanoNat <> <> lib
+R2354:2370 Coq.micromega.Lia <> <> lib
+sec 2536:2546 <> History_Nat
+def 2593:2605 <> max_run_count
+R2609:2611 Coq.Init.Datatypes <> nat ind
+prf 2708:2729 <> max_run_count_positive
+R2734:2736 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R2737:2749 stellarorion_history_proof <> max_run_count def
+R2768:2780 stellarorion_history_proof <> max_run_count def
+R2798:2808 stellarorion_history_proof History_Nat <> sec
+def 2879:2889 <> sample_time
+R2899:2902 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2896:2898 Coq.Init.Datatypes <> nat ind
+R2903:2903 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 2892:2892 <> t:1
+R2911:2913 Coq.Init.Datatypes <> nat ind
+binder 2907:2907 <> i:2
+R2918:2918 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R2923:2923 stellarorion_history_proof <> t:1 var
+R2925:2925 stellarorion_history_proof <> i:2 var
+prf 3375:3409 <> recorded_series_strictly_increasing
+R3428:3431 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3425:3427 Coq.Init.Datatypes <> nat ind
+R3432:3432 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3421:3421 <> t:3
+binder 3435:3435 <> i:4
+binder 3437:3437 <> j:5
+R3442:3442 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3490:3496 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+binder 3450:3450 <> k:6
+R3468:3470 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3453:3463 stellarorion_history_proof <> sample_time def
+R3465:3465 stellarorion_history_proof <> t:3 var
+R3467:3467 stellarorion_history_proof <> k:6 var
+R3471:3481 stellarorion_history_proof <> sample_time def
+R3483:3483 stellarorion_history_proof <> t:3 var
+R3486:3486 Coq.Init.Datatypes <> S constr
+R3488:3488 stellarorion_history_proof <> k:6 var
+R3509:3514 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3499:3502 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3498:3498 stellarorion_history_proof <> i:4 var
+R3503:3503 stellarorion_history_proof <> j:5 var
+R3530:3532 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3515:3525 stellarorion_history_proof <> sample_time def
+R3527:3527 stellarorion_history_proof <> t:3 var
+R3529:3529 stellarorion_history_proof <> i:4 var
+R3533:3543 stellarorion_history_proof <> sample_time def
+R3545:3545 stellarorion_history_proof <> t:3 var
+R3548:3548 Coq.Init.Datatypes <> S constr
+R3550:3550 stellarorion_history_proof <> j:5 var
+R3592:3602 stellarorion_history_proof <> sample_time def
+R3669:3671 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3669:3671 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3732:3746 Coq.Arith.PeanoNat Nat le_gt_cases thm
+R3732:3746 Coq.Arith.PeanoNat Nat le_gt_cases thm
+R3853:3853 Coq.Init.Datatypes <> S constr
+R3853:3853 Coq.Init.Datatypes <> S constr
+R3894:3896 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3897:3897 Coq.Init.Datatypes <> S constr
+R3894:3896 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3897:3897 Coq.Init.Datatypes <> S constr
+prf 4147:4174 <> append_guard_preserves_order
+R4193:4196 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4190:4192 Coq.Init.Datatypes <> nat ind
+R4197:4197 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4186:4186 <> t:7
+binder 4200:4200 <> i:8
+binder 4202:4202 <> j:9
+R4240:4245 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4222:4224 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4207:4217 stellarorion_history_proof <> sample_time def
+R4219:4219 stellarorion_history_proof <> t:7 var
+R4221:4221 stellarorion_history_proof <> i:8 var
+R4225:4235 stellarorion_history_proof <> sample_time def
+R4237:4237 stellarorion_history_proof <> t:7 var
+R4239:4239 stellarorion_history_proof <> j:9 var
+R4283:4288 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4261:4263 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4246:4256 stellarorion_history_proof <> sample_time def
+R4258:4258 stellarorion_history_proof <> t:7 var
+R4260:4260 stellarorion_history_proof <> j:9 var
+R4264:4274 stellarorion_history_proof <> sample_time def
+R4276:4276 stellarorion_history_proof <> t:7 var
+R4279:4279 Coq.Init.Datatypes <> S constr
+R4281:4281 stellarorion_history_proof <> j:9 var
+R4304:4306 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4289:4299 stellarorion_history_proof <> sample_time def
+R4301:4301 stellarorion_history_proof <> t:7 var
+R4303:4303 stellarorion_history_proof <> i:8 var
+R4307:4317 stellarorion_history_proof <> sample_time def
+R4319:4319 stellarorion_history_proof <> t:7 var
+R4322:4322 Coq.Init.Datatypes <> S constr
+R4324:4324 stellarorion_history_proof <> j:9 var
+R4368:4378 stellarorion_history_proof <> sample_time def

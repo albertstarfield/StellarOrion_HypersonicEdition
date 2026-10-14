@@ -1,0 +1,48 @@
+DIGEST d420e45a17d252cd701afb590de9560f
+Fstellarorion_self_test_proof
+R2526:2540 Coq.Reals.Reals <> <> lib
+R2558:2574 Coq.micromega.Lia <> <> lib
+def 2676:2685 <> count_true
+R2695:2698 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2692:2694 Coq.Init.Datatypes <> nat ind
+R2699:2702 Coq.Init.Datatypes <> bool ind
+binder 2688:2688 <> o:1
+R2710:2712 Coq.Init.Datatypes <> nat ind
+binder 2706:2706 <> n:2
+R2717:2719 Coq.Init.Datatypes <> nat ind
+R2733:2733 stellarorion_self_test_proof <> n:2 var
+R2760:2760 Coq.Init.Datatypes <> S constr
+R2768:2768 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R2789:2792 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R2772:2772 stellarorion_self_test_proof <> o:1 var
+R2793:2802 stellarorion_self_test_proof <> count_true:3 def
+R2804:2804 stellarorion_self_test_proof <> o:1 var
+prf 2895:2912 <> pass_count_bounded
+R2931:2934 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2928:2930 Coq.Init.Datatypes <> nat ind
+R2935:2938 Coq.Init.Datatypes <> bool ind
+binder 2924:2924 <> o:5
+R2946:2948 Coq.Init.Datatypes <> nat ind
+binder 2942:2942 <> n:6
+R2969:2972 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R2955:2964 stellarorion_self_test_proof <> count_true def
+R2966:2966 stellarorion_self_test_proof <> o:5 var
+R2968:2968 stellarorion_self_test_proof <> n:6 var
+R2973:2973 stellarorion_self_test_proof <> n:6 var
+prf 3163:3184 <> all_passed_iff_no_fail
+binder 3195:3195 <> n:7
+binder 3197:3206 <> pass_count:8
+binder 3208:3217 <> fail_count:9
+R3250:3254 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3288:3288 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3246:3248 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3233:3235 Coq.Init.Peano <> ::nat_scope:x_'+'_x not
+R3223:3232 stellarorion_self_test_proof <> pass_count:8 var
+R3236:3245 stellarorion_self_test_proof <> fail_count:9 var
+R3249:3249 stellarorion_self_test_proof <> n:7 var
+R3269:3273 Coq.Init.Logic <> ::type_scope:x_'<->'_x not
+R3265:3267 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3255:3264 stellarorion_self_test_proof <> fail_count:9 var
+R3284:3286 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3274:3283 stellarorion_self_test_proof <> pass_count:8 var
+R3287:3287 stellarorion_self_test_proof <> n:7 var

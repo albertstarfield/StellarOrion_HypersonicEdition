@@ -1,0 +1,334 @@
+DIGEST 38bc62161a2a0bbdffbe049d3e5f6483
+Fstellarorion_validation_proof
+R5820:5834 Coq.Reals.Reals <> <> lib
+R5852:5868 Coq.micromega.Lra <> <> lib
+def 6170:6181 <> sic_max_temp
+R6185:6185 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 6209:6223 <> kapton_max_temp
+R6227:6227 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 6250:6259 <> max_g_load
+R6263:6263 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 6433:6457 <> irve3_ftps_struct_limit_k
+R6461:6461 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 6691:6703 <> is_survivable
+R6754:6754 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 6706:6719 <> surface_temp_k:1
+binder 6721:6735 <> backface_temp_k:2
+binder 6737:6742 <> g_load:3
+binder 6744:6750 <> decel_g:4
+R6801:6806 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R6785:6788 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6771:6784 stellarorion_validation_proof <> surface_temp_k:1 var
+R6789:6800 stellarorion_validation_proof <> sic_max_temp def
+R6841:6846 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R6822:6825 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6807:6821 stellarorion_validation_proof <> backface_temp_k:2 var
+R6826:6840 stellarorion_validation_proof <> kapton_max_temp def
+R6867:6872 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R6853:6856 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6847:6852 stellarorion_validation_proof <> g_load:3 var
+R6857:6866 stellarorion_validation_proof <> max_g_load def
+R6880:6883 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6873:6879 stellarorion_validation_proof <> decel_g:4 var
+R6884:6893 stellarorion_validation_proof <> max_g_load def
+def 7183:7191 <> valid_geo
+R7290:7290 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7194:7203 <> diameter_M:5
+binder 7205:7213 <> angle_deg:6
+binder 7215:7226 <> toroid_count:7
+binder 7228:7242 <> toroid_radius_M:8
+binder 7266:7278 <> nose_radius_M:9
+binder 7280:7286 <> mass_kg:10
+R7322:7325 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7308:7311 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7312:7321 stellarorion_validation_proof <> diameter_M:5 var
+R7344:7349 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7336:7339 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7326:7335 stellarorion_validation_proof <> diameter_M:5 var
+R7367:7370 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7354:7357 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7358:7366 stellarorion_validation_proof <> angle_deg:6 var
+R7388:7393 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7380:7383 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7371:7379 stellarorion_validation_proof <> angle_deg:6 var
+R7414:7419 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7406:7409 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7394:7405 stellarorion_validation_proof <> toroid_count:7 var
+R7441:7446 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7423:7425 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7426:7440 stellarorion_validation_proof <> toroid_radius_M:8 var
+R7466:7471 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7450:7452 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7453:7465 stellarorion_validation_proof <> nose_radius_M:9 var
+R7475:7477 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7478:7484 stellarorion_validation_proof <> mass_kg:10 var
+def 7552:7560 <> valid_tps
+R7597:7597 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7563:7569 <> density:11
+binder 7571:7572 <> cp:12
+binder 7574:7582 <> thickness:13
+binder 7584:7593 <> emissivity:14
+R7625:7628 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7615:7617 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7618:7624 stellarorion_validation_proof <> density:11 var
+R7637:7640 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7632:7634 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7635:7636 stellarorion_validation_proof <> cp:12 var
+R7656:7661 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7644:7646 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7647:7655 stellarorion_validation_proof <> thickness:13 var
+R7678:7681 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7665:7667 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7668:7677 stellarorion_validation_proof <> emissivity:14 var
+R7692:7695 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R7682:7691 stellarorion_validation_proof <> emissivity:14 var
+def 7790:7806 <> validate_and_dump
+R7975:7975 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7809:7818 <> diameter_M:15
+binder 7820:7828 <> angle_deg:16
+binder 7830:7841 <> toroid_count:17
+binder 7843:7857 <> toroid_radius_M:18
+binder 7889:7901 <> nose_radius_M:19
+binder 7903:7909 <> mass_kg:20
+binder 7911:7917 <> density:21
+binder 7919:7920 <> cp:22
+binder 7922:7930 <> thickness:23
+binder 7962:7971 <> emissivity:24
+R8083:8088 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7990:7998 stellarorion_validation_proof <> valid_geo def
+R8000:8009 stellarorion_validation_proof <> diameter_M:15 var
+R8011:8019 stellarorion_validation_proof <> angle_deg:16 var
+R8021:8032 stellarorion_validation_proof <> toroid_count:17 var
+R8034:8048 stellarorion_validation_proof <> toroid_radius_M:18 var
+R8062:8074 stellarorion_validation_proof <> nose_radius_M:19 var
+R8076:8082 stellarorion_validation_proof <> mass_kg:20 var
+R8089:8097 stellarorion_validation_proof <> valid_tps def
+R8099:8105 stellarorion_validation_proof <> density:21 var
+R8107:8108 stellarorion_validation_proof <> cp:22 var
+R8110:8118 stellarorion_validation_proof <> thickness:23 var
+R8120:8129 stellarorion_validation_proof <> emissivity:24 var
+prf 8449:8474 <> survivable_default_metrics
+R8478:8490 stellarorion_validation_proof <> is_survivable def
+R8525:8537 stellarorion_validation_proof <> is_survivable def
+R8540:8551 stellarorion_validation_proof <> sic_max_temp def
+R8554:8568 stellarorion_validation_proof <> kapton_max_temp def
+R8571:8580 stellarorion_validation_proof <> max_g_load def
+prf 8889:8914 <> survivable_surface_bounded
+binder 8925:8925 <> s:25
+binder 8927:8927 <> b:26
+binder 8929:8929 <> g:27
+binder 8931:8931 <> d:28
+R8959:8962 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8938:8950 stellarorion_validation_proof <> is_survivable def
+R8952:8952 stellarorion_validation_proof <> s:25 var
+R8954:8954 stellarorion_validation_proof <> b:26 var
+R8956:8956 stellarorion_validation_proof <> g:27 var
+R8958:8958 stellarorion_validation_proof <> d:28 var
+R8964:8967 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8963:8963 stellarorion_validation_proof <> s:25 var
+R8968:8979 stellarorion_validation_proof <> sic_max_temp def
+prf 9070:9096 <> survivable_backface_bounded
+binder 9107:9107 <> s:29
+binder 9109:9109 <> b:30
+binder 9111:9111 <> g:31
+binder 9113:9113 <> d:32
+R9141:9144 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9120:9132 stellarorion_validation_proof <> is_survivable def
+R9134:9134 stellarorion_validation_proof <> s:29 var
+R9136:9136 stellarorion_validation_proof <> b:30 var
+R9138:9138 stellarorion_validation_proof <> g:31 var
+R9140:9140 stellarorion_validation_proof <> d:32 var
+R9146:9149 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9145:9145 stellarorion_validation_proof <> b:30 var
+R9150:9164 stellarorion_validation_proof <> kapton_max_temp def
+prf 9255:9279 <> survivable_g_load_bounded
+binder 9290:9290 <> s:33
+binder 9292:9292 <> b:34
+binder 9294:9294 <> g:35
+binder 9296:9296 <> d:36
+R9324:9327 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9303:9315 stellarorion_validation_proof <> is_survivable def
+R9317:9317 stellarorion_validation_proof <> s:33 var
+R9319:9319 stellarorion_validation_proof <> b:34 var
+R9321:9321 stellarorion_validation_proof <> g:35 var
+R9323:9323 stellarorion_validation_proof <> d:36 var
+R9329:9332 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9328:9328 stellarorion_validation_proof <> g:35 var
+R9333:9342 stellarorion_validation_proof <> max_g_load def
+prf 9433:9456 <> survivable_decel_bounded
+binder 9467:9467 <> s:37
+binder 9469:9469 <> b:38
+binder 9471:9471 <> g:39
+binder 9473:9473 <> d:40
+R9501:9504 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9480:9492 stellarorion_validation_proof <> is_survivable def
+R9494:9494 stellarorion_validation_proof <> s:37 var
+R9496:9496 stellarorion_validation_proof <> b:38 var
+R9498:9498 stellarorion_validation_proof <> g:39 var
+R9500:9500 stellarorion_validation_proof <> d:40 var
+R9506:9509 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9505:9505 stellarorion_validation_proof <> d:40 var
+R9510:9519 stellarorion_validation_proof <> max_g_load def
+prf 9686:9720 <> survivable_antitone_in_surface_temp
+binder 9731:9732 <> s1:41
+binder 9734:9735 <> s2:42
+binder 9737:9737 <> b:43
+binder 9739:9739 <> g:44
+binder 9741:9741 <> d:45
+R9756:9759 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9750:9753 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R9748:9749 stellarorion_validation_proof <> s1:41 var
+R9754:9755 stellarorion_validation_proof <> s2:42 var
+R9782:9785 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9760:9772 stellarorion_validation_proof <> is_survivable def
+R9774:9775 stellarorion_validation_proof <> s2:42 var
+R9777:9777 stellarorion_validation_proof <> b:43 var
+R9779:9779 stellarorion_validation_proof <> g:44 var
+R9781:9781 stellarorion_validation_proof <> d:45 var
+R9786:9798 stellarorion_validation_proof <> is_survivable def
+R9800:9801 stellarorion_validation_proof <> s1:41 var
+R9803:9803 stellarorion_validation_proof <> b:43 var
+R9805:9805 stellarorion_validation_proof <> g:44 var
+R9807:9807 stellarorion_validation_proof <> d:45 var
+prf 9973:10008 <> survivable_antitone_in_backface_temp
+binder 10019:10019 <> s:46
+binder 10021:10022 <> b1:47
+binder 10024:10025 <> b2:48
+binder 10027:10027 <> g:49
+binder 10029:10029 <> d:50
+R10044:10047 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R10038:10041 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R10036:10037 stellarorion_validation_proof <> b1:47 var
+R10042:10043 stellarorion_validation_proof <> b2:48 var
+R10070:10073 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R10048:10060 stellarorion_validation_proof <> is_survivable def
+R10062:10062 stellarorion_validation_proof <> s:46 var
+R10064:10065 stellarorion_validation_proof <> b2:48 var
+R10067:10067 stellarorion_validation_proof <> g:49 var
+R10069:10069 stellarorion_validation_proof <> d:50 var
+R10074:10086 stellarorion_validation_proof <> is_survivable def
+R10088:10088 stellarorion_validation_proof <> s:46 var
+R10090:10091 stellarorion_validation_proof <> b1:47 var
+R10093:10093 stellarorion_validation_proof <> g:49 var
+R10095:10095 stellarorion_validation_proof <> d:50 var
+prf 10261:10289 <> survivable_antitone_in_g_load
+binder 10300:10300 <> s:51
+binder 10302:10302 <> b:52
+binder 10304:10305 <> g1:53
+binder 10307:10308 <> g2:54
+binder 10310:10310 <> d:55
+R10325:10328 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R10319:10322 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R10317:10318 stellarorion_validation_proof <> g1:53 var
+R10323:10324 stellarorion_validation_proof <> g2:54 var
+R10351:10354 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R10329:10341 stellarorion_validation_proof <> is_survivable def
+R10343:10343 stellarorion_validation_proof <> s:51 var
+R10345:10345 stellarorion_validation_proof <> b:52 var
+R10347:10348 stellarorion_validation_proof <> g2:54 var
+R10350:10350 stellarorion_validation_proof <> d:55 var
+R10355:10367 stellarorion_validation_proof <> is_survivable def
+R10369:10369 stellarorion_validation_proof <> s:51 var
+R10371:10371 stellarorion_validation_proof <> b:52 var
+R10373:10374 stellarorion_validation_proof <> g1:53 var
+R10376:10376 stellarorion_validation_proof <> d:55 var
+prf 10760:10787 <> ftps_struct_limit_is_binding
+R10839:10846 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R10820:10823 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R10795:10819 stellarorion_validation_proof <> irve3_ftps_struct_limit_k def
+R10824:10838 stellarorion_validation_proof <> kapton_max_temp def
+R10872:10875 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R10847:10871 stellarorion_validation_proof <> irve3_ftps_struct_limit_k def
+R10876:10887 stellarorion_validation_proof <> sic_max_temp def
+R10906:10930 stellarorion_validation_proof <> irve3_ftps_struct_limit_k def
+R10933:10947 stellarorion_validation_proof <> kapton_max_temp def
+R10950:10961 stellarorion_validation_proof <> sic_max_temp def
+prf 11355:11383 <> irve3_baseline_geometry_valid
+R11391:11399 stellarorion_validation_proof <> valid_geo def
+R11448:11456 stellarorion_validation_proof <> valid_geo def
+prf 11742:11759 <> sic_card_tps_valid
+R11763:11771 stellarorion_validation_proof <> valid_tps def
+R11816:11824 stellarorion_validation_proof <> valid_tps def
+prf 12078:12116 <> irve3_baseline_passes_validate_and_dump
+R12124:12140 stellarorion_validation_proof <> validate_and_dump def
+R12215:12231 stellarorion_validation_proof <> validate_and_dump def
+R12253:12281 stellarorion_validation_proof <> irve3_baseline_geometry_valid thm
+R12253:12281 stellarorion_validation_proof <> irve3_baseline_geometry_valid thm
+R12294:12311 stellarorion_validation_proof <> sic_card_tps_valid thm
+R12294:12311 stellarorion_validation_proof <> sic_card_tps_valid thm
+prf 12596:12625 <> valid_geo_diameter_in_envelope
+binder 12636:12636 <> d:56
+binder 12638:12638 <> a:57
+binder 12640:12640 <> n:58
+binder 12642:12643 <> rt:59
+binder 12645:12646 <> nr:60
+binder 12648:12648 <> m:61
+R12678:12681 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R12655:12663 stellarorion_validation_proof <> valid_geo def
+R12665:12665 stellarorion_validation_proof <> d:56 var
+R12667:12667 stellarorion_validation_proof <> a:57 var
+R12669:12669 stellarorion_validation_proof <> n:58 var
+R12671:12672 stellarorion_validation_proof <> rt:59 var
+R12674:12675 stellarorion_validation_proof <> nr:60 var
+R12677:12677 stellarorion_validation_proof <> m:61 var
+R12690:12693 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R12685:12688 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R12689:12689 stellarorion_validation_proof <> d:56 var
+R12695:12698 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R12694:12694 stellarorion_validation_proof <> d:56 var
+prf 12816:12842 <> valid_geo_angle_in_envelope
+binder 12853:12853 <> d:62
+binder 12855:12855 <> a:63
+binder 12857:12857 <> n:64
+binder 12859:12860 <> rt:65
+binder 12862:12863 <> nr:66
+binder 12865:12865 <> m:67
+R12895:12898 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R12872:12880 stellarorion_validation_proof <> valid_geo def
+R12882:12882 stellarorion_validation_proof <> d:62 var
+R12884:12884 stellarorion_validation_proof <> a:63 var
+R12886:12886 stellarorion_validation_proof <> n:64 var
+R12888:12889 stellarorion_validation_proof <> rt:65 var
+R12891:12892 stellarorion_validation_proof <> nr:66 var
+R12894:12894 stellarorion_validation_proof <> m:67 var
+R12908:12911 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R12903:12906 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R12907:12907 stellarorion_validation_proof <> a:63 var
+R12913:12916 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R12912:12912 stellarorion_validation_proof <> a:63 var
+R12966:12974 stellarorion_validation_proof <> valid_geo def
+prf 13080:13108 <> valid_geo_torus_count_bounded
+binder 13119:13119 <> d:68
+binder 13121:13121 <> a:69
+binder 13123:13123 <> n:70
+binder 13125:13126 <> rt:71
+binder 13128:13129 <> nr:72
+binder 13131:13131 <> m:73
+R13161:13164 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R13138:13146 stellarorion_validation_proof <> valid_geo def
+R13148:13148 stellarorion_validation_proof <> d:68 var
+R13150:13150 stellarorion_validation_proof <> a:69 var
+R13152:13152 stellarorion_validation_proof <> n:70 var
+R13154:13155 stellarorion_validation_proof <> rt:71 var
+R13157:13158 stellarorion_validation_proof <> nr:72 var
+R13160:13160 stellarorion_validation_proof <> m:73 var
+R13166:13169 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R13165:13165 stellarorion_validation_proof <> n:70 var
+R13219:13227 stellarorion_validation_proof <> valid_geo def
+prf 13311:13347 <> valid_tps_emissivity_in_unit_interval
+binder 13358:13360 <> rho:74
+binder 13362:13362 <> c:75
+binder 13364:13364 <> t:76
+binder 13366:13366 <> e:77
+R13392:13395 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R13373:13381 stellarorion_validation_proof <> valid_tps def
+R13383:13385 stellarorion_validation_proof <> rho:74 var
+R13387:13387 stellarorion_validation_proof <> c:75 var
+R13389:13389 stellarorion_validation_proof <> t:76 var
+R13391:13391 stellarorion_validation_proof <> e:77 var
+R13403:13406 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R13399:13401 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R13402:13402 stellarorion_validation_proof <> e:77 var
+R13408:13411 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R13407:13407 stellarorion_validation_proof <> e:77 var
+R13456:13464 stellarorion_validation_proof <> valid_tps def

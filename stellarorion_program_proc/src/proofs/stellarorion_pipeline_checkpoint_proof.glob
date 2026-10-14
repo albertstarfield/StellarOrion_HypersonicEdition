@@ -1,0 +1,230 @@
+DIGEST 984a0ef937b3ed9b67264e4e6d4b2c31
+Fstellarorion_pipeline_checkpoint_proof
+R2501:2518 Coq.Init.Datatypes <> <> lib
+R2536:2547 Coq.Init.Nat <> <> lib
+R2641:2658 Coq.Arith.PeanoNat <> <> lib
+R2676:2692 Coq.micromega.Lia <> <> lib
+def 2931:2949 <> Pipeline_Step_Count
+R2953:2955 Coq.Init.Datatypes <> nat ind
+def 2974:2989 <> Max_Output_Files
+R2993:2995 Coq.Init.Datatypes <> nat ind
+def 3015:3032 <> Max_Config_Entries
+R3036:3038 Coq.Init.Datatypes <> nat ind
+def 3298:3312 <> Find_Step_Index
+R3322:3324 Coq.Init.Datatypes <> nat ind
+binder 3315:3318 <> name:1
+R3329:3331 Coq.Init.Datatypes <> nat ind
+R3341:3347 Coq.Arith.PeanoNat Nat eqb def
+R3349:3352 stellarorion_pipeline_checkpoint_proof <> name:1 var
+R3373:3379 Coq.Arith.PeanoNat Nat eqb def
+R3381:3384 stellarorion_pipeline_checkpoint_proof <> name:1 var
+R3405:3411 Coq.Arith.PeanoNat Nat eqb def
+R3413:3416 stellarorion_pipeline_checkpoint_proof <> name:1 var
+R3437:3443 Coq.Arith.PeanoNat Nat eqb def
+R3445:3448 stellarorion_pipeline_checkpoint_proof <> name:1 var
+prf 3683:3703 <> find_step_index_range
+binder 3714:3717 <> name:2
+R3740:3743 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R3720:3734 stellarorion_pipeline_checkpoint_proof <> Find_Step_Index def
+R3736:3739 stellarorion_pipeline_checkpoint_proof <> name:2 var
+R3744:3762 stellarorion_pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R3796:3810 stellarorion_pipeline_checkpoint_proof <> Find_Step_Index def
+R3825:3831 Coq.Arith.PeanoNat Nat eqb def
+R3825:3831 Coq.Arith.PeanoNat Nat eqb def
+R3860:3878 stellarorion_pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R3900:3906 Coq.Arith.PeanoNat Nat eqb def
+R3900:3906 Coq.Arith.PeanoNat Nat eqb def
+R3937:3955 stellarorion_pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R3979:3985 Coq.Arith.PeanoNat Nat eqb def
+R3979:3985 Coq.Arith.PeanoNat Nat eqb def
+R4018:4036 stellarorion_pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R4062:4068 Coq.Arith.PeanoNat Nat eqb def
+R4062:4068 Coq.Arith.PeanoNat Nat eqb def
+R4104:4122 stellarorion_pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R4148:4166 stellarorion_pipeline_checkpoint_proof <> Pipeline_Step_Count def
+prf 4425:4448 <> find_step_index_nz_valid
+binder 4459:4462 <> name:3
+R4492:4495 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4487:4490 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R4467:4481 stellarorion_pipeline_checkpoint_proof <> Find_Step_Index def
+R4483:4486 stellarorion_pipeline_checkpoint_proof <> name:3 var
+R4497:4500 Coq.Init.Peano <> ::nat_scope:x_'<='_x_'<='_x not
+R4521:4524 Coq.Init.Peano <> ::nat_scope:x_'<='_x_'<='_x not
+R4501:4515 stellarorion_pipeline_checkpoint_proof <> Find_Step_Index def
+R4517:4520 stellarorion_pipeline_checkpoint_proof <> name:3 var
+R4501:4515 stellarorion_pipeline_checkpoint_proof <> Find_Step_Index def
+R4517:4520 stellarorion_pipeline_checkpoint_proof <> name:3 var
+R4525:4543 stellarorion_pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R4600:4620 stellarorion_pipeline_checkpoint_proof <> find_step_index_range thm
+R4600:4620 stellarorion_pipeline_checkpoint_proof <> find_step_index_range thm
+def 5113:5129 <> Output_File_Count
+R5139:5141 Coq.Init.Datatypes <> nat ind
+binder 5132:5135 <> fidx:4
+R5146:5148 Coq.Init.Datatypes <> nat ind
+R5153:5156 stellarorion_pipeline_checkpoint_proof <> fidx:4 var
+prf 5408:5430 <> output_file_count_bound
+binder 5441:5444 <> fidx:5
+R5458:5461 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5450:5453 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5454:5457 stellarorion_pipeline_checkpoint_proof <> fidx:5 var
+R5486:5489 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5466:5469 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5462:5465 stellarorion_pipeline_checkpoint_proof <> fidx:5 var
+R5470:5485 stellarorion_pipeline_checkpoint_proof <> Max_Output_Files def
+R5491:5494 Coq.Init.Peano <> ::nat_scope:x_'<='_x_'<='_x not
+R5517:5520 Coq.Init.Peano <> ::nat_scope:x_'<='_x_'<='_x not
+R5495:5511 stellarorion_pipeline_checkpoint_proof <> Output_File_Count def
+R5513:5516 stellarorion_pipeline_checkpoint_proof <> fidx:5 var
+R5495:5511 stellarorion_pipeline_checkpoint_proof <> Output_File_Count def
+R5513:5516 stellarorion_pipeline_checkpoint_proof <> fidx:5 var
+R5521:5536 stellarorion_pipeline_checkpoint_proof <> Max_Output_Files def
+R5576:5592 stellarorion_pipeline_checkpoint_proof <> Output_File_Count def
+prf 5939:5960 <> output_file_loop_total
+binder 5971:5975 <> count:6
+binder 5977:5977 <> j:7
+R5992:5995 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5983:5986 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5987:5991 stellarorion_pipeline_checkpoint_proof <> count:6 var
+R6021:6024 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6001:6004 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R5996:6000 stellarorion_pipeline_checkpoint_proof <> count:6 var
+R6005:6020 stellarorion_pipeline_checkpoint_proof <> Max_Output_Files def
+R6031:6034 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6026:6029 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R6030:6030 stellarorion_pipeline_checkpoint_proof <> j:7 var
+R6045:6050 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6036:6039 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R6035:6035 stellarorion_pipeline_checkpoint_proof <> j:7 var
+R6040:6044 stellarorion_pipeline_checkpoint_proof <> count:6 var
+R6052:6055 Coq.Init.Peano <> ::nat_scope:x_'<='_x_'<='_x not
+R6057:6060 Coq.Init.Peano <> ::nat_scope:x_'<='_x_'<='_x not
+R6056:6056 stellarorion_pipeline_checkpoint_proof <> j:7 var
+R6056:6056 stellarorion_pipeline_checkpoint_proof <> j:7 var
+R6061:6076 stellarorion_pipeline_checkpoint_proof <> Max_Output_Files def
+def 6365:6378 <> guarded_append
+R6389:6391 Coq.Init.Datatypes <> nat ind
+binder 6381:6385 <> count:8
+R6396:6398 Coq.Init.Datatypes <> nat ind
+R6408:6414 Coq.Arith.PeanoNat Nat ltb def
+R6416:6420 stellarorion_pipeline_checkpoint_proof <> count:8 var
+R6422:6439 stellarorion_pipeline_checkpoint_proof <> Max_Config_Entries def
+R6459:6463 stellarorion_pipeline_checkpoint_proof <> count:8 var
+R6446:6446 Coq.Init.Datatypes <> S constr
+R6448:6452 stellarorion_pipeline_checkpoint_proof <> count:8 var
+prf 6699:6718 <> guarded_append_bound
+binder 6729:6733 <> count:9
+R6765:6768 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6743:6746 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R6738:6742 stellarorion_pipeline_checkpoint_proof <> count:9 var
+R6747:6764 stellarorion_pipeline_checkpoint_proof <> Max_Config_Entries def
+R6789:6792 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R6769:6782 stellarorion_pipeline_checkpoint_proof <> guarded_append def
+R6784:6788 stellarorion_pipeline_checkpoint_proof <> count:9 var
+R6793:6810 stellarorion_pipeline_checkpoint_proof <> Max_Config_Entries def
+R6847:6860 stellarorion_pipeline_checkpoint_proof <> guarded_append def
+R6875:6881 Coq.Arith.PeanoNat Nat ltb def
+R6889:6906 stellarorion_pipeline_checkpoint_proof <> Max_Config_Entries def
+R6875:6881 Coq.Arith.PeanoNat Nat ltb def
+R6889:6906 stellarorion_pipeline_checkpoint_proof <> Max_Config_Entries def
+R6926:6935 Coq.Arith.PeanoNat Nat ltb_lt thm
+R6926:6935 Coq.Arith.PeanoNat Nat ltb_lt thm
+R6954:6971 stellarorion_pipeline_checkpoint_proof <> Max_Config_Entries def
+R6998:7007 Coq.Arith.PeanoNat Nat ltb_ge thm
+R6998:7007 Coq.Arith.PeanoNat Nat ltb_ge thm
+prf 7316:7334 <> guarded_append_step
+binder 7345:7349 <> count:10
+R7381:7386 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7359:7362 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R7354:7358 stellarorion_pipeline_checkpoint_proof <> count:10 var
+R7363:7380 stellarorion_pipeline_checkpoint_proof <> Max_Config_Entries def
+R7387:7387 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R7464:7471 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R7530:7530 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R7418:7421 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7408:7410 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7388:7401 stellarorion_pipeline_checkpoint_proof <> guarded_append def
+R7403:7407 stellarorion_pipeline_checkpoint_proof <> count:10 var
+R7411:7411 Coq.Init.Datatypes <> S constr
+R7413:7417 stellarorion_pipeline_checkpoint_proof <> count:10 var
+R7442:7445 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R7422:7435 stellarorion_pipeline_checkpoint_proof <> guarded_append def
+R7437:7441 stellarorion_pipeline_checkpoint_proof <> count:10 var
+R7446:7463 stellarorion_pipeline_checkpoint_proof <> Max_Config_Entries def
+R7500:7503 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R7492:7494 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7472:7485 stellarorion_pipeline_checkpoint_proof <> guarded_append def
+R7487:7491 stellarorion_pipeline_checkpoint_proof <> count:10 var
+R7495:7499 stellarorion_pipeline_checkpoint_proof <> count:10 var
+R7509:7511 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7504:7508 stellarorion_pipeline_checkpoint_proof <> count:10 var
+R7512:7529 stellarorion_pipeline_checkpoint_proof <> Max_Config_Entries def
+R7567:7580 stellarorion_pipeline_checkpoint_proof <> guarded_append def
+R7595:7601 Coq.Arith.PeanoNat Nat ltb def
+R7609:7626 stellarorion_pipeline_checkpoint_proof <> Max_Config_Entries def
+R7595:7601 Coq.Arith.PeanoNat Nat ltb def
+R7609:7626 stellarorion_pipeline_checkpoint_proof <> Max_Config_Entries def
+R7646:7655 Coq.Arith.PeanoNat Nat ltb_lt thm
+R7646:7655 Coq.Arith.PeanoNat Nat ltb_lt thm
+R7716:7733 stellarorion_pipeline_checkpoint_proof <> Max_Config_Entries def
+R7762:7771 Coq.Arith.PeanoNat Nat ltb_ge thm
+R7762:7771 Coq.Arith.PeanoNat Nat ltb_ge thm
+ind 8157:8167 <> Step_Status
+constr 8183:8189 <> Pending
+constr 8209:8215 <> Running
+constr 8235:8243 <> Completed
+constr 8263:8268 <> Failed
+R8193:8203 stellarorion_pipeline_checkpoint_proof <> Step_Status:11 ind
+R8219:8229 stellarorion_pipeline_checkpoint_proof <> Step_Status:11 ind
+R8247:8257 stellarorion_pipeline_checkpoint_proof <> Step_Status:11 ind
+R8272:8282 stellarorion_pipeline_checkpoint_proof <> Step_Status:11 ind
+scheme 8157:8167 <> Step_Status_rect
+scheme 8157:8167 <> Step_Status_ind
+scheme 8157:8167 <> Step_Status_rec
+scheme 8157:8167 <> Step_Status_sind
+prf 8292:8308 <> step_status_total
+R8323:8333 stellarorion_pipeline_checkpoint_proof <> Step_Status ind
+binder 8319:8319 <> s:13
+R8349:8352 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R8339:8341 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8338:8338 stellarorion_pipeline_checkpoint_proof <> s:13 var
+R8342:8348 stellarorion_pipeline_checkpoint_proof <> Pending constr
+R8364:8367 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R8354:8356 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8353:8353 stellarorion_pipeline_checkpoint_proof <> s:13 var
+R8357:8363 stellarorion_pipeline_checkpoint_proof <> Running constr
+R8381:8384 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R8369:8371 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8368:8368 stellarorion_pipeline_checkpoint_proof <> s:13 var
+R8372:8380 stellarorion_pipeline_checkpoint_proof <> Completed constr
+R8386:8388 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8385:8385 stellarorion_pipeline_checkpoint_proof <> s:13 var
+R8389:8394 stellarorion_pipeline_checkpoint_proof <> Failed constr
+def 8875:8887 <> all_completed
+R8901:8904 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8898:8900 Coq.Init.Datatypes <> nat ind
+R8905:8915 stellarorion_pipeline_checkpoint_proof <> Step_Status ind
+binder 8890:8894 <> steps:14
+binder 8937:8937 <> i:15
+R8969:8972 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R8941:8944 Coq.Init.Peano <> ::nat_scope:x_'<='_x_'<='_x not
+R8946:8949 Coq.Init.Peano <> ::nat_scope:x_'<='_x_'<='_x not
+R8945:8945 stellarorion_pipeline_checkpoint_proof <> i:15 var
+R8945:8945 stellarorion_pipeline_checkpoint_proof <> i:15 var
+R8950:8968 stellarorion_pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R8980:8982 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8973:8977 stellarorion_pipeline_checkpoint_proof <> steps:14 var
+R8979:8979 stellarorion_pipeline_checkpoint_proof <> i:15 var
+R8983:8991 stellarorion_pipeline_checkpoint_proof <> Completed constr
+prf 9001:9024 <> all_completed_imply_last
+R9046:9049 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9043:9045 Coq.Init.Datatypes <> nat ind
+R9050:9060 stellarorion_pipeline_checkpoint_proof <> Step_Status ind
+binder 9035:9039 <> steps:16
+R9084:9087 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R9065:9077 stellarorion_pipeline_checkpoint_proof <> all_completed def
+R9079:9083 stellarorion_pipeline_checkpoint_proof <> steps:16 var
+R9113:9115 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R9088:9092 stellarorion_pipeline_checkpoint_proof <> steps:16 var
+R9094:9112 stellarorion_pipeline_checkpoint_proof <> Pipeline_Step_Count def
+R9116:9124 stellarorion_pipeline_checkpoint_proof <> Completed constr
+R9178:9196 stellarorion_pipeline_checkpoint_proof <> Pipeline_Step_Count def

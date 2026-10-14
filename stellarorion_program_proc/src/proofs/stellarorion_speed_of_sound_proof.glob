@@ -1,0 +1,233 @@
+DIGEST 4670881cd222ad294bbdeddb420acf76
+Fstellarorion_speed_of_sound_proof
+R1968:1982 Coq.Reals.Reals <> <> lib
+R2000:2016 Coq.micromega.Lra <> <> lib
+def 2889:2902 <> speed_of_sound
+R2921:2921 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 2905:2909 <> gamma:1
+binder 2911:2915 <> r_gas:2
+binder 2917:2917 <> t:3
+R2926:2926 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R2931:2934 Coq.Reals.R_sqrt <> sqrt def
+R2950:2952 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2942:2944 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2937:2941 stellarorion_speed_of_sound_proof <> gamma:1 var
+R2945:2949 stellarorion_speed_of_sound_proof <> r_gas:2 var
+R2953:2953 stellarorion_speed_of_sound_proof <> t:3 var
+prf 3197:3214 <> speed_of_sound_pos
+R3241:3241 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3225:3229 <> gamma:4
+binder 3231:3235 <> r_gas:5
+binder 3237:3237 <> t:6
+R3256:3259 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3248:3250 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3251:3255 stellarorion_speed_of_sound_proof <> gamma:4 var
+R3269:3272 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3261:3263 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3264:3268 stellarorion_speed_of_sound_proof <> r_gas:5 var
+R3278:3281 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3274:3276 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3277:3277 stellarorion_speed_of_sound_proof <> t:6 var
+R3283:3285 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3286:3299 stellarorion_speed_of_sound_proof <> speed_of_sound def
+R3301:3305 stellarorion_speed_of_sound_proof <> gamma:4 var
+R3307:3311 stellarorion_speed_of_sound_proof <> r_gas:5 var
+R3313:3313 stellarorion_speed_of_sound_proof <> t:6 var
+R3365:3378 stellarorion_speed_of_sound_proof <> speed_of_sound def
+R3389:3398 Coq.Reals.R_sqrt <> sqrt_lt_R0 thm
+R3389:3398 Coq.Reals.R_sqrt <> sqrt_lt_R0 thm
+R3409:3425 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R3409:3425 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R3438:3454 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R3438:3454 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+prf 3742:3757 <> gamma_r_t_nonneg
+binder 3768:3772 <> gamma:7
+binder 3774:3778 <> r_gas:8
+binder 3780:3780 <> t:9
+R3796:3799 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3787:3790 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3791:3795 stellarorion_speed_of_sound_proof <> gamma:7 var
+R3810:3813 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3801:3804 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3805:3809 stellarorion_speed_of_sound_proof <> r_gas:8 var
+R3820:3823 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3815:3818 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3819:3819 stellarorion_speed_of_sound_proof <> t:9 var
+R3825:3828 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3842:3844 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3834:3836 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3829:3833 stellarorion_speed_of_sound_proof <> gamma:7 var
+R3837:3841 stellarorion_speed_of_sound_proof <> r_gas:8 var
+R3845:3845 stellarorion_speed_of_sound_proof <> t:9 var
+R3896:3907 Coq.Reals.RIneq <> Rmult_le_pos thm
+R3896:3907 Coq.Reals.RIneq <> Rmult_le_pos thm
+R3920:3931 Coq.Reals.RIneq <> Rmult_le_pos thm
+R3920:3931 Coq.Reals.RIneq <> Rmult_le_pos thm
+prf 4190:4208 <> speed_of_sound_mono
+binder 4219:4223 <> gamma:10
+binder 4225:4229 <> r_gas:11
+binder 4231:4232 <> t1:12
+binder 4234:4235 <> t2:13
+R4250:4253 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4242:4244 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4245:4249 stellarorion_speed_of_sound_proof <> gamma:10 var
+R4263:4266 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4255:4257 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4258:4262 stellarorion_speed_of_sound_proof <> r_gas:11 var
+R4274:4277 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4268:4271 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4272:4273 stellarorion_speed_of_sound_proof <> t1:12 var
+R4286:4292 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4280:4283 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4278:4279 stellarorion_speed_of_sound_proof <> t1:12 var
+R4284:4285 stellarorion_speed_of_sound_proof <> t2:13 var
+R4322:4325 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4293:4306 stellarorion_speed_of_sound_proof <> speed_of_sound def
+R4308:4312 stellarorion_speed_of_sound_proof <> gamma:10 var
+R4314:4318 stellarorion_speed_of_sound_proof <> r_gas:11 var
+R4320:4321 stellarorion_speed_of_sound_proof <> t1:12 var
+R4326:4339 stellarorion_speed_of_sound_proof <> speed_of_sound def
+R4341:4345 stellarorion_speed_of_sound_proof <> gamma:10 var
+R4347:4351 stellarorion_speed_of_sound_proof <> r_gas:11 var
+R4353:4354 stellarorion_speed_of_sound_proof <> t2:13 var
+R4416:4429 stellarorion_speed_of_sound_proof <> speed_of_sound def
+R4448:4451 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4457:4459 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4477:4488 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4448:4451 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4457:4459 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4477:4488 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4531:4534 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4526:4528 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4518:4520 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4548:4550 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4540:4542 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4531:4534 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4526:4528 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4518:4520 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4548:4550 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4540:4542 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4569:4578 Coq.Reals.Raxioms <> Rmult_comm thm
+R4586:4588 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4569:4578 Coq.Reals.Raxioms <> Rmult_comm thm
+R4586:4588 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4569:4578 Coq.Reals.Raxioms <> Rmult_comm thm
+R4586:4588 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4614:4623 Coq.Reals.Raxioms <> Rmult_comm thm
+R4631:4633 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4614:4623 Coq.Reals.Raxioms <> Rmult_comm thm
+R4631:4633 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4614:4623 Coq.Reals.Raxioms <> Rmult_comm thm
+R4631:4633 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4656:4672 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R4656:4672 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R4710:4718 Coq.Reals.R_sqrt <> sqrt_le_1 thm
+R4710:4718 Coq.Reals.R_sqrt <> sqrt_le_1 thm
+R4731:4742 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4731:4742 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4779:4790 Coq.Reals.RIneq <> Rmult_le_pos thm
+R4779:4790 Coq.Reals.RIneq <> Rmult_le_pos thm
+prf 5071:5091 <> speed_of_sound_square
+binder 5102:5106 <> gamma:14
+binder 5108:5112 <> r_gas:15
+binder 5114:5114 <> t:16
+R5142:5148 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5121:5124 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5138:5140 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5130:5132 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5125:5129 stellarorion_speed_of_sound_proof <> gamma:14 var
+R5133:5137 stellarorion_speed_of_sound_proof <> r_gas:15 var
+R5141:5141 stellarorion_speed_of_sound_proof <> t:16 var
+R5208:5210 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5177:5179 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5149:5162 stellarorion_speed_of_sound_proof <> speed_of_sound def
+R5164:5168 stellarorion_speed_of_sound_proof <> gamma:14 var
+R5170:5174 stellarorion_speed_of_sound_proof <> r_gas:15 var
+R5176:5176 stellarorion_speed_of_sound_proof <> t:16 var
+R5180:5193 stellarorion_speed_of_sound_proof <> speed_of_sound def
+R5195:5199 stellarorion_speed_of_sound_proof <> gamma:14 var
+R5201:5205 stellarorion_speed_of_sound_proof <> r_gas:15 var
+R5207:5207 stellarorion_speed_of_sound_proof <> t:16 var
+R5224:5226 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5216:5218 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5211:5215 stellarorion_speed_of_sound_proof <> gamma:14 var
+R5219:5223 stellarorion_speed_of_sound_proof <> r_gas:15 var
+R5227:5227 stellarorion_speed_of_sound_proof <> t:16 var
+R5272:5285 stellarorion_speed_of_sound_proof <> speed_of_sound def
+R5296:5304 Coq.Reals.R_sqrt <> sqrt_sqrt thm
+R5296:5304 Coq.Reals.R_sqrt <> sqrt_sqrt thm
+prf 5706:5720 <> gamma_r_t_upper
+binder 5731:5735 <> gamma:17
+binder 5737:5741 <> r_gas:18
+binder 5743:5743 <> t:19
+R5759:5762 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5750:5753 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5754:5758 stellarorion_speed_of_sound_proof <> gamma:17 var
+R5775:5781 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5768:5771 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5763:5767 stellarorion_speed_of_sound_proof <> gamma:17 var
+R5792:5795 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5783:5786 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5787:5791 stellarorion_speed_of_sound_proof <> r_gas:18 var
+R5812:5818 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5801:5804 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5796:5800 stellarorion_speed_of_sound_proof <> r_gas:18 var
+R5825:5828 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5820:5823 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5824:5824 stellarorion_speed_of_sound_proof <> t:19 var
+R5838:5844 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5830:5833 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5829:5829 stellarorion_speed_of_sound_proof <> t:19 var
+R5862:5865 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5858:5860 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5850:5852 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5845:5849 stellarorion_speed_of_sound_proof <> gamma:17 var
+R5853:5857 stellarorion_speed_of_sound_proof <> r_gas:18 var
+R5861:5861 stellarorion_speed_of_sound_proof <> t:19 var
+R5879:5881 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5869:5871 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5948:5962 Coq.Reals.RIneq <> Rmult_le_compat thm
+R5948:5962 Coq.Reals.RIneq <> Rmult_le_compat thm
+R5975:5986 Coq.Reals.RIneq <> Rmult_le_pos thm
+R5975:5986 Coq.Reals.RIneq <> Rmult_le_pos thm
+R6018:6032 Coq.Reals.RIneq <> Rmult_le_compat thm
+R6018:6032 Coq.Reals.RIneq <> Rmult_le_compat thm
+prf 6378:6397 <> speed_of_sound_upper
+binder 6408:6412 <> gamma:20
+binder 6414:6418 <> r_gas:21
+binder 6420:6420 <> t:22
+R6436:6439 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6427:6430 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6431:6435 stellarorion_speed_of_sound_proof <> gamma:20 var
+R6452:6458 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6445:6448 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6440:6444 stellarorion_speed_of_sound_proof <> gamma:20 var
+R6469:6472 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6460:6463 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6464:6468 stellarorion_speed_of_sound_proof <> r_gas:21 var
+R6489:6495 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6478:6481 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6473:6477 stellarorion_speed_of_sound_proof <> r_gas:21 var
+R6502:6505 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6497:6500 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6501:6501 stellarorion_speed_of_sound_proof <> t:22 var
+R6515:6521 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6507:6510 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6506:6506 stellarorion_speed_of_sound_proof <> t:22 var
+R6550:6553 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6522:6535 stellarorion_speed_of_sound_proof <> speed_of_sound def
+R6537:6541 stellarorion_speed_of_sound_proof <> gamma:20 var
+R6543:6547 stellarorion_speed_of_sound_proof <> r_gas:21 var
+R6549:6549 stellarorion_speed_of_sound_proof <> t:22 var
+R6554:6557 Coq.Reals.R_sqrt <> sqrt def
+R6573:6575 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6563:6565 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R6644:6657 stellarorion_speed_of_sound_proof <> speed_of_sound def
+R6668:6676 Coq.Reals.R_sqrt <> sqrt_le_1 thm
+R6668:6676 Coq.Reals.R_sqrt <> sqrt_le_1 thm
+R6689:6704 stellarorion_speed_of_sound_proof <> gamma_r_t_nonneg thm
+R6689:6704 stellarorion_speed_of_sound_proof <> gamma_r_t_nonneg thm
+R6729:6740 Coq.Reals.RIneq <> Rmult_le_pos thm
+R6729:6740 Coq.Reals.RIneq <> Rmult_le_pos thm
+R6758:6772 stellarorion_speed_of_sound_proof <> gamma_r_t_upper thm
+R6758:6772 stellarorion_speed_of_sound_proof <> gamma_r_t_upper thm

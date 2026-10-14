@@ -1,0 +1,75 @@
+DIGEST 98550a26af2e59e9f47489a599e318f9
+Fsidecar_server_proof
+R2897:2911 Coq.Reals.Reals <> <> lib
+R2929:2945 Coq.micromega.Lra <> <> lib
+R2963:2979 Coq.micromega.Lia <> <> lib
+def 3088:3097 <> reset_step
+R3105:3107 Coq.Init.Datatypes <> nat ind
+binder 3100:3101 <> _s:1
+R3112:3114 Coq.Init.Datatypes <> nat ind
+prf 3172:3188 <> reset_step_zeroes
+binder 3199:3199 <> s:2
+R3214:3216 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3202:3211 sidecar_server_proof <> reset_step def
+R3213:3213 sidecar_server_proof <> s:2 var
+R3248:3257 sidecar_server_proof <> reset_step def
+prf 3320:3340 <> reset_step_idempotent
+binder 3351:3351 <> s:3
+R3379:3381 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3354:3363 sidecar_server_proof <> reset_step def
+R3366:3375 sidecar_server_proof <> reset_step def
+R3377:3377 sidecar_server_proof <> s:3 var
+R3382:3391 sidecar_server_proof <> reset_step def
+R3393:3393 sidecar_server_proof <> s:3 var
+R3424:3433 sidecar_server_proof <> reset_step def
+sec 3465:3479 <> Register_Bounds
+def 4173:4192 <> DEFAULT_SIDECAR_PORT
+R4196:4196 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4220:4231 <> TCP_PORT_MIN
+R4235:4235 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4325:4336 <> TCP_PORT_MAX
+R4340:4340 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4505:4520 <> HTTP_SUCCESS_MIN
+R4524:4524 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4547:4567 <> HTTP_SUCCESS_MAX_EXCL
+R4571:4571 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4594:4611 <> HTTP_CLIENTERR_MIN
+R4615:4615 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 4638:4660 <> HTTP_CLIENTERR_MAX_EXCL
+R4664:4664 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+prf 4741:4761 <> default_port_bindable
+R4777:4780 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<='_x not
+R4801:4804 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<='_x not
+R4765:4776 sidecar_server_proof <> TCP_PORT_MIN def
+R4781:4800 sidecar_server_proof <> DEFAULT_SIDECAR_PORT def
+R4781:4800 sidecar_server_proof <> DEFAULT_SIDECAR_PORT def
+R4805:4816 sidecar_server_proof <> TCP_PORT_MAX def
+R4839:4850 sidecar_server_proof <> TCP_PORT_MIN def
+R4853:4872 sidecar_server_proof <> DEFAULT_SIDECAR_PORT def
+R4875:4886 sidecar_server_proof <> TCP_PORT_MAX def
+prf 4957:4975 <> port_space_nonempty
+R4980:4982 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4983:4994 sidecar_server_proof <> TCP_PORT_MAX def
+R5017:5028 sidecar_server_proof <> TCP_PORT_MAX def
+prf 5109:5129 <> status_200_is_success
+R5149:5152 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<'_x not
+R5156:5158 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<'_x not
+R5133:5148 sidecar_server_proof <> HTTP_SUCCESS_MIN def
+R5159:5179 sidecar_server_proof <> HTTP_SUCCESS_MAX_EXCL def
+R5202:5217 sidecar_server_proof <> HTTP_SUCCESS_MIN def
+R5220:5240 sidecar_server_proof <> HTTP_SUCCESS_MAX_EXCL def
+prf 5332:5357 <> status_400_is_client_error
+R5379:5382 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<'_x not
+R5386:5388 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<'_x not
+R5361:5378 sidecar_server_proof <> HTTP_CLIENTERR_MIN def
+R5389:5411 sidecar_server_proof <> HTTP_CLIENTERR_MAX_EXCL def
+R5434:5451 sidecar_server_proof <> HTTP_CLIENTERR_MIN def
+R5454:5476 sidecar_server_proof <> HTTP_CLIENTERR_MAX_EXCL def
+prf 5567:5592 <> status_404_is_client_error
+R5614:5617 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<'_x not
+R5621:5623 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x_'<'_x not
+R5596:5613 sidecar_server_proof <> HTTP_CLIENTERR_MIN def
+R5624:5646 sidecar_server_proof <> HTTP_CLIENTERR_MAX_EXCL def
+R5669:5686 sidecar_server_proof <> HTTP_CLIENTERR_MIN def
+R5689:5711 sidecar_server_proof <> HTTP_CLIENTERR_MAX_EXCL def
+R5741:5755 sidecar_server_proof Register_Bounds <> sec

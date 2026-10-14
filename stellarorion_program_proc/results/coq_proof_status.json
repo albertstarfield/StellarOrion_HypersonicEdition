@@ -1,0 +1,733 @@
+{
+  "schema": "stellarorion.coq_proof_status/1",
+  "status": "pass",
+  "generated_utc": "2026-10-13T16:36:49.383885+00:00",
+  "tool": {
+    "name": "coqc",
+    "path": "/Users/albertstarfield/.opam/spark-coq/bin/coqc",
+    "version": "The Coq Proof Assistant, version 8.18.0"
+  },
+  "directories": {
+    "scanned": [
+      "proofs",
+      "src/proofs",
+      "src/rocq"
+    ],
+    "missing": []
+  },
+  "totals": {
+    "proofs": 88,
+    "compiled": 88,
+    "failed": 0,
+    "duration_s": 21.964
+  },
+  "files": [
+    {
+      "path": "proofs/StellarOrion_Float.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.497,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/_tex_config.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.156,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/ada_pinn_wrapper.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.252,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/compare_validation_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.249,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/gen_trajectory_profile_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.229,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/generate_hiad_dashboard.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.237,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/generate_optimized_overlay.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.157,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/generate_outputs.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.275,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/hiad_geometry.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.157,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/hiad_optimizer.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.251,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/make_derived_plots_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.242,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/make_validation_plots_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.244,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/make_vtu_visualization_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.236,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/plot_hiad_3d_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.24,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/plot_rapisarda_comparison_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.247,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/plot_surf_profile_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.249,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/run_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.252,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/sabotage_verifier_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.246,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/sidecar_watchdog_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.253,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/sparta_grid.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.246,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/stellarorion_ffi.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.151,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/stellarorion_pinn_trajectory.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.241,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/stellarorion_pipeline_checkpoint.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.171,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/stellarorion_postprocessing.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.254,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/stellarorion_safe_access_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.055,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/stellarorion_speed_of_sound.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.248,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/stellarorion_trajectory_output.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.257,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "proofs/validation_pipeline.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.238,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/__init___proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.248,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/_tex_config_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.245,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/ada_pinn_wrapper_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.247,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/add_exception_handlers_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.052,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/gen_trajectory_profile_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.254,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/generate_hiad_dashboard_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.254,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/generate_optimized_overlay_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.257,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/generate_outputs_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.281,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/hiad_geometry_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.262,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/hiad_optimizer_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.262,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/kriging_denoise_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.257,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/main_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.244,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/make_derived_plots_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.246,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/make_validation_plots_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.259,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/make_vtu_visualization_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.246,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/pinn_accelerator_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.239,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/pinn_test_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.237,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/pipeline_checkpoint_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.243,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/pipeline_comparison_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.054,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/plot_hiad_3d_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.275,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/plot_rapisarda_comparison_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.264,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/plot_surf_profile_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.246,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/pyansys_test_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.254,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/pyfluent_test_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.259,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/run_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.26,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/sabotage_verifier_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.257,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/sidecar_launcher_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.249,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/sidecar_server_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.259,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/sidecar_ui_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.257,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/sparta_grid_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.273,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_atomic_parity_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.17,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_cli_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.281,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_dual_watchdog_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.194,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_environment_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.815,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_ffi_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.283,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_geometry_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.279,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_history_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.262,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_optimization_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.267,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_optimize_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.266,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_orion_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.251,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_physics_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.256,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_pinn_trajectory_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.282,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_pipeline_checkpoint_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.184,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_postprocessing_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.29,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_project_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.313,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_reports_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.298,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_runtime_guard_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.164,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_self_test_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.258,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_sensitivity_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.285,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_sparta_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.185,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_speed_of_sound_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.266,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_status_writer_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.188,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_test_modes_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.253,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_trajectory_output_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.275,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_types_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.269,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/stellarorion_validation_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.286,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/validation_pipeline_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.28,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/proofs/visualizer_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.256,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/rocq/stellarorion_physics_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.276,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    },
+    {
+      "path": "src/rocq/stellarorion_thermal_proof.v",
+      "ok": true,
+      "returncode": 0,
+      "duration_s": 0.262,
+      "artifacts_removed": [],
+      "error_snippet": ""
+    }
+  ],
+  "summary": "88/88 proofs compiled",
+  "status_file": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/stellarorion_program_proc/results/coq_proof_status.json",
+  "error": ""
+}

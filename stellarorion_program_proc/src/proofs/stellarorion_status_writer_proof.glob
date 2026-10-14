@@ -1,0 +1,85 @@
+DIGEST 83823246dc7f2feb64fc2d73d20762d9
+Fstellarorion_status_writer_proof
+R2265:2282 Coq.Strings.String <> <> lib
+R2300:2313 Coq.Lists.List <> <> lib
+R2323:2335 Coq.Lists.List ListNotations <> mod
+R2353:2370 Coq.Arith.PeanoNat <> <> lib
+R2388:2404 Coq.micromega.Lia <> <> lib
+def 2758:2767 <> frame_keys
+R2771:2774 Coq.Init.Datatypes <> list ind
+R2776:2781 Coq.Strings.String <> string ind
+R2788:2789 Coq.Lists.List ListNotations ::list_scope:'['_x_';'_x_';'_'..'_';'_x_']' not
+R2805:2806 Coq.Lists.List ListNotations ::list_scope:'['_x_';'_x_';'_'..'_';'_x_']' not
+R2824:2825 Coq.Lists.List ListNotations ::list_scope:'['_x_';'_x_';'_'..'_';'_x_']' not
+R2843:2847 Coq.Lists.List ListNotations ::list_scope:'['_x_';'_x_';'_'..'_';'_x_']' not
+R2864:2865 Coq.Lists.List ListNotations ::list_scope:'['_x_';'_x_';'_'..'_';'_x_']' not
+R2882:2883 Coq.Lists.List ListNotations ::list_scope:'['_x_';'_x_';'_'..'_';'_x_']' not
+prf 2943:2959 <> frame_keys_length
+R2980:2982 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R2963:2968 Coq.Lists.List <> length abbrev
+R2970:2979 stellarorion_status_writer_proof <> frame_keys def
+R3002:3011 stellarorion_status_writer_proof <> frame_keys def
+prf 3168:3184 <> frame_keys_no_dup
+R3188:3192 Coq.Lists.List <> NoDup ind
+R3194:3203 stellarorion_status_writer_proof <> frame_keys def
+R3222:3231 stellarorion_status_writer_proof <> frame_keys def
+def 3506:3517 <> member_count
+R3521:3523 Coq.Init.Datatypes <> nat ind
+def 3599:3623 <> member_has_trailing_comma
+R3630:3632 Coq.Init.Datatypes <> nat ind
+binder 3626:3626 <> i:1
+R3637:3640 Coq.Init.Datatypes <> bool ind
+R3646:3649 Coq.Arith.PeanoNat <> ::nat_scope:x_'<?'_x not
+R3645:3645 stellarorion_status_writer_proof <> i:1 var
+R3650:3661 stellarorion_status_writer_proof <> member_count def
+prf 3732:3758 <> interior_members_have_comma
+binder 3769:3769 <> i:2
+R3790:3793 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3775:3777 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R3774:3774 stellarorion_status_writer_proof <> i:2 var
+R3778:3789 stellarorion_status_writer_proof <> member_count def
+R3821:3823 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3794:3818 stellarorion_status_writer_proof <> member_has_trailing_comma def
+R3820:3820 stellarorion_status_writer_proof <> i:2 var
+R3824:3827 Coq.Init.Datatypes <> true constr
+R3860:3884 stellarorion_status_writer_proof <> member_has_trailing_comma def
+R3887:3898 stellarorion_status_writer_proof <> member_count def
+R3914:3923 Coq.Arith.PeanoNat Nat ltb_lt thm
+R3914:3923 Coq.Arith.PeanoNat Nat ltb_lt thm
+prf 4078:4101 <> last_member_has_no_comma
+R4145:4147 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4107:4131 stellarorion_status_writer_proof <> member_has_trailing_comma def
+R4133:4144 stellarorion_status_writer_proof <> member_count def
+R4148:4152 Coq.Init.Datatypes <> false constr
+R4171:4195 stellarorion_status_writer_proof <> member_has_trailing_comma def
+R4198:4209 stellarorion_status_writer_proof <> member_count def
+ind 4307:4317 <> status_kind
+constr 4322:4325 <> Idle
+constr 4343:4349 <> Running
+constr 4391:4399 <> Completed
+constr 4417:4421 <> Error
+R4329:4339 stellarorion_status_writer_proof <> status_kind:3 ind
+R4353:4363 stellarorion_status_writer_proof <> status_kind:3 ind
+R4403:4413 stellarorion_status_writer_proof <> status_kind:3 ind
+R4425:4435 stellarorion_status_writer_proof <> status_kind:3 ind
+scheme 4307:4317 <> status_kind_rect
+scheme 4307:4317 <> status_kind_ind
+scheme 4307:4317 <> status_kind_rec
+scheme 4307:4317 <> status_kind_sind
+prf 4580:4602 <> status_kind_four_values
+binder 4613:4613 <> k:5
+R4626:4629 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R4619:4621 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4618:4618 stellarorion_status_writer_proof <> k:5 var
+R4622:4625 stellarorion_status_writer_proof <> Idle constr
+R4641:4644 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R4631:4633 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4630:4630 stellarorion_status_writer_proof <> k:5 var
+R4634:4640 stellarorion_status_writer_proof <> Running constr
+R4658:4661 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R4646:4648 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4645:4645 stellarorion_status_writer_proof <> k:5 var
+R4649:4657 stellarorion_status_writer_proof <> Completed constr
+R4663:4665 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4662:4662 stellarorion_status_writer_proof <> k:5 var
+R4666:4670 stellarorion_status_writer_proof <> Error constr

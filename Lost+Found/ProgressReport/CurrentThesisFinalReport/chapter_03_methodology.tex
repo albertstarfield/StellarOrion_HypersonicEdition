@@ -456,9 +456,9 @@ Table~\ref{tab:tps_materials} lists the available TPS material presets.
     \begin{tabularx}{\textwidth}{|l|c|c|c|>{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X|}
         \hline
         \textbf{Material} & \textbf{$\rho$ (kg/m$^3$)} & \textbf{$C_p$ (J/kg$\cdot$K)} & \textbf{$\epsilon$} & \textbf{Application} \\ \hline
-        Nicalon SiC & 1468 & 1100 & 0.75 & Gen-2 HIAD TPS \\ \hline
-        Pyrogel 2250 & 200 & 1000 & 0.85 & FTPS blanket insulation \\ \hline
-        Kapton & 1420 & 1090 & 0.70 & Polyimide film layers \\ \hline
+        Nicalon SiC & 1468 & 1100 & 0.75 & Gen-2 HIAD TPS outer fabric \\ \hline
+        Pyrogel 3350 & 110 & 1000 & 0.80 & FTPS blanket insulation \\ \hline
+        Kapton & 3100 & 1090 & 0.12 & Polyimide gas barrier \\ \hline
         Multi-layer (stack) & 650 & 1050 & 0.80 & Combined FTPS stack \\ \hline
     \end{tabularx}
 \end{table}
@@ -466,25 +466,73 @@ Table~\ref{tab:tps_materials} lists the available TPS material presets.
 \subsection{Composite Thermal Protection Conduction Model}
 \label{sec:composite_tps}
 
-The thermal protection system is modeled as an ordered composite stack, yielding the in-depth temperature field. The baseline IRVE-3 layup~\mbox{\cite{rapisarda2023mdao}} is five plies, listed in Table~\ref{tab:tps_layup}.
+The thermal protection system is modeled as an ordered composite stack, yielding the in-depth temperature field. Two IRVE-3 flexible-TPS schedules exist and must not be conflated: the \emph{flown} first-generation stack (two Nextel BF-20 plies, two Pyrogel 3350 plies and an AKK barrier, 6.35\,mm), and the \emph{second-generation} stack Rapisarda recommends to replace the outer Nextel with Nicalon SiC. The framework runs the second-generation schedule~\mbox{\cite{rapisarda2023mdao}}; its five plies are listed in Table~\ref{tab:tps_layup} and specified in full in Table~\ref{tab:tps_spec}.
 
 \begin{table}[!htbp]
     \centering
-    \caption{IRVE-3 flexible thermal protection layup and derived lumped properties.}
+    \caption{Second-generation flexible thermal protection layup (Rapisarda Table~4.17) and derived lumped properties.}
     \label{tab:tps_layup}
-    \begin{tabularx}{\textwidth}{r >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{3.4cm} >{\RaggedRight\arraybackslash}p{3.0cm}}
+    \begin{tabularx}{\textwidth}{r >{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{3.0cm} >{\RaggedRight\arraybackslash}p{2.8cm}}
         \toprule
         \textbf{Ply} & \textbf{Material} & \textbf{Thickness} & \textbf{$k$ (W m$^{-1}$ K$^{-1}$)} \\
         \midrule
-        1 & Nextel BF-20 outer fabric   & 0.60 mm & 0.25 \\
-        2 & Nextel BF-20 outer fabric   & 0.60 mm & 0.25 \\
-        3 & Pyrogel 2250 insulation    & 2.50 mm & 0.02 \\
-        4 & Pyrogel 2250 insulation    & 2.50 mm & 0.02 \\
-        5 & Aluminized Kapton/Kevlar gas barrier & 0.15 mm & 0.12 \\
+        1 & Nicalon SiC outer fabric   & 0.506 mm & 1.50 \\
+        2 & Nicalon SiC outer fabric   & 0.506 mm & 1.50 \\
+        3 & Pyrogel 3350 insulation    & 3.047 mm & 0.02 \\
+        4 & Pyrogel 3350 insulation    & 3.047 mm & 0.02 \\
+        5 & Kapton gas barrier & 0.025 mm & 0.12 \\
         \midrule
-        \multicolumn{2}{l}{\textbf{Total thickness}} & \textbf{6.35 mm} & \textbf{R = 0.25605 m\textsuperscript{2}K/W} \\
+        \multicolumn{2}{l}{\textbf{Total thickness}} & \textbf{7.131 mm} & \textbf{R = 0.305583 m\textsuperscript{2}K/W} \\
         \bottomrule
     \end{tabularx}
+\end{table}
+
+\begin{table}[!htbp]
+    \centering
+    \footnotesize
+    \caption[Per-ply material and resistance specification of the second-generation flexible thermal protection shield.]{Per-ply material and resistance specification of the second-generation flexible thermal protection shield (Rapisarda Table~4.17). Ply~1 is the hot face and ply~5 the cold face ($t$ in mm; $k$ in W m$^{-1}$ K$^{-1}$; $\rho$ in kg m$^{-3}$; $C_p$ in J kg$^{-1}$ K$^{-1}$; $R = t/k$ in m\textsuperscript{2}\,K\,W\textsuperscript{-1}; $\Sigma R = 0.305583$).}
+    \label{tab:tps_spec}
+    \begin{tabularx}{\textwidth}{r >{\RaggedRight\arraybackslash}X *{5}{>{\centering\arraybackslash}X} >{\centering\arraybackslash}p{1.4cm} >{\centering\arraybackslash}X}
+        \toprule
+        \textbf{Ply} & \textbf{Mat.} & \textbf{$t$} & \textbf{$k$} & \textbf{$\rho$} & \textbf{$C_p$} & \textbf{$\varepsilon$} & \textbf{$R$} & \textbf{$\Sigma R$\%} \\
+        \midrule
+        1 (hot) & Nicalon SiC & 0.506 & 1.50 & 1468 & 1100 & 0.75 & 0.000337 & 0.11 \\
+        2 & Nicalon SiC & 0.506 & 1.50 & 1468 & 1100 & 0.75 & 0.000337 & 0.11 \\
+        3 & Pyrogel 3350 & 3.047 & 0.02 & 110 & 1000 & 0.80 & 0.15235 & 49.86 \\
+        4 & Pyrogel 3350 & 3.047 & 0.02 & 110 & 1000 & 0.80 & 0.15235 & 49.86 \\
+        5 (cold) & Kapton & 0.025 & 0.12 & 3100 & 1090 & 0.12 & 0.000208 & 0.07 \\
+        \midrule
+        $\Sigma$ & 5 plies & 7.131 & & & & 0.80\textsuperscript{1} & 0.305583 & 100 \\
+        \bottomrule
+    \end{tabularx}
+
+    \vspace{0.3em}
+
+    \raggedright\footnotesize\textsuperscript{1}\,Stack-level emissivity (Pyrogel grades carry no published $\varepsilon$).
+\end{table}
+
+\begin{table}[!htbp]
+    \centering
+    \footnotesize
+    \caption[Per-ply steady ply-face temperatures and thermal margins of the shield stack.]{Per-ply steady ply-face temperatures and thermal margins of the second-generation flexible thermal protection shield, from the step-2200 conduction solve. $T_{max}$ is the ply's own continuous-use limit; the margin is $T_{max} - \max(T_{top}, T_{bot})$.}
+    \label{tab:tps_spec_thermal}
+    \begin{tabularx}{\textwidth}{r *{4}{>{\centering\arraybackslash}X}}
+        \toprule
+        \textbf{Ply} & \textbf{$T_{max}$ [K]} & \textbf{$T_{top}$ [K]} & \textbf{$T_{bot}$ [K]} & \textbf{Margin [K]} \\
+        \midrule
+        1 (hot) & 2073 & 1550.2 & 1538.5 & $+522.8$ \\
+        2 & 2073 & 1538.5 & 1524.8 & $+548.2$ \\
+        3 & 1373 & 1524.8 & 1220.6 & $+152.4$ \\
+        4 & 1373 & 1220.6 & 313.6 & $+1059.4$ \\
+        5 (cold) & 773 & 313.6 & 313.6 & $+459.4$ \\
+        \midrule
+        $\Sigma$ & 773\textsuperscript{2} & 1550.2 & 313.6 & \\
+        \bottomrule
+    \end{tabularx}
+
+    \vspace{0.3em}
+
+    \raggedright\footnotesize\textsuperscript{2}\,The $\Sigma$-row $T_{max}$ is the coldest ply's limit, the binding one.
 \end{table}
 
 The quoted conductivities are effective through-thickness values, since in a felt ply conduction crosses inter-fiber voids.

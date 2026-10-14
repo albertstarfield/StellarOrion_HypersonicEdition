@@ -1,0 +1,94 @@
+DIGEST 57dc01eda042bf38bb7c709567d837bf
+Fpinn_accelerator_proof
+R3001:3015 Coq.Reals.Reals <> <> lib
+R3033:3049 Coq.micromega.Lra <> <> lib
+prf 3275:3283 <> sq_nonneg
+binder 3294:3294 <> x:1
+R3298:3301 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3303:3305 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3302:3302 pinn_accelerator_proof <> x:1 var
+R3306:3306 pinn_accelerator_proof <> x:1 var
+R3342:3351 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3342:3351 Coq.Reals.RIneq <> Rle_lt_dec thm
+R3381:3392 Coq.Reals.RIneq <> Rmult_le_pos thm
+R3381:3392 Coq.Reals.RIneq <> Rmult_le_pos thm
+R3421:3424 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3425:3426 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3421:3424 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3425:3426 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3453:3455 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3468:3470 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3465:3466 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3471:3472 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3453:3455 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3468:3470 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3465:3466 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3471:3472 Coq.Reals.Rdefinitions <> ::R_scope:'-'_x not
+R3496:3507 Coq.Reals.RIneq <> Rmult_le_pos thm
+R3496:3507 Coq.Reals.RIneq <> Rmult_le_pos thm
+def 3613:3629 <> pinn_gas_pressure
+R3645:3645 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3632:3634 <> rho:2
+binder 3636:3639 <> Rgas:3
+binder 3641:3641 <> T:4
+R3650:3650 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3665:3667 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3658:3660 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3655:3657 pinn_accelerator_proof <> rho:2 var
+R3661:3664 pinn_accelerator_proof <> Rgas:3 var
+R3668:3668 pinn_accelerator_proof <> T:4 var
+prf 3678:3701 <> pinn_gas_pressure_nonneg
+binder 3712:3714 <> rho:5
+binder 3716:3719 <> Rgas:6
+binder 3721:3721 <> T:7
+R3735:3738 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3728:3731 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3732:3734 pinn_accelerator_proof <> rho:5 var
+R3748:3751 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3740:3743 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3744:3747 pinn_accelerator_proof <> Rgas:6 var
+R3758:3761 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3753:3756 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3757:3757 pinn_accelerator_proof <> T:7 var
+R3763:3766 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3767:3783 pinn_accelerator_proof <> pinn_gas_pressure def
+R3785:3787 pinn_accelerator_proof <> rho:5 var
+R3789:3792 pinn_accelerator_proof <> Rgas:6 var
+R3794:3794 pinn_accelerator_proof <> T:7 var
+R3847:3863 pinn_accelerator_proof <> pinn_gas_pressure def
+R3875:3886 Coq.Reals.RIneq <> Rmult_le_pos thm
+R3875:3886 Coq.Reals.RIneq <> Rmult_le_pos thm
+R3913:3924 Coq.Reals.RIneq <> Rmult_le_pos thm
+R3913:3924 Coq.Reals.RIneq <> Rmult_le_pos thm
+def 4162:4170 <> pinn_loss
+R4186:4186 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4173:4177 <> r_pde:8
+binder 4179:4182 <> r_bc:9
+R4191:4191 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4209:4211 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R4201:4203 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4196:4200 pinn_accelerator_proof <> r_pde:8 var
+R4204:4208 pinn_accelerator_proof <> r_pde:8 var
+R4216:4218 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4212:4215 pinn_accelerator_proof <> r_bc:9 var
+R4219:4222 pinn_accelerator_proof <> r_bc:9 var
+prf 4232:4247 <> pinn_loss_nonneg
+binder 4258:4262 <> r_pde:10
+binder 4264:4267 <> r_bc:11
+R4271:4274 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4275:4283 pinn_accelerator_proof <> pinn_loss def
+R4285:4289 pinn_accelerator_proof <> r_pde:10 var
+R4291:4294 pinn_accelerator_proof <> r_bc:11 var
+R4336:4344 pinn_accelerator_proof <> pinn_loss def
+R4364:4367 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4373:4375 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4393:4401 pinn_accelerator_proof <> sq_nonneg thm
+R4364:4367 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4373:4375 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4393:4401 pinn_accelerator_proof <> sq_nonneg thm
+R4422:4425 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4430:4432 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4449:4457 pinn_accelerator_proof <> sq_nonneg thm
+R4422:4425 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4430:4432 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4449:4457 pinn_accelerator_proof <> sq_nonneg thm

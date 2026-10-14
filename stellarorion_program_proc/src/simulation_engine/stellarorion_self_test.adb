@@ -289,7 +289,7 @@ package body StellarOrion_Self_Test is
          Pyro    : constant TPS_Material := TPS_Pyrogel;
          Multi   : constant TPS_Material := TPS_Multi;
          --  The ACTIVE preset for this vehicle: the lumped equivalent of
-         --  TPS_Layup_IRVE3 (two Nextel BF-20 / two Pyrogel 2250 / AKK,
+         --  TPS_Layup_IRVE3 (two Nextel BF-20 / two Pyrogel 3350 / AKK,
          --  6.35 mm total), not the 25.4 mm LOFTID SiC baseline.
          IRVE3   : constant TPS_Material := TPS_IRVE3_FTPS;
          All_OK  : Boolean := True;

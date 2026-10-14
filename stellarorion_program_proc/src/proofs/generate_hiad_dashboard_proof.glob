@@ -1,0 +1,327 @@
+DIGEST 922136694742116a6e3a94c49a548e0e
+Fgenerate_hiad_dashboard_proof
+R1575:1589 Coq.Reals.Reals <> <> lib
+R1607:1624 Coq.Arith.PeanoNat <> <> lib
+R1642:1658 Coq.micromega.Lia <> <> lib
+R1676:1692 Coq.micromega.Lra <> <> lib
+R1786:1800 Coq.ZArith.Znat <> <> lib
+sec 1970:1986 <> Cancel_Mul_Helper
+prf 1997:2006 <> cancel_mul
+R2023:2023 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 2017:2017 <> x:1
+binder 2019:2019 <> l:2
+R2032:2035 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2027:2030 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R2026:2026 generate_hiad_dashboard_proof <> l:2 var
+R2047:2049 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R2037:2040 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2046:2046 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2036:2036 generate_hiad_dashboard_proof <> l:2 var
+R2042:2044 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R2041:2041 generate_hiad_dashboard_proof <> x:1 var
+R2045:2045 generate_hiad_dashboard_proof <> l:2 var
+R2050:2050 generate_hiad_dashboard_proof <> x:1 var
+R2089:2092 Coq.Reals.Rdefinitions <> Rdiv def
+R2108:2118 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2108:2118 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2108:2118 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2132:2141 Coq.Reals.Raxioms <> Rmult_comm thm
+R2132:2141 Coq.Reals.Raxioms <> Rmult_comm thm
+R2132:2141 Coq.Reals.Raxioms <> Rmult_comm thm
+R2159:2169 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2159:2169 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2159:2169 Coq.Reals.Raxioms <> Rmult_assoc thm
+R2183:2192 Coq.Reals.Raxioms <> Rmult_comm thm
+R2197:2198 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2183:2192 Coq.Reals.Raxioms <> Rmult_comm thm
+R2197:2198 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2183:2192 Coq.Reals.Raxioms <> Rmult_comm thm
+R2197:2198 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2215:2220 Coq.Reals.Raxioms <> Rinv_l thm
+R2215:2220 Coq.Reals.Raxioms <> Rinv_l thm
+R2215:2220 Coq.Reals.Raxioms <> Rinv_l thm
+R2240:2248 Coq.Reals.RIneq <> Rmult_1_r thm
+R2240:2248 Coq.Reals.RIneq <> Rmult_1_r thm
+R2240:2248 Coq.Reals.RIneq <> Rmult_1_r thm
+R2277:2293 generate_hiad_dashboard_proof Cancel_Mul_Helper <> sec
+prf 2303:2311 <> rdiv_lt_1
+binder 2322:2322 <> a:3
+binder 2324:2324 <> b:4
+R2332:2335 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2328:2330 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2331:2331 generate_hiad_dashboard_proof <> b:4 var
+R2341:2344 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2337:2339 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2336:2336 generate_hiad_dashboard_proof <> a:3 var
+R2340:2340 generate_hiad_dashboard_proof <> b:4 var
+R2350:2352 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2346:2348 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R2345:2345 generate_hiad_dashboard_proof <> a:3 var
+R2349:2349 generate_hiad_dashboard_proof <> b:4 var
+R2401:2404 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R2401:2404 Coq.Init.Logic <> ::type_scope:x_'<>'_x not
+R2441:2443 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R2431:2434 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2440:2440 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2436:2438 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R2457:2466 generate_hiad_dashboard_proof <> cancel_mul thm
+R2441:2443 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R2431:2434 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2440:2440 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R2436:2438 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R2457:2466 generate_hiad_dashboard_proof <> cancel_mul thm
+R2490:2503 Coq.Reals.RIneq <> Rmult_lt_reg_l thm
+R2490:2503 Coq.Reals.RIneq <> Rmult_lt_reg_l thm
+R2546:2554 Coq.Reals.RIneq <> Rmult_1_r thm
+R2546:2554 Coq.Reals.RIneq <> Rmult_1_r thm
+R2546:2554 Coq.Reals.RIneq <> Rmult_1_r thm
+prf 2580:2590 <> rdiv_nonneg
+binder 2601:2601 <> a:5
+binder 2603:2603 <> b:6
+R2612:2615 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2607:2610 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R2611:2611 generate_hiad_dashboard_proof <> a:5 var
+R2621:2624 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R2617:2619 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2620:2620 generate_hiad_dashboard_proof <> b:6 var
+R2626:2629 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R2631:2633 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R2630:2630 generate_hiad_dashboard_proof <> a:5 var
+R2634:2634 generate_hiad_dashboard_proof <> b:6 var
+R2682:2684 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2685:2686 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2700:2715 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R2682:2684 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R2685:2686 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R2700:2715 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R2737:2742 Coq.Reals.RIneq <> Rlt_le thm
+R2737:2742 Coq.Reals.RIneq <> Rlt_le thm
+R2762:2765 Coq.Reals.Rdefinitions <> Rdiv def
+R2776:2787 Coq.Reals.RIneq <> Rmult_le_pos thm
+R2776:2787 Coq.Reals.RIneq <> Rmult_le_pos thm
+def 3057:3070 <> frame_progress
+R3094:3094 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3073:3077 <> frame:7
+binder 3079:3081 <> fps:8
+binder 3083:3090 <> duration:9
+R3099:3099 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3109:3112 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3127:3127 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3104:3108 generate_hiad_dashboard_proof <> frame:7 var
+R3116:3118 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3113:3115 generate_hiad_dashboard_proof <> fps:8 var
+R3119:3126 generate_hiad_dashboard_proof <> duration:9 var
+def 3142:3151 <> frame_time
+R3166:3166 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 3154:3158 <> frame:10
+binder 3160:3162 <> fps:11
+R3171:3171 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R3181:3183 Coq.Reals.Rdefinitions <> ::R_scope:x_'/'_x not
+R3176:3180 generate_hiad_dashboard_proof <> frame:10 var
+R3184:3186 generate_hiad_dashboard_proof <> fps:11 var
+prf 3453:3473 <> frame_progress_bounds
+binder 3484:3488 <> frame:12
+binder 3490:3492 <> fps:13
+binder 3494:3501 <> duration:14
+R3514:3517 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3508:3510 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3511:3513 generate_hiad_dashboard_proof <> fps:13 var
+R3530:3533 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3519:3521 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3522:3529 generate_hiad_dashboard_proof <> duration:14 var
+R3544:3547 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3535:3538 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3539:3543 generate_hiad_dashboard_proof <> frame:12 var
+R3570:3576 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3553:3555 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3548:3552 generate_hiad_dashboard_proof <> frame:12 var
+R3559:3561 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3556:3558 generate_hiad_dashboard_proof <> fps:13 var
+R3562:3569 generate_hiad_dashboard_proof <> duration:14 var
+R3615:3618 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R3578:3581 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3582:3595 generate_hiad_dashboard_proof <> frame_progress def
+R3597:3601 generate_hiad_dashboard_proof <> frame:12 var
+R3603:3605 generate_hiad_dashboard_proof <> fps:13 var
+R3607:3614 generate_hiad_dashboard_proof <> duration:14 var
+R3652:3654 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3619:3632 generate_hiad_dashboard_proof <> frame_progress def
+R3634:3638 generate_hiad_dashboard_proof <> frame:12 var
+R3640:3642 generate_hiad_dashboard_proof <> fps:13 var
+R3644:3651 generate_hiad_dashboard_proof <> duration:14 var
+R3725:3727 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3731:3733 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3725:3727 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3731:3733 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R3755:3771 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R3755:3771 Coq.Reals.RIneq <> Rmult_lt_0_compat thm
+R3808:3821 generate_hiad_dashboard_proof <> frame_progress def
+R3843:3853 generate_hiad_dashboard_proof <> rdiv_nonneg thm
+R3843:3853 generate_hiad_dashboard_proof <> rdiv_nonneg thm
+R3892:3900 generate_hiad_dashboard_proof <> rdiv_lt_1 thm
+R3892:3900 generate_hiad_dashboard_proof <> rdiv_lt_1 thm
+prf 3941:3959 <> frame_time_monotone
+binder 3970:3971 <> f1:15
+binder 3973:3974 <> f2:16
+binder 3976:3978 <> fps:17
+R3991:3994 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3985:3987 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R3988:3990 generate_hiad_dashboard_proof <> fps:17 var
+R4003:4006 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R3997:4000 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R3995:3996 generate_hiad_dashboard_proof <> f1:15 var
+R4001:4002 generate_hiad_dashboard_proof <> f2:16 var
+R4014:4017 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4008:4011 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4012:4013 generate_hiad_dashboard_proof <> f1:15 var
+R4035:4038 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4018:4027 generate_hiad_dashboard_proof <> frame_time def
+R4029:4030 generate_hiad_dashboard_proof <> f1:15 var
+R4032:4034 generate_hiad_dashboard_proof <> fps:17 var
+R4039:4048 generate_hiad_dashboard_proof <> frame_time def
+R4050:4051 generate_hiad_dashboard_proof <> f2:16 var
+R4053:4055 generate_hiad_dashboard_proof <> fps:17 var
+R4104:4113 generate_hiad_dashboard_proof <> frame_time def
+R4134:4136 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4137:4138 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4154:4169 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4134:4136 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R4137:4138 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4154:4169 Coq.Reals.RIneq <> Rinv_0_lt_compat thm
+R4209:4212 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4201:4203 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4204:4205 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4215:4217 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4218:4219 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4209:4212 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4201:4203 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4204:4205 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4215:4217 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4218:4219 Coq.Reals.Rdefinitions <> ::R_scope:'/'_x not
+R4236:4252 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+R4236:4252 Coq.Reals.RIneq <> Rmult_le_compat_r thm
+def 4504:4509 <> n_show
+R4520:4522 Coq.Init.Datatypes <> nat ind
+binder 4512:4516 <> n_pts:18
+R4537:4537 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 4526:4533 <> progress:19
+R4542:4542 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+R4547:4550 Coq.Reals.Rbasic_fun <> Rmax def
+R4564:4566 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R4555:4557 Coq.Reals.Raxioms <> INR def
+R4559:4563 generate_hiad_dashboard_proof <> n_pts:18 var
+R4567:4574 generate_hiad_dashboard_proof <> progress:19 var
+prf 4818:4836 <> n_show_at_least_one
+binder 4847:4851 <> n_pts:20
+binder 4853:4860 <> progress:21
+R4864:4867 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R4868:4873 generate_hiad_dashboard_proof <> n_show def
+R4875:4879 generate_hiad_dashboard_proof <> n_pts:20 var
+R4881:4888 generate_hiad_dashboard_proof <> progress:21 var
+R4932:4937 generate_hiad_dashboard_proof <> n_show def
+R4948:4953 Coq.Reals.Rbasic_fun <> Rmax_l thm
+R4948:4953 Coq.Reals.Rbasic_fun <> Rmax_l thm
+prf 5325:5338 <> inr_pts_nonneg
+binder 5349:5353 <> n_pts:22
+R5357:5360 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5361:5363 Coq.Reals.Raxioms <> INR def
+R5365:5369 generate_hiad_dashboard_proof <> n_pts:22 var
+R5403:5409 Coq.Reals.RIneq <> pos_INR thm
+R5403:5409 Coq.Reals.RIneq <> pos_INR thm
+prf 5424:5441 <> n_show_le_geometry
+binder 5452:5456 <> n_pts:23
+binder 5458:5465 <> progress:24
+R5484:5487 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5472:5475 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5476:5483 generate_hiad_dashboard_proof <> progress:24 var
+R5501:5507 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5496:5499 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5488:5495 generate_hiad_dashboard_proof <> progress:24 var
+R5529:5532 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5508:5513 generate_hiad_dashboard_proof <> n_show def
+R5515:5519 generate_hiad_dashboard_proof <> n_pts:23 var
+R5521:5528 generate_hiad_dashboard_proof <> progress:24 var
+R5533:5536 Coq.Reals.Rbasic_fun <> Rmax def
+R5541:5543 Coq.Reals.Raxioms <> INR def
+R5545:5549 generate_hiad_dashboard_proof <> n_pts:23 var
+R5611:5614 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5615:5617 Coq.Reals.Raxioms <> INR def
+R5635:5648 generate_hiad_dashboard_proof <> inr_pts_nonneg thm
+R5611:5614 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5615:5617 Coq.Reals.Raxioms <> INR def
+R5635:5648 generate_hiad_dashboard_proof <> inr_pts_nonneg thm
+R5660:5665 generate_hiad_dashboard_proof <> n_show def
+R5680:5686 Coq.Reals.RIneq <> Rle_dec thm
+R5700:5702 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5691:5693 Coq.Reals.Raxioms <> INR def
+R5680:5686 Coq.Reals.RIneq <> Rle_dec thm
+R5700:5702 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5691:5693 Coq.Reals.Raxioms <> INR def
+R5738:5747 Coq.Reals.Rbasic_fun <> Rmax_right thm
+R5738:5747 Coq.Reals.Rbasic_fun <> Rmax_right thm
+R5738:5747 Coq.Reals.Rbasic_fun <> Rmax_right thm
+R5799:5802 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5788:5790 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5779:5781 Coq.Reals.Raxioms <> INR def
+R5803:5805 Coq.Reals.Raxioms <> INR def
+R5799:5802 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5788:5790 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5779:5781 Coq.Reals.Raxioms <> INR def
+R5803:5805 Coq.Reals.Raxioms <> INR def
+R5854:5857 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5843:5845 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5834:5836 Coq.Reals.Raxioms <> INR def
+R5867:5869 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5858:5860 Coq.Reals.Raxioms <> INR def
+R5854:5857 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R5843:5845 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5834:5836 Coq.Reals.Raxioms <> INR def
+R5867:5869 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R5858:5860 Coq.Reals.Raxioms <> INR def
+R5888:5904 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+R5888:5904 Coq.Reals.RIneq <> Rmult_le_compat_l thm
+R5949:5957 Coq.Reals.RIneq <> Rmult_1_r thm
+R5949:5957 Coq.Reals.RIneq <> Rmult_1_r thm
+R5949:5957 Coq.Reals.RIneq <> Rmult_1_r thm
+R6016:6018 Coq.Reals.Raxioms <> INR def
+R5994:6002 Coq.Reals.RIneq <> Rle_trans thm
+R6016:6018 Coq.Reals.Raxioms <> INR def
+R5994:6002 Coq.Reals.RIneq <> Rle_trans thm
+R6057:6062 Coq.Reals.Rbasic_fun <> Rmax_r thm
+R6057:6062 Coq.Reals.Rbasic_fun <> Rmax_r thm
+R6075:6084 Coq.Reals.RIneq <> Rnot_le_lt thm
+R6075:6084 Coq.Reals.RIneq <> Rnot_le_lt thm
+R6102:6107 Coq.Reals.RIneq <> Rlt_le thm
+R6102:6107 Coq.Reals.RIneq <> Rlt_le thm
+R6127:6135 Coq.Reals.Rbasic_fun <> Rmax_left thm
+R6127:6135 Coq.Reals.Rbasic_fun <> Rmax_left thm
+R6127:6135 Coq.Reals.Rbasic_fun <> Rmax_left thm
+R6159:6164 Coq.Reals.Rbasic_fun <> Rmax_l thm
+R6159:6164 Coq.Reals.Rbasic_fun <> Rmax_l thm
+sec 6560:6566 <> NatPart
+def 6609:6622 <> mirrored_total
+R6636:6638 Coq.Init.Datatypes <> nat ind
+binder 6625:6632 <> revealed:25
+R6643:6645 Coq.Init.Datatypes <> nat ind
+R6651:6653 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R6654:6661 generate_hiad_dashboard_proof <> revealed:25 var
+prf 6671:6692 <> mirrored_total_nonzero
+binder 6703:6710 <> revealed:26
+R6726:6729 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6714:6717 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R6718:6725 generate_hiad_dashboard_proof <> revealed:26 var
+R6731:6734 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R6735:6748 generate_hiad_dashboard_proof <> mirrored_total def
+R6750:6757 generate_hiad_dashboard_proof <> revealed:26 var
+R6797:6810 generate_hiad_dashboard_proof <> mirrored_total def
+R6832:6834 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R6832:6834 Coq.Init.Peano <> ::nat_scope:x_'<'_x not
+R6868:6871 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R6864:6866 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R6873:6875 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R6896:6912 Coq.Arith.PeanoNat Nat mul_le_mono_l thm
+R6868:6871 Coq.Init.Peano <> ::nat_scope:x_'<='_x not
+R6864:6866 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R6873:6875 Coq.Init.Peano <> ::nat_scope:x_'*'_x not
+R6896:6912 Coq.Arith.PeanoNat Nat mul_le_mono_l thm
+R6945:6951 generate_hiad_dashboard_proof NatPart <> sec

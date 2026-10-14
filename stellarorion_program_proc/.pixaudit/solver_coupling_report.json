@@ -1,0 +1,289 @@
+{
+  "figure": "/Users/albertstarfield/Documents/NeoSchool14/for_someone/StellarOrion_HypersonicEdition/Lost+Found/ProgressReport/CurrentThesisFinalReport/figures/solver_coupling.png",
+  "size": [
+    1951,
+    1078
+  ],
+  "fit": {
+    "s_x": 290.921,
+    "bx": 30.079,
+    "s_y": 291.818,
+    "cy": 1049.59
+  },
+  "labels": {
+    "surface heat flux": {
+      "data": [
+        1.55,
+        2.55
+      ],
+      "annotates": "SPARTA->OpenFOAM horizontal (top row)",
+      "bbox": [
+        335,
+        267,
+        649,
+        295
+      ],
+      "glyphs": 13,
+      "groups_dil12": 1,
+      "gap_border": 23.0,
+      "gap_fill": 28.0,
+      "gap_box_text": 36.0,
+      "gap_arrow": 11.0,
+      "gap_annotated_arrow": 116.0,
+      "arrow_bbox": [
+        531,
+        411,
+        657,
+        433
+      ],
+      "gaps_other_labels": {
+        "backface temperature": 49.8196748283246,
+        "grid dump": 359.0,
+        "refined field": 441.2640932593541,
+        "new design": 828.7128573878892
+      },
+      "ocr": {
+        "psm7": "turface heat flux",
+        "psm13": "turface heat flux",
+        "psm6": "turface heat flux",
+        "psm8": "turface heat flux"
+      },
+      "glyph_heights": [
+        21,
+        21,
+        21,
+        22,
+        22,
+        22,
+        22,
+        22,
+        22,
+        27,
+        29,
+        29,
+        29
+      ],
+      "min_glyph_height": 21,
+      "render_pred_ink": [
+        320.0,
+        268.5,
+        642.0,
+        297.7
+      ],
+      "residual_obs_minus_pred": [
+        15.0,
+        -1.5,
+        7.0,
+        -2.7
+      ],
+      "check_a": true,
+      "check_c": true,
+      "check_e": true
+    },
+    "backface temperature": {
+      "data": [
+        3.05,
+        2.55
+      ],
+      "annotates": "OpenFOAM->Survivability horizontal (top row)",
+      "bbox": [
+        696,
+        267,
+        1138,
+        303
+      ],
+      "glyphs": 19,
+      "groups_dil12": 1,
+      "gap_border": 15.0,
+      "gap_fill": 20.0,
+      "gap_box_text": 76.16429609731846,
+      "gap_arrow": 33.0,
+      "gap_annotated_arrow": 116.0,
+      "arrow_bbox": [
+        1084,
+        411,
+        1210,
+        433
+      ],
+      "gaps_other_labels": {
+        "surface heat flux": 49.8196748283246,
+        "grid dump": 384.8597147013441,
+        "refined field": 351.5693388223723,
+        "new design": 344.6055716322648
+      },
+      "ocr": {
+        "psm7": "backface temperature",
+        "psm13": "backface temperature",
+        "psm6": "backface temperature",
+        "psm8": "backface temperature"
+      },
+      "glyph_heights": [
+        21,
+        22,
+        22,
+        22,
+        22,
+        22,
+        22,
+        22,
+        22,
+        22,
+        22,
+        22,
+        22,
+        27,
+        27,
+        29,
+        29,
+        29,
+        30
+      ],
+      "min_glyph_height": 21,
+      "render_pred_ink": [
+        706.0,
+        267.5,
+        1128.8,
+        304.5
+      ],
+      "residual_obs_minus_pred": [
+        -10.0,
+        -0.5,
+        9.2,
+        -1.5
+      ],
+      "check_a": true,
+      "check_c": true,
+      "check_e": true
+    },
+    "grid dump": {
+      "data": [
+        1.55,
+        1.22
+      ],
+      "annotates": "SPARTA->PINN vertical (inter-row)",
+      "bbox": [
+        381,
+        654,
+        580,
+        690
+      ],
+      "glyphs": 8,
+      "groups_dil12": 1,
+      "gap_border": 7.0,
+      "gap_fill": 11.0,
+      "gap_box_text": 73.24616030891995,
+      "gap_arrow": 49.64876634922564,
+      "gap_annotated_arrow": 49.0,
+      "arrow_bbox": [
+        310,
+        530,
+        332,
+        685
+      ],
+      "gaps_other_labels": {
+        "surface heat flux": 359.0,
+        "backface temperature": 384.8597147013441,
+        "refined field": 306.08005488760614,
+        "new design": 1004.4705072823193
+      },
+      "ocr": {
+        "psm7": "grid dump",
+        "psm13": "grid dump",
+        "psm6": "grid dump",
+        "psm8": "grid dump"
+      },
+      "glyph_heights": [
+        21,
+        21,
+        22,
+        22,
+        29,
+        29,
+        30,
+        30
+      ],
+      "min_glyph_height": 21,
+      "render_pred_ink": [
+        383.1,
+        655.6,
+        577.0,
+        692.6
+      ],
+      "residual_obs_minus_pred": [
+        -2.1,
+        -1.6,
+        3.0,
+        -2.6
+      ],
+      "check_a": true,
+      "check_c": true,
+      "check_e": true
+    },
+    "refined field": {
+      "data": [
+        3.35,
+        1.22
+      ],
+      "annotates": "OpenFOAM->Bayes vertical (inter-row)",
+      "bbox": [
+        886,
+        654,
+        1125,
+        682
+      ],
+      "glyphs": 10,
+      "groups_dil12": 1,
+      "gap_border": 15.0,
+      "gap_fill": 19.0,
+      "gap_box_text": 74.33034373659252,
+      "gap_arrow": 11.0,
+      "gap_annotated_arrow": 11.0,
+      "arrow_bbox": [
+        862,
+        530,
+        875,
+        685
+      ],
+      "gaps_other_labels": {
+        "surface heat flux": 441.2640932593541,
+        "backface temperature": 351.5693388223723,
+        "grid dump": 306.08005488760614,
+        "new design": 566.935622447558
+      },
+      "ocr": {
+        "psm7": "yrefined field",
+        "psm13": "prefined field",
+        "psm6": "yrefined field",
+        "psm8": "prefined field"
+      },
+      "glyph_heights": [
+        22,
+        22,
+        22,
+        22,
+        22,
+        29,
+        29,
+        29,
+        29,
+        29
+      ],
+      "min_glyph_height": 22,
+      "render_pred_ink": [
+        891.2,
+        655.6,
+        1119.1,
+        684.8
+      ],
+      "residual_obs_minus_pred": [
+        -5.2,
+        -1.6,
+        5.9,
+        -2.8
+      ],
+      "check_a": true,
+      "check_c": true,
+      "check_e": true
+    }
+  }
+}

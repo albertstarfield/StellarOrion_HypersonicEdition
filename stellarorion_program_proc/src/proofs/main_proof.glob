@@ -1,0 +1,104 @@
+DIGEST 0085f2577b41dc25b430bbc6fef37a3f
+Fmain_proof
+R4796:4810 Coq.Reals.Reals <> <> lib
+R4828:4844 Coq.micromega.Lra <> <> lib
+def 5003:5017 <> DISPATCH_GUARDS
+R5021:5021 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 5111:5131 <> DOCUMENTED_MODE_FLAGS
+R5135:5135 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 5277:5294 <> SHARED_FLAG_GUARDS
+R5298:5298 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 5391:5415 <> UNKNOWN_MODE_FALLTHROUGHS
+R5419:5419 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 5496:5508 <> DEFAULT_STEPS
+R5512:5512 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 5578:5599 <> SAMPLE_SHORTHAND_STEPS
+R5603:5603 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 5637:5650 <> UNSTEADY_STEPS
+R5654:5654 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 5697:5718 <> PINN_CALIBRATION_STEPS
+R5722:5722 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 5757:5777 <> PINN_VALIDATION_STEPS
+R5781:5781 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+prf 5955:5991 <> dispatch_covers_every_documented_flag
+R6018:6020 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5997:6017 main_proof <> DOCUMENTED_MODE_FLAGS def
+R6036:6038 Coq.Reals.Rdefinitions <> ::R_scope:x_'+'_x not
+R6021:6035 main_proof <> DISPATCH_GUARDS def
+R6039:6056 main_proof <> SHARED_FLAG_GUARDS def
+R6075:6095 main_proof <> DOCUMENTED_MODE_FLAGS def
+R6098:6112 main_proof <> DISPATCH_GUARDS def
+R6115:6132 main_proof <> SHARED_FLAG_GUARDS def
+prf 6407:6441 <> dispatch_guards_do_not_exceed_flags
+R6462:6465 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6447:6461 main_proof <> DISPATCH_GUARDS def
+R6466:6486 main_proof <> DOCUMENTED_MODE_FLAGS def
+R6505:6519 main_proof <> DISPATCH_GUARDS def
+R6522:6542 main_proof <> DOCUMENTED_MODE_FLAGS def
+prf 6757:6792 <> dispatch_arms_are_mutually_exclusive
+R6820:6820 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 6805:6816 <> handlers_run:1
+R6840:6843 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6835:6838 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6823:6834 main_proof <> handlers_run:1 var
+R6856:6859 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R6844:6855 main_proof <> handlers_run:1 var
+R6860:6874 main_proof <> DISPATCH_GUARDS def
+R6921:6935 main_proof <> DISPATCH_GUARDS def
+prf 7140:7173 <> unknown_mode_fallthrough_is_unique
+R7204:7206 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7179:7203 main_proof <> UNKNOWN_MODE_FALLTHROUGHS def
+R7226:7250 main_proof <> UNKNOWN_MODE_FALLTHROUGHS def
+prf 7479:7503 <> mode_step_counts_positive
+R7518:7518 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+binder 7514:7514 <> n:2
+R7655:7664 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R7540:7543 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R7524:7526 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7523:7523 main_proof <> n:2 var
+R7527:7539 main_proof <> DEFAULT_STEPS def
+R7562:7565 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R7545:7547 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7544:7544 main_proof <> n:2 var
+R7548:7561 main_proof <> UNSTEADY_STEPS def
+R7592:7599 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R7567:7569 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7566:7566 main_proof <> n:2 var
+R7570:7591 main_proof <> PINN_CALIBRATION_STEPS def
+R7625:7628 Coq.Init.Logic <> ::type_scope:x_'\/'_x not
+R7601:7603 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7600:7600 main_proof <> n:2 var
+R7604:7624 main_proof <> PINN_VALIDATION_STEPS def
+R7630:7632 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R7629:7629 main_proof <> n:2 var
+R7633:7654 main_proof <> SAMPLE_SHORTHAND_STEPS def
+R7666:7668 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R7669:7669 main_proof <> n:2 var
+R7760:7772 main_proof <> DEFAULT_STEPS def
+R7802:7815 main_proof <> UNSTEADY_STEPS def
+R7845:7866 main_proof <> PINN_CALIBRATION_STEPS def
+R7896:7916 main_proof <> PINN_VALIDATION_STEPS def
+R7946:7967 main_proof <> SAMPLE_SHORTHAND_STEPS def
+prf 8067:8101 <> unsteady_steps_is_ten_times_default
+R8125:8127 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R8109:8111 Coq.Reals.Rdefinitions <> ::R_scope:x_'*'_x not
+R8112:8124 main_proof <> DEFAULT_STEPS def
+R8128:8141 main_proof <> UNSTEADY_STEPS def
+R8160:8172 main_proof <> DEFAULT_STEPS def
+R8175:8188 main_proof <> UNSTEADY_STEPS def
+prf 8446:8469 <> mode_step_counts_ordered
+R8513:8520 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R8488:8491 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8475:8487 main_proof <> DEFAULT_STEPS def
+R8492:8512 main_proof <> PINN_VALIDATION_STEPS def
+R8568:8577 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R8542:8545 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8521:8541 main_proof <> PINN_VALIDATION_STEPS def
+R8546:8567 main_proof <> PINN_CALIBRATION_STEPS def
+R8600:8603 Coq.Reals.Rdefinitions <> ::R_scope:x_'<='_x not
+R8578:8599 main_proof <> PINN_CALIBRATION_STEPS def
+R8604:8617 main_proof <> UNSTEADY_STEPS def
+R8636:8648 main_proof <> DEFAULT_STEPS def
+R8651:8664 main_proof <> UNSTEADY_STEPS def
+R8667:8688 main_proof <> PINN_CALIBRATION_STEPS def
+R8700:8720 main_proof <> PINN_VALIDATION_STEPS def

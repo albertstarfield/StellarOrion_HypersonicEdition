@@ -1,0 +1,142 @@
+DIGEST 70a10e090566c94f48cf6e6a304b01a9
+F__init___proof
+R2928:2942 Coq.Reals.Reals <> <> lib
+R2960:2976 Coq.micromega.Lra <> <> lib
+R2994:3010 Coq.micromega.Lia <> <> lib
+def 3300:3313 <> module_imports
+R3322:3324 Coq.Init.Datatypes <> nat ind
+binder 3316:3316 <> a:1
+binder 3318:3318 <> b:2
+R3329:3331 Coq.Init.Datatypes <> nat ind
+R3336:3336 Coq.Init.Datatypes <> O constr
+def 3502:3512 <> import_path
+R3519:3521 Coq.Init.Datatypes <> nat ind
+binder 3515:3515 <> a:3
+R3529:3531 Coq.Init.Datatypes <> nat ind
+binder 3525:3525 <> k:4
+R3539:3541 Coq.Init.Datatypes <> nat ind
+binder 3535:3535 <> b:5
+R3562:3562 __init___proof <> k:4 var
+R3573:3573 Coq.Init.Datatypes <> O constr
+R3579:3581 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3578:3578 __init___proof <> b:5 var
+R3582:3582 __init___proof <> a:3 var
+R3588:3588 Coq.Init.Datatypes <> S constr
+R3596:3602 Coq.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R3604:3605 Coq.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 3603:3603 <> c:8
+R3630:3633 Coq.Init.Logic <> ::type_scope:x_'/\'_x not
+R3624:3626 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3606:3619 __init___proof <> module_imports def
+R3621:3621 __init___proof <> a:3 var
+R3623:3623 __init___proof <> c:8 var
+R3627:3627 Coq.Init.Datatypes <> S constr
+R3629:3629 Coq.Init.Datatypes <> O constr
+R3634:3644 __init___proof <> import_path:6 def
+R3651:3651 __init___proof <> b:5 var
+R3646:3646 __init___proof <> c:8 var
+prf 3734:3753 <> module_imports_empty
+R3770:3772 Coq.Init.Datatypes <> nat ind
+binder 3764:3764 <> a:9
+binder 3766:3766 <> b:10
+R3793:3795 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R3775:3788 __init___proof <> module_imports def
+R3790:3790 __init___proof <> a:9 var
+R3792:3792 __init___proof <> b:10 var
+R3796:3796 Coq.Init.Datatypes <> O constr
+R3829:3842 __init___proof <> module_imports def
+prf 4076:4117 <> no_positive_length_import_path_from_marker
+R4136:4138 Coq.Init.Datatypes <> nat ind
+binder 4130:4130 <> k:11
+binder 4132:4132 <> b:12
+R4162:4165 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R4141:4151 __init___proof <> import_path def
+R4153:4153 Coq.Init.Datatypes <> O constr
+R4156:4156 Coq.Init.Datatypes <> S constr
+R4158:4158 __init___proof <> k:11 var
+R4161:4161 __init___proof <> b:12 var
+R4166:4170 Coq.Init.Logic <> False ind
+R4295:4297 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4277:4290 __init___proof <> module_imports def
+R4292:4292 Coq.Init.Datatypes <> O constr
+R4298:4298 Coq.Init.Datatypes <> O constr
+R4311:4330 __init___proof <> module_imports_empty thm
+R4332:4332 Coq.Init.Datatypes <> O constr
+R4295:4297 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4277:4290 __init___proof <> module_imports def
+R4292:4292 Coq.Init.Datatypes <> O constr
+R4298:4298 Coq.Init.Datatypes <> O constr
+R4311:4330 __init___proof <> module_imports_empty thm
+R4332:4332 Coq.Init.Datatypes <> O constr
+R4620:4622 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4602:4615 __init___proof <> module_imports def
+R4617:4617 Coq.Init.Datatypes <> O constr
+R4623:4623 Coq.Init.Datatypes <> O constr
+R4636:4655 __init___proof <> module_imports_empty thm
+R4657:4657 Coq.Init.Datatypes <> O constr
+R4620:4622 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R4602:4615 __init___proof <> module_imports def
+R4617:4617 Coq.Init.Datatypes <> O constr
+R4623:4623 Coq.Init.Datatypes <> O constr
+R4636:4655 __init___proof <> module_imports_empty thm
+R4657:4657 Coq.Init.Datatypes <> O constr
+prf 5028:5053 <> marker_reaches_only_itself
+R5070:5072 Coq.Init.Datatypes <> nat ind
+binder 5064:5064 <> k:13
+binder 5066:5066 <> b:14
+R5092:5095 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R5075:5085 __init___proof <> import_path def
+R5087:5087 Coq.Init.Datatypes <> O constr
+R5089:5089 __init___proof <> k:13 var
+R5091:5091 __init___proof <> b:14 var
+R5097:5099 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R5096:5096 __init___proof <> b:14 var
+R5100:5100 Coq.Init.Datatypes <> O constr
+R5326:5367 __init___proof <> no_positive_length_import_path_from_marker thm
+R5326:5367 __init___proof <> no_positive_length_import_path_from_marker thm
+prf 5531:5553 <> no_cycle_through_marker
+R5568:5570 Coq.Init.Datatypes <> nat ind
+binder 5564:5564 <> k:15
+R5573:5574 Coq.Init.Logic <> ::type_scope:'~'_x not
+R5575:5585 __init___proof <> import_path def
+R5587:5587 Coq.Init.Datatypes <> O constr
+R5590:5590 Coq.Init.Datatypes <> S constr
+R5592:5592 __init___proof <> k:15 var
+R5595:5595 Coq.Init.Datatypes <> O constr
+R5639:5643 Coq.Init.Logic <> False ind
+R5660:5701 __init___proof <> no_positive_length_import_path_from_marker thm
+R5705:5705 Coq.Init.Datatypes <> O constr
+R5639:5643 Coq.Init.Logic <> False ind
+R5660:5701 __init___proof <> no_positive_length_import_path_from_marker thm
+R5705:5705 Coq.Init.Datatypes <> O constr
+def 5965:5988 <> marker_import_statements
+R5992:5992 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+def 6011:6031 <> documented_submodules
+R6035:6035 Coq.Reals.Rdefinitions RbaseSymbolsImpl R defax
+prf 6127:6153 <> marker_imports_no_submodule
+R6183:6185 Coq.Reals.Rdefinitions <> ::R_scope:x_'<'_x not
+R6159:6182 __init___proof <> marker_import_statements def
+R6186:6206 __init___proof <> documented_submodules def
+R6225:6248 __init___proof <> marker_import_statements def
+R6251:6271 __init___proof <> documented_submodules def
+prf 6413:6437 <> marker_out_degree_is_zero
+R6465:6467 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6441:6464 __init___proof <> marker_import_statements def
+R6487:6510 __init___proof <> marker_import_statements def
+prf 6719:6745 <> marker_import_depth_is_zero
+R6760:6762 Coq.Init.Datatypes <> nat ind
+binder 6756:6756 <> b:16
+R6782:6785 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R6765:6775 __init___proof <> import_path def
+R6777:6777 Coq.Init.Datatypes <> O constr
+R6779:6779 __init___proof <> b:16 var
+R6781:6781 __init___proof <> b:16 var
+R6787:6789 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6786:6786 __init___proof <> b:16 var
+R6790:6790 Coq.Init.Datatypes <> O constr
+R6830:6832 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6833:6833 Coq.Init.Datatypes <> O constr
+R6846:6871 __init___proof <> marker_reaches_only_itself thm
+R6830:6832 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R6833:6833 Coq.Init.Datatypes <> O constr
+R6846:6871 __init___proof <> marker_reaches_only_itself thm

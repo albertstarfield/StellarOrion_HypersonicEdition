@@ -25,7 +25,7 @@ A realistic 5-species air model (N$_2$, O$_2$, NO, N, O) with Variable Soft Sphe
 \subsection{Optimization and Thermal Constraint}
 The optimization work evaluated a 15-point central composite screen~\cite{Montgomery2017} and, separately, a 70-entry Bayesian Optimization campaign (20 Latin Hypercube designs and 50 Expected-Improvement iterations)~\cite{sklearn2024gp} across three design variables (nose radius, toroid radius, half-cone angle). The constrained single-objective cost trades total heat load against drag with one-sided backface-temperature and deceleration-load constraints, and the campaign converged toward a larger-nose design that then passed the DSMC validation gate of Chapter~\ref{ch:results}.
 
-The thermal constraint is violated: the active TPS reports a backface temperature of 955.66\,K, exceeding the Kapton limit of 773\,K by 182.7\,K~\cite{old2013irve3postflight}. The system is the five-ply IRVE-3 flexible TPS (two 0.60\,mm Nextel BF-20 outer fabric plies, two 2.50\,mm Pyrogel 2250 insulation plies, one 0.15\,mm aluminized Kapton/Kevlar gas barrier), totaling 6.35\,mm with series resistance $R = 0.25605$\,m$^2$\,K/W and outer emissivity 0.80. Survival is judged on four fronts: surface temperature under 2073\,K, backface temperature under 773\,K, and both measured and computed deceleration under 25\,g. The thermal channel binds; the deceleration channel passes with margin.
+The thermal constraint is violated: the active TPS reports a backface temperature of 955.66\,K, exceeding the Kapton limit of 773\,K by 182.7\,K~\cite{old2013irve3postflight}. The system is the five-ply second-generation flexible TPS (two 0.506\,mm Nicalon SiC outer fabric plies, two 3.047\,mm Pyrogel 3350 insulation plies, one 0.025\,mm Kapton gas barrier), totaling 7.131\,mm with series resistance $R = 0.305583$\,m$^2$\,K/W and outer emissivity 0.80. Survival is judged on four fronts: surface temperature under 2073\,K, backface temperature under 773\,K, and both measured and computed deceleration under 25\,g. The thermal channel binds; the deceleration channel passes with margin.
 
 \section{Contributions}
 \begin{enumerate}
@@ -51,7 +51,7 @@ Results come from 2D axisymmetric cases at zero angle of attack; full 3D runs at
 The HIAD is treated as rigid and fully inflated. Coupling DSMC aerothermal loads to a structural finite element model would enable fluid-structure interaction (FSI) analysis of deformation and its flow-field effects.
 
 \subsection{Gen-2 and Gen-3 TPS Material Assessment}
-The baseline is the IRVE-3 Gen-1 TPS (Nextel/Pyrogel). Evaluate thermal margins for Gen-2 (SiC/Carbon) and Gen-3 TPS materials under the predicted scalloped heating profiles, especially for Mars entry, where atmospheric composition differs~\cite{Guidotti2023EFESTO2}.
+The baseline is the second-generation flexible TPS (Nicalon SiC / Pyrogel 3350 / Kapton). Evaluate thermal margins for Gen-3 TPS materials under the predicted scalloped heating profiles, especially for Mars entry, where atmospheric composition differs~\cite{Guidotti2023EFESTO2}.
 
 \subsection{Mars Entry Extension}
 Extend the framework to Mars entry with a CO$_2$-dominated composition and updated SPARTA gas model. Replace the Sutton-Graves correlation with the West and Brandis~\cite{west2020mars} (2020) Mars correlation and the 5-species air model with a CO$_2$/N$_2$/Ar mixture.

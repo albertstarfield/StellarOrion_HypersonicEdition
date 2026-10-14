@@ -591,7 +591,7 @@ package body StellarOrion_Project is
       --  TPS material preset (from --tps or --tps-material)
       if TPS_Str = "irve3-ftps" or else TPS_Material_Str = "irve3-ftps" then
          --  IRVE-3 F-TPS: lumped-equivalent of TPS_Layup_IRVE3 (two Nextel
-         --  BF-20 plies / two Pyrogel 2250 plies / AKK gas barrier, 6.35 mm
+         --  BF-20 plies / two Pyrogel 3350 plies / AKK gas barrier, 6.35 mm
          --  total). Used by the single-slab consumers that cannot express a
          --  layup; the layup itself is what TPS_Conduction solves.
          TPS := TPS_IRVE3_FTPS;
