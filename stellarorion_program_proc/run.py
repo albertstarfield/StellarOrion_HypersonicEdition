@@ -1291,19 +1291,24 @@ def _sync_media_into_canonical_tree() -> None:
                 if p.suffix.lower() in {".png", ".mp4"}:
                     _copy_media(p, dest_dir / p.name)
 
-    # OptimizedTopology canonical tree
+    # OptimizedTopology canonical tree. We deliberately create ONLY the
+    # subfolders that will actually hold something (mp4 / plots), so an MP4-
+    # only source directory cannot leave behind a littered empty sibling.
     opt_src = Path(script_dir) / "results" / "OptimizedTopology" / "plots"
-    if opt_src.is_dir():
-        dest_dir = Path(media_out) / "optimized_topology" / "plots"
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        for p in opt_src.iterdir():
-            if p.suffix.lower() not in {".png", ".mp4"}:
-                continue
-            # MP4s get their own folder; PNGs stay in optimized_topology/plots.
+    # Collect the source artefacts once so we never mkdir an empty folder.
+    opt_sources = ([p for p in opt_src.iterdir()
+                   if p.suffix.lower() in {".png", ".mp4"}]
+                  if opt_src.is_dir() else [])
+    if opt_sources:
+        (Path(media_out) / "optimized_topology").mkdir(parents=True, exist_ok=True)
+        targets = sorted({"mp4" if p.suffix.lower() == ".mp4" else "plots"
+                            for p in opt_sources})
+        for sub in targets:
+            (Path(media_out) / "optimized_topology" / sub).mkdir(parents=True,
+                                                                  exist_ok=True)
+        for p in opt_sources:
             sub = "mp4" if p.suffix.lower() == ".mp4" else "plots"
-            target = Path(media_out) / "optimized_topology" / sub
-            target.mkdir(parents=True, exist_ok=True)
-            _copy_media(p, target / p.name)
+            _copy_media(p, Path(media_out) / "optimized_topology" / sub / p.name)
 
     # Root-level geometry/optimizer PNGs
     root_pngs = [
