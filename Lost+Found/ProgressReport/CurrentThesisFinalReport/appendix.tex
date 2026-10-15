@@ -206,8 +206,8 @@ The binary dispatches a range of command-line options, including \texttt{self-te
 \textbf{Tool} & \textbf{Invocation} & \textbf{Checked property} \\
 \hline
 Rocq 9.3.0 / Coq 8.18.0 & theorem files & Proof skeletons and contractual arithmetic, including orbit and ATP guarantees. \\
-GNATprove 16.1.0 & \texttt{gnatprove --level=4} & all enabled SPARK obligations on the Ada built-in, units and validation code. \\
-CrossHair & symbolic property checks & Python contract conformance for image and setup helpers. \\
+GNATprove 16.1.0 & \texttt{gnatprove --level=4} & SPARK level-4 campaign for the Ada built-in, units and validation code; the raw level-4 summary is reported, including the unproved checks that remain. \\
+CrossHair & theorem checker (Python) & Property-based theorem checking of Python code for contracted assumptions and equivalence. \\
 Pyrefly & static analysis & type consistency of the Python entry points and wrappers. \\
 Ruff & lint + format checks & style and common Python error patterns in the supporting scripts. \\
 sabotage\_verifier.py & sabotage scan & resource cleanup, exception handling, memory safety, and audit rules across Ada and Python. \\
@@ -215,6 +215,133 @@ sabotage\_verifier.py & sabotage scan & resource cleanup, exception handling, me
 \end{tabularx}
 \end{table}
 
+\subsection{Raw Report Transcripts}
+\label{sec:raw_verification_transcripts}
+
+Each transcript below documents the emitted tool report; this appendix does
+not repair any reported finding. Terminal colour codes were removed from the
+raw records. Exit codes are reported because a tool can exit cleanly while
+still printing errors or leaving checks unproved.
+
+\begin{table}[!htbp]
+\centering
+\caption{Documented raw verification outcomes.}
+\label{tab:raw_verification_outcomes}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.20\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X >{\RaggedRight\arraybackslash}p{0.10\textwidth}@{}}
+\hline
+\textbf{Tool} & \textbf{Recorded raw outcome} & \textbf{Exit code} \\
+\hline
+Ruff & \texttt{All checks passed!} & 0 \\
+Pyrefly & \texttt{2 errors} reported with an \texttt{INFO 2 errors (6 suppressed, 19 warnings not shown)} line & 0 \\
+CrossHair & \texttt{WARNING: Targets found, but contain no checkable functions.} & 0 \\
+sabotage\_verifier.py & \texttt{VERDICT: TAINTED - 39 CRITICAL+ violation(s) found. NOT CLEAN.} & 1 \\
+Coq/Rocq proof gate & \texttt{88/88 proofs compiled}; \texttt{failed: 0}; \texttt{duration\_s: 25.354} & 0 \\
+GNATprove & \texttt{Total 533}; flow \texttt{28 (5\%)}; provers \texttt{474 (89\%)}; unproved \texttt{31 (6\%)} & 0 \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsubsection*{Ruff raw report}
+\begingroup\tiny
+\begin{verbatim}
+$ ./venv/python/bin/ruff check .
+All checks passed!
+\end{verbatim}
+\endgroup
+
+\subsubsection*{Pyrefly raw report}
+\begingroup\tiny
+\begin{verbatim}
+$ ./venv/python/bin/pyrefly check . --python-interpreter-path \
+    "$PWD/venv/python/bin/python3" --project-excludes venv/** \
+    --project-excludes .venv/** --project-excludes __pycache__/** \
+    --project-excludes build/** --project-excludes scripts/** \
+    --project-excludes data/** --project-excludes results/** \
+    --project-excludes .opencode/** --project-excludes .tmp/** \
+    --project-excludes Lost+Found/**
+ERROR Cannot infer type of empty container; it will be treated as containing `Any` [implicit-any-empty-container]
+    --> run.py:1302:44
+ERROR Cannot infer type of empty container; it will be treated as containing `Any` [implicit-any-empty-container]
+    --> run.py:2356:17
+ INFO 2 errors (6 suppressed, 19 warnings not shown)
+exit code: 0
+\end{verbatim}
+\endgroup
+
+\subsubsection*{CrossHair raw report}
+\begingroup\tiny
+\begin{verbatim}
+$ ./venv/python/bin/crosshair check src/utils/sabotage_verifier.py
+WARNING: Targets found, but contain no checkable functions.
+exit code: 0
+\end{verbatim}
+\endgroup
+
+\subsubsection*{sabotage\_verifier.py raw summary}
+\begingroup\tiny
+\begin{verbatim}
+$ ./venv/python/bin/python src/utils/sabotage_verifier.py src \
+    --extensions .adb,.ads,.py
+ 1 CRITICAL violation(s) - NOT CLEAN. Build blocked. Critical issues demand immediate fix.
+ VERDICT: TAINTED - 39 CRITICAL+ violation(s) found. NOT CLEAN.
+ audit log written to: stellarorion_program_proc/.verifier_audit.log
+exit code: 1
+\end{verbatim}
+\endgroup
+
+\subsubsection*{Coq/Rocq raw report}
+\begingroup\tiny
+\begin{verbatim}
+$ rocq --version
+The Rocq Prover, version 9.3.0
+compiled with OCaml 5.5.1
+
+$ ./venv/python/bin/python src/utils/coq_proof_gate.py
+88/88 proofs compiled
+  status file: stellarorion_program_proc/results/coq_proof_status.json
+exit code: 0
+\end{verbatim}
+\endgroup
+
+The corresponding JSON status artifact records:
+
+\begingroup\tiny
+\begin{verbatim}
+status: pass
+tool: coqc 8.18.0 at .opam/spark-coq/bin/coqc
+directories scanned: proofs, src/proofs, src/rocq
+directories missing: none
+totals: proofs 88, compiled 88, failed 0, duration_s 25.354
+generated_utc: 2026-10-15T00:26:41.071660+00:00
+\end{verbatim}
+\endgroup
+
+\subsubsection*{GNATprove raw report}
+\begingroup\tiny
+\begin{verbatim}
+$ bash scripts/prove.sh 4
+Phase 1 of 3: generation of data representation information ...
+Phase 2 of 3: generation of Global contracts ...
+Phase 3 of 3: flow analysis and proof ...
+exit code: 0
+\end{verbatim}
+\endgroup
+
+The corresponding final SPARK-analysis table records:
+
+\begingroup\tiny
+\begin{verbatim}
+Summary of SPARK analysis
+SPARK Analysis results        Total       Flow                                            Provers   Justified   Unproved
+Initialization                    3          3                                                  .           .          .
+Run-time Checks                 244          .    224 (CVC5 41%, Trivial 16%, Z3 40%, altergo 2%)           .         20
+Assertions                      173          .    163 (CVC5 28%, Trivial 19%, Z3 46%, altergo 7%)           .         10
+Functional Contracts             88          .     87 (CVC5 18%, Trivial 19%, Z3 63%, altergo 1%)           .          1
+Termination                      25         25                                                  .           .          .
+Total                           533    28 (5%)                                          474 (89%)           .    31 (6%)
+max steps used for successful proof: 76307
+\end{verbatim}
+\endgroup
 
 \chapter{IRVE-3 Validation Data Summary}
 \label{app:validation_data}
