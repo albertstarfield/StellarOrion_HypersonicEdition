@@ -11,7 +11,7 @@ correction 2026-10-11: the thesis now adopts the value the engine
 carries; 1.83e-4 was the Mars-mixture coefficient) and R_N = 1.5 m,
 giving 15.36 W/cm^2 at the run condition (h = 51.8 km, V = 3378 m/s),
 the value stated in the figure caption and in the AccSupp. The official
-Optimization_Attempt_1 record quotes 16.1379 W/cm^2 on the superseded
+optimisation run record quotes 16.1379 W/cm^2 on the superseded
 1.83e-4 scale, which the thesis discloses as the group-R campaign
 reference.
 
@@ -26,7 +26,7 @@ A1. The correlation evaluated here is
     The engine default in `stellarorion_types.ads` is 1.7415e-4 and stays
     the disclosed contrast in the thesis; it is NOT the constant this
     figure plots, because the caption, the AccSupp and the official
-    Optimization_Attempt_1 record all quote the 1.83e-4 scale (16.14 /
+    optimisation run record all quote the 1.83e-4 scale (16.14 /
     16.1379 W/cm^2). Round-2 (2026-10-11) aligned the thesis caption and
     AccSupp with the ads value, so this script now renders 15.36 W/cm^2
     with no contradiction.
@@ -98,7 +98,7 @@ V_RUN_MS: float = 3378.0             # A4: run velocity
 # value 1.7415e-4, the same value stellarorion_types.ads carries; 1.83e-4
 # was the Mars-mixture coefficient (validation_pipeline.py L788/L804
 # prohibit it for Earth). The caption and AccSupp quote 15.36 W/cm^2 at
-# the run condition; the Optimization_Attempt_1 record quotes 16.1379
+# the run condition; the optimisation run record quotes 16.1379
 # W/cm^2 on the superseded scale, disclosed as the group-R campaign
 # reference. Value = documented thesis constant, not an invention.
 C_SG_THESIS: float = 1.7415e-4
@@ -268,7 +268,7 @@ def sg_at_velocity(velocity_kms: float, nose_radius_m: float, solver: dict[str, 
 
     # Thesis-adopted constant (A1): curves and the baseline marker share this
     # single value so the figure matches its own caption and the official
-    # Optimization_Attempt_1 record.
+    # optimisation run record.
     c_sg = C_SG_THESIS
     q_wm2 = c_sg * (density / nose_radius_m) ** 0.5 * (velocity_kms * 1000.0) ** 3
     return q_wm2 / 1.0e4

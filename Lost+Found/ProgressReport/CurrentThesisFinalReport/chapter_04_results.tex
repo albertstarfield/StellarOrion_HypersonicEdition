@@ -318,6 +318,52 @@ The vehicle fails the thermal constraint. The active TPS reports a backface temp
     \label{fig:tps_ply_stack}
 \end{figure}
 
+The optimized topology now carries its own step-2200 conduction solve, run from that topology's own surf VTU on 2026-10-14 at a condition matching the tree exactly (52.06921\,km, 3101.079\,m/s). Table~\ref{tab:tps_per_ply_comparison} and Figure~\ref{fig:tps_per_ply_comparison} compare the trees ply by ply. Peak heat flux and peak hot-face temperature are identical: the optimization did not change the heating, so it cannot change the peak. What it changes is the \emph{field}. The peak migrates from element 144 to element 3072, the mean hot-face temperature rises 3.58\,\%, and hot-face elements above the 523.15\,K structural limit rise from 2064 to 2160 of 3648.
+
+One column of the comparison carries no predictive content and is listed only to make that explicit. The cold-face temperature is 300.00\,K for every element of both trees because the solver imposes a steady-state Dirichlet condition on the cold face, so $T_{back}$ restates that boundary rather than predicting a transient back-face temperature. The informative outer-ply quantity is the hot-face temperature above; the back-face survivability question belongs to the lumped-capacitance model below.
+
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Two-panel comparison of per-ply thermal protection system conduction between the reference and optimized topologies. Left panel: through-thickness temperature profile against depth from the hot face at each tree's peak element, element 144 for the reference and element 3072 for the optimized. The two curves coincide exactly, falling from about 1430 kelvin at the hot face to about 300 kelvin at the cold face, with dotted lines marking the 773 kelvin Kapton limit and the 523.15 kelvin structural limit. Right panel: hot-face temperature plotted against surface element index for both trees. The reference field has a hotter cluster near low element indices while the optimized field redistributes, and both reach the same peak of about 1430 kelvin.}}%
+\includegraphics[width=\textwidth]{figures/tps_per_ply_comparison.png}%
+    \EndAccSupp{}%
+    \caption[Per-ply conduction, reference versus optimized.]{Per-ply conduction comparison of the reference and optimized topologies at step 2200. Left: through-thickness profile at each tree's own peak element (144 reference, 3072 optimized); the curves coincide because the peak heating is identical. Right: hot-face temperature across the surface element field, which redistributes between the trees. Source: \texttt{tps\_conduction/00\_reference/tps\_step2200\_profiles.csv} and \texttt{tps\_conduction/03\_opt\_geometry/tps\_step2200\_profiles.csv}.}
+    \label{fig:tps_per_ply_comparison}
+\end{figure}
+
+\begin{table}[!htbp]
+    \centering
+    \caption[Per-ply conduction comparison for the reference and optimized topologies at step 2200.]{Per-ply conduction comparison for the reference and optimized topologies at step 2200, both solved through the same five-ply schedule of Table~\ref{tab:tps_layup}. The cold-face row is pinned by the solver's steady-state Dirichlet condition and is shown to make that explicit, not as a prediction.}
+    \label{tab:tps_per_ply_comparison}
+    \scriptsize
+    \begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.30\textwidth} >{\RaggedRight\arraybackslash}p{0.16\textwidth} >{\RaggedRight\arraybackslash}p{0.16\textwidth} >{\RaggedRight\arraybackslash}p{0.10\textwidth} >{\RaggedRight\arraybackslash}X@{}}
+        \toprule
+        \textbf{Quantity} & \textbf{Reference} & \textbf{Optimized} & \textbf{$\Delta$} & \textbf{Note} \\
+        \midrule
+        Peak surface element & 144 & 3072 & n/a & Peak migrates \\
+        Peak heat flux $q_{SG}$ & 19.3154\,W/cm\textsuperscript{2} & 19.3154\,W/cm\textsuperscript{2} & 0 & Identical \\
+        Peak hot-face temperature & 1430.25\,K & 1430.25\,K & 0 & Identical \\
+        Mean hot-face temperature & 801.32\,K & 829.98\,K & $+3.58\,\%$ & Optimized hotter \\
+        Hot-face elements above 523.15\,K & 2064 / 3648 & 2160 / 3648 & $+96$ & Optimized worse \\
+        Cold-face temperature & 300.00\,K & 300.00\,K & 0 & Pinned, not predicted \\
+        Elements at zero flux & 912 & 960 & $+48$ & Negative-flux noise floored \\
+        Elements with negative raw flux & 288 & 288 & 0 & DSMC noise \\
+        Nextel BF20 rating check & pass & pass & n/a & $19.32 \leq 30$\,W/cm\textsuperscript{2} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+The per-ply decomposition also shows where the stack spends its resistance. Because the two trees share the layup of Table~\ref{tab:tps_layup}, the resistance budget is a property of the material stack rather than of the topology: the two 3.047\,mm Pyrogel 3350 plies carry 0.1524\,m$^2$\,K/W each against 0.000337\,m$^2$\,K/W for each Nicalon SiC ply and 0.000208\,m$^2$\,K/W for the Kapton barrier, so the insulation plies hold 99.71\,\% of the $0.305583$\,m$^2$\,K/W total. Figure~\ref{fig:tps_per_ply_resistance} decomposes the budget, and the panel on the left confirms at ply level what Table~\ref{tab:tps_per_ply_comparison} shows at stack level: the through-flux is the same through every ply and the same for both trees.
+
+\begin{figure}[!htbp]
+    \centering
+    \BeginAccSupp{method=escape,ActualText={Two-panel figure. Left panel: per-ply through-flux at the peak element for both topologies, drawn as paired bars across the five plies. The reference and optimized bars are equal in height at every ply, about 193154 watts per square metre, showing the through-flux is identical between the trees. Right panel: per-ply series resistance on a logarithmic scale. The two Nicalon plies are at 3.37e-4 and the Kapton ply at 2.08e-4 square metre kelvin per watt, while the two Pyrogel plies are at 0.1524 each, dominating the budget. The title reports the total series resistance as 0.305583 square metre kelvin per watt.}}%
+\includegraphics[width=\textwidth]{figures/tps_per_ply_resistance.png}%
+    \EndAccSupp{}%
+    \caption[Per-ply through-flux and resistance budget.]{Per-ply through-flux and series-resistance budget at step 2200. Left: through-flux through each ply at each tree's own peak element, equal between the trees and constant across the stack, as a one-dimensional steady series stack requires. Right: per-ply series resistance $R_i = t_i/k_i$ on a logarithmic scale; the two Pyrogel 3350 plies carry 99.71\,\% of the $0.305583$\,m$^2$\,K/W total. The total is reproduced from the ply schedule rather than quoted.}
+    \label{fig:tps_per_ply_resistance}
+\end{figure}
+
 Thermal soak is dominated by integrated heat load, not instantaneous heat flux. For this trajectory point $Q = 165.72$\,J/cm$^2$, or $1.657$\,MJ/m$^2$; the 1D transient model integrates the heat pulse over the exposure duration, so this accumulated quantity, not the Chapter~3 stagnation-point correlation value, sets the backface temperature. Implications for TPS design:
 \begin{itemize}
     \item The active 7.131\,mm layup is insufficient, so insulation must gain Pyrogel content. Cutting backface temperature from 955.66\,K to the 773\,K Kapton limit raises the required thermal resistance by a factor of 1.39, the ratio implied by the lumped-capacitance back-face model ($(955.66-300)/(773-300)$), which for this stack means thickening Pyrogel plies, not outer fabric.
@@ -337,7 +383,7 @@ The aggregate (constrained single-objective) cost function $J(\mathbf{x})$ of Se
 
 \begin{table}[!htbp]
     \centering
-    \caption{Validation reference set used to scale the aggregate cost $J(\mathbf{x})$ (attempt-1 optimisation run, 2026-09-26; deleted 2026-10-14).}
+    \caption{Validation reference set used to scale the aggregate cost $J(\mathbf{x})$ (optimisation run, 2026-09-26; superseded 2026-10-14).}
     \label{tab:bo_reference}
     \begin{tabular}{llr}
         \toprule
@@ -360,7 +406,7 @@ A 15-point central composite design~\cite{Montgomery2017} screens first, best $J
     \BeginAccSupp{method=escape,ActualText={Three-dimensional scatter of the 15 central composite screen points in the design space of nose radius R N, torus radius r tor and half-cone angle theta c, each marker colored by its evaluated cost J of x on a logarithmic scale running from about 2 to about 38. The points are the 8 factorial combinations of the low and high levels 1.2 and 1.8 metres in nose radius, 0.10 and 0.18 metres in torus radius and 55 and 65 degrees in half-cone angle; the design center at 1.5 metres, 0.140 metres and 60 degrees; and 6 axial points stepping one factor at a time away from the center. Distinct reference markers in the panel denote the screen design center, the IRVE-3 baseline, the best-screened factorial point and the round-1 Bayesian optimization optimum. The panel is a design layout annotated with measured costs and is not a fitted response surface.}}%
 \includegraphics[width=0.97\textwidth]{figures/bo_ccd_design.png}%
 \EndAccSupp{}%
-    \caption[Central composite screen in the design space, colored by cost $J(\mathbf{x})$ (attempt-1 run, deleted 2026-10-14).]{Central composite screen evaluated in the three-dimensional design space, colored by the evaluated cost $J(\mathbf{x})$ on a logarithmic scale (attempt-1 optimisation run, 2026-09-26; deleted 2026-10-14). The 15 screen points comprise 8 factorial points, the design center ($R_N = 1.5$\,m, $r_{tor} = 0.140$\,m, $\theta_c = 60^\circ$) and 6 axial points; the design center, IRVE-3 baseline, best-screened point and round-1 optimum are marked in the panel.}
+    \caption[Central composite screen in the design space, colored by cost $J(\mathbf{x})$ (optimisation run, 2026-09-26).]{Central composite screen evaluated in the three-dimensional design space, colored by the evaluated cost $J(\mathbf{x})$ on a logarithmic scale (optimisation run, 2026-09-26; superseded 2026-10-14). The 15 screen points comprise 8 factorial points, the design center ($R_N = 1.5$\,m, $r_{tor} = 0.140$\,m, $\theta_c = 60^\circ$) and 6 axial points; the design center, IRVE-3 baseline, best-screened point and round-1 optimum are marked in the panel.}
     \label{fig:ccd_surface}
     \centering
     \BeginAccSupp{method=escape,ActualText={Three scatter panels showing the fifteen central composite design points as pairwise projections of the three design variables: nose radius against toroid radius, nose radius against half-cone angle, and toroid radius against half-cone angle. Eight factorial corner points appear as circles, six axial star points as triangles, and the single center point as a star.}}%
@@ -381,9 +427,9 @@ Figure~\ref{fig:ccd_surface} shows the cost-annotated 15-point screen layout; Fi
 %   * Closed-form (surrogate) rows: stellarorion_program_proc/src/python/
 %     hiad_optimization_results.json (keys "default" and "optimized").
 %     That file carries the RETAINED latest attempt. Commit 57a3a3d6
-%     (2026-10-14) is the commit that deleted the superseded attempt-1 run
-%     data: it removed the "hybrid_validation" and "optimized_round2"
-%     blocks, which belonged to the attempt-1 optimum (R_N = 2.9714 m).
+%     (2026-10-14) is the commit that removed the superseded 2026-09-26
+%     run data: it deleted the "hybrid_validation" and "optimized_round2"
+%     blocks, which belonged to that run's optimum (R_N = 2.9714 m).
 %     The retained latest attempt is R_N = 2.9991 m, r_tor = 0.0551 m,
 %     theta_c = 52.2220 deg, J = 1.4921, Q = 147.4597 J/cm^2, 70 evaluations.
 %   * DSMC rows, baseline (IRVE-3 scalloped skin):
@@ -408,11 +454,11 @@ Figure~\ref{fig:ccd_surface} shows the cost-annotated 15-point screen layout; Fi
 %     Kept as -0.5268 so the two tables agree.
 % =====================================================================
 \subsection{Optimized Configuration}
-Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 winner. The tabulated values are those of the \emph{attempt-1} optimisation run of 2026-09-26, the run that was carried to the DSMC validation gate; commit 57a3a3d6 removed that run's data from the live results file on 2026-10-14. The retained latest attempt of the same campaign (70 evaluations; optimum $R_N = 2.999096$\,m, $r_{tor} = 0.055052$\,m, $\theta_c = 52.2220^\circ$, $Q(\mathbf{x}) = 147.46$\,J/cm$^2$, $J = 1.4921$) is the live configuration, but it has no DSMC re-simulation, so this table reports the gated attempt-1 run. The attempt-1 optimizer cuts total heat load by 28.95\,\% to 155.67~J/cm\textsuperscript{2} (6.06\,\% \emph{below} the 165.72~J/cm\textsuperscript{2} validation target), drag coefficient by 2.96\,\% and aggregate cost $J$ by 25.78\,\%, with no constraint violated at the optimum (penalty $= 0$). Four drag-coefficient values appear in this work and must not be conflated: $C_{d,ref} = 1.4625$ is the IRVE-3 flight reference loaded at run time, not a measurement of this run; $1.6073 \rightarrow 1.5597$ are the closed-form surrogate values at the baseline and the round-1 optimum; and $1.7655$ (baseline) and $2.5294$ (round-1 winner) are the DSMC-resolved values, which sit above the surrogate because the closed-form model under-predicts drag exactly as it under-predicts heat load. The DSMC rows also carry the survivability channels: the round-1 winner lowers peak deceleration (14.01 against 16.55~g) and total heat load (77.93 against 165.72~J/cm\textsuperscript{2}) relative to the baseline, while its ballistic coefficient falls from 27.70 to 10.06~kg/m\textsuperscript{2} and its lift magnitude roughly doubles.
+Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 winner. The tabulated values are those of the optimisation run of 2026-09-26, the run that was carried to the DSMC validation gate; commit 57a3a3d6 removed that run's data from the live results file on 2026-10-14. The retained latest run of the same campaign (70 evaluations; optimum $R_N = 2.999096$\,m, $r_{tor} = 0.055052$\,m, $\theta_c = 52.2220^\circ$, $Q(\mathbf{x}) = 147.46$\,J/cm$^2$, $J = 1.4921$) is the live configuration, but it has no DSMC re-simulation, so this table reports the gated run. The optimizer cuts total heat load by 28.95\,\% to 155.67~J/cm\textsuperscript{2} (6.06\,\% \emph{below} the 165.72~J/cm\textsuperscript{2} validation target), drag coefficient by 2.96\,\% and aggregate cost $J$ by 25.78\,\%, with no constraint violated at the optimum (penalty $= 0$). Four drag-coefficient values appear in this work and must not be conflated: $C_{d,ref} = 1.4625$ is the IRVE-3 flight reference loaded at run time, not a measurement of this run; $1.6073 \rightarrow 1.5597$ are the closed-form surrogate values at the baseline and the round-1 optimum; and $1.7655$ (baseline) and $2.5294$ (round-1 winner) are the DSMC-resolved values, which sit above the surrogate because the closed-form model under-predicts drag exactly as it under-predicts heat load. The DSMC rows also carry the survivability channels: the round-1 winner lowers peak deceleration (14.01 against 16.55~g) and total heat load (77.93 against 165.72~J/cm\textsuperscript{2}) relative to the baseline, while its ballistic coefficient falls from 27.70 to 10.06~kg/m\textsuperscript{2} and its lift magnitude roughly doubles.
 
 \begin{table}[!htbp]
     \centering
-    \caption[IRVE-3 versus round-1 winner with DSMC gate statistics]{IRVE-3 baseline versus round-1 Bayesian Optimization winner, with the DSMC performance statistics of the validation gate alongside the closed-form surrogate values (attempt-1 optimisation run, 2026-09-26; deleted 2026-10-14, 70 evaluations).}
+    \caption[IRVE-3 versus round-1 winner with DSMC gate statistics]{IRVE-3 baseline versus round-1 Bayesian Optimization winner, with the DSMC performance statistics of the validation gate alongside the closed-form surrogate values (optimisation run, 2026-09-26; superseded 2026-10-14, 70 evaluations).}
     \label{tab:bo_before_after}
     \begin{tabularx}{\textwidth}{l r r >{\RaggedRight\arraybackslash}X}
         \toprule
@@ -439,16 +485,16 @@ Table~\ref{tab:bo_before_after} compares the IRVE-3 baseline with the round-1 wi
 
 \begin{figure}[!htbp]
     \centering
-    \BeginAccSupp{method=escape,ActualText={Bayesian optimization convergence over 70 evaluations, with the subtitle 20 Latin-Hypercube initial points plus 50 GP/Expected-Improvement iterations. Evaluated cost J of x is on a logarithmic vertical axis running from about 1.5 to over 1000, against evaluation index 0 to 69 on the horizontal. Blue circles are the 70 evaluated costs and the solid red line is the running-best incumbent, which falls from 1.7654 at the first evaluation to 1.6051 at index 37 and then holds that value to the final evaluation. A vertical dashed line at index 20 marks the handover from the Latin-Hypercube design to the Bayesian stage, a horizontal dotted line marks the IRVE-3 baseline cost, and a gold star marks the round-1 optimum. Most early evaluations are expensive, reaching above 1000; the optimum arrives at index 68, and none of the remaining evaluations beats it. Source: hiad_optimization_results.json as committed at bdddb47 (attempt-1 run, 2026-09-26); these data were removed from the live results file by commit 57a3a3d6 on 2026-10-14.}}%
+    \BeginAccSupp{method=escape,ActualText={Bayesian optimization convergence over 70 evaluations, with the subtitle 20 Latin-Hypercube initial points plus 50 GP/Expected-Improvement iterations. Evaluated cost J of x is on a logarithmic vertical axis running from about 1.5 to over 1000, against evaluation index 0 to 69 on the horizontal. Blue circles are the 70 evaluated costs and the solid red line is the running-best incumbent, which falls from 1.7654 at the first evaluation to 1.6051 at index 37 and then holds that value to the final evaluation. A vertical dashed line at index 20 marks the handover from the Latin-Hypercube design to the Bayesian stage, a horizontal dotted line marks the IRVE-3 baseline cost, and a gold star marks the round-1 optimum. Most early evaluations are expensive, reaching above 1000; the optimum arrives at index 68, and none of the remaining evaluations beats it. Source: hiad_optimization_results.json as committed at bdddb47 (optimisation run, 2026-09-26); these data were removed from the live results file by commit 57a3a3d6 on 2026-10-14.}}%
 \includegraphics[width=\textwidth]{figures/bo_convergence.png}%
 \EndAccSupp{}%
-    \caption[Convergence history of the optimization campaign (attempt-1 optimisation run, 2026-09-26; deleted 2026-10-14).]{Convergence history of the optimization campaign (attempt-1 optimisation run, 2026-09-26; deleted 2026-10-14). Blue points are the cost $J(\mathbf{x})$ at each of the 70 designs; the red curve is the running-best incumbent, which is non-increasing by construction.}
+    \caption[Convergence history of the optimization campaign (optimisation run, 2026-09-26; superseded 2026-10-14).]{Convergence history of the optimization campaign (optimisation run, 2026-09-26; superseded 2026-10-14). Blue points are the cost $J(\mathbf{x})$ at each of the 70 designs; the red curve is the running-best incumbent, which is non-increasing by construction.}
     \label{fig:ga_convergence}
 \end{figure}
 
 Figure~\ref{fig:ga_convergence} separates the two series. The evaluated cost $J$ is \emph{not} monotone: proposals are rejected freely, and log-scale scatter spans nearly three decades, with 46 of the 70 evaluations above the IRVE-3 baseline cost. Those proposals are bidirectional: 17 of the 46 sit above the baseline nose radius of $1.5$\,m, 29 below it, so the excess cost is no single excursion.
 
-The attempt-1 history opens at $J = 1.7654$ at the first evaluation, so the incumbent entering the Bayesian stage is $1.7654$, not the CCD minimum of $1.9959$. Bayesian iterations improve it to $1.6051$, a 9.08\,\% reduction. The incumbent reaches $1.6051$ at zero-based index 37 and holds it to the end: none of the remaining 32 evaluations beats that index, so the search converges rather than drifting.
+That history opens at $J = 1.7654$ at the first evaluation, so the incumbent entering the Bayesian stage is $1.7654$, not the CCD minimum of $1.9959$. Bayesian iterations improve it to $1.6051$, a 9.08\,\% reduction. The incumbent reaches $1.6051$ at zero-based index 37 and holds it to the end: none of the remaining 32 evaluations beats that index, so the search converges rather than drifting.
 
 Since $\dot{q} \propto 1/\sqrt{R_N}$ in the Sutton-Graves scaling~\cite{sutton1971gravesh}, nearly doubling the nose radius is the cheapest route to heat-load reduction; toroid radius and half-cone angle then recover the drag and ballistic-coefficient terms an enlarged nose would penalize. The optimizer finds the trade-off a designer would reach analytically.
 
@@ -464,7 +510,7 @@ Since $\dot{q} \propto 1/\sqrt{R_N}$ in the Sutton-Graves scaling~\cite{sutton19
 \subsection{PINN Overview of Heating and Entry State}
 \label{sec:pinn_heating_entry_overview}
 
-The PINN Overview Pipeline is used here only as a fast overview, not as an accuracy refinement of the DSMC result~\cite{raissi2019pinn}. The step-aligned full-trajectory overview files available for the reference and optimized trees show the same heating and entry-state histories; the only differing columns are the force coefficients. This overview therefore cannot support a claim of a topology-sensitive heating change by itself, and the DSMC validation-gate result remains the authority for the optimized heat load discussed in Sec.~\ref{sec:hybrid_gate}. The optimized tree is the gated attempt-1 geometry of Table~\ref{tab:bo_before_after}, so these overviews inherit the attempt-1 provenance stated there.
+The PINN Overview Pipeline is used here only as a fast overview, not as an accuracy refinement of the DSMC result~\cite{raissi2019pinn}. The step-aligned full-trajectory overview files available for the reference and optimized trees show the same heating and entry-state histories; the only differing columns are the force coefficients. This overview therefore cannot support a claim of a topology-sensitive heating change by itself, and the DSMC validation-gate result remains the authority for the optimized heat load discussed in Sec.~\ref{sec:hybrid_gate}. The optimized tree is the gated geometry of Table~\ref{tab:bo_before_after}, so these overviews inherit the provenance stated there.
 
 \begin{figure}[!htbp]
     \centering
@@ -511,7 +557,7 @@ Table~\ref{tab:pinn_heating_entry_overview} records the step-aligned values from
     \BeginAccSupp{method=escape,ActualText={Three-dimensional scatter plot of the design-space samples. The axes are nose radius, toroid radius, and half-cone angle. The color of each point represents the evaluated cost. The plot shows the 70-evaluation budget: 20 Latin-Hypercube initial samples followed by 50 Bayesian optimization iterations.}}%
     \includegraphics[width=\textwidth]{figures/bo_optimization_3d.png}%
     \EndAccSupp{}%
-    \caption[Design-space samples in the 70-evaluation optimization campaign.]{Design-space samples in the 70-evaluation optimization campaign. The axes are nose radius $R_N$, toroid radius $r_{tor}$, and half-cone angle $\theta_c$. The color of each point represents the evaluated cost $J(\mathbf{x})$. The plot shows the 20 Latin-Hypercube initial samples followed by 50 Bayesian optimization iterations, with the cost decreasing as the search progresses.}
+    \caption[Design-space samples in the optimization campaign.]{Design-space samples in the 70-evaluation optimization campaign. The axes are nose radius $R_N$, toroid radius $r_{tor}$, and half-cone angle $\theta_c$. The color of each point represents the evaluated cost $J(\mathbf{x})$. The plot shows the 20 Latin-Hypercube initial samples followed by 50 Bayesian optimization iterations, with the cost decreasing as the search progresses.}
     \label{fig:bo_optimization_3d}
 \end{figure}
 
@@ -536,7 +582,7 @@ The gate runs post-optimization in five legs~\cite{kennedy2000multi}:
 \end{enumerate}
 
 \subsection{Gate Result}
-The attempt-1 gate execution (2026-09-26) returned \textsc{pass}. The round-1 winner's analytic prediction was $q_{analytic} = 155.67$\,J/cm$^2$; the DSMC re-simulation returned
+The 2026-09-26 gate execution returned \textsc{pass}. The round-1 winner's analytic prediction was $q_{analytic} = 155.67$\,J/cm$^2$; the DSMC re-simulation returned
 \begin{equation}
     q_{hybrid} = 77.93\ \text{J/cm}^2 \;\leq\; Q_{target} = 165.72\ \text{J/cm}^2,
 \end{equation}

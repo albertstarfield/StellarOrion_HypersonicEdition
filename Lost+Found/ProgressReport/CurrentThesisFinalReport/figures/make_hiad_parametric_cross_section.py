@@ -211,7 +211,7 @@ def draw() -> plt.Figure:
     """
     # Native figsize is the thesis print width minus print_fit's tight-bbox
     # pad (0.1 in): with every artist inside the canvas the tight crop equals
-    # canvas + pad, so attempt 1 lands on the target.
+    # canvas + pad, so the layout lands on the target.
     fig = plt.figure(figsize=(4.83, 2.72), facecolor=BG)
     ax = fig.add_axes((0.145, 0.145, 0.835, 0.72))
     ax.set_facecolor(BG)

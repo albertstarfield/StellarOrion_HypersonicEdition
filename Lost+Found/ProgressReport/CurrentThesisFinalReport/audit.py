@@ -281,11 +281,11 @@ def dim_scope() -> None:
 def dim_numeric() -> None:
     """Thesis values against the committed artefacts they claim to come from.
 
-    Pinned to 57a3a3d6, the commit that carries the RETAINED latest attempt.
-    The earlier pin bdddb47 (2026-09-26) was the attempt-1 run whose data
-    commit 57a3a3d6 deleted on 2026-10-14; while the pin sat on the deleted
-    attempt this check passed against artefacts the thesis no longer cites,
-    which made it a false-clean pass. Values that match bdddb47 instead of
+    Pinned to 57a3a3d6, the commit that carries the retained latest run.
+    The earlier pin bdddb47 (2026-09-26) held the superseded run whose data
+    commit 57a3a3d6 removed on 2026-10-14; while the pin sat on that run
+    this check passed against artefacts the thesis no longer cites, which
+    made it a false-clean pass. Values that match bdddb47 instead of
     57a3a3d6 therefore surface as failures here, by design.
     """
     import json as _json
