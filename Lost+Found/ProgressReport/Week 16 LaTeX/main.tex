@@ -284,6 +284,68 @@
   (CCD count F17; seed reproducibility F6), instead of pay-as-you-go.
 \end{frame}
 
+% Added before Redemption 3b at the owner request: state what the samples are
+% scored against, why this cuts simulation time, and what the single validation
+% reference is.
+% SOURCE: stellarorion_optimization.ads:493-497 and .adb:1766-1896 (analytic
+% J(x)); stellarorion_pinn_trajectory.ads:18-20; validation_pipeline.py:5080-5091
+% (references/trajectory).
+\begin{frame}{REDEMPTION 3a: ANALYTIC SAMPLING BASIS}
+  \small
+  \textbf{What samples are scored against.} A candidate
+  $x=(R_N,r_t,\theta_c)$ is first scored by the closed-form geometry/Sutton--Graves
+  chain in Ada/SPARK; a fresh DSMC solve is reserved for the selected candidate.\\
+  \textbf{Heat flux and load.}
+  \[
+    q_{SG}=C_{SG}\sqrt{\rho(h)/R_N}\,V^3,
+    \qquad
+    Q(x)=q_{SG}(R_N)\,\tau .
+  \]
+  \textbf{Geometry and ballistic terms.}
+  \[
+    R_{\max}=R_N+r_t,\qquad
+    A=\pi R_{\max}^2,\qquad
+    \beta_r=\frac{C_{d,ref}A_{ref}}{C_d(x)A(x)},\qquad
+    \beta_{dev}=(\beta_r-1)^2 .
+  \]
+  \textbf{Cost used for ranking.}
+  \[
+    J=Q/Q_t+0.5\,q/q_{ref}+0.5\,\beta_{dev}
+      +0.25\,C_d/C_{d,ref}+\Lambda\,\mathrm{Pen}.
+  \]
+  \textbf{Why it is faster:} the same snapshot values are used for every sample,
+  so DSMC/PINN do not run per sample until CCD/LHS/BO shortlist candidates.
+\end{frame}
+
+\begin{frame}{REDEMPTION 3a2: ONE VALIDATION POINT, REFERENCES ONLY}
+  \small
+  \textbf{Single DSMC anchor.} $h=51.8$ km and $V=3378$ m/s; this is the
+  common point where the analytic, DSMC and PINN values are compared.\\
+  \textbf{Reference values, not extra sample commands.}
+  \begin{tabular}{@{}p{3.1cm}p{9.0cm}@{}}
+  Rapisarda 2023 & geometry and analytical trajectory references (Tables 4.1, 4.10, 5.4)\\
+  IRVE-3 flight & $14.3610$ W/cm$^2$, $195.0577$ J/cm$^2$, $19.7$\,g\\
+  LOFTID flight & $39.27$ W/cm$^2$, $3520.0$ J/cm$^2$, $9.66$\,g\\
+  \end{tabular}
+  \vspace{0.2cm}
+  \textbf{Interpretation.} These sources calibrate and validate the anchor; they
+  are not re-run as DSMC samples. Sampling uses the analytic chain above.
+\end{frame}
+
+\begin{frame}{REDEMPTION 3a3: PINN OVERVIEW ONLY, NETWORK NOT SHOWN}
+  \small
+  \textbf{Purpose here.} PINN is shown only as a trajectory-overview tool, not
+  as the optimizer's cost kernel and not as a neural-network diagram.\\
+  \textbf{What it gives.} From the single validated anchor it provides the trend
+  for heat flux, heat load, drag and $g$-load along the descent, so a geometry
+  family can be inspected before detailed DSMC verification.\\
+  \textbf{Corridor.} Owner-requested overview range is $140\rightarrow40$ km.
+  The current source-backed model implements $120\rightarrow40$ km
+  ($4300\rightarrow2700$ m/s); keep the source and slide consistent before final use.\\
+  \textbf{Downstream rule.} PINN is used for overview and candidate ranking only;
+  the final gate is still direct DSMC on the selected optimum.
+\end{frame}
+
 % so_ccd_screen.png moved here from Current Implementation.
 % Design of experiments that answers the Redemption 3 sampling-order issue.
 % (source unchanged; stats unchanged).
