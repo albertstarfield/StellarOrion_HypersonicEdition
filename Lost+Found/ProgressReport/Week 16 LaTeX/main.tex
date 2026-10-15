@@ -93,16 +93,16 @@
   \textbf{Conduction:} $q_{\mathrm{cond}}=(T_s-T_{\mathrm{back}})/R_{\mathrm{tot}}$,
   Fourier through the 5-ply IRVE-3 FTPS.\\
   \textbf{Reradiation:} $q_{\mathrm{rad}}=\varepsilon\sigma T_s^4$ to ambient
-  ($\varepsilon=0.80$ is the hot-face surface coating only; the ply stack carries
+  ($\varepsilon=0.75$ is the outer Nicalon SiC surface only; the ply stack carries
   no optical term in conduction).\\
   \textbf{Hot-face energy balance:} convection absorbed = reradiation + conduction:
   \[
   q_{\mathrm{conv}} = q_{\mathrm{rad}} + q_{\mathrm{cond}}
   = \varepsilon\sigma T_s^4 + (T_s - T_{\mathrm{back}})/R_{\mathrm{tot}}
   \]
-  Evaluated at peak: $266509.3 = 261626.5 + 4882.8$ W/m$^2$;
-  $T_s=1550.2345$ K, $R_{\mathrm{tot}}=0.25605$ m$^2$K/W,
-  surface emissivity $\varepsilon=0.80$.\\
+  Evaluated at peak: $266509.3 = 261530.8 + 4978.5$ W/m$^2$;
+  $T_s=1574.7530$ K, $R_{\mathrm{tot}}=0.25605$ m$^2$K/W,
+  outer-layer emissivity $\varepsilon=0.75$.\\
   DSMC$\rightarrow$thermal is not superposition: DSMC supplies shape, $Q_{SG}$ scales, local balance solves.\\
   \begin{tabular}{@{}lll@{}}
   \textbf{Term} & \textbf{definition} & \textbf{slide}\\
@@ -131,7 +131,7 @@
     q_{cond}=(T_s-T_{back})/R_{tot},\qquad
     R_{tot}=\sum_i \Delta x_i/k_i.
   \]
-  Symbols: $q_{cond}$ [W/m$^2$] through the TPS; $T_s=1550.2345$ K hot face,
+  Symbols: $q_{cond}$ [W/m$^2$] through the TPS; $T_s=1574.7530$ K hot face,
   $T_{back}=300$ K cold face; $\Delta x_i$ [m] ply thickness; $k_i$ [W/mK]
   ply conductivity (Nicalon SiC, Pyrogel, Kapton); total
   $R_{tot}=0.25605$ [m$^2$K/W]. (F84)
@@ -143,13 +143,13 @@
   \[
     q_{rad}=\varepsilon\,\sigma_{SB}\,T_s^4.
   \]
-  Symbols: $q_{rad}$ [W/m$^2$] radiated outward; $\varepsilon=0.80$ emissivity;
+  Symbols: $q_{rad}$ [W/m$^2$] radiated outward; $\varepsilon=0.75$ outer-layer emissivity;
   $\sigma_{SB}=5.670374\times10^{-8}$ [W/m$^2$K$^4$]; $T_s$ hot-face
   temperature. (F84) \\
 
   \textbf{Hot-face energy balance.} $q_{conv}=q_{rad}+q_{cond}$:
   \[
-    266509.3=261626.5+4882.8\ \text{W/m}^2,\quad
+    266509.3=261530.8+4978.5\ \text{W/m}^2,\quad
     \text{residual }0.0000\%.
   \]
   (F84) \\
@@ -159,31 +159,30 @@
 \end{frame}
 
 
-\begin{frame}{REDEMPTION 1e: 5-PLY IRVE-3 FTPS SPECIFICATION}
+% SOURCE: thesis Table tab:tps_spec (chapter_03_methodology.tex). Complete
+% per-ply material and thermal-resistance specification. Outer hot ply is
+% Nicalon SiC; its per-ply epsilon = 0.75 is the re-radiation value.
+\begin{frame}{REDEMPTION 1e: 5-PLY IRVE-3 FTPS SPECIFICATION (THESIS)}
   \scriptsize
-  \begin{columns}[T]
-    \begin{column}{0.36\textwidth}
-      \resizebox{\linewidth}{!}{%
-            \begin{tabular}{@{}llrrr@{}}
-      \textbf{Ply} & \textbf{Material} & \textbf{m} & \textbf{k W/mK} & \textbf{T max K}\\
-      \hline
-      1 & Nicalon SiC & $5.06\mathrm{e}{-}4$ & 1.50 & 2073\\
-      2 & Nicalon SiC & $5.06\mathrm{e}{-}4$ & 1.50 & 2073\\
-      3 & Pyrogel 3350 & $3.047\mathrm{e}{-}3$ & 0.02 & 1373\\
-      4 & Pyrogel 3350 & $3.047\mathrm{e}{-}3$ & 0.02 & 1373\\
-      5 & Kapton & $2.5\mathrm{e}{-}5$ & 0.12 & 773\\
-      \end{tabular}}
-      \vspace{0.2cm}
-      \par{\tiny $R_{tot}=0.25605$ m$^2$K/W, $\varepsilon=0.80$ (F84;
-      IRVE-3 FTPS layup and baseline from Rapisarda 2023).}
-    \end{column}
-    \begin{column}{0.64\textwidth}
-      \centering
-      \includegraphics[width=\linewidth,height=0.65\textheight,keepaspectratio]
-        {figures/so_ply_stack_temperature.png}
-      \par{\tiny 5-ply cross-section at peak heating: depth from hot face, temperature in K.}
-    \end{column}
-  \end{columns}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{@{}llrrrrrrr@{}}
+  \textbf{Ply} & \textbf{Material} & \textbf{t [mm]} & \textbf{k [W/mK]} &
+  \textbf{$\rho$ [kg/m$^3$]} & \textbf{$C_p$ [J/kgK]} & \textbf{$\varepsilon$} &
+  \textbf{R=t/k [m$^2$K/W]} & \textbf{$\Sigma$R\%}\\
+  \hline
+  1 (hot) & Nicalon SiC & 0.506 & 1.50 & 1468 & 1100 & 0.75 & 0.000337 & 0.11\\
+  2 & Nicalon SiC & 0.506 & 1.50 & 1468 & 1100 & 0.75 & 0.000337 & 0.11\\
+  3 & Pyrogel 3350 & 3.047 & 0.02 & 110 & 1000 & 0.80 & 0.152350 & 49.86\\
+  4 & Pyrogel 3350 & 3.047 & 0.02 & 110 & 1000 & 0.80 & 0.152350 & 49.86\\
+  5 (cold) & Kapton & 0.025 & 0.12 & 3100 & 1090 & 0.12 & 0.000208 & 0.07\\
+  \hline
+  $\Sigma$ & 5 plies & 7.131 & & & & 0.80 & 0.305583 & 100\\
+  \end{tabular}}
+  \par\vspace{0.25cm}
+  \par{\footnotesize Source: thesis Table~tab:tps\_spec (chapter~3). Stack-level
+  $\varepsilon=0.80$ is the thesis footnote; the hot outer ply is Nicalon SiC with
+  per-ply $\varepsilon=0.75$, and $0.75$ is the value used for reradiation.
+  Total thickness $7.131$ mm, $\Sigma R=0.305583$ m$^2$K/W.}
 \end{frame}
 
 % SOURCE: stellarorion_sparta.adb:651-684 (2-D cartesian background grid),
@@ -211,7 +210,7 @@
 \PlotFrame{REDEMPTION 1f: OVERALL HEAT FLUX PICTURE}
   {\MaxTextLines{2}%
    Convection (Sutton-Graves) = reradiation + conduction through the TPS:
-   266509.3 = 261626.5 + 4882.8 W/m$^2$, residual 0.0000\% (F84).}
+   266509.3 = 261530.8 + 4978.5 W/m$^2$, residual 0.0000\% (F84; outer-layer $\varepsilon=0.75$).}
   {heatflux_methodology}
 
 \PlotFrame{REDEMPTION 1c: PLY STACK AND TEMPERATURE (IRVE-3 FTPS)}
