@@ -61,6 +61,17 @@
     "emissivity": 0.8,
     "struct_limit_K": 523.15
   },
+  "surface_energy_balance": {
+    "sigma_Wm2K4": 5.670374515803611e-08,
+    "sigma_source": "recovered from Ada Radiative_Eq_Temp_C identity",
+    "sigma_codata_Wm2K4": 5.670374419e-08,
+    "emissivity": 0.8,
+    "residual_Wm2_abs_max": 0.05174394170171581,
+    "residual_Wm2_abs_mean": 0.009324342603488018,
+    "residual_rel_max": 3.552213562903045e-05,
+    "mean_radiative_fraction": 0.8888831713580645,
+    "max_radiative_fraction": 0.9808512253993318
+  },
   "caveats": [
     "T_back is pinned to T_init by the solver's steady-state Dirichlet cold-face condition, so its structure-limit flag restates the boundary condition rather than predicting a transient back-face temperature. The informative outer-ply number is T_surface.",
     "The zero-flux elements are real: their raw SPARTA per-element flux is negative DSMC noise, which axiom A1 floors at zero."

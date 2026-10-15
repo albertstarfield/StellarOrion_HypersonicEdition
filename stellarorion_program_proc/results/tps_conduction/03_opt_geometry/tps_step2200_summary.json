@@ -1,0 +1,79 @@
+{
+  "snapshot": "surf_2200.vtu",
+  "provenance": {
+    "tree": "03_opt_geometry",
+    "role": "optimized-topology candidate",
+    "verdict": "Per-ply TPS generated from that topology's own step-2200 surf VTU (2026-10-14). Its step-2200 row reads the same altitude and velocity as the validated reference.",
+    "altitude_km_used": 52.06921,
+    "velocity_ms_used": 3101.079,
+    "tree_step2200_alt_km": 52.06921,
+    "tree_step2200_vel_ms": 3101.079,
+    "condition_matches_tree": true
+  },
+  "elements": 3648,
+  "snapshot_shape": {
+    "axial_segments": 76,
+    "n_theta": 48,
+    "points_per_revolution": 48
+  },
+  "q_sg_Wm2": 193154.21875,
+  "q_peak_Wm2": 193154.21875,
+  "q_peak_Wcm2": 19.315421875,
+  "nextel_bf20_rating_Wcm2": 30.0,
+  "peak_within_nextel_rating": true,
+  "t_surface_K": {
+    "min": 300.0,
+    "max": 1430.2493896484375,
+    "mean": 829.983035037392
+  },
+  "t_back_K": {
+    "min": 300.0,
+    "max": 300.0,
+    "mean": 300.0
+  },
+  "elements_at_zero_flux": 960,
+  "elements_with_negative_raw_flux": 288,
+  "elements_t_surface_over_struct_limit": 2160,
+  "elements_t_back_over_struct_limit": 0,
+  "struct_limit_K": 523.15,
+  "peak_element": {
+    "element": 3072,
+    "q_sg_Wm2": 193154.21875,
+    "t_surface_K": 1430.2493896484375,
+    "t_back_K": 300.0
+  },
+  "layup": {
+    "ply_thickness_m": [
+      0.000506,
+      0.000506,
+      0.003047,
+      0.003047,
+      2.5e-05
+    ],
+    "ply_thermal_k": [
+      1.5,
+      1.5,
+      0.02,
+      0.02,
+      0.12
+    ],
+    "total_thickness_m": 0.007130999999999999,
+    "emissivity": 0.8,
+    "struct_limit_K": 523.15
+  },
+  "surface_energy_balance": {
+    "sigma_Wm2K4": 5.670374515803611e-08,
+    "sigma_source": "recovered from Ada Radiative_Eq_Temp_C identity",
+    "sigma_codata_Wm2K4": 5.670374419e-08,
+    "emissivity": 0.8,
+    "residual_Wm2_abs_max": 0.05073352192994207,
+    "residual_Wm2_abs_mean": 0.011392647785501296,
+    "residual_rel_max": 2.4797063810535265e-06,
+    "mean_radiative_fraction": 0.9022934290866984,
+    "max_radiative_fraction": 0.9808512253993318
+  },
+  "caveats": [
+    "T_back is pinned to T_init by the solver's steady-state Dirichlet cold-face condition, so its structure-limit flag restates the boundary condition rather than predicting a transient back-face temperature. The informative outer-ply number is T_surface.",
+    "The zero-flux elements are real: their raw SPARTA per-element flux is negative DSMC noise, which axiom A1 floors at zero."
+  ]
+}

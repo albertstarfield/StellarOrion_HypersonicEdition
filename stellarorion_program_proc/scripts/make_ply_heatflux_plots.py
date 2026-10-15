@@ -61,6 +61,7 @@ import argparse
 import csv
 import math
 import os
+import statistics
 import sys
 
 import matplotlib
@@ -469,6 +470,214 @@ def plot_flux_distribution(all_flux: list[list[float]], out_path: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Surface energy balance -- re-radiation vs conduction into the stack
+# ---------------------------------------------------------------------------
+# Colours for the two destinations of the wall heat. Kept as module constants
+# so every figure in this family draws re-radiation the same hue; a reader
+# comparing two figures must not have to re-learn which arc is which.
+_RAD = "#45c4ff"     # re-radiated back to the stream
+_COND = "#ffb454"    # conducted through the stack to the cold face
+_RESID = "#7dffb2"   # closure residual (the check, not a destination)
+
+#: Relative closure the solver must meet before the split is plotted at all.
+#: Measured 2026-10-15: worst element 3.6e-6 relative, so 1e-3 leaves three
+#: decades of headroom while still failing loudly if the balance breaks.
+_BALANCE_REL_TOL = 1.0e-3
+
+
+def _balance_terms(elements: dict[int, dict[str, float]]
+                   ) -> tuple[list[float], list[float], list[float],
+                              list[float], list[float]]:
+    """Extract the usable surface-balance population from the element table.
+
+    WHY A FILTER RATHER THAN A GUARD: an element that received zero wall heat
+    has no meaningful radiative FRACTION (q_rad/q_conv is 0/0), and plotting it
+    would pin a spurious point at the origin.  Those elements are excluded from
+    the fraction panels but the closure panel still needs them, so the raw
+    residual list is returned unfiltered-in-spirit -- it is only dropped when
+    the value itself is non-finite (an older CSV with no balance columns).
+
+    Parameters:
+        elements: ``{element_id: {field: value}}`` from ``load_elements``.
+
+    Returns:
+        ``(q_conv, q_rad, q_cond, t_surface, residual)``, all parallel lists,
+        each element appearing at most once, ordered by ``q_conv``.
+
+    Raises:
+        ValueError: if no element carries a usable balance term, which means
+            the CSV predates the balance columns rather than that the physics
+            failed. The caller must say so instead of drawing an empty frame.
+    """
+    q_conv: list[float] = []
+    q_rad: list[float] = []
+    q_cond: list[float] = []
+    t_surface: list[float] = []
+    residual: list[float] = []
+    for row in sorted(elements.values(), key=lambda r: r.get("q_conv_Wm2", 0.0)):
+        conv = row.get("q_conv_Wm2", float("nan"))
+        rad = row.get("q_rad_Wm2", float("nan"))
+        cond = row.get("q_cond_Wm2", float("nan"))
+        temp = row.get("t_surface_K", float("nan"))
+        resid = row.get("balance_residual_Wm2", float("nan"))
+        if not all(math.isfinite(v) for v in (conv, rad, cond, temp, resid)):
+            continue
+        if conv <= 0.0:
+            continue
+        q_conv.append(conv)
+        q_rad.append(rad)
+        q_cond.append(cond)
+        t_surface.append(temp)
+        residual.append(resid)
+    if not q_conv:
+        raise ValueError(
+            "no element carries a finite, positive q_conv_Wm2; the elements "
+            "CSV was written before the surface-energy-balance columns were "
+            "added, so there is nothing to plot")
+    return q_conv, q_rad, q_cond, t_surface, residual
+
+
+def plot_surface_energy_balance(elements: dict[int, dict[str, float]],
+                                out_path: str) -> dict[str, float]:
+    """Figure: where the convective wall heat actually goes, and its closure.
+
+    The Ada surface balance solves ``q_conv = q_cond + q_rad`` for each
+    element.  That split is the whole operating principle of a re-radiating
+    TPS, so this figure makes it visible and, in the fourth panel, proves the
+    split really is the solver's answer rather than a reconstruction.
+
+    Panels:
+        (a) radiative share vs surface temperature -- the physics trend;
+        (b) mean split of the wall heat, stacked to 100 %;
+        (c) conducted vs incoming flux with the 1:1 line (log-log);
+        (d) closure residual vs incoming flux -- the correctness check.
+
+    Parameters:
+        elements: ``{element_id: {field: value}}`` from ``load_elements``.
+        out_path: PNG destination.
+
+    Returns:
+        The headline numbers actually drawn, so a caller can print them:
+        ``radiative_fraction_mean``, ``radiative_fraction_max``,
+        ``residual_rel_max``, ``elements_plotted``.
+
+    Raises:
+        ValueError: no usable balance rows (see ``_balance_terms``).
+        RuntimeError: the closure exceeds ``_BALANCE_REL_TOL``, meaning the
+            plotted split would not satisfy the equation it claims to show.
+            Refusing to draw is the honest outcome.
+    """
+    q_conv, q_rad, q_cond, t_surface, residual = _balance_terms(elements)
+
+    # Closure, checked BEFORE anything is drawn.
+    worst_rel = max(abs(r) / c for r, c in zip(residual, q_conv))
+    if worst_rel > _BALANCE_REL_TOL:
+        raise RuntimeError(
+            f"surface energy balance does not close: worst relative residual "
+            f"{worst_rel:.3e} > {_BALANCE_REL_TOL:.1e}. Plotting a split that "
+            f"fails its own governing equation would misrepresent the solver.")
+
+    fractions = [r / c for r, c in zip(q_rad, q_conv)]
+    stats = {
+        "radiative_fraction_mean": float(statistics.fmean(fractions)),
+        "radiative_fraction_max": float(max(fractions)),
+        "residual_rel_max": float(worst_rel),
+        "elements_plotted": len(q_conv),
+    }
+
+    fig, axes = plt.subplots(2, 2, figsize=(8.2, 5.8), dpi=200, facecolor=_BG)
+    ax_a, ax_b, ax_c, ax_d = (axes[0][0], axes[0][1], axes[1][0], axes[1][1])
+
+    # (a) radiative share against surface temperature.
+    ax_a.scatter(t_surface, [f * 100.0 for f in fractions],
+                 s=3, alpha=0.45, color=_RAD, linewidths=0)
+    ax_a.axhline(stats["radiative_fraction_mean"] * 100.0,
+                 color=_TEXT, linestyle="--", linewidth=1.0,
+                 label=f"mean {stats['radiative_fraction_mean'] * 100.0:.1f} %")
+    ax_a.set_xlabel("surface temperature $T_s$ [K]", color=_TEXT, fontsize=8)
+    ax_a.set_ylabel("share re-radiated [%]", color=_TEXT, fontsize=8)
+    ax_a.set_title("(a) re-radiation share vs surface temperature",
+                   color=_TEXT, fontsize=9)
+    ax_a.tick_params(labelsize=7)
+    leg = ax_a.legend(fontsize=7, facecolor=_PANEL, edgecolor=_DIM)
+    for txt in leg.get_texts():
+        txt.set_color(_TEXT)
+    _style(ax_a)
+
+    # (b) the split itself, as a two-segment stack reaching 100 %.
+    mean_rad = stats["radiative_fraction_mean"] * 100.0
+    mean_cond = 100.0 - mean_rad
+    ax_b.bar([0], [mean_rad], color=_RAD, width=0.55,
+             label=f"re-radiated {mean_rad:.1f} %")
+    ax_b.bar([0], [mean_cond], bottom=[mean_rad], color=_COND, width=0.55,
+             label=f"conducted {mean_cond:.1f} %")
+    ax_b.set_xticks([0])
+    ax_b.set_xticklabels(["mean over\nheated elements"], color=_TEXT, fontsize=7)
+    ax_b.set_ylabel("share of $q_{conv}$ [%]", color=_TEXT, fontsize=8)
+    ax_b.set_ylim(0, 100)
+    ax_b.set_title("(b) destination of the incoming wall heat",
+                   color=_TEXT, fontsize=9)
+    ax_b.tick_params(labelsize=7)
+    leg_b = ax_b.legend(fontsize=7, loc="lower right",
+                        facecolor=_PANEL, edgecolor=_DIM)
+    for txt in leg_b.get_texts():
+        txt.set_color(_TEXT)
+    _style(ax_b)
+
+    # (c) conducted against incoming, on log-log with the 1:1 reference.
+    ax_c.scatter(q_conv, q_cond, s=3, alpha=0.45, color=_COND, linewidths=0,
+                 label="conducted into stack")
+    lo = min(min(q_cond), min(q_conv))
+    hi = max(max(q_cond), max(q_conv))
+    ax_c.plot([lo, hi], [lo, hi], color=_TEXT, linestyle="--",
+              linewidth=1.0, label="1:1 (all conducted)")
+    ax_c.set_xscale("log")
+    ax_c.set_yscale("log")
+    ax_c.set_xlabel("$q_{conv}$ imposed on the element [W/m$^2$]",
+                    color=_TEXT, fontsize=8)
+    ax_c.set_ylabel("$q_{cond}$ into the stack [W/m$^2$]",
+                    color=_TEXT, fontsize=8)
+    ax_c.set_title("(c) conducted share stays far below the 1:1 line",
+                   color=_TEXT, fontsize=9)
+    ax_c.tick_params(labelsize=7)
+    leg_c = ax_c.legend(fontsize=7, facecolor=_PANEL, edgecolor=_DIM)
+    for txt in leg_c.get_texts():
+        txt.set_color(_TEXT)
+    _style(ax_c)
+
+    # (d) closure: the evidence that (b) and (c) are the solver's own answer.
+    ax_d.scatter(q_conv, [abs(r) for r in residual], s=3, alpha=0.45,
+                 color=_RESID, linewidths=0)
+    ax_d.axhline(_BALANCE_REL_TOL * min(q_conv), color=_ACCENT,
+                 linestyle=":", linewidth=1.0,
+                 label=f"tolerance {_BALANCE_REL_TOL:.0e} $\\times q_{{conv}}$")
+    ax_d.set_xscale("log")
+    ax_d.set_yscale("log")
+    ax_d.set_xlabel("$q_{conv}$ imposed on the element [W/m$^2$]",
+                    color=_TEXT, fontsize=8)
+    ax_d.set_ylabel("|$q_{conv}-q_{cond}-q_{rad}$| [W/m$^2$]",
+                    color=_TEXT, fontsize=8)
+    ax_d.set_title(f"(d) closure residual -- worst "
+                   f"{stats['residual_rel_max']:.1e} relative",
+                   color=_TEXT, fontsize=9)
+    ax_d.tick_params(labelsize=7)
+    leg_d = ax_d.legend(fontsize=7, facecolor=_PANEL, edgecolor=_DIM)
+    for txt in leg_d.get_texts():
+        txt.set_color(_TEXT)
+    _style(ax_d)
+
+    fig.suptitle(
+        "Surface energy balance -- $q_{conv} = q_{cond} + q_{rad}$ "
+        f"({stats['elements_plotted']:,} heated elements)",
+        color=_TEXT, fontsize=10)
+    fig.tight_layout(rect=(0, 0.145, 1, 0.955))
+    _annotate_stage(fig, reserved_frac=0.145)
+    fig.savefig(out_path, facecolor=_BG)
+    plt.close(fig)
+    return stats
+
+
+# ---------------------------------------------------------------------------
 # Reentry-stage annotation (single definition, reused by every figure)
 # ---------------------------------------------------------------------------
 # WHY A CONSTANT AND NOT AN f-string AT EACH CALL SITE: the flight condition
@@ -712,7 +921,11 @@ def load_elements(csv_path: str) -> dict[int, dict[str, float]]:
 
     Returns:
         dict element id -> row dict with floats for
-        ``ke_raw_Wm2, q_sg_Wm2, t_surface_K, t_back_K, n_iterations``.
+        ``ke_raw_Wm2, q_sg_Wm2, t_surface_K, t_back_K, n_iterations`` and,
+        when the driver emitted them, the surface energy balance terms
+        ``series_resistance_m2K_W, q_conv_Wm2, q_cond_Wm2, q_rad_Wm2,
+        balance_residual_Wm2``.  Missing balance columns become NaN rather
+        than 0.0, so an older CSV cannot be mistaken for a solved balance.
 
     Raises:
         FileNotFoundError: csv_path does not exist.
@@ -722,7 +935,10 @@ def load_elements(csv_path: str) -> dict[int, dict[str, float]]:
         raise FileNotFoundError(f"element CSV not found: {csv_path}")
 
     numeric = ("ke_raw_Wm2", "q_sg_Wm2", "t_surface_K", "t_back_K",
-               "n_iterations")
+               "n_iterations",
+               # Surface energy balance terms (run_tps_conduction_step2200).
+               "series_resistance_m2K_W", "q_conv_Wm2", "q_cond_Wm2",
+               "q_rad_Wm2", "balance_residual_Wm2")
     by_element: dict[int, dict[str, float]] = {}
     with open(csv_path, newline="") as fh:
         for row in csv.DictReader(fh):
@@ -1696,6 +1912,22 @@ def main() -> int:
                                     os.path.join(args.outdir, "ply_temperature_by_element.png"),
                                     tmax=preset_tmax)
 
+    # Surface energy balance: the re-radiation split the goal asks for, plus
+    # the closure that proves it is the solver's own answer.
+    try:
+        balance = plot_surface_energy_balance(
+            elements,
+            os.path.join(args.outdir, "surface_energy_balance.png"))
+    except (ValueError, RuntimeError) as exc:
+        print(f"[ply] ERROR: surface energy balance figure: {exc}",
+              file=sys.stderr)
+        return 1
+    print(f"[ply] surface balance: re-radiated "
+          f"{balance['radiative_fraction_mean'] * 100.0:.1f} % mean "
+          f"({balance['radiative_fraction_max'] * 100.0:.1f} % max), "
+          f"closure {balance['residual_rel_max']:.1e} relative over "
+          f"{balance['elements_plotted']:,} heated elements")
+
     print(f"[ply] peak element {peak_element}: " + ", ".join(f"q{i + 1}={q:,.1f}" for i, q in enumerate(peak_flux)) + " W/m^2")
     print(f"[ply] elements processed: {len(all_flux)}")
     print(f"[ply] contrast element {low_element}: T_peak_node="
@@ -1721,6 +1953,7 @@ def main() -> int:
         "ply_heatflux_distribution.png",
         "ply_stack_temperature_heatmap.png",
         "ply_temperature_by_element.png",
+        "surface_energy_balance.png",
     ]
     print(f"[ply] wrote {len(figures_written)} figures to {args.outdir}: "
           + ", ".join(figures_written))

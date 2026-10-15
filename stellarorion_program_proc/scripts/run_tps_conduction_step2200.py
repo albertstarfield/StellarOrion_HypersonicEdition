@@ -94,6 +94,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import os
 import re
 import statistics
@@ -255,6 +256,43 @@ def guard_step_identity(path: str, step: int) -> None:
             f"refusing to assume which snapshot it is.")
 
 
+def guard_tree_provenance(path: str, tree: str | None) -> None:
+    """Refuse a snapshot whose results tree disagrees with ``--tree``.
+
+    WHY THIS EXISTS (measured, 2026-10-15): ``--vtu`` used to default to a
+    fixed path while ``--tree`` only set the provenance LABEL, so running
+    ``--tree 03_opt_geometry`` without an explicit ``--vtu`` solved the
+    00_reference snapshot and then wrote it into the 03 tree's outputs.  The
+    numbers came back byte-identical to the reference run, which is how it was
+    caught.  run.py has always passed ``--vtu`` explicitly and was never
+    affected; the hole was in the standalone CLI.
+
+    The check is a path-segment test rather than a content hash because the
+    contract is about WHICH tree the caller claims, and the tree segment is
+    exactly where that claim is made.
+
+    Raises:
+        SystemExit: if ``tree`` is set and ``path`` does not contain
+            ``results/<tree>/`` as a path segment.
+    """
+    if tree is None:
+        return
+    parts = os.path.normpath(path).split(os.sep)
+    # Adjacency test on SEGMENTS: "results" must be immediately followed by
+    # the tree name. Comparing a joined "results/<tree>" string against single
+    # segments can never match, which is the bug this replaced.
+    under_tree = any(
+        parts[i] == "results" and parts[i + 1] == tree
+        for i in range(len(parts) - 1)
+    )
+    if not under_tree:
+        raise SystemExit(
+            f"[GUARD] --tree {tree} but --vtu is {os.path.normpath(path)!r}, "
+            f"which is not under results/{tree}/. Solving one tree's snapshot "
+            f"while labelling the results with another tree's provenance "
+            f"would make the summary JSON a lie. Pass a matching --vtu.")
+
+
 def verify_snapshot_shape(n_points: int, n_cells: int) -> dict[str, int]:
     """Check the snapshot against the Ada VTU writer's documented capacity.
 
@@ -296,6 +334,133 @@ def verify_snapshot_shape(n_points: int, n_cells: int) -> dict[str, int]:
 # ---------------------------------------------------------------------------
 # Per-element solve
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Surface energy balance -- re-radiation vs conduction
+# ---------------------------------------------------------------------------
+# CODATA 2018 / SI-2019 exact value, used ONLY as an independent cross-check of
+# the sigma recovered from Ada below; it is never the value the physics uses.
+# [Citation: CODATA 2018, sigma = 5.670374419e-8 W m^-2 K^-4 (exact since 2019
+#  SI redefinition); https://physics.nist.gov/cgi-bin/cuu/Value?sigma]
+SIGMA_CODATA_WM2K4 = 5.670374419e-8
+
+# Relative agreement required between the probes and CODATA before the
+# recovered constant may be trusted.  1e-5 is ~20x the observed float64
+# round-trip noise (measured 1.7e-8) yet far tighter than any physical change.
+SIGMA_TOLERANCE = 1.0e-5
+
+_sigma_cache: list[float] = []
+
+
+def stefan_boltzmann_sigma() -> float:
+    """Stefan-Boltzmann constant [W m^-2 K^-4], recovered from the Ada FFI.
+
+    WHY NOT A LITERAL: the constant exists exactly once in this project, as
+    ``SIGMA_BOLTZMANN`` in ``stellarorion_physics``.  ``TPS_Surface_Balance``
+    uses that copy in its radiative term, so writing a second copy here would
+    give the residual below two different sigmas to disagree about -- it would
+    then be measuring my transcription, not the solver.  Deriving it keeps the
+    value single-sourced in Ada.
+
+    IDENTITIES
+        ``Radiative_Eq_Temp(q, eps) = (q / (sigma * eps))**(1/4)``  [Ada]
+        =>  ``sigma = q / (eps * T**4)``
+
+    Three (q, eps) probes are evaluated and must agree; the first is taken as
+    canonical.  The recovered value is then compared against the CODATA exact
+    constant, which here acts as a GUARD on Ada's identity rather than as the
+    source of the value.
+
+    Returns:
+        sigma [W m^-2 K^-4].
+
+    Raises:
+        ValueError: if any probe returns a non-positive temperature, the
+            probes disagree by more than ``SIGMA_TOLERANCE``, or the result is
+            non-positive or disagrees with CODATA by more than
+            ``SIGMA_TOLERANCE``.  Each means the Ada identity changed shape,
+            and silently continuing would corrupt every balance residual.
+    """
+    if _sigma_cache:
+        return _sigma_cache[0]
+
+    probes = ((1.0, 1.0), (1.0e6, 0.8), (3.0, 1.0))
+    recovered: list[float] = []
+    for heat_flux, emissivity in probes:
+        temperature = float(W.radiative_eq_temp(heat_flux, emissivity))
+        if temperature <= 0.0:
+            raise ValueError(
+                "radiative_eq_temp"
+                f"({heat_flux}, {emissivity}) returned {temperature} K; "
+                "cannot invert for sigma")
+        recovered.append(heat_flux / (emissivity * temperature ** 4))
+
+    spread = max(recovered) - min(recovered)
+    scale = max(recovered)
+    if scale <= 0.0 or spread / scale > SIGMA_TOLERANCE:
+        raise ValueError(
+            f"sigma probes disagree: {recovered} (relative spread "
+            f"{spread / scale if scale else float('inf'):.3e} > "
+            f"{SIGMA_TOLERANCE:.1e}); the Ada radiative identity changed")
+
+    sigma = recovered[0]
+    drift = abs(sigma - SIGMA_CODATA_WM2K4) / SIGMA_CODATA_WM2K4
+    if drift > SIGMA_TOLERANCE:
+        raise ValueError(
+            f"sigma recovered from Ada {sigma:.10e} drifts {drift:.3e} "
+            f"relative from CODATA {SIGMA_CODATA_WM2K4:.10e}")
+
+    _sigma_cache.append(sigma)
+    return sigma
+
+
+def surface_flux_terms(t_surface_K: float, t_back_K: float,
+                       q_conv: float, series_resistance: float,
+                       emissivity: float, t_inf: float,
+                       sigma: float) -> tuple[float, float, float, float]:
+    """Split an element's wall flux into its balanced parts [W/m^2].
+
+    The Ada surface balance solves, for the root ``T_s``::
+
+        q_conv = (T_s - T_back)/R + eps*sigma*(T_s**4 - T_inf**4)
+                 = q_cond       +  q_rad
+
+    so the three terms must sum back to ``q_conv`` to solver tolerance.  This
+    returns all four numbers so the caller can both PLOT the split (which is
+    what makes re-radiation visible) and CHECK the closure (which is what
+    proves the split is the solver's own answer rather than a reconstruction).
+
+    Parameters:
+        t_surface_K: hot-face temperature the solver returned [K].
+        t_back_K: cold-face temperature the solver returned [K].
+        q_conv: imposed convective wall flux the solver consumed [W/m^2].
+        series_resistance: total series resistance of the layup [m^2K/W],
+            as returned by the Ada FFI (NOT recomputed here).
+        emissivity: hot-face emissivity [-].
+        t_inf: radiative ambient temperature [K].
+        sigma: Stefan-Boltzmann constant [W/m^2/K^4].
+
+    Returns:
+        ``(q_conv, q_cond, q_rad, residual)`` in W/m^2, where
+        ``residual = q_conv - q_cond - q_rad``.
+
+    Raises:
+        ValueError: if ``series_resistance`` is not strictly positive (the
+            conduction term would divide by zero) or any input is non-finite.
+            These are contract violations from the solver, not data noise.
+    """
+    values = (t_surface_K, t_back_K, q_conv, series_resistance,
+              emissivity, t_inf, sigma)
+    if not all(math.isfinite(v) for v in values):
+        raise ValueError(f"non-finite input to surface_flux_terms: {values}")
+    if series_resistance <= 0.0:
+        raise ValueError(
+            f"series resistance must be > 0, got {series_resistance}")
+
+    q_cond = (t_surface_K - t_back_K) / series_resistance
+    q_rad = emissivity * sigma * (t_surface_K ** 4 - t_inf ** 4)
+    return q_conv, q_cond, q_rad, q_conv - q_cond - q_rad
+
+
 def solve_all_elements(
     ke_raw: list[float],
     q_sg: float,
@@ -315,6 +480,14 @@ def solve_all_elements(
             f"[GUARD] Ke_Ref = {ke_ref} is not positive; it is the divisor "
             f"that maps the hottest snapshot reading onto Q_SG (axiom A4).")
 
+    sigma = stefan_boltzmann_sigma()
+    emissivity = W.IRVE3_FTPS_EMISSIVITY
+    print(f"[BALANCE] sigma recovered from Ada FFI = {sigma:.10e} W/m^2/K^4 "
+          f"(CODATA {SIGMA_CODATA_WM2K4:.10e}, relative drift "
+          f"{abs(sigma - SIGMA_CODATA_WM2K4) / SIGMA_CODATA_WM2K4:.2e}); "
+          f"eps = {emissivity}; the surface split below is the solver's own, "
+          f"not a re-implementation")
+
     rows: list[dict[str, Any]] = []
     for index, raw in enumerate(ke_raw):
         result = W.tps_conduction(q_sg_scale=q_sg, ke_raw=raw, ke_ref=ke_ref,
@@ -324,6 +497,15 @@ def solve_all_elements(
                 f"[GUARD] element {index}: Ada returned q_SG="
                 f"{result['q_sg']} outside [0, Q_SG={q_sg}]; the clamp in "
                 f"axiom A1 was not honoured.")
+        q_conv, q_cond, q_rad, residual = surface_flux_terms(
+            t_surface_K=result["t_surface"],
+            t_back_K=result["t_back"],
+            q_conv=result["q_sg"],
+            series_resistance=result["series_resistance_m2K_W"],
+            emissivity=emissivity,
+            t_inf=t_inf,
+            sigma=sigma,
+        )
         rows.append({
             "element": index,
             "ke_raw_Wm2": raw,
@@ -334,6 +516,12 @@ def solve_all_elements(
             "t_surface_exceeds_struct_limit":
                 result["t_surface"] > W.IRVE3_FTPS_STRUCT_LIMIT_K,
             "t_back_exceeds_struct_limit": result["t_back_exceeds_limit"],
+            # Surface energy balance: q_conv = q_cond + q_rad [+ residual].
+            "series_resistance_m2K_W": result["series_resistance_m2K_W"],
+            "q_conv_Wm2": q_conv,
+            "q_cond_Wm2": q_cond,
+            "q_rad_Wm2": q_rad,
+            "balance_residual_Wm2": residual,
             "profile_depth_m": result["profile_depth_m"] if write_profiles else None,
             "profile_temp_K": result["profile_temp"] if write_profiles else None,
         })
@@ -347,7 +535,12 @@ def write_element_csv(path: str, rows: list[dict[str, Any]]) -> None:
     """Per-element table: the q_SG / T_s / T_back exposure the goal requires."""
     fields = ["element", "ke_raw_Wm2", "q_sg_Wm2", "t_surface_K", "t_back_K",
               "n_iterations", "t_surface_exceeds_struct_limit",
-              "t_back_exceeds_struct_limit"]
+              "t_back_exceeds_struct_limit",
+              # Surface energy balance: q_conv = q_cond + q_rad (+ residual).
+              # Emitted so a reader can re-check closure without re-running
+              # the solver, and so the balance plot has its data on disk.
+              "series_resistance_m2K_W", "q_conv_Wm2", "q_cond_Wm2",
+              "q_rad_Wm2", "balance_residual_Wm2"]
     with open(path, "w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
@@ -585,6 +778,26 @@ def _flux_of(row: dict[str, Any]) -> float:
     return float(row["q_sg_Wm2"])
 
 
+def _safe_mean(values: Sequence[float]) -> float:
+    """Arithmetic mean of ``values``, or 0.0 when ``values`` is empty.
+
+    An empty sequence is legitimate here: if every element received zero flux
+    there is no radiative FRACTION to average (0/0 is undefined).  0.0 is
+    returned as an explicit sentinel for "no heated elements to average", NOT
+    as a claim that the radiative share is zero -- the caller must read
+    ``elements_at_zero_flux`` next to it to tell those two apart.
+
+    Raises:
+        ValueError: if any value is non-finite (a NaN would otherwise
+            silently poison the mean).
+    """
+    if not values:
+        return 0.0
+    if not all(math.isfinite(v) for v in values):
+        raise ValueError("non-finite value in mean")
+    return float(statistics.fmean(values))
+
+
 def summarise(rows: list[dict[str, Any]], q_sg: float, shape: dict[str, int],
               snapshot: str, *,
               tree: str | None = None,
@@ -647,6 +860,33 @@ def summarise(rows: list[dict[str, Any]], q_sg: float, shape: dict[str, int],
             "emissivity": W.IRVE3_FTPS_EMISSIVITY,
             "struct_limit_K": W.IRVE3_FTPS_STRUCT_LIMIT_K,
         },
+        "surface_energy_balance": {
+            # q_conv = q_cond + q_rad + residual, evaluated on every element.
+            # The residual is the solver's own closure error: TPS_Surface_Balance
+            # stops bisection when f(T) stops changing, so a small residual here
+            # is evidence the returned T_s really is the root of THAT equation.
+            "sigma_Wm2K4": stefan_boltzmann_sigma(),
+            "sigma_source": "recovered from Ada Radiative_Eq_Temp_C identity",
+            "sigma_codata_Wm2K4": SIGMA_CODATA_WM2K4,
+            "emissivity": W.IRVE3_FTPS_EMISSIVITY,
+            "residual_Wm2_abs_max": max(
+                abs(r["balance_residual_Wm2"]) for r in rows),
+            "residual_Wm2_abs_mean": statistics.fmean(
+                abs(r["balance_residual_Wm2"]) for r in rows),
+            # Relative to the flux the element actually received, so a
+            # zero-flux element (residual also ~0) cannot inflate the ratio.
+            "residual_rel_max": max(
+                (abs(r["balance_residual_Wm2"]) / r["q_conv_Wm2"]
+                 for r in rows if r["q_conv_Wm2"] > 0.0),
+                default=0.0),
+            "mean_radiative_fraction": _safe_mean(
+                [r["q_rad_Wm2"] / r["q_conv_Wm2"]
+                 for r in rows if r["q_conv_Wm2"] > 0.0]),
+            "max_radiative_fraction": max(
+                (r["q_rad_Wm2"] / r["q_conv_Wm2"]
+                 for r in rows if r["q_conv_Wm2"] > 0.0),
+                default=0.0),
+        },
         "caveats": [
             # Parenthesised so each caveat reads as ONE list item rather than
             # as several adjacent strings (ruff ISC004).
@@ -666,8 +906,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Per-element IRVE-3 F-TPS conduction over the step-2200 "
                     "SPARTA snapshot.")
-    parser.add_argument("--vtu", default=DEFAULT_VTU,
-                        help="snapshot VTU (must be the step-2200 file)")
+    parser.add_argument("--vtu", default=None,
+                        help="snapshot VTU (must be the step-2200 file); "
+                             "defaults to results/<tree>/paraview/surf_2200.vtu "
+                             "so the file always matches --tree")
     parser.add_argument("--step", type=int, default=REQUIRED_STEP,
                         help="snapshot step; only 2200 is accepted")
     parser.add_argument("--tree", default=None, choices=sorted(PER_PLY_TREES),
@@ -704,11 +946,27 @@ def main(argv: list[str] | None = None) -> int:
                              "for smoke runs only, and reported as such")
     args = parser.parse_args(argv)
 
+    # Resolve --vtu AFTER --tree so the default follows the claimed tree
+    # (see guard_tree_provenance). With neither given, fall back to the
+    # reference snapshot, which is the tree this driver was written for.
+    if args.vtu is None:
+        if args.tree is not None:
+            args.vtu = os.path.join(
+                _HERE, "..", "results", args.tree, "paraview",
+                f"surf_{args.step}.vtu")
+        else:
+            args.vtu = DEFAULT_VTU
+
     snapshot = os.path.normpath(args.vtu)
 
     print("=" * 78)
     print("Per-element IRVE-3 F-TPS conduction -- SPARTA step-2200 snapshot")
     print("=" * 78)
+
+    # Provenance must agree before anything is solved or reported.
+    guard_tree_provenance(snapshot, args.tree)
+    print(f"[GUARD] tree provenance OK: --tree {args.tree} <- "
+          f"{os.path.relpath(snapshot, os.path.join(_HERE, '..'))}")
 
     # A3: refuse anything but the step-2200 snapshot, BEFORE any solve.
     guard_step_identity(snapshot, args.step)
@@ -822,6 +1080,16 @@ def main(argv: list[str] | None = None) -> int:
           f"{summary['elements_t_back_over_struct_limit']} / "
           f"{summary['elements']}  (pinned by the boundary condition -- see "
           f"caveats in the JSON)")
+    bal = summary["surface_energy_balance"]
+    print(f"surface balance closure    : max |q_conv-q_cond-q_rad| = "
+          f"{bal['residual_Wm2_abs_max']:.3e} W/m^2 "
+          f"(mean {bal['residual_Wm2_abs_mean']:.3e}); worst relative "
+          f"{bal['residual_rel_max']:.3e}")
+    print(f"re-radiation share of q    : mean "
+          f"{bal['mean_radiative_fraction'] * 100.0:.2f}%, "
+          f"max {bal['max_radiative_fraction'] * 100.0:.2f}% "
+          f"({100.0 - bal['mean_radiative_fraction'] * 100.0:.2f}% conducted "
+          f"into the stack)")
     print("=" * 78)
     return 0
 
