@@ -186,6 +186,28 @@
   \end{columns}
 \end{frame}
 
+% SOURCE: stellarorion_sparta.adb:651-684 (2-D cartesian background grid),
+% 2163-2181 (axisymmetric R,Z surface curve revolved by SPARTA),
+% stellarorion_physics.adb:2680-2700 (SG_Scaled_Element_Flux clamp),
+% 2824-3000 (TPS_Conduction, 1-D balance). Source citations F21, F83, F84.
+\begin{frame}{REDEMPTION 1d3: HEAT-FLUX DISCRETIZATION AND COUPLING}
+  \small
+  \textbf{Grid/mesh.} DSMC uses a 2-D Cartesian cell grid
+  ($139\times139\times1$ at factor 0.7); the HIAD profile is a 2-D
+  axisymmetric $(R,Z)$ curve that SPARTA revolves into 3648 surface elements.
+  \textbf{Coupling.} For each surface element:
+  \[
+    q_i=Q_{SG}\,\mathrm{clamp}(K_{e,i}/K_{e,\mathrm{ref}},0,1),
+    \qquad
+    q_i=\varepsilon\sigma T_s^4+\frac{T_s-T_{\mathrm{back}}}{R_{\mathrm{tot}}}.
+  \]
+  \textbf{What is not done.} No superposition, no heat-leak vector between
+  elements, and no lateral spreading between elements. DSMC supplies the local
+  scalar flux shape; $Q_{SG}$ sets the stagnation scale; the TPS model is 1-D
+  through the stack. Peak and heat-load reductions are reporting steps, not a
+  coupled lateral-diffusion solve.
+\end{frame}
+
 \PlotFrame{REDEMPTION 1f: OVERALL HEAT FLUX PICTURE}
   {\MaxTextLines{2}%
    Convection (Sutton-Graves) = reradiation + conduction through the TPS:
@@ -318,125 +340,15 @@
 
 \section{CURRENT IMPLEMENTATION}
 
-% Figures below are copies of files the _proc pipeline already generated.
-% Source path of each is recorded in SOURCES.md next to main.tex so every
-% slide can be audited back to the script that drew it.
+% Placeholders for slides 22-28: content removed on request, blank for now.
+\begin{frame}[plain]\null\end{frame}
+\begin{frame}[plain]\null\end{frame}
+\begin{frame}[plain]\null\end{frame}
+\begin{frame}[plain]\null\end{frame}
+\begin{frame}[plain]\null\end{frame}
+\begin{frame}[plain]\null\end{frame}
+\begin{frame}[plain]\null\end{frame}
 
-% so_bo_convergence.png <- bo_convergence.png, regenerated 2026-10-06,
-% drawn by _proc/scripts/render_bo_figures.py from
-% _proc/src/python/hiad_optimization_results.json. The caption numbers are
-% read off the artwork's own subtitle: 70 evaluations, 20 LHS then 50 EI,
-% incumbent 1.7654 -> 1.6051 (9.08 %).
-% SOURCE (orchestrator/middle code): informal scalar value note
-% so_bo_convergence.png <- make_bo_convergence.py from
-% hiad_optimization_results.json; orthodox BO parameters come from
-% ada_pinn_wrapper.py bounds (Ada/SPARK FFI) and run_bayesian_optimize (hiad_optimizer.py / run.py).
-\PlotFrame{1. BAYESIAN OPTIMIZATION}
-  {\MaxTextLines{2}%
-   Mat\'ern 5/2 GP with EI (run bdddb47, F6); 20 LHS then 50 EI,
-   incumbent 1.7654\textrightarrow 1.6051 (-9.08\%).}
-  {so_bo_convergence}
-
-% kriging_denoise.png <- _proc/src/ui/uiassets/assets/plots/
-% kriging_denoise_step500.png, drawn by
-% _proc/scripts/render_kriging_panel.py (which calls the real
-% kriging_denoise.denoise_grid and plots ITS output -- never a stand-in).
-% The compute module itself plots nothing by design; rendering is separate.
-% convergence_audit_plot.png remains an unrelated metric-convergence
-% figure and is deliberately NOT used here.
-\PlotFrame{2. KRIGING DENOISING}
-  {\MaxTextLines{2}%
-   Gaussian-process denoising of the SPARTA cell field, pipeline step 2.
-   Top row raw, bottom row kriged; $\rho$, T, v and w channels.}
-  {kriging_denoise}
-
-% so_pipeline.png <- fignew_pipeline.png, the end-to-end pipeline diagram
-% drawn by CurrentThesisFinalReport/figures/make_fignew.py.
-%
-% PROVENANCE RE-DERIVED 2026-10-07 from git, per-commit blobs:
-%   commit 29de84b (2026-10-06 12:30) changed BOTH files 226314 -> 203630 in
-%   one commit, i.e. so_pipeline.png was copied from fignew_pipeline.png
-%   while that figure was LANDSCAPE 1619x995 (md5 3a50cf93da). The source was
-%   then regenerated back to PORTRAIT 1586x2017 and so_pipeline.png was never
-%   re-copied, so the two now differ in LAYOUT only. CONTENT is the same in
-%   both: the "Validation pipeline executed by the engine" 12-stage chart and
-%   the "Geometry optimization loop" ending in Bayesian optimization. The
-%   landscape copy is the better 16:9 fit, so it is KEPT deliberately.
-% The previous note here claimed the portrait aspect 0.786 and a 0.62
-% \plotheight override tuned for it. That tuning belonged to artwork this
-% frame no longer holds, so the override is removed and the deck default
-% \plotheight is used.
-\PlotFrame{3. VALIDATION RUN}
-  {\MaxTextLines{2}%
-   Performance reference against performance simulated on StellarOrion,
-   over the DSMC to PINN pipeline shown.}
-  {so_pipeline}
-
-% so_pinn_architecture.png <- pinn_architecture.png. What the PINN stage of
-% the pipeline above actually is: the two-stage loss and the layer sizes.
-\PlotFrame{3b. THE PINN INSIDE THE PIPELINE}
-  {\MaxTextLines{2}%
-   Two-stage loss: Stage 1 data only, Stage 2 adds the PDE residual;
-   2 inputs to 3 hidden layers of 64 to 4 outputs.}
-  {so_pinn_architecture}
-
-% heatflux_methodology.png <- figures/heatflux_methodology.png, drawn by this
-% directory's make_heatflux_methodology.py (200 dpi, Ghibli palette so it sits
-% on the deck rather than looking pasted in). Placed BEFORE frame 4 because the
-% "wrong definition" claim is only legible once the reader knows what the
-% methodology actually is. Every box carries the _proc file:line it was read
-% from; the figure's own overflow guard (AXIOM A5) raises rather than clipping.
-%
-% WHAT THIS FRAME NOW CLAIMS. It defines heat flux instead of only describing
-% how it is counted. Sutton-Graves returns the convective input to the
-% surface; the surface energy balance then splits that input three ways:
-%     q_conv = eps*sigma*T_s^4  +  (T_s - T_back)/R_total
-%     (reradiation back out)      (conduction into the 5-ply stack)
-% So the three terms the deck names are CONVECTION (Sutton-Graves),
-% CONDUCTION (through the materials) and RERADIATION (back to the flow).
-%
-% NUMBERS, all from the F84 joint solve with a measured residual of
-% 0.0000 % at the peak element:
-%     q_conv = 266509.28, q_rad = 261626.54, q_cond = 4882.77 W/m^2
-%     T_s = 1550.2345 K, T_back = 300 K, R_total = 0.25605 m^2.K/W, eps = 0.80
-% Source: FAILURES_AND_FIXES.md entry F84; solver ada_pinn_wrapper.py
-% tps_conduction.
-%
-% ROUNDING IS LOAD-BEARING HERE. Rounded to whole numbers the three terms do
-% NOT add up in print (261627 + 4883 = 266510 against a true 266509), and a
-% caption whose own arithmetic fails on screen is worse than no caption. One
-% decimal makes it exact: 261626.5 + 4882.8 = 266509.3. That is why the
-% caption carries .3 / .5 / .8 rather than integers.
-
-% so_sutton_graves.png <- sutton_graves_parametric.png, drawn by
-% _proc CurrentThesisFinalReport/figures/generate_sutton_graves_parametric.py
-% (+177 lines in the current diff). The curve is what makes F21 legible:
-% the same relation evaluated at two conditions.
-\PlotFrame{4. REDEFINING YESTERDAY'S WRONG HEAT FLUX DEFINITION}
-  {\MaxTextLines{2}%
-   Normalisation constant taken at 51.8 km, not the snapshot's own
-   52.03 km: reported peak overstated by 31.90 \% (F21).}
-  {so_sutton_graves}
-
-% so_scalloped_vs_smooth.png <- fignew_scalloped_vs_smooth_heatflux.png.
-% The condition caveat is mandatory, not decorative: the two curves are NOT
-% at the same flight condition (the F18 cross-run confound), so the caption
-% names both conditions rather than implying a like-for-like comparison.
-\PlotFrame{4b. SCALLOPED VERSUS SMOOTH GEOMETRY}
-  {\MaxTextLines{2}%
-   Per-element and peak heat flux for the two surfaces, each at its own
-   run condition: smooth 51.82 km / 3379 m/s, scalloped 52.07 km / 3101 m/s.}
-  {so_scalloped_vs_smooth}
-
-% so_topology_before_after.png <- optimization_comparison.png, drawn by
-% _proc/scripts/render_optimization_comparison.py L1007-1008 into
-% _proc/. Two panels: BEFORE (IRVE-3 default) and AFTER (Bayesian optimum).
-\PlotFrame{5. OPTIMIZATION RESULT: TOPOLOGY BEFORE/AFTER}
-  {\MaxTextLines{2}%
-   Nose/torus geometry before (pre-optimised Rapisarda 2023 baseline) and after BO,
-   both from the shipped Ada FFI: $C_d$ 1.607\textrightarrow1.573, heat load
-   219.1\textrightarrow155.2 J/cm$^2$ ($-29.2\%$).}
-  {so_topology_4views}
 
 % =====================================================================
 % SECTION LAST -- CONTEXT (moved here so the positioning map is seen after
