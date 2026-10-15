@@ -648,8 +648,96 @@ def _nan_banner(ax, text: str) -> None:
 # ---------------------------------------------------------------------------
 # the eight panels
 # ---------------------------------------------------------------------------
-def render_grid_panels(step: int, d: dict[str, np.ndarray], outdir: str
-                       ) -> list[str]:
+# Vehicle silhouettes drawn on the computational-mesh panel, in draw order.
+# Each entry is (results tree, line colour, line style, legend label).
+# WHY BOTH ON EVERY MESH PANEL: the mesh panel's whole job is to show where
+# the body sits inside the domain, but the cell rectangles alone never
+# identify the body.  Plotting the flown reference and the optimized topology
+# together makes the boundary visible AND makes the difference between the two
+# designs readable (ref r_max = 1.88019 m vs opt r_max = 1.82981 m).
+OUTLINE_TREES = (
+    ("00_reference", "#1f4e79", "-", "reference body (00_reference)"),
+    ("03_opt_geometry", "#c0392b", "--", "optimized body (03_opt_geometry)"),
+)
+
+
+def _load_surf_profile(tree: str) -> tuple[list[float], list[float]] | None:
+    """Read one tree's SPARTA surface profile as (axial, radial) point lists.
+
+    Parameters
+    ----------
+    tree : str
+        Results sub-directory holding HIAD_custom.surf.
+
+    Returns
+    -------
+    tuple[list[float], list[float]] | None
+        (x_axial, r_radial) point lists, or None when the file is absent or
+        carries no usable points.  None means "draw no outline", never
+        "invent one".
+
+    Raises
+    ------
+    None -- every failure path warns and returns None so a missing artefact
+        cannot abort the remaining panels.
+    """
+    path = os.path.join(RESULTS, tree, "HIAD_custom.surf")
+    if not os.path.isfile(path):
+        warn(f"[field] {tree}: surface file not found at {path} -- "
+             "vehicle outline skipped")
+        return None
+    try:
+        # Imported lazily: plot_hiad_3d.read_surf is the one reader that
+        # handles the blank line after "Points" and the "Lines" terminator.
+        from plot_hiad_3d import read_surf
+        pts = read_surf(path)
+    except Exception as exc:  # noqa: BLE001 -- a bad artefact must not kill the plot
+        warn(f"[field] {tree}: cannot read surface profile {path}: {exc!r} "
+             "-- vehicle outline skipped")
+        return None
+    if len(pts) < 2:
+        warn(f"[field] {tree}: surface profile {path} has {len(pts)} points "
+             "-- vehicle outline skipped")
+        return None
+    return [p[0] for p in pts], [p[1] for p in pts]
+
+
+def _draw_vehicle_outlines(ax: object) -> int:
+    """Overlay every known vehicle silhouette on a mesh axes.
+
+    Parameters
+    ----------
+    ax : matplotlib Axes
+        Axes mutated in place; the mesh cell collection is already added.
+
+    Returns
+    -------
+    int
+        Number of outlines actually drawn (0..len(OUTLINE_TREES)).
+
+    Raises
+    ------
+    None -- missing or malformed artefacts are warned and skipped.
+    """
+    drawn = 0
+    for tree, color, style, label in OUTLINE_TREES:
+        prof = _load_surf_profile(tree)
+        if prof is None:
+            continue
+        xs, rs = prof
+        # Axisymmetric domain: y is radial and >= 0, so the upper-half
+        # meridian IS the body silhouette -- no mirrored copy is drawn.
+        ax.plot(xs, rs, color=color, linestyle=style, linewidth=1.8,
+                solid_capstyle="round", label=label, zorder=5)
+        drawn += 1
+    if drawn:
+        ax.legend(loc="upper right", fontsize=FONT_PT * 0.85,
+                  framealpha=0.92, edgecolor="#555555")
+    return drawn
+
+
+def render_grid_panels(step: int, d: dict[str, np.ndarray], outdir: str,
+                       tree: str = "") -> list[str]:
     """Render the six grid-derived panels for one DSMC step.
 
     Parameters
@@ -660,6 +748,10 @@ def render_grid_panels(step: int, d: dict[str, np.ndarray], outdir: str
         Parsed grid dump.
     outdir : str
         Destination directory.
+    tree : str, optional
+        Results sub-directory the dump came from.  Used only to title the
+        mesh panel and to keep its file name unique per tree, so rendering
+        two trees cannot silently overwrite the other's mesh figure.
 
     Returns
     -------
@@ -763,6 +855,9 @@ def render_grid_panels(step: int, d: dict[str, np.ndarray], outdir: str
     plt.close(fig)
 
     # 6 -- grid mesh ---------------------------------------------------------
+    #  The cells alone never identify the body, so both vehicle silhouettes
+    #  are drawn ON TOP of the mesh: this is the panel that shows where the
+    #  reference and the optimized geometry sit inside the domain.
     fig, ax = plt.subplots()
     verts = np.stack([
         np.stack([d["xlo"], d["ylo"]], axis=1),
@@ -777,11 +872,24 @@ def render_grid_panels(step: int, d: dict[str, np.ndarray], outdir: str
     ax.set_xlim(d["xlo"].min(), d["xhi"].max())
     ax.set_ylim(d["ylo"].min(), d["yhi"].max())
     ax.set_aspect("equal")
+    n_outlines = _draw_vehicle_outlines(ax)
+    if n_outlines == 0:
+        warn("[field] mesh panel: NO vehicle outline could be drawn -- "
+             "HIAD_custom.surf missing/unreadable for every tree")
     ax.set_xlabel("axial  x [m]", fontsize=FONT_PT)
     ax.set_ylabel("radial  y [m]", fontsize=FONT_PT)
-    ax.set_title(f"Computational mesh -- {short}", fontsize=TITLE_PT, pad=20)
+    mesh_title = f"Computational mesh -- {short}"
+    if tree:
+        # Name the tree that produced the cells: two trees share this panel,
+        # and an unqualified title would attribute the wrong mesh to a run.
+        mesh_title = f"Computational mesh -- {tree}, {short}"
+    ax.set_title(mesh_title, fontsize=TITLE_PT, pad=20)
     _stats_note(ax, d, mask, step)
-    written.append(_save(fig, "grid_mesh_map_smooth", step, outdir))
+    #  Tree-qualified base name: without it the second tree rendered would
+    #  overwrite the first tree's figure (both used to write
+    #  "grid_mesh_map_smooth_step_<N>.png" into one flat outdir).
+    mesh_name = f"grid_mesh_map_smooth_{tree}" if tree else "grid_mesh_map_smooth"
+    written.append(_save(fig, mesh_name, step, outdir))
     plt.close(fig)
 
     # 7 -- mesh statistics ---------------------------------------------------
@@ -1037,7 +1145,7 @@ def main(argv: list[str] | None = None) -> int:
                 failed.append(f"{path}: unparseable")
                 continue
             try:
-                written += render_grid_panels(step, d, args.outdir)
+                written += render_grid_panels(step, d, args.outdir, tree=tree)
             except Exception as exc:    # noqa: BLE001 -- one bad dump must not stop other steps; logged
                 warn(f"[field] grid panels failed for {path}: {exc!r}")
                 failed.append(f"{path}: {exc!r}")
