@@ -1588,6 +1588,8 @@ _ada_lib.TPS_Conduction_C.argtypes = [
     ctypes.c_double,                      # Emissivity
     ctypes.c_double,                      # T_Init
     ctypes.c_double,                      # T_Inf
+    ctypes.c_double,                      # Lateral_G    (sum g_ij [W/K])
+    ctypes.c_double,                      # Lateral_Src  (sum g_ij*T_j [W/m^2])
     ctypes.POINTER(ctypes.c_int),         # Status      (out)
     ctypes.POINTER(ctypes.c_double),      # Q_SG        (out)
     ctypes.POINTER(ctypes.c_double),      # T_Surface   (out)
@@ -1601,7 +1603,9 @@ def tps_conduction(q_sg_scale: float, ke_raw: float, ke_ref: float,
                    ply_thickness: Sequence[float] = IRVE3_FTPS_PLY_THICKNESS_M,
                    ply_thermal_k: Sequence[float] = IRVE3_FTPS_PLY_THERMAL_K,
                    emissivity: float = IRVE3_FTPS_EMISSIVITY,
-                   t_init: float = 300.0, t_inf: float = 300.0) -> dict[str, Any]:
+                   t_init: float = 300.0, t_inf: float = 300.0,
+                   lateral_g: float = 0.0,
+                   lateral_src: float = 0.0) -> dict[str, Any]:
     """Solve 1-D steady composite F-TPS conduction via the Ada/SPARK FFI.
 
     Runs the Sutton-Graves-scaled surface energy balance and the
@@ -1632,6 +1636,19 @@ def tps_conduction(q_sg_scale: float, ke_raw: float, ke_ref: float,
     t_init, t_inf : float
         Initial back-face (cold-side) temperature and radiative ambient
         temperature [K].
+    lateral_g, lateral_src : float
+        LATERAL CONDUCTION WITH THE EDGE NEIGHBOURS (expert review, axiom C5).
+        ``lateral_g`` = sum_j g_ij [W/K] over the element's adjacent surface
+        elements, where g_ij = (shared edge length / centroid distance) x the
+        structural sheet conductance. ``lateral_src`` = sum_j g_ij*T_j [W/m^2].
+        The surface balance gains ``+ lateral_g*T - lateral_src``, i.e. net
+        in-plane heat arriving from the neighbouring elements, which is what
+        turns this from a purely 1-D through-thickness solve into a coupled
+        one. Both default to 0.0, which is EXACTLY the uncoupled 1-D problem
+        — the defaults are not an approximation, they are the identity.
+        Must satisfy ``lateral_g >= 0`` and ``0 <= lateral_src <= 2e15`` (the
+        same box the Ada Pre declares); outside it Ada reports
+        ``TPS_STATUS_BAD_FLUX_INPUT``.
 
     Returns
     -------
@@ -1718,6 +1735,7 @@ def tps_conduction(q_sg_scale: float, ke_raw: float, ke_ref: float,
         thk, kdl,
         ctypes.c_double(emissivity), ctypes.c_double(t_init),
         ctypes.c_double(t_inf),
+        ctypes.c_double(lateral_g), ctypes.c_double(lateral_src),
         ctypes.byref(status), ctypes.byref(q_sg), ctypes.byref(t_surface),
         ctypes.byref(t_back), ctypes.byref(n_iter), profile)
 
@@ -1729,7 +1747,7 @@ def tps_conduction(q_sg_scale: float, ke_raw: float, ke_ref: float,
             f"TPS_Conduction_C failed: status={status.value} ({remedy}) "
             f"[N_Layers={n_ply}, emissivity={emissivity}, "
             f"t_init={t_init}, t_inf={t_inf}, ke_raw={ke_raw}, ke_ref={ke_ref}, "
-            f"q_sg_scale={q_sg_scale}]")
+            f"q_sg_scale={q_sg_scale}, lateral_g={lateral_g}, lateral_src={lateral_src}]")
 
     # Reached only once Status == TPS_STATUS_OK, so every k in the active stack
     # is >= 1e-3 and every t >= 1e-4: the divisions below cannot trap.

@@ -858,6 +858,8 @@ package body StellarOrion_FFI is
       Emissivity    : Interfaces.C.Double;
       T_Init        : Interfaces.C.Double;
       T_Inf         : Interfaces.C.Double;
+      Lateral_G     : Interfaces.C.Double;
+      Lateral_Src   : Interfaces.C.Double;
       Status        : out Interfaces.C.int;
       Q_SG          : out Interfaces.C.Double;
       T_Surface     : out Interfaces.C.Double;
@@ -1012,10 +1014,14 @@ package body StellarOrion_FFI is
       --      real DSMC noise (axiom Q3) and is legal input.
       if Q_SG_Scale < 0.0 or else Q_SG_Scale > 2.0e15
         or else Ke_Ref < 1.0e-12 or else Ke_Ref > 1.0e15
+        or else Lateral_G < 0.0
+        or else Lateral_Src < 0.0 or else Lateral_Src > 2.0e15
       then
          Status := TPS_STATUS_BAD_FLUX_INPUT;
          Log ("[TPS_Conduction_C] FAIL: Q_SG_Scale=" & Interfaces.C.double'Image (Q_SG_Scale)
                & " or Ke_Ref=" & Interfaces.C.double'Image (Ke_Ref)
+               & " or Lateral_G=" & Interfaces.C.double'Image (Lateral_G)
+               & " or Lateral_Src=" & Interfaces.C.double'Image (Lateral_Src)
                & " outside bounds (Status="
                & Standard.Integer'Image (Standard.Integer (TPS_STATUS_BAD_FLUX_INPUT)) & ")");
          return;
@@ -1095,13 +1101,15 @@ package body StellarOrion_FFI is
             Q_SG := Interfaces.C.Double (Flux);
 
             StellarOrion_Physics.TPS_Conduction
-              (Heat_Flux => Flux,
-               Layup     => Layup,
-               T_Init    => Standard.Float (T_Init),
-               T_Inf     => Standard.Float (T_Inf),
-               T_Back    => Ada_T_Back,
-               T_Surface => Ada_T_Surface,
-               Iterations => Iterations);
+              (Heat_Flux   => Flux,
+               Lateral_G   => Standard.Float (Lateral_G),
+               Lateral_Src => Standard.Float (Lateral_Src),
+               Layup       => Layup,
+               T_Init      => Standard.Float (T_Init),
+               T_Inf       => Standard.Float (T_Inf),
+               T_Back      => Ada_T_Back,
+               T_Surface   => Ada_T_Surface,
+               Iterations  => Iterations);
          end;
       exception
          when E : others =>
@@ -1574,6 +1582,8 @@ package body StellarOrion_FFI is
          Emissivity    => 0.9,
          T_Init        => 300.0,
          T_Inf         => 300.0,
+         Lateral_G     => 0.0,
+         Lateral_Src   => 0.0,
          Status        => Status,
          Q_SG          => Q_SG,
          T_Surface     => T_Surface,
@@ -1614,6 +1624,8 @@ package body StellarOrion_FFI is
          Emissivity    => 0.9,
          T_Init        => 300.0,
          T_Inf         => 300.0,
+         Lateral_G     => 0.0,
+         Lateral_Src   => 0.0,
          Status        => Status,
          Q_SG          => Q_SG,
          T_Surface     => T_Surface,

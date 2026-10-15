@@ -787,6 +787,16 @@ package StellarOrion_FFI is
       Emissivity    : Interfaces.C.Double;
       T_Init        : Interfaces.C.Double;
       T_Inf         : Interfaces.C.Double;
+      --  LATERAL CONDUCTION INPUTS (axiom C5). See the physics spec's
+      --  TPS_Conduction for the full derivation: Lateral_G = sum_j g_ij
+      --  over the element's edge neighbours [W/K], Lateral_Src =
+      --  sum_j g_ij*T_j [W/m^2]. Both are IN parameters because they change
+      --  the solved root, and neither has an Ada default here: the C ABI
+      --  has no concept of one, so an un-updated caller would be caught by
+      --  the Pre below (Lateral_G >= 0) rather than silently solved as a
+      --  1-D problem.
+      Lateral_G     : Interfaces.C.Double;
+      Lateral_Src   : Interfaces.C.Double;
       Status        : out Interfaces.C.int;
       Q_SG          : out Interfaces.C.Double;
       T_Surface     : out Interfaces.C.Double;
@@ -798,6 +808,9 @@ package StellarOrion_FFI is
                 and then Emissivity >= 1.0e-3 and then Emissivity <= 1.0
                 and then T_Init >= 0.0 and then T_Init <= 3000.0
                 and then T_Inf >= 0.0 and then T_Inf <= 3000.0
+                and then Lateral_G >= 0.0
+                and then Lateral_Src >= 0.0
+                and then Lateral_Src <= 2.0e15
                 and then Ply_Thickness /= null
                 and then Ply_Thermal_K /= null
                 and then Profile /= null,

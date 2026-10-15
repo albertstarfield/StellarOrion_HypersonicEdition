@@ -2583,12 +2583,14 @@ package body StellarOrion_Physics is
      --            post => TPS_Surface_Balance'Result is finite (Long_Float envelope).
      --  Register_Routine: "TPS_Surface_Balance"
     function TPS_Surface_Balance
-      (T       : Float;
-       T_Back  : Float;
-       Q_Wall  : Float;
-       R_Tot   : Float;
-       Eps     : Float;
-       T_Inf_4 : Float) return Long_Float
+      (T           : Float;
+       T_Back      : Float;
+       Q_Wall      : Float;
+       R_Tot       : Float;
+       Eps         : Float;
+       T_Inf_4     : Float;
+       Lateral_G   : Float := 0.0;
+       Lateral_Src : Float := 0.0) return Long_Float
     is
        --  Widened BEFORE the squaring, not after: widening T**4 afterwards
        --  would still have overflowed inside the Float multiplication.
@@ -2597,13 +2599,23 @@ package body StellarOrion_Physics is
        T_4  : constant Long_Float := T_2 * T_2;
     begin
        -- APPLICATION: f(T) = (T - T_Back)/R + eps*sigma*(T^4 - T_inf^4) - q
+       --                    + Lateral_G*T - Lateral_Src
        -- AXIOM C1 term 1: Fourier conduction into the stack, scaled by R.
        -- AXIOM C1 term 2: Stefan-Boltzmann net radiative loss to the stream.
        -- AXIOM C1 term 3: residual against the imposed flux (=> f = 0).
+       -- AXIOM C5 term 4: net IN-PLANE conduction with the edge neighbours,
+       --   written as `+ G*T - sum_j g_ij*T_j`. Moving the neighbour sum to
+       --   the right-hand side is what makes this fit the existing solver:
+       --   for fixed neighbour temperatures it is affine in T with a
+       --   NON-NEGATIVE slope G, so it adds to f's strict monotonicity
+       --   rather than fighting it -- the unique root and the bisection
+       --   that finds it are both preserved.
        return (T_LF - Long_Float (T_Back)) / Long_Float (R_Tot)
          + Long_Float (Eps) * Long_Float (SIGMA_BOLTZMANN)
            * (T_4 - Long_Float (T_Inf_4))
-         - Long_Float (Q_Wall);
+         - Long_Float (Q_Wall)
+         + Long_Float (Lateral_G) * T_LF
+         - Long_Float (Lateral_Src);
     exception
         when E : others =>
            -- SAFETY FALLBACK (Murphy's Law): report the offending inputs, then
@@ -2625,6 +2637,10 @@ package body StellarOrion_Physics is
              ("[VERBOSE_ERROR] R_Tot:          " & Float'Image (R_Tot));
            Ada.Text_IO.Put_Line
              ("[VERBOSE_ERROR] Q_Wall:         " & Float'Image (Q_Wall));
+           Ada.Text_IO.Put_Line
+             ("[VERBOSE_ERROR] Lateral_G:      " & Float'Image (Lateral_G));
+           Ada.Text_IO.Put_Line
+             ("[VERBOSE_ERROR] Lateral_Src:    " & Float'Image (Lateral_Src));
            Ada.Text_IO.Put_Line
              ("[VERBOSE_ERROR] ========================================");
            raise;
@@ -2822,13 +2838,15 @@ package body StellarOrion_Physics is
    --            post => T_Surface >= 0.0 and Iterations <= Max_Bisection_Iterations.
    --  Register_Routine: "TPS_Conduction"
    procedure TPS_Conduction
-     (Heat_Flux  : Float;
-      Layup      : TPS_Layup;
-      T_Init     : Float;
-      T_Inf      : Float;
-      T_Back     : out Float;
-      T_Surface  : out Float;
-      Iterations : out Natural)
+     (Heat_Flux   : Float;
+      Lateral_G   : Float := 0.0;
+      Lateral_Src : Float := 0.0;
+      Layup       : TPS_Layup;
+      T_Init      : Float;
+      T_Inf       : Float;
+      T_Back      : out Float;
+      T_Surface   : out Float;
+      Iterations  : out Natural)
    is
       --  Loop-invariant quantities, hoisted out of the bisection loop.
       R_Tot    : constant Float := Layup_Resistance (Layup);
@@ -2862,8 +2880,15 @@ package body StellarOrion_Physics is
       -- APPLICATION STEP 1 (theory T-C1, bracket derivation APP-1):
       -- establish f(T_Lo) <= 0 <= f(T_Hi) ANALYTICALLY, not by trial.
       -- T_Lo is already 0.0 from initialisation (f(0) <= 0 proven above).
+      --  Lateral_Src is added to the flux term it is algebraically
+      --  identical to: the balance carries `- Lateral_Src` (see
+      --  TPS_Surface_Balance), so T_Hi must absorb it or the upper end of
+      --  the bracket could land BELOW the root and bisection would converge
+      --  to the wrong face. Lateral_G needs no such term -- it multiplies T
+      --  itself and therefore only pushes f(T_Hi) further above zero.
       T_Hi := Long_Float (T_Init)
         + Long_Float (Heat_Flux) * Long_Float (R_Tot)
+        + Long_Float (Lateral_Src) * Long_Float (R_Tot)
         + Long_Float (Rad_Inf) * Long_Float (R_Tot)
         + 1.0;
 
@@ -2886,7 +2911,8 @@ package body StellarOrion_Physics is
          -- 1-ULP error there cannot move the final root by more than one
          -- bracket width, which the tolerance exit already bounds.
          F_Mid := TPS_Surface_Balance
-           (Float (T_Mid), T_Init, Heat_Flux, R_Tot, Eps, T_Inf_4);
+           (Float (T_Mid), T_Init, Heat_Flux, R_Tot, Eps, T_Inf_4,
+            Lateral_G => Lateral_G, Lateral_Src => Lateral_Src);
 
          -- AXIOM C2 (strict monotonicity) is what licenses this discard:
          -- f(T_Mid) < 0 => root is strictly above T_Mid; otherwise at or

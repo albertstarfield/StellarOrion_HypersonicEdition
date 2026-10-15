@@ -902,7 +902,8 @@ package StellarOrion_Physics is
    --  DERIVATION (axiom S5 -- the Pre-condition of the profile routine is
    --  derived from the solver's own input box, never guessed):
    --  TPS_Conduction's upper bracket is
-   --      T_Hi = T_Init + Heat_Flux*R + eps*sigma*T_Inf^4*R + 1.0
+   --      T_Hi = T_Init + R*(Heat_Flux + Lateral_Src + eps*sigma*T_Inf^4)
+   --             + 1.0
 --  and the root lies below it. Over the solver's declared box
     --  (TPS_Conduction's Pre, physics.ads):
     --      T_Init <= 3000                    -> 3.0e3
@@ -913,11 +914,24 @@ package StellarOrion_Physics is
     --        <= 1.0 * 5.670374419e-8 * 8.1e13 * 8.0e3 -> 3.674e10
     --        (T_Inf <= 3000 => T_Inf^4 = 8.1e13)
     --      +1.0                                -> 1.0
-    --  summing: 3.0e3 + 1.6e19 + 3.674e10 + 1.0 = 1.6000004e19, so
-    --  T_Surface <= 1.7e19 K. The constant is rounded UP to 1.7e19 so it
+    --      Lateral_Src*R <= 2.0e15 * 8.0e3   -> 1.6e19
+    --        (Lateral_Src = sum over an element's edge neighbours of
+    --         g_ij*T_j, a flux-shaped term in W/m^2, carrying the same
+    --         Pre bound as Heat_Flux. It is exactly the quantity the
+    --         widened T_Hi must cancel; Lateral_G adds only a
+    --         NON-NEGATIVE term to f(T_Hi), so it can never pull the
+    --         upper end of the bracket below zero.)
+    --      eps*sigma*T_Inf^4*R
+    --        <= 1.0 * 5.670374419e-8 * 8.1e13 * 8.0e3 -> 3.674e10
+    --        (T_Inf <= 3000 => T_Inf^4 = 8.1e13)
+    --      +1.0                                -> 1.0
+    --  summing: 3.0e3 + 1.6e19 + 1.6e19 + 3.674e10 + 1.0 = 3.2000004e19,
+    --  so T_Surface <= 3.3e19 K. The constant is rounded UP to 3.3e19 so it
    --  strictly dominates the derivation rather than sitting on its boundary,
    --  which keeps TPS_Conduction_Profile's Pre satisfiable by every value the
-   --  solver can legally produce.
+   --  solver can legally produce. Raised from 1.7e19 when the lateral term
+   --  was added to TPS_Conduction; a LARGER bound only LOOSENS the profile's
+   --  `T_Surface <= TPS_Surface_Max_K` Pre, so no caller can break on it.
    --
    --  WHY SUCH A LARGE NUMBER IS ACCEPTABLE HERE: a layup this thick and this
    --  insulating is far outside the IRVE-3 design point (R ~ 0.13 m^2.K/W, so
@@ -928,7 +942,7 @@ package StellarOrion_Physics is
    --  and the optimizer's objective that decide a design is unacceptable. A
    --  ceiling near 1.0e6 would have hidden that verdict behind a
    --  Constraint_Error instead.
-   TPS_Surface_Max_K : constant Float := 1.7e19;
+   TPS_Surface_Max_K : constant Float := 3.3e19;
 
    --  Heating-pulse duration for the IRVE-3 mission [s].
    --
@@ -1021,15 +1035,35 @@ package StellarOrion_Physics is
    --    self-test registry: Test_TPS_Conduction exercises L1 .. L5.
    --  Register_Routine: "TPS_Conduction"
    procedure TPS_Conduction
-     (Heat_Flux  : Float;
-      Layup      : TPS_Layup;
-      T_Init     : Float;
-      T_Inf      : Float;
-      T_Back     : out Float;
-      T_Surface  : out Float;
-      Iterations : out Natural)
+     (Heat_Flux    : Float;
+      --  LATERAL CONDUCTION (axiom C5, added with the expert review).
+      --  Lateral_G is sum_j g_ij over an element's edge neighbours [W/K]:
+      --  the coefficient that makes the element's SURFACE temperature act
+      --  as a heat sink for its neighbours. Lateral_Src is sum_j g_ij*T_j
+      --  [W/m^2], the heat those neighbours deliver to it. Together they
+      --  append `+ Lateral_G*T - Lateral_Src` to the surface balance, i.e.
+      --  net in-plane conduction THROUGH THE STRUCTURAL PLY ONLY.
+      --  Both default to 0.0, which reduces this routine bit-for-bit to the
+      --  pre-existing 1-D through-thickness solve, so every existing caller
+      --  and every existing self-test is unaffected by construction.
+      --  PRE on Lateral_G is `>= 0.0` with NO upper bound: a non-negative G
+      --  only steepens a balance that is already strictly increasing, so it
+      --  can neither destroy the unique root nor pull the upper bracket
+      --  down (it enters f(T_Hi) with a + sign). Lateral_Src needs the
+      --  upper bound because it IS cancelled by the widened bracket.
+      Lateral_G    : Float := 0.0;
+      Lateral_Src  : Float := 0.0;
+      Layup        : TPS_Layup;
+      T_Init       : Float;
+      T_Inf        : Float;
+      T_Back       : out Float;
+      T_Surface    : out Float;
+      Iterations   : out Natural)
      with Pre  => Heat_Flux >= 0.0
                    and Heat_Flux <= 2.0e15
+                   and Lateral_G >= 0.0
+                   and Lateral_Src >= 0.0
+                   and Lateral_Src <= 2.0e15
                    and T_Init >= 0.0
                    and T_Init <= 3000.0
                    and T_Inf >= 0.0
