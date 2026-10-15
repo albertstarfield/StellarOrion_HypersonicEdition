@@ -369,19 +369,19 @@
 
 % produced geometry grid selected from the official run: use the shipped render
 % (avoid generated typesetting; image is the source truth).
-\PlotFrame{GEOMETRY GRID (DoE / BO RUN)}
+\PlotFrame{DESIGN-SPACE RESULT: GEOMETRY GRID}
   {\MaxTextLines{2}%
-   Produced geometry grid, LHS (20) plus 50 BO evaluations.
-   Includes doE/BO samples in ambient/reference frame.}
+   What this is: sampled geometry candidates, not a DSMC validation result.
+   LHS (20) plus 50 BO samples; source: official BO-results JSON.}
   {hiad_geometry_grid}
 
 % moved next to the DoE/CCD slide: 70-evaluation Bayesian design plot.
 % Figure copied from CurrentThesisFinalReport/figures/bo_optimization_3d.png
 % because it is the readable, titled thesis version; it shows final best 1.6051.
-\PlotFrame{6. BAYESIAN PLOT OPTIMIZATION}
+\PlotFrame{OPTIMIZATION DIAGNOSTIC: 70-EVAL BAYESIAN CAMPAIGN}
   {\MaxTextLines{2}%
-   Design-space samples in nose radius against torus radius, with evaluated cost
-   over the 70-step budget; final best $J=1.6051$.}
+   What this is: optimization search/convergence, not DSMC validation.
+   Final best $J=1.6051$; source: thesis fig.~bo-optimization-3d.}
   {so_bo_3d}
 
 % moved from the Bayes-hyperparameter section (slide 6 order): keep the
@@ -405,11 +405,11 @@
 % the final thesis 2x2 reference-vs-optimized topology and the DSMC-gated result.
 % Figure copied from CurrentThesisFinalReport/figures/optimization_comparison.png.
 % Numbers: chapter_04_results.tex, tab:bo_before_after, official run 2026-09-26.
-\PlotFrame{RESULT: SIMULATION AND OPTIMIZATION TOPOLOGY}
+\PlotFrame{OPTIMIZATION RESULT: BASELINE VS. OPTIMUM}
   {\MaxTextLines{2}%
-   IRVE-3 baseline (left) vs. round-1 optimum (right): 219.10$\rightarrow$155.67
-   J/cm$^2$ ($-28.95\%$), $C_d$ 1.61$\rightarrow$1.56. DSMC gate:
-   $Q$ 165.72$\rightarrow$77.93 J/cm$^2$, 16.6$\rightarrow$14.0 g, no violation.}
+   What this is: optimized candidate geometry, not a validation page.
+   IRVE-3 baseline vs. optimum: $Q$ 219.10$\rightarrow$155.67 J/cm$^2$;
+   DSMC gate 165.72$\rightarrow$77.93 J/cm$^2$. Source: thesis Table~bo-before-after.}
   {so_topology_4views}
 
 \section{CURRENT IMPLEMENTATION}
@@ -423,53 +423,54 @@
 % tps_ply_stack_temperature.png, tps_ply_profile_peak.png,
 % fignew_gate_comparison.png.
 
-\PlotFrame{RESULTS: SMOOTH-SKIN THERMAL FIELD}
+\PlotFrame{DSMC FIELD RESULT: THERMAL MAP}
   {\MaxTextLines{2}%
-   Smooth-skin DSMC temperature field around the toroid-stack aeroshell at
-   particle-time step 1000, meridional slice. Source: thesis fig.~thermal-map.}
+   What this is: DSMC temperature result field, not optimization.
+   Smooth skin at particle-time step 1000; source: thesis fig.~thermal-map.}
   {so_thermal_map}
 
-\PlotFrame{RESULTS: MACH FIELD}
+\PlotFrame{DSMC FIELD RESULT: MACH MAP}
   {\MaxTextLines{2}%
-   Smooth-skin Mach field at particle-time step 1000; bow shock ahead of the
-   aeroshell and subsonic wake behind it. Source: thesis fig.~mach-map.}
+   What this is: DSMC Mach result field, not optimization.
+   Smooth skin, step 1000; source: thesis fig.~mach-map.}
   {so_mach_map}
 
-\PlotFrame{RESULTS: CELL-SCALE KNUDSEN FIELD}
+\PlotFrame{DSMC FIELD RESULT: KNUDSEN MAP}
   {\MaxTextLines{2}%
-   Smooth-skin Knudsen field at particle-time step 1000; at cell scale the dump
-   remains continuum-dominated. Source: thesis fig.~knudsen-map.}
+   What this is: DSMC regime-support field, not optimization.
+   Smooth skin, step 1000; source: thesis fig.~knudsen-map.}
   {so_knudsen_map}
 
-\PlotFrame{RESULTS: SMOOTH VS. SCALLOPED PERFORMANCE}
+\PlotFrame{DSMC RESULT: SKIN PERFORMANCE COMPARISON}
   {\MaxTextLines{2}%
-   Drag, lift, deceleration and axial force for smooth and scalloped DSMC runs;
-   runs are at 51.82 km/3379 m/s and 52.07 km/3101 m/s. Source: thesis
+   What this is: smooth-vs-scalloped DSMC performance result, not optimization.
+   Runs at 51.82 km/3379 m/s and 52.07 km/3101 m/s; source: thesis
    fig.~performance-comparison.}
   {so_performance_comparison}
 
-\PlotFrame{RESULTS: TPS BACKFACE}
+\PlotFrame{TPS RESULT: BACKFACE CHECK}
   {\MaxTextLines{2}%
-   Active 7.131 mm five-ply F-TPS backface is 955.66 K, above the 773 K Kapton
-   and 523.15 K structural limits. Source: thesis fig.~tps-backface.}
+   What this is: TPS backface limit check, not optimization.
+   Active 7.131 mm stack reads 955.66 K; source: thesis fig.~tps-backface.}
   {so_tps_backface}
 
-\PlotFrame{RESULTS: PLY STACK TEMPERATURE}
+\PlotFrame{TPS RESULT: PLY STACK TEMPERATURE}
   {\MaxTextLines{2}%
-   Per-ply temperature across the five-ply IRVE-3 stack at the step-2200 DSMC
-   conduction solve. Source: thesis fig.~tps-ply-stack.}
+   What this is: TPS conduction solve result, not optimization.
+   Five-ply stack at step 2200; source: thesis fig.~tps-ply-stack.}
   {so_ply_stack_temperature}
 
-\PlotFrame{RESULTS: PEAK PLY PROFILE}
+\PlotFrame{TPS RESULT: PEAK PLY PROFILE}
   {\MaxTextLines{2}%
-   Through-thickness profile at the peak-flux surface element, from Nicalon SiC
-   hot face to Kapton cold face. Source: thesis fig.~tps-ply-stack.}
+   What this is: through-thickness TPS result, not optimization.
+   Peak-flux element, SiC hot face to Kapton cold face; source: thesis
+   fig.~tps-ply-stack.}
   {so_tps_ply_profile_peak}
 
-\PlotFrame{RESULTS: HYBRID DSMC VALIDATION GATE}
+\PlotFrame{VALIDATION RESULT: HYBRID DSMC GATE}
   {\MaxTextLines{2}%
-   Campaign reference, analytic prediction and DSMC re-simulation heat loads;
-   DSMC value 77.93 J/cm$^2$ passes the 165.72 J/cm$^2$ gate. Source: thesis
+   What this is: validation gate for the optimized candidate, not another
+   optimization plot. DSMC 77.93 J/cm$^2$ passes 165.72; source: thesis
    fig.~gate-comparison.}
   {so_gate_comparison}
 
