@@ -215,6 +215,15 @@ sabotage\_verifier.py & sabotage scan & resource cleanup, exception handling, me
 \end{tabularx}
 \end{table}
 
+\noindent The versions recorded for this sweep are the measured ones rather
+than nominal ones: Python 3.12.15 in the project's validation virtual
+environment, ruff 0.16.10, pyrefly 1.3.2, GNAT 16.1.0 and GNATprove FSF
+16.1.0. The Python checks run inside that environment, and pyrefly is
+invoked with \texttt{--python-interpreter-path} pointed at the same
+interpreter: resolved against a different interpreter it reports three
+spurious \texttt{missing-import} errors in \texttt{ada\_pinn\_wrapper.py}
+that are an artifact of the invocation rather than of the code.
+
 \subsection{Raw Report Transcripts}
 \label{sec:raw_verification_transcripts}
 
@@ -232,19 +241,26 @@ still printing errors or leaving checks unproved.
 \textbf{Tool} & \textbf{Recorded raw outcome} & \textbf{Exit code} \\
 \hline
 Ruff & \texttt{All checks passed!} & 0 \\
-Pyrefly & \texttt{2 errors} reported with an \texttt{INFO 2 errors (6 suppressed, 19 warnings not shown)} line & 0 \\
+Pyrefly & \texttt{INFO 0 errors (6 suppressed, 19 warnings not shown)} & 0 \\
 CrossHair & \texttt{WARNING: Targets found, but contain no checkable functions.} & 0 \\
-sabotage\_verifier.py & \texttt{VERDICT: TAINTED - 39 CRITICAL+ violation(s) found. NOT CLEAN.} & 1 \\
+sabotage\_verifier.py & \texttt{VERDICT: TAINTED - 40 CRITICAL+ violation(s) found. NOT CLEAN.} & 1 \\
 Coq/Rocq proof gate & \texttt{88/88 proofs compiled}; \texttt{failed: 0}; \texttt{duration\_s: 25.354} & 0 \\
-GNATprove & \texttt{Total 533}; flow \texttt{28 (5\%)}; provers \texttt{474 (89\%)}; unproved \texttt{31 (6\%)} & 0 \\
+GNATprove analysis & \texttt{Total 533}; flow \texttt{28 (5\%)}; provers \texttt{474 (89\%)}; unproved \texttt{31 (6\%)} & 0 \\
+\texttt{prove.sh} wrapper & prints \texttt{GNATprove: PASSED}, then aborts on unbound \texttt{GNATCOV\_FAILED} & 1 \\
+Ada unit tests (\texttt{bin/test\_main}) & \texttt{Tests run: 29  Failed: 0}; \texttt{ALL TESTS PASSED} & 0 \\
 \hline
 \end{tabularx}
 \end{table}
 
+\noindent Two rows describe the same GNATprove campaign at different levels
+and therefore carry different exit codes: the analysis itself completes with
+exit~0, while the \texttt{prove.sh} wrapper aborts with exit~1 afterwards,
+as the transcript below records.
+
 \subsubsection*{Ruff raw report}
 \begingroup\tiny
 \begin{verbatim}
-$ ./venv/python/bin/ruff check .
+$ ./venv_validation/bin/ruff check .
 All checks passed!
 \end{verbatim}
 \endgroup
@@ -252,18 +268,15 @@ All checks passed!
 \subsubsection*{Pyrefly raw report}
 \begingroup\tiny
 \begin{verbatim}
-$ ./venv/python/bin/pyrefly check . --python-interpreter-path \
-    "$PWD/venv/python/bin/python3" --project-excludes venv/** \
-    --project-excludes .venv/** --project-excludes __pycache__/** \
-    --project-excludes build/** --project-excludes scripts/** \
-    --project-excludes data/** --project-excludes results/** \
-    --project-excludes .opencode/** --project-excludes .tmp/** \
-    --project-excludes Lost+Found/**
-ERROR Cannot infer type of empty container; it will be treated as containing `Any` [implicit-any-empty-container]
-    --> run.py:1302:44
-ERROR Cannot infer type of empty container; it will be treated as containing `Any` [implicit-any-empty-container]
-    --> run.py:2356:17
- INFO 2 errors (6 suppressed, 19 warnings not shown)
+$ ./venv_validation/bin/pyrefly check . \
+    --python-interpreter-path ./venv_validation/bin/python \
+    --project-excludes 'venv_validation/**' --project-excludes 'venv/**' \
+    --project-excludes '.venv/**' --project-excludes '__pycache__/**' \
+    --project-excludes 'build/**' --project-excludes 'scripts/**' \
+    --project-excludes 'data/**' --project-excludes 'results/**' \
+    --project-excludes '.opencode/**' --project-excludes '.tmp/**' \
+    --project-excludes 'Lost+Found/**'
+ INFO 0 errors (6 suppressed, 19 warnings not shown)
 exit code: 0
 \end{verbatim}
 \endgroup
@@ -271,23 +284,45 @@ exit code: 0
 \subsubsection*{CrossHair raw report}
 \begingroup\tiny
 \begin{verbatim}
-$ ./venv/python/bin/crosshair check src/utils/sabotage_verifier.py
+$ ./venv_validation/bin/crosshair check src/utils/sabotage_verifier.py
 WARNING: Targets found, but contain no checkable functions.
 exit code: 0
 \end{verbatim}
 \endgroup
 
+\noindent The exit~0 here is a vacuous pass: the target file was found and
+zero functions were analysed, so this gate contributes no assurance in its
+current configuration and is reported as such rather than counted as
+evidence.
+
 \subsubsection*{sabotage\_verifier.py raw summary}
 \begingroup\tiny
 \begin{verbatim}
-$ ./venv/python/bin/python src/utils/sabotage_verifier.py src \
+$ ./venv_validation/bin/python src/utils/sabotage_verifier.py src/ \
     --extensions .adb,.ads,.py
+Total Static Violations: 184
+  CRITICAL:   1
+  HIGH:       0
+  MEDIUM:    39
+  LOW:      144
  1 CRITICAL violation(s) - NOT CLEAN. Build blocked. Critical issues demand immediate fix.
- VERDICT: TAINTED - 39 CRITICAL+ violation(s) found. NOT CLEAN.
+ VERDICT: TAINTED - 40 CRITICAL+ violation(s) found. NOT CLEAN.
  audit log written to: stellarorion_program_proc/.verifier_audit.log
 exit code: 1
 \end{verbatim}
 \endgroup
+
+\noindent The single CRITICAL is \texttt{ADA\_NOT\_DOMINANT}: Ada accounts
+for 32.5\% of bytes against Python at 42.3\%, a composition posture the
+finding itself marks as a standing exclusion, since the Python in this
+repository holds the toolchain, the interface layer and the build
+verification rather than the flight logic. Of the 39 MEDIUM findings, the
+actionable subset is the sensitivity-unit contract work the source already
+records as outstanding, together with roughly 23 missing \texttt{Test\_}
+registrations; at least two of the assertion-scanner findings are false
+positives, reporting a contract as missing from a declaration that carries
+it. The dominant LOW class is \texttt{SPARK\_MODE\_OFF}, and every instance
+inspected is justified inline as non-SPARK runtime use.
 
 \subsubsection*{Coq/Rocq raw report}
 \begingroup\tiny
@@ -319,11 +354,13 @@ generated_utc: 2026-10-15T00:26:41.071660+00:00
 \subsubsection*{GNATprove raw report}
 \begingroup\tiny
 \begin{verbatim}
-$ bash scripts/prove.sh 4
+$ bash prove.sh --level 4
 Phase 1 of 3: generation of data representation information ...
 Phase 2 of 3: generation of Global contracts ...
 Phase 3 of 3: flow analysis and proof ...
-exit code: 0
+GNATprove: PASSED (Level 4)
+prove.sh: line 259: GNATCOV_FAILED: unbound variable
+exit code: 1
 \end{verbatim}
 \endgroup
 
@@ -342,6 +379,69 @@ Total                           533    28 (5%)                                  
 max steps used for successful proof: 76307
 \end{verbatim}
 \endgroup
+
+\noindent Twenty-one units were analysed and no single check exceeded one
+second. The analysis itself exits~0; the exit~1 above belongs to the
+wrapper, for two separate reasons that change what the transcript means.
+First, the wrapper prints \texttt{GNATprove: PASSED} keyed solely on
+gnatprove's exit code, and gnatprove exits~0 on a \emph{completed} run,
+which is not the same as a \emph{fully discharged} one: the PASS line is
+therefore printed immediately below the unproved count it contradicts.
+Second, the default invocation aborts afterwards under
+\texttt{set -euo pipefail}, which reads a coverage-failed flag that is only
+assigned inside the coverage branch. The project carries a second wrapper
+that runs the same analysis without that coverage machinery; neither wrapper
+changes the obligation counts above.
+
+\subsubsection*{Unproved obligation disposition}
+
+All 31 unproved obligations lie in one unit,
+\texttt{stellarorion\_postprocessing.ads}, distributed as follows.
+
+\begin{table}[!htbp]
+\centering
+\caption{Disposition of the 31 unproved obligations (level 4); all lie in \texttt{stellarorion\_postprocessing.ads}.}
+\label{tab:unproved_obligations}
+\begin{tabular}{lr}
+\hline
+\textbf{Subprogram} & \textbf{Proved / total} \\
+\hline
+\texttt{Compute\_Validation\_Metrics} & 94 / 99 \\
+\texttt{Compute\_Surf\_Stats} & 43 / 51 \\
+\texttt{Compute\_Convergence\_Stats} & 37 / 44 \\
+\texttt{Hollis\_Scalloping\_Correction} & 15 / 20 \\
+\texttt{Compute\_Ratios} & 8 / 10 \\
+\texttt{Compare\_To\_Flight} & 11 / 12 \\
+\texttt{Compute\_Integrated\_Heat\_Load} & 25 / 26 \\
+\texttt{Sutherland\_Viscosity} & 20 / 21 \\
+\texttt{Compute\_Chapman\_Heat\_Flux} & 2 / 3 \\
+\hline
+\end{tabular}
+\end{table}
+
+\noindent None of them fall in the aerothermodynamics or foreign-function
+boundary units, which are discharged in full. The same campaign emits 48
+warnings: 31 statements recorded as never reached, 15 subprograms named
+\texttt{Test\_} recorded as having no effect (the same registration gap the
+static scan reports from the other side), and two pragmas that claim a
+justified false positive for a check message that no longer exists. None of
+these alter the counts above; they are recorded so that the discharged
+figure is read with its residue attached.
+
+\subsubsection*{Ada unit tests raw report}
+\begingroup\tiny
+\begin{verbatim}
+$ ./bin/test_main
+Tests run: 29  Failed: 0
+ALL TESTS PASSED
+exit code: 0
+\end{verbatim}
+\endgroup
+
+\noindent Both Ada projects also build clean, the program and test project
+and the foreign-interface library project. They are separate targets:
+building the first does not relink the library that the Python wrapper
+loads, which matters whenever a change reaches that boundary.
 
 \chapter{IRVE-3 Validation Data Summary}
 \label{app:validation_data}
