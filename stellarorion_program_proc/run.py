@@ -1131,9 +1131,10 @@ def _phase2c_generate_media_and_sync() -> None:
     # Per-ply TPS sets -- one per tree, each solved on its own snapshot
     # and flight condition, then plotted into its own folder.  No tree borrows
     # another's altitude/velocity or stage annotation.
-    per_ply_trees = ("00_reference",)
+    per_ply_trees = ("00_reference", "03_opt_geometry")
     _per_ply_args = {
         "00_reference": (52.069210, 3101.079),
+        "03_opt_geometry": (52.069210, 3101.079),
     }
     for _tree in per_ply_trees:
         _vtu = os.path.join(script_dir, "results", _tree, "paraview",
@@ -2259,7 +2260,8 @@ def _run_per_ply_trees(trees: list[str]) -> None:
     venv_python = os.path.join(script_dir, "venv_validation", "bin", "python3")
     media_out = os.path.join(script_dir, "results", "99_shared")
 
-    per_ply_args = {"00_reference": (52.069210, 3101.079)}
+    per_ply_args = {"00_reference": (52.069210, 3101.079),
+                    "03_opt_geometry": (52.069210, 3101.079)}
 
     for tree in trees:
         vtu = os.path.join(script_dir, "results", tree, "paraview",
@@ -2354,9 +2356,14 @@ def main() -> None:  # nosec: PYTHON_FUNCTION_COVERAGE — CLI entry point
         # Target specific trees / per-ply only: call the solve+plot loop that
         # run.py already uses, limited to the requested trees.
         trees = []
-        if args.regenerate_plots in ("validation", "tps-validation") or args.regenerate_plots in ("tps-per-ply", "tps-validation",
-                                           "tps-optimized", "all"):
+        if args.regenerate_plots == "tps-validation":
             trees = ["00_reference"]
+        elif args.regenerate_plots == "tps-optimized":
+            trees = ["03_opt_geometry"]
+        elif args.regenerate_plots == "tps-per-ply":
+            trees = ["00_reference", "03_opt_geometry"]
+        elif args.regenerate_plots == "all":
+            trees = ["00_reference", "03_opt_geometry"]
         if not trees:
             trees = ["00_reference"]
         _run_per_ply_trees(trees)

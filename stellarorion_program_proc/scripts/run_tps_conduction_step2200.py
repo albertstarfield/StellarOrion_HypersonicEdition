@@ -162,6 +162,16 @@ PER_PLY_TREES: dict[str, dict[str, object]] = {
             "step-2200 dump on disk (2026-10-06 12:35)."
         ),
     },
+    "03_opt_geometry": {
+        "alt_km": REF_STEP2200_ALT_KM,
+        "vel_ms": REF_STEP2200_VEL_MS,
+        "role": "optimized-topology candidate",
+        "verdict": (
+            "Per-ply TPS generated from that topology's own step-2200 "
+            "surf VTU (2026-10-14). Its step-2200 row reads the same "
+            "altitude and velocity as the validated reference."
+        ),
+    },
 }
 
 #: Nextel BF-20 outer-fabric heat-flux rating [W/cm^2] [2]. Used only for

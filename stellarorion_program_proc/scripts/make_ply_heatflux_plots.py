@@ -523,6 +523,15 @@ STAGE_TEXT_INFO = {
         ),
         "alt_km": 52.069210, "vel_ms": 3101.079, "mach": 9.455298,
     },
+    "03_opt_geometry": {
+        "role": "OPTIMIZED-TOPOLOGY CANDIDATE (results/03_opt_geometry/)",
+        "verdict": (
+            "Per-ply solve on that topology's own step-2200 VTU. Its geometry "
+            "came from the optimizer; stage is reported here verbatim from its "
+            "validation_timeseries.csv rather than from the reference run."
+        ),
+        "alt_km": 52.069210, "vel_ms": 3101.079, "mach": 9.455298,
+    },
 }
 
 
@@ -1566,10 +1575,10 @@ def main() -> int:
     ap.add_argument("--elements-csv", default=os.path.join(default_dir, "tps_step2200_elements.csv"))
     ap.add_argument("--profiles-csv", default=os.path.join(default_dir, "tps_step2200_profiles.csv"))
     ap.add_argument("--tree", default="00_reference",
-                    choices=["00_reference"],
-                    help="results tree this solve came from (only the validated "
-                         "reference available): writes 'results/plots/<tree>/"
-                         "tps_per_ply/' and selects matching provenance")
+                    choices=["00_reference", "03_opt_geometry"],
+                    help="results tree this solve came from: writes "
+                         "'results/plots/<tree>/tps_per_ply/' and selects "
+                         "matching provenance where available")
     ap.add_argument("--solve-out-dir", default=None,
                     help="directory holding tps_step2200_*.csv for this tree "
                          "(default 'results/99_shared/tps_conduction', or the "
