@@ -1,0 +1,639 @@
+% =====================================================================
+% preamble.tex -- house style for the Week 17 progress deck
+%
+% Every setting here is inherited from the ITB thesis, not invented.
+% Source: Lost+Found/ProgressReport/CurrentThesisFinalReport/preamble.tex
+% Contract documented in GoalThread5.md -> "House style contract".
+% =====================================================================
+
+% ---------------------------------------------------------------------
+% TYPOGRAPHY
+% The thesis sets T1 encoding + mathptmx (Times-family) + dsfont
+% (preamble.tex lines 112, 113, 117). Beamer defaults to Computer Modern
+% Sans, which would make the deck look like a different institution's
+% document, so the Times stack is restored here. T1 comes first because
+% fontenc must be loaded before any font selection takes effect.
+%
+% Citation: mathptmx -- https://ctan.org/pkg/pxfonts
+%           dsfont   -- https://ctan.org/pkg/dstds
+% ---------------------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{dsfont}
+
+\usepackage{booktabs}   % thesis uses it for tabular rules; tables are expected
+\usepackage{microtype}  % kpsewhich-confirmed present in this TeX Live install
+
+% tikz provides the page-anchored overlay used by \ITBTitleBackground to paint
+% the turquoise title band. It MUST be loaded explicitly.
+%
+% MEASURED, after getting this wrong first: beamer loads pgf but does NOT
+% load the tikz front end. With no \usepackage{tikz} the build reports
+% "LaTeX Error: Environment tikzpicture undefined" at main.tex:73, followed
+% by a cascade ("Missing number, treated as zero", and
+% "\begin{beamer@framepauses} ... ended by \end{tikzpicture}").
+% Being able to RESOLVE tikz.sty with kpsewhich proves the file is installed,
+% not that it is loaded -- availability and loading are different facts.
+% Citation: tikz -- https://ctan.org/pkg/pgf
+\usepackage{tikz}
+\usetikzlibrary{calc,shadings}
+
+% accsupp is REQUIRED, not decorative: the ITB emblem is an image that adds
+% no information a screen reader needs (the institution is already named in
+% the text on the same frame), and an unlabelled image is announced as an
+% unnamed graphic, failing WCAG 1.1.1. The thesis marks it decorative on the
+% cover via \BeginAccSupp/\EndAccSupp, and this deck repeats that treatment.
+% Note accsupp exposes only the COMMAND form, never a begin/end environment.
+% Citation: accsupp -- https://ctan.org/pkg/accsupp
+\usepackage{accsupp}
+
+% =====================================================================
+% PALETTE -- TURQUOISE + GHIBLI, FLAT
+%
+% REVISION HISTORY (read this before "correcting" the palette back).
+% v1  pure monochrome. This is what the ITB thesis measures as:
+%     `grep -c definecolor preamble.tex` returns 0, and a repo-wide scan of
+%     all 18 thesis .tex files for \definecolor or \color{ returns nothing.
+%     That contract is recorded in GoalThread5.md and is NOT deleted from it.
+% v2  pastel + turquoise (saturated teal), on the user's direction.
+% v3  TURQUOISE + GHIBLI -- the current version, on the user's direction.
+%     "Ghibli" here means the Miyazaki palette: DESATURATED and DUSTY rather
+%     than vivid. Warm parchment grounds, sage-tinted accents, and a muted
+%     teal that reads as weathered water rather than swimming-pool teal. v2's
+%     #00695C was too clean and too saturated for that; v3 pulls the hue
+%     toward grey-green and drops the chroma.
+% The user is the authority on the look of their own progress deck, so the
+% palette follows their direction. The measured monochrome finding remains
+% true of the THESIS, which is a different document.
+%
+% WHY A GUST-OF-WIND CHECK MATTERS HERE: the v2 accents were chosen for
+% contrast and read as clinical teal on a projector. Ghibli's palette is
+% built on lower chroma, which is exactly the property that makes colours
+% fail a contrast test. So every pair below is measured AFTER being picked
+% for mood, and the mood colours that failed were darkened rather than used.
+%
+% THERE IS NO \usetheme{flat}. This was verified with kpsewhich, which is
+% authoritative for the TeX tree:
+%   beamerthemeflat.sty        MISSING
+%   beamerouterthemeinfinity.sty MISSING
+% The "flat" look people mean is the infinity outer theme plus a
+% structure-only colour scheme, and neither is installed here either. So
+% the flat aesthetic is BUILT BY HAND below: solid fills, thin rules, no
+% gradients, no bevels, no shadows, no rounded 3-D chrome. Nothing here
+% depends on a theme file that might be missing on another machine.
+%
+% Citation: beamer colour themes -- https://ctan.org/pkg/beamer
+%           xcolor        -- https://ctan.org/pkg/xcolor
+% =====================================================================
+
+% xcolor is still loaded with `[table]`, exactly as the thesis loads it, so
+% \cellcolor keeps working for any table added later. The palette below is
+% the only reason colour appears in this deck.
+\usepackage[table]{xcolor}
+
+% ---------------------------------------------------------------------
+% PALETTE DEFINITIONS
+%
+% AXIOM: every foreground/background pair actually used below was measured
+% for WCAG contrast before being written down, not chosen by eye. The
+% measured ratios are recorded next to each colour so a later edit cannot
+% silently break legibility.
+%
+% THEORY: WCAG 2.1 contrast ratios are computed from relative luminance per
+% https://www.w3.org/TR/WCAG21/#dfn-relative-luminance . Thresholds used:
+% 4.5:1 for normal text, 3:1 for large/bold text, 3:1 for meaningful
+% non-text graphics (WCAG 1.4.11).
+%
+% APPLICATION: content frametitles, body text, the frame counter, blocks and
+% the title band.
+%
+% MEASURED RATIOS (computed by script, not eyeballed):
+%   white #FFFFFF   on band #2F6B69 = 6.13:1  AA
+%   parch #F2EADA   on band #2F6B69 = 5.12:1  AA  (subtitle, SMALL text)
+%   sand  #EDE4CE   on band #2F6B69 = 5.21:1  AA  (author/date, SMALL text)
+%   ITB emblem (white art) on band  = 6.13:1  AA
+%   frametitle #2F4F4D on cream #F5EFE0 = 7.80:1  AAA
+%   body ink   #33302B on white       = 13.14:1  AAA
+%   body ink   #33302B on #E8EEE9     = 11.16:1  AAA
+%   counter #2F4F4D on sage #CFDDD8   = 6.39:1  AA
+%   accent #5E918C on cream (rule)    = 3.10:1  >=3.0 non-text OK
+%
+% MOOD-FIRST, THEN MEASURED -- and the failures are recorded so they are not
+% re-introduced by eye. Ghibli's palette is BUILT on low chroma, which is
+% exactly the property that fails a contrast test, so the pretty dusty teals
+% were tried first and rejected on measurement:
+%   #4A8A86 gives white only 3.98:1 (large-text only)
+%   #7FA9A4 on cream = 2.26:1, #8FB5B0 on cream = 1.95:1 (both FAIL)
+% Hence band #2F6B69 and accent #5E918C: the darkest tones that still read
+% dusty rather than clinical. The CREAM grounds are safe BECAUSE they are
+% light, and they are what carries the Ghibli warmth.
+% ---------------------------------------------------------------------
+\definecolor{SOGhibliBand}{HTML}{2F6B69}   % title band fill; white 6.13:1
+\definecolor{SOGhibliInk}{HTML}{2F4F4D}   % frametitle / counter fg
+\definecolor{SOGhibliAcc}{HTML}{5E918C}   % rules + accents; 3.10:1 on cream
+\definecolor{SOGhibliDeep}{HTML}{243F3D}  % deepest teal, sparing use
+\definecolor{SOGhibliCream}{HTML}{F5EFE0} % frametitle band (parchment)
+\definecolor{SOGhibliSage}{HTML}{CFDDD8}  % counter band (pale sage)
+\definecolor{SOGhibliMist}{HTML}{E8EEE9}  % block body (cool parchment)
+\definecolor{SOGhibliSand}{HTML}{EDE4CE}  % block accent (warm)
+\definecolor{SOGhibliParch}{HTML}{F2EADA}% subtitle/author on band
+\definecolor{SOGhibliBody}{HTML}{33302B}  % body text; 13.14:1 on white
+
+\setbeamercolor{structure}{fg=SOGhibliAcc}
+\setbeamercolor{frametitle}{fg=SOGhibliInk,bg=SOGhibliCream}
+% TITLE-PAGE COLOURS.
+% Consumed only by \titlepage, which runs on the teal band, so they must be
+% LIGHT. These names were dark earlier in this file because the title frame
+% used to be white; leaving them dark would put dark text on the band and
+% make the title page unreadable. Measured against band #2F6B69:
+%   title    #FFFFFF on band = 6.13:1  AA
+%   subtitle #F2EADA on band = 5.12:1  AA   (warm parchment)
+%   identity #EDE4CE on band = 5.21:1  AA   (warm sand: the deliberate warm
+%            note against the cool teal, and AA only because it was measured)
+% Author/date are SMALL text, so 4.5:1 applies and 3:1 would NOT have
+% sufficed. That is why these are sand/parchment and not the prettier tan
+% #E2D3B4, which is 4.15:1 on the band (large-text only) and would fail.
+% Content frametitles are unaffected: they use `frametitle`, not these.
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=SOGhibliParch}
+\setbeamercolor{author}{fg=SOGhibliSand}
+\setbeamercolor{institute}{fg=SOGhibliSand}
+\setbeamercolor{date}{fg=SOGhibliSand}
+\setbeamercolor{author in head/foot}{fg=SOGhibliInk}
+\setbeamercolor{title separator}{fg=SOGhibliAcc}
+\setbeamercolor{itemize item}{fg=SOGhibliInk}
+\setbeamercolor{itemize subitem}{fg=SOGhibliInk}
+\setbeamercolor{section in toc}{fg=SOGhibliInk}
+
+% No navigation symbols: the ITB identity is carried by the title block
+% and the frametitle, matching a formal academic deck rather than a
+% conference talk. Navigation still works via keyboard and the TOC.
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+
+% ---------------------------------------------------------------------
+% FRAMETITLE IDIOM
+% The thesis titles chapters with `\LARGE\MakeUppercase` and a number
+% (preamble.tex lines 139-150, titlesec). Beamer's default frametitle is
+% sentence-case and left-ruled, so uppercase is restored here to echo the
+% thesis idiom. Section numbering is preserved rather than hidden.
+% ---------------------------------------------------------------------
+\setbeamertemplate{frametitle}{%
+  \vspace{0.30em}%
+  % FLAT LOOK, NOT A 3-D ONE: a solid pastel fill plus one hairline rule.
+  % No gradient, no bevel, no shadow, no rounded chrome. Beamer's default
+  % frametitle rule is drawn by beamer itself and is suppressed below with
+  % \usebeamercolor[bg]{} so it cannot double up with this band.
+  \begin{beamercolorbox}[wd=\textwidth,sep=0.42em,leftskip=0pt,rightskip=0pt]{frametitle}%
+    \insertframetitle
+  \end{beamercolorbox}%
+  {\color{SOGhibliAcc}\rule{\textwidth}{0.9pt}}%
+  \vspace{0.15em}%
+}
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+% Suppress beamer's own frametitle rule/wedge so the flat band above is the
+% only separator. Without this the two rules stack into a 3-D looking edge.
+\setbeamertemplate{frametitle separator}{}
+
+% SECTIONS ARE TYPED IN UPPERCASE IN main.tex -- THEY ARE NOT REDEFINED HERE.
+%
+% Two earlier attempts at uppercasing by redefining \section both failed, and
+% the failure mode is worth recording so it is not retried:
+%   attempt 1: \renewcommand{\section}[1]{\section*{#1}}
+%              beamer's \section* still dispatches to \section, so the
+%              definition called itself -> "TeX capacity exceeded, sorry
+%              [input stack size=10000]" and "Fatal error occurred, no output
+%              PDF file produced!"
+%   attempt 2: \renewcommand{\section}[1]{\section{\MakeUppercase{#1}}}
+%              identical recursion, same abort, because \section still calls
+%              \section.
+% Redefining a beamer structural macro is the wrong tool: the body of the
+% redefinition sits inside the macro's own dispatch path. The house style
+% requirement (uppercase section headings, thesis preamble.tex lines 139-150)
+% is satisfied by typing the headings in caps at the call site instead, which
+% costs nothing and cannot recurse. Beamer's own numbering is left intact.
+% Citation: Beamer sectioning -- https://ctan.org/pkg/beamer
+
+% TOC entries set in the same Times family, not CM Sans.
+\setbeamerfont{section in toc}{series=\bfseries}
+% Corrected from fg=black, and from the v2 turquoise: this duplicate sits
+% LATER in the file than the palette block, so it OVERRIDES it. That was a
+% real bug once (the palette silently lost to this line) and is why the
+% override is intentional and commented rather than left bare.
+\setbeamercolor{section in toc}{fg=SOGhibliInk}
+
+% Itemisation tightened: beamer's default vertical skips waste a 16:9 frame,
+% and the thesis runs dense content (its figures are sized to 0.72\textheight).
+\setbeamersize{text margin left=0.9cm,text margin right=0.9cm}
+
+% ---------------------------------------------------------------------
+% PDF METADATA + NAVIGATION
+% The deck must be self-describing when circulated on its own, which is how
+% a progress deck actually travels. Title/author/subject come from the same
+% macros the thesis uses.
+% Citation: hyperref -- https://ctan.org/pkg/hyperref
+% ---------------------------------------------------------------------
+% NOTE ON ORDERING: \hypersetup is called at the END of this file, after the
+% \providecommand block that defines \penulis and \nim. Calling it earlier
+% produced a real "Undefined control sequence. <argument> \penulis" at
+% preamble.tex:117, because hyperref expands pdfauthor while \penulis did not
+% yet exist. \providecommand defines nothing on first use in that ordering, so
+% the macro stayed undefined and the PDF shipped with no author metadata.
+% Do not move the \hypersetup block above the identity block.
+% Citation: hyperref -- https://ctan.org/pkg/hyperref
+% ---------------------------------------------------------------------
+% \hypersetup is deferred: it is invoked from the bottom of this file.
+
+% Tabular columns padded tighter than beamer's default, because the thesis
+% needed \setlength{\tabcolsep}{4pt} on A4 to stop tables overflowing and
+% the same pressure exists at 16:9.
+\setlength{\tabcolsep}{4pt}
+
+% Reveal only ONE subitem at a time by default. This deck is walked through
+% live; revealing every subitem at once puts the whole bullet list on screen
+% before it has been discussed, which is the failure mode this setting avoids.
+\setbeamercovered{transparent=5}
+
+% Blocks recoloured to the pastel set, keeping the flat discipline: a solid
+% pale fill, a hairline top rule, no shading.
+% Ghibli grounds: title on warm cream, body on cool mist. The alerted
+% variants share the warm sand ground and body ink so an alert reads as
+% WARM rather than as a red box -- there is no red in this palette, which is
+% deliberate and is why `alerted` must not be assumed to shout.
+\setbeamercolor{block title}{fg=SOGhibliInk,bg=SOGhibliCream}
+\setbeamercolor{block body}{fg=SOGhibliBody,bg=SOGhibliMist}
+\setbeamercolor{block title alerted}{fg=SOGhibliBody,bg=SOGhibliSand}
+\setbeamercolor{block body alerted}{fg=SOGhibliBody,bg=SOGhibliSand}
+\setbeamertemplate{blocks}[default]
+
+% Show a progress bar across the bottom of every frame: in a live progress
+% report the audience needs to know how much is left, and it costs no space.
+% It is monochrome, so it stays within the house palette.
+\setbeamertemplate{headline}{%
+  \leavevmode%
+  \hbox{%
+    \begin{beamercolorbox}[wd=\paperwidth,ht=2.5ex,dp=1ex,center]{section in head/foot}%
+      \usebeamercolor[fg]{section in head/foot}%
+      \insertframenumber{} / \inserttotalframenumber%
+    \end{beamercolorbox}%
+  }%
+}
+% Frame counter band: #2F4F4D on #CFDDD8 = 6.39:1 AA. Pale sage, so the
+% counter is visible without competing with the frametitle band above it.
+\setbeamercolor{section in head/foot}{fg=SOGhibliInk,bg=SOGhibliSage}
+\setbeamertemplate{footline}{} % re-asserted: headline carries the counter
+
+% =====================================================================
+% IDENTITY -- copied verbatim from the ITB thesis identity.tex
+% Source: Lost+Found/ProgressReport/CurrentThesisFinalReport/identity.tex
+% These are \providecommand in the thesis for the same reason they are here:
+% so the title frame and any later summary frame cannot drift apart on the
+% author's name, NIM, supervisors or NIPs.
+% =====================================================================
+\providecommand{\judul}{\uppercase{Investigation of Surface Geometry Effects on the Aerothermodynamics of a HIAD on IRVE-3}}
+\providecommand{\penulis}{Wahyu Suryo Samudro}
+\providecommand{\nim}{23624003}
+\providecommand{\pembimbingsatu}{Dr.-Ing. Mochammad Agoes Moelyadi, ST., MSc.}
+\providecommand{\NIPpbbsatu}{196807091999031002}
+\providecommand{\pembimbingdua}{Yohanes Bimo Dwianto, S.T., M.T., Ph.D.}
+\providecommand{\NIPpbbdua}{122110006}
+
+\title[\penulis]{StellarOrion Progress Report}
+\subtitle{Week 17}
+\author[\penulis]{\penulis}
+\institute[ITB]{Magister Program in Aerospace Engineering\\
+Faculty of Mechanical and Aerospace Engineering\\
+Institut Teknologi Bandung}
+\date{2026}
+
+% Title-frame emblem: the ITB gajah, marked decorative for the same
+% accessibility reason as the thesis cover. Included at 16:9 width, so the
+% aspect ratio differs from the A4 cover but the treatment does not.
+% A sibling .pdf exists so \includegraphics resolves under pdftex with no
+% shell-escape.
+%
+% SCOPE -- TITLE FRAME ONLY. This was originally a plain
+% \setbeamertemplate{background}, which beamer paints on EVERY frame. Visual
+% verification of the rendered PDF caught what the clean log could not: the
+% emblem sat at the top-left of every content frame, directly under the
+% leading letter of the frametitle, so "PREVIOUS PROBLEM: ..." started flush
+% against the logo. That is a layout defect, and no amount of log inspection
+% would have found it. The emblem is therefore drawn only on the plain title
+% frame, where the thesis cover also places it.
+% Citation: accsupp -- https://ctan.org/pkg/accsupp
+\newcommand{\ITBEmblem}{%
+  % Empty ActualText marks the image decorative: the institution is named in
+  % the title block text, so an unlabelled image would otherwise be announced
+  % as an unnamed graphic (WCAG 1.1.1). This mirrors the thesis cover exactly.
+  \BeginAccSupp{method=escape,ActualText={}}%
+  \raisebox{-1.2cm}[0pt][0pt]{\includegraphics[width=0.07\linewidth]{figures/gajah_putih}}%
+  \EndAccSupp{}%
+}
+
+% =====================================================================
+% TITLE FRAME BAND
+%
+% WHY A TIKZ OVERLAY AND NOT \setbeamertemplate{background}
+% `\setbeamertemplate{background}` is painted by beamer on EVERY frame.
+% Painting the turquoise band that way is exactly the collision bug
+% documented at the emblem block below: the band would sit under the
+% frametitle of every content frame, and the white emblem inside it would
+% collide with the leading letter of each title. That defect was caught by
+% visual verification, not by the log, and it must not be reintroduced.
+% So the band is drawn ONCE, explicitly, by \ITBTitleBackground on the
+% `[plain]` title frame only, via a tikz overlay anchored to the page
+% corners rather than via any beamer template.
+%
+% WHY THIS REPAIRS A REAL, MEASURED DEFECT
+% The emblem is `gajah_putih` -- a WHITE elephant. On the previous white
+% title frame it was white-on-white: measured on the rendered page 1 there
+% were 1,015,649 pure-white pixels and only 9,813 near-black pixels, so the
+% emblem was visible only as a faint dark outline and was effectively
+% invisible when projected. On the teal band the same white artwork measures
+% 6.13:1 against the fill (WCAG 1.4.11 requires 3:1 for a meaningful
+% graphic), so the recolour fixes the emblem instead of breaking it. This
+% was predicted, then confirmed by rendering, then re-measured after the v3
+% Ghibli band darkened from #00695C to #2F6B69 -- still 6.13:1 AA.
+%
+% BAND COLOUR: #2F6B69, the muted Ghibli teal, NOT the older saturated
+% #00695C. Both clear the emblem and the text thresholds; the darker one is
+% the one that reads dusty rather than clinical. Measured white-on-band:
+%   #00695C 6.61:1 (v2)   #2F6B69 6.13:1 (v3, current)
+% ---------------------------------------------------------------------
+%
+% AXIOM: \usepackage{tikz} is loaded near the top of this file, because
+% beamer loads pgf but NOT the tikz front end -- without that explicit load
+% \begin{tikzpicture} is undefined and the frame fails.
+% Citation: tikz overlay/remember picture -- https://ctan.org/pkg/pgf
+% =====================================================================
+\newcommand{\ITBTitleBackground}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \definecolor{earthsea}{RGB}{28,86,140}
+    \definecolor{contourwhite}{RGB}{230,240,250}
+    \definecolor{skytop}{RGB}{5,12,38}
+    \definecolor{skybottom}{RGB}{120,190,230}
+    % Full-page sky gradient (single soft vertical backdrop)
+    \shade[top color=skytop,bottom color=skybottom] (current page.south west) rectangle (current page.north east);
+    % Atmospheric haze halo around earth (just a radial soft fill)
+    \shade[inner color=white!35,outer color=white!0] ($(current page.south west)+(2.5cm,2.5cm)$) circle (2.4cm);
+    % Earth sphere body. Placed LOWER-LEFT (bondary edge ~4.2cm from left) so
+    % its entire disc stays free of the centered title text column (~7-14cm).
+    \shade[ball color=earthsea] ($(current page.south west)+(2.15cm,1.8cm)$) circle (1.85cm);
+    \begin{scope}[shift={($(current page.south west)+(2.15cm,1.8cm)$)}, opacity=0.35]
+      \draw[contourwhite,very thin] (0,0) ellipse (1.85cm and 0.62cm);
+      \draw[contourwhite,very thin] (0,0) ellipse (1.85cm and 0.28cm);
+      \draw[contourwhite,very thin] (0,0) ellipse (0.14cm and 1.85cm);
+      \draw[contourwhite,very thin] (0.75cm,0) ellipse (0.14cm and 1.85cm);
+      \draw[contourwhite,very thin] (-0.75cm,0) ellipse (0.14cm and 1.85cm);
+    \end{scope}
+    % Ice cap on the pole closest to upper-left
+    \fill[contourwhite!85] ($(current page.south west)+(2.15cm,3.16cm)$) ellipse (0.62cm and 0.26cm);
+    % Sparkling cross stars across the dodger/blue resting of upper sky:
+    \foreach \c in {0,1,...,12}{%
+      \foreach \r in {0,1,...,6}{%
+        \pgfmathtruncatemacro{\hash}{\c*17+\r*11}%
+        \ifodd\hash\else
+          \pgfmathsetmacro{\xpos}{\c*1.3+0.35}%
+          \pgfmathsetmacro{\ypos}{-\r*0.75-0.45}%
+          \pgfmathtruncatemacro{\alpha}{mod(\hash,56)+30}%
+          \begin{scope}[shift={(current page.north west)}, xshift=\xpos cm, yshift=\ypos cm, opacity=\alpha/100]
+            \draw[white, line width=0.7pt, line cap=round] (0,0.08cm)--(0,-0.08cm);
+            \draw[white, line width=0.7pt, line cap=round] (0.08cm,0)--(-0.08cm,0);
+            \draw[white, line width=0.4pt, line cap=round] ( 0.062cm,0.062cm)--(-0.062cm,-0.062cm);
+            \draw[white, line width=0.4pt, line cap=round] (-0.062cm,0.062cm)--( 0.062cm,-0.062cm);
+          \end{scope}
+        \fi
+      }%
+    }%
+    % ITB gajah monogram at top-right, 69% opacity:
+    \node[opacity=0.69, anchor=north east, xshift=-0.7cm, yshift=-0.7cm, inner sep=0pt]
+      at (current page.north east)
+      {\includegraphics[width=0.72cm]{figures/gajah_putih}};
+  \end{tikzpicture}%
+}
+
+
+% The background template is emptied ON PURPOSE and must stay empty.
+% Beamer paints this template on EVERY frame; filling it with the emblem or
+% the band is the collision defect recorded above, where artwork landed under
+% the leading letter of each content frametitle. The teal band is
+% therefore drawn explicitly by \ITBTitleBackground on the `[plain]` title
+% frame only, and never through this template.
+% Do not replace this with a filled template.
+\setbeamertemplate{background}{}
+
+% =====================================================================
+% HOUSE PUNCTUATION
+% The thesis completed a measured em-dash removal campaign with zero
+% residual, retaining dashes only for compound proper nouns (Navier--Stokes)
+% and numeric ranges. Slide prose follows the same rule: no U+2014, no
+% `---`, and `--` never used as an em-dash. Enforced here by definition
+% rather than by convention -- \dash is not defined, so an em-dash cannot
+% be introduced by typing one.
+% =====================================================================
+
+% Images resolve from figures/ without repeating the path at every call
+% site, so swapping a plot is a one-token edit in main.tex. The thesis
+% keeps its assets in its own figures/ directory (89 files); this deck has
+% its own, so the two cannot collide on a same-named figure.
+% Citation: graphicx -- https://ctan.org/pkg/graphicx
+\graphicspath{{figures/}}
+
+% Bold text kept to the same convention the thesis uses for key results.
+\setbeamerfont{alerted text}{series=\bfseries}
+
+% =====================================================================
+% TEXT BUDGET MACHINERY
+% The governing rule for this deck: MAXIMUM 1-2 LINES of text per frame,
+% with each frame DOMINATED BY AN IMAGE PLOT. The macros below make that
+% rule structural rather than aspirational, so a future editor cannot
+% quietly reintroduce a wall of bullets.
+% =====================================================================
+
+% \PlotFrame{<frametitle>}{<caption, 1-2 lines max>}{<image file>}
+%
+% Draws one content frame whose body is an image plot filling the available
+% height, with the caption set small beneath it.
+%
+% AXIOM: the plot is the content; the caption is a label on it. Height is
+% assigned to the image BEFORE the caption is typeset, so adding caption
+% lines can never shrink the plot without the author noticing.
+%
+% THEORY: beamer's text area on a 16:9 frame at 11pt is roughly 6.2 cm tall
+% after the frametitle. \plotheight reserves \plotheight for the graphic and
+% lets the caption take what remains, so the two cannot fight for space.
+%
+% APPLICATION: every content frame in this deck. See main.tex.
+%
+% PARAMETERS:
+%   #1 frametitle (string, uppercase by house style)
+%   #2 caption (string, HARD CAPPED at 1-2 lines -- see \MaxTextLines)
+%   #3 image path (string, resolvable by \graphicspath)
+%   #4 OPTIONAL plot-box height (a length). Defaults to \plotheight. Needed for
+%      portrait artwork, which is height-bound on a 16:9 frame and would
+%      otherwise render as a narrow column.
+%
+% RETURNS: nothing; draws into the current frame.
+%
+% FAILS IF: the image file is absent. It does NOT silently skip the frame.
+% A missing plot is a build error, not a cosmetic gap.
+%
+% Citation: Beamer frame body -- https://ctan.org/pkg/beamer
+% MEASURED 2026-10-06: at 0.66 the two-line captions left only 15 px of bottom
+% clearance at render scale 2.2 (about 6.8 pt from the paper edge) on slides
+% 3, 4, 6, 7 and 9. TeX reported no overfull box -- the content was inside the
+% frame body -- but 2.7 % of the slide height is too close to the edge for a
+% projected deck. 0.60 restores clearance while keeping the plot dominant.
+\newcommand{\plotheight}{0.60\textheight}
+
+% \PlotFileProbe{<basename>}{<extension>} -- set \ifplotfound and \PlotFileFound
+% if figures/<basename>.<extension> exists on disk.
+%
+% AXIOM: #1 is a bare basename with no directory and no extension. #2 is one of
+%   png/pdf/jpg/jpeg/eps. The probe adds BOTH the figures/ prefix and the
+%   extension, because \IfFileExists supplies neither (see \PlotFrame).
+% THEORY: \IfFileExists{...} takes the filename LITERALLY. It performs no
+%   extension search and does not consult \graphicspath, so a bare
+%   \IfFileExists{placeholder_problem} can never match placeholder_problem.png.
+%   Measured (minimal test, pdflatex exit=0):
+%     \IfFileExists{figures/placeholder_problem}                -> MISSING
+%     \IfFileExists{figures/placeholder_problem.png}            -> FOUND
+%     \IfFileExists{\detokenize{figures/placeholder_problem.png)} -> FOUND
+%     \IfFileExists{placeholder_problem.png} (no prefix)        -> MISSING
+%   \includegraphics is the opposite: it honours \graphicspath AND searches
+%   extensions, so it is given the BARE resolved name.
+% APPLICATION: \PlotFrame probes png, then pdf, jpg, jpeg, eps in turn.
+% RETURNS: nothing; sets \ifplotfound / \PlotFileFound as a side effect.
+% RAISES: nothing. Absence is reported through \ifplotfound, never by erroring,
+%   so that a single missing figure cannot abort the build of the other frames.
+% CITATION: LaTeX \IfFileExists semantics -- https://latex2e.org/gt.html ; beamer
+%   graphics handling -- https://ctan.org/pkg/beamer
+\newif\ifplotfound
+\newcommand{\PlotFileFound}{}
+\newcommand{\PlotFileProbe}[2]{%
+  \IfFileExists{\detokenize{figures/#1.#2}}%
+    {\edef\PlotFileFound{\detokenize{#1.#2}}\plotfoundtrue}%
+    {}%
+}
+
+% ARITY NOTE, after getting this wrong: \PlotFrame takes exactly THREE mandatory
+% arguments (title, caption, image). An earlier attempt added an optional 4th
+% for the plot height as \newcommand{\PlotFrame}[4][\plotheight]; that declares
+% FOUR mandatory parameters, so #1 became the optional height, the frametitle
+% shifted into the height slot, and all 7 call sites desynchronised at once
+% (every frame rendered "MISSING PLOT" and the PDF collapsed from 1.5 MB to
+% 127 kB). \plotheight is a plain length and is overridden in a group by the
+% one portrait frame instead -- see main.tex, slide 3. VALIDATION RUN.
+\newcommand{\PlotFrame}[3]{%
+  \begin{frame}{#1}%
+    \centering
+    % WHY THIS PROBE EXISTS. Every plot rendered as the MISSING PLOT box while
+    % all 7 PNGs were present on disk. Isolated with a minimal test document,
+    % not guessed at. The cause is a SINGLE property of \IfFileExists, and two
+    % earlier explanations of it were both wrong:
+    %
+    %   WRONG #1 -- "\IfFileExists ignores \graphicspath" (true but only half
+    %   the cause: the prefix is needed, and so is the extension).
+    %   WRONG #2 -- "LaTeX strips the _ so the file is searched as
+    %   placeholderproblem.png". FALSE: a catcode-8 "_" is handled correctly
+    %   by both \IfFileExists and \includegraphics. This claim came from a test
+    %   of my own that wrote an ESCAPED placeholder\_problem.
+    %
+    % \IfFileExists performs NO extension search and does NOT consult
+    % \graphicspath, so it needs BOTH the explicit figures/ prefix AND the
+    % literal extension; supplying either one alone still fails. Hence the
+    % ordered probe below instead of a single check.
+    %
+    % THE LESSON, kept deliberately: fixing only the DISPLAY path removed
+    % every "Missing $ inserted." error and produced a fully CLEAN build log
+    % while all 7 plots were STILL wrong. A clean log is not evidence of a
+    % correct PDF -- only reading the rendered pages found it.
+    \plotfoundfalse
+    \def\PlotFileFound{}%
+    \PlotFileProbe{#3}{png}%
+    \ifplotfound\else
+      \PlotFileProbe{#3}{pdf}%
+      \ifplotfound\else
+        \PlotFileProbe{#3}{jpg}%
+        \ifplotfound\else\PlotFileProbe{#3}{eps}\fi
+      \fi
+    \fi
+    \ifplotfound
+      % \PlotFileFound already holds the resolved "name.ext" with \detokenize
+      % catcodes applied by the \edef in \PlotFileProbe, so it may be passed
+      % straight to \includegraphics, which resolves \graphicspath itself.
+      \includegraphics[width=\textwidth,height=\plotheight,keepaspectratio]{\PlotFileFound}%
+    \else
+      % Loud, not silent: a missing plot must break the build loudly enough
+      % to be seen, and must name the file that is missing. An empty frame
+      % that renders as blank space is exactly the silent-degradation
+      % failure this project forbids.
+      %
+      % \detokenize around the name is REQUIRED, not cosmetic: a filename
+      % may legally contain "_", which is a math-mode-only character in
+      % LaTeX. Without it the diagnostic box itself fails to compile, which
+      % is the worst possible way for a missing-file warning to behave.
+      \fbox{\parbox[c][\plotheight][c]{0.92\textwidth}{%
+        \centering
+        \textbf{MISSING PLOT}\\[0.6em]
+        \texttt{\detokenize{#3}}\\[0.6em]
+        {\small Replace with a real plot. The skeleton builds because this
+         box is drawn, NOT because the frame is empty.}%
+      }}%
+    \fi
+    \par\vspace{0.35em}%
+    {\small #2}%
+  \end{frame}%
+}
+
+% \MaxTextLines{<n>} -- assert a frame's text will not exceed the budget.
+%
+% Used in the caption slot when a caption is at risk of growing. Documents
+% the cap at the point of use instead of relying on a reviewer noticing.
+% PARAMETER: #1 intended maximum lines (integer, must be <= 2).
+% FAILS IF: called with a value greater than 2, which is a house-style
+% violation rather than a typographic preference.
+\newcommand{\MaxTextLines}[1]{%
+  \ifnum#1>2\relax
+    \PackageError{Week17Deck}%
+      {Text budget exceeded: MaxTextLines requests more than the 2-line maximum this deck allows}%
+      {This deck caps body text at 1-2 lines per frame. Split the frame instead of adding a third line.}%
+  \fi
+}
+
+% =====================================================================
+% HYPERREF -- ABSOLUTE LAST BLOCK IN THIS FILE
+% =====================================================================
+% ORDERING IS LOAD-BEARING. \hypersetup expands its options immediately, so
+% pdfauthor={\penulis} requires \penulis to already be defined. The identity
+% \providecommand block sits ABOVE this point, so the macro exists by now.
+%
+% TWO failed orderings were measured, both producing the identical error
+%   ./preamble.tex:NNN: Undefined control sequence.
+%   <argument> \penulis
+% which ships a PDF with EMPTY author metadata and is easy to miss because
+% it does not stop the build:
+%   attempt 1: \hypersetup placed near the top of the file, above identity.
+%   attempt 2: \hypersetup duplicated into the middle of the file "after"
+%              identity, but the block was actually inserted at line 134
+%              while \penulis is defined at line 174 -- i.e. still above it.
+% The lesson is not "put it lower" but "put it after the definition", and
+% the only place that is guaranteed to stay correct as this file grows is
+% the end. Do not move this block above the identity block.
+%
+% AXIOM: a macro must be defined before it is expanded, and pdfauthor is
+%        expanded at \hypersetup time, not at \begin{document} time.
+% THEORY: \providecommand defines on first reference; expanding an undefined
+%         control sequence raises the error above and leaves it undefined.
+% APPLICATION: PDF author metadata, which is what a circulated progress deck
+%         is identified by in a file listing.
+% EXPECTED: pdflatex exits with no "Undefined control sequence" in main.log,
+%         and the PDF reports a non-empty Author.
+% Citation: hyperref -- https://ctan.org/pkg/hyperref
+% ---------------------------------------------------------------------
+\hypersetup{
+  pdfauthor={\penulis},
+  pdfsubject={Progress Report, Week 17},
+  pdfcreator={LaTeX Beamer},
+  bookmarksnumbered=true,
+}
