@@ -22,9 +22,9 @@
   "nextel_bf20_rating_Wcm2": 30.0,
   "peak_within_nextel_rating": true,
   "t_surface_K": {
-    "min": 300.0,
+    "min": 299.9999694824219,
     "max": 1430.2493896484375,
-    "mean": 801.3188259727076
+    "mean": 801.3540110337107
   },
   "t_back_K": {
     "min": 300.0,
@@ -39,7 +39,7 @@
   "peak_element": {
     "element": 144,
     "q_sg_Wm2": 193154.21875,
-    "t_surface_K": 1430.2493896484375,
+    "t_surface_K": 1430.248779296875,
     "t_back_K": 300.0
   },
   "layup": {
@@ -66,11 +66,19 @@
     "sigma_source": "recovered from Ada Radiative_Eq_Temp_C identity",
     "sigma_codata_Wm2K4": 5.670374419e-08,
     "emissivity": 0.8,
-    "residual_Wm2_abs_max": 0.05174394170171581,
-    "residual_Wm2_abs_mean": 0.009324342603488018,
-    "residual_rel_max": 3.552213562903045e-05,
-    "mean_radiative_fraction": 0.8888831713580645,
-    "max_radiative_fraction": 0.9808512253993318
+    "residual_Wm2_abs_max": 0.0630630943342112,
+    "residual_Wm2_abs_mean": 0.01036306907382114,
+    "residual_throughput_floor_Wm2": 1.0,
+    "residual_rel_max": 0.00017780621976411562,
+    "radiative_population_floor_Wm2": 1.0,
+    "radiative_elements_used": 2971,
+    "mean_radiative_fraction": 0.8660431959765557,
+    "max_radiative_fraction": 0.9808512294768365,
+    "mean_lateral_Wm2": -9.847345371206256e-10,
+    "min_lateral_Wm2": -6.301932138056332,
+    "max_lateral_Wm2": 6.902449924996648,
+    "elements_losing_to_neighbours": 1632,
+    "elements_gaining_from_neighbours": 2016
   },
   "caveats": [
     "T_back is pinned to T_init by the solver's steady-state Dirichlet cold-face condition, so its structure-limit flag restates the boundary condition rather than predicting a transient back-face temperature. The informative outer-ply number is T_surface.",

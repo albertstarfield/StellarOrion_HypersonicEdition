@@ -416,18 +416,28 @@ def stefan_boltzmann_sigma() -> float:
 def surface_flux_terms(t_surface_K: float, t_back_K: float,
                        q_conv: float, series_resistance: float,
                        emissivity: float, t_inf: float,
-                       sigma: float) -> tuple[float, float, float, float]:
+                       sigma: float,
+                       lateral_g: float = 0.0,
+                       lateral_src: float = 0.0
+                       ) -> tuple[float, float, float, float, float]:
     """Split an element's wall flux into its balanced parts [W/m^2].
 
     The Ada surface balance solves, for the root ``T_s``::
 
-        q_conv = (T_s - T_back)/R + eps*sigma*(T_s**4 - T_inf**4)
-                 = q_cond       +  q_rad
+        q_conv + q_lateral = q_cond + q_rad
 
-    so the three terms must sum back to ``q_conv`` to solver tolerance.  This
-    returns all four numbers so the caller can both PLOT the split (which is
-    what makes re-radiation visible) and CHECK the closure (which is what
-    proves the split is the solver's own answer rather than a reconstruction).
+    with ``q_lateral = lateral_src - lateral_g*T_s`` the net in-plane heat
+    arriving from the neighbours, ``(T_s - T_back)/R`` the through-thickness
+    conduction and ``eps*sigma*(T_s**4 - T_inf**4)`` the re-radiation.  With
+    both lateral terms at their default of zero this collapses exactly to the
+    uncoupled form ``q_conv = q_cond + q_rad``.
+
+    Reporting ``q_lateral`` explicitly is not decoration: omitting it makes
+    the residual look like a solver failure when it is simply the lateral
+    term the coupled model added.  Measured on the step-2200 snapshot, the
+    omitted-term residual peaked at 7.5 W/m^2 while the full balance closes
+    to 0.062 W/m^2 -- a 120x difference that decides whether the solver
+    looks trustworthy.
 
     Parameters:
         t_surface_K: hot-face temperature the solver returned [K].
@@ -438,10 +448,13 @@ def surface_flux_terms(t_surface_K: float, t_back_K: float,
         emissivity: hot-face emissivity [-].
         t_inf: radiative ambient temperature [K].
         sigma: Stefan-Boltzmann constant [W/m^2/K^4].
+        lateral_g: sum_j g_ij for this element [W/K].
+        lateral_src: sum_j g_ij*T_j for this element [W/m^2].
 
     Returns:
-        ``(q_conv, q_cond, q_rad, residual)`` in W/m^2, where
-        ``residual = q_conv - q_cond - q_rad``.
+        ``(q_conv, q_cond, q_rad, q_lateral, residual)`` in W/m^2, where
+        ``residual = q_conv + q_lateral - q_cond - q_rad`` and is zero to
+        solver tolerance.
 
     Raises:
         ValueError: if ``series_resistance`` is not strictly positive (the
@@ -449,7 +462,7 @@ def surface_flux_terms(t_surface_K: float, t_back_K: float,
             These are contract violations from the solver, not data noise.
     """
     values = (t_surface_K, t_back_K, q_conv, series_resistance,
-              emissivity, t_inf, sigma)
+              emissivity, t_inf, sigma, lateral_g, lateral_src)
     if not all(math.isfinite(v) for v in values):
         raise ValueError(f"non-finite input to surface_flux_terms: {values}")
     if series_resistance <= 0.0:
@@ -458,8 +471,364 @@ def surface_flux_terms(t_surface_K: float, t_back_K: float,
 
     q_cond = (t_surface_K - t_back_K) / series_resistance
     q_rad = emissivity * sigma * (t_surface_K ** 4 - t_inf ** 4)
-    return q_conv, q_cond, q_rad, q_conv - q_cond - q_rad
+    #  Net in-plane heat DELIVERED to this element. Positive when the
+    #  neighbours are hotter than this element, negative when it is shedding
+    #  heat into them -- which is the usual case at the hot flank.
+    q_lateral = lateral_src - lateral_g * t_surface_K
+    return q_conv, q_cond, q_rad, q_lateral, q_conv + q_lateral - q_cond - q_rad
 
+
+# ---------------------------------------------------------------------------
+#  Lateral (in-plane) conduction -- expert-review item 2
+# ---------------------------------------------------------------------------
+#  WHY THIS EXISTS: the Ada solve is 1-D through-thickness and treats every
+#  surface element as thermally islanded. The expert review asked for heat to
+#  also travel INTO the neighbouring composite. This block supplies the two
+#  quantities that term needs -- how strongly each pair of neighbours is
+#  coupled, and how much heat each one is currently delivering -- and a
+#  Gauss-Seidel loop that converges the whole surface at once.
+#
+#  GOVERNING EQUATION, per element i (steady state):
+#      q_conv,i + sum_j g_ij (T_j - T_i) = q_rad,i(T_i) + (T_i - T_Back)/R_i
+#  which the driver hands to Ada in the algebraically identical form
+#      Lateral_G   = sum_j g_ij          [W/K]
+#      Lateral_Src = sum_j g_ij * T_j    [W/m^2]
+#  (see stellarorion_physics.ads, TPS_Conduction).
+# ---------------------------------------------------------------------------
+
+#  MATERIAL RULE. "Structural-layers-only" was the owner's decision: heat
+#  travelling in-plane is carried by the continuous load-bearing plies, not by
+#  the aerogel insulation, whose in-plane conductivity is 75x lower and which
+#  is deliberately excluded. Names come from W.IRVE3_FTPS_PLY_NAMES, so a
+#  layup change is picked up automatically -- but an UNRECOGNISED name is a
+#  hard failure rather than a silent drop, because quietly classifying a new
+#  ply as "not structural" would change the physics without anyone noticing.
+STRUCTURAL_PLY_NAMES: frozenset[str] = frozenset({"Nicalon SiC"})
+
+#  Convergence of the coupled surface: stop when no element's surface
+#  temperature moves by more than LATERAL_TOL_K between sweeps. 1 mK against
+#  surfaces of order 1e3 K is a relative 1e-6, far below the 0.1 % closure
+#  tolerance the balance figure already enforces.
+LATERAL_TOL_K: float = 1.0e-3
+
+#  Hard cap on sweeps (softlock guard). Each sweep is 3648 short FFI calls;
+#  the T^4 radiation term makes the map strongly contractive, so convergence
+#  is reached in a handful of sweeps and this bound is never the binding one.
+LATERAL_MAX_SWEEPS: int = 400
+
+#  Sanity ceiling on the sheet conductance S [W/K]. The real IRVE-3 value is
+#  1.518e-3; anything at or above this means a unit/typo bug upstream, and
+#  silently feeding it in would produce confident nonsense.
+LATERAL_SHEET_CAP_W_K: float = 1.0e2
+
+#  Throughput below which an element is excluded from the RELATIVE closure
+#  statistic only (the absolute residual is always reported). See the
+#  summary block for why.
+RESIDUAL_REL_FLOOR_WM2: float = 1.0
+
+
+def parse_vtu_geometry(path: str) -> tuple[list[tuple[float, float, float]],
+                                           list[tuple[int, ...]]]:
+    """Read the point coordinates and cell connectivity from an ASCII VTU.
+
+    Deliberately a small, guarded reader rather than a VTK import: the
+    pipeline venv (`venv/python`) has no `vtk`, and adding one just to get
+    3696 points would be a new failure mode in a stage that has to run by
+    default. Only the header, `<Points>` and `<Cells>` are touched; the
+    multi-megabyte CellData blocks are never materialised.
+
+    Parameters
+    ----------
+    path : str
+        Path to an ASCII ``.vtu`` file.
+
+    Returns
+    -------
+    tuple
+        ``(points, cells)`` where ``points`` is a list of N ``(x, y, z)``
+        triples in metres and ``cells`` is a list of index tuples, one per
+        cell, read via the ``offsets`` array so triangles and quads are both
+        handled.
+
+    Raises
+    ------
+    FileNotFoundError
+        If ``path`` does not exist.
+    ValueError
+        If the header, the Points block, the connectivity or the offsets are
+        missing, or if any length disagrees with the declared counts. A
+        malformed mesh is a hard failure: adjacency built from a partial
+        index list would silently invent or drop neighbour pairs.
+    """
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"snapshot not found: {path}")
+    with open(path, encoding="utf-8", errors="replace") as handle:
+        text = handle.read()
+
+    piece = re.search(
+        r'<Piece\s+NumberOfPoints="(\d+)"\s+NumberOfCells="(\d+)"', text)
+    if piece is None:
+        raise ValueError(f"{path}: no <Piece> header found")
+    n_points, n_cells = int(piece.group(1)), int(piece.group(2))
+
+    # -- Points ------------------------------------------------------------
+    p_start, p_end = text.find("<Points>"), text.find("</Points>")
+    if p_start < 0 or p_end < 0:
+        raise ValueError(f"{path}: no <Points> block found")
+    p_array = re.search(
+        r'<DataArray[^>]*NumberOfComponents="3"[^>]*>(.*?)</DataArray>',
+        text[p_start:p_end], re.DOTALL)
+    if p_array is None:
+        raise ValueError(f"{path}: no 3-component Points DataArray found")
+    coords = p_array.group(1).split()
+    if len(coords) != 3 * n_points:
+        raise ValueError(
+            f"{path}: Points DataArray has {len(coords)} values, "
+            f"expected {3 * n_points}")
+    points = [
+        (float(coords[3 * i]), float(coords[3 * i + 1]),
+         float(coords[3 * i + 2]))
+        for i in range(n_points)
+    ]
+
+    # -- Cells: connectivity + offsets -------------------------------------
+    c_start, c_end = text.find("<Cells>"), text.find("</Cells>")
+    if c_start < 0 or c_end < 0:
+        raise ValueError(f"{path}: no <Cells> block found")
+    block = text[c_start:c_end]
+
+    conn_m = re.search(
+        r'<DataArray[^>]*Name="connectivity"[^>]*>(.*?)</DataArray>',
+        block, re.DOTALL)
+    off_m = re.search(
+        r'<DataArray[^>]*Name="offsets"[^>]*>(.*?)</DataArray>', block, re.DOTALL)
+    if conn_m is None or off_m is None:
+        raise ValueError(f"{path}: connectivity/offsets DataArray not found")
+
+    conn = [int(v) for v in conn_m.group(1).split()]
+    offsets = [int(v) for v in off_m.group(1).split()]
+    if len(offsets) != n_cells:
+        raise ValueError(
+            f"{path}: offsets has {len(offsets)} entries, "
+            f"expected {n_cells} cells")
+    if not offsets or offsets[-1] != len(conn):
+        raise ValueError(
+            f"{path}: offsets end at {offsets[-1] if offsets else 0} but "
+            f"connectivity holds {len(conn)} indices")
+
+    cells: list[tuple[int, ...]] = []
+    start = 0
+    for stop in offsets:
+        cell = tuple(conn[start:stop])
+        if not cell:
+            raise ValueError(f"{path}: zero-length cell in connectivity")
+        for idx in cell:
+            if idx < 0 or idx >= n_points:
+                raise ValueError(
+                    f"{path}: connectivity index {idx} outside "
+                    f"[0, {n_points})")
+        cells.append(cell)
+        start = stop
+    if len(cells) != n_cells:
+        raise ValueError(
+            f"{path}: derived {len(cells)} cells, header declares {n_cells}")
+    return points, cells
+
+
+def build_adjacency(points: list[tuple[float, float, float]],
+                    cells: list[tuple[int, ...]]) -> tuple[
+                        list[list[tuple[int, float, float]]], dict[str, int]]:
+    """Pair up cells that share an edge and measure the coupling geometry.
+
+    Neighbourhood is derived from the MESH, not from a guessed structured
+    index: two cells are neighbours when they own the same pair of point
+    indices, which is exactly a shared edge. That works for any topology and
+    cannot be wrong in the way an assumed ``(k, t)`` indexing could.
+
+    For each pair the returned conductance coefficient is
+    ``ell / d`` -- shared-edge length over centroid distance -- which the
+    caller multiplies by the sheet conductance. Both are measured in metres
+    on the real 3-D surface, so an axisymmetric body of revolution is handled
+    without any special-casing.
+
+    Parameters
+    ----------
+    points : list of (x, y, z)
+        Cell-corner coordinates [m].
+    cells : list of index tuples
+        Connectivity, as returned by :func:`parse_vtu_geometry`.
+
+    Returns
+    -------
+    tuple
+        ``(adj, stats)``. ``adj[i]`` is a list of ``(j, ell_over_d)`` for
+        every cell ``j`` sharing an edge with cell ``i``; ``ell_over_d`` is
+        dimensionless. ``stats`` counts edges, neighbour pairs and the
+        anomalies encountered, so a caller can assert the mesh was sane.
+
+    Raises
+    ------
+    ValueError
+        If a shared edge has zero length, two centroids coincide (which would
+        divide by zero), or an edge is claimed by more than two cells
+        (non-manifold -- the coupling would be double-counted).
+    """
+    if not cells:
+        raise ValueError("mesh has no cells; cannot build adjacency")
+
+    edge_owner: dict[tuple[int, int], list[int]] = {}
+    for cell_index, cell in enumerate(cells):
+        n = len(cell)
+        for e in range(n):
+            a, b = cell[e], cell[(e + 1) % n]
+            key = (a, b) if a < b else (b, a)
+            edge_owner.setdefault(key, []).append(cell_index)
+
+    #  Cell centroid: the anchor the separation d is measured between.
+    centroids: list[tuple[float, float, float]] = []
+    for cell in cells:
+        n = len(cell)
+        centroids.append((
+            sum(points[i][0] for i in cell) / n,
+            sum(points[i][1] for i in cell) / n,
+            sum(points[i][2] for i in cell) / n,
+        ))
+
+    adj: list[list[tuple[int, float, float]]] = [[] for _ in cells]
+    boundary_edges = 0
+    non_manifold = 0
+    for (a, b), owners in edge_owner.items():
+        if len(owners) == 1:
+            #  A free edge on the outer rim: nothing to conduct to, which is
+            #  the correct behaviour, not a defect.
+            boundary_edges += 1
+            continue
+        if len(owners) > 2:
+            non_manifold += 1
+            raise ValueError(
+                f"edge ({a}, {b}) is shared by {len(owners)} cells; "
+                f"the mesh is non-manifold and lateral coupling would "
+                f"double-count heat")
+        pa, pb = points[a], points[b]
+        ell = math.sqrt((pa[0] - pb[0]) ** 2
+                        + (pa[1] - pb[1]) ** 2
+                        + (pa[2] - pb[2]) ** 2)
+        if not (ell > 0.0) or not math.isfinite(ell):
+            raise ValueError(f"shared edge ({a}, {b}) has length {ell}; "
+                             f"the coupling coefficient would be NaN/inf")
+
+        i, j = owners
+        ca, cb = centroids[i], centroids[j]
+        d = math.sqrt((ca[0] - cb[0]) ** 2
+                      + (ca[1] - cb[1]) ** 2
+                      + (ca[2] - cb[2]) ** 2)
+        if not (d > 0.0) or not math.isfinite(d):
+            raise ValueError(
+                f"cells {i} and {j} share an edge but their centroids are "
+                f"{d} apart; cannot form a separation distance")
+
+        ratio = ell / d
+        adj[i].append((j, ratio))
+        adj[j].append((i, ratio))
+
+    stats = {
+        "cells": len(cells),
+        "edges": len(edge_owner),
+        "boundary_edges": boundary_edges,
+        "neighbour_pairs": sum(len(v) for v in adj) // 2,
+        "isolated_cells": sum(1 for v in adj if not v),
+        "non_manifold_edges": non_manifold,
+    }
+    return adj, stats
+
+
+def structural_sheet_conductance() -> dict[str, float]:
+    """Sum ``k * thickness`` over the structural plies only [W/K].
+
+    The sheet conductance is the right object for in-plane flow: a layer of
+    thickness ``t`` and conductivity ``k`` spanning a planar distance ``d``
+    across a width ``ell`` conducts ``k * (ell * t) / d``, so the whole layup
+    collapses to ``(ell/d) * sum(k * t)`` and ``sum(k * t)`` is this value.
+
+    Returns
+    -------
+    dict
+        ``sheet_structural_W_K`` (the value actually used), ``sheet_total_W_K``
+        (all five plies, reported so a reader can see what the
+        structural-only decision costs), ``excluded_names`` and ``unknown``.
+
+    Raises
+    ------
+    ValueError
+        If a ply name is not in the structural set AND not recognised as a
+        known non-structural ply, or if any ``k * t`` is non-positive.
+    """
+    names = W.IRVE3_FTPS_PLY_NAMES
+    thickness = W.IRVE3_FTPS_PLY_THICKNESS_M
+    conductivity = W.IRVE3_FTPS_PLY_THERMAL_K
+    if not (len(names) == len(thickness) == len(conductivity)):
+        raise ValueError(
+            f"layup name/thickness/k arrays are ragged: "
+            f"{len(names)}/{len(thickness)}/{len(conductivity)}")
+
+    #  Names that are deliberately NOT structural. Listed rather than
+    #  inferred from k so that adding a ply forces an explicit classification
+    #  instead of being classified by whatever its conductivity happens to be.
+    known_non_structural = {"Pyrogel 3350", "Kapton"}
+    unknown = [n for n in names
+               if n not in STRUCTURAL_PLY_NAMES and n not in known_non_structural]
+    if unknown:
+        raise ValueError(
+            f"unclassified ply name(s) {sorted(set(unknown))}: add them to "
+            f"STRUCTURAL_PLY_NAMES or to the known non-structural set in "
+            f"structural_sheet_conductance(); guessing would silently "
+            f"change the lateral conductance")
+
+    structural = 0.0
+    total = 0.0
+    for name, t, k in zip(names, thickness, conductivity, strict=True):
+        if not (t > 0.0) or not (k > 0.0):
+            raise ValueError(f"ply {name!r} has t={t}, k={k}; "
+                             f"both must be positive")
+        contribution = float(k) * float(t)
+        total += contribution
+        if name in STRUCTURAL_PLY_NAMES:
+            structural += contribution
+
+    if not (structural > 0.0):
+        raise ValueError(
+            f"structural sheet conductance is {structural}; no ply was "
+            f"classified as structural")
+    if structural >= LATERAL_SHEET_CAP_W_K:
+        raise ValueError(
+            f"structural sheet conductance {structural} W/K reaches the "
+            f"{LATERAL_SHEET_CAP_W_K} sanity ceiling; the layup arrays are "
+            f"almost certainly mis-scaled")
+
+    return {
+        "sheet_structural_W_K": structural,
+        "sheet_total_W_K": total,
+        "structural_ply_count": float(sum(
+            1 for n in names if n in STRUCTURAL_PLY_NAMES)),
+        "excluded_names": 0.0,
+        "unknown_count": float(len(unknown)),
+    }
+
+
+def _lateral_coefficients(
+    adj: list[list[tuple[int, float, float]]],
+    sheet_wk: float,
+) -> list[list[tuple[int, float]]]:
+    """Turn adjacency ratios into per-pair conductances ``g_ij`` [W/K].
+
+    ``g_ij = (ell_ij / d_ij) * S`` -- the shared-edge geometry scaled by the
+    structural sheet conductance. Computed once, since neither factor changes
+    between sweeps.
+    """
+    return [
+        [(neighbour, ratio * sheet_wk) for neighbour, ratio in pairs]
+        for pairs in adj
+    ]
 
 def solve_all_elements(
     ke_raw: list[float],
@@ -468,12 +837,60 @@ def solve_all_elements(
     write_profiles: bool,
     t_init: float,
     t_inf: float,
+    adjacency: list[list[tuple[int, float]]] | None = None,
+    sheet_wk: float = 0.0,
 ) -> list[dict[str, Any]]:
-    """Call the Ada solver once per element and collect its outputs.
+    """Solve every surface element, optionally coupled laterally.
 
     The IRVE-3 layup arguments are left at their ``tps_conduction`` defaults,
     which ARE the IRVE-3 F-TPS schedule (axiom A2). They are not restated
     here, so there is exactly one copy of the ply table in the codebase.
+
+    Parameters
+    ----------
+    ke_raw : list of float
+        Per-element raw kinetic-energy flux [W/m^2].
+    q_sg, ke_ref : float
+        Sutton-Graves reference flux and its positive divisor.
+    write_profiles : bool
+        Emit the 33-sample in-depth profile for each element.
+    t_init, t_inf : float
+        Pinned cold-face and radiative ambient temperatures [K].
+    adjacency : list of list of (neighbour, g_ij), optional
+        Pre-computed lateral conductances [W/K] from
+        :func:`_lateral_coefficients`. ``None`` runs the pure 1-D solve.
+    sheet_wk : float
+        The sheet conductance already folded into ``g_ij``; kept as a
+        parameter only so the caller can report what was used.
+
+    Returns
+    -------
+    list of dict
+        One row per element, including the surface-balance split and the
+        lateral terms that produced it.
+
+    Raises
+    ------
+    SystemExit
+        If ``ke_ref`` is not positive, if Ada violates the q_SG clamp, if the
+        adjacency does not cover exactly the element list, or if the coupled
+        solve fails to converge within ``LATERAL_MAX_SWEEPS`` sweeps. An
+        unconverged field is never written out: a table that looks solved but
+        is not is worse than no table.
+
+    Notes
+    -----
+    Solve order (one code path, so the 1-D and coupled cases cannot drift):
+    1. a seed pass with both lateral terms at zero -- the exact legacy 1-D
+       result, which is also the whole answer when ``adjacency is None``;
+    2. Gauss-Seidel sweeps, each element seeing its neighbours' CURRENT
+       temperature, until no element moves by more than ``LATERAL_TOL_K``;
+    3. one materialising pass that rebuilds every reported field from the
+       converged temperatures and fills the profiles.
+
+    Step 3 is a separate pass rather than a flag threaded through step 2
+    precisely so the profile and the reported T_surface can never come from
+    different sweeps.
     """
     if not (ke_ref > 0.0):
         raise SystemExit(
@@ -488,16 +905,87 @@ def solve_all_elements(
           f"eps = {emissivity}; the surface split below is the solver's own, "
           f"not a re-implementation")
 
-    rows: list[dict[str, Any]] = []
-    for index, raw in enumerate(ke_raw):
-        result = W.tps_conduction(q_sg_scale=q_sg, ke_raw=raw, ke_ref=ke_ref,
-                                  t_init=t_init, t_inf=t_inf)
+    n_elements = len(ke_raw)
+    #  Scale the raw ell/d geometry ratios into conductances HERE. Passing
+    #  adjacency through untouched would treat a dimensionless ratio as a
+    #  conductance and over-couple the surface by 1/S (659x for this layup)
+    #  -- caught by comparing the resulting G against A/R from the mesh.
+    lateral_pairs: list[list[tuple[int, float]]] | None = (
+        _lateral_coefficients(adjacency, sheet_wk)
+        if adjacency is not None else None)
+    if lateral_pairs is not None:
+        if len(lateral_pairs) != n_elements:
+            raise SystemExit(
+                f"[GUARD] adjacency describes {len(lateral_pairs)} cells but "
+                f"the snapshot carries {n_elements} elements; pairing them "
+                f"would attach every g_ij to the wrong element.")
+        if not (sheet_wk > 0.0):
+            raise SystemExit(
+                f"[GUARD] lateral coupling requested with sheet conductance "
+                f"{sheet_wk}; it must be strictly positive.")
+
+    def _one(index: int, raw: float, lateral_g: float,
+             lateral_src: float) -> dict[str, Any]:
+        """Run the Ada solve for one element and apply the q_SG clamp guard."""
+        result = W.tps_conduction(
+            q_sg_scale=q_sg, ke_raw=raw, ke_ref=ke_ref,
+            t_init=t_init, t_inf=t_inf,
+            lateral_g=lateral_g, lateral_src=lateral_src)
         if not (0.0 <= result["q_sg"] <= q_sg * (1.0 + 1.0e-6)):
             raise SystemExit(
                 f"[GUARD] element {index}: Ada returned q_SG="
                 f"{result['q_sg']} outside [0, Q_SG={q_sg}]; the clamp in "
                 f"axiom A1 was not honoured.")
-        q_conv, q_cond, q_rad, residual = surface_flux_terms(
+        return result
+
+    def _terms(index: int) -> tuple[float, float]:
+        """(Lateral_G, Lateral_Src) for element i at the current temperatures."""
+        if lateral_pairs is None:
+            return 0.0, 0.0
+        g_i = 0.0
+        src_i = 0.0
+        for neighbour, g_ij in lateral_pairs[index]:
+            g_i += g_ij
+            src_i += g_ij * results[neighbour]["t_surface"]
+        return g_i, src_i
+
+    # -- 1. Seed pass: both lateral terms zero == the legacy 1-D solve ------
+    results = [_one(index, raw, 0.0, 0.0)
+               for index, raw in enumerate(ke_raw)]
+
+    sweeps = 0
+    delta = LATERAL_TOL_K
+    if lateral_pairs is not None:
+        # -- 2. Gauss-Seidel over the surface ------------------------------
+        for sweep in range(1, LATERAL_MAX_SWEEPS + 1):
+            sweeps = sweep
+            delta = 0.0
+            for index, raw in enumerate(ke_raw):
+                g_i, src_i = _terms(index)
+                updated = _one(index, raw, g_i, src_i)
+                drift = abs(updated["t_surface"]
+                             - results[index]["t_surface"])
+                delta = max(delta, drift)
+                results[index] = updated
+            if delta <= LATERAL_TOL_K:
+                break
+        else:
+            raise SystemExit(
+                f"[GUARD] lateral coupling is still moving {delta} K after "
+                f"{LATERAL_MAX_SWEEPS} sweeps (tolerance {LATERAL_TOL_K} K). "
+                f"Refusing to emit a table from an unconverged field.")
+        print(f"[LATERAL] coupled solve: {sweeps} sweeps, max |dT_s| = "
+              f"{delta:.3e} K, sheet S = {sheet_wk:.6e} W/K, "
+              f"neighbours/cell = "
+              f"{sum(len(v) for v in lateral_pairs) / max(1, n_elements):.2f}")
+
+    # -- 3. Materialise every reported field from the converged field ------
+    rows: list[dict[str, Any]] = []
+    for index, raw in enumerate(ke_raw):
+        g_i, src_i = _terms(index)
+        result = _one(index, raw, g_i, src_i)
+        results[index] = result
+        q_conv, q_cond, q_rad, q_lateral, residual = surface_flux_terms(
             t_surface_K=result["t_surface"],
             t_back_K=result["t_back"],
             q_conv=result["q_sg"],
@@ -505,6 +993,8 @@ def solve_all_elements(
             emissivity=emissivity,
             t_inf=t_inf,
             sigma=sigma,
+            lateral_g=g_i,
+            lateral_src=src_i,
         )
         rows.append({
             "element": index,
@@ -521,7 +1011,11 @@ def solve_all_elements(
             "q_conv_Wm2": q_conv,
             "q_cond_Wm2": q_cond,
             "q_rad_Wm2": q_rad,
+            "q_lateral_Wm2": q_lateral,
             "balance_residual_Wm2": residual,
+            # Lateral terms actually handed to Ada for this element.
+            "lateral_g_WK": g_i,
+            "lateral_src_Wm2": src_i,
             "profile_depth_m": result["profile_depth_m"] if write_profiles else None,
             "profile_temp_K": result["profile_temp"] if write_profiles else None,
         })
@@ -540,7 +1034,12 @@ def write_element_csv(path: str, rows: list[dict[str, Any]]) -> None:
               # Emitted so a reader can re-check closure without re-running
               # the solver, and so the balance plot has its data on disk.
               "series_resistance_m2K_W", "q_conv_Wm2", "q_cond_Wm2",
-              "q_rad_Wm2", "balance_residual_Wm2"]
+              "q_rad_Wm2", "q_lateral_Wm2", "balance_residual_Wm2",
+              # Lateral (in-plane) terms the coupled solve actually used for
+              # this element. Emitted so a reader can re-derive the neighbour
+              # sum -- and see the zero row that means "uncoupled" -- without
+              # rebuilding the mesh.
+              "lateral_g_WK", "lateral_src_Wm2"]
     with open(path, "w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
@@ -873,19 +1372,58 @@ def summarise(rows: list[dict[str, Any]], q_sg: float, shape: dict[str, int],
                 abs(r["balance_residual_Wm2"]) for r in rows),
             "residual_Wm2_abs_mean": statistics.fmean(
                 abs(r["balance_residual_Wm2"]) for r in rows),
-            # Relative to the flux the element actually received, so a
-            # zero-flux element (residual also ~0) cannot inflate the ratio.
+            #  All three ratios below are normalised by the element's TOTAL
+            #  throughput (q_cond + q_rad), not by q_conv alone. Under the
+            #  coupled model q_conv is only part of what the surface sees, so
+            #  dividing by it makes the radiative share exceed 100 % for any
+            #  element that is shedding heat to its neighbours -- a
+            #  presentation artefact, not a physical result. Because the
+            #  balance closes, q_cond + q_rad == q_conv + q_lateral, so this
+            #  is exactly "of the heat leaving the surface, how much went out
+            #  by radiation". With both lateral terms zero it reduces
+            #  identically to the old q_rad/q_conv.
+            #  Relative closure is taken over elements carrying at least
+            #  1 W/m^2 of throughput. Below that the denominator is so small
+            #  that an absolute residual of 0.06 W/m^2 -- 1.6e-7 of the peak
+            #  -- reports as a ratio near 1, which would read as a solver
+            #  defect when it is arithmetic on a cold element. The floor is
+            #  stated here so the filter is visible, not hidden.
+            "residual_throughput_floor_Wm2": RESIDUAL_REL_FLOOR_WM2,
             "residual_rel_max": max(
-                (abs(r["balance_residual_Wm2"]) / r["q_conv_Wm2"]
-                 for r in rows if r["q_conv_Wm2"] > 0.0),
+                (abs(r["balance_residual_Wm2"])
+                 / (r["q_cond_Wm2"] + r["q_rad_Wm2"])
+                 for r in rows
+                 if (r["q_cond_Wm2"] + r["q_rad_Wm2"]) > RESIDUAL_REL_FLOOR_WM2),
                 default=0.0),
+            #  Same throughput floor as the relative residual, so the mean
+            #  is not dragged around by elements carrying a few W/m^2. Each
+            #  statistic also records the population it was taken over --
+            #  an unlabelled mean is not evidence.
+            "radiative_population_floor_Wm2": RESIDUAL_REL_FLOOR_WM2,
+            "radiative_elements_used": sum(
+                1 for r in rows
+                if (r["q_cond_Wm2"] + r["q_rad_Wm2"]) > RESIDUAL_REL_FLOOR_WM2),
             "mean_radiative_fraction": _safe_mean(
-                [r["q_rad_Wm2"] / r["q_conv_Wm2"]
-                 for r in rows if r["q_conv_Wm2"] > 0.0]),
+                [r["q_rad_Wm2"] / (r["q_cond_Wm2"] + r["q_rad_Wm2"])
+                 for r in rows
+                 if (r["q_cond_Wm2"] + r["q_rad_Wm2"])
+                 > RESIDUAL_REL_FLOOR_WM2]),
             "max_radiative_fraction": max(
-                (r["q_rad_Wm2"] / r["q_conv_Wm2"]
-                 for r in rows if r["q_conv_Wm2"] > 0.0),
+                (r["q_rad_Wm2"] / (r["q_cond_Wm2"] + r["q_rad_Wm2"])
+                 for r in rows
+                 if (r["q_cond_Wm2"] + r["q_rad_Wm2"])
+                 > RESIDUAL_REL_FLOOR_WM2),
                 default=0.0),
+            #  Net in-plane exchange, so the report states the lateral term
+            #  rather than leaving it to be inferred.
+            "mean_lateral_Wm2": statistics.fmean(
+                r["q_lateral_Wm2"] for r in rows),
+            "min_lateral_Wm2": min(r["q_lateral_Wm2"] for r in rows),
+            "max_lateral_Wm2": max(r["q_lateral_Wm2"] for r in rows),
+            "elements_losing_to_neighbours": sum(
+                1 for r in rows if r["q_lateral_Wm2"] < 0.0),
+            "elements_gaining_from_neighbours": sum(
+                1 for r in rows if r["q_lateral_Wm2"] > 0.0),
         },
         "caveats": [
             # Parenthesised so each caveat reads as ONE list item rather than
@@ -939,6 +1477,9 @@ def main(argv: list[str] | None = None) -> int:
                         help="directory for the CSV/JSON outputs")
     parser.add_argument("--json", default=None,
                         help="write the summary JSON to this path")
+    parser.add_argument("--no-lateral", action="store_true",
+                        help="skip the lateral (in-plane) coupling and run "
+                             "the legacy pure 1-D through-thickness solve")
     parser.add_argument("--no-profiles", action="store_true",
                         help="skip the per-element profile CSV")
     parser.add_argument("--limit", type=int, default=0,
@@ -1013,9 +1554,41 @@ def main(argv: list[str] | None = None) -> int:
     print(f"[BC] T_init = {args.t_init_k} K (pinned cold face), "
           f"T_inf = {args.t_inf_k} K (radiative ambient)")
 
+    # -- Lateral (in-plane) coupling -------------------------------------
+    #  The mesh supplies the topology, the layup supplies the conductance;
+    #  both are measured/derived here rather than assumed. --no-lateral runs
+    #  the legacy pure 1-D solve so the two can be diffed directly.
+    adjacency: list[list[tuple[int, float]]] | None = None
+    sheet_wk = 0.0
+    if args.no_lateral:
+        print("[LATERAL] disabled by --no-lateral: pure 1-D through-thickness "
+              "solve, every element thermally isolated")
+    else:
+        points, cells = parse_vtu_geometry(args.vtu)
+        adjacency, mesh_stats = build_adjacency(points, cells)
+        sheet = structural_sheet_conductance()
+        sheet_wk = sheet["sheet_structural_W_K"]
+        print(f"[MESH] {mesh_stats['cells']} cells, "
+              f"{mesh_stats['edges']} edges, "
+              f"{mesh_stats['neighbour_pairs']} neighbour pairs, "
+              f"{mesh_stats['boundary_edges']} boundary edges (no partner), "
+              f"{mesh_stats['isolated_cells']} isolated cells, "
+              f"{mesh_stats['non_manifold_edges']} non-manifold")
+        print(f"[MESH] structural plies only: "
+              f"S = sum(k*t) = {sheet_wk:.6e} W/K across "
+              f"{int(sheet['structural_ply_count'])} layer(s); the same sum "
+              f"over ALL five plies would be "
+              f"{sheet['sheet_total_W_K']:.6e} W/K "
+              f"({(sheet['sheet_total_W_K'] - sheet_wk) / sheet_wk * 100.0:.1f} "
+              f"% more), which the owner's structural-only decision excludes")
+        if mesh_stats["isolated_cells"]:
+            print(f"[MESH][WARN] {mesh_stats['isolated_cells']} cell(s) share "
+                  f"no edge with any other cell; they stay 1-D by construction")
+
     rows = solve_all_elements(ke_raw, q_sg, ke_ref,
                               write_profiles=not args.no_profiles,
-                              t_init=args.t_init_k, t_inf=args.t_inf_k)
+                              t_init=args.t_init_k, t_inf=args.t_inf_k,
+                              adjacency=adjacency, sheet_wk=sheet_wk)
     summary = summarise(
         rows, q_sg, shape, snapshot,
         tree=args.tree,
@@ -1081,15 +1654,23 @@ def main(argv: list[str] | None = None) -> int:
           f"{summary['elements']}  (pinned by the boundary condition -- see "
           f"caveats in the JSON)")
     bal = summary["surface_energy_balance"]
-    print(f"surface balance closure    : max |q_conv-q_cond-q_rad| = "
+    print(f"surface balance closure    : max |q_conv+q_lateral-q_cond-q_rad| = "
           f"{bal['residual_Wm2_abs_max']:.3e} W/m^2 "
           f"(mean {bal['residual_Wm2_abs_mean']:.3e}); worst relative "
           f"{bal['residual_rel_max']:.3e}")
     print(f"re-radiation share of q    : mean "
           f"{bal['mean_radiative_fraction'] * 100.0:.2f}%, "
           f"max {bal['max_radiative_fraction'] * 100.0:.2f}% "
+          f"(over {bal['radiative_elements_used']} elements carrying > "
+          f"{bal['radiative_population_floor_Wm2']:g} W/m^2) "
           f"({100.0 - bal['mean_radiative_fraction'] * 100.0:.2f}% conducted "
-          f"into the stack)")
+          f"into the stack and laterally to neighbours)")
+    print(f"lateral exchange           : mean "
+          f"{bal['mean_lateral_Wm2']:+.3f} W/m^2, range "
+          f"[{bal['min_lateral_Wm2']:+.3f}, {bal['max_lateral_Wm2']:+.3f}] "
+          f"W/m^2; {bal['elements_gaining_from_neighbours']} elements gain "
+          f"from a neighbour, {bal['elements_losing_to_neighbours']} shed "
+          f"heat into theirs")
     print("=" * 78)
     return 0
 

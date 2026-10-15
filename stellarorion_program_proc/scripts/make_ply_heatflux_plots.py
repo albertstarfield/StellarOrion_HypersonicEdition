@@ -478,11 +478,18 @@ def plot_flux_distribution(all_flux: list[list[float]], out_path: str) -> None:
 _RAD = "#45c4ff"     # re-radiated back to the stream
 _COND = "#ffb454"    # conducted through the stack to the cold face
 _RESID = "#7dffb2"   # closure residual (the check, not a destination)
+#  Lateral (in-plane) exchange with the neighbouring elements [W/m^2].
+_LAT = "#c39bff"
 
 #: Relative closure the solver must meet before the split is plotted at all.
 #: Measured 2026-10-15: worst element 3.6e-6 relative, so 1e-3 leaves three
 #: decades of headroom while still failing loudly if the balance breaks.
 _BALANCE_REL_TOL = 1.0e-3
+#  Throughput [W/m^2] below which an element is left out of the RELATIVE
+#  closure test. Mirrors RESIDUAL_REL_FLOOR_WM2 in
+#  run_tps_conduction_step2200.py; kept local so the plot script has no
+#  import dependency on the solver.
+_BALANCE_REL_FLOOR_WM2 = 1.0
 
 
 def _balance_terms(elements: dict[int, dict[str, float]]
@@ -512,6 +519,7 @@ def _balance_terms(elements: dict[int, dict[str, float]]
     q_conv: list[float] = []
     q_rad: list[float] = []
     q_cond: list[float] = []
+    q_lateral: list[float] = []
     t_surface: list[float] = []
     residual: list[float] = []
     for row in sorted(elements.values(), key=lambda r: r.get("q_conv_Wm2", 0.0)):
@@ -520,13 +528,24 @@ def _balance_terms(elements: dict[int, dict[str, float]]
         cond = row.get("q_cond_Wm2", float("nan"))
         temp = row.get("t_surface_K", float("nan"))
         resid = row.get("balance_residual_Wm2", float("nan"))
-        if not all(math.isfinite(v) for v in (conv, rad, cond, temp, resid)):
+        #  Lateral term is absent from CSVs written before the coupled model;
+        #  defaulting to 0.0 keeps those readable as the pure 1-D case rather
+        #  than poisoning the series with NaN.
+        lateral = row.get("q_lateral_Wm2", 0.0)
+        if not all(math.isfinite(v) for v in
+                   (conv, rad, cond, temp, resid, lateral)):
             continue
-        if conv <= 0.0:
+        #  Skip only a TRULY inert element. Under the coupled model an
+        #  element can carry q_conv == 0 and still be heated by its
+        #  neighbours, so the old `conv <= 0` test would drop exactly the
+        #  population the lateral term exists to describe -- and the mean
+        #  radiative share would then disagree with the solver's own summary.
+        if conv <= 0.0 and lateral == 0.0:
             continue
         q_conv.append(conv)
         q_rad.append(rad)
         q_cond.append(cond)
+        q_lateral.append(lateral)
         t_surface.append(temp)
         residual.append(resid)
     if not q_conv:
@@ -534,7 +553,7 @@ def _balance_terms(elements: dict[int, dict[str, float]]
             "no element carries a finite, positive q_conv_Wm2; the elements "
             "CSV was written before the surface-energy-balance columns were "
             "added, so there is nothing to plot")
-    return q_conv, q_rad, q_cond, t_surface, residual
+    return q_conv, q_rad, q_cond, q_lateral, t_surface, residual
 
 
 def plot_surface_energy_balance(elements: dict[int, dict[str, float]],
@@ -567,29 +586,56 @@ def plot_surface_energy_balance(elements: dict[int, dict[str, float]],
             plotted split would not satisfy the equation it claims to show.
             Refusing to draw is the honest outcome.
     """
-    q_conv, q_rad, q_cond, t_surface, residual = _balance_terms(elements)
+    q_conv, q_rad, q_cond, q_lateral, t_surface, residual = _balance_terms(
+        elements)
 
-    # Closure, checked BEFORE anything is drawn.
-    worst_rel = max(abs(r) / c for r, c in zip(residual, q_conv))
+    #  Throughput, not q_conv, is the denominator everywhere below. With the
+    #  lateral model active, q_conv is only PART of what the surface receives,
+    #  so normalising by it would report radiative shares above 100 % for any
+    #  element that sheds heat to its neighbours -- a plotting artefact. The
+    #  balance gives q_cond + q_rad == q_conv + q_lateral, so the share below
+    #  is exactly "of the heat leaving this surface, how much re-radiated",
+    #  and it reduces identically to q_rad/q_conv when q_lateral is zero.
+    throughput = [cond + rad for cond, rad in zip(q_cond, q_rad)]
+    #  Same floor the runner uses: below it a 0.06 W/m^2 residual reports as
+    #  a ratio near 1 purely because the denominator is arithmetically small.
+    floor = _BALANCE_REL_FLOOR_WM2
+    eligible = [(r, th) for r, th in zip(residual, throughput) if th > floor]
+    if not eligible:
+        raise ValueError(
+            "no element carries more than "
+            f"{floor:g} W/m^2 of surface throughput; there is nothing the "
+            "balance split can meaningfully describe")
+    worst_rel = max(abs(r) / th for r, th in eligible)
     if worst_rel > _BALANCE_REL_TOL:
         raise RuntimeError(
             f"surface energy balance does not close: worst relative residual "
             f"{worst_rel:.3e} > {_BALANCE_REL_TOL:.1e}. Plotting a split that "
             f"fails its own governing equation would misrepresent the solver.")
 
-    fractions = [r / c for r, c in zip(q_rad, q_conv)]
+    #  Mean taken over the SAME population the solver's summary uses --
+    #  elements carrying more than the throughput floor. Averaging the
+    #  hundreds of near-ambient elements instead would report a different
+    #  headline number for the same physics, which is exactly the
+    #  inconsistency this figure is meant to remove.
+    scored = [(rad, th, temp) for rad, th, temp
+              in zip(q_rad, throughput, t_surface) if th > floor]
+    fractions = [rad / th for rad, th, _temp in scored]
     stats = {
         "radiative_fraction_mean": float(statistics.fmean(fractions)),
         "radiative_fraction_max": float(max(fractions)),
         "residual_rel_max": float(worst_rel),
         "elements_plotted": len(q_conv),
+        "elements_scored": len(scored),
+        "throughput_floor_Wm2": floor,
     }
 
     fig, axes = plt.subplots(2, 2, figsize=(8.2, 5.8), dpi=200, facecolor=_BG)
     ax_a, ax_b, ax_c, ax_d = (axes[0][0], axes[0][1], axes[1][0], axes[1][1])
 
     # (a) radiative share against surface temperature.
-    ax_a.scatter(t_surface, [f * 100.0 for f in fractions],
+    ax_a.scatter([temp for _rad, _th, temp in scored],
+                 [f * 100.0 for f in fractions],
                  s=3, alpha=0.45, color=_RAD, linewidths=0)
     ax_a.axhline(stats["radiative_fraction_mean"] * 100.0,
                  color=_TEXT, linestyle="--", linewidth=1.0,
@@ -613,7 +659,8 @@ def plot_surface_energy_balance(elements: dict[int, dict[str, float]],
              label=f"conducted {mean_cond:.1f} %")
     ax_b.set_xticks([0])
     ax_b.set_xticklabels(["mean over\nheated elements"], color=_TEXT, fontsize=7)
-    ax_b.set_ylabel("share of $q_{conv}$ [%]", color=_TEXT, fontsize=8)
+    ax_b.set_ylabel("share of surface throughput [%]", color=_TEXT,
+                    fontsize=8)
     ax_b.set_ylim(0, 100)
     ax_b.set_title("(b) destination of the incoming wall heat",
                    color=_TEXT, fontsize=9)
@@ -624,9 +671,16 @@ def plot_surface_energy_balance(elements: dict[int, dict[str, float]],
         txt.set_color(_TEXT)
     _style(ax_b)
 
-    # (c) conducted against incoming, on log-log with the 1:1 reference.
+    # (c) where the heat goes, against the flux imposed on the element. The
+    # lateral series is |q_lateral| so a heat-shedding element and a
+    # heat-gaining one are both visible on the log axis; the SIGNED value is
+    # in the elements CSV for anyone who needs the direction.
     ax_c.scatter(q_conv, q_cond, s=3, alpha=0.45, color=_COND, linewidths=0,
                  label="conducted into stack")
+    if any(abs(v) > 0.0 for v in q_lateral):
+        ax_c.scatter(q_conv, [abs(v) for v in q_lateral], s=3, alpha=0.45,
+                     color=_LAT, linewidths=0,
+                     label="|lateral| exchanged with neighbours")
     lo = min(min(q_cond), min(q_conv))
     hi = max(max(q_cond), max(q_conv))
     ax_c.plot([lo, hi], [lo, hi], color=_TEXT, linestyle="--",
@@ -637,7 +691,7 @@ def plot_surface_energy_balance(elements: dict[int, dict[str, float]],
                     color=_TEXT, fontsize=8)
     ax_c.set_ylabel("$q_{cond}$ into the stack [W/m$^2$]",
                     color=_TEXT, fontsize=8)
-    ax_c.set_title("(c) conducted share stays far below the 1:1 line",
+    ax_c.set_title("(c) conduction and lateral exchange vs imposed flux",
                    color=_TEXT, fontsize=9)
     ax_c.tick_params(labelsize=7)
     leg_c = ax_c.legend(fontsize=7, facecolor=_PANEL, edgecolor=_DIM)
@@ -938,7 +992,7 @@ def load_elements(csv_path: str) -> dict[int, dict[str, float]]:
                "n_iterations",
                # Surface energy balance terms (run_tps_conduction_step2200).
                "series_resistance_m2K_W", "q_conv_Wm2", "q_cond_Wm2",
-               "q_rad_Wm2", "balance_residual_Wm2")
+               "q_rad_Wm2", "q_lateral_Wm2", "balance_residual_Wm2")
     by_element: dict[int, dict[str, float]] = {}
     with open(csv_path, newline="") as fh:
         for row in csv.DictReader(fh):
