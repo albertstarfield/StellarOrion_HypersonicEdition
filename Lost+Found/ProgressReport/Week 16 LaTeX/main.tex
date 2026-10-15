@@ -313,8 +313,39 @@
     J=Q/Q_t+0.5\,q/q_{ref}+0.5\,\beta_{dev}
       +0.25\,C_d/C_{d,ref}+\Lambda\,\mathrm{Pen}.
   \]
-  \textbf{Why it is faster:} the same snapshot values are used for every sample,
-  so DSMC/PINN do not run per sample until CCD/LHS/BO shortlist candidates.
+  \textbf{Why faster:} one snapshot serves every sample, so DSMC/PINN run only
+  after CCD/LHS/BO shortlist candidates.
+\end{frame}
+
+% Companion variable-definition notes for the analytic sampling equations above.
+\begin{frame}{REDEMPTION 3a1: VARIABLE DEFINITIONS (ANALYTIC SAMPLING)}
+  \footnotesize
+  \textbf{Heat flux and load terms.}
+  \begin{tabular}{@{}ll@{}}
+  $q_{SG}$ & Sutton--Graves convective flux at the hot face [W/m$^2$]\\
+  $C_{SG}$ & correlation constant $1.7415\times10^{-4}$ for Earth air (F21)\\
+  $\rho(h)$ & freestream density at altitude $h$ [kg/m$^3$] (ISA)\\
+  $V$ & flight speed [m/s] at the same snapshot\\
+  $R_N$ & nose radius [m]; $R_N$ sets the $1/\sqrt{R_N}$ scaling\\
+  $\tau$ & effective heating time [s]; $Q(x)=q_{SG}\,\tau$ (F84)\\
+  \end{tabular}\par
+  \vspace{0.1cm}
+  \textbf{Geometry and ballistic terms.}
+  \begin{tabular}{@{}ll@{}}
+  $r_t$ & toroid (tube) radius [m]\\
+  $R_{\max}$ & maximum outer radius $=R_N+r_t$ [m]\\
+  $A$ & frontal area $=\pi R_{\max}^2$ [m$^2$]\\
+  $C_d,\;C_{d,ref}$ & candidate drag coefficient and IRVE-3 reference value\\
+  $\beta_r$ & ballistic ratio $=(C_{d,ref}A_{ref})/(C_d(x)A(x))$\\
+  $\beta_{dev}$ & squared deviation $(\beta_r-1)^2$\\
+  \end{tabular}\par
+  \vspace{0.1cm}
+  \textbf{Cost and penalty terms.}
+  \begin{tabular}{@{}ll@{}}
+  $Q_t,\;q_{ref}$ & validation targets for total heat load and heat flux\\
+  $\Lambda$ & penalty weight (hard constraints)\\
+  $\mathrm{Pen}$ & quadratic envelope, nose and payload violation term\\
+  \end{tabular}
 \end{frame}
 
 \begin{frame}{REDEMPTION 3a2: ONE VALIDATION POINT, REFERENCES ONLY}
