@@ -2908,7 +2908,30 @@ package body StellarOrion_Sparta is
                 Put (VF, Img (Integer (N2))); Put (VF, " ");
                 Put (VF, Img (Integer (N3)));
                 Cnt := Cnt + 1;
-                if Cnt mod 4 = 0 then New_Line (VF); end if;
+                --  AXIOMS: VTK ascii arrays are whitespace-separated tokens;
+                --    one cell contributes exactly 4 Int64 indices and a cell
+                --    boundary must carry a separator like any intra-cell gap.
+                --  THEORIES: N3 above is written with NO trailing separator,
+                --    so the newline branch is only one of two cases.  With no
+                --    `else` the next cell's N0 was concatenated onto N3 --
+                --    cell(1,t=0) ends "…49 1" and cell(1,t=1) begins "1 …",
+                --    producing the single token "11".  That gluing removed one
+                --    token per non-line-break cell: 14592 numbers collapsed to
+                --    11856 entries, so vtkXMLUnstructuredGridReader rejected
+                --    every produced file with 'the "connectivity" array is not
+                --    long enough' and reported 0 points / 0 cells.
+                --  APPLICATIONS: every .vtu written by Write_VTU since the
+                --    feature landed was unreadable by ParaView; this restores
+                --    the separator the offsets/types/CellData writers below
+                --    already carry.
+                --  CITATIONS: VTK File Format Specification §3 (ascii
+                --    DataArray is space-delimited);
+                --    https://docs.vtk.org/en/latest/file_formats.html
+                if Cnt mod 4 = 0 then
+                   New_Line (VF);
+                else
+                   Put (VF, " ");
+                end if;
              end loop;
           end loop;
           New_Line (VF);

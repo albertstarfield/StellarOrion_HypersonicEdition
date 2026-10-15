@@ -1,7 +1,7 @@
 {
   "schema": "stellarorion.coq_proof_status/1",
   "status": "pass",
-  "generated_utc": "2026-10-13T16:36:49.383885+00:00",
+  "generated_utc": "2026-10-15T00:26:41.071660+00:00",
   "tool": {
     "name": "coqc",
     "path": "/Users/albertstarfield/.opam/spark-coq/bin/coqc",
@@ -19,254 +19,404 @@
     "proofs": 88,
     "compiled": 88,
     "failed": 0,
-    "duration_s": 21.964
+    "duration_s": 25.354
   },
   "files": [
     {
       "path": "proofs/StellarOrion_Float.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.497,
-      "artifacts_removed": [],
+      "duration_s": 0.586,
+      "artifacts_removed": [
+        "StellarOrion_Float.vo",
+        "StellarOrion_Float.vok",
+        "StellarOrion_Float.vos",
+        "StellarOrion_Float.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/_tex_config.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.156,
-      "artifacts_removed": [],
+      "duration_s": 0.182,
+      "artifacts_removed": [
+        "_tex_config.vo",
+        "_tex_config.vok",
+        "_tex_config.vos",
+        "_tex_config.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/ada_pinn_wrapper.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.252,
-      "artifacts_removed": [],
+      "duration_s": 0.291,
+      "artifacts_removed": [
+        "ada_pinn_wrapper.vo",
+        "ada_pinn_wrapper.vok",
+        "ada_pinn_wrapper.vos",
+        "ada_pinn_wrapper.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/compare_validation_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.249,
-      "artifacts_removed": [],
+      "duration_s": 0.397,
+      "artifacts_removed": [
+        "compare_validation_proof.vo",
+        "compare_validation_proof.vok",
+        "compare_validation_proof.vos",
+        "compare_validation_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/gen_trajectory_profile_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.229,
-      "artifacts_removed": [],
+      "duration_s": 0.327,
+      "artifacts_removed": [
+        "gen_trajectory_profile_proof.vo",
+        "gen_trajectory_profile_proof.vok",
+        "gen_trajectory_profile_proof.vos",
+        "gen_trajectory_profile_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/generate_hiad_dashboard.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.237,
-      "artifacts_removed": [],
+      "duration_s": 0.328,
+      "artifacts_removed": [
+        "generate_hiad_dashboard.vo",
+        "generate_hiad_dashboard.vok",
+        "generate_hiad_dashboard.vos",
+        "generate_hiad_dashboard.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/generate_optimized_overlay.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.157,
-      "artifacts_removed": [],
+      "duration_s": 0.177,
+      "artifacts_removed": [
+        "generate_optimized_overlay.vo",
+        "generate_optimized_overlay.vok",
+        "generate_optimized_overlay.vos",
+        "generate_optimized_overlay.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/generate_outputs.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.275,
-      "artifacts_removed": [],
+      "duration_s": 0.316,
+      "artifacts_removed": [
+        "generate_outputs.vo",
+        "generate_outputs.vok",
+        "generate_outputs.vos",
+        "generate_outputs.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/hiad_geometry.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.157,
-      "artifacts_removed": [],
+      "duration_s": 0.173,
+      "artifacts_removed": [
+        "hiad_geometry.vo",
+        "hiad_geometry.vok",
+        "hiad_geometry.vos",
+        "hiad_geometry.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/hiad_optimizer.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.251,
-      "artifacts_removed": [],
+      "duration_s": 0.28,
+      "artifacts_removed": [
+        "hiad_optimizer.vo",
+        "hiad_optimizer.vok",
+        "hiad_optimizer.vos",
+        "hiad_optimizer.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/make_derived_plots_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.242,
-      "artifacts_removed": [],
+      "duration_s": 0.264,
+      "artifacts_removed": [
+        "make_derived_plots_proof.vo",
+        "make_derived_plots_proof.vok",
+        "make_derived_plots_proof.vos",
+        "make_derived_plots_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/make_validation_plots_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.244,
-      "artifacts_removed": [],
+      "duration_s": 0.277,
+      "artifacts_removed": [
+        "make_validation_plots_proof.vo",
+        "make_validation_plots_proof.vok",
+        "make_validation_plots_proof.vos",
+        "make_validation_plots_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/make_vtu_visualization_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.236,
-      "artifacts_removed": [],
+      "duration_s": 0.274,
+      "artifacts_removed": [
+        "make_vtu_visualization_proof.vo",
+        "make_vtu_visualization_proof.vok",
+        "make_vtu_visualization_proof.vos",
+        "make_vtu_visualization_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/plot_hiad_3d_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.24,
-      "artifacts_removed": [],
+      "duration_s": 0.27,
+      "artifacts_removed": [
+        "plot_hiad_3d_proof.vo",
+        "plot_hiad_3d_proof.vok",
+        "plot_hiad_3d_proof.vos",
+        "plot_hiad_3d_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/plot_rapisarda_comparison_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.247,
-      "artifacts_removed": [],
+      "duration_s": 0.269,
+      "artifacts_removed": [
+        "plot_rapisarda_comparison_proof.vo",
+        "plot_rapisarda_comparison_proof.vok",
+        "plot_rapisarda_comparison_proof.vos",
+        "plot_rapisarda_comparison_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/plot_surf_profile_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.249,
-      "artifacts_removed": [],
+      "duration_s": 0.343,
+      "artifacts_removed": [
+        "plot_surf_profile_proof.vo",
+        "plot_surf_profile_proof.vok",
+        "plot_surf_profile_proof.vos",
+        "plot_surf_profile_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/run_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.252,
-      "artifacts_removed": [],
+      "duration_s": 0.331,
+      "artifacts_removed": [
+        "run_proof.vo",
+        "run_proof.vok",
+        "run_proof.vos",
+        "run_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/sabotage_verifier_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.246,
-      "artifacts_removed": [],
+      "duration_s": 0.297,
+      "artifacts_removed": [
+        "sabotage_verifier_proof.vo",
+        "sabotage_verifier_proof.vok",
+        "sabotage_verifier_proof.vos",
+        "sabotage_verifier_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/sidecar_watchdog_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.253,
-      "artifacts_removed": [],
+      "duration_s": 0.288,
+      "artifacts_removed": [
+        "sidecar_watchdog_proof.vo",
+        "sidecar_watchdog_proof.vok",
+        "sidecar_watchdog_proof.vos",
+        "sidecar_watchdog_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/sparta_grid.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.246,
-      "artifacts_removed": [],
+      "duration_s": 0.277,
+      "artifacts_removed": [
+        "sparta_grid.vo",
+        "sparta_grid.vok",
+        "sparta_grid.vos",
+        "sparta_grid.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/stellarorion_ffi.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.151,
-      "artifacts_removed": [],
+      "duration_s": 0.179,
+      "artifacts_removed": [
+        "stellarorion_ffi.vo",
+        "stellarorion_ffi.vok",
+        "stellarorion_ffi.vos",
+        "stellarorion_ffi.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/stellarorion_pinn_trajectory.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.241,
-      "artifacts_removed": [],
+      "duration_s": 0.266,
+      "artifacts_removed": [
+        "stellarorion_pinn_trajectory.vo",
+        "stellarorion_pinn_trajectory.vok",
+        "stellarorion_pinn_trajectory.vos",
+        "stellarorion_pinn_trajectory.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/stellarorion_pipeline_checkpoint.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.171,
-      "artifacts_removed": [],
+      "duration_s": 0.189,
+      "artifacts_removed": [
+        "stellarorion_pipeline_checkpoint.vo",
+        "stellarorion_pipeline_checkpoint.vok",
+        "stellarorion_pipeline_checkpoint.vos",
+        "stellarorion_pipeline_checkpoint.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/stellarorion_postprocessing.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.254,
-      "artifacts_removed": [],
+      "duration_s": 0.274,
+      "artifacts_removed": [
+        "stellarorion_postprocessing.vo",
+        "stellarorion_postprocessing.vok",
+        "stellarorion_postprocessing.vos",
+        "stellarorion_postprocessing.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/stellarorion_safe_access_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.055,
-      "artifacts_removed": [],
+      "duration_s": 0.064,
+      "artifacts_removed": [
+        "stellarorion_safe_access_proof.vo",
+        "stellarorion_safe_access_proof.vok",
+        "stellarorion_safe_access_proof.vos",
+        "stellarorion_safe_access_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/stellarorion_speed_of_sound.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.248,
-      "artifacts_removed": [],
+      "duration_s": 0.276,
+      "artifacts_removed": [
+        "stellarorion_speed_of_sound.vo",
+        "stellarorion_speed_of_sound.vok",
+        "stellarorion_speed_of_sound.vos",
+        "stellarorion_speed_of_sound.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/stellarorion_trajectory_output.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.257,
-      "artifacts_removed": [],
+      "duration_s": 0.349,
+      "artifacts_removed": [
+        "stellarorion_trajectory_output.vo",
+        "stellarorion_trajectory_output.vok",
+        "stellarorion_trajectory_output.vos",
+        "stellarorion_trajectory_output.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "proofs/validation_pipeline.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.238,
-      "artifacts_removed": [],
+      "duration_s": 0.285,
+      "artifacts_removed": [
+        "validation_pipeline.vo",
+        "validation_pipeline.vok",
+        "validation_pipeline.vos",
+        "validation_pipeline.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/__init___proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.248,
-      "artifacts_removed": [],
+      "duration_s": 0.296,
+      "artifacts_removed": [
+        "__init___proof.vo",
+        "__init___proof.vok",
+        "__init___proof.vos",
+        "__init___proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/_tex_config_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.245,
-      "artifacts_removed": [],
+      "duration_s": 0.279,
+      "artifacts_removed": [
+        "_tex_config_proof.vo",
+        "_tex_config_proof.vok",
+        "_tex_config_proof.vos",
+        "_tex_config_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/ada_pinn_wrapper_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.247,
+      "duration_s": 0.295,
       "artifacts_removed": [],
       "error_snippet": ""
     },
@@ -274,456 +424,741 @@
       "path": "src/proofs/add_exception_handlers_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.052,
-      "artifacts_removed": [],
+      "duration_s": 0.059,
+      "artifacts_removed": [
+        "add_exception_handlers_proof.vo",
+        "add_exception_handlers_proof.vok",
+        "add_exception_handlers_proof.vos",
+        "add_exception_handlers_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/gen_trajectory_profile_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.254,
-      "artifacts_removed": [],
+      "duration_s": 0.291,
+      "artifacts_removed": [
+        "gen_trajectory_profile_proof.vo",
+        "gen_trajectory_profile_proof.vok",
+        "gen_trajectory_profile_proof.vos",
+        "gen_trajectory_profile_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/generate_hiad_dashboard_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.254,
-      "artifacts_removed": [],
+      "duration_s": 0.298,
+      "artifacts_removed": [
+        "generate_hiad_dashboard_proof.vo",
+        "generate_hiad_dashboard_proof.vok",
+        "generate_hiad_dashboard_proof.vos",
+        "generate_hiad_dashboard_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/generate_optimized_overlay_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.257,
-      "artifacts_removed": [],
+      "duration_s": 0.299,
+      "artifacts_removed": [
+        "generate_optimized_overlay_proof.vo",
+        "generate_optimized_overlay_proof.vok",
+        "generate_optimized_overlay_proof.vos",
+        "generate_optimized_overlay_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/generate_outputs_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.281,
-      "artifacts_removed": [],
+      "duration_s": 0.326,
+      "artifacts_removed": [
+        "generate_outputs_proof.vo",
+        "generate_outputs_proof.vok",
+        "generate_outputs_proof.vos",
+        "generate_outputs_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/hiad_geometry_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.262,
-      "artifacts_removed": [],
+      "duration_s": 0.342,
+      "artifacts_removed": [
+        "hiad_geometry_proof.vo",
+        "hiad_geometry_proof.vok",
+        "hiad_geometry_proof.vos",
+        "hiad_geometry_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/hiad_optimizer_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.262,
-      "artifacts_removed": [],
+      "duration_s": 0.307,
+      "artifacts_removed": [
+        "hiad_optimizer_proof.vo",
+        "hiad_optimizer_proof.vok",
+        "hiad_optimizer_proof.vos",
+        "hiad_optimizer_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/kriging_denoise_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.257,
-      "artifacts_removed": [],
+      "duration_s": 0.282,
+      "artifacts_removed": [
+        "kriging_denoise_proof.vo",
+        "kriging_denoise_proof.vok",
+        "kriging_denoise_proof.vos",
+        "kriging_denoise_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/main_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.244,
-      "artifacts_removed": [],
+      "duration_s": 0.294,
+      "artifacts_removed": [
+        "main_proof.vo",
+        "main_proof.vok",
+        "main_proof.vos",
+        "main_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/make_derived_plots_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.246,
-      "artifacts_removed": [],
+      "duration_s": 0.275,
+      "artifacts_removed": [
+        "make_derived_plots_proof.vo",
+        "make_derived_plots_proof.vok",
+        "make_derived_plots_proof.vos",
+        "make_derived_plots_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/make_validation_plots_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.259,
-      "artifacts_removed": [],
+      "duration_s": 0.284,
+      "artifacts_removed": [
+        "make_validation_plots_proof.vo",
+        "make_validation_plots_proof.vok",
+        "make_validation_plots_proof.vos",
+        "make_validation_plots_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/make_vtu_visualization_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.246,
-      "artifacts_removed": [],
+      "duration_s": 0.295,
+      "artifacts_removed": [
+        "make_vtu_visualization_proof.vo",
+        "make_vtu_visualization_proof.vok",
+        "make_vtu_visualization_proof.vos",
+        "make_vtu_visualization_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/pinn_accelerator_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.239,
-      "artifacts_removed": [],
+      "duration_s": 0.279,
+      "artifacts_removed": [
+        "pinn_accelerator_proof.vo",
+        "pinn_accelerator_proof.vok",
+        "pinn_accelerator_proof.vos",
+        "pinn_accelerator_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/pinn_test_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.237,
-      "artifacts_removed": [],
+      "duration_s": 0.29,
+      "artifacts_removed": [
+        "pinn_test_proof.vo",
+        "pinn_test_proof.vok",
+        "pinn_test_proof.vos",
+        "pinn_test_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/pipeline_checkpoint_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.243,
-      "artifacts_removed": [],
+      "duration_s": 0.286,
+      "artifacts_removed": [
+        "pipeline_checkpoint_proof.vo",
+        "pipeline_checkpoint_proof.vok",
+        "pipeline_checkpoint_proof.vos",
+        "pipeline_checkpoint_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/pipeline_comparison_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.054,
-      "artifacts_removed": [],
+      "duration_s": 0.065,
+      "artifacts_removed": [
+        "pipeline_comparison_proof.vo",
+        "pipeline_comparison_proof.vok",
+        "pipeline_comparison_proof.vos",
+        "pipeline_comparison_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/plot_hiad_3d_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.275,
-      "artifacts_removed": [],
+      "duration_s": 0.291,
+      "artifacts_removed": [
+        "plot_hiad_3d_proof.vo",
+        "plot_hiad_3d_proof.vok",
+        "plot_hiad_3d_proof.vos",
+        "plot_hiad_3d_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/plot_rapisarda_comparison_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.264,
-      "artifacts_removed": [],
+      "duration_s": 0.29,
+      "artifacts_removed": [
+        "plot_rapisarda_comparison_proof.vo",
+        "plot_rapisarda_comparison_proof.vok",
+        "plot_rapisarda_comparison_proof.vos",
+        "plot_rapisarda_comparison_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/plot_surf_profile_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.246,
-      "artifacts_removed": [],
+      "duration_s": 0.281,
+      "artifacts_removed": [
+        "plot_surf_profile_proof.vo",
+        "plot_surf_profile_proof.vok",
+        "plot_surf_profile_proof.vos",
+        "plot_surf_profile_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/pyansys_test_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.254,
-      "artifacts_removed": [],
+      "duration_s": 0.275,
+      "artifacts_removed": [
+        "pyansys_test_proof.vo",
+        "pyansys_test_proof.vok",
+        "pyansys_test_proof.vos",
+        "pyansys_test_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/pyfluent_test_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.259,
-      "artifacts_removed": [],
+      "duration_s": 0.28,
+      "artifacts_removed": [
+        "pyfluent_test_proof.vo",
+        "pyfluent_test_proof.vok",
+        "pyfluent_test_proof.vos",
+        "pyfluent_test_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/run_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.26,
-      "artifacts_removed": [],
+      "duration_s": 0.289,
+      "artifacts_removed": [
+        "run_proof.vo",
+        "run_proof.vok",
+        "run_proof.vos",
+        "run_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/sabotage_verifier_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.257,
-      "artifacts_removed": [],
+      "duration_s": 0.289,
+      "artifacts_removed": [
+        "sabotage_verifier_proof.vo",
+        "sabotage_verifier_proof.vok",
+        "sabotage_verifier_proof.vos",
+        "sabotage_verifier_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/sidecar_launcher_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.249,
-      "artifacts_removed": [],
+      "duration_s": 0.273,
+      "artifacts_removed": [
+        "sidecar_launcher_proof.vo",
+        "sidecar_launcher_proof.vok",
+        "sidecar_launcher_proof.vos",
+        "sidecar_launcher_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/sidecar_server_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.259,
-      "artifacts_removed": [],
+      "duration_s": 0.273,
+      "artifacts_removed": [
+        "sidecar_server_proof.vo",
+        "sidecar_server_proof.vok",
+        "sidecar_server_proof.vos",
+        "sidecar_server_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/sidecar_ui_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.257,
-      "artifacts_removed": [],
+      "duration_s": 0.279,
+      "artifacts_removed": [
+        "sidecar_ui_proof.vo",
+        "sidecar_ui_proof.vok",
+        "sidecar_ui_proof.vos",
+        "sidecar_ui_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/sparta_grid_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.273,
-      "artifacts_removed": [],
+      "duration_s": 0.308,
+      "artifacts_removed": [
+        "sparta_grid_proof.vo",
+        "sparta_grid_proof.vok",
+        "sparta_grid_proof.vos",
+        "sparta_grid_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_atomic_parity_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.17,
-      "artifacts_removed": [],
+      "duration_s": 0.191,
+      "artifacts_removed": [
+        "stellarorion_atomic_parity_proof.vo",
+        "stellarorion_atomic_parity_proof.vok",
+        "stellarorion_atomic_parity_proof.vos",
+        "stellarorion_atomic_parity_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_cli_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.281,
-      "artifacts_removed": [],
+      "duration_s": 0.312,
+      "artifacts_removed": [
+        "stellarorion_cli_proof.vo",
+        "stellarorion_cli_proof.vok",
+        "stellarorion_cli_proof.vos",
+        "stellarorion_cli_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_dual_watchdog_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.194,
-      "artifacts_removed": [],
+      "duration_s": 0.213,
+      "artifacts_removed": [
+        "stellarorion_dual_watchdog_proof.vo",
+        "stellarorion_dual_watchdog_proof.vok",
+        "stellarorion_dual_watchdog_proof.vos",
+        "stellarorion_dual_watchdog_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_environment_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.815,
-      "artifacts_removed": [],
+      "duration_s": 0.895,
+      "artifacts_removed": [
+        "stellarorion_environment_proof.vo",
+        "stellarorion_environment_proof.vok",
+        "stellarorion_environment_proof.vos",
+        "stellarorion_environment_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_ffi_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.283,
-      "artifacts_removed": [],
+      "duration_s": 0.349,
+      "artifacts_removed": [
+        "stellarorion_ffi_proof.vo",
+        "stellarorion_ffi_proof.vok",
+        "stellarorion_ffi_proof.vos",
+        "stellarorion_ffi_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_geometry_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.279,
-      "artifacts_removed": [],
+      "duration_s": 0.35,
+      "artifacts_removed": [
+        "stellarorion_geometry_proof.vo",
+        "stellarorion_geometry_proof.vok",
+        "stellarorion_geometry_proof.vos",
+        "stellarorion_geometry_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_history_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.262,
-      "artifacts_removed": [],
+      "duration_s": 0.285,
+      "artifacts_removed": [
+        "stellarorion_history_proof.vo",
+        "stellarorion_history_proof.vok",
+        "stellarorion_history_proof.vos",
+        "stellarorion_history_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_optimization_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.267,
-      "artifacts_removed": [],
+      "duration_s": 0.333,
+      "artifacts_removed": [
+        "stellarorion_optimization_proof.vo",
+        "stellarorion_optimization_proof.vok",
+        "stellarorion_optimization_proof.vos",
+        "stellarorion_optimization_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_optimize_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.266,
-      "artifacts_removed": [],
+      "duration_s": 0.285,
+      "artifacts_removed": [
+        "stellarorion_optimize_proof.vo",
+        "stellarorion_optimize_proof.vok",
+        "stellarorion_optimize_proof.vos",
+        "stellarorion_optimize_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_orion_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.251,
-      "artifacts_removed": [],
+      "duration_s": 0.279,
+      "artifacts_removed": [
+        "stellarorion_orion_proof.vo",
+        "stellarorion_orion_proof.vok",
+        "stellarorion_orion_proof.vos",
+        "stellarorion_orion_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_physics_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.256,
-      "artifacts_removed": [],
+      "duration_s": 0.302,
+      "artifacts_removed": [
+        "stellarorion_physics_proof.vo",
+        "stellarorion_physics_proof.vok",
+        "stellarorion_physics_proof.vos",
+        "stellarorion_physics_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_pinn_trajectory_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.282,
-      "artifacts_removed": [],
+      "duration_s": 0.305,
+      "artifacts_removed": [
+        "stellarorion_pinn_trajectory_proof.vo",
+        "stellarorion_pinn_trajectory_proof.vok",
+        "stellarorion_pinn_trajectory_proof.vos",
+        "stellarorion_pinn_trajectory_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_pipeline_checkpoint_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.184,
-      "artifacts_removed": [],
+      "duration_s": 0.197,
+      "artifacts_removed": [
+        "stellarorion_pipeline_checkpoint_proof.vo",
+        "stellarorion_pipeline_checkpoint_proof.vok",
+        "stellarorion_pipeline_checkpoint_proof.vos",
+        "stellarorion_pipeline_checkpoint_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_postprocessing_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.29,
-      "artifacts_removed": [],
+      "duration_s": 0.348,
+      "artifacts_removed": [
+        "stellarorion_postprocessing_proof.vo",
+        "stellarorion_postprocessing_proof.vok",
+        "stellarorion_postprocessing_proof.vos",
+        "stellarorion_postprocessing_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_project_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.313,
-      "artifacts_removed": [],
+      "duration_s": 0.369,
+      "artifacts_removed": [
+        "stellarorion_project_proof.vo",
+        "stellarorion_project_proof.vok",
+        "stellarorion_project_proof.vos",
+        "stellarorion_project_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_reports_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.298,
-      "artifacts_removed": [],
+      "duration_s": 0.327,
+      "artifacts_removed": [
+        "stellarorion_reports_proof.vo",
+        "stellarorion_reports_proof.vok",
+        "stellarorion_reports_proof.vos",
+        "stellarorion_reports_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_runtime_guard_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.164,
-      "artifacts_removed": [],
+      "duration_s": 0.185,
+      "artifacts_removed": [
+        "stellarorion_runtime_guard_proof.vo",
+        "stellarorion_runtime_guard_proof.vok",
+        "stellarorion_runtime_guard_proof.vos",
+        "stellarorion_runtime_guard_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_self_test_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.258,
-      "artifacts_removed": [],
+      "duration_s": 0.285,
+      "artifacts_removed": [
+        "stellarorion_self_test_proof.vo",
+        "stellarorion_self_test_proof.vok",
+        "stellarorion_self_test_proof.vos",
+        "stellarorion_self_test_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_sensitivity_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.285,
-      "artifacts_removed": [],
+      "duration_s": 0.313,
+      "artifacts_removed": [
+        "stellarorion_sensitivity_proof.vo",
+        "stellarorion_sensitivity_proof.vok",
+        "stellarorion_sensitivity_proof.vos",
+        "stellarorion_sensitivity_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_sparta_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.185,
-      "artifacts_removed": [],
+      "duration_s": 0.205,
+      "artifacts_removed": [
+        "stellarorion_sparta_proof.vo",
+        "stellarorion_sparta_proof.vok",
+        "stellarorion_sparta_proof.vos",
+        "stellarorion_sparta_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_speed_of_sound_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.266,
-      "artifacts_removed": [],
+      "duration_s": 0.293,
+      "artifacts_removed": [
+        "stellarorion_speed_of_sound_proof.vo",
+        "stellarorion_speed_of_sound_proof.vok",
+        "stellarorion_speed_of_sound_proof.vos",
+        "stellarorion_speed_of_sound_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_status_writer_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.188,
-      "artifacts_removed": [],
+      "duration_s": 0.213,
+      "artifacts_removed": [
+        "stellarorion_status_writer_proof.vo",
+        "stellarorion_status_writer_proof.vok",
+        "stellarorion_status_writer_proof.vos",
+        "stellarorion_status_writer_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_test_modes_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.253,
-      "artifacts_removed": [],
+      "duration_s": 0.284,
+      "artifacts_removed": [
+        "stellarorion_test_modes_proof.vo",
+        "stellarorion_test_modes_proof.vok",
+        "stellarorion_test_modes_proof.vos",
+        "stellarorion_test_modes_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_trajectory_output_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.275,
-      "artifacts_removed": [],
+      "duration_s": 0.317,
+      "artifacts_removed": [
+        "stellarorion_trajectory_output_proof.vo",
+        "stellarorion_trajectory_output_proof.vok",
+        "stellarorion_trajectory_output_proof.vos",
+        "stellarorion_trajectory_output_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_types_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.269,
-      "artifacts_removed": [],
+      "duration_s": 0.319,
+      "artifacts_removed": [
+        "stellarorion_types_proof.vo",
+        "stellarorion_types_proof.vok",
+        "stellarorion_types_proof.vos",
+        "stellarorion_types_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/stellarorion_validation_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.286,
-      "artifacts_removed": [],
+      "duration_s": 0.31,
+      "artifacts_removed": [
+        "stellarorion_validation_proof.vo",
+        "stellarorion_validation_proof.vok",
+        "stellarorion_validation_proof.vos",
+        "stellarorion_validation_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/validation_pipeline_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.28,
-      "artifacts_removed": [],
+      "duration_s": 0.307,
+      "artifacts_removed": [
+        "validation_pipeline_proof.vo",
+        "validation_pipeline_proof.vok",
+        "validation_pipeline_proof.vos",
+        "validation_pipeline_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/proofs/visualizer_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.256,
-      "artifacts_removed": [],
+      "duration_s": 0.279,
+      "artifacts_removed": [
+        "visualizer_proof.vo",
+        "visualizer_proof.vok",
+        "visualizer_proof.vos",
+        "visualizer_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/rocq/stellarorion_physics_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.276,
-      "artifacts_removed": [],
+      "duration_s": 0.306,
+      "artifacts_removed": [
+        "stellarorion_physics_proof.vo",
+        "stellarorion_physics_proof.vok",
+        "stellarorion_physics_proof.vos",
+        "stellarorion_physics_proof.glob"
+      ],
       "error_snippet": ""
     },
     {
       "path": "src/rocq/stellarorion_thermal_proof.v",
       "ok": true,
       "returncode": 0,
-      "duration_s": 0.262,
-      "artifacts_removed": [],
+      "duration_s": 0.299,
+      "artifacts_removed": [
+        "stellarorion_thermal_proof.vo",
+        "stellarorion_thermal_proof.vok",
+        "stellarorion_thermal_proof.vos",
+        "stellarorion_thermal_proof.glob"
+      ],
       "error_snippet": ""
     }
   ],
