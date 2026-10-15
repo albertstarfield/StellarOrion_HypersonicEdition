@@ -194,6 +194,28 @@ Packages:
 
 The binary dispatches a range of command-line options, including \texttt{self-test}, \texttt{compareNoses}, \texttt{compareCalibrate}, \texttt{optimize}, \texttt{validate}, \texttt{gridIndepTest} and \texttt{validationPINN}.
 
+\section{Automated Verification and Code-Quality Toolchain}
+\label{sec:automated_verification_toolchain}
+
+\begin{table}[!htbp]
+\centering
+\caption{Automated verification and code-quality tools applied to the StellarOrion program.}
+\label{tab:verification_tools}
+\begin{tabularx}{\textwidth}{@{}>{\RaggedRight\arraybackslash}p{0.24\textwidth} >{\RaggedRight\arraybackslash}p{0.16\textwidth} >{\RaggedRight\arraybackslash}>{\RaggedRight\arraybackslash}X@{}}
+\hline
+\textbf{Tool} & \textbf{Invocation} & \textbf{Checked property} \\
+\hline
+Rocq 9.3.0 / Coq 8.18.0 & theorem files & Proof skeletons and contractual arithmetic, including orbit and ATP guarantees. \\
+GNATprove 16.1.0 & \texttt{gnatprove --level=4} & all enabled SPARK obligations on the Ada built-in, units and validation code. \\
+CrossHair & symbolic property checks & Python contract conformance for image and setup helpers. \\
+Pyrefly & static analysis & type consistency of the Python entry points and wrappers. \\
+Ruff & lint + format checks & style and common Python error patterns in the supporting scripts. \\
+sabotage\_verifier.py & sabotage scan & resource cleanup, exception handling, memory safety, and audit rules across Ada and Python. \\
+\hline
+\end{tabularx}
+\end{table}
+
+
 \chapter{IRVE-3 Validation Data Summary}
 \label{app:validation_data}
 

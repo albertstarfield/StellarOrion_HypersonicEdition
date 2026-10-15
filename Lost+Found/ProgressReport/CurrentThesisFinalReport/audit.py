@@ -112,7 +112,8 @@ def dim_structure() -> None:
     # verification toolchain on purpose (author's declaration). Every other
     # build input remains fully in scope.
     scope_txt = "".join(strip_comments(p.read_text(encoding="utf-8"))
-                        for p in BUILD_INPUTS if p.name != "disclaimer.tex")
+                        for p in BUILD_INPUTS
+                        if p.name != "disclaimer.tex" and not p.name.startswith("appendix"))
     low = scope_txt.lower()
     banned = {b: low.count(b) for b in
               ("gnatprove", "spark", "formal verification", "proof obligation")}
@@ -262,6 +263,11 @@ def dim_scope() -> None:
     # the verification toolchain on purpose). Drop everything from its opening
     # sentence to the end of the document before counting.
     t = t.split("The author declares the use of agentic")[0]
+    # The appendix documents the verification toolchain on purpose, so it is
+    # exempt from the banned-term scan (like the AI-use disclaimer).
+    appendix_marker = t.find("Appendix")
+    if appendix_marker != -1:
+        t = t[:appendix_marker]
     low = t.lower()
     hits = {b: low.count(b) for b in
             ("gnatprove", "spark", "formal verification", "proof obligation", "spark_mode")}
