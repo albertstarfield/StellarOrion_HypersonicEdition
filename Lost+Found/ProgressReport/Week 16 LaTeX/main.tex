@@ -414,14 +414,64 @@
 
 \section{CURRENT IMPLEMENTATION}
 
-% Placeholders for slides 22-28: content removed on request, blank for now.
-\begin{frame}[plain]\null\end{frame}
-\begin{frame}[plain]\null\end{frame}
-\begin{frame}[plain]\null\end{frame}
-\begin{frame}[plain]\null\end{frame}
-\begin{frame}[plain]\null\end{frame}
-\begin{frame}[plain]\null\end{frame}
-\begin{frame}[plain]\null\end{frame}
+% Result figures added from CurrentThesisFinalReport/figures and the generated
+% results plots. Every copied figure carries its thesis figure/source label in
+% the caption so it can be traced back.
+% SOURCE: chapter_04_results.tex figures:
+% thermal_map_smooth.png, mach_map_smooth_M0_A0.png, knudsen_map_smooth_M0_A0.png,
+% results_performance_comparison.png, results_tps_backface.png,
+% tps_ply_stack_temperature.png, tps_ply_profile_peak.png,
+% fignew_gate_comparison.png.
+
+\PlotFrame{RESULTS: SMOOTH-SKIN THERMAL FIELD}
+  {\MaxTextLines{2}%
+   Smooth-skin DSMC temperature field around the toroid-stack aeroshell at
+   particle-time step 1000, meridional slice. Source: thesis fig.~thermal-map.}
+  {so_thermal_map}
+
+\PlotFrame{RESULTS: MACH FIELD}
+  {\MaxTextLines{2}%
+   Smooth-skin Mach field at particle-time step 1000; bow shock ahead of the
+   aeroshell and subsonic wake behind it. Source: thesis fig.~mach-map.}
+  {so_mach_map}
+
+\PlotFrame{RESULTS: CELL-SCALE KNUDSEN FIELD}
+  {\MaxTextLines{2}%
+   Smooth-skin Knudsen field at particle-time step 1000; at cell scale the dump
+   remains continuum-dominated. Source: thesis fig.~knudsen-map.}
+  {so_knudsen_map}
+
+\PlotFrame{RESULTS: SMOOTH VS. SCALLOPED PERFORMANCE}
+  {\MaxTextLines{2}%
+   Drag, lift, deceleration and axial force for smooth and scalloped DSMC runs;
+   runs are at 51.82 km/3379 m/s and 52.07 km/3101 m/s. Source: thesis
+   fig.~performance-comparison.}
+  {so_performance_comparison}
+
+\PlotFrame{RESULTS: TPS BACKFACE}
+  {\MaxTextLines{2}%
+   Active 7.131 mm five-ply F-TPS backface is 955.66 K, above the 773 K Kapton
+   and 523.15 K structural limits. Source: thesis fig.~tps-backface.}
+  {so_tps_backface}
+
+\PlotFrame{RESULTS: PLY STACK TEMPERATURE}
+  {\MaxTextLines{2}%
+   Per-ply temperature across the five-ply IRVE-3 stack at the step-2200 DSMC
+   conduction solve. Source: thesis fig.~tps-ply-stack.}
+  {so_ply_stack_temperature}
+
+\PlotFrame{RESULTS: PEAK PLY PROFILE}
+  {\MaxTextLines{2}%
+   Through-thickness profile at the peak-flux surface element, from Nicalon SiC
+   hot face to Kapton cold face. Source: thesis fig.~tps-ply-stack.}
+  {so_tps_ply_profile_peak}
+
+\PlotFrame{RESULTS: HYBRID DSMC VALIDATION GATE}
+  {\MaxTextLines{2}%
+   Campaign reference, analytic prediction and DSMC re-simulation heat loads;
+   DSMC value 77.93 J/cm$^2$ passes the 165.72 J/cm$^2$ gate. Source: thesis
+   fig.~gate-comparison.}
+  {so_gate_comparison}
 
 
 % =====================================================================
