@@ -279,9 +279,17 @@ def dim_scope() -> None:
 
 #, dimension 9
 def dim_numeric() -> None:
-    """Thesis values against the committed artefacts they claim to come from."""
+    """Thesis values against the committed artefacts they claim to come from.
+
+    Pinned to 57a3a3d6, the commit that carries the RETAINED latest attempt.
+    The earlier pin bdddb47 (2026-09-26) was the attempt-1 run whose data
+    commit 57a3a3d6 deleted on 2026-10-14; while the pin sat on the deleted
+    attempt this check passed against artefacts the thesis no longer cites,
+    which made it a false-clean pass. Values that match bdddb47 instead of
+    57a3a3d6 therefore surface as failures here, by design.
+    """
     import json as _json
-    r = subprocess.run(["git", "show", "bdddb47:stellarorion_program_proc/src/python/"
+    r = subprocess.run(["git", "show", "57a3a3d6:stellarorion_program_proc/src/python/"
                         "hiad_optimization_results.json"],
                        cwd=str(ROOT), capture_output=True, text=True)
     if r.returncode != 0:
