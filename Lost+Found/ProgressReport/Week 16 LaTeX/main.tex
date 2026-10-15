@@ -412,6 +412,33 @@
    DSMC gate 165.72$\rightarrow$77.93 J/cm$^2$. Source: thesis Table~bo-before-after.}
   {so_topology_4views}
 
+\begin{frame}{RESULT TABLE: BASELINE VS. OPTIMIZED}
+  \scriptsize
+  \renewcommand{\arraystretch}{1.05}
+  \begin{tabular}{@{}lrrr@{}}
+    \hline
+    \textbf{Parameter} & \textbf{Baseline} & \textbf{Optimized} & \textbf{$\Delta$} \\
+    \hline
+    \multicolumn{4}{@{}l}{\textbf{Geometry and closed-form surrogate}} \\
+    Nose radius $R_N$ & 1.5000 m & 2.9714 m & $+98.10\%$ \\
+    Torus radius $r_{tor}$ & 0.1350 m & 0.0885 m & $-34.47\%$ \\
+    Half-cone angle $\theta_c$ & $60.00^\circ$ & $40.15^\circ$ & $-33.09\%$ \\
+    Drag coefficient $C_d$ & 1.6073 & 1.5597 & $-2.96\%$ \\
+    Sutton--Graves heat flux & 15.36 W/cm$^2$ & 11.47 W/cm$^2$ & $-28.95\%$ \\
+    Total heat load $Q(\mathbf{x})$ & 219.10 J/cm$^2$ & 155.67 J/cm$^2$ & $-28.95\%$ \\
+    Cost $J(\mathbf{x})$ & 2.1626 & 1.6051 & $-25.78\%$ \\
+    \hline
+    \multicolumn{4}{@{}l}{\textbf{DSMC (baseline run / round-1 gate re-simulation)}} \\
+    Drag coefficient $C_d$ & 1.7655 & 2.5294 & $+43.3\%$ \\
+    Total heat load $Q$ & 165.72 J/cm$^2$ & 77.93 J/cm$^2$ & $-53.0\%$ \\
+    Peak deceleration & 16.55 g & 14.01 g & $-15.3\%$ \\
+    Ballistic coefficient $\beta$ & 27.70 kg/m$^2$ & 10.06 kg/m$^2$ & $-63.7\%$ \\
+    Lift coefficient $C_l$ & $-0.5268$ & $-1.0767$ & $+104.4\%$ \\
+    \hline
+  \end{tabular}
+  \par{\scriptsize Source: thesis Table bo-before-after (chapter 4, official run 2026-09-26).}
+\end{frame}
+
 \section{CURRENT IMPLEMENTATION}
 
 % Result figures added from CurrentThesisFinalReport/figures and the generated
