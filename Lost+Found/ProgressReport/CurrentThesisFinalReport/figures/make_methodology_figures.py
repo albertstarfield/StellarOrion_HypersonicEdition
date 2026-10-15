@@ -278,40 +278,60 @@ def build_domain_mesh() -> object:
     for y in [0.8, 1.3, 1.8, 2.3, 2.8, 3.3]:
         ax.plot([0.5, 6.0], [y, y], color="#B0B0B0", linewidth=0.5, zorder=0)
 
-    # HIAD vehicle: one smooth, blunt body-of-revolution cross-section.
-    # WHY one closed interpolated contour: a previous revision pasted a nose arc
-    # onto a separate body wedge, which left a notch at the junction and read as
-    # a dome plus a ramp rather than a blunt aeroshell.  A single Catmull-Rom
-    # contour through the surface control points removes the notch.
+    # HIAD vehicle: a blunt aeroshell of revolution in meridian section,
+    # whose radius GROWS from the nose tip on the symmetry plane out to the
+    # inflated toroidal shoulder, then closes on a FLAT aft base.
+    #
+    # WHY the base corner is appended instead of interpolated: the aft face
+    # of a HIAD is a flat disk perpendicular to the symmetry plane.  If the
+    # last control point sits on the symmetry plane (as an earlier revision
+    # had it) the Catmull-Rom spline sweeps the surface back down onto the
+    # centerline, closing a left-right symmetric bump that reads as a dome
+    # plus a ramp rather than a flared aeroshell.  Taking the vertical base
+    # segment out of the interpolant keeps the silhouette asymmetric, which
+    # is what makes it read as a vehicle facing the flow.
+    #
+    # WHY the dip at the third-from-last point: the conical flank ends where
+    # the inflatable torus stack begins, and the tori sit proud of the cone,
+    # so the real skin shows a notch there before bulging outward again.
+    # See figures/hiad_parametric_cross_section.png (Rapisarda MDAO baseline).
     import numpy as np
     from matplotlib.path import Path
     from matplotlib.patches import PathPatch
 
-    vx, vy = _blunt_body_contour(
-        [(1.55, 0.30),   # nose tip, on the symmetry plane (front)
-         (1.70, 0.95),   # blunt nose
-         (2.12, 1.28),   # forebody
-         (2.72, 1.36),   # toroidal body crest
-         (3.15, 1.18),   # aft shoulder
-         (3.42, 0.72),   # aft taper
-         (3.52, 0.30)],  # aft base, on the symmetry plane
+    y0 = 0.30  # symmetry plane
+    sx, sy = _blunt_body_contour(
+        [(1.55, y0),    # nose tip, on the symmetry plane (stagnation point)
+         (1.61, 0.74),  # blunt nose cap
+         (1.82, 1.06),  # nose / forebody junction
+         (2.30, 1.30),  # conical flank at theta_c
+         (2.75, 1.44),  # flank ends where the torus stack begins
+         (3.00, 1.38),  # root of the inflated shoulder (tori sit proud)
+         (3.30, 1.58),  # inflated toroidal shoulder bulge
+         (3.52, 1.66)], # shoulder crest at the outer edge
         samples_per_segment=30)
-    # Close the silhouette along the symmetry plane (nose base to aft base).
-    verts = list(zip(vx, vy)) + [(vx[0], vy[0])]
-    codes = [Path.MOVETO] + [Path.LINETO] * (len(vx) - 1) + [Path.CLOSEPOLY]
+    # Vertices are: surface, then the base corner, then a repeat of the nose
+    # tip.  The repeat exists because Path assigns each code to one vertex
+    # and CLOSEPOLY's vertex coordinates are DISCARDED, so the closing edge
+    # is always drawn back to the first vertex.  Putting the base corner last
+    # would have made it the discarded vertex, and the silhouette would then
+    # close on a straight diagonal from the shoulder to the nose tip.
+    pts = list(zip(sx, sy))
+    verts = pts + [(pts[-1][0], y0), pts[0]]
+    codes = [Path.MOVETO] + [Path.LINETO] * (len(verts) - 2) + [Path.CLOSEPOLY]
     ax.add_patch(PathPatch(Path(verts, codes), facecolor=SOLVER_FILL,
                            edgecolor=SOLVER_EDGE, linewidth=1.2, zorder=2))
 
     # Bow shock: one smooth curve, convex upstream, detached ahead of the nose
-    # and wrapping aft over the shoulder.
+    # and wrapping aft clear of the taller shoulder.
     sx, sy = _blunt_body_contour(
-        [(1.30, 0.30),   # vertex on the symmetry plane, upstream of the nose
-         (1.36, 0.80),   # near-normal stand-off (convex upstream)
-         (1.55, 1.22),   #
-         (1.95, 1.55),   # curving over the shoulder
-         (2.50, 1.72),   #
-         (3.10, 1.72),   # trailing aft
-         (3.60, 1.55)],
+        [(1.30, y0),    # vertex on the symmetry plane, upstream of the nose
+         (1.34, 0.80),  # near-normal stand-off (convex upstream)
+         (1.52, 1.30),  #
+         (1.95, 1.68),  # curving over the shoulder
+         (2.55, 1.90),  #
+         (3.20, 2.00),  # trailing aft
+         (3.90, 1.92)],
         samples_per_segment=30)
     ax.plot(sx, sy, linestyle="--", color=ORANGE, linewidth=1.5, zorder=1)
 
@@ -319,17 +339,17 @@ def build_domain_mesh() -> object:
     ax.annotate("Farfield boundary", xy=(0.5, 3.5), xytext=(0.2, 3.55),
                 fontsize=9.5, color=INK, ha="left", va="bottom",
                 arrowprops=dict(arrowstyle="->", color=INK, lw=1.0))
-    ax.annotate("Symmetry plane", xy=(4.0, 0.3), xytext=(4.5, 0.15),
+    ax.annotate("Symmetry plane", xy=(4.0, y0), xytext=(4.5, 0.15),
                 fontsize=9.5, color=INK, ha="center", va="bottom",
                 arrowprops=dict(arrowstyle="->", color=INK, lw=1.0))
-    ax.annotate("HIAD surface", xy=(3.12, 1.18), xytext=(4.25, 1.20),
+    ax.annotate("HIAD surface", xy=(3.18, 1.56), xytext=(4.35, 1.56),
                 fontsize=9.5, color=INK, ha="center", va="center",
                 arrowprops=dict(arrowstyle="->", color=INK, lw=1.0))
-    ax.annotate("Bow shock", xy=(1.45, 0.95), xytext=(0.3, 2.05),
+    ax.annotate("Bow shock", xy=(1.42, 1.06), xytext=(0.3, 2.05),
                 fontsize=9.5, color=ORANGE, ha="left", va="center",
                 arrowprops=dict(arrowstyle="->", color=ORANGE, lw=1.0))
-    ax.annotate("Cartesian mesh\n(grid factor 0.7)", xy=(4.0, 2.0),
-                xytext=(3.5, 2.8), fontsize=9.5, color=HEADER_GRAY,
+    ax.annotate("Cartesian mesh\n(grid factor 0.7)", xy=(4.7, 2.3),
+                xytext=(4.3, 3.0), fontsize=9.5, color=HEADER_GRAY,
                 ha="center", va="bottom",
                 arrowprops=dict(arrowstyle="->", color=HEADER_GRAY, lw=1.0))
 
