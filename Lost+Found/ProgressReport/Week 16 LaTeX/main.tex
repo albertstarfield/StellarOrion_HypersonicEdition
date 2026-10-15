@@ -274,6 +274,15 @@
   {so_ccd_screen}
 
 
+% inserted between DoE sampling and the produced geometry grid:
+% state the optimization ordering explicitly.
+\PlotFrame{REDEMPTION 3c: OPTIMIZATION STAGE}
+  {\MaxTextLines{2}%
+   CCD gives the validated first candidate; 20 LHS seeds and
+   50 BO steps then optimize it (Bayesian plot follows).}
+  {so_bo_convergence}
+
+
 % produced geometry grid selected from the official run: use the shipped render
 % (avoid generated typesetting; image is the source truth).
 \PlotFrame{GEOMETRY GRID (DoE / BO RUN)}
