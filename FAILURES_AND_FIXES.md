@@ -6128,6 +6128,40 @@ owner rather than becoming an audit edit.
 **Integrity check on my own deliverables.** `FAILURES_AND_FIXES.md` is 6 960 lines,
 `README.md` 932, `SummaryProcessingPipeline.md` 453; all three have an even fence
 count and zero malformed table rows. Both files I own are clean in git.
+### Thread 4j — inventory rows F107–F127 completed by the owning process; the F90 duplicate row surfaced alongside them
+
+Six commits landed since thread 4i. Five of them are week-16 thesis work and one — `b530b1c0`,
+`fix(docs): complete FAILURES_AND_FIXES inventory rows F107-F127` — is the response to the gap I
+reported in thread 4i. Sixteen rows added; sixteen missing; exact match.
+
+Verified the result rather than the message:
+
+| check | before 4j | after b530b1c0 |
+| :--- | ---: | ---: |
+| entries | 111 | 111 |
+| summary rows | 96 | 112 |
+| entries missing a row | 16 | **0** |
+| duplicate row ids | — | one (F90) |
+| malformed rows | 0 | 0 |
+
+The inventories now cover every entry from F1 to F127 — the closure is real, not partial.
+
+**One inherited defect, reported and not passed over.** Before this merge there was one F90
+summary row (`documentation/provenance`, SPARK posture, open). After it there are two F90 rows:
+
+| # | category | status | subject |
+| :--- | :--- | :--- | :--- |
+| 1 | documentation/provenance | open | 20 of 28 `.adb` bodies declaring `SPARK_Mode (Off)` |
+| 2 | verification scope | fixed 2026-10-13 | Phase-2 ruff gate ran the wrong ruff binary |
+
+Two distinct findings are collected under one F-number. The entry itself (`## F90`) names only the
+first; the second is a separate result whose number should, by the rule at the top of this log, have
+been the next sequential one. This pre-dates this thread — both rows existed before row
+unification (blame: `9ead1e90` and `6e58b2fa`). I record it because the strictness that caught the
+preceding gap should not let a doubled number pass once the log claims `entries == rows`,
+especially now that the inventory is presented as complete.
+
+
 ## Summary
 
 | ID | Severity | Status | Root cause class |
